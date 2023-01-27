@@ -1,0 +1,84 @@
+﻿{
+	"version": 3,
+	"configurePresets": [
+		{
+			"name": "windows-base",
+			"description": "Target Windows with the Visual Studio development environment.",
+			"hidden": true,
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/out/build/${presetName}",
+			"installDir": "${sourceDir}/out/install/${presetName}",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "cl.exe",
+				"CMAKE_CXX_COMPILER": "cl.exe",
+				"PS2": false
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "x64-debug",
+			"displayName": "x64 Debug",
+			"description": "Target Windows (64-bit) with the Visual Studio development environment. (Debug)",
+			"inherits": "windows-base",
+			"architecture": {
+				"value": "x64",
+				"strategy": "external"
+			},
+			"cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+		},
+		{
+			"name": "x64-release",
+			"displayName": "x64 Release",
+			"description": "Target Windows (64-bit) with the Visual Studio development environment. (RelWithDebInfo)",
+			"inherits": "x64-debug",
+			"cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+		},
+		{
+			"name": "x86-debug",
+			"displayName": "x86 Debug",
+			"description": "Target Windows (32-bit) with the Visual Studio development environment. (Debug)",
+			"inherits": "windows-base",
+			"architecture": {
+				"value": "x86",
+				"strategy": "external"
+			},
+			"cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+		},
+		{
+			"name": "x86-release",
+			"displayName": "x86 Release",
+			"description": "Target Windows (32-bit) with the Visual Studio development environment. (RelWithDebInfo)",
+			"inherits": "x86-debug",
+			"cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+		},
+		{
+			"name": "linux-debug",
+			"displayName": "Linux Debug",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/out/build/${presetName}",
+			"installDir": "${sourceDir}/out/install/${presetName}",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"PS2": true,
+				"CMAKE_C_COMPILER": "/usr/local/sce/ee/gcc/bin/ee-gcc",
+				"CMAKE_CXX_COMPILER": "/usr/local/sce/ee/gcc/bin/ee-g++",
+				"CMAKE_C_COMPILER_WORKS": true,
+				"CMAKE_CXX_COMPILER_WORKS": true
+			},
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Linux"
+			},
+			"vendor": {
+				"microsoft.com/VisualStudioRemoteSettings/CMake/1.0": {
+					"sourceDir": "$env{HOME}/.vs/$ms{projectDirName}"
+				}
+			}
+		}
+	]
+}

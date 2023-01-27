@@ -6,8 +6,6 @@ set(CMAKE_CXX_COMPILER "clang")
 # set the project name
 project(Kya)
 
-set(proj_root "src")
-
 if (PS2)
 	message("PS2 Build")
 	set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
@@ -21,61 +19,65 @@ else()
 	set(PLATFORM_BINARY_FOLDER "WIN")
 endif()
 
+set(src_root "src")
+
 set(main_src 
-	"${proj_root}/main.cpp"
-	"${proj_root}/IniFile.cpp"
-	"${proj_root}/IniFile.h"
-	"${proj_root}/Iop.cpp"
-	"${proj_root}/Iop.h"
-	"${proj_root}/edPacket.cpp"
-	"${proj_root}/edPacket.h"
-	"${proj_root}/edMem.cpp"
-	"${proj_root}/edMem.h"
-	"${proj_root}/edSystem.cpp"
-	"${proj_root}/edSystem.h"
-	"${proj_root}/edText.cpp"
-	"${proj_root}/edText.h"
-	"${proj_root}/ed3D.cpp"
-	"${proj_root}/ed3D.h"
-	"${proj_root}/edDlist.cpp"
-	"${proj_root}/edDlist.h"
-	"${proj_root}/PackedFont.h"
-	"${proj_root}/LargeObject.cpp"
-	"${proj_root}/LargeObject.h"
-	"${proj_root}/LevelScheduleManager.cpp"
-	"${proj_root}/LevelScheduleManager.h"
-	"${proj_root}/PauseManager.cpp"
-	"${proj_root}/PauseManager.h"
-	"${proj_root}/CinematicManager.cpp"
-	"${proj_root}/CinematicManager.h"
-	"${proj_root}/Rendering/DisplayList.cpp"
-	"${proj_root}/Rendering/DisplayList.h"
-	"${proj_root}/Rendering/Font.cpp"
-	"${proj_root}/Rendering/Font.h"
-	"${proj_root}/edC/edCBank.cpp"
-	"${proj_root}/edC/edCBank.h"
-	"${proj_root}/edC/edCBankBuffer.cpp"
-	"${proj_root}/edC/edCBankBuffer.h"
-	"${proj_root}/edC/edCFiler.cpp"
-	"${proj_root}/edC/edCFiler.h"
-	"${proj_root}/edC/edCFiler_Static.cpp"
-	"${proj_root}/edC/edCFiler_Static.h"
-	"${proj_root}/edC/edCFiler_CDVD.cpp"
-	"${proj_root}/edC/edCFiler_CDVD.h"
-	"${proj_root}/TimeController.cpp"
-	"${proj_root}/TimeController.h"
+	"${src_root}/main.cpp"
+	"${src_root}/IniFile.cpp"
+	"${src_root}/IniFile.h"
+	"${src_root}/Iop.cpp"
+	"${src_root}/Iop.h"
+	"${src_root}/edPacket.cpp"
+	"${src_root}/edPacket.h"
+	"${src_root}/edMem.cpp"
+	"${src_root}/edMem.h"
+	"${src_root}/edSystem.cpp"
+	"${src_root}/edSystem.h"
+	"${src_root}/edText.cpp"
+	"${src_root}/edText.h"
+	"${src_root}/ed3D.cpp"
+	"${src_root}/ed3D.h"
+	"${src_root}/edDlist.cpp"
+	"${src_root}/edDlist.h"
+	"${src_root}/PackedFont.h"
+	"${src_root}/LargeObject.cpp"
+	"${src_root}/LargeObject.h"
+	"${src_root}/LevelScheduleManager.cpp"
+	"${src_root}/LevelScheduleManager.h"
+	"${src_root}/PauseManager.cpp"
+	"${src_root}/PauseManager.h"
+	"${src_root}/CinematicManager.cpp"
+	"${src_root}/CinematicManager.h"
+	"${src_root}/Rendering/DisplayList.cpp"
+	"${src_root}/Rendering/DisplayList.h"
+	"${src_root}/Rendering/Font.cpp"
+	"${src_root}/Rendering/Font.h"
+	"${src_root}/edC/edCBank.cpp"
+	"${src_root}/edC/edCBank.h"
+	"${src_root}/edC/edCBankBuffer.cpp"
+	"${src_root}/edC/edCBankBuffer.h"
+	"${src_root}/edC/edCFiler.cpp"
+	"${src_root}/edC/edCFiler.h"
+	"${src_root}/edC/edCFiler_Static.cpp"
+	"${src_root}/edC/edCFiler_Static.h"
+	"${src_root}/edC/edCFiler_CDVD.cpp"
+	"${src_root}/edC/edCFiler_CDVD.h"
+	"${src_root}/TimeController.cpp"
+	"${src_root}/TimeController.h"
 )
+
+set(ps2_src_root "ps2")
 
 if (PS2)
 	list(APPEND main_src	
-		"${proj_root}/ezmpegstr/ldimage.c"
-		"${proj_root}/ezmpegstr/playpss.c"
-		"${proj_root}/ezmpegstr/playpss.h"
-		"${proj_root}/ezmpegstr/audiodec.c"
-		"${proj_root}/ezmpegstr/audiodec.h"
-		"${proj_root}/ezmpegstr/strfile.c"
-		"${proj_root}/ezmpegstr/strfile.h"
-		"${proj_root}/ezmpegstr/ezmpegstr.h"
+		"${ps2_src_root}/ezmpegstr/ldimage.c"
+		"${ps2_src_root}/ezmpegstr/playpss.c"
+		"${ps2_src_root}/ezmpegstr/playpss.h"
+		"${ps2_src_root}/ezmpegstr/audiodec.c"
+		"${ps2_src_root}/ezmpegstr/audiodec.h"
+		"${ps2_src_root}/ezmpegstr/strfile.c"
+		"${ps2_src_root}/ezmpegstr/strfile.h"
+		"${ps2_src_root}/ezmpegstr/ezmpegstr.h"
 
 		"/usr/local/sce/ee/src/lib/vu0/libvu0.c"
 	)
@@ -89,7 +91,7 @@ add_executable(Kya
 if (PS2)
 	message("Using src directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 
-	string(APPEND CMAKE_EXE_LINKER_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/app.cmd ${CMAKE_CURRENT_SOURCE_DIR}/crt0.o -mno-crt0")
+	string(APPEND CMAKE_EXE_LINKER_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/ps2/app.cmd ${CMAKE_CURRENT_SOURCE_DIR}/ps2/crt0.o -mno-crt0")
 	set_target_properties(Kya PROPERTIES OUTPUT_NAME "kya.elf")
 	set_target_properties(Kya PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}")
 	#set(CMAKE_VERBOSE_MAKEFILE on)
@@ -108,10 +110,14 @@ else()
 )
 endif()
 
-target_include_directories(Kya PRIVATE ${proj_root})
+target_include_directories(Kya PRIVATE ${src_root})
 
 if (PS2)
-	set(EXECUTABLE_OUTPUT_PATH ${proj_root})
+	target_include_directories(Kya PRIVATE ${ps2_src_root})
+endif()
+
+if (PS2)
+	set(EXECUTABLE_OUTPUT_PATH ${src_root})
 
 	target_compile_definitions(Kya PRIVATE PLATFORM_PS2)
 
