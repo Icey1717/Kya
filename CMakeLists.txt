@@ -105,9 +105,13 @@ if (PS2)
 else()
 	set_target_properties(Kya PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}")
 	message("Making Exe")
-	add_custom_command(TARGET Kya POST_BUILD
-	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/DoRobo" "${CMAKE_CURRENT_SOURCE_DIR}/assets/" "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}/"
-)
+
+	add_custom_target(sync_files
+		COMMAND ${CMAKE_COMMAND} -E echo "Syncing files using robocopy..."
+		COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/DoRobo" "${CMAKE_CURRENT_SOURCE_DIR}/assets/" "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}/"
+	)
+
+	add_dependencies(Kya sync_files)
 endif()
 
 target_include_directories(Kya PRIVATE ${src_root})
