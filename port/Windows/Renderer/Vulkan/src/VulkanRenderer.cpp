@@ -32,7 +32,7 @@ const std::vector<const char*> deviceExtensions = {
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
-const bool enableValidationLayers = false;
+const bool enableValidationLayers = true;
 #endif
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -132,8 +132,20 @@ public:
 	}
 
 	void drawSplash(char* splashFile, int width, int height) {
-		currentImage = new VulkanColorImage(splashFile, width, height);
+		VulkanColorImage* oldImage = currentImage;
+
+		if (!currentImage || currentImage->GetWidth() != width || currentImage->GetHeight() != height) {
+			currentImage = new VulkanColorImage(splashFile, width, height);
+		}
+		else {
+			currentImage->UpdateImage(splashFile);
+		}
 		drawFrame();
+
+		// If we swapped the image out in draw frame, we can delete this one now.
+		if (oldImage != currentImage) {
+			delete oldImage;
+		}
 	}
 
 	void run() {

@@ -53,6 +53,11 @@ VulkanColorImage::~VulkanColorImage()
 	vkDestroyDescriptorSetLayout(GetDevice(), descriptorSetLayout, nullptr);
 }
 
+void VulkanColorImage::UpdateImage(char* newImage)
+{
+	image.UpdateImage(newImage);
+}
+
 void VulkanColorImage::CreateDescriptorSets() {
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -94,6 +99,27 @@ void VulkanColorImage::CreateDescriptorSets() {
 		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorWrites[1].descriptorCount = 1;
 		descriptorWrites[1].pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	}
+}
+
+void VulkanColorImage::UpdateDescriptorSets() {
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = image.GetTextureImageView();
+		imageInfo.sampler = image.GetTextureSampler();
+
+		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = descriptorSets[i];
+		descriptorWrites[0].dstBinding = 1;
+		descriptorWrites[0].dstArrayElement = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pImageInfo = &imageInfo;
 
 		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}

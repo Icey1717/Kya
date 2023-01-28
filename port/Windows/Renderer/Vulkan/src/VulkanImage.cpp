@@ -27,39 +27,53 @@ VkImageView CreateImageView(VkImage image, VkFormat format) {
 }
 
 VulkanImage::VulkanImage(char* splashFile, int width, int height)
+	: texWidth(width)
+	, texHeight(height)
 {
-	CreateTextureImage(splashFile, width, height);
+	CreateTextureImage(splashFile);
 	CreateTextureImageView();
 	CreateTextureSampler();
 }
 
 VulkanImage::~VulkanImage()
 {
-	vkDestroySampler(GetDevice(), textureSampler, nullptr);
-	vkDestroyImageView(GetDevice(), textureImageView, nullptr);
+	if (textureSampler) {
+		vkDestroySampler(GetDevice(), textureSampler, nullptr);
+		textureSampler = NULL;
+	}
 
-	vkDestroyImage(GetDevice(), textureImage, nullptr);
-	vkFreeMemory(GetDevice(), textureImageMemory, nullptr);
+	if (textureImageView) {
+		vkDestroyImageView(GetDevice(), textureImageView, nullptr);
+		textureImageView = NULL;
+	}
+
+	if (textureImage) {
+		vkDestroyImage(GetDevice(), textureImage, nullptr);
+		textureImage = NULL;
+	}
+
+	if (textureImageMemory) {
+		vkFreeMemory(GetDevice(), textureImageMemory, nullptr);
+		textureImageMemory = NULL;
+	}
 }
 
-void VulkanImage::CreateTextureImage(char* splashFile, int width, int height) {
-	int texWidth = width;
-	int texHeight = height;
-
+void VulkanImage::UpdateImage(char* pixelData)
+{
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 
-	std::vector<char> pixels;
+	std::vector<char> pixelBuffer;
 
 	// Add alpha to the image.
 	for (int i = 0; i < texWidth * texHeight; i++)
 	{
-		pixels.push_back(splashFile[(i * 3) + 1]);
-		pixels.push_back(splashFile[(i * 3) + 0]);
-		pixels.push_back(splashFile[(i * 3) + 2]);
-		pixels.push_back(0xff);
+		pixelBuffer.push_back(pixelData[(i * 3) + 1]);
+		pixelBuffer.push_back(pixelData[(i * 3) + 0]);
+		pixelBuffer.push_back(pixelData[(i * 3) + 2]);
+		pixelBuffer.push_back(0xff);
 	}
 
-	if (!pixels.size()) {
+	if (!pixelBuffer.size()) {
 		throw std::runtime_error("failed to load texture image!");
 	}
 
@@ -69,10 +83,8 @@ void VulkanImage::CreateTextureImage(char* splashFile, int width, int height) {
 
 	void* data;
 	vkMapMemory(GetDevice(), stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels.data(), static_cast<size_t>(imageSize));
+	memcpy(data, pixelBuffer.data(), static_cast<size_t>(imageSize));
 	vkUnmapMemory(GetDevice(), stagingBufferMemory);
-
-	CreateImage(texWidth, texHeight, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
 	TransitionImageLayout(textureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	CopyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
@@ -81,6 +93,11 @@ void VulkanImage::CreateTextureImage(char* splashFile, int width, int height) {
 
 	vkDestroyBuffer(GetDevice(), stagingBuffer, nullptr);
 	vkFreeMemory(GetDevice(), stagingBufferMemory, nullptr);
+}
+
+void VulkanImage::CreateTextureImage(char* pixelData) {
+	CreateImage(texWidth, texHeight, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+	UpdateImage(pixelData);
 }
 
 void VulkanImage::CreateTextureImageView() {

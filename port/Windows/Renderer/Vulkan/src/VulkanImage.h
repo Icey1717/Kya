@@ -14,8 +14,13 @@ public:
 	const VkImageView& GetTextureImageView() const { return textureImageView; }
 	const VkSampler& GetTextureSampler() const { return textureSampler; }
 
+	void UpdateImage(char* pixelData);
+
+	int GetWidth() { return texWidth; }
+	int GetHeight() { return texHeight; }
+
 private:
-	void CreateTextureImage(char* splashFile, int width, int height);
+	void CreateTextureImage(char* splashFile);
 	void CreateTextureImageView();
 	void CreateTextureSampler();
 	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
@@ -26,4 +31,7 @@ private:
 	VkDeviceMemory textureImageMemory;
 	VkImageView textureImageView;
 	VkSampler textureSampler;
+
+	int texWidth;
+	int texHeight;
 };

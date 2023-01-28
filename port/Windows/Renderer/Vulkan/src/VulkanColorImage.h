@@ -15,8 +15,14 @@ public:
 
 	const VkDescriptorSet& GetDescriptorSet(int index) { return descriptorSets[index]; }
 
+	void UpdateImage(char* newImage);
+
+	int GetWidth() { return image.GetWidth(); }
+	int GetHeight() { return image.GetHeight(); }
+
 private:
 	void CreateDescriptorSets();
+	void UpdateDescriptorSets();
 	void CreateDescriptorPool();
 
 	VkDescriptorPool descriptorPool;
