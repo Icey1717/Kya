@@ -32,7 +32,7 @@ const std::vector<const char*> deviceExtensions = {
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
-const bool enableValidationLayers = true;
+const bool enableValidationLayers = false;
 #endif
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -123,7 +123,7 @@ const std::vector<uint16_t> indices = {
 	0, 3, 2, 2, 1, 0
 };
 
-class HelloTriangleApplication {
+class ImageRendererApp {
 public:
 
 	void setup() {
@@ -131,14 +131,14 @@ public:
 		initVulkan();
 	}
 
-	void drawSplash(char* splashFile, int width, int height) {
+	void drawImage(char* imageData, int width, int height) {
 		VulkanColorImage* oldImage = currentImage;
 
 		if (!currentImage || currentImage->GetWidth() != width || currentImage->GetHeight() != height) {
-			currentImage = new VulkanColorImage(splashFile, width, height);
+			currentImage = new VulkanColorImage(imageData, width, height);
 		}
 		else {
-			currentImage->UpdateImage(splashFile);
+			currentImage->UpdateImage(imageData);
 		}
 		drawFrame();
 
@@ -223,7 +223,7 @@ private:
 	}
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-		auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+		auto app = reinterpret_cast<ImageRendererApp*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
 	}
 
@@ -332,7 +332,7 @@ private:
 
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "Hello Triangle";
+		appInfo.pApplicationName = "Image Renderer";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "No Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -1162,7 +1162,7 @@ private:
 	}
 };
 
-HelloTriangleApplication app;
+ImageRendererApp app;
 
 int renderMain() {
 
@@ -1183,9 +1183,9 @@ namespace Renderer
 		app.setup();
 	}
 
-	void ShowSplash(char* splashFile, int width, int height)
+	void RenderImage(char* imageData, int width, int height)
 	{
-		app.drawSplash(splashFile, width, height);
+		app.drawImage(imageData, width, height);
 	}
 }
 

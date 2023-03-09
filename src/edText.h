@@ -64,7 +64,7 @@ FontPacked {
 	ushort pageOffset;
 	char glyphHeader[4];
 };
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
 
@@ -79,10 +79,11 @@ SegmentPacked {
 	ushort header;
 	ushort field_0x2;
 };
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
 
 bool Init_edText(void);
+bool FontSetup(FontPacked* pFontData);
 
 #endif //_EDTEXT_H

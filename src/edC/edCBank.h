@@ -5,6 +5,12 @@
 
 #include "edCBankBuffer.h"
 
+enum ESeekMode {
+	ED_SEEK_SET,
+	ED_SEEK_CUR,
+	ED_SEEK_END
+};
+
 typedef struct BankFileData BankFileData, * PBankFileData;
 
 struct BankFileData {
@@ -73,12 +79,22 @@ DebugBankData_234* LoadFile(char* filePath, uint flags);
 byte UsedInFileLoad(DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize);
 void edCBank_Free_00244e10(edCBank* pBank);
 
+bool SetBankReadStream(class edCFiler_28* param_1, DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize);
+
 void Init_edBank(void);
+
+char* ReadFileToBuffer(short heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData);
+bool DebugBankSeek(DebugBankData_234* pDebugBank, uint seekOffset, ESeekMode mode);
+bool DebugBankClose(DebugBankData_234* pDebugBank);
+bool SetBankClose(edCFiler_28* param_1, DebugBankData_234* pDataBank);
 
 extern int g_FileSystemSysHandlerID_00469bc4;
 extern int g_FileSystemHandlers_00469bc8;
 extern ReadBank_158 g_ReadBank_00466e60;
 
 extern edCFiler* g_edCFiler_MCPtr_00448fd8;
+
+extern byte g_DebugBankLoadFlag_00469be0[16];
+extern DebugBankData_234 g_DebugBankDataArray_00469bf0[16];
 
 #endif //_EDCBANK_H

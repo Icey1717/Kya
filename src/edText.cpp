@@ -1,6 +1,7 @@
 #include "edText.h"
 #include "PackedFont.h"
 #include "ed3D.h"
+#include "TextIconDictionary.h"
 
 FontPacked* g_PackedFontPtr_004324d0 = (FontPacked*)g_PackedFontData_0041f290;
 
@@ -96,6 +97,7 @@ bool FontSetup_Internal(FontPacked* pFont)
 	return bVar2;
 }
 
+int g_iMaxTextIconEntryCount_0044916c = 0x26;
 
 bool FontSetup(FontPacked* pFontData)
 {
@@ -121,7 +123,7 @@ bool Init_edText(void)
 	}
 	else {
 		//edText::LoadDebugLib_0028c9b0();
-		//uVar1 = FUN_0028db80((int**)&g_saveSizeString, DAT_0044916c);
+		g_TextIconDictionary.Init(g_iMaxTextIconEntryCount_0044916c);
 	}
 	return true;
 	return uVar1;

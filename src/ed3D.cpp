@@ -8,6 +8,7 @@
 #if defined(PLATFORM_PS2)
 #include <eekernel.h>
 #endif
+#include "edVideo/VideoD.h"
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 
@@ -77,8 +78,10 @@ namespace ed3D
 		//	CameraPanMasterHeader::Setup_00290bf0(&cameraPanStaticMasterArray_00449378[uVar2].field_0x30, PTR_MeshTransformParentHeader_0044937c, 0, 0);
 		//	CameraPanMasterHeader::Setup_00290bf0(&cameraPanStaticMasterArray_00449378[uVar2].field_0x10, PTR_MeshTransformParentHeader_0044937c, 0, 0);
 		//}
-		///* Add render handler */
-		//edSysHandlers::edSysHandlersAdd(edSysHandlersNodeParent_0048cee0.pNodeTable, edSysHandlersNodeParent_0048cee0.pTypeArray_0x4, g_SysHandlersMainMaxEventID_0048cf10, ESHT_RenderScene, RenderScene, 1, 1);
+		/* Add render handler */
+		//edSysHandlersAdd
+		//(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
+		//	edSysHandlerVideo_0048cee0.maxEventID, ESHT_RenderScene, RenderScene, 1, 1);
 		//edSysHandlers::edSysHandlersAdd
 		//(edSysHandlersNodeParent_0048cee0.pNodeTable, edSysHandlersNodeParent_0048cee0.pTypeArray_0x4, g_SysHandlersMainMaxEventID_0048cf10, ESHT_Sound, EdSoundHandler_002b2730, 1, 0);
 		//if (Params_00424e30.meshHeaderCountBAlt < 0x180) {
@@ -193,6 +196,43 @@ namespace ed3D
 		return;
 	}
 
+#ifdef PLATFORM_WIN
+	namespace TextureSection 
+	{
+		std::unordered_map<int, void*> TextureSectionMap;
+		int KeyGenerator = 0;
+
+		int AddTextureSectionValue(void* value)
+		{
+			TextureSectionMap.try_emplace(++KeyGenerator, value);
+			return KeyGenerator;
+		}
+
+		std::optional<void*> ResolveTextureSectionKey(int key)
+		{
+			auto iter = TextureSectionMap.find(key);
+			if (iter == TextureSectionMap.end()) {
+				return std::nullopt; // key not found, return empty optional
+			}
+			else {
+				return iter->second; // key found, return optional containing value
+			}
+		}
+
+		void* ResolveTextureSectionKeyChecked(int key)
+		{
+			std::optional<void*> value = ResolveTextureSectionKey(key);
+			assert(value.has_value());
+			return *value;
+		}
+	}
+
+#define STORE_SECTION(a) TextureSection::AddTextureSectionValue(a)
+#define LOAD_SECTION(a) TextureSection::ResolveTextureSectionKeyChecked(a)
+#else
+#define STORE_SECTION(a) a
+#define LOAD_SECTION(a) a
+#endif
 
 	int* SetTextureSubsectionPointers(char* fileBuffer, int length, char* fileBufferCopy, int lengthCopy)
 	{
@@ -237,7 +277,8 @@ namespace ed3D
 					/* Jump forward one section */
 					if (*nextSubSection != 0) {
 						/* Store a pointer to the next sub section */
-						*(char**)(actualFileStart + *nextSubSection) = actualFileStart + (int)*(char**)(actualFileStart + *nextSubSection);
+						int offset = (int)*(char**)(actualFileStart + *nextSubSection);
+						*(int*)(actualFileStart + *nextSubSection) = (int)STORE_SECTION(actualFileStart + offset);
 					}
 					nextSubSection = nextSubSection + 1;
 				}
@@ -248,7 +289,7 @@ namespace ed3D
 					for (uVar4 = 0; uVar4 < (uVar3 & 0xffff); uVar4 = uVar4 + 1 & 0xffff) {
 						if (*nextSubSection != 0) {
 							/* Store a pointer to the next sub section */
-							*(char**)(pcVar5 + *nextSubSection) = actualFileStart + (int)*(char**)(pcVar5 + *nextSubSection);
+							*(int*)(pcVar5 + *nextSubSection) = (int)STORE_SECTION(actualFileStart + (int)*(char**)(pcVar5 + *nextSubSection));
 						}
 						nextSubSection = nextSubSection + 1;
 					}
@@ -259,7 +300,7 @@ namespace ed3D
 						for (uVar4 = 0; uVar4 < (uVar3 & 0xffff); uVar4 = uVar4 + 1 & 0xffff) {
 							if (*nextSubSection != 0) {
 								/* Store a pointer to the next sub section */
-								*(char**)(actualFileStart + *nextSubSection) = pcVar5 + (int)*(char**)(actualFileStart + *nextSubSection);
+								*(int*)(actualFileStart + *nextSubSection) = (int)STORE_SECTION(pcVar5 + (int)*(char**)(actualFileStart + *nextSubSection));
 							}
 							nextSubSection = nextSubSection + 1;
 						}
@@ -270,7 +311,7 @@ namespace ed3D
 							for (uVar4 = 0; uVar4 < (uVar3 & 0xffff); uVar4 = uVar4 + 1 & 0xffff) {
 								if (*nextSubSection != 0) {
 									/* Store a pointer to the next sub section */
-									*(char**)(pcVar5 + *nextSubSection) = pcVar5 + (int)*(char**)(pcVar5 + *nextSubSection);
+									*(int*)(pcVar5 + *nextSubSection) = (int)STORE_SECTION(pcVar5 + (int)*(char**)(pcVar5 + *nextSubSection));
 								}
 								nextSubSection = nextSubSection + 1;
 							}
@@ -299,7 +340,7 @@ namespace ed3D
 					piVar5 = GetNextFileSection((char*)piVar5, (int*)((int)piVar4 + iVar3))) {
 					/* .TAM */
 					if (*piVar5 == 0x2e54414d) {
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 						assert(false); // untested
 #endif
 						//GenerateRenderingCommands_0029ffd0((TamPacked*)(piVar5 + 4), mode);
@@ -323,7 +364,7 @@ namespace ed3D
 		texHeaderStart = textureInfoObj->textureHeaderStart;
 		iVar1 = *(int*)(texHeaderStart + 8);
 		if ((textureInfoObj != (TextureInfoSmall*)0x0) && (fileBufferStart = textureInfoObj->textureFileBufferStart, (*(uint*)(fileBufferStart + 4) & 1) == 0)) {
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 			assert(false); // untested
 #endif
 			for (pBuffer = (LayerHeaderPacked*)VerifyFileBufferRead(texHeaderStart + 0x10, texHeaderStart + iVar1); pBuffer != (LayerHeaderPacked*)0x0;
@@ -401,8 +442,11 @@ namespace ed3D
 #ifdef PLATFORM_PS2
 							if ((int*)piVar2[2] == nextSection) {
 #else
-							unsigned long long* B = (unsigned long long*)piVar2;
-							if ((int*)B[1] == nextSection) {
+							std::optional<void*> value = TextureSection::ResolveTextureSectionKey(piVar2[2]);
+
+							if (value.has_value() && *value == nextSection)
+							{
+								MY_LOG("Searching key %d = %p\n", piVar2[2], nextSection);
 #endif
 								return (char*)piVar2;
 							}
@@ -425,11 +469,7 @@ namespace ed3D
 
 		counter = 0;
 		pvVar1 = memset(outObj, 0, sizeof(MaterialInfo));
-#ifdef PLATFORM_PS2
-		outObj->matSubsectionStart = (char*)(*(int*)(materialBuffer + 8) + 0x10);
-#else
-		outObj->matSubsectionStart = (char*)(*(unsigned long long*)(materialBuffer + 8) + 0x10);
-#endif
+		outObj->matSubsectionStart = (char*)(LOAD_SECTION(*(int*)(materialBuffer + 8))) + 0x10;
 		while (true) {
 			if ((*(long*)(edDlist::g_DisplayListPtr_0044965c + counter) == 0) || (edDlist::g_DisplayListObjCount_004250e0 - 1U <= counter)) break;
 			counter = counter + 1;

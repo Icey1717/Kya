@@ -3,6 +3,17 @@
 
 #include "Types.h"
 
+enum EBankAction
+{
+	BANK_ACTION_3 = 3,
+	BANK_ACTION_5 = 5,
+	CLOSE = 4,
+	LOAD = 0,
+	OPEN = 6,
+	READ_STREAM = 2,
+	SEEK = 1
+};
+
 //struct edCFilerVTable {
 //	void* field_0x0;
 //	void* field_0x4;
@@ -37,7 +48,7 @@
 //};
 
 struct edCFiler_28_Internal {
-	int lastResult;
+	EBankAction nextAction;
 	int mode;
 	struct DebugBankData_234* pDataBank;
 	int seekOffset;
@@ -52,7 +63,7 @@ struct edCFiler_28_Internal {
 struct edCFiler_28 {
 	int freeIndexes;
 	int currentIndex;
-	int field_0x8;
+	EBankAction nextAction;
 	struct edCFiler_28_Internal internalBank;
 };
 
@@ -92,15 +103,21 @@ struct edCdlFolder {
 
 class edCFiler {
 public:
-	virtual bool InitTableOfContents(char* path, ETableOfContentsInitMode mode, InitTableOfContentsParams* param_4) { return true; }
+	edCFiler();
+
+	virtual bool InitTableOfContents(char* path, ETableOfContentsInitMode mode, InitTableOfContentsParams* param_4) { return false; }
 	virtual bool Init() { return true; };
-	virtual edCFiler_28* GetGlobalC_0x1c() { return (edCFiler_28*)0x0; }
+	virtual edCFiler_28* GetGlobalC_0x1c();
 	virtual void SetDriveLetter(char* szDriveLetter);
 	virtual int AppendDriveLetter(char* outString);
 	virtual bool FormatStreamPath(char* outFilePath, char* pathBuff) { return false; }
+	virtual bool LoadAndStoreInternal(char* filePath, char* bankPath) { return false; }
 	virtual bool Open(DebugBankData_234* outFile, char* unformatedFilePath) { return true; }
+	virtual bool Close(DebugBankData_234* pDebugBank) { return false; }
 	virtual uint ReadStream(DebugBankData_234* pDebugBank, char* destination, uint requiredSize) { return 0; }
+	virtual bool Seek(DebugBankData_234* pDebugBank) { return false; }
 	virtual bool ReadCallback(edCFiler_28_Internal* pEdFilerInternal) { return false; }
+	virtual uint Function74(uint inSize) { return inSize; }
 
 	//struct edCFilerVTable* pVTable;
 	struct EdFileBaseData baseData;
@@ -118,5 +135,7 @@ edCFiler* GetFirstEdFileHandler_00260e00(edCFiler** param_1);
 void Func_0025b0c0(edCFiler* pFiler);
 bool edCFilerInitTOC_00260f80(char* path, ETableOfContentsInitMode mode, void* param_3, int* param_4);
 bool FormatStreamPath(char* filePathOut, char* filePathIn);
+void Link_00260ec0(edCFiler** param_1, edCFiler* param_2);
+void* GetInternalData_0025b2e0(DebugBankData_234* pDebugBankData);
 
 #endif //_EDCFILER_H

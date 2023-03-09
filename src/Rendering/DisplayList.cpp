@@ -8,6 +8,7 @@
 #endif
 #include "../edDlist.h"
 #include <assert.h>
+#include "../LargeObject.h"
 
 DisplayList* g_GuiDisplayListPtr_00449724;
 
@@ -115,7 +116,7 @@ void Setup_002cad90
 				iVar1 = (param_3 - (int)(param_2 + 0x640 + -(int)param_2) >> 1) * uVar3;
 				pDVar2->field_0x14 = (RenderCommand*)(param_2 + uVar3 * 800);
 				pDVar2->field_0xc = param_2 + 0x640 + iVar1;
-				pDVar2->field_0x10 = pDVar2->field_0xc;
+				pDVar2->field_0x10 = (MeshDrawRenderCommand*)pDVar2->field_0xc;
 				pDVar2->field_0x28 = pDVar2->field_0xc + iVar1;
 				pDVar2->field_0x14 = (RenderCommand*)pDVar2->field_0xc;
 				uVar4 = (uint)pDVar2->field_0xc & 0xf;
@@ -271,16 +272,15 @@ void SetupDisplayLists(void)
 	if (g_GuiDisplayListPtr_00449724 != (DisplayList*)0x0) {
 		g_GuiDisplayListPtr_00449724->Init();
 	}
-	//FUN_002ca930((short*)g_LargeObject_006db450->pCameraObj28_0x4);
+	edDlist::RenderCommand_002ca930(g_LargeObject_006db450->pCameraObj28_0x4);
 	return;
 }
 
 DisplayListInternal* g_CurrentDisplayListBase_004495dc = NULL;
-char* PTR_DAT_004495fc = NULL;
+MeshDrawRenderCommand* PTR_MeshDrawRenderCommand_004495fc = NULL;
 
 DisplayListInternal*
 SetActiveDisplayList_002cab60(DisplayListInternal* pNewDisplayList)
-
 {
 	DisplayListInternal* pDVar1;
 	DisplayListInternal* pPreviousDList;
@@ -298,12 +298,14 @@ SetActiveDisplayList_002cab60(DisplayListInternal* pNewDisplayList)
 	}
 	g_CurrentDisplayListBase_004495dc = pNewDisplayList;
 	if (edDlist::g_DisplayListEnd_004495d8 != (DisplayListInternal*)0x0) {
-		edDlist::g_DisplayListEnd_004495d8->field_0x10 = PTR_DAT_004495fc;
+		edDlist::g_DisplayListEnd_004495d8->field_0x10 = PTR_MeshDrawRenderCommand_004495fc;
 	}
 	if ((pDVar1->flags_0x0 & 1) != 0) {
-		PTR_DAT_004495fc = pDVar1->field_0x10;
-		if (((uint)PTR_DAT_004495fc & 0xf) != 0) {
-			PTR_DAT_004495fc = PTR_DAT_004495fc + (0x10 - ((uint)PTR_DAT_004495fc & 0xf));
+		PTR_MeshDrawRenderCommand_004495fc = pDVar1->field_0x10;
+		if (((uint)PTR_MeshDrawRenderCommand_004495fc & 0xf) != 0) {
+			PTR_MeshDrawRenderCommand_004495fc =
+				(MeshDrawRenderCommand*)
+				((int)PTR_MeshDrawRenderCommand_004495fc + (0x10 - ((uint)PTR_MeshDrawRenderCommand_004495fc & 0xf)));
 		}
 	}
 	edDlist::g_DisplayListCommandCount_004495d4 = 0;
@@ -314,7 +316,7 @@ SetActiveDisplayList_002cab60(DisplayListInternal* pNewDisplayList)
 	//		(int)((int)pNewDisplayList[1].field_0x14 - (int)pNewDisplayList->field_0x14));
 	edDlist::g_pMaterialInfo_00449644 = (MaterialInfo*)0x0;
 	edDlist::g_CachedRenderCommandPtr_00449650 = (RenderCommand*)0x0;
-	//DAT_00449654 = 0;
+	edDlist::INT_00449654 = 0;
 	//DAT_0044969c = 0;
 	return pPreviousDList;
 }
@@ -331,6 +333,20 @@ bool GuiDisplayListFunc_002d6360(void)
 		SetActiveDisplayList_002cab60(pDVar2->pDisplayListInternal);
 	}
 	return bVar1;
+}
+
+void ActivateDisplayLists_002d6490(void)
+{
+	//if (g_GameDisplayListPtr_0044971c->bEnabled != 0) {
+	//	WillSetActiveDisplayList_002cac70(g_GameDisplayListPtr_0044971c->pDisplayListInternal);
+	//}
+	//if (g_FrontendDisplayListPtr_00449720->bEnabled != 0) {
+	//	WillSetActiveDisplayList_002cac70(g_FrontendDisplayListPtr_00449720->pDisplayListInternal);
+	//}
+	if ((g_GuiDisplayListPtr_00449724 != (DisplayList*)0x0) && (g_GuiDisplayListPtr_00449724->bEnabled != 0)) {
+		edDlist::WillSetActiveDisplayList_002cac70(g_GuiDisplayListPtr_00449724->pDisplayListInternal);
+	}
+	return;
 }
 
 DisplayList::DisplayList()

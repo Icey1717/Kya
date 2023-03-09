@@ -299,5 +299,6 @@ struct G2DObj_PauseManager {
 };
 
 extern PauseManager* g_PauseManager_00451688;
+extern struct FontPacked* g_MenuFont_00449754;
 
 #endif // _PAUSEMANAGER_H

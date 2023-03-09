@@ -5,7 +5,7 @@
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
 #endif
 
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 #define PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop))
 #endif
 
@@ -19,7 +19,7 @@ typedef unsigned char    uchar;
 typedef unsigned char    u_char;
 typedef unsigned int    uint;
 typedef unsigned int    uint3;
-typedef unsigned long    ulong;
+typedef unsigned long long    ulong;
 typedef unsigned char    undefined1;
 typedef unsigned short    undefined2;
 typedef unsigned int    undefined3;
@@ -29,6 +29,9 @@ typedef unsigned long    undefined8;
 typedef unsigned short    ushort;
 typedef unsigned short    word;
 typedef unsigned long long    ulonglong;
+typedef long    int7;
+typedef unsigned long    uint7;
+
 
 #ifdef PLATFORM_WIN
 typedef unsigned int    u_int;
@@ -83,13 +86,28 @@ void SetupEd10_00217720(void* pObj, void* pFreeFunc, EdFileGlobal_10* pHeader);
 EFileLoadMode GetFileLoadMode_00424d9c(void);
 InputSetupParams* GetInputSetupParams(void);
 
+#define ENABLE_MY_LOG
+
+#ifdef ENABLE_MY_LOG
 #if defined(PLATFORM_WIN)
 #define scePrintf printf
+#else
+#ifdef PLATFORM_PS2
+#include <eekernel.h>
+#endif
 #endif
 
 #define PrintString scePrintf
 
+#include <stdio.h>
+
+#include <stdlib.h>
+
+#define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
 #define MY_LOG scePrintf
+#else
+#define MY_LOG(...)
+#endif
 
 inline int edStringCpyL(char* outString, char* inString)
 {
@@ -138,7 +156,7 @@ Vector { /* Aligned */
 	float z;
 	float w;
 };
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
 
@@ -166,7 +184,7 @@ Matrix {
 	float dc;
 	float dd;
 };
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
 
@@ -297,5 +315,7 @@ inline void sceVu0MulMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FMATRIX m2
 
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*
+
+void* GetScratchPadPtr_00424e10(void);
 
 #endif //_TYPES_H

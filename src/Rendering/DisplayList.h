@@ -75,19 +75,13 @@ struct RenderCommand {
 
 struct DisplayListInternalSubObj_60 {
 	struct RenderCommandUint aCommandArray[4];
-	undefined field_0x40;
-	undefined field_0x41;
+	byte field_0x40;
+	byte field_0x41;
 	ushort type_0x42;
 	struct RenderCommand* pRenderInput;
 	uint field_0x48;
-	undefined field_0x4c;
-	undefined field_0x4d;
-	undefined field_0x4e;
-	undefined field_0x4f;
-	undefined field_0x50;
-	undefined field_0x51;
-	undefined field_0x52;
-	undefined field_0x53;
+	int field_0x4c;
+	uint field_0x50;
 	int field_0x54;
 	struct Matrix* field_0x58;
 	undefined field_0x5c;
@@ -105,7 +99,7 @@ struct DisplayListInternal {
 	undefined2 field_0x6;
 	undefined4 field_0x8;
 	char* field_0xc;
-	char* field_0x10;
+	struct MeshDrawRenderCommand* field_0x10;
 	struct RenderCommand* field_0x14;
 	struct RenderCommand* pRenderCommands;
 	struct DisplayListInternalSubObj_60* pDisplayListInternalSubObj;
@@ -136,5 +130,9 @@ public:
 
 void SetupDisplayLists(void);
 bool GuiDisplayListFunc_002d6360(void);
+void ActivateDisplayLists_002d6490(void);
+
+extern DisplayListInternal* g_CurrentDisplayListBase_004495dc;
+extern struct MeshDrawRenderCommand* PTR_MeshDrawRenderCommand_004495fc;
 
 #endif // _DISPLAYLIST_H

@@ -26,18 +26,22 @@ public:
 	struct edCdlFolder* pCurrentFolder;
 	int offset;
 	struct edCdlFolder* pNextFreeEntry;
-	int field_0x14;
+	int objCount_0x14;
 };
 
 class edCFiler_CDVD : public edCFiler
 {
 public:
+	edCFiler_CDVD();
+
 	virtual bool InitTableOfContents(char* path, ETableOfContentsInitMode mode, InitTableOfContentsParams* param_4);
 	virtual bool Init();
 	virtual edCFiler_28* GetGlobalC_0x1c();
 	virtual bool FormatStreamPath(char* filePathOut, char* pathBuff);
 	virtual bool Open(DebugBankData_234* outFile, char* unformatedFilePath);
+	virtual bool Close(DebugBankData_234* pDebugBank);
 	virtual uint ReadStream(DebugBankData_234* pDebugBank, char* destination, uint requiredSize);
+	virtual bool Seek(DebugBankData_234* pDebugBank);
 	virtual bool ReadCallback(edCFiler_28_Internal* pEdFilerInternal);
 
 private:
@@ -537,23 +541,8 @@ private:
 	undefined field_0x211;
 	undefined field_0x212;
 	undefined field_0x213;
-	astruct_8 field_0x214[16];
-	undefined field_0x494;
-	undefined field_0x495;
-	undefined field_0x496;
-	undefined field_0x497;
-	undefined field_0x498;
-	undefined field_0x499;
-	undefined field_0x49a;
-	undefined field_0x49b;
-	undefined field_0x49c;
-	undefined field_0x49d;
-	undefined field_0x49e;
-	undefined field_0x49f;
-	undefined field_0x4a0;
-	undefined field_0x4a1;
-	undefined field_0x4a2;
-	undefined field_0x4a3;
+	byte aContainerInUse[16];
+	CDFileContainer aFileContainers[16];
 	edCFiler_28 field_0x4a4[24];
 	undefined field_0x864;
 	undefined field_0x865;

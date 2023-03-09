@@ -3,5 +3,5 @@
 namespace Renderer
 {
 	void Setup();
-	void ShowSplash(char* splashFile, int width, int height);
+	void RenderImage(char* imageData, int width, int height);
 }

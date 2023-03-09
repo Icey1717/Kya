@@ -3,7 +3,10 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang")
 
-# set the project name
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_EXTENSIONS YES)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+
 project(Kya)
 
 if (PS2)
@@ -50,6 +53,10 @@ set(main_src
 	"${src_root}/CinematicManager.h"
 	"${src_root}/Rendering/DisplayList.cpp"
 	"${src_root}/Rendering/DisplayList.h"
+	"${src_root}/Rendering/DisplayListData.cpp"
+	"${src_root}/Rendering/DisplayListData.h"
+	"${src_root}/Rendering/CameraPanMasterHeader.cpp"
+	"${src_root}/Rendering/CameraPanMasterHeader.h"
 	"${src_root}/Rendering/Font.cpp"
 	"${src_root}/Rendering/Font.h"
 	"${src_root}/edC/edCBank.cpp"
@@ -64,6 +71,24 @@ set(main_src
 	"${src_root}/edC/edCFiler_CDVD.h"
 	"${src_root}/TimeController.cpp"
 	"${src_root}/TimeController.h"
+	"${src_root}/LocalizationManager.cpp"
+	"${src_root}/LocalizationManager.h" 
+	"${src_root}/TranslatedTextData.cpp" 
+	"${src_root}/TranslatedTextData.h" 
+	"${src_root}/edC/edCFiler_BNK.cpp" 
+	"${src_root}/edC/edCFiler_BNK.h"
+	"${src_root}/TextIconDictionary.cpp"
+	"${src_root}/TextIconDictionary.h"
+	"${src_root}/edVideo/VideoA.cpp"
+	"${src_root}/edVideo/VideoA.h"
+	"${src_root}/edVideo/VideoB.cpp"
+	"${src_root}/edVideo/VideoB.h"
+	"${src_root}/edVideo/VideoC.cpp"
+	"${src_root}/edVideo/VideoC.h"
+	"${src_root}/edVideo/VideoD.cpp"
+	"${src_root}/edVideo/VideoD.h"
+	"${src_root}/Camera.cpp"
+	"${src_root}/Camera.h"
 )
 
 set(ps2_src_root "ps2")

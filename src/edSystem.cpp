@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cstdarg>
+#include <assert.h>
 
 #if defined(PLATFORM_PS2)
 #include <libdma.h>
@@ -20,7 +21,7 @@ byte g_NetIsSetup_004893d0 = 0;
 int g_isNTSC;
 
 edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;
-edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[2] = { 0 };
+edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[4] = { 0 };
 
 namespace edSystem
 {
@@ -200,6 +201,7 @@ bool edSysHandlersCall(int typeA, edSysHandlersPoolEntry** pPool, int eventMax, 
 	edSysHandlersPoolEntry* pEntry;
 
 	if ((eventID < 0) || (eventMax <= eventID)) {
+		assert(false);
 		/* edSysHandlersCall: Invalid event index */
 		//SystemMessage(0, 0, s_edSysHandlersCall:_Invalid_event_00432e00);
 		//Break();

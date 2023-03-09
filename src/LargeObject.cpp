@@ -4,10 +4,16 @@
 #include "PauseManager.h"
 #include "CinematicManager.h"
 #include "Rendering/DisplayList.h"
+#include "LocalizationManager.h"
+#include "edVideo/VideoA.h"
+#include "edVideo/VideoB.h"
+#include "edVideo/VideoD.h"
+#include "Camera.h"
 
 LargeObject* g_LargeObject_006db450 = NULL;
 
 LevelScheduleManager* g_LevelScheduleManager_00451660 = NULL;
+LocalizationManager* g_LocalizationManager_00451678 = NULL;
 
 LargeObject::LargeObject()
 {
@@ -33,7 +39,7 @@ LargeObject::LargeObject()
 	//EffectsManager* pEVar9;
 	//EventManager* pEventManager;
 	//Manager_29b4* pMVar10;
-	//VidParams26** ppVVar11;
+	edVideo_Globals* peVar11;
 	VidModeData_30* pVVar12;
 	VidModeData_30* pVVar13;
 	CameraObj_28* pCVar14;
@@ -45,7 +51,7 @@ LargeObject::LargeObject()
 	int iVar19;
 	//StaticMeshMaster** ppSVar20;
 	//CameraObj_130* pCVar21;
-	//CameraObjParams local_8;
+	CameraObjParams local_8;
 
 	this->field_0x38 = 1;
 	//errorPrinter = (void**)Allocate(4);
@@ -87,10 +93,8 @@ LargeObject::LargeObject()
 	if (g_LevelScheduleManager_00451660 != (LevelScheduleManager*)0x0) {
 		g_LevelScheduleManager_00449728 = g_LevelScheduleManager_00451660;
 	}
-	//pManager = (LocalizationManager*)Allocate(0x1e4);
-	//if (pManager != (LocalizationManager*)0x0) {
-	//	pManager = (LocalizationManager*)LocalizationManager::Setup_0032fae0(pManager);
-	//}
+	g_LocalizationManager_00451678 = new LocalizationManager();
+
 	//g_Manager1e4_00451678 = pManager;
 	//pMVar1 = (Manager_170*)Allocate(0x170);
 	//if (pMVar1 != (Manager_170*)0x0) {
@@ -212,16 +216,16 @@ LargeObject::LargeObject()
 	//	pMVar10 = (Manager_29b4*)uVar17;
 	//}
 	//g_Manager29B4_004516bc = pMVar10;
-	//ppVVar11 = GetVideoParams_002ba3e0();
-	//local_8.field_0x2 = 0;
-	//local_8.field_0x0 = 0;
-	//local_8.screenWidth = (*ppVVar11)->screenWidth;
-	//local_8.screenHeight = (*ppVVar11)->screenHeight;
-	//pVVar12 = GetVidModeData30_001ba9c0();
-	//pVVar13 = GetVidModeData30_001ba9d0();
-	//pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 3);
-	//this->pCameraObj28_0x4 = pCVar14;
-	//SetCameraObjBytes_002bb960(this->pCameraObj28_0x4, 0, 0, 0);
+	peVar11 = GetVideoParams_002ba3e0();
+	local_8.field_0x2 = 0;
+	local_8.field_0x0 = 0;
+	local_8.screenWidth = peVar11->pActiveVidParams->params26.screenWidth;
+	local_8.screenHeight = peVar11->pActiveVidParams->params26.screenHeight;
+	pVVar12 = GetVidModeData30_001ba9c0();
+	pVVar13 = GetVidModeData30_001ba9d0();
+	pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 3);
+	this->pCameraObj28_0x4 = pCVar14;
+	SetCameraObjBytes_002bb960(this->pCameraObj28_0x4, 0, 0, 0);
 	//g_StaticMeshMasterA_00448808 = SetupCameraPanStaticMaster_002b4600(&CameraObj_130_0044a100, this->pCameraObj28_0x4, 1);
 	//StaticMeshMaster::SetFlag_002a5400(g_StaticMeshMasterA_00448808, 0x20);
 	//CameraPanMasterSetFlag_002a5410(g_StaticMeshMasterA_00448808, 1);
@@ -237,8 +241,8 @@ LargeObject::LargeObject()
 	//(pCVar15->field_0x100).field_0x8 = -0.01;
 	//(pCVar15->field_0x100).field_0xc = -150.0;
 	//(pCVar15->field_0x100).field_0x22 = 0x32;
-	//pVVar12 = GetVidModeData30_001ba9c0();
-	//pVVar13 = GetVidModeData30_001ba9d0();
+	pVVar12 = GetVidModeData30_001ba9c0();
+	pVVar13 = GetVidModeData30_001ba9d0();
 	//pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 0);
 	//this->pCameraObj28_0x8 = pCVar14;
 	//SetCameraObjBytes_002bb960(this->pCameraObj28_0x8, 0, 0, 0);
@@ -278,6 +282,7 @@ void WillSetupDisplayListAndRunConstructors(void)
 
 	g_LevelScheduleManager_00449728->OnBeginGame(); // #HACK
 	g_PauseManager_00451688->OnBeginGame(); // #HACK
+	g_LocalizationManager_00449744->OnBeginGame(); // #HACK
 
 	//iVar2 = 0;
 	//ppLVar1 = &g_LevelScheduleManager_00451660;
@@ -310,6 +315,6 @@ void LoadLevelUpdate_001b9c60(void)
 	//	iVar2 = iVar2 + 1;
 	//	ppLVar1 = ppLVar1 + 1;
 	//} while (iVar2 < 0x18);
-	//FUN_002d6490();
+	ActivateDisplayLists_002d6490();
 	return;
 }

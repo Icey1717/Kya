@@ -56,6 +56,11 @@ extern "C" {
 #include "edText.h"
 #include "ed3D.h"
 #include "edDlist.h"
+#include "TranslatedTextData.h"
+#include "edVideo/VideoA.h"
+#include "edVideo/VideoB.h"
+#include "edVideo/VideoD.h"
+#include "PauseManager.h"
 
 uint g_DebugCameraFlag_00448ea4 = 0;
 
@@ -63,6 +68,17 @@ template<class T>
 T* CreateNew()
 {
 	return new T;
+}
+
+const void* g_ScratchpadAddr_00424e10 = (void*)0x70000000;
+
+void* GetScratchPadPtr_00424e10(void)
+{
+#ifndef PLATFORM_PS2
+	static void* g_fakeScratch = malloc(0x10000);
+	return g_fakeScratch;
+#endif
+	return (void*)g_ScratchpadAddr_00424e10;
 }
 
 InputSetupParams g_InputSetupParams = { 0, 0, 0, 0x8C };
@@ -929,7 +945,7 @@ const char* g_szIni_0042b5b8 = "BWITCH.INI";
 int g_ScreenWidth;
 int g_VideoMode1;
 int g_ScreenHeight;
-int g_VideoMode2;
+int g_omode;
 
 char* s_Video_0042b490 = "Video";
 
@@ -968,7 +984,7 @@ void SetupVideo(IniFile* file)
 		g_VideoMode1 = 0;
 		g_ScreenHeight = screenHeight;
 		g_isNTSC = isNTSC;
-		g_VideoMode2 = videoMode;
+		g_omode = videoMode;
 		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetX", &g_SetOffsetX);
 		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetY", &g_SetOffsetY);
 	}
@@ -1031,7 +1047,7 @@ void SetupDoubleBuffer_00405ba0(void)
 	screenWidth = (short)g_ScreenWidth;
 	/* Start video mode in NTCS and change to PAL based on global */
 	videoMode = 2;
-	if (g_VideoMode2 != 2) {
+	if (g_omode != 2) {
 		videoMode = 3;
 	}
 #if defined(PLATFORM_PS2)
@@ -1215,7 +1231,7 @@ void SetupSplash(char* pSplashFile, uint count)
 		sceGsSwapDBuff(&g_DoubleBuffer, counter);
 	}
 #else
-	Renderer::ShowSplash(pSplashFile, g_ScreenWidth, g_ScreenHeight);
+	Renderer::RenderImage(pSplashFile, g_ScreenWidth, g_ScreenHeight);
 #endif
 	return;
 }
@@ -1264,6 +1280,216 @@ void Init_edFileA(void)
 	return;
 }
 
+bool LoadBNK(char* bnkTitle, char* bnkPath)
+{
+	bool uVar1;
+	edCFiler* peVar1;
+	char filePath[512];
+
+	/* Param_1: "<BNK>0:" Param_2: "CDEURO/menu/Messages.bnk" */
+	peVar1 = FindEdCFiler(filePath, bnkTitle, 1);
+	if (peVar1 == (edCFiler*)0x0) {
+		uVar1 = false;
+	}
+	else {
+		uVar1 = peVar1->LoadAndStoreInternal(filePath, bnkPath);
+	}
+	return uVar1;
+}
+
+#define WIN_ENGLISH_LANGUAGE 0;
+
+int GetSystemLanguage(void)
+{
+	int systemLanguageID;
+#ifdef PLATFORM_PS2
+	systemLanguageID = sceScfGetLanguage();
+	switch (systemLanguageID) {
+	case SCE_JAPANESE_LANGUAGE:
+		systemLanguageID = SCE_JAPANESE_LANGUAGE;
+		break;
+	case SCE_ENGLISH_LANGUAGE:
+		systemLanguageID = SCE_ENGLISH_LANGUAGE;
+		break;
+	case SCE_FRENCH_LANGUAGE:
+		systemLanguageID = SCE_FRENCH_LANGUAGE;
+		break;
+	case SCE_SPANISH_LANGUAGE:
+		systemLanguageID = SCE_SPANISH_LANGUAGE;
+		break;
+	case SCE_GERMAN_LANGUAGE:
+		systemLanguageID = SCE_GERMAN_LANGUAGE;
+		break;
+	case SCE_ITALIAN_LANGUAGE:
+		systemLanguageID = SCE_ITALIAN_LANGUAGE;
+		break;
+	case SCE_DUTCH_LANGUAGE:
+		systemLanguageID = SCE_DUTCH_LANGUAGE;
+		break;
+	case SCE_PORTUGUESE_LANGUAGE:
+		systemLanguageID = SCE_PORTUGUESE_LANGUAGE;
+		break;
+	default:
+		systemLanguageID = 8;
+	}
+#else
+	systemLanguageID = WIN_ENGLISH_LANGUAGE;
+#endif
+	return systemLanguageID;
+}
+
+void SetLanguageID_00336b40(void)
+{
+	int systemLanguageID;
+
+	if (g_omode == 3) {
+		systemLanguageID = GetSystemLanguage();
+		switch (systemLanguageID) {
+		default:
+			g_LanguageID_0044974c = GB;
+			break;
+		case 2:
+			g_LanguageID_0044974c = FR;
+			break;
+		case 3:
+			g_LanguageID_0044974c = SP;
+			break;
+		case 4:
+			g_LanguageID_0044974c = GE;
+			break;
+		case 5:
+			g_LanguageID_0044974c = IT;
+		}
+	}
+	else {
+		g_LanguageID_0044974c = GB;
+	}
+	return;
+}
+
+edCBank g_MenuDataedCBank_00491980 = { 0 };
+edCBankBuffer* g_MenuDataBank_0049758 = NULL;
+char* sz_MenuDataBankName_00435610 = "CDEURO/menu/MenuData.bnk";
+char* sz_pMenuDataBankName_00448b64 = sz_MenuDataBankName_00435610;
+
+char* sz_MediumFont_004355f8 = "medium.fon";
+char* sz_MediumFontFileName_00448b60 = sz_MediumFont_004355f8;
+
+int GetIndexForFileName(edCBankBuffer* headerObj, char* inFileName)
+{
+	int iVar1;
+
+	iVar1 = 0;
+	if ((edCBankFileHeader*)headerObj->fileBuffer != (edCBankFileHeader*)0x0) {
+		iVar1 = GetIndexFromFileHeader((edCBankFileHeader*)headerObj->fileBuffer, inFileName);
+	}
+	return iVar1;
+}
+
+char* GetFilePointerFromFileIndex(edCBankBuffer* bankObj, int fileIndex)
+{
+	return edCBankFileHeader_GetFileBufferStartFromFileIndex(bankObj->fileBuffer, fileIndex);
+}
+
+
+void LoadAndVerifyMenuBnk(void)
+{
+	undefined* puVar1;
+	int fileIndex;
+	char* messagesFilePointer;
+	//G2DObj* pIconTexture;
+	char** ppcVar2;
+	int iVar3;
+	BankFilePathContainer bankHeader;
+
+	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
+	   and a map. */
+	memset(&bankHeader, 0, sizeof(BankFilePathContainer));
+	edCBank_Setup(&g_MenuDataedCBank_00491980, 0x32000, 1, &bankHeader);
+	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
+	bankHeader.filePath = sz_pMenuDataBankName_00448b64;
+	g_MenuDataBank_0049758 = edCBank_GetBankBuffer(&g_MenuDataedCBank_00491980);
+	edCBankBuffer_file_access(g_MenuDataBank_0049758, &bankHeader);
+	/* Bank will go on the heap here */
+	iVar3 = 0;
+	//ppcVar2 = g_StaticIconListArray_004258e0;
+	//pIconTexture = g_LoadedTextIcons;
+	//do {
+	//	messagesFilePointer = *ppcVar2;
+	//	fileIndex = GetIndexForFileName(g_MenuDataBank_0049758, messagesFilePointer);
+	//	if (fileIndex == -1) {
+	//		PrintString(s__File:_ % s_00435750, messagesFilePointer);
+	//		messagesFilePointer = (char*)0x0;
+	//	}
+	//	else {
+	//		messagesFilePointer = GetFilePointerFromFileIndex(g_MenuDataBank_0049758, fileIndex);
+	//	}
+	//	LoadTextIcon(pIconTexture, messagesFilePointer);
+	//	puVar1 = sz_MediumFontFileName_00448b60;
+	//	iVar3 = iVar3 + 1;
+	//	ppcVar2 = ppcVar2 + 1;
+	//	pIconTexture = pIconTexture + 1;
+	//} while (iVar3 < 0x17);
+	/* Load Medium.Fon */
+	iVar3 = GetIndexForFileName(g_MenuDataBank_0049758, sz_MediumFontFileName_00448b60);
+	if (iVar3 == -1) {
+		PrintString("\r\nFile: %s\r\n", puVar1);
+		g_MenuFont_00449754 = (FontPacked*)0x0;
+	}
+	else {
+		g_MenuFont_00449754 = (FontPacked*)GetFilePointerFromFileIndex(g_MenuDataBank_0049758, iVar3);
+	}
+	FontSetup(g_MenuFont_00449754);
+	if (g_MenuFont_00449754->pSubData != (FontPacked_2C*)0x0) {
+		//g_MenuFont_00449754->pSubData->pOverrideData = USHORT_ARRAY_0048fc60;
+	}
+	//USHORT_ARRAY_0048fc60[156] = 0x153;
+	//USHORT_ARRAY_0048fc60[241] = 0xf1;
+	//USHORT_ARRAY_0048fc60[231] = 0xe7;
+	//USHORT_ARRAY_0048fc60[199] = 199;
+	//USHORT_ARRAY_0048fc60[220] = 0xdc;
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_MAGIC_00435630, &g_LoadedTextIcons[0].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CATCH_00435638, &g_LoadedTextIcons[1].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_ACTION_00435640, &g_LoadedTextIcons[2].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_JUMP_00435648, &g_LoadedTextIcons[3].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CROUCH_00435650, &g_LoadedTextIcons[6].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_SNEAK_00435658, &g_LoadedTextIcons[6].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_VIEW_00435668, &g_LoadedTextIcons[5].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_MAP_00435680, &g_LoadedTextIcons[4].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_INVENT_00435660, &g_LoadedTextIcons[7].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CAMERA_00435670, &g_LoadedTextIcons[10].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CONTROL_00435678, &g_LoadedTextIcons[10].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_MONEY_00435688, &g_LoadedTextIcons[0x15].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_BACK_00435690, &g_LoadedTextIcons[0].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_VALID_00435698, &g_LoadedTextIcons[3].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_VALDSAFE_004356a0, &g_LoadedTextIcons[1].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_UDLR_004356b0, &g_LoadedTextIcons[0xb].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_LR_004356b8, &g_LoadedTextIcons[0xc].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_STIK_ROT_00435760, &g_LoadedTextIcons[9].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_UP_004356c0, &g_LoadedTextIcons[0xd].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_RIGHT_004356c8, &g_LoadedTextIcons[0xe].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_LEFT_004356d0, &g_LoadedTextIcons[0xf].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_DOWN_004356d8, &g_LoadedTextIcons[0x10].pMaterialInfo);
+	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_HELP_004356e0, &g_LoadedTextIcons[8].pMaterialInfo);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_RED_004356e8, FUN_00359e90);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_GREEN_004356f0, FUN_00359e70);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_BLUE_004356f8, FUN_00359e60);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_YELLOW_00435700, FUN_00359e40);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_BLACK_00435708, FUN_00359e30);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_WHITE_00435710, FUN_00359e10);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_BLINK_00435718, FUN_00359c90);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_NOBLINK_00435720, FUN_00359c50);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA0_00435728, FUN_00359c30);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA25_00435730, FUN_00359c00);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA50_00435738, FUN_00359bd0);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA75_00435740, FUN_00359ba0);
+	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_RESET_00435748, 0);
+	return;
+}
+
+char* sz_BNK_Messages_Drive = "<BNK>0:";
+char* sz_BNK_Messages_Path = "CDEURO/menu/Messages.bnk";
+
 void SetupGame(int argc,char **argv)
 {
 	InputSetupParams *pIVar1;
@@ -1307,7 +1533,7 @@ void SetupGame(int argc,char **argv)
 #endif
 
 	/* If using NTSC then load SPLASH_N, otherwise load SPLASH_P */
-	if (g_VideoMode2 == 2) {
+	if (g_omode == 2) {
 		pFileBuffer = LoadFileFromDisk("CDEURO\\FRONTEND\\SPLASH_N.RAW", (uint*)0x0);
 	}
 	else {
@@ -1384,16 +1610,16 @@ void SetupGame(int argc,char **argv)
 	//PrintString(s_--------------------------------_0042b780);
 	//Game_Init();
 	///* <BNK>0: CDEURO/menu/Messages.bnk */
-	//LoadBNK(s_ < BNK>0:_0042b528, s_CDEURO / menu / Messages.bnk_0042b7c0);
-	//FUN_00336b40();
-	//LoadAndVerifyMenuBnk();
-	///* Init_edVideo */
-	//PrintString(s_----_Init_edVideo_0042b7e0);
-	//puVar1 = GetAddressuGpffff8510();
-	//puVar1[1] = 1;
-	//puVar1[4] = 0;
-	//FUN_002b9e70();
-	//SetupVidParams_001baa30((short)g_VideoMode2, (short)g_ScreenWidth, (short)g_ScreenHeight, (short)g_VideoMode1, 0);
+	LoadBNK(sz_BNK_Messages_Drive, sz_BNK_Messages_Path);
+	SetLanguageID_00336b40();
+	LoadAndVerifyMenuBnk();
+	/* Init_edVideo */
+	PrintString("---- Init edVideo \n");
+	VidParams8* pVVar4 = GetVidParams8_002b9e60();
+	pVVar4->field_0x1 = 1;
+	pVVar4->field_0x4 = 0;
+	Init_edVideo_002b9e70();
+	SetupVidParams_001baa30((short)g_omode, (short)g_ScreenWidth, (short)g_ScreenHeight, (short)g_VideoMode1, 0);
 	//CheckControllers(&g_IniFile_00450750);
 	SetupGameCreateObject();
 	WillSetupDisplayListAndRunConstructors();
@@ -1442,7 +1668,7 @@ void LoadVideoFromFilePath(VideoFile* display, char* inFileName)
 	int iVar7;
 	char fileName[512];
 
-	display->videoIsPAL = g_VideoMode2 == 3;
+	display->videoIsPAL = g_omode == 3;
 	display->fbp0 = 0;
 	display->fileReadSuccess = 0;
 	//UpdateSoundManager();
@@ -1591,7 +1817,7 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 			char* image = continuePss();
 
 			if (image) {
-				Renderer::ShowSplash(image + 0x10, 0x280, 0x200);
+				Renderer::RenderImage(image + 0x10, 0x280, 0x200);
 			}
 #endif
 		}
@@ -1665,7 +1891,7 @@ void LoadLevel(void)
 		LoadLevelUpdate_001b9c60();
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
 		/* Update rendering */
-		//RefreshScreenRender();
+		RefreshScreenRender();
 	} while (bVar2 != false);
 	//EndLoadStageOne();
 	return;
@@ -1700,7 +1926,7 @@ int main(int argc,char **argv)
 	SetupGame(argc, argv);
 	if (g_LevelScheduleManager_00449728->nextLevelID == 0xe) {
 		videoModeSpecifier = 'n';
-		if (g_VideoMode2 == 3) {
+		if (g_omode == 3) {
 			videoModeSpecifier = 'p';
 		}
 
@@ -1718,8 +1944,8 @@ int main(int argc,char **argv)
 		sprintf(edenFileName, sz_EdenFileFormat_0042b848, cutsceneID + 1, videoModeSpecifier);
 		/* atari_%c */
 		sprintf(atariFileName, sz_AtariFileFormat_0042b858, videoModeSpecifier);
-		ShowCompanySplashScreen(atariFileName, 0, 0);
-		ShowCompanySplashScreen(edenFileName, 0, 0);
+		//ShowCompanySplashScreen(atariFileName, 0, 0);
+		//ShowCompanySplashScreen(edenFileName, 0, 0);
 	}
 	do {
 		LoadAndPlayCutscene();

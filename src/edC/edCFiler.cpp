@@ -402,6 +402,23 @@ void FormatFilePath_002618e0(char* param_1, char* param_2, char* param_3, char* 
 	return;
 }
 
+edCFiler::edCFiler()
+{	
+	baseData.pDriveName_0x0 = (char*)0x0;
+	baseData.pPrevEd = (edCFiler*)0x0;
+	baseData.pNextEd = (edCFiler*)0x0;
+	baseData.field_0x4 = 0;
+	filePath[0] = '\0';
+	return;
+}
+
+edCFiler_28 edCFiler_28_ARRAY_004697a0[24] = { 0 };
+
+edCFiler_28* edCFiler::GetGlobalC_0x1c()
+{
+	return edCFiler_28_ARRAY_004697a0;
+}
+
 void edCFiler::SetDriveLetter(char* szDriveLetter)
 {
 	FormatFilePath_002618e0((char*)0x0, filePath, (char*)0x0, (char*)0x0, szDriveLetter);
@@ -416,8 +433,9 @@ int edCFiler::AppendDriveLetter(char* outString)
 	return iVar1;
 }
 
-void ReadsBankFile(edCFiler_28* param_1)
+void ReadsBankFile(edCFiler_28* pFiler_28)
 {
+	EBankAction EVar1;
 	int puVar1;
 	edCFiler* pFiler;
 	bool bVar2;
@@ -431,10 +449,10 @@ void ReadsBankFile(edCFiler_28* param_1)
 	DebugBankData_234* pDVar8;
 	edCFiler_28_Internal* peVar9;
 
-	if (param_1->freeIndexes != 0) {
-		puVar1 = param_1->field_0x8;
-		pFilerSubObj = param_1 + param_1->currentIndex;
-		if (puVar1 == 0) {
+	if (pFiler_28->freeIndexes != 0) {
+		EVar1 = pFiler_28->nextAction;
+		pFilerSubObj = pFiler_28 + pFiler_28->currentIndex;
+		if (EVar1 == LOAD) {
 			iVar7 = (pFilerSubObj->internalBank).mode;
 			pDVar8 = (DebugBankData_234*)0x0;
 			pDVar5 = (edCFiler*)0x0;
@@ -451,73 +469,69 @@ void ReadsBankFile(edCFiler_28* param_1)
 			if (lVar4 != 0) {
 				if ((pFilerSubObj->internalBank).mode == 0) {
 					if (pDVar8->bInUse == 0) {
-						iVar7 = param_1->freeIndexes;
+						iVar7 = pFiler_28->freeIndexes;
 						while (iVar7 != 0) {
-							pDVar8 = param_1[param_1->currentIndex].internalBank.pDataBank;
-							pDVar8->field_0x228 = pDVar8->field_0x228 + -1;
+							pDVar8 = pFiler_28[pFiler_28->currentIndex].internalBank.pDataBank;
+							pDVar8->count_0x228 = pDVar8->count_0x228 + -1;
 							assert(false);
 							//CallFilerFunction_0025b7c0(pDVar8);
-							param_1->freeIndexes = param_1->freeIndexes + -1;
-							param_1->currentIndex = param_1->currentIndex + 1;
-							if (param_1->currentIndex == 0x18) {
-								param_1->currentIndex = 0;
+							pFiler_28->freeIndexes = pFiler_28->freeIndexes + -1;
+							pFiler_28->currentIndex = pFiler_28->currentIndex + 1;
+							if (pFiler_28->currentIndex == 0x18) {
+								pFiler_28->currentIndex = 0;
 							}
-							iVar7 = param_1->freeIndexes;
+							iVar7 = pFiler_28->freeIndexes;
 						}
 						return;
 					}
-					pDVar8->field_0x228 = pDVar8->field_0x228 + -1;
+					pDVar8->count_0x228 = pDVar8->count_0x228 + -1;
 				}
 				if (true) {
-					switch ((pFilerSubObj->internalBank).lastResult) {
-					case 1:
-						assert(false);
-						//edSysHandlersCall(DAT_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, DAT_00469bc4, 6, 0);
+					switch ((pFilerSubObj->internalBank).nextAction) {
+					case SEEK:
+						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 6, (void*)0x0);
 						break;
-					case 2:
+					case READ_STREAM:
 						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 4,
 							(pFilerSubObj->internalBank).pReadBuffer);
 						break;
-					case 3:
-						assert(false);
-						//edSysHandlersCall(DAT_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, DAT_00469bc4, 5, *(undefined4*)&(pFilerSubObj->internalBank).field_0x18);
+					case BANK_ACTION_3:
+						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 5, *(void**)&(pFilerSubObj->internalBank).field_0x18);
 						break;
-					case 4:
-						assert(false);
-						//edSysHandlersCall(DAT_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, DAT_00469bc4, 3, 0);
-						//if ((pDVar8->openFlags & 0x20) == 0) {
-						//	iVar7 = 0;
-						//	pbVar6 = g_DebugBankLoadFlag_00469be0;
-						//	do {
-						//		if ((DebugBankData_234*)(pbVar6 + 0x10) == pDVar8) {
-						//			g_DebugBankLoadFlag_00469be0[iVar7] = 0;
-						//			memset(g_DebugBankDataArray_00469bf0 + iVar7, 0, 0x234);
-						//			break;
-						//		}
-						//		iVar7 = iVar7 + 1;
-						//		pbVar6 = pbVar6 + 0x234;
-						//	} while (iVar7 < 0x10);
-						//}
+					case CLOSE:
+						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 3, (void*)0x0);
+						if ((pDVar8->openFlags & 0x20) == 0) {
+							iVar7 = 0;
+							do {
+								if (&g_DebugBankDataArray_00469bf0[iVar7] == pDVar8) {
+									g_DebugBankLoadFlag_00469be0[iVar7] = 0;
+									memset(&g_DebugBankDataArray_00469bf0[iVar7], 0, sizeof(DebugBankData_234));
+									break;
+								}
+								iVar7 = iVar7 + 1;
+							} while (iVar7 < 0x10);
+						}
 					}
 				}
-				param_1->freeIndexes = param_1->freeIndexes + -1;
-				if (param_1->freeIndexes != 0) {
-					param_1->currentIndex = param_1->currentIndex + 1;
-					if (param_1->currentIndex == 0x18) {
-						param_1->currentIndex = 0;
-						peVar9 = &param_1->internalBank;
+				pFiler_28->freeIndexes = pFiler_28->freeIndexes + -1;
+				if (pFiler_28->freeIndexes != 0) {
+					pFiler_28->currentIndex = pFiler_28->currentIndex + 1;
+					if (pFiler_28->currentIndex == 0x18) {
+						pFiler_28->currentIndex = 0;
+						peVar9 = &pFiler_28->internalBank;
 					}
 					else {
 						peVar9 = &pFilerSubObj[1].internalBank;
 					}
-					param_1->field_0x8 = peVar9->lastResult;
+					pFiler_28->nextAction = peVar9->nextAction;
 				}
 			}
 		}
 		else {
 			iVar7 = (pFilerSubObj->internalBank).mode;
 			if (iVar7 == 1) {
-				if (puVar1 == 5) {
+				if (EVar1 == BANK_ACTION_5) {
+					assert(false);
 					uVar3 = 0; //(*(code*)((pFilerSubObj->internalBank).pDataBank)->pOwningFiler[2].baseData.field_0x4)();
 					in_a3 = uVar3 & 0xff;
 				}
@@ -529,14 +543,15 @@ void ReadsBankFile(edCFiler_28* param_1)
 				if (iVar7 == 0) {
 					pDVar8 = (pFilerSubObj->internalBank).pDataBank;
 					pFiler = pDVar8->pOwningFiler;
-					pDVar8->field_0x230 = (int)puVar1;
-					iVar7 = param_1->field_0x8;
-					if (iVar7 == 4) {
-						uVar3 = 0; // (*(code*)pFiler->pVTable->field_0x3c)(pFiler, pDVar8);
-						in_a3 = uVar3 & 0xff;
+					pDVar8->action = EVar1;
+					EVar1 = pFiler_28->nextAction;
+					if (EVar1 == CLOSE) {
+						bVar2 = pFiler->Close(pDVar8);
+						in_a3 = bVar2 & 0xff;
 					}
 					else {
-						if (iVar7 == 3) {
+						if (EVar1 == BANK_ACTION_3) {
+							assert(false);
 							uVar3 = 0; //(*(code*)pFiler->pVTable->field_0x44)(pFiler, pDVar8, *(undefined4*)&(pFilerSubObj->internalBank).field_0x18, pFilerSubObj[1].freeIndexes);
 							in_a3 = uVar3 & 0xff;
 							if (in_a3 != 0) {
@@ -544,7 +559,7 @@ void ReadsBankFile(edCFiler_28* param_1)
 							}
 						}
 						else {
-							if (iVar7 == 2) {
+							if (EVar1 == READ_STREAM) {
 								uVar3 = pFiler->ReadStream(pDVar8, (pFilerSubObj->internalBank).pReadBuffer, (pFilerSubObj->internalBank).seekOffset2);
 								in_a3 = uVar3 & 0xff;
 								if (in_a3 != 0) {
@@ -552,13 +567,14 @@ void ReadsBankFile(edCFiler_28* param_1)
 								}
 							}
 							else {
-								if (iVar7 == 1) {
+								if (EVar1 == SEEK) {
 									pDVar8->seekOffset = (pFilerSubObj->internalBank).seekOffset;
-									bVar2 = 0; //(*pFiler->pVTable->seek)(pFiler, pDVar8);
+									bVar2 = pFiler->Seek(pDVar8);
 									in_a3 = (long)bVar2 & 0xff;
 								}
 								else {
-									if (iVar7 == 6) {
+									if (EVar1 == OPEN) {
+										assert(false);
 										bVar2 = 0; //(*pFiler->pVTable->Open)(pFiler, pDVar8, (char*)pFilerSubObj[1].field_0x8);
 										in_a3 = (long)bVar2 & 0xff;
 									}
@@ -575,22 +591,22 @@ void ReadsBankFile(edCFiler_28* param_1)
 				}
 			}
 			if (in_a3 == 0) {
-				iVar7 = param_1->freeIndexes;
+				iVar7 = pFiler_28->freeIndexes;
 				while (iVar7 != 0) {
-					pDVar8 = param_1[param_1->currentIndex].internalBank.pDataBank;
-					pDVar8->field_0x228 = pDVar8->field_0x228 + -1;
+					pDVar8 = pFiler_28[pFiler_28->currentIndex].internalBank.pDataBank;
+					pDVar8->count_0x228 = pDVar8->count_0x228 + -1;
 					assert(false);
 					//CallFilerFunction_0025b7c0(pDVar8);
-					param_1->freeIndexes = param_1->freeIndexes + -1;
-					param_1->currentIndex = param_1->currentIndex + 1;
-					if (param_1->currentIndex == 0x18) {
-						param_1->currentIndex = 0;
+					pFiler_28->freeIndexes = pFiler_28->freeIndexes + -1;
+					pFiler_28->currentIndex = pFiler_28->currentIndex + 1;
+					if (pFiler_28->currentIndex == 0x18) {
+						pFiler_28->currentIndex = 0;
 					}
-					iVar7 = param_1->freeIndexes;
+					iVar7 = pFiler_28->freeIndexes;
 				}
 			}
 			else {
-				param_1->field_0x8 = 0;
+				pFiler_28->nextAction = LOAD;
 			}
 		}
 	}
@@ -677,4 +693,16 @@ bool FormatStreamPath(char* filePathOut, char* filePathIn)
 		}
 	}
 	return uVar1;
+}
+
+void* GetInternalData_0025b2e0(DebugBankData_234* pDebugBankData)
+{
+	void* pvVar1;
+
+	pvVar1 = (void*)0x0;
+	if ((pDebugBankData != (DebugBankData_234*)0x0) &&
+		(pvVar1 = pDebugBankData->pFileData, pvVar1 == (void*)0x0)) {
+		pvVar1 = (void*)0x0;
+	}
+	return pvVar1;
 }

@@ -128,17 +128,6 @@ DrawTextParams::DrawTextParams()
 	return;
 }
 
-void* g_ScratchpadAddr_00424e10 = (void*)0x70000000;
-
-void* GetScratchPadPtr_00424e10(void)
-{
-#ifndef PLATFORM_PS2
-	static void* g_fakeScratch = malloc(0x10000);
-	return g_fakeScratch;
-#endif
-	return (void*)g_ScratchpadAddr_00424e10;
-}
-
 char* s_0123456789abcdef_00432380 = "0123456789abcdef";
 char* s_0123456789ABCDEF_004323a0 = "0123456789ABCDEF";
 
@@ -1314,33 +1303,35 @@ void SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderCommands)
 	int iVar1;
 	uint uVar2;
 	uint uVar3;
-	CharacterData* pCVar4;
+	CharacterData* pCharacterData;
 
 	if (pTextRenderCommands->characterCount != 0) {
 		edDlist::LoadMaterialResource_002cb850(pTextRenderCommands->pMaterialInfoB);
-	//	RenderCommand_002ca6a0(1, 7, 0, 0, 0, 0, 1, 1);
-	//	FUN_002ca800();
-	//	FUN_002ca8c0(1);
-	//	FUN_002ca170(0.0, 0.0, 0.0, 8, pTextRenderCommands->characterCount << 2);
-	//	pCVar4 = pTextRenderCommands->pCharacterData;
-	//	iVar1 = pTextRenderCommands->characterCount;
-	//	while (iVar1 != 0) {
-	//		uVar2 = pCVar4->colour_0x0;
-	//		uVar3 = (uVar2 >> 0x18) + 1 >> 1;
-	//		FUN_002ce1a0((byte)uVar3, (long)(int)((uVar2 >> 0x10 & 0xff) + 1 >> 1), (long)(int)((uVar2 >> 8 & 0xff) + 1 >> 1), (long)(int)((uVar2 & 0xff) + 1 >> 1));
-	//		CallpcGpffff9200(pCVar4->field_0x14, pCVar4->field_0x18);
-	//		CallpcGpffff91f8(pCVar4->field_0x4, pCVar4->field_0x8, 0.0, uVar3);
-	//		CallpcGpffff9200(pCVar4->field_0x14, pCVar4->field_0x20);
-	//		CallpcGpffff91f8(pCVar4->field_0x4, pCVar4->field_0x10, 0.0, uVar3);
-	//		CallpcGpffff9200(pCVar4->field_0x1c, pCVar4->field_0x18);
-	//		CallpcGpffff91f8(pCVar4->field_0xc, pCVar4->field_0x8, 0.0, uVar3);
-	//		CallpcGpffff9200(pCVar4->field_0x1c, pCVar4->field_0x20);
-	//		CallpcGpffff91f8(pCVar4->field_0xc, pCVar4->field_0x10, 0.0, uVar3);
-	//		pTextRenderCommands->characterCount = pTextRenderCommands->characterCount + -1;
-	//		pCVar4 = pCVar4 + 1;
-	//		iVar1 = pTextRenderCommands->characterCount;
-	//	}
-	//	EndDraw_002cfe40();
+		edDlist::RenderCommand_002ca6a0(1, 7, 0, 0, 0, 0, 1, 1);
+		edDlist::RenderCommand_002ca800();
+		edDlist::RenderCommand_002ca8c0(1);
+		edDlist::MeshDrawCommands_002ca170(0.0, 0.0, 0.0, 8, pTextRenderCommands->characterCount << 2);
+		pCharacterData = pTextRenderCommands->pCharacterData;
+		iVar1 = pTextRenderCommands->characterCount;
+		while (iVar1 != 0) {
+			uVar2 = pCharacterData->colour_0x0;
+			uVar3 = (uVar2 >> 0x18) + 1 >> 1;
+			edDlist::SetDropShadowColour_002ce1a0
+			((byte)uVar3, (byte)((uVar2 >> 0x10 & 0xff) + 1 >> 1), (byte)((uVar2 >> 8 & 0xff) + 1 >> 1),
+				(byte)((uVar2 & 0xff) + 1 >> 1));
+			edDlist::CallpcGpffff9200(pCharacterData->field_0x14, pCharacterData->field_0x18);
+			edDlist::CallpcGpffff91f8(pCharacterData->field_0x4, pCharacterData->field_0x8, 0.0, uVar3);
+			edDlist::CallpcGpffff9200(pCharacterData->field_0x14, pCharacterData->field_0x20);
+			edDlist::CallpcGpffff91f8(pCharacterData->field_0x4, pCharacterData->field_0x10, 0.0, uVar3);
+			edDlist::CallpcGpffff9200(pCharacterData->field_0x1c, pCharacterData->field_0x18);
+			edDlist::CallpcGpffff91f8(pCharacterData->field_0xc, pCharacterData->field_0x8, 0.0, uVar3);
+			edDlist::CallpcGpffff9200(pCharacterData->field_0x1c, pCharacterData->field_0x20);
+			edDlist::CallpcGpffff91f8(pCharacterData->field_0xc, pCharacterData->field_0x10, 0.0, uVar3);
+			pTextRenderCommands->characterCount = pTextRenderCommands->characterCount + -1;
+			pCharacterData = pCharacterData + 1;
+			iVar1 = pTextRenderCommands->characterCount;
+		}
+		edDlist::EndDraw_002cfe40();
 	}
 	return;
 }

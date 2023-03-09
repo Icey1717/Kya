@@ -184,7 +184,7 @@ Segment_1C_Packed {
 	float field_0x14;
 	float field_0x18;
 };
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
 

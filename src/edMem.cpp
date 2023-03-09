@@ -5,6 +5,8 @@
 #include <string.h>
 #include <malloc.h>
 
+#include <assert.h>
+
 short g_MaxHeadersUsed_00424d68 = 0;
 short g_TotalHeaders_00424d64 = 0;
 short g_FreeHeaders_00424d66 = 0;
@@ -123,12 +125,15 @@ void StoreSomeFunctionsInRAM(void)
 	return;
 }
 
-edHeap* GetHeap(short heapID)
+edHeap* GetHeap(void* heapID)
 {
-	if (g_TotalHeaders_00424d64 <= heapID) {
-		heapID = *(short*)(heapID + -0xc);
+	short sVar1;
+
+	sVar1 = (short)heapID;
+	if ((long)g_TotalHeaders_00424d64 <= (long)(int)heapID) {
+		sVar1 = *(short*)((int)heapID + -0xc);
 	}
-	return g_HeapArray_00424d60 + (int)(((long)heapID << 0x30) >> 0x30);
+	return g_HeapArray_00424d60 + (int)(((long)sVar1 << 0x30) >> 0x30);
 }
 
 void* HeapAlloc(short heap, size_t size, int align, int offset)
@@ -149,7 +154,7 @@ void* HeapAlloc(short heap, size_t size, int align, int offset)
 			//PrintString(g_T'es_pas_fou_d');
 			//CallSystemFunction(&edMemObj_004890c0, 4, (char*)0x0);
 		}
-		peVar2 = GetHeap(heap);
+		peVar2 = GetHeap((void*)heap);
 		pvVar3 = (*g_HeapFunctionTableArray_00489030[(char)peVar2->funcTableID].alloc)(peVar2, (int)size, align, offset);
 		if (pvVar3 == (void*)0x0) {
 			//iVar4 = GetCurrentFreeMemory(heap);
@@ -158,6 +163,23 @@ void* HeapAlloc(short heap, size_t size, int align, int offset)
 		}
 	}
 	return pvVar3;
+}
+
+void* WillAllocate_0028ddd0(void* param_1)
+{
+	edHeap* peVar1;
+	void* puVar2;
+
+	if (param_1 == (void*)0x0) {
+		assert(false);
+		//CallSystemFunction(&edMemObj_004890c0, 1, s_edMemAlloc_004324f8);
+		puVar2 = (void*)0x0;
+	}
+	else {
+		peVar1 = GetHeap(param_1);
+		puVar2 = peVar1->pStartAddr;
+	}
+	return puVar2;
 }
 
 void* edMemAlloc(short heapID, size_t size)
@@ -170,7 +192,7 @@ void* edMemAlloc(short heapID, size_t size)
 		pvVar2 = (void*)0x0;
 	}
 	else {
-		peVar1 = GetHeap(heapID);
+		peVar1 = GetHeap((void*)heapID);
 		pvVar2 = HeapAlloc(heapID, size, peVar1->align, peVar1->offset);
 	}
 	return pvVar2;
@@ -193,7 +215,7 @@ void* edMemAllocAlign(int heapID, size_t size, int align)
 			//PrintString(g_T'es_pas_fou_d');
 			//CallSystemFunction(&edMemObj_004890c0, 4, (char*)0x0);
 		}
-		peVar2 = GetHeap(heapID);
+		peVar2 = GetHeap((void*)heapID);
 		pvVar3 = HeapAlloc((short)heapID, size, align, peVar2->offset);
 	}
 	return pvVar3;
@@ -211,7 +233,7 @@ void edMemFree(void* heapID)
 //#if defined(PLATFORM_PS2)
 //		peVar1 = GetHeap((short)heapID);
 //#else
-		peVar1 = GetHeap(1);
+		peVar1 = GetHeap((void*)1);
 //#endif
 		(*g_HeapFunctionTableArray_00489030[(char)peVar1->funcTableID].free)((edHeap*)heapID); //peVar1); HACK
 	}

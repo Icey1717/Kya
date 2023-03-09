@@ -2,6 +2,11 @@ project(renderer)
 
 add_subdirectory("Shaders")
 
+add_subdirectory("ext/glfw")
+
+add_subdirectory("ext/glm")
+include_directories("ext/glm")
+
 find_package(Vulkan REQUIRED FATAL_ERROR)
 
 set (SOURCES

@@ -9,7 +9,10 @@ typedef void EdSysFunc(int, int, char*);
 
 enum edSysHandlerType
 {
+	ESHT_Profile_1 = 0,
 	ESHT_LoadFile = 4,
+	ESHT_RenderScene = 6,
+	ESHT_RenderUI = 10,
 };
 
 struct edSysHandlersNodeTable {
@@ -26,8 +29,13 @@ struct edSysHandlersPoolEntry {
 	undefined4 field_0xc;
 };
 
+struct edSysHandlersNodeParent {
+	edSysHandlersNodeTable* pNodeTable;
+	edSysHandlersPoolEntry* pTypeArray_0x4[1];
+};
+
 extern edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;;
-extern edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[2];
+extern edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[4];
 
 namespace edSystem
 {

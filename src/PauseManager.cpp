@@ -4,6 +4,7 @@
 #include "LevelScheduleManager.h"
 #include "Rendering/DisplayList.h"
 #include "Rendering/Font.h"
+#include "edText.h"
 
 PauseManager* g_PauseManager_00451688;
 
@@ -46,6 +47,8 @@ extern int g_ScreenHeight;
 
 char* inpLaceText = "PLEASE WAIT... LOADING";
 
+FontPacked* g_MenuFont_00449754 = NULL;
+
 void DrawLoadingScreen_001b05e0(void)
 {
 	bool bVar2;
@@ -77,7 +80,7 @@ void DrawLoadingScreen_001b05e0(void)
 		if (bVar2 != false) {
 			InitFontData_0028d430(&FStack192);
 			pNewFont = SetActiveFontData(&FStack192);
-			//FStack192.SetFontTextureData_0028d3e0(g_MenuFont_00449754, 0);
+			FStack192.SetFontTextureData_0028d3e0(NULL, 0);
 
 			FStack192.SetFontFlag_0028d340(0x100);
 			FStack192.alpha = FStack192.alpha & 0xff;

@@ -1,115 +1,35 @@
-#ifndef _EDCBANKBUFFER_H
-#define _EDCBANKBUFFER_H
+#ifndef _EDCFILER_BNK_H
+#define _EDCFILER_BNK_H
 
 #include "Types.h"
 #include "edCFiler.h"
+#include "edCBankBuffer.h"
 
-#if defined(PLATFORM_PS2)
-#include <libcdvd.h>
-#else
-struct sceCdlFILE {
-	uint lsn; /* File location on disc */
-	uint size; /* File size */
-	char name[16]; /* File name (body) */
-	u_char date[8]; /* Date */
-	uint flag; /* File flag */
-};
-#endif
-
-// typedef struct BankFileAccessBuffer BankFileAccessBuffer, * PBankFileAccessBuffer;
-
-struct edCBankFileHeader {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-	uint field_0x20;
-	undefined field_0x24;
-	undefined field_0x25;
-	undefined field_0x26;
-	undefined field_0x27;
-	undefined field_0x28;
-	undefined field_0x29;
-	undefined field_0x2a;
-	undefined field_0x2b;
-	undefined field_0x2c;
-	undefined field_0x2d;
-	undefined field_0x2e;
-	undefined field_0x2f;
-	int usedInGetIndex;
-	int field_0x34;
-	int field_0x38;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
+struct edCFiler_BNK_8 {
+	struct DebugBankData_234* pDebugBankData;
+	char* pFileData;
 };
 
-// typedef struct astruct_8 astruct_8, * Pastruct_8;
-
-struct CDFileContainer {
-	int fd;
-	sceCdlFILE file;
+struct edCFiler_Bnk_static {
+	char* pFileData;
+	char path[512];
+	char diskPath[512];
 };
 
-// typedef struct DebugBankDataInternal DebugBankDataInternal, * PDebugBankDataInternal;
+class edCFiler_BNK : public edCFiler
+{
+public:
+	edCFiler_BNK();
 
-struct DebugBankDataInternal {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	uint fileSize;
-	int field_0x14;
-	char name[4];
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
+	virtual bool Init();
+	virtual bool FormatStreamPath(char* outFilePath, char* pathBuff);
+	virtual bool LoadAndStoreInternal(char* filePath, char* bankPath);
+	virtual bool Open(DebugBankData_234* pOutData, char* filePath);
+	virtual bool Close(DebugBankData_234* pDebugBank);
+	virtual uint ReadStream(DebugBankData_234* pDebugBank, char* destination, uint requiredSize);
+	virtual bool Seek(DebugBankData_234* pDebugBank);
+	virtual bool ReadCallback(edCFiler_28_Internal* pEdFilerInternal);
+
 	undefined field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;
@@ -606,114 +526,153 @@ struct DebugBankDataInternal {
 	undefined field_0x211;
 	undefined field_0x212;
 	undefined field_0x213;
-	undefined field_0x214;
-	undefined field_0x215;
-	undefined field_0x216;
-	undefined field_0x217;
+	byte bnkInUse[4];
+	struct edCFiler_BNK_8 field_0x218[4];
+	undefined4 field_0x238;
+	undefined4 field_0x23c;
+	float field_0x240;
+	undefined field_0x244;
+	undefined field_0x245;
+	undefined field_0x246;
+	undefined field_0x247;
+	undefined field_0x248;
+	undefined field_0x249;
+	undefined field_0x24a;
+	undefined field_0x24b;
+	undefined field_0x24c;
+	undefined field_0x24d;
+	undefined field_0x24e;
+	undefined field_0x24f;
+	undefined field_0x250;
+	undefined field_0x251;
+	undefined field_0x252;
+	undefined field_0x253;
+	undefined field_0x254;
+	undefined field_0x255;
+	undefined field_0x256;
+	undefined field_0x257;
+	undefined field_0x258;
+	undefined field_0x259;
+	undefined field_0x25a;
+	undefined field_0x25b;
+	undefined field_0x25c;
+	undefined field_0x25d;
+	undefined field_0x25e;
+	undefined field_0x25f;
+	undefined field_0x260;
+	undefined field_0x261;
+	undefined field_0x262;
+	undefined field_0x263;
+	undefined field_0x264;
+	undefined field_0x265;
+	undefined field_0x266;
+	undefined field_0x267;
+	undefined field_0x268;
+	undefined field_0x269;
+	undefined field_0x26a;
+	undefined field_0x26b;
+	undefined field_0x26c;
+	undefined field_0x26d;
+	undefined field_0x26e;
+	undefined field_0x26f;
+	undefined field_0x270;
+	undefined field_0x271;
+	undefined field_0x272;
+	undefined field_0x273;
+	undefined field_0x274;
+	undefined field_0x275;
+	undefined field_0x276;
+	undefined field_0x277;
+	undefined field_0x278;
+	undefined field_0x279;
+	undefined field_0x27a;
+	undefined field_0x27b;
+	undefined field_0x27c;
+	undefined field_0x27d;
+	undefined field_0x27e;
+	undefined field_0x27f;
+	undefined field_0x280;
+	undefined field_0x281;
+	undefined field_0x282;
+	undefined field_0x283;
+	undefined field_0x284;
+	undefined field_0x285;
+	undefined field_0x286;
+	undefined field_0x287;
+	undefined field_0x288;
+	undefined field_0x289;
+	undefined field_0x28a;
+	undefined field_0x28b;
+	undefined field_0x28c;
+	undefined field_0x28d;
+	undefined field_0x28e;
+	undefined field_0x28f;
+	undefined field_0x290;
+	undefined field_0x291;
+	undefined field_0x292;
+	undefined field_0x293;
+	undefined field_0x294;
+	undefined field_0x295;
+	undefined field_0x296;
+	undefined field_0x297;
+	undefined field_0x298;
+	undefined field_0x299;
+	undefined field_0x29a;
+	undefined field_0x29b;
+	undefined field_0x29c;
+	undefined field_0x29d;
+	undefined field_0x29e;
+	undefined field_0x29f;
+	undefined field_0x2a0;
+	undefined field_0x2a1;
+	undefined field_0x2a2;
+	undefined field_0x2a3;
+	undefined field_0x2a4;
+	undefined field_0x2a5;
+	undefined field_0x2a6;
+	undefined field_0x2a7;
+	undefined field_0x2a8;
+	undefined field_0x2a9;
+	undefined field_0x2aa;
+	undefined field_0x2ab;
+	undefined field_0x2ac;
+	undefined field_0x2ad;
+	undefined field_0x2ae;
+	undefined field_0x2af;
+	undefined field_0x2b0;
+	undefined field_0x2b1;
+	undefined field_0x2b2;
+	undefined field_0x2b3;
+	undefined field_0x2b4;
+	undefined field_0x2b5;
+	undefined field_0x2b6;
+	undefined field_0x2b7;
+	undefined field_0x2b8;
+	undefined field_0x2b9;
+	undefined field_0x2ba;
+	undefined field_0x2bb;
+	undefined field_0x2bc;
+	undefined field_0x2bd;
+	undefined field_0x2be;
+	undefined field_0x2bf;
+	undefined field_0x2c0;
+	undefined field_0x2c1;
+	undefined field_0x2c2;
+	undefined field_0x2c3;
+	undefined field_0x2c4;
+	undefined field_0x2c5;
+	undefined field_0x2c6;
+	undefined field_0x2c7;
+	undefined field_0x2c8;
+	undefined field_0x2c9;
+	undefined field_0x2ca;
+	undefined field_0x2cb;
+	undefined field_0x2cc;
+	undefined field_0x2cd;
+	undefined field_0x2ce;
+	undefined field_0x2cf;
 };
 
-// typedef struct DebugBankData_234 DebugBankData_234, * PDebugBankData_234;
+void Link_00247700(void);
 
-struct DebugBankData_234 {
-	struct edCFiler* pOwningFiler;
-	struct CDFileContainer* pFileData;
-	int seekOffset; /* Created by retype action */
-	uint openFlags;
-	struct DebugBankDataInternal field_0x10;
-	int count_0x228;
-	byte bInUse;
-	undefined field_0x22d;
-	undefined field_0x22e;
-	undefined field_0x22f;
-	EBankAction action;
-};
-
-// typedef struct edCBankBuffer edCBankBuffer, * PedCBankBuffer;
-
-struct edCBankBuffer {
-	struct edCBank* header;
-	int* field_0x4;
-	char* fileBuffer;
-	void* pObjectReference;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
-	undefined4 field_0x14;
-	struct DebugBankData_234* pLoadedData;
-	int headerComponent;
-	int accessFlag;
-	undefined field_0x24;
-	undefined field_0x25;
-	undefined field_0x26;
-	undefined field_0x27;
-	int field_0x28;
-	undefined field_0x2c;
-	undefined field_0x2d;
-	undefined field_0x2e;
-	undefined field_0x2f;
-	undefined field_0x30;
-	undefined field_0x31;
-	undefined field_0x32;
-	undefined field_0x33;
-	undefined field_0x34;
-	undefined field_0x35;
-	undefined field_0x36;
-	undefined field_0x37;
-	undefined field_0x38;
-	undefined field_0x39;
-	undefined field_0x3a;
-	undefined field_0x3b;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
-	undefined field_0x40;
-	undefined field_0x41;
-	undefined field_0x42;
-	undefined field_0x43;
-	undefined field_0x44;
-};
-
-struct ReadBank_1C {
-	struct edCBankBuffer* pBankHeader_0x0;
-	char* pReadBuffer;
-	struct DebugBankData_234* pDebugBankData;
-	undefined* pBankTypePairData_0xc;
-	undefined* pObjectReference_0x10;
-	undefined* fileFunc_0x14;
-	int fileFlagB_0x18;
-};
-
-struct ReadBank_158 {
-	int loadedBanks;
-	int field_0x4;
-	ReadBank_1C field_0x8[12];
-};
-
-struct TypePairData {
-	uint field_0x0;
-	uint field_0x4;
-	void (*pFunction)(int);
-	uint field_0xc;
-	uint field_0x10;
-	uint field_0x14;
-	uint field_0x18;
-	uint field_0x1c;
-};
-
-bool edCBankBuffer_file_access(edCBankBuffer* pBankBuffer, struct BankFilePathContainer* file);
-int CheckFileLoadAndGetParam(edCBankBuffer* pBankBuffer);
-
-uint GetFileSize_0025b330(DebugBankData_234* param_1);
-
-void edCBankFileHeader_get_entry_typepair(char* fileBuffer, TypePairData* pTypePairData, int param_3);
-
-char* edCBankFileHeader_FindFileDataInHeader(char* pFileHeader, int inFileIndex);
-char* edCBankFileHeader_GetFileBufferStartFromFileIndex(char* pFileData, int fileIndex);
-bool GetFileDataForIndex(edCBankBuffer* pBankBuffer, int inFileIndex, struct BankFileData* outFileData, char* outIopPath);
-bool edCBankBuffer_close(edCBankBuffer* pBankBuffer);
-
-int GetIndexFromFileHeader(edCBankFileHeader* bankBufferObj, char* inFileName);
-
-#endif //_EDCBANKBUFFER_H
+#endif //_EDCFILER_BNK_H

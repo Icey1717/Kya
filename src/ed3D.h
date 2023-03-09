@@ -3,6 +3,11 @@
 
 #include "Types.h"
 
+#ifdef PLATFORM_WIN
+#include <unordered_map>
+#include <optional>
+#endif
+
 struct TextureInfoSmall {
 	char* textureFileBufferStart;
 	int textureFileLengthA;
@@ -90,7 +95,7 @@ LayerHeaderPacked {
 	undefined field_0xf;
 	char field_0x10;
 };
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
 
@@ -99,6 +104,13 @@ namespace ed3D
 	void Init(void);
 	TextureInfoSmall* LoadTextureFromBuffer(char* fileBufferStart, int fileLength, int* outInt, TextureInfoSmall* pTextureInfo, ulong param_5);
 	MaterialInfo* GetMaterialInfoFromTexture(MaterialInfo* outObj, int count, TextureInfoSmall* textureInfoObj, int mode);
+
+#ifdef PLATFORM_WIN
+	namespace TextureSection
+	{
+		std::optional<void*> ResolveTextureSectionKey(int key);
+	}
+#endif
 }
 
 #endif //_ED3D_H
