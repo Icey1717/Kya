@@ -9,11 +9,167 @@
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
 #include "Camera.h"
+#include "edDlist.h"
+#include "edMem.h"
+#include <string.h>
+#include "ed3D.h"
+
+#ifdef PLATFORM_WIN
+#include "port.h"
+#endif
+#include "edVideo/VideoC.h"
 
 LargeObject* g_LargeObject_006db450 = NULL;
 
 LevelScheduleManager* g_LevelScheduleManager_00451660 = NULL;
 LocalizationManager* g_LocalizationManager_00451678 = NULL;
+
+StaticMeshMaster* g_StaticMeshMasterA_00448808 = NULL;
+StaticMeshMaster* g_CameraPanMasterB_0044880c = NULL;
+
+CameraObj_130 CameraObj_130_0044a100;
+
+StaticMeshMaster* g_CameraPanStaticMasterArray_00451630[10] = { 0 };
+
+FrameBuffer* AllocateFrameBuffer_002b7100(VidModeData* pVidModeData)
+{
+	VidModeData* pVidModeCopy;
+	FrameBuffer* pFrameBuffer;
+	ZBufferTags* pTags;
+	int zBufferFormat;
+
+	pVidModeCopy = (VidModeData*)edMemAlloc(H_MAIN, sizeof(VidModeData));
+	*pVidModeCopy = *pVidModeData;
+
+	pFrameBuffer = (FrameBuffer*)edMemAlloc(H_MAIN, sizeof(FrameBuffer));
+	memset(pFrameBuffer, 0, sizeof(FrameBuffer));
+
+	pFrameBuffer->pVidModeData_0x0 = pVidModeCopy;
+	pFrameBuffer->pVidModeData_0x0->pLink_0xc = pFrameBuffer;
+
+	if (pVidModeData->bUseGlobalFrameBuffer == false) {
+		pFrameBuffer->frameBasePtr = (uint)ed3D::g_FrameBufferPtr_004491f0 >> 5;
+		pFrameBuffer->data_0xc = (char*)ed3D::g_FrameBufferPtr_004491f0;
+	}
+	if ((pVidModeData->flags_0x8 & 8) != 0) {
+		pTags = (ZBufferTags*)edMemAlloc(H_MAIN, sizeof(ZBufferTags));
+		pFrameBuffer->pZTags = pTags;
+
+		// TAG
+		pTags->commandBuffer[0].cmdA = SCE_GIF_SET_TAG(
+			2,					// NLOOP
+			SCE_GS_TRUE,		// EOP
+			SCE_GS_FALSE,		// PRE
+			0,					// PRIM
+			SCE_GIF_PACKED,		// FLG
+			1					// NREG
+		);
+		pTags->commandBuffer[0].cmdB = SCE_GIF_PACKED_AD;
+
+		// Z BUFFER
+		zBufferFormat = GetZBufferTextureFormat(pFrameBuffer->pVidModeData_0x0->pixelStoreMode);
+		pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
+			pFrameBuffer->frameBasePtr,	// ZBP
+			zBufferFormat,				// PSM
+			0							// ZMASK
+		);
+		pTags->commandBuffer[1].cmdB = SCE_GS_ZBUF_1;
+
+		// Z TEST
+		pTags->commandBuffer[2].cmdA = SCE_GS_SET_TEST(
+			0,	// ATE 
+			0,	// ATST
+			0,	// AREF
+			0,	// AFAIL
+			0,	// DATE
+			0,	// DATM
+			1,	// ZTE
+			3	// ZTST
+		);
+		pTags->commandBuffer[2].cmdB = SCE_GS_TEST_1;
+	}
+	pFrameBuffer->pNext = pFrameBuffer;
+	return pFrameBuffer;
+}
+
+StaticMeshMaster* CopyCameraPanStaticMaster_002b6ed0(StaticMeshMaster* pTemplate, CameraObj_130* pCameraObj130)
+{
+	FrameBuffer* pVidModeDataA;
+	FrameBuffer* pVidModeDataB;
+	CameraObjParams* pCVar1;
+	uint uVar2;
+	uint uVar3;
+	FrameBuffer* pVidModeDataA_00;
+	CameraObj_28* pCVar4;
+	CameraObj_28* pCVar5;
+	StaticMeshMaster* pStaticMeshMaster;
+	CameraPanStatic_50* pCVar6;
+	CameraObjParams* pCVar7;
+	CameraObjParams* pCVar8;
+	VidModeData local_20;
+	CameraObjParams local_8;
+
+	pVidModeDataA = pTemplate->pCameraObj28_0xc->pVidModeData30_0x10;
+	pVidModeDataB = pTemplate->pCameraObj28_0xc->pZBuffer;
+	//if (0x100 < (uint)(pTemplate->field_0x50).field_0x100.field_0x1c) {
+	//	(pTemplate->field_0x50).field_0x100.field_0x1c = 0x100;
+	//}
+	uVar2 = 0; //FUN_0029e3f0((pTemplate->field_0x50).field_0x100.field_0x18);
+	uVar3 = 0; //FUN_0029e3f0((pTemplate->field_0x50).field_0x100.field_0x1c);
+	pCVar7 = (CameraObjParams*)0x8;
+	pCVar8 = &local_8;
+	pCVar1 = pCVar8;
+	//while (pCVar1 != (CameraObjParams*)0x0) {
+	//	*(undefined*)&pCVar8->field_0x0 = 0;
+	//	pCVar8 = (CameraObjParams*)((int)&pCVar8->field_0x0 + 1);
+	//	pCVar7 = (CameraObjParams*)((int)&pCVar7[-1].screenHeight + 1);
+	//	pCVar1 = pCVar7;
+	//}
+	local_20.field_0x6 = 0x10;
+	local_20.flags_0x8 = 4;
+	local_20.frameBufferCount = 1;
+	local_20.screenHeight = (ushort)uVar3;
+	local_20.screenWidth = (ushort)uVar2;
+	local_20.pixelStoreMode = SCE_GS_PSMCT32;
+	local_20.bUseGlobalFrameBuffer = false;
+	local_8.screenWidth = local_20.screenWidth;
+	local_8.screenHeight = local_20.screenHeight;
+	pVidModeDataA_00 = AllocateFrameBuffer_002b7100(&local_20);
+	pCVar4 = AllocateCameraObj28_002bae70(&local_8, pVidModeDataA_00, pVidModeDataB, 1);
+	SetCameraObjBytes_002bb960(pCVar4, 0, 0, 0);
+	pCVar5 = AllocateCameraObj28_002bae70(&local_8, pVidModeDataA, pVidModeDataB, 0);
+	pStaticMeshMaster = ed3D::SetupCameraPanStaticMaster_002b4600(pCameraObj130, pCVar4, 1);
+	pStaticMeshMaster->field_0x0 = 1;
+	//pCVar6 = StaticMeshMaster::GetCameraPanStatic_50_002a5600(pStaticMeshMaster);
+	//pCVar6->field_0x4 = (pTemplate->field_0x50).field_0x100.field_0x4;
+	//pCVar6->field_0x18 = (pTemplate->field_0x50).field_0x100.field_0x4;
+	//pCVar6->field_0xc = (pTemplate->field_0x50).field_0x100.field_0xc;
+	//pCVar6->field_0x8 = (pTemplate->field_0x50).field_0x100.field_0x8;
+	//pCVar6->field_0x14 = (pTemplate->field_0x50).field_0x12c;
+	//pCVar6->field_0x10 = (pTemplate->field_0x50).field_0x128;
+	//(pCVar6->field_0x100).field_0x10 = pCVar4;
+	//(pCVar6->field_0x100).field_0x14 = pCVar5;
+	//(pCVar6->field_0x100).field_0x20 = (pTemplate->field_0x50).field_0x100.field_0x20;
+	//(pCVar6->field_0x100).field_0x23 = (pTemplate->field_0x50).field_0x100.field_0x23;
+	//(pCVar6->field_0x100).field_0x22 = (pTemplate->field_0x50).field_0x100.field_0x22;
+	//(pCVar6->field_0x100).field_0x24 = (pTemplate->field_0x50).field_0x100.field_0x24;
+	//(pCVar6->field_0x100).field_0x18 = (pTemplate->field_0x50).field_0x100.field_0x18;
+	//(pCVar6->field_0x100).field_0x1c = (pTemplate->field_0x50).field_0x100.field_0x1c;
+	//(pTemplate->field_0x50).field_0x100.field_0x20 = 0;
+	//g_CameraPanStaticMaster_00449574 = pStaticMeshMaster;
+	return pStaticMeshMaster;
+}
+
+StaticMeshMaster* CopyCameraPanStaticMaster_002b4790(StaticMeshMaster* param_1, CameraObj_130* param_2)
+{
+	StaticMeshMaster* pDisplayList;
+
+	param_1->flags_0x4 = param_1->flags_0x4 | 2;
+	pDisplayList = CopyCameraPanStaticMaster_002b6ed0(param_1, param_2);
+	edDlist::WillSetActiveDisplayList_00290cb0(&param_1->field_0x10, (DisplayListInternal*)pDisplayList);
+	return pDisplayList;
+}
+
 
 LargeObject::LargeObject()
 {
@@ -40,17 +196,17 @@ LargeObject::LargeObject()
 	//EventManager* pEventManager;
 	//Manager_29b4* pMVar10;
 	edVideo_Globals* peVar11;
-	VidModeData_30* pVVar12;
-	VidModeData_30* pVVar13;
+	FrameBuffer* pVVar12;
+	FrameBuffer* pVVar13;
 	CameraObj_28* pCVar14;
 	//CameraPanStatic_50* pCVar15;
-	//StaticMeshMaster* pSVar16;
+	StaticMeshMaster* pSVar16;
 	undefined8 uVar17;
 	//Manager_29b4** ppMVar18;
 	LargeObject* puVar5;
 	int iVar19;
-	//StaticMeshMaster** ppSVar20;
-	//CameraObj_130* pCVar21;
+	StaticMeshMaster** ppSVar20;
+	CameraObj_130* pCVar21;
 	CameraObjParams local_8;
 
 	this->field_0x38 = 1;
@@ -221,15 +377,15 @@ LargeObject::LargeObject()
 	local_8.field_0x0 = 0;
 	local_8.screenWidth = peVar11->pActiveVidParams->params26.screenWidth;
 	local_8.screenHeight = peVar11->pActiveVidParams->params26.screenHeight;
-	pVVar12 = GetVidModeData30_001ba9c0();
-	pVVar13 = GetVidModeData30_001ba9d0();
+	pVVar12 = GetFrameBuffer_001ba9c0();
+	pVVar13 = GetFrameBuffer_001ba9d0();
 	pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 3);
 	this->pCameraObj28_0x4 = pCVar14;
 	SetCameraObjBytes_002bb960(this->pCameraObj28_0x4, 0, 0, 0);
-	//g_StaticMeshMasterA_00448808 = SetupCameraPanStaticMaster_002b4600(&CameraObj_130_0044a100, this->pCameraObj28_0x4, 1);
-	//StaticMeshMaster::SetFlag_002a5400(g_StaticMeshMasterA_00448808, 0x20);
-	//CameraPanMasterSetFlag_002a5410(g_StaticMeshMasterA_00448808, 1);
-	//CameraPanMasterSetFlag_002a5440(g_StaticMeshMasterA_00448808, 1);
+	g_StaticMeshMasterA_00448808 = ed3D::SetupCameraPanStaticMaster_002b4600(&CameraObj_130_0044a100, this->pCameraObj28_0x4, 1);
+	g_StaticMeshMasterA_00448808->SetFlag_002a5400(0x20);
+	g_StaticMeshMasterA_00448808->SetFlag_002a5410(1);
+	g_StaticMeshMasterA_00448808->SetFlag_002a5440(1);
 	//pCVar15 = StaticMeshMaster::GetCameraPanStatic_50_002a5600(g_StaticMeshMasterA_00448808);
 	//pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
 	//(pCVar15->field_0x100).field_0x18 = 0x200;
@@ -241,28 +397,28 @@ LargeObject::LargeObject()
 	//(pCVar15->field_0x100).field_0x8 = -0.01;
 	//(pCVar15->field_0x100).field_0xc = -150.0;
 	//(pCVar15->field_0x100).field_0x22 = 0x32;
-	pVVar12 = GetVidModeData30_001ba9c0();
-	pVVar13 = GetVidModeData30_001ba9d0();
-	//pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 0);
-	//this->pCameraObj28_0x8 = pCVar14;
-	//SetCameraObjBytes_002bb960(this->pCameraObj28_0x8, 0, 0, 0);
-	//g_CameraPanMasterB_0044880c = SetupCameraPanStaticMaster_002b4600(&CameraObj_130_0044a100, this->pCameraObj28_0x8, 1);
-	//StaticMeshMaster::SetFlag_002a5400(g_CameraPanMasterB_0044880c, 0);
-	//CameraPanMasterSetFlag_002a5410(g_CameraPanMasterB_0044880c, 0);
+	pVVar12 = GetFrameBuffer_001ba9c0();
+	pVVar13 = GetFrameBuffer_001ba9d0();
+	pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 0);
+	this->pCameraObj28_0x8 = pCVar14;
+	SetCameraObjBytes_002bb960(this->pCameraObj28_0x8, 0, 0, 0);
+	g_CameraPanMasterB_0044880c = ed3D::SetupCameraPanStaticMaster_002b4600(&CameraObj_130_0044a100, this->pCameraObj28_0x8, 1);
+	g_CameraPanMasterB_0044880c->SetFlag_002a5400(0);
+	g_CameraPanMasterB_0044880c->SetFlag_002a5410(0);
 	//pCVar15 = StaticMeshMaster::GetCameraPanStatic_50_002a5600(g_CameraPanMasterB_0044880c);
 	//pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
 	//StaticMeshMaster::GetCameraPanStatic_50_002a5600(g_StaticMeshMasterA_00448808);
 	//iVar19 = 0;
 	//pCVar21 = CameraObj_130_ARRAY_0044a230;
-	//ppSVar20 = g_CameraPanStaticMasterArray_00451630;
-	//do {
-	//	pSVar16 = CopyCameraPanStaticMaster_002b4790(g_StaticMeshMasterA_00448808, pCVar21);
-	//	*ppSVar20 = pSVar16;
-	//	StaticMeshMaster::SetFlag_002a5400(*ppSVar20, 4);
-	//	iVar19 = iVar19 + 1;
-	//	pCVar21 = pCVar21 + 1;
-	//	ppSVar20 = ppSVar20 + 1;
-	//} while (iVar19 < 10);
+	ppSVar20 = g_CameraPanStaticMasterArray_00451630;
+	do {
+		pSVar16 = CopyCameraPanStaticMaster_002b4790(g_StaticMeshMasterA_00448808, pCVar21);
+		*ppSVar20 = pSVar16;
+		(*ppSVar20)->SetFlag_002a5400(4);
+		iVar19 = iVar19 + 1;
+		pCVar21 = pCVar21 + 1;
+		ppSVar20 = ppSVar20 + 1;
+	} while (iVar19 < 10);
 	this->count_0x120 = 0;
 	this->field_0x11c = 0;
 	g_LargeObject_006db450 = this;

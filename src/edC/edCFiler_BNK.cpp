@@ -333,7 +333,7 @@ bool edCFiler_BNK::LoadAndStoreInternal(char* filePath, char* bankPath)
 		bSuccess = false;
 		if (__s != (edCFiler_Bnk_static*)0x0) {
 			edStringCpyL(__s->diskPath, outString);
-			pcVar3 = ReadFileToBuffer(1, bankPath, 1, (DebugBankData_234**)0x0);
+			pcVar3 = ReadFileToBuffer(H_MAIN, bankPath, 1, (DebugBankData_234**)0x0);
 			__s->pFileData = pcVar3;
 			bSuccess = true;
 		}

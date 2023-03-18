@@ -1,5 +1,4 @@
 #include "CameraPanMasterHeader.h"
-#include "edMem.h"
 #include <string.h>
 
 const char sz_NodeTitle_00432b68[4] = { 'N', 'O', 'D', 'E' };
@@ -101,17 +100,17 @@ void Link_00290c10(CameraPanMasterHeader* param_1)
 	return;
 }
 
-CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, long heapID)
+CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, EHeap heapID)
 {
 	bool bVar1;
 	CameraPanMasterHeader* pCVar2;
 	CameraPanMasterHeader* pAllocatedBuffer;
 
 	if (meshHeaderCount == 0) {
-		pCVar2 = (CameraPanMasterHeader*)edMemAlloc((short)heapID, cameraPanCount << 5);
+		pCVar2 = (CameraPanMasterHeader*)edMemAlloc(heapID, cameraPanCount << 5);
 	}
 	else {
-		pCVar2 = (CameraPanMasterHeader*)edMemAlloc((short)heapID, meshHeaderCount * 0x10 + cameraPanCount * 0x20 + 0x10);
+		pCVar2 = (CameraPanMasterHeader*)edMemAlloc(heapID, meshHeaderCount * 0x10 + cameraPanCount * 0x20 + 0x10);
 		pAllocatedBuffer = pCVar2 + cameraPanCount;
 		Setup_00290b70((MeshTransformParentHeader*)pAllocatedBuffer, meshHeaderCount);
 		while (bVar1 = cameraPanCount != 0, cameraPanCount = cameraPanCount + -1, bVar1) {

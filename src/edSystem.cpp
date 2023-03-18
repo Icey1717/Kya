@@ -16,17 +16,16 @@
 #include <libgraph.h>
 #endif
 
+#ifdef PLATFORM_WIN
+#include <string.h>
+#endif
+
 byte g_NetIsSetup_004893d0 = 0;
 
 int g_isNTSC;
 
 edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;
 edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[4] = { 0 };
-
-namespace edSystem
-{
-	edHeap* edSystemDataPtr_0042df0 = NULL;
-};
 
 #ifdef PLATFORM_PS2
 void edSystemInit_Reset(void)
@@ -53,9 +52,25 @@ void edSystemInit_Reset(void)
 }
 #endif
 
-edHeap g_heap_004a5780[4096];
+#ifdef PLATFORM_WIN
+#pragma pack(push,1)
+struct VirtualMemory {
+	edHeapEntry g_heap_004a5780[0x1000];
+	//char g_memory[0x1685100];
+	char g_memory[0x1F85100];
+};
+#pragma  pack(pop)
 
-edHeap* g_HeapPtr_0040f370 = g_heap_004a5780;
+edHeapEntry* g_HeapPtr_0040f370 = NULL;
+#else
+edHeapEntry* g_HeapPtr_0040f370 = (edHeapEntry*)0x004a5780;
+#endif
+
+edHeapEntry* GetHeap()
+{
+	return g_HeapPtr_0040f370;
+}
+
 
 bool edSystemInit(int argc, char** argv)
 {
@@ -65,6 +80,11 @@ bool edSystemInit(int argc, char** argv)
 
 	g_NetIsSetup_004893d0 = 0;
 
+#ifdef PLATFORM_WIN
+	g_HeapPtr_0040f370 = (edHeapEntry*)_aligned_malloc(sizeof(VirtualMemory), 0x10);
+	memset(g_HeapPtr_0040f370, 0x0, sizeof(VirtualMemory));
+#endif
+
 	scePrintf("--------------------------------------\n");
 	scePrintf("Code Size:     %09d  (0x%08x)\n", 0, 0);
 	scePrintf("Data Size:     %09d  (0x%08x)\n", 0, 0);
@@ -72,13 +92,14 @@ bool edSystemInit(int argc, char** argv)
 	scePrintf("Stack Size:    %09d  (0x%08x)\n", 0, 0);
 	scePrintf("--------------------------------------\n");
 
-	if (edSystem::edSystemDataPtr_0042df0 == (edHeap*)0x0)
+	if (g_SystemHeap_0042df0.startAddress == (char*)0x0)
 	{
 #ifdef PLATFORM_PS2
 		edSystemInit_Reset();
 #endif
 
-		edSystem::edSystemDataPtr_0042df0 = g_HeapPtr_0040f370;
+		g_SystemHeap_0042df0.startAddress = (char*)g_HeapPtr_0040f370;
+		g_SystemHeap_0042df0.size = g_MemWorkSizeB;
 	}
 
 	return true;

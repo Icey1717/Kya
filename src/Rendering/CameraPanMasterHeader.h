@@ -2,14 +2,14 @@
 #define CAMERA_PAN_MASTER_HEADER_H
 
 #include "Types.h"
-#include "DisplayList.h"
+#include "edMem.h"
 
 struct MeshTransformSpecial {
 	ushort field_0x0;
 	ushort field_0x2;
 	MeshTransformSpecial* pNext_0x4;
 	MeshTransformSpecial* field_0x8;
-	DisplayListInternal* pRenderInput;
+	struct DisplayListInternal* pRenderInput;
 };
 
 struct MeshTransformParent {
@@ -51,6 +51,8 @@ struct CameraPanMasterHeader {
 };
 
 void Link_00290c10(CameraPanMasterHeader* param_1);
-CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, long heapID);
+CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, EHeap heapID);
+bool Setup_00290bf0(CameraPanMasterHeader* pCameraPanStatic, MeshTransformParentHeader* param_2, int param_3, undefined* param_4);
+void* Setup_00290b70(MeshTransformParentHeader* pAllocatedBuffer, int count);
 
 #endif //CAMERA_PAN_MASTER_HEADER_H

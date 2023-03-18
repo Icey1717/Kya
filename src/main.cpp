@@ -16,8 +16,6 @@
 #include <libdbc.h>
 #include <libpad2.h>
 
-#include <shellCore.h>
-#include <shellDma.h>
 
 #include <libscf.h>
 #include <libipu.h>
@@ -62,23 +60,14 @@ extern "C" {
 #include "edVideo/VideoD.h"
 #include "PauseManager.h"
 
+#include "Rendering/CustomShell.h"
+
 uint g_DebugCameraFlag_00448ea4 = 0;
 
 template<class T>
 T* CreateNew()
 {
 	return new T;
-}
-
-const void* g_ScratchpadAddr_00424e10 = (void*)0x70000000;
-
-void* GetScratchPadPtr_00424e10(void)
-{
-#ifndef PLATFORM_PS2
-	static void* g_fakeScratch = malloc(0x10000);
-	return g_fakeScratch;
-#endif
-	return (void*)g_ScratchpadAddr_00424e10;
 }
 
 InputSetupParams g_InputSetupParams = { 0, 0, 0, 0x8C };
@@ -661,7 +650,7 @@ void edPsx2ModuleLoad(char* pModulesName)
 	else {
 		nbyte = sceLseek(iVar4, 0, 2);
 		sceLseek(iVar4, 0, 0);
-		buf = (byte*)edMemAllocAlign(1, nbyte, 0x40);
+		buf = (byte*)edMemAllocAlign(H_MAIN, nbyte, 0x40);
 		sceRead(iVar4, buf, nbyte);
 		sceClose(iVar4);
 		pModule = (edModule*)(buf + 4);
@@ -889,7 +878,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 				if (outSize != (uint*)0x0) {
 					*outSize = size;
 				}
-				unaff_s3_lo = (char*)edMemAlloc(1, (long)(int)size);
+				unaff_s3_lo = (char*)edMemAlloc(H_MAIN, (long)(int)size);
 				if (unaff_s3_lo != (char*)0x0) {
 					sceLseek(iVar1, 0, 0);
 					sceRead(iVar1, unaff_s3_lo, size);
@@ -908,7 +897,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 			if (outSize != (uint*)0x0) {
 				*outSize = size;
 			}
-			unaff_s3_lo = (char*)edMemAlloc(1, (long)(int)size);
+			unaff_s3_lo = (char*)edMemAlloc(H_MAIN, (long)(int)size);
 			if (unaff_s3_lo != (char*)0x0) {
 				sceLseek(iVar1, 0, 0);
 				sceRead(iVar1, unaff_s3_lo, size);
@@ -927,7 +916,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 			*outSize = size;
 		}
 
-		unaff_s3_lo = (char*)edMemAlloc(1, (long)(int)size);
+		unaff_s3_lo = (char*)edMemAlloc(H_MAIN, (long)(int)size);
 		if (unaff_s3_lo != (char*)0x0) {
 			fseek(fp, 0, SEEK_SET);
 			fread(unaff_s3_lo, 1, size, fp);
@@ -966,13 +955,13 @@ void SetupVideo(IniFile* file)
 		outVideoMode[0] = '\0';
 		screenHeight = 0x200;
 		isNTSC = 1;
-		videoMode = 3;
+		videoMode = SCE_GS_PAL;
 		/* Video - SetVideoMode */
 		bVar1 = g_IniFile_00450750.ReadString_001aa520(s_Video_0042b490, "SetVideoMode", outVideoMode);
 		if ((bVar1 != false) && (iVar2 = strcmp(outVideoMode, "NTSC"), iVar2 == 0)) {
 			screenHeight = 0x1c0;
 			isNTSC = 0;
-			videoMode = 2;
+			videoMode = SCE_GS_NTSC;
 		}
 		/* Video - SetFrequency */
 		videoFrequency = 0;
@@ -1005,28 +994,47 @@ void GraphicsClear_004059a0(ulong r, ulong g, ulong b, ulong a)
 
 	sceGifPkInit(&gifpkt, auStack256);
 	sceGifPkReset(&gifpkt);
+	// set GIF tag
 	sceGifPkAddGsData(&gifpkt, 0x100000000000800a);
 	sceGifPkAddGsData(&gifpkt, 0xe);
-	sceGifPkAddGsData(&gifpkt, 1);
-	sceGifPkAddGsData(&gifpkt, 0x1a);
+
+	// enable PRIM register
+	sceGifPkAddGsData(&gifpkt, SCE_GS_SET_PRMODECONT(1));
+	sceGifPkAddGsData(&gifpkt, SCE_GS_PRMODECONT);
+
+	// frame buffer settting
 	sceGifPkAddGsData(&gifpkt, 0x100000);
-	sceGifPkAddGsData(&gifpkt, 0x4c);
+	sceGifPkAddGsData(&gifpkt, SCE_GS_FRAME_1);
 	sceGifPkAddGsData(&gifpkt, g_DoubleBuffer.draw0.zbuf1addr | 0x130000000);
-	sceGifPkAddGsData(&gifpkt, 0x4e);
-	sceGifPkAddGsData(&gifpkt, 0);
-	sceGifPkAddGsData(&gifpkt, 0x18);
+	sceGifPkAddGsData(&gifpkt, SCE_GS_ZBUF_1);
+
+	// offset value ( PRIM coord -> WIN coord )
+	sceGifPkAddGsData(&gifpkt, SCE_GS_SET_XYOFFSET_1(0, 0));
+	sceGifPkAddGsData(&gifpkt, SCE_GS_XYOFFSET_1);
+
+	// scissor settings ( WIN coordinates x0,x1,y0,y1 )
 	sceGifPkAddGsData(&gifpkt, 0x400000004000000);
-	sceGifPkAddGsData(&gifpkt, 0x40);
+	sceGifPkAddGsData(&gifpkt, SCE_GS_SCISSOR_1);
+
+	// pixel test control
 	sceGifPkAddGsData(&gifpkt, 0x30000);
-	sceGifPkAddGsData(&gifpkt, 0x47);
-	sceGifPkAddGsData(&gifpkt, 6);
-	sceGifPkAddGsData(&gifpkt, 0);
+	sceGifPkAddGsData(&gifpkt, SCE_GS_TEST_1);
+
+	// set sprite primitive
+	sceGifPkAddGsData(&gifpkt, SCE_GS_SET_PRIM(SCE_GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0));
+	sceGifPkAddGsData(&gifpkt, SCE_GS_PRIM);
+
+	// set RGBA of sprite
 	sceGifPkAddGsData(&gifpkt, (a & 0xff) << 0x18 | (b & 0xff) << 0x10 | r & 0xff | (g & 0xff) << 8 | 0x3f80000000000000);
-	sceGifPkAddGsData(&gifpkt, 1);
-	sceGifPkAddGsData(&gifpkt, 0);
-	sceGifPkAddGsData(&gifpkt, 4);
+	sceGifPkAddGsData(&gifpkt, SCE_GS_RGBAQ);
+
+	// set upper-left position of sprite
+	sceGifPkAddGsData(&gifpkt, SCE_GS_SET_XYZ(0, 0, 0));
+	sceGifPkAddGsData(&gifpkt, SCE_GS_XYZF2);
+
+	// set lower-right position of sprite
 	sceGifPkAddGsData(&gifpkt, 0x40004000);
-	sceGifPkAddGsData(&gifpkt, 4);
+	sceGifPkAddGsData(&gifpkt, SCE_GS_XYZF2);
 	sceGifPkTerminate(&gifpkt);
 	FlushCache(0);
 	size = sceGifPkSize(&gifpkt);
@@ -1046,9 +1054,9 @@ void SetupDoubleBuffer_00405ba0(void)
 	screenHeight = (short)g_ScreenHeight;
 	screenWidth = (short)g_ScreenWidth;
 	/* Start video mode in NTCS and change to PAL based on global */
-	videoMode = 2;
-	if (g_omode != 2) {
-		videoMode = 3;
+	videoMode = SCE_GS_NTSC;
+	if (g_omode != SCE_GS_NTSC) {
+		videoMode = SCE_GS_PAL;
 	}
 #if defined(PLATFORM_PS2)
 	g_DmaChan_00449820 = sceDmaGetChan(2);
@@ -1192,8 +1200,8 @@ void SplashFunc_002ba880(SplashParams* pParams, long param_2, uint param_3)
 	edPacketFunc_0026a6d0(&packet, 0);
 	edPacketClose_00269e70(&packet);
 #if defined(PLATFORM_PS2)
-	//WaitDMA();
-	shellDmaStartChain(SHELLDMA_CHANNEL_GIF, (ShellDmaTag*)packet.pBuffer);
+	WaitDMA();
+	shellDmaStartChain(SHELLDMA_CHANNEL_GIF, (ulonglong*)packet.pBuffer);
 #endif
 	return;
 }
@@ -1207,7 +1215,7 @@ void SetupSplash(char* pSplashFile, uint count)
 	SplashParams auStack32;
 	astruct_9 local_8;
 
-	//WaitForDraw_00258230();
+	WaitForDraw_00258230();
 	auStack32.field_0x4 = &local_8;
 	local_8.field_0x0 = 0;
 	local_8.field_0x2 = 0;
@@ -1217,7 +1225,7 @@ void SetupSplash(char* pSplashFile, uint count)
 	auStack32.field_0xc = auStack32.field_0x4;
 	auStack32.pSplashFile = pSplashFile;
 	for (counter = 0; counter < count; counter = counter + 2) {
-		//WaitForDraw_00258230();
+		WaitForDraw_00258230();
 		SplashFunc_002ba880(&auStack32, 1, 0);
 		if (true) {
 			draw = &g_DoubleBuffer.draw0;
@@ -1269,7 +1277,7 @@ void Init_edFileA(void)
 	local_4 = 0;
 	bVar1 = edCFilerInitTOC_00260f80(sz_ModeCdvd_0042b800, IM_CALC_SIZE, (void*)0x898, &local_4);
 	if (bVar1 != false) {
-		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAlloc(1, local_4);
+		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAlloc(H_MAIN, local_4);
 		/* <cdvd> */
 		edCFilerInitTOC_00260f80(sz_ModeCdvd_0042b800, IM_INIT, PTR_edCdlFolder_00448ef4, (int*)local_4);
 	}
@@ -1342,7 +1350,7 @@ void SetLanguageID_00336b40(void)
 {
 	int systemLanguageID;
 
-	if (g_omode == 3) {
+	if (g_omode == SCE_GS_PAL) {
 		systemLanguageID = GetSystemLanguage();
 		switch (systemLanguageID) {
 		default:
@@ -1440,7 +1448,7 @@ void LoadAndVerifyMenuBnk(void)
 		g_MenuFont_00449754 = (FontPacked*)GetFilePointerFromFileIndex(g_MenuDataBank_0049758, iVar3);
 	}
 	FontSetup(g_MenuFont_00449754);
-	if (g_MenuFont_00449754->pSubData != (FontPacked_2C*)0x0) {
+	if ((FontPacked_2C*)g_MenuFont_00449754->pSubData != (FontPacked_2C*)0x0) {
 		//g_MenuFont_00449754->pSubData->pOverrideData = USHORT_ARRAY_0048fc60;
 	}
 	//USHORT_ARRAY_0048fc60[156] = 0x153;
@@ -1533,16 +1541,13 @@ void SetupGame(int argc,char **argv)
 #endif
 
 	/* If using NTSC then load SPLASH_N, otherwise load SPLASH_P */
-	if (g_omode == 2) {
+	if (g_omode == SCE_GS_NTSC) {
 		pFileBuffer = LoadFileFromDisk("CDEURO\\FRONTEND\\SPLASH_N.RAW", (uint*)0x0);
 	}
 	else {
 		pFileBuffer = LoadFileFromDisk("CDEURO\\FRONTEND\\SPLASH_P.RAW", (uint*)0x0);
 	}
 	if (pFileBuffer != (char*)0x0) {
-#if defined(PLATFORM_PS2)
-		shellDmaInit();
-#endif
 		SetupSplash(pFileBuffer, 2);
 		edMemFree(pFileBuffer);
 	}
@@ -1592,7 +1597,7 @@ void SetupGame(int argc,char **argv)
 	//	soundController ? [3] = *puVar2;
 	//	soundController ? [4] = uVar3 - 1;
 	//	*soundController ? = 0x80;
-	//	if (g_VideoMode2 == 3) {
+	//	if (g_omode == SCE_GS_PAL) {
 	//		soundController ? [5] = 0x32;
 	//	}
 	//	else {
@@ -1668,35 +1673,35 @@ void LoadVideoFromFilePath(VideoFile* display, char* inFileName)
 	int iVar7;
 	char fileName[512];
 
-	display->videoIsPAL = g_omode == 3;
+	display->videoIsPAL = g_omode == SCE_GS_PAL;
 	display->fbp0 = 0;
 	display->fileReadSuccess = 0;
 	//UpdateSoundManager();
 	//SetPerfFlag_0023e2b0();
 #ifdef PLATFORM_PS2
-	DisableIntc(2);
-	DisableIntc(0);
+	DisableIntc(INTC_VBLANK_S);
+	DisableIntc(INTC_GS);
 
 	uint workArea = 0x16976c + 0x1000;
 
-	puVar2 = (u_char*)edMemAllocAlign(1, workArea, 0x40);
+	puVar2 = (u_char*)edMemAllocAlign(H_MAIN, workArea, 0x40);
 	(display->pssResources).mpegBuff = puVar2;
 	(display->pssResources).mpegBuffSize = workArea;
-	psVar3 = (sceIpuRGB32*)edMemAllocAlign(1, 0x140000, 0x40);
+	psVar3 = (sceIpuRGB32*)edMemAllocAlign(H_MAIN, 0x140000, 0x40);
 	(display->pssResources).rgb32 = psVar3;
-	puVar4 = (u_int*)edMemAllocAlign(1, 0x3c200, 0x40);
+	puVar4 = (u_int*)edMemAllocAlign(H_MAIN, 0x3c200, 0x40);
 	(display->pssResources).path3tag = puVar4;
-	pvVar5 = edMemAllocAlign(1, 0x30000, 0x40);
+	pvVar5 = edMemAllocAlign(H_MAIN, 0x30000, 0x40);
 	(display->pssResources).demuxBuff = pvVar5;
 	(display->pssResources).demuxBuffSize = 0x30000;
-	puVar2 = (u_char*)edMemAllocAlign(1, 0xc000, 0x40);
+	puVar2 = (u_char*)edMemAllocAlign(H_MAIN, 0xc000, 0x40);
 	(display->pssResources).audioBuff = puVar2;
 	(display->pssResources).audioBuffSize = 0xc000;
 
 	pvVar5 = sceSifAllocIopHeap(0x6000);
 	(display->pssResources).iopBuff = (int)pvVar5;
 	(display->pssResources).iopBuffSize = 0x6000;
-	puVar2 = (u_char*)edMemAllocAlign(1, ZERO_BUFF_SIZE, 0x40);
+	puVar2 = (u_char*)edMemAllocAlign(H_MAIN, ZERO_BUFF_SIZE, 0x40);
 	(display->pssResources).zeroBuff = puVar2;
 	pvVar5 = sceSifAllocIopHeap(ZERO_BUFF_SIZE);
 	(display->pssResources).iopZeroBuff = (int)pvVar5;
@@ -1773,12 +1778,12 @@ void DestroyVideoFile(VideoFile* pVideo)
 	sceSifFreeIopHeap((void*)(pVideo->pssResources).iopBuff);
 	edMemFree((pVideo->pssResources).zeroBuff);
 	sceSifFreeIopHeap((void*)(pVideo->pssResources).iopZeroBuff);
-	EnableIntc(2);
-	EnableIntc(0);
-	//FUN_002b9b80((VidParams26*)0x0);
-	//FUN_002b9e00(0, 0, 0);
-	//FUN_002b9dd0((short)g_SetOffsetX, (short)g_SetOffsetY);
-	//RefreshScreenRender();
+	EnableIntc(INTC_VBLANK_S);
+	EnableIntc(INTC_GS);
+	SetupPCRTC_002b9b80((VidParams26*)0x0);
+	FUN_002b9e00(0, 0, 0);
+	SetVideoOffsets_002b9dd0((short)g_SetOffsetX, (short)g_SetOffsetY);
+	RefreshScreenRender();
 #endif
 	return;
 }
@@ -1926,7 +1931,7 @@ int main(int argc,char **argv)
 	SetupGame(argc, argv);
 	if (g_LevelScheduleManager_00449728->nextLevelID == 0xe) {
 		videoModeSpecifier = 'n';
-		if (g_omode == 3) {
+		if (g_omode == SCE_GS_PAL) {
 			videoModeSpecifier = 'p';
 		}
 

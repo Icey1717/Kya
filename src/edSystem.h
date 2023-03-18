@@ -3,7 +3,7 @@
 
 #include "Types.h"
 
-struct edHeap;
+struct edHeapEntry;
 
 typedef void EdSysFunc(int, int, char*);
 
@@ -12,6 +12,7 @@ enum edSysHandlerType
 	ESHT_Profile_1 = 0,
 	ESHT_LoadFile = 4,
 	ESHT_RenderScene = 6,
+	ESHT_Sound = 7,
 	ESHT_RenderUI = 10,
 };
 
@@ -39,7 +40,7 @@ extern edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[4];
 
 namespace edSystem
 {
-	extern edHeap* edSystemDataPtr_0042df0;
+	extern edHeapEntry* edSystemDataPtr_0042df0;
 };
 
 namespace edCSysHandlerPool
@@ -52,6 +53,8 @@ bool edSysHandlersAdd(edSysHandlersNodeTable* pNode, edSysHandlersPoolEntry** pa
 bool edSysHandlersCall(int typeA, edSysHandlersPoolEntry** pPool, int eventMax, int eventID, void* param_5);
 
 void FormatFilePath(char* dst, char* src, ...);
+
+edHeapEntry* GetHeap();
 
 extern int g_isNTSC;
 

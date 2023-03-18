@@ -2,6 +2,7 @@
 #define _EDCBANK_H
 
 #include "Types.h"
+#include "edMem.h"
 
 #include "edCBankBuffer.h"
 
@@ -28,7 +29,7 @@ struct BankFilePathContainer {
 	int fileFlagA;
 	int pObjectReference;
 	int fileFunc;
-	int heapID;
+	EHeap heapID;
 	int fileFlagE;
 };
 
@@ -43,7 +44,7 @@ struct edCBank {
 	int flagC;
 	struct TypePairData* pBankTypePairData;
 	int fileFlagA;
-	int heapID;
+	EHeap heapID;
 	undefined field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;
@@ -83,7 +84,7 @@ bool SetBankReadStream(class edCFiler_28* param_1, DebugBankData_234* pDebugBank
 
 void Init_edBank(void);
 
-char* ReadFileToBuffer(short heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData);
+char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData);
 bool DebugBankSeek(DebugBankData_234* pDebugBank, uint seekOffset, ESeekMode mode);
 bool DebugBankClose(DebugBankData_234* pDebugBank);
 bool SetBankClose(edCFiler_28* param_1, DebugBankData_234* pDataBank);

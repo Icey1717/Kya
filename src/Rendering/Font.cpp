@@ -1,15 +1,23 @@
 #include "Font.h"
 
-#ifndef PLATFORM_PS2
 #include <assert.h>
+
+#ifndef PLATFORM_PS2
 #include <corecrt_malloc.h>
 #include <corecrt_math.h>
 #else
 #include <math.h>
-#define assert(...)
 #endif
 #include "edText.h"
 #include "edDlist.h"
+#include "port/pointer_conv.h"
+#include "../edMem.h"
+
+#ifdef PLATFORM_WIN
+#define RESOLVE_FONT_SUB_DATA(a) (FontPacked_2C*)LOAD_SECTION(a)
+#else
+#define RESOLVE_FONT_SUB_DATA(a) a
+#endif
 
 extern FontPacked* g_PackedFontPtr_004324d0;
 FontFileData* g_ActiveFont_00448968;
@@ -72,7 +80,7 @@ void FontFileData::SetFontTextureData_0028d3e0(FontPacked* pPackedFont, bool bUp
 	if (pPackedFont == (FontPacked*)0x0) {
 		pPackedFont = g_PackedFontPtr_004324d0;
 	}
-	pPackedFont = pPackedFont;
+	this->pPackedFont = pPackedFont;
 	if (bUpdateSpacing != false) {
 #ifndef PLATFORM_PS2
 		assert(false);
@@ -856,7 +864,7 @@ Segment_1C_Packed* GetSegmentFloatData_0028cba0(FontPacked* pFontPacked, uint ch
 	int iVar4;
 	SegmentPacked* pSVar5;
 
-	pFVar1 = pFontPacked->pSubData;
+	pFVar1 = RESOLVE_FONT_SUB_DATA(pFontPacked->pSubData);
 	pSVar5 = pFVar1->pSegment;
 	iVar4 = 0;
 	if (pFVar1 != (FontPacked_2C*)0x0) {
@@ -889,7 +897,7 @@ float FUN_0028cc70(FontPacked* pFontPacked, ulong param_2, ulong param_3)
 	ushort uVar3;
 	int iVar4;
 
-	piVar1 = (int*)pFontPacked->pSubData->field_0x1c;
+	piVar1 = (int*)(RESOLVE_FONT_SUB_DATA(pFontPacked->pSubData))->field_0x1c;
 	if (piVar1 != (int*)0x0) {
 		puVar2 = (ushort*)piVar1[1];
 		iVar4 = *piVar1;
@@ -1522,7 +1530,7 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 									pFontPacked = pFVar9->pPackedFont;
 									ppcVar7 = GetSegmentFloatData_0028cba0(pFontPacked, (uint)bVar1);
 									if (ppcVar7 != (Segment_1C_Packed*)0x0) {
-										local_10.pMaterialInfoA = &pFontPacked->pSubData->materialInfo;
+										local_10.pMaterialInfoA = &(RESOLVE_FONT_SUB_DATA(pFontPacked->pSubData))->materialInfo;
 										if (bFlag == false) {
 											unaff_s7_lo = pFVar9->alpha;
 										}

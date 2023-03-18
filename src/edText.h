@@ -48,9 +48,10 @@ FontPacked {
 	char header[4];
 	short field_0x4;
 	short field_0x6;
-	struct FontPacked_2C* pSubData;
 #ifdef _WIN64
-	int padding[3];
+	int pSubData;
+#else
+	struct FontPacked_2C* pSubData;
 #endif
 	ushort field_0xc;
 	undefined field_0xe;

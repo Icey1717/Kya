@@ -12,6 +12,14 @@
 
 DisplayList* g_GuiDisplayListPtr_00449724;
 
+void DisplayListFunc_002d6340(void)
+{
+	if (g_GuiDisplayListPtr_00449724->bEnabled != 0) {
+		g_GuiDisplayListPtr_00449724->field_0x18 = 0;
+	}
+	return;
+}
+
 char* g_NewLine = "\n";
 char* sz_DisplayListSpacer_00433970 = "---------------------------------------- - \n";
 
@@ -142,7 +150,7 @@ void Setup_002cad90
 	return;
 }
 
-DisplayListInternal* AllocateDisplayListMemory_002caee0(short heapID, uint inFlags, int param_3, int param_4, int param_5, undefined8 param_6, DisplayListInternal* pInBuffer)
+DisplayListInternal* AllocateDisplayListMemory_002caee0(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, undefined8 param_6, DisplayListInternal* pInBuffer)
 {
 	int iVar1;
 	uint displayListMemSize;
@@ -214,7 +222,7 @@ void SetupDisplayLists(void)
 	//    pDVar2->field_0xc = 0x1000;
 	//    pDVar2->field_0x10 = 0;
 	//    pDVar2->field_0x1c = 0x11;
-	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(1, 0x11, 0x200, 0, 0x1000, 0, (char*)0x0);
+	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(H_MAIN, 0x11, 0x200, 0, 0x1000, 0, (char*)0x0);
 	//    pDVar2->pDisplayListInternal = pDVar3;
 	//    DisplayListInternal::SetStaticMeshMaster_002cb380(pDVar2->pDisplayListInternal, pSVar1);
 	//}
@@ -236,7 +244,7 @@ void SetupDisplayLists(void)
 	//    pDVar2->field_0xc = 0x80;
 	//    pDVar2->field_0x10 = 0;
 	//    pDVar2->field_0x1c = 0x11;
-	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(1, 0x11, 0x20, 0, 0x80, 0, (char*)0x0);
+	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(H_MAIN, 0x11, 0x20, 0, 0x80, 0, (char*)0x0);
 	//    pDVar2->pDisplayListInternal = pDVar3;
 	//    DisplayListInternal::SetStaticMeshMaster_002cb380(pDVar2->pDisplayListInternal, pSVar1);
 	//}
@@ -366,7 +374,7 @@ DisplayList::DisplayList(int inField_0x8, int inField_0xc, int inField_0x10, int
 	field_0xc = inField_0xc;
 	field_0x10 = inField_0x10;
 	field_0x1c = inField_0x1c;
-	pDVar3 = AllocateDisplayListMemory_002caee0(1, field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
+	pDVar3 = AllocateDisplayListMemory_002caee0(H_MAIN, field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
 	pDisplayListInternal = pDVar3;
 	SetStaticMeshMaster_002cb380(pDisplayListInternal, pInStaticMeshMaster);
 }
@@ -375,4 +383,31 @@ void DisplayList::Init()
 {
 	bEnabled = 1;
 	field_0x18 = 0;
+}
+
+void StaticMeshMaster::SetFlag_002a5400(uint flag)
+{
+	this->flags_0x4 = this->flags_0x4 | flag;
+}
+
+void StaticMeshMaster::SetFlag_002a5410(bool bValue)
+{
+	if (bValue == false) {
+		this->flags_0x4 = this->flags_0x4 & 0xffffffbf;
+	}
+	else {
+		this->flags_0x4 = this->flags_0x4 | 0x40;
+	}
+	return;
+}
+
+void StaticMeshMaster::SetFlag_002a5440(bool bValue)
+{
+	if (bValue == false) {
+		this->flags_0x4 = this->flags_0x4 & 0xffffff7f;
+	}
+	else {
+		this->flags_0x4 = this->flags_0x4 | 0x80;
+	}
+	return;
 }

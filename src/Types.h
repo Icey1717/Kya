@@ -313,9 +313,15 @@ inline void sceVu0MulMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FMATRIX m2
 
 #endif
 
+struct RenderCommand {
+	ulong cmdA;
+	ulong cmdB;
+};
+
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*
 
-void* GetScratchPadPtr_00424e10(void);
+extern int g_SetOffsetX;
+extern int g_SetOffsetY;
 
 #endif //_TYPES_H

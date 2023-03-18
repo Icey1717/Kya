@@ -57,6 +57,8 @@ set(main_src
 	"${src_root}/Rendering/DisplayListData.h"
 	"${src_root}/Rendering/CameraPanMasterHeader.cpp"
 	"${src_root}/Rendering/CameraPanMasterHeader.h"
+	"${src_root}/Rendering/CustomShell.cpp"
+	"${src_root}/Rendering/CustomShell.h"
 	"${src_root}/Rendering/Font.cpp"
 	"${src_root}/Rendering/Font.h"
 	"${src_root}/edC/edCBank.cpp"
@@ -89,6 +91,8 @@ set(main_src
 	"${src_root}/edVideo/VideoD.h"
 	"${src_root}/Camera.cpp"
 	"${src_root}/Camera.h"
+	"${src_root}/port/pointer_conv.cpp"
+	"${src_root}/port/pointer_conv.h"
 )
 
 set(ps2_src_root "ps2")
@@ -116,11 +120,20 @@ add_executable(Kya
 if (PS2)
 	message("Using src directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 
-	string(APPEND CMAKE_EXE_LINKER_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/ps2/app.cmd ${CMAKE_CURRENT_SOURCE_DIR}/ps2/crt0.o -mno-crt0")
+	add_custom_target(compile_crt0
+	COMMAND ${CMAKE_C_COMPILER} -c -xassembler-with-cpp -o ${CMAKE_CURRENT_SOURCE_DIR}/ps2/out/crt0.o ${CMAKE_CURRENT_SOURCE_DIR}/ps2/crt0.s
+	BYPRODUCTS "${CMAKE_CURRENT_SOURCE_DIR}/ps2/out/crt0.o"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ps2/crt0.s"
+	COMMENT "Compiling crt0.s"
+	)
+	
+	add_dependencies(Kya compile_crt0)
+
+	string(APPEND CMAKE_EXE_LINKER_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/ps2/app.cmd ${CMAKE_CURRENT_SOURCE_DIR}/ps2/out/crt0.o -mno-crt0")
 	set_target_properties(Kya PROPERTIES OUTPUT_NAME "kya.elf")
 	set_target_properties(Kya PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}")
 	#set(CMAKE_VERBOSE_MAKEFILE on)
-	
+
 	message("Making ISO")
 
 	add_custom_command(TARGET Kya POST_BUILD
@@ -171,3 +184,5 @@ else()
 
 	target_link_libraries(Kya port)
 endif()
+
+set(VS_STARTUP_PROJECT Kya)

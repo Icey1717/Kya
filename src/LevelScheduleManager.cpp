@@ -464,7 +464,7 @@ void LevelScheduleManager::OnBeginGame()
 	LevelInfo* pLVar12;
 	char local_80[128];
 
-	lVar2 = (SaveBigAlloc*)edMemAlloc(1, 0x10000);
+	lVar2 = (SaveBigAlloc*)edMemAlloc(H_MAIN, 0x10000);
 	/* Zero out most of load loop */
 	pSaveData_0x48 = lVar2;
 	pSaveDataEnd_0x4c = (int)(pSaveData_0x48 + 1);
@@ -712,7 +712,7 @@ void LevelScheduleManager::LoadStageOne()
 	   It loads in the level IOP bank for the specific level found in the level load
 	   master.
 	   Example: CDEURO/LEVEL/PREINTRO/LevelIOP.bnk */
-	//MemSetFlags(1, 0x100);
+	edMemSetFlags(H_MAIN, 0x100);
 	cachedNextLevelID = nextLevelID;
 	memset(&bankContainer, 0, 0x18);
 	edCBank_Setup(&levelIOPBank,
@@ -731,5 +731,5 @@ void LevelScheduleManager::LoadStageOne()
 	(levelIOPBank).pBankFileAccessObject = pBankBuffer;
 	loadStage_0x5b48 = 0;
 	edCBankBuffer_file_access((levelIOPBank).pBankFileAccessObject, &bankContainer);
-	//iVar2 = MemClearFlags(1, 0x100);
+	edMemClearFlags(H_MAIN, 0x100);
 }

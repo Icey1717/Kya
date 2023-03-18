@@ -4,11 +4,12 @@
 #include "Types.h"
 
 // Not here
-void FUN_002b8f70(struct VidModeData_30* param_1);
+void UpdateCameraCommands_002b8f70(struct FrameBuffer* param_1);
 int GetCanInterlace_002b8b90(void);
 void SetupDisplayGlobals_002b8c00(void);
 
-struct VidModeData_30* AllocateVidModeData30_002bbb90(struct VidModeData* param_1);
-int GetZbufferData_002bbee0(int mode);
+struct FrameBuffer* AllocateFrameBuffers_002bbb90(struct VidModeData* param_1);
+int GetZBufferTextureFormat(int mode);
+void DestroyFrameBuffer_002bbd40(FrameBuffer* pFrameBuffer);
 
 #endif //VIDEO_C_H

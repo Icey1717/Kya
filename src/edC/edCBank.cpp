@@ -1,6 +1,5 @@
 #include "edCBank.h"
 
-#include "edMem.h"
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -354,7 +353,7 @@ bool DebugBankClose(DebugBankData_234* pDebugBank)
 	return bVar1;
 }
 
-char* ReadFileToBuffer(short heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData)
+char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData)
 {
 	byte bVar1;
 	DebugBankData_234* pDebugBank;
@@ -406,8 +405,7 @@ char* ReadFileToBuffer(short heapID, char* filePath, uint flags, DebugBankData_2
 						UsedInFileLoad(pDebugBank, __dest + 0x800, size - 0x800);
 						CompleteRead_0025bcc0();
 						if (__n != size) {
-							assert(false);
-							//edMemShrink(__dest, __n);
+							edMemShrink(__dest, __n);
 						}
 					}
 					if (outLoadedData == (DebugBankData_234**)0x0) {
@@ -442,8 +440,8 @@ void edCBank_Setup(edCBank* pBankObj, int size, int param_3, BankFilePathContain
 	pBankObj->flagC = 0;
 	pBankObj->firstField = 0;
 	pBankObj->heapID = bankPathContainer->heapID;
-	if (pBankObj->heapID == 0) {
-		pBankObj->heapID = 1;
+	if (pBankObj->heapID == H_INVALID) {
+		pBankObj->heapID = H_MAIN;
 	}
 	if (g_edCBank_DebugAllowNoWait_00448900 == 0) {
 		pBankObj->fileFlagA = pBankObj->fileFlagA & 0xfffffffb;
@@ -489,7 +487,7 @@ void edCBank_Setup(edCBank* pBankObj, int size, int param_3, BankFilePathContain
 		if ((pBankObj->fileFlagA & 4U) != 0) {
 			uVar5 = 9;
 		}
-		piVar3 = (int*)ReadFileToBuffer((short)pBankObj->heapID, bankPathContainer->filePath, uVar5, &peVar2->pLoadedData);
+		piVar3 = (int*)ReadFileToBuffer(pBankObj->heapID, bankPathContainer->filePath, uVar5, &peVar2->pLoadedData);
 		peVar2->field_0x4 = piVar3;
 		peVar2->fileBuffer = (char*)(piVar3 + 2);
 		peVar2->field_0x14 = piVar3[0x11];

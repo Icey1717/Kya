@@ -10,7 +10,28 @@
 #ifdef PLATFORM_WIN
 typedef ulong tGS_DISPFB2;
 typedef ulong tGS_DISPFB1;
-typedef ulong tGS_DISPLAY2;
+
+/*
+ * Bitfield Structure
+ */
+typedef struct {
+	unsigned DX : 12;   /* */
+	unsigned DY : 11;   /* */
+	unsigned MAGH : 4;   /* */
+	unsigned MAGV : 2;   /* */
+	unsigned p0 : 3;
+	unsigned DW : 12;   /* */
+	unsigned DH : 11;   /* */
+	unsigned p1 : 9;
+} tGS_DISPLAY2;
+
+#define GS_DISPLAY2_DX_O    ( 0)
+#define GS_DISPLAY2_DY_O    (12)
+#define GS_DISPLAY2_MAGH_O  (23)
+#define GS_DISPLAY2_MAGV_O  (27)
+#define GS_DISPLAY2_DW_O    (32)
+#define GS_DISPLAY2_DH_O    (44)
+
 typedef ulong tGS_DISPLAY1;
 #endif
 
@@ -34,8 +55,8 @@ struct VidParams26 {
 	byte inter;
 	byte field_0xb;
 	byte field_0xc;
-	byte field_0xd;
-	byte field_0xe;
+	byte bVSyncForever;
+	byte maxVblank_0xe;
 	byte field_0xf;
 	char field_0x10[4];
 	int field_0x14;
@@ -46,11 +67,11 @@ struct VidParams26 {
 struct VidParams18 {
 	short gs_pmode;
 	short gs_smode2;
-	short field_0x4;
-	short field_0x6;
-	short field_0x8;
-	short field_0xa;
-	uint field_0xc;
+	short DX;
+	short DY;
+	short DH;
+	short MAGH;
+	uint unused_0xc;
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
@@ -64,7 +85,7 @@ struct VidParams18 {
 struct VidModeData_20 {
 	tGS_DISPFB2 dispfb2;
 	tGS_DISPFB1 dispfb1;
-	byte field_0x10;
+	byte csrValue_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
 	undefined field_0x13;
@@ -82,21 +103,21 @@ struct VidModeData_20 {
 	undefined field_0x1f;
 };
 
-struct VidModeData_30 {
+struct FrameBuffer {
 	struct VidModeData* pVidModeData_0x0;
 	undefined field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
-	uint size_0x8;
+	uint frameBasePtr;
 	char* data_0xc;
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
 	undefined field_0x13;
-	struct VideModeData_30_30* pVidModeData30_30;
+	struct ZBufferTags* pZTags;
 	struct VidModeData_20* pVidModeData20;
-	struct VidModeData_30* pLink_0x1c;
+	struct FrameBuffer* pNext;
 	undefined field_0x20;
 	undefined field_0x21;
 	undefined field_0x22;
@@ -141,11 +162,11 @@ struct edVideoData {
 	undefined field_0x3f;
 	tGS_DISPLAY2 disp2;
 	tGS_DISPLAY1 disp1;
-	byte field_0x50;
-	byte field_0x51;
+	byte vblankCount;
+	byte bWaitingForVSync;
 	byte field_0x52;
 	undefined field_0x53;
-	uint field_0x54;
+	uint lastCount;
 	undefined field_0x58;
 	undefined field_0x59;
 	undefined field_0x5a;
@@ -154,7 +175,7 @@ struct edVideoData {
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	struct VidModeData_30* data30;
+	struct FrameBuffer* pFrameBuffer;
 	struct CameraObj_28* pCamera;
 	byte field_0x68;
 	byte field_0x69;
@@ -191,27 +212,23 @@ struct edVideoData {
 struct VidModeData {
 	ushort screenWidth;
 	ushort screenHeight;
-	ushort mode_0x4;
+	ushort pixelStoreMode;
 	ushort field_0x6;
-	ushort field_0x8;
-	char field_0xa;
-	byte count_0xb;
-	struct VidModeData_30* pLink_0xc;
+	ushort flags_0x8;
+	bool bUseGlobalFrameBuffer;
+	byte frameBufferCount;
+	struct FrameBuffer* pLink_0xc;
 };
 
-struct VideModeData_30_30 {
-	undefined8 field_0x0;
-	undefined8 field_0x8;
-	ulong field_0x10;
-	undefined8 field_0x18;
-	undefined8 field_0x20;
-	undefined8 field_0x28;
+struct ZBufferTags {
+	RenderCommand commandBuffer[3];
 };
 
-void SetActiveVidModeData_002b9b10(VidModeData_30* param_1);
+void SetActiveFrameBuffer_002b9b10(FrameBuffer* param_1);
 void SetupPCRTC_002b9b80(VidParams26* param_1);
 VidParams8* GetVidParams8_002b9e60(void);
 void Init_edVideo_002b9e70(void);
+void ResetVideoData_002ba560(void);
 
 extern VidParams8 g_VidParams8_00449588;
 extern edVideoData g_ActiveVidParams_0048cd90;

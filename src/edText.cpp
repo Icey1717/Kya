@@ -3,6 +3,8 @@
 #include "ed3D.h"
 #include "TextIconDictionary.h"
 
+#include "port/pointer_conv.h"
+
 FontPacked* g_PackedFontPtr_004324d0 = (FontPacked*)g_PackedFontData_0041f290;
 
 
@@ -23,27 +25,32 @@ bool FontSetup_Internal(FontPacked* pFont)
 		if ((((pFont->header[0] == 'M') && (pFont->header[1] == 'K')) && (pFont->header[2] == 'F')) && (pFont->header[3] == 'N')) {
 			if ((pFont->field_0x4 == 2) && (pFont->field_0x6 == 0)) {
 				bVar2 = false;
-				if (pFont->pSubData == (FontPacked_2C*)0x0) {
+				if ((FontPacked_2C*)pFont->pSubData == (FontPacked_2C*)0x0) {
 					pFVar3 = new FontPacked_2C();
+
+#ifdef PLATFORM_WIN
+					pFont->pSubData = STORE_SECTION(pFVar3);
+#else
 					pFont->pSubData = pFVar3;
-					if (pFont->pSubData == (FontPacked_2C*)0x0) {
+#endif
+					if ((FontPacked_2C*)pFont->pSubData == (FontPacked_2C*)0x0) {
 						bVar2 = false;
 					}
 					else {
-						pFont->pSubData->pTextureInfo = (TextureInfoSmall*)0x0;
-						pFont->pSubData->field_0x1c = (void*)0x0;
-						pFont->pSubData->field_0x20 = (void*)0x0;
-						pFont->pSubData->field_0x4 = (void*)0x0;
-						pFont->pSubData->pGlyphData = (void*)0x0;
-						pFont->pSubData->pOverrideData = (ushort*)0x0;
+						pFVar3->pTextureInfo = (TextureInfoSmall*)0x0;
+						pFVar3->field_0x1c = (void*)0x0;
+						pFVar3->field_0x20 = (void*)0x0;
+						pFVar3->field_0x4 = (void*)0x0;
+						pFVar3->pGlyphData = (void*)0x0;
+						pFVar3->pOverrideData = (ushort*)0x0;
 						if (((pFont->glyphHeader[0] == 'G') && (pFont->glyphHeader[1] == 'L')) && ((pFont->glyphHeader[2] == 'Y' && (pFont->glyphHeader[3] == 'F')))) {
-							pFont->pSubData->pGlyphData = pFont + 1;
+							pFVar3->pGlyphData = pFont + 1;
 							pcVar5 = pFont[1].header + (uint)pFont->count_0x18 * 4;
-							pFont->pSubData->field_0x4 = pcVar5;
+							pFVar3->field_0x4 = pcVar5;
 							pcVar5 = pcVar5 + (uint)pFont->field_0x10 * 0x1c;
 							if ((pFont->field_0xc & 0xc) == 0) {
-								pFont->pSubData->field_0x1c = (void*)0x0;
-								pFont->pSubData->field_0x20 = (void*)0x0;
+								pFVar3->field_0x1c = (void*)0x0;
+								pFVar3->field_0x20 = (void*)0x0;
 							}
 							else {
 								if ((((*pcVar5 != 'K') || (pcVar5[1] != 'E')) || (pcVar5[2] != 'R')) || (pcVar5[3] != 'N')) {
@@ -51,14 +58,14 @@ bool FontSetup_Internal(FontPacked* pFont)
 								}
 								pcVar5 = pcVar5 + 4;
 								if ((pFont->field_0xc & 4) != 0) {
-									pFont->pSubData->field_0x1c = pcVar5;
+									pFVar3->field_0x1c = pcVar5;
 								}
 								if ((pFont->field_0xc & 8) != 0) {
-									pFont->pSubData->field_0x20 = pcVar5;
+									pFVar3->field_0x20 = pcVar5;
 								}
 							}
 							if (((*pcVar5 == 'S') && (pcVar5[1] == 'E')) && ((pcVar5[2] == 'G' && (pcVar5[3] == 'M')))) {
-								pFont->pSubData->pSegment = (SegmentPacked*)(pcVar5 + 4);
+								pFVar3->pSegment = (SegmentPacked*)(pcVar5 + 4);
 								pSVar6 = (PagePacked*)((SegmentPacked*)(pcVar5 + 4) + pFont->pageOffset);
 								if (((pSVar6->header[0] == 'P') && (pSVar6->header[1] == 'A')) && ((pSVar6->header[2] == 'G' && (pSVar6->header[3] == 'E')))) {
 #ifdef PLATFORM_PS2
@@ -68,8 +75,8 @@ bool FontSetup_Internal(FontPacked* pFont)
 									pcVar5 = (char*)((unsigned long long)intPtr & 0xfffffffffffffff0);
 #endif
 									pTVar4 = ed3D::LoadTextureFromBuffer(pcVar5, *(int*)(pcVar5 + 8), &iStack4, (TextureInfoSmall*)0x0, 0);
-									pFont->pSubData->pTextureInfo = pTVar4;
-									ed3D::GetMaterialInfoFromTexture(&pFont->pSubData->materialInfo, 0, pFont->pSubData->pTextureInfo, 2);
+									pFVar3->pTextureInfo = pTVar4;
+									ed3D::GetMaterialInfoFromTexture(&pFVar3->materialInfo, 0, pFVar3->pTextureInfo, 2);
 									bVar2 = true;
 								}
 								else {

@@ -4,6 +4,22 @@
 #include "Types.h"
 #include "Rendering/DisplayListData.h"
 
+struct edSysHandlerDisplayList {
+
+	edSysHandlerDisplayList(struct edSysHandlersNodeTable* inNodeParent, int inMaxEventID, int inMainIdentifier)
+		: nodeParent(inNodeParent)
+		, maxEventID(inMaxEventID)
+		, mainIdentifier(inMainIdentifier)
+	{
+
+	}
+
+	struct edSysHandlersNodeTable* nodeParent;
+	struct edSysHandlersPoolEntry* entries[5];
+	int maxEventID;
+	int mainIdentifier;
+};
+
 struct DisplayList_0x10 {
 	undefined field_0x0;
 	undefined field_0x1;
@@ -55,6 +71,15 @@ struct CameraObj_28;
 
 namespace edDlist
 {
+	typedef enum DL_LINK_MODE {
+		LM_CALL = 2,
+		LM_FUNC = 4,
+		LM_REF_0 = 0,
+		LM_REF_1 = 5,
+		LM_RELINK = 1,
+		LM_SKIP = 3
+	} DL_LINK_MODE;
+
 	extern DisplayList_0x10* g_DisplayListPtr_0044965c;
 	extern int g_DisplayListObjCount_004250e0;
 	extern int MaterialDisplayListCount_00449648;
@@ -66,6 +91,7 @@ namespace edDlist
 	extern DisplayListData DisplayListData_004496a0;
 	extern int g_HasUIData_00448a88;
 	extern int INT_00449654;
+	extern edSysHandlerDisplayList sysHandler_0048cb90;
 
 	void Init(void);
 
@@ -83,6 +109,7 @@ namespace edDlist
 	void RenderCommand_002ca930(CameraObj_28* pCamera);
 
 	void WillSetActiveDisplayList_002cac70(DisplayListInternal* param_1);
+	bool WillSetActiveDisplayList_00290cb0(CameraPanMasterHeader* pCameraPanHeader, DisplayListInternal* pDisplayList);
 
 	void MeshDrawCommands_002ca170(float x, float y, float z, ulong mode, int count);
 

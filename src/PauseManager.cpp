@@ -80,7 +80,7 @@ void DrawLoadingScreen_001b05e0(void)
 		if (bVar2 != false) {
 			InitFontData_0028d430(&FStack192);
 			pNewFont = SetActiveFontData(&FStack192);
-			FStack192.SetFontTextureData_0028d3e0(NULL, 0);
+			FStack192.SetFontTextureData_0028d3e0(g_MenuFont_00449754, 0);
 
 			FStack192.SetFontFlag_0028d340(0x100);
 			FStack192.alpha = FStack192.alpha & 0xff;
@@ -101,7 +101,7 @@ void DrawLoadingScreen_001b05e0(void)
 				//DrawTextB_0028a710((float)g_ScreenWidth * 0.5, (float)g_ScreenHeight * 0.5, &drawTextParams);
 			}
 			SetActiveFontData(pNewFont);
-			//DisplayListFunc_002d6340();
+			DisplayListFunc_002d6340();
 			//RunInPlaceDestructors_002173e0(drawTextParams.fontData_0x850, Free_00166e40, 0xc0, 0x11);
 		}
 	}
