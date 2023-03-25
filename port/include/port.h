@@ -276,6 +276,25 @@ struct Gif_Tag {
 #define SCE_GS_ZBUF_1       0x4e
 #define SCE_GS_ZBUF_2       0x4f
 
+	/*-- inter-buffer transfer reg. --*/
+#define SCE_GS_BITBLTBUF    0x50
+#define SCE_GS_TRXPOS       0x51
+#define SCE_GS_TRXREG       0x52
+#define SCE_GS_TRXDIR       0x53
+#define SCE_GS_HWREG        0x54
+
+	/*-- other reg. --*/
+#define SCE_GS_SIGNAL       0x60
+#define SCE_GS_FINISH       0x61
+#define SCE_GS_LABEL        0x62
+#define SCE_GS_NOP          0x7f
+
+#define SCE_GS_SET_ALPHA_1  SCE_GS_SET_ALPHA
+#define SCE_GS_SET_ALPHA_2  SCE_GS_SET_ALPHA
+#define SCE_GS_SET_ALPHA(a, b, c, d, fix) \
+    ((ulong)(a)       | ((ulong)(b) << 2)     | ((ulong)(c) << 4) | \
+    ((ulong)(d) << 6) | ((ulong)(fix) << 32))
+
 #define SCE_GS_SET_FRAME(fbp, fbw, psm, fbmask) \
     ((ulong)(fbp)        | ((ulong)(fbw) << 16) | \
     ((ulong)(psm) << 24) | ((ulong)(fbmask) << 32))
@@ -297,6 +316,35 @@ struct Gif_Tag {
 #define SCE_GS_SET_SCISSOR(scax0, scax1, scay0, scay1) \
     ((ulong)(scax0)        | ((ulong)(scax1) << 16) | \
     ((ulong)(scay0) << 32) | ((ulong)(scay1) << 48))
+
+#define SCE_GS_ALPHA_CS			(0)
+#define SCE_GS_ALPHA_CD			(1)
+#define SCE_GS_ALPHA_ZERO		(2)
+#define SCE_GS_ALPHA_AS			(0)
+#define SCE_GS_ALPHA_AD			(1)
+#define SCE_GS_ALPHA_FIX		(2)
+
+#define SCE_GS_PRIM_POINT		(0)
+#define SCE_GS_PRIM_LINE		(1)
+#define SCE_GS_PRIM_LINESTRIP		(2)
+#define SCE_GS_PRIM_TRI			(3)
+#define SCE_GS_PRIM_TRISTRIP		(4)
+#define SCE_GS_PRIM_TRIFAN		(5)
+#define SCE_GS_PRIM_SPRITE		(6)
+#define SCE_GS_PRIM_IIP			(1<<3)
+#define SCE_GS_PRIM_TME			(1<<4)
+#define SCE_GS_PRIM_FGE			(1<<5)
+#define SCE_GS_PRIM_ABE			(1<<6)
+#define SCE_GS_PRIM_AA1			(1<<7)
+#define SCE_GS_PRIM_FST			(1<<8)
+#define SCE_GS_PRIM_CTXT1		(0)
+#define SCE_GS_PRIM_CTXT2		(1<<9)
+#define SCE_GS_PRIM_FIX			(1<<10)
+
+#define SCE_GS_SET_PRIM(prim, iip, tme, fge, abe, aa1, fst, ctxt, fix) \
+    ((ulong)(prim)      | ((ulong)(iip) << 3)  | ((ulong)(tme) << 4) | \
+    ((ulong)(fge) << 5) | ((ulong)(abe) << 6)  | ((ulong)(aa1) << 7) | \
+    ((ulong)(fst) << 8) | ((ulong)(ctxt) << 9) | ((ulong)(fix) << 10))
 
 #define SCE_GS_SET_PRMODECONT(ac) ((ulong)(ac))
 #define SCE_GS_SET_COLCLAMP(clamp) ((ulong)(clamp))

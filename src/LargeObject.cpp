@@ -38,10 +38,10 @@ FrameBuffer* AllocateFrameBuffer_002b7100(VidModeData* pVidModeData)
 	ZBufferTags* pTags;
 	int zBufferFormat;
 
-	pVidModeCopy = (VidModeData*)edMemAlloc(H_MAIN, sizeof(VidModeData));
+	pVidModeCopy = (VidModeData*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(VidModeData));
 	*pVidModeCopy = *pVidModeData;
 
-	pFrameBuffer = (FrameBuffer*)edMemAlloc(H_MAIN, sizeof(FrameBuffer));
+	pFrameBuffer = (FrameBuffer*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(FrameBuffer));
 	memset(pFrameBuffer, 0, sizeof(FrameBuffer));
 
 	pFrameBuffer->pVidModeData_0x0 = pVidModeCopy;
@@ -52,7 +52,7 @@ FrameBuffer* AllocateFrameBuffer_002b7100(VidModeData* pVidModeData)
 		pFrameBuffer->data_0xc = (char*)ed3D::g_FrameBufferPtr_004491f0;
 	}
 	if ((pVidModeData->flags_0x8 & 8) != 0) {
-		pTags = (ZBufferTags*)edMemAlloc(H_MAIN, sizeof(ZBufferTags));
+		pTags = (ZBufferTags*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
 		pFrameBuffer->pZTags = pTags;
 
 		// TAG

@@ -84,7 +84,7 @@ void Link_00290c10(CameraPanMasterHeader* param_1)
 	if (param_1->field_0x10 == 0) {
 		if ((CameraPanMasterHeader*)param_1->pLoadedData != param_1) {
 			pMVar1 = param_1->pCameraPanHeader_0xc;
-			param_1->pCameraPanStatic_0x8->pSubMeshParent = (MeshTransformParent*)pMVar1->field_0x4;
+			param_1->pCameraPanStatic_0x8->pNext = (MeshTransformParent*)pMVar1->field_0x4;
 			pMVar1->field_0x4 = param_1->pLoadedData;
 			pMVar1->usedCount = pMVar1->usedCount - param_1->count_0x14;
 			param_1->count_0x14 = 0;
@@ -100,7 +100,7 @@ void Link_00290c10(CameraPanMasterHeader* param_1)
 	return;
 }
 
-CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, EHeap heapID)
+CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, void* heapID)
 {
 	bool bVar1;
 	CameraPanMasterHeader* pCVar2;

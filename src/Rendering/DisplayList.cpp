@@ -222,7 +222,7 @@ void SetupDisplayLists(void)
 	//    pDVar2->field_0xc = 0x1000;
 	//    pDVar2->field_0x10 = 0;
 	//    pDVar2->field_0x1c = 0x11;
-	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(H_MAIN, 0x11, 0x200, 0, 0x1000, 0, (char*)0x0);
+	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(TO_HEAP(H_MAIN), 0x11, 0x200, 0, 0x1000, 0, (char*)0x0);
 	//    pDVar2->pDisplayListInternal = pDVar3;
 	//    DisplayListInternal::SetStaticMeshMaster_002cb380(pDVar2->pDisplayListInternal, pSVar1);
 	//}
@@ -244,7 +244,7 @@ void SetupDisplayLists(void)
 	//    pDVar2->field_0xc = 0x80;
 	//    pDVar2->field_0x10 = 0;
 	//    pDVar2->field_0x1c = 0x11;
-	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(H_MAIN, 0x11, 0x20, 0, 0x80, 0, (char*)0x0);
+	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(TO_HEAP(H_MAIN), 0x11, 0x20, 0, 0x80, 0, (char*)0x0);
 	//    pDVar2->pDisplayListInternal = pDVar3;
 	//    DisplayListInternal::SetStaticMeshMaster_002cb380(pDVar2->pDisplayListInternal, pSVar1);
 	//}
@@ -374,7 +374,7 @@ DisplayList::DisplayList(int inField_0x8, int inField_0xc, int inField_0x10, int
 	field_0xc = inField_0xc;
 	field_0x10 = inField_0x10;
 	field_0x1c = inField_0x1c;
-	pDVar3 = AllocateDisplayListMemory_002caee0(H_MAIN, field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
+	pDVar3 = AllocateDisplayListMemory_002caee0(TO_HEAP(H_MAIN), field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
 	pDisplayListInternal = pDVar3;
 	SetStaticMeshMaster_002cb380(pDisplayListInternal, pInStaticMeshMaster);
 }

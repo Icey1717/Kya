@@ -35,6 +35,55 @@ TimeController* GetTimeController(void)
 	return &g_TimeController_004516d0;
 }
 
+#ifdef PLATFORM_PS2
+uint UINT_00449178 = 0;
+uint UINT_0044917c = 0;
+
+unsigned int GetCountValue_Time(void)
+{
+	unsigned int i;
+
+	__asm__ volatile (" mfc0 %0, $09" : "=r"(i));
+
+	return i;
+}
+
+uint GetFrameTime_00291b80(void)
+{
+	uint uVar1;
+	int iVar2;
+
+	iVar2 = 0;
+	uVar1 = GetCountValue_Time() / 0x48000;
+	if (uVar1 < UINT_0044917c) {
+		iVar2 = 0x38e3;
+	}
+	UINT_00449178 = UINT_00449178 + ((uVar1 + iVar2) - UINT_0044917c);
+	UINT_0044917c = uVar1;
+	return UINT_00449178;
+}
+#endif
+
+float GetFrameTime_00291c40(void)
+{
+#ifdef PLATFORM_PS2
+	uint uVar1;
+	float fVar2;
+
+	uVar1 = GetFrameTime_00291b80();
+	if ((int)uVar1 < 0) {
+		fVar2 = (float)(uVar1 >> 1 | uVar1 & 1);
+		fVar2 = fVar2 + fVar2;
+	}
+	else {
+		fVar2 = (float)uVar1;
+	}
+	return fVar2 / 1000.0;
+#else
+	return 0.0f;
+#endif
+}
+
 float TimeController::UpdateDeltaTime()
 {
 	float currentTime;
@@ -50,7 +99,7 @@ float TimeController::UpdateDeltaTime()
 	cutsceneDeltaTime = frameTime * timeScale;
 	totalTime = totalTime + frameTime;
 	scaledTotalTime = scaledTotalTime + frameTime * timeScale;
-	currentTime = 0.0f; // thunk_FUN_00291c40();
+	currentTime = GetFrameTime_00291c40();
 	frameDelta = currentTime - totalPlayTime;
 	totalPlayTime = currentTime;
 	return currentTime;

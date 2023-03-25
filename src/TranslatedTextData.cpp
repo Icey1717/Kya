@@ -75,7 +75,7 @@ char* g_LanguageSuffixArray_00425840[5] = {
 
 ELanguageID g_LanguageID_0044974c = GB;
 short SHORT_00448fce = 0;
-EHeap EHeap_00448fc8 = H_MAIN;
+EHeap EHeap_00448fc8 = TO_HEAP(H_MAIN);
 short SHORT_00448fcc = 0x40;
 
 char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
@@ -117,7 +117,7 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 			pReadBuffer = (char*)edMemAlloc(EHeap_00448fc8, *outSize, (uint)(ushort)SHORT_00448fcc,
 				(uint)(ushort)SHORT_00448fce);
 			SHORT_00448fce = 0;
-			EHeap_00448fc8 = H_MAIN;
+			EHeap_00448fc8 = TO_HEAP(H_MAIN);
 			SHORT_00448fcc = 0x40;
 			peVar4 = peVar2->GetGlobalC_0x1c();
 			SetBankReadStream(peVar4, pDebugBank, pReadBuffer, *outSize);
@@ -291,4 +291,20 @@ char* TranslatedTextData::GetText_00336c10(ulong key, long mode)
 	MY_LOG("TranslatedTextData::GetText_00336c10 %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
 
 	return pcVar1;
+}
+
+char* FindTranslatedTextFromKey_00336970(TranslatedTextData** ppTextData, ulong key)
+{
+	char* pcVar1;
+	TranslatedTextData* pTextData;
+
+	if (key != 0) {
+		for (pTextData = *ppTextData; pTextData != (TranslatedTextData*)0x0; pTextData = pTextData->pNext) {
+			pcVar1 = pTextData->GetText_00336c10(key, 1);
+			if (pcVar1 != (char*)0x0) {
+				return pcVar1;
+			}
+		}
+	}
+	return g_szTextNotFound_00434bf0;
 }

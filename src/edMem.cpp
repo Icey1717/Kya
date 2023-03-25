@@ -98,7 +98,7 @@ int edMemGetMemoryAvailable(EHeap heapID)
 	// Might wanna check this is actually working.
 	assert(false);
 
-	if (heapID == H_INVALID) {
+	if (heapID == TO_HEAP(H_INVALID)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemGetMemoryAvailable);
 	}
 	pHeap = GetHeap((void*)heapID);
@@ -162,13 +162,13 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 	edHeapEntry* pHeap;
 	void* pNewAllocation;
 
-	if (heapID == H_INVALID) {
+	if (heapID == TO_HEAP(H_INVALID)) {
 		/* edMemAllocAlign */
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, "edMemAllocAlign");
 		pNewAllocation = (void*)0x0;
 	}
 	else {
-		if ((heapID == H_MEMKIT) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
+		if ((heapID == TO_HEAP(H_MEMKIT)) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
 			PrintString(g_szMemkitWarning);
 			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
 		}
@@ -187,13 +187,13 @@ void* edMemAlloc(EHeap heap, size_t size, int align, int offset)
 
 	MY_LOG("edMemAlloc id: %d, size: %d, align: %d, offset: %d\n", heap, size, align, offset);
 
-	if (heap == H_INVALID) {
+	if (heap == TO_HEAP(H_INVALID)) {
 		/* edMemAlloc */
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemAlloc_00432508);
 		pNewAllocation = (void*)0x0;
 	}
 	else {
-		if ((heap == H_MEMKIT) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
+		if ((heap == TO_HEAP(H_MEMKIT)) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
 			PrintString(g_szMemkitWarning);
 			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
 		}
@@ -858,7 +858,7 @@ void edMemSetFlags(EHeap heapID, ushort newFlags)
 	edHeapEntry* pHeap;
 	ushort uVar1;
 
-	if (heapID == H_INVALID) {
+	if (heapID == TO_HEAP(H_INVALID)) {
 		/* emSetFlags */
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemSetFlags_00432b28);
 	}
@@ -879,7 +879,7 @@ void edMemClearFlags(EHeap heapID, ushort flags)
 	edHeapEntry* pHeap;
 	ushort uVar2;
 
-	if (heapID == H_INVALID) {
+	if (heapID == TO_HEAP(H_INVALID)) {
 		/* edMemClearFlags */
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemClearFlags_00432b40);
 	}
@@ -1089,7 +1089,7 @@ void* AllocateFunc_001002a0(size_t size)
 {
 	void* pvVar1;
 
-	pvVar1 = edMemAlloc(H_MAIN, size);
+	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), size);
 	return pvVar1;
 }
 
@@ -1097,7 +1097,7 @@ void* Allocate(long amount)
 {
 	void* pvVar1;
 
-	pvVar1 = edMemAlloc(H_MAIN, (int)amount);
+	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), (int)amount);
 	return pvVar1;
 }
 

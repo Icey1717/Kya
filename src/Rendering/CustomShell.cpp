@@ -12,12 +12,6 @@
 
 #define CHCR_STR 0x100
 
-struct DMA_Register_Struct {
-	uint* CHCR;
-	uint MADR;
-	uint QWC;
-};
-
 DMA_Register_Struct DMA_Registers[10] =
 {
 	/* DMAC */
@@ -81,12 +75,6 @@ DMA_Register_Struct DMA_Registers[10] =
 		0x0
 	},
 };
-
-#ifdef PLATFORM_PS2
-#define SYNC(...) __asm__ volatile(" sync.l ")
-#else
-#define SYNC(...)
-#endif
 
 void Reset_00257f90(void)
 {

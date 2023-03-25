@@ -219,7 +219,7 @@ struct CameraPanStatic_50 {
 	undefined4 field_0xe4;
 	undefined4 field_0xe8;
 	undefined4 field_0xec;
-	uint3 field_0xf0;
+	uint3 fogCol_0xf0;
 	undefined field_0xf3;
 	undefined field_0xf4;
 	undefined field_0xf5;
@@ -278,8 +278,8 @@ struct StaticMeshMaster {
 	undefined field_0x1a1;
 	undefined field_0x1a2;
 	undefined field_0x1a3;
-	//struct CameraPanMasterHeader* pFinalLink_0x1a4;
-	//struct CameraPanMasterHeader* field_0x1a8;
+	struct CameraPanMasterHeader* pFinalLink_0x1a4;
+	struct CameraPanMasterHeader* field_0x1a8;
 	undefined field_0x1ac;
 	undefined field_0x1ad;
 	undefined field_0x1ae;

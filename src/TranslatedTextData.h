@@ -130,6 +130,9 @@ public:
 	struct TranslatedTextData* pNext;
 };
 
+char* FindTranslatedTextFromKey_00336970(TranslatedTextData** ppTextData, ulong key);
+
 extern ELanguageID g_LanguageID_0044974c;
+extern TranslatedTextData* g_TranslatedTextTRC_00449748;
 
 #endif //TRANSLATED_TEXT_DATA

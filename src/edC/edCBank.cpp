@@ -440,8 +440,8 @@ void edCBank_Setup(edCBank* pBankObj, int size, int param_3, BankFilePathContain
 	pBankObj->flagC = 0;
 	pBankObj->firstField = 0;
 	pBankObj->heapID = bankPathContainer->heapID;
-	if (pBankObj->heapID == H_INVALID) {
-		pBankObj->heapID = H_MAIN;
+	if (pBankObj->heapID == TO_HEAP(H_INVALID)) {
+		pBankObj->heapID = TO_HEAP(H_MAIN);
 	}
 	if (g_edCBank_DebugAllowNoWait_00448900 == 0) {
 		pBankObj->fileFlagA = pBankObj->fileFlagA & 0xfffffffb;

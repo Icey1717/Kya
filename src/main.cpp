@@ -650,7 +650,7 @@ void edPsx2ModuleLoad(char* pModulesName)
 	else {
 		nbyte = sceLseek(iVar4, 0, 2);
 		sceLseek(iVar4, 0, 0);
-		buf = (byte*)edMemAllocAlign(H_MAIN, nbyte, 0x40);
+		buf = (byte*)edMemAllocAlign(TO_HEAP(H_MAIN), nbyte, 0x40);
 		sceRead(iVar4, buf, nbyte);
 		sceClose(iVar4);
 		pModule = (edModule*)(buf + 4);
@@ -878,7 +878,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 				if (outSize != (uint*)0x0) {
 					*outSize = size;
 				}
-				unaff_s3_lo = (char*)edMemAlloc(H_MAIN, (long)(int)size);
+				unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
 				if (unaff_s3_lo != (char*)0x0) {
 					sceLseek(iVar1, 0, 0);
 					sceRead(iVar1, unaff_s3_lo, size);
@@ -897,7 +897,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 			if (outSize != (uint*)0x0) {
 				*outSize = size;
 			}
-			unaff_s3_lo = (char*)edMemAlloc(H_MAIN, (long)(int)size);
+			unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
 			if (unaff_s3_lo != (char*)0x0) {
 				sceLseek(iVar1, 0, 0);
 				sceRead(iVar1, unaff_s3_lo, size);
@@ -916,7 +916,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 			*outSize = size;
 		}
 
-		unaff_s3_lo = (char*)edMemAlloc(H_MAIN, (long)(int)size);
+		unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
 		if (unaff_s3_lo != (char*)0x0) {
 			fseek(fp, 0, SEEK_SET);
 			fread(unaff_s3_lo, 1, size, fp);
@@ -1277,7 +1277,7 @@ void Init_edFileA(void)
 	local_4 = 0;
 	bVar1 = edCFilerInitTOC_00260f80(sz_ModeCdvd_0042b800, IM_CALC_SIZE, (void*)0x898, &local_4);
 	if (bVar1 != false) {
-		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAlloc(H_MAIN, local_4);
+		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAlloc(TO_HEAP(H_MAIN), local_4);
 		/* <cdvd> */
 		edCFilerInitTOC_00260f80(sz_ModeCdvd_0042b800, IM_INIT, PTR_edCdlFolder_00448ef4, (int*)local_4);
 	}
@@ -1684,24 +1684,24 @@ void LoadVideoFromFilePath(VideoFile* display, char* inFileName)
 
 	uint workArea = 0x16976c + 0x1000;
 
-	puVar2 = (u_char*)edMemAllocAlign(H_MAIN, workArea, 0x40);
+	puVar2 = (u_char*)edMemAllocAlign(TO_HEAP(H_MAIN), workArea, 0x40);
 	(display->pssResources).mpegBuff = puVar2;
 	(display->pssResources).mpegBuffSize = workArea;
-	psVar3 = (sceIpuRGB32*)edMemAllocAlign(H_MAIN, 0x140000, 0x40);
+	psVar3 = (sceIpuRGB32*)edMemAllocAlign(TO_HEAP(H_MAIN), 0x140000, 0x40);
 	(display->pssResources).rgb32 = psVar3;
-	puVar4 = (u_int*)edMemAllocAlign(H_MAIN, 0x3c200, 0x40);
+	puVar4 = (u_int*)edMemAllocAlign(TO_HEAP(H_MAIN), 0x3c200, 0x40);
 	(display->pssResources).path3tag = puVar4;
-	pvVar5 = edMemAllocAlign(H_MAIN, 0x30000, 0x40);
+	pvVar5 = edMemAllocAlign(TO_HEAP(H_MAIN), 0x30000, 0x40);
 	(display->pssResources).demuxBuff = pvVar5;
 	(display->pssResources).demuxBuffSize = 0x30000;
-	puVar2 = (u_char*)edMemAllocAlign(H_MAIN, 0xc000, 0x40);
+	puVar2 = (u_char*)edMemAllocAlign(TO_HEAP(H_MAIN), 0xc000, 0x40);
 	(display->pssResources).audioBuff = puVar2;
 	(display->pssResources).audioBuffSize = 0xc000;
 
 	pvVar5 = sceSifAllocIopHeap(0x6000);
 	(display->pssResources).iopBuff = (int)pvVar5;
 	(display->pssResources).iopBuffSize = 0x6000;
-	puVar2 = (u_char*)edMemAllocAlign(H_MAIN, ZERO_BUFF_SIZE, 0x40);
+	puVar2 = (u_char*)edMemAllocAlign(TO_HEAP(H_MAIN), ZERO_BUFF_SIZE, 0x40);
 	(display->pssResources).zeroBuff = puVar2;
 	pvVar5 = sceSifAllocIopHeap(ZERO_BUFF_SIZE);
 	(display->pssResources).iopZeroBuff = (int)pvVar5;

@@ -33,7 +33,7 @@ void AllocateVidModeData20_002b8a30(FrameBuffer* pFrameBuffer, byte interlace)
 {
 	VidModeData_20* pVVar1;
 
-	pVVar1 = (VidModeData_20*)edMemAlloc(H_MAIN, sizeof(VidModeData_20));
+	pVVar1 = (VidModeData_20*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(VidModeData_20));
 	pFrameBuffer->pVidModeData20 = pVVar1;
 	ulong dispfb2 =
 		(ulong)g_VidParams8_00449588.field_0x1 << 0x2b |
@@ -54,7 +54,7 @@ void CreateZBufferTags(FrameBuffer* pFrameBuffer)
 	ZBufferTags* pTags;
 	int zBufferFormat;
 
-	pTags = (ZBufferTags*)edMemAlloc(H_MAIN, sizeof(ZBufferTags));
+	pTags = (ZBufferTags*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
 	pFrameBuffer->pZTags = pTags;
 
 	// TAG
@@ -277,7 +277,7 @@ bool CreateVideoMemoryForFrameBuffer_002bbaa0(FrameBuffer* pFrameBuffer)
 	if ((uVar1 == SCE_GS_PSMCT32) || (uVar1 == SCE_GS_PSMCT24)) {
 		size = width * height * 4;
 	}
-	pvVar3 = edMemAllocAlign(H_VIDEO, size, align);
+	pvVar3 = edMemAllocAlign(TO_HEAP(H_VIDEO), size, align);
 	pFrameBuffer->data_0xc = (char*)pvVar3;
 	pvVar3 = edMemGetBlockAddress((void*)pFrameBuffer->data_0xc);
 	pFrameBuffer->frameBasePtr = (int)pvVar3 / align;
@@ -297,14 +297,14 @@ FrameBuffer* AllocateFrameBuffers_002bbb90(VidModeData* pVidModeData)
 	FrameBuffer* pNewFrameBuffer;
 
 	lVar5 = (FrameBuffer*)0x0;
-	pVidModeCopy = (VidModeData*)edMemAlloc(H_MAIN, sizeof(VidModeData));
+	pVidModeCopy = (VidModeData*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(VidModeData));
 	*pVidModeCopy = *pVidModeData;
 
 	uVar4 = 0;
 	pPrevFrameBuffer = (FrameBuffer*)0x0;
 	if (pVidModeData->frameBufferCount != 0) {
 		do {
-			pNewFrameBuffer = (FrameBuffer*)edMemAlloc(H_MAIN, sizeof(FrameBuffer));
+			pNewFrameBuffer = (FrameBuffer*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(FrameBuffer));
 			memset(pNewFrameBuffer, 0, sizeof(FrameBuffer));
 			pNewFrameBuffer->pVidModeData_0x0 = pVidModeCopy;
 			if (lVar5 == (FrameBuffer*)0x0) {

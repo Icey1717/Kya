@@ -5,6 +5,7 @@
 #include "Rendering/DisplayList.h"
 #include "Rendering/Font.h"
 #include "edText.h"
+#include "TranslatedTextData.h"
 
 PauseManager* g_PauseManager_00451688;
 
@@ -45,9 +46,15 @@ void PauseManager::OnBeginGame()
 extern int g_ScreenWidth;
 extern int g_ScreenHeight;
 
-char* inpLaceText = "PLEASE WAIT... LOADING";
-
 FontPacked* g_MenuFont_00449754 = NULL;
+
+void SetFontScale_0028d2b0(float xScale, float yScale, FontFileData* pFontFileData)
+{
+	pFontFileData->xScale = xScale;
+	pFontFileData->yScale = yScale;
+	pFontFileData->flags_0x84 = pFontFileData->flags_0x84 | 0x400;
+	return;
+}
 
 void DrawLoadingScreen_001b05e0(void)
 {
@@ -57,48 +64,49 @@ void DrawLoadingScreen_001b05e0(void)
 	char* pcVar4;
 	float fVar5;
 	FontFileData FStack192;
-	bool bVar1;
+	bool bIsLoadingScreen;
+	int localAlpha;
 
 	if (g_CinematicManager_0048efc->pSubObj_0x1c == (CinematicObjectB*)0x0) {
 		pTVar3 = GetTimeController();
-		fVar5 = pTVar3->totalTime * 256.0;
-		if (fVar5 < 2.147484e+09) {
-			FStack192.alpha = (int)fVar5;
+		fVar5 = pTVar3->totalTime * 256.0f;
+		if (fVar5 < 2.147484e+09f) {
+			localAlpha = (int)fVar5;
 		}
 		else {
-			FStack192.alpha = (int)(fVar5 - 2.147484e+09) | 0x80000000;
+			localAlpha = (int)(fVar5 - 2.147484e+09f) | 0x80000000;
 		}
-		FStack192.alpha = FStack192.alpha % 0x140;
-		if (0xff < (uint)FStack192.alpha) {
-			FStack192.alpha = (0x40 - (FStack192.alpha - 0x100U)) * 0xff >> 6;
+		localAlpha = localAlpha % 0x140;
+		if (0xff < (uint)localAlpha) {
+			localAlpha = (0x40 - (localAlpha - 0x100U)) * 0xff >> 6;
 		}
-		bVar1 = g_LevelScheduleManager_00449728->nextLevelID != 0xf;
-		if (!bVar1) {
-			FStack192.alpha = 0xff;
+		bIsLoadingScreen = g_LevelScheduleManager_00449728->nextLevelID != 0xf;
+		if (!bIsLoadingScreen) {
+			localAlpha = 0xff;
 		}
 		bVar2 = GuiDisplayListFunc_002d6360();
 		if (bVar2 != false) {
 			InitFontData_0028d430(&FStack192);
 			pNewFont = SetActiveFontData(&FStack192);
-			FStack192.SetFontTextureData_0028d3e0(g_MenuFont_00449754, 0);
+			FStack192.SetFontTextureData_0028d3e0(g_MenuFont_00449754, false);
 
 			FStack192.SetFontFlag_0028d340(0x100);
-			FStack192.alpha = FStack192.alpha & 0xff;
+			FStack192.alpha = localAlpha & 0xff;
 			FStack192.rgbaColour = FStack192.alpha | 0xffffff00;
 			FStack192.SetFontFlag_0028d3c0(2);
 			FStack192.SetFontFlag_0028d3a0(8);
 			DrawTextParams drawTextParams = DrawTextParams();
-			if (bVar1) {
-				//pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x30803025f4c4f41);
-				//DrawTextA_0028c540(&drawTextParams, pcVar4);
-				drawTextParams.Setup_0028c540(inpLaceText);
+			if (bIsLoadingScreen) {
+				pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x30803025f4c4f41);
+				drawTextParams.Setup_0028c540(pcVar4);
 				DrawTextB_0028a710((float)g_ScreenWidth / 2.0, (float)g_ScreenHeight - 36.0, &drawTextParams);
 			}
 			else {
-				//SetFontScale_0028d2b0(1.3, 1.3, &FStack192);
-				//pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x180403015f544845);
-				//DrawTextA_0028c540(&drawTextParams, pcVar4);
-				//DrawTextB_0028a710((float)g_ScreenWidth * 0.5, (float)g_ScreenHeight * 0.5, &drawTextParams);
+				// This is the text for the final end game screen.
+				SetFontScale_0028d2b0(1.3f, 1.3f, &FStack192);
+				pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x180403015f544845);
+				drawTextParams.Setup_0028c540(pcVar4);
+				DrawTextB_0028a710((float)g_ScreenWidth * 0.5, (float)g_ScreenHeight * 0.5, &drawTextParams);
 			}
 			SetActiveFontData(pNewFont);
 			DisplayListFunc_002d6340();

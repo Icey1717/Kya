@@ -318,7 +318,7 @@ AllocateCameraObj28_002bae70
 		}
 		pParams = &local_8;
 	}
-	__s = (CameraObj_28*)edMemAlloc(H_MAIN, sizeof(CameraObj_28));
+	__s = (CameraObj_28*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_28));
 	memset(__s, 0, sizeof(CameraObj_28));
 	__s->field_0x18[3] = param_4;
 	__s->fbMask = 0;
@@ -340,7 +340,7 @@ AllocateCameraObj28_002bae70
 	__s->field_0x18[0] = 0x40;
 	if ((param_4 & 4) != 0) {
 		g_ActiveVidParams_0048cd90.pCamera = __s;
-		pCVar1 = (CameraObj_390*)edMemAlloc(H_MAIN, sizeof(CameraObj_390));
+		pCVar1 = (CameraObj_390*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_390));
 		__s->pCameraObj390_0x24 = pCVar1;
 		if (__s->pVidModeData30_0x10 == (FrameBuffer*)0x0) {
 			__s->pCameraObj390_0x24->qwc = 0;

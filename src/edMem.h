@@ -4,7 +4,7 @@
 #include "Types.h"
 #include <stdlib.h>
 
-enum EHeap
+enum EHeapType
 {
 	H_INVALID,
 	H_MAIN,
@@ -12,6 +12,8 @@ enum EHeap
 	H_SCRATCHPAD,
 	H_VIDEO
 };
+
+typedef void* EHeap;
 
 struct edHeapEntry
 {
@@ -83,5 +85,7 @@ void SetHeapFunctionsB(void);
 
 extern edHeapParams g_SystemHeap_0042df0;
 extern uint g_MemWorkSizeB;
+
+#define TO_HEAP(a) (void*)a
 
 #endif //_EDMEM_H

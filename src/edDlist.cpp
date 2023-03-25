@@ -90,7 +90,7 @@ namespace edDlist
 		// #HACK
 		size = size * 4;
 
-		g_DisplayListMemStart_004595b8 = (char*)edMemAlloc(H_MAIN, size);
+		g_DisplayListMemStart_004595b8 = (char*)edMemAlloc(TO_HEAP(H_MAIN), size);
 		memset(g_DisplayListMemStart_004595b8, 0, size);
 		g_DisplayListMemAllocPtr_004495bc = g_DisplayListMemStart_004595b8;
 		g_DisplayListMemEnd_004595c0 = g_DisplayListMemStart_004595b8 + size;
@@ -286,7 +286,7 @@ namespace edDlist
 			}
 			else {
 				if (eventID == 0) {
-					assert(false);
+					//assert(false);
 					//ProcessRenderTask_002ce5c0(pRenderTaskData);
 				}
 			}
@@ -377,9 +377,9 @@ namespace edDlist
 		do {
 			pDVar1 = (DisplayListArray*)ProvisionDisplayListMemory_002ce490((uint)(g_DisplayListSizeBCount_004250d0 << 2) >> 4);
 			DisplayListData_004496a0.pDisplayListArray[uVar3] = pDVar1;
-			pCVar2 = AllocateCameraAndMesh_00290a10(1, g_DisplayListCount_004250d4, H_MAIN);
+			pCVar2 = AllocateCameraAndMesh_00290a10(1, g_DisplayListCount_004250d4, TO_HEAP(H_MAIN));
 			DisplayListData_004496a0.pCameraPanPairA[uVar3] = pCVar2;
-			pCVar2 = AllocateCameraAndMesh_00290a10(1, g_DisplayListCount_004250d4, H_MAIN);
+			pCVar2 = AllocateCameraAndMesh_00290a10(1, g_DisplayListCount_004250d4, TO_HEAP(H_MAIN));
 			DisplayListData_004496a0.pCameraPanPairB[uVar3] = pCVar2;
 			//FUN_002909f0(DisplayListData_004496a0.pCameraPanPairA[uVar3], 2, FUN_002ce480);
 			//FUN_002909f0(DisplayListData_004496a0.pCameraPanPairB[uVar3], 2, FUN_002ce480);

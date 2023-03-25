@@ -16,7 +16,7 @@ struct MeshTransformParent {
 	short bLoaded;
 	undefined field_0x2;
 	undefined field_0x3;
-	MeshTransformParent* pSubMeshParent;
+	MeshTransformParent* pNext;
 	MeshTransformParent* pLink_0x8;
 	struct MeshTransformData* pMeshTransformData;
 };
@@ -51,7 +51,7 @@ struct CameraPanMasterHeader {
 };
 
 void Link_00290c10(CameraPanMasterHeader* param_1);
-CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, EHeap heapID);
+CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, void* heapID);
 bool Setup_00290bf0(CameraPanMasterHeader* pCameraPanStatic, MeshTransformParentHeader* param_2, int param_3, undefined* param_4);
 void* Setup_00290b70(MeshTransformParentHeader* pAllocatedBuffer, int count);
 
