@@ -12,6 +12,7 @@
 #include "edDlist.h"
 #include "port/pointer_conv.h"
 #include "../edMem.h"
+#include "../MathOps.h"
 
 #ifdef PLATFORM_WIN
 #define RESOLVE_FONT_SUB_DATA(a) (FontPacked_2C*)LOAD_SECTION(a)
@@ -71,6 +72,11 @@ void FontFileData::SetFontFlag_0028d3a0(uint flag)
 {
 	flags_0x84 = flags_0x84 & 0xfffffff3 | flag;
 	return;
+}
+
+uint FontFileData::GetFontFlag_0028d330()
+{
+	return this->flags_0x84 & 0x200;
 }
 
 void FontFileData::SetFontTextureData_0028d3e0(FontPacked* pPackedFont, bool bUpdateSpacing)
@@ -1208,53 +1214,6 @@ bool DrawTextParams::Setup_0028c540(char* pText)
 	return bVar4;
 }
 
-sceVu0FMATRIX g_ZeroMatrix_00431690 = { 0 };
-
-void MatrixSetPosition_00267750(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTOR v0)
-{
-	undefined8 uVar1;
-	float fVar2;
-	float fVar3;
-	int iVar4;
-	sceVu0FMATRIX local_40;
-
-	sceVu0CopyMatrix(local_40, g_ZeroMatrix_00431690);
-
-	local_40[0][0] = (v0)[0];
-	local_40[1][1] = (v0)[1];
-	local_40[2][2] = (v0)[2];
-	local_40[3][3] = 1.0;
-	sceVu0MulMatrix(m0, m1, local_40);
-	return;
-}
-
-void MatrixCalcSetUVOffset(float t0, Matrix* m0, Matrix* m1)
-{
-	sceVu0FMATRIX local_40;
-
-	//mat[0][0] = cosf(2.0f * 3.14159265f * t0);
-	//mat[0][1] = sinf(2.0f * 3.14159265f * t0);
-
-	local_40[0][0] = cosf(2.0f * 3.14159265f * t0);
-	local_40[0][1] = sinf(2.0f * 3.14159265f * t0);
-	local_40[0][2] = 0.0;
-	local_40[1][0] = -local_40[0][1];
-	local_40[0][3] = 0.0;
-	local_40[1][2] = 0.0;
-	local_40[1][3] = 0.0;
-	local_40[2][0] = 0.0;
-	local_40[2][1] = 0.0;
-	local_40[2][2] = 1.0;
-	local_40[2][3] = 0.0;
-	local_40[3][0] = 0.0;
-	local_40[3][1] = 0.0;
-	local_40[3][2] = 0.0;
-	local_40[3][3] = 1.0;
-	local_40[1][1] = local_40[0][0];
-	sceVu0MulMatrix((TO_SCE_MTX)m0, (TO_SCE_MTX)m1, local_40);
-	return;
-}
-
 void BuildTextMatrix_0028d190(float x, float y, FontFileData* pFontFileData, Matrix* outMatrix)
 {
 	Vector local_20;
@@ -1266,7 +1225,7 @@ void BuildTextMatrix_0028d190(float x, float y, FontFileData* pFontFileData, Mat
 		local_20.z = 1.0;
 		local_20.w = 1.0;
 		sceVu0UnitMatrix((TO_SCE_MTX)&pFontFileData->m0);
-		MatrixCalcSetUVOffset(pFontFileData->rotation, &pFontFileData->m0, &pFontFileData->m0);
+		CalculateRotationMatrix_002673f0(pFontFileData->rotation, &pFontFileData->m0, &pFontFileData->m0);
 		MatrixSetPosition_00267750((TO_SCE_MTX)&pFontFileData->m0, (TO_SCE_MTX)&pFontFileData->m0, (TO_SCE_VECTOR)&local_20);
 		pFontFileData->flags_0x84 = pFontFileData->flags_0x84 & 0xfffffbff;
 	}
@@ -1288,15 +1247,15 @@ void GetFontFileDataAdditionalOffset_0028d300(FontFileData* pFontFileData, float
 
 
 struct CharacterData {
-	uint colour_0x0;
-	float field_0x4;
-	float field_0x8;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-	float field_0x18;
-	float field_0x1c;
-	float field_0x20;
+	uint colour;
+	float pos_x1;
+	float pos_y1;
+	float pos_x2;
+	float pos_y2;
+	float tex_x1;
+	float tex_y1;
+	float tex_x2;
+	float tex_y2;
 };
 
 struct DrawText16 {
@@ -1315,26 +1274,26 @@ void SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderCommands)
 
 	if (pTextRenderCommands->characterCount != 0) {
 		edDlist::LoadMaterialResource_002cb850(pTextRenderCommands->pMaterialInfoB);
-		edDlist::RenderCommand_002ca6a0(1, 7, 0, 0, 0, 0, 1, 1);
-		edDlist::RenderCommand_002ca800();
-		edDlist::RenderCommand_002ca8c0(1);
+		edDlist::AddGSTestCommand_002ca6a0(1, 7, 0, 0, 0, 0, 1, 1);
+		edDlist::AddSetAlphaCommand_002ca800();
+		edDlist::ApplyMaterialFlag_002ca8c0(1);
 		edDlist::MeshDrawCommands_002ca170(0.0, 0.0, 0.0, 8, pTextRenderCommands->characterCount << 2);
 		pCharacterData = pTextRenderCommands->pCharacterData;
 		iVar1 = pTextRenderCommands->characterCount;
 		while (iVar1 != 0) {
-			uVar2 = pCharacterData->colour_0x0;
+			uVar2 = pCharacterData->colour;
 			uVar3 = (uVar2 >> 0x18) + 1 >> 1;
 			edDlist::SetDropShadowColour_002ce1a0
 			((byte)uVar3, (byte)((uVar2 >> 0x10 & 0xff) + 1 >> 1), (byte)((uVar2 >> 8 & 0xff) + 1 >> 1),
 				(byte)((uVar2 & 0xff) + 1 >> 1));
-			edDlist::CallpcGpffff9200(pCharacterData->field_0x14, pCharacterData->field_0x18);
-			edDlist::CallpcGpffff91f8(pCharacterData->field_0x4, pCharacterData->field_0x8, 0.0, uVar3);
-			edDlist::CallpcGpffff9200(pCharacterData->field_0x14, pCharacterData->field_0x20);
-			edDlist::CallpcGpffff91f8(pCharacterData->field_0x4, pCharacterData->field_0x10, 0.0, uVar3);
-			edDlist::CallpcGpffff9200(pCharacterData->field_0x1c, pCharacterData->field_0x18);
-			edDlist::CallpcGpffff91f8(pCharacterData->field_0xc, pCharacterData->field_0x8, 0.0, uVar3);
-			edDlist::CallpcGpffff9200(pCharacterData->field_0x1c, pCharacterData->field_0x20);
-			edDlist::CallpcGpffff91f8(pCharacterData->field_0xc, pCharacterData->field_0x10, 0.0, uVar3);
+			edDlist::CallSetST(pCharacterData->tex_x1, pCharacterData->tex_y1);
+			edDlist::CallSetXYZ(pCharacterData->pos_x1, pCharacterData->pos_y1, 0.0, uVar3);
+			edDlist::CallSetST(pCharacterData->tex_x1, pCharacterData->tex_y2);
+			edDlist::CallSetXYZ(pCharacterData->pos_x1, pCharacterData->pos_y2, 0.0, uVar3);
+			edDlist::CallSetST(pCharacterData->tex_x2, pCharacterData->tex_y1);
+			edDlist::CallSetXYZ(pCharacterData->pos_x2, pCharacterData->pos_y1, 0.0, uVar3);
+			edDlist::CallSetST(pCharacterData->tex_x2, pCharacterData->tex_y2);
+			edDlist::CallSetXYZ(pCharacterData->pos_x2, pCharacterData->pos_y2, 0.0, uVar3);
 			pTextRenderCommands->characterCount = pTextRenderCommands->characterCount + -1;
 			pCharacterData = pCharacterData + 1;
 			iVar1 = pTextRenderCommands->characterCount;
@@ -1587,15 +1546,15 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 									}
 									local_10.pMaterialInfoB = local_10.pMaterialInfoA;
 									puVar7 = local_10.pCharacterData + local_10.characterCount;
-									puVar7->colour_0x0 = unaff_s7_lo;
-									puVar7->field_0x4 = unaff_f24;
-									puVar7->field_0x8 = in_f23;
-									puVar7->field_0xc = unaff_f22;
-									puVar7->field_0x10 = in_f21;
-									puVar7->field_0x14 = unaff_f28;
-									puVar7->field_0x18 = in_f27;
-									puVar7->field_0x1c = unaff_f26;
-									puVar7->field_0x20 = in_f25;
+									puVar7->colour = unaff_s7_lo;
+									puVar7->pos_x1 = unaff_f24;
+									puVar7->pos_y1 = in_f23;
+									puVar7->pos_x2 = unaff_f22;
+									puVar7->pos_y2 = in_f21;
+									puVar7->tex_x1 = unaff_f28;
+									puVar7->tex_y1 = in_f27;
+									puVar7->tex_x2 = unaff_f26;
+									puVar7->tex_y2 = in_f25;
 									local_10.characterCount = local_10.characterCount + 1;
 								}
 							}
@@ -1637,6 +1596,32 @@ void DrawTextC_0028a600(float x, float y, DrawTextParams* pDrawTextParams, Vecto
 		}
 		CreateTextRenderCommands_0028a960(pDrawTextParams->offsetX_0x0, pDrawTextParams->offsetY_0x4, pDrawTextParams, true);
 	}
+	return;
+}
+
+void DrawText_0028a4f0(float x, float y, char* text)
+{
+	bool bVar1;
+	uint uVar2;
+	Vector local_1590;
+	DrawTextParams auStack5504;
+
+	//DrawTextParams::Constructor_0028c7d0(&auStack5504);
+	bVar1 = auStack5504.DrawTextA_0028b7e0(text);
+	if (bVar1 != false) {
+		auStack5504.DrawTextB_0028b270();
+		uVar2 = auStack5504.fontData_0x850->GetFontFlag_0028d330();
+		if (uVar2 != 0) {
+			assert(false);
+			//DrawToScreen(x, y, &auStack5504);
+		}
+		local_1590.z = 640.0;
+		local_1590.w = 512.0;
+		local_1590.x = 0.0;
+		local_1590.y = 0.0;
+		DrawTextC_0028a600(x, y, &auStack5504, &local_1590);
+	}
+	//RunInPlaceDestructors_002173e0(auStack5504.fontData_0x850, Free_00166e40, 0xc0, 0x11);
 	return;
 }
 

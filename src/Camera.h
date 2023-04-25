@@ -35,16 +35,16 @@ struct CameraObj_28 {
 	short screenHeight;
 	undefined4 field_0x8;
 	undefined4 field_0xc;
-	struct FrameBuffer* pVidModeData30_0x10;
+	struct FrameBuffer* pColorBuffer;
 	struct FrameBuffer* pZBuffer;
-	byte field_0x18[4];
+	ByteColor clearColor;
 	uint fbMask;
-	uint field_0x20;
+	uint altFbMask;
 	CameraObj_390* pCameraObj390_0x24;
 };
 
 RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand* pCommandBuf);
 CameraObj_28* AllocateCameraObj28_002bae70(CameraObjParams* pParams, struct FrameBuffer* pVidModeDataA, struct FrameBuffer* pVidModeDataB, byte param_4);
-void SetCameraObjBytes_002bb960(CameraObj_28* param_1, byte param_2, byte param_3, byte param_4);
-void BuildCameraCommands_002bafe0(CameraObj_28* pCamera, CameraObjParams* param_2, FrameBuffer* param_3, FrameBuffer* param_4, byte param_5);
+void SetCameraClear_002bb960(CameraObj_28* pCamera, byte r, byte g, byte b);
+void BuildCameraCommands_002bafe0(CameraObj_28* pCamera, CameraObjParams* pParams, FrameBuffer* pColorBuffer, FrameBuffer* pZBuffer, byte alpha);
 #endif //CAMERA_H

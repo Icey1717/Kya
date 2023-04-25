@@ -61,8 +61,9 @@ extern "C" {
 #include "PauseManager.h"
 
 #include "Rendering/CustomShell.h"
+#include "InputManager.h"
 
-uint g_DebugCameraFlag_00448ea4 = 0;
+#include <assert.h>
 
 template<class T>
 T* CreateNew()
@@ -92,9 +93,6 @@ void SetupEd10_00217720(void* pObj, void* pFreeFunc, EdFileGlobal_10* pHeader)
 	g_NextFreeFilePtr_00457888 = pHeader;
 	return;
 }
-
-IopManager IopManager_004497c4;
-IopManager* PTR_IopManager_00448cf8 = &IopManager_004497c4;
 
 char* g_szCdRomPrefix_00438548 = "cdrom0:";
 char* g_szHostPrefix_00438550 = "host0:";
@@ -1061,7 +1059,9 @@ void SetupDoubleBuffer_00405ba0(void)
 #if defined(PLATFORM_PS2)
 	g_DmaChan_00449820 = sceDmaGetChan(2);
 	sceGsResetGraph(0, SCE_GS_INTERLACE, videoMode, SCE_GS_FIELD);
+#endif
 	GraphicsClear_004059a0(0xff, 0xff, 0, 0);
+#if defined(PLATFORM_PS2)
 	sceGsSetDefDBuff(&g_DoubleBuffer, SCE_GS_PSMCT32, screenWidth, screenHeight, SCE_GS_ZGREATER, SCE_GS_PSMZ32, SCE_GS_NOCLEAR);
 	iVar1 = 0;
 	do {
@@ -1383,23 +1383,6 @@ char* sz_pMenuDataBankName_00448b64 = sz_MenuDataBankName_00435610;
 char* sz_MediumFont_004355f8 = "medium.fon";
 char* sz_MediumFontFileName_00448b60 = sz_MediumFont_004355f8;
 
-int GetIndexForFileName(edCBankBuffer* headerObj, char* inFileName)
-{
-	int iVar1;
-
-	iVar1 = 0;
-	if ((edCBankFileHeader*)headerObj->fileBuffer != (edCBankFileHeader*)0x0) {
-		iVar1 = GetIndexFromFileHeader((edCBankFileHeader*)headerObj->fileBuffer, inFileName);
-	}
-	return iVar1;
-}
-
-char* GetFilePointerFromFileIndex(edCBankBuffer* bankObj, int fileIndex)
-{
-	return edCBankFileHeader_GetFileBufferStartFromFileIndex(bankObj->fileBuffer, fileIndex);
-}
-
-
 void LoadAndVerifyMenuBnk(void)
 {
 	undefined* puVar1;
@@ -1534,11 +1517,12 @@ void SetupGame(int argc,char **argv)
 		SetupVideo(&g_IniFile_00450750);
 	}
 
-#if defined(PLATFORM_PS2)
-	SetupDoubleBuffer_00405ba0();
-#else
+
+#if defined(PLATFORM_WIN)
 	Renderer::Setup();
 #endif
+
+	SetupDoubleBuffer_00405ba0();
 
 	/* If using NTSC then load SPLASH_N, otherwise load SPLASH_P */
 	if (g_omode == SCE_GS_NTSC) {
@@ -1559,7 +1543,7 @@ void SetupGame(int argc,char **argv)
 	//*soundController ? = 6;
 	//Init_edClusterB();
 	//edProfile::Init_001b8390(0);
-	//(*(code*)(*PTR_IopManager_00448cf8)->field_0x10)(PTR_IopManager_00448cf8, 0);
+	PTR_IopManager_00448cf8->IOPFunc_0x10(0);
 	PrintString("---- Init edDlist \n");
 	//soundController ? = GetDAT_004250d0();
 	//*soundController ? = 0x14;
@@ -1629,11 +1613,12 @@ void SetupGame(int argc,char **argv)
 	SetupGameCreateObject();
 	WillSetupDisplayListAndRunConstructors();
 	///* May jump to 003965B8 */
-	//lVar4 = (*(code*)(*PTR_IopManager_00448cf8)->field_0x18)(PTR_IopManager_00448cf8, 0);
-	///* This doesn't seem to trigger on main run. */
-	//if (lVar4 != 0) {
-	//	DrawPopup_0034e1f0(8, 0, 0x52525f503700080c, 0x171d0d0b190f111a, 0);
-	//}
+	bool bVar1 = PTR_IopManager_00448cf8->GetAnyControllerConnected();
+	/* This doesn't seem to trigger on main run. */
+	if (bVar1 != false) {
+		assert(false);
+		//DrawPopup_0034e1f0(8, 0, 0x52525f503700080c, 0x171d0d0b190f111a, 0);
+	}
 	//SetupIconSaveAndSerial();
 	return;
 }
@@ -1826,18 +1811,18 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 			}
 #endif
 		}
-		//if (param_2 != false) {
-		//	if (param_3 == false) {
-		//		uVar2 = 1;
-		//		if ((((uint)InputManager_00450960.pressedBitfield & 0x40000) == 0) && (((uint)InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
-		//			uVar2 = 0;
-		//		}
-		//	}
-		//	else {
-		//		uVar2 = (uint)InputManager_00450960.pressedBitfield & 0x40000;
-		//	}
-		//	if (uVar2 != 0) break;
-		//}
+		if (param_2 != false) {
+			if (param_3 == false) {
+				uVar2 = 1;
+				if (((g_InputManager_00450960.pressedBitfield & 0x40000) == 0) && ((g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+					uVar2 = 0;
+				}
+			}
+			else {
+				uVar2 = g_InputManager_00450960.pressedBitfield & 0x40000;
+			}
+			if (uVar2 != 0) break;
+		}
 		iVar3 = 1;
 		if (display->fileReadSuccess != 0) {
 			iVar3 = hasVideoEnded();
@@ -1850,40 +1835,19 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	return;
 }
 
-void LoadStageOne(void)
-{
-	TimeController* objAndCounter;
-	LevelScheduleManager** loadLoopObject;
-	int iVar1;
-
-	objAndCounter = GetTimeController();
-	objAndCounter->ResetTimeController_001ba6d0();
-	//SetuGpffff8e5cTo0();
-	//iVar1 = 0;
-	//loadLoopObject = &g_LevelScheduleManager_00451660;
-	//do {
-	//	if (*loadLoopObject != (LevelScheduleManager*)0x0) {
-	//		(*(code*)(*loadLoopObject)->pManagerFunctionData->loadStageOneFunc)();
-	//	}
-	//	iVar1 = iVar1 + 1;
-	//	loadLoopObject = loadLoopObject + 1;
-	//} while (iVar1 < 0x18);
-	g_LevelScheduleManager_00449728->LoadStageOne();
-	return;
-}
-
-
 void LoadLevel(void)
 {
 	LargeObject* pLVar1;
 	bool bVar2;
 	TimeController* inTimeController;
 
+	MY_LOG("LoadLevel Begin\n");
+
 	/* These functions just run once */
 	//PlayIntroVideo(0);
 	pLVar1 = g_LargeObject_006db450;
 	inTimeController = GetTimeController();
-	LoadStageOne();
+	LoadStageOne_001b9dc0();
 	do {
 		/* This is the main loop that plays cutscenes
 
@@ -1891,26 +1855,182 @@ void LoadLevel(void)
 		//ReadInput(inTimeController->cutsceneDeltaTime);
 		inTimeController->UpdateDeltaTime();
 		/* Play cutscene */
-		bVar2 = true; // AsyncLoad_001b9cd0(pLVar1);
+		bVar2 = pLVar1->AsyncLoad_001b9cd0();
 		/* Responsible for drawing the loading screen. */
 		LoadLevelUpdate_001b9c60();
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
 		/* Update rendering */
 		RefreshScreenRender();
+#if defined(LOAD_FOREVER)
+	} while (1);
+#else
 	} while (bVar2 != false);
-	//EndLoadStageOne();
+#endif
+	pLVar1->EndLoadStageOne();
+	MY_LOG("LoadLevel End\n");
 	return;
+}
+
+struct APlayer;
+APlayer* g_PlayerActor_00448e10 = NULL;
+
+void GameLoop(void)
+{
+	//ActorState AVar1;
+	APlayer* pAVar2;
+	LargeObject* pLVar3;
+	bool cVar4;
+	bool bVar4;
+	TimeController* timeController;
+	int* piVar5;
+	//AnimResult* pAVar6;
+	uint uVar7;
+	ulong uVar8;
+	float fVar9;
+
+	MY_LOG("GameLoop Begin\n");
+
+	pLVar3 = g_LargeObject_006db450;
+	timeController = GetTimeController();
+	do {
+		PTR_IopManager_00448cf8->IOPFunc_0x14(0);
+		//ReadInput(timeController->cutsceneDeltaTime);
+		cVar4 = PTR_IopManager_00448cf8->GetAnyControllerConnected();
+		bVar4 = g_InputManager_00450960.FUN_001b6f60();
+		if (bVar4 != false) {
+			assert(false);
+			//FUN_001b93c0(g_LargeObject_006db450);
+		}
+		pAVar2 = g_PlayerActor_00448e10;
+		if ((g_DebugCameraFlag_00448ea4 & 0xc0) == 0) {
+			if (g_PlayerActor_00448e10 != (APlayer*)0x0) {
+				assert(false);
+				//piVar5 = (int*)(*(code*)g_PlayerActor_00448e10->pVTable->field_0x138)(g_PlayerActor_00448e10);
+				//fVar9 = (float)(**(code**)(*piVar5 + 0x24))();
+				//bVar4 = fVar9 - (pAVar2->character).characterBase.field_0x2e0 <= 0.0;
+				//if (!bVar4) {
+				//	AVar1 = (pAVar2->character).characterBase.actorBase.actorState;
+				//	if (AVar1 == AS_None) {
+				//		uVar7 = 0;
+				//	}
+				//	else {
+				//		pAVar6 = (*(pAVar2->pVTable->actorBase).getAnimForState)((AActorBase*)pAVar2, AVar1);
+				//		uVar7 = pAVar6->flags_0x4 & 1;
+				//	}
+				//	bVar4 = uVar7 != 0;
+				//}
+				//if (bVar4) goto LAB_001a7608;
+			}
+			if (cVar4 != false) {
+				if ((g_DebugCameraFlag_00448ea4 & 8) != 0) {
+					assert(false);
+					//LoadFrontendWithuRam00451684();
+				}
+				if ((g_DebugCameraFlag_00448ea4 & 0x10) != 0) {
+					assert(false);
+					//OpenMapScreen_003f59b0();
+				}
+				if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
+					if ((g_DebugCameraFlag_00448ea4 & 0x800) == 0) {
+						assert(false);
+						//ActivatePause_001b5320(PM_PauseMenu);
+					}
+					else {
+						assert(false);
+						//ActivatePause_001b5320(PM_MiniGame);
+					}
+				}
+			}
+			if ((((g_DebugCameraFlag_00448ea4 & 0x8000) == 0) &&
+				((g_InputManager_00450960.pressedBitfield & 0x80000) != 0)) &&
+				(g_InputManager_00450960.buttonArray[18].floatFieldB == 0.0)) {
+				if ((g_DebugCameraFlag_00448ea4 & 8) == 0) {
+					if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
+						assert(false);
+						//GameLoopFunc_0037a670();
+					}
+				}
+				else {
+					assert(false);
+					//LoadFrontendWithuRam00451684();
+				}
+			}
+			bVar4 = g_InputManager_00450960.buttonArray[6].floatFieldB != 0.0 ||
+				g_InputManager_00450960.buttonArray[10].floatFieldB != 0.0;
+			if ((g_InputManager_00450960.field_0x58 != 4) || (g_InputManager_00450960.field_0x34 != 4)) {
+				bVar4 = true;
+			}
+			if ((((g_InputManager_00450960.pressedBitfield & 0x8000000) != 0) && (!bVar4)) ||
+				((g_DebugCameraFlag_00448ea4 & 0x400) != 0)) {
+				if (((g_DebugCameraFlag_00448ea4 & 0x10) == 0) || ((g_DebugCameraFlag_00448ea4 & 0x400) != 0)) {
+					if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
+						assert(false);
+						//LoadMaps();
+					}
+				}
+				else {
+					assert(false);
+					//OpenMapScreen_003f59b0();
+				}
+				g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffbff;
+			}
+			if (((g_InputManager_00450960.pressedBitfield & 0x40000) != 0) &&
+				((g_InputManager_00450960.pressedBitfield & 0x80000) == 0)) {
+				if ((g_DebugCameraFlag_00448ea4 & 4) == 0) {
+					if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
+						if ((g_DebugCameraFlag_00448ea4 & 0x800) == 0) {
+							assert(false);
+							//ActivatePause_001b5320(PM_PauseMenu);
+						}
+						else {
+							assert(false);
+							//ActivatePause_001b5320(PM_MiniGame);
+						}
+					}
+				}
+				else {
+					assert(false);
+					//uVar8 = FUN_001b5d90();
+					//if (uVar8 == 0) {
+					//	FUN_001b5110();
+					//}
+				}
+			}
+		}
+	LAB_001a7608:
+		if (((long)(int)g_DebugCameraFlag_00448ea4 & 0xffffffff80000000U) != 0) {
+			g_DebugCameraFlag_00448ea4 = (uint)((ulong)((long)(int)g_DebugCameraFlag_00448ea4 << 0x21) >> 0x21);
+			assert(false);
+			//SetPaused_001b8c40(g_LargeObject_006db450, 1);
+		}
+		timeController->UpdateDeltaTime();
+		/* This may control cine cutscenes */
+		PreUpdateObjects(pLVar3);
+		UpdateObjectsMain();
+		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
+		RefreshScreenRender();
+		/* Determine if we should exit the main game loop here. */
+		if ((g_DebugCameraFlag_00448ea4 & 2) != 0) {
+			g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7d;
+			return;
+		}
+	} while (true);
+
+	MY_LOG("GameLoop End\n");
 }
 
 void LoadAndPlayCutscene(void)
 {
 	LargeObject* pLVar1;
 
+	MY_LOG("LoadAndPlayCutscene Begin\n");
+
 	/* Cutscenes are played in here */
 	LoadLevel();
-	//pLVar1 = g_LargeObject_006db450;
-	//LoadA();
-	//LoadB(pLVar1);
+	pLVar1 = g_LargeObject_006db450;
+	LoadA_001b9bf0();
+	LoadB_001b95c0(pLVar1);
+	MY_LOG("LoadAndPlayCutscene End\n");
 	return;
 }
 
@@ -1954,7 +2074,7 @@ int main(int argc,char **argv)
 	}
 	do {
 		LoadAndPlayCutscene();
-	//	GameLoop();
+		GameLoop();
 	//	LoadGame();
 	} while ((g_DebugCameraFlag_00448ea4 & 1) == 0);
 	//MainCleanup();

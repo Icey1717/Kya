@@ -76,9 +76,9 @@ struct VidParams18 {
 	undefined field_0x11;
 	undefined field_0x12;
 	undefined field_0x13;
-	byte field_0x14;
-	byte field_0x15;
-	byte field_0x16;
+	byte r;
+	byte g;
+	byte b;
 	byte ffmode;
 };
 

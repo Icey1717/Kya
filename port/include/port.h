@@ -289,6 +289,24 @@ struct Gif_Tag {
 #define SCE_GS_LABEL        0x62
 #define SCE_GS_NOP          0x7f
 
+#define SCE_GS_SET_PABE(pabe) ((ulong)(pabe))
+
+#define SCE_GS_SET_ST(s, t) ((ulong)(s) |  ((ulong)(t) << 32))
+
+#define SCE_GS_SET_FOGCOL(fcr, fcg, fcb) \
+    ((ulong)(fcr) | ((ulong)(fcg) << 8) | ((ulong)(fcb) << 16))
+
+#define SCE_GS_SET_XYZF3 SCE_GS_SET_XYZF
+#define SCE_GS_SET_XYZF2 SCE_GS_SET_XYZF
+#define SCE_GS_SET_XYZF(x, y, z, f) \
+    ((ulong)(x) | ((ulong)(y) << 16) | ((ulong)(z) << 32) | \
+    ((ulong)(f) << 56))
+
+#define SCE_GS_SET_XYZ3 SCE_GS_SET_XYZ
+#define SCE_GS_SET_XYZ2 SCE_GS_SET_XYZ
+#define SCE_GS_SET_XYZ(x, y, z) \
+    ((ulong)(x) | ((ulong)(y) << 16) | ((ulong)(z) << 32))
+
 #define SCE_GS_SET_ALPHA_1  SCE_GS_SET_ALPHA
 #define SCE_GS_SET_ALPHA_2  SCE_GS_SET_ALPHA
 #define SCE_GS_SET_ALPHA(a, b, c, d, fix) \
@@ -307,11 +325,17 @@ struct Gif_Tag {
 
 #define SCE_GS_SET_SCANMSK(msk) ((ulong)(msk))
 
+#define SCE_GS_SET_RGBAQ(r, g, b, a, q) \
+    ((ulong)(r)        | ((ulong)(g) << 8) | ((ulong)(b) << 16) | \
+    ((ulong)(a) << 24) | ((ulong)(q) << 32))
+
 #define SCE_GS_SET_ZBUF(zbp, psm, zmsk) \
     ((ulong)(zbp) | ((ulong)(psm) << 24) | \
     ((ulong)(zmsk) << 32))
 
 #define SCE_GS_SET_XYOFFSET(ofx, ofy) ((ulong)(ofx) | ((ulong)(ofy) << 32))
+
+#define SCE_GS_SET_FBA(fba) ((ulong)(fba))
 
 #define SCE_GS_SET_SCISSOR(scax0, scax1, scay0, scay1) \
     ((ulong)(scax0)        | ((ulong)(scax1) << 16) | \
@@ -362,6 +386,13 @@ gifTag.setTag((u8*)&a, 1); \
 MY_LOG("--Gif Tag [mode=%s][pre=%d][prim=%d][nregs=%d][nloop=%d][qwc=%d][EOP=%d]\n", \
 	GifTag_ModeStr[gifTag.tag.FLG], gifTag.tag.PRE, gifTag.tag.PRIM, \
 	gifTag.nRegs, gifTag.nLoop, gifTag.len / 16, gifTag.tag.EOP); }
+
+#define DUMP_TAG_ADV(a) { Gif_Tag gifTag; \
+gifTag.setTag((u8*)&a, 1); \
+MY_LOG("SCE_GIF_SET_TAG(\n%d, // NLOOP\n%s, // EOP\n%s, // PRE\n%d, // PRIM\n%s, // FLG\n%d // NREG\n", \
+	gifTag.nLoop, gifTag.tag.EOP ? "SCE_GS_TRUE" : "SCE_GS_FALSE", \
+	gifTag.tag.PRE ? "SCE_GS_TRUE" : "SCE_GS_FALSE", gifTag.tag.PRIM, \
+	GifTag_ModeStr[gifTag.tag.FLG], gifTag.nRegs); }
 
 /* DMAC */
 #define D0_CHCR         ((volatile u_int *)(0x10008000))

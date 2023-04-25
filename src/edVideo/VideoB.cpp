@@ -87,29 +87,86 @@ void FUN_002b9740(void)
 	g_ActiveVidParams_0048cd90.field_0x6a = 0;
 	g_ActiveVidParams_0048cd90.field_0x6b = 0;
 	g_ActiveVidParams_0048cd90.field_0x80 = 0;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[0] = 0x1000000000008009;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[1] = 0xe;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[2] = 0x30003;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[3] = 0x47;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[4] = 0x44;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[5] = 0x42;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[6] = 0;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[7] = 0x49;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[8] = 0;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[9] = 0x4a;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[10] = 0x4e;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[11] = 0;
+
+	// GIF TAG
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[0] = SCE_GIF_SET_TAG(
+		9,				// NLOOP
+		SCE_GS_TRUE,	// EOP
+		SCE_GS_FALSE,	// PRE
+		0,				// PRIM
+		SCE_GIF_PACKED, // FLG
+		1				// NREG
+	);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[1] = SCE_GIF_PACKED_AD;
+
+	// GS TEST
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[2] = SCE_GS_SET_TEST(
+		1,	// ATE 
+		1,	// ATST
+		0,	// AREF
+		0,	// AFAIL
+		0,	// DATE
+		0,	// DATM
+		1,	// ZTE
+		1	// ZTST
+	);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[3] = SCE_GS_TEST_1;
+
+	// ALPHA
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[4] = SCE_GS_SET_ALPHA(SCE_GS_ALPHA_CS, SCE_GS_ALPHA_CD, SCE_GS_ALPHA_CS, SCE_GS_ALPHA_CD, 0);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[5] = SCE_GS_ALPHA_1;
+
+	// PABE
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[6] = SCE_GS_SET_PABE(0);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[7] = SCE_GS_PABE;
+
+	// FBA
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[8] = SCE_GS_SET_FBA(SCE_GS_FALSE);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[9] = SCE_GS_FBA_1;
+
+	// PRIM
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[10] = SCE_GS_SET_PRIM(
+		SCE_GS_PRIM_SPRITE,		// PRIM (Primitive type)
+		SCE_GS_TRUE,			// IIP  (Gouraud)
+		0,						// TME  (Textured)
+		0,						// FGE  (Fogging)
+		SCE_GS_TRUE,			// ABE  (Alpha Blending)
+		0,						// AA1  (Anti-Aliasing)
+		0,						// FST  (Use ST for texture coords)
+		0,						// CTXT (Context)
+		0						// FIX  (Fragment control)
+	);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[11] = SCE_GS_PRIM;
+
+	// RGBAQ
 	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[12] =
-		(long)(int7)((uint7)g_ActiveVidParams_0048cd90.field_0x6c << 0x18) | 0x3f80000000000000;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[13] = 1;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[14] = (long)iVar2 & 0xffffffffU | ((long)iVar1 & 0xffffffffU) << 0x10;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[15] = 4;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[16] =
-		(long)(int)(iVar2 + (uint)g_ActiveVidParams_0048cd90.params26.screenWidth * 0x10) & 0xffffffffU |
-		((long)(int)(iVar1 + (uint)g_ActiveVidParams_0048cd90.params26.screenHeight * 0x10) & 0xffffffffU) << 0x10;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[17] = 4;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[18] = 0x70000;
-	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[19] = 0x47;
+		(ulong)(int7)((uint7)g_ActiveVidParams_0048cd90.field_0x6c << 0x18) | 0x3f80000000000000;
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[13] = SCE_GS_RGBAQ;
+
+	// XYZF2
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[14] = SCE_GS_SET_XYZF(iVar2 & 0xffffffffU, iVar1 & 0xffffffffU, 0, 0);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[15] = SCE_GS_XYZF2;
+
+	// XYZF2
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[16] = SCE_GS_SET_XYZF(
+		(int)(iVar2 + (uint)g_ActiveVidParams_0048cd90.params26.screenWidth * 0x10) & 0xffffffffU,
+		(int)(iVar1 + (uint)g_ActiveVidParams_0048cd90.params26.screenHeight * 0x10) & 0xffffffffU,
+		0, 0);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[17] = SCE_GS_XYZF2;
+
+	// TEST
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[18] = SCE_GS_SET_TEST(
+		0,	// ATE 
+		0,	// ATST
+		0,	// AREF
+		0,	// AFAIL
+		0,	// DATE
+		0,	// DATM
+		1,	// ZTE
+		3	// ZTST
+	);
+	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[19] = SCE_GS_TEST_1;
+
 	g_ActiveVidParams_0048cd90.listDataAC.field_0xa0 = (ulong*)((char*)&g_ActiveVidParams_0048cd90 + 0xf0);
 	g_ActiveVidParams_0048cd90.listDataAC.field_0xa4 = (ulong*)((char*)&g_ActiveVidParams_0048cd90 + 0x100);
 	g_ActiveVidParams_0048cd90.listDataAC.field_0xa8 = (ulong*)((char*)&g_ActiveVidParams_0048cd90 + 0x110);

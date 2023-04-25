@@ -4,29 +4,33 @@
 #ifdef PLATFORM_WIN
 namespace PointerConv
 {
-	std::unordered_map<int, void*> TextureSectionMap;
+	std::vector<void*> TextureSections = { 0 }; // One element to start with, so null lookups don't
 	int KeyGenerator = 0;
 }
 
 int PointerConv::AddTextureSectionValue(void* value)
 {
-	TextureSectionMap.try_emplace(++KeyGenerator, value);
-	return KeyGenerator;
+	TextureSections.push_back(value);
+	return TextureSections.size() - 1;
 }
 
 std::optional<void*> PointerConv::ResolveTextureSectionKey(int key)
 {
-	auto iter = TextureSectionMap.find(key);
-	if (iter == TextureSectionMap.end()) {
-		return std::nullopt; // key not found, return empty optional
+	if (key < TextureSections.size())
+	{
+		return TextureSections[key];
 	}
-	else {
-		return iter->second; // key found, return optional containing value
-	}
+
+	return std::nullopt; // key not found, return empty optional
 }
 
 void* PointerConv::ResolveTextureSectionKeyChecked(int key)
 {
+	if (key == 0)
+	{
+		return (void*)0x0;
+	}
+
 	std::optional<void*> value = ResolveTextureSectionKey(key);
 	assert(value.has_value());
 	return *value;

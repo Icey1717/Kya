@@ -16,7 +16,7 @@ struct sceCdlFILE {
 };
 #endif
 
-// typedef struct BankFileAccessBuffer BankFileAccessBuffer, * PBankFileAccessBuffer;
+typedef void(*LoadBankFileFunc)(bool, void*);
 
 struct edCBankFileHeader {
 	undefined field_0x0;
@@ -679,9 +679,9 @@ struct ReadBank_1C {
 	struct edCBankBuffer* pBankHeader_0x0;
 	char* pReadBuffer;
 	struct DebugBankData_234* pDebugBankData;
-	undefined* pBankTypePairData_0xc;
-	undefined* pObjectReference_0x10;
-	undefined* fileFunc_0x14;
+	struct TypePairData* pBankTypePairData_0xc;
+	void* pObjectReference_0x10;
+	LoadBankFileFunc fileFunc_0x14;
 	int fileFlagB_0x18;
 };
 
@@ -694,26 +694,31 @@ struct ReadBank_158 {
 struct TypePairData {
 	uint field_0x0;
 	uint field_0x4;
-	void (*pFunction)(int);
-	uint field_0xc;
-	uint field_0x10;
-	uint field_0x14;
-	uint field_0x18;
-	uint field_0x1c;
+	void (*pFunction[6])(char*, int);
 };
+
+struct BankFile_Internal;
+
+void ReadsBankFile(void);
 
 bool edCBankBuffer_file_access(edCBankBuffer* pBankBuffer, struct BankFilePathContainer* file);
 int CheckFileLoadAndGetParam(edCBankBuffer* pBankBuffer);
 
 uint GetFileSize_0025b330(DebugBankData_234* param_1);
 
-void edCBankFileHeader_get_entry_typepair(char* fileBuffer, TypePairData* pTypePairData, int param_3);
+void edCBankFileHeader_get_entry_typepair(BankFile_Internal* fileBuffer, TypePairData* pTypePairData, int param_3);
 
 char* edCBankFileHeader_FindFileDataInHeader(char* pFileHeader, int inFileIndex);
 char* edCBankFileHeader_GetFileBufferStartFromFileIndex(char* pFileData, int fileIndex);
 bool GetFileDataForIndex(edCBankBuffer* pBankBuffer, int inFileIndex, struct BankFileData* outFileData, char* outIopPath);
+bool edCBankBuffer_file_access_002450e0(edCBankBuffer* pBankBuffer, BankFilePathContainer* pLoadData);
 bool edCBankBuffer_close(edCBankBuffer* pBankBuffer);
 
 int GetIndexFromFileHeader(edCBankFileHeader* bankBufferObj, char* inFileName);
+int GetIndexForFileName(edCBankBuffer* headerObj, char* inFileName);
+char* GetFilePointerFromFileIndex(edCBankBuffer* bankObj, int fileIndex);
+
+void edCBankBuffer_file_access(edCBankBuffer* pBankAccessObject);
+bool edCBankBuffer_CheckAccessFlag(edCBankBuffer* bankAccessObj);
 
 #endif //_EDCBANKBUFFER_H

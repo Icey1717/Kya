@@ -175,7 +175,7 @@ struct CinematicCameraView {
 
 class CinematicManager : public Manager {
 public:
-	CinematicManager* SetupCinematicManager_001c68b0();
+	CinematicManager::CinematicManager();
 
 	struct CinematicObjectB** ppCinematicObjB_A;
 	int numCutscenes_0x8;
@@ -227,6 +227,5 @@ public:
 };
 
 extern CinematicManager* g_CinematicManager_0048efc;
-extern CinematicManager* g_CinematicManagerPtr_004516ac;
 
 #endif // _CINEMATICMANAGER_H

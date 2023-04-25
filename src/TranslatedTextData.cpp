@@ -39,6 +39,30 @@ void RemoveLinkedTextData_00336a00(TranslatedTextData** ppTextData, TranslatedTe
 	return;
 }
 
+void FUN_00336d20(TranslatedTextData* pTextData)
+{
+	int* piVar1;
+	uint uVar2;
+	ulong* puVar3;
+
+	piVar1 = (int*)pTextData->pFileData;
+	pTextData->entryCount = *piVar1;
+	puVar3 = (ulong*)(piVar1 + 2);
+	pTextData->pDataA = puVar3;
+	if (piVar1[1] == 0) {
+		piVar1[1] = 1;
+		uVar2 = 0;
+		if (pTextData->entryCount != 0) {
+			do {
+				uVar2 = uVar2 + 1;
+				*(char**)(puVar3 + 1) = pTextData->pFileData + *(int*)(puVar3 + 1);
+				puVar3 = puVar3 + 2;
+			} while (uVar2 < (uint)pTextData->entryCount);
+		}
+	}
+	return;
+}
+
 TranslatedTextData::TranslatedTextData()
 {
 	pPrev = (TranslatedTextData*)0x0;
@@ -77,6 +101,69 @@ ELanguageID g_LanguageID_0044974c = GB;
 short SHORT_00448fce = 0;
 EHeap EHeap_00448fc8 = TO_HEAP(H_MAIN);
 short SHORT_00448fcc = 0x40;
+
+void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBuffer* pBankAccess, char* pFilePath, ELanguageID languageID)
+{
+	bool bVar1;
+	TranslatedTextData* pTVar2;
+	TranslatedTextData* pTVar3;
+	TranslatedTextData* pTVar4;
+	bool bVar5;
+	int iVar6;
+	BankFileData BStack544;
+	char acStack512[512];
+
+	bVar1 = false;
+	if (this->entryCount != 0) {
+		this->pFileData = (char*)0x0;
+		this->pDataA = (ulong*)0x0;
+		this->entryCount = 0;
+		this->pBankAccessObj = (edCBankBuffer*)0x0;
+		if (pBankAccess == (edCBankBuffer*)0x0) {
+			RemoveLinkedTextData_00336a00(&g_TranslatedTextTRC_00449748, this);
+		}
+		else {
+			bVar1 = true;
+		}
+	}
+	if (pBankAccess != (edCBankBuffer*)0x0) {
+		if (languageID == AUTO) {
+			languageID = g_LanguageID_0044974c;
+		}
+		if (pFilePath != (char*)0x0) {
+			iVar6 = edStringCpyL(this->field_0x8, pFilePath);
+			(this->field_0x8 + iVar6 + -8)[2] = '%';
+			(this->field_0x8 + iVar6 + -8)[3] = 's';
+		}
+		sprintf(acStack512, this->field_0x8);
+		iVar6 = GetIndexForFileName(pBankAccess, acStack512);
+		if ((iVar6 != -1) && (bVar5 = GetFileDataForIndex(pBankAccess, iVar6, &BStack544, (char*)0x0), bVar5 != false)) {
+			this->languageID = languageID;
+			this->pFileData = BStack544.fileBufferStart;
+			this->pBankAccessObj = pBankAccess;
+			FUN_00336d20(this);
+			if ((!bVar1) && (this != (TranslatedTextData*)0x0)) {
+				if (g_TranslatedTextTRC_00449748 == (TranslatedTextData*)0x0) {
+					this->pPrev = (TranslatedTextData*)0x0;
+					this->pNext = (TranslatedTextData*)0x0;
+					g_TranslatedTextTRC_00449748 = this;
+				}
+				else {
+					pTVar4 = g_TranslatedTextTRC_00449748->pNext;
+					pTVar3 = g_TranslatedTextTRC_00449748;
+					while (pTVar2 = pTVar4, pTVar2 != (TranslatedTextData*)0x0) {
+						pTVar3 = pTVar2;
+						pTVar4 = pTVar2->pNext;
+					}
+					this->pPrev = pTVar3;
+					this->pNext = (TranslatedTextData*)0x0;
+					pTVar3->pNext = this;
+				}
+			}
+		}
+	}
+	return;
+}
 
 char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 {
@@ -124,7 +211,7 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 			peVar4 = peVar2->GetGlobalC_0x1c();
 			SetBankClose(peVar4, pDebugBank);
 			if ((pDebugBank->openFlags & 8) == 0) {
-				Func_0025b0c0(pDebugBank->pOwningFiler);
+				TriggerBankRead_0025b0c0(pDebugBank->pOwningFiler);
 				iVar6 = 0;
 				do {
 					if (&g_DebugBankDataArray_00469bf0[iVar6] == pDebugBank) {
@@ -153,30 +240,6 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 		}
 	}
 	return pReadBuffer;
-}
-
-void FUN_00336d20(TranslatedTextData* pTextData)
-{
-	int* piVar1;
-	uint uVar2;
-	ulong* puVar3;
-
-	piVar1 = (int*)pTextData->pFileData;
-	pTextData->entryCount = *piVar1;
-	puVar3 = (ulong*)(piVar1 + 2);
-	pTextData->pDataA = puVar3;
-	if (piVar1[1] == 0) {
-		piVar1[1] = 1;
-		uVar2 = 0;
-		if (pTextData->entryCount != 0) {
-			do {
-				uVar2 = uVar2 + 1;
-				*(char**)(puVar3 + 1) = pTextData->pFileData + *(int*)(puVar3 + 1);
-				puVar3 = puVar3 + 2;
-			} while (uVar2 < (uint)pTextData->entryCount);
-		}
-	}
-	return;
 }
 
 void TranslatedTextData::LoadTranslatedTextFromDisk(char* filePath, ELanguageID inLanguageID)
@@ -288,7 +351,7 @@ char* TranslatedTextData::GetText_00336c10(ulong key, long mode)
 		}
 	}
 
-	MY_LOG("TranslatedTextData::GetText_00336c10 %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
+	//MY_LOG("TranslatedTextData::GetText_00336c10 %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
 
 	return pcVar1;
 }

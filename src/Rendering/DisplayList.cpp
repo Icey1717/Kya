@@ -9,8 +9,11 @@
 #include "../edDlist.h"
 #include <assert.h>
 #include "../LargeObject.h"
+#include "../FrontendManager.h"
 
-DisplayList* g_GuiDisplayListPtr_00449724;
+DisplayList* g_GameDisplayListPtr_0044971c = NULL;
+DisplayList* g_FrontendDisplayListPtr_00449720 = NULL;
+DisplayList* g_GuiDisplayListPtr_00449724 = NULL;
 
 void DisplayListFunc_002d6340(void)
 {
@@ -190,6 +193,96 @@ DisplayListInternal* AllocateDisplayListMemory_002caee0(EHeap heapID, uint inFla
 	return pInBuffer;
 }
 
+float FLOAT_00448510 = 0.1f;
+
+void FUN_00290620(float param_1, int param_2, char* param_3, long param_4, char* param_5)
+{
+	int iVar1;
+	char* pcVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	char acStack32[32];
+
+	iVar1 = 0;
+	if (param_4 != 0) {
+		if (param_1 == 0.0) {
+			param_4 = 0;
+		}
+		else {
+			if (param_1 < FLOAT_00448510) {
+				for (; param_1 < 1.0; param_1 = param_1 * 10.0) {
+					iVar1 = iVar1 + -1;
+				}
+			}
+			else {
+				if (10.0 <= param_1) {
+					for (; 10.0 <= param_1; param_1 = param_1 * FLOAT_00448510) {
+						iVar1 = iVar1 + 1;
+					}
+				}
+				else {
+					param_4 = 0;
+				}
+			}
+		}
+	}
+	fVar7 = param_1;
+	if (param_1 < 0.0) {
+		fVar7 = -param_1;
+	}
+	fVar6 = 1.0;
+	for (iVar3 = 0; iVar3 < param_2; iVar3 = iVar3 + 1) {
+		fVar6 = fVar6 * 10.0;
+	}
+	if (2.147484e+09 < fVar7 * fVar6) {
+		sprintf(param_3, "%s", "ERROR");
+	}
+	else {
+		iVar4 = 0x13;
+		iVar3 = (int)(fVar7 * fVar6 + 0.5);
+		for (iVar5 = 0; (0 < iVar4 && ((iVar3 != 0 || (iVar5 <= param_2)))); iVar5 = iVar5 + 1) {
+			param_5 = acStack32 + iVar4;
+			iVar4 = iVar4 + -1;
+			*param_5 = (char)iVar3 + (char)(iVar3 / 10) * -10 + '0';
+			iVar3 = iVar3 / 10;
+		}
+		if (param_1 < 0.0) {
+			*param_3 = '-';
+			param_3 = param_3 + 1;
+		}
+		for (iVar3 = 0; iVar3 < iVar5 - param_2; iVar3 = iVar3 + 1) {
+			*param_3 = *param_5;
+			param_5 = param_5 + 1;
+			param_3 = param_3 + 1;
+		}
+		*param_3 = '.';
+		for (iVar3 = 0; pcVar2 = param_3 + 1, iVar3 < param_2; iVar3 = iVar3 + 1) {
+			*pcVar2 = *param_5;
+			param_5 = param_5 + 1;
+			param_3 = pcVar2;
+		}
+		if (param_4 == 0) {
+			*pcVar2 = '\0';
+		}
+		else {
+			*pcVar2 = 'e';
+			sprintf(param_3 + 2, "%d", iVar1);
+		}
+	}
+	return;
+}
+
+char* WorkOutMo(float param_1, int param_2, char* param_3, long param_4, char* param_5)
+{
+	FUN_00290620(param_1, param_2, param_3, param_4, param_5);
+	return param_3;
+}
+
+char g_DebugTextBuffer_00468ef0[16] = { 0 };
+
 void SetupDisplayLists(void)
 {
 	StaticMeshMaster* pSVar1;
@@ -208,75 +301,45 @@ void SetupDisplayLists(void)
 	PrintString(sz_DisplayListSpacer_00433970);
 	PrintString("----- Memory used by display list -------\n");
 	PrintString(g_NewLine);
-	//freeMemCalcA = GetCurrentFreeMemory(1);
-	//pDVar2 = (DisplayList*)Allocate(0x20);
-	pSVar1 = NULL; // g_StaticMeshMasterA_00448808;
-	//if (pDVar2 != (DisplayList*)0x0) {
-	//    pDVar2->pVTable = &DisplayListHeader::VTable_004406d0;
-	//    pDVar2->field_0x8 = -1;
-	//    pDVar2->field_0xc = -1;
-	//    pDVar2->field_0x10 = -1;
-	//    pDVar2->pDisplayListInternal = (DisplayListInternal*)0x0;
-	//    pDVar2->bEnabled = 0;
-	//    pDVar2->field_0x8 = 0x200;
-	//    pDVar2->field_0xc = 0x1000;
-	//    pDVar2->field_0x10 = 0;
-	//    pDVar2->field_0x1c = 0x11;
-	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(TO_HEAP(H_MAIN), 0x11, 0x200, 0, 0x1000, 0, (char*)0x0);
-	//    pDVar2->pDisplayListInternal = pDVar3;
-	//    DisplayListInternal::SetStaticMeshMaster_002cb380(pDVar2->pDisplayListInternal, pSVar1);
-	//}
-	//g_GameDisplayListPtr_0044971c = pDVar2;
-	//GetCurrentFreeMemory(1);
-	///* - Game list          : %07d\n */
-	//PrintString(s_ - _Game_list_:_ % 07d_004339d0);
-	//GetCurrentFreeMemory(1);
-	//pDVar2 = (DisplayList*)Allocate(0x20);
-	//pSVar1 = PTR_StaticMeshMaster_ARRAY_004d7d60[12].field_0x0_00448818;
-	//if (pDVar2 != (DisplayList*)0x0) {
-	//    pDVar2->pVTable = &DisplayListHeader::VTable_004406d0;
-	//    pDVar2->field_0x8 = -1;
-	//    pDVar2->field_0xc = -1;
-	//    pDVar2->field_0x10 = -1;
-	//    pDVar2->pDisplayListInternal = (DisplayListInternal*)0x0;
-	//    pDVar2->bEnabled = 0;
-	//    pDVar2->field_0x8 = 0x20;
-	//    pDVar2->field_0xc = 0x80;
-	//    pDVar2->field_0x10 = 0;
-	//    pDVar2->field_0x1c = 0x11;
-	//    pDVar3 = (DisplayListInternal*)AllocateDisplayListMemory_002caee0(TO_HEAP(H_MAIN), 0x11, 0x20, 0, 0x80, 0, (char*)0x0);
-	//    pDVar2->pDisplayListInternal = pDVar3;
-	//    DisplayListInternal::SetStaticMeshMaster_002cb380(pDVar2->pDisplayListInternal, pSVar1);
-	//}
-	//g_FrontendDisplayListPtr_00449720 = pDVar2;
-	//GetCurrentFreeMemory(1);
-	///* - Frontend 3D list   : %07d\n */
-	//PrintString(s_ - _Frontend_3D_list_:_ % 07d_004339f0);
-	//iVar4 = GetCurrentFreeMemory(1);
+	freeMemCalcA = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
+	pDVar2 = new DisplayList(0x200, 0x1000, 0, 0x11, g_StaticMeshMasterA_00448808);
+	g_GameDisplayListPtr_0044971c = pDVar2;
+	iVar5 = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
+
+	/* - Game list          : %07d\n */
+	PrintString("- Game list          : %07d\n", freeMemCalcA - iVar5);
+	iVar4 = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
+	pDVar2 = new DisplayList(0x20, 0x80, 0, 0x11, g_FrontendStaticMeshMaster_00448818);
+	g_FrontendDisplayListPtr_00449720 = pDVar2;
+	iVar5 = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
+
+	/* - Frontend 3D list   : %07d\n */
+	PrintString("- Frontend 3D list   : %07d\n", iVar4 - iVar5);
+	iVar4 = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
 	pDVar2 = new DisplayList(0x180, 0xe74, 0, 0x12, pSVar1);
 	g_GuiDisplayListPtr_00449724 = pDVar2;
-	//iVar5 = GetCurrentFreeMemory(1);
-	///* - Gui list           : %07d\n */
-	//PrintString(s_ - _Gui_list_:_ % 07d_00433a10, iVar4 - iVar5);
-	//PrintString(g_NewLine);
-	//iVar4 = GetCurrentFreeMemory(1);
-	//iVar5 = GetCurrentFreeMemory(1);
-	//uVar6 = freeMemCalcA - iVar5;
-	//if ((int)uVar6 < 0) {
-	//    fVar8 = (float)(uVar6 >> 1 | uVar6 & 1);
-	//    fVar8 = fVar8 + fVar8;
-	//}
-	//else {
-	//    fVar8 = (float)uVar6;
-	//}
-	//pcVar7 = WorkOutMo(fVar8 / 1048576.0, 3, g_DebugTextBuffer_00468ef0, 0);
-	///* --- total used : \t%d (%s Mo) ----
-	//   ----------------------------------------- */
-	//PrintString(s_-- - _total_used_:_ % d_(% s_Mo)_----_00433a30, freeMemCalcA - iVar4, pcVar7);
-	//PrintString(s_--------------------------------_00433970);
-	//PrintString(g_NewLine);
-	//(*(code*)g_GameDisplayListPtr_0044971c->pVTable->init)();
-	//(*(code*)g_FrontendDisplayListPtr_00449720->pVTable->init)();
+	iVar5 = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
+	/* - Gui list           : %07d\n */
+	PrintString("- Gui list           : %07d\n", iVar4 - iVar5);
+	PrintString(g_NewLine);
+	iVar4 = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
+	iVar5 = GetCurrentFreeMemory(TO_HEAP(H_MAIN));
+	uVar6 = freeMemCalcA - iVar5;
+	if ((int)uVar6 < 0) {
+		fVar8 = (float)(uVar6 >> 1 | uVar6 & 1);
+		fVar8 = fVar8 + fVar8;
+	}
+	else {
+		fVar8 = (float)uVar6;
+	}
+	pcVar7 = WorkOutMo(fVar8 / 1048576.0, 3, g_DebugTextBuffer_00468ef0, 0, (char*)0x0);
+	/* --- total used : \t%d (%s Mo) ----
+	   ----------------------------------------- */
+	PrintString("--- total used : \t%d (%s Mo) ----\n", freeMemCalcA - iVar4, pcVar7);
+	PrintString(sz_DisplayListSpacer_00433970);
+	PrintString(g_NewLine);
+	g_GameDisplayListPtr_0044971c->Init();
+	g_FrontendDisplayListPtr_00449720->Init();
 	if (g_GuiDisplayListPtr_00449724 != (DisplayList*)0x0) {
 		g_GuiDisplayListPtr_00449724->Init();
 	}
@@ -345,12 +408,12 @@ bool GuiDisplayListFunc_002d6360(void)
 
 void ActivateDisplayLists_002d6490(void)
 {
-	//if (g_GameDisplayListPtr_0044971c->bEnabled != 0) {
-	//	WillSetActiveDisplayList_002cac70(g_GameDisplayListPtr_0044971c->pDisplayListInternal);
-	//}
-	//if (g_FrontendDisplayListPtr_00449720->bEnabled != 0) {
-	//	WillSetActiveDisplayList_002cac70(g_FrontendDisplayListPtr_00449720->pDisplayListInternal);
-	//}
+	if (g_GameDisplayListPtr_0044971c->bEnabled != 0) {
+		edDlist::WillSetActiveDisplayList_002cac70(g_GameDisplayListPtr_0044971c->pDisplayListInternal);
+	}
+	if (g_FrontendDisplayListPtr_00449720->bEnabled != 0) {
+		edDlist::WillSetActiveDisplayList_002cac70(g_FrontendDisplayListPtr_00449720->pDisplayListInternal);
+	}
 	if ((g_GuiDisplayListPtr_00449724 != (DisplayList*)0x0) && (g_GuiDisplayListPtr_00449724->bEnabled != 0)) {
 		edDlist::WillSetActiveDisplayList_002cac70(g_GuiDisplayListPtr_00449724->pDisplayListInternal);
 	}
@@ -383,6 +446,12 @@ void DisplayList::Init()
 {
 	bEnabled = 1;
 	field_0x18 = 0;
+}
+
+void StaticMeshMaster::RemoveFlag_002a53e0(uint flag)
+{
+	this->flags_0x4 = this->flags_0x4 & ~flag;
+	return;
 }
 
 void StaticMeshMaster::SetFlag_002a5400(uint flag)

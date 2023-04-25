@@ -3,20 +3,20 @@
 
 const char sz_NodeTitle_00432b68[4] = { 'N', 'O', 'D', 'E' };
 
-bool FUN_002909f0(CameraPanMasterHeader* param_1, int param_2, undefined* param_3)
+bool FUN_002909f0(CameraPanMasterHeader* param_1, int param_2, CameraPanFunc* param_3)
 {
 	if (param_2 == 2) {
-		param_1->headerUnion.field1 = (char*)param_3;
+		param_1->headerUnion.field1 = param_3;
 	}
 	else {
-		param_1->headerUnion.field1 = (char*)param_2;
+		param_1->headerUnion.field0 = param_2;
 	}
 	return true;
 }
 
 bool Setup_00290bf0
 (CameraPanMasterHeader* pCameraPanStatic, MeshTransformParentHeader* param_2, int param_3,
-	undefined* param_4)
+	CameraPanFunc* param_4)
 {
 	bool bVar1;
 
@@ -76,25 +76,25 @@ short* FUN_002908d0(CameraPanMasterHeader* param_1, short* param_2)
 	return param_2;
 }
 
-void Link_00290c10(CameraPanMasterHeader* param_1)
+void Link_00290c10(CameraPanMasterHeader* pCameraPanMasterHeader)
 {
 	MeshTransformParentHeader* pMVar1;
 	CameraPanMasterHeader* pCVar2;
 
-	if (param_1->field_0x10 == 0) {
-		if ((CameraPanMasterHeader*)param_1->pLoadedData != param_1) {
-			pMVar1 = param_1->pCameraPanHeader_0xc;
-			param_1->pCameraPanStatic_0x8->pNext = (MeshTransformParent*)pMVar1->field_0x4;
-			pMVar1->field_0x4 = param_1->pLoadedData;
-			pMVar1->usedCount = pMVar1->usedCount - param_1->count_0x14;
-			param_1->count_0x14 = 0;
-			param_1->pLoadedData = (MeshTransformSpecial*)param_1;
-			param_1->pCameraPanStatic_0x8 = (MeshTransformParent*)param_1;
+	if (pCameraPanMasterHeader->field_0x10 == 0) {
+		if ((CameraPanMasterHeader*)pCameraPanMasterHeader->pLoadedData != pCameraPanMasterHeader) {
+			pMVar1 = pCameraPanMasterHeader->pCameraPanHeader_0xc;
+			pCameraPanMasterHeader->pCameraPanStatic_0x8->pNext = (MeshTransformParent*)pMVar1->field_0x4;
+			pMVar1->field_0x4 = pCameraPanMasterHeader->pLoadedData;
+			pMVar1->usedCount = pMVar1->usedCount - pCameraPanMasterHeader->count_0x14;
+			pCameraPanMasterHeader->count_0x14 = 0;
+			pCameraPanMasterHeader->pLoadedData = (MeshTransformSpecial*)pCameraPanMasterHeader;
+			pCameraPanMasterHeader->pCameraPanStatic_0x8 = (MeshTransformParent*)pCameraPanMasterHeader;
 		}
 	}
 	else {
-		for (pCVar2 = (CameraPanMasterHeader*)param_1->pLoadedData; pCVar2 != param_1;
-			pCVar2 = (CameraPanMasterHeader*)FUN_002908d0(param_1, (short*)pCVar2)) {
+		for (pCVar2 = (CameraPanMasterHeader*)pCameraPanMasterHeader->pLoadedData; pCVar2 != pCameraPanMasterHeader;
+			pCVar2 = (CameraPanMasterHeader*)FUN_002908d0(pCameraPanMasterHeader, (short*)pCVar2)) {
 		}
 	}
 	return;
@@ -114,7 +114,7 @@ CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int me
 		pAllocatedBuffer = pCVar2 + cameraPanCount;
 		Setup_00290b70((MeshTransformParentHeader*)pAllocatedBuffer, meshHeaderCount);
 		while (bVar1 = cameraPanCount != 0, cameraPanCount = cameraPanCount + -1, bVar1) {
-			Setup_00290bf0(pCVar2 + cameraPanCount, (MeshTransformParentHeader*)pAllocatedBuffer, 0, 0);
+			Setup_00290bf0(pCVar2 + cameraPanCount, (MeshTransformParentHeader*)pAllocatedBuffer, 0, NULL);
 		}
 	}
 	if (pCVar2 == (CameraPanMasterHeader*)0x0) {

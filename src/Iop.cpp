@@ -8,6 +8,9 @@ extern EFileLoadMode g_FileLoadMode_00448810;
 
 IopPaths IopPaths_00496aa0;
 
+IopManager IopManager_004497c4;
+IopManager* PTR_IopManager_00448cf8 = &IopManager_004497c4;
+
 char g_IopPath[8] = "\\IOP\\";
 #if defined(USE_IOP_300)
 char g_ImagePath[16] = "IOPRP300.IMG";
@@ -63,4 +66,9 @@ void IopManager::SetupIopPaths(InputSetupParams* pSetupParams)
 #endif
 	pSetupParams->fileLoadMode = g_FileLoadMode_00448810;
 	return;
+}
+
+bool IopManager::GetAnyControllerConnected()
+{
+	return disconnectedController != 0;
 }

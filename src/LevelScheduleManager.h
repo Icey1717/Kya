@@ -52,30 +52,7 @@ struct SaveDataSection_56454c42 {
 };
 
 struct LoadLoopObject_418_18 {
-	undefined4 field_0x0;
-	undefined4 field_0x4;
-	undefined4 field_0x8;
-	undefined4 field_0xc;
-	undefined4 field_0x10;
-	undefined4 field_0x14;
-	undefined4 field_0x18;
-	undefined4 field_0x1c;
-	undefined4 field_0x20;
-	undefined4 field_0x24;
-	undefined4 field_0x28;
-	undefined4 field_0x2c;
-	undefined4 field_0x30;
-	undefined4 field_0x34;
-	undefined4 field_0x38;
-	undefined4 field_0x3c;
-	undefined4 field_0x40;
-	undefined4 field_0x44;
-	undefined4 field_0x48;
-	undefined4 field_0x4c;
-	undefined4 field_0x50;
-	undefined4 field_0x54;
-	undefined4 field_0x58;
-	undefined4 field_0x5c;
+	SectorManagerSubObj aSubObj[6];
 };
 
 struct SaveBigAlloc {
@@ -125,14 +102,15 @@ struct SaveBigAlloc {
 
 struct LevelInfo {
 	undefined8 field_0x0;
-	undefined4 field_0x8;
-	undefined4 field_0xc;
-	int bankSize;
-	undefined4 field_0x14;
+	int bankSizeLevel;
+	int bankSizeSect;
+	int bankSizeIOP;
+	int sectorCount_0x14;
 	int field_0x18;
-	undefined4 field_0x1c;
+	int sectorStartIndex;
 	undefined4 field_0x20;
-	char levelName[16];
+	char levelName[12];
+	int field_0x30;
 	char levelPath[8];
 	undefined field_0x3c;
 	undefined field_0x3d;
@@ -599,22 +577,28 @@ struct LevelInfo {
 	undefined field_0x235;
 	undefined field_0x236;
 	undefined field_0x237;
-	struct LoadLoopObject_418_18 field_0x238[5];
+	SectorManagerSubObj aSectorSubObj[30];
 };
 
-class LevelScheduleManager : Manager {
+
+class LevelScheduleManager : public Manager {
 public:
 	LevelScheduleManager();
 
-	// Manager
+	// Begin Manager
 	virtual void OnBeginGame();
 	virtual void LoadStageOne();
+	virtual void EndLoadStageOne();
+	virtual bool AsyncLoad();
+	virtual void LoadA();
+	virtual void LoadB();
 	// End Manager
 
 	void SetLevelToLoad_002dba90(int levelID, int elevatorID, int param_4);
 
 	void MoreLoadLoopObjectSetup(bool param_2);
 	void StoreLevelFolders(char* fileData, LevelInfo* pLevelInfo);
+	uint* LevelLoadSetup_002e1750(uint* param_2, int count, LevelInfo* pLevelInfo);
 	void LevelLoadSetup(char* pFileData, int count, LevelInfo* pLevelInfo);
 	void LoadLevelInfoBnk();
 
@@ -2004,7 +1988,7 @@ public:
 	int level_0x5b54;
 	undefined4 field_0x5b58;
 	undefined4 field_0x5b5c;
-	edCBank pLevelBank;
+	edCBank levelBank;
 	edCBank levelIOPBank;
 	undefined field_0x5bd8;
 	undefined field_0x5bd9;
@@ -2014,37 +1998,6 @@ public:
 	undefined field_0x5bdd;
 	undefined field_0x5bde;
 	undefined field_0x5bdf;
-};
-
-struct ManagerFunctionData {
-	void* field_0x0;
-	void* field_0x4;
-	void* free;
-	void* constructorFunc;
-	void* field_0x10;
-	void* loadStageOneFunc;
-	void* endLoadStageOneFunc;
-	void* asyncLoadFunc;
-	void* loadLevelUpdateFunc;
-	void* loadAFunc;
-	void* loadBFunc;
-	void* unload;
-	void* deserializeFunc;
-	void* field_0x34;
-	void* preUpdateFuncA;
-	void* preUpdateFuncB;
-	void* mainUpdateFunc;
-	void* field_0x44;
-	void* field_0x48;
-	void* onSaveLoadedA;
-	void* onSaveLoadedB;
-	void* onSectorChanged;
-	void* setPaused;
-	void* field_0x5c;
-	void* saveDataLoaded_0x60;
-	void* field_0x64;
-	void* getName;
-	void* field_0x6c;
 };
 
 extern LevelScheduleManager* g_LevelScheduleManager_00449728;

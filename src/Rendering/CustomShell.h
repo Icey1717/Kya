@@ -26,7 +26,8 @@ struct DMA_Register_Struct {
 	uint QWC;
 };
 
-
+void FUN_00258050(Vector* param_1, uint param_2, uint param_3);
+bool FUN_002580b0(uint addr, uint qwc, uint param_3);
 void WaitDMA(void);
 int WaitForDraw_00258230(void);
 int shellDmaSync(int channel);

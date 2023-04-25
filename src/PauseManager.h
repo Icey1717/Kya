@@ -23,12 +23,23 @@ typedef enum EPauseMenu {
 } EPauseMenu;
 
 struct PauseScreenData {
-	struct PauseScreenData* field_0x4;
-	undefined4 field_0x8;
-	void* field_0xc;
-	void* field_0x10;
+public:
+	PauseScreenData();
+	void Reset();
+	void SetMode(EPauseMenu mode);
+
+	void SetFontValue_002f2cf0(struct FontPacked* pFont);
+	void SetFontValue_002f2d00(struct FontPacked* pFont);
+	void SetFontValue_002f2d10(struct FontPacked* pFont);
+	void SetTranslatedTextData_002f2d20(struct TranslatedTextData* pTextData);
+	EPauseMenu GetCurrentMode_002f2d30();
+	void Func_002f00a0();
+	struct TranslatedTextData* pTranslatedTextData;
+	struct FontPacked* pFontA;
+	struct FontPacked* pFontB;
+	struct FontPacked* pFontC;
 	int lastInput_0x14;
-	float field_0x18;
+	float totalTime;
 	int screenState_0x1c;
 	int field_0x20;
 	undefined4 counter_0x24;
@@ -176,7 +187,7 @@ struct PauseScreenData {
 	float field_0xe8;
 	float field_0xec;
 	float field_0xf0;
-	undefined field_0xf4;
+	byte field_0xf4;
 	undefined field_0xf5;
 	undefined field_0xf6;
 	undefined field_0xf7;
@@ -189,10 +200,14 @@ struct PauseScreenData {
 class PauseManager : public Manager {
 
 public:
-	PauseManager* SetupPauseManager_001b0eb0();
+	PauseManager();
 
+	// Manager
 	virtual void OnBeginGame();
 	virtual void LoadLevelUpdate();
+	virtual void LoadB();
+	virtual void Update();
+	// End Manager
 
 	int currentAreaIndex;
 	int totalAreaCount;
@@ -217,20 +232,21 @@ public:
 	undefined field_0x27;
 	struct PauseScreenData* pSubObj108_0x28;
 	struct G2DObj_PauseManager* pTexture_0x2c;
-	float field_0x30;
+	float totalPlayTime;
 	int field_0x34;
 };
 
 struct G2DObj {
-	struct G2DObj_VTable* pVTable;
-	undefined field_0x4;
+public:
+	G2DObj();
+	byte field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
 	undefined4 field_0x8;
-	void* field_0xc;
+	struct MaterialInfo* pMaterialInfo;
 	undefined4 field_0x10;
-	undefined* field_0x14;
+	float field_0x14;
 	float field_0x18;
 	float field_0x1c;
 	undefined4 field_0x20;
@@ -269,36 +285,25 @@ struct G2DObj {
 	undefined* field_0x70;
 	float field_0x74;
 	float field_0x78;
-	int field_0x7c;
+	uint flags_0x7c;
 	struct MaterialInfo materialInfo;
 	struct TextureInfoSmall textureInfo;
 };
 
-struct G2DObj_VTable {
-	void* field_0x0;
-	void* field_0x4;
-	void (*init)(struct G2DObj*);
-	void* field_0xc;
-	void* field_0x10;
-	void* field_0x14;
-	void* field_0x18;
-	void* field_0x1c;
-	void* field_0x20;
-	void* field_0x24;
-	void* field_0x28;
-	void* field_0x2c;
-};
-
-struct G2DObj_PauseManager {
-	struct G2DObj base;
+struct G2DObj_PauseManager : public G2DObj {
+public:
+	G2DObj_PauseManager();
+	bool Load(float param_1, char* filePath);
+	bool Draw(ulong param_2, bool param_3, bool param_4);
+	void SetDrawLocation(float x, float y, float z, float w);
+	char* pTextureFileData;
 	float field_0xc4;
 	float field_0xc8;
 	undefined4 field_0xcc;
 	undefined4 field_0xd0;
-	sceVu0FVECTOR vector_0xd4;
+	struct Vector drawOffsets;
 };
 
-extern PauseManager* g_PauseManager_00451688;
 extern struct FontPacked* g_MenuFont_00449754;
 
 #endif // _PAUSEMANAGER_H

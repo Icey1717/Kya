@@ -70,7 +70,7 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 		if (bnkInUse[iVar4] == 0) {
 			bnkInUse[iVar4] = 1;
 			bufferStart = field_0x218 + iVar4;
-			memset(bufferStart, 0, 8);
+			memset(bufferStart, 0, sizeof(edCFiler_BNK_8));
 			break;
 		}
 		iVar4 = iVar4 + 1;
@@ -110,7 +110,7 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 					do {
 						if ((edCFiler_BNK_8*)(pbVar8 + 4) == bufferStart) {
 							bnkInUse[iVar2] = 0;
-							memset(field_0x218 + iVar2, 0, 8);
+							memset(field_0x218 + iVar2, 0, sizeof(edCFiler_BNK_8));
 							break;
 						}
 						iVar2 = iVar2 + 1;
@@ -130,7 +130,7 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 						do {
 							if ((edCFiler_BNK_8*)(pbVar8 + 4) == bufferStart) {
 								bnkInUse[iVar4] = 0;
-								memset(field_0x218 + iVar4, 0, 8);
+								memset(field_0x218 + iVar4, 0, sizeof(edCFiler_BNK_8));
 								break;
 							}
 							iVar4 = iVar4 + 1;
@@ -140,7 +140,7 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 					}
 					else {
 						bufferStart->pFileData = (char*)puVar6;
-						memset(&pOutData->field_0x10, 0, 0x218);
+						memset(&pOutData->field_0x10, 0, sizeof(DebugBankDataInternal));
 						pcVar3 = SearchForColon(filePath);
 						edStringCpyL((pOutData->field_0x10).name, pcVar3 + 1);
 						bVar1 = true;
@@ -320,7 +320,7 @@ bool edCFiler_BNK::LoadAndStoreInternal(char* filePath, char* bankPath)
 			iVar4 = 0;
 			do {
 				if (__s->path[0] == '\0') {
-					memset(__s, 0, 0x404);
+					memset(__s, 0, sizeof(edCFiler_Bnk_static));
 					edStringCpyL(__s->path, formattedPath);
 					goto LAB_00247648;
 				}

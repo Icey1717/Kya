@@ -11,6 +11,8 @@
 #include <vector>
 #endif
 
+#include "edSystem.h"
+
 #include <assert.h>
 
 edCFiler_CDVD g_edCFiler_CDVD_0046c360;
@@ -173,7 +175,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 		if (aContainerInUse[fileDirectoryLength] == 0) {
 			aContainerInUse[fileDirectoryLength] = 1;
 			bufferStart = &aFileContainers[fileDirectoryLength];
-			memset(bufferStart, 0, 0x28);
+			memset(bufferStart, 0, sizeof(CDFileContainer));
 			break;
 		}
 		fileDirectoryLength = fileDirectoryLength + 1;
@@ -245,7 +247,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 			do {
 				if ((CDFileContainer*)(pbVar8 + 0x10) == bufferStart) {
 					aContainerInUse[fileDirectoryLength] = 0;
-					memset(aFileContainers + fileDirectoryLength, 0, 0x28);
+					memset(aFileContainers + fileDirectoryLength, 0, sizeof(CDFileContainer));
 					break;
 				}
 				fileDirectoryLength = fileDirectoryLength + 1;
@@ -300,14 +302,18 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 					local_4.second = 0;
 					local_4.sector = 0;
 					sceCdIntToPos((bufferStart->file).lsn, &local_4);
-				}
-#else
-				if (fp) {
-					bufferStart->fd = g_FileDescriptors.size();
-					g_FileDescriptors.push_back(fp);
-				}
+				}	
 #endif
 			}
+
+#ifdef PLATFORM_WIN
+			if (fp) {
+				bufferStart->fd = g_FileDescriptors.size();
+				MY_LOG("edCFiler_CDVD::Open FILE: %d\n", bufferStart->fd);
+				g_FileDescriptors.push_back(fp);
+			}
+#endif
+
 			openSuccess = true;
 		}
 	}
@@ -325,6 +331,8 @@ bool edCFiler_CDVD::Close(DebugBankData_234* pDebugBank)
 		bVar1 = false;
 	}
 	else {
+		MY_LOG("edCFiler_CDVD::Close FILE: %d\n", piVar2->fd);
+
 #ifdef PLATFORM_PS2
 		if ((pDebugBank->openFlags & 8) == 0) {
 			if ((pDebugBank->openFlags & 0x10) != 0) {
@@ -366,6 +374,8 @@ uint edCFiler_CDVD::ReadStream(DebugBankData_234* pDebugBank, char* destination,
 		readBytes = 0;
 	}
 	else {
+		MY_LOG("edCFiler_CDVD::ReadStream FILE: %d Offset: %u\n", paVar1->fd, requiredSize);
+
 		if ((pDebugBank->openFlags & 8) == 0) {
 			iVar2 = 0;
 			if ((pDebugBank->openFlags & 0x10) == 0) {
@@ -383,6 +393,8 @@ uint edCFiler_CDVD::ReadStream(DebugBankData_234* pDebugBank, char* destination,
 				do {
 					readBytes = sceCdStRead(requiredSize >> 0xb, (u_int*)destination, 1, &readError);
 				} while ((readBytes & 0x1fffff) == 0);
+#else
+				assert(false);
 #endif
 			}
 		}
@@ -399,6 +411,9 @@ uint edCFiler_CDVD::ReadStream(DebugBankData_234* pDebugBank, char* destination,
 				sceCdDiskReady(0);
 				iVar2 = sceCdRead((paVar1->file).lsn + ((uint)pDebugBank->seekOffset >> 0xb), readBytes, destination, &local_4);
 			} while (iVar2 == 0);
+#else
+			iVar2 = fread(destination, 1, requiredSize, g_FileDescriptors[paVar1->fd]);
+			assert(iVar2 > 0);
 #endif
 		}
 		readBytes = 1;
@@ -417,6 +432,8 @@ bool edCFiler_CDVD::Seek(DebugBankData_234* pDebugBank)
 		bVar1 = false;
 	}
 	else {
+		MY_LOG("edCFiler_CDVD::Seek FILE: %d Offset: %d\n", piVar2->fd, pDebugBank->seekOffset);
+
 		if ((pDebugBank->openFlags & 8) == 0) {
 			do {
 #ifdef PLATFORM_PS2
@@ -485,8 +502,9 @@ bool edCFiler_CDVD::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 										/* Cover opened during playback\n */
 										PrintString("Cover opened during playback\n");
 										field_0x88c = 1;
-										assert(false);
-										//edSysHandlersCall(DAT_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, DAT_00469bc4, 0xd, 0);
+										edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
+											g_edSysHandlerFile_00469b84.entries,
+											g_edSysHandlerFile_00469b84.maxEventID, 0xd, (void*)0x0);
 									}
 									else {
 										if (result == 0x32) {
@@ -502,8 +520,9 @@ bool edCFiler_CDVD::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 												if (result == -1) {
 													/* sceCdGetError() function issue failed\n */
 													PrintString("sceCdGetError() function issue failed\n");
-													assert(false);
-													//edSysHandlersCall(DAT_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, DAT_00469bc4, 0xd, 0);
+													edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
+														g_edSysHandlerFile_00469b84.entries,
+														g_edSysHandlerFile_00469b84.maxEventID, 0xd, (void*)0x0);
 												}
 												else {
 													/* unknown error\n */
@@ -516,8 +535,9 @@ bool edCFiler_CDVD::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 							}
 						}
 					}
-					assert(false);
-					//edSysHandlersCall(DAT_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, DAT_00469bc4, 0xf, 0);
+					edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
+						g_edSysHandlerFile_00469b84.entries,
+						g_edSysHandlerFile_00469b84.maxEventID, 0xf, (void*)0x0);
 				}
 				bVar1 = true;
 			}
@@ -532,7 +552,7 @@ bool edCFiler_CDVD::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 				do {
 					if ((CDFileContainer*)(pbVar2 + 0x10) == pInternalData) {
 						this->aContainerInUse[iVar3] = 0;
-						memset(this->aFileContainers + iVar3, 0, 0x28);
+						memset(this->aFileContainers + iVar3, 0, sizeof(CDFileContainer));
 						break;
 					}
 					iVar3 = iVar3 + 1;
@@ -605,7 +625,7 @@ bool edCFiler_CDVD_Toc::Initialize(edCdlFolder* pFolder, int size)
 				pBaseFolder = pFolder;
 				pCurrentFolder = (edCdlFolder*)(pFolder->name + size);
 				offset = size;
-				memset(pBaseFolder, 0, 0x2c);
+				memset(pBaseFolder, 0, sizeof(edCdlFolder));
 				uVar2 = (uint)auStack1954 & 3;
 				uVar1 = (uint)(auStack1954 + 3) & 3;
 				uVar1 = *(int*)(auStack1954 + 3 + -uVar1) << (3 - uVar1) * 8 | (uVar5 & -1 << (4 - uVar2) * 8 | *(uint*)(auStack1954 + -uVar2) >> uVar2 * 8) & 0xffffffffU >> (uVar1 + 1) * 8;
@@ -895,7 +915,7 @@ bool edCFiler_CDVD_Toc::LoadFromTOC(sceCdlFILE* pOutFileData, char* filePath)
 		strcpy(pOutFileData->name, (char*)pFoundFile);
 	}
 	else {
-		memset(pOutFileData, 0, 0x24);
+		memset(pOutFileData, 0, sizeof(sceCdlFILE));
 	}
 	return pFoundFile != (edCdlFolder*)0x0;
 }

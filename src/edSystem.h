@@ -36,7 +36,6 @@ struct edSysHandlersNodeParent {
 };
 
 extern edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;;
-extern edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[4];
 
 namespace edSystem
 {

@@ -45,12 +45,24 @@ set(main_src
 	"${src_root}/PackedFont.h"
 	"${src_root}/LargeObject.cpp"
 	"${src_root}/LargeObject.h"
+	"${src_root}/MemoryStream.cpp"
+	"${src_root}/MemoryStream.h"
 	"${src_root}/LevelScheduleManager.cpp"
 	"${src_root}/LevelScheduleManager.h"
+	"${src_root}/FrontendManager.cpp"
+	"${src_root}/FrontendManager.h"
+	"${src_root}/FileManager3D.cpp"
+	"${src_root}/FileManager3D.h"
 	"${src_root}/PauseManager.cpp"
 	"${src_root}/PauseManager.h"
+	"${src_root}/SectorManager.cpp"
+	"${src_root}/SectorManager.h"
 	"${src_root}/CinematicManager.cpp"
 	"${src_root}/CinematicManager.h"
+	"${src_root}/CameraViewManager.cpp"
+	"${src_root}/CameraViewManager.h"
+	"${src_root}/InputManager.cpp"
+	"${src_root}/InputManager.h"
 	"${src_root}/Rendering/DisplayList.cpp"
 	"${src_root}/Rendering/DisplayList.h"
 	"${src_root}/Rendering/DisplayListData.cpp"
@@ -71,6 +83,8 @@ set(main_src
 	"${src_root}/edC/edCFiler_Static.h"
 	"${src_root}/edC/edCFiler_CDVD.cpp"
 	"${src_root}/edC/edCFiler_CDVD.h"
+	"${src_root}/MathOps.cpp"
+	"${src_root}/MathOps.h"
 	"${src_root}/TimeController.cpp"
 	"${src_root}/TimeController.h"
 	"${src_root}/LocalizationManager.cpp"
@@ -172,11 +186,13 @@ if (PS2)
 
 	target_link_libraries(Kya PRIVATE "sdr" "dma" "cdvd" "graph" "pkt" "dbc" "pad2" "shell" "scf" "mpeg" "ipu" "dev" "vu0" "mc")
 
+	target_compile_options(Kya PRIVATE "-w")
+
 else()
 	target_compile_features(Kya PRIVATE cxx_std_17)
 	target_compile_definitions(Kya PRIVATE "PLATFORM_WIN")
 
-	target_compile_options(Kya PRIVATE "-Wno-c++11-narrowing")
+	target_compile_options(Kya PRIVATE "-Wno-c++11-narrowing" "-w")
 
 	target_include_directories(Kya PRIVATE 
 		"${CMAKE_CURRENT_LIST_DIR}/src"

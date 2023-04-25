@@ -3,6 +3,8 @@
 
 #include "Types.h"
 
+float GetFrameTime_00291c40(void);
+
 class TimeController {
 public:
 	TimeController();

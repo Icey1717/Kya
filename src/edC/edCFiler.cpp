@@ -6,8 +6,11 @@
 #include "edCFiler_CDVD.h"
 #include "edSystem.h"
 #include "edCBank.h"
+#include "../edVideo/VideoD.h"
 
 edCFiler* g_edCFiler_MCPtr_00448fd8;
+
+edSysHandlerFile g_edSysHandlerFile_00469b84 = edSysHandlerFile(&g_SysHandlersNodeTable_00489170, 0x10, 6);
 
 char* FindEmptyChar(char* param_1)
 {
@@ -304,6 +307,11 @@ void LoadNetFileLog_00260a30(void)
 	return;
 }
 
+void ReadsBankFileHandler(int, int, char*)
+{
+	ReadsBankFile();
+}
+
 bool InitFileHandlers_0025c300(void)
 {
 	bool bVar1;
@@ -325,13 +333,15 @@ bool InitFileHandlers_0025c300(void)
 	//SHORT_00448fcc = 0x40;
 	//INT_00448fc8 = 1;
 	//SHORT_00448fce = 0;
-	//bVar1 = edSysHandlers::edSysHandlersAdd
-	//(edSysHandlersNodeParent_0048cee0.pNodeTable, edSysHandlersNodeParent_0048cee0.pTypeArray_0x4, (long)g_SysHandlersMainMaxEventID_0048cf10, ESHT_RenderScene, &LAB_0025c3d0, 3, 1);
-	//if (bVar1 == false) {
-	//	bVar3 = false;
-	//}
+	bVar1 = edSysHandlersAdd
+	(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
+		edSysHandlerVideo_0048cee0.maxEventID, ESHT_RenderScene, ReadsBankFileHandler, 3, 1);
+	if (bVar1 == false) {
+		bVar3 = false;
+	}
 	return bVar3;
 }
+
 
 
 void FormatFilePath_002618e0(char* param_1, char* param_2, char* param_3, char* param_4, char* param_5)
@@ -489,17 +499,26 @@ void ReadsBankFile(edCFiler_28* pFiler_28)
 				if (true) {
 					switch ((pFilerSubObj->internalBank).nextAction) {
 					case SEEK:
-						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 6, (void*)0x0);
+						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
+							g_edSysHandlerFile_00469b84.entries,
+							g_edSysHandlerFile_00469b84.maxEventID, 6, (void*)0x0);
 						break;
 					case READ_STREAM:
-						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 4,
-							(pFilerSubObj->internalBank).pReadBuffer);
+						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
+							g_edSysHandlerFile_00469b84.entries,
+							g_edSysHandlerFile_00469b84.maxEventID, 4, (pFilerSubObj->internalBank).pReadBuffer)
+							;
 						break;
 					case BANK_ACTION_3:
-						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 5, *(void**)&(pFilerSubObj->internalBank).field_0x18);
+						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
+							g_edSysHandlerFile_00469b84.entries,
+							g_edSysHandlerFile_00469b84.maxEventID, 5,
+							*(void**)&(pFilerSubObj->internalBank).field_0x18);
 						break;
 					case CLOSE:
-						edSysHandlersCall(g_FileSystemHandlers_00469bc8, (edSysHandlersPoolEntry**)edSysHandlersPoolEntry_ARRAY_00469b84, g_FileSystemSysHandlerID_00469bc4, 3, (void*)0x0);
+						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
+							g_edSysHandlerFile_00469b84.entries,
+							g_edSysHandlerFile_00469b84.maxEventID, 3, (void*)0x0);
 						if ((pDVar8->openFlags & 0x20) == 0) {
 							iVar7 = 0;
 							do {
@@ -613,7 +632,7 @@ void ReadsBankFile(edCFiler_28* pFiler_28)
 	return;
 }
 
-void Func_0025b0c0(edCFiler* pFiler)
+void TriggerBankRead_0025b0c0(edCFiler* pFiler)
 {
 	bool bVar1;
 	edCFiler* peVar2;

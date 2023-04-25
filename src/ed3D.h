@@ -30,8 +30,54 @@ struct TextureInfoSmall {
 	undefined field_0x2f;
 };
 
+struct LightingMatrixSubSubObj {
+	struct Vector* field_0x0;
+	struct Matrix* field_0x4;
+	struct Matrix* field_0x8;
+};
+
+struct LightingMatrixFuncObj {
+	char* field_0x0;
+	struct Vector* pVector_0x4;
+	struct LightingMatrixSubSubObj* field_0x8;
+	char* field_0xc;
+	float* field_0x10;
+};
+
+struct MeshTransformDataBase {
+	struct Matrix transformA;
+	struct Matrix transformB;
+	Hash_8 hash;
+	byte field_0x88;
+	undefined field_0x89;
+	ushort bRenderShadow;
+	struct Matrix* pShadowAnimMatrix;
+	struct MeshTransformData* pLinkTransformData;
+	undefined* field_0x94;
+	undefined* pTextureInfo;
+	ushort count_0x9c;
+	ushort flags_0x9e;
+	struct LightingMatrixFuncObj* pLightingMatrixFuncObj_0xa0;
+	Matrix* field_0xa4;
+	struct Matrix* pAnimMatrix;
+	short subMeshParentCount_0xac;
+	byte size_0xae;
+	char field_0xaf;
+};
+
+struct MeshTransformObjData {
+	char* pObj;
+	short field_0x4;
+	short field_0x6;
+};
+
+struct MeshTransformData {
+	MeshTransformDataBase base;
+	MeshTransformObjData aSubArray[4];
+};
+
 struct TextureInfo {
-	TextureInfoSmall a;
+	TextureInfoSmall field_0x0;
 	char* pFileBuffer;
 };
 
@@ -39,8 +85,8 @@ struct ed3D_Params {
 	ed3D_Params();
 
 	int meshHeaderCountB;
-	int initialStaticMeshMasterCount;
-	int field_0x8;
+	int staticMeshMasterCount;
+	uint meshDisplayListInternalCount;
 	int meshHeaderCountBAlt;
 	int meshHeaderCountA;
 	int field_0x14;
@@ -67,14 +113,20 @@ struct MaterialInfo {
 	int Length;
 };
 
+PACK(struct MeshData_HASH {
+	Hash_4 header;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	int field_0xc;
+});
 
-#ifdef PLATFORM_PS2
-struct __attribute__((__packed__))
-#else
-#pragma pack(push,1)
-struct
-#endif
-LayerHeaderPacked {
+PACK( struct LayerHeaderPacked {
 	undefined field_0x0;
 	undefined field_0x1;
 	undefined field_0x2;
@@ -89,126 +141,48 @@ LayerHeaderPacked {
 	undefined field_0xe;
 	undefined field_0xf;
 	char field_0x10;
-};
-#ifdef PLATFORM_WIN
-#pragma pack(pop)
-#endif
+});
 
 struct CameraObj_28;
-
-struct CameraObj_130 {
-	struct Matrix matrix_0x0;
-	struct Matrix matrix_0x40;
-	struct Matrix matrix_0x80;
-	undefined field_0xc0;
-	undefined field_0xc1;
-	undefined field_0xc2;
-	undefined field_0xc3;
-	undefined field_0xc4;
-	undefined field_0xc5;
-	undefined field_0xc6;
-	undefined field_0xc7;
-	undefined field_0xc8;
-	undefined field_0xc9;
-	undefined field_0xca;
-	undefined field_0xcb;
-	undefined field_0xcc;
-	undefined field_0xcd;
-	undefined field_0xce;
-	undefined field_0xcf;
-	undefined field_0xd0;
-	undefined field_0xd1;
-	undefined field_0xd2;
-	undefined field_0xd3;
-	undefined field_0xd4;
-	undefined field_0xd5;
-	undefined field_0xd6;
-	undefined field_0xd7;
-	undefined field_0xd8;
-	undefined field_0xd9;
-	undefined field_0xda;
-	undefined field_0xdb;
-	undefined field_0xdc;
-	undefined field_0xdd;
-	undefined field_0xde;
-	undefined field_0xdf;
-	undefined field_0xe0;
-	undefined field_0xe1;
-	undefined field_0xe2;
-	undefined field_0xe3;
-	undefined field_0xe4;
-	undefined field_0xe5;
-	undefined field_0xe6;
-	undefined field_0xe7;
-	undefined field_0xe8;
-	undefined field_0xe9;
-	undefined field_0xea;
-	undefined field_0xeb;
-	undefined field_0xec;
-	undefined field_0xed;
-	undefined field_0xee;
-	undefined field_0xef;
-	undefined field_0xf0;
-	undefined field_0xf1;
-	undefined field_0xf2;
-	undefined field_0xf3;
-	undefined field_0xf4;
-	undefined field_0xf5;
-	undefined field_0xf6;
-	undefined field_0xf7;
-	undefined field_0xf8;
-	undefined field_0xf9;
-	undefined field_0xfa;
-	undefined field_0xfb;
-	undefined field_0xfc;
-	undefined field_0xfd;
-	undefined field_0xfe;
-	undefined field_0xff;
-	undefined field_0x100;
-	undefined field_0x101;
-	undefined field_0x102;
-	undefined field_0x103;
-	undefined field_0x104;
-	undefined field_0x105;
-	undefined field_0x106;
-	undefined field_0x107;
-	undefined field_0x108;
-	undefined field_0x109;
-	undefined field_0x10a;
-	undefined field_0x10b;
-	undefined field_0x10c;
-	undefined field_0x10d;
-	undefined field_0x10e;
-	undefined field_0x10f;
-	struct Vector vector_0x110;
-	undefined field_0x120;
-	undefined field_0x121;
-	undefined field_0x122;
-	undefined field_0x123;
-	undefined field_0x124;
-	undefined field_0x125;
-	undefined field_0x126;
-	undefined field_0x127;
-	undefined field_0x128;
-	undefined field_0x129;
-	undefined field_0x12a;
-	undefined field_0x12b;
-	undefined field_0x12c;
-	undefined field_0x12d;
-	undefined field_0x12e;
-	undefined field_0x12f;
-};
+struct CameraObj_130;
 
 struct StaticMeshMaster;
+
+struct MeshInfo;
+struct DisplayListInternal;
+struct DisplayListInternalMesh;
+struct MeshTransformParent;
+
+extern Matrix SomeIdentityMatrix;
 
 namespace ed3D
 {
 	void Init(void);
 	TextureInfoSmall* LoadTextureFromBuffer(char* fileBufferStart, int fileLength, int* outInt, TextureInfoSmall* pTextureInfo, ulong param_5);
 	MaterialInfo* GetMaterialInfoFromTexture(MaterialInfo* outObj, int count, TextureInfoSmall* textureInfoObj, int mode);
-	StaticMeshMaster* SetupCameraPanStaticMaster_002b4600(CameraObj_130* param_1, CameraObj_28* param_2, long mode);
+	char* GetMAT_Section_0029eae0(TextureInfoSmall* pTextureInfo, int param_2);
+	char* GetT2D_Section_0029ea60(char* pMaterialSection, int param_2);
+	StaticMeshMaster* FindFreeStaticMeshMaster_002b4600(CameraObj_130* param_1, CameraObj_28* param_2, long mode);
+	MeshInfo* LoadMeshFromBuffer(char* pFileData, int fileLength, ulong flags, int* outInt, TextureInfo* textureObj, int unknown, MeshInfo* pMeshInfo);
+	MeshTransformParent* SetupMeshTransform_001fffe0(StaticMeshMaster* pStaticMeshMaster, MeshInfo* pMeshInfo, ulong hash);
+
+	void CheckHashesProcessCSTA_002a4ec0(MeshInfo* pMeshInfo, TextureInfo* pTextureInfo);
+	void SetupANHR_001fd180(struct MeshData_ANHR** ppOutANHR, struct MeshData_ANHR* pInANHR, int length, MeshInfo* pMeshInfo,
+		StaticMeshMaster* pStaticMeshMaster);
+
+	void SetupHIER_002abc00(MeshInfo* pMeshInfo);
+
+	void Func_002a5540(StaticMeshMaster* pStaticMeshMaster, MeshInfo* pMeshInfo);
+
+	uint GetElementCount_002947b0(char* pStart, char* pEnd);
+	char* FindSectionHash(Hash_8 meshHashValue, struct MeshData_HASH* textureObjMatBuffer);
 
 	extern int g_FrameBufferPtr_004491f0;
+	extern byte BYTE_00448a5c;
+	extern int INT_0044935c;
+	extern DisplayListInternalMesh* g_MeshDisplayListInternal_00449380;
+	extern MeshTransformParent* PTR_MeshTransformParent_ARRAY_00449434;
+	extern MeshTransformData* PTR_MeshTransformData_ARRAY_0044942c;
 }
 
 #endif //_ED3D_H

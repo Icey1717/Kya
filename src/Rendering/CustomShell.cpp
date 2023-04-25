@@ -123,6 +123,31 @@ void FUN_00258050(Vector* param_1, uint param_2, uint param_3)
 	return;
 }
 
+bool FUN_002580b0(uint addr, uint qwc, uint param_3)
+{
+	uint* puVar1;
+	uint madr;
+	bool bVar2;
+
+	madr = DMA_Registers[8].MADR;
+	puVar1 = DMA_Registers[8].CHCR;
+#ifdef PLATFORM_PS2
+	DPUT_D_PCR(DMA_Registers[8].MADR);
+	SYNC(0);
+	DPUT_D_STAT(DMA_Registers[8].MADR);
+	SYNC(0);
+	DMA_Registers[8].CHCR[4] = param_3;
+	SYNC(0);
+	puVar1[0x20] = addr;
+	SYNC(0);
+	puVar1[8] = qwc >> 4;
+	SYNC(0);
+	*puVar1 = DMA_Registers[8].QWC | 0x100;
+#endif
+	bVar2 = MADR_Func_002586c0(madr);
+	return bVar2;
+}
+
 void WaitDMA(void)
 {
 #ifdef PLATFORM_PS2
@@ -169,7 +194,7 @@ int WaitForDraw_00258230(void)
 	long lVar4;
 	uint uVar5;
 
-	MY_LOG("WaitForDraw_00258230\n");
+	//MY_LOG("WaitForDraw_00258230\n");
 
 #ifdef PLATFORM_PS2
 	if ((*DMA_Registers[2].CHCR & CHCR_STR) != 0) {

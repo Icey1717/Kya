@@ -34,7 +34,9 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 	RenderCommand* pRVar21;
 	RenderCommand* pRVar22;
 
-	pVVar1 = pCamera->pVidModeData30_0x10->pVidModeData_0x0->pLink_0xc;
+	RENDER_LOG("BuildCameraCommands_002bb110 camera: %p (%d)\n", pCamera, pCamera->clearColor.a);
+
+	pVVar1 = pCamera->pColorBuffer->pVidModeData_0x0->pLink_0xc;
 	pCommandBuf->cmdB = SCE_GIF_PACKED_AD;
 
 	// FRAME
@@ -49,7 +51,7 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 	pRVar21 = pCommandBuf + 2;
 
 	// SCAN MASK
-	if ((pCamera->field_0x18[3] & 4) != 0) {
+	if ((pCamera->clearColor.a & 4) != 0) {
 		if ((g_ActiveVidParams_0048cd90.params18.ffmode == SCE_GS_FIELD) && (pVVar1->pNext == pVVar1)) {
 			iVar3 = 3; // Drawing of pixel with odd Y coordinate is prohibited.
 			if (pVVar1->pVidModeData20->csrValue_0x10 == 0) {
@@ -67,7 +69,7 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 	// ZBUFFER
 	pVVar2 = pCamera->pZBuffer;
 	if (pVVar2 != (FrameBuffer*)0x0) {
-		if ((pCamera->field_0x18[3] & 2) == 0) {
+		if ((pCamera->clearColor.a & 2) == 0) {
 			iVar3 = GetZBufferTextureFormat((uint)pVVar2->pVidModeData_0x0->pixelStoreMode);
 			pRVar21->cmdA = (ulong)pCamera->pZBuffer->frameBasePtr | ((ulong)iVar3 & 0xffffffffU) << 0x18 | 0x100000000;
 			pRVar21->cmdA = SCE_GS_SET_ZBUF(
@@ -119,24 +121,67 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 
 	pRVar22 = pRVar21 + 5;
 
-	if (((pCamera->field_0x18[3] & 2) != 0) || ((pCamera->field_0x18[3] & 1) != 0)) {
-		pRVar22->cmdA =
-			(ulong)pCamera->field_0x20 << 0x20 |
-			(ulong)pVVar1->pVidModeData_0x0->pixelStoreMode << 0x18 |
-			(ulong)pVVar1->frameBasePtr | (ulong)((int)(uint)pVVar1->pVidModeData_0x0->screenWidth >> 6) << 0x10;
-		pRVar21[5].cmdB = 0x4c;
+	if (((pCamera->clearColor.a & 2) != 0) || ((pCamera->clearColor.a & 1) != 0)) {
+
+		RENDER_LOG("BuildCameraCommands_002bb110 CLEAR\n");
+
+		// FRAME
+		pRVar22->cmdA = SCE_GS_SET_FRAME(
+			pVVar1->frameBasePtr,							// FBP
+			pVVar1->pVidModeData_0x0->screenWidth >> 6,		// FBW
+			pVVar1->pVidModeData_0x0->pixelStoreMode,		// PSM
+			pCamera->altFbMask								// FBMASK
+		);
+		pRVar21[5].cmdB = SCE_GS_FRAME_1;
+
+		// TEST
 		if (pCamera->pZBuffer == (FrameBuffer*)0x0) {
-			pRVar21[6].cmdA = 0;
+			pRVar21[6].cmdA = SCE_GS_SET_TEST(
+				0,	// ATE 
+				0,	// ATST
+				0,	// AREF
+				0,	// AFAIL
+				0,	// DATE
+				0,	// DATM
+				0,	// ZTE
+				0	// ZTST
+			);
 		}
 		else {
 			pRVar21[6].cmdA = 0x30000;
+			pRVar21[6].cmdA = SCE_GS_SET_TEST(
+				0,	// ATE 
+				0,	// ATST
+				0,	// AREF
+				0,	// AFAIL
+				0,	// DATE
+				0,	// DATM
+				1,	// ZTE
+				1	// ZTST
+			);
 		}
-		pRVar21[6].cmdB = 0x47;
+		pRVar21[6].cmdB = SCE_GS_TEST_1;
+
 		uVar7 = 0;
-		pRVar21[7].cmdA = 6;
-		pRVar21[7].cmdB = 0;
-		pRVar21[8].cmdA = (ulong) * (uint3*)pCamera->field_0x18 | 0x3f80000000000000;
-		pRVar21[8].cmdB = 1;
+
+		// PRIM
+		pRVar21[7].cmdA = SCE_GS_SET_PRIM(
+			SCE_GS_PRIM_SPRITE,		// PRIM (Primitive type)
+			SCE_GS_FALSE,			// IIP  (Gouraud)
+			0,						// TME  (Textured)
+			0,						// FGE  (Fogging)
+			SCE_GS_FALSE,			// ABE  (Alpha Blending)
+			0,						// AA1  (Anti-Aliasing)
+			0,						// FST  (Use ST for texture coords)
+			0,						// CTXT (Context)
+			0						// FIX  (Fragment control)
+		);
+		pRVar21[7].cmdB = SCE_GS_PRIM;
+
+		// RGBAQ
+		pRVar21[8].cmdA = SCE_GS_SET_RGBAQ(pCamera->clearColor.r, pCamera->clearColor.g, pCamera->clearColor.b, pCamera->clearColor.a, 0x3f800000);
+		pRVar21[8].cmdB = SCE_GS_RGBAQ;
+
 		pRVar22 = pRVar21 + 9;
 		uVar8 = (int)pCamera->screenWidth >> 5;
 		iVar9 = ((int)pCamera->posX + (0x1000 - ((int)pCamera->screenWidth + (int)pCamera->posX) >> 1)) * 0x10;
@@ -243,7 +288,6 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 		);
 	}
 	else {
-		pRVar22[1].cmdA = 0x70000;
 		pRVar22[1].cmdA = SCE_GS_SET_TEST(
 			0,	// ATE 
 			0,	// ATST
@@ -297,7 +341,7 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 
 CameraObj_28*
 AllocateCameraObj28_002bae70
-(CameraObjParams* pParams, FrameBuffer* pVidModeDataA, FrameBuffer* pVidModeDataB, byte param_4)
+(CameraObjParams* pParams, FrameBuffer* pVidModeDataA, FrameBuffer* pVidModeDataB, byte alpha)
 {
 	CameraObj_28* __s;
 	CameraObj_390* pCVar1;
@@ -320,29 +364,29 @@ AllocateCameraObj28_002bae70
 	}
 	__s = (CameraObj_28*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_28));
 	memset(__s, 0, sizeof(CameraObj_28));
-	__s->field_0x18[3] = param_4;
+	__s->clearColor.a = alpha;
 	__s->fbMask = 0;
-	if ((param_4 & 1) == 0) {
-		__s->field_0x20 = 0xffffffff;
+	if ((alpha & 1) == 0) {
+		__s->altFbMask = 0xffffffff;
 	}
 	else {
-		__s->field_0x20 = 0;
+		__s->altFbMask = 0;
 	}
 	__s->posX = pParams->field_0x0;
 	__s->posY = pParams->field_0x2;
 	__s->screenWidth = pParams->screenWidth;
 	__s->screenHeight = pParams->screenHeight;
-	__s->pVidModeData30_0x10 = pVidModeDataA;
+	__s->pColorBuffer = pVidModeDataA;
 	__s->pZBuffer = pVidModeDataB;
 	__s->pCameraObj390_0x24 = (CameraObj_390*)0x0;
-	__s->field_0x18[2] = 0x40;
-	__s->field_0x18[1] = 0x40;
-	__s->field_0x18[0] = 0x40;
-	if ((param_4 & 4) != 0) {
+	__s->clearColor.b = 0x40;
+	__s->clearColor.g = 0x40;
+	__s->clearColor.r = 0x40;
+	if ((alpha & 4) != 0) {
 		g_ActiveVidParams_0048cd90.pCamera = __s;
 		pCVar1 = (CameraObj_390*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_390));
 		__s->pCameraObj390_0x24 = pCVar1;
-		if (__s->pVidModeData30_0x10 == (FrameBuffer*)0x0) {
+		if (__s->pColorBuffer == (FrameBuffer*)0x0) {
 			__s->pCameraObj390_0x24->qwc = 0;
 		}
 		else {
@@ -353,28 +397,28 @@ AllocateCameraObj28_002bae70
 	return __s;
 }
 
-void SetCameraObjBytes_002bb960(CameraObj_28* param_1, byte param_2, byte param_3, byte param_4)
+void SetCameraClear_002bb960(CameraObj_28* pCamera, byte r, byte g, byte b)
 {
-	param_1->field_0x18[0] = param_2;
-	param_1->field_0x18[1] = param_3;
-	param_1->field_0x18[2] = param_4;
+	(pCamera->clearColor).r = r;
+	(pCamera->clearColor).g = g;
+	(pCamera->clearColor).b = b;
 	return;
 }
 
-void BuildCameraCommands_002bafe0(CameraObj_28* pCamera, CameraObjParams* param_2, FrameBuffer* param_3, FrameBuffer* param_4, byte param_5)
+void BuildCameraCommands_002bafe0(CameraObj_28* pCamera, CameraObjParams* pParams, FrameBuffer* pColorBuffer, FrameBuffer* pZBuffer, byte alpha)
 {
 	RenderCommand* pRVar1;
 
-	if (param_2 != (CameraObjParams*)0x0) {
-		pCamera->posX = param_2->field_0x0;
-		pCamera->posY = param_2->field_0x2;
-		pCamera->screenWidth = param_2->screenWidth;
-		pCamera->screenHeight = param_2->screenHeight;
+	if (pParams != (CameraObjParams*)0x0) {
+		pCamera->posX = pParams->field_0x0;
+		pCamera->posY = pParams->field_0x2;
+		pCamera->screenWidth = pParams->screenWidth;
+		pCamera->screenHeight = pParams->screenHeight;
 	}
-	pCamera->pVidModeData30_0x10 = param_3;
-	pCamera->pZBuffer = param_4;
-	pCamera->field_0x18[3] = param_5;
-	if (pCamera->pVidModeData30_0x10 == (FrameBuffer*)0x0) {
+	pCamera->pColorBuffer = pColorBuffer;
+	pCamera->pZBuffer = pZBuffer;
+	pCamera->clearColor.a = alpha;
+	if (pCamera->pColorBuffer == (FrameBuffer*)0x0) {
 		pCamera->pCameraObj390_0x24->qwc = 0;
 	}
 	else {

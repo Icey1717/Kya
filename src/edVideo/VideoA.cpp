@@ -36,11 +36,11 @@ void CleanupFunc_001ba9e0(void)
 
 void FUN_002b9e00(byte param_1, byte param_2, byte param_3)
 {
-	g_ActiveVidParams_0048cd90.params18.field_0x14 = param_1;
-	g_ActiveVidParams_0048cd90.params18.field_0x15 = param_2;
-	g_ActiveVidParams_0048cd90.params18.field_0x16 = param_3;
+	g_ActiveVidParams_0048cd90.params18.r = param_1;
+	g_ActiveVidParams_0048cd90.params18.g = param_2;
+	g_ActiveVidParams_0048cd90.params18.b = param_3;
 	if (g_ActiveVidParams_0048cd90.pCamera != (CameraObj_28*)0x0) {
-		SetCameraObjBytes_002bb960(g_ActiveVidParams_0048cd90.pCamera, param_1, param_2, param_3);
+		SetCameraClear_002bb960(g_ActiveVidParams_0048cd90.pCamera, param_1, param_2, param_3);
 	}
 	return;
 }

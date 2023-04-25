@@ -102,7 +102,7 @@ void ConditonallyUpdateRegisters_002ba050(void)
 
 void SendCameraCommands_002bb910(CameraObj_28* pCamera)
 {
-	if (pCamera->pVidModeData30_0x10 != (FrameBuffer*)0x0) {
+	if (pCamera->pColorBuffer != (FrameBuffer*)0x0) {
 		BuildCameraCommands_002bb110(pCamera, pCamera->pCameraObj390_0x24->commandBuffer);
 		WaitDMA();
 		WaitForDraw_00258230();
@@ -237,6 +237,8 @@ void WaitForVSync(byte param_1)
 
 void RefreshScreenRender(void)
 {
+	RENDER_LOG("RefreshScreenRender\n");
+
 	/* Render scene */
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 6, (void*)0x0);

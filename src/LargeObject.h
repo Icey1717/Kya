@@ -2,19 +2,70 @@
 #define _LARGEOBJECT_H
 
 #include "Types.h"
+#include "edMem.h"
 
 class Manager
 {
 public:
 	virtual void OnBeginGame() {};
 	virtual void LoadStageOne() {};
+	virtual void EndLoadStageOne() {};
+	virtual bool AsyncLoad() { return false; }
 	virtual void LoadLevelUpdate() {};
+	virtual void LoadA() {};
+	virtual void LoadB() {};
+	virtual void Unload() {};
+	virtual void Deserialize(struct MemoryStream* pMemoryStream) {};
+	virtual void PreUpdateA() {};
+	virtual void PreUpdateB() {};
+	virtual void Update() {};
+
+	void* operator new(size_t size)
+	{
+		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
+		return p;
+	}
 };
+
+PACK(
+struct ManagerContainer {
+	struct LevelScheduleManager* g_LevelScheduleManager_00451660;
+	struct FileManager3D * g_FileManager3D_00451664;
+	struct AnimManager* g_AnimManager_00451668;
+	char* g_CinematicManager_0045166c;
+	struct SectorManager* g_SectorManager_00451670;
+	struct Manager_170* g_Manager170_00451674;
+	struct LocalizationManager* g_LocalizationManager_00451678;
+	struct CameraViewManager* g_CameraManager_0045167c;
+	struct FrontendManager* g_FrontendManager_00451680;
+	struct HelpManager* g_HelpManager_00451684;
+	struct PauseManager* g_PauseManager_00451688;
+	struct MapManager* g_MapManager_0045168c;
+	struct CollisionManager* g_CollisionManager_00451690;
+	struct Manager_208* g_Manager208_00451694;
+	struct GlobalSound_00451698* g_GlobalSoundPtr_00451698;
+	struct Manager_C* g_ManagerC_0045169c;
+	struct Manager_10* g_Manager10_004516a0;
+	struct ActorManager* g_ActorManager_004516a4;
+	struct EventManager* g_EventManager_006f5080;
+	struct CinematicManager* g_CinematicManagerPtr_004516ac;
+	struct LightManager* g_LightManager_004516b0;
+	struct Manager_C_Alt* g_ManagerC_Alt_004516b4;
+	struct EffectsManager* g_EffectsManager_004516b8;
+	struct Manager_29b4* g_Manager29B4_004516bc;
+});
 
 class LargeObject 
 {
 public:
 	LargeObject();
+
+	void* operator new(size_t size)
+	{
+		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
+		return p;
+	}
+
 public:
 	int field_0x0;
 	struct CameraObj_28* pCameraObj28_0x4;
@@ -205,12 +256,29 @@ public:
 	undefined field_0x125;
 	undefined field_0x126;
 	undefined field_0x127;
+
+public:
+	void EndLoadStageOne();
+	bool AsyncLoad_001b9cd0();
+	void OnLoadLevelBnk_001b8920(struct MemoryStream* pMemoryStream);
+	bool CheckFunc_001b9300();
+
+	void LoadFunc_001b87b0();
 };
 
 void SetupGameCreateObject(void);
 void WillSetupDisplayListAndRunConstructors(void);
 void LoadLevelUpdate_001b9c60(void);
+void LoadStageOne_001b9dc0(void);
+void LoadA_001b9bf0(void);
+void LoadB_001b95c0(LargeObject* param_1);
+void PreUpdateObjects(LargeObject* param_1);
+void UpdateObjectsMain(void);
+void FUN_002ab4a0(byte param_1, uint param_2, uint param_3);
 
 extern LargeObject* g_LargeObject_006db450;
+extern uint g_DebugCameraFlag_00448ea4;
+extern ManagerContainer g_ManagerSingletonArray_00451660;
+extern struct StaticMeshMaster* g_StaticMeshMasterA_00448808;
 
 #endif //_LARGEOBJECT_H

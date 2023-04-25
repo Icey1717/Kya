@@ -14,6 +14,21 @@ enum EBankAction
 	SEEK = 1
 };
 
+struct edSysHandlerFile {
+	edSysHandlerFile(struct edSysHandlersNodeTable* inNodeParent, int inMaxEventID, int inMainIdentifier)
+		: nodeParent(inNodeParent)
+		, maxEventID(inMaxEventID)
+		, mainIdentifier(inMainIdentifier)
+	{
+
+	}
+
+	struct edSysHandlersNodeTable* nodeParent;
+	struct edSysHandlersPoolEntry* entries[16];
+	int maxEventID;
+	int mainIdentifier;
+};
+
 //struct edCFilerVTable {
 //	void* field_0x0;
 //	void* field_0x4;
@@ -132,10 +147,12 @@ edCFiler* FindEdCFiler(char* outString, char* filePath, long mode);
 void SetFilePathMode_00261810(char* mode);
 bool InitFileHandlers_0025c300(void);
 edCFiler* GetFirstEdFileHandler_00260e00(edCFiler** param_1);
-void Func_0025b0c0(edCFiler* pFiler);
+void TriggerBankRead_0025b0c0(edCFiler* pFiler);
 bool edCFilerInitTOC_00260f80(char* path, ETableOfContentsInitMode mode, void* param_3, int* param_4);
 bool FormatStreamPath(char* filePathOut, char* filePathIn);
 void Link_00260ec0(edCFiler** param_1, edCFiler* param_2);
 void* GetInternalData_0025b2e0(DebugBankData_234* pDebugBankData);
+
+extern edSysHandlerFile g_edSysHandlerFile_00469b84;
 
 #endif //_EDCFILER_H

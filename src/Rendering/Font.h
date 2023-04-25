@@ -12,6 +12,7 @@ public:
 	void SetFontFlag_0028d340(uint flag);
 	void SetFontFlag_0028d3c0(uint flag);
 	void SetFontFlag_0028d3a0(uint flag);
+	uint GetFontFlag_0028d330();
 	void SetFontTextureData_0028d3e0(struct FontPacked* pPackedFont, bool bUpdateSpacing);
 
 	Matrix m0;
@@ -141,6 +142,7 @@ struct DrawTextParams {
 	FontFileData fontData_0x850[17];
 };
 
+void DrawText_0028a4f0(float x, float y, char* text);
 void DrawTextB_0028a710(float x, float y, DrawTextParams* pDrawTextParams);
 
 struct astruct_5 {

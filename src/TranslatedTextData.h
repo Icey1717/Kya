@@ -19,6 +19,7 @@ public:
 	TranslatedTextData();
 	~TranslatedTextData();
 
+	void LoadTextTranslatedFromBank(struct edCBankBuffer* pBankAccess, char* pFilePath, ELanguageID languageID);
 	void LoadTranslatedTextFromDisk(char* filePath, ELanguageID languageID);
 
 	char* GetText_00336c10(ulong key, long mode);

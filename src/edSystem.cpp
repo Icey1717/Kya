@@ -25,7 +25,6 @@ byte g_NetIsSetup_004893d0 = 0;
 int g_isNTSC;
 
 edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;
-edSysHandlersPoolEntry edSysHandlersPoolEntry_ARRAY_00469b84[4] = { 0 };
 
 #ifdef PLATFORM_PS2
 void edSystemInit_Reset(void)

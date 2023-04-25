@@ -25,7 +25,7 @@ typedef unsigned short    undefined2;
 typedef unsigned int    undefined3;
 typedef unsigned int    undefined4;
 typedef unsigned long    undefined5;
-typedef unsigned long    undefined8;
+typedef unsigned long long    undefined8;
 typedef unsigned short    ushort;
 typedef unsigned short    word;
 typedef unsigned long long    ulonglong;
@@ -37,6 +37,21 @@ typedef unsigned long    uint7;
 typedef unsigned int    u_int;
 #endif
 
+union Hash_4
+{
+	char name[4];
+	uint number;
+};
+
+union Hash_8
+{
+	char name[8];
+	ulong number;
+
+	Hash_8() { number = 0; }
+	Hash_8(ulong inNumber) { number = inNumber; }
+};
+
 struct EdFileGlobal_10 {
 	EdFileGlobal_10* pPrevFileHeader;
 	void* pFreeFunc;
@@ -45,6 +60,19 @@ struct EdFileGlobal_10 {
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
+};
+
+struct ByteColor {
+	byte r;
+	byte g;
+	byte b;
+	byte a;
+};
+
+struct ByteColor3 {
+	byte r;
+	byte g;
+	byte b;
 };
 
 enum EFileLoadMode {
@@ -105,6 +133,8 @@ InputSetupParams* GetInputSetupParams(void);
 
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
 #define MY_LOG scePrintf
+#define RENDER_LOG(...)
+//#define RENDER_LOG scePrintf
 #else
 #define MY_LOG(...)
 #endif
@@ -145,7 +175,7 @@ inline char* SearchString(char* inString, char searchChar)
 }
 
 #ifdef PLATFORM_PS2
-struct __attribute__((__packed__))
+struct __attribute__((aligned(16)))
 #else
 #pragma pack(push,1)
 struct alignas(16)
@@ -156,12 +186,19 @@ Vector { /* Aligned */
 	float z;
 	float w;
 };
+
+struct Vector3 {
+	float x;
+	float y;
+	float z;
+};
+
 #ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
 
 #ifdef PLATFORM_PS2
-struct __attribute__((__packed__))
+struct __attribute__((aligned(16)))
 #else
 #pragma pack(push,1)
 struct alignas(16)
@@ -297,23 +334,33 @@ inline void sceVu0TransMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTOR 
 
 inline void sceVu0MulMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FMATRIX m2)
 {
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			for (int k = 0; k < 4; ++k)
-			{
-				m0[i][j] += m1[i][k] * m2[k][j];
+	int i, j, k;
+	sceVu0FMATRIX temp;
+
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 4; j++) {
+			temp[i][j] = 0;
+			for (k = 0; k < 4; k++) {
+				temp[i][j] += m1[i][k] * m2[k][j];
 			}
 		}
 	}
 
-	return;
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 4; j++) {
+			m0[i][j] = temp[i][j];
+		}
+	}
 }
 
 #endif
 
-struct RenderCommand {
+#ifdef PLATFORM_PS2
+struct __attribute__((aligned(16)))
+#else
+struct alignas(16)
+#endif 
+RenderCommand {
 	ulong cmdA;
 	ulong cmdB;
 };
@@ -321,7 +368,48 @@ struct RenderCommand {
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*
 
+inline void PrintVector(Vector* vector)
+{
+	//MY_LOG("%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
+	char buff[256] = { 0 };
+	sprintf(buff, "%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
+	MY_LOG("%s", buff);
+}
+
+inline void PrintMatrix(Matrix* matrix)
+{
+	PrintVector((Vector*)&matrix->aa);
+	PrintVector((Vector*)&matrix->ba);
+	PrintVector((Vector*)&matrix->ca);
+	PrintVector((Vector*)&matrix->da);
+}
+
+#define PRINT_VECTOR(a) PrintVector(a)
+#define PRINT_MATRIX(a) PrintMatrix(a)
+
+//#define PRINT_VECTOR(a) MY_LOG("%.02f, %.02f, %.02f, %.02f\n", ((float*)&a)[0], ((float*)&a)[1], ((float*)&a)[2], ((float*)&a)[3])
+//#define PRINT_MATRIX(a) PRINT_VECTOR((float*)&a); PRINT_VECTOR(((float*)&a) + 4); PRINT_VECTOR(((float*)&a) + 8); PRINT_VECTOR(((float*)&a) + 12)
+
 extern int g_SetOffsetX;
 extern int g_SetOffsetY;
+
+struct SectorManagerSubObj {
+	uint flags;
+	undefined* pFileData;
+	struct WindSectorObj* pWindSectorObj;
+	int field_0xc;
+};
+
+inline ulong Combine_00189a30(int param_1, int param_2)
+{
+	return (ulong)param_1 & 0xffffffffU | (ulong)param_2 << 0x20;
+}
+
+#ifdef PLATFORM_WIN
+#include <assert.h>
+#define IMPLEMENTATION_GUARD(x) assert(false);
+#else
+#define IMPLEMENTATION_GUARD(x) MY_LOG("Hit an assert! %s, %d\n", __FILE__, __LINE__);
+#endif
 
 #endif //_TYPES_H

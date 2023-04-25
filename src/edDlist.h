@@ -99,11 +99,11 @@ namespace edDlist
 
 	void LoadMaterialResource_002cb850(struct MaterialInfo* pMaterialInfo);
 
-	void RenderCommand_002ca6a0(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
+	void AddGSTestCommand_002ca6a0(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
 		ulong param_8);
 
-	void RenderCommand_002ca800(void);
-	void RenderCommand_002ca8c0(uint mode);
+	void AddSetAlphaCommand_002ca800(void);
+	void ApplyMaterialFlag_002ca8c0(uint mode);
 	void FUN_002ca8c0(uint mode);
 
 	void RenderCommand_002ca930(CameraObj_28* pCamera);
@@ -115,9 +115,12 @@ namespace edDlist
 
 	void SetDropShadowColour_002ce1a0(byte r, byte g, byte b, byte a);
 
-	void CallpcGpffff9200(float param_1, float param_2);
-	void CallpcGpffff91f8(float x, float y, float param_3, int param_4);
+	void CallSetST(float param_1, float param_2);
+	void CallSetXYZ(float x, float y, float param_3, int param_4);
 
 	void EndDraw_002cfe40(void);
+
+	void SetUnitMatrix_002d07b0(void);
 }
+
 #endif //_EDDLIST_H

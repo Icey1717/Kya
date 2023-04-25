@@ -39,7 +39,10 @@ namespace edDlist
 	int g_DisplayListGlobal_00449664 = 0;
 	int g_DisplayListCommandCount_004495d4 = 0;
 
-	uint g_DisplayListMode_00449658 = 0;
+	uint g_MeshDrawPrimCountMode_00449658 = 0;
+
+	int g_CharacterIndex_00449614 = 0;
+	int g_MaxCharacterIndex_00449618 = 0;
 
 	int g_DisplayListMatrixCount_004495e0;
 	Matrix* g_DisplayListMatrix_004595e4;
@@ -54,7 +57,7 @@ namespace edDlist
 
 	int MaterialDisplayListCount_00449648;
 
-	int g_DrawEnded_004496c0 = 0;
+	bool g_DrawEnded_004496c0 = false;
 
 	byte DAT_00449660 = 0;
 	int INT_00449654 = 0;
@@ -69,6 +72,29 @@ namespace edDlist
 	byte BYTE_004496e4 = 0;
 	short SHORT_00449698 = 0;
 	short SHORT_0044969c = 0;
+
+	int g_Mode_0044966c = 0;
+	int g_Count_004495f4 = 0;
+	int g_Count_004495f8 = 0;
+
+	int Mode_00449694 = 0;
+
+	ByteColor ByteColor_ARRAY_0048dd40[4];
+
+	ByteColor* g_RGBAQ_00448aa0 = ByteColor_ARRAY_0048dd40;
+
+	typedef void (*DisplayListFourFloats)(float, float, float, int);
+	typedef void (*DisplayListColourFunction)(byte, byte, byte, byte);
+	typedef void (*DisplayListTwoFloats)(float, float);
+
+	DisplayListFourFloats g_pSetXYZ_004496e8 = NULL;
+	DisplayListColourFunction g_pSetRGBAQ_004496ec = NULL;
+	DisplayListTwoFloats g_pSetST_004496f0 = NULL;
+
+	ByteColor* g_pByteColour_0044960c = NULL;
+	char* PTR_DAT_00449610 = NULL;
+	Vector* g_pVector_00449604 = NULL;
+	undefined* PTR_DAT_0044962c = NULL;
 
 	edSysHandlerDisplayList sysHandler_0048cb90 = edSysHandlerDisplayList(&g_SysHandlersNodeTable_00489170, 5, 10);
 
@@ -116,8 +142,7 @@ namespace edDlist
 	int g_HasUIData_00448a88 = 0;
 	RenderCommand* g_LiveDisplayList_004495d0 = NULL;
 
-
-	sceDmaTag* LinkSubCommandBuffers_002ce850(DisplayListInternal* pDisplayList, sceDmaTag* pCommandBuffer)
+	RenderCommand* LinkSubCommandBuffers_002ce850(DisplayListInternal* pDisplayList, RenderCommand* pCommandBuffer)
 	{
 		uint uVar1;
 		ulonglong uVar2;
@@ -137,19 +162,22 @@ namespace edDlist
 			}
 			else {
 				if (uVar1 == LM_CALL) {
-					sceDmaAddCall(&pCommandBuffer, 0, (void*)pRVar3->pCommandBuffer);
+					pCommandBuffer->cmdB = 0x0;
+					sceDmaAddCall((sceDmaTag**)&pCommandBuffer, 0, (void*)pRVar3->pCommandBuffer);
 				}
 				else {
 					if (uVar1 == LM_FUNC) {
-						assert(false);
-						//pCommandBuffer = FUN_002cb4e0(pCommandBuffer);
+						IMPLEMENTATION_GUARD(
+						pCommandBuffer = FUN_002cb4e0(pCommandBuffer);
+						)
 					}
 					else {
 						if (uVar1 == LM_REF_0) {
 
 							uVar2 = (ulong)(pRVar3->size >> 4);
 							if ((pRVar3->size != 0) && (uVar2 != 0)) {
-								sceDmaAddRef(&pCommandBuffer, uVar2, (void*)pRVar3->pCommandBuffer);
+								pCommandBuffer->cmdB = 0x0;
+								sceDmaAddRef((sceDmaTag**)&pCommandBuffer, uVar2, (void*)pRVar3->pCommandBuffer);
 							}
 						}
 						else {
@@ -160,14 +188,14 @@ namespace edDlist
 							uVar2 = (ulong)(pRVar3->size >> 4);
 							if (pRVar3->size != 0) {
 								if (uVar2 != 0) {
-									sceDmaAddRef(&pCommandBuffer, uVar2, (void*)pRVar3->pCommandBuffer);
+									pCommandBuffer->cmdB = 0x0;
+									sceDmaAddRef((sceDmaTag**)&pCommandBuffer, uVar2, (void*)pRVar3->pCommandBuffer);
 								}
-								RenderCommand* pRenderCommand = (RenderCommand*)pCommandBuffer;
-								pRenderCommand->cmdA = 0xe10000002;
-								pRenderCommand->cmdB = 0;
+								pCommandBuffer->cmdA = 0xe10000002;
+								pCommandBuffer->cmdB = 0;
 
-								pRenderCommand[1].cmdB = SCE_GIF_PACKED_AD;
-								pRenderCommand[1].cmdA = SCE_GIF_SET_TAG(
+								pCommandBuffer[1].cmdB = SCE_GIF_PACKED_AD;
+								pCommandBuffer[1].cmdA = SCE_GIF_SET_TAG(
 									1,					// NLOOP
 									SCE_GS_TRUE,		// EOP
 									SCE_GS_FALSE,		// PRE
@@ -175,7 +203,7 @@ namespace edDlist
 									SCE_GIF_PACKED,		// FLG
 									1					// NREG
 								);
-								pRenderCommand[2].cmdA = SCE_GS_SET_TEST(
+								pCommandBuffer[2].cmdA = SCE_GS_SET_TEST(
 									1,	// ATE 
 									7,	// ATST
 									0,	// AREF
@@ -185,9 +213,9 @@ namespace edDlist
 									1,	// ZTE
 									1	// ZTST
 								);
-								pRenderCommand[2].cmdB = SCE_GS_TEST_1;
+								pCommandBuffer[2].cmdB = SCE_GS_TEST_1;
 
-								pCommandBuffer = (sceDmaTag*)(pRenderCommand + 3);
+								pCommandBuffer = pCommandBuffer + 3;
 							}
 						}
 					}
@@ -203,13 +231,13 @@ namespace edDlist
 	{
 		DisplayListInternal* pDisplayList;
 		DisplayListInternalSubObj_60* pDVar1;
-		sceDmaTag* pCommandBuffer;
+		RenderCommand* pCommandBuffer;
 		RenderCommandUint* pRVar2;
-		sceDmaTag* pBuffer;
+		RenderCommand* pBuffer;
 		MeshTransformSpecial* pCVar7;
 
-		pBuffer = (sceDmaTag*)(edDlist::g_LiveDisplayList_004495d0 +
-			(edDlist::g_DisplayListGlobal_00449668 * ((uint)g_DisplayListSizeA_004250dc >> 4) >> 1));
+		pBuffer = (g_LiveDisplayList_004495d0 +
+			(g_DisplayListGlobal_00449668 * ((uint)g_DisplayListSizeA_004250dc >> 4) >> 1));
 		pCommandBuffer = pBuffer;
 		for (pCVar7 = pHeader->pLoadedData; (CameraPanMasterHeader*)pCVar7 != pHeader; pCVar7 = pCVar7->pNext_0x4) {
 			pDisplayList = pCVar7->pRenderInput;
@@ -230,14 +258,14 @@ namespace edDlist
 			pDisplayList->field_0x3 = 0;
 		}
 		if ((pBuffer != pCommandBuffer) && (g_HasUIData_00448a88 != 0)) {
-			sceDmaAddEnd(&pCommandBuffer, 0, 0);
+			pCommandBuffer->cmdB = 0x0;
+			sceDmaAddEnd((sceDmaTag**)&pCommandBuffer, 0, 0);
 			WaitDMA();
 			WaitForDraw_00258230();
 			WaitForDraw_00258230();
 			if (g_Render_UI_00448a8c != 0) {
-#ifdef PLATFORM_PS2
+				RENDER_LOG("DMA Begin RenderUI_002cea00\n");
 				shellDmaStartChainB(SHELLDMA_CHANNEL_GIF, (ulonglong*)pBuffer);
-#endif
 			}
 			WaitForDraw_00258230();
 
@@ -246,6 +274,103 @@ namespace edDlist
 		return;
 	}
 
+	struct RenderTaskData {
+		struct StaticMeshMaster* field_0x0;
+		int field_0x4;
+		ushort taskID;
+	};
+
+	void ProcessRenderTask_002ce5c0(RenderTaskData* pRenderTaskData)
+	{
+		ushort uVar1;
+		bool bVar2;
+		uint uVar3;
+		Matrix* pMVar4;
+		DisplayListInternalSubObj_60* pDVar5;
+		uint displayListIndex;
+		uint uVar6;
+		uint uVar7;
+		DisplayListInternalSubObj_60* pDVar8;
+		Matrix* pMVar9;
+		DisplayListArray* pDisplayListArray;
+		DisplayListInternal* pDisplayListInternal;
+
+		pDisplayListArray = DisplayListData_004496a0.pDisplayListArray[g_DisplayListGlobal_00449664];
+		//DAT_00449688 = 0;
+		if (g_HasUIData_00448a88 != 0) {
+			for (displayListIndex = 0;
+				displayListIndex <
+				DisplayListData_004496a0.LoadedDisplayListCount[g_DisplayListGlobal_00449664];
+				displayListIndex = displayListIndex + 1) {
+				pDisplayListInternal =
+					((DisplayListArray*)
+						((int)pDisplayListArray +
+							((DisplayListData_004496a0.LoadedDisplayListCount[g_DisplayListGlobal_00449664] - 1) -
+								displayListIndex) * 4))->field_0x0[0];
+				if (((ed3D::BYTE_00448a5c == 0) ||
+					(((pRenderTaskData->taskID & 1) != 0 && ((pDisplayListInternal->flags_0x0 & 0x40) != 0)))) ||
+					(((pRenderTaskData->taskID & 2) != 0 && ((pDisplayListInternal->flags_0x0 & 0x40) == 0)))) {
+					pMVar9 = (Matrix*)0x0;
+					if ((pDisplayListInternal->pStaticMeshMaster_0x20 == (StaticMeshMaster*)0x1) ||
+						(pDisplayListInternal->pStaticMeshMaster_0x20 == pRenderTaskData->field_0x0)) {
+						for (uVar6 = 0; uVar6 < pDisplayListInternal->subCommandBufferCount; uVar6 = uVar6 + 1) {
+							bVar2 = true;
+							uVar7 = 0;
+							pDVar5 = pDisplayListInternal->pDisplayListInternalSubObj + uVar6;
+							pDVar8 = pDVar5;
+							pMVar4 = pMVar9;
+							do {
+								if (pDVar5->field_0x54 != 0) {
+									pDVar8 = (DisplayListInternalSubObj_60*)(pDVar5->field_0x58 + uVar7);
+								}
+								uVar1 = pDVar5->type_0x42;
+								if (uVar1 == 9) {
+									pMVar9 = (Matrix*)pDVar5->pRenderInput;
+								LAB_002ce7c4:
+									uVar3 = pDVar5->field_0x54;
+								}
+								else {
+									if (uVar1 == 6) {
+										if ((pRenderTaskData->field_0x4 != 1) && (pDVar5->field_0x40 != 0)) {
+											IMPLEMENTATION_GUARD(
+											RenderInput_40::Func_002973c0
+											((RenderInput_40*)pDVar5->pRenderInput, (Matrix*)pDVar8,
+												(long)(int)g_DisplayListPtr_0044965c, pMVar4);
+											pMVar4 = (Matrix*)0x0;)
+										}
+										goto LAB_002ce7c4;
+									}
+									if (((uVar1 == 4) || (uVar1 == 2)) || (uVar1 == 0)) {
+										if ((pDisplayListInternal->pStaticMeshMaster_0x20 != (StaticMeshMaster*)0x1) &&
+											(((pRenderTaskData->field_0x4 == 1 && (*(short*)((int)&pDVar5->pRenderInput[3].cmdA + 2) == 0)) ||
+												((pRenderTaskData->field_0x4 != 1 && (*(short*)((int)&pDVar5->pRenderInput[3].cmdA + 2) != 0)))))
+											) {
+											bVar2 = false;
+										}
+										if ((bVar2) && (pDVar5->field_0x40 != 0)) {
+											IMPLEMENTATION_GUARD(
+											RenderInput_40::Func_002994e0
+											((RenderInput_40*)pDVar5->pRenderInput, (Matrix*)pDVar8,
+												(long)(int)g_DisplayListPtr_0044965c, (float*)pMVar4);
+											pMVar4 = (Matrix*)0x0;)
+										}
+										goto LAB_002ce7c4;
+									}
+									uVar3 = pDVar5->field_0x54;
+								}
+								uVar7 = uVar7 + 1;
+							} while (uVar7 < uVar3);
+						}
+					}
+				}
+			}
+		}
+#ifdef PLATFORM_PS2
+		iFlushCache(0);
+#endif
+		g_DisplayListEnd_004495d8 = (DisplayListInternal*)0x0;
+		return;
+	}
 
 	void PrepareDisplayListData_002cb2c0(void)
 	{
@@ -286,8 +411,7 @@ namespace edDlist
 			}
 			else {
 				if (eventID == 0) {
-					//assert(false);
-					//ProcessRenderTask_002ce5c0(pRenderTaskData);
+					ProcessRenderTask_002ce5c0((RenderTaskData*)pRenderTaskData);
 				}
 			}
 		}
@@ -308,6 +432,11 @@ namespace edDlist
 		return;
 	}
 
+	int FUN_002ce480(DisplayListInternal* param_1, DisplayListInternal* param_2)
+	{
+		return (uint)param_1->field_0x2 - (uint)param_2->field_0x2;
+	}
+
 	const int g_DisplayListCount_004250d4 = 5;
 
 	void Init(void)
@@ -315,11 +444,11 @@ namespace edDlist
 		DisplayListArray* pDVar1;
 		CameraPanMasterHeader* pCVar2;
 		uint uVar3;
-		//
+		
 		//g_DisplayListGlobal_004495a8 = 0;
 		//g_DisplayListPtr_004495b0 = (undefined*)0x0;
 		//DAT_004495b4 = 0;
-		//g_DisplayListMemStart_004595b8 = (undefined*)0x0;
+		g_DisplayListMemStart_004595b8 = (char*)0x0;
 		g_DisplayListMemAllocPtr_004495bc = (char*)0x0;
 		g_DisplayListMemEnd_004595c0 = (char*)0x0;
 		g_LiveDisplayList_004495d0 = (RenderCommand*)0x0;
@@ -330,14 +459,14 @@ namespace edDlist
 		g_Height_004495f0 = 0;
 		g_DisplayListMatrix_004595e4 = (Matrix*)0x0;
 		g_Camera_004495e8 = (CameraObj_28*)0x0;
-		//DAT_004495f4 = 0;
+		g_Count_004495f4 = 0;
 		PTR_MeshDrawRenderCommand_004495fc = (MeshDrawRenderCommand*)0x0;
 		//PTR_DAT_00449600 = (undefined*)0x0;
-		//PTR_DAT_00449604 = (undefined*)0x0;
-		//PTR_DAT_0044960c = (undefined*)0x0;
-		//PTR_DAT_00449610 = (undefined*)0x0;
-		//DAT_00449614 = 0;
-		//DAT_00449618 = 0;
+		g_pVector_00449604 = (Vector*)0x0;
+		g_pByteColour_0044960c = (ByteColor*)0x0;
+		PTR_DAT_00449610 = (char*)0x0;
+		g_CharacterIndex_00449614 = 0;
+		g_MaxCharacterIndex_00449618 = 0;
 		//DAT_0044961c = 0;
 		//DAT_00449620 = 0;
 		//DAT_00449624 = 0;
@@ -346,14 +475,14 @@ namespace edDlist
 		//PTR_DAT_00449634 = (undefined*)0x0;
 		//DAT_0044963c = 0;
 		//DAT_00449640 = 0;
-		//DAT_00449644 = 0;
-		g_CachedRenderCommandPtr_00449650 = 0;
+		g_pMaterialInfo_00449644 = (MaterialInfo*)0x0;
+		g_CachedRenderCommandPtr_00449650 = (RenderCommand*)0x0;
 		INT_00449654 = 0;
-		g_DisplayListMode_00449658 = 0;
-		DAT_00449660 = 0;
+		g_MeshDrawPrimCountMode_00449658 = 0;
+		//BYTE_00449660 = 0;
 		g_DisplayListGlobal_00449664 = 0;
-		//g_DisplayListGlobal_00449668 = 0;
-		//DAT_0044966c = 0;
+		g_DisplayListGlobal_00449668 = 0;
+		g_Mode_0044966c = 0;
 		MaterialDisplayListCount_00449648 = 0;
 		//DAT_00449670 = 0;
 		//DAT_00449674 = 0;
@@ -361,13 +490,14 @@ namespace edDlist
 		//DAT_0044967c = 0;
 		INT_00449680 = 0;
 		//DAT_00449684 = 0;
-		//DAT_004496e8 = 0;
-		//DAT_004496ec = 0;
-		//PTR_FUN_004496f0 = (undefined*)0x0;
+		g_pSetXYZ_004496e8 = (DisplayListFourFloats)0x0;
+		g_pSetRGBAQ_004496ec = (DisplayListColourFunction)0x0;
+		g_pSetST_004496f0 = (DisplayListTwoFloats)0x0;
 		SHORT_00449698 = 0;
 		SHORT_0044969c = 0;
-		//DisplayListData_004496a0.LoadedDisplayListCount[0] = 0;
-		//DisplayListData_004496a0.LoadedDisplayListCount[1] = 0;
+		DisplayListData_004496a0.LoadedDisplayListCount[0] = 0;
+		DisplayListData_004496a0.LoadedDisplayListCount[1] = 0;
+
 		//memset(&DAT_0048db80, 0, 0xb0);
 		AllocateDisplayListMem_002ce4c0();
 		g_DisplayListPtr_0044965c = (DisplayList_0x10*)ProvisionDisplayListMemory_002ce490(g_DisplayListObjCount_004250e0 & 0xfffffff);
@@ -381,8 +511,8 @@ namespace edDlist
 			DisplayListData_004496a0.pCameraPanPairA[uVar3] = pCVar2;
 			pCVar2 = AllocateCameraAndMesh_00290a10(1, g_DisplayListCount_004250d4, TO_HEAP(H_MAIN));
 			DisplayListData_004496a0.pCameraPanPairB[uVar3] = pCVar2;
-			//FUN_002909f0(DisplayListData_004496a0.pCameraPanPairA[uVar3], 2, FUN_002ce480);
-			//FUN_002909f0(DisplayListData_004496a0.pCameraPanPairB[uVar3], 2, FUN_002ce480);
+			FUN_002909f0(DisplayListData_004496a0.pCameraPanPairA[uVar3], 2, FUN_002ce480);
+			FUN_002909f0(DisplayListData_004496a0.pCameraPanPairB[uVar3], 2, FUN_002ce480);
 			uVar3 = uVar3 + 1;
 		} while (uVar3 < 2);
 		g_DisplayListMatrix_004595e4 = (Matrix*)ProvisionDisplayListMemory_002ce490((uint)(g_DisplayListMatrixCount_004250d8 << 6) >> 4);
@@ -416,15 +546,22 @@ namespace edDlist
 	::MaterialInfo* g_pMaterialInfo_00449644 = NULL;
 	DisplayListInternal* g_DisplayListEnd_004495d8 = NULL;
 
-	void ColourCommandSetup_002c9fd0(void)
+	void SetCommandGifTag_002c9fd0(void)
 	{
 		RenderCommand* pRVar1;
 
 		if (g_DisplayListCommandCount_004495d4 != 0) {
 			pRVar1 = g_DisplayListEnd_004495d8->pRenderCommands;
-			pRVar1[-(g_DisplayListCommandCount_004495d4 + 1)].cmdA =
-				(long)g_DisplayListCommandCount_004495d4 | 0x1000000000008000;
-			pRVar1[-(g_DisplayListCommandCount_004495d4 + 1)].cmdB = 0xe;
+ 			pRVar1[-(g_DisplayListCommandCount_004495d4 + 1)].cmdA = SCE_GIF_SET_TAG(
+				g_DisplayListCommandCount_004495d4,	// NLOOP
+				SCE_GS_TRUE,						// EOP
+				SCE_GS_FALSE,						// PRE
+				0,									// PRIM
+				SCE_GIF_PACKED,						// FLG
+				1									// NREG
+			);
+
+			pRVar1[-(g_DisplayListCommandCount_004495d4 + 1)].cmdB = SCE_GIF_PACKED_AD;
 			g_DisplayListCommandCount_004495d4 = 0;
 		}
 		return;
@@ -441,11 +578,11 @@ namespace edDlist
 
 	void FUN_002ca8c0(uint mode)
 	{
-		if ((((g_DrawEnded_004496c0 == '\0') &&
-			(g_DisplayListMode_00449658 = mode & 0xff,
+		if ((((g_DrawEnded_004496c0 == false) &&
+			(g_MeshDrawPrimCountMode_00449658 = mode & 0xff,
 				g_pMaterialInfo_00449644 != (MaterialInfo*)0x0)) &&
 			((byte*)g_pMaterialInfo_00449644->matSubsectionStart != (byte*)0x0)) &&
-			(g_DisplayListMode_00449658 == 1)) {
+			(g_MeshDrawPrimCountMode_00449658 == 1)) {
 			ApplyFlag_0029f1e0((byte*)g_pMaterialInfo_00449644->matSubsectionStart, 0, 4);
 		}
 		return;
@@ -507,7 +644,7 @@ namespace edDlist
 		return (char*)0x0;
 	}
 
-	void RenderCommand_002ca540(ulong cmdA, ulong cmdB)
+	void AddRenderCommand_002ca540(ulong cmdA, ulong cmdB)
 	{
 		ushort uVar1;
 		DisplayListInternalSubObj_60* pDVar2;
@@ -519,9 +656,11 @@ namespace edDlist
 		pDVar4 = g_DisplayListEnd_004495d8;
 		iVar3 = g_DisplayListCommandCount_004495d4;
 		g_DisplayListEnd_004495d8 = pDVar4;
-		if (g_DrawEnded_004496c0 == '\0') {
+		if (g_DrawEnded_004496c0 == false) {
 			if ((g_DisplayListEnd_004495d8->flags_0x0 & 0x100) == 0) {
 				pRVar6 = g_DisplayListEnd_004495d8->pRenderCommands;
+
+				// Begin the giftag header if we have no commands already.
 				if (g_DisplayListCommandCount_004495d4 == 0) {
 					if ((g_DisplayListEnd_004495d8->flags_0x0 & 1) != 0) {
 						uVar1 = g_DisplayListEnd_004495d8->subCommandBufferCount;
@@ -529,8 +668,16 @@ namespace edDlist
 						pDVar2[uVar1].type_0x42 = 9;
 						pDVar2[uVar1].pRenderInput = pRVar6;
 					}
-					pRVar6->cmdA = 0x1000000000008001;
-					pRVar6->cmdB = 0xe;
+
+					pRVar6->cmdA = SCE_GIF_SET_TAG(
+						1,				// NLOOP
+						SCE_GS_TRUE,	// EOP
+						SCE_GS_FALSE,	// PRE
+						0,				// PRIM
+						SCE_GIF_PACKED, // FLG
+						1				// NREG
+					);
+					pRVar6->cmdB = SCE_GIF_PACKED_AD;
 					pRVar6 = pRVar6 + 1;
 				}
 				g_DisplayListCommandCount_004495d4 = g_DisplayListCommandCount_004495d4 + 1;
@@ -544,6 +691,8 @@ namespace edDlist
 					g_DisplayListEnd_004495d8 = g_CurrentDisplayListBase_004495dc + iVar5;
 					pRVar6 = g_DisplayListEnd_004495d8->pRenderCommands;
 					g_DisplayListCommandCount_004495d4 = iVar3;
+
+					// Begin the giftag header if we have no commands already.
 					if (iVar3 == 0) {
 						if ((g_DisplayListEnd_004495d8->flags_0x0 & 1) != 0) {
 							uVar1 = g_DisplayListEnd_004495d8->subCommandBufferCount;
@@ -551,8 +700,16 @@ namespace edDlist
 							pDVar2[uVar1].type_0x42 = 9;
 							pDVar2[uVar1].pRenderInput = pRVar6;
 						}
-						pRVar6->cmdA = 0x1000000000008001;
-						pRVar6->cmdB = 0xe;
+
+						pRVar6->cmdA = SCE_GIF_SET_TAG(
+							1,				// NLOOP
+							SCE_GS_TRUE,	// EOP
+							SCE_GS_FALSE,	// PRE
+							0,				// PRIM
+							SCE_GIF_PACKED, // FLG
+							1				// NREG
+						);
+						pRVar6->cmdB = SCE_GIF_PACKED_AD;
 						pRVar6 = pRVar6 + 1;
 					}
 					iVar5 = iVar5 + 1;
@@ -567,32 +724,37 @@ namespace edDlist
 		return;
 	}
 
-	void RenderCommand_002ca6a0
-	(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
-		ulong param_8)
+	void AddGSTestCommand_002ca6a0
+	(ulong ate, ulong atst, ulong aref, ulong afail, ulong date, ulong datm, ulong zte,
+		ulong ztst)
 	{
-		RenderCommand_002ca540
-		((param_8 & 0xffffffff) << 0x11 |
-			(param_7 & 0xff) << 0x10 |
-			(param_6 & 0xffffffff) << 0xf |
-			(param_5 & 0xff) << 0xe |
-			(param_4 & 0xffffffff) << 0xc | (param_3 & 0xffffffff) << 4 | param_1 & 0xff | (param_2 & 0xffffffff) << 1,
-			0x47);
+		AddRenderCommand_002ca540
+		(
+			SCE_GS_SET_TEST(
+				ate & 0xff,			// ATE 
+				atst & 0xffffffff,	// ATST
+				aref & 0xffffffff,	// AREF
+				afail & 0xffffffff,	// AFAIL
+				date & 0xff,		// DATE
+				datm & 0xffffffff,	// DATM
+				zte & 0xff,			// ZTE
+				ztst & 0xffffffff	// ZTST
+			),
+			SCE_GS_TEST_1);
+	}
+
+	void AddSetAlphaCommand_002ca800(void)
+	{
+		ApplyMaterialFlag_002ca8c0(1);
+		AddRenderCommand_002ca540(SCE_GS_SET_ALPHA(SCE_GS_ALPHA_CS, SCE_GS_ALPHA_CD, SCE_GS_ALPHA_CS, SCE_GS_ALPHA_CD, 0), SCE_GS_ALPHA_1);
 		return;
 	}
 
-	void RenderCommand_002ca800(void)
+	void ApplyMaterialFlag_002ca8c0(uint mode)
 	{
-		RenderCommand_002ca8c0(1);
-		RenderCommand_002ca540(0x44, 0x42);
-		return;
-	}
-
-	void RenderCommand_002ca8c0(uint mode)
-	{
-		if ((((g_DrawEnded_004496c0 == '\0') &&
-			(g_DisplayListMode_00449658 = mode & 0xff, g_pMaterialInfo_00449644 != (MaterialInfo*)0x0)) &&
-			((byte*)g_pMaterialInfo_00449644->matSubsectionStart != (byte*)0x0)) && (g_DisplayListMode_00449658 == 1)) {
+		if ((((g_DrawEnded_004496c0 == false) &&
+			(g_MeshDrawPrimCountMode_00449658 = mode & 0xff, g_pMaterialInfo_00449644 != (MaterialInfo*)0x0)) &&
+			((byte*)g_pMaterialInfo_00449644->matSubsectionStart != (byte*)0x0)) && (g_MeshDrawPrimCountMode_00449658 == 1)) {
 			ApplyFlag_0029f1e0((byte*)g_pMaterialInfo_00449644->matSubsectionStart, 0, 4);
 		}
 		return;
@@ -601,30 +763,39 @@ namespace edDlist
 
 	void RenderCommand_002ca930(CameraObj_28* pCamera)
 	{
-		if (g_DrawEnded_004496c0 == '\0') {
-			g_Width_004495ec = (0x800 - ((int)(uint)pCamera->pVidModeData30_0x10->pVidModeData_0x0->screenWidth >> 1)) * 0x10;
-			g_Height_004495f0 = (0x800 - ((int)(uint)pCamera->pVidModeData30_0x10->pVidModeData_0x0->screenHeight >> 1)) * 0x10;
+		if (g_DrawEnded_004496c0 == false) {
+			g_Width_004495ec = (0x800 - ((int)(uint)pCamera->pColorBuffer->pVidModeData_0x0->screenWidth >> 1)) * 0x10;
+			g_Height_004495f0 = (0x800 - ((int)(uint)pCamera->pColorBuffer->pVidModeData_0x0->screenHeight >> 1)) * 0x10;
 			g_Camera_004495e8 = pCamera;
 			if ((((g_DisplayListEnd_004495d8 != (DisplayListInternal*)0x0) &&
 				(g_DisplayListEnd_004495d8->subCommandBufferCount != 0)) && ((g_DisplayListEnd_004495d8->flags_0x0 & 2) != 0))
 				&& (g_DisplayListEnd_004495d8->pDisplayListInternalSubObj->aCommandArray
 					[g_DisplayListEnd_004495d8->subCommandBufferCount - 1].type == LM_REF_0)) {
-				RenderCommand_002ca540
-				((long)((0x1000 - ((int)pCamera->screenWidth + (int)pCamera->posX) >> 1) << 4) & 0xffffffffU |
-					(long)((0x1000 - ((int)pCamera->screenHeight + (int)pCamera->posY) >> 1) << 4) << 0x20, 0x18);
+				AddRenderCommand_002ca540(
+					SCE_GS_SET_XYOFFSET(
+						((0x1000 - ((int)pCamera->screenWidth + (int)pCamera->posX) >> 1) << 4),	// X
+						((0x1000 - ((int)pCamera->screenHeight + (int)pCamera->posY) >> 1) << 4)	// Y
+					),
+					SCE_GS_XYOFFSET_1);
 				if (g_Camera_004495e8->screenHeight == 0x1c0) {
-					RenderCommand_002ca540
-					((long)(g_Camera_004495e8->posY + 0x1ff) << 0x30 |
-						(long)g_Camera_004495e8->posY << 0x20 |
-						(long)g_Camera_004495e8->posX |
-						(long)((int)g_Camera_004495e8->screenWidth + (int)g_Camera_004495e8->posX + -1) << 0x10, 0x40);
+					AddRenderCommand_002ca540(
+						SCE_GS_SET_SCISSOR(
+							pCamera->posX,																// SCAX0
+							((int)g_Camera_004495e8->screenWidth + (int)g_Camera_004495e8->posX + -1),	// SCAX1
+							pCamera->posY,																// SCAY0
+							g_Camera_004495e8->posY + 0x1ff												// SCAY1
+						),
+						SCE_GS_SCISSOR_1);
 				}
 				else {
-					RenderCommand_002ca540
-					((long)g_Camera_004495e8->posY << 0x20 |
-						(long)g_Camera_004495e8->posX |
-						(long)((int)g_Camera_004495e8->screenWidth + (int)g_Camera_004495e8->posX + -1) << 0x10 |
-						(long)((int)g_Camera_004495e8->screenHeight + (int)g_Camera_004495e8->posY + -1) << 0x30, 0x40);
+					AddRenderCommand_002ca540(
+						SCE_GS_SET_SCISSOR(
+							pCamera->posX,																// SCAX0
+							((int)g_Camera_004495e8->screenWidth + (int)g_Camera_004495e8->posX + -1),	// SCAX1
+							pCamera->posY,																// SCAY0
+							((int)g_Camera_004495e8->screenHeight + (int)g_Camera_004495e8->posY + -1)	// SCAY1
+						),
+						SCE_GS_SCISSOR_1);
 				}
 			}
 		}
@@ -645,7 +816,7 @@ namespace edDlist
 
 		Mode_0044964c = 0;
 		g_pMaterialInfo_00449644 = pMaterialInfo;
-		ColourCommandSetup_002c9fd0();
+		SetCommandGifTag_002c9fd0();
 		if ((g_DisplayListEnd_004495d8->flags_0x0 & 2) == 0) {
 			return;
 		}
@@ -711,7 +882,7 @@ namespace edDlist
 		g_DisplayListEnd_004495d8->subCommandBufferCount = g_DisplayListEnd_004495d8->subCommandBufferCount + 1;
 		if ((g_DisplayListEnd_004495d8->subCommandBufferCount == 1) || (g_DisplayListEnd_004495d8->subCommandBufferCount == 3)
 			) {
-			RenderCommand_002ca6a0(1, 7, 0, 0, 0, 0, 1, 1);
+			AddGSTestCommand_002ca6a0(1, 7, 0, 0, 0, 0, 1, 1);
 			RenderCommand_002ca930(g_Camera_004495e8);
 		}
 		return;
@@ -727,7 +898,7 @@ namespace edDlist
 		bVar1 = pMVar2->totalCount != pMVar2->usedCount;
 		if (bVar1) {
 			pMVar3 = pMVar2->field_0x4;
-			pMVar3->field_0x0 = 2;
+			pMVar3->specUnion.field_0x0[0] = 2;
 			pMVar3->pRenderInput = param_2;
 		}
 		return bVar1;
@@ -743,11 +914,11 @@ namespace edDlist
 		param_1->count_0x14 = param_1->count_0x14 + 1;
 		pMVar2 = pMVar1->field_0x4;
 		pMVar1->field_0x4 = pMVar2->pNext_0x4;
-		pMVar2->field_0x0 = 0;
-		pMVar2->field_0x8 = param_2->field_0x8;
+		pMVar2->specUnion.randoPtr = NULL;
+		pMVar2->pPrev_0x8 = param_2->pPrev_0x8;
 		pMVar2->pNext_0x4 = param_2;
-		param_2->field_0x8->pNext_0x4 = pMVar2;
-		param_2->field_0x8 = pMVar2;
+		param_2->pPrev_0x8->pNext_0x4 = pMVar2;
+		param_2->pPrev_0x8 = pMVar2;
 		return pMVar2;
 	}
 
@@ -756,7 +927,7 @@ namespace edDlist
 		CameraPanMasterHeader* pCVar1;
 		bool bVar2;
 		MeshTransformSpecial* pMVar3;
-		long lVar4;
+		int lVar4;
 
 		bVar2 = SetActiveDisplayList_00290960(pCameraPanHeader, pDisplayList);
 		if (bVar2 == false) {
@@ -774,12 +945,11 @@ namespace edDlist
 				}
 				else {
 					pCVar1 = (CameraPanMasterHeader*)pCameraPanHeader->pLoadedData;
-					assert(false);
-					//while (((pCVar1 != pCameraPanHeader && (*(ushort*)&pCVar1->headerUnion != 1)) &&
-						//(lVar4 = (*(code*)pCameraPanHeader->headerUnion.field1)
-						//	(pDisplayList, (DisplayListInternal*)pCVar1->pCameraPanHeader_0xc), -1 < lVar4))) {
-						//pCVar1 = (CameraPanMasterHeader*)pCVar1->pLoadedData;
-					//}
+					while (((pCVar1 != pCameraPanHeader && (*(ushort*)&pCVar1->headerUnion != 1)) &&
+						(lVar4 = (*pCameraPanHeader->headerUnion.field1)
+							(pDisplayList, (DisplayListInternal*)pCVar1->pCameraPanHeader_0xc), -1 < lVar4))) {
+						pCVar1 = (CameraPanMasterHeader*)pCVar1->pLoadedData;
+					}
 					FUN_002909a0(pCameraPanHeader, (MeshTransformSpecial*)pCVar1);
 				}
 			}
@@ -829,48 +999,34 @@ namespace edDlist
 		return;
 	}
 
-	int g_Mode_0044966c = 0;
-	int g_Count_004495f4 = 0;
-	int g_Count_004495f8 = 0;
-
-	int Mode_00449694 = 0;
-
-	typedef void (*DisplayListFourFloats)(float, float, float, int);
-	typedef void (*DisplayListColourFunction)(byte, byte, byte, byte);
-	typedef void (*DisplayListTwoFloats)(float, float);
-
-	DisplayListFourFloats g_pDisplayListFunction_004496e8 = NULL;
-	DisplayListColourFunction g_pDisplayListColurFunction_004496ec = NULL;
-	DisplayListTwoFloats g_pDisplayListFunction_004496f0 = NULL;
-
-	void DeferredCommand_002cd4d0(float x, float y, float z, int param_4)
+	void SetXYZ_002cd4d0(float inX, float inY, float inZ, int param_4)
 	{
 		DisplayListInternal* pDVar1;
-		int iVar2;
-		int iVar3;
+		int y;
+		int x;
 		RenderCommand** ppRVar4;
 		Vector local_10;
 
 		local_10.w = 1.0;
 		local_10.z = 0.0;
-		local_10.x = x;
-		local_10.y = y;
+		local_10.x = inX;
+		local_10.y = inY;
 #ifdef PLATFORM_PS2
 		sceVu0ApplyMatrix((float*)&local_10, (float(*)[4])g_DisplayListMatrix_004595e4 + g_DisplayListMatrixCount_004495e0, (float*)&local_10);
 #endif
 		pDVar1 = g_DisplayListEnd_004495d8;
-		iVar3 = g_Width_004495ec + (int)(local_10.x * 16.0);
-		iVar2 = g_Height_004495f0 + (int)(local_10.y * 16.0);
+		x = g_Width_004495ec + (int)(local_10.x * 16.0);
+		y = g_Height_004495f0 + (int)(local_10.y * 16.0);
 		if (g_Mode_0044966c == 8) {
 			g_Count_004495f8 = g_Count_004495f8 + 1;
 			if ((g_Count_004495f8 == 1) || (g_Count_004495f8 == 2)) {
-				g_DisplayListEnd_004495d8->pRenderCommands->cmdA = (long)(int)z << 0x20 | (long)iVar3 | (long)iVar2 << 0x10;
-				pDVar1->pRenderCommands->cmdB = 0xd;
+				g_DisplayListEnd_004495d8->pRenderCommands->cmdA = SCE_GS_SET_XYZ(x, y, inZ);
+				pDVar1->pRenderCommands->cmdB = SCE_GS_XYZ3;
 				pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
 			}
 			else {
-				g_DisplayListEnd_004495d8->pRenderCommands->cmdA = (long)(int)z << 0x20 | (long)iVar3 | (long)iVar2 << 0x10;
-				pDVar1->pRenderCommands->cmdB = 5;
+				g_DisplayListEnd_004495d8->pRenderCommands->cmdA = SCE_GS_SET_XYZ(x, y, inZ);
+				pDVar1->pRenderCommands->cmdB = SCE_GS_XYZ2;
 				pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
 				if (g_Count_004495f8 == 4) {
 					g_Count_004495f8 = 0;
@@ -879,12 +1035,12 @@ namespace edDlist
 		}
 		else {
 			ppRVar4 = &g_DisplayListEnd_004495d8->pRenderCommands;
-			g_DisplayListEnd_004495d8->pRenderCommands->cmdA = (long)(int)z << 0x20 | (long)iVar3 | (long)iVar2 << 0x10;
+			g_DisplayListEnd_004495d8->pRenderCommands->cmdA = SCE_GS_SET_XYZ(x, y, inZ);
 			if (param_4 == 0xc000) {
-				(*ppRVar4)->cmdB = 0xd;
+				(*ppRVar4)->cmdB = SCE_GS_XYZ3;
 			}
 			else {
-				(*ppRVar4)->cmdB = 5;
+				(*ppRVar4)->cmdB = SCE_GS_XYZ2;
 			}
 			*ppRVar4 = *ppRVar4 + 1;
 		}
@@ -892,48 +1048,37 @@ namespace edDlist
 		return;
 	}
 
-	struct ByteColor {
-		byte r;
-		byte g;
-		byte b;
-		byte a;
-	};
-
-	ByteColor ByteColor_ARRAY_0048dd40[4];
-
-	ByteColor* PTR_ByteColor_ARRAY_00448aa0 = ByteColor_ARRAY_0048dd40;
-
-	void DeferredCommand_002ce000(byte r, byte g, byte b, byte a)
+	void SetRGBAQ_002ce000(byte r, byte g, byte b, byte a)
 	{
 		DisplayListInternal* pDVar1;
 
-		PTR_ByteColor_ARRAY_00448aa0->r = r;
-		PTR_ByteColor_ARRAY_00448aa0->g = g;
-		PTR_ByteColor_ARRAY_00448aa0->b = b;
-		PTR_ByteColor_ARRAY_00448aa0->a = a;
+		g_RGBAQ_00448aa0->r = r;
+		g_RGBAQ_00448aa0->g = g;
+		g_RGBAQ_00448aa0->b = b;
+		g_RGBAQ_00448aa0->a = a;
 		pDVar1 = g_DisplayListEnd_004495d8;
-		g_DisplayListEnd_004495d8->pRenderCommands->cmdA = ((ulong)(a & 0xff) << 0x18 | (b & 0xff) << 0x10 | r & 0xff | (g & 0xff) << 8) | 0x3f80000000000000;
-		pDVar1->pRenderCommands->cmdB = 1;
+		g_DisplayListEnd_004495d8->pRenderCommands->cmdA = SCE_GS_SET_RGBAQ(r, g, b, a, 0x3f800000);
+		pDVar1->pRenderCommands->cmdB = SCE_GS_RGBAQ;
 		pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
 		return;
 	}
 
-	void DeferredCommand_002cde90(float param_1, float param_2)
+	void SetST_002cde90(float inS, float inT)
 	{
 		DisplayListInternal* pDVar1;
 
 		pDVar1 = g_DisplayListEnd_004495d8;
 
-		uint A = *reinterpret_cast<uint*>(&param_1);
-		uint B = *reinterpret_cast<uint*>(&param_2);
+		uint S = *reinterpret_cast<uint*>(&inS);
+		uint T = *reinterpret_cast<uint*>(&inT);
 
-		g_DisplayListEnd_004495d8->pRenderCommands->cmdA = ((ulong)B << 0x20) | A;
-		pDVar1->pRenderCommands->cmdB = 2;
+		g_DisplayListEnd_004495d8->pRenderCommands->cmdA = SCE_GS_SET_ST(S, T);
+		pDVar1->pRenderCommands->cmdB = SCE_GS_ST;
 		pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
 		return;
 	}
 
-	void RenderCommand_002ceb50(ulong count)
+	void SetupPrimGifTag_002ceb50(ulong count)
 	{
 		RenderCommand* pRVar1;
 		RenderCommand** ppRVar2;
@@ -951,15 +1096,30 @@ namespace edDlist
 			lVar4 = 1;
 		}
 		g_CachedRenderCommandPtr_00449650 = pRVar1;
+		uint primCount = g_MeshDrawPrimCountMode_00449658 << 6 | count & 0xffffffff | lVar4 << 4;
 		if (Mode_00449694 == 0) {
-			pRVar1->cmdA = ((ulong)g_DisplayListMode_00449658 << 6 | count & 0xffffffff | lVar4 << 4) << 0x2f |
-				0x1000400000008000;
+			pRVar1->cmdA = SCE_GIF_SET_TAG(
+				0,							// NLOOP
+				SCE_GS_TRUE,				// EOP
+				SCE_GS_TRUE,				// PRE
+				primCount,					// PRIM
+				SCE_GIF_PACKED,				// FLG
+				1							// NREG
+			);
 		}
 		else {
-			pRVar1->cmdA = ((ulong)g_DisplayListMode_00449658 << 6 | count & 0xffffffff | 8 | lVar4 << 4) << 0x2f |
-				0x1000400000008000;
+			primCount = primCount | 8;
+			pRVar1->cmdA = SCE_GIF_SET_TAG(
+				0,							// NLOOP
+				SCE_GS_TRUE,				// EOP
+				SCE_GS_TRUE,				// PRE
+				primCount,					// PRIM
+				SCE_GIF_PACKED,				// FLG
+				1							// NREG
+			);
+
 		}
-		pRVar1->cmdB = 0xe;
+		pRVar1->cmdB = SCE_GIF_PACKED_AD;
 		*ppRVar2 = pRVar1 + 1;
 		return;
 	}
@@ -991,17 +1151,16 @@ namespace edDlist
 			PTR_MeshDrawRenderCommand_004495fc = g_DisplayListEnd_004495d8->field_0x10;
 			g_DisplayListEnd_004495d8->subCommandBufferCount = g_DisplayListEnd_004495d8->subCommandBufferCount + 1;
 			iVar3 = -INT_00449654;
+			assert(false);
 			pRVar2[iVar3].cmdA = (long)g_DisplayListCommandCount_004495d4 | 0x1000000000008000;
+#ifdef PLATFORM_WIN
+			DUMP_TAG_ADV(pRVar2[iVar3].cmdA);
+#endif
 			pRVar2[iVar3].cmdB = 0xe;
 			g_DisplayListCommandCount_004495d4 = 0;
 		}
 		return;
 	}
-
-	ByteColor* g_pByteColour_0044960c = NULL;
-	char* PTR_DAT_00449610 = NULL;
-	Vector* g_pVector_00449604 = NULL;
-	undefined* PTR_DAT_0044962c = NULL;
 
 	void RenderCommand_002cec50(float x, float y, float z, uint param_4, ushort param_5)
 	{
@@ -1133,7 +1292,7 @@ namespace edDlist
 		g_pVector_00449604->w = 6.887662e-41;
 		pVVar3[1].w = 6.887662e-41;
 		//DAT_00449624 = 1;
-		//DAT_00449618 = 1;
+		g_MaxCharacterIndex_00449618 = 1;
 		//DAT_0044961c = 0;
 		//PTR_DAT_00449630 = &g_pByteColour_0044960c->r + uVar5;
 		//DAT_00449620 = 0;
@@ -1149,7 +1308,7 @@ namespace edDlist
 		v0->type_0x42 = param_5;
 		v0->field_0x4c = g_Mode_0044966c;
 		sceVu0CopyMatrix((float(*)[4])v0, (float(*)[4])g_DisplayListMatrix_004595e4 + g_DisplayListMatrixCount_004495e0);
-		//DAT_0044935c = 0x48;
+		ed3D::INT_0044935c = 0x48;
 		return;
 	}
 
@@ -1170,7 +1329,7 @@ namespace edDlist
 			g_DisplayListEnd_004495d8 = pDVar4;
 			MeshDrawCommands_002ca170(x, y, z, mode, count);
 			g_DisplayListEnd_004495d8->field_0x10 = PTR_MeshDrawRenderCommand_004495fc;
-			g_DrawEnded_004496c0 = 0;
+			g_DrawEnded_004496c0 = false;
 			g_DisplayListEnd_004495d8 = g_CurrentDisplayListBase_004495dc + g_DisplayListGlobal_00449664;
 		}
 		uVar5 = (uint)mode;
@@ -1183,8 +1342,15 @@ namespace edDlist
 		if ((g_DisplayListEnd_004495d8->flags_0x0 & 1) == 0) {
 			if (iVar2 != 0) {
 				pRVar1 = g_DisplayListEnd_004495d8->pRenderCommands;
-				pRVar1[-(iVar2 + 1)].cmdA = (long)iVar2 | 0x1000000000008000;
-				pRVar1[-(iVar2 + 1)].cmdB = 0xe;
+				pRVar1[-(iVar2 + 1)].cmdA = SCE_GIF_SET_TAG(
+					iVar2,			// NLOOP
+					SCE_GS_TRUE,	// EOP
+					SCE_GS_FALSE,	// PRE
+					0,				// PRIM
+					SCE_GIF_PACKED,	// FLG
+					1				// NREG
+				);
+				pRVar1[-(iVar2 + 1)].cmdB = SCE_GIF_PACKED_AD;
 				g_DisplayListCommandCount_004495d4 = 0;
 			}
 			switch ((int)(mode & 0xff)) {
@@ -1195,25 +1361,24 @@ namespace edDlist
 			case 4:
 			case 5:
 			case 6:
-				RenderCommand_002ceb50(mode & 0xff);
+				SetupPrimGifTag_002ceb50(mode & 0xff);
 				break;
 			default:
-				RenderCommand_002ceb50(4);
+				SetupPrimGifTag_002ceb50(4);
 				break;
 			case 8:
 				g_Count_004495f8 = 0;
-				RenderCommand_002ceb50(4);
+				SetupPrimGifTag_002ceb50(4);
 			}
-			g_pDisplayListFunction_004496e8 = DeferredCommand_002cd4d0;
-			g_pDisplayListColurFunction_004496ec = DeferredCommand_002ce000;
-			g_pDisplayListFunction_004496f0 = DeferredCommand_002cde90;
-			g_DrawEnded_004496c0 = 1;
+			g_pSetXYZ_004496e8 = SetXYZ_002cd4d0;
+			g_pSetRGBAQ_004496ec = SetRGBAQ_002ce000;
+			g_pSetST_004496f0 = SetST_002cde90;
+			g_DrawEnded_004496c0 = true;
 			return;
 		}
 		RenderCommand_002ca030();
 		if (((0 < INT_00449680) && ((mode & 0xff) == 0xb)) || ((mode & 0xff) == 0xc)) {
-			assert(false);
-			//FUN_002d00c0();
+			IMPLEMENTATION_GUARD(FUN_002d00c0();)
 		}
 		pDVar6 = g_DisplayListEnd_004495d8->pDisplayListInternalSubObj + g_DisplayListEnd_004495d8->subCommandBufferCount;
 		if (INT_004496d8 < 1) {
@@ -1239,28 +1404,57 @@ namespace edDlist
 			default:
 				mode = 4;
 				break;
-			//case 6:
-			//case 7:
-			//case 0xb:
-			//case 0xc:
-			//	DAT_0044963c = DAT_0044963c << 2;
-			//	FUN_002cf060(count, uVar5 & 0xff);
-			//	break;
+			case 6:
+			case 7:
+			case 0xb:
+			case 0xc:
+				IMPLEMENTATION_GUARD(
+				DAT_0044963c = DAT_0044963c << 2;
+				FUN_002cf060(count, uVar5 & 0xff);)
+				break;
 			case 10:
 				count = count + 1;
-				//DAT_0044963c = DAT_0044963c + 1;
+				IMPLEMENTATION_GUARD(
+				DAT_0044963c = DAT_0044963c + 1;)
 			case 1:
 				RenderCommand_002cec50(x, y, z, count, 2);
 		}
 		uVar5 = (uint)mode;
 	LAB_002ca38c:
-		assert(false);
 		uVar5 = uVar5 & 0xff;
-		//g_DrawEnded_004496c0 = 1;
-		//g_pDisplayListFunction_004496e8 = g_aDisplayListFunctions_004250f0[uVar5];
-		//g_pDisplayListColurFunction_004496ec = g_aDisplayListColourFunctions_00425130[uVar5];
-		//g_pDisplayListFunction_004496f0 = g_aDisplayListFunctions_00425170[uVar5];
+		g_DrawEnded_004496c0 = true;
+		IMPLEMENTATION_GUARD(
+		g_pSetXYZ_004496e8 = g_aSetXYZFuncs_004250f0[uVar5];
+		g_pSetRGBAQ_004496ec = g_aSetRGBAQFuncs_00425130[uVar5];
+		g_pSetST_004496f0 = g_aSetSTFuncs_00425170[uVar5];)
 		return;
+}
+
+	RenderCommand* AddDisplayListInternal_002ca4c0(RenderCommand* pRenderCommand)
+	{
+		ushort uVar1;
+		DisplayListInternalSubObj_60* pDVar2;
+
+		if (g_DisplayListCommandCount_004495d4 == 0) {
+			if ((g_DisplayListEnd_004495d8->flags_0x0 & 1) != 0) {
+				uVar1 = g_DisplayListEnd_004495d8->subCommandBufferCount;
+				pDVar2 = g_DisplayListEnd_004495d8->pDisplayListInternalSubObj;
+				pDVar2[uVar1].type_0x42 = 9;
+				pDVar2[uVar1].pRenderInput = pRenderCommand;
+			}
+			pRenderCommand->cmdA = SCE_GIF_SET_TAG(
+				1,				// NLOOP
+				SCE_GS_TRUE,	// EOP
+				SCE_GS_FALSE,	// PRE
+				0,				// PRIM
+				SCE_GIF_PACKED,	// FLG
+				1				// NREG
+			);
+			pRenderCommand->cmdB = SCE_GIF_PACKED_AD;
+			pRenderCommand = pRenderCommand + 1;
+		}
+		g_DisplayListCommandCount_004495d4 = g_DisplayListCommandCount_004495d4 + 1;
+		return pRenderCommand;
 	}
 
 	void SetDropShadowColour_002ce1a0(byte r, byte g, byte b, byte a)
@@ -1268,61 +1462,60 @@ namespace edDlist
 		DisplayListInternal* pDVar1;
 		RenderCommand* pRVar2;
 
-		if (g_pDisplayListColurFunction_004496ec == (DisplayListColourFunction)0x0) {
-			assert(false);
-			//PTR_ByteColor_ARRAY_00448aa0[g_CharacterIndex_00449614].r = r;
-			//PTR_ByteColor_ARRAY_00448aa0[g_CharacterIndex_00449614].g = g;
-			//PTR_ByteColor_ARRAY_00448aa0[g_CharacterIndex_00449614].b = b;
-			//PTR_ByteColor_ARRAY_00448aa0[g_CharacterIndex_00449614].a = a;
-			//if (((g_Mode_0044966c == 0xb) || (g_Mode_0044966c == 0xc)) && (g_CharacterIndex_00449614 < DAT_00449618)) {
-			//	g_CharacterIndex_00449614 = g_CharacterIndex_00449614 + 1;
-			//}
-			//if (((g_DisplayListEnd_004495d8->flags_0x0 & 2) == 0) && (g_Mode_0044966c == 7)) {
-			//	g_pByteColour_0044960c->r = PTR_ByteColor_ARRAY_00448aa0->r;
-			//	g_pByteColour_0044960c->g = PTR_ByteColor_ARRAY_00448aa0->g;
-			//	g_pByteColour_0044960c->b = PTR_ByteColor_ARRAY_00448aa0->b;
-			//	g_pByteColour_0044960c->a = PTR_ByteColor_ARRAY_00448aa0->a;
-			//	g_pByteColour_0044960c[1].r = PTR_ByteColor_ARRAY_00448aa0->r;
-			//	g_pByteColour_0044960c[1].g = PTR_ByteColor_ARRAY_00448aa0->g;
-			//	g_pByteColour_0044960c[1].b = PTR_ByteColor_ARRAY_00448aa0->b;
-			//	g_pByteColour_0044960c[1].a = PTR_ByteColor_ARRAY_00448aa0->a;
-			//	g_pByteColour_0044960c = g_pByteColour_0044960c + 2;
-			//}
-			//if ((g_DisplayListEnd_004495d8->flags_0x0 & 2) != 0) {
-			//	ColourCommandSetup_002c9fd0();
-			//	if (g_DrawEnded_004496c0 == '\0') {
-			//		pRVar2 = AddDisplayListInternal_002ca4c0(g_DisplayListEnd_004495d8->pRenderCommands);
-			//		g_DisplayListEnd_004495d8->pRenderCommands = pRVar2;
-			//	}
-			//	pDVar1 = g_DisplayListEnd_004495d8;
-			//	g_DisplayListEnd_004495d8->pRenderCommands->cmdA =
-			//		((long)(char)a & 0xffU) << 0x18 |
-			//		((long)(char)b & 0xffU) << 0x10 | (long)(char)r & 0xffU | ((long)(char)g & 0xffU) << 8 | 0x3f80000000000000;
-			//	pDVar1->pRenderCommands->cmdB = 1;
-			//	pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
-			//}
+		if (g_pSetRGBAQ_004496ec == (DisplayListColourFunction)0x0) {
+			g_RGBAQ_00448aa0[g_CharacterIndex_00449614].r = r;
+			g_RGBAQ_00448aa0[g_CharacterIndex_00449614].g = g;
+			g_RGBAQ_00448aa0[g_CharacterIndex_00449614].b = b;
+			g_RGBAQ_00448aa0[g_CharacterIndex_00449614].a = a;
+			if (((g_Mode_0044966c == 0xb) || (g_Mode_0044966c == 0xc)) && (g_CharacterIndex_00449614 < g_MaxCharacterIndex_00449618)) {
+				g_CharacterIndex_00449614 = g_CharacterIndex_00449614 + 1;
+			}
+			if (((g_DisplayListEnd_004495d8->flags_0x0 & 2) == 0) && (g_Mode_0044966c == 7)) {
+				g_pByteColour_0044960c->r = g_RGBAQ_00448aa0->r;
+				g_pByteColour_0044960c->g = g_RGBAQ_00448aa0->g;
+				g_pByteColour_0044960c->b = g_RGBAQ_00448aa0->b;
+				g_pByteColour_0044960c->a = g_RGBAQ_00448aa0->a;
+				g_pByteColour_0044960c[1].r = g_RGBAQ_00448aa0->r;
+				g_pByteColour_0044960c[1].g = g_RGBAQ_00448aa0->g;
+				g_pByteColour_0044960c[1].b = g_RGBAQ_00448aa0->b;
+				g_pByteColour_0044960c[1].a = g_RGBAQ_00448aa0->a;
+				g_pByteColour_0044960c = g_pByteColour_0044960c + 2;
+			}
+			if ((g_DisplayListEnd_004495d8->flags_0x0 & 2) != 0) {
+				SetCommandGifTag_002c9fd0();
+				if (g_DrawEnded_004496c0 == 0) {
+					pRVar2 = AddDisplayListInternal_002ca4c0(g_DisplayListEnd_004495d8->pRenderCommands);
+					g_DisplayListEnd_004495d8->pRenderCommands = pRVar2;
+				}
+				pDVar1 = g_DisplayListEnd_004495d8;
+				g_DisplayListEnd_004495d8->pRenderCommands->cmdA = SCE_GS_SET_RGBAQ(r, g, b, a, 0x3f800000);
+				pDVar1->pRenderCommands->cmdB = SCE_GS_RGBAQ;
+				pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
+			}
 		}
 		else {
-			(g_pDisplayListColurFunction_004496ec)(r, g, b, a);
+			(g_pSetRGBAQ_004496ec)(r, g, b, a);
 		}
 		return;
 	}
 
-	void CallpcGpffff9200(float param_1, float param_2)
+	void CallSetST(float s, float t)
 	{
 		/* WARNING: Could not recover jumptable at 0x002cdff4. Too many branches */
 		/* WARNING: Treating indirect jump as call */
-		(g_pDisplayListFunction_004496f0)(param_1, param_2);
+		(g_pSetST_004496f0)(s, t);
 		return;
 	}
 
-	void CallpcGpffff91f8(float x, float y, float z, int param_4)
+	void CallSetXYZ(float x, float y, float z, int param_4)
 	{
 		/* WARNING: Could not recover jumptable at 0x002cd6e4. Too many branches */
 		/* WARNING: Treating indirect jump as call */
-		(g_pDisplayListFunction_004496e8)(x, y, z, param_4);
+		(g_pSetXYZ_004496e8)(x, y, z, param_4);
 		return;
 	}
+
+	Vector3 Vector3_0048d390 = { 0 };
 
 	void EndDraw_002cfe40(void)
 	{
@@ -1332,7 +1525,7 @@ namespace edDlist
 		ulong uVar4;
 		DisplayListInternalSubObj_60* pDVar5;
 
-		if (g_DrawEnded_004496c0 != '\0') {
+		if (g_DrawEnded_004496c0 != false) {
 			if ((g_DisplayListEnd_004495d8->flags_0x0 & 1) == 0) {
 				if ((g_DisplayListEnd_004495d8->flags_0x0 & 2) != 0) {
 					pRVar2 = g_DisplayListEnd_004495d8->pRenderCommands;
@@ -1345,10 +1538,9 @@ namespace edDlist
 			else {
 				if (g_DisplayListEnd_004495d8->subCommandBufferCount != 0) {
 					if (g_Mode_0044966c == 10) {
-						assert(false);
-						//CallpcGpffff91f8(Vector3_0048d390.x, Vector3_0048d390.y, Vector3_0048d390.z, 10);
+						CallSetXYZ(Vector3_0048d390.x, Vector3_0048d390.y, Vector3_0048d390.z, 10);
 					}
-					//DAT_0044935c = 0x48;
+					ed3D::INT_0044935c = 0x48;
 					INT_00449654 = 0;
 					g_CachedRenderCommandPtr_00449650 = (RenderCommand*)0x0;
 					pDVar5 = g_DisplayListEnd_004495d8->pDisplayListInternalSubObj +
@@ -1362,12 +1554,12 @@ namespace edDlist
 								PTR_MeshDrawRenderCommand_004495fc = (MeshDrawRenderCommand*)pDVar5->pRenderInput;
 							}
 							else {
-								assert(false);
-								//FUN_002cf640((int)pDVar5->pRenderInput);
-								//PTR_MeshDrawRenderCommand_004495fc =
-								//	(MeshDrawRenderCommand*)
-								//	FUN_002a3240((uint*)pDVar5->pRenderInput, (undefined4*)PTR_MeshDrawRenderCommand_004495fc,
-								//		(int)g_DisplayListPtr_0044965c, (ulong)pDVar5->type_0x42);
+								IMPLEMENTATION_GUARD(
+								FUN_002cf640((int)pDVar5->pRenderInput);
+								PTR_MeshDrawRenderCommand_004495fc =
+									(MeshDrawRenderCommand*)
+									FUN_002a3240((uint*)pDVar5->pRenderInput, (undefined4*)PTR_MeshDrawRenderCommand_004495fc,
+										(int)g_DisplayListPtr_0044965c, (ulong)pDVar5->type_0x42);)
 							}
 						}
 						else {
@@ -1377,11 +1569,11 @@ namespace edDlist
 									PTR_MeshDrawRenderCommand_004495fc = (MeshDrawRenderCommand*)pDVar5->pRenderInput;
 								}
 								else {
-									assert(false);
-									//pDVar5->field_0x50 = g_Count_004495f4;
-									//FUN_002cf500(pDVar5->pRenderInput);
-									//uVar4 = FUN_002cfb10((long)(int)pDVar5->pRenderInput, (long)(int)PTR_MeshDrawRenderCommand_004495fc);
-									//PTR_MeshDrawRenderCommand_004495fc = (MeshDrawRenderCommand*)uVar4;
+									IMPLEMENTATION_GUARD(
+									pDVar5->field_0x50 = g_Count_004495f4;
+									FUN_002cf500(pDVar5->pRenderInput);
+									uVar4 = FUN_002cfb10((long)(int)pDVar5->pRenderInput, (long)(int)PTR_MeshDrawRenderCommand_004495fc);
+									PTR_MeshDrawRenderCommand_004495fc = (MeshDrawRenderCommand*)uVar4;)
 								}
 							}
 						}
@@ -1392,10 +1584,16 @@ namespace edDlist
 			g_Count_004495f4 = 0;
 			//DAT_0044963c = 0;
 			g_CachedRenderCommandPtr_00449650 = (RenderCommand*)0x0;
-			g_DrawEnded_004496c0 = '\0';
-			g_pDisplayListFunction_004496e8 = (DisplayListFourFloats)0x0;
-			g_pDisplayListColurFunction_004496ec = (DisplayListColourFunction)0x0;
+			g_DrawEnded_004496c0 = false;
+			g_pSetXYZ_004496e8 = (DisplayListFourFloats)0x0;
+			g_pSetRGBAQ_004496ec = (DisplayListColourFunction)0x0;
 		}
+		return;
+	}
+
+	void SetUnitMatrix_002d07b0(void)
+	{
+		sceVu0UnitMatrix((TO_SCE_MTX)(g_DisplayListMatrix_004595e4 + g_DisplayListMatrixCount_004495e0));
 		return;
 	}
 }

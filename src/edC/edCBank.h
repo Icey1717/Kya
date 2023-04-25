@@ -27,8 +27,8 @@ typedef struct BankFilePathContainer BankFilePathContainer, * PBankFilePathConta
 struct BankFilePathContainer {
 	char* filePath;
 	int fileFlagA;
-	int pObjectReference;
-	int fileFunc;
+	void* pObjectReference;
+	LoadBankFileFunc fileFunc;
 	EHeap heapID;
 	int fileFlagE;
 };
@@ -77,6 +77,9 @@ void edCBank_Setup(edCBank* pBankObj, int size, int param_3, BankFilePathContain
 void edCBank_SetDeserializeData(edCBank* pBank, TypePairData* pTypePairData);
 edCBankBuffer* edCBank_GetBankBuffer(edCBank* bankObj);
 DebugBankData_234* LoadFile(char* filePath, uint flags);
+uint GetFileSize_0025bd70(DebugBankData_234* pDebugBank);
+bool SetRead_0025be80(DebugBankData_234* pDebugBank, char* param_2, uint size);
+bool SetClose_0025bf60(DebugBankData_234* pDebugBank);
 byte UsedInFileLoad(DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize);
 void edCBank_Free_00244e10(edCBank* pBank);
 

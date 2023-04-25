@@ -10,8 +10,11 @@ class LocalizationManager : public Manager {
 public:
 	LocalizationManager();
 
+	// Begin Manager
 	virtual void OnBeginGame();
-	//virtual void LoadLevelUpdate();
+	virtual void LoadB();
+	virtual void Unload();
+	// End Manager
 
 	TranslatedTextData trcText;
 	TranslatedTextData levelText;

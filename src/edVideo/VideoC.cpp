@@ -159,35 +159,35 @@ void SetupDisplayGlobals_002b8c00(void)
 	return;
 }
 
-void UpdateCameraCommands_002b8f70(FrameBuffer* pVidModeData)
+void UpdateCameraCommands_002b8f70(FrameBuffer* pColorBuffer)
 {
-	byte bVar1;
-	CameraObjParams local_8;
+	byte alpha;
+	CameraObjParams params;
 
-	local_8.field_0x2 = 0;
-	local_8.field_0x0 = 0;
-	local_8.screenHeight = 0x200;
-	local_8.screenWidth = 0x200;
-	if (pVidModeData != (FrameBuffer*)0x0) {
-		local_8.screenWidth = pVidModeData->pVidModeData_0x0->screenWidth;
-		local_8.screenHeight = pVidModeData->pVidModeData_0x0->screenHeight;
+	params.field_0x2 = 0;
+	params.field_0x0 = 0;
+	params.screenHeight = 0x200;
+	params.screenWidth = 0x200;
+	if (pColorBuffer != (FrameBuffer*)0x0) {
+		params.screenWidth = pColorBuffer->pVidModeData_0x0->screenWidth;
+		params.screenHeight = pColorBuffer->pVidModeData_0x0->screenHeight;
 	}
-	bVar1 = 4;
+	alpha = 4;
 	if (g_ActiveVidParams_0048cd90.params26.field_0xc != 0) {
-		bVar1 = 6;
+		alpha = 6;
 	}
 	if (g_ActiveVidParams_0048cd90.params26.field_0xb != 0) {
-		bVar1 = bVar1 | 1;
+		alpha = alpha | 1;
 	}
 	if (g_ActiveVidParams_0048cd90.pCamera == (CameraObj_28*)0x0) {
-		AllocateCameraObj28_002bae70(&local_8, pVidModeData, (FrameBuffer*)0x0, bVar1);
-		SetCameraObjBytes_002bb960(g_ActiveVidParams_0048cd90.pCamera, 0x20, 0x20, 0x40);
+		AllocateCameraObj28_002bae70(&params, pColorBuffer, (FrameBuffer*)0x0, alpha);
+		SetCameraClear_002bb960(g_ActiveVidParams_0048cd90.pCamera, 0x20, 0x20, 0x40);
 	}
 	else {
-		BuildCameraCommands_002bafe0(g_ActiveVidParams_0048cd90.pCamera, &local_8, pVidModeData, 0, bVar1);
-		SetCameraObjBytes_002bb960
-		(g_ActiveVidParams_0048cd90.pCamera, g_ActiveVidParams_0048cd90.params18.field_0x14,
-			g_ActiveVidParams_0048cd90.params18.field_0x15, g_ActiveVidParams_0048cd90.params18.field_0x16);
+		BuildCameraCommands_002bafe0(g_ActiveVidParams_0048cd90.pCamera, &params, pColorBuffer, 0, alpha);
+		SetCameraClear_002bb960
+		(g_ActiveVidParams_0048cd90.pCamera, g_ActiveVidParams_0048cd90.params18.r,
+			g_ActiveVidParams_0048cd90.params18.g, g_ActiveVidParams_0048cd90.params18.b);
 	}
 	return;
 }

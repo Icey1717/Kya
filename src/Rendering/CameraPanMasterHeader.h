@@ -4,11 +4,17 @@
 #include "Types.h"
 #include "edMem.h"
 
+union MeshTransformSpecialUnion {
+	byte byteFlags[4];
+	short field_0x0[2];
+	int count;
+	void* randoPtr;
+};
+
 struct MeshTransformSpecial {
-	ushort field_0x0;
-	ushort field_0x2;
+	MeshTransformSpecialUnion specUnion;
 	MeshTransformSpecial* pNext_0x4;
-	MeshTransformSpecial* field_0x8;
+	MeshTransformSpecial* pPrev_0x8;
 	struct DisplayListInternal* pRenderInput;
 };
 
@@ -18,7 +24,7 @@ struct MeshTransformParent {
 	undefined field_0x3;
 	MeshTransformParent* pNext;
 	MeshTransformParent* pLink_0x8;
-	struct MeshTransformData* pMeshTransformData;
+	struct DisplayListInternalMesh* pMeshTransformData;
 };
 
 struct MeshTransformParentHeader {
@@ -28,9 +34,11 @@ struct MeshTransformParentHeader {
 	int usedCount;
 };
 
+typedef int(CameraPanFunc)(DisplayListInternal*, DisplayListInternal*);
+
 union CameraPanHeaderUnion {
 	short field0;
-	char* field1;
+	CameraPanFunc* field1;
 };
 
 struct CameraPanMasterHeader {
@@ -50,9 +58,10 @@ struct CameraPanMasterHeader {
 	undefined field_0x1f;
 };
 
-void Link_00290c10(CameraPanMasterHeader* param_1);
+void Link_00290c10(CameraPanMasterHeader* pCameraPanMasterHeader);
 CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, void* heapID);
-bool Setup_00290bf0(CameraPanMasterHeader* pCameraPanStatic, MeshTransformParentHeader* param_2, int param_3, undefined* param_4);
+bool Setup_00290bf0(CameraPanMasterHeader* pCameraPanStatic, MeshTransformParentHeader* param_2, int param_3, CameraPanFunc* param_4);
 void* Setup_00290b70(MeshTransformParentHeader* pAllocatedBuffer, int count);
+bool FUN_002909f0(CameraPanMasterHeader* param_1, int param_2, CameraPanFunc* param_3);
 
 #endif //CAMERA_PAN_MASTER_HEADER_H
