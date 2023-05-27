@@ -12,7 +12,7 @@
 #include "CameraViewManager.h"
 
 struct BankAccessCombined {
-	edCBankBuffer* pAccessObj;
+	edCBankBufferEntry* pAccessObj;
 	edCBank bankData;
 };
 
@@ -26,14 +26,14 @@ void LoadUIBnk_001db720(BankAccessCombined* param_1, int param_2, int size)
 	BankFilePathContainer BStack32;
 
 	memset(&BStack32, 0, sizeof(BankFilePathContainer));
-	edCBank_Setup(&param_1->bankData, size, param_2, &BStack32);
+	initialize(&param_1->bankData, size, param_2, &BStack32);
 	return;
 }
 
 bool LoadBNKCombined(BankAccessCombined* param_1, char* path, char* fileName, TypePairData* pTypePairData)
 {
 	bool bVar1;
-	edCBankBuffer* peVar2;
+	edCBankBufferEntry* peVar2;
 	BankFilePathContainer local_a0;
 	char filePath[128];
 
@@ -44,31 +44,31 @@ bool LoadBNKCombined(BankAccessCombined* param_1, char* path, char* fileName, Ty
 	/* +.bnk */
 	FormatFilePath(filePath, path, fileName, ".bnk", 0);
 	local_a0.filePath = filePath;
-	peVar2 = edCBank_GetBankBuffer(&param_1->bankData);
+	peVar2 = get_free_entry(&param_1->bankData);
 	param_1->pAccessObj = peVar2;
-	bVar1 = edCBankBuffer_file_access(param_1->pAccessObj, &local_a0);
+	bVar1 = load(param_1->pAccessObj, &local_a0);
 	return bVar1;
 }
 
-char* GetFileFromBank(BankAccessCombined* bankHeaderPtr, char* fileName, BankFileData* param_3)
+char* GetFileFromBank(BankAccessCombined* bankHeaderPtr, char* fileName, edBANK_ENTRY_INFO* param_3)
 {
 	bool bVar1;
 	int fileIndex;
 	char* fileBuffer;
 
-	fileIndex = GetIndexForFileName(bankHeaderPtr->pAccessObj, fileName);
+	fileIndex = get_index(bankHeaderPtr->pAccessObj, fileName);
 	if (fileIndex == -1) {
 		/* \r\nFile: %s\r\n */
-		PrintString("\r\nFile: %s\r\n", fileName);
+		edDebugPrintf("\r\nFile: %s\r\n", fileName);
 		fileBuffer = (char*)0x0;
 	}
 	else {
 		fileBuffer = (char*)0x0;
-		if (param_3 == (BankFileData*)0x0) {
-			fileBuffer = GetFilePointerFromFileIndex(bankHeaderPtr->pAccessObj, fileIndex);
+		if (param_3 == (edBANK_ENTRY_INFO*)0x0) {
+			fileBuffer = get_element(bankHeaderPtr->pAccessObj, fileIndex);
 		}
 		else {
-			bVar1 = GetFileDataForIndex(bankHeaderPtr->pAccessObj, fileIndex, param_3, (char*)0x0);
+			bVar1 = get_info(bankHeaderPtr->pAccessObj, fileIndex, param_3, (char*)0x0);
 			if (bVar1 != false) {
 				fileBuffer = param_3->fileBufferStart;
 			}
@@ -82,7 +82,7 @@ bool CloseBankCombined_001db640(BankAccessCombined* param_1)
 	bool bVar1;
 
 	bVar1 = edCBankBuffer_close(param_1->pAccessObj);
-	param_1->pAccessObj = (edCBankBuffer*)0x0;
+	param_1->pAccessObj = (edCBankBufferEntry*)0x0;
 	return bVar1;
 }
 
@@ -101,7 +101,7 @@ char* g_FrontendSoundFiles_0040ec90[5] =
 	"takeMoney.vag",
 };
 
-G2DObj g_aFrontendIcons_0048fe70[13];
+Sprite g_aFrontendIcons_0048fe70[13];
 
 char* g_aFrontendIconFileNames_00425940[13] = {
 	"i_wolfen.g2d",
@@ -119,11 +119,13 @@ char* g_aFrontendIconFileNames_00425940[13] = {
 	"tatoo.g2d"
 };
 
-StaticMeshMaster* g_FrontendStaticMeshMaster_00448818 = NULL;
+namespace Frontend {
+	ed_3D_Scene* _scene_handle = NULL;
+}
 
 FrontendManager::FrontendManager()
 {
-	this->pCamera = (CameraObj_28*)0x0;
+	this->pCamera = (ed_viewport*)0x0;
 	//FUN_001dcc10((long)&this->field_0x54);
 	this->bHideHUD = 0;
 	//this->pHealthBar = (undefined*)&PTR_DAT_00451710;
@@ -137,18 +139,18 @@ FrontendManager::FrontendManager()
 	//this->field_0x78 = (char*)&FLOAT_00456220;
 }
 
-void FrontendManager::OnBeginGame()
+void FrontendManager::Game_Init()
 {
 	Manager_170* pMVar1;
 	char* soundFileBuffer;
 	edVideo_Globals* peVar2;
-	FrameBuffer* pVidModeDataA;
-	FrameBuffer* pVidModeDataB;
-	CameraObj_28* pCVar3;
+	edSurface* pVidModeDataA;
+	edSurface* pVidModeDataB;
+	ed_viewport* pCVar3;
 	char* pFileBuffer;
 	undefined8 uVar4;
 	char** fileToLoad;
-	G2DObj* pTexture;
+	Sprite* pTexture;
 	int iVar5;
 	char** wolfenFileName;
 	char* puVar6;
@@ -158,13 +160,13 @@ void FrontendManager::OnBeginGame()
 	puVar6 = this->field_0x78;
 	FUN_001db780(&someBankObject);
 	LoadUIBnk_001db720(&someBankObject, 1, 0x6000);
-	/* Load the frontend IOP Bnk */
+	/* Init the frontend IOP Bnk */
 	uVar4 = 0;
 	LoadBNKCombined(&someBankObject, "CDEURO/Frontend/", "frntdiop", NULL);
 	iVar5 = 0;
 	fileToLoad = g_FrontendSoundFiles_0040ec90;
 	do {
-		soundFileBuffer = GetFileFromBank(&someBankObject, *fileToLoad, (BankFileData*)0x0);
+		soundFileBuffer = GetFileFromBank(&someBankObject, *fileToLoad, (edBANK_ENTRY_INFO*)0x0);
 		//TakesMenuSoundFileBuffer(soundFileBuffer, (StaticSoundObj_18*)(puVar6 + 4), 0);
 		iVar5 = iVar5 + 1;
 		fileToLoad = fileToLoad + 1;
@@ -179,10 +181,10 @@ void FrontendManager::OnBeginGame()
 	local_8.screenHeight = (peVar2->pActiveVidParams->params26).screenHeight;
 	pVidModeDataA = GetFrameBuffer_001ba9c0();
 	pVidModeDataB = GetFrameBuffer_001ba9d0();
-	pCVar3 = AllocateCameraObj28_002bae70(&local_8, pVidModeDataA, pVidModeDataB, 2);
+	pCVar3 = edViewportNew(&local_8, pVidModeDataA, pVidModeDataB, 2);
 	this->pCamera = pCVar3;
-	SetCameraClear_002bb960(this->pCamera, 0, 0, 0);
-	g_FrontendStaticMeshMaster_00448818 = ed3D::FindFreeStaticMeshMaster_002b4600(&g_CameraObj_0044ae10, this->pCamera, 1);
+	edViewportSetBackgroundColor(this->pCamera, 0, 0, 0);
+	Frontend::_scene_handle = ed3DSceneCreate(&g_CameraObj_0044ae10, this->pCamera, 1);
 
 	sceVu0UnitMatrix((TO_SCE_MTX)&this->field_0x10);
 	pMVar1 = g_ManagerSingletonArray_00451660.g_Manager170_00451674;
@@ -191,7 +193,7 @@ void FrontendManager::OnBeginGame()
 	pTexture = g_aFrontendIcons_0048fe70;
 	do {
 		//pFileBuffer = OpenOrLoadSomeFile(pMVar1, *wolfenFileName, 0);
-		//LoadTextIcon(pTexture, pFileBuffer);
+		//Sprite::Install(pTexture, pFileBuffer);
 		iVar5 = iVar5 + 1;
 		wolfenFileName = wolfenFileName + 1;
 		pTexture = pTexture + 1;

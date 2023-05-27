@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "LargeObject.h"
 
-struct MeshInfo {
+struct ed_g3d_manager {
 	char* fileBufferStart;
 	char* field_0x4;
 	int fileLengthA;
@@ -26,21 +26,21 @@ struct MeshInfo {
 struct Mesh {
 	char* pFileData;
 	int fileLength;
-	struct MeshInfo meshInfo;
+	struct ed_g3d_manager meshInfo;
 	struct TextureInfo* pTextureInfo;
 };
 
 struct FileManager3D : public Manager {
 	FileManager3D();
 
-	virtual void Deserialize(struct MemoryStream* pMemoryStream);
+	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 
 
 
-	struct TextureInfo* GetLevelSectorTextureInfo_001a6670();
+	struct TextureInfo* GetCommonSectorG2D();
 	void Setup_001a7110();
-	void AllocateMeshTextureMemory_001a6f10(MemoryStream* pMemoryStream);
-	struct MeshInfo* pMeshInfo;
+	void AllocateMeshTextureMemory_001a6f10(ByteCode* pMemoryStream);
+	struct ed_g3d_manager* pMeshInfo;
 	struct MeshTransformParent* pMeshTransformParent;
 	struct MeshTransformParent* pLastMeshTransformParent;
 	char* field_0x10;

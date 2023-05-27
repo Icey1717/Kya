@@ -210,7 +210,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 				ret = sceCdSearchFile(&bufferStart->file, pcVar6);
 				if (ret == 0) {
 					/* edCFiler_CDVD::open: File not found... retry... %s\n */
-					PrintString(sz_FileNotFound_00431280);
+					edDebugPrintf(sz_FileNotFound_00431280);
 				}
 #else
 				pcVar6 = SearchForColon(fullFilePath);
@@ -238,7 +238,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 			ret = (long)success & 0xff;
 			if (ret == 0) {
 				/* edCFiler_CDVD::open: File not found... retry... %s\n */
-				PrintString(sz_FileNotFound_00431280);
+				edDebugPrintf(sz_FileNotFound_00431280);
 			}
 		}
 		fileDirectoryLength = 0;
@@ -477,30 +477,30 @@ bool edCFiler_CDVD::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 				result = sceCdGetError();
 				if (result != 0x0) {
 					/* Errors:  */
-					PrintString("Errors: ");
+					edDebugPrintf("Errors: ");
 					if (result == 0x1) {
-						PrintString("Abort command received\n");
+						edDebugPrintf("Abort command received\n");
 					}
 					else {
 						if (result == 0x13) {
 							/* Processing Command\n */
-							PrintString("Processing command\n");
+							edDebugPrintf("Processing command\n");
 						}
 						else {
 							if (result == 0x14) {
 								/* Not appropriate for disc in drive\n */
-								PrintString("Not appropriate for disc in drive\n");
+								edDebugPrintf("Not appropriate for disc in drive\n");
 								field_0x88d = 0;
 							}
 							else {
 								if (result == 0x30) {
 									/* Problem occured during read\n */
-									PrintString("Problem occured during read\n");
+									edDebugPrintf("Problem occured during read\n");
 								}
 								else {
 									if (result == 0x31) {
 										/* Cover opened during playback\n */
-										PrintString("Cover opened during playback\n");
+										edDebugPrintf("Cover opened during playback\n");
 										field_0x88c = 1;
 										edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
 											g_edSysHandlerFile_00469b84.entries,
@@ -509,24 +509,24 @@ bool edCFiler_CDVD::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 									else {
 										if (result == 0x32) {
 											/* Outermost track reached during playback\n */
-											PrintString("Outermost track reached during playback\n");
+											edDebugPrintf("Outermost track reached during playback\n");
 										}
 										else {
 											if (result == 0x0) {
 												/* No error\n */
-												PrintString("No error\n");
+												edDebugPrintf("No error\n");
 											}
 											else {
 												if (result == -1) {
 													/* sceCdGetError() function issue failed\n */
-													PrintString("sceCdGetError() function issue failed\n");
+													edDebugPrintf("sceCdGetError() function issue failed\n");
 													edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
 														g_edSysHandlerFile_00469b84.entries,
 														g_edSysHandlerFile_00469b84.maxEventID, 0xd, (void*)0x0);
 												}
 												else {
 													/* unknown error\n */
-													PrintString("unknown error\n");
+													edDebugPrintf("unknown error\n");
 												}
 											}
 										}

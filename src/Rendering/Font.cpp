@@ -5,6 +5,7 @@
 #ifndef PLATFORM_PS2
 #include <corecrt_malloc.h>
 #include <corecrt_math.h>
+#include "renderer.h"
 #else
 #include <math.h>
 #endif
@@ -20,10 +21,10 @@
 #define RESOLVE_FONT_SUB_DATA(a) a
 #endif
 
-extern FontPacked* g_PackedFontPtr_004324d0;
-FontFileData* g_ActiveFont_00448968;
+extern edCTextFont* g_PackedFontPtr_004324d0;
+edCTextStyle* g_ActiveFont_00448968;
 
-void InitFontData_0028d430(FontFileData* pNewFontData)
+void InitFontData_0028d430(edCTextStyle* pNewFontData)
 {
 	pNewFontData->pPackedFont = g_PackedFontPtr_004324d0;
 
@@ -47,43 +48,43 @@ void InitFontData_0028d430(FontFileData* pNewFontData)
 	return;
 }
 
-FontFileData* SetActiveFontData(FontFileData* pNewFont)
+edCTextStyle* SetActiveFontData(edCTextStyle* pNewFont)
 {
-	FontFileData* pFVar1;
+	edCTextStyle* pFVar1;
 
 	pFVar1 = g_ActiveFont_00448968;
 	g_ActiveFont_00448968 = pNewFont;
 	return pFVar1;
 }
 
-void FontFileData::SetFontFlag_0028d340(uint flag)
+void edCTextStyle::SetFontFlag_0028d340(uint flag)
 {
 	flags_0x84 = flags_0x84 & 0xfffffeff | flag;
 	return;
 }
 
-void FontFileData::SetFontFlag_0028d3c0(uint flag)
+void edCTextStyle::SetFontFlag_0028d3c0(uint flag)
 {
 	flags_0x84 = flags_0x84 & 0xfffffffc | flag;
 	return;
 }
 
-void FontFileData::SetFontFlag_0028d3a0(uint flag)
+void edCTextStyle::SetFontFlag_0028d3a0(uint flag)
 {
 	flags_0x84 = flags_0x84 & 0xfffffff3 | flag;
 	return;
 }
 
-uint FontFileData::GetFontFlag_0028d330()
+uint edCTextStyle::GetFontFlag_0028d330()
 {
 	return this->flags_0x84 & 0x200;
 }
 
-void FontFileData::SetFontTextureData_0028d3e0(FontPacked* pPackedFont, bool bUpdateSpacing)
+void edCTextStyle::SetFontTextureData_0028d3e0(edCTextFont* pPackedFont, bool bUpdateSpacing)
 {
 	float fVar1;
 
-	if (pPackedFont == (FontPacked*)0x0) {
+	if (pPackedFont == (edCTextFont*)0x0) {
 		pPackedFont = g_PackedFontPtr_004324d0;
 	}
 	this->pPackedFont = pPackedFont;
@@ -97,10 +98,10 @@ void FontFileData::SetFontTextureData_0028d3e0(FontPacked* pPackedFont, bool bUp
 	return;
 }
 
-DrawTextParams::DrawTextParams()
+edCTextFormat::edCTextFormat()
 {
 	undefined8 uVar1;
-	FontFileData* pFVar2;
+	edCTextStyle* pFVar2;
 	float fVar3;
 	float fVar4;
 	float fVar5;
@@ -116,7 +117,7 @@ DrawTextParams::DrawTextParams()
 	float fVar15;
 	float fVar16;
 	float fVar17;
-	DrawTextParams* iVar18;
+	edCTextFormat* iVar18;
 
 	//RunInPlaceConstructor_00217450((undefined*)fontData_0x850, FontFileData::Constructor_0028c7c0, Free_00166e40, 0xc0, 0x11);
 	pFVar2 = g_ActiveFont_00448968;
@@ -145,7 +146,7 @@ DrawTextParams::DrawTextParams()
 char* s_0123456789abcdef_00432380 = "0123456789abcdef";
 char* s_0123456789ABCDEF_004323a0 = "0123456789ABCDEF";
 
-bool DrawTextParams::DrawTextA_0028b7e0(char* pText, ...)
+bool edCTextFormat::DrawTextA_0028b7e0(char* pText, ...)
 {
 	byte bVar1;
 	int iVar2;
@@ -185,7 +186,7 @@ bool DrawTextParams::DrawTextA_0028b7e0(char* pText, ...)
 	char* pcVar34;
 	char* pcVar19;
 	char* unaff_s0_lo;
-	FontFileData* pFVar35;
+	edCTextStyle* pFVar35;
 	byte* pbVar36;
 	char** ppcVar37;
 	char* pcVar38;
@@ -834,7 +835,7 @@ bool DrawTextParams::DrawTextA_0028b7e0(char* pText, ...)
 			}
 			assert(false);
 #if 0
-			pcVar10 = (char*)TextIconDictionary::GetEntry(local_390, local_3a0);
+			pcVar10 = (char*)edCTextResourcePool::GetEntry(local_390, local_3a0);
 			if ((pcVar10 == (char*)0x0) && (local_3a0 != 3)) {
 				iVar25 = 5;
 				piVar38->field_0x10 = s_(? ? ? )_004323b8;
@@ -857,12 +858,12 @@ bool DrawTextParams::DrawTextA_0028b7e0(char* pText, ...)
 	} while (true);
 }
 
-float GetFontFileDataValue_0028d2e0(FontFileData* param_1)
+float GetHorizontalSize(edCTextStyle* param_1)
 {
 	return param_1->field_0xa4;
 }
 
-Segment_1C_Packed* GetSegmentFloatData_0028cba0(FontPacked* pFontPacked, uint character)
+Segment_1C_Packed* GetSymbol(edCTextFont* pFontPacked, uint character)
 {
 	FontPacked_2C* pFVar1;
 	uint uVar2;
@@ -896,7 +897,7 @@ Segment_1C_Packed* GetSegmentFloatData_0028cba0(FontPacked* pFontPacked, uint ch
 	return (Segment_1C_Packed*)0x0;
 }
 
-float FUN_0028cc70(FontPacked* pFontPacked, ulong param_2, ulong param_3)
+float GetRelativeAlignment(edCTextFont* pFontPacked, ulong param_2, ulong param_3)
 {
 	int* piVar1;
 	ushort* puVar2;
@@ -925,7 +926,7 @@ float FUN_0028cc70(FontPacked* pFontPacked, ulong param_2, ulong param_3)
 	return 0.0;
 }
 
-void DrawTextParams::DrawTextB_0028b270()
+void edCTextFormat::DrawTextB_0028b270()
 {
 	ushort uVar1;
 	bool bVar2;
@@ -936,10 +937,10 @@ void DrawTextParams::DrawTextB_0028b270()
 	uint uVar7;
 	byte* pbVar8;
 	byte* pbVar9;
-	FontPacked* pFontPacked;
+	edCTextFont* pFontPacked;
 	ulong uVar10;
 	TextLine* pTVar11;
-	FontFileData* pFVar12;
+	edCTextStyle* pFVar12;
 	byte* pbVar13;
 	float fVar14;
 	float fVar15;
@@ -951,7 +952,7 @@ void DrawTextParams::DrawTextB_0028b270()
 	byte* local_28;
 	byte* local_24;
 	byte* local_20;
-	FontFileData* local_8;
+	edCTextStyle* local_8;
 	int local_4;
 
 	offsetX_0x0 = 0.0;
@@ -962,7 +963,7 @@ void DrawTextParams::DrawTextB_0028b270()
 		field_0x8 = 0.0;
 	}
 	else {
-		fVar14 = GetFontFileDataValue_0028d2e0(pFVar12);
+		fVar14 = GetHorizontalSize(pFVar12);
 		field_0x8 = fVar14;
 	}
 	lineCount = 0;
@@ -1040,12 +1041,12 @@ void DrawTextParams::DrawTextB_0028b270()
 						}
 						else {
 							pFontPacked = pFVar12->pPackedFont;
-							pSVar6 = GetSegmentFloatData_0028cba0(pFontPacked, (uint)*pbVar8);
+							pSVar6 = GetSymbol(pFontPacked, (uint)*pbVar8);
 							if (pSVar6 == (Segment_1C_Packed*)0x0) {
 								unaff_f20 = 0.0;
 							}
 							else {
-								fVar15 = FUN_0028cc70(pFontPacked, (long)local_4, uVar10);
+								fVar15 = GetRelativeAlignment(pFontPacked, (long)local_4, uVar10);
 								uVar1 = pFontPacked->field_0x16;
 								unaff_f20 = pSVar6->field_0x10 + fVar15;
 								if (false) {
@@ -1075,7 +1076,7 @@ void DrawTextParams::DrawTextB_0028b270()
 				}
 			}
 			if (bVar4) {
-				if (((flags_0x28 & 0x80) != 0) && (fVar16 = GetFontFileDataValue_0028d2e0(pFVar12), fVar16 <= fVar18 + unaff_f20)) {
+				if (((flags_0x28 & 0x80) != 0) && (fVar16 = GetHorizontalSize(pFVar12), fVar16 <= fVar18 + unaff_f20)) {
 					bVar5 = true;
 					bVar3 = true;
 				}
@@ -1160,11 +1161,11 @@ void DrawTextParams::DrawTextB_0028b270()
 	return;
 }
 
-bool DrawTextParams::Setup_0028c540(char* pText)
+bool edCTextFormat::Setup_0028c540(char* pText)
 {
 	undefined8 uVar1;
 	undefined8 uVar2;
-	FontFileData* pFVar3;
+	edCTextStyle* pFVar3;
 	bool bVar4;
 	int iVar5;
 	float fVar6;
@@ -1214,7 +1215,7 @@ bool DrawTextParams::Setup_0028c540(char* pText)
 	return bVar4;
 }
 
-void BuildTextMatrix_0028d190(float x, float y, FontFileData* pFontFileData, Matrix* outMatrix)
+void TransformMatrix(float x, float y, edCTextStyle* pFontFileData, edF32MATRIX4* outMatrix)
 {
 	Vector local_20;
 	Vector local_10;
@@ -1238,7 +1239,7 @@ void BuildTextMatrix_0028d190(float x, float y, FontFileData* pFontFileData, Mat
 	return;
 }
 
-void GetFontFileDataAdditionalOffset_0028d300(FontFileData* pFontFileData, float* param_2, float* param_3)
+void GetShadowShift(edCTextStyle* pFontFileData, float* param_2, float* param_3)
 {
 	*param_2 = pFontFileData->offset_0xac;
 	*param_3 = pFontFileData->offset_0xb0;
@@ -1261,8 +1262,8 @@ struct CharacterData {
 struct DrawText16 {
 	struct CharacterData* pCharacterData;
 	int characterCount;
-	struct MaterialInfo* pMaterialInfoA;
-	struct MaterialInfo* pMaterialInfoB;
+	struct edDList_material* pMaterialInfoA;
+	struct edDList_material* pMaterialInfoB;
 };
 
 void SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderCommands)
@@ -1273,42 +1274,45 @@ void SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderCommands)
 	CharacterData* pCharacterData;
 
 	if (pTextRenderCommands->characterCount != 0) {
-		edDlist::LoadMaterialResource_002cb850(pTextRenderCommands->pMaterialInfoB);
-		edDlist::AddGSTestCommand_002ca6a0(1, 7, 0, 0, 0, 0, 1, 1);
-		edDlist::AddSetAlphaCommand_002ca800();
-		edDlist::ApplyMaterialFlag_002ca8c0(1);
-		edDlist::MeshDrawCommands_002ca170(0.0, 0.0, 0.0, 8, pTextRenderCommands->characterCount << 2);
+		edDlist::edDListUseMaterial(pTextRenderCommands->pMaterialInfoB);
+		edDlist::edDListAlphaTestAndZTest(1, 7, 0, 0, 0, 0, 1, 1);
+		edDlist::edDListBlendFuncNormal();
+		edDlist::edDListBlendSet(1);
+		edDlist::edDListBegin(0.0, 0.0, 0.0, 8, pTextRenderCommands->characterCount << 2);
 		pCharacterData = pTextRenderCommands->pCharacterData;
 		iVar1 = pTextRenderCommands->characterCount;
 		while (iVar1 != 0) {
 			uVar2 = pCharacterData->colour;
 			uVar3 = (uVar2 >> 0x18) + 1 >> 1;
-			edDlist::SetDropShadowColour_002ce1a0
+			edDlist::edDListColor4u8
 			((byte)uVar3, (byte)((uVar2 >> 0x10 & 0xff) + 1 >> 1), (byte)((uVar2 >> 8 & 0xff) + 1 >> 1),
 				(byte)((uVar2 & 0xff) + 1 >> 1));
-			edDlist::CallSetST(pCharacterData->tex_x1, pCharacterData->tex_y1);
-			edDlist::CallSetXYZ(pCharacterData->pos_x1, pCharacterData->pos_y1, 0.0, uVar3);
-			edDlist::CallSetST(pCharacterData->tex_x1, pCharacterData->tex_y2);
-			edDlist::CallSetXYZ(pCharacterData->pos_x1, pCharacterData->pos_y2, 0.0, uVar3);
-			edDlist::CallSetST(pCharacterData->tex_x2, pCharacterData->tex_y1);
-			edDlist::CallSetXYZ(pCharacterData->pos_x2, pCharacterData->pos_y1, 0.0, uVar3);
-			edDlist::CallSetST(pCharacterData->tex_x2, pCharacterData->tex_y2);
-			edDlist::CallSetXYZ(pCharacterData->pos_x2, pCharacterData->pos_y2, 0.0, uVar3);
+			edDlist::edDListTexCoo2f(pCharacterData->tex_x1, pCharacterData->tex_y1);
+			edDlist::edDListVertex4f(pCharacterData->pos_x1, pCharacterData->pos_y1, 0.0, uVar3);
+			edDlist::edDListTexCoo2f(pCharacterData->tex_x1, pCharacterData->tex_y2);
+			edDlist::edDListVertex4f(pCharacterData->pos_x1, pCharacterData->pos_y2, 0.0, uVar3);
+			edDlist::edDListTexCoo2f(pCharacterData->tex_x2, pCharacterData->tex_y1);
+			edDlist::edDListVertex4f(pCharacterData->pos_x2, pCharacterData->pos_y1, 0.0, uVar3);
+			edDlist::edDListTexCoo2f(pCharacterData->tex_x2, pCharacterData->tex_y2);
+			edDlist::edDListVertex4f(pCharacterData->pos_x2, pCharacterData->pos_y2, 0.0, uVar3);
 			pTextRenderCommands->characterCount = pTextRenderCommands->characterCount + -1;
 			pCharacterData = pCharacterData + 1;
 			iVar1 = pTextRenderCommands->characterCount;
 		}
-		edDlist::EndDraw_002cfe40();
+		edDlist::edDListEnd();
+#ifdef PLATFORM_WIN
+		Renderer::Draw();
+#endif
 	}
 	return;
 }
 
-void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTextParams, bool bFlag)
+void DrawString(float x, float y, edCTextFormat* pDrawTextParams, bool bFlag)
 {
 	byte bVar1;
 	ushort uVar2;
-	MaterialInfo* pMVar3;
-	FontPacked* pFontPacked;
+	edDList_material* pMVar3;
+	edCTextFont* pFontPacked;
 	bool bVar4;
 	bool bVar5;
 	void* pvVar6;
@@ -1316,7 +1320,7 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 	CharacterData* puVar7;
 	uint uVar7;
 	char* pcVar8;
-	FontFileData* pFVar9;
+	edCTextStyle* pFVar9;
 	ulong uVar10;
 	TextLine* ppbVar13;
 	byte* pbVar11;
@@ -1347,8 +1351,8 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 	pvVar6 = GetScratchPadPtr_00424e10();
 	local_10.pCharacterData = (CharacterData*)((char*)pvVar6 + 0x800);
 	local_10.characterCount = 0;
-	local_10.pMaterialInfoA = (MaterialInfo*)0x0;
-	local_10.pMaterialInfoB = (MaterialInfo*)0x0;
+	local_10.pMaterialInfoA = (edDList_material*)0x0;
+	local_10.pMaterialInfoB = (edDList_material*)0x0;
 	local_30 = 0;
 	ppbVar13 = pDrawTextParams->aTextLines;
 	if (pDrawTextParams->lineCount != 0) {
@@ -1370,7 +1374,7 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 				}
 				else {
 					pcVar8 = ppbVar13->pTextEnd + (-(uint)ppbVar13->field_0x22 - (int)ppbVar13->pTextStart);
-					fVar13 = GetFontFileDataValue_0028d2e0(ppbVar13->pFontFileData);
+					fVar13 = GetHorizontalSize(ppbVar13->pFontFileData);
 					uVar2 = ppbVar13->field_0x20;
 					uVar7 = (uint)uVar2;
 					fVar13 = fVar13 - ppbVar13->field_0x10;
@@ -1462,8 +1466,8 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 							bVar5 = true;
 							bVar1 = *pbVar12;
 							pbVar12 = pbVar12 + 1;
-							pMVar3 = (MaterialInfo*)pDrawTextParams->field_0x38[bVar1];
-							local_10.pMaterialInfoA = (MaterialInfo*)pMVar3->textureInfo;
+							pMVar3 = (edDList_material*)pDrawTextParams->field_0x38[bVar1];
+							local_10.pMaterialInfoA = (edDList_material*)pMVar3->textureInfo;
 							fVar13 = (float)pMVar3->Length;
 							unaff_f28 = *(float*)((int)(pMVar3 + 1) + 4);
 							in_f27 = *(float*)((int)(pMVar3 + 1) + 8);
@@ -1487,7 +1491,7 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 							else {
 								if ((uVar10 != 10) && (uVar10 != 0)) {
 									pFontPacked = pFVar9->pPackedFont;
-									ppcVar7 = GetSegmentFloatData_0028cba0(pFontPacked, (uint)bVar1);
+									ppcVar7 = GetSymbol(pFontPacked, (uint)bVar1);
 									if (ppcVar7 != (Segment_1C_Packed*)0x0) {
 										local_10.pMaterialInfoA = &(RESOLVE_FONT_SUB_DATA(pFontPacked->pSubData))->materialInfo;
 										if (bFlag == false) {
@@ -1497,7 +1501,7 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 											unaff_s7_lo = pFVar9->rgbaColour;
 										}
 										fVar14 = ppcVar7->field_0x10;
-										fVar13 = FUN_0028cc70(pFontPacked, (long)local_44, uVar10);
+										fVar13 = GetRelativeAlignment(pFontPacked, (long)local_44, uVar10);
 										fVar13 = fVar14 + fVar13;
 										unaff_f22 = fVar20 + fVar14;
 										bVar5 = true;
@@ -1575,9 +1579,9 @@ void CreateTextRenderCommands_0028a960(float x, float y, DrawTextParams* pDrawTe
 
 
 
-void DrawTextC_0028a600(float x, float y, DrawTextParams* pDrawTextParams, Vector* param_4)
+void DisplayWindow(float x, float y, edCTextFormat* pDrawTextParams, Vector* param_4)
 {
-	Matrix textMatrix;
+	edF32MATRIX4 textMatrix;
 	float local_8;
 	float local_4;
 
@@ -1586,15 +1590,15 @@ void DrawTextC_0028a600(float x, float y, DrawTextParams* pDrawTextParams, Vecto
 		(pDrawTextParams->vector_0x10).y = param_4->y + pDrawTextParams->offsetY_0x4;
 		(pDrawTextParams->vector_0x10).z = param_4->z;
 		(pDrawTextParams->vector_0x10).w = param_4->w;
-		BuildTextMatrix_0028d190(x, y, pDrawTextParams->fontData_0x850, &textMatrix);
-		edDlist::CopyMatrixToDisplayList_002d07d0(&textMatrix);
+		TransformMatrix(x, y, pDrawTextParams->fontData_0x850, &textMatrix);
+		edDlist::edDListLoadMatrix(&textMatrix);
 		if ((pDrawTextParams->flags_0x28 & 0x100) != 0) {
-			GetFontFileDataAdditionalOffset_0028d300(pDrawTextParams->fontData_0x850, &local_4, &local_8);
+			GetShadowShift(pDrawTextParams->fontData_0x850, &local_4, &local_8);
 		}
 		if ((pDrawTextParams->flags_0x28 & 0x100) != 0) {
-			CreateTextRenderCommands_0028a960(local_4 + pDrawTextParams->offsetX_0x0, local_8 + pDrawTextParams->offsetY_0x4, pDrawTextParams, false);
+			DrawString(local_4 + pDrawTextParams->offsetX_0x0, local_8 + pDrawTextParams->offsetY_0x4, pDrawTextParams, false);
 		}
-		CreateTextRenderCommands_0028a960(pDrawTextParams->offsetX_0x0, pDrawTextParams->offsetY_0x4, pDrawTextParams, true);
+		DrawString(pDrawTextParams->offsetX_0x0, pDrawTextParams->offsetY_0x4, pDrawTextParams, true);
 	}
 	return;
 }
@@ -1604,7 +1608,7 @@ void DrawText_0028a4f0(float x, float y, char* text)
 	bool bVar1;
 	uint uVar2;
 	Vector local_1590;
-	DrawTextParams auStack5504;
+	edCTextFormat auStack5504;
 
 	//DrawTextParams::Constructor_0028c7d0(&auStack5504);
 	bVar1 = auStack5504.DrawTextA_0028b7e0(text);
@@ -1619,14 +1623,14 @@ void DrawText_0028a4f0(float x, float y, char* text)
 		local_1590.w = 512.0;
 		local_1590.x = 0.0;
 		local_1590.y = 0.0;
-		DrawTextC_0028a600(x, y, &auStack5504, &local_1590);
+		DisplayWindow(x, y, &auStack5504, &local_1590);
 	}
 	//RunInPlaceDestructors_002173e0(auStack5504.fontData_0x850, Free_00166e40, 0xc0, 0x11);
 	return;
 }
 
 
-void DrawTextB_0028a710(float x, float y, DrawTextParams* pDrawTextParams)
+void Display(float x, float y, edCTextFormat* pDrawTextParams)
 {
 	Vector local_10;
 
@@ -1634,6 +1638,6 @@ void DrawTextB_0028a710(float x, float y, DrawTextParams* pDrawTextParams)
 	local_10.x = 0.0;
 	local_10.w = 512.0;
 	local_10.y = 0.0;
-	DrawTextC_0028a600(x, y, pDrawTextParams, &local_10);
+	DisplayWindow(x, y, pDrawTextParams, &local_10);
 	return;
 }

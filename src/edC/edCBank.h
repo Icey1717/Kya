@@ -12,13 +12,13 @@ enum ESeekMode {
 	ED_SEEK_END
 };
 
-typedef struct BankFileData BankFileData, * PBankFileData;
+typedef struct edBANK_ENTRY_INFO edBANK_ENTRY_INFO, * PBankFileData;
 
-struct BankFileData {
-	uint unknownA;
-	uint unknownB;
-	uint length;
-	uint unknownC;
+struct edBANK_ENTRY_INFO {
+	uint type;
+	uint stype;
+	uint size;
+	uint crc;
 	char* fileBufferStart;
 };
 
@@ -37,7 +37,7 @@ typedef struct edCBank edCBank, * PedCBank;
 
 struct edCBank {
 	int firstField;
-	struct edCBankBuffer* pBankBuffer;
+	struct edCBankBufferEntry* pBankBuffer;
 	int size;
 	int createFlagA;
 	int flagB;
@@ -59,7 +59,7 @@ struct edCBank {
 	undefined field_0x2f;
 	struct edCBank* pNextBank;
 	struct edCBank* pPrevBank;
-	struct edCBankBuffer* pBankFileAccessObject;
+	struct edCBankBufferEntry* pBankFileAccessObject;
 };
 
 struct edBank_Manager {
@@ -70,13 +70,13 @@ struct edBank_Manager {
 	int bankCount;
 	struct edCBank* pNextBank;
 	undefined4 field_0xc;
-	undefined4 field_0x10;
+	int selectedFileIndex;
 };
 
-void edCBank_Setup(edCBank* pBankObj, int size, int param_3, BankFilePathContainer* bankPathContainer);
+void initialize(edCBank* pBankObj, int size, int param_3, BankFilePathContainer* bankPathContainer);
 void edCBank_SetDeserializeData(edCBank* pBank, TypePairData* pTypePairData);
-edCBankBuffer* edCBank_GetBankBuffer(edCBank* bankObj);
-DebugBankData_234* LoadFile(char* filePath, uint flags);
+edCBankBufferEntry* get_free_entry(edCBank* bankObj);
+DebugBankData_234* edFileLoadSize(char* filePath, uint flags);
 uint GetFileSize_0025bd70(DebugBankData_234* pDebugBank);
 bool SetRead_0025be80(DebugBankData_234* pDebugBank, char* param_2, uint size);
 bool SetClose_0025bf60(DebugBankData_234* pDebugBank);
@@ -85,7 +85,7 @@ void edCBank_Free_00244e10(edCBank* pBank);
 
 bool SetBankReadStream(class edCFiler_28* param_1, DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize);
 
-void Init_edBank(void);
+void edBankInit(void);
 
 char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData);
 bool DebugBankSeek(DebugBankData_234* pDebugBank, uint seekOffset, ESeekMode mode);
@@ -94,7 +94,7 @@ bool SetBankClose(edCFiler_28* param_1, DebugBankData_234* pDataBank);
 
 extern int g_FileSystemSysHandlerID_00469bc4;
 extern int g_FileSystemHandlers_00469bc8;
-extern ReadBank_158 g_ReadBank_00466e60;
+extern AsyncBankReader g_AsyncBankReader_00466e60;
 
 extern edCFiler* g_edCFiler_MCPtr_00448fd8;
 

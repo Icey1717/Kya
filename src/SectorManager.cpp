@@ -8,20 +8,20 @@
 
 SectorManager::SectorManager()
 {
-	(this->baseSector).pANHR = 0;
+	(this->baseSector).pANHR.pThis = 0;
 	sceVu0UnitMatrix((TO_SCE_MTX)&SomeIdentityMatrix);
 	(this->baseSector).field_0x0 = -1;
 	(this->baseSector).field_0x4 = -1;
-	(this->baseSector).bankObject.pBankFileAccessObject = (edCBankBuffer*)0x0;
+	(this->baseSector).bankObject.pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 	(this->baseSector).pMeshTransform = (MeshTransformParent*)0x0;
 	(this->baseSector).pManager100Obj = (undefined*)0x0;
 	(this->baseSector).loadStage_0x8 = 0;
 	(this->baseSector).field_0x134 = 0.0;
 	(this->baseSector).pMeshTransformParent_0x130 = (MeshTransformParent*)0x0;
-	memset(&(this->baseSector).textureInfo, 0, sizeof(TextureInfoSmall));
-	memset(&(this->baseSector).meshInfo, 0, sizeof(MeshInfo));
-	memset(&(this->baseSector).textureInfoB, 0, sizeof(TextureInfoSmall));
-	memset(&(this->baseSector).meshInfoB, 0, sizeof(MeshInfo));
+	memset(&(this->baseSector).textureInfo, 0, sizeof(ed_g2d_manager));
+	memset(&(this->baseSector).meshInfo, 0, sizeof(ed_g3d_manager));
+	memset(&(this->baseSector).textureInfoB, 0, sizeof(ed_g2d_manager));
+	memset(&(this->baseSector).meshInfoB, 0, sizeof(ed_g3d_manager));
 	Setup_001ffec0();
 	return;
 }
@@ -112,7 +112,7 @@ void SectorManager::Func_001fe620()
 	return;
 }
 
-void SectorManager::LoadStageOne()
+void SectorManager::Game_Term()
 {
 	SectorManagerSubObj* pLVar1;
 	int* piVar2;
@@ -320,11 +320,11 @@ void SectorManager::LoadStageOne()
 	return;
 }
 
-bool SectorManager::AsyncLoad()
+bool SectorManager::LevelLoading_Manage()
 {
 	uint uVar1;
 	int iVar2;
-	edCBankBuffer* peVar3;
+	edCBankBufferEntry* peVar3;
 	int iVar4;
 	bool bVar5;
 	bool bVar6;
@@ -343,7 +343,7 @@ bool SectorManager::AsyncLoad()
 		if ((this->baseSector).loadStage_0x8 == 1) {
 			peVar3 = (this->baseSector).bankObject.pBankFileAccessObject;
 			bVar5 = false;
-			if ((peVar3 != (edCBankBuffer*)0x0) && (bVar6 = edCBankBuffer_CheckAccessFlag(peVar3), bVar6 != false)) {
+			if ((peVar3 != (edCBankBufferEntry*)0x0) && (bVar6 = edCBankBuffer_CheckAccessFlag(peVar3), bVar6 != false)) {
 				bVar5 = true;
 			}
 			bVar6 = true;
@@ -357,7 +357,7 @@ bool SectorManager::AsyncLoad()
 						if (pSectData->loadStage_0x8 == 1) {
 							peVar3 = (pSectData->bankObject).pBankFileAccessObject;
 							bVar5 = false;
-							if ((peVar3 != (edCBankBuffer*)0x0) && (bVar7 = edCBankBuffer_CheckAccessFlag(peVar3), bVar7 != false))
+							if ((peVar3 != (edCBankBufferEntry*)0x0) && (bVar7 = edCBankBuffer_CheckAccessFlag(peVar3), bVar7 != false))
 							{
 								bVar5 = true;
 							}
@@ -369,7 +369,7 @@ bool SectorManager::AsyncLoad()
 							iVar2 = this->field_0x36c;
 							iVar4 = pSectData->field_0x140;
 							memset(&BStack96, 0, sizeof(BankFilePathContainer));
-							edCBank_Setup(&pSectData->bankObject, iVar4 + 0x1000, 1, &BStack96);
+							initialize(&pSectData->bankObject, iVar4 + 0x1000, 1, &BStack96);
 							if (iVar9 == -1) {
 								pSectData->loadStage_0x8 = 0;
 							}
@@ -392,7 +392,7 @@ bool SectorManager::AsyncLoad()
 			iVar8 = this->field_0x36c;
 			iVar9 = g_LevelScheduleManager_00449728->aLevelInfo[g_LevelScheduleManager_00449728->nextLevelID].bankSizeSect;
 			memset(&BStack32, 0, sizeof(BankFilePathContainer));
-			edCBank_Setup(&(this->baseSector).bankObject, iVar9 + 0x1000, 1, &BStack32);
+			initialize(&(this->baseSector).bankObject, iVar9 + 0x1000, 1, &BStack32);
 			if (iVar10 == -1) {
 				(this->baseSector).loadStage_0x8 = 0;
 				bVar11 = false;
@@ -411,7 +411,7 @@ bool SectorManager::AsyncLoad()
 						if (pSector->sectID == -1) {
 							iVar2 = pSector->field_0x140;
 							memset(&BStack64, 0, sizeof(BankFilePathContainer));
-							edCBank_Setup(&pSector->bankObject, iVar2 + 0x1000, 1, &BStack64);
+							initialize(&pSector->bankObject, iVar2 + 0x1000, 1, &BStack64);
 							*(undefined4*)(iVar9 + 8) = 0;
 						}
 						iVar10 = iVar10 + 1;
@@ -436,11 +436,11 @@ bool CheckFunc_00401fd0(StaticEdFileBase* param_1)
 	return param_1->field_0x4 == 0;
 }
 
-void Sector::Load_001fddc0()
+void Sector::InstallCallback()
 {
-	CameraPanMasterHeader* pCameraPanMasterHeader;
+	edLIST* pCameraPanMasterHeader;
 	WindSectorObj* pWindSectorObj;
-	StaticMeshMaster* pStaticMeshMaster;
+	ed_3D_Scene* pStaticMeshMaster;
 	MeshTransformData* pSubSubObjArray;
 	FileManager3D* p3DFileManager;
 	SectorManager* pSectorManager;
@@ -449,73 +449,79 @@ void Sector::Load_001fddc0()
 	undefined* puVar3;
 	TextureInfo* pTextureInfo;
 	MeshTransformParent* pMVar4;
-	uint uVar5;
+	uint meshSize;
 	char* pcVar6;
 	MeshTransformParent* pMVar7;
 	int iVar8;
 	uint uVar9;
 	int** ppiVar10;
 	int* piVar11;
-	char* pcVar12;
+	char* pMeshData;
 	uint inFileIndex;
 	uint unaff_s5_lo;
 	char* pFileData;
-	char* pcVar14;
+	char* pAnimHierarchy;
 	float fVar14;
 	uint local_40;
 	uint local_30;
-	BankFileData local_20;
+	edBANK_ENTRY_INFO local_20;
 	int iStack8;
 	short sStack2;
 
-	pcVar14 = (char*)0x0;
+	pAnimHierarchy = (char*)0x0;
 	pFileData = (char*)0x0;
 	this->pManager100Obj = (undefined*)0x0;
 	local_40 = 0;
 	pcVar6 = (char*)0x0;
-	uVar2 = CheckFileLoadAndGetParam((this->bankObject).pBankFileAccessObject);
+	uVar2 = get_element_count((this->bankObject).pBankFileAccessObject);
 	inFileIndex = 0;
-	pcVar12 = pcVar6;
-	uVar5 = unaff_s5_lo;
+	pMeshData = pcVar6;
+	meshSize = unaff_s5_lo;
 	if (uVar2 != 0) {
 		do {
-			bVar1 = GetFileDataForIndex((this->bankObject).pBankFileAccessObject, inFileIndex, &local_20, (char*)0x0);
-			pcVar12 = pcVar6;
-			uVar5 = unaff_s5_lo;
+			bVar1 = get_info((this->bankObject).pBankFileAccessObject, inFileIndex, &local_20, (char*)0x0);
+			pMeshData = pcVar6;
+			meshSize = unaff_s5_lo;
 			if (bVar1 == false) break;
-			uVar9 = local_20.unknownA << 0x10 | local_20.unknownB;
+			uVar9 = local_20.type << 0x10 | local_20.stype;
 			if (uVar9 == 0x170001) {
-				pcVar14 = local_20.fileBufferStart;
-				local_40 = local_20.length;
+				MY_LOG("Sector::Init Anim Heirarchy: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+				pAnimHierarchy = local_20.fileBufferStart;
+				local_40 = local_20.size;
 			}
 			else {
 				if (uVar9 == 0x50003) {
-					ed3D::LoadTextureFromBuffer(local_20.fileBufferStart, local_20.length, &iStack8, &this->textureInfoB, 1);
+					MY_LOG("Sector::Init LoadTexture B: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+					ed3DInstallG2D(local_20.fileBufferStart, local_20.size, &iStack8, &this->textureInfoB, 1);
 				}
 				else {
 					if (uVar9 == 0x40002) {
-						local_30 = local_20.length;
+						MY_LOG("Sector::Init UNKNOWN: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+						local_30 = local_20.size;
 						pFileData = local_20.fileBufferStart;
 					}
 					else {
 						if (uVar9 == 0x70001) {
+							MY_LOG("Sector::Init Init Collision: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 							//IMPLEMENTATION_GUARD(
 							//puVar3 = (undefined*)
-							//	Manager_100::Func_00211820
+							//	CollisionManager::InstallColFile
 							//	(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690,
 							//		(long)(int)local_20.fileBufferStart, (long)(int)local_20.length);
 							//this->pManager100Obj = puVar3;)
 						}
 						else {
 							if (uVar9 == 0x50001) {
-								ed3D::LoadTextureFromBuffer(local_20.fileBufferStart, local_20.length, &iStack8, &this->textureInfo, 1);
+								MY_LOG("Sector::Init LoadTexture A: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								ed3DInstallG2D(local_20.fileBufferStart, local_20.size, &iStack8, &this->textureInfo, 1);
 							}
 							else {
-								pcVar12 = local_20.fileBufferStart;
-								uVar5 = local_20.length;
+								MY_LOG("Sector::Init Mesh: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								pMeshData = local_20.fileBufferStart;
+								meshSize = local_20.size;
 								if (uVar9 != 0x40001) {
-									pcVar12 = pcVar6;
-									uVar5 = unaff_s5_lo;
+									pMeshData = pcVar6;
+									meshSize = unaff_s5_lo;
 								}
 							}
 						}
@@ -523,40 +529,40 @@ void Sector::Load_001fddc0()
 				}
 			}
 			inFileIndex = inFileIndex + 1;
-			pcVar6 = pcVar12;
-			unaff_s5_lo = uVar5;
+			pcVar6 = pMeshData;
+			unaff_s5_lo = meshSize;
 		} while (inFileIndex < uVar2);
 	}
 	pSectorManager = g_ManagerSingletonArray_00451660.g_SectorManager_00451670;
 	p3DFileManager = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
-	pStaticMeshMaster = g_StaticMeshMasterA_00448808;
-	ed3D::LoadMeshFromBuffer(pcVar12, uVar5, 0, &iStack8, (TextureInfo*)&this->textureInfo, 0xc, &this->meshInfo);
-	pTextureInfo = p3DFileManager->GetLevelSectorTextureInfo_001a6670();
-	ed3D::CheckHashesProcessCSTA_002a4ec0(&this->meshInfo, pTextureInfo);
-	ed3D::Func_002a5540(pStaticMeshMaster, &this->meshInfo);
+	pStaticMeshMaster = Scene::_scene_handleA;
+	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, (TextureInfo*)&this->textureInfo, 0xc, &this->meshInfo);
+	pTextureInfo = p3DFileManager->GetCommonSectorG2D();
+	ed3DLinkG2DToG3D(&this->meshInfo, pTextureInfo);
+	ed3DScenePushCluster(pStaticMeshMaster, &this->meshInfo);
 	if (pFileData == (char*)0x0) {
 		this->pMeshTransform = (MeshTransformParent*)0x0;
 	}
 	else {
 		IMPLEMENTATION_GUARD(
-		3DFileManager::SetStaticMeshHidden_001a6640(p3DFileManager);
-		ed3D::LoadMeshFromBuffer(pFileData, local_30, 0, &iStack8, (TextureInfo*)&this->textureInfoB, 0xc, &this->meshInfoB);
-		pMVar4 = CreateMeshTransform_002ad750(pStaticMeshMaster, &this->meshInfoB, (char*)0x0);
+		3DFileManager::HideCommonBackground(p3DFileManager);
+		ed3DInstallG3D(pFileData, local_30, 0, &iStack8, (TextureInfo*)&this->textureInfoB, 0xc, &this->meshInfoB);
+		pMVar4 = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->meshInfoB, (char*)0x0);
 		this->pMeshTransform = pMVar4;
 		if (this->pMeshTransform != (MeshTransformParent*)0x0) {
-			IMPLEMENTATION_GUARD(3DFileManager::Func_001a6510(p3DFileManager, this->pMeshTransform));
+			IMPLEMENTATION_GUARD(3DFileManager::SetupBackground(p3DFileManager, this->pMeshTransform));
 		})
 	}
 	this->field_0x0 = this->field_0x4;
 	this->field_0x4 = -1;
-	ed3D::SetupANHR_001fd180(&this->pANHR, (ed3D::MeshData_ANHR*)pcVar14, local_40, &this->meshInfo, pStaticMeshMaster);
-	ed3D::SetupHIER_002abc00(&this->meshInfo);
-	pMVar4 = ed3D::PTR_MeshTransformParent_ARRAY_00449434;
-	pSubSubObjArray = ed3D::PTR_MeshTransformData_ARRAY_0044942c;
-	pcVar12 = (this->meshInfo).HALL;
-	pCameraPanMasterHeader = pStaticMeshMaster->pFinalLink_0x1a4;
-	uVar5 = ed3D::GetElementCount_002947b0(pcVar12 + 0x10, pcVar12 + *(int*)(pcVar12 + 8));
-	pcVar6 = ed3D::FindSectionHash(0x43494d414e5944, (MeshData_HASH*)((this->meshInfo).HALL + 0x10));
+	this->pANHR.Install((MeshData_ANHR*)pAnimHierarchy, local_40, &this->meshInfo, pStaticMeshMaster);
+	ed3DHierarchyCopyHashCode(&this->meshInfo);
+	pMVar4 = gHierarchyManagerFirstFreeNode;
+	pSubSubObjArray = gHierarchyManagerBuffer;
+	pMeshData = (this->meshInfo).HALL;
+	pCameraPanMasterHeader = pStaticMeshMaster->pHeirListA;
+	meshSize = edChunckGetNb(pMeshData + 0x10, pMeshData + *(int*)(pMeshData + 8));
+	pcVar6 = edHashcodeGet(0x43494d414e5944, (MeshData_HASH*)((this->meshInfo).HALL + 0x10));
 	iVar8 = 0;
 	if (pcVar6 != (char*)0x0) {
 		iVar8 = *(int*)(pcVar6 + 8);
@@ -566,12 +572,12 @@ void Sector::Load_001fddc0()
 	}
 	else {
 		IMPLEMENTATION_GUARD(
-		pMVar7 = CameraPanMasterHeader::Func_002ab920
+		pMVar7 = edLIST::Func_002ab920
 		(pCameraPanMasterHeader, pSubSubObjArray, pMVar4, (undefined8*)(iVar8 + 0x10),
 			(MeshTransformData*)0x0);
-		CameraPanMasterHeader::Func_002ad020
-		(pCameraPanMasterHeader, pSubSubObjArray, pMVar4, iVar8, (int)pMVar7, (int)(pcVar12 + 0x20),
-			(uVar5 & 0xffff) - 1);
+		edLIST::Func_002ad020
+		(pCameraPanMasterHeader, pSubSubObjArray, pMVar4, iVar8, (int)pMVar7, (int)(pMeshData + 0x20),
+			(meshSize & 0xffff) - 1);
 		MeshTransformParent::Func_002ac980(pMVar7, &sStack2);)
 	}
 	this->pMeshTransformParent_0x130 = pMVar7;
@@ -589,14 +595,14 @@ void Sector::Load_001fddc0()
 			iVar8 = this->field_0x138;
 			if (iVar8 != 0) {
 				ppiVar10 = (int**)(iVar8 + 0x10);
-				uVar5 = 0;
+				meshSize = 0;
 				if (*(uint*)(iVar8 + 8) != 0) {
 					do {
 						piVar11 = *ppiVar10;
 						if ((piVar11[1] != 0) && (lVar13 == *(long*)(piVar11[1] + 0x80))) goto LAB_001fe180;
-						uVar5 = uVar5 + 1;
+						meshSize = meshSize + 1;
 						ppiVar10 = ppiVar10 + 1;
-					} while (uVar5 < *(uint*)(iVar8 + 8));
+					} while (meshSize < *(uint*)(iVar8 + 8));
 				}
 			}
 			piVar11 = (int*)0x0;
@@ -618,7 +624,7 @@ void Sector::Load_001fddc0()
 void LoadSect_001fe3c0(bool index, void* pSector)
 {
 	if (index != false) {
-		((Sector*)pSector)->Load_001fddc0();
+		((Sector*)pSector)->InstallCallback();
 	}
 	return;
 }
@@ -628,7 +634,7 @@ void Sector::LoadBNK(int param_2, int param_3, bool bFileFlag)
 	int iVar1;
 	char cVar2;
 	bool bVar3;
-	edCBankBuffer* peVar4;
+	edCBankBufferEntry* peVar4;
 	int sectStringLength;
 	float fVar5;
 	BankFilePathContainer local_60;
@@ -644,11 +650,11 @@ void Sector::LoadBNK(int param_2, int param_3, bool bFileFlag)
 		this->field_0x0 = -1;
 		this->field_0x4 = param_2;
 		peVar4 = (this->bankObject).pBankFileAccessObject;
-		if (peVar4 != (edCBankBuffer*)0x0) {
+		if (peVar4 != (edCBankBufferEntry*)0x0) {
 			edCBankBuffer_close(peVar4);
-			(this->bankObject).pBankFileAccessObject = (edCBankBuffer*)0x0;
+			(this->bankObject).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 		}
-		peVar4 = edCBank_GetBankBuffer(&this->bankObject);
+		peVar4 = get_free_entry(&this->bankObject);
 		(this->bankObject).pBankFileAccessObject = peVar4;
 		iVar1 = this->field_0x4;
 		sectStringLength = edStringCpyL(acStack64, (g_ManagerSingletonArray_00451660.g_SectorManager_00451670)->field_0x4);
@@ -675,17 +681,17 @@ void Sector::LoadBNK(int param_2, int param_3, bool bFileFlag)
 		local_60.filePath = acStack64;
 		local_60.fileFunc = LoadSect_001fe3c0;
 		local_60.pObjectReference = this;
-		bVar3 = edCBankBuffer_file_access((this->bankObject).pBankFileAccessObject, &local_60);
+		bVar3 = load((this->bankObject).pBankFileAccessObject, &local_60);
 		if ((bVar3 != false) && (this->loadStage_0x8 = 1, param_3 == 0)) {
-			edCBankBuffer_file_access((this->bankObject).pBankFileAccessObject);
+			load((this->bankObject).pBankFileAccessObject);
 		}
 	}
 	return;
 }
 
-void SectorManager::LoadA()
+void SectorManager::Level_Install()
 {
-	edCBankBuffer* peVar1;
+	edCBankBufferEntry* peVar1;
 	bool bVar2;
 	bool bVar3;
 	int iVar4;
@@ -697,7 +703,7 @@ void SectorManager::LoadA()
 	if ((this->baseSector).loadStage_0x8 == 1) {
 		peVar1 = (this->baseSector).bankObject.pBankFileAccessObject;
 		bVar2 = false;
-		if ((peVar1 != (edCBankBuffer*)0x0) && (bVar3 = edCBankBuffer_CheckAccessFlag(peVar1), bVar3 != false)) {
+		if ((peVar1 != (edCBankBufferEntry*)0x0) && (bVar3 = edCBankBuffer_CheckAccessFlag(peVar1), bVar3 != false)) {
 			bVar2 = true;
 		}
 		if (bVar2) {
@@ -717,7 +723,7 @@ void SectorManager::LoadA()
 			if ((pvVar4->sectID != -1) && (pvVar4->loadStage_0x8 == 1)) {
 				peVar1 = (pvVar4->bankObject).pBankFileAccessObject;
 				bVar2 = false;
-				if ((peVar1 != (edCBankBuffer*)0x0) && (bVar3 = edCBankBuffer_CheckAccessFlag(peVar1), bVar3 != false)) {
+				if ((peVar1 != (edCBankBufferEntry*)0x0) && (bVar3 = edCBankBuffer_CheckAccessFlag(peVar1), bVar3 != false)) {
 					bVar2 = true;
 				}
 				if (bVar2) {

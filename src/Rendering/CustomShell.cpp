@@ -12,7 +12,7 @@
 
 #define CHCR_STR 0x100
 
-DMA_Register_Struct DMA_Registers[10] =
+DMA_Register_Struct edDmaChannelList[10] =
 {
 	/* DMAC */
 	{
@@ -76,14 +76,14 @@ DMA_Register_Struct DMA_Registers[10] =
 	},
 };
 
-void Reset_00257f90(void)
+void edDmaResetAll(void)
 {
-	PrintString("#\n");
-	*DMA_Registers[1].CHCR = DMA_Registers[1].QWC;
+	edDebugPrintf("#\n");
+	*edDmaChannelList[1].CHCR = edDmaChannelList[1].QWC;
 	SYNC(0);
-	*DMA_Registers[2].CHCR = DMA_Registers[2].QWC;
+	*edDmaChannelList[2].CHCR = edDmaChannelList[2].QWC;
 	SYNC(0);
-	*DMA_Registers[0].CHCR = DMA_Registers[0].QWC;
+	*edDmaChannelList[0].CHCR = edDmaChannelList[0].QWC;
 	SYNC(0);
 
 #ifdef PLATFORM_PS2
@@ -101,15 +101,15 @@ void Reset_00257f90(void)
 	return;
 }
 
-void FUN_00258050(Vector* param_1, uint param_2, uint param_3)
+void edDmaLoadFromFastRam_nowait(Vector* param_1, uint param_2, uint param_3)
 {
 	uint* puVar1;
 	uint uVar2;
 
-	uVar2 = DMA_Registers[8].MADR;
-	puVar1 = DMA_Registers[8].CHCR;
+	uVar2 = edDmaChannelList[8].MADR;
+	puVar1 = edDmaChannelList[8].CHCR;
 #ifdef PLATFORM_PS2
-	DMA_Registers[8].CHCR[4] = param_3;
+	edDmaChannelList[8].CHCR[4] = param_3;
 	SYNC(0);
 	puVar1[0x20] = (uint)param_1;
 	SYNC(0);
@@ -117,38 +117,38 @@ void FUN_00258050(Vector* param_1, uint param_2, uint param_3)
 	SYNC(0);
 	DPUT_D_STAT(uVar2);
 	SYNC(0);
-	*puVar1 = DMA_Registers[8].QWC | 0x100;
+	*puVar1 = edDmaChannelList[8].QWC | 0x100;
 	SYNC(0);
 #endif
 	return;
 }
 
-bool FUN_002580b0(uint addr, uint qwc, uint param_3)
+bool edDmaLoadFromFastRam(uint addr, uint qwc, uint param_3)
 {
 	uint* puVar1;
 	uint madr;
 	bool bVar2;
 
-	madr = DMA_Registers[8].MADR;
-	puVar1 = DMA_Registers[8].CHCR;
+	madr = edDmaChannelList[8].MADR;
+	puVar1 = edDmaChannelList[8].CHCR;
 #ifdef PLATFORM_PS2
-	DPUT_D_PCR(DMA_Registers[8].MADR);
+	DPUT_D_PCR(edDmaChannelList[8].MADR);
 	SYNC(0);
-	DPUT_D_STAT(DMA_Registers[8].MADR);
+	DPUT_D_STAT(edDmaChannelList[8].MADR);
 	SYNC(0);
-	DMA_Registers[8].CHCR[4] = param_3;
+	edDmaChannelList[8].CHCR[4] = param_3;
 	SYNC(0);
 	puVar1[0x20] = addr;
 	SYNC(0);
 	puVar1[8] = qwc >> 4;
 	SYNC(0);
-	*puVar1 = DMA_Registers[8].QWC | 0x100;
+	*puVar1 = edDmaChannelList[8].QWC | 0x100;
 #endif
-	bVar2 = MADR_Func_002586c0(madr);
+	bVar2 = edDmaWaitDma(madr);
 	return bVar2;
 }
 
-void WaitDMA(void)
+void edDmaFlushCache(void)
 {
 #ifdef PLATFORM_PS2
 	FlushCache(0);
@@ -172,7 +172,7 @@ unsigned int GetCOUNT(void)
 int UINT_00449180 = 0;
 int UINT_00449184 = 0;
 
-int thunk_FUN_00291be0(void)
+int edTimerTimeGetCycleElapsedU32(void)
 {
 	int iVar1;
 
@@ -186,7 +186,7 @@ int thunk_FUN_00291be0(void)
 }
 
 
-int WaitForDraw_00258230(void)
+int edDmaSyncPath(void)
 {
 	char cVar1;
 	uint uVar2;
@@ -197,15 +197,15 @@ int WaitForDraw_00258230(void)
 	//MY_LOG("WaitForDraw_00258230\n");
 
 #ifdef PLATFORM_PS2
-	if ((*DMA_Registers[2].CHCR & CHCR_STR) != 0) {
-		thunk_FUN_00291be0();
-		DPUT_D_PCR(DMA_Registers[2].MADR);
-		MADR_Func_002586c0(DMA_Registers[2].MADR);
+	if ((*edDmaChannelList[2].CHCR & CHCR_STR) != 0) {
+		edTimerTimeGetCycleElapsedU32();
+		DPUT_D_PCR(edDmaChannelList[2].MADR);
+		edDmaWaitDma(edDmaChannelList[2].MADR);
 	}
-	if ((*DMA_Registers[1].CHCR & CHCR_STR) != 0) {
-		thunk_FUN_00291be0();
-		DPUT_D_PCR(DMA_Registers[1].MADR);
-		MADR_Func_002586c0(DMA_Registers[1].MADR);
+	if ((*edDmaChannelList[1].CHCR & CHCR_STR) != 0) {
+		edTimerTimeGetCycleElapsedU32();
+		DPUT_D_PCR(edDmaChannelList[1].MADR);
+		edDmaWaitDma(edDmaChannelList[1].MADR);
 	}
 
 	lVar4 = 0x35048a;
@@ -231,31 +231,31 @@ int WaitForDraw_00258230(void)
 	":"=r"(lVar4):"r"(lVar4));		// Sync bc2f
 
 	if (lVar4 < 1) {
-		Reset_00257f90();
+		edDmaResetAll();
 		iVar3 = (int)lVar4;
 	}
 	else {
-		thunk_FUN_00291be0();
+		edTimerTimeGetCycleElapsedU32();
 		uVar5 = 0;
 		while (uVar2 = DGET_VIF0_STAT(), (uVar2 & 3) != 0) { // Wait for VIF to become idle
-			iVar3 = thunk_FUN_00291be0();
+			iVar3 = edTimerTimeGetCycleElapsedU32();
 			uVar5 = uVar5 + iVar3;
 			if (0x6a0914 < uVar5) {
-				Reset_00257f90();
+				edDmaResetAll();
 			}
 		}
-		iVar3 = thunk_FUN_00291be0();
+		iVar3 = edTimerTimeGetCycleElapsedU32();
 		lVar4 = (long)iVar3;
 		uVar5 = 0;
 		while (true) {
 			iVar3 = (int)lVar4;
 			uVar2 = DGET_GIF_STAT();
 			if ((uVar2 & 0x600) == 0) break;
-			iVar3 = thunk_FUN_00291be0();
+			iVar3 = edTimerTimeGetCycleElapsedU32();
 			lVar4 = (long)iVar3;
 			uVar5 = uVar5 + iVar3;
 			if (0x6a0914 < uVar5) {
-				Reset_00257f90();
+				edDmaResetAll();
 			}
 		}
 	}
@@ -265,27 +265,27 @@ int WaitForDraw_00258230(void)
 #endif
 }
 
-int shellDmaSync(int channel)
+int edDmaSync(int channel)
 {
 #ifdef PLATFORM_PS2
-	if ((*DMA_Registers[channel].CHCR & 0x100) != 0) {
-		thunk_FUN_00291be0();
-		DPUT_D_PCR(DMA_Registers[channel].MADR);
-		MADR_Func_002586c0(DMA_Registers[channel].MADR);
+	if ((*edDmaChannelList[channel].CHCR & 0x100) != 0) {
+		edTimerTimeGetCycleElapsedU32();
+		DPUT_D_PCR(edDmaChannelList[channel].MADR);
+		edDmaWaitDma(edDmaChannelList[channel].MADR);
 	}
 #endif
 	return 1;
 }
 
-void shellDmaStartChainB(int channel, ulonglong* pBuffer)
+void edDmaSend_nowait(int channel, ulonglong* pBuffer)
 {
 #ifdef PLATFORM_PS2
 	uint* puVar1;
 	uint uVar2;
 	uint uVar3;
 
-	puVar1 = DMA_Registers[channel].CHCR;
-	uVar2 = DMA_Registers[channel].MADR;
+	puVar1 = edDmaChannelList[channel].CHCR;
+	uVar2 = edDmaChannelList[channel].MADR;
 	uVar3 = (uint)pBuffer & 0xfffffff;
 	if (((uint)pBuffer & 0xf0000000) == 0x70000000) {
 		uVar3 = uVar3 | 0x80000000;
@@ -296,21 +296,21 @@ void shellDmaStartChainB(int channel, ulonglong* pBuffer)
 	SYNC(0);
 	DPUT_D_STAT(uVar2);
 	SYNC(0);
-	*puVar1 = DMA_Registers[channel].QWC | 0x104;
+	*puVar1 = edDmaChannelList[channel].QWC | 0x104;
 	SYNC(0);
 #endif
 	return;
 }
 
-void shellDmaStartChain(int channel, ulonglong* pBuffer)
+void edDmaSend(int channel, ulonglong* pBuffer)
 {
 #ifdef PLATFORM_PS2
 	uint madr;
 	uint* puVar1;
 	uint uVar2;
 
-	madr = DMA_Registers[channel].MADR;
-	puVar1 = DMA_Registers[channel].CHCR;
+	madr = edDmaChannelList[channel].MADR;
+	puVar1 = edDmaChannelList[channel].CHCR;
 	uVar2 = (uint)pBuffer & 0xfffffff;
 	if (((uint)pBuffer & 0xf0000000) == 0x70000000) {
 		uVar2 = uVar2 | 0x80000000;
@@ -323,21 +323,21 @@ void shellDmaStartChain(int channel, ulonglong* pBuffer)
 	SYNC(0);
 	DPUT_D_STAT(madr);
 	SYNC(0);
-	*puVar1 = DMA_Registers[channel].QWC | 0x104;
-	MADR_Func_002586c0(madr);
+	*puVar1 = edDmaChannelList[channel].QWC | 0x104;
+	edDmaWaitDma(madr);
 #endif
 	return;
 }
 
-void shellDmaStartB(int channel, void* memory, uint qwc)
+void edDmaSendN_nowait(int channel, void* memory, uint qwc)
 {
 #ifdef PLATFORM_PS2
 	uint* puVar1;
 	uint uVar2;
 	uint madr;
 
-	puVar1 = DMA_Registers[channel].CHCR;
-	madr = DMA_Registers[channel].MADR;
+	puVar1 = edDmaChannelList[channel].CHCR;
+	madr = edDmaChannelList[channel].MADR;
 	uVar2 = (uint)memory & 0xfffffff;
 	if (((uint)memory & 0xf0000000) == 0x70000000) {
 		uVar2 = uVar2 | 0x80000000;
@@ -350,21 +350,21 @@ void shellDmaStartB(int channel, void* memory, uint qwc)
 	SYNC(0);
 	DPUT_D_STAT(madr);
 	SYNC(0);
-	*puVar1 = DMA_Registers[channel].QWC | 0x100;
+	*puVar1 = edDmaChannelList[channel].QWC | 0x100;
 	SYNC(0);
 #endif
 	return;
 }
 
-void shellDmaStart(int channel, void* memory, u_int qwc)
+void edDmaSendN(int channel, void* memory, u_int qwc)
 {
 #ifdef PLATFORM_PS2
 	uint madr;
 	uint* puVar1;
 	uint uVar2;
 
-	madr = DMA_Registers[channel].MADR;
-	puVar1 = DMA_Registers[channel].CHCR;
+	madr = edDmaChannelList[channel].MADR;
+	puVar1 = edDmaChannelList[channel].CHCR;
 	uVar2 = (uint)memory & 0xfffffff;
 	if (((uint)memory & 0xf0000000) == 0x70000000) {
 		uVar2 = uVar2 | 0x80000000;
@@ -377,13 +377,13 @@ void shellDmaStart(int channel, void* memory, u_int qwc)
 	SYNC(0);
 	DPUT_D_STAT(madr);
 	SYNC(0);
-	*puVar1 = DMA_Registers[channel].QWC | 0x100;
-	MADR_Func_002586c0(madr);
+	*puVar1 = edDmaChannelList[channel].QWC | 0x100;
+	edDmaWaitDma(madr);
 #endif
 	return;
 }
 
-bool MADR_Func_002586c0(uint madr)
+bool edDmaWaitDma(uint madr)
 {
 	char cVar1;
 	int iVar2;
@@ -417,7 +417,7 @@ bool MADR_Func_002586c0(uint madr)
 		SYNC(0);
 	}
 	else {
-		Reset_00257f90();
+		edDmaResetAll();
 	}
 #endif
 	return 0 < iVar3;

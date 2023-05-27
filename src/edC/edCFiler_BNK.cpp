@@ -55,7 +55,7 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 	char* pcVar3;
 	int iVar4;
 	DebugBankData_234* pDVar5;
-	uint* puVar6;
+	FileHeaderFileData* puVar6;
 	ulong uVar7;
 	byte* pbVar8;
 	edCFiler_Bnk_static* pAlreadyLoadedData;
@@ -97,13 +97,13 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 			edStringCpyL(acStack1024, pcVar3 + 1);
 			pcVar3 = pAlreadyLoadedData->pFileData;
 			/* Look for the index of the file we want. */
-			iVar4 = GetIndexFromFileHeader((edCBankFileHeader*)(pcVar3 + 8), acStack1024);
+			iVar4 = GetIndexFromFileHeader((BankFile_Internal*)(pcVar3 + 8), acStack1024);
 			if (iVar4 == -1) {
 				bVar1 = false;
 			}
 			else {
 				/* Okay we found the index, load the file. */
-				pDVar5 = LoadFile(pAlreadyLoadedData->diskPath, 1);
+				pDVar5 = edFileLoadSize(pAlreadyLoadedData->diskPath, 1);
 				iVar2 = 0;
 				if (pDVar5 == (DebugBankData_234*)0x0) {
 					pbVar8 = bnkInUse;
@@ -121,8 +121,8 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 				else {
 					bufferStart->pDebugBankData = pDVar5;
 					g_LastBank_00448f50 = pDVar5;
-					puVar6 = (uint*)edCBankFileHeader_FindFileDataInHeader((char*)(edCBankFileHeader*)(pcVar3 + 8), iVar4);
-					uVar7 = DebugBankSeek(bufferStart->pDebugBankData, *puVar6, ED_SEEK_SET);
+					puVar6 = edCBankFileHeader_FindFileDataInHeader((BankFile_Internal*)(pcVar3 + 8), iVar4);
+					uVar7 = DebugBankSeek(bufferStart->pDebugBankData, puVar6->offset, ED_SEEK_SET);
 					if (uVar7 == 0) {
 						pDVar5->pOwningFiler->Close(pDVar5);
 						iVar4 = 0;
@@ -139,13 +139,13 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 						bVar1 = false;
 					}
 					else {
-						bufferStart->pFileData = (char*)puVar6;
+						bufferStart->pFileData = puVar6;
 						memset(&pOutData->field_0x10, 0, sizeof(DebugBankDataInternal));
 						pcVar3 = SearchForColon(filePath);
 						edStringCpyL((pOutData->field_0x10).name, pcVar3 + 1);
 						bVar1 = true;
 						(pOutData->field_0x10).field_0x14 = 0x21;
-						(pOutData->field_0x10).fileSize = *(uint*)(bufferStart->pFileData + 4);
+						(pOutData->field_0x10).fileSize = bufferStart->pFileData->size;
 						pOutData->pFileData = (CDFileContainer*)bufferStart;
 					}
 				}
@@ -297,7 +297,7 @@ bool edCFiler_BNK::LoadAndStoreInternal(char* filePath, char* bankPath)
 	char formattedPath[512];
 	char outString[512];
 
-	peVar1 = FindEdCFiler(outString, bankPath, 0);
+	peVar1 = edFileOpen(outString, bankPath, 0);
 	if (peVar1 == (edCFiler*)0x0) {
 		bSuccess = false;
 	}

@@ -1,0 +1,6 @@
+[submodule "port/Windows/Renderer/SPIRV-Reflect"]
+	path = port/Windows/Renderer/ext/SPIRV-Reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
+[submodule "port/ext/imgui"]
+	path = port/Windows/Renderer/ext/imgui
+	url = https://github.com/ocornut/imgui.git

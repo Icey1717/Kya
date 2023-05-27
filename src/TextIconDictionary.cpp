@@ -1,16 +1,16 @@
 #include "TextIconDictionary.h"
 #include "edMem.h"
 
-TextIconDictionary g_TextIconDictionary;
+edCTextResourcePool g_TextIconDictionary;
 
-TextIconDictionary::TextIconDictionary()
+edCTextResourcePool::edCTextResourcePool()
 {
 	pEntries = (TextIconDictionaryEntry*)0x0;
 	maxEntries = 0;
 	currentEntries = 0;
 }
 
-bool TextIconDictionary::Init(int maxEntries)
+bool edCTextResourcePool::Init(int maxEntries)
 {
 	bool bVar1;
 	uint count;
@@ -34,7 +34,7 @@ bool TextIconDictionary::Init(int maxEntries)
 	return bVar1;
 }
 
-bool TextIconDictionary::AddTextEntry(char* key, char* value)
+bool edCTextResourcePool::AddTextEntry(char* key, char* value)
 {
 	char cVar1;
 	char* pcVar2;
@@ -43,7 +43,7 @@ bool TextIconDictionary::AddTextEntry(char* key, char* value)
 	TextIconDictionaryEntry* pTVar5;
 	long long lVar6;
 
-	MY_LOG("TextIconDictionary::AddTextEntry key: %s value: %s\n", key, value);
+	MY_LOG("edCTextResourcePool::AddTextEntry key: %s value: %s\n", key, value);
 
 	iVar3 = 0;
 	lVar6 = 0;

@@ -65,13 +65,13 @@ edHeapEntry* g_HeapPtr_0040f370 = NULL;
 edHeapEntry* g_HeapPtr_0040f370 = (edHeapEntry*)0x004a5780;
 #endif
 
-edHeapEntry* GetHeap()
+edHeapEntry* edmemGetMainHeader()
 {
 	return g_HeapPtr_0040f370;
 }
 
 
-bool edSystemInit(int argc, char** argv)
+bool _edSystemInit(int argc, char** argv)
 {
 	bool bVar1;
 	EFileLoadMode EVar2;

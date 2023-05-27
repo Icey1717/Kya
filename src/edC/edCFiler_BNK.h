@@ -7,7 +7,7 @@
 
 struct edCFiler_BNK_8 {
 	struct DebugBankData_234* pDebugBankData;
-	char* pFileData;
+	struct FileHeaderFileData* pFileData;
 };
 
 struct edCFiler_Bnk_static {

@@ -35,7 +35,7 @@ typedef struct {
 typedef ulong tGS_DISPLAY1;
 #endif
 
-struct VidParams8 {
+struct edVideoConfig {
 	byte field_0x0;
 	byte field_0x1;
 	byte field_0x2;
@@ -46,7 +46,7 @@ struct VidParams8 {
 	undefined field_0x7;
 };
 
-struct VidParams26 {
+struct ed_video_attr {
 	ushort screenWidth;
 	ushort screenHeight;
 	ushort vidMode1;
@@ -103,8 +103,8 @@ struct VidModeData_20 {
 	undefined field_0x1f;
 };
 
-struct FrameBuffer {
-	struct VidModeData* pVidModeData_0x0;
+struct edSurface {
+	struct ed_surface_desc* pVidModeData_0x0;
 	undefined field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;
@@ -117,7 +117,7 @@ struct FrameBuffer {
 	undefined field_0x13;
 	struct ZBufferTags* pZTags;
 	struct VidModeData_20* pVidModeData20;
-	struct FrameBuffer* pNext;
+	struct edSurface* pNext;
 	undefined field_0x20;
 	undefined field_0x21;
 	undefined field_0x22;
@@ -144,7 +144,7 @@ struct VideoListData_AC {
 };
 
 struct edVideoData {
-	struct VidParams26 params26;
+	struct ed_video_attr params26;
 	undefined field_0x1a;
 	undefined field_0x1b;
 	undefined field_0x1c;
@@ -175,8 +175,8 @@ struct edVideoData {
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	struct FrameBuffer* pFrameBuffer;
-	struct CameraObj_28* pCamera;
+	struct edSurface* pFrameBuffer;
+	struct ed_viewport* pCamera;
 	byte field_0x68;
 	byte field_0x69;
 	byte field_0x6a;
@@ -209,7 +209,7 @@ struct edVideoData {
 	undefined field_0x13f;
 };
 
-struct VidModeData {
+struct ed_surface_desc {
 	ushort screenWidth;
 	ushort screenHeight;
 	ushort pixelStoreMode;
@@ -217,20 +217,20 @@ struct VidModeData {
 	ushort flags_0x8;
 	bool bUseGlobalFrameBuffer;
 	byte frameBufferCount;
-	struct FrameBuffer* pLink_0xc;
+	struct edSurface* pLink_0xc;
 };
 
 struct ZBufferTags {
-	RenderCommand commandBuffer[3];
+	edpkt_data commandBuffer[3];
 };
 
-void SetActiveFrameBuffer_002b9b10(FrameBuffer* param_1);
-void SetupPCRTC_002b9b80(VidParams26* param_1);
-VidParams8* GetVidParams8_002b9e60(void);
-void Init_edVideo_002b9e70(void);
-void ResetVideoData_002ba560(void);
+void SetActiveFrameBuffer_002b9b10(edSurface* param_1);
+void edVideoSetAttribute(ed_video_attr* pAttr);
+edVideoConfig* edVideoGetConfig(void);
+void edVideoInit(void);
+void _edVideoSyncReset(void);
 
-extern VidParams8 g_VidParams8_00449588;
+extern edVideoConfig edVideoConfiguration;
 extern edVideoData g_ActiveVidParams_0048cd90;
 
 #endif //VIDEO_B_H

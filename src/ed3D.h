@@ -3,19 +3,19 @@
 
 #include "Types.h"
 
-struct TextureInfoSmall {
+struct ed_g2d_manager {
 	char* textureFileBufferStart;
 	int textureFileLengthA;
 	char* textureHeaderStart;
-	char* materialBufferStart;
-	char* textureBufferStart;
-	char* palleteBufferStart;
+	char* pMAT_HASH;
+	char* pT2DA;
+	char* pPALL;
 	byte field_0x18;
 	byte field_0x19;
 	byte field_0x1a;
 	byte field_0x1b;
 	int textureFileLengthB;
-	char* animationBufferStart;
+	char* pANMA;
 	undefined field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;
@@ -32,8 +32,8 @@ struct TextureInfoSmall {
 
 struct LightingMatrixSubSubObj {
 	struct Vector* field_0x0;
-	struct Matrix* field_0x4;
-	struct Matrix* field_0x8;
+	struct edF32MATRIX4* field_0x4;
+	struct edF32MATRIX4* field_0x8;
 };
 
 struct LightingMatrixFuncObj {
@@ -45,24 +45,24 @@ struct LightingMatrixFuncObj {
 };
 
 struct MeshTransformDataBase {
-	struct Matrix transformA;
-	struct Matrix transformB;
+	struct edF32MATRIX4 transformA;
+	struct edF32MATRIX4 transformB;
 	Hash_8 hash;
 	byte field_0x88;
 	undefined field_0x89;
 	ushort bRenderShadow;
-	struct Matrix* pShadowAnimMatrix;
+	struct edF32MATRIX4* pShadowAnimMatrix;
 	struct MeshTransformData* pLinkTransformData;
 	undefined* field_0x94;
 	undefined* pTextureInfo;
 	ushort count_0x9c;
 	ushort flags_0x9e;
 	struct LightingMatrixFuncObj* pLightingMatrixFuncObj_0xa0;
-	Matrix* field_0xa4;
-	struct Matrix* pAnimMatrix;
+	edF32MATRIX4* field_0xa4;
+	struct edF32MATRIX4* pAnimMatrix;
 	short subMeshParentCount_0xac;
 	byte size_0xae;
-	char field_0xaf;
+	char GlobalAlhaON;
 };
 
 struct MeshTransformObjData {
@@ -77,15 +77,15 @@ struct MeshTransformData {
 };
 
 struct TextureInfo {
-	TextureInfoSmall field_0x0;
+	ed_g2d_manager field_0x0;
 	char* pFileBuffer;
 };
 
-struct ed3D_Params {
-	ed3D_Params();
+struct ed3DConfig {
+	ed3DConfig();
 
 	int meshHeaderCountB;
-	int staticMeshMasterCount;
+	int sceneCount;
 	uint meshDisplayListInternalCount;
 	int meshHeaderCountBAlt;
 	int meshHeaderCountA;
@@ -106,12 +106,222 @@ struct ed3D_Params {
 	undefined4 field_0x34;
 };
 
-struct MaterialInfo {
-	struct TextureInfoSmall* textureInfo;
-	char* matSubsectionStart;
+PACK(
+	struct ed_g2d_material_After {
+	int pLAY; // ed_g2d_layer
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+});
+
+PACK(
+	struct ed_g2d_material {
+	byte count_0x0;
+	undefined field_0x1;
+	ushort field_0x2;
+	int pRenderFrame30; // RenderFrame_30*
+	int pCommandBufferTexture; // RenderCommand*
+	int commandBufferTextureSize;
+});
+
+PACK(
+	struct TextureData_MAT {
+	Hash_4 header;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	ed_g2d_material body;
+});
+
+struct edDList_material {
+	struct ed_g2d_manager* textureInfo;
+	ed_g2d_material* pMAT;
 	int mode;
 	int Length;
 };
+
+
+PACK(
+	struct TextureData_LAY_Internal {
+	uint flags_0x0;
+	uint field_0x4;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	undefined field_0x10;
+	undefined field_0x11;
+	undefined field_0x12;
+	undefined field_0x13;
+	undefined field_0x14;
+	undefined field_0x15;
+	undefined field_0x16;
+	undefined field_0x17;
+	undefined field_0x18;
+	undefined field_0x19;
+	undefined field_0x1a;
+	undefined field_0x1b;
+	short field_0x1c;
+	ushort field_0x1e;
+	int pTex; // TextureData_TEX*
+});
+
+PACK(
+	struct ed_g2d_layer {
+	Hash_4 header;
+	uint field_0x4;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	TextureData_LAY_Internal body;
+});
+
+
+PACK(struct ed_g2d_bitmap {
+	ushort field_0x0;
+	ushort field_0x2;
+	ushort field_0x4;
+	ushort field_0x6;
+	int pPSX2; //char*
+});
+
+PACK(struct TextureData_MATA {
+	Hash_4 header;
+	undefined4 field_0x4;
+	undefined4 size_0x8;
+	int field_0xc;
+});
+
+PACK(struct TextureData_PA32 {
+	Hash_4 header;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	ed_g2d_bitmap body;
+});
+
+PACK(
+	struct TextureData_HASH_Internal_MAT {
+	undefined field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	int pMAT; // TextureData_MAT*
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+});
+
+PACK(
+	struct TextureData_HASH_Internal_PA32 {
+	undefined field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	int pPA32; // TextureData_PA32*
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+});
+
+PACK(
+	struct TextureData_TEX_Internal_After {
+	undefined field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	int pHASH_Internal; // TextureData_HASH_Internal*
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+});
+
+PACK(
+	struct TextureData_TEX_Internal {
+	TextureData_TEX_Internal_After after;
+	int field_0x10;
+	undefined field_0x14;
+	undefined field_0x15;
+	undefined field_0x16;
+	undefined field_0x17;
+	float field_0x18;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+});
+
+PACK(
+	struct TextureData_TEX {
+	undefined field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	TextureData_TEX_Internal body;
+});
 
 PACK(struct MeshData_HASH {
 	Hash_4 header;
@@ -143,46 +353,51 @@ PACK( struct LayerHeaderPacked {
 	char field_0x10;
 });
 
-struct CameraObj_28;
-struct CameraObj_130;
+struct ed_viewport;
+struct edFCamera;
 
-struct StaticMeshMaster;
+struct ed_3D_Scene;
 
-struct MeshInfo;
+struct ed_g3d_manager;
 struct DisplayListInternal;
 struct DisplayListInternalMesh;
 struct MeshTransformParent;
 
-extern Matrix SomeIdentityMatrix;
+extern edF32MATRIX4 SomeIdentityMatrix;
 
-namespace ed3D
-{
-	void Init(void);
-	TextureInfoSmall* LoadTextureFromBuffer(char* fileBufferStart, int fileLength, int* outInt, TextureInfoSmall* pTextureInfo, ulong param_5);
-	MaterialInfo* GetMaterialInfoFromTexture(MaterialInfo* outObj, int count, TextureInfoSmall* textureInfoObj, int mode);
-	char* GetMAT_Section_0029eae0(TextureInfoSmall* pTextureInfo, int param_2);
-	char* GetT2D_Section_0029ea60(char* pMaterialSection, int param_2);
-	StaticMeshMaster* FindFreeStaticMeshMaster_002b4600(CameraObj_130* param_1, CameraObj_28* param_2, long mode);
-	MeshInfo* LoadMeshFromBuffer(char* pFileData, int fileLength, ulong flags, int* outInt, TextureInfo* textureObj, int unknown, MeshInfo* pMeshInfo);
-	MeshTransformParent* SetupMeshTransform_001fffe0(StaticMeshMaster* pStaticMeshMaster, MeshInfo* pMeshInfo, ulong hash);
+ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int* outInt, TextureInfo* textureObj, int unknown, ed_g3d_manager* pMeshInfo);
 
-	void CheckHashesProcessCSTA_002a4ec0(MeshInfo* pMeshInfo, TextureInfo* pTextureInfo);
-	void SetupANHR_001fd180(struct MeshData_ANHR** ppOutANHR, struct MeshData_ANHR* pInANHR, int length, MeshInfo* pMeshInfo,
-		StaticMeshMaster* pStaticMeshMaster);
 
-	void SetupHIER_002abc00(MeshInfo* pMeshInfo);
+void Init3D(void);
+ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outInt, ed_g2d_manager* pTextureInfo, ulong param_5);
+edDList_material* edDListCreatMaterialFromIndex(edDList_material* outObj, int count, ed_g2d_manager* textureInfoObj, int mode);
+ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, int param_2);
+char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
+ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
+MeshTransformParent* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
 
-	void Func_002a5540(StaticMeshMaster* pStaticMeshMaster, MeshInfo* pMeshInfo);
+void ed3DLinkG2DToG3D(ed_g3d_manager* pMeshInfo, TextureInfo* pTextureInfo);
 
-	uint GetElementCount_002947b0(char* pStart, char* pEnd);
-	char* FindSectionHash(Hash_8 meshHashValue, struct MeshData_HASH* textureObjMatBuffer);
+struct HierarchyAnm {
+	void Install(struct MeshData_ANHR* pInANHR, int length, ed_g3d_manager* pMeshInfo, ed_3D_Scene* pStaticMeshMaster);
+	uint UpdateMatrix(float param_1, MeshTransformData* param_3, int* pFileData, int param_5);
 
-	extern int g_FrameBufferPtr_004491f0;
-	extern byte BYTE_00448a5c;
-	extern int INT_0044935c;
-	extern DisplayListInternalMesh* g_MeshDisplayListInternal_00449380;
-	extern MeshTransformParent* PTR_MeshTransformParent_ARRAY_00449434;
-	extern MeshTransformData* PTR_MeshTransformData_ARRAY_0044942c;
-}
+	MeshData_ANHR* pThis;
+};
+
+void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo);
+
+void ed3DScenePushCluster(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo);
+
+uint edChunckGetNb(char* pStart, char* pEnd);
+char* edHashcodeGet(Hash_8 meshHashValue, struct MeshData_HASH* textureObjMatBuffer);
+
+extern int gFXBufAddr;
+extern byte BYTE_00448a5c;
+extern DisplayListInternalMesh* g_MeshDisplayListInternal_00449380;
+extern MeshTransformParent* gHierarchyManagerFirstFreeNode;
+extern MeshTransformData* gHierarchyManagerBuffer;
+
+extern int gNbVertexDMA;
 
 #endif //_ED3D_H

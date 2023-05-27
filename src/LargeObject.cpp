@@ -17,6 +17,7 @@
 
 #ifdef PLATFORM_WIN
 #include "port.h"
+#include "renderer.h"
 #endif
 #include "edVideo/VideoC.h"
 #include "TimeController.h"
@@ -27,36 +28,36 @@
 #include "MathOps.h"
 #include "SectorManager.h"
 
-LargeObject* g_LargeObject_006db450 = NULL;
+Scene* Scene::_pinstance = NULL;
 
 ManagerContainer g_ManagerSingletonArray_00451660 = { 0 };
 
-StaticMeshMaster* g_StaticMeshMasterA_00448808 = NULL;
-StaticMeshMaster* g_CameraPanMasterB_0044880c = NULL;
+ed_3D_Scene* Scene::_scene_handleA = NULL;
+ed_3D_Scene* Scene::_scene_handleB = NULL;
 
-StaticMeshMaster* g_CameraPanStaticMasterArray_00451630[10] = { 0 };
+ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10] = { 0 };
 
-uint g_DebugCameraFlag_00448ea4 = 0;
+uint GameFlags = 0;
 
-FrameBuffer* AllocateFrameBuffer_002b7100(VidModeData* pVidModeData)
+edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
 {
-	VidModeData* pVidModeCopy;
-	FrameBuffer* pFrameBuffer;
+	ed_surface_desc* pVidModeCopy;
+	edSurface* pFrameBuffer;
 	ZBufferTags* pTags;
 	int zBufferFormat;
 
-	pVidModeCopy = (VidModeData*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(VidModeData));
+	pVidModeCopy = (ed_surface_desc*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
 	*pVidModeCopy = *pVidModeData;
 
-	pFrameBuffer = (FrameBuffer*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(FrameBuffer));
-	memset(pFrameBuffer, 0, sizeof(FrameBuffer));
+	pFrameBuffer = (edSurface*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(edSurface));
+	memset(pFrameBuffer, 0, sizeof(edSurface));
 
 	pFrameBuffer->pVidModeData_0x0 = pVidModeCopy;
 	pFrameBuffer->pVidModeData_0x0->pLink_0xc = pFrameBuffer;
 
 	if (pVidModeData->bUseGlobalFrameBuffer == false) {
-		pFrameBuffer->frameBasePtr = (uint)ed3D::g_FrameBufferPtr_004491f0 >> 5;
-		pFrameBuffer->data_0xc = (char*)ed3D::g_FrameBufferPtr_004491f0;
+		pFrameBuffer->frameBasePtr = (uint)gFXBufAddr >> 5;
+		pFrameBuffer->data_0xc = (char*)gFXBufAddr;
 	}
 	if ((pVidModeData->flags_0x8 & 8) != 0) {
 		pTags = (ZBufferTags*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
@@ -74,7 +75,7 @@ FrameBuffer* AllocateFrameBuffer_002b7100(VidModeData* pVidModeData)
 		pTags->commandBuffer[0].cmdB = SCE_GIF_PACKED_AD;
 
 		// Z BUFFER
-		zBufferFormat = GetZBufferTextureFormat(pFrameBuffer->pVidModeData_0x0->pixelStoreMode);
+		zBufferFormat = edSurfaceGetZBufferBpp(pFrameBuffer->pVidModeData_0x0->pixelStoreMode);
 		pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
 			pFrameBuffer->frameBasePtr,	// ZBP
 			zBufferFormat,				// PSM
@@ -99,43 +100,43 @@ FrameBuffer* AllocateFrameBuffer_002b7100(VidModeData* pVidModeData)
 	return pFrameBuffer;
 }
 
-CameraPanStatic_50* GetCameraPanStatic_50_002a5600(StaticMeshMaster* pStaticMeshMaster)
+SceneConfig* ed3DSceneGetConfig(ed_3D_Scene* pStaticMeshMaster)
 {
-	CameraPanStatic_50* pCVar1;
+	SceneConfig* pCVar1;
 
-	pCVar1 = (CameraPanStatic_50*)0x0;
-	if (pStaticMeshMaster != (StaticMeshMaster*)0xffffffff) {
-		pCVar1 = &pStaticMeshMaster->field_0x50;
+	pCVar1 = (SceneConfig*)0x0;
+	if (pStaticMeshMaster != (ed_3D_Scene*)0xffffffff) {
+		pCVar1 = &pStaticMeshMaster->sceneConfig;
 	}
 	return pCVar1;
 }
 
-StaticMeshMaster* g_CameraPanStaticMaster_00449574 = NULL;
+ed_3D_Scene* gShadowScene = NULL;
 
-StaticMeshMaster* LinkChildStaticMeshMaster_002b6ed0(StaticMeshMaster* pTemplate, CameraObj_130* pCameraObj130)
+ed_3D_Scene* ed3DShadowCreateScene(ed_3D_Scene* pTemplate, edFCamera* pCamera)
 {
-	FrameBuffer* pVidModeDataA;
-	FrameBuffer* pVidModeDataB;
+	edSurface* pVidModeDataA;
+	edSurface* pVidModeDataB;
 	CameraObjParams* pCVar1;
 	uint uVar2;
 	uint uVar3;
-	FrameBuffer* pVidModeDataA_00;
-	CameraObj_28* pCVar4;
-	CameraObj_28* pCVar5;
-	StaticMeshMaster* pStaticMeshMaster;
-	CameraPanStatic_50* pCVar6;
+	edSurface* pVidModeDataA_00;
+	ed_viewport* pViewport;
+	ed_viewport* pCVar5;
+	ed_3D_Scene* pStaticMeshMaster;
+	SceneConfig* pCVar6;
 	CameraObjParams* pCVar7;
 	CameraObjParams* pCVar8;
-	VidModeData local_20;
+	ed_surface_desc local_20;
 	CameraObjParams local_8;
 
-	pVidModeDataA = pTemplate->pCameraObj28_0xc->pColorBuffer;
-	pVidModeDataB = pTemplate->pCameraObj28_0xc->pZBuffer;
-	if (0x100 < (uint)(pTemplate->field_0x50).field_0x100.field_0x1c) {
-		(pTemplate->field_0x50).field_0x100.field_0x1c = 0x100;
+	pVidModeDataA = pTemplate->pViewport->pColorBuffer;
+	pVidModeDataB = pTemplate->pViewport->pZBuffer;
+	if (0x100 < (uint)(pTemplate->sceneConfig).pShadowConfig.field_0x1c) {
+		(pTemplate->sceneConfig).pShadowConfig.field_0x1c = 0x100;
 	}
-	uVar2 = ToPowerOfTwo_0029e3f0((pTemplate->field_0x50).field_0x100.field_0x18);
-	uVar3 = ToPowerOfTwo_0029e3f0((pTemplate->field_0x50).field_0x100.field_0x1c);
+	uVar2 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.field_0x18);
+	uVar3 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.field_0x1c);
 	pCVar7 = (CameraObjParams*)0x8;
 	pCVar8 = &local_8;
 	pCVar1 = pCVar8;
@@ -154,43 +155,43 @@ StaticMeshMaster* LinkChildStaticMeshMaster_002b6ed0(StaticMeshMaster* pTemplate
 	local_20.bUseGlobalFrameBuffer = false;
 	local_8.screenWidth = local_20.screenWidth;
 	local_8.screenHeight = local_20.screenHeight;
-	pVidModeDataA_00 = AllocateFrameBuffer_002b7100(&local_20);
-	pCVar4 = AllocateCameraObj28_002bae70(&local_8, pVidModeDataA_00, pVidModeDataB, 1);
-	SetCameraClear_002bb960(pCVar4, 0, 0, 0);
-	pCVar5 = AllocateCameraObj28_002bae70(&local_8, pVidModeDataA, pVidModeDataB, 0);
-	pStaticMeshMaster = ed3D::FindFreeStaticMeshMaster_002b4600(pCameraObj130, pCVar4, 1);
-	pStaticMeshMaster->isChild = 1;
-	pCVar6 = GetCameraPanStatic_50_002a5600(pStaticMeshMaster);
-	pCVar6->field_0x4 = (pTemplate->field_0x50).field_0x100.field_0x4;
-	pCVar6->field_0x18 = (pTemplate->field_0x50).field_0x100.field_0x4;
-	pCVar6->farClip = (pTemplate->field_0x50).field_0x100.field_0xc;
-	pCVar6->nearClip = (pTemplate->field_0x50).field_0x100.field_0x8;
-	pCVar6->field_0x14 = (pTemplate->field_0x50).field_0x12c;
-	pCVar6->field_0x10 = (pTemplate->field_0x50).field_0x128;
-	(pCVar6->field_0x100).pCamera_0x10 = pCVar4;
-	(pCVar6->field_0x100).pCamera_0x14 = pCVar5;
-	(pCVar6->field_0x100).field_0x20 = (pTemplate->field_0x50).field_0x100.field_0x20;
-	(pCVar6->field_0x100).field_0x23 = (pTemplate->field_0x50).field_0x100.field_0x23;
-	(pCVar6->field_0x100).field_0x22 = (pTemplate->field_0x50).field_0x100.field_0x22;
-	(pCVar6->field_0x100).field_0x24 = (pTemplate->field_0x50).field_0x100.field_0x24;
-	(pCVar6->field_0x100).field_0x18 = (pTemplate->field_0x50).field_0x100.field_0x18;
-	(pCVar6->field_0x100).field_0x1c = (pTemplate->field_0x50).field_0x100.field_0x1c;
-	(pTemplate->field_0x50).field_0x100.field_0x20 = 0;
-	g_CameraPanStaticMaster_00449574 = pStaticMeshMaster;
+	pVidModeDataA_00 = ed3DShadowSurfaceNew(&local_20);
+	pViewport = edViewportNew(&local_8, pVidModeDataA_00, pVidModeDataB, 1);
+	edViewportSetBackgroundColor(pViewport, 0, 0, 0);
+	pCVar5 = edViewportNew(&local_8, pVidModeDataA, pVidModeDataB, 0);
+	pStaticMeshMaster = ed3DSceneCreate(pCamera, pViewport, 1);
+	pStaticMeshMaster->bShadowScene = 1;
+	pCVar6 = ed3DSceneGetConfig(pStaticMeshMaster);
+	pCVar6->field_0x4 = (pTemplate->sceneConfig).pShadowConfig.field_0x4;
+	pCVar6->field_0x18 = (pTemplate->sceneConfig).pShadowConfig.field_0x4;
+	pCVar6->farClip = (pTemplate->sceneConfig).pShadowConfig.field_0xc;
+	pCVar6->nearClip = (pTemplate->sceneConfig).pShadowConfig.field_0x8;
+	pCVar6->field_0x14 = (pTemplate->sceneConfig).field_0x12c;
+	pCVar6->field_0x10 = (pTemplate->sceneConfig).field_0x128;
+	(pCVar6->pShadowConfig).pCamera_0x10 = pViewport;
+	(pCVar6->pShadowConfig).pCamera_0x14 = pCVar5;
+	(pCVar6->pShadowConfig).field_0x20 = (pTemplate->sceneConfig).pShadowConfig.field_0x20;
+	(pCVar6->pShadowConfig).field_0x23 = (pTemplate->sceneConfig).pShadowConfig.field_0x23;
+	(pCVar6->pShadowConfig).field_0x22 = (pTemplate->sceneConfig).pShadowConfig.field_0x22;
+	(pCVar6->pShadowConfig).field_0x24 = (pTemplate->sceneConfig).pShadowConfig.field_0x24;
+	(pCVar6->pShadowConfig).field_0x18 = (pTemplate->sceneConfig).pShadowConfig.field_0x18;
+	(pCVar6->pShadowConfig).field_0x1c = (pTemplate->sceneConfig).pShadowConfig.field_0x1c;
+	(pTemplate->sceneConfig).pShadowConfig.field_0x20 = 0;
+	gShadowScene = pStaticMeshMaster;
 	return pStaticMeshMaster;
 }
 
-StaticMeshMaster* LinkChildStaticMeshMaster_002b4790(StaticMeshMaster* pStaticMeshMaster, CameraObj_130* param_2)
+ed_3D_Scene* ed3DSceneCastShadow(ed_3D_Scene* p3DScene, edFCamera* pCamera)
 {
-	StaticMeshMaster* pDisplayList;
+	ed_3D_Scene* pDisplayList;
 
-	pStaticMeshMaster->flags_0x4 = pStaticMeshMaster->flags_0x4 | 2;
-	pDisplayList = LinkChildStaticMeshMaster_002b6ed0(pStaticMeshMaster, param_2);
-	edDlist::WillSetActiveDisplayList_00290cb0(&pStaticMeshMaster->headerA, (DisplayListInternal*)pDisplayList);
+	p3DScene->flags_0x4 = p3DScene->flags_0x4 | 2;
+	pDisplayList = ed3DShadowCreateScene(p3DScene, pCamera);
+	edDlist::edListAddNode(&p3DScene->headerA, (DisplayListInternal*)pDisplayList);
 	return pDisplayList;
 }
 
-LargeObject::LargeObject()
+Scene::Scene()
 {
 	void** errorPrinter;
 	//LocalizationManager* pManager;
@@ -215,17 +216,17 @@ LargeObject::LargeObject()
 	//EventManager* pEventManager;
 	//Manager_29b4* pMVar10;
 	edVideo_Globals* peVar11;
-	FrameBuffer* pVVar12;
-	FrameBuffer* pVVar13;
-	CameraObj_28* pCVar14;
-	CameraPanStatic_50* pCVar15;
-	StaticMeshMaster* pSVar16;
+	edSurface* pVVar12;
+	edSurface* pVVar13;
+	ed_viewport* pCVar14;
+	SceneConfig* pCVar15;
+	ed_3D_Scene* pSVar16;
 	undefined8 uVar17;
 	//Manager_29b4** ppMVar18;
-	LargeObject* puVar5;
+	Scene* puVar5;
 	int iVar19;
-	StaticMeshMaster** ppSVar20;
-	CameraObj_130* pCVar21;
+	ed_3D_Scene** ppSVar20;
+	edFCamera* pCVar21;
 	CameraObjParams local_8;
 	LocalizationManager* pManager;
 
@@ -249,8 +250,8 @@ LargeObject::LargeObject()
 	this->field_0xdc = this->field_0xec;
 	this->field_0xe0 = this->field_0xf0;
 	this->field_0xe4 = this->field_0xf4;
-	this->pCameraObj28_0x4 = (CameraObj_28*)0x0;
-	this->pCameraObj28_0x8 = (CameraObj_28*)0x0;
+	this->pCameraObj28_0x4 = (ed_viewport*)0x0;
+	this->pCameraObj28_0x8 = (ed_viewport*)0x0;
 	this->field_0x48 = 0;
 	//do {
 	//	*ppMVar18 = (Manager_29b4*)0x0;
@@ -379,59 +380,59 @@ LargeObject::LargeObject()
 	local_8.screenHeight = peVar11->pActiveVidParams->params26.screenHeight;
 	pVVar12 = GetFrameBuffer_001ba9c0();
 	pVVar13 = GetFrameBuffer_001ba9d0();
-	pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 3);
+	pCVar14 = edViewportNew(&local_8, pVVar12, pVVar13, 3);
 	this->pCameraObj28_0x4 = pCVar14;
-	SetCameraClear_002bb960(this->pCameraObj28_0x4, 0, 0, 0);
-	g_StaticMeshMasterA_00448808 = ed3D::FindFreeStaticMeshMaster_002b4600(&CameraObj_130_0044a100, this->pCameraObj28_0x4, 1);
-	g_StaticMeshMasterA_00448808->SetFlag_002a5400(0x20);
-	g_StaticMeshMasterA_00448808->SetFlag_002a5410(1);
-	g_StaticMeshMasterA_00448808->SetFlag_002a5440(1);
-	pCVar15 = GetCameraPanStatic_50_002a5600(g_StaticMeshMasterA_00448808);
+	edViewportSetBackgroundColor(this->pCameraObj28_0x4, 0, 0, 0);
+	Scene::_scene_handleA = ed3DSceneCreate(&CameraObj_130_0044a100, this->pCameraObj28_0x4, 1);
+	Scene::_scene_handleA->ed3DSceneSetFlag(0x20);
+	Scene::_scene_handleA->ed3DSceneSetFogProperty(1);
+	Scene::_scene_handleA->SetFlag_002a5440(1);
+	pCVar15 = ed3DSceneGetConfig(Scene::_scene_handleA);
 	pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
-	(pCVar15->field_0x100).field_0x18 = 0x200;
-	(pCVar15->field_0x100).field_0x1c = 0x100;
+	(pCVar15->pShadowConfig).field_0x18 = 0x200;
+	(pCVar15->pShadowConfig).field_0x1c = 0x100;
 	pCVar15->field_0x12c = pCVar15->field_0x14 * 800;
 	pCVar15->field_0x128 = 1;
-	(pCVar15->field_0x100).field_0x0 = 0;
-	(pCVar15->field_0x100).field_0x4 = 90.0;
-	(pCVar15->field_0x100).field_0x8 = -0.01;
-	(pCVar15->field_0x100).field_0xc = -150.0;
-	(pCVar15->field_0x100).field_0x22 = 0x32;
+	(pCVar15->pShadowConfig).field_0x0 = 0;
+	(pCVar15->pShadowConfig).field_0x4 = 90.0;
+	(pCVar15->pShadowConfig).field_0x8 = -0.01;
+	(pCVar15->pShadowConfig).field_0xc = -150.0;
+	(pCVar15->pShadowConfig).field_0x22 = 0x32;
 	pVVar12 = GetFrameBuffer_001ba9c0();
 	pVVar13 = GetFrameBuffer_001ba9d0();
-	pCVar14 = AllocateCameraObj28_002bae70(&local_8, pVVar12, pVVar13, 0);
+	pCVar14 = edViewportNew(&local_8, pVVar12, pVVar13, 0);
 	this->pCameraObj28_0x8 = pCVar14;
-	SetCameraClear_002bb960(this->pCameraObj28_0x8, 0, 0, 0);
-	g_CameraPanMasterB_0044880c = ed3D::FindFreeStaticMeshMaster_002b4600(&CameraObj_130_0044a100, this->pCameraObj28_0x8, 1);
-	g_CameraPanMasterB_0044880c->SetFlag_002a5400(0);
-	g_CameraPanMasterB_0044880c->SetFlag_002a5410(0);
-	pCVar15 = GetCameraPanStatic_50_002a5600(g_CameraPanMasterB_0044880c);
+	edViewportSetBackgroundColor(this->pCameraObj28_0x8, 0, 0, 0);
+	_scene_handleB = ed3DSceneCreate(&CameraObj_130_0044a100, this->pCameraObj28_0x8, 1);
+	_scene_handleB->ed3DSceneSetFlag(0);
+	_scene_handleB->ed3DSceneSetFogProperty(0);
+	pCVar15 = ed3DSceneGetConfig(_scene_handleB);
 	pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
-	GetCameraPanStatic_50_002a5600(g_StaticMeshMasterA_00448808);
+	ed3DSceneGetConfig(Scene::_scene_handleA);
 	iVar19 = 0;
 	pCVar21 = CameraObj_130_ARRAY_0044a230;
 	ppSVar20 = g_CameraPanStaticMasterArray_00451630;
 	do {
-		pSVar16 = LinkChildStaticMeshMaster_002b4790(g_StaticMeshMasterA_00448808, pCVar21);
+		pSVar16 = ed3DSceneCastShadow(Scene::_scene_handleA, pCVar21);
 		*ppSVar20 = pSVar16;
-		(*ppSVar20)->SetFlag_002a5400(4);
+		(*ppSVar20)->ed3DSceneSetFlag(4);
 		iVar19 = iVar19 + 1;
 		pCVar21 = pCVar21 + 1;
 		ppSVar20 = ppSVar20 + 1;
 	} while (iVar19 < 10);
 	this->count_0x120 = 0;
 	this->field_0x11c = 0;
-	g_LargeObject_006db450 = this;
+	Scene::_pinstance = this;
 	return;
 }
 
 
-void SetupGameCreateObject(void)
+void Scene::CreateScene(void)
 {
-	new LargeObject;
+	new Scene;
 }
 
-void WillSetupDisplayListAndRunConstructors(void)
+void Game_Init(void)
 {
 	Manager** ppMVar1;
 	int iVar2;
@@ -440,16 +441,16 @@ void WillSetupDisplayListAndRunConstructors(void)
 	ppMVar1 = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		if (*ppMVar1 != (Manager*)0x0) {
-			(*ppMVar1)->OnBeginGame();
+			(*ppMVar1)->Game_Init();
 		}
 		iVar2 = iVar2 + 1;
 		ppMVar1 = ppMVar1 + 1;
 	} while (iVar2 < 0x18);
-	SetupDisplayLists();
+	GlobalDList_Init();
 	return;
 }
 
-void LoadLevelUpdate_001b9c60(void)
+void Scene::LevelLoading_Draw(void)
 {
 	Manager** ppMVar1;
 	int iVar2;
@@ -458,20 +459,20 @@ void LoadLevelUpdate_001b9c60(void)
 	ppMVar1 = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		if (*ppMVar1 != (Manager*)0x0) {
-			(*ppMVar1)->LoadLevelUpdate();
+			(*ppMVar1)->LevelLoading_Draw();
 		}
 		iVar2 = iVar2 + 1;
 		ppMVar1 = ppMVar1 + 1;
 	} while (iVar2 < 0x18);
-	ActivateDisplayLists_002d6490();
+	GlobalDList_AddToView();
 	return;
 }
 
-int INT_0044934c = 0;
+int gCurTime = 0;
 
-void SetuGpffff8e5cTo0(void)
+void ed3DResetTime(void)
 {
-	INT_0044934c = 0;
+	gCurTime = 0;
 	return;
 }
 
@@ -482,14 +483,14 @@ void LoadStageOne_001b9dc0(void)
 	Manager** loadLoopObject;
 	int iVar1;
 
-	pTimeController = GetTimeController();
-	pTimeController->ResetTimeController_001ba6d0();
-	SetuGpffff8e5cTo0();
+	pTimeController = GetTimer();
+	pTimeController->ResetGameTimers();
+	ed3DResetTime();
 	iVar1 = 0;
 	loadLoopObject = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		if (*loadLoopObject != (Manager*)0x0) {
-			(*loadLoopObject)->LoadStageOne();
+			(*loadLoopObject)->Game_Term();
 		}
 		iVar1 = iVar1 + 1;
 		loadLoopObject = loadLoopObject + 1;
@@ -497,7 +498,7 @@ void LoadStageOne_001b9dc0(void)
 	return;
 }
 
-bool LargeObject::AsyncLoad_001b9cd0()
+bool Scene::LevelLoading_Manage()
 {
 	bool bVar1;
 	Manager** loopFunc;
@@ -505,11 +506,11 @@ bool LargeObject::AsyncLoad_001b9cd0()
 	bool bVar3;
 
 	bVar3 = false;
-	//LargeObjectFunc_001b97f0(param_1);
+	//HandleFogAndClippingSettings(param_1);
 	iVar2 = 0;
 	loopFunc = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
-		if ((*loopFunc != (Manager*)0x0) && (bVar1 = (*loopFunc)->AsyncLoad(), bVar1 != false)) {
+		if ((*loopFunc != (Manager*)0x0) && (bVar1 = (*loopFunc)->LevelLoading_Manage(), bVar1 != false)) {
 			bVar3 = true;
 		}
 		iVar2 = iVar2 + 1;
@@ -518,7 +519,7 @@ bool LargeObject::AsyncLoad_001b9cd0()
 	return bVar3;
 }
 
-void LargeObject::EndLoadStageOne(void)
+void Scene::LevelLoading_End(void)
 {
 	Manager** ppMVar1;
 	int iVar2;
@@ -527,7 +528,7 @@ void LargeObject::EndLoadStageOne(void)
 	ppMVar1 = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		if (*ppMVar1 != (Manager*)0x0) {
-			(*ppMVar1)->EndLoadStageOne();
+			(*ppMVar1)->LevelLoading_End();
 		}
 		iVar2 = iVar2 + 1;
 		ppMVar1 = ppMVar1 + 1;
@@ -535,7 +536,7 @@ void LargeObject::EndLoadStageOne(void)
 	return;
 }
 
-void LoadA_001b9bf0(void)
+void Scene::Level_Install(void)
 {
 	Manager** ppMVar1;
 	int iVar2;
@@ -544,7 +545,7 @@ void LoadA_001b9bf0(void)
 	ppMVar1 = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		if (*ppMVar1 != (Manager*)0x0) {
-			(*ppMVar1)->LoadA();
+			(*ppMVar1)->Level_Install();
 		}
 		iVar2 = iVar2 + 1;
 		ppMVar1 = ppMVar1 + 1;
@@ -552,89 +553,89 @@ void LoadA_001b9bf0(void)
 	return;
 }
 
-void SetParam1_0x20ToParam2(CameraObj_28* param_1, uint param_2)
+void edViewportSetClearMask(ed_viewport* pViewport, uint clearMask)
 {
-	param_1->altFbMask = param_2;
+	pViewport->clearMask = clearMask;
 	return;
 }
 
-byte BYTE_004489dc = 0;
-uint UINT_004489e0 = 0;
-uint UINT_004493fc = 0;
+byte gbDoMipmap = 0;
+uint gMipmapK = 0;
+uint gMipmapL = 0;
 
-void FUN_002ab4a0(byte param_1, uint param_2, uint param_3)
+void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK)
 {
-	BYTE_004489dc = param_1;
-	UINT_004489e0 = param_3;
-	UINT_004493fc = param_2;
+	gbDoMipmap = bDoMipmap;
+	gMipmapK = mipMapK;
+	gMipmapL = mipMapL;
 	return;
 }
 
-void LoadB_001b95c0(LargeObject* param_1)
+void Scene::Level_Init()
 {
 	undefined4* puVar1;
 	TimeController* pTimeController;
 	Manager** loadFuncPtr;
 	int loopCounter;
 
-	if (param_1->field_0x40 != 0) {
-		param_1->field_0x44 = 0.0;
-		param_1->field_0x40 = 0;
+	if (this->curState != 0) {
+		this->field_0x44 = 0.0;
+		this->curState = 0;
 	}
-	param_1->field_0x44 = 0.0;
-	if ((param_1->field_0xc[3] & 1) == 0) {
-		param_1->field_0xcc = param_1->field_0xcc + 1;
-		param_1->field_0xd8 = param_1->field_0xe8;
-		param_1->field_0xdc = param_1->field_0xec;
-		param_1->field_0xe0 = param_1->field_0xf0;
-		param_1->field_0xe4 = param_1->field_0xf4;
-		param_1->field_0xd0 = 0.0;
-		param_1->field_0xd4 = 0.0;
-		loopCounter = param_1->field_0xcc;
-		(&param_1->field_0x0 + loopCounter * 2)[0x13] = (int)param_1->field_0xc;
-		(&param_1->field_0x0 + loopCounter * 2)[0x14] = (int)0x0;
+	this->field_0x44 = 0.0;
+	if ((this->field_0xc[3] & 1) == 0) {
+		this->field_0xcc = this->field_0xcc + 1;
+		this->field_0xd8 = this->field_0xe8;
+		this->field_0xdc = this->field_0xec;
+		this->field_0xe0 = this->field_0xf0;
+		this->field_0xe4 = this->field_0xf4;
+		this->field_0xd0 = 0.0;
+		this->field_0xd4 = 0.0;
+		loopCounter = this->field_0xcc;
+		(&this->field_0x0 + loopCounter * 2)[0x13] = (int)this->field_0xc;
+		(&this->field_0x0 + loopCounter * 2)[0x14] = (int)0x0;
 	}
-	puVar1 = param_1->field_0xc;
-	param_1->field_0xd8 = *puVar1;
-	param_1->field_0xdc = puVar1[1];
-	param_1->field_0xe0 = (undefined4)puVar1[2];
-	param_1->field_0xe4 = puVar1[3];
-	puVar1 = param_1->field_0xc;
-	param_1->field_0xe8 = *puVar1;
-	param_1->field_0xec = puVar1[1];
-	param_1->field_0xf0 = (undefined4)puVar1[2];
-	param_1->field_0xf4 = puVar1[3];
-	param_1->field_0x48 = 0;
-	FUN_002ab4a0(1, param_1->field_0x14, param_1->field_0x10);
-	//if (g_ManagerSingletonArray_00451660[1][2].pVTable == (ManagerFunctionData*)0x0) {
-	//	SetParam1_0x20ToParam2(param_1->pCameraObj28_0x4, 0);
-	//}
-	//else {
-		SetParam1_0x20ToParam2(param_1->pCameraObj28_0x4, 0xffffffff);
-	//}
-	SetParam1_0x20ToParam2(param_1->pCameraObj28_0x8, 0);
-	pTimeController = GetTimeController();
-	pTimeController->ResetTimeController_001ba6d0();
-	SetuGpffff8e5cTo0();
-	param_1->field_0x38 = 1;
-	//EffectsManager::LoadFunc_001a14d0((EffectsManager*)g_ManagerSingletonArray_00451660[22]);
+	puVar1 = this->field_0xc;
+	this->field_0xd8 = *puVar1;
+	this->field_0xdc = puVar1[1];
+	this->field_0xe0 = (undefined4)puVar1[2];
+	this->field_0xe4 = puVar1[3];
+	puVar1 = this->field_0xc;
+	this->field_0xe8 = *puVar1;
+	this->field_0xec = puVar1[1];
+	this->field_0xf0 = (undefined4)puVar1[2];
+	this->field_0xf4 = puVar1[3];
+	this->field_0x48 = 0;
+	ed3DSetMipmapProp(1, this->field_0x14, this->field_0x10);
+	if ((g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->pMeshTransformParent == (MeshTransformParent*)0x0) {
+		edViewportSetClearMask(this->pCameraObj28_0x4, 0);
+	}
+	else {
+		edViewportSetClearMask(this->pCameraObj28_0x4, 0xffffffff);
+	}
+	edViewportSetClearMask(this->pCameraObj28_0x8, 0);
+	pTimeController = GetTimer();
+	pTimeController->ResetGameTimers();
+	ed3DResetTime();
+	this->field_0x38 = 1;
+	//EffectsManager::Level_PreInit((EffectsManager*)g_ManagerSingletonArray_00451660[22]);
 	loopCounter = 0;
-	/* Load loop Initially points at 006db5b0 */
+	/* Init loop Initially points at 006db5b0 */
 	loadFuncPtr = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		/* This will call load functions */
 		if (*loadFuncPtr != (Manager*)0x0) {
-			(*loadFuncPtr)->LoadB();
+			(*loadFuncPtr)->Level_Init();
 		}
 		loopCounter = loopCounter + 1;
 		loadFuncPtr = loadFuncPtr + 1;
 	} while (loopCounter < 0x18);
-	param_1->field_0x38 = 1;
-	//FUN_0024ae40();
+	this->field_0x38 = 1;
+	//edColFreeTemporaryMemory();
 	//(*(code*)g_LevelScheduleManager_00449728->pManagerFunctionData[1].field_0x0)();
 	//WillLoadCinematic(g_CinematicManager_0048efc);
 	//FUN_003f95f0((MapManager*)g_ManagerSingletonArray_00451660[11]);
-	if (param_1->field_0xcc != -1) {
+	if (this->field_0xcc != -1) {
 		//puVar1 = (undefined4*)(&param_1->field_0x4c)[param_1->field_0xcc * 2];
 		//param_1->field_0xe8 = *puVar1;
 		//param_1->field_0xec = puVar1[1];
@@ -645,16 +646,15 @@ void LoadB_001b95c0(LargeObject* param_1)
 	return;
 }
 
-void FUN_001b90b0(LargeObject* param_1)
-
+void Scene::HandleCurState()
 {
 	TimeController* pTVar1;
 	ulong uVar2;
 
-	//LargeObjectFunc_001b97f0(param_1);
-	pTVar1 = GetTimeController();
-	param_1->field_0x44 = param_1->field_0x44 + pTVar1->lastFrameTime;
-	switch (param_1->field_0x40) {
+	//HandleFogAndClippingSettings(param_1);
+	pTVar1 = GetTimer();
+	this->field_0x44 = this->field_0x44 + pTVar1->lastFrameTime;
+	switch (this->curState) {
 	case 1:
 		assert(false);
 		//FUN_001a0180(1.0, 2, 0);
@@ -730,32 +730,32 @@ void FUN_001b90b0(LargeObject* param_1)
 	return;
 }
 
-void PreUpdateObjects(LargeObject* param_1)
+void Scene::Level_Manage()
 {
 	Manager** ppMVar1;
 	int iVar2;
 
-	if (param_1->field_0x48 == 0) {
-		if ((g_DebugCameraFlag_00448ea4 & 0x200) != 0) {
-			g_StaticMeshMasterA_00448808->RemoveFlag_002a53e0(4);
-			g_CameraPanMasterB_0044880c->RemoveFlag_002a53e0(4);
-			g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffdff;
+	if (this->field_0x48 == 0) {
+		if ((GameFlags & 0x200) != 0) {
+			Scene::_scene_handleA->RemoveFlag_002a53e0(4);
+			_scene_handleB->RemoveFlag_002a53e0(4);
+			GameFlags = GameFlags & 0xfffffdff;
 		}
 	}
 	else {
-		if ((g_DebugCameraFlag_00448ea4 & 0x200) == 0) {
-			g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 | 0x200;
-			g_StaticMeshMasterA_00448808->SetFlag_002a5400(4);
-			g_CameraPanMasterB_0044880c->SetFlag_002a5400(4);
+		if ((GameFlags & 0x200) == 0) {
+			GameFlags = GameFlags | 0x200;
+			Scene::_scene_handleA->ed3DSceneSetFlag(4);
+			_scene_handleB->ed3DSceneSetFlag(4);
 		}
 	}
 	//EmptyFunction();
-	if ((g_DebugCameraFlag_00448ea4 & 0x20) == 0) {
+	if ((GameFlags & 0x20) == 0) {
 		iVar2 = 0;
 		ppMVar1 = (Manager**)&g_ManagerSingletonArray_00451660;
 		do {
 			if (*ppMVar1 != (Manager*)0x0) {
-				(*ppMVar1)->PreUpdateA();
+				(*ppMVar1)->Level_Manage();
 			}
 			iVar2 = iVar2 + 1;
 			ppMVar1 = ppMVar1 + 1;
@@ -766,13 +766,13 @@ void PreUpdateObjects(LargeObject* param_1)
 		ppMVar1 = (Manager**)&g_ManagerSingletonArray_00451660;
 		do {
 			if (*ppMVar1 != (Manager*)0x0) {
-				(*ppMVar1)->PreUpdateB();
+				(*ppMVar1)->Level_ManagePaused();
 			}
 			iVar2 = iVar2 + 1;
 			ppMVar1 = ppMVar1 + 1;
 		} while (iVar2 < 0x18);
 	}
-	FUN_001b90b0(param_1);
+	HandleCurState();
 	return;
 }
 
@@ -785,18 +785,18 @@ void UpdateObjectsMain(void)
 	ppMVar1 = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		if (*ppMVar1 != (Manager*)0x0) {
-			(*ppMVar1)->Update();
+			(*ppMVar1)->Level_Draw();
 		}
 		iVar2 = iVar2 + 1;
 		ppMVar1 = ppMVar1 + 1;
 	} while (iVar2 < 0x18);
-	ActivateDisplayLists_002d6490();
+	GlobalDList_AddToView();
 	return;
 }
 
 char* s_Main_Camera_0042b460 = "Main Camera";
 
-void LargeObject::OnLoadLevelBnk_001b8920(MemoryStream* pMemoryStream)
+void Scene::Level_Setup(ByteCode* pMemoryStream)
 {
 	undefined4* puVar1;
 	int* piVar2;
@@ -806,51 +806,51 @@ void LargeObject::OnLoadLevelBnk_001b8920(MemoryStream* pMemoryStream)
 	float fVar5;
 	uint* local_4;
 
-	pMemoryStream->ReadByte_00189bb0();
-	pMemoryStream->ReadByte_00189bb0();
-	pMemoryStream->ReadByte_00189bb0();
-	pMemoryStream->ReadByte_00189bb0();
-	pMemoryStream->ReadLongFunc_00189b00();
-	pMemoryStream->ReadInt_00189b70();
-	pMemoryStream->ReadInt_00189b70();
-	uVar3 = pMemoryStream->ReadUint_00189b50();
+	pMemoryStream->GetU8();
+	pMemoryStream->GetU8();
+	pMemoryStream->GetU8();
+	pMemoryStream->GetU8();
+	pMemoryStream->GetU64();
+	pMemoryStream->GetS32();
+	pMemoryStream->GetS32();
+	uVar3 = pMemoryStream->GetU32();
 	this->field_0x18 = uVar3;
 	puVar1 = (undefined4*)pMemoryStream->currentSeekPos;
 	pMemoryStream->currentSeekPos = (char*)(puVar1 + 4);
 	this->field_0xc = puVar1;
-	iVar4 = pMemoryStream->ReadInt_00189b70();
+	iVar4 = pMemoryStream->GetS32();
 	this->field_0x14 = iVar4;
-	iVar4 = pMemoryStream->ReadInt_00189b70();
+	iVar4 = pMemoryStream->GetS32();
 	this->field_0x10 = iVar4;
 	/* Main Camera */
-	pCVar5 = (MainCamera*)g_ManagerSingletonArray_00451660.g_CameraManager_0045167c->LoadViewOrCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
-	fVar5 = pMemoryStream->ReadFloat_00189b30();
+	pCVar5 = (MainCamera*)g_ManagerSingletonArray_00451660.g_CameraManager_0045167c->AddCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
+	fVar5 = pMemoryStream->GetF32();
 	this->field_0x118 = fVar5;
 	//pCVar5->field_0x2dc = fVar5;
-	uVar3 = pMemoryStream->ReadUint_00189b50();
+	uVar3 = pMemoryStream->GetU32();
 	this->field_0x11c = uVar3;
-	uVar3 = pMemoryStream->ReadUint_00189b50();
+	uVar3 = pMemoryStream->GetU32();
 	this->count_0x120 = uVar3;
 	LoadFunc_001b87b0();
 	//MapManager::OnLoadLevelBnk_003f9a60(g_ManagerSingletonArray_00451660.g_MapManager_0045168c, pMemoryStream);
-	iVar4 = pMemoryStream->ReadInt_00189b70();
+	iVar4 = pMemoryStream->GetS32();
 	this->field_0x28 = iVar4;
 	if (this->field_0x28 != -1) {
-		IMPLEMENTATION_GUARD(FileManager3D::OnLoadLevelBnk_001a6b80(g_ManagerSingletonArray_00451660.g_FileManager3D_00451664, this->field_0x28));
+		IMPLEMENTATION_GUARD(FileManager3D::InstanciateG2D(g_ManagerSingletonArray_00451660.g_FileManager3D_00451664, this->field_0x28));
 	}
-	iVar4 = pMemoryStream->ReadInt_00189b70();
+	iVar4 = pMemoryStream->GetS32();
 	this->defaultTextureIndex_0x2c = iVar4;
 	//FUN_002cbc90((undefined4*)&this->field_0xfc);
-	iVar4 = pMemoryStream->ReadInt_00189b70();
+	iVar4 = pMemoryStream->GetS32();
 	this->field_0x30 = iVar4;
 	//EffectsManager::OnLoadLevelBnk_001a1790(g_ManagerSingletonArray_00451660.g_EffectsManager_004516b8, pMemoryStream);
 	local_4 = (uint*)0x0;
 	//MemoryStreamReadFunc_00117330(&local_4, pMemoryStream);
 	//FUN_00117210(&local_4);
 	//LevelScheduleManager::OnLoadLevelBnk_002d9f80(g_LevelScheduleManager_00449728, pMemoryStream);
-	iVar4 = pMemoryStream->ReadInt_00189b70();
+	iVar4 = pMemoryStream->GetS32();
 	this->field_0x10c = iVar4;
-	iVar4 = pMemoryStream->ReadInt_00189b70();
+	iVar4 = pMemoryStream->GetS32();
 	this->field_0x110 = iVar4;
 	piVar2 = (int*)pMemoryStream->currentSeekPos;
 	pMemoryStream->currentSeekPos = (char*)(piVar2 + 1);
@@ -861,17 +861,17 @@ void LargeObject::OnLoadLevelBnk_001b8920(MemoryStream* pMemoryStream)
 	return;
 }
 
-bool LargeObject::CheckFunc_001b9300()
+bool Scene::CheckFunc_001b9300()
 {
-	return this->field_0x40 - 6U < 2;
+	return this->curState - 6U < 2;
 }
 
-void Func_002b6db0(StaticMeshMaster* pStaticMeshMaster, uint width, uint height)
+void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height)
 {
-	CameraObj_28* pCVar1;
-	CameraObj_28* pCVar2;
+	ed_viewport* pCVar1;
+	ed_viewport* pCVar2;
 	short* psVar3;
-	CameraPanStatic_50* pCVar4;
+	SceneConfig* pCVar4;
 	uint uVar5;
 	uint uVar6;
 	short* psVar7;
@@ -881,11 +881,11 @@ void Func_002b6db0(StaticMeshMaster* pStaticMeshMaster, uint width, uint height)
 	short local_8;
 	short local_6;
 
-	pCVar4 = GetCameraPanStatic_50_002a5600(pStaticMeshMaster);
-	pCVar1 = (pCVar4->field_0x100).pCamera_0x10;
-	pCVar2 = (pCVar4->field_0x100).pCamera_0x14;
-	uVar5 = ToPowerOfTwo_0029e3f0(width);
-	uVar6 = ToPowerOfTwo_0029e3f0(height);
+	pCVar4 = ed3DSceneGetConfig(pStaticMeshMaster);
+	pCVar1 = (pCVar4->pShadowConfig).pCamera_0x10;
+	pCVar2 = (pCVar4->pShadowConfig).pCamera_0x14;
+	uVar5 = GetGreaterPower2Val(width);
+	uVar6 = GetGreaterPower2Val(height);
 	if (0x100 < (int)uVar6) {
 		uVar6 = 0x100;
 	}
@@ -903,8 +903,8 @@ void Func_002b6db0(StaticMeshMaster* pStaticMeshMaster, uint width, uint height)
 	}
 	uVar10 = (ushort)uVar5;
 	uVar9 = (ushort)uVar6;
-	(pCVar4->field_0x100).field_0x18 = uVar5;
-	(pCVar4->field_0x100).field_0x1c = uVar6;
+	(pCVar4->pShadowConfig).field_0x18 = uVar5;
+	(pCVar4->pShadowConfig).field_0x1c = uVar6;
 	pCVar1->posX = local_8;
 	pCVar1->posY = local_6;
 	pCVar1->screenWidth = uVar10;
@@ -918,10 +918,10 @@ void Func_002b6db0(StaticMeshMaster* pStaticMeshMaster, uint width, uint height)
 	return;
 }
 
-void LargeObject::LoadFunc_001b87b0()
+void Scene::LoadFunc_001b87b0()
 {
-	CameraPanStatic_50* pCVar1;
-	StaticMeshMaster** ppSVar2;
+	SceneConfig* pCVar1;
+	ed_3D_Scene** ppSVar2;
 	uint unaff_s1_lo;
 	uint unaff_s2_lo;
 	uint uVar3;
@@ -932,7 +932,7 @@ void LargeObject::LoadFunc_001b87b0()
 	if (10 < this->count_0x120) {
 		this->count_0x120 = 10;
 	}
-	GetCameraPanStatic_50_002a5600(g_StaticMeshMasterA_00448808);
+	ed3DSceneGetConfig(Scene::_scene_handleA);
 	if (this->field_0x11c == 0) {
 		unaff_s2_lo = 0x200;
 		unaff_s1_lo = 0x100;
@@ -948,22 +948,22 @@ void LargeObject::LoadFunc_001b87b0()
 			(*ppSVar2)->RemoveFlag_002a53e0(4);
 		}
 		else {
-			(*ppSVar2)->SetFlag_002a5400(4);
+			(*ppSVar2)->ed3DSceneSetFlag(4);
 		}
 		Func_002b6db0(*ppSVar2, unaff_s2_lo, unaff_s1_lo);
-		pCVar1 = GetCameraPanStatic_50_002a5600(*ppSVar2);
-		(pCVar1->field_0x100).field_0x20 = (short)(1 << (uVar3 & 0x1f));
+		pCVar1 = ed3DSceneGetConfig(*ppSVar2);
+		(pCVar1->pShadowConfig).field_0x20 = (short)(1 << (uVar3 & 0x1f));
 		uVar3 = uVar3 + 1;
 		ppSVar2 = ppSVar2 + 1;
 		pCVar1->field_0x12c = pCVar1->field_0x14 * 800;
 		pCVar1->field_0x128 = 1;
-		(pCVar1->field_0x100).field_0x0 = 0;
-		(pCVar1->field_0x100).field_0x4 = 90.0;
-		(pCVar1->field_0x100).field_0x8 = -0.01;
-		(pCVar1->field_0x100).field_0xc = -150.0;
-		(pCVar1->field_0x100).field_0x22 = 0x32;
-		(pCVar1->field_0x100).field_0x23 = 0;
-		(pCVar1->field_0x100).field_0x24 = 0;
+		(pCVar1->pShadowConfig).field_0x0 = 0;
+		(pCVar1->pShadowConfig).field_0x4 = 90.0;
+		(pCVar1->pShadowConfig).field_0x8 = -0.01;
+		(pCVar1->pShadowConfig).field_0xc = -150.0;
+		(pCVar1->pShadowConfig).field_0x22 = 0x32;
+		(pCVar1->pShadowConfig).field_0x23 = 0;
+		(pCVar1->pShadowConfig).field_0x24 = 0;
 	} while ((int)uVar3 < 10);
 	return;
 }

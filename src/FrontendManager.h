@@ -6,9 +6,9 @@
 
 struct FrontendManager : public Manager {
 	FrontendManager();
-	virtual void OnBeginGame();
+	virtual void Game_Init();
 
-	struct CameraObj_28* pCamera;
+	struct ed_viewport* pCamera;
 	undefined field_0x8;
 	undefined field_0x9;
 	undefined field_0xa;
@@ -17,7 +17,7 @@ struct FrontendManager : public Manager {
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	Matrix field_0x10;
+	edF32MATRIX4 field_0x10;
 	byte bHideHUD;
 	undefined field_0x51;
 	undefined field_0x52;
@@ -41,6 +41,8 @@ struct FrontendManager : public Manager {
 	undefined field_0x7f;
 };
 
-extern struct StaticMeshMaster* g_FrontendStaticMeshMaster_00448818;
+namespace Frontend {
+	extern struct ed_3D_Scene* _scene_handle;
+}
 
 #endif // FRONTEND_MANAGER_H

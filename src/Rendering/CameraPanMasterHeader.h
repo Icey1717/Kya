@@ -27,9 +27,9 @@ struct MeshTransformParent {
 	struct DisplayListInternalMesh* pMeshTransformData;
 };
 
-struct MeshTransformParentHeader {
+struct edNODE_MANAGER {
 	char name[4];
-	MeshTransformSpecial* field_0x4;
+	MeshTransformSpecial* pNextFree;
 	int totalCount;
 	int usedCount;
 };
@@ -41,11 +41,11 @@ union CameraPanHeaderUnion {
 	CameraPanFunc* field1;
 };
 
-struct CameraPanMasterHeader {
+struct edLIST {
 	CameraPanHeaderUnion headerUnion;
 	MeshTransformSpecial* pLoadedData;
 	struct MeshTransformParent* pCameraPanStatic_0x8;
-	MeshTransformParentHeader* pCameraPanHeader_0xc;
+	edNODE_MANAGER* pCameraPanHeader_0xc;
 	undefined4 field_0x10;
 	int count_0x14;
 	undefined field_0x18;
@@ -58,10 +58,10 @@ struct CameraPanMasterHeader {
 	undefined field_0x1f;
 };
 
-void Link_00290c10(CameraPanMasterHeader* pCameraPanMasterHeader);
-CameraPanMasterHeader* AllocateCameraAndMesh_00290a10(int cameraPanCount, int meshHeaderCount, void* heapID);
-bool Setup_00290bf0(CameraPanMasterHeader* pCameraPanStatic, MeshTransformParentHeader* param_2, int param_3, CameraPanFunc* param_4);
-void* Setup_00290b70(MeshTransformParentHeader* pAllocatedBuffer, int count);
-bool FUN_002909f0(CameraPanMasterHeader* param_1, int param_2, CameraPanFunc* param_3);
+void edListClear(edLIST* pCameraPanMasterHeader);
+edLIST* edListNew(int cameraPanCount, int meshHeaderCount, void* heapID);
+bool edListLink(edLIST* pCameraPanStatic, edNODE_MANAGER* param_2, int param_3, CameraPanFunc* param_4);
+void* Setup_00290b70(edNODE_MANAGER* pAllocatedBuffer, int count);
+bool edListSetMode(edLIST* param_1, int param_2, CameraPanFunc* param_3);
 
 #endif //CAMERA_PAN_MASTER_HEADER_H

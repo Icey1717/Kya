@@ -8,12 +8,13 @@
 #include <libgraph.h>
 #else
 #include "port.h"
+#include "renderer.h"
 #endif
 #include "../Camera.h"
 
 // Not here
 
-void FUN_002b98f0(FrameBuffer* pFrameBuffer)
+void FUN_002b98f0(edSurface* pFrameBuffer)
 {
 	int iVar1;
 	int iVar2;
@@ -29,14 +30,14 @@ void FUN_002b98f0(FrameBuffer* pFrameBuffer)
 
 
 
-void AllocateVidModeData20_002b8a30(FrameBuffer* pFrameBuffer, byte interlace)
+void AllocateVidModeData20_002b8a30(edSurface* pFrameBuffer, byte interlace)
 {
 	VidModeData_20* pVVar1;
 
 	pVVar1 = (VidModeData_20*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(VidModeData_20));
 	pFrameBuffer->pVidModeData20 = pVVar1;
 	ulong dispfb2 =
-		(ulong)g_VidParams8_00449588.field_0x1 << 0x2b |
+		(ulong)edVideoConfiguration.field_0x1 << 0x2b |
 		(ulong)pFrameBuffer->pVidModeData_0x0->pixelStoreMode << 0xf |
 		(ulong)pFrameBuffer->frameBasePtr | (ulong)((int)(uint)pFrameBuffer->pVidModeData_0x0->screenWidth >> 6) << 9;
 	pFrameBuffer->pVidModeData20->dispfb2 = *(tGS_DISPFB2*)&dispfb2;
@@ -49,7 +50,7 @@ void AllocateVidModeData20_002b8a30(FrameBuffer* pFrameBuffer, byte interlace)
 	return;
 }
 
-void CreateZBufferTags(FrameBuffer* pFrameBuffer)
+void CreateZBufferTags(edSurface* pFrameBuffer)
 {
 	ZBufferTags* pTags;
 	int zBufferFormat;
@@ -69,7 +70,7 @@ void CreateZBufferTags(FrameBuffer* pFrameBuffer)
 	pTags->commandBuffer[0].cmdB = SCE_GIF_PACKED_AD;
 
 	// Z BUFFER
-	zBufferFormat = GetZBufferTextureFormat(pFrameBuffer->pVidModeData_0x0->pixelStoreMode);
+	zBufferFormat = edSurfaceGetZBufferBpp(pFrameBuffer->pVidModeData_0x0->pixelStoreMode);
 	pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
 		pFrameBuffer->frameBasePtr,	// ZBP
 		zBufferFormat,				// PSM
@@ -92,7 +93,7 @@ void CreateZBufferTags(FrameBuffer* pFrameBuffer)
 	return;
 }
 
-int GetCanInterlace_002b8b90(void)
+int _HighResMode(void)
 {
 	int iVar1;
 
@@ -112,7 +113,7 @@ int GetCanInterlace_002b8b90(void)
 	return iVar1;
 }
 
-void SetupDisplayGlobals_002b8c00(void)
+void _SetVideoEnv(void)
 {
 	ulong uVar1;
 
@@ -130,7 +131,7 @@ void SetupDisplayGlobals_002b8c00(void)
 			uVar1 = (ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
 				(ulong)(g_ActiveVidParams_0048cd90.params18.DX + 0x27c) | (ulong)(g_ActiveVidParams_0048cd90.params18.DY + 0x32) << GS_DISPLAY2_DY_O |
 				0x9ff00000000;
-			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)g_ActiveVidParams_0048cd90.params18.DH - (uint)g_VidParams8_00449588.field_0x1) <<
+			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)g_ActiveVidParams_0048cd90.params18.DH - (uint)edVideoConfiguration.field_0x1) <<
 				GS_DISPLAY2_DH_O);
 			g_ActiveVidParams_0048cd90.disp2 = *(tGS_DISPLAY2*)&dispfb2;
 			ulong dispfb1 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O | uVar1);
@@ -149,7 +150,7 @@ void SetupDisplayGlobals_002b8c00(void)
 			uVar1 = (ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
 				(ulong)(g_ActiveVidParams_0048cd90.params18.DX + 0x290) | (ulong)(g_ActiveVidParams_0048cd90.params18.DY + 0x48) << GS_DISPLAY2_DY_O |
 				0x9ff00000000;
-			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)g_ActiveVidParams_0048cd90.params18.DH - (uint)g_VidParams8_00449588.field_0x1) <<
+			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)g_ActiveVidParams_0048cd90.params18.DH - (uint)edVideoConfiguration.field_0x1) <<
 				GS_DISPLAY2_DH_O);
 			g_ActiveVidParams_0048cd90.disp2 = *(tGS_DISPLAY2*)&dispfb2;
 			ulong dispfb1 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O | uVar1);
@@ -159,7 +160,7 @@ void SetupDisplayGlobals_002b8c00(void)
 	return;
 }
 
-void UpdateCameraCommands_002b8f70(FrameBuffer* pColorBuffer)
+void _VideoUpdateSystemViewport(edSurface* pColorBuffer)
 {
 	byte alpha;
 	CameraObjParams params;
@@ -168,7 +169,7 @@ void UpdateCameraCommands_002b8f70(FrameBuffer* pColorBuffer)
 	params.field_0x0 = 0;
 	params.screenHeight = 0x200;
 	params.screenWidth = 0x200;
-	if (pColorBuffer != (FrameBuffer*)0x0) {
+	if (pColorBuffer != (edSurface*)0x0) {
 		params.screenWidth = pColorBuffer->pVidModeData_0x0->screenWidth;
 		params.screenHeight = pColorBuffer->pVidModeData_0x0->screenHeight;
 	}
@@ -179,13 +180,13 @@ void UpdateCameraCommands_002b8f70(FrameBuffer* pColorBuffer)
 	if (g_ActiveVidParams_0048cd90.params26.field_0xb != 0) {
 		alpha = alpha | 1;
 	}
-	if (g_ActiveVidParams_0048cd90.pCamera == (CameraObj_28*)0x0) {
-		AllocateCameraObj28_002bae70(&params, pColorBuffer, (FrameBuffer*)0x0, alpha);
-		SetCameraClear_002bb960(g_ActiveVidParams_0048cd90.pCamera, 0x20, 0x20, 0x40);
+	if (g_ActiveVidParams_0048cd90.pCamera == (ed_viewport*)0x0) {
+		edViewportNew(&params, pColorBuffer, (edSurface*)0x0, alpha);
+		edViewportSetBackgroundColor(g_ActiveVidParams_0048cd90.pCamera, 0x20, 0x20, 0x40);
 	}
 	else {
 		BuildCameraCommands_002bafe0(g_ActiveVidParams_0048cd90.pCamera, &params, pColorBuffer, 0, alpha);
-		SetCameraClear_002bb960
+		edViewportSetBackgroundColor
 		(g_ActiveVidParams_0048cd90.pCamera, g_ActiveVidParams_0048cd90.params18.r,
 			g_ActiveVidParams_0048cd90.params18.g, g_ActiveVidParams_0048cd90.params18.b);
 	}
@@ -252,10 +253,10 @@ uint GetTextureMemorySize_002bba40(uint pixels)
 	return pixels;
 }
 
-bool CreateVideoMemoryForFrameBuffer_002bbaa0(FrameBuffer* pFrameBuffer)
+bool CreateVideoMemoryForFrameBuffer_002bbaa0(edSurface* pFrameBuffer)
 {
 	ushort uVar1;
-	VidModeData* pVVar2;
+	ed_surface_desc* pVVar2;
 	int align;
 	void* pvVar3;
 	int size;
@@ -284,35 +285,35 @@ bool CreateVideoMemoryForFrameBuffer_002bbaa0(FrameBuffer* pFrameBuffer)
 	return pFrameBuffer->data_0xc != 0;
 }
 
-FrameBuffer* AllocateFrameBuffers_002bbb90(VidModeData* pVidModeData)
+edSurface* edSurfaceNew(ed_surface_desc* pVidModeData)
 {
 	bool bVar2;
 	byte interlaceFormat;
-	VidModeData* pVidModeCopy;
-	VidModeData* puVar2;
-	FrameBuffer* bufferStart;
+	ed_surface_desc* pVidModeCopy;
+	ed_surface_desc* puVar2;
+	edSurface* bufferStart;
 	uint uVar4;
-	FrameBuffer* lVar5;
-	FrameBuffer* pPrevFrameBuffer;
-	FrameBuffer* pNewFrameBuffer;
+	edSurface* lVar5;
+	edSurface* pPrevFrameBuffer;
+	edSurface* pNewFrameBuffer;
 
-	lVar5 = (FrameBuffer*)0x0;
-	pVidModeCopy = (VidModeData*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(VidModeData));
+	lVar5 = (edSurface*)0x0;
+	pVidModeCopy = (ed_surface_desc*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
 	*pVidModeCopy = *pVidModeData;
 
 	uVar4 = 0;
-	pPrevFrameBuffer = (FrameBuffer*)0x0;
+	pPrevFrameBuffer = (edSurface*)0x0;
 	if (pVidModeData->frameBufferCount != 0) {
 		do {
-			pNewFrameBuffer = (FrameBuffer*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(FrameBuffer));
-			memset(pNewFrameBuffer, 0, sizeof(FrameBuffer));
+			pNewFrameBuffer = (edSurface*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(edSurface));
+			memset(pNewFrameBuffer, 0, sizeof(edSurface));
 			pNewFrameBuffer->pVidModeData_0x0 = pVidModeCopy;
-			if (lVar5 == (FrameBuffer*)0x0) {
+			if (lVar5 == (edSurface*)0x0) {
 				lVar5 = pNewFrameBuffer;
 			}
 			if ((pVidModeData->bUseGlobalFrameBuffer == '\0') && (bVar2 = CreateVideoMemoryForFrameBuffer_002bbaa0(pNewFrameBuffer), bVar2 == false)) {
 				edMemFree(pNewFrameBuffer);
-				return (FrameBuffer*)0x0;
+				return (edSurface*)0x0;
 			}
 			if ((pVidModeData->flags_0x8 & 0x20) != 0) {
 				interlaceFormat = 0;
@@ -324,7 +325,7 @@ FrameBuffer* AllocateFrameBuffers_002bbb90(VidModeData* pVidModeData)
 			if ((pVidModeData->flags_0x8 & 8) != 0) {
 				CreateZBufferTags(pNewFrameBuffer);
 			}
-			if (pPrevFrameBuffer != (FrameBuffer*)0x0) {
+			if (pPrevFrameBuffer != (edSurface*)0x0) {
 				pNewFrameBuffer->pNext = pPrevFrameBuffer;
 			}
 			uVar4 = uVar4 + 1;
@@ -338,23 +339,23 @@ FrameBuffer* AllocateFrameBuffers_002bbb90(VidModeData* pVidModeData)
 	return pNewFrameBuffer;
 }
 
-void DestroyFrameBuffer_002bbd40(FrameBuffer* pFrameBuffer)
+void edSurfaceDel(edSurface* pFrameBuffer)
 {
 	byte bVar1;
-	VidModeData* heapID;
-	FrameBuffer* pVVar2;
+	ed_surface_desc* heapID;
+	edSurface* pVVar2;
 	uint uVar3;
 
 	heapID = pFrameBuffer->pVidModeData_0x0;
 	bVar1 = heapID->frameBufferCount;
-	if (heapID != (VidModeData*)0x0) {
+	if (heapID != (ed_surface_desc*)0x0) {
 		edMemFree(heapID);
 	}
 	uVar3 = 0;
 	if (bVar1 != 0) {
 		do {
 			if (g_ActiveVidParams_0048cd90.pFrameBuffer == pFrameBuffer) {
-				g_ActiveVidParams_0048cd90.pFrameBuffer = (FrameBuffer*)0x0;
+				g_ActiveVidParams_0048cd90.pFrameBuffer = (edSurface*)0x0;
 			}
 			if (pFrameBuffer->pVidModeData20 != (VidModeData_20*)0x0) {
 				edMemFree(pFrameBuffer->pVidModeData20);
@@ -374,7 +375,7 @@ void DestroyFrameBuffer_002bbd40(FrameBuffer* pFrameBuffer)
 	return;
 }
 
-void SetMode_002bbe20(FrameBuffer* param_1, ushort mode)
+void SetMode_002bbe20(edSurface* param_1, ushort mode)
 {
 	uint uVar1;
 	uint uVar2;
@@ -385,7 +386,7 @@ void SetMode_002bbe20(FrameBuffer* param_1, ushort mode)
 		do {
 			param_1->pVidModeData_0x0->pixelStoreMode = mode;
 			if (param_1->pVidModeData20 != (VidModeData_20*)0x0) {
-				ulong dispfb2 = (ulong)g_VidParams8_00449588.field_0x1 << 0x2b |
+				ulong dispfb2 = (ulong)edVideoConfiguration.field_0x1 << 0x2b |
 					(ulong)param_1->pVidModeData_0x0->pixelStoreMode << 0xf |
 					(ulong)param_1->frameBasePtr | (long)((int)(uint)param_1->pVidModeData_0x0->screenWidth >> 6) << 9;
 
@@ -403,9 +404,9 @@ void SetMode_002bbe20(FrameBuffer* param_1, ushort mode)
 
 char* g_szInvalidZBuffer_00433480 = "You don't have a valid zbuffer !!!!";
 
-int GetZBufferTextureFormat(int pixelStoreMode)
+int edSurfaceGetZBufferBpp(int pixelStoreMode)
 {
-	FrameBuffer* pVVar1;
+	edSurface* pVVar1;
 	int outFormat;
 
 	if (pixelStoreMode == SCE_GS_PSMCT16) {
@@ -429,7 +430,7 @@ int GetZBufferTextureFormat(int pixelStoreMode)
 			}
 			else {
 				outFormat = SCE_GS_PSMZ32;
-				PrintString(g_szInvalidZBuffer_00433480);
+				edDebugPrintf(g_szInvalidZBuffer_00433480);
 			}
 		}
 	}

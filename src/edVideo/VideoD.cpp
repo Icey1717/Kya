@@ -14,15 +14,19 @@
 
 #include "Rendering/CustomShell.h"
 
+#ifdef PLATFORM_WIN
+#include "renderer.h"
+#endif
+
 edVideo_Globals edVideo_Globals_00449590 = { 0 };
 
-void FUN_002b8f30(void)
+void _UpdateVideoInfo(void)
 {
 	if (g_ActiveVidParams_0048cd90.params26.omode == SCE_GS_PAL) {
 		edVideo_Globals_00449590.field_0x4 = (undefined*)0x0059f740;
 	}
 	else {
-		edVideo_Globals_00449590.field_0x4 = (undefined*)&GetHeap()[0x59b].pStartAddr;
+		edVideo_Globals_00449590.field_0x4 = (undefined*)&edmemGetMainHeader()[0x59b].pStartAddr;
 	}
 	edVideo_Globals_00449590.pActiveVidParams = &g_ActiveVidParams_0048cd90;
 	return;
@@ -57,9 +61,9 @@ edSysHandlerVideo::edSysHandlerVideo()
 	return;
 }
 
-void CallRenderFunc_002ba0f0(void)
+void edVideoSwap(void)
 {
-	FrameBuffer* pVVar1;
+	edSurface* pVVar1;
 
 	pVVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pVidModeData_0x0->pLink_0xc;
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
@@ -70,7 +74,7 @@ void CallRenderFunc_002ba0f0(void)
 	return;
 }
 
-void SetGSRegistersFromVidModeData_002b8e20(FrameBuffer* param_1)
+void SetGSRegistersFromVidModeData_002b8e20(edSurface* param_1)
 {
 #ifdef PLATFORM_PS2
 	DPUT_GS_PMODE((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.gs_pmode);
@@ -84,9 +88,9 @@ void SetGSRegistersFromVidModeData_002b8e20(FrameBuffer* param_1)
 	return;
 }
 
-void ConditonallyUpdateRegisters_002ba050(void)
+void edVideoPutDisplayEnv(void)
 {
-	FrameBuffer* pVVar1;
+	edSurface* pVVar1;
 	ulong uVar2;
 
 	pVVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pVidModeData_0x0->pLink_0xc;
@@ -100,32 +104,19 @@ void ConditonallyUpdateRegisters_002ba050(void)
 	return;
 }
 
-void SendCameraCommands_002bb910(CameraObj_28* pCamera)
+void edVideoPutDrawEnv(void)
 {
-	if (pCamera->pColorBuffer != (FrameBuffer*)0x0) {
-		BuildCameraCommands_002bb110(pCamera, pCamera->pCameraObj390_0x24->commandBuffer);
-		WaitDMA();
-		WaitForDraw_00258230();
-#ifdef PLATFORM_PS2
-		shellDmaStartB(SHELLDMA_CHANNEL_GIF, pCamera->pCameraObj390_0x24, pCamera->pCameraObj390_0x24->qwc);
-#endif
+	if (g_ActiveVidParams_0048cd90.pCamera != (ed_viewport*)0x0) {
+		edViewPortApplyDrawingEnv(g_ActiveVidParams_0048cd90.pCamera);
 	}
 	return;
 }
 
-void SendGifPacket_002ba0c0(void)
-{
-	if (g_ActiveVidParams_0048cd90.pCamera != (CameraObj_28*)0x0) {
-		SendCameraCommands_002bb910(g_ActiveVidParams_0048cd90.pCamera);
-	}
-	return;
-}
-
-void FUN_002b9550(void)
+void _ManageFade(void)
 {
 	if (g_ActiveVidParams_0048cd90.field_0x78 != 0) {
 		assert(false);
-		//FUN_002b96c0();
+		//_DrawFade();
 	}
 	if (g_ActiveVidParams_0048cd90.field_0x68 != 0) {
 		g_ActiveVidParams_0048cd90.field_0x6c =
@@ -170,14 +161,14 @@ unsigned int GetCountValue(void)
 #endif
 }
 
-void SetiGpffff9094ToCountValue(void)
+void _VideoTimerReset(void)
 
 {
 	UINT_00449584 = GetCountValue();
 	return;
 }
 
-void WaitForSomething2(void)
+void _VideoTimerSyncVbl(void)
 {
 	undefined* puVar1;
 	int currentCount;
@@ -203,7 +194,7 @@ void WaitForSomething2(void)
 	return;
 }
 
-void WaitForVSync(byte param_1)
+void edVideoWaitVsync(byte param_1)
 {
 #ifdef PLATFORM_PS2
 	ulong uVar1;
@@ -211,21 +202,21 @@ void WaitForVSync(byte param_1)
 	g_ActiveVidParams_0048cd90.bWaitingForVSync = 1;
 	if (g_ActiveVidParams_0048cd90.params26.bVSyncForever == 0) {
 		g_ActiveVidParams_0048cd90.field_0x52 = param_1;
-		WaitForSomething2();
+		_VideoTimerSyncVbl();
 		if ((((g_ActiveVidParams_0048cd90.field_0x52 == 0) ||
 			(g_ActiveVidParams_0048cd90.params26.inter == SCE_GS_NOINTERLACE)) ||
 			(g_ActiveVidParams_0048cd90.params18.ffmode == SCE_GS_FIELD)) ||
-			(g_ActiveVidParams_0048cd90.pFrameBuffer == (FrameBuffer*)0x0)) {
-			ResetVideoData_002ba560();
+			(g_ActiveVidParams_0048cd90.pFrameBuffer == (edSurface*)0x0)) {
+			_edVideoSyncReset();
 		}
 		else {
 			uVar1 = DGET_GS_CSR();
 			if ((uint)((uVar1 & 0x2000) >> 0xd) ==
 				(uint)(g_ActiveVidParams_0048cd90.pFrameBuffer)->pVidModeData_0x0->pLink_0xc->pVidModeData20->csrValue_0x10) {
-				ResetVideoData_002ba560();
+				_edVideoSyncReset();
 			}
 		}
-		SetiGpffff9094ToCountValue();
+		_VideoTimerReset();
 		return;
 	}
 	do {
@@ -235,41 +226,47 @@ void WaitForVSync(byte param_1)
 #endif
 }
 
-void RefreshScreenRender(void)
+void edVideoFlip(void)
 {
 	RENDER_LOG("RefreshScreenRender\n");
 
 	/* Render scene */
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 6, (void*)0x0);
-	WaitForDraw_00258230();
-	FUN_002b9550();
+	edDmaSyncPath();
+	_ManageFade();
 	/* Render UI */
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 10, (void*)0x0);
-	WaitForDraw_00258230();
+	edDmaSyncPath();
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 9, (void*)0x0);
-	WaitForVSync(1);
+
+	edVideoWaitVsync(1);
+
 	if (g_ActiveVidParams_0048cd90.params26.field_0xf != 0) {
-		ConditonallyUpdateRegisters_002ba050();
-		SendGifPacket_002ba0c0();
+		edVideoPutDisplayEnv();
+		edVideoPutDrawEnv();
 	}
-	CallRenderFunc_002ba0f0();
+	edVideoSwap();
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 7, (void*)0x0);
+
+#ifdef PLATFORM_WIN
+	Renderer::Present();
+#endif
 	return;
 }
 
-FrameBuffer* GetVidModeData_002ba360(void)
+edSurface* GetVidModeData_002ba360(void)
 {
-	FrameBuffer* pVVar1;
+	edSurface* pVVar1;
 
-	pVVar1 = (FrameBuffer*)0x0;
-	if (g_ActiveVidParams_0048cd90.pFrameBuffer != (FrameBuffer*)0x0) {
+	pVVar1 = (edSurface*)0x0;
+	if (g_ActiveVidParams_0048cd90.pFrameBuffer != (edSurface*)0x0) {
 		pVVar1 = g_ActiveVidParams_0048cd90.pFrameBuffer->pVidModeData_0x0->pLink_0xc;
 	}
-	if ((pVVar1 != (FrameBuffer*)0x0) && (pVVar1->pNext != (FrameBuffer*)0x0)) {
+	if ((pVVar1 != (edSurface*)0x0) && (pVVar1->pNext != (edSurface*)0x0)) {
 		pVVar1 = pVVar1->pNext;
 	}
 	return pVVar1;

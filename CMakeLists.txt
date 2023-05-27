@@ -73,6 +73,7 @@ set(main_src
 	"${src_root}/Rendering/CustomShell.h"
 	"${src_root}/Rendering/Font.cpp"
 	"${src_root}/Rendering/Font.h"
+	"${src_root}/Rendering/OneTimeCommands.h"
 	"${src_root}/edC/edCBank.cpp"
 	"${src_root}/edC/edCBank.h"
 	"${src_root}/edC/edCBankBuffer.cpp"
@@ -201,4 +202,4 @@ else()
 	target_link_libraries(Kya port)
 endif()
 
-set(VS_STARTUP_PROJECT Kya)
+set_property( DIRECTORY PROPERTY VS_STARTUP_PROJECT Kya )

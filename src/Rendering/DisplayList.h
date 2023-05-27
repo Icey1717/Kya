@@ -9,24 +9,24 @@
 #include "CameraPanMasterHeader.h"
 
 struct ScratchpadSubObj_60 {
-	struct Matrix field_0x0;
+	struct edF32MATRIX4 field_0x0;
 	struct Vector field_0x40;
 	struct Vector field_0x50;
 };
 
-struct CameraPanStatic_C {
-	struct Vector* field_0x0;
-	struct Vector* field_0x4;
-	struct Vector* field_0x8;
+struct ed_3D_Light_Config {
+	struct Vector* pLightAmbient;
+	struct Vector* pLightDirections;
+	struct Vector* pLightColorMatrix;
 };
 
-struct CameraPanStatic_100 {
+struct ed_3D_Shadow_Config {
 	undefined4 field_0x0;
 	float field_0x4;
 	float field_0x8;
 	float field_0xc;
-	struct CameraObj_28* pCamera_0x10;
-	struct CameraObj_28* pCamera_0x14;
+	struct ed_viewport* pCamera_0x10;
+	struct ed_viewport* pCamera_0x14;
 	undefined4 field_0x18;
 	undefined4 field_0x1c;
 	undefined2 field_0x20;
@@ -35,7 +35,7 @@ struct CameraPanStatic_100 {
 	byte field_0x24;
 };
 
-struct CameraPanStatic_50 {
+struct SceneConfig {
 	undefined* field_0x0;
 	float field_0x4;
 	float nearClip;
@@ -64,13 +64,13 @@ struct CameraPanStatic_50 {
 	undefined field_0xfd;
 	undefined field_0xfe;
 	undefined field_0xff;
-	struct CameraPanStatic_100 field_0x100;
+	struct ed_3D_Shadow_Config pShadowConfig;
 	undefined field_0x125;
 	undefined field_0x126;
 	undefined field_0x127;
 	int field_0x128;
 	int field_0x12c;
-	struct CameraPanStatic_C field_0x130;
+	struct ed_3D_Light_Config pLightConfig;
 	undefined field_0x13c;
 	undefined field_0x13d;
 	undefined field_0x13e;
@@ -93,19 +93,19 @@ struct CameraPanStatic_50 {
 	undefined field_0x14f;
 };
 
-struct StaticMeshMaster {
+struct ed_3D_Scene {
 	void RemoveFlag_002a53e0(uint flag);
-	void SetFlag_002a5400(uint flag);
-	void SetFlag_002a5410(bool bValue);
+	void ed3DSceneSetFlag(uint flag);
+	void ed3DSceneSetFogProperty(bool bValue);
 	void SetFlag_002a5440(bool bValue);
 
-	int isChild;
+	int bShadowScene;
 	uint flags_0x4;
-	struct CameraObj_130* pCameraObj130_0x8;
-	struct CameraObj_28* pCameraObj28_0xc;
-	CameraPanMasterHeader headerA;
-	CameraPanMasterHeader headerB;
-	struct CameraPanStatic_50 field_0x50;
+	struct edFCamera* pCamera;
+	struct ed_viewport* pViewport;
+	edLIST headerA;
+	edLIST headerB;
+	struct SceneConfig sceneConfig;
 	undefined field_0x18c;
 	undefined field_0x18d;
 	undefined field_0x18e;
@@ -126,9 +126,9 @@ struct StaticMeshMaster {
 	undefined field_0x19d;
 	undefined field_0x19e;
 	undefined field_0x19f;
-	struct CameraPanMasterHeader* field_0x1a0;
-	struct CameraPanMasterHeader* pFinalLink_0x1a4;
-	struct CameraPanMasterHeader* field_0x1a8;
+	struct edLIST* field_0x1a0;
+	struct edLIST* pHeirListA;
+	struct edLIST* pHeirListB;
 	int* field_0x1ac;
 	uint count_0x1b0;
 	undefined field_0x1b4;
@@ -148,7 +148,7 @@ struct StaticMeshMaster {
 
 struct RenderCommandUint {
 	uint type;
-	struct RenderCommand* pCommandBuffer;
+	struct edpkt_data* pCommandBuffer;
 	uint size;
 	struct DisplayListInternal* pDisplayList;
 };
@@ -158,12 +158,12 @@ struct DisplayListInternalSubObj_60 {
 	byte field_0x40;
 	byte field_0x41;
 	ushort type_0x42;
-	struct RenderCommand* pRenderInput;
-	uint field_0x48;
+	struct edpkt_data* pRenderInput;
+	uint pCurDListBuf;
 	int field_0x4c;
 	uint field_0x50;
-	int field_0x54;
-	struct Matrix* field_0x58;
+	int nbMatrix;
+	struct edF32MATRIX4* pCurMatrixArray;
 	undefined field_0x5c;
 	undefined field_0x5d;
 	undefined field_0x5e;
@@ -180,10 +180,10 @@ struct DisplayListInternal {
 	undefined4 field_0x8;
 	char* field_0xc;
 	struct MeshDrawRenderCommand* field_0x10;
-	struct RenderCommand* field_0x14;
-	struct RenderCommand* pRenderCommands;
+	struct edpkt_data* field_0x14;
+	struct edpkt_data* pRenderCommands;
 	struct DisplayListInternalSubObj_60* pDisplayListInternalSubObj;
-	struct StaticMeshMaster* pStaticMeshMaster_0x20;
+	struct ed_3D_Scene* pStaticMeshMaster_0x20;
 	float field_0x24;
 	char* field_0x28;
 	char* field_0x2c;
@@ -206,7 +206,7 @@ struct DisplayListInternalMesh {
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	struct MeshInfo* pMeshInfo;
+	struct ed_g3d_manager* pMeshInfo;
 	uint flags;
 	float field_0x18;
 	undefined field_0x1c;
@@ -231,10 +231,10 @@ struct DisplayListInternalMesh {
 	undefined field_0x2f;
 };
 
-class DisplayList {
+class GlobalDList {
 public:
-	DisplayList();
-	DisplayList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, StaticMeshMaster* pInStaticMeshMaster);
+	GlobalDList();
+	GlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster);
 
 	void Init();
 
@@ -250,12 +250,12 @@ public:
 	int field_0x1c;
 };
 
-void SetupDisplayLists(void);
-bool GuiDisplayListFunc_002d6360(void);
-void ActivateDisplayLists_002d6490(void);
-void DisplayListFunc_002d6340(void);
+void GlobalDList_Init(void);
+bool GuiDList_BeginCurrent(void);
+void GlobalDList_AddToView(void);
+void GuiDList_EndCurrent(void);
 
-extern DisplayListInternal* g_CurrentDisplayListBase_004495dc;
-extern struct MeshDrawRenderCommand* PTR_MeshDrawRenderCommand_004495fc;
+extern DisplayListInternal* gCurDListHandle;
+extern struct MeshDrawRenderCommand* gCurDListBuf;
 
 #endif // _DISPLAYLIST_H

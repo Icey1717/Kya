@@ -30,7 +30,7 @@ TimeController::TimeController()
 	SetDesiredFrameTime(frameTime);
 }
 
-TimeController* GetTimeController(void)
+TimeController* GetTimer(void)
 {
 	return &g_TimeController_004516d0;
 }
@@ -84,7 +84,7 @@ float GetFrameTime_00291c40(void)
 #endif
 }
 
-float TimeController::UpdateDeltaTime()
+float TimeController::Update()
 {
 	float currentTime;
 
@@ -105,7 +105,7 @@ float TimeController::UpdateDeltaTime()
 	return currentTime;
 }
 
-void TimeController::ResetTimeController_001ba6d0()
+void TimeController::ResetGameTimers()
 {
 	field_0x8 = 1.0;
 	timeScale = 1.0;

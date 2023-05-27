@@ -2,17 +2,22 @@
 
 #include <assert.h>
 
-void MemoryStream::SeekForward_00189a50(int param_2)
+ulong ByteCode::BuildU64(int param_1, int param_2)
 {
-	this->currentSeekPos = this->currentSeekPos + param_2 + -1;
-	if (param_2 == 0) {
+	return (ulong)param_1 & 0xffffffffU | (ulong)param_2 << 0x20;
+}
+
+void ByteCode::Align(int align)
+{
+	this->currentSeekPos = this->currentSeekPos + align + -1;
+	if (align == 0) {
 		assert(false);
 	}
-	this->currentSeekPos = this->currentSeekPos + -((ulong)this->currentSeekPos % param_2);
+	this->currentSeekPos = this->currentSeekPos + -((ulong)this->currentSeekPos % align);
 	return;
 }
 
-undefined4 MemoryStream::Func_00189a90()
+undefined4 ByteCode::GetChunk()
 {
 	undefined4 uVar1;
 
@@ -22,7 +27,7 @@ undefined4 MemoryStream::Func_00189a90()
 	return uVar1;
 }
 
-char* MemoryStream::ReadString_00189ab0()
+char* ByteCode::GetString()
 {
 	char* pcVar1;
 	char* pcVar2;
@@ -37,7 +42,7 @@ char* MemoryStream::ReadString_00189ab0()
 	return pcVar1;
 }
 
-ulong MemoryStream::ReadLongFunc_00189b00()
+ulong ByteCode::GetU64()
 {
 	undefined4 uVar1;
 	undefined4 uVar2;
@@ -49,7 +54,7 @@ ulong MemoryStream::ReadLongFunc_00189b00()
 	return (ulong)uVar2 << 32 | (ulong)uVar1;
 }
 
-float MemoryStream::ReadFloat_00189b30()
+float ByteCode::GetF32()
 {
 	float fVar1;
 
@@ -58,7 +63,7 @@ float MemoryStream::ReadFloat_00189b30()
 	return fVar1;
 }
 
-uint MemoryStream::ReadUint_00189b50()
+uint ByteCode::GetU32()
 {
 	uint uVar1;
 
@@ -67,7 +72,7 @@ uint MemoryStream::ReadUint_00189b50()
 	return uVar1;
 }
 
-int MemoryStream::ReadInt_00189b70()
+int ByteCode::GetS32()
 {
 	int iVar1;
 
@@ -76,9 +81,16 @@ int MemoryStream::ReadInt_00189b70()
 	return iVar1;
 }
 
-// GAP
+ushort ByteCode::GetU16()
+{
+	ushort uVar1;
 
-byte MemoryStream::ReadByte_00189bb0()
+	uVar1 = *(ushort*)this->currentSeekPos;
+	this->currentSeekPos = (char*)((int)this->currentSeekPos + 2);
+	return uVar1;
+}
+
+byte ByteCode::GetU8()
 {
 	byte* pbVar1;
 
@@ -87,18 +99,23 @@ byte MemoryStream::ReadByte_00189bb0()
 	return *pbVar1;
 }
 
-char* MemoryStream::GetSeekPos()
+char* ByteCode::GetPosition()
 {
 	return this->currentSeekPos;
 }
 
-void MemoryStream::SetSeekPos(char* newPos)
+void ByteCode::SetPosition(char* newPos)
 {
 	this->currentSeekPos = newPos;
 	return;
 }
 
-char* MemoryStream::Setup_00189c00(char* fileBuffer)
+void ByteCode::Term(void)
+{
+	return;
+}
+
+char* ByteCode::Init(char* fileBuffer)
 {
 	char* pcVar1;
 
@@ -111,7 +128,7 @@ char* MemoryStream::Setup_00189c00(char* fileBuffer)
 	return this->currentSeekPos;
 }
 
-MemoryStream::MemoryStream()
+ByteCode::ByteCode()
 {
 	data = (char*)0x0;
 	size = 0;

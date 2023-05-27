@@ -586,12 +586,12 @@ public:
 	LevelScheduleManager();
 
 	// Begin Manager
-	virtual void OnBeginGame();
-	virtual void LoadStageOne();
-	virtual void EndLoadStageOne();
-	virtual bool AsyncLoad();
-	virtual void LoadA();
-	virtual void LoadB();
+	virtual void Game_Init();
+	virtual void Game_Term();
+	virtual void LevelLoading_End();
+	virtual bool LevelLoading_Manage();
+	virtual void Level_Install();
+	virtual void Level_Init();
 	// End Manager
 
 	void SetLevelToLoad_002dba90(int levelID, int elevatorID, int param_4);

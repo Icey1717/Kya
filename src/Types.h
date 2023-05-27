@@ -41,6 +41,9 @@ union Hash_4
 {
 	char name[4];
 	uint number;
+
+	Hash_4() { number = 0; }
+	Hash_4(uint inNumber) { number = inNumber; }
 };
 
 union Hash_8
@@ -112,7 +115,7 @@ struct InputSetupParams {
 
 void SetupEd10_00217720(void* pObj, void* pFreeFunc, EdFileGlobal_10* pHeader);
 EFileLoadMode GetFileLoadMode_00424d9c(void);
-InputSetupParams* GetInputSetupParams(void);
+InputSetupParams* edSysGetConfig(void);
 
 #define ENABLE_MY_LOG
 
@@ -125,7 +128,7 @@ InputSetupParams* GetInputSetupParams(void);
 #endif
 #endif
 
-#define PrintString scePrintf
+#define edDebugPrintf scePrintf
 
 #include <stdio.h>
 
@@ -133,8 +136,8 @@ InputSetupParams* GetInputSetupParams(void);
 
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
 #define MY_LOG scePrintf
-#define RENDER_LOG(...)
-//#define RENDER_LOG scePrintf
+//#define RENDER_LOG(...)
+#define RENDER_LOG scePrintf
 #else
 #define MY_LOG(...)
 #endif
@@ -203,7 +206,7 @@ struct __attribute__((aligned(16)))
 #pragma pack(push,1)
 struct alignas(16)
 #endif 
-Matrix {
+edF32MATRIX4 {
 	float aa;
 	float ab;
 	float ac;
@@ -360,7 +363,7 @@ struct __attribute__((aligned(16)))
 #else
 struct alignas(16)
 #endif 
-RenderCommand {
+edpkt_data {
 	ulong cmdA;
 	ulong cmdB;
 };
@@ -376,7 +379,7 @@ inline void PrintVector(Vector* vector)
 	MY_LOG("%s", buff);
 }
 
-inline void PrintMatrix(Matrix* matrix)
+inline void PrintMatrix(edF32MATRIX4* matrix)
 {
 	PrintVector((Vector*)&matrix->aa);
 	PrintVector((Vector*)&matrix->ba);
@@ -399,11 +402,6 @@ struct SectorManagerSubObj {
 	struct WindSectorObj* pWindSectorObj;
 	int field_0xc;
 };
-
-inline ulong Combine_00189a30(int param_1, int param_2)
-{
-	return (ulong)param_1 & 0xffffffffU | (ulong)param_2 << 0x20;
-}
 
 #ifdef PLATFORM_WIN
 #include <assert.h>

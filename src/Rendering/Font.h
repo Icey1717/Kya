@@ -7,19 +7,19 @@
 #include <libvu0.h>
 #endif
 
-class FontFileData {
+class edCTextStyle {
 public:
 	void SetFontFlag_0028d340(uint flag);
 	void SetFontFlag_0028d3c0(uint flag);
 	void SetFontFlag_0028d3a0(uint flag);
 	uint GetFontFlag_0028d330();
-	void SetFontTextureData_0028d3e0(struct FontPacked* pPackedFont, bool bUpdateSpacing);
+	void SetFontTextureData_0028d3e0(struct edCTextFont* pPackedFont, bool bUpdateSpacing);
 
-	Matrix m0;
-	Matrix m1;
+	edF32MATRIX4 m0;
+	edF32MATRIX4 m1;
 	undefined4 pFunction;
 	uint flags_0x84;
-	struct FontPacked* pPackedFont;
+	struct edCTextFont* pPackedFont;
 	float field_0x8c;
 	float field_0x90;
 	float spaceSize;
@@ -36,13 +36,13 @@ public:
 };
 
 
-void InitFontData_0028d430(FontFileData* pNewFontData);
-FontFileData* SetActiveFontData(FontFileData* pNewFont);
+void InitFontData_0028d430(edCTextStyle* pNewFontData);
+edCTextStyle* SetActiveFontData(edCTextStyle* pNewFont);
 
 struct TextLine {
 	char* pTextStart;
 	char* pTextEnd;
-	struct FontFileData* pFontFileData;
+	struct edCTextStyle* pFontFileData;
 	char* pText;
 	float field_0x10;
 	float field_0x14;
@@ -56,8 +56,8 @@ struct TextLine {
 	undefined field_0x27;
 };
 
-struct DrawTextParams {
-	DrawTextParams();
+struct edCTextFormat {
+	edCTextFormat();
 	bool DrawTextA_0028b7e0(char* pText, ...);
 	void DrawTextB_0028b270();
 	bool Setup_0028c540(char* pText);
@@ -139,11 +139,11 @@ struct DrawTextParams {
 	undefined field_0x84d;
 	undefined field_0x84e;
 	undefined field_0x84f;
-	FontFileData fontData_0x850[17];
+	edCTextStyle fontData_0x850[17];
 };
 
 void DrawText_0028a4f0(float x, float y, char* text);
-void DrawTextB_0028a710(float x, float y, DrawTextParams* pDrawTextParams);
+void Display(float x, float y, edCTextFormat* pDrawTextParams);
 
 struct astruct_5 {
 	int switchMode;

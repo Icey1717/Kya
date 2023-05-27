@@ -26,17 +26,17 @@ struct DMA_Register_Struct {
 	uint QWC;
 };
 
-void FUN_00258050(Vector* param_1, uint param_2, uint param_3);
-bool FUN_002580b0(uint addr, uint qwc, uint param_3);
-void WaitDMA(void);
-int WaitForDraw_00258230(void);
-int shellDmaSync(int channel);
-void shellDmaStartChainB(int channel, ulonglong* pBuffer);
-void shellDmaStartChain(int channel, ulonglong* pBuffer);
-void shellDmaStartB(int channel, void* memory, uint qwc);
-void shellDmaStart(int channel, void* memory, u_int qwc);
-bool MADR_Func_002586c0(uint madr);
+void edDmaLoadFromFastRam_nowait(Vector* param_1, uint param_2, uint param_3);
+bool edDmaLoadFromFastRam(uint addr, uint qwc, uint param_3);
+void edDmaFlushCache(void);
+int edDmaSyncPath(void);
+int edDmaSync(int channel);
+void edDmaSend_nowait(int channel, ulonglong* pBuffer);
+void edDmaSend(int channel, ulonglong* pBuffer);
+void edDmaSendN_nowait(int channel, void* memory, uint qwc);
+void edDmaSendN(int channel, void* memory, u_int qwc);
+bool edDmaWaitDma(uint madr);
 
-extern DMA_Register_Struct DMA_Registers[10];
+extern DMA_Register_Struct edDmaChannelList[10];
 
 #endif // _CUSTOM_SHELL_H

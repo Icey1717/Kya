@@ -47,13 +47,13 @@ namespace edCSysHandlerPool
 	bool initialize(edSysHandlersNodeTable* pNode, int count);
 }
 
-bool edSystemInit(int argc, char** argv);
+bool _edSystemInit(int argc, char** argv);
 bool edSysHandlersAdd(edSysHandlersNodeTable* pNode, edSysHandlersPoolEntry** param_2, int param_3, edSysHandlerType type, EdSysFunc* pHandlerFunc, long param_6, long param_7);
 bool edSysHandlersCall(int typeA, edSysHandlersPoolEntry** pPool, int eventMax, int eventID, void* param_5);
 
 void FormatFilePath(char* dst, char* src, ...);
 
-edHeapEntry* GetHeap();
+edHeapEntry* edmemGetMainHeader();
 
 extern int g_isNTSC;
 

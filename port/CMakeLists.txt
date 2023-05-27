@@ -11,7 +11,6 @@ add_subdirectory("Windows/Renderer")
 set(SOURCES 
 	"Windows/WindowsFunctions.cpp" 
 	"include/port.h"
-	"include/renderer.h"
 )
 
 add_library(port ${SOURCES})

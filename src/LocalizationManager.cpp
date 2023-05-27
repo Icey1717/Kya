@@ -12,7 +12,7 @@ LocalizationManager::LocalizationManager()
 
 char* sz_GAMENAME_004349a8 = "GAMENAME";
 
-void LocalizationManager::OnBeginGame()
+void LocalizationManager::Game_Init()
 {
 	char* pcVar1;
 
@@ -25,7 +25,7 @@ void LocalizationManager::OnBeginGame()
 
 char* sz_LevelTextSuffix_004349a0 = "_xx.bin";
 
-void LocalizationManager::LoadB()
+void LocalizationManager::Level_Init()
 {
 	int iVar1;
 	LevelScheduleManager* pLVar2;
@@ -41,8 +41,8 @@ void LocalizationManager::LoadB()
 	return;
 }
 
-void LocalizationManager::Unload()
+void LocalizationManager::Level_Term()
 {
-	this->levelText.LoadTextTranslatedFromBank((edCBankBuffer*)0x0, (char*)0x0, AUTO);
+	this->levelText.LoadTextTranslatedFromBank((edCBankBufferEntry*)0x0, (char*)0x0, AUTO);
 	return;
 }

@@ -72,7 +72,7 @@ TranslatedTextData::TranslatedTextData()
 	languageID = (ELanguageID)0;
 	pDataA = (ulong*)0x0;
 	field_0x8[0] = '\0';
-	pBankAccessObj = (edCBankBuffer*)0x0;
+	pBankAccessObj = (edCBankBufferEntry*)0x0;
 	return;
 }
 
@@ -84,7 +84,7 @@ TranslatedTextData::~TranslatedTextData()
 		pFileData = (char*)0x0;
 		pDataA = (ulong*)0x0;
 		entryCount = 0;
-		pBankAccessObj = (edCBankBuffer*)0x0;
+		pBankAccessObj = (edCBankBufferEntry*)0x0;
 		RemoveLinkedTextData_00336a00(&g_TranslatedTextTRC_00449748, this);
 	}
 }
@@ -102,7 +102,7 @@ short SHORT_00448fce = 0;
 EHeap EHeap_00448fc8 = TO_HEAP(H_MAIN);
 short SHORT_00448fcc = 0x40;
 
-void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBuffer* pBankAccess, char* pFilePath, ELanguageID languageID)
+void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBufferEntry* pBankAccess, char* pFilePath, ELanguageID languageID)
 {
 	bool bVar1;
 	TranslatedTextData* pTVar2;
@@ -110,7 +110,7 @@ void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBuffer* pBankAccess, 
 	TranslatedTextData* pTVar4;
 	bool bVar5;
 	int iVar6;
-	BankFileData BStack544;
+	edBANK_ENTRY_INFO BStack544;
 	char acStack512[512];
 
 	bVar1 = false;
@@ -118,15 +118,15 @@ void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBuffer* pBankAccess, 
 		this->pFileData = (char*)0x0;
 		this->pDataA = (ulong*)0x0;
 		this->entryCount = 0;
-		this->pBankAccessObj = (edCBankBuffer*)0x0;
-		if (pBankAccess == (edCBankBuffer*)0x0) {
+		this->pBankAccessObj = (edCBankBufferEntry*)0x0;
+		if (pBankAccess == (edCBankBufferEntry*)0x0) {
 			RemoveLinkedTextData_00336a00(&g_TranslatedTextTRC_00449748, this);
 		}
 		else {
 			bVar1 = true;
 		}
 	}
-	if (pBankAccess != (edCBankBuffer*)0x0) {
+	if (pBankAccess != (edCBankBufferEntry*)0x0) {
 		if (languageID == AUTO) {
 			languageID = g_LanguageID_0044974c;
 		}
@@ -136,8 +136,8 @@ void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBuffer* pBankAccess, 
 			(this->field_0x8 + iVar6 + -8)[3] = 's';
 		}
 		sprintf(acStack512, this->field_0x8);
-		iVar6 = GetIndexForFileName(pBankAccess, acStack512);
-		if ((iVar6 != -1) && (bVar5 = GetFileDataForIndex(pBankAccess, iVar6, &BStack544, (char*)0x0), bVar5 != false)) {
+		iVar6 = get_index(pBankAccess, acStack512);
+		if ((iVar6 != -1) && (bVar5 = get_info(pBankAccess, iVar6, &BStack544, (char*)0x0), bVar5 != false)) {
 			this->languageID = languageID;
 			this->pFileData = BStack544.fileBufferStart;
 			this->pBankAccessObj = pBankAccess;
@@ -180,12 +180,12 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 	MY_LOG("TranslatedTextData::LoadFromDisk_0025b960 %s\n", filePath);
 
 	*outSize = 0;
-	pDebugBank = LoadFile(filePath, flags | 1);
+	pDebugBank = edFileLoadSize(filePath, flags | 1);
 	if (pDebugBank == (DebugBankData_234*)0x0) {
 		pReadBuffer = (char*)0x0;
 	}
 	else {
-		peVar2 = FindEdCFiler(acStack512, filePath, 0);
+		peVar2 = edFileOpen(acStack512, filePath, 0);
 		if (peVar2 == (edCFiler*)0x0) {
 			pReadBuffer = (char*)0x0;
 		}
@@ -211,7 +211,7 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 			peVar4 = peVar2->GetGlobalC_0x1c();
 			SetBankClose(peVar4, pDebugBank);
 			if ((pDebugBank->openFlags & 8) == 0) {
-				TriggerBankRead_0025b0c0(pDebugBank->pOwningFiler);
+				edFileGetFiler(pDebugBank->pOwningFiler);
 				iVar6 = 0;
 				do {
 					if (&g_DebugBankDataArray_00469bf0[iVar6] == pDebugBank) {
@@ -265,7 +265,7 @@ void TranslatedTextData::LoadTranslatedTextFromDisk(char* filePath, ELanguageID 
 
 	MY_LOG("TranslatedTextData::LoadTranslatedTextFromDisk %s [%s]\n", filePath, g_LanguageSuffixArray_00425840[inLanguageID]);
 
-	this->pBankAccessObj = (edCBankBuffer*)0x0;
+	this->pBankAccessObj = (edCBankBufferEntry*)0x0;
 	this->languageID = inLanguageID;
 	sprintf(acStack512, this->field_0x8, g_LanguageSuffixArray_00425840[inLanguageID]);
 	if (this->pFileData == (char*)0x0) {
@@ -294,7 +294,7 @@ void TranslatedTextData::LoadTranslatedTextFromDisk(char* filePath, ELanguageID 
 		}
 	}
 	else {
-		pDebugBank = LoadFile(acStack512, 1);
+		pDebugBank = edFileLoadSize(acStack512, 1);
 		if (pDebugBank == (DebugBankData_234*)0x0) {
 			return;
 		}

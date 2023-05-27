@@ -36,7 +36,7 @@ uint g_MemWorkSizeB = 0x1B4A880;
 
 // Contiguous
 
-edHeapEntry* g_HeapArray_00424d60 = NULL;
+edHeapEntry* MemoryMasterBlock = NULL;
 short g_TotalHeaders_00424d64 = 0;
 short g_FreeHeaders_00424d66 = 0;
 short g_MaxHeadersUsed_00424d68 = 0;
@@ -101,21 +101,21 @@ int edMemGetMemoryAvailable(EHeap heapID)
 	if (heapID == TO_HEAP(H_INVALID)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemGetMemoryAvailable);
 	}
-	pHeap = GetHeap((void*)heapID);
+	pHeap = edmemGetMainHeader((void*)heapID);
 	if ((pHeap->flags & 8) == 0) {
 		if ((pHeap->flags & 0x200) == 0) {
 			freeBytes = pHeap->freeBytes;
 		}
 		else {
 			freeBytes = (int)(pHeap->pStartAddr +
-				(pHeap->freeBytes - *(int*)g_HeapArray_00424d60[pHeap->nextFreeBlock].pStartAddr));
+				(pHeap->freeBytes - *(int*)MemoryMasterBlock[pHeap->nextFreeBlock].pStartAddr));
 		}
 	}
 	else {
 		freeBytes = 0;
 		for (nextBlockID = pHeap->nextFreeBlock; nextBlockID != -1;
-			nextBlockID = g_HeapArray_00424d60[nextBlockID].nextBlock) {
-			iVar2 = g_HeapArray_00424d60[nextBlockID].freeBytes;
+			nextBlockID = MemoryMasterBlock[nextBlockID].nextBlock) {
+			iVar2 = MemoryMasterBlock[nextBlockID].freeBytes;
 			if (freeBytes < iVar2) {
 				freeBytes = iVar2;
 			}
@@ -134,7 +134,7 @@ void* edMemGetBlockAddress(void* pAlloc)
 		pBlockAddress = (void*)0x0;
 	}
 	else {
-		pHeap = GetHeap(pAlloc);
+		pHeap = edmemGetMainHeader(pAlloc);
 		pBlockAddress = pHeap->pStartAddr;
 	}
 	return pBlockAddress;
@@ -150,7 +150,7 @@ void* edMemAlloc(EHeap heapID, size_t size)
 		pNewAlloc = (void*)0x0;
 	}
 	else {
-		pHeap = GetHeap((void*)heapID);
+		pHeap = edmemGetMainHeader((void*)heapID);
 		pNewAlloc = edMemAlloc(heapID, size, pHeap->align, pHeap->offset);
 	}
 	return pNewAlloc;
@@ -169,10 +169,10 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 	}
 	else {
 		if ((heapID == TO_HEAP(H_MEMKIT)) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
-			PrintString(g_szMemkitWarning);
+			edDebugPrintf(g_szMemkitWarning);
 			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
 		}
-		pHeap = GetHeap((void*)heapID);
+		pHeap = edmemGetMainHeader((void*)heapID);
 		pNewAllocation = edMemAlloc(heapID, size, align, pHeap->offset);
 	}
 	return pNewAllocation;
@@ -194,14 +194,14 @@ void* edMemAlloc(EHeap heap, size_t size, int align, int offset)
 	}
 	else {
 		if ((heap == TO_HEAP(H_MEMKIT)) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
-			PrintString(g_szMemkitWarning);
+			edDebugPrintf(g_szMemkitWarning);
 			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
 		}
-		pHeap = GetHeap((void*)heap);
+		pHeap = edmemGetMainHeader((void*)heap);
 		pNewAllocation = (*g_HeapFunctionTableArray_00489030[(char)pHeap->funcTableID].alloc)(pHeap, (int)size, align, offset);
 		if (pNewAllocation == (void*)0x0) {
-			freeMemory = GetCurrentFreeMemory(heap);
-			PrintString(g_szCannotAllocate, size, freeMemory);
+			freeMemory = edMemGetAvailable(heap);
+			edDebugPrintf(g_szCannotAllocate, size, freeMemory);
 		}
 	}
 	return pNewAllocation;
@@ -216,7 +216,7 @@ void edMemFree(void* pAlloc)
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemFree_00432598);
 	}
 	else {
-		peVar1 = GetHeap(pAlloc);
+		peVar1 = edmemGetMainHeader(pAlloc);
 		(*g_HeapFunctionTableArray_00489030[(char)peVar1->funcTableID].free)(peVar1);
 	}
 	return;
@@ -233,7 +233,7 @@ void* edMemShrink(void* pAlloc, int size)
 		pNewAllocation = (void*)0x0;
 	}
 	else {
-		pHeap = GetHeap(pAlloc);
+		pHeap = edmemGetMainHeader(pAlloc);
 		pNewAllocation = (*g_HeapFunctionTableArray_00489030[(char)pHeap->funcTableID].shrink)(pHeap, size);
 	}
 	return pNewAllocation;
@@ -260,7 +260,7 @@ char* Alloc_0028e140(edHeapEntry* pInHeap, int size, int align, int offset)
 	edHeapEntry* heapArray;
 	edHeapEntry* pNewHeap;
 
-	heapArray = g_HeapArray_00424d60;
+	heapArray = MemoryMasterBlock;
 	if (((pInHeap->flags & 2) == 0) || ((pInHeap->flags & 4) == 0)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 3, pInHeap->pStartAddr);
 	}
@@ -353,7 +353,7 @@ char* Alloc_0028e140(edHeapEntry* pInHeap, int size, int align, int offset)
 							}
 						}
 						if (uVar11 == -1) {
-							PrintString(sz_CannotAllocate_004325c0, size);
+							edDebugPrintf(sz_CannotAllocate_004325c0, size);
 							CallHandlerFunction(&edSysHandlerMemory_004890c0, 0, pInHeap->pStartAddr);
 							pReturn = (char*)0x0;
 						}
@@ -389,7 +389,7 @@ char* Alloc_0028e140(edHeapEntry* pInHeap, int size, int align, int offset)
 									SetHeapFlag_0028f4e0(pHeap);
 								}
 								pHeap = pNewHeap;
-								uVar10 = (ushort)((uint)((ulong)pNewHeap - (ulong)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+								uVar10 = (ushort)((uint)((ulong)pNewHeap - (ulong)MemoryMasterBlock) / sizeof(edHeapEntry));
 								uVar13 = uVar11;
 							}
 							pHeap->flags = pInHeap->flags & 0x10 | 0x86;
@@ -423,7 +423,7 @@ char* Alloc_0028e140(edHeapEntry* pInHeap, int size, int align, int offset)
 								pNewHeap->flags = 2;
 								pNewHeap->pStartAddr = pcVar7;
 								pNewHeap->freeBytes = (ulong)(local_10 + -(ulong)pcVar7);
-								sVar5 = (short)((uint)((ulong)pNewHeap - (ulong)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+								sVar5 = (short)((uint)((ulong)pNewHeap - (ulong)MemoryMasterBlock) / sizeof(edHeapEntry));
 								if (sVar1 == -1) {
 									pInHeap->nextFreeBlock = sVar5;
 								}
@@ -443,7 +443,7 @@ char* Alloc_0028e140(edHeapEntry* pInHeap, int size, int align, int offset)
 								}
 							}
 							if ((pInHeap->flags & 0x10) == 0) {
-								pReturn = (char*)(int)(short)((uint)((ulong)pHeap - (ulong)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+								pReturn = (char*)(int)(short)((uint)((ulong)pHeap - (ulong)MemoryMasterBlock) / sizeof(edHeapEntry));
 							}
 						}
 					}
@@ -481,7 +481,7 @@ void Free_0028ecc0(edHeapEntry* pHeap)
 	long lVar9;
 	char cVar10;
 
-	peVar3 = g_HeapArray_00424d60;
+	peVar3 = MemoryMasterBlock;
 	if ((pHeap->flags & 4) != 0) {
 		pcVar7 = pHeap->pStartAddr;
 		if ((pHeap->flags & 0x10) != 0) {
@@ -517,7 +517,7 @@ void Free_0028ecc0(edHeapEntry* pHeap)
 		}
 		pHeap->flags = 2;
 		peVar5 = peVar3 + pHeap->field_0xa;
-		sVar8 = (short)((uint)((ulong)pHeap - (ulong)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+		sVar8 = (short)((uint)((ulong)pHeap - (ulong)MemoryMasterBlock) / sizeof(edHeapEntry));
 		bVar1 = (peVar5->flags & 4) != 0;
 		if (bVar1) {
 			sVar2 = pHeap->heapID;
@@ -552,7 +552,7 @@ void Free_0028ecc0(edHeapEntry* pHeap)
 					if ((uVar4 & 4) == 0) {
 						unaff_s1_lo = peVar5->field_0x2;
 						cVar10 = '\x01';
-						unaff_s0_lo = (ushort)((uint)((ulong)peVar5 - (ulong)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+						unaff_s0_lo = (ushort)((uint)((ulong)peVar5 - (ulong)MemoryMasterBlock) / sizeof(edHeapEntry));
 					}
 				}
 			}
@@ -570,7 +570,7 @@ void Free_0028ecc0(edHeapEntry* pHeap)
 			unaff_s1_lo = 0xffff;
 			unaff_s0_lo = unaff_s1_lo;
 			if (uVar4 == 0) {
-				unaff_s1_lo = (ushort)((uint)((ulong)peVar6 - (ulong)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+				unaff_s1_lo = (ushort)((uint)((ulong)peVar6 - (ulong)MemoryMasterBlock) / sizeof(edHeapEntry));
 				unaff_s0_lo = peVar6->nextBlock;
 			}
 		}
@@ -641,7 +641,7 @@ bool IsAllocationValid_0028f3d0(int size, int align, int offset)
 		bVar1 = true;
 		if (offset << 1 < iVar2 + size) {
 			/* Allocation impossible : size + align > boundary\n */
-			PrintString(g_szAllocationImpossible_004325f0);
+			edDebugPrintf(g_szAllocationImpossible_004325f0);
 			bVar1 = false;
 		}
 	}
@@ -683,7 +683,7 @@ void SetHeapFlag_0028f4e0(edHeapEntry* pHeap)
 	return;
 }
 
-int GetCurrentFreeMemory(EHeap heapID)
+int edMemGetAvailable(EHeap heapID)
 {
 	short sVar1;
 	edHeapEntry* peVar2;
@@ -691,15 +691,15 @@ int GetCurrentFreeMemory(EHeap heapID)
 	int iVar4;
 
 	iVar4 = 0;
-	peVar2 = GetHeap((void*)heapID);
+	peVar2 = edmemGetMainHeader((void*)heapID);
 	uVar3 = peVar2->flags & 4;
 	if (((uVar3 == 0) || (uVar3 == 0)) || (peVar2->field_0x1c == -1)) {
 		iVar4 = peVar2->freeBytes;
 	}
 	else {
 		for (sVar1 = peVar2->nextFreeBlock; sVar1 != -1;
-			sVar1 = g_HeapArray_00424d60[sVar1].nextBlock) {
-			iVar4 = iVar4 + g_HeapArray_00424d60[sVar1].freeBytes;
+			sVar1 = MemoryMasterBlock[sVar1].nextBlock) {
+			iVar4 = iVar4 + MemoryMasterBlock[sVar1].freeBytes;
 		}
 	}
 	return iVar4;
@@ -717,14 +717,14 @@ edHeapEntry* AllocateHeapMemory_0028fac0(edHeapEntry* pHeap, int param_2)
 	edHeapEntry* peVar3;
 
 	sVar1 = g_MaxHeadersUsed_00424d6a;
-	peVar3 = g_HeapArray_00424d60;
+	peVar3 = MemoryMasterBlock;
 	if (g_FreeHeaders_00424d66 == 0) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 2, (char*)0x0);
 		peVar2 = (edHeapEntry*)0x0;
 	}
 	else {
 		g_FreeHeaders_00424d66 = g_FreeHeaders_00424d66 + -1;
-		peVar2 = g_HeapArray_00424d60 + g_MaxHeadersUsed_00424d6a;
+		peVar2 = MemoryMasterBlock + g_MaxHeadersUsed_00424d6a;
 		g_MaxHeadersUsed_00424d6a = peVar2->heapID;
 		if ((long)g_MaxHeadersUsed_00424d68 < (long)((int)g_TotalHeaders_00424d64 - (int)g_FreeHeaders_00424d66)) {
 			g_MaxHeadersUsed_00424d68 = (short)((int)g_TotalHeaders_00424d64 - (int)g_FreeHeaders_00424d66);
@@ -739,7 +739,7 @@ edHeapEntry* AllocateHeapMemory_0028fac0(edHeapEntry* pHeap, int param_2)
 				peVar2->field_0xa = 0xffff;
 			}
 			else {
-				peVar2->heapID = (short)((uint)((char*)pHeap - (char*)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+				peVar2->heapID = (short)((uint)((char*)pHeap - (char*)MemoryMasterBlock) / sizeof(edHeapEntry));
 				peVar2->field_0xa = pHeap->field_0xa;
 				peVar3 = peVar3 + (short)pHeap->field_0xa;
 				if (peVar2->heapID == peVar3->heapID) {
@@ -753,7 +753,7 @@ edHeapEntry* AllocateHeapMemory_0028fac0(edHeapEntry* pHeap, int param_2)
 		}
 		else {
 			peVar2->heapID = 0xffff;
-			peVar2->field_0xa = (short)((uint)((char*)pHeap - (char*)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+			peVar2->field_0xa = (short)((uint)((char*)pHeap - (char*)MemoryMasterBlock) / sizeof(edHeapEntry));
 			pHeap->field_0x1c = sVar1;
 			pHeap->nextFreeBlock = sVar1;
 		}
@@ -761,7 +761,7 @@ edHeapEntry* AllocateHeapMemory_0028fac0(edHeapEntry* pHeap, int param_2)
 	return peVar2;
 }
 
-edHeapEntry* GetHeap(void* heapID)
+edHeapEntry* edmemGetMainHeader(void* heapID)
 {
 	short sVar1;
 
@@ -769,7 +769,7 @@ edHeapEntry* GetHeap(void* heapID)
 	if ((ulong)g_TotalHeaders_00424d64 <= (ulong)heapID) {
 		sVar1 = *(short*)((ulong)heapID + -0xc);
 	}
-	return g_HeapArray_00424d60 + sVar1;
+	return MemoryMasterBlock + sVar1;
 }
 
 edHeapEntry* GetBlock_0028fc40(edHeapEntry* pHeap)
@@ -778,7 +778,7 @@ edHeapEntry* GetBlock_0028fc40(edHeapEntry* pHeap)
 	edHeapEntry* peVar2;
 
 	sVar1 = pHeap->field_0xa;
-	while (peVar2 = g_HeapArray_00424d60 + sVar1, g_HeapArray_00424d60 + peVar2->heapID == pHeap) {
+	while (peVar2 = MemoryMasterBlock + sVar1, MemoryMasterBlock + peVar2->heapID == pHeap) {
 		sVar1 = peVar2->field_0xa;
 		pHeap = peVar2;
 	}
@@ -792,11 +792,11 @@ void FreeDataBlock_0028fc90(edHeapEntry* pHeap)
 	short sVar3;
 	edHeapEntry* peVar4;
 
-	peVar2 = g_HeapArray_00424d60;
-	sVar3 = (short)((uint)((int)pHeap - (int)g_HeapArray_00424d60) / sizeof(edHeapEntry));
+	peVar2 = MemoryMasterBlock;
+	sVar3 = (short)((uint)((int)pHeap - (int)MemoryMasterBlock) / sizeof(edHeapEntry));
 	if (pHeap->field_0xa != -1) {
 		sVar1 = pHeap->heapID;
-		peVar4 = g_HeapArray_00424d60 + pHeap->field_0xa;
+		peVar4 = MemoryMasterBlock + pHeap->field_0xa;
 		if (peVar4->field_0x1c == sVar3) {
 			peVar4->field_0x1c = sVar1;
 			if (pHeap->heapID == -1) {
@@ -863,7 +863,7 @@ void edMemSetFlags(EHeap heapID, ushort newFlags)
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemSetFlags_00432b28);
 	}
 	else {
-		pHeap = GetHeap((void*)heapID);
+		pHeap = edmemGetMainHeader((void*)heapID);
 		uVar1 = newFlags & 0x85e0;
 		if ((newFlags & 0x20) != 0) {
 			uVar1 = uVar1 ^ 0x20;
@@ -884,7 +884,7 @@ void edMemClearFlags(EHeap heapID, ushort flags)
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemClearFlags_00432b40);
 	}
 	else {
-		pHeap = GetHeap((void*)heapID);
+		pHeap = edmemGetMainHeader((void*)heapID);
 		uVar2 = flags & 0x91e0;
 		if ((flags & 0x20) != 0) {
 			uVar2 = 0x1020;
@@ -899,8 +899,8 @@ void ClearHeaps_0028ff10(void)
 	short sVar1;
 	edHeapEntry* peVar2;
 
-	peVar2 = g_HeapArray_00424d60;
-	memset((char*)g_HeapArray_00424d60, 0, g_TotalHeaders_00424d64 * sizeof(edHeapEntry));
+	peVar2 = MemoryMasterBlock;
+	memset((char*)MemoryMasterBlock, 0, g_TotalHeaders_00424d64 * sizeof(edHeapEntry));
 	for (sVar1 = 0; sVar1 < g_TotalHeaders_00424d64; sVar1 = sVar1 + 1) {
 		peVar2->heapID = sVar1 + 1;
 		peVar2 = peVar2 + 1;
@@ -908,7 +908,7 @@ void ClearHeaps_0028ff10(void)
 
 #ifdef PLATFORM_WIN
 	// Poison the end of the heap so we can see it in memory
-	memset(&g_HeapArray_00424d60[0xfff], 0x5, sizeof(edHeapEntry));
+	memset(&MemoryMasterBlock[0xfff], 0x5, sizeof(edHeapEntry));
 #endif
 
 	return;
@@ -919,8 +919,8 @@ void SetupDefaultHeaps_0028ff90(void)
 	edHeapEntry* peVar1;
 	edHeapEntry* puVar1;
 
-	peVar1 = g_HeapArray_00424d60;
-	g_HeapArray_00424d60->flags = 2;
+	peVar1 = MemoryMasterBlock;
+	MemoryMasterBlock->flags = 2;
 	peVar1->funcTableID = 0xff;
 	peVar1->field_0xf = 0xff;
 	peVar1->pStartAddr = (char*)0xffffffff;
@@ -938,8 +938,8 @@ void SetupDefaultHeaps_0028ff90(void)
 	peVar1[1].flags = 0x96;
 	peVar1[1].funcTableID = 0;
 	peVar1[1].field_0xf = 0;
-	peVar1[1].pStartAddr = (char*)(g_HeapArray_00424d60 + g_TotalHeaders_00424d64);
-	int initialAlloc = (int)((char*)peVar1[1].pStartAddr - (char*)g_HeapArray_00424d60);
+	peVar1[1].pStartAddr = (char*)(MemoryMasterBlock + g_TotalHeaders_00424d64);
+	int initialAlloc = (int)((char*)peVar1[1].pStartAddr - (char*)MemoryMasterBlock);
 	peVar1[1].freeBytes = g_MemWorkSizeB - initialAlloc;
 	peVar1[1].field_0xa = 0xffff;
 	peVar1[1].heapID = 2;
@@ -1015,13 +1015,13 @@ void EmptyFunction_00290290(void)
 	return;
 }
 
-void InitHeap_002902a0(short headerCount)
+void edMemInit(short headerCount)
 {
 	g_MaxHeadersUsed_00424d68 = 0;
 	g_MaxHeadersUsed_00424d6a = 0;
 	BYTE_00424d6c = 0;
 	BYTE_00424d6d = 0;
-	g_HeapArray_00424d60 = (edHeapEntry*)g_SystemHeap_0042df0.startAddress;
+	MemoryMasterBlock = (edHeapEntry*)g_SystemHeap_0042df0.startAddress;
 	g_TotalHeaders_00424d64 = headerCount;
 	g_FreeHeaders_00424d66 = headerCount;
 	IncrementCounter_002903f0();
@@ -1062,7 +1062,7 @@ bool Cleanup_00290410(void)
 
 	bVar2 = true;
 	BYTE_00424d6c = BYTE_00424d6c - 1;
-	peVar3 = g_HeapArray_00424d60;
+	peVar3 = MemoryMasterBlock;
 	for (sVar4 = 0; sVar4 < g_TotalHeaders_00424d64; sVar4 = sVar4 + 1) {
 		uVar1 = peVar3->flags;
 		if ((((uVar1 & 2) != 0) && ((uVar1 & 4) != 0)) && (BYTE_00424d6c < peVar3->field_0xf)) {

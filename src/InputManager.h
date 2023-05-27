@@ -26,7 +26,7 @@ struct InputTest {
 struct InputManager {
 
 public:
-	bool FUN_001b6f60();
+	bool SoftReset();
 
 	int field_0x0;
 	int field_0x4;

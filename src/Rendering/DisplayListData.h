@@ -72,11 +72,5 @@ struct DisplayListArray {
 	undefined field_0x4f;
 };
 
-struct DisplayListData {
-	uint LoadedDisplayListCount[2];
-	struct DisplayListArray* pDisplayListArray[2];
-	struct CameraPanMasterHeader* pCameraPanPairA[2];
-	struct CameraPanMasterHeader* pCameraPanPairB[2];
-};
 
 #endif //DISPLAY_LIST_DATA_H

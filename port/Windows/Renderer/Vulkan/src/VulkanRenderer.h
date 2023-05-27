@@ -9,7 +9,10 @@ struct UniformBufferObject {
 };
 
 VkDevice GetDevice();
+VkFormat GetSwapchainImageFormat();
 VkPhysicalDevice GetPhysicalDevice();
+const VkCommandBuffer& GetCurrentCommandBuffer();
+uint32_t GetCurrentFrame();
 uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 const VkBuffer& GetUniformBuffer(int index);
 const VkQueue& GetGraphicsQueue();

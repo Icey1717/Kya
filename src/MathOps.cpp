@@ -5,7 +5,7 @@
 #define absf std::abs
 
 sceVu0FMATRIX g_ZeroMatrix_00431690 = { 0 };
-Matrix g_IdentityMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+edF32MATRIX4 g_IdentityMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 
 #define M_PI_2f 1.5707963f
 #define M_PIf 3.14159265f
@@ -29,18 +29,84 @@ void sceVu0Normalize(float* v0, float* v1)
 	v0[3] = 0.0;
 	return;
 }
+#endif
 
-void sceVu0TransposeMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1)
+void sceVu0ApplyMatrix(Vector* v0, edF32MATRIX4* m0, Vector* v1)
 {
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+
+	fVar13 = v1->x;
+	fVar14 = v1->y;
+	fVar15 = v1->z;
+	fVar16 = v1->w;
+	fVar1 = m0->ab;
+	fVar2 = m0->ac;
+	fVar3 = m0->ad;
+	fVar4 = m0->bb;
+	fVar5 = m0->bc;
+	fVar6 = m0->bd;
+	fVar7 = m0->cb;
+	fVar8 = m0->cc;
+	fVar9 = m0->cd;
+	fVar10 = m0->db;
+	fVar11 = m0->dc;
+	fVar12 = m0->dd;
+	v0->x = m0->aa * fVar13 + m0->ba * fVar14 + m0->ca * fVar15 + m0->da * fVar16;
+	v0->y = fVar1 * fVar13 + fVar4 * fVar14 + fVar7 * fVar15 + fVar10 * fVar16;
+	v0->z = fVar2 * fVar13 + fVar5 * fVar14 + fVar8 * fVar15 + fVar11 * fVar16;
+	v0->w = fVar3 * fVar13 + fVar6 * fVar14 + fVar9 * fVar15 + fVar12 * fVar16;
+	return;
+}
+
+void sceVu0TransposeMatrixFixed(sceVu0FMATRIX m0, sceVu0FMATRIX m1)
+{
+#if 1
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
 			m0[i][j] = m1[j][i];
 		}
 	}
-}
+#else
+	__asm__ __volatile__("\n\
+	lq $8,0x0000(%1)\n\
+	lq $9,0x0010(%1)\n\
+	lq $10,0x0020(%1)\n\
+	lq $11,0x0030(%1)\n\
+	\n\
+	pextlw     $12,$9,$8\n\
+	pextuw     $13,$9,$8\n\
+	pextlw     $14,$11,$10\n\
+	pextuw     $15,$11,$10\n\
+	\n\
+	pcpyld     $8,$14,$12\n\
+	pcpyud     $9,$12,$14\n\
+	pcpyld     $10,$15,$13\n\
+	pcpyud     $11,$13,$15\n\
+	\n\
+	sq $8,0x0000(%0)\n\
+	sq $9,0x0010(%0)\n\
+	sq $10,0x0020(%0)\n\
+	sq $11,0x0030(%0)\n\
+	": : "r" (m0), "r" (m1) : "memory");
 #endif
+}
 
-void sceVu0InverseMatrix(Matrix* m0, Matrix* m1)
+void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 	float fVar1;
 	float fVar2;
@@ -163,9 +229,9 @@ void CalculatePitchAngles2D_00193c70(Vector* pitchAngles, Vector* velocity)
 	return;
 }
 
-void RotateMatrixByAngle(float angle, Matrix* m0, Matrix* m1)
+void RotateMatrixByAngle(float angle, edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
-	Matrix local_40;
+	edF32MATRIX4 local_40;
 
 	local_40.bb = cosf(angle);
 	local_40.bc = sinf(angle);
@@ -187,9 +253,9 @@ void RotateMatrixByAngle(float angle, Matrix* m0, Matrix* m1)
 	return;
 }
 
-void ApplyRotationToMatrix(float angle, Matrix* outputMatrix, Matrix* inputMatrix)
+void ApplyRotationToMatrix(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4* inputMatrix)
 {
-	Matrix local_40;
+	edF32MATRIX4 local_40;
 
 	local_40.aa = cosf(angle);
 	local_40.ca = sinf(angle);
@@ -229,7 +295,7 @@ void MatrixSetPosition_00267750(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTO
 	return;
 }
 
-void CalculateRotationMatrix_002673f0(float t0, Matrix* m0, Matrix* m1)
+void CalculateRotationMatrix_002673f0(float t0, edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 	sceVu0FMATRIX local_40;
 
@@ -254,7 +320,7 @@ void CalculateRotationMatrix_002673f0(float t0, Matrix* m0, Matrix* m1)
 }
 
 void ComputeMapRectangleMatrix_0029b9e0
-(float startX, float endX, float startY, float endY, float startZ, float endZ, float startW, float endW, Matrix* m0)
+(float startX, float endX, float startY, float endY, float startZ, float endZ, float startW, float endW, edF32MATRIX4* m0)
 {
 	float fVar1;
 	float fVar2;
@@ -280,7 +346,7 @@ void ComputeMapRectangleMatrix_0029b9e0
 	return;
 }
 
-void CalculateYAxisTransformMatrix_0029ba70(float x, float y, float yMin, float yMax, Matrix* m0)
+void CalculateYAxisTransformMatrix_0029ba70(float x, float y, float yMin, float yMax, edF32MATRIX4* m0)
 {
 	float fVar1;
 	float fVar2;
@@ -306,7 +372,7 @@ void CalculateYAxisTransformMatrix_0029ba70(float x, float y, float yMin, float 
 	return;
 }
 
-uint ToPowerOfTwo_0029e3f0(uint value)
+uint GetGreaterPower2Val(uint value)
 {
 	uint uVar1;
 	uint uVar2;

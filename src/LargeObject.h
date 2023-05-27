@@ -7,18 +7,18 @@
 class Manager
 {
 public:
-	virtual void OnBeginGame() {};
-	virtual void LoadStageOne() {};
-	virtual void EndLoadStageOne() {};
-	virtual bool AsyncLoad() { return false; }
-	virtual void LoadLevelUpdate() {};
-	virtual void LoadA() {};
-	virtual void LoadB() {};
-	virtual void Unload() {};
-	virtual void Deserialize(struct MemoryStream* pMemoryStream) {};
-	virtual void PreUpdateA() {};
-	virtual void PreUpdateB() {};
-	virtual void Update() {};
+	virtual void Game_Init() {};
+	virtual void Game_Term() {};
+	virtual void LevelLoading_End() {};
+	virtual bool LevelLoading_Manage() { return false; }
+	virtual void LevelLoading_Draw() {};
+	virtual void Level_Install() {};
+	virtual void Level_Init() {};
+	virtual void Level_Term() {};
+	virtual void Level_AddAll(struct ByteCode* pMemoryStream) {};
+	virtual void Level_Manage() {};
+	virtual void Level_ManagePaused() {};
+	virtual void Level_Draw() {};
 
 	void* operator new(size_t size)
 	{
@@ -55,10 +55,10 @@ struct ManagerContainer {
 	struct Manager_29b4* g_Manager29B4_004516bc;
 });
 
-class LargeObject 
+class Scene 
 {
 public:
-	LargeObject();
+	Scene();
 
 	void* operator new(size_t size)
 	{
@@ -68,8 +68,8 @@ public:
 
 public:
 	int field_0x0;
-	struct CameraObj_28* pCameraObj28_0x4;
-	struct CameraObj_28* pCameraObj28_0x8;
+	struct ed_viewport* pCameraObj28_0x4;
+	struct ed_viewport* pCameraObj28_0x8;
 	undefined4* field_0xc;
 	undefined4 field_0x10;
 	undefined4 field_0x14;
@@ -85,7 +85,7 @@ public:
 	undefined field_0x36;
 	undefined field_0x37;
 	undefined8 field_0x38;
-	int field_0x40;
+	int curState;
 	undefined4 field_0x44;
 	undefined4 field_0x48;
 	undefined field_0x4c;
@@ -258,27 +258,37 @@ public:
 	undefined field_0x127;
 
 public:
-	void EndLoadStageOne();
-	bool AsyncLoad_001b9cd0();
-	void OnLoadLevelBnk_001b8920(struct MemoryStream* pMemoryStream);
+	void Level_Setup(struct ByteCode* pMemoryStream);
 	bool CheckFunc_001b9300();
 
 	void LoadFunc_001b87b0();
+
+	void Level_Install();
+	void Level_Init();
+	void Level_Manage();
+	void LevelLoading_Draw();
+	void LevelLoading_End();
+	bool LevelLoading_Manage();
+
+	void HandleCurState();
+
+	static void CreateScene(void);
+
+	static Scene* _pinstance;
+	static struct ed_3D_Scene* _scene_handleA;
+	static struct ed_3D_Scene* _scene_handleB;
 };
 
-void SetupGameCreateObject(void);
-void WillSetupDisplayListAndRunConstructors(void);
-void LoadLevelUpdate_001b9c60(void);
+void Game_Init(void);
 void LoadStageOne_001b9dc0(void);
-void LoadA_001b9bf0(void);
-void LoadB_001b95c0(LargeObject* param_1);
-void PreUpdateObjects(LargeObject* param_1);
 void UpdateObjectsMain(void);
-void FUN_002ab4a0(byte param_1, uint param_2, uint param_3);
+void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK);
 
-extern LargeObject* g_LargeObject_006db450;
-extern uint g_DebugCameraFlag_00448ea4;
+extern byte gbDoMipmap;
+extern uint gMipmapK;
+extern uint gMipmapL;
+
+extern uint GameFlags;
 extern ManagerContainer g_ManagerSingletonArray_00451660;
-extern struct StaticMeshMaster* g_StaticMeshMasterA_00448808;
 
 #endif //_LARGEOBJECT_H

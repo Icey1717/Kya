@@ -19,7 +19,7 @@ public:
 	TranslatedTextData();
 	~TranslatedTextData();
 
-	void LoadTextTranslatedFromBank(struct edCBankBuffer* pBankAccess, char* pFilePath, ELanguageID languageID);
+	void LoadTextTranslatedFromBank(struct edCBankBufferEntry* pBankAccess, char* pFilePath, ELanguageID languageID);
 	void LoadTranslatedTextFromDisk(char* filePath, ELanguageID languageID);
 
 	char* GetText_00336c10(ulong key, long mode);
@@ -126,7 +126,7 @@ public:
 	ulong* pDataA;
 	char* pFileData;
 	uint size;
-	struct edCBankBuffer* pBankAccessObj;
+	struct edCBankBufferEntry* pBankAccessObj;
 	struct TranslatedTextData* pPrev;
 	struct TranslatedTextData* pNext;
 };

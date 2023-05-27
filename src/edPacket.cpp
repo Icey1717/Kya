@@ -16,14 +16,14 @@ void edPacketInit(edPacket* pPacket, uint packetSize, ulonglong* pBuffer)
 {
 	if ((packetSize & 0xf) != 0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0xb1, " size must be qword \n");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0xb1, " size must be qword \n");
 		if ((packetSize & 0xf) != 0) {
 			trap(0);
 		}
 	}
 	if (pBuffer == (ulonglong*)0x0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0xb2, " edPacketInit invalid ptr \n");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0xb2, " edPacketInit invalid ptr \n");
 		if (true) {
 			trap(0);
 		}
@@ -32,7 +32,7 @@ void edPacketInit(edPacket* pPacket, uint packetSize, ulonglong* pBuffer)
 	pPacket->totalSize = (int)pPacket->pBuffer + packetSize;
 	if (pPacket == (edPacket*)0x0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x81, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x81, "");
 		if (true) {
 			trap(0);
 		}
@@ -53,7 +53,7 @@ void edPacketFunc_0026a2b0(edPacket* pPacket, uint param_2)
 
 	if (pPacket == (edPacket*)0x0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1a0, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1a0, "");
 		if (true) {
 			trap(0);
 		}
@@ -62,7 +62,7 @@ void edPacketFunc_0026a2b0(edPacket* pPacket, uint param_2)
 	edPacketFunc_00269bb0(pPacket);
 	if ((ulonglong*)(pPacket->totalSize - 0x10) < pPacket->seekPos) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x65, " packet s buffer full \n");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x65, " packet s buffer full \n");
 		if ((ulonglong*)(pPacket->totalSize - 0x10) < pPacket->seekPos) {
 			trap(0);
 		}
@@ -92,7 +92,7 @@ void edPacketFunc_00269aa0(edPacket* pPacket)
 
 		if ((ulonglong*)(pPacket->totalSize - len) < pPacket->seekPos) {
 			//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-			PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x21, "");
+			edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x21, "");
 			if ((ulonglong*)(pPacket->totalSize - len) < pPacket->seekPos) {
 				trap(0);
 			}
@@ -112,7 +112,7 @@ void edPacketFunc_00269bb0(edPacket* pPacket)
 
 	if (pPacket == (edPacket*)0x0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x37, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x37, "");
 		if (true) {
 			trap(0);
 		}
@@ -124,7 +124,7 @@ void edPacketFunc_00269bb0(edPacket* pPacket)
 			uVar3 = (uint)puVar2 & 0xf;
 			if (uVar3 != 0) {
 				//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-				PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x41, " size must be qword \n");
+				edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x41, " size must be qword \n");
 				if (uVar3 != 0) {
 					trap(0);
 				}
@@ -145,14 +145,14 @@ void edPacketWriteLong_0026a000(edPacket* pPacket, ulonglong value)
 {
 	if (pPacket == (edPacket*)0x0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x153, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x153, "");
 		if (true) {
 			trap(0);
 		}
 	}
 	if ((ulonglong*)(pPacket->totalSize - 8) < pPacket->seekPos) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x154, " packet s buffer full \n");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x154, " packet s buffer full \n");
 		if ((ulonglong*)(pPacket->totalSize - 8) < pPacket->seekPos) {
 			trap(0);
 		}
@@ -173,14 +173,14 @@ void edPacketFunc_0026a440(edPacket* pPacket, long param_2, uint param_3, uint p
 
 	if (pPacket == (edPacket*)0x0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1b4, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1b4, "");
 		if (true) {
 			trap(0);
 		}
 	}
 	if (param_2 == 0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1b5, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1b5, "");
 		if (true) {
 			trap(0);
 		}
@@ -188,7 +188,7 @@ void edPacketFunc_0026a440(edPacket* pPacket, long param_2, uint param_3, uint p
 	uVar2 = param_3 & 0xf;
 	if (uVar2 != 0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1b6, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x1b6, "");
 		if (uVar2 != 0) {
 			trap(0);
 		}
@@ -198,7 +198,7 @@ void edPacketFunc_0026a440(edPacket* pPacket, long param_2, uint param_3, uint p
 		edPacketFunc_00269bb0(pPacket);
 		if ((ulonglong*)(pPacket->totalSize - 0x10) < pPacket->seekPos) {
 			//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-			PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x65, " packet s buffer full \n");
+			edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x65, " packet s buffer full \n");
 			if ((ulonglong*)(pPacket->totalSize - 0x10) < pPacket->seekPos) {
 				trap(0);
 			}
@@ -230,7 +230,7 @@ void edPacketFunc_0026a6d0(edPacket* pPacket, uint param_2)
 
 	if (pPacket == (edPacket*)0x0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x233, "");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x233, "");
 		if (true) {
 			trap(0);
 		}
@@ -239,7 +239,7 @@ void edPacketFunc_0026a6d0(edPacket* pPacket, uint param_2)
 	edPacketFunc_00269bb0(pPacket);
 	if ((ulonglong*)(pPacket->totalSize - 0x10) < pPacket->seekPos) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x65, " packet s buffer full \n");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x65, " packet s buffer full \n");
 		if ((ulonglong*)(pPacket->totalSize - 0x10) < pPacket->seekPos) {
 			trap(0);
 		}
@@ -296,7 +296,7 @@ void edPacketClose_00269e70(edPacket* pPacket)
 		//local_8 = UINT_00482fa8;
 		if ((ulonglong*)(pPacket->totalSize - uVar1) < pPacket->seekPos) {
 			//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-			PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x21, "");
+			edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0x21, "");
 			if ((ulonglong*)(pPacket->totalSize - uVar1) < pPacket->seekPos) {
 				trap(0);
 			}
@@ -308,7 +308,7 @@ void edPacketClose_00269e70(edPacket* pPacket)
 	pPacket->size_0x14 = (int)((int)pPacket->seekPos - (int)pPacket->pBuffer);
 	if ((pPacket->size_0x14 & 0xfU) != 0) {
 		//edSysHandlersCall(INT_00489154, edSysHandlersNodeParent_00489140.pTypeArray_0x4, INT_00489150, 2, 0);
-		PrintString("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0xde, "pb edPacketClose, unvalid size \n");
+		edDebugPrintf("\n%s(%i) : Error : %s\n", "edpacket.cpp", 0xde, "pb edPacketClose, unvalid size \n");
 		if ((pPacket->size_0x14 & 0xfU) != 0) {
 			trap(0);
 		}

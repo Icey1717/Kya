@@ -20,7 +20,7 @@ enum ECameraType {
 };
 
 struct astruct_8 {
-	void Init(struct MemoryStream* pMemoryStream);
+	void Init(struct ByteCode* pMemoryStream);
 	uint field_0x0;
 	uint field_0x4;
 	uint field_0x8;
@@ -52,7 +52,7 @@ struct astruct_8 {
 };
 
 struct astruct_12 {
-	bool Init(struct MemoryStream* pMemoryStream);
+	bool Init(struct ByteCode* pMemoryStream);
 	float field_0x0;
 	float field_0x4;
 	float field_0x8;
@@ -69,7 +69,7 @@ struct ObjectBase {
 };
 
 struct CameraViewBase : public ObjectBase {
-	CameraViewBase(struct MemoryStream* pMemoryStream);
+	CameraViewBase(struct ByteCode* pMemoryStream);
 
 	virtual void SetCameraType(ECameraType type) {}
 	virtual ECameraType GetCameraType();
@@ -78,7 +78,7 @@ struct CameraViewBase : public ObjectBase {
 
 	int field_0x8;
 	uint flags_0xc;
-	Matrix matrix_0x10;
+	edF32MATRIX4 matrix_0x10;
 	undefined4 field_0x50;
 	undefined4 field_0x54;
 	undefined4 field_0x58;
@@ -105,7 +105,7 @@ struct CameraViewBase : public ObjectBase {
 
 struct CameraView : public CameraViewBase
 {
-	CameraView(struct MemoryStream* pMemoryStream);
+	CameraView(struct ByteCode* pMemoryStream);
 
 	undefined field_0xa8;
 	undefined field_0xa9;
@@ -123,7 +123,7 @@ struct CameraView : public CameraViewBase
 };
 
 struct MainCamera : public CameraView {
-	MainCamera(ECameraType type, struct MemoryStream* pMemoryStream);
+	MainCamera(ECameraType type, struct ByteCode* pMemoryStream);
 	virtual void SetCameraType(ECameraType type);
 	virtual ECameraType GetCameraType();
 	undefined4 field_0xc0;
@@ -978,8 +978,8 @@ struct MainCamera : public CameraView {
 	undefined field_0x4af;
 };
 
-struct CameraObj_130 {
-	struct Matrix aMatrices[4];
+struct edFCamera {
+	struct edF32MATRIX4 aMatrices[4];
 	
 	undefined field_0x100;
 	undefined field_0x101;
@@ -1097,16 +1097,16 @@ struct CameraViewManagerSubObj {
 
 struct CameraViewManager : public Manager {
 	CameraViewManager();
-	virtual void OnBeginGame();
+	virtual void Game_Init();
 	void SetupFunc_00197770();
-	CameraViewBase* LoadViewOrCamera(ECameraType type, struct MemoryStream* pMemoryStream, char* objName);
+	CameraViewBase* AddCamera(ECameraType type, struct ByteCode* pMemoryStream, char* objName);
 	float time_0x4;
 	uint field_0x8;
 	undefined field_0xc;
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	struct Matrix matrix_0x10;
+	struct edF32MATRIX4 matrix_0x10;
 	undefined field_0x50;
 	undefined field_0x51;
 	undefined field_0x52;
@@ -2037,7 +2037,7 @@ struct CameraViewManager : public Manager {
 	undefined field_0x40d;
 	undefined field_0x40e;
 	undefined field_0x40f;
-	struct Matrix matrix_0x410;
+	struct edF32MATRIX4 matrix_0x410;
 	float field_0x450;
 	float field_0x454;
 	float field_0x458;
@@ -2995,8 +2995,8 @@ struct CameraViewManager : public Manager {
 	undefined field_0xa7f;
 };
 
-extern CameraObj_130 CameraObj_130_0044a100;
-extern CameraObj_130 g_CameraObj_0044ae10;
-extern CameraObj_130 CameraObj_130_ARRAY_0044a230[10];
+extern edFCamera CameraObj_130_0044a100;
+extern edFCamera g_CameraObj_0044ae10;
+extern edFCamera CameraObj_130_ARRAY_0044a230[10];
 
 #endif // _CAMERA_VIEW_MANAGER_H

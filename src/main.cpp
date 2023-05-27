@@ -73,7 +73,7 @@ T* CreateNew()
 
 InputSetupParams g_InputSetupParams = { 0, 0, 0, 0x8C };
 
-InputSetupParams* GetInputSetupParams(void)
+InputSetupParams* edSysGetConfig(void)
 {
 	return &g_InputSetupParams;
 }
@@ -181,7 +181,7 @@ void Set_edPsx2ModulePath(char* path)
 	}
 	g_ModuleNamePtr_004892a0 = pcVar4;
 	/* edPsx2Module.path = %s\n */
-	PrintString("edPsx2Module.path = %s\n", g_edPsx2ModulePath);
+	edDebugPrintf("edPsx2Module.path = %s\n", g_edPsx2ModulePath);
 	return;
 }
 
@@ -191,29 +191,29 @@ void StartCDDVDInit(void)
 	int iVar1;
 
 	/* CDVD Drive Initialization... Please wait...\n */
-	PrintString("CDVD Drive Initialization... Please wait...\n");
+	edDebugPrintf("CDVD Drive Initialization... Please wait...\n");
 	sceSifInitRpc(0);
 	iVar1 = sceCdInit(0);
 	if (iVar1 == 0) {
 		/* CDVD drive initialization failed\n */
-		PrintString("CDVD drive initialization failed\n");
+		edDebugPrintf("CDVD drive initialization failed\n");
 	}
 	else {
 		iVar1 = sceCdGetDiskType();
 		if (iVar1 == 0x14) {
 			sceCdMmode(2);
 			/* Media type : DVD-ROM\n */
-			PrintString("Media type : DVD-ROM\n");
+			edDebugPrintf("Media type : DVD-ROM\n");
 		}
 		else {
 			sceCdMmode(1);
 			/* Media type : CD-ROM\n */
-			PrintString("Media type : CD-ROM\n");
+			edDebugPrintf("Media type : CD-ROM\n");
 		}
 		sceFsReset();
 		sceCdDiskReady(0);
 		/* CDVD drive successfully initialized\n */
-		PrintString("CDVD drive successfully initialized\n");
+		edDebugPrintf("CDVD drive successfully initialized\n");
 	}
 #endif
 	return;
@@ -225,13 +225,13 @@ void InitIopAndRPC_00291de0(void)
 
 #if defined(PLATFORM_PS2)
 	sceSifInitRpc(0);
-	PrintString("RPC initialized\n");
+	edDebugPrintf("RPC initialized\n");
 	iVar1 = sceSifInitIopHeap();
 	if (iVar1 == 0) {
-		PrintString("IOP heap initialized\n");
+		edDebugPrintf("IOP heap initialized\n");
 	}
 	else {
-		PrintString("IOP heap initialization failed\n");
+		edDebugPrintf("IOP heap initialization failed\n");
 	}
 #endif
 	return;
@@ -269,7 +269,7 @@ void StartCDBootModuleAndInitCDDVD(IopPaths* pIopPaths)
 			iVar3 = sceSifSyncIop();
 		} while (iVar3 == 0);
 		/* CD boot module %s successfully loaded\n */
-		PrintString("CD boot module %s successfully loaded\n", __src);
+		edDebugPrintf("CD boot module %s successfully loaded\n", __src);
 	}
 	InitIopAndRPC_00291de0();
 	StartCDDVDInit();
@@ -626,7 +626,7 @@ void edPsx2ModuleLoad(char* pModulesName)
 #if defined(PLATFORM_PS2)
 	sceSifDmaData local_10;
 
-	pIVar2 = GetInputSetupParams();
+	pIVar2 = edSysGetConfig();
 	if (pIVar2->field_0x20 != (char*)0x0) {
 		ToUppercase(pIVar2->field_0x20);
 	}
@@ -643,7 +643,7 @@ void edPsx2ModuleLoad(char* pModulesName)
 	iVar4 = sceOpen(g_edPsx2ModulePath, 1);
 	if (iVar4 < 0) {
 		int errorC = sceStdioConvertError(SCE_STDIO_FUNC_ANYTHING, iVar4);
-		PrintString("module binary file : %s error: %d\n", g_edPsx2ModulePath, errorC);
+		edDebugPrintf("module binary file : %s error: %d\n", g_edPsx2ModulePath, errorC);
 	}
 	else {
 		nbyte = sceLseek(iVar4, 0, 2);
@@ -652,7 +652,7 @@ void edPsx2ModuleLoad(char* pModulesName)
 		sceRead(iVar4, buf, nbyte);
 		sceClose(iVar4);
 		pModule = (edModule*)(buf + 4);
-		PrintString("Binary modules Sony Libs version : %d.%d\n", (ulong)*buf, (ulong)buf[1]);
+		edDebugPrintf("Binary modules Sony Libs version : %d.%d\n", (ulong)*buf, (ulong)buf[1]);
 		for (uVar7 = 0; uVar7 < buf[2]; uVar7 = uVar7 + 1) {
 			if (((uint)pModule & 3) != 0) {
 				pModule = (edModule*)((((uint)pModule >> 2) + 1) * 4);
@@ -663,12 +663,12 @@ void edPsx2ModuleLoad(char* pModulesName)
 			else {
 				paVar9 = (char*)((((uint)(pModule + 1) >> 6) + 1) * 0x40);
 			}
-			PrintString("Module %s (id = %02d) :\n", pModule->name, pModule->id);
+			edDebugPrintf("Module %s (id = %02d) :\n", pModule->name, pModule->id);
 			bVar1 = IsModuleLoaded_002921b0(pModule->id);
 			if (bVar1 == false) {
 				pvVar5 = sceSifAllocSysMemory(1, pModule->size, (void*)0x0);
 				if (pvVar5 == (void*)0x0) {
-					PrintString("-> module %s (%d)\n", pModule->name, pvVar5);
+					edDebugPrintf("-> module %s (%d)\n", pModule->name, pvVar5);
 				}
 				local_10.size = pModule->size;
 				local_10.mode = 0;
@@ -676,7 +676,7 @@ void edPsx2ModuleLoad(char* pModulesName)
 				local_10.addr = (uint)pvVar5;
 				sceSifSetDma(&local_10, 1);
 				if (pModule->args != 0) {
-					PrintString("command line : %s", pModule->commandLine);
+					edDebugPrintf("command line : %s", pModule->commandLine);
 					for (pcVar6 = pModule->commandLine; *pcVar6 != '\0'; pcVar6 = pcVar6 + 1) {
 						if (*pcVar6 == ' ') {
 							*pcVar6 = '\0';
@@ -687,15 +687,15 @@ void edPsx2ModuleLoad(char* pModulesName)
 				if ((pIVar2->field_0x20 == (char*)0x0)) // || (pcVar6 = FUN_0021ce50(pModule->name, pIVar2->field_0x20), pcVar6 == (char*)0x0)) {
 					result = sceSifLoadModuleBuffer(pvVar5, pModule->args, pModule->commandLine);
 				if (result < 0) {
-					PrintString("-> module %s (%d), err : %d\n", pModule->name, pModule->id, result);
+					edDebugPrintf("-> module %s (%d), err : %d\n", pModule->name, pModule->id, result);
 				}
 			}
 			else {
-				PrintString("edPsx2ModuleLoad : hand-load your IOP module NOW then press F5 to continue\n");
+				edDebugPrintf("edPsx2ModuleLoad : hand-load your IOP module NOW then press F5 to continue\n");
 				//Break();
 			}
 			//FUN_0022fa30(uVar5);
-			PrintString("-> successfully loaded\n");
+			edDebugPrintf("-> successfully loaded\n");
 		}
 		pModule = (edModule*)((char*)((int)paVar9 + 0xc) + (pModule->size - 0xc));
 	}
@@ -720,12 +720,12 @@ void edPsx2ModuleLoad(int count, edPsx2Module* aModules)
 	uint uVar7;
 	char* pcVar8;
 
-	pIVar2 = GetInputSetupParams();
+	pIVar2 = edSysGetConfig();
 	if (pIVar2->field_0x20 != (char*)0x0) {
 		ToUppercase(pIVar2->field_0x20);
 	}
 	for (; count != 0; count = count + -1) {
-		PrintString("Module %s (id = %02d) :\n", aModules->name, aModules->id);
+		edDebugPrintf("Module %s (id = %02d) :\n", aModules->name, aModules->id);
 		bVar1 = IsModuleLoaded_002921b0(*(byte*)&aModules->id);
 		if (bVar1 == false) {
 			ToUppercase(aModules->name);
@@ -738,10 +738,10 @@ void edPsx2ModuleLoad(int count, edPsx2Module* aModules)
 				sVar6 = strlen(aModules->name);
 				g_ModuleNamePtr_004892a0 = g_ModuleNamePtr_004892a0 + -(int)sVar6;
 			}
-			PrintString("\tmodule full path/name : %s\n", g_edPsx2ModulePath);
+			edDebugPrintf("\tmodule full path/name : %s\n", g_edPsx2ModulePath);
 			pcVar8 = (char*)0x0;
 			if (aModules->cmdLine != (char*)0x0) {
-				PrintString("command line : %s", aModules->cmdLine);
+				edDebugPrintf("command line : %s", aModules->cmdLine);
 				for (pcVar8 = aModules->cmdLine; *pcVar8 != '\0'; pcVar8 = pcVar8 + 1) {
 					if (*pcVar8 == ' ') {
 						*pcVar8 = '\0';
@@ -755,15 +755,15 @@ void edPsx2ModuleLoad(int count, edPsx2Module* aModules)
 			{
 				iVar5 = sceSifLoadModule(g_edPsx2ModulePath, (int)pcVar8, aModules->cmdLine);
 				while ((iVar5 < 0 && (bVar1 = uVar7 < 10, uVar7 = uVar7 + 1, bVar1))) {
-					PrintString("** could not load module %s, error : %d (retrying) **\n", aModules->name, -iVar5);
+					edDebugPrintf("** could not load module %s, error : %d (retrying) **\n", aModules->name, -iVar5);
 					iVar5 = sceSifLoadModule(g_edPsx2ModulePath, (int)pcVar8, aModules->cmdLine);
 				}
 				if ((uVar7 < 0xb) || (-1 < iVar5)) {
-					PrintString("-> successfully loaded\n");
+					edDebugPrintf("-> successfully loaded\n");
 				}
 			}
 			else {
-				PrintString("edPsx2ModuleLoad : hand-load your IOP module NOW then press F5 to continue\n");
+				edDebugPrintf("edPsx2ModuleLoad : hand-load your IOP module NOW then press F5 to continue\n");
 				//Break();
 			}
 			EVar3 = GetFileLoadMode_00424d9c();
@@ -780,14 +780,14 @@ void edPsx2ModuleLoad(int count, edPsx2Module* aModules)
 
 
 
-void IOPFunc_00291d10(void)
+void _edSystemInitSpecific(void)
 {
 	IopPaths* pIopPaths;
 	InputSetupParams* pIVar1;
 	uint uVar2;
 	undefined4 uVar3;
 
-	pIVar1 = GetInputSetupParams();
+	pIVar1 = edSysGetConfig();
 	pIopPaths = pIVar1->pIopPaths;
 	StartCDBootModuleAndInitCDDVD(pIopPaths);
 	if (pIopPaths->modulesCount == 0) {
@@ -800,7 +800,7 @@ void IOPFunc_00291d10(void)
 	//uVar2 = GetTotalIOPMemory_00292b80();
 	//uVar3 = GetLargestIOPMemory_00292c70();
 	/* IOP available memory :\nTotal : %010d\nLargest : %010d\n */
-	//PrintString(s_IOP_available_memory_:_Total_:_ % _00432fb0, uVar2, uVar3);
+	//edDebugPrintf(s_IOP_available_memory_:_Total_:_ % _00432fb0, uVar2, uVar3);
 	return;
 }
 
@@ -817,13 +817,13 @@ int SetupLibdcbAndLibpad(void)
 		}
 		else {
 			/* [EE] edDev : libpad2 init went wrong.\n */
-			PrintString("[EE] edDev : libpad2 init went wrong.\n");
+			edDebugPrintf("[EE] edDev : libpad2 init went wrong.\n");
 			success = -1;
 		}
 	}
 	else {
 		/* [EE] edDev : libdbc init went wrong.\n */
-		PrintString("[EE] edDev : libdbc init went wrong.\n");
+		edDebugPrintf("[EE] edDev : libdbc init went wrong.\n");
 		success = -1;
 	}
 #else
@@ -832,13 +832,36 @@ int SetupLibdcbAndLibpad(void)
 	return success;
 }
 
-void InitEdSys1(void)
+int edTime = 0;
+int DAT_00449174 = 0;
+
+void _edSystemTimerReset(void)
 {
-	edSystemInit(g_InputSetupParams.argc, g_InputSetupParams.argv);
-	InitHeap_002902a0((short)g_InputSetupParams.headerCount);
+	DAT_00449174 = 0;
+	return;
+}
+
+void _edSystemSetTimer(int a, void(pFunc)(void))
+{
+	return;
+}
+
+void edTimerInit(void)
+{
+	edTime = 0;
+	_edSystemTimerReset();
+	//_edSystemSetTimer(edSysConfiguration.field_0x14, edTimerDefault);
+	//EdSysTimerNodeFunc_00290f50(&edSysHandlersNodeParent_00489100, 6, TimerFunc_00290e80, 1, 0);
+	return;
+}
+
+void edSysInit(void)
+{
+	_edSystemInit(g_InputSetupParams.argc, g_InputSetupParams.argv);
+	edMemInit((short)g_InputSetupParams.headerCount);
 	edSysHandlersInit(g_InputSetupParams.handlersSize);
-	//EdSysFunc_00290f00();
-	IOPFunc_00291d10();
+	edTimerInit();
+	_edSystemInitSpecific();
 
 	SetupLibdcbAndLibpad(); // HACK
 	return;
@@ -1200,8 +1223,9 @@ void SplashFunc_002ba880(SplashParams* pParams, long param_2, uint param_3)
 	edPacketFunc_0026a6d0(&packet, 0);
 	edPacketClose_00269e70(&packet);
 #if defined(PLATFORM_PS2)
-	WaitDMA();
-	shellDmaStartChain(SHELLDMA_CHANNEL_GIF, (ulonglong*)packet.pBuffer);
+	edDmaFlushCache();
+	RENDER_LOG("DMA Begin SplashFunc_002ba880\n");
+	edDmaSend(SHELLDMA_CHANNEL_GIF, (ulonglong*)packet.pBuffer);
 #endif
 	return;
 }
@@ -1215,7 +1239,7 @@ void SetupSplash(char* pSplashFile, uint count)
 	SplashParams auStack32;
 	astruct_9 local_8;
 
-	WaitForDraw_00258230();
+	edDmaSyncPath();
 	auStack32.field_0x4 = &local_8;
 	local_8.field_0x0 = 0;
 	local_8.field_0x2 = 0;
@@ -1225,7 +1249,7 @@ void SetupSplash(char* pSplashFile, uint count)
 	auStack32.field_0xc = auStack32.field_0x4;
 	auStack32.pSplashFile = pSplashFile;
 	for (counter = 0; counter < count; counter = counter + 2) {
-		WaitForDraw_00258230();
+		edDmaSyncPath();
 		SplashFunc_002ba880(&auStack32, 1, 0);
 		if (true) {
 			draw = &g_DoubleBuffer.draw0;
@@ -1251,39 +1275,39 @@ char* sz_ModeFullPC_0042b810 = "<pc>0:d:\\Projects\\BWitch\\Psx2\\";
 
 edCdlFolder* PTR_edCdlFolder_00448ef4;
 
-void Init_edFileA(void)
+void Init_edFile(void)
 {
 	bool bVar1;
 	InputSetupParams* pIVar2;
 	undefined4 uVar3;
 	int local_4;
 
-	pIVar2 = GetInputSetupParams();
-	//uVar3 = Get0x448fd0();
-	//*(bool*)uVar3 = g_ProfileModeSetup_00448edc != 0;
-	InitFileHandlers_0025c300();
+	pIVar2 = edSysGetConfig();
+	//uVar3 = edFileGetConfig();
+	//uVar3->field_0x0 = g_ProfileModeSetup_00448edc != 0;
+	edFileInit();
 	if (g_FileLoadMode_00448810 == FLM_Net) {
-		SetFilePathMode_00261810(sz_ModeNet_0042b7f8);
+		edFileSetPath(sz_ModeNet_0042b7f8);
 	}
 	else {
 		if (g_FileLoadMode_00448810 == FLM_CD_DVD) {
-			SetFilePathMode_00261810(sz_ModeCdvd_0042b800);
+			edFileSetPath(sz_ModeCdvd_0042b800);
 		}
 		else {
-			SetFilePathMode_00261810(sz_ModePc_0042b808);
+			edFileSetPath(sz_ModePc_0042b808);
 		}
 	}
 	/* <cdvd> */
 	local_4 = 0;
-	bVar1 = edCFilerInitTOC_00260f80(sz_ModeCdvd_0042b800, IM_CALC_SIZE, (void*)0x898, &local_4);
+	bVar1 = edFileFilerConfigure(sz_ModeCdvd_0042b800, IM_CALC_SIZE, (void*)0x898, &local_4);
 	if (bVar1 != false) {
 		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAlloc(TO_HEAP(H_MAIN), local_4);
 		/* <cdvd> */
-		edCFilerInitTOC_00260f80(sz_ModeCdvd_0042b800, IM_INIT, PTR_edCdlFolder_00448ef4, (int*)local_4);
+		edFileFilerConfigure(sz_ModeCdvd_0042b800, IM_INIT, PTR_edCdlFolder_00448ef4, (int*)local_4);
 	}
 	if (pIVar2->field_0x20 != (char*)0x0) {
 		/* <pc>0:d:\\Projects\\BWitch\\Psx2\\ */
-		SetFilePathMode_00261810(sz_ModeFullPC_0042b810);
+		edFileSetPath(sz_ModeFullPC_0042b810);
 	}
 	return;
 }
@@ -1295,7 +1319,7 @@ bool LoadBNK(char* bnkTitle, char* bnkPath)
 	char filePath[512];
 
 	/* Param_1: "<BNK>0:" Param_2: "CDEURO/menu/Messages.bnk" */
-	peVar1 = FindEdCFiler(filePath, bnkTitle, 1);
+	peVar1 = edFileOpen(filePath, bnkTitle, 1);
 	if (peVar1 == (edCFiler*)0x0) {
 		uVar1 = false;
 	}
@@ -1376,7 +1400,7 @@ void SetLanguageID_00336b40(void)
 }
 
 edCBank g_MenuDataedCBank_00491980 = { 0 };
-edCBankBuffer* g_MenuDataBank_0049758 = NULL;
+edCBankBufferEntry* BootData_BankBufferEntry = NULL;
 char* sz_MenuDataBankName_00435610 = "CDEURO/menu/MenuData.bnk";
 char* sz_pMenuDataBankName_00448b64 = sz_MenuDataBankName_00435610;
 
@@ -1388,7 +1412,7 @@ void LoadAndVerifyMenuBnk(void)
 	undefined* puVar1;
 	int fileIndex;
 	char* messagesFilePointer;
-	//G2DObj* pIconTexture;
+	//Sprite* pIconTexture;
 	char** ppcVar2;
 	int iVar3;
 	BankFilePathContainer bankHeader;
@@ -1396,92 +1420,92 @@ void LoadAndVerifyMenuBnk(void)
 	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
 	   and a map. */
 	memset(&bankHeader, 0, sizeof(BankFilePathContainer));
-	edCBank_Setup(&g_MenuDataedCBank_00491980, 0x32000, 1, &bankHeader);
+	initialize(&g_MenuDataedCBank_00491980, 0x32000, 1, &bankHeader);
 	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
 	bankHeader.filePath = sz_pMenuDataBankName_00448b64;
-	g_MenuDataBank_0049758 = edCBank_GetBankBuffer(&g_MenuDataedCBank_00491980);
-	edCBankBuffer_file_access(g_MenuDataBank_0049758, &bankHeader);
+	BootData_BankBufferEntry = get_free_entry(&g_MenuDataedCBank_00491980);
+	load(BootData_BankBufferEntry, &bankHeader);
 	/* Bank will go on the heap here */
 	iVar3 = 0;
-	//ppcVar2 = g_StaticIconListArray_004258e0;
-	//pIconTexture = g_LoadedTextIcons;
+	//ppcVar2 = BootBitmapNames;
+	//pIconTexture = BootBitmaps;
 	//do {
 	//	messagesFilePointer = *ppcVar2;
-	//	fileIndex = GetIndexForFileName(g_MenuDataBank_0049758, messagesFilePointer);
+	//	fileIndex = get_index(BootData_BankBufferEntry, messagesFilePointer);
 	//	if (fileIndex == -1) {
-	//		PrintString(s__File:_ % s_00435750, messagesFilePointer);
+	//		edDebugPrintf(s__File:_ % s_00435750, messagesFilePointer);
 	//		messagesFilePointer = (char*)0x0;
 	//	}
 	//	else {
-	//		messagesFilePointer = GetFilePointerFromFileIndex(g_MenuDataBank_0049758, fileIndex);
+	//		messagesFilePointer = get_element(BootData_BankBufferEntry, fileIndex);
 	//	}
-	//	LoadTextIcon(pIconTexture, messagesFilePointer);
+	//	Sprite::Install(pIconTexture, messagesFilePointer);
 	//	puVar1 = sz_MediumFontFileName_00448b60;
 	//	iVar3 = iVar3 + 1;
 	//	ppcVar2 = ppcVar2 + 1;
 	//	pIconTexture = pIconTexture + 1;
 	//} while (iVar3 < 0x17);
-	/* Load Medium.Fon */
-	iVar3 = GetIndexForFileName(g_MenuDataBank_0049758, sz_MediumFontFileName_00448b60);
+	/* Init Medium.Fon */
+	iVar3 = get_index(BootData_BankBufferEntry, sz_MediumFontFileName_00448b60);
 	if (iVar3 == -1) {
-		PrintString("\r\nFile: %s\r\n", puVar1);
-		g_MenuFont_00449754 = (FontPacked*)0x0;
+		edDebugPrintf("\r\nFile: %s\r\n", puVar1);
+		BootDataFont = (edCTextFont*)0x0;
 	}
 	else {
-		g_MenuFont_00449754 = (FontPacked*)GetFilePointerFromFileIndex(g_MenuDataBank_0049758, iVar3);
+		BootDataFont = (edCTextFont*)get_element(BootData_BankBufferEntry, iVar3);
 	}
-	FontSetup(g_MenuFont_00449754);
-	if ((FontPacked_2C*)g_MenuFont_00449754->pSubData != (FontPacked_2C*)0x0) {
-		//g_MenuFont_00449754->pSubData->pOverrideData = USHORT_ARRAY_0048fc60;
+	edTextInstallFont(BootDataFont);
+	if ((FontPacked_2C*)BootDataFont->pSubData != (FontPacked_2C*)0x0) {
+		//BootDataFont->pSubData->pOverrideData = USHORT_ARRAY_0048fc60;
 	}
 	//USHORT_ARRAY_0048fc60[156] = 0x153;
 	//USHORT_ARRAY_0048fc60[241] = 0xf1;
 	//USHORT_ARRAY_0048fc60[231] = 0xe7;
 	//USHORT_ARRAY_0048fc60[199] = 199;
 	//USHORT_ARRAY_0048fc60[220] = 0xdc;
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_MAGIC_00435630, &g_LoadedTextIcons[0].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CATCH_00435638, &g_LoadedTextIcons[1].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_ACTION_00435640, &g_LoadedTextIcons[2].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_JUMP_00435648, &g_LoadedTextIcons[3].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CROUCH_00435650, &g_LoadedTextIcons[6].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_SNEAK_00435658, &g_LoadedTextIcons[6].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_VIEW_00435668, &g_LoadedTextIcons[5].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_MAP_00435680, &g_LoadedTextIcons[4].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_INVENT_00435660, &g_LoadedTextIcons[7].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CAMERA_00435670, &g_LoadedTextIcons[10].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_CONTROL_00435678, &g_LoadedTextIcons[10].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_MONEY_00435688, &g_LoadedTextIcons[0x15].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_BACK_00435690, &g_LoadedTextIcons[0].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_VALID_00435698, &g_LoadedTextIcons[3].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_VALDSAFE_004356a0, &g_LoadedTextIcons[1].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_UDLR_004356b0, &g_LoadedTextIcons[0xb].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_LR_004356b8, &g_LoadedTextIcons[0xc].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_STIK_ROT_00435760, &g_LoadedTextIcons[9].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_UP_004356c0, &g_LoadedTextIcons[0xd].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_RIGHT_004356c8, &g_LoadedTextIcons[0xe].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_LEFT_004356d0, &g_LoadedTextIcons[0xf].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_DOWN_004356d8, &g_LoadedTextIcons[0x10].pMaterialInfo);
-	//TextIconDictionary::AddTextureEntry(&g_TextIconDictionary, s_HELP_004356e0, &g_LoadedTextIcons[8].pMaterialInfo);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_RED_004356e8, FUN_00359e90);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_GREEN_004356f0, FUN_00359e70);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_BLUE_004356f8, FUN_00359e60);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_YELLOW_00435700, FUN_00359e40);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_BLACK_00435708, FUN_00359e30);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_WHITE_00435710, FUN_00359e10);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_BLINK_00435718, FUN_00359c90);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_NOBLINK_00435720, FUN_00359c50);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA0_00435728, FUN_00359c30);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA25_00435730, FUN_00359c00);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA50_00435738, FUN_00359bd0);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_ALPHA75_00435740, FUN_00359ba0);
-	//TextIconDictionary::AddFunctionEntry(&g_TextIconDictionary, s_RESET_00435748, 0);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_MAGIC_00435630, &BootBitmaps[0].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CATCH_00435638, &BootBitmaps[1].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_ACTION_00435640, &BootBitmaps[2].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_JUMP_00435648, &BootBitmaps[3].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CROUCH_00435650, &BootBitmaps[6].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_SNEAK_00435658, &BootBitmaps[6].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_VIEW_00435668, &BootBitmaps[5].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_MAP_00435680, &BootBitmaps[4].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_INVENT_00435660, &BootBitmaps[7].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CAMERA_00435670, &BootBitmaps[10].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CONTROL_00435678, &BootBitmaps[10].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_MONEY_00435688, &BootBitmaps[0x15].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_BACK_00435690, &BootBitmaps[0].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_VALID_00435698, &BootBitmaps[3].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_VALDSAFE_004356a0, &BootBitmaps[1].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_UDLR_004356b0, &BootBitmaps[0xb].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_LR_004356b8, &BootBitmaps[0xc].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_STIK_ROT_00435760, &BootBitmaps[9].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_UP_004356c0, &BootBitmaps[0xd].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_RIGHT_004356c8, &BootBitmaps[0xe].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_LEFT_004356d0, &BootBitmaps[0xf].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_DOWN_004356d8, &BootBitmaps[0x10].pMaterialInfo);
+	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_HELP_004356e0, &BootBitmaps[8].pMaterialInfo);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_RED_004356e8, FUN_00359e90);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_GREEN_004356f0, FUN_00359e70);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_BLUE_004356f8, FUN_00359e60);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_YELLOW_00435700, FUN_00359e40);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_BLACK_00435708, FUN_00359e30);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_WHITE_00435710, FUN_00359e10);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_BLINK_00435718, FUN_00359c90);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_NOBLINK_00435720, FUN_00359c50);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA0_00435728, FUN_00359c30);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA25_00435730, FUN_00359c00);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA50_00435738, FUN_00359bd0);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA75_00435740, FUN_00359ba0);
+	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_RESET_00435748, 0);
 	return;
 }
 
 char* sz_BNK_Messages_Drive = "<BNK>0:";
 char* sz_BNK_Messages_Path = "CDEURO/menu/Messages.bnk";
 
-void SetupGame(int argc,char **argv)
+void MainInit(int argc,char **argv)
 {
 	InputSetupParams *pIVar1;
 	char* pFileBuffer;
@@ -1491,15 +1515,15 @@ void SetupGame(int argc,char **argv)
 	printf("-------- eden lib init --------------\n");
 	printf("---- Init edSys \n");
 	
-	pIVar1 = GetInputSetupParams();
+	pIVar1 = edSysGetConfig();
 	pIVar1->argc = argc;
 	pIVar1->argv = argv;
 	pIVar1->field_0x14 = 10000;
 	pIVar1->headerCount = 0x1000;
 
-	PTR_IopManager_00448cf8->SetupIopPaths(pIVar1);
+	gCompatibilityHandlingPtr->SetupIopPaths(pIVar1);
 
-	InitEdSys1();
+	edSysInit();
 
 	//ScratchPadAllocator::Init_00191940(&ScratchPadAllocator_00449ed0);
 
@@ -1536,84 +1560,84 @@ void SetupGame(int argc,char **argv)
 		edMemFree(pFileBuffer);
 	}
 
-	//PrintString(s_----_Init_edDebug_0042b610);
-	//edDebug::Init();
-	//PrintString(s_----_Init_edCluster_0042b630);
-	//soundController ? = Init_edClusterA();
-	//*soundController ? = 6;
-	//Init_edClusterB();
-	//edProfile::Init_001b8390(0);
-	PTR_IopManager_00448cf8->IOPFunc_0x10(0);
-	PrintString("---- Init edDlist \n");
-	//soundController ? = GetDAT_004250d0();
-	//*soundController ? = 0x14;
-	//soundController ? [3] = soundController ? [3] * 3;
-	//soundController ? [4] = 500;
-	edDlist::Init();
-	PrintString("---- Init ed3D \n");
-	ed3D::Init();
-	//PrintString(s_----_Init_edFile_0042b690);
-	Init_edFileA();
-	//puVar1 = GetPtrgp0xffff8c78();
-	//*(undefined4*)(puVar1 + 4) = 0x26;
-	Init_edText();
-	//PrintString(s_----_Init_edMath_0042b6b0);
-	//Init_edMath();
-	//PrintString(s_----_Init_edDev_0042b6d0);
-	//Init_edDevA();
+	//edDebugPrintf(s_----_Init_edDebug_0042b610);
+	//edDebugInit();
+	//edDebugPrintf(s_----_Init_edCluster_0042b630);
+	//edClusterConfig = edClusterGetConfig();
+	//edClusterConfig->field_0x0 = 6;
+	//edClusterInit();
+	//ProfileInit(0);
+	gCompatibilityHandlingPtr->IOPFunc_0x10(0);
+	edDebugPrintf("---- Init edDlist \n");
+	//edDListConfig_ = edDListGetConfig();
+	//edDListConfig_->field_0x0 = 0x14;
+	//edDListConfig_->field_0xc = edDListConfig_->field_0xc * 3;
+	//edDListConfig_->field_0x10 = 500;
+	edDlist::edDListInit();
+	edDebugPrintf("---- Init ed3D \n");
+	Init3D();
+	//edDebugPrintf(s_----_Init_edFile_0042b690);
+	Init_edFile();
+	//puVar2 = edTextGetConfig();
+	//puVar2->field_0x4 = 0x26;
+	edTextInit();
+	//edDebugPrintf(s_----_Init_edMath_0042b6b0);
+	//edMathInit();
+	//edDebugPrintf(s_----_Init_edDev_0042b6d0);
+	//edDevInit();
 	///* Should we init sound and music? */
 	//if (DAT_00448ef0 == 0) {
-	//	PrintString(s_----_Init_edMusic_0042b6f0);
-	//	puVar2 = FUN_002699e0();
-	//	uVar3 = Get0x30();
-	//	if (uVar3 < 0x30) {
-	//		*puVar2 = uVar3 >> 1;
+	//	edDebugPrintf(s_----_Init_edMusic_0042b6f0); 6f0);
+	//	musicConfig = edMusicGetConfig();
+	//	uVar2 = edSoundVoicesNumberGet();
+	//	if (uVar2 < 0x30) {
+	//		musicConfig->field_0x0 = uVar2 >> 1;
 	//	}
 	//	else {
-	//		*puVar2 = 0x18;
+	//		musicConfig->field_0x0 = 0x18;
 	//	}
-	//	puVar2[1] = 10;
-	//	puVar2[2] = 0xf;
-	//	puVar2[3] = 5;
+	//	musicConfig->field_0x4 = 10;
+	//	musicConfig->field_0x8 = 0xf;
+	//	musicConfig->field_0xc = 5;
 	//	edMusic::Init();
-	//	PrintString(s_----_Init_Sound_0042b710);
-	//	soundController ? = Init_SoundA();
-	//	soundController ? [3] = *puVar2;
-	//	soundController ? [4] = uVar3 - 1;
-	//	*soundController ? = 0x80;
+	//	edDebugPrintf(s_----_Init_Sound_0042b710); 0);
+	//	soundConfig = edSoundGetConfig();
+	//	soundConfig->field_0xc = musicConfig->field_0x0;
+	//	soundConfig->field_0x10 = uVar2 - 1;
+	//	soundConfig->field_0x0 = 0x80;
 	//	if (g_omode == SCE_GS_PAL) {
-	//		soundController ? [5] = 0x32;
+	//		soundConfig->field_0x14 = 0x32;
 	//	}
 	//	else {
-	//		soundController ? [5] = 0x3c;
+	//		soundConfig->field_0x14 = 0x3c;
 	//	}
-	//	Init_SoundB();
-	//	Init_SoundC((float)&DAT_3f4ccccd);
+	//	edMusicInit();
+	//	edSoundInit((float)&DAT_3f4ccccd);
 	//}
-	//Init_SoundD();
+	//edEventInit();
 	/* Init_edBank */
-	PrintString("---- Init edBank \n");
-	Init_edBank();
+	edDebugPrintf("---- Init edBank \n");
+	edBankInit();
 	///* game_init */
-	//PrintString(s_--------_game_init_------------ - _0042b750);
-	//PrintString(s_--------------------------------_0042b780);
+	//edDebugPrintf(s_--------_game_init_------------ - _0042b750);
+	//edDebugPrintf(s_--------------------------------_0042b780);
 	//Game_Init();
 	///* <BNK>0: CDEURO/menu/Messages.bnk */
 	LoadBNK(sz_BNK_Messages_Drive, sz_BNK_Messages_Path);
 	SetLanguageID_00336b40();
 	LoadAndVerifyMenuBnk();
 	/* Init_edVideo */
-	PrintString("---- Init edVideo \n");
-	VidParams8* pVVar4 = GetVidParams8_002b9e60();
+	edDebugPrintf("---- Init edVideo \n");
+	edVideoConfig* pVVar4 = edVideoGetConfig();
 	pVVar4->field_0x1 = 1;
 	pVVar4->field_0x4 = 0;
-	Init_edVideo_002b9e70();
-	SetupVidParams_001baa30((short)g_omode, (short)g_ScreenWidth, (short)g_ScreenHeight, (short)g_VideoMode1, 0);
+	edVideoInit();
+	SetVideoMode((short)g_omode, (short)g_ScreenWidth, (short)g_ScreenHeight, (short)g_VideoMode1, 0);
 	//CheckControllers(&g_IniFile_00450750);
-	SetupGameCreateObject();
-	WillSetupDisplayListAndRunConstructors();
+	Scene::CreateScene();
+	Game_Init();
 	///* May jump to 003965B8 */
-	bool bVar1 = PTR_IopManager_00448cf8->GetAnyControllerConnected();
+	bool bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 	/* This doesn't seem to trigger on main run. */
 	if (bVar1 != false) {
 		assert(false);
@@ -1765,10 +1789,10 @@ void DestroyVideoFile(VideoFile* pVideo)
 	sceSifFreeIopHeap((void*)(pVideo->pssResources).iopZeroBuff);
 	EnableIntc(INTC_VBLANK_S);
 	EnableIntc(INTC_GS);
-	SetupPCRTC_002b9b80((VidParams26*)0x0);
-	FUN_002b9e00(0, 0, 0);
-	SetVideoOffsets_002b9dd0((short)g_SetOffsetX, (short)g_SetOffsetY);
-	RefreshScreenRender();
+	edVideoSetAttribute((ed_video_attr*)0x0);
+	edVideoSetBackgroundColor(0, 0, 0);
+	edVideoSetOffset((short)g_SetOffsetX, (short)g_SetOffsetY);
+	edVideoFlip();
 #endif
 	return;
 }
@@ -1783,7 +1807,7 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	float fVar4;
 	char file_path[512];
 
-	inTimeController = GetTimeController();
+	inTimeController = GetTimer();
 	display = (VideoFile*)Allocate(sizeof(VideoFile));
 	/* file_path = CDEURO/movies/ + file_name + .pss */
 	FormatFilePath(file_path, "CDEURO/movies/", file_name, ".pss", 0);
@@ -1791,7 +1815,7 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 
 	do {
 		//ReadInput(inTimeController->cutsceneDeltaTime);
-		inTimeController->UpdateDeltaTime();
+		inTimeController->Update();
 		if (display->fileReadSuccess != 0) {
 			fVar4 = 1.0;
 			if (param_2 == false) {
@@ -1835,9 +1859,11 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	return;
 }
 
-void LoadLevel(void)
+//#define LOAD_FOREVER 1
+
+void LoadingLoop(void)
 {
-	LargeObject* pLVar1;
+	Scene* pLVar1;
 	bool bVar2;
 	TimeController* inTimeController;
 
@@ -1845,28 +1871,31 @@ void LoadLevel(void)
 
 	/* These functions just run once */
 	//PlayIntroVideo(0);
-	pLVar1 = g_LargeObject_006db450;
-	inTimeController = GetTimeController();
+	pLVar1 = Scene::_pinstance;
+	inTimeController = GetTimer();
 	LoadStageOne_001b9dc0();
 	do {
+#ifdef PLATFORM_WIN
+		Renderer::WaitUntilReady();
+#endif
 		/* This is the main loop that plays cutscenes
 
 		   This does not control any cutscene elements */
 		//ReadInput(inTimeController->cutsceneDeltaTime);
-		inTimeController->UpdateDeltaTime();
+		inTimeController->Update();
 		/* Play cutscene */
-		bVar2 = pLVar1->AsyncLoad_001b9cd0();
+		bVar2 = pLVar1->LevelLoading_Manage();
 		/* Responsible for drawing the loading screen. */
-		LoadLevelUpdate_001b9c60();
+		pLVar1->LevelLoading_Draw();
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
 		/* Update rendering */
-		RefreshScreenRender();
+		edVideoFlip();
 #if defined(LOAD_FOREVER)
 	} while (1);
 #else
 	} while (bVar2 != false);
 #endif
-	pLVar1->EndLoadStageOne();
+	pLVar1->LevelLoading_End();
 	MY_LOG("LoadLevel End\n");
 	return;
 }
@@ -1878,7 +1907,7 @@ void GameLoop(void)
 {
 	//ActorState AVar1;
 	APlayer* pAVar2;
-	LargeObject* pLVar3;
+	Scene* pLVar3;
 	bool cVar4;
 	bool bVar4;
 	TimeController* timeController;
@@ -1890,19 +1919,19 @@ void GameLoop(void)
 
 	MY_LOG("GameLoop Begin\n");
 
-	pLVar3 = g_LargeObject_006db450;
-	timeController = GetTimeController();
+	pLVar3 = Scene::_pinstance;
+	timeController = GetTimer();
 	do {
-		PTR_IopManager_00448cf8->IOPFunc_0x14(0);
-		//ReadInput(timeController->cutsceneDeltaTime);
-		cVar4 = PTR_IopManager_00448cf8->GetAnyControllerConnected();
-		bVar4 = g_InputManager_00450960.FUN_001b6f60();
+		gCompatibilityHandlingPtr->IOPFunc_0x14(0);
+		//PlayerInput::Update(timeController->cutsceneDeltaTime);
+		cVar4 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+		bVar4 = g_InputManager_00450960.SoftReset();
 		if (bVar4 != false) {
 			assert(false);
-			//FUN_001b93c0(g_LargeObject_006db450);
+			//Scene::_pinstance->InitiateReset();
 		}
 		pAVar2 = g_PlayerActor_00448e10;
-		if ((g_DebugCameraFlag_00448ea4 & 0xc0) == 0) {
+		if ((GameFlags & 0xc0) == 0) {
 			if (g_PlayerActor_00448e10 != (APlayer*)0x0) {
 				assert(false);
 				//piVar5 = (int*)(*(code*)g_PlayerActor_00448e10->pVTable->field_0x138)(g_PlayerActor_00448e10);
@@ -1922,16 +1951,16 @@ void GameLoop(void)
 				//if (bVar4) goto LAB_001a7608;
 			}
 			if (cVar4 != false) {
-				if ((g_DebugCameraFlag_00448ea4 & 8) != 0) {
+				if ((GameFlags & 8) != 0) {
 					assert(false);
 					//LoadFrontendWithuRam00451684();
 				}
-				if ((g_DebugCameraFlag_00448ea4 & 0x10) != 0) {
+				if ((GameFlags & 0x10) != 0) {
 					assert(false);
 					//OpenMapScreen_003f59b0();
 				}
-				if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
-					if ((g_DebugCameraFlag_00448ea4 & 0x800) == 0) {
+				if ((GameFlags & 0x3c) == 0) {
+					if ((GameFlags & 0x800) == 0) {
 						assert(false);
 						//ActivatePause_001b5320(PM_PauseMenu);
 					}
@@ -1941,11 +1970,11 @@ void GameLoop(void)
 					}
 				}
 			}
-			if ((((g_DebugCameraFlag_00448ea4 & 0x8000) == 0) &&
+			if ((((GameFlags & 0x8000) == 0) &&
 				((g_InputManager_00450960.pressedBitfield & 0x80000) != 0)) &&
 				(g_InputManager_00450960.buttonArray[18].floatFieldB == 0.0)) {
-				if ((g_DebugCameraFlag_00448ea4 & 8) == 0) {
-					if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
+				if ((GameFlags & 8) == 0) {
+					if ((GameFlags & 0x3c) == 0) {
 						assert(false);
 						//GameLoopFunc_0037a670();
 					}
@@ -1961,9 +1990,9 @@ void GameLoop(void)
 				bVar4 = true;
 			}
 			if ((((g_InputManager_00450960.pressedBitfield & 0x8000000) != 0) && (!bVar4)) ||
-				((g_DebugCameraFlag_00448ea4 & 0x400) != 0)) {
-				if (((g_DebugCameraFlag_00448ea4 & 0x10) == 0) || ((g_DebugCameraFlag_00448ea4 & 0x400) != 0)) {
-					if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
+				((GameFlags & 0x400) != 0)) {
+				if (((GameFlags & 0x10) == 0) || ((GameFlags & 0x400) != 0)) {
+					if ((GameFlags & 0x3c) == 0) {
 						assert(false);
 						//LoadMaps();
 					}
@@ -1972,13 +2001,13 @@ void GameLoop(void)
 					assert(false);
 					//OpenMapScreen_003f59b0();
 				}
-				g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffbff;
+				GameFlags = GameFlags & 0xfffffbff;
 			}
 			if (((g_InputManager_00450960.pressedBitfield & 0x40000) != 0) &&
 				((g_InputManager_00450960.pressedBitfield & 0x80000) == 0)) {
-				if ((g_DebugCameraFlag_00448ea4 & 4) == 0) {
-					if ((g_DebugCameraFlag_00448ea4 & 0x3c) == 0) {
-						if ((g_DebugCameraFlag_00448ea4 & 0x800) == 0) {
+				if ((GameFlags & 4) == 0) {
+					if ((GameFlags & 0x3c) == 0) {
+						if ((GameFlags & 0x800) == 0) {
 							assert(false);
 							//ActivatePause_001b5320(PM_PauseMenu);
 						}
@@ -1998,20 +2027,20 @@ void GameLoop(void)
 			}
 		}
 	LAB_001a7608:
-		if (((long)(int)g_DebugCameraFlag_00448ea4 & 0xffffffff80000000U) != 0) {
-			g_DebugCameraFlag_00448ea4 = (uint)((ulong)((long)(int)g_DebugCameraFlag_00448ea4 << 0x21) >> 0x21);
+		if (((long)(int)GameFlags & 0xffffffff80000000U) != 0) {
+			GameFlags = (uint)((ulong)((long)(int)GameFlags << 0x21) >> 0x21);
 			assert(false);
-			//SetPaused_001b8c40(g_LargeObject_006db450, 1);
+			//SetPaused_001b8c40(Scene::_pinstance, 1);
 		}
-		timeController->UpdateDeltaTime();
+		timeController->Update();
 		/* This may control cine cutscenes */
-		PreUpdateObjects(pLVar3);
+		pLVar3->Level_Manage();
 		UpdateObjectsMain();
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
-		RefreshScreenRender();
+		edVideoFlip();
 		/* Determine if we should exit the main game loop here. */
-		if ((g_DebugCameraFlag_00448ea4 & 2) != 0) {
-			g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7d;
+		if ((GameFlags & 2) != 0) {
+			GameFlags = GameFlags & 0xfffffe7d;
 			return;
 		}
 	} while (true);
@@ -2019,18 +2048,18 @@ void GameLoop(void)
 	MY_LOG("GameLoop End\n");
 }
 
-void LoadAndPlayCutscene(void)
+void LevelInit(void)
 {
-	LargeObject* pLVar1;
+	Scene* pLVar1;
 
-	MY_LOG("LoadAndPlayCutscene Begin\n");
+	MY_LOG("LevelInit Begin\n");
 
 	/* Cutscenes are played in here */
-	LoadLevel();
-	pLVar1 = g_LargeObject_006db450;
-	LoadA_001b9bf0();
-	LoadB_001b95c0(pLVar1);
-	MY_LOG("LoadAndPlayCutscene End\n");
+	LoadingLoop();
+	pLVar1 = Scene::_pinstance;
+	pLVar1->Level_Install();
+	pLVar1->Level_Init();
+	MY_LOG("LevelInit End\n");
 	return;
 }
 
@@ -2048,7 +2077,7 @@ int main(int argc,char **argv)
 
 	/* arcg = %d\nargv = %s\n */
 	printf("arcg = %d\nargv = %s\n", argc, *argv);
-	SetupGame(argc, argv);
+	MainInit(argc, argv);
 	if (g_LevelScheduleManager_00449728->nextLevelID == 0xe) {
 		videoModeSpecifier = 'n';
 		if (g_omode == SCE_GS_PAL) {
@@ -2073,11 +2102,11 @@ int main(int argc,char **argv)
 		//ShowCompanySplashScreen(edenFileName, 0, 0);
 	}
 	do {
-		LoadAndPlayCutscene();
+		LevelInit();
 		GameLoop();
-	//	LoadGame();
-	} while ((g_DebugCameraFlag_00448ea4 & 1) == 0);
-	//MainCleanup();
+	//	LevelTerm();
+	} while ((GameFlags & 1) == 0);
+	//MainTerm();
 	return 0;
 }
 

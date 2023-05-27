@@ -21,7 +21,7 @@ char* FindEmptyChar(char* param_1)
 
 char s_DefaultFilePath_00431460[8] = "";
 
-edCFiler* FindEdCFiler(char* outString, char* filePath, long mode)
+edCFiler* edFileOpen(char* outString, char* filePath, long mode)
 {
     char* pcVar1;
     bool bVar2;
@@ -219,7 +219,7 @@ LAB_00261138:
     return peVar9;
 }
 
-void SetFilePathMode_00261810(char* mode)
+void edFileSetPath(char* mode)
 {
 	bool bVar1;
 	char* pcVar2;
@@ -229,7 +229,7 @@ void SetFilePathMode_00261810(char* mode)
 	char local_200[512];
     char weirdChange;
 
-	peVar3 = FindEdCFiler(local_200, mode, 1);
+	peVar3 = edFileOpen(local_200, mode, 1);
 	if (peVar3 != (edCFiler*)0x0) {
         g_edCFiler_Static_0046dea0.SetDefaultFileLoad_00261610(local_200);
 		pcVar2 = local_200;
@@ -290,13 +290,13 @@ void LinkCDVD(void)
 	return;
 }
 
-void LoadNetFileLog_00260a30(void)
+void _edFileInit(void)
 {
 	byte bVar1;
 
 	//if ((DAT_00448fd1 != '\0') && (bVar1 = IsNetSetup_004893d0(), bVar1 != 0)) {
 	//	SetFilePathMode_00261810(s_<net>_00431458);
-	//	g_NetFilePtr_00448fd4 = (undefined*)LoadFile(PTR_s_NetFile.log_00448930, 6);
+	//	g_NetFilePtr_00448fd4 = (undefined*)edFileLoadSize(PTR_s_NetFile.log_00448930, 6);
 	//	edSysHandlers::edSysHandlersAdd(edSysHandlersNodeParent_0048cee0.pNodeTable, edSysHandlersNodeParent_0048cee0.pTypeArray_0x4, (long)g_SysHandlersMainMaxEventID_0048cf10, New_Name, FUN_00260ae0, 1, 0);
 	//}
 	//FUN_00260ec0();
@@ -312,16 +312,16 @@ void ReadsBankFileHandler(int, int, char*)
 	ReadsBankFile();
 }
 
-bool InitFileHandlers_0025c300(void)
+bool edFileInit(void)
 {
 	bool bVar1;
 	edCFiler* piVar2;
 	bool bSuccess;
 	bool bVar3;
 
-	//edFile::LoadLib_0025a430();
-	LoadNetFileLog_00260a30();
-	//EdFileBase::LinkMEM_00262050();
+	//edFileDebugInit();
+	_edFileInit();
+	//EdFileBase::edFileMemAddFiler();
 	piVar2 = GetFirstEdFileHandler_00260e00(&g_edCFiler_MCPtr_00448fd8);
 	bVar3 = true;
 	for (; piVar2 != (edCFiler*)0x0; piVar2 = (piVar2->baseData).pNextEd) {
@@ -632,7 +632,7 @@ void ReadsBankFile(edCFiler_28* pFiler_28)
 	return;
 }
 
-void TriggerBankRead_0025b0c0(edCFiler* pFiler)
+void edFileGetFiler(edCFiler* pFiler)
 {
 	bool bVar1;
 	edCFiler* peVar2;
@@ -658,7 +658,7 @@ void TriggerBankRead_0025b0c0(edCFiler* pFiler)
 	return;
 }
 
-bool edCFilerInitTOC_00260f80(char* path, ETableOfContentsInitMode mode, void* param_3, int* param_4)
+bool edFileFilerConfigure(char* path, ETableOfContentsInitMode mode, void* param_3, int* param_4)
 {
 	bool bVar1;
 	edCFiler_CDVD* peVar1;
@@ -671,7 +671,7 @@ bool edCFilerInitTOC_00260f80(char* path, ETableOfContentsInitMode mode, void* p
 	local_28 = (long)(int)param_4;
 	local_30 = (long)(int)param_3;
 	EStack64 = mode;
-	peVar1 = (edCFiler_CDVD*)FindEdCFiler(acStack592, path, 1);
+	peVar1 = (edCFiler_CDVD*)edFileOpen(acStack592, path, 1);
 	if (peVar1 == (edCFiler_CDVD*)0x0) {
 		bVar1 = false;
 	}
@@ -703,7 +703,7 @@ bool FormatStreamPath(char* filePathOut, char* filePathIn)
 	}
 	else {
 		*filePathOut = '\0';
-		peVar1 = FindEdCFiler(acStack512, filePathIn, 0);
+		peVar1 = edFileOpen(acStack512, filePathIn, 0);
 		if (peVar1 == (edCFiler*)0x0) {
 			uVar1 = false;
 		}

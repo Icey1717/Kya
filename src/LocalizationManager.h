@@ -11,9 +11,9 @@ public:
 	LocalizationManager();
 
 	// Begin Manager
-	virtual void OnBeginGame();
-	virtual void LoadB();
-	virtual void Unload();
+	virtual void Game_Init();
+	virtual void Level_Init();
+	virtual void Level_Term();
 	// End Manager
 
 	TranslatedTextData trcText;

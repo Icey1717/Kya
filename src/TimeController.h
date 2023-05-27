@@ -8,8 +8,8 @@ float GetFrameTime_00291c40(void);
 class TimeController {
 public:
 	TimeController();
-	float UpdateDeltaTime();
-	void ResetTimeController_001ba6d0();
+	float Update();
+	void ResetGameTimers();
 
 	float totalPlayTime;
 	float frameDelta;
@@ -22,6 +22,6 @@ public:
 	float frameTime;
 };
 
-TimeController* GetTimeController(void);
+TimeController* GetTimer(void);
 
 #endif //_TIMECONTROLLER_H

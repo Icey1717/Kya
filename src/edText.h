@@ -31,10 +31,10 @@ struct FontPacked_2C {
 	void* pGlyphData;
 	void* field_0x4;
 	struct SegmentPacked* pSegment;
-	struct MaterialInfo materialInfo;
+	struct edDList_material materialInfo;
 	void* field_0x1c;
 	void* field_0x20;
-	struct TextureInfoSmall* pTextureInfo;
+	struct ed_g2d_manager* pTextureInfo;
 	ushort* pOverrideData;
 };
 
@@ -44,7 +44,7 @@ struct __attribute__((__packed__))
 #pragma pack(push,1)
 struct 
 #endif
-FontPacked {
+edCTextFont {
 	char header[4];
 	short field_0x4;
 	short field_0x6;
@@ -84,7 +84,7 @@ SegmentPacked {
 #pragma pack(pop)
 #endif
 
-bool Init_edText(void);
-bool FontSetup(FontPacked* pFontData);
+bool edTextInit(void);
+bool edTextInstallFont(edCTextFont* pFontData);
 
 #endif //_EDTEXT_H

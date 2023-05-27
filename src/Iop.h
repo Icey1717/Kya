@@ -34,6 +34,6 @@ struct edPsx2Module {
 	char* cmdLine;
 };
 
-extern IopManager* PTR_IopManager_00448cf8;
+extern IopManager* gCompatibilityHandlingPtr;
 
 #endif //_IOP_H

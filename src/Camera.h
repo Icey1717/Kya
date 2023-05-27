@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "Rendering/DisplayList.h"
 
+struct edSurface;
+
 struct CameraObjParams {
 	short field_0x0;
 	short field_0x2;
@@ -12,7 +14,7 @@ struct CameraObjParams {
 };
 
 struct CameraObj_390 {
-	RenderCommand commandBuffer[56];
+	edpkt_data commandBuffer[56];
 	int qwc;
 	undefined field_0x384;
 	undefined field_0x385;
@@ -28,23 +30,27 @@ struct CameraObj_390 {
 	undefined field_0x38f;
 };
 
-struct CameraObj_28 {
+struct ed_viewport {
 	short posX;
 	short posY;
 	short screenWidth;
 	short screenHeight;
 	undefined4 field_0x8;
 	undefined4 field_0xc;
-	struct FrameBuffer* pColorBuffer;
-	struct FrameBuffer* pZBuffer;
+	edSurface* pColorBuffer;
+	edSurface* pZBuffer;
 	ByteColor clearColor;
 	uint fbMask;
-	uint altFbMask;
+	uint clearMask;
 	CameraObj_390* pCameraObj390_0x24;
 };
 
-RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand* pCommandBuf);
-CameraObj_28* AllocateCameraObj28_002bae70(CameraObjParams* pParams, struct FrameBuffer* pVidModeDataA, struct FrameBuffer* pVidModeDataB, byte param_4);
-void SetCameraClear_002bb960(CameraObj_28* pCamera, byte r, byte g, byte b);
-void BuildCameraCommands_002bafe0(CameraObj_28* pCamera, CameraObjParams* pParams, FrameBuffer* pColorBuffer, FrameBuffer* pZBuffer, byte alpha);
+ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, edSurface* pVidModeDataB, byte alpha);
+void BuildCameraCommands_002bafe0(ed_viewport* pCamera, CameraObjParams* pParams, edSurface* pColorBuffer, edSurface* pZBuffer, byte alpha);
+void edViewportDel(ed_viewport* pCamera, bool bDestroyFrameBuffers);
+edpkt_data* edViewportUpdateEnv(ed_viewport* pCamera, edpkt_data* pCommandBuf);
+void edViewPortApplyDrawingEnv(ed_viewport* pCamera);
+void edViewportSetBackgroundColor(ed_viewport* pCamera, byte r, byte g, byte b);
+void edViewportSetClearMask(ed_viewport* pCamera, uint param_2);
+
 #endif //CAMERA_H

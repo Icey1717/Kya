@@ -14,21 +14,21 @@ namespace ed3D
 
 struct Sector {
 public:
-	void Load_001fddc0();
+	void InstallCallback();
 	void LoadBNK(int param_2, int param_3, bool bFileFlag);
 	int field_0x0;
 	int field_0x4;
 	int loadStage_0x8;
 	edCBank bankObject;
-	MeshInfo meshInfo;
-	TextureInfoSmall textureInfo;
+	ed_g3d_manager meshInfo;
+	ed_g2d_manager textureInfo;
 	undefined* pManager100Obj;
-	MeshInfo meshInfoB;
-	TextureInfoSmall textureInfoB;
+	ed_g3d_manager meshInfoB;
+	ed_g2d_manager textureInfoB;
 	struct MeshTransformParent* pMeshTransform;
 	struct MeshTransformParent* pMeshTransformParent_0x130;
 	float field_0x134;
-	ed3D::MeshData_ANHR* pANHR;
+	HierarchyAnm pANHR;
 	int sectID;
 	int field_0x140;
 };
@@ -43,9 +43,9 @@ public:
 	void Func_001fe620();
 
 	// Manager
-	virtual void LoadStageOne();
-	virtual bool AsyncLoad();
-	virtual void LoadA();
+	virtual void Game_Term();
+	virtual bool LevelLoading_Manage();
+	virtual void Level_Install();
 	// End Manager
 
 	char field_0x4[32];

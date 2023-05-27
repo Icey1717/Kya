@@ -12,7 +12,7 @@ FileManager3D::FileManager3D()
 	return;
 }
 
-void FileManager3D::Deserialize(MemoryStream* pMemoryStream)
+void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 {
 	int iVar1;
 	int iVar2;
@@ -21,40 +21,39 @@ void FileManager3D::Deserialize(MemoryStream* pMemoryStream)
 	int iStack8;
 	int iStack4;
 
-	iVar1 = pMemoryStream->ReadInt_00189b70();
+	iVar1 = pMemoryStream->GetS32();
 	if (iVar1 == 0) {
-		this->pMeshInfo = (MeshInfo*)0x0;
+		this->pMeshInfo = (ed_g3d_manager*)0x0;
 		this->levelSectorTextureIndex = 0;
 		this->pLastMeshTransformParent = (MeshTransformParent*)0x0;
 	}
 	else {
-		iVar1 = pMemoryStream->ReadInt_00189b70();
-		iVar2 = pMemoryStream->ReadInt_00189b70();
-		pMemoryStream->ReadInt_00189b70();
+		iVar1 = pMemoryStream->GetS32();
+		iVar2 = pMemoryStream->GetS32();
+		pMemoryStream->GetS32();
 		this->levelSectorTextureIndex = iVar2;
 		pMVar4 = this->pMeshDataArray + iVar1;
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
-			ed3D::LoadMeshFromBuffer(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, pMVar4->pTextureInfo, 0xc, &pMVar4->meshInfo);
+			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, pMVar4->pTextureInfo, 0xc, &pMVar4->meshInfo);
 		}
 		this->pMeshInfo = &pMVar4->meshInfo;
-		ed3D::Func_002a5540(g_StaticMeshMasterA_00448808, this->pMeshInfo);
-		pMVar3 = ed3D::SetupMeshTransform_001fffe0
-		(g_StaticMeshMasterA_00448808, this->pMeshInfo, 0x43494d414e5944);
+		ed3DScenePushCluster(Scene::_scene_handleA, this->pMeshInfo);
+		pMVar3 = ed3DHierarchyAddToSceneByHashcode(Scene::_scene_handleA, this->pMeshInfo, 0x43494d414e5944);
 		this->pLastMeshTransformParent = pMVar3;
 	}
-	iVar1 = pMemoryStream->ReadInt_00189b70();
+	iVar1 = pMemoryStream->GetS32();
 	if (iVar1 == -1) {
 		this->pMeshTransformParent = (MeshTransformParent*)0x0;
 	}
 	else {
-		iVar2 = pMemoryStream->ReadInt_00189b70();
+		iVar2 = pMemoryStream->GetS32();
 		pMVar4 = this->pMeshDataArray + iVar1;
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
-			ed3D::LoadMeshFromBuffer(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, pMVar4->pTextureInfo, 0xc, &pMVar4->meshInfo);
+			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, pMVar4->pTextureInfo, 0xc, &pMVar4->meshInfo);
 		}
-		IMPLEMENTATION_GUARD(pMVar3 = CreateMeshTransform_002ad750(g_StaticMeshMasterA_00448808, &pMVar4->meshInfo, (char*)0x0);
+		IMPLEMENTATION_GUARD(pMVar3 = ed3DHierarchyAddToScene(Scene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
 		this->pMeshTransformParent = pMVar3;
 		if (this->pMeshTransformParent != (MeshTransformParent*)0x0) {
 			3DFileManager::Func_001a6510(this, this->pMeshTransformParent);
@@ -63,7 +62,7 @@ void FileManager3D::Deserialize(MemoryStream* pMemoryStream)
 	return;
 }
 
-TextureInfo* FileManager3D::GetLevelSectorTextureInfo_001a6670()
+TextureInfo* FileManager3D::GetCommonSectorG2D()
 {
 	return this->pTextureInfoArray + this->levelSectorTextureIndex;
 }
@@ -81,7 +80,7 @@ void FileManager3D::Setup_001a7110()
 	this->textureCount = 0;
 	this->textureLoadedCount = 0;
 	this->pTextureInfoArray = (TextureInfo*)0x0;
-	this->pMeshInfo = (MeshInfo*)0x0;
+	this->pMeshInfo = (ed_g3d_manager*)0x0;
 	this->pMeshTransformParent = (MeshTransformParent*)0x0;
 	//pPVar2 = this->pParticleInfoArray_0x50;
 	//do {
@@ -119,7 +118,7 @@ void FileManager3D::Setup_001a7110()
 	return;
 }
 
-void FileManager3D::AllocateMeshTextureMemory_001a6f10(MemoryStream* pMemoryStream)
+void FileManager3D::AllocateMeshTextureMemory_001a6f10(ByteCode* pMemoryStream)
 {
 	int iVar1;
 	Mesh* pMVar2;
@@ -127,18 +126,18 @@ void FileManager3D::AllocateMeshTextureMemory_001a6f10(MemoryStream* pMemoryStre
 	int iVar4;
 
 	this->levelSectorTextureIndex = 0;
-	iVar1 = pMemoryStream->ReadInt_00189b70();
+	iVar1 = pMemoryStream->GetS32();
 	this->meshCount = iVar1;
 	pMVar2 = (Mesh*)AllocateFunc_001002a0((long)(this->meshCount * sizeof(Mesh)));
 	this->pMeshDataArray = pMVar2;
 	for (iVar1 = this->meshCount; 0 < iVar1; iVar1 = iVar1 + -1) {
-		pMemoryStream->ReadInt_00189b70();
+		pMemoryStream->GetS32();
 	}
-	iVar1 = pMemoryStream->ReadInt_00189b70();
+	iVar1 = pMemoryStream->GetS32();
 	this->textureCount = iVar1;
 	pTVar3 = (TextureInfo*)AllocateFunc_001002a0((long)(this->textureCount * sizeof(TextureInfo)));
 	this->pTextureInfoArray = pTVar3;
-	pMemoryStream->ReadInt_00189b70();
+	pMemoryStream->GetS32();
 	pMVar2 = this->pMeshDataArray;
 	for (iVar1 = this->meshCount; 0 < iVar1; iVar1 = iVar1 + -1) {
 		pMVar2->fileLength = 0;

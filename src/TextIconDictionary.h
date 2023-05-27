@@ -9,9 +9,9 @@ struct TextIconDictionaryEntry {
 	int index;
 };
 
-class TextIconDictionary {
+class edCTextResourcePool {
 public:
-	TextIconDictionary();
+	edCTextResourcePool();
 	bool Init(int maxEntries);
 	bool AddTextEntry(char* key, char* value);
 
@@ -20,6 +20,6 @@ public:
 	int currentEntries;
 };
 
-extern TextIconDictionary g_TextIconDictionary;
+extern edCTextResourcePool g_TextIconDictionary;
 
 #endif //TEXT_ICON_DICTIONARY

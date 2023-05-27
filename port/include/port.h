@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef PLATFORM_WIN
+#include "renderer.h"
+#endif
+
 struct sceCdCLOCK {
 	unsigned int second;
 };
@@ -67,9 +71,40 @@ inline void* sceDmaAddRef(sceDmaTag** tag, int qwc, void* addr)
 #define	SCE_GS_FALSE			(0)
 #define	SCE_GS_TRUE			(1)
 
-#define SCE_GIF_SET_TAG(nloop, eop, pre, prim, flg, nreg) \
+#define SCE_GIF_SET_TAG_PS2(nloop, eop, pre, prim, flg, nreg) \
     ((ulong)(nloop) | ((ulong)(eop)<<15) | ((ulong)(pre) << 46) | \
     ((ulong)(prim)<<47) | ((ulong)(flg)<<58) | ((ulong)(nreg)<<60))
+
+#ifdef PLATFORM_WIN
+inline void unpack_gs_prim_ps2(ulong packed, int& prim, int& iip, int& tme, int& fge, int& abe, int& aa1, int& fst, int& ctxt, int& fix)
+{
+	prim = packed & 0x7;        // Mask out the first 3 bits for the 'prim' value
+	iip = (packed >> 3) & 0x1;  // Shift and mask out the next bit for 'iip'
+	tme = (packed >> 4) & 0x1;  // Shift and mask out the next bit for 'tme'
+	fge = (packed >> 5) & 0x1;  // Shift and mask out the next bit for 'fge'
+	abe = (packed >> 6) & 0x1;  // Shift and mask out the next bit for 'abe'
+	aa1 = (packed >> 7) & 0x1;  // Shift and mask out the next bit for 'aa1'
+	fst = (packed >> 8) & 0x1;  // Shift and mask out the next bit for 'fst'
+	ctxt = (packed >> 9) & 0x1; // Shift and mask out the next bit for 'ctxt'
+	fix = (packed >> 10) & 0x1; // Shift and mask out the next bit for 'fix'
+}
+
+template<typename A, typename B, typename C, typename D, typename E, typename F>
+inline ulong SetGIFTAGWin(A nloop, B eop, C pre, D prim, E flg, F nreg)
+{
+	if (pre != 0 && flg == 0) {
+		int uprim, iip, tme, fge, abe, aa1, fst, ctxt, fix;
+		unpack_gs_prim_ps2(prim, uprim, iip, tme, fge, abe, aa1, fst, ctxt, fix);
+		Renderer::SetPrim(uprim, iip, tme, fge, abe, aa1, fst, ctxt, fix);
+	}
+	return SCE_GIF_SET_TAG_PS2(nloop, eop, pre, prim, flg, nreg);
+}
+
+#define SCE_GIF_SET_TAG(nloop, eop, pre, prim, flg, nreg) \
+	 SetGIFTAGWin(nloop, eop, pre, prim, flg, nreg)
+#else
+#define SCE_GIF_SET_TAG SCE_GIF_SET_TAG_PS2
+#endif
 
 #include <stdint.h>
 #include <algorithm>
@@ -215,6 +250,9 @@ struct Gif_Tag {
 #define SCE_GS_PSMCT32			(0)
 #define SCE_GS_PSMCT24			(1)
 #define SCE_GS_PSMCT16			(2)
+#define SCE_GS_PSMCT16S			(10)
+#define SCE_GS_PSMT8			(19)
+#define SCE_GS_PSMT4			(20)
 
 #define SCE_GS_PSMZ32			(48)
 #define SCE_GS_PSMZ24			(49)
@@ -291,7 +329,62 @@ struct Gif_Tag {
 
 #define SCE_GS_SET_PABE(pabe) ((ulong)(pabe))
 
-#define SCE_GS_SET_ST(s, t) ((ulong)(s) |  ((ulong)(t) << 32))
+#ifdef PLATFORM_WIN
+inline void unpack_sce_gs_set_tex0(ulong packed_value,
+	ulong& tbp, ulong& tbw, ulong& psm,
+	ulong& tw, ulong& th, ulong& tcc,
+	ulong& tfx, ulong& cbp, ulong& cpsm,
+	ulong& csm, ulong& csa, ulong& cld)
+{
+	tbp = packed_value & 0x3F;
+	tbw = (packed_value >> 14) & 0x3F;
+	psm = (packed_value >> 20) & 0x3F;
+	tw = (packed_value >> 26) & 0xF;
+	th = (packed_value >> 30) & 0xF;
+	tcc = (packed_value >> 34) & 0x1;
+	tfx = (packed_value >> 35) & 0x3;
+	cbp = (packed_value >> 37) & 0x3FFF;
+	cpsm = (packed_value >> 51) & 0xF;
+	csm = (packed_value >> 55) & 0xF;
+	csa = (packed_value >> 56) & 0xF;
+	cld = (packed_value >> 61) & 0xF;
+}
+
+inline void SendTextureCommandsFromPacked(ulong packed) {
+	ulong tbp, tbw, psm, tw, th, tcc, tfx, cpsm, csa, cbp, csm, cld;
+	unpack_sce_gs_set_tex0(packed, tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
+	Renderer::SetTEX(tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
+}
+
+
+#endif
+
+#define SCE_GS_SET_TEX0_1   SCE_GS_SET_TEX0
+#define SCE_GS_SET_TEX0_2   SCE_GS_SET_TEX0
+#define SCE_GS_SET_TEX0(tbp, tbw, psm, tw, th, tcc, tfx, \
+            cbp, cpsm, csm, csa, cld) \
+    ((ulong)(tbp)         | ((ulong)(tbw) << 14) | \
+    ((ulong)(psm) << 20)  | ((ulong)(tw) << 26) | \
+    ((ulong)(th) << 30)   | ((ulong)(tcc) << 34) | \
+    ((ulong)(tfx) << 35)  | ((ulong)(cbp) << 37) | \
+    ((ulong)(cpsm) << 51) | ((ulong)(csm) << 55) | \
+    ((ulong)(csa) << 56)  | ((ulong)(cld) << 61))
+
+#define SCE_GS_SET_ST_PS2(s, t) ((ulong)(s) |  ((ulong)(t) << 32))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B>
+inline ulong SetSTWin(A s, B t)
+{
+	Renderer::SetST(*reinterpret_cast<float*>(&s), *reinterpret_cast<float*>(&t));
+	return SCE_GS_SET_ST_PS2(s, t);
+}
+
+#define SCE_GS_SET_ST(s, t) \
+	 SetSTWin(s, t)
+#else
+#define SCE_GS_SET_ST SCE_GS_SET_ST_PS2
+#endif
 
 #define SCE_GS_SET_FOGCOL(fcr, fcg, fcb) \
     ((ulong)(fcr) | ((ulong)(fcg) << 8) | ((ulong)(fcb) << 16))
@@ -304,8 +397,22 @@ struct Gif_Tag {
 
 #define SCE_GS_SET_XYZ3 SCE_GS_SET_XYZ
 #define SCE_GS_SET_XYZ2 SCE_GS_SET_XYZ
-#define SCE_GS_SET_XYZ(x, y, z) \
+#define SCE_GS_SET_XYZ_PS2(x, y, z) \
     ((ulong)(x) | ((ulong)(y) << 16) | ((ulong)(z) << 32))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C>
+inline ulong SetXYZWin(A x, B y, C z)
+{
+	Renderer::KickVertex(x, y, z);
+	return SCE_GS_SET_XYZ_PS2(x, y, z);
+}
+
+#define SCE_GS_SET_XYZ(x, y, z) \
+	 SetXYZWin(x, y, z)
+#else
+#define SCE_GS_SET_XYZ SCE_GS_SET_XYZ_PS2
+#endif
 
 #define SCE_GS_SET_ALPHA_1  SCE_GS_SET_ALPHA
 #define SCE_GS_SET_ALPHA_2  SCE_GS_SET_ALPHA
@@ -313,33 +420,103 @@ struct Gif_Tag {
     ((ulong)(a)       | ((ulong)(b) << 2)     | ((ulong)(c) << 4) | \
     ((ulong)(d) << 6) | ((ulong)(fix) << 32))
 
-#define SCE_GS_SET_FRAME(fbp, fbw, psm, fbmask) \
+#define SCE_GS_SET_FRAME_PS2(fbp, fbw, psm, fbmask) \
     ((ulong)(fbp)        | ((ulong)(fbw) << 16) | \
     ((ulong)(psm) << 24) | ((ulong)(fbmask) << 32))
 
-#define SCE_GS_SET_TEST(ate, atst, aref, afail, date, datm, zte, ztst) \
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C, typename D>
+inline ulong SetFrameWin(A fbp, B fbw, C psm, D fbmask)
+{
+	Renderer::SetFrame(fbp, fbw, psm, fbmask);
+	return SCE_GS_SET_FRAME_PS2(fbp, fbw, psm, fbmask);
+}
+
+#define SCE_GS_SET_FRAME(fbp, fbw, psm, fbmask) \
+	 SetFrameWin(fbp, fbw, psm, fbmask)
+#else
+#define SCE_GS_SET_FRAME SCE_GS_SET_FRAME_PS2
+#endif
+
+#define SCE_GS_SET_TEST_PS2(ate, atst, aref, afail, date, datm, zte, ztst) \
     ((ulong)(ate)         | ((ulong)(atst) << 1) | \
     ((ulong)(aref) << 4)  | ((ulong)(afail) << 12) | \
     ((ulong)(date) << 14) | ((ulong)(datm) << 15) | \
     ((ulong)(zte) << 16)  | ((ulong)(ztst) << 17))
 
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C, typename D, typename E, typename F, typename G, typename H>
+inline ulong SetTestWin(A ate, B atst, C aref, D afail, E date, F datm, G zte, H ztst)
+{
+	Renderer::SetTest(ate, atst, aref, afail, date, datm, zte, ztst);
+	return SCE_GS_SET_TEST_PS2(ate, atst, aref, afail, date, datm, zte, ztst);
+}
+
+#define SCE_GS_SET_TEST(ate, atst, aref, afail, date, datm, zte, ztst) \
+	 SetTestWin(ate, atst, aref, afail, date, datm, zte, ztst)
+#else
+#define SCE_GS_SET_TEST SCE_GS_SET_TEST_PS2
+#endif
+
 #define SCE_GS_SET_SCANMSK(msk) ((ulong)(msk))
 
-#define SCE_GS_SET_RGBAQ(r, g, b, a, q) \
+#define SCE_GS_SET_RGBAQ_PS2(r, g, b, a, q) \
     ((ulong)(r)        | ((ulong)(g) << 8) | ((ulong)(b) << 16) | \
     ((ulong)(a) << 24) | ((ulong)(q) << 32))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C, typename D, typename E>
+inline ulong SetRGBAQWin(A r, B g, C b, D a, E q)
+{
+	Renderer::SetRGBAQ(r, g, b, a, *reinterpret_cast<float*>(&q));
+	return SCE_GS_SET_RGBAQ_PS2(r, g, b, a, q);
+}
+
+#define SCE_GS_SET_RGBAQ(r, g, b, a, q) \
+	 SetRGBAQWin(r, g, b, a, q)
+#else
+#define SCE_GS_SET_RGBAQ SCE_GS_SET_RGBAQ_PS2
+#endif
 
 #define SCE_GS_SET_ZBUF(zbp, psm, zmsk) \
     ((ulong)(zbp) | ((ulong)(psm) << 24) | \
     ((ulong)(zmsk) << 32))
 
-#define SCE_GS_SET_XYOFFSET(ofx, ofy) ((ulong)(ofx) | ((ulong)(ofy) << 32))
+#define SCE_GS_SET_XYOFFSET_PS2(ofx, ofy) ((ulong)(ofx) | ((ulong)(ofy) << 32))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B>
+inline ulong SetXYOffsetWin(A ofx, B ofy)
+{
+	Renderer::SetXY(ofx, ofy);
+	return SCE_GS_SET_XYOFFSET_PS2(ofx, ofy);
+}
+
+#define SCE_GS_SET_XYOFFSET(ofx, ofy) \
+	 SetXYOffsetWin(ofx, ofy)
+#else
+#define SCE_GS_SET_XYOFFSET SCE_GS_SET_XYOFFSET_PS2
+#endif
 
 #define SCE_GS_SET_FBA(fba) ((ulong)(fba))
 
-#define SCE_GS_SET_SCISSOR(scax0, scax1, scay0, scay1) \
+#define SCE_GS_SET_SCISSOR_PS2(scax0, scax1, scay0, scay1) \
     ((ulong)(scax0)        | ((ulong)(scax1) << 16) | \
     ((ulong)(scay0) << 32) | ((ulong)(scay1) << 48))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C, typename D>
+inline ulong SetScissorWin(A scax0, B scax1, C scay0, D scay1)
+{
+	Renderer::SetScissor(scax0, scay0, scax1 + 1, scay1 + 1);
+	return SCE_GS_SET_SCISSOR_PS2(scax0, scax1, scay0, scay1);
+}
+
+#define SCE_GS_SET_SCISSOR(scax0, scax1, scay0, scay1) \
+	 SetScissorWin(scax0, scax1, scay0, scay1)
+#else
+#define SCE_GS_SET_SCISSOR SCE_GS_SET_SCISSOR_PS2
+#endif
 
 #define SCE_GS_ALPHA_CS			(0)
 #define SCE_GS_ALPHA_CD			(1)
@@ -365,10 +542,24 @@ struct Gif_Tag {
 #define SCE_GS_PRIM_CTXT2		(1<<9)
 #define SCE_GS_PRIM_FIX			(1<<10)
 
-#define SCE_GS_SET_PRIM(prim, iip, tme, fge, abe, aa1, fst, ctxt, fix) \
+#define SCE_GS_SET_PRIM_PS2(prim, iip, tme, fge, abe, aa1, fst, ctxt, fix) \
     ((ulong)(prim)      | ((ulong)(iip) << 3)  | ((ulong)(tme) << 4) | \
     ((ulong)(fge) << 5) | ((ulong)(abe) << 6)  | ((ulong)(aa1) << 7) | \
     ((ulong)(fst) << 8) | ((ulong)(ctxt) << 9) | ((ulong)(fix) << 10))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C, typename D, typename E, typename F, typename G, typename H, typename I>
+inline ulong SetPrimWin(A prim, B iip, C tme, D fge, E abe, F aa1, G fst, H ctxt, I fix)
+{
+	Renderer::SetPrim(prim, iip, tme, fge, abe, aa1, fst, ctxt, fix);
+	return SCE_GS_SET_PRIM_PS2(prim, iip, tme, fge, abe, aa1, fst, ctxt, fix);
+}
+
+#define SCE_GS_SET_PRIM(prim, iip, tme, fge, abe, aa1, fst, ctxt, fix) \
+	 SetPrimWin(prim, iip, tme, fge, abe, aa1, fst, ctxt, fix)
+#else
+#define SCE_GS_SET_PRIM SCE_GS_SET_PRIM_PS2
+#endif
 
 #define SCE_GS_SET_PRMODECONT(ac) ((ulong)(ac))
 #define SCE_GS_SET_COLCLAMP(clamp) ((ulong)(clamp))

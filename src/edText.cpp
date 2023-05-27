@@ -5,20 +5,20 @@
 
 #include "port/pointer_conv.h"
 
-FontPacked* g_PackedFontPtr_004324d0 = (FontPacked*)g_PackedFontData_0041f290;
+edCTextFont* g_PackedFontPtr_004324d0 = (edCTextFont*)g_PackedFontData_0041f290;
 
 
-bool FontSetup_Internal(FontPacked* pFont)
+bool Install(edCTextFont* pFont)
 {
 	bool bVar2;
 	FontPacked_2C* pFVar3;
-	TextureInfoSmall* pTVar4;
+	ed_g2d_manager* pTVar4;
 	char* pcVar5;
 	PagePacked* pSVar6;
 	int iStack4;
 	uint uVar1;
 
-	if (pFont == (FontPacked*)0x0) {
+	if (pFont == (edCTextFont*)0x0) {
 		bVar2 = false;
 	}
 	else {
@@ -37,7 +37,7 @@ bool FontSetup_Internal(FontPacked* pFont)
 						bVar2 = false;
 					}
 					else {
-						pFVar3->pTextureInfo = (TextureInfoSmall*)0x0;
+						pFVar3->pTextureInfo = (ed_g2d_manager*)0x0;
 						pFVar3->field_0x1c = (void*)0x0;
 						pFVar3->field_0x20 = (void*)0x0;
 						pFVar3->field_0x4 = (void*)0x0;
@@ -74,9 +74,9 @@ bool FontSetup_Internal(FontPacked* pFont)
 									char* intPtr = (char*)pSVar6 + 0x4 + 0xf;
 									pcVar5 = (char*)((unsigned long long)intPtr & 0xfffffffffffffff0);
 #endif
-									pTVar4 = ed3D::LoadTextureFromBuffer(pcVar5, *(int*)(pcVar5 + 8), &iStack4, (TextureInfoSmall*)0x0, 0);
+									pTVar4 = ed3DInstallG2D(pcVar5, *(int*)(pcVar5 + 8), &iStack4, (ed_g2d_manager*)0x0, 0);
 									pFVar3->pTextureInfo = pTVar4;
-									ed3D::GetMaterialInfoFromTexture(&pFVar3->materialInfo, 0, pFVar3->pTextureInfo, 2);
+									edDListCreatMaterialFromIndex(&pFVar3->materialInfo, 0, pFVar3->pTextureInfo, 2);
 									bVar2 = true;
 								}
 								else {
@@ -106,30 +106,30 @@ bool FontSetup_Internal(FontPacked* pFont)
 
 int g_iMaxTextIconEntryCount_0044916c = 0x26;
 
-bool FontSetup(FontPacked* pFontData)
+bool edTextInstallFont(edCTextFont* pFontData)
 {
 	bool uVar1;
 
-	if (pFontData == (FontPacked*)0x0) {
+	if (pFontData == (edCTextFont*)0x0) {
 		uVar1 = false;
 	}
 	else {
-		uVar1 = FontSetup_Internal(pFontData);
+		uVar1 = Install(pFontData);
 	}
 	return uVar1;
 }
 
-bool Init_edText(void)
+bool edTextInit(void)
 {
 	bool bVar1;
 	bool uVar1;
 
-	bVar1 = FontSetup(g_PackedFontPtr_004324d0);
+	bVar1 = edTextInstallFont(g_PackedFontPtr_004324d0);
 	if (bVar1 == false) {
 		uVar1 = false;
 	}
 	else {
-		//edText::LoadDebugLib_0028c9b0();
+		//edTextEdDebugInit();
 		g_TextIconDictionary.Init(g_iMaxTextIconEntryCount_0044916c);
 	}
 	return true;

@@ -4,7 +4,7 @@ extern EFileLoadMode g_FileLoadMode_00448810;
 
 InputManager g_InputManager_00450960 = { 0 };
 
-bool InputManager::FUN_001b6f60()
+bool InputManager::SoftReset()
 {
 	bool bVar1;
 

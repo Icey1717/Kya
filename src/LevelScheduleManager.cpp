@@ -258,7 +258,7 @@ void LevelScheduleManager::StoreLevelFolders(char* fileData, LevelInfo* pLevelIn
 	int iVar2;
 	SectorManagerSubObj* pLVar3;
 
-	uVar1 = Combine_00189a30(*(int*)(fileData + 0x18), *(int*)(fileData + 0x1c));
+	uVar1 = ByteCode::BuildU64(*(int*)(fileData + 0x18), *(int*)(fileData + 0x1c));
 	pLevelInfo->field_0x0 = uVar1;
 	pLVar3 = pLevelInfo->aSectorSubObj;
 	iVar2 = 0;
@@ -517,7 +517,7 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 	int iVar2;
 	undefined4* puVar3;
 	bool bVar4;
-	edCBankBuffer* infoLevelsFileBuffer;
+	edCBankBufferEntry* infoLevelsFileBuffer;
 	int inFileIndex;
 	uint* puVar5;
 	LevelInfo* pLevelInfo;
@@ -526,25 +526,25 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 	int iVar8;
 	int iVar9;
 	int* fileData;
-	BankFileData outHeader;
+	edBANK_ENTRY_INFO outHeader;
 	char levelInfoFilePath[512];
 	edCBank bank;
 	BankFilePathContainer infoLevelsPathPtr;
 
 	memset(&infoLevelsPathPtr, 0, sizeof(BankFilePathContainer));
-	edCBank_Setup(&bank, 0x10000, 1, &infoLevelsPathPtr);
+	initialize(&bank, 0x10000, 1, &infoLevelsPathPtr);
 	edCBank_SetDeserializeData(&bank, &g_LevelInfoTypePairData_004256e0);
 	/* CDEURO/LEVEL/ + Info/levels.bnk */
 	levelInfoFilePath[0] = '\0';
 	FormatFilePath(levelInfoFilePath, levelPath, "Info/levels.bnk", 0);
-	infoLevelsFileBuffer = edCBank_GetBankBuffer(&bank);
+	infoLevelsFileBuffer = get_free_entry(&bank);
 	infoLevelsPathPtr.filePath = levelInfoFilePath;
-	bVar4 = edCBankBuffer_file_access(infoLevelsFileBuffer, &infoLevelsPathPtr);
+	bVar4 = load(infoLevelsFileBuffer, &infoLevelsPathPtr);
 	if (bVar4 != false) {
-		inFileIndex = CheckFileLoadAndGetParam(infoLevelsFileBuffer);
+		inFileIndex = get_element_count(infoLevelsFileBuffer);
 		while (inFileIndex != 0) {
 			inFileIndex = inFileIndex + -1;
-			bVar4 = GetFileDataForIndex(infoLevelsFileBuffer, inFileIndex, &outHeader, (char*)0x0);
+			bVar4 = get_info(infoLevelsFileBuffer, inFileIndex, &outHeader, (char*)0x0);
 			puVar3 = (undefined4*)outHeader.fileBufferStart;
 			if (bVar4 != false) {
 				fileData = (int*)(outHeader.fileBufferStart + 4);
@@ -596,7 +596,7 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 int INT_ARRAY_0048ed60[16] = { 0 };
 int INT_ARRAY_0048eda0[16] = { 0 };
 
-void LevelScheduleManager::OnBeginGame()
+void LevelScheduleManager::Game_Init()
 {
 	SaveBigAlloc* pSVar1;
 	bool bVar2;
@@ -636,8 +636,8 @@ void LevelScheduleManager::OnBeginGame()
 	field_0x78 = 0;
 	field_0x7c = 0;
 	field_0x80 = 0;
-	(levelBank).pBankFileAccessObject = (edCBankBuffer*)0x0;
-	(levelIOPBank).pBankFileAccessObject = (edCBankBuffer*)0x0;
+	(levelBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+	(levelIOPBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 	loadStage_0x5b48 = 4;
 	field_0x84 = 0.0;
 	field_0x88 = 0.0;
@@ -706,7 +706,7 @@ void LevelScheduleManager::OnBeginGame()
 	bVar2 = g_IniFile_00450750.ReadString_001aa520(g_szRouter_00433c08, g_szSetPath_00433c10, levelPath);
 	if (bVar2 == false) {
 		/* No path found in .INI -> use default !\n */
-		PrintString(g_szNoPathError_00433c20);
+		edDebugPrintf(g_szNoPathError_00433c20);
 	}
 	/* Try read [Router] - AddLevel from INI file  */
 	local_80[0] = '\0';
@@ -842,216 +842,213 @@ LAB_002e26c8:
 	return;
 }
 
-namespace LoadLevelBank
+void BnkInstallScene(char* pFileData, int size)
 {
-	void OnManagerDataLoaded_001b85a0(char* pFileData, int size)
-	{
-		MemoryStream MStack16;
+	ByteCode MStack16;
 
-		/* Origin: 0040e860 */
-		MStack16.Setup_00189c00(pFileData);
-		MStack16.Func_00189a90();
-		g_ManagerSingletonArray_00451660.g_FileManager3D_00451664->Deserialize(&MStack16);
-		g_LargeObject_006db450->OnLoadLevelBnk_001b8920(&MStack16);
-		//(*(code*)(g_ManagerSingletonArray_00451660.g_ManagerC_0045169c)->pManagerFunctionData->deserializeFunc)();
-		//(*(code*)(g_ManagerSingletonArray_00451660.g_Manager10_004516a0)->pManagerFunctionData->deserializeFunc)();
-		//(*(code*)(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690)->pManagerFunctionData->deserializeFunc)();
-		//(*(code*)(g_ManagerSingletonArray_00451660.g_ActorManager_004516a4)->pVTable->deserializeFunc)();
-		//(*(code*)(g_ManagerSingletonArray_00451660.g_SectorManager_00451670)->pManagerFunctionData->deserializeFunc)();
-		//if (g_ManagerSingletonArray_00451660.g_Manager29B4_004516bc != (Manager_29b4*)0x0) {
-		//	(*(code*)(g_ManagerSingletonArray_00451660.g_Manager29B4_004516bc)->pManagerFunctionData[1].field_0x0)();
-		//}
-		//::EmptyFunction();
-		//FreeMemoryStream_00189c40(&MStack16, -1);
-		return;
-	}
-
-	void OnManagerDataLoaded_001b86b0(char* pFileData, int size)
-	{
-		LargeObject* pLVar1;
-		uint uVar2;
-		float fVar3;
-		MemoryStream MStack16;
-		MStack16.Setup_00189c00(pFileData);
-		MStack16.Func_00189a90();
-		pLVar1 = g_LargeObject_006db450;
-		fVar3 = MStack16.ReadFloat_00189b30();
-		pLVar1->field_0x1c = fVar3;
-		uVar2 = MStack16.ReadUint_00189b50();
-		pLVar1->field_0x20 = uVar2;
-		fVar3 = MStack16.ReadFloat_00189b30();
-		pLVar1->field_0x24 = fVar3;
-		MStack16.ReadUint_00189b50();
-		MStack16.ReadUint_00189b50();
-		g_ManagerSingletonArray_00451660.g_FileManager3D_00451664->AllocateMeshTextureMemory_001a6f10(&MStack16);
-		//Manager_100::AllocateMemoryFunc_00211b50(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690, &MStack16);
-		//AnimManager::AllocateAnimKeyPtrArray_0017f5a0(g_ManagerSingletonArray_00451660.g_AnimManager_00451668, &MStack16);
-		MStack16.ReadUint_00189b50();
-		MStack16.ReadUint_00189b50();
-		//SectorManager::TypePairFunc_001ff260(g_ManagerSingletonArray_00451660.g_SectorManager_00451670, &MStack16);
-		//ActorManager::AllocateActorMemory_00107a70(g_ManagerSingletonArray_00451660.g_ActorManager_004516a4, &MStack16);
-		//Manager_100::SetupFunc_002119c0(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690);
-		//FUN_0032d010(&MStack16);
-		//FreeMemoryStream_00189c40(&MStack16, -1);
-		return;
-	}
-
-	void OnSoundLoaded_00180ef0(char* pFileData, int param_2)
-	{
-		MY_LOG("MISSING HANDLER OnSoundLoaded_00180ef0\n");
-	}
-
-	void OnTextureLoaded_001a62f0(char* pFileData, int length)
-	{
-		FileManager3D* pFVar1;
-		int iStack4;
-		
-		pFVar1 = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
-		ed3D::LoadTextureFromBuffer
-		(pFileData, length, &iStack4,
-			(TextureInfoSmall*)
-			((g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->pTextureInfoArray +
-				(g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->textureLoadedCount), 1);
-		pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
-		pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
-		return;
-	}
-
-	void OnMeshLoaded_001a6380(char* pFileData, int length)
-	{
-		int iVar1;
-		Mesh* pMVar2;
-		FileManager3D* pFVar3;
-		
-		pFVar3 = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
-		iVar1 = (g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->meshLoadedCount;
-		pMVar2 = (g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->pMeshDataArray;
-		pMVar2[iVar1].fileLength = length;
-		pMVar2[iVar1].pFileData = pFileData;
-		pFVar3->meshLoadedCount = pFVar3->meshLoadedCount + 1;
-		return;
-	}
-
-	void OnLoadedFunc_00211480(char* pFileBuffer, int length)
-	{
-		MY_LOG("MISSING HANDLER OnLoadedFunc_00211480\n");
-		//CollisionManager* pCVar1;
-		//int iVar2;
-		//
-		//pCVar1 = g_ManagerSingletonArray_00451660.g_CollisionManager_00451690;
-		//iVar2 = LoadCollision_00251570(pFileBuffer, length, 0);
-		//*(undefined4*)(&pCVar1->field_0x20 + pCVar1->count_0x60 * 4) = *(undefined4*)(iVar2 + 0x44);
-		//pCVar1->count_0x60 = pCVar1->count_0x60 + 1;
-		return;
-	}
-
-	void OnEventLoaded_0019e750(char* pFileData, int length)
-	{
-		MY_LOG("MISSING HANDLER OnEventLoaded_0019e750\n");
-		//EventManager* pEVar1;
-		//uint* pFileData_00;
-		//uint uVar2;
-		//undefined4 uVar3;
-		//MemoryStream MStack16;
-		//
-		//MemoryStream::MemoryStream(&MStack16);
-		//MemoryStream::Setup_00189c00(&MStack16, pFileData);
-		//MemoryStream:::Func_00189a90(&MStack16);
-		//pEVar1 = g_ManagerSingletonArray_00451660.g_EventManager_006f5080;
-		//pFileData_00 = (uint*)MemoryStream:::GetSeekPos(&MStack16);
-		//uVar2 = edEvent::AddChunk_002590c0(pFileData_00, 0);
-		//pEVar1->activeEventChunkID_0x8 = uVar2;
-		//uVar3 = edEvent::GetEventObjCount_00259610(pEVar1->activeEventChunkID_0x8);
-		//pEVar1->field_0x4 = uVar3;
-		//edEvent::SetFunctionData_0025a0c0((int*)edEvent::FunctionDataA_0040eba0);
-		//::EmptyFunction();
-		//FreeMemoryStream_00189c40(&MStack16, -1);
-		return;
-	}
-
-	void OnViewLoaded_0019a9e0(char* pFileData, int length)
-	{
-		MemoryStream MStack16;
-
-		MStack16.Setup_00189c00(pFileData);
-		MStack16.Func_00189a90();
-
-		MY_LOG("MISSING HANDLER OnViewLoaded_0019a9e0\n");
-		//(*(code*)g_CameraViewManager_00448e98->pManagerFunctionData->deserializeFunc)();
-		//::EmptyFunction();
-		//FreeMemoryStream_00189c40(&MStack16, -1);
-		return;
-	}
-
-	void OnLightLoaded_002172d0(char* pFileData, int length)
-	{
-		MemoryStream MStack16;
-
-		MStack16.Setup_00189c00(pFileData);
-		MStack16.Func_00189a90();
-		MY_LOG("MISSING HANDLER OnLightLoaded_002172d0\n");
-		//(*(code*)(g_ManagerSingletonArray_00451660.g_LightManager_004516b0)->pManagerFunctionData->deserializeFunc)();
-		//::EmptyFunction();
-		//FreeMemoryStream_00189c40(&MStack16, -1);
-		return;
-	}
-
-	void OnEffectLoaded_001a0870(char* pFileData, int length)
-	{
-		MemoryStream MStack16;
-		MY_LOG("MISSING HANDLER OnEffectLoaded_001a0870\n");
-
-		MStack16.Setup_00189c00(pFileData);
-		//(*(code*)(g_ManagerSingletonArray_00451660.g_EffectsManager_004516b8)->pManagerFunctionData->deserializeFunc)();
-		//::EmptyFunction();
-		//FreeMemoryStream_00189c40(&MStack16, -1);
-		return;
-	}
-
-	void OnCinematicLoaded_001c67a0(char* pFileData, int length)
-	{
-		MemoryStream MStack16;
-		MY_LOG("MISSING HANDLER OnCinematicLoaded_001c67a0\n");
-
-		MStack16.Setup_00189c00(pFileData);
-		//(*(code*)g_CinematicManager_0048efc->pManagerFunctionData->deserializeFunc)();
-		//::EmptyFunction();
-		//FreeMemoryStream_00189c40(&MStack16, -1);
-		return;
-	}
-
-	void NullTypePairFunc(char* pFileData, int param_2)
-	{
-		assert(false);
-	}
-
-	TypePairData TypePairFunctionData_0040e780[24] = {
-		{ 0x02, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x02, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x03, 4, { OnSoundLoaded_00180ef0, 0, 0, 0, 0, 0 } },
-		{ 0x03, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x03, 5, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x03, 6, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x03, 7, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x06, 1, { OnManagerDataLoaded_001b85a0, 0, 0, 0, 0, 0 } },
-		{ 0x06, 2, { OnManagerDataLoaded_001b86b0, 0, 0, 0, 0, 0 } },
-		{ 0x04, 1, { OnMeshLoaded_001a6380, 0, 0, 0, 0, 0 } },
-		{ 0x05, 1, { OnTextureLoaded_001a62f0, 0, 0, 0, 0, 0 } },
-		{ 0x07, 1, { OnLoadedFunc_00211480, 0, 0, 0, 0, 0 } },
-		{ 0x07, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x08, 1, { OnEventLoaded_0019e750, 0, 0, 0, 0, 0 } },
-		{ 0x0A, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x0B, 1, { OnViewLoaded_0019a9e0, 0, 0, 0, 0, 0 } },
-		{ 0x0C, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x0F, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x10, 1, { OnLightLoaded_002172d0, 0, 0, 0, 0, 0 } },
-		{ 0x11, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0x09, 1, { OnEffectLoaded_001a0870, 0, 0, 0, 0, 0 } },
-		{ 0x13, 1, { OnCinematicLoaded_001c67a0, 0, 0, 0, 0, 0 } },
-		{ 0x09, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-		{ 0xFFFFFFFF, 0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
-	};
+	/* Origin: 0040e860 */
+	MStack16.Init(pFileData);
+	MStack16.GetChunk();
+	g_ManagerSingletonArray_00451660.g_FileManager3D_00451664->Level_AddAll(&MStack16);
+	Scene::_pinstance->Level_Setup(&MStack16);
+	//(*(code*)(g_ManagerSingletonArray_00451660.g_ManagerC_0045169c)->pManagerFunctionData->deserializeFunc)();
+	//(*(code*)(g_ManagerSingletonArray_00451660.g_Manager10_004516a0)->pManagerFunctionData->deserializeFunc)();
+	//(*(code*)(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690)->pManagerFunctionData->deserializeFunc)();
+	//(*(code*)(g_ManagerSingletonArray_00451660.g_ActorManager_004516a4)->pVTable->deserializeFunc)();
+	//(*(code*)(g_ManagerSingletonArray_00451660.g_SectorManager_00451670)->pManagerFunctionData->deserializeFunc)();
+	//if (g_ManagerSingletonArray_00451660.g_Manager29B4_004516bc != (Manager_29b4*)0x0) {
+	//	(*(code*)(g_ManagerSingletonArray_00451660.g_Manager29B4_004516bc)->pManagerFunctionData[1].field_0x0)();
+	//}
+	MStack16.Term();
+	//ByteCodeDestructor(&MStack16, -1);
+	return;
 }
+
+void OnManagerDataLoaded_001b86b0(char* pFileData, int size)
+{
+	Scene* pLVar1;
+	uint uVar2;
+	float fVar3;
+	ByteCode MStack16;
+	MStack16.Init(pFileData);
+	MStack16.GetChunk();
+	pLVar1 = Scene::_pinstance;
+	fVar3 = MStack16.GetF32();
+	pLVar1->field_0x1c = fVar3;
+	uVar2 = MStack16.GetU32();
+	pLVar1->field_0x20 = uVar2;
+	fVar3 = MStack16.GetF32();
+	pLVar1->field_0x24 = fVar3;
+	MStack16.GetU32();
+	MStack16.GetU32();
+	g_ManagerSingletonArray_00451660.g_FileManager3D_00451664->AllocateMeshTextureMemory_001a6f10(&MStack16);
+	//Manager_100::AllocateMemoryFunc_00211b50(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690, &MStack16);
+	//AnimManager::AllocateAnimKeyPtrArray_0017f5a0(g_ManagerSingletonArray_00451660.g_AnimManager_00451668, &MStack16);
+	MStack16.GetU32();
+	MStack16.GetU32();
+	//SectorManager::TypePairFunc_001ff260(g_ManagerSingletonArray_00451660.g_SectorManager_00451670, &MStack16);
+	//ActorManager::AllocateActorMemory_00107a70(g_ManagerSingletonArray_00451660.g_ActorManager_004516a4, &MStack16);
+	//Manager_100::SetupFunc_002119c0(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690);
+	//FUN_0032d010(&MStack16);
+	//ByteCodeDestructor(&MStack16, -1);
+	return;
+}
+
+void OnSoundLoaded_00180ef0(char* pFileData, int param_2)
+{
+	MY_LOG("MISSING HANDLER OnSoundLoaded_00180ef0\n");
+}
+
+void BnkInstallG2D(char* pFileData, int length)
+{
+	FileManager3D* pFVar1;
+	int iStack4;
+
+	pFVar1 = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
+	ed3DInstallG2D
+	(pFileData, length, &iStack4,
+		(ed_g2d_manager*)
+		((g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->pTextureInfoArray +
+			(g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->textureLoadedCount), 1);
+	pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
+	pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
+	return;
+}
+
+void OnMeshLoaded_001a6380(char* pFileData, int length)
+{
+	int iVar1;
+	Mesh* pMVar2;
+	FileManager3D* pFVar3;
+
+	pFVar3 = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
+	iVar1 = (g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->meshLoadedCount;
+	pMVar2 = (g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->pMeshDataArray;
+	pMVar2[iVar1].fileLength = length;
+	pMVar2[iVar1].pFileData = pFileData;
+	pFVar3->meshLoadedCount = pFVar3->meshLoadedCount + 1;
+	return;
+}
+
+void OnLoadedFunc_00211480(char* pFileBuffer, int length)
+{
+	MY_LOG("MISSING HANDLER OnLoadedFunc_00211480\n");
+	//CollisionManager* pCVar1;
+	//int iVar2;
+	//
+	//pCVar1 = g_ManagerSingletonArray_00451660.g_CollisionManager_00451690;
+	//iVar2 = LoadCollision_00251570(pFileBuffer, length, 0);
+	//*(undefined4*)(&pCVar1->field_0x20 + pCVar1->count_0x60 * 4) = *(undefined4*)(iVar2 + 0x44);
+	//pCVar1->count_0x60 = pCVar1->count_0x60 + 1;
+	return;
+}
+
+void OnEventLoaded_0019e750(char* pFileData, int length)
+{
+	MY_LOG("MISSING HANDLER OnEventLoaded_0019e750\n");
+	//EventManager* pEVar1;
+	//uint* pFileData_00;
+	//uint uVar2;
+	//undefined4 uVar3;
+	//MemoryStream MStack16;
+	//
+	//MemoryStream::MemoryStream(&MStack16);
+	//MemoryStream::Init(&MStack16, pFileData);
+	//MemoryStream:::Func_00189a90(&MStack16);
+	//pEVar1 = g_ManagerSingletonArray_00451660.g_EventManager_006f5080;
+	//pFileData_00 = (uint*)MemoryStream:::GetPosition(&MStack16);
+	//uVar2 = edEvent::AddChunk_002590c0(pFileData_00, 0);
+	//pEVar1->activeEventChunkID_0x8 = uVar2;
+	//uVar3 = edEvent::GetEventObjCount_00259610(pEVar1->activeEventChunkID_0x8);
+	//pEVar1->field_0x4 = uVar3;
+	//edEvent::SetFunctionData_0025a0c0((int*)edEvent::FunctionDataA_0040eba0);
+	//::EmptyFunction();
+	//ByteCodeDestructor(&MStack16, -1);
+	return;
+}
+
+void OnViewLoaded_0019a9e0(char* pFileData, int length)
+{
+	ByteCode MStack16;
+
+	MStack16.Init(pFileData);
+	MStack16.GetChunk();
+
+	MY_LOG("MISSING HANDLER OnViewLoaded_0019a9e0\n");
+	//(*(code*)g_CameraViewManager_00448e98->pManagerFunctionData->deserializeFunc)();
+	//::EmptyFunction();
+	//ByteCodeDestructor(&MStack16, -1);
+	return;
+}
+
+void OnLightLoaded_002172d0(char* pFileData, int length)
+{
+	ByteCode MStack16;
+
+	MStack16.Init(pFileData);
+	MStack16.GetChunk();
+	MY_LOG("MISSING HANDLER OnLightLoaded_002172d0\n");
+	//(*(code*)(g_ManagerSingletonArray_00451660.g_LightManager_004516b0)->pManagerFunctionData->deserializeFunc)();
+	//::EmptyFunction();
+	//ByteCodeDestructor(&MStack16, -1);
+	return;
+}
+
+void OnEffectLoaded_001a0870(char* pFileData, int length)
+{
+	ByteCode MStack16;
+	MY_LOG("MISSING HANDLER OnEffectLoaded_001a0870\n");
+
+	MStack16.Init(pFileData);
+	//(*(code*)(g_ManagerSingletonArray_00451660.g_EffectsManager_004516b8)->pManagerFunctionData->deserializeFunc)();
+	//::EmptyFunction();
+	//ByteCodeDestructor(&MStack16, -1);
+	return;
+}
+
+void OnCinematicLoaded_001c67a0(char* pFileData, int length)
+{
+	ByteCode MStack16;
+	MY_LOG("MISSING HANDLER OnCinematicLoaded_001c67a0\n");
+
+	MStack16.Init(pFileData);
+	//(*(code*)g_CinematicManager_0048efc->pManagerFunctionData->deserializeFunc)();
+	//::EmptyFunction();
+	//ByteCodeDestructor(&MStack16, -1);
+	return;
+}
+
+void NullTypePairFunc(char* pFileData, int param_2)
+{
+	assert(false);
+}
+
+TypePairData TypePairFunctionData_0040e780[24] = {
+	{ 0x02, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x02, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x03, 4, { OnSoundLoaded_00180ef0, 0, 0, 0, 0, 0 } },
+	{ 0x03, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x03, 5, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x03, 6, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x03, 7, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x06, 1, { BnkInstallScene, 0, 0, 0, 0, 0 } },
+	{ 0x06, 2, { OnManagerDataLoaded_001b86b0, 0, 0, 0, 0, 0 } },
+	{ 0x04, 1, { OnMeshLoaded_001a6380, 0, 0, 0, 0, 0 } },
+	{ 0x05, 1, { BnkInstallG2D, 0, 0, 0, 0, 0 } },
+	{ 0x07, 1, { OnLoadedFunc_00211480, 0, 0, 0, 0, 0 } },
+	{ 0x07, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x08, 1, { OnEventLoaded_0019e750, 0, 0, 0, 0, 0 } },
+	{ 0x0A, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x0B, 1, { OnViewLoaded_0019a9e0, 0, 0, 0, 0, 0 } },
+	{ 0x0C, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x0F, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x10, 1, { OnLightLoaded_002172d0, 0, 0, 0, 0, 0 } },
+	{ 0x11, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x09, 1, { OnEffectLoaded_001a0870, 0, 0, 0, 0, 0 } },
+	{ 0x13, 1, { OnCinematicLoaded_001c67a0, 0, 0, 0, 0, 0 } },
+	{ 0x09, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0xFFFFFFFF, 0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
+};
 
 int FindNextNullTerminator(char* startCharacter)
 {
@@ -1062,7 +1059,7 @@ int FindNextNullTerminator(char* startCharacter)
 	return iVar1;
 }
 
-void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBuffer* pBankBuffer)
+void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBufferEntry* pBankBuffer)
 {
 	bool bVar1;
 	uint uVar2;
@@ -1072,18 +1069,18 @@ void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBuffer* p
 	int iVar6;
 	int iVar7;
 	uint uVar8;
-	BankFileData local_220;
+	edBANK_ENTRY_INFO local_220;
 	char acStack512[512];
 
-	uVar2 = CheckFileLoadAndGetParam(pBankBuffer);
+	uVar2 = get_element_count(pBankBuffer);
 	iVar6 = 0;
 	iVar7 = 0;
 	uVar8 = 0;
 	if (uVar2 != 0) {
 		do {
-			bVar1 = GetFileDataForIndex(pBankBuffer, uVar8, &local_220, acStack512);
+			bVar1 = get_info(pBankBuffer, uVar8, &local_220, acStack512);
 			if (bVar1 == false) break;
-			if ((local_220.unknownA << 0x10 | local_220.unknownB) == 0x30001) {
+			if ((local_220.type << 0x10 | local_220.stype) == 0x30001) {
 				iVar3 = FindNextNullTerminator(acStack512);
 				iVar7 = iVar7 + 1;
 				iVar6 = iVar6 + iVar3 + 1;
@@ -1144,9 +1141,9 @@ const char* sz_bankSlash = "/";
 const char* sz_LevelBank_00433bd8 = "Level.bnk";
 const char* sz_LevelIOPBankName = "LevelIOP.bnk";
 
-void LevelScheduleManager::LoadStageOne()
+void LevelScheduleManager::Game_Term()
 {
-	edCBankBuffer* pBankBuffer;
+	edCBankBufferEntry* pBankBuffer;
 	int cachedNextLevelID;
 	char filePath[128];
 	BankFilePathContainer bankContainer;
@@ -1158,11 +1155,11 @@ void LevelScheduleManager::LoadStageOne()
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	cachedNextLevelID = nextLevelID;
 	memset(&bankContainer, 0, sizeof(BankFilePathContainer));
-	edCBank_Setup(&levelIOPBank,
+	initialize(&levelIOPBank,
 		aLevelInfo[cachedNextLevelID].bankSizeIOP + 0x1000, 1,
 		&bankContainer);
 	edCBank_SetDeserializeData
-	(&levelIOPBank, LoadLevelBank::TypePairFunctionData_0040e780);
+	(&levelIOPBank, TypePairFunctionData_0040e780);
 	/* / + LevelIOP.bnk */
 	FormatFilePath(filePath, levelPath,
 		aLevelInfo[cachedNextLevelID].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
@@ -1170,10 +1167,10 @@ void LevelScheduleManager::LoadStageOne()
 	bankContainer.pObjectReference = (void*)0x0;
 	bankContainer.fileFlagA = 4;
 	bankContainer.fileFunc = WillLoadFilefromBank;
-	pBankBuffer = edCBank_GetBankBuffer(&levelIOPBank);
+	pBankBuffer = get_free_entry(&levelIOPBank);
 	(levelIOPBank).pBankFileAccessObject = pBankBuffer;
 	loadStage_0x5b48 = 0;
-	edCBankBuffer_file_access((levelIOPBank).pBankFileAccessObject, &bankContainer);
+	load((levelIOPBank).pBankFileAccessObject, &bankContainer);
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 }
 
@@ -1197,9 +1194,9 @@ bool GetLoadStage_002889c0()
 	return GetLoadStage_00267ba0();
 }
 
-bool LevelScheduleManager::AsyncLoad()
+bool LevelScheduleManager::LevelLoading_Manage()
 {
-	edCBankBuffer* pBVar1;
+	edCBankBufferEntry* pBVar1;
 	bool bVar1;
 	char filePath[128];
 	BankFilePathContainer bankFilePathContainer;
@@ -1221,7 +1218,7 @@ bool LevelScheduleManager::AsyncLoad()
 				bVar1 = GetLoadStage_002889c0();
 				if ((bVar1 != false) && (bVar1 = GetLoadStage_00267ba0(), bVar1 != false)) {
 					edCBankBuffer_close((this->levelIOPBank).pBankFileAccessObject);
-					(this->levelIOPBank).pBankFileAccessObject = (edCBankBuffer*)0x0;
+					(this->levelIOPBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 					edCBank_Free_00244e10(&this->levelIOPBank);
 					this->loadStage_0x5b48 = 3;
 				}
@@ -1230,16 +1227,16 @@ bool LevelScheduleManager::AsyncLoad()
 				if (loadStage == 1) {
 					levelToLoadID = this->nextLevelID;
 					memset(&bankFilePathContainer, 0, sizeof(BankFilePathContainer));
-					edCBank_Setup(&this->levelBank, this->aLevelInfo[levelToLoadID].bankSizeLevel + 0x1000, 1,
+					initialize(&this->levelBank, this->aLevelInfo[levelToLoadID].bankSizeLevel + 0x1000, 1,
 						&bankFilePathContainer);
-					edCBank_SetDeserializeData(&this->levelBank, LoadLevelBank::TypePairFunctionData_0040e780);
+					edCBank_SetDeserializeData(&this->levelBank, TypePairFunctionData_0040e780);
 					/* / + level.bnk */
 					FormatFilePath(filePath, this->levelPath, this->aLevelInfo[levelToLoadID].levelName, sz_bankSlash, sz_LevelBank_00433bd8, 0);
 					bankFilePathContainer.filePath = filePath;
 					bankFilePathContainer.fileFlagA = 0xc;
-					pBVar1 = edCBank_GetBankBuffer(&this->levelBank);
+					pBVar1 = get_free_entry(&this->levelBank);
 					(this->levelBank).pBankFileAccessObject = pBVar1;
-					edCBankBuffer_file_access((this->levelBank).pBankFileAccessObject, &bankFilePathContainer);
+					load((this->levelBank).pBankFileAccessObject, &bankFilePathContainer);
 					this->loadStage_0x5b48 = 2;
 				}
 			}
@@ -1248,7 +1245,7 @@ bool LevelScheduleManager::AsyncLoad()
 	return this->loadStage_0x5b48 != 4;
 }
 
-void LevelScheduleManager::LoadA()
+void LevelScheduleManager::Level_Install()
 {
 	BankFilePathContainer SStack32;
 
@@ -1258,7 +1255,7 @@ void LevelScheduleManager::LoadA()
 	return;
 }
 
-void LevelScheduleManager::LoadB()
+void LevelScheduleManager::Level_Init()
 {
 	uint** ppuVar1;
 	float fVar2;
@@ -1424,12 +1421,12 @@ void LevelScheduleManager::LoadB()
 	//	g_NbEpisodes.field_0x1c = g_NbEpisodes.field_0x1c + episodeNumber;
 	//}
 	if (this->currentLevelID == 0xe) {
-		g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 | 0x40;
+		GameFlags = GameFlags | 0x40;
 	}
 	return;
 }
 
-void LevelScheduleManager::EndLoadStageOne()
+void LevelScheduleManager::LevelLoading_End()
 {
 	this->currentLevelID = this->nextLevelID;
 	this->nextLevelID = 0x10;

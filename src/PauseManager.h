@@ -22,22 +22,22 @@ typedef enum EPauseMenu {
 	PM_SaveMenu = 3
 } EPauseMenu;
 
-struct PauseScreenData {
+struct SimpleMenu {
 public:
-	PauseScreenData();
+	SimpleMenu();
 	void Reset();
 	void SetMode(EPauseMenu mode);
 
-	void SetFontValue_002f2cf0(struct FontPacked* pFont);
-	void SetFontValue_002f2d00(struct FontPacked* pFont);
-	void SetFontValue_002f2d10(struct FontPacked* pFont);
+	void SetFontValue_002f2cf0(struct edCTextFont* pFont);
+	void SetFontValue_002f2d00(struct edCTextFont* pFont);
+	void SetFontValue_002f2d10(struct edCTextFont* pFont);
 	void SetTranslatedTextData_002f2d20(struct TranslatedTextData* pTextData);
-	EPauseMenu GetCurrentMode_002f2d30();
-	void Func_002f00a0();
+	EPauseMenu get_current_page();
+	void perform_action();
 	struct TranslatedTextData* pTranslatedTextData;
-	struct FontPacked* pFontA;
-	struct FontPacked* pFontB;
-	struct FontPacked* pFontC;
+	struct edCTextFont* pFontA;
+	struct edCTextFont* pFontB;
+	struct edCTextFont* pFontC;
 	int lastInput_0x14;
 	float totalTime;
 	int screenState_0x1c;
@@ -54,7 +54,7 @@ public:
 	undefined4 field_0x3c;
 	undefined4 pFunc_0x40;
 	undefined4 slotID_0x44;
-	enum EPauseMenu currentMode;
+	enum EPauseMenu currentPage;
 	int selectedIndex;
 	int field_0x50;
 	undefined field_0x54;
@@ -203,10 +203,10 @@ public:
 	PauseManager();
 
 	// Manager
-	virtual void OnBeginGame();
-	virtual void LoadLevelUpdate();
-	virtual void LoadB();
-	virtual void Update();
+	virtual void Game_Init();
+	virtual void LevelLoading_Draw();
+	virtual void Level_Init();
+	virtual void Level_Draw();
 	// End Manager
 
 	int currentAreaIndex;
@@ -230,21 +230,21 @@ public:
 	undefined field_0x25;
 	undefined field_0x26;
 	undefined field_0x27;
-	struct PauseScreenData* pSubObj108_0x28;
-	struct G2DObj_PauseManager* pTexture_0x2c;
+	struct SimpleMenu* pSimpleMenu;
+	struct SplashScreen* pSplashScreen;
 	float totalPlayTime;
 	int field_0x34;
 };
 
-struct G2DObj {
+struct Sprite {
 public:
-	G2DObj();
+	Sprite();
 	byte field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
 	undefined4 field_0x8;
-	struct MaterialInfo* pMaterialInfo;
+	struct edDList_material* pMaterialInfo;
 	undefined4 field_0x10;
 	float field_0x14;
 	float field_0x18;
@@ -286,15 +286,15 @@ public:
 	float field_0x74;
 	float field_0x78;
 	uint flags_0x7c;
-	struct MaterialInfo materialInfo;
-	struct TextureInfoSmall textureInfo;
+	struct edDList_material materialInfo;
+	struct ed_g2d_manager textureInfo;
 };
 
-struct G2DObj_PauseManager : public G2DObj {
+struct SplashScreen : public Sprite {
 public:
-	G2DObj_PauseManager();
-	bool Load(float param_1, char* filePath);
-	bool Draw(ulong param_2, bool param_3, bool param_4);
+	SplashScreen();
+	bool Init(float param_1, char* filePath);
+	bool Manage(ulong param_2, bool param_3, bool param_4);
 	void SetDrawLocation(float x, float y, float z, float w);
 	char* pTextureFileData;
 	float field_0xc4;
@@ -304,6 +304,6 @@ public:
 	struct Vector drawOffsets;
 };
 
-extern struct FontPacked* g_MenuFont_00449754;
+extern struct edCTextFont* BootDataFont;
 
 #endif // _PAUSEMANAGER_H

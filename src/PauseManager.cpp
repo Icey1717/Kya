@@ -16,12 +16,12 @@
 #include "MathOps.h"
 #include <math.h>
 
-PauseScreenData g_PauseScreenData_004507f0;
+SimpleMenu g_PauseScreenData_004507f0;
 
 PauseManager::PauseManager()
 {
-	pSubObj108_0x28 = (PauseScreenData*)0x0;
-	pTexture_0x2c = (G2DObj_PauseManager*)0x0;
+	pSimpleMenu = (SimpleMenu*)0x0;
+	pSplashScreen = (SplashScreen*)0x0;
 	field_0xd = 0;
 	field_0xe = 0;
 	field_0xf = 0;
@@ -39,11 +39,11 @@ PauseManager::PauseManager()
 	return;
 }
 
-void PauseManager::OnBeginGame()
+void PauseManager::Game_Init()
 {
-	g_PauseScreenData_004507f0.SetFontValue_002f2d10(g_MenuFont_00449754);
-	g_PauseScreenData_004507f0.SetFontValue_002f2d00(g_MenuFont_00449754);
-	g_PauseScreenData_004507f0.SetFontValue_002f2cf0(g_MenuFont_00449754);
+	g_PauseScreenData_004507f0.SetFontValue_002f2d10(BootDataFont);
+	g_PauseScreenData_004507f0.SetFontValue_002f2d00(BootDataFont);
+	g_PauseScreenData_004507f0.SetFontValue_002f2cf0(BootDataFont);
 	g_PauseScreenData_004507f0.SetTranslatedTextData_002f2d20(NULL);
 	field_0xf = 0;
 	field_0x10 = 0;
@@ -55,9 +55,9 @@ void PauseManager::OnBeginGame()
 extern int g_ScreenWidth;
 extern int g_ScreenHeight;
 
-FontPacked* g_MenuFont_00449754 = NULL;
+edCTextFont* BootDataFont = NULL;
 
-void SetFontScale_0028d2b0(float xScale, float yScale, FontFileData* pFontFileData)
+void SetFontScale_0028d2b0(float xScale, float yScale, edCTextStyle* pFontFileData)
 {
 	pFontFileData->xScale = xScale;
 	pFontFileData->yScale = yScale;
@@ -69,15 +69,15 @@ void DrawLoadingScreen_001b05e0(void)
 {
 	bool bVar2;
 	TimeController* pTVar3;
-	FontFileData* pNewFont;
+	edCTextStyle* pNewFont;
 	char* pcVar4;
 	float fVar5;
-	FontFileData FStack192;
+	edCTextStyle FStack192;
 	bool bIsLoadingScreen;
 	int localAlpha;
 
 	if (g_CinematicManager_0048efc->pSubObj_0x1c == (CinematicObjectB*)0x0) {
-		pTVar3 = GetTimeController();
+		pTVar3 = GetTimer();
 		fVar5 = pTVar3->totalTime * 256.0f;
 		if (fVar5 < 2.147484e+09f) {
 			localAlpha = (int)fVar5;
@@ -93,32 +93,32 @@ void DrawLoadingScreen_001b05e0(void)
 		if (!bIsLoadingScreen) {
 			localAlpha = 0xff;
 		}
-		bVar2 = GuiDisplayListFunc_002d6360();
+		bVar2 = GuiDList_BeginCurrent();
 		if (bVar2 != false) {
 			InitFontData_0028d430(&FStack192);
 			pNewFont = SetActiveFontData(&FStack192);
-			FStack192.SetFontTextureData_0028d3e0(g_MenuFont_00449754, false);
+			FStack192.SetFontTextureData_0028d3e0(BootDataFont, false);
 
 			FStack192.SetFontFlag_0028d340(0x100);
 			FStack192.alpha = localAlpha & 0xff;
 			FStack192.rgbaColour = FStack192.alpha | 0xffffff00;
 			FStack192.SetFontFlag_0028d3c0(2);
 			FStack192.SetFontFlag_0028d3a0(8);
-			DrawTextParams drawTextParams = DrawTextParams();
+			edCTextFormat drawTextParams = edCTextFormat();
 			if (bIsLoadingScreen) {
 				pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x30803025f4c4f41);
 				drawTextParams.Setup_0028c540(pcVar4);
-				DrawTextB_0028a710((float)g_ScreenWidth / 2.0, (float)g_ScreenHeight - 36.0, &drawTextParams);
+				Display((float)g_ScreenWidth / 2.0, (float)g_ScreenHeight - 36.0, &drawTextParams);
 			}
 			else {
 				// This is the text for the final end game screen.
 				SetFontScale_0028d2b0(1.3f, 1.3f, &FStack192);
 				pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x180403015f544845);
 				drawTextParams.Setup_0028c540(pcVar4);
-				DrawTextB_0028a710((float)g_ScreenWidth * 0.5, (float)g_ScreenHeight * 0.5, &drawTextParams);
+				Display((float)g_ScreenWidth * 0.5, (float)g_ScreenHeight * 0.5, &drawTextParams);
 			}
 			SetActiveFontData(pNewFont);
-			DisplayListFunc_002d6340();
+			GuiDList_EndCurrent();
 			//RunInPlaceDestructors_002173e0(drawTextParams.fontData_0x850, Free_00166e40, 0xc0, 0x11);
 		}
 	}
@@ -126,7 +126,7 @@ void DrawLoadingScreen_001b05e0(void)
 }
 
 
-void PauseManager::LoadLevelUpdate()
+void PauseManager::LevelLoading_Draw()
 {
 	//PauseManagerFunc_001b0860(pPauseManager, 0);
 	DrawLoadingScreen_001b05e0();
@@ -211,11 +211,11 @@ void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 	return;
 }
 
-void PauseManager::LoadB()
+void PauseManager::Level_Init()
 {
 	APlayer* pAVar1;
-	PauseScreenData* pPVar2;
-	G2DObj_PauseManager* pGVar3;
+	SimpleMenu* pPVar2;
+	SplashScreen* pGVar3;
 	TimeController* pTVar4;
 	undefined8 uVar5;
 
@@ -239,22 +239,22 @@ void PauseManager::LoadB()
 		}
 	}
 	UINT_00448eac = 0;
-	if ((g_DebugCameraFlag_00448ea4 & 0x40) != 0) {
-		pPVar2 = new PauseScreenData();
-		if (pPVar2 != (PauseScreenData*)0x0) {
-			this->pSubObj108_0x28 = pPVar2;
-			this->pSubObj108_0x28->Reset();
-			this->pSubObj108_0x28->SetFontValue_002f2d10(g_MenuFont_00449754);
-			this->pSubObj108_0x28->SetFontValue_002f2d00(g_MenuFont_00449754);
-			this->pSubObj108_0x28->SetFontValue_002f2cf0(g_MenuFont_00449754);
-			this->pSubObj108_0x28->SetTranslatedTextData_002f2d20(&(g_ManagerSingletonArray_00451660.g_LocalizationManager_00451678)->userInterfaceText);
-			pGVar3 = new G2DObj_PauseManager();
-			this->pTexture_0x2c = pGVar3;
+	if ((GameFlags & 0x40) != 0) {
+		pPVar2 = new SimpleMenu();
+		if (pPVar2 != (SimpleMenu*)0x0) {
+			this->pSimpleMenu = pPVar2;
+			this->pSimpleMenu->Reset();
+			this->pSimpleMenu->SetFontValue_002f2d10(BootDataFont);
+			this->pSimpleMenu->SetFontValue_002f2d00(BootDataFont);
+			this->pSimpleMenu->SetFontValue_002f2cf0(BootDataFont);
+			this->pSimpleMenu->SetTranslatedTextData_002f2d20(&(g_ManagerSingletonArray_00451660.g_LocalizationManager_00451678)->userInterfaceText);
+			pGVar3 = new SplashScreen();
+			this->pSplashScreen = pGVar3;
 			/* CDEURO/Frontend/kyatitle.g2d */
-			this->pTexture_0x2c->Load(0.0, "CDEURO/Frontend/kyatitle.g2d");
-			this->pTexture_0x2c->SetDrawLocation((float)g_ScreenWidth / 2.0 - 80.0, ((float)g_ScreenHeight * 20.0) / 512.0,
+			this->pSplashScreen->Init(0.0, "CDEURO/Frontend/kyatitle.g2d");
+			this->pSplashScreen->SetDrawLocation((float)g_ScreenWidth / 2.0 - 80.0, ((float)g_ScreenHeight * 20.0) / 512.0,
 				(float)g_ScreenWidth / 2.0 + 80.0, ((float)g_ScreenHeight * 220.0) / 512.0);
-			pTVar4 = GetTimeController();
+			pTVar4 = GetTimer();
 			this->totalPlayTime = pTVar4->totalPlayTime;
 		}
 	}
@@ -264,7 +264,7 @@ void PauseManager::LoadB()
 	return;
 }
 
-void PauseManager::Update()
+void PauseManager::Level_Draw()
 {
 	CinematicManager* pCinematicManager;
 	LevelScheduleManager* pLevelScheduleManager;
@@ -279,14 +279,14 @@ void PauseManager::Update()
 	CinematicObjectB* pCVar8;
 	float fVar9;
 
-	if ((this->pSubObj108_0x28 != (PauseScreenData*)0x0) && (this->pTexture_0x2c != (G2DObj_PauseManager*)0x0)) {
-		bVar1 = PTR_IopManager_00448cf8->GetAnyControllerConnected();
-		pTVar3 = GetTimeController();
+	if ((this->pSimpleMenu != (SimpleMenu*)0x0) && (this->pSplashScreen != (SplashScreen*)0x0)) {
+		bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+		pTVar3 = GetTimer();
 		fVar9 = pTVar3->totalPlayTime;
 		if ((g_InputManager_00450960.pressedBitfield != 0) ||
 			(((this->field_0x34 == 0 &&
-				(EVar4 = this->pSubObj108_0x28->GetCurrentMode_002f2d30(), EVar4 != PM_MainMenu)) ||
-				(bVar2 = g_LargeObject_006db450->CheckFunc_001b9300(), bVar2 != 0)))) {
+				(EVar4 = this->pSimpleMenu->get_current_page(), EVar4 != PM_MainMenu)) ||
+				(bVar2 = Scene::_pinstance->CheckFunc_001b9300(), bVar2 != 0)))) {
 			this->totalPlayTime = fVar9;
 		}
 		//pCinematicManager = g_CinematicManager_0048efc;
@@ -304,7 +304,7 @@ void PauseManager::Update()
 		//}
 		pLevelScheduleManager = g_LevelScheduleManager_00449728;
 		if (60.0f < fVar9 - this->totalPlayTime) {
-			this->pTexture_0x2c->Draw((long)this->field_0x34, false, bVar1);
+			this->pSplashScreen->Manage((long)this->field_0x34, false, bVar1);
 			//if (pCVar8 == (CinematicObjectB*)0x0) {
 			//	LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
 			//	if ((g_DebugCameraFlag_00448ea4 & 4) != 0) {
@@ -320,22 +320,22 @@ void PauseManager::Update()
 			//}
 		}
 		else {
-			if ((g_DebugCameraFlag_00448ea4 & 0x80) == 0) {
+			if ((GameFlags & 0x80) == 0) {
 				if ((long)this->field_0x34 == 0) {
-					bVar2 = GuiDisplayListFunc_002d6360();
+					bVar2 = GuiDList_BeginCurrent();
 					if (bVar2 != false) {
 						assert(false);
-						//PauseManagerSubObjFunc_002f00e0(this->pSubObj108_0x28, DrawMainMenu_001b0f20);
-						DisplayListFunc_002d6340();
+						//this->pSubObj108_0x28->draw(DrawGameMenu);
+						GuiDList_EndCurrent();
 					}
-					this->pSubObj108_0x28->Func_002f00a0();
-					EVar4 = this->pSubObj108_0x28->GetCurrentMode_002f2d30();
+					this->pSimpleMenu->perform_action();
+					EVar4 = this->pSimpleMenu->get_current_page();
 					if ((EVar4 == PM_MainMenu) && (bVar1 == false)) {
-						this->pTexture_0x2c->Draw((long)this->field_0x34, false, false);
+						this->pSplashScreen->Manage((long)this->field_0x34, false, false);
 					}
 				}
 				else {
-					bVar1 = this->pTexture_0x2c->Draw((long)this->field_0x34, false, bVar1);
+					bVar1 = this->pSplashScreen->Manage((long)this->field_0x34, false, bVar1);
 					this->field_0x34 = (int)bVar1;
 					if (this->field_0x34 == 0) {
 						g_PauseScreenData_004507f0.SetMode(PM_MainMenu);
@@ -345,40 +345,40 @@ void PauseManager::Update()
 			}
 		}
 	}
-	if ((g_DebugCameraFlag_00448ea4 & 4) != 0) {
+	if ((GameFlags & 4) != 0) {
 		if ((UINT_00448eac == 1) || (UINT_00448eac == 2)) {
-			if ((g_DebugCameraFlag_00448ea4 & 0x800) == 0) {
+			if ((GameFlags & 0x800) == 0) {
 				assert(false);
 				//FUN_001b48c0();
 			}
-			bVar1 = GuiDisplayListFunc_002d6360();
+			bVar1 = GuiDList_BeginCurrent();
 			if (bVar1 != false) {
 				assert(false);
-				//PauseManagerSubObjFunc_002f00e0(&g_PauseScreenData_004507f0, DrawPauseMenu_001b1420);
-				DisplayListFunc_002d6340();
+				//gPauseMenu->draw(DrawPauseMenu);
+				GuiDList_EndCurrent();
 			}
 		}
-		this->pSubObj108_0x28->Func_002f00a0();
+		//gPauseMenu->perform_action();
 	}
 	//PauseManagerFunc_001b0860(this, 0);
 	return;
 }
 
-PauseScreenData::PauseScreenData()
+SimpleMenu::SimpleMenu()
 {
 	Reset();
 }
 
-void PauseScreenData::Reset()
+void SimpleMenu::Reset()
 {
 	TimeController* pTVar1;
 
 	this->field_0x2c = 0;
-	this->currentMode = PM_MainMenu;
+	this->currentPage = PM_MainMenu;
 	this->selectedIndex = 0;
 	this->field_0x50 = 3;
 	this->screenState_0x1c = 0;
-	pTVar1 = GetTimeController();
+	pTVar1 = GetTimer();
 	this->totalTime = pTVar1->totalTime;
 	this->field_0xcc = 0xfff609ff;
 	this->field_0xd0 = 0xff9000ff;
@@ -393,46 +393,46 @@ void PauseScreenData::Reset()
 	return;
 }
 
-void PauseScreenData::SetMode(EPauseMenu mode)
+void SimpleMenu::SetMode(EPauseMenu mode)
 {
 	Reset();
-	this->currentMode = mode;
+	this->currentPage = mode;
 	this->field_0xcc = 0xfc9900ff;
 	this->field_0xd0 = 0xffffd2ff;
 	this->field_0xd4 = 0xe9e6e7ff;
 	return;
 }
 
-void PauseScreenData::SetFontValue_002f2cf0(FontPacked* pFont)
+void SimpleMenu::SetFontValue_002f2cf0(edCTextFont* pFont)
 {
 	pFontC = pFont;
 	return;
 }
 
-void PauseScreenData::SetFontValue_002f2d00(FontPacked* pFont)
+void SimpleMenu::SetFontValue_002f2d00(edCTextFont* pFont)
 {
 	pFontB = pFont;
 	return;
 }
 
-void PauseScreenData::SetFontValue_002f2d10(FontPacked* pFont)
+void SimpleMenu::SetFontValue_002f2d10(edCTextFont* pFont)
 {
 	pFontA = pFont;
 	return;
 }
 
-void PauseScreenData::SetTranslatedTextData_002f2d20(TranslatedTextData* pTextData)
+void SimpleMenu::SetTranslatedTextData_002f2d20(TranslatedTextData* pTextData)
 {
 	pTranslatedTextData = pTextData;
 	return;
 }
 
-EPauseMenu PauseScreenData::GetCurrentMode_002f2d30()
+EPauseMenu SimpleMenu::get_current_page()
 {
-	return currentMode;
+	return currentPage;
 }
 
-void PauseScreenData::Func_002f00a0()
+void SimpleMenu::perform_action()
 {
 	if (this->pFunc_0x40 != 0x0) {
 		assert(false);
@@ -446,7 +446,7 @@ void PauseScreenData::Func_002f00a0()
 
 float FLOAT_ARRAY_00448cd0[2] = { 1.0f, 1.0f };
 
-G2DObj::G2DObj()
+Sprite::Sprite()
 {
 	undefined4* puVar1;
 	int puVar4;
@@ -473,7 +473,7 @@ G2DObj::G2DObj()
 	this->field_0x24 = 0;
 	this->field_0x28 = 1.0;
 	this->field_0x2c = 1.0;
-	this->pMaterialInfo = (MaterialInfo*)0x0;
+	this->pMaterialInfo = (edDList_material*)0x0;
 	this->field_0x4c = local_8;
 	this->field_0x50 = local_4;
 	local_10 = FLOAT_ARRAY_00448cd0[0];
@@ -487,7 +487,7 @@ G2DObj::G2DObj()
 	return;
 }
 
-G2DObj_PauseManager::G2DObj_PauseManager()
+SplashScreen::SplashScreen()
 {
 	//(this->base).pVTable = &G2DObj_VTable_004446e0;
 	this->field_0x68 = 0;
@@ -499,7 +499,7 @@ G2DObj_PauseManager::G2DObj_PauseManager()
 	this->field_0x70 = (undefined*)0x0;
 	this->field_0x6c = 0;
 	this->flags_0x7c = 0;
-	//(*((this->base).pVTable)->init)((G2DObj*)this);
+	//(*((this->base).pVTable)->init)((Sprite*)this);
 	this->pTextureFileData = (char*)0x0;
 	this->field_0xcc = 0;
 	this->field_0xc4 = 0.0;
@@ -507,7 +507,7 @@ G2DObj_PauseManager::G2DObj_PauseManager()
 	return;
 }
 
-bool G2DObj_PauseManager::Load(float param_1, char* filePath)
+bool SplashScreen::Init(float param_1, char* filePath)
 {
 	uint uVar1;
 	DebugBankData_234* pLoadedFile;
@@ -515,11 +515,12 @@ bool G2DObj_PauseManager::Load(float param_1, char* filePath)
 	char* pcVar3;
 	ushort* puVar4;
 	TimeController* pTVar5;
+	ed_g2d_material* pMaterialSection;
 	float fVar6;
 	int iStack4;
 
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
-	pLoadedFile = LoadFile(filePath, 9);
+	pLoadedFile = edFileLoadSize(filePath, 9);
 	if (pLoadedFile != (DebugBankData_234*)0x0) {
 		iVar2 = GetFileSize_0025bd70(pLoadedFile);
 		uVar1 = iVar2 + 0x7ffU & 0xfffff800;
@@ -537,12 +538,12 @@ bool G2DObj_PauseManager::Load(float param_1, char* filePath)
 	}
 	pcVar3 = this->pTextureFileData;
 	if (pcVar3 != (char*)0x0) {
-		ed3D::LoadTextureFromBuffer(pcVar3, *(int*)(pcVar3 + 8), &iStack4, &this->textureInfo, 0);
+		ed3DInstallG2D(pcVar3, *(int*)(pcVar3 + 8), &iStack4, &this->textureInfo, 0);
 		this->flags_0x7c = this->flags_0x7c | 2;
 		this->field_0x4 = 0;
-		char* a = ed3D::GetMAT_Section_0029eae0(&this->textureInfo, 0);
-		puVar4 = (ushort*)ed3D::GetT2D_Section_0029ea60(a, 0);
-		ed3D::GetMaterialInfoFromTexture(&this->materialInfo, 0, &this->textureInfo, 2);
+		pMaterialSection = ed3DG2DGetG2DMaterialFromIndex(&this->textureInfo, 0);
+		puVar4 = (ushort*)ed3DG2DGetBitmapFromMaterial(pMaterialSection, 0);
+		edDListCreatMaterialFromIndex(&this->materialInfo, 0, &this->textureInfo, 2);
 		this->flags_0x7c = this->flags_0x7c | 1;
 		this->field_0x38 = *puVar4;
 		this->field_0x3a = puVar4[1];
@@ -556,7 +557,7 @@ bool G2DObj_PauseManager::Load(float param_1, char* filePath)
 		this->field_0xc8 = 0.0001;
 	}
 	this->field_0xcc = 0;
-	pTVar5 = GetTimeController();
+	pTVar5 = GetTimer();
 	this->field_0xc4 = pTVar5->totalTime;
 	uVar1 = g_ScreenWidth;
 	fVar6 = (float)g_ScreenHeight;
@@ -567,12 +568,12 @@ bool G2DObj_PauseManager::Load(float param_1, char* filePath)
 	return this->pTextureFileData != (char*)0x0;
 }
 
-bool G2DObj_PauseManager::Draw(ulong param_2, bool param_3, bool param_4)
+bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 {
 	bool bVar1;
 	TimeController* pTVar2;
 	uint uVar3;
-	FontFileData* pNewFont;
+	edCTextStyle* pNewFont;
 	char* pcVar4;
 	byte r;
 	undefined8 uVar5;
@@ -592,15 +593,15 @@ bool G2DObj_PauseManager::Draw(ulong param_2, bool param_3, bool param_4)
 	float fVar17;
 	float x;
 	float fVar18;
-	FontFileData FStack192;
+	edCTextStyle FStack192;
 
 	uVar8 = 0x7f;
-	pTVar2 = GetTimeController();
+	pTVar2 = GetTimer();
 	fVar12 = pTVar2->totalTime;
 	if (((param_2 != 0) && (((uint)g_InputManager_00450960.releasedBitfield & 0x40000) != 0)) && (this->field_0xcc == 0))
 	{
 		this->field_0xcc = 1;
-		pTVar2 = GetTimeController();
+		pTVar2 = GetTimer();
 		this->field_0xc4 = pTVar2->totalTime;
 	}
 	fVar15 = (fVar12 - this->field_0xc4) / this->field_0xc8;
@@ -627,27 +628,27 @@ bool G2DObj_PauseManager::Draw(ulong param_2, bool param_3, bool param_4)
 			}
 		}
 	}
-	bVar1 = GuiDisplayListFunc_002d6360();
+	bVar1 = GuiDList_BeginCurrent();
 	if (bVar1 != false) {
 		if ((this->pTextureFileData != (char*)0x0) && (param_4 == false)) {
 			fVar13 = (this->drawOffsets).z - (this->drawOffsets).x;
 			fVar10 = (this->drawOffsets).w - (this->drawOffsets).y;
 			if (this->field_0xd0 != 0) {
-				edDlist::LoadMaterialResource_002cb850((MaterialInfo*)0x0);
-				edDlist::SetDropShadowColour_002ce1a0(0, 0, 0, 0x80);
+				edDlist::edDListUseMaterial((edDList_material*)0x0);
+				edDlist::edDListColor4u8(0, 0, 0, 0x80);
 				edDlist::SetUnitMatrix_002d07b0();
 				iVar9 = 6;
-				edDlist::MeshDrawCommands_002ca170(1.0f, 1.0f, 1.0f, 6, 2);
-				edDlist::CallSetXYZ(0.0f, 0.0f, 0.0f, iVar9);
-				edDlist::CallSetXYZ(fVar13, fVar10, 0.0f, iVar9);
-				edDlist::EndDraw_002cfe40();
+				edDlist::edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
+				edDlist::edDListVertex4f(0.0f, 0.0f, 0.0f, iVar9);
+				edDlist::edDListVertex4f(fVar13, fVar10, 0.0f, iVar9);
+				edDlist::edDListEnd();
 			}
-			edDlist::LoadMaterialResource_002cb850(&this->materialInfo);
+			edDlist::edDListUseMaterial(&this->materialInfo);
 			edDlist::SetUnitMatrix_002d07b0();
-			edDlist::ApplyMaterialFlag_002ca8c0(1);
-			edDlist::AddSetAlphaCommand_002ca800();
+			edDlist::edDListBlendSet(1);
+			edDlist::edDListBlendFuncNormal();
 			r = (byte)uVar8;
-			edDlist::SetDropShadowColour_002ce1a0(r, r, r, r);
+			edDlist::edDListColor4u8(r, r, r, r);
 			y_00 = (this->drawOffsets).y;
 			iVar7 = (int)(fVar13 / 32.0) + 1;
 			iVar9 = (int)(fVar10 / 32.0);
@@ -659,17 +660,17 @@ bool G2DObj_PauseManager::Draw(ulong param_2, bool param_3, bool param_4)
 				fVar18 = 0.0;
 				do {
 					uVar5 = 4;
-					edDlist::MeshDrawCommands_002ca170(0.0f, 0.0f, 0.0f, 4, iVar7 * 2);
+					edDlist::edDListBegin(0.0f, 0.0f, 0.0f, 4, iVar7 * 2);
 					x = (this->drawOffsets).x;
 					fVar14 = 0.0;
 					iVar6 = iVar7;
 					y = fVar11;
 					fVar17 = fVar16;
 					while (iVar6 != 0) {
-						edDlist::CallSetST(fVar14, fVar18);
-						edDlist::CallSetXYZ(x, y_00, 0.0f, (int)uVar5);
-						edDlist::CallSetST(fVar14, fVar17);
-						edDlist::CallSetXYZ(x, y, 0.0f, (int)uVar5);
+						edDlist::edDListTexCoo2f(fVar14, fVar18);
+						edDlist::edDListVertex4f(x, y_00, 0.0f, (int)uVar5);
+						edDlist::edDListTexCoo2f(fVar14, fVar17);
+						edDlist::edDListVertex4f(x, y, 0.0f, (int)uVar5);
 						iVar6 = iVar6 + -1;
 						if (iVar6 == 1) {
 							fVar14 = 1.0;
@@ -689,7 +690,7 @@ bool G2DObj_PauseManager::Draw(ulong param_2, bool param_3, bool param_4)
 						fVar16 = fVar17 + fVar13;
 						fVar11 = y + 32.0;
 					}
-					edDlist::EndDraw_002cfe40();
+					edDlist::edDListEnd();
 					y_00 = y;
 					fVar18 = fVar17;
 				} while (iVar9 != 0);
@@ -706,7 +707,7 @@ bool G2DObj_PauseManager::Draw(ulong param_2, bool param_3, bool param_4)
 			FStack192.SetFontFlag_0028d340(0x100);
 			FStack192.alpha = (uVar8 & 0x7f) << 1;
 			FStack192.rgbaColour = FStack192.alpha | 0xffffff00;
-			FStack192.SetFontTextureData_0028d3e0(g_MenuFont_00449754, false);
+			FStack192.SetFontTextureData_0028d3e0(BootDataFont, false);
 			FStack192.SetFontFlag_0028d3c0(2);
 			if (param_4 == false) {
 				if (fVar12 < 0.3) {
@@ -730,12 +731,12 @@ bool G2DObj_PauseManager::Draw(ulong param_2, bool param_3, bool param_4)
 				param_2 = (ulong)(1.0f <= fVar15);
 			}
 		}
-		DisplayListFunc_002d6340();
+		GuiDList_EndCurrent();
 	}
 	return param_2 == 0;
 }
 
-void G2DObj_PauseManager::SetDrawLocation(float x, float y, float z, float w)
+void SplashScreen::SetDrawLocation(float x, float y, float z, float w)
 {
 	(this->drawOffsets).x = x;
 	(this->drawOffsets).y = y;

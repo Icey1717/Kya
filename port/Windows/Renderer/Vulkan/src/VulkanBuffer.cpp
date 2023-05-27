@@ -29,7 +29,7 @@ void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
 	vkBindBufferMemory(GetDevice(), buffer, bufferMemory, 0);
 }
 
-void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+void CopyBufferImmediate(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
 	VkBufferCopy copyRegion{};
@@ -37,4 +37,10 @@ void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
 	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
 	EndSingleTimeCommands(commandBuffer);
+}
+
+void CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+	VkBufferCopy copyRegion{};
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 }

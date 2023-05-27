@@ -3,21 +3,24 @@
 
 #include "Types.h"
 
-struct MemoryStream {
+struct ByteCode {
 public:
-	void SeekForward_00189a50(int param_2);
-	undefined4 Func_00189a90();
+	static ulong BuildU64(int param_1, int param_2);
+	void Align(int param_2);
+	undefined4 GetChunk();
 
-	char* ReadString_00189ab0();
-	ulong ReadLongFunc_00189b00();
-	float ReadFloat_00189b30();
-	uint ReadUint_00189b50();
-	int ReadInt_00189b70();
-	byte ReadByte_00189bb0();
-	char* GetSeekPos();
-	void SetSeekPos(char* newPos);
-	char* Setup_00189c00(char* fileBuffer);
-	MemoryStream();
+	char* GetString();
+	ulong GetU64();
+	float GetF32();
+	uint GetU32();
+	int GetS32();
+	ushort GetU16();
+	byte GetU8();
+	char* GetPosition();
+	void SetPosition(char* newPos);
+	void Term(void);
+	char* Init(char* fileBuffer);
+	ByteCode();
 	char* data;
 	char* streamEnd;
 	int size;

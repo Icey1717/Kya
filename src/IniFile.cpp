@@ -311,7 +311,7 @@ bool IniFile::ReadQuotedString(char* outValue)
 		else {
 			if (0x7e < stringIndex) {
 				/* String will be truncated !\n */
-				PrintString("String will be truncated !\n");
+				edDebugPrintf("String will be truncated !\n");
 			}
 			returnValue = true;
 		}
@@ -616,7 +616,7 @@ bool IniFile::ReadInt_001a9830(char* section, char* key, int* outValue)
 	char* currentPointer;
 
 	if (fileBufferStart == (char*)0x0) {
-		PrintString(".INI file empty !\n");
+		edDebugPrintf(".INI file empty !\n");
 		return false;
 	}
 	currentSeekPosition = fileBufferStart;
@@ -885,7 +885,7 @@ bool IniFile::ReadInt_001a9830(char* section, char* key, int* outValue)
 			}
 		}
 		if (!isEndOfLine) {
-			PrintString("Section [%s] not found !\n", section);
+			edDebugPrintf("Section [%s] not found !\n", section);
 			isEndOfLine = false;
 			goto LAB_001aa4b8;
 		}
@@ -915,7 +915,7 @@ bool IniFile::ReadInt_001a9830(char* section, char* key, int* outValue)
 	}
 	isEndOfLine = SeekToKey_001a7ed0(key, section == (char*)0x0);
 	if (isEndOfLine == false) {
-		PrintString("Key %s = not found in section [%s]!\n", key, section);
+		edDebugPrintf("Key %s = not found in section [%s]!\n", key, section);
 		isEndOfLine = false;
 	}
 	else {
@@ -925,7 +925,7 @@ LAB_001aa4b8:
 	if (isEndOfLine) {
 		isEndOfLine = ReadInteger(outValue);
 		if (isEndOfLine == false) {
-			PrintString("Invalid integer key %s in section [%s]!\n", key, section);
+			edDebugPrintf("Invalid integer key %s in section [%s]!\n", key, section);
 			isEndOfLine = false;
 		}
 		else {
@@ -1215,7 +1215,7 @@ bool IniFile::ReadString_001aa520(const char* section, const char* key, char* ou
 			}
 		}
 		if (!bAtEndOfFile) {
-			PrintString("Section [%s] not found !\n", section);
+			edDebugPrintf("Section [%s] not found !\n", section);
 			bAtEndOfFile = false;
 			goto LAB_001ab190;
 		}
@@ -1246,7 +1246,7 @@ bool IniFile::ReadString_001aa520(const char* section, const char* key, char* ou
 	bAtEndOfFile = SeekToKey_001a7ed0(key, section == (char*)0x0);
 	if (bAtEndOfFile == false) {
 		/* Key %s = not found in section [%s]!\n */
-		PrintString("Key %s = not found in section [%s]!\n", key, section);
+		edDebugPrintf("Key %s = not found in section [%s]!\n", key, section);
 		bAtEndOfFile = false;
 	}
 	else {
@@ -1257,7 +1257,7 @@ LAB_001ab190:
 		bAtEndOfFile = ReadQuotedString(outValue);
 		if (bAtEndOfFile == false) {
 			/* Invalid string key %s in section [%s]!\n */
-			PrintString("Invalid string key %s in section [%s]!\n", key, section);
+			edDebugPrintf("Invalid string key %s in section [%s]!\n", key, section);
 			bAtEndOfFile = false;
 		}
 		else {

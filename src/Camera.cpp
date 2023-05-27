@@ -7,22 +7,124 @@
 
 #ifdef PLATFORM_WIN
 #include "port.h"
+#include "renderer.h"
+#include <vector>
 #endif
+#include "Rendering/CustomShell.h"
 
-RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand* pCommandBuf)
+ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, edSurface* pVidModeDataB, byte alpha)
 {
-	FrameBuffer* pVVar1;
-	FrameBuffer* pVVar2;
+	ed_viewport* __s;
+	CameraObj_390* pCVar1;
+	edpkt_data* pRVar2;
+	ed_viewport* pReturnValue;
+	CameraObjParams local_8;
+
+	if (pParams == (CameraObjParams*)0x0) {
+		local_8.field_0x0 = 0;
+		local_8.field_0x2 = 0;
+		if (pVidModeDataA == (edSurface*)0x0) {
+			local_8.screenWidth = 0x200;
+			local_8.screenHeight = 0x200;
+		}
+		else {
+			local_8.screenWidth = pVidModeDataA->pVidModeData_0x0->screenWidth;
+			local_8.screenHeight = pVidModeDataA->pVidModeData_0x0->screenHeight;
+		}
+		pParams = &local_8;
+	}
+	__s = (ed_viewport*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_viewport));
+	memset(__s, 0, sizeof(ed_viewport));
+	__s->clearColor.a = alpha;
+	__s->fbMask = 0;
+	if ((alpha & 1) == 0) {
+		__s->clearMask = 0xffffffff;
+	}
+	else {
+		__s->clearMask = 0;
+	}
+	__s->posX = pParams->field_0x0;
+	__s->posY = pParams->field_0x2;
+	__s->screenWidth = pParams->screenWidth;
+	__s->screenHeight = pParams->screenHeight;
+	__s->pColorBuffer = pVidModeDataA;
+	__s->pZBuffer = pVidModeDataB;
+	__s->pCameraObj390_0x24 = (CameraObj_390*)0x0;
+	__s->clearColor.b = 0x40;
+	__s->clearColor.g = 0x40;
+	__s->clearColor.r = 0x40;
+	if ((alpha & 4) != 0) {
+		g_ActiveVidParams_0048cd90.pCamera = __s;
+		pCVar1 = (CameraObj_390*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_390));
+		__s->pCameraObj390_0x24 = pCVar1;
+		if (__s->pColorBuffer == (edSurface*)0x0) {
+			__s->pCameraObj390_0x24->qwc = 0;
+		}
+		else {
+			pRVar2 = edViewportUpdateEnv(__s, __s->pCameraObj390_0x24->commandBuffer);
+			__s->pCameraObj390_0x24->qwc = (int)((ulong)pRVar2 - (ulong)__s->pCameraObj390_0x24);
+		}
+	}
+	return __s;
+}
+
+void BuildCameraCommands_002bafe0(ed_viewport* pCamera, CameraObjParams* pParams, edSurface* pColorBuffer, edSurface* pZBuffer, byte alpha)
+{
+	edpkt_data* pRVar1;
+
+	if (pParams != (CameraObjParams*)0x0) {
+		pCamera->posX = pParams->field_0x0;
+		pCamera->posY = pParams->field_0x2;
+		pCamera->screenWidth = pParams->screenWidth;
+		pCamera->screenHeight = pParams->screenHeight;
+	}
+	pCamera->pColorBuffer = pColorBuffer;
+	pCamera->pZBuffer = pZBuffer;
+	pCamera->clearColor.a = alpha;
+	if (pCamera->pColorBuffer == (edSurface*)0x0) {
+		pCamera->pCameraObj390_0x24->qwc = 0;
+	}
+	else {
+		pRVar1 = edViewportUpdateEnv(pCamera, (edpkt_data*)pCamera->pCameraObj390_0x24);
+		pCamera->pCameraObj390_0x24->qwc = (int)((ulong)pRVar1 - (ulong)pCamera->pCameraObj390_0x24);
+	}
+	return;
+}
+
+void edViewportDel(ed_viewport* pCamera, bool bDestroyFrameBuffers)
+{
+	if (pCamera->pCameraObj390_0x24 != (CameraObj_390*)0x0) {
+		edMemFree(pCamera->pCameraObj390_0x24);
+	}
+	if (bDestroyFrameBuffers != false) {
+		if (pCamera->pColorBuffer != (edSurface*)0x0) {
+			edSurfaceDel(pCamera->pColorBuffer);
+		}
+		if (pCamera->pZBuffer != (edSurface*)0x0) {
+			edSurfaceDel(pCamera->pZBuffer);
+		}
+	}
+	if (g_ActiveVidParams_0048cd90.pCamera == pCamera) {
+		g_ActiveVidParams_0048cd90.pCamera = (ed_viewport*)0x0;
+	}
+	edMemFree(pCamera);
+	return;
+}
+
+edpkt_data* edViewportUpdateEnv(ed_viewport* pCamera, edpkt_data* pCommandBuf)
+{
+	edSurface* pVVar1;
+	edSurface* pVVar2;
 	int iVar3;
-	ulong uVar4;
+	int uVar4;
 	int iVar5;
 	int iVar6;
 	uint uVar7;
 	uint uVar8;
 	int iVar9;
 	int iVar10;
-	uint uVar11;
-	uint uVar12;
+	int uVar11;
+	int uVar12;
 	int iVar13;
 	int iVar14;
 	int iVar15;
@@ -31,10 +133,10 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 	int iVar18;
 	int iVar19;
 	int iVar20;
-	RenderCommand* pRVar21;
-	RenderCommand* pRVar22;
+	edpkt_data* pRVar21;
+	edpkt_data* pRVar22;
 
-	RENDER_LOG("BuildCameraCommands_002bb110 camera: %p (%d)\n", pCamera, pCamera->clearColor.a);
+	RENDER_LOG("edViewportUpdateEnv camera: %p (%d)\n", pCamera, pCamera->clearColor.a);
 
 	pVVar1 = pCamera->pColorBuffer->pVidModeData_0x0->pLink_0xc;
 	pCommandBuf->cmdB = SCE_GIF_PACKED_AD;
@@ -68,9 +170,9 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 
 	// ZBUFFER
 	pVVar2 = pCamera->pZBuffer;
-	if (pVVar2 != (FrameBuffer*)0x0) {
+	if (pVVar2 != (edSurface*)0x0) {
 		if ((pCamera->clearColor.a & 2) == 0) {
-			iVar3 = GetZBufferTextureFormat((uint)pVVar2->pVidModeData_0x0->pixelStoreMode);
+			iVar3 = edSurfaceGetZBufferBpp((uint)pVVar2->pVidModeData_0x0->pixelStoreMode);
 			pRVar21->cmdA = (ulong)pCamera->pZBuffer->frameBasePtr | ((ulong)iVar3 & 0xffffffffU) << 0x18 | 0x100000000;
 			pRVar21->cmdA = SCE_GS_SET_ZBUF(
 				pCamera->pZBuffer->frameBasePtr,	// ZBP
@@ -79,7 +181,7 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 			);
 		}
 		else {
-			iVar3 = GetZBufferTextureFormat((uint)pVVar2->pVidModeData_0x0->pixelStoreMode);
+			iVar3 = edSurfaceGetZBufferBpp((uint)pVVar2->pVidModeData_0x0->pixelStoreMode);
 			pRVar21->cmdA = (ulong)pCamera->pZBuffer->frameBasePtr | ((ulong)iVar3 & 0xffffffffU) << 0x18;
 			pRVar21->cmdA = SCE_GS_SET_ZBUF(
 				pCamera->pZBuffer->frameBasePtr,	// ZBP
@@ -123,19 +225,19 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 
 	if (((pCamera->clearColor.a & 2) != 0) || ((pCamera->clearColor.a & 1) != 0)) {
 
-		RENDER_LOG("BuildCameraCommands_002bb110 CLEAR\n");
+		RENDER_LOG("edViewportUpdateEnv CLEAR\n");
 
 		// FRAME
 		pRVar22->cmdA = SCE_GS_SET_FRAME(
 			pVVar1->frameBasePtr,							// FBP
 			pVVar1->pVidModeData_0x0->screenWidth >> 6,		// FBW
 			pVVar1->pVidModeData_0x0->pixelStoreMode,		// PSM
-			pCamera->altFbMask								// FBMASK
+			pCamera->clearMask								// FBMASK
 		);
 		pRVar21[5].cmdB = SCE_GS_FRAME_1;
 
 		// TEST
-		if (pCamera->pZBuffer == (FrameBuffer*)0x0) {
+		if (pCamera->pZBuffer == (edSurface*)0x0) {
 			pRVar21[6].cmdA = SCE_GS_SET_TEST(
 				0,	// ATE 
 				0,	// ATST
@@ -186,66 +288,61 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 		uVar8 = (int)pCamera->screenWidth >> 5;
 		iVar9 = ((int)pCamera->posX + (0x1000 - ((int)pCamera->screenWidth + (int)pCamera->posX) >> 1)) * 0x10;
 		iVar3 = ((int)pCamera->posY + (0x1000 - ((int)pCamera->screenHeight + (int)pCamera->posY) >> 1)) * 0x10;
+#ifdef PLATFORM_WIN
+		Renderer::SetVertexSkip(0);
+#endif
 		if (uVar8 != 0) {
 			if (8 < uVar8) {
 				iVar5 = iVar9 + 0x200;
-				uVar4 = ((ulong)iVar3 & 0xffffffffU) << 0x10;
 				iVar6 = iVar9;
 				do {
-					pRVar22->cmdA = uVar4 | (ulong)iVar6 & 0xffffffffU;
-					pRVar22->cmdB = 5;
+					pRVar22->cmdA = SCE_GS_SET_XYZ2(iVar6, iVar3, 0);
+					pRVar22->cmdB = SCE_GS_XYZ2;
 					iVar18 = iVar5 + 0x400;
 					iVar19 = iVar6 + 0x600;
 					iVar20 = iVar5 + 0x600;
 					iVar17 = iVar6 + 0x800;
-					pRVar22[1].cmdA =
-						(ulong)iVar5 & 0xffffffffU | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[1].cmdB = 5;
-					pRVar22[2].cmdA = uVar4 | (ulong)(iVar6 + 0x200) & 0xffffffffU;
+					pRVar22[1].cmdA = SCE_GS_SET_XYZ2(iVar5, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[1].cmdB = SCE_GS_XYZ2;
+					pRVar22[2].cmdA = SCE_GS_SET_XYZ2(iVar6 + 0x200, iVar3, 0);
+					pRVar22[2].cmdB = SCE_GS_XYZ2;
 					iVar10 = iVar6 + 0xa00;
-					pRVar22[2].cmdB = 5;
 					uVar11 = iVar6 + 0xc00;
 					iVar15 = iVar5 + 0x800;
 					uVar12 = iVar5 + 0xc00;
-					pRVar22[3].cmdA =
-						(ulong)(iVar5 + 0x200) & 0xffffffffU |
-						((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					iVar16 = iVar5 + 0xa00;
-					pRVar22[3].cmdB = 5;
-					pRVar22[4].cmdA = uVar4 | (ulong)(iVar6 + 0x400) & 0xffffffffU;
+					pRVar22[3].cmdA = SCE_GS_SET_XYZ2(iVar5 + 0x200, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[3].cmdB = SCE_GS_XYZ2;
+					pRVar22[4].cmdA = SCE_GS_SET_XYZ2(iVar6 + 0x400, iVar3, 0);
+					pRVar22[4].cmdB = SCE_GS_XYZ2;
 					iVar13 = iVar6 + 0xe00;
-					pRVar22[4].cmdB = 5;
+					iVar16 = iVar5 + 0xa00;
 					iVar14 = iVar5 + 0xe00;
 					uVar7 = uVar7 + 8;
 					iVar6 = iVar6 + 0x1000;
 					iVar5 = iVar5 + 0x1000;
-					pRVar22[5].cmdA =
-						(ulong)iVar18 & 0xffffffffU | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[5].cmdB = 5;
-					pRVar22[6].cmdA = uVar4 | (ulong)iVar19 & 0xffffffffU;
-					pRVar22[6].cmdB = 5;
-					pRVar22[7].cmdA =
-						(ulong)iVar20 & 0xffffffffU | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[7].cmdB = 5;
-					pRVar22[8].cmdA = uVar4 | (ulong)iVar17 & 0xffffffffU;
-					pRVar22[8].cmdB = 5;
-					pRVar22[9].cmdA =
-						(ulong)iVar15 & 0xffffffffU | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[9].cmdB = 5;
-					pRVar22[10].cmdA = uVar4 | (ulong)iVar10 & 0xffffffffU;
-					pRVar22[10].cmdB = 5;
-					pRVar22[0xb].cmdA =
-						(ulong)iVar16 & 0xffffffffU | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[0xb].cmdB = 5;
-					pRVar22[0xc].cmdA = uVar4 & 0xffffffff00000000 | (ulong)((uint)uVar4 | uVar11);
-					pRVar22[0xc].cmdB = 5;
-					pRVar22[0xd].cmdA = (ulong)uVar12 | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[0xd].cmdB = 5;
-					pRVar22[0xe].cmdA = uVar4 | (ulong)iVar13 & 0xffffffffU;
-					pRVar22[0xe].cmdB = 5;
-					pRVar22[0xf].cmdA =
-						(ulong)iVar14 & 0xffffffffU | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[0xf].cmdB = 5;
+
+					pRVar22[5].cmdA = SCE_GS_SET_XYZ2(iVar18, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[5].cmdB = SCE_GS_XYZ2;
+					pRVar22[6].cmdA = SCE_GS_SET_XYZ2(iVar19, iVar3, 0);
+					pRVar22[6].cmdB = SCE_GS_XYZ2;
+					pRVar22[7].cmdA = SCE_GS_SET_XYZ2(iVar20, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[7].cmdB = SCE_GS_XYZ2;
+					pRVar22[8].cmdA = SCE_GS_SET_XYZ2(iVar17, iVar3, 0);
+					pRVar22[8].cmdB = SCE_GS_XYZ2;
+					pRVar22[9].cmdA = SCE_GS_SET_XYZ2(iVar15, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[9].cmdB = SCE_GS_XYZ2;
+					pRVar22[10].cmdA = SCE_GS_SET_XYZ2(iVar10, iVar3, 0);
+					pRVar22[10].cmdB = SCE_GS_XYZ2;
+					pRVar22[0xb].cmdA = SCE_GS_SET_XYZ2(iVar16, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[0xb].cmdB = SCE_GS_XYZ2;
+					pRVar22[0xc].cmdA = SCE_GS_SET_XYZ2(uVar11, iVar3, 0);
+					pRVar22[0xc].cmdB = SCE_GS_XYZ2;
+					pRVar22[0xd].cmdA = SCE_GS_SET_XYZ2(uVar12, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[0xd].cmdB = SCE_GS_XYZ2;
+					pRVar22[0xe].cmdA = SCE_GS_SET_XYZ2(iVar13, iVar3, 0);
+					pRVar22[0xe].cmdB = SCE_GS_XYZ2;
+					pRVar22[0xf].cmdA = SCE_GS_SET_XYZ2(iVar14, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[0xf].cmdB = SCE_GS_XYZ2;
 					pRVar22 = pRVar22 + 0x10;
 				} while (uVar7 < uVar8 - 8);
 			}
@@ -254,13 +351,13 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 				iVar9 = iVar9 + 0x200 + uVar7 * 0x200;
 				do {
 					uVar4 = iVar9;
-					pRVar22->cmdA = ((ulong)iVar3 & 0xffffffffU) << 0x10 | (ulong)iVar6 & 0xffffffffU;
+					pRVar22->cmdA = SCE_GS_SET_XYZ2(iVar6, iVar3, 0);
+					pRVar22->cmdB = SCE_GS_XYZ2;
 					uVar7 = uVar7 + 1;
-					pRVar22->cmdB = 5;
 					iVar6 = iVar6 + 0x200;
 					iVar9 = iVar9 + 0x200;
-					pRVar22[1].cmdA = uVar4 & 0xffffffff | ((ulong)(iVar3 + pCamera->screenHeight * 0x10) & 0xffffffffU) << 0x10;
-					pRVar22[1].cmdB = 5;
+					pRVar22[1].cmdA = SCE_GS_SET_XYZ2(uVar4, iVar3 + pCamera->screenHeight * 0x10, 0);
+					pRVar22[1].cmdB = SCE_GS_XYZ2;
 					pRVar22 = pRVar22 + 2;
 				} while (uVar7 < uVar8);
 			}
@@ -275,7 +372,7 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 	pRVar22->cmdB = SCE_GS_XYOFFSET_1;
 
 	// Z TEST
-	if (pCamera->pZBuffer == (FrameBuffer*)0x0) {
+	if (pCamera->pZBuffer == (edSurface*)0x0) {
 		pRVar22[1].cmdA = SCE_GS_SET_TEST(
 			0,	// ATE 
 			0,	// ATST
@@ -313,8 +410,8 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 	pRVar21 = pRVar22 + 3;
 
 	// Z BUFFER
-	if (pCamera->pZBuffer != (FrameBuffer*)0x0) {
-		iVar3 = GetZBufferTextureFormat((uint)pCamera->pZBuffer->pVidModeData_0x0->pixelStoreMode);
+	if (pCamera->pZBuffer != (edSurface*)0x0) {
+		iVar3 = edSurfaceGetZBufferBpp((uint)pCamera->pZBuffer->pVidModeData_0x0->pixelStoreMode);
 		pRVar21->cmdA = (ulong)pCamera->pZBuffer->frameBasePtr | ((ulong)iVar3 & 0xffffffffU) << 0x18;
 
 		pRVar21->cmdA = SCE_GS_SET_ZBUF(
@@ -327,8 +424,9 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 		pRVar21 = pRVar22 + 4;
 	}
 
+	uint commandCount = (((ulong)pRVar21 - (ulong)pCommandBuf) >> 4) - 1;
 	pCommandBuf->cmdA = SCE_GIF_SET_TAG(
-		(int)(((uint)((ulong)pRVar21 - (ulong)pCommandBuf) >> 4) - 1), // NLOOP
+		commandCount,		// NLOOP
 		SCE_GS_TRUE,		// EOP
 		SCE_GS_FALSE,		// PRE
 		0,					// PRIM
@@ -339,91 +437,24 @@ RenderCommand* BuildCameraCommands_002bb110(CameraObj_28* pCamera, RenderCommand
 	return pRVar21;
 }
 
-CameraObj_28*
-AllocateCameraObj28_002bae70
-(CameraObjParams* pParams, FrameBuffer* pVidModeDataA, FrameBuffer* pVidModeDataB, byte alpha)
+void edViewPortApplyDrawingEnv(ed_viewport* pCamera)
 {
-	CameraObj_28* __s;
-	CameraObj_390* pCVar1;
-	RenderCommand* pRVar2;
-	CameraObj_28* pReturnValue;
-	CameraObjParams local_8;
-
-	if (pParams == (CameraObjParams*)0x0) {
-		local_8.field_0x0 = 0;
-		local_8.field_0x2 = 0;
-		if (pVidModeDataA == (FrameBuffer*)0x0) {
-			local_8.screenWidth = 0x200;
-			local_8.screenHeight = 0x200;
-		}
-		else {
-			local_8.screenWidth = pVidModeDataA->pVidModeData_0x0->screenWidth;
-			local_8.screenHeight = pVidModeDataA->pVidModeData_0x0->screenHeight;
-		}
-		pParams = &local_8;
+	if (pCamera->pColorBuffer != (edSurface*)0x0) {
+		edViewportUpdateEnv(pCamera, pCamera->pCameraObj390_0x24->commandBuffer);
+		edDmaFlushCache();
+		edDmaSyncPath();
+#ifdef PLATFORM_PS2
+		RENDER_LOG("DMA Begin edViewPortApplyDrawingEnv\n");
+		edDmaSendN_nowait(SHELLDMA_CHANNEL_GIF, pCamera->pCameraObj390_0x24, pCamera->pCameraObj390_0x24->qwc);
+#endif
 	}
-	__s = (CameraObj_28*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_28));
-	memset(__s, 0, sizeof(CameraObj_28));
-	__s->clearColor.a = alpha;
-	__s->fbMask = 0;
-	if ((alpha & 1) == 0) {
-		__s->altFbMask = 0xffffffff;
-	}
-	else {
-		__s->altFbMask = 0;
-	}
-	__s->posX = pParams->field_0x0;
-	__s->posY = pParams->field_0x2;
-	__s->screenWidth = pParams->screenWidth;
-	__s->screenHeight = pParams->screenHeight;
-	__s->pColorBuffer = pVidModeDataA;
-	__s->pZBuffer = pVidModeDataB;
-	__s->pCameraObj390_0x24 = (CameraObj_390*)0x0;
-	__s->clearColor.b = 0x40;
-	__s->clearColor.g = 0x40;
-	__s->clearColor.r = 0x40;
-	if ((alpha & 4) != 0) {
-		g_ActiveVidParams_0048cd90.pCamera = __s;
-		pCVar1 = (CameraObj_390*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_390));
-		__s->pCameraObj390_0x24 = pCVar1;
-		if (__s->pColorBuffer == (FrameBuffer*)0x0) {
-			__s->pCameraObj390_0x24->qwc = 0;
-		}
-		else {
-			pRVar2 = BuildCameraCommands_002bb110(__s, __s->pCameraObj390_0x24->commandBuffer);
-			__s->pCameraObj390_0x24->qwc = (int)((ulong)pRVar2 - (ulong)__s->pCameraObj390_0x24);
-		}
-	}
-	return __s;
+	return;
 }
 
-void SetCameraClear_002bb960(CameraObj_28* pCamera, byte r, byte g, byte b)
+void edViewportSetBackgroundColor(ed_viewport* pCamera, byte r, byte g, byte b)
 {
 	(pCamera->clearColor).r = r;
 	(pCamera->clearColor).g = g;
 	(pCamera->clearColor).b = b;
-	return;
-}
-
-void BuildCameraCommands_002bafe0(CameraObj_28* pCamera, CameraObjParams* pParams, FrameBuffer* pColorBuffer, FrameBuffer* pZBuffer, byte alpha)
-{
-	RenderCommand* pRVar1;
-
-	if (pParams != (CameraObjParams*)0x0) {
-		pCamera->posX = pParams->field_0x0;
-		pCamera->posY = pParams->field_0x2;
-		pCamera->screenWidth = pParams->screenWidth;
-		pCamera->screenHeight = pParams->screenHeight;
-	}
-	pCamera->pColorBuffer = pColorBuffer;
-	pCamera->pZBuffer = pZBuffer;
-	pCamera->clearColor.a = alpha;
-	if (pCamera->pColorBuffer == (FrameBuffer*)0x0) {
-		pCamera->pCameraObj390_0x24->qwc = 0;
-	}
-	else {
-		pRVar1 = BuildCameraCommands_002bb110(pCamera, (RenderCommand*)pCamera->pCameraObj390_0x24);
-		pCamera->pCameraObj390_0x24->qwc = (int)((ulong)pRVar1 - (ulong)pCamera->pCameraObj390_0x24);
-	}
 	return;
 }

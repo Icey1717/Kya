@@ -29,7 +29,7 @@ struct DisplayList_0x10 {
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
-	char* field_0x8;
+	struct TextureData_HASH_Internal_MAT* pHASH_MAT;
 	undefined field_0xc;
 	undefined field_0xd;
 	undefined field_0xe;
@@ -65,9 +65,19 @@ struct MeshDrawRenderCommand {
 };
 
 struct DisplayListInternal;
-struct RenderCommand;
-struct MaterialInfo;
-struct CameraObj_28;
+struct edpkt_data;
+struct edDList_material;
+struct ed_viewport;
+
+extern int gNbUsedMaterial;
+extern int gCurRenderState;
+extern DisplayListInternal* gCurDList;
+extern edDList_material* gCurMaterial;
+extern int gNbStateAdded;
+extern edpkt_data* gCurStatePKT;
+extern int gbDispList;
+extern int gCurStatePKTSize;
+extern DisplayList_0x10* gBankMaterial;
 
 namespace edDlist
 {
@@ -80,45 +90,35 @@ namespace edDlist
 		LM_SKIP = 3
 	} DL_LINK_MODE;
 
-	extern DisplayList_0x10* g_DisplayListPtr_0044965c;
 	extern int g_DisplayListObjCount_004250e0;
-	extern int MaterialDisplayListCount_00449648;
-	extern int g_DisplayListGlobal_00449664;
-	extern DisplayListInternal* g_DisplayListEnd_004495d8;
-	extern MaterialInfo* g_pMaterialInfo_00449644;
-	extern int g_DisplayListCommandCount_004495d4;
-	extern RenderCommand* g_CachedRenderCommandPtr_00449650;
-	extern DisplayListData DisplayListData_004496a0;
-	extern int g_HasUIData_00448a88;
-	extern int INT_00449654;
 	extern edSysHandlerDisplayList sysHandler_0048cb90;
 
-	void Init(void);
+	void edDListInit(void);
 
-	void CopyMatrixToDisplayList_002d07d0(Matrix* m0);
+	void edDListLoadMatrix(edF32MATRIX4* m0);
 
-	void LoadMaterialResource_002cb850(struct MaterialInfo* pMaterialInfo);
+	void edDListUseMaterial(struct edDList_material* pMaterialInfo);
 
-	void AddGSTestCommand_002ca6a0(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
+	void edDListAlphaTestAndZTest(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
 		ulong param_8);
 
-	void AddSetAlphaCommand_002ca800(void);
-	void ApplyMaterialFlag_002ca8c0(uint mode);
-	void FUN_002ca8c0(uint mode);
+	void edDListBlendFuncNormal(void);
+	void edDListBlendSet(uint mode);
+	void edDListBlendSet(uint mode);
 
-	void RenderCommand_002ca930(CameraObj_28* pCamera);
+	void edDListSetActiveViewPort(ed_viewport* pCamera);
 
-	void WillSetActiveDisplayList_002cac70(DisplayListInternal* param_1);
-	bool WillSetActiveDisplayList_00290cb0(CameraPanMasterHeader* pCameraPanHeader, DisplayListInternal* pDisplayList);
+	void edDlistAddtoView(DisplayListInternal* param_1);
+	bool edListAddNode(edLIST* pCameraPanHeader, DisplayListInternal* pDisplayList);
 
-	void MeshDrawCommands_002ca170(float x, float y, float z, ulong mode, int count);
+	void edDListBegin(float x, float y, float z, ulong mode, int count);
 
-	void SetDropShadowColour_002ce1a0(byte r, byte g, byte b, byte a);
+	void edDListColor4u8(byte r, byte g, byte b, byte a);
 
-	void CallSetST(float param_1, float param_2);
-	void CallSetXYZ(float x, float y, float param_3, int param_4);
+	void edDListTexCoo2f(float param_1, float param_2);
+	void edDListVertex4f(float x, float y, float param_3, int param_4);
 
-	void EndDraw_002cfe40(void);
+	void edDListEnd(void);
 
 	void SetUnitMatrix_002d07b0(void);
 }

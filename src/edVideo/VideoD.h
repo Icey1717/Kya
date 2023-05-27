@@ -17,11 +17,11 @@ struct edSysHandlerVideo {
 	int mainIdentifier;
 };
 
-void FUN_002b8f30(void);
-void RefreshScreenRender(void);
-struct FrameBuffer* GetVidModeData_002ba360(void);
+void _UpdateVideoInfo(void);
+void edVideoFlip(void);
+struct edSurface* GetVidModeData_002ba360(void);
 edVideo_Globals* GetVideoParams_002ba3e0(void);
-void WaitForVSync(byte param_1);
+void edVideoWaitVsync(byte param_1);
 unsigned int GetCountValue(void);
 
 extern edSysHandlerVideo edSysHandlerVideo_0048cee0;

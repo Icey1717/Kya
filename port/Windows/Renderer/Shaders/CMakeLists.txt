@@ -6,29 +6,77 @@ else()
 	set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin32/glslangValidator.exe")
 endif()
 
+set(DXC_COMPILER "$ENV{VULKAN_SDK}/Bin/dxc.exe")
+set(SHADER_OUTPUT_FOLDER "${CMAKE_SOURCE_DIR}/bin/WIN/shaders")
+
+message("Cleaning output folder: ${CMAKE_CURRENT_SOURCE_DIR}")
+file(REMOVE_RECURSE ${SHADER_OUTPUT_FOLDER})
+
 message("Finding shader source files in: ${CMAKE_CURRENT_SOURCE_DIR}")
 
 file(GLOB_RECURSE GLSL_SOURCE_FILES
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.frag"
-	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.vert"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.frag.glsl"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.vert.glsl"
 	)
 
-message(Found: ${GLSL_SOURCE_FILES})
+message(Found GLSL: ${GLSL_SOURCE_FILES})
+
+file(GLOB_RECURSE HLSL_SOURCE_FILES
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.frag.hlsl"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.vert.hlsl"
+	)
+
+message(Found HLSL: ${HLSL_SOURCE_FILES})
 
 message("Project directory: ${CMAKE_SOURCE_DIR}")
 
 foreach(GLSL ${GLSL_SOURCE_FILES})
 	get_filename_component(FILE_NAME ${GLSL} NAME)
-	set(SPIRV "${CMAKE_SOURCE_DIR}/bin/WIN/shaders/${FILE_NAME}.spv")
+	string(REPLACE ".glsl" "" FILE_NAME ${FILE_NAME})
+	set(SPIRV "${SHADER_OUTPUT_FOLDER}/${FILE_NAME}.spv")
 	add_custom_command(
 		OUTPUT ${SPIRV}
-		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/bin/WIN/shaders"
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_FOLDER}
 		COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
 		DEPENDS ${GLSL})
 	list(APPEND SPIRV_BINARY_FILES ${SPIRV})
 endforeach(GLSL)
 
+foreach(HLSL ${HLSL_SOURCE_FILES})
+	get_filename_component(FILE_NAME ${HLSL} NAME)
+	string(REPLACE ".hlsl" "" FILE_NAME ${FILE_NAME})
+	set(SPIRV "${SHADER_OUTPUT_FOLDER}/${FILE_NAME}.vs.spv")
+	add_custom_command(
+		OUTPUT ${SPIRV}
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_FOLDER}
+		COMMAND ${DXC_COMPILER} -spirv ${HLSL} -DSHADER_MODEL=1 -T vs_6_0 -E vs_main -Fo ${SPIRV} -fspv-debug=vulkan-with-source
+		DEPENDS ${HLSL})
+	list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach(HLSL)
+
+foreach(HLSL ${HLSL_SOURCE_FILES})
+	get_filename_component(FILE_NAME ${HLSL} NAME)
+	string(REPLACE ".hlsl" "" FILE_NAME ${FILE_NAME})
+	set(SPIRV "${SHADER_OUTPUT_FOLDER}/${FILE_NAME}.gs.spv")
+	add_custom_command(
+		OUTPUT ${SPIRV}
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_FOLDER}
+		COMMAND ${DXC_COMPILER} -spirv ${HLSL} -DSHADER_MODEL=1 -T gs_6_0 -E gs_main -Fo ${SPIRV} -fspv-debug=vulkan-with-source
+		DEPENDS ${HLSL})
+	list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach(HLSL)
+
+#PS2 Shaders
+add_subdirectory("ps2")
+
 add_custom_target(
-	Shaders 
+	Shaders
 	DEPENDS ${SPIRV_BINARY_FILES}
 	)
+
+add_dependencies(Shaders ShadersPS2)
+
+target_sources(Shaders PRIVATE 
+	${GLSL_SOURCE_FILES}
+	${HLSL_SOURCE_FILES}
+)

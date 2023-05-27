@@ -10,9 +10,9 @@
 
 CameraViewManager* g_CameraViewManager_00448e98 = NULL;
 CameraViewManager* g_CameraViewManager_00448e9c = NULL;
-CameraObj_130 CameraObj_130_0044a100 = { 0 };
-CameraObj_130 g_CameraObj_0044ae10 = { 0 };
-CameraObj_130 CameraObj_130_ARRAY_0044a230[10] = { 0 };
+edFCamera CameraObj_130_0044a100 = { 0 };
+edFCamera g_CameraObj_0044ae10 = { 0 };
+edFCamera CameraObj_130_ARRAY_0044a230[10] = { 0 };
 
 CameraViewManagerSubObj::CameraViewManagerSubObj()
 {
@@ -59,13 +59,13 @@ CameraViewManager::CameraViewManager()
 	return;
 }
 
-void CameraViewManager::OnBeginGame()
+void CameraViewManager::Game_Init()
 {
 	(this->field_0x470).x = 1.333333;
 	return;
 }
 
-void MatrixFunc_0025a370(float param_1, float param_2, float param_3, CameraObj_130* m0)
+void MatrixFunc_0025a370(float param_1, float param_2, float param_3, edFCamera* m0)
 {
 	m0->aMatrices[0].db = param_1 * param_2;
 	m0->aMatrices[0].dc = param_1;
@@ -73,14 +73,14 @@ void MatrixFunc_0025a370(float param_1, float param_2, float param_3, CameraObj_
 	return;
 }
 
-void MatrixFunc_001983f0(CameraObj_130* inputMatrix)
+void MatrixFunc_001983f0(edFCamera* inputMatrix)
 {
 	float fVar1;
 	float fVar2;
 	float fVar3;
 	Vector rowDiffVector;
 	Vector rotationVector;
-	Matrix transformedMatrix;
+	edF32MATRIX4 transformedMatrix;
 
 	transformedMatrix.aa = g_IdentityMatrix.aa;
 	transformedMatrix.ab = g_IdentityMatrix.ab;
@@ -148,7 +148,7 @@ void MatrixFunc_001983f0(CameraObj_130* inputMatrix)
 void CameraViewManager::SetupFunc_00197770()
 {
 	CameraViewManager* pCVar1;
-	CameraObj_130* m0;
+	edFCamera* m0;
 	int iVar2;
 
 	CameraObj_130_0044a100.aMatrices[0].aa = 0.0f;
@@ -208,7 +208,7 @@ void CameraViewManager::SetupFunc_00197770()
 	return;
 }
 
-CameraViewBase* CameraViewManager::LoadViewOrCamera(ECameraType type, MemoryStream* pMemoryStream, char* objName)
+CameraViewBase* CameraViewManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, char* objName)
 {
 	CameraViewBase* pCVar1;
 	CameraViewBase* pCVar2;
@@ -403,7 +403,7 @@ CameraViewBase* CameraViewManager::LoadViewOrCamera(ECameraType type, MemoryStre
 	return pCVar9;
 }
 
-CameraViewBase::CameraViewBase(MemoryStream* pMemoryStream)
+CameraViewBase::CameraViewBase(ByteCode* pMemoryStream)
 {
 	CheckpointManagerSubObjB* pCVar1;
 	int* piVar2;
@@ -420,19 +420,19 @@ CameraViewBase::CameraViewBase(MemoryStream* pMemoryStream)
 	this->pNextCameraView_0xa4 = (CameraViewBase*)0x0;
 	*(undefined*)&this->field_0xa0 = 0;
 	Func_0x34(0);
-	fVar6 = pMemoryStream->ReadFloat_00189b30();
+	fVar6 = pMemoryStream->GetF32();
 	this->field_0x74 = fVar6;
-	local_10.x = pMemoryStream->ReadFloat_00189b30();
-	local_10.y = pMemoryStream->ReadFloat_00189b30();
-	local_10.z = pMemoryStream->ReadFloat_00189b30();
+	local_10.x = pMemoryStream->GetF32();
+	local_10.y = pMemoryStream->GetF32();
+	local_10.z = pMemoryStream->GetF32();
 	local_10.w = 1.0;
 	(this->matrix_0x10).da = local_10.x;
 	(this->matrix_0x10).db = local_10.y;
 	(this->matrix_0x10).dc = local_10.z;
 	(this->matrix_0x10).dd = 1.0f;
-	local_10.x = pMemoryStream->ReadFloat_00189b30();
-	local_10.y = pMemoryStream->ReadFloat_00189b30();
-	local_10.z = pMemoryStream->ReadFloat_00189b30();
+	local_10.x = pMemoryStream->GetF32();
+	local_10.y = pMemoryStream->GetF32();
+	local_10.z = pMemoryStream->GetF32();
 	local_10.w = 1.0;
 	(this->field_0x60).x = local_10.x;
 	(this->field_0x60).y = local_10.y;
@@ -444,9 +444,9 @@ CameraViewBase::CameraViewBase(MemoryStream* pMemoryStream)
 	(this->matrix_0x10).cb = local_10.y;
 	(this->matrix_0x10).cc = local_10.z;
 	(this->matrix_0x10).cd = local_10.w;
-	local_10.x = pMemoryStream->ReadFloat_00189b30();
-	local_10.y = pMemoryStream->ReadFloat_00189b30();
-	local_10.z = pMemoryStream->ReadFloat_00189b30();
+	local_10.x = pMemoryStream->GetF32();
+	local_10.y = pMemoryStream->GetF32();
+	local_10.z = pMemoryStream->GetF32();
 	local_10.w = 0.0;
 	(this->matrix_0x10).ba = local_10.x;
 	(this->matrix_0x10).bb = local_10.y;
@@ -458,17 +458,17 @@ CameraViewBase::CameraViewBase(MemoryStream* pMemoryStream)
 	(this->matrix_0x10).ab = local_10.y;
 	(this->matrix_0x10).ac = local_10.z;
 	(this->matrix_0x10).ad = 0.0f;
-	iVar3 = pMemoryStream->ReadInt_00189b70();
+	iVar3 = pMemoryStream->GetS32();
 	this->field_0x4 = iVar3;
-	iVar3 = pMemoryStream->ReadInt_00189b70();
+	iVar3 = pMemoryStream->GetS32();
 	this->field_0x8 = iVar3;
-	uVar4 = pMemoryStream->ReadUint_00189b50();
+	uVar4 = pMemoryStream->GetU32();
 	this->flags_0xc = uVar4 | 0x200000;
-	fVar6 = pMemoryStream->ReadFloat_00189b30();
+	fVar6 = pMemoryStream->GetF32();
 	this->field_0x50 = fVar6;
-	fVar6 = pMemoryStream->ReadFloat_00189b30();
+	fVar6 = pMemoryStream->GetF32();
 	this->field_0x54 = fVar6;
-	fVar6 = pMemoryStream->ReadFloat_00189b30();
+	fVar6 = pMemoryStream->GetF32();
 	this->field_0x58 = fVar6;
 	this->field_0x5c = 0;
 	if ((this->flags_0xc & 2) == 0) {
@@ -479,7 +479,7 @@ CameraViewBase::CameraViewBase(MemoryStream* pMemoryStream)
 		this->field_0x9c = 0.8f;
 	}
 	else {
-		pEVar5 = (EventChunk_24*)pMemoryStream->ReadInt_00189b70();
+		pEVar5 = (EventChunk_24*)pMemoryStream->GetS32();
 		//this->field_0x80 = pEVar5;
 		//pCVar1 = (CheckpointManagerSubObjB*)pMemoryStream->currentSeekPos;
 		//pMemoryStream->currentSeekPos = (char*)&pCVar1->field_0x4;
@@ -493,15 +493,15 @@ CameraViewBase::CameraViewBase(MemoryStream* pMemoryStream)
 		//	pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar2 * 4;
 		//}
 		//this->field_0x88 = (float)piVar2;
-		fVar6 = pMemoryStream->ReadFloat_00189b30();
+		fVar6 = pMemoryStream->GetF32();
 		this->field_0x8c = fVar6;
-		iVar3 = pMemoryStream->ReadInt_00189b70();
+		iVar3 = pMemoryStream->GetS32();
 		this->field_0x90 = iVar3;
-		fVar6 = pMemoryStream->ReadFloat_00189b30();
+		fVar6 = pMemoryStream->GetF32();
 		this->field_0x98 = fVar6;
-		iVar3 = pMemoryStream->ReadInt_00189b70();
+		iVar3 = pMemoryStream->GetS32();
 		this->field_0x94 = iVar3;
-		fVar6 = pMemoryStream->ReadFloat_00189b30();
+		fVar6 = pMemoryStream->GetF32();
 		this->field_0x9c = fVar6;
 		if (this->field_0x80 == (EventChunk_24*)0xffffffff) {
 			this->flags_0xc = this->flags_0xc & 0xfffffffd;
@@ -528,7 +528,7 @@ void CameraViewBase::Func_0x34(undefined4 param_2)
 
 Vector Vector3_00472250 = { 0 };
 
-CameraView::CameraView(struct MemoryStream* pMemoryStream)
+CameraView::CameraView(struct ByteCode* pMemoryStream)
 	: CameraViewBase(pMemoryStream)
 {
 	float fVar1;
@@ -544,7 +544,7 @@ CameraView::CameraView(struct MemoryStream* pMemoryStream)
 	return;
 }
 
-MainCamera::MainCamera(ECameraType type, MemoryStream* pMemoryStream)
+MainCamera::MainCamera(ECameraType type, ByteCode* pMemoryStream)
 	: CameraView(pMemoryStream)
 {
 	ECameraType EVar1;
@@ -639,25 +639,25 @@ ECameraType MainCamera::GetCameraType()
 	return this->cameraType_0xd4;
 }
 
-void astruct_8::Init(struct MemoryStream* pMemoryStream)
+void astruct_8::Init(struct ByteCode* pMemoryStream)
 {
 	uint uVar1;
 	int iVar2;
 	float fVar3;
 
-	uVar1 = pMemoryStream->ReadUint_00189b50();
+	uVar1 = pMemoryStream->GetU32();
 	this->field_0x0 = uVar1;
-	uVar1 = pMemoryStream->ReadInt_00189b70();
+	uVar1 = pMemoryStream->GetS32();
 	this->field_0x4 = uVar1;
-	uVar1 = pMemoryStream->ReadInt_00189b70();
+	uVar1 = pMemoryStream->GetS32();
 	this->field_0x8 = uVar1;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x18 = fVar3;
 	fVar3 = this->field_0x18 * 0.01745329 * 0.5;
 	this->field_0x18 =
 		sinf(fVar3) /
 		cosf(fVar3);
-	iVar2 = pMemoryStream->ReadInt_00189b70();
+	iVar2 = pMemoryStream->GetS32();
 	if (iVar2 == 0) {
 		this->field_0x20 = 2.0;
 		this->field_0xc = 0.25;
@@ -667,41 +667,41 @@ void astruct_8::Init(struct MemoryStream* pMemoryStream)
 	}
 	else {
 		if (iVar2 == 1) {
-			fVar3 = pMemoryStream->ReadFloat_00189b30();
+			fVar3 = pMemoryStream->GetF32();
 			this->field_0x20 = fVar3;
-			fVar3 = pMemoryStream->ReadFloat_00189b30();
+			fVar3 = pMemoryStream->GetF32();
 			this->field_0xc = fVar3;
-			fVar3 = pMemoryStream->ReadFloat_00189b30();
+			fVar3 = pMemoryStream->GetF32();
 			this->field_0x10 = fVar3;
-			fVar3 = pMemoryStream->ReadFloat_00189b30();
+			fVar3 = pMemoryStream->GetF32();
 			this->field_0x14 = fVar3;
-			fVar3 = pMemoryStream->ReadFloat_00189b30();
+			fVar3 = pMemoryStream->GetF32();
 			this->field_0x1c = fVar3 * 0.01745329;
 		}
 	}
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x28 = fVar3 * 0.01745329;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x2c = fVar3 * 0.01745329;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x30 = fVar3 * 0.01745329;
 	this->field_0x34 = 0.8726646;
 	this->field_0x38 = 2.443461;
 	this->field_0x3c = 2.443461;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x40 = fVar3 * 0.01745329;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x44 = fVar3 * 0.01745329;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x48 = fVar3 * 0.01745329;
 	this->field_0x4c = 1.047198;
 	this->field_0x50 = 3.490659;
 	this->field_0x54 = 3.490659;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x58 = fVar3;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x5c = fVar3;
-	fVar3 = pMemoryStream->ReadFloat_00189b30();
+	fVar3 = pMemoryStream->GetF32();
 	this->field_0x60 = fVar3;
 	this->field_0x64 = 4.0;
 	this->field_0x68 = 8.0;
@@ -716,34 +716,34 @@ void astruct_8::Init(struct MemoryStream* pMemoryStream)
 	return;
 }
 
-bool astruct_12::Init(struct MemoryStream* pMemoryStream)
+bool astruct_12::Init(struct ByteCode* pMemoryStream)
 {
 	uint uVar1;
 	float fVar2;
 
-	uVar1 = pMemoryStream->ReadUint_00189b50();
+	uVar1 = pMemoryStream->GetU32();
 	if (uVar1 == 1) {
-		fVar2 = pMemoryStream->ReadFloat_00189b30();
+		fVar2 = pMemoryStream->GetF32();
 		this->field_0x0 = fVar2;
-		pMemoryStream->ReadFloat_00189b30();
+		pMemoryStream->GetF32();
 		this->field_0x4 = 0.0;
-		fVar2 = pMemoryStream->ReadFloat_00189b30();
+		fVar2 = pMemoryStream->GetF32();
 		this->field_0x8 = fVar2;
-		pMemoryStream->ReadFloat_00189b30();
-		pMemoryStream->ReadFloat_00189b30();
+		pMemoryStream->GetF32();
+		pMemoryStream->GetF32();
 		this->field_0xc = 0.1;
-		fVar2 = pMemoryStream->ReadFloat_00189b30();
+		fVar2 = pMemoryStream->GetF32();
 		this->field_0x10 = fVar2 * 0.01745329;
-		pMemoryStream->ReadFloat_00189b30();
+		pMemoryStream->GetF32();
 		this->field_0x14 = 0.0;
-		fVar2 = pMemoryStream->ReadFloat_00189b30();
+		fVar2 = pMemoryStream->GetF32();
 		this->field_0x18 = fVar2 * 0.01745329;
-		fVar2 = pMemoryStream->ReadFloat_00189b30();
+		fVar2 = pMemoryStream->GetF32();
 		this->field_0x1c = fVar2;
-		fVar2 = pMemoryStream->ReadFloat_00189b30();
+		fVar2 = pMemoryStream->GetF32();
 		this->field_0x20 = fVar2;
-		pMemoryStream->ReadFloat_00189b30();
-		pMemoryStream->ReadFloat_00189b30();
+		pMemoryStream->GetF32();
+		pMemoryStream->GetF32();
 	}
 	else {
 		this->field_0x0 = 0.5;

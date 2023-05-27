@@ -143,12 +143,12 @@ void ReadsBankFile(edCFiler_28* param_1);
 
 void FormatFilePath_002618e0(char* param_1, char* param_2, char* param_3, char* param_4, char* param_5);
 
-edCFiler* FindEdCFiler(char* outString, char* filePath, long mode);
-void SetFilePathMode_00261810(char* mode);
-bool InitFileHandlers_0025c300(void);
+edCFiler* edFileOpen(char* outString, char* filePath, long mode);
+void edFileSetPath(char* mode);
+bool edFileInit(void);
 edCFiler* GetFirstEdFileHandler_00260e00(edCFiler** param_1);
-void TriggerBankRead_0025b0c0(edCFiler* pFiler);
-bool edCFilerInitTOC_00260f80(char* path, ETableOfContentsInitMode mode, void* param_3, int* param_4);
+void edFileGetFiler(edCFiler* pFiler);
+bool edFileFilerConfigure(char* path, ETableOfContentsInitMode mode, void* param_3, int* param_4);
 bool FormatStreamPath(char* filePathOut, char* filePathIn);
 void Link_00260ec0(edCFiler** param_1, edCFiler* param_2);
 void* GetInternalData_0025b2e0(DebugBankData_234* pDebugBankData);
