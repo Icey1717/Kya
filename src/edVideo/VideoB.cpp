@@ -18,9 +18,9 @@
 edVideoConfig edVideoConfiguration = { 0 };
 edVideoData g_ActiveVidParams_0048cd90 = { 0 };
 
-void SetActiveFrameBuffer_002b9b10(edSurface* pNewFrameBuffer)
+void _VideoManagerAddFlippingSurface(edSurface* pNewFrameBuffer)
 {
-	pNewFrameBuffer->pVidModeData_0x0->pLink_0xc = pNewFrameBuffer;
+	pNewFrameBuffer->pSurfaceDesc->pLink_0xc = pNewFrameBuffer;
 	g_ActiveVidParams_0048cd90.pFrameBuffer = pNewFrameBuffer;
 	_VideoUpdateSystemViewport(pNewFrameBuffer);
 	return;
@@ -325,7 +325,7 @@ int VBlankHandler_002ba580(int cause)
 			else {
 				uVar1 = DGET_GS_CSR();
 				if ((uint)((uVar1 & 0x2000) >> 0xd) ==
-					(uint)(g_ActiveVidParams_0048cd90.pFrameBuffer)->pVidModeData_0x0->pLink_0xc->pVidModeData20->csrValue_0x10)
+					(uint)(g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc->pSurfaceDispEnv->csrValue_0x10)
 				{
 					_edVideoSyncReset();
 				}

@@ -6,7 +6,7 @@
 #include "edCBankBuffer.h"
 
 struct edCFiler_BNK_8 {
-	struct DebugBankData_234* pDebugBankData;
+	struct edFILEH* pDebugBankData;
 	struct FileHeaderFileData* pFileData;
 };
 
@@ -22,13 +22,13 @@ public:
 	edCFiler_BNK();
 
 	virtual bool Init();
-	virtual bool FormatStreamPath(char* outFilePath, char* pathBuff);
-	virtual bool LoadAndStoreInternal(char* filePath, char* bankPath);
-	virtual bool Open(DebugBankData_234* pOutData, char* filePath);
-	virtual bool Close(DebugBankData_234* pDebugBank);
-	virtual uint ReadStream(DebugBankData_234* pDebugBank, char* destination, uint requiredSize);
-	virtual bool Seek(DebugBankData_234* pDebugBank);
-	virtual bool ReadCallback(edCFiler_28_Internal* pEdFilerInternal);
+	virtual bool get_physical_filename(char* outFilePath, char* pathBuff);
+	virtual bool mount_unit(char* filePath, char* bankPath);
+	virtual bool open(edFILEH* pOutData, char* filePath);
+	virtual bool close(edFILEH* pDebugBank);
+	virtual uint read(edFILEH* pDebugBank, char* destination, uint requiredSize);
+	virtual bool seek(edFILEH* pDebugBank);
+	virtual bool isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal);
 
 	undefined field_0x24;
 	undefined field_0x25;

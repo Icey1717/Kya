@@ -90,7 +90,7 @@ void edCTextStyle::SetFontTextureData_0028d3e0(edCTextFont* pPackedFont, bool bU
 	this->pPackedFont = pPackedFont;
 	if (bUpdateSpacing != false) {
 #ifndef PLATFORM_PS2
-		assert(false);
+		IMPLEMENTATION_GUARD();
 #endif
 		//fVar1 = GetFontSpacing_0028cb30(pPackedFont);
 		//pFontFileData->spaceSize = fVar1;
@@ -271,7 +271,7 @@ bool edCTextFormat::DrawTextA_0028b7e0(char* pText, ...)
 					}
 					uVar17 = 0;
 					if (uVar40 != 0) {
-						assert(false);
+						IMPLEMENTATION_GUARD();
 						paVar37 = local_90;
 						ppcVar37 = local_50;
 						//do {
@@ -359,7 +359,7 @@ bool edCTextFormat::DrawTextA_0028b7e0(char* pText, ...)
 							case 2:
 							case 3:
 							case 4:
-								assert(false);
+								IMPLEMENTATION_GUARD();
 #if 0
 								iVar25 = paVar38->field_0x4;
 								iVar2 = paVar38->field_0x1c;
@@ -481,7 +481,7 @@ bool edCTextFormat::DrawTextA_0028b7e0(char* pText, ...)
 #endif
 								break;
 							case 5:
-								assert(false);
+								IMPLEMENTATION_GUARD();
 #if 0
 								pbVar36 = (byte*)*ppcVar10;
 								bVar33 = *pbVar36;
@@ -497,7 +497,7 @@ bool edCTextFormat::DrawTextA_0028b7e0(char* pText, ...)
 #endif
 								break;
 							case 7:
-								assert(false);
+								IMPLEMENTATION_GUARD();
 #if 0
 								pcVar34 = *ppcVar10;
 								*pcVar38 = 1;
@@ -509,7 +509,7 @@ bool edCTextFormat::DrawTextA_0028b7e0(char* pText, ...)
 #endif
 								break;
 							case 8:
-								assert(false);
+								IMPLEMENTATION_GUARD();
 #if 0
 								pcVar4 = (code*)*ppcVar10;
 								*pcVar38 = 2;
@@ -833,7 +833,7 @@ bool edCTextFormat::DrawTextA_0028b7e0(char* pText, ...)
 					}
 				}
 			}
-			assert(false);
+			IMPLEMENTATION_GUARD();
 #if 0
 			pcVar10 = (char*)edCTextResourcePool::GetEntry(local_390, local_3a0);
 			if ((pcVar10 == (char*)0x0) && (local_3a0 != 3)) {
@@ -1014,7 +1014,7 @@ void edCTextFormat::DrawTextB_0028b270()
 			}
 			else {
 				if (uVar10 == 1) {
-					assert(false);
+					IMPLEMENTATION_GUARD();
 #if 0
 					fVar15 = *(float*)(field_0x38[*pbVar13] + 0x10);
 					unaff_f20 = *(float*)(field_0x38[*pbVar13] + 0xc);
@@ -1616,7 +1616,7 @@ void DrawText_0028a4f0(float x, float y, char* text)
 		auStack5504.DrawTextB_0028b270();
 		uVar2 = auStack5504.fontData_0x850->GetFontFlag_0028d330();
 		if (uVar2 != 0) {
-			assert(false);
+			IMPLEMENTATION_GUARD();
 			//DrawToScreen(x, y, &auStack5504);
 		}
 		local_1590.z = 640.0;

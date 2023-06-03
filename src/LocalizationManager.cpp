@@ -16,9 +16,9 @@ void LocalizationManager::Game_Init()
 {
 	char* pcVar1;
 
-	trcText.LoadTranslatedTextFromDisk("<bnk>0:TRC_%s.bin", AUTO);
-	userInterfaceText.LoadTranslatedTextFromDisk("<BNK>0:UserInterface_%s.bin", AUTO);
-	pcVar1 = userInterfaceText.GetText_00336c10(0x2414d455f4e414d, 0);
+	trcText.select_language("<bnk>0:TRC_%s.bin", AUTO);
+	userInterfaceText.select_language("<BNK>0:UserInterface_%s.bin", AUTO);
+	pcVar1 = userInterfaceText.get_message(0x2414d455f4e414d, 0);
 	g_TextIconDictionary.AddTextEntry(sz_GAMENAME_004349a8, pcVar1);
 	return;
 }
@@ -36,13 +36,13 @@ void LocalizationManager::Level_Init()
 	if ((iVar1 != -1) && (iVar1 != 0)) {
 		/* Format: %s%s LEVEL_x '_xx.bin' */
 		sprintf(filePath, "%s%s", g_LevelScheduleManager_00449728->aLevelInfo[g_LevelScheduleManager_00449728->currentLevelID].levelPath, sz_LevelTextSuffix_004349a0);
-		this->levelText.LoadTextTranslatedFromBank((pLVar2->levelBank).pBankFileAccessObject, filePath, AUTO);
+		this->levelText.select_language((pLVar2->levelBank).pBankFileAccessObject, filePath, AUTO);
 	}
 	return;
 }
 
 void LocalizationManager::Level_Term()
 {
-	this->levelText.LoadTextTranslatedFromBank((edCBankBufferEntry*)0x0, (char*)0x0, AUTO);
+	this->levelText.select_language((edCBankBufferEntry*)0x0, (char*)0x0, AUTO);
 	return;
 }

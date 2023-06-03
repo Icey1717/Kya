@@ -9,6 +9,7 @@
 
 namespace DebugMenu {
 	VkRenderPass g_imguiRenderPass;
+	std::vector<VkCommandBuffer> commandBuffers;
 }
 
 void DebugMenu::Setup(VkInstance instance, uint32_t queueFamily, VkQueue graphicsQueue, GLFWwindow* window, VkRenderPass renderPass)
@@ -48,11 +49,11 @@ void DebugMenu::Setup(VkInstance instance, uint32_t queueFamily, VkQueue graphic
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = GetSwapchainImageFormat();
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	VkAttachmentReference colorAttachmentRef{};
@@ -72,18 +73,18 @@ void DebugMenu::Setup(VkInstance instance, uint32_t queueFamily, VkQueue graphic
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-	/*VkRenderPassCreateInfo renderPassInfo{};
+	VkRenderPassCreateInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = 1;
 	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
 	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;*/
+	renderPassInfo.pDependencies = &dependency;
 
-	//if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &g_imguiRenderPass) != VK_SUCCESS) {
-	//	throw std::runtime_error("failed to create render pass!");
-	//}
+	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &g_imguiRenderPass) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create render pass!");
+	}
 
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
@@ -113,10 +114,43 @@ void DebugMenu::Setup(VkInstance instance, uint32_t queueFamily, VkQueue graphic
 
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
+
+	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = GetCommandPool();
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+	if (vkAllocateCommandBuffers(GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate command buffers!");
+	}
 }
 
-void DebugMenu::Render(VkCommandBuffer commandBuffer)
+void DebugMenu::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
 {
+	const VkCommandBuffer& cmd = commandBuffers[GetCurrentFrame()];
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(cmd, &beginInfo);
+
+	VkRenderPassBeginInfo renderPassInfo{};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = g_imguiRenderPass;
+	renderPassInfo.framebuffer = framebuffer;
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = extent;
+
+	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+	renderPassInfo.clearValueCount = 1;
+	renderPassInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
 	// Start the Dear ImGui frame
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -145,5 +179,16 @@ void DebugMenu::Render(VkCommandBuffer commandBuffer)
 	ImDrawData* drawData = ImGui::GetDrawData();
 
 	// Record dear imgui primitives into command buffer
-	ImGui_ImplVulkan_RenderDrawData(drawData, commandBuffer);
+	ImGui_ImplVulkan_RenderDrawData(drawData, cmd);
+
+	vkCmdEndRenderPass(cmd);
+	vkEndCommandBuffer(cmd);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &cmd;
+
+	vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(GetGraphicsQueue());
 }

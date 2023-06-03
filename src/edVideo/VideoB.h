@@ -82,7 +82,7 @@ struct VidParams18 {
 	byte ffmode;
 };
 
-struct VidModeData_20 {
+struct SurfaceDispEnv {
 	tGS_DISPFB2 dispfb2;
 	tGS_DISPFB1 dispfb1;
 	byte csrValue_0x10;
@@ -104,7 +104,7 @@ struct VidModeData_20 {
 };
 
 struct edSurface {
-	struct ed_surface_desc* pVidModeData_0x0;
+	struct ed_surface_desc* pSurfaceDesc;
 	undefined field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;
@@ -116,7 +116,7 @@ struct edSurface {
 	undefined field_0x12;
 	undefined field_0x13;
 	struct ZBufferTags* pZTags;
-	struct VidModeData_20* pVidModeData20;
+	struct SurfaceDispEnv* pSurfaceDispEnv;
 	struct edSurface* pNext;
 	undefined field_0x20;
 	undefined field_0x21;
@@ -224,7 +224,7 @@ struct ZBufferTags {
 	edpkt_data commandBuffer[3];
 };
 
-void SetActiveFrameBuffer_002b9b10(edSurface* param_1);
+void _VideoManagerAddFlippingSurface(edSurface* param_1);
 void edVideoSetAttribute(ed_video_attr* pAttr);
 edVideoConfig* edVideoGetConfig(void);
 void edVideoInit(void);

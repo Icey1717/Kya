@@ -2,6 +2,8 @@
 
 #include "VulkanIncludes.h"
 
+#include <vector>
+
 struct UniformBufferObject {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
@@ -10,6 +12,7 @@ struct UniformBufferObject {
 
 VkDevice GetDevice();
 VkFormat GetSwapchainImageFormat();
+std::vector<VkImage>& GetSwapchainImages();
 VkPhysicalDevice GetPhysicalDevice();
 const VkCommandBuffer& GetCurrentCommandBuffer();
 uint32_t GetCurrentFrame();

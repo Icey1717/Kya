@@ -31,10 +31,10 @@ public:
 	void SetFontValue_002f2cf0(struct edCTextFont* pFont);
 	void SetFontValue_002f2d00(struct edCTextFont* pFont);
 	void SetFontValue_002f2d10(struct edCTextFont* pFont);
-	void SetTranslatedTextData_002f2d20(struct TranslatedTextData* pTextData);
+	void SetTranslatedTextData_002f2d20(struct MessageFile* pTextData);
 	EPauseMenu get_current_page();
 	void perform_action();
-	struct TranslatedTextData* pTranslatedTextData;
+	struct MessageFile* pTranslatedTextData;
 	struct edCTextFont* pFontA;
 	struct edCTextFont* pFontB;
 	struct edCTextFont* pFontC;

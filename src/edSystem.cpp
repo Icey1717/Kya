@@ -221,7 +221,7 @@ bool edSysHandlersCall(int typeA, edSysHandlersPoolEntry** pPool, int eventMax, 
 	edSysHandlersPoolEntry* pEntry;
 
 	if ((eventID < 0) || (eventMax <= eventID)) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		/* edSysHandlersCall: Invalid event index */
 		//SystemMessage(0, 0, s_edSysHandlersCall:_Invalid_event_00432e00);
 		//Break();
@@ -239,22 +239,4 @@ bool edSysHandlersCall(int typeA, edSysHandlersPoolEntry** pPool, int eventMax, 
 		}
 	}
 	return bVar1;
-}
-
-void FormatFilePath(char* dst, char* src, ...)
-{
-	va_list args;
-	va_start(args, src);
-
-	char* suffix = va_arg(args, char*);
-
-	strcpy(dst, src);
-
-	while (suffix != 0x0)
-	{
-		strcat(dst, suffix);
-		suffix = va_arg(args, char*);
-	}
-
-	va_end(args);
 }

@@ -64,6 +64,7 @@ extern "C" {
 #include "InputManager.h"
 
 #include <assert.h>
+#include "edStr.h"
 
 template<class T>
 T* CreateNew()
@@ -143,16 +144,16 @@ void Set_edPsx2ModulePath(char* path)
 	EVar2 = GetFileLoadMode_00424d9c();
 	if (EVar2 == FLM_Net) {
 		strcpy(g_edPsx2ModulePath, "");
-		strcat(g_edPsx2ModulePath, "");
-		strcat(g_edPsx2ModulePath, path);
+		edStrCat(g_edPsx2ModulePath, "");
+		edStrCat(g_edPsx2ModulePath, path);
 	}
 	else {
 		if (EVar2 == FLM_CD_DVD) {
 			strcpy(g_edPsx2ModulePath, "cdrom0:");
 			if ((*path != '\\') && (*path != '/')) {
-				strcat(g_edPsx2ModulePath, "\\");
+				edStrCat(g_edPsx2ModulePath, "\\");
 			}
-			strcat(g_edPsx2ModulePath, path);
+			edStrCat(g_edPsx2ModulePath, path);
 		}
 		else {
 			//#Unimplemented
@@ -162,7 +163,7 @@ void Set_edPsx2ModulePath(char* path)
 			//	if ((*param_1 == '\\') || (*param_1 == '/')) {
 			//		param_1 = param_1 + 1;
 			//	}
-			//	strcat(g_edPsx2ModulePath, param_1);
+			//	edStrCat(g_edPsx2ModulePath, param_1);
 			//}
 			//else {
 			//	g_edPsx2ModulePath = g_edPsx2ModulePath & 0xffffffffffffff00;
@@ -261,7 +262,7 @@ void StartCDBootModuleAndInitCDDVD(IopPaths* pIopPaths)
 	if ((__src != (char*)0x0) && (EVar2 = GetFileLoadMode_00424d9c(), EVar2 == FLM_CD_DVD)) {
 		ToUppercase(__src);
 		strcpy(stringParameter, g_edPsx2ModulePath);
-		strcat(stringParameter, __src);
+		edStrCat(stringParameter, __src);
 		do {
 			iVar3 = sceSifRebootIop(stringParameter);
 		} while (iVar3 == 0);
@@ -869,7 +870,7 @@ void edSysInit(void)
 
 EFileLoadMode g_FileLoadMode_00448810 = FLM_CD_DVD;
 
-char* LoadFileFromDisk(const char* fileName, uint* outSize)
+char* LoadFileFromDisk(char* fileName, uint* outSize)
 {
 	int iVar1;
 	uint size;
@@ -885,21 +886,21 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 	if (g_FileLoadMode_00448810 == FLM_CD_DVD) {
 		/* Format: '\Param 1;1' */
 		strcpy(filePath, "\\");
-		strcat(filePath, fileName);
-		strcat(filePath, ";1");
+		edStrCat(filePath, fileName);
+		edStrCat(filePath, ";1");
 		scePrintf("Loading ini %s\n", filePath);
 		ret = sceCdSearchFile(&inFile, filePath);
 		scePrintf("Loading ini %d | %d\n", ret, sceCdGetError());
 		if (ret != 0) {
 			strcpy(cdPath, g_szCdRomPrefix_00438548);
-			strcat(cdPath, filePath);
+			edStrCat(cdPath, filePath);
 			iVar1 = sceOpen(cdPath, 1);
 			if (-1 < iVar1) {
 				size = sceLseek(iVar1, 0, 2);
 				if (outSize != (uint*)0x0) {
 					*outSize = size;
 				}
-				unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
+				unaff_s3_lo = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (long)(int)size);
 				if (unaff_s3_lo != (char*)0x0) {
 					sceLseek(iVar1, 0, 0);
 					sceRead(iVar1, unaff_s3_lo, size);
@@ -911,14 +912,14 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 	else {
 		/* host0: */
 		strcpy(filePath, g_szHostPrefix_00438550);
-		strcat(filePath, fileName);
+		edStrCat(filePath, fileName);
 		iVar1 = sceOpen(filePath, 1);
 		if (-1 < iVar1) {
 			size = sceLseek(iVar1, 0, 2);
 			if (outSize != (uint*)0x0) {
 				*outSize = size;
 			}
-			unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
+			unaff_s3_lo = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (long)(int)size);
 			if (unaff_s3_lo != (char*)0x0) {
 				sceLseek(iVar1, 0, 0);
 				sceRead(iVar1, unaff_s3_lo, size);
@@ -937,7 +938,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 			*outSize = size;
 		}
 
-		unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
+		unaff_s3_lo = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (long)(int)size);
 		if (unaff_s3_lo != (char*)0x0) {
 			fseek(fp, 0, SEEK_SET);
 			fread(unaff_s3_lo, 1, size, fp);
@@ -949,7 +950,7 @@ char* LoadFileFromDisk(const char* fileName, uint* outSize)
 	return unaff_s3_lo;
 }
 
-const char* g_szIni_0042b5b8 = "BWITCH.INI";
+char* g_szIni_0042b5b8 = "BWITCH.INI";
 
 
 int g_ScreenWidth;
@@ -979,7 +980,7 @@ void SetupVideo(IniFile* file)
 		videoMode = SCE_GS_PAL;
 		/* Video - SetVideoMode */
 		bVar1 = g_IniFile_00450750.ReadString_001aa520(s_Video_0042b490, "SetVideoMode", outVideoMode);
-		if ((bVar1 != false) && (iVar2 = strcmp(outVideoMode, "NTSC"), iVar2 == 0)) {
+		if ((bVar1 != false) && (iVar2 = edStrCmp(outVideoMode, "NTSC"), iVar2 == 0)) {
 			screenHeight = 0x1c0;
 			isNTSC = 0;
 			videoMode = SCE_GS_NTSC;
@@ -1301,7 +1302,7 @@ void Init_edFile(void)
 	local_4 = 0;
 	bVar1 = edFileFilerConfigure(sz_ModeCdvd_0042b800, IM_CALC_SIZE, (void*)0x898, &local_4);
 	if (bVar1 != false) {
-		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAlloc(TO_HEAP(H_MAIN), local_4);
+		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), local_4);
 		/* <cdvd> */
 		edFileFilerConfigure(sz_ModeCdvd_0042b800, IM_INIT, PTR_edCdlFolder_00448ef4, (int*)local_4);
 	}
@@ -1319,12 +1320,12 @@ bool LoadBNK(char* bnkTitle, char* bnkPath)
 	char filePath[512];
 
 	/* Param_1: "<BNK>0:" Param_2: "CDEURO/menu/Messages.bnk" */
-	peVar1 = edFileOpen(filePath, bnkTitle, 1);
+	peVar1 = edFileGetFiler(filePath, bnkTitle, 1);
 	if (peVar1 == (edCFiler*)0x0) {
 		uVar1 = false;
 	}
 	else {
-		uVar1 = peVar1->LoadAndStoreInternal(filePath, bnkPath);
+		uVar1 = peVar1->mount_unit(filePath, bnkPath);
 	}
 	return uVar1;
 }
@@ -1640,7 +1641,7 @@ void MainInit(int argc,char **argv)
 	bool bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 	/* This doesn't seem to trigger on main run. */
 	if (bVar1 != false) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//DrawPopup_0034e1f0(8, 0, 0x52525f503700080c, 0x171d0d0b190f111a, 0);
 	}
 	//SetupIconSaveAndSerial();
@@ -1742,10 +1743,10 @@ void LoadVideoFromFilePath(VideoFile* display, char* inFileName)
 
 #endif
 
-	FormatStreamPath(fileName, inFileName);
+	get_physical_filename(fileName, inFileName);
 
 #ifdef PLATFORM_WIN
-	char* pcVar6 = SearchForColon(fileName);
+	char* pcVar6 = edFilePathGetFilePath(fileName);
 
 	char* pcFileFull = FormatForPC(pcVar6);
 	memcpy(fileName, pcFileFull, strlen(pcFileFull));
@@ -1810,7 +1811,7 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	inTimeController = GetTimer();
 	display = (VideoFile*)Allocate(sizeof(VideoFile));
 	/* file_path = CDEURO/movies/ + file_name + .pss */
-	FormatFilePath(file_path, "CDEURO/movies/", file_name, ".pss", 0);
+	edStrCatMulti(file_path, "CDEURO/movies/", file_name, ".pss", 0);
 	LoadVideoFromFilePath(display, file_path);
 
 	do {
@@ -1869,15 +1870,16 @@ void LoadingLoop(void)
 
 	MY_LOG("LoadLevel Begin\n");
 
+#ifdef PLATFORM_WIN
+	Renderer::WaitUntilReady();
+#endif
+
 	/* These functions just run once */
 	//PlayIntroVideo(0);
 	pLVar1 = Scene::_pinstance;
 	inTimeController = GetTimer();
 	LoadStageOne_001b9dc0();
 	do {
-#ifdef PLATFORM_WIN
-		Renderer::WaitUntilReady();
-#endif
 		/* This is the main loop that plays cutscenes
 
 		   This does not control any cutscene elements */
@@ -1927,13 +1929,13 @@ void GameLoop(void)
 		cVar4 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 		bVar4 = g_InputManager_00450960.SoftReset();
 		if (bVar4 != false) {
-			assert(false);
+			IMPLEMENTATION_GUARD();
 			//Scene::_pinstance->InitiateReset();
 		}
 		pAVar2 = g_PlayerActor_00448e10;
 		if ((GameFlags & 0xc0) == 0) {
 			if (g_PlayerActor_00448e10 != (APlayer*)0x0) {
-				assert(false);
+				IMPLEMENTATION_GUARD();
 				//piVar5 = (int*)(*(code*)g_PlayerActor_00448e10->pVTable->field_0x138)(g_PlayerActor_00448e10);
 				//fVar9 = (float)(**(code**)(*piVar5 + 0x24))();
 				//bVar4 = fVar9 - (pAVar2->character).characterBase.field_0x2e0 <= 0.0;
@@ -1952,20 +1954,20 @@ void GameLoop(void)
 			}
 			if (cVar4 != false) {
 				if ((GameFlags & 8) != 0) {
-					assert(false);
+					IMPLEMENTATION_GUARD();
 					//LoadFrontendWithuRam00451684();
 				}
 				if ((GameFlags & 0x10) != 0) {
-					assert(false);
+					IMPLEMENTATION_GUARD();
 					//OpenMapScreen_003f59b0();
 				}
 				if ((GameFlags & 0x3c) == 0) {
 					if ((GameFlags & 0x800) == 0) {
-						assert(false);
+						IMPLEMENTATION_GUARD();
 						//ActivatePause_001b5320(PM_PauseMenu);
 					}
 					else {
-						assert(false);
+						IMPLEMENTATION_GUARD();
 						//ActivatePause_001b5320(PM_MiniGame);
 					}
 				}
@@ -1975,12 +1977,12 @@ void GameLoop(void)
 				(g_InputManager_00450960.buttonArray[18].floatFieldB == 0.0)) {
 				if ((GameFlags & 8) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
-						assert(false);
+						IMPLEMENTATION_GUARD();
 						//GameLoopFunc_0037a670();
 					}
 				}
 				else {
-					assert(false);
+					IMPLEMENTATION_GUARD();
 					//LoadFrontendWithuRam00451684();
 				}
 			}
@@ -1993,12 +1995,12 @@ void GameLoop(void)
 				((GameFlags & 0x400) != 0)) {
 				if (((GameFlags & 0x10) == 0) || ((GameFlags & 0x400) != 0)) {
 					if ((GameFlags & 0x3c) == 0) {
-						assert(false);
+						IMPLEMENTATION_GUARD();
 						//LoadMaps();
 					}
 				}
 				else {
-					assert(false);
+					IMPLEMENTATION_GUARD();
 					//OpenMapScreen_003f59b0();
 				}
 				GameFlags = GameFlags & 0xfffffbff;
@@ -2008,17 +2010,17 @@ void GameLoop(void)
 				if ((GameFlags & 4) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						if ((GameFlags & 0x800) == 0) {
-							assert(false);
+							IMPLEMENTATION_GUARD();
 							//ActivatePause_001b5320(PM_PauseMenu);
 						}
 						else {
-							assert(false);
+							IMPLEMENTATION_GUARD();
 							//ActivatePause_001b5320(PM_MiniGame);
 						}
 					}
 				}
 				else {
-					assert(false);
+					IMPLEMENTATION_GUARD();
 					//uVar8 = FUN_001b5d90();
 					//if (uVar8 == 0) {
 					//	FUN_001b5110();
@@ -2029,7 +2031,7 @@ void GameLoop(void)
 	LAB_001a7608:
 		if (((long)(int)GameFlags & 0xffffffff80000000U) != 0) {
 			GameFlags = (uint)((ulong)((long)(int)GameFlags << 0x21) >> 0x21);
-			assert(false);
+			IMPLEMENTATION_GUARD();
 			//SetPaused_001b8c40(Scene::_pinstance, 1);
 		}
 		timeController->Update();

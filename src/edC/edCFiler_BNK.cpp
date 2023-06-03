@@ -2,6 +2,7 @@
 #include <string>
 #include "edCBank.h"
 #include "edCFiler_CDVD.h"
+#include "../edStr.h"
 
 edCFiler_BNK g_edCFiler_BNK_00467fe0;
 
@@ -27,11 +28,11 @@ bool edCFiler_BNK::Init()
 	/* <BNK> */
 	baseData.pDriveName_0x0 = sz_BNK_DriveName_0042ffc8;
 	baseData.field_0x4 = 1;
-	g_edCFiler_BNK_00467fe0.SetDriveLetter(sz_BNK_DriveLetter_0042ffd0);
+	g_edCFiler_BNK_00467fe0.set_default_unit(sz_BNK_DriveLetter_0042ffd0);
 	return true;
 }
 
-bool edCFiler_BNK::FormatStreamPath(char* outFilePath, char* pathBuff)
+bool edCFiler_BNK::get_physical_filename(char* outFilePath, char* pathBuff)
 {
 	bool bVar1;
 
@@ -46,15 +47,15 @@ bool edCFiler_BNK::FormatStreamPath(char* outFilePath, char* pathBuff)
 }
 
 edCFiler_Bnk_static g_BnkInternalLoadedData_00466fc0[4];
-DebugBankData_234* g_LastBank_00448f50 = NULL;
+edFILEH* g_LastBank_00448f50 = NULL;
 
-bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
+bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 {
 	bool bVar1;
 	int iVar2;
 	char* pcVar3;
 	int iVar4;
-	DebugBankData_234* pDVar5;
+	edFILEH* pDVar5;
 	FileHeaderFileData* puVar6;
 	ulong uVar7;
 	byte* pbVar8;
@@ -63,7 +64,7 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 	char acStack1024[512];
 	char acStack512[512];
 
-	MY_LOG("edCFiler_BNK::Open %s\n", filePath);
+	MY_LOG("edCFiler_BNK::open %s\n", filePath);
 
 	iVar4 = 0;
 	do {
@@ -78,12 +79,12 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 	} while (iVar4 < 4);
 	bVar1 = false;
 	if (bufferStart != (edCFiler_BNK_8*)0x0) {
-		FormatFilePath_002618e0((char*)0x0, acStack512, (char*)0x0, (char*)0x0, filePath);
+		edFilePathSplit((char*)0x0, acStack512, (char*)0x0, (char*)0x0, filePath);
 		iVar4 = 0;
 		/* Look to see if we already loaded the file. */
 		pAlreadyLoadedData = g_BnkInternalLoadedData_00466fc0;
 		do {
-			iVar2 = strcmp(pAlreadyLoadedData->path, acStack512);
+			iVar2 = edStrICmp((byte*)pAlreadyLoadedData->path, (byte*)acStack512);
 			if (iVar2 == 0) goto LAB_00247280;
 			iVar4 = iVar4 + 1;
 			pAlreadyLoadedData = pAlreadyLoadedData + 1;
@@ -92,20 +93,21 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 	LAB_00247280:
 		bVar1 = false;
 		if (pAlreadyLoadedData != (edCFiler_Bnk_static*)0x0) {
-			pcVar3 = SearchString(filePath, '>');
-			pcVar3 = SearchString(pcVar3 + 1, ':');
-			edStringCpyL(acStack1024, pcVar3 + 1);
+			pcVar3 = edStrChr(filePath, '>');
+			pcVar3 = edStrChr(pcVar3 + 1, ':');
+			edStrCopy(acStack1024, pcVar3 + 1);
 			pcVar3 = pAlreadyLoadedData->pFileData;
 			/* Look for the index of the file we want. */
-			iVar4 = GetIndexFromFileHeader((BankFile_Internal*)(pcVar3 + 8), acStack1024);
+			iVar4 = get_entryindex_from_filename((BankFile_Internal*)(pcVar3 + 8), acStack1024);
 			if (iVar4 == -1) {
+				MY_LOG("edCFiler_BNK::open ERROR could not find file index %s\n", acStack1024);
 				bVar1 = false;
 			}
 			else {
 				/* Okay we found the index, load the file. */
-				pDVar5 = edFileLoadSize(pAlreadyLoadedData->diskPath, 1);
+				pDVar5 = edFileOpen(pAlreadyLoadedData->diskPath, 1);
 				iVar2 = 0;
-				if (pDVar5 == (DebugBankData_234*)0x0) {
+				if (pDVar5 == (edFILEH*)0x0) {
 					pbVar8 = bnkInUse;
 					do {
 						if ((edCFiler_BNK_8*)(pbVar8 + 4) == bufferStart) {
@@ -121,10 +123,10 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 				else {
 					bufferStart->pDebugBankData = pDVar5;
 					g_LastBank_00448f50 = pDVar5;
-					puVar6 = edCBankFileHeader_FindFileDataInHeader((BankFile_Internal*)(pcVar3 + 8), iVar4);
-					uVar7 = DebugBankSeek(bufferStart->pDebugBankData, puVar6->offset, ED_SEEK_SET);
+					puVar6 = get_entry((BankFile_Internal*)(pcVar3 + 8), iVar4);
+					uVar7 = edFileSeek(bufferStart->pDebugBankData, puVar6->offset, ED_SEEK_SET);
 					if (uVar7 == 0) {
-						pDVar5->pOwningFiler->Close(pDVar5);
+						pDVar5->pOwningFiler->close(pDVar5);
 						iVar4 = 0;
 						pbVar8 = bnkInUse;
 						do {
@@ -141,8 +143,8 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 					else {
 						bufferStart->pFileData = puVar6;
 						memset(&pOutData->field_0x10, 0, sizeof(DebugBankDataInternal));
-						pcVar3 = SearchForColon(filePath);
-						edStringCpyL((pOutData->field_0x10).name, pcVar3 + 1);
+						pcVar3 = edFilePathGetFilePath(filePath);
+						edStrCopy((pOutData->field_0x10).name, pcVar3 + 1);
 						bVar1 = true;
 						(pOutData->field_0x10).field_0x14 = 0x21;
 						(pOutData->field_0x10).fileSize = bufferStart->pFileData->size;
@@ -155,22 +157,22 @@ bool edCFiler_BNK::Open(DebugBankData_234* pOutData, char* filePath)
 	return bVar1;
 }
 
-bool edCFiler_BNK::Close(DebugBankData_234* pDebugBank)
+bool edCFiler_BNK::close(edFILEH* pDebugBank)
 {
 	edCFiler* peVar1;
 	edCFiler_BNK_8* ppiVar1;
 
-	MY_LOG("edCFiler_BNK::Close\n");
+	MY_LOG("edCFiler_BNK::close\n");
 
 	ppiVar1 = (edCFiler_BNK_8*)GetInternalData_0025b2e0(pDebugBank);
 	if (ppiVar1 != (edCFiler_BNK_8*)0x0) {
 		peVar1 = ppiVar1->pDebugBankData->pOwningFiler;
-		peVar1->Close(ppiVar1->pDebugBankData);
+		peVar1->close(ppiVar1->pDebugBankData);
 	}
 	return ppiVar1 != (edCFiler_BNK_8*)0x0;
 }
 
-uint edCFiler_BNK::ReadStream(DebugBankData_234* pDebugBank, char* destination, uint requiredSize)
+uint edCFiler_BNK::read(edFILEH* pDebugBank, char* destination, uint requiredSize)
 {
 	edCFiler* peVar1;
 	edCFiler_BNK_8* ppiVar2;
@@ -183,7 +185,7 @@ uint edCFiler_BNK::ReadStream(DebugBankData_234* pDebugBank, char* destination, 
 	else {
 		if (requiredSize == (pDebugBank->field_0x10).fileSize) {
 			peVar1 = ppiVar2->pDebugBankData->pOwningFiler;
-			uVar2 = peVar1->ReadStream(ppiVar2->pDebugBankData, destination, requiredSize);
+			uVar2 = peVar1->read(ppiVar2->pDebugBankData, destination, requiredSize);
 		}
 		else {
 			uVar2 = 0;
@@ -192,9 +194,9 @@ uint edCFiler_BNK::ReadStream(DebugBankData_234* pDebugBank, char* destination, 
 	return uVar2;
 }
 
-bool edCFiler_BNK::Seek(DebugBankData_234* pDebugBank)
+bool edCFiler_BNK::seek(edFILEH* pDebugBank)
 {
-	DebugBankData_234* pData;
+	edFILEH* pData;
 	bool uVar1;
 	edCFiler_BNK_8* ppiVar2;
 
@@ -209,16 +211,16 @@ bool edCFiler_BNK::Seek(DebugBankData_234* pDebugBank)
 		else {
 			pData = ppiVar2->pDebugBankData;
 			pData->seekOffset = *(int*)ppiVar2->pFileData + pDebugBank->seekOffset;
-			uVar1 = pData->pOwningFiler->Seek(pData);
+			uVar1 = pData->pOwningFiler->seek(pData);
 		}
 	}
 	return uVar1;
 }
 
-bool edCFiler_BNK::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
+bool edCFiler_BNK::isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal)
 {
-	DebugBankData_234* pDebugBankData;
-	DebugBankData_234* pDVar1;
+	edFILEH* pDebugBankData;
+	edFILEH* pDVar1;
 	edCFiler* peVar2;
 	EBankAction EVar3;
 	bool bVar4;
@@ -239,7 +241,7 @@ bool edCFiler_BNK::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 		EVar3 = pEdFilerInternal->nextAction;
 		if (((EVar3 == BANK_ACTION_3) || (EVar3 == READ_STREAM)) || (bVar4 = true, EVar3 == SEEK)) {
 			pEdFilerInternal->pDataBank = pDVar1;
-			lVar5 = peVar2->ReadCallback(pEdFilerInternal);
+			lVar5 = peVar2->isnowaitcmdend(pEdFilerInternal);
 			if (lVar5 == 0) {
 				pEdFilerInternal->pDataBank = pDebugBankData;
 				bVar4 = false;
@@ -252,7 +254,7 @@ bool edCFiler_BNK::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 		else {
 			if (EVar3 == CLOSE) {
 				pEdFilerInternal->pDataBank = pDVar1;
-				lVar5 = peVar2->ReadCallback(pEdFilerInternal);
+				lVar5 = peVar2->isnowaitcmdend(pEdFilerInternal);
 				if (lVar5 == 0) {
 					pEdFilerInternal->pDataBank = pDebugBankData;
 					bVar4 = false;
@@ -272,7 +274,7 @@ bool edCFiler_BNK::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 					do {
 						if (&g_DebugBankDataArray_00469bf0[iVar7] == pDVar1) {
 							g_DebugBankLoadFlag_00469be0[iVar7] = 0;
-							memset(&g_DebugBankDataArray_00469bf0[iVar7], 0, sizeof(DebugBankData_234));
+							memset(&g_DebugBankDataArray_00469bf0[iVar7], 0, sizeof(edFILEH));
 							break;
 						}
 						iVar7 = iVar7 + 1;
@@ -285,7 +287,7 @@ bool edCFiler_BNK::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
 	return bVar4;
 }
 
-bool edCFiler_BNK::LoadAndStoreInternal(char* filePath, char* bankPath)
+bool edCFiler_BNK::mount_unit(char* filePath, char* bankPath)
 {
 	bool bSuccess;
 	edCFiler* peVar1;
@@ -297,17 +299,17 @@ bool edCFiler_BNK::LoadAndStoreInternal(char* filePath, char* bankPath)
 	char formattedPath[512];
 	char outString[512];
 
-	peVar1 = edFileOpen(outString, bankPath, 0);
+	peVar1 = edFileGetFiler(outString, bankPath, 0);
 	if (peVar1 == (edCFiler*)0x0) {
 		bSuccess = false;
 	}
 	else {
-		FormatFilePath_002618e0((char*)0x0, formattedPath, (char*)0x0, (char*)0x0, filePath);
+		edFilePathSplit((char*)0x0, formattedPath, (char*)0x0, (char*)0x0, filePath);
 		iVar4 = 0;
 		/* Check if the bank is already loaded. */
 		peVar5 = g_BnkInternalLoadedData_00466fc0;
 		do {
-			iVar2 = strcmp(peVar5->path, formattedPath);
+			iVar2 = edStrICmp((byte*)peVar5->path, (byte*)formattedPath);
 			if (iVar2 == 0) goto LAB_002475e0;
 			iVar4 = iVar4 + 1;
 			peVar5 = peVar5 + 1;
@@ -321,7 +323,7 @@ bool edCFiler_BNK::LoadAndStoreInternal(char* filePath, char* bankPath)
 			do {
 				if (__s->path[0] == '\0') {
 					memset(__s, 0, sizeof(edCFiler_Bnk_static));
-					edStringCpyL(__s->path, formattedPath);
+					edStrCopy(__s->path, formattedPath);
 					goto LAB_00247648;
 				}
 				iVar4 = iVar4 + 1;
@@ -332,8 +334,8 @@ bool edCFiler_BNK::LoadAndStoreInternal(char* filePath, char* bankPath)
 	LAB_00247648:
 		bSuccess = false;
 		if (__s != (edCFiler_Bnk_static*)0x0) {
-			edStringCpyL(__s->diskPath, outString);
-			pcVar3 = ReadFileToBuffer(TO_HEAP(H_MAIN), bankPath, 1, (DebugBankData_234**)0x0);
+			edStrCopy(__s->diskPath, outString);
+			pcVar3 = ReadFileToBuffer(TO_HEAP(H_MAIN), bankPath, 1, (edFILEH**)0x0);
 			__s->pFileData = pcVar3;
 			bSuccess = true;
 		}
@@ -347,6 +349,6 @@ void Link_00247700(void)
 	/* <BNK> */
 	g_edCFiler_BNK_00467fe0.baseData.pDriveName_0x0 = sz_BNK_DriveName_0042ffc8;
 	g_edCFiler_BNK_00467fe0.baseData.field_0x4 = 1;
-	g_edCFiler_BNK_00467fe0.SetDriveLetter(sz_BNK_DriveLetter_0042ffd0);
+	g_edCFiler_BNK_00467fe0.set_default_unit(sz_BNK_DriveLetter_0042ffd0);
 	return;
 }

@@ -11,7 +11,7 @@ void ByteCode::Align(int align)
 {
 	this->currentSeekPos = this->currentSeekPos + align + -1;
 	if (align == 0) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 	}
 	this->currentSeekPos = this->currentSeekPos + -((ulong)this->currentSeekPos % align);
 	return;

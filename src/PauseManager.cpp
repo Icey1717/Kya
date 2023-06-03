@@ -16,6 +16,10 @@
 #include "MathOps.h"
 #include <math.h>
 
+#ifdef PLATFORM_WIN
+#include "renderer.h"
+#endif
+
 SimpleMenu g_PauseScreenData_004507f0;
 
 PauseManager::PauseManager()
@@ -106,14 +110,14 @@ void DrawLoadingScreen_001b05e0(void)
 			FStack192.SetFontFlag_0028d3a0(8);
 			edCTextFormat drawTextParams = edCTextFormat();
 			if (bIsLoadingScreen) {
-				pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x30803025f4c4f41);
+				pcVar4 = gMessageManager.get_message(0x30803025f4c4f41);
 				drawTextParams.Setup_0028c540(pcVar4);
 				Display((float)g_ScreenWidth / 2.0, (float)g_ScreenHeight - 36.0, &drawTextParams);
 			}
 			else {
 				// This is the text for the final end game screen.
 				SetFontScale_0028d2b0(1.3f, 1.3f, &FStack192);
-				pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x180403015f544845);
+				pcVar4 = gMessageManager.get_message(0x180403015f544845);
 				drawTextParams.Setup_0028c540(pcVar4);
 				Display((float)g_ScreenWidth * 0.5, (float)g_ScreenHeight * 0.5, &drawTextParams);
 			}
@@ -164,7 +168,7 @@ int FUN_00284930(void)
 	return INT_00483804;
 }
 
-ELanguageID GetLanguageID_00336b30(void)
+LANGUAGE GetLanguageID_00336b30(void)
 {
 	return g_LanguageID_0044974c;
 }
@@ -224,7 +228,7 @@ void PauseManager::Level_Init()
 	this->field_0x20 = 0;
 	pAVar1 = g_PlayerActor_00448e10;
 	if (g_PlayerActor_00448e10 != (APlayer*)0x0) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		if (this->field_0xe == 0) {
 			//g_PlayerActor_00448e10->field_0xaa0 = 0;
 		}
@@ -313,7 +317,7 @@ void PauseManager::Level_Draw()
 			//}
 			//else {
 			//	if (pCVar8->totalCutsceneDelta < 0.5) {
-			//		assert(false);
+			//		IMPLEMENTATION_GUARD();
 			//		//LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
 			//		//g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 | 2;
 			//	}
@@ -324,7 +328,7 @@ void PauseManager::Level_Draw()
 				if ((long)this->field_0x34 == 0) {
 					bVar2 = GuiDList_BeginCurrent();
 					if (bVar2 != false) {
-						assert(false);
+						IMPLEMENTATION_GUARD();
 						//this->pSubObj108_0x28->draw(DrawGameMenu);
 						GuiDList_EndCurrent();
 					}
@@ -348,12 +352,12 @@ void PauseManager::Level_Draw()
 	if ((GameFlags & 4) != 0) {
 		if ((UINT_00448eac == 1) || (UINT_00448eac == 2)) {
 			if ((GameFlags & 0x800) == 0) {
-				assert(false);
+				IMPLEMENTATION_GUARD();
 				//FUN_001b48c0();
 			}
 			bVar1 = GuiDList_BeginCurrent();
 			if (bVar1 != false) {
-				assert(false);
+				IMPLEMENTATION_GUARD();
 				//gPauseMenu->draw(DrawPauseMenu);
 				GuiDList_EndCurrent();
 			}
@@ -421,7 +425,7 @@ void SimpleMenu::SetFontValue_002f2d10(edCTextFont* pFont)
 	return;
 }
 
-void SimpleMenu::SetTranslatedTextData_002f2d20(TranslatedTextData* pTextData)
+void SimpleMenu::SetTranslatedTextData_002f2d20(MessageFile* pTextData)
 {
 	pTranslatedTextData = pTextData;
 	return;
@@ -435,7 +439,7 @@ EPauseMenu SimpleMenu::get_current_page()
 void SimpleMenu::perform_action()
 {
 	if (this->pFunc_0x40 != 0x0) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//(*(code*)param_1->pFunc_0x40)(param_1->slotID_0x44);
 		this->pFunc_0x40 = 0;
 		this->slotID_0x44 = 0;
@@ -510,7 +514,7 @@ SplashScreen::SplashScreen()
 bool SplashScreen::Init(float param_1, char* filePath)
 {
 	uint uVar1;
-	DebugBankData_234* pLoadedFile;
+	edFILEH* pLoadedFile;
 	int iVar2;
 	char* pcVar3;
 	ushort* puVar4;
@@ -520,8 +524,8 @@ bool SplashScreen::Init(float param_1, char* filePath)
 	int iStack4;
 
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
-	pLoadedFile = edFileLoadSize(filePath, 9);
-	if (pLoadedFile != (DebugBankData_234*)0x0) {
+	pLoadedFile = edFileOpen(filePath, 9);
+	if (pLoadedFile != (edFILEH*)0x0) {
 		iVar2 = GetFileSize_0025bd70(pLoadedFile);
 		uVar1 = iVar2 + 0x7ffU & 0xfffff800;
 		pcVar3 = (char*)edMemAllocAlign(TO_HEAP(H_MAIN), (long)(int)uVar1, 0x40);
@@ -530,7 +534,7 @@ bool SplashScreen::Init(float param_1, char* filePath)
 			SetRead_0025be80(pLoadedFile, this->pTextureFileData, uVar1);
 			iVar2 = pLoadedFile->count_0x228;
 			while (iVar2 != 0) {
-				ReadsBankFile();
+				edFileNoWaitStackFlush();
 				iVar2 = pLoadedFile->count_0x228;
 			}
 		}
@@ -553,16 +557,16 @@ bool SplashScreen::Init(float param_1, char* filePath)
 	}
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	this->field_0xc8 = param_1;
-	if (param_1 <= 0.0) {
-		this->field_0xc8 = 0.0001;
+	if (param_1 <= 0.0f) {
+		this->field_0xc8 = 0.0001f;
 	}
 	this->field_0xcc = 0;
 	pTVar5 = GetTimer();
 	this->field_0xc4 = pTVar5->totalTime;
 	uVar1 = g_ScreenWidth;
 	fVar6 = (float)g_ScreenHeight;
-	(this->drawOffsets).x = 0.0;
-	(this->drawOffsets).y = 0.0;
+	(this->drawOffsets).x = 0.0f;
+	(this->drawOffsets).y = 0.0f;
 	(this->drawOffsets).z = (float)uVar1;
 	(this->drawOffsets).w = fVar6;
 	return this->pTextureFileData != (char*)0x0;
@@ -694,6 +698,9 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 					y_00 = y;
 					fVar18 = fVar17;
 				} while (iVar9 != 0);
+#ifdef PLATFORM_WIN
+				Renderer::Draw();
+#endif
 			}
 		}
 		if (param_2 != 0) {
@@ -710,19 +717,19 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			FStack192.SetFontTextureData_0028d3e0(BootDataFont, false);
 			FStack192.SetFontFlag_0028d3c0(2);
 			if (param_4 == false) {
-				if (fVar12 < 0.3) {
+				if (fVar12 < 0.3f) {
 					FStack192.spaceSize = 10.0f;
 					FStack192.SetFontFlag_0028d3a0(8);
 					fVar10 = (float)((int)uVar3 >> 1);
 					fVar12 = (float)g_ScreenHeight;
-					pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x6001a010b110011);
+					pcVar4 = gMessageManager.get_message(0x6001a010b110011);
 					DrawText_0028a4f0(fVar10, fVar12 - 36.0f, pcVar4);
 				}
 			}
 			else {
 				fVar12 = (float)g_ScreenHeight;
 				fVar10 = (float)((int)uVar3 >> 1);
-				pcVar4 = FindTranslatedTextFromKey_00336970(&g_TranslatedTextTRC_00449748, 0x52525f503700080c);
+				pcVar4 = gMessageManager.get_message(0x52525f503700080c);
 				DrawText_0028a4f0(fVar10, fVar12 * 0.5f + 60.0f, pcVar4);
 			}
 			SetActiveFontData(pNewFont);

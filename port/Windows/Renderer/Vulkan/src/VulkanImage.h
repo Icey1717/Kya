@@ -19,13 +19,14 @@ public:
 	int GetWidth() { return texWidth; }
 	int GetHeight() { return texHeight; }
 
+	static void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
+	static 	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
+	
 private:
 	void CreateTextureImage(char* splashFile);
 	void CreateTextureImageView();
 	void CreateTextureSampler();
 	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;

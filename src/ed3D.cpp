@@ -267,7 +267,7 @@ edSurface* edVideoGetDrawSurface(void)
 		pFVar1 = (edSurface*)0x0;
 	}
 	else {
-		pFVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pVidModeData_0x0->pLink_0xc;
+		pFVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
 	}
 	return pFVar1;
 }
@@ -1514,7 +1514,7 @@ ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mo
 			IMPLEMENTATION_GUARD((pSVar5->sceneConfig).field_0x14 = &DAT_00ffffef);
 		}
 		else {
-			uVar1 = pVVar2->pVidModeData_0x0->pixelStoreMode;
+			uVar1 = pVVar2->pSurfaceDesc->pixelStoreMode;
 			if (uVar1 == 2) {
 				(pFreeScene->sceneConfig).field_0x14 = 0xfffe;
 			}
@@ -1830,11 +1830,11 @@ void CameraSetupFunc_0029b120
 	(param_1->field_0x20).field_0x50.y = 0.0;
 	(param_1->field_0x20).field_0x50.z = -1.0f;
 	(param_1->field_0x20).field_0x50.w = -param_1->field_0x18;
-	uVar1 = pFrameBuffer->pVidModeData_0x0->screenHeight;
+	uVar1 = pFrameBuffer->pSurfaceDesc->screenHeight;
 	fVar7 = 2048.0 - FLOAT_00449230;
 	fVar8 = atan2f
 	(((2048.0 - FLOAT_0044922c) * min) /
-		((float)(uint)pFrameBuffer->pVidModeData_0x0->screenWidth / 2.0), fVar12);
+		((float)(uint)pFrameBuffer->pSurfaceDesc->screenWidth / 2.0), fVar12);
 	fVar7 = atan2f((fVar7 * fVar11) / ((float)(uint)uVar1 / 2.0), fVar12);
 	fVar11 = sinf(fVar8);
 	fVar12 = sinf(fVar7);
@@ -5417,7 +5417,7 @@ LAB_00297680:
 				if (!bVar4) goto LAB_00297798;
 				param_1->flags_0x0 = param_1->flags_0x0 | 0x200;
 			}
-			if ((iVar2->body).field_0x10 == 0) {
+			if ((iVar2->body).palette == 0) {
 				IMPLEMENTATION_GUARD(
 				iVar3 = (iVar2->body).field_0x8;
 				if (iVar3 != 0) {
@@ -6968,7 +6968,7 @@ void ed3DFlushFogFX(void)
 
 	pRVar4 = g_VifRefPktCur;
 	if (((UINT_00425000 & 1) != 0) && (gCurViewportUsed != (ed_viewport*)0x0)) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 	}
 	return;
 }
@@ -6982,7 +6982,7 @@ edpkt_data* ed3DFlushAAEffect(edpkt_data* pRenderCommand)
 	if (((((BYTE_00448a70 != 0) && (BYTE_00449418 != 0)) && (gCurViewportUsed != (ed_viewport*)0x0)) &&
 		(gCurRectViewport.screenWidth == 0x200)) &&
 		((gCurRectViewport.screenHeight == 0x200 || (gCurRectViewport.screenHeight == 0x1c0)))) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 	}
 	return pRenderCommand;
 }
@@ -7304,7 +7304,7 @@ void ed3DSceneRender(int, int, char*)
 					}
 					else {
 						bVar3 = true;
-						assert(false);
+						IMPLEMENTATION_GUARD();
 						//g_VideoMemoryPtr_00449280 = (sceDmaTag*)FUN_002b8030((ulong*)g_VideoMemoryPtr_00449280);
 					}
 				}
@@ -7350,7 +7350,7 @@ void ed3DSceneRender(int, int, char*)
 				)
 			}
 			else {
-				assert(false);
+				IMPLEMENTATION_GUARD();
 				//uVar6 = (uint)gIDProfileFlush >> 4;
 				//if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
 				//	g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
@@ -7365,7 +7365,7 @@ void ed3DSceneRender(int, int, char*)
 		if ((g_pStartPktData != (edpkt_data*)0x0) && (g_pStartPktData != g_VifRefPktCur)) {
 			g_VifRefPktCur = ed3DAddViewport2DAfter3D(g_VifRefPktCur);
 			if (gBlurON != 0) {
-				assert(false);
+				IMPLEMENTATION_GUARD();
 				//ed3DFlushBlurEffect();
 			}
 			g_VifRefPktCur->cmdA = 0x30000000;
@@ -7404,7 +7404,7 @@ void ed3DSceneRender(int, int, char*)
 			}
 		}
 		if (ged3DConfig.bEnableProfile != 0) {
-			assert(false);
+			IMPLEMENTATION_GUARD();
 			uVar7 = (uint)gIDProfileFlush >> 4;
 			//if ((gIDProfileFlush & 1U) == 0) {
 			//	ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
@@ -7434,7 +7434,7 @@ edNODE_MANAGER* edListCreateNodesTable(int count, EHeap heapID)
 {
 	edNODE_MANAGER* pAllocatedBuffer;
 
-	pAllocatedBuffer = (edNODE_MANAGER*)edMemAlloc(heapID, count * 0x10 + 0x10);
+	pAllocatedBuffer = (edNODE_MANAGER*)edMemAllocAlignBoundary(heapID, count * 0x10 + 0x10);
 	if (pAllocatedBuffer == (edNODE_MANAGER*)0x0) {
 		pAllocatedBuffer = (edNODE_MANAGER*)0x0;
 	}
@@ -7515,11 +7515,11 @@ struct ed3D_60 {
 
 void ed3DHierarchyManagerInit(void)
 {
-	gHierarchyManagerBuffer = (MeshTransformData*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshTransformDataCount * sizeof(MeshTransformData));
+	gHierarchyManagerBuffer = (MeshTransformData*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshTransformDataCount * sizeof(MeshTransformData));
 	gHierarchyManagerNodeManager =
 		edListCreateNodesTable(ged3DConfig.meshTransformDataCount, TO_HEAP(H_MAIN));
 	gHierarchyManagerFirstFreeNode = (MeshTransformParent*)gHierarchyManagerNodeManager->pNextFree;
-	gScene_list_buffer = edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(ed3D_60));
+	gScene_list_buffer = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(ed3D_60));
 	return;
 }
 
@@ -7533,13 +7533,13 @@ void ed3DListBufferInit(int countA, int countB)
 	uVar4 = 0;
 	do {
 		ppRVar3 = DmaMaterialBuffer + uVar4;
-		pRVar1 = (RenderFrame_30*)edMemAlloc(TO_HEAP(H_MAIN), countA * sizeof(RenderFrame_30));
+		pRVar1 = (RenderFrame_30*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), countA * sizeof(RenderFrame_30));
 		*ppRVar3 = pRVar1;
 		ppRVar2 = DmaMaterialBuffer + uVar4;
 		uVar4 = uVar4 + 1 & 0xffff;
 		*ppRVar2 = *ppRVar3 + countA;
 	} while (uVar4 < 2);
-	DmaMatrixBuffer = (RenderFrame_30*)edMemAlloc(TO_HEAP(H_MAIN), countB * 0x30);
+	DmaMatrixBuffer = (RenderFrame_30*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), countB * 0x30);
 	DmaMaterialBufferCurrent = DmaMaterialBuffer[0];
 	DmaMaterialBufferCurrentMax = DmaMaterialBufferMax[0];
 	DmaMatrixBufferMax = DmaMatrixBuffer + countB;
@@ -7759,9 +7759,9 @@ void ed3DInit(void)
 	gLibInitialized = 1;
 	gManager3D = edListNew(1, ged3DConfig.meshHeaderCountAA, TO_HEAP(H_MAIN));
 	CameraPanMasterHeaderB_004491d4 = edListNew(1, ged3DConfig.meshHeaderCountBB, TO_HEAP(H_MAIN));
-	gpG3D = (ed_g3d_manager*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountAA * sizeof(ed_g3d_manager));
+	gpG3D = (ed_g3d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountAA * sizeof(ed_g3d_manager));
 	memset(gpG3D, 0, ged3DConfig.meshHeaderCountAA * sizeof(ed_g3d_manager));
-	gpG2D = (ed_g2d_manager*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountBB * sizeof(ed_g2d_manager));
+	gpG2D = (ed_g2d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountBB * sizeof(ed_g2d_manager));
 	memset(gpG2D, 0, ged3DConfig.meshHeaderCountBB * sizeof(ed_g2d_manager));
 	//pTVar1 = TexturePool_004491cc;
 	gNbG3D = 0;
@@ -7770,10 +7770,10 @@ void ed3DInit(void)
 	//*(undefined8*)&pTVar1->textureHeaderStart = 0x50;
 	//*(undefined8*)&pTVar1->textureBufferStart = 0x7ffe000000000;
 	memset(&ged3DFXConfig, 0, sizeof(ed3DFXConfig) * 16);
-	gScene3D = (ed_3D_Scene*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(ed_3D_Scene) + 1);
+	gScene3D = (ed_3D_Scene*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(ed_3D_Scene) + 1);
 	memset(gScene3D, 0, ged3DConfig.sceneCount * sizeof(ed_3D_Scene));
 	gNodeCluster = edListCreateNodesTable(ged3DConfig.meshDisplayListInternalCount + ged3DConfig.sceneCount * 3, TO_HEAP(H_MAIN));
-	g_MeshDisplayListInternal_00449380 = (DisplayListInternalMesh*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshDisplayListInternalCount * sizeof(DisplayListInternalMesh));
+	g_MeshDisplayListInternal_00449380 = (DisplayListInternalMesh*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshDisplayListInternalCount * sizeof(DisplayListInternalMesh));
 	memset(g_MeshDisplayListInternal_00449380, 0, ged3DConfig.meshDisplayListInternalCount * sizeof(DisplayListInternalMesh));
 	for (uVar2 = 0; uVar2 < ged3DConfig.sceneCount; uVar2 = uVar2 + 1) {
 		edListLink(&gScene3D[uVar2].headerB, gNodeCluster, 0, 0);
@@ -7789,11 +7789,11 @@ void ed3DInit(void)
 	if (ged3DConfig.meshHeaderCountBAlt < 0x180) {
 		ged3DConfig.meshHeaderCountBAlt = ged3DConfig.meshHeaderCountBAlt + 0x180;
 	}
-	g_pStripBuf = (edpkt_data*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountBAlt);
+	g_pStripBuf = (edpkt_data*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountBAlt);
 	g_pStrippBufMaxPos = (edpkt_data*)(((char*)g_pStripBuf) + ged3DConfig.meshHeaderCountBAlt);
 	size = (ged3DConfig.field_0x28 * 2 + ged3DConfig.field_0x18 + 0x8c0 + ged3DConfig.meshHeaderCountA * 0x38 + ged3DConfig.field_0x34 * 8) * 0x10;
 	g_pStrippBufLastPos = g_pStripBuf;
-	ed3D_Allocator_00449248.base = (char*)edMemAlloc(TO_HEAP(H_MAIN), size);
+	ed3D_Allocator_00449248.base = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
 	memset(ed3D_Allocator_00449248.base, 0, size);
 	ed3D_Allocator_00449248.current = ed3D_Allocator_00449248.base + size;
 	ed3D_Allocator_00449248.end = ed3D_Allocator_00449248.base;
@@ -7825,7 +7825,7 @@ void ed3DInit(void)
 	gZbuf_ScreenZMax = 0xffffffff;
 	g_pStripBufResetPos = g_pStrippBufLastPos;;
 	if (ged3DConfig.bEnableProfile == 1) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 	//	gIDProfileRender = edProfileNew(1, 0, 0, 0x80, s_3DRend_004333b8);
 	//	gIDProfileFlush = edProfileNew(1, 0x80, 0, 0, s_3DFlush_004333c0);
 	}
@@ -7913,7 +7913,7 @@ void ed3DPrepareG2DManageStruct(ed_g2d_manager* textureInfoObj, char* fileBuffer
 	int* nextSection;
 	int readValue;
 
-	/* Seek through the buffer */
+	/* seek through the buffer */
 	for (piVar1 = (int*)edChunckGetFirst(fileBuffer, fileBuffer + length); piVar1 != (int*)0x0; piVar1 = edChunckGetNext((char*)piVar1, (int*)(fileBuffer + length))) {
 		readValue = *piVar1;
 		/* Check the first value in the buffer is *2D* */
@@ -8058,7 +8058,7 @@ void ed3DPreparedAllMaterial(ed_g2d_manager* textureInfoObj, ulong mode)
 				/* .TAM */
 				if (*piVar5 == 0x2e54414d) {
 #ifdef PLATFORM_WIN
-					assert(false); // untested
+					IMPLEMENTATION_GUARD(); // untested
 #endif
 					//ed3DPrepareMaterial((TamPacked*)(piVar5 + 4), mode);
 				}
@@ -8187,27 +8187,24 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, in
 char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int index)
 {
 	char* pcVar1;
-	char* iVar2;
-	int iVar1;
+	TextureData_TEX_Internal* iVar2;
+	ed_g2d_layer* pLayerSection;
 
-	iVar2 = (char*)0x0;
-		
-	// UPDATE THIS
-	assert(false);
+	iVar2 = (TextureData_TEX_Internal*)0x0;
+	ed_g2d_material_After* pAfter = &((ed_g2d_material_After*)(pMAT_Internal + 1))[index];
+	pLayerSection = (ed_g2d_layer*)LOAD_SECTION(pAfter->pLAY);
 
-	iVar1 = *(int*)((char*)pMAT_Internal + index * 4 + 0x10);
-	char* pLayerSection = (char*)LOAD_SECTION(iVar1);
 	pcVar1 = (char*)0x0;
-	if ((iVar1 != -0x10) && (*(short*)(pLayerSection + 0x2c) != 0)) {
-		iVar2 = (char*)((char*)LOAD_SECTION(*(int*)(pLayerSection + 0x30)) + 0x10);
+	if ((pLayerSection != (ed_g2d_layer*)0xfffffff0) && (pLayerSection->body.field_0x1c != 0)) {
+		iVar2 = &((TextureData_TEX*)LOAD_SECTION(pLayerSection->body.pTex))->body;
 	}
-	if (iVar2 == (char*)0x0) {
+	if (iVar2 == (TextureData_TEX_Internal*)0x0) {
 		pcVar1 = (char*)0x0;
 	}
 	else {
-		char* otherValue = (char*)LOAD_SECTION(*(int*)(iVar2 + 8));
+		TextureData_HASH_Internal_PA32* otherValue = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(iVar2->after.pHASH_Internal);
 		if (otherValue != 0) {
-			pcVar1 = (char*)((char*)LOAD_SECTION(*(int*)(otherValue + 8)) + 0x10);
+			pcVar1 = (char*)((char*)LOAD_SECTION(otherValue->pPA32) + 0x10);
 		}
 	}
 	return pcVar1;
@@ -8847,7 +8844,7 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 				edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 				size = *(int*)(meshInfoObj->GEOM + 8);
 				size_00 = size + *(int*)(meshInfoObj->GEOM + size + 8);
-				fileBuffer = (char*)edMemAlloc(TO_HEAP(H_MAIN), size_00);
+				fileBuffer = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size_00);
 				memcpy(fileBuffer, (void*)meshInfoObj->GEOM, size_00);
 				edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 				*outInt = (fileLength - size_00) - fileLength;

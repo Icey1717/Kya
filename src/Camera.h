@@ -7,8 +7,8 @@
 struct edSurface;
 
 struct CameraObjParams {
-	short field_0x0;
-	short field_0x2;
+	short posX;
+	short posY;
 	short screenWidth;
 	short screenHeight;
 };
@@ -46,7 +46,7 @@ struct ed_viewport {
 };
 
 ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, edSurface* pVidModeDataB, byte alpha);
-void BuildCameraCommands_002bafe0(ed_viewport* pCamera, CameraObjParams* pParams, edSurface* pColorBuffer, edSurface* pZBuffer, byte alpha);
+void edViewportUpdate(ed_viewport* pCamera, CameraObjParams* pParams, edSurface* pColorBuffer, edSurface* pZBuffer, byte alpha);
 void edViewportDel(ed_viewport* pCamera, bool bDestroyFrameBuffers);
 edpkt_data* edViewportUpdateEnv(ed_viewport* pCamera, edpkt_data* pCommandBuf);
 void edViewPortApplyDrawingEnv(ed_viewport* pCamera);

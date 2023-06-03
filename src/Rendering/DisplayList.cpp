@@ -166,7 +166,7 @@ DisplayListInternal* AllocateDisplayListMemory_002caee0(EHeap heapID, uint inFla
 
 	displayListMemSize = CalcDisplayListMemory_002cb020(inFlags, param_3, param_4, param_5, &local_8, &local_4);
 	if (pInBuffer == (DisplayListInternal*)0x0) {
-		pInBuffer = (DisplayListInternal*)edMemAlloc(heapID, displayListMemSize);
+		pInBuffer = (DisplayListInternal*)edMemAllocAlignBoundary(heapID, displayListMemSize);
 	}
 	memset(pInBuffer, 0, displayListMemSize);
 	pcVar5 = (char*)((char*)&pInBuffer[2].flags_0x0 + local_8);

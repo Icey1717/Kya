@@ -96,7 +96,7 @@ int edMemGetMemoryAvailable(EHeap heapID)
 	int freeBytes;
 
 	// Might wanna check this is actually working.
-	assert(false);
+	IMPLEMENTATION_GUARD();
 
 	if (heapID == TO_HEAP(H_INVALID)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemGetMemoryAvailable);
@@ -140,7 +140,7 @@ void* edMemGetBlockAddress(void* pAlloc)
 	return pBlockAddress;
 }
 
-void* edMemAlloc(EHeap heapID, size_t size)
+void* edMemAllocAlignBoundary(EHeap heapID, size_t size)
 {
 	edHeapEntry* pHeap;
 	void* pNewAlloc;
@@ -151,7 +151,7 @@ void* edMemAlloc(EHeap heapID, size_t size)
 	}
 	else {
 		pHeap = edmemGetMainHeader((void*)heapID);
-		pNewAlloc = edMemAlloc(heapID, size, pHeap->align, pHeap->offset);
+		pNewAlloc = edMemAllocAlignBoundary(heapID, size, pHeap->align, pHeap->offset);
 	}
 	return pNewAlloc;
 }
@@ -173,12 +173,12 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
 		}
 		pHeap = edmemGetMainHeader((void*)heapID);
-		pNewAllocation = edMemAlloc(heapID, size, align, pHeap->offset);
+		pNewAllocation = edMemAllocAlignBoundary(heapID, size, align, pHeap->offset);
 	}
 	return pNewAllocation;
 }
 
-void* edMemAlloc(EHeap heap, size_t size, int align, int offset)
+void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 {
 	EFileLoadMode fileLoadMode;
 	edHeapEntry* pHeap;
@@ -621,7 +621,7 @@ void Free_0028ecc0(edHeapEntry* pHeap)
 char* Shrink_0028f120(edHeapEntry* pHeap, int newSize)
 {
 	// Not yet implemented.
-	assert(false);
+	IMPLEMENTATION_GUARD();
 	return NULL;
 }
 
@@ -1089,7 +1089,7 @@ void* AllocateFunc_001002a0(size_t size)
 {
 	void* pvVar1;
 
-	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), size);
+	pvVar1 = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
 	return pvVar1;
 }
 
@@ -1097,7 +1097,7 @@ void* Allocate(long amount)
 {
 	void* pvVar1;
 
-	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), (int)amount);
+	pvVar1 = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (int)amount);
 	return pvVar1;
 }
 

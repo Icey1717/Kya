@@ -488,7 +488,7 @@ struct edCFiler_Static_200 {
 	undefined field_0x1ff;
 };
 
-class edCFiler_Static {
+class edCFilePathManager {
 public:
 	struct edCFiler_Static_200 field_0x0[8];
 	undefined field_0x1000;
@@ -1035,12 +1035,12 @@ public:
 	int count_0x1224;
 
 public:
-	edCFiler_Static();
-	void InitDriveType_00261530(char* param_2);
+	edCFilePathManager();
+	void get_path(char* param_2);
 	int CopyDrivePath(char* param_2);
 	int SetDefaultFileLoad_00261610(char* param_2);
 };
 
-extern edCFiler_Static g_edCFiler_Static_0046dea0;
+extern edCFilePathManager edFilePathManager;
 
 #endif //_EDCFILER_STATIC_H

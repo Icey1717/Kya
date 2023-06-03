@@ -44,9 +44,9 @@ struct edHeapParams {
 
 int edMemGetMemoryAvailable(EHeap heapID);
 void* edMemGetBlockAddress(void* pAlloc);
-void* edMemAlloc(EHeap heapID, size_t size);
+void* edMemAllocAlignBoundary(EHeap heapID, size_t size);
 void* edMemAllocAlign(EHeap heapID, size_t size, int align);
-void* edMemAlloc(EHeap heap, size_t size, int align, int offset);
+void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset);
 void edMemFree(void* pAlloc);
 void* edMemShrink(void* pAlloc, int size);
 

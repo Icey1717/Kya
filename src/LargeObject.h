@@ -22,7 +22,7 @@ public:
 
 	void* operator new(size_t size)
 	{
-		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
+		void* p = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
 		return p;
 	}
 };
@@ -62,7 +62,7 @@ public:
 
 	void* operator new(size_t size)
 	{
-		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
+		void* p = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
 		return p;
 	}
 

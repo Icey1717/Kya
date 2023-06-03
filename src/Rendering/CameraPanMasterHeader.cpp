@@ -107,10 +107,10 @@ edLIST* edListNew(int cameraPanCount, int meshHeaderCount, void* heapID)
 	edLIST* pAllocatedBuffer;
 
 	if (meshHeaderCount == 0) {
-		pCVar2 = (edLIST*)edMemAlloc(heapID, cameraPanCount << 5);
+		pCVar2 = (edLIST*)edMemAllocAlignBoundary(heapID, cameraPanCount << 5);
 	}
 	else {
-		pCVar2 = (edLIST*)edMemAlloc(heapID, meshHeaderCount * 0x10 + cameraPanCount * 0x20 + 0x10);
+		pCVar2 = (edLIST*)edMemAllocAlignBoundary(heapID, meshHeaderCount * 0x10 + cameraPanCount * 0x20 + 0x10);
 		pAllocatedBuffer = pCVar2 + cameraPanCount;
 		Setup_00290b70((edNODE_MANAGER*)pAllocatedBuffer, meshHeaderCount);
 		while (bVar1 = cameraPanCount != 0, cameraPanCount = cameraPanCount + -1, bVar1) {

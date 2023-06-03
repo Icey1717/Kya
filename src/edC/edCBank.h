@@ -76,21 +76,21 @@ struct edBank_Manager {
 void initialize(edCBank* pBankObj, int size, int param_3, BankFilePathContainer* bankPathContainer);
 void edCBank_SetDeserializeData(edCBank* pBank, TypePairData* pTypePairData);
 edCBankBufferEntry* get_free_entry(edCBank* bankObj);
-DebugBankData_234* edFileLoadSize(char* filePath, uint flags);
-uint GetFileSize_0025bd70(DebugBankData_234* pDebugBank);
-bool SetRead_0025be80(DebugBankData_234* pDebugBank, char* param_2, uint size);
-bool SetClose_0025bf60(DebugBankData_234* pDebugBank);
-byte UsedInFileLoad(DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize);
+edFILEH* edFileOpen(char* filePath, uint flags);
+uint GetFileSize_0025bd70(edFILEH* pDebugBank);
+bool SetRead_0025be80(edFILEH* pDebugBank, char* param_2, uint size);
+bool SetClose_0025bf60(edFILEH* pDebugBank);
+byte edFileRead(edFILEH* pDebugBank, char* pReadBuffer, uint someSize);
 void edCBank_Free_00244e10(edCBank* pBank);
 
-bool SetBankReadStream(class edCFiler_28* param_1, DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize);
+bool SetBankReadStream(class edCFiler_28* param_1, edFILEH* pDebugBank, char* pReadBuffer, uint someSize);
 
 void edBankInit(void);
 
-char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData);
-bool DebugBankSeek(DebugBankData_234* pDebugBank, uint seekOffset, ESeekMode mode);
-bool DebugBankClose(DebugBankData_234* pDebugBank);
-bool SetBankClose(edCFiler_28* param_1, DebugBankData_234* pDataBank);
+char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, edFILEH** outLoadedData);
+bool edFileSeek(edFILEH* pDebugBank, uint seekOffset, ESeekMode mode);
+bool edFileClose(edFILEH* pDebugBank);
+bool SetBankClose(edCFiler_28* param_1, edFILEH* pDataBank);
 
 extern int g_FileSystemSysHandlerID_00469bc4;
 extern int g_FileSystemHandlers_00469bc8;
@@ -99,6 +99,6 @@ extern AsyncBankReader g_AsyncBankReader_00466e60;
 extern edCFiler* g_edCFiler_MCPtr_00448fd8;
 
 extern byte g_DebugBankLoadFlag_00469be0[16];
-extern DebugBankData_234 g_DebugBankDataArray_00469bf0[16];
+extern edFILEH g_DebugBankDataArray_00469bf0[16];
 
 #endif //_EDCBANK_H

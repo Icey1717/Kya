@@ -4,5 +4,5 @@
 
 namespace DebugMenu {
 	void Setup(VkInstance instance, uint32_t queueFamily, VkQueue graphicsQueue, GLFWwindow* window, VkRenderPass renderPass);
-	void Render(VkCommandBuffer commandBuffer);
+	void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent);
 }

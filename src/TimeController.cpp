@@ -13,19 +13,19 @@ void SetDesiredFrameTime(float inTime)
 
 TimeController::TimeController()
 {
-	totalPlayTime = 0.0;
-	frameDelta = 0.0;
-	field_0x8 = 1.0;
-	timeScale = 1.0;
-	lastFrameTime = 0.0;
-	totalTime = 0.0;
-	cutsceneDeltaTime = 0.0;
-	scaledTotalTime = 0.0;
+	totalPlayTime = 0.0f;
+	frameDelta = 0.0f;
+	field_0x8 = 1.0f;
+	timeScale = 1.0f;
+	lastFrameTime = 0.0f;
+	totalTime = 0.0f;
+	cutsceneDeltaTime = 0.0f;
+	scaledTotalTime = 0.0f;
 	if (g_isNTSC == 1) {
-		frameTime = 0.02;
+		frameTime = 0.02f;
 	}
 	else {
-		frameTime = 0.01668335;
+		frameTime = 0.01668335f;
 	}
 	SetDesiredFrameTime(frameTime);
 }
@@ -80,7 +80,7 @@ float GetFrameTime_00291c40(void)
 	}
 	return fVar2 / 1000.0;
 #else
-	return 0.0f;
+	return 0.033f;
 #endif
 }
 
@@ -89,10 +89,10 @@ float TimeController::Update()
 	float currentTime;
 
 	if (g_isNTSC == 1) {
-		frameTime = 0.02;
+		frameTime = 0.02f;
 	}
 	else {
-		frameTime = 0.01668335;
+		frameTime = 0.01668335f;
 	}
 	SetDesiredFrameTime(frameTime);
 	lastFrameTime = frameTime;

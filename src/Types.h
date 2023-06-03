@@ -142,41 +142,6 @@ InputSetupParams* edSysGetConfig(void);
 #define MY_LOG(...)
 #endif
 
-inline int edStringCpyL(char* outString, char* inString)
-{
-	int len;
-	char currentCharacter;
-
-	len = 0;
-	if (*inString == '\0') {
-		*outString = '\0';
-	}
-	else {
-		while (true) {
-			currentCharacter = *inString;
-			inString = inString + 1;
-			*outString = currentCharacter;
-			if (currentCharacter == '\0') break;
-			len = len + 1;
-			outString = outString + 1;
-		}
-	}
-	return len;
-}
-
-inline char* SearchString(char* inString, char searchChar)
-{
-	char currentChar;
-
-	/* Returns the position in the inBuffer of first instance of searchChar */
-	for (; (currentChar = *inString, currentChar != '\0' && (currentChar != searchChar)); inString = inString + 1) {
-	}
-	if (currentChar == '\0') {
-		inString = (char*)0x0;
-	}
-	return inString;
-}
-
 #ifdef PLATFORM_PS2
 struct __attribute__((aligned(16)))
 #else
@@ -362,11 +327,17 @@ inline void sceVu0MulMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FMATRIX m2
 struct __attribute__((aligned(16)))
 #else
 struct alignas(16)
-#endif 
+#endif
 edpkt_data {
 	ulong cmdA;
 	ulong cmdB;
 };
+
+#ifdef PLATFORM_WIN
+inline uint* edpktAsU32(edpkt_data* pkt) {
+	return reinterpret_cast<uint*>(pkt);
+}
+#endif
 
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*

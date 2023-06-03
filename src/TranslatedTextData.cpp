@@ -5,78 +5,79 @@
 #include "edC/edCBank.h"
 #include "edC/edCFiler.h"
 #include <assert.h>
+#include "edStr.h"
 
-TranslatedTextData* g_TranslatedTextTRC_00449748 = NULL;
+MessageManager gMessageManager = { NULL };
 
-void RemoveLinkedTextData_00336a00(TranslatedTextData** ppTextData, TranslatedTextData* pToRemove)
+void MessageManager::remove_entry(MessageFile* pToRemove)
 {
-	TranslatedTextData* pTVar1;
+	MessageFile* pTVar1;
 
-	if (pToRemove != (TranslatedTextData*)0x0) {
-		for (pTVar1 = *ppTextData; (pTVar1 != (TranslatedTextData*)0x0 && (pTVar1 != pToRemove));
+	if (pToRemove != (MessageFile*)0x0) {
+		for (pTVar1 = pMessage; (pTVar1 != (MessageFile*)0x0 && (pTVar1 != pToRemove));
 			pTVar1 = pTVar1->pNext) {
 		}
-		if (pTVar1->pPrev != (TranslatedTextData*)0x0) {
+		if (pTVar1->pPrev != (MessageFile*)0x0) {
 			pTVar1->pPrev->pNext = pTVar1->pNext;
 		}
-		if (pTVar1->pNext != (TranslatedTextData*)0x0) {
+		if (pTVar1->pNext != (MessageFile*)0x0) {
 			pTVar1->pNext->pPrev = pTVar1->pPrev;
 		}
-		if (pTVar1 == *ppTextData) {
-			if (pTVar1->pPrev == (TranslatedTextData*)0x0) {
-				if (pTVar1->pNext == (TranslatedTextData*)0x0) {
-					*ppTextData = (TranslatedTextData*)0x0;
+		if (pTVar1 == pMessage) {
+			if (pTVar1->pPrev == (MessageFile*)0x0) {
+				if (pTVar1->pNext == (MessageFile*)0x0) {
+					pMessage = (MessageFile*)0x0;
 				}
 				else {
-					*ppTextData = pTVar1->pNext;
+					pMessage = pTVar1->pNext;
 				}
 			}
 			else {
-				*ppTextData = pTVar1->pPrev;
+				pMessage = pTVar1->pPrev;
 			}
 		}
 	}
 	return;
 }
 
-void FUN_00336d20(TranslatedTextData* pTextData)
+void MessageFile::prepare_buffer()
 {
 	int* piVar1;
 	uint uVar2;
 	ulong* puVar3;
 
-	piVar1 = (int*)pTextData->pFileData;
-	pTextData->entryCount = *piVar1;
+	piVar1 = (int*)this->pFileData;
+	this->entryCount = *piVar1;
 	puVar3 = (ulong*)(piVar1 + 2);
-	pTextData->pDataA = puVar3;
+	this->pDataA = puVar3;
 	if (piVar1[1] == 0) {
 		piVar1[1] = 1;
 		uVar2 = 0;
-		if (pTextData->entryCount != 0) {
+		if (this->entryCount != 0) {
 			do {
 				uVar2 = uVar2 + 1;
-				*(char**)(puVar3 + 1) = pTextData->pFileData + *(int*)(puVar3 + 1);
+				*(char**)(puVar3 + 1) = this->pFileData + *(int*)(puVar3 + 1);
 				puVar3 = puVar3 + 2;
-			} while (uVar2 < (uint)pTextData->entryCount);
+			} while (uVar2 < (uint)this->entryCount);
 		}
 	}
 	return;
 }
 
-TranslatedTextData::TranslatedTextData()
+MessageFile::MessageFile()
 {
-	pPrev = (TranslatedTextData*)0x0;
-	pNext = (TranslatedTextData*)0x0;
+	pPrev = (MessageFile*)0x0;
+	pNext = (MessageFile*)0x0;
 	pFileData = (char*)0x0;
 	entryCount = 0;
-	languageID = (ELanguageID)0;
+	languageID = (LANGUAGE)0;
 	pDataA = (ulong*)0x0;
 	field_0x8[0] = '\0';
 	pBankAccessObj = (edCBankBufferEntry*)0x0;
 	return;
 }
 
-TranslatedTextData::~TranslatedTextData()
+MessageFile::~MessageFile()
 {
 	char* dataPtr = pFileData;
 	if ((dataPtr != (char*)0x0) && (dataPtr != (char*)0x0)) {
@@ -85,7 +86,7 @@ TranslatedTextData::~TranslatedTextData()
 		pDataA = (ulong*)0x0;
 		entryCount = 0;
 		pBankAccessObj = (edCBankBufferEntry*)0x0;
-		RemoveLinkedTextData_00336a00(&g_TranslatedTextTRC_00449748, this);
+		gMessageManager.remove_entry(this);
 	}
 }
 
@@ -97,21 +98,20 @@ char* g_LanguageSuffixArray_00425840[5] = {
 	"IT",
 };
 
-ELanguageID g_LanguageID_0044974c = GB;
-short SHORT_00448fce = 0;
-EHeap EHeap_00448fc8 = TO_HEAP(H_MAIN);
-short SHORT_00448fcc = 0x40;
+LANGUAGE g_LanguageID_0044974c = GB;
 
-void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBufferEntry* pBankAccess, char* pFilePath, ELanguageID languageID)
+void MessageFile::select_language(edCBankBufferEntry* pBankAccess, char* pFilePath, LANGUAGE languageID)
 {
 	bool bVar1;
-	TranslatedTextData* pTVar2;
-	TranslatedTextData* pTVar3;
-	TranslatedTextData* pTVar4;
+	MessageFile* pTVar2;
+	MessageFile* pTVar3;
+	MessageFile* pTVar4;
 	bool bVar5;
 	int iVar6;
 	edBANK_ENTRY_INFO BStack544;
 	char acStack512[512];
+
+	MY_LOG("select_language: %s\n", pFilePath);
 
 	bVar1 = false;
 	if (this->entryCount != 0) {
@@ -120,7 +120,7 @@ void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBufferEntry* pBankAcc
 		this->entryCount = 0;
 		this->pBankAccessObj = (edCBankBufferEntry*)0x0;
 		if (pBankAccess == (edCBankBufferEntry*)0x0) {
-			RemoveLinkedTextData_00336a00(&g_TranslatedTextTRC_00449748, this);
+			gMessageManager.remove_entry(this);
 		}
 		else {
 			bVar1 = true;
@@ -131,7 +131,7 @@ void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBufferEntry* pBankAcc
 			languageID = g_LanguageID_0044974c;
 		}
 		if (pFilePath != (char*)0x0) {
-			iVar6 = edStringCpyL(this->field_0x8, pFilePath);
+			iVar6 = edStrCopy(this->field_0x8, pFilePath);
 			(this->field_0x8 + iVar6 + -8)[2] = '%';
 			(this->field_0x8 + iVar6 + -8)[3] = 's';
 		}
@@ -141,23 +141,25 @@ void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBufferEntry* pBankAcc
 			this->languageID = languageID;
 			this->pFileData = BStack544.fileBufferStart;
 			this->pBankAccessObj = pBankAccess;
-			FUN_00336d20(this);
-			if ((!bVar1) && (this != (TranslatedTextData*)0x0)) {
-				if (g_TranslatedTextTRC_00449748 == (TranslatedTextData*)0x0) {
-					this->pPrev = (TranslatedTextData*)0x0;
-					this->pNext = (TranslatedTextData*)0x0;
-					g_TranslatedTextTRC_00449748 = this;
+			prepare_buffer();
+			if ((!bVar1) && (this != (MessageFile*)0x0)) {
+				if (gMessageManager.pMessage == (MessageFile*)0x0) {
+					this->pPrev = (MessageFile*)0x0;
+					this->pNext = (MessageFile*)0x0;
+					gMessageManager.pMessage = this;
+					MY_LOG("Linking first message: %p\n", this);
 				}
 				else {
-					pTVar4 = g_TranslatedTextTRC_00449748->pNext;
-					pTVar3 = g_TranslatedTextTRC_00449748;
-					while (pTVar2 = pTVar4, pTVar2 != (TranslatedTextData*)0x0) {
+					pTVar4 = gMessageManager.pMessage->pNext;
+					pTVar3 = gMessageManager.pMessage;
+					while (pTVar2 = pTVar4, pTVar2 != (MessageFile*)0x0) {
 						pTVar3 = pTVar2;
 						pTVar4 = pTVar2->pNext;
 					}
 					this->pPrev = pTVar3;
-					this->pNext = (TranslatedTextData*)0x0;
+					this->pNext = (MessageFile*)0x0;
 					pTVar3->pNext = this;
+					MY_LOG("Linking next message: %p\n", this);
 				}
 			}
 		}
@@ -165,10 +167,10 @@ void TranslatedTextData::LoadTextTranslatedFromBank(edCBankBufferEntry* pBankAcc
 	return;
 }
 
-char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
+char* edFileOpen(char* filePath, uint* outSize, uint flags)
 {
 	byte bVar1;
-	DebugBankData_234* pDebugBank;
+	edFILEH* pDebugBank;
 	edCFiler* peVar2;
 	uint uVar3;
 	char* pReadBuffer;
@@ -177,15 +179,15 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 	int iVar6;
 	char acStack512[512];
 
-	MY_LOG("TranslatedTextData::LoadFromDisk_0025b960 %s\n", filePath);
+	MY_LOG("MessageFile::edFileOpen %s\n", filePath);
 
 	*outSize = 0;
-	pDebugBank = edFileLoadSize(filePath, flags | 1);
-	if (pDebugBank == (DebugBankData_234*)0x0) {
+	pDebugBank = edFileOpen(filePath, flags | 1);
+	if (pDebugBank == (edFILEH*)0x0) {
 		pReadBuffer = (char*)0x0;
 	}
 	else {
-		peVar2 = edFileOpen(acStack512, filePath, 0);
+		peVar2 = edFileGetFiler(acStack512, filePath, 0);
 		if (peVar2 == (edCFiler*)0x0) {
 			pReadBuffer = (char*)0x0;
 		}
@@ -199,13 +201,13 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 				//peVar7 = peVar2->pVTable;
 			}
 
-			uVar3 = peVar2->Function74(uVar3);
+			uVar3 = peVar2->getalignedsize(uVar3);
 			*outSize = uVar3;
-			pReadBuffer = (char*)edMemAlloc(EHeap_00448fc8, *outSize, (uint)(ushort)SHORT_00448fcc,
-				(uint)(ushort)SHORT_00448fce);
-			SHORT_00448fce = 0;
-			EHeap_00448fc8 = TO_HEAP(H_MAIN);
-			SHORT_00448fcc = 0x40;
+			pReadBuffer = (char*)edMemAllocAlignBoundary(edFileLoadInfo.heap, *outSize, (uint)edFileLoadInfo.align,
+				(uint)edFileLoadInfo.offset);
+			edFileLoadInfo.offset = 0;
+			edFileLoadInfo.heap = TO_HEAP(H_MAIN);
+			edFileLoadInfo.align = 0x40;
 			peVar4 = peVar2->GetGlobalC_0x1c();
 			SetBankReadStream(peVar4, pDebugBank, pReadBuffer, *outSize);
 			peVar4 = peVar2->GetGlobalC_0x1c();
@@ -242,13 +244,13 @@ char* LoadFromDisk_0025b960(char* filePath, uint* outSize, uint flags)
 	return pReadBuffer;
 }
 
-void TranslatedTextData::LoadTranslatedTextFromDisk(char* filePath, ELanguageID inLanguageID)
+void MessageFile::select_language(char* filePath, LANGUAGE inLanguageID)
 {
-	TranslatedTextData* pTVar1;
-	TranslatedTextData* pTVar2;
-	TranslatedTextData* pTVar3;
+	MessageFile* pTVar1;
+	MessageFile* pTVar2;
+	MessageFile* pTVar3;
 	byte bVar4;
-	DebugBankData_234* pDebugBank;
+	edFILEH* pDebugBank;
 	char* pcVar5;
 	char acStack512[512];
 
@@ -260,59 +262,62 @@ void TranslatedTextData::LoadTranslatedTextFromDisk(char* filePath, ELanguageID 
 		return;
 	}
 	if (filePath != (char*)0x0) {
-		edStringCpyL(this->field_0x8, filePath);
+		edStrCopy(this->field_0x8, filePath);
 	}
 
-	MY_LOG("TranslatedTextData::LoadTranslatedTextFromDisk %s [%s]\n", filePath, g_LanguageSuffixArray_00425840[inLanguageID]);
+	MY_LOG("MessageFile::select_language %s [%s]\n", filePath, g_LanguageSuffixArray_00425840[inLanguageID]);
 
 	this->pBankAccessObj = (edCBankBufferEntry*)0x0;
 	this->languageID = inLanguageID;
 	sprintf(acStack512, this->field_0x8, g_LanguageSuffixArray_00425840[inLanguageID]);
 	if (this->pFileData == (char*)0x0) {
-		pcVar5 = LoadFromDisk_0025b960(acStack512, &this->size, 0);
+		pcVar5 = edFileOpen(acStack512, &this->size, 0);
 		this->pFileData = pcVar5;
 		if (this->pFileData == (char*)0x0) {
+			MY_LOG("MessageFile::select_language FAILED TO OPEN FILE: %s\n", acStack512);
 			return;
 		}
-		if (this != (TranslatedTextData*)0x0) {
-			if (g_TranslatedTextTRC_00449748 == (TranslatedTextData*)0x0) {
-				this->pPrev = (TranslatedTextData*)0x0;
-				this->pNext = (TranslatedTextData*)0x0;
-				g_TranslatedTextTRC_00449748 = this;
+		if (this != (MessageFile*)0x0) {
+			if (gMessageManager.pMessage == (MessageFile*)0x0) {
+				this->pPrev = (MessageFile*)0x0;
+				this->pNext = (MessageFile*)0x0;
+				gMessageManager.pMessage = this;
+				MY_LOG("Linking first message: %p\n", this);
 			}
 			else {
-				pTVar3 = g_TranslatedTextTRC_00449748->pNext;
-				pTVar2 = g_TranslatedTextTRC_00449748;
-				while (pTVar1 = pTVar3, pTVar1 != (TranslatedTextData*)0x0) {
+				pTVar3 = gMessageManager.pMessage->pNext;
+				pTVar2 = gMessageManager.pMessage;
+				while (pTVar1 = pTVar3, pTVar1 != (MessageFile*)0x0) {
 					pTVar2 = pTVar1;
 					pTVar3 = pTVar1->pNext;
 				}
 				this->pPrev = pTVar2;
-				this->pNext = (TranslatedTextData*)0x0;
+				this->pNext = (MessageFile*)0x0;
 				pTVar2->pNext = this;
+				MY_LOG("Linking next message: %p\n", this);
 			}
 		}
 	}
 	else {
-		pDebugBank = edFileLoadSize(acStack512, 1);
-		if (pDebugBank == (DebugBankData_234*)0x0) {
+		pDebugBank = edFileOpen(acStack512, 1);
+		if (pDebugBank == (edFILEH*)0x0) {
 			return;
 		}
-		bVar4 = UsedInFileLoad(pDebugBank, this->pFileData, this->size);
+		bVar4 = edFileRead(pDebugBank, this->pFileData, this->size);
 		if (bVar4 == 0) {
 			this->entryCount = 0;
-			DebugBankClose(pDebugBank);
+			edFileClose(pDebugBank);
 			return;
 		}
-		DebugBankClose(pDebugBank);
+		edFileClose(pDebugBank);
 	}
-	FUN_00336d20(this);
+	prepare_buffer();
 	return;
 }
 
 char* g_szTextNotFound_00434bf0 = "NotFound";
 
-char* TranslatedTextData::GetText_00336c10(ulong key, long mode)
+char* MessageFile::get_message(ulong key, long mode)
 {
 	char* pcVar1;
 	ulong* puVar2;
@@ -351,19 +356,19 @@ char* TranslatedTextData::GetText_00336c10(ulong key, long mode)
 		}
 	}
 
-	//MY_LOG("TranslatedTextData::GetText_00336c10 %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
+	MY_LOG("MessageFile::get_message %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
 
 	return pcVar1;
 }
 
-char* FindTranslatedTextFromKey_00336970(TranslatedTextData** ppTextData, ulong key)
+char* MessageManager::get_message(ulong key)
 {
 	char* pcVar1;
-	TranslatedTextData* pTextData;
+	MessageFile* pTextData;
 
 	if (key != 0) {
-		for (pTextData = *ppTextData; pTextData != (TranslatedTextData*)0x0; pTextData = pTextData->pNext) {
-			pcVar1 = pTextData->GetText_00336c10(key, 1);
+		for (pTextData = pMessage; pTextData != (MessageFile*)0x0; pTextData = pTextData->pNext) {
+			pcVar1 = pTextData->get_message(key, 1);
 			if (pcVar1 != (char*)0x0) {
 				return pcVar1;
 			}

@@ -10,6 +10,7 @@
 #include "edVideo/VideoA.h"
 #include "ed3D.h"
 #include "CameraViewManager.h"
+#include "edStr.h"
 
 struct BankAccessCombined {
 	edCBankBufferEntry* pAccessObj;
@@ -42,7 +43,7 @@ bool LoadBNKCombined(BankAccessCombined* param_1, char* path, char* fileName, Ty
 	}
 	memset(&local_a0, 0, sizeof(BankFilePathContainer));
 	/* +.bnk */
-	FormatFilePath(filePath, path, fileName, ".bnk", 0);
+	edStrCatMulti(filePath, path, fileName, ".bnk", 0);
 	local_a0.filePath = filePath;
 	peVar2 = get_free_entry(&param_1->bankData);
 	param_1->pAccessObj = peVar2;
@@ -175,8 +176,8 @@ void FrontendManager::Game_Init()
 	CloseBankCombined_001db640(&someBankObject);
 	FreeBankCombined_001db710(&someBankObject);
 	peVar2 = GetVideoParams_002ba3e0();
-	local_8.field_0x2 = 0;
-	local_8.field_0x0 = 0;
+	local_8.posY = 0;
+	local_8.posX = 0;
 	local_8.screenWidth = (peVar2->pActiveVidParams->params26).screenWidth;
 	local_8.screenHeight = (peVar2->pActiveVidParams->params26).screenHeight;
 	pVidModeDataA = GetFrameBuffer_001ba9c0();

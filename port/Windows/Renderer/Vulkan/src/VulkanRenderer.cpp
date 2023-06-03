@@ -25,6 +25,7 @@
 #include "imgui.h"
 #include "VulkanCommands.h"
 #include "DebugMenu/DebugMenu.h"
+#include "FrameBuffer.h"
 
 constexpr uint32_t WIDTH = 800;
 constexpr uint32_t HEIGHT = 600;
@@ -178,6 +179,10 @@ public:
 		return swapChainImageFormat;
 	}
 
+	std::vector<VkImage>& GetSwapchainImages() {
+		return swapChainImages;
+	}
+
 	const VkCommandBuffer& GetCurrentCommandBuffer() {
 		return commandBuffers[currentFrame];
 	}
@@ -258,7 +263,7 @@ private:
 		createLogicalDevice();
 		createSwapChain();
 		createImageViews();
-		createRenderPass();
+		createGlobalRenderPass();
 		CreateDescriptorSetLayout();
 		createGraphicsPipeline();
 		PS2::Setup();
@@ -498,7 +503,7 @@ private:
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
 		createInfo.imageExtent = extent;
 		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 		uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
@@ -537,7 +542,7 @@ private:
 		}
 	}
 
-	void createRenderPass() {
+	void createGlobalRenderPass() {
 		VkAttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChainImageFormat;
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -939,6 +944,10 @@ public:
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
+		// Blit
+		// Transition the swapchain image layout to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		//VulkanImage::TransitionImageLayout(GetSwapchainImages()[currentFrame], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
 		if (vkBeginCommandBuffer(GetCurrentCommandBuffer(), &beginInfo) != VK_SUCCESS) {
 			throw std::runtime_error("failed to begin recording command buffer!");
 		}
@@ -963,9 +972,15 @@ public:
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
-		vkCmdBeginRenderPass(GetCurrentCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		auto& frameBuffer = FrameBuffer::Get(GetHardwareState().FBP);
 
-		DebugMenu::Render(GetCurrentCommandBuffer());
+		VkImageSubresourceLayers subresourceLayers = {};
+		subresourceLayers.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subresourceLayers.mipLevel = 0;
+		subresourceLayers.baseArrayLayer = 0;
+		subresourceLayers.layerCount = 1;
+
+		vkCmdBeginRenderPass(GetCurrentCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		vkCmdEndRenderPass(GetCurrentCommandBuffer());
 
@@ -993,6 +1008,24 @@ public:
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
 
+		VkCommandBuffer cmd = BeginSingleTimeCommands();
+		// Transition the swapchain image layout back to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmd);
+
+		VkImageBlit imageBlit = {};
+		imageBlit.srcSubresource = subresourceLayers;
+		imageBlit.srcOffsets[1] = { GetRTSize().x / 2, GetRTSize().y / 2, 1 };
+		imageBlit.dstSubresource = subresourceLayers;
+		imageBlit.dstOffsets[1] = { (int)swapChainExtent.width, (int)swapChainExtent.height, 1 };
+		vkCmdBlitImage(cmd, frameBuffer.colorImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, GetSwapchainImages()[presentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_LINEAR);
+
+		// Transition the swapchain image layout back to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, cmd);
+
+		EndSingleTimeCommands(cmd);
+
+		DebugMenu::Render(swapChainFramebuffers[presentImageIndex], swapChainExtent);
+
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -1016,13 +1049,6 @@ public:
 		}
 
 		currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-	}
-
-	void setScissor(int x, int y, uint32_t width, uint32_t height) {
-		VkRect2D scissor{};
-		scissor.offset = { x, y };
-		scissor.extent = { width, height };
-		vkCmdSetScissor(GetCurrentCommandBuffer(), 0, 1, &scissor);
 	}
 
 	void drawFrame() {
@@ -1343,10 +1369,6 @@ namespace Renderer
 	{
 		app.present();
 	}
-
-	void SetScissor(int x, int y, uint32_t width, uint32_t height) {
-		app.setScissor(x, y, width, height);
-	}
 }
 
 VkDevice GetDevice()
@@ -1357,6 +1379,10 @@ VkDevice GetDevice()
 VkFormat GetSwapchainImageFormat()
 {
 	return app.GetSwapchainImageFormat();
+}
+
+std::vector<VkImage>& GetSwapchainImages() {
+	return app.GetSwapchainImages();
 }
 
 VkPhysicalDevice GetPhysicalDevice()

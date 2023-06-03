@@ -14,7 +14,7 @@
 edBank_Manager g_edCBank_00466d30;
 byte g_edCBank_DebugAllowNoWait_00448900;
 byte g_DebugBankLoadFlag_00469be0[16];
-DebugBankData_234 g_DebugBankDataArray_00469bf0[16];
+edFILEH g_DebugBankDataArray_00469bf0[16];
 
 edCBankBufferEntry* get_free_entry(edCBank* bankObj)
 {
@@ -73,28 +73,28 @@ void edCBank_Link_00245420(edBank_Manager* pEdBank, edCBank* bankAllocateAddress
 	return;
 }
 
-DebugBankData_234* edFileLoadSize(char* filePath, uint flags)
+edFILEH* edFileOpen(char* filePath, uint flags)
 {
 	bool bVar1;
 	edCFiler* pFiler;
-	DebugBankData_234* pDVar2;
+	edFILEH* pDVar2;
 	byte* pbVar3;
 	int iVar4;
-	DebugBankData_234* pDebugBank;
+	edFILEH* pDebugBank;
 	char outCdPath[512];
 
-	MY_LOG("edFileLoadSize %s\n", filePath);
+	MY_LOG("edFileOpen %s\n", filePath);
 
-	pFiler = edFileOpen(outCdPath, filePath, 0);
+	pFiler = edFileGetFiler(outCdPath, filePath, 0);
 	if (pFiler == (edCFiler*)0x0) {
-		pDVar2 = (DebugBankData_234*)0x0;
+		pDVar2 = (edFILEH*)0x0;
 	}
 	else {
 		if (((flags & 8) != 0) && (((pFiler->baseData).field_0x4 & 0x20U) == 0)) {
 			flags = flags & 0xfffffff7;
 		}
-		if ((((flags & 2) == 0) || (pDVar2 = (DebugBankData_234*)0x0, ((pFiler->baseData).field_0x4 & 2U) != 0)) &&
-			(((flags & 4) == 0 || (pDVar2 = (DebugBankData_234*)0x0, ((pFiler->baseData).field_0x4 & 4U) != 0)))) {
+		if ((((flags & 2) == 0) || (pDVar2 = (edFILEH*)0x0, ((pFiler->baseData).field_0x4 & 2U) != 0)) &&
+			(((flags & 4) == 0 || (pDVar2 = (edFILEH*)0x0, ((pFiler->baseData).field_0x4 & 4U) != 0)))) {
 			if (((flags & 8) == 0) || (((pFiler->baseData).field_0x4 & 0x80U) != 0)) {
 				edFileGetFiler(pFiler);
 			}
@@ -103,30 +103,30 @@ DebugBankData_234* edFileLoadSize(char* filePath, uint flags)
 				if (g_DebugBankLoadFlag_00469be0[iVar4] == 0) {
 					g_DebugBankLoadFlag_00469be0[iVar4] = 1;
 					pDebugBank = &g_DebugBankDataArray_00469bf0[iVar4];
-					memset(pDebugBank, 0, sizeof(DebugBankData_234));
+					memset(pDebugBank, 0, sizeof(edFILEH));
 					goto LAB_0025c168;
 				}
 				iVar4 = iVar4 + 1;
 			} while (iVar4 < 0x10);
-			pDebugBank = (DebugBankData_234*)0x0;
+			pDebugBank = (edFILEH*)0x0;
 		LAB_0025c168:
-			pDVar2 = (DebugBankData_234*)0x0;
-			if (pDebugBank != (DebugBankData_234*)0x0) {
+			pDVar2 = (edFILEH*)0x0;
+			if (pDebugBank != (edFILEH*)0x0) {
 				pDebugBank->pOwningFiler = pFiler;
 				pDebugBank->openFlags = flags;
 				/* May call edCFiler_CDVD_open */
-				bVar1 = pFiler->Open(pDebugBank, outCdPath);
+				bVar1 = pFiler->open(pDebugBank, outCdPath);
 				if (bVar1 == false) {
 					iVar4 = 0;
 					do {
 						if (&g_DebugBankDataArray_00469bf0[iVar4] == pDebugBank) {
 							g_DebugBankLoadFlag_00469be0[iVar4] = 0;
-							memset(&g_DebugBankDataArray_00469bf0[iVar4], 0, sizeof(DebugBankData_234));
+							memset(&g_DebugBankDataArray_00469bf0[iVar4], 0, sizeof(edFILEH));
 							break;
 						}
 						iVar4 = iVar4 + 1;
 					} while (iVar4 < 0x10);
-					pDVar2 = (DebugBankData_234*)0x0;
+					pDVar2 = (edFILEH*)0x0;
 				}
 				else {
 					pDebugBank->bInUse = 1;
@@ -138,7 +138,7 @@ DebugBankData_234* edFileLoadSize(char* filePath, uint flags)
 	return pDVar2;
 }
 
-uint GetFileSize_0025bd70(DebugBankData_234* pDebugBank)
+uint GetFileSize_0025bd70(edFILEH* pDebugBank)
 {
 	uint uVar1;
 
@@ -149,7 +149,7 @@ uint GetFileSize_0025bd70(DebugBankData_234* pDebugBank)
 	return uVar1;
 }
 
-bool SetRead_0025be80(DebugBankData_234* pDebugBank, char* param_2, uint size)
+bool SetRead_0025be80(edFILEH* pDebugBank, char* param_2, uint size)
 {
 	byte bVar2;
 	bool bVar1;
@@ -184,7 +184,7 @@ bool SetRead_0025be80(DebugBankData_234* pDebugBank, char* param_2, uint size)
 	return bVar1;
 }
 
-bool SetClose_0025bf60(DebugBankData_234* pDebugBank)
+bool SetClose_0025bf60(edFILEH* pDebugBank)
 {
 	byte bVar1;
 	bool uVar2;
@@ -219,7 +219,7 @@ bool SetClose_0025bf60(DebugBankData_234* pDebugBank)
 	return uVar2;
 }
 
-bool SetBankReadStream(edCFiler_28* param_1, DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize)
+bool SetBankReadStream(edCFiler_28* param_1, edFILEH* pDebugBank, char* pReadBuffer, uint someSize)
 {
 	uint uVar1;
 	int iVar2;
@@ -251,7 +251,7 @@ bool SetBankReadStream(edCFiler_28* param_1, DebugBankData_234* pDebugBank, char
 	return puVar3 != (edCFiler_28_Internal*)0x0;
 }
 
-bool SetBankSeek(edCFiler_28* param_1, DebugBankData_234* pDebugBank, uint seekOffset)
+bool SetBankSeek(edCFiler_28* param_1, edFILEH* pDebugBank, uint seekOffset)
 {
 	uint uVar1;
 	int iVar2;
@@ -282,7 +282,7 @@ bool SetBankSeek(edCFiler_28* param_1, DebugBankData_234* pDebugBank, uint seekO
 	return peVar3 != (edCFiler_28_Internal*)0x0;
 }
 
-bool DebugBankSeek(DebugBankData_234* pDebugBank, uint seekOffset, ESeekMode mode)
+bool edFileSeek(edFILEH* pDebugBank, uint seekOffset, ESeekMode mode)
 {
 	byte bVar2;
 	bool bVar1;
@@ -330,7 +330,7 @@ bool DebugBankSeek(DebugBankData_234* pDebugBank, uint seekOffset, ESeekMode mod
 	return bVar1;
 }
 
-byte UsedInFileLoad(DebugBankData_234* pDebugBank, char* pReadBuffer, uint someSize)
+byte edFileRead(edFILEH* pDebugBank, char* pReadBuffer, uint someSize)
 {
 	byte bVar1;
 	edCFiler_28* peVar2;
@@ -344,12 +344,12 @@ byte UsedInFileLoad(DebugBankData_234* pDebugBank, char* pReadBuffer, uint someS
 		iVar4 = 0;
 		pbVar3 = g_DebugBankLoadFlag_00469be0;
 		do {
-			if ((DebugBankData_234*)(pbVar3 + 0x10) == pDebugBank) {
+			if ((edFILEH*)(pbVar3 + 0x10) == pDebugBank) {
 				bVar1 = g_DebugBankLoadFlag_00469be0[iVar4];
 				goto LAB_0025b580;
 			}
 			iVar4 = iVar4 + 1;
-			pbVar3 = pbVar3 + sizeof(DebugBankData_234);
+			pbVar3 = pbVar3 + sizeof(edFILEH);
 		} while (iVar4 < 0x10);
 		bVar1 = 0;
 	LAB_0025b580:
@@ -372,7 +372,7 @@ bool CompleteRead_0025bcc0(void)
 	return true;
 }
 
-bool SetBankClose(edCFiler_28* param_1, DebugBankData_234* pDataBank)
+bool SetBankClose(edCFiler_28* param_1, edFILEH* pDataBank)
 {
 	uint uVar1;
 	int iVar2;
@@ -400,7 +400,7 @@ bool SetBankClose(edCFiler_28* param_1, DebugBankData_234* pDataBank)
 	return peVar3 != (edCFiler_28_Internal*)0x0;
 }
 
-bool DebugBankClose(DebugBankData_234* pDebugBank)
+bool edFileClose(edFILEH* pDebugBank)
 {
 	byte bVar2;
 	bool bVar1;
@@ -434,10 +434,10 @@ bool DebugBankClose(DebugBankData_234* pDebugBank)
 	return bVar1;
 }
 
-char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_234** outLoadedData)
+char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, edFILEH** outLoadedData)
 {
 	byte bVar1;
-	DebugBankData_234* pDebugBank;
+	edFILEH* pDebugBank;
 	uint uVar2;
 	char* __dest;
 	char* pReadBuffer;
@@ -449,8 +449,8 @@ char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_2
 	if (((uint)pReadBuffer & 0x7ff) != 0) {
 		pReadBuffer = (char*)((((long long)pReadBuffer >> 0xb) + 1) * 0x800);
 	}
-	pDebugBank = edFileLoadSize(filePath, flags);
-	if (pDebugBank == (DebugBankData_234*)0x0) {
+	pDebugBank = edFileOpen(filePath, flags);
+	if (pDebugBank == (edFILEH*)0x0) {
 		__dest = (char*)0x0;
 	}
 	else {
@@ -460,7 +460,7 @@ char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_2
 		}
 		else {
 			memset(pReadBuffer, 0, 0x800);
-			bVar1 = UsedInFileLoad(pDebugBank, pReadBuffer, 0x800);
+			bVar1 = edFileRead(pDebugBank, pReadBuffer, 0x800);
 			if (bVar1 == 0) {
 				__dest = (char*)0x0;
 			}
@@ -471,9 +471,9 @@ char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_2
 				if ((0x800 < __n) && ((__n & 0x7ff) != 0)) {
 					size = ((__n >> 0xb) + 1) * 0x800;
 				}
-				__dest = (char*)edMemAlloc(heapID, size);
+				__dest = (char*)edMemAllocAlignBoundary(heapID, size);
 				if (__dest == (char*)0x0) {
-					assert(false);
+					IMPLEMENTATION_GUARD();
 					//FUN_0025b420(pDebugBank);
 					__dest = (char*)0x0;
 				}
@@ -483,14 +483,14 @@ char* ReadFileToBuffer(EHeap heapID, char* filePath, uint flags, DebugBankData_2
 					}
 					else {
 						memcpy(__dest, pReadBuffer, 0x800);
-						UsedInFileLoad(pDebugBank, __dest + 0x800, size - 0x800);
+						edFileRead(pDebugBank, __dest + 0x800, size - 0x800);
 						CompleteRead_0025bcc0();
 						if (__n != size) {
 							edMemShrink(__dest, __n);
 						}
 					}
-					if (outLoadedData == (DebugBankData_234**)0x0) {
-						DebugBankClose(pDebugBank);
+					if (outLoadedData == (edFILEH**)0x0) {
+						edFileClose(pDebugBank);
 					}
 					else {
 						*outLoadedData = pDebugBank;
@@ -607,7 +607,7 @@ void edCBank_Free_00244e10(edCBank* pBank)
 {
 	ClearBankLink_002453b0(&g_edCBank_00466d30, pBank);
 	if ((pBank->fileFlagA & 1U) != 0) {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//FUN_0025b420(pBank->pBankBuffer->pLoadedData);
 		edMemFree(pBank->pBankBuffer->field_0x4);
 		memset(pBank->pBankBuffer, 0, sizeof(edCBankBufferEntry));
@@ -835,7 +835,7 @@ void ReadBanksAsync(int idA, int idB, char* pReadBuffer)
 	TypePairData* pTypePairData;
 	void* puVar1;
 	LoadBankFileFunc pLVar2;
-	DebugBankData_234* pDVar3;
+	edFILEH* pDVar3;
 	int iVar4;
 	uint uVar5;
 	BankFileHeader* pcVar1;
@@ -863,7 +863,7 @@ void ReadBanksAsync(int idA, int idB, char* pReadBuffer)
 				//EmptyFunction();
 			}
 			pDVar3 = g_AsyncBankReader_00466e60.aBankQueue[iVar4].pDebugBankData;
-			if (pDVar3 != (DebugBankData_234*)0x0) {
+			if (pDVar3 != (edFILEH*)0x0) {
 				uVar5 = GetFileSize_0025b330(pDVar3);
 				(pcVar1->body).sizePacked = uVar5;
 			}

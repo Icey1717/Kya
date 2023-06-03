@@ -46,21 +46,21 @@ edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
 	ZBufferTags* pTags;
 	int zBufferFormat;
 
-	pVidModeCopy = (ed_surface_desc*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
+	pVidModeCopy = (ed_surface_desc*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
 	*pVidModeCopy = *pVidModeData;
 
-	pFrameBuffer = (edSurface*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(edSurface));
+	pFrameBuffer = (edSurface*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(edSurface));
 	memset(pFrameBuffer, 0, sizeof(edSurface));
 
-	pFrameBuffer->pVidModeData_0x0 = pVidModeCopy;
-	pFrameBuffer->pVidModeData_0x0->pLink_0xc = pFrameBuffer;
+	pFrameBuffer->pSurfaceDesc = pVidModeCopy;
+	pFrameBuffer->pSurfaceDesc->pLink_0xc = pFrameBuffer;
 
 	if (pVidModeData->bUseGlobalFrameBuffer == false) {
 		pFrameBuffer->frameBasePtr = (uint)gFXBufAddr >> 5;
 		pFrameBuffer->data_0xc = (char*)gFXBufAddr;
 	}
 	if ((pVidModeData->flags_0x8 & 8) != 0) {
-		pTags = (ZBufferTags*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
+		pTags = (ZBufferTags*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
 		pFrameBuffer->pZTags = pTags;
 
 		// TAG
@@ -75,7 +75,7 @@ edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
 		pTags->commandBuffer[0].cmdB = SCE_GIF_PACKED_AD;
 
 		// Z BUFFER
-		zBufferFormat = edSurfaceGetZBufferBpp(pFrameBuffer->pVidModeData_0x0->pixelStoreMode);
+		zBufferFormat = edSurfaceGetZBufferBpp(pFrameBuffer->pSurfaceDesc->pixelStoreMode);
 		pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
 			pFrameBuffer->frameBasePtr,	// ZBP
 			zBufferFormat,				// PSM
@@ -374,8 +374,8 @@ Scene::Scene()
 	//}
 	//g_Manager29B4_004516bc = pMVar10;
 	peVar11 = GetVideoParams_002ba3e0();
-	local_8.field_0x2 = 0;
-	local_8.field_0x0 = 0;
+	local_8.posY = 0;
+	local_8.posX = 0;
 	local_8.screenWidth = peVar11->pActiveVidParams->params26.screenWidth;
 	local_8.screenHeight = peVar11->pActiveVidParams->params26.screenHeight;
 	pVVar12 = GetFrameBuffer_001ba9c0();
@@ -656,7 +656,7 @@ void Scene::HandleCurState()
 	this->field_0x44 = this->field_0x44 + pTVar1->lastFrameTime;
 	switch (this->curState) {
 	case 1:
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//FUN_001a0180(1.0, 2, 0);
 		//if (param_1->field_0x40 != 2) {
 		//	param_1->field_0x44 = 0.0;
@@ -664,7 +664,7 @@ void Scene::HandleCurState()
 		//}
 		break;
 	case 2:
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//uVar2 = GetbRam0048cdf8();
 		//if (uVar2 == 0) {
 		//	g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7f;
@@ -677,7 +677,7 @@ void Scene::HandleCurState()
 		//}
 		break;
 	case 3:
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7f;
 		//LargeObject::OnSaveLoaded_001b8d40(param_1);
 		//FUN_001a0180(1.0, 1, 0);
@@ -687,7 +687,7 @@ void Scene::HandleCurState()
 		//}
 		break;
 	case 4:
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//FUN_001a0180(1.0, 2, 0);
 		//if (param_1->field_0x40 != 5) {
 		//	param_1->field_0x44 = 0.0;
@@ -695,7 +695,7 @@ void Scene::HandleCurState()
 		//}
 		break;
 	case 5:
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//uVar2 = GetbRam0048cdf8();
 		//if (uVar2 == 0) {
 		//	g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7f;
@@ -708,7 +708,7 @@ void Scene::HandleCurState()
 		//}
 		break;
 	case 6:
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//FUN_001a0180(1.0, 2, 0);
 		//if (param_1->field_0x40 != 7) {
 		//	param_1->field_0x44 = 0.0;
@@ -716,7 +716,7 @@ void Scene::HandleCurState()
 		//}
 		break;
 	case 7:
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//uVar2 = GetbRam0048cdf8();
 		//if (uVar2 == 0) {
 		//	FUN_001a0180(1.0, 1, 0);
@@ -868,53 +868,45 @@ bool Scene::CheckFunc_001b9300()
 
 void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height)
 {
-	ed_viewport* pCVar1;
-	ed_viewport* pCVar2;
-	short* psVar3;
-	SceneConfig* pCVar4;
+	ed_viewport* peVar1;
+	ed_viewport* peVar2;
+	SceneConfig* pSVar3;
+	uint uVar4;
 	uint uVar5;
-	uint uVar6;
-	short* psVar7;
-	short* psVar8;
-	ushort uVar9;
-	ushort uVar10;
-	short local_8;
-	short local_6;
+	int psVar7;
+	short* psVar6;
+	ushort uVar7;
+	ushort uVar8;
+	short local_8[4];
+	int psVar3;
 
-	pCVar4 = ed3DSceneGetConfig(pStaticMeshMaster);
-	pCVar1 = (pCVar4->pShadowConfig).pCamera_0x10;
-	pCVar2 = (pCVar4->pShadowConfig).pCamera_0x14;
-	uVar5 = GetGreaterPower2Val(width);
-	uVar6 = GetGreaterPower2Val(height);
-	if (0x100 < (int)uVar6) {
-		uVar6 = 0x100;
+	pSVar3 = ed3DSceneGetConfig(pStaticMeshMaster);
+	peVar1 = (pSVar3->pShadowConfig).pCamera_0x10;
+	peVar2 = (pSVar3->pShadowConfig).pCamera_0x14;
+	uVar4 = GetGreaterPower2Val(width);
+	uVar5 = GetGreaterPower2Val(height);
+	if (0x100 < (int)uVar5) {
+		uVar5 = 0x100;
 	}
-	psVar8 = &local_8;
-	if (0x200 < (int)uVar5) {
-		uVar5 = 0x200;
+	psVar6 = local_8;
+	if (0x200 < (int)uVar4) {
+		uVar4 = 0x200;
 	}
-	psVar7 = (short*)0x8;
-	psVar3 = psVar8;
-	while (psVar3 != (short*)0x0) {
-		*(undefined*)psVar8 = 0;
-		psVar8 = (short*)((ulong)psVar8 + 1);
-		psVar7 = (short*)((ulong)psVar7 + -1);
-		psVar3 = psVar7;
-	}
-	uVar10 = (ushort)uVar5;
-	uVar9 = (ushort)uVar6;
-	(pCVar4->pShadowConfig).field_0x18 = uVar5;
-	(pCVar4->pShadowConfig).field_0x1c = uVar6;
-	pCVar1->posX = local_8;
-	pCVar1->posY = local_6;
-	pCVar1->screenWidth = uVar10;
-	pCVar1->screenHeight = uVar9;
-	pCVar1->pColorBuffer->pVidModeData_0x0->screenWidth = uVar10;
-	pCVar1->pColorBuffer->pVidModeData_0x0->screenHeight = uVar9;
-	pCVar2->posX = local_8;
-	pCVar2->posY = local_6;
-	pCVar2->screenWidth = uVar10;
-	pCVar2->screenHeight = uVar9;
+	memset(local_8, 0, sizeof(local_8));
+	uVar8 = (ushort)uVar4;
+	uVar7 = (ushort)uVar5;
+	(pSVar3->pShadowConfig).field_0x18 = uVar4;
+	(pSVar3->pShadowConfig).field_0x1c = uVar5;
+	peVar1->posX = local_8[0];
+	peVar1->posY = local_8[1];
+	peVar1->screenWidth = uVar8;
+	peVar1->screenHeight = uVar7;
+	peVar1->pColorBuffer->pSurfaceDesc->screenWidth = uVar8;
+	peVar1->pColorBuffer->pSurfaceDesc->screenHeight = uVar7;
+	peVar2->posX = local_8[0];
+	peVar2->posY = local_8[1];
+	peVar2->screenWidth = uVar8;
+	peVar2->screenHeight = uVar7;
 	return;
 }
 

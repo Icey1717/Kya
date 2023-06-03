@@ -24,6 +24,18 @@ namespace Renderer
 		float FOG[4]; // FOG:28
 	};
 
+	struct ImageData {
+		void* pImage = nullptr;
+		uint32_t width = 0;
+		uint32_t height = 0;
+		uint32_t bpp = 0;
+	};
+
+	struct TextureData {
+		ImageData image;
+		ImageData pallete;
+	};
+
 	void Setup();
 	void RenderImage(char* imageData, int width, int height);
 	void WaitUntilReady();
@@ -47,5 +59,5 @@ namespace Renderer
 		uint32_t tfx, uint32_t cbp, uint32_t cpsm,
 		uint32_t csm, uint32_t csa, uint32_t cld);
 
-	void SetImagePointer(void* pInImage);
+	void SetImagePointer(TextureData inImage);
 }

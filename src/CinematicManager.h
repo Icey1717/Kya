@@ -101,7 +101,7 @@ struct CinematicObjectB {
 	undefined field_0x11f;
 	sceVu0FMATRIX matrix_0x120;
 	//struct CinematicFileData cinFileData;
-	//struct TranslatedTextData textData;
+	//struct MessageFile textData;
 	//struct MeshInfo* pMeshInfo;
 	//struct MeshTransformParent* pMeshTransform;
 	//struct ACutsceneActor** pCutsceneSubInfo;

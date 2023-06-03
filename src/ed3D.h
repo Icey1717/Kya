@@ -205,9 +205,9 @@ PACK(
 
 
 PACK(struct ed_g2d_bitmap {
-	ushort field_0x0;
-	ushort field_0x2;
-	ushort field_0x4;
+	ushort width;
+	ushort height;
+	ushort psm;
 	ushort field_0x6;
 	int pPSX2; //char*
 });
@@ -280,7 +280,7 @@ PACK(
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
-	int pHASH_Internal; // TextureData_HASH_Internal*
+	int pHASH_Internal; // TextureData_HASH_Internal_PA32*
 	undefined field_0xc;
 	undefined field_0xd;
 	undefined field_0xe;
@@ -290,7 +290,7 @@ PACK(
 PACK(
 	struct TextureData_TEX_Internal {
 	TextureData_TEX_Internal_After after;
-	int field_0x10;
+	int palette;
 	undefined field_0x14;
 	undefined field_0x15;
 	undefined field_0x16;

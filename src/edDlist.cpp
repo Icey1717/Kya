@@ -135,7 +135,7 @@ namespace edDlist
 		// #HACK
 		size = size * 4;
 
-		gDLISTWorkingBufferStart = (char*)edMemAlloc(TO_HEAP(H_MAIN), size);
+		gDLISTWorkingBufferStart = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
 		memset(gDLISTWorkingBufferStart, 0, size);
 		gDLISTWorkingBufferCur = gDLISTWorkingBufferStart;
 		gDLISTWorkingBufferEnd = gDLISTWorkingBufferStart + size;
@@ -607,7 +607,7 @@ namespace edDlist
 		return;
 	}
 
-	ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bSuccess, ed_g2d_bitmap** pOutAddr)
+	ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHasPalette, ed_g2d_bitmap** pOutAddr)
 	{
 		TextureData_HASH_Internal_PA32* pTVar1;
 		ed_g2d_bitmap* pTVar2;
@@ -615,7 +615,7 @@ namespace edDlist
 		ed_g2d_layer* iVar1;
 		TextureData_HASH_Internal_PA32* iVar3;
 
-		*bSuccess = false;
+		*bHasPalette = false;
 		*pOutAddr = (ed_g2d_bitmap*)0x0;
 		if (pMAT != (ed_g2d_material*)0x0) {
 			if (pMAT->count_0x0 == 0) {
@@ -632,8 +632,8 @@ namespace edDlist
 					return (ed_g2d_bitmap*)0x0;
 				}
 
-				if ((iVar2->body).field_0x10 != 0) {
-					*bSuccess = true;
+				if ((iVar2->body).palette != 0) {
+					*bHasPalette = true;
 
 					iVar3 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(((TextureData_TEX_Internal_After*)(iVar2 + 1))[(uint)(iVar1->body).field_0x1e].pHASH_Internal);
 
@@ -768,8 +768,8 @@ namespace edDlist
 	void edDListSetActiveViewPort(ed_viewport* pViewport)
 	{
 		if (gbInsideBegin == false) {
-			gIncViewportX = (0x800 - ((int)(uint)pViewport->pColorBuffer->pVidModeData_0x0->screenWidth >> 1)) * 0x10;
-			gIncViewportY = (0x800 - ((int)(uint)pViewport->pColorBuffer->pVidModeData_0x0->screenHeight >> 1)) * 0x10;
+			gIncViewportX = (0x800 - ((int)(uint)pViewport->pColorBuffer->pSurfaceDesc->screenWidth >> 1)) * 0x10;
+			gIncViewportY = (0x800 - ((int)(uint)pViewport->pColorBuffer->pSurfaceDesc->screenHeight >> 1)) * 0x10;
 			gCurViewport = pViewport;
 			if ((((gCurDList != (DisplayListInternal*)0x0) &&
 				(gCurDList->subCommandBufferCount != 0)) && ((gCurDList->flags_0x0 & 2) != 0))
@@ -810,13 +810,13 @@ namespace edDlist
 	{
 		edpkt_data* pRVar1;
 		edpkt_data* pRVar2;
-		ed_g2d_bitmap* pcVar3;
+		ed_g2d_bitmap* pPaletteBitmap;
 		edpkt_data* pRVar4;
 		RenderCommandUint* pDVar4;
 		DisplayListInternalSubObj_60* pDVar5;
 		RenderCommandUint* pDVar6;
-		ed_g2d_bitmap* local_8;
-		bool local_1;
+		ed_g2d_bitmap* pTextureBitmap;
+		bool bHasPalette;
 		int iVar3;
 
 		gCurFlashMaterial = 0;
@@ -835,15 +835,15 @@ namespace edDlist
 		if (pMaterialInfo != (edDList_material*)0x0) {
 			if ((pMaterialInfo->mode & 4U) == 0) {
 				if (pMaterialInfo->pMAT != (ed_g2d_material*)0x0) {
-					local_1 = false;
-					local_8 = (ed_g2d_bitmap*)0x0;
-					pcVar3 = edDListGetG2DBitmap(pMaterialInfo->pMAT, 0, &local_1, &local_8);
+					bHasPalette = false;
+					pTextureBitmap = (ed_g2d_bitmap*)0x0;
+					pPaletteBitmap = edDListGetG2DBitmap(pMaterialInfo->pMAT, 0, &bHasPalette, &pTextureBitmap);
 					pDVar6 = pDVar5->aCommandArray;
-					if (pcVar3 != (ed_g2d_bitmap*)0x0) {
-						pDVar5->aCommandArray[0].pCommandBuffer = (edpkt_data*)(((char*)LOAD_SECTION(pcVar3->pPSX2)) + 0x40);
+					if (pPaletteBitmap != (ed_g2d_bitmap*)0x0) {
+						pDVar5->aCommandArray[0].pCommandBuffer = (edpkt_data*)(((char*)LOAD_SECTION(pPaletteBitmap->pPSX2)) + 0x40);
 						pDVar5->aCommandArray[0].type = LM_CALL;
 						
-						if ((local_1 != false) && (iVar3 = (uint)local_8->field_0x0 * (uint)local_8->field_0x2, 0x3ffff < iVar3)) {
+						if ((bHasPalette != false) && (iVar3 = (uint)pTextureBitmap->width * (uint)pTextureBitmap->height, 0x3ffff < iVar3)) {
 							pRVar2 = pDVar5->aCommandArray[0].pCommandBuffer;
 							pRVar4 = pRVar2 + 0x12;
 							if (iVar3 == 0x40000) {
@@ -853,18 +853,76 @@ namespace edDlist
 						}
 						pDVar6 = pDVar5->aCommandArray + 1;
 						gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
+
+#ifdef PLATFORM_WIN
+						int imageIndex = -1;
+						int paletteIndex = -1;
+						auto pPkt = edpktAsU32(pDVar5->aCommandArray[0].pCommandBuffer);
+						while (true)
+						{
+							if ((*pPkt) >> 28 == 0x03) {
+								if (imageIndex == -1) {
+									imageIndex = pPkt[1];
+								}
+								else {
+									paletteIndex = pPkt[1];
+									break;
+								}
+							}
+							pPkt += 4;
+						}
+
+						Renderer::SetImagePointer(
+							{ {LOAD_SECTION(imageIndex), 0x40, 0x80, pTextureBitmap->psm},
+							{  LOAD_SECTION(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, 32 } });
+#endif
 					}
 
 					pDVar6->pCommandBuffer = (edpkt_data*)((char*)LOAD_SECTION(pMaterialInfo->pMAT->pCommandBufferTexture) + 0x10);
 
-					if ((local_1 != false) && (0x3ffff < (uint)local_8->field_0x0 * (uint)local_8->field_0x2)) {
+					if ((bHasPalette != false) && (0x3ffff < (uint)pTextureBitmap->width * (uint)pTextureBitmap->height)) {
 						*(uint*)((int)&pDVar6->pCommandBuffer[1].cmdA + 4) =
 							*(uint*)((int)&pDVar6->pCommandBuffer[1].cmdA + 4) & 0xfffc001f | 0x10000;
 					}
 
+					// Texture palette hacks.
+#if 0
+					//{
+					//	int* pAddr = (int*)(pDVar5->aCommandArray[0].pCommandBuffer + 7);
+					//	uint* pCol = (uint*)LOAD_SECTION(pAddr[1]);
+					//
+					//	int i = 0;
+					//	for (; i < 0x40 * 0x80 * 1; i++) {
+					//		pCol[i] = 0x1234567;
+					//	}
+					//
+					//	i = 0;
+					//	for (; i < 0x40 / 4; i++) {
+					//		pCol[i] = 0x0;
+					//	}
+					//}
+
+					//uint palette[8] = {
+					//	0xFF0000FF,  // Red (ARGB)		0
+					//	0xFF00FF00,  // Green (ARGB)	1
+					//	0xFFFF0000,  // Blue (ARGB)		2
+					//	0xFF00FFFF,  // Yellow (ARGB)	3
+					//	0xFFFF00FF,  // Magenta (ARGB)	4
+					//	0xFFFFFF00,  // Cyan (ARGB)		5
+					//	0xFFFFFFFF,  // White (ARGB)	6
+					//	0x00000000   // Black (ARGB)	7
+					//};
+
+					{
+						//int* pAddr = (int*)(pDVar5->aCommandArray[0].pCommandBuffer + 7 + 8);
+						//uint* pCol = (uint*)LOAD_SECTION(pAddr[1]);
+						//memcpy(pCol, palette, 8 * 4);
+						//pCol[4] = 0xFFFF00FF;
+					}
+#endif
+
 #ifdef PLATFORM_WIN
 					SendTextureCommandsFromPacked((pDVar6->pCommandBuffer + 1)->cmdA);
-					Renderer::SetImagePointer(pMaterialInfo->textureInfo->pT2DA + 0x50);
 #endif
 
 					pDVar6->type = LM_REF_1;
@@ -1164,7 +1222,7 @@ namespace edDlist
 			gCurDListBuf = gCurDList->field_0x10;
 			gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 			iVar3 = -gCurStatePKTSize;
-			assert(false);
+			IMPLEMENTATION_GUARD();
 			pRVar2[iVar3].cmdA = (long)gNbStateAdded | 0x1000000000008000;
 #ifdef PLATFORM_WIN
 			DUMP_TAG_ADV(pRVar2[iVar3].cmdA);

@@ -3,7 +3,7 @@
 
 #include "Types.h"
 
-enum ELanguageID 
+enum LANGUAGE 
 {
 	GB,
 	FR,
@@ -13,18 +13,19 @@ enum ELanguageID
 	AUTO
 };
 
-class TranslatedTextData 
+class MessageFile 
 {
 public:
-	TranslatedTextData();
-	~TranslatedTextData();
+	MessageFile();
+	~MessageFile();
 
-	void LoadTextTranslatedFromBank(struct edCBankBufferEntry* pBankAccess, char* pFilePath, ELanguageID languageID);
-	void LoadTranslatedTextFromDisk(char* filePath, ELanguageID languageID);
+	void select_language(struct edCBankBufferEntry* pBankAccess, char* pFilePath, LANGUAGE languageID);
+	void select_language(char* filePath, LANGUAGE languageID);
+	void prepare_buffer();
 
-	char* GetText_00336c10(ulong key, long mode);
+	char* get_message(ulong key, long mode);
 
-	ELanguageID languageID;
+	LANGUAGE languageID;
 	int entryCount;
 	char field_0x8[32];
 	undefined field_0x28;
@@ -127,13 +128,18 @@ public:
 	char* pFileData;
 	uint size;
 	struct edCBankBufferEntry* pBankAccessObj;
-	struct TranslatedTextData* pPrev;
-	struct TranslatedTextData* pNext;
+	struct MessageFile* pPrev;
+	struct MessageFile* pNext;
 };
 
-char* FindTranslatedTextFromKey_00336970(TranslatedTextData** ppTextData, ulong key);
+class MessageManager {
+public:
+	void remove_entry(MessageFile* pToRemove);
+	char* get_message(ulong key);
+	MessageFile* pMessage;
+};
 
-extern ELanguageID g_LanguageID_0044974c;
-extern TranslatedTextData* g_TranslatedTextTRC_00449748;
+extern LANGUAGE g_LanguageID_0044974c;
+extern MessageManager gMessageManager;
 
 #endif //TRANSLATED_TEXT_DATA

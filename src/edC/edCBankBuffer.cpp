@@ -8,10 +8,11 @@
 #if defined(PLATFORM_PS2)
 #include <eekernel.h>
 #endif
+#include "../edStr.h"
 
 const char* sz_edCBankBuffer_Wait_0042fb70 = "edCBankBufferEntry::file_access: Wait for end of previous loading operation \n";
 
-void ReadsBankFile(void)
+void edFileNoWaitStackFlush(void)
 {
 	edCFiler* peVar1;
 	edCFiler_28* peVar2;
@@ -19,7 +20,7 @@ void ReadsBankFile(void)
 	for (peVar1 = GetFirstEdFileHandler_00260e00(&g_edCFiler_MCPtr_00448fd8); peVar1 != (edCFiler*)0x0; peVar1 = (peVar1->baseData).pNextEd) {
 		peVar2 = peVar1->GetGlobalC_0x1c();
 		if (peVar2 != (edCFiler_28*)0x0) {
-			ReadsBankFile(peVar2);
+			edFileNoWaitStackCallBack(peVar2);
 		}
 	}
 	return;
@@ -45,7 +46,7 @@ bool QueueBankRead_002444a0(AsyncBankReader* pReadBank, ReadBank_1C* pInBank)
 	return iVar1 != 0xc;
 }
 
-uint GetFileSize_0025b330(DebugBankData_234* param_1)
+uint GetFileSize_0025b330(edFILEH* param_1)
 {
 	uint uVar1;
 
@@ -56,7 +57,7 @@ uint GetFileSize_0025b330(DebugBankData_234* param_1)
 	return uVar1;
 }
 
-uint edCBankFileHeader_get_index(BankFile_Internal* pFileData, int inIndex, int mode)
+uint get_index(BankFile_Internal* pFileData, int inIndex, int mode)
 {
 	uint uVar1;
 	char* pcVar2;
@@ -101,7 +102,7 @@ char* DebugFindFilePath(BankFile_Internal* pBVar3, int inFileIndex)
 	char* returnFileBufferStart = NULL;
 	if (pBVar3->fileCount != 0) {
 		do {
-			uint uVar2 = edCBankFileHeader_get_index(pBVar3, inIndex, 0);
+			uint uVar2 = get_index(pBVar3, inIndex, 0);
 			if ((uVar2 == inFileIndex) &&
 				(returnFileBufferStart = edCBankFileHeader_GetIopPath_00246460(pBVar3, inIndex),
 					returnFileBufferStart != (char*)0x0)) {
@@ -121,7 +122,7 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 {
 	BankFile_Internal* bankBufferObj;
 	uint* puVar1;
-	DebugBankData_234* pDebugBank;
+	edFILEH* pDebugBank;
 	uint uVar2;
 	edCBankBufferEntry* peVar3;
 	ulong uVar4;
@@ -136,7 +137,7 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 		edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
 		fileBufferData = pBankFileAccessObject->accessFlag;
 		while (fileBufferData != 0) {
-			ReadsBankFile();
+			edFileNoWaitStackFlush();
 			fileBufferData = pBankFileAccessObject->accessFlag;
 		}
 	}
@@ -145,8 +146,8 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 		if (((pBankHeader->fileFlagA & 4U) != 0) || ((filePathPtr->fileFlagA & 4U) != 0)) {
 			uVar2 = 9;
 		}
-		pDebugBank = edFileLoadSize(filePathPtr->filePath, uVar2 | 1);
-		if (pDebugBank == (DebugBankData_234*)0x0) {
+		pDebugBank = edFileOpen(filePathPtr->filePath, uVar2 | 1);
+		if (pDebugBank == (edFILEH*)0x0) {
 			/* edCBankBuffer: Can't open file\n */
 			edDebugPrintf(sz_CannotOpenFile_0042fc60);
 			return false;
@@ -159,7 +160,7 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 			edDebugPrintf(sz_CannotReplaceHeader_0042fbf0);
 			return false;
 		}
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		/* Dereference the input pointer to get the actual file path */
 		//uVar4 = SEXT48((int)filePathPtr->filePath);
 		//bankBufferObj = pBankHeader->pBankBuffer->fileBuffer;
@@ -170,7 +171,7 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 		//uVar2 = puVar1[1];
 		//unaff_s7_lo = *puVar1;
 		//pDebugBank = pBankHeader->pBankBuffer->pLoadedData;
-		//if (pDebugBank == (DebugBankData_234*)0x0) {
+		//if (pDebugBank == (edFILEH*)0x0) {
 		//	/* edCBankBuffer: File not open \n */
 		//	edDebugPrintf(sz_FileNotOpen_0042fc40);
 		//	return false;
@@ -194,11 +195,11 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 		pReadBuffer = (char*)((char*)&peVar3->header + pBankHeader->flagB + uVar5);
 		pBankFileAccessObject->field_0x4 = (int*)pReadBuffer;
 		pBankFileAccessObject->fileBuffer = (BankFile_Internal*)(pReadBuffer + 8);
-		pBankFileAccessObject->pLoadedData = (DebugBankData_234*)0x0;
+		pBankFileAccessObject->pLoadedData = (edFILEH*)0x0;
 		pBankFileAccessObject->field_0x14 = uVar2;
 	}
 	else {
-		assert(false);
+		IMPLEMENTATION_GUARD();
 		//edCBankFileHeader_get_entry_typepair((long)(int)pBankFileAccessObject->fileBuffer, pBankHeader->pBankTypePairData, 1, pBankFileAccessObject->pObjectReference);
 		pReadBuffer = (char*)pBankFileAccessObject->field_0x4;
 	}
@@ -208,7 +209,7 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 	local_20.fileFlagB_0x18 = filePathPtr->fileFlagA;
 	local_20.pDebugBankData = pDebugBank;
 	if (someFlag != false) {
-		local_20.pDebugBankData = (DebugBankData_234*)0x0;
+		local_20.pDebugBankData = (edFILEH*)0x0;
 	}
 	local_20.fileFunc_0x14 = filePathPtr->fileFunc;
 	local_20.pBankHeader_0x0 = pBankFileAccessObject;
@@ -221,18 +222,18 @@ bool load(edCBank* pBankHeader, edCBankBufferEntry* pBankFileAccessObject, BankF
 		pBankHeader->flagB = pBankHeader->flagB + filePathPtr->fileFlagE;
 	}
 	if (someFlag != false) {
-		DebugBankSeek(pDebugBank, unaff_s7_lo, ED_SEEK_SET);
+		edFileSeek(pDebugBank, unaff_s7_lo, ED_SEEK_SET);
 	}
-	UsedInFileLoad(pDebugBank, pReadBuffer, uVar2);
+	edFileRead(pDebugBank, pReadBuffer, uVar2);
 	if (someFlag == false) {
-		DebugBankClose(pDebugBank);
+		edFileClose(pDebugBank);
 	}
 	if ((((pBankHeader->fileFlagA & 4U) == 0) && ((filePathPtr->fileFlagA & 4U) == 0)) && (pBankFileAccessObject->accessFlag != 0)) {
 		/* edCBankBuffer::file_access: Wait for end of previous loading operation \n */
 		edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
 		fileBufferData = pBankFileAccessObject->accessFlag;
 		while (fileBufferData != 0) {
-			ReadsBankFile();
+			edFileNoWaitStackFlush();
 			fileBufferData = pBankFileAccessObject->accessFlag;
 		}
 	}
@@ -253,7 +254,7 @@ bool load(edCBankBufferEntry* pBankBuffer, BankFilePathContainer* file)
 			edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
 			fileOutputStart = pBankBuffer->accessFlag;
 			while (fileOutputStart != 0) {
-				ReadsBankFile();
+				edFileNoWaitStackFlush();
 				fileOutputStart = pBankBuffer->accessFlag;
 			}
 		}
@@ -362,7 +363,7 @@ void edCBankFileHeader_get_entry_typepair(BankFile_Internal* fileBuffer, TypePai
 	return;
 }
 
-FileHeaderFileData* edCBankFileHeader_FindFileDataInHeader(BankFile_Internal* pFileHeader, int fileIndex)
+FileHeaderFileData* get_entry(BankFile_Internal* pFileHeader, int fileIndex)
 {
 	char* pcVar1;
 
@@ -569,7 +570,7 @@ bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, edBANK_ENTRY_INF
 			else {
 				outFileData->type = (uint)pTypeData->type;
 				outFileData->stype = (uint)pTypeData->stype;
-				pFileHeader = edCBankFileHeader_FindFileDataInHeader(pBankBuffer->fileBuffer, inFileIndex);
+				pFileHeader = get_entry(pBankBuffer->fileBuffer, inFileIndex);
 				if (pFileHeader == (FileHeaderFileData*)0x0) {
 					bVar1 = false;
 				}
@@ -584,11 +585,11 @@ bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, edBANK_ENTRY_INF
 						inIndex = 0;
 						if (pBVar3->fileCount != 0) {
 							do {
-								uVar2 = edCBankFileHeader_get_index(pBVar3, inIndex, 0);
+								uVar2 = get_index(pBVar3, inIndex, 0);
 								if ((uVar2 == inFileIndex) &&
 									(returnFileBufferStart = edCBankFileHeader_GetIopPath_00246460(pBankBuffer->fileBuffer, inIndex),
 										returnFileBufferStart != (char*)0x0)) {
-									edStringCpyL(outIopPath, returnFileBufferStart);
+									edStrCopy(outIopPath, returnFileBufferStart);
 									break;
 								}
 								pBVar3 = pBankBuffer->fileBuffer;
@@ -619,7 +620,7 @@ bool edCBankBuffer_file_access_002450e0(edCBankBufferEntry* pBankBuffer, BankFil
 			edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
 			iVar1 = pBankBuffer->accessFlag;
 			while (iVar1 != 0) {
-				ReadsBankFile();
+				edFileNoWaitStackFlush();
 				iVar1 = pBankBuffer->accessFlag;
 			}
 		}
@@ -655,7 +656,7 @@ bool edCBankBuffer_close(edCBankBufferEntry* pBankBuffer)
 			edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
 			iVar1 = pBankBuffer->accessFlag;
 			while (iVar1 != 0) {
-				ReadsBankFile();
+				edFileNoWaitStackFlush();
 				iVar1 = pBankBuffer->accessFlag;
 			}
 		}
@@ -665,7 +666,7 @@ bool edCBankBuffer_close(edCBankBufferEntry* pBankBuffer)
 			edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
 			iVar1 = pBankBuffer->accessFlag;
 			while (iVar1 != 0) {
-				ReadsBankFile();
+				edFileNoWaitStackFlush();
 				iVar1 = pBankBuffer->accessFlag;
 			}
 		}
@@ -686,7 +687,7 @@ bool edCBankBuffer_close(edCBankBufferEntry* pBankBuffer)
 	return bVar3;
 }
 
-int FormatFileName(char* outFileName, char* inFileName)
+int TreeInfo_OptimizeFilePath(char* outFileName, char* inFileName)
 {
 	char* pcVar1;
 	char* pcVar2;
@@ -734,7 +735,7 @@ int FormatFileName(char* outFileName, char* inFileName)
 	return (int)(finalBufferPos + -(long long)outFileName);
 }
 
-char* FindHeaderIndex(char* headerBaseFilePath, int* outIndex, char* fileName, char* searchBuffer)
+char* TreeInfo_RecurseWhileCountingIndexesUsingReference(char* headerBaseFilePath, int* outIndex, char* fileName, char* searchBuffer)
 {
 	bool bVar1;
 	char cVar2;
@@ -746,6 +747,8 @@ char* FindHeaderIndex(char* headerBaseFilePath, int* outIndex, char* fileName, c
 	long lVar7;
 	uint uVar8;
 
+	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference headerBaseFilePath %s\n", headerBaseFilePath);
+
 	/* This will recursively search for the input file in the header folder
 	   structure */
 	cVar2 = *headerBaseFilePath;
@@ -754,6 +757,7 @@ char* FindHeaderIndex(char* headerBaseFilePath, int* outIndex, char* fileName, c
 	if (lVar4 < 0) {
 		lVar4 = (long)-(int)cVar2 << 0x38;
 		lVar7 = lVar4 >> 0x38;
+		MY_LOG("%d %d\n", lVar4, lVar7);
 		if (lVar7 == 0x80) {
 			lVar7 = (long)((int)(lVar4 >> 0x38) + (int)*basePathChar);
 			basePathChar = headerBaseFilePath + 2;
@@ -766,6 +770,9 @@ char* FindHeaderIndex(char* headerBaseFilePath, int* outIndex, char* fileName, c
 			uVar8 = uVar8 | ((int)(char)bVar3 & 0x7fU) << (uVar5 & 0x1f);
 			uVar5 = uVar5 + 7;
 		} while ((char)bVar3 < '\0');
+
+		MY_LOG("%u %u %d\n", uVar8, uVar5, lVar7);
+
 		iVar6 = (int)lVar7;
 		if (lVar7 != 0) {
 			do {
@@ -775,14 +782,16 @@ char* FindHeaderIndex(char* headerBaseFilePath, int* outIndex, char* fileName, c
 				searchBuffer = searchBuffer + 1;
 			} while (iVar6 != 0);
 		}
+		MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference basePathChar2: %s\n", basePathChar);
 		*searchBuffer = '\\';
 		do {
 			if (uVar8 == 0) {
 				return basePathChar;
 			}
 			uVar8 = uVar8 - 1;
-			basePathChar = FindHeaderIndex(basePathChar, outIndex, fileName, searchBuffer + 1);
+			basePathChar = TreeInfo_RecurseWhileCountingIndexesUsingReference(basePathChar, outIndex, fileName, searchBuffer + 1);
 		} while (basePathChar != (char*)0x0);
+		MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference FOUND\n");
 		basePathChar = (char*)0x0;
 	}
 	else {
@@ -792,29 +801,36 @@ char* FindHeaderIndex(char* headerBaseFilePath, int* outIndex, char* fileName, c
 		}
 		while (bVar1 = lVar4 != 0, lVar4 = (long)((int)lVar4 + -1), bVar1) {
 			*searchBuffer = *basePathChar;
-			basePathChar = (char*)((byte*)basePathChar + 1);
-			searchBuffer = (char*)((byte*)searchBuffer + 1);
+			basePathChar = basePathChar + 1;
+			searchBuffer = searchBuffer + 1;
 		}
+		MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference searchBufferB %s\n", basePathChar);
 		do {
-			fileName = (char*)((byte*)fileName + -1);
-			searchBuffer = (char*)((byte*)searchBuffer + -1);
+			fileName = fileName + -1;
+			searchBuffer = searchBuffer + -1;
+			MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference searchBufferB %s\n", searchBuffer);
+			MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference filenameB %s\n", fileName);
 			if (*fileName == 0) {
+				MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference FOUND B\n");
 				return (char*)0x0;
 			}
 		} while ((*searchBuffer != 0) && ((*fileName & 0xdfU) == (*searchBuffer & 0xdfU)));
 		*outIndex = *outIndex + 1;
 	}
+	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference basePathChar %s\n", basePathChar);
+	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference fileName %s\n", fileName);
+	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference searchBuffer %s\n", searchBuffer);
 	return basePathChar;
 }
 
-int GetIndexFromFileHeader(BankFile_Internal* bankBufferObj, char* inFileName)
+int get_entryindex_from_filename(BankFile_Internal* bankBufferObj, char* inFileName)
 {
 	char* pHeaderBase;
 	int fileNameLength;
 	char* headerBasePath;
 	uint uVar2;
 	int inIndex;
-	char formattedFilename[271];
+	char formattedFilename[272];
 	char fullHeaderFilePath[267];
 	int outIndex;
 	char cVar1;
@@ -828,18 +844,21 @@ int GetIndexFromFileHeader(BankFile_Internal* bankBufferObj, char* inFileName)
 		pHeaderBase = bankBufferObj->header + bankBufferObj->field_0x30 + -8;
 	}
 	headerBasePath = pHeaderBase + 8;
+	formattedFilename[0] = '\0';
 	/* Formats file in the format extension / file name */
-	fileNameLength = FormatFileName(formattedFilename, inFileName);
+	fileNameLength = TreeInfo_OptimizeFilePath(formattedFilename + 1, inFileName);
+	MY_LOG("GetIndexFromFileHeader formatted %s | %s %d\n", formattedFilename + 1, headerBasePath, fileNameLength);
 	outIndex = 0;
 	cVar1 = *headerBasePath;
 	while (cVar1 != '\0') {
 		/* Search through the header object and find which index the input file name is
 			*/
 		headerBasePath =
-			FindHeaderIndex(headerBasePath, &outIndex, formattedFilename + fileNameLength,
+			TreeInfo_RecurseWhileCountingIndexesUsingReference(headerBasePath, &outIndex, formattedFilename + 1 + fileNameLength,
 				fullHeaderFilePath);
 		/* This will be true if we reached all the way through the path we were tryng to
 		   search */
+
 		inIndex = outIndex;
 		if (headerBasePath == (char*)0x0) goto LAB_00246280;
 		cVar1 = *headerBasePath;
@@ -849,7 +868,7 @@ LAB_00246280:
 	uVar2 = 0xffffffff;
 	if (-1 < inIndex) {
 		/* Ensure we found the right index? */
-		uVar2 = edCBankFileHeader_get_index(bankBufferObj, inIndex, 0);
+		uVar2 = get_index(bankBufferObj, inIndex, 0);
 	}
 	return (int)uVar2;
 }
@@ -860,7 +879,7 @@ int get_index(edCBankBufferEntry* headerObj, char* inFileName)
 
 	iVar1 = 0;
 	if (headerObj->fileBuffer != (BankFile_Internal*)0x0) {
-		iVar1 = GetIndexFromFileHeader(headerObj->fileBuffer, inFileName);
+		iVar1 = get_entryindex_from_filename(headerObj->fileBuffer, inFileName);
 	}
 	return iVar1;
 }
@@ -879,7 +898,7 @@ void load(edCBankBufferEntry* pBankAccessObject)
 		edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
 		iVar1 = pBankAccessObject->accessFlag;
 		while (iVar1 != 0) {
-			ReadsBankFile();
+			edFileNoWaitStackFlush();
 			iVar1 = pBankAccessObject->accessFlag;
 		}
 	}

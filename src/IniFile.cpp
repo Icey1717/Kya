@@ -8,43 +8,11 @@
 #if defined(PLATFORM_PS2)
 #include <eekernel.h>
 #endif
+#include "edStr.h"
 
 EdFileGlobal_10 g_IniFile_00450750_mem;
 IniFile g_IniFile_00450750;
 
-// NOT PART OF THIS FILE
-int ReadIntFromStream(char* stream, int offset)
-{
-	char currentChar;
-	int result;
-	uint tempIndexA;
-	uint tempIndexB;
-	int multiplier;
-
-	multiplier = 1;
-	tempIndexA = offset - 1;
-	result = 0;
-	if (offset != 0) {
-		do {
-			tempIndexB = tempIndexA & 0xff;
-			currentChar = stream[tempIndexA & 0xff];
-			if ((currentChar == '-') || (currentChar == '+')) {
-				if (currentChar == '-') {
-					result = -result;
-				}
-			}
-			else {
-				// If the current character is a digit
-				// add it to the final result
-				result = result + multiplier * (currentChar + -0x30);
-				multiplier = multiplier * 10;
-			}
-			tempIndexA = tempIndexB - 1;
-		} while (tempIndexB != 0);
-	}
-	return result;
-}
-// END NOT PART OF THIS FILE
 
 bool IniFile::ReadHexValueFromFile(int* hexValue)
 {
@@ -225,7 +193,7 @@ bool IniFile::ReadInteger(int* outVal)
 			isSuccess = false;
 		}
 		else {
-			parsedValue = ReadIntFromStream(streamStart, tempIndex & 0xff);
+			parsedValue = edStrStr2Int(streamStart, tempIndex & 0xff);
 			*outVal = parsedValue;
 			isSuccess = true;
 			*outVal = *outVal * multiplier;

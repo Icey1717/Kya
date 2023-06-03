@@ -5,6 +5,7 @@
 #include "TimeController.h"
 #include "Rendering/CameraPanMasterHeader.h"
 #include "Rendering/DisplayList.h"
+#include "edStr.h"
 
 SectorManager::SectorManager()
 {
@@ -143,7 +144,7 @@ void SectorManager::Game_Term()
 	LevelInfo* pcVar5 = &g_LevelScheduleManager_00449728->aLevelInfo[g_LevelScheduleManager_00449728->nextLevelID];
 	local_1a0 = pcVar5;
 	/* /sect */
-	FormatFilePath(this->field_0x4, g_LevelScheduleManager_00449728->levelPath, pcVar5->levelName, "/", "SECT", 0);
+	edStrCatMulti(this->field_0x4, g_LevelScheduleManager_00449728->levelPath, pcVar5->levelName, "/", "SECT", 0);
 	uVar12 = 0;
 	memset(auStack144, 0, 0x78);
 	this->sectDataCount = 0;
@@ -657,7 +658,7 @@ void Sector::LoadBNK(int param_2, int param_3, bool bFileFlag)
 		peVar4 = get_free_entry(&this->bankObject);
 		(this->bankObject).pBankFileAccessObject = peVar4;
 		iVar1 = this->field_0x4;
-		sectStringLength = edStringCpyL(acStack64, (g_ManagerSingletonArray_00451660.g_SectorManager_00451670)->field_0x4);
+		sectStringLength = edStrCopy(acStack64, (g_ManagerSingletonArray_00451660.g_SectorManager_00451670)->field_0x4);
 		sectString = acStack64 + sectStringLength;
 		if (iVar1 < 10) {
 			*sectString = (char)iVar1 + '0';
@@ -670,7 +671,7 @@ void Sector::LoadBNK(int param_2, int param_3, bool bFileFlag)
 			sectString = acStack64 + 2;
 		}
 		/* Add the '.bnk' suffix to the file name */
-		edStringCpyL(sectString + sectStringLength, ".bnk");
+		edStrCopy(sectString + sectStringLength, ".bnk");
 		memset(&local_60, 0, sizeof(BankFilePathContainer));
 		if (bFileFlag == false) {
 			local_60.fileFlagA = 0xc;

@@ -5,6 +5,7 @@
 struct HardwareState {
 	int FBP;
 	bool bActivePass;
+	VkRect2D scissor;
 };
 
 HardwareState& GetHardwareState();

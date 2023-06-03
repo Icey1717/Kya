@@ -14,8 +14,9 @@
 #include "edSystem.h"
 
 #include <assert.h>
+#include "../edStr.h"
 
-edCFiler_CDVD g_edCFiler_CDVD_0046c360;
+edCFiler_CDVD edFiler_CDVD;
 
 char* sz_CDVD_Drive_004312f8 = "<CDVD>";
 char* sz_DriveLetter_00431300 = "0:";
@@ -40,11 +41,11 @@ edCFiler_CDVD::edCFiler_CDVD()
 	toc.offset = 0;
 	toc.pNextFreeEntry = (edCdlFolder*)0x0;
 	toc.objCount_0x14 = 0;
-	//SetupEd10_00217720((undefined*)&g_edCFiler_CDVD_0046c360, Free_0025c560, &EdFileGlobal_10_0046c350);
+	//SetupEd10_00217720((undefined*)&edFiler_CDVD, Free_0025c560, &EdFileGlobal_10_0046c350);
 	return;
 }
 
-bool edCFiler_CDVD::InitTableOfContents(char* path, ETableOfContentsInitMode mode, InitTableOfContentsParams* param_4)
+bool edCFiler_CDVD::configure(char* path, ETableOfContentsInitMode mode, edFILE_PARAMETER* param_4)
 {
 	if (mode == IM_INIT) {
 		//toc.Initialize((edCdlFolder*)param_4->field_0x0, (int)param_4->field_0x8);
@@ -59,11 +60,11 @@ bool edCFiler_CDVD::InitTableOfContents(char* path, ETableOfContentsInitMode mod
 	return true;
 }
 
-bool edCFiler_CDVD::Init()
+bool edCFiler_CDVD::initialize()
 {
 	baseData.pDriveName_0x0 = sz_CDVD_Drive_004312f8;
 	iopBuf = 0;
-	SetDriveLetter(sz_DriveLetter_00431300);
+	set_default_unit(sz_DriveLetter_00431300);
 	baseData.field_0x4 = 0x61;
 	return true;
 }
@@ -73,12 +74,12 @@ edCFiler_28* edCFiler_CDVD::GetGlobalC_0x1c()
 	return field_0x4a4;
 }
 
-char* SearchForColon(char* inString)
+char* edFilePathGetFilePath(char* inString)
 {
 	char* ret;
 
 	/* Takes a string and finds the first colon, then returns the address of the first character after the found colon */
-	ret = SearchString(inString, ':');
+	ret = edStrChr(inString, ':');
 	if (ret != (char*)0x0) {
 		ret = ret + 1;
 	}
@@ -97,30 +98,7 @@ char* FormatForPC(char* inString)
 }
 #endif
 
-int CopyStringExcept_0028a120(char* outBuffer, char* inString)
-{
-	int stringLength;
-	char outCharacter;
-	int counter;
-	char currentCharacter;
-
-	counter = 0;
-	do {
-		stringLength = counter;
-		currentCharacter = *inString;
-		inString = inString + 1;
-		outCharacter = currentCharacter;
-		if (('`' < currentCharacter) && (currentCharacter < '{')) {
-			outCharacter = currentCharacter + -0x20;
-		}
-		*outBuffer = outCharacter;
-		outBuffer = outBuffer + 1;
-		counter = stringLength + 1;
-	} while (currentCharacter != '\0');
-	return stringLength;
-}
-
-DebugBankDataInternal* GetDebugBankInternal(DebugBankData_234* param_1)
+DebugBankDataInternal* GetDebugBankInternal(edFILEH* param_1)
 {
 	DebugBankDataInternal* pDVar1;
 
@@ -139,7 +117,7 @@ char* sz_FileNotFound_00431280 = "edCFiler_CDVD::open: File not found... retry..
 char* sz_cdrom_00431268 = "cdrom";
 char* sz_DriveLetter_00431270 = ";1";
 
-bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
+bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 {
 	u_char uVar1;
 	u_char uVar2;
@@ -166,7 +144,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 #endif
 	int fileDescriptor;
 
-	MY_LOG("edCFiler_CDVD::Open %s\n", unformatedFilePath);
+	MY_LOG("edCFiler_CDVD::open %s\n", unformatedFilePath);
 
 	/* First we have to change the format of the file path from <CDVD>0:\CDEURO\LEVEL\ to cdrom0:\CDEURO\LEVEL\ */
 	uVar5 = outFile->openFlags;
@@ -183,18 +161,18 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 	} while (fileDirectoryLength < 0x10);
 	openSuccess = false;
 	if (bufferStart != (CDFileContainer*)0x0) {
-		FormatFilePath_002618e0((char*)0x0, fileDirectory, (char*)0x0, (char*)0x0, unformatedFilePath);
+		edFilePathSplit((char*)0x0, fileDirectory, (char*)0x0, (char*)0x0, unformatedFilePath);
 		/* File path starts with 'cdrom' */
-		fileDirectoryLength = edStringCpyL(fullFilePath, sz_cdrom_00431268);
+		fileDirectoryLength = edStrCopy(fullFilePath, sz_cdrom_00431268);
 		outString = fullFilePath + fileDirectoryLength;
-		fileDirectoryLength = edStringCpyL(outString, fileDirectory);
-		pcVar6 = SearchForColon(unformatedFilePath);
-		fileNameLength = CopyStringExcept_0028a120(outString + fileDirectoryLength, pcVar6);
+		fileDirectoryLength = edStrCopy(outString, fileDirectory);
+		pcVar6 = edFilePathGetFilePath(unformatedFilePath);
+		fileNameLength = edStrCopyUpper(outString + fileDirectoryLength, pcVar6);
 		/* Find the first empty char after our current buffer pos and append this suffix ';1' */
-		strcat(outString + fileDirectoryLength + fileNameLength, sz_DriveLetter_00431270);
+		edStrCat(outString + fileDirectoryLength + fileNameLength, sz_DriveLetter_00431270);
 		/* At this point we will have a path like cdrom0:\CDEURO\LEVEL\PREINTRO\CINE\1c9de79b.bnk */
 
-		MY_LOG("edCFiler_CDVD::Open Formatted path %s toc: %d\n", fullFilePath, toc.bLoaded);
+		MY_LOG("edCFiler_CDVD::open Formatted path %s toc: %d\n", fullFilePath, toc.bLoaded);
 
 #ifdef PLATFORM_WIN
 		FILE* fp = NULL;
@@ -204,16 +182,16 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 		if (toc.bLoaded == 0) {
 			while (ret == 0) {
 #if defined(PLATFORM_PS2)
-				MY_LOG("edCFiler_CDVD::Open Searching\n");
+				MY_LOG("edCFiler_CDVD::open Searching\n");
 				sceCdDiskReady(0);
-				pcVar6 = SearchForColon(fullFilePath);
+				pcVar6 = edFilePathGetFilePath(fullFilePath);
 				ret = sceCdSearchFile(&bufferStart->file, pcVar6);
 				if (ret == 0) {
 					/* edCFiler_CDVD::open: File not found... retry... %s\n */
 					edDebugPrintf(sz_FileNotFound_00431280);
 				}
 #else
-				pcVar6 = SearchForColon(fullFilePath);
+				pcVar6 = edFilePathGetFilePath(fullFilePath);
 
 				char* pcFileFull = FormatForPC(pcVar6);
 
@@ -232,8 +210,8 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 			}
 		}
 		else {
-			/* Seek along the path to the first colon (cdrom0:(HERE)\CDEURO\LEVEL\PREINTRO\CINE\1c9de79b.bnk) */
-			postColonFilePath = SearchForColon(unformatedFilePath);
+			/* seek along the path to the first colon (cdrom0:(HERE)\CDEURO\LEVEL\PREINTRO\CINE\1c9de79b.bnk) */
+			postColonFilePath = edFilePathGetFilePath(unformatedFilePath);
 			success = toc.LoadFromTOC(&bufferStart->file, postColonFilePath);
 			ret = (long)success & 0xff;
 			if (ret == 0) {
@@ -282,7 +260,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 			*(undefined*)&pDVar7->field_0xd = *(undefined*)&pDVar7->field_0x5;
 			/* Copy file name into object */
 			*(undefined2*)&pDVar7->field_0xe = *(undefined2*)&pDVar7->field_0x6;
-			edStringCpyL(pDVar7->name, (bufferStart->file).name);
+			edStrCopy(pDVar7->name, (bufferStart->file).name);
 			if ((uVar5 & 8) == 0) {
 #if defined(PLATFORM_PS2)
 				bufferStart->fd = -1;
@@ -309,7 +287,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 #ifdef PLATFORM_WIN
 			if (fp) {
 				bufferStart->fd = g_FileDescriptors.size();
-				MY_LOG("edCFiler_CDVD::Open FILE: %d\n", bufferStart->fd);
+				MY_LOG("edCFiler_CDVD::open FILE: %d\n", bufferStart->fd);
 				g_FileDescriptors.push_back(fp);
 			}
 #endif
@@ -320,7 +298,7 @@ bool edCFiler_CDVD::Open(DebugBankData_234* outFile, char* unformatedFilePath)
 	return openSuccess;
 }
 
-bool edCFiler_CDVD::Close(DebugBankData_234* pDebugBank)
+bool edCFiler_CDVD::close(edFILEH* pDebugBank)
 {
 	bool bVar1;
 	CDFileContainer* piVar2;
@@ -331,7 +309,7 @@ bool edCFiler_CDVD::Close(DebugBankData_234* pDebugBank)
 		bVar1 = false;
 	}
 	else {
-		MY_LOG("edCFiler_CDVD::Close FILE: %d\n", piVar2->fd);
+		MY_LOG("edCFiler_CDVD::close FILE: %d\n", piVar2->fd);
 
 #ifdef PLATFORM_PS2
 		if ((pDebugBank->openFlags & 8) == 0) {
@@ -359,7 +337,7 @@ bool edCFiler_CDVD::Close(DebugBankData_234* pDebugBank)
 	return bVar1;
 }
 
-uint edCFiler_CDVD::ReadStream(DebugBankData_234* pDebugBank, char* destination, uint requiredSize)
+uint edCFiler_CDVD::read(edFILEH* pDebugBank, char* destination, uint requiredSize)
 {
 	CDFileContainer* paVar1;
 	int iVar2;
@@ -374,7 +352,7 @@ uint edCFiler_CDVD::ReadStream(DebugBankData_234* pDebugBank, char* destination,
 		readBytes = 0;
 	}
 	else {
-		MY_LOG("edCFiler_CDVD::ReadStream FILE: %d Offset: %u\n", paVar1->fd, requiredSize);
+		MY_LOG("edCFiler_CDVD::read FILE: %d Offset: %u\n", paVar1->fd, requiredSize);
 
 		if ((pDebugBank->openFlags & 8) == 0) {
 			iVar2 = 0;
@@ -394,7 +372,7 @@ uint edCFiler_CDVD::ReadStream(DebugBankData_234* pDebugBank, char* destination,
 					readBytes = sceCdStRead(requiredSize >> 0xb, (u_int*)destination, 1, &readError);
 				} while ((readBytes & 0x1fffff) == 0);
 #else
-				assert(false);
+				IMPLEMENTATION_GUARD();
 #endif
 			}
 		}
@@ -421,7 +399,7 @@ uint edCFiler_CDVD::ReadStream(DebugBankData_234* pDebugBank, char* destination,
 	return readBytes;
 }
 
-bool edCFiler_CDVD::Seek(DebugBankData_234* pDebugBank)
+bool edCFiler_CDVD::seek(edFILEH* pDebugBank)
 {
 	bool bVar1;
 	CDFileContainer* piVar2;
@@ -432,7 +410,7 @@ bool edCFiler_CDVD::Seek(DebugBankData_234* pDebugBank)
 		bVar1 = false;
 	}
 	else {
-		MY_LOG("edCFiler_CDVD::Seek FILE: %d Offset: %d\n", piVar2->fd, pDebugBank->seekOffset);
+		MY_LOG("edCFiler_CDVD::seek FILE: %d Offset: %d\n", piVar2->fd, pDebugBank->seekOffset);
 
 		if ((pDebugBank->openFlags & 8) == 0) {
 			do {
@@ -450,7 +428,7 @@ bool edCFiler_CDVD::Seek(DebugBankData_234* pDebugBank)
 	return bVar1;
 }
 
-bool edCFiler_CDVD::ReadCallback(edCFiler_28_Internal* pEdFilerInternal)
+bool edCFiler_CDVD::isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal)
 {
 	bool bVar1;
 	CDFileContainer* pInternalData;
@@ -837,7 +815,7 @@ edCdlFolder* edCFiler_CDVD_Toc::FindEdCFile(char* filePath)
 	char folderNameBuffer[512];
 	char currentCharacter;
 
-	/* Seek through the file path looking for the first non \ character */
+	/* seek through the file path looking for the first non \ character */
 	pcVar4 = pBaseFolder;
 	do {
 		if (*filePath == '\\') {
@@ -848,7 +826,7 @@ edCdlFolder* edCFiler_CDVD_Toc::FindEdCFile(char* filePath)
 		while (true) {
 			currentCharacter = *filePath;
 			filePath = filePath + 1;
-			/* Seek through to the next slash, storing the name of the folder */
+			/* seek through to the next slash, storing the name of the folder */
 			if ((currentCharacter == '\0') || (currentCharacter == '\\')) break;
 			*folderName = currentCharacter;
 			folderName = folderName + 1;
@@ -863,7 +841,7 @@ edCdlFolder* edCFiler_CDVD_Toc::FindEdCFile(char* filePath)
 			if (pcVar4->fileCount != 0) {
 				do {
 					MY_LOG("File: Comparing %s to %s\n", folderNameBuffer, (char*)peVar4);
-					iVar2 = strcmp(folderNameBuffer, (char*)peVar4);
+					iVar2 = edStrICmp((byte*)folderNameBuffer, (byte*)peVar4);
 					if (iVar2 == 0) {
 						return peVar4;
 					}
@@ -879,7 +857,7 @@ edCdlFolder* edCFiler_CDVD_Toc::FindEdCFile(char* filePath)
 		if (pcVar4->folderCount != 0) {
 			do {
 				MY_LOG("Folder: Comparing %s to %s\n", folderNameBuffer, (char*)peVar4);
-				iVar2 = strcmp(folderNameBuffer, (char*)peVar4);
+				iVar2 = edStrICmp((byte*)folderNameBuffer, (byte*)peVar4);
 				if (iVar2 == 0) {
 					bVar1 = true;
 					pcVar4 = peVar4;
@@ -920,7 +898,7 @@ bool edCFiler_CDVD_Toc::LoadFromTOC(sceCdlFILE* pOutFileData, char* filePath)
 	return pFoundFile != (edCdlFolder*)0x0;
 }
 
-bool edCFiler_CDVD::FormatStreamPath(char* filePathOut, char* pathBuff)
+bool edCFiler_CDVD::get_physical_filename(char* filePathOut, char* pathBuff)
 {
 	bool bVar1;
 	int iVar2;
@@ -933,13 +911,13 @@ bool edCFiler_CDVD::FormatStreamPath(char* filePathOut, char* pathBuff)
 		bVar1 = false;
 	}
 	else {
-		FormatFilePath_002618e0((char*)0x0, acStack512, (char*)0x0, (char*)0x0, pathBuff);
-		iVar2 = edStringCpyL(filePathOut, sz_cdrom_00431268);
+		edFilePathSplit((char*)0x0, acStack512, (char*)0x0, (char*)0x0, pathBuff);
+		iVar2 = edStrCopy(filePathOut, sz_cdrom_00431268);
 		outString = filePathOut + iVar2;
-		iVar2 = edStringCpyL(outString, acStack512);
-		inString = SearchForColon(pathBuff);
-		iVar3 = CopyStringExcept_0028a120(outString + iVar2, inString);
-		strcat(outString + iVar2 + iVar3, sz_DriveLetter_00431270);
+		iVar2 = edStrCopy(outString, acStack512);
+		inString = edFilePathGetFilePath(pathBuff);
+		iVar3 = edStrCopyUpper(outString + iVar2, inString);
+		edStrCat(outString + iVar2 + iVar3, sz_DriveLetter_00431270);
 		bVar1 = true;
 	}
 	return bVar1;

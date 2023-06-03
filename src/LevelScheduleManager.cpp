@@ -16,6 +16,7 @@
 #include "MemoryStream.h"
 #include "ed3D.h"
 #include "FileManager3D.h"
+#include "edStr.h"
 
 
 LevelScheduleManager* g_LevelScheduleManager_00449728 = NULL;
@@ -536,7 +537,7 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 	edCBank_SetDeserializeData(&bank, &g_LevelInfoTypePairData_004256e0);
 	/* CDEURO/LEVEL/ + Info/levels.bnk */
 	levelInfoFilePath[0] = '\0';
-	FormatFilePath(levelInfoFilePath, levelPath, "Info/levels.bnk", 0);
+	edStrCatMulti(levelInfoFilePath, levelPath, "Info/levels.bnk", 0);
 	infoLevelsFileBuffer = get_free_entry(&bank);
 	infoLevelsPathPtr.filePath = levelInfoFilePath;
 	bVar4 = load(infoLevelsFileBuffer, &infoLevelsPathPtr);
@@ -613,7 +614,7 @@ void LevelScheduleManager::Game_Init()
 	LevelInfo* pLVar12;
 	char local_80[128];
 
-	lVar2 = (SaveBigAlloc*)edMemAlloc(TO_HEAP(H_MAIN), 0x10000);
+	lVar2 = (SaveBigAlloc*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), 0x10000);
 	/* Zero out most of load loop */
 	pSaveData_0x48 = lVar2;
 	pSaveDataEnd_0x4c = (int)(pSaveData_0x48 + 1);
@@ -731,7 +732,7 @@ void LevelScheduleManager::Game_Init()
 	pLVar12 = aLevelInfo;
 	iVar11 = 0;
 	do {
-		iVar3 = strcmp(local_80, pLVar12->levelName);
+		iVar3 = edStrICmp((byte*)local_80, (byte*)pLVar12->levelName);
 		if (iVar3 == 0) goto LAB_002e26c8;
 		iVar11 = iVar11 + 1;
 		pLVar12 = pLVar12 + 1;
@@ -1020,7 +1021,7 @@ void OnCinematicLoaded_001c67a0(char* pFileData, int length)
 
 void NullTypePairFunc(char* pFileData, int param_2)
 {
-	assert(false);
+	IMPLEMENTATION_GUARD();
 }
 
 TypePairData TypePairFunctionData_0040e780[24] = {
@@ -1050,15 +1051,6 @@ TypePairData TypePairFunctionData_0040e780[24] = {
 	{ 0xFFFFFFFF, 0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
 };
 
-int FindNextNullTerminator(char* startCharacter)
-{
-	int iVar1;
-
-	for (iVar1 = 0; startCharacter[iVar1] != '\0'; iVar1 = iVar1 + 1) {
-	}
-	return iVar1;
-}
-
 void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBufferEntry* pBankBuffer)
 {
 	bool bVar1;
@@ -1081,7 +1073,7 @@ void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBufferEnt
 			bVar1 = get_info(pBankBuffer, uVar8, &local_220, acStack512);
 			if (bVar1 == false) break;
 			if ((local_220.type << 0x10 | local_220.stype) == 0x30001) {
-				iVar3 = FindNextNullTerminator(acStack512);
+				iVar3 = edStrLength(acStack512);
 				iVar7 = iVar7 + 1;
 				iVar6 = iVar6 + iVar3 + 1;
 			}
@@ -1111,10 +1103,10 @@ void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBufferEnt
 	//			return;
 	//		}
 	//		if ((local_220.unknownA << 0x10 | local_220.unknownB) == 0x30001) {
-	//			edStringCpyL(pcVar5, acStack512);
+	//			edStrCopy(pcVar5, acStack512);
 	//			*(char**)(param_1->field_0x18 + iVar6) = pcVar5;
 	//			iVar6 = iVar6 + 4;
-	//			iVar7 = FindNextNullTerminator(pcVar5);
+	//			iVar7 = edStrLength(pcVar5);
 	//			pcVar5 = pcVar5 + iVar7 + 1;
 	//		}
 	//		uVar8 = uVar8 + 1;
@@ -1161,7 +1153,7 @@ void LevelScheduleManager::Game_Term()
 	edCBank_SetDeserializeData
 	(&levelIOPBank, TypePairFunctionData_0040e780);
 	/* / + LevelIOP.bnk */
-	FormatFilePath(filePath, levelPath,
+	edStrCatMulti(filePath, levelPath,
 		aLevelInfo[cachedNextLevelID].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
 	bankContainer.filePath = filePath;
 	bankContainer.pObjectReference = (void*)0x0;
@@ -1231,7 +1223,7 @@ bool LevelScheduleManager::LevelLoading_Manage()
 						&bankFilePathContainer);
 					edCBank_SetDeserializeData(&this->levelBank, TypePairFunctionData_0040e780);
 					/* / + level.bnk */
-					FormatFilePath(filePath, this->levelPath, this->aLevelInfo[levelToLoadID].levelName, sz_bankSlash, sz_LevelBank_00433bd8, 0);
+					edStrCatMulti(filePath, this->levelPath, this->aLevelInfo[levelToLoadID].levelName, sz_bankSlash, sz_LevelBank_00433bd8, 0);
 					bankFilePathContainer.filePath = filePath;
 					bankFilePathContainer.fileFlagA = 0xc;
 					pBVar1 = get_free_entry(&this->levelBank);

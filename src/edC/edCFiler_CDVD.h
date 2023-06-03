@@ -6,7 +6,7 @@
 #include "edCBankBuffer.h"
 
 // Might not be traditonally in the header here. Exposing them for windows.
-char* SearchForColon(char* inString);
+char* edFilePathGetFilePath(char* inString);
 #if defined(PLATFORM_WIN)
 char* FormatForPC(char* inString);
 #endif
@@ -34,15 +34,15 @@ class edCFiler_CDVD : public edCFiler
 public:
 	edCFiler_CDVD();
 
-	virtual bool InitTableOfContents(char* path, ETableOfContentsInitMode mode, InitTableOfContentsParams* param_4);
-	virtual bool Init();
+	virtual bool configure(char* path, ETableOfContentsInitMode mode, edFILE_PARAMETER* param_4);
+	virtual bool initialize();
 	virtual edCFiler_28* GetGlobalC_0x1c();
-	virtual bool FormatStreamPath(char* filePathOut, char* pathBuff);
-	virtual bool Open(DebugBankData_234* outFile, char* unformatedFilePath);
-	virtual bool Close(DebugBankData_234* pDebugBank);
-	virtual uint ReadStream(DebugBankData_234* pDebugBank, char* destination, uint requiredSize);
-	virtual bool Seek(DebugBankData_234* pDebugBank);
-	virtual bool ReadCallback(edCFiler_28_Internal* pEdFilerInternal);
+	virtual bool get_physical_filename(char* filePathOut, char* pathBuff);
+	virtual bool open(edFILEH* outFile, char* unformatedFilePath);
+	virtual bool close(edFILEH* pDebugBank);
+	virtual uint read(edFILEH* pDebugBank, char* destination, uint requiredSize);
+	virtual bool seek(edFILEH* pDebugBank);
+	virtual bool isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal);
 
 private:
 	undefined field_0x24;
@@ -562,6 +562,6 @@ private:
 	byte field_0x88d;
 };
 
-extern edCFiler_CDVD g_edCFiler_CDVD_0046c360;;
+extern edCFiler_CDVD edFiler_CDVD;;
 
 #endif //_EDCFILER_CDVD_H

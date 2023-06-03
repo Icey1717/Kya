@@ -599,9 +599,9 @@ PACK(struct FileHeaderFileData {
 	int crc;
 });
 
-// typedef struct DebugBankData_234 DebugBankData_234, * PDebugBankData_234;
+// typedef struct edFILEH edFILEH, * PDebugBankData_234;
 
-struct DebugBankData_234 {
+struct edFILEH {
 	struct edCFiler* pOwningFiler;
 	struct CDFileContainer* pFileData;
 	int seekOffset; /* Created by retype action */
@@ -627,7 +627,7 @@ struct edCBankBufferEntry {
 	undefined field_0x12;
 	undefined field_0x13;
 	undefined4 field_0x14;
-	struct DebugBankData_234* pLoadedData;
+	struct edFILEH* pLoadedData;
 	int headerComponent;
 	int accessFlag;
 	undefined field_0x24;
@@ -665,7 +665,7 @@ struct edCBankBufferEntry {
 struct ReadBank_1C {
 	struct edCBankBufferEntry* pBankHeader_0x0;
 	char* pReadBuffer;
-	struct DebugBankData_234* pDebugBankData;
+	struct edFILEH* pDebugBankData;
 	struct TypePairData* pBankTypePairData_0xc;
 	void* pObjectReference_0x10;
 	LoadBankFileFunc fileFunc_0x14;
@@ -687,23 +687,23 @@ struct TypePairData {
 // Debug
 char* DebugFindFilePath(BankFile_Internal* pBVar3, int inFileIndex);
 
-void ReadsBankFile(void);
+void edFileNoWaitStackFlush(void);
 
 bool load(edCBankBufferEntry* pBankBuffer, struct BankFilePathContainer* file);
 int get_element_count(edCBankBufferEntry* pBankBuffer);
 
-uint GetFileSize_0025b330(DebugBankData_234* param_1);
+uint GetFileSize_0025b330(edFILEH* param_1);
 
 void edCBankFileHeader_get_entry_typepair(BankFile_Internal* fileBuffer, TypePairData* pTypePairData, int mode);
 
-FileHeaderFileData* edCBankFileHeader_FindFileDataInHeader(BankFile_Internal* pFileHeader, int fileIndex);
+FileHeaderFileData* get_entry(BankFile_Internal* pFileHeader, int fileIndex);
 char* edCBankFileHeader_GetFileBufferStartFromFileIndex(BankFile_Internal* pFileData, int fileIndex);
 char* edCBankFileHeader_GetIopPath_00246460(BankFile_Internal* fileBuffer, int inIndex);
 bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, struct edBANK_ENTRY_INFO* outFileData, char* outIopPath);
 bool edCBankBuffer_file_access_002450e0(edCBankBufferEntry* pBankBuffer, BankFilePathContainer* pLoadData);
 bool edCBankBuffer_close(edCBankBufferEntry* pBankBuffer);
 
-int GetIndexFromFileHeader(BankFile_Internal* bankBufferObj, char* inFileName);
+int get_entryindex_from_filename(BankFile_Internal* bankBufferObj, char* inFileName);
 int get_index(edCBankBufferEntry* headerObj, char* inFileName);
 char* get_element(edCBankBufferEntry* bankObj, int fileIndex);
 

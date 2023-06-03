@@ -30,6 +30,8 @@ set(main_src
 	"${src_root}/IniFile.h"
 	"${src_root}/Iop.cpp"
 	"${src_root}/Iop.h"
+	"${src_root}/edStr.cpp"
+	"${src_root}/edStr.h"
 	"${src_root}/edPacket.cpp"
 	"${src_root}/edPacket.h"
 	"${src_root}/edMem.cpp"
