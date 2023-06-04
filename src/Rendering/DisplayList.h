@@ -178,7 +178,7 @@ struct DisplayListInternal {
 	ushort subCommandBufferCount;
 	undefined2 field_0x6;
 	undefined4 field_0x8;
-	char* field_0xc;
+	char* pCommandBuffer;
 	struct MeshDrawRenderCommand* field_0x10;
 	struct edpkt_data* field_0x14;
 	struct edpkt_data* pRenderCommands;

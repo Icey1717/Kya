@@ -204,4 +204,4 @@ else()
 	target_link_libraries(Kya port)
 endif()
 
-set_property( DIRECTORY PROPERTY VS_STARTUP_PROJECT Kya )
+set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )

@@ -350,8 +350,8 @@ namespace edDlist
 									if (uVar1 == 6) {
 										if ((pRenderTaskData->field_0x4 != 1) && (pDVar5->field_0x40 != 0)) {
 											IMPLEMENTATION_GUARD(
-											RenderInput_40::Func_002973c0
-											((RenderInput_40*)pDVar5->pRenderInput, (edF32MATRIX4*)pDVar8,
+											ed_3d_strip::Func_002973c0
+											((ed_3d_strip*)pDVar5->pRenderInput, (edF32MATRIX4*)pDVar8,
 												(long)(int)gBankMaterial, pMVar4);
 											pMVar4 = (edF32MATRIX4*)0x0;)
 										}
@@ -366,8 +366,8 @@ namespace edDlist
 										}
 										if ((bVar2) && (pDVar5->field_0x40 != 0)) {
 											IMPLEMENTATION_GUARD(
-											RenderInput_40::Func_002994e0
-											((RenderInput_40*)pDVar5->pRenderInput, (edF32MATRIX4*)pDVar8,
+												ed3DLinkStripToViewport
+											((ed_3d_strip*)pDVar5->pRenderInput, (edF32MATRIX4*)pDVar8,
 												(long)(int)gBankMaterial, (float*)pMVar4);
 											pMVar4 = (edF32MATRIX4*)0x0;)
 										}
@@ -402,8 +402,8 @@ namespace edDlist
 			pDVar1 = pDisplayListArray->field_0x0[displayListIndex];
 			if (((pDVar1->flags_0x0 & 4) == 0) && ((pDVar1->flags_0x0 & 0x100) == 0)) {
 				pDVar1->subCommandBufferCount = 0;
-				pDVar1->pRenderCommands = (edpkt_data*)pDVar1->field_0xc;
-				pDVar1->field_0x10 = (MeshDrawRenderCommand*)pDVar1->field_0xc;
+				pDVar1->pRenderCommands = (edpkt_data*)pDVar1->pCommandBuffer;
+				pDVar1->field_0x10 = (MeshDrawRenderCommand*)pDVar1->pCommandBuffer;
 			}
 			pDVar1->field_0x3 = 0;
 			displayListIndex = displayListIndex + 1;
@@ -871,9 +871,9 @@ namespace edDlist
 							}
 							pPkt += 4;
 						}
-
+						//0x40, 0x80
 						Renderer::SetImagePointer(
-							{ {LOAD_SECTION(imageIndex), 0x40, 0x80, pTextureBitmap->psm},
+							{ {LOAD_SECTION(imageIndex), 0x100, 0x100, pTextureBitmap->psm},
 							{  LOAD_SECTION(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, 32 } });
 #endif
 					}
@@ -988,6 +988,7 @@ namespace edDlist
 		pMVar2->specUnion.randoPtr = NULL;
 		pMVar2->pPrev_0x8 = param_2->pPrev_0x8;
 		pMVar2->pNext_0x4 = param_2;
+		RENDER_LOG("edlistInsertNode %p\n", param_2);
 		param_2->pPrev_0x8->pNext_0x4 = pMVar2;
 		param_2->pPrev_0x8 = pMVar2;
 		return pMVar2;
@@ -1041,7 +1042,7 @@ namespace edDlist
 		}
 		if (pDisplayList->subCommandBufferCount == 0) {
 			pDisplayList->pRenderCommands = pDisplayList->field_0x14;
-			pDisplayList->field_0x10 = (MeshDrawRenderCommand*)pDisplayList->field_0xc;
+			pDisplayList->field_0x10 = (MeshDrawRenderCommand*)pDisplayList->pCommandBuffer;
 		}
 		else {
 			pDisplayList->field_0x3 = 1;

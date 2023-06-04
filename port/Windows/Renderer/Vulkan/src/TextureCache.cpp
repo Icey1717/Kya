@@ -254,6 +254,101 @@ namespace PS2_Internal {
 #endif
 	}
 
+	template<int i> __forceinline static void ReadColumn8(const uint8_t* src, uint8_t* dst, int dstpitch)
+	{
+		//for(int j = 0; j < 64; j++) ((uint8*)src)[j] = (uint8)j;
+
+#if 0//_M_SSE >= 0x501
+
+		const GSVector8i* s = (const GSVector8i*)src;
+
+		GSVector8i v0 = s[i * 2 + 0];
+		GSVector8i v1 = s[i * 2 + 1];
+
+		GSVector8i::sw8(v0, v1);
+		GSVector8i::sw16(v0, v1);
+		GSVector8i::sw8(v0, v1);
+		GSVector8i::sw128(v0, v1);
+		GSVector8i::sw16(v0, v1);
+
+		v0 = v0.acbd();
+		v1 = v1.acbd();
+		v1 = v1.yxwz();
+
+		GSVector8i::storel(&dst[dstpitch * 0], v0);
+		GSVector8i::storeh(&dst[dstpitch * 1], v0);
+		GSVector8i::storel(&dst[dstpitch * 2], v1);
+		GSVector8i::storeh(&dst[dstpitch * 3], v1);
+
+		// TODO: not sure if this is worth it, not in this form, there should be a shorter path
+
+#elif _M_SSE >= 0x301
+
+		const GSVector4i* s = (const GSVector4i*)src;
+
+		GSVector4i v0, v1, v2, v3;
+
+		if ((i & 1) == 0)
+		{
+			v0 = s[i * 4 + 0];
+			v1 = s[i * 4 + 1];
+			v2 = s[i * 4 + 2];
+			v3 = s[i * 4 + 3];
+		}
+		else
+		{
+			v2 = s[i * 4 + 0];
+			v3 = s[i * 4 + 1];
+			v0 = s[i * 4 + 2];
+			v1 = s[i * 4 + 3];
+		}
+
+		v0 = v0.shuffle8(m_r8mask);
+		v1 = v1.shuffle8(m_r8mask);
+		v2 = v2.shuffle8(m_r8mask);
+		v3 = v3.shuffle8(m_r8mask);
+
+		GSVector4i::sw16(v0, v1, v2, v3);
+		GSVector4i::sw32(v0, v1, v3, v2);
+
+		GSVector4i::store<true>(&dst[dstpitch * 0], v0);
+		GSVector4i::store<true>(&dst[dstpitch * 1], v3);
+		GSVector4i::store<true>(&dst[dstpitch * 2], v1);
+		GSVector4i::store<true>(&dst[dstpitch * 3], v2);
+
+#else
+
+		const GSVector4i* s = (const GSVector4i*)src;
+
+		GSVector4i v0 = s[i * 4 + 0];
+		GSVector4i v1 = s[i * 4 + 1];
+		GSVector4i v2 = s[i * 4 + 2];
+		GSVector4i v3 = s[i * 4 + 3];
+
+		GSVector4i::sw8(v0, v1, v2, v3);
+		GSVector4i::sw16(v0, v1, v2, v3);
+		GSVector4i::sw8(v0, v2, v1, v3);
+		GSVector4i::sw64(v0, v1, v2, v3);
+
+		if ((i & 1) == 0)
+		{
+			v2 = v2.yxwz();
+			v3 = v3.yxwz();
+		}
+		else
+		{
+			v0 = v0.yxwz();
+			v1 = v1.yxwz();
+		}
+
+		GSVector4i::store<true>(&dst[dstpitch * 0], v0);
+		GSVector4i::store<true>(&dst[dstpitch * 1], v1);
+		GSVector4i::store<true>(&dst[dstpitch * 2], v2);
+		GSVector4i::store<true>(&dst[dstpitch * 3], v3);
+
+#endif
+	}
+
 	static void ReadBlock4(const uint8_t* src, uint8_t* dst, int dstpitch)
 	{
 		ReadColumn4<0>(src, dst, dstpitch);
@@ -265,12 +360,15 @@ namespace PS2_Internal {
 		ReadColumn4<3>(src, dst, dstpitch);
 	}
 
-	static void ExpandBlock4_32(const uint8_t* src, uint8_t* dst, int dstpitch, const uint64_t* pal)
+	static void ReadBlock8(const uint8_t* src, uint8_t* dst, int dstpitch)
 	{
-		for (int j = 0; j < 16; j++, dst += dstpitch)
-		{
-
-		}
+		ReadColumn8<0>(src, dst, dstpitch);
+		dst += dstpitch * 4;
+		ReadColumn8<1>(src, dst, dstpitch);
+		dst += dstpitch * 4;
+		ReadColumn8<2>(src, dst, dstpitch);
+		dst += dstpitch * 4;
+		ReadColumn8<3>(src, dst, dstpitch);
 	}
 
 	static void ReadAndExpandBlock4_32(const uint8_t* src, uint8_t* dst, int dstpitch)
@@ -372,6 +470,92 @@ namespace PS2_Internal {
 #endif
 	}
 
+	static void ReadAndExpandBlock8_32(const uint8_t* src, uint8_t* dst, int dstpitch)
+	{
+		//printf("ReadAndExpandBlock8_32\n");
+
+#if _M_SSE >= 0x401
+
+		const GSVector4i* s = (const GSVector4i*)src;
+
+		GSVector4i v0, v1, v2, v3;
+		GSVector4i mask = m_r8mask;
+
+		for (int i = 0; i < 2; i++)
+		{
+			v0 = s[i * 8 + 0].shuffle8(mask);
+			v1 = s[i * 8 + 1].shuffle8(mask);
+			v2 = s[i * 8 + 2].shuffle8(mask);
+			v3 = s[i * 8 + 3].shuffle8(mask);
+
+			GSVector4i::sw16(v0, v1, v2, v3);
+			GSVector4i::sw32(v0, v1, v3, v2);
+
+			v0.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+			v3.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+			v1.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+			v2.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+
+			v2 = s[i * 8 + 4].shuffle8(mask);
+			v3 = s[i * 8 + 5].shuffle8(mask);
+			v0 = s[i * 8 + 6].shuffle8(mask);
+			v1 = s[i * 8 + 7].shuffle8(mask);
+
+			GSVector4i::sw16(v0, v1, v2, v3);
+			GSVector4i::sw32(v0, v1, v3, v2);
+
+			v0.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+			v3.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+			v1.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+			v2.gather32_8<>(pal, (GSVector4i*)dst);
+			dst += dstpitch;
+		}
+
+#else
+
+		alignas(32) uint8_t block[16 * 16];
+
+		ReadBlock8(src, (uint8_t*)block, sizeof(block) / 16);
+
+		for (int y = 0; y < 16; y++)
+		{
+			for (int x = 0; x < 8; x++) // 32 across, with 2 pixels per byte.
+			{
+				const uint8_t byte = block[(y * 16) + x];
+
+				// Extract the two indexes.
+				const uint8_t lower = byte & 0x0F;
+				const uint8_t higher = (byte >> 4) & 0x0F;
+
+				// Get the two colors.
+				const uint32_t colorl = ((uint32_t*)gImageData.pallete.pImage)[lower];
+				const uint32_t colorh = ((uint32_t*)gImageData.pallete.pImage)[higher];
+
+				// Get the destination.
+				const uint32_t xOffset = x * 8; // 8 pixels per byte
+				const uint32_t yOffset = y * dstpitch; // 8 pixels per byte
+				uint32_t* const dstu32 = (uint32_t*)(dst + xOffset + yOffset);
+
+				// Write the colors.
+				dstu32[0] = colorl;
+				dstu32[1] = colorh;
+			}
+		}
+
+		((uint32_t*)dst)[0] = 0xFFFF00FF;
+
+		//ExpandBlock8_32(block, dst, dstpitch, pal);
+
+#endif
+	}
+
 	const int blockSize = 0x80;
 
 	const int srcBPP = 4;
@@ -401,6 +585,19 @@ namespace PS2_Internal {
 			{
 				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
 				ReadAndExpandBlock4_32(src + (x * sourceBlockStride) + (y * sourceBlockSize), read_dst, dstpitch);
+			}
+		}
+	}
+
+	void ReadTextureBlock8(uint8_t* src, uint8_t* dst, int dstpitch)
+	{
+		int _offset = dstpitch * (dstSmallBlockHeight);
+		for (int y = 0; y < 8; y += 1, dst += _offset)
+		{
+			for (int x = 0; x < 8; x += 1)
+			{
+				uint8_t* read_dst = &dst[x * 2 * dstBPP];
+				ReadAndExpandBlock8_32(src + (x * sourceBlockStride) + (y * sourceBlockSize), read_dst, dstpitch);
 			}
 		}
 	}
@@ -448,6 +645,20 @@ void PS2::GSTexValue::UploadImage() {
 		for (int y = 0; y < (height / PS2_Internal::dstBigBlockSize); y++) {
 			for (int x = 0; x < (width / PS2_Internal::dstBigBlockSize); x++) {
 				PS2_Internal::ReadTextureBlock4(imageBuffer.data() + (x * 0x800) + (y * 0x800 * PS2_Internal::yBlocks), pixelBuffer.data() + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y), 0x400);
+			}
+		}
+	}
+
+	if (gImageData.image.bpp == 8) {
+		GSVector4i r;
+		r.left = 0;
+		r.top = 0x0;
+		r.right = PS2_Internal::dstBigBlockSize;
+		r.bottom = PS2_Internal::dstBigBlockSize;
+
+		for (int y = 0; y < 1; y++) {
+			for (int x = 0; x < 1; x++) {
+				PS2_Internal::ReadTextureBlock8(imageBuffer.data() + (x * 0x800) + (y * 0x800 * PS2_Internal::yBlocks), pixelBuffer.data() + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y), 0x400);
 			}
 		}
 	}

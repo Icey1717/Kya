@@ -88,8 +88,8 @@ struct ed3DConfig {
 	int sceneCount;
 	uint meshDisplayListInternalCount;
 	int meshHeaderCountBAlt;
-	int meshHeaderCountA;
-	int field_0x14;
+	int matrixBufferCount;
+	int materialBufferCount;
 	int field_0x18;
 	int meshHeaderCountAA;
 	int meshHeaderCountBB;
@@ -128,7 +128,7 @@ PACK(
 	byte count_0x0;
 	undefined field_0x1;
 	ushort field_0x2;
-	int pRenderFrame30; // RenderFrame_30*
+	int pRenderFrame30; // ed_dma_matrix*
 	int pCommandBufferTexture; // RenderCommand*
 	int commandBufferTextureSize;
 });

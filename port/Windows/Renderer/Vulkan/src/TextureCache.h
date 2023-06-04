@@ -92,6 +92,7 @@ namespace PS2 {
 	public:
 		GSTexEntry& Create(const GSState::GSTex& TEX, const LayoutVector& descriptorSetLayouts, const LayoutBindingMap& descriptorSetLayoutBindings);
 		GSTexEntry& Lookup(const GSState::GSTex& TEX, const LayoutVector& descriptorSetLayouts, const LayoutBindingMap& descriptorSetLayoutBindings);
+		const std::vector<GSTexEntry>& GetEntries() { return texcache; }
 	};
 
 	inline GSTexKey CreateKeyFromTEX(const GSState::GSTex& TEX) {

@@ -124,15 +124,15 @@ void Setup_002cad90
 		}
 		if ((inFlags & 2) == 0) {
 			if ((inFlags & 1) != 0) {
-				iVar1 = (param_3 - (int)(param_2 + 0x640 + -(int)param_2) >> 1) * uVar3;
+				iVar1 = (param_3 - (ulong)(param_2 + 0x640 + -(ulong)param_2) >> 1) * uVar3;
 				pDVar2->field_0x14 = (edpkt_data*)(param_2 + uVar3 * 800);
-				pDVar2->field_0xc = param_2 + 0x640 + iVar1;
-				pDVar2->field_0x10 = (MeshDrawRenderCommand*)pDVar2->field_0xc;
-				pDVar2->field_0x28 = pDVar2->field_0xc + iVar1;
-				pDVar2->field_0x14 = (edpkt_data*)pDVar2->field_0xc;
-				uVar4 = (uint)pDVar2->field_0xc & 0xf;
+				pDVar2->pCommandBuffer = param_2 + 0x640 + iVar1;
+				pDVar2->field_0x10 = (MeshDrawRenderCommand*)pDVar2->pCommandBuffer;
+				pDVar2->field_0x28 = pDVar2->pCommandBuffer + iVar1;
+				pDVar2->field_0x14 = (edpkt_data*)pDVar2->pCommandBuffer;
+				uVar4 = (uint)pDVar2->pCommandBuffer & 0xf;
 				if (uVar4 != 0) {
-					pDVar2->field_0xc = pDVar2->field_0xc + (0x10 - uVar4);
+					pDVar2->pCommandBuffer = pDVar2->pCommandBuffer + (0x10 - uVar4);
 				}
 				uVar4 = (uint)pDVar2->field_0x10 & 0xf;
 				if (uVar4 != 0) {
