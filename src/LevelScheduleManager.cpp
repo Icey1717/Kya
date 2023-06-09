@@ -19,7 +19,7 @@
 #include "edStr.h"
 
 
-LevelScheduleManager* g_LevelScheduleManager_00449728 = NULL;
+LevelScheduleManager* LevelScheduleManager::gThis = NULL;
 
 const char* g_CD_LevelPath_00433bf8 = "CDEURO/Level/";
 const char* g_szRouter_00433c08 = "Router";
@@ -1119,11 +1119,11 @@ void WillLoadFilefromBank(bool param_1, void* pObj)
 {
 	LevelScheduleManager* pLVar1;
 
-	pLVar1 = g_LevelScheduleManager_00449728;
+	pLVar1 = LevelScheduleManager::gThis;
 	if (param_1 != false) {
 		WillLoadFileFromBank
 		(g_ManagerSingletonArray_00451660.g_GlobalSoundPtr_00451698,
-			(g_LevelScheduleManager_00449728->levelIOPBank).pBankFileAccessObject);
+			(LevelScheduleManager::gThis->levelIOPBank).pBankFileAccessObject);
 		pLVar1->loadStage_0x5b48 = 1;
 	}
 	return;
@@ -1287,13 +1287,13 @@ void LevelScheduleManager::Level_Init()
 	//			}
 	//			if (*piVar10 != 0x62) {
 	//				episodeNumber = 0;
-	//				pLVar8 = g_LevelScheduleManager_00449728->field_0x4220;
-	//				if (0 < g_LevelScheduleManager_00449728->objCount_0x4218) {
+	//				pLVar8 = LevelScheduleManager::gThis->field_0x4220;
+	//				if (0 < LevelScheduleManager::gThis->objCount_0x4218) {
 	//					do {
 	//						if (pLVar8->field_0x0 == *piVar10) goto LAB_002dd540;
 	//						episodeNumber = episodeNumber + 1;
 	//						pLVar8 = pLVar8 + 1;
-	//					} while (episodeNumber < g_LevelScheduleManager_00449728->objCount_0x4218);
+	//					} while (episodeNumber < LevelScheduleManager::gThis->objCount_0x4218);
 	//				}
 	//				pLVar8 = (LoadLoopObject_50*)0x0;
 	//			LAB_002dd540:

@@ -2,11 +2,11 @@
 #include "PackedFont.h"
 #include "ed3D.h"
 #include "TextIconDictionary.h"
-
+#include "Rendering/edCTextFont.h"
+#include "Rendering/edCTextFormat.h"
 #include "port/pointer_conv.h"
 
 edCTextFont* g_PackedFontPtr_004324d0 = (edCTextFont*)g_PackedFontData_0041f290;
-
 
 bool Install(edCTextFont* pFont)
 {
@@ -134,4 +134,29 @@ bool edTextInit(void)
 	}
 	return true;
 	return uVar1;
+}
+
+void edTextDraw(float x, float y, char* text)
+{
+	bool bVar1;
+	uint uVar2;
+	Vector local_1590;
+	edCTextFormat auStack5504;
+
+	//DrawTextParams::Constructor_0028c7d0(&auStack5504);
+	bVar1 = auStack5504.FormatString(text);
+	if (bVar1 != false) {
+		auStack5504.GetRect();
+		uVar2 = auStack5504.fontData_0x850->GetDebug();
+		if (uVar2 != 0) {
+			auStack5504.DisplayDebugInfos(x, y);
+		}
+		local_1590.z = 640.0f;
+		local_1590.w = 512.0f;
+		local_1590.x = 0.0f;
+		local_1590.y = 0.0f;
+		auStack5504.DisplayWindow(x, y, &local_1590);
+	}
+	//RunInPlaceDestructors_002173e0(auStack5504.fontData_0x850, Free_00166e40, 0xc0, 0x11);
+	return;
 }

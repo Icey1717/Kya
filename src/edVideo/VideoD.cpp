@@ -16,6 +16,9 @@
 
 #ifdef PLATFORM_WIN
 #include "renderer.h"
+
+#include <chrono>
+#include <thread>
 #endif
 
 edVideo_Globals edVideo_Globals_00449590 = { 0 };
@@ -222,6 +225,24 @@ void edVideoWaitVsync(byte param_1)
 	do {
 	} while (g_ActiveVidParams_0048cd90.bWaitingForVSync != 0);
 #else
+	static const double targetFrameTime = 1.0 / 60.0;  // Target frame time for 60 fps (in seconds)
+
+	// Calculate frame time
+	static auto frameStart = std::chrono::steady_clock::now();
+
+	// Update game logic and render the frame
+
+	// Calculate elapsed frame time
+	auto frameEnd = std::chrono::steady_clock::now();
+	auto elapsedSeconds = std::chrono::duration<double>(frameEnd - frameStart).count();
+
+	// Sleep to maintain the desired frame rate
+	if (elapsedSeconds < targetFrameTime)
+	{
+		std::this_thread::sleep_for(std::chrono::duration<double>(targetFrameTime - elapsedSeconds));
+	}
+
+	frameStart = std::chrono::steady_clock::now();
 	return;
 #endif
 }

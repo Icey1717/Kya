@@ -3,17 +3,28 @@
 #include "imgui.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "backends/imgui_impl_glfw.h"
-#include "Vulkan/src/VulkanRenderer.h"
+
+#include "DebugMenu.h"
+
 #include <stdexcept>
-#include "Vulkan/src/VulkanCommands.h"
-#include "../Vulkan/src/TextureCache.h"
+
+#include "VulkanRenderer.h"
+#include "VulkanCommands.h"
+#include "TextureCache.h"
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace DebugMenu {
 	VkRenderPass g_imguiRenderPass;
 	std::vector<VkCommandBuffer> commandBuffers;
 }
 
-void DebugMenu::Setup(VkInstance instance, uint32_t queueFamily, VkQueue graphicsQueue, GLFWwindow* window, VkRenderPass renderPass)
+void DebugMenu::Setup()
 {
 	VkDescriptorPool imguiPool;
 	g_imguiRenderPass = renderPass;
@@ -127,27 +138,8 @@ void DebugMenu::Setup(VkInstance instance, uint32_t queueFamily, VkQueue graphic
 	if (vkAllocateCommandBuffers(GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
-}
 
-std::unordered_map<const PS2::GSTexEntry*, ImTextureID> debugTextures;
-
-// Find or add function
-ImTextureID FindOrAddTexture(const PS2::GSTexEntry& texEntry)
-{
-	printf("%p", &texEntry);
-	auto it = debugTextures.find(&texEntry);
-	if (it != debugTextures.end())
-	{
-		// Texture already exists in the map
-		return it->second;
-	}
-	else
-	{
-		// Texture does not exist, add it to the map
-		ImTextureID newTextureID = ImGui_ImplVulkan_AddTexture(texEntry.value.sampler, texEntry.value.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		debugTextures[&texEntry] = newTextureID;
-		return newTextureID;
-	}
+	GetRenderDelegate() += DebugMenu::Render;
 }
 
 void DebugMenu::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
@@ -178,34 +170,7 @@ void DebugMenu::Render(const VkFramebuffer& framebuffer, const VkExtent2D& exten
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	static bool bShowDemoWindow = false;
-	ImGui::ShowDemoWindow(&bShowDemoWindow);
-
-	auto texCache = PS2::GetTextureCache();
-	for (const auto& entry : texCache.GetEntries()) {
-		ImGui::Begin("Image", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-		ImVec2 imageSize(400, 300); // Set the image size
-
-		// Use ImGui::Image to display the image
-		ImGui::Image(FindOrAddTexture(entry), imageSize);
-		ImGui::End();
-	}
-
-	// Calculate the framerate
-	static double prevTime = 0.0;
-	double currentTime = glfwGetTime();
-	double deltaTime = currentTime - prevTime;
-	prevTime = currentTime;
-	double fps = 1.0 / deltaTime;
-
-	const ImVec2 window_size(100.0f, 25.0f);
-
-	// Render the framerate counter
-	ImGui::SetNextWindowSize(window_size);
-	ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_Always);
-	ImGui::Begin("Framerate Counter", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
-	ImGui::Text("FPS: %.1f", fps);
-	ImGui::End();
+	BuildImguiCommands();
 
 	ImGui::Render();
 	ImDrawData* drawData = ImGui::GetDrawData();

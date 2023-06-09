@@ -91,8 +91,8 @@ struct ed3DConfig {
 	int matrixBufferCount;
 	int materialBufferCount;
 	int field_0x18;
-	int meshHeaderCountAA;
-	int meshHeaderCountBB;
+	int g3dManagerCount;
+	int g2dManagerCount;
 	byte bEnableProfile;
 	byte field_0x25;
 	byte field_0x26;

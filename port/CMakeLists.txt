@@ -20,3 +20,5 @@ target_include_directories(port PUBLIC "include")
 target_link_libraries(port renderer)
 
 target_link_libraries(port pss)
+
+add_subdirectory(DebugMenu)

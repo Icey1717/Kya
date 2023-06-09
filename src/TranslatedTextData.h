@@ -3,16 +3,6 @@
 
 #include "Types.h"
 
-enum LANGUAGE 
-{
-	GB,
-	FR,
-	GE,
-	SP,
-	IT,
-	AUTO
-};
-
 class MessageFile 
 {
 public:

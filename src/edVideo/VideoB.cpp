@@ -47,7 +47,7 @@ void edVideoClearVram(ulong r, ulong g, ulong b, ulong a)
 	ulonglong* pBuffer;
 	edPacket eStack32;
 
-	pBuffer = (ulonglong*)GetScratchPadPtr_00424e10();
+	pBuffer = (ulonglong*)edSystemFastRamGetAddr();
 	if (pBuffer != (ulonglong*)0x0) {
 		edPacketInit(&eStack32, 0xa0, pBuffer);
 		edPacketWriteLong_0026a000(&eStack32, 0x1000000000008009);

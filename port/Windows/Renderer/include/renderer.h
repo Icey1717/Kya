@@ -1,5 +1,10 @@
 #pragma once
 #include <stdint.h>
+#include "delegate.h"
+
+// Forward decs for RenderDelegate
+typedef struct VkFramebuffer_T* VkFramebuffer;
+struct VkExtent2D;
 
 namespace Renderer
 {
@@ -60,4 +65,8 @@ namespace Renderer
 		uint32_t csm, uint32_t csa, uint32_t cld);
 
 	void SetImagePointer(TextureData inImage);
+
+	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;
+
+	RenderDelegate& GetRenderDelegate();
 }

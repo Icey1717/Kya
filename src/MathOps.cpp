@@ -277,7 +277,7 @@ void ApplyRotationToMatrix(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4
 	return;
 }
 
-void MatrixSetPosition_00267750(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTOR v0)
+void edF32Matrix4ScaleHard(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTOR v0)
 {
 	undefined8 uVar1;
 	float fVar2;
@@ -295,7 +295,7 @@ void MatrixSetPosition_00267750(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTO
 	return;
 }
 
-void CalculateRotationMatrix_002673f0(float t0, edF32MATRIX4* m0, edF32MATRIX4* m1)
+void edF32Matrix4RotateZHard(float t0, edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 	sceVu0FMATRIX local_40;
 

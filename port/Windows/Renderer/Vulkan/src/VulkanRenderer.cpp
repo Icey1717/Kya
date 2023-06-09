@@ -24,11 +24,10 @@
 #include "VulkanPS2.h"
 #include "imgui.h"
 #include "VulkanCommands.h"
-#include "DebugMenu/DebugMenu.h"
 #include "FrameBuffer.h"
 
-constexpr uint32_t WIDTH = 800;
-constexpr uint32_t HEIGHT = 600;
+constexpr uint32_t WIDTH = 640;
+constexpr uint32_t HEIGHT = 480;
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
@@ -140,7 +139,7 @@ public:
 		initVulkan();
 
 		const QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-		DebugMenu::Setup(instance, indices.graphicsFamily.value(), graphicsQueue, window, renderPass);
+		//DebugMenu::Setup(instance, indices.graphicsFamily.value(), graphicsQueue, window, renderPass);
 	}
 
 	void drawImage(char* imageData, int width, int height) {
@@ -910,6 +909,7 @@ private:
 
 public:
 	uint32_t presentImageIndex = 0;
+	Renderer::RenderDelegate renderDelegate;
 
 	void waitUntilReady() {
 		vkDeviceWaitIdle(device);
@@ -1014,7 +1014,7 @@ public:
 
 		VkImageBlit imageBlit = {};
 		imageBlit.srcSubresource = subresourceLayers;
-		imageBlit.srcOffsets[1] = { GetRTSize().x / 2, GetRTSize().y / 2, 1 };
+		imageBlit.srcOffsets[1] = { int32_t(GetRTSize().x / 2.5), GetRTSize().y / 2, 1 };
 		imageBlit.dstSubresource = subresourceLayers;
 		imageBlit.dstOffsets[1] = { (int)swapChainExtent.width, (int)swapChainExtent.height, 1 };
 		vkCmdBlitImage(cmd, frameBuffer.colorImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, GetSwapchainImages()[presentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_LINEAR);
@@ -1024,7 +1024,7 @@ public:
 
 		EndSingleTimeCommands(cmd);
 
-		DebugMenu::Render(swapChainFramebuffers[presentImageIndex], swapChainExtent);
+		renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent);
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -1368,6 +1368,11 @@ namespace Renderer
 	void Present()
 	{
 		app.present();
+	}
+
+	RenderDelegate& GetRenderDelegate()
+	{
+		return app.renderDelegate;
 	}
 }
 

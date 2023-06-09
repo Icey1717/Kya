@@ -333,11 +333,11 @@ edpkt_data {
 	ulong cmdB;
 };
 
-#ifdef PLATFORM_WIN
+//#ifdef PLATFORM_WIN
 inline uint* edpktAsU32(edpkt_data* pkt) {
 	return reinterpret_cast<uint*>(pkt);
 }
-#endif
+//#endif
 
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*
@@ -364,6 +364,16 @@ inline void PrintMatrix(edF32MATRIX4* matrix)
 //#define PRINT_VECTOR(a) MY_LOG("%.02f, %.02f, %.02f, %.02f\n", ((float*)&a)[0], ((float*)&a)[1], ((float*)&a)[2], ((float*)&a)[3])
 //#define PRINT_MATRIX(a) PRINT_VECTOR((float*)&a); PRINT_VECTOR(((float*)&a) + 4); PRINT_VECTOR(((float*)&a) + 8); PRINT_VECTOR(((float*)&a) + 12)
 
+enum LANGUAGE
+{
+	GB,
+	FR,
+	GE,
+	SP,
+	IT,
+	AUTO
+};
+
 extern int g_SetOffsetX;
 extern int g_SetOffsetY;
 
@@ -379,6 +389,12 @@ struct SectorManagerSubObj {
 #define IMPLEMENTATION_GUARD(x) assert(false);
 #else
 #define IMPLEMENTATION_GUARD(x) MY_LOG("Hit an assert! %s, %d\n", __FILE__, __LINE__);
+#endif
+
+#ifdef PLATFORM_WIN
+#define RESOLVE_FONT_SUB_DATA(a) (FontPacked_2C*)LOAD_SECTION(a)
+#else
+#define RESOLVE_FONT_SUB_DATA(a) a
 #endif
 
 #endif //_TYPES_H

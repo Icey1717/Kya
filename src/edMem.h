@@ -76,7 +76,7 @@ int GetMaxHeadersUsed_00290350(void);
 
 void IncrementCounter_002903f0(void);
 bool Cleanup_00290410(void);
-void* GetScratchPadPtr_00424e10(void);
+void* edSystemFastRamGetAddr(void);
 
 // Not in this file.
 void* AllocateFunc_001002a0(size_t size);

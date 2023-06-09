@@ -1074,7 +1074,7 @@ bool Cleanup_00290410(void)
 	return bVar2;
 }
 
-void* GetScratchPadPtr_00424e10(void)
+void* edSystemFastRamGetAddr(void)
 {
 #ifndef PLATFORM_PS2
 	static void* g_fakeScratch = malloc(0x10000);

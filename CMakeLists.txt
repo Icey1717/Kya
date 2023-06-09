@@ -75,6 +75,12 @@ set(main_src
 	"${src_root}/Rendering/CustomShell.h"
 	"${src_root}/Rendering/Font.cpp"
 	"${src_root}/Rendering/Font.h"
+	"${src_root}/Rendering/edCTextStyle.cpp"
+	"${src_root}/Rendering/edCTextStyle.h"
+	"${src_root}/Rendering/edCTextFormat.cpp"
+	"${src_root}/Rendering/edCTextFormat.h"
+	"${src_root}/Rendering/edCTextFont.cpp"
+	"${src_root}/Rendering/edCTextFont.h"
 	"${src_root}/Rendering/OneTimeCommands.h"
 	"${src_root}/edC/edCBank.cpp"
 	"${src_root}/edC/edCBank.h"
@@ -205,3 +211,14 @@ else()
 endif()
 
 set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )
+
+option(SKIP_MOVIES "Skip into cinematics" OFF)
+option(LOAD_FOREVER "Holds on the loading screen forever" OFF)
+
+if (SKIP_MOVIES)
+	target_compile_definitions(Kya PRIVATE SKIP_MOVIES)
+endif()
+
+if (LOAD_FOREVER)
+	target_compile_definitions(Kya PRIVATE LOAD_FOREVER)
+endif()

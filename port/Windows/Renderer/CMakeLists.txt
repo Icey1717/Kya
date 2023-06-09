@@ -41,9 +41,8 @@ set (SOURCES
 	"Vulkan/src/GSState.h"
 	"Vulkan/src/GSVector.h"
 	"Vulkan/src/MD5.h"
-	"DebugMenu/DebugMenu.h"
-	"DebugMenu/DebugMenu.cpp"
 	"include/renderer.h"
+	"include/delegate.h"
 )
 
 add_library(renderer ${SOURCES})

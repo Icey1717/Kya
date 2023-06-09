@@ -343,7 +343,7 @@ void GlobalDList_Init(void)
 	if (pGuiDList != (GlobalDList*)0x0) {
 		pGuiDList->Init();
 	}
-	edDlist::edDListSetActiveViewPort(Scene::_pinstance->pCameraObj28_0x4);
+	edDListSetActiveViewPort(Scene::_pinstance->pCameraObj28_0x4);
 	return;
 }
 
@@ -409,13 +409,13 @@ bool GuiDList_BeginCurrent(void)
 void GlobalDList_AddToView(void)
 {
 	if (g_GameDisplayListPtr_0044971c->bEnabled != 0) {
-		edDlist::edDlistAddtoView(g_GameDisplayListPtr_0044971c->pDisplayListInternal);
+		edDlistAddtoView(g_GameDisplayListPtr_0044971c->pDisplayListInternal);
 	}
 	if (g_FrontendDisplayListPtr_00449720->bEnabled != 0) {
-		edDlist::edDlistAddtoView(g_FrontendDisplayListPtr_00449720->pDisplayListInternal);
+		edDlistAddtoView(g_FrontendDisplayListPtr_00449720->pDisplayListInternal);
 	}
 	if ((pGuiDList != (GlobalDList*)0x0) && (pGuiDList->bEnabled != 0)) {
-		edDlist::edDlistAddtoView(pGuiDList->pDisplayListInternal);
+		edDlistAddtoView(pGuiDList->pDisplayListInternal);
 	}
 	return;
 }

@@ -604,6 +604,8 @@ public:
 
 public:
 
+	static LevelScheduleManager* gThis;
+
 	struct ManagerFunctionData* pManagerFunctionData;
 	int field_0x4;
 	char levelPath[14];
@@ -1999,7 +2001,5 @@ public:
 	undefined field_0x5bde;
 	undefined field_0x5bdf;
 };
-
-extern LevelScheduleManager* g_LevelScheduleManager_00449728;
 
 #endif //_LEVELSCHEDULEMANAGER_H

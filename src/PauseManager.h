@@ -306,4 +306,24 @@ public:
 
 extern struct edCTextFont* BootDataFont;
 
+struct PauseStaticObj {
+	bool field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	undefined4 languageID;
+	bool field_0x8;
+	byte field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	int setOffsetX;
+	int setOffsetY;
+	undefined4 field_0x14;
+	uint field_0x18;
+	uint field_0x1c;
+};
+
+extern PauseStaticObj g_PauseStaticObj_0049c9d0;
+LANGUAGE GetLanguageID_00336b30(void);
+
 #endif // _PAUSEMANAGER_H

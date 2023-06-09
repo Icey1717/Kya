@@ -187,7 +187,7 @@ ed_3D_Scene* ed3DSceneCastShadow(ed_3D_Scene* p3DScene, edFCamera* pCamera)
 
 	p3DScene->flags_0x4 = p3DScene->flags_0x4 | 2;
 	pDisplayList = ed3DShadowCreateScene(p3DScene, pCamera);
-	edDlist::edListAddNode(&p3DScene->headerA, (DisplayListInternal*)pDisplayList);
+	edListAddNode(&p3DScene->headerA, (DisplayListInternal*)pDisplayList);
 	return pDisplayList;
 }
 
@@ -268,7 +268,7 @@ Scene::Scene()
 	g_ManagerSingletonArray_00451660.g_LevelScheduleManager_00451660 = new LevelScheduleManager();
 	/* Initial load point at 006db5b0 */
 	if (g_ManagerSingletonArray_00451660.g_LevelScheduleManager_00451660 != (LevelScheduleManager*)0x0) {
-		g_LevelScheduleManager_00449728 = g_ManagerSingletonArray_00451660.g_LevelScheduleManager_00451660;
+		LevelScheduleManager::gThis = g_ManagerSingletonArray_00451660.g_LevelScheduleManager_00451660;
 	}
 	pManager = new LocalizationManager();
 	g_ManagerSingletonArray_00451660.g_LocalizationManager_00451678 = pManager;
@@ -632,7 +632,7 @@ void Scene::Level_Init()
 	} while (loopCounter < 0x18);
 	this->field_0x38 = 1;
 	//edColFreeTemporaryMemory();
-	//(*(code*)g_LevelScheduleManager_00449728->pManagerFunctionData[1].field_0x0)();
+	//(*(code*)LevelScheduleManager::gThis->pManagerFunctionData[1].field_0x0)();
 	//WillLoadCinematic(g_CinematicManager_0048efc);
 	//FUN_003f95f0((MapManager*)g_ManagerSingletonArray_00451660[11]);
 	if (this->field_0xcc != -1) {
@@ -847,7 +847,7 @@ void Scene::Level_Setup(ByteCode* pMemoryStream)
 	local_4 = (uint*)0x0;
 	//MemoryStreamReadFunc_00117330(&local_4, pMemoryStream);
 	//FUN_00117210(&local_4);
-	//LevelScheduleManager::OnLoadLevelBnk_002d9f80(g_LevelScheduleManager_00449728, pMemoryStream);
+	//LevelScheduleManager::OnLoadLevelBnk_002d9f80(LevelScheduleManager::gThis, pMemoryStream);
 	iVar4 = pMemoryStream->GetS32();
 	this->field_0x10c = iVar4;
 	iVar4 = pMemoryStream->GetS32();

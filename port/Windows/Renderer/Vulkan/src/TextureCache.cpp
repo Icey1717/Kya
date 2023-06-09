@@ -457,7 +457,7 @@ namespace PS2_Internal {
 
 				// Get the destination.
 				const uint32_t xOffset = x * 8; // 8 pixels per byte
-				const uint32_t yOffset = y * dstpitch; // 8 pixels per byte
+				const uint32_t yOffset = y * dstpitch;
 				uint32_t* const dstu32 = (uint32_t*)(dst + xOffset + yOffset);
 
 				// Write the colors.
@@ -465,8 +465,6 @@ namespace PS2_Internal {
 				dstu32[1] = colorh;
 			}
 		}
-
-		((uint32_t*)dst)[0] = 0xFFFF00FF;
 #endif
 	}
 
@@ -524,39 +522,45 @@ namespace PS2_Internal {
 
 		ReadBlock8(src, (uint8_t*)block, sizeof(block) / 16);
 
+		alignas(32) uint32_t palBlock[16 * 16];
+		uint32_t* pal = (uint32_t*)gImageData.pallete.pImage;
+		
+		for (int j = 0; j < ((gImageData.pallete.width * gImageData.pallete.height) / 32); j += 1)
+		{
+			for (int i = 0; i < 2; i += 1)
+			{
+				memcpy(&palBlock[(i * 8 * 2) + (j * 32)], pal + (i * 8) + (j * 32), 8 * sizeof(uint32_t));
+				memcpy(&palBlock[(i * 8 * 2) + 8 + (j * 32)], pal + ((i * 8) + 16) + (j * 32), 8 * sizeof(uint32_t));
+			}
+		}
+
+
+
 		for (int y = 0; y < 16; y++)
 		{
-			for (int x = 0; x < 8; x++) // 32 across, with 2 pixels per byte.
+			for (int x = 0; x < 16; x++) // 16 across, with 1 pixels per byte.
 			{
 				const uint8_t byte = block[(y * 16) + x];
 
-				// Extract the two indexes.
-				const uint8_t lower = byte & 0x0F;
-				const uint8_t higher = (byte >> 4) & 0x0F;
-
 				// Get the two colors.
-				const uint32_t colorl = ((uint32_t*)gImageData.pallete.pImage)[lower];
-				const uint32_t colorh = ((uint32_t*)gImageData.pallete.pImage)[higher];
+				const uint32_t color = palBlock[byte];
 
 				// Get the destination.
-				const uint32_t xOffset = x * 8; // 8 pixels per byte
+				const uint32_t xOffset = x * 4; // 8 pixels per byte
 				const uint32_t yOffset = y * dstpitch; // 8 pixels per byte
 				uint32_t* const dstu32 = (uint32_t*)(dst + xOffset + yOffset);
 
 				// Write the colors.
-				dstu32[0] = colorl;
-				dstu32[1] = colorh;
+				dstu32[0] = color;
 			}
 		}
-
-		((uint32_t*)dst)[0] = 0xFFFF00FF;
 
 		//ExpandBlock8_32(block, dst, dstpitch, pal);
 
 #endif
 	}
 
-	const int blockSize = 0x80;
+	const int blockSize = 128;
 
 	const int srcBPP = 4;
 
@@ -585,6 +589,8 @@ namespace PS2_Internal {
 			{
 				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
 				ReadAndExpandBlock4_32(src + (x * sourceBlockStride) + (y * sourceBlockSize), read_dst, dstpitch);
+
+				//((uint32_t*)read_dst)[0] = 0xFFFF00FF;
 			}
 		}
 	}
@@ -597,7 +603,12 @@ namespace PS2_Internal {
 			for (int x = 0; x < 8; x += 1)
 			{
 				uint8_t* read_dst = &dst[x * 2 * dstBPP];
-				ReadAndExpandBlock8_32(src + (x * sourceBlockStride) + (y * sourceBlockSize), read_dst, dstpitch);
+				ReadAndExpandBlock8_32(src + (x * 0x100) + (y * sourceBlockSize * 16), read_dst, dstpitch);
+
+				//read_dst[0] = (uint8_t)x * 2;
+				//read_dst[1] = (uint8_t)y * 2;
+				//read_dst[2] = (uint8_t)0xff;
+				//read_dst[3] = (uint8_t)0xff;
 			}
 		}
 	}
@@ -656,9 +667,9 @@ void PS2::GSTexValue::UploadImage() {
 		r.right = PS2_Internal::dstBigBlockSize;
 		r.bottom = PS2_Internal::dstBigBlockSize;
 
-		for (int y = 0; y < 1; y++) {
-			for (int x = 0; x < 1; x++) {
-				PS2_Internal::ReadTextureBlock8(imageBuffer.data() + (x * 0x800) + (y * 0x800 * PS2_Internal::yBlocks), pixelBuffer.data() + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y), 0x400);
+		for (int y = 0; y < (height / PS2_Internal::dstBigBlockSize); y++) {
+			for (int x = 0; x < (width / PS2_Internal::dstBigBlockSize); x++) {
+				PS2_Internal::ReadTextureBlock8(imageBuffer.data() + (x * 0x800) + (y * 0x1000 * PS2_Internal::yBlocks), pixelBuffer.data() + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y), 0x400);
 			}
 		}
 	}

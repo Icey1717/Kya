@@ -141,10 +141,10 @@ void SectorManager::Game_Term()
 
 	/* LoadSect
 		*/
-	LevelInfo* pcVar5 = &g_LevelScheduleManager_00449728->aLevelInfo[g_LevelScheduleManager_00449728->nextLevelID];
+	LevelInfo* pcVar5 = &LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->nextLevelID];
 	local_1a0 = pcVar5;
 	/* /sect */
-	edStrCatMulti(this->field_0x4, g_LevelScheduleManager_00449728->levelPath, pcVar5->levelName, "/", "SECT", 0);
+	edStrCatMulti(this->field_0x4, LevelScheduleManager::gThis->levelPath, pcVar5->levelName, "/", "SECT", 0);
 	uVar12 = 0;
 	memset(auStack144, 0, 0x78);
 	this->sectDataCount = 0;
@@ -340,7 +340,7 @@ bool SectorManager::LevelLoading_Manage()
 	BankFilePathContainer BStack32;
 
 	bVar11 = true;
-	if (g_LevelScheduleManager_00449728->loadStage_0x5b48 == 4) {
+	if (LevelScheduleManager::gThis->loadStage_0x5b48 == 4) {
 		if ((this->baseSector).loadStage_0x8 == 1) {
 			peVar3 = (this->baseSector).bankObject.pBankFileAccessObject;
 			bVar5 = false;
@@ -389,9 +389,9 @@ bool SectorManager::LevelLoading_Manage()
 			}
 		}
 		else {
-			iVar10 = g_LevelScheduleManager_00449728->level_0x5b40;
+			iVar10 = LevelScheduleManager::gThis->level_0x5b40;
 			iVar8 = this->field_0x36c;
-			iVar9 = g_LevelScheduleManager_00449728->aLevelInfo[g_LevelScheduleManager_00449728->nextLevelID].bankSizeSect;
+			iVar9 = LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->nextLevelID].bankSizeSect;
 			memset(&BStack32, 0, sizeof(BankFilePathContainer));
 			initialize(&(this->baseSector).bankObject, iVar9 + 0x1000, 1, &BStack32);
 			if (iVar10 == -1) {

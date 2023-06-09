@@ -36,6 +36,7 @@ extern "C" {
 #include <port.h>
 #include <renderer.h>
 #include <decode.h>
+#include <thread>
 #include "edC/edCFiler_CDVD.h"
 #endif
 
@@ -65,6 +66,7 @@ extern "C" {
 
 #include <assert.h>
 #include "edStr.h"
+#include "Rendering/edCTextFont.h"
 
 template<class T>
 T* CreateNew()
@@ -1574,7 +1576,7 @@ void MainInit(int argc,char **argv)
 	//edDListConfig_->field_0x0 = 0x14;
 	//edDListConfig_->field_0xc = edDListConfig_->field_0xc * 3;
 	//edDListConfig_->field_0x10 = 500;
-	edDlist::edDListInit();
+	edDListInit();
 	edDebugPrintf("---- Init ed3D \n");
 	Init3D();
 	//edDebugPrintf(s_----_Init_edFile_0042b690);
@@ -1808,8 +1810,12 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	float fVar4;
 	char file_path[512];
 
+#ifdef SKIP_MOVIES
+	return;
+#endif
+
 	inTimeController = GetTimer();
-	display = (VideoFile*)Allocate(sizeof(VideoFile));
+	display = new(VideoFile);
 	/* file_path = CDEURO/movies/ + file_name + .pss */
 	edStrCatMulti(file_path, "CDEURO/movies/", file_name, ".pss", 0);
 	LoadVideoFromFilePath(display, file_path);
@@ -1855,12 +1861,274 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	} while (iVar3 == 0);
 	DestroyVideoFile(display);
 	if (display != (VideoFile*)0x0) {
-		Free(display);
+		free(display);
 	}
 	return;
 }
 
-//#define LOAD_FOREVER 1
+
+char* PTR_ARRAY_ARRAY_00427ac0[4][2] = {
+	{"teas_nt", "teas_nt"},
+	{"teas_pt", "teas_pt"},
+	{"teasa_nt", "teasa_nt"},
+	{"teasa_pt", "teasa_pt"}
+};
+
+
+char* PTR_IntroVideoTitleStart[2][2] = {
+	{"int_nw", "int_nt"},
+	{"int_pw", "int_pt"}
+};
+
+char* s_ufgsi_004381a8 = "ufgsi";
+char* s_SubtitleSuffix = "s";
+
+float FLOAT_004837b0 = 0.5f;
+float FUN_00284900(void)
+{
+	return FLOAT_004837b0;
+}
+
+char* szMoviesPath = "CDEURO/movies/";
+
+void PlayIntroVideo(long mode)
+{
+	undefined4 uVar1;
+	bool bVar2;
+	TimeController* pTVar3;
+	int currentLanguage;
+	VideoFile* currentLanguage_videoPointer;
+	uint WTVersion;
+	uint uVar4;
+	float fVar5;
+	char mysteryFilePathA[512];
+	char teaserFilePath[512];
+	char promoFilePath[512];
+	char introFilePath[512];
+	char mysteryFilePathB[512];
+	char introFileName[128];
+	char* fileName;
+	undefined* promoFileName;
+
+	uVar4 = (uint)(g_omode == 3);
+	WTVersion = (uint)(g_PauseStaticObj_0049c9d0.field_0x9 == 0);
+	if (mode == 0) {
+		if (LevelScheduleManager::gThis->nextLevelID == 1) {
+			bVar2 = false; // LevelScheduleManager::GetFirstRunOrSave(LevelScheduleManager::gThis, 1);
+			if (bVar2 == false) {
+				if (uVar4 == 1) {
+					WTVersion = 1;
+				}
+				currentLanguage = GetLanguageID_00336b30();
+				/* Format is &s%c
+				   First param is = "int_nw"
+				   Second param is "ufgsi" (US, French, German, Spanish, Italian) */
+				sprintf(introFileName, "%s%c", PTR_IntroVideoTitleStart[uVar4][WTVersion], s_ufgsi_004381a8[currentLanguage]);
+				if (g_PauseStaticObj_0049c9d0.field_0x8 != false) {
+					/* If we have subtitles on, append an 's' */
+					strcat(introFileName, s_SubtitleSuffix);
+				}
+				pTVar3 = GetTimer();
+				currentLanguage_videoPointer = new(VideoFile);
+				/* CDEURO/movies/ */
+				edStrCatMulti(introFilePath, szMoviesPath, introFileName, ".pss", "\0");
+				LoadVideoFromFilePath(currentLanguage_videoPointer, introFilePath);
+				do {
+					//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+					pTVar3->Update();
+					if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+						fVar5 = FUN_00284900();
+#ifdef PLATFORM_PS2
+						continuePss(&currentLanguage_videoPointer->pssResources, &currentLanguage_videoPointer->dispenv,
+							(uint)currentLanguage_videoPointer->videoIsPAL); // , fVar5);
+#else
+						char* image = continuePss();
+
+						if (image) {
+							Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+						}
+#endif
+					}
+					if (((uint)g_InputManager_00450960.pressedBitfield & 0x40000) != 0) break;
+					currentLanguage = 1;
+					if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+						currentLanguage = hasVideoEnded();
+					}
+				} while (currentLanguage == 0);
+				DestroyVideoFile(currentLanguage_videoPointer);
+				if (currentLanguage_videoPointer != (VideoFile*)0x0) {
+					Free(currentLanguage_videoPointer);
+				}
+			}
+		}
+		else {
+			if ((LevelScheduleManager::gThis->nextLevelID == 0xe) &&
+				//(currentLanguage = LevelScheduleManager::GetParamFromDat004253d4(1), currentLanguage == 0xe)) {
+				(currentLanguage = 0, currentLanguage == 0xe)) {
+				/* Fail the above check on normal run, then return to end of function. */
+				if ((GameFlags & 0x1000) == 0) {
+					if ((GameFlags & 0x2000) == 0) {
+						fileName = PTR_ARRAY_ARRAY_00427ac0[uVar4][WTVersion];
+						pTVar3 = GetTimer();
+						currentLanguage_videoPointer = new(VideoFile);
+						edStrCatMulti(mysteryFilePathA, szMoviesPath, fileName, ".pss", "\0");
+						LoadVideoFromFilePath(currentLanguage_videoPointer, mysteryFilePathA);
+						do {
+							//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+							pTVar3->Update();
+							if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+								fVar5 = FUN_00284900();
+#ifdef PLATFORM_PS2
+								continuePss(&currentLanguage_videoPointer->pssResources, &currentLanguage_videoPointer->dispenv,
+									(uint)currentLanguage_videoPointer->videoIsPAL); //, fVar5);
+#else
+								char* image = continuePss();
+
+								if (image) {
+									Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+								}
+#endif
+							}
+							bVar2 = true;
+							if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
+								(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+								bVar2 = false;
+							}
+							if (bVar2) break;
+							currentLanguage = 1;
+							if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+								currentLanguage = hasVideoEnded();
+							}
+						} while (currentLanguage == 0);
+						DestroyVideoFile(currentLanguage_videoPointer);
+						if (currentLanguage_videoPointer != (VideoFile*)0x0) {
+							Free(currentLanguage_videoPointer);
+						}
+					}
+					else {
+						/* teasa_nt */
+						uVar1 = 0; // *(undefined4*)(WTVersion * 4 + uVar4 * 8 + 0x427ad0);
+						pTVar3 = GetTimer();
+						currentLanguage_videoPointer = new(VideoFile);
+						edStrCatMulti(teaserFilePath, szMoviesPath, fileName, ".pss", "\0");
+						LoadVideoFromFilePath(currentLanguage_videoPointer, teaserFilePath);
+						do {
+							//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+							pTVar3->Update();
+							if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+								fVar5 = FUN_00284900();
+#ifdef PLATFORM_PS2
+								continuePss(&currentLanguage_videoPointer->pssResources, &currentLanguage_videoPointer->dispenv,
+									(uint)currentLanguage_videoPointer->videoIsPAL); //, fVar5);
+#else
+								char* image = continuePss();
+
+								if (image) {
+									Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+								}
+#endif
+							}
+							bVar2 = true;
+							if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
+								(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+								bVar2 = false;
+							}
+							if (bVar2) break;
+							currentLanguage = 1;
+							if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+								currentLanguage = hasVideoEnded();
+							}
+						} while (currentLanguage == 0);
+						DestroyVideoFile(currentLanguage_videoPointer);
+						if (currentLanguage_videoPointer != (VideoFile*)0x0) {
+							Free(currentLanguage_videoPointer);
+						}
+					}
+				}
+				else {
+					/* promo_nt */
+					promoFileName = NULL; // (&PTR_PromoVideoTitleStart)[uVar4 * 2 + WTVersion];
+					pTVar3 = GetTimer();
+					currentLanguage_videoPointer = new(VideoFile);
+					edStrCatMulti(promoFilePath, szMoviesPath, fileName, ".pss", "\0");
+					LoadVideoFromFilePath(currentLanguage_videoPointer, promoFilePath);
+					do {
+						//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+						pTVar3->Update();
+						if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+							fVar5 = FUN_00284900();
+#ifdef PLATFORM_PS2
+							continuePss(&currentLanguage_videoPointer->pssResources, &currentLanguage_videoPointer->dispenv,
+								(uint)currentLanguage_videoPointer->videoIsPAL); //, fVar5);
+#else
+							char* image = continuePss();
+
+							if (image) {
+								Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+							}
+#endif
+						}
+						bVar2 = true;
+						if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
+							(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+							bVar2 = false;
+						}
+						if (bVar2) break;
+						currentLanguage = 1;
+						if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+							currentLanguage = hasVideoEnded();
+						}
+					} while (currentLanguage == 0);
+					DestroyVideoFile(currentLanguage_videoPointer);
+					if (currentLanguage_videoPointer != (VideoFile*)0x0) {
+						Free(currentLanguage_videoPointer);
+					}
+					GameFlags = GameFlags & 0xffffefff;
+				}
+			}
+		}
+	}
+	else {
+		fileName = PTR_ARRAY_ARRAY_00427ac0[uVar4][WTVersion];
+		pTVar3 = GetTimer();
+		currentLanguage_videoPointer = new(VideoFile);
+		/* CDEURO/movies/ */
+		edStrCatMulti(mysteryFilePathB, szMoviesPath, fileName, ".pss", "\0");
+		LoadVideoFromFilePath(currentLanguage_videoPointer, mysteryFilePathB);
+		do {
+			//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+			pTVar3->Update();
+			if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+				fVar5 = FUN_00284900();
+#ifdef PLATFORM_PS2
+				continuePss(&currentLanguage_videoPointer->pssResources, &currentLanguage_videoPointer->dispenv,
+					(uint)currentLanguage_videoPointer->videoIsPAL); //, fVar5);
+#else
+				char* image = continuePss();
+
+				if (image) {
+					Renderer::RenderImage(image + 0x10, 0x280, 0x200);
+				}
+#endif
+			}
+			bVar2 = true;
+			if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
+				(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+				bVar2 = false;
+			}
+			if (bVar2) break;
+			currentLanguage = 1;
+			if (currentLanguage_videoPointer->fileReadSuccess != 0) {
+				currentLanguage = hasVideoEnded();
+			}
+		} while (currentLanguage == 0);
+		DestroyVideoFile(currentLanguage_videoPointer);
+		if (currentLanguage_videoPointer != (VideoFile*)0x0) {
+			Free(currentLanguage_videoPointer);
+		}
+	}
+	return;
+}
 
 void LoadingLoop(void)
 {
@@ -1875,7 +2143,7 @@ void LoadingLoop(void)
 #endif
 
 	/* These functions just run once */
-	//PlayIntroVideo(0);
+	PlayIntroVideo(0);
 	pLVar1 = Scene::_pinstance;
 	inTimeController = GetTimer();
 	LoadStageOne_001b9dc0();
@@ -2080,7 +2348,8 @@ int main(int argc,char **argv)
 	/* arcg = %d\nargv = %s\n */
 	printf("arcg = %d\nargv = %s\n", argc, *argv);
 	MainInit(argc, argv);
-	if (g_LevelScheduleManager_00449728->nextLevelID == 0xe) {
+	//std::this_thread::sleep_for(std::chrono::duration<double>(10.0));
+	if (LevelScheduleManager::gThis->nextLevelID == 0xe) {
 		videoModeSpecifier = 'n';
 		if (g_omode == SCE_GS_PAL) {
 			videoModeSpecifier = 'p';
@@ -2100,8 +2369,8 @@ int main(int argc,char **argv)
 		sprintf(edenFileName, sz_EdenFileFormat_0042b848, cutsceneID + 1, videoModeSpecifier);
 		/* atari_%c */
 		sprintf(atariFileName, sz_AtariFileFormat_0042b858, videoModeSpecifier);
-		//ShowCompanySplashScreen(atariFileName, 0, 0);
-		//ShowCompanySplashScreen(edenFileName, 0, 0);
+		ShowCompanySplashScreen(atariFileName, 0, 0);
+		ShowCompanySplashScreen(edenFileName, 0, 0);
 	}
 	do {
 		LevelInit();

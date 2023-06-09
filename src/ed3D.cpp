@@ -42,8 +42,8 @@ ed3DConfig::ed3DConfig()
 	, matrixBufferCount(0x1F4)
 	, materialBufferCount(0xFA)
 	, field_0x18(0x7D0)
-	, meshHeaderCountAA(0xA)
-	, meshHeaderCountBB(0x19)
+	, g3dManagerCount(0xA)
+	, g2dManagerCount(0x19)
 	, bEnableProfile(0x0)
 	, field_0x25(0x0)
 	, field_0x26(0x64)
@@ -773,8 +773,8 @@ void ed3DFlushSendDMA3D(void)
 		edSysHandlerVideo_0048cee0.maxEventID, 1, (void*)0x0);
 	gCurFlushList = gCurRenderList;
 	gCurRenderList = gCurRenderList != 0 ^ 1;
-	edSysHandlersCall(edDlist::sysHandler_0048cb90.mainIdentifier, edDlist::sysHandler_0048cb90.entries,
-		edDlist::sysHandler_0048cb90.maxEventID, 1, (void*)0x0);
+	edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
+		sysHandler_0048cb90.maxEventID, 1, (void*)0x0);
 	if ((edLIST*)gPrim_List_FlushTex[gCurFlushList].pLoadedData !=
 		gPrim_List_FlushTex + gCurFlushList) {
 		ed3DFlushTexPrepareDMA(gPrim_List_FlushTex + gCurFlushList);
@@ -1286,8 +1286,8 @@ void ed3DComputeSonHierarchy(void)
 			}
 		}
 	}
-	edSysHandlersCall(edDlist::sysHandler_0048cb90.mainIdentifier, edDlist::sysHandler_0048cb90.entries,
-		edDlist::sysHandler_0048cb90.maxEventID, 4, (void*)0x0);
+	edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
+		sysHandler_0048cb90.maxEventID, 4, (void*)0x0);
 	return;
 }
 
@@ -6541,8 +6541,8 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 				if (pInStaticMeshMaster == pStaticMeshMaster) {
 					renderTaskData.isChild = pInStaticMeshMaster->bShadowScene;
 					renderTaskData.taskID = 2;
-					edSysHandlersCall(edDlist::sysHandler_0048cb90.mainIdentifier, edDlist::sysHandler_0048cb90.entries,
-						edDlist::sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
+					edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
+						sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
 				}
 				else {
 					renderTaskData.isChild = pInStaticMeshMaster->bShadowScene;
@@ -6550,8 +6550,8 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 					if (pInStaticMeshMaster != pStaticMeshMaster) {
 						renderTaskData.taskID = 3;
 					}
-					edSysHandlersCall(edDlist::sysHandler_0048cb90.mainIdentifier, edDlist::sysHandler_0048cb90.entries,
-						edDlist::sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
+					edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
+						sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
 				}
 			}
 			else {
@@ -6560,8 +6560,8 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 				if (pInStaticMeshMaster != pStaticMeshMaster) {
 					renderTaskData.taskID = 3;
 				}
-				edSysHandlersCall(edDlist::sysHandler_0048cb90.mainIdentifier, edDlist::sysHandler_0048cb90.entries,
-					edDlist::sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
+				edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
+					sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
 			}
 			if (ged3DConfig.bEnableProfile != 0) {
 				IMPLEMENTATION_GUARD(
@@ -6816,8 +6816,8 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 		renderTaskData.isChild = pStaticMeshMaster->bShadowScene;
 		renderTaskData.taskID = 2;
 		renderTaskData.pStaticMeshMaster = pStaticMeshMaster;
-		edSysHandlersCall(edDlist::sysHandler_0048cb90.mainIdentifier, edDlist::sysHandler_0048cb90.entries,
-			edDlist::sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
+		edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
+			sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
 		if (ged3DConfig.bEnableProfile != 0) {
 			IMPLEMENTATION_GUARD(
 			uVar6 = (uint)gIDProfileRender >> 4;
@@ -7769,12 +7769,12 @@ void ed3DInit(void)
 	edDebugPrintf(s_ed3D_Initialsation_004333a0);
 	ed3DPrepareVRAMBuf();
 	gLibInitialized = 1;
-	gManager3D = edListNew(1, ged3DConfig.meshHeaderCountAA, TO_HEAP(H_MAIN));
-	CameraPanMasterHeaderB_004491d4 = edListNew(1, ged3DConfig.meshHeaderCountBB, TO_HEAP(H_MAIN));
-	gpG3D = (ed_g3d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountAA * sizeof(ed_g3d_manager));
-	memset(gpG3D, 0, ged3DConfig.meshHeaderCountAA * sizeof(ed_g3d_manager));
-	gpG2D = (ed_g2d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountBB * sizeof(ed_g2d_manager));
-	memset(gpG2D, 0, ged3DConfig.meshHeaderCountBB * sizeof(ed_g2d_manager));
+	gManager3D = edListNew(1, ged3DConfig.g3dManagerCount, TO_HEAP(H_MAIN));
+	CameraPanMasterHeaderB_004491d4 = edListNew(1, ged3DConfig.g2dManagerCount, TO_HEAP(H_MAIN));
+	gpG3D = (ed_g3d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.g3dManagerCount * sizeof(ed_g3d_manager));
+	memset(gpG3D, 0, ged3DConfig.g3dManagerCount * sizeof(ed_g3d_manager));
+	gpG2D = (ed_g2d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.g2dManagerCount * sizeof(ed_g2d_manager));
+	memset(gpG2D, 0, ged3DConfig.g2dManagerCount * sizeof(ed_g2d_manager));
 	//pTVar1 = TexturePool_004491cc;
 	gNbG3D = 0;
 	gNbG2D = 0;
@@ -7845,7 +7845,7 @@ void ed3DInit(void)
 		ged3DConfig.matrixBufferCount * 0x220 +
 		ged3DConfig.field_0x18 * 0x10 +
 		ged3DConfig.meshHeaderCountBAlt +
-		ged3DConfig.meshHeaderCountAA * 0x40 + ged3DConfig.meshHeaderCountBB * 0x30 +
+		ged3DConfig.g3dManagerCount * 0x40 + ged3DConfig.g2dManagerCount * 0x30 +
 		ged3DConfig.materialBufferCount * 0x60);
 	return;
 }
@@ -7897,8 +7897,8 @@ void Init3D(void)
 	puVar1->meshHeaderCountB = 2000;
 	puVar1->field_0x18 = 55000;
 	puVar1->materialBufferCount = 500;
-	puVar1->meshHeaderCountAA = 0x1e;
-	puVar1->meshHeaderCountBB = 0x6e;
+	puVar1->g3dManagerCount = 0x1e;
+	puVar1->g2dManagerCount = 0x6e;
 	puVar1->meshHeaderCountBAlt = 0x180;
 	puVar1->sceneCount = 0xf;
 	puVar1->field_0x28 = 0x15e;
@@ -8232,7 +8232,7 @@ void* edDListInitMaterial(edDList_material* outObj, TextureData_HASH_Internal_MA
 	pvVar1 = memset(outObj, 0, sizeof(edDList_material));
 	outObj->pMAT = &(((TextureData_MAT*)LOAD_SECTION(pHASH_MAT->pMAT))->body);
 	while (true) {
-		if ((*(long*)(gBankMaterial + counter) == 0) || (edDlist::g_DisplayListObjCount_004250e0 - 1U <= counter)) break;
+		if ((*(long*)(gBankMaterial + counter) == 0) || (g_DisplayListObjCount_004250e0 - 1U <= counter)) break;
 		counter = counter + 1;
 	}
 	someGlobalBuffer = gBankMaterial + counter;

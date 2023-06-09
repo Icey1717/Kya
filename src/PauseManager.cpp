@@ -19,6 +19,8 @@
 #ifdef PLATFORM_WIN
 #include "renderer.h"
 #endif
+#include "Rendering/edCTextStyle.h"
+#include "Rendering/edCTextFormat.h"
 
 SimpleMenu g_PauseScreenData_004507f0;
 
@@ -61,14 +63,6 @@ extern int g_ScreenHeight;
 
 edCTextFont* BootDataFont = NULL;
 
-void SetFontScale_0028d2b0(float xScale, float yScale, edCTextStyle* pFontFileData)
-{
-	pFontFileData->xScale = xScale;
-	pFontFileData->yScale = yScale;
-	pFontFileData->flags_0x84 = pFontFileData->flags_0x84 | 0x400;
-	return;
-}
-
 void DrawLoadingScreen_001b05e0(void)
 {
 	bool bVar2;
@@ -93,35 +87,35 @@ void DrawLoadingScreen_001b05e0(void)
 		if (0xff < (uint)localAlpha) {
 			localAlpha = (0x40 - (localAlpha - 0x100U)) * 0xff >> 6;
 		}
-		bIsLoadingScreen = g_LevelScheduleManager_00449728->nextLevelID != 0xf;
+		bIsLoadingScreen = LevelScheduleManager::gThis->nextLevelID != 0xf;
 		if (!bIsLoadingScreen) {
 			localAlpha = 0xff;
 		}
 		bVar2 = GuiDList_BeginCurrent();
 		if (bVar2 != false) {
-			InitFontData_0028d430(&FStack192);
-			pNewFont = SetActiveFontData(&FStack192);
-			FStack192.SetFontTextureData_0028d3e0(BootDataFont, false);
+			FStack192.Reset();
+			pNewFont = edTextStyleSetCurrent(&FStack192);
+			FStack192.SetFont(BootDataFont, false);
 
-			FStack192.SetFontFlag_0028d340(0x100);
+			FStack192.SetShadow(0x100);
 			FStack192.alpha = localAlpha & 0xff;
 			FStack192.rgbaColour = FStack192.alpha | 0xffffff00;
-			FStack192.SetFontFlag_0028d3c0(2);
-			FStack192.SetFontFlag_0028d3a0(8);
+			FStack192.SetHorizontalAlignment(2);
+			FStack192.SetVerticalAlignment(8);
 			edCTextFormat drawTextParams = edCTextFormat();
 			if (bIsLoadingScreen) {
 				pcVar4 = gMessageManager.get_message(0x30803025f4c4f41);
-				drawTextParams.Setup_0028c540(pcVar4);
-				Display((float)g_ScreenWidth / 2.0, (float)g_ScreenHeight - 36.0, &drawTextParams);
+				drawTextParams.FormatString(pcVar4);
+				drawTextParams.Display((float)g_ScreenWidth / 2.0f, (float)g_ScreenHeight - 36.0f);
 			}
 			else {
 				// This is the text for the final end game screen.
-				SetFontScale_0028d2b0(1.3f, 1.3f, &FStack192);
+				FStack192.SetScale(1.3f, 1.3f);
 				pcVar4 = gMessageManager.get_message(0x180403015f544845);
-				drawTextParams.Setup_0028c540(pcVar4);
-				Display((float)g_ScreenWidth * 0.5, (float)g_ScreenHeight * 0.5, &drawTextParams);
+				drawTextParams.FormatString(pcVar4);
+				drawTextParams.Display((float)g_ScreenWidth * 0.5f, (float)g_ScreenHeight * 0.5f);
 			}
-			SetActiveFontData(pNewFont);
+			edTextStyleSetCurrent(pNewFont);
 			GuiDList_EndCurrent();
 			//RunInPlaceDestructors_002173e0(drawTextParams.fontData_0x850, Free_00166e40, 0xc0, 0x11);
 		}
@@ -141,23 +135,6 @@ struct APlayer;
 extern APlayer* g_PlayerActor_00448e10;
 
 uint UINT_00448eac;
-
-struct PauseStaticObj {
-	bool field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined4 languageID;
-	bool field_0x8;
-	byte field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	int setOffsetX;
-	int setOffsetY;
-	undefined4 field_0x14;
-	uint field_0x18;
-	uint field_0x1c;
-};
 
 PauseStaticObj g_PauseStaticObj_0049c9d0 = { 0 };
 
@@ -223,7 +200,7 @@ void PauseManager::Level_Init()
 	TimeController* pTVar4;
 	undefined8 uVar5;
 
-	this->currentLevelID_0x18 = g_LevelScheduleManager_00449728->currentLevelID;
+	this->currentLevelID_0x18 = LevelScheduleManager::gThis->currentLevelID;
 	this->field_0x1c = 0;
 	this->field_0x20 = 0;
 	pAVar1 = g_PlayerActor_00448e10;
@@ -306,7 +283,7 @@ void PauseManager::Level_Draw()
 		//		index = index + 1;
 		//	} while (index < iVar5);
 		//}
-		pLevelScheduleManager = g_LevelScheduleManager_00449728;
+		pLevelScheduleManager = LevelScheduleManager::gThis;
 		if (60.0f < fVar9 - this->totalPlayTime) {
 			this->pSplashScreen->Manage((long)this->field_0x34, false, bVar1);
 			//if (pCVar8 == (CinematicObjectB*)0x0) {
@@ -638,21 +615,21 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			fVar13 = (this->drawOffsets).z - (this->drawOffsets).x;
 			fVar10 = (this->drawOffsets).w - (this->drawOffsets).y;
 			if (this->field_0xd0 != 0) {
-				edDlist::edDListUseMaterial((edDList_material*)0x0);
-				edDlist::edDListColor4u8(0, 0, 0, 0x80);
-				edDlist::SetUnitMatrix_002d07b0();
+				edDListUseMaterial((edDList_material*)0x0);
+				edDListColor4u8(0, 0, 0, 0x80);
+				SetUnitMatrix_002d07b0();
 				iVar9 = 6;
-				edDlist::edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
-				edDlist::edDListVertex4f(0.0f, 0.0f, 0.0f, iVar9);
-				edDlist::edDListVertex4f(fVar13, fVar10, 0.0f, iVar9);
-				edDlist::edDListEnd();
+				edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
+				edDListVertex4f(0.0f, 0.0f, 0.0f, iVar9);
+				edDListVertex4f(fVar13, fVar10, 0.0f, iVar9);
+				edDListEnd();
 			}
-			edDlist::edDListUseMaterial(&this->materialInfo);
-			edDlist::SetUnitMatrix_002d07b0();
-			edDlist::edDListBlendSet(1);
-			edDlist::edDListBlendFuncNormal();
+			edDListUseMaterial(&this->materialInfo);
+			SetUnitMatrix_002d07b0();
+			edDListBlendSet(1);
+			edDListBlendFuncNormal();
 			r = (byte)uVar8;
-			edDlist::edDListColor4u8(r, r, r, r);
+			edDListColor4u8(r, r, r, r);
 			y_00 = (this->drawOffsets).y;
 			iVar7 = (int)(fVar13 / 32.0) + 1;
 			iVar9 = (int)(fVar10 / 32.0);
@@ -664,17 +641,17 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 				fVar18 = 0.0;
 				do {
 					uVar5 = 4;
-					edDlist::edDListBegin(0.0f, 0.0f, 0.0f, 4, iVar7 * 2);
+					edDListBegin(0.0f, 0.0f, 0.0f, 4, iVar7 * 2);
 					x = (this->drawOffsets).x;
 					fVar14 = 0.0;
 					iVar6 = iVar7;
 					y = fVar11;
 					fVar17 = fVar16;
 					while (iVar6 != 0) {
-						edDlist::edDListTexCoo2f(fVar14, fVar18);
-						edDlist::edDListVertex4f(x, y_00, 0.0f, (int)uVar5);
-						edDlist::edDListTexCoo2f(fVar14, fVar17);
-						edDlist::edDListVertex4f(x, y, 0.0f, (int)uVar5);
+						edDListTexCoo2f(fVar14, fVar18);
+						edDListVertex4f(x, y_00, 0.0f, (int)uVar5);
+						edDListTexCoo2f(fVar14, fVar17);
+						edDListVertex4f(x, y, 0.0f, (int)uVar5);
 						iVar6 = iVar6 + -1;
 						if (iVar6 == 1) {
 							fVar14 = 1.0;
@@ -694,7 +671,7 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 						fVar16 = fVar17 + fVar13;
 						fVar11 = y + 32.0;
 					}
-					edDlist::edDListEnd();
+					edDListEnd();
 					y_00 = y;
 					fVar18 = fVar17;
 				} while (iVar9 != 0);
@@ -709,30 +686,30 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			if ((int)g_ScreenWidth < 0) {
 				uVar3 = g_ScreenWidth + 1;
 			}
-			InitFontData_0028d430(&FStack192);
-			pNewFont = SetActiveFontData(&FStack192);
-			FStack192.SetFontFlag_0028d340(0x100);
+			FStack192.Reset();
+			pNewFont = edTextStyleSetCurrent(&FStack192);
+			FStack192.SetShadow(0x100);
 			FStack192.alpha = (uVar8 & 0x7f) << 1;
 			FStack192.rgbaColour = FStack192.alpha | 0xffffff00;
-			FStack192.SetFontTextureData_0028d3e0(BootDataFont, false);
-			FStack192.SetFontFlag_0028d3c0(2);
+			FStack192.SetFont(BootDataFont, false);
+			FStack192.SetHorizontalAlignment(2);
 			if (param_4 == false) {
 				if (fVar12 < 0.3f) {
 					FStack192.spaceSize = 10.0f;
-					FStack192.SetFontFlag_0028d3a0(8);
+					FStack192.SetVerticalAlignment(8);
 					fVar10 = (float)((int)uVar3 >> 1);
 					fVar12 = (float)g_ScreenHeight;
 					pcVar4 = gMessageManager.get_message(0x6001a010b110011);
-					DrawText_0028a4f0(fVar10, fVar12 - 36.0f, pcVar4);
+					edTextDraw(fVar10, fVar12 - 36.0f, pcVar4);
 				}
 			}
 			else {
 				fVar12 = (float)g_ScreenHeight;
 				fVar10 = (float)((int)uVar3 >> 1);
 				pcVar4 = gMessageManager.get_message(0x52525f503700080c);
-				DrawText_0028a4f0(fVar10, fVar12 * 0.5f + 60.0f, pcVar4);
+				edTextDraw(fVar10, fVar12 * 0.5f + 60.0f, pcVar4);
 			}
-			SetActiveFontData(pNewFont);
+			edTextStyleSetCurrent(pNewFont);
 			param_2 = (ulong)(this->field_0xcc != 0);
 			if (param_2 != 0) {
 				param_2 = (ulong)(1.0f <= fVar15);

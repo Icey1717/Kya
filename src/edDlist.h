@@ -79,48 +79,45 @@ extern int gbDispList;
 extern int gCurStatePKTSize;
 extern DisplayList_0x10* gBankMaterial;
 
-namespace edDlist
-{
-	typedef enum DL_LINK_MODE {
-		LM_CALL = 2,
-		LM_FUNC = 4,
-		LM_REF_0 = 0,
-		LM_REF_1 = 5,
-		LM_RELINK = 1,
-		LM_SKIP = 3
-	} DL_LINK_MODE;
+typedef enum DL_LINK_MODE {
+	LM_CALL = 2,
+	LM_FUNC = 4,
+	LM_REF_0 = 0,
+	LM_REF_1 = 5,
+	LM_RELINK = 1,
+	LM_SKIP = 3
+} DL_LINK_MODE;
 
-	extern int g_DisplayListObjCount_004250e0;
-	extern edSysHandlerDisplayList sysHandler_0048cb90;
+extern int g_DisplayListObjCount_004250e0;
+extern edSysHandlerDisplayList sysHandler_0048cb90;
 
-	void edDListInit(void);
+void edDListInit(void);
 
-	void edDListLoadMatrix(edF32MATRIX4* m0);
+void edDListLoadMatrix(edF32MATRIX4* m0);
 
-	void edDListUseMaterial(struct edDList_material* pMaterialInfo);
+void edDListUseMaterial(struct edDList_material* pMaterialInfo);
 
-	void edDListAlphaTestAndZTest(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
-		ulong param_8);
+void edDListAlphaTestAndZTest(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
+	ulong param_8);
 
-	void edDListBlendFuncNormal(void);
-	void edDListBlendSet(uint mode);
-	void edDListBlendSet(uint mode);
+void edDListBlendFuncNormal(void);
+void edDListBlendSet(uint mode);
+void edDListBlendSet(uint mode);
 
-	void edDListSetActiveViewPort(ed_viewport* pCamera);
+void edDListSetActiveViewPort(ed_viewport* pCamera);
 
-	void edDlistAddtoView(DisplayListInternal* param_1);
-	bool edListAddNode(edLIST* pCameraPanHeader, DisplayListInternal* pDisplayList);
+void edDlistAddtoView(DisplayListInternal* param_1);
+bool edListAddNode(edLIST* pCameraPanHeader, DisplayListInternal* pDisplayList);
 
-	void edDListBegin(float x, float y, float z, ulong mode, int count);
+void edDListBegin(float x, float y, float z, ulong mode, int count);
 
-	void edDListColor4u8(byte r, byte g, byte b, byte a);
+void edDListColor4u8(byte r, byte g, byte b, byte a);
 
-	void edDListTexCoo2f(float param_1, float param_2);
-	void edDListVertex4f(float x, float y, float param_3, int param_4);
+void edDListTexCoo2f(float param_1, float param_2);
+void edDListVertex4f(float x, float y, float param_3, int param_4);
 
-	void edDListEnd(void);
+void edDListEnd(void);
 
-	void SetUnitMatrix_002d07b0(void);
-}
+void SetUnitMatrix_002d07b0(void);
 
 #endif //_EDDLIST_H

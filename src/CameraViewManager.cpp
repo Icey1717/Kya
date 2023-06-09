@@ -112,7 +112,7 @@ void MatrixFunc_001983f0(edFCamera* inputMatrix)
 	//PRINT_VECTOR(&rotationVector);
 	fVar3 = inputMatrix->aMatrices[0].da;
 	if (fVar3 != 0.0) {
-		CalculateRotationMatrix_002673f0(fVar3, &transformedMatrix, &transformedMatrix);
+		edF32Matrix4RotateZHard(fVar3, &transformedMatrix, &transformedMatrix);
 	}
 	RotateMatrixByAngle(rotationVector.x, &transformedMatrix, &transformedMatrix);
 	//MY_LOG("Rotation Matrix A\n");

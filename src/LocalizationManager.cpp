@@ -31,11 +31,11 @@ void LocalizationManager::Level_Init()
 	LevelScheduleManager* pLVar2;
 	char filePath[64];
 
-	pLVar2 = g_LevelScheduleManager_00449728;
-	iVar1 = g_LevelScheduleManager_00449728->aLevelInfo[g_LevelScheduleManager_00449728->currentLevelID].field_0x30;
+	pLVar2 = LevelScheduleManager::gThis;
+	iVar1 = LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->currentLevelID].field_0x30;
 	if ((iVar1 != -1) && (iVar1 != 0)) {
 		/* Format: %s%s LEVEL_x '_xx.bin' */
-		sprintf(filePath, "%s%s", g_LevelScheduleManager_00449728->aLevelInfo[g_LevelScheduleManager_00449728->currentLevelID].levelPath, sz_LevelTextSuffix_004349a0);
+		sprintf(filePath, "%s%s", LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->currentLevelID].levelPath, sz_LevelTextSuffix_004349a0);
 		this->levelText.select_language((pLVar2->levelBank).pBankFileAccessObject, filePath, AUTO);
 	}
 	return;
