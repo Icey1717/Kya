@@ -117,11 +117,15 @@ void SetupEd10_00217720(void* pObj, void* pFreeFunc, EdFileGlobal_10* pHeader);
 EFileLoadMode GetFileLoadMode_00424d9c(void);
 InputSetupParams* edSysGetConfig(void);
 
+#ifdef PLATFORM_WIN
+#include "log.h"
+#endif
+
 #define ENABLE_MY_LOG
 
 #ifdef ENABLE_MY_LOG
 #if defined(PLATFORM_WIN)
-#define scePrintf printf
+#define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
 #else
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
@@ -135,9 +139,9 @@ InputSetupParams* edSysGetConfig(void);
 #include <stdlib.h>
 
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
-#define MY_LOG scePrintf
+#define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
 //#define RENDER_LOG(...)
-#define RENDER_LOG scePrintf
+#define RENDER_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
 #else
 #define MY_LOG(...)
 #endif

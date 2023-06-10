@@ -468,6 +468,27 @@ Sprite::Sprite()
 	return;
 }
 
+void Sprite::Install(char* pFileBuffer)
+{
+	ed_g2d_material* pMAT_Internal;
+	ushort* puVar1;
+	int iStack4;
+
+	ed3DInstallG2D(pFileBuffer, *(int*)(pFileBuffer + 8), &iStack4, &this->textureInfo, 0);
+	this->flags_0x7c = this->flags_0x7c | 2;
+	this->field_0x4 = 0;
+	pMAT_Internal = ed3DG2DGetG2DMaterialFromIndex(&this->textureInfo, 0);
+	puVar1 = (ushort*)ed3DG2DGetBitmapFromMaterial(pMAT_Internal, 0);
+	edDListCreatMaterialFromIndex(&this->materialInfo, 0, &this->textureInfo, 2);
+	this->flags_0x7c = this->flags_0x7c | 1;
+	this->field_0x38 = *puVar1;
+	this->field_0x3a = puVar1[1];
+	this->pMaterialInfo = &this->materialInfo;
+	this->field_0x18 = (float)(uint)this->field_0x38;
+	this->field_0x1c = (float)(uint)this->field_0x3a;
+	return;
+}
+
 SplashScreen::SplashScreen()
 {
 	//(this->base).pVTable = &G2DObj_VTable_004446e0;

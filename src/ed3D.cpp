@@ -32,6 +32,8 @@
 #include "Rendering/OneTimeCommands.h"
 #include "MemoryStream.h"
 
+#define ED3D_LOG(level, format, ...) Log::GetInstance().AddLog(level, "ed3D", format, ##__VA_ARGS__)
+
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 
 ed3DConfig::ed3DConfig()
@@ -8108,12 +8110,22 @@ void ed3DPrepareG2D(ed_g2d_manager* textureInfoObj, ulong mode)
 	return;
 }
 
+#ifdef PLATFORM_WIN
+std::vector<ed_g2d_manager*> loadedTextures;
+
+std::vector<ed_g2d_manager*> ed3DGetLoadedTextures() {
+	return loadedTextures;
+}
+#endif
+
 ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outInt, ed_g2d_manager* pTextureInfo, ulong param_5)
 {
 	bool bVar1;
 	ed_g2d_manager* pOutTexture;
 	char* fileBuffer;
 	ed_g2d_manager* pTexturePool;
+
+	ED3D_LOG(LogLevel::Info, "ed3DInstallG2D");
 
 	/* Find some free area in the buffer? */
 	pOutTexture = pTextureInfo;
@@ -8142,6 +8154,11 @@ ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outIn
 		*outInt = fileLength - pOutTexture->textureFileLengthB;
 		ed3DPrepareG2D(pOutTexture, param_5);
 	}
+
+#ifdef PLATFORM_WIN
+	loadedTextures.push_back(pOutTexture);
+#endif
+
 	return pOutTexture;
 }
 
@@ -8222,6 +8239,14 @@ char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int index)
 	return pcVar1;
 }
 
+#ifdef PLATFORM_WIN
+std::vector<edDList_material*> loadedMaterials;
+
+std::vector<edDList_material*> ed3DGetLoadedMaterials() {
+	return loadedMaterials;
+}
+#endif
+
 void* edDListInitMaterial(edDList_material* outObj, TextureData_HASH_Internal_MAT* pHASH_MAT, ed_g2d_manager* textureInfoObj, int mode)
 {
 	void* pvVar1;
@@ -8242,6 +8267,11 @@ void* edDListInitMaterial(edDList_material* outObj, TextureData_HASH_Internal_MA
 	gNbUsedMaterial = gNbUsedMaterial + 1;
 	outObj->mode = mode;
 	outObj->textureInfo = textureInfoObj;
+
+#ifdef PLATFORM_WIN
+	loadedMaterials.push_back(outObj);
+#endif
+
 	return pvVar1;
 }
 

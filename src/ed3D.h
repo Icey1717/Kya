@@ -30,6 +30,10 @@ struct ed_g2d_manager {
 	undefined field_0x2f;
 };
 
+#ifdef PLATFORM_WIN
+std::vector<ed_g2d_manager*> ed3DGetLoadedTextures();
+#endif
+
 struct LightingMatrixSubSubObj {
 	struct Vector* field_0x0;
 	struct edF32MATRIX4* field_0x4;
@@ -158,6 +162,9 @@ struct edDList_material {
 	int Length;
 };
 
+#ifdef PLATFORM_WIN
+std::vector<edDList_material*> ed3DGetLoadedMaterials();
+#endif
 
 PACK(
 	struct TextureData_LAY_Internal {

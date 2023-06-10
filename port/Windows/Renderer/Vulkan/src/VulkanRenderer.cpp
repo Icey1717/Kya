@@ -25,9 +25,13 @@
 #include "imgui.h"
 #include "VulkanCommands.h"
 #include "FrameBuffer.h"
+#include "log.h"
 
-constexpr uint32_t WIDTH = 640;
-constexpr uint32_t HEIGHT = 480;
+//constexpr uint32_t WIDTH = 640;
+//constexpr uint32_t HEIGHT = 480;
+
+constexpr uint32_t WIDTH = 1920;
+constexpr uint32_t HEIGHT = 1080;
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"
@@ -172,6 +176,19 @@ public:
 
 	VkDevice GetDevice() {
 		return device;
+	}
+
+	GLFWwindow* GetGLFWWindow() {
+		return window;
+	}
+
+	VkInstance GetInstance() {
+		return instance;
+	}
+
+	uint32_t GetGraphicsQueueFamily() {
+		const QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+		return indices.graphicsFamily.value();
 	}
 
 	VkFormat GetSwapchainImageFormat() {
@@ -972,8 +989,6 @@ public:
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
-		auto& frameBuffer = FrameBuffer::Get(GetHardwareState().FBP);
-
 		VkImageSubresourceLayers subresourceLayers = {};
 		subresourceLayers.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		subresourceLayers.mipLevel = 0;
@@ -1008,6 +1023,9 @@ public:
 			throw std::runtime_error("failed to submit draw command buffer!");
 		}
 
+#ifdef BLIT_TO_BACKBUFFER
+		auto& frameBuffer = FrameBuffer::Get(GetHardwareState().FBP);
+
 		VkCommandBuffer cmd = BeginSingleTimeCommands();
 		// Transition the swapchain image layout back to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmd);
@@ -1023,6 +1041,7 @@ public:
 		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, cmd);
 
 		EndSingleTimeCommands(cmd);
+#endif
 
 		renderDelegate(swapChainFramebuffers[presentImageIndex], swapChainExtent);
 
@@ -1329,6 +1348,7 @@ public:
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
 			std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+			Log::GetInstance().AddLog(LogLevel::Info, "Validation", pCallbackData->pMessage);
 		}
 		return VK_FALSE;
 	}
@@ -1422,4 +1442,19 @@ const VkQueue& GetGraphicsQueue()
 const VkCommandPool& GetCommandPool()
 {
 	return app.GetCommandPool();
+}
+
+GLFWwindow* GetGLFWWindow()
+{
+	return app.GetGLFWWindow();
+}
+
+VkInstance GetInstance()
+{
+	return app.GetInstance();
+}
+
+uint32_t GetGraphicsQueueFamily()
+{
+	return app.GetGraphicsQueueFamily();
 }

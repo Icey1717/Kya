@@ -1,4 +1,4 @@
-project(renderer)
+project(Renderer)
 
 find_package(Vulkan REQUIRED FATAL_ERROR)
 
@@ -45,9 +45,9 @@ set (SOURCES
 	"include/delegate.h"
 )
 
-add_library(renderer ${SOURCES})
+add_library(Renderer ${SOURCES})
 
-target_compile_features(renderer PRIVATE cxx_std_17)
+target_compile_features(Renderer PRIVATE cxx_std_17)
 
 set (ReflectPrintSrc
 	"ext/SPIRV-Reflect/common/output_stream.h"
@@ -60,10 +60,10 @@ add_library(reflect-print ${ReflectPrintSrc})
 target_link_libraries(reflect-print ${Vulkan_LIBRARIES} spirv-reflect-static)
 target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")
 
-target_link_libraries(renderer glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui)
+target_link_libraries(Renderer glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log)
 
-target_include_directories(renderer PRIVATE ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR} "${CMAKE_CURRENT_LIST_DIR}/Vulkan/src")
 
-target_include_directories(renderer PUBLIC "include")
+target_include_directories(Renderer PUBLIC "include")
 
-add_dependencies(renderer Shaders)
+add_dependencies(Renderer Shaders)

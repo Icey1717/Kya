@@ -4,6 +4,11 @@
 #include "Types.h"
 #include "Rendering/DisplayListData.h"
 
+#ifdef PLATFORM_WIN
+#include "port.h"
+#include "renderer.h"
+#endif
+
 struct edSysHandlerDisplayList {
 
 	edSysHandlerDisplayList(struct edSysHandlersNodeTable* inNodeParent, int inMaxEventID, int inMainIdentifier)
@@ -91,6 +96,10 @@ typedef enum DL_LINK_MODE {
 extern int g_DisplayListObjCount_004250e0;
 extern edSysHandlerDisplayList sysHandler_0048cb90;
 
+#ifdef PLATFORM_WIN
+Renderer::TextureData MakeTextureDataFromPacket(edpkt_data* pPkt, struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap);
+#endif
+
 void edDListInit(void);
 
 void edDListLoadMatrix(edF32MATRIX4* m0);
@@ -99,6 +108,8 @@ void edDListUseMaterial(struct edDList_material* pMaterialInfo);
 
 void edDListAlphaTestAndZTest(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
 	ulong param_8);
+
+struct ed_g2d_bitmap* edDListGetG2DBitmap(struct ed_g2d_material* pMAT, int offset, bool* bHasPalette, struct ed_g2d_bitmap** pOutAddr);
 
 void edDListBlendFuncNormal(void);
 void edDListBlendSet(uint mode);

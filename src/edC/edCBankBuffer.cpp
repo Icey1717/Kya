@@ -10,6 +10,8 @@
 #endif
 #include "../edStr.h"
 
+#define IO_LOG(level, format, ...) Log::GetInstance().AddLog(level, "IO", format, ##__VA_ARGS__)
+
 const char* sz_edCBankBuffer_Wait_0042fb70 = "edCBankBufferEntry::file_access: Wait for end of previous loading operation \n";
 
 void edFileNoWaitStackFlush(void)
@@ -312,7 +314,7 @@ void edCBankFileHeader_get_entry_typepair(BankFile_Internal* fileBuffer, TypePai
 	int iVar4;
 	int iVar5;
 
-	MY_LOG("Looking up type pair entry: %d | file count: %d\n", mode, fileBuffer->fileCount);
+	IO_LOG(LogLevel::Info, "Looking up type pair entry: %d | file count: %d\n", mode, fileBuffer->fileCount);
 
 	if ((pTypePairData != (TypePairData*)0x0) && (uVar3 = 0, fileBuffer->fileCount != 0)) {
 		iVar5 = 0;
@@ -350,7 +352,7 @@ void edCBankFileHeader_get_entry_typepair(BankFile_Internal* fileBuffer, TypePai
 					pFileHeaderStart = (char*)(((char*)fileBuffer - 8) + fileBuffer->fileHeaderDataOffset);
 				}
 
-				MY_LOG("Executing for %s\n", DebugFindFilePath(fileBuffer, uVar3));
+				IO_LOG(LogLevel::Info, "Executing for %s\n", DebugFindFilePath(fileBuffer, uVar3));
 
 				FileHeaderFileData* pFileHeaderData = (FileHeaderFileData*)(pFileHeaderStart + iVar4 + 8);
 				puVar8->pFunction[mode](fileBuffer->header + pFileHeaderData->offset - 8, pFileHeaderData->size);
@@ -554,7 +556,7 @@ bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, edBANK_ENTRY_INF
 	BankFile_Internal* pBVar3;
 	uint inIndex;
 
-	MY_LOG("get_info for %d = %s\n", inFileIndex, DebugFindFilePath(pBankBuffer->fileBuffer, inFileIndex));
+	IO_LOG(LogLevel::Info, "get_info for %d = %s\n", inFileIndex, DebugFindFilePath(pBankBuffer->fileBuffer, inFileIndex));
 
 	pBVar3 = pBankBuffer->fileBuffer;
 	if (pBVar3 == (BankFile_Internal*)0x0) {
@@ -740,26 +742,26 @@ char* TreeInfo_RecurseWhileCountingIndexesUsingReference(char* headerBaseFilePat
 	bool bVar1;
 	char cVar2;
 	byte bVar3;
-	long lVar4;
+	long long lVar4;
 	char* basePathChar;
 	uint uVar5;
 	int iVar6;
-	long lVar7;
+	long long lVar7;
 	uint uVar8;
 
-	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference headerBaseFilePath %s\n", headerBaseFilePath);
+	IO_LOG(LogLevel::VeryVerbose, "TreeInfo_RecurseWhileCountingIndexesUsingReference headerBaseFilePath %s\n", headerBaseFilePath);
 
 	/* This will recursively search for the input file in the header folder
 	   structure */
 	cVar2 = *headerBaseFilePath;
-	lVar4 = (long)cVar2;
+	lVar4 = (long long)cVar2;
 	basePathChar = headerBaseFilePath + 1;
 	if (lVar4 < 0) {
-		lVar4 = (long)-(int)cVar2 << 0x38;
+		lVar4 = (long long)-(int)cVar2 << 0x38;
 		lVar7 = lVar4 >> 0x38;
-		MY_LOG("%d %d\n", lVar4, lVar7);
+		IO_LOG(LogLevel::VeryVerbose, "%d %d\n", lVar4, lVar7);
 		if (lVar7 == 0x80) {
-			lVar7 = (long)((int)(lVar4 >> 0x38) + (int)*basePathChar);
+			lVar7 = (long long)((int)(lVar4 >> 0x38) + (int)*basePathChar);
 			basePathChar = headerBaseFilePath + 2;
 		}
 		uVar8 = 0;
@@ -771,7 +773,7 @@ char* TreeInfo_RecurseWhileCountingIndexesUsingReference(char* headerBaseFilePat
 			uVar5 = uVar5 + 7;
 		} while ((char)bVar3 < '\0');
 
-		MY_LOG("%u %u %d\n", uVar8, uVar5, lVar7);
+		IO_LOG(LogLevel::VeryVerbose, "%u %u %d\n", uVar8, uVar5, lVar7);
 
 		iVar6 = (int)lVar7;
 		if (lVar7 != 0) {
@@ -782,7 +784,7 @@ char* TreeInfo_RecurseWhileCountingIndexesUsingReference(char* headerBaseFilePat
 				searchBuffer = searchBuffer + 1;
 			} while (iVar6 != 0);
 		}
-		MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference basePathChar2: %s\n", basePathChar);
+		IO_LOG(LogLevel::VeryVerbose, "TreeInfo_RecurseWhileCountingIndexesUsingReference basePathChar2: %s\n", basePathChar);
 		*searchBuffer = '\\';
 		do {
 			if (uVar8 == 0) {
@@ -791,35 +793,35 @@ char* TreeInfo_RecurseWhileCountingIndexesUsingReference(char* headerBaseFilePat
 			uVar8 = uVar8 - 1;
 			basePathChar = TreeInfo_RecurseWhileCountingIndexesUsingReference(basePathChar, outIndex, fileName, searchBuffer + 1);
 		} while (basePathChar != (char*)0x0);
-		MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference FOUND\n");
+		IO_LOG(LogLevel::VeryVerbose, "TreeInfo_RecurseWhileCountingIndexesUsingReference FOUND\n");
 		basePathChar = (char*)0x0;
 	}
 	else {
 		if (lVar4 == 0x7f) {
-			lVar4 = (long)((int)cVar2 + (int)*basePathChar);
+			lVar4 = (long long)((int)cVar2 + (int)*basePathChar);
 			basePathChar = headerBaseFilePath + 2;
 		}
-		while (bVar1 = lVar4 != 0, lVar4 = (long)((int)lVar4 + -1), bVar1) {
+		while (bVar1 = lVar4 != 0, lVar4 = (long long)((int)lVar4 + -1), bVar1) {
 			*searchBuffer = *basePathChar;
 			basePathChar = basePathChar + 1;
 			searchBuffer = searchBuffer + 1;
 		}
-		MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference searchBufferB %s\n", basePathChar);
+		IO_LOG(LogLevel::VeryVerbose,"TreeInfo_RecurseWhileCountingIndexesUsingReference searchBufferB %s\n", basePathChar);
 		do {
 			fileName = fileName + -1;
 			searchBuffer = searchBuffer + -1;
-			MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference searchBufferB %s\n", searchBuffer);
-			MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference filenameB %s\n", fileName);
+			IO_LOG(LogLevel::VeryVerbose,"TreeInfo_RecurseWhileCountingIndexesUsingReference searchBufferB %s\n", searchBuffer);
+			IO_LOG(LogLevel::VeryVerbose,"TreeInfo_RecurseWhileCountingIndexesUsingReference filenameB %s\n", fileName);
 			if (*fileName == 0) {
-				MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference FOUND B\n");
+				IO_LOG(LogLevel::VeryVerbose,"TreeInfo_RecurseWhileCountingIndexesUsingReference FOUND B\n");
 				return (char*)0x0;
 			}
 		} while ((*searchBuffer != 0) && ((*fileName & 0xdfU) == (*searchBuffer & 0xdfU)));
 		*outIndex = *outIndex + 1;
 	}
-	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference basePathChar %s\n", basePathChar);
-	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference fileName %s\n", fileName);
-	MY_LOG("TreeInfo_RecurseWhileCountingIndexesUsingReference searchBuffer %s\n", searchBuffer);
+	IO_LOG(LogLevel::VeryVerbose,"TreeInfo_RecurseWhileCountingIndexesUsingReference basePathChar %s\n", basePathChar);
+	IO_LOG(LogLevel::VeryVerbose,"TreeInfo_RecurseWhileCountingIndexesUsingReference fileName %s\n", fileName);
+	IO_LOG(LogLevel::VeryVerbose,"TreeInfo_RecurseWhileCountingIndexesUsingReference searchBuffer %s\n", searchBuffer);
 	return basePathChar;
 }
 
@@ -835,7 +837,7 @@ int get_entryindex_from_filename(BankFile_Internal* bankBufferObj, char* inFileN
 	int outIndex;
 	char cVar1;
 
-	MY_LOG("GetIndexFromFileHeader %s\n", inFileName);
+	IO_LOG(LogLevel::Info, "GetIndexFromFileHeader %s\n", inFileName);
 
 	if (bankBufferObj->field_0x30 == 0) {
 		pHeaderBase = (char*)0x0;
@@ -847,7 +849,7 @@ int get_entryindex_from_filename(BankFile_Internal* bankBufferObj, char* inFileN
 	formattedFilename[0] = '\0';
 	/* Formats file in the format extension / file name */
 	fileNameLength = TreeInfo_OptimizeFilePath(formattedFilename + 1, inFileName);
-	MY_LOG("GetIndexFromFileHeader formatted %s | %s %d\n", formattedFilename + 1, headerBasePath, fileNameLength);
+	IO_LOG(LogLevel::VeryVerbose, "GetIndexFromFileHeader formatted %s | %s %d\n", formattedFilename + 1, headerBasePath, fileNameLength);
 	outIndex = 0;
 	cVar1 = *headerBasePath;
 	while (cVar1 != '\0') {

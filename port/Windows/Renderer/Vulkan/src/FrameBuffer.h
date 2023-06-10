@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VulkanIncludes.h"
+#include <unordered_map>
 
 struct Vector2i { int x; int y; };
 struct Vector2f { float x; float y; };
@@ -19,7 +20,10 @@ struct FrameBuffer {
 	VkDeviceMemory depthImageMemory;
 	int FBP;
 
+	using FrameBufferMap = std::unordered_map<int, FrameBuffer>;
+
 	static FrameBuffer Create(Vector2i size, int FBP);
 
 	static FrameBuffer& Get(int FBP);
+	static FrameBufferMap& GetAll();
 };

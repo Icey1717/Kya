@@ -1,9 +1,8 @@
 #include "FrameBuffer.h"
-#include <unordered_map>
 #include "VulkanRenderer.h"
 #include "stdexcept"
 
-std::unordered_map<int, FrameBuffer> passes;
+FrameBuffer::FrameBufferMap passes;
 
 // Custom res settings.
 const Vector2i rtsize = { 0x500, 0x400 };
@@ -46,7 +45,11 @@ FrameBuffer FrameBuffer::Create(Vector2i size, int FBP) {
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+#ifdef BLIT_TO_BACKBUFFER
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+#else
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+#endif
 
 	VkAttachmentReference colorAttachmentRef{};
 	colorAttachmentRef.attachment = 0;
@@ -103,7 +106,7 @@ FrameBuffer FrameBuffer::Create(Vector2i size, int FBP) {
 	{
 		const VkFormat format = GetSwapchainImageFormat();
 		const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-		const VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+		const VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 		// Create the images that will be used as render targets
 		VkImageCreateInfo colorImageCreateInfo = {};
@@ -229,4 +232,9 @@ FrameBuffer& FrameBuffer::Get(int FBP)
 	}
 
 	return passes[FBP]; // Return the FrameBuffer object
+}
+
+FrameBuffer::FrameBufferMap& FrameBuffer::GetAll()
+{
+	return passes;
 }

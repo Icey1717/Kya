@@ -31,8 +31,10 @@ namespace Renderer
 
 	struct ImageData {
 		void* pImage = nullptr;
-		uint32_t width = 0;
-		uint32_t height = 0;
+		uint32_t canvasWidth = 0;
+		uint32_t canvasHeight = 0;
+		uint32_t readWidth = 0;
+		uint32_t readHeight = 0;
 		uint32_t bpp = 0;
 	};
 

@@ -19,11 +19,6 @@
 #include "edVideo/VideoD.h"
 #include "port/pointer_conv.h"
 
-#ifdef PLATFORM_WIN
-#include "port.h"
-#include "renderer.h"
-#endif
-
 #include "Rendering/CustomShell.h"
 #include "MathOps.h"
 
@@ -805,6 +800,55 @@ void edDListSetActiveViewPort(ed_viewport* pViewport)
 	return;
 }
 
+#ifdef PLATFORM_WIN
+Renderer::TextureData MakeTextureDataFromPacket(edpkt_data* pPkt, ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap) {
+	int imageIndex = -1;
+	int paletteIndex = -1;
+	uint* pPktU32 = edpktAsU32(pPkt);
+
+	uint texWidth;
+	uint texHeight;
+	uint palWidth;
+	uint palHeight;
+	bool bSetTexDimensions = false;
+	bool bSetPalDimensions = false;
+
+	while (true)
+	{
+		if ((*pPktU32) >> 28 == 0x03) {
+			if (imageIndex == -1) {
+				imageIndex = pPktU32[1];
+			}
+			else {
+				paletteIndex = pPktU32[1];
+				break;
+			}
+		}
+
+		if (pPkt->cmdB == SCE_GS_TRXREG) {
+			if (!bSetTexDimensions) {
+				texWidth = pPktU32[1];
+				texHeight = pPktU32[0];
+				bSetTexDimensions = true;
+			}
+			else {
+				palWidth = pPktU32[1];
+				palHeight = pPktU32[0];
+				bSetPalDimensions = true;
+			}
+		}
+
+		pPkt += 1;
+		pPktU32 += 4;
+	}
+
+	assert(bSetTexDimensions);
+
+	return { { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm },
+		{  LOAD_SECTION(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, 32 } };
+}
+#endif
+
 void edDListUseMaterial(edDList_material* pMaterialInfo)
 {
 	edpkt_data* pRVar1;
@@ -853,61 +897,8 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					pDVar6 = pDVar5->aCommandArray + 1;
 					gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 
-//#ifdef PLATFORM_WIN
-					int imageIndex = -1;
-					int paletteIndex = -1;
-					edpkt_data* pPkt = pDVar5->aCommandArray[0].pCommandBuffer;
-					uint* pPktU32 = edpktAsU32(pDVar5->aCommandArray[0].pCommandBuffer);
-
-					uint texWidth;
-					uint texHeight;
-					uint palWidth;
-					uint palHeight;
-					bool bSetTexDimensions = false;
-					bool bSetPalDimensions = false;
-
-					while (true)
-					{
-						if ((*pPktU32) >> 28 == 0x03) {
-							if (imageIndex == -1) {
-								imageIndex = pPktU32[1];
-							}
-							else {
-								paletteIndex = pPktU32[1];
-								break;
-							}
-						}
-
-						if (pPkt->cmdB == SCE_GS_TRXREG) {
-							if (!bSetTexDimensions) {
-								texWidth = pPktU32[1];
-								texHeight = pPktU32[0];
-								bSetTexDimensions = true;
-							}
-							else {
-								palWidth = pPktU32[1];
-								palHeight = pPktU32[0];
-								bSetPalDimensions = true;
-							}
-						}
-
-						pPkt += 1;
-						pPktU32 += 4;
-					}
-
-					assert(bSetTexDimensions);
-
-					//if (palHeight == 0x10) {
-					//	byte* a = (byte*)LOAD_SECTION(imageIndex);
-					//	for (int i = 0; i < 0x100 * 0x10; i++) {
-					//		a[i] = 0x9;
-					//	}
-					//}
-
 #ifdef PLATFORM_WIN
-					Renderer::SetImagePointer(
-						{ { LOAD_SECTION(imageIndex), texWidth, texHeight, pTextureBitmap->psm },
-						{  LOAD_SECTION(paletteIndex), palWidth, palHeight, 32 } });
+					Renderer::SetImagePointer(MakeTextureDataFromPacket(pDVar5->aCommandArray[0].pCommandBuffer, pTextureBitmap, pPaletteBitmap));
 #endif
 				}
 

@@ -356,7 +356,7 @@ char* MessageFile::get_message(ulong key, long mode)
 		}
 	}
 
-	MY_LOG("MessageFile::get_message %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
+	//MY_LOG("MessageFile::get_message %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
 
 	return pcVar1;
 }

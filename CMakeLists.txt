@@ -25,7 +25,8 @@ endif()
 set(src_root "src")
 
 set(main_src 
-	"${src_root}/main.cpp"
+	"${src_root}/kya.h"
+	"${src_root}/kya.cpp"
 	"${src_root}/IniFile.cpp"
 	"${src_root}/IniFile.h"
 	"${src_root}/Iop.cpp"
@@ -112,7 +113,7 @@ set(main_src
 	"${src_root}/edVideo/VideoC.h"
 	"${src_root}/edVideo/VideoD.cpp"
 	"${src_root}/edVideo/VideoD.h"
-	"${src_root}/Camera.cpp"
+	"src/edVideo/Camera.cpp"
 	"${src_root}/Camera.h"
 	"${src_root}/port/pointer_conv.cpp"
 	"${src_root}/port/pointer_conv.h"
@@ -136,9 +137,15 @@ if (PS2)
 endif()
 
 # add the executable
-add_executable(Kya 
-	${main_src}
-)
+if (PS2)
+	add_executable(Kya 
+		${main_src}
+	)
+else()
+	add_library(Kya 
+		${main_src}
+	)
+endif()
 
 if (PS2)
 	message("Using src directory: ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -164,7 +171,7 @@ if (PS2)
 		COMMAND mkisofs -o "${CMAKE_CURRENT_SOURCE_DIR}/kya.iso" "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}"
 	)
 else()
-	set_target_properties(Kya PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}")
+	set(KYA_EXECUTABLE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM_BINARY_FOLDER}")
 	message("Making Exe")
 
 	add_custom_target(sync_files
@@ -198,16 +205,16 @@ if (PS2)
 	target_compile_options(Kya PRIVATE "-w")
 
 else()
-	target_compile_features(Kya PRIVATE cxx_std_17)
-	target_compile_definitions(Kya PRIVATE "PLATFORM_WIN")
+	target_compile_features(Kya PUBLIC cxx_std_17)
+	target_compile_definitions(Kya PUBLIC "PLATFORM_WIN")
 
-	target_compile_options(Kya PRIVATE "-Wno-c++11-narrowing" "-w")
+	target_compile_options(Kya PUBLIC "-Wno-c++11-narrowing" "-w")
 
-	target_include_directories(Kya PRIVATE 
-		"${CMAKE_CURRENT_LIST_DIR}/src"
+	target_include_directories(Kya PUBLIC 
+		"src"
 	)
 
-	target_link_libraries(Kya port)
+	target_link_libraries(Kya Port)
 endif()
 
 set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )
@@ -216,9 +223,13 @@ option(SKIP_MOVIES "Skip into cinematics" OFF)
 option(LOAD_FOREVER "Holds on the loading screen forever" OFF)
 
 if (SKIP_MOVIES)
-	target_compile_definitions(Kya PRIVATE SKIP_MOVIES)
+	target_compile_definitions(Kya PUBLIC SKIP_MOVIES)
 endif()
 
 if (LOAD_FOREVER)
-	target_compile_definitions(Kya PRIVATE LOAD_FOREVER)
+	target_compile_definitions(Kya PUBLIC LOAD_FOREVER)
+endif()
+
+if (NOT PS2)
+	add_subdirectory("port/Windows/Host")
 endif()

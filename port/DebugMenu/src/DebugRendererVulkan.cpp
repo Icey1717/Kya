@@ -1,4 +1,4 @@
-#include "DebugMenu.h"
+#include "DebugRenderer.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -8,9 +8,11 @@
 
 #include <stdexcept>
 
+#include "renderer.h"
 #include "VulkanRenderer.h"
 #include "VulkanCommands.h"
 #include "TextureCache.h"
+#include "FrameBuffer.h"
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -19,15 +21,62 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace DebugMenu {
+namespace DebugMenu_Internal {
 	VkRenderPass g_imguiRenderPass;
 	std::vector<VkCommandBuffer> commandBuffers;
+
+	void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
+	{
+		const VkCommandBuffer& cmd = commandBuffers[GetCurrentFrame()];
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(cmd, &beginInfo);
+
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = g_imguiRenderPass;
+		renderPassInfo.framebuffer = framebuffer;
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = extent;
+
+		VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+
+		vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Start the Dear ImGui frame
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		DebugMenu::BuildImguiCommands();
+
+		ImGui::Render();
+		ImDrawData* drawData = ImGui::GetDrawData();
+
+		// Record dear imgui primitives into command buffer
+		ImGui_ImplVulkan_RenderDrawData(drawData, cmd);
+
+		vkCmdEndRenderPass(cmd);
+		vkEndCommandBuffer(cmd);
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &cmd;
+
+		vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+		vkQueueWaitIdle(GetGraphicsQueue());
+	}
 }
 
-void DebugMenu::Setup()
+void DebugMenu::SetupRenderer()
 {
 	VkDescriptorPool imguiPool;
-	g_imguiRenderPass = renderPass;
 
 	// Create Descriptor Pool
 	{
@@ -94,18 +143,18 @@ void DebugMenu::Setup()
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &g_imguiRenderPass) != VK_SUCCESS) {
+	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &DebugMenu_Internal::g_imguiRenderPass) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create render pass!");
 	}
 
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 	ImGui_ImplVulkan_InitInfo initInfo = {};
-	initInfo.Instance = instance;
+	initInfo.Instance = GetInstance();
 	initInfo.PhysicalDevice = GetPhysicalDevice();
 	initInfo.Device = GetDevice();
-	initInfo.QueueFamily = queueFamily;
-	initInfo.Queue = graphicsQueue;
+	initInfo.QueueFamily = GetGraphicsQueueFamily();
+	initInfo.Queue = GetGraphicsQueue();
 	initInfo.PipelineCache = nullptr;
 	initInfo.DescriptorPool = imguiPool;
 	initInfo.Subpass = 0;
@@ -114,8 +163,8 @@ void DebugMenu::Setup()
 	initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	initInfo.Allocator = nullptr;
 	initInfo.CheckVkResultFn = nullptr;
-	ImGui_ImplVulkan_Init(&initInfo, g_imguiRenderPass);
-	ImGui_ImplGlfw_InitForVulkan(window, true);
+	ImGui_ImplVulkan_Init(&initInfo, DebugMenu_Internal::g_imguiRenderPass);
+	ImGui_ImplGlfw_InitForVulkan(GetGLFWWindow(), true);
 
 	// Upload Fonts
 	{
@@ -127,65 +176,78 @@ void DebugMenu::Setup()
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 
-	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	DebugMenu_Internal::commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = GetCommandPool();
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+	allocInfo.commandBufferCount = (uint32_t)DebugMenu_Internal::commandBuffers.size();
 
-	if (vkAllocateCommandBuffers(GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+	if (vkAllocateCommandBuffers(GetDevice(), &allocInfo, DebugMenu_Internal::commandBuffers.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
 
-	GetRenderDelegate() += DebugMenu::Render;
+	Renderer::GetRenderDelegate() += DebugMenu_Internal::Render;
 }
 
-void DebugMenu::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
+ImTextureID DebugMenu::AddTexture(const PS2::GSTexEntry& texEntry)
 {
-	const VkCommandBuffer& cmd = commandBuffers[GetCurrentFrame()];
+	return ImGui_ImplVulkan_AddTexture(texEntry.value.sampler, texEntry.value.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
 
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+ImTextureID DebugMenu::AddTexture(const PS2::GSTexValue& texValue)
+{
+	return ImGui_ImplVulkan_AddTexture(texValue.sampler, texValue.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
 
-	vkBeginCommandBuffer(cmd, &beginInfo);
+struct DebugFrameBuffer {
+	DebugFrameBuffer(ImTextureID inTexID, VkSampler inSampler)
+		: texID(inTexID)
+		, sampler(inSampler)
+	{}
 
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = g_imguiRenderPass;
-	renderPassInfo.framebuffer = framebuffer;
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = extent;
+	DebugFrameBuffer()
+		: texID(nullptr)
+		, sampler(VK_NULL_HANDLE)
+	{}
 
-	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
+	ImTextureID texID;
+	VkSampler sampler;
+};
 
-	vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+std::unordered_map<int, DebugFrameBuffer> gDebugFrameBuffers;
 
-	// Start the Dear ImGui frame
-	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+ImTextureID DebugMenu::AddFrameBuffer(const FrameBuffer& frameBuffer)
+{
+	if (gDebugFrameBuffers.find(frameBuffer.FBP) == gDebugFrameBuffers.end()) {
+		// Create sampler
+		VkSamplerCreateInfo samplerCreateInfo{};
+		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+		samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+		samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+		samplerCreateInfo.anisotropyEnable = VK_FALSE;
+		samplerCreateInfo.maxAnisotropy = 1.0f;
+		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+		samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+		samplerCreateInfo.compareEnable = VK_FALSE;
+		samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerCreateInfo.mipLodBias = 0.0f;
+		samplerCreateInfo.minLod = 0.0f;
+		samplerCreateInfo.maxLod = 0.0f;
 
-	BuildImguiCommands();
+		VkSampler sampler;
+		VkResult result = vkCreateSampler(GetDevice(), &samplerCreateInfo, nullptr, &sampler);
+		if (result != VK_SUCCESS) {
+			// Handle sampler creation failure
+		}
 
-	ImGui::Render();
-	ImDrawData* drawData = ImGui::GetDrawData();
+		gDebugFrameBuffers.emplace(frameBuffer.FBP, DebugFrameBuffer(ImGui_ImplVulkan_AddTexture(sampler, frameBuffer.colorImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL), sampler));
+	}
 
-	// Record dear imgui primitives into command buffer
-	ImGui_ImplVulkan_RenderDrawData(drawData, cmd);
-
-	vkCmdEndRenderPass(cmd);
-	vkEndCommandBuffer(cmd);
-
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &cmd;
-
-	vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(GetGraphicsQueue());
+	return gDebugFrameBuffers[frameBuffer.FBP].texID;
 }

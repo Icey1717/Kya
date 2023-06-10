@@ -239,6 +239,7 @@ public:
 struct Sprite {
 public:
 	Sprite();
+	void Install(char* pFileBuffer);
 	byte field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;

@@ -20,3 +20,7 @@ uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 const VkBuffer& GetUniformBuffer(int index);
 const VkQueue& GetGraphicsQueue();
 const VkCommandPool& GetCommandPool();
+
+GLFWwindow* GetGLFWWindow();
+VkInstance GetInstance();
+uint32_t GetGraphicsQueueFamily();

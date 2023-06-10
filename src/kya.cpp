@@ -1402,20 +1402,48 @@ void SetLanguageID_00336b40(void)
 	return;
 }
 
-edCBank g_MenuDataedCBank_00491980 = { 0 };
+edCBank BootData_BankBuffer = { 0 };
 edCBankBufferEntry* BootData_BankBufferEntry = NULL;
 char* sz_MenuDataBankName_00435610 = "CDEURO/menu/MenuData.bnk";
-char* sz_pMenuDataBankName_00448b64 = sz_MenuDataBankName_00435610;
+char* BootDataBankName = sz_MenuDataBankName_00435610;
 
 char* sz_MediumFont_004355f8 = "medium.fon";
 char* sz_MediumFontFileName_00448b60 = sz_MediumFont_004355f8;
 
-void LoadAndVerifyMenuBnk(void)
+char* BootBitmapNames[23] = {
+	"but_tria.g2d",
+	"but_circ.g2d",
+	"but_squa.g2d",
+	"but_cros.g2d",
+	"but_l1.g2d",
+	"but_r1.g2d",
+	"but_l2.g2d",
+	"but_r2.g2d",
+	"but_sele.g2d",
+	"but_m1_turn.g2d",
+	"but_m1.g2d",
+	"but_udlr.g2d",
+	"but_lr.g2d",
+	"fl_haut.g2d",
+	"fl_droite.g2d",
+	"fl_gauche.g2d",
+	"fl_bas.g2d",
+	"selection.g2d",
+	"woodsqre.g2d",
+	"icon_clock.g2d",
+	"map.g2d",
+	"money.g2d",
+	"memory_card.g2d"
+};
+
+Sprite BootBitmaps[23] = {};
+
+void InstallBootData(void)
 {
-	undefined* puVar1;
+	char* puVar1;
 	int fileIndex;
 	char* messagesFilePointer;
-	//Sprite* pIconTexture;
+	Sprite* pIconTexture;
 	char** ppcVar2;
 	int iVar3;
 	BankFilePathContainer bankHeader;
@@ -1423,31 +1451,31 @@ void LoadAndVerifyMenuBnk(void)
 	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
 	   and a map. */
 	memset(&bankHeader, 0, sizeof(BankFilePathContainer));
-	initialize(&g_MenuDataedCBank_00491980, 0x32000, 1, &bankHeader);
+	initialize(&BootData_BankBuffer, 0x32000, 1, &bankHeader);
 	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
-	bankHeader.filePath = sz_pMenuDataBankName_00448b64;
-	BootData_BankBufferEntry = get_free_entry(&g_MenuDataedCBank_00491980);
+	bankHeader.filePath = BootDataBankName;
+	BootData_BankBufferEntry = get_free_entry(&BootData_BankBuffer);
 	load(BootData_BankBufferEntry, &bankHeader);
 	/* Bank will go on the heap here */
 	iVar3 = 0;
-	//ppcVar2 = BootBitmapNames;
-	//pIconTexture = BootBitmaps;
-	//do {
-	//	messagesFilePointer = *ppcVar2;
-	//	fileIndex = get_index(BootData_BankBufferEntry, messagesFilePointer);
-	//	if (fileIndex == -1) {
-	//		edDebugPrintf(s__File:_ % s_00435750, messagesFilePointer);
-	//		messagesFilePointer = (char*)0x0;
-	//	}
-	//	else {
-	//		messagesFilePointer = get_element(BootData_BankBufferEntry, fileIndex);
-	//	}
-	//	Sprite::Install(pIconTexture, messagesFilePointer);
-	//	puVar1 = sz_MediumFontFileName_00448b60;
-	//	iVar3 = iVar3 + 1;
-	//	ppcVar2 = ppcVar2 + 1;
-	//	pIconTexture = pIconTexture + 1;
-	//} while (iVar3 < 0x17);
+	ppcVar2 = BootBitmapNames;
+	pIconTexture = BootBitmaps;
+	do {
+		messagesFilePointer = *ppcVar2;
+		fileIndex = get_index(BootData_BankBufferEntry, messagesFilePointer);
+		if (fileIndex == -1) {
+			edDebugPrintf("\r\nFile: %s\r\n", messagesFilePointer);
+			messagesFilePointer = (char*)0x0;
+		}
+		else {
+			messagesFilePointer = get_element(BootData_BankBufferEntry, fileIndex);
+		}
+		pIconTexture->Install(messagesFilePointer);
+		puVar1 = sz_MediumFontFileName_00448b60;
+		iVar3 = iVar3 + 1;
+		ppcVar2 = ppcVar2 + 1;
+		pIconTexture = pIconTexture + 1;
+	} while (iVar3 < 0x17);
 	/* Init Medium.Fon */
 	iVar3 = get_index(BootData_BankBufferEntry, sz_MediumFontFileName_00448b60);
 	if (iVar3 == -1) {
@@ -1544,11 +1572,6 @@ void MainInit(int argc,char **argv)
 		SetupVideo(&g_IniFile_00450750);
 	}
 
-
-#if defined(PLATFORM_WIN)
-	Renderer::Setup();
-#endif
-
 	SetupDoubleBuffer_00405ba0();
 
 	/* If using NTSC then load SPLASH_N, otherwise load SPLASH_P */
@@ -1628,7 +1651,7 @@ void MainInit(int argc,char **argv)
 	///* <BNK>0: CDEURO/menu/Messages.bnk */
 	LoadBNK(sz_BNK_Messages_Drive, sz_BNK_Messages_Path);
 	SetLanguageID_00336b40();
-	LoadAndVerifyMenuBnk();
+	InstallBootData();
 	/* Init_edVideo */
 	edDebugPrintf("---- Init edVideo \n");
 	edVideoConfig* pVVar4 = edVideoGetConfig();
@@ -2333,11 +2356,14 @@ void LevelInit(void)
 	return;
 }
 
-
 char* sz_EdenFileFormat_0042b848 = "eden%d_%c";
 char* sz_AtariFileFormat_0042b858 = "atari_%c";
 
+#ifdef PLATFORM_PS2
 int main(int argc,char **argv)
+#else
+int main_internal(int argc, char** argv)
+#endif
 {
 	char videoModeSpecifier;
 	uint cutsceneID;
@@ -2380,4 +2406,3 @@ int main(int argc,char **argv)
 	//MainTerm();
 	return 0;
 }
-

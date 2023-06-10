@@ -2,8 +2,13 @@
 
 #include <stdint.h>
 #include <vector>
+#include <optional>
 #include "GSState.h"
 #include "Pipeline.h"
+
+namespace Renderer {
+	struct TextureData;
+}
 
 namespace PS2 {
 	struct GSTexKey {
@@ -47,8 +52,12 @@ namespace PS2 {
 	struct GSTexValue {
 	public:
 		GSTexValue(const GSTexValueCreateInfo& createInfo);
+
+		// For Debug textures.
+		GSTexValue(const Renderer::TextureData& textureData);
+
 		void Cleanup();
-		void UploadImage();
+		void UploadImage(const Renderer::TextureData& textureData);
 		void CreateResources();
 
 		VkImage image;
