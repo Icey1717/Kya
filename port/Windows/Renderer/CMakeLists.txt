@@ -56,6 +56,12 @@ set (ReflectPrintSrc
 	"ext/SPIRV-Reflect/examples/common.cpp"
 )
 
+option(RENDERER_HEADLESS "Skip rendering commands" OFF)
+
+if (RENDERER_HEADLESS OR FORCE_RENDERER_HEADLESS) 
+	target_compile_definitions(Renderer PRIVATE HEADLESS)
+endif()
+
 add_library(reflect-print ${ReflectPrintSrc})
 target_link_libraries(reflect-print ${Vulkan_LIBRARIES} spirv-reflect-static)
 target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")

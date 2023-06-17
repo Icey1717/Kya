@@ -36,8 +36,8 @@ TimeController* GetTimer(void)
 }
 
 #ifdef PLATFORM_PS2
-uint UINT_00449178 = 0;
-uint UINT_0044917c = 0;
+uint lastTime = 0;
+uint lastResult = 0;
 
 unsigned int GetCountValue_Time(void)
 {
@@ -48,29 +48,29 @@ unsigned int GetCountValue_Time(void)
 	return i;
 }
 
-uint GetFrameTime_00291b80(void)
+uint _edSystemTimerGetU32(void)
 {
 	uint uVar1;
 	int iVar2;
 
 	iVar2 = 0;
 	uVar1 = GetCountValue_Time() / 0x48000;
-	if (uVar1 < UINT_0044917c) {
+	if (uVar1 < lastResult) {
 		iVar2 = 0x38e3;
 	}
-	UINT_00449178 = UINT_00449178 + ((uVar1 + iVar2) - UINT_0044917c);
-	UINT_0044917c = uVar1;
-	return UINT_00449178;
+	lastTime = lastTime + ((uVar1 + iVar2) - lastResult);
+	lastResult = uVar1;
+	return lastTime;
 }
 #endif
 
-float GetFrameTime_00291c40(void)
+float _edSystemTimerGet(void)
 {
 #ifdef PLATFORM_PS2
 	uint uVar1;
 	float fVar2;
 
-	uVar1 = GetFrameTime_00291b80();
+	uVar1 = _edSystemTimerGetU32();
 	if ((int)uVar1 < 0) {
 		fVar2 = (float)(uVar1 >> 1 | uVar1 & 1);
 		fVar2 = fVar2 + fVar2;
@@ -82,6 +82,11 @@ float GetFrameTime_00291c40(void)
 #else
 	return 0.033f;
 #endif
+}
+
+float edTimerTimeGet(void)
+{
+	return _edSystemTimerGet();
 }
 
 float TimeController::Update()
@@ -99,7 +104,7 @@ float TimeController::Update()
 	cutsceneDeltaTime = frameTime * timeScale;
 	totalTime = totalTime + frameTime;
 	scaledTotalTime = scaledTotalTime + frameTime * timeScale;
-	currentTime = GetFrameTime_00291c40();
+	currentTime = edTimerTimeGet();
 	frameDelta = currentTime - totalPlayTime;
 	totalPlayTime = currentTime;
 	return currentTime;

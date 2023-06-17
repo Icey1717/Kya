@@ -3,11 +3,16 @@
 #include "ed3D.h"
 #include "edCTextFont.h"
 
-#include "pointer_conv.h"
+#include "port/pointer_conv.h"
 
 #ifdef PLATFORM_WIN
 #include "renderer.h"
+#else
+#include <libvu0.h>
+#include <libdma.h>
 #endif
+
+
 
 struct CharacterData {
 	uint colour;

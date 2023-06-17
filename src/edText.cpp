@@ -10,7 +10,7 @@ edCTextFont* g_PackedFontPtr_004324d0 = (edCTextFont*)g_PackedFontData_0041f290;
 
 bool Install(edCTextFont* pFont)
 {
-	bool bVar2;
+	bool bInstallSuccess;
 	FontPacked_2C* pFVar3;
 	ed_g2d_manager* pTVar4;
 	char* pcVar5;
@@ -19,12 +19,12 @@ bool Install(edCTextFont* pFont)
 	uint uVar1;
 
 	if (pFont == (edCTextFont*)0x0) {
-		bVar2 = false;
+		bInstallSuccess = false;
 	}
 	else {
 		if ((((pFont->header[0] == 'M') && (pFont->header[1] == 'K')) && (pFont->header[2] == 'F')) && (pFont->header[3] == 'N')) {
 			if ((pFont->field_0x4 == 2) && (pFont->field_0x6 == 0)) {
-				bVar2 = false;
+				bInstallSuccess = false;
 				if ((FontPacked_2C*)pFont->pSubData == (FontPacked_2C*)0x0) {
 					pFVar3 = new FontPacked_2C();
 
@@ -34,7 +34,7 @@ bool Install(edCTextFont* pFont)
 					pFont->pSubData = pFVar3;
 #endif
 					if ((FontPacked_2C*)pFont->pSubData == (FontPacked_2C*)0x0) {
-						bVar2 = false;
+						bInstallSuccess = false;
 					}
 					else {
 						pFVar3->pTextureInfo = (ed_g2d_manager*)0x0;
@@ -77,46 +77,46 @@ bool Install(edCTextFont* pFont)
 									pTVar4 = ed3DInstallG2D(pcVar5, *(int*)(pcVar5 + 8), &iStack4, (ed_g2d_manager*)0x0, 0);
 									pFVar3->pTextureInfo = pTVar4;
 									edDListCreatMaterialFromIndex(&pFVar3->materialInfo, 0, pFVar3->pTextureInfo, 2);
-									bVar2 = true;
+									bInstallSuccess = true;
 								}
 								else {
-									bVar2 = false;
+									bInstallSuccess = false;
 								}
 							}
 							else {
-								bVar2 = false;
+								bInstallSuccess = false;
 							}
 						}
 						else {
-							bVar2 = false;
+							bInstallSuccess = false;
 						}
 					}
 				}
 			}
 			else {
-				bVar2 = false;
+				bInstallSuccess = false;
 			}
 		}
 		else {
-			bVar2 = false;
+			bInstallSuccess = false;
 		}
 	}
-	return bVar2;
+	return bInstallSuccess;
 }
 
 int g_iMaxTextIconEntryCount_0044916c = 0x26;
 
 bool edTextInstallFont(edCTextFont* pFontData)
 {
-	bool uVar1;
+	bool bInstallSuccess;
 
 	if (pFontData == (edCTextFont*)0x0) {
-		uVar1 = false;
+		bInstallSuccess = false;
 	}
 	else {
-		uVar1 = Install(pFontData);
+		bInstallSuccess = Install(pFontData);
 	}
-	return uVar1;
+	return bInstallSuccess;
 }
 
 bool edTextInit(void)

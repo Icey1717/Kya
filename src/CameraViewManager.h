@@ -68,8 +68,8 @@ struct ObjectBase {
 	undefined4 field_0x4;
 };
 
-struct CameraViewBase : public ObjectBase {
-	CameraViewBase(struct ByteCode* pMemoryStream);
+struct Camera : public ObjectBase {
+	Camera(struct ByteCode* pMemoryStream);
 
 	virtual void SetCameraType(ECameraType type) {}
 	virtual ECameraType GetCameraType();
@@ -100,10 +100,10 @@ struct CameraViewBase : public ObjectBase {
 	undefined field_0xa1;
 	undefined field_0xa2;
 	undefined field_0xa3;
-	struct CameraViewBase* pNextCameraView_0xa4;
+	struct Camera* pNextCameraView_0xa4;
 };
 
-struct CameraView : public CameraViewBase
+struct CameraView : public Camera
 {
 	CameraView(struct ByteCode* pMemoryStream);
 
@@ -1083,11 +1083,31 @@ struct CameraViewManagerSubObj_40 {
 	undefined field_0x3f;
 };
 
+struct FrontendCameraView : public Camera {
+	undefined field_0xa8;
+	undefined field_0xa9;
+	undefined field_0xaa;
+	undefined field_0xab;
+	undefined field_0xac;
+	undefined field_0xad;
+	undefined field_0xae;
+	undefined field_0xaf;
+};
+
+struct CameraCinematic : public FrontendCameraView {
+	void SetTransform(edF32MATRIX4* transformMatrix);
+	edF32VECTOR3 field_0xb0;
+	undefined field_0xbc;
+	undefined field_0xbd;
+	undefined field_0xbe;
+	undefined field_0xbf;
+};
+
 struct CameraViewManagerSubObj {
 	CameraViewManagerSubObj();
 	struct CameraViewManagerSubObj_40 aSubObj40[8];
 	float field_0x200;
-	struct CameraViewBase* pActiveCameraView_0x204;
+	struct Camera* pActiveCameraView_0x204;
 	int field_0x208;
 	int field_0x20c;
 	undefined4 field_0x210;
@@ -1095,11 +1115,15 @@ struct CameraViewManagerSubObj {
 	float field_0x218;
 };
 
-struct CameraViewManager : public Manager {
-	CameraViewManager();
+struct CameraManager : public Manager {
+	CameraManager();
 	virtual void Game_Init();
 	void SetupFunc_00197770();
-	CameraViewBase* AddCamera(ECameraType type, struct ByteCode* pMemoryStream, char* objName);
+	Camera* AddCamera(ECameraType type, struct ByteCode* pMemoryStream, char* objName);
+	Camera* GetDefGameCamera(ECameraType type);
+
+	static CameraManager* _gThis;
+
 	float time_0x4;
 	uint field_0x8;
 	undefined field_0xc;
@@ -2102,9 +2126,9 @@ struct CameraViewManager : public Manager {
 	undefined field_0x4b1;
 	undefined field_0x4b2;
 	undefined field_0x4b3;
-	struct CameraViewBase* pInitialView_0x4b4;
-	struct CameraViewBase* pShadowSunView_0x4b8;
-	struct CameraViewBase* pShadowSunView_0x4bc;
+	struct Camera* pInitialView_0x4b4;
+	struct Camera* pShadowSunView_0x4b8;
+	struct Camera* pShadowSunView_0x4bc;
 	undefined field_0x4c0;
 	undefined field_0x4c1;
 	undefined field_0x4c2;
@@ -2141,8 +2165,8 @@ struct CameraViewManager : public Manager {
 	undefined field_0x4e1;
 	undefined field_0x4e2;
 	undefined field_0x4e3;
-	struct CameraViewBase* pFrontendCamera_0x4e4;
-	struct CameraViewBase* pMouseQuakeCamera_0x4e8;
+	struct Camera* pFrontendCamera_0x4e4;
+	struct Camera* pMouseQuakeCamera_0x4e8;
 	struct CameraViewManagerSubObj cameraViewManagerSubObj_0x4ec;
 	undefined field_0x708;
 	undefined field_0x709;

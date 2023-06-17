@@ -200,7 +200,7 @@ Scene::Scene()
 	//HelpManager* pHelpManager;
 	PauseManager* pPVar2;
 	//MapManager* pMVar3;
-	CameraViewManager* pCameraViewmanager;
+	CameraManager* pCameraViewmanager;
 	SectorManager* pSectorManager;
 	//LightManager* pLightManager;
 	FileManager3D* p3DFileManager;
@@ -294,7 +294,7 @@ Scene::Scene()
 	//	pMVar3 = (MapManager*)SetupMapManager_003f9ef0(pMVar3);
 	//}
 	//g_MapManager_0045168c = pMVar3;
-	pCameraViewmanager = new CameraViewManager();
+	pCameraViewmanager = new CameraManager();
 	g_ManagerSingletonArray_00451660.g_CameraManager_0045167c = pCameraViewmanager;
 	pSectorManager = new SectorManager();
 	g_ManagerSingletonArray_00451660.g_SectorManager_00451670 = pSectorManager;
@@ -477,7 +477,7 @@ void ed3DResetTime(void)
 }
 
 
-void LoadStageOne_001b9dc0(void)
+void Scene::LevelLoading_Begin(void)
 {
 	TimeController* pTimeController;
 	Manager** loadLoopObject;
@@ -490,7 +490,7 @@ void LoadStageOne_001b9dc0(void)
 	loadLoopObject = (Manager**)&g_ManagerSingletonArray_00451660;
 	do {
 		if (*loadLoopObject != (Manager*)0x0) {
-			(*loadLoopObject)->Game_Term();
+			(*loadLoopObject)->LevelLoading_Begin();
 		}
 		iVar1 = iVar1 + 1;
 		loadLoopObject = loadLoopObject + 1;

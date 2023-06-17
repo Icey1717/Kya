@@ -587,7 +587,8 @@ public:
 
 	// Begin Manager
 	virtual void Game_Init();
-	virtual void Game_Term();
+
+	virtual void LevelLoading_Begin();
 	virtual void LevelLoading_End();
 	virtual bool LevelLoading_Manage();
 	virtual void Level_Install();
@@ -1990,8 +1991,8 @@ public:
 	int level_0x5b54;
 	undefined4 field_0x5b58;
 	undefined4 field_0x5b5c;
-	edCBank levelBank;
-	edCBank levelIOPBank;
+	edCBankBuffer levelBank;
+	edCBankBuffer levelIOPBank;
 	undefined field_0x5bd8;
 	undefined field_0x5bd9;
 	undefined field_0x5bda;

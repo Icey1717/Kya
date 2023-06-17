@@ -32,7 +32,11 @@
 #include "Rendering/OneTimeCommands.h"
 #include "MemoryStream.h"
 
+#ifdef PLATFORM_WIN
 #define ED3D_LOG(level, format, ...) Log::GetInstance().AddLog(level, "ed3D", format, ##__VA_ARGS__)
+#else
+#define ED3D_LOG(level, format, ...) scePrintf(format, ##__VA_ARGS__)
+#endif
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 
@@ -150,7 +154,7 @@ PACK(
 
 PACK(
 struct TextureData_MYSTERY {
-	Vector3 field_0x0;
+	edF32VECTOR3 field_0x0;
 	ushort field_0xc;
 	undefined field_0xe;
 	undefined field_0xf;
@@ -8111,10 +8115,24 @@ void ed3DPrepareG2D(ed_g2d_manager* textureInfoObj, ulong mode)
 }
 
 #ifdef PLATFORM_WIN
-std::vector<ed_g2d_manager*> loadedTextures;
+Multidelegate<ed_g2d_manager*> onTextureLoadedDelegate;
 
-std::vector<ed_g2d_manager*> ed3DGetLoadedTextures() {
-	return loadedTextures;
+Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate()
+{
+	return onTextureLoadedDelegate;
+}
+
+Multidelegate<edDList_material*> onMaterialLoadedDelegate;
+Multidelegate<edDList_material*> onMaterialUnloadedDelegate;
+
+Multidelegate<edDList_material*>& ed3DGetMaterialLoadedDelegate()
+{
+	return onMaterialLoadedDelegate;
+}
+
+Multidelegate<edDList_material*>& ed3DGetMaterialUnloadedDelegate()
+{
+	return onMaterialUnloadedDelegate;
 }
 #endif
 
@@ -8122,6 +8140,7 @@ ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outIn
 {
 	bool bVar1;
 	ed_g2d_manager* pOutTexture;
+
 	char* fileBuffer;
 	ed_g2d_manager* pTexturePool;
 
@@ -8156,13 +8175,13 @@ ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outIn
 	}
 
 #ifdef PLATFORM_WIN
-	loadedTextures.push_back(pOutTexture);
+	onTextureLoadedDelegate(pOutTexture);
 #endif
 
 	return pOutTexture;
 }
 
-TextureData_HASH_Internal_MAT* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int count)
+TextureData_HASH_Internal_MAT* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index)
 {
 	int* pBuffStart;
 	int* nextSection;
@@ -8179,7 +8198,7 @@ TextureData_HASH_Internal_MAT* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pText
 		for (nextSection = (int*)edChunckGetFirst((char*)pBuffStart, (char*)sectionEnd); nextSection != (int*)0x0; nextSection = edChunckGetNext((char*)nextSection, sectionEnd)) {
 			/* Check the first value in the buffer is *MAT.* */
 			if (*nextSection == 0x2e54414d) {
-				if ((count == 0) && (*pBuffStart == 0x48534148)) {
+				if ((index == 0) && (*pBuffStart == 0x48534148)) {
 					/* Check the first value in the buffer is *HASH* */
 					pHASH_MAT = (TextureData_HASH_Internal_MAT*)(pBuffStart + 4);
 					uVar1 = (uint)((ulong)(pMATA) + (pMATA->field_0xc - (ulong)pHASH_MAT)) >> 4;
@@ -8190,7 +8209,7 @@ TextureData_HASH_Internal_MAT* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pText
 						pHASH_MAT = pHASH_MAT + 1;
 					}
 				}
-				count = count + -1;
+				index = index + -1;
 			}
 			/* Jump to the next section */
 		}
@@ -8239,14 +8258,6 @@ char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int index)
 	return pcVar1;
 }
 
-#ifdef PLATFORM_WIN
-std::vector<edDList_material*> loadedMaterials;
-
-std::vector<edDList_material*> ed3DGetLoadedMaterials() {
-	return loadedMaterials;
-}
-#endif
-
 void* edDListInitMaterial(edDList_material* outObj, TextureData_HASH_Internal_MAT* pHASH_MAT, ed_g2d_manager* textureInfoObj, int mode)
 {
 	void* pvVar1;
@@ -8269,11 +8280,30 @@ void* edDListInitMaterial(edDList_material* outObj, TextureData_HASH_Internal_MA
 	outObj->textureInfo = textureInfoObj;
 
 #ifdef PLATFORM_WIN
-	loadedMaterials.push_back(outObj);
+	onMaterialLoadedDelegate(outObj);
 #endif
 
 	return pvVar1;
 }
+
+bool edDListTermMaterial(edDList_material* pMaterial)
+{
+	char** ppcVar1;
+
+	if ((*(ulong*)(gBankMaterial + pMaterial->Length) != 0) &&
+		(ppcVar1 = (char**)&gBankMaterial->pHASH_MAT, ppcVar1[pMaterial->Length * 4] != (char*)0x0)) {
+		*(undefined8*)(gBankMaterial + pMaterial->Length) = 0;
+		ppcVar1[pMaterial->Length * 4] = (char*)0x0;
+		gNbUsedMaterial = gNbUsedMaterial + -1;
+	}
+
+#ifdef PLATFORM_WIN
+	onMaterialUnloadedDelegate(pMaterial);
+#endif
+
+	return true;
+}
+
 
 edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, int mode)
 {

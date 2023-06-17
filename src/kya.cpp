@@ -1402,7 +1402,7 @@ void SetLanguageID_00336b40(void)
 	return;
 }
 
-edCBank BootData_BankBuffer = { 0 };
+edCBankBuffer BootData_BankBuffer = { 0 };
 edCBankBufferEntry* BootData_BankBufferEntry = NULL;
 char* sz_MenuDataBankName_00435610 = "CDEURO/menu/MenuData.bnk";
 char* BootDataBankName = sz_MenuDataBankName_00435610;
@@ -1446,16 +1446,16 @@ void InstallBootData(void)
 	Sprite* pIconTexture;
 	char** ppcVar2;
 	int iVar3;
-	BankFilePathContainer bankHeader;
+	edCBankInstall bankHeader;
 
 	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
 	   and a map. */
-	memset(&bankHeader, 0, sizeof(BankFilePathContainer));
-	initialize(&BootData_BankBuffer, 0x32000, 1, &bankHeader);
+	memset(&bankHeader, 0, sizeof(edCBankInstall));
+	BootData_BankBuffer.initialize(0x32000, 1, &bankHeader);
 	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
 	bankHeader.filePath = BootDataBankName;
-	BootData_BankBufferEntry = get_free_entry(&BootData_BankBuffer);
-	load(BootData_BankBufferEntry, &bankHeader);
+	BootData_BankBufferEntry = BootData_BankBuffer.get_free_entry();
+	BootData_BankBufferEntry->load(&bankHeader);
 	/* Bank will go on the heap here */
 	iVar3 = 0;
 	ppcVar2 = BootBitmapNames;
@@ -1844,7 +1844,7 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	LoadVideoFromFilePath(display, file_path);
 
 	do {
-		//ReadInput(inTimeController->cutsceneDeltaTime);
+		//PlayerInput::Update(inTimeController->cutsceneDeltaTime);
 		inTimeController->Update();
 		if (display->fileReadSuccess != 0) {
 			fVar4 = 1.0;
@@ -2155,7 +2155,7 @@ void PlayIntroVideo(long mode)
 
 void LoadingLoop(void)
 {
-	Scene* pLVar1;
+	Scene* pSceneInstance;
 	bool bVar2;
 	TimeController* inTimeController;
 
@@ -2167,19 +2167,19 @@ void LoadingLoop(void)
 
 	/* These functions just run once */
 	PlayIntroVideo(0);
-	pLVar1 = Scene::_pinstance;
+	pSceneInstance = Scene::_pinstance;
 	inTimeController = GetTimer();
-	LoadStageOne_001b9dc0();
+	pSceneInstance->LevelLoading_Begin();
 	do {
 		/* This is the main loop that plays cutscenes
 
 		   This does not control any cutscene elements */
-		//ReadInput(inTimeController->cutsceneDeltaTime);
+		//PlayerInput::Update(inTimeController->cutsceneDeltaTime);
 		inTimeController->Update();
 		/* Play cutscene */
-		bVar2 = pLVar1->LevelLoading_Manage();
+		bVar2 = pSceneInstance->LevelLoading_Manage();
 		/* Responsible for drawing the loading screen. */
-		pLVar1->LevelLoading_Draw();
+		pSceneInstance->LevelLoading_Draw();
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
 		/* Update rendering */
 		edVideoFlip();
@@ -2188,7 +2188,7 @@ void LoadingLoop(void)
 #else
 	} while (bVar2 != false);
 #endif
-	pLVar1->LevelLoading_End();
+	pSceneInstance->LevelLoading_End();
 	MY_LOG("LoadLevel End\n");
 	return;
 }
@@ -2343,15 +2343,15 @@ void GameLoop(void)
 
 void LevelInit(void)
 {
-	Scene* pLVar1;
+	Scene* pSceneInstance;
 
 	MY_LOG("LevelInit Begin\n");
 
 	/* Cutscenes are played in here */
 	LoadingLoop();
-	pLVar1 = Scene::_pinstance;
-	pLVar1->Level_Install();
-	pLVar1->Level_Init();
+	pSceneInstance = Scene::_pinstance;
+	pSceneInstance->Level_Install();
+	pSceneInstance->Level_Init();
 	MY_LOG("LevelInit End\n");
 	return;
 }

@@ -394,4 +394,144 @@ uint GetGreaterPower2Val(uint value)
 	return value;
 }
 
+float edF32ATanSoft(float val)
+{
+	int iVar1;
+	float fVar2;
+	float fVar3;
 
+	iVar1 = -1;
+	if (val < 0.0) {
+		val = -val;
+	}
+	else {
+		iVar1 = 1;
+	}
+	if (2.414214f < val) {
+		fVar2 = 1.570796f;
+		val = -(1.0f / val);
+	}
+	else {
+		if (0.4142136f < val) {
+			fVar2 = 0.7853982f;
+			val = (val - 1.0f) / (val + 1.0f);
+		}
+		else {
+			fVar2 = 0.0f;
+		}
+	}
+	fVar3 = val * val;
+	fVar2 = fVar2 + val + val * fVar3 * (fVar3 * ((fVar3 * 0.08053745f - 0.1387769f) * fVar3 + 0.1997771f) - 0.3333295f);
+	if (iVar1 < 0) {
+		fVar2 = -fVar2;
+	}
+	return fVar2;
+}
+
+float edF32ATanHard(float val)
+{
+	return edF32ATanSoft(val);
+}
+
+#define M_PI 3.1415927f
+#define M_NEG_PI -3.1415927f
+#define M_PI_2 1.5707964f
+#define M_NEG_PI_2 -1.5707964f
+
+float edF32ATan2Soft(float a, float b)
+{
+	uint uVar1;
+	float fVar2;
+	float fVar3;
+
+	uVar1 = 0;
+	if (b < 0.0f) {
+		uVar1 = 2;
+	}
+	if (a < 0.0f) {
+		uVar1 = uVar1 | 1;
+	}
+	if (b == 0.0f) {
+		fVar3 = M_NEG_PI_2;
+		if (((uVar1 & 1) == 0) && (fVar3 = 0.0f, a != 0.0f)) {
+			fVar3 = M_PI_2;
+		}
+	}
+	else {
+		if (a == 0.0f) {
+			fVar3 = 0.0f;
+			if ((uVar1 & 2) != 0) {
+				fVar3 = M_PI;
+			}
+		}
+		else {
+			fVar3 = M_NEG_PI;
+			if ((uVar1 != 3) && (fVar3 = M_PI, uVar1 != 2)) {
+				fVar3 = 0.0f;
+			}
+			fVar2 = edF32ATanHard(a / b);
+			fVar3 = fVar3 + fVar2;
+		}
+	}
+	return fVar3;
+}
+
+void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder)
+{
+	float* pfVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+
+	iVar4 = *rotationOrder + -0x58;
+	iVar3 = rotationOrder[1] + -0x58;
+	iVar2 = rotationOrder[2] + -0x58;
+	pfVar1 = &m0[-0x16].aa + *rotationOrder * 4;
+	fVar5 = pfVar1[iVar4];
+	fVar7 = pfVar1[iVar3];
+	fVar5 = sqrtf(fVar7 * fVar7 + fVar5 * fVar5);
+	if (0.001f < fVar5) {
+		fVar7 = edF32ATan2Soft(*(float*)((int)m0 + iVar2 * 4 + iVar3 * 0x10), ((edF32MATRIX4*)((int)m0 + iVar2 * 0x14))->aa
+		);
+		fVar5 = edF32ATan2Soft(-pfVar1[iVar2], fVar5);
+		fVar6 = edF32ATan2Soft(pfVar1[iVar3], pfVar1[iVar4]);
+	}
+	else {
+		fVar7 = edF32ATan2Soft(-*(float*)((int)m0 + iVar3 * 4 + iVar2 * 0x10),
+			((edF32MATRIX4*)((int)m0 + iVar3 * 0x14))->aa);
+		fVar5 = M_PI_2f;
+		if (-pfVar1[iVar2] < 0.0f) {
+			fVar5 = M_NEG_PI_2;
+		}
+		fVar6 = 0.0;
+	}
+	((edF32VECTOR3*)((int)v0 + iVar4 * 4))->x = fVar7;
+	((edF32VECTOR3*)((int)v0 + iVar3 * 4))->x = fVar5;
+	((edF32VECTOR3*)((int)v0 + iVar2 * 4))->x = fVar6;
+	return;
+}
+
+void edF32Vector4AddHard(Vector* v0, Vector* v1, Vector* v2)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar1 = v1->y;
+	fVar2 = v1->z;
+	fVar3 = v1->w;
+	fVar4 = v2->y;
+	fVar5 = v2->z;
+	fVar6 = v2->w;
+	v0->x = v1->x + v2->x;
+	v0->y = fVar1 + fVar4;
+	v0->z = fVar2 + fVar5;
+	v0->w = fVar3 + fVar6;
+	return;
+}

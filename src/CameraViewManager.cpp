@@ -8,8 +8,8 @@
 #include <libvu0.h>
 #endif
 
-CameraViewManager* g_CameraViewManager_00448e98 = NULL;
-CameraViewManager* g_CameraViewManager_00448e9c = NULL;
+CameraManager* CameraManager::_gThis = NULL;
+CameraManager* g_CameraViewManager_00448e9c = NULL;
 edFCamera CameraObj_130_0044a100 = { 0 };
 edFCamera g_CameraObj_0044ae10 = { 0 };
 edFCamera CameraObj_130_ARRAY_0044a230[10] = { 0 };
@@ -46,20 +46,20 @@ CameraViewManagerSubObj::CameraViewManagerSubObj()
 		*(undefined4*)&pCVar1->aSubObj40[0].field_0x3c = 0;
 		pCVar1 = (CameraViewManagerSubObj*)(pCVar1->aSubObj40 + 1);
 	} while (iVar2 < 0x40);
-	this->pActiveCameraView_0x204 = (CameraViewBase*)0x0;
+	this->pActiveCameraView_0x204 = (Camera*)0x0;
 	return;
 }
 
-CameraViewManager::CameraViewManager()
+CameraManager::CameraManager()
 {
 	//FUN_003fedc0((long)&this->field_0x710);
-	g_CameraViewManager_00448e98 = this;
+	_gThis = this;
 	this->field_0xa7c = 0;
 	SetupFunc_00197770();
 	return;
 }
 
-void CameraViewManager::Game_Init()
+void CameraManager::Game_Init()
 {
 	(this->field_0x470).x = 1.333333;
 	return;
@@ -145,9 +145,9 @@ void MatrixFunc_001983f0(edFCamera* inputMatrix)
 	return;
 }
 
-void CameraViewManager::SetupFunc_00197770()
+void CameraManager::SetupFunc_00197770()
 {
-	CameraViewManager* pCVar1;
+	CameraManager* pCVar1;
 	edFCamera* m0;
 	int iVar2;
 
@@ -189,9 +189,9 @@ void CameraViewManager::SetupFunc_00197770()
 		MatrixFunc_0025a370(0.0001875f, 1.333333f, 0.25f, m0);
 		MatrixFunc_001983f0(m0);
 		iVar2 = iVar2 + 1;
-		pCVar1->pShadowSunView_0x4bc = (CameraViewBase*)0x0;
+		pCVar1->pShadowSunView_0x4bc = (Camera*)0x0;
 		m0 = m0 + 1;
-		pCVar1 = (CameraViewManager*)&pCVar1->time_0x4;
+		pCVar1 = (CameraManager*)&pCVar1->time_0x4;
 	} while (iVar2 < 10);
 	//SetupCameraViewManagerSubObj_00198fe0(&this->cameraViewManagerSubObj_0x4ec);
 	//SetParam1280bToMaxint32(&this->field_0x710);
@@ -199,19 +199,19 @@ void CameraViewManager::SetupFunc_00197770()
 	this->count_0x9f4 = 0;
 	this->field_0x9f8 = 0;
 	this->count_0x9fc = 0;
-	this->pInitialView_0x4b4 = (CameraViewBase*)0x0;
-	this->pShadowSunView_0x4b8 = (CameraViewBase*)0x0;
-	this->pFrontendCamera_0x4e4 = (CameraViewBase*)0x0;
-	this->pMouseQuakeCamera_0x4e8 = (CameraViewBase*)0x0;
+	this->pInitialView_0x4b4 = (Camera*)0x0;
+	this->pShadowSunView_0x4b8 = (Camera*)0x0;
+	this->pFrontendCamera_0x4e4 = (Camera*)0x0;
+	this->pMouseQuakeCamera_0x4e8 = (Camera*)0x0;
 	this->field_0xa78 = 0;
 	this->time_0x4 = 0.0;
 	return;
 }
 
-CameraViewBase* CameraViewManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, char* objName)
+Camera* CameraManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, char* objName)
 {
-	CameraViewBase* pCVar1;
-	CameraViewBase* pCVar2;
+	Camera* pCVar1;
+	Camera* pCVar2;
 	MainCamera* pMVar3;
 	//MouseCameraView* pMVar4;
 	//VSilverBoomy* pVVar5;
@@ -220,10 +220,10 @@ CameraViewBase* CameraViewManager::AddCamera(ECameraType type, ByteCode* pMemory
 	void* pvVar7;
 	//FrontendCameraView* pFVar8;
 	//DeathCameraViewLocationObject* pDeathCameraView;
-	CameraViewBase* pCVar9;
-	CameraViewBase* newObjectPtr;
+	Camera* pCVar9;
+	Camera* newObjectPtr;
 
-	newObjectPtr = (CameraViewBase*)0x0;
+	newObjectPtr = (Camera*)0x0;
 	switch (type) {
 	case CT_MouseQuake:
 	IMPLEMENTATION_GUARD(
@@ -276,7 +276,7 @@ CameraViewBase* CameraViewManager::AddCamera(ECameraType type, ByteCode* pMemory
 	case CT_KyaJamgut:
 	case CT_MainCamera:
 		pMVar3 = new MainCamera(type, pMemoryStream);
-		newObjectPtr = (CameraViewBase*)pMVar3;
+		newObjectPtr = (Camera*)pMVar3;
 		break;
 	case CT_SilverBoomy:
 		IMPLEMENTATION_GUARD(
@@ -384,15 +384,15 @@ CameraViewBase* CameraViewManager::AddCamera(ECameraType type, ByteCode* pMemory
 		})
 	}
 	pCVar9 = newObjectPtr;
-	if (newObjectPtr != (CameraViewBase*)0x0) {
+	if (newObjectPtr != (Camera*)0x0) {
 		pCVar1 = this->pInitialView_0x4b4;
-		if (pCVar1 == (CameraViewBase*)0x0) {
+		if (pCVar1 == (Camera*)0x0) {
 			this->pInitialView_0x4b4 = pCVar9;
 			g_CameraViewManager_00448e9c = this;
 		}
 		else {
 			pCVar2 = pCVar1->pNextCameraView_0xa4;
-			while (pCVar2 != (CameraViewBase*)0x0) {
+			while (pCVar2 != (Camera*)0x0) {
 				pCVar1 = pCVar1->pNextCameraView_0xa4;
 				pCVar2 = pCVar1->pNextCameraView_0xa4;
 			}
@@ -403,7 +403,20 @@ CameraViewBase* CameraViewManager::AddCamera(ECameraType type, ByteCode* pMemory
 	return pCVar9;
 }
 
-CameraViewBase::CameraViewBase(ByteCode* pMemoryStream)
+Camera* CameraManager::GetDefGameCamera(ECameraType type)
+{
+	Camera* pCVar1;
+	ECameraType EVar2;
+
+	for (pCVar1 = this->pInitialView_0x4b4;
+		(pCVar1 != (Camera*)0x0 &&
+			((EVar2 = pCVar1->GetCameraType(), type != EVar2 || (pCVar1->field_0x8 != -100))));
+		pCVar1 = pCVar1->pNextCameraView_0xa4) {
+	}
+	return pCVar1;
+}
+
+Camera::Camera(ByteCode* pMemoryStream)
 {
 	CheckpointManagerSubObjB* pCVar1;
 	int* piVar2;
@@ -417,7 +430,7 @@ CameraViewBase::CameraViewBase(ByteCode* pMemoryStream)
 	this->field_0x4 = 0xffffffff;
 	//this->pVTable = &VTable_0043d130;
 	this->field_0x78 = (char*)0x0;
-	this->pNextCameraView_0xa4 = (CameraViewBase*)0x0;
+	this->pNextCameraView_0xa4 = (Camera*)0x0;
 	*(undefined*)&this->field_0xa0 = 0;
 	Func_0x34(0);
 	fVar6 = pMemoryStream->GetF32();
@@ -516,12 +529,12 @@ CameraViewBase::CameraViewBase(ByteCode* pMemoryStream)
 	return;
 }
 
-ECameraType CameraViewBase::GetCameraType()
+ECameraType Camera::GetCameraType()
 {
 	return CT_Frontend;
 }
 
-void CameraViewBase::Func_0x34(undefined4 param_2)
+void Camera::Func_0x34(undefined4 param_2)
 {
 	this->field_0x70 = param_2;
 }
@@ -529,7 +542,7 @@ void CameraViewBase::Func_0x34(undefined4 param_2)
 Vector Vector3_00472250 = { 0 };
 
 CameraView::CameraView(struct ByteCode* pMemoryStream)
-	: CameraViewBase(pMemoryStream)
+	: Camera(pMemoryStream)
 {
 	float fVar1;
 	float fVar2;
@@ -757,4 +770,33 @@ bool astruct_12::Init(struct ByteCode* pMemoryStream)
 		this->field_0x20 = 8.0;
 	}
 	return uVar1 == 1;
+}
+
+void CameraCinematic::SetTransform(edF32MATRIX4* transformMatrix)
+{
+	float fVar1;
+	int iVar2;
+	edF32MATRIX4* peVar3;
+	edF32MATRIX4* peVar4;
+	Vector local_10;
+
+	iVar2 = 8;
+	peVar3 = &matrix_0x10;
+	peVar4 = transformMatrix;
+	do {
+		iVar2 = iVar2 + -1;
+		fVar1 = peVar4->ab;
+		peVar3->aa = peVar4->aa;
+		peVar4 = (edF32MATRIX4*)&peVar4->ac;
+		peVar3->ab = fVar1;
+		peVar3 = (edF32MATRIX4*)&peVar3->ac;
+	} while (0 < iVar2);
+	edF32Matrix4ToEulerSoft(transformMatrix, &this->field_0xb0, "ZXY");
+	edF32Vector4AddHard(&local_10, (Vector*)&this->matrix_0x10.da,
+		(Vector*)&transformMatrix->ca);
+	this->field_0x60.x = local_10.x;
+	this->field_0x60.y = local_10.y;
+	this->field_0x60.z = local_10.z;
+	this->field_0x60.w = local_10.w;
+	return;
 }

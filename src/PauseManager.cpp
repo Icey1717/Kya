@@ -153,7 +153,7 @@ LANGUAGE GetLanguageID_00336b30(void)
 void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 {
 	CinematicManager* pCVar1;
-	CameraViewManager* pCVar2;
+	CameraManager* pCVar2;
 	GlobalSound_00451698* pGVar3;
 	undefined4 uVar4;
 	float fVar5;
@@ -185,7 +185,7 @@ void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 	else {
 		pPauseStaticObj->field_0x9 = 0;
 	}
-	pPauseStaticObj->field_0x8 = pCVar1->field_0x30 != 0;
+	pPauseStaticObj->field_0x8 = pCVar1->bInitialized != 0;
 	uVar4 = GetLanguageID_00336b30();
 	pPauseStaticObj->languageID = uVar4;
 	pPauseStaticObj->field_0x0 = g_InputManager_00450960.field_0x14 != 0;
@@ -232,9 +232,9 @@ void PauseManager::Level_Init()
 			pGVar3 = new SplashScreen();
 			this->pSplashScreen = pGVar3;
 			/* CDEURO/Frontend/kyatitle.g2d */
-			this->pSplashScreen->Init(0.0, "CDEURO/Frontend/kyatitle.g2d");
-			this->pSplashScreen->SetDrawLocation((float)g_ScreenWidth / 2.0 - 80.0, ((float)g_ScreenHeight * 20.0) / 512.0,
-				(float)g_ScreenWidth / 2.0 + 80.0, ((float)g_ScreenHeight * 220.0) / 512.0);
+			this->pSplashScreen->Init(0.0f, "CDEURO/Frontend/kyatitle.g2d");
+			this->pSplashScreen->SetDrawLocation((float)g_ScreenWidth / 2.0f - 80.0f, ((float)g_ScreenHeight * 20.0f) / 512.0f,
+				(float)g_ScreenWidth / 2.0f + 80.0f, ((float)g_ScreenHeight * 220.0f) / 512.0f);
 			pTVar4 = GetTimer();
 			this->totalPlayTime = pTVar4->totalPlayTime;
 		}

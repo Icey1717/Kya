@@ -10,6 +10,10 @@ struct UniformBufferObject {
 	alignas(16) glm::mat4 proj;
 };
 
+namespace Renderer {
+	extern bool gHeadless;
+}
+
 VkDevice GetDevice();
 VkFormat GetSwapchainImageFormat();
 std::vector<VkImage>& GetSwapchainImages();

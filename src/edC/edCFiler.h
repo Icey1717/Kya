@@ -155,7 +155,7 @@ bool get_physical_filename(char* filePathOut, char* filePathIn);
 void Link_00260ec0(edCFiler** param_1, edCFiler* param_2);
 void* GetInternalData_0025b2e0(edFILEH* pDebugBankData);
 
-extern edSysHandlerFile g_edSysHandlerFile_00469b84;
+extern edSysHandlerFile edFileHandlers;
 
 struct edFileLoadConfig {
 	EHeap heap;

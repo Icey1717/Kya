@@ -41,6 +41,10 @@ const std::vector<const char*> deviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
+namespace Renderer {
+	bool gHeadless = false;
+}
+
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
@@ -1356,43 +1360,43 @@ public:
 
 ImageRendererApp app;
 
-int renderMain() {
-
-    try {
-        app.run();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
-}
-
 namespace Renderer
 {
 	void Setup()
 	{
-		app.setup();
+		if (!gHeadless) {
+			app.setup();
+		}
 	}
 
 	void RenderImage(char* imageData, int width, int height)
 	{
-		app.drawImage(imageData, width, height);
+		if (!gHeadless) {
+			app.drawImage(imageData, width, height);
+		}
 	}
 
 	void WaitUntilReady()
 	{
-		app.waitUntilReady();
+		if (!gHeadless) {
+			app.waitUntilReady();
+		}
 	}
 
 	void Present()
 	{
-		app.present();
+		if (!gHeadless) {
+			app.present();
+		}
 	}
 
 	RenderDelegate& GetRenderDelegate()
 	{
 		return app.renderDelegate;
+	}
+
+	void SetHeadless(bool bValue) {
+		gHeadless = bValue;
 	}
 }
 

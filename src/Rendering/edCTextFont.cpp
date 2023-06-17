@@ -1,5 +1,5 @@
 #include "edCTextFont.h"
-#include "pointer_conv.h"
+#include "port/pointer_conv.h"
 
 Segment_1C_Packed* edCTextFont::GetSymbol(uint character)
 {

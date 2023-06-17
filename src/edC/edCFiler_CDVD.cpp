@@ -480,9 +480,9 @@ bool edCFiler_CDVD::isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal)
 										/* Cover opened during playback\n */
 										edDebugPrintf("Cover opened during playback\n");
 										field_0x88c = 1;
-										edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
-											g_edSysHandlerFile_00469b84.entries,
-											g_edSysHandlerFile_00469b84.maxEventID, 0xd, (void*)0x0);
+										edSysHandlersCall(edFileHandlers.mainIdentifier,
+											edFileHandlers.entries,
+											edFileHandlers.maxEventID, 0xd, (void*)0x0);
 									}
 									else {
 										if (result == 0x32) {
@@ -498,9 +498,9 @@ bool edCFiler_CDVD::isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal)
 												if (result == -1) {
 													/* sceCdGetError() function issue failed\n */
 													edDebugPrintf("sceCdGetError() function issue failed\n");
-													edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
-														g_edSysHandlerFile_00469b84.entries,
-														g_edSysHandlerFile_00469b84.maxEventID, 0xd, (void*)0x0);
+													edSysHandlersCall(edFileHandlers.mainIdentifier,
+														edFileHandlers.entries,
+														edFileHandlers.maxEventID, 0xd, (void*)0x0);
 												}
 												else {
 													/* unknown error\n */
@@ -513,9 +513,9 @@ bool edCFiler_CDVD::isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal)
 							}
 						}
 					}
-					edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
-						g_edSysHandlerFile_00469b84.entries,
-						g_edSysHandlerFile_00469b84.maxEventID, 0xf, (void*)0x0);
+					edSysHandlersCall(edFileHandlers.mainIdentifier,
+						edFileHandlers.entries,
+						edFileHandlers.maxEventID, 0xf, (void*)0x0);
 				}
 				bVar1 = true;
 			}

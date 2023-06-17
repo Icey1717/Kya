@@ -34,4 +34,9 @@ void ComputeMapRectangleMatrix_0029b9e0
 void CalculateYAxisTransformMatrix_0029ba70(float x, float y, float yMin, float yMax, edF32MATRIX4* m0);
 uint GetGreaterPower2Val(uint value);
 
+float edF32ATan2Soft(float a, float b);
+void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder);
+
+void edF32Vector4AddHard(Vector* v0, Vector* v1, Vector* v2);
+
 #endif // _MATH_OPS_H

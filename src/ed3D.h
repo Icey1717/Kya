@@ -3,6 +3,10 @@
 
 #include "Types.h"
 
+#ifdef PLATFORM_WIN
+#include "delegate.h"
+#endif
+
 struct ed_g2d_manager {
 	char* textureFileBufferStart;
 	int textureFileLengthA;
@@ -29,10 +33,6 @@ struct ed_g2d_manager {
 	undefined field_0x2e;
 	undefined field_0x2f;
 };
-
-#ifdef PLATFORM_WIN
-std::vector<ed_g2d_manager*> ed3DGetLoadedTextures();
-#endif
 
 struct LightingMatrixSubSubObj {
 	struct Vector* field_0x0;
@@ -161,10 +161,6 @@ struct edDList_material {
 	int mode;
 	int Length;
 };
-
-#ifdef PLATFORM_WIN
-std::vector<edDList_material*> ed3DGetLoadedMaterials();
-#endif
 
 PACK(
 	struct TextureData_LAY_Internal {
@@ -372,13 +368,21 @@ struct MeshTransformParent;
 
 extern edF32MATRIX4 SomeIdentityMatrix;
 
+#ifdef PLATFORM_WIN
+Multidelegate<edDList_material*>& ed3DGetMaterialLoadedDelegate();
+Multidelegate<edDList_material*>& ed3DGetMaterialUnloadedDelegate();
+Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
+#endif
+
 ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int* outInt, TextureInfo* textureObj, int unknown, ed_g3d_manager* pMeshInfo);
 
 
 void Init3D(void);
 ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outInt, ed_g2d_manager* pTextureInfo, ulong param_5);
-edDList_material* edDListCreatMaterialFromIndex(edDList_material* outObj, int count, ed_g2d_manager* textureInfoObj, int mode);
-ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, int param_2);
+TextureData_HASH_Internal_MAT* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
+edDList_material* edDListCreatMaterialFromIndex(edDList_material* outObj, int index, ed_g2d_manager* textureInfoObj, int mode);
+ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
+bool edDListTermMaterial(edDList_material* pMaterial);
 char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
 MeshTransformParent* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);

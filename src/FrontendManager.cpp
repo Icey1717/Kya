@@ -14,7 +14,7 @@
 
 struct BankAccessCombined {
 	edCBankBufferEntry* pAccessObj;
-	edCBank bankData;
+	edCBankBuffer bankData;
 };
 
 BankAccessCombined* FUN_001db780(BankAccessCombined* param_1)
@@ -24,10 +24,10 @@ BankAccessCombined* FUN_001db780(BankAccessCombined* param_1)
 
 void LoadUIBnk_001db720(BankAccessCombined* param_1, int param_2, int size)
 {
-	BankFilePathContainer BStack32;
+	edCBankInstall BStack32;
 
-	memset(&BStack32, 0, sizeof(BankFilePathContainer));
-	initialize(&param_1->bankData, size, param_2, &BStack32);
+	memset(&BStack32, 0, sizeof(edCBankInstall));
+	param_1->bankData.initialize(size, param_2, &BStack32);
 	return;
 }
 
@@ -35,19 +35,19 @@ bool LoadBNKCombined(BankAccessCombined* param_1, char* path, char* fileName, Ty
 {
 	bool bVar1;
 	edCBankBufferEntry* peVar2;
-	BankFilePathContainer local_a0;
+	edCBankInstall local_a0;
 	char filePath[128];
 
 	if (pTypePairData != (TypePairData*)0x0) {
-		edCBank_SetDeserializeData(&param_1->bankData, pTypePairData);
+		param_1->bankData.bank_buffer_setcb(pTypePairData);
 	}
-	memset(&local_a0, 0, sizeof(BankFilePathContainer));
+	memset(&local_a0, 0, sizeof(edCBankInstall));
 	/* +.bnk */
 	edStrCatMulti(filePath, path, fileName, ".bnk", 0);
 	local_a0.filePath = filePath;
-	peVar2 = get_free_entry(&param_1->bankData);
+	peVar2 = param_1->bankData.get_free_entry();
 	param_1->pAccessObj = peVar2;
-	bVar1 = load(param_1->pAccessObj, &local_a0);
+	bVar1 = param_1->pAccessObj->load(&local_a0);
 	return bVar1;
 }
 
@@ -82,14 +82,14 @@ bool CloseBankCombined_001db640(BankAccessCombined* param_1)
 {
 	bool bVar1;
 
-	bVar1 = edCBankBuffer_close(param_1->pAccessObj);
+	bVar1 = param_1->pAccessObj->close();
 	param_1->pAccessObj = (edCBankBufferEntry*)0x0;
 	return bVar1;
 }
 
 void FreeBankCombined_001db710(BankAccessCombined* param_1)
 {
-	edCBank_Free_00244e10(&param_1->bankData);
+	param_1->bankData.terminate();
 	return;
 }
 

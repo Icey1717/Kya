@@ -5,4 +5,7 @@
 int main_internal(int argc, char** argv);
 #endif
 
+void Init_edFile(void);
+void MainInit(int argc, char** argv);
+
 #endif //_KYA_H

@@ -141,7 +141,7 @@ struct CinematicObjectB {
 	undefined field_0x272;
 	undefined field_0x273;
 	int intFieldD;
-	edCBank cineBank;
+	edCBankBuffer cineBank;
 	int cineBankLoadStage_0x2b4;
 	int soundCount_0x2b8;
 	int sound_0x2bc;
@@ -162,24 +162,17 @@ struct CinematicObjectB {
 	int field_0x2ec;
 };
 
-struct CinematicCameraView {
-	//struct FrontendCameraView frontendCameraView;
-	undefined4 field_0xb0;
-	undefined4 field_0xb4;
-	undefined4 field_0xb8;
-	undefined field_0xbc;
-	undefined field_0xbd;
-	undefined field_0xbe;
-	undefined field_0xbf;
-};
-
 class CinematicManager : public Manager {
 public:
 	CinematicManager::CinematicManager();
 
+	virtual void Game_Init();
+	virtual void Game_Term() {}
+	virtual void LevelLoading_Begin();
+
 	struct CinematicObjectB** ppCinematicObjB_A;
 	int numCutscenes_0x8;
-	struct CinematicCameraView* pCameraLocationObj;
+	struct CameraCinematic* pCameraLocationObj;
 	struct CinematicObjectB** ppCinematicObjB_B;
 	int count_0x14;
 	struct CinematicObjectB* pCinematicObjB_0x18;
@@ -188,7 +181,7 @@ public:
 	int field_0x24;
 	undefined4 field_0x28;
 	undefined4 field_0x2c;
-	uint field_0x30;
+	uint bInitialized;
 	undefined4 field_0x34;
 	undefined4 field_0x38;
 	undefined field_0x3c;
@@ -210,7 +203,7 @@ public:
 	float y_0x64;
 	float z_0x68;
 	undefined4 field_0x6c;
-	sceVu0FMATRIX matrix_0x70;
+	edF32MATRIX4 matrix_0x70;
 	float field_0xb0;
 	undefined field_0xb4;
 	undefined field_0xb5;

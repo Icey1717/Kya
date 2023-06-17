@@ -15,11 +15,11 @@ namespace ed3D
 struct Sector {
 public:
 	void InstallCallback();
-	void LoadBNK(int param_2, int param_3, bool bFileFlag);
+	void Load(int param_2, int param_3, bool bFileFlag);
 	int field_0x0;
-	int field_0x4;
+	int sectorIndex;
 	int loadStage_0x8;
-	edCBank bankObject;
+	edCBankBuffer bankObject;
 	ed_g3d_manager meshInfo;
 	ed_g2d_manager textureInfo;
 	undefined* pManager100Obj;
@@ -43,12 +43,12 @@ public:
 	void Func_001fe620();
 
 	// Manager
-	virtual void Game_Term();
+	virtual void LevelLoading_Begin();
 	virtual bool LevelLoading_Manage();
 	virtual void Level_Install();
 	// End Manager
 
-	char field_0x4[32];
+	char szSectorFileRoot[32];
 	undefined field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;

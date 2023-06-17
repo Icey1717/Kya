@@ -673,6 +673,6 @@ public:
 	undefined field_0x2cf;
 };
 
-void Link_00247700(void);
+void edBankFilerInstall(void);
 
 #endif //_EDCFILER_BNK_H

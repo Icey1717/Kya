@@ -56,6 +56,7 @@ namespace PS2 {
 		// For Debug textures.
 		GSTexValue(const Renderer::TextureData& textureData);
 
+		void AllocateBuffers();
 		void Cleanup();
 		void UploadImage(const Renderer::TextureData& textureData);
 		void CreateResources();
@@ -72,7 +73,13 @@ namespace PS2 {
 		VkDescriptorPool descriptorPool;
 		std::vector<VkDescriptorSet> descriptorSets;
 
-		int width, height;
+		int width, height, bpp;
+
+		// Buffer emulating the PS2 vram memory.
+		std::vector<uint8_t> writeBuffer;
+
+		// Buffer of 32bit colour pixels.
+		std::vector<uint8_t> readBuffer;
 
 	private:
 		void CreateDescriptorSets(const LayoutVector& descriptorSetLayouts);

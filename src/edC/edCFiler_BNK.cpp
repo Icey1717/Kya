@@ -46,7 +46,7 @@ bool edCFiler_BNK::get_physical_filename(char* outFilePath, char* pathBuff)
 	return bVar1;
 }
 
-edCFiler_Bnk_static g_BnkInternalLoadedData_00466fc0[4];
+edCFiler_Bnk_static BnkUnitTable[4];
 edFILEH* g_LastBank_00448f50 = NULL;
 
 bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
@@ -82,7 +82,7 @@ bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 		edFilePathSplit((char*)0x0, acStack512, (char*)0x0, (char*)0x0, filePath);
 		iVar4 = 0;
 		/* Look to see if we already loaded the file. */
-		pAlreadyLoadedData = g_BnkInternalLoadedData_00466fc0;
+		pAlreadyLoadedData = BnkUnitTable;
 		do {
 			iVar2 = edStrICmp((byte*)pAlreadyLoadedData->path, (byte*)acStack512);
 			if (iVar2 == 0) goto LAB_00247280;
@@ -98,7 +98,7 @@ bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 			edStrCopy(acStack1024, pcVar3 + 1);
 			pcVar3 = pAlreadyLoadedData->pFileData;
 			/* Look for the index of the file we want. */
-			iVar4 = get_entryindex_from_filename((BankFile_Internal*)(pcVar3 + 8), acStack1024);
+			iVar4 = get_entryindex_from_filename((edCBankFileHeader*)(pcVar3 + 8), acStack1024);
 			if (iVar4 == -1) {
 				MY_LOG("edCFiler_BNK::open ERROR could not find file index %s\n", acStack1024);
 				bVar1 = false;
@@ -123,7 +123,7 @@ bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 				else {
 					bufferStart->pDebugBankData = pDVar5;
 					g_LastBank_00448f50 = pDVar5;
-					puVar6 = get_entry((BankFile_Internal*)(pcVar3 + 8), iVar4);
+					puVar6 = get_entry((edCBankFileHeader*)(pcVar3 + 8), iVar4);
 					uVar7 = edFileSeek(bufferStart->pDebugBankData, puVar6->offset, ED_SEEK_SET);
 					if (uVar7 == 0) {
 						pDVar5->pOwningFiler->close(pDVar5);
@@ -307,7 +307,7 @@ bool edCFiler_BNK::mount_unit(char* filePath, char* bankPath)
 		edFilePathSplit((char*)0x0, formattedPath, (char*)0x0, (char*)0x0, filePath);
 		iVar4 = 0;
 		/* Check if the bank is already loaded. */
-		peVar5 = g_BnkInternalLoadedData_00466fc0;
+		peVar5 = BnkUnitTable;
 		do {
 			iVar2 = edStrICmp((byte*)peVar5->path, (byte*)formattedPath);
 			if (iVar2 == 0) goto LAB_002475e0;
@@ -318,7 +318,7 @@ bool edCFiler_BNK::mount_unit(char* filePath, char* bankPath)
 	LAB_002475e0:
 		__s = (edCFiler_Bnk_static*)0x0;
 		if (peVar5 == (edCFiler_Bnk_static*)0x0) {
-			__s = g_BnkInternalLoadedData_00466fc0;
+			__s = BnkUnitTable;
 			iVar4 = 0;
 			do {
 				if (__s->path[0] == '\0') {
@@ -335,7 +335,7 @@ bool edCFiler_BNK::mount_unit(char* filePath, char* bankPath)
 		bSuccess = false;
 		if (__s != (edCFiler_Bnk_static*)0x0) {
 			edStrCopy(__s->diskPath, outString);
-			pcVar3 = ReadFileToBuffer(TO_HEAP(H_MAIN), bankPath, 1, (edFILEH**)0x0);
+			pcVar3 = edBankFilerReadHeader(TO_HEAP(H_MAIN), bankPath, 1, (edFILEH**)0x0);
 			__s->pFileData = pcVar3;
 			bSuccess = true;
 		}
@@ -343,7 +343,7 @@ bool edCFiler_BNK::mount_unit(char* filePath, char* bankPath)
 	return bSuccess;
 }
 
-void Link_00247700(void)
+void edBankFilerInstall(void)
 {
 	Link_00260ec0(&g_edCFiler_MCPtr_00448fd8, &g_edCFiler_BNK_00467fe0);
 	/* <BNK> */

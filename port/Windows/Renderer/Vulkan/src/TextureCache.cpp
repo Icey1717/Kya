@@ -18,7 +18,7 @@ void Renderer::SetImagePointer(Renderer::TextureData inImage)
 }
 
 namespace PS2_Internal {
-	template<int i, int alignment, uint32_t mask> __forceinline static void WriteColumn32(uint8_t* dst, const uint8_t* src, int srcpitch)
+	template<int i, int alignment, uint32_t mask> static void WriteColumn32(uint8_t* dst, const uint8_t* src, int srcpitch)
 	{
 		const uint8_t* s0 = &src[srcpitch * 0];
 		const uint8_t* s1 = &src[srcpitch * 1];
@@ -522,7 +522,7 @@ namespace PS2_Internal {
 
 		ReadBlock8(src, (uint8_t*)block, sizeof(block) / 16);
 
-		alignas(32) uint32_t palBlock[16 * 16];
+		alignas(32) uint32_t palBlock[pal.readWidth * pal.readHeight];
 		uint32_t* palVal = (uint32_t*)pal.pImage;
 		
 		for (int j = 0; j < ((pal.readWidth * pal.readHeight) / 32); j += 1)
@@ -568,56 +568,67 @@ namespace PS2_Internal {
 	// Each block is 4x8 of 32x16 mini blocks
 	const int dstBPP = 32;
 	const int dstBigBlockSize = 128;
-	const int dstSmallBlockX = 4;
 	const int dstSmallBlockY = 8;
-	const int dstSmallBlockWidth = 32;
-	const int dstSmallBlockHeight = 16;
-
-	const int xBlocks = dstBigBlockSize / dstSmallBlockWidth;
-	const int yBlocks = dstBigBlockSize / dstSmallBlockHeight;
 
 	const int sourceBlockSize = 0x100;
-	const int sourceBlockStride = blockSize * dstSmallBlockWidth;
 
 
-	void ReadTextureBlock4(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal)
+	void ReadTextureBlock4(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint32_t width, uint32_t height)
 	{
+		const int dstSmallBlockWidth = 32;
+		const int dstSmallBlockHeight = 16;
+		int xBlocks = std::min<int>(dstBigBlockSize, width) / dstSmallBlockWidth;
+		int yBlocks = std::min<int>(dstBigBlockSize, height) / dstSmallBlockHeight;
 		int _offset = dstpitch * (dstSmallBlockHeight);
+		const int dstSmallBlockX = 4;
+
 		for (int y = 0; y < yBlocks; y += 1, dst += _offset)
 		{
 			for (int x = 0; x < xBlocks; x += 1)
 			{
 				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
-				ReadAndExpandBlock4_32(src + (x * sourceBlockStride) + (y * sourceBlockSize), read_dst, dstpitch, pal);
+				ReadAndExpandBlock4_32(src + (x * width * 0x10) + (y * sourceBlockSize), read_dst, dstpitch, pal);
 
 				//((uint32_t*)read_dst)[0] = 0xFFFF00FF;
 			}
 		}
 	}
 
-	void ReadTextureBlock8(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal)
+	void ReadTextureBlock8(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint32_t width, uint32_t height, int bigBlockX, int bigBlockY)
 	{
+		const int dstSmallBlockWidth = 16;
+		const int dstSmallBlockHeight = 16;
+		int xBlocks = std::min<int>(dstBigBlockSize, width) / dstSmallBlockWidth;
+		int yBlocks = std::min<int>(dstBigBlockSize, height) / dstSmallBlockHeight;
 		int _offset = dstpitch * (dstSmallBlockHeight);
-		for (int y = 0; y < 8; y += 1, dst += _offset)
-		{
-			for (int x = 0; x < 8; x += 1)
-			{
-				uint8_t* read_dst = &dst[x * 2 * dstBPP];
-				ReadAndExpandBlock8_32(src + (x * 0x100) + (y * sourceBlockSize * 16), read_dst, dstpitch, pal);
 
-				//read_dst[0] = (uint8_t)x * 2;
-				//read_dst[1] = (uint8_t)y * 2;
-				//read_dst[2] = (uint8_t)0xff;
-				//read_dst[3] = (uint8_t)0xff;
+		const int sourceBlockStride = blockSize * dstSmallBlockWidth;
+
+		const int dstSmallBlockX = 2;
+
+		uint32_t* base = ((uint32_t*)dst);
+
+		for (int y = 0; y < yBlocks; y += 1, dst += _offset)
+		{
+			for (int x = 0; x < xBlocks; x += 1)
+			{
+				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
+				ReadAndExpandBlock8_32(src + (x * 0x100) + (y * 0x100 * xBlocks * bigBlockX), read_dst, dstpitch, pal);
+
+				//((uint32_t*)read_dst)[0] = 0xFFFF00FF;
 			}
 		}
+
+		//base[0] = 0xFF0000FF;
 	}
 }
 
 PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
 	: width(1 << createInfo.key.TW)
 	, height(1 << createInfo.key.TH)
+	, bpp(0)
 {
+	AllocateBuffers();
 	CreateResources();
 	UploadImage(gImageData);
 	CreateDescriptorPool(createInfo.descriptorSetLayoutBindings);
@@ -627,9 +638,25 @@ PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
 PS2::GSTexValue::GSTexValue(const Renderer::TextureData& textureData)
 	: width(textureData.image.canvasWidth)
 	, height(textureData.image.canvasHeight)
+	, bpp(textureData.image.bpp)
 {
-	CreateResources();
+	AllocateBuffers();
+
+	if (!Renderer::gHeadless) {
+		CreateResources();
+	}
+
 	UploadImage(textureData);
+}
+
+void PS2::GSTexValue::AllocateBuffers()
+{
+	const int bufferSize = width * height * 4;
+
+	readBuffer.resize(bufferSize);
+	writeBuffer.resize(bufferSize);
+	memset(readBuffer.data(), 0, bufferSize);
+	memset(writeBuffer.data(), 0, bufferSize);
 }
 
 void PS2::GSTexValue::Cleanup() {
@@ -646,43 +673,43 @@ void PS2::GSTexValue::Cleanup() {
 void PS2::GSTexValue::UploadImage(const Renderer::TextureData& textureData) {
 	const VkDeviceSize bufferSize = width * height * 4;
 
-	std::vector<uint8_t> pixelBuffer;
-	std::vector<uint8_t> imageBuffer;
-	pixelBuffer.resize(width * height * 4);
-	imageBuffer.resize(width * height * 4);
-	memset(pixelBuffer.data(), 0, width * height * 4);
-	memset(imageBuffer.data(), 0, width * height * 4);
-	PS2_Internal::WriteImageBlock<0, 8, 8, 32>(0, textureData.image.readHeight, 0, textureData.image.readWidth, (uint8_t*)textureData.image.pImage, imageBuffer.data(), 0x200);
+	// 0x40 * 8 = 0x200
+	// 0x80 * 4 = 0x200
+	const int pixelPerByte = (32 / textureData.image.bpp);
+	const int srcpitch = textureData.image.readWidth * pixelPerByte;
+
+	uint8_t* const pWriteData = writeBuffer.data();
+	uint8_t* const pReadData = readBuffer.data();
+	PS2_Internal::WriteImageBlock<0, 8, 8, 32>(0, textureData.image.readHeight, 0, textureData.image.readWidth, (uint8_t*)textureData.image.pImage, pWriteData, srcpitch);
+
+	const int yBlocks = std::max<int>(1, (height / PS2_Internal::dstBigBlockSize));
+	const int xBlocks = std::max<int>(1, (width / PS2_Internal::dstBigBlockSize));
 
 	if (textureData.image.bpp == 4) {
-		GSVector4i r;
-		r.left = 0;
-		r.top = 0x0;
-		r.right = PS2_Internal::dstBigBlockSize;
-		r.bottom = PS2_Internal::dstBigBlockSize;
-
-		const int yBlocks = std::max<int>(0, (height / PS2_Internal::dstBigBlockSize));
-		const int xBlocks = std::max<int>(0, (width / PS2_Internal::dstBigBlockSize));
+		const int writeOffset = pixelPerByte * textureData.image.canvasWidth;
 
 		for (int y = 0; y < yBlocks; y++) {
 			for (int x = 0; x < xBlocks; x++) {
-				PS2_Internal::ReadTextureBlock4(imageBuffer.data() + (x * 0x800) + (y * 0x800 * PS2_Internal::yBlocks)
-					, pixelBuffer.data() + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
-					, 0x400
-					, textureData.pallete);
+				PS2_Internal::ReadTextureBlock4(writeBuffer.data() + (x * writeOffset) + (y * writeOffset * 0x8)
+					, readBuffer.data() + (PS2_Internal::dstBigBlockSize * textureData.image.bpp * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
+					, textureData.image.canvasWidth * 4
+					, textureData.pallete
+					, textureData.image.canvasWidth
+					, textureData.image.canvasHeight);
 			}
 		}
 	}
 	else if (textureData.image.bpp == 8) {
-		GSVector4i r;
-		r.left = 0;
-		r.top = 0x0;
-		r.right = PS2_Internal::dstBigBlockSize;
-		r.bottom = PS2_Internal::dstBigBlockSize;
-
-		for (int y = 0; y < (height / PS2_Internal::dstBigBlockSize); y++) {
-			for (int x = 0; x < (width / PS2_Internal::dstBigBlockSize); x++) {
-				PS2_Internal::ReadTextureBlock8(imageBuffer.data() + (x * 0x800) + (y * 0x1000 * PS2_Internal::yBlocks), pixelBuffer.data() + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y), 0x400, textureData.pallete);
+		for (int y = 0; y < yBlocks; y++) {
+			for (int x = 0; x < xBlocks; x++) {
+				PS2_Internal::ReadTextureBlock8(pWriteData + (x * 0x800) + (y * 0x1000 * 0x8)
+					, pReadData + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
+					, textureData.image.canvasWidth * 4
+					, textureData.pallete
+					, textureData.image.canvasWidth
+					, textureData.image.canvasHeight
+					, xBlocks
+					, yBlocks);
 			}
 		}
 	}
@@ -690,17 +717,19 @@ void PS2::GSTexValue::UploadImage(const Renderer::TextureData& textureData) {
 		assert(false);
 	}
 
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	if (!Renderer::gHeadless) {
+		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-	void* data;
-	vkMapMemory(GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, pixelBuffer.data(), static_cast<size_t>(bufferSize));
-	vkUnmapMemory(GetDevice(), stagingBufferMemory);
+		void* data;
+		vkMapMemory(GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, readBuffer.data(), static_cast<size_t>(bufferSize));
+		vkUnmapMemory(GetDevice(), stagingBufferMemory);
 
-	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	VulkanImage::CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+		VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		VulkanImage::CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 
-	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
 }
 
 void PS2::GSTexValue::CreateResources() {

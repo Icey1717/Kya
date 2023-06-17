@@ -529,18 +529,18 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 	int* fileData;
 	edBANK_ENTRY_INFO outHeader;
 	char levelInfoFilePath[512];
-	edCBank bank;
-	BankFilePathContainer infoLevelsPathPtr;
+	edCBankBuffer bank;
+	edCBankInstall infoLevelsPathPtr;
 
-	memset(&infoLevelsPathPtr, 0, sizeof(BankFilePathContainer));
-	initialize(&bank, 0x10000, 1, &infoLevelsPathPtr);
-	edCBank_SetDeserializeData(&bank, &g_LevelInfoTypePairData_004256e0);
+	memset(&infoLevelsPathPtr, 0, sizeof(edCBankInstall));
+	bank.initialize(0x10000, 1, &infoLevelsPathPtr);
+	bank.bank_buffer_setcb(&g_LevelInfoTypePairData_004256e0);
 	/* CDEURO/LEVEL/ + Info/levels.bnk */
 	levelInfoFilePath[0] = '\0';
 	edStrCatMulti(levelInfoFilePath, levelPath, "Info/levels.bnk", 0);
-	infoLevelsFileBuffer = get_free_entry(&bank);
+	infoLevelsFileBuffer = bank.get_free_entry();
 	infoLevelsPathPtr.filePath = levelInfoFilePath;
-	bVar4 = load(infoLevelsFileBuffer, &infoLevelsPathPtr);
+	bVar4 = infoLevelsFileBuffer->load(&infoLevelsPathPtr);
 	if (bVar4 != false) {
 		inFileIndex = get_element_count(infoLevelsFileBuffer);
 		while (inFileIndex != 0) {
@@ -588,9 +588,9 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 				}
 			}
 		}
-		edCBankBuffer_close(infoLevelsFileBuffer);
+		infoLevelsFileBuffer->close();
 	}
-	edCBank_Free_00244e10(&bank);
+	bank.terminate();
 	return;
 }
 
@@ -1133,12 +1133,12 @@ const char* sz_bankSlash = "/";
 const char* sz_LevelBank_00433bd8 = "Level.bnk";
 const char* sz_LevelIOPBankName = "LevelIOP.bnk";
 
-void LevelScheduleManager::Game_Term()
+void LevelScheduleManager::LevelLoading_Begin()
 {
 	edCBankBufferEntry* pBankBuffer;
 	int cachedNextLevelID;
 	char filePath[128];
-	BankFilePathContainer bankContainer;
+	edCBankInstall bankContainer;
 
 	/* This is part of the level load process
 	   It loads in the level IOP bank for the specific level found in the level load
@@ -1146,12 +1146,10 @@ void LevelScheduleManager::Game_Term()
 	   Example: CDEURO/LEVEL/PREINTRO/LevelIOP.bnk */
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	cachedNextLevelID = nextLevelID;
-	memset(&bankContainer, 0, sizeof(BankFilePathContainer));
-	initialize(&levelIOPBank,
-		aLevelInfo[cachedNextLevelID].bankSizeIOP + 0x1000, 1,
+	memset(&bankContainer, 0, sizeof(edCBankInstall));
+	levelIOPBank.initialize(aLevelInfo[cachedNextLevelID].bankSizeIOP + 0x1000, 1,
 		&bankContainer);
-	edCBank_SetDeserializeData
-	(&levelIOPBank, TypePairFunctionData_0040e780);
+	levelIOPBank.bank_buffer_setcb(TypePairFunctionData_0040e780);
 	/* / + LevelIOP.bnk */
 	edStrCatMulti(filePath, levelPath,
 		aLevelInfo[cachedNextLevelID].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
@@ -1159,31 +1157,37 @@ void LevelScheduleManager::Game_Term()
 	bankContainer.pObjectReference = (void*)0x0;
 	bankContainer.fileFlagA = 4;
 	bankContainer.fileFunc = WillLoadFilefromBank;
-	pBankBuffer = get_free_entry(&levelIOPBank);
+	pBankBuffer = levelIOPBank.get_free_entry();
 	(levelIOPBank).pBankFileAccessObject = pBankBuffer;
 	loadStage_0x5b48 = 0;
-	load((levelIOPBank).pBankFileAccessObject, &bankContainer);
+	(levelIOPBank).pBankFileAccessObject->load(&bankContainer);
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 }
 
-uint UINT_004491a8 = 0;
-uint UINT_00448ffc = 0;
-uint UINT_004491ac = 0;
+uint _edSysTransferIndex = 0;
+uint _edSoundLastTransferIndex = 0;
+uint _edMusicLastTransferIndex = 0;
+uint _edSysCompletedTransferIndex = 0;
 
-bool GetLoadStage_00267ba0(void)
+bool _edSoundAreAllSoundDataLoaded(uint lastIndex)
 {
 	bool bVar1;
 
 	bVar1 = true;
-	if ((UINT_004491a8 != 0) && ((UINT_00448ffc == 0 || (bVar1 = false, UINT_00448ffc <= UINT_004491ac)))) {
+	if ((_edSysTransferIndex != 0) && ((lastIndex == 0 || (bVar1 = false, lastIndex <= _edSysCompletedTransferIndex)))) {
 		bVar1 = true;
 	}
 	return bVar1;
 }
 
-bool GetLoadStage_002889c0()
+bool edSoundAreAllSoundDataLoaded()
 {
-	return GetLoadStage_00267ba0();
+	return _edSoundAreAllSoundDataLoaded(_edSoundLastTransferIndex);
+}
+
+bool edMusicAreAllMusicDataLoaded()
+{
+	return _edSoundAreAllSoundDataLoaded(_edMusicLastTransferIndex);
 }
 
 bool LevelScheduleManager::LevelLoading_Manage()
@@ -1191,7 +1195,7 @@ bool LevelScheduleManager::LevelLoading_Manage()
 	edCBankBufferEntry* pBVar1;
 	bool bVar1;
 	char filePath[128];
-	BankFilePathContainer bankFilePathContainer;
+	edCBankInstall bankFilePathContainer;
 	int levelToLoadID;
 	int loadStage;
 
@@ -1200,35 +1204,35 @@ bool LevelScheduleManager::LevelLoading_Manage()
 	loadStage = this->loadStage_0x5b48;
 	if (loadStage != 4) {
 		if (loadStage == 3) {
-			bVar1 = edCBankBuffer_CheckAccessFlag((this->levelBank).pBankFileAccessObject);
+			bVar1 = (this->levelBank).pBankFileAccessObject->is_loaded();
 			if (bVar1 != false) {
 				this->loadStage_0x5b48 = 4;
 			}
 		}
 		else {
 			if (loadStage == 2) {
-				bVar1 = GetLoadStage_002889c0();
-				if ((bVar1 != false) && (bVar1 = GetLoadStage_00267ba0(), bVar1 != false)) {
-					edCBankBuffer_close((this->levelIOPBank).pBankFileAccessObject);
+				bVar1 = edSoundAreAllSoundDataLoaded();
+				if ((bVar1 != false) && (bVar1 = edMusicAreAllMusicDataLoaded(), bVar1 != false)) {
+					(this->levelIOPBank).pBankFileAccessObject->close();
 					(this->levelIOPBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
-					edCBank_Free_00244e10(&this->levelIOPBank);
+					this->levelIOPBank.terminate();
 					this->loadStage_0x5b48 = 3;
 				}
 			}
 			else {
 				if (loadStage == 1) {
 					levelToLoadID = this->nextLevelID;
-					memset(&bankFilePathContainer, 0, sizeof(BankFilePathContainer));
-					initialize(&this->levelBank, this->aLevelInfo[levelToLoadID].bankSizeLevel + 0x1000, 1,
+					memset(&bankFilePathContainer, 0, sizeof(edCBankInstall));
+					this->levelBank.initialize(this->aLevelInfo[levelToLoadID].bankSizeLevel + 0x1000, 1,
 						&bankFilePathContainer);
-					edCBank_SetDeserializeData(&this->levelBank, TypePairFunctionData_0040e780);
+					this->levelBank.bank_buffer_setcb(TypePairFunctionData_0040e780);
 					/* / + level.bnk */
 					edStrCatMulti(filePath, this->levelPath, this->aLevelInfo[levelToLoadID].levelName, sz_bankSlash, sz_LevelBank_00433bd8, 0);
 					bankFilePathContainer.filePath = filePath;
 					bankFilePathContainer.fileFlagA = 0xc;
-					pBVar1 = get_free_entry(&this->levelBank);
+					pBVar1 = this->levelBank.get_free_entry();
 					(this->levelBank).pBankFileAccessObject = pBVar1;
-					load((this->levelBank).pBankFileAccessObject, &bankFilePathContainer);
+					(this->levelBank).pBankFileAccessObject->load(&bankFilePathContainer);
 					this->loadStage_0x5b48 = 2;
 				}
 			}
@@ -1239,11 +1243,11 @@ bool LevelScheduleManager::LevelLoading_Manage()
 
 void LevelScheduleManager::Level_Install()
 {
-	BankFilePathContainer SStack32;
+	edCBankInstall SStack32;
 
-	memset(&SStack32, 0, sizeof(BankFilePathContainer));
+	memset(&SStack32, 0, sizeof(edCBankInstall));
 	SStack32.fileFlagA = 0;
-	edCBankBuffer_file_access_002450e0((this->levelBank).pBankFileAccessObject, &SStack32);
+	(this->levelBank).pBankFileAccessObject->install(&SStack32);
 	return;
 }
 

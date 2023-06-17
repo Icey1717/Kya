@@ -9,6 +9,7 @@ class Manager
 public:
 	virtual void Game_Init() {};
 	virtual void Game_Term() {};
+	virtual void LevelLoading_Begin() {};
 	virtual void LevelLoading_End() {};
 	virtual bool LevelLoading_Manage() { return false; }
 	virtual void LevelLoading_Draw() {};
@@ -36,7 +37,7 @@ struct ManagerContainer {
 	struct SectorManager* g_SectorManager_00451670;
 	struct Manager_170* g_Manager170_00451674;
 	struct LocalizationManager* g_LocalizationManager_00451678;
-	struct CameraViewManager* g_CameraManager_0045167c;
+	struct CameraManager* g_CameraManager_0045167c;
 	struct FrontendManager* g_FrontendManager_00451680;
 	struct HelpManager* g_HelpManager_00451684;
 	struct PauseManager* g_PauseManager_00451688;
@@ -259,16 +260,17 @@ public:
 
 public:
 	void Level_Setup(struct ByteCode* pMemoryStream);
-	bool CheckFunc_001b9300();
+	bool CheckFunc_001b9300(void);
 
-	void LoadFunc_001b87b0();
+	void LoadFunc_001b87b0(void);
 
-	void Level_Install();
-	void Level_Init();
-	void Level_Manage();
-	void LevelLoading_Draw();
-	void LevelLoading_End();
-	bool LevelLoading_Manage();
+	void Level_Install(void);
+	void Level_Init(void);
+	void Level_Manage(void);
+	void LevelLoading_Draw(void);
+	void LevelLoading_End(void);
+	bool LevelLoading_Manage(void);
+	void LevelLoading_Begin(void);
 
 	void HandleCurState();
 
@@ -280,7 +282,6 @@ public:
 };
 
 void Game_Init(void);
-void LoadStageOne_001b9dc0(void);
 void UpdateObjectsMain(void);
 void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK);
 

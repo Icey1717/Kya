@@ -11,7 +11,7 @@
 
 edCFiler* g_edCFiler_MCPtr_00448fd8;
 
-edSysHandlerFile g_edSysHandlerFile_00469b84 = edSysHandlerFile(&g_SysHandlersNodeTable_00489170, 0x10, 6);
+edSysHandlerFile edFileHandlers = edSysHandlerFile(&g_SysHandlersNodeTable_00489170, 0x10, 6);
 
 char s_DefaultFilePath_00431460[8] = "";
 
@@ -507,26 +507,26 @@ void edFileNoWaitStackCallBack(edCFiler_28* pFiler_28)
 					MY_LOG("Doing file action %s\n", g_FileActionNames[(int)(pFilerSubObj->internalBank).nextAction]);
 					switch ((pFilerSubObj->internalBank).nextAction) {
 					case SEEK:
-						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
-							g_edSysHandlerFile_00469b84.entries,
-							g_edSysHandlerFile_00469b84.maxEventID, 6, (void*)0x0);
+						edSysHandlersCall(edFileHandlers.mainIdentifier,
+							edFileHandlers.entries,
+							edFileHandlers.maxEventID, 6, (void*)0x0);
 						break;
 					case READ_STREAM:
-						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
-							g_edSysHandlerFile_00469b84.entries,
-							g_edSysHandlerFile_00469b84.maxEventID, 4, (pFilerSubObj->internalBank).pReadBuffer)
+						edSysHandlersCall(edFileHandlers.mainIdentifier,
+							edFileHandlers.entries,
+							edFileHandlers.maxEventID, 4, (pFilerSubObj->internalBank).pReadBuffer)
 							;
 						break;
 					case BANK_ACTION_3:
-						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
-							g_edSysHandlerFile_00469b84.entries,
-							g_edSysHandlerFile_00469b84.maxEventID, 5,
+						edSysHandlersCall(edFileHandlers.mainIdentifier,
+							edFileHandlers.entries,
+							edFileHandlers.maxEventID, 5,
 							*(void**)&(pFilerSubObj->internalBank).field_0x18);
 						break;
 					case CLOSE:
-						edSysHandlersCall(g_edSysHandlerFile_00469b84.mainIdentifier,
-							g_edSysHandlerFile_00469b84.entries,
-							g_edSysHandlerFile_00469b84.maxEventID, 3, (void*)0x0);
+						edSysHandlersCall(edFileHandlers.mainIdentifier,
+							edFileHandlers.entries,
+							edFileHandlers.maxEventID, 3, (void*)0x0);
 						if ((pDVar8->openFlags & 0x20) == 0) {
 							iVar7 = 0;
 							do {

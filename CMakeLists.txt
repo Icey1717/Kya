@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19.4)
 
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang")
@@ -16,6 +16,15 @@ if (PS2)
 	set(PLATFORM_BINARY_FOLDER "PS2")
 else()
 	message("Win Build")
+
+	if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+		message(STATUS "Enabling edit and continue")
+		set(CMAKE_CXX_FLAGS_DEBUG "/ZI")
+		set(CMAKE_SHARED_LINKER_FLAGS "/SAFESEH:NO")
+		set(CMAKE_EXE_LINKER_FLAGS "/SAFESEH:NO")
+	endif()
+
+	enable_testing()
 
 	add_subdirectory("port")
 
@@ -232,4 +241,5 @@ endif()
 
 if (NOT PS2)
 	add_subdirectory("port/Windows/Host")
+	add_subdirectory("port/Test")
 endif()

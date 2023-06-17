@@ -216,7 +216,7 @@ IniFile::~IniFile()
 {
 	if (fileBufferStart != NULL)
 	{
-		free(fileBufferStart);
+		//free(fileBufferStart);
 	}
 }
 

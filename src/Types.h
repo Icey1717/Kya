@@ -123,13 +123,17 @@ InputSetupParams* edSysGetConfig(void);
 
 #define ENABLE_MY_LOG
 
+#define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
+
 #ifdef ENABLE_MY_LOG
 #if defined(PLATFORM_WIN)
 #define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
+#define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
+#define RENDER_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
 #else
-#ifdef PLATFORM_PS2
 #include <eekernel.h>
-#endif
+#define MY_LOG scePrintf
+#define RENDER_LOG scePrintf
 #endif
 
 #define edDebugPrintf scePrintf
@@ -138,12 +142,9 @@ InputSetupParams* edSysGetConfig(void);
 
 #include <stdlib.h>
 
-#define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
-#define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
-//#define RENDER_LOG(...)
-#define RENDER_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
 #else
 #define MY_LOG(...)
+#define RENDER_LOG(...)
 #endif
 
 #ifdef PLATFORM_PS2
@@ -159,7 +160,7 @@ Vector { /* Aligned */
 	float w;
 };
 
-struct Vector3 {
+struct edF32VECTOR3 {
 	float x;
 	float y;
 	float z;

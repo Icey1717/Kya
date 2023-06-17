@@ -3,7 +3,7 @@
 
 #include "Types.h"
 
-float GetFrameTime_00291c40(void);
+float edTimerTimeGet(void);
 
 class TimeController {
 public:
