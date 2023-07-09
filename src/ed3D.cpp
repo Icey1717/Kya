@@ -36,6 +36,12 @@
 #include <string.h>
 #include "ed3DScratchPadGlobalVar.h"
 
+#define SHELLDMA_TAG_ID_CNT (0x10)
+#define SHELLDMA_TAG_ID_REF (0x30)
+
+#define ED_VIF1_SET_TAG_CNT(qwc) ((ulong)(qwc) | ((ulong)SHELLDMA_TAG_ID_CNT << 24) | ((ulong)0xe << 32))
+#define ED_VIF1_SET_TAG_REF(qwc, addr) ((ulong)(qwc) | ((ulong)SHELLDMA_TAG_ID_REF << 24) | ((ulong)addr << 32))
+
 #define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
@@ -323,9 +329,9 @@ void ed3DOptionFlagCNTInit(void)
 	gOptionFlagCNT[0].cmdB = (ulong)ed3DVU1Buffer[0] << 0x20 | 0x7c01000000000000;
 	gOptionFlagCNT[1].cmdB = (ulong)ed3DVU1Buffer[1] << 0x20 | 0x7c01000000000000;
 	gOptionFlagCNT[2].cmdB = (ulong)ed3DVU1Buffer[2] << 0x20 | 0x7c01000000000000;
-	gOptionFlagCNT[0].cmdA = 0xe10000001;
-	gOptionFlagCNT[1].cmdA = 0xe10000001;
-	gOptionFlagCNT[2].cmdA = 0xe10000001;
+	gOptionFlagCNT[0].cmdA = ED_VIF1_SET_TAG_CNT(1);
+	gOptionFlagCNT[1].cmdA = ED_VIF1_SET_TAG_CNT(1);
+	gOptionFlagCNT[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	return;
 }
 
@@ -375,12 +381,12 @@ void ed3DDMAGenerateHeaders(void)
 	} while (uVar2 < 0x61);
 	//g_StaticVideoList_00489590[7] = 0;
 	//g_StaticVideoList_00489590[11] = 0;
-	g_stMatrixHeader.asU32[0] = 0x01000101;
-	//g_StaticVideoList_00489590[4] = 0x01000101;
-	g_stMatrixHeader.asU32[1] = 0x20000000;
-	//g_StaticVideoList_00489590[5] = 0x20000000;
+	g_stMatrixHeader.asU32[0] = SCE_VIF1_SET_STCYCL(1, 1, 0); // 0x01000101;
+	//g_StaticVideoList_00489590[4] = SCE_VIF1_SET_STCYCL(1, 1, 0); // 0x01000101;
+	g_stMatrixHeader.asU32[1] = SCE_VIF1_SET_STMASK(0); // 0x20000000;
+	//g_StaticVideoList_00489590[5] = SCE_VIF1_SET_STMASK(0); // 0x20000000;
 	//g_StaticVideoList_00489590[8] = 0x01000103;
-	g_stMatrixHeader.cmdB = 0xffffff00;
+	g_stMatrixHeader.cmdB = 0xffffff00; // MASK
 	//g_StaticVideoList_00489590[34] = 0xffffffc0;
 	//g_StaticVideoList_00489590[6] = 0xffffff00;
 	//g_StaticVideoList_00489590[9] = 0x20000000;
@@ -1983,7 +1989,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 	return 1;
 }
 
-#define SCE_VIF1_SET_UNPACK(vuaddr, num, cmd, irq) ((uint)(vuaddr) | ((uint)(num) << 16) | ((uint)(0x60 | (cmd)) << 24) | ((uint)(irq) << 31))
+#define UNPACK_V4_32 0x6c
 
 edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 {
@@ -1994,13 +2000,14 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 	float fVar5;
 	float fVar6;
 
-	pPkt->cmdA = 0xe10000008;
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(8);
 	pPkt->cmdB = 0;
-	pPkt->asU32[2] = 0;
-	pPkt->asU32[3] = 0x6c080000;
+	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0, 8, UNPACK_V4_32, 0); //0x6c080000
 
 	pPkt[1] = gFANbuffers;
 
+	// Not sure what this does yet, but its transferred via the above ^.
 	pPkt[2].cmdA = 0x302ec00000008000;
 	pPkt[2].cmdB = 0x512;
 
@@ -2023,21 +2030,21 @@ void ed3DInitVU1Globals(void)
 	return;
 }
 
-edpkt_data* ed3DAddViewportContextPacket(ed_viewport* pCamera, edpkt_data* pCommandBuffer)
+edpkt_data* ed3DAddViewportContextPacket(ed_viewport* pViewport, edpkt_data* pPkt)
 {
-	edpkt_data* pRVar1;
-	uint uVar2;
+	edpkt_data* pNextPkt;
+	uint qwc;
 
-	pRVar1 = pCommandBuffer;
-	if (pCamera != (ed_viewport*)0x0) {
-		pRVar1 = edViewportUpdateEnv(pCamera, pCommandBuffer + 1);
-		uVar2 = ((uint)((ulong)pRVar1 - (ulong)pCommandBuffer) >> 4) - 1;
-		pCommandBuffer->cmdA = (ulong)(ulong)uVar2 & 0xffffffffU | 0xe10000000;
-		pCommandBuffer->cmdB = 0;
-		pCommandBuffer->asU32[2] = 0;
-		pCommandBuffer->asU32[3] = uVar2 | 0x51000000;
+	pNextPkt = pPkt;
+	if (pViewport != (ed_viewport*)0x0) {
+		pNextPkt = edViewportUpdateEnv(pViewport, pPkt + 1);
+		qwc = ((uint)((ulong)pNextPkt - (ulong)pPkt) >> 4) - 1;
+		pPkt->cmdA = ED_VIF1_SET_TAG_CNT(qwc & 0xffffffffU);
+		pPkt->cmdB = 0;
+		pPkt->asU32[2] = 0;
+		pPkt->asU32[3] = SCE_VIF1_SET_DIRECTHL(qwc, 0); // uVar2 | 0x51000000;
 	}
-	return pRVar1;
+	return pNextPkt;
 }
 
 edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
@@ -2046,10 +2053,10 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 
 	RENDER_LOG("ed3DSceneAddContextPacket %p", pScene);
 
-	pPkt->cmdA = 0xe10000003;
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(3);
 	pPkt->cmdB = 0;
-	pPkt->asU32[2] = 0x40003dc;
-	pPkt->asU32[3] = 0x6c0203dc;
+	pPkt->asU32[2] = SCE_VIF1_SET_ITOP(0x03dc, 0); // 0x40003dc;
+	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x03dc, 2, UNPACK_V4_32, 0); // 0x6c0203dc;
 
 	pPkt[1].cmdA = SCE_GIF_SET_TAG(
 		1,					// NLOOP
@@ -2064,9 +2071,9 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 	pPkt[2].cmdA = SCE_GS_SET_FOGCOL(pScene->sceneConfig.fogCol_0xf0.r, pScene->sceneConfig.fogCol_0xf0.g, pScene->sceneConfig.fogCol_0xf0.b);
 	pPkt[2].cmdB = SCE_GS_FOGCOL;
 
-	pPkt[3].asU32[0] = 0;
-	pPkt[3].asU32[1] = 0x14000000;
-	pPkt[3].cmdB = 0x11000000;
+	pPkt[3].asU32[0] = SCE_VIF1_SET_NOP(0);
+	pPkt[3].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0); // 0x14000000;
+	pPkt[3].cmdB = SCE_VIF1_SET_FLUSH(0); // 0x11000000;
 	pRVar1 = pPkt + 4;
 
 	if (pScene->pViewport != (ed_viewport*)0x0) {
@@ -2075,24 +2082,24 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 	return pRVar1;
 }
 
-struct CameraScreenData {
-	short posX;
-	short posY;
-	short screenWidth;
-	short screenHeight;
+struct edRECT16 {
+	short x;
+	short y;
+	short w;
+	short h;
 };
 
-CameraScreenData gCurRectViewport = { 0 };
-CameraScreenData CameraScreenData_00449560 = { 0 };
+edRECT16 gCurRectViewport = { 0 };
+edRECT16 CameraScreenData_00449560 = { 0 };
 
-edpkt_data* ed3DFlushResetOffset(edpkt_data* pRenderCommand, CameraScreenData* pScreenData)
+edpkt_data* ed3DFlushResetOffset(edpkt_data* pPkt, edRECT16* pRect)
 {
-	pRenderCommand->cmdA = 0xe10000003;
-	pRenderCommand->cmdB = 0;
-	*(undefined4*)&pRenderCommand->cmdB = 0;
-	*(undefined4*)((ulong)&pRenderCommand->cmdB + 4) = 0x50000003;
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(3);
+	pPkt->cmdB = 0;
+	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt->asU32[3] = SCE_VIF1_SET_DIRECT(3, 0);
 
-	pRenderCommand[1].cmdA = SCE_GIF_SET_TAG(
+	pPkt[1].cmdA = SCE_GIF_SET_TAG(
 		2,					// NLOOP
 		SCE_GS_TRUE,		// EOP
 		SCE_GS_FALSE,		// PRE
@@ -2100,25 +2107,25 @@ edpkt_data* ed3DFlushResetOffset(edpkt_data* pRenderCommand, CameraScreenData* p
 		SCE_GIF_PACKED,		// FLG
 		1					// NREG
 	);
-	pRenderCommand[1].cmdB = SCE_GIF_PACKED_AD;
+	pPkt[1].cmdB = SCE_GIF_PACKED_AD;
 
 	// OFFSET
-	pRenderCommand[2].cmdA = SCE_GS_SET_XYOFFSET(
-		(((0x1000 - ((int)pScreenData->screenWidth + (int)pScreenData->posX) >> 1) - ((int)pScreenData->posX >> 1)) * 0x10) & 0xffffffffU,	// X
-		(((0x1000 - ((int)pScreenData->screenHeight + (int)pScreenData->posY) >> 1) - ((int)pScreenData->posY >> 1)) * 0x10)	// Y
+	pPkt[2].cmdA = SCE_GS_SET_XYOFFSET(
+		(((0x1000 - ((int)pRect->w + (int)pRect->x) >> 1) - ((int)pRect->x >> 1)) * 0x10) & 0xffffffffU,	// X
+		(((0x1000 - ((int)pRect->h + (int)pRect->y) >> 1) - ((int)pRect->y >> 1)) * 0x10)	// Y
 	);
-	pRenderCommand[2].cmdB = SCE_GS_XYOFFSET_1;
+	pPkt[2].cmdB = SCE_GS_XYOFFSET_1;
 
 	// SCISSOR
-	pRenderCommand[3].cmdA = SCE_GS_SET_SCISSOR(
-		pScreenData->posX,											// SCAX0
-		((int)pScreenData->screenWidth + (int)pScreenData->posX + -1),	// SCAX1
-		pScreenData->posY,											// SCAY0
-		((int)pScreenData->screenHeight + (int)pScreenData->posY + -1)	// SCAY1
+	pPkt[3].cmdA = SCE_GS_SET_SCISSOR(
+		pRect->x,											// SCAX0
+		((int)pRect->w + (int)pRect->x + -1),	// SCAX1
+		pRect->y,											// SCAY0
+		((int)pRect->h + (int)pRect->y + -1)	// SCAY1
 	);
-	pRenderCommand[3].cmdB = SCE_GS_SCISSOR_1;
+	pPkt[3].cmdB = SCE_GS_SCISSOR_1;
 
-	return pRenderCommand + 4;
+	return pPkt + 4;
 }
 
 void ed3DClustersRenderComputeSceneHierarchyList(ed_3D_Scene* pStaticMeshMaster)
@@ -2261,7 +2268,7 @@ edpkt_data* ed3DHierachyCheckForGlobalAlpha(edpkt_data* pRenderCommand, ed_g2d_l
 						(gGlobalAlhaON = 0x80, pLAY != (ed_g2d_layer*)0x0)))) && ((pLAY->flags_0x0 & 0xfc) == 0)))) {
 				pRenderCommand->cmdA = 0x30000000;
 				pRenderCommand->cmdB = 0x1300000000000000;
-				pRenderCommand[1].cmdA = 0xe10000003;
+				pRenderCommand[1].cmdA = ED_VIF1_SET_TAG_CNT(3);
 				pRenderCommand[1].cmdB = 0;
 				*(undefined4*)&pRenderCommand[1].cmdB = 0;
 				*(undefined4*)((int)&pRenderCommand[1].cmdB + 4) = 0x50000003;
@@ -2594,7 +2601,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 		}
 		if (!bVar5) {
 			IMPLEMENTATION_GUARD(
-			pPkt->cmdA = 0xe1000001c;
+			pPkt->cmdA = ED_VIF1_SET_TAG_CNT(0x1c);
 			pPkt->cmdB = 0;
 			*(undefined4*)&pPkt->cmdB = 0;
 			*(undefined4*)((ulong)&pPkt->cmdB + 4) = 0x6c1c0006;
@@ -2603,7 +2610,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 				(uint)((ulong)((long)(int)(pPkt + 1) << 0x24) >> 0x24) + 0xa0;
 			if (bVar11 != 0) {
 				pRVar9 = pRVar6 + 1;
-				pRVar6->cmdA = 0xe10000004;
+				pRVar6->cmdA = ED_VIF1_SET_TAG_CNT(4);
 				pRVar6->cmdB = 0;
 				*(undefined4*)&pRVar6->cmdB = 0;
 				iVar7 = 8;
@@ -2751,7 +2758,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 		PTR_AnimScratchpad_00449554->flags =
 			PTR_AnimScratchpad_00449554->flags | 1;
 	}
-	pDisplayList->cmdA = 0xe10000001;
+	pDisplayList->cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pDisplayList->cmdB = 0x7c01007600000000;
 	pAVar8 = PTR_AnimScratchpad_00449554;
 	uVar4 = *(undefined8*)PTR_AnimScratchpad_00449554;
@@ -2761,7 +2768,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 	*(int*)((ulong)&pDisplayList[1].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
 	*(undefined4*)&pDisplayList[1].cmdB = uVar12;
 	*(undefined4*)((ulong)&pDisplayList[1].cmdB + 4) = uVar13;
-	pDisplayList[2].cmdA = 0xe10000001;
+	pDisplayList[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pDisplayList[2].cmdB = 0x7c01019800000000;
 	uVar4 = *(undefined8*)pAVar8;
 	uVar12 = pAVar8->field_0x8;
@@ -2770,7 +2777,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 	*(int*)((ulong)&pDisplayList[3].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
 	*(undefined4*)&pDisplayList[3].cmdB = uVar12;
 	*(undefined4*)((ulong)&pDisplayList[3].cmdB + 4) = uVar13;
-	pDisplayList[4].cmdA = 0xe10000001;
+	pDisplayList[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pDisplayList[4].cmdB = 0x7c0102ba00000000;
 	uVar4 = *(undefined8*)pAVar8;
 	uVar12 = pAVar8->field_0x8;
@@ -2827,10 +2834,10 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 		}
 		for (; (bVar1 = iVar14 != 0, iVar14 = iVar14 + -1, bVar1 && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1)
 		{
-			*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = 0xe10000004;
-			*(ulong*)&((edF32VECTOR4*)ppuVar15)->z = (ulong)(uVar16 | 0x6c040000) << 0x20;
+			ppuVar15->cmdA = ED_VIF1_SET_TAG_CNT(4);
+			ppuVar15->cmdB = (ulong)(uVar16 | 0x6c040000) << 0x20;
 			edF32Matrix4CopyHard(((edF32MATRIX4*)ppuVar15 + 1), (peVar15 + *pAnimIndexes));
-			ppuVar15 = (edpkt_data*)((edF32VECTOR4*)ppuVar15 + 5);
+			ppuVar15 = ppuVar15 + 5;
 			uVar16 = uVar16 + 4;
 		}
 		if (gBackupPKT != (edpkt_data*)0x0) {
@@ -2867,7 +2874,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 			}
 			pBFCVect.w = (float)INT_004489a4;
 			pBFCVect.y = (float)INT_004489a8;
-			*(ulong*)&((edF32VECTOR4*)ppuVar15)[1].x = 0xe10000001;
+			*(ulong*)&((edF32VECTOR4*)ppuVar15)[1].x = ED_VIF1_SET_TAG_CNT(1);
 			*(ulong*)&((edF32VECTOR4*)ppuVar15)[1].z = 0x7c01003d00000000;
 			fVar7 = pBFCVect.w;
 			fVar6 = pBFCVect.z;
@@ -2880,7 +2887,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 		}
 	}
 	if (((peVar3->flags_0x0 & 0x100) != 0) || (gFushListCounter == 0xe)) {
-		*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = 0xe10000001;
+		*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = ED_VIF1_SET_TAG_CNT(1);
 		*(ulong*)&((edF32VECTOR4*)ppuVar15)->z = 0;
 		((edF32VECTOR4*)ppuVar15)->z = 0.0;
 		*(undefined4*)((ulong)&((edF32VECTOR4*)ppuVar15)->z + 4) = 0x6c010021;
@@ -2951,7 +2958,7 @@ void ed3DFlushStrip(edNODE* pNode)
 	if (globalAlhaON != 0x80) {
 		pNode->header.typeField.unknown = pNode->header.typeField.unknown | 0x20;;
 		pBFCVect.alphaON = globalAlhaON;
-		pRVar18->cmdA = 0xe10000001;
+		pRVar18->cmdA = ED_VIF1_SET_TAG_CNT(1);
 		pRVar18->cmdB = 0x7c01003d00000000;
 		fVar3 = pBFCVect.z;
 		fVar27 = pBFCVect.y;
@@ -3069,7 +3076,7 @@ void ed3DFlushStrip(edNODE* pNode)
 			ppuVar20[1].cmdA = 0x30000000;
 			ppuVar20[1].cmdB = 0x1100000011000000;
 			pBFCVect.z = 256.0 - fVar11 * 256.0;
-			ppuVar20[2].cmdA = 0xe10000001;
+			ppuVar20[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
 			ppuVar20[2].cmdB = 0x7c01003d00000000;
 			fVar3 = pBFCVect.w;
 			fVar27 = pBFCVect.z;
@@ -3204,7 +3211,7 @@ void ed3DFlushStrip(edNODE* pNode)
 						gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
 						gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pRVar18 & 0xfffffff0));
 					}
-					ppuVar6->cmdA = 0xe10000001;
+					ppuVar6->cmdA = ED_VIF1_SET_TAG_CNT(1);
 					ppuVar6->cmdB = 0x7c01003d00000000;
 					fVar3 = pBFCVect.z;
 					fVar27 = pBFCVect.y;
@@ -3280,7 +3287,7 @@ void ed3DFlushStrip(edNODE* pNode)
 			ppuVar6[1].cmdA = 0x30000000;
 			ppuVar6[1].cmdB = 0x1100000011000000;
 			pBFCVect.z = 256.0 - fVar11 * 256.0;
-			ppuVar6[2].cmdA = 0xe10000001;
+			ppuVar6[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
 			ppuVar6[2].cmdB = 0x7c01003d00000000;
 			fVar3 = pBFCVect.w;
 			fVar27 = pBFCVect.z;
@@ -3368,7 +3375,7 @@ void ed3DFlushStrip(edNODE* pNode)
 						}
 						goto LAB_002a5a74;
 					}
-					ppuVar19->cmdA = 0xe10000001;
+					ppuVar19->cmdA = ED_VIF1_SET_TAG_CNT(1);
 					ppuVar19->cmdB = 0x7c01003d00000000;
 					fVar3 = pBFCVect.w;
 					fVar27 = pBFCVect.z;
@@ -3415,9 +3422,9 @@ void ed3DFlushStrip(edNODE* pNode)
 		}
 	}
 	if ((*gShadowRenderMask != 0) && (pRenderInput->bUseShadowMatrix_0x30 != 0)) {
-		ppuVar6->cmdA = 0x30000000;
+		ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 		ppuVar6->cmdB = 0;
-		*(undefined4*)&ppuVar6->cmdB = 0x13000000;
+		ppuVar6->asU32[2] = SCE_VIF1_SET_FLUSHA(0);
 		ppuVar6 = ppuVar6 + 1;
 	}
 	g_VifRefPktCur = ppuVar6;
@@ -3657,7 +3664,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 				(pMVar10 == &gF32Matrix4Unit)) {
 				IMPLEMENTATION_GUARD(
 				m0 = (edF32MATRIX4*)(puVar14 + 3);
-				puVar14->cmdA = 0xe10000006;
+				puVar14->cmdA = ED_VIF1_SET_TAG_CNT(6);
 				puVar14->cmdB = 0;
 				iVar8 = 8;
 				*(undefined4*)&puVar14->cmdB = 0;
@@ -3726,7 +3733,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 	g_VifRefPktCur = puVar14;
 	puVar14 = ed3DHierachyCheckForGlobalAlpha(puVar14, gCurLayer);
 	g_VifRefPktCur = puVar14;
-	puVar14->cmdA = 0xe10000001;
+	puVar14->cmdA = ED_VIF1_SET_TAG_CNT(1);
 	puVar14->cmdB = 0;
 	*(undefined4*)&puVar14->cmdB = 0;
 	*(undefined4*)((ulong)&g_VifRefPktCur->cmdB + 4) = 0x6c010021;
@@ -3894,7 +3901,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 				fVar12 = (float)uVar9;
 			}
 			((pTVar4->body).field_0x14)->z = fVar12 * (fVar10 / fVar11);
-			pPkt->cmdA = 0xe10000001;
+			pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 			pPkt->cmdB = 0;
 			*(undefined4*)&pPkt->cmdB = 0;
 			*(undefined4*)((int)&pPkt->cmdB + 4) = 0x6c010021;
@@ -3932,7 +3939,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 					peVar5->w = fVar10 + 1.0;
 				}
 			}
-			pPkt->cmdA = 0xe10000001;
+			pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 			pPkt->cmdB = 0;
 			*(undefined4*)&pPkt->cmdB = 0;
 			*(undefined4*)((ulong)&pPkt->cmdB + 4) = 0x6c010021;
@@ -4045,7 +4052,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 				peVar4[1].cmdB = 0x1100000011000000;
 				peVar4[2].cmdA = 0x30000000;
 				peVar4[2].cmdB = 0x600000000000000;
-				peVar4[3].cmdA = 0xe10000001;
+				peVar4[3].cmdA = ED_VIF1_SET_TAG_CNT(1);
 				peVar4[3].cmdB = 0;
 				*(undefined4*)&peVar4[4].cmdA = in_zero_lo;
 				*(undefined4*)((int)&peVar4[4].cmdA + 4) = in_zero_hi;
@@ -4057,25 +4064,31 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 				gpPKTDataRefMasPath3 = peVar4 + 2;)
 			}
 			else {
-				peVar4->cmdA = 0x30000000;
-				peVar4->cmdB = 0x1300000000000000;
-				peVar4[1].cmdA =
-					((ulong)(ulong)(peVar1->pCommandBufferTexture +
-						gVRAMBufferFlush * peVar1->commandBufferTextureSize * (uint)peVar1->count_0x0) & 0xfffffffU) <<
-					0x20 | (ulong)peVar1->commandBufferTextureSize & 0xffffffffU | 0x30000000;
-				peVar4[1].cmdB = 0;
-				peVar4[2].cmdA = 0x30000000;
-				peVar4[2].cmdB = 0x1100000011000000;
-				peVar4[3].cmdA = 0x30000000;
-				peVar4[3].cmdB = 0x600000000000000;
-				peVar4[4].cmdA = 0xe10000001;
-				peVar4[4].cmdB = 0;
-				*(undefined4*)&peVar4[5].cmdA = in_zero_lo;
-				*(undefined4*)((ulong)&peVar4[5].cmdA + 4) = in_zero_hi;
-				*(undefined4*)&peVar4[5].cmdB = in_zero_udw;
-				*(undefined4*)((ulong)&peVar4[5].cmdB + 4) = in_register_0000000c;
-				peVar4[6].cmdA = 0x30000000;
-				peVar4[6].cmdB = 0x600800000000000;
+				peVar4->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+				peVar4->asU32[2] = SCE_VIF1_SET_NOP(0);
+				peVar4->asU32[3] = SCE_VIF1_SET_FLUSHA(0);
+
+				peVar4[1].cmdA = ED_VIF1_SET_TAG_REF(peVar1->commandBufferTextureSize, ((ulong)(ulong)(peVar1->pCommandBufferTexture +
+					gVRAMBufferFlush * peVar1->commandBufferTextureSize * (uint)peVar1->count_0x0) & 0xfffffffU));
+				peVar4[1].cmdB = SCE_VIF1_SET_NOP(0);
+
+				peVar4[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+				peVar4[2].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+				peVar4[2].asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
+				peVar4[3].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+				peVar4[3].asU32[2] = SCE_VIF1_SET_NOP(0);
+				peVar4[3].asU32[3] = SCE_VIF1_SET_MSKPATH3(0, 0);
+
+				peVar4[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
+				peVar4[4].cmdB = SCE_VIF1_SET_NOP(0);
+
+				peVar4[5].asU128 = 0;
+
+				peVar4[6].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+				peVar4[6].asU32[2] = SCE_VIF1_SET_NOP(0);
+				peVar4[6].asU32[3] = SCE_VIF1_SET_MSKPATH3(0x8000, 0);
+
 				peVar8 = peVar4 + 7;
 				gpPKTDataRefMasPath3 = peVar4 + 3;
 			}
@@ -4110,7 +4123,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 		if ((long)iVar9 != 0) {
 			puVar2 = &g_VifRefPktCur->cmdA;
 			g_VifRefPktCur = peVar8;
-			*puVar2 = (long)(iVar9 + 2) | 0xe10000000;
+			*puVar2 = ED_VIF1_SET_TAG_CNT(iVar9 + 2);
 			peVar4->cmdB = 0;
 			*(undefined4*)&peVar4->cmdB = 0x40003dc;
 			*(uint*)((ulong)&peVar4->cmdB + 4) = (iVar9 + 1) * 0x10000 | 0x6c0003dc;
@@ -4133,7 +4146,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 		pRenderMeshData->pBitmap = (ed_g2d_bitmap*)0xdfdfdfdf;
 	}
 	else {
-		g_VifRefPktCur->cmdA = 0xe10000001;
+		g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_CNT(1);
 		peVar4->cmdB = 0;
 		peVar3 = g_VifRefPktCur;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
@@ -4322,7 +4335,7 @@ edpkt_data* ed3DFlushFullAlphaInit(edpkt_data* pRenderCommand)
 		gZBUF_TEXBASE = gZBUF_BASE << 5;
 		pRenderCommand->cmdA = 0x30000000;
 		pRenderCommand->cmdB = 0x1100000011000000;
-		pRenderCommand[1].cmdA = 0xe10000002;
+		pRenderCommand[1].cmdA = ED_VIF1_SET_TAG_CNT(2);
 		pRenderCommand[1].cmdB = 0;
 		pRenderCommand[1].asU32[2] = 0;
 		pRenderCommand[1].asU32[3] = 0x50000002;
@@ -4368,7 +4381,7 @@ edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand)
 		gZBUF_BASE_BIS_TEX = gZBUF_TEXBASE;
 		pRenderCommand->cmdA = 0x30000000;
 		pRenderCommand->cmdB = 0x1100000011000000;
-		pRenderCommand[1].cmdA = 0xe10000002;
+		pRenderCommand[1].cmdA = ED_VIF1_SET_TAG_CNT(2);
 		pRenderCommand[1].cmdB = 0;
 		pRenderCommand[1].asU32[2] = 0;
 		pRenderCommand[1].asU32[3] = 0x50000002;
@@ -4432,7 +4445,7 @@ void ed3DFlushShadowList(void)
 		g_VifRefPktCur = ed3DAddViewportContextPacket(g_Camera_0044956c, g_VifRefPktCur);
 		peVar5 = (edpkt_data*)ed3DShadowFlushResetOffset((undefined8*)g_VifRefPktCur, (short*)&gCurRectViewport);
 		g_VifRefPktCur = peVar5;
-		peVar5->cmdA = 0xe10000002;
+		peVar5->cmdA = ED_VIF1_SET_TAG_CNT(2);
 		peVar5->cmdB = 0;
 		*(undefined4*)&peVar5->cmdB = 0;
 		*(undefined4*)((ulong)&g_VifRefPktCur->cmdB + 4) = 0x50000002;
@@ -6340,10 +6353,10 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 				})
 			}
 			if (pShadowScene->bShadowScene == 1) {
-				g_VifRefPktCur->cmdA = 0xe10000002;
+				g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_CNT(2);
 				g_VifRefPktCur->cmdB = 0;
-				*(undefined4*)&g_VifRefPktCur->cmdB = 0;
-				*(undefined4*)((ulong)&g_VifRefPktCur->cmdB + 4) = 0x50000002;
+				g_VifRefPktCur->asU32[2] = SCE_VIF1_SET_NOP(0);
+				g_VifRefPktCur->asU32[3] = SCE_VIF1_SET_DIRECT(2, 0);
 				g_VifRefPktCur = g_VifRefPktCur + 1;
 
 				// TAG
@@ -6375,10 +6388,10 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 			}
 			g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
 			pCVar2 = pShadowScene->pViewport;
-			CameraScreenData_00449560.posX = pCVar2->posX;
-			CameraScreenData_00449560.posY = pCVar2->posY;
-			CameraScreenData_00449560.screenWidth = pCVar2->screenWidth;
-			CameraScreenData_00449560.screenHeight = pCVar2->screenHeight;
+			CameraScreenData_00449560.x = pCVar2->posX;
+			CameraScreenData_00449560.y = pCVar2->posY;
+			CameraScreenData_00449560.w = pCVar2->screenWidth;
+			CameraScreenData_00449560.h = pCVar2->screenHeight;
 			g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
 			ed3DPrimlistMatrixBufferReset();
 			if (ged3DConfig.bEnableProfile != 0) {
@@ -6657,7 +6670,7 @@ edpkt_data* ed3DAddViewport2DAfter3D(edpkt_data* param_1)
 			if (gDebugViewport != (ed_viewport*)0x0) {
 				g_VifRefPktCur = edViewportUpdateEnv(gDebugViewport, g_VifRefPktCur + 1);
 				uVar4 = ((uint)((ulong)g_VifRefPktCur - (ulong)pRVar2) >> 4) - 1;
-				pRVar2->cmdA = (ulong)(int)uVar4 & 0xffffffffU | 0xe10000000;
+				pRVar2->cmdA = ED_VIF1_SET_TAG_CNT(uVar4 & 0xffffffffU);
 				pRVar2->cmdB = 0;
 				*(undefined4*)&pRVar2->cmdB = 0;
 				*(uint*)((ulong)&pRVar2->cmdB + 4) = uVar4 | 0x51000000;
@@ -6669,7 +6682,7 @@ edpkt_data* ed3DAddViewport2DAfter3D(edpkt_data* param_1)
 		if (PTR_00449388 != (ed_viewport*)0x0) {
 			pRVar3 = edViewportUpdateEnv(PTR_00449388, param_1 + 1);
 			uVar4 = ((uint)((ulong)pRVar3 - (ulong)param_1) >> 4) - 1;
-			param_1->cmdA = (ulong)(int)uVar4 & 0xffffffffU | 0xe10000000;
+			param_1->cmdA = ED_VIF1_SET_TAG_CNT(uVar4 & 0xffffffffU);
 			param_1->cmdB = 0;
 			*(undefined4*)&param_1->cmdB = 0;
 			*(uint*)((ulong)&param_1->cmdB + 4) = uVar4 | 0x51000000;
@@ -6682,7 +6695,7 @@ uint UINT_00425000 = 0;
 
 edpkt_data* ed3DDMAAddFinish(edpkt_data* param_1)
 {
-	param_1->cmdA = 0xe10000003;
+	param_1->cmdA = ED_VIF1_SET_TAG_CNT(3);
 	param_1->cmdB = 0;
 	*(undefined4*)&param_1->cmdB = 0x40003dc;
 	*(undefined4*)((ulong)&param_1->cmdB + 4) = 0x6c0203dc;
@@ -6726,8 +6739,8 @@ edpkt_data* ed3DFlushAAEffect(edpkt_data* pRenderCommand)
 	int iVar3;
 
 	if (((((BYTE_00448a70 != 0) && (BYTE_00449418 != 0)) && (gCurViewportUsed != (ed_viewport*)0x0)) &&
-		(gCurRectViewport.screenWidth == 0x200)) &&
-		((gCurRectViewport.screenHeight == 0x200 || (gCurRectViewport.screenHeight == 0x1c0)))) {
+		(gCurRectViewport.w == 0x200)) &&
+		((gCurRectViewport.h == 0x200 || (gCurRectViewport.h == 0x1c0)))) {
 		IMPLEMENTATION_GUARD();
 	}
 	return pRenderCommand;
@@ -6971,7 +6984,7 @@ void ed3DSceneRender(int, int, char*)
 						g_VifRefPktCur[1].cmdB = 0x1100000011000000;
 						g_VifRefPktCur[2].cmdA = 0x30000000;
 						g_VifRefPktCur[2].cmdB = 0x600000000000000;
-						g_VifRefPktCur[3].cmdA = 0xe10000001;
+						g_VifRefPktCur[3].cmdA = ED_VIF1_SET_TAG_CNT(1);
 						g_VifRefPktCur[3].cmdB = 0;
 						pRVar5 = g_VifRefPktCur;
 						*(undefined4*)&g_VifRefPktCur[4].cmdA = in_zero_lo;
@@ -6992,10 +7005,10 @@ void ed3DSceneRender(int, int, char*)
 					gCurViewportUsed = pInStaticMeshMaster->pViewport;
 				}
 				pCVar1 = pInStaticMeshMaster->pViewport;
-				gCurRectViewport.posX = pCVar1->posX;
-				gCurRectViewport.posY = pCVar1->posY;
-				gCurRectViewport.screenWidth = pCVar1->screenWidth;
-				gCurRectViewport.screenHeight = pCVar1->screenHeight;
+				gCurRectViewport.x = pCVar1->posX;
+				gCurRectViewport.y = pCVar1->posY;
+				gCurRectViewport.w = pCVar1->screenWidth;
+				gCurRectViewport.h = pCVar1->screenHeight;
 				gCurScene = pInStaticMeshMaster;
 				ed3DSceneRenderOne(pInStaticMeshMaster, pInStaticMeshMaster);
 
@@ -7118,7 +7131,7 @@ void ed3DSceneRender(int, int, char*)
 			g_VifRefPktCur->cmdB = 0;
 			*(undefined4*)&g_VifRefPktCur->cmdB = 0x6000000;
 			g_VifRefPktCur = g_VifRefPktCur + 1;
-			g_VifRefPktCur->cmdA = 0xe10000002;
+			g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_CNT(2);
 			g_VifRefPktCur->cmdB = 0;
 			*(undefined4*)&g_VifRefPktCur->cmdB = 0;
 			*(undefined4*)((ulong)&g_VifRefPktCur->cmdB + 4) = 0x50000002;
@@ -7325,8 +7338,8 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 	do {
 		if (pBuffer->count_0x0 == 0) {
 			if (param_2 == true) {
-				peVar10->cmdA = 0xe10000001;
-				peVar10->cmdB = 0;
+				peVar10->cmdA = ED_VIF1_SET_TAG_CNT(1);
+				peVar10->cmdB = SCE_VIF1_SET_NOP(0);
 				*(undefined4*)&peVar10->cmdB = 0;
 				*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
 				*(undefined4*)&peVar10[1].cmdA = 0;
@@ -7336,8 +7349,8 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 				peVar10 = peVar10 + 2;
 			}
 			else {
-				peVar10->cmdA = 0xe10000000;
-				peVar10->cmdB = 0;
+				peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0);
+				peVar10->cmdB = SCE_VIF1_SET_NOP(0);
 				pBuffer->commandBufferTextureSize = 1;
 				peVar10 = peVar10 + 1;
 			}
@@ -7355,8 +7368,8 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 				}
 				if (pTVar14 == (TextureData_TEX_Internal*)0x0) {
 					if (param_2 == true) {
-						peVar10->cmdA = 0xe10000001;
-						peVar10->cmdB = 0;
+						peVar10->cmdA = ED_VIF1_SET_TAG_CNT(1);
+						peVar10->cmdB = SCE_VIF1_SET_NOP(0);
 						*(undefined4*)&peVar10->cmdB = 0;
 						*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
 						*(undefined4*)&peVar10[1].cmdA = 0;
@@ -7366,8 +7379,8 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 						peVar10 = peVar10 + 2;
 					}
 					else {
-						peVar10->cmdA = 0xe10000000;
-						peVar10->cmdB = 0;
+						peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0);
+						peVar10->cmdB = SCE_VIF1_SET_NOP(0);
 						pBuffer->commandBufferTextureSize = 1;
 						peVar10 = peVar10 + 1;
 					}
@@ -7379,19 +7392,19 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 					}
 					if (peVar12 == (ed_g2d_bitmap*)0x0) {
 						if (param_2 == true) {
-							peVar10->cmdA = 0xe10000001;
+							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(1);
 							peVar10->cmdB = 0;
-							*(undefined4*)&peVar10->cmdB = 0x11000000;
-							*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
-							*(undefined4*)&peVar10[1].cmdA = 0;
-							*(undefined4*)((ulong)&peVar10[1].cmdA + 4) = 0x14000000;
-							peVar10[1].cmdB = 0x11000000;
+							peVar10->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+							peVar10->asU32[3] = SCE_VIF1_SET_ITOP(0x03dc, 0);
+							peVar10[1].asU32[0] = SCE_VIF1_SET_NOP(0);
+							peVar10[1].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0);
+							peVar10[1].cmdB = SCE_VIF1_SET_FLUSH(0);
 							pBuffer->commandBufferTextureSize = 2;
 							peVar10 = peVar10 + 2;
 						}
 						else {
-							peVar10->cmdA = 0xe10000000;
-							peVar10->cmdB = 0;
+							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0);
+							peVar10->cmdB = SCE_VIF1_SET_NOP(0);
 							pBuffer->commandBufferTextureSize = 1;
 							peVar10 = peVar10 + 1;
 						}
@@ -7418,14 +7431,14 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 							pLAY->flags_0x0 = uVar2;
 						}
 						if (param_2 == true) {
-							peVar10->cmdA = 0xe1000000b;
-							peVar10->cmdB = 0;
+							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0xb);
+							peVar10->cmdB = SCE_VIF1_SET_NOP(0);
 							*(undefined4*)&peVar10->cmdB = 0x40003dc;
 							*(undefined4*)((int)&peVar10->cmdB + 4) = 0x6c0a03dc;
 						}
 						else {
-							peVar10->cmdA = 0xe1000000a;
-							peVar10->cmdB = 0;
+							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0xa);
+							peVar10->cmdB = SCE_VIF1_SET_NOP(0);
 						}
 						peVar10[1].cmdA = 0x1000000000008009;
 						peVar10[1].cmdB = 0xe;

@@ -224,6 +224,8 @@ edF32MATRIX4 {
 #endif
 
 union edpkt_data {
+	uint128 asU128;
+
 	struct __attribute__((aligned(16))) {
 		ulong cmdA;
 		ulong cmdB;
