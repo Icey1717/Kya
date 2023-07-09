@@ -70,7 +70,7 @@ struct MeshDrawRenderCommand {
 };
 
 struct DisplayListInternal;
-struct edpkt_data;
+union edpkt_data;
 struct edDList_material;
 struct ed_viewport;
 

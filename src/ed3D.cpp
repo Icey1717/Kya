@@ -107,6 +107,8 @@ edpkt_data* g_pStripBuf;
 edpkt_data* g_pStrippBufMaxPos;
 edpkt_data* g_pStripBufResetPos;
 
+edpkt_data g_stMatrixHeader;
+
 ed3DConfig ged3DConfig;
 
 edSurface* gVRAMed3D = NULL;
@@ -218,10 +220,7 @@ edNODE_MANAGER* gHierarchyManagerNodeManager = NULL;
 edNODE* gHierarchyManagerFirstFreeNode = NULL;
 
 byte BYTE_00448a5c = 1;
-uint UINT_0048c2c0 = 0;
-uint UINT_0048c2c4 = 0;
-uint UINT_0048c2c8 = 0;
-uint UINT_0048c2cc = 0;
+edpkt_data gFANbuffers;
 edF32VECTOR4 gClipMulVector = { 0 };
 edF32VECTOR4 gClipAddVector = { 0 };
 edF32VECTOR4 gClipXY = { 0 };
@@ -230,8 +229,8 @@ byte BYTE_00448a70 = 1;
 byte BYTE_00449418 = 0;
 edpkt_data* gpPKTDataRefMasPath3 = NULL;
 
-uint g_StaticVideoList_00489590[0xB20] = { 0 };
-ulong* g_StaticVideoList_00489590_LONG = (ulong*)g_StaticVideoList_00489590;
+//uint g_StaticVideoList_00489590[0xB20] = { 0 };
+//ulong* g_StaticVideoList_00489590_LONG = (ulong*)g_StaticVideoList_00489590;
 
 edNODE_MANAGER* pNodeManRender = NULL;
 edNODE_MANAGER* pNodeManMaterial[2] = { NULL, NULL };
@@ -317,7 +316,7 @@ uint ed3DVU1Buffer[3] = { 0 };
 byte BYTE_004493b4 = 0;
 byte BYTE_004493b8 = 0;
 
-edpkt_data gOptionFlagCNT[3] = {0};
+edpkt_data gOptionFlagCNT[3];
 
 void ed3DOptionFlagCNTInit(void)
 {
@@ -341,132 +340,132 @@ void ed3DDMAGenerateHeaders(void)
 		iVar1 = (int)uVar2;
 		uVar3 = uVar2 & 0xffffffff;
 		uVar2 = (iVar1 + 1);
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x2a] = uVar3 | 0x302e400000008000;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x2b] = 0x512;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0xec] = uVar3 | 0x3026400000008000;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0xed] = 0x512;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x1ae] = uVar3 | 0x3022400000008000;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x1af] = 0x512;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x2a] = uVar3 | 0x302e400000008000;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x2b] = 0x512;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0xec] = uVar3 | 0x3026400000008000;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0xed] = 0x512;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x1ae] = uVar3 | 0x3022400000008000;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x1af] = 0x512;
 	} while (uVar2 < 0x61);
-	g_StaticVideoList_00489590_LONG[624] = 0x302ec00000008000;
-	g_StaticVideoList_00489590_LONG[626] = 0x3026c00000008000;
-	g_StaticVideoList_00489590_LONG[625] = 0x512;
+	//g_StaticVideoList_00489590_LONG[624] = 0x302ec00000008000;
+	//g_StaticVideoList_00489590_LONG[626] = 0x3026c00000008000;
+	//g_StaticVideoList_00489590_LONG[625] = 0x512;
 	uVar2 = 0;
-	g_StaticVideoList_00489590_LONG[628] = 0x3022c00000008000;
-	g_StaticVideoList_00489590_LONG[627] = 0x512;
-	g_StaticVideoList_00489590_LONG[629] = 0x512;
+	//g_StaticVideoList_00489590_LONG[628] = 0x3022c00000008000;
+	//g_StaticVideoList_00489590_LONG[627] = 0x512;
+	//g_StaticVideoList_00489590_LONG[629] = 0x512;
 	do {
 		iVar1 = (int)uVar2;
 		uVar3 = uVar2 & 0xffffffff;
 		uVar2 = (iVar1 + 1);
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x276] = uVar3 | 0x302d400000008000;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x277] = 0x512;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x338] = uVar3 | 0x3025400000008000;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x339] = 0x512;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x276] = uVar3 | 0x302d400000008000;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x277] = 0x512;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x338] = uVar3 | 0x3025400000008000;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x339] = 0x512;
 	} while (uVar2 < 0x61);
 	uVar2 = 0;
 	do {
 		iVar1 = (int)uVar2;
 		uVar3 = uVar2 & 0xffffffff;
 		uVar2 = (iVar1 + 1);
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x3fa] = uVar3 | 0x3020400000008000;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x3fb] = 0x512;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x4bc] = uVar3 | 0x3028400000008000;
-		g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x4bd] = 0x512;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x3fa] = uVar3 | 0x3020400000008000;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x3fb] = 0x512;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x4bc] = uVar3 | 0x3028400000008000;
+		//g_StaticVideoList_00489590_LONG[iVar1 * 2 + 0x4bd] = 0x512;
 	} while (uVar2 < 0x61);
-	g_StaticVideoList_00489590[7] = 0;
-	g_StaticVideoList_00489590[11] = 0;
-	g_StaticVideoList_00489590[0] = 0x01000101;
-	g_StaticVideoList_00489590[4] = 0x01000101;
-	g_StaticVideoList_00489590[1] = 0x20000000;
-	g_StaticVideoList_00489590[5] = 0x20000000;
-	g_StaticVideoList_00489590[8] = 0x01000103;
-	g_StaticVideoList_00489590[2] = 0xffffff00;
-	g_StaticVideoList_00489590[34] = 0xffffffc0;
-	g_StaticVideoList_00489590[6] = 0xffffff00;
-	g_StaticVideoList_00489590[9] = 0x20000000;
-	g_StaticVideoList_00489590[10] = 0xffffff00;
-	g_StaticVideoList_00489590[26] = 0xfffffff0;
-	g_StaticVideoList_00489590[66] = 0xffffff40;
-	g_StaticVideoList_00489590[74] = 0xbf800000;
-	g_StaticVideoList_00489590[75] = 0xc000;
+	//g_StaticVideoList_00489590[7] = 0;
+	//g_StaticVideoList_00489590[11] = 0;
+	g_stMatrixHeader.asU32[0] = 0x01000101;
+	//g_StaticVideoList_00489590[4] = 0x01000101;
+	g_stMatrixHeader.asU32[1] = 0x20000000;
+	//g_StaticVideoList_00489590[5] = 0x20000000;
+	//g_StaticVideoList_00489590[8] = 0x01000103;
+	g_stMatrixHeader.cmdB = 0xffffff00;
+	//g_StaticVideoList_00489590[34] = 0xffffffc0;
+	//g_StaticVideoList_00489590[6] = 0xffffff00;
+	//g_StaticVideoList_00489590[9] = 0x20000000;
+	//g_StaticVideoList_00489590[10] = 0xffffff00;
+	//g_StaticVideoList_00489590[26] = 0xfffffff0;
+	//g_StaticVideoList_00489590[66] = 0xffffff40;
+	//g_StaticVideoList_00489590[74] = 0xbf800000;
+	//g_StaticVideoList_00489590[75] = 0xc000;
 	ed3DVU1Buffer[0] = 0x76;
-	g_StaticVideoList_00489590[28] = 0x01000103;
+	//g_StaticVideoList_00489590[28] = 0x01000103;
 	ed3DVU1Buffer[1] = 0x198;
-	g_StaticVideoList_00489590[29] = 0x20000000;
+	//g_StaticVideoList_00489590[29] = 0x20000000;
 	ed3DVU1Buffer[2] = 0x2ba;
-	g_StaticVideoList_00489590[30] = 0xffffff00;
+	//g_StaticVideoList_00489590[30] = 0xffffff00;
 	ed3DVU1BufferCur = 1;
-	g_StaticVideoList_00489590[31] = 0;
+	//g_StaticVideoList_00489590[31] = 0;
 	gRefOptionsforVU1Buf[1] = 0x200000003000077;
 	gRefOptionsforVU1Buf[3] = 0x200000003000199;
 	gRefOptionsforVU1Buf[5] = 0x2000000030002bb;
-	g_StaticVideoList_00489590[32] = 0x01000103;
-	g_StaticVideoList_00489590[33] = 0x20000000;
-	g_StaticVideoList_00489590[35] = 0;
-	g_StaticVideoList_00489590[12] = 0x01000103;
-	g_StaticVideoList_00489590[13] = 0x20000000;
-	g_StaticVideoList_00489590[14] = 0xffffff00;
-	g_StaticVideoList_00489590[15] = 0;
-	g_StaticVideoList_00489590[16] = 0x01000103;
-	g_StaticVideoList_00489590[17] = 0x20000000;
-	g_StaticVideoList_00489590[18] = 0xffffff50;
-	g_StaticVideoList_00489590[19] = 0x30000000;
-	g_StaticVideoList_00489590[20] = 0;
-	g_StaticVideoList_00489590[21] = 0;
-	g_StaticVideoList_00489590[22] = 0x3f800000;
-	g_StaticVideoList_00489590[23] = 0;
-	g_StaticVideoList_00489590[24] = 0x01000103;
-	g_StaticVideoList_00489590[25] = 0x20000000;
-	g_StaticVideoList_00489590[27] = 0;
-	g_StaticVideoList_00489590[36] = 0x01000101;
-	g_StaticVideoList_00489590[37] = 0x20000000;
-	g_StaticVideoList_00489590[38] = 0xffffff00;
-	g_StaticVideoList_00489590[39] = 0;
-	g_StaticVideoList_00489590[64] = 0x01000103;
-	g_StaticVideoList_00489590[65] = 0x20000000;
-	g_StaticVideoList_00489590[67] = 0;
-	g_StaticVideoList_00489590[60] = 0x01000103;
-	g_StaticVideoList_00489590[61] = 0x20000000;
-	g_StaticVideoList_00489590[62] = 0xffffff00;
-	g_StaticVideoList_00489590[63] = 0;
-	g_StaticVideoList_00489590[68] = 0x01000101;
-	g_StaticVideoList_00489590[69] = 0x20000000;
-	g_StaticVideoList_00489590[70] = 0xffffff50;
-	g_StaticVideoList_00489590[71] = 0x30000000;
-	g_StaticVideoList_00489590[72] = 0;
-	g_StaticVideoList_00489590[73] = 0;
-	g_StaticVideoList_00489590[76] = 0x01000103;
-	g_StaticVideoList_00489590[56] = 0x01000103;
-	g_StaticVideoList_00489590[77] = 0x20000000;
-	g_StaticVideoList_00489590[78] = 0xffffff50;
-	g_StaticVideoList_00489590[50] = 0xffffff50;
-	g_StaticVideoList_00489590[79] = 0x30000000;
-	g_StaticVideoList_00489590[80] = 0;
-	g_StaticVideoList_00489590[81] = 0;
-	g_StaticVideoList_00489590[82] = 0x3f800000;
-	g_StaticVideoList_00489590[54] = 0x3f800000;
-	g_StaticVideoList_00489590[83] = 0;
-	g_StaticVideoList_00489590[57] = 0x20000000;
-	g_StaticVideoList_00489590[58] = 0xffffff00;
-	g_StaticVideoList_00489590[59] = 0;
-	g_StaticVideoList_00489590[44] = 0x01000101;
-	g_StaticVideoList_00489590[45] = 0x20000000;
-	g_StaticVideoList_00489590[46] = 0xffffff00;
-	g_StaticVideoList_00489590[42] = 0xffffff00;
-	g_StaticVideoList_00489590[47] = 0;
-	g_StaticVideoList_00489590[40] = 0x01000101;
-	g_StaticVideoList_00489590[48] = 0x01000101;
-	g_StaticVideoList_00489590[41] = 0x20000000;
-	g_StaticVideoList_00489590[49] = 0x20000000;
-	g_StaticVideoList_00489590[43] = 0;
-	g_StaticVideoList_00489590[51] = 0x30000000;
-	g_StaticVideoList_00489590[52] = 0;
-	g_StaticVideoList_00489590[53] = 0;
-	g_StaticVideoList_00489590[55] = 0;
-	g_StaticDisplayListData_0048c340_LONG[0] = 0x30000000;
-	g_StaticDisplayListData_0048c340_LONG[2] = 0x30000000;
-	g_StaticDisplayListData_0048c340_LONG[4] = 0x30000000;
+	//g_StaticVideoList_00489590[32] = 0x01000103;
+	//g_StaticVideoList_00489590[33] = 0x20000000;
+	//g_StaticVideoList_00489590[35] = 0;
+	//g_StaticVideoList_00489590[12] = 0x01000103;
+	//g_StaticVideoList_00489590[13] = 0x20000000;
+	//g_StaticVideoList_00489590[14] = 0xffffff00;
+	//g_StaticVideoList_00489590[15] = 0;
+	//g_StaticVideoList_00489590[16] = 0x01000103;
+	//g_StaticVideoList_00489590[17] = 0x20000000;
+	//g_StaticVideoList_00489590[18] = 0xffffff50;
+	//g_StaticVideoList_00489590[19] = 0x30000000;
+	//g_StaticVideoList_00489590[20] = 0;
+	//g_StaticVideoList_00489590[21] = 0;
+	//g_StaticVideoList_00489590[22] = 0x3f800000;
+	//g_StaticVideoList_00489590[23] = 0;
+	//g_StaticVideoList_00489590[24] = 0x01000103;
+	//g_StaticVideoList_00489590[25] = 0x20000000;
+	//g_StaticVideoList_00489590[27] = 0;
+	//g_StaticVideoList_00489590[36] = 0x01000101;
+	//g_StaticVideoList_00489590[37] = 0x20000000;
+	//g_StaticVideoList_00489590[38] = 0xffffff00;
+	//g_StaticVideoList_00489590[39] = 0;
+	//g_StaticVideoList_00489590[64] = 0x01000103;
+	//g_StaticVideoList_00489590[65] = 0x20000000;
+	//g_StaticVideoList_00489590[67] = 0;
+	//g_StaticVideoList_00489590[60] = 0x01000103;
+	//g_StaticVideoList_00489590[61] = 0x20000000;
+	//g_StaticVideoList_00489590[62] = 0xffffff00;
+	//g_StaticVideoList_00489590[63] = 0;
+	//g_StaticVideoList_00489590[68] = 0x01000101;
+	//g_StaticVideoList_00489590[69] = 0x20000000;
+	//g_StaticVideoList_00489590[70] = 0xffffff50;
+	//g_StaticVideoList_00489590[71] = 0x30000000;
+	//g_StaticVideoList_00489590[72] = 0;
+	//g_StaticVideoList_00489590[73] = 0;
+	//g_StaticVideoList_00489590[76] = 0x01000103;
+	//g_StaticVideoList_00489590[56] = 0x01000103;
+	//g_StaticVideoList_00489590[77] = 0x20000000;
+	//g_StaticVideoList_00489590[78] = 0xffffff50;
+	//g_StaticVideoList_00489590[50] = 0xffffff50;
+	//g_StaticVideoList_00489590[79] = 0x30000000;
+	//g_StaticVideoList_00489590[80] = 0;
+	//g_StaticVideoList_00489590[81] = 0;
+	//g_StaticVideoList_00489590[82] = 0x3f800000;
+	//g_StaticVideoList_00489590[54] = 0x3f800000;
+	//g_StaticVideoList_00489590[83] = 0;
+	//g_StaticVideoList_00489590[57] = 0x20000000;
+	//g_StaticVideoList_00489590[58] = 0xffffff00;
+	//g_StaticVideoList_00489590[59] = 0;
+	//g_StaticVideoList_00489590[44] = 0x01000101;
+	//g_StaticVideoList_00489590[45] = 0x20000000;
+	//g_StaticVideoList_00489590[46] = 0xffffff00;
+	//g_StaticVideoList_00489590[42] = 0xffffff00;
+	//g_StaticVideoList_00489590[47] = 0;
+	//g_StaticVideoList_00489590[40] = 0x01000101;
+	//g_StaticVideoList_00489590[48] = 0x01000101;
+	//g_StaticVideoList_00489590[41] = 0x20000000;
+	//g_StaticVideoList_00489590[49] = 0x20000000;
+	//g_StaticVideoList_00489590[43] = 0;
+	//g_StaticVideoList_00489590[51] = 0x30000000;
+	//g_StaticVideoList_00489590[52] = 0;
+	//g_StaticVideoList_00489590[53] = 0;
+	//g_StaticVideoList_00489590[55] = 0;
+	//g_StaticDisplayListData_0048c340_LONG[0] = 0x30000000;
+	//g_StaticDisplayListData_0048c340_LONG[2] = 0x30000000;
+	//g_StaticDisplayListData_0048c340_LONG[4] = 0x30000000;
 	ed3DOptionFlagCNTInit();
 	return;
 }
@@ -832,24 +831,26 @@ struct ed3D_SubAllocator {
 
 ed3D_SubAllocator ed3D_SubAllocator_004491b8 = { 0 };
 
+edpkt_data g_PKTHeaderRef[9] = {};
+
 void ed3DDMAGeneratePacketRefHeader(void)
 {
-	g_StaticVideoList_00489590[1406] = 0x4895b030000001;
-	g_StaticVideoList_00489590[1407] = 0;
-	g_StaticVideoList_00489590[1408] = 0x4895d030000002;
-	g_StaticVideoList_00489590[1409] = 0;
-	g_StaticVideoList_00489590[1410] = 0x4895c030000001;
-	g_StaticVideoList_00489590[1411] = 0;
-	g_StaticVideoList_00489590[1412] = 0x48960030000001;
-	g_StaticVideoList_00489590[1413] = 0;
-	g_StaticVideoList_00489590[1414] = 0x48962030000001;
-	g_StaticVideoList_00489590[1415] = 0;
-	g_StaticVideoList_00489590[1416] = 0x4895a030000001;
-	g_StaticVideoList_00489590[1417] = 0;
-	g_StaticVideoList_00489590[1418] = 0x4895f030000001;
-	g_StaticVideoList_00489590[1419] = 0;
-	g_StaticVideoList_00489590[1420] = 0x48961030000001;
-	g_StaticVideoList_00489590[1421] = 0;
+	g_PKTHeaderRef[0].cmdA = 0x4895b030000001;
+	g_PKTHeaderRef[0].cmdB = 0;
+	g_PKTHeaderRef[1].cmdA = 0x4895d030000002;
+	g_PKTHeaderRef[1].cmdB = 0;
+	g_PKTHeaderRef[2].cmdA = 0x4895c030000001;
+	g_PKTHeaderRef[2].cmdB = 0;
+	g_PKTHeaderRef[3].cmdA = 0x48960030000001;
+	g_PKTHeaderRef[3].cmdB = 0;
+	g_PKTHeaderRef[4].cmdA = 0x48962030000001;
+	g_PKTHeaderRef[4].cmdB = 0;
+	g_PKTHeaderRef[5].cmdA = 0x4895a030000001;
+	g_PKTHeaderRef[5].cmdB = 0;
+	g_PKTHeaderRef[6].cmdA = 0x4895f030000001;
+	g_PKTHeaderRef[6].cmdB = 0;
+	g_PKTHeaderRef[7].cmdA = 0x48961030000001;
+	g_PKTHeaderRef[7].cmdB = 0;
 	return;
 }
 
@@ -901,7 +902,7 @@ void ed3DDMAGenerateSpritePacketRefHeader(void)
 	return;
 }
 
-int g_stExecuteCode = 0;
+edpkt_data g_stExecuteCode;
 
 void ed3DDMAInit(uint countA, int countB)
 {
@@ -909,11 +910,11 @@ void ed3DDMAInit(uint countA, int countB)
 	char* pcVar2;
 	ulong lVar3;
 
-	UINT_0048c2c0 = 0x22;
-	UINT_0048c2cc = 0xc000;
+	gFANbuffers.asU32[0] = 0x22;
+	gFANbuffers.asU32[3] = 0xc000;
 	lVar3 = (ulong)ed3D_Allocator_00449248.end;
-	UINT_0048c2c4 = 0x3e;
-	UINT_0048c2c8 = 0x5a;
+	gFANbuffers.asU32[1] = 0x3e;
+	gFANbuffers.asU32[2] = 0x5a;
 	pcVar2 = ed3D_Allocator_00449248.end + countA * 0x10;
 	if (ed3D_Allocator_00449248.current < ed3D_Allocator_00449248.end + countA * 0x10) {
 		lVar3 = 0;
@@ -929,9 +930,8 @@ void ed3DDMAInit(uint countA, int countB)
 	g_VideoMemorySize_00449280 = countA;
 	g_VifRefPktCur = g_stVifReferencesPacket;
 	ed3DDMAGenerateHeaders();
-	g_stExecuteCode = 0;
-	//DAT_0048c2b4 = 0;
-	//DAT_0048c2b8 = 0;
+	g_stExecuteCode.cmdA = 0;
+	g_stExecuteCode.cmdB = 0;
 	ed3DDMAGeneratePacketRefHeader();
 	ed3DDMAGenerateSpritePacketRefHeader();
 	g_PKTShapeHeaderRef[0].cmdB = 0;
@@ -1983,7 +1983,9 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 	return 1;
 }
 
-edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* param_1)
+#define SCE_VIF1_SET_UNPACK(vuaddr, num, cmd, irq) ((uint)(vuaddr) | ((uint)(num) << 16) | ((uint)(0x60 | (cmd)) << 24) | ((uint)(irq) << 31))
+
+edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 {
 	uint uVar1;
 	uint uVar2;
@@ -1992,69 +1994,30 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* param_1)
 	float fVar5;
 	float fVar6;
 
-	param_1->cmdA = 0xe10000008;
-	param_1->cmdB = 0;
-	*(undefined4*)&param_1->cmdB = 0;
-	*(undefined4*)((ulong)&param_1->cmdB + 4) = 0x6c080000;
-	uVar3 = UINT_0048c2cc;
-	uVar2 = UINT_0048c2c8;
-	uVar1 = UINT_0048c2c4;
-	*(uint*)&param_1[1].cmdA = UINT_0048c2c0;
-	*(uint*)((ulong)&param_1[1].cmdA + 4) = uVar1;
-	*(uint*)&param_1[1].cmdB = uVar2;
-	*(uint*)((ulong)&param_1[1].cmdB + 4) = uVar3;
-	param_1[2].cmdA = 0x302ec00000008000;
-	param_1[2].cmdB = 0x512;
-	fVar6 = gClipMulVector.w;
-	fVar5 = gClipMulVector.z;
-	fVar4 = gClipMulVector.y;
-	*(float*)&param_1[3].cmdA = gClipMulVector.x;
-	*(float*)((ulong)&param_1[3].cmdA + 4) = fVar4;
-	*(float*)&param_1[3].cmdB = fVar5;
-	*(float*)((ulong)&param_1[3].cmdB + 4) = fVar6;
-	fVar6 = gClipAddVector.w;
-	fVar5 = gClipAddVector.z;
-	fVar4 = gClipAddVector.y;
-	*(float*)&param_1[4].cmdA = gClipAddVector.x;
-	*(float*)((ulong)&param_1[4].cmdA + 4) = fVar4;
-	*(float*)&param_1[4].cmdB = fVar5;
-	*(float*)((ulong)&param_1[4].cmdB + 4) = fVar6;
-	fVar6 = gClipXY.w;
-	fVar5 = gClipXY.z;
-	fVar4 = gClipXY.y;
-	*(float*)&param_1[5].cmdA = gClipXY.x;
-	*(float*)((ulong)&param_1[5].cmdA + 4) = fVar4;
-	*(float*)&param_1[5].cmdB = fVar5;
-	*(float*)((ulong)&param_1[5].cmdB + 4) = fVar6;
-	fVar6 = gCamPos.w;
-	fVar5 = gCamPos.z;
-	fVar4 = gCamPos.y;
-	*(float*)&param_1[6].cmdA = gCamPos.x;
-	*(float*)((ulong)&param_1[6].cmdA + 4) = fVar4;
-	*(float*)&param_1[6].cmdB = fVar5;
-	*(float*)((ulong)&param_1[6].cmdB + 4) = fVar6;
-	fVar6 = gCamNormal_X.w;
-	fVar5 = gCamNormal_X.z;
-	fVar4 = gCamNormal_X.y;
-	*(float*)&param_1[7].cmdA = gCamNormal_X.x;
-	*(float*)((ulong)&param_1[7].cmdA + 4) = fVar4;
-	*(float*)&param_1[7].cmdB = fVar5;
-	*(float*)((ulong)&param_1[7].cmdB + 4) = fVar6;
-	fVar6 = gCamNormal_Y.w;
-	fVar5 = gCamNormal_Y.z;
-	fVar4 = gCamNormal_Y.y;
-	*(float*)&param_1[8].cmdA = gCamNormal_Y.x;
-	*(float*)((ulong)&param_1[8].cmdA + 4) = fVar4;
-	*(float*)&param_1[8].cmdB = fVar5;
-	*(float*)((ulong)&param_1[8].cmdB + 4) = fVar6;
-	return param_1 + 9;
+	pPkt->cmdA = 0xe10000008;
+	pPkt->cmdB = 0;
+	pPkt->asU32[2] = 0;
+	pPkt->asU32[3] = 0x6c080000;
+
+	pPkt[1] = gFANbuffers;
+
+	pPkt[2].cmdA = 0x302ec00000008000;
+	pPkt[2].cmdB = 0x512;
+
+	pPkt[3].asVector = gClipMulVector;
+	pPkt[4].asVector = gClipAddVector;
+	pPkt[5].asVector = gClipXY;
+	pPkt[6].asVector = gCamPos;
+	pPkt[7].asVector = gCamNormal_X;
+	pPkt[8].asVector = gCamNormal_Y;
+	return pPkt + 9;
 }
 
 void ed3DInitVU1Globals(void)
 {
 	edpkt_data* pRVar1;
 	pRVar1 = g_VifRefPktCur;
-	sceDmaAddRef((sceDmaTag**)&g_VifRefPktCur, 1, (void*)g_StaticVideoList_00489590);
+	sceDmaAddRef((sceDmaTag**)&g_VifRefPktCur, 1, (void*)&g_stMatrixHeader);
 	pRVar1->cmdB = 0x0;
 	g_VifRefPktCur = ed3DDMAGenerateGlobalPacket(g_VifRefPktCur);
 	return;
@@ -2071,8 +2034,8 @@ edpkt_data* ed3DAddViewportContextPacket(ed_viewport* pCamera, edpkt_data* pComm
 		uVar2 = ((uint)((ulong)pRVar1 - (ulong)pCommandBuffer) >> 4) - 1;
 		pCommandBuffer->cmdA = (ulong)(ulong)uVar2 & 0xffffffffU | 0xe10000000;
 		pCommandBuffer->cmdB = 0;
-		*(undefined4*)&pCommandBuffer->cmdB = 0;
-		*(uint*)((ulong)&pCommandBuffer->cmdB + 4) = uVar2 | 0x51000000;
+		pCommandBuffer->asU32[2] = 0;
+		pCommandBuffer->asU32[3] = uVar2 | 0x51000000;
 	}
 	return pRVar1;
 }
@@ -2085,8 +2048,8 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 
 	pPkt->cmdA = 0xe10000003;
 	pPkt->cmdB = 0;
-	*(undefined4*)&pPkt->cmdB = 0x40003dc;
-	*(undefined4*)((ulong)&pPkt->cmdB + 4) = 0x6c0203dc;
+	pPkt->asU32[2] = 0x40003dc;
+	pPkt->asU32[3] = 0x6c0203dc;
 
 	pPkt[1].cmdA = SCE_GIF_SET_TAG(
 		1,					// NLOOP
@@ -2101,10 +2064,11 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 	pPkt[2].cmdA = SCE_GS_SET_FOGCOL(pScene->sceneConfig.fogCol_0xf0.r, pScene->sceneConfig.fogCol_0xf0.g, pScene->sceneConfig.fogCol_0xf0.b);
 	pPkt[2].cmdB = SCE_GS_FOGCOL;
 
-	*(undefined4*)&pPkt[3].cmdA = 0;
-	*(undefined4*)((ulong)&pPkt[3].cmdA + 4) = 0x14000000;
+	pPkt[3].asU32[0] = 0;
+	pPkt[3].asU32[1] = 0x14000000;
 	pPkt[3].cmdB = 0x11000000;
 	pRVar1 = pPkt + 4;
+
 	if (pScene->pViewport != (ed_viewport*)0x0) {
 		pRVar1 = ed3DAddViewportContextPacket(pScene->pViewport, pRVar1);
 	}
@@ -2844,19 +2808,12 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 				iVar14 = 7;
 			}
 		}
-		if ((peVar3->bUseShadowMatrix_0x30 == 0) ||
-			(peVar15 = gpCurHierarchy->pShadowAnimMatrix, peVar15 == (edF32MATRIX4*)0x0)) {
+		if ((peVar3->bUseShadowMatrix_0x30 == 0) || (peVar15 = gpCurHierarchy->pShadowAnimMatrix, peVar15 == (edF32MATRIX4*)0x0)) {
 			peVar15 = gpCurHierarchy->pAnimMatrix;
 		}
 		ppuVar15->cmdA = 0x30000000;
 		ppuVar15->cmdB = 0x1100000011000000;
-		uVar11 = g_StaticVideoList_00489590[2831];
-		uVar10 = g_StaticVideoList_00489590[2830];
-		uVar9 = g_StaticVideoList_00489590[2829];
-		*(uint*)&ppuVar15[1].cmdA = g_StaticVideoList_00489590[2828];
-		*(uint*)((ulong)&ppuVar15[1].cmdA + 4) = uVar9;
-		*(uint*)&ppuVar15[1].cmdB = uVar10;
-		*(uint*)((ulong)&ppuVar15[1].cmdB + 4) = uVar11;
+		ppuVar15[1] = g_PKTHeaderRef[4];
 		peVar17 = (edF32VECTOR4*)(ppuVar15 + 2);
 		ppuVar15 = (edpkt_data*)peVar17;
 		if (gBackupPKT != (edpkt_data*)0x0) {
@@ -4333,30 +4290,42 @@ void ed3DFlushList(void)
 	} while (true);
 }
 
+int gDRAWBUF_BASE = 0;
+int gOFFX = 0;
+int gDRAWBUF_BASE_BIS = 0;
+int gOFFY = 0;
+int gDRAWBUF_BASE_BIS_TEX = 0;
+int gDRAWBUF_TXBASE = 0;
+int gSCRN_W = 0;
+int gSCRN_H = 0;
+int gZBUF_BASE_BIS = 0;
+int gZBUF_BASE_BIS_TEX = 0;
+int gZBUF_TEXBASE = 0;
+
 edpkt_data* ed3DFlushFullAlphaInit(edpkt_data* pRenderCommand)
 {
 	edSurface* pFVar1;
 
 	pFVar1 = edVideoGetDrawSurface();
 	if (pFVar1 != (edSurface*)0x0) {
-		//DAT_00449450 = 0x40;
-		//DAT_00449448 = 0x7000;
-		//DAT_00449468 = 0xb0;
-		//DAT_0044944c = 0x7000;
-		//DAT_00449474 = 0x1600;
-		//DAT_00449454 = 0x800;
+		gDRAWBUF_BASE = 0x40;
+		gOFFX = 0x7000;
+		gDRAWBUF_BASE_BIS = 0xb0;
+		gOFFY = 0x7000;
+		gDRAWBUF_BASE_BIS_TEX = 0x1600;
+		gDRAWBUF_TXBASE = 0x800;
 		gZBUF_BASE = gCurViewportUsed->pZBuffer->frameBasePtr;
-		//DAT_00449460 = 0x200;
-		//DAT_00449464 = 0x200;
-		//DAT_0044946c = 0xc0;
-		//DAT_00449470 = 0x1800;
-		//DAT_00449458 = g_ZBufferFrameBasePtr_0044945c << 5;
+		gSCRN_W = 0x200;
+		gSCRN_H = 0x200;
+		gZBUF_BASE_BIS = 0xc0;
+		gZBUF_BASE_BIS_TEX = 0x1800;
+		gZBUF_TEXBASE = gZBUF_BASE << 5;
 		pRenderCommand->cmdA = 0x30000000;
 		pRenderCommand->cmdB = 0x1100000011000000;
 		pRenderCommand[1].cmdA = 0xe10000002;
 		pRenderCommand[1].cmdB = 0;
-		*(undefined4*)&pRenderCommand[1].cmdB = 0;
-		*(undefined4*)((ulong)&pRenderCommand[1].cmdB + 4) = 0x50000002;
+		pRenderCommand[1].asU32[2] = 0;
+		pRenderCommand[1].asU32[3] = 0x50000002;
 		pRenderCommand[2].cmdA = SCE_GIF_SET_TAG(
 			1,				// NLOOP
 			SCE_GS_TRUE,	// EOP
@@ -4385,24 +4354,24 @@ edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand)
 
 	pFVar1 = edVideoGetDrawSurface();
 	if (pFVar1 != (edSurface*)0x0) {
-		//DAT_00449448 = 0x7000;
-		//DAT_0044944c = 0x7000;
-		//DAT_00449450 = pFVar1->frameBasePtr;
-		//DAT_00449474 = 0x800;
-		//DAT_00449468 = 0x40;
-		//DAT_00449454 = DAT_00449450 << 5;
+		gOFFX = 0x7000;
+		gOFFY = 0x7000;
+		gDRAWBUF_BASE = pFVar1->frameBasePtr;
+		gDRAWBUF_BASE_BIS_TEX = 0x800;
+		gDRAWBUF_BASE_BIS = 0x40;
+		gDRAWBUF_TXBASE = gDRAWBUF_BASE << 5;
 		gZBUF_BASE = gCurViewportUsed->pZBuffer->frameBasePtr;
-		//DAT_00449460 = 0x200;
-		//DAT_00449464 = 0x200;
-		//DAT_00449458 = g_ZBufferFrameBasePtr_0044945c << 5;
-		//DAT_0044946c = g_ZBufferFrameBasePtr_0044945c;
-		//DAT_00449470 = DAT_00449458;
+		gSCRN_W = 0x200;
+		gSCRN_H = 0x200;
+		gZBUF_TEXBASE = gZBUF_BASE << 5;
+		gZBUF_BASE_BIS = gZBUF_BASE;
+		gZBUF_BASE_BIS_TEX = gZBUF_TEXBASE;
 		pRenderCommand->cmdA = 0x30000000;
 		pRenderCommand->cmdB = 0x1100000011000000;
 		pRenderCommand[1].cmdA = 0xe10000002;
 		pRenderCommand[1].cmdB = 0;
-		*(undefined4*)&pRenderCommand[1].cmdB = 0;
-		*(undefined4*)((ulong)&pRenderCommand[1].cmdB + 4) = 0x50000002;
+		pRenderCommand[1].asU32[2] = 0;
+		pRenderCommand[1].asU32[3] = 0x50000002;
 		pRenderCommand[2].cmdA = SCE_GIF_SET_TAG(
 			1,				// NLOOP
 			SCE_GS_TRUE,	// EOP

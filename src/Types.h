@@ -20,6 +20,7 @@ typedef unsigned char    u_char;
 typedef unsigned int    uint;
 typedef unsigned int    uint3;
 typedef unsigned long long    ulong;
+typedef unsigned uint128 __attribute__((mode(TI)));
 typedef unsigned char    undefined1;
 typedef unsigned short    undefined2;
 typedef unsigned int    undefined3;
@@ -222,14 +223,13 @@ edF32MATRIX4 {
 
 #endif
 
-#ifdef PLATFORM_PS2
-struct __attribute__((aligned(16)))
-#else
-struct alignas(16)
-#endif
-edpkt_data {
-	ulong cmdA;
-	ulong cmdB;
+union edpkt_data {
+	struct __attribute__((aligned(16))) {
+		ulong cmdA;
+		ulong cmdB;
+	};
+	uint asU32[4];
+	edF32VECTOR4 asVector;
 };
 
 //#ifdef PLATFORM_WIN

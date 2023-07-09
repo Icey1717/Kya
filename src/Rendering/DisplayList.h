@@ -149,7 +149,7 @@ struct ed_3D_Scene {
 
 struct RenderCommandUint {
 	uint type;
-	struct edpkt_data* pCommandBuffer;
+	union edpkt_data* pCommandBuffer;
 	uint size;
 	struct DisplayListInternal* pDisplayList;
 };
@@ -159,7 +159,7 @@ struct DisplayListInternalSubObj_60 {
 	byte field_0x40;
 	byte field_0x41;
 	ushort type_0x42;
-	struct edpkt_data* pRenderInput;
+	union edpkt_data* pRenderInput;
 	uint pCurDListBuf;
 	int field_0x4c;
 	uint field_0x50;
@@ -181,8 +181,8 @@ struct DisplayListInternal {
 	undefined4 field_0x8;
 	char* pCommandBuffer;
 	struct MeshDrawRenderCommand* field_0x10;
-	struct edpkt_data* field_0x14;
-	struct edpkt_data* pRenderCommands;
+	union edpkt_data* field_0x14;
+	union edpkt_data* pRenderCommands;
 	struct DisplayListInternalSubObj_60* pDisplayListInternalSubObj;
 	struct ed_3D_Scene* pStaticMeshMaster_0x20;
 	float field_0x24;
