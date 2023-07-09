@@ -34,8 +34,10 @@ endif()
 set(src_root "src")
 
 set(main_src 
-	"${src_root}/kya.h"
+	"${src_root}/ed3DScratchPadGlobalVar.cpp"
+	"${src_root}/ed3DScratchPadGlobalVar.h"
 	"${src_root}/kya.cpp"
+	"${src_root}/kya.h"
 	"${src_root}/IniFile.cpp"
 	"${src_root}/IniFile.h"
 	"${src_root}/Iop.cpp"
@@ -54,9 +56,15 @@ set(main_src
 	"${src_root}/ed3D.h"
 	"${src_root}/edDlist.cpp"
 	"${src_root}/edDlist.h"
+	"${src_root}/edList.cpp"
+	"${src_root}/edList.h"
 	"${src_root}/PackedFont.h"
 	"${src_root}/LargeObject.cpp"
 	"${src_root}/LargeObject.h"
+	"${src_root}/BootData.cpp"
+	"${src_root}/BootData.h"
+	"${src_root}/SaveManagement.cpp"
+	"${src_root}/SaveManagement.h"
 	"${src_root}/MemoryStream.cpp"
 	"${src_root}/MemoryStream.h"
 	"${src_root}/LevelScheduleManager.cpp"
@@ -69,10 +77,14 @@ set(main_src
 	"${src_root}/PauseManager.h"
 	"${src_root}/SectorManager.cpp"
 	"${src_root}/SectorManager.h"
+	"${src_root}/ActorManager.cpp"
+	"${src_root}/ActorManager.h"
 	"${src_root}/CinematicManager.cpp"
 	"${src_root}/CinematicManager.h"
 	"${src_root}/CameraViewManager.cpp"
 	"${src_root}/CameraViewManager.h"
+	"${src_root}/ScenaricCondition.cpp"
+	"${src_root}/ScenaricCondition.h"
 	"${src_root}/InputManager.cpp"
 	"${src_root}/InputManager.h"
 	"${src_root}/Rendering/DisplayList.cpp"
@@ -107,13 +119,25 @@ set(main_src
 	"${src_root}/TimeController.cpp"
 	"${src_root}/TimeController.h"
 	"${src_root}/LocalizationManager.cpp"
-	"${src_root}/LocalizationManager.h" 
-	"${src_root}/TranslatedTextData.cpp" 
-	"${src_root}/TranslatedTextData.h" 
-	"${src_root}/edC/edCFiler_BNK.cpp" 
+	"${src_root}/LocalizationManager.h"
+	"${src_root}/TranslatedTextData.cpp"
+	"${src_root}/TranslatedTextData.h"
+	"${src_root}/MenuMessageBox.cpp"
+	"${src_root}/MenuMessageBox.h"
+	"${src_root}/PathManager.cpp"
+	"${src_root}/PathManager.h"
+	"${src_root}/Settings.cpp"
+	"${src_root}/Settings.h"
+	"${src_root}/WayPoint.cpp"
+	"${src_root}/WayPoint.h"
+	"${src_root}/MapManager.cpp"
+	"${src_root}/MapManager.h"
+	"${src_root}/Fx.cpp"
+	"${src_root}/Fx.h"
+	"${src_root}/edC/edCFiler_BNK.cpp"
 	"${src_root}/edC/edCFiler_BNK.h"
-	"${src_root}/TextIconDictionary.cpp"
-	"${src_root}/TextIconDictionary.h"
+	"${src_root}/EdenLib/edText/sources/edTextResources.cpp"
+	"${src_root}/EdenLib/edText/sources/edTextResources.h"
 	"${src_root}/edVideo/VideoA.cpp"
 	"${src_root}/edVideo/VideoA.h"
 	"${src_root}/edVideo/VideoB.cpp"
@@ -122,8 +146,10 @@ set(main_src
 	"${src_root}/edVideo/VideoC.h"
 	"${src_root}/edVideo/VideoD.cpp"
 	"${src_root}/edVideo/VideoD.h"
-	"src/edVideo/Camera.cpp"
-	"${src_root}/Camera.h"
+	"${src_root}/edVideo/Camera.cpp"
+	"${src_root}/edVideo/Camera.h"
+	"${src_root}/edVideo/CameraStack.cpp"
+	"${src_root}/edVideo/CameraStack.h"
 	"${src_root}/port/pointer_conv.cpp"
 	"${src_root}/port/pointer_conv.h"
 )
@@ -209,7 +235,7 @@ if (PS2)
 	target_link_directories(Kya PRIVATE		"/usr/local/sce/ee/lib"
 											"/usr/local/sce/Shell/Lib")
 
-	target_link_libraries(Kya PRIVATE "sdr" "dma" "cdvd" "graph" "pkt" "dbc" "pad2" "shell" "scf" "mpeg" "ipu" "dev" "vu0" "mc")
+	target_link_libraries(Kya PRIVATE "sdr" "dma" "cdvd" "graph" "pkt" "dbc" "pad2" "shell" "scf" "mpeg" "ipu" "dev" "vu0" "mc" "pc")
 
 	target_compile_options(Kya PRIVATE "-w")
 
@@ -231,9 +257,11 @@ set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )
 option(SKIP_MOVIES "Skip into cinematics" OFF)
 option(LOAD_FOREVER "Holds on the loading screen forever" OFF)
 
-if (SKIP_MOVIES)
-	target_compile_definitions(Kya PUBLIC SKIP_MOVIES)
+if (SKIP_MOVIES OR PLATFORM_PS2)
+	#target_compile_definitions(Kya PUBLIC SKIP_MOVIES)
 endif()
+
+target_compile_definitions(Kya PUBLIC SKIP_MOVIES)
 
 if (LOAD_FOREVER)
 	target_compile_definitions(Kya PUBLIC LOAD_FOREVER)

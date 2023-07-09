@@ -45,9 +45,9 @@ struct MeshDrawRenderCommand {
 	uint field_0x0;
 	short field_0x4;
 	short field_0x6;
-	struct Vector* field_0x8;
+	struct edF32VECTOR4* field_0x8;
 	uint field_0xc;
-	struct Vector field_0x10;
+	struct edF32VECTOR4 field_0x10;
 	char* field_0x20;
 	char* field_0x24;
 	char* field_0x28;
@@ -93,7 +93,16 @@ typedef enum DL_LINK_MODE {
 	LM_SKIP = 3
 } DL_LINK_MODE;
 
-extern int g_DisplayListObjCount_004250e0;
+struct edDlistConfiguration {
+	int field_0x0;
+	int field_0x4;
+	int matrixCount;
+	int commandCount;
+	int field_0x10;
+};
+
+extern edDlistConfiguration edDlistConfig;
+
 extern edSysHandlerDisplayList sysHandler_0048cb90;
 
 #ifdef PLATFORM_WIN
@@ -111,14 +120,15 @@ void edDListAlphaTestAndZTest(ulong param_1, ulong param_2, ulong param_3, ulong
 
 struct ed_g2d_bitmap* edDListGetG2DBitmap(struct ed_g2d_material* pMAT, int offset, bool* bHasPalette, struct ed_g2d_bitmap** pOutAddr);
 
+void edDListSetState(ulong cmdA, ulong cmdB);
+
 void edDListBlendFuncNormal(void);
 void edDListBlendSet(uint mode);
-void edDListBlendSet(uint mode);
+void edDListBlendFunc50(void);
 
 void edDListSetActiveViewPort(ed_viewport* pCamera);
 
 void edDlistAddtoView(DisplayListInternal* param_1);
-bool edListAddNode(edLIST* pCameraPanHeader, DisplayListInternal* pDisplayList);
 
 void edDListBegin(float x, float y, float z, ulong mode, int count);
 
@@ -129,6 +139,6 @@ void edDListVertex4f(float x, float y, float param_3, int param_4);
 
 void edDListEnd(void);
 
-void SetUnitMatrix_002d07b0(void);
+void edDListLoadIdentity(void);
 
 #endif //_EDDLIST_H

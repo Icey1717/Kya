@@ -48,7 +48,7 @@ struct astruct_10 {
 };
 
 struct edCTextFormat {
-	void DisplayWindow(float x, float y, Vector* param_4);
+	void DisplayWindow(float x, float y, edF32VECTOR4* param_4);
 	void Display(float x, float y);
 	void DisplayDebugInfos(float x, float y);
 	void DrawString(float x, float y, bool bFlag);
@@ -62,7 +62,7 @@ struct edCTextFormat {
 	float offsetY_0x4;
 	float field_0x8;
 	float field_0xc;
-	Vector vector_0x10;
+	edF32VECTOR4 vector_0x10;
 	char* pScratchpadA;
 	char* pScratchpadB;
 	uint flags_0x28;

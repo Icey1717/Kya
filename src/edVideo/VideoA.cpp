@@ -6,17 +6,18 @@
 #ifdef PLATFORM_WIN
 #include "port.h"
 #endif
-#include "../Camera.h"
+#include "Camera.h"
+#include "../kya.h"
 
 edSurface* psurf = NULL;
 edSurface* pzbuf = NULL;
 
-edSurface* GetFrameBuffer_001ba9c0(void)
+edSurface* VideoGetDisplaybuffer(void)
 {
 	return psurf;
 }
 
-edSurface* GetFrameBuffer_001ba9d0(void)
+edSurface* VideoGetZbuffer(void)
 {
 	return pzbuf;
 }
@@ -107,6 +108,6 @@ void SetVideoMode(short omode, short screenWidth, short screenHeight, short vidM
 	local_30.screenHeight = screenHeight;
 	pzbuf = edSurfaceNew(&local_30);
 	edVideoSetBackgroundColor(0, 0, 0);
-	edVideoSetOffset((short)g_SetOffsetX, (short)g_SetOffsetY);
+	edVideoSetOffset((short)gVideoConfig.offsetX, (short)gVideoConfig.offsetY);
 	return;
 }

@@ -17,6 +17,12 @@
 #include "ed3D.h"
 #include "FileManager3D.h"
 #include "edStr.h"
+#include "CinematicManager.h"
+#include "ScenaricCondition.h"
+#include "WayPoint.h"
+#include "PathManager.h"
+#include "ActorManager.h"
+#include "SectorManager.h"
 
 
 LevelScheduleManager* LevelScheduleManager::gThis = NULL;
@@ -87,6 +93,37 @@ void LevelScheduleManager::SetLevelToLoad_002dba90(int levelID, int elevatorID, 
 		*(undefined4*)(aLevelInfo[0].levelName + currentSaveIndex * 4 + -100) = 0;
 		currentSaveIndex = currentSaveIndex + -1;
 	}
+	return;
+}
+
+void LevelScheduleManager::Level_LoadObjectives(ByteCode* pMemoryStream)
+{
+	int* piVar1;
+	int iVar2;
+	uint uVar3;
+
+	piVar1 = (int*)pMemoryStream->currentSeekPos;
+	pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
+	this->pObjectiveStreamBegin = piVar1;
+	uVar3 = 0;
+	if (*this->pObjectiveStreamBegin != 0) {
+		do {
+			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + 0x1c;
+			piVar1 = (int*)pMemoryStream->currentSeekPos;
+			pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
+			iVar2 = *piVar1;
+			if (iVar2 != 0) {
+				pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + iVar2 * 0x10;
+			}
+			uVar3 = uVar3 + 1;
+		} while (uVar3 < (uint)*this->pObjectiveStreamBegin);
+	}
+	piVar1 = (int*)pMemoryStream->currentSeekPos;
+	pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
+	if (*piVar1 != 0) {
+		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar1 * 8;
+	}
+	this->pObjectiveStreamEnd = piVar1;
 	return;
 }
 
@@ -253,7 +290,7 @@ void LevelScheduleManager::MoreLoadLoopObjectSetup(bool param_2)
 TypePairData g_LevelInfoTypePairData_004256e0 = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
 char* g_szLevelInfoBnkPath_00433c60 = "Info/levels.bnk";
 
-void LevelScheduleManager::StoreLevelFolders(char* fileData, LevelInfo* pLevelInfo)
+void LevelScheduleManager::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo)
 {
 	ulong uVar1;
 	int iVar2;
@@ -316,37 +353,7 @@ void LevelScheduleManager::StoreLevelFolders(char* fileData, LevelInfo* pLevelIn
 	return;
 }
 
-void SetStream_00117b0(char** param_1, char* param_2)
-{
-	*param_1 = param_2;
-	return;
-}
-
-int GetInt_001173d0(char** param_1)
-{
-	int iVar1;
-
-	if ((int*)*param_1 == (int*)0x0) {
-		iVar1 = 0;
-	}
-	else {
-		iVar1 = *(int*)*param_1;
-	}
-	return iVar1;
-}
-
-int FUN_001173f0(char** param_1)
-{
-	return *(int*)*param_1 * 0x10 + 4;
-}
-
-uint* SeekForward_00117410(char** param_1)
-{
-	char* a = *param_1;
-	return (uint*)((ulong)a + (*(int*)*param_1 * 4 + 1) * 4);
-}
-
-uint* LevelScheduleManager::LevelLoadSetup_002e1750(uint* pFileBuffer, int count, LevelInfo* pLevelInfo)
+uint* LevelScheduleManager::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int count, LevelInfo* pLevelInfo)
 {
 	uint uVar1;
 	uint uVar2;
@@ -364,7 +371,7 @@ uint* LevelScheduleManager::LevelLoadSetup_002e1750(uint* pFileBuffer, int count
 	int iVar13;
 	uint* local_10;
 	int* local_8;
-	char* local_4;
+	ScenaricCondition local_4;
 
 	iVar13 = 0;
 	uVar12 = 0;
@@ -385,19 +392,19 @@ uint* LevelScheduleManager::LevelLoadSetup_002e1750(uint* pFileBuffer, int count
 			if (0 < (int)uVar1) {
 				do {
 					uVar2 = *puVar5;
-					local_4 = (char*)0x0;
-					SetStream_00117b0(&local_4, (char*)(puVar5 + 1));
+					memset(&local_4, 0, sizeof(ScenaricCondition));
+					local_4.Create((char*)(puVar5 + 1));
 					if ((0 < (int)uVar2) && ((int)uVar2 < 0x1e)) {
 						pcVar8->flags = pcVar8->flags | 1 << (uVar2 & 0x1f);
-						iVar4 = GetInt_001173d0(&local_4);
+						iVar4 = local_4.GetNumSimpleConds();
 						if (iVar4 != 0) {
 							uVar12 = uVar12 + 1;
 							pcVar8->pWindSectorObj = (WindSectorObj*)((int)pcVar8->pWindSectorObj + 1);
-							iVar4 = FUN_001173f0(&local_4);
+							iVar4 = local_4.GetDataSize();
 							iVar13 = iVar13 + iVar4;
 						}
 					}
-					puVar5 = (uint*)SeekForward_00117410(&local_4);
+					puVar5 = local_4.GetEndPtr();
 					iVar9 = iVar9 + 1;
 				} while (iVar9 < (int)uVar1);
 			}
@@ -465,7 +472,7 @@ uint* LevelScheduleManager::LevelLoadSetup_002e1750(uint* pFileBuffer, int count
 	return puVar5;
 }
 
-void LevelScheduleManager::LevelLoadSetup(char* pFileData, int count, LevelInfo* pLevelInfo)
+void LevelScheduleManager::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, LevelInfo* pLevelInfo)
 {
 	int iVar1;
 	undefined8* puVar2;
@@ -510,9 +517,9 @@ void LevelScheduleManager::LevelLoadSetup(char* pFileData, int count, LevelInfo*
 	return;
 }
 
-void LevelScheduleManager::LoadLevelInfoBnk()
+void LevelScheduleManager::Levels_LoadInfoBank()
 {
-	MY_LOG("LevelScheduleManager::LoadLevelInfoBnk\n");
+	MY_LOG("LevelScheduleManager::Levels_LoadInfoBank\n");
 
 	char cVar1;
 	int iVar2;
@@ -542,10 +549,10 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 	infoLevelsPathPtr.filePath = levelInfoFilePath;
 	bVar4 = infoLevelsFileBuffer->load(&infoLevelsPathPtr);
 	if (bVar4 != false) {
-		inFileIndex = get_element_count(infoLevelsFileBuffer);
+		inFileIndex = infoLevelsFileBuffer->get_element_count();
 		while (inFileIndex != 0) {
 			inFileIndex = inFileIndex + -1;
-			bVar4 = get_info(infoLevelsFileBuffer, inFileIndex, &outHeader, (char*)0x0);
+			bVar4 = infoLevelsFileBuffer->get_info(inFileIndex, &outHeader, (char*)0x0);
 			puVar3 = (undefined4*)outHeader.fileBufferStart;
 			if (bVar4 != false) {
 				fileData = (int*)(outHeader.fileBufferStart + 4);
@@ -555,10 +562,10 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 						iVar2 = *fileData;
 						if ((-1 < iVar2) && (iVar2 < 0x10)) {
 							pLevelInfo = &aLevelInfo[iVar2];
-							StoreLevelFolders((char*)fileData, pLevelInfo);
-							LevelLoadSetup((char*)(puVar3 + 0xf), puVar3[0xc], pLevelInfo);
-							puVar5 = LevelLoadSetup_002e1750(puVar3 + 0xf + puVar3[0xc] * 7, puVar3[10], pLevelInfo);
-							//LevelLoadSetup(inLevelLoadMaster, puVar5, puVar3[0xe], *fileData);
+							LevelsInfo_ReadHeader_V7_V9((char*)fileData, pLevelInfo);
+							LevelsInfo_ReadTeleporters_V7_V9((char*)(puVar3 + 0xf), puVar3[0xc], pLevelInfo);
+							puVar5 = LevelsInfo_ReadSectors_V7_V9(puVar3 + 0xf + puVar3[0xc] * 7, puVar3[10], pLevelInfo);
+							//LevelsInfo_ReadLanguageFileNames_V7_V9(this, puVar5, puVar3[0xe], *fileData);
 							//iVar9 = puVar3[0xd];
 							//puVar5 = puVar5 + puVar3[0xe] * 7;
 							//if (1 < iVar9) {
@@ -582,7 +589,7 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 							//		levelNameHolderObj = (LevelInfo*)&levelNameHolderObj->field_0x14;
 							//	} while (iVar8 < iVar9);
 							//}
-							//inLevelLoadMaster->field_0x4210 = inLevelLoadMaster->field_0x4210 + *(int*)(inLevelLoadMaster->levelPath + iVar2 * 0x418 + -8 + 0xb0);
+							//this->field_0x4210 = this->field_0x4210 + *(int*)(this->levelPath + iVar2 * 0x418 + -8 + 0xb0);
 						}
 					}
 				}
@@ -592,6 +599,11 @@ void LevelScheduleManager::LoadLevelInfoBnk()
 	}
 	bank.terminate();
 	return;
+}
+
+int LevelScheduleManager::SaveGame_GetMaxBufferSize()
+{
+	return 0x10000;
 }
 
 int INT_ARRAY_0048ed60[16] = { 0 };
@@ -614,7 +626,7 @@ void LevelScheduleManager::Game_Init()
 	LevelInfo* pLVar12;
 	char local_80[128];
 
-	lVar2 = (SaveBigAlloc*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), 0x10000);
+	lVar2 = (SaveBigAlloc*)edMemAlloc(TO_HEAP(H_MAIN), 0x10000);
 	/* Zero out most of load loop */
 	pSaveData_0x48 = lVar2;
 	pSaveDataEnd_0x4c = (int)(pSaveData_0x48 + 1);
@@ -631,8 +643,8 @@ void LevelScheduleManager::Game_Init()
 	aSaveDataArray[7] = (SaveBigAlloc*)0x0;
 	currentSaveIndex = 0;
 	aSaveDataArray[currentSaveIndex] = pSaveData_0x48;
-	field_0x5b58 = 0;
-	field_0x5b5c = 0;
+	pObjectiveStreamBegin = 0;
+	pObjectiveStreamEnd = 0;
 	field_0x74 = 0;
 	field_0x78 = 0;
 	field_0x7c = 0;
@@ -727,8 +739,8 @@ void LevelScheduleManager::Game_Init()
 		pLVar12 = pLVar12 + 1;
 	} while (iVar11 < 0x10);
 	MoreLoadLoopObjectSetup(true);
-	LoadLevelInfoBnk();
-	//LoadEpisodesFromINI();
+	Levels_LoadInfoBank();
+	//Episode_LoadFromIniFile();
 	pLVar12 = aLevelInfo;
 	iVar11 = 0;
 	do {
@@ -850,15 +862,15 @@ void BnkInstallScene(char* pFileData, int size)
 	/* Origin: 0040e860 */
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
-	g_ManagerSingletonArray_00451660.g_FileManager3D_00451664->Level_AddAll(&MStack16);
+	Scene::ptable.g_FileManager3D_00451664->Level_AddAll(&MStack16);
 	Scene::_pinstance->Level_Setup(&MStack16);
-	//(*(code*)(g_ManagerSingletonArray_00451660.g_ManagerC_0045169c)->pManagerFunctionData->deserializeFunc)();
-	//(*(code*)(g_ManagerSingletonArray_00451660.g_Manager10_004516a0)->pManagerFunctionData->deserializeFunc)();
-	//(*(code*)(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690)->pManagerFunctionData->deserializeFunc)();
-	//(*(code*)(g_ManagerSingletonArray_00451660.g_ActorManager_004516a4)->pVTable->deserializeFunc)();
-	//(*(code*)(g_ManagerSingletonArray_00451660.g_SectorManager_00451670)->pManagerFunctionData->deserializeFunc)();
-	//if (g_ManagerSingletonArray_00451660.g_Manager29B4_004516bc != (Manager_29b4*)0x0) {
-	//	(*(code*)(g_ManagerSingletonArray_00451660.g_Manager29B4_004516bc)->pManagerFunctionData[1].field_0x0)();
+	Scene::ptable.g_WayPointManager_0045169c->Level_AddAll(&MStack16);
+	Scene::ptable.g_PathManager_004516a0->Level_AddAll(&MStack16);
+	//(*(code*)(Scene::ptable.g_CollisionManager_00451690)->pManagerFunctionData->Level_AddAll)();
+	Scene::ptable.g_ActorManager_004516a4->Level_AddAll(&MStack16);
+	Scene::ptable.g_SectorManager_00451670->Level_AddAll(&MStack16);
+	//if (Scene::ptable.g_Manager29B4_004516bc != (Manager_29b4*)0x0) {
+	//	(*(code*)(Scene::ptable.g_Manager29B4_004516bc)->pManagerFunctionData[1].field_0x0)();
 	//}
 	MStack16.Term();
 	//ByteCodeDestructor(&MStack16, -1);
@@ -882,14 +894,14 @@ void OnManagerDataLoaded_001b86b0(char* pFileData, int size)
 	pLVar1->field_0x24 = fVar3;
 	MStack16.GetU32();
 	MStack16.GetU32();
-	g_ManagerSingletonArray_00451660.g_FileManager3D_00451664->AllocateMeshTextureMemory_001a6f10(&MStack16);
-	//Manager_100::AllocateMemoryFunc_00211b50(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690, &MStack16);
-	//AnimManager::AllocateAnimKeyPtrArray_0017f5a0(g_ManagerSingletonArray_00451660.g_AnimManager_00451668, &MStack16);
+	Scene::ptable.g_FileManager3D_00451664->AllocateMeshTextureMemory_001a6f10(&MStack16);
+	//Manager_100::AllocateMemoryFunc_00211b50(Scene::ptable.g_CollisionManager_00451690, &MStack16);
+	//AnimManager::AllocateAnimKeyPtrArray_0017f5a0(Scene::ptable.g_AnimManager_00451668, &MStack16);
 	MStack16.GetU32();
 	MStack16.GetU32();
-	//SectorManager::TypePairFunc_001ff260(g_ManagerSingletonArray_00451660.g_SectorManager_00451670, &MStack16);
-	//ActorManager::AllocateActorMemory_00107a70(g_ManagerSingletonArray_00451660.g_ActorManager_004516a4, &MStack16);
-	//Manager_100::SetupFunc_002119c0(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690);
+	//SectorManager::TypePairFunc_001ff260(Scene::ptable.g_SectorManager_00451670, &MStack16);
+	//ActorManager::AllocateActorMemory_00107a70(Scene::ptable.g_ActorManager_004516a4, &MStack16);
+	//Manager_100::SetupFunc_002119c0(Scene::ptable.g_CollisionManager_00451690);
 	//FUN_0032d010(&MStack16);
 	//ByteCodeDestructor(&MStack16, -1);
 	return;
@@ -905,12 +917,12 @@ void BnkInstallG2D(char* pFileData, int length)
 	FileManager3D* pFVar1;
 	int iStack4;
 
-	pFVar1 = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
+	pFVar1 = Scene::ptable.g_FileManager3D_00451664;
 	ed3DInstallG2D
 	(pFileData, length, &iStack4,
 		(ed_g2d_manager*)
-		((g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->pTextureInfoArray +
-			(g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->textureLoadedCount), 1);
+		((Scene::ptable.g_FileManager3D_00451664)->pTextureInfoArray +
+			(Scene::ptable.g_FileManager3D_00451664)->textureLoadedCount), 1);
 	pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
 	pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
 	return;
@@ -922,9 +934,9 @@ void OnMeshLoaded_001a6380(char* pFileData, int length)
 	Mesh* pMVar2;
 	FileManager3D* pFVar3;
 
-	pFVar3 = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
-	iVar1 = (g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->meshLoadedCount;
-	pMVar2 = (g_ManagerSingletonArray_00451660.g_FileManager3D_00451664)->pMeshDataArray;
+	pFVar3 = Scene::ptable.g_FileManager3D_00451664;
+	iVar1 = (Scene::ptable.g_FileManager3D_00451664)->meshLoadedCount;
+	pMVar2 = (Scene::ptable.g_FileManager3D_00451664)->pMeshDataArray;
 	pMVar2[iVar1].fileLength = length;
 	pMVar2[iVar1].pFileData = pFileData;
 	pFVar3->meshLoadedCount = pFVar3->meshLoadedCount + 1;
@@ -937,7 +949,7 @@ void OnLoadedFunc_00211480(char* pFileBuffer, int length)
 	//CollisionManager* pCVar1;
 	//int iVar2;
 	//
-	//pCVar1 = g_ManagerSingletonArray_00451660.g_CollisionManager_00451690;
+	//pCVar1 = Scene::ptable.g_CollisionManager_00451690;
 	//iVar2 = LoadCollision_00251570(pFileBuffer, length, 0);
 	//*(undefined4*)(&pCVar1->field_0x20 + pCVar1->count_0x60 * 4) = *(undefined4*)(iVar2 + 0x44);
 	//pCVar1->count_0x60 = pCVar1->count_0x60 + 1;
@@ -956,7 +968,7 @@ void OnEventLoaded_0019e750(char* pFileData, int length)
 	//MemoryStream::MemoryStream(&MStack16);
 	//MemoryStream::Init(&MStack16, pFileData);
 	//MemoryStream:::Func_00189a90(&MStack16);
-	//pEVar1 = g_ManagerSingletonArray_00451660.g_EventManager_006f5080;
+	//pEVar1 = Scene::ptable.g_EventManager_006f5080;
 	//pFileData_00 = (uint*)MemoryStream:::GetPosition(&MStack16);
 	//uVar2 = edEvent::AddChunk_002590c0(pFileData_00, 0);
 	//pEVar1->activeEventChunkID_0x8 = uVar2;
@@ -989,7 +1001,7 @@ void OnLightLoaded_002172d0(char* pFileData, int length)
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
 	MY_LOG("MISSING HANDLER OnLightLoaded_002172d0\n");
-	//(*(code*)(g_ManagerSingletonArray_00451660.g_LightManager_004516b0)->pManagerFunctionData->deserializeFunc)();
+	//(*(code*)(Scene::ptable.g_LightManager_004516b0)->pManagerFunctionData->deserializeFunc)();
 	//::EmptyFunction();
 	//ByteCodeDestructor(&MStack16, -1);
 	return;
@@ -1001,21 +1013,20 @@ void OnEffectLoaded_001a0870(char* pFileData, int length)
 	MY_LOG("MISSING HANDLER OnEffectLoaded_001a0870\n");
 
 	MStack16.Init(pFileData);
-	//(*(code*)(g_ManagerSingletonArray_00451660.g_EffectsManager_004516b8)->pManagerFunctionData->deserializeFunc)();
+	//(*(code*)(Scene::ptable.g_EffectsManager_004516b8)->pManagerFunctionData->deserializeFunc)();
 	//::EmptyFunction();
 	//ByteCodeDestructor(&MStack16, -1);
 	return;
 }
 
-void OnCinematicLoaded_001c67a0(char* pFileData, int length)
+void BnkInstallCinematic(char* pFileData, int length)
 {
 	ByteCode MStack16;
-	MY_LOG("MISSING HANDLER OnCinematicLoaded_001c67a0\n");
+	MY_LOG("BnkInstallCinematic\n");
 
 	MStack16.Init(pFileData);
-	//(*(code*)g_CinematicManager_0048efc->pManagerFunctionData->deserializeFunc)();
-	//::EmptyFunction();
-	//ByteCodeDestructor(&MStack16, -1);
+	g_CinematicManager_0048efc->Level_AddAll(&MStack16);
+	MStack16.Term();
 	return;
 }
 
@@ -1024,7 +1035,7 @@ void NullTypePairFunc(char* pFileData, int param_2)
 	IMPLEMENTATION_GUARD();
 }
 
-TypePairData TypePairFunctionData_0040e780[24] = {
+TypePairData TableBankCallback[24] = {
 	{ 0x02, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
 	{ 0x02, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
 	{ 0x03, 4, { OnSoundLoaded_00180ef0, 0, 0, 0, 0, 0 } },
@@ -1046,7 +1057,7 @@ TypePairData TypePairFunctionData_0040e780[24] = {
 	{ 0x10, 1, { OnLightLoaded_002172d0, 0, 0, 0, 0, 0 } },
 	{ 0x11, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
 	{ 0x09, 1, { OnEffectLoaded_001a0870, 0, 0, 0, 0, 0 } },
-	{ 0x13, 1, { OnCinematicLoaded_001c67a0, 0, 0, 0, 0, 0 } },
+	{ 0x13, 1, { BnkInstallCinematic, 0, 0, 0, 0, 0 } },
 	{ 0x09, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
 	{ 0xFFFFFFFF, 0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
 };
@@ -1064,13 +1075,13 @@ void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBufferEnt
 	edBANK_ENTRY_INFO local_220;
 	char acStack512[512];
 
-	uVar2 = get_element_count(pBankBuffer);
+	uVar2 = pBankBuffer->get_element_count();
 	iVar6 = 0;
 	iVar7 = 0;
 	uVar8 = 0;
 	if (uVar2 != 0) {
 		do {
-			bVar1 = get_info(pBankBuffer, uVar8, &local_220, acStack512);
+			bVar1 = pBankBuffer->get_info(uVar8, &local_220, acStack512);
 			if (bVar1 == false) break;
 			if ((local_220.type << 0x10 | local_220.stype) == 0x30001) {
 				iVar3 = edStrLength(acStack512);
@@ -1122,7 +1133,7 @@ void WillLoadFilefromBank(bool param_1, void* pObj)
 	pLVar1 = LevelScheduleManager::gThis;
 	if (param_1 != false) {
 		WillLoadFileFromBank
-		(g_ManagerSingletonArray_00451660.g_GlobalSoundPtr_00451698,
+		(Scene::ptable.g_GlobalSoundPtr_00451698,
 			(LevelScheduleManager::gThis->levelIOPBank).pBankFileAccessObject);
 		pLVar1->loadStage_0x5b48 = 1;
 	}
@@ -1149,7 +1160,7 @@ void LevelScheduleManager::LevelLoading_Begin()
 	memset(&bankContainer, 0, sizeof(edCBankInstall));
 	levelIOPBank.initialize(aLevelInfo[cachedNextLevelID].bankSizeIOP + 0x1000, 1,
 		&bankContainer);
-	levelIOPBank.bank_buffer_setcb(TypePairFunctionData_0040e780);
+	levelIOPBank.bank_buffer_setcb(TableBankCallback);
 	/* / + LevelIOP.bnk */
 	edStrCatMulti(filePath, levelPath,
 		aLevelInfo[cachedNextLevelID].levelName, sz_bankSlash, sz_LevelIOPBankName, 0);
@@ -1225,7 +1236,7 @@ bool LevelScheduleManager::LevelLoading_Manage()
 					memset(&bankFilePathContainer, 0, sizeof(edCBankInstall));
 					this->levelBank.initialize(this->aLevelInfo[levelToLoadID].bankSizeLevel + 0x1000, 1,
 						&bankFilePathContainer);
-					this->levelBank.bank_buffer_setcb(TypePairFunctionData_0040e780);
+					this->levelBank.bank_buffer_setcb(TableBankCallback);
 					/* / + level.bnk */
 					edStrCatMulti(filePath, this->levelPath, this->aLevelInfo[levelToLoadID].levelName, sz_bankSlash, sz_LevelBank_00433bd8, 0);
 					bankFilePathContainer.filePath = filePath;
@@ -1257,7 +1268,7 @@ void LevelScheduleManager::Level_Init()
 	float fVar2;
 	float fVar3;
 	float fVar4;
-	sceVu0FMATRIX* m2;
+	//sceVu0FMATRIX* m2;
 	ulong uVar5;
 	int iVar6;
 	int* piVar7;
@@ -1308,10 +1319,10 @@ void LevelScheduleManager::Level_Init()
 	//						piVar7 = piVar10 + pLVar8->field_0x2c * 4;
 	//						if (piVar7 + 8 == (int*)0x0) {
 	//							pLVar8->field_0x40 = 0;
-	//							fVar4 = Vector_00431710.w;
-	//							fVar3 = Vector_00431710.z;
-	//							fVar2 = Vector_00431710.y;
-	//							pLVar8->field_0x30 = Vector_00431710.x;
+	//							fVar4 = gF32Vertex4Zero.w;
+	//							fVar3 = gF32Vertex4Zero.z;
+	//							fVar2 = gF32Vertex4Zero.y;
+	//							pLVar8->field_0x30 = gF32Vertex4Zero.x;
 	//							pLVar8->field_0x34 = fVar2;
 	//							pLVar8->field_0x38 = fVar3;
 	//							pLVar8->field_0x3c = fVar4;
@@ -1319,19 +1330,19 @@ void LevelScheduleManager::Level_Init()
 	//						else {
 	//							uVar5 = FUN_00189a30(piVar7[8], piVar7[9]);
 	//							pLVar8->field_0x40 = uVar5;
-	//							fVar4 = Vector_00431710.w;
-	//							fVar3 = Vector_00431710.z;
-	//							fVar2 = Vector_00431710.y;
+	//							fVar4 = gF32Vertex4Zero.w;
+	//							fVar3 = gF32Vertex4Zero.z;
+	//							fVar2 = gF32Vertex4Zero.y;
 	//							ppuVar1 = (uint**)piVar7[0xb];
 	//							if (ppuVar1 == (uint**)0x0) {
-	//								pLVar8->field_0x30 = Vector_00431710.x;
+	//								pLVar8->field_0x30 = gF32Vertex4Zero.x;
 	//								pLVar8->field_0x34 = fVar2;
 	//								pLVar8->field_0x38 = fVar3;
 	//								pLVar8->field_0x3c = fVar4;
 	//							}
 	//							else {
 	//								m2 = (sceVu0FMATRIX*)
-	//									FUN_002596a0((g_ManagerSingletonArray_00451660.g_EventManager_006f5080)->activeEventChunkID_0x8,
+	//									FUN_002596a0((Scene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8,
 	//										ppuVar1, 0, &uStack4);
 	//								if ((sceVu0FMATRIX*)ppuVar1[8] != (sceVu0FMATRIX*)0x0) {
 	//									sceVu0MulMatrix((sceVu0FMATRIX*)afStack144, (sceVu0FMATRIX*)ppuVar1[8], m2);
@@ -1349,10 +1360,10 @@ void LevelScheduleManager::Level_Init()
 	//					}
 	//					else {
 	//						pLVar8->field_0x40 = 0;
-	//						fVar4 = Vector_00431710.w;
-	//						fVar3 = Vector_00431710.z;
-	//						fVar2 = Vector_00431710.y;
-	//						pLVar8->field_0x30 = Vector_00431710.x;
+	//						fVar4 = gF32Vertex4Zero.w;
+	//						fVar3 = gF32Vertex4Zero.z;
+	//						fVar2 = gF32Vertex4Zero.y;
+	//						pLVar8->field_0x30 = gF32Vertex4Zero.x;
 	//						pLVar8->field_0x34 = fVar2;
 	//						pLVar8->field_0x38 = fVar3;
 	//						pLVar8->field_0x3c = fVar4;
@@ -1376,45 +1387,45 @@ void LevelScheduleManager::Level_Init()
 	//		piVar10 = piVar10 + 2;
 	//	}
 	//}
-	//if ((g_Count_00425404 < 0) || (episodeNumber = g_Count_00425404, g_NbEpisodes.count <= g_Count_00425404)) {
-	//	episodeNumber = g_NbEpisodes.count + -1;
+	//if ((g_Count_00425404 < 0) || (episodeNumber = g_Count_00425404, _gGameNfo.count <= g_Count_00425404)) {
+	//	episodeNumber = _gGameNfo.count + -1;
 	//}
-	//episodeNumber = g_NbEpisodes.monster - g_EpisodeDataArray_0048eb0[episodeNumber].monster;
+	//episodeNumber = _gGameNfo.monster - g_EpisodeDataArray_0048eb0[episodeNumber].monster;
 	//if (episodeNumber < 1) {
 	//	if (episodeNumber < 0) {
-	//		iVar6 = g_NbEpisodes.field_0x1c;
-	//		if (-episodeNumber <= g_NbEpisodes.field_0x1c) {
+	//		iVar6 = _gGameNfo.field_0x1c;
+	//		if (-episodeNumber <= _gGameNfo.field_0x1c) {
 	//			iVar6 = -episodeNumber;
 	//		}
-	//		if (0 < g_NbEpisodes.field_0x1c) {
-	//			g_NbEpisodes.field_0x1c = g_NbEpisodes.field_0x1c - iVar6;
-	//			g_NbEpisodes.monster = g_NbEpisodes.monster + iVar6;
+	//		if (0 < _gGameNfo.field_0x1c) {
+	//			_gGameNfo.field_0x1c = _gGameNfo.field_0x1c - iVar6;
+	//			_gGameNfo.monster = _gGameNfo.monster + iVar6;
 	//		}
 	//	}
 	//}
 	//else {
-	//	g_NbEpisodes.monster = g_NbEpisodes.monster - episodeNumber;
-	//	g_NbEpisodes.field_0x1c = g_NbEpisodes.field_0x1c + episodeNumber;
+	//	_gGameNfo.monster = _gGameNfo.monster - episodeNumber;
+	//	_gGameNfo.field_0x1c = _gGameNfo.field_0x1c + episodeNumber;
 	//}
-	//if ((g_Count_00425404 < 0) || (episodeNumber = g_Count_00425404, g_NbEpisodes.count <= g_Count_00425404)) {
-	//	episodeNumber = g_NbEpisodes.count + -1;
+	//if ((g_Count_00425404 < 0) || (episodeNumber = g_Count_00425404, _gGameNfo.count <= g_Count_00425404)) {
+	//	episodeNumber = _gGameNfo.count + -1;
 	//}
-	//episodeNumber = g_NbEpisodes.bet - g_EpisodeDataArray_0048eb0[episodeNumber].bet;
+	//episodeNumber = _gGameNfo.bet - g_EpisodeDataArray_0048eb0[episodeNumber].bet;
 	//if (episodeNumber < 1) {
 	//	if (episodeNumber < 0) {
-	//		iVar6 = g_NbEpisodes.field_0x1c;
-	//		if (-episodeNumber <= g_NbEpisodes.field_0x1c) {
+	//		iVar6 = _gGameNfo.field_0x1c;
+	//		if (-episodeNumber <= _gGameNfo.field_0x1c) {
 	//			iVar6 = -episodeNumber;
 	//		}
-	//		if (0 < g_NbEpisodes.field_0x1c) {
-	//			g_NbEpisodes.field_0x1c = g_NbEpisodes.field_0x1c - iVar6;
-	//			g_NbEpisodes.bet = g_NbEpisodes.bet + iVar6;
+	//		if (0 < _gGameNfo.field_0x1c) {
+	//			_gGameNfo.field_0x1c = _gGameNfo.field_0x1c - iVar6;
+	//			_gGameNfo.bet = _gGameNfo.bet + iVar6;
 	//		}
 	//	}
 	//}
 	//else {
-	//	g_NbEpisodes.bet = g_NbEpisodes.bet - episodeNumber;
-	//	g_NbEpisodes.field_0x1c = g_NbEpisodes.field_0x1c + episodeNumber;
+	//	_gGameNfo.bet = _gGameNfo.bet - episodeNumber;
+	//	_gGameNfo.field_0x1c = _gGameNfo.field_0x1c + episodeNumber;
 	//}
 	if (this->currentLevelID == 0xe) {
 		GameFlags = GameFlags | 0x40;
@@ -1428,4 +1439,16 @@ void LevelScheduleManager::LevelLoading_End()
 	this->nextLevelID = 0x10;
 	this->level_0x5b3c = -1;
 	return;
+}
+
+struct ScenarioVariable {
+	int field_0x0;
+	int field_0x4;
+};
+
+ScenarioVariable _gScenVarInfo[30] = { 0 };
+
+int LevelScheduleManager::ScenVar_Get(SCENARIC_VARIABLE param_1)
+{
+	return _gScenVarInfo[param_1].field_0x0;
 }

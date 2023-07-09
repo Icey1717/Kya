@@ -20,19 +20,45 @@ typedef enum
 #define SYNC(...)
 #endif
 
+/*
+#define D0_CHCR         ((volatile u_int *)(0x10008000))
+#define D0_MADR         ((volatile u_int *)(0x10008010))
+#define D0_QWC          ((volatile u_int *)(0x10008020))
+#define D0_TADR         ((volatile u_int *)(0x10008030))
+#define D0_ASR0         ((volatile u_int *)(0x10008040))
+#define D0_ASR1         ((volatile u_int *)(0x10008050))
+*/
+
+PACK(
+	struct DMA_Reg_Ptr {
+	uint CHCR;
+	uint packA[3];
+	uint MADR;
+	uint packB[3];
+	uint QWC;
+	uint packC[3];
+	uint TADR;
+	uint packD[3];
+	uint ASR0;
+	uint packE[3];
+	uint ASR1;
+	uint packF[11];
+	uint SADR;
+});
+
 struct DMA_Register_Struct {
-	uint* CHCR;
+	DMA_Reg_Ptr* pReg;
 	uint MADR;
 	uint QWC;
 };
 
-void edDmaLoadFromFastRam_nowait(Vector* param_1, uint param_2, uint param_3);
+void edDmaLoadFromFastRam_nowait(edF32VECTOR4* param_1, uint qwc, uint addr);
 bool edDmaLoadFromFastRam(uint addr, uint qwc, uint param_3);
 void edDmaFlushCache(void);
 int edDmaSyncPath(void);
 int edDmaSync(int channel);
 void edDmaSend_nowait(int channel, ulonglong* pBuffer);
-void edDmaSend(int channel, ulonglong* pBuffer);
+void edDmaSend(int channel, uint addr);
 void edDmaSendN_nowait(int channel, void* memory, uint qwc);
 void edDmaSendN(int channel, void* memory, u_int qwc);
 bool edDmaWaitDma(uint madr);

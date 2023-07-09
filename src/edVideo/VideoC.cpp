@@ -10,7 +10,7 @@
 #include "port.h"
 #include "renderer.h"
 #endif
-#include "../Camera.h"
+#include "Camera.h"
 
 // Not here
 
@@ -34,7 +34,7 @@ void _SetSurfaceDispEnv(edSurface* pFrameBuffer, byte interlace)
 {
 	SurfaceDispEnv* pVVar1;
 
-	pVVar1 = (SurfaceDispEnv*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(SurfaceDispEnv));
+	pVVar1 = (SurfaceDispEnv*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(SurfaceDispEnv));
 	pFrameBuffer->pSurfaceDispEnv = pVVar1;
 	ulong dispfb2 =
 		(ulong)edVideoConfiguration.field_0x1 << 0x2b |
@@ -55,7 +55,7 @@ void _SetSurfaceZEnv(edSurface* pFrameBuffer)
 	ZBufferTags* pTags;
 	int zBufferFormat;
 
-	pTags = (ZBufferTags*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
+	pTags = (ZBufferTags*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
 	pFrameBuffer->pZTags = pTags;
 
 	// TAG
@@ -298,14 +298,14 @@ edSurface* edSurfaceNew(ed_surface_desc* pVidModeData)
 	edSurface* pNewFrameBuffer;
 
 	lVar5 = (edSurface*)0x0;
-	pVidModeCopy = (ed_surface_desc*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
+	pVidModeCopy = (ed_surface_desc*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
 	*pVidModeCopy = *pVidModeData;
 
 	uVar4 = 0;
 	pPrevFrameBuffer = (edSurface*)0x0;
 	if (pVidModeData->frameBufferCount != 0) {
 		do {
-			pNewFrameBuffer = (edSurface*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(edSurface));
+			pNewFrameBuffer = (edSurface*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(edSurface));
 			memset(pNewFrameBuffer, 0, sizeof(edSurface));
 			pNewFrameBuffer->pSurfaceDesc = pVidModeCopy;
 			if (lVar5 == (edSurface*)0x0) {

@@ -13,7 +13,7 @@
 #endif
 
 #include "Rendering/CustomShell.h"
-#include "../Camera.h"
+#include "Camera.h"
 
 edVideoConfig edVideoConfiguration = { 0 };
 edVideoData g_ActiveVidParams_0048cd90 = { 0 };

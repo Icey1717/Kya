@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <cstdarg>
 #include <cstdio>
+#include <mutex>
 
 enum class LogLevel
 {
@@ -76,9 +77,17 @@ public:
 
 			std::string message = oss.str();
 
+			{
+				std::lock_guard<std::mutex> lock(logMutex);
+				consoleLogMessages.push_back({ message, level, category });
+			}
+
 			logMessages.push_back({ message, level, category });
 			logCategories.insert(category);
-			printf("%s", message.c_str());
+			
+
+			// Notify the log thread to flush logs
+			logCondition.notify_all();
 
 			if (logMessages.size() > maxBufferSize) {
 				logMessages.pop_front(); // Remove the oldest log message if the buffer exceeds the maximum size
@@ -104,17 +113,51 @@ public:
 private:
 	static constexpr int maxBufferSize = 0x10000; // Maximum size of the circular buffer
 	std::deque<LogMessage> logMessages;
+	std::deque<LogMessage> consoleLogMessages;
 	std::unordered_set<std::string> logCategories;
 	std::unordered_map<LogLevel, bool> verboseLevels = {
-	{ LogLevel::VeryVerbose, false },
-	{ LogLevel::Verbose, false },
+	{ LogLevel::VeryVerbose, true },
+	{ LogLevel::Verbose, true },
 	{ LogLevel::Info, true },
 	{ LogLevel::Warning, true },
 	{ LogLevel::Error, true },
 	};
 
-	Log() = default;
-	~Log() = default;
+	std::mutex logMutex;  // Mutex to synchronize access to log data
+	std::condition_variable logCondition;  // Condition variable to signal log flushing
+	std::thread logThread;  // Thread for flushing logs
+
+	Log()
+	{
+		logThread = std::thread(&Log::FlushLogs, this);
+	}
+
+	~Log()
+	{
+		// Notify the log thread to stop and wait for it to join
+		{
+			std::unique_lock<std::mutex> lock(logMutex);
+			logCondition.notify_all();
+		}
+		logThread.join();
+	}
+
+	void FlushLogs()
+	{
+		while (true) {
+			// Wait for the log condition to be notified
+			std::unique_lock<std::mutex> lock(logMutex);
+			logCondition.wait(lock);
+
+			// Flush logs
+			while (!consoleLogMessages.empty()) {
+				const LogMessage& message = consoleLogMessages.front();
+				printf("%s\n", message.message.c_str());
+				consoleLogMessages.pop_front();
+			}
+		}
+	}
+
 	Log(const Log&) = delete;
 	Log& operator=(const Log&) = delete;
 };

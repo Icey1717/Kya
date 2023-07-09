@@ -43,6 +43,7 @@ public:
 	int altColour;
 };
 
+edCTextStyle* edTextStyleGetCurrent();
 edCTextStyle* edTextStyleSetCurrent(edCTextStyle* pNewFont);
 
 extern edCTextStyle* pedTextCurrentStyle;

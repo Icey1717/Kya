@@ -471,7 +471,7 @@ char* edBankFilerReadHeader(EHeap heapID, char* filePath, uint flags, edFILEH** 
 				if ((0x800 < __n) && ((__n & 0x7ff) != 0)) {
 					size = ((__n >> 0xb) + 1) * 0x800;
 				}
-				__dest = (char*)edMemAllocAlignBoundary(heapID, size);
+				__dest = (char*)edMemAlloc(heapID, size);
 				if (__dest == (char*)0x0) {
 					IMPLEMENTATION_GUARD();
 					//FUN_0025b420(pDebugBank);

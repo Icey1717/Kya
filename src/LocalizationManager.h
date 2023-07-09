@@ -16,9 +16,9 @@ public:
 	virtual void Level_Term();
 	// End Manager
 
-	MessageFile trcText;
-	MessageFile levelText;
-	MessageFile userInterfaceText;
+	CMessageFile trcText;
+	CMessageFile levelText;
+	CMessageFile userInterfaceText;
 };
 
 extern LocalizationManager* g_LocalizationManager_00449744;

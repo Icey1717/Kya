@@ -25,13 +25,22 @@ public:
 	undefined* pManager100Obj;
 	ed_g3d_manager meshInfoB;
 	ed_g2d_manager textureInfoB;
-	struct MeshTransformParent* pMeshTransform;
-	struct MeshTransformParent* pMeshTransformParent_0x130;
+	struct edNODE* pMeshTransform;
+	struct edNODE* pMeshTransformParent_0x130;
 	float field_0x134;
 	HierarchyAnm pANHR;
 	int sectID;
 	int field_0x140;
 };
+
+struct StaticEdFileBase {
+	struct edCFiler* pEdFileBase;
+	undefined4 field_0x4;
+};
+
+extern StaticEdFileBase StaticEdFileBase_004497f0;
+
+bool CheckFunc_00401fd0(StaticEdFileBase* param_1);
 
 struct SectorManager : public Manager {
 	
@@ -46,6 +55,8 @@ public:
 	virtual void LevelLoading_Begin();
 	virtual bool LevelLoading_Manage();
 	virtual void Level_Install();
+	virtual void Level_Init();
+	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 	// End Manager
 
 	char szSectorFileRoot[32];

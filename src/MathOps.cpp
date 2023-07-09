@@ -4,15 +4,14 @@
 
 #define absf std::abs
 
-sceVu0FMATRIX g_ZeroMatrix_00431690 = { 0 };
-edF32MATRIX4 g_IdentityMatrix = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+edF32MATRIX4 gF32Matrix4Zero = { };
+edF32MATRIX4 gF32Matrix4Unit = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 
 #define M_PI_2f 1.5707963f
 #define M_PIf 3.14159265f
 #define M_2PIf 6.283185f
 
-#ifdef PLATFORM_WIN
-void sceVu0Normalize(float* v0, float* v1)
+void edF32Vector4NormalizeHard(float* v0, float* v1)
 {
 	float fVar1;
 	float fVar2;
@@ -29,9 +28,8 @@ void sceVu0Normalize(float* v0, float* v1)
 	v0[3] = 0.0;
 	return;
 }
-#endif
 
-void sceVu0ApplyMatrix(Vector* v0, edF32MATRIX4* m0, Vector* v1)
+void sceVu0ApplyMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1)
 {
 	float fVar1;
 	float fVar2;
@@ -73,14 +71,26 @@ void sceVu0ApplyMatrix(Vector* v0, edF32MATRIX4* m0, Vector* v1)
 	return;
 }
 
-void sceVu0TransposeMatrixFixed(sceVu0FMATRIX m0, sceVu0FMATRIX m1)
+void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 #if 1
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			m0[i][j] = m1[j][i];
-		}
-	}
+	m1->aa = m0->aa;
+	m1->ab = m0->ba;
+	m1->ac = m0->ca;
+	m1->ad = m0->da;
+	m1->ba = m0->ab;
+	m1->bb = m0->bb;
+	m1->bc = m0->cb;
+	m1->bd = m0->db;
+	m1->ca = m0->ac;
+	m1->cb = m0->bc;
+	m1->cc = m0->cc;
+	m1->cd = m0->dc;
+	m1->da = m0->ad;
+	m1->db = m0->bd;
+	m1->dc = m0->cd;
+	m1->dd = m0->dd;
+	return;
 #else
 	__asm__ __volatile__("\n\
 	lq $8,0x0000(%1)\n\
@@ -142,7 +152,7 @@ void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1)
 	m0->ba = fVar2;
 	m0->bb = fVar5;
 	m0->bc = fVar8;
-	m0->bd = 0.0;
+	m0->bd = 0.0f;
 	m0->ca = fVar3;
 	m0->cb = fVar6;
 	m0->cc = fVar9;
@@ -154,7 +164,7 @@ void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1)
 	return;
 }
 
-void ps2_vu0_sub_vector(Vector* v0, Vector* v1, Vector* v2)
+void edF32Vector4SubHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
 {
 	float fVar1;
 	float fVar2;
@@ -176,7 +186,7 @@ void ps2_vu0_sub_vector(Vector* v0, Vector* v1, Vector* v2)
 	return;
 }
 
-void ps2_vu0_outer_product(Vector* v0, Vector* v1, Vector* v2)
+void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
 {
 	float in_vf0x;
 	float fVar1;
@@ -199,7 +209,7 @@ void ps2_vu0_outer_product(Vector* v0, Vector* v1, Vector* v2)
 	return;
 }
 
-void ps2_vu0_sqr_vector(Vector* v0, Vector* v1)
+void ps2_vu0_sqr_vector(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;
 	float fVar2;
@@ -215,7 +225,7 @@ void ps2_vu0_sqr_vector(Vector* v0, Vector* v1)
 	return;
 }
 
-void CalculatePitchAngles2D_00193c70(Vector* pitchAngles, Vector* velocity)
+void GetAnglesFromVector(edF32VECTOR4* pitchAngles, edF32VECTOR4* velocity)
 {
 	float fVar1;
 
@@ -229,137 +239,189 @@ void CalculatePitchAngles2D_00193c70(Vector* pitchAngles, Vector* velocity)
 	return;
 }
 
-void RotateMatrixByAngle(float angle, edF32MATRIX4* m0, edF32MATRIX4* m1)
+void edF32Matrix4RotateXHard(float angle, edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 	edF32MATRIX4 local_40;
 
 	local_40.bb = cosf(angle);
 	local_40.bc = sinf(angle);
-	local_40.ab = 0.0;
-	local_40.ac = 0.0;
-	local_40.ad = 0.0;
-	local_40.aa = 1.0;
+	local_40.ab = 0.0f;
+	local_40.ac = 0.0f;
+	local_40.ad = 0.0f;
+	local_40.aa = 1.0f;
 	local_40.cb = -local_40.bc;
-	local_40.ba = 0.0;
-	local_40.bd = 0.0;
-	local_40.ca = 0.0;
-	local_40.cd = 0.0;
-	local_40.da = 0.0;
-	local_40.db = 0.0;
-	local_40.dc = 0.0;
-	local_40.dd = 1.0;
+	local_40.ba = 0.0f;
+	local_40.bd = 0.0f;
+	local_40.ca = 0.0f;
+	local_40.cd = 0.0f;
+	local_40.da = 0.0f;
+	local_40.db = 0.0f;
+	local_40.dc = 0.0f;
+	local_40.dd = 1.0f;
 	local_40.cc = local_40.bb;
-	sceVu0MulMatrix((TO_SCE_MTX)m0, (TO_SCE_MTX)m1, (TO_SCE_MTX)&local_40);
+	edF32Matrix4MulF32Matrix4Hard(m0, m1, &local_40);
 	return;
 }
 
-void ApplyRotationToMatrix(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4* inputMatrix)
+void edF32Matrix4RotateYHard(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4* inputMatrix)
 {
 	edF32MATRIX4 local_40;
 
 	local_40.aa = cosf(angle);
 	local_40.ca = sinf(angle);
-	local_40.ab = 0.0;
+	local_40.ab = 0.0f;
 	local_40.ac = -local_40.ca;
-	local_40.ad = 0.0;
-	local_40.ba = 0.0;
-	local_40.bb = 1.0;
-	local_40.bc = 0.0;
-	local_40.bd = 0.0;
-	local_40.cb = 0.0;
-	local_40.cd = 0.0;
-	local_40.da = 0.0;
-	local_40.db = 0.0;
-	local_40.dc = 0.0;
-	local_40.dd = 1.0;
+	local_40.ad = 0.0f;
+	local_40.ba = 0.0f;
+	local_40.bb = 1.0f;
+	local_40.bc = 0.0f;
+	local_40.bd = 0.0f;
+	local_40.cb = 0.0f;
+	local_40.cd = 0.0f;
+	local_40.da = 0.0f;
+	local_40.db = 0.0f;
+	local_40.dc = 0.0f;
+	local_40.dd = 1.0f;
 	local_40.cc = local_40.aa;
-	sceVu0MulMatrix((TO_SCE_MTX)outputMatrix, (TO_SCE_MTX)inputMatrix, (TO_SCE_MTX)&local_40);
+	edF32Matrix4MulF32Matrix4Hard(outputMatrix, inputMatrix, &local_40);
 	return;
 }
 
-void edF32Matrix4ScaleHard(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTOR v0)
+void edF32Matrix4CopyHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+
+	fVar1 = m1->ab;
+	fVar2 = m1->ac;
+	fVar3 = m1->ad;
+	fVar4 = m1->ba;
+	fVar5 = m1->bb;
+	fVar6 = m1->bc;
+	fVar7 = m1->bd;
+	fVar8 = m1->ca;
+	fVar9 = m1->cb;
+	fVar10 = m1->cc;
+	fVar11 = m1->cd;
+	fVar12 = m1->da;
+	fVar13 = m1->db;
+	fVar14 = m1->dc;
+	fVar15 = m1->dd;
+	m0->aa = m1->aa;
+	m0->ab = fVar1;
+	m0->ac = fVar2;
+	m0->ad = fVar3;
+	m0->ba = fVar4;
+	m0->bb = fVar5;
+	m0->bc = fVar6;
+	m0->bd = fVar7;
+	m0->ca = fVar8;
+	m0->cb = fVar9;
+	m0->cc = fVar10;
+	m0->cd = fVar11;
+	m0->da = fVar12;
+	m0->db = fVar13;
+	m0->dc = fVar14;
+	m0->dd = fVar15;
+	return;
+}
+
+void edF32Matrix4ScaleHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0)
 {
 	undefined8 uVar1;
 	float fVar2;
 	float fVar3;
 	int iVar4;
-	sceVu0FMATRIX local_40;
+	edF32MATRIX4 local_40;
 
-	sceVu0CopyMatrix(local_40, g_ZeroMatrix_00431690);
+	edF32Matrix4CopyHard(&local_40, &gF32Matrix4Zero);
 
-	local_40[0][0] = (v0)[0];
-	local_40[1][1] = (v0)[1];
-	local_40[2][2] = (v0)[2];
-	local_40[3][3] = 1.0;
-	sceVu0MulMatrix(m0, m1, local_40);
+	local_40.aa = v0->x;
+	local_40.bb = v0->y;
+	local_40.cc = v0->z;
+	local_40.dd = 1.0;
+	edF32Matrix4MulF32Matrix4Hard(m0, m1, &local_40);
 	return;
 }
 
 void edF32Matrix4RotateZHard(float t0, edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
-	sceVu0FMATRIX local_40;
+	edF32MATRIX4 local_40;
 
-	local_40[0][0] = cosf(t0);
-	local_40[0][1] = sinf(t0);
-	local_40[0][2] = 0.0;
-	local_40[1][0] = -local_40[0][1];
-	local_40[0][3] = 0.0;
-	local_40[1][2] = 0.0;
-	local_40[1][3] = 0.0;
-	local_40[2][0] = 0.0;
-	local_40[2][1] = 0.0;
-	local_40[2][2] = 1.0;
-	local_40[2][3] = 0.0;
-	local_40[3][0] = 0.0;
-	local_40[3][1] = 0.0;
-	local_40[3][2] = 0.0;
-	local_40[3][3] = 1.0;
-	local_40[1][1] = local_40[0][0];
-	sceVu0MulMatrix((TO_SCE_MTX)m0, (TO_SCE_MTX)m1, local_40);
+	local_40.aa = cosf(t0);
+	local_40.ab = sinf(t0);
+	local_40.ac = 0.0f;
+	local_40.ba = -local_40.ab;
+	local_40.ad = 0.0f;
+	local_40.bc = 0.0f;
+	local_40.bd = 0.0f;
+	local_40.ca = 0.0f;
+	local_40.cb = 0.0f;
+	local_40.cc = 1.0f;
+	local_40.cd = 0.0f;
+	local_40.da = 0.0f;
+	local_40.db = 0.0f;
+	local_40.dc = 0.0f;
+	local_40.dd = 1.0f;
+	local_40.bb = local_40.aa;
+	edF32Matrix4MulF32Matrix4Hard(m0, m1, &local_40);
 	return;
 }
 
-void ComputeMapRectangleMatrix_0029b9e0
+void ed3DComputeProjectionToScreenMatrix
 (float startX, float endX, float startY, float endY, float startZ, float endZ, float startW, float endW, edF32MATRIX4* m0)
 {
 	float fVar1;
 	float fVar2;
 
-	fVar2 = 1.0 / (endX - startX);
-	fVar1 = 1.0 / (endY - startY);
+	fVar2 = 1.0f / (endX - startX);
+	fVar1 = 1.0f / (endY - startY);
 	m0->aa = (endZ - startZ) * fVar2;
-	m0->ab = 0.0;
-	m0->ac = 0.0;
-	m0->ad = 0.0;
-	m0->ba = 0.0;
+	m0->ab = 0.0f;
+	m0->ac = 0.0f;
+	m0->ad = 0.0f;
+	m0->ba = 0.0f;
 	m0->bb = (endW - startW) * fVar1;
-	m0->bc = 0.0;
-	m0->bd = 0.0;
-	m0->ca = 0.0;
-	m0->cb = 0.0;
-	m0->cc = 1.0;
-	m0->cd = 0.0;
+	m0->bc = 0.0f;
+	m0->bd = 0.0f;
+	m0->ca = 0.0f;
+	m0->cb = 0.0f;
+	m0->cc = 1.0f;
+	m0->cd = 0.0f;
 	m0->da = fVar2 * (startZ * (endX - startX) - startX * (endZ - startZ));
 	m0->db = fVar1 * (startW * (endY - startY) - startY * (endW - startW));
-	m0->dc = 0.0;
-	m0->dd = 1.0;
+	m0->dc = 0.0f;
+	m0->dd = 1.0f;
 	return;
 }
 
-void CalculateYAxisTransformMatrix_0029ba70(float x, float y, float yMin, float yMax, edF32MATRIX4* m0)
+void ed3DComputeLocalToProjectionMatrix(float x, float y, float yMin, float yMax, edF32MATRIX4* m0)
 {
 	float fVar1;
 	float fVar2;
 
-	m0->aa = 1.0;
-	m0->ab = 0.0;
-	m0->ac = 0.0;
-	m0->ad = 0.0;
-	m0->ba = 0.0;
-	fVar1 = 1.0 / (yMax - yMin);
-	m0->bb = 1.0;
-	m0->bc = 0.0;
-	m0->bd = 0.0;
+	m0->aa = 1.0f;
+	m0->ab = 0.0f;
+	m0->ac = 0.0f;
+	m0->ad = 0.0f;
+	m0->ba = 0.0f;
+	fVar1 = 1.0f / (yMax - yMin);
+	m0->bb = 1.0f;
+	m0->bc = 0.0f;
+	m0->bd = 0.0f;
 	m0->ca = x * fVar1;
 	m0->cb = y * fVar1;
 	m0->cc = yMax * fVar1;
@@ -494,27 +556,27 @@ void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationO
 	fVar7 = pfVar1[iVar3];
 	fVar5 = sqrtf(fVar7 * fVar7 + fVar5 * fVar5);
 	if (0.001f < fVar5) {
-		fVar7 = edF32ATan2Soft(*(float*)((int)m0 + iVar2 * 4 + iVar3 * 0x10), ((edF32MATRIX4*)((int)m0 + iVar2 * 0x14))->aa
+		fVar7 = edF32ATan2Soft(*(float*)((ulong)m0 + iVar2 * 4 + iVar3 * 0x10), ((edF32MATRIX4*)((ulong)m0 + iVar2 * 0x14))->aa
 		);
 		fVar5 = edF32ATan2Soft(-pfVar1[iVar2], fVar5);
 		fVar6 = edF32ATan2Soft(pfVar1[iVar3], pfVar1[iVar4]);
 	}
 	else {
-		fVar7 = edF32ATan2Soft(-*(float*)((int)m0 + iVar3 * 4 + iVar2 * 0x10),
-			((edF32MATRIX4*)((int)m0 + iVar3 * 0x14))->aa);
+		fVar7 = edF32ATan2Soft(-*(float*)((ulong)m0 + iVar3 * 4 + iVar2 * 0x10),
+			((edF32MATRIX4*)((ulong)m0 + iVar3 * 0x14))->aa);
 		fVar5 = M_PI_2f;
 		if (-pfVar1[iVar2] < 0.0f) {
 			fVar5 = M_NEG_PI_2;
 		}
 		fVar6 = 0.0;
 	}
-	((edF32VECTOR3*)((int)v0 + iVar4 * 4))->x = fVar7;
-	((edF32VECTOR3*)((int)v0 + iVar3 * 4))->x = fVar5;
-	((edF32VECTOR3*)((int)v0 + iVar2 * 4))->x = fVar6;
+	((edF32VECTOR3*)((ulong)v0 + iVar4 * 4))->x = fVar7;
+	((edF32VECTOR3*)((ulong)v0 + iVar3 * 4))->x = fVar5;
+	((edF32VECTOR3*)((ulong)v0 + iVar2 * 4))->x = fVar6;
 	return;
 }
 
-void edF32Vector4AddHard(Vector* v0, Vector* v1, Vector* v2)
+void edF32Vector4AddHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
 {
 	float fVar1;
 	float fVar2;
@@ -535,3 +597,170 @@ void edF32Vector4AddHard(Vector* v0, Vector* v1, Vector* v2)
 	v0->w = fVar3 + fVar6;
 	return;
 }
+
+void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+
+	fVar3 = m1->ac;
+	fVar4 = m1->ba;
+	fVar5 = m1->bb;
+	fVar6 = m1->bc;
+	fVar7 = m1->ca;
+	fVar8 = m1->cb;
+	fVar9 = m1->cc;
+	fVar10 = m1->da;
+	fVar11 = m1->db;
+	fVar12 = m1->dc;
+	fVar13 = m1->dd;
+	fVar2 = m1->ab;
+	fVar1 = m1->aa;
+	m0->aa = fVar1;
+	m0->ab = fVar4;
+	m0->ac = fVar7;
+	m0->ad = 0.0f;
+	m0->ba = fVar2;
+	m0->bb = fVar5;
+	m0->bc = fVar8;
+	m0->bd = 0.0;
+	m0->ca = fVar3;
+	m0->cb = fVar6;
+	m0->cc = fVar9;
+	m0->cd = 0.0f;
+	m0->da = 0.0f - (fVar1 * fVar10 + fVar2 * fVar11 + fVar3 * fVar12);
+	m0->db = 0.0f - (fVar4 * fVar10 + fVar5 * fVar11 + fVar6 * fVar12);
+	m0->dc = 0.0f - (fVar7 * fVar10 + fVar8 * fVar11 + fVar9 * fVar12);
+	m0->dd = fVar13;
+	return;
+}
+
+void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar1 = v1->y;
+	fVar2 = v1->z;
+	fVar3 = v1->w;
+	v0->x = v1->x * t;
+	v0->y = fVar1 * t;
+	v0->z = fVar2 * t;
+	v0->w = fVar3 * t;
+	return;
+}
+
+void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32MATRIX4* m2)
+{
+	m0->aa = m1->aa * m2->aa + m1->ab * m2->ba + m1->ac * m2->ca + m1->ad * m2->da;
+	m0->ab = m1->aa * m2->ab + m1->ab * m2->bb + m1->ac * m2->cb + m1->ad * m2->db;
+	m0->ac = m1->aa * m2->ac + m1->ab * m2->bc + m1->ac * m2->cc + m1->ad * m2->dc;
+	m0->ad = m1->aa * m2->ad + m1->ab * m2->bd + m1->ac * m2->cd + m1->ad * m2->dd;
+
+	m0->ba = m1->ba * m2->aa + m1->bb * m2->ba + m1->bc * m2->ca + m1->bd * m2->da;
+	m0->bb = m1->ba * m2->ab + m1->bb * m2->bb + m1->bc * m2->cb + m1->bd * m2->db;
+	m0->bc = m1->ba * m2->ac + m1->bb * m2->bc + m1->bc * m2->cc + m1->bd * m2->dc;
+	m0->bd = m1->ba * m2->ad + m1->bb * m2->bd + m1->bc * m2->cd + m1->bd * m2->dd;
+
+	m0->ca = m1->ca * m2->aa + m1->cb * m2->ba + m1->cc * m2->ca + m1->cd * m2->da;
+	m0->cb = m1->ca * m2->ab + m1->cb * m2->bb + m1->cc * m2->cb + m1->cd * m2->db;
+	m0->cc = m1->ca * m2->ac + m1->cb * m2->bc + m1->cc * m2->cc + m1->cd * m2->dc;
+	m0->cd = m1->ca * m2->ad + m1->cb * m2->bd + m1->cc * m2->cd + m1->cd * m2->dd;
+
+	m0->da = m1->da * m2->aa + m1->db * m2->ba + m1->dc * m2->ca + m1->dd * m2->da;
+	m0->db = m1->da * m2->ab + m1->db * m2->bb + m1->dc * m2->cb + m1->dd * m2->db;
+	m0->dc = m1->da * m2->ac + m1->db * m2->bc + m1->dc * m2->cc + m1->dd * m2->dc;
+	m0->dd = m1->da * m2->ad + m1->db * m2->bd + m1->dc * m2->cd + m1->dd * m2->dd;
+}
+
+void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0)
+{
+	m0->da = 0.0;
+	m0->db = 0.0;
+	m0->dc = 0.0;
+	m0->dd = 1.0;
+	m0->ca = 0.0;
+	m0->cb = 0.0;
+	m0->cc = 1.0;
+	m0->cd = 0.0;
+	m0->ba = 0.0;
+	m0->bb = 1.0;
+	m0->bc = 0.0;
+	m0->bd = 0.0;
+	m0->aa = 1.0;
+	m0->ab = 0.0;
+	m0->ac = 0.0;
+	m0->ad = 0.0;
+	return;
+}
+
+void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+	float fVar17;
+	float fVar18;
+
+	fVar12 = v0->x;
+	fVar13 = v0->y;
+	fVar14 = v0->z;
+	fVar15 = m1->da;
+	fVar16 = m1->db;
+	fVar17 = m1->dc;
+	fVar18 = m1->dd;
+	fVar1 = m1->ab;
+	fVar2 = m1->ac;
+	fVar3 = m1->ad;
+	fVar4 = m1->ba;
+	fVar5 = m1->bb;
+	fVar6 = m1->bc;
+	fVar7 = m1->bd;
+	fVar8 = m1->ca;
+	fVar9 = m1->cb;
+	fVar10 = m1->cc;
+	fVar11 = m1->cd;
+	m0->aa = m1->aa;
+	m0->ab = fVar1;
+	m0->ac = fVar2;
+	m0->ad = fVar3;
+	m0->ba = fVar4;
+	m0->bb = fVar5;
+	m0->bc = fVar6;
+	m0->bd = fVar7;
+	m0->ca = fVar8;
+	m0->cb = fVar9;
+	m0->cc = fVar10;
+	m0->cd = fVar11;
+	m0->da = fVar15 + fVar12;
+	m0->db = fVar16 + fVar13;
+	m0->dc = fVar17 + fVar14;
+	m0->dd = fVar18;
+	return;
+}
+

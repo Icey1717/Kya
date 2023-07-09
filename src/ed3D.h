@@ -35,14 +35,14 @@ struct ed_g2d_manager {
 };
 
 struct LightingMatrixSubSubObj {
-	struct Vector* field_0x0;
+	struct edF32VECTOR4* field_0x0;
 	struct edF32MATRIX4* field_0x4;
 	struct edF32MATRIX4* field_0x8;
 };
 
-struct LightingMatrixFuncObj {
+struct ed_3d_hierarchy_setup {
 	char* field_0x0;
-	struct Vector* pVector_0x4;
+	struct edF32VECTOR4* pVector_0x4;
 	struct LightingMatrixSubSubObj* field_0x8;
 	char* field_0xc;
 	float* field_0x10;
@@ -56,12 +56,12 @@ struct MeshTransformDataBase {
 	undefined field_0x89;
 	ushort bRenderShadow;
 	struct edF32MATRIX4* pShadowAnimMatrix;
-	struct MeshTransformData* pLinkTransformData;
+	struct ed_g3d_hierarchy* pLinkTransformData;
 	undefined* field_0x94;
 	undefined* pTextureInfo;
 	ushort count_0x9c;
 	ushort flags_0x9e;
-	struct LightingMatrixFuncObj* pLightingMatrixFuncObj_0xa0;
+	struct ed_3d_hierarchy_setup* pHierarchySetup;
 	edF32MATRIX4* field_0xa4;
 	struct edF32MATRIX4* pAnimMatrix;
 	short subMeshParentCount_0xac;
@@ -75,7 +75,7 @@ struct MeshTransformObjData {
 	short field_0x6;
 };
 
-struct MeshTransformData {
+struct ed_3d_hierarchy_node {
 	MeshTransformDataBase base;
 	MeshTransformObjData aSubArray[4];
 };
@@ -90,7 +90,7 @@ struct ed3DConfig {
 
 	int meshHeaderCountB;
 	int sceneCount;
-	uint meshDisplayListInternalCount;
+	uint maxClusterCount;
 	int meshHeaderCountBAlt;
 	int matrixBufferCount;
 	int materialBufferCount;
@@ -99,7 +99,7 @@ struct ed3DConfig {
 	int g2dManagerCount;
 	byte bEnableProfile;
 	byte field_0x25;
-	byte field_0x26;
+	byte clusterTabListSize;
 	byte field_0x27;
 	int field_0x28;
 	byte field_0x2c;
@@ -111,28 +111,11 @@ struct ed3DConfig {
 };
 
 PACK(
-	struct ed_g2d_material_After {
-	int pLAY; // ed_g2d_layer
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-});
-
-PACK(
 	struct ed_g2d_material {
 	byte count_0x0;
 	undefined field_0x1;
 	ushort field_0x2;
-	int pRenderFrame30; // ed_dma_matrix*
+	int pDMA_Material; // ed_dma_material*
 	int pCommandBufferTexture; // RenderCommand*
 	int commandBufferTextureSize;
 });
@@ -163,9 +146,9 @@ struct edDList_material {
 };
 
 PACK(
-	struct TextureData_LAY_Internal {
+	struct ed_g2d_layer {
 	uint flags_0x0;
-	uint field_0x4;
+	uint flags;
 	undefined field_0x8;
 	undefined field_0x9;
 	undefined field_0xa;
@@ -192,7 +175,7 @@ PACK(
 });
 
 PACK(
-	struct ed_g2d_layer {
+	struct ed_g2d_layer_header {
 	Hash_4 header;
 	uint field_0x4;
 	undefined field_0x8;
@@ -203,7 +186,7 @@ PACK(
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	TextureData_LAY_Internal body;
+	ed_g2d_layer body;
 });
 
 
@@ -212,7 +195,7 @@ PACK(struct ed_g2d_bitmap {
 	ushort height;
 	ushort psm;
 	ushort field_0x6;
-	int pPSX2; //char*
+	int pPSX2; //edpkt_data*
 });
 
 PACK(struct TextureData_MATA {
@@ -294,10 +277,7 @@ PACK(
 	struct TextureData_TEX_Internal {
 	TextureData_TEX_Internal_After after;
 	int palette;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
+	int field_0x14; // edF32VECTOR4*
 	float field_0x18;
 	undefined field_0x1c;
 	undefined field_0x1d;
@@ -356,6 +336,16 @@ PACK( struct LayerHeaderPacked {
 	char field_0x10;
 });
 
+PACK(
+	struct ed_hash_code {
+	Hash_8 field_0x0;
+	int field_0x8; // char*
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+};)
+
 struct ed_viewport;
 struct edFCamera;
 
@@ -363,10 +353,8 @@ struct ed_3D_Scene;
 
 struct ed_g3d_manager;
 struct DisplayListInternal;
-struct DisplayListInternalMesh;
-struct MeshTransformParent;
-
-extern edF32MATRIX4 SomeIdentityMatrix;
+struct edCluster;
+struct edNODE;
 
 #ifdef PLATFORM_WIN
 Multidelegate<edDList_material*>& ed3DGetMaterialLoadedDelegate();
@@ -385,15 +373,27 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, in
 bool edDListTermMaterial(edDList_material* pMaterial);
 char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
-MeshTransformParent* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
+edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
 
 void ed3DLinkG2DToG3D(ed_g3d_manager* pMeshInfo, TextureInfo* pTextureInfo);
 
 struct HierarchyAnm {
 	void Install(struct MeshData_ANHR* pInANHR, int length, ed_g3d_manager* pMeshInfo, ed_3D_Scene* pStaticMeshMaster);
-	uint UpdateMatrix(float param_1, MeshTransformData* param_3, int* pFileData, int param_5);
+	uint UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, int* pFileData, int param_5);
 
 	MeshData_ANHR* pThis;
+
+	static edF32MATRIX4 _gscale_mat;
+};
+
+
+struct FxFogProp {
+	uint field_0x0;
+	uint field_0x4;
+	int field_0x8;
+	int field_0xc;
+	int field_0x10;
+	uint field_0x14;
 };
 
 void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo);
@@ -403,11 +403,21 @@ void ed3DScenePushCluster(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshI
 uint edChunckGetNb(char* pStart, char* pEnd);
 char* edHashcodeGet(Hash_8 meshHashValue, struct MeshData_HASH* textureObjMatBuffer);
 
+edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand);
+edpkt_data* ed3DFlushFullAlphaInit(edpkt_data* pRenderCommand);
+
+void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0);
+
+void ed3DResetTime(void);
+void ed3DSetDeltaTime(int newTime);
+
+FxFogProp* ed3DGetFxFogProp(void);
+
 extern int gFXBufAddr;
 extern byte BYTE_00448a5c;
-extern DisplayListInternalMesh* g_MeshDisplayListInternal_00449380;
-extern MeshTransformParent* gHierarchyManagerFirstFreeNode;
-extern MeshTransformData* gHierarchyManagerBuffer;
+extern edCluster* gCluster;
+extern edNODE* gHierarchyManagerFirstFreeNode;
+extern ed_3d_hierarchy_node* gHierarchyManagerBuffer;
 
 extern int gNbVertexDMA;
 

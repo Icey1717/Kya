@@ -31,10 +31,10 @@ public:
 	void SetFontValue_002f2cf0(struct edCTextFont* pFont);
 	void SetFontValue_002f2d00(struct edCTextFont* pFont);
 	void SetFontValue_002f2d10(struct edCTextFont* pFont);
-	void SetTranslatedTextData_002f2d20(struct MessageFile* pTextData);
+	void SetTranslatedTextData_002f2d20(struct CMessageFile* pTextData);
 	EPauseMenu get_current_page();
 	void perform_action();
-	struct MessageFile* pTranslatedTextData;
+	struct CMessageFile* pTranslatedTextData;
 	struct edCTextFont* pFontA;
 	struct edCTextFont* pFontB;
 	struct edCTextFont* pFontC;
@@ -240,6 +240,7 @@ struct Sprite {
 public:
 	Sprite();
 	void Install(char* pFileBuffer);
+	void DrawXYXY(uint param_2, float param_3, float param_4, float param_5, float param_6, float param_7);
 	byte field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;
@@ -254,7 +255,7 @@ public:
 	undefined4 field_0x24;
 	float field_0x28;
 	float field_0x2c;
-	undefined4 field_0x30;
+	byte field_0x30[4];
 	undefined4 field_0x34;
 	ushort field_0x38;
 	ushort field_0x3a;
@@ -274,8 +275,8 @@ public:
 	undefined field_0x49;
 	undefined field_0x4a;
 	undefined field_0x4b;
-	undefined4 field_0x4c;
-	undefined4 field_0x50;
+	float field_0x4c;
+	float field_0x50;
 	float field_0x54;
 	float field_0x58;
 	undefined4 field_0x5c;
@@ -302,7 +303,7 @@ public:
 	float field_0xc8;
 	undefined4 field_0xcc;
 	undefined4 field_0xd0;
-	struct Vector drawOffsets;
+	struct edF32VECTOR4 drawOffsets;
 };
 
 extern struct edCTextFont* BootDataFont;
@@ -325,6 +326,5 @@ struct PauseStaticObj {
 };
 
 extern PauseStaticObj g_PauseStaticObj_0049c9d0;
-LANGUAGE GetLanguageID_00336b30(void);
 
 #endif // _PAUSEMANAGER_H

@@ -19,7 +19,7 @@ edCFiler_BNK::edCFiler_BNK()
 		memset(&field_0x218[iVar2], 0, sizeof(edCFiler_BNK_8));
 		iVar2 = iVar2 + 1;
 	} while (iVar2 < 4);
-	//SetupEd10_00217720((undefined*)&Singleton_00467fe0, Free_00246df0, &EdFileGlobal_10_00467fd0);
+	//__register_global_object((undefined*)&Singleton_00467fe0, Free_00246df0, &EdFileGlobal_10_00467fd0);
 	return;
 }
 

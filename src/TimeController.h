@@ -5,11 +5,12 @@
 
 float edTimerTimeGet(void);
 
-class TimeController {
+class Timer {
 public:
-	TimeController();
+	Timer();
 	float Update();
 	void ResetGameTimers();
+	static Timer* GetTimer();
 
 	float totalPlayTime;
 	float frameDelta;
@@ -22,6 +23,6 @@ public:
 	float frameTime;
 };
 
-TimeController* GetTimer(void);
+Timer* GetTimer(void);
 
 #endif //_TIMECONTROLLER_H

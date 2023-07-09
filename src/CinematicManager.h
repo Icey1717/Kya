@@ -8,8 +8,309 @@
 #ifdef PLATFORM_PS2
 #include <libvu0.h>
 #endif
+#include "ScenaricCondition.h"
+#include "TranslatedTextData.h"
 
-struct CinematicObjectB {
+enum edResCollectionEnum {
+	COT_Animation = 2,
+	COT_MeshModel = 1,
+	COT_MeshTexture = 4,
+	COT_Particle = 8,
+	COT_Sound = 0,
+	COT_Text = 9,
+	COT_Scene = 3,
+};
+
+struct edCinGameInterface {
+	char name[32];
+	char* meshName;
+	bool bHasMesh;
+	undefined field_0x25;
+	undefined field_0x26;
+	undefined field_0x27;
+	char* textureName;
+	bool bHasTexture;
+	undefined field_0x2d;
+	undefined field_0x2e;
+	undefined field_0x2f;
+	float field_0x30;
+	undefined field_0x34;
+	undefined field_0x35;
+	undefined field_0x36;
+	undefined field_0x37;
+	undefined field_0x38;
+	undefined field_0x39;
+	undefined field_0x3a;
+	undefined field_0x3b;
+	undefined field_0x3c;
+	undefined field_0x3d;
+	undefined field_0x3e;
+	undefined field_0x3f;
+	float field_0x40;
+	float field_0x44;
+	float field_0x48;
+	float field_0x4c;
+	edF32VECTOR4 vectorFieldA;
+	edF32VECTOR4 vectorFieldB;
+	edF32VECTOR4 vectorFieldC;
+};
+
+struct edCinActorInterface {
+	undefined field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	//struct SoundStructA soundStruct;
+	undefined field_0x90;
+	undefined field_0x91;
+	undefined field_0x92;
+	undefined field_0x93;
+	undefined field_0x94;
+	undefined field_0x95;
+	undefined field_0x96;
+	undefined field_0x97;
+	//struct SoundStructAInternal soundInternalStruct; /* Created by retype action */
+	int usedInInstCreate;
+	undefined field_0xbc;
+	undefined field_0xbd;
+	undefined field_0xbe;
+	undefined field_0xbf;
+	undefined field_0xc0;
+	undefined field_0xc1;
+	undefined field_0xc2;
+	undefined field_0xc3;
+	undefined field_0xc4;
+	undefined field_0xc5;
+	undefined field_0xc6;
+	undefined field_0xc7;
+	undefined field_0xc8;
+	undefined field_0xc9;
+	undefined field_0xca;
+	undefined field_0xcb;
+	undefined field_0xcc;
+	undefined field_0xcd;
+	undefined field_0xce;
+	undefined field_0xcf;
+	undefined field_0xd0;
+	undefined field_0xd1;
+	undefined field_0xd2;
+	undefined field_0xd3;
+	undefined field_0xd4;
+	undefined field_0xd5;
+	undefined field_0xd6;
+	undefined field_0xd7;
+	undefined field_0xd8;
+	undefined field_0xd9;
+	undefined field_0xda;
+	undefined field_0xdb;
+	undefined field_0xdc;
+	undefined field_0xdd;
+	undefined field_0xde;
+	undefined field_0xdf;
+	edF32VECTOR4 vectorFieldA;
+	edF32VECTOR4 vectorFieldB;
+	edF32VECTOR4 vectorFieldC;
+};
+
+class BWitchCin {
+public:
+	char* GetResource(edResCollectionEnum type1, long type2, char* fileName, int* bufferLengthOut);
+	bool CreateActor(int* ppActorInterface, edCinGameInterface* ppGameInterface);
+};
+
+struct ConditionedOperationArray {
+	uint* field_0x0;
+	void Create(struct ByteCode* pByteCode);
+	void Perform();
+};
+
+struct edResCollectionInternal {
+	int* field_0x0;
+};
+
+PACK(
+struct edResCollection {
+	int pData; // char*
+
+	static char* GetResFilename(edResCollection** resBufferPtr, int offset);
+});
+
+struct edCinematic {
+	char* headerPtr;
+	int* fileStart;
+	edResCollection* pRes;
+	bool ExtractVersions(int size, int* cinematicLibraryVersion, int* cinematicCompilerVersion);
+	bool Create(BWitchCin* pInterface, char* fileName);
+	bool Create(BWitchCin* pInterface, char* cinFileBuffer, int bufferLength);
+};
+
+struct CutsceneHoldsDurations {
+	float durationA;
+	float durationB;
+};
+
+struct CinematicFileDataHeader {
+	CutsceneHoldsDurations durationA;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined1 offsetSomeObj; /* Created by retype action */
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	undefined1 numSomeObjAA; /* Created by retype action */
+	undefined field_0x11;
+	undefined field_0x12;
+	undefined field_0x13;
+	undefined field_0x14;
+	undefined field_0x15;
+	undefined field_0x16;
+	undefined field_0x17;
+	undefined field_0x18;
+	undefined field_0x19;
+	undefined field_0x1a;
+	undefined field_0x1b;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+	undefined field_0x20;
+	undefined field_0x21;
+	undefined field_0x22;
+	undefined field_0x23;
+	undefined field_0x24;
+	undefined field_0x25;
+	undefined field_0x26;
+	undefined field_0x27;
+	undefined field_0x28;
+	undefined field_0x29;
+	undefined field_0x2a;
+	undefined field_0x2b;
+	undefined1 sceFileBufferStart; /* Created by retype action */
+	undefined field_0x2d;
+	undefined field_0x2e;
+	undefined field_0x2f;
+	undefined field_0x30;
+	undefined field_0x31;
+	undefined field_0x32;
+	undefined field_0x33;
+	undefined field_0x34;
+	undefined field_0x35;
+	undefined field_0x36;
+	undefined field_0x37;
+	undefined field_0x38;
+	undefined field_0x39;
+	undefined field_0x3a;
+	undefined field_0x3b;
+	undefined field_0x3c;
+	undefined field_0x3d;
+	undefined field_0x3e;
+	undefined field_0x3f;
+	undefined field_0x40;
+	undefined field_0x41;
+	undefined field_0x42;
+	undefined field_0x43;
+	undefined field_0x44;
+	undefined field_0x45;
+	undefined field_0x46;
+	undefined field_0x47;
+	undefined field_0x48;
+	undefined field_0x49;
+	undefined field_0x4a;
+	undefined field_0x4b;
+	undefined field_0x4c;
+	undefined field_0x4d;
+	undefined field_0x4e;
+	undefined field_0x4f;
+	undefined field_0x50;
+	undefined field_0x51;
+	undefined field_0x52;
+	undefined field_0x53;
+	undefined field_0x54;
+	undefined field_0x55;
+	undefined field_0x56;
+	undefined field_0x57;
+	undefined field_0x58;
+	undefined field_0x59;
+	undefined field_0x5a;
+	undefined field_0x5b;
+	undefined field_0x5c;
+	undefined field_0x5d;
+	undefined field_0x5e;
+	undefined field_0x5f;
+	undefined field_0x60;
+	undefined field_0x61;
+	undefined field_0x62;
+	undefined field_0x63;
+	undefined field_0x64;
+	undefined field_0x65;
+	undefined field_0x66;
+	undefined field_0x67;
+	undefined field_0x68;
+	undefined field_0x69;
+	undefined field_0x6a;
+	undefined field_0x6b;
+	undefined field_0x6c;
+	undefined field_0x6d;
+	undefined field_0x6e;
+	undefined field_0x6f;
+	undefined field_0x70;
+	undefined field_0x71;
+	undefined field_0x72;
+	undefined field_0x73;
+	undefined field_0x74;
+	undefined field_0x75;
+	undefined field_0x76;
+	undefined field_0x77;
+	undefined field_0x78;
+	undefined field_0x79;
+	undefined field_0x7a;
+	undefined field_0x7b;
+	undefined field_0x7c;
+	undefined field_0x7d;
+	undefined field_0x7e;
+	undefined field_0x7f;
+	undefined field_0x80;
+	undefined field_0x81;
+	undefined field_0x82;
+	undefined field_0x83;
+	undefined field_0x84;
+	undefined field_0x85;
+	undefined field_0x86;
+	undefined field_0x87;
+	undefined field_0x88;
+	undefined field_0x89;
+	undefined field_0x8a;
+	undefined field_0x8b;
+	undefined field_0x8c;
+};
+
+struct CinFileContainer {
+	edResCollectionEnum type;
+	char* pData;
+};
+
+struct Cinematic {
+	void InitInternalData();
+	Cinematic();
+	void Create(struct ByteCode* pByteCode);
+	void Init();
+
+	void Start();
+	void Load(long mode);
+	bool LoadInternal(long mode);
+	void Install();
+	bool LoadCineBnk(bool mode);
+	int* InstallResource(edResCollectionEnum objectType, long type2, char* fileName, struct ed_g2d_manager* textureObj, int* bufferLengthOut);
 	int prtBuffer;
 	uint flags_0x4;
 	uint flags_0x8;
@@ -47,16 +348,13 @@ struct CinematicObjectB {
 	undefined4 field_0x7c;
 	float field_0x80;
 	int intOrPtrField;
-	undefined field_0x88;
-	undefined field_0x89;
-	undefined field_0x8a;
-	undefined field_0x8b;
+	float field_0x88;
 	int intFieldC;
 	int field_0x90;
 	int field_0x94;
 	int field_0x98;
 	uint objCount_0x9c;
-	int* field_0xa0;
+	struct CineActorConfig* field_0xa0;
 	undefined field_0xa4;
 	undefined field_0xa5;
 	undefined field_0xa6;
@@ -69,7 +367,7 @@ struct CinematicObjectB {
 	undefined field_0xad;
 	undefined field_0xae;
 	undefined field_0xaf;
-	//struct CinematicObjectBLoadData cinematicLoadObject;
+	BWitchCin cinematicLoadObject;
 	undefined* field_0x100;
 	undefined field_0x104;
 	undefined field_0x105;
@@ -99,11 +397,11 @@ struct CinematicObjectB {
 	undefined field_0x11d;
 	undefined field_0x11e;
 	undefined field_0x11f;
-	sceVu0FMATRIX matrix_0x120;
-	//struct CinematicFileData cinFileData;
-	//struct MessageFile textData;
-	//struct MeshInfo* pMeshInfo;
-	//struct MeshTransformParent* pMeshTransform;
+	edF32MATRIX4 matrix_0x120;
+	struct edCinematic cinFileData;
+	CMessageFile textData;
+	struct ed_g3d_manager* pMeshInfo;
+	struct edNODE* pMeshTransform;
 	//struct ACutsceneActor** pCutsceneSubInfo;
 	int numObjects_0x218;
 	int* subObjBasePtr;
@@ -112,12 +410,12 @@ struct CinematicObjectB {
 	//struct CineSunHolder* pCineSunHolderArray;
 	int count_0x22c;
 	//struct CineSpotHolder* pCineSpotHolderArray;
-	int fileInfoStart;
-	undefined4 field_0x238;
+	CinFileContainer* fileInfoStart;
+	int cinFileCount;
 	struct Actor* pActor;
 	float totalCutsceneDelta;
-	uint* field_0x244;
-	int* field_0x248;
+	ConditionedOperationArray condArray_0x244;
+	ScenaricCondition cond_0x248;
 	int* field_0x24c;
 	int field_0x250;
 	int* field_0x254;
@@ -151,10 +449,7 @@ struct CinematicObjectB {
 	float field_0x2cc;
 	float field_0x2d0;
 	float field_0x2d4;
-	undefined field_0x2d8;
-	undefined field_0x2d9;
-	undefined field_0x2da;
-	undefined field_0x2db;
+	int count_0x2d8;
 	int particleSectionStart;
 	int numberOfParticles;
 	int buffer_0x2e4;
@@ -168,18 +463,29 @@ public:
 
 	virtual void Game_Init();
 	virtual void Game_Term() {}
-	virtual void LevelLoading_Begin();
 
-	struct CinematicObjectB** ppCinematicObjB_A;
+	virtual void LevelLoading_Begin();
+	virtual void LevelLoading_End();
+	virtual bool LevelLoading_Manage();
+
+	virtual void Level_Init();
+
+	virtual void Level_AddAll(struct ByteCode* pByteCode);
+
+	virtual void Level_SectorChange(int param_2, int param_3);
+
+	void WillLoadCinematic();
+
+	struct Cinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;
 	struct CameraCinematic* pCameraLocationObj;
-	struct CinematicObjectB** ppCinematicObjB_B;
+	struct Cinematic** ppCinematicObjB_B;
 	int count_0x14;
-	struct CinematicObjectB* pCinematicObjB_0x18;
-	struct CinematicObjectB* pSubObj_0x1c;
+	struct Cinematic* pCinematicObjB_0x18;
+	struct Cinematic* pCinematic;
 	int field_0x20;
 	int field_0x24;
-	undefined4 field_0x28;
+	Cinematic* field_0x28;
 	undefined4 field_0x2c;
 	uint bInitialized;
 	undefined4 field_0x34;
@@ -198,7 +504,7 @@ public:
 	undefined field_0x4d;
 	undefined field_0x4e;
 	undefined field_0x4f;
-	sceVu0FVECTOR vector_0x50;
+	edF32VECTOR4 vector_0x50;
 	float x_0x60;
 	float y_0x64;
 	float z_0x68;

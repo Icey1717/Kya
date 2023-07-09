@@ -20,7 +20,7 @@ struct edSysHandlerVideo {
 void _UpdateVideoInfo(void);
 void edVideoFlip(void);
 struct edSurface* edVideoGetDisplaySurface(void);
-edVideo_Globals* GetVideoParams_002ba3e0(void);
+edVideo_Globals* edVideoGetInfo(void);
 void edVideoWaitVsync(byte param_1);
 unsigned int GetCountValue(void);
 

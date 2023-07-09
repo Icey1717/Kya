@@ -17,7 +17,7 @@
 #include "Callstack.h"
 #include "Log.h"
 
-#define DEBUG_LOG(level, format, ...) Log::GetInstance().AddLog(level, "Debug", format, ##__VA_ARGS__)
+#define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
 namespace DebugMenu_Internal {
 

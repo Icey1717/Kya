@@ -95,9 +95,6 @@ int edMemGetMemoryAvailable(EHeap heapID)
 	edHeapEntry* pHeap;
 	int freeBytes;
 
-	// Might wanna check this is actually working.
-	IMPLEMENTATION_GUARD();
-
 	if (heapID == TO_HEAP(H_INVALID)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemGetMemoryAvailable);
 	}
@@ -121,6 +118,7 @@ int edMemGetMemoryAvailable(EHeap heapID)
 			}
 		}
 	}
+	MY_LOG("edMemGetMemoryAvailable 0x%X bytes\n", freeBytes);
 	return freeBytes;
 }
 
@@ -140,7 +138,7 @@ void* edMemGetBlockAddress(void* pAlloc)
 	return pBlockAddress;
 }
 
-void* edMemAllocAlignBoundary(EHeap heapID, size_t size)
+void* edMemAlloc(EHeap heapID, size_t size)
 {
 	edHeapEntry* pHeap;
 	void* pNewAlloc;
@@ -1089,7 +1087,7 @@ void* AllocateFunc_001002a0(size_t size)
 {
 	void* pvVar1;
 
-	pvVar1 = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
+	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), size);
 	return pvVar1;
 }
 
@@ -1097,7 +1095,7 @@ void* Allocate(long amount)
 {
 	void* pvVar1;
 
-	pvVar1 = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (int)amount);
+	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), (int)amount);
 	return pvVar1;
 }
 

@@ -39,7 +39,7 @@ struct ed_viewport {
 	undefined4 field_0xc;
 	edSurface* pColorBuffer;
 	edSurface* pZBuffer;
-	ByteColor clearColor;
+	_rgba clearColor;
 	uint fbMask;
 	uint clearMask;
 	CameraObj_390* pCameraObj390_0x24;

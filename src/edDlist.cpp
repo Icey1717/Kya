@@ -14,13 +14,14 @@
 #include "LargeObject.h"
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
-#include "Camera.h"
+#include "edVideo/Camera.h"
 #include "edSystem.h"
 #include "edVideo/VideoD.h"
 #include "port/pointer_conv.h"
 
 #include "Rendering/CustomShell.h"
 #include "MathOps.h"
+#include "edList.h"
 
 edLIST* gDList_2D[2] = { 0 };
 edLIST* gDList_2D_Before3D[2] = { 0 };
@@ -82,21 +83,17 @@ DisplayListXYZFunc gAddVertexFUNC = NULL;
 DisplayListRGBAQFunc gAddColorFUNC = NULL;
 DisplayListSTFunc gAddSTFUNC = NULL;
 
-ByteColor* gCurColorBuf = NULL;
+_rgba* gCurColorBuf = NULL;
 char* gCurSTBuf = NULL;
 char* gEndSTBuf = NULL;
-Vector* gCurVertexBuf = NULL;
+edF32VECTOR4* gCurVertexBuf = NULL;
 undefined* gStartVertexBuf = NULL;
 
 int gCurFlashMaterial = 0;
 edDList_material* gCurMaterial = NULL;
 DisplayListInternal* gCurDList = NULL;
 
-
-int g_DisplayListSizeA_004250dc = 0x3E80;
-int g_DisplayListSizeBCount_004250d0 = 0x5;
-int g_DisplayListMatrixCount_004250d8 = 0xA;
-int g_DisplayListObjCount_004250e0 = 0x12C;
+edDlistConfiguration edDlistConfig = { 0x5, 0x5, 0xA, 0x3E80, 0x12C };
 
 byte DAT_00449660 = 0;
 	
@@ -105,23 +102,23 @@ int g_Count_004495f8 = 0;
 
 int Mode_00449694 = 0;
 
-ByteColor ByteColor_ARRAY_0048dd40[4];
+_rgba ByteColor_ARRAY_0048dd40[4];
 
-ByteColor* g_RGBAQ_00448aa0 = ByteColor_ARRAY_0048dd40;
+_rgba* g_RGBAQ_00448aa0 = ByteColor_ARRAY_0048dd40;
 
 edSysHandlerDisplayList sysHandler_0048cb90 = edSysHandlerDisplayList(&g_SysHandlersNodeTable_00489170, 5, 10);
 
 void edDListInitMemory(void)
 {
 	uint size;
-
-	if ((g_DisplayListSizeA_004250dc & 0xfU) != 0) {
-		g_DisplayListSizeA_004250dc = g_DisplayListSizeA_004250dc + (0x10 - (g_DisplayListSizeA_004250dc & 0xfU));
+	if ((edDlistConfig.commandCount & 0xfU) != 0) {
+		edDlistConfig.commandCount = edDlistConfig.commandCount + (0x10 - (edDlistConfig.commandCount & 0xfU));
 	}
-	if ((g_DisplayListSizeBCount_004250d0 & 3U) != 0) {
-		g_DisplayListSizeBCount_004250d0 = g_DisplayListSizeBCount_004250d0 + (4 - (g_DisplayListSizeBCount_004250d0 & 3U));
+	if ((edDlistConfig.field_0x0 & 3U) != 0) {
+		edDlistConfig.field_0x0 = edDlistConfig.field_0x0 + (4 - (edDlistConfig.field_0x0 & 3U));
 	}
-	size = g_DisplayListSizeA_004250dc + 0x640 + g_DisplayListMatrixCount_004250d8 * 0x40 + g_DisplayListSizeBCount_004250d0 * 8 + g_DisplayListObjCount_004250e0 * sizeof(DisplayList_0x10);
+	size = edDlistConfig.commandCount + 0x640 + edDlistConfig.matrixCount * sizeof(edF32MATRIX4) + edDlistConfig.field_0x0 * 8 +
+		edDlistConfig.field_0x10 * sizeof(DisplayList_0x10);
 	if ((size & 0xf) != 0) {
 		size = size + (0x10 - (size & 0xf));
 	}
@@ -129,7 +126,7 @@ void edDListInitMemory(void)
 	// #HACK
 	size = size * 4;
 
-	gDLISTWorkingBufferStart = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
+	gDLISTWorkingBufferStart = (char*)edMemAlloc(TO_HEAP(H_MAIN), size);
 	memset(gDLISTWorkingBufferStart, 0, size);
 	gDLISTWorkingBufferCur = gDLISTWorkingBufferStart;
 	gDLISTWorkingBufferEnd = gDLISTWorkingBufferStart + size;
@@ -238,24 +235,24 @@ LAB_002ce9d4:
 }
 
 byte g_Render_UI_00448a8c = 1;
-void edDListSend2DList(edLIST* pHeader)
+
+void edDListSend2DList(edLIST* pList)
 {
 	DisplayListInternal* pDisplayList;
 	DisplayListInternalSubObj_60* pDVar1;
 	edpkt_data* pCommandBuffer;
 	RenderCommandUint* pRVar2;
 	edpkt_data* pBuffer;
-	MeshTransformSpecial* pCVar7;
+	edNODE* pCVar7;
 
-	pBuffer = (gPKTDListFlush2DStart +
-		(gCurFlushState * ((uint)g_DisplayListSizeA_004250dc >> 4) >> 1));
+	pBuffer = gPKTDListFlush2DStart + (gCurFlushState * ((uint)edDlistConfig.commandCount >> 4) >> 1);
 	pCommandBuffer = pBuffer;
-	for (pCVar7 = pHeader->pLoadedData; (edLIST*)pCVar7 != pHeader; pCVar7 = pCVar7->pNext_0x4) {
-		pDisplayList = pCVar7->pRenderInput;
+	for (pCVar7 = pList->pPrev; (edLIST*)pCVar7 != pList; pCVar7 = pCVar7->pPrev) {
+		pDisplayList = (DisplayListInternal*)pCVar7->pData;
 		if ((gbDispList != 0) && (pDisplayList->pRenderCommands != pDisplayList->field_0x14)) {
 			pRVar2 = pDisplayList->pDisplayListInternalSubObj->aCommandArray + (pDisplayList->subCommandBufferCount - 1);
 			if (pRVar2->type == LM_REF_0) {
-				pRVar2->size = (uint)((int)pDisplayList->pRenderCommands - (int)pRVar2->pCommandBuffer);
+				pRVar2->size = (uint)((ulong)pDisplayList->pRenderCommands - (ulong)pRVar2->pCommandBuffer);
 			}
 			pCommandBuffer = edDListRecurseRefTag(pDisplayList, pCommandBuffer);
 		}
@@ -269,8 +266,8 @@ void edDListSend2DList(edLIST* pHeader)
 		pDisplayList->field_0x3 = 0;
 	}
 	if ((pBuffer != pCommandBuffer) && (gbDispList != 0)) {
-		pCommandBuffer->cmdB = 0x0;
-		sceDmaAddEnd((sceDmaTag**)&pCommandBuffer, 0, 0);
+		pCommandBuffer->cmdA = 0x70000000;
+		pCommandBuffer->cmdB = 0;
 		edDmaFlushCache();
 		edDmaSyncPath();
 		edDmaSyncPath();
@@ -279,9 +276,8 @@ void edDListSend2DList(edLIST* pHeader)
 			edDmaSend_nowait(SHELLDMA_CHANNEL_GIF, (ulonglong*)pBuffer);
 		}
 		edDmaSyncPath();
-
 	}
-	edListClear(pHeader);
+	edListClear(pList);
 	return;
 }
 
@@ -443,12 +439,10 @@ void edDListInterrupt(int callingID, int eventID, char* pRenderTaskData)
 	return;
 }
 
-int FUN_002ce480(DisplayListInternal* param_1, DisplayListInternal* param_2)
+int edDlistTestFunc(void* param_1, void* param_2)
 {
-	return (uint)param_1->field_0x2 - (uint)param_2->field_0x2;
+	return (uint)((DisplayListInternal*)param_1)->field_0x2 - (uint)((DisplayListInternal*)param_2)->field_0x2;
 }
-
-const int g_DisplayListCount_004250d4 = 5;
 
 int gbInitDone = 0;
 int gEndSTNbInVertex = 0;
@@ -463,8 +457,8 @@ void edDListInit(void)
 	uint uVar3;
 		
 	gbInitDone = 0;
-	//g_DisplayListPtr_004495b0 = (undefined*)0x0;
-	//DAT_004495b4 = 0;
+	//gPKTBlit = (undefined*)0x0;
+	//gCurPKTBlit = 0;
 	gDLISTWorkingBufferStart = (char*)0x0;
 	gDLISTWorkingBufferCur = (char*)0x0;
 	gDLISTWorkingBufferEnd = (char*)0x0;
@@ -478,9 +472,9 @@ void edDListInit(void)
 	gCurViewport = (ed_viewport*)0x0;
 	gNbAddedVertex = 0;
 	gCurDListBuf = (MeshDrawRenderCommand*)0x0;
-	//PTR_DAT_00449600 = (undefined*)0x0;
-	gCurVertexBuf = (Vector*)0x0;
-	gCurColorBuf = (ByteColor*)0x0;
+	//gCurDListBufEnd = (undefined*)0x0;
+	gCurVertexBuf = (edF32VECTOR4*)0x0;
+	gCurColorBuf = (_rgba*)0x0;
 	gCurSTBuf = (char*)0x0;
 	gCurColorNbInVertex = 0;
 	gEndColorNbInVertex = 0;
@@ -496,17 +490,17 @@ void edDListInit(void)
 	gCurStatePKT = (edpkt_data*)0x0;
 	gCurStatePKTSize = 0;
 	gBlendMode = 0;
-	//BYTE_00449660 = 0;
+	//gbFlipDone = 0;
 	gCurRenderState = 0;
 	gCurFlushState = 0;
 	gCurPrimType = 0;
 	gNbUsedMaterial = 0;
-	//DAT_00449670 = 0;
-	//DAT_00449674 = 0;
+	//gbFog = 0;
+	//gbFogAlpha = 0;
 	gbLight = 0;
-	//DAT_0044967c = 0;
+	//gShapeSize = 0;
 	gSubdivideLevel = 0;
-	//DAT_00449684 = 0;
+	//gSubdivideFovCoef = 0;
 	gAddVertexFUNC = (DisplayListXYZFunc)0x0;
 	gAddColorFUNC = (DisplayListRGBAQFunc)0x0;
 	gAddSTFUNC = (DisplayListSTFunc)0x0;
@@ -515,27 +509,36 @@ void edDListInit(void)
 	gNbDList_3D[0] = 0;
 	gNbDList_3D[1] = 0;
 
-	//memset(&DAT_0048db80, 0, 0xb0);
+	//memset(&gCurUnitHierachy, 0, 0xb0);
 	edDListInitMemory();
-	gBankMaterial = (DisplayList_0x10*)edDListAllocMemory(g_DisplayListObjCount_004250e0 & 0xfffffff);
-	//g_DisplayListPtr_004495b0 = edDListAllocMemory(100);
-	gPKTDListFlush2DStart = (edpkt_data*)edDListAllocMemory((uint)g_DisplayListSizeA_004250dc >> 4);
+	gBankMaterial = (DisplayList_0x10*)edDListAllocMemory(edDlistConfig.field_0x10 & 0xfffffff);
+	//gPKTBlit = edDListAllocMemory(100);
+	gPKTDListFlush2DStart = (edpkt_data*)edDListAllocMemory((uint)edDlistConfig.commandCount >> 4);
 	uVar3 = 0;
 	do {
-		pDVar1 = (DisplayListArray*)edDListAllocMemory((uint)(g_DisplayListSizeBCount_004250d0 << 2) >> 4);
+		pDVar1 = (DisplayListArray*)edDListAllocMemory((uint)(edDlistConfig.field_0x0 << 2) >> 4);
 		gDList_3D[uVar3] = pDVar1;
-		pCVar2 = edListNew(1, g_DisplayListCount_004250d4, TO_HEAP(H_MAIN));
+		pCVar2 = edListNew(1, edDlistConfig.field_0x4, TO_HEAP(H_MAIN));
 		gDList_2D[uVar3] = pCVar2;
-		pCVar2 = edListNew(1, g_DisplayListCount_004250d4, TO_HEAP(H_MAIN));
+		pCVar2 = edListNew(1, edDlistConfig.field_0x4, TO_HEAP(H_MAIN));
 		gDList_2D_Before3D[uVar3] = pCVar2;
-		edListSetMode(gDList_2D[uVar3], 2, FUN_002ce480);
-		edListSetMode(gDList_2D_Before3D[uVar3], 2, FUN_002ce480);
+		edListSetMode(gDList_2D[uVar3], 2, edDlistTestFunc);
+		edListSetMode(gDList_2D_Before3D[uVar3], 2, edDlistTestFunc);
+
+#ifdef EDITOR_BUILD
+		char name[128];
+		sprintf(name, "gDList_2D[%d]", uVar3);
+		edListSetName(gDList_2D[uVar3], name);
+		sprintf(name, "gDList_2D_Before3D[%d]", uVar3);
+		edListSetName(gDList_2D_Before3D[uVar3], name);
+#endif
+
 		uVar3 = uVar3 + 1;
 	} while (uVar3 < 2);
-	gCurMatrix = (edF32MATRIX4*)edDListAllocMemory((uint)(g_DisplayListMatrixCount_004250d8 << 6) >> 4);
+	gCurMatrix = (edF32MATRIX4*)edDListAllocMemory((uint)(edDlistConfig.matrixCount * sizeof(edF32MATRIX4)) >> 4);
 	gCurRenderState = 1;
 	gNbMatrix = 0;
-	//g_DisplayListGlobal_00449668 = 0;
+	gCurFlushState = 0;
 	edSysHandlersAdd(sysHandler_0048cb90.nodeParent, sysHandler_0048cb90.entries, sysHandler_0048cb90.maxEventID, (edSysHandlerType)0, edDListInterrupt, 1, 0);
 	edSysHandlersAdd(sysHandler_0048cb90.nodeParent, sysHandler_0048cb90.entries, sysHandler_0048cb90.maxEventID, (edSysHandlerType)1, edDListInterrupt, 1, 0);
 	edSysHandlersAdd(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
@@ -555,7 +558,7 @@ void edDListInit(void)
 
 void edDListLoadMatrix(edF32MATRIX4* m0)
 {
-	sceVu0CopyMatrix((float(*)[4])(gCurMatrix + gNbMatrix), (float(*)[4])m0);
+	edF32Matrix4CopyHard(gCurMatrix + gNbMatrix, m0);
 	return;
 }
 
@@ -583,7 +586,8 @@ void edDListPatchGifTag2D(void)
 void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 {
 	if (index < pMAT_Internal->count_0x0) {
-		ed_g2d_layer* pLAY = (ed_g2d_layer*)LOAD_SECTION(((ed_g2d_material_After*)(pMAT_Internal + 1))[index].pLAY);
+		int* hash = (int*)(pMAT_Internal + 1);
+		ed_g2d_layer_header* pLAY = (ed_g2d_layer_header*)LOAD_SECTION(hash[index]);
 		pLAY->body.flags_0x0 |= flag;
 	}
 	return;
@@ -601,12 +605,19 @@ void edDListBlendSet(uint mode)
 	return;
 }
 
+void edDListBlendFunc50(void)
+{
+	edDListBlendSet(1);
+	edDListSetState(0x4000000064, 0x42);
+	return;
+}
+
 ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHasPalette, ed_g2d_bitmap** pOutAddr)
 {
 	TextureData_HASH_Internal_PA32* pTVar1;
 	ed_g2d_bitmap* pTVar2;
 	TextureData_TEX* iVar2;
-	ed_g2d_layer* iVar1;
+	ed_g2d_layer_header* iVar1;
 	TextureData_HASH_Internal_PA32* iVar3;
 
 	*bHasPalette = false;
@@ -615,9 +626,10 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHas
 		if (pMAT->count_0x0 == 0) {
 			return (ed_g2d_bitmap*)0x0;
 		}
-		iVar1 = (ed_g2d_layer*)LOAD_SECTION(((ed_g2d_material_After*)(pMAT + 1))[offset].pLAY);
+		int* hash = (int*)(pMAT + 1);
+		iVar1 = (ed_g2d_layer_header*)LOAD_SECTION(hash[offset]);
 
-		if (((iVar1 != (ed_g2d_layer*)0xfffffff0) && (iVar1 != (ed_g2d_layer*)0xfffffff0)) && ((iVar1->body).field_0x1c != 0)) {
+		if (((iVar1 != (ed_g2d_layer_header*)0xfffffff0) && (iVar1 != (ed_g2d_layer_header*)0xfffffff0)) && ((iVar1->body).field_0x1c != 0)) {
 
 			iVar2 = (TextureData_TEX*)LOAD_SECTION(iVar1->body.pTex);
 			pTVar2 = (ed_g2d_bitmap *)0x0;
@@ -883,7 +895,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 				pPaletteBitmap = edDListGetG2DBitmap(pMaterialInfo->pMAT, 0, &bHasPalette, &pTextureBitmap);
 				pDVar6 = pDVar5->aCommandArray;
 				if (pPaletteBitmap != (ed_g2d_bitmap*)0x0) {
-					pDVar5->aCommandArray[0].pCommandBuffer = (edpkt_data*)(((char*)LOAD_SECTION(pPaletteBitmap->pPSX2)) + 0x40);
+					pDVar5->aCommandArray[0].pCommandBuffer = ((edpkt_data*)LOAD_SECTION(pPaletteBitmap->pPSX2)) + 0x4;
 					pDVar5->aCommandArray[0].type = LM_CALL;
 						
 					if ((bHasPalette != false) && (iVar3 = (uint)pTextureBitmap->width * (uint)pTextureBitmap->height, 0x3ffff < iVar3)) {
@@ -983,77 +995,6 @@ LAB_002cba4c:
 	return;
 }
 
-bool edlistNewObj(edLIST* param_1, DisplayListInternal* param_2)
-{
-	bool bVar1;
-	edNODE_MANAGER* pMVar2;
-	MeshTransformSpecial* pMVar3;
-
-	pMVar2 = param_1->pCameraPanHeader_0xc;
-	bVar1 = pMVar2->totalCount != pMVar2->usedCount;
-	if (bVar1) {
-		pMVar3 = pMVar2->pNextFree;
-		pMVar3->specUnion.field_0x0[0] = 2;
-		pMVar3->pRenderInput = param_2;
-	}
-	return bVar1;
-}
-
-MeshTransformSpecial* edlistInsertNode(edLIST* pList, MeshTransformSpecial* param_2)
-{
-	edNODE_MANAGER* pMVar1;
-	MeshTransformSpecial* pMVar2;
-
-	pMVar1 = pList->pCameraPanHeader_0xc;
-	pMVar1->usedCount = pMVar1->usedCount + 1;
-	pList->count_0x14 = pList->count_0x14 + 1;
-	pMVar2 = pMVar1->pNextFree;
-	pMVar1->pNextFree = pMVar2->pNext_0x4;
-	pMVar2->specUnion.randoPtr = NULL;
-	pMVar2->pPrev_0x8 = param_2->pPrev_0x8;
-	pMVar2->pNext_0x4 = param_2;
-	RENDER_LOG("edlistInsertNode %p\n", param_2);
-	param_2->pPrev_0x8->pNext_0x4 = pMVar2;
-	param_2->pPrev_0x8 = pMVar2;
-	return pMVar2;
-}
-
-bool edListAddNode(edLIST* pCameraPanHeader, DisplayListInternal* pDisplayList)
-{
-	edLIST* pCVar1;
-	bool bVar2;
-	MeshTransformSpecial* pMVar3;
-	int lVar4;
-
-	bVar2 = edlistNewObj(pCameraPanHeader, pDisplayList);
-	if (bVar2 == false) {
-		bVar2 = false;
-	}
-	else {
-		if (pCameraPanHeader->headerUnion.field0 == 1) {
-			pMVar3 = edlistInsertNode(pCameraPanHeader, (MeshTransformSpecial*)pCameraPanHeader);
-			pCameraPanHeader->pCameraPanStatic_0x8 = (MeshTransformParent*)pMVar3;
-		}
-		else {
-			if (pCameraPanHeader->headerUnion.field0 == 0) {
-				pMVar3 = edlistInsertNode(pCameraPanHeader, pCameraPanHeader->pLoadedData);
-				pCameraPanHeader->pLoadedData = pMVar3;
-			}
-			else {
-				pCVar1 = (edLIST*)pCameraPanHeader->pLoadedData;
-				while (((pCVar1 != pCameraPanHeader && (*(ushort*)&pCVar1->headerUnion != 1)) &&
-					(lVar4 = (*pCameraPanHeader->headerUnion.field1)
-						(pDisplayList, (DisplayListInternal*)pCVar1->pCameraPanHeader_0xc), -1 < lVar4))) {
-					pCVar1 = (edLIST*)pCVar1->pLoadedData;
-				}
-				edlistInsertNode(pCameraPanHeader, (MeshTransformSpecial*)pCVar1);
-			}
-		}
-		bVar2 = true;
-	}
-	return bVar2;
-}
-
 void edDlistAddtoView(DisplayListInternal* param_1)
 {
 	ushort uVar1;
@@ -1097,7 +1038,7 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, int param_4)
 	int y;
 	int x;
 	edpkt_data** ppRVar4;
-	Vector local_10;
+	edF32VECTOR4 local_10;
 
 	local_10.w = 1.0;
 	local_10.z = 0.0;
@@ -1262,7 +1203,7 @@ void edDListBeginStrip(float x, float y, float z, uint param_4, ushort param_5)
 {
 	MeshDrawRenderCommand** ppMVar1;
 	MeshDrawRenderCommand* pMVar2;
-	Vector* pVVar3;
+	edF32VECTOR4* pVVar3;
 	short sVar4;
 	uint uVar5;
 	int iVar6;
@@ -1371,9 +1312,9 @@ void edDListBeginStrip(float x, float y, float z, uint param_4, ushort param_5)
 	if (uVar11 != 0) {
 		gCurDListBuf->field_0x28 = gCurDListBuf->field_0x28 + (0x10 - uVar11);
 	}
-	gCurColorBuf = (ByteColor*)gCurDListBuf->field_0x24;
+	gCurColorBuf = (_rgba*)gCurDListBuf->field_0x24;
 	gCurSTBuf = gCurDListBuf->field_0x20 + 0x10;
-	gCurVertexBuf = (Vector*)gCurDListBuf->field_0x28;
+	gCurVertexBuf = (edF32VECTOR4*)gCurDListBuf->field_0x28;
 	if ((param_4 & 3) != 0) {
 		param_4 = param_4 + (4 - (param_4 & 3));
 	}
@@ -1403,7 +1344,7 @@ void edDListBeginStrip(float x, float y, float z, uint param_4, ushort param_5)
 	}
 	v0->type_0x42 = param_5;
 	v0->field_0x4c = gCurPrimType;
-	sceVu0CopyMatrix((float(*)[4])v0, (float(*)[4])gCurMatrix + gNbMatrix);
+	edF32Matrix4CopyHard((edF32MATRIX4*)v0, gCurMatrix + gNbMatrix);
 	gNbVertexDMA = 0x48;
 	return;
 }
@@ -1687,8 +1628,8 @@ void edDListEnd(void)
 	return;
 }
 
-void SetUnitMatrix_002d07b0(void)
+void edDListLoadIdentity(void)
 {
-	sceVu0UnitMatrix((TO_SCE_MTX)(gCurMatrix + gNbMatrix));
+	edF32Matrix4SetIdentityHard((gCurMatrix + gNbMatrix));
 	return;
 }

@@ -565,7 +565,8 @@ PACK(struct FileTypeData {
 PACK(struct edCBankFileHeader {
 	void apply_callback(struct TypePairData* pTypePairData, int mode);
 	void unpack();
-	void analyse() {};
+	void analyse() {}
+	uint get_index(int inIndex, int mode);
 
 	char header[4];
 	uint flags_0x4;
@@ -626,6 +627,10 @@ struct edCBankBufferEntry {
 	bool install(struct edCBankInstall* pLoadData);
 	bool is_loaded();
 	bool close();
+	void wait();
+	int get_index(char* inFileName);
+	bool get_info(int inFileIndex, struct edBANK_ENTRY_INFO* outFileData, char* outIopPath);
+	int get_element_count();
 
 	struct edCBankBuffer* header;
 	int* field_0x4;
@@ -699,16 +704,12 @@ char* DebugFindFilePath(edCBankFileHeader* pBVar3, int inFileIndex);
 
 void edFileNoWaitStackFlush(void);
 
-int get_element_count(edCBankBufferEntry* pBankBuffer);
-
 uint edFileGetSize(edFILEH* param_1);
 
 FileHeaderFileData* get_entry(edCBankFileHeader* pFileHeader, int fileIndex);
 char* edCBankFileHeader_GetFileBufferStartFromFileIndex(edCBankFileHeader* pFileData, int fileIndex);
 char* edCBankFileHeader_GetIopPath_00246460(edCBankFileHeader* fileBuffer, int inIndex);
-bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, struct edBANK_ENTRY_INFO* outFileData, char* outIopPath);
 int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, char* inFileName);
-int get_index(edCBankBufferEntry* headerObj, char* inFileName);
 char* get_element(edCBankBufferEntry* bankObj, int fileIndex);
 
 void load(edCBankBufferEntry* pBankAccessObject);

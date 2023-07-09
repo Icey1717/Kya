@@ -10,11 +10,7 @@
 #endif
 #include "../edStr.h"
 
-#ifdef PLATFORM_WIN
-#define IO_LOG(level, format, ...) Log::GetInstance().AddLog(level, "IO", format, ##__VA_ARGS__)
-#else
-#define IO_LOG(level, format, ...) scePrintf(format, ##__VA_ARGS__)
-#endif
+#define IO_LOG(level, format, ...) MY_LOG_CATEGORY("IO", level, format, ##__VA_ARGS__)
 
 const char* sz_edCBankBuffer_Wait_0042fb70 = "edCBankBufferEntry::file_access: Wait for end of previous loading operation \n";
 
@@ -63,12 +59,12 @@ uint edFileGetSize(edFILEH* param_1)
 	return uVar1;
 }
 
-uint get_index(edCBankFileHeader* pFileData, int inIndex, int mode)
+uint edCBankFileHeader::get_index(int inIndex, int mode)
 {
 	uint uVar1;
 	char* pcVar2;
 
-	if (pFileData == (edCBankFileHeader*)0x0) {
+	if (this == (edCBankFileHeader*)0x0) {
 		/* edCBankFileHeader::get_index: NULL object\n */
 		edDebugPrintf("edCBankFileHeader::get_index: NULL object\n");
 		uVar1 = 0;
@@ -76,22 +72,22 @@ uint get_index(edCBankFileHeader* pFileData, int inIndex, int mode)
 	else {
 		if (mode == 0) {
 			pcVar2 = (char*)0x0;
-			if (pFileData->field_0x34 != 0) {
-				pcVar2 = pFileData->header + (pFileData->field_0x34 - 8);
+			if (this->field_0x34 != 0) {
+				pcVar2 = this->header + (this->field_0x34 - 8);
 			}
 		}
 		else {
 			pcVar2 = (char*)0x0;
-			if (pFileData->field_0x38 != 0) {
-				pcVar2 = pFileData->header + pFileData->field_0x38 + -8;
+			if (this->field_0x38 != 0) {
+				pcVar2 = this->header + this->field_0x38 + -8;
 			}
 		}
 		pcVar2 = pcVar2 + 8;
-		if (pFileData->fileCount < 0x100) {
+		if (this->fileCount < 0x100) {
 			uVar1 = (uint)(byte)pcVar2[inIndex];
 		}
 		else {
-			if (pFileData->fileCount < 0x10000) {
+			if (this->fileCount < 0x10000) {
 				uVar1 = (uint) * (ushort*)(pcVar2 + inIndex * 2);
 			}
 			else {
@@ -108,7 +104,7 @@ char* DebugFindFilePath(edCBankFileHeader* pBVar3, int inFileIndex)
 	char* returnFileBufferStart = NULL;
 	if (pBVar3->fileCount != 0) {
 		do {
-			uint uVar2 = get_index(pBVar3, inIndex, 0);
+			uint uVar2 = pBVar3->get_index(inIndex, 0);
 			if ((uVar2 == inFileIndex) &&
 				(returnFileBufferStart = edCBankFileHeader_GetIopPath_00246460(pBVar3, inIndex),
 					returnFileBufferStart != (char*)0x0)) {
@@ -269,15 +265,15 @@ bool edCBankBufferEntry::load(edCBankInstall* file)
 	return ret;
 }
 
-int get_element_count(edCBankBufferEntry* pBankBuffer)
+int edCBankBufferEntry::get_element_count()
 {
 	int ret;
 
-	if (pBankBuffer->fileBuffer == (edCBankFileHeader*)0x0) {
+	if (this->fileBuffer == (edCBankFileHeader*)0x0) {
 		ret = 0;
 	}
 	else {
-		ret = pBankBuffer->fileBuffer->fileCount;
+		ret = this->fileBuffer->fileCount;
 	}
 	return ret;
 }
@@ -550,7 +546,7 @@ char* edCBankFileHeader_GetIopPath_00246460(edCBankFileHeader* fileBuffer, int i
 }
 
 
-bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, edBANK_ENTRY_INFO* outFileData, char* outIopPath)
+bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileData, char* outIopPath)
 {
 	bool bVar1;
 	FileTypeData* pTypeData;
@@ -560,9 +556,9 @@ bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, edBANK_ENTRY_INF
 	edCBankFileHeader* pBVar3;
 	uint inIndex;
 
-	IO_LOG(LogLevel::Info, "get_info for %d = %s\n", inFileIndex, DebugFindFilePath(pBankBuffer->fileBuffer, inFileIndex));
+	IO_LOG(LogLevel::Info, "get_info for %d = %s\n", inFileIndex, DebugFindFilePath(this->fileBuffer, inFileIndex));
 
-	pBVar3 = pBankBuffer->fileBuffer;
+	pBVar3 = this->fileBuffer;
 	if (pBVar3 == (edCBankFileHeader*)0x0) {
 		bVar1 = false;
 	}
@@ -576,29 +572,29 @@ bool get_info(edCBankBufferEntry* pBankBuffer, int inFileIndex, edBANK_ENTRY_INF
 			else {
 				outFileData->type = (uint)pTypeData->type;
 				outFileData->stype = (uint)pTypeData->stype;
-				pFileHeader = get_entry(pBankBuffer->fileBuffer, inFileIndex);
+				pFileHeader = get_entry(this->fileBuffer, inFileIndex);
 				if (pFileHeader == (FileHeaderFileData*)0x0) {
 					bVar1 = false;
 				}
 				else {
 					outFileData->size = pFileHeader->size;
 					outFileData->crc = pFileHeader->crc;
-					returnFileBufferStart = edCBankFileHeader_GetFileBufferStartFromFileIndex(pBankBuffer->fileBuffer, inFileIndex);
+					returnFileBufferStart = edCBankFileHeader_GetFileBufferStartFromFileIndex(this->fileBuffer, inFileIndex);
 					outFileData->fileBufferStart = returnFileBufferStart;
 					if (outIopPath != (char*)0x0) {
 						*outIopPath = '\0';
-						pBVar3 = pBankBuffer->fileBuffer;
+						pBVar3 = this->fileBuffer;
 						inIndex = 0;
 						if (pBVar3->fileCount != 0) {
 							do {
-								uVar2 = get_index(pBVar3, inIndex, 0);
+								uVar2 = pBVar3->get_index(inIndex, 0);
 								if ((uVar2 == inFileIndex) &&
-									(returnFileBufferStart = edCBankFileHeader_GetIopPath_00246460(pBankBuffer->fileBuffer, inIndex),
+									(returnFileBufferStart = edCBankFileHeader_GetIopPath_00246460(this->fileBuffer, inIndex),
 										returnFileBufferStart != (char*)0x0)) {
 									edStrCopy(outIopPath, returnFileBufferStart);
 									break;
 								}
-								pBVar3 = pBankBuffer->fileBuffer;
+								pBVar3 = this->fileBuffer;
 								inIndex = inIndex + 1;
 							} while (inIndex < pBVar3->fileCount);
 						}
@@ -874,18 +870,18 @@ LAB_00246280:
 	uVar2 = 0xffffffff;
 	if (-1 < inIndex) {
 		/* Ensure we found the right index? */
-		uVar2 = get_index(bankBufferObj, inIndex, 0);
+		uVar2 = bankBufferObj->get_index(inIndex, 0);
 	}
 	return (int)uVar2;
 }
 
-int get_index(edCBankBufferEntry* headerObj, char* inFileName)
+int edCBankBufferEntry::get_index(char* inFileName)
 {
 	int iVar1;
 
 	iVar1 = 0;
-	if (headerObj->fileBuffer != (edCBankFileHeader*)0x0) {
-		iVar1 = get_entryindex_from_filename(headerObj->fileBuffer, inFileName);
+	if (this->fileBuffer != (edCBankFileHeader*)0x0) {
+		iVar1 = get_entryindex_from_filename(this->fileBuffer, inFileName);
 	}
 	return iVar1;
 }
@@ -895,17 +891,17 @@ char* get_element(edCBankBufferEntry* bankObj, int fileIndex)
 	return edCBankFileHeader_GetFileBufferStartFromFileIndex(bankObj->fileBuffer, fileIndex);
 }
 
-void load(edCBankBufferEntry* pBankAccessObject)
+void edCBankBufferEntry::wait()
 {
 	int iVar1;
 
-	if (pBankAccessObject->accessFlag != 0) {
+	if (this->accessFlag != 0) {
 		/* edCBankBuffer::file_access: Wait for end of previous loading operation \n */
 		edDebugPrintf(sz_edCBankBuffer_Wait_0042fb70);
-		iVar1 = pBankAccessObject->accessFlag;
+		iVar1 = this->accessFlag;
 		while (iVar1 != 0) {
 			edFileNoWaitStackFlush();
-			iVar1 = pBankAccessObject->accessFlag;
+			iVar1 = this->accessFlag;
 		}
 	}
 	return;

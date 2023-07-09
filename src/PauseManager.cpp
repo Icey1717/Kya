@@ -21,6 +21,7 @@
 #endif
 #include "Rendering/edCTextStyle.h"
 #include "Rendering/edCTextFormat.h"
+#include "kya.h"
 
 SimpleMenu g_PauseScreenData_004507f0;
 
@@ -58,15 +59,12 @@ void PauseManager::Game_Init()
 	return;
 }
 
-extern int g_ScreenWidth;
-extern int g_ScreenHeight;
-
 edCTextFont* BootDataFont = NULL;
 
 void DrawLoadingScreen_001b05e0(void)
 {
 	bool bVar2;
-	TimeController* pTVar3;
+	Timer* pTVar3;
 	edCTextStyle* pNewFont;
 	char* pcVar4;
 	float fVar5;
@@ -74,7 +72,7 @@ void DrawLoadingScreen_001b05e0(void)
 	bool bIsLoadingScreen;
 	int localAlpha;
 
-	if (g_CinematicManager_0048efc->pSubObj_0x1c == (CinematicObjectB*)0x0) {
+	if (g_CinematicManager_0048efc->pCinematic == (Cinematic*)0x0) {
 		pTVar3 = GetTimer();
 		fVar5 = pTVar3->totalTime * 256.0f;
 		if (fVar5 < 2.147484e+09f) {
@@ -106,14 +104,14 @@ void DrawLoadingScreen_001b05e0(void)
 			if (bIsLoadingScreen) {
 				pcVar4 = gMessageManager.get_message(0x30803025f4c4f41);
 				drawTextParams.FormatString(pcVar4);
-				drawTextParams.Display((float)g_ScreenWidth / 2.0f, (float)g_ScreenHeight - 36.0f);
+				drawTextParams.Display((float)gVideoConfig.screenWidth / 2.0f, (float)gVideoConfig.screenHeight - 36.0f);
 			}
 			else {
 				// This is the text for the final end game screen.
 				FStack192.SetScale(1.3f, 1.3f);
 				pcVar4 = gMessageManager.get_message(0x180403015f544845);
 				drawTextParams.FormatString(pcVar4);
-				drawTextParams.Display((float)g_ScreenWidth * 0.5f, (float)g_ScreenHeight * 0.5f);
+				drawTextParams.Display((float)gVideoConfig.screenWidth * 0.5f, (float)gVideoConfig.screenHeight * 0.5f);
 			}
 			edTextStyleSetCurrent(pNewFont);
 			GuiDList_EndCurrent();
@@ -145,11 +143,6 @@ int FUN_00284930(void)
 	return INT_00483804;
 }
 
-LANGUAGE GetLanguageID_00336b30(void)
-{
-	return g_LanguageID_0044974c;
-}
-
 void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 {
 	CinematicManager* pCVar1;
@@ -158,10 +151,10 @@ void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 	undefined4 uVar4;
 	float fVar5;
 
-	pGVar3 = g_ManagerSingletonArray_00451660.g_GlobalSoundPtr_00451698;
-	pCVar2 = g_ManagerSingletonArray_00451660.g_CameraManager_0045167c;
+	pGVar3 = Scene::ptable.g_GlobalSoundPtr_00451698;
+	pCVar2 = Scene::ptable.g_CameraManager_0045167c;
 	pCVar1 = g_CinematicManager_0048efc;
-	//fVar5 = (g_ManagerSingletonArray_00451660.g_GlobalSoundPtr_00451698)->field_0xbc * 12.0;
+	//fVar5 = (Scene::ptable.g_GlobalSoundPtr_00451698)->field_0xbc * 12.0;
 	//if (fVar5 < 2.147484e+09) {
 	//	pPauseStaticObj->field_0x18 = (int)fVar5;
 	//}
@@ -177,16 +170,16 @@ void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 	//}
 	uVar4 = FUN_00284930();
 	pPauseStaticObj->field_0x14 = uVar4;
-	pPauseStaticObj->setOffsetX = g_SetOffsetX;
-	pPauseStaticObj->setOffsetY = g_SetOffsetY;
-	if ((pCVar2->field_0x470).x == 1.777778f) {
+	pPauseStaticObj->setOffsetX = gVideoConfig.offsetX;
+	pPauseStaticObj->setOffsetY = gVideoConfig.offsetY;
+	if (pCVar2->aspectRatio == 1.777778f) {
 		pPauseStaticObj->field_0x9 = 1;
 	}
 	else {
 		pPauseStaticObj->field_0x9 = 0;
 	}
 	pPauseStaticObj->field_0x8 = pCVar1->bInitialized != 0;
-	uVar4 = GetLanguageID_00336b30();
+	uVar4 = CMessageFile::get_default_language();
 	pPauseStaticObj->languageID = uVar4;
 	pPauseStaticObj->field_0x0 = g_InputManager_00450960.field_0x14 != 0;
 	return;
@@ -197,7 +190,7 @@ void PauseManager::Level_Init()
 	APlayer* pAVar1;
 	SimpleMenu* pPVar2;
 	SplashScreen* pGVar3;
-	TimeController* pTVar4;
+	Timer* pTVar4;
 	undefined8 uVar5;
 
 	this->currentLevelID_0x18 = LevelScheduleManager::gThis->currentLevelID;
@@ -228,13 +221,13 @@ void PauseManager::Level_Init()
 			this->pSimpleMenu->SetFontValue_002f2d10(BootDataFont);
 			this->pSimpleMenu->SetFontValue_002f2d00(BootDataFont);
 			this->pSimpleMenu->SetFontValue_002f2cf0(BootDataFont);
-			this->pSimpleMenu->SetTranslatedTextData_002f2d20(&(g_ManagerSingletonArray_00451660.g_LocalizationManager_00451678)->userInterfaceText);
+			this->pSimpleMenu->SetTranslatedTextData_002f2d20(&(Scene::ptable.g_LocalizationManager_00451678)->userInterfaceText);
 			pGVar3 = new SplashScreen();
 			this->pSplashScreen = pGVar3;
 			/* CDEURO/Frontend/kyatitle.g2d */
 			this->pSplashScreen->Init(0.0f, "CDEURO/Frontend/kyatitle.g2d");
-			this->pSplashScreen->SetDrawLocation((float)g_ScreenWidth / 2.0f - 80.0f, ((float)g_ScreenHeight * 20.0f) / 512.0f,
-				(float)g_ScreenWidth / 2.0f + 80.0f, ((float)g_ScreenHeight * 220.0f) / 512.0f);
+			this->pSplashScreen->SetDrawLocation((float)gVideoConfig.screenWidth / 2.0f - 80.0f, ((float)gVideoConfig.screenHeight * 20.0f) / 512.0f,
+				(float)gVideoConfig.screenWidth / 2.0f + 80.0f, ((float)gVideoConfig.screenHeight * 220.0f) / 512.0f);
 			pTVar4 = GetTimer();
 			this->totalPlayTime = pTVar4->totalPlayTime;
 		}
@@ -251,13 +244,13 @@ void PauseManager::Level_Draw()
 	LevelScheduleManager* pLevelScheduleManager;
 	bool bVar1;
 	bool bVar2;
-	TimeController* pTVar3;
+	Timer* pTVar3;
 	EPauseMenu EVar4;
 	int iVar5;
-	CinematicObjectB* pCVar6;
+	Cinematic* pCVar6;
 	ulong uVar7;
 	int index;
-	CinematicObjectB* pCVar8;
+	Cinematic* pCVar8;
 	float fVar9;
 
 	if ((this->pSimpleMenu != (SimpleMenu*)0x0) && (this->pSplashScreen != (SplashScreen*)0x0)) {
@@ -352,7 +345,7 @@ SimpleMenu::SimpleMenu()
 
 void SimpleMenu::Reset()
 {
-	TimeController* pTVar1;
+	Timer* pTVar1;
 
 	this->field_0x2c = 0;
 	this->currentPage = PM_MainMenu;
@@ -402,7 +395,7 @@ void SimpleMenu::SetFontValue_002f2d10(edCTextFont* pFont)
 	return;
 }
 
-void SimpleMenu::SetTranslatedTextData_002f2d20(MessageFile* pTextData)
+void SimpleMenu::SetTranslatedTextData_002f2d20(CMessageFile* pTextData)
 {
 	pTranslatedTextData = pTextData;
 	return;
@@ -461,7 +454,10 @@ Sprite::Sprite()
 	this->field_0x54 = local_10;
 	fStack12 = FLOAT_ARRAY_00448cd0[1];
 	this->field_0x58 = fStack12;
-	this->field_0x30 = 0x80808080;
+	this->field_0x30[0] = 0x80;
+	this->field_0x30[1] = 0x80;
+	this->field_0x30[2] = 0x80;
+	this->field_0x30[3] = 0x80;
 	this->field_0x4 = 0;
 	this->field_0x8 = 0;
 	this->field_0x34 = 0;
@@ -486,6 +482,223 @@ void Sprite::Install(char* pFileBuffer)
 	this->pMaterialInfo = &this->materialInfo;
 	this->field_0x18 = (float)(uint)this->field_0x38;
 	this->field_0x1c = (float)(uint)this->field_0x3a;
+	return;
+}
+
+void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5, float param_6, float param_7)
+{
+	uint uVar1;
+	byte b;
+	byte bVar2;
+	int iVar3;
+	byte r;
+	byte g;
+	float fVar4;
+	float fVar5;
+	float y;
+	float x;
+	float y_00;
+	float local_20;
+	float local_1c;
+	float local_18;
+	float local_14;
+	float local_10;
+	float local_c;
+	float local_8;
+	float local_4;
+
+	if (param_4 == param_6) {
+		param_6 = param_4 + (float)(uint)this->field_0x38;
+	}
+	if (param_5 == param_7) {
+		param_7 = param_5 + (float)(uint)this->field_0x3a;
+	}
+	edDListUseMaterial(&this->materialInfo);
+	edDListLoadIdentity();
+	local_c = this->field_0x58;
+	local_4 = this->field_0x50;
+	if ((this->field_0x34 & 0x2000) != 0) {
+		local_c = this->field_0x50;
+		local_4 = this->field_0x58;
+	}
+	local_10 = this->field_0x54;
+	local_8 = this->field_0x4c;
+	if ((param_2 & 0x1000) != 0) {
+		local_10 = this->field_0x4c;
+		local_8 = this->field_0x54;
+	}
+	local_18 = local_10;
+	local_14 = local_4;
+	local_20 = local_8;
+	local_1c = local_c;
+	if ((param_2 & 0xc000) != 0) {
+		IMPLEMENTATION_GUARD(
+		iVar3 = 2;
+		if ((param_2 & 0x8000) == 0) {
+			iVar3 = 0;
+		}
+		iVar3 = (uint)((param_2 & 0x4000) != 0) + iVar3;
+		FUN_0038c6f0(&local_8, &local_8, iVar3);
+		FUN_0038c6f0(&local_10, &local_10, iVar3);
+		FUN_0038c6f0(&local_18, &local_18, iVar3);
+		FUN_0038c6f0(&local_20, &local_20, iVar3);)
+	}
+	if ((param_2 & 0x3c0) != 0) {
+		fVar4 = param_3 * 3.0;
+		x = param_4 + fVar4;
+		y_00 = param_5 + fVar4;
+		fVar5 = param_6 - fVar4;
+		y = param_7 - fVar4;
+		if ((param_2 & 0x40) != 0) {
+			x = x - fVar4 * 2.0;
+		}
+		if ((param_2 & 0x80) != 0) {
+			fVar5 = fVar5 + fVar4 * 2.0;
+		}
+		if ((param_2 & 0x100) != 0) {
+			y_00 = y_00 - fVar4 * 2.0;
+		}
+		if ((param_2 & 0x200) != 0) {
+			y = y + fVar4 * 2.0;
+		}
+		edDListBlendSet(1);
+		edDListBlendFunc50();
+		edDListColor4u8(0, 0, 0, 0x80);
+		iVar3 = 4;
+		edDListBegin(1.0, 1.0, 1.0, 4, 4);
+		edDListTexCoo2f(local_8, local_4);
+		edDListVertex4f(x, y_00, 0.0, iVar3);
+		edDListTexCoo2f(local_18, local_14);
+		edDListVertex4f(fVar5, y_00, 0.0, iVar3);
+		edDListTexCoo2f(local_20, local_1c);
+		edDListVertex4f(x, y, 0.0, iVar3);
+		edDListTexCoo2f(local_10, local_c);
+		edDListVertex4f(fVar5, y, 0.0, iVar3);
+		edDListEnd();
+	}
+	if ((param_2 & 0x800) == 0) {
+		edDListBlendSet(1);
+	}
+	else {
+		edDListBlendSet(0);
+	}
+	edDListBlendFuncNormal();
+	if ((param_2 & 0x400) == 0) {
+		edDListColor4u8(this->field_0x30[0], this->field_0x30[1], this->field_0x30[2], this->field_0x30[3]);
+	}
+	else {
+		fVar4 = (float)(uint)this->field_0x30[0] * param_3;
+		if (fVar4 < 2.147484e+09) {
+			r = (byte)(int)fVar4;
+			bVar2 = this->field_0x30[1];
+		}
+		else {
+			r = (byte)(int)(fVar4 - 2.147484e+09);
+			bVar2 = this->field_0x30[1];
+		}
+		fVar4 = (float)(uint)bVar2 * param_3;
+		if (fVar4 < 2.147484e+09) {
+			g = (byte)(int)fVar4;
+			bVar2 = this->field_0x30[2];
+		}
+		else {
+			g = (byte)(int)(fVar4 - 2.147484e+09);
+			bVar2 = this->field_0x30[2];
+		}
+		fVar4 = (float)(uint)bVar2 * param_3;
+		if (fVar4 < 2.147484e+09) {
+			b = (byte)(int)fVar4;
+			bVar2 = this->field_0x30[3];
+		}
+		else {
+			b = (byte)(int)(fVar4 - 2.147484e+09);
+			bVar2 = this->field_0x30[3];
+		}
+		edDListColor4u8(r, g, b, bVar2);
+	}
+	uVar1 = param_2 & 0x30000;
+	if (uVar1 == 0) {
+		iVar3 = 4;
+		edDListBegin(1.0, 1.0, 1.0, 4, 4);
+		edDListTexCoo2f(local_8, local_4);
+		edDListVertex4f(param_4, param_5, 0.0, iVar3);
+		edDListTexCoo2f(local_18, local_14);
+		edDListVertex4f(param_6, param_5, 0.0, iVar3);
+		edDListTexCoo2f(local_20, local_1c);
+		edDListVertex4f(param_4, param_7, 0.0, iVar3);
+		edDListTexCoo2f(local_10, local_c);
+		edDListVertex4f(param_6, param_7, 0.0, iVar3);
+		edDListEnd();
+	}
+	else {
+		if (uVar1 == 0x20000) {
+			iVar3 = 4;
+			edDListBegin(1.0, 1.0, 1.0, 4, 8);
+			edDListTexCoo2f(local_8, local_4);
+			edDListVertex4f(param_4, param_5, 0.0, iVar3);
+			edDListTexCoo2f(local_18, local_14);
+			edDListVertex4f(param_6, param_5, 0.0, iVar3);
+			edDListTexCoo2f(local_20, local_1c);
+			fVar4 = (param_5 + param_7) / 2.0;
+			edDListVertex4f(param_4, fVar4, 0.0, iVar3);
+			edDListTexCoo2f(local_10, local_c);
+			edDListVertex4f(param_6, fVar4, 0.0, iVar3);
+			edDListTexCoo2f(local_8, local_4);
+			edDListVertex4f(param_4, param_7, 0.0, iVar3);
+			edDListTexCoo2f(local_18, local_14);
+			edDListVertex4f(param_6, param_7, 0.0, iVar3);
+			edDListEnd();
+		}
+		else {
+			if (uVar1 == 0x10000) {
+				iVar3 = 4;
+				edDListBegin(1.0, 1.0, 1.0, 4, 6);
+				edDListTexCoo2f(local_8, local_4);
+				edDListVertex4f(param_4, param_5, 0.0, iVar3);
+				edDListTexCoo2f(local_20, local_1c);
+				edDListVertex4f(param_4, param_7, 0.0, iVar3);
+				edDListTexCoo2f(local_18, local_14);
+				fVar4 = (param_4 + param_6) / 2.0;
+				edDListVertex4f(fVar4, param_5, 0.0, iVar3);
+				edDListTexCoo2f(local_10, local_c);
+				edDListVertex4f(fVar4, param_7, 0.0, iVar3);
+				edDListTexCoo2f(local_8, local_4);
+				edDListVertex4f(param_6, param_5, 0.0, iVar3);
+				edDListTexCoo2f(local_20, local_1c);
+				edDListVertex4f(param_6, param_7, 0.0, iVar3);
+				edDListEnd();
+			}
+			else {
+				iVar3 = 4;
+				edDListBegin(1.0, 1.0, 1.0, 4, 0xb);
+				edDListTexCoo2f(local_8, local_4);
+				edDListVertex4f(param_4, param_5, 0.0, iVar3);
+				edDListTexCoo2f(local_20, local_1c);
+				fVar4 = (param_5 + param_7) / 2.0;
+				edDListVertex4f(param_4, fVar4, 0.0, iVar3);
+				edDListTexCoo2f(local_18, local_14);
+				fVar5 = (param_4 + param_6) / 2.0;
+				edDListVertex4f(fVar5, param_5, 0.0, iVar3);
+				edDListTexCoo2f(local_10, local_c);
+				edDListVertex4f(fVar5, fVar4, 0.0, iVar3);
+				edDListTexCoo2f(local_8, local_4);
+				edDListVertex4f(param_6, param_5, 0.0, iVar3);
+				edDListTexCoo2f(local_20, local_1c);
+				edDListVertex4f(param_6, fVar4, 0.0, iVar3);
+				edDListTexCoo2f(local_8, local_4);
+				edDListVertex4f(param_6, param_7, 0.0, iVar3);
+				edDListTexCoo2f(local_10, local_c);
+				edDListVertex4f(fVar5, fVar4, 0.0, iVar3);
+				edDListTexCoo2f(local_18, local_14);
+				edDListVertex4f(fVar5, param_7, 0.0, iVar3);
+				edDListTexCoo2f(local_20, local_1c);
+				edDListVertex4f(param_4, fVar4, 0.0, iVar3);
+				edDListTexCoo2f(local_8, local_4);
+				edDListVertex4f(param_4, param_7, 0.0, iVar3);
+				edDListEnd();
+			}
+		}
+	}
 	return;
 }
 
@@ -516,7 +729,7 @@ bool SplashScreen::Init(float param_1, char* filePath)
 	int iVar2;
 	char* pcVar3;
 	ushort* puVar4;
-	TimeController* pTVar5;
+	Timer* pTVar5;
 	ed_g2d_material* pMaterialSection;
 	float fVar6;
 	int iStack4;
@@ -561,8 +774,8 @@ bool SplashScreen::Init(float param_1, char* filePath)
 	this->field_0xcc = 0;
 	pTVar5 = GetTimer();
 	this->field_0xc4 = pTVar5->totalTime;
-	uVar1 = g_ScreenWidth;
-	fVar6 = (float)g_ScreenHeight;
+	uVar1 = gVideoConfig.screenWidth;
+	fVar6 = (float)gVideoConfig.screenHeight;
 	(this->drawOffsets).x = 0.0f;
 	(this->drawOffsets).y = 0.0f;
 	(this->drawOffsets).z = (float)uVar1;
@@ -573,7 +786,7 @@ bool SplashScreen::Init(float param_1, char* filePath)
 bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 {
 	bool bVar1;
-	TimeController* pTVar2;
+	Timer* pTVar2;
 	uint uVar3;
 	edCTextStyle* pNewFont;
 	char* pcVar4;
@@ -638,7 +851,7 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			if (this->field_0xd0 != 0) {
 				edDListUseMaterial((edDList_material*)0x0);
 				edDListColor4u8(0, 0, 0, 0x80);
-				SetUnitMatrix_002d07b0();
+				edDListLoadIdentity();
 				iVar9 = 6;
 				edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
 				edDListVertex4f(0.0f, 0.0f, 0.0f, iVar9);
@@ -646,7 +859,7 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 				edDListEnd();
 			}
 			edDListUseMaterial(&this->materialInfo);
-			SetUnitMatrix_002d07b0();
+			edDListLoadIdentity();
 			edDListBlendSet(1);
 			edDListBlendFuncNormal();
 			r = (byte)uVar8;
@@ -703,9 +916,9 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 		}
 		if (param_2 != 0) {
 			fVar12 = fmodf(fVar12, 0.4f);
-			uVar3 = g_ScreenWidth;
-			if ((int)g_ScreenWidth < 0) {
-				uVar3 = g_ScreenWidth + 1;
+			uVar3 = gVideoConfig.screenWidth;
+			if ((int)gVideoConfig.screenWidth < 0) {
+				uVar3 = gVideoConfig.screenWidth + 1;
 			}
 			FStack192.Reset();
 			pNewFont = edTextStyleSetCurrent(&FStack192);
@@ -719,13 +932,13 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 					FStack192.spaceSize = 10.0f;
 					FStack192.SetVerticalAlignment(8);
 					fVar10 = (float)((int)uVar3 >> 1);
-					fVar12 = (float)g_ScreenHeight;
+					fVar12 = (float)gVideoConfig.screenHeight;
 					pcVar4 = gMessageManager.get_message(0x6001a010b110011);
 					edTextDraw(fVar10, fVar12 - 36.0f, pcVar4);
 				}
 			}
 			else {
-				fVar12 = (float)g_ScreenHeight;
+				fVar12 = (float)gVideoConfig.screenHeight;
 				fVar10 = (float)((int)uVar3 >> 1);
 				pcVar4 = gMessageManager.get_message(0x52525f503700080c);
 				edTextDraw(fVar10, fVar12 * 0.5f + 60.0f, pcVar4);

@@ -7,17 +7,18 @@
 #include <libvu0.h>
 #endif
 #include "CameraPanMasterHeader.h"
+#include "../edList.h"
 
-struct ScratchpadSubObj_60 {
-	struct edF32MATRIX4 field_0x0;
-	struct Vector field_0x40;
-	struct Vector field_0x50;
+struct FrustumData {
+	struct edF32MATRIX4 frustumMatrix;
+	struct edF32VECTOR4 field_0x40;
+	struct edF32VECTOR4 field_0x50;
 };
 
 struct ed_3D_Light_Config {
-	struct Vector* pLightAmbient;
-	struct Vector* pLightDirections;
-	struct Vector* pLightColorMatrix;
+	struct edF32VECTOR4* pLightAmbient;
+	struct edF32VECTOR4* pLightDirections;
+	struct edF32VECTOR4* pLightColorMatrix;
 };
 
 struct ed_3D_Shadow_Config {
@@ -26,10 +27,10 @@ struct ed_3D_Shadow_Config {
 	float field_0x8;
 	float field_0xc;
 	struct ed_viewport* pCamera_0x10;
-	struct ed_viewport* pCamera_0x14;
+	struct ed_viewport* pViewport;
 	undefined4 field_0x18;
 	undefined4 field_0x1c;
-	undefined2 field_0x20;
+	undefined2 renderMask;
 	byte field_0x22;
 	byte field_0x23;
 	byte field_0x24;
@@ -37,19 +38,19 @@ struct ed_3D_Shadow_Config {
 
 struct SceneConfig {
 	undefined* field_0x0;
-	float field_0x4;
+	float clipValue_0x4;
 	float nearClip;
 	float farClip;
 	uint field_0x10;
 	uint field_0x14;
-	float field_0x18;
+	float clipValue_0x18;
 	undefined field_0x1c;
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;
-	struct ScratchpadSubObj_60 field_0x20;
-	struct ScratchpadSubObj_60 field_0x80;
-	struct Vector field_0xe0;
+	struct FrustumData frustumA;
+	struct FrustumData frustumB;
+	struct edF32VECTOR4 field_0xe0;
 	ByteColor3 fogCol_0xf0;
 	undefined field_0xf3;
 	undefined field_0xf4;
@@ -130,7 +131,7 @@ struct ed_3D_Scene {
 	struct edLIST* pHeirListA;
 	struct edLIST* pHeirListB;
 	int* field_0x1ac;
-	uint count_0x1b0;
+	uint heirarchyListCount;
 	undefined field_0x1b4;
 	undefined field_0x1b5;
 	undefined field_0x1b6;
@@ -189,7 +190,7 @@ struct DisplayListInternal {
 	char* field_0x2c;
 };
 
-struct DisplayListInternalMesh {
+struct edCluster {
 	undefined field_0x0;
 	undefined field_0x1;
 	undefined field_0x2;

@@ -60,7 +60,7 @@ edSysHandlerVideo::edSysHandlerVideo()
 	nodeParent = &g_SysHandlersNodeTable_00489170;
 	maxEventID = 0xb;
 	mainIdentifier = 2;
-	//SetupEd10_00217720((undefined*)&edSysHandlerVideo_0048cee0, Destructor, &EdFileGlobal_10_0048ced0);
+	//__register_global_object((undefined*)&edSysHandlerVideo_0048cee0, Destructor, &EdFileGlobal_10_0048ced0);
 	return;
 }
 
@@ -295,7 +295,7 @@ edSurface* edVideoGetDisplaySurface(void)
 	return pVVar1;
 }
 
-edVideo_Globals* GetVideoParams_002ba3e0(void)
+edVideo_Globals* edVideoGetInfo(void)
 {
 	return &edVideo_Globals_00449590;
 }

@@ -1,10 +1,10 @@
 #include "edText.h"
 #include "PackedFont.h"
 #include "ed3D.h"
-#include "TextIconDictionary.h"
 #include "Rendering/edCTextFont.h"
 #include "Rendering/edCTextFormat.h"
 #include "port/pointer_conv.h"
+#include "EdenLib/edText/sources/edTextResources.h"
 
 edCTextFont* g_PackedFontPtr_004324d0 = (edCTextFont*)g_PackedFontData_0041f290;
 
@@ -130,7 +130,7 @@ bool edTextInit(void)
 	}
 	else {
 		//edTextEdDebugInit();
-		g_TextIconDictionary.Init(g_iMaxTextIconEntryCount_0044916c);
+		edTextResources.Init(g_iMaxTextIconEntryCount_0044916c);
 	}
 	return true;
 	return uVar1;
@@ -140,7 +140,7 @@ void edTextDraw(float x, float y, char* text)
 {
 	bool bVar1;
 	uint uVar2;
-	Vector local_1590;
+	edF32VECTOR4 local_1590;
 	edCTextFormat auStack5504;
 
 	//DrawTextParams::Constructor_0028c7d0(&auStack5504);

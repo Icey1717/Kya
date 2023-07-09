@@ -16,7 +16,7 @@ namespace PointerConv
 #define STORE_SECTION(a) PointerConv::AddTextureSectionValue(a)
 #define LOAD_SECTION(a) PointerConv::ResolveTextureSectionKeyChecked(a)
 #else
-#define STORE_SECTION(a) a
+#define STORE_SECTION(a) (int)a
 #define LOAD_SECTION(a) a
 #endif
 

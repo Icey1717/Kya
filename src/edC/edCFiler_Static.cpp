@@ -53,7 +53,7 @@ edCFilePathManager::edCFilePathManager()
 		} while (*pcVar5 != '\0');
 	}
 	*pcVar4 = '\0';
-	//SetupEd10_00217720((undefined*)&g_edCFiler_Static_0046dea0, Destructor_00261780, &EdFileGlobal_10_0046dac8);
+	//__register_global_object((undefined*)&g_edCFiler_Static_0046dea0, Destructor_00261780, &EdFileGlobal_10_0046dac8);
 	return;
 }
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "edDlist.h"
+#include "edList.h"
 
 #if defined(PLATFORM_PS2)
 #include <eekernel.h>
@@ -18,7 +19,7 @@
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoC.h"
 #include "Rendering/DisplayList.h"
-#include "Camera.h"
+#include "edVideo/Camera.h"
 
 #include "Rendering/CustomShell.h"
 #include "Types.h"
@@ -32,18 +33,51 @@
 #include "Rendering/OneTimeCommands.h"
 #include "MemoryStream.h"
 
-#ifdef PLATFORM_WIN
-#define ED3D_LOG(level, format, ...) Log::GetInstance().AddLog(level, "ed3D", format, ##__VA_ARGS__)
-#else
-#define ED3D_LOG(level, format, ...) scePrintf(format, ##__VA_ARGS__)
-#endif
+#include <string.h>
+#include "ed3DScratchPadGlobalVar.h"
+
+#define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
+
+#ifdef PLATFORM_PS2
+#define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)addr
+#define SCRATCHPAD_ADDRESS_TYPE(addr, type) (type)addr
+#define SCRATCHPAD_READ_ADDRESS_TYPE(addr, type) (type)addr
+
+#define SCRATCHPAD_WRITE_ADDRESS_TYPE(addr, type, value) *((type*)addr) = value;
+#else
+#define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)((addr - 0x70000000) + (char*)WorldToCamera_Matrix)
+#define SCRATCHPAD_ADDRESS_TYPE(addr, type) (type)((addr - 0x70000000) + (char*)WorldToCamera_Matrix)
+#define SCRATCHPAD_READ_ADDRESS_TYPE(addr, type) *(type*)((addr - 0x70000000) + (char*)WorldToCamera_Matrix)
+
+#define SCRATCHPAD_WRITE_ADDRESS_TYPE(addr, type, value) do { \
+	type* destPtr = (type*)((addr - 0x70000000) + (char*)WorldToCamera_Matrix); \
+	*destPtr = value; \
+} while(0)
+
+#endif
+
+#ifdef PLATFORM_PS2
+
+#else
+
+#endif
+
+int gCurTime = 0;
+int gStepTime = 0;
+
+edF32MATRIX4 HierarchyAnm::_gscale_mat = {
+	0.6954f, 0.0f, 0.0f, 0.0f,
+	0.0f, 0.6954f, 0.0f, 0.0f,
+	0.0f, 0.0f, 0.6954f, 0.0f,
+	0.0f, 0.0f, 0.0f, 1.0f
+};
 
 ed3DConfig::ed3DConfig()
 	: meshHeaderCountB(0x3E0)
 	, sceneCount(0xF)
-	, meshDisplayListInternalCount(0x10)
+	, maxClusterCount(0x10)
 	, meshHeaderCountBAlt(0x2800)
 	, matrixBufferCount(0x1F4)
 	, materialBufferCount(0xFA)
@@ -52,7 +86,7 @@ ed3DConfig::ed3DConfig()
 	, g2dManagerCount(0x19)
 	, bEnableProfile(0x0)
 	, field_0x25(0x0)
-	, field_0x26(0x64)
+	, clusterTabListSize(0x64)
 	, field_0x27(0x0)
 	, field_0x28(0xC8)
 	, field_0x2c(0x2)
@@ -64,13 +98,6 @@ ed3DConfig::ed3DConfig()
 {
 
 }
-
-edF32MATRIX4 SomeIdentityMatrix = {
-	0.6954f, 0.0f, 0.0f, 0.0f,
-	0.0f, 0.6954, 0.0f, 0.0f,
-	0.0f, 0.0f, 0.6954, 0.0f,
-	0.0f, 0.0f, 0.0f, 1.0f
-};
 
 int gNbVertexDMA = 0;
 ed_g2d_manager* gpG2D;
@@ -96,8 +123,8 @@ edpkt_data* g_pGifStart = NULL;
 
 int gFXBufAddr = 0;
 
-edLIST gPrim_List_FlushTex[2] = { 0 };
-edLIST gPrim_List_Shadow[2] = { 0 };
+edLIST gPrim_List_FlushTex[2] = { };
+edLIST gPrim_List_Shadow[2] = { };
 
 struct ed_3d_octree {
 	float field_0x0;
@@ -132,7 +159,7 @@ PACK(
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	ushort field_0x10[5];
+	ushort aClusterStripCounts[5];
 	ushort field_0x1a;
 	ushort field_0x1c;
 	undefined2 field_0x1e;
@@ -149,11 +176,11 @@ PACK(
 	undefined field_0x45;
 	undefined field_0x46;
 	undefined field_0x47;
-	int field_0x48;
+	int p3DStrip; // ed_3d_strip*
 });
 
 PACK(
-struct TextureData_MYSTERY {
+struct ed_Bound_Sphere_packet {
 	edF32VECTOR3 field_0x0;
 	ushort field_0xc;
 	undefined field_0xe;
@@ -168,7 +195,7 @@ struct ed_3d_strip {
 	short field_0x6;
 	int offsetA;
 	int pNext; // ed_3d_strip*
-	struct Vector vector_0x10;
+	struct edF32VECTOR4 boundingSphere;
 	int field_0x20; // char*
 	int field_0x24; // char*
 	int field_0x28; // char*
@@ -176,28 +203,28 @@ struct ed_3d_strip {
 	short bUseShadowMatrix_0x30;
 	undefined field_0x32;
 	undefined field_0x33;
-	int pRenderFrame30; // ed_dma_matrix*
+	int pDMA_Matrix; // ed_dma_matrix*
 	byte field_0x38;
 	byte cameraPanIndex;
 	short meshSectionCount_0x3a;
-	int pTextureDataMystery; // TextureData_MYSTERY*
+	int pTextureDataMystery; // ed_Bound_Sphere_packet*
 });
 
 MeshTransformDataBase* gpCurHierarchy = NULL;
 undefined* pOldFANGifTag = NULL;
 
-MeshTransformData* gHierarchyManagerBuffer = NULL;
+ed_3d_hierarchy_node* gHierarchyManagerBuffer = NULL;
 edNODE_MANAGER* gHierarchyManagerNodeManager = NULL;
-MeshTransformParent* gHierarchyManagerFirstFreeNode = NULL;
+edNODE* gHierarchyManagerFirstFreeNode = NULL;
 
 byte BYTE_00448a5c = 1;
 uint UINT_0048c2c0 = 0;
 uint UINT_0048c2c4 = 0;
 uint UINT_0048c2c8 = 0;
 uint UINT_0048c2cc = 0;
-Vector Vector_0048c2d0 = { 0 };
-Vector Vector_0048c2e0 = { 0 };
-Vector Vector_0048c2f0 = { 0 };
+edF32VECTOR4 gClipMulVector = { 0 };
+edF32VECTOR4 gClipAddVector = { 0 };
+edF32VECTOR4 gClipXY = { 0 };
 
 byte BYTE_00448a70 = 1;
 byte BYTE_00449418 = 0;
@@ -207,12 +234,11 @@ uint g_StaticVideoList_00489590[0xB20] = { 0 };
 ulong* g_StaticVideoList_00489590_LONG = (ulong*)g_StaticVideoList_00489590;
 
 edNODE_MANAGER* pNodeManRender = NULL;
-edNODE_MANAGER* pNodeManMaterial = NULL;
-edNODE_MANAGER* PTR_MeshTransformParentHeader_004494b4 = NULL;
-edNODE_MANAGER* PTR_MeshTransformParentHeader_004494b8 = NULL;
-edNODE_MANAGER* PTR_MeshTransformParentHeader_004494bc = NULL;
+edNODE_MANAGER* pNodeManMaterial[2] = { NULL, NULL };
+edNODE_MANAGER* gNodeDmaMatrix = NULL;
+edNODE_MANAGER* gNodeDmaStrip = NULL;
 
-edLIST gPrim_List[15][2] = { 0 };
+edLIST gPrim_List[15][2] = { };
 
 int gIDProfileRender = 0;
 int gIDProfileFlush = 0;
@@ -281,7 +307,7 @@ edSurface* edVideoGetDrawSurface(void)
 uint gRefOptionsforVU1Buf[12] = { 0 };
 ulong* g_StaticDisplayListData_0048c340_LONG = (ulong*)&gRefOptionsforVU1Buf;
 
-Vector Vector_00424ff0 = { 0 };
+edF32VECTOR4 Vector_00424ff0 = { 0 };
 
 int INT_004489a4 = 0;
 int INT_004489a8 = 0;
@@ -291,16 +317,16 @@ uint ed3DVU1Buffer[3] = { 0 };
 byte BYTE_004493b4 = 0;
 byte BYTE_004493b8 = 0;
 
-edpkt_data RenderCommand_ARRAY_0048c5f0[3] = {0};
+edpkt_data gOptionFlagCNT[3] = {0};
 
 void ed3DOptionFlagCNTInit(void)
 {
-	RenderCommand_ARRAY_0048c5f0[0].cmdB = (ulong)ed3DVU1Buffer[0] << 0x20 | 0x7c01000000000000;
-	RenderCommand_ARRAY_0048c5f0[1].cmdB = (ulong)ed3DVU1Buffer[1] << 0x20 | 0x7c01000000000000;
-	RenderCommand_ARRAY_0048c5f0[2].cmdB = (ulong)ed3DVU1Buffer[2] << 0x20 | 0x7c01000000000000;
-	RenderCommand_ARRAY_0048c5f0[0].cmdA = 0xe10000001;
-	RenderCommand_ARRAY_0048c5f0[1].cmdA = 0xe10000001;
-	RenderCommand_ARRAY_0048c5f0[2].cmdA = 0xe10000001;
+	gOptionFlagCNT[0].cmdB = (ulong)ed3DVU1Buffer[0] << 0x20 | 0x7c01000000000000;
+	gOptionFlagCNT[1].cmdB = (ulong)ed3DVU1Buffer[1] << 0x20 | 0x7c01000000000000;
+	gOptionFlagCNT[2].cmdB = (ulong)ed3DVU1Buffer[2] << 0x20 | 0x7c01000000000000;
+	gOptionFlagCNT[0].cmdA = 0xe10000001;
+	gOptionFlagCNT[1].cmdA = 0xe10000001;
+	gOptionFlagCNT[2].cmdA = 0xe10000001;
 	return;
 }
 
@@ -578,16 +604,11 @@ union RenderFrameUnion_2c
 	uint numValue;
 };
 
-struct ed_dma_matrix {
-	char* pFileData;
-	MeshTransformSpecial* field_0x4;
-	MeshTransformSpecial internalMeshTransformSpecial;
-	undefined4 field_0x18;
-	int index_0x1c;
-	struct edF32MATRIX4* pTransformMatrix;
-	struct MeshTransformDataBase* pMeshTransformData;
+struct ed_dma_matrix : public edLIST {
+	edF32MATRIX4* pObjToWorld;
+	MeshTransformDataBase* pMeshTransformData;
 	int flags_0x28;
-	RenderFrameUnion_2c field_0x2c;
+	float field_0x2c;
 };
 
 struct RenderFrame_30_B_DEPRECATED {
@@ -603,16 +624,24 @@ struct RenderFrame_30_B_DEPRECATED {
 	undefined field_0x1b;
 	int index_0x1c;
 	struct edF32MATRIX4* pTransformMatrix;
-	struct MeshTransformData* pMeshTransformData;
+	struct ed_3d_hierarchy_node* pMeshTransformData;
 	int flags_0x28;
 	float field_0x2c;
 };
 
-ed_dma_matrix* DmaMaterialBuffer[2] = { 0 };
-ed_dma_matrix* DmaMaterialBufferMax[2] = { 0 };
+struct ed_dma_material {
+	ed_g2d_material* pMaterial;
+	undefined4 field_0x4;
+	edLIST list;
+	uint flags;
+	ed_g2d_bitmap* pBitmap;
+};
 
-ed_dma_matrix* DmaMaterialBufferCurrent = NULL;
-ed_dma_matrix* DmaMaterialBufferCurrentMax = NULL;
+
+ed_dma_material* DmaMaterialBuffer[2] = { 0 };
+ed_dma_material* DmaMaterialBufferMax[2] = { 0 };
+ed_dma_material* DmaMaterialBufferCurrent = NULL;
+ed_dma_material* DmaMaterialBufferCurrentMax = NULL;
 
 ed_dma_matrix* DmaMatrixBuffer = NULL;
 ed_dma_matrix* DmaMatrixBufferMax = NULL;
@@ -622,10 +651,10 @@ ed_dma_matrix* DmaMatrixDefault = NULL;
 
 byte bTexInvalid = 0;
 int gVRAMBufferDMA = 0;
-MeshTransformParent* g_TransformParent_00449304 = NULL;
-ed_g2d_material* g_MAT_Internal_B_00449338 = NULL;
-edLIST* g_ActiveCameraPanMasterHeader_00449308 = NULL;
-MeshTransformSpecial* gPrim_List_FlushTex_Last = NULL;
+edNODE* gFlushTexCurrent = NULL;
+ed_g2d_material* previous_flushDMAMat = NULL;
+edLIST* gFlushTexLast = NULL;
+edNODE* gPrim_List_FlushTex_Last = NULL;
 
 struct ed3DFXConfig {
 	undefined4 field_0x0;
@@ -667,77 +696,65 @@ MeshTransformDataBase MeshTransformDataBase_0048cad0 = { 0 };
 
 void ed3DPrimlistMatrixBufferReset(void)
 {
-	RENDER_LOG("ed3DPrimlistMatrixBufferReset\n");
 	DmaMatrixDefault = DmaMatrixBuffer;
 	MeshTransformDataBase_0048cad0.field_0xa4 = (edF32MATRIX4*)0x0;
 	DmaMatrixBufferCurrentMax = DmaMatrixBufferMax;
-	PTR_MeshTransformParentHeader_004494b8 = pNodeManRender;
-	PTR_MeshTransformParentHeader_004494bc = pNodeManRender;
+	gNodeDmaMatrix = pNodeManRender;
+	gNodeDmaStrip = pNodeManRender;
 	DmaMatrixBufferCurrent = DmaMatrixBuffer + 1;
-	(DmaMatrixBuffer)->pTransformMatrix = &g_IdentityMatrix;
-	(DmaMatrixDefault)->pMeshTransformData = &MeshTransformDataBase_0048cad0;
-	RENDER_LOG("Storing pMeshTransformData %p\n", &MeshTransformDataBase_0048cad0);
-	(DmaMatrixDefault)->field_0x2c.floatValue = 1.0f;
-	((DmaMatrixDefault)->internalMeshTransformSpecial).specUnion.randoPtr =
-		DmaMatrixDefault;
-	(DmaMatrixDefault)->field_0x4 =
-		(MeshTransformSpecial*)DmaMatrixDefault;
-	((DmaMatrixDefault)->internalMeshTransformSpecial).pNext_0x4 =
-		(MeshTransformSpecial*)PTR_MeshTransformParentHeader_004494bc;
-	((DmaMatrixDefault)->internalMeshTransformSpecial).pPrev_0x8 = (MeshTransformSpecial*)0x0
-		;
-	((DmaMatrixDefault)->internalMeshTransformSpecial).pRenderInput =
-		(DisplayListInternal*)0x0;
-	(DmaMatrixDefault)->pFileData = (char*)0x0;
-	(DmaMatrixDefault)->pMeshTransformData = &MeshTransformDataBase_0048cad0;
-	RENDER_LOG("Storing pMeshTransformData %p\n", &MeshTransformDataBase_0048cad0);
+	DmaMatrixBuffer->pObjToWorld = &gF32Matrix4Unit;
+	DmaMatrixDefault->pMeshTransformData = &MeshTransformDataBase_0048cad0;
+	DmaMatrixDefault->field_0x2c = 1.0;
+	(DmaMatrixDefault)->pNext = (edNODE*)DmaMatrixDefault;
+	(DmaMatrixDefault)->pPrev = (edNODE*)DmaMatrixDefault;
+	(DmaMatrixDefault)->pData = gNodeDmaStrip;
+	(DmaMatrixDefault)->field_0x10 = 0;
+	(DmaMatrixDefault)->nodeCount = 0;
+	(DmaMatrixDefault)->header.mode = 0;
+	DmaMatrixDefault->pMeshTransformData = &MeshTransformDataBase_0048cad0;
 	return;
 }
 
-void ed3DFlushTexReset(edLIST* param_1)
+void ed3DFlushTexReset(edLIST* pList)
 {
-	char* pcVar1;
-	int iVar2;
-	ulong* puVar3;
-	int iVar4;
-	ed_dma_matrix* pMVar1;
+	ed_g2d_bitmap* peVar1;
+	edpkt_data* peVar2;
+	edpkt_data* puVar3;
+	ed_dma_material* pMVar1;
 
 	if (bTexInvalid == 0x3c) {
 		bTexInvalid = 0;
 	}
 	gVRAMBufferDMA = 0;
 	bTexInvalid = bTexInvalid + 1;
-	g_TransformParent_00449304 = (MeshTransformParent*)param_1->pLoadedData;
+	gFlushTexCurrent = pList->pPrev;
 	do {
-		pMVar1 = (ed_dma_matrix*)g_TransformParent_00449304->pMeshTransformData;
-		if (pMVar1 != (ed_dma_matrix*)0x0) {
-			g_MAT_Internal_B_00449338 = (ed_g2d_material*)pMVar1->pFileData;
+		pMVar1 = (ed_dma_material*)gFlushTexCurrent->pData;
+		if (pMVar1 != (ed_dma_material*)0x0) {
+			previous_flushDMAMat = pMVar1->pMaterial;
 		}
-		g_TransformParent_00449304 = g_TransformParent_00449304->pNext;
-	} while (pMVar1->field_0x2c.numValue == 0xdfdfdfdf);
-	g_ActiveCameraPanMasterHeader_00449308 = param_1;
-	if ((pMVar1->flags_0x28 & 2U) != 0) {
+		gFlushTexCurrent = gFlushTexCurrent->pPrev;
+	} while (pMVar1->pBitmap == (ed_g2d_bitmap*)0xdfdfdfdf);
+	gFlushTexLast = pList;
+	if ((pMVar1->flags & 2) != 0) {
 		ed3DFXClearALLFXSendedTOVRAM();
-		pMVar1->flags_0x28 = pMVar1->flags_0x28 & 0xfffffffd;
+		pMVar1->flags = pMVar1->flags & 0xfffffffd;
 	}
-
-	if (((ed_g2d_material*)pMVar1->pFileData)->count_0x0 < 2) {
-		pcVar1 = pMVar1->field_0x2c.ptrValue;
-		if ((pcVar1 != (char*)0x0) && (*(short*)(pcVar1 + 4) != 0)) {
-			iVar2 = *(int*)(pcVar1 + 8);
-			char* pBufferAddr = (char*)LOAD_SECTION(iVar2);
-			iVar4 = gVRAMBufferDMA * 8;
+	if (pMVar1->pMaterial->count_0x0 < 2) {
+		peVar1 = pMVar1->pBitmap;
+		if ((peVar1 != (ed_g2d_bitmap*)0x0) && (peVar1->psm != 0)) {
+			int* pInt = ((int*)LOAD_SECTION(peVar1->pPSX2)) + gVRAMBufferDMA;
+			puVar3 = (edpkt_data*)LOAD_SECTION(*pInt);
 			edDmaFlushCache();
-			RENDER_LOG("DMA Begin ed3DFlushTexReset\n");
-			edDmaSend_nowait(SHELLDMA_CHANNEL_GIF, *(ulonglong**)(pBufferAddr + iVar4));
+			RENDER_LOG("DMA Begin ed3DFlushTexReset");
+			edDmaSend_nowait(SHELLDMA_CHANNEL_GIF, (ulonglong*)puVar3);
 		}
 	}
 	else {
 		IMPLEMENTATION_GUARD(
-		puVar3 = ed3DFlushMultiTexture(pMVar1, gPKTMultiTex, 1, gVRAMBufferDMA);
-		if (puVar3 != (ulong*)0x0) {
+		peVar2 = ed3DFlushMultiTexture(pMVar1, (edpkt_data*)gPKTMultiTex, 1, gVRAMBufferDMA);
+		if (peVar2 != (edpkt_data*)0x0) {
 			edDmaFlushCache();
-			RENDER_LOG("DMA Begin ed3DFlushTexReset\n");
 			edDmaSend_nowait(SHELLDMA_CHANNEL_GIF, gPKTMultiTex);
 		})
 	}
@@ -761,7 +778,7 @@ void ed3DFlushTexPrepareDMA(edLIST* pCommandInfo)
 		DPUT_VIF1_FIFO(*(u_long128*)&g_VIF1_FIFO_00424fe0[0]);
 #endif
 		edDmaFlushCache();
-		RENDER_LOG("DMA Begin ed3DFlushTexPrepareDMA\n");
+		RENDER_LOG("DMA Begin ed3DFlushTexPrepareDMA");
 		edDmaSend_nowait(SHELLDMA_CHANNEL_GIF, (ulonglong*)g_pGifStart);
 	}
 	ed3DFXClearALLFXSendedTOVRAM();
@@ -781,8 +798,7 @@ void ed3DFlushSendDMA3D(void)
 	gCurRenderList = gCurRenderList != 0 ^ 1;
 	edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
 		sysHandler_0048cb90.maxEventID, 1, (void*)0x0);
-	if ((edLIST*)gPrim_List_FlushTex[gCurFlushList].pLoadedData !=
-		gPrim_List_FlushTex + gCurFlushList) {
+	if ((edLIST*)gPrim_List_FlushTex[gCurFlushList].pPrev != gPrim_List_FlushTex + gCurFlushList) {
 		ed3DFlushTexPrepareDMA(gPrim_List_FlushTex + gCurFlushList);
 	}
 #ifdef PLATFORM_PS2
@@ -790,7 +806,7 @@ void ed3DFlushSendDMA3D(void)
 #endif
 	if ((g_pStartPktData != (edpkt_data*)0x0) && (g_pStartPktData != g_VifRefPktCur)) {
 		edDmaFlushCache();
-		RENDER_LOG("DMA Begin ed3DFlushSendDMA3D\n");
+		RENDER_LOG("DMA Begin ed3DFlushSendDMA3D");
 		edDmaSend_nowait(SHELLDMA_CHANNEL_VIF1, (ulonglong*)g_pStartPktData);
 		if (g_WaitAfterVIF_00449244 != 0) {
 			edDmaSyncPath();
@@ -940,14 +956,18 @@ void ed3DDMAInit(uint countA, int countB)
 		pcVar2 = ed3D_Allocator_00449248.end;
 	}
 	ed3D_Allocator_00449248.end = pcVar2;
+#ifdef PLATFORM_PS2
 	g_RenderCommandVidMem_004492a0 = (edpkt_data*)(((ulong)(lVar3 << 0x24) >> 0x24) | 0x30000000);
+#else
+	g_RenderCommandVidMem_004492a0 = (edpkt_data*)malloc(0x1000);
+#endif
 	g_GifRefPktCur = g_RenderCommandVidMem_004492a0;
 	g_GifRefPktCurMax = g_RenderCommandVidMem_004492a0 + countB;
 	return;
 }
 
 ed_g2d_material* previous_flush3DMat = NULL;
-ed_dma_matrix* gpLastMaterial = NULL;
+ed_dma_material* gpLastMaterial = NULL;
 int gVRAMBufferFlush = 0;
 byte gbFirstTex = 0;
 
@@ -970,7 +990,7 @@ void ed3DFlushListInit(void)
 	gVRAMBufferFlush = 0;
 	previous_flush3DMat = (ed_g2d_material*)0x0;
 	gpCurHierarchy = (MeshTransformDataBase*)0x0;
-	gpLastMaterial = (ed_dma_matrix*)0x0;
+	gpLastMaterial = (ed_dma_material*)0x0;
 	if (gCurRenderList == 0) {
 		GifRefPktCurMax = ged3DConfig.field_0x28 * 0x10;
 		g_GifRefPktCur = g_RenderCommandVidMem_004492a0;
@@ -994,16 +1014,17 @@ void ed3DFlushListInit(void)
 	return;
 }
 
-char* ed3DGetG2DBitmap(ed_dma_matrix* param_1, int index)
+ed_g2d_bitmap* ed3DGetG2DBitmap(ed_dma_material* pDMA_Material, int index)
 {
-	char* pcVar1;
+	ed_g2d_material* peVar1;
+	ed_g2d_bitmap* pcVar1;
 
-	pcVar1 = param_1->pFileData;
-	if ((pcVar1 == (char*)0x0) || (*pcVar1 == '\0')) {
-		pcVar1 = (char*)0x0;
+	peVar1 = pDMA_Material->pMaterial;
+	if ((peVar1 == (ed_g2d_material*)0x0) || (peVar1->count_0x0 == 0)) {
+		pcVar1 = (ed_g2d_bitmap*)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD(pcVar1 = (char*)ed3DGetG2DBitmap(pcVar1, index));
+		IMPLEMENTATION_GUARD(pcVar1 = ed3DGetG2DBitmap(peVar1, index));
 	}
 	return pcVar1;
 }
@@ -1011,79 +1032,75 @@ char* ed3DGetG2DBitmap(ed_dma_matrix* param_1, int index)
 char DAT_0048c3b0[200] = { 0 };
 char DAT_0048c3c0[200] = { 0 };
 
-RenderFrame_30_B* pprevious_shadow_dma_matrix = NULL;
+ed_dma_matrix* pprevious_shadow_dma_matrix = NULL;
+
+ed_g2d_material gDefault_Material_Gouraud = { 0 };
+ed_g2d_material gDefault_Material_Gouraud_Cluster = { 0 };
+ed_g2d_material gDefault_Material_Flat = { 0 };
+ed_g2d_material gDefault_Material_Flat_Cluster = { 0 };
+ed_g2d_material gMaterial_Render_Zbuffer_Only = { 0 };
+ed_g2d_material gMaterial_Render_Zbuffer_Only_Cluster = { 0 };
 
 void ed3DShadowResetPrimList(void)
 {
+	edLIST* pInternalMeshTransformSpecial;
+	ed_g2d_bitmap* pcVar3;
+	edNODE* peVar1;
+	edNODE_MANAGER* pvVar1;
 	edNODE_MANAGER* pMVar1;
-	char** ppFileData;
-	edLIST* pCVar3;
-	ed_dma_matrix* pMeshCurrrent;
-	MeshTransformSpecial* pInternalMeshTransformSpecial;
-	char* pcVar6;
+	ed_dma_material* pMeshCurrrent;
+	ed_g2d_material** ppFileData;
 
-	RENDER_LOG("ed3DShadowResetPrimList\n");
-
-	// Setup Mesh Current
 	pMeshCurrrent = DmaMaterialBufferCurrent;
-	pInternalMeshTransformSpecial = &(DmaMaterialBufferCurrent)->internalMeshTransformSpecial;
-	ppFileData = &(DmaMaterialBufferCurrent)->pFileData;
+	pInternalMeshTransformSpecial = &DmaMaterialBufferCurrent->list;
+	ppFileData = &DmaMaterialBufferCurrent->pMaterial;
 	DmaMaterialBufferCurrent = DmaMaterialBufferCurrent + 1;
-	*ppFileData = DAT_0048c3b0;
-	pMeshCurrrent->field_0x4 = (MeshTransformSpecial*)0x0;
-	pMeshCurrrent->flags_0x28 = pMeshCurrrent->flags_0x28 & 0xfffffffe;
-	(pMeshCurrrent->internalMeshTransformSpecial).pPrev_0x8 = pInternalMeshTransformSpecial;
-	(pMeshCurrrent->internalMeshTransformSpecial).pNext_0x4 = pInternalMeshTransformSpecial;
-	(pMeshCurrrent->internalMeshTransformSpecial).pRenderInput = (DisplayListInternal*)PTR_MeshTransformParentHeader_004494b8;
-	pMeshCurrrent->field_0x18 = 0;
-	pMeshCurrrent->index_0x1c = 0;
-	pMeshCurrrent->internalMeshTransformSpecial.specUnion.randoPtr = NULL;
-	pcVar6 = ed3DGetG2DBitmap(pMeshCurrrent, 0);
-	pMeshCurrrent->field_0x2c.ptrValue = pcVar6;
-
-	pMVar1 = gPrim_List_Shadow[gCurRenderList].pCameraPanHeader_0xc;
-	pInternalMeshTransformSpecial = pMVar1->pNextFree + pMVar1->usedCount;
-	pInternalMeshTransformSpecial->pRenderInput = (DisplayListInternal*)pMeshCurrrent;
-	pInternalMeshTransformSpecial->specUnion.field_0x0[0] = 1;
-	pMVar1->usedCount = pMVar1->usedCount + 1;
-	pCVar3 = gPrim_List_Shadow + gCurRenderList;
-	gPrim_List_Shadow[gCurRenderList].count_0x14 =
-		gPrim_List_Shadow[gCurRenderList].count_0x14 + 1;
-	pInternalMeshTransformSpecial->pNext_0x4 = pCVar3->pLoadedData;
-	RENDER_LOG("ed3DShadowResetPrimList B %p\n", pCVar3->pLoadedData);
-	gPrim_List_Shadow[gCurRenderList].pLoadedData = pInternalMeshTransformSpecial;
-
-	// Setup Mesh Current
+	*ppFileData = &gMaterial_Render_Zbuffer_Only;
+	pMeshCurrrent->field_0x4 = 0;
+	pMeshCurrrent->flags = pMeshCurrrent->flags & 0xfffffffe;
+	(pMeshCurrrent->list).pNext = (edNODE*)pInternalMeshTransformSpecial;
+	(pMeshCurrrent->list).pPrev = (edNODE*)pInternalMeshTransformSpecial;
+	(pMeshCurrrent->list).pData = gNodeDmaMatrix;
+	(pMeshCurrrent->list).field_0x10 = 0;
+	(pMeshCurrrent->list).nodeCount = 0;
+	(pMeshCurrrent->list).header.mode = 0;
+	pcVar3 = ed3DGetG2DBitmap(pMeshCurrrent, 0);
+	pMeshCurrrent->pBitmap = pcVar3;
+	pMVar1 = (edNODE_MANAGER*)gPrim_List_Shadow[gCurRenderList].pData;
+	peVar1 = pMVar1->pNodeHead + pMVar1->linkCount;
+	peVar1->pData = pMeshCurrrent;
+	peVar1->header.typeField.type = 1;
+	pMVar1->linkCount = pMVar1->linkCount + 1;
+	pInternalMeshTransformSpecial = gPrim_List_Shadow + gCurRenderList;
+	gPrim_List_Shadow[gCurRenderList].nodeCount = gPrim_List_Shadow[gCurRenderList].nodeCount + 1;
+	peVar1->pPrev = pInternalMeshTransformSpecial->pPrev;
+	gPrim_List_Shadow[gCurRenderList].pPrev = peVar1;
 	pMeshCurrrent = DmaMaterialBufferCurrent;
-	pInternalMeshTransformSpecial = &(DmaMaterialBufferCurrent)->internalMeshTransformSpecial;
-	ppFileData = &(DmaMaterialBufferCurrent)->pFileData;
+	pInternalMeshTransformSpecial = &DmaMaterialBufferCurrent->list;
+	ppFileData = &DmaMaterialBufferCurrent->pMaterial;
 	DmaMaterialBufferCurrent = DmaMaterialBufferCurrent + 1;
-	*ppFileData = DAT_0048c3c0;
-	pMeshCurrrent->field_0x4 = (MeshTransformSpecial*)0x0;
-	RENDER_LOG("Storing pMeshTransformData %p\n", 0x0);
-	pMeshCurrrent->flags_0x28 = pMeshCurrrent->flags_0x28 & 0xfffffffe;
-	(pMeshCurrrent->internalMeshTransformSpecial).pPrev_0x8 = pInternalMeshTransformSpecial;
-	(pMeshCurrrent->internalMeshTransformSpecial).pNext_0x4 = pInternalMeshTransformSpecial;
-	(pMeshCurrrent->internalMeshTransformSpecial).pRenderInput = (DisplayListInternal*)PTR_MeshTransformParentHeader_004494b8;
-	pMeshCurrrent->field_0x18 = 0;
-	pMeshCurrrent->index_0x1c = 0;
-	*(undefined4*)&pMeshCurrrent->internalMeshTransformSpecial = 0;
-	pMeshCurrrent->flags_0x28 = pMeshCurrrent->flags_0x28 | 1;
-	pcVar6 = ed3DGetG2DBitmap(pMeshCurrrent, 0);
-	pMeshCurrrent->field_0x2c.ptrValue = pcVar6;
-
-	pMVar1 = gPrim_List_Shadow[gCurRenderList].pCameraPanHeader_0xc;
-	pInternalMeshTransformSpecial = pMVar1->pNextFree + pMVar1->usedCount;
-	pInternalMeshTransformSpecial->pRenderInput = (DisplayListInternal*)pMeshCurrrent;
-	pInternalMeshTransformSpecial->specUnion.field_0x0[0] = 1;
-	pMVar1->usedCount = pMVar1->usedCount + 1;
-	pCVar3 = gPrim_List_Shadow + gCurRenderList;
-	gPrim_List_Shadow[gCurRenderList].count_0x14 =
-		gPrim_List_Shadow[gCurRenderList].count_0x14 + 1;
-	pInternalMeshTransformSpecial->pNext_0x4 = pCVar3->pLoadedData;
-	RENDER_LOG("ed3DShadowResetPrimList C %p\n", pCVar3->pLoadedData);
-	gPrim_List_Shadow[gCurRenderList].pLoadedData = pInternalMeshTransformSpecial;
-	pprevious_shadow_dma_matrix = 0;
+	*ppFileData = &gMaterial_Render_Zbuffer_Only_Cluster;
+	pMeshCurrrent->field_0x4 = 0;
+	pMeshCurrrent->flags = pMeshCurrrent->flags & 0xfffffffe;
+	(pMeshCurrrent->list).pNext = (edNODE*)pInternalMeshTransformSpecial;
+	(pMeshCurrrent->list).pPrev = (edNODE*)pInternalMeshTransformSpecial;
+	(pMeshCurrrent->list).pData = gNodeDmaMatrix;
+	(pMeshCurrrent->list).field_0x10 = 0;
+	(pMeshCurrrent->list).nodeCount = 0;
+	(pMeshCurrrent->list).header.mode = 0;
+	pMeshCurrrent->flags = pMeshCurrrent->flags | 1;
+	pcVar3 = ed3DGetG2DBitmap(pMeshCurrrent, 0);
+	pMeshCurrrent->pBitmap = pcVar3;
+	pvVar1 = (edNODE_MANAGER*)gPrim_List_Shadow[gCurRenderList].pData;
+	peVar1 = pvVar1->pNodeHead + pvVar1->linkCount;
+	peVar1->pData = pMeshCurrrent;
+	peVar1->header.typeField.type = 1;
+	pvVar1->linkCount = pvVar1->linkCount + 1;
+	pInternalMeshTransformSpecial = gPrim_List_Shadow + gCurRenderList;
+	gPrim_List_Shadow[gCurRenderList].nodeCount = gPrim_List_Shadow[gCurRenderList].nodeCount + 1;
+	peVar1->pPrev = pInternalMeshTransformSpecial->pPrev;
+	gPrim_List_Shadow[gCurRenderList].pPrev = peVar1;
+	pprevious_shadow_dma_matrix = (ed_dma_matrix*)0x0;
 	return;
 }
 
@@ -1091,32 +1108,31 @@ int gCurSceneID = 0;
 
 void ed3DPrimlistInitMaterialRenderList(void)
 {
-	edLIST* pCVar1;
-	edNODE_MANAGER** ppMVar2;
+	edLIST* peVar1;
+	edNODE_MANAGER** ppeVar2;
 
-	ppMVar2 = &pNodeManMaterial + gCurRenderList;
-	pCVar1 = gPrim_List_FlushTex + gCurRenderList;
-	gPrim_List_FlushTex[gCurRenderList].pLoadedData =
-		(MeshTransformSpecial*)(gPrim_List_FlushTex + gCurRenderList);
-	pCVar1->count_0x14 = 0;
-	gPrim_List_FlushTex_Last = (MeshTransformSpecial*)0x0;
-	(*ppMVar2)->usedCount = 0;
+	ppeVar2 = pNodeManMaterial + gCurRenderList;
+	peVar1 = gPrim_List_FlushTex + gCurRenderList;
+	gPrim_List_FlushTex[gCurRenderList].pPrev = (edNODE*)(gPrim_List_FlushTex + gCurRenderList);
+	peVar1->nodeCount = 0;
+	gPrim_List_FlushTex_Last = (edNODE*)0x0;
+	(*ppeVar2)->linkCount = 0;
 	DmaMaterialBufferCurrent = DmaMaterialBuffer[gCurRenderList];
 	DmaMaterialBufferCurrentMax = DmaMaterialBufferMax[gCurRenderList];
 	return;
 }
 
 
-void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
+void UpdateRenderMeshTransform_002954b0(ed_3d_hierarchy_node* param_1, bool mode)
 {
-	MeshTransformData* v1;
-	MeshTransformData* v1_00;
+	ed_3d_hierarchy_node* v1;
+	ed_3d_hierarchy_node* v1_00;
 	edF32MATRIX4* v1_01;
 	edF32MATRIX4* v1_02;
 	edF32MATRIX4* v1_03;
 	edF32MATRIX4* v1_04;
-	MeshTransformData* pMeshTransformData;
-	MeshTransformData* pMVar1;
+	ed_3d_hierarchy_node* pMeshTransformData;
+	ed_3d_hierarchy_node* pMVar1;
 	ulong uVar2;
 
 	if ((mode != false) && ((param_1->base).subMeshParentCount_0xac != 0)) {
@@ -1125,18 +1141,18 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 	if ((param_1->base).field_0x88 == 0) {
 		return;
 	}
-	v1 = (param_1->base).pLinkTransformData;
-	if (v1 == (MeshTransformData*)0x0) {
+	v1 = (ed_3d_hierarchy_node*)(param_1->base).pLinkTransformData;
+	if (v1 == (ed_3d_hierarchy_node*)0x0) {
 		if (((param_1->base).flags_0x9e & 1) == 0) {
-			sceVu0CopyMatrix((TO_SCE_MTX) & (param_1->base).transformB, (TO_SCE_MTX)param_1);
+			edF32Matrix4CopyHard(&(param_1->base).transformB, &param_1->base.transformA);
 		}
 		goto LAB_002957c4;
 	}
 	if ((v1->base).field_0x88 != '\0') {
-		v1_00 = (v1->base).pLinkTransformData;
-		if (v1_00 == (MeshTransformData*)0x0) {
+		v1_00 = (ed_3d_hierarchy_node*)(v1->base).pLinkTransformData;
+		if (v1_00 == (ed_3d_hierarchy_node*)0x0) {
 			if (((v1->base).flags_0x9e & 1) == 0) {
-				sceVu0CopyMatrix((TO_SCE_MTX) & (v1->base).transformB, (TO_SCE_MTX)v1);
+				edF32Matrix4CopyHard(&(v1->base).transformB, &v1->base.transformA);
 			}
 		}
 		else {
@@ -1145,7 +1161,7 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 				v1_01 = *(edF32MATRIX4*)((int)(v1_00->base).hash.number + 0x10);
 				if (v1_01 == (edF32MATRIX4*)0x0) {
 					if ((*(ushort*)((int)(v1_00->base).hash.number + 0x1e) & 1) == 0) {
-						sceVu0CopyMatrix((TO_SCE_MTX) & (v1_00->base).transformB, (TO_SCE_MTX)v1_00);
+						edF32Matrix4CopyHard( & (v1_00->base).transformB, v1_00);
 					}
 				}
 				else {
@@ -1153,54 +1169,54 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 						v1_02 = (edF32MATRIX4*)v1_01[2][1][0];
 						if (v1_02 == (edF32MATRIX4*)0x0) {
 							if ((*(ushort*)((int)v1_01[2][1] + 0xe) & 1) == 0) {
-								sceVu0CopyMatrix(v1_01[1], v1_01);
+								edF32Matrix4CopyHard(v1_01[1], v1_01);
 							}
 						}
 						else {
 							if (*(char*)(v1_02[2] + 2) != '\0') {
-								v1_03 = (TO_SCE_MTX)v1_02[2][1][0];
-								if (v1_03 == (TO_SCE_MTX)0x0) {
+								v1_03 = v1_02[2][1][0];
+								if (v1_03 == 0x0) {
 									if ((*(ushort*)((int)v1_02[2][1] + 0xe) & 1) == 0) {
-										sceVu0CopyMatrix(v1_02[1], v1_02);
+										edF32Matrix4CopyHard(v1_02[1], v1_02);
 									}
 								}
 								else {
 									if (*(char*)(v1_03[2] + 2) != '\0') {
-										v1_04 = (TO_SCE_MTX)v1_03[2][1][0];
-										if (v1_04 == (TO_SCE_MTX)0x0) {
+										v1_04 = v1_03[2][1][0];
+										if (v1_04 == 0x0) {
 											if ((*(ushort*)((int)v1_03[2][1] + 0xe) & 1) == 0) {
-												sceVu0CopyMatrix(v1_03[1], v1_03);
+												edF32Matrix4CopyHard(v1_03[1], v1_03);
 											}
 										}
 										else {
 											if (*(char*)(v1_04[2] + 2) != '\0') {
-												pMeshTransformData = (MeshTransformData*)v1_04[2][1][0];
-												if (pMeshTransformData == (MeshTransformData*)0x0) {
+												pMeshTransformData = (ed_3d_hierarchy_node*)v1_04[2][1][0];
+												if (pMeshTransformData == (ed_3d_hierarchy_node*)0x0) {
 													if ((*(ushort*)((int)v1_04[2][1] + 0xe) & 1) == 0) {
-														sceVu0CopyMatrix(v1_04[1], v1_04);
+														edF32Matrix4CopyHard(v1_04[1], v1_04);
 													}
 												}
 												else {
 													uVar2 = GetParam1_0x88((int)pMeshTransformData);
 													if (uVar2 != 0) {
 														pMVar1 = (pMeshTransformData->base).pLinkTransformData;
-														if (pMVar1 == (MeshTransformData*)0x0) {
+														if (pMVar1 == (ed_3d_hierarchy_node*)0x0) {
 															if (((pMeshTransformData->base).flags_0x9e & 1) == 0) {
-																sceVu0CopyMatrix((TO_SCE_MTX) & (pMeshTransformData->base).transformB,
-																	(TO_SCE_MTX)pMeshTransformData);
+																edF32Matrix4CopyHard( & (pMeshTransformData->base).transformB,
+																	pMeshTransformData);
 															}
 														}
 														else {
 															UpdateRenderMeshTransform_002954b0(pMVar1, false);
 															if (((pMeshTransformData->base).flags_0x9e & 1) == 0) {
-																sceVu0MulMatrix((TO_SCE_MTX) & (pMeshTransformData->base).transformB,
-																	(TO_SCE_MTX)pMeshTransformData, (TO_SCE_MTX) & (pMVar1->base).transformB);
+																edF32Matrix4MulF32Matrix4Hard( & (pMeshTransformData->base).transformB,
+																	pMeshTransformData,  & (pMVar1->base).transformB);
 															}
 														}
 														ed3DSetSceneRender(pMeshTransformData, 0);
 													}
 													if ((*(ushort*)((int)v1_04[2][1] + 0xe) & 1) == 0) {
-														sceVu0MulMatrix(v1_04[1], v1_04, (TO_SCE_MTX) & (pMeshTransformData->base).transformB);
+														edF32Matrix4MulF32Matrix4Hard(v1_04[1], v1_04,  & (pMeshTransformData->base).transformB);
 														*(undefined*)(v1_04[2] + 2) = 0;
 														goto LAB_00295648;
 													}
@@ -1209,7 +1225,7 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 											}
 										LAB_00295648:
 											if ((*(ushort*)((int)v1_03[2][1] + 0xe) & 1) == 0) {
-												sceVu0MulMatrix(v1_03[1], v1_03, v1_04[1]);
+												edF32Matrix4MulF32Matrix4Hard(v1_03[1], v1_03, v1_04[1]);
 												*(undefined*)(v1_03[2] + 2) = 0;
 												goto LAB_00295688;
 											}
@@ -1218,7 +1234,7 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 									}
 								LAB_00295688:
 									if ((*(ushort*)((int)v1_02[2][1] + 0xe) & 1) == 0) {
-										sceVu0MulMatrix(v1_02[1], v1_02, v1_03[1]);
+										edF32Matrix4MulF32Matrix4Hard(v1_02[1], v1_02, v1_03[1]);
 										*(undefined*)(v1_02[2] + 2) = 0;
 										goto LAB_002956c8;
 									}
@@ -1227,7 +1243,7 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 							}
 						LAB_002956c8:
 							if ((*(ushort*)((int)v1_01[2][1] + 0xe) & 1) == 0) {
-								sceVu0MulMatrix(v1_01[1], v1_01, v1_02[1]);
+								edF32Matrix4MulF32Matrix4Hard(v1_01[1], v1_01, v1_02[1]);
 								*(undefined*)(v1_01[2] + 2) = 0;
 								goto LAB_00295708;
 							}
@@ -1236,7 +1252,7 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 					}
 				LAB_00295708:
 					if ((*(ushort*)((int)(v1_00->base).field_0x80 + 0x1e) & 1) == 0) {
-						sceVu0MulMatrix((TO_SCE_MTX) & (v1_00->base).transformB, (TO_SCE_MTX)v1_00, v1_01[1]);
+						edF32Matrix4MulF32Matrix4Hard(&(v1_00->base).transformB, v1_00, v1_01[1]);
 						*(undefined*)((int)(v1_00->base).field_0x80 + 8) = 0;
 						goto LAB_00295748;
 					}
@@ -1245,7 +1261,7 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 			}
 		LAB_00295748:
 			if (((v1->base).flags_0x9e & 1) == 0) {
-				sceVu0MulMatrix((TO_SCE_MTX) & (v1->base).transformB, (TO_SCE_MTX)v1, (TO_SCE_MTX) & (v1_00->base).transformB);
+				edF32Matrix4MulF32Matrix4Hard(&(v1->base).transformB, &v1->base.transformA, &(v1_00->base).transformB);
 				(v1->base).field_0x88 = 0;
 				goto LAB_00295788;
 			}
@@ -1254,7 +1270,7 @@ void UpdateRenderMeshTransform_002954b0(MeshTransformData* param_1, bool mode)
 	}
 LAB_00295788:
 	if (((param_1->base).flags_0x9e & 1) == 0) {
-		sceVu0MulMatrix((TO_SCE_MTX) & (param_1->base).transformB, (TO_SCE_MTX)param_1, (TO_SCE_MTX) & (v1->base).transformB);
+		edF32Matrix4MulF32Matrix4Hard(&(param_1->base).transformB, &param_1->base.transformA, &(v1->base).transformB);
 		(param_1->base).field_0x88 = 0;
 		return;
 	}
@@ -1265,30 +1281,30 @@ LAB_002957c4:
 
 void ed3DComputeSonHierarchy(void)
 {
-	edLIST* pCVar1;
+	edLIST* peVar1;
 	int iVar2;
 	uint uVar3;
 	uint uVar4;
-	MeshTransformParent* pCVar6;
+	edNODE* pCVar6;
 	int* piVar5;
-	ed_3D_Scene* pSVar6;
+	ed_3D_Scene* peVar6;
 	int iVar7;
 
 	for (uVar3 = 0; uVar3 < (uint)ged3DConfig.sceneCount; uVar3 = uVar3 + 1) {
-		pSVar6 = gScene3D + uVar3;
-		if (((pSVar6->flags_0x4 & 1) != 0) && ((pSVar6->flags_0x4 & 4) == 0)) {
-			pCVar1 = pSVar6->pHeirListA;
-			for (pCVar6 = (MeshTransformParent*)pCVar1->pLoadedData; (edLIST*)pCVar6 != pCVar1;
-				pCVar6 = pCVar6->pNext) {
-				UpdateRenderMeshTransform_002954b0((MeshTransformData*)pCVar6->pMeshTransformData, true);
+		peVar6 = gScene3D + uVar3;
+		if (((peVar6->flags_0x4 & 1) != 0) && ((peVar6->flags_0x4 & 4) == 0)) {
+			peVar1 = peVar6->pHeirListA;
+			for (pCVar6 = peVar1->pPrev; (edLIST*)pCVar6 != peVar1; pCVar6 = pCVar6->pPrev) {
+				UpdateRenderMeshTransform_002954b0((ed_3d_hierarchy_node*)pCVar6->pData, true);
 			}
-			piVar5 = pSVar6->field_0x1ac;
-			for (uVar4 = 0; uVar4 < pSVar6->count_0x1b0; uVar4 = uVar4 + 1) {
+			piVar5 = peVar6->field_0x1ac;
+			for (uVar4 = 0; uVar4 < peVar6->heirarchyListCount; uVar4 = uVar4 + 1) {
+				IMPLEMENTATION_GUARD(
 				iVar2 = *piVar5;
 				for (iVar7 = *(int*)(iVar2 + 4); iVar7 != iVar2; iVar7 = *(int*)(iVar7 + 4)) {
-					IMPLEMENTATION_GUARD(UpdateRenderMeshTransform_002954b0(*(MeshTransformData**)(iVar7 + 0xc), true));
+					UpdateRenderMeshTransform_002954b0(*(ed_3d_hierarchy_node**)(iVar7 + 0xc), true);
 				}
-				piVar5 = piVar5 + 1;
+				piVar5 = piVar5 + 1;)
 			}
 		}
 	}
@@ -1304,8 +1320,8 @@ void ed3DDMALoadVU1MicroCode(void)
 	if (BYTE_004492e8 == 0) {
 		edDmaFlushCache();
 		edDmaSync(SHELLDMA_CHANNEL_VIF1);
-		RENDER_LOG("DMA Begin ed3DDMALoadVU1MicroCode NOT RUN\n");
-		edDmaSend(SHELLDMA_CHANNEL_VIF1, (ulonglong*)vu1_micro);
+		RENDER_LOG("DMA Begin ed3DDMALoadVU1MicroCode");
+		edDmaSend(SHELLDMA_CHANNEL_VIF1, (uint)vu1_micro);
 		BYTE_004492e8 = 1;
 	}
 	return;
@@ -1418,8 +1434,8 @@ void ed3DShadowConfigSetDefault(ed_3D_Shadow_Config* pShadowConfig)
 	pShadowConfig->field_0x8 = -0.0;
 	pShadowConfig->field_0xc = -50.0;
 	pShadowConfig->pCamera_0x10 = (ed_viewport*)0x0;
-	pShadowConfig->pCamera_0x14 = (ed_viewport*)0x0;
-	pShadowConfig->field_0x20 = 0;
+	pShadowConfig->pViewport = (ed_viewport*)0x0;
+	pShadowConfig->renderMask = 0;
 	pShadowConfig->field_0x22 = 0x30;
 	pShadowConfig->field_0x23 = 0x14;
 	pShadowConfig->field_0x24 = 2;
@@ -1428,7 +1444,7 @@ void ed3DShadowConfigSetDefault(ed_3D_Shadow_Config* pShadowConfig)
 	return;
 }
 
-Vector Vector_00424f10 = { 10.0f, 10.0f, 10.0f, 128.0f };
+edF32VECTOR4 Vector_00424f10 = { 10.0f, 10.0f, 10.0f, 128.0f };
 edF32MATRIX4 Matrix_00424ed0 = { 64.0f,
 	0.0f,
 	0.0f,
@@ -1465,9 +1481,9 @@ edF32MATRIX4 Matrix_00424e90 = { 1.0f,
 	0.0f
 };
 
-Vector* LightAmbiant_DEBUG = &Vector_00424f10;
-Vector* LightDirections_Matrix_DEBUG = (Vector*)&Matrix_00424e90;
-Vector* LightColor_Matrix_DEBUG = (Vector*)&Matrix_00424ed0;
+edF32VECTOR4* LightAmbiant_DEBUG = &Vector_00424f10;
+edF32VECTOR4* LightDirections_Matrix_DEBUG = (edF32VECTOR4*)&Matrix_00424e90;
+edF32VECTOR4* LightColor_Matrix_DEBUG = (edF32VECTOR4*)&Matrix_00424ed0;
 
 void ed3DSceneLightConfigSetDefault(ed_3D_Light_Config* pLightConfig)
 {
@@ -1479,8 +1495,8 @@ void ed3DSceneLightConfigSetDefault(ed_3D_Light_Config* pLightConfig)
 
 void ed3DSceneConfigSetDefault(SceneConfig* pSceneConfig)
 {
-	pSceneConfig->field_0x4 = 250.0;
-	pSceneConfig->field_0x18 = 250.0;
+	pSceneConfig->clipValue_0x4 = 250.0;
+	pSceneConfig->clipValue_0x18 = 250.0;
 	pSceneConfig->nearClip = g_DefaultNearClip_0044851c;
 	pSceneConfig->farClip = -5000.0;
 	pSceneConfig->field_0x10 = 1;
@@ -1548,6 +1564,14 @@ ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mo
 			gScene3D[sceneIndex].pHeirListA = pCVar4;
 			pCVar4 = ed3DHierarchyListInit();
 			gScene3D[sceneIndex].pHeirListB = pCVar4;
+
+#ifdef EDITOR_BUILD
+			char name[128];
+			sprintf(name, "gScene3D[%d].pHeirListA", sceneIndex);
+			edListSetName(gScene3D[sceneIndex].pHeirListA, name);
+			sprintf(name, "gScene3D[%d].pHeirListB", sceneIndex);
+			edListSetName(gScene3D[sceneIndex].pHeirListB, name);
+#endif
 		}
 	}
 	return pSVar3;
@@ -1573,48 +1597,15 @@ void ed3DFlushSceneInit(void)
 	return;
 }
 
-edF32MATRIX4* g_ScratchpadAddr_00448a58 = (edF32MATRIX4*)0x70000000;
-
-struct ScratchpadAnimManager {
-	ScratchpadAnimManager();
-	struct edF32MATRIX4* pScreenSpaceMatrix;
-	struct edF32MATRIX4* pTextureSpaceMatrix;
-	struct edF32MATRIX4* pWorldSpaceMatrix;
-	struct edF32MATRIX4* pLightDirections;
-	struct edF32MATRIX4* pLightColor;
-	struct Vector* pLightAmbient;
-	struct Vector* pVector_0x18;
-	char* field_0x1c;
-	struct edF32MATRIX4** field_0x20;
-	char* field_0x24;
-	undefined4* gShadowRenderMask;
-	struct edFCamera* pData_130;
-	struct edF32MATRIX4* pMatrix_0x30;
-	char* field_0x34;
-	char* field_0x38;
-	int* field_0x3c;
-	char* field_0x40;
-	char* field_0x44;
-	char* field_0x48;
-	char* field_0x4c;
-	char* field_0x50;
-	char* field_0x54;
-	char* field_0x58;
-	struct SceneConfig* pData_150;
-	struct RenderAnimationStatic* pRenderAnimationStatic_0x60;
-	struct Vector* vector_0x64;
-	struct AnimScratchpad* pAnimScratchpad;
-};
-
-struct RenderAnimationStatic {
+struct RenderInfo {
 	struct edF32MATRIX4* pSharedMeshTransform;
 	struct edF32MATRIX4* pMeshTransformMatrix;
 	int field_0x8;
-	struct LightingMatrixFuncObj* pLightingMatrixFuncObj;
+	struct ed_3d_hierarchy_setup* pLightingMatrixFuncObj;
 	uint flags_0x10;
 	float field_0x14;
 	undefined4 field_0x18;
-	struct MeshTransformData* pMeshTransformData;
+	struct ed_3d_hierarchy_node* pMeshTransformData;
 };
 
 struct AnimScratchpad {
@@ -1624,53 +1615,16 @@ struct AnimScratchpad {
 	undefined4 field_0xc;
 };
 
-ScratchpadAnimManager::ScratchpadAnimManager()
-{
-#ifdef PLATFORM_WIN
-	g_ScratchpadAddr_00448a58 = (edF32MATRIX4*)malloc(0x10000);
-#endif
-	pScreenSpaceMatrix = g_ScratchpadAddr_00448a58 + 1;
-	pTextureSpaceMatrix = g_ScratchpadAddr_00448a58 + 2;
-	pWorldSpaceMatrix = g_ScratchpadAddr_00448a58 + 3;
-	pLightDirections = g_ScratchpadAddr_00448a58 + 4;
-	pLightColor = g_ScratchpadAddr_00448a58 + 5;
-	pLightAmbient = (Vector*)(g_ScratchpadAddr_00448a58 + 6);
-	pVector_0x18 = (Vector*)&g_ScratchpadAddr_00448a58[6].ba;
-	field_0x1c = (char*)&g_ScratchpadAddr_00448a58[6].ca;
-	field_0x20 = (edF32MATRIX4**)&g_ScratchpadAddr_00448a58[6].cb;
-	field_0x24 = (char*)&g_ScratchpadAddr_00448a58[6].cc;
-	gShadowRenderMask = (undefined4*)& g_ScratchpadAddr_00448a58[6].cd;
-	pData_130 = (edFCamera*)&g_ScratchpadAddr_00448a58[6].da;
-	pMatrix_0x30 = (edF32MATRIX4*)&g_ScratchpadAddr_00448a58[0xb].ca;
-	field_0x34 = (char*)&g_ScratchpadAddr_00448a58[0xc].ca;
-	field_0x38 = (char*)&g_ScratchpadAddr_00448a58[0xc].cd;
-	field_0x3c = (int*)&g_ScratchpadAddr_00448a58[0xd].ba;
-	field_0x40 = (char*)&g_ScratchpadAddr_00448a58[0xd].bb;
-	field_0x44 = (char*)&g_ScratchpadAddr_00448a58[0xd].bc;
-	field_0x48 = (char*)&g_ScratchpadAddr_00448a58[0xd].bd;
-	field_0x4c = (char*)&g_ScratchpadAddr_00448a58[0xd].ca;
-	field_0x50 = (char*)&g_ScratchpadAddr_00448a58[0xd].cb;
-	field_0x54 = (char*)&g_ScratchpadAddr_00448a58[0xd].cc;
-	field_0x58 = (char*)&g_ScratchpadAddr_00448a58[0xd].cd;
-	pData_150 = (SceneConfig*)&g_ScratchpadAddr_00448a58[0xd].da;
-	pRenderAnimationStatic_0x60 =
-		(RenderAnimationStatic*)(g_ScratchpadAddr_00448a58 + 0x13);
-	vector_0x64 = (Vector*)&g_ScratchpadAddr_00448a58[0x13].ca;
-	pAnimScratchpad = (AnimScratchpad*)&g_ScratchpadAddr_00448a58[0x13].da;
-	return;
-}
+edF32MATRIX4 gCurLOD_WorldToCamera_Matrix = { 0 };
 
-ScratchpadAnimManager ScratchpadAnimManager_004494ec;
-edF32MATRIX4 Matrix_004894e0 = { 0 };
+edF32VECTOR4* gLightAmbiant = NULL;
+edF32VECTOR4* gLightDirections_Matrix = NULL;
+edF32VECTOR4* gLightColor_Matrix = NULL;
 
-Vector* gLightAmbiant = NULL;
-Vector* gLightDirections_Matrix = NULL;
-Vector* gLightColor_Matrix = NULL;
-
-void Func_00293ec0(ed_3D_Light_Config* param_1)
+void ed3DSceneLightSetGlobals(ed_3D_Light_Config* param_1)
 {
 	gLightAmbiant = param_1->pLightAmbient;
-	if (gLightAmbiant != (Vector*)0x0) {
+	if (gLightAmbiant != (edF32VECTOR4*)0x0) {
 		gLightAmbiant->w = 0.0078125;
 	}
 	gLightDirections_Matrix = param_1->pLightDirections;
@@ -1678,29 +1632,26 @@ void Func_00293ec0(ed_3D_Light_Config* param_1)
 	return;
 }
 
-Vector Vector_0048c300 = { 0 };
-Vector Vector_0048c310 = { 0 };
-Vector Vector_0048c320 = { 0 };
-Vector Vector_0048c330 = { 0 };
+edF32VECTOR4 gCamPos = { 0 };
+edF32VECTOR4 gCamNormal_X = { 0 };
+edF32VECTOR4 gCamNormal_Y = { 0 };
+edF32VECTOR4 gCamNormal_Z = { 0 };
 
-float FLOAT_0044921c = 0.0f;
-float FLOAT_00449218 = 0.0f;
-float FLOAT_00449214 = 0.0f;
+float gRenderInvFovCoef = 0.0f;
+float gRenderFovCoef = 0.0f;
+float gCurLOD_RenderFOVCoef = 0.0f;
 
-edSurface g_ColorBufferCopy_00489520 = { 0 };
+edSurface gRenderSurface = { 0 };
 
-SceneConfig* g_CameraPanStatic_50_Ptr_00449220 = NULL;
+SceneConfig* gRenderSceneConfig = NULL;
 
-ed_3D_Scene* g_StaticMeshMaster_00449224 = NULL;
+ed_3D_Scene* gRenderScene = NULL;
 
-float g_RectangleScale_00448980 = 5.0f;
+float fSecInc = 5.0f;
 
-
-void ComputeMatrix_0029b610
-(float screenWidth, float screenHeight, float width, float height, float yMin, float zValue, float wValue,
-	float nearClip, edF32MATRIX4* mScreenSpace, edF32MATRIX4* mTextureSpace, edF32MATRIX4* mWorldSpace, edF32MATRIX4* mUnknown,
+void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float width, float height, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV,
+	float nearClip, edF32MATRIX4* pCameraToScreen, edF32MATRIX4* pCameraToCulling, edF32MATRIX4* pCameraToClipping, edF32MATRIX4* pCameraToFog,
 	float farClip, float fovUp, float fovDown)
-
 {
 	float fVar1;
 	float fVar2;
@@ -1708,94 +1659,94 @@ void ComputeMatrix_0029b610
 	float startX;
 	float fVar4;
 	float startY;
-	edF32MATRIX4 MStack128;
-	edF32MATRIX4 MStack64;
+	edF32MATRIX4 screenMatrix;
+	edF32MATRIX4 projectionMatrix;
 
-	CalculateYAxisTransformMatrix_0029ba70(0.0, 0.0, yMin, 0.0, &MStack64);
+	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, horizontalHalfFOV, 0.0f, &projectionMatrix);
 	startY = -height;
 	startX = -width;
-	ComputeMapRectangleMatrix_0029b9e0
-	(startX, width, startY, height, zValue - screenWidth * 0.5, zValue + screenWidth * 0.5,
-		wValue + screenHeight * 0.5, wValue - screenHeight * 0.5, &MStack128);
-	sceVu0MulMatrix((TO_SCE_MTX)mScreenSpace, (TO_SCE_MTX)&MStack64, (TO_SCE_MTX)&MStack128);
-	fVar4 = 1.0 / (farClip - nearClip);
-	fVar1 = mScreenSpace->dd + mScreenSpace->cd * nearClip;
-	mScreenSpace->cc = fVar4 * (fovDown * (mScreenSpace->dd + mScreenSpace->cd * farClip) - fovUp * fVar1);
-	mScreenSpace->dc = fVar4 * (fVar1 * farClip * fovUp - fVar1 * nearClip * fovDown);
-	ComputeMapRectangleMatrix_0029b9e0
-	(startX * 1.0, width * 1.0, startY * 1.0, height * 1.0, -1.0f, 1.0, -1.0f, 1.0,
-		&MStack128);
-	sceVu0MulMatrix((TO_SCE_MTX)mTextureSpace, (TO_SCE_MTX)&MStack64, (TO_SCE_MTX)&MStack128);
-	fVar2 = nearClip * 1.0;
-	fVar1 = mTextureSpace->dd + mTextureSpace->cd * nearClip;
-	fVar3 = farClip * -1.0;
-	mTextureSpace->cc = fVar4 * ((mTextureSpace->dd + mTextureSpace->cd * farClip) * 1.0 - fVar1 * -1.0);
-	mTextureSpace->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
-	ComputeMapRectangleMatrix_0029b9e0
-	(startX * g_RectangleScale_00448980, width * g_RectangleScale_00448980, startY * g_RectangleScale_00448980,
-		height * g_RectangleScale_00448980, -1.0f, 1.0, -1.0f, 1.0, &MStack128);
-	sceVu0MulMatrix((TO_SCE_MTX)mWorldSpace, (TO_SCE_MTX)&MStack64, (TO_SCE_MTX)&MStack128);
-	fVar1 = mWorldSpace->dd + mWorldSpace->cd * nearClip;
-	mWorldSpace->cc = fVar4 * ((mWorldSpace->dd + mWorldSpace->cd * farClip) * 1.0 - fVar1 * -1.0);
-	mWorldSpace->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
-	Vector_0048c2d0.z = 2.0 / (fovDown - fovUp);
-	Vector_0048c2f0.y = (g_RectangleScale_00448980 * 256.0 + 2048.0) - 1.0;
-	Vector_0048c2f0.x = (2048.0 - g_RectangleScale_00448980 * 256.0) + 1.0;
-	Vector_0048c2d0.x = 2.0 / (Vector_0048c2f0.y - Vector_0048c2f0.x);
-	Vector_0048c2d0.y = 2.0 / (Vector_0048c2f0.x - Vector_0048c2f0.y);
-	Vector_0048c2e0.x = (Vector_0048c2f0.x + Vector_0048c2f0.y) / (Vector_0048c2f0.x - Vector_0048c2f0.y);
-	Vector_0048c2e0.y = (Vector_0048c2f0.x + Vector_0048c2f0.y) / (Vector_0048c2f0.y - Vector_0048c2f0.x);
-	Vector_0048c2d0.w = mScreenSpace->dc + mScreenSpace->cc * nearClip;
-	Vector_0048c2e0.z = (fovUp + fovDown) / (fovUp - fovDown);
-	Vector_0048c2e0.w = mScreenSpace->dc + mScreenSpace->cc * farClip;
-	Vector_0048c2f0.z = Vector_0048c2f0.y;
-	Vector_0048c2f0.w = Vector_0048c2f0.x;
-	sceVu0UnitMatrix((TO_SCE_MTX)&MStack128);
-	sceVu0MulMatrix((TO_SCE_MTX)mUnknown, (TO_SCE_MTX)&MStack64, (TO_SCE_MTX)&MStack128);
-	fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0xe0).z;
-	fVar2 = 255.0 - ((ScratchpadAnimManager_004494ec.pData_150)->field_0xe0).x;
-	fVar1 = ((255.0 - ((ScratchpadAnimManager_004494ec.pData_150)->field_0xe0).y) - fVar2) /
-		(((ScratchpadAnimManager_004494ec.pData_150)->field_0xe0).w - fVar3);
-	mUnknown->cc = fVar1;
-	mUnknown->dc = fVar2 - fVar1 * fVar3;
+
+	ed3DComputeProjectionToScreenMatrix
+	(startX, width, startY, height, halfFOV - screenWidth * 0.5f, halfFOV + screenWidth * 0.5f,
+		verticalHalfFOV + screenHeight * 0.5f, verticalHalfFOV - screenHeight * 0.5f, &screenMatrix);
+
+	edF32Matrix4MulF32Matrix4Hard(pCameraToScreen, &projectionMatrix, &screenMatrix);
+	fVar4 = 1.0f / (farClip - nearClip);
+	fVar1 = pCameraToScreen->dd + pCameraToScreen->cd * nearClip;
+	pCameraToScreen->cc = fVar4 * (fovDown * (pCameraToScreen->dd + pCameraToScreen->cd * farClip) - fovUp * fVar1);
+	pCameraToScreen->dc = fVar4 * (fVar1 * farClip * fovUp - fVar1 * nearClip * fovDown);
+
+	ed3DComputeProjectionToScreenMatrix(startX * 1.0f, width * 1.0f, startY * 1.0f, height * 1.0f, -1.0f, 1.0, -1.0f, 1.0f,	&screenMatrix);
+
+	edF32Matrix4MulF32Matrix4Hard(pCameraToCulling, &projectionMatrix, &screenMatrix);
+	fVar2 = nearClip * 1.0f;
+	fVar1 = pCameraToCulling->dd + pCameraToCulling->cd * nearClip;
+	fVar3 = farClip * -1.0f;
+	pCameraToCulling->cc = fVar4 * ((pCameraToCulling->dd + pCameraToCulling->cd * farClip) * 1.0f - fVar1 * -1.0f);
+	pCameraToCulling->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
+
+	ed3DComputeProjectionToScreenMatrix(startX * fSecInc, width * fSecInc, startY * fSecInc, height * fSecInc, -1.0f, 1.0f, -1.0f, 1.0f, &screenMatrix);
+
+	edF32Matrix4MulF32Matrix4Hard(pCameraToClipping, &projectionMatrix, &screenMatrix);
+	fVar1 = pCameraToClipping->dd + pCameraToClipping->cd * nearClip;
+	pCameraToClipping->cc = fVar4 * ((pCameraToClipping->dd + pCameraToClipping->cd * farClip) * 1.0f - fVar1 * -1.0f);
+	pCameraToClipping->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
+	gClipMulVector.z = 2.0f / (fovDown - fovUp);
+	gClipXY.y = (fSecInc * 256.0f + 2048.0f) - 1.0f;
+	gClipXY.x = (2048.0f - fSecInc * 256.0f) + 1.0f;
+	gClipMulVector.x = 2.0f / (gClipXY.y - gClipXY.x);
+	gClipMulVector.y = 2.0f / (gClipXY.x - gClipXY.y);
+	gClipAddVector.x = (gClipXY.x + gClipXY.y) / (gClipXY.x - gClipXY.y);
+	gClipAddVector.y = (gClipXY.x + gClipXY.y) / (gClipXY.y - gClipXY.x);
+	gClipMulVector.w = pCameraToScreen->dc + pCameraToScreen->cc * nearClip;
+	gClipAddVector.z = (fovUp + fovDown) / (fovUp - fovDown);
+	gClipAddVector.w = pCameraToScreen->dc + pCameraToScreen->cc * farClip;
+	gClipXY.z = gClipXY.y;
+	gClipXY.w = gClipXY.x;
+	edF32Matrix4SetIdentityHard(&screenMatrix);
+	edF32Matrix4MulF32Matrix4Hard(pCameraToFog, &projectionMatrix, &screenMatrix);
+	fVar3 = (gRenderSceneConfig_SPR->field_0xe0).z;
+	fVar2 = 255.0f - (gRenderSceneConfig_SPR->field_0xe0).x;
+	fVar1 = ((255.0f - (gRenderSceneConfig_SPR->field_0xe0).y) - fVar2) / ((gRenderSceneConfig_SPR->field_0xe0).w - fVar3);
+	pCameraToFog->cc = fVar1;
+	pCameraToFog->dc = fVar2 - fVar1 * fVar3;
 	return;
 }
 
-edF32MATRIX4 g_TransformationMatrix_00489460 = { 0 };
-edF32MATRIX4 Matrix_004894a0 = { 0 };
-edF32MATRIX4 g_ScreenSpaceMatrix_0048cbb0 = { 0 };
-edF32MATRIX4 g_TextureSpaceMatrix_0048cbf0 = { 0 };
-edF32MATRIX4 g_WorldSpaceMatrix_0048cc30 = { 0 };
-edF32MATRIX4 g_TransformationMatrix_0048cc70 = { 0 };
-edF32MATRIX4 Matrix_0048ccb0 = { 0 };
-edF32MATRIX4 Matrix_00489550 = { 0 };
+edF32MATRIX4 CameraToFog_Matrix = { 0 };
+edF32MATRIX4 WorldToScreen_Matrix = { 0 };
+edF32MATRIX4 gShadow_CameraToScreen_Matrix = { 0 };
+edF32MATRIX4 gShadow_CameraToCulling_Matrix = { 0 };
+edF32MATRIX4 gShadow_CameraToClipping_Matrix = { 0 };
+edF32MATRIX4 gShadow_CameraToFog_Matrix = { 0 };
+edF32MATRIX4 gShadow_WorldToCamera_Matrix = { 0 };
+edF32MATRIX4 WorldToCamera_Matrix_CastShadow = { 0 };
 
-Vector Vector_0048ccf0 = { 0 };
-Vector Vector_0048cd00 = { 0 };
-Vector Vector_0048cd10 = { 0 };
-Vector Vector_0048cd20 = { 0 };
-Vector Vector_0048cd30 = { 0 };
-Vector Vector_0048cd40 = { 0 };
+edF32VECTOR4 gShadow_ClipMulVector = { 0 };
+edF32VECTOR4 gShadow_ClipAddVector = { 0 };
+edF32VECTOR4 gShadow_ClipXY = { 0 };
+edF32VECTOR4 gShadow_CamPos = { 0 };
+edF32VECTOR4 gShadow_gCamNormal_X = { 0 };
+edF32VECTOR4 gShadow_gCamNormal_Y = { 0 };
 
-ed_g2d_material* PTR_TextureData_MAT_004492ec = NULL;
-ed_g2d_material* PTR_TextureData_MAT_004492f0 = NULL;
+ed_g2d_material* gDefault_Material_Current = NULL;
+ed_g2d_material* gDefault_Material_Cluster_Current = NULL;
 
 ed_3D_Scene* gShadowRenderScene = NULL;
 
 ed_viewport* g_Camera_0044956c = NULL;
 
-void SetCamera_002b6d10(ed_viewport* pCamera)
+void ed3DShadowSetRenderViewport(ed_viewport* pCamera)
 {
 	g_Camera_0044956c = pCamera;
 	return;
 }
 
-float FLOAT_0044922c = 0.0f;
-float FLOAT_00449230 = 0.0f;
-float FLOAT_00449234 = 0.0f;
+float gfSecuritx = 0.0f;
+float gfSecurity = 0.0f;
+float gfSecuritz = 0.0f;
 
-void CameraSetupFunc_0029b120
-(SceneConfig* param_1, edFCamera* param_2, edSurface* pFrameBuffer)
+void ed3DFrustumCompute(SceneConfig* pSceneConfig, edFCamera* pCamera, edSurface* pSurface)
 {
 	ushort uVar1;
 	float puVar2;
@@ -1811,150 +1762,145 @@ void CameraSetupFunc_0029b120
 	float fVar12;
 	float min;
 
-	fVar12 = param_2->aMatrices[0].dd;
-	min = param_2->aMatrices[0].db;
-	fVar11 = param_2->aMatrices[0].dc;
+	fVar12 = pCamera->verticalHalfFOV;
+	min = pCamera->horizontalHalfFOV;
+	fVar11 = pCamera->halfFOV;
 	fVar7 = atan2f(min, fVar12);
 	fVar8 = atan2f(fVar11, fVar12);
 	fVar9 = sinf(fVar7);
 	fVar10 = sinf(fVar8);
 	fVar7 = cosf(fVar7);
 	fVar8 = cosf(fVar8);
-	(param_1->field_0x20).field_0x0.aa = fVar7;
-	(param_1->field_0x20).field_0x0.ab = 0.0;
-	(param_1->field_0x20).field_0x0.ac = fVar9;
-	(param_1->field_0x20).field_0x0.ad = 0.0;
-	(param_1->field_0x20).field_0x0.ba = -fVar7;
-	(param_1->field_0x20).field_0x0.bb = 0.0;
-	(param_1->field_0x20).field_0x0.bc = fVar9;
-	(param_1->field_0x20).field_0x0.bd = 0.0;
-	(param_1->field_0x20).field_0x0.ca = 0.0;
-	(param_1->field_0x20).field_0x0.cb = fVar8;
-	(param_1->field_0x20).field_0x0.cc = fVar10;
-	(param_1->field_0x20).field_0x0.cd = 0.0;
-	(param_1->field_0x20).field_0x0.da = 0.0;
-	(param_1->field_0x20).field_0x0.db = -fVar8;
-	(param_1->field_0x20).field_0x0.dc = fVar10;
-	(param_1->field_0x20).field_0x0.dd = 0.0;
-	(param_1->field_0x20).field_0x40.x = 0.0;
-	(param_1->field_0x20).field_0x40.y = 0.0;
-	(param_1->field_0x20).field_0x40.z = 1.0;
-	(param_1->field_0x20).field_0x40.w = 0.0;
-	(param_1->field_0x20).field_0x50.x = 0.0;
-	(param_1->field_0x20).field_0x50.y = 0.0;
-	(param_1->field_0x20).field_0x50.z = -1.0f;
-	(param_1->field_0x20).field_0x50.w = -param_1->field_0x18;
-	uVar1 = pFrameBuffer->pSurfaceDesc->screenHeight;
-	fVar7 = 2048.0 - FLOAT_00449230;
-	fVar8 = atan2f
-	(((2048.0 - FLOAT_0044922c) * min) /
-		((float)(uint)pFrameBuffer->pSurfaceDesc->screenWidth / 2.0), fVar12);
-	fVar7 = atan2f((fVar7 * fVar11) / ((float)(uint)uVar1 / 2.0), fVar12);
+	(pSceneConfig->frustumA).frustumMatrix.aa = fVar7;
+	(pSceneConfig->frustumA).frustumMatrix.ab = 0.0f;
+	(pSceneConfig->frustumA).frustumMatrix.ac = fVar9;
+	(pSceneConfig->frustumA).frustumMatrix.ad = 0.0f;
+	(pSceneConfig->frustumA).frustumMatrix.ba = -fVar7;
+	(pSceneConfig->frustumA).frustumMatrix.bb = 0.0f;
+	(pSceneConfig->frustumA).frustumMatrix.bc = fVar9;
+	(pSceneConfig->frustumA).frustumMatrix.bd = 0.0f;
+	(pSceneConfig->frustumA).frustumMatrix.ca = 0.0f;
+	(pSceneConfig->frustumA).frustumMatrix.cb = fVar8;
+	(pSceneConfig->frustumA).frustumMatrix.cc = fVar10;
+	(pSceneConfig->frustumA).frustumMatrix.cd = 0.0f;
+	(pSceneConfig->frustumA).frustumMatrix.da = 0.0f;
+	(pSceneConfig->frustumA).frustumMatrix.db = -fVar8;
+	(pSceneConfig->frustumA).frustumMatrix.dc = fVar10;
+	(pSceneConfig->frustumA).frustumMatrix.dd = 0.0f;
+	(pSceneConfig->frustumA).field_0x40.x = 0.0f;
+	(pSceneConfig->frustumA).field_0x40.y = 0.0f;
+	(pSceneConfig->frustumA).field_0x40.z = 1.0f;
+	(pSceneConfig->frustumA).field_0x40.w = 0.0f;
+	(pSceneConfig->frustumA).field_0x50.x = 0.0f;
+	(pSceneConfig->frustumA).field_0x50.y = 0.0f;
+	(pSceneConfig->frustumA).field_0x50.z = -1.0f;
+	(pSceneConfig->frustumA).field_0x50.w = -pSceneConfig->clipValue_0x18;
+	uVar1 = pSurface->pSurfaceDesc->screenHeight;
+	fVar7 = 2048.0f - gfSecurity;
+	fVar8 = atan2f(((2048.0f - gfSecuritx) * min) / ((float)(uint)pSurface->pSurfaceDesc->screenWidth / 2.0f), fVar12);
+	fVar7 = atan2f((fVar7 * fVar11) / ((float)(uint)uVar1 / 2.0f), fVar12);
 	fVar11 = sinf(fVar8);
 	fVar12 = sinf(fVar7);
 	fVar7 = cosf(fVar7);
 	fVar8 = cosf(fVar8);
-	(param_1->field_0x80).field_0x0.aa = fVar8;
-	(param_1->field_0x80).field_0x0.ab = 0.0;
-	(param_1->field_0x80).field_0x0.ac = fVar11;
-	(param_1->field_0x80).field_0x0.ad = 0.0;
-	(param_1->field_0x80).field_0x0.ba = -fVar8;
-	(param_1->field_0x80).field_0x0.bb = 0.0;
-	(param_1->field_0x80).field_0x0.bc = fVar11;
-	(param_1->field_0x80).field_0x0.bd = 0.0;
-	(param_1->field_0x80).field_0x0.ca = 0.0;
-	(param_1->field_0x80).field_0x0.cb = fVar7;
-	(param_1->field_0x80).field_0x0.cc = fVar12;
-	(param_1->field_0x80).field_0x0.cd = 0.0;
-	(param_1->field_0x80).field_0x0.da = 0.0;
-	(param_1->field_0x80).field_0x0.db = -fVar7;
-	(param_1->field_0x80).field_0x0.dc = fVar12;
-	(param_1->field_0x80).field_0x0.dd = 0.0;
-	(param_1->field_0x80).field_0x40.x = 0.0;
-	(param_1->field_0x80).field_0x40.y = 0.0;
-	(param_1->field_0x80).field_0x40.z = 1.0;
-	(param_1->field_0x80).field_0x40.w = FLOAT_00449234;
-	(param_1->field_0x80).field_0x50.x = 0.0;
-	(param_1->field_0x80).field_0x50.y = 0.0;
-	(param_1->field_0x80).field_0x50.z = -1.0f;
-	(param_1->field_0x80).field_0x50.w = -param_1->field_0x18;
+	(pSceneConfig->frustumB).frustumMatrix.aa = fVar8;
+	(pSceneConfig->frustumB).frustumMatrix.ab = 0.0f;
+	(pSceneConfig->frustumB).frustumMatrix.ac = fVar11;
+	(pSceneConfig->frustumB).frustumMatrix.ad = 0.0f;
+	(pSceneConfig->frustumB).frustumMatrix.ba = -fVar8;
+	(pSceneConfig->frustumB).frustumMatrix.bb = 0.0f;
+	(pSceneConfig->frustumB).frustumMatrix.bc = fVar11;
+	(pSceneConfig->frustumB).frustumMatrix.bd = 0.0f;
+	(pSceneConfig->frustumB).frustumMatrix.ca = 0.0f;
+	(pSceneConfig->frustumB).frustumMatrix.cb = fVar7;
+	(pSceneConfig->frustumB).frustumMatrix.cc = fVar12;
+	(pSceneConfig->frustumB).frustumMatrix.cd = 0.0f;
+	(pSceneConfig->frustumB).frustumMatrix.da = 0.0f;
+	(pSceneConfig->frustumB).frustumMatrix.db = -fVar7;
+	(pSceneConfig->frustumB).frustumMatrix.dc = fVar12;
+	(pSceneConfig->frustumB).frustumMatrix.dd = 0.0f;
+	(pSceneConfig->frustumB).field_0x40.x = 0.0f;
+	(pSceneConfig->frustumB).field_0x40.y = 0.0f;
+	(pSceneConfig->frustumB).field_0x40.z = 1.0f;
+	(pSceneConfig->frustumB).field_0x40.w = gfSecuritz;
+	(pSceneConfig->frustumB).field_0x50.x = 0.0f;
+	(pSceneConfig->frustumB).field_0x50.y = 0.0f;
+	(pSceneConfig->frustumB).field_0x50.z = -1.0f;
+	(pSceneConfig->frustumB).field_0x50.w = -pSceneConfig->clipValue_0x18;
 	return;
 }
-
-ed_g2d_material ed_g2d_material_ARRAY_0048c370[6] = { 0 };
 
 int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 {
 	uint uVar1;
-	Vector* v0;
+	edF32VECTOR4* v0;
 	float fVar2;
 	float fVar3;
 	float farClip;
 	float fVar5;
 	edF32MATRIX4 local_40;
 
-	RENDER_LOG("ed3DInitRenderEnvironement: %d\n", mode);
+	RENDER_LOG("ed3DInitRenderEnvironement: %d", mode);
 
-	fVar5 = pStaticMeshMaster->pCamera->aMatrices[0].dc;
-	memcpy(ScratchpadAnimManager_004494ec.pData_130, pStaticMeshMaster->pCamera, sizeof(edFCamera));
-	//MY_LOG("Matrix + 2\n");
-	//PRINT_MATRIX((ScratchpadAnimManager_004494ec.pData_130)->aMatrices + 2);
-	sceVu0CopyMatrix((TO_SCE_MTX)g_ScratchpadAddr_00448a58, (TO_SCE_MTX)((ScratchpadAnimManager_004494ec.pData_130)->aMatrices + 2));
+	fVar5 = pStaticMeshMaster->pCamera->halfFOV;
+	memcpy(gRenderCamera, pStaticMeshMaster->pCamera, sizeof(edFCamera));
+	//MY_LOG("Matrix + 2");
+	//PRINT_MATRIX(gRenderCamera->aMatrices + 2);
+	edF32Matrix4CopyHard(WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
 	if (mode != 0) {
-		sceVu0CopyMatrix((TO_SCE_MTX)&Matrix_004894e0, (TO_SCE_MTX)((ScratchpadAnimManager_004494ec.pData_130)->aMatrices + 2));
+		edF32Matrix4CopyHard(&gCurLOD_WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
 	}
-	((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).y = 0.0f;
-	((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).x = g_ScratchpadAddr_00448a58->cc;
-	((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).z = -g_ScratchpadAddr_00448a58->ac;
-	v0 = &(ScratchpadAnimManager_004494ec.pData_130)->vector_0x110;
-	if (((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).z +
-		((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).x +
-		((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).y == 0.0f) {
+	(gRenderCamera->calculatedRotation).y = 0.0f;
+	(gRenderCamera->calculatedRotation).x = WorldToCamera_Matrix->cc;
+	(gRenderCamera->calculatedRotation).z = -WorldToCamera_Matrix->ac;
+	v0 = &gRenderCamera->calculatedRotation;
+	if ((gRenderCamera->calculatedRotation).z +
+		(gRenderCamera->calculatedRotation).x +
+		(gRenderCamera->calculatedRotation).y == 0.0f) {
 		v0->x = 1.0;
 	}
 	else {
-		sceVu0Normalize((float*)v0, (float*)v0);
+		edF32Vector4NormalizeHard((float*)v0, (float*)v0);
 	}
-	sceVu0InverseMatrix(&local_40, g_ScratchpadAddr_00448a58);
-	Vector_0048c310.z = local_40.ac;
-	Vector_0048c310.w = local_40.ad;
-	Vector_0048c310.x = local_40.aa;
-	Vector_0048c310.y = local_40.ab;
-	//MY_LOG("Vec A\n");
+	sceVu0InverseMatrix(&local_40, WorldToCamera_Matrix);
+	gCamNormal_X.z = local_40.ac;
+	gCamNormal_X.w = local_40.ad;
+	gCamNormal_X.x = local_40.aa;
+	gCamNormal_X.y = local_40.ab;
+	//MY_LOG("Vec A");
 	//PRINT_VECTOR(&Vector_0048c310);
-	sceVu0Normalize((float*)&Vector_0048c310, (float*)&Vector_0048c310);
-	Vector_0048c320.x = local_40.ba;
-	Vector_0048c320.y = local_40.bb;
-	Vector_0048c320.z = local_40.bc;
-	Vector_0048c320.w = local_40.bd;
-	//MY_LOG("Vec B\n");
+	edF32Vector4NormalizeHard((float*)&gCamNormal_X, (float*)&gCamNormal_X);
+	gCamNormal_Y.x = local_40.ba;
+	gCamNormal_Y.y = local_40.bb;
+	gCamNormal_Y.z = local_40.bc;
+	gCamNormal_Y.w = local_40.bd;
+	//MY_LOG("Vec B");
 	//PRINT_VECTOR(&Vector_0048c320);
-	sceVu0Normalize((float*)&Vector_0048c320, (float*)&Vector_0048c320);
-	Vector_0048c330.x = local_40.ca;
-	Vector_0048c330.y = local_40.cb;
-	Vector_0048c330.z = local_40.cc;
-	Vector_0048c330.w = local_40.cd;
-	//MY_LOG("Vec C\n");
+	edF32Vector4NormalizeHard((float*)&gCamNormal_Y, (float*)&gCamNormal_Y);
+	gCamNormal_Z.x = local_40.ca;
+	gCamNormal_Z.y = local_40.cb;
+	gCamNormal_Z.z = local_40.cc;
+	gCamNormal_Z.w = local_40.cd;
+	//MY_LOG("Vec C");
 	//PRINT_VECTOR(&Vector_0048c330);
-	sceVu0Normalize((float*)&Vector_0048c330, (float*)&Vector_0048c330);
-	Vector_0048c300.x = (ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].aa;
-	Vector_0048c300.y = (ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].ab;
-	Vector_0048c300.z = (ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].ac;
-	Vector_0048c300.w = (ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].ad;
-	fVar2 = (ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].dc /
-		(ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].dd;
-	FLOAT_0044921c = 1.0f / fVar2;
-	FLOAT_00449218 = fVar2 * fVar2;
+	edF32Vector4NormalizeHard((float*)&gCamNormal_Z, (float*)&gCamNormal_Z);
+	gCamPos.x = (gRenderCamera->position).x;
+	gCamPos.y = (gRenderCamera->position).y;
+	gCamPos.z = (gRenderCamera->position).z;
+	gCamPos.w = (gRenderCamera->position).w;
+	fVar2 = gRenderCamera->halfFOV / gRenderCamera->verticalHalfFOV;
+	gRenderInvFovCoef = 1.0f / fVar2;
+	gRenderFovCoef = fVar2 * fVar2;
 	if (mode != 0) {
-		FLOAT_00449214 = FLOAT_00449218;
+		gCurLOD_RenderFOVCoef = gRenderFovCoef;
 	}
-	memcpy(&g_ColorBufferCopy_00489520, pStaticMeshMaster->pViewport->pColorBuffer, sizeof(edSurface));
-	g_CameraPanStatic_50_Ptr_00449220 = &pStaticMeshMaster->sceneConfig;
-	(pStaticMeshMaster->sceneConfig).field_0x18 = (pStaticMeshMaster->sceneConfig).field_0x4;
-	memcpy(ScratchpadAnimManager_004494ec.pData_150, g_CameraPanStatic_50_Ptr_00449220, sizeof(SceneConfig));
-	g_StaticMeshMaster_00449224 = pStaticMeshMaster;
-	Func_00293ec0(&(pStaticMeshMaster->sceneConfig).pLightConfig);
-	uVar1 = (ScratchpadAnimManager_004494ec.pData_150)->field_0x14;
+	memcpy(&gRenderSurface, pStaticMeshMaster->pViewport->pColorBuffer, sizeof(edSurface));
+	gRenderSceneConfig = &pStaticMeshMaster->sceneConfig;
+	(pStaticMeshMaster->sceneConfig).clipValue_0x18 = (pStaticMeshMaster->sceneConfig).clipValue_0x4;
+	memcpy(gRenderSceneConfig_SPR, gRenderSceneConfig, sizeof(SceneConfig));
+	gRenderScene = pStaticMeshMaster;
+	ed3DSceneLightSetGlobals(&(pStaticMeshMaster->sceneConfig).pLightConfig);
+	uVar1 = gRenderSceneConfig_SPR->field_0x14;
 	if ((int)uVar1 < 0) {
 		fVar2 = (float)(uVar1 >> 1 | uVar1 & 1);
 		fVar2 = fVar2 + fVar2;
@@ -1962,7 +1908,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 	else {
 		fVar2 = (float)uVar1;
 	}
-	uVar1 = (ScratchpadAnimManager_004494ec.pData_150)->field_0x10;
+	uVar1 = gRenderSceneConfig_SPR->field_0x10;
 	if ((int)uVar1 < 0) {
 		fVar3 = (float)(uVar1 >> 1 | uVar1 & 1);
 		fVar3 = fVar3 + fVar3;
@@ -1970,33 +1916,30 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 	else {
 		fVar3 = (float)uVar1;
 	}
-	farClip = (ScratchpadAnimManager_004494ec.pData_150)->farClip;
-	ComputeMatrix_0029b610((float)(int)pStaticMeshMaster->pViewport->screenWidth,
-		(float)(int)pStaticMeshMaster->pViewport->screenHeight,
-		(ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].db,
-		(ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].dc,
-		(ScratchpadAnimManager_004494ec.pData_130)->aMatrices[0].dd, 2048.0, 2048.0,
-		(ScratchpadAnimManager_004494ec.pData_150)->nearClip, ScratchpadAnimManager_004494ec.pScreenSpaceMatrix,
-		ScratchpadAnimManager_004494ec.pTextureSpaceMatrix, ScratchpadAnimManager_004494ec.pWorldSpaceMatrix, &g_TransformationMatrix_00489460,
-		farClip, fVar2, fVar3);
-	CameraSetupFunc_0029b120
-	(ScratchpadAnimManager_004494ec.pData_150, ScratchpadAnimManager_004494ec.pData_130
-		, &g_ColorBufferCopy_00489520);
+	farClip = gRenderSceneConfig_SPR->farClip;
+	ed3DViewportComputeViewMatrices
+	((float)(int)pStaticMeshMaster->pViewport->screenWidth,
+		(float)(int)pStaticMeshMaster->pViewport->screenHeight, gRenderCamera->horizontalHalfFOV,
+		gRenderCamera->halfFOV, gRenderCamera->verticalHalfFOV, 2048.0f, 2048.0f,
+		gRenderSceneConfig_SPR->nearClip, CameraToScreen_Matrix, CameraToCulling_Matrix, CameraToClipping_Matrix,
+		&CameraToFog_Matrix, gRenderSceneConfig_SPR->farClip, fVar2, fVar3);
 
-	sceVu0MulMatrix((TO_SCE_MTX)&Matrix_004894a0, (TO_SCE_MTX)g_ScratchpadAddr_00448a58,
-		(TO_SCE_MTX)ScratchpadAnimManager_004494ec.pScreenSpaceMatrix);
+	ed3DFrustumCompute(gRenderSceneConfig_SPR, gRenderCamera, &gRenderSurface);
+
+	edF32Matrix4MulF32Matrix4Hard(&WorldToScreen_Matrix, WorldToCamera_Matrix, CameraToScreen_Matrix);
+
 	if ((pStaticMeshMaster->flags_0x4 & 2) != 0) {
-		memcpy(&g_ScreenSpaceMatrix_0048cbb0, ScratchpadAnimManager_004494ec.pScreenSpaceMatrix, sizeof(edF32MATRIX4));
-		memcpy(&g_TextureSpaceMatrix_0048cbf0, ScratchpadAnimManager_004494ec.pTextureSpaceMatrix, sizeof(edF32MATRIX4));
-		memcpy(&g_WorldSpaceMatrix_0048cc30, ScratchpadAnimManager_004494ec.pWorldSpaceMatrix, sizeof(edF32MATRIX4));
-		memcpy(&g_TransformationMatrix_0048cc70, &g_TransformationMatrix_00489460, sizeof(edF32MATRIX4));
-		memcpy(&Matrix_0048ccb0, g_ScratchpadAddr_00448a58, sizeof(edF32MATRIX4));
-		memcpy(&Vector_0048ccf0, &Vector_0048c2d0, sizeof(Vector));
-		memcpy(&Vector_0048cd00, &Vector_0048c2e0, sizeof(Vector));
-		memcpy(&Vector_0048cd10, &Vector_0048c2f0, sizeof(Vector));
-		memcpy(&Vector_0048cd20, &Vector_0048c300, sizeof(Vector));
-		memcpy(&Vector_0048cd30, &Vector_0048c310, sizeof(Vector));
-		memcpy(&Vector_0048cd40, &Vector_0048c320, sizeof(Vector));
+		memcpy(&gShadow_CameraToScreen_Matrix, CameraToScreen_Matrix, sizeof(edF32MATRIX4));
+		memcpy(&gShadow_CameraToCulling_Matrix, CameraToCulling_Matrix, sizeof(edF32MATRIX4));
+		memcpy(&gShadow_CameraToClipping_Matrix, CameraToClipping_Matrix, sizeof(edF32MATRIX4));
+		memcpy(&gShadow_CameraToFog_Matrix, &CameraToFog_Matrix, sizeof(edF32MATRIX4));
+		memcpy(&gShadow_WorldToCamera_Matrix, WorldToCamera_Matrix, sizeof(edF32MATRIX4));
+		memcpy(&gShadow_ClipMulVector, &gClipMulVector, sizeof(edF32VECTOR4));
+		memcpy(&gShadow_ClipAddVector, &gClipAddVector, sizeof(edF32VECTOR4));
+		memcpy(&gShadow_ClipXY, &gClipXY, sizeof(edF32VECTOR4));
+		memcpy(&gShadow_CamPos, &gCamPos, sizeof(edF32VECTOR4));
+		memcpy(&gShadow_gCamNormal_X, &gCamNormal_X, sizeof(edF32VECTOR4));
+		memcpy(&gShadow_gCamNormal_Y, &gCamNormal_Y, sizeof(edF32VECTOR4));
 	}
 	if (pStaticMeshMaster->bShadowScene == 1) {
 		uVar1 = GetGreaterPower2Val((int)pStaticMeshMaster->pViewport->screenWidth);
@@ -2015,28 +1958,27 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 		else {
 			fVar3 = (float)uVar1;
 		}
-		PTR_TextureData_MAT_004492ec = &ed_g2d_material_0048c3b0;
-		PTR_TextureData_MAT_004492f0 = &ed_g2d_material_0048c3c0;
-		Vector_0048c300.x = 2048.0f - fVar2 / 2.0f;
-		Vector_0048c300.y = 2048.0f - fVar3 / 2.0f;
-		Vector_0048c300.z = 1.0f / fVar2;
-		Vector_0048c300.w = 1.0f / fVar3;
-		SetCamera_002b6d10(((ScratchpadAnimManager_004494ec.pData_150)->pShadowConfig).pCamera_0x14);
-		*ScratchpadAnimManager_004494ec.gShadowRenderMask =
-			(uint)(ushort)((ScratchpadAnimManager_004494ec.pData_150)->pShadowConfig).field_0x20;
-		if (*ScratchpadAnimManager_004494ec.gShadowRenderMask == 0) {
+		gDefault_Material_Current = &gMaterial_Render_Zbuffer_Only;
+		gDefault_Material_Cluster_Current = &gMaterial_Render_Zbuffer_Only_Cluster;
+		gCamPos.x = 2048.0f - fVar2 / 2.0f;
+		gCamPos.y = 2048.0f - fVar3 / 2.0f;
+		gCamPos.z = 1.0f / fVar2;
+		gCamPos.w = 1.0f / fVar3;
+		ed3DShadowSetRenderViewport((gRenderSceneConfig_SPR->pShadowConfig).pViewport);
+		*gShadowRenderMask = (uint)(ushort)(gRenderSceneConfig_SPR->pShadowConfig).renderMask;
+		if (*gShadowRenderMask == 0) {
 			return 0;
 		}
-		memcpy(&Matrix_00489550, g_ScratchpadAddr_00448a58, sizeof(edF32MATRIX4));
+		memcpy(&WorldToCamera_Matrix_CastShadow, WorldToCamera_Matrix, sizeof(edF32MATRIX4));
 		gShadowRenderScene = pStaticMeshMaster;
 	}
 	else {
-		*ScratchpadAnimManager_004494ec.gShadowRenderMask = 0;
-		PTR_TextureData_MAT_004492ec = ed_g2d_material_ARRAY_0048c370;
-		PTR_TextureData_MAT_004492f0 = ed_g2d_material_ARRAY_0048c370 + 1;
+		*gShadowRenderMask = 0;
+		gDefault_Material_Current = &gDefault_Material_Gouraud;
+		gDefault_Material_Cluster_Current = &gDefault_Material_Gouraud_Cluster;
 	}
 	if (pStaticMeshMaster->pViewport->screenHeight != 0x200) {
-		pStaticMeshMaster->pCamera->aMatrices[0].dc = fVar5;
+		pStaticMeshMaster->pCamera->halfFOV = fVar5;
 	}
 	return 1;
 }
@@ -2063,45 +2005,45 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* param_1)
 	*(uint*)((ulong)&param_1[1].cmdB + 4) = uVar3;
 	param_1[2].cmdA = 0x302ec00000008000;
 	param_1[2].cmdB = 0x512;
-	fVar6 = Vector_0048c2d0.w;
-	fVar5 = Vector_0048c2d0.z;
-	fVar4 = Vector_0048c2d0.y;
-	*(float*)&param_1[3].cmdA = Vector_0048c2d0.x;
+	fVar6 = gClipMulVector.w;
+	fVar5 = gClipMulVector.z;
+	fVar4 = gClipMulVector.y;
+	*(float*)&param_1[3].cmdA = gClipMulVector.x;
 	*(float*)((ulong)&param_1[3].cmdA + 4) = fVar4;
 	*(float*)&param_1[3].cmdB = fVar5;
 	*(float*)((ulong)&param_1[3].cmdB + 4) = fVar6;
-	fVar6 = Vector_0048c2e0.w;
-	fVar5 = Vector_0048c2e0.z;
-	fVar4 = Vector_0048c2e0.y;
-	*(float*)&param_1[4].cmdA = Vector_0048c2e0.x;
+	fVar6 = gClipAddVector.w;
+	fVar5 = gClipAddVector.z;
+	fVar4 = gClipAddVector.y;
+	*(float*)&param_1[4].cmdA = gClipAddVector.x;
 	*(float*)((ulong)&param_1[4].cmdA + 4) = fVar4;
 	*(float*)&param_1[4].cmdB = fVar5;
 	*(float*)((ulong)&param_1[4].cmdB + 4) = fVar6;
-	fVar6 = Vector_0048c2f0.w;
-	fVar5 = Vector_0048c2f0.z;
-	fVar4 = Vector_0048c2f0.y;
-	*(float*)&param_1[5].cmdA = Vector_0048c2f0.x;
+	fVar6 = gClipXY.w;
+	fVar5 = gClipXY.z;
+	fVar4 = gClipXY.y;
+	*(float*)&param_1[5].cmdA = gClipXY.x;
 	*(float*)((ulong)&param_1[5].cmdA + 4) = fVar4;
 	*(float*)&param_1[5].cmdB = fVar5;
 	*(float*)((ulong)&param_1[5].cmdB + 4) = fVar6;
-	fVar6 = Vector_0048c300.w;
-	fVar5 = Vector_0048c300.z;
-	fVar4 = Vector_0048c300.y;
-	*(float*)&param_1[6].cmdA = Vector_0048c300.x;
+	fVar6 = gCamPos.w;
+	fVar5 = gCamPos.z;
+	fVar4 = gCamPos.y;
+	*(float*)&param_1[6].cmdA = gCamPos.x;
 	*(float*)((ulong)&param_1[6].cmdA + 4) = fVar4;
 	*(float*)&param_1[6].cmdB = fVar5;
 	*(float*)((ulong)&param_1[6].cmdB + 4) = fVar6;
-	fVar6 = Vector_0048c310.w;
-	fVar5 = Vector_0048c310.z;
-	fVar4 = Vector_0048c310.y;
-	*(float*)&param_1[7].cmdA = Vector_0048c310.x;
+	fVar6 = gCamNormal_X.w;
+	fVar5 = gCamNormal_X.z;
+	fVar4 = gCamNormal_X.y;
+	*(float*)&param_1[7].cmdA = gCamNormal_X.x;
 	*(float*)((ulong)&param_1[7].cmdA + 4) = fVar4;
 	*(float*)&param_1[7].cmdB = fVar5;
 	*(float*)((ulong)&param_1[7].cmdB + 4) = fVar6;
-	fVar6 = Vector_0048c320.w;
-	fVar5 = Vector_0048c320.z;
-	fVar4 = Vector_0048c320.y;
-	*(float*)&param_1[8].cmdA = Vector_0048c320.x;
+	fVar6 = gCamNormal_Y.w;
+	fVar5 = gCamNormal_Y.z;
+	fVar4 = gCamNormal_Y.y;
+	*(float*)&param_1[8].cmdA = gCamNormal_Y.x;
 	*(float*)((ulong)&param_1[8].cmdA + 4) = fVar4;
 	*(float*)&param_1[8].cmdB = fVar5;
 	*(float*)((ulong)&param_1[8].cmdB + 4) = fVar6;
@@ -2135,18 +2077,18 @@ edpkt_data* ed3DAddViewportContextPacket(ed_viewport* pCamera, edpkt_data* pComm
 	return pRVar1;
 }
 
-edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* param_1, edpkt_data* pInCommandBuffer)
+edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 {
 	edpkt_data* pRVar1;
 
-	RENDER_LOG("ed3DSceneAddContextPacket %p\n", param_1);
+	RENDER_LOG("ed3DSceneAddContextPacket %p", pScene);
 
-	pInCommandBuffer->cmdA = 0xe10000003;
-	pInCommandBuffer->cmdB = 0;
-	*(undefined4*)&pInCommandBuffer->cmdB = 0x40003dc;
-	*(undefined4*)((ulong)&pInCommandBuffer->cmdB + 4) = 0x6c0203dc;
+	pPkt->cmdA = 0xe10000003;
+	pPkt->cmdB = 0;
+	*(undefined4*)&pPkt->cmdB = 0x40003dc;
+	*(undefined4*)((ulong)&pPkt->cmdB + 4) = 0x6c0203dc;
 
-	pInCommandBuffer[1].cmdA = SCE_GIF_SET_TAG(
+	pPkt[1].cmdA = SCE_GIF_SET_TAG(
 		1,					// NLOOP
 		SCE_GS_TRUE,		// EOP
 		SCE_GS_FALSE,		// PRE
@@ -2154,17 +2096,17 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* param_1, edpkt_data* pInComma
 		SCE_GIF_PACKED,		// FLG
 		1					// NREG
 	);
-	pInCommandBuffer[1].cmdB = SCE_GIF_PACKED_AD;
+	pPkt[1].cmdB = SCE_GIF_PACKED_AD;
 
-	pInCommandBuffer[2].cmdA = SCE_GS_SET_FOGCOL(param_1->sceneConfig.fogCol_0xf0.r, param_1->sceneConfig.fogCol_0xf0.g, param_1->sceneConfig.fogCol_0xf0.b);
-	pInCommandBuffer[2].cmdB = SCE_GS_FOGCOL;
+	pPkt[2].cmdA = SCE_GS_SET_FOGCOL(pScene->sceneConfig.fogCol_0xf0.r, pScene->sceneConfig.fogCol_0xf0.g, pScene->sceneConfig.fogCol_0xf0.b);
+	pPkt[2].cmdB = SCE_GS_FOGCOL;
 
-	*(undefined4*)&pInCommandBuffer[3].cmdA = 0;
-	*(undefined4*)((ulong)&pInCommandBuffer[3].cmdA + 4) = 0x14000000;
-	pInCommandBuffer[3].cmdB = 0x11000000;
-	pRVar1 = pInCommandBuffer + 4;
-	if (param_1->pViewport != (ed_viewport*)0x0) {
-		pRVar1 = ed3DAddViewportContextPacket(param_1->pViewport, pRVar1);
+	*(undefined4*)&pPkt[3].cmdA = 0;
+	*(undefined4*)((ulong)&pPkt[3].cmdA + 4) = 0x14000000;
+	pPkt[3].cmdB = 0x11000000;
+	pRVar1 = pPkt + 4;
+	if (pScene->pViewport != (ed_viewport*)0x0) {
+		pRVar1 = ed3DAddViewportContextPacket(pScene->pViewport, pRVar1);
 	}
 	return pRVar1;
 }
@@ -2223,11 +2165,11 @@ void ed3DClustersRenderComputeSceneHierarchyList(ed_3D_Scene* pStaticMeshMaster)
 	uint uVar4;
 
 	piVar3 = pStaticMeshMaster->field_0x1ac;
-	for (uVar4 = 0; uVar4 < pStaticMeshMaster->count_0x1b0; uVar4 = uVar4 + 1) {
+	for (uVar4 = 0; uVar4 < pStaticMeshMaster->heirarchyListCount; uVar4 = uVar4 + 1) {
 		iVar1 = *piVar3;
 		for (iVar2 = *(int*)(iVar1 + 4); iVar2 != iVar1; iVar2 = *(int*)(iVar2 + 4)) {
 			IMPLEMENTATION_GUARD(
-			MeshTransformData::ed3DRenderSonHierarchy(*(MeshTransformData**)(iVar2 + 0xc));)
+			ed_3d_hierarchy_node::ed3DRenderSonHierarchy(*(ed_3d_hierarchy_node**)(iVar2 + 0xc));)
 		}
 		piVar3 = piVar3 + 1;
 	}
@@ -2268,49 +2210,50 @@ PACK(struct MeshData_CSTA {
 	undefined field_0x2d;
 	undefined field_0x2e;
 	undefined field_0x2f;
-	Vector field_0x30;
+	edF32VECTOR4 field_0x30;
 };)
 
-void ed3DSceneSortClusters(ed_3D_Scene* pStaticMeshMaster)
+void ed3DSceneSortClusters(ed_3D_Scene* pScene)
 {
-	bool bVar1;
-	edLIST* pCVar2;
-	edLIST* pCVar3;
-	edLIST* pCVar4;
-	Vector local_10;
-	DisplayListInternalMesh* pMVar2;
+	edLIST* peVar1;
+	bool bVar2;
+	edLIST* peVar3;
+	edLIST* peVar4;
+	edF32VECTOR4 local_10;
+	edCluster* pvVar1;
+	edCluster* pMVar2;
 	MeshData_CSTA* pcVar1;
-	DisplayListInternalMesh* pMVar1;
+	edCluster* pMVar1;
 
-	bVar1 = true;
-	if ((pStaticMeshMaster->flags_0x4 & 0x400) == 0) {
-		pCVar4 = &pStaticMeshMaster->headerB;
+	bVar2 = true;
+	if ((pScene->flags_0x4 & 0x400) == 0) {
+		peVar4 = &pScene->headerB;
 	}
 	else {
-		pCVar4 = pStaticMeshMaster->field_0x1a0;
+		peVar4 = pScene->field_0x1a0;
 	}
-	pCVar3 = (edLIST*)pCVar4->pLoadedData;
-	if (pCVar3 != pCVar4) {
-		for (; pCVar3 != pCVar4; pCVar3 = (edLIST*)pCVar3->pLoadedData) {
-			pMVar2 = (DisplayListInternalMesh*)pCVar3->pCameraPanHeader_0xc;
+	peVar3 = (edLIST*)peVar4->pPrev;
+	if (peVar3 != peVar4) {
+		for (; peVar3 != peVar4; peVar3 = (edLIST*)peVar3->pPrev) {
+			pMVar2 = (edCluster*)peVar3->pData;
 			pcVar1 = (MeshData_CSTA*)pMVar2->pMeshInfo->CSTA;
 			if (pcVar1 != (MeshData_CSTA*)0x0) {
-				ps2_vu0_sub_vector(&local_10, (Vector*)pStaticMeshMaster->pCamera->aMatrices, &pcVar1->field_0x30);
+				edF32Vector4SubHard(&local_10, &pScene->pCamera->position, &pcVar1->field_0x30);
 				pMVar2->field_0x18 = local_10.z * local_10.z + local_10.x * local_10.x + local_10.y * local_10.y;
 			}
 		}
-		while (bVar1) {
-			bVar1 = false;
-			pCVar2 = (edLIST*)pCVar4->pLoadedData;
-			for (pCVar3 = (edLIST*)((edLIST*)pCVar4->pLoadedData)->pLoadedData;
-				pCVar3 != pCVar4; pCVar3 = (edLIST*)pCVar3->pLoadedData) {
-				pMVar1 = (DisplayListInternalMesh*)pCVar2->pCameraPanHeader_0xc;
-				if (pMVar1->field_0x18 < ((DisplayListInternalMesh*)pCVar3->pCameraPanHeader_0xc)->field_0x18) {
-					pCVar2->pCameraPanHeader_0xc = pCVar3->pCameraPanHeader_0xc;
-					bVar1 = true;
-					pCVar3->pCameraPanHeader_0xc = (edNODE_MANAGER*)pMVar1;
+		while (bVar2) {
+			peVar3 = (edLIST*)peVar4->pPrev;
+			bVar2 = false;
+			for (peVar1 = (edLIST*)peVar3->pPrev; peVar1 != peVar4; peVar1 = (edLIST*)peVar1->pPrev) {
+				pvVar1 = (edCluster*)peVar1->pData;
+				pMVar1 = (edCluster*)peVar3->pData;
+				if (pMVar1->field_0x18 < pvVar1->field_0x18) {
+					peVar3->pData = pvVar1;
+					bVar2 = true;
+					peVar1->pData = pMVar1;
 				}
-				pCVar2 = pCVar3;
+				peVar3 = peVar1;
 			}
 		}
 	}
@@ -2322,12 +2265,13 @@ float FLOAT_00448a04 = 0.01f;
 
 byte gGlobalAlhaON = 0;
 
-TextureData_LAY_Internal* g_TextureData_LAY_Int_00449404 = NULL;
-ed_g2d_bitmap* PTR_DAT_0044940c = NULL;
+ed_g2d_layer* gCurLayer = NULL;
+ed_g2d_bitmap* gCurBitmap = NULL;
 
-void ed3DG2DMaterialGetLayerBitmap(ed_dma_matrix* param_1, ed_g2d_bitmap** ppOutTEX2D, TextureData_LAY_Internal** ppOutLAY, int index)
+void ed3DG2DMaterialGetLayerBitmap(ed_dma_material* pMaterial, ed_g2d_bitmap** ppOutTEX2D, ed_g2d_layer** ppOutLAY, int index)
 {
-	*ppOutLAY = &((ed_g2d_layer*)LOAD_SECTION(*(int*)(param_1->pFileData + index * 4 + 0x10)))->body;
+	int* hash = (int*)(pMaterial->pMaterial + 1);
+	*ppOutLAY = &((ed_g2d_layer_header*)LOAD_SECTION(hash[index]))->body;
 	TextureData_TEX* pTEX = (TextureData_TEX*)LOAD_SECTION((*ppOutLAY)->pTex);
 	TextureData_HASH_Internal_PA32* b = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(pTEX->body.after.pHASH_Internal);
 	TextureData_PA32* pTEX2D = (TextureData_PA32*)LOAD_SECTION(b->pPA32);
@@ -2338,28 +2282,25 @@ void ed3DG2DMaterialGetLayerBitmap(ed_dma_matrix* param_1, ed_g2d_bitmap** ppOut
 byte gShadowFlushMode = 0;
 int gFlushListFlusaON = 0;
 
-edpkt_data* ed3DHierachyCheckForGlobalAlpha(edpkt_data* pRenderCommand, TextureData_LAY_Internal* pLAY)
+edpkt_data* ed3DHierachyCheckForGlobalAlpha(edpkt_data* pRenderCommand, ed_g2d_layer* pLAY)
 {
-	if (((gpLastMaterial == (ed_dma_matrix*)0x0) || ((gpLastMaterial->flags_0x28 & 1U) != 0)) &&
-		(gpLastMaterial != (ed_dma_matrix*)0x0)) {
+	if (((gpLastMaterial == (ed_dma_material*)0x0) || ((gpLastMaterial->flags & 1) != 0)) &&
+		(gpLastMaterial != (ed_dma_material*)0x0)) {
 		gGlobalAlhaON = 0x80;
 	}
 	else {
-		if (((gpCurHierarchy == (MeshTransformDataBase*)0x0) ||
-			(gpCurHierarchy == (MeshTransformDataBase*)0x0000ffff)) ||
-			(gpCurHierarchy->GlobalAlhaON == 0xff)) {
+		if (((gpCurHierarchy == (MeshTransformDataBase*)0x0) || (gpCurHierarchy == (MeshTransformDataBase*)0x0000ffff))
+			|| (gpCurHierarchy->GlobalAlhaON == 0xff)) {
 			if (((gGlobalAlhaON != 0x80) && (gpCurHierarchy != (MeshTransformDataBase*)0x0)) &&
 				(((gpCurHierarchy != (MeshTransformDataBase*)0x0000ffff &&
-					(((gpCurHierarchy->GlobalAlhaON == -1 &&
-						(gCurViewportUsed != (ed_viewport*)0x0)) &&
-						(gGlobalAlhaON = 0x80, pLAY != (TextureData_LAY_Internal*)0x0)))) && ((pLAY->flags_0x0 & 0xfc) == 0))
-					)) {
+					(((gpCurHierarchy->GlobalAlhaON == -1 && (gCurViewportUsed != (ed_viewport*)0x0)) &&
+						(gGlobalAlhaON = 0x80, pLAY != (ed_g2d_layer*)0x0)))) && ((pLAY->flags_0x0 & 0xfc) == 0)))) {
 				pRenderCommand->cmdA = 0x30000000;
 				pRenderCommand->cmdB = 0x1300000000000000;
 				pRenderCommand[1].cmdA = 0xe10000003;
 				pRenderCommand[1].cmdB = 0;
 				*(undefined4*)&pRenderCommand[1].cmdB = 0;
-				*(undefined4*)((ulong)&pRenderCommand[1].cmdB + 4) = 0x50000003;
+				*(undefined4*)((int)&pRenderCommand[1].cmdB + 4) = 0x50000003;
 				pRenderCommand[2].cmdA = 0x1000000000008002;
 				pRenderCommand[2].cmdB = 0xe;
 				pRenderCommand[3].cmdA = 0x5001b;
@@ -2372,14 +2313,16 @@ edpkt_data* ed3DHierachyCheckForGlobalAlpha(edpkt_data* pRenderCommand, TextureD
 		else {
 			if (gCurViewportUsed != (ed_viewport*)0x0) {
 				gGlobalAlhaON = gpCurHierarchy->GlobalAlhaON;
-				IMPLEMENTATION_GUARD( pRenderCommand = ed3DHierachyCheckForGlobalAlphaSetPKT_(pRenderCommand, pLAY));
+				IMPLEMENTATION_GUARD(
+				pRenderCommand = ed3DHierachyCheckForGlobalAlphaSetPKT_(pRenderCommand, pLAY));
 			}
 		}
 	}
 	return pRenderCommand;
 }
+
 	
-void sceVu0ScaleVectorAlt(float t, Vector* v0, Vector* v1)
+void sceVu0ScaleVectorAlt(float t, edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;
 	float fVar2;
@@ -2395,86 +2338,55 @@ void sceVu0ScaleVectorAlt(float t, Vector* v0, Vector* v1)
 	return;
 }
 
-void sceVu0MatrixFunc_00267300(sceVu0FMATRIX m0, sceVu0FMATRIX m1)
+void edF32Matrix4OrthonormalizeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 	float fVar1;
 	float fVar2;
 	float fVar3;
 	float fVar4;
-	float fVar5;
-	float fVar6;
 
-	fVar1 = (m1)[0][0];
-	fVar2 = (m1)[0][1];
-	fVar3 = (m1)[0][2];
-	fVar6 = 1.0 / (sqrt(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0);
-	(m0)[0][0] = fVar1 * fVar6;
-	(m0)[0][1] = fVar2 * fVar6;
-	(m0)[0][2] = fVar3 * fVar6;
-	(m0)[0][3] = 0.0;
-	fVar1 = (m0)[0][0];
-	fVar2 = (m0)[0][1];
-	fVar3 = (m0)[0][2];
-	fVar6 = (m1)[1][0];
-	fVar4 = (m1)[1][1];
-	fVar5 = (m1)[1][2];
-	(m0)[2][0] = fVar2 * fVar5 - fVar4 * fVar3;
-	(m0)[2][1] = fVar3 * fVar6 - fVar5 * fVar1;
-	(m0)[2][2] = fVar1 * fVar4 - fVar6 * fVar2;
-	(m0)[2][3] = 0.0;
-	fVar1 = (m0)[2][0];
-	fVar2 = (m0)[2][1];
-	fVar3 = (m0)[2][2];
-	fVar6 = 1.0 / (sqrt(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0);
-	(m0)[2][0] = fVar1 * fVar6;
-	(m0)[2][1] = fVar2 * fVar6;
-	(m0)[2][2] = fVar3 * fVar6;
-	(m0)[2][3] = 0.0;
-	fVar1 = (m0)[2][0];
-	fVar2 = (m0)[2][1];
-	fVar3 = (m0)[2][2];
-	fVar6 = (m0)[0][0];
-	fVar4 = (m0)[0][1];
-	fVar5 = (m0)[0][2];
-	(m0)[1][0] = fVar2 * fVar5 - fVar4 * fVar3;
-	(m0)[1][1] = fVar3 * fVar6 - fVar5 * fVar1;
-	(m0)[1][2] = fVar1 * fVar4 - fVar6 * fVar2;
-	(m0)[1][3] = 0.0;
-	fVar3 = (m1)[3][1];
-	fVar1 = (m1)[3][2];
-	fVar2 = (m1)[3][3];
-	(m0)[3][0] = (m1)[3][0];
-	(m0)[3][1] = fVar3;
-	(m0)[3][2] = fVar1;
-	(m0)[3][3] = fVar2;
+	fVar1 = m1->aa;
+	fVar2 = m1->ab;
+	fVar3 = m1->ac;
+	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f);
+	m0->aa = fVar1 * fVar4;
+	m0->ab = fVar2 * fVar4;
+	m0->ac = fVar3 * fVar4;
+	m0->ad = 0.0f;
+	fVar1 = m1->ba;
+	fVar2 = m1->bb;
+	fVar3 = m1->bc;
+	m0->ca = m0->ab * fVar3 - fVar2 * m0->ac;
+	m0->cb = m0->ac * fVar1 - fVar3 * m0->aa;
+	m0->cc = m0->aa * fVar2 - fVar1 * m0->ab;
+	m0->cd = 0.0f;
+	fVar1 = m0->ca;
+	fVar2 = m0->cb;
+	fVar3 = m0->cc;
+	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f);
+	m0->ca = fVar1 * fVar4;
+	m0->cb = fVar2 * fVar4;
+	m0->cc = fVar3 * fVar4;
+	m0->cd = 0.0f;
+	m0->ba = m0->cb * m0->ac - m0->ab * m0->cc;
+	m0->bb = m0->cc * m0->aa - m0->ac * m0->ca;
+	m0->bc = m0->ca * m0->ab - m0->aa * m0->cb;
+	m0->bd = 0.0f;
+	fVar3 = m1->db;
+	fVar1 = m1->dc;
+	fVar2 = m1->dd;
+	m0->da = m1->da;
+	m0->db = fVar3;
+	m0->dc = fVar1;
+	m0->dd = fVar2;
 	return;
 }
-
-#ifdef PLATFORM_WIN
-Vector Vector_ARRAY_70000800[2] = { 0 };
-Vector Vector_ARRAY_70000990[3] = { 0 };
-Vector Vector_ARRAY_70000920[7] = { 0 };
-edF32MATRIX4 g_RenderMData[4] = { 0 };
-edF32MATRIX4 Matrix_70000a00 = { 0 };
-edF32MATRIX4* Matrix_70000a00_PTR = &Matrix_70000a00;
-#else
-Vector* Vector_ARRAY_70000800 = (Vector*)0x70000800;
-Vector* Vector_ARRAY_70000990 = (Vector*)0x70000990;
-Vector* Vector_ARRAY_70000920 = (Vector*)0x70000920;
-edF32MATRIX4* g_RenderMData = (edF32MATRIX4*)0x70000820;
-edF32MATRIX4* Matrix_70000a00_PTR = (edF32MATRIX4*)0x70000a00;
-#endif
-
-// These are in the scratchpad
-edF32MATRIX4* PTR_Matrix_70000a40 = NULL;
-edF32MATRIX4* PTR_Matrix_70000a50 = NULL;
-Vector* PTR_Vector_70000a60 = NULL;
 
 edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix* pRenderData, byte param_3)
 {
 	edF32MATRIX4* m1;
 	LightingMatrixSubSubObj* pLVar1;
-	LightingMatrixFuncObj* pLVar2;
+	ed_3d_hierarchy_setup* pLVar2;
 	float* pfVar3;
 	float fVar4;
 	float fVar5;
@@ -2509,314 +2421,168 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	float fVar34;
 	float fVar35;
 	undefined* psVar1;
-	LightingMatrixFuncObj* puVar1;
+	ed_3d_hierarchy_setup* puVar1;
 
-	m1 = pRenderData->pTransformMatrix;
-	RENDER_LOG("DMA Begin ed3DPKTCopyMatrixPacket\n");
+	m1 = pRenderData->pObjToWorld;
+	RENDER_LOG("DMA Begin ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
-	sceVu0ScaleVectorAlt(pRenderData->field_0x2c.floatValue, Vector_ARRAY_70000800, &Vector_0048c310);
-	sceVu0ScaleVectorAlt(pRenderData->field_0x2c.floatValue, Vector_ARRAY_70000800 + 1, &Vector_0048c320);
-	*ScratchpadAnimManager_004494ec.field_0x20 = m1;
+	sceVu0ScaleVectorAlt(pRenderData->field_0x2c, SCRATCHPAD_ADDRESS_TYPE(0x70000800, edF32VECTOR4*), &gCamNormal_X);
+	sceVu0ScaleVectorAlt(pRenderData->field_0x2c, SCRATCHPAD_ADDRESS_TYPE(0x70000810, edF32VECTOR4*), &gCamNormal_Y);
+	*g_pCurFlareObj2WorldMtx = m1;
 	if (((pRenderData->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
-		(puVar1 = pRenderData->pMeshTransformData->pLightingMatrixFuncObj_0xa0, puVar1 == (LightingMatrixFuncObj*)0x0))
+		(puVar1 = pRenderData->pMeshTransformData->pHierarchySetup, puVar1 == (ed_3d_hierarchy_setup*)0x0))
 		|| (pLVar1 = puVar1->field_0x8, pLVar1 == (LightingMatrixSubSubObj*)0x0)) {
-		PTR_Matrix_70000a40 = ScratchpadAnimManager_004494ec.pLightDirections;
-		PTR_Matrix_70000a50 = ScratchpadAnimManager_004494ec.pLightColor;
-		PTR_Vector_70000a60 = ScratchpadAnimManager_004494ec.pLightAmbient;
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*, gLightColor_Matrix_Scratch);
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*, gLightAmbiant_Scratch);
 	}
 	else {
-		PTR_Matrix_70000a40 = pLVar1->field_0x4;
-		if (PTR_Matrix_70000a40 == (edF32MATRIX4*)0x0) {
-			PTR_Matrix_70000a40 = ScratchpadAnimManager_004494ec.pLightDirections;
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*, pLVar1->field_0x4);
+		if (SCRATCHPAD_READ_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*) == (edF32MATRIX4*)0x0) {
+			SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
 		}
-		PTR_Matrix_70000a50 = pLVar1->field_0x8;
-		if (PTR_Matrix_70000a50 == (edF32MATRIX4*)0x0) {
-			PTR_Matrix_70000a50 = ScratchpadAnimManager_004494ec.pLightColor;
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*, pLVar1->field_0x8);
+		if (SCRATCHPAD_READ_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*) == (edF32MATRIX4*)0x0) {
+			SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*, gLightColor_Matrix_Scratch);
 		}
-		PTR_Vector_70000a60 = pLVar1->field_0x0;
-		if (PTR_Vector_70000a60 == (Vector*)0x0) {
-			PTR_Vector_70000a60 = ScratchpadAnimManager_004494ec.pLightAmbient;
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*, pLVar1->field_0x0);
+		if (SCRATCHPAD_READ_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*) == (edF32VECTOR4*)0x0) {
+			SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*, gLightAmbiant_Scratch);
 		}
 	}
-	Vector_ARRAY_70000990[0].x = ((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).x;
-	Vector_ARRAY_70000990[0].z = ((ScratchpadAnimManager_004494ec.pData_130)->vector_0x110).z;
-	Vector_ARRAY_70000990[0].y = 0.0;
+
+	edF32VECTOR4* vectorA = SCRATCHPAD_ADDRESS_TYPE(0x70000990, edF32VECTOR4*);
+
+	vectorA->x = (gRenderCamera->calculatedRotation).x;
+	vectorA->z = (gRenderCamera->calculatedRotation).z;
+	vectorA->y = 0.0f;
 	if (param_3 == 0) {
-		Vector_ARRAY_70000990[0].w = 0.0;
+		vectorA->w = 0.0f;
 	}
 	else {
-		Vector_ARRAY_70000990[0].w = 999.0;
-		m1 = ScratchpadAnimManager_004494ec.pMatrix_0x30;
+		vectorA->w = 999.0f;
+		m1 = gF32Matrix4Unit_Scratch;
 	}
-	fVar20 = m1->aa;
-	fVar21 = m1->ab;
-	fVar22 = m1->ac;
-	fVar23 = m1->ad;
-	fVar24 = m1->ba;
-	fVar25 = m1->bb;
-	fVar26 = m1->bc;
-	fVar27 = m1->bd;
-	fVar28 = m1->ca;
-	fVar29 = m1->cb;
-	fVar30 = m1->cc;
-	fVar31 = m1->cd;
-	fVar32 = m1->da;
-	fVar33 = m1->db;
-	fVar34 = m1->dc;
-	fVar35 = m1->dd;
-	fVar4 = g_ScratchpadAddr_00448a58->aa;
-	fVar5 = g_ScratchpadAddr_00448a58->ab;
-	fVar6 = g_ScratchpadAddr_00448a58->ac;
-	fVar7 = g_ScratchpadAddr_00448a58->ad;
-	fVar8 = g_ScratchpadAddr_00448a58->ba;
-	fVar9 = g_ScratchpadAddr_00448a58->bb;
-	fVar10 = g_ScratchpadAddr_00448a58->bc;
-	fVar11 = g_ScratchpadAddr_00448a58->bd;
-	fVar12 = g_ScratchpadAddr_00448a58->ca;
-	fVar13 = g_ScratchpadAddr_00448a58->cb;
-	fVar14 = g_ScratchpadAddr_00448a58->cc;
-	fVar15 = g_ScratchpadAddr_00448a58->cd;
-	fVar16 = g_ScratchpadAddr_00448a58->da;
-	fVar17 = g_ScratchpadAddr_00448a58->db;
-	fVar18 = g_ScratchpadAddr_00448a58->dc;
-	fVar19 = g_ScratchpadAddr_00448a58->dd;
-	g_RenderMData[3].aa = fVar4 * fVar20 + fVar8 * fVar21 + fVar12 * fVar22 + fVar16 * fVar23;
-	g_RenderMData[3].ab = fVar5 * fVar20 + fVar9 * fVar21 + fVar13 * fVar22 + fVar17 * fVar23;
-	g_RenderMData[3].ac = fVar6 * fVar20 + fVar10 * fVar21 + fVar14 * fVar22 + fVar18 * fVar23;
-	g_RenderMData[3].ad = fVar7 * fVar20 + fVar11 * fVar21 + fVar15 * fVar22 + fVar19 * fVar23;
-	g_RenderMData[3].ba = fVar4 * fVar24 + fVar8 * fVar25 + fVar12 * fVar26 + fVar16 * fVar27;
-	g_RenderMData[3].bb = fVar5 * fVar24 + fVar9 * fVar25 + fVar13 * fVar26 + fVar17 * fVar27;
-	g_RenderMData[3].bc = fVar6 * fVar24 + fVar10 * fVar25 + fVar14 * fVar26 + fVar18 * fVar27;
-	g_RenderMData[3].bd = fVar7 * fVar24 + fVar11 * fVar25 + fVar15 * fVar26 + fVar19 * fVar27;
-	g_RenderMData[3].ca = fVar4 * fVar28 + fVar8 * fVar29 + fVar12 * fVar30 + fVar16 * fVar31;
-	g_RenderMData[3].cb = fVar5 * fVar28 + fVar9 * fVar29 + fVar13 * fVar30 + fVar17 * fVar31;
-	g_RenderMData[3].cc = fVar6 * fVar28 + fVar10 * fVar29 + fVar14 * fVar30 + fVar18 * fVar31;
-	g_RenderMData[3].cd = fVar7 * fVar28 + fVar11 * fVar29 + fVar15 * fVar30 + fVar19 * fVar31;
-	g_RenderMData[3].da = fVar4 * fVar32 + fVar8 * fVar33 + fVar12 * fVar34 + fVar16 * fVar35;
-	g_RenderMData[3].db = fVar5 * fVar32 + fVar9 * fVar33 + fVar13 * fVar34 + fVar17 * fVar35;
-	g_RenderMData[3].dc = fVar6 * fVar32 + fVar10 * fVar33 + fVar14 * fVar34 + fVar18 * fVar35;
-	g_RenderMData[3].dd = fVar7 * fVar32 + fVar11 * fVar33 + fVar15 * fVar34 + fVar19 * fVar35;
-	fVar4 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->aa;
-	fVar5 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->ab;
-	fVar6 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->ac;
-	fVar7 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->ad;
-	fVar8 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->ba;
-	fVar9 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->bb;
-	fVar10 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->bc;
-	fVar11 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->bd;
-	fVar12 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->ca;
-	fVar13 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->cb;
-	fVar14 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->cc;
-	fVar15 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->cd;
-	fVar16 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->da;
-	fVar17 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->db;
-	fVar18 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->dc;
-	fVar19 = (ScratchpadAnimManager_004494ec.pTextureSpaceMatrix)->dd;
-	g_RenderMData[0].aa =
-		fVar4 * g_RenderMData[3].aa + fVar8 * g_RenderMData[3].ab + fVar12 * g_RenderMData[3].ac +
-		fVar16 * g_RenderMData[3].ad;
-	g_RenderMData[0].ab =
-		fVar5 * g_RenderMData[3].aa + fVar9 * g_RenderMData[3].ab + fVar13 * g_RenderMData[3].ac +
-		fVar17 * g_RenderMData[3].ad;
-	g_RenderMData[0].ac =
-		fVar6 * g_RenderMData[3].aa + fVar10 * g_RenderMData[3].ab + fVar14 * g_RenderMData[3].ac +
-		fVar18 * g_RenderMData[3].ad;
-	g_RenderMData[0].ad =
-		fVar7 * g_RenderMData[3].aa + fVar11 * g_RenderMData[3].ab + fVar15 * g_RenderMData[3].ac +
-		fVar19 * g_RenderMData[3].ad;
-	g_RenderMData[0].ba =
-		fVar4 * g_RenderMData[3].ba + fVar8 * g_RenderMData[3].bb + fVar12 * g_RenderMData[3].bc +
-		fVar16 * g_RenderMData[3].bd;
-	g_RenderMData[0].bb =
-		fVar5 * g_RenderMData[3].ba + fVar9 * g_RenderMData[3].bb + fVar13 * g_RenderMData[3].bc +
-		fVar17 * g_RenderMData[3].bd;
-	g_RenderMData[0].bc =
-		fVar6 * g_RenderMData[3].ba + fVar10 * g_RenderMData[3].bb + fVar14 * g_RenderMData[3].bc +
-		fVar18 * g_RenderMData[3].bd;
-	g_RenderMData[0].bd =
-		fVar7 * g_RenderMData[3].ba + fVar11 * g_RenderMData[3].bb + fVar15 * g_RenderMData[3].bc +
-		fVar19 * g_RenderMData[3].bd;
-	g_RenderMData[0].ca =
-		fVar4 * g_RenderMData[3].ca + fVar8 * g_RenderMData[3].cb + fVar12 * g_RenderMData[3].cc +
-		fVar16 * g_RenderMData[3].cd;
-	g_RenderMData[0].cb =
-		fVar5 * g_RenderMData[3].ca + fVar9 * g_RenderMData[3].cb + fVar13 * g_RenderMData[3].cc +
-		fVar17 * g_RenderMData[3].cd;
-	g_RenderMData[0].cc =
-		fVar6 * g_RenderMData[3].ca + fVar10 * g_RenderMData[3].cb + fVar14 * g_RenderMData[3].cc +
-		fVar18 * g_RenderMData[3].cd;
-	g_RenderMData[0].cd =
-		fVar7 * g_RenderMData[3].ca + fVar11 * g_RenderMData[3].cb + fVar15 * g_RenderMData[3].cc +
-		fVar19 * g_RenderMData[3].cd;
-	g_RenderMData[0].da =
-		fVar4 * g_RenderMData[3].da + fVar8 * g_RenderMData[3].db + fVar12 * g_RenderMData[3].dc +
-		fVar16 * g_RenderMData[3].dd;
-	g_RenderMData[0].db =
-		fVar5 * g_RenderMData[3].da + fVar9 * g_RenderMData[3].db + fVar13 * g_RenderMData[3].dc +
-		fVar17 * g_RenderMData[3].dd;
-	g_RenderMData[0].dc =
-		fVar6 * g_RenderMData[3].da + fVar10 * g_RenderMData[3].db + fVar14 * g_RenderMData[3].dc +
-		fVar18 * g_RenderMData[3].dd;
-	g_RenderMData[0].dd =
-		fVar7 * g_RenderMData[3].da + fVar11 * g_RenderMData[3].db + fVar15 * g_RenderMData[3].dc +
-		fVar19 * g_RenderMData[3].dd;
-	fVar4 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->aa;
-	fVar5 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->ab;
-	fVar6 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->ac;
-	fVar7 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->ad;
-	fVar8 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->ba;
-	fVar9 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->bb;
-	fVar10 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->bc;
-	fVar11 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->bd;
-	fVar12 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->ca;
-	fVar13 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->cb;
-	fVar14 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->cc;
-	fVar15 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->cd;
-	fVar16 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->da;
-	fVar17 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->db;
-	fVar18 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->dc;
-	fVar19 = (ScratchpadAnimManager_004494ec.pWorldSpaceMatrix)->dd;
-	g_RenderMData[1].aa =
-		fVar4 * g_RenderMData[3].aa + fVar8 * g_RenderMData[3].ab + fVar12 * g_RenderMData[3].ac +
-		fVar16 * g_RenderMData[3].ad;
-	g_RenderMData[1].ab =
-		fVar5 * g_RenderMData[3].aa + fVar9 * g_RenderMData[3].ab + fVar13 * g_RenderMData[3].ac +
-		fVar17 * g_RenderMData[3].ad;
-	g_RenderMData[1].ac =
-		fVar6 * g_RenderMData[3].aa + fVar10 * g_RenderMData[3].ab + fVar14 * g_RenderMData[3].ac +
-		fVar18 * g_RenderMData[3].ad;
-	g_RenderMData[1].ad =
-		fVar7 * g_RenderMData[3].aa + fVar11 * g_RenderMData[3].ab + fVar15 * g_RenderMData[3].ac +
-		fVar19 * g_RenderMData[3].ad;
-	g_RenderMData[1].ba =
-		fVar4 * g_RenderMData[3].ba + fVar8 * g_RenderMData[3].bb + fVar12 * g_RenderMData[3].bc +
-		fVar16 * g_RenderMData[3].bd;
-	g_RenderMData[1].bb =
-		fVar5 * g_RenderMData[3].ba + fVar9 * g_RenderMData[3].bb + fVar13 * g_RenderMData[3].bc +
-		fVar17 * g_RenderMData[3].bd;
-	g_RenderMData[1].bc =
-		fVar6 * g_RenderMData[3].ba + fVar10 * g_RenderMData[3].bb + fVar14 * g_RenderMData[3].bc +
-		fVar18 * g_RenderMData[3].bd;
-	g_RenderMData[1].bd =
-		fVar7 * g_RenderMData[3].ba + fVar11 * g_RenderMData[3].bb + fVar15 * g_RenderMData[3].bc +
-		fVar19 * g_RenderMData[3].bd;
-	g_RenderMData[1].ca =
-		fVar4 * g_RenderMData[3].ca + fVar8 * g_RenderMData[3].cb + fVar12 * g_RenderMData[3].cc +
-		fVar16 * g_RenderMData[3].cd;
-	g_RenderMData[1].cb =
-		fVar5 * g_RenderMData[3].ca + fVar9 * g_RenderMData[3].cb + fVar13 * g_RenderMData[3].cc +
-		fVar17 * g_RenderMData[3].cd;
-	g_RenderMData[1].cc =
-		fVar6 * g_RenderMData[3].ca + fVar10 * g_RenderMData[3].cb + fVar14 * g_RenderMData[3].cc +
-		fVar18 * g_RenderMData[3].cd;
-	g_RenderMData[1].cd =
-		fVar7 * g_RenderMData[3].ca + fVar11 * g_RenderMData[3].cb + fVar15 * g_RenderMData[3].cc +
-		fVar19 * g_RenderMData[3].cd;
-	g_RenderMData[1].da =
-		fVar4 * g_RenderMData[3].da + fVar8 * g_RenderMData[3].db + fVar12 * g_RenderMData[3].dc +
-		fVar16 * g_RenderMData[3].dd;
-	g_RenderMData[1].db =
-		fVar5 * g_RenderMData[3].da + fVar9 * g_RenderMData[3].db + fVar13 * g_RenderMData[3].dc +
-		fVar17 * g_RenderMData[3].dd;
-	g_RenderMData[1].dc =
-		fVar6 * g_RenderMData[3].da + fVar10 * g_RenderMData[3].db + fVar14 * g_RenderMData[3].dc +
-		fVar18 * g_RenderMData[3].dd;
-	g_RenderMData[1].dd =
-		fVar7 * g_RenderMData[3].da + fVar11 * g_RenderMData[3].db + fVar15 * g_RenderMData[3].dc +
-		fVar19 * g_RenderMData[3].dd;
-	fVar4 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->aa;
-	fVar5 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->ab;
-	fVar6 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->ac;
-	fVar7 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->ad;
-	fVar8 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->ba;
-	fVar9 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->bb;
-	fVar10 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->bc;
-	fVar11 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->bd;
-	fVar12 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->ca;
-	fVar13 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->cb;
-	fVar14 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->cc;
-	fVar15 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->cd;
-	fVar16 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->da;
-	fVar17 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->db;
-	fVar18 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->dc;
-	fVar19 = (ScratchpadAnimManager_004494ec.pScreenSpaceMatrix)->dd;
-	g_RenderMData[2].aa =
-		fVar4 * g_RenderMData[3].aa + fVar8 * g_RenderMData[3].ab + fVar12 * g_RenderMData[3].ac +
-		fVar16 * g_RenderMData[3].ad;
-	g_RenderMData[2].ab =
-		fVar5 * g_RenderMData[3].aa + fVar9 * g_RenderMData[3].ab + fVar13 * g_RenderMData[3].ac +
-		fVar17 * g_RenderMData[3].ad;
-	g_RenderMData[2].ac =
-		fVar6 * g_RenderMData[3].aa + fVar10 * g_RenderMData[3].ab + fVar14 * g_RenderMData[3].ac +
-		fVar18 * g_RenderMData[3].ad;
-	g_RenderMData[2].ad =
-		fVar7 * g_RenderMData[3].aa + fVar11 * g_RenderMData[3].ab + fVar15 * g_RenderMData[3].ac +
-		fVar19 * g_RenderMData[3].ad;
-	g_RenderMData[2].ba =
-		fVar4 * g_RenderMData[3].ba + fVar8 * g_RenderMData[3].bb + fVar12 * g_RenderMData[3].bc +
-		fVar16 * g_RenderMData[3].bd;
-	g_RenderMData[2].bb =
-		fVar5 * g_RenderMData[3].ba + fVar9 * g_RenderMData[3].bb + fVar13 * g_RenderMData[3].bc +
-		fVar17 * g_RenderMData[3].bd;
-	g_RenderMData[2].bc =
-		fVar6 * g_RenderMData[3].ba + fVar10 * g_RenderMData[3].bb + fVar14 * g_RenderMData[3].bc +
-		fVar18 * g_RenderMData[3].bd;
-	g_RenderMData[2].bd =
-		fVar7 * g_RenderMData[3].ba + fVar11 * g_RenderMData[3].bb + fVar15 * g_RenderMData[3].bc +
-		fVar19 * g_RenderMData[3].bd;
-	g_RenderMData[2].ca =
-		fVar4 * g_RenderMData[3].ca + fVar8 * g_RenderMData[3].cb + fVar12 * g_RenderMData[3].cc +
-		fVar16 * g_RenderMData[3].cd;
-	g_RenderMData[2].cb =
-		fVar5 * g_RenderMData[3].ca + fVar9 * g_RenderMData[3].cb + fVar13 * g_RenderMData[3].cc +
-		fVar17 * g_RenderMData[3].cd;
-	g_RenderMData[2].cc =
-		fVar6 * g_RenderMData[3].ca + fVar10 * g_RenderMData[3].cb + fVar14 * g_RenderMData[3].cc +
-		fVar18 * g_RenderMData[3].cd;
-	g_RenderMData[2].cd =
-		fVar7 * g_RenderMData[3].ca + fVar11 * g_RenderMData[3].cb + fVar15 * g_RenderMData[3].cc +
-		fVar19 * g_RenderMData[3].cd;
-	g_RenderMData[2].da =
-		fVar4 * g_RenderMData[3].da + fVar8 * g_RenderMData[3].db + fVar12 * g_RenderMData[3].dc +
-		fVar16 * g_RenderMData[3].dd;
-	g_RenderMData[2].db =
-		fVar5 * g_RenderMData[3].da + fVar9 * g_RenderMData[3].db + fVar13 * g_RenderMData[3].dc +
-		fVar17 * g_RenderMData[3].dd;
-	g_RenderMData[2].dc =
-		fVar6 * g_RenderMData[3].da + fVar10 * g_RenderMData[3].db + fVar14 * g_RenderMData[3].dc +
-		fVar18 * g_RenderMData[3].dd;
-	g_RenderMData[2].dd =
-		fVar7 * g_RenderMData[3].da + fVar11 * g_RenderMData[3].db + fVar15 * g_RenderMData[3].dc +
-		fVar19 * g_RenderMData[3].dd;
-	sceVu0MatrixFunc_00267300((TO_SCE_MTX)Matrix_70000a00_PTR, (TO_SCE_MTX)m1);
-	sceVu0InverseMatrix(Matrix_70000a00_PTR, Matrix_70000a00_PTR);
-	sceVu0MulMatrix((TO_SCE_MTX)Vector_ARRAY_70000920, (TO_SCE_MTX)PTR_Matrix_70000a40,
-		(TO_SCE_MTX)Matrix_70000a00_PTR);
-	sceVu0TransposeMatrixFixed((TO_SCE_MTX)Vector_ARRAY_70000920, (TO_SCE_MTX)Vector_ARRAY_70000920);
-	sceVu0CopyMatrix((TO_SCE_MTX)(Vector_ARRAY_70000920 + 3), (TO_SCE_MTX)PTR_Matrix_70000a50);
-	Vector_ARRAY_70000990[1].z = PTR_Vector_70000a60->z;
-	Vector_ARRAY_70000990[1].x = PTR_Vector_70000a60->x;
-	Vector_ARRAY_70000990[1].y = PTR_Vector_70000a60->y;
-	Vector_ARRAY_70000990[1].w = 0.0078125f;
+
+	edF32MATRIX4 objToWorld = *m1;
+	edF32MATRIX4 worldToCamera = *WorldToCamera_Matrix;
+
+	edF32MATRIX4* matrixA = SCRATCHPAD_ADDRESS_TYPE(0x700008E0, edF32MATRIX4*);
+
+	matrixA->aa = worldToCamera.aa * objToWorld.aa + worldToCamera.ba * objToWorld.ab + worldToCamera.ca * objToWorld.ac + worldToCamera.da * objToWorld.ad;
+	matrixA->ab = worldToCamera.ab * objToWorld.aa + worldToCamera.bb * objToWorld.ab + worldToCamera.cb * objToWorld.ac + worldToCamera.db * objToWorld.ad;
+	matrixA->ac = worldToCamera.ac * objToWorld.aa + worldToCamera.bc * objToWorld.ab + worldToCamera.cc * objToWorld.ac + worldToCamera.dc * objToWorld.ad;
+	matrixA->ad = worldToCamera.ad * objToWorld.aa + worldToCamera.bd * objToWorld.ab + worldToCamera.cd * objToWorld.ac + worldToCamera.dd * objToWorld.ad;
+	matrixA->ba = worldToCamera.aa * objToWorld.ba + worldToCamera.ba * objToWorld.bb + worldToCamera.ca * objToWorld.bc + worldToCamera.da * objToWorld.bd;
+	matrixA->bb = worldToCamera.ab * objToWorld.ba + worldToCamera.bb * objToWorld.bb + worldToCamera.cb * objToWorld.bc + worldToCamera.db * objToWorld.bd;
+	matrixA->bc = worldToCamera.ac * objToWorld.ba + worldToCamera.bc * objToWorld.bb + worldToCamera.cc * objToWorld.bc + worldToCamera.dc * objToWorld.bd;
+	matrixA->bd = worldToCamera.ad * objToWorld.ba + worldToCamera.bd * objToWorld.bb + worldToCamera.cd * objToWorld.bc + worldToCamera.dd * objToWorld.bd;
+	matrixA->ca = worldToCamera.aa * objToWorld.ca + worldToCamera.ba * objToWorld.cb + worldToCamera.ca * objToWorld.cc + worldToCamera.da * objToWorld.cd;
+	matrixA->cb = worldToCamera.ab * objToWorld.ca + worldToCamera.bb * objToWorld.cb + worldToCamera.cb * objToWorld.cc + worldToCamera.db * objToWorld.cd;
+	matrixA->cc = worldToCamera.ac * objToWorld.ca + worldToCamera.bc * objToWorld.cb + worldToCamera.cc * objToWorld.cc + worldToCamera.dc * objToWorld.cd;
+	matrixA->cd = worldToCamera.ad * objToWorld.ca + worldToCamera.bd * objToWorld.cb + worldToCamera.cd * objToWorld.cc + worldToCamera.dd * objToWorld.cd;
+	matrixA->da = worldToCamera.aa * objToWorld.da + worldToCamera.ba * objToWorld.db + worldToCamera.ca * objToWorld.dc + worldToCamera.da * objToWorld.dd;
+	matrixA->db = worldToCamera.ab * objToWorld.da + worldToCamera.bb * objToWorld.db + worldToCamera.cb * objToWorld.dc + worldToCamera.db * objToWorld.dd;
+	matrixA->dc = worldToCamera.ac * objToWorld.da + worldToCamera.bc * objToWorld.db + worldToCamera.cc * objToWorld.dc + worldToCamera.dc * objToWorld.dd;
+	matrixA->dd = worldToCamera.ad * objToWorld.da + worldToCamera.bd * objToWorld.db + worldToCamera.cd * objToWorld.dc + worldToCamera.dd * objToWorld.dd;
+	
+	edF32MATRIX4 cameraToCulling = *CameraToCulling_Matrix;
+	edF32MATRIX4* matrixB = SCRATCHPAD_ADDRESS_TYPE(0x70000820, edF32MATRIX4*);
+
+	matrixB->aa = cameraToCulling.aa * matrixA->aa + cameraToCulling.ba * matrixA->ab + cameraToCulling.ca * matrixA->ac + cameraToCulling.da * matrixA->ad;
+	matrixB->ab = cameraToCulling.ab * matrixA->aa + cameraToCulling.bb * matrixA->ab + cameraToCulling.cb * matrixA->ac + cameraToCulling.db * matrixA->ad;
+	matrixB->ac = cameraToCulling.ac * matrixA->aa + cameraToCulling.bc * matrixA->ab + cameraToCulling.cc * matrixA->ac + cameraToCulling.dc * matrixA->ad;
+	matrixB->ad = cameraToCulling.ad * matrixA->aa + cameraToCulling.bd * matrixA->ab + cameraToCulling.cd * matrixA->ac + cameraToCulling.dd * matrixA->ad;
+	matrixB->ba = cameraToCulling.aa * matrixA->ba + cameraToCulling.ba * matrixA->bb + cameraToCulling.ca * matrixA->bc + cameraToCulling.da * matrixA->bd;
+	matrixB->bb = cameraToCulling.ab * matrixA->ba + cameraToCulling.bb * matrixA->bb + cameraToCulling.cb * matrixA->bc + cameraToCulling.db * matrixA->bd;
+	matrixB->bc = cameraToCulling.ac * matrixA->ba + cameraToCulling.bc * matrixA->bb + cameraToCulling.cc * matrixA->bc + cameraToCulling.dc * matrixA->bd;
+	matrixB->bd = cameraToCulling.ad * matrixA->ba + cameraToCulling.bd * matrixA->bb + cameraToCulling.cd * matrixA->bc + cameraToCulling.dd * matrixA->bd;
+	matrixB->ca = cameraToCulling.aa * matrixA->ca + cameraToCulling.ba * matrixA->cb + cameraToCulling.ca * matrixA->cc + cameraToCulling.da * matrixA->cd;
+	matrixB->cb = cameraToCulling.ab * matrixA->ca + cameraToCulling.bb * matrixA->cb + cameraToCulling.cb * matrixA->cc + cameraToCulling.db * matrixA->cd;
+	matrixB->cc = cameraToCulling.ac * matrixA->ca + cameraToCulling.bc * matrixA->cb + cameraToCulling.cc * matrixA->cc + cameraToCulling.dc * matrixA->cd;
+	matrixB->cd = cameraToCulling.ad * matrixA->ca + cameraToCulling.bd * matrixA->cb + cameraToCulling.cd * matrixA->cc + cameraToCulling.dd * matrixA->cd;
+	matrixB->da = cameraToCulling.aa * matrixA->da + cameraToCulling.ba * matrixA->db + cameraToCulling.ca * matrixA->dc + cameraToCulling.da * matrixA->dd;
+	matrixB->db = cameraToCulling.ab * matrixA->da + cameraToCulling.bb * matrixA->db + cameraToCulling.cb * matrixA->dc + cameraToCulling.db * matrixA->dd;
+	matrixB->dc = cameraToCulling.ac * matrixA->da + cameraToCulling.bc * matrixA->db + cameraToCulling.cc * matrixA->dc + cameraToCulling.dc * matrixA->dd;
+	matrixB->dd = cameraToCulling.ad * matrixA->da + cameraToCulling.bd * matrixA->db + cameraToCulling.cd * matrixA->dc + cameraToCulling.dd * matrixA->dd;
+	
+	edF32MATRIX4 cameraToClipping = *CameraToClipping_Matrix;
+	edF32MATRIX4* matrixC = SCRATCHPAD_ADDRESS_TYPE(0x70000860, edF32MATRIX4*);
+
+	matrixC->aa = cameraToClipping.aa * matrixA->aa + cameraToClipping.ba * matrixA->ab + cameraToClipping.ca * matrixA->ac + cameraToClipping.da * matrixA->ad;
+	matrixC->ab = cameraToClipping.ab * matrixA->aa + cameraToClipping.bb * matrixA->ab + cameraToClipping.cb * matrixA->ac + cameraToClipping.db * matrixA->ad;
+	matrixC->ac = cameraToClipping.ac * matrixA->aa + cameraToClipping.bc * matrixA->ab + cameraToClipping.cc * matrixA->ac + cameraToClipping.dc * matrixA->ad;
+	matrixC->ad = cameraToClipping.ad * matrixA->aa + cameraToClipping.bd * matrixA->ab + cameraToClipping.cd * matrixA->ac + cameraToClipping.dd * matrixA->ad;
+	matrixC->ba = cameraToClipping.aa * matrixA->ba + cameraToClipping.ba * matrixA->bb + cameraToClipping.ca * matrixA->bc + cameraToClipping.da * matrixA->bd;
+	matrixC->bb = cameraToClipping.ab * matrixA->ba + cameraToClipping.bb * matrixA->bb + cameraToClipping.cb * matrixA->bc + cameraToClipping.db * matrixA->bd;
+	matrixC->bc = cameraToClipping.ac * matrixA->ba + cameraToClipping.bc * matrixA->bb + cameraToClipping.cc * matrixA->bc + cameraToClipping.dc * matrixA->bd;
+	matrixC->bd = cameraToClipping.ad * matrixA->ba + cameraToClipping.bd * matrixA->bb + cameraToClipping.cd * matrixA->bc + cameraToClipping.dd * matrixA->bd;
+	matrixC->ca = cameraToClipping.aa * matrixA->ca + cameraToClipping.ba * matrixA->cb + cameraToClipping.ca * matrixA->cc + cameraToClipping.da * matrixA->cd;
+	matrixC->cb = cameraToClipping.ab * matrixA->ca + cameraToClipping.bb * matrixA->cb + cameraToClipping.cb * matrixA->cc + cameraToClipping.db * matrixA->cd;
+	matrixC->cc = cameraToClipping.ac * matrixA->ca + cameraToClipping.bc * matrixA->cb + cameraToClipping.cc * matrixA->cc + cameraToClipping.dc * matrixA->cd;
+	matrixC->cd = cameraToClipping.ad * matrixA->ca + cameraToClipping.bd * matrixA->cb + cameraToClipping.cd * matrixA->cc + cameraToClipping.dd * matrixA->cd;
+	matrixC->da = cameraToClipping.aa * matrixA->da + cameraToClipping.ba * matrixA->db + cameraToClipping.ca * matrixA->dc + cameraToClipping.da * matrixA->dd;
+	matrixC->db = cameraToClipping.ab * matrixA->da + cameraToClipping.bb * matrixA->db + cameraToClipping.cb * matrixA->dc + cameraToClipping.db * matrixA->dd;
+	matrixC->dc = cameraToClipping.ac * matrixA->da + cameraToClipping.bc * matrixA->db + cameraToClipping.cc * matrixA->dc + cameraToClipping.dc * matrixA->dd;
+	matrixC->dd = cameraToClipping.ad * matrixA->da + cameraToClipping.bd * matrixA->db + cameraToClipping.cd * matrixA->dc + cameraToClipping.dd * matrixA->dd;
+
+	edF32MATRIX4 cameraToScreen = *CameraToScreen_Matrix;
+	edF32MATRIX4* matrixD = SCRATCHPAD_ADDRESS_TYPE(0x700008A0, edF32MATRIX4*);
+	
+	matrixD->aa = cameraToScreen.aa * matrixA->aa + cameraToScreen.ba * matrixA->ab + cameraToScreen.ca * matrixA->ac + cameraToScreen.da * matrixA->ad;
+	matrixD->ab = cameraToScreen.ab * matrixA->aa + cameraToScreen.bb * matrixA->ab + cameraToScreen.cb * matrixA->ac + cameraToScreen.db * matrixA->ad;
+	matrixD->ac = cameraToScreen.ac * matrixA->aa + cameraToScreen.bc * matrixA->ab + cameraToScreen.cc * matrixA->ac + cameraToScreen.dc * matrixA->ad;
+	matrixD->ad = cameraToScreen.ad * matrixA->aa + cameraToScreen.bd * matrixA->ab + cameraToScreen.cd * matrixA->ac + cameraToScreen.dd * matrixA->ad;
+	matrixD->ba = cameraToScreen.aa * matrixA->ba + cameraToScreen.ba * matrixA->bb + cameraToScreen.ca * matrixA->bc + cameraToScreen.da * matrixA->bd;
+	matrixD->bb = cameraToScreen.ab * matrixA->ba + cameraToScreen.bb * matrixA->bb + cameraToScreen.cb * matrixA->bc + cameraToScreen.db * matrixA->bd;
+	matrixD->bc = cameraToScreen.ac * matrixA->ba + cameraToScreen.bc * matrixA->bb + cameraToScreen.cc * matrixA->bc + cameraToScreen.dc * matrixA->bd;
+	matrixD->bd = cameraToScreen.ad * matrixA->ba + cameraToScreen.bd * matrixA->bb + cameraToScreen.cd * matrixA->bc + cameraToScreen.dd * matrixA->bd;
+	matrixD->ca = cameraToScreen.aa * matrixA->ca + cameraToScreen.ba * matrixA->cb + cameraToScreen.ca * matrixA->cc + cameraToScreen.da * matrixA->cd;
+	matrixD->cb = cameraToScreen.ab * matrixA->ca + cameraToScreen.bb * matrixA->cb + cameraToScreen.cb * matrixA->cc + cameraToScreen.db * matrixA->cd;
+	matrixD->cc = cameraToScreen.ac * matrixA->ca + cameraToScreen.bc * matrixA->cb + cameraToScreen.cc * matrixA->cc + cameraToScreen.dc * matrixA->cd;
+	matrixD->cd = cameraToScreen.ad * matrixA->ca + cameraToScreen.bd * matrixA->cb + cameraToScreen.cd * matrixA->cc + cameraToScreen.dd * matrixA->cd;
+	matrixD->da = cameraToScreen.aa * matrixA->da + cameraToScreen.ba * matrixA->db + cameraToScreen.ca * matrixA->dc + cameraToScreen.da * matrixA->dd;
+	matrixD->db = cameraToScreen.ab * matrixA->da + cameraToScreen.bb * matrixA->db + cameraToScreen.cb * matrixA->dc + cameraToScreen.db * matrixA->dd;
+	matrixD->dc = cameraToScreen.ac * matrixA->da + cameraToScreen.bc * matrixA->db + cameraToScreen.cc * matrixA->dc + cameraToScreen.dc * matrixA->dd;
+	matrixD->dd = cameraToScreen.ad * matrixA->da + cameraToScreen.bd * matrixA->db + cameraToScreen.cd * matrixA->dc + cameraToScreen.dd * matrixA->dd;
+
+	edF32Matrix4OrthonormalizeHard(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), m1);
+	sceVu0InverseMatrix(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*));
+	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A40, edF32MATRIX4*),
+		SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*));
+	edF32Matrix4GetTransposeHard(SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*));
+	edF32Matrix4CopyHard(SCRATCHPAD_ADDRESS_TYPE(0x70000950, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A50, edF32MATRIX4*));
+
+	edF32VECTOR4* vectorB = SCRATCHPAD_ADDRESS_TYPE(0x700009A0, edF32VECTOR4*);
+	edF32VECTOR4* vectorD = SCRATCHPAD_ADDRESS_TYPE(0x700009B0, edF32VECTOR4*);
+	edF32VECTOR4* vectorC = SCRATCHPAD_ADDRESS_TYPE(0x70000A60, edF32VECTOR4*);
+
+	vectorB->z = vectorC->z;
+	vectorB->x = vectorC->x;
+	vectorB->y = vectorC->y;
+	vectorB->w = 0.0078125f;
 	if (((pRenderData->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
-		(pLVar2 = pRenderData->pMeshTransformData->pLightingMatrixFuncObj_0xa0, pLVar2 == (LightingMatrixFuncObj*)0x0))
+		(pLVar2 = pRenderData->pMeshTransformData->pHierarchySetup, pLVar2 == (ed_3d_hierarchy_setup*)0x0))
 		|| (pfVar3 = pLVar2->field_0x10, pfVar3 == (float*)0x0)) {
-		(ScratchpadAnimManager_004494ec.pVector_0x18)->z = FLOAT_00448a04;
+		gVU1_AnimST_NormalExtruder_Scratch->z = FLOAT_00448a04;
 	}
 	else {
-		(ScratchpadAnimManager_004494ec.pVector_0x18)->z = *pfVar3;
+		gVU1_AnimST_NormalExtruder_Scratch->z = *pfVar3;
 	}
-	Vector_ARRAY_70000990[2] = *ScratchpadAnimManager_004494ec.pVector_0x18;
-	RENDER_LOG("DMA End ed3DPKTCopyMatrixPacket\n");
+	vectorD->z = gVU1_AnimST_NormalExtruder_Scratch->z;
+	vectorD->w = gVU1_AnimST_NormalExtruder_Scratch->w;
+	vectorD->x = gVU1_AnimST_NormalExtruder_Scratch->x;
+	vectorD->y = gVU1_AnimST_NormalExtruder_Scratch->y;
+	RENDER_LOG("DMA End ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
-	edDmaLoadFromFastRam_nowait(Vector_ARRAY_70000800, 0x1c0, (uint)((ulong)((long)(int)pMatrixBuffer << 0x24) >> 0x24));
+	edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS_TYPE(0x70000800, edF32VECTOR4*), 0x1c0, (uint)((ulong)((long)(int)pMatrixBuffer << 0x24) >> 0x24));
 	return pMatrixBuffer + 7;
 }
 
 edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 {
 	ushort uVar1;
-	MeshTransformSpecial* pMVar2;
+	edNODE* peVar2;
 	MeshTransformDataBase* pMVar3;
 	float fVar4;
 	bool bVar5;
@@ -2827,17 +2593,18 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 	edF32MATRIX4* pMVar10;
 	byte bVar11;
 
-	RENDER_LOG("ed3DPKTAddMatrixPacket %p\n", pDmaMatrix->pMeshTransformData);
+	RENDER_LOG("ed3DPKTAddMatrixPacket %p", pDmaMatrix->pMeshTransformData);
 
-	pMVar2 = pDmaMatrix->field_0x4;
+	peVar2 = pDmaMatrix->pPrev;
 	while (true) {
-		uVar1 = pMVar2->specUnion.field_0x0[0];
+		uVar1 = peVar2->header.typeField.type;
 		bVar11 = 0;
 		if (uVar1 == 4) {
+			IMPLEMENTATION_GUARD(
 			if (((pMVar2->pRenderInput[1].subCommandBufferCount & 0x280) == 0) &&
 				(pDmaMatrix->pMeshTransformData != &MeshTransformDataBase_0048cad0)) {
 				bVar11 = 1;
-			}
+			})
 		}
 		else {
 			if (uVar1 == 6) {
@@ -2845,12 +2612,12 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 			}
 		}
 		if (gFushListCounter == 0xe) {
-			IMPLEMENTATION_GUARD(pPkt = FUN_002a9220(pDmaMatrix->pTransformMatrix, pPkt);)
+			IMPLEMENTATION_GUARD(pPkt = FUN_002a9220(pDmaMatrix->pObjToWorld, pPkt);)
 		}
 		pMVar10 = gPKTMatrixCur;
 		pMVar3 = pDmaMatrix->pMeshTransformData;
 		if (pMVar3 != (MeshTransformDataBase*)0x0) break;
-		pMVar10 = pDmaMatrix->pTransformMatrix;
+		pMVar10 = pDmaMatrix->pObjToWorld;
 		bVar5 = false;
 
 		PRINT_MATRIX(pMVar10);
@@ -2877,7 +2644,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 				*(undefined4*)&pRVar6->cmdB = 0;
 				iVar7 = 8;
 				*(undefined4*)((ulong)&pRVar6->cmdB + 4) = 0x6c0403fb;
-				pMVar10 = pDmaMatrix->pTransformMatrix;
+				pMVar10 = pDmaMatrix->pObjToWorld;
 				do {
 					iVar7 = iVar7 + -1;
 					fVar4 = pMVar10->ab;
@@ -2891,13 +2658,13 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 			return pRVar6;)
 		}
 		pDmaMatrix->pMeshTransformData = &MeshTransformDataBase_0048cad0;
-		RENDER_LOG("Storing pMeshTransformData %p\n", &MeshTransformDataBase_0048cad0);
+		RENDER_LOG("Storing pMeshTransformData %p", &MeshTransformDataBase_0048cad0);
 	}
 	if (pMVar3->field_0xa4 == (edF32MATRIX4*)0x0) {
 		pMVar3->field_0xa4 = gPKTMatrixCur;
 		gPKTMatrixCur = ed3DPKTCopyMatrixPacket(pMVar10, pDmaMatrix, bVar11);
 		if (bVar11 != 0) {
-			pMVar10 = pDmaMatrix->pTransformMatrix;
+			pMVar10 = pDmaMatrix->pObjToWorld;
 			iVar7 = 8;
 			pMVar8 = gPKTMatrixCur;
 			do {
@@ -2911,8 +2678,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 			gPKTMatrixCur = gPKTMatrixCur + 1;
 		}
 	}
-	*(uint*)ScratchpadAnimManager_004494ec.field_0x1c =
-		(uint)((ulong)((ulong)(int)pDmaMatrix->pMeshTransformData->field_0xa4 << 0x24) >> 0x24) + 0xa0;
+	*g_pCurFlareMtx = (edF32MATRIX4*)((uint)((ulong)((long)(int)pDmaMatrix->pMeshTransformData->field_0xa4 << 0x24) >> 0x24) + 0xa0);
 	pPkt->cmdA = ((ulong)(int)pDmaMatrix->pMeshTransformData->field_0xa4 & 0xfffffffU) << 0x20 | 0x3000001c;
 	pPkt->cmdB = 0x6c1c000600000000;
 	if (bVar11 == 0) {
@@ -2923,8 +2689,8 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 	return pPkt + 2;
 }
 
-edpkt_data* g_TempCommandBuffer_004493b0 = NULL;
-edpkt_data* g_CommandScratchpadBase_004489a0 = NULL;
+edpkt_data* gBackupPKT = NULL;
+edpkt_data* gStartPKT_SPR = NULL;
 
 uint ed3DFlushStripGetIncPacket(ed_3d_strip* param_1, int param_2, long bUpdateInternal)
 {
@@ -2988,69 +2754,70 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* param_1, int param_2, long bUpdateI
 
 ed_3D_Scene* gCurScene = NULL;
 
-edpkt_data*
-	ed3DFlushStripInit(edpkt_data* pDisplayList, MeshTransformSpecial* pMeshTransformSpecial, ulong mode)
+edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mode)
 {
 	bool bVar1;
 	ushort uVar2;
-	DisplayListInternal* pDVar3;
+	ed_3d_strip* peVar3;
 	undefined8 uVar4;
 	float fVar5;
 	float fVar6;
 	float fVar7;
 	AnimScratchpad* pAVar8;
-	undefined4 uVar9;
-	undefined4 uVar10;
-	undefined4 uVar11;
-	int iVar12;
-	edF32MATRIX4* pMVar13;
-	uint uVar14;
+	uint uVar9;
+	uint uVar10;
+	uint uVar11;
+	undefined4 uVar12;
+	undefined4 uVar13;
+	int iVar14;
+	edF32MATRIX4* peVar15;
+	uint uVar16;
 	short* pAnimIndexes;
 	edpkt_data* ppuVar15;
-	Vector* pVVar15;
-	Vector* pVVar16;
+	edF32VECTOR4* peVar17;
+	edF32VECTOR4* qwc;
 
-	pDVar3 = pMeshTransformSpecial->pRenderInput;
-	uVar2 = pMeshTransformSpecial->specUnion.field_0x0[1];
-	(ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x0 = (int)(short)uVar2;
-	(ScratchpadAnimManager_004494ec.pAnimScratchpad)->flags = 0;
-	(ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x8 = 0;
-	(ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0xc = 0;
+	peVar3 = (ed_3d_strip*)pNode->pData;
+	uVar2 = pNode->header.typeField.unknown;
+	PTR_AnimScratchpad_00449554->field_0x0 = (int)(short)uVar2;
+	PTR_AnimScratchpad_00449554->flags = 0;
+	PTR_AnimScratchpad_00449554->field_0x8 = 0;
+	PTR_AnimScratchpad_00449554->field_0xc = 0;
 	if ((gFushListCounter == 0xe) && (FLOAT_00448a04 != 0.0)) {
-		(ScratchpadAnimManager_004494ec.pAnimScratchpad)->flags =
-			(ScratchpadAnimManager_004494ec.pAnimScratchpad)->flags | 1;
+		PTR_AnimScratchpad_00449554->flags =
+			PTR_AnimScratchpad_00449554->flags | 1;
 	}
 	pDisplayList->cmdA = 0xe10000001;
 	pDisplayList->cmdB = 0x7c01007600000000;
-	pAVar8 = ScratchpadAnimManager_004494ec.pAnimScratchpad;
-	uVar4 = *(undefined8*)ScratchpadAnimManager_004494ec.pAnimScratchpad;
-	uVar10 = (ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x8;
-	uVar11 = (ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0xc;
+	pAVar8 = PTR_AnimScratchpad_00449554;
+	uVar4 = *(undefined8*)PTR_AnimScratchpad_00449554;
+	uVar12 = PTR_AnimScratchpad_00449554->field_0x8;
+	uVar13 = PTR_AnimScratchpad_00449554->field_0xc;
 	*(int*)&pDisplayList[1].cmdA = (int)uVar4;
 	*(int*)((ulong)&pDisplayList[1].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
-	*(undefined4*)&pDisplayList[1].cmdB = uVar10;
-	*(undefined4*)((ulong)&pDisplayList[1].cmdB + 4) = uVar11;
+	*(undefined4*)&pDisplayList[1].cmdB = uVar12;
+	*(undefined4*)((ulong)&pDisplayList[1].cmdB + 4) = uVar13;
 	pDisplayList[2].cmdA = 0xe10000001;
 	pDisplayList[2].cmdB = 0x7c01019800000000;
 	uVar4 = *(undefined8*)pAVar8;
-	uVar10 = pAVar8->field_0x8;
-	uVar11 = pAVar8->field_0xc;
+	uVar12 = pAVar8->field_0x8;
+	uVar13 = pAVar8->field_0xc;
 	*(int*)&pDisplayList[3].cmdA = (int)uVar4;
 	*(int*)((ulong)&pDisplayList[3].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
-	*(undefined4*)&pDisplayList[3].cmdB = uVar10;
-	*(undefined4*)((ulong)&pDisplayList[3].cmdB + 4) = uVar11;
+	*(undefined4*)&pDisplayList[3].cmdB = uVar12;
+	*(undefined4*)((ulong)&pDisplayList[3].cmdB + 4) = uVar13;
 	pDisplayList[4].cmdA = 0xe10000001;
 	pDisplayList[4].cmdB = 0x7c0102ba00000000;
 	uVar4 = *(undefined8*)pAVar8;
-	uVar10 = pAVar8->field_0x8;
-	uVar11 = pAVar8->field_0xc;
+	uVar12 = pAVar8->field_0x8;
+	uVar13 = pAVar8->field_0xc;
 	*(int*)&pDisplayList[5].cmdA = (int)uVar4;
 	*(int*)((ulong)&pDisplayList[5].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
-	*(undefined4*)&pDisplayList[5].cmdB = uVar10;
-	*(undefined4*)((ulong)&pDisplayList[5].cmdB + 4) = uVar11;
+	*(undefined4*)&pDisplayList[5].cmdB = uVar12;
+	*(undefined4*)((ulong)&pDisplayList[5].cmdB + 4) = uVar13;
 	ppuVar15 = pDisplayList + 6;
 	if ((uVar2 & 2) != 0) {
-		if ((*(uint*)pDVar3 & 0x2000000) == 0) {
+		if ((peVar3->flags_0x0 & 0x2000000) == 0) {
 			ppuVar15->cmdA = 0x48a91030000001;
 			pDisplayList[6].cmdB = 0x7c01000100000000;
 			ppuVar15 = pDisplayList + 7;
@@ -3061,86 +2828,78 @@ edpkt_data*
 			ppuVar15 = pDisplayList + 7;
 		}
 	}
-	if (((*(uint*)pDVar3 & 0x10000) != 0) && (gpCurHierarchy != (MeshTransformDataBase*)0x0)) {
-		pAnimIndexes = (short*)((ulong)&pDVar3[-1].flags_0x0 + pDVar3->field_0x8);
-		if ((*(uint*)pDVar3 & 0x8000000) == 0) {
-			uVar14 = 0x394;
-			iVar12 = 0x18;
+	if (((peVar3->flags_0x0 & 0x10000) != 0) && (gpCurHierarchy != (MeshTransformDataBase*)0x0)) {
+		pAnimIndexes = (short*)((int)peVar3 + peVar3->offsetA + -0x30);
+		if ((peVar3->flags_0x0 & 0x8000000) == 0) {
+			uVar16 = 0x394;
+			iVar14 = 0x18;
 		}
 		else {
-			uVar14 = 0x3dc;
+			uVar16 = 0x3dc;
 			if (mode < 2) {
-				uVar14 = 0x3dc;
-				iVar12 = 9;
+				uVar16 = 0x3dc;
+				iVar14 = 9;
 			}
 			else {
-				iVar12 = 7;
+				iVar14 = 7;
 			}
 		}
-		if ((pDVar3[1].flags_0x0 == 0) ||
-			(pMVar13 = gpCurHierarchy->pShadowAnimMatrix, pMVar13 == (edF32MATRIX4*)0x0)) {
-			pMVar13 = gpCurHierarchy->pAnimMatrix;
+		if ((peVar3->bUseShadowMatrix_0x30 == 0) ||
+			(peVar15 = gpCurHierarchy->pShadowAnimMatrix, peVar15 == (edF32MATRIX4*)0x0)) {
+			peVar15 = gpCurHierarchy->pAnimMatrix;
 		}
 		ppuVar15->cmdA = 0x30000000;
 		ppuVar15->cmdB = 0x1100000011000000;
-		uVar9 = g_StaticVideoList_00489590[2831];
-		uVar11 = g_StaticVideoList_00489590[2830];
-		uVar10 = g_StaticVideoList_00489590[2829];
-		*(undefined4*)&ppuVar15[1].cmdA = g_StaticVideoList_00489590[2828];
-		*(undefined4*)((ulong)&ppuVar15[1].cmdA + 4) = uVar10;
-		*(undefined4*)&ppuVar15[1].cmdB = uVar11;
-		*(undefined4*)((ulong)&ppuVar15[1].cmdB + 4) = uVar9;
-		pVVar15 = (Vector*)(ppuVar15 + 2);
-		ppuVar15 = (edpkt_data*)pVVar15;
-		if (g_TempCommandBuffer_004493b0 != (edpkt_data*)0x0) {
-			IMPLEMENTATION_GUARD(
-			pVVar16 = (Vector*)((int)pVVar15 - (int)g_CommandScratchpadBase_004489a0);
-			RENDER_LOG("DMA Begin ed3DFlushStripInit");
+		uVar11 = g_StaticVideoList_00489590[2831];
+		uVar10 = g_StaticVideoList_00489590[2830];
+		uVar9 = g_StaticVideoList_00489590[2829];
+		*(uint*)&ppuVar15[1].cmdA = g_StaticVideoList_00489590[2828];
+		*(uint*)((ulong)&ppuVar15[1].cmdA + 4) = uVar9;
+		*(uint*)&ppuVar15[1].cmdB = uVar10;
+		*(uint*)((ulong)&ppuVar15[1].cmdB + 4) = uVar11;
+		peVar17 = (edF32VECTOR4*)(ppuVar15 + 2);
+		ppuVar15 = (edpkt_data*)peVar17;
+		if (gBackupPKT != (edpkt_data*)0x0) {
+			qwc = (edF32VECTOR4*)((ulong)peVar17 - (ulong)gStartPKT_SPR);
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
-			edDmaLoadFromFastRam_nowait((Vector*)g_CommandScratchpadBase_004489a0, (uint)pVVar16,
-				(uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-			g_TempCommandBuffer_004493b0 =
-				(edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pVVar16 & 0xfffffff0));
-			ppuVar15 = (edpkt_data*)&Vector_70000800;
-			g_CommandScratchpadBase_004489a0 = (edpkt_data*)pVVar15;)
+			edDmaLoadFromFastRam_nowait
+			((edF32VECTOR4*)gStartPKT_SPR, (uint)qwc, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+			gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)qwc & 0xfffffff0));
+			ppuVar15 = SCRATCHPAD_ADDRESS(0x70000800);
+			gStartPKT_SPR = (edpkt_data*)peVar17;
 		}
-		for (; (bVar1 = iVar12 != 0, iVar12 = iVar12 + -1, bVar1 && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1)
+		for (; (bVar1 = iVar14 != 0, iVar14 = iVar14 + -1, bVar1 && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1)
 		{
-			IMPLEMENTATION_GUARD(
-			*(ulong*)&((Vector*)ppuVar15)->x = 0xe10000004;
-			*(ulong*)&((Vector*)ppuVar15)->z = (ulong)(uVar14 | 0x6c040000) << 0x20;
-			sceVu0CopyMatrix((edF32MATRIX4*)((Vector*)ppuVar15 + 1), pMVar13 + *pAnimIndexes);
-			ppuVar15 = (edpkt_data*)((Vector*)ppuVar15 + 5);
-			uVar14 = uVar14 + 4;
-			)
+			*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = 0xe10000004;
+			*(ulong*)&((edF32VECTOR4*)ppuVar15)->z = (ulong)(uVar16 | 0x6c040000) << 0x20;
+			edF32Matrix4CopyHard(((edF32MATRIX4*)ppuVar15 + 1), (peVar15 + *pAnimIndexes));
+			ppuVar15 = (edpkt_data*)((edF32VECTOR4*)ppuVar15 + 5);
+			uVar16 = uVar16 + 4;
 		}
-		if (g_TempCommandBuffer_004493b0 != (edpkt_data*)0x0) {
-			IMPLEMENTATION_GUARD(
-			RENDER_LOG("DMA Begin ed3DFlushStripInit");
+		if (gBackupPKT != (edpkt_data*)0x0) {
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
-			pVVar15 = (Vector*)ppuVar15 + -0x7000080;
-			edDmaLoadFromFastRam_nowait(&Vector_70000800, (uint)pVVar15,
-				(uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
+			peVar17 = (edF32VECTOR4*)ppuVar15 + -0x7000080;
+			edDmaLoadFromFastRam_nowait
+			((edF32VECTOR4*)0x70000800, (uint)peVar17, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
-			ppuVar15 = RenderCommand_ARRAY_70001000;
-			g_CommandScratchpadBase_004489a0 = RenderCommand_ARRAY_70001000;
-			g_TempCommandBuffer_004493b0 =
-				(edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pVVar15 & 0xfffffff0));)
+			ppuVar15 = SCRATCHPAD_ADDRESS(0x70001000);
+			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+			gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)peVar17 & 0xfffffff0));
 		}
 	}
-	if (((gpCurHierarchy == (MeshTransformDataBase*)0x0) ||
-		(gpCurHierarchy == (MeshTransformDataBase*)0x0000ffff)) ||
-		(gpCurHierarchy == &MeshTransformDataBase_0048cad0)) {
-		*(uint*)pDVar3 = *(uint*)pDVar3 & 0xfffffff7;
+	if (((gpCurHierarchy == (MeshTransformDataBase*)0x0) || (gpCurHierarchy == (MeshTransformDataBase*)0x0000ffff))
+		|| (gpCurHierarchy == &MeshTransformDataBase_0048cad0)) {
+		peVar3->flags_0x0 = peVar3->flags_0x0 & 0xfffffff7;
 	}
 	else {
 		if ((BYTE_004493b4 == 0) && ((gpCurHierarchy->flags_0x9e & 2) == 0)) {
-			*(uint*)pDVar3 = *(uint*)pDVar3 & 0xfffffff7;
+			peVar3->flags_0x0 = peVar3->flags_0x0 & 0xfffffff7;
 		}
 		else {
-			*(uint*)pDVar3 = *(uint*)pDVar3 | 8;
-			*(ulong*)&((Vector*)ppuVar15)->x = 0x30000000;
-			*(ulong*)&((Vector*)ppuVar15)->z = 0x1100000011000000;
+			IMPLEMENTATION_GUARD(
+			peVar3->flags_0x0 = peVar3->flags_0x0 | 8;
+			*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = 0x30000000;
+			*(ulong*)&((edF32VECTOR4*)ppuVar15)->z = 0x1100000011000000;
 			if ((BYTE_004493b8 == 0) && ((gCurScene->flags_0x4 & 0x200) == 0)) {
 				INT_004489a4 = 0xfffe;
 				INT_004489a8 = 0xfffe;
@@ -3149,59 +2908,66 @@ edpkt_data*
 				INT_004489a4 = 0x7ffe;
 				INT_004489a8 = 0x7ffe;
 			}
-			Vector_00424ff0.w = (float)INT_004489a4;
-			Vector_00424ff0.y = (float)INT_004489a8;
-			*(ulong*)&((Vector*)ppuVar15)[1].x = 0xe10000001;
-			*(ulong*)&((Vector*)ppuVar15)[1].z = 0x7c01003d00000000;
-			fVar7 = Vector_00424ff0.w;
-			fVar6 = Vector_00424ff0.z;
-			fVar5 = Vector_00424ff0.y;
-			((Vector*)ppuVar15)[2].x = Vector_00424ff0.x;
-			*(float*)((ulong)&((Vector*)ppuVar15)[2].x + 4) = fVar5;
-			((Vector*)ppuVar15)[2].z = fVar6;
-			*(float*)((ulong)&((Vector*)ppuVar15)[2].z + 4) = fVar7;
-			ppuVar15 = (edpkt_data*)((Vector*)ppuVar15 + 3);
+			pBFCVect.w = (float)INT_004489a4;
+			pBFCVect.y = (float)INT_004489a8;
+			*(ulong*)&((edF32VECTOR4*)ppuVar15)[1].x = 0xe10000001;
+			*(ulong*)&((edF32VECTOR4*)ppuVar15)[1].z = 0x7c01003d00000000;
+			fVar7 = pBFCVect.w;
+			fVar6 = pBFCVect.z;
+			fVar5 = pBFCVect.y;
+			((edF32VECTOR4*)ppuVar15)[2].x = pBFCVect.x;
+			*(float*)((ulong)&((edF32VECTOR4*)ppuVar15)[2].x + 4) = fVar5;
+			((edF32VECTOR4*)ppuVar15)[2].z = fVar6;
+			*(float*)((ulong)&((edF32VECTOR4*)ppuVar15)[2].z + 4) = fVar7;
+			ppuVar15 = (edpkt_data*)((edF32VECTOR4*)ppuVar15 + 3);)
 		}
 	}
-	if (((*(uint*)pDVar3 & 0x100) != 0) || (gFushListCounter == 0xe)) {
-		*(ulong*)&((Vector*)ppuVar15)->x = 0xe10000001;
-		*(ulong*)&((Vector*)ppuVar15)->z = 0;
-		((Vector*)ppuVar15)->z = 0.0;
-		*(undefined4*)((ulong)&((Vector*)ppuVar15)->z + 4) = 0x6c010021;
-		((Vector*)ppuVar15)[1].x = (ScratchpadAnimManager_004494ec.pVector_0x18)->x;
-		*(float*)((ulong)&((Vector*)ppuVar15)[1].x + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->y;
-		((Vector*)ppuVar15)[1].z = (ScratchpadAnimManager_004494ec.pVector_0x18)->z;
-		*(float*)((ulong)&((Vector*)ppuVar15)[1].z + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->w;
-		ppuVar15 = (edpkt_data*)((Vector*)ppuVar15 + 2);
+	if (((peVar3->flags_0x0 & 0x100) != 0) || (gFushListCounter == 0xe)) {
+		*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = 0xe10000001;
+		*(ulong*)&((edF32VECTOR4*)ppuVar15)->z = 0;
+		((edF32VECTOR4*)ppuVar15)->z = 0.0;
+		*(undefined4*)((ulong)&((edF32VECTOR4*)ppuVar15)->z + 4) = 0x6c010021;
+		((edF32VECTOR4*)ppuVar15)[1].x = gVU1_AnimST_NormalExtruder_Scratch->x;
+		*(float*)((ulong)&((edF32VECTOR4*)ppuVar15)[1].x + 4) = gVU1_AnimST_NormalExtruder_Scratch->y;
+		((edF32VECTOR4*)ppuVar15)[1].z = gVU1_AnimST_NormalExtruder_Scratch->z;
+		*(float*)((ulong)&((edF32VECTOR4*)ppuVar15)[1].z + 4) = gVU1_AnimST_NormalExtruder_Scratch->w;
+		ppuVar15 = (edpkt_data*)((edF32VECTOR4*)ppuVar15 + 2);
 	}
 	return ppuVar15;
 }
 
-void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
+struct BFCVect {
+	uint alphaON;
+	float x;
+	float y;
+	float z;
+};
+
+BFCVect pBFCVect = {};
+
+void ed3DFlushStrip(edNODE* pNode)
 {
-	bool bVar1;
-	undefined8 uVar2;
-	float fVar3;
-	char* pcVar4;
+	undefined8 uVar1;
 	uint uVar5;
 	edpkt_data* ppuVar6;
-	int iVar6;
+	//ed_g3d_Anim_def* iVar6;
 	uint uVar7;
 	uint uVar8;
 	byte bVar9;
 	ulong uVar10;
 	float fVar11;
 	uint uVar12;
-	int iVar13;
+	char* iVar13;
 	int* piVar14;
-	int iVar15;
+	char* iVar15;
 	undefined4 uVar16;
 	undefined4 uVar17;
 	edpkt_data* pRVar18;
 	edpkt_data* ppuVar19;
 	edpkt_data* ppuVar20;
-	MeshTransformSpecial* pMVar19;
-	uint uVar20;
+	int iVar2;
+	edNODE* pMVar19;
+	char* uVar20;
 	int* piVar21;
 	int* piVar22;
 	uint uVar23;
@@ -3211,57 +2977,57 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 	float fVar27;
 	int* local_30;
 	uint local_20;
+	bool bVar1;
+	float fVar3;
 	ed_3d_strip* pRenderInput;
+	char* pcVar4;
+	ulong uVar2;
+
+	ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStrip");
 
 	pRVar18 = g_VifRefPktCur;
-	pRenderInput = (ed_3d_strip*)pMeshTransformSpecial->pRenderInput;
-	pMVar19 = (MeshTransformSpecial*)LOAD_SECTION((int)pMeshTransformSpecial->pPrev_0x8);
-	uVar20 = (ulong)&pRenderInput->flags_0x0 + pRenderInput->offsetA;
+	pRenderInput = (ed_3d_strip*)pNode->pData;
+	pMVar19 = pNode->pNext;
+	uVar20 = (char*)&pRenderInput->flags_0x0 + pRenderInput->offsetA;
 	uVar5 = ed3DFlushStripGetIncPacket(pRenderInput, 0, 0);
-	fVar11 = (float)(uint)gGlobalAlhaON;
-	if (fVar11 != 1.793662e-43) {
-		pMeshTransformSpecial->specUnion.field_0x0[1] =
-			pMeshTransformSpecial->specUnion.field_0x0[1] | 0x20;
-		Vector_00424ff0.x = fVar11;
+	uint globalAlhaON = (uint)gGlobalAlhaON;
+	if (globalAlhaON != 0x80) {
+		pNode->header.typeField.unknown = pNode->header.typeField.unknown | 0x20;;
+		pBFCVect.alphaON = globalAlhaON;
 		pRVar18->cmdA = 0xe10000001;
 		pRVar18->cmdB = 0x7c01003d00000000;
-		fVar3 = Vector_00424ff0.w;
-		fVar27 = Vector_00424ff0.z;
-		fVar11 = Vector_00424ff0.y;
-		*(float*)&pRVar18[1].cmdA = Vector_00424ff0.x;
+		fVar3 = pBFCVect.z;
+		fVar27 = pBFCVect.y;
+		fVar11 = pBFCVect.x;
+		*(float*)&pRVar18[1].cmdA = pBFCVect.x;
 		*(float*)((ulong)&pRVar18[1].cmdA + 4) = fVar11;
 		*(float*)&pRVar18[1].cmdB = fVar27;
 		*(float*)((ulong)&pRVar18[1].cmdB + 4) = fVar3;
 		pRVar18 = pRVar18 + 2;
 	}
-	if (pMVar19 == (MeshTransformSpecial*)0x0) {
-		IMPLEMENTATION_GUARD(
+	if (pMVar19 == (edNODE*)0x0) {
 		uVar8 = (uint)(ushort)pRenderInput->meshSectionCount_0x3a % 3;
-		iVar6 = (ushort)pRenderInput->meshSectionCount_0x3a - uVar8;
-		ppuVar20 = ed3DFlushStripInit(pRVar18, pMeshTransformSpecial, 1);
-		if ((edpkt_data*)0x70003000 < ppuVar20 + (uint)(ushort)pRenderInput->meshSectionCount_0x3a * 2) {
-			IMPLEMENTATION_GUARD(
-			pRVar18 = (edpkt_data*)((int)ppuVar20 - (int)g_CommandScratchpadBase_004489a0);
-			edDmaLoadFromFastRam(g_CommandScratchpadBase_004489a0, (uint)pRVar18,
-				(uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-			g_CommandScratchpadBase_004489a0 = (edpkt_data*)&PTR_DAT_70001000;
-			g_TempCommandBuffer_004493b0 =
-				(edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar18 & 0xfffffff0));
-			ppuVar20 = (edpkt_data*)&PTR_DAT_70001000;)
+		iVar2 = (ushort)pRenderInput->meshSectionCount_0x3a - uVar8;
+		ppuVar20 = ed3DFlushStripInit(pRVar18, pNode, 1);
+		if (SCRATCHPAD_ADDRESS(0x70003000) < ppuVar20 + (uint)(ushort)pRenderInput->meshSectionCount_0x3a * 2) {
+			pRVar18 = (edpkt_data*)((int)ppuVar20 - (int)gStartPKT_SPR);
+			edDmaLoadFromFastRam((uint)gStartPKT_SPR, (uint)pRVar18, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+			ppuVar20 = SCRATCHPAD_ADDRESS(0x70001000);
+			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+			gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pRVar18 & 0xfffffff0));
 		}
-		pcVar4 = ScratchpadAnimManager_004494ec.field_0x34;
+		pcVar4 = (char*)ed3DVU1Addr_Scratch;
 		if ((pRenderInput->flags_0x0 & 4) == 0) {
-			IMPLEMENTATION_GUARD(
 			ppuVar6 = ppuVar20;
 			while (bVar1 = uVar8 != 0, uVar8 = uVar8 - 1, bVar1) {
 				ppuVar6->cmdA = 0x30000000;
 				uVar23 = ed3DVU1BufferCur;
-				uVar7 = uVar20 & 0xfffffff;
+				uVar7 = (uint)uVar20 & 0xfffffff;
 				uVar20 = uVar20 + uVar5 * 0x10;
-				iVar13 = ed3DVU1BufferCur * 4;
-				ppuVar6->cmdB = (long)(int)(*(int*)(pcVar4 + iVar13) + 1U | 0x3000000) & 0xffffffffU | 0x200000000000000;
+				iVar13 = (char*)(ed3DVU1BufferCur * 4);
+				ppuVar6->cmdB = (long)(int)(*(int*)(pcVar4 + (ulong)iVar13) + 1U | 0x3000000) & 0xffffffffU | 0x200000000000000;
 				ppuVar6[1].cmdA = (ulong)uVar7 << 0x20 | 0x50000000;
-				ppuVar6[1].cmdB = (long)(int)(*(int*)(pcVar4 + iVar13) + 1U | 0x4000000) << 0x20;
+				ppuVar6[1].cmdB = (long)(int)(*(int*)(pcVar4 + (ulong)iVar13) + 1U | 0x4000000) << 0x20;
 				ppuVar6 = ppuVar6 + 2;
 				if (uVar23 == 2) {
 					ed3DVU1BufferCur = 0;
@@ -3270,10 +3036,10 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 					ed3DVU1BufferCur = ed3DVU1BufferCur + 1;
 				}
 			}
-			piVar14 = (int*)(ScratchpadAnimManager_004494ec.field_0x38 + ed3DVU1BufferCur * 0xc);
-			for (; iVar6 != 0; iVar6 = iVar6 + -3) {
+			piVar14 = (int*)ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur];
+			for (; iVar2 != 0; iVar2 = iVar2 + -3) {
 				ppuVar6->cmdA = 0x30000000;
-				uVar8 = uVar20 & 0xfffffff;
+				uVar8 = (uint)uVar20 & 0xfffffff;
 				iVar13 = uVar20 + uVar5 * 0x10;
 				iVar15 = uVar20 + uVar5 * 0x20;
 				uVar20 = uVar20 + uVar5 * 0x30;
@@ -3289,14 +3055,14 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 				ppuVar6[5].cmdA = ((long)iVar15 & 0xfffffffU) << 0x20 | 0x50000000;
 				ppuVar6[5].cmdB = ((long)(piVar14[2] + 1) & 0xffffffffU | 0x4000000) << 0x20;
 				ppuVar6 = ppuVar6 + 6;
-			})
+			}
 		}
 		else {
 			IMPLEMENTATION_GUARD(
 			uVar23 = 0x48;
 			iVar6 = ed3DG3DAnimGet(pRenderInput);
 			uVar8 = ed3DG3DNbMaxBaseRGBA(pRenderInput);
-			fVar11 = *(float*)(iVar6 + 0x10);
+			fVar11 = iVar6->field_0x10;
 			if (fVar11 < 2.147484e+09) {
 				uVar7 = (uint)fVar11;
 			}
@@ -3312,32 +3078,32 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 			}
 			fVar11 = fVar11 - fVar27;
 			piVar14 = (int*)pRenderInput->field_0x24;
-			iVar13 = *piVar14;
-			piVar22 = piVar14 + uVar7 * iVar13 * 4 + 4;
+			iVar2 = *piVar14;
+			piVar22 = piVar14 + uVar7 * iVar2 * 4 + 4;
 			piVar21 = piVar22;
-			if ((*(uint*)(iVar6 + 4) & 8) == 0) {
+			if ((iVar6->field_0x4 & 8) == 0) {
 				uVar26 = uVar8 - 1;
 				if (uVar7 < uVar26) {
-					piVar21 = piVar14 + (uVar7 + 1) * iVar13 * 4 + 4;
+					piVar21 = piVar14 + (uVar7 + 1) * iVar2 * 4 + 4;
 				}
 				else {
 					if ((uVar7 != uVar26) && (piVar21 = (int*)0x0, uVar7 == uVar8)) {
 						fVar11 = 1.0;
-						piVar22 = piVar14 + (uVar8 - 2) * iVar13 * 4 + 4;
-						piVar21 = piVar14 + uVar26 * iVar13 * 4 + 4;
+						piVar22 = piVar14 + (uVar8 - 2) * iVar2 * 4 + 4;
+						piVar21 = piVar14 + uVar26 * iVar2 * 4 + 4;
 					}
 				}
 			}
 			else {
 				uVar26 = uVar8 - 1;
 				if (uVar7 < uVar26) {
-					piVar21 = piVar14 + (uVar7 + 1) * iVar13 * 4 + 4;
+					piVar21 = piVar14 + (uVar7 + 1) * iVar2 * 4 + 4;
 				}
 				else {
 					if ((uVar7 != uVar26) && (piVar21 = (int*)0x0, uVar7 == uVar8)) {
 						fVar11 = 1.0;
-						piVar22 = piVar14 + (uVar8 - 2) * iVar13 * 4 + 4;
-						piVar21 = piVar14 + uVar26 * iVar13 * 4 + 4;
+						piVar22 = piVar14 + (uVar8 - 2) * iVar2 * 4 + 4;
+						piVar21 = piVar14 + uVar26 * iVar2 * 4 + 4;
 					}
 				}
 			}
@@ -3345,13 +3111,13 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 			ppuVar20->cmdB = 0x1300000000000000;
 			ppuVar20[1].cmdA = 0x30000000;
 			ppuVar20[1].cmdB = 0x1100000011000000;
-			Vector_00424ff0.z = 256.0 - fVar11 * 256.0;
+			pBFCVect.z = 256.0 - fVar11 * 256.0;
 			ppuVar20[2].cmdA = 0xe10000001;
 			ppuVar20[2].cmdB = 0x7c01003d00000000;
-			fVar3 = Vector_00424ff0.w;
-			fVar27 = Vector_00424ff0.z;
-			fVar11 = Vector_00424ff0.y;
-			*(float*)&ppuVar20[3].cmdA = Vector_00424ff0.x;
+			fVar3 = pBFCVect.w;
+			fVar27 = pBFCVect.z;
+			fVar11 = pBFCVect.y;
+			*(float*)&ppuVar20[3].cmdA = pBFCVect.x;
 			*(float*)((ulong)&ppuVar20[3].cmdA + 4) = fVar11;
 			*(float*)&ppuVar20[3].cmdB = fVar27;
 			*(float*)((ulong)&ppuVar20[3].cmdB + 4) = fVar3;
@@ -3364,27 +3130,27 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 					for (uVar23 = (uint)pRenderInput->field_0x38; (uVar23 & 3) != 0; uVar23 = uVar23 + 1) {
 					}
 				}
-				uVar10 = (long)(int)(uVar23 >> 2) | 0x30000000;
+				uVar2 = (long)(int)(uVar23 >> 2) | 0x30000000;
 				uVar26 = (uint)piVar22 & 0xfffffff;
 				pRVar18->cmdA = 0x30000000;
 				uVar7 = ed3DVU1BufferCur;
 				uVar12 = (uint)piVar21 & 0xfffffff;
 				uVar24 = uVar20 & 0xfffffff;
-				iVar6 = ed3DVU1BufferCur * 4;
+				iVar2 = ed3DVU1BufferCur * 4;
 				piVar22 = piVar22 + 0x48;
 				piVar21 = piVar21 + 0x48;
 				uVar20 = uVar20 + uVar5 * 0x10;
-				pRVar18->cmdB = (long)(*(int*)(pcVar4 + iVar6) + 1) & 0xffffffffU | 0x200000003000000;
+				pRVar18->cmdB = (long)(*(int*)(pcVar4 + iVar2) + 1) & 0xffffffffU | 0x200000003000000;
 				pRVar18[1].cmdA = 0x4895c030000001;
 				pRVar18[1].cmdB = 0;
-				pRVar18[2].cmdA = (ulong)uVar26 << 0x20 | uVar10;
+				pRVar18[2].cmdA = (ulong)uVar26 << 0x20 | uVar2;
 				pRVar18[2].cmdB = ((long)(int)(uVar23 << 0x10) & 0xffffffffU | 0x7e00c002) << 0x20;
 				pRVar18[3].cmdA = 0x48962030000001;
 				pRVar18[3].cmdB = 0;
-				pRVar18[4].cmdA = (ulong)uVar12 << 0x20 | uVar10;
+				pRVar18[4].cmdA = (ulong)uVar12 << 0x20 | uVar2;
 				pRVar18[4].cmdB = ((long)(int)(uVar23 << 0x10) & 0xffffffffU | 0x7e00c0d9) << 0x20;
 				pRVar18[5].cmdA = (ulong)uVar24 << 0x20 | 0x50000000;
-				pRVar18[5].cmdB = ((long)(*(int*)(pcVar4 + iVar6) + 1) & 0xffffffffU | 0x4000000) << 0x20;
+				pRVar18[5].cmdB = ((long)(*(int*)(pcVar4 + iVar2) + 1) & 0xffffffffU | 0x4000000) << 0x20;
 				pRVar18 = pRVar18 + 6;
 				if (uVar7 == 2) {
 					ed3DVU1BufferCur = 0;
@@ -3396,71 +3162,63 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 			pRVar18->cmdA = 0x30000000;
 			pRVar18->cmdB = 0x1300000000000000;
 			ppuVar6 = pRVar18 + 1;)
-		})
+		}
 	}
 	else {
 		uVar8 = pRenderInput->flags_0x0;
-		pRVar25 = 0x0;
+		pRVar25 = 0;
 		uVar23 = 0;
-		//ppuVar6 = (RenderCommand*)(uint)(ushort)pRenderInput->meshSectionCount_0x3a;
-		ppuVar6 = ed3DFlushStripInit(pRVar18, pMeshTransformSpecial, 1);
-#ifdef PLATFORM_WIN
-		if ((edpkt_data*)(g_ScratchpadAddr_00448a58 + 0xC0) < ppuVar6 + (int)pRenderInput->meshSectionCount_0x3a * 4) {
-#else
-		if ((edpkt_data*)0x70003000 < ppuVar6 + (int)pRenderInput->meshSectionCount_0x3a * 4) {
-#endif
-			IMPLEMENTATION_GUARD(
-			pRVar18 = (edpkt_data*)((int)ppuVar6 - (int)g_CommandScratchpadBase_004489a0);
-			edDmaLoadFromFastRam(g_CommandScratchpadBase_004489a0, (uint)pRVar18,
-				(uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-			g_CommandScratchpadBase_004489a0 = (edpkt_data*)&PTR_DAT_70001000;
-			g_TempCommandBuffer_004493b0 =
-				(edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar18 & 0xfffffff0));
-			ppuVar6 = (edpkt_data*)&PTR_DAT_70001000;)
+		short meshSectionCount = pRenderInput->meshSectionCount_0x3a;
+		ppuVar6 = ed3DFlushStripInit(pRVar18, pNode, 1);
+		if (SCRATCHPAD_ADDRESS(0x70003000) < ppuVar6 + meshSectionCount * 4) {
+			pRVar18 = (edpkt_data*)((ulong)ppuVar6 - (ulong)gStartPKT_SPR);
+			edDmaLoadFromFastRam((uint)gStartPKT_SPR, (uint)pRVar18, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+			ppuVar6 = SCRATCHPAD_ADDRESS(0x70001000);
+			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+			gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pRVar18 & 0xfffffff0));
 		}
 		if ((pRenderInput->flags_0x0 & 4) == 0) {
-			while (pRVar25 < pRenderInput->meshSectionCount_0x3a) {
-				bVar9 = pMVar19->specUnion.byteFlags[0] & 3;
+			while (pRVar25 < meshSectionCount) {
+				bVar9 = pMVar19->header.byteFlags[0] & 3;
 				if (bVar9 == 1) {
 					uVar8 = uVar8 & 0xfffffffd | 1;
 				LAB_002a5dac:
-#ifdef PLATFORM_WIN
-					if ((edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x100) < ppuVar6 + 0x80) {
-#else
-					if ((edpkt_data*)0x70003fff < ppuVar6 + 0x80) {
-#endif
-						RENDER_LOG("ed3DFlushStrip");
-						pRVar18 = (edpkt_data*)((ulong)ppuVar6 - (ulong)g_CommandScratchpadBase_004489a0);
-						edDmaLoadFromFastRam((uint)g_CommandScratchpadBase_004489a0, (uint)pRVar18,
-							(uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-						g_CommandScratchpadBase_004489a0 = (edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x40);
-						g_TempCommandBuffer_004493b0 =
-							(edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar18 & 0xfffffff0));
-						ppuVar6 = (edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x40);
+					if (SCRATCHPAD_ADDRESS(0x70003fff) < ppuVar6 + 0x80) {
+						pRVar18 = (edpkt_data*)((int)ppuVar6 - (int)gStartPKT_SPR);
+						edDmaLoadFromFastRam((uint)gStartPKT_SPR, (uint)pRVar18, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+						ppuVar6 = SCRATCHPAD_ADDRESS(0x70001000);
+						gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+						gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pRVar18 & 0xfffffff0));
 					}
-					(ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x0 = uVar8;
+					PTR_AnimScratchpad_00449554->field_0x0 = uVar8;
 					uVar7 = ed3DVU1BufferCur;
-					iVar15 = ed3DVU1BufferCur * 0x10;
-					iVar13 = ed3DVU1BufferCur * 4;
-					iVar6 = ed3DVU1BufferCur * 2;
-					*ppuVar6 = RenderCommand_ARRAY_0048c5f0[ed3DVU1BufferCur];
-					uVar2 = *(undefined8*)ScratchpadAnimManager_004494ec.pAnimScratchpad;
-					uVar16 = (ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x8;
-					uVar17 = (ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0xc;
-					*(int*)&ppuVar6[1].cmdA = (int)uVar2;
-					*(int*)((ulong)&ppuVar6[1].cmdA + 4) = (int)((ulong)uVar2 >> 0x20);
+					iVar15 = (char*)(ed3DVU1BufferCur * 0x10);
+					iVar13 = (char*)(ed3DVU1BufferCur * 4);
+					iVar2 = ed3DVU1BufferCur * 2;
+					uVar2 = gOptionFlagCNT[ed3DVU1BufferCur].cmdA;
+					uVar16 = *(undefined4*)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB;
+					uVar17 = *(undefined4*)((ulong)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB + 4);
+					*(int*)&ppuVar6->cmdA = (int)uVar2;
+					*(int*)((ulong)&ppuVar6->cmdA + 4) = (int)(uVar2 >> 0x20);
+					*(undefined4*)&ppuVar6->cmdB = uVar16;
+					*(undefined4*)((ulong)&ppuVar6->cmdB + 4) = uVar17;
+					uVar1 = *(undefined8*)PTR_AnimScratchpad_00449554;
+					uVar16 = PTR_AnimScratchpad_00449554->field_0x8;
+					uVar17 = PTR_AnimScratchpad_00449554->field_0xc;
+					*(int*)&ppuVar6[1].cmdA = (int)uVar1;
+					*(int*)((ulong)&ppuVar6[1].cmdA + 4) = (int)((ulong)uVar1 >> 0x20);
 					*(undefined4*)&ppuVar6[1].cmdB = uVar16;
 					*(undefined4*)((ulong)&ppuVar6[1].cmdB + 4) = uVar17;
-					uVar2 = g_StaticDisplayListData_0048c340_LONG[iVar6];
-					uVar16 = gRefOptionsforVU1Buf[uVar7 * 4 + 2];
-					uVar17 = gRefOptionsforVU1Buf[uVar7 * 4 + 3];
+					uVar2 = gRefOptionsforVU1Buf[iVar2];
+					uVar16 = *(undefined4*)(gRefOptionsforVU1Buf + uVar7 * 2 + 1);
+					uVar17 = *(undefined4*)((ulong)gRefOptionsforVU1Buf + iVar15 + 0xc);
 					*(int*)&ppuVar6[2].cmdA = (int)uVar2;
-					*(int*)((ulong)&ppuVar6[2].cmdA + 4) = (int)((ulong)uVar2 >> 0x20);
+					*(int*)((ulong)&ppuVar6[2].cmdA + 4) = (int)(uVar2 >> 0x20);
 					*(undefined4*)&ppuVar6[2].cmdB = uVar16;
 					*(undefined4*)((ulong)&ppuVar6[2].cmdB + 4) = uVar17;
-					ppuVar6[3].cmdA = (ulong)(uVar20 & 0xfffffff) << 0x20 | 0x50000000;
+					ppuVar6[3].cmdA = (ulong)((uint)uVar20 & 0xfffffff) << 0x20 | 0x50000000;
 					ppuVar6[3].cmdB =
-						((long)(*(int*)(ScratchpadAnimManager_004494ec.field_0x34 + iVar13) + 1) & 0xffffffffU | 0x4000000) <<
+						((long)(ed3DVU1Addr_Scratch[uVar7] + 1) & 0xffffffffU | 0x4000000) <<
 						0x20;
 					ppuVar6 = ppuVar6 + 4;
 					if (uVar7 == 2) {
@@ -3471,7 +3229,7 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 					}
 				}
 				else {
-					if ((pMVar19->specUnion.byteFlags[0] & 3) != 0) {
+					if ((pMVar19->header.byteFlags[0] & 3) != 0) {
 						if (bVar9 == 3) {
 							uVar8 = uVar8 & 0xfffffffc;
 						}
@@ -3482,25 +3240,19 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 						}
 						goto LAB_002a5dac;
 					}
-#ifdef PLATFORM_WIN
-					if ((edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x100) < ppuVar6 + 0x80) {
-#else
-					if ((edpkt_data*)0x70003fff < ppuVar6 + 0x80) {
-#endif
-						pRVar18 = (edpkt_data*)((ulong)ppuVar6 - (ulong)g_CommandScratchpadBase_004489a0);
-						edDmaLoadFromFastRam((uint)g_CommandScratchpadBase_004489a0, (uint)pRVar18,
-							(uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-						g_CommandScratchpadBase_004489a0 = (edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x40);
-						g_TempCommandBuffer_004493b0 =
-							(edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar18 & 0xfffffff0));
-						ppuVar6 = (edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x40);
+					if (SCRATCHPAD_ADDRESS(0x70003fff) < ppuVar6 + 0x80) {
+						pRVar18 = (edpkt_data*)((ulong)ppuVar6 - (ulong)gStartPKT_SPR);
+						edDmaLoadFromFastRam((uint)gStartPKT_SPR, (uint)pRVar18, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+						ppuVar6 = SCRATCHPAD_ADDRESS(0x70001000);
+						gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+						gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pRVar18 & 0xfffffff0));
 					}
 					ppuVar6->cmdA = 0xe10000001;
 					ppuVar6->cmdB = 0x7c01003d00000000;
-					fVar3 = Vector_00424ff0.w;
-					fVar27 = Vector_00424ff0.z;
-					fVar11 = Vector_00424ff0.y;
-					*(float*)&ppuVar6[1].cmdA = Vector_00424ff0.x;
+					fVar3 = pBFCVect.z;
+					fVar27 = pBFCVect.y;
+					fVar11 = pBFCVect.x;
+					*(float*)&ppuVar6[1].cmdA = pBFCVect.x;
 					*(float*)((ulong)&ppuVar6[1].cmdA + 4) = fVar11;
 					*(float*)&ppuVar6[1].cmdB = fVar27;
 					*(float*)((ulong)&ppuVar6[1].cmdB + 4) = fVar3;
@@ -3509,10 +3261,10 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 				uVar23 = uVar23 + 1;
 				uVar20 = uVar20 + uVar5 * 0x10;
 				pRVar25 = pRVar25 + 1;
-				pMVar19->specUnion.byteFlags[0] = (char)((int)(uint)pMVar19->specUnion.byteFlags[0] >> 2);
+				pMVar19->header.byteFlags[0] = pMVar19->header.byteFlags[0] >> 2;
 				if (3 < uVar23) {
 					uVar23 = 0;
-					pMVar19 = pMVar19 + 1;
+					pMVar19 = (edNODE*)((ulong)&pMVar19->header + 1);
 				}
 			}
 		}
@@ -3521,7 +3273,7 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 			local_20 = 0x48;
 			iVar6 = ed3DG3DAnimGet(pRenderInput);
 			uVar7 = ed3DG3DNbMaxBaseRGBA(pRenderInput);
-			fVar11 = *(float*)(iVar6 + 0x10);
+			fVar11 = iVar6->field_0x10;
 			if (fVar11 < 2.147484e+09) {
 				uVar26 = (uint)fVar11;
 			}
@@ -3537,32 +3289,32 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 			}
 			fVar11 = fVar11 - fVar27;
 			piVar14 = (int*)pRenderInput->field_0x24;
-			iVar13 = *piVar14;
-			local_30 = piVar14 + uVar26 * iVar13 * 4 + 4;
+			iVar2 = *piVar14;
+			local_30 = piVar14 + uVar26 * iVar2 * 4 + 4;
 			piVar21 = local_30;
-			if ((*(uint*)(iVar6 + 4) & 8) == 0) {
+			if ((iVar6->field_0x4 & 8) == 0) {
 				uVar12 = uVar7 - 1;
 				if (uVar26 < uVar12) {
-					piVar21 = piVar14 + (uVar26 + 1) * iVar13 * 4 + 4;
+					piVar21 = piVar14 + (uVar26 + 1) * iVar2 * 4 + 4;
 				}
 				else {
 					if ((uVar26 != uVar12) && (piVar21 = (int*)0x0, uVar26 == uVar7)) {
 						fVar11 = 1.0;
-						local_30 = piVar14 + (uVar7 - 2) * iVar13 * 4 + 4;
-						piVar21 = piVar14 + uVar12 * iVar13 * 4 + 4;
+						local_30 = piVar14 + (uVar7 - 2) * iVar2 * 4 + 4;
+						piVar21 = piVar14 + uVar12 * iVar2 * 4 + 4;
 					}
 				}
 			}
 			else {
 				uVar12 = uVar7 - 1;
 				if (uVar26 < uVar12) {
-					piVar21 = piVar14 + (uVar26 + 1) * iVar13 * 4 + 4;
+					piVar21 = piVar14 + (uVar26 + 1) * iVar2 * 4 + 4;
 				}
 				else {
 					if ((uVar26 != uVar12) && (piVar21 = (int*)0x0, uVar26 == uVar7)) {
 						fVar11 = 1.0;
-						local_30 = piVar14 + (uVar7 - 2) * iVar13 * 4 + 4;
-						piVar21 = piVar14 + uVar12 * iVar13 * 4 + 4;
+						local_30 = piVar14 + (uVar7 - 2) * iVar2 * 4 + 4;
+						piVar21 = piVar14 + uVar12 * iVar2 * 4 + 4;
 					}
 				}
 			}
@@ -3570,58 +3322,60 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 			ppuVar6->cmdB = 0x1300000000000000;
 			ppuVar6[1].cmdA = 0x30000000;
 			ppuVar6[1].cmdB = 0x1100000011000000;
-			Vector_00424ff0.z = 256.0 - fVar11 * 256.0;
+			pBFCVect.z = 256.0 - fVar11 * 256.0;
 			ppuVar6[2].cmdA = 0xe10000001;
 			ppuVar6[2].cmdB = 0x7c01003d00000000;
-			fVar3 = Vector_00424ff0.w;
-			fVar27 = Vector_00424ff0.z;
-			fVar11 = Vector_00424ff0.y;
-			*(float*)&ppuVar6[3].cmdA = Vector_00424ff0.x;
+			fVar3 = pBFCVect.w;
+			fVar27 = pBFCVect.z;
+			fVar11 = pBFCVect.y;
+			*(float*)&ppuVar6[3].cmdA = pBFCVect.x;
 			*(float*)((ulong)&ppuVar6[3].cmdA + 4) = fVar11;
 			*(float*)&ppuVar6[3].cmdB = fVar27;
 			*(float*)((ulong)&ppuVar6[3].cmdB + 4) = fVar3;
 			ppuVar6[4].cmdA = 0x30000000;
 			ppuVar6[4].cmdB = 0x1100000011000000;
 			ppuVar19 = ppuVar6 + 5;
-			while (pRVar25 < pRenderInput->meshSectionCount_0x3a) {
-				bVar9 = *(byte*)&pMVar19->specUnion & 3;
+			while (pRVar25 < ppuVar6) {
+				bVar9 = *(byte*)&pMVar19->header & 3;
 				if (bVar9 == 1) {
 					uVar8 = uVar8 & 0xfffffffd | 1;
 				LAB_002a5a74:
-					if ((edpkt_data*)0x70003fff < ppuVar19 + 4) {
-						pRVar18 = (edpkt_data*)((int)ppuVar19 - (int)g_CommandScratchpadBase_004489a0);
-						edDmaLoadFromFastRam(g_CommandScratchpadBase_004489a0, (uint)pRVar18,
-							(uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-						g_CommandScratchpadBase_004489a0 = (edpkt_data*)&PTR_DAT_70001000;
-						g_TempCommandBuffer_004493b0 =
-							(edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar18 & 0xfffffff0));
-						ppuVar19 = (edpkt_data*)&PTR_DAT_70001000;
+					if (SCRATCHPAD_ADDRESS(0x70003fff) < ppuVar19 + 4) {
+						pRVar18 = (edpkt_data*)((int)ppuVar19 - (int)gStartPKT_SPR);
+						edDmaLoadFromFastRam(gStartPKT_SPR, (uint)pRVar18, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+						ppuVar19 = edpkt_data_ARRAY_70001000;
+						gStartPKT_SPR = edpkt_data_ARRAY_70001000;
+						gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pRVar18 & 0xfffffff0));
 					}
-					if (pRVar25 == (edpkt_data*)((ushort)pRenderInput->meshSectionCount_0x3a - 1)) {
+					if (pRVar25 == (ushort)pRenderInput->meshSectionCount_0x3a - 1) {
 						for (local_20 = (uint)pRenderInput->field_0x38; (local_20 & 3) != 0; local_20 = local_20 + 1) {
 						}
 					}
 					uVar10 = (long)(int)(local_20 >> 2) | 0x30000000;
-					(ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x0 = uVar8;
+					PTR_AnimScratchpad_00449554->field_0x0 = uVar8;
 					uVar7 = ed3DVU1BufferCur;
 					iVar15 = ed3DVU1BufferCur * 0x10;
-					iVar6 = ed3DVU1BufferCur * 2;
+					iVar2 = ed3DVU1BufferCur * 2;
+					uVar2 = edpkt_data_ARRAY_0048c5f0[ed3DVU1BufferCur].cmdA;
+					uVar16 = *(undefined4*)&edpkt_data_ARRAY_0048c5f0[ed3DVU1BufferCur].cmdB;
+					uVar17 = *(undefined4*)((ulong)&edpkt_data_ARRAY_0048c5f0[ed3DVU1BufferCur].cmdB + 4);
 					iVar13 = ed3DVU1BufferCur * 4;
-
-					*ppuVar19 = RenderCommand_ARRAY_0048c5f0[ed3DVU1BufferCur];
-
-					uVar2 = *(undefined8*)ScratchpadAnimManager_004494ec.pAnimScratchpad;
-					uVar16 = (ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x8;
-					uVar17 = (ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0xc;
-					*(int*)&ppuVar19[1].cmdA = (int)uVar2;
-					*(int*)((ulong)&ppuVar19[1].cmdA + 4) = (int)((ulong)uVar2 >> 0x20);
+					*(int*)&ppuVar19->cmdA = (int)uVar2;
+					*(int*)((ulong)&ppuVar19->cmdA + 4) = (int)(uVar2 >> 0x20);
+					*(undefined4*)&ppuVar19->cmdB = uVar16;
+					*(undefined4*)((ulong)&ppuVar19->cmdB + 4) = uVar17;
+					uVar1 = *(undefined8*)ScratchpadAnimManager_004494ec.pAnimScratchpad;
+					uVar16 = PTR_AnimScratchpad_00449554->field_0x8;
+					uVar17 = PTR_AnimScratchpad_00449554->field_0xc;
+					*(int*)&ppuVar19[1].cmdA = (int)uVar1;
+					*(int*)((ulong)&ppuVar19[1].cmdA + 4) = (int)((ulong)uVar1 >> 0x20);
 					*(undefined4*)&ppuVar19[1].cmdB = uVar16;
 					*(undefined4*)((ulong)&ppuVar19[1].cmdB + 4) = uVar17;
-					uVar2 = g_StaticDisplayListData_0048c340_LONG[iVar6];
-					uVar16 = gRefOptionsforVU1Buf[uVar7 * 4 + 2];
-					uVar17 = gRefOptionsforVU1Buf[uVar7 * 4 + 3];
+					uVar2 = gRefOptionsforVU1Buf[iVar2];
+					uVar16 = *(undefined4*)(gRefOptionsforVU1Buf + uVar7 * 2 + 1);
+					uVar17 = *(undefined4*)((int)gRefOptionsforVU1Buf + iVar15 + 0xc);
 					*(int*)&ppuVar19[2].cmdA = (int)uVar2;
-					*(int*)((ulong)&ppuVar19[2].cmdA + 4) = (int)((ulong)uVar2 >> 0x20);
+					*(int*)((ulong)&ppuVar19[2].cmdA + 4) = (int)(uVar2 >> 0x20);
 					*(undefined4*)&ppuVar19[2].cmdB = uVar16;
 					*(undefined4*)((ulong)&ppuVar19[2].cmdB + 4) = uVar17;
 					ppuVar19[3].cmdA = 0x30000000;
@@ -3646,7 +3400,7 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 					}
 				}
 				else {
-					if ((*(byte*)&pMVar19->specUnion & 3) != 0) {
+					if ((*(byte*)&pMVar19->header & 3) != 0) {
 						if (bVar9 == 3) {
 							uVar8 = uVar8 & 0xfffffffc;
 						}
@@ -3659,10 +3413,10 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 					}
 					ppuVar19->cmdA = 0xe10000001;
 					ppuVar19->cmdB = 0x7c01003d00000000;
-					fVar3 = Vector_00424ff0.w;
-					fVar27 = Vector_00424ff0.z;
-					fVar11 = Vector_00424ff0.y;
-					*(float*)&ppuVar19[1].cmdA = Vector_00424ff0.x;
+					fVar3 = pBFCVect.w;
+					fVar27 = pBFCVect.z;
+					fVar11 = pBFCVect.y;
+					*(float*)&ppuVar19[1].cmdA = pBFCVect.x;
 					*(float*)((ulong)&ppuVar19[1].cmdA + 4) = fVar11;
 					*(float*)&ppuVar19[1].cmdB = fVar27;
 					*(float*)((ulong)&ppuVar19[1].cmdB + 4) = fVar3;
@@ -3673,10 +3427,10 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 				pRVar25 = pRVar25 + 1;
 				local_30 = local_30 + 0x48;
 				uVar20 = uVar20 + uVar5 * 0x10;
-				*(char*)&pMVar19->specUnion = (char)((int)(uint) * (byte*)&pMVar19->specUnion >> 2);
+				*(char*)&pMVar19->header = (char)((int)(uint) * (byte*)&pMVar19->header >> 2);
 				if (3 < uVar23) {
 					uVar23 = 0;
-					pMVar19 = (MeshTransformSpecial*)((ulong)&pMVar19->specUnion + 1);
+					pMVar19 = (edNODE*)((ulong)&pMVar19->header + 1);
 				}
 			}
 			ppuVar19->cmdA = 0x30000000;
@@ -3685,25 +3439,25 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 		}
 	}
 	if (ed3DVU1BufferCur == 2) {
-		ed3DVU1Buffer[0] = *(uint*)(ScratchpadAnimManager_004494ec.field_0x34 + 4);
-		ed3DVU1Buffer[1] = *(uint*)(ScratchpadAnimManager_004494ec.field_0x34 + 8);
-		ed3DVU1Buffer[2] = *(uint*)ScratchpadAnimManager_004494ec.field_0x34;
+		ed3DVU1Buffer[0] = ed3DVU1Addr_Scratch[1];
+		ed3DVU1Buffer[1] = ed3DVU1Addr_Scratch[2];
+		ed3DVU1Buffer[2] = *ed3DVU1Addr_Scratch;
 	}
 	else {
 		if (ed3DVU1BufferCur == 1) {
-			ed3DVU1Buffer[0] = *(uint*)ScratchpadAnimManager_004494ec.field_0x34;
-			ed3DVU1Buffer[1] = *(uint*)(ScratchpadAnimManager_004494ec.field_0x34 + 4);
-			ed3DVU1Buffer[2] = *(uint*)(ScratchpadAnimManager_004494ec.field_0x34 + 8);
+			ed3DVU1Buffer[0] = *ed3DVU1Addr_Scratch;
+			ed3DVU1Buffer[1] = ed3DVU1Addr_Scratch[1];
+			ed3DVU1Buffer[2] = ed3DVU1Addr_Scratch[2];
 		}
 		else {
 			if (ed3DVU1BufferCur == 0) {
-				ed3DVU1Buffer[0] = *(uint*)(ScratchpadAnimManager_004494ec.field_0x34 + 8);
-				ed3DVU1Buffer[1] = *(uint*)ScratchpadAnimManager_004494ec.field_0x34;
-				ed3DVU1Buffer[2] = *(uint*)(ScratchpadAnimManager_004494ec.field_0x34 + 4);
+				ed3DVU1Buffer[0] = ed3DVU1Addr_Scratch[2];
+				ed3DVU1Buffer[1] = *ed3DVU1Addr_Scratch;
+				ed3DVU1Buffer[2] = ed3DVU1Addr_Scratch[1];
 			}
 		}
 	}
-	if ((*ScratchpadAnimManager_004494ec.gShadowRenderMask != 0) && (pRenderInput->bUseShadowMatrix_0x30 != 0)) {
+	if ((*gShadowRenderMask != 0) && (pRenderInput->bUseShadowMatrix_0x30 != 0)) {
 		ppuVar6->cmdA = 0x30000000;
 		ppuVar6->cmdB = 0;
 		*(undefined4*)&ppuVar6->cmdB = 0x13000000;
@@ -3713,113 +3467,113 @@ void ed3DFlushStrip(MeshTransformSpecial* pMeshTransformSpecial)
 	return;
 }
 
-void ed3DFlushStripList(ed_dma_matrix* pRenderData, ed_g2d_material* pFileData)
+void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 {
 	short sVar1;
-	ushort uVar2;
-	edNODE_MANAGER* pMVar3;
-	DisplayListInternal* pDVar4;
-	bool bVar5;
-	edpkt_data* pRVar6;
-	MeshTransformSpecial* pRVar5;
+	undefined4* puVar2;
+	bool bVar3;
+	edpkt_data* peVar4;
+	edLIST* pRVar5;
 
-	pRVar5 = pRenderData->field_0x4;
-	if ((ed_dma_matrix*)pRVar5 != pRenderData) {
-		*ScratchpadAnimManager_004494ec.field_0x3c = *ScratchpadAnimManager_004494ec.field_0x3c + 1;
+	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterialNode");
+
+	pRVar5 = (edLIST*)pList->pPrev;
+
+	if (pRVar5 != pList) {
+		*gMaterialNbPrimSend = *gMaterialNbPrimSend + 1;
 	}
-	if ((pFileData == &ed_g2d_material_0048c3c0) || (pFileData == &ed_g2d_material_0048c3b0)) {
-		IMPLEMENTATION_GUARD(
-		g_TempCommandBuffer_004493b0 = (edpkt_data*)0x0;
+
+	if ((pMaterial == &gMaterial_Render_Zbuffer_Only_Cluster) || (pMaterial == &gMaterial_Render_Zbuffer_Only)) {
+		gBackupPKT = (edpkt_data*)0x0;
 		if (gShadowFlushMode == 0) {
-			if (pFileData->count_0x0 < 2) {
-				bVar5 = false;
-				while (pRVar6 = g_VifRefPktCur, (ed_dma_matrix*)pRVar5 != pRenderData) {
-					sVar1 = *(short*)&((ed_dma_matrix*)pRVar5)->pFileData;
+			if (pMaterial->count_0x0 < 2) {
+				bVar3 = false;
+				while (peVar4 = g_VifRefPktCur, pRVar5 != pList) {
+					sVar1 = pRVar5->header.typeField.type;
 					if (sVar1 == 4) {
+						IMPLEMENTATION_GUARD();
 					LAB_002a7d54:
-						pRVar5 = ((ed_dma_matrix*)pRVar5)->field_0x4;
+						pRVar5 = (edLIST*)pRVar5->pPrev;
 					}
 					else {
 						if ((sVar1 == 5) || (sVar1 == 6)) {
-							pMVar3 = ((ed_dma_matrix*)pRVar5)->field_0xc;
-							*(undefined4*)&g_VifRefPktCur->cmdA = *(undefined4*)pMVar3->name;
-							*(MeshTransformSpecial**)((ulong)&g_VifRefPktCur->cmdA + 4) = pMVar3->pNextFree;
-							*(int*)&g_VifRefPktCur->cmdB = pMVar3->totalCount;
-							*(int*)((ulong)&g_VifRefPktCur->cmdB + 4) = pMVar3->usedCount;
+							IMPLEMENTATION_GUARD();
+							puVar2 = (undefined4*)pRVar5->pData;
+							*(undefined4*)&g_VifRefPktCur->cmdA = *puVar2;
+							*(undefined4*)((int)&g_VifRefPktCur->cmdA + 4) = puVar2[1];
+							*(undefined4*)&g_VifRefPktCur->cmdB = puVar2[2];
+							*(undefined4*)((int)&g_VifRefPktCur->cmdB + 4) = puVar2[3];
 							g_VifRefPktCur = g_VifRefPktCur + 1;
 							goto LAB_002a7d54;
 						}
 						if (sVar1 == 3) {
-							if ((*(uint*)((RenderFrame_30_B*)pRVar5)->field_0xc->name & 0x10000) == 0) {
-								ed3DFlushStripShadowRender(pRVar5, (byte*)pFileData);
+							IMPLEMENTATION_GUARD(
+							/* WARNING: Load size is inaccurate */
+							if ((*pRVar5->pData & 0x10000) == 0) {
+								ed3DFlushStripShadowRender((MeshTransformSpecial*)pRVar5, (byte*)pMaterial);
 							}
 							else {
-								bVar5 = true;
-								ed3DFlushStrip(pRVar5);
+								bVar3 = true;
+								ed3DFlushStrip((MeshTransformSpecial*)pRVar5);
 							}
-							goto LAB_002a7d54;
+							goto LAB_002a7d54;)
 						}
-						pRVar5 = ((RenderFrame_30_B*)pRVar5)->field_0x4;
+						pRVar5 = (edLIST*)pRVar5->pPrev;
 					}
 				}
-				if (bVar5) {
+				if (bVar3) {
 					g_VifRefPktCur->cmdA = 0x30000000;
-					pRVar6->cmdB = 0x1100000011000000;
+					peVar4->cmdB = 0x1100000011000000;
 					g_VifRefPktCur = g_VifRefPktCur + 1;
 				}
 			}
 		}
 		else {
-			while ((RenderFrame_30_B*)pRVar5 != pRenderData) {
-				uVar2 = pRVar5->specUnion.field_0x0[0];
-				if ((uVar2 == 5) || (uVar2 == 6)) {
-					pDVar4 = pRVar5->pRenderInput;
-					*(undefined4*)&g_VifRefPktCur->cmdA = *(undefined4*)pDVar4;
-					*(undefined4*)((ulong)&g_VifRefPktCur->cmdA + 4) = *(undefined4*)&pDVar4->subCommandBufferCount;
-					*(undefined4*)&g_VifRefPktCur->cmdB = pDVar4->field_0x8;
-					*(char**)((ulong)&g_VifRefPktCur->cmdB + 4) = pDVar4->field_0xc;
+			while (pRVar5 != pList) {
+				sVar1 = pRVar5->header.typeField.type;
+				if ((sVar1 == 5) || (sVar1 == 6)) {
+					IMPLEMENTATION_GUARD();
+					puVar2 = (undefined4*)pRVar5->pData;
+					*(undefined4*)&g_VifRefPktCur->cmdA = *puVar2;
+					*(undefined4*)((int)&g_VifRefPktCur->cmdA + 4) = puVar2[1];
+					*(undefined4*)&g_VifRefPktCur->cmdB = puVar2[2];
+					*(undefined4*)((int)&g_VifRefPktCur->cmdB + 4) = puVar2[3];
 					g_VifRefPktCur = g_VifRefPktCur + 1;
 				LAB_002a7c6c:
-					pRVar5 = pRVar5->pNext_0x4;
+					pRVar5 = (edLIST*)pRVar5->pPrev;
 				}
 				else {
-					if (uVar2 == 4) goto LAB_002a7c6c;
-					if (uVar2 == 3) {
-						IMPLEMENTATION_GUARD(ed3DFlushStripForZbufferOnly((int)pRVar5, (byte*)pFileData));
+					if (sVar1 == 4) goto LAB_002a7c6c;
+					if (sVar1 == 3) {
+						IMPLEMENTATION_GUARD(
+						ed3DFlushStripForZbufferOnly((int)pRVar5, (byte*)pMaterial);)
 						goto LAB_002a7c6c;
 					}
-					pRVar5 = pRVar5->pNext_0x4;
+					pRVar5 = (edLIST*)pRVar5->pPrev;
 				}
 			}
-		})
+		}
 	}
 	else {
-#ifdef PLATFORM_WIN
-		g_CommandScratchpadBase_004489a0 = (edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x40);
-		g_TempCommandBuffer_004493b0 = g_VifRefPktCur;
-		g_VifRefPktCur = (edpkt_data*)(g_ScratchpadAddr_00448a58 + 0x40);
-#else
-		g_CommandScratchpadBase_004489a0 = (edpkt_data*)0x70001000;
-		g_TempCommandBuffer_004493b0 = g_VifRefPktCur;
-		g_VifRefPktCur = (edpkt_data*)0x70001000;
-#endif
-		if (pFileData->count_0x0 < 2) {
-			for (; (ed_dma_matrix*)pRVar5 != pRenderData; pRVar5 = ((ed_dma_matrix*)pRVar5)->field_0x4) {
-				sVar1 = *(short*)&((ed_dma_matrix*)pRVar5)->pFileData;
+		gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+		gBackupPKT = g_VifRefPktCur;
+		g_VifRefPktCur = SCRATCHPAD_ADDRESS(0x70001000);
+		if (pMaterial->count_0x0 < 2) {
+			for (; pRVar5 != pList; pRVar5 = (edLIST*)pRVar5->pPrev) {
+				sVar1 = pRVar5->header.typeField.type;
 				if ((sVar1 == 5) || (sVar1 == 6)) {
-					IMPLEMENTATION_GUARD(
-					pMVar3 = ((ed_dma_matrix*)pRVar5)->field_0xc;
-					*(undefined4*)&g_VifRefPktCur->cmdA = *(undefined4*)pMVar3->name;
-					*(MeshTransformSpecial**)((ulong)&g_VifRefPktCur->cmdA + 4) = pMVar3->pNextFree;
-					*(int*)&g_VifRefPktCur->cmdB = pMVar3->totalCount;
-					*(int*)((ulong)&g_VifRefPktCur->cmdB + 4) = pMVar3->usedCount;
+					IMPLEMENTATION_GUARD();
+					puVar2 = (undefined4*)pRVar5->pData;
+					*(undefined4*)&g_VifRefPktCur->cmdA = *puVar2;
+					*(undefined4*)((int)&g_VifRefPktCur->cmdA + 4) = puVar2[1];
+					*(undefined4*)&g_VifRefPktCur->cmdB = puVar2[2];
+					*(undefined4*)((int)&g_VifRefPktCur->cmdB + 4) = puVar2[3];
 					g_VifRefPktCur = g_VifRefPktCur + 1;
-					)
 				}
 				else {
 					if (sVar1 == 4) {
 						IMPLEMENTATION_GUARD(
-						ed3DFlushSprite(pRVar5, pFileData);)
+						ed3DFlushSprite((MeshTransformSpecial*)pRVar5, pMaterial);)
 					}
 					else {
 						if (sVar1 == 3) {
@@ -3827,79 +3581,82 @@ void ed3DFlushStripList(ed_dma_matrix* pRenderData, ed_g2d_material* pFileData)
 						}
 					}
 				}
-#ifdef PLATFORM_WIN
-				if ((edpkt_data*)(g_ScratchpadAddr_00448a58 + 0xC0) < g_VifRefPktCur) {
-#else
-				if ((edpkt_data*)0x70003000 < g_VifRefPktCur) {
-#endif
-					IMPLEMENTATION_GUARD(
-					pRVar6 = (edpkt_data*)((int)g_VifRefPktCur - (int)g_CommandScratchpadBase_004489a0);
-					edDmaLoadFromFastRam(g_CommandScratchpadBase_004489a0, (uint)pRVar6, (uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-					g_VifRefPktCur = (edpkt_data*)&PTR_DAT_70001000;
-					g_CommandScratchpadBase_004489a0 = &PTR_DAT_70001000;
-					g_TempCommandBuffer_004493b0 = (edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar6 & 0xfffffff0));)
+				if (SCRATCHPAD_ADDRESS(0x70003000) < g_VifRefPktCur) {
+					peVar4 = (edpkt_data*)((ulong)g_VifRefPktCur - (ulong)gStartPKT_SPR);
+					edDmaLoadFromFastRam
+					((uint)gStartPKT_SPR, (uint)peVar4,
+						(uint)((ulong)((long)(ulong)gBackupPKT << 0x24) >> 0x24));
+					g_VifRefPktCur = SCRATCHPAD_ADDRESS(0x70001000);
+					gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+					gBackupPKT =
+						(edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)peVar4 & 0xfffffff0));
 				}
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			for (; (RenderFrame_30_B*)pRVar5 != pRenderData; pRVar5 = ((RenderFrame_30_B*)pRVar5)->field_0x4) {
-				if (*(short*)&((RenderFrame_30_B*)pRVar5)->pFileData == 4) {
-					ed3DFlushSprite(pRVar5, pFileData);
+			for (; pRVar5 != pList; pRVar5 = (edLIST*)pRVar5->pPrev) {
+				sVar1 = pRVar5->header.typeField.type;
+				if (sVar1 == 4) {
+					IMPLEMENTATION_GUARD(ed3DFlushSprite((MeshTransformSpecial*)pRVar5, pMaterial));
 				}
 				else {
-					if (*(short*)&((RenderFrame_30_B*)pRVar5)->pFileData == 3) {
-						ed3DFlushStripMultiTexture((int)pRVar5, (byte*)pFileData);
+					if (sVar1 == 3) {
+						IMPLEMENTATION_GUARD(ed3DFlushStripMultiTexture((int)pRVar5, (byte*)pMaterial));
 					}
 				}
-				if ((edpkt_data*)0x70003000 < g_VifRefPktCur) {
-					pRVar6 = (edpkt_data*)((int)g_VifRefPktCur - (int)g_CommandScratchpadBase_004489a0);
-					edDmaLoadFromFastRam(g_CommandScratchpadBase_004489a0, (uint)pRVar6, (uint)((ulong)((long)(int)g_TempCommandBuffer_004493b0 << 0x24) >> 0x24));
-					g_VifRefPktCur = (edpkt_data*)&PTR_DAT_70001000;
-					g_CommandScratchpadBase_004489a0 = &PTR_DAT_70001000;
-					g_TempCommandBuffer_004493b0 = (edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar6 & 0xfffffff0));
+				if (SCRATCHPAD_ADDRESS(0x70003000) < g_VifRefPktCur) {
+					peVar4 = (edpkt_data*)((int)g_VifRefPktCur - (int)gStartPKT_SPR);
+					edDmaLoadFromFastRam
+					((uint)gStartPKT_SPR, (uint)peVar4,
+						(uint)((ulong)((long)(uint)gBackupPKT << 0x24) >> 0x24));
+					g_VifRefPktCur = SCRATCHPAD_ADDRESS(0x70001000);
+					gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+					gBackupPKT =
+						(edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)peVar4 & 0xfffffff0));
 				}
-			})
+			}
 		}
-		pRVar6 = (edpkt_data*)((ulong)g_VifRefPktCur - (ulong)g_CommandScratchpadBase_004489a0);
-		if (pRVar6 == (edpkt_data*)0x0) {
-			g_VifRefPktCur = g_TempCommandBuffer_004493b0;
+		peVar4 = (edpkt_data*)((ulong)g_VifRefPktCur - (ulong)gStartPKT_SPR);
+		if (peVar4 == (edpkt_data*)0x0) {
+			g_VifRefPktCur = gBackupPKT;
 		}
 		else {
-			RENDER_LOG("DMA Begin ed3DFlushStripList");
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
-			edDmaLoadFromFastRam_nowait((Vector*)g_CommandScratchpadBase_004489a0, (uint)pRVar6, (uint)g_TempCommandBuffer_004493b0 & 0xfffffff);
-			g_VifRefPktCur = (edpkt_data*)((ulong)&g_TempCommandBuffer_004493b0->cmdA + ((uint)pRVar6 & 0xfffffff0));
+			edDmaLoadFromFastRam_nowait
+			((edF32VECTOR4*)gStartPKT_SPR, (uint)peVar4,
+				(uint)gBackupPKT & 0xfffffff);
+			g_VifRefPktCur = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)peVar4 & 0xfffffff0));
 		}
 	}
 	return;
 }
 
-TextureData_LAY_Internal* ed3DGetG2DLayer(ed_g2d_material* pMAT, int index)
+ed_g2d_layer* ed3DGetG2DLayer(ed_g2d_material* pMAT, int index)
 {
-	TextureData_LAY_Internal* pTVar1;
+	ed_g2d_layer* pTVar1;
 
-	pTVar1 = (TextureData_LAY_Internal*)0x0;
+	pTVar1 = (ed_g2d_layer*)0x0;
 	if (pMAT != (ed_g2d_material*)0x0) {
 		if (pMAT->count_0x0 == 0) {
-			pTVar1 = (TextureData_LAY_Internal*)0x0;
+			pTVar1 = (ed_g2d_layer*)0x0;
 		}
 		else {
-			pTVar1 = (TextureData_LAY_Internal*)((char*)LOAD_SECTION(((int*)(pMAT + 1))[index]) + 0x10);
+			int* pHash = (int*)(pMAT + 1);
+			pTVar1 = (ed_g2d_layer*)((char*)LOAD_SECTION(pHash[index]) + 0x10);
 		}
 	}
 	return pTVar1;
 }
 
-bool ed3DFXIsTrue(TextureData_LAY_Internal* pLAY)
+bool ed3DFXIsTrue(ed_g2d_layer* pLAY)
 {
 	return (pLAY->flags_0x0 & 0x7fff8000) != 0;
 }
 
-Vector Vector_004489bc = { 1.0f, 1.0f, 1.0f, 1.0f };
-Vector Vector_004489cc = { 1.0f, 1.0f, 1.0f, 1.0f };
+edF32VECTOR4 Vector_004489bc = { 1.0f, 1.0f, 1.0f, 1.0f };
+edF32VECTOR4 Vector_004489cc = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pFileData)
+void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 {
 	byte bVar1;
 	MeshTransformDataBase* pMVar2;
@@ -3933,14 +3690,14 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pFileData)
 		puVar14 = pRVar5 + 1;
 		pRVar5->cmdB = 0x1100000011000000;
 	}
-	pMVar12 = pRenderData->pTransformMatrix;
-	if (((1 < pFileData->count_0x0) || (pMVar12 == &g_IdentityMatrix)) && (uVar11 = 0, gFushListCounter != 0xe))
+	pMVar12 = pRenderData->pObjToWorld;
+	if (((1 < pMaterial->count_0x0) || (pMVar12 == &gF32Matrix4Unit)) && (uVar11 = 0, gFushListCounter != 0xe))
 	{
-		bVar1 = pFileData->count_0x0;
+		bVar1 = pMaterial->count_0x0;
 		for (; uVar11 < bVar1; uVar11 = uVar11 + 1) {
-			TextureData_LAY_Internal* pTVar6 = ed3DGetG2DLayer(pFileData, uVar11);
-			if (((pTVar6 != (TextureData_LAY_Internal*)0x0) && (bVar4 = ed3DFXIsTrue(pTVar6), bVar4 != false)) ||
-				(pMVar10 == &g_IdentityMatrix)) {
+			ed_g2d_layer* pTVar6 = ed3DGetG2DLayer(pMaterial, uVar11);
+			if (((pTVar6 != (ed_g2d_layer*)0x0) && (bVar4 = ed3DFXIsTrue(pTVar6), bVar4 != false)) ||
+				(pMVar10 == &gF32Matrix4Unit)) {
 				IMPLEMENTATION_GUARD(
 				m0 = (edF32MATRIX4*)(puVar14 + 3);
 				puVar14->cmdA = 0xe10000006;
@@ -3949,7 +3706,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pFileData)
 				*(undefined4*)&puVar14->cmdB = 0;
 				*(undefined4*)((ulong)&puVar14->cmdB + 4) = 0x6c0603fa;
 				pMVar9 = &local_40;
-				pMVar10 = g_ScratchpadAddr_00448a58;
+				pMVar10 = WorldToCamera_Matrix;
 				do {
 					iVar8 = iVar8 + -1;
 					fVar3 = pMVar10->ab;
@@ -3959,15 +3716,15 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pFileData)
 					pMVar9 = (edF32MATRIX4*)&pMVar9->ac;
 				} while (0 < iVar8);
 				if (local_40.ac + local_40.aa + local_40.ab != 0.0) {
-					sceVu0Normalize((float*)&local_40, (float*)&local_40);
+					edF32Vector4NormalizeHard((float*)&local_40, (float*)&local_40);
 				}
 				if (local_40.bc + local_40.ba + local_40.bb != 0.0) {
-					sceVu0Normalize(&local_40.ba, &local_40.ba);
+					edF32Vector4NormalizeHard(&local_40.ba, &local_40.ba);
 				}
 				if (local_40.cc + local_40.ca + local_40.cb != 0.0) {
-					sceVu0Normalize(&local_40.ca, &local_40.ca);
+					edF32Vector4NormalizeHard(&local_40.ca, &local_40.ca);
 				}
-				sceVu0TransposeMatrixFixed(&local_40, &local_40);
+				edF32Matrix4GetTransposeHard(&local_40, &local_40);
 				iVar8 = 8;
 				local_40.aa = local_40.aa * Vector_004489bc.x;
 				local_40.ab = local_40.ab * Vector_004489bc.y;
@@ -4002,89 +3759,94 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pFileData)
 				*(undefined4*)((ulong)&puVar14[3].cmdB + 4) = 0;
 				*(undefined4*)((ulong)&puVar14[6].cmdB + 4) = 0x3f800000;
 				sceVu0InverseMatrix(m0, m0);
-				sceVu0TransposeMatrixFixed(m0, m0);
+				edF32Matrix4GetTransposeHard(m0, m0);
 				puVar14 = puVar14 + 7;)
 				break;
 			}
-			bVar1 = pFileData->count_0x0;
+			bVar1 = pMaterial->count_0x0;
 		}
 	}
 	g_VifRefPktCur = puVar14;
-	puVar14 = ed3DHierachyCheckForGlobalAlpha(puVar14, g_TextureData_LAY_Int_00449404);
+	puVar14 = ed3DHierachyCheckForGlobalAlpha(puVar14, gCurLayer);
 	g_VifRefPktCur = puVar14;
 	puVar14->cmdA = 0xe10000001;
 	puVar14->cmdB = 0;
 	*(undefined4*)&puVar14->cmdB = 0;
 	*(undefined4*)((ulong)&g_VifRefPktCur->cmdB + 4) = 0x6c010021;
 	g_VifRefPktCur = g_VifRefPktCur + 1;
-	*(float*)&g_VifRefPktCur->cmdA = (ScratchpadAnimManager_004494ec.pVector_0x18)->x;
-	*(float*)((ulong)&g_VifRefPktCur->cmdA + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->y;
-	*(float*)&g_VifRefPktCur->cmdB = (ScratchpadAnimManager_004494ec.pVector_0x18)->z;
-	*(float*)((ulong)&g_VifRefPktCur->cmdB + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->w;
+	*(float*)&g_VifRefPktCur->cmdA = gVU1_AnimST_NormalExtruder_Scratch->x;
+	*(float*)((ulong)&g_VifRefPktCur->cmdA + 4) = gVU1_AnimST_NormalExtruder_Scratch->y;
+	*(float*)&g_VifRefPktCur->cmdB = gVU1_AnimST_NormalExtruder_Scratch->z;
+	*(float*)((ulong)&g_VifRefPktCur->cmdB + 4) = gVU1_AnimST_NormalExtruder_Scratch->w;
 	g_VifRefPktCur = g_VifRefPktCur + 1;
-	ed3DFlushStripList(pRenderData, pFileData);
-	pMVar4 = (edNODE_MANAGER*)(pRenderData->internalMeshTransformSpecial).pNext_0x4;
-	pRenderData->field_0x4 = pMVar4->pNextFree + pMVar4->usedCount;
-	pMVar4->usedCount = pMVar4->usedCount - (int)(pRenderData->internalMeshTransformSpecial).pRenderInput;
-	(pRenderData->internalMeshTransformSpecial).pRenderInput = (DisplayListInternal*)0x0;
-	pRenderData->field_0x4 = (MeshTransformSpecial*)pRenderData;
-	(pRenderData->internalMeshTransformSpecial).specUnion.randoPtr = pRenderData;
+	ed3DFlushStripList(pRenderData, pMaterial);
+	pMVar4 = (edNODE_MANAGER*)pRenderData->pData;
+	pRenderData->pPrev = pMVar4->pNodeHead + pMVar4->linkCount;
+	pMVar4->linkCount = pMVar4->linkCount - pRenderData->nodeCount;
+	pRenderData->nodeCount = 0;
+	pRenderData->pPrev = (edNODE*)pRenderData;
+	pRenderData->pNext = (edNODE*)pRenderData;
 	return;
 }
 
-void ed3DFlushMaterialNode(ed_dma_matrix* pRenderFrame)
+void ed3DFlushMaterialNode(ed_dma_material* pMaterial)
 {
-	edNODE_MANAGER* peVar1;
-	MeshTransformSpecial* pRVar3;
+	edNODE_MANAGER* pvVar2;
+	edNODE* pRVar3;
+	edNODE_MANAGER* pvVar1;
 
-	if ((pRenderFrame->flags_0x28 & 1U) == 0) {
-		pRVar3 = (pRenderFrame->internalMeshTransformSpecial).pNext_0x4;
-		if (pRVar3 != (MeshTransformSpecial*)0x0) {
+	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterialNode");
+
+	if ((pMaterial->flags & 1) == 0) {
+		pRVar3 = pMaterial->list.pPrev;
+		if ((edLIST*)pRVar3 != (edLIST*)0x0) {
 			if (gShadowFlushMode == 0) {
-				for (; pRVar3 != &pRenderFrame->internalMeshTransformSpecial; pRVar3 = pRVar3->pNext_0x4) {
-					ed3DFlushMatrix((ed_dma_matrix*)pRVar3->pRenderInput, (ed_g2d_material*)pRenderFrame->pFileData);
+				for (; (edLIST*)pRVar3 != &pMaterial->list; pRVar3 = pRVar3->pPrev) {
+					ed3DFlushMatrix((ed_dma_matrix*)pRVar3->pData, pMaterial->pMaterial);
 				}
-				peVar1 = (edNODE_MANAGER*)(pRenderFrame->internalMeshTransformSpecial).pRenderInput;
+				pvVar2 = (edNODE_MANAGER*)pMaterial->list.pData;
 			}
 			else {
-				for (; pRVar3 != &pRenderFrame->internalMeshTransformSpecial; pRVar3 = pRVar3->pNext_0x4) {
-					IMPLEMENTATION_GUARD(ed3DFlushMatrixForShadow((int)pRVar3->pRenderInput);
-					ed3DFlushMatrix((ed_dma_matrix*)pRVar3->pRenderInput, (ed_g2d_material*)pRenderFrame->pFileData));
+				for (; (edLIST*)pRVar3 != &pMaterial->list; pRVar3 = pRVar3->pPrev) {
+					IMPLEMENTATION_GUARD(
+					ed3DFlushMatrixForShadow((ed_dma_matrix*)pRVar3->pData);
+					ed3DFlushMatrix((ed_dma_matrix*)pRVar3->pData, pMaterial->pMaterial);)
 				}
-				peVar1 = (edNODE_MANAGER*)(pRenderFrame->internalMeshTransformSpecial).pRenderInput;
+				pvVar2 = (edNODE_MANAGER*)pMaterial->list.pData;
 			}
-			(pRenderFrame->internalMeshTransformSpecial).pNext_0x4 = peVar1->pNextFree + peVar1->usedCount;
-			peVar1->usedCount = peVar1->usedCount - pRenderFrame->index_0x1c;
-			pRenderFrame->index_0x1c = 0;
-			(pRenderFrame->internalMeshTransformSpecial).pNext_0x4 = &pRenderFrame->internalMeshTransformSpecial;
-			(pRenderFrame->internalMeshTransformSpecial).pPrev_0x8 = &pRenderFrame->internalMeshTransformSpecial;
+			pMaterial->list.pPrev = pvVar2->pNodeHead + pvVar2->linkCount;
+			pvVar2->linkCount = pvVar2->linkCount - (pMaterial->list).nodeCount;
+			(pMaterial->list).nodeCount = 0;
+			pMaterial->list.pPrev = (edNODE*)&pMaterial->list;
+			pMaterial->list.pNext = (edNODE*)&pMaterial->list;
 		}
 		gFlushListFlusaON = 0;
 	}
 	else {
 		if (gFlushListFlusaON == 0) {
-			ed3DFlushMatrix(DmaMatrixDefault, (ed_g2d_material*)pRenderFrame->pFileData);
+			ed3DFlushMatrix(DmaMatrixDefault, pMaterial->pMaterial);
 			gFlushListFlusaON = 1;
 		}
-		ed3DFlushStripList((ed_dma_matrix*)&pRenderFrame->internalMeshTransformSpecial, (ed_g2d_material*)pRenderFrame->pFileData);
-		peVar1 = (edNODE_MANAGER*)(pRenderFrame->internalMeshTransformSpecial).pRenderInput;
-		(pRenderFrame->internalMeshTransformSpecial).pNext_0x4 = peVar1->pNextFree + peVar1->usedCount;
-		peVar1->usedCount = peVar1->usedCount - pRenderFrame->index_0x1c;
-		pRenderFrame->index_0x1c = 0;
-		(pRenderFrame->internalMeshTransformSpecial).pNext_0x4 = &pRenderFrame->internalMeshTransformSpecial;
-		(pRenderFrame->internalMeshTransformSpecial).pPrev_0x8 = &pRenderFrame->internalMeshTransformSpecial;
+		ed3DFlushStripList(&pMaterial->list, pMaterial->pMaterial);
+		pvVar1 = (edNODE_MANAGER*)pMaterial->list.pData;
+		pMaterial->list.pPrev = pvVar1->pNodeHead + pvVar1->linkCount;
+		pvVar1->linkCount = pvVar1->linkCount - (pMaterial->list).nodeCount;
+		(pMaterial->list).nodeCount = 0;
+		pMaterial->list.pPrev = (edNODE*)&pMaterial->list;
+		pMaterial->list.pNext = (edNODE*)&pMaterial->list;
 	}
 	return;
 }
 
 
-edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* param_1)
+
+edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 {
 	uint uVar1;
 	uint uVar2;
 	ushort uVar3;
 	TextureData_TEX* pTVar4;
-	float* pfVar5;
+	edF32VECTOR4* peVar5;
 	int iVar6;
 	uint uVar7;
 	int iVar8;
@@ -4093,11 +3855,11 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* param_1)
 	float fVar11;
 	float fVar12;
 
-	uVar9 = g_TextureData_LAY_Int_00449404->field_0x4;
+	uVar9 = gCurLayer->flags;
 	if ((uVar9 & 0x10) == 0) {
 		if ((uVar9 & 2) != 0) {
 			IMPLEMENTATION_GUARD(
-			pTVar4 = g_TextureData_LAY_Int_00449404->pTexB;
+			pTVar4 = gCurLayer->pTex;
 			ed3DG2DGetBitmapFromTexture((int)&pTVar4->body);
 			iVar6 = *(int*)&(pTVar4->body).field_0x1c;
 			iVar8 = ed3DG2DAnimTexGet(&pTVar4->body);
@@ -4118,7 +3880,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* param_1)
 				trap(7);
 			}
 			if (uVar9 < uVar1) {
-				*(undefined4*)(*(int*)&(pTVar4->body).field_0x14 + 0xc) = 0;
+				((pTVar4->body).field_0x14)->w = 0.0;
 			}
 			else {
 				uVar2 = (int)uVar9 / (int)uVar1;
@@ -4149,7 +3911,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* param_1)
 					fVar12 = (float)uVar2;
 				}
 				uVar9 = uVar9 - uVar2 * uVar1;
-				*(float*)(*(int*)&(pTVar4->body).field_0x14 + 0xc) = fVar12 * (fVar10 / fVar11);
+				((pTVar4->body).field_0x14)->w = fVar12 * (fVar10 / fVar11);
 			}
 			uVar1 = *(uint*)(iVar6 + 0x14);
 			if ((int)uVar1 < 0) {
@@ -4174,91 +3936,83 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* param_1)
 			else {
 				fVar12 = (float)uVar9;
 			}
-			*(float*)(*(int*)&(pTVar4->body).field_0x14 + 8) = fVar12 * (fVar10 / fVar11);
-			param_1->cmdA = 0xe10000001;
-			param_1->cmdB = 0;
-			*(undefined4*)&param_1->cmdB = 0;
-			*(undefined4*)((int)&param_1->cmdB + 4) = 0x6c010021;
-			(ScratchpadAnimManager_004494ec.pVector_0x18)->x = *(float*)(*(int*)&(pTVar4->body).field_0x14 + 8);
-			(ScratchpadAnimManager_004494ec.pVector_0x18)->y = *(float*)(*(int*)&(pTVar4->body).field_0x14 + 0xc);
-			*(float*)&param_1[1].cmdA = (ScratchpadAnimManager_004494ec.pVector_0x18)->x;
-			*(float*)((int)&param_1[1].cmdA + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->y;
-			*(float*)&param_1[1].cmdB = (ScratchpadAnimManager_004494ec.pVector_0x18)->z;
-			*(float*)((int)&param_1[1].cmdB + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->w;
-			param_1 = param_1 + 2;
-			g_TextureData_LAY_Int_00449404->field_0x4 = g_TextureData_LAY_Int_00449404->field_0x4 | 0x400;)
+			((pTVar4->body).field_0x14)->z = fVar12 * (fVar10 / fVar11);
+			pPkt->cmdA = 0xe10000001;
+			pPkt->cmdB = 0;
+			*(undefined4*)&pPkt->cmdB = 0;
+			*(undefined4*)((int)&pPkt->cmdB + 4) = 0x6c010021;
+			gVU1_AnimST_NormalExtruder_Scratch->x = ((pTVar4->body).field_0x14)->z;
+			gVU1_AnimST_NormalExtruder_Scratch->y = ((pTVar4->body).field_0x14)->w;
+			*(float*)&pPkt[1].cmdA = gVU1_AnimST_NormalExtruder_Scratch->x;
+			*(float*)((int)&pPkt[1].cmdA + 4) = gVU1_AnimST_NormalExtruder_Scratch->y;
+			*(float*)&pPkt[1].cmdB = gVU1_AnimST_NormalExtruder_Scratch->z;
+			*(float*)((int)&pPkt[1].cmdB + 4) = gVU1_AnimST_NormalExtruder_Scratch->w;
+			pPkt = pPkt + 2;
+			gCurLayer->flags = gCurLayer->flags | 0x400;)
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		pTVar4 = g_TextureData_LAY_Int_00449404->pTexB;
+		pTVar4 = (TextureData_TEX*)LOAD_SECTION(gCurLayer->pTex);
 		if (pTVar4 != (TextureData_TEX*)0xfffffff0) {
-			if (((uVar9 & 0x400) == 0) && (DAT_00449348 != 0)) {
-				pfVar5 = *(float**)&(pTVar4->body).field_0x14;
-				pfVar5[2] = pfVar5[2] + *pfVar5;
-				iVar6 = *(int*)&(pTVar4->body).field_0x14;
-				*(float*)(iVar6 + 0xc) = *(float*)(iVar6 + 0xc) + *(float*)(iVar6 + 4);
-				iVar6 = *(int*)&(pTVar4->body).field_0x14;
-				fVar10 = *(float*)(iVar6 + 8);
+			peVar5 = (edF32VECTOR4*)LOAD_SECTION((pTVar4->body).field_0x14);
+			if (((uVar9 & 0x400) == 0) && (gStepTime != 0)) {
+				peVar5->z = peVar5->z + peVar5->x;
+				peVar5->w = peVar5->w + peVar5->y;
+				fVar10 = peVar5->z;
 				if (1.0 <= fVar10) {
-					*(float*)(iVar6 + 8) = fVar10 - 1.0;
+					peVar5->z = fVar10 - 1.0;
 				}
-				iVar6 = *(int*)&(pTVar4->body).field_0x14;
-				fVar10 = *(float*)(iVar6 + 0xc);
+				fVar10 = peVar5->w;
 				if (1.0 <= fVar10) {
-					*(float*)(iVar6 + 0xc) = fVar10 - 1.0;
+					peVar5->w = fVar10 - 1.0;
 				}
-				iVar6 = *(int*)&(pTVar4->body).field_0x14;
-				fVar10 = *(float*)(iVar6 + 8);
+				fVar10 = peVar5->z;
 				if (fVar10 <= -1.0) {
-					*(float*)(iVar6 + 8) = fVar10 + 1.0;
+					peVar5->z = fVar10 + 1.0;
 				}
-				iVar6 = *(int*)&(pTVar4->body).field_0x14;
-				fVar10 = *(float*)(iVar6 + 0xc);
+				fVar10 = peVar5->w;
 				if (fVar10 <= -1.0) {
-					*(float*)(iVar6 + 0xc) = fVar10 + 1.0;
+					peVar5->w = fVar10 + 1.0;
 				}
 			}
-			param_1->cmdA = 0xe10000001;
-			param_1->cmdB = 0;
-			*(undefined4*)&param_1->cmdB = 0;
-			*(undefined4*)((int)&param_1->cmdB + 4) = 0x6c010021;
-			(ScratchpadAnimManager_004494ec.pVector_0x18)->x = *(float*)(*(int*)&(pTVar4->body).field_0x14 + 8);
-			(ScratchpadAnimManager_004494ec.pVector_0x18)->y = *(float*)(*(int*)&(pTVar4->body).field_0x14 + 0xc);
-			*(float*)&param_1[1].cmdA = (ScratchpadAnimManager_004494ec.pVector_0x18)->x;
-			*(float*)((int)&param_1[1].cmdA + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->y;
-			*(float*)&param_1[1].cmdB = (ScratchpadAnimManager_004494ec.pVector_0x18)->z;
-			*(float*)((int)&param_1[1].cmdB + 4) = (ScratchpadAnimManager_004494ec.pVector_0x18)->w;
-			param_1 = param_1 + 2;
-			g_TextureData_LAY_Int_00449404->field_0x4 = g_TextureData_LAY_Int_00449404->field_0x4 | 0x400;
-		})
+			pPkt->cmdA = 0xe10000001;
+			pPkt->cmdB = 0;
+			*(undefined4*)&pPkt->cmdB = 0;
+			*(undefined4*)((ulong)&pPkt->cmdB + 4) = 0x6c010021;
+			gVU1_AnimST_NormalExtruder_Scratch->x = peVar5->z;
+			gVU1_AnimST_NormalExtruder_Scratch->y = peVar5->w;
+			*(float*)&pPkt[1].cmdA = gVU1_AnimST_NormalExtruder_Scratch->x;
+			*(float*)((ulong)&pPkt[1].cmdA + 4) = gVU1_AnimST_NormalExtruder_Scratch->y;
+			*(float*)&pPkt[1].cmdB = gVU1_AnimST_NormalExtruder_Scratch->z;
+			*(float*)((ulong)&pPkt[1].cmdB + 4) = gVU1_AnimST_NormalExtruder_Scratch->w;
+			pPkt = pPkt + 2;
+			gCurLayer->flags = gCurLayer->flags | 0x400;
+		}
 	}
-	return param_1;
+	return pPkt;
 }
 
-void ed3DFlushMaterialManageGIFPacket(ed_dma_matrix* param_1)
+void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 {
 	bool bVar1;
-	edpkt_data* pRVar2;
+	edpkt_data* peVar2;
 
-	if ((param_1->flags_0x28 & 2U) != 0) {
+	if ((pMaterial->flags & 2) != 0) {
 		ed3DFXClearALLFXSendedTOVRAM();
-		param_1->flags_0x28 = param_1->flags_0x28 & 0xfffffffd;
+		pMaterial->flags = pMaterial->flags & 0xfffffffd;
 	}
-	pRVar2 = g_GifRefPktCur;
+	peVar2 = g_GifRefPktCur;
 	if (gFushListCounter != 0xe) {
-		if ((gbFirstTex == 0) && (param_1->field_0x2c.ptrValue != (char*)0x0)) {
-			if ((byte)*param_1->pFileData < 2) {
-				IMPLEMENTATION_GUARD(
-				g_GifRefPktCur->cmdA =
-					((long)(*(int*)(*(int*)(param_1->field_0x2c + 8) + gVRAMBufferFlush * 8) + 0x20) & 0xfffffffU) << 0x20 |
-					0x50000000;
-				pRVar2->cmdB = 0;
-				g_GifRefPktCur = g_GifRefPktCur + 1;)
+		if ((gbFirstTex == 0) && (pMaterial->pBitmap != (ed_g2d_bitmap*)0x0)) {
+			if (pMaterial->pMaterial->count_0x0 < 2) {
+				edpkt_data* pPkt = (edpkt_data*)LOAD_SECTION(pMaterial->pBitmap->pPSX2);
+				g_GifRefPktCur->cmdA = ((ulong)(pPkt + gVRAMBufferFlush) + 0x20) << 0x20 | 0x50000000;
+				peVar2->cmdB = 0;
+				g_GifRefPktCur = g_GifRefPktCur + 1;
 			}
 			else {
 				IMPLEMENTATION_GUARD(
-				g_GifRefPktCur = ed3DFlushMultiTexture(param_1, g_GifRefPktCur, 0, gVRAMBufferFlush);)
+				g_GifRefPktCur = ed3DFlushMultiTexture(pMaterial, g_GifRefPktCur, 0, gVRAMBufferFlush);)
 			}
 		}
 		else {
@@ -4273,36 +4027,38 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_matrix* param_1)
 	return;
 }
 
-void ed3DFlushMaterial(ed_dma_matrix* pRenderMeshData)
+void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 {
-	ed_g2d_material* pTVar2;
-	ulong* puVar3;
-	edpkt_data* pRVar4;
-	edpkt_data* pRVar5;
-	edpkt_data* pRVar6;
-	edpkt_data* pRVar7;
-	ed_g2d_material* pTVar8;
-	undefined4 in_zero_lo = 0x0;
-	undefined4 in_zero_hi = 0x0;
-	undefined4 in_zero_udw = 0x0;
-	undefined4 in_register_0000000c = 0x0;
-	edpkt_data* pRVar9;
-	int iVar10;
+	ed_g2d_material* peVar1;
+	ulong* puVar2;
+	edpkt_data* peVar3;
+	edpkt_data* peVar4;
+	edpkt_data* peVar5;
+	edpkt_data* peVar6;
+	ed_g2d_material* peVar7;
+	undefined4 in_zero_lo;
+	undefined4 in_zero_hi;
+	undefined4 in_zero_udw;
+	undefined4 in_register_0000000c;
+	edpkt_data* peVar8;
+	int iVar9;
 	ed_g2d_material* pTVar1;
 
-	pRVar7 = gpPKTDataRefMasPath3;
-	pRVar6 = g_GifRefPktCur;
-	pRVar4 = g_VifRefPktCur;
-	*ScratchpadAnimManager_004494ec.field_0x3c = 0;
-	pRVar5 = g_VifRefPktCur;
+	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial");
+
+	peVar6 = gpPKTDataRefMasPath3;
+	peVar5 = g_GifRefPktCur;
+	peVar3 = g_VifRefPktCur;
+	*gMaterialNbPrimSend = 0;
+	peVar4 = g_VifRefPktCur;
 	gGlobalAlhaON = 0x80;
-	pTVar2 = (ed_g2d_material*)pRenderMeshData->pFileData;
-	pTVar2->pRenderFrame30 = 0;
-	pRVar9 = gpPKTDataRefMasPath3;
-	iVar10 = gFushListCounter;
-	pTVar8 = pTVar2;
-	if (pTVar2 == previous_flush3DMat) {
-		pTVar8 = previous_flush3DMat;
+	peVar1 = pRenderMeshData->pMaterial;
+	peVar1->pDMA_Material = 0x0;
+	peVar8 = gpPKTDataRefMasPath3;
+	iVar9 = gFushListCounter;
+	peVar7 = peVar1;
+	if (peVar1 == previous_flush3DMat) {
+		peVar7 = previous_flush3DMat;
 		if (gVRAMBufferFlush == 0) {
 			gVRAMBufferFlush = 1;
 		}
@@ -4310,100 +4066,99 @@ void ed3DFlushMaterial(ed_dma_matrix* pRenderMeshData)
 			gVRAMBufferFlush = gVRAMBufferFlush + -1;
 		}
 	}
-	previous_flush3DMat = pTVar8;
-	if (((gFushListCounter != 0xe) && (pRenderMeshData->field_0x2c.ptrValue == (char*)0x0)) &&
+	previous_flush3DMat = peVar7;
+	if (((gFushListCounter != 0xe) && (pRenderMeshData->pBitmap == (ed_g2d_bitmap*)0x0)) &&
 		(gpPKTDataRefMasPath3 != (edpkt_data*)0x0)) {
-		IMPLEMENTATION_GUARD(
-		gpPKTDataRefMasPath3->cmdA =
-			((long)(int)(gpPKTDataRefMasPath3 + 4) & 0xfffffffU) << 0x20 | 0x20000000;
-		pRVar9->cmdB = 0;)
+		gpPKTDataRefMasPath3->cmdA = ((long)(int)(gpPKTDataRefMasPath3 + 4) & 0xfffffffU) << 0x20 | 0x20000000;
+		peVar8->cmdB = 0;
 	}
-	pRVar9 = pRVar5;
+	peVar8 = peVar4;
 	if (gpLastMaterial != pRenderMeshData) {
 		gpLastMaterial = pRenderMeshData;
-		if (iVar10 == 0xe) {
-			IMPLEMENTATION_GUARD(pRVar9 = FUN_002a97a0(pRVar5);)
+		if (iVar9 == 0xe) {
+			IMPLEMENTATION_GUARD(
+			peVar8 = FUN_002a97a0(peVar4));
 		}
 		else {
-			if (pTVar2->commandBufferTextureSize == 2) {
+			if (peVar1->commandBufferTextureSize == 2) {
 				IMPLEMENTATION_GUARD(
-				pRVar5->cmdA = 0x30000000;
-				pRVar5->cmdB = 0x1300000000000000;
-				pRVar5[1].cmdA = 0x30000000;
-				pRVar5[1].cmdB = 0x1100000011000000;
-				pRVar5[2].cmdA = 0x30000000;
-				pRVar5[2].cmdB = 0x600000000000000;
-				pRVar5[3].cmdA = 0xe10000001;
-				pRVar5[3].cmdB = 0;
-				*(undefined4*)&pRVar5[4].cmdA = in_zero_lo;
-				*(undefined4*)((ulong)&pRVar5[4].cmdA + 4) = in_zero_hi;
-				*(undefined4*)&pRVar5[4].cmdB = in_zero_udw;
-				*(undefined4*)((ulong)&pRVar5[4].cmdB + 4) = in_register_0000000c;
-				pRVar5[5].cmdA = 0x30000000;
-				pRVar5[5].cmdB = 0x600800000000000;
-				pRVar9 = pRVar5 + 6;
-				gpPKTDataRefMasPath3 = pRVar5 + 2;)
+				peVar4->cmdA = 0x30000000;
+				peVar4->cmdB = 0x1300000000000000;
+				peVar4[1].cmdA = 0x30000000;
+				peVar4[1].cmdB = 0x1100000011000000;
+				peVar4[2].cmdA = 0x30000000;
+				peVar4[2].cmdB = 0x600000000000000;
+				peVar4[3].cmdA = 0xe10000001;
+				peVar4[3].cmdB = 0;
+				*(undefined4*)&peVar4[4].cmdA = in_zero_lo;
+				*(undefined4*)((int)&peVar4[4].cmdA + 4) = in_zero_hi;
+				*(undefined4*)&peVar4[4].cmdB = in_zero_udw;
+				*(undefined4*)((int)&peVar4[4].cmdB + 4) = in_register_0000000c;
+				peVar4[5].cmdA = 0x30000000;
+				peVar4[5].cmdB = 0x600800000000000;
+				peVar8 = peVar4 + 6;
+				gpPKTDataRefMasPath3 = peVar4 + 2;)
 			}
 			else {
-				pRVar5->cmdA = 0x30000000;
-				pRVar5->cmdB = 0x1300000000000000;
-				pRVar5[1].cmdA =
-					((ulong)(int)(pTVar2->pCommandBufferTexture + gVRAMBufferFlush * pTVar2->commandBufferTextureSize * (uint)pTVar2->count_0x0) & 0xfffffffU)
-					<< 0x20 | (ulong)pTVar2->commandBufferTextureSize & 0xffffffffU | 0x30000000;
-				pRVar5[1].cmdB = 0;
-				pRVar5[2].cmdA = 0x30000000;
-				pRVar5[2].cmdB = 0x1100000011000000;
-				pRVar5[3].cmdA = 0x30000000;
-				pRVar5[3].cmdB = 0x600000000000000;
-				pRVar5[4].cmdA = 0xe10000001;
-				pRVar5[4].cmdB = 0;
-				*(undefined4*)&pRVar5[5].cmdA = in_zero_lo;
-				*(undefined4*)((ulong)&pRVar5[5].cmdA + 4) = in_zero_hi;
-				*(undefined4*)&pRVar5[5].cmdB = in_zero_udw;
-				*(undefined4*)((ulong)&pRVar5[5].cmdB + 4) = in_register_0000000c;
-				pRVar5[6].cmdA = 0x30000000;
-				pRVar5[6].cmdB = 0x600800000000000;
-				pRVar9 = pRVar5 + 7;
-				gpPKTDataRefMasPath3 = pRVar5 + 3;
+				peVar4->cmdA = 0x30000000;
+				peVar4->cmdB = 0x1300000000000000;
+				peVar4[1].cmdA =
+					((ulong)(ulong)(peVar1->pCommandBufferTexture +
+						gVRAMBufferFlush * peVar1->commandBufferTextureSize * (uint)peVar1->count_0x0) & 0xfffffffU) <<
+					0x20 | (ulong)peVar1->commandBufferTextureSize & 0xffffffffU | 0x30000000;
+				peVar4[1].cmdB = 0;
+				peVar4[2].cmdA = 0x30000000;
+				peVar4[2].cmdB = 0x1100000011000000;
+				peVar4[3].cmdA = 0x30000000;
+				peVar4[3].cmdB = 0x600000000000000;
+				peVar4[4].cmdA = 0xe10000001;
+				peVar4[4].cmdB = 0;
+				*(undefined4*)&peVar4[5].cmdA = in_zero_lo;
+				*(undefined4*)((ulong)&peVar4[5].cmdA + 4) = in_zero_hi;
+				*(undefined4*)&peVar4[5].cmdB = in_zero_udw;
+				*(undefined4*)((ulong)&peVar4[5].cmdB + 4) = in_register_0000000c;
+				peVar4[6].cmdA = 0x30000000;
+				peVar4[6].cmdB = 0x600800000000000;
+				peVar8 = peVar4 + 7;
+				gpPKTDataRefMasPath3 = peVar4 + 3;
 			}
 		}
 	}
-	g_VifRefPktCur = pRVar9;
-	if (pRenderMeshData->field_0x2c.ptrValue == (char*)0x0) {
+	g_VifRefPktCur = peVar8;
+	if (pRenderMeshData->pBitmap == (ed_g2d_bitmap*)0x0) {
+		gCurLayer = (ed_g2d_layer*)0x0;
 		IMPLEMENTATION_GUARD(
-		g_TextureData_LAY_Int_00449404 = (ed_g2d_layer*)0x0;
-		g_VifRefPktCur = FUN_002a9e80(pRVar9);)
+		g_VifRefPktCur = FUN_002a9e80(peVar8));
 	}
 	else {
-		ed3DG2DMaterialGetLayerBitmap(pRenderMeshData, &PTR_DAT_0044940c, &g_TextureData_LAY_Int_00449404, 0);
-		*(char**)ScratchpadAnimManager_004494ec.field_0x24 = pRenderMeshData->pFileData;
-		pRVar5 = g_VifRefPktCur;
+		ed3DG2DMaterialGetLayerBitmap(pRenderMeshData, &gCurBitmap, &gCurLayer, 0);
+		*g_pCurFlareMaterial = pRenderMeshData->pMaterial;
+		peVar4 = g_VifRefPktCur;
 		g_VifRefPktCur[2].cmdA =
-			(long)*(int*)ScratchpadAnimManager_004494ec.field_0x48 << 0x20 |
-			(ulong) * (uint*)ScratchpadAnimManager_004494ec.field_0x44 << 0x13 |
-			(ulong)(*(int*)ScratchpadAnimManager_004494ec.field_0x4c + 4) << 6 |
-			((ulong)(int)((PTR_DAT_0044940c->field_0x6 - 1) * *(int*)ScratchpadAnimManager_004494ec.field_0x40) &
-				0xffffffffU) << 2 | 0x20;
-		pRVar9 = g_VifRefPktCur + 3;
+			(ulong)*(int*)gMipmapK_SPR << 0x20 |
+			(ulong) * (uint*)gMipmapL_SPR << 0x13 |
+			(ulong)(*(int*)gbTrilinear_SPR + 4) << 6 |
+			((ulong)(int)((gCurBitmap->field_0x6 - 1) * *gbDoMipmap_SPR) & 0xffffffffU) << 2 | 0x20;
+		peVar8 = g_VifRefPktCur + 3;
 		g_VifRefPktCur[2].cmdB = 0x14;
-		iVar10 = 1;
-		if ((g_TextureData_LAY_Int_00449404->field_0x4 & 0x80) != 0) {
-			iVar10 = 3;
-			pRVar9->cmdA = 0x50000;
-			pRVar9 = g_VifRefPktCur + 5;
+		iVar9 = 1;
+		if ((gCurLayer->flags & 0x80) != 0) {
+			iVar9 = 3;
+			peVar8->cmdA = 0x50000;
+			peVar8 = g_VifRefPktCur + 5;
 			g_VifRefPktCur[3].cmdB = 0x47;
 			g_VifRefPktCur[4].cmdA = 0x800000002a;
 			g_VifRefPktCur[4].cmdB = 0x42;
 		}
-		if ((long)iVar10 != 0) {
-			puVar3 = &g_VifRefPktCur->cmdA;
-			g_VifRefPktCur = pRVar9;
-			*puVar3 = (ulong)(iVar10 + 2) | 0xe10000000;
-			pRVar5->cmdB = 0;
-			*(undefined4*)&pRVar5->cmdB = 0x40003dc;
-			*(uint*)((ulong)&pRVar5->cmdB + 4) = (iVar10 + 1) * 0x10000 | 0x6c0003dc;
-			pRVar5[1].cmdA = (long)iVar10 | 0x1000000000008000;
-			pRVar5[1].cmdB = 0xe;
+		if ((long)iVar9 != 0) {
+			puVar2 = &g_VifRefPktCur->cmdA;
+			g_VifRefPktCur = peVar8;
+			*puVar2 = (long)(iVar9 + 2) | 0xe10000000;
+			peVar4->cmdB = 0;
+			*(undefined4*)&peVar4->cmdB = 0x40003dc;
+			*(uint*)((ulong)&peVar4->cmdB + 4) = (iVar9 + 1) * 0x10000 | 0x6c0003dc;
+			peVar4[1].cmdA = (long)iVar9 | 0x1000000000008000;
+			peVar4[1].cmdB = 0xe;
 			*(undefined4*)&g_VifRefPktCur->cmdA = 0;
 			*(undefined4*)((ulong)&g_VifRefPktCur->cmdA + 4) = 0x14000000;
 			*(undefined4*)&g_VifRefPktCur->cmdB = 0;
@@ -4413,34 +4168,45 @@ void ed3DFlushMaterial(ed_dma_matrix* pRenderMeshData)
 		g_VifRefPktCur = ed3DFlushMaterialAnimST(g_VifRefPktCur);
 	}
 	ed3DFlushMaterialNode(pRenderMeshData);
-	pRVar5 = g_VifRefPktCur;
-	if (*ScratchpadAnimManager_004494ec.field_0x3c == 0) {
-		g_VifRefPktCur = pRVar4;
-		g_GifRefPktCur = pRVar6;
-		gpPKTDataRefMasPath3 = pRVar7;
-		pRenderMeshData->field_0x2c.numValue = 0xdfdfdfdf;
+	peVar4 = g_VifRefPktCur;
+	if (*gMaterialNbPrimSend == 0) {
+		g_VifRefPktCur = peVar3;
+		g_GifRefPktCur = peVar5;
+		gpPKTDataRefMasPath3 = peVar6;
+		pRenderMeshData->pBitmap = (ed_g2d_bitmap*)0xdfdfdfdf;
 	}
 	else {
 		g_VifRefPktCur->cmdA = 0xe10000001;
-		pRVar5->cmdB = 0;
-		pRVar4 = g_VifRefPktCur;
+		peVar4->cmdB = 0;
+		peVar3 = g_VifRefPktCur;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 		g_VifRefPktCur->cmdA = 0x2000000001000101;
-		pRVar4[1].cmdB = 0xffffff00;
+		peVar3[1].cmdB = 0xffffff00;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 		ed3DFlushMaterialManageGIFPacket(pRenderMeshData);
 	}
 	return;
 }
 
+bool gbFA2AObject = true;
+
 void ed3DFlushList(void)
 {
 	float fVar1;
 	int iVar2;
 	edLIST* unaff_s1_lo;
-	MeshTransformSpecial* pCVar5;
-	edLIST* pCVar3;
-	edLIST* pCVar4;
+	edLIST* pPrevList;
+	edLIST* peVar3;
+	edLIST* pCurrentList;
+	ed_dma_material* pvVar2;
+	ed_dma_material* pvVar1;
+	ed_dma_material* pvVar4;
+	ed_dma_material* pvVar3;
+	ed_dma_material* pvVar6;
+	ed_dma_material* pvVar5;
+	ed_dma_material* pvVar7;
+
+	ED3D_LOG(LogLevel::Verbose, "ed3DFlushList");
 
 	gFlushListFlusaON = 0;
 	gFushListCounter = 0;
@@ -4450,20 +4216,20 @@ void ed3DFlushList(void)
 			return;
 		}
 		/* Get the camera type, and then add the flip index as there is two per type. */
-		pCVar4 = gPrim_List[gFushListCounter] + gCurRenderList;
-		pCVar5 = pCVar4->pLoadedData;
-		if ((edLIST*)pCVar5 != pCVar4) {
+		pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
+		pPrevList = (edLIST*)(pCurrentList)->pPrev;
+		if (pPrevList != pCurrentList) {
 			switch (gFushListCounter) {
 			default:
 				/* 0x7 = Particle
-					0x3 = Some level mesh
-					0x2 = Character */
-				((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount =
-					((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount | 2;
-				while (pCVar3 = (edLIST*)pCVar5, pCVar3 != pCVar4) {
-					ed3DFlushMaterial((ed_dma_matrix*)pCVar3->pCameraPanHeader_0xc);
-					unaff_s1_lo = pCVar3;
-					pCVar5 = (MeshTransformSpecial*)pCVar3->pLoadedData;
+				   0x3 = Some level mesh
+				   0x2 = Character */
+				pvVar4 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar4->flags = pvVar4->flags | 2;
+				while (peVar3 = pPrevList, peVar3 != pCurrentList) {
+					ed3DFlushMaterial((ed_dma_material*)(peVar3)->pData);
+					unaff_s1_lo = peVar3;
+					pPrevList = (edLIST*)(peVar3)->pPrev;
 				}
 				break;
 			case 1:
@@ -4471,57 +4237,53 @@ void ed3DFlushList(void)
 			case 6:
 			case 7:
 			case 9:
-				IMPLEMENTATION_GUARD(if (gbFA2AObject != '\0') {
+				if (gbFA2AObject != false) {
 					g_VifRefPktCur = ed3DFlushFullAlphaInit(g_VifRefPktCur);
 				}
-				((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount =
-					((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount | 2;
-				for (; (edLIST*)pCVar5 != pCVar4; pCVar5 = pCVar5->pNext_0x4) {
-					ed3DFlushMaterial((ed_dma_matrix*)pCVar5->pRenderInput);
-					unaff_s1_lo = (edLIST*)pCVar5;
+				pvVar3 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar3->flags = pvVar3->flags | 2;
+				for (; pPrevList != pCurrentList; pPrevList = (edLIST*)(pPrevList)->pPrev) {
+					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
+					unaff_s1_lo = pPrevList;
 				}
-				if (gbFA2AObject != '\0') {
+				if (gbFA2AObject != false) {
 					g_VifRefPktCur = ed3DFlushFullAlphaTerm(g_VifRefPktCur);
-				})
+				}
 				break;
 			case 10:
-				IMPLEMENTATION_GUARD(((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount =
-					((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount | 2;
-				for (; (edLIST*)pCVar5 != pCVar4;
-					pCVar5 = (MeshTransformSpecial*)((edLIST*)pCVar5)->pLoadedData) {
-					ed3DFlushMaterial((ed_dma_matrix*)((edLIST*)pCVar5)->pCameraPanHeader_0xc);
-					unaff_s1_lo = (edLIST*)pCVar5;
-				})
+				pvVar2 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar2->flags = pvVar2->flags | 2;
+				for (; pPrevList != pCurrentList; pPrevList = (edLIST*)(pPrevList)->pPrev) {
+					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
+					unaff_s1_lo = pPrevList;
+				}
 				g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
 				break;
 			case 0xb:
 				IMPLEMENTATION_GUARD(
 				g_VifRefPktCur = (edpkt_data*)ed3DFlushBackFaceInit((ulong*)g_VifRefPktCur);
 				g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
-				((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount =
-					((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount & 0xfffffffd;
-				for (; (edLIST*)pCVar5 != pCVar4;
-					pCVar5 = (MeshTransformSpecial*)((edLIST*)pCVar5)->pLoadedData) {
-					ed3DFlushMaterial((ed_dma_matrix*)((edLIST*)pCVar5)->pCameraPanHeader_0xc);
-					unaff_s1_lo = (edLIST*)pCVar5;
+				pvVar7 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar7->flags = pvVar7->flags & 0xfffffffd;
+				for (; pPrevList != pCurrentList; pPrevList = (edLIST*)(pPrevList)->pPrev) {
+					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
+					unaff_s1_lo = pPrevList;
 				}
 				g_VifRefPktCur = (edpkt_data*)ed3DFlushBackFaceTerm(g_VifRefPktCur);
 				g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);)
 			case 8:
-				IMPLEMENTATION_GUARD(
-				if (gbFA2AObject != '\0') {
+				if (gbFA2AObject != false) {
 					g_VifRefPktCur = ed3DFlushFullAlphaInit(g_VifRefPktCur);
 				}
-				((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount =
-					((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount | 2;
-				for (; (edLIST*)pCVar5 != pCVar4;
-					pCVar5 = (MeshTransformSpecial*)((edLIST*)pCVar5)->pLoadedData) {
-					ed3DFlushMaterial((ed_dma_matrix*)((edLIST*)pCVar5)->pCameraPanHeader_0xc);
-					unaff_s1_lo = (edLIST*)pCVar5;
+				pvVar1 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar1->flags = pvVar1->flags | 2;
+				for (; pPrevList != pCurrentList; pPrevList = (edLIST*)(pPrevList)->pPrev) {
+					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
+					unaff_s1_lo = pPrevList;
 				}
-				if (gbFA2AObject != '\0') {
+				if (gbFA2AObject != false) {
 					g_VifRefPktCur = ed3DFlushFullAlphaTerm(g_VifRefPktCur);
-				})
+				}
 				break;
 			case 0xd:
 				IMPLEMENTATION_GUARD(
@@ -4529,12 +4291,11 @@ void ed3DFlushList(void)
 				g_VifRefPktCur = (edpkt_data*)FUN_002b4e60((ulong*)g_VifRefPktCur);
 				BYTE_004489e4 = 0;
 				gFushListCounter = 0xe;
-				((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount =
-					((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount | 2;
-				for (; (edLIST*)pCVar5 != pCVar4;
-					pCVar5 = (MeshTransformSpecial*)((edLIST*)pCVar5)->pLoadedData) {
-					ed3DFlushMaterial((ed_dma_matrix*)((edLIST*)pCVar5)->pCameraPanHeader_0xc);
-					unaff_s1_lo = (edLIST*)pCVar5;
+				pvVar5 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar5->flags = pvVar5->flags | 2;
+				for (; pPrevList != pCurrentList; pPrevList = (edLIST*)(pPrevList)->pPrev) {
+					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
+					unaff_s1_lo = pPrevList;
 				}
 				gFushListCounter = 0xd;
 				FLOAT_00448a04 = fVar1;)
@@ -4543,33 +4304,30 @@ void ed3DFlushList(void)
 				IMPLEMENTATION_GUARD(
 				g_VifRefPktCur = (edpkt_data*)FUN_002b4e60((ulong*)g_VifRefPktCur);
 				BYTE_004489e4 = 1;
-				((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount =
-					((edLIST*)pCVar5)->pCameraPanHeader_0xc[2].totalCount | 2;
-				for (; (edLIST*)pCVar5 != pCVar4;
-					pCVar5 = (MeshTransformSpecial*)((edLIST*)pCVar5)->pLoadedData) {
-					ed3DFlushMaterial((ed_dma_matrix*)((edLIST*)pCVar5)->pCameraPanHeader_0xc);
-					unaff_s1_lo = (edLIST*)pCVar5;
+				pvVar6 = (ed_dma_material*)(pPrevList)->pData;
+				pvVar6->flags = pvVar6->flags | 2;
+				for (; pPrevList != pCurrentList; pPrevList = (edLIST*)(pPrevList)->pPrev) {
+					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
+					unaff_s1_lo = pPrevList;
 				}
 				g_VifRefPktCur = (edpkt_data*)FUN_002b4d50();)
 			}
 			iVar2 = gCurRenderList;
-			if ((edLIST*)gPrim_List_FlushTex[gCurRenderList].pLoadedData ==
-				gPrim_List_FlushTex + gCurRenderList) {
-				pCVar4 = gPrim_List[gFushListCounter] + gCurRenderList;
-				gPrim_List_FlushTex[gCurRenderList].pLoadedData = pCVar4->pLoadedData;
-				gPrim_List_FlushTex[iVar2].count_0x14 = pCVar4->count_0x14;
+			if ((edLIST*)gPrim_List_FlushTex[gCurRenderList].pPrev == gPrim_List_FlushTex + gCurRenderList) {
+				pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
+				gPrim_List_FlushTex[gCurRenderList].pPrev = (pCurrentList)->pPrev;
+				gPrim_List_FlushTex[iVar2].nodeCount = pCurrentList->nodeCount;
 			}
 			else {
-				IMPLEMENTATION_GUARD(
-				pCVar4 = gPrim_List[gFushListCounter] + gCurRenderList;
-				gPrim_List_FlushTex[gCurRenderList].count_0x14 =
-					gPrim_List_FlushTex[gCurRenderList].count_0x14 + pCVar4->count_0x14;
-				gPrim_List_FlushTex_Last->pNext_0x4 = pCVar4->pLoadedData;)
+				pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
+				gPrim_List_FlushTex[gCurRenderList].nodeCount =
+					gPrim_List_FlushTex[gCurRenderList].nodeCount + pCurrentList->nodeCount;
+				gPrim_List_FlushTex_Last->pPrev = pCurrentList->pPrev;
 			}
-			pCVar4 = gPrim_List[gFushListCounter] + gCurRenderList;
-			gPrim_List_FlushTex_Last = (MeshTransformSpecial*)unaff_s1_lo;
-			pCVar4->count_0x14 = 0;
-			pCVar4->pLoadedData = (MeshTransformSpecial*)pCVar4;
+			pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
+			gPrim_List_FlushTex_Last = unaff_s1_lo;
+			pCurrentList->nodeCount = 0;
+			(pCurrentList)->pPrev = (edNODE*)pCurrentList;
 		}
 		gFushListCounter = gFushListCounter + 1;
 	} while (true);
@@ -4668,107 +4426,102 @@ edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand)
 
 void ed3DFlushShadowList(void)
 {
-	edNODE_MANAGER* pMVar1;
-	bool bVar2;
-	char** ppcVar3;
-	int iVar4;
-	ed_dma_matrix* pRVar5;
-	edpkt_data* pRVar6;
-	MeshTransformSpecial* pMVar7;
-	char* pcVar8;
-	edLIST* pCVar9;
-	ed_dma_matrix* pRenderFrame;
+	bool bVar1;
+	ed_g2d_material** ppeVar2;
+	int iVar3;
+	ed_dma_material* peVar4;
+	edpkt_data* peVar5;
+	edLIST* peVar6;
+	ed_g2d_material* peVar7;
+	edNODE* peVar8;
+	edNODE_MANAGER* pvVar1;
+	ed_dma_material* pShadowListData;
 
-	bVar2 = false;
+	bVar1 = false;
 	g_VifRefPktCur = ed3DFlushFullAlphaInit(g_VifRefPktCur);
 	gFlushListFlusaON = 0;
 	gShadowFlushMode = 1;
-	pRenderFrame = (ed_dma_matrix*)(gPrim_List_Shadow[gCurRenderList].pLoadedData)->pNext_0x4->pRenderInput;
-
-	// Is the next equal to the render frame.
-	if ((pRenderFrame->internalMeshTransformSpecial).pNext_0x4 != &pRenderFrame->internalMeshTransformSpecial) {
+	pShadowListData = (ed_dma_material*)(gPrim_List_Shadow[gCurRenderList].pPrev)->pPrev->pData;
+	if ((edLIST*)(pShadowListData->list).pPrev != &pShadowListData->list) {
 		IMPLEMENTATION_GUARD(
-			memcpy(ScratchpadAnimManager_004494ec.pScreenSpaceMatrix, &Matrix_0048cbb0, sizeof(edF32MATRIX4));
-		memcpy(ScratchpadAnimManager_004494ec.pTextureSpaceMatrix, &Matrix_0048cbf0, sizeof(edF32MATRIX4));
-		memcpy(ScratchpadAnimManager_004494ec.pWorldSpaceMatrix, &Matrix_0048cc30, sizeof(edF32MATRIX4));
-		memcpy(g_ScratchpadAddr_00448a58, &Matrix_0048ccb0, sizeof(edF32MATRIX4));
-		memcpy(&Vector_0048c2d0, &Vector_0048ccf0, sizeof(Vector));
-		memcpy(&Vector_0048c2e0, &Vector_0048cd00, sizeof(Vector));
-		memcpy(&Vector_0048c2f0, &Vector_0048cd10, sizeof(Vector));
-		memcpy(&Vector_0048c300, &Vector_0048cd20, sizeof(Vector));
-		memcpy(&Vector_0048c310, &Vector_0048cd30, sizeof(Vector));
-		memcpy(&Vector_0048c320, &Vector_0048cd40, sizeof(Vector));
-		pRVar6 = g_VifRefPktCur;
+		memcpy(ScratchpadAnimManager_004494ec.pScreenSpaceMatrix, &gShadow_CameraToScreen_Matrix, 0x40);
+		memcpy(ScratchpadAnimManager_004494ec.pTextureSpaceMatrix, &gShadow_CameraToCulling_Matrix, 0x40);
+		memcpy(ScratchpadAnimManager_004494ec.pWorldSpaceMatrix, &gShadow_CameraToClipping_Matrix, 0x40);
+		memcpy(WorldToCamera_Matrix, &edF32MATRIX4_0048ccb0, 0x40);
+		memcpy(&edF32VECTOR4_0048c2d0, &edF32VECTOR4_0048ccf0, 0x10);
+		memcpy(&edF32VECTOR4_0048c2e0, &edF32VECTOR4_0048cd00, 0x10);
+		memcpy(&edF32VECTOR4_0048c2f0, &edF32VECTOR4_0048cd10, 0x10);
+		memcpy(&edF32VECTOR4_0048c300, &edF32VECTOR4_0048cd20, 0x10);
+		memcpy(&edF32VECTOR4_0048c310, &edF32VECTOR4_0048cd30, 0x10);
+		memcpy(&edF32VECTOR4_0048c320, &edF32VECTOR4_0048cd40, 0x10);
+		peVar5 = g_VifRefPktCur;
 		g_VifRefPktCur->cmdA = 0x30000000;
-		pRVar6->cmdB = 0x1300000000000000;
+		peVar5->cmdB = 0x1300000000000000;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 		g_VifRefPktCur = (edpkt_data*)ed3DJitterShadow((undefined8*)g_VifRefPktCur);
 		g_VifRefPktCur = ed3DDMAGenerateGlobalPacket(g_VifRefPktCur);
-		g_VifRefPktCur = ed3DAddViewportContextPacket((CameraObj_28*)PTR_DAT_0044956c, g_VifRefPktCur);
-		pRVar6 = (edpkt_data*)ed3DShadowFlushResetOffset((undefined8*)g_VifRefPktCur, (short*)&gCurRectViewport);
-		g_VifRefPktCur = pRVar6;
-		pRVar6->cmdA = 0xe10000002;
-		pRVar6->cmdB = 0;
-		*(undefined4*)&pRVar6->cmdB = 0;
+		g_VifRefPktCur = ed3DAddViewportContextPacket(g_Camera_0044956c, g_VifRefPktCur);
+		peVar5 = (edpkt_data*)ed3DShadowFlushResetOffset((undefined8*)g_VifRefPktCur, (short*)&gCurRectViewport);
+		g_VifRefPktCur = peVar5;
+		peVar5->cmdA = 0xe10000002;
+		peVar5->cmdB = 0;
+		*(undefined4*)&peVar5->cmdB = 0;
 		*(undefined4*)((ulong)&g_VifRefPktCur->cmdB + 4) = 0x50000002;
-		pRVar6 = g_VifRefPktCur;
+		peVar5 = g_VifRefPktCur;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 		g_VifRefPktCur->cmdA = 0x1000800000008001;
-		pRVar6[1].cmdB = 0xe;
-		pRVar6 = g_VifRefPktCur;
+		peVar5[1].cmdB = 0xe;
+		peVar5 = g_VifRefPktCur;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
-		g_VifRefPktCur->cmdA =
-			(ulong)gCurScene->pViewport->pZBuffer->frameBasePtr | 0x130000000;
-		pRVar6[1].cmdB = 0x4e;
+		g_VifRefPktCur->cmdA = (ulong)gCurScene->pViewport->pZBuffer->frameBasePtr | 0x130000000;
+		peVar5[1].cmdB = 0x4e;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
-		ed3DFlushMaterialNode(pRenderFrame);
-		pRVar6 = g_VifRefPktCur;
+		ed3DFlushMaterialNode(pShadowListData);
+		peVar5 = g_VifRefPktCur;
 		g_VifRefPktCur->cmdA = 0x30000000;
-		pRVar6->cmdB = 0x1300000000000000;
-		iVar4 = gCurRenderList;
+		peVar5->cmdB = 0x1300000000000000;
+		iVar3 = gCurRenderList;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
-		gPrim_List_FlushTex[gCurRenderList].count_0x14 =
-			gPrim_List_FlushTex[gCurRenderList].count_0x14 + 1;
-		bVar2 = true;
+		gPrim_List_FlushTex[gCurRenderList].nodeCount = gPrim_List_FlushTex[gCurRenderList].nodeCount + 1;
+		bVar1 = true;
 		if (gPrim_List_FlushTex_Last == (MeshTransformSpecial*)0x0) {
-			gPrim_List_FlushTex_Last = (gPrim_List_Shadow[iVar4].pLoadedData)->pNext_0x4;
+			gPrim_List_FlushTex_Last = (MeshTransformSpecial*)(gPrim_List_Shadow[iVar3].node.pNext)->pNext;
 		}
 		else {
-			gPrim_List_FlushTex_Last->pNext_0x4 = (gPrim_List_Shadow[iVar4].pLoadedData)->pNext_0x4;
+			gPrim_List_FlushTex_Last->pNext_0x4 = (MeshTransformSpecial*)(gPrim_List_Shadow[iVar3].node.pNext)->pNext;
 			gPrim_List_FlushTex_Last = gPrim_List_FlushTex_Last->pNext_0x4;
 		}
-		(gPrim_List_Shadow[gCurRenderList].pLoadedData)->pNext_0x4 =
-			(MeshTransformSpecial*)(gPrim_List_Shadow + gCurRenderList);
-		pRVar5 = DmaMaterialBufferCurrent;
-		pMVar7 = &(DmaMaterialBufferCurrent)->internalMeshTransformSpecial;
-		ppcVar3 = &(DmaMaterialBufferCurrent)->pFileData;
+		(gPrim_List_Shadow[gCurRenderList].node.pNext)->pNext = (edNODE*)(gPrim_List_Shadow + gCurRenderList);
+		peVar4 = DmaMaterialBufferCurrent;
+		peVar6 = &DmaMaterialBufferCurrent->list;
+		ppeVar2 = &DmaMaterialBufferCurrent->pMaterial;
 		DmaMaterialBufferCurrent = DmaMaterialBufferCurrent + 1;
-		*ppcVar3 = &DAT_0048c3b0;
-		pRVar5->field_0x4 = (MeshTransformSpecial*)0x0;
-		pRVar5->flags_0x28 = pRVar5->flags_0x28 & 0xfffffffe;
-		(pRVar5->internalMeshTransformSpecial).pPrev_0x8 = pMVar7;
-		(pRVar5->internalMeshTransformSpecial).pNext_0x4 = pMVar7;
-		(pRVar5->internalMeshTransformSpecial).pRenderInput = (DisplayListInternal*)PTR_MeshTransformParentHeader_004494b8;
-		pRVar5->field_0x18 = 0;
-		pRVar5->index_0x1c = 0;
-		*(undefined4*)&pRVar5->internalMeshTransformSpecial = 0;
-		pcVar8 = (char*)ed3DGetG2DBitmap((char**)pRVar5, 0);
-		pRenderFrame->field_0x2c = pcVar8;
-		iVar4 = gCurRenderList;
-		pCVar9 = gPrim_List_Shadow + gCurRenderList;
-		pMVar1 = gPrim_List_Shadow[gCurRenderList].pCameraPanHeader_0xc;
-		pMVar7 = pMVar1->pNextFree + pMVar1->usedCount;
-		pMVar7->pRenderInput = (DisplayListInternal*)pRVar5;
-		pMVar7->specUnion = 1;
-		pMVar1->usedCount = pMVar1->usedCount + 1;
-		gPrim_List_Shadow[iVar4].count_0x14 = gPrim_List_Shadow[iVar4].count_0x14 + 1;
-		pMVar7->pNext_0x4 = (MeshTransformSpecial*)pCVar9;
-		(gPrim_List_Shadow[iVar4].pLoadedData)->pNext_0x4 = pMVar7;)
+		*ppeVar2 = &gMaterial_Render_Zbuffer_Only;
+		peVar4->field_0x4 = 0;
+		peVar4->flags = peVar4->flags & 0xfffffffe;
+		(peVar4->list).node.pNext = (edNODE*)peVar6;
+		(peVar4->list).node.pPrev = (edNODE*)peVar6;
+		(peVar4->list).node.pData = gNodeDmaMatrix;
+		(peVar4->list).field_0x10 = 0;
+		(peVar4->list).nodeCount = 0;
+		(peVar4->list).node.header = 0;
+		peVar7 = (ed_g2d_material*)ed3DGetG2DBitmap(peVar4, 0);
+		pShadowListData->field_0x2c = peVar7;
+		iVar3 = gCurRenderList;
+		peVar6 = gPrim_List_Shadow + gCurRenderList;
+		pvVar1 = (edNODE_MANAGER*)gPrim_List_Shadow[gCurRenderList].node.pData;
+		peVar8 = pvVar1->pNodeHead + pvVar1->linkCount;
+		peVar8->pData = peVar4;
+		peVar8->header.typeField.type = 1;
+		pvVar1->linkCount = pvVar1->linkCount + 1;
+		gPrim_List_Shadow[iVar3].nodeCount = gPrim_List_Shadow[iVar3].nodeCount + 1;
+		peVar8->pPrev = (edNODE*)peVar6;
+		(gPrim_List_Shadow[iVar3].node.pNext)->pNext = peVar8;)
 	}
 	gShadowFlushMode = 0;
-	*ScratchpadAnimManager_004494ec.gShadowRenderMask = 0;
-	if (bVar2) {
-		pprevious_shadow_dma_matrix = 0;
+	*gShadowRenderMask = 0;
+	if (bVar1) {
+		pprevious_shadow_dma_matrix = (ed_dma_matrix*)0x0;
 	}
 	g_VifRefPktCur = ed3DFlushFullAlphaTerm(g_VifRefPktCur);
 	return;
@@ -4785,12 +4538,11 @@ typedef enum EVectorMode_A {
 } EVectorMode_A;
 
 
-ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(char* pMBNK, int index)
+ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index)
 {
 	int* piVar1;
 	int* piVar2;
-
-	piVar1 = (int*)LOAD_SECTION((int)*(int**)(pMBNK + index * 0x10 + 8));
+	piVar1 = (int*)LOAD_SECTION(pMBNK[index].field_0x8);
 	piVar2 = (int*)0x0;
 	if ((piVar1 != (int*)0x0) && (piVar2 = piVar1 + 4, *piVar1 != 0x2e54414d)) {
 		piVar2 = (int*)((char*)LOAD_SECTION(piVar1[2]) + 0x10);
@@ -4799,30 +4551,30 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(char* pMBNK, int index)
 }
 
 
-EVectorMode_A ed3DTestBoundingSphere(Vector* param_1)
+EVectorMode_A ed3DTestBoundingSphere(edF32VECTOR4* pInSphere)
 {
 	EVectorMode_A EVar1;
 	float fVar2;
 	float fVar3;
 	float fVar4;
 
-	fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x50.w;
-	fVar3 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
+	fVar2 = (gRenderSceneConfig_SPR->frustumA).field_0x50.w;
+	fVar3 = gBoundSphereCenter->z;
 	EVar1 = VM_1;
 	if (fVar3 < fVar2) {
-		fVar4 = param_1->w;
+		fVar4 = pInSphere->w;
 		if (fVar4 <= fVar2 - fVar3) {
 			return VM_4;
 		}
 		EVar1 = VM_2;
 	}
 	else {
-		fVar4 = param_1->w;
+		fVar4 = pInSphere->w;
 		if (fVar3 - fVar2 < fVar4) {
 			EVar1 = VM_2;
 		}
 	}
-	fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x40.w;
+	fVar2 = (gRenderSceneConfig_SPR->frustumA).field_0x40.w;
 	if (fVar3 < fVar2) {
 		if (fVar2 - fVar3 < fVar4) {
 			EVar1 = VM_2;
@@ -4834,10 +4586,10 @@ EVectorMode_A ed3DTestBoundingSphere(Vector* param_1)
 		}
 		EVar1 = VM_2;
 	}
-	fVar2 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
+	fVar2 = gBoundSphereCenter->x;
 	if (fVar2 <= 0.0f) {
-		fVar2 = -((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.bc * fVar3 -
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.ba * fVar2;
+		fVar2 = -(gRenderSceneConfig_SPR->frustumA).frustumMatrix.bc * fVar3 -
+			(gRenderSceneConfig_SPR->frustumA).frustumMatrix.ba * fVar2;
 		if (0.0f < fVar2) {
 			if (fVar2 <= fVar4) {
 				EVar1 = VM_2;
@@ -4851,8 +4603,8 @@ EVectorMode_A ed3DTestBoundingSphere(Vector* param_1)
 		}
 	}
 	else {
-		fVar2 = -((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.ac * fVar3 -
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.aa * fVar2;
+		fVar2 = -(gRenderSceneConfig_SPR->frustumA).frustumMatrix.ac * fVar3 -
+			(gRenderSceneConfig_SPR->frustumA).frustumMatrix.aa * fVar2;
 		if (0.0f < fVar2) {
 			if (fVar2 <= fVar4) {
 				EVar1 = VM_2;
@@ -4865,10 +4617,10 @@ EVectorMode_A ed3DTestBoundingSphere(Vector* param_1)
 			EVar1 = VM_2;
 		}
 	}
-	fVar2 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
+	fVar2 = gBoundSphereCenter->y;
 	if (fVar2 <= 0.0) {
-		fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.cb * fVar2 +
-			-((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.cc * fVar3;
+		fVar2 = (gRenderSceneConfig_SPR->frustumA).frustumMatrix.cb * fVar2 +
+			-(gRenderSceneConfig_SPR->frustumA).frustumMatrix.cc * fVar3;
 		if (0.0 < fVar2) {
 			if (fVar2 <= fVar4) {
 				EVar1 = VM_2;
@@ -4882,8 +4634,8 @@ EVectorMode_A ed3DTestBoundingSphere(Vector* param_1)
 		}
 	}
 	else {
-		fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.db * fVar2 +
-			-((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.dc * fVar3;
+		fVar2 = (gRenderSceneConfig_SPR->frustumA).frustumMatrix.db * fVar2 +
+			-(gRenderSceneConfig_SPR->frustumA).frustumMatrix.dc * fVar3;
 		if (0.0f < fVar2) {
 			if (fVar2 <= fVar4) {
 				EVar1 = VM_2;
@@ -4899,14 +4651,14 @@ EVectorMode_A ed3DTestBoundingSphere(Vector* param_1)
 	return EVar1;
 }
 
-EVectorMode_A FUN_0029a6c0(Vector* param_1)
+EVectorMode_A ed3DTestBoundingSphereZNearOnly(edF32VECTOR4* param_1)
 {
 	EVectorMode_A EVar1;
 	float fVar2;
 	float fVar3;
 
-	fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x40.w;
-	fVar3 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
+	fVar2 = (gRenderSceneConfig_SPR->frustumB).field_0x40.w;
+	fVar3 = gBoundSphereCenter->z;
 	EVar1 = VM_1;
 	if (fVar3 < fVar2) {
 		if (-(fVar3 - fVar2) < param_1->w) {
@@ -4923,19 +4675,19 @@ EVectorMode_A FUN_0029a6c0(Vector* param_1)
 }
 
 
-EVectorMode_A FUN_00299fa0(Vector* param_1)
+EVectorMode_A ed3DTestBoundingSphereSide(edF32VECTOR4* param_1)
 {
 	EVectorMode_A EVar1;
 	float fVar2;
 	float fVar3;
 	float fVar4;
 
-	fVar2 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
+	fVar2 = gBoundSphereCenter->x;
 	EVar1 = VM_1;
 	if (fVar2 <= 0.0f) {
-		fVar4 = -(ScratchpadAnimManager_004494ec.vector_0x64)->z;
-		fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.ba * -fVar2 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.bc * fVar4;
+		fVar4 = -gBoundSphereCenter->z;
+		fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.ba * -fVar2 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.bc * fVar4;
 		if (0.0f < fVar2) {
 			fVar3 = param_1->w;
 			if (fVar2 <= fVar3) {
@@ -4951,9 +4703,9 @@ EVectorMode_A FUN_00299fa0(Vector* param_1)
 		}
 	}
 	else {
-		fVar4 = -(ScratchpadAnimManager_004494ec.vector_0x64)->z;
-		fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.aa * -fVar2 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.ac * fVar4;
+		fVar4 = -gBoundSphereCenter->z;
+		fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.aa * -fVar2 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.ac * fVar4;
 		if (0.0f < fVar2) {
 			fVar3 = param_1->w;
 			if (fVar2 <= fVar3) {
@@ -4968,10 +4720,10 @@ EVectorMode_A FUN_00299fa0(Vector* param_1)
 			EVar1 = VM_2;
 		}
 	}
-	fVar2 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
+	fVar2 = gBoundSphereCenter->y;
 	if (fVar2 <= 0.0f) {
-		fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.cb * fVar2 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.cc * fVar4;
+		fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.cb * fVar2 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.cc * fVar4;
 		if (0.0f < fVar2) {
 			if (fVar2 <= fVar3) {
 				EVar1 = VM_2;
@@ -4985,8 +4737,8 @@ EVectorMode_A FUN_00299fa0(Vector* param_1)
 		}
 	}
 	else {
-		fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.db * fVar2 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.dc * fVar4;
+		fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.db * fVar2 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.dc * fVar4;
 		if (0.0f < fVar2) {
 			if (fVar2 <= fVar3) {
 				EVar1 = VM_2;
@@ -5004,47 +4756,47 @@ EVectorMode_A FUN_00299fa0(Vector* param_1)
 
 float FLOAT_00448514 = 0.1f;
 
-EVectorMode_A FUN_0029a350(TextureData_MYSTERY* param_1)
+EVectorMode_A ed3DTestBoundingSpherePacketZNearOnly(ed_Bound_Sphere_packet* param_1)
 {
 	EVectorMode_A EVar1;
 	float fVar2;
 	float fVar3;
 
-	fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x50.w;
-	fVar3 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
+	fVar2 = (gRenderSceneConfig_SPR->frustumB).field_0x50.w;
+	fVar3 = gBoundSphereCenter->z;
 	EVar1 = VM_1;
 	if ((fVar2 <= fVar3) || (-(fVar3 - fVar2) < (float)(uint)param_1->field_0xc)) {
-		fVar2 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
+		fVar2 = gBoundSphereCenter->x;
 		if (fVar2 <= 0.0f) {
-			fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.ba * -fVar2 +
-				((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.bc * -fVar3;
+			fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.ba * -fVar2 +
+				(gRenderSceneConfig_SPR->frustumB).frustumMatrix.bc * -fVar3;
 			if ((fVar2 <= 0.0f) && ((float)(uint)param_1->field_0xc < -fVar2)) {
 				return VM_4;
 			}
 		}
 		else {
-			fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.aa * -fVar2 +
-				((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.ac * -fVar3;
+			fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.aa * -fVar2 +
+				(gRenderSceneConfig_SPR->frustumB).frustumMatrix.ac * -fVar3;
 			if ((fVar2 <= 0.0f) && ((float)(uint)param_1->field_0xc < -fVar2)) {
 				return VM_4;
 			}
 		}
-		fVar2 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
+		fVar2 = gBoundSphereCenter->y;
 		if (fVar2 <= 0.0f) {
-			fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.cb * fVar2 +
-				((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.cc * -fVar3;
+			fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.cb * fVar2 +
+				(gRenderSceneConfig_SPR->frustumB).frustumMatrix.cc * -fVar3;
 			if ((fVar2 <= 0.0f) && ((float)(uint)param_1->field_0xc < -fVar2)) {
 				return VM_4;
 			}
 		}
 		else {
-			fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.db * fVar2 +
-				((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.dc * -fVar3;
+			fVar2 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.db * fVar2 +
+				(gRenderSceneConfig_SPR->frustumB).frustumMatrix.dc * -fVar3;
 			if ((fVar2 <= 0.0f) && ((float)(uint)param_1->field_0xc < -fVar2)) {
 				return VM_4;
 			}
 		}
-		fVar2 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x40.w;
+		fVar2 = (gRenderSceneConfig_SPR->frustumB).field_0x40.w;
 		if (fVar3 < fVar2) {
 			if (-(fVar3 - fVar2) < (float)(uint)param_1->field_0xc + FLOAT_00448514 * (float)(uint)param_1->field_0xc) {
 				EVar1 = VM_2;
@@ -5063,19 +4815,19 @@ EVectorMode_A FUN_0029a350(TextureData_MYSTERY* param_1)
 	return EVar1;
 }
 
-EVectorMode_A FUN_00299c90(TextureData_MYSTERY* param_1)
+EVectorMode_A ed3DTestBoundingSpherePacketSide(ed_Bound_Sphere_packet* param_1)
 {
 	EVectorMode_A EVar1;
 	uint uVar2;
 	float fVar3;
 	float fVar4;
 
-	fVar3 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
+	fVar3 = gBoundSphereCenter->x;
 	EVar1 = VM_1;
 	if (fVar3 <= 0.0f) {
-		fVar4 = -(ScratchpadAnimManager_004494ec.vector_0x64)->z;
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.ba * -fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.bc * fVar4;
+		fVar4 = -gBoundSphereCenter->z;
+		fVar3 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.ba * -fVar3 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.bc * fVar4;
 		if (0.0f < fVar3) {
 			uVar2 = (uint)param_1->field_0xc;
 			if (fVar3 <= (float)uVar2) {
@@ -5091,9 +4843,9 @@ EVectorMode_A FUN_00299c90(TextureData_MYSTERY* param_1)
 		}
 	}
 	else {
-		fVar4 = -(ScratchpadAnimManager_004494ec.vector_0x64)->z;
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.aa * -fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.ac * fVar4;
+		fVar4 = -gBoundSphereCenter->z;
+		fVar3 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.aa * -fVar3 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.ac * fVar4;
 		if (0.0f < fVar3) {
 			uVar2 = (uint)param_1->field_0xc;
 			if (fVar3 <= (float)uVar2) {
@@ -5108,10 +4860,10 @@ EVectorMode_A FUN_00299c90(TextureData_MYSTERY* param_1)
 			EVar1 = VM_2;
 		}
 	}
-	fVar3 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
+	fVar3 = gBoundSphereCenter->y;
 	if (fVar3 <= 0.0f) {
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.cb * fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.cc * fVar4;
+		fVar3 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.cb * fVar3 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.cc * fVar4;
 		if (0.0f < fVar3) {
 			if (fVar3 <= (float)uVar2) {
 				EVar1 = VM_2;
@@ -5125,8 +4877,8 @@ EVectorMode_A FUN_00299c90(TextureData_MYSTERY* param_1)
 		}
 	}
 	else {
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.db * fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x80).field_0x0.dc * fVar4;
+		fVar3 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.db * fVar3 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.dc * fVar4;
 		if (0.0f < fVar3) {
 			if (fVar3 <= (float)uVar2) {
 				EVar1 = VM_2;
@@ -5144,17 +4896,17 @@ EVectorMode_A FUN_00299c90(TextureData_MYSTERY* param_1)
 
 uint UINT_00448978 = 0x14;
 
-bool AllocateRenderData_30_00299650(ed_3d_strip* param_1)
+bool ed3DCheckSpherePacket(ed_3d_strip* param_1)
 {
 	byte bVar1;
 	edF32MATRIX4* pMVar2;
 	uint uVar3;
-	Vector* pVVar4;
+	edF32VECTOR4* pVVar4;
 	int iVar5;
 	EVectorMode_A EVar6;
 	bool bVar7;
 	int iVar8;
-	TextureData_MYSTERY* pfVar8;
+	ed_Bound_Sphere_packet* pfVar8;
 	uint uVar9;
 	ulong uVar10;
 	ed_dma_matrix* pRVar11;
@@ -5175,30 +4927,30 @@ bool AllocateRenderData_30_00299650(ed_3d_strip* param_1)
 	float extraout_vf9w;
 	float extraout_vf9w_00;
 
-	pfVar8 = (TextureData_MYSTERY*)LOAD_SECTION(param_1->pTextureDataMystery);
-	if (pfVar8 == (TextureData_MYSTERY*)0x0) {
+	pfVar8 = (ed_Bound_Sphere_packet*)LOAD_SECTION(param_1->pTextureDataMystery);
+	if (pfVar8 == (ed_Bound_Sphere_packet*)0x0) {
 		bVar7 = true;
 		param_1->flags_0x0 = param_1->flags_0x0 | 3;
 	}
 	else {
 		uVar12 = (uint)(ushort)param_1->meshSectionCount_0x3a;
 		uVar10 = 0;
-		param_1->pRenderFrame30 = (int)STORE_SECTION(ed3D_SubAllocator_004491b8.current);
-		pRVar11 = (ed_dma_matrix*)LOAD_SECTION(param_1->pRenderFrame30);
+		param_1->pDMA_Matrix = (int)STORE_SECTION(ed3D_SubAllocator_004491b8.current);
+		pRVar11 = (ed_dma_matrix*)LOAD_SECTION(param_1->pDMA_Matrix);
 		uVar9 = 0;
-		while (pVVar4 = ScratchpadAnimManager_004494ec.vector_0x64, bVar7 = uVar12 != 0, uVar12 = uVar12 - 1, bVar7) {
+		while (pVVar4 = gBoundSphereCenter, bVar7 = uVar12 != 0, uVar12 = uVar12 - 1, bVar7) {
 			fVar13 = (pfVar8->field_0x0).y;
 			fVar14 = (pfVar8->field_0x0).z;
-			(ScratchpadAnimManager_004494ec.vector_0x64)->x = (pfVar8->field_0x0).x;
+			gBoundSphereCenter->x = (pfVar8->field_0x0).x;
 			pVVar4->y = fVar13;
 			pVVar4->z = fVar14;
-			(ScratchpadAnimManager_004494ec.vector_0x64)->w = 1.0;
-			pVVar4 = ScratchpadAnimManager_004494ec.vector_0x64;
-			pMVar2 = (ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix;
-			fVar21 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
-			fVar22 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
-			fVar23 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
-			fVar24 = (ScratchpadAnimManager_004494ec.vector_0x64)->w;
+			gBoundSphereCenter->w = 1.0;
+			pVVar4 = gBoundSphereCenter;
+			pMVar2 = gRender_info_SPR->pMeshTransformMatrix;
+			fVar21 = gBoundSphereCenter->x;
+			fVar22 = gBoundSphereCenter->y;
+			fVar23 = gBoundSphereCenter->z;
+			fVar24 = gBoundSphereCenter->w;
 			fVar13 = pMVar2->ab;
 			fVar14 = pMVar2->ac;
 			fVar15 = pMVar2->bb;
@@ -5207,14 +4959,14 @@ bool AllocateRenderData_30_00299650(ed_3d_strip* param_1)
 			fVar18 = pMVar2->cc;
 			fVar19 = pMVar2->db;
 			fVar20 = pMVar2->dc;
-			(ScratchpadAnimManager_004494ec.vector_0x64)->x =
+			gBoundSphereCenter->x =
 				pMVar2->aa * fVar21 + pMVar2->ba * fVar22 + pMVar2->ca * fVar23 + pMVar2->da * fVar24;
 			pVVar4->y = fVar13 * fVar21 + fVar15 * fVar22 + fVar17 * fVar23 + fVar19 * fVar24;
 			pVVar4->z = fVar14 * fVar21 + fVar16 * fVar22 + fVar18 * fVar23 + fVar20 * fVar24;
 			pVVar4->w = in_vf9w;
-			EVar6 = FUN_0029a350(pfVar8);
+			EVar6 = ed3DTestBoundingSpherePacketZNearOnly(pfVar8);
 			if (EVar6 == VM_1) {
-				EVar6 = FUN_00299c90(pfVar8);
+				EVar6 = ed3DTestBoundingSpherePacketSide(pfVar8);
 				in_vf9w = extraout_vf9w_00;
 				if (EVar6 != VM_2) {
 					iVar5 = 3;
@@ -5227,7 +4979,7 @@ bool AllocateRenderData_30_00299650(ed_3d_strip* param_1)
 				iVar8 = 1;
 				iVar5 = 2;
 				if ((int)UINT_00448978 < (int)(uint)pfVar8->field_0xc) goto LAB_0029976c;
-				bVar1 = *(byte*)&pRVar11->pFileData;
+				bVar1 = pRVar11->header.byteFlags[0];
 			}
 			else {
 				in_vf9w = extraout_vf9w;
@@ -5238,43 +4990,44 @@ bool AllocateRenderData_30_00299650(ed_3d_strip* param_1)
 				}
 			LAB_0029976c:
 				iVar8 = iVar5;
-				bVar1 = *(byte*)&pRVar11->pFileData;
+				bVar1 = pRVar11->header.byteFlags[0];
 			}
 			uVar3 = uVar10 & 0x1f;
 			uVar10 = uVar10 + 2;
-			*(byte*)&pRVar11->pFileData = bVar1 | (byte)(iVar8 << uVar3);
+			pRVar11->header.byteFlags[0] = bVar1 | (byte)(iVar8 << uVar3);
 			if (7 < (int)uVar10) {
-				pRVar11 = (ed_dma_matrix*)((ulong)&pRVar11->pFileData + 1);
+				pRVar11 = (ed_dma_matrix*)((ulong)&pRVar11->header + 1);
 				uVar10 = 0;
-				*(undefined*)&pRVar11->pFileData = 0;
+				pRVar11->header.byteFlags[0] = 0;
 			}
 			pfVar8 = pfVar8 + 1;
 		}
-		uVar10 = (ulong)&pRVar11->pFileData + 1;
+		uVar10 = (ulong)(&pRVar11->header.mode) + 1;
 		ed3D_SubAllocator_004491b8.current = (char*)(uVar10 + (8 - (uVar10 & 7)));
 		bVar7 = uVar9 != (ushort)param_1->meshSectionCount_0x3a;
 	}
 	return bVar7;
 }
 
-void ed3DLinkClusterStripToViewport(ed_3d_strip* param_1, char* pMBNK)
+void ed3DLinkClusterStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 {
-	edF32MATRIX4* pMVar1;
-	int iVar3;
-	bool bVar4;
-	ed_g2d_material** ppTVar5;
-	ed_dma_matrix* pRVar6;
-	Vector* pVVar7;
-	EVectorMode_A EVar8;
+	edF32MATRIX4* peVar1;
+	int iVar4;
+	TextureData_HASH_Internal_PA32* pTVar5;
+	bool bVar6;
+	ed_g2d_material** ppeVar7;
+	ed_dma_material* peVar8;
+	edF32VECTOR4* peVar9;
+	EVectorMode_A EVar10;
 	ed_g2d_material* piVar7;
-	uint* puVar9;
-	long lVar10;
-	undefined2* puVar11;
-	MeshTransformSpecial* pMVar12;
-	int* piVar13;
+	//ed_g3d_Anim_def* peVar11;
+	long lVar12;
+	edLIST* peVar13;
+	edNODE* peVar14;
+	int* piVar15;
 	edNODE_MANAGER* pDVar14;
-	ed_dma_matrix* pRVar15;
-	char* pcVar16;
+	ed_dma_material* peVar17;
+	ed_g2d_bitmap* peVar16;
 	uint uVar17;
 	uint uVar18;
 	float fVar19;
@@ -5289,221 +5042,220 @@ void ed3DLinkClusterStripToViewport(ed_3d_strip* param_1, char* pMBNK)
 	float fVar28;
 	float fVar29;
 	float fVar30;
-	float in_vf9w;
-	float extraout_vf9w;
+	float in_vf9w = 1.0f;
+	float extraout_vf9w = 1.0f;
 	float extraout_vf9w_00;
 	float extraout_vf9w_01;
 	float extraout_vf9w_02;
 	float extraout_vf9w_03;
-	ed_g2d_layer* iVar1;
+	ed_g2d_layer_header* iVar1;
+	edNODE_MANAGER* iVar3;
 	TextureData_TEX* iVar2;
 
-	if (param_1->field_0x4 == -1) {
+	if (pStrip->field_0x4 == -1) {
 		piVar7 = (ed_g2d_material*)0x0;
 	}
 	else {
-		piVar7 = ed3DG2DGetG2DMaterialFromIndex(pMBNK, (int)param_1->field_0x4);
+		piVar7 = ed3DG2DGetG2DMaterialFromIndex(pMBNK, (int)pStrip->field_0x4);
 		in_vf9w = extraout_vf9w;
 		if ((piVar7 != (ed_g2d_material*)0x0) && ((piVar7->field_0x2 & 1) != 0)) {
 			return;
 		}
 	}
-	param_1->pRenderFrame30 = 0x0;
-	pVVar7 = ScratchpadAnimManager_004494ec.vector_0x64;
-	if ((ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x8 == 1) {
-		param_1->flags_0x0 = param_1->flags_0x0 & 0xfffffffc;
+	pStrip->pDMA_Matrix = 0x0;
+	peVar9 = gBoundSphereCenter;
+	if (gRender_info_SPR->field_0x8 == 1) {
+		pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffc;
 	}
 	else {
-		fVar19 = (param_1->vector_0x10).y;
-		fVar20 = (param_1->vector_0x10).z;
-		(ScratchpadAnimManager_004494ec.vector_0x64)->x = (param_1->vector_0x10).x;
-		pVVar7->y = fVar19;
-		pVVar7->z = fVar20;
-		(ScratchpadAnimManager_004494ec.vector_0x64)->w = 1.0;
-		pVVar7 = ScratchpadAnimManager_004494ec.vector_0x64;
-		pMVar1 = (ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix;
-		fVar27 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
-		fVar28 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
-		fVar29 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
-		fVar30 = (ScratchpadAnimManager_004494ec.vector_0x64)->w;
-		fVar19 = pMVar1->ab;
-		fVar20 = pMVar1->ac;
-		fVar21 = pMVar1->bb;
-		fVar22 = pMVar1->bc;
-		fVar23 = pMVar1->cb;
-		fVar24 = pMVar1->cc;
-		fVar25 = pMVar1->db;
-		fVar26 = pMVar1->dc;
-		(ScratchpadAnimManager_004494ec.vector_0x64)->x =
-			pMVar1->aa * fVar27 + pMVar1->ba * fVar28 + pMVar1->ca * fVar29 + pMVar1->da * fVar30;
-		pVVar7->y = fVar19 * fVar27 + fVar21 * fVar28 + fVar23 * fVar29 + fVar25 * fVar30;
-		pVVar7->z = fVar20 * fVar27 + fVar22 * fVar28 + fVar24 * fVar29 + fVar26 * fVar30;
-		pVVar7->w = in_vf9w;
-		EVar8 = ed3DTestBoundingSphere(&param_1->vector_0x10);
-		if (EVar8 == VM_4) {
+		fVar19 = (pStrip->boundingSphere).y;
+		fVar20 = (pStrip->boundingSphere).z;
+		gBoundSphereCenter->x = (pStrip->boundingSphere).x;
+		peVar9->y = fVar19;
+		peVar9->z = fVar20;
+		gBoundSphereCenter->w = 1.0f;
+		peVar9 = gBoundSphereCenter;
+		peVar1 = gRender_info_SPR->pMeshTransformMatrix;
+		fVar27 = gBoundSphereCenter->x;
+		fVar28 = gBoundSphereCenter->y;
+		fVar29 = gBoundSphereCenter->z;
+		fVar30 = gBoundSphereCenter->w;
+		fVar19 = peVar1->ab;
+		fVar20 = peVar1->ac;
+		fVar21 = peVar1->bb;
+		fVar22 = peVar1->bc;
+		fVar23 = peVar1->cb;
+		fVar24 = peVar1->cc;
+		fVar25 = peVar1->db;
+		fVar26 = peVar1->dc;
+		gBoundSphereCenter->x = peVar1->aa * fVar27 + peVar1->ba * fVar28 + peVar1->ca * fVar29 + peVar1->da * fVar30;
+		peVar9->y = fVar19 * fVar27 + fVar21 * fVar28 + fVar23 * fVar29 + fVar25 * fVar30;
+		peVar9->z = fVar20 * fVar27 + fVar22 * fVar28 + fVar24 * fVar29 + fVar26 * fVar30;
+		peVar9->w = in_vf9w;
+		EVar10 = ed3DTestBoundingSphere(&pStrip->boundingSphere);
+		if (EVar10 == VM_4) {
 			return;
 		}
 		in_vf9w = extraout_vf9w_00;
-		if (EVar8 != VM_1) {
-			param_1->flags_0x0 = param_1->flags_0x0 | 3;
-			if ((param_1->flags_0x0 & 0x1000) == 0) {
-				EVar8 = FUN_0029a6c0(&param_1->vector_0x10);
-				if (EVar8 == VM_1) {
-					param_1->flags_0x0 = param_1->flags_0x0 & 0xfffffffc;
-					EVar8 = FUN_00299fa0(&param_1->vector_0x10);
+		if (EVar10 != VM_1) {
+			pStrip->flags_0x0 = pStrip->flags_0x0 | 3;
+			if ((pStrip->flags_0x0 & 0x1000) == 0) {
+				EVar10 = ed3DTestBoundingSphereZNearOnly(&pStrip->boundingSphere);
+				if (EVar10 == VM_1) {
+					pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffc;
+					EVar10 = ed3DTestBoundingSphereSide(&pStrip->boundingSphere);
 					in_vf9w = extraout_vf9w_01;
-					if (EVar8 == VM_1) goto LAB_00297680;
-					param_1->flags_0x0 = param_1->flags_0x0 | 1;
-					lVar10 = AllocateRenderData_30_00299650(param_1);
+					if (EVar10 == VM_1) goto LAB_00297680;
+					pStrip->flags_0x0 = pStrip->flags_0x0 | 1;
+					lVar12 = ed3DCheckSpherePacket(pStrip);
 					in_vf9w = extraout_vf9w_02;
 				}
 				else {
-					lVar10 = AllocateRenderData_30_00299650(param_1);
+					lVar12 = ed3DCheckSpherePacket(pStrip);
 					in_vf9w = extraout_vf9w_03;
 				}
-				if (lVar10 == 0) {
+				if (lVar12 == 0) {
 					return;
 				}
 			}
 			else {
-				param_1->flags_0x0 = param_1->flags_0x0 & 0xfffffffd;
+				pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffd;
 			}
 		}
 	}
 LAB_00297680:
 	if ((piVar7 != (ed_g2d_material*)0x0) && (piVar7->count_0x0 != 0)) {
-		iVar1 = (ed_g2d_layer*)LOAD_SECTION(*(int*)(piVar7 + 1));
-		uVar18 = iVar1->body.flags_0x0;
-		uVar17 = iVar1->body.field_0x4;
-		pcVar16 = (char*)0x0;
-		if (iVar1->body.field_0x1c != 0) {
-			iVar2 = (TextureData_TEX*)LOAD_SECTION(iVar1->body.pTex);
-			iVar1->body.field_0x4 = uVar17 & 0xfffffbff;
-			pVVar7 = ScratchpadAnimManager_004494ec.vector_0x64;
+		iVar1 = (ed_g2d_layer_header*)LOAD_SECTION(*(int*)(piVar7 + 1));
+		uVar18 = (iVar1->body).flags_0x0;
+		uVar17 = (iVar1->body).flags;
+		peVar16 = (ed_g2d_bitmap*)0x0;
+		if ((iVar1->body).field_0x1c != 0) {
+			iVar2 = (TextureData_TEX*)LOAD_SECTION((iVar1->body).pTex);
+			(iVar1->body).flags = uVar17 & 0xfffffbff;
+			peVar9 = gBoundSphereCenter;
 			if ((uVar17 & 0x10) == 0) {
 			LAB_00297798:
 				if ((uVar17 & 2) == 0) {
-					param_1->flags_0x0 = param_1->flags_0x0 & 0xfffffdff;
+					pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffdff;
 				}
 				else {
 					IMPLEMENTATION_GUARD(
-					puVar9 = (uint*)ed3DG2DAnimTexGet(&iVar2->body);
-					FUN_0029eca0(puVar9);
-					param_1->flags_0x0 = param_1->flags_0x0 | 0x200;)
+					peVar11 = (ed_g3d_Anim_def*)ed3DG2DAnimTexGet(&iVar2->body);
+					ed3DManageAnim(peVar11);
+					pStrip->flags_0x0 = pStrip->flags_0x0 | 0x200;)
 				}
 			}
 			else {
-				fVar20 = (param_1->vector_0x10).y;
-				fVar19 = (param_1->vector_0x10).z;
-				(ScratchpadAnimManager_004494ec.vector_0x64)->x = (param_1->vector_0x10).x;
-				pVVar7->y = fVar20;
-				pVVar7->z = fVar19;
-				(ScratchpadAnimManager_004494ec.vector_0x64)->w = 1.0;
-				pVVar7 = ScratchpadAnimManager_004494ec.vector_0x64;
-				pMVar1 = (ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix;
-				fVar27 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
-				fVar28 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
-				fVar29 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
-				fVar30 = (ScratchpadAnimManager_004494ec.vector_0x64)->w;
-				fVar19 = pMVar1->ab;
-				fVar20 = pMVar1->ac;
-				fVar21 = pMVar1->bb;
-				fVar22 = pMVar1->bc;
-				fVar23 = pMVar1->cb;
-				fVar24 = pMVar1->cc;
-				fVar25 = pMVar1->db;
-				fVar26 = pMVar1->dc;
-				(ScratchpadAnimManager_004494ec.vector_0x64)->x =
-					pMVar1->aa * fVar27 + pMVar1->ba * fVar28 + pMVar1->ca * fVar29 + pMVar1->da * fVar30;
-				pVVar7->y = fVar19 * fVar27 + fVar21 * fVar28 + fVar23 * fVar29 + fVar25 * fVar30;
-				pVVar7->z = fVar20 * fVar27 + fVar22 * fVar28 + fVar24 * fVar29 + fVar26 * fVar30;
-				pVVar7->w = in_vf9w;
+				fVar20 = (pStrip->boundingSphere).y;
+				fVar19 = (pStrip->boundingSphere).z;
+				gBoundSphereCenter->x = (pStrip->boundingSphere).x;
+				peVar9->y = fVar20;
+				peVar9->z = fVar19;
+				gBoundSphereCenter->w = 1.0;
+				peVar9 = gBoundSphereCenter;
+				peVar1 = gRender_info_SPR->pMeshTransformMatrix;
+				fVar27 = gBoundSphereCenter->x;
+				fVar28 = gBoundSphereCenter->y;
+				fVar29 = gBoundSphereCenter->z;
+				fVar30 = gBoundSphereCenter->w;
+				fVar19 = peVar1->ab;
+				fVar20 = peVar1->ac;
+				fVar21 = peVar1->bb;
+				fVar22 = peVar1->bc;
+				fVar23 = peVar1->cb;
+				fVar24 = peVar1->cc;
+				fVar25 = peVar1->db;
+				fVar26 = peVar1->dc;
+				gBoundSphereCenter->x =
+					peVar1->aa * fVar27 + peVar1->ba * fVar28 + peVar1->ca * fVar29 + peVar1->da * fVar30;
+				peVar9->y = fVar19 * fVar27 + fVar21 * fVar28 + fVar23 * fVar29 + fVar25 * fVar30;
+				peVar9->z = fVar20 * fVar27 + fVar22 * fVar28 + fVar24 * fVar29 + fVar26 * fVar30;
+				peVar9->w = in_vf9w;
 				fVar19 = (iVar2->body).field_0x18;
 				if (fVar19 <= 0.0) {
 					fVar19 = gAnimSTMaxDist;
 				}
-				if (-(ScratchpadAnimManager_004494ec.vector_0x64)->z < fVar19) {
-					bVar4 = true;
+				if (-gBoundSphereCenter->z < fVar19) {
+					bVar6 = true;
 				}
 				else {
-					bVar4 = false;
-					if (-(ScratchpadAnimManager_004494ec.vector_0x64)->z - fVar19 < (param_1->vector_0x10).w) {
-						bVar4 = true;
+					bVar6 = false;
+					if (-gBoundSphereCenter->z - fVar19 < (pStrip->boundingSphere).w) {
+						bVar6 = true;
 					}
 				}
-				if (!bVar4) goto LAB_00297798;
-				param_1->flags_0x0 = param_1->flags_0x0 | 0x200;
+				if (!bVar6) goto LAB_00297798;
+				pStrip->flags_0x0 = pStrip->flags_0x0 | 0x200;
 			}
 			if ((iVar2->body).palette == 0) {
-				IMPLEMENTATION_GUARD(
-				iVar3 = (iVar2->body).field_0x8;
-				if (iVar3 != 0) {
-					pcVar16 = (char*)(*(int*)(iVar3 + 8) + 0x10);
-				})
-			}
-			else {
-				iVar3 = *(int*)(&iVar2[1].field_0x8 + (uint)iVar1->body.field_0x1e * 0x10);
-				if (iVar3 != 0) {
-					char* bb = (char*)LOAD_SECTION(iVar3);
-					char* aa = (char*)LOAD_SECTION(*(int*)(bb + 8));
-					pcVar16 = (char*)(aa + 0x10);
+				pTVar5 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).after.pHASH_Internal);
+				if (pTVar5 != (TextureData_HASH_Internal_PA32*)0x0) {
+					TextureData_PA32* pPA = (TextureData_PA32*)LOAD_SECTION(pTVar5->pPA32);
+					peVar16 = (ed_g2d_bitmap*)&pPA->body;
 				}
 			}
-			if ((param_1->flags_0x0 & 4) != 0) {
-				IMPLEMENTATION_GUARD(puVar9 = (uint*)FUN_002b4d40(param_1);
-				FUN_0029eca0(puVar9);)
+			else {
+				iVar4 = *(int*)(&iVar2[1].field_0x8 + (uint)(iVar1->body).field_0x1e * 0x10);
+				if (iVar4 != 0) {
+					ed_hash_code* pHash = (ed_hash_code*)LOAD_SECTION(iVar4);
+					peVar16 = (ed_g2d_bitmap*)(((char*)LOAD_SECTION(pHash->field_0x8)) + 0x10);
+				}
+			}
+			if ((pStrip->flags_0x0 & 4) != 0) {
+				IMPLEMENTATION_GUARD(
+				peVar11 = ed3DG3DAnimGet(pStrip);
+				ed3DManageAnim(peVar11);)
 			}
 			goto LAB_00297870;
 		}
 		if ((uVar17 & 0x800) != 0) goto LAB_00297870;
 	}
-	pcVar16 = (char*)0x0;
+	peVar16 = (ed_g2d_bitmap*)0x0;
 	uVar18 = 0;
 	uVar17 = 0;
-	piVar7 = (ed_g2d_material*)PTR_TextureData_MAT_004492f0;
+	piVar7 = gDefault_Material_Cluster_Current;
 LAB_00297870:
-	pRVar6 = DmaMaterialBufferCurrent;
+	peVar8 = DmaMaterialBufferCurrent;
 	if ((((uVar18 & 0xfc) == 0) || ((uVar18 & 0x80000000) != 0)) || ((uVar18 & 0x4000) != 0)) {
-		pRVar15 = (ed_dma_matrix*)LOAD_SECTION(piVar7->pRenderFrame30);
-		if (piVar7->pRenderFrame30 == 0x0) {
-			pMVar12 = &(DmaMaterialBufferCurrent)->internalMeshTransformSpecial;
-			ppTVar5 = (ed_g2d_material**)&(DmaMaterialBufferCurrent)->pFileData;
+		peVar17 = (ed_dma_material*)LOAD_SECTION(piVar7->pDMA_Material);
+		if (piVar7->pDMA_Material == (int)0x0) {
+			peVar13 = &DmaMaterialBufferCurrent->list;
+			ppeVar7 = &DmaMaterialBufferCurrent->pMaterial;
 			DmaMaterialBufferCurrent = DmaMaterialBufferCurrent + 1;
-			*ppTVar5 = piVar7;
-			pRVar6->field_0x4 = (MeshTransformSpecial*)0x0;
-			pRVar6->flags_0x28 = pRVar6->flags_0x28 & 0xfffffffe;
-			(pRVar6->internalMeshTransformSpecial).pPrev_0x8 = pMVar12;
-			(pRVar6->internalMeshTransformSpecial).pNext_0x4 = pMVar12;
-			(pRVar6->internalMeshTransformSpecial).pRenderInput =
-				(DisplayListInternal*)PTR_MeshTransformParentHeader_004494b8;
-			pRVar6->field_0x18 = 0;
-			pRVar6->index_0x1c = 0;
-			*(undefined4*)&pRVar6->internalMeshTransformSpecial = 0;
-			pRVar6->flags_0x28 = pRVar6->flags_0x28 | 1;
-			piVar7->pRenderFrame30 = (int)STORE_SECTION(pRVar6);
-			pRVar6->field_0x2c.ptrValue = pcVar16;
-			if (param_1->cameraPanIndex == 0) {
+			*ppeVar7 = piVar7;
+			peVar8->field_0x4 = 0;
+			peVar8->flags = peVar8->flags & 0xfffffffe;
+			(peVar8->list).pNext = (edNODE*)peVar13;
+			(peVar8->list).pPrev = (edNODE*)peVar13;
+			(peVar8->list).pData = gNodeDmaMatrix;
+			(peVar8->list).field_0x10 = 0;
+			(peVar8->list).nodeCount = 0;
+			(peVar8->list).header.mode = 0;
+			peVar8->flags = peVar8->flags | 1;
+			piVar7->pDMA_Material = STORE_SECTION(peVar8);
+			peVar8->pBitmap = peVar16;
+			if (pStrip->cameraPanIndex == 0) {
 				if ((uVar17 & 0x40) == 0) {
 					if ((uVar17 & 0x80) == 0) {
 						if ((uVar18 & 0x80000000) == 0) {
 							if ((uVar18 & 0x4000) == 0) {
 								if (((uVar18 & 0x100) == 0) && ((uVar18 & 0xfc) == 0)) {
-									param_1->cameraPanIndex = 0;
+									pStrip->cameraPanIndex = 0;
 								}
 								else {
-									param_1->cameraPanIndex = 2;
+									pStrip->cameraPanIndex = 2;
 								}
 							}
 							else {
-								param_1->cameraPanIndex = 4;
+								pStrip->cameraPanIndex = 4;
 							}
 						}
 						else {
-							param_1->cameraPanIndex = 5;
+							pStrip->cameraPanIndex = 5;
 						}
 					}
 					else {
-						param_1->cameraPanIndex = 0xb;
+						pStrip->cameraPanIndex = 0xb;
 					}
 				}
 				else {
@@ -5511,100 +5263,99 @@ LAB_00297870:
 						if ((uVar18 & 0x4000) == 0) {
 							if ((uVar18 & 0xfc) == 0) {
 								if ((uVar18 & 0x100) == 0) {
-									param_1->cameraPanIndex = 1;
+									pStrip->cameraPanIndex = 1;
 								}
 								else {
-									param_1->cameraPanIndex = 2;
+									pStrip->cameraPanIndex = 2;
 								}
 							}
 							else {
-								param_1->cameraPanIndex = 3;
+								pStrip->cameraPanIndex = 3;
 							}
 						}
 						else {
-							param_1->cameraPanIndex = 4;
+							pStrip->cameraPanIndex = 4;
 						}
 					}
 					else {
-						param_1->cameraPanIndex = 5;
+						pStrip->cameraPanIndex = 5;
 					}
 				}
 			}
-			edLIST* pCameraPanMasterHeader = &gPrim_List[param_1->cameraPanIndex][gCurRenderList];
-			edNODE_MANAGER* pHeader = pCameraPanMasterHeader->pCameraPanHeader_0xc;
-			pMVar12 = pHeader->pNextFree + pHeader->usedCount;
-			pMVar12->pRenderInput = (DisplayListInternal*)pRVar6;
-			pMVar12->specUnion.field_0x0[0] = 1;
-			pHeader->usedCount = pHeader->usedCount + 1;
-			pCameraPanMasterHeader->count_0x14 = pCameraPanMasterHeader->count_0x14 + 1;
-			pMVar12->pNext_0x4 = pCameraPanMasterHeader->pLoadedData;
-			RENDER_LOG("ed3DLinkClusterStripToViewport A %p\n", pCameraPanMasterHeader->pLoadedData);
-			pCameraPanMasterHeader->pLoadedData = pMVar12;
-			pRVar15 = pRVar6;
+			iVar3 = (edNODE_MANAGER*)gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pData;
+			peVar14 = iVar3->pNodeHead + iVar3->linkCount;
+			peVar14->pData = peVar8;
+			peVar14->header.typeField.type = 1;
+			iVar3->linkCount = iVar3->linkCount + 1;
+			piVar15 = &gPrim_List[pStrip->cameraPanIndex][gCurRenderList].nodeCount;
+			*piVar15 = *piVar15 + 1;
+			peVar14->pPrev = gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pPrev;
+			gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pPrev = peVar14;
+			peVar17 = peVar8;
+
+			ED3D_LOG(LogLevel::Verbose, "ed3DLinkClusterStripToViewport Linked Cluster Strip: (%d, %d). New node count: %d", pStrip->cameraPanIndex, gCurRenderList,
+				gPrim_List[pStrip->cameraPanIndex][gCurRenderList].nodeCount);
 		}
-		pDVar14 = (edNODE_MANAGER*)(pRVar15->internalMeshTransformSpecial).pRenderInput;
+		pDVar14 = (edNODE_MANAGER*)(peVar17->list).pData;
 	}
 	else {
-		IMPLEMENTATION_GUARD();
-		if ((ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x8 == 1) {
-			(ScratchpadAnimManager_004494ec.vector_0x64)->x = (param_1->vector_0x10).x;
-			(ScratchpadAnimManager_004494ec.vector_0x64)->y = (param_1->vector_0x10).y;
-			(ScratchpadAnimManager_004494ec.vector_0x64)->z = (param_1->vector_0x10).z;
-			(ScratchpadAnimManager_004494ec.vector_0x64)->w = 1.0;
-			sceVu0ApplyMatrix(ScratchpadAnimManager_004494ec.vector_0x64, g_ScratchpadAddr_00448a58,
-				ScratchpadAnimManager_004494ec.vector_0x64);
+		if (gRender_info_SPR->field_0x8 == 1) {
+			gBoundSphereCenter->x = (pStrip->boundingSphere).x;
+			gBoundSphereCenter->y = (pStrip->boundingSphere).y;
+			gBoundSphereCenter->z = (pStrip->boundingSphere).z;
+			gBoundSphereCenter->w = 1.0;
+			sceVu0ApplyMatrix(gBoundSphereCenter, WorldToCamera_Matrix,
+				gBoundSphereCenter);
 		}
-		pRVar15 = DmaMaterialBufferCurrent;
-		pMVar12 = &(DmaMaterialBufferCurrent)->internalMeshTransformSpecial;
-		ppTVar5 = (ed_g2d_material**)&(DmaMaterialBufferCurrent)->pFileData;
+		peVar17 = DmaMaterialBufferCurrent;
+		peVar13 = &DmaMaterialBufferCurrent->list;
+		ppeVar7 = &DmaMaterialBufferCurrent->pMaterial;
 		DmaMaterialBufferCurrent = DmaMaterialBufferCurrent + 1;
-		*ppTVar5 = piVar7;
-		pRVar15->field_0x4 = 0; // (MeshTransformSpecial*)(ScratchpadAnimManager_004494ec.vector_0x64)->z;
-		pRVar15->flags_0x28 = pRVar15->flags_0x28 & 0xfffffffe;
-		(pRVar15->internalMeshTransformSpecial).pPrev_0x8 = pMVar12;
-		(pRVar15->internalMeshTransformSpecial).pNext_0x4 = pMVar12;
-		(pRVar15->internalMeshTransformSpecial).pRenderInput = (DisplayListInternal*)PTR_MeshTransformParentHeader_004494b8
-			;
-		pRVar15->field_0x18 = 0;
-		pRVar15->index_0x1c = 0;
-		*(undefined4*)&pRVar15->internalMeshTransformSpecial = 0;
-		pRVar15->flags_0x28 = pRVar15->flags_0x28 | 1;
-		pRVar15->field_0x2c.ptrValue = pcVar16;
-		//FUN_002b1040(g_CameraFlipIndex_004494a4 * 0x20 + 0x48c7d0, (int)pRVar15, 1);
-		pDVar14 = (edNODE_MANAGER*)(pRVar15->internalMeshTransformSpecial).pRenderInput;
+		*ppeVar7 = piVar7;
+		peVar17->field_0x4 = gBoundSphereCenter->z;
+		peVar17->flags = peVar17->flags & 0xfffffffe;
+		(peVar17->list).pNext = (edNODE*)peVar13;
+		(peVar17->list).pPrev = (edNODE*)peVar13;
+		(peVar17->list).pData = gNodeDmaMatrix;
+		(peVar17->list).field_0x10 = 0;
+		(peVar17->list).nodeCount = 0;
+		(peVar17->list).header.mode = 0;
+		peVar17->flags = peVar17->flags | 1;
+		peVar17->pBitmap = peVar16;
+		IMPLEMENTATION_GUARD(FUN_002b1040(gPrim_List[3] + gCurRenderList, (int)peVar17, 1));
+		pDVar14 = (edNODE_MANAGER*)(peVar17->list).pData;
 	}
-	pMVar12 = pDVar14->pNextFree + pDVar14->usedCount;
-	pMVar12->pRenderInput = (DisplayListInternal*)param_1;
-	pMVar12->specUnion.field_0x0[0] = 3;
-	pMVar12->specUnion.field_0x0[1] = (ushort)param_1->flags_0x0;
-	pDVar14->usedCount = pDVar14->usedCount + 1;
-	pRVar15->index_0x1c = pRVar15->index_0x1c + 1;
-	pMVar12->pNext_0x4 = (pRVar15->internalMeshTransformSpecial).pNext_0x4;
-	RENDER_LOG("ed3DLinkClusterStripToViewport B %p\n", (pRVar15->internalMeshTransformSpecial).pNext_0x4);
-	pMVar12->pPrev_0x8 = (MeshTransformSpecial*)param_1->pRenderFrame30;
-	(pRVar15->internalMeshTransformSpecial).pNext_0x4 = pMVar12;
+	peVar14 = pDVar14->pNodeHead + pDVar14->linkCount;
+	peVar14->pData = pStrip;
+	peVar14->header.typeField.type = 3;
+	peVar14->header.typeField.unknown = (short)pStrip->flags_0x0;
+	pDVar14->linkCount = pDVar14->linkCount + 1;
+	(peVar17->list).nodeCount = (peVar17->list).nodeCount + 1;
+	peVar14->pPrev = (peVar17->list).pPrev;
+	peVar14->pNext = (edNODE*)LOAD_SECTION(pStrip->pDMA_Matrix);
+	(peVar17->list).pPrev = peVar14;
 	return;
 }
 
-void ed3DRenderCluster(ed_3d_octree* param_1)
+void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 {
 	bool bVar1;
 	ushort uVar2;
 	char* pcVar4;
 	edF32MATRIX4* pMVar5;
 	bool bVar6;
-	Vector* pVVar7;
+	edF32VECTOR4* pVVar7;
 	int* piVar8;
 	uint uVar9;
 	int iVar10;
 	char cVar11;
 	int* piVar12;
-	ed_3d_strip* pcVar13;
+	ed_3d_strip* p3DStrip;
 	uint uVar14;
 	ulong uVar15;
 	long lVar16;
 	ushort* puVar17;
-	ushort* puVar18;
+	ushort* pStripCounts;
 	uint uVar19;
 	uint uVar20;
 	float fVar21;
@@ -5622,11 +5373,11 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 	float fVar33;
 	float extraout_vf9w;
 	float extraout_vf9w_00;
-	Vector local_270;
-	Vector local_260;
-	Vector local_250;
-	Vector local_240;
-	Vector local_230;
+	edF32VECTOR4 local_270;
+	edF32VECTOR4 local_260;
+	edF32VECTOR4 local_250;
+	edF32VECTOR4 local_240;
+	edF32VECTOR4 local_230;
 	undefined auStack544[32];
 	float afStack512[4];
 	float local_1f0[4];
@@ -5636,24 +5387,27 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 	float local_1d4[117];
 	MeshData_CDQU* pcVar3;
 
-	pcVar3 = (MeshData_CDQU*)param_1->pCDQU;
-	puVar18 = pcVar3->field_0x10;
-	if (param_1->field_0x30 == 1.0) {
+	pcVar3 = (MeshData_CDQU*)p3DOctree->pCDQU;
+	pStripCounts = pcVar3->aClusterStripCounts;
+	if (p3DOctree->field_0x30 == 1.0) {
 		uVar20 = 4;
 	}
 	else {
 		uVar20 = 0xc;
 	}
-	uVar9 = (uint)puVar18[uVar20];
+
+	ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Strip Count: %u | %u", pStripCounts[uVar20], uVar20);
+
+	uVar9 = (uint)pStripCounts[uVar20];
 	bVar6 = false;
 	if ((uVar9 != 0) && (bVar6 = true, uVar9 != 0)) {
 		pcVar4 = (char*)LOAD_SECTION(pcVar3->pMBNK);
-		pcVar13 = (ed_3d_strip*)LOAD_SECTION(pcVar3->field_0x48);
-		(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x8 = (uint)param_1->field_0x28;
-		(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix = g_ScratchpadAddr_00448a58;
+		p3DStrip = (ed_3d_strip*)LOAD_SECTION(pcVar3->p3DStrip);
+		gRender_info_SPR->field_0x8 = (uint)p3DOctree->field_0x28;
+		gRender_info_SPR->pMeshTransformMatrix = WorldToCamera_Matrix;
 		for (; uVar9 != 0; uVar9 = uVar9 - 1) {
-			ed3DLinkClusterStripToViewport(pcVar13, pcVar4 + 0x10);
-			pcVar13 = (ed_3d_strip*)LOAD_SECTION(pcVar13->pNext);
+			ed3DLinkClusterStripToViewport(p3DStrip, (ed_hash_code*)(pcVar4 + 0x10));
+			p3DStrip = (ed_3d_strip*)LOAD_SECTION(p3DStrip->pNext);
 		}
 		bVar6 = true;
 	}
@@ -5662,7 +5416,7 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 		IMPLEMENTATION_GUARD();
 		iVar10 = *(int*)pcVar3[1].field_0x0;
 		pcVar4 = (char*)LOAD_SECTION(pcVar3->pMBNK);
-		uVar2 = param_1->field_0x28;
+		uVar2 = p3DOctree->field_0x28;
 		for (; 0 < (int)uVar9; uVar9 = uVar9 - 1) {
 			//ed3DLinkClusterSpriteToViewport(iVar10, uVar2, pcVar4 + 0x10);
 			iVar10 = *(int*)(iVar10 + 0xc);
@@ -5672,7 +5426,7 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 	uVar9 = (uint) * (ushort*)((ulong)&pcVar3->field_0x28 + 2);
 	if (uVar9 != 0) {
 		IMPLEMENTATION_GUARD();
-		puVar17 = pcVar3[1].field_0x10 + 2;
+		puVar17 = pcVar3[1].aClusterStripCounts + 2;
 		while (bVar1 = uVar9 != 0, uVar9 = uVar9 - 1, bVar1) {
 			//ed3DRenderClusterHierarchy((long)(*(int*)(puVar17 + 4) + 0x10));
 			puVar17 = puVar17 + 8;
@@ -5688,38 +5442,38 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 		if (uVar2 != 0) {
 			iVar10 = (uint)uVar2 * 0x10 + 0x10;
 		}
-		piVar8 = (int*)edChunckGetFirst((char*)((int)puVar18 + iVar10 + 0x40), param_1->pCDQU_End);
+		piVar8 = (int*)edChunckGetFirst((char*)((int)pStripCounts + iVar10 + 0x40), p3DOctree->pCDQU_End);
 		while (true) {
 			uVar14 = (uint)uVar15;
 			if (piVar8 == (int*)0x0) break;
-			local_1d4[uVar14 * 0x10 + 1] = param_1->field_0x30;
+			local_1d4[uVar14 * 0x10 + 1] = p3DOctree->field_0x30;
 			if ((*piVar8 == 0x55514443) || (*piVar8 == 0x434f4443)) {
-				if (param_1->field_0x28 == 2) {
+				if (p3DOctree->field_0x28 == 2) {
 					if (local_1d4[uVar14 * 0x10 + 1] == 1.0) {
-						IMPLEMENTATION_GUARD(ed3DCalculSubBoxQuadTree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)param_1, uVar14));
+						IMPLEMENTATION_GUARD(ed3DCalculSubBoxQuadTree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar14));
 						fVar21 = extraout_vf9w;
 					}
 					else {
-						IMPLEMENTATION_GUARD(ed3DCalculSubBoxOctree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)param_1, uVar15));
+						IMPLEMENTATION_GUARD(ed3DCalculSubBoxOctree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar15));
 						fVar21 = extraout_vf9w_00;
 					}
 					local_230.x = *(float*)(auStack544 + uVar14 * 0x40 + 0x30);
 					local_230.y = local_1f0[uVar14 * 0x10 + 1];
 					local_230.z = local_1f0[uVar14 * 0x10 + 2];
-					local_230.w = param_1->field_0x2c * 0.5;
-					(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix = g_ScratchpadAddr_00448a58
+					local_230.w = p3DOctree->field_0x2c * 0.5;
+					gRender_info_SPR->pMeshTransformMatrix = WorldToCamera_Matrix
 						;
-					pVVar7 = ScratchpadAnimManager_004494ec.vector_0x64;
-					(ScratchpadAnimManager_004494ec.vector_0x64)->x = local_230.x;
+					pVVar7 = gBoundSphereCenter;
+					gBoundSphereCenter->x = local_230.x;
 					pVVar7->y = local_230.y;
 					pVVar7->z = local_230.z;
-					(ScratchpadAnimManager_004494ec.vector_0x64)->w = 1.0;
-					pVVar7 = ScratchpadAnimManager_004494ec.vector_0x64;
-					pMVar5 = (ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix;
-					fVar30 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
-					fVar31 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
-					fVar32 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
-					fVar33 = (ScratchpadAnimManager_004494ec.vector_0x64)->w;
+					gBoundSphereCenter->w = 1.0;
+					pVVar7 = gBoundSphereCenter;
+					pMVar5 = gRender_info_SPR->pMeshTransformMatrix;
+					fVar30 = gBoundSphereCenter->x;
+					fVar31 = gBoundSphereCenter->y;
+					fVar32 = gBoundSphereCenter->z;
+					fVar33 = gBoundSphereCenter->w;
 					fVar22 = pMVar5->ab;
 					fVar23 = pMVar5->ac;
 					fVar24 = pMVar5->bb;
@@ -5728,7 +5482,7 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 					fVar27 = pMVar5->cc;
 					fVar28 = pMVar5->db;
 					fVar29 = pMVar5->dc;
-					(ScratchpadAnimManager_004494ec.vector_0x64)->x =
+					gBoundSphereCenter->x =
 						pMVar5->aa * fVar30 + pMVar5->ba * fVar31 + pMVar5->ca * fVar32 + pMVar5->da * fVar33;
 					pVVar7->y = fVar22 * fVar30 + fVar24 * fVar31 + fVar26 * fVar32 + fVar28 * fVar33;
 					pVVar7->z = fVar23 * fVar30 + fVar25 * fVar31 + fVar27 * fVar32 + fVar29 * fVar33;
@@ -5746,7 +5500,7 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 						local_240.y = local_230.y;
 						local_240.z = local_230.z;
 						local_240.w = 1.0;
-						ps2_vu0_sub_vector(&local_250, &local_240, (Vector*)ScratchpadAnimManager_004494ec.pData_130);
+						edF32Vector4SubHard(&local_250, &local_240, &gRenderCamera->position);
 						ps2_vu0_sqr_vector(&local_250, &local_250);
 						uVar9 = uVar9 | uVar19;
 						local_250.x = local_250.x + local_250.y + local_250.z;
@@ -5755,10 +5509,10 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 				}
 				else {
 					if (local_1d4[uVar14 * 0x10 + 1] == 1.0) {
-						IMPLEMENTATION_GUARD(ed3DCalculSubBoxQuadTree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)param_1, uVar14));
+						IMPLEMENTATION_GUARD(ed3DCalculSubBoxQuadTree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar14));
 					}
 					else {
-						IMPLEMENTATION_GUARD(ed3DCalculSubBoxOctree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)param_1, uVar15));
+						IMPLEMENTATION_GUARD(ed3DCalculSubBoxOctree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar15));
 					}
 					local_260.x = *(float*)(auStack544 + uVar14 * 0x40 + 0x30);
 					local_260.y = local_1f0[uVar14 * 0x10 + 1];
@@ -5770,16 +5524,16 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 					local_230.x = local_260.x;
 					local_230.y = local_260.y;
 					local_230.z = local_260.z;
-					ps2_vu0_sub_vector(&local_270, &local_260, (Vector*)ScratchpadAnimManager_004494ec.pData_130);
+					edF32Vector4SubHard(&local_270, &local_260, &gRenderCamera->position);
 					ps2_vu0_sqr_vector(&local_270, &local_270);
 					uVar9 = uVar9 | uVar19;
 					local_270.x = local_270.x + local_270.y + local_270.z;
 					local_1d4[uVar14 * 0x10 + 2] = local_270.x;
 				}
-				piVar12 = (int*)param_1->pCDQU_End;
+				piVar12 = (int*)p3DOctree->pCDQU_End;
 			}
 			else {
-				piVar12 = (int*)param_1->pCDQU_End;
+				piVar12 = (int*)p3DOctree->pCDQU_End;
 			}
 			uVar19 = uVar19 << 1;
 			uVar15 = (int)(uVar14 + 1);
@@ -5796,7 +5550,7 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 				lVar16 = (long)((int)lVar16 + 1);
 			}
 		}
-		fVar21 = param_1->field_0x30;
+		fVar21 = p3DOctree->field_0x30;
 		if (fVar21 < 2.147484e+09) {
 			cVar11 = (char)(int)fVar21;
 		}
@@ -5805,7 +5559,7 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 		}
 		uVar9 = 0; IMPLEMENTATION_GUARD(ed3DClusterGetEdgeWithSon(uVar9, cVar11));
 		if ((long)(int)uVar9 != 0) {
-			IMPLEMENTATION_GUARD(ed3DRenderEdge((short*)puVar18, (long)(int)uVar9, (uint)param_1->field_0x28, uVar20));
+			IMPLEMENTATION_GUARD(ed3DRenderEdge((short*)pStripCounts, (long)(int)uVar9, (uint)p3DOctree->field_0x28, uVar20));
 		}
 	}
 	return;
@@ -5814,11 +5568,13 @@ void ed3DRenderCluster(ed_3d_octree* param_1)
 bool ed3DSceneRenderCluster(ed_g3d_manager* pMeshInfo)
 {
 	bool bVar1;
-	Vector local_a0;
-	Vector local_90;
+	edF32VECTOR4 local_a0;
+	edF32VECTOR4 local_90;
 	ed_3d_octree local_80;
 	ed_3d_octree local_40;
 	MeshData_CSTA* pcVar1;
+
+	ED3D_LOG(LogLevel::Verbose, "ed3DSceneRenderCluster");
 
 	pcVar1 = (MeshData_CSTA*)pMeshInfo->CSTA;
 	if (pcVar1->field_0x10 == 0x414f4443) {
@@ -5888,10 +5644,10 @@ float ed3DMatrixGetBigerScale(edF32MATRIX4* param_1)
 	float fVar2;
 	float fVar3;
 	int iVar4;
-	Vector* pVVar5;
+	edF32VECTOR4* pVVar5;
 	edF32MATRIX4* pMVar6;
-	Vector* v0;
-	Vector local_30[3];
+	edF32VECTOR4* v0;
+	edF32VECTOR4 local_30[3];
 
 	pMVar6 = &Matrix_00424f50;
 	iVar4 = 3;
@@ -5938,16 +5694,16 @@ float ed3DMatrixGetBigerScale(edF32MATRIX4* param_1)
 	return fVar2;
 }
 
-void ed3DSetSceneRender(MeshTransformData* pMeshTransformData, byte param_2)
+void ed3DSetSceneRender(ed_3d_hierarchy_node* pMeshTransformData, byte param_2)
 {
 	(pMeshTransformData->base).field_0x88 = param_2;
 	return;
 }
 
-MeshTransformObjData* ed3DChooseGoodLOD(MeshTransformData* pMeshTransformData)
+MeshTransformObjData* ed3DChooseGoodLOD(ed_3d_hierarchy_node* pMeshTransformData)
 {
 	ushort uVar1;
-	LightingMatrixFuncObj* pLVar2;
+	ed_3d_hierarchy_setup* pLVar2;
 	char* pcVar3;
 	MeshTransformObjData* pMVar4;
 	uint uVar5;
@@ -5972,11 +5728,11 @@ MeshTransformObjData* ed3DChooseGoodLOD(MeshTransformData* pMeshTransformData)
 		uVar5 = (uint)(pMeshTransformData->base).size_0xae;
 		if (uVar5 == 0xff) {
 			IMPLEMENTATION_GUARD(
-				sceVu0MulMatrix((TO_SCE_MTX)afStack64, (TO_SCE_MTX) & (pMeshTransformData->base).transformB,
-					(TO_SCE_MTX)&Matrix_004894e0);
-			pLVar2 = (pMeshTransformData->base).pLightingMatrixFuncObj_0xa0;
-			fVar7 = FLOAT_00449214 * (local_8 * local_8 + local_10 * local_10 + local_c * local_c);
-			if ((pLVar2 == (LightingMatrixFuncObj*)0x0) || (pcVar3 = pLVar2->field_0xc, pcVar3 == (char*)0x0)) {
+				edF32Matrix4MulF32Matrix4Hard(afStack64,  & (pMeshTransformData->base).transformB,
+					&gCurLOD_WorldToCamera_Matrix);
+			pLVar2 = (pMeshTransformData->base).pHierarchySetup;
+			fVar7 = gCurLOD_RenderFOVCoef * (local_8 * local_8 + local_10 * local_10 + local_c * local_c);
+			if ((pLVar2 == (ed_3d_hierarchy_setup*)0x0) || (pcVar3 = pLVar2->field_0xc, pcVar3 == (char*)0x0)) {
 				uVar5 = (uint)(pMeshTransformData->base).count_0x9c;
 				pMVar4 = pMeshTransformData->aSubArray;
 				uVar6 = 0;
@@ -6028,7 +5784,7 @@ PACK (struct MeshData_OBJ {
 	undefined field_0x12;
 	undefined field_0x13;
 	int count_0x14;
-	struct Vector field_0x18;
+	struct edF32VECTOR4 field_0x18;
 	undefined field_0x28;
 	undefined field_0x29;
 	undefined field_0x2a;
@@ -6036,7 +5792,7 @@ PACK (struct MeshData_OBJ {
 	int field_0x2c; //struct ed_3d_strip*
 });
 
-uint ed3DTestBoundingSphereObject(Vector* param_1)
+uint ed3DTestBoundingSphereObject(edF32VECTOR4* param_1)
 {
 	float* pfVar1;
 	uint uVar2;
@@ -6045,16 +5801,16 @@ uint ed3DTestBoundingSphereObject(Vector* param_1)
 	float fVar5;
 
 	uVar2 = 1;
-	fVar4 = param_1->w * (ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x14;
-	if ((((ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->flags_0x10 & 0x10) == 0) ||
-		(pfVar1 = (float*)(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pLightingMatrixFuncObj->field_0x0,
+	fVar4 = param_1->w * gRender_info_SPR->field_0x14;
+	if (((gRender_info_SPR->flags_0x10 & 0x10) == 0) ||
+		(pfVar1 = (float*)gRender_info_SPR->pLightingMatrixFuncObj->field_0x0,
 			pfVar1 == (float*)0x0)) {
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x50.w;
+		fVar3 = (gRenderSceneConfig_SPR->frustumA).field_0x50.w;
 	}
 	else {
 		fVar3 = -*pfVar1;
 	}
-	fVar5 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
+	fVar5 = gBoundSphereCenter->z;
 	if (fVar5 < fVar3) {
 		if (fVar4 <= -(fVar5 - fVar3)) {
 			return 4;
@@ -6066,7 +5822,7 @@ uint ed3DTestBoundingSphereObject(Vector* param_1)
 			uVar2 = 2;
 		}
 	}
-	fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x40.w;
+	fVar3 = (gRenderSceneConfig_SPR->frustumA).field_0x40.w;
 	if (fVar5 < fVar3) {
 		if (-(fVar5 - fVar3) < fVar4) {
 			uVar2 = 2;
@@ -6078,10 +5834,10 @@ uint ed3DTestBoundingSphereObject(Vector* param_1)
 		}
 		uVar2 = 2;
 	}
-	fVar3 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
+	fVar3 = gBoundSphereCenter->x;
 	if (fVar3 <= 0.0) {
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.ba * -fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.bc * -fVar5;
+		fVar3 = (gRenderSceneConfig_SPR->frustumA).frustumMatrix.ba * -fVar3 +
+			(gRenderSceneConfig_SPR->frustumA).frustumMatrix.bc * -fVar5;
 		if (0.0 < fVar3) {
 			if (fVar3 <= fVar4) {
 				uVar2 = 2;
@@ -6095,8 +5851,8 @@ uint ed3DTestBoundingSphereObject(Vector* param_1)
 		}
 	}
 	else {
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.aa * -fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.ac * -fVar5;
+		fVar3 = (gRenderSceneConfig_SPR->frustumA).frustumMatrix.aa * -fVar3 +
+			(gRenderSceneConfig_SPR->frustumA).frustumMatrix.ac * -fVar5;
 		if (0.0 < fVar3) {
 			if (fVar3 <= fVar4) {
 				uVar2 = 2;
@@ -6109,10 +5865,10 @@ uint ed3DTestBoundingSphereObject(Vector* param_1)
 			uVar2 = 2;
 		}
 	}
-	fVar3 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
+	fVar3 = gBoundSphereCenter->y;
 	if (fVar3 <= 0.0) {
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.cb * fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.cc * -fVar5;
+		fVar3 = (gRenderSceneConfig_SPR->frustumA).frustumMatrix.cb * fVar3 +
+			(gRenderSceneConfig_SPR->frustumA).frustumMatrix.cc * -fVar5;
 		if (0.0 < fVar3) {
 			if (fVar3 <= fVar4) {
 				uVar2 = 2;
@@ -6126,8 +5882,8 @@ uint ed3DTestBoundingSphereObject(Vector* param_1)
 		}
 	}
 	else {
-		fVar3 = ((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.db * fVar3 +
-			((ScratchpadAnimManager_004494ec.pData_150)->field_0x20).field_0x0.dc * -fVar5;
+		fVar3 = (gRenderSceneConfig_SPR->frustumA).frustumMatrix.db * fVar3 +
+			(gRenderSceneConfig_SPR->frustumA).frustumMatrix.dc * -fVar5;
 		if (0.0 < fVar3) {
 			if (fVar3 <= fVar4) {
 				uVar2 = 2;
@@ -6148,10 +5904,10 @@ void ed3DRenderObject(MeshHeader* pMeshHeader, undefined* pTextureInfo)
 {
 	bool bVar1;
 	edF32MATRIX4* pMVar2;
-	Vector* pVVar3;
+	edF32VECTOR4* pVVar3;
 	uint uVar4;
 	int iVar5;
-	Vector* pVVar6;
+	edF32VECTOR4* pVVar6;
 	int iVar7;
 	int meshCount;
 	ed_3d_strip* pRenderInput;
@@ -6170,33 +5926,33 @@ void ed3DRenderObject(MeshHeader* pMeshHeader, undefined* pTextureInfo)
 	float in_vf9w;
 	MeshData_OBJ* pMeshOBJ;
 
-	pVVar3 = ScratchpadAnimManager_004494ec.vector_0x64;
+	pVVar3 = gBoundSphereCenter;
 	pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pMeshHeader->pOBJ);
 	pRenderInput = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->field_0x2c);
 	if (pRenderInput == (ed_3d_strip*)0x0) {
 		return;
 	}
 	meshCount = pMeshOBJ->count_0x14;
-	if (((ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->flags_0x10 & 0x10) != 0) {
-		pVVar6 = (ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pLightingMatrixFuncObj->pVector_0x4;
+	if ((gRender_info_SPR->flags_0x10 & 0x10) != 0) {
+		pVVar6 = gRender_info_SPR->pLightingMatrixFuncObj->pVector_0x4;
 		iVar7 = 8;
-		if (pVVar6 != (Vector*)0x0) goto LAB_002b0d68;
+		if (pVVar6 != (edF32VECTOR4*)0x0) goto LAB_002b0d68;
 	}
 	pVVar6 = &pMeshOBJ->field_0x18;
 	iVar7 = 2;
 LAB_002b0d68:
 	fVar8 = pVVar6->y;
 	fVar9 = pVVar6->z;
-	(ScratchpadAnimManager_004494ec.vector_0x64)->x = pVVar6->x;
+	gBoundSphereCenter->x = pVVar6->x;
 	pVVar3->y = fVar8;
 	pVVar3->z = fVar9;
-	(ScratchpadAnimManager_004494ec.vector_0x64)->w = 1.0;
-	pVVar3 = ScratchpadAnimManager_004494ec.vector_0x64;
-	pMVar2 = (ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix;
-	fVar16 = (ScratchpadAnimManager_004494ec.vector_0x64)->x;
-	fVar17 = (ScratchpadAnimManager_004494ec.vector_0x64)->y;
-	fVar18 = (ScratchpadAnimManager_004494ec.vector_0x64)->z;
-	fVar19 = (ScratchpadAnimManager_004494ec.vector_0x64)->w;
+	gBoundSphereCenter->w = 1.0;
+	pVVar3 = gBoundSphereCenter;
+	pMVar2 = gRender_info_SPR->pMeshTransformMatrix;
+	fVar16 = gBoundSphereCenter->x;
+	fVar17 = gBoundSphereCenter->y;
+	fVar18 = gBoundSphereCenter->z;
+	fVar19 = gBoundSphereCenter->w;
 	fVar8 = pMVar2->ab;
 	fVar9 = pMVar2->ac;
 	fVar10 = pMVar2->bb;
@@ -6205,7 +5961,7 @@ LAB_002b0d68:
 	fVar13 = pMVar2->cc;
 	fVar14 = pMVar2->db;
 	fVar15 = pMVar2->dc;
-	(ScratchpadAnimManager_004494ec.vector_0x64)->x =
+	gBoundSphereCenter->x =
 		pMVar2->aa * fVar16 + pMVar2->ba * fVar17 + pMVar2->ca * fVar18 + pMVar2->da * fVar19;
 	pVVar3->y = fVar8 * fVar16 + fVar10 * fVar17 + fVar12 * fVar18 + fVar14 * fVar19;
 	pVVar3->z = fVar9 * fVar16 + fVar11 * fVar17 + fVar13 * fVar18 + fVar15 * fVar19;
@@ -6213,16 +5969,16 @@ LAB_002b0d68:
 	uVar4 = ed3DTestBoundingSphereObject(pVVar6);
 	if (uVar4 != 4) {
 		if (uVar4 == 1) {
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x8 = 1;
+			gRender_info_SPR->field_0x8 = 1;
 		}
 		else {
 			IMPLEMENTATION_GUARD(
 			iVar5 = ed3DTestBoundingSphereObjectNoZFar(pVVar6);
 			if (iVar5 != 1) {
-				(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x8 = iVar7;
+				gRender_info_SPR->field_0x8 = iVar7;
 			})
 		}
-		if (*ScratchpadAnimManager_004494ec.gShadowRenderMask == 0) {
+		if (*gShadowRenderMask == 0) {
 			IMPLEMENTATION_GUARD(
 			while (bVar1 = meshCount != 0, meshCount = meshCount + -1, bVar1) {
 				_ed3DLinkStripToViewport(pRenderInput, pTextureInfo);
@@ -6240,7 +5996,7 @@ LAB_002b0d68:
 	return;
 }
 
-void ed3DRenderSonHierarchy(MeshTransformData* pMeshTransformData)
+void ed3DRenderSonHierarchy(ed_3d_hierarchy_node* pMeshTransformData)
 {
 	short sVar1;
 	MeshHeader* pMeshHeader;
@@ -6255,20 +6011,20 @@ void ed3DRenderSonHierarchy(MeshTransformData* pMeshTransformData)
 			if (((pMeshTransformData->base).flags_0x9e & 0x80) == 0) {
 				(pMeshTransformData->base).size_0xae = 0xff;
 			}
-			sceVu0MulMatrix((TO_SCE_MTX)&MStack64, (TO_SCE_MTX) & (pMeshTransformData->base).transformB,
-				(TO_SCE_MTX)g_ScratchpadAddr_00448a58);
+			edF32Matrix4MulF32Matrix4Hard(&MStack64,  & (pMeshTransformData->base).transformB,
+				WorldToCamera_Matrix);
 			pMVar3 = &(pMeshTransformData->base).transformB;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix = &MStack64;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformData = pMeshTransformData;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pLightingMatrixFuncObj =
-				(pMeshTransformData->base).pLightingMatrixFuncObj_0xa0;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pSharedMeshTransform = pMVar3;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->flags_0x10 =
+			gRender_info_SPR->pMeshTransformMatrix = &MStack64;
+			gRender_info_SPR->pMeshTransformData = pMeshTransformData;
+			gRender_info_SPR->pLightingMatrixFuncObj =
+				(pMeshTransformData->base).pHierarchySetup;
+			gRender_info_SPR->pSharedMeshTransform = pMVar3;
+			gRender_info_SPR->flags_0x10 =
 				(uint)(pMeshTransformData->base).flags_0x9e;
 			fVar4 = ed3DMatrixGetBigerScale(pMVar3);
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x14 = fVar4;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x18 = 0;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x8 = 1;
+			gRender_info_SPR->field_0x14 = fVar4;
+			gRender_info_SPR->field_0x18 = 0;
+			gRender_info_SPR->field_0x8 = 1;
 			(pMeshTransformData->base).field_0xa4 = (edF32MATRIX4*)0x0;
 			pMeshHeader = (MeshHeader*)pMVar2->pObj;
 			if (((pMeshHeader != (MeshHeader*)0x0) && (sVar1 = pMVar2->field_0x4, sVar1 != 2)) && (sVar1 != 1)) {
@@ -6287,7 +6043,7 @@ void ed3DRenderSonHierarchy(MeshTransformData* pMeshTransformData)
 	return;
 }
 
-void ed3DRenderSonHierarchyForShadow(MeshTransformData* pMeshTransformData)
+void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy_node* pMeshTransformData)
 {
 	char cVar1;
 	ushort uVar2;
@@ -6300,26 +6056,26 @@ void ed3DRenderSonHierarchyForShadow(MeshTransformData* pMeshTransformData)
 
 	uVar2 = (pMeshTransformData->base).flags_0x9e;
 	if (((((uVar2 & 0x200) != 0) &&
-		((*ScratchpadAnimManager_004494ec.gShadowRenderMask & (uint)(pMeshTransformData->base).bRenderShadow) != 0)) &&
+		((*gShadowRenderMask & (uint)(pMeshTransformData->base).bRenderShadow) != 0)) &&
 		((uVar2 & 0x41) == 0)) && ((pMeshTransformData->base).count_0x9c != 0)) {
 		pMVar4 = ed3DChooseGoodLOD(pMeshTransformData);
 		if (((pMeshTransformData->base).flags_0x9e & 0x80) == 0) {
 			(pMeshTransformData->base).size_0xae = 0xff;
 		}
 		if ((pMVar4 != (MeshTransformObjData*)0x0) && (pMVar4->pObj != (char*)0x0)) {
-			sceVu0MulMatrix((TO_SCE_MTX)&MStack64, (TO_SCE_MTX) & (pMeshTransformData->base).transformB,
-				(TO_SCE_MTX)g_ScratchpadAddr_00448a58);
+			edF32Matrix4MulF32Matrix4Hard(&MStack64,  & (pMeshTransformData->base).transformB,
+				WorldToCamera_Matrix);
 			pMVar6 = &(pMeshTransformData->base).transformB;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformMatrix = &MStack64;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pMeshTransformData = pMeshTransformData;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pLightingMatrixFuncObj =
-				(pMeshTransformData->base).pLightingMatrixFuncObj_0xa0;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->pSharedMeshTransform = pMVar6;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->flags_0x10 =
+			gRender_info_SPR->pMeshTransformMatrix = &MStack64;
+			gRender_info_SPR->pMeshTransformData = pMeshTransformData;
+			gRender_info_SPR->pLightingMatrixFuncObj =
+				(pMeshTransformData->base).pHierarchySetup;
+			gRender_info_SPR->pSharedMeshTransform = pMVar6;
+			gRender_info_SPR->flags_0x10 =
 				(uint)(pMeshTransformData->base).flags_0x9e;
 			fVar7 = ed3DMatrixGetBigerScale(pMVar6);
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x14 = fVar7;
-			(ScratchpadAnimManager_004494ec.pRenderAnimationStatic_0x60)->field_0x18 = 0;
+			gRender_info_SPR->field_0x14 = fVar7;
+			gRender_info_SPR->field_0x18 = 0;
 			(pMeshTransformData->base).field_0xa4 = (edF32MATRIX4*)0x0;
 			sVar3 = pMVar4->field_0x4;
 			if (sVar3 == 3) {
@@ -6367,7 +6123,7 @@ const char* gSceneNames[] = {
 	"Frontend::_scene_handle"
 };
 
-uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMeshMaster)
+uint ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 {
 	ed_g3d_manager* pMeshInfo;
 	float fVar1;
@@ -6377,21 +6133,22 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 	uint uVar5;
 	uint uVar6;
 	//ProfileObject* pPVar7;
-	MeshTransformParent* pCVar10;
-	MeshTransformParent* pCVar9;
+	edNODE* pCVar10;
+	edNODE* pCVar9;
 	RenderTaskData renderTaskData;
-	MeshTransformParent* pCVar8;
+	edNODE* pCVar8;
 
-	RENDER_LOG("ed3DSceneRenderOne A %p (%s) (shadow: %d)\n", pInStaticMeshMaster, gSceneNames[GetStaticMeshMasterIndex(pInStaticMeshMaster)], pInStaticMeshMaster->bShadowScene);
-	RENDER_LOG("ed3DSceneRenderOne B %p (%s) (shadow: %d)\n", pStaticMeshMaster, gSceneNames[GetStaticMeshMasterIndex(pStaticMeshMaster)], pStaticMeshMaster->bShadowScene);
+	RENDER_LOG("\n--------------------------------------------");
+	RENDER_LOG("ed3DSceneRenderOne Scene %p (%s) (shadow: %d)", pShadowScene, gSceneNames[GetStaticMeshMasterIndex(pShadowScene)], pShadowScene->bShadowScene);
+	RENDER_LOG("ed3DSceneRenderOne Shadow Scene %p (%s) (shadow: %d)", pScene, gSceneNames[GetStaticMeshMasterIndex(pScene)], pScene->bShadowScene);
 
 	iVar3 = gIDProfileFlush;
-	if ((pInStaticMeshMaster->bShadowScene == 1) && ((pStaticMeshMaster->flags_0x4 & 0x10) != 0)) {
-		RENDER_LOG("ed3DSceneRenderOne SKIP\n");
+	if ((pShadowScene->bShadowScene == 1) && ((pScene->flags_0x4 & 0x10) != 0)) {
+		RENDER_LOG("ed3DSceneRenderOne SKIP");
 		uVar6 = 0;
 	}
 	else {
-		RENDER_LOG("ed3DSceneRenderOne DRAW\n");
+		RENDER_LOG("ed3DSceneRenderOne DRAW");
 		if (ged3DConfig.bEnableProfile != 0) {
 			IMPLEMENTATION_GUARD(
 			if ((gIDProfileFlush & 1U) == 0) {
@@ -6416,7 +6173,7 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 			})
 		}
 		ed3DFlushSceneInit();
-		uVar6 = ed3DInitRenderEnvironement(pInStaticMeshMaster, (ulong)((pInStaticMeshMaster->flags_0x4 & 0x20) != 0));
+		uVar6 = ed3DInitRenderEnvironement(pShadowScene, (ulong)((pShadowScene->flags_0x4 & 0x20) != 0));
 		uVar6 = uVar6 & 0xff;
 		if (ged3DConfig.bEnableProfile != 0) {
 			IMPLEMENTATION_GUARD(
@@ -6467,7 +6224,7 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 				})
 			}
 			ed3DInitVU1Globals();
-			g_VifRefPktCur = ed3DSceneAddContextPacket(pInStaticMeshMaster, g_VifRefPktCur);
+			g_VifRefPktCur = ed3DSceneAddContextPacket(pShadowScene, g_VifRefPktCur);
 			if (ged3DConfig.bEnableProfile != 0) {
 				IMPLEMENTATION_GUARD(
 				uVar5 = (uint)gIDProfileFlush >> 4;
@@ -6511,49 +6268,50 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount + 1;
 				})
 			}
-			pCVar8 = (MeshTransformParent*)pStaticMeshMaster->pHeirListA;
-			pCVar9 = pCVar8->pNext;
-			if (*ScratchpadAnimManager_004494ec.gShadowRenderMask == 0) {
+			pCVar8 = (edNODE*)pScene->pHeirListA;
+			pCVar9 = pCVar8->pPrev;
+			if (*gShadowRenderMask == 0) {
 				if (ged3DConfig.field_0x2d == 0) {
-					for (; pCVar9 != pCVar8; pCVar9 = pCVar9->pNext) {
-						ed3DRenderSonHierarchy((MeshTransformData*)pCVar9->pMeshTransformData);
+					for (; pCVar9 != pCVar8; pCVar9 = pCVar9->pPrev) {
+						ed3DRenderSonHierarchy((ed_3d_hierarchy_node*)pCVar9->pData);
 					}
 				}
 				else {
-					for (; pCVar9 != pCVar8; pCVar9 = pCVar9->pNext) {
-						IMPLEMENTATION_GUARD(ed3DRenderSonHierarchyHIDDEN(pCVar9->pMeshTransformData);)
+					for (; pCVar9 != pCVar8; pCVar9 = pCVar9->pPrev) {
+						IMPLEMENTATION_GUARD(ed3DRenderSonHierarchyHIDDEN(pCVar9->pData);)
 					}
 				}
 			}
 			else {
-				for (; pCVar9 != pCVar8; pCVar9 = pCVar9->pNext) {
-					ed3DRenderSonHierarchyForShadow((MeshTransformData*)pCVar9->pMeshTransformData);
+				for (; pCVar9 != pCVar8; pCVar9 = pCVar9->pPrev) {
+					ed3DRenderSonHierarchyForShadow((ed_3d_hierarchy_node*)pCVar9->pData);
 				}
 			}
-			ed3DClustersRenderComputeSceneHierarchyList(pInStaticMeshMaster);
-			if ((pInStaticMeshMaster->bShadowScene != 1) &&
-				(ed3DSceneSortClusters(pInStaticMeshMaster), (pInStaticMeshMaster->flags_0x4 & 8) == 0)) {
-				for (pCVar10 = (MeshTransformParent*)(pStaticMeshMaster->headerB).pLoadedData;
-					(edLIST*)pCVar10 != &pStaticMeshMaster->headerB; pCVar10 = pCVar10->pNext) {
-						if (((pCVar10->pMeshTransformData->flags & 2) == 0) &&
-							(pMeshInfo = pCVar10->pMeshTransformData->pMeshInfo, pMeshInfo->CSTA != (char*)0x0)) {
+			ed3DClustersRenderComputeSceneHierarchyList(pShadowScene);
+			if ((pShadowScene->bShadowScene != 1) &&
+				(ed3DSceneSortClusters(pShadowScene), (pShadowScene->flags_0x4 & 8) == 0)) {
+				for (pCVar10 = (edNODE*)(pScene->headerB).pPrev;
+					(edLIST*)pCVar10 != &pScene->headerB; pCVar10 = pCVar10->pPrev) {
+						edCluster* pCluster = (edCluster*)pCVar10->pData;
+						if (((pCluster->flags & 2) == 0) &&
+							(pMeshInfo = pCluster->pMeshInfo, pMeshInfo->CSTA != (char*)0x0)) {
 							bVar4 = ed3DSceneRenderCluster(pMeshInfo);
 							uVar6 = (int)bVar4 & 0xff;
 					}
 				}
 			}
-			renderTaskData.pStaticMeshMaster = pStaticMeshMaster;
+			renderTaskData.pStaticMeshMaster = pScene;
 			if (BYTE_00448a5c == 0) {
-				if (pInStaticMeshMaster == pStaticMeshMaster) {
-					renderTaskData.isChild = pInStaticMeshMaster->bShadowScene;
+				if (pShadowScene == pScene) {
+					renderTaskData.isChild = pShadowScene->bShadowScene;
 					renderTaskData.taskID = 2;
 					edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
 						sysHandler_0048cb90.maxEventID, 0, &renderTaskData);
 				}
 				else {
-					renderTaskData.isChild = pInStaticMeshMaster->bShadowScene;
+					renderTaskData.isChild = pShadowScene->bShadowScene;
 					renderTaskData.taskID = 1;
-					if (pInStaticMeshMaster != pStaticMeshMaster) {
+					if (pShadowScene != pScene) {
 						renderTaskData.taskID = 3;
 					}
 					edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
@@ -6561,9 +6319,9 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 				}
 			}
 			else {
-				renderTaskData.isChild = pInStaticMeshMaster->bShadowScene;
+				renderTaskData.isChild = pShadowScene->bShadowScene;
 				renderTaskData.taskID = 1;
-				if (pInStaticMeshMaster != pStaticMeshMaster) {
+				if (pShadowScene != pScene) {
 					renderTaskData.taskID = 3;
 				}
 				edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
@@ -6612,7 +6370,7 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount + 1;
 				})
 			}
-			if (pInStaticMeshMaster->bShadowScene == 1) {
+			if (pShadowScene->bShadowScene == 1) {
 				g_VifRefPktCur->cmdA = 0xe10000002;
 				g_VifRefPktCur->cmdB = 0;
 				*(undefined4*)&g_VifRefPktCur->cmdB = 0;
@@ -6633,7 +6391,7 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 
 				// ZBUF
 				g_VifRefPktCur->cmdA = SCE_GS_SET_ZBUF(
-					pInStaticMeshMaster->pViewport->pZBuffer->frameBasePtr,	// ZBP
+					pShadowScene->pViewport->pZBuffer->frameBasePtr,	// ZBP
 					SCE_GS_PSMZ32,						// PSM
 					SCE_GS_TRUE							// ZMASK
 				);
@@ -6647,7 +6405,7 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pInStaticMeshMaster, ed_3D_Scene* pStaticMe
 				ed3DFlushList();
 			}
 			g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
-			pCVar2 = pInStaticMeshMaster->pViewport;
+			pCVar2 = pShadowScene->pViewport;
 			CameraScreenData_00449560.posX = pCVar2->posX;
 			CameraScreenData_00449560.posY = pCVar2->posY;
 			CameraScreenData_00449560.screenWidth = pCVar2->screenWidth;
@@ -6694,7 +6452,7 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 	//ProfileObject* pPVar9;
 	RenderTaskData renderTaskData;
 
-	RENDER_LOG("ed3DSceneRenderDlist %p (%d) (child: %d)\n", pStaticMeshMaster, GetStaticMeshMasterIndex(pStaticMeshMaster), pStaticMeshMaster->bShadowScene);
+	RENDER_LOG("ed3DSceneRenderDlist %p (%d) (child: %d)", pStaticMeshMaster, GetStaticMeshMasterIndex(pStaticMeshMaster), pStaticMeshMaster->bShadowScene);
 
 	iVar4 = gIDProfileFlush;
 	if (ged3DConfig.bEnableProfile != 0) {
@@ -7008,15 +6766,14 @@ edpkt_data* ed3DFlushAAEffect(edpkt_data* pRenderCommand)
 
 void ed3DPrimlistTermMaterialRenderList(void)
 {
-	if (gPrim_List_FlushTex_Last != (MeshTransformSpecial*)0x0) {
-		gPrim_List_FlushTex_Last->pNext_0x4 =
-			(MeshTransformSpecial*)(gPrim_List_FlushTex + gCurRenderList);
-		RENDER_LOG("ed3DPrimlistTermMaterialRenderList %p\n", (MeshTransformSpecial*)(gPrim_List_FlushTex + gCurRenderList));
+	if (gPrim_List_FlushTex_Last != (edNODE*)0x0) {
+		gPrim_List_FlushTex_Last->pPrev = gPrim_List_FlushTex + gCurRenderList;
+		RENDER_LOG("ed3DPrimlistTermMaterialRenderList %p", (MeshTransformSpecial*)(gPrim_List_FlushTex + gCurRenderList));
 	}
 	return;
 }
 
-Vector Vector_0048c3d0 = { 0 };
+edF32VECTOR4 Vector_0048c3d0 = { 0 };
 byte BYTE_0044941c = 0;
 
 int ed3DVU1Addr[3] = { 0x76, 0x198, 0x2BA };
@@ -7031,44 +6788,44 @@ void ed3DRefreshSracthGlobalVar(void)
 	undefined4 in_register_0000000c;
 	int iVar2;
 	edF32MATRIX4* pMVar3;
-	Vector* pVVar4;
+	edF32VECTOR4* pVVar4;
 	edF32MATRIX4* pMVar5;
 	float fVar6;
 	float fVar7;
 	float fVar8;
 
-	if (gLightDirections_Matrix != (Vector*)0x0) {
+	if (gLightDirections_Matrix != (edF32VECTOR4*)0x0) {
 		iVar2 = 8;
 		pVVar4 = gLightDirections_Matrix;
-		pMVar3 = ScratchpadAnimManager_004494ec.pLightDirections;
+		pMVar3 = gLightDirections_Matrix_Scratch;
 		do {
 			iVar2 = iVar2 + -1;
 			fVar6 = pVVar4->y;
 			pMVar3->aa = pVVar4->x;
-			pVVar4 = (Vector*)&pVVar4->z;
+			pVVar4 = (edF32VECTOR4*)&pVVar4->z;
 			pMVar3->ab = fVar6;
 			pMVar3 = (edF32MATRIX4*)&pMVar3->ac;
 		} while (0 < iVar2);
 	}
-	if (gLightColor_Matrix != (Vector*)0x0) {
+	if (gLightColor_Matrix != (edF32VECTOR4*)0x0) {
 		iVar2 = 8;
 		pVVar4 = gLightColor_Matrix;
-		pMVar3 = ScratchpadAnimManager_004494ec.pLightColor;
+		pMVar3 = gLightColor_Matrix_Scratch;
 		do {
 			iVar2 = iVar2 + -1;
 			fVar6 = pVVar4->y;
 			pMVar3->aa = pVVar4->x;
-			pVVar4 = (Vector*)&pVVar4->z;
+			pVVar4 = (edF32VECTOR4*)&pVVar4->z;
 			pMVar3->ab = fVar6;
 			pMVar3 = (edF32MATRIX4*)&pMVar3->ac;
 		} while (0 < iVar2);
 	}
-	pVVar4 = ScratchpadAnimManager_004494ec.pLightAmbient;
-	if (gLightAmbiant != (Vector*)0x0) {
+	pVVar4 = gLightAmbiant_Scratch;
+	if (gLightAmbiant != (edF32VECTOR4*)0x0) {
 		fVar8 = gLightAmbiant->y;
 		fVar6 = gLightAmbiant->z;
 		fVar7 = gLightAmbiant->w;
-		(ScratchpadAnimManager_004494ec.pLightAmbient)->x = gLightAmbiant->x;
+		gLightAmbiant_Scratch->x = gLightAmbiant->x;
 		pVVar4->y = fVar8;
 		pVVar4->z = fVar6;
 		pVVar4->w = fVar7;
@@ -7076,14 +6833,14 @@ void ed3DRefreshSracthGlobalVar(void)
 	fVar8 = Vector_0048c3d0.w;
 	fVar7 = Vector_0048c3d0.z;
 	fVar6 = Vector_0048c3d0.y;
-	pVVar4 = ScratchpadAnimManager_004494ec.pVector_0x18;
-	pMVar5 = &g_IdentityMatrix;
+	pVVar4 = gVU1_AnimST_NormalExtruder_Scratch;
+	pMVar5 = &gF32Matrix4Unit;
 	iVar2 = 8;
-	(ScratchpadAnimManager_004494ec.pVector_0x18)->x = Vector_0048c3d0.x;
+	gVU1_AnimST_NormalExtruder_Scratch->x = Vector_0048c3d0.x;
 	pVVar4->y = fVar6;
 	pVVar4->z = fVar7;
 	pVVar4->w = fVar8;
-	pMVar3 = ScratchpadAnimManager_004494ec.pMatrix_0x30;
+	pMVar3 = gF32Matrix4Unit_Scratch;
 	do {
 		iVar2 = iVar2 + -1;
 		fVar6 = pMVar5->ab;
@@ -7092,18 +6849,18 @@ void ed3DRefreshSracthGlobalVar(void)
 		pMVar3->ab = fVar6;
 		pMVar3 = (edF32MATRIX4*)&pMVar3->ac;
 	} while (0 < iVar2);
-	*(uint*)ScratchpadAnimManager_004494ec.field_0x40 = (uint)gbDoMipmap;
-	*(uint*)ScratchpadAnimManager_004494ec.field_0x44 = gMipmapL;
-	*(uint*)ScratchpadAnimManager_004494ec.field_0x48 = gMipmapK;
-	*(uint*)ScratchpadAnimManager_004494ec.field_0x4c = (uint)BYTE_0044941c;
-	pAVar1 = ScratchpadAnimManager_004494ec.pAnimScratchpad;
-	(ScratchpadAnimManager_004494ec.pAnimScratchpad)->field_0x0 = in_zero_lo;
+	*gbDoMipmap_SPR = (uint)gbDoMipmap;
+	*gMipmapL_SPR = gMipmapL;
+	*gMipmapK_SPR = gMipmapK;
+	*gbTrilinear_SPR = (uint)BYTE_0044941c;
+	pAVar1 = PTR_AnimScratchpad_00449554;
+	PTR_AnimScratchpad_00449554->field_0x0 = in_zero_lo;
 	pAVar1->flags = 0;
 	pAVar1->field_0x8 = 0;
 	pAVar1->field_0xc = 0;
-	*(undefined4*)ScratchpadAnimManager_004494ec.field_0x1c = 0x700008a0;
-	memcpy(ScratchpadAnimManager_004494ec.field_0x34, ed3DVU1Addr, 0xc);
-	memcpy(ScratchpadAnimManager_004494ec.field_0x38, ed3DVU1AddrWithBufCur, 0x24);
+	*g_pCurFlareMtx = SCRATCHPAD_ADDRESS_TYPE(0x700008a0, edF32MATRIX4*);
+	memcpy(ed3DVU1Addr_Scratch, ed3DVU1Addr, 0xc);
+	memcpy(ed3DVU1AddrWithBufCur_Scratch, ed3DVU1AddrWithBufCur, 0x24);
 	return;
 }
 
@@ -7260,7 +7017,7 @@ void ed3DSceneRender(int, int, char*)
 				pRVar5 = g_VifRefPktCur;
 				pInStaticMeshMaster = gScene3D + staticMeshMasterIndex;
 
-				RENDER_LOG("ed3DSceneRender Processing %p (%d)\n", pInStaticMeshMaster, staticMeshMasterIndex);
+				RENDER_LOG("ed3DSceneRender Processing %p (%d)", pInStaticMeshMaster, staticMeshMasterIndex);
 
 				if (gCurViewportUsed == (ed_viewport*)0x0) {
 					gCurViewportUsed = pInStaticMeshMaster->pViewport;
@@ -7273,14 +7030,14 @@ void ed3DSceneRender(int, int, char*)
 				gCurScene = pInStaticMeshMaster;
 				ed3DSceneRenderOne(pInStaticMeshMaster, pInStaticMeshMaster);
 
-				RENDER_LOG("ed3DSceneRender Begin Processing Children\n");
-				for (pCVar12 = (edLIST*)(pInStaticMeshMaster->headerA).pLoadedData;
-					pCVar12 != &pInStaticMeshMaster->headerA; pCVar12 = (edLIST*)pCVar12->pLoadedData) {
-					if ((((ed_3D_Scene*)pCVar12->pCameraPanHeader_0xc)->flags_0x4 & 4) == 0) {
-						ed3DSceneRenderOne((ed_3D_Scene*)pCVar12->pCameraPanHeader_0xc, pInStaticMeshMaster);
+				RENDER_LOG("ed3DSceneRender Begin Processing Children");
+				for (pCVar12 = (edLIST*)(pInStaticMeshMaster->headerA).pPrev;
+					pCVar12 != &pInStaticMeshMaster->headerA; pCVar12 = (edLIST*)pCVar12->pPrev) {
+					if ((((ed_3D_Scene*)pCVar12->pData)->flags_0x4 & 4) == 0) {
+						ed3DSceneRenderOne((ed_3D_Scene*)pCVar12->pData, pInStaticMeshMaster);
 					}
 				}
-				RENDER_LOG("ed3DSceneRender End Processing Children\n");
+				RENDER_LOG("ed3DSceneRender End Processing Children");
 
 				if (BYTE_00448a5c != 0) {
 					ed3DSceneRenderDlist(pInStaticMeshMaster);
@@ -7448,21 +7205,6 @@ void ed3DSceneRender(int, int, char*)
 	}
 	return;
 }
-	
-
-edNODE_MANAGER* edListCreateNodesTable(int count, EHeap heapID)
-{
-	edNODE_MANAGER* pAllocatedBuffer;
-
-	pAllocatedBuffer = (edNODE_MANAGER*)edMemAllocAlignBoundary(heapID, count * 0x10 + 0x10);
-	if (pAllocatedBuffer == (edNODE_MANAGER*)0x0) {
-		pAllocatedBuffer = (edNODE_MANAGER*)0x0;
-	}
-	else {
-		Setup_00290b70(pAllocatedBuffer, count);
-	}
-	return pAllocatedBuffer;
-}
 
 void ed3DShadowInitPrimList(edNODE_MANAGER** aHeaders)
 {
@@ -7477,42 +7219,43 @@ void ed3DShadowInitPrimList(edNODE_MANAGER** aHeaders)
 	return;
 }
 
-void ed3DPrimListInit(int materialBufferCount, int countB)
+void ed3DPrimListInit(int materialMatrixNodeCount, int renderNodeCount)
 {
 	int iVar1;
 	int iVar2;
 
-	pNodeManRender = edListCreateNodesTable(countB, TO_HEAP(H_MAIN));
-	pNodeManMaterial = edListCreateNodesTable(materialBufferCount, TO_HEAP(H_MAIN));
-	PTR_MeshTransformParentHeader_004494b4 = edListCreateNodesTable(materialBufferCount, TO_HEAP(H_MAIN));
+	pNodeManRender = edListCreateNodesTable(renderNodeCount, TO_HEAP(H_MAIN));
+	pNodeManMaterial[0] = edListCreateNodesTable(materialMatrixNodeCount, TO_HEAP(H_MAIN));
+	pNodeManMaterial[1] = edListCreateNodesTable(materialMatrixNodeCount, TO_HEAP(H_MAIN));
+
 	iVar2 = 0;
 	do {
-		edListLink
-		((edLIST*)gPrim_List[iVar2], pNodeManMaterial,
-			0, 0);
-		edListClear((edLIST*)gPrim_List[iVar2]);
-		edListLink
-		(gPrim_List[iVar2] + 1, PTR_MeshTransformParentHeader_004494b4, 0, 0);
+		edListLink(gPrim_List[iVar2], pNodeManMaterial[0],	0, 0);
+		edListClear(gPrim_List[iVar2]);
+		edListLink(gPrim_List[iVar2] + 1, pNodeManMaterial[1], 0, 0);
 		edListClear(gPrim_List[iVar2] + 1);
 		iVar2 = iVar2 + 1;
 	} while (iVar2 < 0xf);
-	ed3DShadowInitPrimList(&pNodeManMaterial);
+
+	ed3DShadowInitPrimList(pNodeManMaterial);
+
 	gCurRenderList = 0;
 	gCurFlushList = 0;
+
 	iVar2 = 0;
 	do {
 		iVar1 = iVar2 + 1;
-		gPrim_List_FlushTex[iVar2].pLoadedData = (MeshTransformSpecial*)(gPrim_List_FlushTex + iVar2);
-		gPrim_List_FlushTex[iVar2].count_0x14 = 0;
+		gPrim_List_FlushTex[iVar2].pPrev = (gPrim_List_FlushTex + iVar2);
+		gPrim_List_FlushTex[iVar2].nodeCount = 0;
 		iVar2 = iVar1;
 	} while (iVar1 < 2);
+
 	return;
 }
 
-edLIST* gManager3D = NULL;
-edLIST* CameraPanMasterHeaderB_004491d4 = NULL;
+edLIST* gManager3D[2] = { NULL, NULL };
 
-char* g_szed3DAllocInfo_004333d0 = "ed3D Init total allocation ammount:<< %d >>\n";
+char* g_szed3DAllocInfo_004333d0 = "ed3D Init total allocation ammount:<< %d >>";
 
 byte BYTE_00449344 = 0;
 
@@ -7528,36 +7271,31 @@ void ed3DFlushTexInit(void)
 	return;
 }
 
-struct ed3D_60 {
-	char a[0x60];
-};
-
-
 void ed3DHierarchyManagerInit(void)
 {
-	gHierarchyManagerBuffer = (MeshTransformData*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshTransformDataCount * sizeof(MeshTransformData));
+	gHierarchyManagerBuffer = (ed_3d_hierarchy_node*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshTransformDataCount * sizeof(ed_3d_hierarchy_node));
 	gHierarchyManagerNodeManager =
 		edListCreateNodesTable(ged3DConfig.meshTransformDataCount, TO_HEAP(H_MAIN));
-	gHierarchyManagerFirstFreeNode = (MeshTransformParent*)gHierarchyManagerNodeManager->pNextFree;
-	gScene_list_buffer = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(ed3D_60));
+	gHierarchyManagerFirstFreeNode = (edNODE*)gHierarchyManagerNodeManager->pNodeHead;
+	gScene_list_buffer = edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(edLIST) * 3);
 	return;
 }
 
 void ed3DListBufferInit(int materialBufferCount, int matrixBufferCount)
 {
-	ed_dma_matrix* pRVar1;
-	ed_dma_matrix** ppRVar2;
-	ed_dma_matrix** ppRVar3;
+	ed_dma_material* peVar1;
+	ed_dma_material** ppeVar2;
+	ed_dma_material** ppeVar3;
 	uint uVar4;
 
 	uVar4 = 0;
 	do {
-		pRVar1 = (ed_dma_matrix*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), materialBufferCount * sizeof(ed_dma_matrix));
-		DmaMaterialBuffer[uVar4] = pRVar1;
-		DmaMaterialBufferMax[uVar4] = pRVar1 + materialBufferCount;
+		peVar1 = (ed_dma_material*)edMemAlloc(TO_HEAP(H_MAIN), materialBufferCount * sizeof(ed_dma_material));
+		DmaMaterialBuffer[uVar4] = peVar1;
+		DmaMaterialBufferMax[uVar4] = peVar1 + materialBufferCount;
 		uVar4 = uVar4 + 1 & 0xffff;
 	} while (uVar4 < 2);
-	DmaMatrixBuffer = (ed_dma_matrix*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), matrixBufferCount * sizeof(ed_dma_matrix));
+	DmaMatrixBuffer = (ed_dma_matrix*)edMemAlloc(TO_HEAP(H_MAIN), matrixBufferCount * sizeof(ed_dma_matrix));
 	DmaMaterialBufferCurrent = DmaMaterialBuffer[0];
 	DmaMaterialBufferCurrentMax = DmaMaterialBufferMax[0];
 	DmaMatrixBufferMax = DmaMatrixBuffer + matrixBufferCount;
@@ -7567,11 +7305,11 @@ void ed3DListBufferInit(int materialBufferCount, int matrixBufferCount)
 }
 
 ed_g3d_manager* gpG3D = NULL;
-DisplayListInternalMesh* g_MeshDisplayListInternal_00449380 = NULL;
+edCluster* gCluster = NULL;
 
 void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 {
-	int iVar1;
+	TextureData_HASH_Internal_PA32* pTVar1;
 	uint uVar2;
 	undefined* puVar3;
 	bool bVar4;
@@ -7580,12 +7318,12 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 	undefined8 uVar7;
 	int puVar8;
 	undefined* puVar9;
-	edpkt_data* pRVar10;
+	edpkt_data* peVar10;
 	uint uVar11;
-	TextureData_LAY_Internal* pLAY;
-	ushort* puVar12;
+	ed_g2d_layer* pLAY;
+	ed_g2d_bitmap* peVar12;
 	uint uVar13;
-	int iVar14;
+	TextureData_TEX_Internal* pTVar14;
 	float fVar15;
 	uint local_40;
 	undefined4 local_30;
@@ -7597,41 +7335,42 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 	undefined local_10[8];
 	uint local_8;
 	uint local_4;
+	ed_g2d_layer_header* iVar1;
 
 	puVar8 = 0x10;
-	iVar14 = 0;
-	puVar12 = (ushort*)0x0;
+	pTVar14 = (TextureData_TEX_Internal*)0x0;
+	peVar12 = (ed_g2d_bitmap*)0x0;
 	puVar9 = local_10;
 	puVar3 = puVar9;
-	while (pRVar10 = g_pStrippBufLastPos, puVar3 != (undefined*)0x0) {
+	while (peVar10 = g_pStrippBufLastPos, puVar3 != (undefined*)0x0) {
 		*puVar9 = 0;
 		puVar9 = puVar9 + 1;
 		puVar8 = puVar8 + -1;
 		puVar3 = (undefined*)puVar8;
 	}
-	for (; ((uint)pRVar10 & 0xf) != 0; pRVar10 = pRVar10 + 1) {
+	for (; ((uint)peVar10 & 0xf) != 0; peVar10 = peVar10 + 1) {
 	}
-	pBuffer->pCommandBufferTexture = (int)STORE_SECTION(pRVar10);
+	pBuffer->pCommandBufferTexture = STORE_SECTION(peVar10);
 	pBuffer->commandBufferTextureSize = 0;
 	uVar13 = 0;
 	do {
 		if (pBuffer->count_0x0 == 0) {
 			if (param_2 == true) {
-				pRVar10->cmdA = 0xe10000001;
-				pRVar10->cmdB = 0;
-				*(undefined4*)&pRVar10->cmdB = 0;
-				*(undefined4*)((ulong)&pRVar10->cmdB + 4) = 0x40003dc;
-				*(undefined4*)&pRVar10[1].cmdA = 0;
-				*(undefined4*)((ulong)&pRVar10[1].cmdA + 4) = 0x14000000;
-				pRVar10[1].cmdB = 0;
+				peVar10->cmdA = 0xe10000001;
+				peVar10->cmdB = 0;
+				*(undefined4*)&peVar10->cmdB = 0;
+				*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
+				*(undefined4*)&peVar10[1].cmdA = 0;
+				*(undefined4*)((ulong)&peVar10[1].cmdA + 4) = 0x14000000;
+				peVar10[1].cmdB = 0;
 				pBuffer->commandBufferTextureSize = 2;
-				pRVar10 = pRVar10 + 2;
+				peVar10 = peVar10 + 2;
 			}
 			else {
-				pRVar10->cmdA = 0xe10000000;
-				pRVar10->cmdB = 0;
+				peVar10->cmdA = 0xe10000000;
+				peVar10->cmdB = 0;
 				pBuffer->commandBufferTextureSize = 1;
-				pRVar10 = pRVar10 + 1;
+				peVar10 = peVar10 + 1;
 			}
 		}
 		else {
@@ -7639,113 +7378,114 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 			local_1c = gVRAMBuffers[uVar13];
 			local_18 = local_40 + local_1c;
 			for (uVar11 = 0; uVar11 < pBuffer->count_0x0; uVar11 = uVar11 + 1) {
-				IMPLEMENTATION_GUARD();
-				iVar1 = *(int*)(&pBuffer[1].count_0x0 + uVar11 * 4);
-				pLAY = (TextureData_LAY_Internal*)(iVar1 + 0x10);
-				if ((pLAY != (TextureData_LAY_Internal*)0x0) && (*(short*)(iVar1 + 0x2c) != 0)) {
-					iVar14 = *(int*)(iVar1 + 0x30) + 0x10;
+				ed_hash_code* pHash = (ed_hash_code*)(pBuffer + 1);
+				iVar1 = (ed_g2d_layer_header*)LOAD_SECTION(pHash[uVar11].field_0x8);
+				pLAY = &iVar1->body;
+				if ((pLAY != (ed_g2d_layer*)0x0) && ((iVar1->body).field_0x1c != 0)) {
+					pTVar14 = &((TextureData_TEX*)LOAD_SECTION((iVar1->body).pTex))->body;
 				}
-				if (iVar14 == 0) {
+				if (pTVar14 == (TextureData_TEX_Internal*)0x0) {
 					if (param_2 == true) {
-						pRVar10->cmdA = 0xe10000001;
-						pRVar10->cmdB = 0;
-						*(undefined4*)&pRVar10->cmdB = 0;
-						*(undefined4*)((ulong)&pRVar10->cmdB + 4) = 0x40003dc;
-						*(undefined4*)&pRVar10[1].cmdA = 0;
-						*(undefined4*)((ulong)&pRVar10[1].cmdA + 4) = 0x14000000;
-						pRVar10[1].cmdB = 0;
+						peVar10->cmdA = 0xe10000001;
+						peVar10->cmdB = 0;
+						*(undefined4*)&peVar10->cmdB = 0;
+						*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
+						*(undefined4*)&peVar10[1].cmdA = 0;
+						*(undefined4*)((ulong)&peVar10[1].cmdA + 4) = 0x14000000;
+						peVar10[1].cmdB = 0;
 						pBuffer->commandBufferTextureSize = 2;
-						pRVar10 = pRVar10 + 2;
+						peVar10 = peVar10 + 2;
 					}
 					else {
-						pRVar10->cmdA = 0xe10000000;
-						pRVar10->cmdB = 0;
+						peVar10->cmdA = 0xe10000000;
+						peVar10->cmdB = 0;
 						pBuffer->commandBufferTextureSize = 1;
-						pRVar10 = pRVar10 + 1;
+						peVar10 = peVar10 + 1;
 					}
 				}
 				else {
-					if (*(int*)(iVar14 + 8) != 0) {
-						puVar12 = (ushort*)(*(int*)(*(int*)(iVar14 + 8) + 8) + 0x10);
+					pTVar1 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((pTVar14->after).pHASH_Internal);
+					if (pTVar1 != (TextureData_HASH_Internal_PA32*)0x0) {
+						peVar12 = &((TextureData_PA32*)LOAD_SECTION(pTVar1->pPA32))->body;
 					}
-					if (puVar12 == (ushort*)0x0) {
+					if (peVar12 == (ed_g2d_bitmap*)0x0) {
 						if (param_2 == true) {
-							pRVar10->cmdA = 0xe10000001;
-							pRVar10->cmdB = 0;
-							*(undefined4*)&pRVar10->cmdB = 0x11000000;
-							*(undefined4*)((ulong)&pRVar10->cmdB + 4) = 0x40003dc;
-							*(undefined4*)&pRVar10[1].cmdA = 0;
-							*(undefined4*)((ulong)&pRVar10[1].cmdA + 4) = 0x14000000;
-							pRVar10[1].cmdB = 0x11000000;
+							peVar10->cmdA = 0xe10000001;
+							peVar10->cmdB = 0;
+							*(undefined4*)&peVar10->cmdB = 0x11000000;
+							*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
+							*(undefined4*)&peVar10[1].cmdA = 0;
+							*(undefined4*)((ulong)&peVar10[1].cmdA + 4) = 0x14000000;
+							peVar10[1].cmdB = 0x11000000;
 							pBuffer->commandBufferTextureSize = 2;
-							pRVar10 = pRVar10 + 2;
+							peVar10 = peVar10 + 2;
 						}
 						else {
-							pRVar10->cmdA = 0xe10000000;
-							pRVar10->cmdB = 0;
+							peVar10->cmdA = 0xe10000000;
+							peVar10->cmdB = 0;
 							pBuffer->commandBufferTextureSize = 1;
-							pRVar10 = pRVar10 + 1;
+							peVar10 = peVar10 + 1;
 						}
 					}
 					else {
 						IMPLEMENTATION_GUARD(
-						local_8 = (uint)*puVar12;
-						fVar15 = (float)(uint)puVar12[1];
+						local_8 = (uint)peVar12->width;
+						fVar15 = (float)(uint)peVar12->height;
 						if (fVar15 < 2.147484e+09) {
 							local_4 = (uint)fVar15;
 						}
 						else {
 							local_4 = (int)(fVar15 - 2.147484e+09) | 0x80000000;
 						}
-						if (puVar12[2] == 0x18) {
+						if (peVar12->psm == 0x18) {
 							local_40 = local_8 * local_4 * 4 >> 8;
 						}
 						else {
-							local_40 = (uint)puVar12[2] * local_8 * local_4 >> 0xb;
+							local_40 = (uint)peVar12->psm * local_8 * local_4 >> 0xb;
 						}
-						uVar2 = DAT_00449350;
-						if (pLAY != (TextureData_LAY_Internal*)0x0) {
-							uVar2 = DAT_00449350 | pLAY->field_0x0;
-							pLAY->field_0x0 = uVar2;
+						uVar2 = gLayerProp;
+						if (pLAY != (ed_g2d_layer*)0x0) {
+							uVar2 = gLayerProp | pLAY->flags_0x0;
+							pLAY->flags_0x0 = uVar2;
 						}
 						if (param_2 == true) {
-							pRVar10->cmdA = 0xe1000000b;
-							pRVar10->cmdB = 0;
-							*(undefined4*)&pRVar10->cmdB = 0x40003dc;
-							*(undefined4*)((int)&pRVar10->cmdB + 4) = 0x6c0a03dc;
+							peVar10->cmdA = 0xe1000000b;
+							peVar10->cmdB = 0;
+							*(undefined4*)&peVar10->cmdB = 0x40003dc;
+							*(undefined4*)((int)&peVar10->cmdB + 4) = 0x6c0a03dc;
 						}
 						else {
-							pRVar10->cmdA = 0xe1000000a;
-							pRVar10->cmdB = 0;
+							peVar10->cmdA = 0xe1000000a;
+							peVar10->cmdB = 0;
 						}
-						pRVar10[1].cmdA = 0x1000000000008009;
-						pRVar10[1].cmdB = 0xe;
+						peVar10[1].cmdA = 0x1000000000008009;
+						peVar10[1].cmdB = 0xe;
 						bVar4 = ed3DFXIsTrue(pLAY);
 						if (bVar4 == false) {
-							uVar7 = ed3DSetBasicTexPacket(pRVar10 + 2, &local_20, puVar12, pLAY);
+							uVar7 = ed3DSetBasicTexPacket(peVar10 + 2, &local_20, peVar12, pLAY);
 						}
 						else {
 							puVar5 = (undefined4*)ed3DGetFxConfigFromFlag(uVar2);
 							local_30 = puVar5[1];
 							local_2c = *puVar5;
 							local_28 = *puVar5;
-							uVar7 = ed3DSetBasicTexPacket(pRVar10 + 2, &local_30, puVar12, pLAY);
+							uVar7 = ed3DSetBasicTexPacket(peVar10 + 2, &local_30, peVar12, pLAY);
 						}
 						puVar6 = (ulong*)ed3DSetAlphaPacket(uVar7, (uVar2 & 0x2000) != 0, pLAY, uVar11);
 						*puVar6 = (long)(int)gMipmapK << 0x20 |
-							(long)(int)(puVar12[3] - 1) << 2 | 0x60U | (ulong)gMipmapL << 0x13;
+							(long)(int)(peVar12->field_0x6 - 1) << 2 | 0x60U | (ulong)gMipmapL << 0x13;
 						puVar6[1] = 0x14;
-						puVar6 = ed3DSetMipmapPacket(puVar6 + 2, (int)&local_20, puVar12);
-						pRVar10 = (edpkt_data*)(puVar6 + 2);
-						*puVar6 = (ulong)((pLAY->field_0x0 & 1) == 0) | (ulong)((pLAY->field_0x0 & 2) == 0) << 2;
+						puVar6 = ed3DSetMipmapPacket(puVar6 + 2, (int)&local_20, (ushort*)peVar12);
+						peVar10 = (edpkt_data*)(puVar6 + 2);
+						*puVar6 = (ulong)((pLAY->flags_0x0 & 1) == 0) | (ulong)((pLAY->flags_0x0 & 2) == 0) << 2;
 						puVar6[1] = 8;
 						if (param_2 == true) {
-							*(undefined4*)&pRVar10->cmdA = 0;
+							*(undefined4*)&peVar10->cmdA = 0;
 							*(undefined4*)((int)puVar6 + 0x14) = 0x14000000;
 							*(undefined4*)(puVar6 + 3) = 0;
 							*(undefined4*)((int)puVar6 + 0x1c) = 0;
 							pBuffer->commandBufferTextureSize = 0xc;
-							pRVar10 = (edpkt_data*)(puVar6 + 4);
+							peVar10 = (edpkt_data*)(puVar6 + 4);
 						}
 						else {
 							pBuffer->commandBufferTextureSize = 0xb;
@@ -7759,12 +7499,37 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 		}
 		uVar13 = uVar13 + 1;
 	} while (uVar13 < 2);
-	g_pStrippBufLastPos = pRVar10;
+	g_pStrippBufLastPos = peVar10;
 	return;
 }
 
 int gLibInitialized = 0;
 uint gZbuf_ScreenZMax = 0;
+
+static bool bAlreadyInit;
+
+int gFlagOptionVU1[3];
+
+void ed3DOptionFlagReset(void)
+{
+	gFlagOptionVU1[0] = -1;
+	gFlagOptionVU1[1] = -1;
+	gFlagOptionVU1[2] = -1;
+	return;
+}
+
+void ed3DFlushInit()
+{
+	ed3DOptionFlagReset();
+}
+
+undefined* gClusterTabList = NULL;
+
+void ed3DClusterInit(void)
+{
+	gClusterTabList = (undefined*)edMemAlloc(TO_HEAP(H_MAIN), (uint)(ushort)ged3DConfig.clusterTabListSize * sizeof(undefined*));
+	return;
+}
 
 void ed3DInit(void)
 {
@@ -7775,24 +7540,28 @@ void ed3DInit(void)
 	edDebugPrintf(s_ed3D_Initialsation_004333a0);
 	ed3DPrepareVRAMBuf();
 	gLibInitialized = 1;
-	gManager3D = edListNew(1, ged3DConfig.g3dManagerCount, TO_HEAP(H_MAIN));
-	CameraPanMasterHeaderB_004491d4 = edListNew(1, ged3DConfig.g2dManagerCount, TO_HEAP(H_MAIN));
-	gpG3D = (ed_g3d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.g3dManagerCount * sizeof(ed_g3d_manager));
+	gManager3D[0] = edListNew(1, ged3DConfig.g3dManagerCount, TO_HEAP(H_MAIN));
+	gManager3D[1] = edListNew(1, ged3DConfig.g2dManagerCount, TO_HEAP(H_MAIN));
+#ifdef EDITOR_BUILD
+	edListSetName(gManager3D[0], "gManager3D[3D]");
+	edListSetName(gManager3D[1], "gManager3D[2D]");
+#endif
+	gpG3D = (ed_g3d_manager*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.g3dManagerCount * sizeof(ed_g3d_manager));
 	memset(gpG3D, 0, ged3DConfig.g3dManagerCount * sizeof(ed_g3d_manager));
-	gpG2D = (ed_g2d_manager*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.g2dManagerCount * sizeof(ed_g2d_manager));
+	gpG2D = (ed_g2d_manager*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.g2dManagerCount * sizeof(ed_g2d_manager));
 	memset(gpG2D, 0, ged3DConfig.g2dManagerCount * sizeof(ed_g2d_manager));
-	//pTVar1 = TexturePool_004491cc;
+	pTVar1 = gpG2D;
 	gNbG3D = 0;
 	gNbG2D = 0;
-	//*(undefined8*)TexturePool_004491cc = 0x3fff00000000;
-	//*(undefined8*)&pTVar1->textureHeaderStart = 0x50;
-	//*(undefined8*)&pTVar1->textureBufferStart = 0x7ffe000000000;
+	*(undefined8*)gpG2D = 0x3fff00000000;
+	*(undefined8*)&pTVar1->textureHeaderStart = 0x50;
+	*(undefined8*)&pTVar1->pT2DA = 0x7ffe000000000;
 	memset(&ged3DFXConfig, 0, sizeof(ed3DFXConfig) * 16);
-	gScene3D = (ed_3D_Scene*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(ed_3D_Scene) + 1);
+	gScene3D = (ed_3D_Scene*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.sceneCount * sizeof(ed_3D_Scene) + 1);
 	memset(gScene3D, 0, ged3DConfig.sceneCount * sizeof(ed_3D_Scene));
-	gNodeCluster = edListCreateNodesTable(ged3DConfig.meshDisplayListInternalCount + ged3DConfig.sceneCount * 3, TO_HEAP(H_MAIN));
-	g_MeshDisplayListInternal_00449380 = (DisplayListInternalMesh*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshDisplayListInternalCount * sizeof(DisplayListInternalMesh));
-	memset(g_MeshDisplayListInternal_00449380, 0, ged3DConfig.meshDisplayListInternalCount * sizeof(DisplayListInternalMesh));
+	gNodeCluster = edListCreateNodesTable(ged3DConfig.maxClusterCount + ged3DConfig.sceneCount * 3, TO_HEAP(H_MAIN));
+	gCluster = (edCluster*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.maxClusterCount * sizeof(edCluster));
+	memset(gCluster, 0, ged3DConfig.maxClusterCount * sizeof(edCluster));
 	for (uVar2 = 0; uVar2 < ged3DConfig.sceneCount; uVar2 = uVar2 + 1) {
 		edListLink(&gScene3D[uVar2].headerB, gNodeCluster, 0, 0);
 		edListLink(&gScene3D[uVar2].headerA, gNodeCluster, 0, 0);
@@ -7807,11 +7576,11 @@ void ed3DInit(void)
 	if (ged3DConfig.meshHeaderCountBAlt < 0x180) {
 		ged3DConfig.meshHeaderCountBAlt = ged3DConfig.meshHeaderCountBAlt + 0x180;
 	}
-	g_pStripBuf = (edpkt_data*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountBAlt);
+	g_pStripBuf = (edpkt_data*)edMemAlloc(TO_HEAP(H_MAIN), ged3DConfig.meshHeaderCountBAlt);
 	g_pStrippBufMaxPos = (edpkt_data*)(((char*)g_pStripBuf) + ged3DConfig.meshHeaderCountBAlt);
 	size = (ged3DConfig.field_0x28 * 2 + ged3DConfig.field_0x18 + 0x8c0 + ged3DConfig.matrixBufferCount * 0x38 + ged3DConfig.field_0x34 * 8) * 0x10;
 	g_pStrippBufLastPos = g_pStripBuf;
-	ed3D_Allocator_00449248.base = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
+	ed3D_Allocator_00449248.base = (char*)edMemAlloc(TO_HEAP(H_MAIN), size);
 	memset(ed3D_Allocator_00449248.base, 0, size);
 	ed3D_Allocator_00449248.current = ed3D_Allocator_00449248.base + size;
 	ed3D_Allocator_00449248.end = ed3D_Allocator_00449248.base;
@@ -7819,14 +7588,14 @@ void ed3DInit(void)
 	ed3D_SubAllocator_004491b8.end = ed3D_SubAllocator_004491b8.base + 16000;
 	ed3D_SubAllocator_004491b8.current = ed3D_SubAllocator_004491b8.base;
 	ed3DListBufferInit(ged3DConfig.materialBufferCount, ged3DConfig.matrixBufferCount);
-	//ed3DClusterInit();
+	ed3DClusterInit();
 	ed3DPrimListInit(ged3DConfig.materialBufferCount, ged3DConfig.meshHeaderCountB);
 	ed3DDMAInit(ged3DConfig.field_0x18 + ged3DConfig.field_0x34 * 8, ged3DConfig.field_0x28);
-	//ed3DFlushInit();
+	ed3DFlushInit();
 	ed3DFlushTexInit();
-	//if (DAT_004491f8 == '\0') {
-	//	DAT_004491f8 = '\x01';
-	//}
+	if (bAlreadyInit == 0) {
+		bAlreadyInit = 1;
+	}
 	gCurViewportUsed = (ed_viewport*)0x0;
 	ed3DVU1BufferInit();
 	ed3DFlushListInit();
@@ -7834,18 +7603,18 @@ void ed3DInit(void)
 	ed3DPrimlistMatrixBufferReset();
 	ed3DShadowResetPrimList();
 	ed3DHierarchyManagerInit();
-	ed3DPrepareMaterial(ed_g2d_material_ARRAY_0048c370 + 1, true);
-	ed3DPrepareMaterial(ed_g2d_material_ARRAY_0048c370, true);
-	ed3DPrepareMaterial(ed_g2d_material_ARRAY_0048c370 + 3, true);
-	ed3DPrepareMaterial(ed_g2d_material_ARRAY_0048c370 + 2, true);
-	ed3DPrepareMaterial(ed_g2d_material_ARRAY_0048c370 + 5, true);
-	ed3DPrepareMaterial(ed_g2d_material_ARRAY_0048c370 + 4, true);
+	ed3DPrepareMaterial(&gDefault_Material_Gouraud_Cluster, true);
+	ed3DPrepareMaterial(&gDefault_Material_Gouraud, true);
+	ed3DPrepareMaterial(&gDefault_Material_Flat_Cluster, true);
+	ed3DPrepareMaterial(&gDefault_Material_Flat, true);
+	ed3DPrepareMaterial(&gMaterial_Render_Zbuffer_Only_Cluster, true);
+	ed3DPrepareMaterial(&gMaterial_Render_Zbuffer_Only, true);
 	gZbuf_ScreenZMax = 0xffffffff;
 	g_pStripBufResetPos = g_pStrippBufLastPos;;
 	if (ged3DConfig.bEnableProfile == 1) {
-		IMPLEMENTATION_GUARD();
-	//	gIDProfileRender = edProfileNew(1, 0, 0, 0x80, s_3DRend_004333b8);
-	//	gIDProfileFlush = edProfileNew(1, 0x80, 0, 0, s_3DFlush_004333c0);
+		IMPLEMENTATION_GUARD(
+		gIDProfileRender = edProfileNew(1, 0, 0, 0x80, s_3DRend_004333b8);
+		gIDProfileFlush = edProfileNew(1, 0x80, 0, 0, s_3DFlush_004333c0);)
 	}
 	edDebugPrintf(g_szed3DAllocInfo_004333d0,
 		ged3DConfig.matrixBufferCount * 0x220 +
@@ -8236,14 +8005,14 @@ char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int index)
 {
 	char* pcVar1;
 	TextureData_TEX_Internal* iVar2;
-	ed_g2d_layer* pLayerSection;
+	ed_g2d_layer_header* pLayerSection;
 
 	iVar2 = (TextureData_TEX_Internal*)0x0;
-	ed_g2d_material_After* pAfter = &((ed_g2d_material_After*)(pMAT_Internal + 1))[index];
-	pLayerSection = (ed_g2d_layer*)LOAD_SECTION(pAfter->pLAY);
+	int* hash = (int*)(pMAT_Internal + 1);
+	pLayerSection = (ed_g2d_layer_header*)LOAD_SECTION(hash[index]);
 
 	pcVar1 = (char*)0x0;
-	if ((pLayerSection != (ed_g2d_layer*)0xfffffff0) && (pLayerSection->body.field_0x1c != 0)) {
+	if ((pLayerSection != (ed_g2d_layer_header*)0xfffffff0) && (pLayerSection->body.field_0x1c != 0)) {
 		iVar2 = &((TextureData_TEX*)LOAD_SECTION(pLayerSection->body.pTex))->body;
 	}
 	if (iVar2 == (TextureData_TEX_Internal*)0x0) {
@@ -8268,7 +8037,7 @@ void* edDListInitMaterial(edDList_material* outObj, TextureData_HASH_Internal_MA
 	pvVar1 = memset(outObj, 0, sizeof(edDList_material));
 	outObj->pMAT = &(((TextureData_MAT*)LOAD_SECTION(pHASH_MAT->pMAT))->body);
 	while (true) {
-		if ((*(long*)(gBankMaterial + counter) == 0) || (g_DisplayListObjCount_004250e0 - 1U <= counter)) break;
+		if ((*(long*)(gBankMaterial + counter) == 0) || (edDlistConfig.field_0x10 - 1U <= counter)) break;
 		counter = counter + 1;
 	}
 	someGlobalBuffer = gBankMaterial + counter;
@@ -8599,7 +8368,7 @@ void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* 
 			uVar7 = 0;
 			do {
 				uVar6 = uVar7 + 1 & 0xffff;
-				uVar8 = uVar8 + pCDQU->field_0x10[uVar7 - 8];
+				uVar8 = uVar8 + pCDQU->aClusterStripCounts[uVar7 - 8];
 				uVar7 = uVar6;
 			} while (uVar6 < 0xd);
 			INT_0044935c = 0x60;
@@ -8661,7 +8430,7 @@ LAB_002a40c4:
 		offset = (uVar1 + 1) * 8;
 	}
 	for (piVar4 = (int*)edChunckGetFirst
-	((char*)((ulong)pCDQU->field_0x10 + offset + 0x30), pCDQU->field_0x0 + iVar3 + -0x10);
+	((char*)((ulong)pCDQU->aClusterStripCounts + offset + 0x30), pCDQU->field_0x0 + iVar3 + -0x10);
 		piVar4 != (int*)0x0; piVar4 = edChunckGetNext((char*)piVar4, (int*)(pCDQU->field_0x0 + iVar3 + -0x10))) {
 		offset = *piVar4;
 		if (offset == 0x41525053) {
@@ -8733,8 +8502,7 @@ void ed3DPrepareClusterALL(bool param_1, ed_g3d_manager* meshInfoObj, TextureInf
 			}
 		}
 	}
-	meshInfoObj->fileLengthB =
-		meshInfoObj->fileLengthB + (int)((int)g_pStrippBufLastPos - (int)pCommandBuffer);
+	meshInfoObj->fileLengthB = meshInfoObj->fileLengthB + (int)((ulong)g_pStrippBufLastPos - (ulong)pCommandBuffer);
 	return;
 }
 
@@ -8753,7 +8521,7 @@ PACK( struct MeshTransformObjData_Packed {
 	short field_0x6;
 });
 
-PACK( struct TextureData_HIER_Internal {
+PACK( struct ed_g3d_hierarchy {
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
 	Hash_8 hash;
@@ -8775,27 +8543,27 @@ PACK( struct TextureData_HIER_Internal {
 	MeshTransformObjData_Packed aSubArray[4];
 });
 
-PACK( struct TextureData_HIER {
+PACK( struct ed_Chunck {
 	char field_0x0[4];
 	int field_0x4;
 	int field_0x8;
 	int field_0xc;
-	TextureData_HIER_Internal body;
+	ed_g3d_hierarchy body;
 });
 
-int ed3DPrepareHierarchy(TextureData_HIER_Internal* pHIER, TextureInfo* pTextureInfo)
+int ed3DPrepareHierarchy(ed_g3d_hierarchy* pHIER, TextureInfo* pTextureInfo)
 {
 	short sVar1;
 	ushort uVar2;
 	int* piVar3;
 	int iVar4;
 	char* pBuffStart;
-	TextureData_HIER_Internal* pTVar5;
-	TextureData_HIER* pHeader;
+	ed_g3d_hierarchy* pTVar5;
+	ed_Chunck* pHeader;
 
 	if ((pHIER->flags_0x9e & 4) == 0) {
 		pTVar5 = pHIER + 1;
-		pHeader = (TextureData_HIER*)((char*)pHIER - 0x10);
+		pHeader = (ed_Chunck*)((char*)pHIER - 0x10);
 		if (pHeader->field_0xc != pHeader->field_0x8) {
 			pBuffStart = ((char*)pHIER) + (pHeader->field_0x8 - 0x10);
 			iVar4 = *(int*)(pBuffStart + 8);
@@ -8821,10 +8589,10 @@ int ed3DPrepareHierarchy(TextureData_HIER_Internal* pHIER, TextureInfo* pTexture
 					//ed3DPrepareObject((int)pHIER, (uint*)(piVar3 + 4), pTextureInfo);
 				}
 			}
-			pTVar5 = (TextureData_HIER_Internal*)&pTVar5->field_0x8;
+			pTVar5 = (ed_g3d_hierarchy*)&pTVar5->field_0x8;
 		}
 		if (pHIER->field_0x90 != 0) {
-			//ed3DPrepareHierarchy((TextureData_HIER_Internal*)(pHIER->field_0x90 + 0x10), pTextureInfo);
+			//ed3DPrepareHierarchy((ed_g3d_hierarchy*)(pHIER->field_0x90 + 0x10), pTextureInfo);
 		}
 		iVar4 = 1;)
 	}
@@ -8845,7 +8613,7 @@ void ed3DPrepareHierarchyALL(ed_g3d_manager* pMeshInfo, TextureInfo* pTextureInf
 	pcVar3 = pcVar1 + 0x20;
 	uVar2 = edChunckGetNb(pcVar1 + 0x10, pcVar1 + *(int*)(pcVar1 + 8));
 	for (uVar4 = 0; uVar4 < (uVar2 & 0xffff) - 1; uVar4 = uVar4 + 1) {
-		ed3DPrepareHierarchy((TextureData_HIER_Internal*)(((char*)LOAD_SECTION(*(int*)(pcVar3 + 8))) + 0x10), pTextureInfo);
+		ed3DPrepareHierarchy((ed_g3d_hierarchy*)(((char*)LOAD_SECTION(*(int*)(pcVar3 + 8))) + 0x10), pTextureInfo);
 		pcVar3 = pcVar3 + 0x10;
 	}
 	return;
@@ -8916,7 +8684,7 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 				edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 				size = *(int*)(meshInfoObj->GEOM + 8);
 				size_00 = size + *(int*)(meshInfoObj->GEOM + size + 8);
-				fileBuffer = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size_00);
+				fileBuffer = (char*)edMemAlloc(TO_HEAP(H_MAIN), size_00);
 				memcpy(fileBuffer, (void*)meshInfoObj->GEOM, size_00);
 				edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 				*outInt = (fileLength - size_00) - fileLength;
@@ -8958,7 +8726,7 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 	return meshInfoObj;
 }
 
-int INT_004493a8 = 0;
+int gLoadedClusterCount = 0;
 
 PACK( struct MeshData_ANHR {
 	char field_0x0[4];
@@ -9029,7 +8797,7 @@ void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo)
 	pMVar3 = (ulong*)(pcVar1 + 2);
 	uVar1 = edChunckGetNb((char*)(pcVar1 + 1), (char*)pcVar1 + pcVar1->totalSize);
 	for (uVar2 = 0; uVar2 < (uVar1 & 0xffff) - 1; uVar2 = uVar2 + 1) {
-		TextureData_HIER* p = (TextureData_HIER*)LOAD_SECTION(*(pMVar3 + 1));
+		ed_Chunck* p = (ed_Chunck*)LOAD_SECTION(*(pMVar3 + 1));
 		p->body.hash.number = *pMVar3;
 		pMVar3 = pMVar3 + 2;
 	}
@@ -9038,86 +8806,83 @@ void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo)
 
 int g_LoadedStaticMeshCount_004493a4 = 0;
 
-MeshTransformParent* ed3DHierarchyAddNode
-	(edLIST* pCameraPanMasterHeader, MeshTransformData* pSubSubObjArray,
-		MeshTransformParent* pCameraPanStaticArray, TextureData_HIER_Internal* pHIER_Internal, MeshTransformData* param_5)
-
+edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_hierarchy* p3DA, ed_g3d_hierarchy* p3DB)
 {
-	MeshTransformParent* pMVar1;
+	edNODE* pMVar1;
 	undefined8 uVar2;
-	MeshTransformData* pCVar8;
+	ed_3d_hierarchy_node* pCVar8;
 	float fVar3;
 	float fVar4;
 	int iVar5;
 	edF32MATRIX4* pMVar6;
 	MeshTransformObjData_Packed* pfVar7;
-	MeshTransformData* pMVar8;
+	ed_3d_hierarchy_node* pMVar8;
 	MeshTransformObjData* pcVar9;
 	edF32MATRIX4* pMVar10;
 	edF32MATRIX4* pMVar11;
 	edF32MATRIX4* pTVar12;
 	uint uVar13;
-	MeshTransformData* pMVar14;
+	ed_3d_hierarchy_node* pMVar14;
 	ushort* puVar15;
-	MeshTransformParent* pCVar1;
+	edNODE* pNewNode;
 	edNODE_MANAGER* pCameraPanHeader;
 
-	MY_LOG("ed3DHierarchyAddNode %s\n", pHIER_Internal->hash.name);
+	MY_LOG("ed3DHierarchyAddNode %s", p3DA->hash.name);
 
 	iVar5 = 4;
-	pCameraPanHeader = pCameraPanMasterHeader->pCameraPanHeader_0xc;
-	pMVar1 = pCameraPanMasterHeader->pCameraPanStatic_0x8;
-	pCameraPanHeader->usedCount = pCameraPanHeader->usedCount + 1;
-	pCameraPanMasterHeader->count_0x14 = pCameraPanMasterHeader->count_0x14 + 1;
-	pCVar1 = (MeshTransformParent*)pCameraPanHeader->pNextFree;
-	uVar13 = (uint)((ulong)pCVar1 - (ulong)pCameraPanStaticArray) >> 4;
-	pCameraPanHeader->pNextFree = (MeshTransformSpecial*)pCVar1->pNext;
-	pMVar14 = pSubSubObjArray + uVar13;
-	pCVar1->bLoaded = 0;
-	pCVar1->pLink_0x8 = pMVar1;
-	pCVar1->pNext = pMVar1->pNext;
-	pMVar1->pNext->pLink_0x8 = pCVar1;
-	pMVar1->pNext = pCVar1;
+	pCameraPanHeader = (edNODE_MANAGER*)pList->pData;
+	pMVar1 = (pList)->pNext;
+	pCameraPanHeader->linkCount = pCameraPanHeader->linkCount + 1;
+	pList->nodeCount = pList->nodeCount + 1;
+	pNewNode = pCameraPanHeader->pNodeHead;
+	uVar13 = (uint)((ulong)pNewNode - (ulong)pNode) >> 4;
+	pCameraPanHeader->pNodeHead = pNewNode->pPrev;
+	pMVar14 = pHierNode + uVar13;
+	pNewNode->header.typeField.type = 0;
+	pNewNode->pNext = pMVar1;
+	pNewNode->pPrev = pMVar1->pPrev;
+	pMVar1->pPrev->pNext = pNewNode;
+	pMVar1->pPrev = pNewNode;
 	g_LoadedStaticMeshCount_004493a4 = g_LoadedStaticMeshCount_004493a4 + 1;
-	pTVar12 = &pHIER_Internal->transformA;
+	pTVar12 = &p3DA->transformA;
 	pMVar8 = pMVar14;
 
 	(pMVar8->base).transformA = *pTVar12;
 		
-	pMVar10 = &pHIER_Internal->transformB;
-	pMVar6 = &pSubSubObjArray[uVar13].base.transformB;
+	pMVar10 = &p3DA->transformB;
+	pMVar6 = &pHierNode[uVar13].base.transformB;
 	iVar5 = 4;
 
 	pMVar11 = pMVar6;
 
 	*pMVar11 = *pMVar10;
-	pCVar8 = pSubSubObjArray + uVar13;
+	pCVar8 = pHierNode + uVar13;
 	puVar15 = &(pCVar8->base).flags_0x9e;
-	pMVar11 = &g_IdentityMatrix;
+	pMVar11 = &gF32Matrix4Unit;
 	iVar5 = 8;
-	(pCVar8->base).hash = pHIER_Internal->hash;
-	(pCVar8->base).field_0x88 = pHIER_Internal->field_0x88;
-	(pCVar8->base).field_0x89 = pHIER_Internal->field_0x89;
-	(pCVar8->base).bRenderShadow = pHIER_Internal->bRenderShadow;
-	(pCVar8->base).pShadowAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(pHIER_Internal->pShadowAnimMatrix);
-	(pCVar8->base).pLinkTransformData = (MeshTransformData*)LOAD_SECTION(pHIER_Internal->pLinkTransformData);
-	(pCVar8->base).field_0x94 = (undefined*)LOAD_SECTION(pHIER_Internal->field_0x94);
-	(pCVar8->base).pTextureInfo = (undefined*)LOAD_SECTION(pHIER_Internal->pTextureInfo);
-	(pCVar8->base).count_0x9c = pHIER_Internal->count_0x9c;
-	(pCVar8->base).flags_0x9e = pHIER_Internal->flags_0x9e;
-	(pCVar8->base).pLightingMatrixFuncObj_0xa0 = (LightingMatrixFuncObj*)LOAD_SECTION(pHIER_Internal->pLightingMatrixFuncObj_0xa0);
-	(pCVar8->base).field_0xa4 = (edF32MATRIX4*)LOAD_SECTION(pHIER_Internal->field_0xa4);
-	(pCVar8->base).pAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(pHIER_Internal->pAnimMatrix);
-	(pCVar8->base).subMeshParentCount_0xac = pHIER_Internal->subMeshParentCount_0xac;
-	(pCVar8->base).size_0xae = pHIER_Internal->size_0xae;
-	(pCVar8->base).GlobalAlhaON = *(char*)&pHIER_Internal->field_0xaf;
+	(pCVar8->base).hash = p3DA->hash;
+	(pCVar8->base).field_0x88 = p3DA->field_0x88;
+	(pCVar8->base).field_0x89 = p3DA->field_0x89;
+	(pCVar8->base).bRenderShadow = p3DA->bRenderShadow;
+	(pCVar8->base).pShadowAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(p3DA->pShadowAnimMatrix);
+	(pCVar8->base).pLinkTransformData = (ed_g3d_hierarchy*)LOAD_SECTION(p3DA->pLinkTransformData);
+	(pCVar8->base).field_0x94 = (undefined*)LOAD_SECTION(p3DA->field_0x94);
+	(pCVar8->base).pTextureInfo = (undefined*)LOAD_SECTION(p3DA->pTextureInfo);
+	(pCVar8->base).count_0x9c = p3DA->count_0x9c;
+	(pCVar8->base).flags_0x9e = p3DA->flags_0x9e;
+	(pCVar8->base).pHierarchySetup = (ed_3d_hierarchy_setup*)LOAD_SECTION(p3DA->pLightingMatrixFuncObj_0xa0);
+	(pCVar8->base).field_0xa4 = (edF32MATRIX4*)LOAD_SECTION(p3DA->field_0xa4);
+	(pCVar8->base).pAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(p3DA->pAnimMatrix);
+	(pCVar8->base).subMeshParentCount_0xac = p3DA->subMeshParentCount_0xac;
+	(pCVar8->base).size_0xae = p3DA->size_0xae;
+	(pCVar8->base).GlobalAlhaON = *(char*)&p3DA->field_0xaf;
 
 	*pMVar6 = *pMVar11;
 
 	iVar5 = 0;
 	do {
-		if (iVar5 < (int)(uint)pHIER_Internal->count_0x9c) {
-			pfVar7 = pHIER_Internal->aSubArray + iVar5;
+		if (iVar5 < (int)(uint)p3DA->count_0x9c) {
+			pfVar7 = p3DA->aSubArray + iVar5;
 			pcVar9 = pMVar14->aSubArray + iVar5;
 			pcVar9->pObj = (char*)LOAD_SECTION(pfVar7->pObj);
 			pcVar9->field_0x4 = pfVar7->field_0x4;
@@ -9132,226 +8897,214 @@ MeshTransformParent* ed3DHierarchyAddNode
 	(pCVar8->base).bRenderShadow = 0;
 	(pCVar8->base).GlobalAlhaON = -1;
 	(pCVar8->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
-	(pCVar8->base).pLinkTransformData = param_5;
-	(pCVar8->base).field_0x94 = (undefined*)param_5;
-	pMVar8 = pSubSubObjArray + uVar13;
+	(pCVar8->base).pLinkTransformData = p3DB;
+	(pCVar8->base).field_0x94 = (undefined*)p3DB;
+	pMVar8 = pHierNode + uVar13;
 	if ((pCVar8->base).subMeshParentCount_0xac == 0) {
 		*puVar15 = *puVar15 | 8;
 	}
 	(pMVar8->base).flags_0x9e = (pMVar8->base).flags_0x9e & 0xfffc;
 	(pMVar8->base).flags_0x9e = (pMVar8->base).flags_0x9e | 0x800;
 	ed3DSetSceneRender(pMVar8, 1);
-	pCVar1->pMeshTransformData = (DisplayListInternalMesh*)pMVar8;
-	return pCVar1;
+	pNewNode->pData = pMVar8;
+	return pNewNode;
 }
 
-
 void ed3DHierarchyAddSonsToList
-(edLIST* pCameraPanMasterHeader, MeshTransformData* pSubSubObjArray,
-	MeshTransformParent* pCameraPanStaticArray, TextureData_HIER* pParent, MeshTransformParent* param_5, char* param_6,
-	uint count)
+(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pParentNode, ed_Chunck* pChunck, edNODE* pNewNode,
+	ed_hash_code* pHashCode, uint count)
 {
-	int iVar2;
-	int iVar3;
-	int iVar4;
-	int iVar5;
-	int iVar6;
-	int iVar7;
-	int iVar8;
-	MeshTransformParent* pMVar9;
-	MeshTransformParent* pMVar10;
-	MeshTransformParent* pMVar11;
-	MeshTransformParent* pMVar12;
-	MeshTransformParent* pMVar13;
-	MeshTransformParent* pMVar14;
-	MeshTransformParent* pMVar15;
-	MeshTransformParent* pMVar16;
-	uint uVar17;
-	MeshTransformParent* pMVar18;
-	char* pcVar19;
-	char* local_220;
-	MeshTransformParent* local_204;
+	char* pcVar1;
+	char* pcVar2;
+	char* pcVar3;
+	char* pcVar4;
+	ed_3d_hierarchy_setup* peVar5;
+	ed_3d_hierarchy_node* peVar6;
+	ed_Chunck* pChunck_00;
+	edNODE* peVar7;
+	edNODE* peVar8;
+	edNODE* peVar9;
+	edNODE* peVar10;
+	edNODE* peVar11;
+	edNODE* peVar12;
+	edNODE* peVar13;
+	edNODE* pNewNode_00;
+	uint uVar14;
+	edNODE* peVar15;
+	ed_hash_code* peVar16;
+	ed_hash_code* local_220;
+	edNODE* local_204;
 	uint local_200;
-	char* local_1d0;
-	MeshTransformParent* local_1b4;
+	ed_hash_code* local_1d0;
+	edNODE* local_1b4;
 	uint local_1b0;
-	char* local_180;
-	MeshTransformParent* local_164;
+	ed_hash_code* local_180;
+	edNODE* local_164;
 	uint local_160;
-	char* local_130;
-	MeshTransformParent* local_114;
+	ed_hash_code* local_130;
+	edNODE* local_114;
 	uint local_110;
-	char* local_e0;
-	MeshTransformParent* local_c4;
+	ed_hash_code* local_e0;
+	edNODE* local_c4;
 	uint local_c0;
-	char* local_90;
-	MeshTransformParent* local_74;
+	ed_hash_code* local_90;
+	edNODE* local_74;
 	uint local_70;
-	char* local_40;
-	MeshTransformParent* local_24;
+	ed_hash_code* local_40;
+	edNODE* local_24;
 	uint local_20;
-	TextureData_HIER* iVar1;
+	ed_Chunck* iVar1;
 
-	pMVar18 = (MeshTransformParent*)0x0;
-	pcVar19 = param_6;
-	for (uVar17 = 0; uVar17 < count; uVar17 = uVar17 + 1) {
-		iVar1 = (TextureData_HIER*)LOAD_SECTION(*(int*)(pcVar19 + 8));
-		if ((TextureData_HIER*)(iVar1->body).pLinkTransformData == pParent) {
-			IMPLEMENTATION_GUARD();
-			pMVar9 = ed3DHierarchyAddNode
-			(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray, &iVar1->body,
-				(MeshTransformData*)param_5->pMeshTransformData);
-			local_24 = (MeshTransformParent*)0x0;
-			local_40 = param_6;
+	peVar15 = (edNODE*)0x0;
+	peVar16 = pHashCode;
+	for (uVar14 = 0; uVar14 < count; uVar14 = uVar14 + 1) {
+		iVar1 = (ed_Chunck*)LOAD_SECTION(peVar16->field_0x8);
+		if ((ed_Chunck*)(iVar1->body).pLinkTransformData == pChunck) {
+			peVar7 = ed3DHierarchyAddNode
+			(pList, pHierNode, pParentNode, &iVar1->body, (ed_g3d_hierarchy*)pNewNode->pData);
+			local_24 = (edNODE*)0x0;
+			local_40 = pHashCode;
 			for (local_20 = 0; local_20 < count; local_20 = local_20 + 1) {
-				iVar2 = *(int*)(local_40 + 8);
-				if (*(TextureData_HIER**)(iVar2 + 0xa0) == iVar1) {
-					pMVar10 = ed3DHierarchyAddNode
-					(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray,
-						(TextureData_HIER_Internal*)(iVar2 + 0x10),
-						(MeshTransformData*)pMVar9->pMeshTransformData);
-					local_74 = (MeshTransformParent*)0x0;
-					local_90 = param_6;
+				pcVar1 = (char*)LOAD_SECTION(local_40->field_0x8);
+				if (*(ed_Chunck**)(pcVar1 + 0xa0) == iVar1) {
+					peVar8 = ed3DHierarchyAddNode
+					(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar1 + 0x10),
+						(ed_g3d_hierarchy*)peVar7->pData);
+					local_74 = (edNODE*)0x0;
+					local_90 = pHashCode;
 					for (local_70 = 0; local_70 < count; local_70 = local_70 + 1) {
-						iVar3 = *(int*)(local_90 + 8);
-						if (*(int*)(iVar3 + 0xa0) == iVar2) {
-							pMVar11 = ed3DHierarchyAddNode
-							(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray,
-								(TextureData_HIER_Internal*)(iVar3 + 0x10),
-								(MeshTransformData*)pMVar10->pMeshTransformData);
-							local_c4 = (MeshTransformParent*)0x0;
-							local_e0 = param_6;
+						pcVar2 = (char*)LOAD_SECTION(local_90->field_0x8);
+						if (*(char**)(pcVar2 + 0xa0) == pcVar1) {
+							peVar9 = ed3DHierarchyAddNode
+							(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar2 + 0x10),
+								(ed_g3d_hierarchy*)peVar8->pData);
+							local_c4 = (edNODE*)0x0;
+							local_e0 = pHashCode;
 							for (local_c0 = 0; local_c0 < count; local_c0 = local_c0 + 1) {
-								iVar4 = *(int*)(local_e0 + 8);
-								if (*(int*)(iVar4 + 0xa0) == iVar3) {
-									pMVar12 = ed3DHierarchyAddNode
-									(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray,
-										(TextureData_HIER_Internal*)(iVar4 + 0x10),
-										(MeshTransformData*)pMVar11->pMeshTransformData);
-									local_114 = (MeshTransformParent*)0x0;
-									local_130 = param_6;
+								pcVar3 = (char*)LOAD_SECTION(local_e0->field_0x8);
+								if (*(char**)(pcVar3 + 0xa0) == pcVar2) {
+									peVar10 = ed3DHierarchyAddNode
+									(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar3 + 0x10),
+										(ed_g3d_hierarchy*)peVar9->pData);
+									local_114 = (edNODE*)0x0;
+									local_130 = pHashCode;
 									for (local_110 = 0; local_110 < count; local_110 = local_110 + 1) {
-										iVar5 = *(int*)(local_130 + 8);
-										if (*(int*)(iVar5 + 0xa0) == iVar4) {
-											pMVar13 = ed3DHierarchyAddNode
-											(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray,
-												(TextureData_HIER_Internal*)(iVar5 + 0x10),
-												(MeshTransformData*)pMVar12->pMeshTransformData);
-											local_164 = (MeshTransformParent*)0x0;
-											local_180 = param_6;
+										pcVar4 = (char*)LOAD_SECTION(local_130->field_0x8);
+										if (*(char**)(pcVar4 + 0xa0) == pcVar3) {
+											peVar11 = ed3DHierarchyAddNode
+											(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar4 + 0x10),
+												(ed_g3d_hierarchy*)peVar10->pData);
+											local_164 = (edNODE*)0x0;
+											local_180 = pHashCode;
 											for (local_160 = 0; local_160 < count; local_160 = local_160 + 1) {
-												iVar6 = *(int*)(local_180 + 8);
-												if (*(int*)(iVar6 + 0xa0) == iVar5) {
-													pMVar14 = ed3DHierarchyAddNode
-													(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray,
-														(TextureData_HIER_Internal*)(iVar6 + 0x10),
-														(MeshTransformData*)pMVar13->pMeshTransformData);
-													local_1b4 = (MeshTransformParent*)0x0;
-													local_1d0 = param_6;
+												peVar5 = (ed_3d_hierarchy_setup*)local_180->field_0x8;
+												if (peVar5[8].field_0x0 == pcVar4) {
+													peVar12 = ed3DHierarchyAddNode
+													(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)&peVar5->field_0x10,
+														(ed_g3d_hierarchy*)peVar11->pData);
+													local_1b4 = (edNODE*)0x0;
+													local_1d0 = pHashCode;
 													for (local_1b0 = 0; local_1b0 < count; local_1b0 = local_1b0 + 1) {
-														iVar7 = *(int*)(local_1d0 + 8);
-														if (*(int*)(iVar7 + 0xa0) == iVar6) {
-															pMVar15 = ed3DHierarchyAddNode
-															(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray,
-																(TextureData_HIER_Internal*)(iVar7 + 0x10),
-																(MeshTransformData*)pMVar14->pMeshTransformData);
-															local_204 = (MeshTransformParent*)0x0;
-															local_220 = param_6;
+														peVar6 = (ed_3d_hierarchy_node*)local_1d0->field_0x8;
+														if ((peVar6->base).pHierarchySetup == peVar5) {
+															peVar13 = ed3DHierarchyAddNode
+															(pList, pHierNode, pParentNode,
+																(ed_g3d_hierarchy*)&(peVar6->base).transformA.ba,
+																(ed_g3d_hierarchy*)peVar12->pData);
+															local_204 = (edNODE*)0x0;
+															local_220 = pHashCode;
 															for (local_200 = 0; local_200 < count; local_200 = local_200 + 1) {
-																iVar8 = *(int*)(local_220 + 8);
-																if (*(int*)(iVar8 + 0xa0) == iVar7) {
-																	pMVar16 = ed3DHierarchyAddNode
-																	(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray,
-																		(TextureData_HIER_Internal*)(iVar8 + 0x10),
-																		(MeshTransformData*)pMVar15->pMeshTransformData);
-																	IMPLEMENTATION_GUARD();
+																pChunck_00 = (ed_Chunck*)local_220->field_0x8;
+																if ((ed_3d_hierarchy_node*)LOAD_SECTION((pChunck_00->body).pLinkTransformData) == peVar6) {
+																	pNewNode_00 = ed3DHierarchyAddNode
+																	(pList, pHierNode, pParentNode, &pChunck_00->body,
+																		(ed_g3d_hierarchy*)peVar13->pData);
 																	ed3DHierarchyAddSonsToList
-																	(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray, (TextureData_HIER*)LOAD_SECTION(iVar8), pMVar16,
-																		param_6, count);
-																	if (local_204 != (MeshTransformParent*)0x0) {
-																		local_204 = pMVar16;
+																	(pList, pHierNode, pParentNode, pChunck_00, pNewNode_00, pHashCode, count);
+																	if (local_204 != (edNODE*)0x0) {
+																		local_204 = pNewNode_00;
 																	}
 																}
-																local_220 = local_220 + 0x10;
+																local_220 = local_220 + 1;
 															}
-															if (local_1b4 != (MeshTransformParent*)0x0) {
-																local_1b4 = pMVar15;
+															if (local_1b4 != (edNODE*)0x0) {
+																local_1b4 = peVar13;
 															}
 														}
-														local_1d0 = local_1d0 + 0x10;
+														local_1d0 = local_1d0 + 1;
 													}
-													if (local_164 != (MeshTransformParent*)0x0) {
-														local_164 = pMVar14;
+													if (local_164 != (edNODE*)0x0) {
+														local_164 = peVar12;
 													}
 												}
-												local_180 = local_180 + 0x10;
+												local_180 = local_180 + 1;
 											}
-											if (local_114 != (MeshTransformParent*)0x0) {
-												local_114 = pMVar13;
+											if (local_114 != (edNODE*)0x0) {
+												local_114 = peVar11;
 											}
 										}
-										local_130 = local_130 + 0x10;
+										local_130 = local_130 + 1;
 									}
-									if (local_c4 != (MeshTransformParent*)0x0) {
-										local_c4 = pMVar12;
+									if (local_c4 != (edNODE*)0x0) {
+										local_c4 = peVar10;
 									}
 								}
-								local_e0 = local_e0 + 0x10;
+								local_e0 = local_e0 + 1;
 							}
-							if (local_74 != (MeshTransformParent*)0x0) {
-								local_74 = pMVar11;
+							if (local_74 != (edNODE*)0x0) {
+								local_74 = peVar9;
 							}
 						}
-						local_90 = local_90 + 0x10;
+						local_90 = local_90 + 1;
 					}
-					if (local_24 != (MeshTransformParent*)0x0) {
-						local_24 = pMVar10;
+					if (local_24 != (edNODE*)0x0) {
+						local_24 = peVar8;
 					}
 				}
-				local_40 = local_40 + 0x10;
+				local_40 = local_40 + 1;
 			}
-			if (pMVar18 != (MeshTransformParent*)0x0) {
-				pMVar18 = pMVar9;
+			if (peVar15 != (edNODE*)0x0) {
+				peVar15 = peVar7;
 			}
 		}
-		pcVar19 = pcVar19 + 0x10;
+		peVar16 = peVar16 + 1;
 	}
 	return;
 }
 
-void ed3DHierarchyRefreshSonNumbers(MeshTransformParent* pMeshTransformParent, short* outMeshCount)
+void ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMeshCount)
 {
 	ushort uVar1;
 	ulong uVar2;
-	MeshTransformData* pDVar4;
+	ed_g3d_hierarchy* pDVar4;
 	ulong uVar3;
 	short local_2;
-	MeshTransformData* pDVar1;
+	ed_g3d_hierarchy* pDVar1;
 
 	local_2 = 0;
-	pDVar1 = (MeshTransformData*)pMeshTransformParent->pMeshTransformData;
-	pDVar4 = (MeshTransformData*)pMeshTransformParent->pNext->pMeshTransformData;
-	if ((pDVar4->base).pLinkTransformData == pDVar1) {
+	pDVar1 = (ed_g3d_hierarchy*)pMeshTransformParent->pData;
+	pDVar4 = (ed_g3d_hierarchy*)pMeshTransformParent->pPrev->pData;
+	if ((ed_g3d_hierarchy*)pDVar4->pLinkTransformData == pDVar1) {
 		IMPLEMENTATION_GUARD();
 		uVar1 = 0;
-		uVar3 = (ulong)pMeshTransformParent->pNext;
-		while (uVar2 = (ulong)uVar1, (pDVar4->base).pLinkTransformData == pDVar1) {
-			ed3DHierarchyRefreshSonNumbers((MeshTransformParent*)uVar3, &local_2);
+		uVar3 = (ulong)pMeshTransformParent->pPrev;
+		while (uVar2 = (ulong)uVar1, (ed_g3d_hierarchy*)pDVar4->pLinkTransformData == pDVar1) {
+			ed3DHierarchyRefreshSonNumbers((edNODE*)uVar3, &local_2);
 			uVar1 = uVar1 + local_2;
 			uVar3 = uVar2;
-			pDVar4 = *(MeshTransformData**)((ulong)uVar2 + 0xc);
+			pDVar4 = *(ed_g3d_hierarchy**)((ulong)uVar2 + 0xc);
 		}
-		(pDVar1->base).subMeshParentCount_0xac = uVar1;
+		pDVar1->subMeshParentCount_0xac = uVar1;
 		*outMeshCount = uVar1 + 1;
 	}
 	else {
-		(pDVar1->base).subMeshParentCount_0xac = 0;
+		pDVar1->subMeshParentCount_0xac = 0;
 		*outMeshCount = 1;
 	}
 	return;
 }
 
-void RotationVectorToMatrix(Vector* v0, edF32MATRIX4* m0)
+void RotationVectorToMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0)
 {
 	float fVar1;
 	float fVar2;
@@ -9398,8 +9151,7 @@ void RotationVectorToMatrix(Vector* v0, edF32MATRIX4* m0)
 	return;
 }
 
-uint HierarchyAnm::UpdateMatrix
-(float param_1, MeshTransformData* param_3, int* pFileData, int param_5)
+uint HierarchyAnm::UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, int* pFileData, int param_5)
 {
 	int iVar1;
 	int iVar2;
@@ -9408,9 +9160,9 @@ uint HierarchyAnm::UpdateMatrix
 	float* pfVar5;
 	float* pfVar6;
 	float* pfVar7;
-	Vector* pVVar8;
+	edF32VECTOR4* pVVar8;
 	float* pfVar9;
-	Vector* pVVar10;
+	edF32VECTOR4* pVVar10;
 	float fVar11;
 	float fVar12;
 	float fVar13;
@@ -9420,8 +9172,8 @@ uint HierarchyAnm::UpdateMatrix
 	float fVar17;
 	float fVar18;
 	uint local_50;
-	Vector local_30;
-	Vector VStack32;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 VStack32;
 	int local_10;
 	int local_c;
 	float local_8;
@@ -9436,7 +9188,7 @@ uint HierarchyAnm::UpdateMatrix
 	pfVar6 = pfVar4 + iVar2 + 1;
 	pfVar9 = (float*)((ulong)pfVar6 + (iVar3 + 1) * 4 + 0xf); // &0xfffffff0);
 	fVar13 = pfVar5[iVar1];
-	pVVar10 = (Vector*)(pfVar9 + iVar1 * 4);
+	pVVar10 = (edF32VECTOR4*)(pfVar9 + iVar1 * 4);
 	pVVar8 = pVVar10 + iVar2;
 	if (0.0f < fVar13) {
 		if (param_5 == 0) {
@@ -9451,12 +9203,12 @@ uint HierarchyAnm::UpdateMatrix
 		}
 	}
 	if (iVar2 == 0) {
-		sceVu0UnitMatrix((TO_SCE_MTX)param_3);
+		edF32Matrix4SetIdentityHard(&param_3->base.transformA);
 	}
 	else {
 		pfVar7 = pfVar4;
 		if (iVar2 == 1) {
-			RotationVectorToMatrix(pVVar10, (edF32MATRIX4*)param_3);
+			RotationVectorToMatrix(pVVar10, &param_3->base.transformA);
 		}
 		else {
 			for (; *pfVar7 <= fVar14; pfVar7 = pfVar7 + 1) {
@@ -9473,7 +9225,7 @@ uint HierarchyAnm::UpdateMatrix
 			}
 			IMPLEMENTATION_GUARD(
 			InterpolateRotation(local_8, &VStack32, pVVar10 + local_10, pVVar10 + local_c);
-			RotationVectorToMatrix(&VStack32, (edF32MATRIX4*)param_3);)
+			RotationVectorToMatrix(&VStack32, &param_3->base.transformA);)
 		}
 	}
 	if (iVar1 != 0) {
@@ -9540,10 +9292,10 @@ uint HierarchyAnm::UpdateMatrix
 			local_30.w = pVVar10->w * local_8 + pVVar8->w * fVar14;
 			pVVar8 = &local_30;
 		}
-		SomeIdentityMatrix.aa = pVVar8->x;
-		SomeIdentityMatrix.bb = pVVar8->y;
-		SomeIdentityMatrix.cc = pVVar8->z;
-		sceVu0MulMatrix((TO_SCE_MTX)param_3, (TO_SCE_MTX)&SomeIdentityMatrix, (TO_SCE_MTX)param_3);
+		_gscale_mat.aa = pVVar8->x;
+		_gscale_mat.bb = pVVar8->y;
+		_gscale_mat.cc = pVVar8->z;
+		edF32Matrix4MulF32Matrix4Hard(&param_3->base.transformA, &_gscale_mat, &param_3->base.transformA);
 	}
 	return local_50;
 }
@@ -9556,10 +9308,10 @@ struct MeshData_OBB
 	int field_0x12;
 };
 
-MeshData_OBB* ed3DHierarchyNodeGetSkeletonChunck(MeshTransformParent* pMeshTransformParent, bool mode)
+MeshData_OBB* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool mode)
 {
 	byte bVar1;
-	MeshTransformData* pMeshTransformData;
+	ed_3d_hierarchy_node* pMeshTransformData;
 	int* piVar2;
 	int iVar3;
 	MeshTransformObjData* pMVar4;
@@ -9568,14 +9320,14 @@ MeshData_OBB* ed3DHierarchyNodeGetSkeletonChunck(MeshTransformParent* pMeshTrans
 	uint uVar7;
 	ushort* puVar8;
 
-	pMeshTransformData = (MeshTransformData*)pMeshTransformParent->pMeshTransformData;
+	pMeshTransformData = (ed_3d_hierarchy_node*)pMeshTransformParent->pData;
 	puVar8 = &(pMeshTransformData->base).count_0x9c;
 	if (((pMeshTransformData->base).count_0x9c != 0) &&
 		(pMVar4 = ed3DChooseGoodLOD(pMeshTransformData), pMVar4 != (MeshTransformObjData*)0x0)) {
 		bVar1 = (pMeshTransformData->base).size_0xae;
 		uVar7 = (uint)bVar1;
 		if ((mode != false) && (uVar7 = (uint)bVar1, ((pMeshTransformData->base).flags_0x9e & 0x100) != 0)) {
-			IMPLEMENTATION_GUARD( MeshTransformData::Func_00295a50(pMeshTransformData, (long)(int)(*puVar8 - 1)));
+			IMPLEMENTATION_GUARD( ed_3d_hierarchy_node::Func_00295a50(pMeshTransformData, (long)(int)(*puVar8 - 1)));
 			uVar7 = *puVar8 - 1;
 		}
 		pcVar5 = pMeshTransformData->aSubArray[uVar7].pObj;
@@ -9647,12 +9399,12 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 {
 	uint uVar1;
 	MeshData_HALL* pcVar2;
-	edLIST* pCameraPanMasterHeader;
-	MeshTransformData* pSubSubObjArray;
-	MeshTransformParent* pCameraPanStaticArray;
+	edLIST* pList;
+	ed_3d_hierarchy_node* pHierNode;
+	edNODE* pParentNode;
 	uint uVar3;
 	char* pcVar4;
-	MeshTransformParent* pMeshTransformParent;
+	edNODE* pNewNode;
 	int iVar5;
 	MeshData_OBB* pMVar6;
 	ulong meshHashValue;
@@ -9693,10 +9445,10 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 			pBaseIndexes[uVar11] = (int)STORE_SECTION(pMVar14);
 			meshHashValue = ByteCode::BuildU64((int)pMVar14->field_0x0, (int)pMVar14->field_0x4);
 			ed3DHierarchyCopyHashCode(pMeshInfo);
-			pCameraPanStaticArray = gHierarchyManagerFirstFreeNode;
-			pSubSubObjArray = gHierarchyManagerBuffer;
+			pParentNode = gHierarchyManagerFirstFreeNode;
+			pHierNode = gHierarchyManagerBuffer;
 			pcVar2 = (MeshData_HALL*)pMeshInfo->HALL;
-			pCameraPanMasterHeader = pStaticMeshMaster->pHeirListA;
+			pList = pStaticMeshMaster->pHeirListA;
 			uVar3 = edChunckGetNb((char*)(pcVar2 + 1), (char*)pcVar2 + pcVar2->totalSize);
 			pcVar4 = edHashcodeGet(meshHashValue, (MeshData_HASH*)(pMeshInfo->HALL + 0x10));
 			if (pcVar4 == (char*)0x0) {
@@ -9706,24 +9458,20 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 				iVar5 = *(int*)(pcVar4 + 8);
 			}
 			if (iVar5 == 0) {
-				pMeshTransformParent = (MeshTransformParent*)0x0;
+				pNewNode = (edNODE*)0x0;
 			}
 			else {
-				pMeshTransformParent =
-					ed3DHierarchyAddNode
-					(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray, (TextureData_HIER_Internal*)(((char*)LOAD_SECTION(iVar5)) + 0x10),
-						(MeshTransformData*)0x0);
-				ed3DHierarchyAddSonsToList(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray, (TextureData_HIER*)LOAD_SECTION(iVar5), pMeshTransformParent,
-					(char*)(pcVar2 + 2), (uVar3 & 0xffff) - 1);
-				ed3DHierarchyRefreshSonNumbers(pMeshTransformParent, &sStack2);
+				pNewNode = ed3DHierarchyAddNode (pList, pHierNode, pParentNode, &((ed_Chunck*)LOAD_SECTION(iVar5))->body, (ed_g3d_hierarchy*)0x0);
+				ed3DHierarchyAddSonsToList(pList, pHierNode, pParentNode, (ed_Chunck*)LOAD_SECTION(iVar5), pNewNode, (ed_hash_code*)(pcVar2 + 2), (uVar3 & 0xffff) - 1);
+				ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 			}
-			pMVar14->field_0x0 = (int)STORE_SECTION(pMeshTransformParent);
-			if (pMeshTransformParent == (MeshTransformParent*)0x0) {
+			pMVar14->field_0x0 = (int)STORE_SECTION(pNewNode);
+			if (pNewNode == (edNODE*)0x0) {
 				pMVar14->field_0x4 = 0x0;
 				pMVar14->field_0x8 = 0x0;
 			}
 			else {
-				pMVar14->field_0x4 = (int)STORE_SECTION(pMeshTransformParent->pMeshTransformData);
+				pMVar14->field_0x4 = (int)STORE_SECTION(pNewNode->pData);
 				pMVar14->fileCount = pMVar14->fileCount | 0xa0000000;
 				if ((pMVar14->fileCount & 1) == 0) {
 					pMVar14->field_0x28 = 0.0;
@@ -9739,10 +9487,10 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 				iVar5 = rand();
 				pMVar14->field_0x2c = puVar15 + (fVar14 - puVar15) * ((float)iVar5 / 2.147484e+09f);
 				if ((pMVar14->fileCount & 4) != 0) {
-					IMPLEMENTATION_GUARD(MeshTransformParent::SetDataPtr_00295c00((MeshTransformData*)LOAD_SECTION(pMVar14->field_0x4), 0x40f070));
+					IMPLEMENTATION_GUARD(ed3DHierarchySetSetup((ed_3d_hierarchy_node*)LOAD_SECTION(pMVar14->field_0x4), 0x40f070));
 				}
 				puVar10 = (uint*)LOAD_SECTION(pcVar8[(int)pMVar14->field_0x8]);
-				UpdateMatrix(pMVar14->field_0x28, (MeshTransformData*)LOAD_SECTION(pMVar14->field_0x4), (int*)puVar10,
+				UpdateMatrix(pMVar14->field_0x28, (ed_3d_hierarchy_node*)LOAD_SECTION(pMVar14->field_0x4), (int*)puVar10,
 					pMVar14->fileCount & 1);
 				if (puVar10[2] == 0) {
 					local_18 = 1.0;
@@ -9770,7 +9518,7 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 				else {
 					pMVar14->field_0x8 = (int)STORE_SECTION(puVar10);
 				}
-				pMVar6 = ed3DHierarchyNodeGetSkeletonChunck(pMeshTransformParent, 0);
+				pMVar6 = ed3DHierarchyNodeGetSkeletonChunck(pNewNode, 0);
 				if (pMVar6 == (MeshData_OBB*)0x0) {
 					pMVar14->field_0x30.pObb_Internal = 0x0;
 				}
@@ -9810,68 +9558,134 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 
 void ed3DScenePushCluster(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo)
 {
-	edNODE_MANAGER* pMVar1;
-	MeshTransformSpecial* pMVar2;
-	DisplayListInternalMesh* pDVar3;
-	uint uVar4;
+	edNODE* peVar1;
+	edCluster* pNewCluster;
+	uint clusterIndex;
+	edNODE_MANAGER* pvVar1;
 
-	uVar4 = 0;
-	while ((uVar4 < ged3DConfig.meshDisplayListInternalCount &&
-		((g_MeshDisplayListInternal_00449380[uVar4].flags & 1) != 0))) {
-		uVar4 = uVar4 + 1;
+	clusterIndex = 0;
+	while ((clusterIndex < ged3DConfig.maxClusterCount && ((gCluster[clusterIndex].flags & 1) != 0))) {
+		clusterIndex = clusterIndex + 1;
 	}
-	if (uVar4 < ged3DConfig.meshDisplayListInternalCount) {
-		pDVar3 = g_MeshDisplayListInternal_00449380 + uVar4;
-		INT_004493a8 = INT_004493a8 + 1;
-		pDVar3->pMeshInfo = pMeshInfo;
-		g_MeshDisplayListInternal_00449380[uVar4].flags = (g_MeshDisplayListInternal_00449380[uVar4].flags | 1);
-		pMVar1 = (pStaticMeshMaster->headerB).pCameraPanHeader_0xc;
-		pMVar2 = pMVar1->pNextFree;
-		pMVar1->pNextFree = pMVar2->pNext_0x4;
-		pMVar2->pRenderInput = (DisplayListInternal*)pDVar3;
-		pMVar1->usedCount = pMVar1->usedCount + 1;
-		(pStaticMeshMaster->headerB).count_0x14 = (pStaticMeshMaster->headerB).count_0x14 + 1;
-		pMVar2->pNext_0x4 = (pStaticMeshMaster->headerB).pLoadedData;
-		RENDER_LOG("ed3DScenePushCluster %p\n", (pStaticMeshMaster->headerB).pLoadedData);
-		(pStaticMeshMaster->headerB).pLoadedData = pMVar2;
+	if (clusterIndex < ged3DConfig.maxClusterCount) {
+		pNewCluster = gCluster + clusterIndex;
+		gLoadedClusterCount = gLoadedClusterCount + 1;
+		pNewCluster->pMeshInfo = pMeshInfo;
+		gCluster[clusterIndex].flags = gCluster[clusterIndex].flags | 1;
+		pvVar1 = (edNODE_MANAGER*)(pStaticMeshMaster->headerB).pData;
+		peVar1 = pvVar1->pNodeHead;
+		pvVar1->pNodeHead = peVar1->pPrev;
+		ED3D_LOG(LogLevel::Info, "ed3DScenePushCluster %p New cluster: %p", peVar1, pNewCluster);
+		peVar1->pData = pNewCluster;
+		pvVar1->linkCount = pvVar1->linkCount + 1;
+		(pStaticMeshMaster->headerB).nodeCount = (pStaticMeshMaster->headerB).nodeCount + 1;
+		peVar1->pPrev = (pStaticMeshMaster->headerB).pPrev;
+		(pStaticMeshMaster->headerB).pPrev = peVar1;
 	}
 	return;
 }
 
-MeshTransformParent* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash)
+edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash)
 {
-	edLIST* pCameraPanMasterHeader;
-	MeshTransformData* pSubSubObjArray;
-	MeshTransformParent* pCameraPanStaticArray;
+	edLIST* pList;
+	ed_3d_hierarchy_node* pHierNode;
+	edNODE* pNode;
 	uint uVar1;
 	char* pcVar2;
-	MeshTransformParent* pMVar3;
-	int iVar4;
+	edNODE* pNewNode;
+	ed_Chunck* pChunck;
 	short sStack2;
 	MeshData_HALL* pcVar1;
 
 	ed3DHierarchyCopyHashCode(pMeshInfo);
-	pCameraPanStaticArray = gHierarchyManagerFirstFreeNode;
-	pSubSubObjArray = gHierarchyManagerBuffer;
+	pNode = gHierarchyManagerFirstFreeNode;
+	pHierNode = gHierarchyManagerBuffer;
 	pcVar1 = (MeshData_HALL*)pMeshInfo->HALL;
-	pCameraPanMasterHeader = pStaticMeshMaster->pHeirListA;
-	uVar1 = edChunckGetNb((char*)(pcVar1 + 1), (char*)pcVar1 + pcVar1->totalSize);
+	pList = pStaticMeshMaster->pHeirListA;
+	uVar1 = edChunckGetNb((char*)(pcVar1 + 1), pcVar1->header + pcVar1->totalSize);
 	pcVar2 = edHashcodeGet(hash, (MeshData_HASH*)(pMeshInfo->HALL + 0x10));
-	iVar4 = 0;
+	pChunck = (ed_Chunck*)0x0;
 	if (pcVar2 != (char*)0x0) {
-		iVar4 = *(int*)(pcVar2 + 8);
+		pChunck = *(ed_Chunck**)(pcVar2 + 8);
 	}
-	if (iVar4 == 0) {
-		pMVar3 = (MeshTransformParent*)0x0;
+	if (pChunck == (ed_Chunck*)0x0) {
+		pNewNode = (edNODE*)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD(pMVar3 = edLIST::Func_002ab920
-		(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray, (undefined8*)(iVar4 + 0x10),
-			(MeshTransformData*)0x0);
-		edLIST::Func_002ad020
-		(pCameraPanMasterHeader, pSubSubObjArray, pCameraPanStaticArray, iVar4, (int)pMVar3, (int)(pcVar1 + 2),
-			(uVar1 & 0xffff) - 1);
-		MeshTransformParent::Func_002ac980(pMVar3, &sStack2);)
+		pNewNode = ed3DHierarchyAddNode(pList, pHierNode, pNode, &pChunck->body, (ed_g3d_hierarchy*)0x0);
+		ed3DHierarchyAddSonsToList(pList, pHierNode, pNode, pChunck, pNewNode, (ed_hash_code*)(pcVar1 + 2), (uVar1 & 0xffff) - 1);
+		ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 	}
-	return pMVar3;
+	return pNewNode;
+}
+
+void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0)
+{
+	short sVar1;
+	uint uVar2;
+	edFCamera* peVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float endY;
+	float fVar10;
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 eStack64;
+
+	uVar2 = (pScene->sceneConfig).field_0x10;
+	if ((int)uVar2 < 0) {
+		fVar6 = (float)(uVar2 >> 1 | uVar2 & 1);
+		fVar6 = fVar6 + fVar6;
+	}
+	else {
+		fVar6 = (float)uVar2;
+	}
+	uVar2 = (pScene->sceneConfig).field_0x14;
+	if ((int)uVar2 < 0) {
+		fVar5 = (float)(uVar2 >> 1 | uVar2 & 1);
+		fVar5 = fVar5 + fVar5;
+	}
+	else {
+		fVar5 = (float)uVar2;
+	}
+	peVar3 = pScene->pCamera;
+	fVar8 = (pScene->sceneConfig).farClip;
+	fVar7 = (pScene->sceneConfig).nearClip;
+	endY = peVar3->halfFOV;
+	fVar9 = peVar3->horizontalHalfFOV;
+	sVar1 = pScene->pViewport->screenHeight;
+	fVar10 = (float)(int)pScene->pViewport->screenWidth;
+	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, peVar3->verticalHalfFOV, 0.0f, &eStack64);
+	fVar4 = (float)(int)sVar1 * 0.5;
+	ed3DComputeProjectionToScreenMatrix
+	(-fVar9, fVar9, -endY, endY, 2048.0f - fVar10 * 0.5f, fVar10 * 0.5f + 2048.0f, fVar4 + 2048.0f, 2048.0f - fVar4, &eStack128);
+	edF32Matrix4MulF32Matrix4Hard(m0, &eStack64, &eStack128);
+	fVar4 = 1.0f / (fVar8 - fVar7);
+	fVar9 = m0->dd + m0->cd * fVar7;
+	m0->cc = fVar4 * (fVar6 * (m0->dd + m0->cd * fVar8) - fVar5 * fVar9);
+	m0->dc = fVar4 * (fVar9 * fVar8 * fVar5 - fVar9 * fVar7 * fVar6);
+	return;
+}
+
+void ed3DResetTime(void)
+{
+	gCurTime = 0;
+	return;
+}
+
+void ed3DSetDeltaTime(int newTime)
+{
+	gStepTime = newTime;
+	gCurTime = gCurTime + newTime;
+	return;
+}
+
+FxFogProp g3DFXFog = { };
+
+FxFogProp* ed3DGetFxFogProp(void)
+{
+	return &g3DFXFog;
 }

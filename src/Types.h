@@ -65,11 +65,22 @@ struct EdFileGlobal_10 {
 	undefined field_0xf;
 };
 
-struct ByteColor {
+struct _rgba {
 	byte r;
 	byte g;
 	byte b;
 	byte a;
+
+	_rgba() {}
+
+	_rgba(byte ir, byte ig, byte ib, byte ia)
+		: r(ir)
+		, g(ig)
+		, b(ib)
+		, a(ia)
+	{}
+
+	void LerpRGBA(float alpha, _rgba param_3, _rgba param_4);
 };
 
 struct ByteColor3 {
@@ -113,13 +124,14 @@ struct InputSetupParams {
 	IopPaths* pIopPaths;
 };
 
-void SetupEd10_00217720(void* pObj, void* pFreeFunc, EdFileGlobal_10* pHeader);
 EFileLoadMode GetFileLoadMode_00424d9c(void);
 InputSetupParams* edSysGetConfig(void);
 
 #ifdef PLATFORM_WIN
 #include "log.h"
 #endif
+
+#define EDITOR_BUILD PLATFORM_WIN
 
 #define ENABLE_MY_LOG
 
@@ -130,10 +142,15 @@ InputSetupParams* edSysGetConfig(void);
 #define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
 #define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
 #define RENDER_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
+#define RENDER_LOGF(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
+
+#define MY_LOG_CATEGORY(category, level, format, ...) Log::GetInstance().AddLog(level, category, format, ##__VA_ARGS__)
+
 #else
 #include <eekernel.h>
-#define MY_LOG scePrintf
-#define RENDER_LOG scePrintf
+#define MY_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
+#define RENDER_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
+#define MY_LOG_CATEGORY(category, level, format, ...) scePrintf(format, ##__VA_ARGS__); scePrintf("\n")
 #endif
 
 #define edDebugPrintf scePrintf
@@ -151,9 +168,9 @@ InputSetupParams* edSysGetConfig(void);
 struct __attribute__((aligned(16)))
 #else
 #pragma pack(push,1)
-struct alignas(16)
+struct //alignas(16)
 #endif 
-Vector { /* Aligned */
+edF32VECTOR4 { /* Aligned */
 	float x;
 	float y;
 	float z;
@@ -200,131 +217,8 @@ edF32MATRIX4 {
 
 
 #ifdef PLATFORM_WIN
-typedef float		sceVu0FVECTOR[4];
-typedef float		sceVu0FMATRIX[4][4];
-
-inline void sceVu0CopyMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1)
-{
-	(m0)[0][0] = (m1)[0][0];
-	(m0)[0][1] = (m1)[0][1];
-	(m0)[0][2] = (m1)[0][2];
-	(m0)[0][3] = (m1)[0][3];
-
-	(m0)[1][0] = (m1)[1][0];
-	(m0)[1][1] = (m1)[1][1];
-	(m0)[1][2] = (m1)[1][2];
-	(m0)[1][3] = (m1)[1][3];
-
-	(m0)[2][0] = (m1)[2][0];
-	(m0)[2][1] = (m1)[2][1];
-	(m0)[2][2] = (m1)[2][2];
-	(m0)[2][3] = (m1)[2][3];
-
-	(m0)[3][0] = (m1)[3][0];
-	(m0)[3][1] = (m1)[3][1];
-	(m0)[3][2] = (m1)[3][2];
-	(m0)[3][3] = (m1)[3][3];
-};
-
-inline void sceVu0UnitMatrix(sceVu0FMATRIX m0)
-{
-	(m0)[3][0] = 0.0;
-	(m0)[3][1] = 0.0;
-	(m0)[3][2] = 0.0;
-	(m0)[3][3] = 1.0;
-	(m0)[2][0] = 0.0;
-	(m0)[2][1] = 0.0;
-	(m0)[2][2] = 1.0;
-	(m0)[2][3] = 0.0;
-	(m0)[1][0] = 0.0;
-	(m0)[1][1] = 1.0;
-	(m0)[1][2] = 0.0;
-	(m0)[1][3] = 0.0;
-	(m0)[0][0] = 1.0;
-	(m0)[0][1] = 0.0;
-	(m0)[0][2] = 0.0;
-	(m0)[0][3] = 0.0;
-	return;
-}
-
-inline void sceVu0TransMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTOR v0)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-	float fVar14;
-	float fVar15;
-	float fVar16;
-	float fVar17;
-	float fVar18;
-
-	fVar12 = (v0)[0];
-	fVar13 = (v0)[1];
-	fVar14 = (v0)[2];
-	fVar15 = (m1)[3][0];
-	fVar16 = (m1)[3][1];
-	fVar17 = (m1)[3][2];
-	fVar18 = (m1)[3][3];
-	fVar1 = (m1)[0][1];
-	fVar2 = (m1)[0][2];
-	fVar3 = (m1)[0][3];
-	fVar4 = (m1)[1][0];
-	fVar5 = (m1)[1][1];
-	fVar6 = (m1)[1][2];
-	fVar7 = (m1)[1][3];
-	fVar8 = (m1)[2][0];
-	fVar9 = (m1)[2][1];
-	fVar10 = (m1)[2][2];
-	fVar11 = (m1)[2][3];
-	(m0)[0][0] = (m1)[0][0];
-	(m0)[0][1] = fVar1;
-	(m0)[0][2] = fVar2;
-	(m0)[0][3] = fVar3;
-	(m0)[1][0] = fVar4;
-	(m0)[1][1] = fVar5;
-	(m0)[1][2] = fVar6;
-	(m0)[1][3] = fVar7;
-	(m0)[2][0] = fVar8;
-	(m0)[2][1] = fVar9;
-	(m0)[2][2] = fVar10;
-	(m0)[2][3] = fVar11;
-	(m0)[3][0] = fVar15 + fVar12;
-	(m0)[3][1] = fVar16 + fVar13;
-	(m0)[3][2] = fVar17 + fVar14;
-	(m0)[3][3] = fVar18;
-	return;
-}
-
-inline void sceVu0MulMatrix(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FMATRIX m2)
-{
-	int i, j, k;
-	sceVu0FMATRIX temp;
-
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
-			temp[i][j] = 0;
-			for (k = 0; k < 4; k++) {
-				temp[i][j] += m1[i][k] * m2[k][j];
-			}
-		}
-	}
-
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < 4; j++) {
-			m0[i][j] = temp[i][j];
-		}
-	}
-}
+//typedef float		sceVu0FVECTOR[4];
+//typedef float		sceVu0FMATRIX[4][4];
 
 #endif
 
@@ -347,7 +241,7 @@ inline uint* edpktAsU32(edpkt_data* pkt) {
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*
 
-inline void PrintVector(Vector* vector)
+inline void PrintVector(edF32VECTOR4* vector)
 {
 	//MY_LOG("%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
 	char buff[256] = { 0 };
@@ -357,10 +251,10 @@ inline void PrintVector(Vector* vector)
 
 inline void PrintMatrix(edF32MATRIX4* matrix)
 {
-	PrintVector((Vector*)&matrix->aa);
-	PrintVector((Vector*)&matrix->ba);
-	PrintVector((Vector*)&matrix->ca);
-	PrintVector((Vector*)&matrix->da);
+	PrintVector((edF32VECTOR4*)&matrix->aa);
+	PrintVector((edF32VECTOR4*)&matrix->ba);
+	PrintVector((edF32VECTOR4*)&matrix->ca);
+	PrintVector((edF32VECTOR4*)&matrix->da);
 }
 
 #define PRINT_VECTOR(a) PrintVector(a)
@@ -378,9 +272,6 @@ enum LANGUAGE
 	IT,
 	AUTO
 };
-
-extern int g_SetOffsetX;
-extern int g_SetOffsetY;
 
 struct SectorManagerSubObj {
 	uint flags;

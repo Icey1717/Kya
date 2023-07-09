@@ -30,6 +30,12 @@ struct Mesh {
 	struct TextureInfo* pTextureInfo;
 };
 
+struct ParticleInfo {
+	int ID;
+	int materialCount_0x4;
+	struct edDList_material* materialInfoArray_0x8;
+};
+
 struct FileManager3D : public Manager {
 	FileManager3D();
 
@@ -37,12 +43,13 @@ struct FileManager3D : public Manager {
 
 
 
+	int InstanciateG2D(int index);
 	struct TextureInfo* GetCommonSectorG2D();
-	void Setup_001a7110();
+	void Level_ClearInternalData();
 	void AllocateMeshTextureMemory_001a6f10(ByteCode* pMemoryStream);
 	struct ed_g3d_manager* pMeshInfo;
-	struct MeshTransformParent* pMeshTransformParent;
-	struct MeshTransformParent* pLastMeshTransformParent;
+	struct edNODE* pMeshTransformParent;
+	struct edNODE* pLastMeshTransformParent;
 	char* field_0x10;
 	undefined field_0x14;
 	undefined field_0x15;
@@ -72,10 +79,7 @@ struct FileManager3D : public Manager {
 	undefined field_0x2d;
 	undefined field_0x2e;
 	undefined field_0x2f;
-	undefined field_0x30;
-	undefined field_0x31;
-	undefined field_0x32;
-	undefined field_0x33;
+	float field_0x30;
 	int meshCount;
 	int meshLoadedCount;
 	struct Mesh* pMeshDataArray;

@@ -21,9 +21,11 @@ public:
 	virtual void Level_ManagePaused() {};
 	virtual void Level_Draw() {};
 
+	virtual void Level_SectorChange(int param_2, int param_3) {}
+
 	void* operator new(size_t size)
 	{
-		void* p = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
+		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
 		return p;
 	}
 };
@@ -45,16 +47,29 @@ struct ManagerContainer {
 	struct CollisionManager* g_CollisionManager_00451690;
 	struct Manager_208* g_Manager208_00451694;
 	struct GlobalSound_00451698* g_GlobalSoundPtr_00451698;
-	struct Manager_C* g_ManagerC_0045169c;
-	struct Manager_10* g_Manager10_004516a0;
-	struct ActorManager* g_ActorManager_004516a4;
+	struct CWayPointManager* g_WayPointManager_0045169c;
+	struct CPathManager* g_PathManager_004516a0;
+	struct CActorManager* g_ActorManager_004516a4;
 	struct EventManager* g_EventManager_006f5080;
 	struct CinematicManager* g_CinematicManagerPtr_004516ac;
 	struct LightManager* g_LightManager_004516b0;
 	struct Manager_C_Alt* g_ManagerC_Alt_004516b4;
-	struct EffectsManager* g_EffectsManager_004516b8;
+	struct CFxManager* g_EffectsManager_004516b8;
 	struct Manager_29b4* g_Manager29B4_004516bc;
 });
+
+PACK(
+struct S_STREAM_FOG_DEF {
+	float clipValue_0x0;
+	float field_0x4;
+	_rgba fogRGBA;
+	uint flags;
+});
+
+struct FogClipEntry {
+	S_STREAM_FOG_DEF* pStreamDef;
+	float field_0x4;
+};
 
 class Scene 
 {
@@ -63,15 +78,15 @@ public:
 
 	void* operator new(size_t size)
 	{
-		void* p = edMemAllocAlignBoundary(TO_HEAP(H_MAIN), size);
+		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
 		return p;
 	}
 
 public:
-	int field_0x0;
+	int clipValue_0x0;
 	struct ed_viewport* pCameraObj28_0x4;
 	struct ed_viewport* pCameraObj28_0x8;
-	undefined4* field_0xc;
+	S_STREAM_FOG_DEF* pFogClipStream;
 	undefined4 field_0x10;
 	undefined4 field_0x14;
 	undefined4 field_0x18;
@@ -89,22 +104,7 @@ public:
 	int curState;
 	undefined4 field_0x44;
 	undefined4 field_0x48;
-	undefined field_0x4c;
-	undefined field_0x4d;
-	undefined field_0x4e;
-	undefined field_0x4f;
-	undefined field_0x50;
-	undefined field_0x51;
-	undefined field_0x52;
-	undefined field_0x53;
-	undefined field_0x54;
-	undefined field_0x55;
-	undefined field_0x56;
-	undefined field_0x57;
-	undefined field_0x58;
-	undefined field_0x59;
-	undefined field_0x5a;
-	undefined field_0x5b;
+	FogClipEntry aFogClipStack[2];
 	undefined field_0x5c;
 	undefined field_0x5d;
 	undefined field_0x5e;
@@ -217,17 +217,17 @@ public:
 	undefined field_0xc9;
 	undefined field_0xca;
 	undefined field_0xcb;
-	int field_0xcc;
+	int fogClipSettingStackSize;
 	float field_0xd0;
 	float field_0xd4;
-	undefined4 field_0xd8;
-	undefined4 field_0xdc;
-	undefined4 field_0xe0;
-	undefined4 field_0xe4;
-	undefined4 field_0xe8;
-	undefined4 field_0xec;
-	undefined4 field_0xf0;
-	undefined4 field_0xf4;
+	float field_0xd8;
+	float field_0xdc;
+	_rgba prevFogRGBA;
+	uint prevFogFlags;
+	float clipValue_0xe8;
+	float field_0xec;
+	_rgba fogRGBA;
+	undefined4 fogFlags;
 	short mode_0xf8;
 	undefined field_0xfa;
 	undefined field_0xfb;
@@ -264,6 +264,9 @@ public:
 
 	void LoadFunc_001b87b0(void);
 
+	void HandleFogAndClippingSettings();
+	void PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream);
+
 	void Level_Install(void);
 	void Level_Init(void);
 	void Level_Manage(void);
@@ -279,6 +282,8 @@ public:
 	static Scene* _pinstance;
 	static struct ed_3D_Scene* _scene_handleA;
 	static struct ed_3D_Scene* _scene_handleB;
+
+	static ManagerContainer ptable;
 };
 
 void Game_Init(void);
@@ -290,6 +295,5 @@ extern uint gMipmapK;
 extern uint gMipmapL;
 
 extern uint GameFlags;
-extern ManagerContainer g_ManagerSingletonArray_00451660;
 
 #endif //_LARGEOBJECT_H

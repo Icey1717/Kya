@@ -5,10 +5,8 @@
 
 FileManager3D::FileManager3D()
 {
-	//ParticleInfo* pPVar1;
-	//pPVar1 = (ParticleInfo*)AllocateFunc_001002a0(0x600);
-	//this->pParticleInfoArray_0x50 = pPVar1;
-	Setup_001a7110();
+	this->pParticleInfoArray_0x50 = new ParticleInfo[0x600];
+	Level_ClearInternalData();
 	return;
 }
 
@@ -16,7 +14,7 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 {
 	int iVar1;
 	int iVar2;
-	MeshTransformParent* pMVar3;
+	edNODE* pMVar3;
 	Mesh* pMVar4;
 	int iStack8;
 	int iStack4;
@@ -25,7 +23,7 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 	if (iVar1 == 0) {
 		this->pMeshInfo = (ed_g3d_manager*)0x0;
 		this->levelSectorTextureIndex = 0;
-		this->pLastMeshTransformParent = (MeshTransformParent*)0x0;
+		this->pLastMeshTransformParent = (edNODE*)0x0;
 	}
 	else {
 		iVar1 = pMemoryStream->GetS32();
@@ -44,7 +42,7 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 	}
 	iVar1 = pMemoryStream->GetS32();
 	if (iVar1 == -1) {
-		this->pMeshTransformParent = (MeshTransformParent*)0x0;
+		this->pMeshTransformParent = (edNODE*)0x0;
 	}
 	else {
 		iVar2 = pMemoryStream->GetS32();
@@ -55,11 +53,36 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 		}
 		IMPLEMENTATION_GUARD(pMVar3 = ed3DHierarchyAddToScene(Scene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
 		this->pMeshTransformParent = pMVar3;
-		if (this->pMeshTransformParent != (MeshTransformParent*)0x0) {
+		if (this->pMeshTransformParent != (edNODE*)0x0) {
 			3DFileManager::Func_001a6510(this, this->pMeshTransformParent);
 		})
 	}
 	return;
+}
+
+int FileManager3D::InstanciateG2D(int index)
+{
+	ParticleInfo* pPVar1;
+	int iVar2;
+
+	pPVar1 = this->pParticleInfoArray_0x50;
+	for (iVar2 = 0; (pPVar1->ID != index && (iVar2 < 0x80)); iVar2 = iVar2 + 1) {
+		pPVar1 = pPVar1 + 1;
+	}
+	if (pPVar1->materialInfoArray_0x8 == (edDList_material*)0x0) {
+		pPVar1 = (ParticleInfo*)0x0;
+	}
+	if (pPVar1 == (ParticleInfo*)0x0) {
+		IMPLEMENTATION_GUARD(
+		pPVar1 = _CreateG2DInfo(index);)
+	}
+	if (pPVar1 == (ParticleInfo*)0x0) {
+		iVar2 = -1;
+	}
+	else {
+		iVar2 = pPVar1->materialCount_0x4;
+	}
+	return iVar2;
 }
 
 TextureInfo* FileManager3D::GetCommonSectorG2D()
@@ -67,7 +90,7 @@ TextureInfo* FileManager3D::GetCommonSectorG2D()
 	return this->pTextureInfoArray + this->levelSectorTextureIndex;
 }
 
-void FileManager3D::Setup_001a7110()
+void FileManager3D::Level_ClearInternalData()
 {
 	void* pvVar1;
 	ParticleInfo* pPVar2;
@@ -81,38 +104,38 @@ void FileManager3D::Setup_001a7110()
 	this->textureLoadedCount = 0;
 	this->pTextureInfoArray = (TextureInfo*)0x0;
 	this->pMeshInfo = (ed_g3d_manager*)0x0;
-	this->pMeshTransformParent = (MeshTransformParent*)0x0;
-	//pPVar2 = this->pParticleInfoArray_0x50;
-	//do {
-	//	pPVar2->ID = -1;
-	//	pPVar2->materialCount_0x4 = 0;
-	//	iVar3 = iVar3 + -8;
-	//	pPVar2->materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2[1].ID = -1;
-	//	pPVar2[1].materialCount_0x4 = 0;
-	//	pPVar2[1].materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2[2].ID = -1;
-	//	pPVar2[2].materialCount_0x4 = 0;
-	//	pPVar2[2].materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2[3].ID = -1;
-	//	pPVar2[3].materialCount_0x4 = 0;
-	//	pPVar2[3].materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2[4].ID = -1;
-	//	pPVar2[4].materialCount_0x4 = 0;
-	//	pPVar2[4].materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2[5].ID = -1;
-	//	pPVar2[5].materialCount_0x4 = 0;
-	//	pPVar2[5].materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2[6].ID = -1;
-	//	pPVar2[6].materialCount_0x4 = 0;
-	//	pPVar2[6].materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2[7].ID = -1;
-	//	pPVar2[7].materialCount_0x4 = 0;
-	//	pPVar2[7].materialInfoArray_0x8 = (MaterialInfo*)0x0;
-	//	pPVar2 = pPVar2 + 8;
-	//} while (0 < iVar3);
+	this->pMeshTransformParent = (edNODE*)0x0;
+	pPVar2 = this->pParticleInfoArray_0x50;
+	do {
+		pPVar2->ID = -1;
+		pPVar2->materialCount_0x4 = 0;
+		iVar3 = iVar3 + -8;
+		pPVar2->materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2[1].ID = -1;
+		pPVar2[1].materialCount_0x4 = 0;
+		pPVar2[1].materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2[2].ID = -1;
+		pPVar2[2].materialCount_0x4 = 0;
+		pPVar2[2].materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2[3].ID = -1;
+		pPVar2[3].materialCount_0x4 = 0;
+		pPVar2[3].materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2[4].ID = -1;
+		pPVar2[4].materialCount_0x4 = 0;
+		pPVar2[4].materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2[5].ID = -1;
+		pPVar2[5].materialCount_0x4 = 0;
+		pPVar2[5].materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2[6].ID = -1;
+		pPVar2[6].materialCount_0x4 = 0;
+		pPVar2[6].materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2[7].ID = -1;
+		pPVar2[7].materialCount_0x4 = 0;
+		pPVar2[7].materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar2 = pPVar2 + 8;
+	} while (0 < iVar3);
 	pvVar1 = memset(&this->field_0x10, 0, 0x20);
-	*(undefined4*)&this->field_0x30 = 0x461c4000;
+	this->field_0x30 = 10000.0f;
 	this->field_0x10 = (char*)&this->field_0x30;
 	*(undefined4*)&this->field_0x14 = 0;
 	return;

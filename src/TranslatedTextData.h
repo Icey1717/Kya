@@ -3,11 +3,16 @@
 
 #include "Types.h"
 
-class MessageFile 
+class CMessageFile 
 {
 public:
-	MessageFile();
-	~MessageFile();
+	CMessageFile();
+	~CMessageFile();
+
+	static void set_default_language(LANGUAGE newID);
+	static LANGUAGE get_default_language(void);
+
+	static LANGUAGE sm_default_language;
 
 	void select_language(struct edCBankBufferEntry* pBankAccess, char* pFilePath, LANGUAGE languageID);
 	void select_language(char* filePath, LANGUAGE languageID);
@@ -118,18 +123,17 @@ public:
 	char* pFileData;
 	uint size;
 	struct edCBankBufferEntry* pBankAccessObj;
-	struct MessageFile* pPrev;
-	struct MessageFile* pNext;
+	struct CMessageFile* pPrev;
+	struct CMessageFile* pNext;
 };
 
 class MessageManager {
 public:
-	void remove_entry(MessageFile* pToRemove);
+	void remove_entry(CMessageFile* pToRemove);
 	char* get_message(ulong key);
-	MessageFile* pMessage;
+	CMessageFile* pMessage;
 };
 
-extern LANGUAGE g_LanguageID_0044974c;
 extern MessageManager gMessageManager;
 
 #endif //TRANSLATED_TEXT_DATA

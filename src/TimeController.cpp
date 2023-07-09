@@ -3,7 +3,7 @@
 
 float g_DesiredFrameTime_00483824;
 
-TimeController g_TimeController_004516d0;
+Timer gTimer;
 
 void SetDesiredFrameTime(float inTime)
 {
@@ -11,7 +11,7 @@ void SetDesiredFrameTime(float inTime)
 	return;
 }
 
-TimeController::TimeController()
+Timer::Timer()
 {
 	totalPlayTime = 0.0f;
 	frameDelta = 0.0f;
@@ -30,9 +30,9 @@ TimeController::TimeController()
 	SetDesiredFrameTime(frameTime);
 }
 
-TimeController* GetTimer(void)
+Timer* GetTimer(void)
 {
-	return &g_TimeController_004516d0;
+	return &gTimer;
 }
 
 #ifdef PLATFORM_PS2
@@ -89,7 +89,7 @@ float edTimerTimeGet(void)
 	return _edSystemTimerGet();
 }
 
-float TimeController::Update()
+float Timer::Update()
 {
 	float currentTime;
 
@@ -110,11 +110,16 @@ float TimeController::Update()
 	return currentTime;
 }
 
-void TimeController::ResetGameTimers()
+void Timer::ResetGameTimers()
 {
 	field_0x8 = 1.0;
 	timeScale = 1.0;
 	cutsceneDeltaTime = 0.0;
 	scaledTotalTime = 0.0;
 	return;
+}
+
+Timer* Timer::GetTimer()
+{
+	return &gTimer;
 }

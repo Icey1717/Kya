@@ -6,27 +6,28 @@
 #include "edC/edCFiler.h"
 #include <assert.h>
 #include "edStr.h"
+#include "PauseManager.h"
 
 MessageManager gMessageManager = { NULL };
 
-void MessageManager::remove_entry(MessageFile* pToRemove)
+void MessageManager::remove_entry(CMessageFile* pToRemove)
 {
-	MessageFile* pTVar1;
+	CMessageFile* pTVar1;
 
-	if (pToRemove != (MessageFile*)0x0) {
-		for (pTVar1 = pMessage; (pTVar1 != (MessageFile*)0x0 && (pTVar1 != pToRemove));
+	if (pToRemove != (CMessageFile*)0x0) {
+		for (pTVar1 = pMessage; (pTVar1 != (CMessageFile*)0x0 && (pTVar1 != pToRemove));
 			pTVar1 = pTVar1->pNext) {
 		}
-		if (pTVar1->pPrev != (MessageFile*)0x0) {
+		if (pTVar1->pPrev != (CMessageFile*)0x0) {
 			pTVar1->pPrev->pNext = pTVar1->pNext;
 		}
-		if (pTVar1->pNext != (MessageFile*)0x0) {
+		if (pTVar1->pNext != (CMessageFile*)0x0) {
 			pTVar1->pNext->pPrev = pTVar1->pPrev;
 		}
 		if (pTVar1 == pMessage) {
-			if (pTVar1->pPrev == (MessageFile*)0x0) {
-				if (pTVar1->pNext == (MessageFile*)0x0) {
-					pMessage = (MessageFile*)0x0;
+			if (pTVar1->pPrev == (CMessageFile*)0x0) {
+				if (pTVar1->pNext == (CMessageFile*)0x0) {
+					pMessage = (CMessageFile*)0x0;
 				}
 				else {
 					pMessage = pTVar1->pNext;
@@ -40,7 +41,7 @@ void MessageManager::remove_entry(MessageFile* pToRemove)
 	return;
 }
 
-void MessageFile::prepare_buffer()
+void CMessageFile::prepare_buffer()
 {
 	int* piVar1;
 	uint uVar2;
@@ -64,10 +65,10 @@ void MessageFile::prepare_buffer()
 	return;
 }
 
-MessageFile::MessageFile()
+CMessageFile::CMessageFile()
 {
-	pPrev = (MessageFile*)0x0;
-	pNext = (MessageFile*)0x0;
+	pPrev = (CMessageFile*)0x0;
+	pNext = (CMessageFile*)0x0;
 	pFileData = (char*)0x0;
 	entryCount = 0;
 	languageID = (LANGUAGE)0;
@@ -77,7 +78,7 @@ MessageFile::MessageFile()
 	return;
 }
 
-MessageFile::~MessageFile()
+CMessageFile::~CMessageFile()
 {
 	char* dataPtr = pFileData;
 	if ((dataPtr != (char*)0x0) && (dataPtr != (char*)0x0)) {
@@ -98,14 +99,25 @@ char* g_LanguageSuffixArray_00425840[5] = {
 	"IT",
 };
 
-LANGUAGE g_LanguageID_0044974c = GB;
+LANGUAGE CMessageFile::sm_default_language = GB;
 
-void MessageFile::select_language(edCBankBufferEntry* pBankAccess, char* pFilePath, LANGUAGE languageID)
+void CMessageFile::set_default_language(LANGUAGE newID)
+{
+	sm_default_language = newID;
+	return;
+}
+
+LANGUAGE CMessageFile::get_default_language(void)
+{
+	return sm_default_language;
+}
+
+void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, char* pFilePath, LANGUAGE languageID)
 {
 	bool bVar1;
-	MessageFile* pTVar2;
-	MessageFile* pTVar3;
-	MessageFile* pTVar4;
+	CMessageFile* pTVar2;
+	CMessageFile* pTVar3;
+	CMessageFile* pTVar4;
 	bool bVar5;
 	int iVar6;
 	edBANK_ENTRY_INFO BStack544;
@@ -128,7 +140,7 @@ void MessageFile::select_language(edCBankBufferEntry* pBankAccess, char* pFilePa
 	}
 	if (pBankAccess != (edCBankBufferEntry*)0x0) {
 		if (languageID == AUTO) {
-			languageID = g_LanguageID_0044974c;
+			languageID = CMessageFile::sm_default_language;
 		}
 		if (pFilePath != (char*)0x0) {
 			iVar6 = edStrCopy(this->field_0x8, pFilePath);
@@ -136,28 +148,28 @@ void MessageFile::select_language(edCBankBufferEntry* pBankAccess, char* pFilePa
 			(this->field_0x8 + iVar6 + -8)[3] = 's';
 		}
 		sprintf(acStack512, this->field_0x8);
-		iVar6 = get_index(pBankAccess, acStack512);
-		if ((iVar6 != -1) && (bVar5 = get_info(pBankAccess, iVar6, &BStack544, (char*)0x0), bVar5 != false)) {
+		iVar6 = pBankAccess->get_index(acStack512);
+		if ((iVar6 != -1) && (bVar5 = pBankAccess->get_info(iVar6, &BStack544, (char*)0x0), bVar5 != false)) {
 			this->languageID = languageID;
 			this->pFileData = BStack544.fileBufferStart;
 			this->pBankAccessObj = pBankAccess;
 			prepare_buffer();
-			if ((!bVar1) && (this != (MessageFile*)0x0)) {
-				if (gMessageManager.pMessage == (MessageFile*)0x0) {
-					this->pPrev = (MessageFile*)0x0;
-					this->pNext = (MessageFile*)0x0;
+			if ((!bVar1) && (this != (CMessageFile*)0x0)) {
+				if (gMessageManager.pMessage == (CMessageFile*)0x0) {
+					this->pPrev = (CMessageFile*)0x0;
+					this->pNext = (CMessageFile*)0x0;
 					gMessageManager.pMessage = this;
 					MY_LOG("Linking first message: %p\n", this);
 				}
 				else {
 					pTVar4 = gMessageManager.pMessage->pNext;
 					pTVar3 = gMessageManager.pMessage;
-					while (pTVar2 = pTVar4, pTVar2 != (MessageFile*)0x0) {
+					while (pTVar2 = pTVar4, pTVar2 != (CMessageFile*)0x0) {
 						pTVar3 = pTVar2;
 						pTVar4 = pTVar2->pNext;
 					}
 					this->pPrev = pTVar3;
-					this->pNext = (MessageFile*)0x0;
+					this->pNext = (CMessageFile*)0x0;
 					pTVar3->pNext = this;
 					MY_LOG("Linking next message: %p\n", this);
 				}
@@ -244,18 +256,18 @@ char* edFileOpen(char* filePath, uint* outSize, uint flags)
 	return pReadBuffer;
 }
 
-void MessageFile::select_language(char* filePath, LANGUAGE inLanguageID)
+void CMessageFile::select_language(char* filePath, LANGUAGE inLanguageID)
 {
-	MessageFile* pTVar1;
-	MessageFile* pTVar2;
-	MessageFile* pTVar3;
+	CMessageFile* pTVar1;
+	CMessageFile* pTVar2;
+	CMessageFile* pTVar3;
 	byte bVar4;
 	edFILEH* pDebugBank;
 	char* pcVar5;
 	char acStack512[512];
 
 	if (inLanguageID == AUTO) {
-		inLanguageID = g_LanguageID_0044974c;
+		inLanguageID = CMessageFile::sm_default_language;
 	}
 
 	if ((this->pFileData != (char*)0x0) && (inLanguageID == this->languageID)) {
@@ -277,22 +289,22 @@ void MessageFile::select_language(char* filePath, LANGUAGE inLanguageID)
 			MY_LOG("MessageFile::select_language FAILED TO OPEN FILE: %s\n", acStack512);
 			return;
 		}
-		if (this != (MessageFile*)0x0) {
-			if (gMessageManager.pMessage == (MessageFile*)0x0) {
-				this->pPrev = (MessageFile*)0x0;
-				this->pNext = (MessageFile*)0x0;
+		if (this != (CMessageFile*)0x0) {
+			if (gMessageManager.pMessage == (CMessageFile*)0x0) {
+				this->pPrev = (CMessageFile*)0x0;
+				this->pNext = (CMessageFile*)0x0;
 				gMessageManager.pMessage = this;
 				MY_LOG("Linking first message: %p\n", this);
 			}
 			else {
 				pTVar3 = gMessageManager.pMessage->pNext;
 				pTVar2 = gMessageManager.pMessage;
-				while (pTVar1 = pTVar3, pTVar1 != (MessageFile*)0x0) {
+				while (pTVar1 = pTVar3, pTVar1 != (CMessageFile*)0x0) {
 					pTVar2 = pTVar1;
 					pTVar3 = pTVar1->pNext;
 				}
 				this->pPrev = pTVar2;
-				this->pNext = (MessageFile*)0x0;
+				this->pNext = (CMessageFile*)0x0;
 				pTVar2->pNext = this;
 				MY_LOG("Linking next message: %p\n", this);
 			}
@@ -317,7 +329,7 @@ void MessageFile::select_language(char* filePath, LANGUAGE inLanguageID)
 
 char* g_szTextNotFound_00434bf0 = "NotFound";
 
-char* MessageFile::get_message(ulong key, long mode)
+char* CMessageFile::get_message(ulong key, long mode)
 {
 	char* pcVar1;
 	ulong* puVar2;
@@ -364,10 +376,10 @@ char* MessageFile::get_message(ulong key, long mode)
 char* MessageManager::get_message(ulong key)
 {
 	char* pcVar1;
-	MessageFile* pTextData;
+	CMessageFile* pTextData;
 
 	if (key != 0) {
-		for (pTextData = pMessage; pTextData != (MessageFile*)0x0; pTextData = pTextData->pNext) {
+		for (pTextData = pMessage; pTextData != (CMessageFile*)0x0; pTextData = pTextData->pNext) {
 			pcVar1 = pTextData->get_message(key, 1);
 			if (pcVar1 != (char*)0x0) {
 				return pcVar1;

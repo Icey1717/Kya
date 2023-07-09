@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "sys/types.h"
 
+#include "kya.h"
+
 #if defined(PLATFORM_PS2)
 #include <libsdr.h>
 #include <libdma.h>
@@ -67,6 +69,8 @@ extern "C" {
 #include <assert.h>
 #include "edStr.h"
 #include "Rendering/edCTextFont.h"
+#include "BootData.h"
+#include "SaveManagement.h"
 
 template<class T>
 T* CreateNew()
@@ -84,17 +88,6 @@ InputSetupParams* edSysGetConfig(void)
 EFileLoadMode GetFileLoadMode_00424d9c(void)
 {
 	return g_InputSetupParams.fileLoadMode;
-}
-
-EdFileGlobal_10* g_NextFreeFilePtr_00457888 = NULL;
-
-void SetupEd10_00217720(void* pObj, void* pFreeFunc, EdFileGlobal_10* pHeader)
-{
-	pHeader->pPrevFileHeader = g_NextFreeFilePtr_00457888;
-	pHeader->pFreeFunc = pFreeFunc;
-	pHeader->pFileData = pObj;
-	g_NextFreeFilePtr_00457888 = pHeader;
-	return;
 }
 
 char* g_szCdRomPrefix_00438548 = "cdrom0:";
@@ -902,7 +895,7 @@ char* LoadFileFromDisk(char* fileName, uint* outSize)
 				if (outSize != (uint*)0x0) {
 					*outSize = size;
 				}
-				unaff_s3_lo = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (long)(int)size);
+				unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
 				if (unaff_s3_lo != (char*)0x0) {
 					sceLseek(iVar1, 0, 0);
 					sceRead(iVar1, unaff_s3_lo, size);
@@ -921,7 +914,7 @@ char* LoadFileFromDisk(char* fileName, uint* outSize)
 			if (outSize != (uint*)0x0) {
 				*outSize = size;
 			}
-			unaff_s3_lo = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (long)(int)size);
+			unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
 			if (unaff_s3_lo != (char*)0x0) {
 				sceLseek(iVar1, 0, 0);
 				sceRead(iVar1, unaff_s3_lo, size);
@@ -940,7 +933,7 @@ char* LoadFileFromDisk(char* fileName, uint* outSize)
 			*outSize = size;
 		}
 
-		unaff_s3_lo = (char*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), (long)(int)size);
+		unaff_s3_lo = (char*)edMemAlloc(TO_HEAP(H_MAIN), (long)(int)size);
 		if (unaff_s3_lo != (char*)0x0) {
 			fseek(fp, 0, SEEK_SET);
 			fread(unaff_s3_lo, 1, size, fp);
@@ -953,19 +946,11 @@ char* LoadFileFromDisk(char* fileName, uint* outSize)
 }
 
 char* g_szIni_0042b5b8 = "BWITCH.INI";
-
-
-int g_ScreenWidth;
-int g_VideoMode1;
-int g_ScreenHeight;
-int g_omode;
-
 char* s_Video_0042b490 = "Video";
 
-int g_SetOffsetX;
-int g_SetOffsetY;
+GlobalVideoConfig gVideoConfig = {};
 
-void SetupVideo(IniFile* file)
+void VideoReadConfig(IniFile* file)
 {
 	bool bVar1;
 	int iVar2;
@@ -993,13 +978,13 @@ void SetupVideo(IniFile* file)
 		if ((bVar1 != false) && (videoFrequency == 0x3c)) {
 			isNTSC = 0;
 		}
-		g_ScreenWidth = 0x200;
-		g_VideoMode1 = 0;
-		g_ScreenHeight = screenHeight;
-		g_isNTSC = isNTSC;
-		g_omode = videoMode;
-		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetX", &g_SetOffsetX);
-		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetY", &g_SetOffsetY);
+		gVideoConfig.screenWidth = 0x200;
+		gVideoConfig.field_0x8 = 0;
+		gVideoConfig.screenHeight = screenHeight;
+		gVideoConfig.isNTSC = isNTSC;
+		gVideoConfig.omode = videoMode;
+		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetX", &gVideoConfig.offsetX);
+		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetY", &gVideoConfig.offsetY);
 	}
 	return;
 }
@@ -1075,11 +1060,11 @@ void SetupDoubleBuffer_00405ba0(void)
 	short screenHeight;
 	short screenWidth;
 
-	screenHeight = (short)g_ScreenHeight;
-	screenWidth = (short)g_ScreenWidth;
+	screenHeight = (short)gVideoConfig.screenHeight;
+	screenWidth = (short)gVideoConfig.screenWidth;
 	/* Start video mode in NTCS and change to PAL based on global */
 	videoMode = SCE_GS_NTSC;
-	if (g_omode != SCE_GS_NTSC) {
+	if (gVideoConfig.omode != SCE_GS_NTSC) {
 		videoMode = SCE_GS_PAL;
 	}
 #if defined(PLATFORM_PS2)
@@ -1228,7 +1213,7 @@ void SplashFunc_002ba880(SplashParams* pParams, long param_2, uint param_3)
 #if defined(PLATFORM_PS2)
 	edDmaFlushCache();
 	RENDER_LOG("DMA Begin SplashFunc_002ba880\n");
-	edDmaSend(SHELLDMA_CHANNEL_GIF, (ulonglong*)packet.pBuffer);
+	edDmaSend(SHELLDMA_CHANNEL_GIF, (uint)packet.pBuffer);
 #endif
 	return;
 }
@@ -1247,8 +1232,8 @@ void SetupSplash(char* pSplashFile, uint count)
 	local_8.field_0x0 = 0;
 	local_8.field_0x2 = 0;
 	auStack32.field_0x8 = 0;
-	local_8.width = (short)g_ScreenWidth;
-	local_8.height = (short)g_ScreenHeight;
+	local_8.width = (short)gVideoConfig.screenWidth;
+	local_8.height = (short)gVideoConfig.screenHeight;
 	auStack32.field_0xc = auStack32.field_0x4;
 	auStack32.pSplashFile = pSplashFile;
 	for (counter = 0; counter < count; counter = counter + 2) {
@@ -1266,7 +1251,7 @@ void SetupSplash(char* pSplashFile, uint count)
 		sceGsSwapDBuff(&g_DoubleBuffer, counter);
 	}
 #else
-	Renderer::RenderImage(pSplashFile, g_ScreenWidth, g_ScreenHeight);
+	Renderer::RenderImage(pSplashFile, gVideoConfig.screenWidth, gVideoConfig.screenHeight);
 #endif
 	return;
 }
@@ -1304,7 +1289,7 @@ void Init_edFile(void)
 	local_4 = 0;
 	bVar1 = edFileFilerConfigure(sz_ModeCdvd_0042b800, IM_CALC_SIZE, (void*)0x898, &local_4);
 	if (bVar1 != false) {
-		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), local_4);
+		PTR_edCdlFolder_00448ef4 = (edCdlFolder*)edMemAlloc(TO_HEAP(H_MAIN), local_4);
 		/* <cdvd> */
 		edFileFilerConfigure(sz_ModeCdvd_0042b800, IM_INIT, PTR_edCdlFolder_00448ef4, (int*)local_4);
 	}
@@ -1377,159 +1362,28 @@ void SetLanguageID_00336b40(void)
 {
 	int systemLanguageID;
 
-	if (g_omode == SCE_GS_PAL) {
+	if (gVideoConfig.omode == SCE_GS_PAL) {
 		systemLanguageID = GetSystemLanguage();
 		switch (systemLanguageID) {
 		default:
-			g_LanguageID_0044974c = GB;
+			CMessageFile::sm_default_language = GB;
 			break;
 		case 2:
-			g_LanguageID_0044974c = FR;
+			CMessageFile::sm_default_language = FR;
 			break;
 		case 3:
-			g_LanguageID_0044974c = SP;
+			CMessageFile::sm_default_language = SP;
 			break;
 		case 4:
-			g_LanguageID_0044974c = GE;
+			CMessageFile::sm_default_language = GE;
 			break;
 		case 5:
-			g_LanguageID_0044974c = IT;
+			CMessageFile::sm_default_language = IT;
 		}
 	}
 	else {
-		g_LanguageID_0044974c = GB;
+		CMessageFile::sm_default_language = GB;
 	}
-	return;
-}
-
-edCBankBuffer BootData_BankBuffer = { 0 };
-edCBankBufferEntry* BootData_BankBufferEntry = NULL;
-char* sz_MenuDataBankName_00435610 = "CDEURO/menu/MenuData.bnk";
-char* BootDataBankName = sz_MenuDataBankName_00435610;
-
-char* sz_MediumFont_004355f8 = "medium.fon";
-char* sz_MediumFontFileName_00448b60 = sz_MediumFont_004355f8;
-
-char* BootBitmapNames[23] = {
-	"but_tria.g2d",
-	"but_circ.g2d",
-	"but_squa.g2d",
-	"but_cros.g2d",
-	"but_l1.g2d",
-	"but_r1.g2d",
-	"but_l2.g2d",
-	"but_r2.g2d",
-	"but_sele.g2d",
-	"but_m1_turn.g2d",
-	"but_m1.g2d",
-	"but_udlr.g2d",
-	"but_lr.g2d",
-	"fl_haut.g2d",
-	"fl_droite.g2d",
-	"fl_gauche.g2d",
-	"fl_bas.g2d",
-	"selection.g2d",
-	"woodsqre.g2d",
-	"icon_clock.g2d",
-	"map.g2d",
-	"money.g2d",
-	"memory_card.g2d"
-};
-
-Sprite BootBitmaps[23] = {};
-
-void InstallBootData(void)
-{
-	char* puVar1;
-	int fileIndex;
-	char* messagesFilePointer;
-	Sprite* pIconTexture;
-	char** ppcVar2;
-	int iVar3;
-	edCBankInstall bankHeader;
-
-	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
-	   and a map. */
-	memset(&bankHeader, 0, sizeof(edCBankInstall));
-	BootData_BankBuffer.initialize(0x32000, 1, &bankHeader);
-	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
-	bankHeader.filePath = BootDataBankName;
-	BootData_BankBufferEntry = BootData_BankBuffer.get_free_entry();
-	BootData_BankBufferEntry->load(&bankHeader);
-	/* Bank will go on the heap here */
-	iVar3 = 0;
-	ppcVar2 = BootBitmapNames;
-	pIconTexture = BootBitmaps;
-	do {
-		messagesFilePointer = *ppcVar2;
-		fileIndex = get_index(BootData_BankBufferEntry, messagesFilePointer);
-		if (fileIndex == -1) {
-			edDebugPrintf("\r\nFile: %s\r\n", messagesFilePointer);
-			messagesFilePointer = (char*)0x0;
-		}
-		else {
-			messagesFilePointer = get_element(BootData_BankBufferEntry, fileIndex);
-		}
-		pIconTexture->Install(messagesFilePointer);
-		puVar1 = sz_MediumFontFileName_00448b60;
-		iVar3 = iVar3 + 1;
-		ppcVar2 = ppcVar2 + 1;
-		pIconTexture = pIconTexture + 1;
-	} while (iVar3 < 0x17);
-	/* Init Medium.Fon */
-	iVar3 = get_index(BootData_BankBufferEntry, sz_MediumFontFileName_00448b60);
-	if (iVar3 == -1) {
-		edDebugPrintf("\r\nFile: %s\r\n", puVar1);
-		BootDataFont = (edCTextFont*)0x0;
-	}
-	else {
-		BootDataFont = (edCTextFont*)get_element(BootData_BankBufferEntry, iVar3);
-	}
-	edTextInstallFont(BootDataFont);
-	if ((FontPacked_2C*)BootDataFont->pSubData != (FontPacked_2C*)0x0) {
-		//BootDataFont->pSubData->pOverrideData = USHORT_ARRAY_0048fc60;
-	}
-	//USHORT_ARRAY_0048fc60[156] = 0x153;
-	//USHORT_ARRAY_0048fc60[241] = 0xf1;
-	//USHORT_ARRAY_0048fc60[231] = 0xe7;
-	//USHORT_ARRAY_0048fc60[199] = 199;
-	//USHORT_ARRAY_0048fc60[220] = 0xdc;
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_MAGIC_00435630, &BootBitmaps[0].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CATCH_00435638, &BootBitmaps[1].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_ACTION_00435640, &BootBitmaps[2].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_JUMP_00435648, &BootBitmaps[3].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CROUCH_00435650, &BootBitmaps[6].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_SNEAK_00435658, &BootBitmaps[6].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_VIEW_00435668, &BootBitmaps[5].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_MAP_00435680, &BootBitmaps[4].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_INVENT_00435660, &BootBitmaps[7].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CAMERA_00435670, &BootBitmaps[10].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_CONTROL_00435678, &BootBitmaps[10].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_MONEY_00435688, &BootBitmaps[0x15].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_BACK_00435690, &BootBitmaps[0].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_VALID_00435698, &BootBitmaps[3].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_VALDSAFE_004356a0, &BootBitmaps[1].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_UDLR_004356b0, &BootBitmaps[0xb].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_LR_004356b8, &BootBitmaps[0xc].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_STIK_ROT_00435760, &BootBitmaps[9].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_UP_004356c0, &BootBitmaps[0xd].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_RIGHT_004356c8, &BootBitmaps[0xe].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_LEFT_004356d0, &BootBitmaps[0xf].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_DOWN_004356d8, &BootBitmaps[0x10].pMaterialInfo);
-	//edCTextResourcePool::BitmapAdd(&g_TextIconDictionary, s_HELP_004356e0, &BootBitmaps[8].pMaterialInfo);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_RED_004356e8, FUN_00359e90);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_GREEN_004356f0, FUN_00359e70);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_BLUE_004356f8, FUN_00359e60);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_YELLOW_00435700, FUN_00359e40);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_BLACK_00435708, FUN_00359e30);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_WHITE_00435710, FUN_00359e10);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_BLINK_00435718, FUN_00359c90);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_NOBLINK_00435720, FUN_00359c50);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA0_00435728, FUN_00359c30);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA25_00435730, FUN_00359c00);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA50_00435738, FUN_00359bd0);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_ALPHA75_00435740, FUN_00359ba0);
-	//edCTextResourcePool::CallbackAdd(&g_TextIconDictionary, s_RESET_00435748, 0);
 	return;
 }
 
@@ -1569,13 +1423,13 @@ void MainInit(int argc,char **argv)
 	if (pFileBuffer != (char*)0x0) 
 	{
 		g_IniFile_00450750.Load_001ab200(g_szIni_0042b5b8, pFileBuffer, fileSize);
-		SetupVideo(&g_IniFile_00450750);
+		VideoReadConfig(&g_IniFile_00450750);
 	}
 
 	SetupDoubleBuffer_00405ba0();
 
 	/* If using NTSC then load SPLASH_N, otherwise load SPLASH_P */
-	if (g_omode == SCE_GS_NTSC) {
+	if (gVideoConfig.omode == SCE_GS_NTSC) {
 		pFileBuffer = LoadFileFromDisk("CDEURO\\FRONTEND\\SPLASH_N.RAW", (uint*)0x0);
 	}
 	else {
@@ -1631,7 +1485,7 @@ void MainInit(int argc,char **argv)
 	//	soundConfig->field_0xc = musicConfig->field_0x0;
 	//	soundConfig->field_0x10 = uVar2 - 1;
 	//	soundConfig->field_0x0 = 0x80;
-	//	if (g_omode == SCE_GS_PAL) {
+	//	if (gVideoConfig.omode == SCE_GS_PAL) {
 	//		soundConfig->field_0x14 = 0x32;
 	//	}
 	//	else {
@@ -1658,10 +1512,15 @@ void MainInit(int argc,char **argv)
 	pVVar4->field_0x1 = 1;
 	pVVar4->field_0x4 = 0;
 	edVideoInit();
-	SetVideoMode((short)g_omode, (short)g_ScreenWidth, (short)g_ScreenHeight, (short)g_VideoMode1, 0);
+	SetVideoMode((short)gVideoConfig.omode, (short)gVideoConfig.screenWidth, (short)gVideoConfig.screenHeight, (short)gVideoConfig.field_0x8, 0);
 	//CheckControllers(&g_IniFile_00450750);
 	Scene::CreateScene();
 	Game_Init();
+
+#ifdef PLATFORM_WIN
+	Renderer::WaitUntilReady();
+#endif
+
 	///* May jump to 003965B8 */
 	bool bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 	/* This doesn't seem to trigger on main run. */
@@ -1669,7 +1528,7 @@ void MainInit(int argc,char **argv)
 		IMPLEMENTATION_GUARD();
 		//DrawPopup_0034e1f0(8, 0, 0x52525f503700080c, 0x171d0d0b190f111a, 0);
 	}
-	//SetupIconSaveAndSerial();
+	SaveManagementBootCheck();
 	return;
 }
 
@@ -1708,7 +1567,7 @@ void LoadVideoFromFilePath(VideoFile* display, char* inFileName)
 	int iVar7;
 	char fileName[512];
 
-	display->videoIsPAL = g_omode == SCE_GS_PAL;
+	display->videoIsPAL = gVideoConfig.omode == SCE_GS_PAL;
 	display->fbp0 = 0;
 	display->fileReadSuccess = 0;
 	//UpdateSoundManager();
@@ -1817,7 +1676,7 @@ void DestroyVideoFile(VideoFile* pVideo)
 	EnableIntc(INTC_GS);
 	edVideoSetAttribute((ed_video_attr*)0x0);
 	edVideoSetBackgroundColor(0, 0, 0);
-	edVideoSetOffset((short)g_SetOffsetX, (short)g_SetOffsetY);
+	edVideoSetOffset((short)gVideoConfig.offsetX, (short)gVideoConfig.offsetY);
 	edVideoFlip();
 #endif
 	return;
@@ -1826,7 +1685,7 @@ void DestroyVideoFile(VideoFile* pVideo)
 void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 {
 	byte bVar1;
-	TimeController* inTimeController;
+	Timer* inTimeController;
 	VideoFile* display;
 	uint uVar2;
 	int iVar3;
@@ -1918,7 +1777,7 @@ void PlayIntroVideo(long mode)
 {
 	undefined4 uVar1;
 	bool bVar2;
-	TimeController* pTVar3;
+	Timer* pTVar3;
 	int currentLanguage;
 	VideoFile* currentLanguage_videoPointer;
 	uint WTVersion;
@@ -1933,7 +1792,7 @@ void PlayIntroVideo(long mode)
 	char* fileName;
 	undefined* promoFileName;
 
-	uVar4 = (uint)(g_omode == 3);
+	uVar4 = (uint)(gVideoConfig.omode == 3);
 	WTVersion = (uint)(g_PauseStaticObj_0049c9d0.field_0x9 == 0);
 	if (mode == 0) {
 		if (LevelScheduleManager::gThis->nextLevelID == 1) {
@@ -1942,7 +1801,7 @@ void PlayIntroVideo(long mode)
 				if (uVar4 == 1) {
 					WTVersion = 1;
 				}
-				currentLanguage = GetLanguageID_00336b30();
+				currentLanguage = CMessageFile::get_default_language();
 				/* Format is &s%c
 				   First param is = "int_nw"
 				   Second param is "ufgsi" (US, French, German, Spanish, Italian) */
@@ -2157,13 +2016,9 @@ void LoadingLoop(void)
 {
 	Scene* pSceneInstance;
 	bool bVar2;
-	TimeController* inTimeController;
+	Timer* inTimeController;
 
 	MY_LOG("LoadLevel Begin\n");
-
-#ifdef PLATFORM_WIN
-	Renderer::WaitUntilReady();
-#endif
 
 	/* These functions just run once */
 	PlayIntroVideo(0);
@@ -2203,7 +2058,7 @@ void GameLoop(void)
 	Scene* pLVar3;
 	bool cVar4;
 	bool bVar4;
-	TimeController* timeController;
+	Timer* timeController;
 	int* piVar5;
 	//AnimResult* pAVar6;
 	uint uVar7;
@@ -2377,7 +2232,7 @@ int main_internal(int argc, char** argv)
 	//std::this_thread::sleep_for(std::chrono::duration<double>(10.0));
 	if (LevelScheduleManager::gThis->nextLevelID == 0xe) {
 		videoModeSpecifier = 'n';
-		if (g_omode == SCE_GS_PAL) {
+		if (gVideoConfig.omode == SCE_GS_PAL) {
 			videoModeSpecifier = 'p';
 		}
 

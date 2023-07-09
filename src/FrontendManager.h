@@ -8,7 +8,7 @@ struct FrontendManager : public Manager {
 	FrontendManager();
 	virtual void Game_Init();
 
-	struct ed_viewport* pCamera;
+	struct ed_viewport* pViewport;
 	undefined field_0x8;
 	undefined field_0x9;
 	undefined field_0xa;
@@ -41,8 +41,10 @@ struct FrontendManager : public Manager {
 	undefined field_0x7f;
 };
 
+struct ed_3D_Scene;
+
 namespace Frontend {
-	extern struct ed_3D_Scene* _scene_handle;
+	extern ed_3D_Scene* _scene_handle;
 }
 
 #endif // FRONTEND_MANAGER_H

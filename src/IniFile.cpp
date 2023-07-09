@@ -208,8 +208,6 @@ IniFile::IniFile()
 	currentSeekPosition = NULL;
 	endSeekPosition = NULL;
 	fileBufferStart = NULL;
-
-	SetupEd10_00217720(this, 0x0, &g_IniFile_00450750_mem);
 }
 
 IniFile::~IniFile()

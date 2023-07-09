@@ -33,7 +33,7 @@ ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, e
 		}
 		pParams = &local_8;
 	}
-	__s = (ed_viewport*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(ed_viewport));
+	__s = (ed_viewport*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_viewport));
 	memset(__s, 0, sizeof(ed_viewport));
 	__s->clearColor.a = alpha;
 	__s->fbMask = 0;
@@ -55,7 +55,7 @@ ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, e
 	__s->clearColor.r = 0x40;
 	if ((alpha & 4) != 0) {
 		g_ActiveVidParams_0048cd90.pCamera = __s;
-		pCVar1 = (CameraObj_390*)edMemAllocAlignBoundary(TO_HEAP(H_MAIN), sizeof(CameraObj_390));
+		pCVar1 = (CameraObj_390*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_390));
 		__s->pCameraObj390_0x24 = pCVar1;
 		if (__s->pColorBuffer == (edSurface*)0x0) {
 			__s->pCameraObj390_0x24->qwc = 0;
@@ -136,7 +136,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pCamera, edpkt_data* pCommandBuf)
 	edpkt_data* pRVar21;
 	edpkt_data* pRVar22;
 
-	RENDER_LOG("edViewportUpdateEnv camera: %p (%d)\n", pCamera, pCamera->clearColor.a);
+	RENDER_LOG("edViewportUpdateEnv camera: %p (%d)", pCamera, pCamera->clearColor.a);
 
 	pVVar1 = pCamera->pColorBuffer->pSurfaceDesc->pLink_0xc;
 	pCommandBuf->cmdB = SCE_GIF_PACKED_AD;
@@ -225,7 +225,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pCamera, edpkt_data* pCommandBuf)
 
 	if (((pCamera->clearColor.a & 2) != 0) || ((pCamera->clearColor.a & 1) != 0)) {
 
-		RENDER_LOG("edViewportUpdateEnv CLEAR\n");
+		RENDER_LOG("edViewportUpdateEnv CLEAR");
 
 		// FRAME
 		pRVar22->cmdA = SCE_GS_SET_FRAME(
@@ -444,7 +444,7 @@ void edViewPortApplyDrawingEnv(ed_viewport* pCamera)
 		edDmaFlushCache();
 		edDmaSyncPath();
 #ifdef PLATFORM_PS2
-		RENDER_LOG("DMA Begin edViewPortApplyDrawingEnv\n");
+		RENDER_LOG("DMA Begin edViewPortApplyDrawingEnv");
 		edDmaSendN_nowait(SHELLDMA_CHANNEL_GIF, pCamera->pCameraObj390_0x24, pCamera->pCameraObj390_0x24->qwc);
 #endif
 	}

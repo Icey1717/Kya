@@ -11,6 +11,7 @@
 #include <libvu0.h>
 #include <libdma.h>
 #endif
+#include "../MathOps.h"
 
 
 
@@ -34,7 +35,7 @@ struct DrawText16 {
 };
 
 
-void edCTextFormat::DisplayWindow(float x, float y, Vector* param_4)
+void edCTextFormat::DisplayWindow(float x, float y, edF32VECTOR4* param_4)
 {
 	edF32MATRIX4 textMatrix;
 	float shadowShiftY;
@@ -60,7 +61,7 @@ void edCTextFormat::DisplayWindow(float x, float y, Vector* param_4)
 
 void edCTextFormat::Display(float x, float y)
 {
-	Vector local_10;
+	edF32VECTOR4 local_10;
 
 	local_10.z = 640.0f;
 	local_10.x = 0.0f;
@@ -1407,8 +1408,8 @@ bool edCTextFormat::FormatString(char* pText)
 
 	pFVar3 = pedTextCurrentStyle;
 
-	sceVu0CopyMatrix((TO_SCE_MTX)&fontData_0x850[0].m0, (TO_SCE_MTX)&pedTextCurrentStyle->m0);
-	sceVu0CopyMatrix((TO_SCE_MTX)&fontData_0x850[0].m1, (TO_SCE_MTX)&pedTextCurrentStyle->m1);
+	edF32Matrix4CopyHard(&fontData_0x850[0].m0, &pedTextCurrentStyle->m0);
+	edF32Matrix4CopyHard(&fontData_0x850[0].m1, &pedTextCurrentStyle->m1);
 
 	fontData_0x850[0].pFunction = pFVar3->pFunction;
 	fontData_0x850[0].flags_0x84 = pFVar3->flags_0x84;
@@ -1463,8 +1464,8 @@ edCTextFormat::edCTextFormat()
 
 	//RunInPlaceConstructor_00217450((undefined*)fontData_0x850, FontFileData::Constructor_0028c7c0, Free_00166e40, 0xc0, 0x11);
 	pFVar2 = pedTextCurrentStyle;
-	sceVu0CopyMatrix((TO_SCE_MTX)&fontData_0x850[0].m0, (TO_SCE_MTX)&pedTextCurrentStyle->m0);
-	sceVu0CopyMatrix((TO_SCE_MTX)&fontData_0x850[0].m1, (TO_SCE_MTX)&pedTextCurrentStyle->m1);
+	edF32Matrix4CopyHard(&fontData_0x850[0].m0, &pedTextCurrentStyle->m0);
+	edF32Matrix4CopyHard(&fontData_0x850[0].m1, &pedTextCurrentStyle->m1);
 	fontData_0x850[0].pFunction = pFVar2->pFunction;
 	fontData_0x850[0].flags_0x84 = pFVar2->flags_0x84;
 	fontData_0x850[0].pPackedFont = pFVar2->pPackedFont;

@@ -4,6 +4,11 @@
 extern edCTextFont* g_PackedFontPtr_004324d0;
 edCTextStyle* pedTextCurrentStyle;
 
+edCTextStyle* edTextStyleGetCurrent()
+{
+	return pedTextCurrentStyle;
+}
+
 edCTextStyle* edTextStyleSetCurrent(edCTextStyle* pNewFont)
 {
 	edCTextStyle* pFVar1;
@@ -15,25 +20,25 @@ edCTextStyle* edTextStyleSetCurrent(edCTextStyle* pNewFont)
 
 void edCTextStyle::TransformMatrix(float x, float y, edF32MATRIX4* outMatrix)
 {
-	Vector local_20;
-	Vector local_10;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
 
 	if ((this->flags_0x84 & 0x400) != 0) {
 		local_20.x = this->xScale;
 		local_20.y = this->yScale;
 		local_20.z = 1.0f;
 		local_20.w = 1.0f;
-		sceVu0UnitMatrix((TO_SCE_MTX)&this->m0);
+		edF32Matrix4SetIdentityHard(&this->m0);
 		edF32Matrix4RotateZHard(this->rotation, &this->m0, &this->m0);
-		edF32Matrix4ScaleHard((TO_SCE_MTX)&this->m0, (TO_SCE_MTX)&this->m0, (TO_SCE_VECTOR)&local_20);
+		edF32Matrix4ScaleHard(&this->m0, &this->m0, &local_20);
 		this->flags_0x84 = this->flags_0x84 & 0xfffffbff;
 	}
 	local_10.z = 0.0f;
 	local_10.w = 0.0f;
 	local_10.x = x;
 	local_10.y = y;
-	sceVu0TransMatrix((TO_SCE_MTX)outMatrix, (TO_SCE_MTX)&this->m0, (TO_SCE_VECTOR)&local_10);
-	sceVu0MulMatrix((TO_SCE_MTX)outMatrix, (TO_SCE_MTX)outMatrix, (TO_SCE_MTX)&this->m1);
+	edF32Matrix4TranslateHard(outMatrix, &this->m0, &local_10);
+	edF32Matrix4MulF32Matrix4Hard(outMatrix, outMatrix, &this->m1);
 	return;
 }
 
@@ -148,8 +153,8 @@ void edCTextStyle::Reset()
 {
 	this->pPackedFont = g_PackedFontPtr_004324d0;
 
-	sceVu0UnitMatrix((TO_SCE_MTX)&this->m0);
-	sceVu0UnitMatrix((TO_SCE_MTX)&this->m1);
+	edF32Matrix4SetIdentityHard(&this->m0);
+	edF32Matrix4SetIdentityHard(&this->m1);
 
 	this->flags_0x84 = 0x400;
 	this->field_0x8c = 1.0f;

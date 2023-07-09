@@ -6,19 +6,22 @@
 #include "Rendering/CameraPanMasterHeader.h"
 #include "Rendering/DisplayList.h"
 #include "edStr.h"
+#include "MathOps.h"
+#include "ScenaricCondition.h"
+#include "MemoryStream.h"
 
 SectorManager::SectorManager()
 {
 	(this->baseSector).pANHR.pThis = 0;
-	sceVu0UnitMatrix((TO_SCE_MTX)&SomeIdentityMatrix);
+	edF32Matrix4SetIdentityHard(&HierarchyAnm::_gscale_mat);
 	(this->baseSector).field_0x0 = -1;
 	(this->baseSector).sectorIndex = -1;
 	(this->baseSector).bankObject.pBankFileAccessObject = (edCBankBufferEntry*)0x0;
-	(this->baseSector).pMeshTransform = (MeshTransformParent*)0x0;
+	(this->baseSector).pMeshTransform = (edNODE*)0x0;
 	(this->baseSector).pManager100Obj = (undefined*)0x0;
 	(this->baseSector).loadStage_0x8 = 0;
 	(this->baseSector).field_0x134 = 0.0;
-	(this->baseSector).pMeshTransformParent_0x130 = (MeshTransformParent*)0x0;
+	(this->baseSector).pMeshTransformParent_0x130 = (edNODE*)0x0;
 	memset(&(this->baseSector).textureInfo, 0, sizeof(ed_g2d_manager));
 	memset(&(this->baseSector).meshInfo, 0, sizeof(ed_g3d_manager));
 	memset(&(this->baseSector).textureInfoB, 0, sizeof(ed_g2d_manager));
@@ -99,7 +102,7 @@ void SectorManager::Func_001fe620()
 		})
 	}
 	local_110 = 0;
-	//ActorManager::Func_00106410(g_ManagerSingletonArray_00451660.g_ActorManager_004516a4, 0x18, &local_110);
+	//ActorManager::Func_00106410(Scene::ptable.g_ActorManager_004516a4, 0x18, &local_110);
 	iVar1 = 0;
 	if (0 < local_110) {
 		IMPLEMENTATION_GUARD(
@@ -425,11 +428,6 @@ bool SectorManager::LevelLoading_Manage()
 	return bVar11;
 }
 
-struct StaticEdFileBase {
-	struct edCFiler* pEdFileBase;
-	undefined4 field_0x4;
-};
-
 StaticEdFileBase StaticEdFileBase_004497f0 = { 0 };
 
 bool CheckFunc_00401fd0(StaticEdFileBase* param_1)
@@ -442,17 +440,17 @@ void Sector::InstallCallback()
 	edLIST* pCameraPanMasterHeader;
 	WindSectorObj* pWindSectorObj;
 	ed_3D_Scene* pStaticMeshMaster;
-	MeshTransformData* pSubSubObjArray;
+	ed_3d_hierarchy_node* pSubSubObjArray;
 	FileManager3D* p3DFileManager;
 	SectorManager* pSectorManager;
 	bool bVar1;
 	uint uVar2;
 	undefined* puVar3;
 	TextureInfo* pTextureInfo;
-	MeshTransformParent* pMVar4;
+	edNODE* pMVar4;
 	uint meshSize;
 	char* pcVar6;
-	MeshTransformParent* pMVar7;
+	edNODE* pMVar7;
 	int iVar8;
 	uint uVar9;
 	int** ppiVar10;
@@ -474,13 +472,13 @@ void Sector::InstallCallback()
 	this->pManager100Obj = (undefined*)0x0;
 	local_40 = 0;
 	pcVar6 = (char*)0x0;
-	uVar2 = get_element_count((this->bankObject).pBankFileAccessObject);
+	uVar2 = (this->bankObject).pBankFileAccessObject->get_element_count();
 	inFileIndex = 0;
 	pMeshData = pcVar6;
 	meshSize = unaff_s5_lo;
 	if (uVar2 != 0) {
 		do {
-			bVar1 = get_info((this->bankObject).pBankFileAccessObject, inFileIndex, &local_20, (char*)0x0);
+			bVar1 = (this->bankObject).pBankFileAccessObject->get_info(inFileIndex, &local_20, (char*)0x0);
 			pMeshData = pcVar6;
 			meshSize = unaff_s5_lo;
 			if (bVar1 == false) break;
@@ -507,7 +505,7 @@ void Sector::InstallCallback()
 							//IMPLEMENTATION_GUARD(
 							//puVar3 = (undefined*)
 							//	CollisionManager::InstallColFile
-							//	(g_ManagerSingletonArray_00451660.g_CollisionManager_00451690,
+							//	(Scene::ptable.g_CollisionManager_00451690,
 							//		(long)(int)local_20.fileBufferStart, (long)(int)local_20.length);
 							//this->pManager100Obj = puVar3;)
 						}
@@ -534,15 +532,15 @@ void Sector::InstallCallback()
 			unaff_s5_lo = meshSize;
 		} while (inFileIndex < uVar2);
 	}
-	pSectorManager = g_ManagerSingletonArray_00451660.g_SectorManager_00451670;
-	p3DFileManager = g_ManagerSingletonArray_00451660.g_FileManager3D_00451664;
+	pSectorManager = Scene::ptable.g_SectorManager_00451670;
+	p3DFileManager = Scene::ptable.g_FileManager3D_00451664;
 	pStaticMeshMaster = Scene::_scene_handleA;
 	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, (TextureInfo*)&this->textureInfo, 0xc, &this->meshInfo);
 	pTextureInfo = p3DFileManager->GetCommonSectorG2D();
 	ed3DLinkG2DToG3D(&this->meshInfo, pTextureInfo);
 	ed3DScenePushCluster(pStaticMeshMaster, &this->meshInfo);
 	if (pFileData == (char*)0x0) {
-		this->pMeshTransform = (MeshTransformParent*)0x0;
+		this->pMeshTransform = (edNODE*)0x0;
 	}
 	else {
 		IMPLEMENTATION_GUARD(
@@ -550,7 +548,7 @@ void Sector::InstallCallback()
 		ed3DInstallG3D(pFileData, local_30, 0, &iStack8, (TextureInfo*)&this->textureInfoB, 0xc, &this->meshInfoB);
 		pMVar4 = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->meshInfoB, (char*)0x0);
 		this->pMeshTransform = pMVar4;
-		if (this->pMeshTransform != (MeshTransformParent*)0x0) {
+		if (this->pMeshTransform != (edNODE*)0x0) {
 			IMPLEMENTATION_GUARD(3DFileManager::SetupBackground(p3DFileManager, this->pMeshTransform));
 		})
 	}
@@ -569,17 +567,17 @@ void Sector::InstallCallback()
 		iVar8 = *(int*)(pcVar6 + 8);
 	}
 	if (iVar8 == 0) {
-		pMVar7 = (MeshTransformParent*)0x0;
+		pMVar7 = (edNODE*)0x0;
 	}
 	else {
 		IMPLEMENTATION_GUARD(
 		pMVar7 = edLIST::Func_002ab920
 		(pCameraPanMasterHeader, pSubSubObjArray, pMVar4, (undefined8*)(iVar8 + 0x10),
-			(MeshTransformData*)0x0);
+			(ed_3d_hierarchy_node*)0x0);
 		edLIST::Func_002ad020
 		(pCameraPanMasterHeader, pSubSubObjArray, pMVar4, iVar8, (int)pMVar7, (int)(pMeshData + 0x20),
 			(meshSize & 0xffff) - 1);
-		MeshTransformParent::Func_002ac980(pMVar7, &sStack2);)
+		edNODE::Func_002ac980(pMVar7, &sStack2);)
 	}
 	this->pMeshTransformParent_0x130 = pMVar7;
 	pWindSectorObj = pSectorManager->subObjArray[this->field_0x0].pWindSectorObj;
@@ -609,7 +607,7 @@ void Sector::InstallCallback()
 			piVar11 = (int*)0x0;
 		LAB_001fe180:
 			if (piVar11 == (int*)0x0) {
-				iVar8 = MeshTransformParent::Func_001fff60(this->pMeshTransformParent_0x130, lVar13);
+				iVar8 = edNODE::Func_001fff60(this->pMeshTransformParent_0x130, lVar13);
 			}
 			else {
 				iVar8 = *piVar11;
@@ -658,7 +656,7 @@ void Sector::Load(int sectorIndex, int param_3, bool bFileFlag)
 		peVar4 = this->bankObject.get_free_entry();
 		(this->bankObject).pBankFileAccessObject = peVar4;
 		iVar1 = this->sectorIndex;
-		sectStringLength = edStrCopy(acStack64, (g_ManagerSingletonArray_00451660.g_SectorManager_00451670)->szSectorFileRoot);
+		sectStringLength = edStrCopy(acStack64, (Scene::ptable.g_SectorManager_00451670)->szSectorFileRoot);
 		sectString = acStack64 + sectStringLength;
 		if (iVar1 < 10) {
 			*sectString = (char)iVar1 + '0';
@@ -684,7 +682,7 @@ void Sector::Load(int sectorIndex, int param_3, bool bFileFlag)
 		local_60.pObjectReference = this;
 		bVar3 = (this->bankObject).pBankFileAccessObject->load(&local_60);
 		if ((bVar3 != false) && (this->loadStage_0x8 = 1, param_3 == 0)) {
-			load((this->bankObject).pBankFileAccessObject);
+			(this->bankObject).pBankFileAccessObject->wait();
 		}
 	}
 	return;
@@ -739,6 +737,74 @@ void SectorManager::Level_Install()
 			iVar5 = iVar5 + 1;
 			iVar4 = iVar4 + sizeof(Sector);
 		} while (iVar5 < this->sectDataCount);
+	}
+	return;
+}
+
+void SectorManager::Level_Init()
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+	undefined* puVar4;
+	SectorManager* pSVar5;
+
+	pSVar5 = Scene::ptable.g_SectorManager_00451670;
+	iVar1 = this->field_0x36c;
+	iVar2 = (this->baseSector).field_0x0;
+	iVar3 = (this->baseSector).sectID;
+	if ((iVar3 != iVar2) || (iVar1 == 0)) {
+		if (iVar3 != iVar2) {
+			if ((iVar3 != -1) &&
+				(puVar4 = (Scene::ptable.g_SectorManager_00451670)->subObjArray[iVar3].pFileData, puVar4 != (undefined*)0x0))
+			{
+				IMPLEMENTATION_GUARD(
+				Scene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar4 + 0xc));)
+			}
+			if ((iVar2 != -1) && (puVar4 = pSVar5->subObjArray[iVar2].pFileData, puVar4 != (undefined*)0x0)) {
+				Scene::_pinstance->PushFogAndClippingSettings(*(float*)(puVar4 + 0x1c), (S_STREAM_FOG_DEF*)(puVar4 + 0xc));
+			}
+		}
+		(this->baseSector).sectID = iVar2;
+		this->field_0x36c = iVar1;
+	}
+	return;
+}
+
+void SectorManager::Level_AddAll(ByteCode* pMemoryStream)
+{
+	char* pcVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	ScenaricCondition local_4;
+
+	pMemoryStream->GetChunk();
+	iVar2 = pMemoryStream->GetS32();
+	iVar5 = 0;
+	if (0 < iVar2) {
+		do {
+			pcVar1 = pMemoryStream->currentSeekPos;
+			pMemoryStream->currentSeekPos = pcVar1 + 0x24;
+			iVar3 = *(int*)(pcVar1 + 4);
+			if ((iVar3 < 0) || (0x1d < iVar3)) {
+				iVar3 = 0;
+			}
+			this->subObjArray[iVar3].pFileData = (undefined*)pcVar1;
+			iVar3 = pMemoryStream->GetS32();
+			iVar4 = 0;
+			if (0 < iVar3) {
+				do {
+					pMemoryStream->GetS32();
+					//local_4 = {};
+					local_4.Create(pMemoryStream);
+					local_4.IsVerified();
+					iVar4 = iVar4 + 1;
+				} while (iVar4 < iVar3);
+			}
+			iVar5 = iVar5 + 1;
+		} while (iVar5 < iVar2);
 	}
 	return;
 }

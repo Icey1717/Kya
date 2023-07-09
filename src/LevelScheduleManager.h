@@ -580,6 +580,7 @@ struct LevelInfo {
 	SectorManagerSubObj aSectorSubObj[30];
 };
 
+typedef int SCENARIC_VARIABLE;
 
 class LevelScheduleManager : public Manager {
 public:
@@ -596,12 +597,17 @@ public:
 	// End Manager
 
 	void SetLevelToLoad_002dba90(int levelID, int elevatorID, int param_4);
+	void Level_LoadObjectives(ByteCode* pMemoryStream);
 
 	void MoreLoadLoopObjectSetup(bool param_2);
-	void StoreLevelFolders(char* fileData, LevelInfo* pLevelInfo);
-	uint* LevelLoadSetup_002e1750(uint* param_2, int count, LevelInfo* pLevelInfo);
-	void LevelLoadSetup(char* pFileData, int count, LevelInfo* pLevelInfo);
-	void LoadLevelInfoBnk();
+	void LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo);
+	uint* LevelsInfo_ReadSectors_V7_V9(uint* param_2, int count, LevelInfo* pLevelInfo);
+	void LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, LevelInfo* pLevelInfo);
+	void Levels_LoadInfoBank();
+
+	static int SaveGame_GetMaxBufferSize();
+
+	static int ScenVar_Get(SCENARIC_VARIABLE param_1);
 
 public:
 
@@ -1989,8 +1995,8 @@ public:
 	int currentElevatorID;
 	int level_0x5b50;
 	int level_0x5b54;
-	undefined4 field_0x5b58;
-	undefined4 field_0x5b5c;
+	int* pObjectiveStreamBegin;
+	int* pObjectiveStreamEnd;
 	edCBankBuffer levelBank;
 	edCBankBuffer levelIOPBank;
 	undefined field_0x5bd8;
@@ -2002,5 +2008,8 @@ public:
 	undefined field_0x5bde;
 	undefined field_0x5bdf;
 };
+
+bool edSoundAreAllSoundDataLoaded();
+bool edMusicAreAllMusicDataLoaded();
 
 #endif //_LEVELSCHEDULEMANAGER_H

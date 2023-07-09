@@ -1,7 +1,7 @@
 #include "LocalizationManager.h"
 #include "edMem.h"
-#include "TextIconDictionary.h"
 #include "LevelScheduleManager.h"
+#include "EdenLib/edText/sources/edTextResources.h"
 
 LocalizationManager* g_LocalizationManager_00449744 = (LocalizationManager*)0x0;
 
@@ -19,7 +19,7 @@ void LocalizationManager::Game_Init()
 	trcText.select_language("<bnk>0:TRC_%s.bin", AUTO);
 	userInterfaceText.select_language("<BNK>0:UserInterface_%s.bin", AUTO);
 	pcVar1 = userInterfaceText.get_message(0x2414d455f4e414d, 0);
-	g_TextIconDictionary.AddTextEntry(sz_GAMENAME_004349a8, pcVar1);
+	edTextResources.TextAdd(sz_GAMENAME_004349a8, pcVar1);
 	return;
 }
 

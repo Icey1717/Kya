@@ -7,36 +7,43 @@
 #include <libvu0.h>
 #endif
 
-extern sceVu0FMATRIX g_ZeroMatrix_00431690;
-extern edF32MATRIX4 g_IdentityMatrix;
+extern edF32MATRIX4 gF32Matrix4Zero;
+extern edF32MATRIX4 gF32Matrix4Unit;
 
-#ifdef PLATFORM_WIN
-void sceVu0Normalize(float* v0, float* v1);
-#endif
-void sceVu0ApplyMatrix(Vector* v0, edF32MATRIX4* m0, Vector* v1);
-void sceVu0TransposeMatrixFixed(sceVu0FMATRIX m0, sceVu0FMATRIX m1);
+void edF32Vector4NormalizeHard(float* v0, float* v1);
+void sceVu0ApplyMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1);
+void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
 void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1);
 
-void ps2_vu0_sub_vector(Vector* v0, Vector* v1, Vector* v2);
-void ps2_vu0_outer_product(Vector* v0, Vector* v1, Vector* v2);
-void ps2_vu0_sqr_vector(Vector* v0, Vector* v1);
+void edF32Vector4SubHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
+void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
+void ps2_vu0_sqr_vector(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
-void CalculatePitchAngles2D_00193c70(Vector* pitchAngles, Vector* v0);
+void GetAnglesFromVector(edF32VECTOR4* pitchAngles, edF32VECTOR4* v0);
 
-void RotateMatrixByAngle(float angle, edF32MATRIX4* m0, edF32MATRIX4* m1);
-void ApplyRotationToMatrix(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4* inputMatrix);
+void edF32Matrix4RotateXHard(float angle, edF32MATRIX4* m0, edF32MATRIX4* m1);
+void edF32Matrix4RotateYHard(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4* inputMatrix);
 
-void edF32Matrix4ScaleHard(sceVu0FMATRIX m0, sceVu0FMATRIX m1, sceVu0FVECTOR v0);
+void edF32Matrix4CopyHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
+void edF32Matrix4ScaleHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0);
 void edF32Matrix4RotateZHard(float t0, edF32MATRIX4* m0, edF32MATRIX4* m1);
 
-void ComputeMapRectangleMatrix_0029b9e0
-(float startX, float endX, float startY, float endY, float startZ, float endZ, float startW, float endW, edF32MATRIX4* m0);
-void CalculateYAxisTransformMatrix_0029ba70(float x, float y, float yMin, float yMax, edF32MATRIX4* m0);
+void ed3DComputeProjectionToScreenMatrix(float startX, float endX, float startY, float endY, float startZ, float endZ, float startW, float endW, edF32MATRIX4* m0);
+void ed3DComputeLocalToProjectionMatrix(float x, float y, float yMin, float yMax, edF32MATRIX4* m0);
 uint GetGreaterPower2Val(uint value);
 
 float edF32ATan2Soft(float a, float b);
 void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder);
 
-void edF32Vector4AddHard(Vector* v0, Vector* v1, Vector* v2);
+void edF32Vector4AddHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
+
+void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
+void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1);
+
+void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32MATRIX4* m2);
+
+void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0);
+
+void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0);
 
 #endif // _MATH_OPS_H

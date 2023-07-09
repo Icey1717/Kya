@@ -17,6 +17,7 @@
 #include "pointer_conv.h"
 #include "DebugHelpers.h"
 #include "Rendering/edCTextFont.h"
+#include "../../../src/MathOps.h"
 
 // The function to be tested
 int Add(int a, int b) {
@@ -95,15 +96,15 @@ TEST(IO, FontOpen) {
 	/* The menu BNK contains images for all button icons, the main Medium.fon. Icon for saves, money
 	   and a map. */
 	memset(&bankHeader, 0, sizeof(edCBankInstall));
-	initialize(&BootData_BankBuffer, 0x32000, 1, &bankHeader);
+	BootData_BankBuffer.initialize(0x32000, 1, &bankHeader);
 	/* Set the bank header to point towards 'CDEURO/menu/Messages.bnk' */
 	bankHeader.filePath = "CDEURO/menu/MenuData.bnk";
-	BootData_BankBufferEntry = get_free_entry(&BootData_BankBuffer);
+	BootData_BankBufferEntry = BootData_BankBuffer.get_free_entry();
 	EXPECT_NE(BootData_BankBufferEntry, nullptr);
-	EXPECT_EQ(load(BootData_BankBufferEntry, &bankHeader), true);
+	EXPECT_EQ(BootData_BankBufferEntry->load(&bankHeader), true);
 
 	/* Init Medium.Fon */
-	int index = get_index(BootData_BankBufferEntry, "medium.fon");
+	int index = BootData_BankBufferEntry->get_index("medium.fon");
 
 	EXPECT_EQ(index, 0x17);
 
@@ -179,6 +180,92 @@ TEST(Image, ReadMenuSplash) {
 	//DumpVectorToFile(debugMaterial.texture.readBuffer, "splash.bin");
 
 	EXPECT_EQ(TestVector("splash.bin", debugMaterial.texture.readBuffer), true);
+}
+
+// Test case for matrix multiplication
+TEST(MatrixMultiplicationTest, MultiplyMatrices) {
+	edF32MATRIX4 matrix1 = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f };
+	edF32MATRIX4 matrix2 = { 17.0f, 18.0f, 19.0f, 20.0f, 21.0f, 22.0f, 23.0f, 24.0f, 25.0f, 26.0f, 27.0f, 28.0f, 29.0f, 30.0f, 31.0f, 32.0f };
+
+	edF32MATRIX4 expected = { 250.0f, 260.0f, 270.0f, 280.0f, 618.0f, 644.0f, 670.0f, 696.0f, 986.0f, 1028.0f, 1070.0f, 1112.0f, 1354.0f, 1412.0f, 1470.0f, 1528.0f };
+
+	edF32MATRIX4 result;
+	edF32Matrix4MulF32Matrix4Hard(&result, &matrix1, &matrix2);
+
+	// Check if the result matches the expected matrix
+	EXPECT_EQ(result.aa, expected.aa);
+	EXPECT_EQ(result.ab, expected.ab);
+	EXPECT_EQ(result.ac, expected.ac);
+	EXPECT_EQ(result.ad, expected.ad);
+	EXPECT_EQ(result.ba, expected.ba);
+	EXPECT_EQ(result.bb, expected.bb);
+	EXPECT_EQ(result.bc, expected.bc);
+	EXPECT_EQ(result.bd, expected.bd);
+	EXPECT_EQ(result.ca, expected.ca);
+	EXPECT_EQ(result.cb, expected.cb);
+	EXPECT_EQ(result.cc, expected.cc);
+	EXPECT_EQ(result.cd, expected.cd);
+	EXPECT_EQ(result.da, expected.da);
+	EXPECT_EQ(result.db, expected.db);
+	EXPECT_EQ(result.dc, expected.dc);
+	EXPECT_EQ(result.dd, expected.dd);
+
+	edF32MATRIX4 matrix3{ 1.0f, 2.0f, 3.0f, 4.0f,
+		5.0f, 6.0f, 7.0f, 8.0f,
+		9.0f, 10.0f, 11.0f, 12.0f,
+		13.0f, 14.0f, 15.0f, 16.0f };
+
+	edF32MATRIX4 matrix4{ 2.0f, 0.0f, 1.0f, 3.0f,
+		0.0f, 2.0f, 4.0f, 1.0f,
+		3.0f, 0.0f, 1.0f, 2.0f,
+		1.0f, 3.0f, 2.0f, 0.0f };
+
+	edF32MATRIX4 result;
+	edF32Matrix4MulF32Matrix4Hard(&result, &matrix3, &matrix4);
+
+	EXPECT_EQ(result.aa, 18.0f);
+	EXPECT_EQ(result.ab, 16.0f);
+	EXPECT_EQ(result.ac, 18.0f);
+	EXPECT_EQ(result.ad, 11.0f);
+	EXPECT_EQ(result.ba, 52.0f);
+	EXPECT_EQ(result.bb, 32.0f);
+	EXPECT_EQ(result.bc, 54.0f);
+	EXPECT_EQ(result.bd, 27.0f);
+	EXPECT_EQ(result.ca, 86.0f);
+	EXPECT_EQ(result.cb, 48.0f);
+	EXPECT_EQ(result.cc, 90.0f);
+	EXPECT_EQ(result.cd, 43.0f);
+	EXPECT_EQ(result.da, 120.0f);
+	EXPECT_EQ(result.db, 64.0f);
+	EXPECT_EQ(result.dc, 126.0f);
+	EXPECT_EQ(result.dd, 59.0f);
+}
+
+TEST(MatrixTest, TransposeHard) {
+	edF32MATRIX4 matrix{ 1.0f, 2.0f, 3.0f, 4.0f,
+		5.0f, 6.0f, 7.0f, 8.0f,
+		9.0f, 10.0f, 11.0f, 12.0f,
+		13.0f, 14.0f, 15.0f, 16.0f };
+
+	edF32MATRIX4 transposed;
+	edF32Matrix4GetTransposeHard(&matrix, &transposed);
+
+	EXPECT_EQ(transposed.aa, 1.0f);
+	EXPECT_EQ(transposed.ab, 5.0f);
+	EXPECT_EQ(transposed.ac, 9.0f);
+	EXPECT_EQ(transposed.ad, 13.0f);
+	EXPECT_EQ(transposed.ba, 2.0f);
+	EXPECT_EQ(transposed.bb, 6.0f);
+	EXPECT_EQ(transposed.bc, 10.0f);
+	EXPECT_EQ(transposed.bd, 14.0f);
+	EXPECT_EQ(transposed.ca, 3.0f);
+	EXPECT_EQ(transposed.cb, 7.0f);
+	EXPECT_EQ(transposed.cc, 11.0f);
+	EXPECT_EQ(transposed.cd, 15.0f);
+	EXPECT_EQ(transposed.da, 4.0f);
+	EXPECT_EQ(transposed.db, 8.0f);
+	EXPECT_EQ(transposed.dc, 12.0f);
+	EXPECT_EQ(transposed.dd, 16.0f);
 }
 
 // The main function to run the tests
