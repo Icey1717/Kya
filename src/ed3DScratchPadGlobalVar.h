@@ -8,7 +8,7 @@ struct edFCamera;
 struct SceneConfig;
 struct RenderInfo;
 struct edF32VECTOR3;
-struct AnimScratchpad;
+union AnimScratchpad;
 
 extern edF32MATRIX4* WorldToCamera_Matrix;
 

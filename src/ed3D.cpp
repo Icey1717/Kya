@@ -311,8 +311,7 @@ edSurface* edVideoGetDrawSurface(void)
 	return pFVar1;
 }
 
-uint gRefOptionsforVU1Buf[12] = { 0 };
-ulong* g_StaticDisplayListData_0048c340_LONG = (ulong*)&gRefOptionsforVU1Buf;
+edpkt_data gRefOptionsforVU1Buf[3];
 
 edF32VECTOR4 Vector_00424ff0 = { 0 };
 
@@ -433,9 +432,12 @@ void ed3DDMAGenerateHeaders(void)
 	g_stVertexXYZHeader.asU32[2] = 0xffffff00;
 	ed3DVU1BufferCur = 1;
 	g_stVertexXYZHeader.asU32[3] = 0;
-	gRefOptionsforVU1Buf[1] = 0x200000003000077;
-	gRefOptionsforVU1Buf[3] = 0x200000003000199;
-	gRefOptionsforVU1Buf[5] = 0x2000000030002bb;
+	gRefOptionsforVU1Buf[0].asU32[2] = SCE_VIF1_SET_BASE(0x0077, 0);
+	gRefOptionsforVU1Buf[0].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
+	gRefOptionsforVU1Buf[1].asU32[2] = SCE_VIF1_SET_BASE(0x0199, 0);
+	gRefOptionsforVU1Buf[1].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
+	gRefOptionsforVU1Buf[2].asU32[2] = SCE_VIF1_SET_BASE(0x02bb, 0);
+	gRefOptionsforVU1Buf[2].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
 	g_stVertexXYZKeepADCHeader.asU32[0] = SCE_VIF1_SET_STCYCL(1, 3, 0);
 	g_stVertexXYZKeepADCHeader.asU32[1] = SCE_VIF1_SET_STMASK(0);
 	g_stVertexXYZKeepADCHeader.asU32[3] = 0;
@@ -499,9 +501,9 @@ void ed3DDMAGenerateHeaders(void)
 	g_stShapeVertexSTHeader[1].asU32[0] = 0;
 	g_stShapeVertexSTHeader[1].asU32[1] = 0;
 	g_stShapeVertexSTHeader[1].asU32[3] = 0;
-	gRefOptionsforVU1Buf[0] = ED_VIF1_SET_TAG_REF(0, 0);
-	gRefOptionsforVU1Buf[2] = ED_VIF1_SET_TAG_REF(0, 0);
-	gRefOptionsforVU1Buf[4] = ED_VIF1_SET_TAG_REF(0, 0);
+	gRefOptionsforVU1Buf[0].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+	gRefOptionsforVU1Buf[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+	gRefOptionsforVU1Buf[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 	ed3DOptionFlagCNTInit();
 	return;
 }
@@ -1369,12 +1371,15 @@ void ed3DVU1BufferInit(void)
 	ed3DVU1Buffer[0] = 0x76;
 	ed3DVU1Buffer[1] = 0x198;
 	ed3DVU1Buffer[2] = 0x2ba;
-	gRefOptionsforVU1Buf[0] = ED_VIF1_SET_TAG_REF(0, 0);
-	gRefOptionsforVU1Buf[1] = 0x200000003000077;
-	gRefOptionsforVU1Buf[2] = ED_VIF1_SET_TAG_REF(0, 0);
-	gRefOptionsforVU1Buf[3] = 0x200000003000199;
-	gRefOptionsforVU1Buf[4] = ED_VIF1_SET_TAG_REF(0, 0);
-	gRefOptionsforVU1Buf[5] = 0x2000000030002bb;
+	gRefOptionsforVU1Buf[0].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+	gRefOptionsforVU1Buf[0].asU32[2] = SCE_VIF1_SET_BASE(0x0077, 0);
+	gRefOptionsforVU1Buf[0].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
+	gRefOptionsforVU1Buf[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+	gRefOptionsforVU1Buf[1].asU32[2] = SCE_VIF1_SET_BASE(0x0199, 0);
+	gRefOptionsforVU1Buf[1].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
+	gRefOptionsforVU1Buf[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+	gRefOptionsforVU1Buf[2].asU32[2] = SCE_VIF1_SET_BASE(0x02bb, 0);
+	gRefOptionsforVU1Buf[2].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
 	return;
 }
 
@@ -1644,11 +1649,14 @@ struct RenderInfo {
 	struct ed_3d_hierarchy_node* pMeshTransformData;
 };
 
-struct AnimScratchpad {
-	int field_0x0;
-	uint flags;
-	undefined4 field_0x8;
-	undefined4 field_0xc;
+union AnimScratchpad {
+	struct {
+		int field_0x0;
+		uint flags;
+		undefined4 field_0x8;
+		undefined4 field_0xc;
+	};
+	edpkt_data asPkt;
 };
 
 edF32MATRIX4 gCurLOD_WorldToCamera_Matrix = { 0 };
@@ -2762,7 +2770,7 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* param_1, int param_2, long bUpdateI
 
 ed_3D_Scene* gCurScene = NULL;
 
-edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mode)
+edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 {
 	bool bVar1;
 	ushort uVar2;
@@ -2771,7 +2779,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 	float fVar5;
 	float fVar6;
 	float fVar7;
-	AnimScratchpad* pAVar8;
+	edpkt_data* pAVar8;
 	uint uVar9;
 	uint uVar10;
 	uint uVar11;
@@ -2791,49 +2799,62 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 	PTR_AnimScratchpad_00449554->flags = 0;
 	PTR_AnimScratchpad_00449554->field_0x8 = 0;
 	PTR_AnimScratchpad_00449554->field_0xc = 0;
+
 	if ((gFushListCounter == 0xe) && (FLOAT_00448a04 != 0.0)) {
-		PTR_AnimScratchpad_00449554->flags =
-			PTR_AnimScratchpad_00449554->flags | 1;
+		PTR_AnimScratchpad_00449554->flags = PTR_AnimScratchpad_00449554->flags | 1;
 	}
-	pDisplayList->cmdA = ED_VIF1_SET_TAG_CNT(1);
-	pDisplayList->cmdB = 0x7c01007600000000;
-	pAVar8 = PTR_AnimScratchpad_00449554;
-	uVar4 = *(undefined8*)PTR_AnimScratchpad_00449554;
-	uVar12 = PTR_AnimScratchpad_00449554->field_0x8;
-	uVar13 = PTR_AnimScratchpad_00449554->field_0xc;
-	*(int*)&pDisplayList[1].cmdA = (int)uVar4;
-	*(int*)((ulong)&pDisplayList[1].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
-	*(undefined4*)&pDisplayList[1].cmdB = uVar12;
-	*(undefined4*)((ulong)&pDisplayList[1].cmdB + 4) = uVar13;
-	pDisplayList[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
-	pDisplayList[2].cmdB = 0x7c01019800000000;
-	uVar4 = *(undefined8*)pAVar8;
-	uVar12 = pAVar8->field_0x8;
-	uVar13 = pAVar8->field_0xc;
-	*(int*)&pDisplayList[3].cmdA = (int)uVar4;
-	*(int*)((ulong)&pDisplayList[3].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
-	*(undefined4*)&pDisplayList[3].cmdB = uVar12;
-	*(undefined4*)((ulong)&pDisplayList[3].cmdB + 4) = uVar13;
-	pDisplayList[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
-	pDisplayList[4].cmdB = 0x7c0102ba00000000;
-	uVar4 = *(undefined8*)pAVar8;
-	uVar12 = pAVar8->field_0x8;
-	uVar13 = pAVar8->field_0xc;
-	*(int*)&pDisplayList[5].cmdA = (int)uVar4;
-	*(int*)((ulong)&pDisplayList[5].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
-	*(undefined4*)&pDisplayList[5].cmdB = uVar12;
-	*(undefined4*)((ulong)&pDisplayList[5].cmdB + 4) = uVar13;
-	ppuVar15 = pDisplayList + 6;
+
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
+	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0076, 0x1, 0x7c, 0); //0x7c010076
+	//pAVar8 = gScratchPkt;
+
+	//uVar4 = *(undefined8*)PTR_AnimScratchpad_00449554;
+	pPkt[1] = PTR_AnimScratchpad_00449554->asPkt;
+	//uVar12 = gScratchPkt->field_0x8;
+	//uVar13 = gScratchPkt->field_0xc;
+	//*(int*)&pPkt[1].cmdA = (int)uVar4;
+	//*(int*)((ulong)&pPkt[1].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
+	//*(undefined4*)&pPkt[1].cmdB = uVar12;
+	//*(undefined4*)((ulong)&pPkt[1].cmdB + 4) = uVar13;
+
+	pPkt[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
+	pPkt[2].asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt[2].asU32[3] = SCE_VIF1_SET_UNPACK(0x0198, 0x1, 0x7c, 0); //0x7c01019800000000;
+	pPkt[3] = PTR_AnimScratchpad_00449554->asPkt;
+
+	//uVar4 = *(undefined8*)pAVar8;
+	//uVar12 = pAVar8->field_0x8;
+	//uVar13 = pAVar8->field_0xc;
+	//*(int*)&pPkt[3].cmdA = (int)uVar4;
+	//*(int*)((ulong)&pPkt[3].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
+	//*(undefined4*)&pPkt[3].cmdB = uVar12;
+	//*(undefined4*)((ulong)&pPkt[3].cmdB + 4) = uVar13;
+
+	pPkt[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
+	pPkt[4].asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt[4].asU32[3] = SCE_VIF1_SET_UNPACK(0x02ba, 0x1, 0x7c, 0); //0x7c0102ba00000000;
+
+	pPkt[5] = PTR_AnimScratchpad_00449554->asPkt;
+
+	//uVar4 = *(undefined8*)pAVar8;
+	//uVar12 = pAVar8->field_0x8;
+	//uVar13 = pAVar8->field_0xc;
+	//*(int*)&pPkt[5].cmdA = (int)uVar4;
+	//*(int*)((ulong)&pPkt[5].cmdA + 4) = (int)((ulong)uVar4 >> 0x20);
+	//*(undefined4*)&pPkt[5].cmdB = uVar12;
+	//*(undefined4*)((ulong)&pPkt[5].cmdB + 4) = uVar13;
+	ppuVar15 = pPkt + 6;
 	if ((uVar2 & 2) != 0) {
 		if ((peVar3->flags_0x0 & 0x2000000) == 0) {
 			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stGifTAG_FAN_Texture_NoFog);
-			pDisplayList[6].cmdB = 0x7c01000100000000;
-			ppuVar15 = pDisplayList + 7;
+			pPkt[6].cmdB = 0x7c01000100000000;
+			ppuVar15 = pPkt + 7;
 		}
 		else {
 			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stGifTAG_FAN_Gouraud_NoFog);
-			pDisplayList[6].cmdB = 0x7c01000100000000;
-			ppuVar15 = pDisplayList + 7;
+			pPkt[6].cmdB = 0x7c01000100000000;
+			ppuVar15 = pPkt + 7;
 		}
 	}
 	if (((peVar3->flags_0x0 & 0x10000) != 0) && (gpCurHierarchy != (MeshTransformDataBase*)0x0)) {
@@ -2855,6 +2876,9 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 		if ((peVar3->bUseShadowMatrix_0x30 == 0) || (peVar15 = gpCurHierarchy->pShadowAnimMatrix, peVar15 == (edF32MATRIX4*)0x0)) {
 			peVar15 = gpCurHierarchy->pAnimMatrix;
 		}
+
+		// #VIF_Tidy
+		IMPLEMENTATION_GUARD();
 		ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 		ppuVar15->cmdB = 0x1100000011000000;
 		ppuVar15[1] = g_PKTHeaderRef[4];
@@ -2924,6 +2948,8 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pDisplayList, edNODE* pNode, ulong mo
 		}
 	}
 	if (((peVar3->flags_0x0 & 0x100) != 0) || (gFushListCounter == 0xe)) {
+		// #VIF_Tidy
+		IMPLEMENTATION_GUARD();
 		*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = ED_VIF1_SET_TAG_CNT(1);
 		*(ulong*)&((edF32VECTOR4*)ppuVar15)->z = 0;
 		((edF32VECTOR4*)ppuVar15)->z = 0.0;
@@ -2993,6 +3019,8 @@ void ed3DFlushStrip(edNODE* pNode)
 	uVar5 = ed3DFlushStripGetIncPacket(pRenderInput, 0, 0);
 	uint globalAlhaON = (uint)gGlobalAlhaON;
 	if (globalAlhaON != 0x80) {
+		// #VIF_Tidy
+		IMPLEMENTATION_GUARD();
 		pNode->header.typeField.unknown = pNode->header.typeField.unknown | 0x20;;
 		pBFCVect.alphaON = globalAlhaON;
 		pRVar18->cmdA = ED_VIF1_SET_TAG_CNT(1);
@@ -3039,6 +3067,8 @@ void ed3DFlushStrip(edNODE* pNode)
 			}
 			piVar14 = (int*)ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur];
 			for (; iVar2 != 0; iVar2 = iVar2 + -3) {
+				// #VIF_Tidy
+				IMPLEMENTATION_GUARD();
 				ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				uVar8 = (uint)uVar20 & 0xfffffff;
 				iVar13 = uVar20 + uVar5 * 0x10;
@@ -3108,6 +3138,9 @@ void ed3DFlushStrip(edNODE* pNode)
 					}
 				}
 			}
+
+			// #VIF_Tidy
+			IMPLEMENTATION_GUARD();
 			ppuVar20->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 			ppuVar20->cmdB = 0x1300000000000000;
 			ppuVar20[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
@@ -3193,34 +3226,43 @@ void ed3DFlushStrip(edNODE* pNode)
 					}
 					PTR_AnimScratchpad_00449554->field_0x0 = uVar8;
 					uVar7 = ed3DVU1BufferCur;
-					iVar15 = (char*)(ed3DVU1BufferCur * 0x10);
-					iVar13 = (char*)(ed3DVU1BufferCur * 4);
-					iVar2 = ed3DVU1BufferCur * 2;
-					uVar2 = gOptionFlagCNT[ed3DVU1BufferCur].cmdA;
-					uVar16 = *(undefined4*)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB;
-					uVar17 = *(undefined4*)((ulong)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB + 4);
-					*(int*)&ppuVar6->cmdA = (int)uVar2;
-					*(int*)((ulong)&ppuVar6->cmdA + 4) = (int)(uVar2 >> 0x20);
-					*(undefined4*)&ppuVar6->cmdB = uVar16;
-					*(undefined4*)((ulong)&ppuVar6->cmdB + 4) = uVar17;
-					uVar1 = *(undefined8*)PTR_AnimScratchpad_00449554;
-					uVar16 = PTR_AnimScratchpad_00449554->field_0x8;
-					uVar17 = PTR_AnimScratchpad_00449554->field_0xc;
-					*(int*)&ppuVar6[1].cmdA = (int)uVar1;
-					*(int*)((ulong)&ppuVar6[1].cmdA + 4) = (int)((ulong)uVar1 >> 0x20);
-					*(undefined4*)&ppuVar6[1].cmdB = uVar16;
-					*(undefined4*)((ulong)&ppuVar6[1].cmdB + 4) = uVar17;
-					uVar2 = gRefOptionsforVU1Buf[iVar2];
-					uVar16 = *(undefined4*)(gRefOptionsforVU1Buf + uVar7 * 2 + 1);
-					uVar17 = *(undefined4*)((ulong)gRefOptionsforVU1Buf + iVar15 + 0xc);
-					*(int*)&ppuVar6[2].cmdA = (int)uVar2;
-					*(int*)((ulong)&ppuVar6[2].cmdA + 4) = (int)(uVar2 >> 0x20);
-					*(undefined4*)&ppuVar6[2].cmdB = uVar16;
-					*(undefined4*)((ulong)&ppuVar6[2].cmdB + 4) = uVar17;
-					ppuVar6[3].cmdA = (ulong)((uint)uVar20 & 0xfffffff) << 0x20 | 0x50000000;
-					ppuVar6[3].cmdB =
-						((long)(ed3DVU1Addr_Scratch[uVar7] + 1) & 0xffffffffU | 0x4000000) <<
-						0x20;
+					//iVar15 = (char*)(ed3DVU1BufferCur * 0x10);
+					//iVar13 = (char*)(ed3DVU1BufferCur * 4);
+					//iVar2 = ed3DVU1BufferCur * 2;
+					//uVar2 = gOptionFlagCNT[ed3DVU1BufferCur].cmdA;
+					//uVar16 = *(undefined4*)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB;
+					//uVar17 = *(undefined4*)((ulong)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB + 4);
+
+					ppuVar6->cmdA = gOptionFlagCNT[ed3DVU1BufferCur].cmdA;
+					//ppuVar6->cmdA = (int)uVar2;
+					//*(int*)((ulong)&ppuVar6->cmdA + 4) = (int)(uVar2 >> 0x20);
+
+					ppuVar6->cmdB = gOptionFlagCNT[ed3DVU1BufferCur].cmdB;
+					//*(undefined4*)&ppuVar6->cmdB = uVar16;
+					//*(undefined4*)((ulong)&ppuVar6->cmdB + 4) = uVar17;
+
+					ppuVar6[1] = PTR_AnimScratchpad_00449554->asPkt;
+
+					//uVar1 = *(undefined8*)gScratchPkt;
+					//uVar16 = gScratchPkt->field_0x8;
+					//uVar17 = gScratchPkt->field_0xc;
+					//*(int*)&ppuVar6[1].cmdA = (int)uVar1;
+					//*(int*)((ulong)&ppuVar6[1].cmdA + 4) = (int)((ulong)uVar1 >> 0x20);
+					//*(undefined4*)&ppuVar6[1].cmdB = uVar16;
+					//*(undefined4*)((ulong)&ppuVar6[1].cmdB + 4) = uVar17;
+
+					ppuVar6[2] = gRefOptionsforVU1Buf[ed3DVU1BufferCur];
+
+					//uVar2 = gRefOptionsforVU1Buf[iVar2];
+					//uVar16 = *(undefined4*)(gRefOptionsforVU1Buf + uVar7 * 2 + 1);
+					//uVar17 = *(undefined4*)((ulong)gRefOptionsforVU1Buf + iVar15 + 0xc);
+					//*(int*)&ppuVar6[2].cmdA = (int)uVar2;
+					//*(int*)((ulong)&ppuVar6[2].cmdA + 4) = (int)(uVar2 >> 0x20);
+					//*(undefined4*)&ppuVar6[2].cmdB = uVar16;
+					//*(undefined4*)((ulong)&ppuVar6[2].cmdB + 4) = uVar17;
+					ppuVar6[3].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0); //(ulong)((uint)uVar20 & 0xfffffff) << 0x20 | 0x50000000;
+					ppuVar6[3].asU32[1] = (uint)uVar20 & 0xfffffff, 0;
+					ppuVar6[3].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1Addr_Scratch[ed3DVU1BufferCur] + 1, 0); //	((long)(ed3DVU1Addr_Scratch[uVar7] + 1) & 0xffffffffU | 0x4000000) 
 					ppuVar6 = ppuVar6 + 4;
 					if (uVar7 == 2) {
 						ed3DVU1BufferCur = 0;
@@ -3319,6 +3361,9 @@ void ed3DFlushStrip(edNODE* pNode)
 					}
 				}
 			}
+
+			// #VIF_Tidy
+			IMPLEMENTATION_GUARD();
 			ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 			ppuVar6->cmdB = 0x1300000000000000;
 			ppuVar6[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
@@ -3352,8 +3397,11 @@ void ed3DFlushStrip(edNODE* pNode)
 						for (local_20 = (uint)pRenderInput->field_0x38; (local_20 & 3) != 0; local_20 = local_20 + 1) {
 						}
 					}
+
+					// #VIF_Tidy
+					IMPLEMENTATION_GUARD();
 					uVar10 = (long)(int)(local_20 >> 2) | ED_VIF1_SET_TAG_REF(0, 0);
-					PTR_AnimScratchpad_00449554->field_0x0 = uVar8;
+					gScratchPkt->field_0x0 = uVar8;
 					uVar7 = ed3DVU1BufferCur;
 					iVar15 = ed3DVU1BufferCur * 0x10;
 					iVar2 = ed3DVU1BufferCur * 2;
@@ -3366,8 +3414,8 @@ void ed3DFlushStrip(edNODE* pNode)
 					*(undefined4*)&ppuVar19->cmdB = uVar16;
 					*(undefined4*)((ulong)&ppuVar19->cmdB + 4) = uVar17;
 					uVar1 = *(undefined8*)ScratchpadAnimManager_004494ec.pAnimScratchpad;
-					uVar16 = PTR_AnimScratchpad_00449554->field_0x8;
-					uVar17 = PTR_AnimScratchpad_00449554->field_0xc;
+					uVar16 = gScratchPkt->field_0x8;
+					uVar17 = gScratchPkt->field_0xc;
 					*(int*)&ppuVar19[1].cmdA = (int)uVar1;
 					*(int*)((ulong)&ppuVar19[1].cmdA + 4) = (int)((ulong)uVar1 >> 0x20);
 					*(undefined4*)&ppuVar19[1].cmdB = uVar16;
@@ -3412,6 +3460,9 @@ void ed3DFlushStrip(edNODE* pNode)
 						}
 						goto LAB_002a5a74;
 					}
+
+					// #VIF_Tidy
+					IMPLEMENTATION_GUARD();
 					ppuVar19->cmdA = ED_VIF1_SET_TAG_CNT(1);
 					ppuVar19->cmdB = 0x7c01003d00000000;
 					fVar3 = pBFCVect.w;
@@ -4010,7 +4061,8 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 		if ((gbFirstTex == 0) && (pMaterial->pBitmap != (ed_g2d_bitmap*)0x0)) {
 			if (pMaterial->pMaterial->count_0x0 < 2) {
 				edpkt_data* pPkt = (edpkt_data*)LOAD_SECTION(pMaterial->pBitmap->pPSX2);
-				g_GifRefPktCur->cmdA = ((ulong)(pPkt + gVRAMBufferFlush) + 0x20) << 0x20 | 0x50000000;
+				g_GifRefPktCur->asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
+				g_GifRefPktCur->asU32[1] = ((ulong)(pPkt + gVRAMBufferFlush) + 0x20);
 				peVar2->cmdB = 0;
 				g_GifRefPktCur = g_GifRefPktCur + 1;
 			}
@@ -6899,7 +6951,7 @@ void ed3DRefreshSracthGlobalVar(void)
 	*gMipmapK_SPR = gMipmapK;
 	*gbTrilinear_SPR = (uint)BYTE_0044941c;
 	pAVar1 = PTR_AnimScratchpad_00449554;
-	PTR_AnimScratchpad_00449554->field_0x0 = in_zero_lo;
+	PTR_AnimScratchpad_00449554->field_0x0 = 0;
 	pAVar1->flags = 0;
 	pAVar1->field_0x8 = 0;
 	pAVar1->field_0xc = 0;
