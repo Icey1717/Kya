@@ -370,6 +370,14 @@ inline void SendTextureCommandsFromPacked(ulong packed) {
     ((ulong)(cpsm) << 51) | ((ulong)(csm) << 55) | \
     ((ulong)(csa) << 56)  | ((ulong)(cld) << 61))
 
+#define SCE_GS_SET_TEX1_1   SCE_GS_SET_TEX1
+#define SCE_GS_SET_TEX1_2   SCE_GS_SET_TEX1
+#define SCE_GS_SET_TEX1(lcm, mxl, mmag, mmin, mtba, l, k) \
+    ((ulong)(lcm)        | ((ulong)(mxl) << 2)  | \
+    ((ulong)(mmag) << 5) | ((ulong)(mmin) << 6) | \
+    ((ulong)(mtba) << 9) | ((ulong)(l) << 19) | \
+    ((ulong)(k) << 32))
+
 #define SCE_GS_SET_ST_PS2(s, t) ((ulong)(s) |  ((ulong)(t) << 32))
 
 #ifdef PLATFORM_WIN
