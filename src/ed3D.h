@@ -35,35 +35,35 @@ struct ed_g2d_manager {
 };
 
 struct LightingMatrixSubSubObj {
-	struct edF32VECTOR4* field_0x0;
-	struct edF32MATRIX4* field_0x4;
-	struct edF32MATRIX4* field_0x8;
+	struct edF32VECTOR4* pLightAmbient;
+	union edF32MATRIX4* pLightDirections;
+	union edF32MATRIX4* pLightColor;
 };
 
 struct ed_3d_hierarchy_setup {
 	char* field_0x0;
 	struct edF32VECTOR4* pVector_0x4;
-	struct LightingMatrixSubSubObj* field_0x8;
+	struct LightingMatrixSubSubObj* pLightData;
 	char* field_0xc;
 	float* field_0x10;
 };
 
 struct MeshTransformDataBase {
-	struct edF32MATRIX4 transformA;
-	struct edF32MATRIX4 transformB;
+	edF32MATRIX4 transformA;
+	edF32MATRIX4 transformB;
 	Hash_8 hash;
 	byte field_0x88;
 	undefined field_0x89;
 	ushort bRenderShadow;
-	struct edF32MATRIX4* pShadowAnimMatrix;
+	union edF32MATRIX4* pShadowAnimMatrix;
 	struct ed_g3d_hierarchy* pLinkTransformData;
 	undefined* field_0x94;
 	undefined* pTextureInfo;
 	ushort count_0x9c;
 	ushort flags_0x9e;
 	struct ed_3d_hierarchy_setup* pHierarchySetup;
-	edF32MATRIX4* field_0xa4;
-	struct edF32MATRIX4* pAnimMatrix;
+	edF32MATRIX4* pMatrixPkt;
+	union edF32MATRIX4* pAnimMatrix;
 	short subMeshParentCount_0xac;
 	byte size_0xae;
 	char GlobalAlhaON;

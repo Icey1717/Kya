@@ -1168,6 +1168,7 @@ void edDListPatchGifTag3D(void)
 	int iVar3;
 
 	if (gNbStateAdded != 0) {
+		IMPLEMENTATION_GUARD();
 		pRVar1 = gCurDList->pRenderCommands;
 		*(undefined4*)&pRVar1->cmdA = 0;
 		*(undefined4*)((int)&pRVar1->cmdA + 4) = 0x14000000;

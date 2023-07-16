@@ -290,7 +290,7 @@ void CameraManager::Level_Init(bool bProcessEvents)
 		if ((bVar4 == 0) && (pCamera != (Camera*)0x0)) {
 			EVar4 = pCamera->GetMode();
 			if (EVar4 == CT_ShadowSun) {
-				this->pShadowSunView_0x4b8 = (CCameraShadow*)pCamera;
+				this->pShadowSunView_0x4b8 = pCamera;
 				pCamera->sceneIndex = -1;
 				pCamera->sceneFlags = 0;
 			}
@@ -301,20 +301,8 @@ void CameraManager::Level_Init(bool bProcessEvents)
 		this->field_0x8 = this->field_0x8 & 0xfbffffff;
 	}
 	this->field_0x4a0 = 0;
-	fVar3 = gF32Vertex4Zero.w;
-	fVar2 = gF32Vertex4Zero.z;
-	fVar1 = gF32Vertex4Zero.y;
-	(this->field_0x50).da = gF32Vertex4Zero.x;
-	(this->field_0x50).db = fVar1;
-	(this->field_0x50).dc = fVar2;
-	(this->field_0x50).dd = fVar3;
-	fVar3 = gF32Vertex4Zero.w;
-	fVar2 = gF32Vertex4Zero.z;
-	fVar1 = gF32Vertex4Zero.y;
-	(this->shadowCameraLookat).x = gF32Vertex4Zero.x;
-	(this->shadowCameraLookat).y = fVar1;
-	(this->shadowCameraLookat).z = fVar2;
-	(this->shadowCameraLookat).w = fVar3;
+	(this->transformationMatrix).rowT = gF32Vertex4Zero;
+	(this->shadowCameraLookat) = gF32Vertex4Zero;
 	this->field_0xa34 = 0.84f;
 	edF32Matrix4SetIdentityHard(&this->matrix_0x10);
 	this->field_0x710.ClearActiveCam();
@@ -388,7 +376,7 @@ void CameraManager::Func_001947e0()
 	int local_120[68];
 	edF32VECTOR4 local_10;
 
-	if ((this->pShadowSunView_0x4b8 != (CCameraShadow*)0x0) &&
+	if ((this->pShadowSunView_0x4b8 != (Camera*)0x0) &&
 		(lVar3 = (long)this->pShadowSunView_0x4b8->GetTarget(), lVar3 != 0)) {
 		IMPLEMENTATION_GUARD(); // Check ghidra for function.
 	}
@@ -506,69 +494,46 @@ void CameraManager::BuildDisplayMatrix()
 	if (((this->pShadowSunView_0x4b8->flags_0xc & 0x20000) == 0) ||
 		((this->field_0x8 & 0x4000000) != 0)) {
 		IMPLEMENTATION_GUARD(
-		fVar1 = (this->field_0x50).da;
-		fVar2 = (this->field_0x50).db;
-		fVar3 = (this->field_0x50).dc;
-		fVar4 = (this->field_0x50).dd;
-		edF32Matrix4FromEulerSoft(&this->field_0x50, (int)&this->field_0xa08, (char*)&PTR_DAT_0042aeb8);
-		(this->field_0x50).da = fVar1;
-		(this->field_0x50).db = fVar2;
-		(this->field_0x50).dc = fVar3;
-		(this->field_0x50).dd = fVar4;)
+		edF32VECTOR4 oldT = (this->transformationMatrix).rowT;
+		edF32Matrix4FromEulerSoft(&this->transformationMatrix, (int)&this->field_0xa08, s_ZXY_0042aeb8);
+		(this->transformationMatrix).rowT = oldT;
+		)
 	}
 	else {
-		edF32Matrix4CopyHard(&this->field_0x50,
-			&this->pShadowSunView_0x4b8->transformationMatrix);
+		edF32Matrix4CopyHard(&this->transformationMatrix, &this->pShadowSunView_0x4b8->transformationMatrix);
 	}
-	fVar1 = Manage_EarthQuake((edF32VECTOR4*)&(this->field_0x50).da);
-	this->field_0x90 = this->field_0x50;
+	fVar1 = Manage_EarthQuake(&(this->transformationMatrix).rowT);
+	this->displayTransformMatrix = this->transformationMatrix;
 	if ((this->field_0x8 & 0x18000000) == 0x18000000) {
-		this->field_0x90 = this->aCameraShadow[0]->transformationMatrix;
+		this->displayTransformMatrix = this->aCameraShadow[0]->transformationMatrix;
 	}
 	else {
 		if ((this->field_0x8 & 0x10000000) != 0) {
-			this->field_0x90 = this->pMouseQuakeCamera_0x4e8->transformationMatrix;
+			this->displayTransformMatrix = this->pMouseQuakeCamera_0x4e8->transformationMatrix;
 		}
 	}
-	edF32Matrix4GetInverseOrthoHard(&this->field_0x350, &this->field_0x50);
-	edF32Vector4ScaleHard(-1.0f, (edF32VECTOR4*)&this->field_0x390, (edF32VECTOR4*)&this->field_0x50);
-	edF32Vector4ScaleHard(-1.0f, (edF32VECTOR4*)&(this->field_0x390).ca, (edF32VECTOR4*)&(this->field_0x50).ca);
-	fVar4 = (this->field_0x50).bb;
-	fVar2 = (this->field_0x50).bc;
-	fVar3 = (this->field_0x50).bd;
-	(this->field_0x390).ba = (this->field_0x50).ba;
-	(this->field_0x390).bb = fVar4;
-	(this->field_0x390).bc = fVar2;
-	(this->field_0x390).bd = fVar3;
-	fVar4 = (this->field_0x50).db;
-	fVar2 = (this->field_0x50).dc;
-	fVar3 = (this->field_0x50).dd;
-	(this->field_0x390).da = (this->field_0x50).da;
-	(this->field_0x390).db = fVar4;
-	(this->field_0x390).dc = fVar2;
-	(this->field_0x390).dd = fVar3;
-	edF32Matrix4GetInverseOrthoHard(&this->field_0x3d0, &this->field_0x390);
-	_gDisplayCamera.position.x = (this->field_0x90).da;
-	_gDisplayCamera.position.y = (this->field_0x90).db;
-	_gDisplayCamera.position.z = (this->field_0x90).dc;
-	_gDisplayCamera.position.w = (this->field_0x90).dd;
+	edF32Matrix4GetInverseOrthoHard(&this->field_0x350, &this->transformationMatrix);
+	edF32Vector4ScaleHard(-1.0f, &this->transMatrix_0x390.rowX, &this->transformationMatrix.rowX);
+	edF32Vector4ScaleHard(-1.0f, &(this->transMatrix_0x390).rowZ, &(this->transformationMatrix).rowZ);
+
+	(this->transMatrix_0x390).rowY = (this->transformationMatrix).rowY;
+	(this->transMatrix_0x390).rowT = (this->transformationMatrix).rowT;
+
+	edF32Matrix4GetInverseOrthoHard(&this->worldToCamera_0x3d0, &this->transMatrix_0x390);
+	_gDisplayCamera.position = (this->displayTransformMatrix).rowT;
 	_gDisplayCamera.lookAt = this->shadowCameraLookat;
 	_gDisplayCamera.rotationZ = 0.0;
-	edF32Vector4ScaleHard(-1.0f, (edF32VECTOR4*)&_gDisplayCamera.transformMatrix, (edF32VECTOR4*)&this->field_0x90);
-	edF32Vector4ScaleHard(-1.0f, (edF32VECTOR4*)&_gDisplayCamera.transformMatrix.ca, (edF32VECTOR4*)&(this->field_0x90).ca);
-	_gDisplayCamera.transformMatrix.ba = (this->field_0x90).ba;
-	_gDisplayCamera.transformMatrix.bb = (this->field_0x90).bb;
-	_gDisplayCamera.transformMatrix.bc = (this->field_0x90).bc;
-	_gDisplayCamera.transformMatrix.bd = (this->field_0x90).bd;
-	_gDisplayCamera.transformMatrix.da = (this->field_0x90).da;
-	_gDisplayCamera.transformMatrix.db = (this->field_0x90).db;
-	_gDisplayCamera.transformMatrix.dc = (this->field_0x90).dc;
-	_gDisplayCamera.transformMatrix.dd = (this->field_0x90).dd;
+
+	edF32Vector4ScaleHard(-1.0f, &_gDisplayCamera.transformMatrix.rowX, &this->displayTransformMatrix.rowX);
+	edF32Vector4ScaleHard(-1.0f, &_gDisplayCamera.transformMatrix.rowZ, &this->displayTransformMatrix.rowZ);
+
+	_gDisplayCamera.transformMatrix.rowY = this->displayTransformMatrix.rowY;
+	_gDisplayCamera.transformMatrix.rowT = this->displayTransformMatrix.rowT;
+
 	edF32Matrix4GetInverseOrthoHard(&_gDisplayCamera.worldToCamera, &_gDisplayCamera.transformMatrix);
-	_gDisplayCamera.calculatedRotation.x = _gDisplayCamera.transformMatrix.aa;
-	_gDisplayCamera.calculatedRotation.y = _gDisplayCamera.transformMatrix.ab;
-	_gDisplayCamera.calculatedRotation.z = _gDisplayCamera.transformMatrix.ac;
-	_gDisplayCamera.calculatedRotation.w = _gDisplayCamera.transformMatrix.ad;
+
+	_gDisplayCamera.calculatedRotation = _gDisplayCamera.transformMatrix.rowX;
+
 	if ((this->field_0x8 & 0x18000000) == 0x18000000) {
 		fVar1 = fVar1 + this->aCameraShadow[0]->field_0x74;
 	}
@@ -581,7 +546,7 @@ void CameraManager::BuildDisplayMatrix()
 		}
 	}
 	edFCameraSetSizeRatioFov(0.03f, this->aspectRatio, fVar1 / 1.333333f, &_gDisplayCamera);
-	ComputeFrustrumPlanes(fVar1, &this->field_0x90);
+	ComputeFrustrumPlanes(fVar1, &this->displayTransformMatrix);
 	return;
 }
 
@@ -602,7 +567,7 @@ void CameraManager::Level_Manage()
 	undefined4 uVar12;
 	float fVar13;
 
-	if (this->pShadowSunView_0x4b8 != (CCameraShadow*)0x0) {
+	if (this->pShadowSunView_0x4b8 != (Camera*)0x0) {
 		if ((this->field_0x8 & 0x1000000) == 0) {
 			pTVar4 = GetTimer();
 			this->time_0x4 = pTVar4->cutsceneDeltaTime;
@@ -620,7 +585,7 @@ void CameraManager::Level_Manage()
 		if (bVar3 != false) {
 			switchMode = (this->cameraStack).switchMode;
 			pCVar1 = (CCameraShadow*)(this->cameraStack).pActiveCamera;
-			bVar3 = this->field_0x710.SwitchActiveCam((this->cameraStack).field_0x218, (Camera*)pCVar1, switchMode);
+			bVar3 = this->field_0x710.SwitchActiveCam((this->cameraStack).field_0x218, pCVar1, switchMode);
 			if ((bVar3 == false) && (pCVar1 != (CCameraShadow*)0x0)) {
 				EVar5 = pCVar1->GetMode();
 				if (EVar5 == CT_ShadowSun) {
@@ -642,27 +607,15 @@ void CameraManager::Level_Manage()
 		}
 		Func_001947e0();
 		pTVar4 = GetTimer();
-		if ((pTVar4->timeScale != 0.0) || ((this->pShadowSunView_0x4b8->flags_0xc & 0x40000) != 0)) {
+		if ((pTVar4->timeScale != 0.0f) || ((this->pShadowSunView_0x4b8->flags_0xc & 0x40000) != 0)) {
 			/* Camera? */
-			//pShadowSunView_0x4b8->Manage();
+			pShadowSunView_0x4b8->Manage();
 			if ((this->field_0x8 & 0x4000000) == 0) {
-				pCVar1 = this->pShadowSunView_0x4b8;
+				pCVar1 = (CCameraShadow*)this->pShadowSunView_0x4b8;
 				if (pCVar1 != (CCameraShadow*)0x0) {
-					fVar13 = pCVar1->transformationMatrix.db;
-					fVar10 = pCVar1->transformationMatrix.dc;
-					fVar11 = pCVar1->transformationMatrix.dd;
-					(this->field_0x50).da = pCVar1->transformationMatrix.da;
-					(this->field_0x50).db = fVar13;
-					(this->field_0x50).dc = fVar10;
-					(this->field_0x50).dd = fVar11;
-					pCVar1 = this->pShadowSunView_0x4b8;
-					fVar13 = pCVar1->lookAt.y;
-					fVar10 = pCVar1->lookAt.z;
-					fVar11 = pCVar1->lookAt.w;
-					(this->shadowCameraLookat).x = pCVar1->lookAt.x;
-					(this->shadowCameraLookat).y = fVar13;
-					(this->shadowCameraLookat).z = fVar10;
-					(this->shadowCameraLookat).w = fVar11;
+					(this->transformationMatrix).rowT = pCVar1->transformationMatrix.rowT;
+					(this->shadowCameraLookat) = pCVar1->lookAt;
+
 					/* Focus object camera? */
 					this->field_0xa30 = pShadowSunView_0x4b8->GetDistance();
 					this->field_0xa34 = pShadowSunView_0x4b8->field_0x74;
@@ -822,7 +775,7 @@ void CameraManager::Level_ClearInternalData()
 	this->field_0x9f8 = 0;
 	this->count_0x9fc = 0;
 	this->pInitialView_0x4b4 = (Camera*)0x0;
-	this->pShadowSunView_0x4b8 = (CCameraShadow*)0x0;
+	this->pShadowSunView_0x4b8 = (Camera*)0x0;
 	this->pFrontendCamera_0x4e4 = (FrontendCameraView*)0x0;
 	this->pMouseQuakeCamera_0x4e8 = (Camera*)0x0;
 	this->field_0xa78 = 0;
@@ -1631,8 +1584,8 @@ bool astruct_12::Init(struct ByteCode* pMemoryStream)
 	return uVar1 == 1;
 }
 
-edF32VECTOR4 gF32Vertex4Zero = { 0 };
-edF32VECTOR4 gF32Vector4Zero = { 0 };
+edF32VECTOR4 gF32Vertex4Zero = { 0.0f, 0.0f, 0.0f, 1.0f };
+edF32VECTOR4 gF32Vector4Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 CameraCinematic::CameraCinematic()
 {
@@ -1782,6 +1735,40 @@ void CCameraShadow::Init()
 ECameraType CCameraShadow::GetMode()
 {
 	return CT_ShadowSun;
+}
+
+bool CCameraShadow::Manage()
+{
+	int iVar1;
+	CActorManager* pCVar2;
+	LightManager* pLVar3;
+	bool bVar4;
+	int iVar5;
+	Actor* pActor;
+	int iVar6;
+	long lVar7;
+	edF32MATRIX4* m0;
+	long lVar8;
+	int* piVar9;
+	float fVar10;
+	edF32MATRIX4 eStack400;
+	edF32VECTOR4 local_150;
+	edF32VECTOR4 local_140;
+	edF32VECTOR4 eStack304;
+	edF32VECTOR4 local_120;
+	int local_110;
+	int local_10c[67];
+
+	lVar8 = (long)(int)this;
+	bVar4 = Camera::Manage();
+	pLVar3 = Scene::ptable.g_LightManager_004516b0;
+	if (bVar4 == false) {
+		IMPLEMENTATION_GUARD();
+	}
+	else {
+		bVar4 = false;
+	}
+	return bVar4;
 }
 
 CCameraMouse::CCameraMouse()

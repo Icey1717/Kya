@@ -189,28 +189,44 @@ struct edF32VECTOR3 {
 #endif
 
 #ifdef PLATFORM_PS2
-struct __attribute__((aligned(16)))
+union __attribute__((aligned(16)))
 #else
 #pragma pack(push,1)
-struct alignas(16)
+union alignas(16)
 #endif 
 edF32MATRIX4 {
-	float aa;
-	float ab;
-	float ac;
-	float ad;
-	float ba;
-	float bb;
-	float bc;
-	float bd;
-	float ca;
-	float cb;
-	float cc;
-	float cd;
-	float da;
-	float db;
-	float dc;
-	float dd;
+	struct {
+		float aa;
+		float ab;
+		float ac;
+		float ad;
+		float ba;
+		float bb;
+		float bc;
+		float bd;
+		float ca;
+		float cb;
+		float cc;
+		float cd;
+		float da;
+		float db;
+		float dc;
+		float dd;
+	};
+
+	struct {
+		edF32VECTOR4 v0;
+		edF32VECTOR4 v1;
+		edF32VECTOR4 v2;
+		edF32VECTOR4 v3;
+	};
+
+	struct {
+		edF32VECTOR4 rowX;
+		edF32VECTOR4 rowY;
+		edF32VECTOR4 rowZ;
+		edF32VECTOR4 rowT;
+	};
 };
 #ifdef PLATFORM_WIN
 #pragma pack(pop)

@@ -52,7 +52,7 @@ struct DMA_Register_Struct {
 	uint QWC;
 };
 
-void edDmaLoadFromFastRam_nowait(edF32VECTOR4* param_1, uint qwc, uint addr);
+void edDmaLoadFromFastRam_nowait(void* pSrc, uint qwc, void* pDest);
 bool edDmaLoadFromFastRam(uint addr, uint qwc, uint param_3);
 void edDmaFlushCache(void);
 int edDmaSyncPath(void);

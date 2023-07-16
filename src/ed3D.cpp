@@ -12,6 +12,7 @@
 #else
 #include "renderer.h"
 #include "port.h"
+#include "port/vu1_emu.h"
 #endif
 
 #include "edVideo/VideoD.h"
@@ -203,9 +204,9 @@ PACK(
 	uint flags_0x0;
 	short field_0x4;
 	short field_0x6;
-	int offsetA;
+	int vifListOffset;
 	int pNext; // ed_3d_strip*
-	struct edF32VECTOR4 boundingSphere;
+	edF32VECTOR4 boundingSphere;
 	int field_0x20; // char*
 	int field_0x24; // char*
 	int field_0x28; // char*
@@ -327,9 +328,12 @@ edpkt_data gOptionFlagCNT[3];
 
 void ed3DOptionFlagCNTInit(void)
 {
-	gOptionFlagCNT[0].cmdB = (ulong)ed3DVU1Buffer[0] << 0x20 | 0x7c01000000000000;
-	gOptionFlagCNT[1].cmdB = (ulong)ed3DVU1Buffer[1] << 0x20 | 0x7c01000000000000;
-	gOptionFlagCNT[2].cmdB = (ulong)ed3DVU1Buffer[2] << 0x20 | 0x7c01000000000000;
+	gOptionFlagCNT[0].cmdB = 0;
+	gOptionFlagCNT[1].cmdB = 0;
+	gOptionFlagCNT[2].cmdB = 0;
+	gOptionFlagCNT[0].asU32[3] = SCE_VIF1_SET_UNPACK(ed3DVU1Buffer[0], 0x1, UNPACK_V4_32_MASKED, 0);
+	gOptionFlagCNT[1].asU32[3] = SCE_VIF1_SET_UNPACK(ed3DVU1Buffer[1], 0x1, UNPACK_V4_32_MASKED, 0);
+	gOptionFlagCNT[2].asU32[3] = SCE_VIF1_SET_UNPACK(ed3DVU1Buffer[2], 0x1, UNPACK_V4_32_MASKED, 0);
 	gOptionFlagCNT[0].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	gOptionFlagCNT[1].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	gOptionFlagCNT[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
@@ -645,7 +649,7 @@ struct ed_dma_matrix : public edLIST {
 	edF32MATRIX4* pObjToWorld;
 	MeshTransformDataBase* pMeshTransformData;
 	int flags_0x28;
-	float field_0x2c;
+	float normalScale;
 };
 
 struct RenderFrame_30_B_DEPRECATED {
@@ -660,7 +664,7 @@ struct RenderFrame_30_B_DEPRECATED {
 	undefined field_0x1a;
 	undefined field_0x1b;
 	int index_0x1c;
-	struct edF32MATRIX4* pTransformMatrix;
+	union edF32MATRIX4* pTransformMatrix;
 	struct ed_3d_hierarchy_node* pMeshTransformData;
 	int flags_0x28;
 	float field_0x2c;
@@ -734,14 +738,14 @@ MeshTransformDataBase MeshTransformDataBase_0048cad0 = { 0 };
 void ed3DPrimlistMatrixBufferReset(void)
 {
 	DmaMatrixDefault = DmaMatrixBuffer;
-	MeshTransformDataBase_0048cad0.field_0xa4 = (edF32MATRIX4*)0x0;
+	MeshTransformDataBase_0048cad0.pMatrixPkt = (edF32MATRIX4*)0x0;
 	DmaMatrixBufferCurrentMax = DmaMatrixBufferMax;
 	gNodeDmaMatrix = pNodeManRender;
 	gNodeDmaStrip = pNodeManRender;
 	DmaMatrixBufferCurrent = DmaMatrixBuffer + 1;
 	DmaMatrixBuffer->pObjToWorld = &gF32Matrix4Unit;
 	DmaMatrixDefault->pMeshTransformData = &MeshTransformDataBase_0048cad0;
-	DmaMatrixDefault->field_0x2c = 1.0;
+	DmaMatrixDefault->normalScale = 1.0;
 	(DmaMatrixDefault)->pNext = (edNODE*)DmaMatrixDefault;
 	(DmaMatrixDefault)->pPrev = (edNODE*)DmaMatrixDefault;
 	(DmaMatrixDefault)->pData = gNodeDmaStrip;
@@ -845,6 +849,11 @@ void ed3DFlushSendDMA3D(void)
 		edDmaFlushCache();
 		RENDER_LOG("DMA Begin ed3DFlushSendDMA3D");
 		edDmaSend_nowait(SHELLDMA_CHANNEL_VIF1, (ulonglong*)g_pStartPktData);
+
+#ifdef PLATFORM_WIN
+		VU1Emu::ClearWriteQueue();
+#endif
+
 		if (g_WaitAfterVIF_00449244 != 0) {
 			edDmaSyncPath();
 			edDmaSyncPath();
@@ -1639,8 +1648,8 @@ void ed3DFlushSceneInit(void)
 }
 
 struct RenderInfo {
-	struct edF32MATRIX4* pSharedMeshTransform;
-	struct edF32MATRIX4* pMeshTransformMatrix;
+	union edF32MATRIX4* pSharedMeshTransform;
+	union edF32MATRIX4* pMeshTransformMatrix;
 	int field_0x8;
 	struct ed_3d_hierarchy_setup* pLightingMatrixFuncObj;
 	uint flags_0x10;
@@ -2027,8 +2036,6 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 	return 1;
 }
 
-#define UNPACK_V4_32 0x6c
-
 edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 {
 	uint uVar1;
@@ -2109,8 +2116,8 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 	pPkt[2].cmdB = SCE_GS_FOGCOL;
 
 	pPkt[3].asU32[0] = SCE_VIF1_SET_NOP(0);
-	pPkt[3].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0); // 0x14000000;
-	pPkt[3].cmdB = SCE_VIF1_SET_FLUSH(0); // 0x11000000;
+	pPkt[3].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0);
+	pPkt[3].cmdB = SCE_VIF1_SET_FLUSH(0);
 	pRVar1 = pPkt + 4;
 
 	if (pScene->pViewport != (ed_viewport*)0x0) {
@@ -2329,23 +2336,6 @@ edpkt_data* ed3DHierachyCheckForGlobalAlpha(edpkt_data* pRenderCommand, ed_g2d_l
 	return pRenderCommand;
 }
 
-
-void sceVu0ScaleVectorAlt(float t, edF32VECTOR4* v0, edF32VECTOR4* v1)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-
-	fVar1 = v1->y;
-	fVar2 = v1->z;
-	fVar3 = v1->w;
-	v0->x = v1->x * t;
-	v0->y = fVar1 * t;
-	v0->z = fVar2 * t;
-	v0->w = fVar3 * t;
-	return;
-}
-
 void edF32Matrix4OrthonormalizeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 	float fVar1;
@@ -2390,7 +2380,13 @@ void edF32Matrix4OrthonormalizeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 	return;
 }
 
-edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix* pRenderData, byte param_3)
+#define LIGHT_DIRECTIONS_MATRIX_SPR 0x70000a40
+#define LIGHT_COLOR_MATRIX_SPR		0x70000a50
+#define LIGHT_AMBIENT_MATRIX_SPR	0x70000a60
+
+#define OBJECT_TO_CAMERA_MATRIX_SPR	0x70000a60
+
+edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix* pDmaMatrix, byte param_3)
 {
 	edF32MATRIX4* m1;
 	LightingMatrixSubSubObj* pLVar1;
@@ -2431,31 +2427,31 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	undefined* psVar1;
 	ed_3d_hierarchy_setup* puVar1;
 
-	m1 = pRenderData->pObjToWorld;
+	m1 = pDmaMatrix->pObjToWorld;
 	RENDER_LOG("DMA Begin ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
-	sceVu0ScaleVectorAlt(pRenderData->field_0x2c, SCRATCHPAD_ADDRESS_TYPE(0x70000800, edF32VECTOR4*), &gCamNormal_X);
-	sceVu0ScaleVectorAlt(pRenderData->field_0x2c, SCRATCHPAD_ADDRESS_TYPE(0x70000810, edF32VECTOR4*), &gCamNormal_Y);
+	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(0x70000800, edF32VECTOR4*), &gCamNormal_X);
+	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(0x70000810, edF32VECTOR4*), &gCamNormal_Y);
 	*g_pCurFlareObj2WorldMtx = m1;
-	if (((pRenderData->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
-		(puVar1 = pRenderData->pMeshTransformData->pHierarchySetup, puVar1 == (ed_3d_hierarchy_setup*)0x0))
-		|| (pLVar1 = puVar1->field_0x8, pLVar1 == (LightingMatrixSubSubObj*)0x0)) {
-		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
-		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*, gLightColor_Matrix_Scratch);
-		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*, gLightAmbiant_Scratch);
+	if (((pDmaMatrix->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
+		(puVar1 = pDmaMatrix->pMeshTransformData->pHierarchySetup, puVar1 == (ed_3d_hierarchy_setup*)0x0))
+		|| (pLVar1 = puVar1->pLightData, pLVar1 == (LightingMatrixSubSubObj*)0x0)) {
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*, gLightColor_Matrix_Scratch);
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_AMBIENT_MATRIX_SPR, edF32VECTOR4*, gLightAmbiant_Scratch);
 	}
 	else {
-		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*, pLVar1->field_0x4);
-		if (SCRATCHPAD_READ_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*) == (edF32MATRIX4*)0x0) {
-			SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a40, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*, pLVar1->pLightDirections);
+		if (SCRATCHPAD_READ_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*) == (edF32MATRIX4*)0x0) {
+			SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
 		}
-		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*, pLVar1->field_0x8);
-		if (SCRATCHPAD_READ_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*) == (edF32MATRIX4*)0x0) {
-			SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a50, edF32MATRIX4*, gLightColor_Matrix_Scratch);
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*, pLVar1->pLightColor);
+		if (SCRATCHPAD_READ_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*) == (edF32MATRIX4*)0x0) {
+			SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*, gLightColor_Matrix_Scratch);
 		}
-		SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*, pLVar1->field_0x0);
-		if (SCRATCHPAD_READ_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*) == (edF32VECTOR4*)0x0) {
-			SCRATCHPAD_WRITE_ADDRESS_TYPE(0x70000a60, edF32VECTOR4*, gLightAmbiant_Scratch);
+		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_AMBIENT_MATRIX_SPR, edF32VECTOR4*, pLVar1->pLightAmbient);
+		if (SCRATCHPAD_READ_ADDRESS_TYPE(LIGHT_AMBIENT_MATRIX_SPR, edF32VECTOR4*) == (edF32VECTOR4*)0x0) {
+			SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_AMBIENT_MATRIX_SPR, edF32VECTOR4*, gLightAmbiant_Scratch);
 		}
 	}
 
@@ -2475,102 +2471,102 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	edF32MATRIX4 objToWorld = *m1;
 	edF32MATRIX4 worldToCamera = *WorldToCamera_Matrix;
 
-	edF32MATRIX4* matrixA = SCRATCHPAD_ADDRESS_TYPE(0x700008E0, edF32MATRIX4*);
+	edF32MATRIX4* pObjToCamera = SCRATCHPAD_ADDRESS_TYPE(OBJECT_TO_CAMERA_MATRIX_SPR, edF32MATRIX4*);
 
-	matrixA->aa = worldToCamera.aa * objToWorld.aa + worldToCamera.ba * objToWorld.ab + worldToCamera.ca * objToWorld.ac + worldToCamera.da * objToWorld.ad;
-	matrixA->ab = worldToCamera.ab * objToWorld.aa + worldToCamera.bb * objToWorld.ab + worldToCamera.cb * objToWorld.ac + worldToCamera.db * objToWorld.ad;
-	matrixA->ac = worldToCamera.ac * objToWorld.aa + worldToCamera.bc * objToWorld.ab + worldToCamera.cc * objToWorld.ac + worldToCamera.dc * objToWorld.ad;
-	matrixA->ad = worldToCamera.ad * objToWorld.aa + worldToCamera.bd * objToWorld.ab + worldToCamera.cd * objToWorld.ac + worldToCamera.dd * objToWorld.ad;
-	matrixA->ba = worldToCamera.aa * objToWorld.ba + worldToCamera.ba * objToWorld.bb + worldToCamera.ca * objToWorld.bc + worldToCamera.da * objToWorld.bd;
-	matrixA->bb = worldToCamera.ab * objToWorld.ba + worldToCamera.bb * objToWorld.bb + worldToCamera.cb * objToWorld.bc + worldToCamera.db * objToWorld.bd;
-	matrixA->bc = worldToCamera.ac * objToWorld.ba + worldToCamera.bc * objToWorld.bb + worldToCamera.cc * objToWorld.bc + worldToCamera.dc * objToWorld.bd;
-	matrixA->bd = worldToCamera.ad * objToWorld.ba + worldToCamera.bd * objToWorld.bb + worldToCamera.cd * objToWorld.bc + worldToCamera.dd * objToWorld.bd;
-	matrixA->ca = worldToCamera.aa * objToWorld.ca + worldToCamera.ba * objToWorld.cb + worldToCamera.ca * objToWorld.cc + worldToCamera.da * objToWorld.cd;
-	matrixA->cb = worldToCamera.ab * objToWorld.ca + worldToCamera.bb * objToWorld.cb + worldToCamera.cb * objToWorld.cc + worldToCamera.db * objToWorld.cd;
-	matrixA->cc = worldToCamera.ac * objToWorld.ca + worldToCamera.bc * objToWorld.cb + worldToCamera.cc * objToWorld.cc + worldToCamera.dc * objToWorld.cd;
-	matrixA->cd = worldToCamera.ad * objToWorld.ca + worldToCamera.bd * objToWorld.cb + worldToCamera.cd * objToWorld.cc + worldToCamera.dd * objToWorld.cd;
-	matrixA->da = worldToCamera.aa * objToWorld.da + worldToCamera.ba * objToWorld.db + worldToCamera.ca * objToWorld.dc + worldToCamera.da * objToWorld.dd;
-	matrixA->db = worldToCamera.ab * objToWorld.da + worldToCamera.bb * objToWorld.db + worldToCamera.cb * objToWorld.dc + worldToCamera.db * objToWorld.dd;
-	matrixA->dc = worldToCamera.ac * objToWorld.da + worldToCamera.bc * objToWorld.db + worldToCamera.cc * objToWorld.dc + worldToCamera.dc * objToWorld.dd;
-	matrixA->dd = worldToCamera.ad * objToWorld.da + worldToCamera.bd * objToWorld.db + worldToCamera.cd * objToWorld.dc + worldToCamera.dd * objToWorld.dd;
+	pObjToCamera->aa = worldToCamera.aa * objToWorld.aa + worldToCamera.ba * objToWorld.ab + worldToCamera.ca * objToWorld.ac + worldToCamera.da * objToWorld.ad;
+	pObjToCamera->ab = worldToCamera.ab * objToWorld.aa + worldToCamera.bb * objToWorld.ab + worldToCamera.cb * objToWorld.ac + worldToCamera.db * objToWorld.ad;
+	pObjToCamera->ac = worldToCamera.ac * objToWorld.aa + worldToCamera.bc * objToWorld.ab + worldToCamera.cc * objToWorld.ac + worldToCamera.dc * objToWorld.ad;
+	pObjToCamera->ad = worldToCamera.ad * objToWorld.aa + worldToCamera.bd * objToWorld.ab + worldToCamera.cd * objToWorld.ac + worldToCamera.dd * objToWorld.ad;
+	pObjToCamera->ba = worldToCamera.aa * objToWorld.ba + worldToCamera.ba * objToWorld.bb + worldToCamera.ca * objToWorld.bc + worldToCamera.da * objToWorld.bd;
+	pObjToCamera->bb = worldToCamera.ab * objToWorld.ba + worldToCamera.bb * objToWorld.bb + worldToCamera.cb * objToWorld.bc + worldToCamera.db * objToWorld.bd;
+	pObjToCamera->bc = worldToCamera.ac * objToWorld.ba + worldToCamera.bc * objToWorld.bb + worldToCamera.cc * objToWorld.bc + worldToCamera.dc * objToWorld.bd;
+	pObjToCamera->bd = worldToCamera.ad * objToWorld.ba + worldToCamera.bd * objToWorld.bb + worldToCamera.cd * objToWorld.bc + worldToCamera.dd * objToWorld.bd;
+	pObjToCamera->ca = worldToCamera.aa * objToWorld.ca + worldToCamera.ba * objToWorld.cb + worldToCamera.ca * objToWorld.cc + worldToCamera.da * objToWorld.cd;
+	pObjToCamera->cb = worldToCamera.ab * objToWorld.ca + worldToCamera.bb * objToWorld.cb + worldToCamera.cb * objToWorld.cc + worldToCamera.db * objToWorld.cd;
+	pObjToCamera->cc = worldToCamera.ac * objToWorld.ca + worldToCamera.bc * objToWorld.cb + worldToCamera.cc * objToWorld.cc + worldToCamera.dc * objToWorld.cd;
+	pObjToCamera->cd = worldToCamera.ad * objToWorld.ca + worldToCamera.bd * objToWorld.cb + worldToCamera.cd * objToWorld.cc + worldToCamera.dd * objToWorld.cd;
+	pObjToCamera->da = worldToCamera.aa * objToWorld.da + worldToCamera.ba * objToWorld.db + worldToCamera.ca * objToWorld.dc + worldToCamera.da * objToWorld.dd;
+	pObjToCamera->db = worldToCamera.ab * objToWorld.da + worldToCamera.bb * objToWorld.db + worldToCamera.cb * objToWorld.dc + worldToCamera.db * objToWorld.dd;
+	pObjToCamera->dc = worldToCamera.ac * objToWorld.da + worldToCamera.bc * objToWorld.db + worldToCamera.cc * objToWorld.dc + worldToCamera.dc * objToWorld.dd;
+	pObjToCamera->dd = worldToCamera.ad * objToWorld.da + worldToCamera.bd * objToWorld.db + worldToCamera.cd * objToWorld.dc + worldToCamera.dd * objToWorld.dd;
 
 	edF32MATRIX4 cameraToCulling = *CameraToCulling_Matrix;
 	edF32MATRIX4* matrixB = SCRATCHPAD_ADDRESS_TYPE(0x70000820, edF32MATRIX4*);
 
-	matrixB->aa = cameraToCulling.aa * matrixA->aa + cameraToCulling.ba * matrixA->ab + cameraToCulling.ca * matrixA->ac + cameraToCulling.da * matrixA->ad;
-	matrixB->ab = cameraToCulling.ab * matrixA->aa + cameraToCulling.bb * matrixA->ab + cameraToCulling.cb * matrixA->ac + cameraToCulling.db * matrixA->ad;
-	matrixB->ac = cameraToCulling.ac * matrixA->aa + cameraToCulling.bc * matrixA->ab + cameraToCulling.cc * matrixA->ac + cameraToCulling.dc * matrixA->ad;
-	matrixB->ad = cameraToCulling.ad * matrixA->aa + cameraToCulling.bd * matrixA->ab + cameraToCulling.cd * matrixA->ac + cameraToCulling.dd * matrixA->ad;
-	matrixB->ba = cameraToCulling.aa * matrixA->ba + cameraToCulling.ba * matrixA->bb + cameraToCulling.ca * matrixA->bc + cameraToCulling.da * matrixA->bd;
-	matrixB->bb = cameraToCulling.ab * matrixA->ba + cameraToCulling.bb * matrixA->bb + cameraToCulling.cb * matrixA->bc + cameraToCulling.db * matrixA->bd;
-	matrixB->bc = cameraToCulling.ac * matrixA->ba + cameraToCulling.bc * matrixA->bb + cameraToCulling.cc * matrixA->bc + cameraToCulling.dc * matrixA->bd;
-	matrixB->bd = cameraToCulling.ad * matrixA->ba + cameraToCulling.bd * matrixA->bb + cameraToCulling.cd * matrixA->bc + cameraToCulling.dd * matrixA->bd;
-	matrixB->ca = cameraToCulling.aa * matrixA->ca + cameraToCulling.ba * matrixA->cb + cameraToCulling.ca * matrixA->cc + cameraToCulling.da * matrixA->cd;
-	matrixB->cb = cameraToCulling.ab * matrixA->ca + cameraToCulling.bb * matrixA->cb + cameraToCulling.cb * matrixA->cc + cameraToCulling.db * matrixA->cd;
-	matrixB->cc = cameraToCulling.ac * matrixA->ca + cameraToCulling.bc * matrixA->cb + cameraToCulling.cc * matrixA->cc + cameraToCulling.dc * matrixA->cd;
-	matrixB->cd = cameraToCulling.ad * matrixA->ca + cameraToCulling.bd * matrixA->cb + cameraToCulling.cd * matrixA->cc + cameraToCulling.dd * matrixA->cd;
-	matrixB->da = cameraToCulling.aa * matrixA->da + cameraToCulling.ba * matrixA->db + cameraToCulling.ca * matrixA->dc + cameraToCulling.da * matrixA->dd;
-	matrixB->db = cameraToCulling.ab * matrixA->da + cameraToCulling.bb * matrixA->db + cameraToCulling.cb * matrixA->dc + cameraToCulling.db * matrixA->dd;
-	matrixB->dc = cameraToCulling.ac * matrixA->da + cameraToCulling.bc * matrixA->db + cameraToCulling.cc * matrixA->dc + cameraToCulling.dc * matrixA->dd;
-	matrixB->dd = cameraToCulling.ad * matrixA->da + cameraToCulling.bd * matrixA->db + cameraToCulling.cd * matrixA->dc + cameraToCulling.dd * matrixA->dd;
+	matrixB->aa = cameraToCulling.aa * pObjToCamera->aa + cameraToCulling.ba * pObjToCamera->ab + cameraToCulling.ca * pObjToCamera->ac + cameraToCulling.da * pObjToCamera->ad;
+	matrixB->ab = cameraToCulling.ab * pObjToCamera->aa + cameraToCulling.bb * pObjToCamera->ab + cameraToCulling.cb * pObjToCamera->ac + cameraToCulling.db * pObjToCamera->ad;
+	matrixB->ac = cameraToCulling.ac * pObjToCamera->aa + cameraToCulling.bc * pObjToCamera->ab + cameraToCulling.cc * pObjToCamera->ac + cameraToCulling.dc * pObjToCamera->ad;
+	matrixB->ad = cameraToCulling.ad * pObjToCamera->aa + cameraToCulling.bd * pObjToCamera->ab + cameraToCulling.cd * pObjToCamera->ac + cameraToCulling.dd * pObjToCamera->ad;
+	matrixB->ba = cameraToCulling.aa * pObjToCamera->ba + cameraToCulling.ba * pObjToCamera->bb + cameraToCulling.ca * pObjToCamera->bc + cameraToCulling.da * pObjToCamera->bd;
+	matrixB->bb = cameraToCulling.ab * pObjToCamera->ba + cameraToCulling.bb * pObjToCamera->bb + cameraToCulling.cb * pObjToCamera->bc + cameraToCulling.db * pObjToCamera->bd;
+	matrixB->bc = cameraToCulling.ac * pObjToCamera->ba + cameraToCulling.bc * pObjToCamera->bb + cameraToCulling.cc * pObjToCamera->bc + cameraToCulling.dc * pObjToCamera->bd;
+	matrixB->bd = cameraToCulling.ad * pObjToCamera->ba + cameraToCulling.bd * pObjToCamera->bb + cameraToCulling.cd * pObjToCamera->bc + cameraToCulling.dd * pObjToCamera->bd;
+	matrixB->ca = cameraToCulling.aa * pObjToCamera->ca + cameraToCulling.ba * pObjToCamera->cb + cameraToCulling.ca * pObjToCamera->cc + cameraToCulling.da * pObjToCamera->cd;
+	matrixB->cb = cameraToCulling.ab * pObjToCamera->ca + cameraToCulling.bb * pObjToCamera->cb + cameraToCulling.cb * pObjToCamera->cc + cameraToCulling.db * pObjToCamera->cd;
+	matrixB->cc = cameraToCulling.ac * pObjToCamera->ca + cameraToCulling.bc * pObjToCamera->cb + cameraToCulling.cc * pObjToCamera->cc + cameraToCulling.dc * pObjToCamera->cd;
+	matrixB->cd = cameraToCulling.ad * pObjToCamera->ca + cameraToCulling.bd * pObjToCamera->cb + cameraToCulling.cd * pObjToCamera->cc + cameraToCulling.dd * pObjToCamera->cd;
+	matrixB->da = cameraToCulling.aa * pObjToCamera->da + cameraToCulling.ba * pObjToCamera->db + cameraToCulling.ca * pObjToCamera->dc + cameraToCulling.da * pObjToCamera->dd;
+	matrixB->db = cameraToCulling.ab * pObjToCamera->da + cameraToCulling.bb * pObjToCamera->db + cameraToCulling.cb * pObjToCamera->dc + cameraToCulling.db * pObjToCamera->dd;
+	matrixB->dc = cameraToCulling.ac * pObjToCamera->da + cameraToCulling.bc * pObjToCamera->db + cameraToCulling.cc * pObjToCamera->dc + cameraToCulling.dc * pObjToCamera->dd;
+	matrixB->dd = cameraToCulling.ad * pObjToCamera->da + cameraToCulling.bd * pObjToCamera->db + cameraToCulling.cd * pObjToCamera->dc + cameraToCulling.dd * pObjToCamera->dd;
 
 	edF32MATRIX4 cameraToClipping = *CameraToClipping_Matrix;
 	edF32MATRIX4* matrixC = SCRATCHPAD_ADDRESS_TYPE(0x70000860, edF32MATRIX4*);
 
-	matrixC->aa = cameraToClipping.aa * matrixA->aa + cameraToClipping.ba * matrixA->ab + cameraToClipping.ca * matrixA->ac + cameraToClipping.da * matrixA->ad;
-	matrixC->ab = cameraToClipping.ab * matrixA->aa + cameraToClipping.bb * matrixA->ab + cameraToClipping.cb * matrixA->ac + cameraToClipping.db * matrixA->ad;
-	matrixC->ac = cameraToClipping.ac * matrixA->aa + cameraToClipping.bc * matrixA->ab + cameraToClipping.cc * matrixA->ac + cameraToClipping.dc * matrixA->ad;
-	matrixC->ad = cameraToClipping.ad * matrixA->aa + cameraToClipping.bd * matrixA->ab + cameraToClipping.cd * matrixA->ac + cameraToClipping.dd * matrixA->ad;
-	matrixC->ba = cameraToClipping.aa * matrixA->ba + cameraToClipping.ba * matrixA->bb + cameraToClipping.ca * matrixA->bc + cameraToClipping.da * matrixA->bd;
-	matrixC->bb = cameraToClipping.ab * matrixA->ba + cameraToClipping.bb * matrixA->bb + cameraToClipping.cb * matrixA->bc + cameraToClipping.db * matrixA->bd;
-	matrixC->bc = cameraToClipping.ac * matrixA->ba + cameraToClipping.bc * matrixA->bb + cameraToClipping.cc * matrixA->bc + cameraToClipping.dc * matrixA->bd;
-	matrixC->bd = cameraToClipping.ad * matrixA->ba + cameraToClipping.bd * matrixA->bb + cameraToClipping.cd * matrixA->bc + cameraToClipping.dd * matrixA->bd;
-	matrixC->ca = cameraToClipping.aa * matrixA->ca + cameraToClipping.ba * matrixA->cb + cameraToClipping.ca * matrixA->cc + cameraToClipping.da * matrixA->cd;
-	matrixC->cb = cameraToClipping.ab * matrixA->ca + cameraToClipping.bb * matrixA->cb + cameraToClipping.cb * matrixA->cc + cameraToClipping.db * matrixA->cd;
-	matrixC->cc = cameraToClipping.ac * matrixA->ca + cameraToClipping.bc * matrixA->cb + cameraToClipping.cc * matrixA->cc + cameraToClipping.dc * matrixA->cd;
-	matrixC->cd = cameraToClipping.ad * matrixA->ca + cameraToClipping.bd * matrixA->cb + cameraToClipping.cd * matrixA->cc + cameraToClipping.dd * matrixA->cd;
-	matrixC->da = cameraToClipping.aa * matrixA->da + cameraToClipping.ba * matrixA->db + cameraToClipping.ca * matrixA->dc + cameraToClipping.da * matrixA->dd;
-	matrixC->db = cameraToClipping.ab * matrixA->da + cameraToClipping.bb * matrixA->db + cameraToClipping.cb * matrixA->dc + cameraToClipping.db * matrixA->dd;
-	matrixC->dc = cameraToClipping.ac * matrixA->da + cameraToClipping.bc * matrixA->db + cameraToClipping.cc * matrixA->dc + cameraToClipping.dc * matrixA->dd;
-	matrixC->dd = cameraToClipping.ad * matrixA->da + cameraToClipping.bd * matrixA->db + cameraToClipping.cd * matrixA->dc + cameraToClipping.dd * matrixA->dd;
+	matrixC->aa = cameraToClipping.aa * pObjToCamera->aa + cameraToClipping.ba * pObjToCamera->ab + cameraToClipping.ca * pObjToCamera->ac + cameraToClipping.da * pObjToCamera->ad;
+	matrixC->ab = cameraToClipping.ab * pObjToCamera->aa + cameraToClipping.bb * pObjToCamera->ab + cameraToClipping.cb * pObjToCamera->ac + cameraToClipping.db * pObjToCamera->ad;
+	matrixC->ac = cameraToClipping.ac * pObjToCamera->aa + cameraToClipping.bc * pObjToCamera->ab + cameraToClipping.cc * pObjToCamera->ac + cameraToClipping.dc * pObjToCamera->ad;
+	matrixC->ad = cameraToClipping.ad * pObjToCamera->aa + cameraToClipping.bd * pObjToCamera->ab + cameraToClipping.cd * pObjToCamera->ac + cameraToClipping.dd * pObjToCamera->ad;
+	matrixC->ba = cameraToClipping.aa * pObjToCamera->ba + cameraToClipping.ba * pObjToCamera->bb + cameraToClipping.ca * pObjToCamera->bc + cameraToClipping.da * pObjToCamera->bd;
+	matrixC->bb = cameraToClipping.ab * pObjToCamera->ba + cameraToClipping.bb * pObjToCamera->bb + cameraToClipping.cb * pObjToCamera->bc + cameraToClipping.db * pObjToCamera->bd;
+	matrixC->bc = cameraToClipping.ac * pObjToCamera->ba + cameraToClipping.bc * pObjToCamera->bb + cameraToClipping.cc * pObjToCamera->bc + cameraToClipping.dc * pObjToCamera->bd;
+	matrixC->bd = cameraToClipping.ad * pObjToCamera->ba + cameraToClipping.bd * pObjToCamera->bb + cameraToClipping.cd * pObjToCamera->bc + cameraToClipping.dd * pObjToCamera->bd;
+	matrixC->ca = cameraToClipping.aa * pObjToCamera->ca + cameraToClipping.ba * pObjToCamera->cb + cameraToClipping.ca * pObjToCamera->cc + cameraToClipping.da * pObjToCamera->cd;
+	matrixC->cb = cameraToClipping.ab * pObjToCamera->ca + cameraToClipping.bb * pObjToCamera->cb + cameraToClipping.cb * pObjToCamera->cc + cameraToClipping.db * pObjToCamera->cd;
+	matrixC->cc = cameraToClipping.ac * pObjToCamera->ca + cameraToClipping.bc * pObjToCamera->cb + cameraToClipping.cc * pObjToCamera->cc + cameraToClipping.dc * pObjToCamera->cd;
+	matrixC->cd = cameraToClipping.ad * pObjToCamera->ca + cameraToClipping.bd * pObjToCamera->cb + cameraToClipping.cd * pObjToCamera->cc + cameraToClipping.dd * pObjToCamera->cd;
+	matrixC->da = cameraToClipping.aa * pObjToCamera->da + cameraToClipping.ba * pObjToCamera->db + cameraToClipping.ca * pObjToCamera->dc + cameraToClipping.da * pObjToCamera->dd;
+	matrixC->db = cameraToClipping.ab * pObjToCamera->da + cameraToClipping.bb * pObjToCamera->db + cameraToClipping.cb * pObjToCamera->dc + cameraToClipping.db * pObjToCamera->dd;
+	matrixC->dc = cameraToClipping.ac * pObjToCamera->da + cameraToClipping.bc * pObjToCamera->db + cameraToClipping.cc * pObjToCamera->dc + cameraToClipping.dc * pObjToCamera->dd;
+	matrixC->dd = cameraToClipping.ad * pObjToCamera->da + cameraToClipping.bd * pObjToCamera->db + cameraToClipping.cd * pObjToCamera->dc + cameraToClipping.dd * pObjToCamera->dd;
 
 	edF32MATRIX4 cameraToScreen = *CameraToScreen_Matrix;
 	edF32MATRIX4* matrixD = SCRATCHPAD_ADDRESS_TYPE(0x700008A0, edF32MATRIX4*);
 
-	matrixD->aa = cameraToScreen.aa * matrixA->aa + cameraToScreen.ba * matrixA->ab + cameraToScreen.ca * matrixA->ac + cameraToScreen.da * matrixA->ad;
-	matrixD->ab = cameraToScreen.ab * matrixA->aa + cameraToScreen.bb * matrixA->ab + cameraToScreen.cb * matrixA->ac + cameraToScreen.db * matrixA->ad;
-	matrixD->ac = cameraToScreen.ac * matrixA->aa + cameraToScreen.bc * matrixA->ab + cameraToScreen.cc * matrixA->ac + cameraToScreen.dc * matrixA->ad;
-	matrixD->ad = cameraToScreen.ad * matrixA->aa + cameraToScreen.bd * matrixA->ab + cameraToScreen.cd * matrixA->ac + cameraToScreen.dd * matrixA->ad;
-	matrixD->ba = cameraToScreen.aa * matrixA->ba + cameraToScreen.ba * matrixA->bb + cameraToScreen.ca * matrixA->bc + cameraToScreen.da * matrixA->bd;
-	matrixD->bb = cameraToScreen.ab * matrixA->ba + cameraToScreen.bb * matrixA->bb + cameraToScreen.cb * matrixA->bc + cameraToScreen.db * matrixA->bd;
-	matrixD->bc = cameraToScreen.ac * matrixA->ba + cameraToScreen.bc * matrixA->bb + cameraToScreen.cc * matrixA->bc + cameraToScreen.dc * matrixA->bd;
-	matrixD->bd = cameraToScreen.ad * matrixA->ba + cameraToScreen.bd * matrixA->bb + cameraToScreen.cd * matrixA->bc + cameraToScreen.dd * matrixA->bd;
-	matrixD->ca = cameraToScreen.aa * matrixA->ca + cameraToScreen.ba * matrixA->cb + cameraToScreen.ca * matrixA->cc + cameraToScreen.da * matrixA->cd;
-	matrixD->cb = cameraToScreen.ab * matrixA->ca + cameraToScreen.bb * matrixA->cb + cameraToScreen.cb * matrixA->cc + cameraToScreen.db * matrixA->cd;
-	matrixD->cc = cameraToScreen.ac * matrixA->ca + cameraToScreen.bc * matrixA->cb + cameraToScreen.cc * matrixA->cc + cameraToScreen.dc * matrixA->cd;
-	matrixD->cd = cameraToScreen.ad * matrixA->ca + cameraToScreen.bd * matrixA->cb + cameraToScreen.cd * matrixA->cc + cameraToScreen.dd * matrixA->cd;
-	matrixD->da = cameraToScreen.aa * matrixA->da + cameraToScreen.ba * matrixA->db + cameraToScreen.ca * matrixA->dc + cameraToScreen.da * matrixA->dd;
-	matrixD->db = cameraToScreen.ab * matrixA->da + cameraToScreen.bb * matrixA->db + cameraToScreen.cb * matrixA->dc + cameraToScreen.db * matrixA->dd;
-	matrixD->dc = cameraToScreen.ac * matrixA->da + cameraToScreen.bc * matrixA->db + cameraToScreen.cc * matrixA->dc + cameraToScreen.dc * matrixA->dd;
-	matrixD->dd = cameraToScreen.ad * matrixA->da + cameraToScreen.bd * matrixA->db + cameraToScreen.cd * matrixA->dc + cameraToScreen.dd * matrixA->dd;
+	matrixD->aa = cameraToScreen.aa * pObjToCamera->aa + cameraToScreen.ba * pObjToCamera->ab + cameraToScreen.ca * pObjToCamera->ac + cameraToScreen.da * pObjToCamera->ad;
+	matrixD->ab = cameraToScreen.ab * pObjToCamera->aa + cameraToScreen.bb * pObjToCamera->ab + cameraToScreen.cb * pObjToCamera->ac + cameraToScreen.db * pObjToCamera->ad;
+	matrixD->ac = cameraToScreen.ac * pObjToCamera->aa + cameraToScreen.bc * pObjToCamera->ab + cameraToScreen.cc * pObjToCamera->ac + cameraToScreen.dc * pObjToCamera->ad;
+	matrixD->ad = cameraToScreen.ad * pObjToCamera->aa + cameraToScreen.bd * pObjToCamera->ab + cameraToScreen.cd * pObjToCamera->ac + cameraToScreen.dd * pObjToCamera->ad;
+	matrixD->ba = cameraToScreen.aa * pObjToCamera->ba + cameraToScreen.ba * pObjToCamera->bb + cameraToScreen.ca * pObjToCamera->bc + cameraToScreen.da * pObjToCamera->bd;
+	matrixD->bb = cameraToScreen.ab * pObjToCamera->ba + cameraToScreen.bb * pObjToCamera->bb + cameraToScreen.cb * pObjToCamera->bc + cameraToScreen.db * pObjToCamera->bd;
+	matrixD->bc = cameraToScreen.ac * pObjToCamera->ba + cameraToScreen.bc * pObjToCamera->bb + cameraToScreen.cc * pObjToCamera->bc + cameraToScreen.dc * pObjToCamera->bd;
+	matrixD->bd = cameraToScreen.ad * pObjToCamera->ba + cameraToScreen.bd * pObjToCamera->bb + cameraToScreen.cd * pObjToCamera->bc + cameraToScreen.dd * pObjToCamera->bd;
+	matrixD->ca = cameraToScreen.aa * pObjToCamera->ca + cameraToScreen.ba * pObjToCamera->cb + cameraToScreen.ca * pObjToCamera->cc + cameraToScreen.da * pObjToCamera->cd;
+	matrixD->cb = cameraToScreen.ab * pObjToCamera->ca + cameraToScreen.bb * pObjToCamera->cb + cameraToScreen.cb * pObjToCamera->cc + cameraToScreen.db * pObjToCamera->cd;
+	matrixD->cc = cameraToScreen.ac * pObjToCamera->ca + cameraToScreen.bc * pObjToCamera->cb + cameraToScreen.cc * pObjToCamera->cc + cameraToScreen.dc * pObjToCamera->cd;
+	matrixD->cd = cameraToScreen.ad * pObjToCamera->ca + cameraToScreen.bd * pObjToCamera->cb + cameraToScreen.cd * pObjToCamera->cc + cameraToScreen.dd * pObjToCamera->cd;
+	matrixD->da = cameraToScreen.aa * pObjToCamera->da + cameraToScreen.ba * pObjToCamera->db + cameraToScreen.ca * pObjToCamera->dc + cameraToScreen.da * pObjToCamera->dd;
+	matrixD->db = cameraToScreen.ab * pObjToCamera->da + cameraToScreen.bb * pObjToCamera->db + cameraToScreen.cb * pObjToCamera->dc + cameraToScreen.db * pObjToCamera->dd;
+	matrixD->dc = cameraToScreen.ac * pObjToCamera->da + cameraToScreen.bc * pObjToCamera->db + cameraToScreen.cc * pObjToCamera->dc + cameraToScreen.dc * pObjToCamera->dd;
+	matrixD->dd = cameraToScreen.ad * pObjToCamera->da + cameraToScreen.bd * pObjToCamera->db + cameraToScreen.cd * pObjToCamera->dc + cameraToScreen.dd * pObjToCamera->dd;
 
 	edF32Matrix4OrthonormalizeHard(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), m1);
 	sceVu0InverseMatrix(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*));
-	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A40, edF32MATRIX4*),
+	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*),
 		SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*));
 	edF32Matrix4GetTransposeHard(SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*));
-	edF32Matrix4CopyHard(SCRATCHPAD_ADDRESS_TYPE(0x70000950, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A50, edF32MATRIX4*));
+	edF32Matrix4CopyHard(SCRATCHPAD_ADDRESS_TYPE(0x70000950, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*));
 
 	edF32VECTOR4* vectorB = SCRATCHPAD_ADDRESS_TYPE(0x700009A0, edF32VECTOR4*);
 	edF32VECTOR4* vectorD = SCRATCHPAD_ADDRESS_TYPE(0x700009B0, edF32VECTOR4*);
-	edF32VECTOR4* vectorC = SCRATCHPAD_ADDRESS_TYPE(0x70000A60, edF32VECTOR4*);
+	edF32VECTOR4* vectorC = SCRATCHPAD_ADDRESS_TYPE(LIGHT_AMBIENT_MATRIX_SPR, edF32VECTOR4*);
 
 	vectorB->z = vectorC->z;
 	vectorB->x = vectorC->x;
 	vectorB->y = vectorC->y;
 	vectorB->w = 0.0078125f;
-	if (((pRenderData->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
-		(pLVar2 = pRenderData->pMeshTransformData->pHierarchySetup, pLVar2 == (ed_3d_hierarchy_setup*)0x0))
+	if (((pDmaMatrix->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
+		(pLVar2 = pDmaMatrix->pMeshTransformData->pHierarchySetup, pLVar2 == (ed_3d_hierarchy_setup*)0x0))
 		|| (pfVar3 = pLVar2->field_0x10, pfVar3 == (float*)0x0)) {
 		gVU1_AnimST_NormalExtruder_Scratch->z = FLOAT_00448a04;
 	}
@@ -2583,7 +2579,7 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	vectorD->y = gVU1_AnimST_NormalExtruder_Scratch->y;
 	RENDER_LOG("DMA End ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
-	edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS_TYPE(0x70000800, edF32VECTOR4*), 0x1c0, (uint)((ulong)((long)(int)pMatrixBuffer << 0x24) >> 0x24));
+	edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS(0x70000800), 0x1c0, pMatrixBuffer);
 	return pMatrixBuffer + 7;
 }
 
@@ -2630,10 +2626,10 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 
 		PRINT_MATRIX(pMVar10);
 
-		if ((((pMVar10->ac + pMVar10->aa + pMVar10->ab == 1.0) &&
-			(bVar5 = false, pMVar10->bc + pMVar10->ba + pMVar10->bb == 1.0)) &&
-			(bVar5 = false, pMVar10->cc + pMVar10->ca + pMVar10->cb == 1.0)) &&
-			(bVar5 = true, pMVar10->dd + pMVar10->dc + pMVar10->da + pMVar10->db != 1.0)) {
+		if ((((pMVar10->ac + pMVar10->aa + pMVar10->ab == 1.0f) &&
+			(bVar5 = false, pMVar10->bc + pMVar10->ba + pMVar10->bb == 1.0f)) &&
+			(bVar5 = false, pMVar10->cc + pMVar10->ca + pMVar10->cb == 1.0f)) &&
+			(bVar5 = true, pMVar10->dd + pMVar10->dc + pMVar10->da + pMVar10->db != 1.0f)) {
 			bVar5 = false;
 		}
 		if (!bVar5) {
@@ -2668,27 +2664,17 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 		pDmaMatrix->pMeshTransformData = &MeshTransformDataBase_0048cad0;
 		RENDER_LOG("Storing pMeshTransformData %p", &MeshTransformDataBase_0048cad0);
 	}
-	if (pMVar3->field_0xa4 == (edF32MATRIX4*)0x0) {
-		pMVar3->field_0xa4 = gPKTMatrixCur;
+	if (pMVar3->pMatrixPkt == (edF32MATRIX4*)0x0) {
+		pMVar3->pMatrixPkt = gPKTMatrixCur;
 		gPKTMatrixCur = ed3DPKTCopyMatrixPacket(pMVar10, pDmaMatrix, bVar11);
 		if (bVar11 != 0) {
-			pMVar10 = pDmaMatrix->pObjToWorld;
-			iVar7 = 8;
-			pMVar8 = gPKTMatrixCur;
-			do {
-				iVar7 = iVar7 + -1;
-				fVar4 = pMVar10->ab;
-				pMVar8->aa = pMVar10->aa;
-				pMVar10 = (edF32MATRIX4*)&pMVar10->ac;
-				pMVar8->ab = fVar4;
-				pMVar8 = (edF32MATRIX4*)&pMVar8->ac;
-			} while (0 < iVar7);
+			*gPKTMatrixCur = *pDmaMatrix->pObjToWorld;
 			gPKTMatrixCur = gPKTMatrixCur + 1;
 		}
 	}
-	*g_pCurFlareMtx = (edF32MATRIX4*)((uint)((ulong)((long)(int)pDmaMatrix->pMeshTransformData->field_0xa4 << 0x24) >> 0x24) + 0xa0);
+	*g_pCurFlareMtx = (edF32MATRIX4*)((uint)((ulong)((long)(int)pDmaMatrix->pMeshTransformData->pMatrixPkt << 0x24) >> 0x24) + 0xa0);
 
-	pPkt->cmdA = ED_VIF1_SET_TAG_REF(0x1c, (int)pDmaMatrix->pMeshTransformData->field_0xa4 & 0xfffffffU); // | 0x3000001c;
+	pPkt->cmdA = ED_VIF1_SET_TAG_REF(0x1c, STORE_SECTION(pDmaMatrix->pMeshTransformData->pMatrixPkt) & 0xfffffffU); // | 0x3000001c;
 	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0006, 0x1c, UNPACK_V4_32, 0); // 0x6c1c0006;
 
@@ -2698,7 +2684,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 
 	// Check
 	IMPLEMENTATION_GUARD();
-	pPkt[1].cmdA = ED_VIF1_SET_TAG_REF(0x4, (int)(pDmaMatrix->pMeshTransformData->field_0xa4 + 7) & 0xfffffffU); // | 0x30000004;
+	pPkt[1].cmdA = ED_VIF1_SET_TAG_REF(0x4, STORE_SECTION(pDmaMatrix->pMeshTransformData->pMatrixPkt + 7) & 0xfffffffU); // | 0x30000004;
 	pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x03fb, 0x04, UNPACK_V4_32, 0); // 0x6c0403fb00000000;
 
@@ -2720,7 +2706,7 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* param_1, int param_2, long bUpdateI
 	uVar2 = (uint)(ushort)param_1->field_0x6;
 	if ((uVar2 == 0) || (bUpdateInternal != 0)) {
 		uVar1 = param_1->flags_0x0;
-		iVar3 = (ulong)&param_1->flags_0x0 + param_1->offsetA;
+		iVar3 = (ulong)&param_1->flags_0x0 + param_1->vifListOffset;
 		if ((uVar1 & 4) == 0) {
 			if ((uVar1 & 0x8000000) == 0) {
 				if ((uVar1 & 0x2000000) == 0) {
@@ -2806,7 +2792,8 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 
 	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
-	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0076, 0x1, 0x7c, 0); //0x7c010076
+	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0076, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c010076
+
 	//pAVar8 = gScratchPkt;
 
 	//uVar4 = *(undefined8*)PTR_AnimScratchpad_00449554;
@@ -2820,7 +2807,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 
 	pPkt[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt[2].asU32[2] = SCE_VIF1_SET_NOP(0);
-	pPkt[2].asU32[3] = SCE_VIF1_SET_UNPACK(0x0198, 0x1, 0x7c, 0); //0x7c01019800000000;
+	pPkt[2].asU32[3] = SCE_VIF1_SET_UNPACK(0x0198, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c01019800000000;
 	pPkt[3] = PTR_AnimScratchpad_00449554->asPkt;
 
 	//uVar4 = *(undefined8*)pAVar8;
@@ -2833,7 +2820,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 
 	pPkt[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt[4].asU32[2] = SCE_VIF1_SET_NOP(0);
-	pPkt[4].asU32[3] = SCE_VIF1_SET_UNPACK(0x02ba, 0x1, 0x7c, 0); //0x7c0102ba00000000;
+	pPkt[4].asU32[3] = SCE_VIF1_SET_UNPACK(0x02ba, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c0102ba00000000;
 
 	pPkt[5] = PTR_AnimScratchpad_00449554->asPkt;
 
@@ -2847,18 +2834,20 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	ppuVar15 = pPkt + 6;
 	if ((uVar2 & 2) != 0) {
 		if ((peVar3->flags_0x0 & 0x2000000) == 0) {
+			IMPLEMENTATION_GUARD();
 			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stGifTAG_FAN_Texture_NoFog);
 			pPkt[6].cmdB = 0x7c01000100000000;
 			ppuVar15 = pPkt + 7;
 		}
 		else {
 			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stGifTAG_FAN_Gouraud_NoFog);
+			IMPLEMENTATION_GUARD();
 			pPkt[6].cmdB = 0x7c01000100000000;
 			ppuVar15 = pPkt + 7;
 		}
 	}
 	if (((peVar3->flags_0x0 & 0x10000) != 0) && (gpCurHierarchy != (MeshTransformDataBase*)0x0)) {
-		pAnimIndexes = (short*)((int)peVar3 + peVar3->offsetA + -0x30);
+		pAnimIndexes = (short*)((int)peVar3 + peVar3->vifListOffset + -0x30);
 		if ((peVar3->flags_0x0 & 0x8000000) == 0) {
 			uVar16 = 0x394;
 			iVar14 = 0x18;
@@ -2887,8 +2876,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		if (gBackupPKT != (edpkt_data*)0x0) {
 			qwc = (edF32VECTOR4*)((ulong)peVar17 - (ulong)gStartPKT_SPR);
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
-			edDmaLoadFromFastRam_nowait
-			((edF32VECTOR4*)gStartPKT_SPR, (uint)qwc, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+			edDmaLoadFromFastRam_nowait(gStartPKT_SPR, (uint)qwc, gBackupPKT);
 			gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)qwc & 0xfffffff0));
 			ppuVar15 = SCRATCHPAD_ADDRESS(0x70000800);
 			gStartPKT_SPR = (edpkt_data*)peVar17;
@@ -2904,8 +2892,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		if (gBackupPKT != (edpkt_data*)0x0) {
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
 			peVar17 = (edF32VECTOR4*)ppuVar15 + -0x7000080;
-			edDmaLoadFromFastRam_nowait
-			((edF32VECTOR4*)0x70000800, (uint)peVar17, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
+			edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS(0x70000800), (uint)peVar17, gBackupPKT);
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
 			ppuVar15 = SCRATCHPAD_ADDRESS(0x70001000);
 			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
@@ -2994,7 +2981,7 @@ void ed3DFlushStrip(edNODE* pNode)
 	edpkt_data* ppuVar20;
 	int iVar2;
 	edNODE* pMVar19;
-	char* uVar20;
+	char* pVifList;
 	int* piVar21;
 	int* piVar22;
 	uint uVar23;
@@ -3015,7 +3002,7 @@ void ed3DFlushStrip(edNODE* pNode)
 	pRVar18 = g_VifRefPktCur;
 	pRenderInput = (ed_3d_strip*)pNode->pData;
 	pMVar19 = pNode->pNext;
-	uVar20 = (char*)&pRenderInput->flags_0x0 + pRenderInput->offsetA;
+	pVifList = ((char*)pRenderInput) + pRenderInput->vifListOffset;
 	uVar5 = ed3DFlushStripGetIncPacket(pRenderInput, 0, 0);
 	uint globalAlhaON = (uint)gGlobalAlhaON;
 	if (globalAlhaON != 0x80) {
@@ -3051,8 +3038,8 @@ void ed3DFlushStrip(edNODE* pNode)
 			while (bVar1 = uVar8 != 0, uVar8 = uVar8 - 1, bVar1) {
 				ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				uVar23 = ed3DVU1BufferCur;
-				uVar7 = (uint)uVar20 & 0xfffffff;
-				uVar20 = uVar20 + uVar5 * 0x10;
+				uVar7 = (uint)pVifList & 0xfffffff;
+				pVifList = pVifList + uVar5 * 0x10;
 				iVar13 = (char*)(ed3DVU1BufferCur * 4);
 				ppuVar6->cmdB = (long)(int)(*(int*)(pcVar4 + (ulong)iVar13) + 1U | 0x3000000) & 0xffffffffU | 0x200000000000000;
 				ppuVar6[1].cmdA = (ulong)uVar7 << 0x20 | 0x50000000;
@@ -3070,10 +3057,10 @@ void ed3DFlushStrip(edNODE* pNode)
 				// #VIF_Tidy
 				IMPLEMENTATION_GUARD();
 				ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
-				uVar8 = (uint)uVar20 & 0xfffffff;
-				iVar13 = uVar20 + uVar5 * 0x10;
-				iVar15 = uVar20 + uVar5 * 0x20;
-				uVar20 = uVar20 + uVar5 * 0x30;
+				uVar8 = (uint)pVifList & 0xfffffff;
+				iVar13 = pVifList + uVar5 * 0x10;
+				iVar15 = pVifList + uVar5 * 0x20;
+				pVifList = pVifList + uVar5 * 0x30;
 				ppuVar6->cmdB = (long)(*piVar14 + 1) & 0xffffffffU | 0x200000003000000;
 				ppuVar6[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				ppuVar6[2].cmdB = (long)(piVar14[1] + 1) & 0xffffffffU | 0x200000003000000;
@@ -3169,11 +3156,11 @@ void ed3DFlushStrip(edNODE* pNode)
 				pRVar18->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				uVar7 = ed3DVU1BufferCur;
 				uVar12 = (uint)piVar21 & 0xfffffff;
-				uVar24 = uVar20 & 0xfffffff;
+				uVar24 = pVifList & 0xfffffff;
 				iVar2 = ed3DVU1BufferCur * 4;
 				piVar22 = piVar22 + 0x48;
 				piVar21 = piVar21 + 0x48;
-				uVar20 = uVar20 + uVar5 * 0x10;
+				pVifList = pVifList + uVar5 * 0x10;
 				pRVar18->cmdB = (long)(*(int*)(pcVar4 + iVar2) + 1) & 0xffffffffU | 0x200000003000000;
 				pRVar18[1].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexRGBAHeader);
 				pRVar18[1].cmdB = 0;
@@ -3224,47 +3211,32 @@ void ed3DFlushStrip(edNODE* pNode)
 						gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
 						gBackupPKT = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)pRVar18 & 0xfffffff0));
 					}
+
 					PTR_AnimScratchpad_00449554->field_0x0 = uVar8;
-					uVar7 = ed3DVU1BufferCur;
-					//iVar15 = (char*)(ed3DVU1BufferCur * 0x10);
-					//iVar13 = (char*)(ed3DVU1BufferCur * 4);
-					//iVar2 = ed3DVU1BufferCur * 2;
-					//uVar2 = gOptionFlagCNT[ed3DVU1BufferCur].cmdA;
-					//uVar16 = *(undefined4*)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB;
-					//uVar17 = *(undefined4*)((ulong)&gOptionFlagCNT[ed3DVU1BufferCur].cmdB + 4);
 
 					ppuVar6->cmdA = gOptionFlagCNT[ed3DVU1BufferCur].cmdA;
-					//ppuVar6->cmdA = (int)uVar2;
-					//*(int*)((ulong)&ppuVar6->cmdA + 4) = (int)(uVar2 >> 0x20);
-
 					ppuVar6->cmdB = gOptionFlagCNT[ed3DVU1BufferCur].cmdB;
-					//*(undefined4*)&ppuVar6->cmdB = uVar16;
-					//*(undefined4*)((ulong)&ppuVar6->cmdB + 4) = uVar17;
 
 					ppuVar6[1] = PTR_AnimScratchpad_00449554->asPkt;
 
-					//uVar1 = *(undefined8*)gScratchPkt;
-					//uVar16 = gScratchPkt->field_0x8;
-					//uVar17 = gScratchPkt->field_0xc;
-					//*(int*)&ppuVar6[1].cmdA = (int)uVar1;
-					//*(int*)((ulong)&ppuVar6[1].cmdA + 4) = (int)((ulong)uVar1 >> 0x20);
-					//*(undefined4*)&ppuVar6[1].cmdB = uVar16;
-					//*(undefined4*)((ulong)&ppuVar6[1].cmdB + 4) = uVar17;
-
 					ppuVar6[2] = gRefOptionsforVU1Buf[ed3DVU1BufferCur];
 
-					//uVar2 = gRefOptionsforVU1Buf[iVar2];
-					//uVar16 = *(undefined4*)(gRefOptionsforVU1Buf + uVar7 * 2 + 1);
-					//uVar17 = *(undefined4*)((ulong)gRefOptionsforVU1Buf + iVar15 + 0xc);
-					//*(int*)&ppuVar6[2].cmdA = (int)uVar2;
-					//*(int*)((ulong)&ppuVar6[2].cmdA + 4) = (int)(uVar2 >> 0x20);
-					//*(undefined4*)&ppuVar6[2].cmdB = uVar16;
-					//*(undefined4*)((ulong)&ppuVar6[2].cmdB + 4) = uVar17;
-					ppuVar6[3].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0); //(ulong)((uint)uVar20 & 0xfffffff) << 0x20 | 0x50000000;
-					ppuVar6[3].asU32[1] = (uint)uVar20 & 0xfffffff, 0;
-					ppuVar6[3].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1Addr_Scratch[ed3DVU1BufferCur] + 1, 0); //	((long)(ed3DVU1Addr_Scratch[uVar7] + 1) & 0xffffffffU | 0x4000000) 
+					// Send strip Vif list.
+					ppuVar6[3].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
+					ppuVar6[3].asU32[1] = (uint)pVifList & 0xfffffff, 0;
+					ppuVar6[3].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1Addr_Scratch[ed3DVU1BufferCur] + 1, 0);
+
 					ppuVar6 = ppuVar6 + 4;
-					if (uVar7 == 2) {
+
+#ifdef  PLATFORM_WIN
+					// #LETS DRAAAAAW
+					VU1Emu::SetVifItop(ed3DVU1Addr_Scratch[ed3DVU1BufferCur] + 1);
+					VU1Emu::UpdateMemory(g_pStartPktData, gBackupPKT);
+					VU1Emu::UpdateMemory(gStartPKT_SPR, ppuVar6);
+					VU1Emu::ProcessVifList((edpkt_data*)pVifList);
+#endif //  PLATFORM_WIN
+
+					if (ed3DVU1BufferCur == 2) {
 						ed3DVU1BufferCur = 0;
 					}
 					else {
@@ -3302,7 +3274,7 @@ void ed3DFlushStrip(edNODE* pNode)
 					ppuVar6 = ppuVar6 + 2;
 				}
 				uVar23 = uVar23 + 1;
-				uVar20 = uVar20 + uVar5 * 0x10;
+				pVifList = pVifList + uVar5 * 0x10;
 				pRVar25 = pRVar25 + 1;
 				pMVar19->header.byteFlags[0] = pMVar19->header.byteFlags[0] >> 2;
 				if (3 < uVar23) {
@@ -3438,7 +3410,7 @@ void ed3DFlushStrip(edNODE* pNode)
 					ppuVar19[6].cmdB = 0;
 					ppuVar19[7].cmdA = (ulong)((uint)piVar21 & 0xfffffff) << 0x20 | uVar10;
 					ppuVar19[7].cmdB = ((long)(int)(local_20 << 0x10) & 0xffffffffU | 0x7e00c0d9) << 0x20;
-					ppuVar19[8].cmdA = (ulong)(uVar20 & 0xfffffff) << 0x20 | 0x50000000;
+					ppuVar19[8].cmdA = (ulong)(pVifList & 0xfffffff) << 0x20 | 0x50000000;
 					ppuVar19[8].cmdB = ((long)(*piVar14 + 1) & 0xffffffffU | 0x4000000) << 0x20;
 					ppuVar19 = ppuVar19 + 9;
 					if (uVar7 == 2) {
@@ -3478,7 +3450,7 @@ void ed3DFlushStrip(edNODE* pNode)
 				piVar21 = piVar21 + 0x48;
 				pRVar25 = pRVar25 + 1;
 				local_30 = local_30 + 0x48;
-				uVar20 = uVar20 + uVar5 * 0x10;
+				pVifList = pVifList + uVar5 * 0x10;
 				*(char*)&pMVar19->header = (char)((int)(uint) * (byte*)&pMVar19->header >> 2);
 				if (3 < uVar23) {
 					uVar23 = 0;
@@ -3674,9 +3646,7 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 		}
 		else {
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
-			edDmaLoadFromFastRam_nowait
-			((edF32VECTOR4*)gStartPKT_SPR, (uint)peVar4,
-				(uint)gBackupPKT & 0xfffffff);
+			edDmaLoadFromFastRam_nowait(gStartPKT_SPR, (uint)peVar4, gBackupPKT);
 			g_VifRefPktCur = (edpkt_data*)((ulong)&gBackupPKT->cmdA + ((uint)peVar4 & 0xfffffff0));
 		}
 	}
@@ -4160,6 +4130,10 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 				peVar4->asU32[2] = SCE_VIF1_SET_NOP(0);
 				peVar4->asU32[3] = SCE_VIF1_SET_FLUSHA(0);
 
+#ifdef PLATFORM_WIN
+				char* texList = (char*)LOAD_SECTION(peVar1->pCommandBufferTexture);
+#endif
+
 				peVar4[1].cmdA = ED_VIF1_SET_TAG_REF(peVar1->commandBufferTextureSize, ((ulong)(ulong)(peVar1->pCommandBufferTexture +
 					gVRAMBufferFlush * peVar1->commandBufferTextureSize * (uint)peVar1->count_0x0) & 0xfffffffU));
 				peVar4[1].cmdB = SCE_VIF1_SET_NOP(0);
@@ -4265,8 +4239,9 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 		peVar4->cmdB = 0;
 		peVar3 = g_VifRefPktCur;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
-		g_VifRefPktCur->cmdA = 0x2000000001000101;
-		peVar3[1].cmdB = 0xffffff00;
+		g_VifRefPktCur->asU32[0] = SCE_VIF1_SET_STCYCL(1, 1, 0);
+		g_VifRefPktCur->asU32[1] = SCE_VIF1_SET_STMASK(0);
+		g_VifRefPktCur->cmdB = 0xffffff00;
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 		ed3DFlushMaterialManageGIFPacket(pRenderMeshData);
 	}
@@ -5881,7 +5856,7 @@ PACK(struct MeshData_OBJ {
 	undefined field_0x12;
 	undefined field_0x13;
 	int count_0x14;
-	struct edF32VECTOR4 field_0x18;
+	edF32VECTOR4 field_0x18;
 	undefined field_0x28;
 	undefined field_0x29;
 	undefined field_0x2a;
@@ -6122,7 +6097,7 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy_node* pMeshTransformData)
 			gRender_info_SPR->field_0x14 = fVar4;
 			gRender_info_SPR->field_0x18 = 0;
 			gRender_info_SPR->field_0x8 = 1;
-			(pMeshTransformData->base).field_0xa4 = (edF32MATRIX4*)0x0;
+			(pMeshTransformData->base).pMatrixPkt = (edF32MATRIX4*)0x0;
 			pMeshHeader = (MeshHeader*)pMVar2->pObj;
 			if (((pMeshHeader != (MeshHeader*)0x0) && (sVar1 = pMVar2->field_0x4, sVar1 != 2)) && (sVar1 != 1)) {
 				if (sVar1 == 3) {
@@ -6173,7 +6148,7 @@ void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy_node* pMeshTransformData)
 			fVar7 = ed3DMatrixGetBigerScale(pMVar6);
 			gRender_info_SPR->field_0x14 = fVar7;
 			gRender_info_SPR->field_0x18 = 0;
-			(pMeshTransformData->base).field_0xa4 = (edF32MATRIX4*)0x0;
+			(pMeshTransformData->base).pMatrixPkt = (edF32MATRIX4*)0x0;
 			sVar3 = pMVar4->field_0x4;
 			if (sVar3 == 3) {
 				IMPLEMENTATION_GUARD(
@@ -8968,7 +8943,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	(pCVar8->base).count_0x9c = p3DA->count_0x9c;
 	(pCVar8->base).flags_0x9e = p3DA->flags_0x9e;
 	(pCVar8->base).pHierarchySetup = (ed_3d_hierarchy_setup*)LOAD_SECTION(p3DA->pLightingMatrixFuncObj_0xa0);
-	(pCVar8->base).field_0xa4 = (edF32MATRIX4*)LOAD_SECTION(p3DA->field_0xa4);
+	(pCVar8->base).pMatrixPkt = (edF32MATRIX4*)LOAD_SECTION(p3DA->field_0xa4);
 	(pCVar8->base).pAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(p3DA->pAnimMatrix);
 	(pCVar8->base).subMeshParentCount_0xac = p3DA->subMeshParentCount_0xac;
 	(pCVar8->base).size_0xae = p3DA->size_0xae;

@@ -1040,7 +1040,7 @@ struct edFCamera {
 	undefined field_0x10d;
 	undefined field_0x10e;
 	undefined field_0x10f;
-	struct edF32VECTOR4 calculatedRotation;
+	edF32VECTOR4 calculatedRotation;
 	undefined field_0x120;
 	undefined field_0x121;
 	undefined field_0x122;
@@ -1181,6 +1181,7 @@ struct CCameraShadow : public CCameraExt {
 
 	virtual void Init();
 	virtual ECameraType GetMode();
+	virtual bool Manage();
 
 	undefined field_0xe0;
 	undefined field_0xe1;
@@ -7594,9 +7595,9 @@ struct CameraManager : public Manager {
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	struct edF32MATRIX4 matrix_0x10;
-	edF32MATRIX4 field_0x50;
-	edF32MATRIX4 field_0x90;
+	edF32MATRIX4 matrix_0x10;
+	edF32MATRIX4 transformationMatrix;
+	edF32MATRIX4 displayTransformMatrix;
 	undefined field_0xd0;
 	undefined field_0xd1;
 	undefined field_0xd2;
@@ -8238,8 +8239,8 @@ struct CameraManager : public Manager {
 	undefined field_0x34e;
 	undefined field_0x34f;
 	edF32MATRIX4 field_0x350;
-	edF32MATRIX4 field_0x390;
-	edF32MATRIX4 field_0x3d0;
+	edF32MATRIX4 transMatrix_0x390;
+	edF32MATRIX4 worldToCamera_0x3d0;
 	edF32MATRIX4 matrix_0x410;
 	edF32VECTOR4 field_0x450;
 	edF32VECTOR4 field_0x460;
@@ -8286,7 +8287,7 @@ struct CameraManager : public Manager {
 	undefined field_0x4b2;
 	undefined field_0x4b3;
 	Camera* pInitialView_0x4b4;
-	CCameraShadow* pShadowSunView_0x4b8;
+	Camera* pShadowSunView_0x4b8;
 	CCameraShadow* aCameraShadow[10];
 	FrontendCameraView* pFrontendCamera_0x4e4;
 	Camera* pMouseQuakeCamera_0x4e8;
@@ -8332,7 +8333,7 @@ struct CameraManager : public Manager {
 	undefined field_0xa1d;
 	undefined field_0xa1e;
 	undefined field_0xa1f;
-	struct edF32VECTOR4 shadowCameraLookat;
+	edF32VECTOR4 shadowCameraLookat;
 	float field_0xa30;
 	float field_0xa34;
 	undefined field_0xa38;

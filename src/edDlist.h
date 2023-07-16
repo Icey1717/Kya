@@ -47,7 +47,7 @@ struct MeshDrawRenderCommand {
 	short field_0x6;
 	struct edF32VECTOR4* field_0x8;
 	uint field_0xc;
-	struct edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x10;
 	char* field_0x20;
 	char* field_0x24;
 	char* field_0x28;

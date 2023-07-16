@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef PLATFORM_WIN
+#include "port/vu1_emu.h"
 #include "renderer.h"
 #endif
 
@@ -693,4 +694,20 @@ MY_LOG("SCE_GIF_SET_TAG(\n%d, // NLOOP\n%s, // EOP\n%s, // PRE\n%d, // PRIM\n%s,
 
 #define SCE_VIF1_SET_UNPACK(vuaddr, num, cmd, irq) ((u_int)(vuaddr) | ((u_int)(num) << 16) | ((u_int)(0x60 | (cmd)) << 24) | ((u_int)(irq) << 31))
 
+//#ifdef PLATFORM_WIN
+//template<typename A, typename B, typename C, typename D, typename E>
+//inline uint VifQueueWrite(A vuaddr, B num, C cmd, D irq, E pkt) {
+//	VU1Emu::QueueWrite(vuaddr, num, (void*)pkt);
+//	return SCE_VIF1_SET_UNPACK_PS2(vuaddr, num, cmd, irq);
+//}
+//
+//#define SCE_VIF1_SET_UNPACK(vuaddr, num, cmd, irq, pkt) \
+//	VifQueueWrite(vuaddr, num, cmd, irq, pkt)
+//#else
+//#define SCE_VIF1_SET_UNPACK(vuaddr, num, cmd, irq, pkt) SCE_VIF1_SET_UNPACK_PS2(vuaddr, num, cmd, irq)
+//#endif
+
 #define SCE_VIF1_SET_UNPACKR(vuaddr, num, cmd, irq) ((u_int)((vuaddr) | 0x8000) | ((u_int)(num) << 16) | ((u_int)(0x60 | (cmd)) << 24) | ((u_int)(irq) << 31))
+
+#define UNPACK_V4_32 0x6c
+#define UNPACK_V4_32_MASKED 0x7c

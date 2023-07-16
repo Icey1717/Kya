@@ -169,6 +169,11 @@ if (PS2)
 
 		"/usr/local/sce/ee/src/lib/vu0/libvu0.c"
 	)
+else()
+	list(APPEND main_src	
+		"${src_root}/port/vu1_emu.cpp"
+		"${src_root}/port/vu1_emu.h"
+	)
 endif()
 
 # add the executable

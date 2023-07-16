@@ -303,7 +303,7 @@ public:
 	float field_0xc8;
 	undefined4 field_0xcc;
 	undefined4 field_0xd0;
-	struct edF32VECTOR4 drawOffsets;
+	edF32VECTOR4 drawOffsets;
 };
 
 extern struct edCTextFont* BootDataFont;

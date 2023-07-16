@@ -1,7 +1,7 @@
 #ifndef ED_3D_SCRATCH_PAD_GLOBAL_VAR_H
 #define ED_3D_SCRATCH_PAD_GLOBAL_VAR_H
 
-struct edF32MATRIX4;
+union edF32MATRIX4;
 struct ed_g2d_material;
 struct edF32VECTOR4;
 struct edFCamera;

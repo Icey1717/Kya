@@ -394,7 +394,7 @@ public:
 	undefined field_0x63d;
 	undefined field_0x63e;
 	undefined field_0x63f;
-	struct edF32VECTOR4 lAnalogStick;
+	edF32VECTOR4 lAnalogStick;
 };
 
 extern InputManager g_InputManager_00450960;

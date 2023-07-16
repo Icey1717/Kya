@@ -10,9 +10,9 @@
 #include "../edList.h"
 
 struct FrustumData {
-	struct edF32MATRIX4 frustumMatrix;
-	struct edF32VECTOR4 field_0x40;
-	struct edF32VECTOR4 field_0x50;
+	edF32MATRIX4 frustumMatrix;
+	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 field_0x50;
 };
 
 struct ed_3D_Light_Config {
@@ -50,7 +50,7 @@ struct SceneConfig {
 	undefined field_0x1f;
 	struct FrustumData frustumA;
 	struct FrustumData frustumB;
-	struct edF32VECTOR4 field_0xe0;
+	edF32VECTOR4 field_0xe0;
 	ByteColor3 fogCol_0xf0;
 	undefined field_0xf3;
 	undefined field_0xf4;
@@ -164,7 +164,7 @@ struct DisplayListInternalSubObj_60 {
 	int field_0x4c;
 	uint field_0x50;
 	int nbMatrix;
-	struct edF32MATRIX4* pCurMatrixArray;
+	union edF32MATRIX4* pCurMatrixArray;
 	undefined field_0x5c;
 	undefined field_0x5d;
 	undefined field_0x5e;
