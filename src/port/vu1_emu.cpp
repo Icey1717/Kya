@@ -57,10 +57,10 @@ namespace VU1Emu {
 #define VIF_REG_Z 2
 #define VIF_REG_W 3
 
-#define VIF_LOAD_I(reg, row, off) *(int*)(GetFakeMem() + (reg << 4) + (row << 4) + (off << 3))
+#define VIF_LOAD_I(reg, row, off) *(int*)(GetFakeMem() + (reg << 4) + (row << 4) + (off << 2))
 #define VIF_LOAD_F(reg, off) *(edF32VECTOR4*)(GetFakeMem() + (reg << 4) + (off << 4))
 
-#define VIF_AS_I(reg, row, off) (int*)(GetFakeMem() + (reg << 4) + (row << 4) + (off << 3))
+#define VIF_AS_I(reg, row, off) (int*)(GetFakeMem() + (reg << 4) + (row << 4) + (off << 2))
 #define VIF_AS_F(reg, off) ((edF32VECTOR4*)(GetFakeMem() + (reg << 4) + (off << 4)))
 
 #define float_to_int4(x)	(s32)((float)x * (1.0f / 0.0625f))
@@ -188,7 +188,7 @@ namespace VU1Emu {
 
 	uint gClipflag = 0;
 
-	void Clip(float value, const edF32VECTOR4& reg)
+	uint Clip(float value, const edF32VECTOR4& reg)
 	{
 		gClipflag <<= 6;
 		if (reg.x > +value) gClipflag |= 0x01;
@@ -198,6 +198,95 @@ namespace VU1Emu {
 		if (reg.z > +value) gClipflag |= 0x10;
 		if (reg.z < -value) gClipflag |= 0x20;
 		gClipflag = gClipflag & 0xFFFFFF;
+		return gClipflag;
+	}
+
+	void _$Culling_12_1()
+	{
+		vi02 = vi14;
+		vi03 = vi15 + 1;
+		vi04 = -24576;
+
+		vf04 = VIF_LOAD_F(vi00, 11);
+		vf03 = VIF_LOAD_F(vi00, 10);
+		vf02 = VIF_LOAD_F(vi00, 9);
+		vf01 = VIF_LOAD_F(vi00, 8);
+
+		for (vi02 = vi02; vi02 > 0; vi02 -= 3) {
+			vf05 = VIF_LOAD_F(vi03, 2);
+			vf06 = VIF_LOAD_F(vi03, 5);
+			vf07 = VIF_LOAD_F(vi03, 8);
+
+			ACC = vf04 + vf03 * vf05.z + vf02 * vf05.y;
+			vf08 = ACC + vf01 * vf05.x;
+
+			ACC = vf04 + vf03 * vf06.z + vf02 * vf06.y;
+			vf09 = ACC + vf01 * vf06.x;
+
+			ACC = vf04 + vf03 * vf07.z + vf02 * vf07.y;
+			vf10 = ACC + vf01 * vf07.x;
+
+			if ((Clip(vf08.w, vf08) & 63) != 0) {
+				auto pFlag = VIF_AS_I(vi03, 2, VIF_REG_W);
+				*pFlag |= vi04;
+			}
+
+			if ((Clip(vf09.w, vf09) & 63) != 0) {
+				auto pFlag = VIF_AS_I(vi03, 5, VIF_REG_W);
+				*pFlag |= vi04;
+			}
+
+			if ((Clip(vf10.w, vf10) & 63) != 0) {
+				auto pFlag = VIF_AS_I(vi03, 8, VIF_REG_W);
+				*pFlag |= vi04;
+			}
+
+			vi03 += 9;
+		}
+	}
+
+	void _$ClippingRejection_12_1()
+	{
+		vi02 = vi14;
+		vi03 = vi15 + 1;
+		vi04 = -24576;
+
+		vf04 = VIF_LOAD_F(vi00, 11);
+		vf03 = VIF_LOAD_F(vi00, 10);
+		vf02 = VIF_LOAD_F(vi00, 9);
+		vf01 = VIF_LOAD_F(vi00, 8);
+
+		for (vi02 = vi02; vi02 > 0; vi02 -= 3) {
+			vf05 = VIF_LOAD_F(vi03, 2);
+			vf06 = VIF_LOAD_F(vi03, 5);
+			vf07 = VIF_LOAD_F(vi03, 8);
+
+			ACC = vf04 + vf03 * vf05.z + vf02 * vf05.y;
+			vf08 = ACC + vf01 * vf05.x;
+
+			ACC = vf04 + vf03 * vf06.z + vf02 * vf06.y;
+			vf09 = ACC + vf01 * vf06.x;
+
+			ACC = vf04 + vf03 * vf07.z + vf02 * vf07.y;
+			vf10 = ACC + vf01 * vf07.x;
+
+			if ((Clip(vf08.w, vf08) & 63) != 0) {
+				auto pFlag = VIF_AS_I(vi03, 2, VIF_REG_W);
+				*pFlag |= vi04;
+			}
+
+			if ((Clip(vf09.w, vf09) & 63) != 0) {
+				auto pFlag = VIF_AS_I(vi03, 5, VIF_REG_W);
+				*pFlag |= vi04;
+			}
+
+			if ((Clip(vf10.w, vf10) & 63) != 0) {
+				auto pFlag = VIF_AS_I(vi03, 8, VIF_REG_W);
+				*pFlag |= vi04;
+			}
+
+			vi03 += 9;
+		}
 	}
 
 #define VIF_F_TO_I(a) (*reinterpret_cast<uint*>(&a)) & 0xFFFF
@@ -247,111 +336,8 @@ namespace VU1Emu {
 
 			if ((vi01 & 0x1) != 0) {
 				if ((vi01 & 0x2) != 0) {
-					vi02 = vi14;
-					vi03 = vi15 + 1;
-
-					vf05 = VIF_LOAD_F(vi03, 2);
-
-					vf04 = VIF_LOAD_F(vi00, 11);
-					vf03 = VIF_LOAD_F(vi00, 10);
-					vf02 = VIF_LOAD_F(vi00, 9);
-					vf01 = VIF_LOAD_F(vi00, 8);
-
-					vi04 = -0xa000;
-
-					ACC = vf04;
-					ACC = ACC + (vf03 * vf05.z);
-					ACC = ACC + (vf02 * vf05.y);
-					vf08 = ACC + (vf01 * vf05.x);
-
-					ACC = vf04 + vf03 * vf05.z + vf02 * vf05.y;
-					vf08 = ACC + vf01 * vf05.x;
-
-					vf06 = VIF_LOAD_F(vi03, 5);
-
-					vi09 = 63;
-					ACC = vf04;
-
-					vi10 = VIF_F_TO_I(vf05.w);
-					Clip(vf08.w, vf08);
-
-					vf07 = VIF_LOAD_F(vi03, 8);
-
-					ACC = ACC + (vf03 * vf06.z);
-					ACC = ACC + (vf02 * vf06.y);
-					vf09 = ACC + (vf01 * vf06.x);
-
-					vi11 = VIF_F_TO_I(vf06.w);
-					vi06 = 63;
-
-					vi05 = 0;
-					vi05 = gClipflag & 0xFFFFFF;
-
-					vi07 = 63;
-
-					for (vi02 = vi02; vi02 > 0; vi02 -= 2) {
-						vi05 = vi09 & vi05;
-						vi08 = vi05 & vi06;
-						vi08 = vi08 & vi07;
-
-						Clip(vf09.w, vf09);
-
-						ACC = vf04;
-						ACC = ACC + (vf03 * vf07.z);
-						ACC = ACC + (vf02 * vf07.y);
-						vf10 = ACC + (vf01 * vf07.x);
-						vi12 = VIF_F_TO_I(vf07.w);
-
-						vi06 = gClipflag & 0xFFFFFF;
-
-						if (vi08 != 0) {
-							vi10 = vi10 | vi04;
-							*VIF_AS_I(vi03, 2, VIF_REG_W) = vi10;
-						}
-
-						vi03 += 9;
-
-						vf05 = VIF_LOAD_F(vi03, 2);
-						vi06 = vi09 & vi06;
-						vi08 = vi05 & vi06;
-						vi08 = vi08 & vi07;
-
-						Clip(vf10.w, vf10);
-						ACC = vf04;
-						ACC = ACC + (vf03 * vf05.z);
-						ACC = ACC + (vf02 * vf05.y);
-						vf08 = ACC + (vf01 * vf05.x);
-						vi10 = VIF_F_TO_I(vf05.w);
-
-						vi07 = gClipflag & 0xFFFFFF;
-
-						if (vi08 != 0) {
-							vi11 = vi11 | vi04;
-							*VIF_AS_I(vi03, -4, VIF_REG_W) = vi11;
-						}
-
-						//vi02 -= 2;
-						vf06 = VIF_LOAD_F(vi03, 5);
-
-						vi07 = vi09 & vi07;
-						vi08 = vi05 & vi06;
-						vi08 = vi08 & vi07;
-						vi11 = VIF_F_TO_I(vf06.w);
-
-						ACC = vf04;
-						ACC = ACC + (vf03 * vf06.z);
-						ACC = ACC + (vf02 * vf06.y);
-						vf09 = ACC + (vf01 * vf06.x);
-
-						vi05 = gClipflag & 0xFFFFFF;
-
-						if (vi08 != 0) {
-							vi12 = vi12 | vi04;
-							*VIF_AS_I(vi03, -1, VIF_REG_W) = vi12;
-						}
-
-						vf07 = VIF_LOAD_F(vi03, 8);
-					}
+					_$Culling_12_1();
+					_$ClippingRejection_12_1();
 
 				}
 				else {
