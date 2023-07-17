@@ -98,12 +98,28 @@ namespace VU1Emu {
 	edF32VECTOR4 vf08;
 	edF32VECTOR4 vf09;
 	edF32VECTOR4 vf10;
+	edF32VECTOR4 vf11;
+	edF32VECTOR4 vf12;
+	edF32VECTOR4 vf13;
 	edF32VECTOR4 vf14;
 	edF32VECTOR4 vf15;
+	edF32VECTOR4 vf16;
 	edF32VECTOR4 vf17;
+	edF32VECTOR4 vf18;
+	edF32VECTOR4 vf19;
+	edF32VECTOR4 vf20;
+	edF32VECTOR4 vf21;
+	edF32VECTOR4 vf22;
 	edF32VECTOR4 vf24;
+	edF32VECTOR4 vf26;
+	edF32VECTOR4 vf27;
+	edF32VECTOR4 vf28;
+	edF32VECTOR4 vf29;
+	edF32VECTOR4 vf30;
+	edF32VECTOR4 vf31;
 
 	edF32VECTOR4 ACC;
+	float Q;
 
 	void _$DrawingStart_XYZ32() 
 	{
@@ -131,18 +147,6 @@ namespace VU1Emu {
 	{
 		vi03 = vi15 + 1;
 		_$UnpackData_XYZ32_Loop(vi14, VIF_AS_F(vi03, 0));
-	}
-
-	void _$GouraudMapping_No_Fog_16_2() 
-	{
-		vi03 = vi15 + 1;
-		vf05 = VIF_LOAD_F(vi14, 1);
-		vf17 = VIF_LOAD_F(vi03, 2);
-
-		vf04 = VIF_LOAD_F(vi00, 19);
-		vf03 = VIF_LOAD_F(vi00, 18);
-		vf02 = VIF_LOAD_F(vi00, 17);
-		vf01 = VIF_LOAD_F(vi00, 16);
 	}
 
 	// Overload the * operator as a non-member function
@@ -176,6 +180,16 @@ namespace VU1Emu {
 		return ret;
 	}
 
+	edF32VECTOR4 operator+(const edF32VECTOR4& lhs, const float& rhs)
+	{
+		edF32VECTOR4 ret;
+		ret.x = lhs.x + rhs;
+		ret.y = lhs.y + rhs;
+		ret.z = lhs.z + rhs;
+		ret.w = lhs.w + rhs;
+		return ret;
+	}
+
 	edF32VECTOR4 operator-(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs)
 	{
 		edF32VECTOR4 ret;
@@ -205,40 +219,51 @@ namespace VU1Emu {
 	{
 		vi02 = vi14;
 		vi03 = vi15 + 1;
-		vi04 = -24576;
 
+		// Obj to Culling matrix
 		vf04 = VIF_LOAD_F(vi00, 11);
 		vf03 = VIF_LOAD_F(vi00, 10);
 		vf02 = VIF_LOAD_F(vi00, 9);
 		vf01 = VIF_LOAD_F(vi00, 8);
+
+		vi06 = 63;
+		vi07 = 63;
+		vi09 = 63;
 
 		for (vi02 = vi02; vi02 > 0; vi02 -= 3) {
 			vf05 = VIF_LOAD_F(vi03, 2);
 			vf06 = VIF_LOAD_F(vi03, 5);
 			vf07 = VIF_LOAD_F(vi03, 8);
 
-			ACC = vf04 + vf03 * vf05.z + vf02 * vf05.y;
-			vf08 = ACC + vf01 * vf05.x;
+			vf08 = vf04 + (vf03 * vf05.z) + (vf02 * vf05.y) + (vf01 * vf05.x);
+			vf09 = vf04 + (vf03 * vf06.z) + (vf02 * vf06.y) + (vf01 * vf06.x);
+			vf10 = vf04 + (vf03 * vf07.z) + (vf02 * vf07.y) + (vf01 * vf07.x);
 
-			ACC = vf04 + vf03 * vf06.z + vf02 * vf06.y;
-			vf09 = ACC + vf01 * vf06.x;
+			vi05 = Clip(vf08.w, vf08) & vi09;
+			vi08 = vi05 & vi06;
+			vi08 = vi08 & vi07;
 
-			ACC = vf04 + vf03 * vf07.z + vf02 * vf07.y;
-			vf10 = ACC + vf01 * vf07.x;
-
-			if ((Clip(vf08.w, vf08) & 63) != 0) {
-				auto pFlag = VIF_AS_I(vi03, 2, VIF_REG_W);
-				*pFlag |= vi04;
+			if (vi08 != 0) {
+				uint* pFlag = (uint*)VIF_AS_I(vi03, 2, VIF_REG_W);
+				*pFlag |= 0xa000;
 			}
 
-			if ((Clip(vf09.w, vf09) & 63) != 0) {
-				auto pFlag = VIF_AS_I(vi03, 5, VIF_REG_W);
-				*pFlag |= vi04;
+			vi06 = Clip(vf09.w, vf09) & vi09;
+			vi08 = vi05 & vi06;
+			vi08 = vi08 & vi07;
+
+			if (vi08 != 0) {
+				uint* pFlag = (uint*)VIF_AS_I(vi03, 5, VIF_REG_W);
+				*pFlag |= 0xa000;
 			}
 
-			if ((Clip(vf10.w, vf10) & 63) != 0) {
-				auto pFlag = VIF_AS_I(vi03, 8, VIF_REG_W);
-				*pFlag |= vi04;
+			vi07 = Clip(vf10.w, vf10) & vi09;
+			vi08 = vi05 & vi06;
+			vi08 = vi08 & vi07;
+
+			if (vi08 != 0) {
+				uint* pFlag = (uint*)VIF_AS_I(vi03, 8, VIF_REG_W);
+				*pFlag |= 0xa000;
 			}
 
 			vi03 += 9;
@@ -249,47 +274,212 @@ namespace VU1Emu {
 	{
 		vi02 = vi14;
 		vi03 = vi15 + 1;
-		vi04 = -24576;
 
-		vf04 = VIF_LOAD_F(vi00, 11);
-		vf03 = VIF_LOAD_F(vi00, 10);
-		vf02 = VIF_LOAD_F(vi00, 9);
-		vf01 = VIF_LOAD_F(vi00, 8);
+		// Obj to Clipping matrix
+		vf04 = VIF_LOAD_F(vi00, 15);
+		vf03 = VIF_LOAD_F(vi00, 14);
+		vf02 = VIF_LOAD_F(vi00, 13);
+		vf01 = VIF_LOAD_F(vi00, 12);
+
+		vi06 = 0;
+		vi07 = 0;
+		vi09 = 63;
 
 		for (vi02 = vi02; vi02 > 0; vi02 -= 3) {
 			vf05 = VIF_LOAD_F(vi03, 2);
 			vf06 = VIF_LOAD_F(vi03, 5);
 			vf07 = VIF_LOAD_F(vi03, 8);
 
-			ACC = vf04 + vf03 * vf05.z + vf02 * vf05.y;
-			vf08 = ACC + vf01 * vf05.x;
+			vf08 = vf04 + (vf03 * vf05.z) + (vf02 * vf05.y) + (vf01 * vf05.x);
+			vf09 = vf04 + (vf03 * vf06.z) + (vf02 * vf06.y) + (vf01 * vf06.x);
+			vf10 = vf04 + (vf03 * vf07.z) + (vf02 * vf07.y) + (vf01 * vf07.x);
 
-			ACC = vf04 + vf03 * vf06.z + vf02 * vf06.y;
-			vf09 = ACC + vf01 * vf06.x;
+			vi05 = Clip(vf08.w, vf08) & vi09;
+			vi08 = vi05 | vi06;
+			vi08 = vi08 | vi07;
 
-			ACC = vf04 + vf03 * vf07.z + vf02 * vf07.y;
-			vf10 = ACC + vf01 * vf07.x;
-
-			if ((Clip(vf08.w, vf08) & 63) != 0) {
-				auto pFlag = VIF_AS_I(vi03, 2, VIF_REG_W);
-				*pFlag |= vi04;
+			if (vi08 != 0) {
+				uint* pFlag = (uint*)VIF_AS_I(vi03, 2, VIF_REG_W);
+				*pFlag |= 0x9000 | vi05;
 			}
 
-			if ((Clip(vf09.w, vf09) & 63) != 0) {
-				auto pFlag = VIF_AS_I(vi03, 5, VIF_REG_W);
-				*pFlag |= vi04;
+			vi06 = Clip(vf09.w, vf09) & vi09;
+			vi08 = vi05 | vi06;
+			vi08 = vi08 | vi07;
+
+			if (vi08 != 0) {
+				uint* pFlag = (uint*)VIF_AS_I(vi03, 5, VIF_REG_W);
+				*pFlag |= 0x9000 | vi06;
 			}
 
-			if ((Clip(vf10.w, vf10) & 63) != 0) {
-				auto pFlag = VIF_AS_I(vi03, 8, VIF_REG_W);
-				*pFlag |= vi04;
+			vi07 = Clip(vf10.w, vf10) & vi09;
+			vi08 = vi05 | vi06;
+			vi08 = vi08 | vi07;
+
+			if (vi08 != 0) {
+				uint* pFlag = (uint*)VIF_AS_I(vi03, 8, VIF_REG_W);
+				*pFlag |= 0x9000 | vi07;
 			}
 
 			vi03 += 9;
 		}
 	}
 
-#define VIF_F_TO_I(a) (*reinterpret_cast<uint*>(&a)) & 0xFFFF
+#define VIF_F_TO_I4(a) (*reinterpret_cast<const uint*>(&a)) & 0xFFFF
+#define VIF_F_TO_I(a) *reinterpret_cast<const uint*>(&a)
+
+	edF32VECTOR4 ConvertFromInt(const edF32VECTOR4& reg) {
+		edF32VECTOR4 ret = {
+			(float)(VIF_F_TO_I(reg.x)),
+			(float)(VIF_F_TO_I(reg.y)),
+			(float)(VIF_F_TO_I(reg.z)),
+			(float)(VIF_F_TO_I(reg.w))
+		};
+		return ret;
+	}
+
+	void _$Clipping()
+	{
+		// Obj to Screen matrix
+		vf04 = VIF_LOAD_F(vi00, 19);
+		vf03 = VIF_LOAD_F(vi00, 18);
+		vf02 = VIF_LOAD_F(vi00, 17);
+		vf01 = VIF_LOAD_F(vi00, 16);
+
+		// gFANbuffers
+		vf28 = VIF_LOAD_F(vi00, 0);
+
+		// Flags?
+		vf29 = VIF_LOAD_F(vi00, 1);
+
+		// gClipMulVector
+		vf30 = VIF_LOAD_F(vi00, 2);
+
+		// gClipAddVector
+		vf31 = VIF_LOAD_F(vi00, 3);
+
+		// gClipXY
+		vf27 = VIF_LOAD_F(vi00, 4);
+
+		vi02 = vi14;
+		vi03 = vi15 + 1;
+
+		for (vi02 = vi02; vi02 > 0; vi02 -= 3) {
+
+			vf07 = VIF_LOAD_F(vi03, 2);
+			vf06 = VIF_LOAD_F(vi03, 1);
+			vf05 = VIF_LOAD_F(vi03, 0);
+
+			vf10 = VIF_LOAD_F(vi03, 5);
+			vf09 = VIF_LOAD_F(vi03, 4);
+			vf08 = VIF_LOAD_F(vi03, 3);
+
+			vi12 = 32;
+
+			vi07 = vi12 & VIF_F_TO_I(vf07.w);
+			vf07 = vf04 + (vf03 * vf07.z) + (vf02 * vf07.y) + (vf01 * vf07.x);
+
+			vi08 = vi12 & VIF_F_TO_I(vf10.w);
+			vf10 = vf04 + (vf03 * vf10.z) + (vf02 * vf10.y) + (vf01 * vf10.x);
+
+			vf06 = ConvertFromInt(vf06);
+			vf09 = ConvertFromInt(vf09);
+
+			vi06 = 63;
+			vi12 = 32;
+
+			vf13 = VIF_LOAD_F(vi03, 8);
+			vf12 = VIF_LOAD_F(vi03, 7);
+			vf11 = VIF_LOAD_F(vi03, 6);
+
+			vi09 = VIF_F_TO_I(vf13.w);
+			vi01 = 0xf000 & vi09;
+			vi09 = vi12 & vi09;
+
+			vf13 = vf04 + (vf03 * vf13.z) + (vf02 * vf13.y) + (vf01 * vf13.x);
+			vf12 = ConvertFromInt(vf12);
+
+			vi03 += 3;
+
+			if (vi01 != 0x9000) {
+				continue;
+			}
+
+			IMPLEMENTATION_GUARD();
+		}
+	}
+
+	void _$GouraudMapping_No_Fog_16_2()
+	{
+		vf05 = VIF_LOAD_F(vi00, 1);
+
+		// Obj to Screen matrix
+		vf04 = VIF_LOAD_F(vi00, 19);
+		vf03 = VIF_LOAD_F(vi00, 18);
+		vf02 = VIF_LOAD_F(vi00, 17);
+		vf01 = VIF_LOAD_F(vi00, 16);
+
+		vi02 = vi14;
+		vi03 = vi15 + 1;
+
+		for (vi02 = vi02; vi02 > 0; vi02 -= 1) {
+			vf17 = VIF_LOAD_F(vi03, 2);
+			vf27 = VIF_LOAD_F(vi03, 5);
+
+			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
+
+			vf16 = VIF_LOAD_F(vi03, 0);
+			vf26 = VIF_LOAD_F(vi03, 3);
+			vf27 = VIF_LOAD_F(vi03, 11);
+
+			Q = 1.0f / vf18.w;
+
+			vf20.x = vf16.x * Q;
+			vf20.y = vf16.y * Q;
+			vf20.z = vf16.z * Q;
+
+			Q = 1.0f / vf28.w;
+
+			vf19.x = vf18.x * Q;
+			vf19.y = vf18.y * Q;
+			vf19.z = vf18.z * Q;
+
+			vf16 = VIF_LOAD_F(vi03, 6);
+			vf17 = VIF_LOAD_F(vi03, 8);
+			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
+
+			*VIF_AS_F(vi03, 0) = vf20;
+
+			vf21.x = float_to_int4(vf19.x);
+			vf21.y = float_to_int4(vf19.y);
+			vf21.z = (float)vf19.z;
+
+			Q = 1.0f / vf18.w;
+
+			vf17 = VIF_LOAD_F(vi03, 14);
+
+			*VIF_AS_F(vi03, 2) = vf21;
+
+			vf30.x = vf26.x * Q;
+			vf30.y = vf26.y * Q;
+			vf30.z = vf26.z * Q;
+
+			*VIF_AS_F(vi03, 2) = vf30;
+
+			vf29.x = vf28.x * Q;
+			vf29.y = vf28.y * Q;
+			vf29.z = vf28.z * Q;
+
+			vf31.x = float_to_int4(vf29.x);
+			vf31.y = float_to_int4(vf29.y);
+			vf31.z = (float)vf29.z;
+
+			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+		}
+
+	}
 
 	void RunCode(int addr) 
 	{
@@ -338,6 +528,7 @@ namespace VU1Emu {
 				if ((vi01 & 0x2) != 0) {
 					_$Culling_12_1();
 					_$ClippingRejection_12_1();
+					_$Clipping();
 
 				}
 				else {
@@ -379,8 +570,8 @@ namespace VU1Emu {
 
 	void UnpackToAddr(uint addr, void* data, int size)
 	{
-		auto p = GetFakeMem();
-		memcpy(p + (addr << 4), data, size);
+		const auto dst = GetFakeMem() + (addr << 4);
+		memcpy(dst, data, size);
 	}
 }
 
@@ -495,19 +686,3 @@ void VU1Emu::UpdateMemory(edpkt_data* pVifPkt, edpkt_data* pEnd)
 		pVifPkt++;
 	}
 }
-
-void VU1Emu::QueueWrite(uint vuaddr, uint num, void* data)
-{
-	gWriteQueue.push_back({ vuaddr, num, (edpkt_data*)data });
-}
-
-void VU1Emu::ClearWriteQueue()
-{
-	gWriteQueue.clear();
-}
-
-//void VU1Emu::UnpackToAddr(uint addr, void* data, int size)
-//{
-//	auto p = GetFakeMem();
-//	memcpy(p + (addr << 4), data, size);
-//}

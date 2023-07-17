@@ -850,10 +850,6 @@ void ed3DFlushSendDMA3D(void)
 		RENDER_LOG("DMA Begin ed3DFlushSendDMA3D");
 		edDmaSend_nowait(SHELLDMA_CHANNEL_VIF1, (ulonglong*)g_pStartPktData);
 
-#ifdef PLATFORM_WIN
-		VU1Emu::ClearWriteQueue();
-#endif
-
 		if (g_WaitAfterVIF_00449244 != 0) {
 			edDmaSyncPath();
 			edDmaSyncPath();
@@ -1916,31 +1912,23 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 		edF32Vector4NormalizeHard((float*)v0, (float*)v0);
 	}
 	sceVu0InverseMatrix(&local_40, WorldToCamera_Matrix);
-	gCamNormal_X.z = local_40.ac;
-	gCamNormal_X.w = local_40.ad;
-	gCamNormal_X.x = local_40.aa;
-	gCamNormal_X.y = local_40.ab;
+	gCamNormal_X = local_40.rowX;
+
 	//MY_LOG("Vec A");
 	//PRINT_VECTOR(&Vector_0048c310);
 	edF32Vector4NormalizeHard((float*)&gCamNormal_X, (float*)&gCamNormal_X);
-	gCamNormal_Y.x = local_40.ba;
-	gCamNormal_Y.y = local_40.bb;
-	gCamNormal_Y.z = local_40.bc;
-	gCamNormal_Y.w = local_40.bd;
+	gCamNormal_Y = local_40.rowY;
+
 	//MY_LOG("Vec B");
 	//PRINT_VECTOR(&Vector_0048c320);
 	edF32Vector4NormalizeHard((float*)&gCamNormal_Y, (float*)&gCamNormal_Y);
-	gCamNormal_Z.x = local_40.ca;
-	gCamNormal_Z.y = local_40.cb;
-	gCamNormal_Z.z = local_40.cc;
-	gCamNormal_Z.w = local_40.cd;
+	gCamNormal_Z = local_40.rowZ;
+
 	//MY_LOG("Vec C");
 	//PRINT_VECTOR(&Vector_0048c330);
 	edF32Vector4NormalizeHard((float*)&gCamNormal_Z, (float*)&gCamNormal_Z);
-	gCamPos.x = (gRenderCamera->position).x;
-	gCamPos.y = (gRenderCamera->position).y;
-	gCamPos.z = (gRenderCamera->position).z;
-	gCamPos.w = (gRenderCamera->position).w;
+	gCamPos = gRenderCamera->position;
+
 	fVar2 = gRenderCamera->halfFOV / gRenderCamera->verticalHalfFOV;
 	gRenderInvFovCoef = 1.0f / fVar2;
 	gRenderFovCoef = fVar2 * fVar2;
@@ -2380,6 +2368,14 @@ void edF32Matrix4OrthonormalizeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 	return;
 }
 
+#define MATRIX_PACKET_START_SPR		0x70000800
+#define CAM_NORMAL_X_SPR			0x70000800
+#define CAM_NORMAL_Y_SPR			0x70000810
+#define CAM_NORMAL_Y_SPR			0x70000810
+#define OBJ_TO_CULLING_MATRIX		0x70000820
+#define OBJ_TO_CLIPPING_MATRIX		0x70000860
+#define OBJ_TO_SCREEN_MATRIX		0x700008A0
+
 #define LIGHT_DIRECTIONS_MATRIX_SPR 0x70000a40
 #define LIGHT_COLOR_MATRIX_SPR		0x70000a50
 #define LIGHT_AMBIENT_MATRIX_SPR	0x70000a60
@@ -2430,8 +2426,8 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	m1 = pDmaMatrix->pObjToWorld;
 	RENDER_LOG("DMA Begin ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
-	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(0x70000800, edF32VECTOR4*), &gCamNormal_X);
-	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(0x70000810, edF32VECTOR4*), &gCamNormal_Y);
+	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_X_SPR, edF32VECTOR4*), &gCamNormal_X);
+	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_Y_SPR, edF32VECTOR4*), &gCamNormal_Y);
 	*g_pCurFlareObj2WorldMtx = m1;
 	if (((pDmaMatrix->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
 		(puVar1 = pDmaMatrix->pMeshTransformData->pHierarchySetup, puVar1 == (ed_3d_hierarchy_setup*)0x0))
@@ -2491,7 +2487,7 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	pObjToCamera->dd = worldToCamera.ad * objToWorld.da + worldToCamera.bd * objToWorld.db + worldToCamera.cd * objToWorld.dc + worldToCamera.dd * objToWorld.dd;
 
 	edF32MATRIX4 cameraToCulling = *CameraToCulling_Matrix;
-	edF32MATRIX4* matrixB = SCRATCHPAD_ADDRESS_TYPE(0x70000820, edF32MATRIX4*);
+	edF32MATRIX4* matrixB = SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_CULLING_MATRIX, edF32MATRIX4*);
 
 	matrixB->aa = cameraToCulling.aa * pObjToCamera->aa + cameraToCulling.ba * pObjToCamera->ab + cameraToCulling.ca * pObjToCamera->ac + cameraToCulling.da * pObjToCamera->ad;
 	matrixB->ab = cameraToCulling.ab * pObjToCamera->aa + cameraToCulling.bb * pObjToCamera->ab + cameraToCulling.cb * pObjToCamera->ac + cameraToCulling.db * pObjToCamera->ad;
@@ -2511,7 +2507,7 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	matrixB->dd = cameraToCulling.ad * pObjToCamera->da + cameraToCulling.bd * pObjToCamera->db + cameraToCulling.cd * pObjToCamera->dc + cameraToCulling.dd * pObjToCamera->dd;
 
 	edF32MATRIX4 cameraToClipping = *CameraToClipping_Matrix;
-	edF32MATRIX4* matrixC = SCRATCHPAD_ADDRESS_TYPE(0x70000860, edF32MATRIX4*);
+	edF32MATRIX4* matrixC = SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_CLIPPING_MATRIX, edF32MATRIX4*);
 
 	matrixC->aa = cameraToClipping.aa * pObjToCamera->aa + cameraToClipping.ba * pObjToCamera->ab + cameraToClipping.ca * pObjToCamera->ac + cameraToClipping.da * pObjToCamera->ad;
 	matrixC->ab = cameraToClipping.ab * pObjToCamera->aa + cameraToClipping.bb * pObjToCamera->ab + cameraToClipping.cb * pObjToCamera->ac + cameraToClipping.db * pObjToCamera->ad;
@@ -2531,7 +2527,7 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	matrixC->dd = cameraToClipping.ad * pObjToCamera->da + cameraToClipping.bd * pObjToCamera->db + cameraToClipping.cd * pObjToCamera->dc + cameraToClipping.dd * pObjToCamera->dd;
 
 	edF32MATRIX4 cameraToScreen = *CameraToScreen_Matrix;
-	edF32MATRIX4* matrixD = SCRATCHPAD_ADDRESS_TYPE(0x700008A0, edF32MATRIX4*);
+	edF32MATRIX4* matrixD = SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_SCREEN_MATRIX, edF32MATRIX4*);
 
 	matrixD->aa = cameraToScreen.aa * pObjToCamera->aa + cameraToScreen.ba * pObjToCamera->ab + cameraToScreen.ca * pObjToCamera->ac + cameraToScreen.da * pObjToCamera->ad;
 	matrixD->ab = cameraToScreen.ab * pObjToCamera->aa + cameraToScreen.bb * pObjToCamera->ab + cameraToScreen.cb * pObjToCamera->ac + cameraToScreen.db * pObjToCamera->ad;
@@ -2579,7 +2575,7 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	vectorD->y = gVU1_AnimST_NormalExtruder_Scratch->y;
 	RENDER_LOG("DMA End ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
-	edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS(0x70000800), 0x1c0, pMatrixBuffer);
+	edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS(MATRIX_PACKET_START_SPR), 0x1c0, pMatrixBuffer);
 	return pMatrixBuffer + 7;
 }
 
@@ -2674,9 +2670,10 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 	}
 	*g_pCurFlareMtx = (edF32MATRIX4*)((uint)((ulong)((long)(int)pDmaMatrix->pMeshTransformData->pMatrixPkt << 0x24) >> 0x24) + 0xa0);
 
-	pPkt->cmdA = ED_VIF1_SET_TAG_REF(0x1c, STORE_SECTION(pDmaMatrix->pMeshTransformData->pMatrixPkt) & 0xfffffffU); // | 0x3000001c;
+	// This will actually overwrite the cam normal X and Y from the global packet, as that writes from 0x0 -> 0x8, and this starts at 0x6.
+	pPkt->cmdA = ED_VIF1_SET_TAG_REF(0x1c, STORE_SECTION(pDmaMatrix->pMeshTransformData->pMatrixPkt) & 0xfffffffU);
 	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
-	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0006, 0x1c, UNPACK_V4_32, 0); // 0x6c1c0006;
+	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0006, 0x1c, UNPACK_V4_32, 0);
 
 	if (bVar11 == 0) {
 		return pPkt + 1;
