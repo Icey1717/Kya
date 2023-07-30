@@ -405,7 +405,7 @@ namespace VU1Emu {
 				continue;
 			}
 
-			IMPLEMENTATION_GUARD();
+			//IMPLEMENTATION_GUARD();
 		}
 	}
 
@@ -423,62 +423,51 @@ namespace VU1Emu {
 		vi03 = vi15 + 1;
 
 		for (vi02 = vi02; vi02 > 0; vi02 -= 1) {
-			vf17 = VIF_LOAD_F(vi03, 2);
-			vf27 = VIF_LOAD_F(vi03, 5);
+			vf17 = VIF_LOAD_F(vi03, 0);
+			vf27 = VIF_LOAD_F(vi03, 2);
 
 			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
 			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
-
-			vf16 = VIF_LOAD_F(vi03, 0);
-			vf26 = VIF_LOAD_F(vi03, 3);
-			vf27 = VIF_LOAD_F(vi03, 11);
-
 			Q = 1.0f / vf18.w;
-
-			vf20.x = vf16.x * Q;
-			vf20.y = vf16.y * Q;
-			vf20.z = vf16.z * Q;
-
-			Q = 1.0f / vf28.w;
 
 			vf19.x = vf18.x * Q;
 			vf19.y = vf18.y * Q;
 			vf19.z = vf18.z * Q;
 
-			vf16 = VIF_LOAD_F(vi03, 6);
-			vf17 = VIF_LOAD_F(vi03, 8);
-			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
-			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
-
-			*VIF_AS_F(vi03, 0) = vf20;
-
-			vf21.x = float_to_int4(vf19.x);
-			vf21.y = float_to_int4(vf19.y);
-			vf21.z = (float)vf19.z;
-
-			Q = 1.0f / vf18.w;
-
-			vf17 = VIF_LOAD_F(vi03, 14);
-
-			*VIF_AS_F(vi03, 2) = vf21;
-
-			vf30.x = vf26.x * Q;
-			vf30.y = vf26.y * Q;
-			vf30.z = vf26.z * Q;
-
-			*VIF_AS_F(vi03, 2) = vf30;
+			Q = 1.0f / vf28.w;
+			vf21 = vf17 * Q;
 
 			vf29.x = vf28.x * Q;
 			vf29.y = vf28.y * Q;
 			vf29.z = vf28.z * Q;
 
-			vf31.x = float_to_int4(vf29.x);
-			vf31.y = float_to_int4(vf29.y);
-			vf31.z = (float)vf29.z;
+			*reinterpret_cast<int*>(&vf31.x) = float_to_int4(vf29.x);
+			*reinterpret_cast<int*>(&vf31.y) = float_to_int4(vf29.y);
+			*reinterpret_cast<int*>(&vf31.z) = (int)vf29.z;
 
-			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+			auto base = VIF_AS_F(vi03, 0);
+			*VIF_AS_F(vi03, 0) = vf21;
+
+			uint skip = *VIF_AS_I(vi03, 2, VIF_REG_W);
+			*VIF_AS_F(vi03, 2) = vf31;
+
+			int x = float_to_int4(vf29.x);
+			int y = float_to_int4(vf29.y);
+			int z = (float)vf29.z;
+
+			Renderer::SetRGBAQ(
+				*VIF_AS_I(vi03, 1, VIF_REG_X),
+				*VIF_AS_I(vi03, 1, VIF_REG_Y),
+				*VIF_AS_I(vi03, 1, VIF_REG_Z),
+				*VIF_AS_I(vi03, 1, VIF_REG_W), 
+				vf21.z);
+
+			Renderer::SetST(vf21.x, vf21.y);
+			Renderer::SetVertexSkip(skip & 0x8000);
+			Renderer::KickVertex(x, y, z);
+
+			vi03 += 3;
 		}
-
 	}
 
 	void RunCode(int addr) 
@@ -506,7 +495,7 @@ namespace VU1Emu {
 
 			if ((vi01 & 0x20) != 0) {
 				// _$Alpha_Object
-				IMPLEMENTATION_GUARD();
+				//IMPLEMENTATION_GUARD();
 			}
 
 			if ((vi01 & 0x100) != 0) {
@@ -521,7 +510,7 @@ namespace VU1Emu {
 
 			if ((vi01 & 0x200) != 0) {
 				// _$Animation_ST
-				IMPLEMENTATION_GUARD();
+				//IMPLEMENTATION_GUARD();
 			}
 
 			if ((vi01 & 0x1) != 0) {
@@ -533,39 +522,12 @@ namespace VU1Emu {
 				}
 				else {
 					// _$NoClipCulling_12_1
-					IMPLEMENTATION_GUARD();
+					//IMPLEMENTATION_GUARD();
 				}
 			}
 
-			vi14 = 2;
 			_$GouraudMapping_No_Fog_16_2();
 		}
-	}
-
-	struct WriteEntry 
-	{
-		uint vuaddr;
-		uint num;
-		edpkt_data* data;
-	};
-
-	std::vector<WriteEntry> gWriteQueue;
-
-	void ProcessWriteQueue()
-	{
-		auto p = GetFakeMem();
-
-		for (auto& entry : gWriteQueue) {
-			if (entry.data->asU32[1] == 0xe) {
-				memcpy(p + (entry.vuaddr << 4), (entry.data) + 1, entry.num * sizeof(edpkt_data));
-			}
-			else {
-				void* altSrc = LOAD_SECTION(entry.data->asU32[1]);
-				memcpy(p + (entry.vuaddr << 4), altSrc, entry.num * sizeof(edpkt_data));
-			}
-		}
-
-		gWriteQueue.clear();
 	}
 
 	void UnpackToAddr(uint addr, void* data, int size)
@@ -573,6 +535,18 @@ namespace VU1Emu {
 		const auto dst = GetFakeMem() + (addr << 4);
 		memcpy(dst, data, size);
 	}
+
+	struct HW_Gif_Tag {
+		u16 NLOOP : 15;
+		u16 EOP : 1;
+		u16 _dummy0 : 16;
+		u32 _dummy1 : 14;
+		u32 PRE : 1;
+		u32 PRIM : 11;
+		u32 FLG : 2;
+		u32 NREG : 4;
+		u32 REGS[2];
+	};
 }
 
 void VU1Emu::ProcessVifList(edpkt_data* pVifPkt) 
@@ -582,22 +556,33 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 	edF32VECTOR4 strow = { 0.0f, 0.0f, 0.0f, 0.0f };
 	char* pFakeMem = GetFakeMem();
 
-	ProcessWriteQueue();
-
 	while (pVifPkt->cmdA != 0x60000000) {
 		RunTag* pRunTag = (RunTag*)(&(pVifPkt->asU32[3]));
 
 		if (pVifPkt->asU32[3] == VIF_NOP) {
-			// Execute commands at addr
-			CyclePacket* pCycleMaskCmd = (CyclePacket*)LOAD_SECTION(pVifPkt->asU32[1]);
-			stcl = pCycleMaskCmd->cycle.cl;
-			stwl = pCycleMaskCmd->cycle.wl;
+			auto pOther = (RunTag*)(&(pVifPkt->asU32[0]));
 
-			if (pCycleMaskCmd->row.cmd == 0x30) {
-				strow = pCycleMaskCmd->rowData;
+			if (pOther->cmd == 0x30) {
+				// Execute commands at addr
+				CyclePacket* pCycleMaskCmd = (CyclePacket*)LOAD_SECTION(pVifPkt->asU32[1]);
+				stcl = pCycleMaskCmd->cycle.cl;
+				stwl = pCycleMaskCmd->cycle.wl;
+
+				if (pCycleMaskCmd->row.cmd == 0x30) {
+					strow = pCycleMaskCmd->rowData;
+				}
+			}
+			else {
+				// Shouldn't end up here?
+				IMPLEMENTATION_GUARD();
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
+			// Update PRIM
+			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pFakeMem + 0x1990);
+			const uint prim = pGifTag->PRIM;
+			Renderer::SetPrim(*reinterpret_cast<const Renderer::PrimPacked*>(&prim));
+
 			RunCode(pRunTag->addr);
 		}
 		else {
@@ -615,7 +600,6 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
-
 					memcpy(pStart, pUnpack + (i * 0x10), 0x10);
 				}
 			}
@@ -658,8 +642,6 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 
 		pVifPkt++;
 	}
-
-	//free(pFakeMem);
 }
 
 void VU1Emu::SetVifItop(uint newItop)

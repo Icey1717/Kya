@@ -254,7 +254,7 @@ else()
 		"src"
 	)
 
-	target_link_libraries(Kya Port)
+	target_link_libraries(Kya PUBLIC Port Log)
 endif()
 
 set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )

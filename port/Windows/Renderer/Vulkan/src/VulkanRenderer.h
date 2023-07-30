@@ -12,6 +12,7 @@ struct UniformBufferObject {
 
 namespace Renderer {
 	extern bool gHeadless;
+	constexpr int VertexIndexBufferSize = 0x100000;
 }
 
 VkDevice GetDevice();
@@ -24,6 +25,8 @@ uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 const VkBuffer& GetUniformBuffer(int index);
 const VkQueue& GetGraphicsQueue();
 const VkCommandPool& GetCommandPool();
+const VkExtent2D& GetSwapchainExtent();
+void SetObjectName(const char* name, const uint64_t objHandle, const VkObjectType objType);
 
 GLFWwindow* GetGLFWWindow();
 VkInstance GetInstance();

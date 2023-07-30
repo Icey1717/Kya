@@ -6,24 +6,24 @@
 #include <vector>
 #include <stdexcept>
 
-VkImageView CreateImageView(VkImage image, VkFormat format) {
+void VulkanImage::CreateImageView(const VkImage& image, VkFormat format, VkImageAspectFlags aspect, VkImageView& imageView)
+{
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.aspectMask = aspect;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	VkImageView imageView;
 	if (vkCreateImageView(GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture image view!");
 	}
 
-	return imageView;
+	return;
 }
 
 VulkanImage::VulkanImage(char* splashFile, int width, int height)
@@ -98,10 +98,11 @@ void VulkanImage::UpdateImage(char* pixelData)
 void VulkanImage::CreateTextureImage(char* pixelData) {
 	CreateImage(texWidth, texHeight, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 	UpdateImage(pixelData);
+	SetObjectName("Texture Color Image", (uint64_t)textureImage, VK_OBJECT_TYPE_IMAGE);
 }
 
 void VulkanImage::CreateTextureImageView() {
-	textureImageView = CreateImageView(textureImage, VK_FORMAT_B8G8R8A8_SRGB);
+	CreateImageView(textureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, textureImageView);
 }
 
 void VulkanImage::CreateTextureSampler() {
@@ -225,6 +226,13 @@ void VulkanImage::TransitionImageLayout(VkImage image, VkFormat format, VkImageL
 
 		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL) {
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 	else {
 		throw std::invalid_argument("unsupported layout transition!");

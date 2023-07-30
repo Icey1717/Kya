@@ -26,7 +26,7 @@ extern int* gShadowRenderMask;
 extern edFCamera* gRenderCamera;
 extern edF32MATRIX4* gF32Matrix4Unit_Scratch;
 extern unsigned int* ed3DVU1Addr_Scratch;
-extern unsigned int* ed3DVU1AddrWithBufCur_Scratch;
+extern int(*ed3DVU1AddrWithBufCur_Scratch)[3];
 extern int* gMaterialNbPrimSend;
 extern int* gbDoMipmap_SPR;
 extern unsigned int* gMipmapL_SPR;

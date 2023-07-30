@@ -1,7 +1,7 @@
-set(TargetName "Log")
+set(TargetName "Hash")
 
 set(SOURCES 
-	"log.h" 
+	"hash.h" 
 )
 
 add_library(${TargetName} ${SOURCES})

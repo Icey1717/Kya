@@ -1,5 +1,5 @@
 #include "Pipeline.h"
-#include "MD5.h"
+#include "hash.h"
 #include "VulkanShader.h"
 #include "VulkanReflect.h"
 #include "renderer.h"
@@ -8,58 +8,28 @@
 #include <iterator>
 
 namespace PS2_Internal {
-	std::unordered_map<PS2::PipelineKey, PS2::Pipeline, PS2::PipelineKeyHash> graphicsPipelines;
+	std::unordered_map<PS2::PipelineKey, Renderer::Pipeline, PS2::PipelineKeyHash> graphicsPipelines;
 	VkRenderPass renderPass;
 
-	PS2::Pipeline CreateGraphicsPipeline(std::string hash, VkPrimitiveTopology topology, const char* vertShaderFilePath, const char* geomShaderFilePath, const char* pixelShaderFilePath) {
-		PS2::Pipeline pipeline;
-		auto vertShaderCode = Shader::readFile(vertShaderFilePath);
-		auto geomShaderCode = Shader::readFile(geomShaderFilePath);
-		auto fragShaderCode = Shader::readFile(pixelShaderFilePath);
+	Renderer::Pipeline CreateGraphicsPipeline(std::string hash, VkPrimitiveTopology topology, const char* vertShaderFilePath, const char* geomShaderFilePath, const char* pixelShaderFilePath) {
+		Renderer::Pipeline pipeline;
+		auto vertShader = Shader::ReflectedModule(vertShaderFilePath, VK_SHADER_STAGE_VERTEX_BIT, true);
+		auto geomShader = Shader::ReflectedModule(geomShaderFilePath, VK_SHADER_STAGE_GEOMETRY_BIT, true);
+		auto fragShader = Shader::ReflectedModule(pixelShaderFilePath, VK_SHADER_STAGE_FRAGMENT_BIT, true);
 
-		VkShaderModule vertShaderModule = Shader::createShaderModule(vertShaderCode);
-		VkShaderModule geomShaderModule = Shader::createShaderModule(geomShaderCode);
-		VkShaderModule fragShaderModule = Shader::createShaderModule(fragShaderCode);
-
-		ReflectData vertReflectData;
-		ReflectData geomReflectData;
-		ReflectData fragReflectData;
-
-		vertReflectData = reflectDescriptorSetLayout(vertShaderCode);
-		geomReflectData = reflectDescriptorSetLayout(geomShaderCode);
-		fragReflectData = reflectDescriptorSetLayout(fragShaderCode);
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = vertShaderModule;
-		vertShaderStageInfo.pName = vertReflectData.entryPointname.c_str();
-
-		VkPipelineShaderStageCreateInfo geomShaderStageInfo{};
-		geomShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		geomShaderStageInfo.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
-		geomShaderStageInfo.module = geomShaderModule;
-		geomShaderStageInfo.pName = geomReflectData.entryPointname.c_str();
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = fragShaderModule;
-		fragShaderStageInfo.pName = fragReflectData.entryPointname.c_str();
-
-		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, geomShaderStageInfo, fragShaderStageInfo };
+		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, geomShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
 		constexpr size_t vertSize = sizeof(Renderer::GSVertex);
-		assert(vertReflectData.bindingDescription.stride == vertSize);
+		assert(vertShader.reflectData.bindingDescription.stride == vertSize);
 
-		auto attributeDescriptions = vertReflectData.attributeDescriptions;
+		auto attributeDescriptions = vertShader.reflectData.attributeDescriptions;
 
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-		vertexInputInfo.pVertexBindingDescriptions = &vertReflectData.bindingDescription;
+		vertexInputInfo.pVertexBindingDescriptions = &vertShader.reflectData.bindingDescription;
 		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -129,44 +99,11 @@ namespace PS2_Internal {
 		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 		dynamicState.pDynamicStates = dynamicStates.data();
 
-		auto AddBindings = [&pipeline](ReflectData& reflectData) {
-			for (auto& layout : reflectData.GetLayouts()) {
-				if (pipeline.descriptorSetLayoutBindings.find(layout.setNumber) == pipeline.descriptorSetLayoutBindings.end()) {
-					pipeline.descriptorSetLayoutBindings.emplace(layout.setNumber, std::vector<VkDescriptorSetLayoutBinding>());
-				}
-
-				// Copy the bindings from vertReflectData into descriptorSetLayoutBindings
-				std::copy(layout.bindings.begin(),
-					layout.bindings.end(),
-					std::back_inserter(pipeline.descriptorSetLayoutBindings[layout.setNumber]));
-			}
-		};
-
-		AddBindings(vertReflectData);
-		AddBindings(geomReflectData);
-		AddBindings(fragReflectData);
-
-		pipeline.descriptorSetLayouts.resize(pipeline.descriptorSetLayoutBindings.size());
-
-		for (auto& bindingSet : pipeline.descriptorSetLayoutBindings) {
-			VkDescriptorSetLayoutCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-			createInfo.bindingCount = bindingSet.second.size();
-			createInfo.pBindings = bindingSet.second.data();
-
-			if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, nullptr, &pipeline.descriptorSetLayouts[bindingSet.first]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create descriptor set layout!");
-			}
-		}
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = pipeline.descriptorSetLayouts.size();
-		pipelineLayoutInfo.pSetLayouts = pipeline.descriptorSetLayouts.data();
-
-		if (vkCreatePipelineLayout(GetDevice(), &pipelineLayoutInfo, nullptr, &pipeline.layout) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create pipeline layout!");
-		}
+		pipeline.AddBindings(vertShader.reflectData);
+		pipeline.AddBindings(geomShader.reflectData);
+		pipeline.AddBindings(fragShader.reflectData);
+		pipeline.UpdateDescriptorSetLayouts();
+		pipeline.CreateLayout();
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -188,10 +125,6 @@ namespace PS2_Internal {
 		if (vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline.pipeline) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
-
-		vkDestroyShaderModule(GetDevice(), fragShaderModule, nullptr);
-		vkDestroyShaderModule(GetDevice(), geomShaderModule, nullptr);
-		vkDestroyShaderModule(GetDevice(), vertShaderModule, nullptr);
 
 		return pipeline;
 	}
@@ -265,6 +198,8 @@ void PS2::CreateDefaultRenderPass()
 	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &PS2_Internal::renderPass) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create render pass!");
 	}
+
+	SetObjectName("PS2 Render Pass", (uint64_t)PS2_Internal::renderPass, VK_OBJECT_TYPE_RENDER_PASS);
 }
 
 void PS2::CreateGraphicsPipelines() {
@@ -301,4 +236,81 @@ void PS2::CreateGraphicsPipelines() {
 PS2::PipelineMap& PS2::GetPipelines()
 {
 	return PS2_Internal::graphicsPipelines;
+}
+
+void Renderer::Pipeline::AddBindings(ReflectData& reflectData) {
+	for (auto& layout : reflectData.GetLayouts()) {
+		if (descriptorSetLayoutBindings.find(layout.setNumber) == descriptorSetLayoutBindings.end()) {
+			descriptorSetLayoutBindings.emplace(layout.setNumber, std::vector<VkDescriptorSetLayoutBinding>());
+		}
+
+		// Copy the bindings from vertReflectData into descriptorSetLayoutBindings
+		std::copy(layout.bindings.begin(),
+			layout.bindings.end(),
+			std::back_inserter(descriptorSetLayoutBindings[layout.setNumber]));
+	}
+}
+
+void Renderer::Pipeline::UpdateDescriptorSetLayouts()
+{
+	descriptorSetLayouts.resize(descriptorSetLayoutBindings.size());
+
+	for (auto& bindingSet : descriptorSetLayoutBindings) {
+		VkDescriptorSetLayoutCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		createInfo.bindingCount = bindingSet.second.size();
+		createInfo.pBindings = bindingSet.second.data();
+
+		if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, nullptr, &descriptorSetLayouts[bindingSet.first]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create descriptor set layout!");
+		}
+	}
+}
+
+void Renderer::Pipeline::CreateLayout()
+{
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
+	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+
+	if (vkCreatePipelineLayout(GetDevice(), &pipelineLayoutInfo, nullptr, &layout) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create pipeline layout!");
+	}
+}
+
+void Renderer::Pipeline::CreateDescriptorPool()
+{
+	auto& descriptorSetLayoutBindingsZero = descriptorSetLayoutBindings[0];
+	// Create descriptor pool based on the descriptor set count from the shader
+	std::vector<VkDescriptorPoolSize> poolSizes;
+	for (uint32_t i = 0; i < descriptorSetLayoutBindingsZero.size(); ++i) {
+		auto& descriptorSet = descriptorSetLayoutBindingsZero[i];
+		poolSizes.push_back({ descriptorSet.descriptorType, descriptorSet.descriptorCount * MAX_FRAMES_IN_FLIGHT });
+	}
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	poolInfo.pPoolSizes = poolSizes.data();
+	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor pool!");
+	}
+}
+
+void Renderer::Pipeline::CreateDescriptorSets()
+{
+	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	allocInfo.pSetLayouts = layouts.data();
+
+	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate descriptor sets!");
+	}
 }

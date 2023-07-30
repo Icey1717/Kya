@@ -147,6 +147,8 @@ void DebugMenu::SetupRenderer()
 		throw std::runtime_error("failed to create render pass!");
 	}
 
+	SetObjectName("Imgui Render Pass", (uint64_t)DebugMenu_Internal::g_imguiRenderPass, VK_OBJECT_TYPE_RENDER_PASS);
+
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 	ImGui_ImplVulkan_InitInfo initInfo = {};
@@ -246,7 +248,7 @@ ImTextureID DebugMenu::AddFrameBuffer(const FrameBuffer& frameBuffer)
 			// Handle sampler creation failure
 		}
 
-		gDebugFrameBuffers.emplace(frameBuffer.FBP, DebugFrameBuffer(ImGui_ImplVulkan_AddTexture(sampler, frameBuffer.colorImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL), sampler));
+		gDebugFrameBuffers.emplace(frameBuffer.FBP, DebugFrameBuffer(ImGui_ImplVulkan_AddTexture(sampler, frameBuffer.finalImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL), sampler));
 	}
 
 	return gDebugFrameBuffers[frameBuffer.FBP].texID;

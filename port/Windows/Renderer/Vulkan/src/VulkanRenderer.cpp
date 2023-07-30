@@ -214,6 +214,7 @@ public:
 	const VkBuffer& GetUniformBuffer(int index) { return uniformBuffers[index]; }
 	const VkQueue& GetGraphicsQueue() { return graphicsQueue; }
 	const VkCommandPool& GetCommandPool() { return commandPool; }
+	const VkExtent2D& GetSwapchainExtent() { return swapChainExtent; }
 
 private:
 	GLFWwindow* window;
@@ -558,7 +559,7 @@ private:
 		swapChainImageViews.resize(swapChainImages.size());
 
 		for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-			swapChainImageViews[i] = CreateImageView(swapChainImages[i], swapChainImageFormat);
+			VulkanImage::CreateImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, swapChainImageViews[i]);
 		}
 	}
 
@@ -602,28 +603,15 @@ private:
 		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
 		}
+
+		SetObjectName("Global Render Pass", (uint64_t)renderPass, VK_OBJECT_TYPE_RENDER_PASS);
 	}
 
 	void createGraphicsPipeline() {
-		auto vertShaderCode = Shader::readFile("shaders/base.vert.spv");
-		auto fragShaderCode = Shader::readFile("shaders/base.frag.spv");
+		auto vertShader = Shader::ReflectedModule("shaders/base.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		auto fragShader = Shader::ReflectedModule("shaders/base.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-		VkShaderModule vertShaderModule = Shader::createShaderModule(vertShaderCode);
-		VkShaderModule fragShaderModule = Shader::createShaderModule(fragShaderCode);
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = vertShaderModule;
-		vertShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = fragShaderModule;
-		fragShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -713,9 +701,6 @@ private:
 		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
-
-		vkDestroyShaderModule(device, fragShaderModule, nullptr);
-		vkDestroyShaderModule(device, vertShaderModule, nullptr);
 	}
 
 	void createFramebuffers() {
@@ -973,6 +958,10 @@ public:
 			throw std::runtime_error("failed to begin recording command buffer!");
 		}
 
+		// Clear passes
+		for (auto& frameBuffer : FrameBuffer::GetAll()) {
+			frameBuffer.second.ExecuteClearPass();
+		}
 		return;
 	}
 
@@ -998,6 +987,11 @@ public:
 		subresourceLayers.mipLevel = 0;
 		subresourceLayers.baseArrayLayer = 0;
 		subresourceLayers.layerCount = 1;
+
+		// Clear passes
+		for (auto& frameBuffer : FrameBuffer::GetAll()) {
+			frameBuffer.second.ExecuteFinalPass();
+		}
 
 		vkCmdBeginRenderPass(GetCurrentCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -1031,7 +1025,7 @@ public:
 		auto& frameBuffer = FrameBuffer::Get(GetHardwareState().FBP);
 
 		VkCommandBuffer cmd = BeginSingleTimeCommands();
-		// Transition the swapchain image layout back to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+		// Transition the swapchain image layout to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmd);
 
 		VkImageBlit imageBlit = {};
@@ -1040,6 +1034,28 @@ public:
 		imageBlit.dstSubresource = subresourceLayers;
 		imageBlit.dstOffsets[1] = { (int)swapChainExtent.width, (int)swapChainExtent.height, 1 };
 		vkCmdBlitImage(cmd, frameBuffer.colorImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, GetSwapchainImages()[presentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_LINEAR);
+
+		// Transition the swapchain image layout back to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, cmd);
+
+		EndSingleTimeCommands(cmd);
+#endif
+#if 0 // Merge
+		VkCommandBuffer cmd = BeginSingleTimeCommands();
+
+		// Transition the swapchain image layout to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmd);
+
+		for (auto& frameBuffer : FrameBuffer::GetAll()) {
+			VkImageBlit imageBlit = {};
+			imageBlit.srcSubresource = subresourceLayers;
+			imageBlit.srcOffsets[1] = { int32_t(GetRTSize().x / 2.5), GetRTSize().y / 2, 1 };
+			imageBlit.dstSubresource = subresourceLayers;
+			imageBlit.dstOffsets[1] = { (int)swapChainExtent.width, (int)swapChainExtent.height, 1 };
+			vkCmdBlitImage(cmd, frameBuffer.second.colorImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, GetSwapchainImages()[presentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imageBlit, VK_FILTER_LINEAR);
+
+			VulkanImage::TransitionImageLayout(frameBuffer.second.colorImage, GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL, cmd);
+		}
 
 		// Transition the swapchain image layout back to VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
 		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, cmd);
@@ -1446,6 +1462,26 @@ const VkQueue& GetGraphicsQueue()
 const VkCommandPool& GetCommandPool()
 {
 	return app.GetCommandPool();
+}
+
+const VkExtent2D& GetSwapchainExtent()
+{
+	return app.GetSwapchainExtent();
+}
+
+void SetObjectName(const char* name, const uint64_t objHandle, const VkObjectType objType)
+{
+	// Set the debug name using vkSetDebugUtilsObjectNameEXT
+	VkDebugUtilsObjectNameInfoEXT objectNameInfo = {};
+	objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+	objectNameInfo.objectType = objType;
+	objectNameInfo.objectHandle = (uint64_t)objHandle;
+	objectNameInfo.pObjectName = name;
+
+	static auto pvkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(GetInstance(), "vkSetDebugUtilsObjectNameEXT");
+	assert(pvkSetDebugUtilsObjectNameEXT);
+	VkResult result = pvkSetDebugUtilsObjectNameEXT(GetDevice(), &objectNameInfo);
+	assert(result == VK_SUCCESS);
 }
 
 GLFWwindow* GetGLFWWindow()

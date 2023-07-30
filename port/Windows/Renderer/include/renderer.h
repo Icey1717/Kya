@@ -43,6 +43,21 @@ namespace Renderer
 		ImageData pallete;
 	};
 
+	struct PrimPacked
+	{
+		uint32_t PRIM : 3;
+		uint32_t IIP : 1;
+		uint32_t TME : 1;
+		uint32_t FGE : 1;
+		uint32_t ABE : 1;
+		uint32_t AA1 : 1;
+		uint32_t FST : 1;
+		uint32_t CTXT : 1;
+		uint32_t FIX : 1;
+		uint32_t _PAD1 : 21;
+		uint32_t _PAD2 : 32;
+	};
+
 	void Setup();
 	void RenderImage(char* imageData, int width, int height);
 	void WaitUntilReady();
@@ -58,6 +73,7 @@ namespace Renderer
 	void SetRGBAQ(uint32_t R, uint32_t G, uint32_t B, uint32_t A, float Q);
 	void SetFrame(int fbp, int fbw, int psm, int fbmask);
 	void SetTest(uint32_t ate, uint32_t atst, uint32_t aref, uint32_t afail, uint32_t date, uint32_t datm, uint32_t zte, uint32_t ztst);
+	void SetPrim(PrimPacked prim);
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z);
 

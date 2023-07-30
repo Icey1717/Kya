@@ -189,13 +189,13 @@ struct edF32VECTOR3 {
 #endif
 
 #ifdef PLATFORM_PS2
-union __attribute__((aligned(16)))
+union
 #else
 #pragma pack(push,1)
 union alignas(16)
 #endif 
 edF32MATRIX4 {
-	struct {
+	struct  __attribute__((aligned(16))) {
 		float aa;
 		float ab;
 		float ac;
@@ -214,19 +214,21 @@ edF32MATRIX4 {
 		float dd;
 	};
 
-	struct {
+	struct  __attribute__((aligned(16))) {
 		edF32VECTOR4 v0;
 		edF32VECTOR4 v1;
 		edF32VECTOR4 v2;
 		edF32VECTOR4 v3;
 	};
 
-	struct {
+	struct  __attribute__((aligned(16))) {
 		edF32VECTOR4 rowX;
 		edF32VECTOR4 rowY;
 		edF32VECTOR4 rowZ;
 		edF32VECTOR4 rowT;
 	};
+
+	float raw[16];
 };
 #ifdef PLATFORM_WIN
 #pragma pack(pop)
@@ -310,5 +312,8 @@ struct SectorManagerSubObj {
 #else
 #define RESOLVE_FONT_SUB_DATA(a) a
 #endif
+
+#define UNPACK_V4_32 0x6c
+#define UNPACK_V4_32_MASKED 0x7c
 
 #endif //_TYPES_H

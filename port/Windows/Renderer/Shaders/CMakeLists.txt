@@ -10,7 +10,7 @@ set(DXC_COMPILER "$ENV{VULKAN_SDK}/Bin/dxc.exe")
 set(SHADER_OUTPUT_FOLDER "${CMAKE_SOURCE_DIR}/bin/WIN/shaders")
 
 message("Cleaning output folder: ${CMAKE_CURRENT_SOURCE_DIR}")
-file(REMOVE_RECURSE ${SHADER_OUTPUT_FOLDER})
+#file(REMOVE_RECURSE ${SHADER_OUTPUT_FOLDER})
 
 message("Finding shader source files in: ${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -67,14 +67,20 @@ foreach(HLSL ${HLSL_SOURCE_FILES})
 endforeach(HLSL)
 
 #PS2 Shaders
-add_subdirectory("ps2")
+set( PS2_SHADER_SRC "src/ps2/ps2.hlsl" )
+set( PS2_SHADER_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${PS2_SHADER_SRC}")
+
+add_subdirectory("compiler")
 
 add_custom_target(
 	Shaders
 	DEPENDS ${SPIRV_BINARY_FILES}
 	)
 
-add_dependencies(Shaders ShadersPS2)
+add_custom_command(
+	TARGET Shaders
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADER_OUTPUT_FOLDER}
+)
 
 target_sources(Shaders PRIVATE 
 	${GLSL_SOURCE_FILES}

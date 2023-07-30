@@ -2,8 +2,6 @@
 
 #include "VulkanIncludes.h"
 
-VkImageView CreateImageView(VkImage image, VkFormat format);
-
 class VulkanImage {
 public:
 	VulkanImage(char* splashFile, int width, int height);
@@ -20,13 +18,15 @@ public:
 	int GetHeight() { return texHeight; }
 
 	static void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
-	static 	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
+	static void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, VkCommandBuffer commandBuffer = VK_NULL_HANDLE);
 	
+	static void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+	static void CreateImageView(const VkImage& image, VkFormat format, VkImageAspectFlags aspect, VkImageView& imageView);
+
 private:
 	void CreateTextureImage(char* splashFile);
 	void CreateTextureImageView();
 	void CreateTextureSampler();
-	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
 	VkImage textureImage;
 	VkDeviceMemory textureImageMemory;

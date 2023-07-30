@@ -50,7 +50,9 @@ void PS2::CreateUniformBuffers() {
 		CreateBuffer(pixelBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, PS2_Internal::pixelUniformBuffers[i], PS2_Internal::pixelUniformBuffersMemory[i]);
 	}
 
-	PS2_Internal::vertexBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		PS2_Internal::vertexBuffers.emplace_back(Renderer::VertexIndexBufferSize, Renderer::VertexIndexBufferSize);
+	}
 }
 
 void PS2::UpdateUniformBuffers()

@@ -32,21 +32,21 @@ namespace PS2 {
 	};
 
 	struct GSTexValueCreateInfo {
-		GSTexValueCreateInfo(GSTexKey& inKey, LayoutVector& inDescriptorSetLayouts, LayoutBindingMap& inDescriptorSetLayoutBindings)
+		GSTexValueCreateInfo(GSTexKey& inKey, Renderer::LayoutVector& inDescriptorSetLayouts, Renderer::LayoutBindingMap& inDescriptorSetLayoutBindings)
 			: key(inKey)
 			, descriptorSetLayouts(inDescriptorSetLayouts)
 			, descriptorSetLayoutBindings(inDescriptorSetLayoutBindings)
 		{}
 
-		GSTexValueCreateInfo(const GSTexKey& inKey, const LayoutVector& inDescriptorSetLayouts, const LayoutBindingMap& inDescriptorSetLayoutBindings)
+		GSTexValueCreateInfo(const GSTexKey& inKey, const Renderer::LayoutVector& inDescriptorSetLayouts, const Renderer::LayoutBindingMap& inDescriptorSetLayoutBindings)
 			: key(inKey)
 			, descriptorSetLayouts(inDescriptorSetLayouts)
 			, descriptorSetLayoutBindings(inDescriptorSetLayoutBindings)
 		{}
 
 		const GSTexKey& key;
-		const LayoutVector& descriptorSetLayouts;
-		const LayoutBindingMap& descriptorSetLayoutBindings;
+		const Renderer::LayoutVector& descriptorSetLayouts;
+		const Renderer::LayoutBindingMap& descriptorSetLayoutBindings;
 	};
 
 	struct GSTexValue {
@@ -82,8 +82,8 @@ namespace PS2 {
 		std::vector<uint8_t> readBuffer;
 
 	private:
-		void CreateDescriptorSets(const LayoutVector& descriptorSetLayouts);
-		void CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutBindingsMap);
+		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts);
+		void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
 	};
 
 	struct GSTexEntry {
@@ -106,8 +106,8 @@ namespace PS2 {
 		std::vector<GSTexEntry> texcache;
 
 	public:
-		GSTexEntry& Create(const GSState::GSTex& TEX, const LayoutVector& descriptorSetLayouts, const LayoutBindingMap& descriptorSetLayoutBindings);
-		GSTexEntry& Lookup(const GSState::GSTex& TEX, const LayoutVector& descriptorSetLayouts, const LayoutBindingMap& descriptorSetLayoutBindings);
+		GSTexEntry& Create(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
+		GSTexEntry& Lookup(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
 		const std::vector<GSTexEntry>& GetEntries() { return texcache; }
 	};
 

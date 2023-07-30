@@ -10,4 +10,4 @@ add_executable(pss_test ${SOURCES})
 
 add_subdirectory(pss)
 
-target_link_libraries(pss_test pss)
+target_link_libraries(pss_test PRIVATE pss)

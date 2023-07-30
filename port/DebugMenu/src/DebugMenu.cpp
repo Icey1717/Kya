@@ -16,6 +16,8 @@
 #include "DebugMaterialPreviewer.h"
 #include "Callstack.h"
 #include "Log.h"
+#include "CameraViewManager.h"
+#include "DebugCamera.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -74,12 +76,17 @@ namespace DebugMenu_Internal {
 		}
 	}
 
-	void ShowFrameCounter() {
+	double deltaTime;
+
+	void Update() {
 		// Calculate the framerate
 		static double prevTime = 0.0;
 		double currentTime = glfwGetTime();
-		double deltaTime = currentTime - prevTime;
+		deltaTime = currentTime - prevTime;
 		prevTime = currentTime;
+	}
+
+	void ShowFrameCounter() {
 		double fps = 1.0 / deltaTime;
 
 		const ImVec2 windowSize(100.0f, 25.0f);
@@ -100,6 +107,7 @@ namespace DebugMenu_Internal {
 	static bool bShowLogWindow = true;
 	static bool bShowMaterialList = true;
 	static bool bShowTextureList = false;
+	static bool bShowFramebuffers = false;
 
 	void DrawMenu() {
 		ImGui::BeginMainMenuBar();
@@ -126,6 +134,7 @@ namespace DebugMenu_Internal {
 			{
 				bShowTextureList = !bShowTextureList;
 			}
+
 			ImGui::EndMenu();
 		}
 
@@ -188,6 +197,31 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
+	bool swapValue = false;
+
+	void ShowGame() {
+		if (!FrameBuffer::Exists(swapValue ? 0x100 : 0x80)) {
+			return;
+		}
+		auto& frameBuffer = FrameBuffer::Get(swapValue ? 0x100 : 0x80);
+		swapValue = !swapValue;
+
+		// Get the display size
+		const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+		const ImVec2 windowSize(640.0f, 480.0f);
+		ImGui::SetNextWindowSize(windowSize);
+		ImVec2 windowPos = ImVec2((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
+		ImGui::SetNextWindowPos(windowPos);
+		ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+
+		const ImVec2 image_size(640.0f * 2.5f, 480.0f * 2.0f);
+		// Use ImGui::Image to display the image
+		const ImTextureID gFrameBuffer = DebugMenu::AddFrameBuffer(frameBuffer);
+		ImGui::Image(gFrameBuffer, image_size);
+
+		ImGui::End();
+	}
+
 	void ShowLogWindow()
 	{
 		const auto& logMessages = Log::GetInstance().GetLogMessages();
@@ -206,6 +240,15 @@ namespace DebugMenu_Internal {
 				ImGui::SameLine();
 			}
 		}
+
+		int usage = 0;
+		for (const auto& log : logMessages)
+		{
+			usage += log.message.capacity() + log.category.capacity();
+		}
+
+		ImGui::SameLine();
+		ImGui::Text("Usage: %dmb", usage / 1024 / 1024);
 
 		// Begin tab bar
 		if (ImGui::BeginTabBar("LogTabs"))
@@ -376,15 +419,26 @@ namespace DebugMenu_Internal {
 			ShowTextureList();
 		}
 
-		ShowFramebuffers();
+		if (bShowFramebuffers) {
+			ShowFramebuffers();
+		}
+
+		ShowGame();
 		DrawMenu();
+		DebugCamera::ShowCamera();
 		ShowFrameCounter();
 	}
 }
 
 void DebugMenu::BuildImguiCommands()
 {
+	DebugMenu_Internal::Update();
 	DebugMenu_Internal::DrawInternal();
+}
+
+double DebugMenu::GetDeltaTime()
+{
+	return DebugMenu_Internal::deltaTime;
 }
 
 void DebugMenu::Init()

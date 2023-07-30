@@ -90,6 +90,25 @@ public:
 		return m;
 	}
 
+	__forceinline static GSVector4i load(int i)
+	{
+		return GSVector4i(_mm_cvtsi32_si128(i));
+	}
+
+	__forceinline GSVector4i(int x, int y, int z, int w)
+	{
+		// 4 gprs
+
+		// m = _mm_set_epi32(w, z, y, x);
+
+		// 2 gprs
+
+		GSVector4i xz = load(x).upl32(load(z));
+		GSVector4i yw = load(y).upl32(load(w));
+
+		*this = xz.upl32(yw);
+	}
+
 	__forceinline void operator = (int i)
 	{
 #if _M_SSE >= 0x501
@@ -554,6 +573,31 @@ public:
 		return (int)u8[i];
 
 #endif
+	}
+
+	__forceinline GSVector4i u16to32() const
+	{
+		return upl16();
+	}
+
+	__forceinline GSVector4i sub32(const GSVector4i& v) const
+	{
+		return GSVector4i(_mm_sub_epi32(m, v.m));
+	}
+
+	__forceinline GSVector4i sra32(int i) const
+	{
+		return GSVector4i(_mm_srai_epi32(m, i));
+	}
+
+	__forceinline GSVector4i ps32() const
+	{
+		return GSVector4i(_mm_packs_epi32(m, m));
+	}
+
+	__forceinline static void storel(void* p, const GSVector4i& v)
+	{
+		_mm_storel_epi64((__m128i*)p, v.m);
 	}
 
 	template<int src, class T> __forceinline GSVector4i gather64_8(const T* ptr) const

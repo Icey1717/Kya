@@ -10,6 +10,7 @@ struct DescriptorSetLayoutData {
 };
 
 struct ReflectData {
+
 	std::vector<DescriptorSetLayoutData> setLayouts;
 	std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 

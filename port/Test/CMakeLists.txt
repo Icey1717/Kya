@@ -14,7 +14,7 @@ target_compile_definitions(KyaPortTest PRIVATE TEST_DATA_DIRECTORY="${CMAKE_CURR
 target_compile_definitions(Renderer PRIVATE HEADLESS)
 
 set_target_properties(KyaPortTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${KYA_EXECUTABLE_DIRECTORY}")
-target_link_libraries(KyaPortTest gtest gtest_main Kya Renderer DebugMenu)
+target_link_libraries(KyaPortTest PRIVATE gtest gtest_main Kya Renderer DebugMenu)
 
 add_test(KyaPortTest KyaPortTest)
 set_tests_properties(KyaPortTest PROPERTIES WORKING_DIRECTORY ${KYA_EXECUTABLE_DIRECTORY})

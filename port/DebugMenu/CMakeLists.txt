@@ -1,4 +1,5 @@
-project(DebugMenu)
+set(TargetName "DebugMenu")
+project(${TargetName})
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -9,6 +10,8 @@ set(SOURCES
 	"src/DebugMaterialPreviewer.cpp"
 	"src/DebugCallstackPreviewer.h"
 	"src/DebugCallstackPreviewer.cpp"
+	"src/DebugCamera.h"
+	"src/DebugCamera.cpp"
 	"src/DebugMenu.cpp"
 	"src/DebugHelpers.cpp"
 	"src/DebugRendererVulkan.cpp"
@@ -18,8 +21,8 @@ set(SOURCES
 	"include/Callstack.h"
 )
 
-add_library(DebugMenu ${SOURCES})
+add_library(${TargetName} ${SOURCES})
 
-target_link_libraries(DebugMenu Renderer Log Kya Dbghelp.lib)
+target_link_libraries(${TargetName} PRIVATE Renderer Log Kya Dbghelp.lib imgui)
 
-target_include_directories(DebugMenu PUBLIC "include")
+target_include_directories(${TargetName} PUBLIC "include")

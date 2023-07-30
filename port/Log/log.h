@@ -88,10 +88,11 @@ public:
 
 			// Notify the log thread to flush logs
 			logCondition.notify_all();
+			printf("%s\n", message.c_str());
 
-			if (logMessages.size() > maxBufferSize) {
-				logMessages.pop_front(); // Remove the oldest log message if the buffer exceeds the maximum size
-			}
+			//if (logMessages.size() > maxBufferSize) {
+			//	logMessages.pop_front(); // Remove the oldest log message if the buffer exceeds the maximum size
+			//}
 		}
 	}
 
@@ -152,7 +153,7 @@ private:
 			// Flush logs
 			while (!consoleLogMessages.empty()) {
 				const LogMessage& message = consoleLogMessages.front();
-				printf("%s\n", message.message.c_str());
+				//printf("%s\n", message.message.c_str());
 				consoleLogMessages.pop_front();
 			}
 		}

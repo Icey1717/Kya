@@ -40,7 +40,6 @@ set (SOURCES
 	"Vulkan/src/UniformBuffer.cpp"
 	"Vulkan/src/GSState.h"
 	"Vulkan/src/GSVector.h"
-	"Vulkan/src/MD5.h"
 	"include/renderer.h"
 	"include/delegate.h"
 )
@@ -63,10 +62,10 @@ if (RENDERER_HEADLESS OR FORCE_RENDERER_HEADLESS)
 endif()
 
 add_library(reflect-print ${ReflectPrintSrc})
-target_link_libraries(reflect-print ${Vulkan_LIBRARIES} spirv-reflect-static)
+target_link_libraries(reflect-print PRIVATE ${Vulkan_LIBRARIES} spirv-reflect-static)
 target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")
 
-target_link_libraries(Renderer glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log)
+target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive)
 
 target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR} "${CMAKE_CURRENT_LIST_DIR}/Vulkan/src")
 

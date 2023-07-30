@@ -737,56 +737,8 @@ void PS2::GSTexValue::CreateResources() {
 	const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-	// Create the images that will be used as render targets
-	VkImageCreateInfo colorImageCreateInfo = {};
-	colorImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	colorImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-	colorImageCreateInfo.extent.width = width;
-	colorImageCreateInfo.extent.height = height;
-	colorImageCreateInfo.extent.depth = 1;
-	colorImageCreateInfo.mipLevels = 1;
-	colorImageCreateInfo.arrayLayers = 1;
-	colorImageCreateInfo.format = format;
-	colorImageCreateInfo.tiling = tiling;
-	colorImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorImageCreateInfo.usage = usage;
-	colorImageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-	VkResult result = vkCreateImage(GetDevice(), &colorImageCreateInfo, nullptr, &image);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create Vulkan image.");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(GetDevice(), image, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	if (vkAllocateMemory(GetDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate image memory!");
-	}
-
-	vkBindImageMemory(GetDevice(), image, imageMemory, 0);
-
-	// Create an image view for the color image
-	VkImageViewCreateInfo colorImageViewCreateInfo = {};
-
-	colorImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	colorImageViewCreateInfo.image = image;
-	colorImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	colorImageViewCreateInfo.format = format;
-	colorImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	colorImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-	colorImageViewCreateInfo.subresourceRange.levelCount = 1;
-	colorImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-	colorImageViewCreateInfo.subresourceRange.layerCount = 1;
-
-	vkCreateImageView(GetDevice(), &colorImageViewCreateInfo, nullptr, &imageView);
+	VulkanImage::CreateImage(width, height, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -821,7 +773,7 @@ void PS2::GSTexValue::CreateResources() {
 	}
 }
 
-void PS2::GSTexValue::CreateDescriptorSets(const LayoutVector& descriptorSetLayouts) {
+void PS2::GSTexValue::CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts) {
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
 
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -889,7 +841,7 @@ void PS2::GSTexValue::CreateDescriptorSets(const LayoutVector& descriptorSetLayo
 	}
 }
 
-void PS2::GSTexValue::CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutBindingsMap) {
+void PS2::GSTexValue::CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap) {
 	// Create descriptor pool based on the descriptor set count from the shader
 
 	auto& descriptorSetLayoutBindings = descriptorSetLayoutBindingsMap.at(0);
@@ -914,7 +866,7 @@ namespace PS2_Internal {
 	PS2::TextureCache gTextureCache;
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Create(const GSState::GSTex& TEX, const LayoutVector& descriptorSetLayouts, const LayoutBindingMap& descriptorSetLayoutBindings)
+PS2::GSTexEntry& PS2::TextureCache::Create(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
 {
 	const GSTexKey key = GSTexKey::CreateFromTEX(TEX);
 	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key, descriptorSetLayouts, descriptorSetLayoutBindings);
@@ -922,7 +874,7 @@ PS2::GSTexEntry& PS2::TextureCache::Create(const GSState::GSTex& TEX, const Layo
 	return texcache.back();
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Lookup(const GSState::GSTex& TEX, const LayoutVector& descriptorSetLayouts, const LayoutBindingMap& descriptorSetLayoutBindings)
+PS2::GSTexEntry& PS2::TextureCache::Lookup(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
 {
 	const GSTexKey key = GSTexKey::CreateFromTEX(TEX);
 	for (auto& entry : texcache) {

@@ -1,11 +1,18 @@
 #pragma once
 
 #include "VulkanIncludes.h"
+#include "VulkanReflect.h"
 #include <vector>
 #include <string>
 
 namespace Shader {
-	std::vector<char> readFile(const std::string& filename);
+	struct ReflectedModule {
+		ReflectedModule(const std::string& filename, const VkShaderStageFlagBits stage, bool bFromArchive = false);
 
-	VkShaderModule createShaderModule(const std::vector<char>& code);
+		~ReflectedModule();
+
+		VkPipelineShaderStageCreateInfo shaderStageCreateInfo;
+		ReflectData reflectData;
+		VkShaderModule shaderModule;
+	};
 }

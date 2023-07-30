@@ -7,7 +7,7 @@
 #include "VulkanShader.h"
 #include "VulkanBuffer.h"
 #include <unordered_map>
-#include "MD5.h"
+#include "hash.h"
 #include "FrameBuffer.h"
 #include "VulkanImage.h"
 #include "GSState.h"
@@ -26,17 +26,7 @@ namespace PS2_Internal {
 
 	void createDescriptorSets() {
 		for (auto& pipeline : PS2::GetPipelines()) {
-			std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.second.descriptorSetLayouts[0]);
-			VkDescriptorSetAllocateInfo allocInfo{};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = pipeline.second.descriptorPool;
-			allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-			allocInfo.pSetLayouts = layouts.data();
-
-			pipeline.second.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-			if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, pipeline.second.descriptorSets.data()) != VK_SUCCESS) {
-				throw std::runtime_error("failed to allocate descriptor sets!");
-			}
+			pipeline.second.CreateDescriptorSets();
 
 			for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 				VkDescriptorBufferInfo vertexConstantBuffer{};
@@ -74,23 +64,7 @@ namespace PS2_Internal {
 
 	void createDescriptorPool() {
 		for (auto& pipeline : PS2::GetPipelines()) {
-			auto& descriptorSetLayoutBindings = pipeline.second.descriptorSetLayoutBindings[0];
-			// Create descriptor pool based on the descriptor set count from the shader
-			std::vector<VkDescriptorPoolSize> poolSizes;
-			for (uint32_t i = 0; i < descriptorSetLayoutBindings.size(); ++i) {
-				auto& descriptorSet = descriptorSetLayoutBindings[i];
-				poolSizes.push_back({ descriptorSet.descriptorType, descriptorSet.descriptorCount * MAX_FRAMES_IN_FLIGHT });
-			}
-
-			VkDescriptorPoolCreateInfo poolInfo{};
-			poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-			poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-			poolInfo.pPoolSizes = poolSizes.data();
-			poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-			if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &pipeline.second.descriptorPool) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create descriptor pool!");
-			}
+			pipeline.second.CreateDescriptorPool();
 		}
 	}
 
@@ -187,6 +161,10 @@ namespace Renderer {
 		PS2::GetGSState().TEST = NewTest;
 	}
 
+	void SetPrim(PrimPacked prim) {
+		PS2::GetGSState().PRIM = { prim.PRIM, prim.IIP, prim.TME, prim.FGE, prim.ABE, prim.AA1, prim.FST, prim.CTXT, prim.FIX };
+	}
+
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix) {
 		PS2::GetGSState().PRIM = { prim, iip, tme, fge, abe, aa1, fst, ctxt, fix };
 	}
@@ -200,15 +178,26 @@ namespace Renderer {
 	{
 		uint32_t skip = Skip;
 		GS_PRIM prim = (GS_PRIM)PS2::GetGSState().PRIM.PRIM;
-		ASSERT(m_vertex.tail < m_vertex.maxcount + 3);
+		assert(m_vertex.tail < m_vertex.maxcount + 3);
 
 		size_t head = m_vertex.head;
 		size_t tail = m_vertex.tail;
 		size_t next = m_vertex.next;
 		size_t xy_tail = m_vertex.xy_tail;
 
-		// callers should write XYZUVF to m_v.m[1] in one piece to have this load store-forwarded, either by the CPU or the compiler when this function is in lined
 		m_vertex.buff[m_vertex.tail] = PS2_Internal::MakeVertex(x, y, z);
+
+		GSVector4i m_ofxy = GSVector4i(
+			0x8000,
+			0x8000,
+			(int)OFX - 15,
+			(int)OFY - 15);
+
+		GSVector4i v1;
+		v1.x = x | ((uint32_t)y << 0x10);
+
+		GSVector4i xy = v1.xxxx().u16to32().sub32(m_ofxy);
+		GSVector4i::storel(&m_vertex.xy[xy_tail & 3], xy.upl64(xy.sra32(4).zwzw()).ps32());
 
 		m_vertex.tail = ++tail;
 		m_vertex.xy_tail = ++xy_tail;
@@ -319,7 +308,7 @@ namespace Renderer {
 				break;
 			}
 			
-			//skip |= test.mask() & 15;
+			skip |= test.mask() & 15;
 		}
 
 		if (skip != 0)
@@ -338,7 +327,7 @@ namespace Renderer {
 				m_vertex.head = head + 1;
 				// fall through
 			case GS_TRIANGLEFAN:
-				//if (tail >= m_vertex.maxcount) GrowVertexBuffer(); // in case too many vertices were skipped
+				if (tail >= m_vertex.maxcount) assert(false); // in case too many vertices were skipped
 				break;
 			default:
 				__assume(0);
@@ -347,7 +336,7 @@ namespace Renderer {
 			return;
 		}
 
-		//if (tail >= m_vertex.maxcount) GrowVertexBuffer();
+		if (tail >= m_vertex.maxcount) assert(false);
 
 		uint16_t* RESTRICT buff = &m_index.buff[m_index.tail];
 
@@ -511,6 +500,10 @@ struct PSSelector
 	operator uint64_t() { return key; }
 
 	PSSelector() : key(0) {}
+
+	void ResetStates() {
+		*this = PSSelector();
+	}
 };
 
 static class GSUtilMaps
@@ -589,6 +582,7 @@ Renderer::GS_PRIM_CLASS GetPrimClass(uint32_t prim) {
 }
 
 GSSelector g_GSSelector;
+PSSelector g_PSSelector;
 
 void Renderer::Draw() {
 	if (Renderer::m_index.tail == 0) {
@@ -596,6 +590,7 @@ void Renderer::Draw() {
 	}
 
 	g_GSSelector.ResetStates();
+	g_PSSelector.ResetStates();
 
 	const PS2::GSState& state = PS2::GetGSState();
 
@@ -639,13 +634,10 @@ void Renderer::Draw() {
 	g_GSSelector.iip = state.PRIM.IIP;
 	g_GSSelector.prim = GetPrimClass(state.PRIM.PRIM);
 
-	auto& frameBuffer = FrameBuffer::Get(state.FBP);
-
-
-	const std::string CONFIG_NAME = "GS_PRIM_" + std::to_string(g_GSSelector.prim)
-		+ "_POINT_" + std::to_string(g_GSSelector.point)
-		+ "_LINE_" + std::to_string(g_GSSelector.line)
-		+ "_IIP_" + std::to_string(g_GSSelector.iip);
+	const std::string CONFIG_NAME = std::string("GS_PRIM_") + std::to_string(g_GSSelector.prim)
+		+ std::string("_POINT_") + std::to_string(g_GSSelector.point)
+		+ std::string("_LINE_") + std::to_string(g_GSSelector.line)
+		+ std::string("_IIP_") + std::to_string(g_GSSelector.iip);
 
 	const std::string hash = GetMD5String(CONFIG_NAME);
 
@@ -661,6 +653,8 @@ void Renderer::Draw() {
 		if (hwState.bActivePass) {
 			vkCmdEndRenderPass(GetCurrentCommandBuffer());
 		}
+
+		FrameBuffer& frameBuffer = FrameBuffer::Get(state.FBP);
 
 		hwState.FBP = state.FBP;
 		hwState.bActivePass = true;
@@ -734,8 +728,9 @@ void PS2::Setup()
 	CreateUniformBuffers();
 	PS2_Internal::createDescriptorSets();
 
-	Renderer::m_vertex.buff = (Renderer::GSVertex*)_aligned_malloc(sizeof(Renderer::GSVertex) * 0x1000, 32);
-	Renderer::m_index.buff = (uint16_t*)_aligned_malloc(sizeof(uint16_t) * 0x1000, 32);
+	Renderer::m_vertex.buff = (Renderer::GSVertex*)_aligned_malloc(sizeof(Renderer::GSVertex) * Renderer::VertexIndexBufferSize, 32);
+	Renderer::m_index.buff = (uint16_t*)_aligned_malloc(sizeof(uint16_t) * Renderer::VertexIndexBufferSize, 32);
+	Renderer::m_vertex.maxcount = Renderer::VertexIndexBufferSize;
 }
 
 void PS2::BeginFrame()

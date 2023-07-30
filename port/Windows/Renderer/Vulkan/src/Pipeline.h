@@ -1,13 +1,33 @@
 #pragma once
 
 #include "VulkanIncludes.h"
+#include "VulkanReflect.h"
 #include <unordered_map>
 #include <string>
 
-namespace PS2 {
+namespace Renderer {
 	using LayoutBindingMap = std::unordered_map<int, std::vector<VkDescriptorSetLayoutBinding>>;
 	using LayoutVector = std::vector<VkDescriptorSetLayout>;
 
+	struct Pipeline {
+		VkPipeline pipeline;
+		VkPipelineLayout layout;
+		VkDescriptorPool descriptorPool;
+		std::vector<VkDescriptorSet> descriptorSets;
+		LayoutVector descriptorSetLayouts;
+		// Set - Descriptor Binding
+		LayoutBindingMap descriptorSetLayoutBindings;
+
+		void AddBindings(ReflectData& reflectData);
+		void UpdateDescriptorSetLayouts();
+		void CreateLayout();
+
+		void CreateDescriptorPool();
+		void CreateDescriptorSets();
+	};
+}
+
+namespace PS2 {
 	struct PipelineKey {
 		std::string hash;
 		VkPrimitiveTopology topology;
@@ -24,17 +44,7 @@ namespace PS2 {
 		}
 	};
 
-	struct Pipeline {
-		VkPipeline pipeline;
-		VkPipelineLayout layout;
-		VkDescriptorPool descriptorPool;
-		std::vector<VkDescriptorSet> descriptorSets;
-		LayoutVector descriptorSetLayouts;
-		// Set - Descriptor Binding
-		LayoutBindingMap descriptorSetLayoutBindings;
-	};
-
-	using PipelineMap = std::unordered_map<PipelineKey, Pipeline, PipelineKeyHash>;
+	using PipelineMap = std::unordered_map<PipelineKey, Renderer::Pipeline, PipelineKeyHash>;
 
 	inline bool operator==(const PipelineKey& lhs, const PipelineKey& rhs) {
 		return lhs.hash == rhs.hash && lhs.topology == rhs.topology;

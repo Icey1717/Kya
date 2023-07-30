@@ -1,7 +1,8 @@
-set(TargetName "Log")
+set(TargetName "Archive")
 
 set(SOURCES 
-	"log.h" 
+	"archive.h" 
+	"archive.cpp" 
 )
 
 add_library(${TargetName} ${SOURCES})

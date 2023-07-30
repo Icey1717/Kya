@@ -59,7 +59,7 @@ namespace PS2 {
 		int indexMax;
 
 	public:
-		VertexBufferPS2(int vertexCount = 0x1000, int indexCount = 0x1000)
+		VertexBufferPS2(int vertexCount, int indexCount)
 			: vertexHead(0)
 			, vertexMax(vertexCount)
 			, indexHead(0)
