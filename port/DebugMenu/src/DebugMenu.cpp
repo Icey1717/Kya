@@ -143,14 +143,35 @@ namespace DebugMenu_Internal {
 
 	void ShowTextureCache() {
 		auto texCache = PS2::GetTextureCache();
-		ImGui::Begin("Image", &bShowTextureCache, ImGuiWindowFlags_AlwaysAutoResize);
-		for (const auto& entry : texCache.GetEntries()) {
-			ImVec2 imageSize(400, 300); // Set the image size
+		ImGui::Begin("Texture Cache", &bShowTextureCache, ImGuiWindowFlags_AlwaysAutoResize);
 
-			// Use ImGui::Image to display the image
-			ImGui::Image(FindOrAddTexture(entry), imageSize);
+		static int selectedMaterialIndex = -1;
+
+		for (int i = 0; i < texCache.GetEntries().size(); i++) {
+			char buttonText[256]; // Buffer to hold the formatted text
+
+			// Format the text using sprintf
+			std::sprintf(buttonText, "Cached Texture %d", i + 1);
+
+			if (ImGui::Selectable(buttonText)) {
+				selectedMaterialIndex = i;
+				MaterialPreviewer::Reset();
+			}
 		}
+
 		ImGui::End();
+
+		if (selectedMaterialIndex >= 0) {
+			auto& selectedMaterial = texCache.GetEntries()[selectedMaterialIndex];
+		
+			bool bOpen = true;
+			std::string name = "Material " + std::to_string(selectedMaterialIndex + 1);
+			MaterialPreviewer::Show(selectedMaterial.value, FindOrAddTexture(selectedMaterial), name, bOpen);
+		
+			if (!bOpen) {
+				selectedMaterialIndex = -1;
+			}
+		}
 	}
 
 	int gRenderFramebufferIndex = 0;

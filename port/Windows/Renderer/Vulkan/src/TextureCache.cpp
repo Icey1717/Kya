@@ -9,8 +9,11 @@
 #include "VulkanImage.h"
 #include <array>
 #include "UniformBuffer.h"
+#include "log.h"
 
 Renderer::TextureData gImageData;
+
+#define LOG_TEXCACHE(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "Texture Cache", fmt, ##__VA_ARGS__);
 
 void Renderer::SetImagePointer(Renderer::TextureData inImage)
 {
@@ -589,7 +592,8 @@ namespace PS2_Internal {
 				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
 				ReadAndExpandBlock4_32(src + (x * width * 0x10) + (y * sourceBlockSize), read_dst, dstpitch, pal);
 
-				//((uint32_t*)read_dst)[0] = 0xFFFF00FF;
+				// Magenta
+				((uint32_t*)read_dst)[0] = 0xFFFF00FF;
 			}
 		}
 	}
@@ -615,11 +619,12 @@ namespace PS2_Internal {
 				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
 				ReadAndExpandBlock8_32(src + (x * 0x100) + (y * 0x100 * xBlocks * bigBlockX), read_dst, dstpitch, pal);
 
-				//((uint32_t*)read_dst)[0] = 0xFFFF00FF;
+				// Cyan
+				((uint32_t*)read_dst)[0] = 0xFFFFFF00;
 			}
 		}
 
-		//base[0] = 0xFF0000FF;
+		base[0] = 0xFF0000FF;
 	}
 }
 
@@ -676,7 +681,10 @@ void PS2::GSTexValue::UploadImage(const Renderer::TextureData& textureData) {
 	// 0x40 * 8 = 0x200
 	// 0x80 * 4 = 0x200
 	const int pixelPerByte = (32 / textureData.image.bpp);
-	const int srcpitch = textureData.image.readWidth * pixelPerByte;
+	const int srcpitch = (textureData.image.readHeight) * 4;
+
+	LOG_TEXCACHE("Uploading texture - bpp: %d, w: %d, h: %d, rw: %d, rh: %d", textureData.image.bpp, width, height, textureData.image.readWidth, textureData.image.readHeight);
+	LOG_TEXCACHE("Uploading texture - srcpitch: %d", srcpitch);
 
 	uint8_t* const pWriteData = writeBuffer.data();
 	uint8_t* const pReadData = readBuffer.data();

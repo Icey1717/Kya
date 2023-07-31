@@ -121,8 +121,8 @@ void edDmaLoadFromFastRam_nowait(void* pSrc, uint qwc, void* pDest)
 	SYNC(0);
 #else
 	memcpy(pDest, pSrc, qwc);
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam_nowait: Copying %d (src: %p | dst: %p)", qwc, pSrc, pDest);
 #endif
+	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam_nowait: Copying 0x%X (src: %p | dst: %p)", qwc, pSrc, pDest);
 	return;
 }
 
@@ -148,8 +148,8 @@ bool edDmaLoadFromFastRam(void* pSrc, uint qwc, void* pDest)
 	pReg->CHCR = edDmaChannelList[8].QWC | 0x100;
 #else
 	memcpy(pDest, pSrc, qwc);
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam: Copying %d (src: %p | dst: %p)", qwc, pSrc, pDest);
 #endif
+	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam: Copying 0x%X (src: %p | dst: %p)", qwc, pSrc, pDest);
 	bVar2 = edDmaWaitDma(madr);
 	return bVar2;
 }

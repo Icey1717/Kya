@@ -70,6 +70,8 @@ char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 #define PKT_TO_SCRATCHPAD(pkt) (void*)((uint)pkt & 0xfffffff)
 #endif
 
+#define PKT_SIZE(end, begin) (ulong)end - (ulong)begin
+
 int gCurTime = 0;
 int gStepTime = 0;
 
@@ -2782,6 +2784,8 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	edpkt_data* peVar17;
 	edF32VECTOR4* qwc;
 
+	RENDER_LOG("ed3DFlushStripInit %p", pPkt);
+
 	peVar3 = (ed_3d_strip*)pNode->pData;
 	uVar2 = pNode->header.typeField.unknown;
 	PTR_AnimScratchpad_00449554->field_0x0 = (int)(short)uVar2;
@@ -2796,7 +2800,6 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0076, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c010076
-
 	pPkt[1] = PTR_AnimScratchpad_00449554->asPkt;
 
 	pPkt[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
@@ -2807,8 +2810,8 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	pPkt[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt[4].asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt[4].asU32[3] = SCE_VIF1_SET_UNPACK(0x02ba, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c0102ba00000000;
-
 	pPkt[5] = PTR_AnimScratchpad_00449554->asPkt;
+
 	ppuVar15 = pPkt + 6;
 	if ((uVar2 & 2) != 0) {
 		if ((peVar3->flags_0x0 & 0x2000000) == 0) {
@@ -2850,7 +2853,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		peVar17 = (ppuVar15 + 2);
 		ppuVar15 = (edpkt_data*)peVar17;
 		if (gBackupPKT != (edpkt_data*)0x0) {
-			uint pktLen = peVar17 - gStartPKT_SPR;
+			uint pktLen = PKT_SIZE(peVar17, gStartPKT_SPR);
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
 			edDmaLoadFromFastRam_nowait(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 			gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
@@ -2867,7 +2870,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		}
 		if (gBackupPKT != (edpkt_data*)0x0) {
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
-			uint pktLen = ppuVar15 - SCRATCHPAD_ADDRESS(0x7000080);
+			uint pktLen = PKT_SIZE(ppuVar15, SCRATCHPAD_ADDRESS(0x7000080));
 			edDmaLoadFromFastRam_nowait(SCRATCHPAD_ADDRESS(0x70000800), pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
 			ppuVar15 = SCRATCHPAD_ADDRESS(0x70001000);
@@ -3001,8 +3004,9 @@ void ed3DFlushStrip(edNODE* pNode)
 		uVar8 = (uint)(ushort)pRenderInput->meshSectionCount_0x3a % 3;
 		iVar2 = (ushort)pRenderInput->meshSectionCount_0x3a - uVar8;
 		ppuVar20 = ed3DFlushStripInit(pRVar18, pNode, 1);
+
 		if (SCRATCHPAD_ADDRESS(0x70003000) < ppuVar20 + (uint)(ushort)pRenderInput->meshSectionCount_0x3a * 2) {
-			uint pktLen = (ppuVar20 - gStartPKT_SPR);
+			uint pktLen = PKT_SIZE(ppuVar20, gStartPKT_SPR);
 			edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 			ppuVar20 = SCRATCHPAD_ADDRESS(0x70001000);
 			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
@@ -3015,6 +3019,8 @@ void ed3DFlushStrip(edNODE* pNode)
 				ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				ppuVar6->asU32[2] = SCE_VIF1_SET_BASE(ed3DVU1Addr_Scratch[ed3DVU1BufferCur] + 1, 0);
 				ppuVar6->asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
+
+				ED3D_LOG(LogLevel::VeryVerbose, "Send strip Vif list A: %p", pVifList);
 
 				// Send strip Vif list.
 				ppuVar6[1].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
@@ -3051,6 +3057,8 @@ void ed3DFlushStrip(edNODE* pNode)
 
 				iVar13 = pVifList + uVar5 * 0x10;
 				iVar15 = pVifList + uVar5 * 0x20;
+
+				ED3D_LOG(LogLevel::VeryVerbose, "Send strip Vif list B: %p", pVifList);
 
 				ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				ppuVar6->asU32[2] = SCE_VIF1_SET_BASE(piVar14[0] + 1, 0);
@@ -3219,7 +3227,7 @@ void ed3DFlushStrip(edNODE* pNode)
 		short meshSectionCount = pRenderInput->meshSectionCount_0x3a;
 		ppuVar6 = ed3DFlushStripInit(pRVar18, pNode, 1);
 		if (SCRATCHPAD_ADDRESS(0x70003000) < ppuVar6 + meshSectionCount * 4) {
-			uint pktLen = ppuVar6 - gStartPKT_SPR;
+			uint pktLen = PKT_SIZE(ppuVar6, gStartPKT_SPR);
 			edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 			ppuVar6 = SCRATCHPAD_ADDRESS(0x70001000);
 			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
@@ -3232,7 +3240,7 @@ void ed3DFlushStrip(edNODE* pNode)
 					uVar8 = uVar8 & 0xfffffffd | 1;
 				LAB_002a5dac:
 					if (SCRATCHPAD_ADDRESS(0x70003fff) < ppuVar6 + 0x80) {
-						uint pktLen = ppuVar6 - gStartPKT_SPR;
+						uint pktLen = PKT_SIZE(ppuVar6, gStartPKT_SPR);
 						edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 						ppuVar6 = SCRATCHPAD_ADDRESS(0x70001000);
 						gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
@@ -3247,6 +3255,8 @@ void ed3DFlushStrip(edNODE* pNode)
 					ppuVar6[1] = PTR_AnimScratchpad_00449554->asPkt;
 
 					ppuVar6[2] = gRefOptionsforVU1Buf[ed3DVU1BufferCur];
+
+					ED3D_LOG(LogLevel::VeryVerbose, "Send strip Vif list C: %p", pVifList);
 
 					// Send strip Vif list.
 					ppuVar6[3].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
@@ -3284,7 +3294,7 @@ void ed3DFlushStrip(edNODE* pNode)
 						goto LAB_002a5dac;
 					}
 					if (SCRATCHPAD_ADDRESS(0x70003fff) < ppuVar6 + 0x80) {
-						uint pktLen = ppuVar6 - gStartPKT_SPR;
+						uint pktLen = PKT_SIZE(ppuVar6,gStartPKT_SPR);
 						edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 						ppuVar6 = SCRATCHPAD_ADDRESS(0x70001000);
 						gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
@@ -3525,7 +3535,7 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 	edpkt_data* peVar4;
 	edLIST* pRVar5;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterialNode");
+	ED3D_LOG(LogLevel::Verbose, "ed3DFlushStripList");
 
 	pRVar5 = (edLIST*)pList->pPrev;
 
@@ -3632,7 +3642,7 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 					}
 				}
 				if (SCRATCHPAD_ADDRESS(0x70003000) < g_VifRefPktCur) {
-					uint pktLen = g_VifRefPktCur - gStartPKT_SPR;
+					uint pktLen = PKT_SIZE(g_VifRefPktCur, gStartPKT_SPR);
 					edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 					g_VifRefPktCur = SCRATCHPAD_ADDRESS(0x70001000);
 					gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
@@ -3652,7 +3662,7 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 					}
 				}
 				if (SCRATCHPAD_ADDRESS(0x70003000) < g_VifRefPktCur) {
-					uint pktLen = g_VifRefPktCur - gStartPKT_SPR;
+					uint pktLen = PKT_SIZE(g_VifRefPktCur, gStartPKT_SPR);
 					edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
 					g_VifRefPktCur = SCRATCHPAD_ADDRESS(0x70001000);
 					gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
@@ -3660,7 +3670,7 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 				}
 			}
 		}
-		uint pktLen = g_VifRefPktCur - gStartPKT_SPR;
+		uint pktLen = PKT_SIZE(g_VifRefPktCur, gStartPKT_SPR);
 		if (pktLen == 0) {
 			g_VifRefPktCur = gBackupPKT;
 		}
@@ -4293,6 +4303,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 		}
 		g_VifRefPktCur = ed3DFlushMaterialAnimST(g_VifRefPktCur);
 	}
+
 	ed3DFlushMaterialNode(pRenderMeshData);
 	peVar4 = g_VifRefPktCur;
 	if (*gMaterialNbPrimSend == 0) {

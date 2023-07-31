@@ -149,57 +149,6 @@ namespace VU1Emu {
 		_$UnpackData_XYZ32_Loop(vi14, VIF_AS_F(vi03, 0));
 	}
 
-	// Overload the * operator as a non-member function
-	edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs) 
-	{
-		edF32VECTOR4 ret;
-		ret.x = lhs.x * rhs.x;
-		ret.y = lhs.y * rhs.y;
-		ret.z = lhs.z * rhs.z;
-		ret.w = lhs.w * rhs.w;
-		return ret;
-	}
-
-	edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const float& rhs) 
-	{
-		edF32VECTOR4 ret;
-		ret.x = lhs.x * rhs;
-		ret.y = lhs.y * rhs;
-		ret.z = lhs.z * rhs;
-		ret.w = lhs.w * rhs;
-		return ret;
-	}
-
-	edF32VECTOR4 operator+(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs) 
-	{
-		edF32VECTOR4 ret;
-		ret.x = lhs.x + rhs.x;
-		ret.y = lhs.y + rhs.y;
-		ret.z = lhs.z + rhs.z;
-		ret.w = lhs.w + rhs.w;
-		return ret;
-	}
-
-	edF32VECTOR4 operator+(const edF32VECTOR4& lhs, const float& rhs)
-	{
-		edF32VECTOR4 ret;
-		ret.x = lhs.x + rhs;
-		ret.y = lhs.y + rhs;
-		ret.z = lhs.z + rhs;
-		ret.w = lhs.w + rhs;
-		return ret;
-	}
-
-	edF32VECTOR4 operator-(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs)
-	{
-		edF32VECTOR4 ret;
-		ret.x = lhs.x - rhs.x;
-		ret.y = lhs.y - rhs.y;
-		ret.z = lhs.z - rhs.z;
-		ret.w = lhs.w - rhs.w;
-		return ret;
-	}
-
 	uint gClipflag = 0;
 
 	uint Clip(float value, const edF32VECTOR4& reg)

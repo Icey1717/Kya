@@ -6,12 +6,21 @@
 #include "DebugRenderer.h"
 
 DebugHelpers::DebugMaterial::DebugMaterial(edDList_material* pInMaterial, bool bCreateTexID)
-	: pMaterial(pInMaterial)
+	: key(pInMaterial)
 	, texture(LoadTextureData())
 	, texID(bCreateTexID ? DebugMenu::AddTexture(texture) : nullptr)
 {
 
 }
+
+DebugHelpers::DebugMaterial::DebugMaterial(PS2::GSTexValue& inTexture, ImTextureID inTexID)
+	: key(inTexture, inTexID)
+	, texture(inTexture)
+	, texID(inTexID)
+{
+
+}
+
 Renderer::TextureData DebugHelpers::DebugMaterial::LoadTextureData()
 {
 	ed_g2d_bitmap* pPaletteBitmap;
@@ -19,12 +28,12 @@ Renderer::TextureData DebugHelpers::DebugMaterial::LoadTextureData()
 	ed_g2d_bitmap* pTextureBitmap;
 	bool bHasPalette;
 
-	if (pMaterial != (edDList_material*)0x0) {
-		if ((pMaterial->mode & 4U) == 0) {
-			if (pMaterial->pMAT != (ed_g2d_material*)0x0) {
+	if (key.pMaterial != (edDList_material*)0x0) {
+		if ((key.pMaterial->mode & 4U) == 0) {
+			if (key.pMaterial->pMAT != (ed_g2d_material*)0x0) {
 				bHasPalette = false;
 				pTextureBitmap = (ed_g2d_bitmap*)0x0;
-				pPaletteBitmap = edDListGetG2DBitmap(pMaterial->pMAT, 0, &bHasPalette, &pTextureBitmap);
+				pPaletteBitmap = edDListGetG2DBitmap(key.pMaterial->pMAT, 0, &bHasPalette, &pTextureBitmap);
 
 				if (pPaletteBitmap != (ed_g2d_bitmap*)0x0 && pTextureBitmap != (ed_g2d_bitmap*)0x0) {
 					pRVar4 = (edpkt_data*)(((char*)LOAD_SECTION(pPaletteBitmap->pPSX2)) + 0x40);
