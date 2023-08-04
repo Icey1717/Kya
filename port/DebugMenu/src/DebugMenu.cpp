@@ -1,6 +1,5 @@
 #include "DebugMenu.h"
 #include "DebugRenderer.h"
-#include "DebugHelpers.h"
 
 #include "FrameBuffer.h"
 
@@ -18,6 +17,7 @@
 #include "Log.h"
 #include "CameraViewManager.h"
 #include "DebugCamera.h"
+#include "TextureCache.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -145,8 +145,6 @@ namespace DebugMenu_Internal {
 		auto texCache = PS2::GetTextureCache();
 		ImGui::Begin("Texture Cache", &bShowTextureCache, ImGuiWindowFlags_AlwaysAutoResize);
 
-		static int selectedMaterialIndex = -1;
-
 		for (int i = 0; i < texCache.GetEntries().size(); i++) {
 			char buttonText[256]; // Buffer to hold the formatted text
 
@@ -154,24 +152,13 @@ namespace DebugMenu_Internal {
 			std::sprintf(buttonText, "Cached Texture %d", i + 1);
 
 			if (ImGui::Selectable(buttonText)) {
-				selectedMaterialIndex = i;
-				MaterialPreviewer::Reset();
+				auto& selectedMaterial = texCache.GetEntries()[i];
+				std::string name = "Material " + std::to_string(i + 1);
+				MaterialPreviewer::Open(selectedMaterial.value, FindOrAddTexture(selectedMaterial), name);
 			}
 		}
 
 		ImGui::End();
-
-		if (selectedMaterialIndex >= 0) {
-			auto& selectedMaterial = texCache.GetEntries()[selectedMaterialIndex];
-		
-			bool bOpen = true;
-			std::string name = "Material " + std::to_string(selectedMaterialIndex + 1);
-			MaterialPreviewer::Show(selectedMaterial.value, FindOrAddTexture(selectedMaterial), name, bOpen);
-		
-			if (!bOpen) {
-				selectedMaterialIndex = -1;
-			}
-		}
 	}
 
 	int gRenderFramebufferIndex = 0;
@@ -306,8 +293,6 @@ namespace DebugMenu_Internal {
 	void ShowMaterialList() {
 		ImGui::Begin("Material List", &bShowMaterialList, ImGuiWindowFlags_AlwaysAutoResize);
 
-		static int selectedMaterialIndex = -1;
-
 		for (int i = 0; i < materialList.size(); i++) {
 			char buttonText[256]; // Buffer to hold the formatted text
 
@@ -315,24 +300,14 @@ namespace DebugMenu_Internal {
 			std::sprintf(buttonText, "Material %d", i + 1);
 
 			if (ImGui::Selectable(buttonText)) {
-				selectedMaterialIndex = i;
-				MaterialPreviewer::Reset();
+				std::string name = "Material " + std::to_string(i + 1);
+
+				auto& selectedMaterial = materialList[i];
+				MaterialPreviewer::Open(selectedMaterial, name);
 			}
 		}
 
 		ImGui::End();
-
-		if (selectedMaterialIndex >= 0) {
-			auto& selectedMaterial = materialList[selectedMaterialIndex];
-
-			bool bOpen = true;
-			std::string name = "Material " + std::to_string(selectedMaterialIndex + 1);
-			MaterialPreviewer::Show(selectedMaterial, name, bOpen);
-
-			if (!bOpen) {
-				selectedMaterialIndex = -1;
-			}
-		}
 	}
 
 	int GetMaterialCountFromTexture(ed_g2d_manager* pTexture) {
@@ -398,15 +373,11 @@ namespace DebugMenu_Internal {
 						edDListCreatMaterialFromIndex(&material, i, selectedTexture.pTexture, 2);
 					}
 					selectedMaterialIndex = i;
-					MaterialPreviewer::Reset();
+					auto entry = MaterialPreviewerEntry(&textureMaterials[selectedMaterialIndex]);
+					MaterialPreviewer::Open(entry, "None");
 					bOpenedMaterial = false;
 				}
 				i++;
-			}
-
-			if (selectedMaterialIndex >= 0 && textureMaterials[selectedMaterialIndex].textureInfo != nullptr) {
-				auto entry = MaterialPreviewerEntry(&textureMaterials[selectedMaterialIndex]);
-				MaterialPreviewer::Show(entry, "None", bOpen);
 			}
 
 			CallstackPreviewer::Show(selectedTexture.callstackEntry);
@@ -444,6 +415,7 @@ namespace DebugMenu_Internal {
 			ShowFramebuffers();
 		}
 
+		MaterialPreviewer::Update();
 		ShowGame();
 		DrawMenu();
 		DebugCamera::ShowCamera();

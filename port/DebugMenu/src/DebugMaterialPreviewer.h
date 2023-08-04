@@ -9,17 +9,19 @@ namespace PS2 {
 	struct GSTexValue;
 }
 
+struct edDList_material;
+
 struct MaterialPreviewerEntry {
-	MaterialPreviewerEntry(struct edDList_material* material, std::vector<DWORD64> inBacktrace)
+	MaterialPreviewerEntry(edDList_material* material, std::vector<DWORD64> inBacktrace)
 		: pMaterial(material)
 		, callstackEntry(inBacktrace)
 	{}
 
-	MaterialPreviewerEntry(struct edDList_material* material)
+	MaterialPreviewerEntry(edDList_material* material)
 		: pMaterial(material)
 	{}
 
-	struct edDList_material* pMaterial;
+	edDList_material* pMaterial;
 	CallstackPreviewerEntry callstackEntry;
 
 	bool operator==(const edDList_material* other) const {
@@ -28,8 +30,9 @@ struct MaterialPreviewerEntry {
 };
 
 namespace MaterialPreviewer {
-	void Show(MaterialPreviewerEntry& entry, std::string name, bool& bOpen);
-	void Show(const PS2::GSTexValue& texValue, const ImTextureID& texID, std::string name, bool& bOpen);
+	void Update();
+	void Open(MaterialPreviewerEntry& entry, std::string name);
+	void Open(const PS2::GSTexValue& texValue, const ImTextureID& texID, std::string name);
 	void Reset();
-	void RemoveMaterial(struct edDList_material* pMaterial);
+	void RemoveMaterial(edDList_material* pMaterial);
 };

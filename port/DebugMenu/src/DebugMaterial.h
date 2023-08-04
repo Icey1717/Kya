@@ -2,6 +2,8 @@
 
 #include "TextureCache.h"
 #include "imgui.h"
+#include "DebugCallstackPreviewer.h"
+#include <string>
 
 struct edDList_material;
 
@@ -36,6 +38,8 @@ namespace DebugHelpers {
 		DebugMaterialKey key;
 		PS2::GSTexValue texture;
 		ImTextureID texID;
+		CallstackPreviewerEntry callstackEntry;
+		std::string name;
 
 		Renderer::TextureData LoadTextureData();
 

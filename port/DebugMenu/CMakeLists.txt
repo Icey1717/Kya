@@ -8,16 +8,15 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(SOURCES 
 	"src/DebugMaterialPreviewer.h"
 	"src/DebugMaterialPreviewer.cpp"
-	"src/DebugMaterialPreviewer.inl"
 	"src/DebugCallstackPreviewer.h"
 	"src/DebugCallstackPreviewer.cpp"
 	"src/DebugCamera.h"
 	"src/DebugCamera.cpp"
 	"src/DebugMenu.cpp"
-	"src/DebugHelpers.cpp"
+	"src/DebugMaterial.h"
+	"src/DebugMaterial.cpp"
 	"src/DebugRendererVulkan.cpp"
 	"include/DebugRenderer.h"
-	"include/DebugHelpers.h"
 	"include/DebugMenu.h"
 	"include/Callstack.h"
 )

@@ -1,4 +1,4 @@
-#include "DebugHelpers.h"
+#include "DebugMaterial.h"
 
 #include "pointer_conv.h"
 #include "ed3D.h"

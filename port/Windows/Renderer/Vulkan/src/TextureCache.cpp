@@ -593,7 +593,7 @@ namespace PS2_Internal {
 				ReadAndExpandBlock4_32(src + (x * width * 0x10) + (y * sourceBlockSize), read_dst, dstpitch, pal);
 
 				// Magenta
-				((uint32_t*)read_dst)[0] = 0xFFFF00FF;
+				//((uint32_t*)read_dst)[0] = 0xFFFF00FF;
 			}
 		}
 	}
@@ -620,11 +620,11 @@ namespace PS2_Internal {
 				ReadAndExpandBlock8_32(src + (x * 0x100) + (y * 0x100 * xBlocks * bigBlockX), read_dst, dstpitch, pal);
 
 				// Cyan
-				((uint32_t*)read_dst)[0] = 0xFFFFFF00;
+				//((uint32_t*)read_dst)[0] = 0xFFFFFF00;
 			}
 		}
 
-		base[0] = 0xFF0000FF;
+		//base[0] = 0xFF0000FF;
 	}
 }
 

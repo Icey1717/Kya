@@ -252,12 +252,12 @@ void edVideoFlip(void)
 {
 	RENDER_LOG("RefreshScreenRender\n");
 	// #Hack
-	//edF32MATRIX4 matrix = {
-	//0.534046, 0.453021, -0.713844, 0,
-	//-0.0929226, 0.870664, 0.483025, 0,
-	//0.840335, -0.191626, 0.50707, 0,
-	//1199.81, -949.292, 1278.1, 1,
-	//};
+	edF32MATRIX4 matrix = {
+	0.534046, 0.453021, -0.713844, 0,
+	-0.0929226, 0.870664, 0.483025, 0,
+	0.840335, -0.191626, 0.50707, 0,
+	1199.81, -949.292, 1278.1, 1,
+	};
 	//CameraManager::_gThis->pShadowSunView_0x4b8->transformationMatrix = matrix;
 #ifdef PLATFORM_WIN
 	Renderer::Present();
