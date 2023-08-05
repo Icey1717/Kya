@@ -30,7 +30,7 @@ namespace DebugMenu_Internal {
 
 	static void Show(DebugHelpers::DebugMaterial& material, bool& bOpen) {
 		ImGui::Begin("Previewer", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-		ImVec2 imageSize(material.texture.width, material.texture.height); // Set the image size
+		ImVec2 imageSize(material.texture.image.imageData.canvasWidth, material.texture.image.imageData.canvasHeight); // Set the image size
 
 		if (ImGui::CollapsingHeader("Material Image", ImGuiTreeNodeFlags_DefaultOpen)) {
 
@@ -53,7 +53,7 @@ namespace DebugMenu_Internal {
 				MaterialPreviewer::Reset();
 			}
 
-			ImGui::Text("Width: %d Height: %d BPP: %d", material.texture.width, material.texture.height, material.texture.bpp);
+			ImGui::Text("Width: %d Height: %d BPP: %d", material.texture.image.imageData.canvasWidth, material.texture.image.imageData.canvasHeight, material.texture.image.imageData.bpp);
 
 			// Calculate the scaled size of the image
 			ImVec2 scaledSize(imageSize.x * zoomLevel, imageSize.y * zoomLevel);
@@ -116,10 +116,11 @@ void MaterialPreviewer::Open(MaterialPreviewerEntry& entry, std::string name)
 	gOpenMaterial->name = name;
 }
 
-void MaterialPreviewer::Open(const PS2::GSTexValue& texValue, const ImTextureID& texID, std::string name)
+void MaterialPreviewer::Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name)
 {
 	Reset();
-	gOpenMaterial = FindOrAddMaterial(texValue, texID);
+	gOpenMaterial = FindOrAddMaterial(texValue, texIDs.palette);
+	gOpenMaterial->paletteTexID = texIDs.palette;
 	gOpenMaterial->name = name;
 }
 

@@ -8,7 +8,7 @@
 DebugHelpers::DebugMaterial::DebugMaterial(edDList_material* pInMaterial, bool bCreateTexID)
 	: key(pInMaterial)
 	, texture(LoadTextureData())
-	, texID(bCreateTexID ? DebugMenu::AddTexture(texture) : nullptr)
+	, texID(bCreateTexID ? DebugMenu::AddTexture(texture.image) : nullptr)
 {
 
 }

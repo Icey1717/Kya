@@ -11,6 +11,11 @@ namespace PS2 {
 
 struct edDList_material;
 
+struct ImageTextureID {
+	ImTextureID image;
+	ImTextureID palette;
+};
+
 struct MaterialPreviewerEntry {
 	MaterialPreviewerEntry(edDList_material* material, std::vector<DWORD64> inBacktrace)
 		: pMaterial(material)
@@ -32,7 +37,7 @@ struct MaterialPreviewerEntry {
 namespace MaterialPreviewer {
 	void Update();
 	void Open(MaterialPreviewerEntry& entry, std::string name);
-	void Open(const PS2::GSTexValue& texValue, const ImTextureID& texID, std::string name);
+	void Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name);
 	void Reset();
 	void RemoveMaterial(edDList_material* pMaterial);
 };

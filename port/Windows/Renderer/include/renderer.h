@@ -40,7 +40,7 @@ namespace Renderer
 
 	struct TextureData {
 		ImageData image;
-		ImageData pallete;
+		ImageData palette;
 	};
 
 	struct PrimPacked

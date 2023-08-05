@@ -5,6 +5,7 @@
 #include <optional>
 #include "GSState.h"
 #include "Pipeline.h"
+#include "renderer.h"
 
 namespace Renderer {
 	struct TextureData;
@@ -12,22 +13,16 @@ namespace Renderer {
 
 namespace PS2 {
 	struct GSTexKey {
-		uint32_t TBP;
-		uint32_t TBW;
-		uint32_t PSM;
-		uint32_t TW;
-		uint32_t TH;
+		GSState::GSTex value;
+		void* pBitmap;
+		void* pPalette;
 
-		static GSTexKey CreateFromTEX(const GSState::GSTex& TEX) {
-			return { TEX.TBP, TEX.TBW, TEX.PSM, TEX.TW, TEX.TH };
+		static GSTexKey CreateFromTEX(const GSState::GSTex& TEX, void* pInBitmap, void* pInPalette) {
+			return { TEX, pInBitmap, pInPalette };
 		}
 
 		bool operator==(const GSTexKey& other) const {
-			return TBP == other.TBP &&
-				TBW == other.TBW &&
-				PSM == other.PSM &&
-				TW == other.TW &&
-				TH == other.TH;
+			return value == other.value && pBitmap == other.pBitmap && pPalette == other.pPalette;
 		}
 	};
 
@@ -49,17 +44,12 @@ namespace PS2 {
 		const Renderer::LayoutBindingMap& descriptorSetLayoutBindings;
 	};
 
-	struct GSTexValue {
-	public:
-		GSTexValue(const GSTexValueCreateInfo& createInfo);
+	struct GSTexImage {
+		GSTexImage(const Renderer::ImageData& inImageData)
+		: imageData(inImageData)
+		{
 
-		// For Debug textures.
-		GSTexValue(const Renderer::TextureData& textureData);
-
-		void AllocateBuffers();
-		void Cleanup();
-		void UploadImage(const Renderer::TextureData& textureData);
-		void CreateResources();
+		}
 
 		VkImage image;
 		VkDeviceMemory imageMemory;
@@ -70,20 +60,42 @@ namespace PS2 {
 
 		VkSampler sampler;
 
+		Renderer::ImageData imageData;
+
 		VkDescriptorPool descriptorPool;
 		std::vector<VkDescriptorSet> descriptorSets;
 
-		int width, height, bpp;
+		void UploadData(int bufferSize, std::vector<uint8_t>& readBuffer);
+
+		void CreateResources();
+		void Cleanup();
+
+		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts);
+		void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
+	};
+
+	struct GSTexValue {
+	public:
+		GSTexValue(const GSTexValueCreateInfo& createInfo);
+
+		// For Debug textures.
+		GSTexValue(const Renderer::TextureData& inTextureData);
+
+		void AllocateBuffers();
+		void Cleanup();
+		void UploadImage();
+		void CreateResources();
+
+		GSTexImage image;
+		GSTexImage paletteImage;
+
+		//Renderer::TextureData textureData;
 
 		// Buffer emulating the PS2 vram memory.
 		std::vector<uint8_t> writeBuffer;
 
 		// Buffer of 32bit colour pixels.
 		std::vector<uint8_t> readBuffer;
-
-	private:
-		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts);
-		void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
 	};
 
 	struct GSTexEntry {

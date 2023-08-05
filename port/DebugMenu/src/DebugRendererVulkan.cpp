@@ -193,14 +193,9 @@ void DebugMenu::SetupRenderer()
 	Renderer::GetRenderDelegate() += DebugMenu_Internal::Render;
 }
 
-ImTextureID DebugMenu::AddTexture(const PS2::GSTexEntry& texEntry)
+ImTextureID DebugMenu::AddTexture(const PS2::GSTexImage& texImage)
 {
-	return ImGui_ImplVulkan_AddTexture(texEntry.value.sampler, texEntry.value.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-}
-
-ImTextureID DebugMenu::AddTexture(const PS2::GSTexValue& texValue)
-{
-	return ImGui_ImplVulkan_AddTexture(texValue.sampler, texValue.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	return ImGui_ImplVulkan_AddTexture(texImage.sampler, texImage.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 struct DebugFrameBuffer {

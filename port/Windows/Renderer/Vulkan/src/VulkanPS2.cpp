@@ -15,6 +15,7 @@
 #include "GSVector.h"
 #include "UniformBuffer.h"
 #include "TextureCache.h"
+#include "log.h"
 
 namespace PS2_Internal {
 
@@ -127,6 +128,19 @@ namespace Renderer {
 
 	uint32_t Skip = 0;
 
+	void LogTex(uint32_t tbp, uint32_t tbw, uint32_t psm, uint32_t tw, uint32_t th, uint32_t tcc, uint32_t tfx, uint32_t cbp, uint32_t cpsm, uint32_t csm, uint32_t csa, uint32_t cld)
+	{
+		// Create a formatted log message string
+		std::ostringstream oss;
+		oss << "SetTEX - tbp: " << tbp << ", tbw: " << tbw << ", psm: " << psm
+			<< ", tw: " << tw << ", th: " << th << ", tcc: " << tcc
+			<< ", tfx: " << tfx << ", cbp: " << cbp << ", cpsm: " << cpsm
+			<< ", csm: " << csm << ", csa: " << csa << ", cld: " << cld;
+
+		// Log the formatted message
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s", oss.str().c_str());
+	}
+
 	void SetVertexSkip(uint32_t inSkip)
 	{
 		Skip = inSkip;
@@ -171,6 +185,7 @@ namespace Renderer {
 
 	void SetTEX(uint32_t tbp, uint32_t tbw, uint32_t psm, uint32_t tw, uint32_t th, uint32_t tcc, uint32_t tfx, uint32_t cbp, uint32_t cpsm, uint32_t csm, uint32_t csa, uint32_t cld)
 	{
+		LogTex(tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
 		PS2::GetGSState().TEX = { tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld };
 	}
 
@@ -589,6 +604,8 @@ void Renderer::Draw() {
 		return;
 	}
 
+	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: %d", Renderer::m_index.tail);
+
 	g_GSSelector.ResetStates();
 	g_PSSelector.ResetStates();
 
@@ -709,7 +726,7 @@ void Renderer::Draw() {
 
 	vkCmdBindIndexBuffer(GetCurrentCommandBuffer(), PS2::GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
 
-	vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.descriptorSets[GetCurrentFrame()], 0, nullptr);
+	vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.descriptorSets[GetCurrentFrame()], 0, nullptr);
 
 	vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(Renderer::m_index.tail), 1, 0, 0, 0);
 

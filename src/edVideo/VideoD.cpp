@@ -258,7 +258,7 @@ void edVideoFlip(void)
 	0.840335, -0.191626, 0.50707, 0,
 	1199.81, -949.292, 1278.1, 1,
 	};
-	//CameraManager::_gThis->pShadowSunView_0x4b8->transformationMatrix = matrix;
+	CameraManager::_gThis->pShadowSunView_0x4b8->transformationMatrix = matrix;
 #ifdef PLATFORM_WIN
 	Renderer::Present();
 #endif

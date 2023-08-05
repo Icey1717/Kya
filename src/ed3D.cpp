@@ -4119,6 +4119,29 @@ edpkt_data* ed3DFlushMaterialMipMapOff(edpkt_data* pPkt)
 	return pPkt + 4;
 }
 
+void ProcessTextureCommands(edpkt_data* aPkt, int size)
+{
+	bool bBeganGIFTag = false;
+
+	for (int i = 0; i < size; i++) {
+		edpkt_data& pkt = aPkt[i];
+		bBeganGIFTag |= pkt.asU32[2] == 0xe;
+
+		if (bBeganGIFTag) {
+			switch (pkt.asU32[2]) {
+			case 0x6:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX0: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				SendTextureCommandsFromPacked(pkt.cmdA);
+			}
+			break;
+			}
+		}
+	}
+
+	assert(bBeganGIFTag);
+}
+
 void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 {
 	ed_g2d_material* peVar1;
@@ -4136,7 +4159,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 	int iVar9;
 	ed_g2d_material* pTVar1;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial");
+	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial pMaterial: %p | pBitmap: %p", pRenderMeshData->pMaterial, pRenderMeshData->pBitmap);
 
 	peVar6 = gpPKTDataRefMasPath3;
 	peVar5 = g_GifRefPktCur;
@@ -4202,10 +4225,10 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 				peVar4->asU32[2] = SCE_VIF1_SET_NOP(0);
 				peVar4->asU32[3] = SCE_VIF1_SET_FLUSHA(0);
 
-#ifdef PLATFORM_WIN
-				auto pFlippedPkt = (edpkt_data*)LOAD_SECTION(peVar1->pCommandBufferTexture) +
+				edpkt_data* pFlippedPkt = (edpkt_data*)LOAD_SECTION(peVar1->pCommandBufferTexture) +
 					(gVRAMBufferFlush * peVar1->commandBufferTextureSize * (uint)peVar1->count_0x0);
-				SendTextureCommandsFromPacked((pFlippedPkt + 2)->cmdA);
+#ifdef PLATFORM_WIN
+				ProcessTextureCommands(pFlippedPkt, peVar1->commandBufferTextureSize);
 #endif
 				peVar4[1].cmdA = ED_VIF1_SET_TAG_REF(peVar1->commandBufferTextureSize, ((ulong)(ulong)(peVar1->pCommandBufferTexture +
 					gVRAMBufferFlush * peVar1->commandBufferTextureSize * (uint)peVar1->count_0x0) & 0xfffffffU));
@@ -4240,6 +4263,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 	}
 	else {
 		ed3DG2DMaterialGetLayerBitmap(pRenderMeshData, &gCurBitmap, &gCurLayer, 0);
+		ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial gCurBitmap: %p | gCurLayer: %p", gCurBitmap, gCurLayer);
 		*g_pCurFlareMaterial = pRenderMeshData->pMaterial;
 		peVar4 = g_VifRefPktCur;
 

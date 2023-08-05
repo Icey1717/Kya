@@ -10,6 +10,8 @@
 #include <cstdarg>
 #include <cstdio>
 #include <mutex>
+#include <iostream>
+#include <fstream>  // Added for file writing
 
 enum class LogLevel
 {
@@ -40,13 +42,21 @@ inline std::string LogLevelToString(LogLevel level)
 	}
 }
 
-
 struct LogMessage
 {
 	std::string message;
 	LogLevel level;
+};
+
+struct LogMessageCategory
+{
+	LogMessage message;
 	std::string category;
 };
+
+using MessageCategoryQueue = std::deque<LogMessageCategory>;
+using MessageQueue = std::deque<LogMessage>;
+using MessageMap = std::unordered_map<std::string, MessageQueue>;
 
 class Log
 {
@@ -60,6 +70,8 @@ public:
 	void AddLog(LogLevel level, const std::string& category, const char* format, ...)
 	{
 		if (verboseLevels[level]) {
+			MessageQueue& msgQueue = logMessages[category];
+
 			va_list args;
 			va_start(args, format);
 
@@ -78,32 +90,33 @@ public:
 			std::string message = oss.str();
 
 			{
-				std::lock_guard<std::mutex> lock(logMutex);
-				consoleLogMessages.push_back({ message, level, category });
+				consoleLogMessagesTo.push_back({ {message, level}, category });
+
+				if (logMutex.try_lock()) {
+
+					while (!consoleLogMessagesTo.empty()) {
+						auto msg = consoleLogMessagesTo.front();
+						consoleLogMessagesFrom.push_back(msg);
+						consoleLogMessagesTo.pop_front();
+					}
+
+					logMutex.unlock();
+				}
 			}
 
-			logMessages.push_back({ message, level, category });
-			logCategories.insert(category);
+			msgQueue.push_back({ message, level });
 			
+			//printf("%s\n", message.c_str());
 
-			// Notify the log thread to flush logs
-			logCondition.notify_all();
-			printf("%s\n", message.c_str());
-
-			//if (logMessages.size() > maxBufferSize) {
-			//	logMessages.pop_front(); // Remove the oldest log message if the buffer exceeds the maximum size
-			//}
+			if (msgQueue.size() > maxBufferSize) {
+				msgQueue.pop_front(); // Remove the oldest log message if the buffer exceeds the maximum size
+			}
 		}
 	}
 
-	const std::deque<LogMessage>& GetLogMessages() const
+	const MessageMap& GetLogMessages() const
 	{
 		return logMessages;
-	}
-
-	const std::unordered_set<std::string>& GetLogCategories() const
-	{
-		return logCategories;
 	}
 
 	std::unordered_map<LogLevel, bool>& GetLogVerboseLevels()
@@ -113,9 +126,11 @@ public:
 
 private:
 	static constexpr int maxBufferSize = 0x10000; // Maximum size of the circular buffer
-	std::deque<LogMessage> logMessages;
-	std::deque<LogMessage> consoleLogMessages;
-	std::unordered_set<std::string> logCategories;
+
+	MessageMap logMessages;
+	MessageCategoryQueue consoleLogMessagesTo;
+	MessageCategoryQueue consoleLogMessagesFrom;
+
 	std::unordered_map<LogLevel, bool> verboseLevels = {
 	{ LogLevel::VeryVerbose, true },
 	{ LogLevel::Verbose, true },
@@ -125,12 +140,19 @@ private:
 	};
 
 	std::mutex logMutex;  // Mutex to synchronize access to log data
-	std::condition_variable logCondition;  // Condition variable to signal log flushing
+	std::unordered_map<std::string, std::unique_ptr<std::ofstream>> logFiles;  // File stream for writing logs
+	std::ofstream fullLogFile;  // Single log file stream
 	std::thread logThread;  // Thread for flushing logs
 
 	Log()
 	{
 		logThread = std::thread(&Log::FlushLogs, this);
+
+		fullLogFile.open("log.txt", std::ios::out | std::ios::trunc);  // Open log file for writing, append mode
+		if (!fullLogFile.is_open())
+		{
+			std::cerr << "Failed to open log file." << std::endl;
+		}
 	}
 
 	~Log()
@@ -138,7 +160,6 @@ private:
 		// Notify the log thread to stop and wait for it to join
 		{
 			std::unique_lock<std::mutex> lock(logMutex);
-			logCondition.notify_all();
 		}
 		logThread.join();
 	}
@@ -148,13 +169,34 @@ private:
 		while (true) {
 			// Wait for the log condition to be notified
 			std::unique_lock<std::mutex> lock(logMutex);
-			logCondition.wait(lock);
 
 			// Flush logs
-			while (!consoleLogMessages.empty()) {
-				const LogMessage& message = consoleLogMessages.front();
+			if (!consoleLogMessagesFrom.empty()) {
+				const LogMessageCategory& message = consoleLogMessagesFrom.front();
 				//printf("%s\n", message.message.c_str());
-				consoleLogMessages.pop_front();
+
+				std::string logFileName = message.category + ".txt";
+
+				auto itr = logFiles.find(logFileName);
+
+				if (itr != logFiles.end()) {
+					if (itr->second->is_open()) {
+						*itr->second << message.message.message << std::endl;  // Write to file
+					}
+				}
+				else {
+					auto logFile = std::make_unique<std::ofstream>(logFileName.c_str(), std::ios::out | std::ios::trunc);
+					if (logFile->is_open()) {
+						*logFile << message.message.message << std::endl;  // Write to file
+						logFiles.emplace(logFileName, std::move(logFile));
+					}
+				}
+
+				if (fullLogFile.is_open()) {
+					fullLogFile << message.category << ": " << message.message.message << std::endl;  // Write to file
+				}
+
+				consoleLogMessagesFrom.pop_front();
 			}
 		}
 	}

@@ -629,21 +629,21 @@ namespace PS2_Internal {
 }
 
 PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
-	: width(1 << createInfo.key.TW)
-	, height(1 << createInfo.key.TH)
-	, bpp(0)
+	: image(gImageData.image)
+	, paletteImage(gImageData.palette)
+	//, textureData(gImageData)
 {
 	AllocateBuffers();
 	CreateResources();
-	UploadImage(gImageData);
-	CreateDescriptorPool(createInfo.descriptorSetLayoutBindings);
-	CreateDescriptorSets(createInfo.descriptorSetLayouts);
+	UploadImage();
+	image.CreateDescriptorPool(createInfo.descriptorSetLayoutBindings);
+	image.CreateDescriptorSets(createInfo.descriptorSetLayouts);
 }
 
-PS2::GSTexValue::GSTexValue(const Renderer::TextureData& textureData)
-	: width(textureData.image.canvasWidth)
-	, height(textureData.image.canvasHeight)
-	, bpp(textureData.image.bpp)
+PS2::GSTexValue::GSTexValue(const Renderer::TextureData& inTextureData)
+	: image(inTextureData.image)
+	, paletteImage(inTextureData.palette)
+	//, textureData(inTextureData)
 {
 	AllocateBuffers();
 
@@ -651,12 +651,12 @@ PS2::GSTexValue::GSTexValue(const Renderer::TextureData& textureData)
 		CreateResources();
 	}
 
-	UploadImage(textureData);
+	UploadImage();
 }
 
 void PS2::GSTexValue::AllocateBuffers()
 {
-	const int bufferSize = width * height * 4;
+	const int bufferSize = image.imageData.canvasWidth * image.imageData.canvasHeight * 4;
 
 	readBuffer.resize(bufferSize);
 	writeBuffer.resize(bufferSize);
@@ -665,57 +665,51 @@ void PS2::GSTexValue::AllocateBuffers()
 }
 
 void PS2::GSTexValue::Cleanup() {
-	vkDestroySampler(GetDevice(), sampler, nullptr);
-
-	vkDestroyBuffer(GetDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(GetDevice(), stagingBufferMemory, nullptr);
-
-	vkDestroyImageView(GetDevice(), imageView, nullptr);
-	vkDestroyImage(GetDevice(), image, nullptr);
-	vkFreeMemory(GetDevice(), imageMemory, nullptr);
+	image.Cleanup();
+	paletteImage.Cleanup();
 }
 
-void PS2::GSTexValue::UploadImage(const Renderer::TextureData& textureData) {
-	const VkDeviceSize bufferSize = width * height * 4;
+void PS2::GSTexValue::UploadImage() {
+	const VkDeviceSize bufferSize = image.imageData.canvasWidth * image.imageData.canvasHeight * 4;
 
 	// 0x40 * 8 = 0x200
 	// 0x80 * 4 = 0x200
-	const int pixelPerByte = (32 / textureData.image.bpp);
-	const int srcpitch = (textureData.image.readHeight) * 4;
+	const int pixelPerByte = (32 / image.imageData.bpp);
+	const int srcpitch = (image.imageData.readHeight) * 4;
 
-	LOG_TEXCACHE("Uploading texture - bpp: %d, w: %d, h: %d, rw: %d, rh: %d", textureData.image.bpp, width, height, textureData.image.readWidth, textureData.image.readHeight);
+	LOG_TEXCACHE("Uploading texture - bpp: %d, w: %d, h: %d, rw: %d, rh: %d", image.imageData.bpp, image.imageData.canvasWidth, image.imageData.canvasHeight, image.imageData.readWidth, image.imageData.readHeight);
 	LOG_TEXCACHE("Uploading texture - srcpitch: %d", srcpitch);
 
 	uint8_t* const pWriteData = writeBuffer.data();
 	uint8_t* const pReadData = readBuffer.data();
-	PS2_Internal::WriteImageBlock<0, 8, 8, 32>(0, textureData.image.readHeight, 0, textureData.image.readWidth, (uint8_t*)textureData.image.pImage, pWriteData, srcpitch);
+	PS2_Internal::WriteImageBlock<0, 8, 8, 32>(0, image.imageData.readHeight, 0, image.imageData.readWidth, (uint8_t*)image.imageData.pImage, pWriteData, srcpitch);
 
-	const int yBlocks = std::max<int>(1, (height / PS2_Internal::dstBigBlockSize));
-	const int xBlocks = std::max<int>(1, (width / PS2_Internal::dstBigBlockSize));
+	const int yBlocks = std::max<int>(1, (image.imageData.canvasHeight / PS2_Internal::dstBigBlockSize));
+	const int xBlocks = std::max<int>(1, (image.imageData.canvasWidth / PS2_Internal::dstBigBlockSize));
 
-	if (textureData.image.bpp == 4) {
-		const int writeOffset = pixelPerByte * textureData.image.canvasWidth;
+	if (image.imageData.bpp == 4) {
+		const int writeOffset = pixelPerByte * image.imageData.canvasWidth;
 
 		for (int y = 0; y < yBlocks; y++) {
 			for (int x = 0; x < xBlocks; x++) {
 				PS2_Internal::ReadTextureBlock4(writeBuffer.data() + (x * writeOffset) + (y * writeOffset * 0x8)
-					, readBuffer.data() + (PS2_Internal::dstBigBlockSize * textureData.image.bpp * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
-					, textureData.image.canvasWidth * 4
-					, textureData.pallete
-					, textureData.image.canvasWidth
-					, textureData.image.canvasHeight);
+					, readBuffer.data() + (PS2_Internal::dstBigBlockSize * image.imageData.bpp * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
+					, image.imageData.canvasWidth * 4
+					, paletteImage.imageData
+					, image.imageData.canvasWidth
+					, image.imageData.canvasHeight);
 			}
 		}
 	}
-	else if (textureData.image.bpp == 8) {
+	else if (image.imageData.bpp == 8) {
 		for (int y = 0; y < yBlocks; y++) {
 			for (int x = 0; x < xBlocks; x++) {
 				PS2_Internal::ReadTextureBlock8(pWriteData + (x * 0x800) + (y * 0x1000 * 0x8)
 					, pReadData + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
-					, textureData.image.canvasWidth * 4
-					, textureData.pallete
-					, textureData.image.canvasWidth
-					, textureData.image.canvasHeight
+					, image.imageData.canvasWidth * 4
+					, paletteImage.imageData
+					, image.imageData.canvasWidth
+					, image.imageData.canvasHeight
 					, xBlocks
 					, yBlocks);
 			}
@@ -726,26 +720,48 @@ void PS2::GSTexValue::UploadImage(const Renderer::TextureData& textureData) {
 	}
 
 	if (!Renderer::gHeadless) {
-		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+		image.UploadData(bufferSize, readBuffer);
 
-		void* data;
-		vkMapMemory(GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, readBuffer.data(), static_cast<size_t>(bufferSize));
-		vkUnmapMemory(GetDevice(), stagingBufferMemory);
+		const VkDeviceSize paletteSize = paletteImage.imageData.canvasWidth * paletteImage.imageData.canvasHeight * 4;
 
-		VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		VulkanImage::CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+		std::vector<uint8_t> paletteReadBuffer;
+		paletteReadBuffer.reserve(paletteSize);
 
-		VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		for (int i = 0; i < paletteSize; i++) {
+			paletteReadBuffer.push_back(((uint8_t*)paletteImage.imageData.pImage)[i]);
+		}
+
+		paletteImage.UploadData(paletteSize, paletteReadBuffer);
 	}
 }
 
 void PS2::GSTexValue::CreateResources() {
+	image.CreateResources();
+	paletteImage.CreateResources();
+}
+
+void PS2::GSTexImage::UploadData(int bufferSize, std::vector<uint8_t>& readBuffer)
+{
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, readBuffer.data(), static_cast<size_t>(bufferSize));
+	vkUnmapMemory(GetDevice(), stagingBufferMemory);
+
+	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	VulkanImage::CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(imageData.canvasWidth), static_cast<uint32_t>(imageData.canvasHeight));
+
+	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
+void PS2::GSTexImage::CreateResources()
+{
 	const VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 	const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-	VulkanImage::CreateImage(width, height, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+	VulkanImage::CreateImage(imageData.canvasWidth, imageData.canvasHeight, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
 
 	VkSamplerCreateInfo samplerInfo{};
@@ -781,7 +797,20 @@ void PS2::GSTexValue::CreateResources() {
 	}
 }
 
-void PS2::GSTexValue::CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts) {
+
+void PS2::GSTexImage::Cleanup()
+{
+	vkDestroySampler(GetDevice(), sampler, nullptr);
+
+	vkDestroyBuffer(GetDevice(), stagingBuffer, nullptr);
+	vkFreeMemory(GetDevice(), stagingBufferMemory, nullptr);
+
+	vkDestroyImageView(GetDevice(), imageView, nullptr);
+	vkDestroyImage(GetDevice(), image, nullptr);
+	vkFreeMemory(GetDevice(), imageMemory, nullptr);
+}
+
+void PS2::GSTexImage::CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts) {
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
 
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -849,7 +878,7 @@ void PS2::GSTexValue::CreateDescriptorSets(const Renderer::LayoutVector& descrip
 	}
 }
 
-void PS2::GSTexValue::CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap) {
+void PS2::GSTexImage::CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap) {
 	// Create descriptor pool based on the descriptor set count from the shader
 
 	auto& descriptorSetLayoutBindings = descriptorSetLayoutBindingsMap.at(0);
@@ -876,7 +905,7 @@ namespace PS2_Internal {
 
 PS2::GSTexEntry& PS2::TextureCache::Create(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX);
+	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palette.pImage);
 	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key, descriptorSetLayouts, descriptorSetLayoutBindings);
 	texcache.emplace_back(GSTexEntry(createInfo));
 	return texcache.back();
@@ -884,7 +913,7 @@ PS2::GSTexEntry& PS2::TextureCache::Create(const GSState::GSTex& TEX, const Rend
 
 PS2::GSTexEntry& PS2::TextureCache::Lookup(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX);
+	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palette.pImage);
 	for (auto& entry : texcache) {
 		if (entry == key) {
 			return entry;

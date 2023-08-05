@@ -23,7 +23,7 @@
 
 namespace DebugMenu_Internal {
 
-	std::unordered_map<const PS2::GSTexEntry*, ImTextureID> debugTextures;
+	std::unordered_map<const PS2::GSTexEntry*, ImageTextureID> debugTextures;
 	std::vector<MaterialPreviewerEntry> materialList;
 
 	void OnMaterialLoaded(edDList_material* pNewMaterial) {
@@ -58,7 +58,7 @@ namespace DebugMenu_Internal {
 	}
 
 	// Find or add function
-	static ImTextureID FindOrAddTexture(const PS2::GSTexEntry& texEntry)
+	static ImageTextureID FindOrAddTexture(const PS2::GSTexEntry& texEntry)
 	{
 		printf("%p", &texEntry);
 		auto it = debugTextures.find(&texEntry);
@@ -70,9 +70,10 @@ namespace DebugMenu_Internal {
 		else
 		{
 			// Texture does not exist, add it to the map
-			ImTextureID newTextureID = DebugMenu::AddTexture(texEntry);
-			debugTextures[&texEntry] = newTextureID;
-			return newTextureID;
+			ImTextureID newImageTextureID = DebugMenu::AddTexture(texEntry.value.image);
+			ImTextureID newPaletteTextureID = DebugMenu::AddTexture(texEntry.value.paletteImage);
+			debugTextures[&texEntry] = { newImageTextureID, newPaletteTextureID };
+			return debugTextures[&texEntry];
 		}
 	}
 
@@ -233,7 +234,6 @@ namespace DebugMenu_Internal {
 	void ShowLogWindow()
 	{
 		const auto& logMessages = Log::GetInstance().GetLogMessages();
-		const auto& logCategories = Log::GetInstance().GetLogCategories();
 		auto& verboseLevels = Log::GetInstance().GetLogVerboseLevels();
 
 		ImGui::Begin("Log Window", &bShowLogWindow);
@@ -252,7 +252,7 @@ namespace DebugMenu_Internal {
 		int usage = 0;
 		for (const auto& log : logMessages)
 		{
-			usage += log.message.capacity() + log.category.capacity();
+			//usage += log.second.capacity() + log.category.capacity();
 		}
 
 		ImGui::SameLine();
@@ -262,18 +262,18 @@ namespace DebugMenu_Internal {
 		if (ImGui::BeginTabBar("LogTabs"))
 		{
 			// Loop through log categories
-			for (const std::string& category : logCategories)
+			for (auto& message : logMessages)
 			{
 				// Begin tab item for the category
-				if (ImGui::BeginTabItem(category.c_str()))
+				if (ImGui::BeginTabItem(message.first.c_str()))
 				{
-					ImGui::BeginChild(category.c_str(), ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+					ImGui::BeginChild(message.first.c_str(), ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
 					// Display log messages for the current category
-					for (const auto& log : logMessages)
+					for (const auto& log : message.second)
 					{
 						// Display log message if it belongs to the current category
-						if (log.category == category && verboseLevels[log.level])
+						if (verboseLevels[log.level])
 						{
 							ImGui::TextWrapped("%s", log.message.c_str());
 						}

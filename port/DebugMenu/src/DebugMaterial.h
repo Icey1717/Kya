@@ -38,6 +38,7 @@ namespace DebugHelpers {
 		DebugMaterialKey key;
 		PS2::GSTexValue texture;
 		ImTextureID texID;
+		ImTextureID paletteTexID;
 		CallstackPreviewerEntry callstackEntry;
 		std::string name;
 
