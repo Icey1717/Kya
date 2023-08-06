@@ -103,10 +103,10 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	static bool bShowTextureCache = false;
+	static bool bShowTextureCache = true;
 	static bool bShowDemoWindow = false;
 	static bool bShowLogWindow = true;
-	static bool bShowMaterialList = true;
+	static bool bShowMaterialList = false;
 	static bool bShowTextureList = false;
 	static bool bShowFramebuffers = false;
 
@@ -333,7 +333,6 @@ namespace DebugMenu_Internal {
 		auto ClearMaterials = [&](){
 			for (auto& material : textureMaterials) {
 				edDListTermMaterial(&material);
-				MaterialPreviewer::RemoveMaterial(&material);
 			}
 			textureMaterials.clear();
 		};

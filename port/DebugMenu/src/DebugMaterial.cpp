@@ -9,11 +9,12 @@ DebugHelpers::DebugMaterial::DebugMaterial(edDList_material* pInMaterial, bool b
 	: key(pInMaterial)
 	, texture(LoadTextureData())
 	, texID(bCreateTexID ? DebugMenu::AddTexture(texture.image) : nullptr)
+	, paletteTexID(bCreateTexID ? DebugMenu::AddTexture(texture.paletteImage) : nullptr)
 {
 
 }
 
-DebugHelpers::DebugMaterial::DebugMaterial(PS2::GSTexValue& inTexture, ImTextureID inTexID)
+DebugHelpers::DebugMaterial::DebugMaterial(const PS2::GSTexValue& inTexture, ImTextureID inTexID)
 	: key(inTexture, inTexID)
 	, texture(inTexture)
 	, texID(inTexID)

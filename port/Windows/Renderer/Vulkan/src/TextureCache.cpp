@@ -374,7 +374,31 @@ namespace PS2_Internal {
 		ReadColumn8<3>(src, dst, dstpitch);
 	}
 
-	static void ReadAndExpandBlock4_32(const uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal)
+	static std::vector<uint32_t> ConvertPalette(int bpp, const Renderer::ImageData& pal)
+	{
+		std::vector<uint32_t> newPal;
+		newPal.resize(pal.readWidth * pal.readHeight);
+
+		if (bpp == 8) {
+			uint32_t* palVal = (uint32_t*)pal.pImage;
+
+			for (int j = 0; j < ((pal.readWidth * pal.readHeight) / 32); j += 1)
+			{
+				for (int i = 0; i < 2; i += 1)
+				{
+					memcpy(&newPal[(i * 8 * 2) + (j * 32)], palVal + (i * 8) + (j * 32), 8 * sizeof(uint32_t));
+					memcpy(&newPal[(i * 8 * 2) + 8 + (j * 32)], palVal + ((i * 8) + 16) + (j * 32), 8 * sizeof(uint32_t));
+				}
+			}
+		}
+		else if (bpp == 4) {
+			memcpy(newPal.data(), pal.pImage, newPal.size() * sizeof(uint32_t));
+		}
+
+		return newPal;
+	}
+
+	static void ReadAndExpandBlock4_32(const uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint8_t* outPaletteIndexes)
 	{
 		//printf("ReadAndExpandBlock4_32\n");
 
@@ -444,6 +468,8 @@ namespace PS2_Internal {
 
 		ReadBlock4(src, block, sizeof(block) / 16);
 
+		auto palBlock = ConvertPalette(4, pal);
+
 		for (int y = 0; y < 16; y++)
 		{
 			for (int x = 0; x < 32 >> 1; x++) // 32 across, with 2 pixels per byte.
@@ -455,8 +481,8 @@ namespace PS2_Internal {
 				const uint8_t higher = (byte >> 4) & 0x0F;
 
 				// Get the two colors.
-				const uint32_t colorl = ((uint32_t*)pal.pImage)[lower];
-				const uint32_t colorh = ((uint32_t*)pal.pImage)[higher];
+				const uint32_t colorl = palBlock[lower];
+				const uint32_t colorh = palBlock[higher];
 
 				// Get the destination.
 				const uint32_t xOffset = x * 8; // 8 pixels per byte
@@ -466,12 +492,16 @@ namespace PS2_Internal {
 				// Write the colors.
 				dstu32[0] = colorl;
 				dstu32[1] = colorh;
+
+				uint32_t* const dstPalu32 = (uint32_t*)(outPaletteIndexes + xOffset + yOffset);
+				dstPalu32[0] = lower;
+				dstPalu32[1] = higher;
 			}
 		}
 #endif
 	}
 
-	static void ReadAndExpandBlock8_32(const uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal)
+	static void ReadAndExpandBlock8_32(const uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint8_t* outPaletteIndexes)
 	{
 		//printf("ReadAndExpandBlock8_32\n");
 
@@ -525,19 +555,7 @@ namespace PS2_Internal {
 
 		ReadBlock8(src, (uint8_t*)block, sizeof(block) / 16);
 
-		alignas(32) uint32_t palBlock[pal.readWidth * pal.readHeight];
-		uint32_t* palVal = (uint32_t*)pal.pImage;
-		
-		for (int j = 0; j < ((pal.readWidth * pal.readHeight) / 32); j += 1)
-		{
-			for (int i = 0; i < 2; i += 1)
-			{
-				memcpy(&palBlock[(i * 8 * 2) + (j * 32)], palVal + (i * 8) + (j * 32), 8 * sizeof(uint32_t));
-				memcpy(&palBlock[(i * 8 * 2) + 8 + (j * 32)], palVal + ((i * 8) + 16) + (j * 32), 8 * sizeof(uint32_t));
-			}
-		}
-
-
+		auto palBlock = ConvertPalette(8, pal);
 
 		for (int y = 0; y < 16; y++)
 		{
@@ -555,6 +573,9 @@ namespace PS2_Internal {
 
 				// Write the colors.
 				dstu32[0] = color;
+
+				uint32_t* const dstPalu32 = (uint32_t*)(outPaletteIndexes + xOffset + yOffset);
+				dstPalu32[0] = byte;
 			}
 		}
 
@@ -576,7 +597,7 @@ namespace PS2_Internal {
 	const int sourceBlockSize = 0x100;
 
 
-	void ReadTextureBlock4(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint32_t width, uint32_t height)
+	void ReadTextureBlock4(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint32_t width, uint32_t height, uint8_t* outPaletteIndexes)
 	{
 		const int dstSmallBlockWidth = 32;
 		const int dstSmallBlockHeight = 16;
@@ -585,12 +606,13 @@ namespace PS2_Internal {
 		int _offset = dstpitch * (dstSmallBlockHeight);
 		const int dstSmallBlockX = 4;
 
-		for (int y = 0; y < yBlocks; y += 1, dst += _offset)
+		for (int y = 0; y < yBlocks; y += 1, dst += _offset, outPaletteIndexes += _offset)
 		{
 			for (int x = 0; x < xBlocks; x += 1)
 			{
 				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
-				ReadAndExpandBlock4_32(src + (x * width * 0x10) + (y * sourceBlockSize), read_dst, dstpitch, pal);
+				uint8_t* pal_dst = &outPaletteIndexes[x * dstSmallBlockX * dstBPP];
+				ReadAndExpandBlock4_32(src + (x * width * 0x10) + (y * sourceBlockSize), read_dst, dstpitch, pal, pal_dst);
 
 				// Magenta
 				//((uint32_t*)read_dst)[0] = 0xFFFF00FF;
@@ -598,7 +620,7 @@ namespace PS2_Internal {
 		}
 	}
 
-	void ReadTextureBlock8(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint32_t width, uint32_t height, int bigBlockX, int bigBlockY)
+	void ReadTextureBlock8(uint8_t* src, uint8_t* dst, int dstpitch, const Renderer::ImageData& pal, uint32_t width, uint32_t height, int bigBlockX, int bigBlockY, uint8_t* outPaletteIndexes)
 	{
 		const int dstSmallBlockWidth = 16;
 		const int dstSmallBlockHeight = 16;
@@ -612,12 +634,13 @@ namespace PS2_Internal {
 
 		uint32_t* base = ((uint32_t*)dst);
 
-		for (int y = 0; y < yBlocks; y += 1, dst += _offset)
+		for (int y = 0; y < yBlocks; y += 1, dst += _offset, outPaletteIndexes += _offset)
 		{
 			for (int x = 0; x < xBlocks; x += 1)
 			{
 				uint8_t* read_dst = &dst[x * dstSmallBlockX * dstBPP];
-				ReadAndExpandBlock8_32(src + (x * 0x100) + (y * 0x100 * xBlocks * bigBlockX), read_dst, dstpitch, pal);
+				uint8_t* pal_dst = &outPaletteIndexes[x * dstSmallBlockX * dstBPP];
+				ReadAndExpandBlock8_32(src + (x * 0x100) + (y * 0x100 * xBlocks * bigBlockX), read_dst, dstpitch, pal, pal_dst);
 
 				// Cyan
 				//((uint32_t*)read_dst)[0] = 0xFFFFFF00;
@@ -672,12 +695,15 @@ void PS2::GSTexValue::Cleanup() {
 void PS2::GSTexValue::UploadImage() {
 	const VkDeviceSize bufferSize = image.imageData.canvasWidth * image.imageData.canvasHeight * 4;
 
+	debugData.paletteIndexes.resize(image.imageData.canvasWidth * image.imageData.canvasHeight);
+
 	// 0x40 * 8 = 0x200
 	// 0x80 * 4 = 0x200
 	const int pixelPerByte = (32 / image.imageData.bpp);
 	const int srcpitch = (image.imageData.readHeight) * 4;
 
-	LOG_TEXCACHE("Uploading texture - bpp: %d, w: %d, h: %d, rw: %d, rh: %d", image.imageData.bpp, image.imageData.canvasWidth, image.imageData.canvasHeight, image.imageData.readWidth, image.imageData.readHeight);
+	LOG_TEXCACHE("Uploading texture TEX - bpp: %d, w: %d, h: %d, rw: %d, rh: %d", image.imageData.bpp, image.imageData.canvasWidth, image.imageData.canvasHeight, image.imageData.readWidth, image.imageData.readHeight);
+	LOG_TEXCACHE("Uploading texture PAL - bpp: %d, w: %d, h: %d, rw: %d, rh: %d", paletteImage.imageData.bpp, paletteImage.imageData.canvasWidth, paletteImage.imageData.canvasHeight, paletteImage.imageData.readWidth, paletteImage.imageData.readHeight);
 	LOG_TEXCACHE("Uploading texture - srcpitch: %d", srcpitch);
 
 	uint8_t* const pWriteData = writeBuffer.data();
@@ -692,26 +718,30 @@ void PS2::GSTexValue::UploadImage() {
 
 		for (int y = 0; y < yBlocks; y++) {
 			for (int x = 0; x < xBlocks; x++) {
+				const int dstOffset = (PS2_Internal::dstBigBlockSize * image.imageData.bpp * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y);
 				PS2_Internal::ReadTextureBlock4(writeBuffer.data() + (x * writeOffset) + (y * writeOffset * 0x8)
-					, readBuffer.data() + (PS2_Internal::dstBigBlockSize * image.imageData.bpp * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
+					, readBuffer.data() + dstOffset
 					, image.imageData.canvasWidth * 4
 					, paletteImage.imageData
 					, image.imageData.canvasWidth
-					, image.imageData.canvasHeight);
+					, image.imageData.canvasHeight
+					, ((uint8_t*)debugData.paletteIndexes.data()) + dstOffset);
 			}
 		}
 	}
 	else if (image.imageData.bpp == 8) {
 		for (int y = 0; y < yBlocks; y++) {
 			for (int x = 0; x < xBlocks; x++) {
+				const int dstOffset = (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y);
 				PS2_Internal::ReadTextureBlock8(pWriteData + (x * 0x800) + (y * 0x1000 * 0x8)
-					, pReadData + (PS2_Internal::dstBigBlockSize * 4 * x) + (PS2_Internal::dstBigBlockSize * PS2_Internal::dstBigBlockSize * 8 * y)
+					, pReadData + dstOffset
 					, image.imageData.canvasWidth * 4
 					, paletteImage.imageData
 					, image.imageData.canvasWidth
 					, image.imageData.canvasHeight
 					, xBlocks
-					, yBlocks);
+					, yBlocks
+					, ((uint8_t*)debugData.paletteIndexes.data()) + dstOffset);
 			}
 		}
 	}
@@ -722,13 +752,15 @@ void PS2::GSTexValue::UploadImage() {
 	if (!Renderer::gHeadless) {
 		image.UploadData(bufferSize, readBuffer);
 
-		const VkDeviceSize paletteSize = paletteImage.imageData.canvasWidth * paletteImage.imageData.canvasHeight * 4;
+		const VkDeviceSize paletteSize = paletteImage.imageData.readWidth * paletteImage.imageData.readHeight * 4;
+
+		debugData.convertedPalette = PS2_Internal::ConvertPalette(image.imageData.bpp, paletteImage.imageData);
 
 		std::vector<uint8_t> paletteReadBuffer;
 		paletteReadBuffer.reserve(paletteSize);
 
 		for (int i = 0; i < paletteSize; i++) {
-			paletteReadBuffer.push_back(((uint8_t*)paletteImage.imageData.pImage)[i]);
+			paletteReadBuffer.push_back(((uint8_t*)debugData.convertedPalette.data())[i]);
 		}
 
 		paletteImage.UploadData(paletteSize, paletteReadBuffer);
@@ -736,8 +768,8 @@ void PS2::GSTexValue::UploadImage() {
 }
 
 void PS2::GSTexValue::CreateResources() {
-	image.CreateResources();
-	paletteImage.CreateResources();
+	image.CreateResources(false);
+	paletteImage.CreateResources(true);
 }
 
 void PS2::GSTexImage::UploadData(int bufferSize, std::vector<uint8_t>& readBuffer)
@@ -750,24 +782,27 @@ void PS2::GSTexImage::UploadData(int bufferSize, std::vector<uint8_t>& readBuffe
 	vkUnmapMemory(GetDevice(), stagingBufferMemory);
 
 	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	VulkanImage::CopyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(imageData.canvasWidth), static_cast<uint32_t>(imageData.canvasHeight));
+	VulkanImage::CopyBufferToImage(stagingBuffer, image, width, height);
 
 	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void PS2::GSTexImage::CreateResources()
+void PS2::GSTexImage::CreateResources(const bool bPalette)
 {
 	const VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 	const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-	VulkanImage::CreateImage(imageData.canvasWidth, imageData.canvasHeight, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+	width = bPalette ? imageData.readWidth : imageData.canvasWidth;
+	height = bPalette ? imageData.readHeight : imageData.canvasHeight;
+
+	VulkanImage::CreateImage(width, height , format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = VK_FILTER_LINEAR;
-	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.magFilter = bPalette ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+	samplerInfo.minFilter = bPalette ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
 
 	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

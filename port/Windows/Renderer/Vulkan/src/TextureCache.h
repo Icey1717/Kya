@@ -22,7 +22,7 @@ namespace PS2 {
 		}
 
 		bool operator==(const GSTexKey& other) const {
-			return value == other.value && pBitmap == other.pBitmap && pPalette == other.pPalette;
+			return value == other.value; //&& pBitmap == other.pBitmap && pPalette == other.pPalette;
 		}
 	};
 
@@ -62,16 +62,25 @@ namespace PS2 {
 
 		Renderer::ImageData imageData;
 
+		uint32_t width;
+		uint32_t height;
+
 		VkDescriptorPool descriptorPool;
 		std::vector<VkDescriptorSet> descriptorSets;
 
 		void UploadData(int bufferSize, std::vector<uint8_t>& readBuffer);
 
-		void CreateResources();
+		void CreateResources(const bool bTextureFiltering);
 		void Cleanup();
 
 		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts);
 		void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
+	};
+
+	struct TextureDebug {
+		// Debug values
+		std::vector<uint32_t> paletteIndexes;
+		std::vector<uint32_t> convertedPalette;
 	};
 
 	struct GSTexValue {
@@ -89,13 +98,13 @@ namespace PS2 {
 		GSTexImage image;
 		GSTexImage paletteImage;
 
-		//Renderer::TextureData textureData;
-
 		// Buffer emulating the PS2 vram memory.
 		std::vector<uint8_t> writeBuffer;
 
 		// Buffer of 32bit colour pixels.
 		std::vector<uint8_t> readBuffer;
+
+		TextureDebug debugData;
 	};
 
 	struct GSTexEntry {

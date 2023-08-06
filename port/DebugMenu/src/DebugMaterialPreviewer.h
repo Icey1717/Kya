@@ -39,5 +39,4 @@ namespace MaterialPreviewer {
 	void Open(MaterialPreviewerEntry& entry, std::string name);
 	void Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name);
 	void Reset();
-	void RemoveMaterial(edDList_material* pMaterial);
 };

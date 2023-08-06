@@ -14,7 +14,7 @@ namespace DebugHelpers {
 			, texID(nullptr)
 		{}
 
-		DebugMaterialKey(PS2::GSTexValue& inTexture, ImTextureID inTexID)
+		DebugMaterialKey(const PS2::GSTexValue& inTexture, ImTextureID inTexID)
 			: pMaterial(nullptr)
 			, texID(inTexID)
 		{}
@@ -33,7 +33,7 @@ namespace DebugHelpers {
 
 	struct DebugMaterial {
 		DebugMaterial(edDList_material* pInMaterial, bool bCreateTexID = true);
-		DebugMaterial(PS2::GSTexValue& inTexture, ImTextureID inTexID);
+		DebugMaterial(const PS2::GSTexValue& inTexture, ImTextureID inTexID);
 
 		DebugMaterialKey key;
 		PS2::GSTexValue texture;

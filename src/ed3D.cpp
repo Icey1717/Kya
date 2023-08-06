@@ -203,7 +203,7 @@ PACK(
 PACK(
 	struct ed_3d_strip {
 	uint flags_0x0;
-	short field_0x4;
+	short materialIndex;
 	short field_0x6;
 	int vifListOffset;
 	int pNext; // ed_3d_strip*
@@ -5192,19 +5192,19 @@ void ed3DLinkClusterStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 	int iVar4;
 	TextureData_HASH_Internal_PA32* pTVar5;
 	bool bVar6;
-	ed_g2d_material** ppeVar7;
-	ed_dma_material* peVar8;
+	ed_g2d_material** ppCurrentMaterial;
+	ed_dma_material* pDMA_Material;
 	edF32VECTOR4* peVar9;
 	EVectorMode_A EVar10;
-	ed_g2d_material* piVar7;
+	ed_g2d_material* pStripMaterial;
 	//ed_g3d_Anim_def* peVar11;
 	long lVar12;
-	edLIST* peVar13;
-	edNODE* peVar14;
-	int* piVar15;
+	edLIST* pList;
+	edNODE* pNode;
+	int* ppNodeCount;
 	edNODE_MANAGER* pDVar14;
-	ed_dma_material* peVar17;
-	ed_g2d_bitmap* peVar16;
+	ed_dma_material* pExistingDMA_Material;
+	ed_g2d_bitmap* pBitmap;
 	uint uVar17;
 	uint uVar18;
 	float fVar19;
@@ -5226,16 +5226,18 @@ void ed3DLinkClusterStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 	float extraout_vf9w_02;
 	float extraout_vf9w_03;
 	ed_g2d_layer_header* iVar1;
-	edNODE_MANAGER* iVar3;
+	edNODE_MANAGER* pNodeManager;
 	TextureData_TEX* iVar2;
 
-	if (pStrip->field_0x4 == -1) {
-		piVar7 = (ed_g2d_material*)0x0;
+	if (pStrip->materialIndex == -1) {
+		pStripMaterial = (ed_g2d_material*)0x0;
 	}
 	else {
-		piVar7 = ed3DG2DGetG2DMaterialFromIndex(pMBNK, (int)pStrip->field_0x4);
+		ED3D_LOG(LogLevel::Verbose, "ed3DLinkClusterStripToViewport materialIndex: %d", pStrip->materialIndex);
+
+		pStripMaterial = ed3DG2DGetG2DMaterialFromIndex(pMBNK, (int)pStrip->materialIndex);
 		in_vf9w = extraout_vf9w;
-		if ((piVar7 != (ed_g2d_material*)0x0) && ((piVar7->field_0x2 & 1) != 0)) {
+		if ((pStripMaterial != (ed_g2d_material*)0x0) && ((pStripMaterial->field_0x2 & 1) != 0)) {
 			return;
 		}
 	}
@@ -5301,11 +5303,11 @@ void ed3DLinkClusterStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 		}
 	}
 LAB_00297680:
-	if ((piVar7 != (ed_g2d_material*)0x0) && (piVar7->count_0x0 != 0)) {
-		iVar1 = (ed_g2d_layer_header*)LOAD_SECTION(*(int*)(piVar7 + 1));
+	if ((pStripMaterial != (ed_g2d_material*)0x0) && (pStripMaterial->count_0x0 != 0)) {
+		iVar1 = (ed_g2d_layer_header*)LOAD_SECTION(*(int*)(pStripMaterial + 1));
 		uVar18 = (iVar1->body).flags_0x0;
 		uVar17 = (iVar1->body).flags;
-		peVar16 = (ed_g2d_bitmap*)0x0;
+		pBitmap = (ed_g2d_bitmap*)0x0;
 		if ((iVar1->body).field_0x1c != 0) {
 			iVar2 = (TextureData_TEX*)LOAD_SECTION((iVar1->body).pTex);
 			(iVar1->body).flags = uVar17 & 0xfffffbff;
@@ -5368,14 +5370,15 @@ LAB_00297680:
 				pTVar5 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).after.pHASH_Internal);
 				if (pTVar5 != (TextureData_HASH_Internal_PA32*)0x0) {
 					TextureData_PA32* pPA = (TextureData_PA32*)LOAD_SECTION(pTVar5->pPA32);
-					peVar16 = (ed_g2d_bitmap*)&pPA->body;
+					pBitmap = (ed_g2d_bitmap*)&pPA->body;
 				}
 			}
 			else {
+				//iVar2->body.after
 				iVar4 = *(int*)(&iVar2[1].field_0x8 + (uint)(iVar1->body).field_0x1e * 0x10);
 				if (iVar4 != 0) {
 					ed_hash_code* pHash = (ed_hash_code*)LOAD_SECTION(iVar4);
-					peVar16 = (ed_g2d_bitmap*)(((char*)LOAD_SECTION(pHash->field_0x8)) + 0x10);
+					pBitmap = (ed_g2d_bitmap*)(((char*)LOAD_SECTION(pHash->field_0x8)) + 0x10);
 				}
 			}
 			if ((pStrip->flags_0x0 & 4) != 0) {
@@ -5387,30 +5390,30 @@ LAB_00297680:
 		}
 		if ((uVar17 & 0x800) != 0) goto LAB_00297870;
 	}
-	peVar16 = (ed_g2d_bitmap*)0x0;
+	pBitmap = (ed_g2d_bitmap*)0x0;
 	uVar18 = 0;
 	uVar17 = 0;
-	piVar7 = gDefault_Material_Cluster_Current;
+	pStripMaterial = gDefault_Material_Cluster_Current;
 LAB_00297870:
-	peVar8 = DmaMaterialBufferCurrent;
+	pDMA_Material = DmaMaterialBufferCurrent;
 	if ((((uVar18 & 0xfc) == 0) || ((uVar18 & 0x80000000) != 0)) || ((uVar18 & 0x4000) != 0)) {
-		peVar17 = (ed_dma_material*)LOAD_SECTION(piVar7->pDMA_Material);
-		if (piVar7->pDMA_Material == (int)0x0) {
-			peVar13 = &DmaMaterialBufferCurrent->list;
-			ppeVar7 = &DmaMaterialBufferCurrent->pMaterial;
+		pExistingDMA_Material = (ed_dma_material*)LOAD_SECTION(pStripMaterial->pDMA_Material);
+		if (pStripMaterial->pDMA_Material == (int)0x0) {
+			pList = &DmaMaterialBufferCurrent->list;
+			ppCurrentMaterial = &DmaMaterialBufferCurrent->pMaterial;
 			DmaMaterialBufferCurrent = DmaMaterialBufferCurrent + 1;
-			*ppeVar7 = piVar7;
-			peVar8->field_0x4 = 0;
-			peVar8->flags = peVar8->flags & 0xfffffffe;
-			(peVar8->list).pNext = (edNODE*)peVar13;
-			(peVar8->list).pPrev = (edNODE*)peVar13;
-			(peVar8->list).pData = gNodeDmaMatrix;
-			(peVar8->list).field_0x10 = 0;
-			(peVar8->list).nodeCount = 0;
-			(peVar8->list).header.mode = 0;
-			peVar8->flags = peVar8->flags | 1;
-			piVar7->pDMA_Material = STORE_SECTION(peVar8);
-			peVar8->pBitmap = peVar16;
+			*ppCurrentMaterial = pStripMaterial;
+			pDMA_Material->field_0x4 = 0;
+			pDMA_Material->flags = pDMA_Material->flags & 0xfffffffe;
+			(pDMA_Material->list).pNext = (edNODE*)pList;
+			(pDMA_Material->list).pPrev = (edNODE*)pList;
+			(pDMA_Material->list).pData = gNodeDmaMatrix;
+			(pDMA_Material->list).field_0x10 = 0;
+			(pDMA_Material->list).nodeCount = 0;
+			(pDMA_Material->list).header.mode = 0;
+			pDMA_Material->flags = pDMA_Material->flags | 1;
+			pStripMaterial->pDMA_Material = STORE_SECTION(pDMA_Material);
+			pDMA_Material->pBitmap = pBitmap;
 			if (pStrip->cameraPanIndex == 0) {
 				if ((uVar17 & 0x40) == 0) {
 					if ((uVar17 & 0x80) == 0) {
@@ -5459,21 +5462,21 @@ LAB_00297870:
 					}
 				}
 			}
-			iVar3 = (edNODE_MANAGER*)gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pData;
-			peVar14 = iVar3->pNodeHead + iVar3->linkCount;
-			peVar14->pData = peVar8;
-			peVar14->header.typeField.type = 1;
-			iVar3->linkCount = iVar3->linkCount + 1;
-			piVar15 = &gPrim_List[pStrip->cameraPanIndex][gCurRenderList].nodeCount;
-			*piVar15 = *piVar15 + 1;
-			peVar14->pPrev = gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pPrev;
-			gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pPrev = peVar14;
-			peVar17 = peVar8;
+			pNodeManager = (edNODE_MANAGER*)gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pData;
+			pNode = pNodeManager->pNodeHead + pNodeManager->linkCount;
+			pNode->pData = pDMA_Material;
+			pNode->header.typeField.type = 1;
+			pNodeManager->linkCount = pNodeManager->linkCount + 1;
+			ppNodeCount = &gPrim_List[pStrip->cameraPanIndex][gCurRenderList].nodeCount;
+			*ppNodeCount = *ppNodeCount + 1;
+			pNode->pPrev = gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pPrev;
+			gPrim_List[pStrip->cameraPanIndex][gCurRenderList].pPrev = pNode;
+			pExistingDMA_Material = pDMA_Material;
 
 			ED3D_LOG(LogLevel::Verbose, "ed3DLinkClusterStripToViewport Linked Cluster Strip: (%d, %d). New node count: %d", pStrip->cameraPanIndex, gCurRenderList,
 				gPrim_List[pStrip->cameraPanIndex][gCurRenderList].nodeCount);
 		}
-		pDVar14 = (edNODE_MANAGER*)(peVar17->list).pData;
+		pDVar14 = (edNODE_MANAGER*)(pExistingDMA_Material->list).pData;
 	}
 	else {
 		if (gRender_info_SPR->field_0x8 == 1) {
@@ -5484,33 +5487,33 @@ LAB_00297870:
 			sceVu0ApplyMatrix(gBoundSphereCenter, WorldToCamera_Matrix,
 				gBoundSphereCenter);
 		}
-		peVar17 = DmaMaterialBufferCurrent;
-		peVar13 = &DmaMaterialBufferCurrent->list;
-		ppeVar7 = &DmaMaterialBufferCurrent->pMaterial;
+		pExistingDMA_Material = DmaMaterialBufferCurrent;
+		pList = &DmaMaterialBufferCurrent->list;
+		ppCurrentMaterial = &DmaMaterialBufferCurrent->pMaterial;
 		DmaMaterialBufferCurrent = DmaMaterialBufferCurrent + 1;
-		*ppeVar7 = piVar7;
-		peVar17->field_0x4 = gBoundSphereCenter->z;
-		peVar17->flags = peVar17->flags & 0xfffffffe;
-		(peVar17->list).pNext = (edNODE*)peVar13;
-		(peVar17->list).pPrev = (edNODE*)peVar13;
-		(peVar17->list).pData = gNodeDmaMatrix;
-		(peVar17->list).field_0x10 = 0;
-		(peVar17->list).nodeCount = 0;
-		(peVar17->list).header.mode = 0;
-		peVar17->flags = peVar17->flags | 1;
-		peVar17->pBitmap = peVar16;
-		IMPLEMENTATION_GUARD(FUN_002b1040(gPrim_List[3] + gCurRenderList, (int)peVar17, 1));
-		pDVar14 = (edNODE_MANAGER*)(peVar17->list).pData;
+		*ppCurrentMaterial = pStripMaterial;
+		pExistingDMA_Material->field_0x4 = gBoundSphereCenter->z;
+		pExistingDMA_Material->flags = pExistingDMA_Material->flags & 0xfffffffe;
+		(pExistingDMA_Material->list).pNext = (edNODE*)pList;
+		(pExistingDMA_Material->list).pPrev = (edNODE*)pList;
+		(pExistingDMA_Material->list).pData = gNodeDmaMatrix;
+		(pExistingDMA_Material->list).field_0x10 = 0;
+		(pExistingDMA_Material->list).nodeCount = 0;
+		(pExistingDMA_Material->list).header.mode = 0;
+		pExistingDMA_Material->flags = pExistingDMA_Material->flags | 1;
+		pExistingDMA_Material->pBitmap = pBitmap;
+		IMPLEMENTATION_GUARD(FUN_002b1040(gPrim_List[3] + gCurRenderList, (int)pExistingDMA_Material, 1));
+		pDVar14 = (edNODE_MANAGER*)(pExistingDMA_Material->list).pData;
 	}
-	peVar14 = pDVar14->pNodeHead + pDVar14->linkCount;
-	peVar14->pData = pStrip;
-	peVar14->header.typeField.type = 3;
-	peVar14->header.typeField.unknown = (short)pStrip->flags_0x0;
+	pNode = pDVar14->pNodeHead + pDVar14->linkCount;
+	pNode->pData = pStrip;
+	pNode->header.typeField.type = 3;
+	pNode->header.typeField.unknown = (short)pStrip->flags_0x0;
 	pDVar14->linkCount = pDVar14->linkCount + 1;
-	(peVar17->list).nodeCount = (peVar17->list).nodeCount + 1;
-	peVar14->pPrev = (peVar17->list).pPrev;
-	peVar14->pNext = (edNODE*)LOAD_SECTION(pStrip->pDMA_Matrix);
-	(peVar17->list).pPrev = peVar14;
+	(pExistingDMA_Material->list).nodeCount = (pExistingDMA_Material->list).nodeCount + 1;
+	pNode->pPrev = (pExistingDMA_Material->list).pPrev;
+	pNode->pNext = (edNODE*)LOAD_SECTION(pStrip->pDMA_Matrix);
+	(pExistingDMA_Material->list).pPrev = pNode;
 	return;
 }
 
