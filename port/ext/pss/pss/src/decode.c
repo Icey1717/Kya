@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <libfmemopen.h>
 #include <mpeg2convert.h>
+#include "pss.h"
 
 #define BUFFER_SIZE 4096
 static uint8_t buffer[BUFFER_SIZE];

@@ -7,6 +7,16 @@
 #include "delegate.h"
 #endif
 
+PACK(
+	struct ed_hash_code {
+	Hash_8 field_0x0;
+	int pData; // char*
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+};)
+
 struct ed_g2d_manager {
 	char* textureFileBufferStart;
 	int textureFileLengthA;
@@ -145,6 +155,12 @@ struct edDList_material {
 	int Length;
 };
 
+struct edPSX2Header
+{
+	int pPkt;
+	int field_0x4;
+};
+
 PACK(
 	struct ed_g2d_layer {
 	uint flags_0x0;
@@ -257,25 +273,8 @@ PACK(
 });
 
 PACK(
-	struct TextureData_TEX_Internal_After {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	int pHASH_Internal; // TextureData_HASH_Internal_PA32*
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-});
-
-PACK(
 	struct TextureData_TEX_Internal {
-	TextureData_TEX_Internal_After after;
+	ed_hash_code hashCode;
 	int palette;
 	int field_0x14; // edF32VECTOR4*
 	float field_0x18;
@@ -335,16 +334,6 @@ PACK( struct LayerHeaderPacked {
 	undefined field_0xf;
 	char field_0x10;
 });
-
-PACK(
-	struct ed_hash_code {
-	Hash_8 field_0x0;
-	int field_0x8; // char*
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-};)
 
 struct ed_viewport;
 struct edFCamera;

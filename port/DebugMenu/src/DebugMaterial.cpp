@@ -37,9 +37,7 @@ Renderer::TextureData DebugHelpers::DebugMaterial::LoadTextureData()
 				pPaletteBitmap = edDListGetG2DBitmap(key.pMaterial->pMAT, 0, &bHasPalette, &pTextureBitmap);
 
 				if (pPaletteBitmap != (ed_g2d_bitmap*)0x0 && pTextureBitmap != (ed_g2d_bitmap*)0x0) {
-					pRVar4 = (edpkt_data*)(((char*)LOAD_SECTION(pPaletteBitmap->pPSX2)) + 0x40);
-
-					return MakeTextureDataFromPacket(pRVar4, pTextureBitmap, pPaletteBitmap);
+					return MakeTextureDataFromPacket(pTextureBitmap, pPaletteBitmap);
 				}
 			}
 		}

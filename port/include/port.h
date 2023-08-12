@@ -331,30 +331,11 @@ struct Gif_Tag {
 #define SCE_GS_SET_PABE(pabe) ((ulong)(pabe))
 
 #ifdef PLATFORM_WIN
-inline void unpack_sce_gs_set_tex0(ulong packed_value,
-	ulong& tbp, ulong& tbw, ulong& psm,
-	ulong& tw, ulong& th, ulong& tcc,
-	ulong& tfx, ulong& cbp, ulong& cpsm,
-	ulong& csm, ulong& csa, ulong& cld)
-{
-	tbp = packed_value & 0x3F;
-	tbw = (packed_value >> 14) & 0x3F;
-	psm = (packed_value >> 20) & 0x3F;
-	tw = (packed_value >> 26) & 0xF;
-	th = (packed_value >> 30) & 0xF;
-	tcc = (packed_value >> 34) & 0x1;
-	tfx = (packed_value >> 35) & 0x3;
-	cbp = (packed_value >> 37) & 0x3FFF;
-	cpsm = (packed_value >> 51) & 0xF;
-	csm = (packed_value >> 55) & 0xF;
-	csa = (packed_value >> 56) & 0xF;
-	cld = (packed_value >> 61) & 0xF;
-}
 
 inline void SendTextureCommandsFromPacked(ulong packed) {
-	ulong tbp, tbw, psm, tw, th, tcc, tfx, cpsm, csa, cbp, csm, cld;
-	unpack_sce_gs_set_tex0(packed, tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
-	Renderer::SetTEX(tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
+	//ulong tbp, tbw, psm, tw, th, tcc, tfx, cpsm, csa, cbp, csm, cld;
+	//unpack_sce_gs_set_tex0(packed, tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
+	Renderer::SetTEX(*reinterpret_cast<Renderer::GSTex*>(&packed));
 }
 
 

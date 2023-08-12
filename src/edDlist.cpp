@@ -641,13 +641,13 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHas
 			if ((iVar2->body).palette != 0) {
 				*bHasPalette = true;
 
-				iVar3 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(((TextureData_TEX_Internal_After*)(iVar2 + 1))[(uint)(iVar1->body).field_0x1e].pHASH_Internal);
+				iVar3 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(((ed_hash_code*)(iVar2 + 1))[(uint)(iVar1->body).field_0x1e].pData);
 
 				if (iVar3 != 0) {
 					pTVar2 = &((TextureData_PA32*)LOAD_SECTION(iVar3->pPA32))->body;
 				}
 
-				pTVar1 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).after.pHASH_Internal);
+				pTVar1 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).hashCode.pData);
 				if (pTVar1 == 0) {
 					return pTVar2;
 				}
@@ -655,7 +655,7 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHas
 				*pOutAddr = &((TextureData_PA32*)LOAD_SECTION(pTVar1->pPA32))->body;
 				return pTVar2;
 			}
-			pTVar1 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).after.pHASH_Internal);
+			pTVar1 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).hashCode.pData);
 			if (pTVar1 == 0) {
 				return (ed_g2d_bitmap*)0x0;
 			}
@@ -813,7 +813,12 @@ void edDListSetActiveViewPort(ed_viewport* pViewport)
 }
 
 #ifdef PLATFORM_WIN
-Renderer::TextureData MakeTextureDataFromPacket(edpkt_data* pPkt, ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap) {
+Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap) {
+
+	edPSX2Header* pHeader = (edPSX2Header*)LOAD_SECTION(pPaletteBitmap->pPSX2);
+	edpkt_data* pPkt = (edpkt_data*)(LOAD_SECTION(pHeader->pPkt));
+	pPkt += 2;
+
 	int imageIndex = -1;
 	int paletteIndex = -1;
 	uint* pPktU32 = edpktAsU32(pPkt);
@@ -910,7 +915,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 
 #ifdef PLATFORM_WIN
-					Renderer::SetImagePointer(MakeTextureDataFromPacket(pDVar5->aCommandArray[0].pCommandBuffer, pTextureBitmap, pPaletteBitmap));
+					Renderer::SetImagePointer(MakeTextureDataFromPacket(pTextureBitmap, pPaletteBitmap));
 #endif
 				}
 

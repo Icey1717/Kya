@@ -183,10 +183,10 @@ namespace Renderer {
 		PS2::GetGSState().PRIM = { prim, iip, tme, fge, abe, aa1, fst, ctxt, fix };
 	}
 
-	void SetTEX(uint32_t tbp, uint32_t tbw, uint32_t psm, uint32_t tw, uint32_t th, uint32_t tcc, uint32_t tfx, uint32_t cbp, uint32_t cpsm, uint32_t csm, uint32_t csa, uint32_t cld)
+	void SetTEX(Renderer::GSTex tex)
 	{
-		LogTex(tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
-		PS2::GetGSState().TEX = { tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld };
+		LogTex(tex.TBP0, tex.TBW, tex.PSM, tex.TW, tex.TH, tex.TCC, tex.TFX, tex.CBP, tex.CPSM, tex.CSM, tex.CSA, tex.CLD);
+		PS2::GetGSState().TEX = tex;
 	}
 
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z)

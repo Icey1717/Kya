@@ -14,7 +14,100 @@ namespace DebugMenu_Internal {
 	static float zoomLevel = 1.0f;
 	static ImVec2 scrollOffset(0.0f, 0.0f);
 
-	static void Show(DebugHelpers::DebugMaterial& debugMaterial, bool& bOpen) {
+	bool Neq(float a, float b, float epsilon) {
+		return std::abs(a - b) < epsilon;
+	}
+
+	static void ShowImageIndexedGrid(const char* name, bool& bShow, const uint32_t* pixelIndexes, const uint32_t* paletteColors, const int width, const int height)
+	{
+		ImGui::Begin(name, &bShow, ImGuiWindowFlags_AlwaysAutoResize);
+		// Draw table with fixed cell heights
+		static float cellHeight = 22.0f;
+		ImGui::InputFloat("Cell Height", &cellHeight);
+
+		static ImVec4 filterColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		static bool bFilter = false;
+		static bool bFilterR = false;
+		static bool bFilterG = false;
+		static bool bFilterB = false;
+		static bool bFilterA = false;
+		ImGui::Checkbox("Filter", &bFilter);
+
+		static float tolerance = 0.001f;
+		if (bFilter) {
+			ImGui::InputFloat("Tolerance", &tolerance);
+
+			ImGui::InputFloat("R", &filterColor.x);
+			ImGui::SameLine();
+			ImGui::Checkbox("Filter R", &bFilterR);
+
+			ImGui::InputFloat("G", &filterColor.y);
+			ImGui::SameLine();
+			ImGui::Checkbox("Filter G", &bFilterG);
+
+			ImGui::InputFloat("B", &filterColor.z);
+			ImGui::SameLine();
+			ImGui::Checkbox("Filter B", &bFilterB);
+
+			ImGui::InputFloat("A", &filterColor.w);
+			ImGui::SameLine();
+			ImGui::Checkbox("Filter A", &bFilterA);
+		}
+
+		//ImGui::SetWindowFontScale(0.5f);
+
+		const ImGuiTableFlags flags = ImGuiTableFlags_Borders;
+		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
+		if (ImGui::BeginTable("GridTable", width, flags, ImVec2((cellHeight * width) + width, 0))) {
+			for (int row = 0; row < height; ++row) {
+				ImGui::TableNextRow(0);
+				for (int col = 0; col < width; ++col) {
+					ImGui::TableSetColumnIndex(col);
+					const int paletteIndex = pixelIndexes[col + (row * width)];
+					ImU32 cell_bg_color = paletteColors[paletteIndex];
+
+					// Extract color components
+					ImVec4 colorRGBA = ImVec4(
+						(float)(cell_bg_color & 0xFF) / 255.0f,                 // Red
+						(float)((cell_bg_color >> 8) & 0xFF) / 255.0f,          // Green
+						(float)((cell_bg_color >> 16) & 0xFF) / 255.0f,         // Blue
+						(float)((cell_bg_color >> 24) & 0xFF) / 255.0f          // Alpha
+					);
+
+					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
+
+					if (bFilter) {
+						if ((Neq(colorRGBA.x, filterColor.x, tolerance) || !bFilterR) &&
+							(Neq(colorRGBA.y, filterColor.y, tolerance) || !bFilterG) &&
+							(Neq(colorRGBA.z, filterColor.z, tolerance) || !bFilterB) &&
+							(Neq(colorRGBA.w, filterColor.w, tolerance) || !bFilterA)) {
+							ImGui::ColorButton("", colorRGBA, 0, ImVec2(cellHeight, cellHeight));
+						}
+						else {
+							ImGui::ColorButton("", {0.0f, 0.0f, 0.0f, 0.0f}, 0, ImVec2(cellHeight, cellHeight));
+						}
+					}
+					else {
+						ImGui::ColorButton("", colorRGBA, 0, ImVec2(cellHeight, cellHeight));
+					}
+					//ImGui::Text("%02X", paletteIndex); // Use %04X for 4 digits and leading zeros
+					// Open the tooltip when hovering the cell
+					if (ImGui::IsItemHovered()) {
+						ImGui::BeginTooltip();
+						ImGui::Text("");
+						ImGui::Text("Cell (%d, %d)\nPalette Index: %02X", col, row, paletteIndex);
+						ImGui::EndTooltip();
+					}
+				}
+			}
+			ImGui::PopStyleVar();
+			ImGui::EndTable();
+		}
+		ImGui::End();
+	}
+
+	static void Show(DebugHelpers::DebugMaterial& debugMaterial, bool& bOpen) 
+	{
 		const auto& imageData = debugMaterial.texture.image.imageData;
 		const auto& paletteData = debugMaterial.texture.paletteImage.imageData;
 
@@ -88,34 +181,24 @@ namespace DebugMenu_Internal {
 		}
 
 		if (bShowPalette) {
-			ImGui::Begin("PaletteIndexes", &bShowPalette, ImGuiWindowFlags_AlwaysAutoResize);
-			// Draw table with fixed cell heights
-			float cellHeight = 22.0f;
-
-			const ImGuiTableFlags flags = ImGuiTableFlags_Borders;
-			const auto& paletteIndexes = debugMaterial.texture.debugData.paletteIndexes;
-
-			if (ImGui::BeginTable("GridTable", imageData.canvasWidth, flags, ImVec2(0, 0))) {
-				for (int row = 0; row < imageData.canvasHeight; ++row) {
-					ImGui::TableNextRow(0, cellHeight);
-					for (int col = 0; col < imageData.canvasWidth; ++col) {
-						ImGui::TableSetColumnIndex(col);
-						const int paletteIndex = paletteIndexes[col + (row * imageData.canvasWidth)];
-						ImU32 cell_bg_color = debugMaterial.texture.debugData.convertedPalette[paletteIndex];
-						ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
-						ImGui::Text("%02X", paletteIndex); // Use %04X for 4 digits and leading zeros
-
-					}
-				}
-				ImGui::EndTable();
-			}
-			ImGui::End();
+			const auto& debugData = debugMaterial.texture.debugData;
+			const auto& imageData = debugMaterial.texture.image.imageData;
+			ShowImageIndexedGrid("Palette Indexes", bShowPalette, debugData.paletteIndexes.data(), debugData.convertedPalette.data(), imageData.canvasWidth, imageData.canvasHeight);
 		}		
 
 		const int scale = 20;
 		ImGui::Begin("Palette", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 		ImVec2 paletteSize = { paletteData.readWidth * scale, paletteData.readHeight * scale };
 		ImGui::Image(debugMaterial.paletteTexID, paletteSize, ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, 1), ImVec4(1, 1, 1, 0.5f));
+
+		std::vector<uint32_t> indexes;
+		indexes.resize(paletteData.readWidth * paletteData.readHeight);
+		for (int i = 0; i < paletteData.readWidth * paletteData.readHeight; i++) {
+			indexes[i] = i;
+		}
+
+		ShowImageIndexedGrid("Actual Palette", bOpen, indexes.data(), debugMaterial.texture.debugData.convertedPalette.data(), paletteData.readWidth, paletteData.readHeight);
+		ShowImageIndexedGrid("Unconverted Palette", bOpen, indexes.data(), (uint32_t*)paletteData.pImage, paletteData.readWidth, paletteData.readHeight);
 
 		ImGui::End();
 

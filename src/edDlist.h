@@ -106,7 +106,7 @@ extern edDlistConfiguration edDlistConfig;
 extern edSysHandlerDisplayList sysHandler_0048cb90;
 
 #ifdef PLATFORM_WIN
-Renderer::TextureData MakeTextureDataFromPacket(edpkt_data* pPkt, struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap);
+Renderer::TextureData MakeTextureDataFromPacket(struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap);
 #endif
 
 void edDListInit(void);

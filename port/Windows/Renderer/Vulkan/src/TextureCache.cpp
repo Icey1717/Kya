@@ -938,7 +938,7 @@ namespace PS2_Internal {
 	PS2::TextureCache gTextureCache;
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Create(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
+PS2::GSTexEntry& PS2::TextureCache::Create(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
 {
 	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palette.pImage);
 	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key, descriptorSetLayouts, descriptorSetLayoutBindings);
@@ -946,7 +946,7 @@ PS2::GSTexEntry& PS2::TextureCache::Create(const GSState::GSTex& TEX, const Rend
 	return texcache.back();
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Lookup(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
+PS2::GSTexEntry& PS2::TextureCache::Lookup(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
 {
 	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palette.pImage);
 	for (auto& entry : texcache) {

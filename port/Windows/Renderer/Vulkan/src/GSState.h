@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "renderer.h"
 
 namespace PS2 {
 	struct alignas(32) GSState
@@ -78,42 +79,7 @@ namespace PS2 {
 		};
 
 		GSPrim PRIM;
-
-		struct GSTex {
-			uint32_t TBP;
-			uint32_t TBW;
-			uint32_t PSM;
-			uint32_t TW;
-			uint32_t TH;
-			uint32_t TCC;
-			uint32_t TFX;
-			uint32_t CBP;
-			uint32_t CPSM;
-			uint32_t CSM;
-			uint32_t CSA;
-			uint32_t CLD;
-
-			bool operator==(const GSTex& other) const {
-				return TBP == other.TBP &&
-					TBW == other.TBW &&
-					PSM == other.PSM &&
-					TW == other.TW &&
-					TH == other.TH &&
-					TCC == other.TCC &&
-					TFX == other.TFX &&
-					CBP == other.CBP &&
-					CPSM == other.CPSM &&
-					CSM == other.CSM &&
-					CSA == other.CSA &&
-					CLD == other.CLD;
-			}
-
-			bool operator!=(const GSTex& other) const {
-				return !(*this == other);
-			}
-		};
-
-		GSTex TEX;
+		Renderer::GSTex TEX;
 	};
 }
 

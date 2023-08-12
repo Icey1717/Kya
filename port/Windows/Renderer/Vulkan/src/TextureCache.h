@@ -13,16 +13,17 @@ namespace Renderer {
 
 namespace PS2 {
 	struct GSTexKey {
-		GSState::GSTex value;
+		Renderer::GSTex value;
 		void* pBitmap;
 		void* pPalette;
 
-		static GSTexKey CreateFromTEX(const GSState::GSTex& TEX, void* pInBitmap, void* pInPalette) {
+		static GSTexKey CreateFromTEX(const Renderer::GSTex& TEX, void* pInBitmap, void* pInPalette) {
 			return { TEX, pInBitmap, pInPalette };
 		}
 
 		bool operator==(const GSTexKey& other) const {
-			return value == other.value; //&& pBitmap == other.pBitmap && pPalette == other.pPalette;
+			// #Hack this should probably key properly, using the pointers here is bad.
+			return value == other.value && pBitmap == other.pBitmap && pPalette == other.pPalette;
 		}
 	};
 
@@ -127,13 +128,13 @@ namespace PS2 {
 		std::vector<GSTexEntry> texcache;
 
 	public:
-		GSTexEntry& Create(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
-		GSTexEntry& Lookup(const GSState::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
+		GSTexEntry& Create(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
+		GSTexEntry& Lookup(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
 		const std::vector<GSTexEntry>& GetEntries() { return texcache; }
 	};
 
-	inline GSTexKey CreateKeyFromTEX(const GSState::GSTex& TEX) {
-		return { TEX.TBP, TEX.TBW, TEX.PSM, TEX.TW, TEX.TH };
+	inline GSTexKey CreateKeyFromTEX(const Renderer::GSTex& TEX) {
+		return { TEX.TBP0, TEX.TBW, TEX.PSM, TEX.TW, (uint32_t)TEX.TH };
 	}
 
 	TextureCache& GetTextureCache();

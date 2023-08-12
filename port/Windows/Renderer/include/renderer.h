@@ -58,6 +58,48 @@ namespace Renderer
 		uint32_t _PAD2 : 32;
 	};
 
+	union GSTex
+	{
+		struct
+		{
+			uint32_t TBP0 : 14;
+			uint32_t TBW : 6;
+			uint32_t PSM : 6;
+			uint32_t TW : 4;
+			uint32_t _PAD1 : 2;
+			uint32_t _PAD2 : 2;
+			uint32_t TCC : 1;
+			uint32_t TFX : 2;
+			uint32_t CBP : 14;
+			uint32_t CPSM : 4;
+			uint32_t CSM : 1;
+			uint32_t CSA : 5;
+			uint32_t CLD : 3;
+		};
+
+		struct
+		{
+			uint64_t _PAD3 : 30;
+			uint64_t TH : 4;
+			uint64_t _PAD4 : 30;
+		};
+
+		bool operator==(const GSTex& other) const {
+			return TBP0 == other.TBP0 &&
+				TBW == other.TBW &&
+				PSM == other.PSM &&
+				TW == other.TW &&
+				TH == other.TH &&
+				TCC == other.TCC &&
+				TFX == other.TFX &&
+				CBP == other.CBP &&
+				CPSM == other.CPSM &&
+				CSM == other.CSM &&
+				CSA == other.CSA &&
+				CLD == other.CLD;
+		}
+	};
+
 	void Setup();
 	void RenderImage(char* imageData, int width, int height);
 	void WaitUntilReady();
@@ -77,10 +119,7 @@ namespace Renderer
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z);
 
-	void SetTEX(uint32_t tbp, uint32_t tbw, uint32_t psm,
-		uint32_t tw, uint32_t th, uint32_t tcc,
-		uint32_t tfx, uint32_t cbp, uint32_t cpsm,
-		uint32_t csm, uint32_t csa, uint32_t cld);
+	void SetTEX(Renderer::GSTex tex);
 
 	void SetImagePointer(TextureData inImage);
 
