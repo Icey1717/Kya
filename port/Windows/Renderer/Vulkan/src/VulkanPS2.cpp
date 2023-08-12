@@ -128,17 +128,18 @@ namespace Renderer {
 
 	uint32_t Skip = 0;
 
-	void LogTex(uint32_t tbp, uint32_t tbw, uint32_t psm, uint32_t tw, uint32_t th, uint32_t tcc, uint32_t tfx, uint32_t cbp, uint32_t cpsm, uint32_t csm, uint32_t csa, uint32_t cld)
+	void LogTex(const char* prefix, Renderer::GSTex tex)
 	{
 		// Create a formatted log message string
 		std::ostringstream oss;
-		oss << "SetTEX - tbp: " << tbp << ", tbw: " << tbw << ", psm: " << psm
-			<< ", tw: " << tw << ", th: " << th << ", tcc: " << tcc
-			<< ", tfx: " << tfx << ", cbp: " << cbp << ", cpsm: " << cpsm
-			<< ", csm: " << csm << ", csa: " << csa << ", cld: " << cld;
+		oss << "tbp: " << tex.TBP0 << ", tbw: " << tex.TBW << ", psm: " << tex.PSM
+			<< ", tw: " << tex.TW << ", th: " << tex.TH << ", tcc: " << tex.TCC
+			<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << ", cpsm: " << tex.CPSM
+			<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
 
 		// Log the formatted message
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s", oss.str().c_str());
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %s", prefix, oss.str().c_str());
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %llx", prefix, tex.CMD);
 	}
 
 	void SetVertexSkip(uint32_t inSkip)
@@ -185,7 +186,7 @@ namespace Renderer {
 
 	void SetTEX(Renderer::GSTex tex)
 	{
-		LogTex(tex.TBP0, tex.TBW, tex.PSM, tex.TW, tex.TH, tex.TCC, tex.TFX, tex.CBP, tex.CPSM, tex.CSM, tex.CSA, tex.CLD);
+		LogTex("SetTEX", tex);
 		PS2::GetGSState().TEX = tex;
 	}
 
@@ -663,73 +664,83 @@ void Renderer::Draw() {
 	assert(pipelineItr != PS2::GetPipelines().end());
 	auto pipeline = (*pipelineItr).second;
 
-	PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, pipeline.descriptorSetLayouts, pipeline.descriptorSetLayoutBindings);
+	LogTex("Lookup", state.TEX);
 
-	if (!hwState.bActivePass || hwState.FBP != state.FBP) {
+	auto imageData = GetImageData();
+	auto paletteData = imageData.palette;
+	//Uploading texture PAL - bpp: 32, w: 256, h: 1, rw: 16, rh: 16
+	const bool b = paletteData.bpp == 32 && paletteData.canvasWidth == 256 && paletteData.canvasHeight == 1 && paletteData.readWidth == 16 && paletteData.readHeight == 16;
 
-		if (hwState.bActivePass) {
-			vkCmdEndRenderPass(GetCurrentCommandBuffer());
+	if (b) {
+
+		PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, pipeline.descriptorSetLayouts, pipeline.descriptorSetLayoutBindings);
+
+		if (!hwState.bActivePass || hwState.FBP != state.FBP) {
+
+			if (hwState.bActivePass) {
+				vkCmdEndRenderPass(GetCurrentCommandBuffer());
+			}
+
+			FrameBuffer& frameBuffer = FrameBuffer::Get(state.FBP);
+
+			hwState.FBP = state.FBP;
+			hwState.bActivePass = true;
+
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = frameBuffer.renderPass;
+			renderPassInfo.framebuffer = frameBuffer.framebuffer;
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = { (unsigned int)GetRTSize().x, (unsigned int)GetRTSize().y };
+
+			VkClearValue clearColors[] = { {{0.0f, 0.0f, 0.0f, 1.0f}}, {{0.0f, 0.0f, 0.0f, 1.0f}} };
+			renderPassInfo.clearValueCount = 2;
+			renderPassInfo.pClearValues = clearColors;
+
+			vkCmdBeginRenderPass(GetCurrentCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			float m_hack_topleft_offset = (false) ? -0.01f : 0.0f;
+			VkViewport viewport{};
+			viewport.x = m_hack_topleft_offset;
+			viewport.y = m_hack_topleft_offset;
+			viewport.width = (float)GetRTSize().x;
+			viewport.height = (float)GetRTSize().y;
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+			vkCmdSetViewport(GetCurrentCommandBuffer(), 0, 1, &viewport);
+
+			float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
+			float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
+			float ox = Renderer::OFX;
+			float oy = Renderer::OFY;
+			float ox2 = -1.0f / GetRTSize().x;
+			float oy2 = -1.0f / GetRTSize().y;
+
+			PS2::GetVertexConstantBufferData().Texture_Scale_Offset = GSVector4(0.0f);
+			PS2::GetVertexConstantBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
+			PS2::GetVertexConstantBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
+
+			PS2::UpdateUniformBuffers();
 		}
 
-		FrameBuffer& frameBuffer = FrameBuffer::Get(state.FBP);
+		vkCmdSetScissor(GetCurrentCommandBuffer(), 0, 1, &hwState.scissor);
 
-		hwState.FBP = state.FBP;
-		hwState.bActivePass = true;
+		vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = frameBuffer.renderPass;
-		renderPassInfo.framebuffer = frameBuffer.framebuffer;
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = { (unsigned int)GetRTSize().x, (unsigned int)GetRTSize().y };
+		const VkDeviceSize vertexOffset = PS2::MapVertices(Renderer::m_vertex.buff, Renderer::m_vertex.tail);
+		const VkDeviceSize indexOffset = PS2::MapIndices(Renderer::m_index.buff, Renderer::m_index.tail);
 
-		VkClearValue clearColors[] = {{{0.0f, 0.0f, 0.0f, 1.0f}}, {{0.0f, 0.0f, 0.0f, 1.0f}} };
-		renderPassInfo.clearValueCount = 2;
-		renderPassInfo.pClearValues = clearColors;
+		VkBuffer vertexBuffers[] = { PS2::GetVertexBuffer() };
+		VkDeviceSize offsets[] = { vertexOffset };
+		vkCmdBindVertexBuffers(GetCurrentCommandBuffer(), 0, 1, vertexBuffers, offsets);
 
-		vkCmdBeginRenderPass(GetCurrentCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindIndexBuffer(GetCurrentCommandBuffer(), PS2::GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
 
-		float m_hack_topleft_offset = (false) ? -0.01f : 0.0f;
-		VkViewport viewport{};
-		viewport.x = m_hack_topleft_offset;
-		viewport.y = m_hack_topleft_offset;
-		viewport.width = (float)GetRTSize().x;
-		viewport.height = (float)GetRTSize().y;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(GetCurrentCommandBuffer(), 0, 1, &viewport);
+		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.descriptorSets[GetCurrentFrame()], 0, nullptr);
 
-		float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
-		float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
-		float ox = Renderer::OFX;
-		float oy = Renderer::OFY;
-		float ox2 = -1.0f / GetRTSize().x;
-		float oy2 = -1.0f / GetRTSize().y;
+		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(Renderer::m_index.tail), 1, 0, 0, 0);
 
-		PS2::GetVertexConstantBufferData().Texture_Scale_Offset = GSVector4(0.0f);
-		PS2::GetVertexConstantBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
-		PS2::GetVertexConstantBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
-
-		PS2::UpdateUniformBuffers();
 	}
-
-	vkCmdSetScissor(GetCurrentCommandBuffer(), 0, 1, &hwState.scissor);
-
-	vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-	const VkDeviceSize vertexOffset = PS2::MapVertices(Renderer::m_vertex.buff, Renderer::m_vertex.tail);
-	const VkDeviceSize indexOffset = PS2::MapIndices(Renderer::m_index.buff, Renderer::m_index.tail);
-
-	VkBuffer vertexBuffers[] = { PS2::GetVertexBuffer() };
-	VkDeviceSize offsets[] = { vertexOffset };
-	vkCmdBindVertexBuffers(GetCurrentCommandBuffer(), 0, 1, vertexBuffers, offsets);
-
-	vkCmdBindIndexBuffer(GetCurrentCommandBuffer(), PS2::GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
-
-	vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.descriptorSets[GetCurrentFrame()], 0, nullptr);
-
-	vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(Renderer::m_index.tail), 1, 0, 0, 0);
-
 	Renderer::m_index.tail = 0;
 	Renderer::m_vertex.head = 0;
 	Renderer::m_vertex.tail = 0;

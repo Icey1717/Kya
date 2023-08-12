@@ -9,6 +9,8 @@
 
 namespace Renderer {
 	struct TextureData;
+
+	const TextureData& GetImageData();
 }
 
 namespace PS2 {

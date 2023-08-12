@@ -20,6 +20,11 @@ void Renderer::SetImagePointer(Renderer::TextureData inImage)
 	gImageData = inImage;
 }
 
+const Renderer::TextureData& Renderer::GetImageData()
+{
+	return gImageData;
+}
+
 namespace PS2_Internal {
 	template<int i, int alignment, uint32_t mask> static void WriteColumn32(uint8_t* dst, const uint8_t* src, int srcpitch)
 	{

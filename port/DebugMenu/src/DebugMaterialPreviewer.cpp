@@ -100,9 +100,9 @@ namespace DebugMenu_Internal {
 					}
 				}
 			}
-			ImGui::PopStyleVar();
 			ImGui::EndTable();
 		}
+		ImGui::PopStyleVar();
 		ImGui::End();
 	}
 

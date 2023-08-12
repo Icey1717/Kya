@@ -84,6 +84,11 @@ namespace Renderer
 			uint64_t _PAD4 : 30;
 		};
 
+		struct
+		{
+			uint64_t CMD;
+		};
+
 		bool operator==(const GSTex& other) const {
 			return TBP0 == other.TBP0 &&
 				TBW == other.TBW &&

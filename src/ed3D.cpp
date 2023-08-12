@@ -7516,7 +7516,7 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 	undefined8 uVar7;
 	int puVar8;
 	undefined* puVar9;
-	edpkt_data* peVar10;
+	edpkt_data* pStripBuf;
 	uint uVar11;
 	ed_g2d_layer* pLAY;
 	ed_g2d_bitmap* peVar12;
@@ -7540,35 +7540,37 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 	peVar12 = (ed_g2d_bitmap*)0x0;
 	puVar9 = local_10;
 	puVar3 = puVar9;
-	while (peVar10 = g_pStrippBufLastPos, puVar3 != (undefined*)0x0) {
+	while (pStripBuf = g_pStrippBufLastPos, puVar3 != (undefined*)0x0) {
 		*puVar9 = 0;
 		puVar9 = puVar9 + 1;
 		puVar8 = puVar8 + -1;
 		puVar3 = (undefined*)puVar8;
 	}
-	for (; ((uint)peVar10 & 0xf) != 0; peVar10 = peVar10 + 1) {
+	for (; ((uint)pStripBuf & 0xf) != 0; pStripBuf = pStripBuf + 1) {
 	}
-	pBuffer->pCommandBufferTexture = STORE_SECTION(peVar10);
+	pBuffer->pCommandBufferTexture = STORE_SECTION(pStripBuf);
 	pBuffer->commandBufferTextureSize = 0;
 	uVar13 = 0;
 	do {
 		if (pBuffer->count_0x0 == 0) {
 			if (param_2 == true) {
-				peVar10->cmdA = ED_VIF1_SET_TAG_CNT(1);
-				peVar10->cmdB = SCE_VIF1_SET_NOP(0);
-				*(undefined4*)&peVar10->cmdB = 0;
-				*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
-				*(undefined4*)&peVar10[1].cmdA = 0;
-				*(undefined4*)((ulong)&peVar10[1].cmdA + 4) = 0x14000000;
-				peVar10[1].cmdB = 0;
+				pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(1);
+				pStripBuf->cmdB = 0;
+				pStripBuf->asU32[2] = SCE_VIF1_SET_NOP(0);
+				pStripBuf->asU32[3] = SCE_VIF1_SET_ITOP(0x3dc, 0);
+
+				pStripBuf[1].asU32[0] = 0;
+				pStripBuf[1].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0);
+
+				pStripBuf[1].cmdB = 0;
 				pBuffer->commandBufferTextureSize = 2;
-				peVar10 = peVar10 + 2;
+				pStripBuf = pStripBuf + 2;
 			}
 			else {
-				peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0);
-				peVar10->cmdB = SCE_VIF1_SET_NOP(0);
+				pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(0);
+				pStripBuf->cmdB = SCE_VIF1_SET_NOP(0);
 				pBuffer->commandBufferTextureSize = 1;
-				peVar10 = peVar10 + 1;
+				pStripBuf = pStripBuf + 1;
 			}
 		}
 		else {
@@ -7584,21 +7586,22 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 				}
 				if (pTVar14 == (TextureData_TEX_Internal*)0x0) {
 					if (param_2 == true) {
-						peVar10->cmdA = ED_VIF1_SET_TAG_CNT(1);
-						peVar10->cmdB = SCE_VIF1_SET_NOP(0);
-						*(undefined4*)&peVar10->cmdB = 0;
-						*(undefined4*)((ulong)&peVar10->cmdB + 4) = 0x40003dc;
-						*(undefined4*)&peVar10[1].cmdA = 0;
-						*(undefined4*)((ulong)&peVar10[1].cmdA + 4) = 0x14000000;
-						peVar10[1].cmdB = 0;
+						pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(1);
+						pStripBuf->cmdB = SCE_VIF1_SET_NOP(0);
+						pStripBuf->asU32[2] = SCE_VIF1_SET_NOP(0);
+						pStripBuf->asU32[3] = SCE_VIF1_SET_ITOP(0x3dc, 0);
+
+						pStripBuf[1].asU32[0] = 0;
+						pStripBuf[1].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0);
+						pStripBuf[1].cmdB = 0;
 						pBuffer->commandBufferTextureSize = 2;
-						peVar10 = peVar10 + 2;
+						pStripBuf = pStripBuf + 2;
 					}
 					else {
-						peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0);
-						peVar10->cmdB = SCE_VIF1_SET_NOP(0);
+						pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(0);
+						pStripBuf->cmdB = SCE_VIF1_SET_NOP(0);
 						pBuffer->commandBufferTextureSize = 1;
-						peVar10 = peVar10 + 1;
+						pStripBuf = pStripBuf + 1;
 					}
 				}
 				else {
@@ -7608,21 +7611,21 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 					}
 					if (peVar12 == (ed_g2d_bitmap*)0x0) {
 						if (param_2 == true) {
-							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(1);
-							peVar10->cmdB = 0;
-							peVar10->asU32[2] = SCE_VIF1_SET_FLUSH(0);
-							peVar10->asU32[3] = SCE_VIF1_SET_ITOP(0x03dc, 0);
-							peVar10[1].asU32[0] = SCE_VIF1_SET_NOP(0);
-							peVar10[1].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0);
-							peVar10[1].cmdB = SCE_VIF1_SET_FLUSH(0);
+							pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(1);
+							pStripBuf->cmdB = 0;
+							pStripBuf->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+							pStripBuf->asU32[3] = SCE_VIF1_SET_ITOP(0x03dc, 0);
+							pStripBuf[1].asU32[0] = SCE_VIF1_SET_NOP(0);
+							pStripBuf[1].asU32[1] = SCE_VIF1_SET_MSCAL(0, 0);
+							pStripBuf[1].cmdB = SCE_VIF1_SET_FLUSH(0);
 							pBuffer->commandBufferTextureSize = 2;
-							peVar10 = peVar10 + 2;
+							pStripBuf = pStripBuf + 2;
 						}
 						else {
-							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0);
-							peVar10->cmdB = SCE_VIF1_SET_NOP(0);
+							pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(0);
+							pStripBuf->cmdB = SCE_VIF1_SET_NOP(0);
 							pBuffer->commandBufferTextureSize = 1;
-							peVar10 = peVar10 + 1;
+							pStripBuf = pStripBuf + 1;
 						}
 					}
 					else {
@@ -7647,43 +7650,47 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 							pLAY->flags_0x0 = uVar2;
 						}
 						if (param_2 == true) {
-							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0xb);
-							peVar10->cmdB = SCE_VIF1_SET_NOP(0);
-							*(undefined4*)&peVar10->cmdB = 0x40003dc;
-							*(undefined4*)((int)&peVar10->cmdB + 4) = 0x6c0a03dc;
+							IMPLEMENTATION_GUARD();
+							pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(0xb);
+							pStripBuf->cmdB = SCE_VIF1_SET_NOP(0);
+							*(undefined4*)&pStripBuf->cmdB = 0x40003dc;
+							*(undefined4*)((int)&pStripBuf->cmdB + 4) = 0x6c0a03dc;
 						}
 						else {
-							peVar10->cmdA = ED_VIF1_SET_TAG_CNT(0xa);
-							peVar10->cmdB = SCE_VIF1_SET_NOP(0);
+							pStripBuf->cmdA = ED_VIF1_SET_TAG_CNT(0xa);
+							pStripBuf->cmdB = SCE_VIF1_SET_NOP(0);
 						}
-						peVar10[1].cmdA = 0x1000000000008009;
-						peVar10[1].cmdB = 0xe;
+
+						IMPLEMENTATION_GUARD();
+						pStripBuf[1].cmdA = 0x1000000000008009;
+						pStripBuf[1].cmdB = 0xe;
 						bVar4 = ed3DFXIsTrue(pLAY);
 						if (bVar4 == false) {
-							uVar7 = ed3DSetBasicTexPacket(peVar10 + 2, &local_20, peVar12, pLAY);
+							uVar7 = ed3DSetBasicTexPacket(pStripBuf + 2, &local_20, peVar12, pLAY);
 						}
 						else {
 							puVar5 = (undefined4*)ed3DGetFxConfigFromFlag(uVar2);
 							local_30 = puVar5[1];
 							local_2c = *puVar5;
 							local_28 = *puVar5;
-							uVar7 = ed3DSetBasicTexPacket(peVar10 + 2, &local_30, peVar12, pLAY);
+							uVar7 = ed3DSetBasicTexPacket(pStripBuf + 2, &local_30, peVar12, pLAY);
 						}
 						puVar6 = (ulong*)ed3DSetAlphaPacket(uVar7, (uVar2 & 0x2000) != 0, pLAY, uVar11);
 						*puVar6 = (long)(int)gMipmapK << 0x20 |
 							(long)(int)(peVar12->field_0x6 - 1) << 2 | 0x60U | (ulong)gMipmapL << 0x13;
 						puVar6[1] = 0x14;
 						puVar6 = ed3DSetMipmapPacket(puVar6 + 2, (int)&local_20, (ushort*)peVar12);
-						peVar10 = (edpkt_data*)(puVar6 + 2);
+						pStripBuf = (edpkt_data*)(puVar6 + 2);
 						*puVar6 = (ulong)((pLAY->flags_0x0 & 1) == 0) | (ulong)((pLAY->flags_0x0 & 2) == 0) << 2;
 						puVar6[1] = 8;
 						if (param_2 == true) {
-							*(undefined4*)&peVar10->cmdA = 0;
+							IMPLEMENTATION_GUARD();
+							*(undefined4*)&pStripBuf->cmdA = 0;
 							*(undefined4*)((int)puVar6 + 0x14) = 0x14000000;
 							*(undefined4*)(puVar6 + 3) = 0;
 							*(undefined4*)((int)puVar6 + 0x1c) = 0;
 							pBuffer->commandBufferTextureSize = 0xc;
-							peVar10 = (edpkt_data*)(puVar6 + 4);
+							pStripBuf = (edpkt_data*)(puVar6 + 4);
 						}
 						else {
 							pBuffer->commandBufferTextureSize = 0xb;
@@ -7697,7 +7704,7 @@ void ed3DPrepareMaterial(ed_g2d_material* pBuffer, bool param_2)
 		}
 		uVar13 = uVar13 + 1;
 	} while (uVar13 < 2);
-	g_pStrippBufLastPos = peVar10;
+	g_pStrippBufLastPos = pStripBuf;
 	return;
 }
 
