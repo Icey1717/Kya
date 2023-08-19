@@ -28,6 +28,7 @@ struct MaterialPreviewerEntry {
 
 	edDList_material* pMaterial;
 	CallstackPreviewerEntry callstackEntry;
+	std::string name;
 
 	bool operator==(const edDList_material* other) const {
 		return pMaterial == other;
@@ -36,7 +37,7 @@ struct MaterialPreviewerEntry {
 
 namespace MaterialPreviewer {
 	void Update();
-	void Open(MaterialPreviewerEntry& entry, std::string name);
+	void Open(MaterialPreviewerEntry& entry);
 	void Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name);
 	void Reset();
 };

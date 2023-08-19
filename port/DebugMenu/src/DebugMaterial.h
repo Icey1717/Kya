@@ -32,7 +32,7 @@ namespace DebugHelpers {
 	};
 
 	struct DebugMaterial {
-		DebugMaterial(edDList_material* pInMaterial, bool bCreateTexID = true);
+		DebugMaterial(edDList_material* pInMaterial, uint32_t CBP, bool bCreateTexID = true);
 		DebugMaterial(const PS2::GSTexValue& inTexture, ImTextureID inTexID);
 
 		DebugMaterialKey key;
@@ -41,8 +41,6 @@ namespace DebugHelpers {
 		ImTextureID paletteTexID;
 		CallstackPreviewerEntry callstackEntry;
 		std::string name;
-
-		Renderer::TextureData LoadTextureData();
 
 		inline ImTextureID GetTextureID() {
 			return texID;
@@ -63,4 +61,6 @@ namespace DebugHelpers {
 		// Example implementation:
 		return lhs.pMaterial == rhs.pMaterial && lhs.texID == rhs.texID;
 	}
+
+	Renderer::TextureData LoadTextureData(edDList_material* pMaterial);
 }

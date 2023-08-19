@@ -4085,7 +4085,7 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 
 		// Send even if gbFirstTex is true.
 #ifdef PLATFORM_WIN
-		Renderer::SetImagePointer(MakeTextureDataFromPacket(gCurBitmap, pMaterial->pBitmap));
+		Renderer::SetImagePointer(MakeTextureDataFromPacket(gCurBitmap, pMaterial->pBitmap, gVRAMBufferFlush));
 #endif
 
 		bVar1 = gVRAMBufferFlush == 1;
@@ -4285,7 +4285,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 
 		g_VifRefPktCur[2].cmdA = SCE_GS_SET_TEX1(
 			0x20, // LCM
-			(ulong)(int)((gCurBitmap->field_0x6 - 1) * *gbDoMipmap_SPR) & 0xffffffffU, // MXL
+			(ulong)(int)((gCurBitmap->maxMipLevel - 1) * *gbDoMipmap_SPR) & 0xffffffffU, // MXL
 			0, // MMAG
 			*(int*)gbTrilinear_SPR + 4, //MMIN
 			0, // MTBA

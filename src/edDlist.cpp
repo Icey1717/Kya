@@ -23,6 +23,8 @@
 #include "MathOps.h"
 #include "edList.h"
 
+#define EDDLIST_LOG(level, format, ...) MY_LOG_CATEGORY("edDList", level, format, ##__VA_ARGS__)
+
 edLIST* gDList_2D[2] = { 0 };
 edLIST* gDList_2D_Before3D[2] = { 0 };
 DisplayListArray* gDList_3D[2] = { 0 };
@@ -813,15 +815,21 @@ void edDListSetActiveViewPort(ed_viewport* pViewport)
 }
 
 #ifdef PLATFORM_WIN
-Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap) {
+void LogBitmap(const char* prefix, ed_g2d_bitmap* pBitmap)
+{
+	EDDLIST_LOG(LogLevel::Verbose, "%s w: %d, h: %d, psm: %d maxMipLevel: %d", prefix, pBitmap->width, pBitmap->height, pBitmap->psm, pBitmap->maxMipLevel);
+}
+
+Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap, int index) 
+{
+	LogBitmap("MakeTextureDataFromPacket TEX", pTextureBitmap);
+	LogBitmap("MakeTextureDataFromPacket PAL", pPaletteBitmap);
 
 	edPSX2Header* pHeader = (edPSX2Header*)LOAD_SECTION(pPaletteBitmap->pPSX2);
-	edpkt_data* pPkt = (edpkt_data*)(LOAD_SECTION(pHeader->pPkt));
+	edpkt_data* pPkt = (edpkt_data*)(LOAD_SECTION((pHeader + index)->pPkt));
 	pPkt += 2;
 
 	int imageIndex = -1;
-	int paletteIndex = -1;
-	uint* pPktU32 = edpktAsU32(pPkt);
 
 	uint texWidth;
 	uint texHeight;
@@ -830,39 +838,64 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, e
 	bool bSetTexDimensions = false;
 	bool bSetPalDimensions = false;
 
+	int clutBasePtr = 0;
+
+	Renderer::PaletteMap palettes;
+
+	bool bCheckNext = false;
+
 	while (true)
 	{
-		if ((*pPktU32) >> 28 == 0x03) {
+		if ((pPkt->asU32[0] >> 28) == 0x03) {
 			if (imageIndex == -1) {
-				imageIndex = pPktU32[1];
+				imageIndex = pPkt->asU32[1];
 			}
 			else {
-				paletteIndex = pPktU32[1];
-				break;
+				const int paletteIndex = pPkt->asU32[1];
+				palettes[clutBasePtr] = { LOAD_SECTION(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel };
+
+				EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket PAL - CBP: %d (0x%x) w: %d h: %d rw: %d rh: %d psm: %d max mip: %d", clutBasePtr, clutBasePtr, pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel);
 			}
 		}
 
 		if (pPkt->cmdB == SCE_GS_TRXREG) {
 			if (!bSetTexDimensions) {
-				texWidth = pPktU32[1];
-				texHeight = pPktU32[0];
+				texWidth = pPkt->asU32[0];
+				texHeight = pPkt->asU32[1];
 				bSetTexDimensions = true;
 			}
 			else {
-				palWidth = pPktU32[1];
-				palHeight = pPktU32[0];
+				palWidth = pPkt->asU32[0];
+				palHeight = pPkt->asU32[1];
 				bSetPalDimensions = true;
 			}
 		}
 
+		if (pPkt->cmdB == SCE_GS_BITBLTBUF) {
+			clutBasePtr = pPkt->asU32[1] & 0xFFFF;
+
+			EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket Found BITBLTBUF CBP: %d (0x%x)", clutBasePtr, clutBasePtr);
+			bCheckNext = false;
+		}
+
+		if (bCheckNext == true) {
+			break;
+		}
+
+		if (pPkt->asU32[2] == 0xe) {
+			bCheckNext = true;
+		}
+
 		pPkt += 1;
-		pPktU32 += 4;
 	}
 
 	assert(bSetTexDimensions);
+	assert(palettes.size() > 0);
 
-	return { { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm },
-		{  LOAD_SECTION(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, 32 } };
+	EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket TEX - rw: %d rh: %d", texWidth, texHeight);
+
+	return { { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm, pTextureBitmap->maxMipLevel },
+		palettes };
 }
 #endif
 
@@ -915,7 +948,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 
 #ifdef PLATFORM_WIN
-					Renderer::SetImagePointer(MakeTextureDataFromPacket(pTextureBitmap, pPaletteBitmap));
+					Renderer::SetImagePointer(MakeTextureDataFromPacket(pTextureBitmap, pPaletteBitmap, 0));
 #endif
 				}
 

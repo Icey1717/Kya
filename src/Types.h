@@ -303,12 +303,6 @@ union edpkt_data {
 	edF32VECTOR4 asVector;
 };
 
-//#ifdef PLATFORM_WIN
-inline uint* edpktAsU32(edpkt_data* pkt) {
-	return reinterpret_cast<uint*>(pkt);
-}
-//#endif
-
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*
 

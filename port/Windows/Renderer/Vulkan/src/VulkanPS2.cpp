@@ -134,7 +134,7 @@ namespace Renderer {
 		std::ostringstream oss;
 		oss << "tbp: " << tex.TBP0 << ", tbw: " << tex.TBW << ", psm: " << tex.PSM
 			<< ", tw: " << tex.TW << ", th: " << tex.TH << ", tcc: " << tex.TCC
-			<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << ", cpsm: " << tex.CPSM
+			<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << " (0x" << std::hex << tex.CBP << "), cpsm: " << tex.CPSM
 			<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
 
 		// Log the formatted message
@@ -667,9 +667,9 @@ void Renderer::Draw() {
 	LogTex("Lookup", state.TEX);
 
 	auto imageData = GetImageData();
-	auto paletteData = imageData.palette;
+	auto paletteData = imageData.palettes[0x380];
 	//Uploading texture PAL - bpp: 32, w: 256, h: 1, rw: 16, rh: 16
-	const bool b = paletteData.bpp == 32 && paletteData.canvasWidth == 256 && paletteData.canvasHeight == 1 && paletteData.readWidth == 16 && paletteData.readHeight == 16;
+	const bool b = true; // paletteData.bpp == 32 && paletteData.canvasWidth == 256 && paletteData.canvasHeight == 1 && paletteData.readWidth == 16 && paletteData.readHeight == 16 || imageData.image.maxMipLevel != 0;
 
 	if (b) {
 

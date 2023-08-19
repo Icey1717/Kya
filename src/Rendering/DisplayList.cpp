@@ -343,7 +343,7 @@ void GlobalDList_Init(void)
 	if (pGuiDList != (GlobalDList*)0x0) {
 		pGuiDList->Init();
 	}
-	edDListSetActiveViewPort(Scene::_pinstance->pCameraObj28_0x4);
+	edDListSetActiveViewPort(Scene::_pinstance->pViewportA);
 	return;
 }
 

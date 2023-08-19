@@ -411,6 +411,23 @@ public:
 		d = f.uph64(d);
 	}
 
+	template<int src, class T> __forceinline GSVector4i gather32_8(const T* ptr) const
+	{
+		return GSVector4i(
+			(int)ptr[extract8<src + 0>()],
+			(int)ptr[extract8<src + 1>()],
+			(int)ptr[extract8<src + 2>()],
+			(int)ptr[extract8<src + 3>()]);
+	}
+
+	template<class T> __forceinline void gather32_8(const T* ptr, GSVector4i* dst) const
+	{
+		dst[0] = gather32_8<0>(ptr);
+		dst[1] = gather32_8<4>(ptr);
+		dst[2] = gather32_8<8>(ptr);
+		dst[3] = gather32_8<12>(ptr);
+	}
+
 	__forceinline GSVector4i blend(const GSVector4i& a, const GSVector4i& mask) const
 	{
 		return GSVector4i(_mm_or_si128(_mm_andnot_si128(mask, m), _mm_and_si128(mask, a)));

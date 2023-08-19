@@ -303,7 +303,8 @@ namespace DebugMenu_Internal {
 				std::string name = "Material " + std::to_string(i + 1);
 
 				auto& selectedMaterial = materialList[i];
-				MaterialPreviewer::Open(selectedMaterial, name);
+				selectedMaterial.name = name;
+				MaterialPreviewer::Open(selectedMaterial);
 			}
 		}
 
@@ -373,7 +374,8 @@ namespace DebugMenu_Internal {
 					}
 					selectedMaterialIndex = i;
 					auto entry = MaterialPreviewerEntry(&textureMaterials[selectedMaterialIndex]);
-					MaterialPreviewer::Open(entry, "None");
+					entry.name = "None";
+					MaterialPreviewer::Open(entry);
 					bOpenedMaterial = false;
 				}
 				i++;

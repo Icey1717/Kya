@@ -48,11 +48,7 @@ namespace PS2 {
 	};
 
 	struct GSTexImage {
-		GSTexImage(const Renderer::ImageData& inImageData)
-		: imageData(inImageData)
-		{
-
-		}
+		GSTexImage(const Renderer::ImageData& inImageData);
 
 		VkImage image;
 		VkDeviceMemory imageMemory;
@@ -71,6 +67,12 @@ namespace PS2 {
 		VkDescriptorPool descriptorPool;
 		std::vector<VkDescriptorSet> descriptorSets;
 
+		// Buffer emulating the PS2 vram memory.
+		std::vector<uint8_t> writeBuffer;
+
+		// Buffer of 32bit colour pixels.
+		std::vector<uint8_t> readBuffer;
+
 		void UploadData(int bufferSize, std::vector<uint8_t>& readBuffer);
 
 		void CreateResources(const bool bTextureFiltering);
@@ -83,7 +85,6 @@ namespace PS2 {
 	struct TextureDebug {
 		// Debug values
 		std::vector<uint32_t> paletteIndexes;
-		std::vector<uint32_t> convertedPalette;
 	};
 
 	struct GSTexValue {
@@ -91,21 +92,14 @@ namespace PS2 {
 		GSTexValue(const GSTexValueCreateInfo& createInfo);
 
 		// For Debug textures.
-		GSTexValue(const Renderer::TextureData& inTextureData);
+		GSTexValue(const Renderer::TextureData& inTextureData, uint32_t CBP);
 
-		void AllocateBuffers();
 		void Cleanup();
 		void UploadImage();
 		void CreateResources();
 
 		GSTexImage image;
 		GSTexImage paletteImage;
-
-		// Buffer emulating the PS2 vram memory.
-		std::vector<uint8_t> writeBuffer;
-
-		// Buffer of 32bit colour pixels.
-		std::vector<uint8_t> readBuffer;
 
 		TextureDebug debugData;
 	};

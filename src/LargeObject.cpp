@@ -256,8 +256,8 @@ Scene::Scene()
 	this->field_0xdc = this->field_0xec;
 	this->prevFogRGBA = this->fogRGBA;
 	this->prevFogFlags = this->fogFlags;
-	this->pCameraObj28_0x4 = (ed_viewport*)0x0;
-	this->pCameraObj28_0x8 = (ed_viewport*)0x0;
+	this->pViewportA = (ed_viewport*)0x0;
+	this->pViewportB = (ed_viewport*)0x0;
 	this->field_0x48 = 0;
 	//do {
 	//	*ppMVar18 = (Manager_29b4*)0x0;
@@ -365,9 +365,9 @@ Scene::Scene()
 	pVVar12 = VideoGetDisplaybuffer();
 	pVVar13 = VideoGetZbuffer();
 	pCVar14 = edViewportNew(&local_8, pVVar12, pVVar13, 3);
-	this->pCameraObj28_0x4 = pCVar14;
-	edViewportSetBackgroundColor(this->pCameraObj28_0x4, 0, 0, 0);
-	Scene::_scene_handleA = ed3DSceneCreate(&_gDisplayCamera, this->pCameraObj28_0x4, 1);
+	this->pViewportA = pCVar14;
+	edViewportSetBackgroundColor(this->pViewportA, 0, 0, 0);
+	Scene::_scene_handleA = ed3DSceneCreate(&_gDisplayCamera, this->pViewportA, 1);
 	Scene::_scene_handleA->ed3DSceneSetFlag(0x20);
 	Scene::_scene_handleA->ed3DSceneSetFogProperty(1);
 	Scene::_scene_handleA->SetFlag_002a5440(1);
@@ -385,9 +385,9 @@ Scene::Scene()
 	pVVar12 = VideoGetDisplaybuffer();
 	pVVar13 = VideoGetZbuffer();
 	pCVar14 = edViewportNew(&local_8, pVVar12, pVVar13, 0);
-	this->pCameraObj28_0x8 = pCVar14;
-	edViewportSetBackgroundColor(this->pCameraObj28_0x8, 0, 0, 0);
-	_scene_handleB = ed3DSceneCreate(&_gDisplayCamera, this->pCameraObj28_0x8, 1);
+	this->pViewportB = pCVar14;
+	edViewportSetBackgroundColor(this->pViewportB, 0, 0, 0);
+	_scene_handleB = ed3DSceneCreate(&_gDisplayCamera, this->pViewportB, 1);
 	_scene_handleB->ed3DSceneSetFlag(0);
 	_scene_handleB->ed3DSceneSetFogProperty(0);
 	pCVar15 = ed3DSceneGetConfig(_scene_handleB);
@@ -581,14 +581,14 @@ void Scene::Level_Init()
 	this->fogRGBA = pSVar1->fogRGBA;
 	this->fogFlags = pSVar1->flags;
 	this->field_0x48 = 0;
-	ed3DSetMipmapProp(1, this->field_0x14, this->field_0x10);
+	ed3DSetMipmapProp(true, this->mipmapL, this->mipmapK);
 	if ((Scene::ptable.g_FileManager3D_00451664)->pMeshTransformParent == (edNODE*)0x0) {
-		edViewportSetClearMask(this->pCameraObj28_0x4, 0);
+		edViewportSetClearMask(this->pViewportA, 0);
 	}
 	else {
-		edViewportSetClearMask(this->pCameraObj28_0x4, 0xffffffff);
+		edViewportSetClearMask(this->pViewportA, 0xffffffff);
 	}
-	edViewportSetClearMask(this->pCameraObj28_0x8, 0);
+	edViewportSetClearMask(this->pViewportB, 0);
 	pTimeController = GetTimer();
 	pTimeController->ResetGameTimers();
 	ed3DResetTime();
@@ -794,9 +794,9 @@ void Scene::Level_Setup(ByteCode* pMemoryStream)
 	pMemoryStream->currentSeekPos = (char*)(pSVar1 + 1);
 	this->pFogClipStream = pSVar1;
 	iVar4 = pMemoryStream->GetS32();
-	this->field_0x14 = iVar4;
+	this->mipmapL = iVar4;
 	iVar4 = pMemoryStream->GetS32();
-	this->field_0x10 = iVar4;
+	this->mipmapK = iVar4;
 	/* Main Camera */
 	pCVar5 = (MainCamera*)Scene::ptable.g_CameraManager_0045167c->AddCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
 	fVar5 = pMemoryStream->GetF32();

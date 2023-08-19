@@ -18,93 +18,123 @@ namespace DebugMenu_Internal {
 		return std::abs(a - b) < epsilon;
 	}
 
-	static void ShowImageIndexedGrid(const char* name, bool& bShow, const uint32_t* pixelIndexes, const uint32_t* paletteColors, const int width, const int height)
+	struct ColorGrid
 	{
-		ImGui::Begin(name, &bShow, ImGuiWindowFlags_AlwaysAutoResize);
-		// Draw table with fixed cell heights
-		static float cellHeight = 22.0f;
-		ImGui::InputFloat("Cell Height", &cellHeight);
+	private:
+		struct Filter
+		{
+			float tolerance = 0.001f;
 
-		static ImVec4 filterColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-		static bool bFilter = false;
-		static bool bFilterR = false;
-		static bool bFilterG = false;
-		static bool bFilterB = false;
-		static bool bFilterA = false;
-		ImGui::Checkbox("Filter", &bFilter);
+			bool bActive = false;
+			bool bFilterR = false;
+			bool bFilterG = false;
+			bool bFilterB = false;
+			bool bFilterA = false;
 
-		static float tolerance = 0.001f;
-		if (bFilter) {
-			ImGui::InputFloat("Tolerance", &tolerance);
+			ImVec4 filterColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		} filter;
+		
+		float customCellSize = 0.0f;
 
-			ImGui::InputFloat("R", &filterColor.x);
+		const float panelSize = 640.0f;
+
+	public:
+		void Show(const char* name, bool& bShow, const uint32_t* pixelIndexes, const uint32_t* paletteColors, const int width, const int height)
+		{
+			ImGui::Begin(name, &bShow, ImGuiWindowFlags_AlwaysAutoResize);
+
+			float cellSize = panelSize / static_cast<float>(std::max(width, height));
+
+			if (customCellSize != 0.0f) {
+				cellSize = customCellSize;
+			}
+
+			// Draw table with fixed cell heights
+			if (ImGui::InputFloat("Cell Height", &cellSize)) {
+				customCellSize = cellSize;
+			}
+
 			ImGui::SameLine();
-			ImGui::Checkbox("Filter R", &bFilterR);
 
-			ImGui::InputFloat("G", &filterColor.y);
-			ImGui::SameLine();
-			ImGui::Checkbox("Filter G", &bFilterG);
+			if (ImGui::Button("Reset")) {
+				customCellSize = 0.0f;
+			}
 
-			ImGui::InputFloat("B", &filterColor.z);
-			ImGui::SameLine();
-			ImGui::Checkbox("Filter B", &bFilterB);
+			ImGui::Checkbox("Filter", &filter.bActive);
 
-			ImGui::InputFloat("A", &filterColor.w);
-			ImGui::SameLine();
-			ImGui::Checkbox("Filter A", &bFilterA);
-		}
+			static float tolerance = 0.001f;
+			if (filter.bActive) {
+				ImGui::InputFloat("Tolerance", &tolerance);
 
-		//ImGui::SetWindowFontScale(0.5f);
+				ImGui::InputFloat("R", &filter.filterColor.x);
+				ImGui::SameLine();
+				ImGui::Checkbox("Filter R", &filter.bFilterR);
 
-		const ImGuiTableFlags flags = ImGuiTableFlags_Borders;
-		ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
-		if (ImGui::BeginTable("GridTable", width, flags, ImVec2((cellHeight * width) + width, 0))) {
-			for (int row = 0; row < height; ++row) {
-				ImGui::TableNextRow(0);
-				for (int col = 0; col < width; ++col) {
-					ImGui::TableSetColumnIndex(col);
-					const int paletteIndex = pixelIndexes[col + (row * width)];
-					ImU32 cell_bg_color = paletteColors[paletteIndex];
+				ImGui::InputFloat("G", &filter.filterColor.y);
+				ImGui::SameLine();
+				ImGui::Checkbox("Filter G", &filter.bFilterG);
 
-					// Extract color components
-					ImVec4 colorRGBA = ImVec4(
-						(float)(cell_bg_color & 0xFF) / 255.0f,                 // Red
-						(float)((cell_bg_color >> 8) & 0xFF) / 255.0f,          // Green
-						(float)((cell_bg_color >> 16) & 0xFF) / 255.0f,         // Blue
-						(float)((cell_bg_color >> 24) & 0xFF) / 255.0f          // Alpha
-					);
+				ImGui::InputFloat("B", &filter.filterColor.z);
+				ImGui::SameLine();
+				ImGui::Checkbox("Filter B", &filter.bFilterB);
 
-					ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
+				ImGui::InputFloat("A", &filter.filterColor.w);
+				ImGui::SameLine();
+				ImGui::Checkbox("Filter A", &filter.bFilterA);
+			}
 
-					if (bFilter) {
-						if ((Neq(colorRGBA.x, filterColor.x, tolerance) || !bFilterR) &&
-							(Neq(colorRGBA.y, filterColor.y, tolerance) || !bFilterG) &&
-							(Neq(colorRGBA.z, filterColor.z, tolerance) || !bFilterB) &&
-							(Neq(colorRGBA.w, filterColor.w, tolerance) || !bFilterA)) {
-							ImGui::ColorButton("", colorRGBA, 0, ImVec2(cellHeight, cellHeight));
+			//ImGui::SetWindowFontScale(0.5f);
+
+			const ImGuiTableFlags flags = ImGuiTableFlags_Borders;
+			ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
+			if (ImGui::BeginTable("GridTable", width, flags, ImVec2((cellSize * width) + width, 0))) {
+				for (int row = 0; row < height; ++row) {
+					ImGui::TableNextRow(0);
+					for (int col = 0; col < width; ++col) {
+						ImGui::TableSetColumnIndex(col);
+						const int paletteIndex = pixelIndexes[col + (row * width)];
+						ImU32 cell_bg_color = paletteColors[paletteIndex];
+
+						// Extract color components
+						ImVec4 colorRGBA = ImVec4(
+							(float)(cell_bg_color & 0xFF) / 255.0f,                 // Red
+							(float)((cell_bg_color >> 8) & 0xFF) / 255.0f,          // Green
+							(float)((cell_bg_color >> 16) & 0xFF) / 255.0f,         // Blue
+							(float)((cell_bg_color >> 24) & 0xFF) / 255.0f          // Alpha
+						);
+
+						ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
+
+						if (filter.bActive) {
+							if ((Neq(colorRGBA.x, filter.filterColor.x, tolerance) || !filter.bFilterR) &&
+								(Neq(colorRGBA.y, filter.filterColor.y, tolerance) || !filter.bFilterG) &&
+								(Neq(colorRGBA.z, filter.filterColor.z, tolerance) || !filter.bFilterB) &&
+								(Neq(colorRGBA.w, filter.filterColor.w, tolerance) || !filter.bFilterA)) {
+								ImGui::ColorButton("", colorRGBA, 0, ImVec2(cellSize, cellSize));
+							}
+							else {
+								ImGui::ColorButton("", { 0.0f, 0.0f, 0.0f, 0.0f }, 0, ImVec2(cellSize, cellSize));
+							}
 						}
 						else {
-							ImGui::ColorButton("", {0.0f, 0.0f, 0.0f, 0.0f}, 0, ImVec2(cellHeight, cellHeight));
+							ImGui::ColorButton("", colorRGBA, 0, ImVec2(cellSize, cellSize));
+						}
+						//ImGui::Text("%02X", paletteIndex); // Use %04X for 4 digits and leading zeros
+						// Open the tooltip when hovering the cell
+						if (ImGui::IsItemHovered()) {
+							ImGui::BeginTooltip();
+							ImGui::Text("");
+							ImGui::Text("Cell (%d, %d)\nPalette Index: %02X", col, row, paletteIndex);
+							ImGui::EndTooltip();
 						}
 					}
-					else {
-						ImGui::ColorButton("", colorRGBA, 0, ImVec2(cellHeight, cellHeight));
-					}
-					//ImGui::Text("%02X", paletteIndex); // Use %04X for 4 digits and leading zeros
-					// Open the tooltip when hovering the cell
-					if (ImGui::IsItemHovered()) {
-						ImGui::BeginTooltip();
-						ImGui::Text("");
-						ImGui::Text("Cell (%d, %d)\nPalette Index: %02X", col, row, paletteIndex);
-						ImGui::EndTooltip();
-					}
 				}
+				ImGui::EndTable();
 			}
-			ImGui::EndTable();
+			ImGui::PopStyleVar();
+			ImGui::End();
 		}
-		ImGui::PopStyleVar();
-		ImGui::End();
-	}
+	};
 
 	static void Show(DebugHelpers::DebugMaterial& debugMaterial, bool& bOpen) 
 	{
@@ -114,7 +144,9 @@ namespace DebugMenu_Internal {
 		ImGui::Begin("Previewer", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 		ImVec2 imageSize(imageData.canvasWidth, imageData.canvasHeight); // Set the image size
 
-		static bool bShowPalette = false;
+		static bool bShowTextureColorGrid = false;
+		static bool bShowFinalPaletteColorGrid = false;
+		static bool bShowRawPaletteColorGrid = false;
 
 		if (ImGui::CollapsingHeader("Material Image", ImGuiTreeNodeFlags_DefaultOpen)) {
 
@@ -138,12 +170,12 @@ namespace DebugMenu_Internal {
 			}
 
 			ImGui::SameLine();
-			if (ImGui::Button("Show Palette")) {
-				bShowPalette = !bShowPalette;
+			if (ImGui::Button("Show Texture Color Grid")) {
+				bShowTextureColorGrid = !bShowTextureColorGrid;
 			}
 
-			ImGui::Text("Image Width: %d Height: %d Read Width: %d Read Height: %d BPP: %d", imageData.canvasWidth, imageData.canvasHeight, imageData.readWidth, imageData.readHeight, imageData.bpp);
-			ImGui::Text("Palette Width: %d Height: %d Read Width: %d Read Height: %d BPP: %d", paletteData.canvasWidth, paletteData.canvasHeight, paletteData.readWidth, paletteData.readHeight, paletteData.bpp);
+			ImGui::Text("Image Width: %d Height: %d Read Width: %d Read Height: %d BPP: %d MXL: %d", imageData.canvasWidth, imageData.canvasHeight, imageData.readWidth, imageData.readHeight, imageData.bpp, imageData.maxMipLevel);
+			ImGui::Text("Palette Width: %d Height: %d Read Width: %d Read Height: %d BPP: %d MXL: %d", paletteData.canvasWidth, paletteData.canvasHeight, paletteData.readWidth, paletteData.readHeight, paletteData.bpp, paletteData.maxMipLevel);
 
 			// Calculate the scaled size of the image
 			ImVec2 scaledSize(imageSize.x * zoomLevel, imageSize.y * zoomLevel);
@@ -180,10 +212,12 @@ namespace DebugMenu_Internal {
 			ImGui::EndChild();
 		}
 
-		if (bShowPalette) {
+		if (bShowTextureColorGrid) {
 			const auto& debugData = debugMaterial.texture.debugData;
 			const auto& imageData = debugMaterial.texture.image.imageData;
-			ShowImageIndexedGrid("Palette Indexes", bShowPalette, debugData.paletteIndexes.data(), debugData.convertedPalette.data(), imageData.canvasWidth, imageData.canvasHeight);
+
+			static ColorGrid textureColorGrid;
+			textureColorGrid.Show("Texture Color Grid", bShowTextureColorGrid, debugData.paletteIndexes.data(), (uint32_t*)debugMaterial.texture.paletteImage.readBuffer.data(), imageData.canvasWidth, imageData.canvasHeight);
 		}		
 
 		const int scale = 20;
@@ -197,8 +231,15 @@ namespace DebugMenu_Internal {
 			indexes[i] = i;
 		}
 
-		ShowImageIndexedGrid("Actual Palette", bOpen, indexes.data(), debugMaterial.texture.debugData.convertedPalette.data(), paletteData.readWidth, paletteData.readHeight);
-		ShowImageIndexedGrid("Unconverted Palette", bOpen, indexes.data(), (uint32_t*)paletteData.pImage, paletteData.readWidth, paletteData.readHeight);
+		if (bShowRawPaletteColorGrid) {
+			static ColorGrid rawPaletteColorGrid;
+			rawPaletteColorGrid.Show("Raw Palette", bShowRawPaletteColorGrid, indexes.data(), (uint32_t*)paletteData.pImage, paletteData.readWidth, paletteData.readHeight);
+		}
+
+		if (bShowFinalPaletteColorGrid) {
+			static ColorGrid finalPaletteColorGrid;
+			finalPaletteColorGrid.Show("Final Palette", bShowFinalPaletteColorGrid, indexes.data(), (uint32_t*)debugMaterial.texture.paletteImage.readBuffer.data(), paletteData.readWidth, paletteData.readHeight);
+		}
 
 		ImGui::End();
 
@@ -210,8 +251,52 @@ namespace DebugMenu_Internal {
 
 using namespace DebugMenu_Internal;
 
+
+namespace PaletteSelector
+{
+	std::optional<MaterialPreviewerEntry> gOpenEntry;
+	Renderer::PaletteMap gPaletteMap;
+
+	void Show(const MaterialPreviewerEntry& entry, bool& bOpen)
+	{
+		ImGui::Begin("Palette Selector", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		if (gPaletteMap.size() > 0) {
+
+			auto paletteEnd = --gPaletteMap.end();
+
+			for (auto& palette : gPaletteMap) {
+				std::string label = "Palette ";
+				label += std::to_string(palette.first);
+				if (ImGui::Selectable(label.c_str()) || (!gOpenMaterial && palette.first == paletteEnd->first)) {
+					MaterialPreviewer::Reset();
+					gOpenMaterial = DebugMaterialPtr(new DebugHelpers::DebugMaterial(entry.pMaterial, palette.first));
+					gOpenMaterial->callstackEntry = entry.callstackEntry;
+					gOpenMaterial->name = entry.name + " - " + label;
+				}
+			}
+		}
+
+		ImGui::End();
+	}
+
+	void Update()
+	{
+		if (gOpenEntry.has_value()) {
+			bool bOpen = true;
+			Show(*gOpenEntry, bOpen);
+
+			if (!bOpen) {
+				gOpenEntry.reset();
+			}
+		}
+	}
+}
+
 void MaterialPreviewer::Update()
 {
+	PaletteSelector::Update();
+
 	if (gOpenMaterial) {
 		bool bOpen = true;
 		Show(*gOpenMaterial, bOpen);
@@ -222,12 +307,13 @@ void MaterialPreviewer::Update()
 	}
 }
 
-void MaterialPreviewer::Open(MaterialPreviewerEntry& entry, std::string name)
+void MaterialPreviewer::Open(MaterialPreviewerEntry& entry)
 {
 	Reset();
-	gOpenMaterial = DebugMaterialPtr(new DebugHelpers::DebugMaterial(entry.pMaterial));
-	gOpenMaterial->callstackEntry = entry.callstackEntry;
-	gOpenMaterial->name = name;
+	PaletteSelector::gOpenEntry = entry;
+
+	const auto textureData = DebugHelpers::LoadTextureData(entry.pMaterial);
+	PaletteSelector::gPaletteMap = textureData.palettes;
 }
 
 void MaterialPreviewer::Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name)
@@ -240,6 +326,7 @@ void MaterialPreviewer::Open(const PS2::GSTexValue& texValue, const ImageTexture
 
 void MaterialPreviewer::Reset()
 {
+	gOpenMaterial.reset();
 	zoomLevel = 1.0f;
 	scrollOffset = ImVec2(0.0f, 0.0f);
 }

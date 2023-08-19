@@ -210,7 +210,7 @@ PACK(struct ed_g2d_bitmap {
 	ushort width;
 	ushort height;
 	ushort psm;
-	ushort field_0x6;
+	ushort maxMipLevel;
 	int pPSX2; //edpkt_data*
 });
 

@@ -84,11 +84,11 @@ public:
 
 public:
 	int clipValue_0x0;
-	struct ed_viewport* pCameraObj28_0x4;
-	struct ed_viewport* pCameraObj28_0x8;
+	struct ed_viewport* pViewportA;
+	struct ed_viewport* pViewportB;
 	S_STREAM_FOG_DEF* pFogClipStream;
-	undefined4 field_0x10;
-	undefined4 field_0x14;
+	undefined4 mipmapK;
+	undefined4 mipmapL;
 	undefined4 field_0x18;
 	float field_0x1c;
 	undefined4 field_0x20;

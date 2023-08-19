@@ -36,11 +36,16 @@ namespace Renderer
 		uint32_t readWidth = 0;
 		uint32_t readHeight = 0;
 		uint32_t bpp = 0;
+		uint32_t maxMipLevel = 0;
+
+		void Log(const char* prefix) const;
 	};
+
+	using PaletteMap = std::unordered_map<int, ImageData>;
 
 	struct TextureData {
 		ImageData image;
-		ImageData palette;
+		PaletteMap palettes;
 	};
 
 	struct PrimPacked
