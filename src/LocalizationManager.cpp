@@ -3,6 +3,10 @@
 #include "LevelScheduleManager.h"
 #include "EdenLib/edText/sources/edTextResources.h"
 
+#ifdef PLATFORM_PS2
+#include <stdio.h>
+#endif
+
 LocalizationManager* g_LocalizationManager_00449744 = (LocalizationManager*)0x0;
 
 LocalizationManager::LocalizationManager()

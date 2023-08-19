@@ -60,7 +60,7 @@ int edDmaSync(int channel);
 void edDmaSend_nowait(int channel, ulonglong* pBuffer);
 void edDmaSend(int channel, uint addr);
 void edDmaSendN_nowait(int channel, void* memory, uint qwc);
-void edDmaSendN(int channel, void* memory, u_int qwc);
+void edDmaSendN(int channel, void* memory, uint qwc);
 bool edDmaWaitDma(uint madr);
 
 extern DMA_Register_Struct edDmaChannelList[10];

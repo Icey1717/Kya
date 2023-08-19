@@ -11,6 +11,10 @@
 #include "edStr.h"
 #include "port/pointer_conv.h"
 
+#ifdef PLATFORM_PS2
+#include <eekernel.h>
+#endif
+
 #include <string.h>
 #include "kya.h"
 

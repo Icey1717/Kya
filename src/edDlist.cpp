@@ -892,7 +892,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, e
 	assert(bSetTexDimensions);
 	assert(palettes.size() > 0);
 
-	EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket TEX - rw: %d rh: %d", texWidth, texHeight);
+	EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket TEX - rw: %d (0x%x) rh: %d (0x%x)", texWidth, texWidth, texHeight, texHeight);
 
 	return { { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm, pTextureBitmap->maxMipLevel },
 		palettes };

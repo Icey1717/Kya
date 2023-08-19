@@ -7,6 +7,10 @@
 
 #include <assert.h>
 
+#ifdef PLATFORM_PS2
+#include <eekernel.h>
+#endif
+
 struct HeapFuncTable
 {
 	char* (*alloc)(edHeapEntry*, int, int, int);

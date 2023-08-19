@@ -362,7 +362,7 @@ void edDmaSendN_nowait(int channel, void* memory, uint qwc)
 	return;
 }
 
-void edDmaSendN(int channel, void* memory, u_int qwc)
+void edDmaSendN(int channel, void* memory, uint qwc)
 {
 #ifdef PLATFORM_PS2
 	uint madr;

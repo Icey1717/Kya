@@ -12,6 +12,8 @@
 
 #ifdef PLATFORM_PS2
 #include "libpc.h"
+#include <stdio.h>
+#include <eekernel.h>
 #endif
 
 edBANK_ENTRY_INFO gSaveManagementInfoIconSys;

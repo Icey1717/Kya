@@ -134,7 +134,7 @@ InputSetupParams* edSysGetConfig(void);
 
 #define EDITOR_BUILD PLATFORM_WIN
 
-#define ENABLE_MY_LOG
+//#define ENABLE_MY_LOG
 
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
 
@@ -154,16 +154,42 @@ InputSetupParams* edSysGetConfig(void);
 #define MY_LOG_CATEGORY(category, level, format, ...) scePrintf(format, ##__VA_ARGS__); scePrintf("\n")
 #endif
 
-#define edDebugPrintf scePrintf
-
 #include <stdio.h>
 
 #include <stdlib.h>
 
+inline void PrintVector(edF32VECTOR4* vector)
+{
+	//MY_LOG("%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
+	char buff[256] = { 0 };
+	sprintf(buff, "%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
+	MY_LOG("%s", buff);
+}
+
+inline void PrintMatrix(edF32MATRIX4* matrix)
+{
+	PrintVector((edF32VECTOR4*)&matrix->aa);
+	PrintVector((edF32VECTOR4*)&matrix->ba);
+	PrintVector((edF32VECTOR4*)&matrix->ca);
+	PrintVector((edF32VECTOR4*)&matrix->da);
+}
+
+#define PRINT_VECTOR(a) PrintVector(a)
+#define PRINT_MATRIX(a) PrintMatrix(a)
+
 #else
 #define MY_LOG(...)
 #define RENDER_LOG(...)
+#define MY_LOG_CATEGORY(...)
+#define PRINT_VECTOR(...)
+#define PRINT_MATRIX(...)
+
+#ifdef PLATFORM_WIN
+#define scePrintf(...)
 #endif
+#endif
+
+#define edDebugPrintf scePrintf
 
 #ifdef PLATFORM_PS2
 struct __attribute__((aligned(16)))
@@ -305,25 +331,6 @@ union edpkt_data {
 
 #define TO_SCE_MTX float(*)[4]
 #define TO_SCE_VECTOR float*
-
-inline void PrintVector(edF32VECTOR4* vector)
-{
-	//MY_LOG("%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
-	char buff[256] = { 0 };
-	sprintf(buff, "%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
-	MY_LOG("%s", buff);
-}
-
-inline void PrintMatrix(edF32MATRIX4* matrix)
-{
-	PrintVector((edF32VECTOR4*)&matrix->aa);
-	PrintVector((edF32VECTOR4*)&matrix->ba);
-	PrintVector((edF32VECTOR4*)&matrix->ca);
-	PrintVector((edF32VECTOR4*)&matrix->da);
-}
-
-#define PRINT_VECTOR(a) PrintVector(a)
-#define PRINT_MATRIX(a) PrintMatrix(a)
 
 //#define PRINT_VECTOR(a) MY_LOG("%.02f, %.02f, %.02f, %.02f\n", ((float*)&a)[0], ((float*)&a)[1], ((float*)&a)[2], ((float*)&a)[3])
 //#define PRINT_MATRIX(a) PRINT_VECTOR((float*)&a); PRINT_VECTOR(((float*)&a) + 4); PRINT_VECTOR(((float*)&a) + 8); PRINT_VECTOR(((float*)&a) + 12)

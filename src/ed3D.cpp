@@ -829,7 +829,7 @@ void ed3DFlushTexPrepareDMA(edLIST* pCommandInfo)
 		puVar1->cmdB = 0;
 		edDmaSyncPath();
 		edDmaSyncPath();
-#ifdef PLATFORM_IS2
+#ifdef PLATFORM_PS2
 		DPUT_VIF1_FIFO(*(u_long128*)&g_VIF1_FIFO_00424fe0[0]);
 #endif
 		edDmaFlushCache();
@@ -4200,8 +4200,8 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 	previous_flush3DMat = peVar7;
 	if (((gFushListCounter != 0xe) && (pRenderMeshData->pBitmap == (ed_g2d_bitmap*)0x0)) &&
 		(gpPKTDataRefMasPath3 != (edpkt_data*)0x0)) {
-		IMPLEMENTATION_GUARD();
-		gpPKTDataRefMasPath3->cmdA = ((long)(int)(gpPKTDataRefMasPath3 + 4) & 0xfffffffU) << 0x20 | 0x20000000;
+		gpPKTDataRefMasPath3->asU32[0] = SCE_VIF1_SET_STMASK(0);
+		gpPKTDataRefMasPath3->asU32[1] = (int)(gpPKTDataRefMasPath3 + 4);
 		peVar8->cmdB = 0;
 	}
 	peVar8 = peVar4;

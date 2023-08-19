@@ -240,7 +240,6 @@ void PauseManager::Level_Init()
 
 void PauseManager::Level_Draw()
 {
-	return;
 	CinematicManager* pCinematicManager;
 	LevelScheduleManager* pLevelScheduleManager;
 	bool bVar1;

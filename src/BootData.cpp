@@ -9,6 +9,10 @@
 #include <string.h>
 #include <math.h>
 
+#ifdef PLATFORM_PS2
+#include <eekernel.h>
+#endif
+
 edCBankBuffer BootData_BankBuffer = { 0 };
 edCBankBufferEntry* BootData_BankBufferEntry = NULL;
 char* sz_MenuDataBankName_00435610 = "CDEURO/menu/MenuData.bnk";
