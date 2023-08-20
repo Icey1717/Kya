@@ -78,7 +78,7 @@ namespace PS2 {
 		void CreateResources(const bool bTextureFiltering);
 		void Cleanup();
 
-		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts);
+		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
 		void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
 	};
 

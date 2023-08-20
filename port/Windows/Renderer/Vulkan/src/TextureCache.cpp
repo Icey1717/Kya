@@ -961,7 +961,7 @@ PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
 	CreateResources();
 	UploadImage();
 	image.CreateDescriptorPool(createInfo.descriptorSetLayoutBindings);
-	image.CreateDescriptorSets(createInfo.descriptorSetLayouts);
+	image.CreateDescriptorSets(createInfo.descriptorSetLayouts, createInfo.descriptorSetLayoutBindings);
 }
 
 PS2::GSTexValue::GSTexValue(const Renderer::TextureData& inTextureData, uint32_t CBP)
@@ -1195,7 +1195,7 @@ void PS2::GSTexImage::Cleanup()
 	vkFreeMemory(GetDevice(), imageMemory, nullptr);
 }
 
-void PS2::GSTexImage::CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts) {
+void PS2::GSTexImage::CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap) {
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
 
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -1210,78 +1210,40 @@ void PS2::GSTexImage::CreateDescriptorSets(const Renderer::LayoutVector& descrip
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
+		//std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = imageView;
 		imageInfo.sampler = sampler;
 
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = descriptorSets[i];
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pImageInfo = &imageInfo;
-
-		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].dstSet = descriptorSets[i];
-		descriptorWrites[1].dstBinding = 1;
-		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-		descriptorWrites[1].descriptorCount = 1;
-		descriptorWrites[1].pImageInfo = &imageInfo;
-
 		VkDescriptorBufferInfo vertexConstantBuffer{};
 		vertexConstantBuffer.buffer = GetVertexConstantUniformBuffer(i);
 		vertexConstantBuffer.offset = 0;
 		vertexConstantBuffer.range = sizeof(VSConstantBuffer);
-
-		descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[2].dstSet = descriptorSets[i];
-		descriptorWrites[2].dstBinding = 5;
-		descriptorWrites[2].dstArrayElement = 0;
-		descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[2].descriptorCount = 1;
-		descriptorWrites[2].pBufferInfo = &vertexConstantBuffer;
 
 		VkDescriptorBufferInfo pixelConstantBuffer{};
 		pixelConstantBuffer.buffer = GetPixelConstantUniformBuffer(i);
 		pixelConstantBuffer.offset = 0;
 		pixelConstantBuffer.range = sizeof(PSConstantBuffer);
 
-		descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[3].dstSet = descriptorSets[i];
-		descriptorWrites[3].dstBinding = 6;
-		descriptorWrites[3].dstArrayElement = 0;
-		descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[3].descriptorCount = 1;
-		descriptorWrites[3].pBufferInfo = &pixelConstantBuffer;
+		Renderer::DescriptorWriteList writeList;
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &pixelConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
 
-		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(descriptorSets[i], descriptorSetLayoutBindingsMap);
+
+		if (descriptorWrites.size() > 0) {
+			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		}
 	}
 }
 
 void PS2::GSTexImage::CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap) {
 	// Create descriptor pool based on the descriptor set count from the shader
-
-	auto& descriptorSetLayoutBindings = descriptorSetLayoutBindingsMap.at(0);
-	std::vector<VkDescriptorPoolSize> poolSizes;
-	for (uint32_t i = 0; i < descriptorSetLayoutBindings.size(); ++i) {
-		auto& descriptorSet = descriptorSetLayoutBindings[i];
-		poolSizes.push_back({ descriptorSet.descriptorType, descriptorSet.descriptorCount * MAX_FRAMES_IN_FLIGHT });
-	}
-
-	VkDescriptorPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor pool!");
-	}
+	Renderer::CreateDescriptorPool(descriptorSetLayoutBindingsMap, descriptorPool);
 }
 
 namespace PS2_Internal {

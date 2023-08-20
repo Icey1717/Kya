@@ -276,8 +276,8 @@ void FrameBuffer::CreateFinalPassPipeline()
 	dynamicState.dynamicStateCount = 2;
 	dynamicState.pDynamicStates = dynamicStates;
 
-	finalPipeline.AddBindings(fragShader.reflectData);
-	finalPipeline.UpdateDescriptorSetLayouts();
+	finalPipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
+	finalPipeline.CreateDescriptorSetLayouts();
 	finalPipeline.CreateLayout();
 
 	std::vector<VkPipelineShaderStageCreateInfo> stages = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };

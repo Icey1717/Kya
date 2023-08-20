@@ -1,11 +1,8 @@
 set(TargetName "ShaderCompiler")
 project(${TargetName})
 
-# Add the executable for the C# project
-add_executable(${TargetName} "src/ShaderCompiler.cpp")
 
-# Define the source file location
-set(CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_executable(${TargetName} "src/ShaderCompiler.cpp")
 
 # Define the output folder for the compiled C# project
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

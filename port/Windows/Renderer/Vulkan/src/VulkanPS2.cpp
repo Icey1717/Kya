@@ -29,36 +29,26 @@ namespace PS2_Internal {
 		for (auto& pipeline : PS2::GetPipelines()) {
 			pipeline.second.CreateDescriptorSets();
 
-			for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			for (size_t frameIndex = 0; frameIndex < MAX_FRAMES_IN_FLIGHT; frameIndex++) {
 				VkDescriptorBufferInfo vertexConstantBuffer{};
-				vertexConstantBuffer.buffer = PS2::GetVertexConstantUniformBuffer(i);
+				vertexConstantBuffer.buffer = PS2::GetVertexConstantUniformBuffer(frameIndex);
 				vertexConstantBuffer.offset = 0;
 				vertexConstantBuffer.range = sizeof(PS2::VSConstantBuffer);
 
-				std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-
-				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[0].dstSet = pipeline.second.descriptorSets[i];
-				descriptorWrites[0].dstBinding = 5;
-				descriptorWrites[0].dstArrayElement = 0;
-				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrites[0].descriptorCount = 1;
-				descriptorWrites[0].pBufferInfo = &vertexConstantBuffer;
-
 				VkDescriptorBufferInfo pixelConstantBuffer{};
-				pixelConstantBuffer.buffer = PS2::GetPixelConstantUniformBuffer(i);
+				pixelConstantBuffer.buffer = PS2::GetPixelConstantUniformBuffer(frameIndex);
 				pixelConstantBuffer.offset = 0;
 				pixelConstantBuffer.range = sizeof(PS2::PSConstantBuffer);
 
-				descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[1].dstSet = pipeline.second.descriptorSets[i];
-				descriptorWrites[1].dstBinding = 6;
-				descriptorWrites[1].dstArrayElement = 0;
-				descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrites[1].descriptorCount = 1;
-				descriptorWrites[1].pBufferInfo = &pixelConstantBuffer;
+				Renderer::DescriptorWriteList writeList;
+				writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+				writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &pixelConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 
-				vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+				std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(pipeline.second.descriptorSets[frameIndex], pipeline.second.descriptorSetLayoutBindings);
+
+				if (descriptorWrites.size() > 0) {
+					vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+				}
 			}
 		}
 	}
@@ -652,14 +642,18 @@ void Renderer::Draw() {
 	g_GSSelector.iip = state.PRIM.IIP;
 	g_GSSelector.prim = GetPrimClass(state.PRIM.PRIM);
 
-	const std::string CONFIG_NAME = std::string("GS_PRIM_") + std::to_string(g_GSSelector.prim)
+	const std::string GS_CONFIG_NAME = std::string("GS_PRIM_") + std::to_string(g_GSSelector.prim)
 		+ std::string("_POINT_") + std::to_string(g_GSSelector.point)
 		+ std::string("_LINE_") + std::to_string(g_GSSelector.line)
 		+ std::string("_IIP_") + std::to_string(g_GSSelector.iip);
 
-	const std::string hash = GetMD5String(CONFIG_NAME);
+	const std::string gsHash = GetMD5String(GS_CONFIG_NAME);
 
-	const PS2::PipelineKey key = { hash, topology };
+	const std::string PS_CONFIG_NAME = std::string("PS_ATST_") + std::to_string(g_PSSelector.atst);
+
+	const std::string psHash = GetMD5String(PS_CONFIG_NAME);
+
+	const PS2::PipelineKey key = { gsHash, psHash, topology };
 	auto pipelineItr = PS2::GetPipelines().find(key);
 	assert(pipelineItr != PS2::GetPipelines().end());
 	auto pipeline = (*pipelineItr).second;

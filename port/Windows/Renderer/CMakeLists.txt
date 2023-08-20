@@ -71,4 +71,6 @@ target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURREN
 
 target_include_directories(Renderer PUBLIC "include")
 
+target_include_directories(Renderer PRIVATE "Shaders/config")
+
 add_dependencies(Renderer Shaders)

@@ -1,5 +1,7 @@
 message("Beginning shader compile")
 
+include_directories("config")
+
 if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
 	set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin/glslangValidator.exe")
 else()

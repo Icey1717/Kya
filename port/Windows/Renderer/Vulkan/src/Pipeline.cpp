@@ -5,17 +5,24 @@
 #include "renderer.h"
 #include "stdexcept"
 #include "VulkanRenderer.h"
+#include "ShaderConfig.h"
 #include <iterator>
 
 namespace PS2_Internal {
 	std::unordered_map<PS2::PipelineKey, Renderer::Pipeline, PS2::PipelineKeyHash> graphicsPipelines;
 	VkRenderPass renderPass;
 
-	Renderer::Pipeline CreateGraphicsPipeline(std::string hash, VkPrimitiveTopology topology, const char* vertShaderFilePath, const char* geomShaderFilePath, const char* pixelShaderFilePath) {
+	Renderer::Pipeline CreateGraphicsPipeline(VkPrimitiveTopology topology, 
+		const char* vertShaderFilePath, 
+		const char* geomShaderFilePath, 
+		const char* pixelShaderFilePath, 
+		PipelineDebug::ConfigData debugData = PipelineDebug::ConfigData()) {
 		Renderer::Pipeline pipeline;
 		auto vertShader = Shader::ReflectedModule(vertShaderFilePath, VK_SHADER_STAGE_VERTEX_BIT, true);
 		auto geomShader = Shader::ReflectedModule(geomShaderFilePath, VK_SHADER_STAGE_GEOMETRY_BIT, true);
 		auto fragShader = Shader::ReflectedModule(pixelShaderFilePath, VK_SHADER_STAGE_FRAGMENT_BIT, true);
+
+		pipeline.debugData = debugData;
 
 		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, geomShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
 
@@ -99,10 +106,10 @@ namespace PS2_Internal {
 		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 		dynamicState.pDynamicStates = dynamicStates.data();
 
-		pipeline.AddBindings(vertShader.reflectData);
-		pipeline.AddBindings(geomShader.reflectData);
-		pipeline.AddBindings(fragShader.reflectData);
-		pipeline.UpdateDescriptorSetLayouts();
+		pipeline.AddBindings(Renderer::EBindingStage::Vertex, vertShader.reflectData);
+		pipeline.AddBindings(Renderer::EBindingStage::Geometry, geomShader.reflectData);
+		pipeline.AddBindings(Renderer::EBindingStage::Fragment,fragShader.reflectData);
+		pipeline.CreateDescriptorSetLayouts();
 		pipeline.CreateLayout();
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -202,11 +209,17 @@ void PS2::CreateDefaultRenderPass()
 	SetObjectName("PS2 Render Pass", (uint64_t)PS2_Internal::renderPass, VK_OBJECT_TYPE_RENDER_PASS);
 }
 
+namespace PipelineDebug
+{
+	const char* gTopologyNames[4] = {
+		"VK_PRIMITIVE_TOPOLOGY_POINT_LIST",
+		"VK_PRIMITIVE_TOPOLOGY_LINE_LIST",
+		"",
+		"VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST",
+	};
+}
+
 void PS2::CreateGraphicsPipelines() {
-	const std::vector<int> GS_PRIM_VALUES = { 0, 1, 2, 3 };
-	const std::vector<int> GS_POINT_VALUES = { 0, 1 };
-	const std::vector<int> GS_LINE_VALUES = { 0, 1 };
-	const std::vector<int> GS_IIP_VALUES = { 0, 1 };
 	const std::vector<VkPrimitiveTopology> TOPOLOGY_VALUES = { VK_PRIMITIVE_TOPOLOGY_POINT_LIST, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
 
 	for (VkPrimitiveTopology TOPOLOGY : TOPOLOGY_VALUES)
@@ -215,17 +228,27 @@ void PS2::CreateGraphicsPipelines() {
 			for (int GS_POINT : GS_POINT_VALUES) {
 				for (int GS_LINE : GS_LINE_VALUES) {
 					for (int GS_IIP : GS_IIP_VALUES) {
-						const std::string CONFIG_NAME = "GS_PRIM_" + std::to_string(GS_PRIM)
+						const std::string GS_CONFIG_NAME = "GS_PRIM_" + std::to_string(GS_PRIM)
 							+ "_POINT_" + std::to_string(GS_POINT)
 							+ "_LINE_" + std::to_string(GS_LINE)
-							+ "_IIP_" + std::to_string(GS_IIP);
+							+ "_IIP_" + std::to_string(GS_IIP);						
 
 						// Compute a hash value for the string
-						const std::string hash = GetMD5String(CONFIG_NAME);
-						const std::string gsFilePath = "shaders/ps2/" + hash + ".gs.spv";
+						const std::string gsHash = GetMD5String(GS_CONFIG_NAME);
+						const std::string gsFilePath = "shaders/ps2/" + gsHash + ".gs.spv";
 
-						const PipelineKey key = { hash, TOPOLOGY };
-						PS2_Internal::graphicsPipelines.emplace(key, PS2_Internal::CreateGraphicsPipeline(hash, TOPOLOGY, "shaders/ps2/ps2.vs.spv", gsFilePath.c_str(), "shaders/ps2/ps2.ps.spv"));
+						for (int PS_ATST : PS_ATST_VALUES) {
+							const std::string PS_CONFIG_NAME = "PS_ATST_" + std::to_string(PS_ATST);
+
+							const PipelineDebug::ConfigData debugData = { PipelineDebug::gTopologyNames[(int)TOPOLOGY], GS_CONFIG_NAME , PS_CONFIG_NAME };
+
+							// Compute a hash value for the string
+							const std::string psHash = GetMD5String(PS_CONFIG_NAME);
+							const std::string psFilePath = "shaders/ps2/" + psHash + ".ps.spv";
+
+							const PipelineKey key = { gsHash, psHash, TOPOLOGY, debugData };
+							PS2_Internal::graphicsPipelines.emplace(key, PS2_Internal::CreateGraphicsPipeline(TOPOLOGY, "shaders/ps2/ps2.vs.spv", gsFilePath.c_str(), psFilePath.c_str(), debugData));
+						}
 					}
 				}
 			}
@@ -238,30 +261,25 @@ PS2::PipelineMap& PS2::GetPipelines()
 	return PS2_Internal::graphicsPipelines;
 }
 
-void Renderer::Pipeline::AddBindings(ReflectData& reflectData) {
+void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, ReflectData& reflectData) {
 	for (auto& layout : reflectData.GetLayouts()) {
-		if (descriptorSetLayoutBindings.find(layout.setNumber) == descriptorSetLayoutBindings.end()) {
-			descriptorSetLayoutBindings.emplace(layout.setNumber, std::vector<VkDescriptorSetLayoutBinding>());
-		}
-
-		// Copy the bindings from vertReflectData into descriptorSetLayoutBindings
-		std::copy(layout.bindings.begin(),
-			layout.bindings.end(),
-			std::back_inserter(descriptorSetLayoutBindings[layout.setNumber]));
+		descriptorSetLayoutBindings[layout.setNumber][bindingStage] = layout.bindings;
 	}
 }
 
-void Renderer::Pipeline::UpdateDescriptorSetLayouts()
+void Renderer::Pipeline::CreateDescriptorSetLayouts()
 {
 	descriptorSetLayouts.resize(descriptorSetLayoutBindings.size());
 
-	for (auto& bindingSet : descriptorSetLayoutBindings) {
+	for (auto& layoutSet : descriptorSetLayoutBindings) {
+		auto descriptorSet = Renderer::CollectDescriptorSets(layoutSet.second);
+
 		VkDescriptorSetLayoutCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		createInfo.bindingCount = bindingSet.second.size();
-		createInfo.pBindings = bindingSet.second.data();
+		createInfo.bindingCount = descriptorSet.size();
+		createInfo.pBindings = descriptorSet.data();
 
-		if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, nullptr, &descriptorSetLayouts[bindingSet.first]) != VK_SUCCESS) {
+		if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, nullptr, &descriptorSetLayouts[layoutSet.first]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create descriptor set layout!");
 		}
 	}
@@ -281,23 +299,7 @@ void Renderer::Pipeline::CreateLayout()
 
 void Renderer::Pipeline::CreateDescriptorPool()
 {
-	auto& descriptorSetLayoutBindingsZero = descriptorSetLayoutBindings[0];
-	// Create descriptor pool based on the descriptor set count from the shader
-	std::vector<VkDescriptorPoolSize> poolSizes;
-	for (uint32_t i = 0; i < descriptorSetLayoutBindingsZero.size(); ++i) {
-		auto& descriptorSet = descriptorSetLayoutBindingsZero[i];
-		poolSizes.push_back({ descriptorSet.descriptorType, descriptorSet.descriptorCount * MAX_FRAMES_IN_FLIGHT });
-	}
-
-	VkDescriptorPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor pool!");
-	}
+	Renderer::CreateDescriptorPool(descriptorSetLayoutBindings, descriptorPool);
 }
 
 void Renderer::Pipeline::CreateDescriptorSets()
@@ -313,4 +315,80 @@ void Renderer::Pipeline::CreateDescriptorSets()
 	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
+}
+
+std::vector<VkDescriptorSetLayoutBinding> Renderer::CollectDescriptorSets(const LayoutStageMap& stageMap)
+{
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
+
+	for (auto& bindingStage : stageMap) {
+		for (auto& binding : bindingStage.second) {
+			bindings.push_back(binding);
+		}
+	}
+
+	return bindings;
+}
+
+void Renderer::CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutBindingsMap, VkDescriptorPool& descriptorPool) {
+	// Create descriptor pool based on the descriptor set count from the shader
+
+	auto& descriptorSetLayoutBindings = descriptorSetLayoutBindingsMap.at(0);
+	std::vector<VkDescriptorPoolSize> poolSizes;
+
+	auto descriptorSets = CollectDescriptorSets(descriptorSetLayoutBindings);
+
+	for (auto& descriptorSet : descriptorSets) {
+		poolSizes.push_back({ descriptorSet.descriptorType, descriptorSet.descriptorCount * MAX_FRAMES_IN_FLIGHT });
+	}
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	poolInfo.pPoolSizes = poolSizes.data();
+	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor pool!");
+	}
+}
+
+std::optional<VkWriteDescriptorSet> Renderer::DescriptorWriteList::AddWrite(Renderer::EBindingStage stage, VkDescriptorType type, const VkDescriptorSet& dstSet, int dstBinding)
+{
+	for (auto& write : writes) {
+		if (write.stage == stage && write.descriptorType == type) {
+			VkWriteDescriptorSet writeDescriptorSet = {};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.dstSet = dstSet;
+			writeDescriptorSet.dstBinding = dstBinding;
+			writeDescriptorSet.dstArrayElement = 0;
+			writeDescriptorSet.descriptorType = type;
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.pBufferInfo = write.pBufferInfo;
+			writeDescriptorSet.pImageInfo = write.pImageInfo;
+			writeDescriptorSet.pNext = nullptr;
+			return writeDescriptorSet;
+		}
+	}
+
+	return std::nullopt;
+}
+
+std::vector<VkWriteDescriptorSet> Renderer::DescriptorWriteList::CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap)
+{
+	std::vector<VkWriteDescriptorSet> descriptorWrites;
+
+	for (auto& bindingSet : layoutBindingMap) {
+		for (auto& binding : bindingSet.second) {
+			for (auto& write : binding.second) {
+				auto maybeDescriptorSet = AddWrite(binding.first, write.descriptorType, dstSet, write.binding);
+
+				if (maybeDescriptorSet.has_value()) {
+					descriptorWrites.push_back(maybeDescriptorSet.value());
+				}				
+			}
+		}
+	}
+
+	return descriptorWrites;
 }

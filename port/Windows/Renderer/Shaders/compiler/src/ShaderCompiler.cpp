@@ -10,12 +10,7 @@
 #include <filesystem>
 #include "hash.h"
 #include "archive.h"
-
-// Define the shader configurations
-std::vector<int> GS_PRIM_VALUES = { 0, 1, 2, 3 };
-std::vector<int> GS_POINT_VALUES = { 0, 1 };
-std::vector<int> GS_LINE_VALUES = { 0, 1 };
-std::vector<int> GS_IIP_VALUES = { 0, 1 };
+#include "ShaderConfig.h"
 
 std::vector<std::string> gParsedFiles;
 
@@ -83,7 +78,20 @@ int main() {
 	CreateDirectory(shaderOutputDirectoryPS2);
 
 	ConvertToSPIRV("vs_6_0", "vs_main", "ps2.vs.spv", "");
-	ConvertToSPIRV("ps_6_0", "ps_main", "ps2.ps.spv", "");
+
+	for (int PS_ATST : PS_ATST_VALUES) {
+		std::stringstream configName;
+		configName << "PS_ATST_" << PS_ATST;
+		std::string configDefinitions = "-DPS_ATST=" + std::to_string(PS_ATST);
+
+		// Compute the MD5 hash for the configuration
+		std::string shaderHash = GetMD5String(configName.str());
+
+		// Convert HLSL to SPIR-V for the current configuration
+		ConvertToSPIRV("ps_6_0", "ps_main", shaderHash + ".ps.spv", configDefinitions);
+	}
+
+	//ConvertToSPIRV("ps_6_0", "ps_main", "ps2.ps.spv", "");
 
 	// Iterate through all possible configurations
 	for (int GS_PRIM : GS_PRIM_VALUES) {
