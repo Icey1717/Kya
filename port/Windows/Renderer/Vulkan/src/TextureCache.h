@@ -15,11 +15,11 @@ namespace Renderer {
 
 namespace PS2 {
 	struct GSTexKey {
-		Renderer::GSTex value;
+		GIFReg::GSTex value;
 		void* pBitmap;
 		void* pPalette;
 
-		static GSTexKey CreateFromTEX(const Renderer::GSTex& TEX, void* pInBitmap, void* pInPalette) {
+		static GSTexKey CreateFromTEX(const GIFReg::GSTex& TEX, void* pInBitmap, void* pInPalette) {
 			return { TEX, pInBitmap, pInPalette };
 		}
 
@@ -30,21 +30,24 @@ namespace PS2 {
 	};
 
 	struct GSTexValueCreateInfo {
-		GSTexValueCreateInfo(GSTexKey& inKey, Renderer::LayoutVector& inDescriptorSetLayouts, Renderer::LayoutBindingMap& inDescriptorSetLayoutBindings)
+		GSTexValueCreateInfo(GSTexKey& inKey)
 			: key(inKey)
-			, descriptorSetLayouts(inDescriptorSetLayouts)
-			, descriptorSetLayoutBindings(inDescriptorSetLayoutBindings)
 		{}
 
-		GSTexValueCreateInfo(const GSTexKey& inKey, const Renderer::LayoutVector& inDescriptorSetLayouts, const Renderer::LayoutBindingMap& inDescriptorSetLayoutBindings)
+		GSTexValueCreateInfo(const GSTexKey& inKey)
 			: key(inKey)
-			, descriptorSetLayouts(inDescriptorSetLayouts)
-			, descriptorSetLayoutBindings(inDescriptorSetLayoutBindings)
 		{}
 
 		const GSTexKey& key;
-		const Renderer::LayoutVector& descriptorSetLayouts;
-		const Renderer::LayoutBindingMap& descriptorSetLayoutBindings;
+	};
+
+	struct GSTexDescriptor {
+		const VkDescriptorSet& GetSet(int index) const {
+			return descriptorSets[index];
+		}
+
+		VkDescriptorPool descriptorPool;
+		std::vector<VkDescriptorSet> descriptorSets;
 	};
 
 	struct GSTexImage {
@@ -61,11 +64,10 @@ namespace PS2 {
 
 		Renderer::ImageData imageData;
 
+		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
+
 		uint32_t width;
 		uint32_t height;
-
-		VkDescriptorPool descriptorPool;
-		std::vector<VkDescriptorSet> descriptorSets;
 
 		// Buffer emulating the PS2 vram memory.
 		std::vector<uint8_t> writeBuffer;
@@ -77,6 +79,9 @@ namespace PS2 {
 
 		void CreateResources(const bool bTextureFiltering);
 		void Cleanup();
+
+		const GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline);
+		const GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline);
 
 		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
 		void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
@@ -124,12 +129,12 @@ namespace PS2 {
 		std::vector<GSTexEntry> texcache;
 
 	public:
-		GSTexEntry& Create(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
-		GSTexEntry& Lookup(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings);
+		GSTexEntry& Create(const GIFReg::GSTex& TEX);
+		GSTexEntry& Lookup(const GIFReg::GSTex& TEX);
 		const std::vector<GSTexEntry>& GetEntries() { return texcache; }
 	};
 
-	inline GSTexKey CreateKeyFromTEX(const Renderer::GSTex& TEX) {
+	inline GSTexKey CreateKeyFromTEX(const GIFReg::GSTex& TEX) {
 		return { TEX.TBP0, TEX.TBW, TEX.PSM, TEX.TW, (uint32_t)TEX.TH };
 	}
 

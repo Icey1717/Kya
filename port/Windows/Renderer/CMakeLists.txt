@@ -40,7 +40,12 @@ set (SOURCES
 	"Vulkan/src/UniformBuffer.cpp"
 	"Vulkan/src/GSState.h"
 	"Vulkan/src/GSVector.h"
+	"Vulkan/src/pcsx2/VKBuilders.h"
+	"Vulkan/src/pcsx2/VKBuilders.cpp"
+	"Vulkan/src/pcsx2/Selectors.h"
+	"Vulkan/src/pcsx2/Selectors.cpp"
 	"include/renderer.h"
+	"include/GIFReg.h"
 	"include/delegate.h"
 )
 

@@ -15,7 +15,7 @@ enum EHeapType
 
 typedef void* EHeap;
 
-struct edHeapEntry
+struct S_MAIN_MEMORY_HEADER
 {
 	short nextBlock; // -1 if not yet reached, or set to the next block if allocation runs past this block.
 	short field_0x2;
@@ -43,23 +43,23 @@ struct edHeapParams {
 };
 
 int edMemGetMemoryAvailable(EHeap heapID);
-void* edMemGetBlockAddress(void* pAlloc);
+void* edMemGetLocalAddress(void* pAlloc);
 void* edMemAlloc(EHeap heapID, size_t size);
 void* edMemAllocAlign(EHeap heapID, size_t size, int align);
 void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset);
 void edMemFree(void* pAlloc);
 void* edMemShrink(void* pAlloc, int size);
 
-bool IsAllocationValid_0028f3d0(int size, int align, int offset);
+bool edmemTestAllocOk(int size, int align, int offset);
 void SetDataBlock_0028f440(uint* data, int numWords, int isFree);
-void SetHeapFlag_0028f4e0(edHeapEntry* pHeap);
+void SetHeapFlag_0028f4e0(S_MAIN_MEMORY_HEADER* pHeap);
 int edMemGetAvailable(EHeap heapID);
 void DebugDump(EHeap heapID, long mode);
-edHeapEntry* AllocateHeapMemory_0028fac0(edHeapEntry* pHeap, int param_2);
-edHeapEntry* edmemGetMainHeader(void* heapID);
-edHeapEntry* GetBlock_0028fc40(edHeapEntry* pHeap);
-void FreeDataBlock_0028fc90(edHeapEntry* pHeap);
-bool AllocateNewBlock_0028fd60(edHeapEntry* pHeap);
+S_MAIN_MEMORY_HEADER* AllocateHeapMemory_0028fac0(S_MAIN_MEMORY_HEADER* pHeap, int param_2);
+S_MAIN_MEMORY_HEADER* edmemGetMainHeader(void* heapID);
+S_MAIN_MEMORY_HEADER* GetBlock_0028fc40(S_MAIN_MEMORY_HEADER* pHeap);
+void FreeDataBlock_0028fc90(S_MAIN_MEMORY_HEADER* pHeap);
+bool AllocateNewBlock_0028fd60(S_MAIN_MEMORY_HEADER* pHeap);
 
 void edMemSetFlags(EHeap heapID, ushort newFlags);
 void edMemClearFlags(EHeap heapID, ushort flags);

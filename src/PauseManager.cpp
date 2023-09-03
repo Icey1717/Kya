@@ -72,7 +72,7 @@ void DrawLoadingScreen_001b05e0(void)
 	bool bIsLoadingScreen;
 	int localAlpha;
 
-	if (g_CinematicManager_0048efc->pCinematic == (Cinematic*)0x0) {
+	if (g_CinematicManager_0048efc->pCinematic == (CCinematic*)0x0) {
 		pTVar3 = GetTimer();
 		fVar5 = pTVar3->totalTime * 256.0f;
 		if (fVar5 < 2.147484e+09f) {
@@ -247,10 +247,10 @@ void PauseManager::Level_Draw()
 	Timer* pTVar3;
 	EPauseMenu EVar4;
 	int iVar5;
-	Cinematic* pCVar6;
+	CCinematic* pCVar6;
 	ulong uVar7;
 	int index;
-	Cinematic* pCVar8;
+	CCinematic* pCVar8;
 	float fVar9;
 
 	if ((this->pSimpleMenu != (SimpleMenu*)0x0) && (this->pSplashScreen != (SplashScreen*)0x0)) {

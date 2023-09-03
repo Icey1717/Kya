@@ -3,7 +3,7 @@
 
 #include "Types.h"
 
-struct edHeapEntry;
+struct S_MAIN_MEMORY_HEADER;
 
 typedef void EdSysFunc(int, int, char*);
 
@@ -39,7 +39,7 @@ extern edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;;
 
 namespace edSystem
 {
-	extern edHeapEntry* edSystemDataPtr_0042df0;
+	extern S_MAIN_MEMORY_HEADER* edSystemDataPtr_0042df0;
 };
 
 namespace edCSysHandlerPool
@@ -51,7 +51,7 @@ bool _edSystemInit(int argc, char** argv);
 bool edSysHandlersAdd(edSysHandlersNodeTable* pNode, edSysHandlersPoolEntry** param_2, int param_3, edSysHandlerType type, EdSysFunc* pHandlerFunc, long param_6, long param_7);
 bool edSysHandlersCall(int typeA, edSysHandlersPoolEntry** pPool, int eventMax, int eventID, void* param_5);
 
-edHeapEntry* edmemGetMainHeader();
+S_MAIN_MEMORY_HEADER* edmemGetMainHeader();
 
 extern int g_isNTSC;
 

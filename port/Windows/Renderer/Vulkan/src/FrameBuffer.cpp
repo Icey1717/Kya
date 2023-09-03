@@ -25,7 +25,7 @@ Vector2f GetRTScale()
 
 static void CreateRenderPass(VkRenderPass& renderPass, bool bIsClear) {
 	VkAttachmentDescription depthAttachment{};
-	depthAttachment.format = VK_FORMAT_D32_SFLOAT;
+	depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -375,7 +375,7 @@ FrameBuffer FrameBuffer::Create(Vector2i size, int FBP) {
 	}
 
 	{
-		VkFormat format = VK_FORMAT_D32_SFLOAT;
+		VkFormat format = VK_FORMAT_D32_SFLOAT_S8_UINT;
 		VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 		VkImageUsageFlags usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 

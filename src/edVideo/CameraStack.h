@@ -23,7 +23,7 @@ struct CCameraStack {
 	int GetCurHeroState(void);
 	bool Contains(Camera* pCamera);
 	bool Pop(Camera* pCamera);
-	bool Push(Camera* pCamera, long param_3);
+	bool Push(Camera* pCamera, int param_3);
 	void SetMainCamera(Camera* pCamera);
 	bool Manage();
 	void Reset();
@@ -33,7 +33,7 @@ struct CCameraStack {
 	float field_0x200;
 	struct Camera* pActiveCamera;
 	int stackSize;
-	int field_0x20c;
+	Camera* field_0x20c;
 	undefined4 field_0x210;
 	enum SWITCH_MODE switchMode;
 	float field_0x218;

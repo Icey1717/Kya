@@ -132,72 +132,13 @@ InputSetupParams* edSysGetConfig(void);
 #include "log.h"
 #endif
 
-#define EDITOR_BUILD PLATFORM_WIN
-
-//#define ENABLE_MY_LOG
-
-#define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
-
-#ifdef ENABLE_MY_LOG
-#if defined(PLATFORM_WIN)
-#define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
-#define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
-#define RENDER_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
-#define RENDER_LOGF(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
-
-#define MY_LOG_CATEGORY(category, level, format, ...) Log::GetInstance().AddLog(level, category, format, ##__VA_ARGS__)
-
-#else
-#include <eekernel.h>
-#define MY_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
-#define RENDER_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
-#define MY_LOG_CATEGORY(category, level, format, ...) scePrintf(format, ##__VA_ARGS__); scePrintf("\n")
-#endif
-
-#include <stdio.h>
-
-#include <stdlib.h>
-
-inline void PrintVector(edF32VECTOR4* vector)
-{
-	//MY_LOG("%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
-	char buff[256] = { 0 };
-	sprintf(buff, "%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
-	MY_LOG("%s", buff);
-}
-
-inline void PrintMatrix(edF32MATRIX4* matrix)
-{
-	PrintVector((edF32VECTOR4*)&matrix->aa);
-	PrintVector((edF32VECTOR4*)&matrix->ba);
-	PrintVector((edF32VECTOR4*)&matrix->ca);
-	PrintVector((edF32VECTOR4*)&matrix->da);
-}
-
-#define PRINT_VECTOR(a) PrintVector(a)
-#define PRINT_MATRIX(a) PrintMatrix(a)
-
-#else
-#define MY_LOG(...)
-#define RENDER_LOG(...)
-#define MY_LOG_CATEGORY(...)
-#define PRINT_VECTOR(...)
-#define PRINT_MATRIX(...)
-
-#ifdef PLATFORM_WIN
-#define scePrintf(...)
-#endif
-#endif
-
-#define edDebugPrintf scePrintf
-
 #ifdef PLATFORM_PS2
 struct __attribute__((aligned(16)))
 #else
 #pragma pack(push,1)
 struct //alignas(16)
 #endif 
-edF32VECTOR4 { /* Aligned */
+	edF32VECTOR4 { /* Aligned */
 	float x;
 	float y;
 	float z;
@@ -255,10 +196,18 @@ inline edF32VECTOR4 operator-(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs)
 	return ret;
 }
 
-struct edF32VECTOR3 {
-	float x;
-	float y;
-	float z;
+union edF32VECTOR3 {
+	struct {
+		float x;
+		float y;
+		float z;
+	};
+
+	struct {
+		float alpha;
+		float beta;
+		float gamma;
+	};
 };
 
 #ifdef PLATFORM_WIN
@@ -271,7 +220,7 @@ union
 #pragma pack(push,1)
 union alignas(16)
 #endif 
-edF32MATRIX4 {
+	edF32MATRIX4 {
 	struct  __attribute__((aligned(16))) {
 		float aa;
 		float ab;
@@ -310,6 +259,65 @@ edF32MATRIX4 {
 #ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
+
+#define EDITOR_BUILD PLATFORM_WIN
+
+#define ENABLE_MY_LOG
+
+#define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
+
+#ifdef ENABLE_MY_LOG
+#if defined(PLATFORM_WIN)
+#define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
+#define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
+#define RENDER_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
+#define RENDER_LOGF(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
+
+#define MY_LOG_CATEGORY(category, level, format, ...) Log::GetInstance().AddLog(level, category, format, ##__VA_ARGS__)
+
+#else
+#include <eekernel.h>
+#define MY_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
+#define RENDER_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
+#define MY_LOG_CATEGORY(category, level, format, ...) scePrintf(format, ##__VA_ARGS__); scePrintf("\n")
+#endif
+
+#include <stdio.h>
+
+#include <stdlib.h>
+
+inline void PrintVector(edF32VECTOR4* vector)
+{
+	//MY_LOG("%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
+	char buff[256] = { 0 };
+	sprintf(buff, "%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
+	MY_LOG("%s", buff);
+}
+
+inline void PrintMatrix(edF32MATRIX4* matrix)
+{
+	PrintVector((edF32VECTOR4*)&matrix->aa);
+	PrintVector((edF32VECTOR4*)&matrix->ba);
+	PrintVector((edF32VECTOR4*)&matrix->ca);
+	PrintVector((edF32VECTOR4*)&matrix->da);
+}
+
+#define PRINT_VECTOR(a) PrintVector(a)
+#define PRINT_MATRIX(a) PrintMatrix(a)
+
+#else
+#define MY_LOG(...)
+#define RENDER_LOG(...)
+#define MY_LOG_CATEGORY(...)
+#define PRINT_VECTOR(...)
+#define PRINT_MATRIX(...)
+
+#ifdef PLATFORM_WIN
+#define scePrintf(...)
+#endif
+#endif
+
+#define edDebugPrintf scePrintf
 
 
 #ifdef PLATFORM_WIN

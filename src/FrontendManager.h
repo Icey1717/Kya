@@ -4,9 +4,16 @@
 #include "Types.h"
 #include "LargeObject.h"
 
+struct CFrontendMagicGauge {
+	unsigned char bVisible;
+	void Magic_SetDisplay(unsigned char bNewVisible);
+};
+
 struct FrontendManager : public Manager {
 	FrontendManager();
 	virtual void Game_Init();
+
+	void SetActive(bool bActive);
 
 	struct ed_viewport* pViewport;
 	undefined field_0x8;
@@ -27,7 +34,7 @@ struct FrontendManager : public Manager {
 	undefined field_0x56;
 	undefined field_0x57;
 	char* pHealthBar;
-	struct HMagicOrbs* pMagicOrbs;
+	struct CFrontendMagicGauge* pMagicOrbs;
 	struct HNootiesWolfun* pNooties;
 	struct HNootiesWolfun* pFreedWolfun;
 	struct MenuObj_164* pMenuObj_0x68;

@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <string>
 #include <optional>
+#include "pcsx2/Selectors.h"
 
 namespace PipelineDebug
 {
@@ -13,6 +14,34 @@ namespace PipelineDebug
 		std::string topology;
 		std::string gsConfig;
 		std::string psConfig;
+		std::string vsConfig;
+	};
+}
+
+namespace PS2 {
+	struct PipelineKey
+	{
+		std::string gsHash;
+		std::string psHash;
+		std::string vsHash;
+		VkPrimitiveTopology topology;
+		PipelineSelector pipelineSelector;
+		PipelineDebug::ConfigData debugData;
+	};
+
+	struct PipelineKeyHash
+	{
+		size_t operator()(const PipelineKey& key) const {
+			size_t hash = 0;
+			// combine the hash of the string and the primitive topology
+			std::hash<std::string> stringHasher;
+			hash ^= stringHasher(key.gsHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= stringHasher(key.psHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= stringHasher(key.vsHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= std::hash<int>()(key.topology) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= PipelineSelectorHash()(key.pipelineSelector) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			return hash;
+		}
 	};
 }
 
@@ -42,7 +71,7 @@ namespace Renderer {
 		// Set - Descriptor Binding
 		LayoutBindingMap descriptorSetLayoutBindings;
 
-		PipelineDebug::ConfigData debugData;
+		PS2::PipelineKey key;
 
 		void AddBindings(const EBindingStage bindingStage, ReflectData& reflectData);
 		void CreateDescriptorSetLayouts();
@@ -77,34 +106,15 @@ namespace Renderer {
 }
 
 namespace PS2 {
-	struct PipelineKey 
-	{
-		std::string gsHash;
-		std::string psHash;
-		VkPrimitiveTopology topology;
-		PipelineDebug::ConfigData debugData;
-	};
-
-	struct PipelineKeyHash 
-	{
-		size_t operator()(const PipelineKey& key) const {
-			size_t hash = 0;
-			// combine the hash of the string and the primitive topology
-			std::hash<std::string> stringHasher;
-			hash ^= stringHasher(key.gsHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-			hash ^= stringHasher(key.psHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-			hash ^= std::hash<int>()(key.topology) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-			return hash;
-		}
-	};
-
 	using PipelineMap = std::unordered_map<PipelineKey, Renderer::Pipeline, PipelineKeyHash>;
 
 	inline bool operator==(const PipelineKey& lhs, const PipelineKey& rhs) {
-		return lhs.gsHash == rhs.gsHash && lhs.psHash == rhs.psHash && lhs.topology == rhs.topology;
+		return lhs.gsHash == rhs.gsHash && lhs.psHash == rhs.psHash && lhs.pipelineSelector.key == rhs.pipelineSelector.key && lhs.topology == rhs.topology;
 	}
 
 	void CreateDefaultRenderPass();
 	void CreateGraphicsPipelines();
 	PipelineMap& GetPipelines();
+
+	const Renderer::Pipeline& GetPipeline(const PS2::PipelineKey& key);
 }

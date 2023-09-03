@@ -26,202 +26,210 @@ char* g_FileActionNames[] = {
 	"SEEK"
 };
 
-edCFiler* edFileGetFiler(char* outString, char* filePath, long mode)
+edCFiler* edFileGetFiler(char* szOutPath, char* szFilePath, long mode)
 {
-    char* pcVar1;
-    bool bVar2;
-    char* pcVar3;
-    char* bufferPos;
-    int length;
-    long lVar4;
-    char cVar5;
-    long lVar6;
-    char cVar7;
-    char* currentCharacter;
-    char* pcVar8;
-    edCFiler* peVar9;
-    char local_200[512];
+	char* pcVar1;
+	bool bVar2;
+	char* pcVar3;
+	char* bufferPos;
+	int length;
+	//ulong lVar4;
+	char cVar5;
+	//long lVar6;
+	char cVar7;
+	char* currentCharacter;
+	char* pcVar8;
+	edCFiler* pFiler;
+	char local_200[512];
 
-    /* This function takes in a raw file path, and puts it in the correct format for finding the file on the disc.
-       Example:
-       In: CDEURO/frontend/kyatitle.g2d
-       Out: <CDVD>0:\CDEURO\FRONTEND\kyatitle.g2d
-       Return: 3A (58) */
-    if (filePath == (char*)0x0) {
-        filePath = s_DefaultFilePath_00431460;
-    }
-    cVar7 = *filePath;
-    if (cVar7 == '<') {
-        filePath = filePath + 1;
-        currentCharacter = outString;
-        if (true) {
-            do {
-                bVar2 = false;
-                if (('`' < cVar7) && (cVar7 < '{')) {
-                    bVar2 = true;
-                }
-                cVar5 = cVar7;
-                if (bVar2) {
-                    cVar5 = cVar7 + -0x20;
-                }
-                *currentCharacter = cVar5;
-                currentCharacter = currentCharacter + 1;
-                if (cVar7 == '>') break;
-                cVar7 = *filePath;
-                filePath = filePath + 1;
-            } while (cVar7 != '\0');
-        }
-        *currentCharacter = '\0';
-        peVar9 = g_edCFiler_MCPtr_00448fd8;
-    }
-    else {
-        length = edFilePathManager.CopyDrivePath(outString);
-        currentCharacter = outString + length;
-        peVar9 = g_edCFiler_MCPtr_00448fd8;
-    }
-    for (; peVar9 != (edCFiler*)0x0; peVar9 = (peVar9->baseData).pNextEd) {
-        bufferPos = (peVar9->baseData).pDriveName_0x0;
-        if ((bufferPos != (char*)0x0) && (length = edStrCmp(outString, bufferPos), length == 0)) goto LAB_00261138;
-    }
-    peVar9 = (edCFiler*)0x0;
+	/* This function takes in a raw file path, and puts it in the correct format for finding the file on the disc.
+	   Example:
+	   In: CDEURO/frontend/kyatitle.g2d
+	   Out: <CDVD>0:\CDEURO\FRONTEND\kyatitle.g2d
+	   Return: 3A (58) */
+	if (szFilePath == (char*)0x0) {
+		szFilePath = s_DefaultFilePath_00431460;
+	}
+	cVar7 = *szFilePath;
+	if (cVar7 == '<') {
+		szFilePath = szFilePath + 1;
+		currentCharacter = szOutPath;
+		if (true) {
+			do {
+				bVar2 = false;
+				if (('`' < cVar7) && (cVar7 < '{')) {
+					bVar2 = true;
+				}
+				cVar5 = cVar7;
+				if (bVar2) {
+					cVar5 = cVar7 + -0x20;
+				}
+				*currentCharacter = cVar5;
+				currentCharacter = currentCharacter + 1;
+				if (cVar7 == '>') break;
+				cVar7 = *szFilePath;
+				szFilePath = szFilePath + 1;
+			} while (cVar7 != '\0');
+		}
+		*currentCharacter = '\0';
+		pFiler = g_edCFiler_MCPtr_00448fd8;
+	}
+	else {
+		length = edFilePathManager.CopyDrivePath(szOutPath);
+		MY_LOG("Inserted %s length %d", szOutPath, length);
+		currentCharacter = szOutPath + length;
+		pFiler = g_edCFiler_MCPtr_00448fd8;
+	}
+	for (; pFiler != (edCFiler*)0x0; pFiler = (pFiler->baseData).pNextEd) {
+		bufferPos = (pFiler->baseData).pDriveName_0x0;
+		if ((bufferPos != (char*)0x0) && (length = edStrCmp(szOutPath, bufferPos), length == 0)) goto LAB_00261138;
+	}
+	pFiler = (edCFiler*)0x0;
 LAB_00261138:
-    if (peVar9 == (edCFiler*)0x0) {
-        *outString = '\0';
-        peVar9 = (edCFiler*)0x0;
-    }
-    else {
-        lVar4 = (long)*filePath;
-        if (lVar4 == 0x7c) {
-            bufferPos = filePath + 1;
-            if (true) {
-                do {
-                    lVar6 = (lVar4 << 0x38) >> 0x38;
-                    bVar2 = false;
-                    if ((0x60 < lVar6) && (lVar6 < 0x7b)) {
-                        bVar2 = true;
-                    }
-                    if (bVar2) {
-                        lVar6 = (long)((int)((lVar4 << 0x38) >> 0x38) + -0x20);
-                    }
-                    *currentCharacter = (char)lVar6;
-                    lVar4 = (long)*bufferPos;
-                    currentCharacter = currentCharacter + 1;
-                    bufferPos = bufferPos + 1;
-                } while ((lVar4 != 0x7c) && (lVar4 != 0));
-            }
-            if (*bufferPos != '\0') {
-                return (edCFiler*)0x0;
-            }
-        }
-        else {
-            bufferPos = edStrChr(filePath, ':');
-            if (bufferPos == (char*)0x0) {
-                length = peVar9->get_default_unit(currentCharacter);
-                currentCharacter = currentCharacter + length;
-            }
-            else {
-                cVar7 = *filePath;
-                while (filePath = filePath + 1, cVar7 != '\0') {
-                    bVar2 = false;
-                    if (('`' < cVar7) && (cVar7 < '{')) {
-                        bVar2 = true;
-                    }
-                    cVar5 = cVar7;
-                    if (bVar2) {
-                        cVar5 = cVar7 + -0x20;
-                    }
-                    *currentCharacter = cVar5;
-                    currentCharacter = currentCharacter + 1;
-                    if (cVar7 == ':') break;
-                    cVar7 = *filePath;
-                }
-                *currentCharacter = '\0';
-            }
-            local_200[0] = '\0';
-            bufferPos = (char*)0x0;
-            /* Try and find the next / or \\ */
-            if ((mode == 0) && ((bufferPos = edStrChr(filePath, '/'), bufferPos != (char*)0x0 || (pcVar3 = edStrChr(filePath, '\\'), bufferPos = filePath, pcVar3 != (char*)0x0)))) {
-                /* Go back through the file and try find '/' and '\\' */
-                for (bufferPos = edStrReturnEndPtr(filePath); (*bufferPos != '/' && (*bufferPos != '\\')); bufferPos = bufferPos + -1) {
-                }
-                bufferPos = bufferPos + 1;
-            }
-            if ((*filePath == '/') || (*filePath == '\\')) {
-                *currentCharacter = '\\';
-                filePath = filePath + 1;
-                currentCharacter = currentCharacter + 1;
-            }
-            else {
-                edFilePathManager.get_path(outString);
-                currentCharacter = edStrReturnEndPtr(outString);
-            }
-            cVar7 = '\0';
-            pcVar3 = local_200;
-            for (; (filePath != bufferPos && ((long)*filePath != 0)); filePath = filePath + 1) {
-                lVar4 = (long)*filePath << 0x38;
-                lVar6 = lVar4 >> 0x38;
-                bVar2 = false;
-                if ((0x60 < lVar6) && (lVar6 < 0x7b)) {
-                    bVar2 = true;
-                }
-                if (bVar2) {
-                    lVar6 = (long)((int)(lVar4 >> 0x38) + -0x20);
-                }
-                cVar5 = (char)lVar6;
-                if ((char)lVar6 == '/') {
-                    cVar5 = '\\';
-                }
-                if ((cVar5 != '\\') || (cVar7 != '\\')) {
-                    *pcVar3 = cVar5;
-                    pcVar3 = pcVar3 + 1;
-                    cVar7 = cVar5;
-                }
-            }
-            if ((cVar7 != '\0') && (cVar7 != '\\')) {
-                *pcVar3 = '\\';
-                pcVar3 = pcVar3 + 1;
-            }
-            *pcVar3 = '\0';
-            pcVar3 = local_200;
-            while (local_200[0] != '\0') {
-                if (local_200[0] == '.') {
-                    if (pcVar3[1] == '\\') {
-                        pcVar3 = pcVar3 + 2;
-                    }
-                    else {
-                        if ((pcVar3[1] == '.') && (pcVar3 = pcVar3 + 3, pcVar8 = currentCharacter, currentCharacter[-2] != ':')) {
-                            do {
-                                currentCharacter = pcVar8 + -1;
-                                pcVar1 = pcVar8 + -2;
-                                pcVar8 = currentCharacter;
-                            } while (*pcVar1 != '\\');
-                        }
-                    }
-                }
-                else {
-                    do {
-                        cVar7 = *pcVar3;
-                        *currentCharacter = cVar7;
-                        pcVar3 = pcVar3 + 1;
-                        currentCharacter = currentCharacter + 1;
-                        if (cVar7 == '\0') break;
-                    } while (cVar7 != '\\');
-                }
-                local_200[0] = *pcVar3;
-            }
-            if (bufferPos != (char*)0x0) {
-                cVar7 = *bufferPos;
-                while (cVar7 != '\0') {
-                    bufferPos = bufferPos + 1;
-                    *currentCharacter = cVar7;
-                    currentCharacter = currentCharacter + 1;
-                    cVar7 = *bufferPos;
-                }
-            }
-        }
-        *currentCharacter = '\0';
-    }
-    return peVar9;
+	if (pFiler == (edCFiler*)0x0) {
+		*szOutPath = '\0';
+		pFiler = (edCFiler*)0x0;
+	}
+	else {
+		char nextChar = *szFilePath;
+		if (nextChar == '|') {
+			bufferPos = szFilePath + 1;
+			if (true) {
+				do {
+					bVar2 = false;
+					if (('`' < nextChar) && (nextChar < '{')) {
+						bVar2 = true;
+					}
+					if (bVar2) {
+						nextChar = nextChar - 0x20;
+					}
+					*currentCharacter = nextChar;
+					nextChar = *bufferPos;
+					currentCharacter = currentCharacter + 1;
+					bufferPos = bufferPos + 1;
+				} while ((nextChar != '|') && (nextChar != '\0'));
+			}
+			if (*bufferPos != '\0') {
+				return (edCFiler*)0x0;
+			}
+		}
+		else {
+			bufferPos = edStrChr(szFilePath, ':');
+			if (bufferPos == (char*)0x0) {
+				length = pFiler->get_default_unit(currentCharacter);
+				currentCharacter = currentCharacter + length;
+			}
+			else {
+				cVar7 = *szFilePath;
+				while (szFilePath = szFilePath + 1, cVar7 != '\0') {
+					bVar2 = false;
+					if (('`' < cVar7) && (cVar7 < '{')) {
+						bVar2 = true;
+					}
+					cVar5 = cVar7;
+					if (bVar2) {
+						cVar5 = cVar7 + -0x20;
+					}
+					*currentCharacter = cVar5;
+					currentCharacter = currentCharacter + 1;
+					if (cVar7 == ':') break;
+					cVar7 = *szFilePath;
+				}
+				*currentCharacter = '\0';
+			}
+			local_200[0] = '\0';
+			bufferPos = (char*)0x0;
+			/* Try and find the next / or \\ */
+			if ((mode == 0) && ((bufferPos = edStrChr(szFilePath, '/'), bufferPos != (char*)0x0 || (pcVar3 = edStrChr(szFilePath, '\\'), bufferPos = szFilePath, pcVar3 != (char*)0x0)))) {
+				/* Go back through the file and try find '/' and '\\' */
+				for (bufferPos = edStrReturnEndPtr(szFilePath); (*bufferPos != '/' && (*bufferPos != '\\')); bufferPos = bufferPos + -1) {
+				}
+				bufferPos = bufferPos + 1;
+
+				MY_LOG("Found filename: %s", bufferPos);
+
+			}
+			if ((*szFilePath == '/') || (*szFilePath == '\\')) {
+				*currentCharacter = '\\';
+				szFilePath = szFilePath + 1;
+				currentCharacter = currentCharacter + 1;
+			}
+			else {
+				edFilePathManager.get_path(szOutPath);
+				currentCharacter = edStrReturnEndPtr(szOutPath);
+
+				MY_LOG("Added default unit %s", szOutPath);
+			}
+			cVar7 = '\0';
+			pcVar3 = local_200;
+
+			// Convert to lowercase and forward slashes
+			for (; (szFilePath != bufferPos && ((long)*szFilePath != 0)); szFilePath = szFilePath + 1) {
+				char nextChar = *szFilePath;
+				bVar2 = false;
+				if (('`' < nextChar) && (nextChar < '{')) {
+					bVar2 = true;
+				}
+				if (bVar2) {
+					// LOWERCASE
+					nextChar = nextChar - 0x20;
+				}
+				cVar5 = nextChar;
+				if (nextChar == '/') {
+					cVar5 = '\\';
+				}
+				if ((cVar5 != '\\') || (cVar7 != '\\')) {
+					*pcVar3 = cVar5;
+					pcVar3 = pcVar3 + 1;
+					cVar7 = cVar5;
+				}
+			}
+
+			if ((cVar7 != '\0') && (cVar7 != '\\')) {
+				*pcVar3 = '\\';
+				pcVar3 = pcVar3 + 1;
+			}
+			*pcVar3 = '\0';
+			pcVar3 = local_200;
+			while (local_200[0] != '\0') {
+				if (local_200[0] == '.') {
+					if (pcVar3[1] == '\\') {
+						pcVar3 = pcVar3 + 2;
+					}
+					else {
+						if ((pcVar3[1] == '.') && (pcVar3 = pcVar3 + 3, pcVar8 = currentCharacter, currentCharacter[-2] != ':')) {
+							do {
+								currentCharacter = pcVar8 + -1;
+								pcVar1 = pcVar8 + -2;
+								pcVar8 = currentCharacter;
+							} while (*pcVar1 != '\\');
+						}
+					}
+				}
+				else {
+					do {
+						cVar7 = *pcVar3;
+						*currentCharacter = cVar7;
+						pcVar3 = pcVar3 + 1;
+						currentCharacter = currentCharacter + 1;
+						if (cVar7 == '\0') break;
+					} while (cVar7 != '\\');
+				}
+				local_200[0] = *pcVar3;
+			}
+			if (bufferPos != (char*)0x0) {
+				cVar7 = *bufferPos;
+				while (cVar7 != '\0') {
+					bufferPos = bufferPos + 1;
+					*currentCharacter = cVar7;
+					currentCharacter = currentCharacter + 1;
+					cVar7 = *bufferPos;
+				}
+			}
+		}
+		*currentCharacter = '\0';
+	}
+	return pFiler;
 }
 
 void edFileSetPath(char* mode)
@@ -232,14 +240,14 @@ void edFileSetPath(char* mode)
 	char cVar4;
 	char* pRootDrivePathChar;
 	char local_200[512];
-    char weirdChange;
+	char weirdChange;
 
 	peVar3 = edFileGetFiler(local_200, mode, 1);
 	if (peVar3 != (edCFiler*)0x0) {
-        edFilePathManager.SetDefaultFileLoad_00261610(local_200);
+		edFilePathManager.SetDefaultFileLoad_00261610(local_200);
 		pcVar2 = local_200;
 		pRootDrivePathChar = edFilePathManager.rootDrivePath;
-        weirdChange = local_200[0];
+		weirdChange = local_200[0];
 		while (pcVar2 = pcVar2 + 1, weirdChange != '\0') {
 			bVar1 = false;
 			if (('`' < weirdChange) && (weirdChange < '{')) {
@@ -252,7 +260,7 @@ void edFileSetPath(char* mode)
 			*pRootDrivePathChar = cVar4;
 			pRootDrivePathChar = pRootDrivePathChar + 1;
 			if (weirdChange == '>') break;
-            weirdChange = *pcVar2;
+			weirdChange = *pcVar2;
 		}
 		*pRootDrivePathChar = '\0';
 		peVar3->set_default_unit(local_200);

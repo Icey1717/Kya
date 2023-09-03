@@ -70,7 +70,9 @@ struct CObject {
 };
 
 struct SpecificCondition {
-	int* field_0x0;
+	int* pData;
+
+	bool IsVerified();
 };
 
 struct Camera : public CObject {
@@ -102,7 +104,7 @@ struct Camera : public CObject {
 	edF32VECTOR4 field_0x50;
 	edF32VECTOR4 lookAt;
 	undefined4 field_0x70;
-	float field_0x74;
+	float fov;
 	SpecificCondition specCondition;
 	undefined4 field_0x7c;
 	struct EventChunk_24* field_0x80;
@@ -1073,21 +1075,22 @@ struct FrontendCameraView : public Camera {
 	undefined field_0xaf;
 };
 
-struct CameraCinematic : public FrontendCameraView {
-	CameraCinematic();
+struct CCameraCinematic : public FrontendCameraView {
+	CCameraCinematic();
+
 	void SetTransform(edF32MATRIX4* transformMatrix);
-	ECameraType GetMode(void);
+
+	virtual ECameraType GetMode(void);
+	virtual void Init();
+	virtual float GetAngleAlpha();
+	virtual float GetAngleBeta();
+	virtual float GetAngleGamma();
+
 	edF32VECTOR3 field_0xb0;
 	undefined field_0xbc;
 	undefined field_0xbd;
 	undefined field_0xbe;
 	undefined field_0xbf;
-};
-
-struct CameraAngles {
-	float alpha;
-	float beta;
-	float gamma;
 };
 
 struct CCameraExt : public Camera {
@@ -1113,7 +1116,7 @@ struct CCameraExt : public Camera {
 	undefined field_0xae;
 	undefined field_0xaf;
 	struct Actor* pActorView;
-	CameraAngles angles;
+	edF32VECTOR3 angles;
 	float distance;
 	undefined field_0xc4;
 	undefined field_0xc5;
@@ -7586,6 +7589,7 @@ struct CameraManager : public Manager {
 	Camera* AddCamera(ECameraType type, struct ByteCode* pMemoryStream, char* objName);
 	Camera* GetDefGameCamera(ECameraType type);
 
+	bool PushCamera(Camera* pCamera, int param_3);
 	static CameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
 
@@ -8287,7 +8291,7 @@ struct CameraManager : public Manager {
 	undefined field_0x4b2;
 	undefined field_0x4b3;
 	Camera* pInitialView_0x4b4;
-	Camera* pShadowSunView_0x4b8;
+	Camera* pActiveCamera;
 	CCameraShadow* aCameraShadow[10];
 	FrontendCameraView* pFrontendCamera_0x4e4;
 	Camera* pMouseQuakeCamera_0x4e8;
@@ -8320,7 +8324,7 @@ struct CameraManager : public Manager {
 	int count_0x9fc; /* Created by retype action */
 	undefined4 field_0xa00;
 	undefined4 field_0xa04;
-	CameraAngles field_0xa08;
+	edF32VECTOR3 field_0xa08;
 	undefined field_0xa14;
 	undefined field_0xa15;
 	undefined field_0xa16;
@@ -8409,7 +8413,5 @@ struct CameraManager : public Manager {
 
 extern edFCamera _gDisplayCamera;
 extern edFCamera gSceneCameras[10];
-extern edF32VECTOR4 gF32Vertex4Zero;
-extern edF32VECTOR4 gF32Vector4Zero;
 
 #endif // _CAMERA_VIEW_MANAGER_H

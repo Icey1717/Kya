@@ -530,7 +530,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			// Update PRIM
 			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pFakeMem + 0x1990);
 			const uint prim = pGifTag->PRIM;
-			Renderer::SetPrim(*reinterpret_cast<const Renderer::PrimPacked*>(&prim));
+			Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim));
 
 			RunCode(pRunTag->addr);
 		}

@@ -402,6 +402,10 @@ void ed3DSetDeltaTime(int newTime);
 
 FxFogProp* ed3DGetFxFogProp(void);
 
+#ifdef PLATFORM_WIN
+void ProcessTextureCommands(edpkt_data* aPkt, int size);
+#endif
+
 extern int gFXBufAddr;
 extern byte BYTE_00448a5c;
 extern edCluster* gCluster;

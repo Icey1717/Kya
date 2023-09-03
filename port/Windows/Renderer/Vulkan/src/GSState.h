@@ -1,8 +1,42 @@
 #pragma once
 #include <stdint.h>
 #include "renderer.h"
+#include "GIFReg.h"
 
 namespace PS2 {
+
+	enum GS_PSM
+	{
+		PSMCT32 = 0, // 0000-0000
+		PSMCT24 = 1, // 0000-0001
+		PSMCT16 = 2, // 0000-0010
+		PSMCT16S = 10, // 0000-1010
+		PSGPU24 = 18, // 0001-0010
+		PSMT8 = 19, // 0001-0011
+		PSMT4 = 20, // 0001-0100
+		PSMT8H = 27, // 0001-1011
+		PSMT4HL = 36, // 0010-0100
+		PSMT4HH = 44, // 0010-1100
+		PSMZ32 = 48, // 0011-0000
+		PSMZ24 = 49, // 0011-0001
+		PSMZ16 = 50, // 0011-0010
+		PSMZ16S = 58, // 0011-1010
+	};
+
+	struct VertexAlpha
+	{
+		int min, max;
+		bool valid;
+	};
+
+	inline VertexAlpha GetAlphaMinMax()
+	{
+		return VertexAlpha{ 0, 0xff, false };
+		//if (!m_vt.m_alpha.valid)
+		//	CalcAlphaMinMax(0, 500);
+		//return m_vt.m_alpha;
+	}
+
 	struct alignas(32) GSState
 	{
 		inline void SetST(float S, float T) {
@@ -28,58 +62,63 @@ namespace PS2 {
 		float T;
 
 		inline void SetFrame(int fbp, int fbw, int psm, int fbmask) {
-			this->PSM = psm;
-			this->FBP = fbp;
-			this->FBW = fbw;
-			this->FBMASK = fbmask;
+			this->FRAME.PSM = psm;
+			this->FRAME.FBP = fbp;
+			this->FRAME.FBW = fbw;
+			this->FRAME.FBMSK = fbmask;
 		}
-		int PSM;
-		int FBP;
-		int FBW;
-		int FBMASK;
 
-		struct GSTest {
-			uint32_t ATE;
-			uint32_t ATST;
-			uint32_t AREF;
-			uint32_t AFAIL;
-			uint32_t DATE;
-			uint32_t DATM;
-			uint32_t ZTE;
-			uint32_t ZTST;
+		GIFReg::GSTest TEST;
 
-			bool operator==(const GSTest& other) const {
-				return ATE == other.ATE
-					&& ATST == other.ATST
-					&& AREF == other.AREF
-					&& AFAIL == other.AFAIL
-					&& DATE == other.DATE
-					&& DATM == other.DATM
-					&& ZTE == other.ZTE
-					&& ZTST == other.ZTST;
+		inline void SetAlpha(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint8_t fix) {
+			this->ALPHA.A = a;
+			this->ALPHA.B = b;
+			this->ALPHA.C = c;
+			this->ALPHA.D = d;
+			this->ALPHA.FIX = fix;
+		}
+
+		GIFReg::GSPrim PRIM;
+		GIFReg::GSClamp CLAMP;
+		GIFReg::GSColClamp COLCLAMP;
+		GIFReg::GSAlpha ALPHA;
+		GIFReg::GSPabe PABE;
+		GIFReg::GSFrame FRAME;
+		GIFReg::GSTex TEX;
+
+		bool bTexSet = false;
+
+		inline bool GSState::IsOpaque() const
+		{
+			if (PRIM.AA1)
+				return false;
+
+			if (!PRIM.ABE)
+				return true;
+
+			int amin = 0;
+			int amax = 0xff;
+
+			if (ALPHA.A != ALPHA.B)
+			{
+				if (ALPHA.C == 0)
+				{
+					amin = GetAlphaMinMax().min;
+					amax = GetAlphaMinMax().max;
+				}
+				else if (ALPHA.C == 1)
+				{
+					if (FRAME.PSM == PSMCT24 || FRAME.PSM == PSMZ24)
+						amin = amax = 0x80;
+				}
+				else if (ALPHA.C == 2)
+				{
+					amin = amax = ALPHA.FIX;
+				}
 			}
 
-			bool operator!=(const GSTest& other) const {
-				return !(*this == other);
-			}
-		};
-
-		GSTest TEST;
-
-		struct GSPrim {
-			uint32_t PRIM;
-			uint32_t IIP;
-			uint32_t TME;
-			uint32_t FGE;
-			uint32_t ABE;
-			uint32_t AA1;
-			uint32_t FST;
-			uint32_t CTXT;
-			uint32_t FIX;
-		};
-
-		GSPrim PRIM;
-		Renderer::GSTex TEX;
+			return ALPHA.IsOpaque(amin, amax);
+		}
 	};
 }
 

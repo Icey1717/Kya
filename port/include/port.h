@@ -110,7 +110,7 @@ inline ulong SetGIFTAGWin(A nloop, B eop, C pre, D prim, E flg, F nreg)
 #include <stdint.h>
 #include <algorithm>
 
-typedef char s8;
+//typedef char s8;
 typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
@@ -335,7 +335,7 @@ struct Gif_Tag {
 inline void SendTextureCommandsFromPacked(ulong packed) {
 	//ulong tbp, tbw, psm, tw, th, tcc, tfx, cpsm, csa, cbp, csm, cld;
 	//unpack_sce_gs_set_tex0(packed, tbp, tbw, psm, tw, th, tcc, tfx, cbp, cpsm, csm, csa, cld);
-	Renderer::SetTEX(*reinterpret_cast<Renderer::GSTex*>(&packed));
+	Renderer::SetTEX(*reinterpret_cast<GIFReg::GSTex*>(&packed));
 }
 
 
@@ -406,9 +406,23 @@ inline ulong SetXYZWin(A x, B y, C z)
 
 #define SCE_GS_SET_ALPHA_1  SCE_GS_SET_ALPHA
 #define SCE_GS_SET_ALPHA_2  SCE_GS_SET_ALPHA
-#define SCE_GS_SET_ALPHA(a, b, c, d, fix) \
+#define SCE_GS_SET_ALPHA_PS2(a, b, c, d, fix) \
     ((ulong)(a)       | ((ulong)(b) << 2)     | ((ulong)(c) << 4) | \
     ((ulong)(d) << 6) | ((ulong)(fix) << 32))
+
+#ifdef PLATFORM_WIN
+template<typename A, typename B, typename C, typename D, typename E>
+inline ulong SetAlphaWin(A a, B b, C c, D d, E fix)
+{
+	Renderer::SetAlpha(a, b, c, d, fix);
+	return SCE_GS_SET_ALPHA_PS2(a, b, c, d, fix);
+}
+
+#define SCE_GS_SET_ALPHA(a, b, c, d, fix) \
+	 SetAlphaWin(a, b, c, d, fix)
+#else
+#define SCE_GS_SET_ALPHA SCE_GS_SET_ALPHA_PS2
+#endif
 
 #define SCE_GS_SET_FRAME_PS2(fbp, fbw, psm, fbmask) \
     ((ulong)(fbp)        | ((ulong)(fbw) << 16) | \

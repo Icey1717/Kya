@@ -332,7 +332,7 @@ void GlobalDList_Init(void)
 	else {
 		fVar8 = (float)uVar6;
 	}
-	pcVar7 = WorkOutMo(fVar8 / 1048576.0, 3, g_DebugTextBuffer_00468ef0, 0, (char*)0x0);
+	pcVar7 = WorkOutMo(fVar8 / 1048576.0f, 3, g_DebugTextBuffer_00468ef0, 0, (char*)0x0);
 	/* --- total used : \t%d (%s Mo) ----
 	   ----------------------------------------- */
 	edDebugPrintf("--- total used : \t%d (%s Mo) ----\n", freeMemCalcA - iVar4, pcVar7);

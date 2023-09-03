@@ -10,151 +10,32 @@
 #endif
 #include "ScenaricCondition.h"
 #include "TranslatedTextData.h"
+#include "EdenLib/edCinematic/Sources/Cinematic.h"
 
-enum edResCollectionEnum {
-	COT_Animation = 2,
-	COT_MeshModel = 1,
-	COT_MeshTexture = 4,
-	COT_Particle = 8,
-	COT_Sound = 0,
-	COT_Text = 9,
-	COT_Scene = 3,
-};
-
-struct edCinGameInterface {
-	char name[32];
-	char* meshName;
-	bool bHasMesh;
-	undefined field_0x25;
-	undefined field_0x26;
-	undefined field_0x27;
-	char* textureName;
-	bool bHasTexture;
-	undefined field_0x2d;
-	undefined field_0x2e;
-	undefined field_0x2f;
-	float field_0x30;
-	undefined field_0x34;
-	undefined field_0x35;
-	undefined field_0x36;
-	undefined field_0x37;
-	undefined field_0x38;
-	undefined field_0x39;
-	undefined field_0x3a;
-	undefined field_0x3b;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
-	float field_0x40;
-	float field_0x44;
-	float field_0x48;
-	float field_0x4c;
-	edF32VECTOR4 vectorFieldA;
-	edF32VECTOR4 vectorFieldB;
-	edF32VECTOR4 vectorFieldC;
-};
-
-struct edCinActorInterface {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	//struct SoundStructA soundStruct;
-	undefined field_0x90;
-	undefined field_0x91;
-	undefined field_0x92;
-	undefined field_0x93;
-	undefined field_0x94;
-	undefined field_0x95;
-	undefined field_0x96;
-	undefined field_0x97;
-	//struct SoundStructAInternal soundInternalStruct; /* Created by retype action */
-	int usedInInstCreate;
-	undefined field_0xbc;
-	undefined field_0xbd;
-	undefined field_0xbe;
-	undefined field_0xbf;
-	undefined field_0xc0;
-	undefined field_0xc1;
-	undefined field_0xc2;
-	undefined field_0xc3;
-	undefined field_0xc4;
-	undefined field_0xc5;
-	undefined field_0xc6;
-	undefined field_0xc7;
-	undefined field_0xc8;
-	undefined field_0xc9;
-	undefined field_0xca;
-	undefined field_0xcb;
-	undefined field_0xcc;
-	undefined field_0xcd;
-	undefined field_0xce;
-	undefined field_0xcf;
-	undefined field_0xd0;
-	undefined field_0xd1;
-	undefined field_0xd2;
-	undefined field_0xd3;
-	undefined field_0xd4;
-	undefined field_0xd5;
-	undefined field_0xd6;
-	undefined field_0xd7;
-	undefined field_0xd8;
-	undefined field_0xd9;
-	undefined field_0xda;
-	undefined field_0xdb;
-	undefined field_0xdc;
-	undefined field_0xdd;
-	undefined field_0xde;
-	undefined field_0xdf;
-	edF32VECTOR4 vectorFieldA;
-	edF32VECTOR4 vectorFieldB;
-	edF32VECTOR4 vectorFieldC;
-};
-
-class BWitchCin {
+class CBWCinCam : public edCinCamInterface {
 public:
-	char* GetResource(edResCollectionEnum type1, long type2, char* fileName, int* bufferLengthOut);
-	bool CreateActor(int* ppActorInterface, edCinGameInterface* ppGameInterface);
+	virtual bool Activate();
+	virtual bool Initialize(bool param_2, uint* flags);
+	virtual bool SetFov(float fov);
+	virtual bool SetPos(float x, float y, float z);
+	virtual bool SetHeadingQuat(float x, float y, float z, float w);
+	virtual bool SetHeadingEuler(float x, float y, float z, bool param_5);
+};
+
+class CBWitchCin : public edCinGameInterface {
+public:
+	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*);
+	virtual char* GetResource(edResCollection::RES_TYPE type1, long type2, const char* fileName, int* bufferLengthOut);
+	virtual bool CreateActor(edCinActorInterface** ppActorInterface, const edCinGameInterface::ACTORV_CREATIONtag* pTag);
+	virtual bool ReleaseResource(void*, bool);
+
+	CBWCinCam BWCinCam_Obj;
 };
 
 struct ConditionedOperationArray {
 	uint* field_0x0;
 	void Create(struct ByteCode* pByteCode);
 	void Perform();
-};
-
-struct edResCollectionInternal {
-	int* field_0x0;
-};
-
-PACK(
-struct edResCollection {
-	int pData; // char*
-
-	static char* GetResFilename(edResCollection** resBufferPtr, int offset);
-});
-
-struct edCinematic {
-	char* headerPtr;
-	int* fileStart;
-	edResCollection* pRes;
-	bool ExtractVersions(int size, int* cinematicLibraryVersion, int* cinematicCompilerVersion);
-	bool Create(BWitchCin* pInterface, char* fileName);
-	bool Create(BWitchCin* pInterface, char* cinFileBuffer, int bufferLength);
-};
-
-struct CutsceneHoldsDurations {
-	float durationA;
-	float durationB;
 };
 
 struct CinematicFileDataHeader {
@@ -295,13 +176,13 @@ struct CinematicFileDataHeader {
 };
 
 struct CinFileContainer {
-	edResCollectionEnum type;
+	edResCollection::RES_TYPE type;
 	char* pData;
 };
 
-struct Cinematic {
+struct CCinematic {
 	void InitInternalData();
-	Cinematic();
+	CCinematic();
 	void Create(struct ByteCode* pByteCode);
 	void Init();
 
@@ -310,7 +191,14 @@ struct Cinematic {
 	bool LoadInternal(long mode);
 	void Install();
 	bool LoadCineBnk(bool mode);
-	int* InstallResource(edResCollectionEnum objectType, long type2, char* fileName, struct ed_g2d_manager* textureObj, int* bufferLengthOut);
+	int* InstallResource(edResCollection::RES_TYPE objectType, bool type2, const char* fileName, struct ed_g2d_manager* textureObj, int* bufferLengthOut);
+
+	void Manage();
+	void ManageState_Playing();
+
+	bool TimeSlice(float currentPlayTime);
+	void IncrementCutsceneDelta();
+
 	int prtBuffer;
 	uint flags_0x4;
 	uint flags_0x8;
@@ -367,7 +255,7 @@ struct Cinematic {
 	undefined field_0xad;
 	undefined field_0xae;
 	undefined field_0xaf;
-	BWitchCin cinematicLoadObject;
+	CBWitchCin cinematicLoadObject;
 	undefined* field_0x100;
 	undefined field_0x104;
 	undefined field_0x105;
@@ -471,21 +359,22 @@ public:
 	virtual void Level_Init();
 
 	virtual void Level_AddAll(struct ByteCode* pByteCode);
+	virtual void Level_Manage();
 
 	virtual void Level_SectorChange(int param_2, int param_3);
 
 	void WillLoadCinematic();
 
-	struct Cinematic** ppCinematicObjB_A;
+	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;
-	struct CameraCinematic* pCameraLocationObj;
-	struct Cinematic** ppCinematicObjB_B;
-	int count_0x14;
-	struct Cinematic* pCinematicObjB_0x18;
-	struct Cinematic* pCinematic;
+	struct CCameraCinematic* pCameraLocationObj;
+	struct CCinematic** ppCinematicObjB_B;
+	int activeCinematicCount;
+	struct CCinematic* pCinematicB_0x18;
+	struct CCinematic* pCinematic;
 	int field_0x20;
 	int field_0x24;
-	Cinematic* field_0x28;
+	CCinematic* field_0x28;
 	undefined4 field_0x2c;
 	uint bInitialized;
 	undefined4 field_0x34;

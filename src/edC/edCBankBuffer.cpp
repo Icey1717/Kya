@@ -689,10 +689,10 @@ bool edCBankBufferEntry::close()
 	return bVar3;
 }
 
-int TreeInfo_OptimizeFilePath(char* outFileName, char* inFileName)
+int TreeInfo_OptimizeFilePath(char* outFileName, const char* inFileName)
 {
-	char* pcVar1;
-	char* pcVar2;
+	const char* pcVar1;
+	const char* pcVar2;
 	char* finalBufferPos;
 	char currentCharacter;
 
@@ -825,7 +825,7 @@ char* TreeInfo_RecurseWhileCountingIndexesUsingReference(char* headerBaseFilePat
 	return basePathChar;
 }
 
-int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, char* inFileName)
+int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, const char* inFileName)
 {
 	char* pHeaderBase;
 	int fileNameLength;
@@ -875,7 +875,7 @@ LAB_00246280:
 	return (int)uVar2;
 }
 
-int edCBankBufferEntry::get_index(char* inFileName)
+int edCBankBufferEntry::get_index(const char* inFileName)
 {
 	int iVar1;
 

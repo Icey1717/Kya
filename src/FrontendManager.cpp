@@ -109,13 +109,15 @@ namespace Frontend {
 	ed_3D_Scene* _scene_handle = NULL;
 }
 
+CFrontendMagicGauge gMagicGauge;
+
 FrontendManager::FrontendManager()
 {
 	this->pViewport = (ed_viewport*)0x0;
 	//FUN_001dcc10((long)&this->field_0x54);
 	this->bHideHUD = 0;
 	//this->pHealthBar = (undefined*)&PTR_DAT_00451710;
-	//this->pMagicOrbs = &HMagicOrbs::Singleton_00452320;
+	this->pMagicOrbs = &gMagicGauge;
 	//this->pNooties = &HNootiesWolfun_004528b0;
 	//this->pFreedWolfun = &HNootiesWolfun_00452ae0;
 	//this->pMenuObj_0x68 = &MenuObj_164_00452d10;
@@ -194,7 +196,24 @@ void FrontendManager::Game_Init()
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x20))();
 	if (this->bHideHUD == 0) {
 		this->bHideHUD = 1;
-		//MenuObjBaseData::Magic_SetDisplay((MenuObjBase*)this->pMagicOrbs, '\0');
+		this->pMagicOrbs->Magic_SetDisplay(false);
+	}
+	return;
+}
+
+void FrontendManager::SetActive(bool bActive)
+{
+	if ((uint)this->bHideHUD == (bActive & 0xffU)) {
+		this->bHideHUD = bActive == 0;
+		this->pMagicOrbs->Magic_SetDisplay(bActive);
+	}
+	return;
+}
+
+void CFrontendMagicGauge::Magic_SetDisplay(unsigned char bNewVisible)
+{
+	if (bNewVisible != this->bVisible) {
+		this->bVisible = bNewVisible;
 	}
 	return;
 }

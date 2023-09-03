@@ -960,8 +960,6 @@ PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
 
 	CreateResources();
 	UploadImage();
-	image.CreateDescriptorPool(createInfo.descriptorSetLayoutBindings);
-	image.CreateDescriptorSets(createInfo.descriptorSetLayouts, createInfo.descriptorSetLayoutBindings);
 }
 
 PS2::GSTexValue::GSTexValue(const Renderer::TextureData& inTextureData, uint32_t CBP)
@@ -1195,23 +1193,27 @@ void PS2::GSTexImage::Cleanup()
 	vkFreeMemory(GetDevice(), imageMemory, nullptr);
 }
 
-void PS2::GSTexImage::CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap) {
-	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
+const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::Pipeline& pipeline)
+{
+	auto& gsDescriptor = descriptorMap[&pipeline];
+
+	// Create descriptor pool based on the descriptor set count from the shader
+	Renderer::CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, gsDescriptor.descriptorPool);
+
+	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.descriptorSetLayouts[0]);
 
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorPool = gsDescriptor.descriptorPool;
 	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	allocInfo.pSetLayouts = layouts.data();
 
-	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+	gsDescriptor.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, gsDescriptor.descriptorSets.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		//std::array<VkWriteDescriptorSet, 4> descriptorWrites{};
-
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = imageView;
@@ -1233,41 +1235,50 @@ void PS2::GSTexImage::CreateDescriptorSets(const Renderer::LayoutVector& descrip
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
 
-		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(descriptorSets[i], descriptorSetLayoutBindingsMap);
+		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(gsDescriptor.descriptorSets[i], pipeline.descriptorSetLayoutBindings);
 
 		if (descriptorWrites.size() > 0) {
 			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
 	}
+
+	return gsDescriptor;
 }
 
-void PS2::GSTexImage::CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap) {
-	// Create descriptor pool based on the descriptor set count from the shader
-	Renderer::CreateDescriptorPool(descriptorSetLayoutBindingsMap, descriptorPool);
+const PS2::GSTexDescriptor& PS2::GSTexImage::GetDescriptorSets(const Renderer::Pipeline& pipeline)
+{
+	auto& gsDescriptor = descriptorMap[&pipeline];
+
+	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
+		return AddDescriptorSets(pipeline);
+	}
+
+	return gsDescriptor;
 }
 
 namespace PS2_Internal {
 	PS2::TextureCache gTextureCache;
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Create(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
+PS2::GSTexEntry& PS2::TextureCache::Create(const GIFReg::GSTex& TEX)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palettes[0x380].pImage);
-	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key, descriptorSetLayouts, descriptorSetLayoutBindings);
+	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palettes[TEX.CBP].pImage);
+	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key);
 	texcache.emplace_back(GSTexEntry(createInfo));
 	return texcache.back();
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Lookup(const Renderer::GSTex& TEX, const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindings)
+PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palettes[0x380].pImage);
+	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palettes[TEX.CBP].pImage);
+
 	for (auto& entry : texcache) {
 		if (entry == key) {
 			return entry;
 		}
 	}
 
-	return Create(TEX, descriptorSetLayouts, descriptorSetLayoutBindings);
+	return Create(TEX);
 }
 
 PS2::TextureCache& PS2::GetTextureCache()

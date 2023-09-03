@@ -9,6 +9,10 @@
 
 extern edF32MATRIX4 gF32Matrix4Zero;
 extern edF32MATRIX4 gF32Matrix4Unit;
+extern edF32VECTOR4 gF32Vertex4Zero;
+extern edF32VECTOR4 gF32Vector4Zero;
+
+void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 
 void edF32Vector4NormalizeHard(float* v0, float* v1);
 void sceVu0ApplyMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1);
@@ -34,7 +38,10 @@ uint GetGreaterPower2Val(uint value);
 
 float edF32ATan2Soft(float a, float b);
 void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder);
-
+edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* order);
+void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrder, float* rotationAngles);
+void edQuatShortestSLERPHard(float delta, edF32VECTOR4* outRotation, edF32VECTOR4* currentRotation, edF32VECTOR4* targetRotation);
+void edF32Vector3LERPSoft(float delta, edF32VECTOR4* outWorldLocation, edF32VECTOR4* currentLocation, edF32VECTOR4* targetLocation);
 void edF32Vector4AddHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 
 void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1);

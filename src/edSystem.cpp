@@ -54,18 +54,18 @@ void edSystemInit_Reset(void)
 #ifdef PLATFORM_WIN
 #pragma pack(push,1)
 struct VirtualMemory {
-	edHeapEntry g_heap_004a5780[0x1000];
+	S_MAIN_MEMORY_HEADER g_heap_004a5780[0x1000];
 	//char g_memory[0x1685100];
 	char g_memory[0x1F85100];
 };
 #pragma  pack(pop)
 
-edHeapEntry* g_HeapPtr_0040f370 = NULL;
+S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = NULL;
 #else
-edHeapEntry* g_HeapPtr_0040f370 = (edHeapEntry*)0x004a5780;
+S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = (S_MAIN_MEMORY_HEADER*)0x004a5780;
 #endif
 
-edHeapEntry* edmemGetMainHeader()
+S_MAIN_MEMORY_HEADER* edmemGetMainHeader()
 {
 	return g_HeapPtr_0040f370;
 }
@@ -80,7 +80,7 @@ bool _edSystemInit(int argc, char** argv)
 	g_NetIsSetup_004893d0 = 0;
 
 #ifdef PLATFORM_WIN
-	g_HeapPtr_0040f370 = (edHeapEntry*)_aligned_malloc(sizeof(VirtualMemory), 0x10);
+	g_HeapPtr_0040f370 = (S_MAIN_MEMORY_HEADER*)_aligned_malloc(sizeof(VirtualMemory), 0x10);
 	memset(g_HeapPtr_0040f370, 0x0, sizeof(VirtualMemory));
 #endif
 

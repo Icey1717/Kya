@@ -628,7 +628,7 @@ struct edCBankBufferEntry {
 	bool is_loaded();
 	bool close();
 	void wait();
-	int get_index(char* inFileName);
+	int get_index(const char* inFileName);
 	bool get_info(int inFileIndex, struct edBANK_ENTRY_INFO* outFileData, char* outIopPath);
 	int get_element_count();
 
@@ -709,7 +709,7 @@ uint edFileGetSize(edFILEH* param_1);
 FileHeaderFileData* get_entry(edCBankFileHeader* pFileHeader, int fileIndex);
 char* edCBankFileHeader_GetFileBufferStartFromFileIndex(edCBankFileHeader* pFileData, int fileIndex);
 char* edCBankFileHeader_GetIopPath_00246460(edCBankFileHeader* fileBuffer, int inIndex);
-int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, char* inFileName);
+int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, const char* inFileName);
 char* get_element(edCBankBufferEntry* bankObj, int fileIndex);
 
 void load(edCBankBufferEntry* pBankAccessObject);

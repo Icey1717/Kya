@@ -1366,7 +1366,7 @@ public:
 	}
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-		if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+		if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT && messageType > VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
 			std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 			Log::GetInstance().AddLog(LogLevel::Info, "Validation", pCallbackData->pMessage);
 		}
@@ -1471,6 +1471,7 @@ const VkExtent2D& GetSwapchainExtent()
 
 void SetObjectName(const char* name, const uint64_t objHandle, const VkObjectType objType)
 {
+#ifdef _DEBUG
 	// Set the debug name using vkSetDebugUtilsObjectNameEXT
 	VkDebugUtilsObjectNameInfoEXT objectNameInfo = {};
 	objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
@@ -1482,6 +1483,7 @@ void SetObjectName(const char* name, const uint64_t objHandle, const VkObjectTyp
 	assert(pvkSetDebugUtilsObjectNameEXT);
 	VkResult result = pvkSetDebugUtilsObjectNameEXT(GetDevice(), &objectNameInfo);
 	assert(result == VK_SUCCESS);
+#endif
 }
 
 GLFWwindow* GetGLFWWindow()

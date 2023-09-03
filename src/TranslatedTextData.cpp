@@ -112,7 +112,7 @@ LANGUAGE CMessageFile::get_default_language(void)
 	return sm_default_language;
 }
 
-void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, char* pFilePath, LANGUAGE languageID)
+void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* pFilePath, LANGUAGE languageID)
 {
 	bool bVar1;
 	CMessageFile* pTVar2;
@@ -256,7 +256,7 @@ char* edFileOpen(char* filePath, uint* outSize, uint flags)
 	return pReadBuffer;
 }
 
-void CMessageFile::select_language(char* filePath, LANGUAGE inLanguageID)
+void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 {
 	CMessageFile* pTVar1;
 	CMessageFile* pTVar2;

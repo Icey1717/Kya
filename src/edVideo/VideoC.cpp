@@ -196,7 +196,7 @@ void _VideoUpdateSystemViewport(edSurface* pColorBuffer)
 
 // End Not here
 
-int GetVideoMemoryAlign_002bb980(int param_1, int psm, int* pPageWidth, int* pPageHeight)
+int edSurfaceGetAlignments(int param_1, int psm, int* pPageWidth, int* pPageHeight)
 {
 	int iVar1;
 
@@ -231,7 +231,7 @@ int GetVideoMemoryAlign_002bb980(int param_1, int psm, int* pPageWidth, int* pPa
 	return iVar1;
 }
 
-uint GetTextureMemorySize_002bba40(uint pixels)
+uint edSurfaceGetGreaterPower2Val(uint pixels)
 {
 	uint uVar1;
 	uint uVar2;
@@ -255,7 +255,7 @@ uint GetTextureMemorySize_002bba40(uint pixels)
 
 bool edSurfaceAlloc(edSurface* pFrameBuffer)
 {
-	ushort uVar1;
+	ushort psm;
 	ed_surface_desc* pVVar2;
 	int align;
 	void* pvVar3;
@@ -268,19 +268,23 @@ bool edSurfaceAlloc(edSurface* pFrameBuffer)
 	pVVar2 = pFrameBuffer->pSurfaceDesc;
 	width = (uint)pVVar2->screenWidth;
 	height = (uint)pVVar2->screenHeight;
-	align = GetVideoMemoryAlign_002bb980(pVVar2->flags_0x8 & 0xf, (uint)pVVar2->pixelStoreMode, &iStack4, &iStack8);
+	align = edSurfaceGetAlignments(pVVar2->flags_0x8 & 0xf, (uint)pVVar2->pixelStoreMode, &iStack4, &iStack8);
+
 	if ((pFrameBuffer->pSurfaceDesc->flags_0x8 & 0x20) != 0) {
-		width = GetTextureMemorySize_002bba40(width);
-		height = GetTextureMemorySize_002bba40(height);
+		width = edSurfaceGetGreaterPower2Val(width);
+		height = edSurfaceGetGreaterPower2Val(height);
 	}
 	size = width * height * 2;
-	uVar1 = pFrameBuffer->pSurfaceDesc->pixelStoreMode;
-	if ((uVar1 == SCE_GS_PSMCT32) || (uVar1 == SCE_GS_PSMCT24)) {
+	psm = pFrameBuffer->pSurfaceDesc->pixelStoreMode;
+	if ((psm == SCE_GS_PSMCT32) || (psm == SCE_GS_PSMCT24)) {
 		size = width * height * 4;
 	}
+
+	MY_LOG("edSurfaceAlloc Allocating surface for %p width: %x height: %x align: %x psm: %x size: %x", pFrameBuffer, width, height, align, psm, size);
+
 	pvVar3 = edMemAllocAlign(TO_HEAP(H_VIDEO), size, align);
 	pFrameBuffer->data_0xc = (char*)pvVar3;
-	pvVar3 = edMemGetBlockAddress((void*)pFrameBuffer->data_0xc);
+	pvVar3 = edMemGetLocalAddress((void*)pFrameBuffer->data_0xc);
 	pFrameBuffer->frameBasePtr = (int)pvVar3 / align;
 	return pFrameBuffer->data_0xc != 0;
 }

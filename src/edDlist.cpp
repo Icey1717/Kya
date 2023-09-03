@@ -996,7 +996,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 #endif
 
 #ifdef PLATFORM_WIN
-				SendTextureCommandsFromPacked((pDVar6->pCommandBuffer + 1)->cmdA);
+				ProcessTextureCommands(pDVar6->pCommandBuffer, pMaterialInfo->pMAT->commandBufferTextureSize);
 #endif
 
 				pDVar6->type = LM_REF_1;
@@ -1171,24 +1171,24 @@ void edDListBegin2D(ulong count)
 		lVar4 = 1;
 	}
 	gCurStatePKT = pRVar1;
-	uint primCount = gBlendMode << 6 | count & 0xffffffff | lVar4 << 4;
+	uint primReg = gBlendMode << 6 | count & 0xffffffff | lVar4 << 4;
 	if (Mode_00449694 == 0) {
 		pRVar1->cmdA = SCE_GIF_SET_TAG(
 			0,							// NLOOP
 			SCE_GS_TRUE,				// EOP
 			SCE_GS_TRUE,				// PRE
-			primCount,					// PRIM
+			primReg,					// PRIM
 			SCE_GIF_PACKED,				// FLG
 			1							// NREG
 		);
 	}
 	else {
-		primCount = primCount | 8;
+		primReg = primReg | 8;
 		pRVar1->cmdA = SCE_GIF_SET_TAG(
 			0,							// NLOOP
 			SCE_GS_TRUE,				// EOP
 			SCE_GS_TRUE,				// PRE
-			primCount,					// PRIM
+			primReg,					// PRIM
 			SCE_GIF_PACKED,				// FLG
 			1							// NREG
 		);

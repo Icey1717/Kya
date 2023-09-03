@@ -42,7 +42,7 @@ void ConvertToSPIRV(const std::string& configName, const std::string& entryPoint
 	}
 
 	// For this demonstration, let's assume the conversion is successful
-	std::cout << "Converting HLSL to SPIR-V for config: " << configName << std::endl;
+	std::cout << "Converting HLSL to SPIR-V for config: " << configName << " and arguments: " << arguments<< std::endl;
 }
 
 void CreateDirectory(std::string name) {
@@ -77,18 +77,40 @@ int main() {
 	DeleteDirectory(shaderOutputDirectoryPS2);
 	CreateDirectory(shaderOutputDirectoryPS2);
 
-	ConvertToSPIRV("vs_6_0", "vs_main", "ps2.vs.spv", "");
+	for (int VS_TME : VS_TME_VALUES) {
+		for (int VS_FST : VS_FST_VALUES) {
+			std::stringstream configName;
+			configName << "VS_TME_" << VS_TME
+				<< "VS_FST_" << VS_FST;
+			std::string configDefinitions = "-DVS_TME=" + std::to_string(VS_TME)
+				+ " -DVS_FST=" + std::to_string(VS_FST);
+
+			// Compute the MD5 hash for the configuration
+			std::string shaderHash = GetMD5String(configName.str());
+
+			// Convert HLSL to SPIR-V for the current configuration
+			ConvertToSPIRV("vs_6_0", "vs_main", shaderHash + ".vs.spv", configDefinitions);
+		}
+	}
 
 	for (int PS_ATST : PS_ATST_VALUES) {
-		std::stringstream configName;
-		configName << "PS_ATST_" << PS_ATST;
-		std::string configDefinitions = "-DPS_ATST=" + std::to_string(PS_ATST);
+		for (int PS_FOG : PS_FOG_VALUES) {
+			for (int PS_TFX : PS_TFX_VALUES) {
+				std::stringstream configName;
+				configName << "PS_ATST_" << PS_ATST
+					<< "PS_FOG_" << PS_FOG
+					<< "PS_TFX_" << PS_TFX;
+				std::string configDefinitions = "-DPS_ATST=" + std::to_string(PS_ATST)
+					+ " -DPS_FOG=" + std::to_string(PS_FOG)
+					+ " -DPS_TFX=" + std::to_string(PS_TFX);
 
-		// Compute the MD5 hash for the configuration
-		std::string shaderHash = GetMD5String(configName.str());
+				// Compute the MD5 hash for the configuration
+				std::string shaderHash = GetMD5String(configName.str());
 
-		// Convert HLSL to SPIR-V for the current configuration
-		ConvertToSPIRV("ps_6_0", "ps_main", shaderHash + ".ps.spv", configDefinitions);
+				// Convert HLSL to SPIR-V for the current configuration
+				ConvertToSPIRV("ps_6_0", "ps_main", shaderHash + ".ps.spv", configDefinitions);
+			}
+		}
 	}
 
 	//ConvertToSPIRV("ps_6_0", "ps_main", "ps2.ps.spv", "");
@@ -99,11 +121,15 @@ int main() {
 			for (int GS_LINE : GS_LINE_VALUES) {
 				for (int GS_IIP : GS_IIP_VALUES) {
 					std::stringstream configName;
-					configName << "GS_PRIM_" << GS_PRIM << "_POINT_" << GS_POINT << "_LINE_" << GS_LINE << "_IIP_" << GS_IIP;
-					std::string configDefinitions = "-DGS_PRIM=" + std::to_string(GS_PRIM) +
-						" -DGS_POINT=" + std::to_string(GS_POINT) +
-						" -DGS_LINE=" + std::to_string(GS_LINE) +
-						" -DGS_IIP=" + std::to_string(GS_IIP);
+					configName << "GS_PRIM_" << GS_PRIM 
+						<< "_POINT_" << GS_POINT 
+						<< "_LINE_" << GS_LINE 
+						<< "_IIP_" << GS_IIP;
+
+					std::string configDefinitions = "-DGS_PRIM=" + std::to_string(GS_PRIM)
+						+ " -DGS_POINT=" + std::to_string(GS_POINT)
+						+ " -DGS_LINE=" + std::to_string(GS_LINE)
+						+ " -DGS_IIP=" + std::to_string(GS_IIP);
 
 					// Compute the MD5 hash for the configuration
 					std::string shaderHash = GetMD5String(configName.str());

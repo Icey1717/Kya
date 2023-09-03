@@ -4085,7 +4085,9 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 
 		// Send even if gbFirstTex is true.
 #ifdef PLATFORM_WIN
-		Renderer::SetImagePointer(MakeTextureDataFromPacket(gCurBitmap, pMaterial->pBitmap, gVRAMBufferFlush));
+		if (pMaterial->pBitmap) {
+			Renderer::SetImagePointer(MakeTextureDataFromPacket(gCurBitmap, pMaterial->pBitmap, gVRAMBufferFlush));
+		}
 #endif
 
 		bVar1 = gVRAMBufferFlush == 1;
@@ -4144,10 +4146,49 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 
 		if (bBeganGIFTag) {
 			switch (pkt.asU32[2]) {
-			case 0x6:
+			case SCE_GS_TEX0_1:
 			{
 				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX0: %llx (%llx)", pkt.cmdA, pkt.cmdB);
 				SendTextureCommandsFromPacked(pkt.cmdA);
+			}
+			break;
+			case SCE_GS_ALPHA_1:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands ALPHA: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				GIFReg::GSAlpha alpha = *reinterpret_cast<GIFReg::GSAlpha*>(&pkt.cmdA);
+				Renderer::SetAlpha(alpha.A, alpha.B, alpha.C, alpha.D, alpha.FIX);
+			}
+			break;
+			case SCE_GS_TEST_1:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEST: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				const GIFReg::GSTest test = *reinterpret_cast<GIFReg::GSTest*>(&pkt.cmdA);
+				Renderer::SetTest(test);
+			}
+			break;
+			case SCE_GS_TEX1_1:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX1: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				
+			}
+			break;
+			case SCE_GS_MIPTBP1_1:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP1: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				
+			}
+			break;
+			case SCE_GS_MIPTBP2_1:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP2: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				
+			}
+			break;
+			case SCE_GS_CLAMP_1:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands CLAMP: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				const GIFReg::GSClamp clamp = *reinterpret_cast<GIFReg::GSClamp*>(&pkt.cmdA);
+				Renderer::SetClamp(clamp);
 			}
 			break;
 			}
@@ -9309,53 +9350,6 @@ void ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMesh
 	return;
 }
 
-void RotationVectorToMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float x;
-	float y;
-	float z;
-	float w;
-
-	x = v0->x;
-	y = v0->y;
-	z = v0->z;
-	w = v0->w;
-	fVar1 = (y + 0.0) * (y + 0.0) + (z + 0.0) * (z + 0.0);
-	fVar7 = (x + 0.0) * (z + 0.0) + (w + 0.0) * (y + 0.0);
-	fVar3 = (x + 0.0) * (y + 0.0) - (w + 0.0) * (z + 0.0);
-	fVar2 = (x + 0.0) * (y + 0.0) + (w + 0.0) * (z + 0.0);
-	fVar5 = (x + 0.0) * (x + 0.0) + (z + 0.0) * (z + 0.0);
-	fVar6 = (y + 0.0) * (z + 0.0) - (w + 0.0) * (x + 0.0);
-	fVar4 = (y + 0.0) * (z + 0.0) + (w + 0.0) * (x + 0.0);
-	fVar8 = (x + 0.0) * (x + 0.0) + (y + 0.0) * (y + 0.0);
-	x = (x + 0.0) * (z + 0.0) - (w + 0.0) * (y + 0.0);
-	m0->aa = (0.0 - (fVar1 + fVar1)) + 1.0;
-	m0->ab = fVar3 + fVar3;
-	m0->ac = fVar7 + fVar7;
-	m0->ad = 0.0;
-	m0->ba = fVar2 + fVar2;
-	m0->bb = (0.0 - (fVar5 + fVar5)) + 1.0;
-	m0->bc = fVar6 + fVar6;
-	m0->bd = 0.0;
-	m0->ca = x + x;
-	m0->cb = fVar4 + fVar4;
-	m0->cc = (0.0 - (fVar8 + fVar8)) + 1.0;
-	m0->cd = 0.0;
-	m0->da = 1.0;
-	m0->db = 0.0;
-	m0->dc = 0.0;
-	m0->dd = 0.0;
-	return;
-}
-
 uint HierarchyAnm::UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, int* pFileData, int param_5)
 {
 	int iVar1;
@@ -9413,7 +9407,7 @@ uint HierarchyAnm::UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, in
 	else {
 		pfVar7 = pfVar4;
 		if (iVar2 == 1) {
-			RotationVectorToMatrix(pVVar10, &param_3->base.transformA);
+			edQuatToMatrix4Hard(pVVar10, &param_3->base.transformA);
 		}
 		else {
 			for (; *pfVar7 <= fVar14; pfVar7 = pfVar7 + 1) {
@@ -9430,7 +9424,7 @@ uint HierarchyAnm::UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, in
 			}
 			IMPLEMENTATION_GUARD(
 				InterpolateRotation(local_8, &VStack32, pVVar10 + local_10, pVVar10 + local_c);
-			RotationVectorToMatrix(&VStack32, &param_3->base.transformA);)
+			edQuatToMatrix4Hard(&VStack32, &param_3->base.transformA);)
 		}
 	}
 	if (iVar1 != 0) {

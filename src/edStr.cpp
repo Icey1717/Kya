@@ -50,7 +50,7 @@ void edStrCatMulti(char* dst, char* src, ...)
 	va_end(args);
 }
 
-int edStrCopy(char* outString, char* inString)
+int edStrCopy(char* outString, const char* inString)
 {
 	int len;
 	char currentCharacter;

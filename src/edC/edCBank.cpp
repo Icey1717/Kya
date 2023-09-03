@@ -73,69 +73,71 @@ void edCBankDebug::buffer_link(edCBankBuffer* bankAllocateAddress)
 	return;
 }
 
-edFILEH* edFileOpen(char* filePath, uint flags)
+edFILEH* edFileOpen(char* szFilePath, uint flags)
 {
-	bool bVar1;
+	bool bOpenSuccess;
 	edCFiler* pFiler;
-	edFILEH* pDVar2;
-	byte* pbVar3;
-	int iVar4;
+	edFILEH* pFile;
+	int bankIndex;
 	edFILEH* pDebugBank;
-	char outCdPath[512];
+	char szFilerPath[512];
 
-	MY_LOG("edFileOpen %s\n", filePath);
+	MY_LOG("edFileOpen %s\n", szFilePath);
 
-	pFiler = edFileGetFiler(outCdPath, filePath, 0);
+	pFiler = edFileGetFiler(szFilerPath, szFilePath, 0);
+
+	MY_LOG("edFileOpen Filer Path %s\n", szFilerPath);
+
 	if (pFiler == (edCFiler*)0x0) {
-		pDVar2 = (edFILEH*)0x0;
+		pFile = (edFILEH*)0x0;
 	}
 	else {
 		if (((flags & 8) != 0) && (((pFiler->baseData).field_0x4 & 0x20U) == 0)) {
 			flags = flags & 0xfffffff7;
 		}
-		if ((((flags & 2) == 0) || (pDVar2 = (edFILEH*)0x0, ((pFiler->baseData).field_0x4 & 2U) != 0)) &&
-			(((flags & 4) == 0 || (pDVar2 = (edFILEH*)0x0, ((pFiler->baseData).field_0x4 & 4U) != 0)))) {
+		if ((((flags & 2) == 0) || (pFile = (edFILEH*)0x0, ((pFiler->baseData).field_0x4 & 2U) != 0)) &&
+			(((flags & 4) == 0 || (pFile = (edFILEH*)0x0, ((pFiler->baseData).field_0x4 & 4U) != 0)))) {
 			if (((flags & 8) == 0) || (((pFiler->baseData).field_0x4 & 0x80U) != 0)) {
 				edFileGetFiler(pFiler);
 			}
-			iVar4 = 0;
+			bankIndex = 0;
 			do {
-				if (g_DebugBankLoadFlag_00469be0[iVar4] == 0) {
-					g_DebugBankLoadFlag_00469be0[iVar4] = 1;
-					pDebugBank = &g_DebugBankDataArray_00469bf0[iVar4];
+				if (g_DebugBankLoadFlag_00469be0[bankIndex] == 0) {
+					g_DebugBankLoadFlag_00469be0[bankIndex] = 1;
+					pDebugBank = &g_DebugBankDataArray_00469bf0[bankIndex];
 					memset(pDebugBank, 0, sizeof(edFILEH));
 					goto LAB_0025c168;
 				}
-				iVar4 = iVar4 + 1;
-			} while (iVar4 < 0x10);
+				bankIndex = bankIndex + 1;
+			} while (bankIndex < 0x10);
 			pDebugBank = (edFILEH*)0x0;
 		LAB_0025c168:
-			pDVar2 = (edFILEH*)0x0;
+			pFile = (edFILEH*)0x0;
 			if (pDebugBank != (edFILEH*)0x0) {
 				pDebugBank->pOwningFiler = pFiler;
 				pDebugBank->openFlags = flags;
 				/* May call edCFiler_CDVD_open */
-				bVar1 = pFiler->open(pDebugBank, outCdPath);
-				if (bVar1 == false) {
-					iVar4 = 0;
+				bOpenSuccess = pFiler->open(pDebugBank, szFilerPath);
+				if (bOpenSuccess == false) {
+					bankIndex = 0;
 					do {
-						if (&g_DebugBankDataArray_00469bf0[iVar4] == pDebugBank) {
-							g_DebugBankLoadFlag_00469be0[iVar4] = 0;
-							memset(&g_DebugBankDataArray_00469bf0[iVar4], 0, sizeof(edFILEH));
+						if (&g_DebugBankDataArray_00469bf0[bankIndex] == pDebugBank) {
+							g_DebugBankLoadFlag_00469be0[bankIndex] = 0;
+							memset(&g_DebugBankDataArray_00469bf0[bankIndex], 0, sizeof(edFILEH));
 							break;
 						}
-						iVar4 = iVar4 + 1;
-					} while (iVar4 < 0x10);
-					pDVar2 = (edFILEH*)0x0;
+						bankIndex = bankIndex + 1;
+					} while (bankIndex < 0x10);
+					pFile = (edFILEH*)0x0;
 				}
 				else {
 					pDebugBank->bInUse = 1;
-					pDVar2 = pDebugBank;
+					pFile = pDebugBank;
 				}
 			}
 		}
 	}
-	return pDVar2;
+	return pFile;
 }
 
 uint GetFileSize_0025bd70(edFILEH* pDebugBank)

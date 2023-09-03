@@ -89,7 +89,9 @@ char* edFilePathGetFilePath(char* inString)
 #if defined(PLATFORM_WIN)
 char* FormatForPC(char* inString)
 {
+	printf("%s\n", inString);
 	size_t len = strlen(inString);
+	printf("%d\n", len);
 	// remove the first character from the string
 	memmove(inString, inString + 1, len - 1);
 	// remove the last three characters from the string
@@ -191,6 +193,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 					edDebugPrintf(sz_FileNotFound_00431280);
 				}
 #else
+				printf("%s\n", fullFilePath);
 				pcVar6 = edFilePathGetFilePath(fullFilePath);
 
 				char* pcFileFull = FormatForPC(pcVar6);

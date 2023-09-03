@@ -81,7 +81,7 @@ namespace DebugCamera {
 	}
 
 	void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
-		auto pCameraManager = CameraManager::_gThis->pShadowSunView_0x4b8;
+		auto pCameraManager = CameraManager::_gThis->pActiveCamera;
 		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;
 		edF32VECTOR4& cameraPosition = pCameraManager->transformationMatrix.rowT;
 		edF32MATRIX4& cameraDirection = pCameraManager->transformationMatrix;
@@ -141,7 +141,7 @@ namespace DebugCamera {
 	}
 
 	void UpdateCameraPosition(float deltaTime) {
-		auto pCameraManager = CameraManager::_gThis->pShadowSunView_0x4b8;
+		auto pCameraManager = CameraManager::_gThis->pActiveCamera;
 		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;
 		edF32VECTOR4& cameraPosition = pCameraManager->transformationMatrix.rowT;
 		edF32MATRIX4& cameraDirection = pCameraManager->transformationMatrix;
@@ -220,7 +220,7 @@ void DebugCamera::ShowCamera()
 	// Get the display size
 	ImGui::Begin("Camera", nullptr);
 
-	auto pCameraManager = CameraManager::_gThis->pShadowSunView_0x4b8;
+	auto pCameraManager = CameraManager::_gThis->pActiveCamera;
 	ImGui::Text("Position");
 	EditEdF32Vector4(pCameraManager->transformationMatrix.rowT);
 	ImGui::Text("LookAt");
@@ -229,13 +229,13 @@ void DebugCamera::ShowCamera()
 	if (ImGui::Button("Save Matrix")) {
 		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
 		// Replace 'viewMatrix' below with your actual matrix variable.
-		SaveMatrixToFile(CameraManager::_gThis->pShadowSunView_0x4b8->transformationMatrix);
+		SaveMatrixToFile(CameraManager::_gThis->pActiveCamera->transformationMatrix);
 	}
 
 	if (ImGui::Button("Load Matrix")) {
 		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
 		// Replace 'viewMatrix' below with your actual matrix variable.
-		LoadMatrixFromFile(CameraManager::_gThis->pShadowSunView_0x4b8->transformationMatrix);
+		LoadMatrixFromFile(CameraManager::_gThis->pActiveCamera->transformationMatrix);
 	}
 
 	if (ImGui::Button("Copy Matrix")) {

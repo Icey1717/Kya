@@ -6,10 +6,59 @@
 
 edF32MATRIX4 gF32Matrix4Zero = { };
 edF32MATRIX4 gF32Matrix4Unit = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+edF32VECTOR4 gF32Vertex4Zero = { 0.0f, 0.0f, 0.0f, 1.0f };
+edF32VECTOR4 gF32Vector4Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 #define M_PI_2f 1.5707963f
 #define M_PIf 3.14159265f
 #define M_2PIf 6.283185f
+
+void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float x;
+	float y;
+	float z;
+	float w;
+
+	x = v0->x;
+	y = v0->y;
+	z = v0->z;
+	w = v0->w;
+	fVar1 = (y + 0.0f) * (y + 0.0f) + (z + 0.0f) * (z + 0.0f);
+	fVar7 = (x + 0.0f) * (z + 0.0f) + (w + 0.0f) * (y + 0.0f);
+	fVar3 = (x + 0.0f) * (y + 0.0f) - (w + 0.0f) * (z + 0.0f);
+	fVar2 = (x + 0.0f) * (y + 0.0f) + (w + 0.0f) * (z + 0.0f);
+	fVar5 = (x + 0.0f) * (x + 0.0f) + (z + 0.0f) * (z + 0.0f);
+	fVar6 = (y + 0.0f) * (z + 0.0f) - (w + 0.0f) * (x + 0.0f);
+	fVar4 = (y + 0.0f) * (z + 0.0f) + (w + 0.0f) * (x + 0.0f);
+	fVar8 = (x + 0.0f) * (x + 0.0f) + (y + 0.0f) * (y + 0.0f);
+	x = (x + 0.0f) * (z + 0.0f) - (w + 0.0f) * (y + 0.0f);
+	m0->aa = (0.0f - (fVar1 + fVar1)) + 1.0f;
+	m0->ab = fVar3 + fVar3;
+	m0->ac = fVar7 + fVar7;
+	m0->ad = 0.0f;
+	m0->ba = fVar2 + fVar2;
+	m0->bb = (0.0f - (fVar5 + fVar5)) + 1.0f;
+	m0->bc = fVar6 + fVar6;
+	m0->bd = 0.0f;
+	m0->ca = x + x;
+	m0->cb = fVar4 + fVar4;
+	m0->cc = (0.0f - (fVar8 + fVar8)) + 1.0f;
+	m0->cd = 0.0f;
+	m0->da = 1.0f;
+	m0->db = 0.0f;
+	m0->dc = 0.0f;
+	m0->dd = 0.0f;
+	return;
+}
 
 void edF32Vector4NormalizeHard(float* v0, float* v1)
 {
@@ -573,6 +622,207 @@ void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationO
 	((edF32VECTOR3*)((ulong)v0 + iVar4 * 4))->x = fVar7;
 	((edF32VECTOR3*)((ulong)v0 + iVar3 * 4))->x = fVar5;
 	((edF32VECTOR3*)((ulong)v0 + iVar2 * 4))->x = fVar6;
+	return;
+}
+
+edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* order)
+{
+	edF32VECTOR4* puVar2;
+	edF32VECTOR4* puVar3;
+	float* pfVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 local_20;
+	int local_10;
+	int local_c;
+	int local_8;
+	edF32VECTOR4* puVar1;
+	char xChar;
+	char yChar;
+	char zChar;
+
+	puVar2 = (edF32VECTOR4*)0xc;
+	xChar = *order;
+	yChar = order[1];
+	zChar = order[2];
+	puVar3 = &local_20;
+	local_10 = xChar + -0x58;
+	local_c = yChar + -0x58;
+	local_8 = zChar + -0x58;
+	puVar1 = puVar3;
+	while (puVar1 != (edF32VECTOR4*)0x0) {
+		*(undefined*)&puVar3->x = 0;
+		puVar3 = (edF32VECTOR4*)((ulong)&puVar3->x + 1);
+		puVar2 = (edF32VECTOR4*)((ulong)&puVar2[-1].w + 3);
+		puVar1 = puVar2;
+	}
+	fVar5 = ((edF32VECTOR3*)((ulong)v0 + (xChar + -0x58) * 4))->x;
+	fVar6 = ((edF32VECTOR3*)((ulong)v0 + (yChar + -0x58) * 4))->x;
+	fVar7 = ((edF32VECTOR3*)((ulong)v0 + (zChar + -0x58) * 4))->x;
+	pfVar4 = &m0->aa + local_10 * 4;
+	fVar8 = sinf(fVar5);
+	fVar10 = cosf(fVar5);
+	fVar11 = sinf(fVar6);
+	fVar9 = cosf(fVar6);
+	fVar5 = sinf(fVar7);
+	fVar6 = cosf(fVar7);
+	pfVar4[local_10] = fVar11 * fVar5;
+	pfVar4[local_c] = fVar11 * fVar6;
+	pfVar4[local_8] = -fVar9;
+	pfVar4[3] = 0.0;
+	pfVar4 = &m0->aa + local_c * 4;
+	pfVar4[local_10] = fVar9 * fVar10 * fVar5 - fVar8 * fVar6;
+	pfVar4[local_c] = fVar8 * fVar5 + fVar10 * fVar6 * fVar9;
+	pfVar4[local_8] = fVar11 * fVar10;
+	pfVar4[3] = 0.0;
+	pfVar4 = &m0->aa + local_8 * 4;
+	pfVar4[local_10] = fVar10 * fVar6 + fVar9 * fVar8 * fVar5;
+	pfVar4[local_c] = fVar9 * fVar8 * fVar6 - fVar10 * fVar5;
+	pfVar4[local_8] = fVar8 * fVar11;
+	pfVar4[3] = 0.0;
+	fVar7 = gF32Vertex4Zero.w;
+	fVar6 = gF32Vertex4Zero.z;
+	fVar5 = gF32Vertex4Zero.y;
+	m0->da = gF32Vertex4Zero.x;
+	m0->db = fVar5;
+	m0->dc = fVar6;
+	m0->dd = fVar7;
+	return m0;
+}
+
+void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrder, float* rotationAngles)
+{
+	char cVar1;
+	char cVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	float* pfVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+
+	iVar3 = *rotationOrder + -0x58;
+	cVar1 = rotationOrder[1];
+	iVar4 = cVar1 + -0x58;
+	cVar2 = rotationOrder[2];
+	iVar5 = cVar2 + -0x58;
+	pfVar6 = &rotatedMatrix[-0x16].aa + *rotationOrder * 4;
+	fVar7 = sinf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(ABS(*rotationAngles * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar11 = cosf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(ABS((*rotationAngles - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar12 = sinf(rotationAngles[1]); //g_FloatSineCurve_00472260[(int)(ABS(rotationAngles[1] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar10 = cosf(rotationAngles[1]); //g_FloatSineCurve_00472260 [(int)(ABS((rotationAngles[1] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar8 = sinf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(ABS(rotationAngles[2] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar9 = cosf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(ABS((rotationAngles[2] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	pfVar6[iVar3] = fVar12 * fVar8;
+	pfVar6[iVar4] = fVar12 * fVar9;
+	pfVar6[iVar5] = -fVar10;
+	pfVar6[3] = 0.0;
+	pfVar6 = &rotatedMatrix[-0x16].aa + cVar1 * 4;
+	pfVar6[iVar3] = fVar10 * fVar11 * fVar8 - fVar7 * fVar9;
+	pfVar6[iVar4] = fVar7 * fVar8 + fVar11 * fVar9 * fVar10;
+	pfVar6[iVar5] = fVar12 * fVar11;
+	pfVar6[3] = 0.0;
+	pfVar6 = &rotatedMatrix[-0x16].aa + cVar2 * 4;
+	pfVar6[iVar3] = fVar11 * fVar9 + fVar10 * fVar7 * fVar8;
+	pfVar6[iVar4] = fVar10 * fVar7 * fVar9 - fVar11 * fVar8;
+	pfVar6[iVar5] = fVar7 * fVar12;
+	pfVar6[3] = 0.0;
+	fVar9 = gF32Vertex4Zero.w;
+	fVar8 = gF32Vertex4Zero.z;
+	fVar7 = gF32Vertex4Zero.y;
+	rotatedMatrix->da = gF32Vertex4Zero.x;
+	rotatedMatrix->db = fVar7;
+	rotatedMatrix->dc = fVar8;
+	rotatedMatrix->dd = fVar9;
+	return;
+}
+
+void edQuatShortestSLERPHard(float delta, edF32VECTOR4* outRotation, edF32VECTOR4* currentRotation, edF32VECTOR4* targetRotation)
+{
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+
+	fVar5 = currentRotation->x * targetRotation->x + currentRotation->y * targetRotation->y +
+		currentRotation->z * targetRotation->z + currentRotation->w * targetRotation->w;
+	bVar1 = fVar5 < 0.0f;
+	if (bVar1) {
+		fVar5 = -fVar5;
+	}
+	if (0.99999f < fVar5) {
+		fVar2 = targetRotation->y;
+		fVar5 = targetRotation->z;
+		fVar3 = targetRotation->w;
+		outRotation->x = targetRotation->x;
+		outRotation->y = fVar2;
+		outRotation->z = fVar5;
+		outRotation->w = fVar3;
+	}
+	else {
+		fVar3 = (((1.570729f - fVar5 * 0.2121144f) + fVar5 * fVar5 * 0.074261f) - fVar5 * fVar5 * fVar5 * 0.0187293f) * sqrtf(1.0f - fVar5);
+		fVar2 = 1.0f / sqrtf(1.0f - fVar5 * fVar5);
+		fVar4 = delta * fVar3;
+		fVar3 = fVar3 - fVar4;
+		fVar7 = fVar3 * fVar3;
+		fVar5 = fVar7 * fVar3 * fVar7;
+		fVar6 = fVar5 * fVar7;
+		fVar5 = fVar2 * (fVar6 * fVar7 * 2.601887e-06f +
+			fVar6 * -0.0001980741f + fVar5 * 0.008333026f + fVar7 * fVar3 * -0.1666666f + fVar3 * 1.0f);
+		fVar7 = fVar4 * fVar4;
+		fVar3 = fVar7 * fVar4 * fVar7;
+		fVar6 = fVar3 * fVar7;
+		fVar2 = fVar2 * (fVar6 * fVar7 * 2.601887e-06f +
+			fVar6 * -0.0001980741f + fVar3 * 0.008333026f + fVar7 * fVar4 * -0.1666666f + fVar4 * 1.0f);
+		if (bVar1) {
+			fVar2 = -fVar2;
+		}
+		fVar3 = currentRotation->y;
+		fVar4 = currentRotation->z;
+		fVar6 = currentRotation->w;
+		fVar7 = targetRotation->y;
+		fVar8 = targetRotation->z;
+		fVar9 = targetRotation->w;
+		outRotation->x = currentRotation->x * fVar5 + targetRotation->x * fVar2;
+		outRotation->y = fVar3 * fVar5 + fVar7 * fVar2;
+		outRotation->z = fVar4 * fVar5 + fVar8 * fVar2;
+		outRotation->w = fVar6 * fVar5 + fVar9 * fVar2;
+	}
+	return;
+}
+
+void edF32Vector3LERPSoft(float delta, edF32VECTOR4* outWorldLocation, edF32VECTOR4* currentLocation, edF32VECTOR4* targetLocation)
+{
+	float remainingKeyframePlayTime;
+
+	if (currentLocation == targetLocation) {
+		/* If the keyframes are the same, just get the first keyframe and set our location from that */
+		outWorldLocation->x = currentLocation->x;
+		outWorldLocation->y = currentLocation->y;
+		outWorldLocation->z = currentLocation->z;
+	}
+	else {
+		/* If the keyframes are different, find somewhere midway through based on current keyframe play
+		   time */
+		remainingKeyframePlayTime = 1.0 - delta;
+		outWorldLocation->x = targetLocation->x * delta + currentLocation->x * remainingKeyframePlayTime;
+		outWorldLocation->y = targetLocation->y * delta + currentLocation->y * remainingKeyframePlayTime;
+		outWorldLocation->z = targetLocation->z * delta + currentLocation->z * remainingKeyframePlayTime;
+	}
 	return;
 }
 

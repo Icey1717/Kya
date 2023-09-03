@@ -106,7 +106,7 @@ public:
 
 			msgQueue.push_back({ message, level });
 			
-			//printf("%s\n", message.c_str());
+			printf("%s\n", message.c_str());
 
 			if (msgQueue.size() > maxBufferSize) {
 				msgQueue.pop_front(); // Remove the oldest log message if the buffer exceeds the maximum size

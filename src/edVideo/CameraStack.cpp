@@ -67,17 +67,17 @@ bool CCameraStack::FindCameraState()
 		bVar1 = false;
 	}
 	else {
-		this->field_0x20c = (int)this->pActiveCamera;
+		this->field_0x20c = this->pActiveCamera;
 		this->pActiveCamera = pCVar3;
-		uVar2 = this->field_0x20c;
-		if ((*(float*)(uVar2 + 0x8c) != 0.0) && (0.0 < this->field_0x200)) {
+		pCVar3 = this->field_0x20c;
+		if ((pCVar3->field_0x8c != 0.0) && (0.0 < this->field_0x200)) {
 			iVar5 = this->stackSize;
 			pCVar4 = this->aCameras + iVar5;
-			for (; ((&pCVar4->field_0x0)[1] != uVar2 && (0 < iVar5)); iVar5 = iVar5 + -1) {
+			for (; ((Camera*)(&pCVar4->field_0x0)[1] != pCVar3 && (0 < iVar5)); iVar5 = iVar5 + -1) {
 				pCVar4 = pCVar4 + -1;
 			}
 			if (0 < iVar5) {
-				*(uint*)(uVar2 + 0xc) = *(uint*)(uVar2 + 0xc) & 0xffdfffff;
+				pCVar3->flags_0xc = pCVar3->flags_0xc & 0xffdfffff;
 				if (iVar5 < this->stackSize) {
 					pCVar4 = this->aCameras + iVar5;
 					do {
@@ -205,7 +205,7 @@ bool CCameraStack::Pop(Camera* pCamera)
 	return uVar2;
 }
 
-bool CCameraStack::Push(Camera* pCamera, long param_3)
+bool CCameraStack::Push(Camera* pCamera, int param_3)
 {
 	int iVar1;
 	bool uVar1;

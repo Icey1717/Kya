@@ -14,8 +14,8 @@ public:
 
 	static LANGUAGE sm_default_language;
 
-	void select_language(struct edCBankBufferEntry* pBankAccess, char* pFilePath, LANGUAGE languageID);
-	void select_language(char* filePath, LANGUAGE languageID);
+	void select_language(struct edCBankBufferEntry* pBankAccess, const char* pFilePath, LANGUAGE languageID);
+	void select_language(const char* filePath, LANGUAGE languageID);
 	void prepare_buffer();
 
 	char* get_message(ulong key, long mode);
