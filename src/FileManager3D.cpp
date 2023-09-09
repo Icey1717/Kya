@@ -141,7 +141,7 @@ void FileManager3D::Level_ClearInternalData()
 	return;
 }
 
-void FileManager3D::AllocateMeshTextureMemory_001a6f10(ByteCode* pMemoryStream)
+void FileManager3D::Level_Create(ByteCode* pMemoryStream)
 {
 	int iVar1;
 	Mesh* pMVar2;

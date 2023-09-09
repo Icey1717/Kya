@@ -207,7 +207,7 @@ Scene::Scene()
 	PauseManager* pPVar2;
 	//MapManager* pMVar3;
 	CameraManager* pCameraViewmanager;
-	SectorManager* pSectorManager;
+	CSectorManager* pSectorManager;
 	//LightManager* pLightManager;
 	FileManager3D* p3DFileManager;
 	//Manager_100* pMVar4;
@@ -298,7 +298,7 @@ Scene::Scene()
 	Scene::ptable.g_MapManager_0045168c = new MapManager;
 	pCameraViewmanager = new CameraManager;
 	Scene::ptable.g_CameraManager_0045167c = pCameraViewmanager;
-	pSectorManager = new SectorManager;
+	pSectorManager = new CSectorManager;
 	Scene::ptable.g_SectorManager_00451670 = pSectorManager;
 	//pLightManager = (LightManager*)Allocate(0x120);
 	//if (pLightManager != (LightManager*)0x0) {

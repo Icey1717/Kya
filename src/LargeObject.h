@@ -36,7 +36,7 @@ struct ManagerContainer {
 	struct FileManager3D * g_FileManager3D_00451664;
 	struct AnimManager* g_AnimManager_00451668;
 	char* g_CinematicManager_0045166c;
-	struct SectorManager* g_SectorManager_00451670;
+	struct CSectorManager* g_SectorManager_00451670;
 	struct Manager_170* g_Manager170_00451674;
 	struct LocalizationManager* g_LocalizationManager_00451678;
 	struct CameraManager* g_CameraManager_0045167c;

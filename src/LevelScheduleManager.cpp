@@ -311,27 +311,27 @@ void LevelScheduleManager::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo
 		pLVar3->pFileData = (undefined*)0x0;
 		pLVar3->flags = 0;
 		iVar2 = iVar2 + 6;
-		pLVar3->pWindSectorObj = (WindSectorObj*)0x0;
+		pLVar3->pWindSectorObj = (CSectorHierarchy*)0x0;
 		pLVar3->field_0xc = 0;
 		pLVar3[1].pFileData = (undefined*)0x0;
 		pLVar3[1].flags = 0;
-		pLVar3[1].pWindSectorObj = (WindSectorObj*)0x0;
+		pLVar3[1].pWindSectorObj = (CSectorHierarchy*)0x0;
 		pLVar3[1].field_0xc = 0;
 		pLVar3[2].pFileData = (undefined*)0x0;
 		pLVar3[2].flags = 0;
-		pLVar3[2].pWindSectorObj = (WindSectorObj*)0x0;
+		pLVar3[2].pWindSectorObj = (CSectorHierarchy*)0x0;
 		pLVar3[2].field_0xc = 0;
 		pLVar3[3].pFileData = (undefined*)0x0;
 		pLVar3[3].flags = 0;
-		pLVar3[3].pWindSectorObj = (WindSectorObj*)0x0;
+		pLVar3[3].pWindSectorObj = (CSectorHierarchy*)0x0;
 		pLVar3[3].field_0xc = 0;
 		pLVar3[4].pFileData = (undefined*)0x0;
 		pLVar3[4].flags = 0;
-		pLVar3[4].pWindSectorObj = (WindSectorObj*)0x0;
+		pLVar3[4].pWindSectorObj = (CSectorHierarchy*)0x0;
 		pLVar3[4].field_0xc = 0;
 		pLVar3[5].pFileData = (undefined*)0x0;
 		pLVar3[5].flags = 0;
-		pLVar3[5].pWindSectorObj = (WindSectorObj*)0x0;
+		pLVar3[5].pWindSectorObj = (CSectorHierarchy*)0x0;
 		pLVar3[5].field_0xc = 0;
 		pLVar3 = pLVar3 + 6;
 	} while (iVar2 < 0x1e);
@@ -399,7 +399,7 @@ uint* LevelScheduleManager::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int 
 						iVar4 = local_4.GetNumSimpleConds();
 						if (iVar4 != 0) {
 							uVar12 = uVar12 + 1;
-							pcVar8->pWindSectorObj = (WindSectorObj*)((int)pcVar8->pWindSectorObj + 1);
+							pcVar8->pWindSectorObj = (CSectorHierarchy*)((int)pcVar8->pWindSectorObj + 1);
 							iVar4 = local_4.GetDataSize();
 							iVar13 = iVar13 + iVar4;
 						}
@@ -877,32 +877,32 @@ void BnkInstallScene(char* pFileData, int size)
 	return;
 }
 
-void OnManagerDataLoaded_001b86b0(char* pFileData, int size)
+void BnkInstallSceneCfg(char* pFileData, int size)
 {
-	Scene* pLVar1;
+	Scene* pScene;
 	uint uVar2;
 	float fVar3;
-	ByteCode MStack16;
-	MStack16.Init(pFileData);
-	MStack16.GetChunk();
-	pLVar1 = Scene::_pinstance;
-	fVar3 = MStack16.GetF32();
-	pLVar1->field_0x1c = fVar3;
-	uVar2 = MStack16.GetU32();
-	pLVar1->field_0x20 = uVar2;
-	fVar3 = MStack16.GetF32();
-	pLVar1->field_0x24 = fVar3;
-	MStack16.GetU32();
-	MStack16.GetU32();
-	Scene::ptable.g_FileManager3D_00451664->AllocateMeshTextureMemory_001a6f10(&MStack16);
-	//Manager_100::AllocateMemoryFunc_00211b50(Scene::ptable.g_CollisionManager_00451690, &MStack16);
-	//AnimManager::AllocateAnimKeyPtrArray_0017f5a0(Scene::ptable.g_AnimManager_00451668, &MStack16);
-	MStack16.GetU32();
-	MStack16.GetU32();
-	//SectorManager::TypePairFunc_001ff260(Scene::ptable.g_SectorManager_00451670, &MStack16);
-	//ActorManager::AllocateActorMemory_00107a70(Scene::ptable.g_ActorManager_004516a4, &MStack16);
-	//Manager_100::SetupFunc_002119c0(Scene::ptable.g_CollisionManager_00451690);
-	//FUN_0032d010(&MStack16);
+	ByteCode byteCode;
+	byteCode.Init(pFileData);
+	byteCode.GetChunk();
+	pScene = Scene::_pinstance;
+	fVar3 = byteCode.GetF32();
+	pScene->field_0x1c = fVar3;
+	uVar2 = byteCode.GetU32();
+	pScene->field_0x20 = uVar2;
+	fVar3 = byteCode.GetF32();
+	pScene->field_0x24 = fVar3;
+	byteCode.GetU32();
+	byteCode.GetU32();
+	Scene::ptable.g_FileManager3D_00451664->Level_Create(&byteCode);
+	//CCollisionManager::Level_Create(Scene::ptable.g_CollisionManager_00451690, &MStack16);
+	//CAnimManager::Level_Create(Scene::ptable.g_AnimManager_00451668, &MStack16);
+	byteCode.GetU32();
+	byteCode.GetU32();
+	Scene::ptable.g_SectorManager_00451670->Level_Create(&byteCode);
+	//CActorManager::Level_LoadClassesInfo(Scene::ptable.g_ActorManager_004516a4, &MStack16);
+	//CCollisionManager::Level_PostCreate(Scene::ptable.g_CollisionManager_00451690);
+	//CFxParticleManager::Level_Create(&BStack16);
 	//ByteCodeDestructor(&MStack16, -1);
 	return;
 }
@@ -1044,7 +1044,7 @@ TypePairData TableBankCallback[24] = {
 	{ 0x03, 6, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
 	{ 0x03, 7, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
 	{ 0x06, 1, { BnkInstallScene, 0, 0, 0, 0, 0 } },
-	{ 0x06, 2, { OnManagerDataLoaded_001b86b0, 0, 0, 0, 0, 0 } },
+	{ 0x06, 2, { BnkInstallSceneCfg, 0, 0, 0, 0, 0 } },
 	{ 0x04, 1, { OnMeshLoaded_001a6380, 0, 0, 0, 0, 0 } },
 	{ 0x05, 1, { BnkInstallG2D, 0, 0, 0, 0, 0 } },
 	{ 0x07, 1, { OnLoadedFunc_00211480, 0, 0, 0, 0, 0 } },

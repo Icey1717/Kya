@@ -3,7 +3,8 @@
 #include "Cinematic.h"
 
 #include "port/pointer_conv.h"
-#include "../../../MathOps.h"
+#include "MathOps.h"
+#include <string>
 
 #define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
 

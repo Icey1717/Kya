@@ -83,7 +83,7 @@ struct edSCENEtag {
 };
 
 struct edScene {
-	edScene() :pTag(NULL) {}
+	edScene() :pTag(0) {}
 	edScene(edSCENEtag* pTag);
 	edSCENEtag* pTag;
 	edSCENEtag* Create(void* inFileBuffer, uint fileLength, edCinGameInterface& loadObj);

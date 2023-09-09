@@ -208,6 +208,8 @@ union edF32VECTOR3 {
 		float beta;
 		float gamma;
 	};
+
+	float raw[3];
 };
 
 #ifdef PLATFORM_WIN
@@ -356,7 +358,7 @@ enum LANGUAGE
 struct SectorManagerSubObj {
 	uint flags;
 	undefined* pFileData;
-	struct WindSectorObj* pWindSectorObj;
+	struct CSectorHierarchy* pWindSectorObj;
 	int field_0xc;
 };
 

@@ -1591,7 +1591,7 @@ void edDListVertex4f(float x, float y, float z, int param_4)
 	return;
 }
 
-edF32VECTOR3 Vector3_0048d390 = { 0 };
+edF32VECTOR3 Vector3_0048d390 = { };
 
 void edDListEnd(void)
 {

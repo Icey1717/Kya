@@ -69,7 +69,7 @@ void edResCollection::FlushAllResources(edCinGameInterface& cinGameInterface)
 		do {
 			pcVar1 = (ResourceHeader*)(this->pData->field_0x0 + iVar2);
 			if ((((uint)pcVar1->pData & 0x80000000) == 0) && (pcVar1->size != 0)) {
-				cinGameInterface.ReleaseResource(LOAD_SECTION(pcVar1->pData), false);
+				cinGameInterface.ReleaseResource((void*)LOAD_SECTION(pcVar1->pData), false);
 				pcVar1->size = 0;
 			}
 			iVar3 = iVar3 + -1;

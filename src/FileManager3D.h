@@ -46,7 +46,7 @@ struct FileManager3D : public Manager {
 	int InstanciateG2D(int index);
 	struct TextureInfo* GetCommonSectorG2D();
 	void Level_ClearInternalData();
-	void AllocateMeshTextureMemory_001a6f10(ByteCode* pMemoryStream);
+	void Level_Create(ByteCode* pMemoryStream);
 	struct ed_g3d_manager* pMeshInfo;
 	struct edNODE* pMeshTransformParent;
 	struct edNODE* pLastMeshTransformParent;

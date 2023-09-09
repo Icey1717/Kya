@@ -859,6 +859,7 @@ CActorHero* CActorHero::_gThis = NULL;
 
 void CCinematic::Start()
 {
+	return;
 	Actor* pAVar1;
 	float fVar2;
 	uint uVar3;

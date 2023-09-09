@@ -12,27 +12,6 @@ namespace ed3D
 	struct MeshData_ANHR;
 }
 
-struct Sector {
-public:
-	void InstallCallback();
-	void Load(int param_2, int param_3, bool bFileFlag);
-	int field_0x0;
-	int sectorIndex;
-	int loadStage_0x8;
-	edCBankBuffer bankObject;
-	ed_g3d_manager meshInfo;
-	ed_g2d_manager textureInfo;
-	undefined* pManager100Obj;
-	ed_g3d_manager meshInfoB;
-	ed_g2d_manager textureInfoB;
-	struct edNODE* pMeshTransform;
-	struct edNODE* pMeshTransformParent_0x130;
-	float field_0x134;
-	HierarchyAnm pANHR;
-	int sectID;
-	int field_0x140;
-};
-
 struct StaticEdFileBase {
 	struct edCFiler* pEdFileBase;
 	undefined4 field_0x4;
@@ -42,13 +21,34 @@ extern StaticEdFileBase StaticEdFileBase_004497f0;
 
 bool CheckFunc_00401fd0(StaticEdFileBase* param_1);
 
-struct SectorManager : public Manager {
+struct CSectorManager : public Manager {
 	
 public:
 
-	SectorManager();
+	struct S_COMP_SLOT {
+	public:
+		void InstallCallback();
+		void Load(int param_2, int param_3, bool bFileFlag);
+		int field_0x0;
+		int sectorIndex;
+		int loadStage_0x8;
+		edCBankBuffer bankObject;
+		ed_g3d_manager meshInfo;
+		ed_g2d_manager textureInfo;
+		undefined* pManager100Obj;
+		ed_g3d_manager meshInfoB;
+		ed_g2d_manager textureInfoB;
+		struct edNODE* pMeshTransform;
+		struct edNODE* pMeshTransformParent_0x130;
+		float field_0x134;
+		HierarchyAnm pANHR;
+		int sectID;
+		int field_0x140;
+	};
 
-	void Setup_001ffec0();
+	CSectorManager();
+
+	void Level_ClearInternalData();
 	void Func_001fe620();
 
 	// Manager
@@ -58,6 +58,8 @@ public:
 	virtual void Level_Init();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 	// End Manager
+
+	void Level_Create(ByteCode* pMemoryStream);
 
 	char szSectorFileRoot[32];
 	undefined field_0x24;
@@ -93,12 +95,15 @@ public:
 	undefined field_0x42;
 	undefined field_0x43;
 	struct SectorManagerSubObj subObjArray[30];
-	struct Sector baseSector;
+	struct S_COMP_SLOT baseSector;
 	int count_0x368;
 	int field_0x36c;
 	undefined4 field_0x370;
 	int sectDataCount;
-	Sector sectorArray[2];
+	S_COMP_SLOT* sectorArray;
+	undefined4 field_0x37c;
+	CSectorHierarchy* pSectorHierarchy;
+	undefined4 field_0x384;
 };
 
 #endif // _SECTORMANAGER_H

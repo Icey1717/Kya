@@ -26,7 +26,7 @@ void GuiDList_EndCurrent(void)
 char* g_NewLine = "\n";
 char* sz_DisplayListSpacer_00433970 = "---------------------------------------- - \n";
 
-void SetStaticMeshMaster_002cb380(DisplayListInternal* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster)
+void edDListSetSceneUsed(DisplayListInternal* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster)
 {
 	uint displayListIndex;
 	uint uVar1;
@@ -153,7 +153,7 @@ void Setup_002cad90
 	return;
 }
 
-DisplayListInternal* AllocateDisplayListMemory_002caee0(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, undefined8 param_6, DisplayListInternal* pInBuffer)
+DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, undefined8 param_6, DisplayListInternal* pInBuffer)
 {
 	int iVar1;
 	uint displayListMemSize;
@@ -437,9 +437,9 @@ GlobalDList::GlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int
 	field_0xc = inField_0xc;
 	field_0x10 = inField_0x10;
 	field_0x1c = inField_0x1c;
-	pDVar3 = AllocateDisplayListMemory_002caee0(TO_HEAP(H_MAIN), field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
+	pDVar3 = edDListNew(TO_HEAP(H_MAIN), field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
 	pDisplayListInternal = pDVar3;
-	SetStaticMeshMaster_002cb380(pDisplayListInternal, pInStaticMeshMaster);
+	edDListSetSceneUsed(pDisplayListInternal, pInStaticMeshMaster);
 }
 
 void GlobalDList::Init()

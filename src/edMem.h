@@ -24,7 +24,7 @@ struct S_MAIN_MEMORY_HEADER
 	short field_0xa;
 	ushort flags;
 	byte funcTableID;
-	byte field_0xf;
+	byte maxStackLevel;
 	char* pStartAddr;
 	int align;
 	int offset;
@@ -51,37 +51,37 @@ void edMemFree(void* pAlloc);
 void* edMemShrink(void* pAlloc, int size);
 
 bool edmemTestAllocOk(int size, int align, int offset);
-void SetDataBlock_0028f440(uint* data, int numWords, int isFree);
-void SetHeapFlag_0028f4e0(S_MAIN_MEMORY_HEADER* pHeap);
+void edmemFillBlock(uint* data, int numWords, int isFree);
+void edmemSetReadOnly(S_MAIN_MEMORY_HEADER* pHeap);
 int edMemGetAvailable(EHeap heapID);
 void DebugDump(EHeap heapID, long mode);
-S_MAIN_MEMORY_HEADER* AllocateHeapMemory_0028fac0(S_MAIN_MEMORY_HEADER* pHeap, int param_2);
+S_MAIN_MEMORY_HEADER* edmemGetFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap, int param_2);
 S_MAIN_MEMORY_HEADER* edmemGetMainHeader(void* heapID);
-S_MAIN_MEMORY_HEADER* GetBlock_0028fc40(S_MAIN_MEMORY_HEADER* pHeap);
-void FreeDataBlock_0028fc90(S_MAIN_MEMORY_HEADER* pHeap);
-bool AllocateNewBlock_0028fd60(S_MAIN_MEMORY_HEADER* pHeap);
+S_MAIN_MEMORY_HEADER* edmemGetMasterMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap);
+void edmemFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap);
+bool edmemMakeMaster(S_MAIN_MEMORY_HEADER* pHeap);
 
 void edMemSetFlags(EHeap heapID, ushort newFlags);
 void edMemClearFlags(EHeap heapID, ushort flags);
 
-void ClearHeaps_0028ff10(void);
-void SetupDefaultHeaps_0028ff90(void);
-void SetHeapFunctionsA(void);
-void EmptyFunction_00290290(void);
+void memMemoryHeadersBlockInit(void);
+void memMastersInit(void);
+void memHandlersInit(void);
+void memDebugInformationInit(void);
 void edMemInit(short headerCount);
 
-int GetHeadersUsed_00290320(void);
-int GetHeadersLeft_00290340(void);
-int GetMaxHeadersUsed_00290350(void);
+int edMemGetNbAlloc(void);
+int edMemGetNbAllocLeft(void);
+int edMemGetNbMaxAlloc(void);
 
-void IncrementCounter_002903f0(void);
-bool Cleanup_00290410(void);
+void edMemStackLevelPush(void);
+bool edMemTerm(void);
 void* edSystemFastRamGetAddr(void);
 
 // Not in this file.
 void* AllocateFunc_001002a0(size_t size);
 void* Allocate(long amount);
-void SetHeapFunctionsB(void);
+void _edSystemInitVideoHandlers(void);
 
 extern edHeapParams g_SystemHeap_0042df0;
 extern uint g_MemWorkSizeB;
