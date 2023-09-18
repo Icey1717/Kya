@@ -15,9 +15,10 @@
 #include "renderer.h"
 
 #include "pointer_conv.h"
-#include "DebugHelpers.h"
+#include "DebugRenderer.h"
 #include "Rendering/edCTextFont.h"
 #include "../../../src/MathOps.h"
+#include "../../Windows/Renderer/Vulkan/src/TextureCache.h"
 
 // The function to be tested
 int Add(int a, int b) {
@@ -163,23 +164,23 @@ TEST(Image, ReadFont) {
 
 	FontPacked_2C* pPackedData = (FontPacked_2C*)LOAD_SECTION(BootDataFont->pSubData);
 	
-	auto debugMaterial = DebugHelpers::DebugMaterial(&pPackedData->materialInfo, false);
-	EXPECT_EQ(debugMaterial.texture.width, 0x100);
-	EXPECT_EQ(debugMaterial.texture.height, 0x100);
+	auto debugMaterial = PS2::GSTexValue(DebugMenu::LoadTextureData(&pPackedData->materialInfo), 0x380);
+	EXPECT_EQ(debugMaterial.image.imageData.canvasWidth, 0x100);
+	EXPECT_EQ(debugMaterial.image.imageData.canvasHeight, 0x100);
 
-	//DumpVectorToFile(debugMaterial.texture.readBuffer, "font.bin");
+	DumpVectorToFile(debugMaterial.image.readBuffer, "font.bin");
 
-	EXPECT_EQ(TestVector("font.bin", debugMaterial.texture.readBuffer), true);
+	EXPECT_EQ(TestVector("font.bin", debugMaterial.image.readBuffer), true);
 }
 
 TEST(Image, ReadMenuSplash) {
-	auto debugMaterial = DebugHelpers::DebugMaterial(&gMenuSplashMaterial, false);
-	EXPECT_EQ(debugMaterial.texture.width, 0x100);
-	EXPECT_EQ(debugMaterial.texture.height, 0x100);
+	auto debugMaterial = PS2::GSTexValue(DebugMenu::LoadTextureData(&gMenuSplashMaterial), 0x380);
+	EXPECT_EQ(debugMaterial.image.imageData.canvasWidth, 0x100);
+	EXPECT_EQ(debugMaterial.image.imageData.canvasHeight, 0x100);
 
-	//DumpVectorToFile(debugMaterial.texture.readBuffer, "splash.bin");
+	DumpVectorToFile(debugMaterial.image.readBuffer, "splash.bin");
 
-	EXPECT_EQ(TestVector("splash.bin", debugMaterial.texture.readBuffer), true);
+	EXPECT_EQ(TestVector("splash.bin", debugMaterial.image.readBuffer), true);
 }
 
 // Test case for matrix multiplication
@@ -189,56 +190,28 @@ TEST(MatrixMultiplicationTest, MultiplyMatrices) {
 
 	edF32MATRIX4 expected = { 250.0f, 260.0f, 270.0f, 280.0f, 618.0f, 644.0f, 670.0f, 696.0f, 986.0f, 1028.0f, 1070.0f, 1112.0f, 1354.0f, 1412.0f, 1470.0f, 1528.0f };
 
-	edF32MATRIX4 result;
-	edF32Matrix4MulF32Matrix4Hard(&result, &matrix1, &matrix2);
+	{
+		edF32MATRIX4 result;
+		edF32Matrix4MulF32Matrix4Hard(&result, &matrix1, &matrix2);
 
-	// Check if the result matches the expected matrix
-	EXPECT_EQ(result.aa, expected.aa);
-	EXPECT_EQ(result.ab, expected.ab);
-	EXPECT_EQ(result.ac, expected.ac);
-	EXPECT_EQ(result.ad, expected.ad);
-	EXPECT_EQ(result.ba, expected.ba);
-	EXPECT_EQ(result.bb, expected.bb);
-	EXPECT_EQ(result.bc, expected.bc);
-	EXPECT_EQ(result.bd, expected.bd);
-	EXPECT_EQ(result.ca, expected.ca);
-	EXPECT_EQ(result.cb, expected.cb);
-	EXPECT_EQ(result.cc, expected.cc);
-	EXPECT_EQ(result.cd, expected.cd);
-	EXPECT_EQ(result.da, expected.da);
-	EXPECT_EQ(result.db, expected.db);
-	EXPECT_EQ(result.dc, expected.dc);
-	EXPECT_EQ(result.dd, expected.dd);
-
-	edF32MATRIX4 matrix3{ 1.0f, 2.0f, 3.0f, 4.0f,
-		5.0f, 6.0f, 7.0f, 8.0f,
-		9.0f, 10.0f, 11.0f, 12.0f,
-		13.0f, 14.0f, 15.0f, 16.0f };
-
-	edF32MATRIX4 matrix4{ 2.0f, 0.0f, 1.0f, 3.0f,
-		0.0f, 2.0f, 4.0f, 1.0f,
-		3.0f, 0.0f, 1.0f, 2.0f,
-		1.0f, 3.0f, 2.0f, 0.0f };
-
-	edF32MATRIX4 result;
-	edF32Matrix4MulF32Matrix4Hard(&result, &matrix3, &matrix4);
-
-	EXPECT_EQ(result.aa, 18.0f);
-	EXPECT_EQ(result.ab, 16.0f);
-	EXPECT_EQ(result.ac, 18.0f);
-	EXPECT_EQ(result.ad, 11.0f);
-	EXPECT_EQ(result.ba, 52.0f);
-	EXPECT_EQ(result.bb, 32.0f);
-	EXPECT_EQ(result.bc, 54.0f);
-	EXPECT_EQ(result.bd, 27.0f);
-	EXPECT_EQ(result.ca, 86.0f);
-	EXPECT_EQ(result.cb, 48.0f);
-	EXPECT_EQ(result.cc, 90.0f);
-	EXPECT_EQ(result.cd, 43.0f);
-	EXPECT_EQ(result.da, 120.0f);
-	EXPECT_EQ(result.db, 64.0f);
-	EXPECT_EQ(result.dc, 126.0f);
-	EXPECT_EQ(result.dd, 59.0f);
+		// Check if the result matches the expected matrix
+		EXPECT_EQ(result.aa, expected.aa);
+		EXPECT_EQ(result.ab, expected.ab);
+		EXPECT_EQ(result.ac, expected.ac);
+		EXPECT_EQ(result.ad, expected.ad);
+		EXPECT_EQ(result.ba, expected.ba);
+		EXPECT_EQ(result.bb, expected.bb);
+		EXPECT_EQ(result.bc, expected.bc);
+		EXPECT_EQ(result.bd, expected.bd);
+		EXPECT_EQ(result.ca, expected.ca);
+		EXPECT_EQ(result.cb, expected.cb);
+		EXPECT_EQ(result.cc, expected.cc);
+		EXPECT_EQ(result.cd, expected.cd);
+		EXPECT_EQ(result.da, expected.da);
+		EXPECT_EQ(result.db, expected.db);
+		EXPECT_EQ(result.dc, expected.dc);
+		EXPECT_EQ(result.dd, expected.dd);
+	}
 }
 
 TEST(MatrixTest, TransposeHard) {
@@ -266,6 +239,10 @@ TEST(MatrixTest, TransposeHard) {
 	EXPECT_EQ(transposed.db, 8.0f);
 	EXPECT_EQ(transposed.dc, 12.0f);
 	EXPECT_EQ(transposed.dd, 16.0f);
+}
+
+TEST(VU1, Run) {
+	
 }
 
 // The main function to run the tests

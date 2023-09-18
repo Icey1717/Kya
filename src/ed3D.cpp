@@ -892,21 +892,21 @@ edpkt_data g_PKTHeaderRef[9] = {};
 
 void ed3DDMAGeneratePacketRefHeader(void)
 {
-	g_PKTHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexGIFHeader);
+	g_PKTHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexGIFHeader));
 	g_PKTHeaderRef[0].cmdB = 0;
-	g_PKTHeaderRef[1].cmdA = ED_VIF1_SET_TAG_REF(2, g_stVertexSTHeader);
+	g_PKTHeaderRef[1].cmdA = ED_VIF1_SET_TAG_REF(2, STORE_SECTION(g_stVertexSTHeader));
 	g_PKTHeaderRef[1].cmdB = 0;
-	g_PKTHeaderRef[2].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexRGBAHeader);
+	g_PKTHeaderRef[2].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexRGBAHeader));
 	g_PKTHeaderRef[2].cmdB = 0;
-	g_PKTHeaderRef[3].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexXYZHeader);
+	g_PKTHeaderRef[3].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexXYZHeader));
 	g_PKTHeaderRef[3].cmdB = 0;
-	g_PKTHeaderRef[4].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stNormalHeader);
+	g_PKTHeaderRef[4].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stNormalHeader));
 	g_PKTHeaderRef[4].cmdB = 0;
-	g_PKTHeaderRef[5].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexOptionFlagHeader);
+	g_PKTHeaderRef[5].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexOptionFlagHeader));
 	g_PKTHeaderRef[5].cmdB = 0;
-	g_PKTHeaderRef[6].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexMultiSTHeader);
+	g_PKTHeaderRef[6].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexMultiSTHeader));
 	g_PKTHeaderRef[6].cmdB = 0;
-	g_PKTHeaderRef[7].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexXYZKeepADCHeader);;
+	g_PKTHeaderRef[7].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexXYZKeepADCHeader));
 	g_PKTHeaderRef[7].cmdB = 0;
 	return;
 }
@@ -946,15 +946,15 @@ edpkt_data* gPKTMultiTex = NULL;
 
 void ed3DDMAGenerateSpritePacketRefHeader(void)
 {
-	g_PKTSpriteHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stSpriteVertexGIFHeader);
+	g_PKTSpriteHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stSpriteVertexGIFHeader));
 	g_PKTSpriteHeaderRef[0].cmdB = 0;
-	g_PKTSpriteHeaderRef[1].cmdA = ED_VIF1_SET_TAG_REF(2, g_stSpriteVertexSTHeader);
+	g_PKTSpriteHeaderRef[1].cmdA = ED_VIF1_SET_TAG_REF(2, STORE_SECTION(g_stSpriteVertexSTHeader));
 	g_PKTSpriteHeaderRef[1].cmdB = 0;
-	g_PKTSpriteHeaderRef[2].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stSpriteVertexRGBAHeader);
+	g_PKTSpriteHeaderRef[2].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stSpriteVertexRGBAHeader));
 	g_PKTSpriteHeaderRef[2].cmdB = 0;
-	g_PKTSpriteHeaderRef[3].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stSpriteVertexXYZHeader);
+	g_PKTSpriteHeaderRef[3].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stSpriteVertexXYZHeader));
 	g_PKTSpriteHeaderRef[3].cmdB = 0;
-	g_PKTSpriteHeaderRef[4].cmdA = ED_VIF1_SET_TAG_REF(2, g_stSpriteWidthHeightHeader);
+	g_PKTSpriteHeaderRef[4].cmdA = ED_VIF1_SET_TAG_REF(2, STORE_SECTION(g_stSpriteWidthHeightHeader));
 	g_PKTSpriteHeaderRef[4].cmdB = 0;
 	return;
 }
@@ -994,9 +994,9 @@ void ed3DDMAInit(uint countA, int countB)
 	g_PKTShapeHeaderRef[0].cmdB = 0;
 	g_PKTShapeHeaderRef[1].cmdB = 0;
 	g_PKTShapeHeaderRef[2].cmdB = 0;
-	g_PKTShapeHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stShapeVertexXYZHeader);
-	g_PKTShapeHeaderRef[1].cmdA = ED_VIF1_SET_TAG_REF(2, g_stShapeVertexSTHeader);
-	g_PKTShapeHeaderRef[2].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stShapeVertexRGBAHeader);
+	g_PKTShapeHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stShapeVertexXYZHeader));
+	g_PKTShapeHeaderRef[1].cmdA = ED_VIF1_SET_TAG_REF(2, STORE_SECTION(g_stShapeVertexSTHeader));
+	g_PKTShapeHeaderRef[2].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stShapeVertexRGBAHeader));
 	pcVar2 = ed3D_Allocator_00449248.end;
 	pcVar1 = ed3D_Allocator_00449248.end + 0x140;
 	if (ed3D_Allocator_00449248.current < ed3D_Allocator_00449248.end + 0x140) {
@@ -2065,6 +2065,10 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 	pPkt[2].cmdA = 0x302ec00000008000;
 	pPkt[2].cmdB = 0x512;
 
+#ifdef PLATFORM_WIN
+	DUMP_TAG_ADV(pPkt[2].cmdA);
+#endif
+
 	pPkt[3].asVector = gClipMulVector;
 	pPkt[4].asVector = gClipAddVector;
 	pPkt[5].asVector = gClipXY;
@@ -2076,7 +2080,7 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 
 void ed3DInitVU1Globals(void)
 {
-	g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stMatrixHeader);
+	g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stMatrixHeader));
 	g_VifRefPktCur->cmdB = SCE_VIF1_SET_NOP(0);
 	g_VifRefPktCur = g_VifRefPktCur + 1;
 	g_VifRefPktCur = ed3DDMAGenerateGlobalPacket(g_VifRefPktCur);
@@ -2818,13 +2822,15 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	ppuVar15 = pPkt + 6;
 	if ((uVar2 & 2) != 0) {
 		if ((peVar3->flags_0x0 & 0x2000000) == 0) {
-			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stGifTAG_FAN_Texture_NoFog);
-			ppuVar15->cmdB = SCE_VIF1_SET_UNPACK(0x1, 0x1, UNPACK_V4_32_MASKED, 0);
+			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stGifTAG_FAN_Texture_NoFog));
+			ppuVar15->asU32[2] = SCE_VIF1_SET_NOP(0);
+			ppuVar15->asU32[3] = SCE_VIF1_SET_UNPACK(0x1, 0x1, UNPACK_V4_32_MASKED, 0);
 			ppuVar15 = pPkt + 7;
 		}
 		else {
-			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stGifTAG_FAN_Gouraud_NoFog);
-			ppuVar15->cmdB = SCE_VIF1_SET_UNPACK(0x1, 0x1, UNPACK_V4_32_MASKED, 0);
+			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stGifTAG_FAN_Gouraud_NoFog));
+			ppuVar15->asU32[2] = SCE_VIF1_SET_NOP(0);
+			ppuVar15->asU32[3] = SCE_VIF1_SET_UNPACK(0x1, 0x1, UNPACK_V4_32_MASKED, 0);
 			ppuVar15 = pPkt + 7;
 		}
 	}
@@ -3015,7 +3021,7 @@ void ed3DFlushStrip(edNODE* pNode)
 			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
 			gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 		}
-		pcVar4 = (char*)ed3DVU1Addr_Scratch;
+
 		if ((pRenderInput->flags_0x0 & 4) == 0) {
 			ppuVar6 = ppuVar20;
 			while (bVar1 = uVar8 != 0, uVar8 = uVar8 - 1, bVar1) {
@@ -3049,7 +3055,7 @@ void ed3DFlushStrip(edNODE* pNode)
 					ed3DVU1BufferCur = ed3DVU1BufferCur + 1;
 				}
 			}
-			piVar14 = (int*)ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur];
+
 			for (; iVar2 != 0; iVar2 = iVar2 + -3) {
 
 #ifdef  PLATFORM_WIN
@@ -3064,47 +3070,47 @@ void ed3DFlushStrip(edNODE* pNode)
 				ED3D_LOG(LogLevel::VeryVerbose, "Send strip Vif list B: %p", pVifList);
 
 				ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
-				ppuVar6->asU32[2] = SCE_VIF1_SET_BASE(piVar14[0] + 1, 0);
+				ppuVar6->asU32[2] = SCE_VIF1_SET_BASE(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][0] + 1, 0);
 				ppuVar6->asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
 
 				ppuVar6[1].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
 				ppuVar6[1].asU32[1] = (uint)pVifList & 0xfffffff;
 				ppuVar6[1].asU32[2] = 0;
-				ppuVar6[1].asU32[3] = SCE_VIF1_SET_ITOP(piVar14[0] + 1, 0);
+				ppuVar6[1].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][0] + 1, 0);
 
 #ifdef  PLATFORM_WIN
 				// #LETS DRAAAAAW
-				VU1Emu::SetVifItop(piVar14[0] + 1);
+				VU1Emu::SetVifItop(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][0] + 1);
 				VU1Emu::ProcessVifList((edpkt_data*)pVifList);
 #endif //  PLATFORM_WIN
 
 				ppuVar6[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
-				ppuVar6[2].asU32[2] = SCE_VIF1_SET_BASE(piVar14[1] + 1, 0);
+				ppuVar6[2].asU32[2] = SCE_VIF1_SET_BASE(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][1] + 1, 0);
 				ppuVar6[2].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
 
 				ppuVar6[3].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
 				ppuVar6[3].asU32[1] = (uint)iVar13 & 0xfffffff;
 				ppuVar6[3].asU32[2] = 0;
-				ppuVar6[3].asU32[3] = SCE_VIF1_SET_ITOP(piVar14[1] + 1, 0);
+				ppuVar6[3].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][1] + 1, 0);
 
 #ifdef  PLATFORM_WIN
 				// #LETS DRAAAAAW
-				VU1Emu::SetVifItop(piVar14[1] + 1);
+				VU1Emu::SetVifItop(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][1] + 1);
 				VU1Emu::ProcessVifList((edpkt_data*)iVar13);
 #endif //  PLATFORM_WIN
 
 				ppuVar6[4].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
-				ppuVar6[4].asU32[2] = SCE_VIF1_SET_BASE(piVar14[2] + 1, 0);
+				ppuVar6[4].asU32[2] = SCE_VIF1_SET_BASE(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][2] + 1, 0);
 				ppuVar6[4].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
 
 				ppuVar6[5].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
 				ppuVar6[5].asU32[1] = (uint)iVar15 & 0xfffffff;
 				ppuVar6[5].asU32[2] = 0;
-				ppuVar6[5].asU32[3] = SCE_VIF1_SET_ITOP(piVar14[2] + 1, 0);
+				ppuVar6[5].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][2] + 1, 0);
 
 #ifdef  PLATFORM_WIN
 				// #LETS DRAAAAAW
-				VU1Emu::SetVifItop(piVar14[2] + 1);
+				VU1Emu::SetVifItop(ed3DVU1AddrWithBufCur_Scratch[ed3DVU1BufferCur][2] + 1);
 				VU1Emu::ProcessVifList((edpkt_data*)iVar15);
 #endif //  PLATFORM_WIN
 
@@ -3200,11 +3206,11 @@ void ed3DFlushStrip(edNODE* pNode)
 				piVar21 = piVar21 + 0x48;
 				pVifList = pVifList + uVar5 * 0x10;
 				pRVar18->cmdB = (long)(*(int*)(pcVar4 + iVar2) + 1) & 0xffffffffU | 0x200000003000000;
-				pRVar18[1].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexRGBAHeader);
+				pRVar18[1].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexRGBAHeader));
 				pRVar18[1].cmdB = 0;
 				pRVar18[2].cmdA = (ulong)uVar26 << 0x20 | uVar2;
 				pRVar18[2].cmdB = ((long)(int)(uVar23 << 0x10) & 0xffffffffU | 0x7e00c002) << 0x20;
-				pRVar18[3].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stNormalHeader);
+				pRVar18[3].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stNormalHeader));
 				pRVar18[3].cmdB = 0;
 				pRVar18[4].cmdA = (ulong)uVar12 << 0x20 | uVar2;
 				pRVar18[4].cmdB = ((long)(int)(uVar23 << 0x10) & 0xffffffffU | 0x7e00c0d9) << 0x20;
@@ -3441,11 +3447,11 @@ void ed3DFlushStrip(edNODE* pNode)
 					ppuVar19[3].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 					piVar14 = (int*)(ScratchpadAnimManager_004494ec.field_0x34 + iVar13);
 					ppuVar19[3].cmdB = (long)(*piVar14 + 1) & 0xffffffffU | 0x200000003000000;
-					ppuVar19[4].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stVertexRGBAHeader);
+					ppuVar19[4].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stVertexRGBAHeader));
 					ppuVar19[4].cmdB = 0;
 					ppuVar19[5].cmdA = ((long)(int)local_30 & 0xfffffffU) << 0x20 | uVar10;
 					ppuVar19[5].cmdB = ((long)(int)(local_20 << 0x10) & 0xffffffffU | 0x7e00c002) << 0x20;
-					ppuVar19[6].cmdA = ED_VIF1_SET_TAG_REF(1, &g_stNormalHeader);
+					ppuVar19[6].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stNormalHeader));
 					ppuVar19[6].cmdB = 0;
 					ppuVar19[7].cmdA = (ulong)((uint)piVar21 & 0xfffffff) << 0x20 | uVar10;
 					ppuVar19[7].cmdB = ((long)(int)(local_20 << 0x10) & 0xffffffffU | 0x7e00c0d9) << 0x20;
@@ -3504,18 +3510,18 @@ void ed3DFlushStrip(edNODE* pNode)
 	if (ed3DVU1BufferCur == 2) {
 		ed3DVU1Buffer[0] = ed3DVU1Addr_Scratch[1];
 		ed3DVU1Buffer[1] = ed3DVU1Addr_Scratch[2];
-		ed3DVU1Buffer[2] = *ed3DVU1Addr_Scratch;
+		ed3DVU1Buffer[2] = ed3DVU1Addr_Scratch[0];
 	}
 	else {
 		if (ed3DVU1BufferCur == 1) {
-			ed3DVU1Buffer[0] = *ed3DVU1Addr_Scratch;
+			ed3DVU1Buffer[0] = ed3DVU1Addr_Scratch[0];
 			ed3DVU1Buffer[1] = ed3DVU1Addr_Scratch[1];
 			ed3DVU1Buffer[2] = ed3DVU1Addr_Scratch[2];
 		}
 		else {
 			if (ed3DVU1BufferCur == 0) {
 				ed3DVU1Buffer[0] = ed3DVU1Addr_Scratch[2];
-				ed3DVU1Buffer[1] = *ed3DVU1Addr_Scratch;
+				ed3DVU1Buffer[1] = ed3DVU1Addr_Scratch[0];
 				ed3DVU1Buffer[2] = ed3DVU1Addr_Scratch[1];
 			}
 		}
@@ -3739,7 +3745,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 			gpCurHierarchy = (MeshTransformDataBase*)0x0000ffff;
 		}
 
-		g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_REF(1, &g_stMatrixHeader);
+		g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stMatrixHeader));
 		g_VifRefPktCur->asU32[2] = SCE_VIF1_SET_FLUSH(0);
 		g_VifRefPktCur->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 
@@ -4288,7 +4294,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 #ifdef PLATFORM_WIN
 				ProcessTextureCommands(pFlippedPkt, peVar1->commandBufferTextureSize);
 #endif
-				peVar4[1].cmdA = ED_VIF1_SET_TAG_REF(peVar1->commandBufferTextureSize, pFlippedPkt);
+				peVar4[1].cmdA = ED_VIF1_SET_TAG_REF(peVar1->commandBufferTextureSize, STORE_SECTION(pFlippedPkt));
 				peVar4[1].cmdB = SCE_VIF1_SET_NOP(0);
 
 				peVar4[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);

@@ -132,17 +132,86 @@ InputSetupParams* edSysGetConfig(void);
 #include "log.h"
 #endif
 
+union edF32VECTOR3 {
+	struct {
+		float x;
+		float y;
+		float z;
+	};
+
+	struct {
+		float alpha;
+		float beta;
+		float gamma;
+	};
+
+	float raw[3];
+};
+
+inline edF32VECTOR3 operator-(const edF32VECTOR3& lhs, const edF32VECTOR3& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs.x - rhs.x;
+	ret.y = lhs.y - rhs.y;
+	ret.z = lhs.z - rhs.z;
+	return ret;
+}
+
+inline edF32VECTOR3 operator+(const edF32VECTOR3& lhs, const edF32VECTOR3& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs.x + rhs.x;
+	ret.y = lhs.y + rhs.y;
+	ret.z = lhs.z + rhs.z;
+	return ret;
+}
+
+inline edF32VECTOR3 operator*(const edF32VECTOR3& lhs, const edF32VECTOR3& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs.x * rhs.x;
+	ret.y = lhs.y * rhs.y;
+	ret.z = lhs.z * rhs.z;
+	return ret;
+}
+
+inline edF32VECTOR3 operator*(const edF32VECTOR3& lhs, const float& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs.x * rhs;
+	ret.y = lhs.y * rhs;
+	ret.z = lhs.z * rhs;
+	return ret;
+}
+
+inline edF32VECTOR3 operator-(const edF32VECTOR3& lhs, const float& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs.x - rhs;
+	ret.y = lhs.y - rhs;
+	ret.z = lhs.z - rhs;
+	return ret;
+}
+
 #ifdef PLATFORM_PS2
-struct __attribute__((aligned(16)))
+union
 #else
 #pragma pack(push,1)
-struct //alignas(16)
+union
 #endif 
 	edF32VECTOR4 { /* Aligned */
-	float x;
-	float y;
-	float z;
-	float w;
+	struct {
+		float x;
+		float y;
+		float z;
+		float w;
+	};
+
+	struct {
+		edF32VECTOR3 xyz;
+	};
+
+	float raw[4];
 };
 
 // Overload the * operator as a non-member function
@@ -196,22 +265,6 @@ inline edF32VECTOR4 operator-(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs)
 	return ret;
 }
 
-union edF32VECTOR3 {
-	struct {
-		float x;
-		float y;
-		float z;
-	};
-
-	struct {
-		float alpha;
-		float beta;
-		float gamma;
-	};
-
-	float raw[3];
-};
-
 #ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif
@@ -264,7 +317,11 @@ union alignas(16)
 
 #define EDITOR_BUILD PLATFORM_WIN
 
+#ifdef PLATFORM_WIN
 #define ENABLE_MY_LOG
+#else
+//#define ENABLE_MY_LOG
+#endif
 
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
 

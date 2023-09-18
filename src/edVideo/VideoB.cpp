@@ -258,16 +258,7 @@ void _edVideoSyncReset(void)
 	return;
 }
 
-ulong SetIMR_00227ea8(ulong flag)
-{
-	ulong prevIMR;
-
-	prevIMR = *GS_IMR;
-	DPUT_GS_IMR(flag);
-	return prevIMR;
-}
-
-int GSHandler_002ba6d0(int cause)
+int _edVideoGs(int cause)
 {
 	void* pvVar1;
 	int eventID;
@@ -276,7 +267,7 @@ int GSHandler_002ba6d0(int cause)
 	ulong uVar4;
 	undefined8 uVar3;
 
-	flag = SetIMR_00227ea8(0xff00);
+	flag = isceGsPutIMR(0xff00);
 	uVar2 = DGET_GS_CSR();
 	uVar3 = DGET_GS_SIGLBLID();
 	uVar4 = DGET_GS_SIGLBLID();
@@ -296,13 +287,13 @@ int GSHandler_002ba6d0(int cause)
 		edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 			edSysHandlerVideo_0048cee0.maxEventID, 2, pvVar1);
 	}
-	SetIMR_00227ea8(flag);
+	isceGsPutIMR(flag);
 	ExitHandler();
 	return 0;
 }
 
 
-int VBlankHandler_002ba580(int cause)
+int _edVideoSync(int cause)
 {
 	ulong uVar1;
 
@@ -310,7 +301,7 @@ int VBlankHandler_002ba580(int cause)
 		edSysHandlerVideo_0048cee0.maxEventID, 3, (void*)0x0);
 	if (g_ActiveVidParams_0048cd90.params26.bVSyncForever == 0) {
 		if (g_ActiveVidParams_0048cd90.vblankCount == 0) {
-			g_ActiveVidParams_0048cd90.lastCount = GetCountValue();
+			g_ActiveVidParams_0048cd90.lastCount = _VideoTimerGet();
 		}
 		g_ActiveVidParams_0048cd90.vblankCount = g_ActiveVidParams_0048cd90.vblankCount + 1;
 	}
@@ -407,8 +398,8 @@ void edVideoInit(void)
 	g_ActiveVidParams_0048cd90.bWaitingForVSync = 0;
 	g_ActiveVidParams_0048cd90.field_0x68 = 0;
 #ifdef PLATFORM_PS2
-	_edVideoVSyncCallback(VBlankHandler_002ba580);
-	_edVideoGSCallback(GSHandler_002ba6d0);
+	_edVideoVSyncCallback(_edVideoSync);
+	_edVideoGSCallback(_edVideoGs);
 	sceGsSyncV(0);
 #endif
 	edVideoClearVram(0, 0, 0, 0x80);

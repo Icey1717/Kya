@@ -61,6 +61,4 @@ namespace DebugHelpers {
 		// Example implementation:
 		return lhs.pMaterial == rhs.pMaterial && lhs.texID == rhs.texID;
 	}
-
-	Renderer::TextureData LoadTextureData(edDList_material* pMaterial);
 }

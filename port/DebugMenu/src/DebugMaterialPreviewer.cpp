@@ -5,6 +5,7 @@
 
 #include <optional>
 #include <memory>
+#include "DebugRenderer.h"
 
 namespace DebugMenu_Internal {
 	using DebugMaterialPtr = std::shared_ptr<DebugHelpers::DebugMaterial>;
@@ -312,7 +313,7 @@ void MaterialPreviewer::Open(MaterialPreviewerEntry& entry)
 	Reset();
 	PaletteSelector::gOpenEntry = entry;
 
-	const auto textureData = DebugHelpers::LoadTextureData(entry.pMaterial);
+	const auto textureData = DebugMenu::LoadTextureData(entry.pMaterial);
 	PaletteSelector::gPaletteMap = textureData.palettes;
 }
 

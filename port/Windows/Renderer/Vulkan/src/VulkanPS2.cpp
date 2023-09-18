@@ -61,7 +61,8 @@ namespace PS2_Internal {
 	}
 
 	Renderer::GSVertex MakeVertex(uint16_t x, uint16_t y, uint32_t z) {
-		return Renderer::GSVertex{ { GetGSState().S, GetGSState().T }, {GetGSState().R, GetGSState().G, GetGSState().B, GetGSState().A }, GetGSState().Q, { x, y }, z, 0, 0 };
+		const auto& state = GetGSState();
+		return Renderer::GSVertex{ { state.S, state.T }, {state.R, state.G, state.B, state.A }, state.Q, { x, y }, z, 0, 0 };
 	}
 }
 

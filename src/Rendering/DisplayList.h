@@ -9,6 +9,8 @@
 #include "CameraPanMasterHeader.h"
 #include "../edList.h"
 
+union edF32VECTOR4;
+
 struct FrustumData {
 	edF32MATRIX4 frustumMatrix;
 	edF32VECTOR4 field_0x40;
@@ -16,9 +18,9 @@ struct FrustumData {
 };
 
 struct ed_3D_Light_Config {
-	struct edF32VECTOR4* pLightAmbient;
-	struct edF32VECTOR4* pLightDirections;
-	struct edF32VECTOR4* pLightColorMatrix;
+	edF32VECTOR4* pLightAmbient;
+	edF32VECTOR4* pLightDirections;
+	edF32VECTOR4* pLightColorMatrix;
 };
 
 struct ed_3D_Shadow_Config {

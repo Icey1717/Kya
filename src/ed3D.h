@@ -45,14 +45,14 @@ struct ed_g2d_manager {
 };
 
 struct LightingMatrixSubSubObj {
-	struct edF32VECTOR4* pLightAmbient;
+	union edF32VECTOR4* pLightAmbient;
 	union edF32MATRIX4* pLightDirections;
 	union edF32MATRIX4* pLightColor;
 };
 
 struct ed_3d_hierarchy_setup {
 	char* field_0x0;
-	struct edF32VECTOR4* pVector_0x4;
+	union edF32VECTOR4* pVector_0x4;
 	struct LightingMatrixSubSubObj* pLightData;
 	char* field_0xc;
 	float* field_0x10;

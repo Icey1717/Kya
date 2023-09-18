@@ -144,6 +144,8 @@ private:
 	std::ofstream fullLogFile;  // Single log file stream
 	std::thread logThread;  // Thread for flushing logs
 
+	std::atomic<bool> bShutdown = false;
+
 	Log()
 	{
 		logThread = std::thread(&Log::FlushLogs, this);
@@ -161,12 +163,13 @@ private:
 		{
 			std::unique_lock<std::mutex> lock(logMutex);
 		}
+		bShutdown = true;
 		logThread.join();
 	}
 
 	void FlushLogs()
 	{
-		while (true) {
+		while (true && !bShutdown) {
 			// Wait for the log condition to be notified
 			std::unique_lock<std::mutex> lock(logMutex);
 

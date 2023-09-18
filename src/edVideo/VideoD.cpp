@@ -152,7 +152,7 @@ void _ManageFade(void)
 
 uint UINT_00449584 = 0;
 
-unsigned int GetCountValue(void)
+unsigned int _VideoTimerGet(void)
 {
 #ifdef PLATFORM_PS2
 	unsigned int i;
@@ -168,7 +168,7 @@ unsigned int GetCountValue(void)
 void _VideoTimerReset(void)
 
 {
-	UINT_00449584 = GetCountValue();
+	UINT_00449584 = _VideoTimerGet();
 	return;
 }
 
@@ -186,13 +186,13 @@ void _VideoTimerSyncVbl(void)
 	if (edVideo_Globals_00449590.field_0x4 < puVar1) {
 		iVar2 = 0;
 	}
-	currentCount = GetCountValue();
+	currentCount = _VideoTimerGet();
 	countDifference = currentCount - UINT_00449584;
 	if (countDifference < waitTime) {
 		waitTime = waitTime - iVar2;
 	}
 	while (countDifference < waitTime) {
-		iVar2 = GetCountValue();
+		iVar2 = _VideoTimerGet();
 		countDifference = iVar2 - UINT_00449584;
 	}
 	return;
@@ -265,7 +265,7 @@ void edVideoFlip(void)
 	0.682727, -0.217002, 0.697711, 0,
 	780.164, -700.3, 747.188, 1,
 	};
-	CameraManager::_gThis->pActiveCamera->transformationMatrix = matrix;
+	//CameraManager::_gThis->pActiveCamera->transformationMatrix = matrix;
 #ifdef PLATFORM_WIN
 	Renderer::Present();
 #endif

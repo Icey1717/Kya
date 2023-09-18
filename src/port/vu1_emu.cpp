@@ -16,6 +16,18 @@ namespace VU1Emu {
 		return gFakeMem;
 	}
 
+	struct HW_Gif_Tag {
+		u16 NLOOP : 15;
+		u16 EOP : 1;
+		u16 _dummy0 : 16;
+		u32 _dummy1 : 14;
+		u32 PRE : 1;
+		u32 PRIM : 11;
+		u32 FLG : 2;
+		u32 NREG : 4;
+		u32 REGS[2];
+	};
+
 	struct alignas(32) WriteTag {
 		ushort addr;
 		byte count;
@@ -58,7 +70,7 @@ namespace VU1Emu {
 #define VIF_REG_W 3
 
 #define VIF_LOAD_I(reg, row, off) *(int*)(GetFakeMem() + (reg << 4) + (row << 4) + (off << 2))
-#define VIF_LOAD_F(reg, off) *(edF32VECTOR4*)(GetFakeMem() + (reg << 4) + (off << 4))
+#define VIF_LOAD_F(reg, off) (*(edF32VECTOR4*)(GetFakeMem() + (reg << 4) + (off << 4)))
 
 #define VIF_AS_I(reg, row, off) (int*)(GetFakeMem() + (reg << 4) + (row << 4) + (off << 2))
 #define VIF_AS_F(reg, off) ((edF32VECTOR4*)(GetFakeMem() + (reg << 4) + (off << 4)))
@@ -84,6 +96,7 @@ namespace VU1Emu {
 	int vi10;
 	int vi11;
 	int vi12;
+	int vi13;
 	int vi14;
 	int vi15;
 	int itop;
@@ -110,7 +123,9 @@ namespace VU1Emu {
 	edF32VECTOR4 vf20;
 	edF32VECTOR4 vf21;
 	edF32VECTOR4 vf22;
+	edF32VECTOR4 vf23;
 	edF32VECTOR4 vf24;
+	edF32VECTOR4 vf25;
 	edF32VECTOR4 vf26;
 	edF32VECTOR4 vf27;
 	edF32VECTOR4 vf28;
@@ -125,7 +140,7 @@ namespace VU1Emu {
 	{
 		vi15 = itop;
 		vi14 = VIF_LOAD_I(vi15, 0, 0);
-		vi14 = (vi14 & 0xff);
+		vi14 = (vi14 & 0xFF);
 		if (vi14 == 0) {
 			// JUMP
 			assert(false);
@@ -164,7 +179,7 @@ namespace VU1Emu {
 		return gClipflag;
 	}
 
-	void _$Culling_12_1()
+	void _$NoClipCulling_12_1()
 	{
 		vi02 = vi14;
 		vi03 = vi15 + 1;
@@ -217,6 +232,11 @@ namespace VU1Emu {
 
 			vi03 += 9;
 		}
+	}
+
+	void _$Culling_12_1()
+	{
+		_$NoClipCulling_12_1();
 	}
 
 	void _$ClippingRejection_12_1()
@@ -287,6 +307,125 @@ namespace VU1Emu {
 		return ret;
 	}
 
+	void CopyClip()
+	{
+		vi05 = *reinterpret_cast<int*>(&vf28.x);
+		*VIF_AS_F(vi05, 0) = vf29;
+		*VIF_AS_I(vi05, 0, VIF_REG_X) = vi13;
+		vi05 = *reinterpret_cast<int*>(&vf28.x);
+
+		vf20 = VIF_LOAD_F(vi05, 1);
+		vf21 = VIF_LOAD_F(vi05, 2);
+		vf22 = VIF_LOAD_F(vi05, 3);
+
+		*VIF_AS_F(vi04, 0) = vf20;
+		*VIF_AS_F(vi04, 1) = vf21;
+		*VIF_AS_F(vi04, 2) = vf22;
+		vi05 = *reinterpret_cast<int*>(&vf28.x);
+		vf28.x = vf28.y;
+		vf28.y = *reinterpret_cast<float*>(&vi05);
+	}
+
+	bool ClipLoopFunc(int inFlag, float inTest, int testReg) 
+	{
+		// _$Clipping_MinusY
+		vi04 = *reinterpret_cast<int*>(&vf28.y);
+		vi06 = *VIF_AS_I(vi04, 0, VIF_REG_X);
+		vi01 = 0xff;
+		vi06 = vi01 & vi06;
+
+		if (vi06 <= 0) {
+			return false;
+		}
+
+		vi05 = *reinterpret_cast<int*>(&vf28.y);
+		vi05 += 1;
+		vi04 = *reinterpret_cast<int*>(&vf28.x);
+		vi04 += 1;
+		vi12 = inFlag;
+		vi13 = *reinterpret_cast<int*>(&vf29.x);
+
+		vf07 = VIF_LOAD_F(vi05, 2);
+		vf06 = VIF_LOAD_F(vi05, 1);
+		vf05 = VIF_LOAD_F(vi05, 0);
+		vi10 = *reinterpret_cast<int*>(&vf07.w);
+
+		vi10 = vi12 & vi10;
+		vi05 += 3;
+
+		// _$Clipping_LoopMinusY
+		for (; vi06 > 0; vi06 -= 1) {
+			vf22 = VIF_LOAD_F(vi05, 2);
+			vf21 = VIF_LOAD_F(vi05, 1);
+			vf20 = VIF_LOAD_F(vi05, 0);
+
+			vi11 = *reinterpret_cast<int*>(&vf22.w);
+			vi11 = vi12 & vi11;
+			vi01 = vi10 & vi11;
+
+			if (vi01 != 0) {
+				break;
+			}
+
+			if (vi10 == 0) {
+				vi01 = vi10 & vi11;
+
+				vf07.w = (VIF_LOAD_F(vi05, -1)).w;
+				vi04 += 3;
+				vi13 += 1;
+
+				(*VIF_AS_F(vi04, -3)).xyz = vf05.xyz;
+				*VIF_AS_F(vi04, -2) = vf06;
+				*VIF_AS_F(vi04, -1) = vf07;
+			}
+
+			// _$Clipping_LoopMinusYmid
+			vi01 = vi10 & vi11;
+			vf23.xyz = vf07.xyz - inTest;
+			vf25.xyz = vf07.xyz - vf22.xyz;
+
+			if (vi01 == 0) {
+				vf24 = vf21 - vf06;
+				vf23 = vf20 - vf05;
+
+				Q = vf23.raw[testReg] / vf25.raw[testReg];
+
+				vi13 += 1;
+				vi04 += 3;
+
+				ACC = vf07;
+				vf25.xyz = ACC.xyz - (vf25.xyz * Q);
+
+				ACC = vf06;
+				vf24 = ACC + (vf24 * Q);
+
+				ACC = vf05;
+				vf23.xyz = ACC.xyz + (vf23.xyz * Q);
+
+				ACC.xyz = vf30.xyz * vf25.xyz;
+				vf26.xyz = ACC.xyz + (vf31.xyz * 1.0f);
+
+				vi01 = Clip(1.0f, vf26);
+				vf25.w = *reinterpret_cast<float*>(&vi01);
+
+				(*VIF_AS_F(vi04, -3)).xyz = vf23.xyz;
+				*VIF_AS_F(vi04, -2) = vf24;
+				*VIF_AS_F(vi04, -1) = vf25;
+			}
+
+			// _$Clipping_LoopMinusYend
+			vi10 = vi11;
+
+			vf07 = vf22;
+			vf06 = vf21;
+			vf05 = vf20;
+
+			vi05 += 3;
+		}
+
+		return true;
+	}
+
 	void _$Clipping()
 	{
 		// Obj to Screen matrix
@@ -313,6 +452,9 @@ namespace VU1Emu {
 		vi02 = vi14;
 		vi03 = vi15 + 1;
 
+		vf22.w = 0.0f; //MR32.w vf22 v00
+
+		// _$Clipping_Loop
 		for (vi02 = vi02; vi02 > 0; vi02 -= 3) {
 
 			vf07 = VIF_LOAD_F(vi03, 2);
@@ -351,10 +493,302 @@ namespace VU1Emu {
 			vi03 += 3;
 
 			if (vi01 != 0x9000) {
-				continue;
+				return;
 			}
 
-			//IMPLEMENTATION_GUARD();
+			// _$TestFirstEdge
+
+			vi04 = VIF_F_TO_I(vf28.x); // From gFanBuffers
+			vi04 += 1;
+
+			vi01 = vi07 & vi08;
+
+			vi13 = VIF_F_TO_I(vf29.x); // From Flags
+
+			vi01 = vi08 | vi09;
+			if (vi01 == 0) {
+
+				vi01 = vi07 | vi08;
+				if (vi07 == 0) {
+
+					vf22.w = (VIF_LOAD_F(vi03, -4)).w;
+
+					vf21 = vf06;
+
+					Q = 1.0f / vf07.w;
+
+					vf20.xyz = vf05.xyz * Q;
+					vf22.xyz = vf07.xyz * Q;
+
+					vi04 += 3;
+					vi13 += 1;
+
+					(*VIF_AS_F(vi04, -3)).xyz = vf20.xyz;
+					*VIF_AS_F(vi04, -2) = vf21;
+					*VIF_AS_F(vi04, -1) = vf22;
+				}
+
+				// _$ClipFirstEdge
+
+				vf20.xyz = vf07.xyz - vf30.w;
+				vf22.xyz = vf07.xyz - vf10.xyz;
+				vf21 = vf09 - vf06;
+
+				vi01 = vi08 & vi09;
+				if (vi01 == 0) {
+
+					vf26 = vf08 - vf05;
+
+					Q = vf20.z / vf22.z;
+
+					vf22.w = 0.0f; //MR32.w vf22 v00
+
+					vi13 += 1;
+					vi04 += 3;
+
+					ACC = vf07;
+					vf22.xyz = ACC.xyz - (vf22.xyz * Q);
+
+					ACC = vf06;
+					vf21 = ACC + (vf21 * Q);
+
+					ACC = vf05;
+					vf26.xyz = ACC.xyz + (vf26.xyz * Q);
+
+					ACC.xyz = vf30.xyz * vf22.xyz;
+					vf23.xyz = ACC.xyz + (vf31.xyz * 1.0f);
+
+					vi05 = Clip(1.0f, vf23) & vi06;
+					vf22.w = *reinterpret_cast<float*>(&vi05);
+
+					(*VIF_AS_F(vi04, -3)).xyz = vf26.xyz;
+					*VIF_AS_F(vi04, -2) = vf21;
+					*VIF_AS_F(vi04, -1) = vf22;
+				}
+			}
+
+			// _$TestSecondEdge
+
+			vi01 = vi09 | vi07;
+			if (vi01 == 0) {
+
+				vi01 = vi08 | vi09;
+				if (vi08 == 0) {
+
+					vf22.w = (VIF_LOAD_F(vi03, -1)).w;
+
+					vf21 = vf09;
+
+					Q = 1.0f / vf10.w;
+
+					vf20.xyz = vf08.xyz * Q;
+					vf22.xyz = vf10.xyz * Q;
+
+					vi04 += 3;
+					vi13 += 1;
+
+					(*VIF_AS_F(vi04, -3)).xyz = vf20.xyz;
+					*VIF_AS_F(vi04, -2) = vf21;
+					*VIF_AS_F(vi04, -1) = vf22;
+				}
+
+				// _$ClipSecondEdge
+
+				vf20.xyz = vf10.xyz - vf30.w;
+				vf22.xyz = vf10.xyz - vf13.xyz;
+				vf21 = vf12 - vf09;
+
+				vi01 = vi09 & vi07;
+				if (vi01 == 0) {
+					vf26 = vf11 - vf08;
+
+					Q = vf20.z / vf22.z;
+
+					vi13 += 1;
+					vi04 += 3;
+
+					ACC = vf10;
+					vf22.xyz = ACC.xyz - (vf22.xyz * Q);
+
+					ACC = vf09;
+					vf21 = ACC + (vf21 * Q);
+
+					ACC = vf08;
+					vf26.xyz = ACC.xyz + (vf26.xyz * Q);
+
+					ACC.xyz = vf30.xyz * vf22.xyz;
+					vf23.xyz = ACC.xyz + (vf31.xyz * 1.0f);
+
+					vi05 = Clip(1.0f, vf23) & vi06;
+					vf22.w = *reinterpret_cast<float*>(&vi05);
+
+					(*VIF_AS_F(vi04, -3)).xyz = vf26.xyz;
+					*VIF_AS_F(vi04, -2) = vf21;
+					*VIF_AS_F(vi04, -1) = vf22;
+				}
+			}
+
+			// _$TestThirdEdge
+
+			if (vi01 == 0) {
+				vi01 = vi09 | vi07;
+				if (vi09 == 0) {
+
+					vf22.w = (VIF_LOAD_F(vi03, 2)).w;
+
+					vf21 = vf12;
+
+					Q = 1.0f / vf13.w;
+
+					vf20.xyz = vf11.xyz * Q;
+					vf22.xyz = vf13.xyz * Q;
+
+					vi04 += 3;
+					vi13 += 1;
+
+					(*VIF_AS_F(vi04, -3)).xyz = vf20.xyz;
+					*VIF_AS_F(vi04, -2) = vf21;
+					*VIF_AS_F(vi04, -1) = vf22;
+				}
+
+				// _$ClipThirdEdge
+
+				vf20.xyz = vf13.xyz - vf30.w;
+				vf22.xyz = vf13.xyz - vf07.xyz;
+				vf21 = vf06 - vf12;
+
+				if (vi01 == 0) {
+					vf26 = vf05 - vf11;
+
+					Q = vf20.z / vf22.z;
+
+					vi13 += 1;
+					vi04 += 3;
+
+					ACC = vf13;
+					vf22.xyz = ACC.xyz - (vf22.xyz * Q);
+
+					ACC = vf12;
+					vf21 = ACC + (vf21 * Q);
+
+					ACC = vf11;
+					vf26.xyz = ACC.xyz + (vf26.xyz * Q);
+
+					ACC.xyz = vf30.xyz * vf22.xyz;
+					vf23.xyz = ACC.xyz + (vf31.xyz * 1.0f);
+
+					vi05 = Clip(1.0f, vf23) & vi06;
+					vf22.w = *reinterpret_cast<float*>(&vi05);
+
+					(*VIF_AS_F(vi04, -3)).xyz = vf26.xyz;
+					*VIF_AS_F(vi04, -2) = vf21;
+					*VIF_AS_F(vi04, -1) = vf22;
+				}
+			}
+
+			// _$EndOfClippingNear
+			CopyClip();
+
+			if (!ClipLoopFunc(8, vf27.z, VIF_REG_Y)) {
+				return;
+			}
+			CopyClip();
+
+			if (!ClipLoopFunc(4, vf27.w, VIF_REG_Y)) {
+				return;
+			}
+			CopyClip();
+
+			if (!ClipLoopFunc(2, vf27.x, VIF_REG_X)) {
+				return;
+			}
+			CopyClip();
+
+			if (!ClipLoopFunc(1, vf27.y, VIF_REG_X)) {
+				return;
+			}
+			CopyClip();
+
+			// _$Clipping_Convert
+			vi04 = *reinterpret_cast<int*>(&vf28.y);
+			vi13 = *VIF_AS_I(vi04, 0, VIF_REG_X);
+			vi01 = 0xff;
+			vi13 = vi01 & vi13;
+
+			if (vi13 <= 0) {
+				return;
+			}
+
+			vi04 += 1;
+
+			// _$Clipping_ConvertLoop_NoFog
+			for (; vi13 > 0; vi13 -= 3) {
+				// this is an unrolled loop.
+
+				vf18 = VIF_LOAD_F(vi04, 1);
+				vf19.xyz = VIF_LOAD_F(vi04, 2).xyz;
+
+				vf22.w = 0.0f;
+				vf18.x = *reinterpret_cast<int*>(&vf18.x);
+				vf18.y = *reinterpret_cast<int*>(&vf18.y);
+				vf18.z = *reinterpret_cast<int*>(&vf18.z);
+				vf18.w = *reinterpret_cast<int*>(&vf18.w);
+
+				vf22.x = float_to_int4(vf19.x);
+				vf22.y = float_to_int4(vf19.y);
+				vf22.z = *reinterpret_cast<int*>(&vf19.z);
+
+				*VIF_AS_F(vi04, 1) = vf18;
+				*VIF_AS_F(vi04, 2) = vf22;
+
+				vf14 = VIF_LOAD_F(vi04, 4);
+				vf15.xyz = VIF_LOAD_F(vi04, 5).xyz;
+
+				vf20.w = 0.0f;
+				vf14.x = *reinterpret_cast<int*>(&vf14.x);
+				vf14.y = *reinterpret_cast<int*>(&vf14.y);
+				vf14.z = *reinterpret_cast<int*>(&vf14.z);
+				vf14.w = *reinterpret_cast<int*>(&vf14.w);
+
+				vf20.x = float_to_int4(vf15.x);
+				vf20.y = float_to_int4(vf15.y);
+				vf20.z = *reinterpret_cast<int*>(&vf15.z);
+
+				*VIF_AS_F(vi04, 4) = vf14;
+				*VIF_AS_F(vi04, 5) = vf20;
+
+				vf16 = VIF_LOAD_F(vi04, 7);
+				vf17.xyz = VIF_LOAD_F(vi04, 8).xyz;
+
+				vf21.w = 0.0f;
+				vf16.x = *reinterpret_cast<int*>(&vf16.x);
+				vf16.y = *reinterpret_cast<int*>(&vf16.y);
+				vf16.z = *reinterpret_cast<int*>(&vf16.z);
+				vf16.w = *reinterpret_cast<int*>(&vf16.w);
+
+				vf21.x = float_to_int4(vf17.x);
+				vf21.y = float_to_int4(vf17.y);
+				vf21.z = *reinterpret_cast<int*>(&vf17.z);
+
+				*VIF_AS_F(vi04, 7) = vf16;
+				*VIF_AS_F(vi04, 8) = vf21;
+
+				vi04 += 9;
+			}
+
+			vi05 = *reinterpret_cast<int*>(&vf28.y);
+			// XGKICK vi05
+
+			edpkt_data* pkt = reinterpret_cast<edpkt_data*>(VIF_AS_F(vi05, 0));
+			DUMP_TAG_ADV(pkt->cmdA);
+
+			//HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pkt);
+			//const uint prim = pGifTag->PRIM;
+			//Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim));
+
+			vi05 = *reinterpret_cast<int*>(&vf28.y);
+			vf28.y = vf28.z;
+			vf28.z = *reinterpret_cast<float*>(&vi05);
 		}
 	}
 
@@ -379,16 +813,12 @@ namespace VU1Emu {
 			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
 			Q = 1.0f / vf18.w;
 
-			vf19.x = vf18.x * Q;
-			vf19.y = vf18.y * Q;
-			vf19.z = vf18.z * Q;
+			vf19.xyz = vf18.xyz * Q;
 
 			Q = 1.0f / vf28.w;
 			vf21 = vf17 * Q;
 
-			vf29.x = vf28.x * Q;
-			vf29.y = vf28.y * Q;
-			vf29.z = vf28.z * Q;
+			vf29.xyz = vf28.xyz * Q;
 
 			*reinterpret_cast<int*>(&vf31.x) = float_to_int4(vf29.x);
 			*reinterpret_cast<int*>(&vf31.y) = float_to_int4(vf29.y);
@@ -444,7 +874,7 @@ namespace VU1Emu {
 
 			if ((vi01 & 0x20) != 0) {
 				// _$Alpha_Object
-				//IMPLEMENTATION_GUARD();
+				IMPLEMENTATION_GUARD();
 			}
 
 			if ((vi01 & 0x100) != 0) {
@@ -470,11 +900,11 @@ namespace VU1Emu {
 
 				}
 				else {
-					// _$NoClipCulling_12_1
-					//IMPLEMENTATION_GUARD();
+					_$NoClipCulling_12_1();
 				}
 			}
 
+			// _$Clipping_End (3b20)
 			_$GouraudMapping_No_Fog_16_2();
 		}
 	}
@@ -484,21 +914,9 @@ namespace VU1Emu {
 		const auto dst = GetFakeMem() + (addr << 4);
 		memcpy(dst, data, size);
 	}
-
-	struct HW_Gif_Tag {
-		u16 NLOOP : 15;
-		u16 EOP : 1;
-		u16 _dummy0 : 16;
-		u32 _dummy1 : 14;
-		u32 PRE : 1;
-		u32 PRIM : 11;
-		u32 FLG : 2;
-		u32 NREG : 4;
-		u32 REGS[2];
-	};
 }
 
-void VU1Emu::ProcessVifList(edpkt_data* pVifPkt) 
+void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 {
 	int stcl = 0;
 	int stwl = 0;
@@ -528,7 +946,8 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
 			// Update PRIM
-			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pFakeMem + 0x1990);
+			const int itopAddr = itop * 0x10;
+			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pFakeMem + itopAddr);
 			const uint prim = pGifTag->PRIM;
 			Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim));
 

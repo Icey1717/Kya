@@ -22,7 +22,7 @@ void edVideoFlip(void);
 struct edSurface* edVideoGetDisplaySurface(void);
 edVideo_Globals* edVideoGetInfo(void);
 void edVideoWaitVsync(byte param_1);
-unsigned int GetCountValue(void);
+unsigned int _VideoTimerGet(void);
 
 extern edSysHandlerVideo edSysHandlerVideo_0048cee0;
 

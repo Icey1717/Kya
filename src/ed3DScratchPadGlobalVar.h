@@ -3,7 +3,7 @@
 
 union edF32MATRIX4;
 struct ed_g2d_material;
-struct edF32VECTOR4;
+union edF32VECTOR4;
 struct edFCamera;
 struct SceneConfig;
 struct RenderInfo;
