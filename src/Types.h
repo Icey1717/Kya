@@ -208,6 +208,13 @@ union
 	};
 
 	struct {
+		int xi;
+		int yi;
+		int zi;
+		int wi;
+	};
+
+	struct {
 		edF32VECTOR3 xyz;
 	};
 
@@ -318,7 +325,7 @@ union alignas(16)
 #define EDITOR_BUILD PLATFORM_WIN
 
 #ifdef PLATFORM_WIN
-#define ENABLE_MY_LOG
+//#define ENABLE_MY_LOG
 #else
 //#define ENABLE_MY_LOG
 #endif

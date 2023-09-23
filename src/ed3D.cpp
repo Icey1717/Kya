@@ -47,6 +47,16 @@
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 
+bool bHackDoOnce = false;
+
+#ifdef PLATFORM_PS2
+#define RENDER_LABEL_BEGIN(...)
+#define RENDER_LABEL_END(...)
+#else
+#define RENDER_LABEL_BEGIN(label) Renderer::Debug::BeginLabel(label)
+#define RENDER_LABEL_END(label) Renderer::Debug::EndLabel()
+#endif
+
 #ifdef PLATFORM_PS2
 #define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)addr
 #define SCRATCHPAD_ADDRESS_TYPE(addr, type) (type)addr
@@ -4224,6 +4234,10 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial pMaterial: %p | pBitmap: %p", pRenderMeshData->pMaterial, pRenderMeshData->pBitmap);
 
+	if (bHackDoOnce) {
+		return;
+	}
+
 	peVar6 = gpPKTDataRefMasPath3;
 	peVar5 = g_GifRefPktCur;
 	peVar3 = g_VifRefPktCur;
@@ -4408,6 +4422,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 #ifdef PLATFORM_WIN
 	Renderer::Draw();
 #endif
+	bHackDoOnce = true;
 	return;
 }
 
@@ -4431,15 +4446,19 @@ void ed3DFlushList(void)
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushList");
 
+	RENDER_LABEL_BEGIN("ed3DFlushList");
+
 	gFlushListFlusaON = 0;
 	gFushListCounter = 0;
 	do {
 		fVar1 = FLOAT_00448a04;
 		if (0xe < gFushListCounter) {
+			RENDER_LABEL_END("ed3DFlushList");
 			return;
 		}
 
 		ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Processing: %d", gFushListCounter);
+		RENDER_LABEL_BEGIN("ed3DFlushList process list");
 
 		/* Get the camera type, and then add the flip index as there is two per type. */
 		pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
@@ -4556,6 +4575,8 @@ void ed3DFlushList(void)
 			(pCurrentList)->pPrev = (edNODE*)pCurrentList;
 		}
 		gFushListCounter = gFushListCounter + 1;
+
+		RENDER_LABEL_END("ed3DFlushList process list");
 	} while (true);
 }
 
@@ -6387,6 +6408,8 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 	RENDER_LOG("ed3DSceneRenderOne Scene %p (%s) (shadow: %d)", pShadowScene, gSceneNames[GetStaticMeshMasterIndex(pShadowScene)], pShadowScene->bShadowScene);
 	RENDER_LOG("ed3DSceneRenderOne Shadow Scene %p (%s) (shadow: %d)", pScene, gSceneNames[GetStaticMeshMasterIndex(pScene)], pScene->bShadowScene);
 
+	RENDER_LABEL_BEGIN("ed3DSceneRenderOne");
+
 	iVar3 = gIDProfileFlush;
 	if ((pShadowScene->bShadowScene == 1) && ((pScene->flags_0x4 & 0x10) != 0)) {
 		RENDER_LOG("ed3DSceneRenderOne SKIP");
@@ -6681,6 +6704,8 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 			}
 		}
 	}
+
+	RENDER_LABEL_END("ed3DSceneRenderOne");
 	return uVar6;
 }
 
@@ -7131,6 +7156,10 @@ void ed3DSceneRender(int, int, char*)
 	uint staticMeshMasterIndex;
 	uint staticMeshMasterFlags;
 
+	RENDER_LABEL_BEGIN("ed3DSceneRender");
+
+	bHackDoOnce = false;
+
 	iVar4 = gIDProfileRender;
 	if (bcalcFrame == false) {
 		bcalcFrame = true;
@@ -7448,6 +7477,8 @@ void ed3DSceneRender(int, int, char*)
 			//}
 		}
 	}
+
+	RENDER_LABEL_END("ed3DSceneRender");
 	return;
 }
 

@@ -1729,7 +1729,13 @@ void CCinematic::Manage()
 		//UsedInCutsceneManagerUpdateC((MagicalSwitch_20*)this->field_0x258, (Actor*)0x0);)
 	}
 	if ((this->intOrPtrField != 0) && ((GameFlags & 0x20) == 0)) {
-		IncrementCutsceneDelta();
+		// #HACK
+		if (this->totalCutsceneDelta < 1.0f) {
+			//IncrementCutsceneDelta();
+		}
+		else {
+			this->totalCutsceneDelta = 1.0f;
+		}
 	}
 	if (this->intOrPtrField == 0) {
 		iVar2 = this->cineBankLoadStage_0x2b4;

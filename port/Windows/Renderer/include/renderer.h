@@ -5,6 +5,7 @@
 
 // Forward decs for RenderDelegate
 typedef struct VkFramebuffer_T* VkFramebuffer;
+typedef struct VkCommandBuffer_T* VkCommandBuffer;
 struct VkExtent2D;
 
 namespace Renderer
@@ -82,4 +83,11 @@ namespace Renderer
 	RenderDelegate& GetRenderDelegate();
 
 	void SetHeadless(bool bValue);
+
+	namespace Debug {
+		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* szLabel);
+		void EndLabel(const VkCommandBuffer& cmdBuffer);
+		void BeginLabel(const char* szLabel);
+		void EndLabel();
+	}
 }

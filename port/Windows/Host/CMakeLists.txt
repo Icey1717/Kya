@@ -5,4 +5,6 @@ target_link_libraries(Kya_Win PRIVATE Kya DebugMenu)
 
 message("Exe directory: ${KYA_EXECUTABLE_DIRECTORY}")
 set_target_properties(Kya_Win PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${KYA_EXECUTABLE_DIRECTORY}")
-set_target_properties(Kya_Win PROPERTIES OUTPUT_NAME "Kya_$<CONFIG>.exe")
+set_target_properties(Kya_Win PROPERTIES OUTPUT_NAME "Kya_$<CONFIG>")
+
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Kya_Win)

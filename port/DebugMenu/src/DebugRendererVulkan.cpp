@@ -34,6 +34,7 @@ namespace DebugMenu_Internal {
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
 		vkBeginCommandBuffer(cmd, &beginInfo);
+		Renderer::Debug::BeginLabel(cmd, "DebugMenu");
 
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -62,6 +63,8 @@ namespace DebugMenu_Internal {
 		ImGui_ImplVulkan_RenderDrawData(drawData, cmd);
 
 		vkCmdEndRenderPass(cmd);
+
+		Renderer::Debug::EndLabel(cmd);
 		vkEndCommandBuffer(cmd);
 
 		VkSubmitInfo submitInfo{};
