@@ -2076,13 +2076,17 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 
 	pPkt[1] = gFANbuffers;
 
-	// Not sure what this does yet, but its transferred via the above ^.
-	pPkt[2].cmdA = 0x302ec00000008000;
+	// Packet to send to GIF when we push vertex data from the VIF.
+	pPkt[2].cmdA = SCE_GIF_SET_TAG(
+		0,				// NLOOP
+		SCE_GS_TRUE,	// EOP
+		SCE_GS_TRUE,	// PRE
+		93,				// PRIM
+		SCE_GIF_PACKED, // FLG
+		3				// NREG
+	);
 	pPkt[2].cmdB = 0x512;
 
-#ifdef PLATFORM_WIN
-	DUMP_TAG_ADV(pPkt[2].cmdA);
-#endif
 
 	pPkt[3].asVector = gClipMulVector;
 	pPkt[4].asVector = gClipAddVector;

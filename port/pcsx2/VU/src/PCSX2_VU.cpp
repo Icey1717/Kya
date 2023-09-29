@@ -21,6 +21,11 @@ void pcsx2_VU::Execute(unsigned int addr)
 	vu1ExecMicro(addr);
 }
 
+void pcsx2_VU::ResetVUMemory()
+{
+	vuResetMem();
+}
+
 void pcsx2_VU::SetKickCallback(std::function<void(int)> callback)
 {
 	gKickCallback = callback;

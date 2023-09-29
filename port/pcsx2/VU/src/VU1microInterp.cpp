@@ -228,8 +228,6 @@ void vu1Exec(VURegs* VU)
 	VU->cycle++;
 	_vu1Exec(VU);
 
-	VU->VF[0].f.w = 1.0f;
-
 	if (VU->VI[0].UL != 0)
 		DbgCon.Error("VI[0] != 0!!!!\n");
 	if (VU->VF[0].f.x != 0.0f)

@@ -4,6 +4,7 @@
 #include "port.h"
 
 #include "PCSX2_VU.h"
+#include "log.h"
 
 namespace VU1Emu {
 
@@ -362,7 +363,7 @@ namespace VU1Emu {
 				vi10 = vi10 | 0x9000;
 				vi10 = vi10 | vi05;
 
-				MY_LOG("00002b18 0a2a1802: ISW.w        %08x (vi10), 2, %08x (vi03),", vi10, vi03);
+				//MY_LOG("00002b18 0a2a1802: ISW.w        %08x (vi10), 2, %08x (vi03),", vi10, vi03);
 
 				*VIF_AS_I(vi03, 2, VIF_REG_W) = vi10;
 			}
@@ -566,6 +567,8 @@ namespace VU1Emu {
 			RGBA.wi,
 			STQ.z);
 
+		Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x S: %f, T: %f, Q: %f", vtxReg, x, y, z, skip, STQ.x, STQ.y, STQ.z);
+
 		Renderer::SetVertexSkip(skip & 0x8000);
 		Renderer::KickVertex(x, y, z);
 	}
@@ -648,7 +651,7 @@ namespace VU1Emu {
 			vi09 = VIF_F_TO_I(vf13.w);
 			auto tempvi09 = vi09;
 
-			MY_LOG("IAND         00000003 (vi01), 0000f000 (vi10), %08x (vi09),", vi09);
+			//MY_LOG("IAND         00000003 (vi01), 0000f000 (vi10), %08x (vi09),", vi09);
 
 			vi01 = 0xf000 & vi09;
 			vi09 = vi12 & vi09;
@@ -1150,7 +1153,6 @@ namespace VU1Emu {
 
 	void KickCallback(int reg) {
 		EmulateXGKICK(reg / 0x10);
-		//KickVertexFromReg(reg);
 	}
 }
 
@@ -1172,6 +1174,8 @@ void VU1Emu::SendVu1Code(unsigned char* pCode, size_t size)
 		pBlockStart += 0x8;
 		pBlockStart += vu1BlockSize;
 	}
+
+	pcsx2_VU::ResetVUMemory();
 }
 
 void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
@@ -1203,19 +1207,15 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
-			//memcpy(gFakeMemInterpreter, GetFakeMem(), FAKE_VU1_MEM_SIZE);
-
-			RunCode(pRunTag->addr);
-
 			if (false) {
 				RunCode(pRunTag->addr);
 			}
 			else {
 
-				//pcsx2_VU::SetKickCallback(KickCallback);
-				//pcsx2_VU::SetMicro(gVu1Code);
-				//pcsx2_VU::SetMem(gFakeMemInterpreter);
-				//pcsx2_VU::Execute(pRunTag->addr);
+				pcsx2_VU::SetKickCallback(KickCallback);
+				pcsx2_VU::SetMicro(gVu1Code);
+				pcsx2_VU::SetMem((unsigned char*)gFakeMem);
+				pcsx2_VU::Execute(pRunTag->addr);
 			}
 
 		}

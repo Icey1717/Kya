@@ -194,6 +194,8 @@ extern void vu1ExecMicro(u32 addr);
 extern void vu1Exec(VURegs* VU);
 extern void MTVUInterrupt();
 
+extern void vuResetMem();
+
 #ifdef VUM_LOG
 
 #define IdebugUPPER(VU) \
