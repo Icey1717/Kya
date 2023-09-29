@@ -119,7 +119,7 @@ extern VIFregisters vif1Regs;
 #define CHECK_VU_OVERFLOW(...) false
 #define CHECK_VUADDSUBHACK false
 #define THREAD_VU1 false
-#define INSTANT_VU1 false
+#define INSTANT_VU1 true
 
 inline u32 EmulateCycle() {
 	//assert(false);
