@@ -567,7 +567,12 @@ namespace VU1Emu {
 			RGBA.wi,
 			STQ.z);
 
-		Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x S: %f, T: %f, Q: %f", vtxReg, x, y, z, skip, STQ.x, STQ.y, STQ.z);
+		if (x == 0xcff0 && vtxReg == 0x61) {
+			skip = skip;
+		}
+
+		//Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x S: %f, T: %f, Q: %f", vtxReg, x, y, z, skip, STQ.x, STQ.y, STQ.z);
+		Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x", vtxReg, x, y, z, skip);
 
 		Renderer::SetVertexSkip(skip & 0x8000);
 		Renderer::KickVertex(x, y, z);
@@ -624,11 +629,13 @@ namespace VU1Emu {
 		vf09 = VIF_LOAD_F(vi03, 4);
 		vf08 = VIF_LOAD_F(vi03, 3);
 
-		vi07 = vi12 & VIF_F_TO_I(vf07.w);
+		vi07 = VIF_F_TO_I(vf07.w);
+		vi07 = vi12 & vi07;
 		vf07 = vf04 + (vf03 * vf07.z) + (vf02 * vf07.y) + (vf01 * vf07.x);
 		vf06 = ConvertFromInt(vf06);
 
-		vi08 = vi12 & VIF_F_TO_I(vf10.w);
+		vi08 = VIF_F_TO_I(vf10.w);
+		vi08 = vi12 & vi08;
 		vf10 = vf04 + (vf03 * vf10.z) + (vf02 * vf10.y) + (vf01 * vf10.x);
 		vf09 = ConvertFromInt(vf09);
 
@@ -1207,7 +1214,8 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
-			if (false) {
+			static bool bEmulateCode = true;
+			if (bEmulateCode) {
 				RunCode(pRunTag->addr);
 			}
 			else {

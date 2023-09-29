@@ -157,7 +157,7 @@ static constexpr unsigned int __pagemask = __pagesize - 1;
 #endif
 
 #define __ri __releaseinline
-#define __fi __releaseinline//__forceinline
+#define __fi __forceinline
 
 // Makes sure that if anyone includes xbyak, it doesn't do anything bad
 #define XBYAK_ENABLE_OMITTED_OPERAND
