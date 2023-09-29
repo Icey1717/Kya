@@ -270,7 +270,7 @@ void PauseManager::Level_Draw()
 		//if (0 < iVar5) {
 		//	do {
 		//		pCVar6 = GetCutsceneData_001c50c0(pCinematicManager, index);
-		//		if ((pCVar6->intOrPtrField != 0) && ((pCVar6->flags_0x4 & 8) != 0)) {
+		//		if ((pCVar6->state != CS_Stopped) && ((pCVar6->flags_0x4 & 8) != 0)) {
 		//			pCVar8 = pCVar6;
 		//		}
 		//		index = index + 1;

@@ -18,6 +18,7 @@
 #include "CameraViewManager.h"
 #include "DebugCamera.h"
 #include "TextureCache.h"
+#include "../../../src/CinematicManager.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -109,6 +110,7 @@ namespace DebugMenu_Internal {
 	static bool bShowMaterialList = false;
 	static bool bShowTextureList = false;
 	static bool bShowFramebuffers = false;
+	static bool bShowCutsceneMenu = true;
 
 	void DrawMenu() {
 		ImGui::BeginMainMenuBar();
@@ -140,6 +142,98 @@ namespace DebugMenu_Internal {
 		}
 
 		ImGui::EndMainMenuBar();
+	}
+
+#include <stdio.h>
+#include <stdlib.h>
+
+	bool GetCutsceneName(void* pData, int index, const char** ppOut) {
+		auto* options = static_cast<std::vector<std::string>*>(pData);
+		*ppOut = ((*options)[index]).c_str();
+		return true;
+	}
+
+	void ShowCutsceneMenu() {
+		// Create a new ImGui window
+		ImGui::Begin("Video Player Controls", &bShowCutsceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
+
+		auto pCinematicManager = g_CinematicManager_0048efc;
+
+		static int selectedCutsceneId = 0;
+
+		if (pCinematicManager->activeCinematicCount > 0) {
+			if (selectedCutsceneId > pCinematicManager->activeCinematicCount) {
+				selectedCutsceneId = 0;
+			}
+
+			std::vector<std::string> options;
+
+			for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
+				options.emplace_back(std::to_string(i));
+			}
+
+			// Create the dropdown box
+			if (ImGui::Combo("Select an Option", &selectedCutsceneId, GetCutsceneName, &options, pCinematicManager->activeCinematicCount, -1))
+			{
+				// Handle the selected option change here
+				// The selected option index will be stored in 'selectedOption'
+				// You can perform actions based on the selected option.
+			}
+
+			auto pCutscene = pCinematicManager->ppCinematicObjB_B[selectedCutsceneId];
+
+			if (pCutscene->cineBankLoadStage_0x2b4 == 4) {
+				// Play/Pause button
+				if (pCutscene->state != CS_Stopped)
+				{
+					if (ImGui::Button("Pause"))
+					{
+						pCutscene->state = CS_Stopped;
+					}
+				}
+				else
+				{
+					if (ImGui::Button("Play"))
+					{
+						pCutscene->state = CS_Playing;
+					}
+				}
+
+				auto& currentTime = pCutscene->totalCutsceneDelta;
+				auto& totalTime = ((pCutscene->cinFileData).pCinTag)->totalPlayTime;
+
+				// Jump to beginning button
+				if (ImGui::Button("Jump to Beginning"))
+				{
+					currentTime = 0.0f;
+					// Seek to the beginning of the video here
+				}
+
+				// Jump to end button
+				if (ImGui::Button("Jump to End"))
+				{
+					currentTime = totalTime;
+					// Seek to the end of the video here
+				}
+
+				// Current time and total time labels
+				ImGui::Text("Time: %.2f / %.2f", currentTime, totalTime);
+
+				// Seek bar for video playback
+				ImGui::SliderFloat("##seekbar", &currentTime, 0.0f, totalTime);
+			}
+			else {
+				// Jump to end button
+				if (ImGui::Button("Start"))
+				{
+					pCutscene->Start();
+					// Seek to the end of the video here
+				}
+			}
+		}
+
+		// End the ImGui window
+		ImGui::End();
 	}
 
 	void ShowTextureCache() {
@@ -414,6 +508,10 @@ namespace DebugMenu_Internal {
 
 		if (bShowFramebuffers) {
 			ShowFramebuffers();
+		}
+
+		if (bShowCutsceneMenu) {
+			ShowCutsceneMenu();
 		}
 
 		MaterialPreviewer::Update();

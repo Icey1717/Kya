@@ -5,8 +5,8 @@
 
 
 char* edStrReturnEndPtr(char* str);
-int edStrLength(char* str);
-char* edStrCat(char* str1, char* str2);
+int edStrLength(const char* str);
+const char* edStrCat(char* str1, const char* str2);
 void edStrCatMulti(char* dst, char* src, ...);
 int edStrCopy(char* outString, const char* inString);
 int edStrCopyUpper(char* outBuffer, char* inString);

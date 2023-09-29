@@ -3,16 +3,17 @@
 #include "port/pointer_conv.h"
 #include "port.h"
 
+#include "PCSX2_VU.h"
+
 namespace VU1Emu {
 
 #define FAKE_VU1_MEM_SIZE 0x100000
-	char* gFakeMem = nullptr;
+	char gFakeMem[FAKE_VU1_MEM_SIZE] = {};
+	unsigned char gFakeMemInterpreter[FAKE_VU1_MEM_SIZE] = {};
+
+	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
 
 	char* GetFakeMem() {
-		if (gFakeMem == nullptr) {
-			gFakeMem = (char*)malloc(FAKE_VU1_MEM_SIZE);
-			memset(gFakeMem, 0, FAKE_VU1_MEM_SIZE);
-		}
 		return gFakeMem;
 	}
 
@@ -168,6 +169,7 @@ namespace VU1Emu {
 
 	uint Clip(float value, const edF32VECTOR4& reg)
 	{
+		value = fabs(value);
 		gClipflag <<= 6;
 		if (reg.x > +value) gClipflag |= 0x01;
 		if (reg.x < -value) gClipflag |= 0x02;
@@ -199,35 +201,51 @@ namespace VU1Emu {
 			vf06 = VIF_LOAD_F(vi03, 5);
 			vf07 = VIF_LOAD_F(vi03, 8);
 
+			vi10 = vf05.wi;
+			vi11 = vf06.wi;
+			vi12 = vf07.wi;
+
 			vf08 = vf04 + (vf03 * vf05.z) + (vf02 * vf05.y) + (vf01 * vf05.x);
 			vf09 = vf04 + (vf03 * vf06.z) + (vf02 * vf06.y) + (vf01 * vf06.x);
 			vf10 = vf04 + (vf03 * vf07.z) + (vf02 * vf07.y) + (vf01 * vf07.x);
 
-			vi05 = Clip(vf08.w, vf08) & vi09;
+			vi05 = Clip(vf08.w, vf08);
+			vi05 = vi09 & vi05;
 			vi08 = vi05 & vi06;
 			vi08 = vi08 & vi07;
 
 			if (vi08 != 0) {
-				uint* pFlag = (uint*)VIF_AS_I(vi03, 2, VIF_REG_W);
-				*pFlag |= 0xa000;
+				vi10 = vi10 | 0xa000;
+				*VIF_AS_I(vi03, 2, VIF_REG_W) = vi10;
+
+				//uint* pFlag = (uint*)VIF_AS_I(vi03, 2, VIF_REG_W);
+				//*pFlag |= 0xa000;
 			}
 
-			vi06 = Clip(vf09.w, vf09) & vi09;
+			vi06 = Clip(vf09.w, vf09);
+			vi06 = vi09 & vi06;
 			vi08 = vi05 & vi06;
 			vi08 = vi08 & vi07;
 
 			if (vi08 != 0) {
-				uint* pFlag = (uint*)VIF_AS_I(vi03, 5, VIF_REG_W);
-				*pFlag |= 0xa000;
+				vi11 = vi11 | 0xa000;
+				*VIF_AS_I(vi03, 5, VIF_REG_W) = vi11;
+
+				//uint* pFlag = (uint*)VIF_AS_I(vi03, 5, VIF_REG_W);
+				//*pFlag |= 0xa000;
 			}
 
-			vi07 = Clip(vf10.w, vf10) & vi09;
+			vi07 = Clip(vf10.w, vf10);
+			vi07 = vi09 & vi07;
 			vi08 = vi05 & vi06;
 			vi08 = vi08 & vi07;
 
 			if (vi08 != 0) {
-				uint* pFlag = (uint*)VIF_AS_I(vi03, 8, VIF_REG_W);
-				*pFlag |= 0xa000;
+				vi12 = vi12 | 0xa000;
+				*VIF_AS_I(vi03, 8, VIF_REG_W) = vi12;
+
+				//uint* pFlag = (uint*)VIF_AS_I(vi03, 8, VIF_REG_W);
+				//*pFlag |= 0xa000;
 			}
 
 			vi03 += 9;
@@ -239,7 +257,7 @@ namespace VU1Emu {
 		_$NoClipCulling_12_1();
 	}
 
-	void _$ClippingRejection_12_1()
+	void _$ClippingRejection_12_1_OLD()
 	{
 		vi02 = vi14;
 		vi03 = vi15 + 1;
@@ -263,16 +281,20 @@ namespace VU1Emu {
 			vf09 = vf04 + (vf03 * vf06.z) + (vf02 * vf06.y) + (vf01 * vf06.x);
 			vf10 = vf04 + (vf03 * vf07.z) + (vf02 * vf07.y) + (vf01 * vf07.x);
 
-			vi05 = Clip(vf08.w, vf08) & vi09;
+			vi05 = Clip(vf08.w, vf08);
+			vi05 = vi09 & vi05;
 			vi08 = vi05 | vi06;
 			vi08 = vi08 | vi07;
 
 			if (vi08 != 0) {
-				uint* pFlag = (uint*)VIF_AS_I(vi03, 2, VIF_REG_W);
-				*pFlag |= 0x9000 | vi05;
+				vi10 = *VIF_AS_I(vi03, 2, VIF_REG_W);
+				vi10 = vi10 | 0x9000;
+				vi10 = vi10 | vi05;
+				*VIF_AS_I(vi03, 2, VIF_REG_W) = vi10;
 			}
 
-			vi06 = Clip(vf09.w, vf09) & vi09;
+			vi06 = Clip(vf09.w, vf09);
+			vi06 = vi09 & vi06;
 			vi08 = vi05 | vi06;
 			vi08 = vi08 | vi07;
 
@@ -281,7 +303,8 @@ namespace VU1Emu {
 				*pFlag |= 0x9000 | vi06;
 			}
 
-			vi07 = Clip(vf10.w, vf10) & vi09;
+			vi07 = Clip(vf10.w, vf10);
+			vi07 = vi09 & vi07;
 			vi08 = vi05 | vi06;
 			vi08 = vi08 | vi07;
 
@@ -291,6 +314,98 @@ namespace VU1Emu {
 			}
 
 			vi03 += 9;
+		}
+	}
+
+	void _$ClippingRejection_12_1()
+	{
+		vi02 = vi14;
+		vi03 = vi15 + 1;
+
+		vf05 = VIF_LOAD_F(vi03, 2);
+
+		// Obj to Clipping matrix
+		vf04 = VIF_LOAD_F(vi00, 15);
+		vf03 = VIF_LOAD_F(vi00, 14);
+		vf02 = VIF_LOAD_F(vi00, 13);
+		vf01 = VIF_LOAD_F(vi00, 12);
+
+		vi04 = 0x9000;
+
+		vf08 = vf04 + (vf03 * vf05.z) + (vf02 * vf05.y) + (vf01 * vf05.x);
+
+		vf06 = VIF_LOAD_F(vi03, 5);
+
+		vi09 = 63;
+
+		vi10 = vf05.wi;
+		vi05 = Clip(vf08.w, vf08);
+		vf07 = VIF_LOAD_F(vi03, 8);
+		vi11 = vf06.wi;
+
+		vf09 = vf04 + (vf03 * vf06.z) + (vf02 * vf06.y) + (vf01 * vf06.x);
+
+		vi06 = 0;
+		vi07 = 0;
+
+		while (vi02 > 0) {
+			vi05 = vi09 & vi05;
+			vi08 = vi05 | vi06;
+			vi08 = vi08 | vi07;
+
+			vi06 = Clip(vf09.w, vf09);
+
+			vi12 = vf07.wi;
+			vf10 = vf04 + (vf03 * vf07.z) + (vf02 * vf07.y) + (vf01 * vf07.x);
+
+			if (vi08 != 0) {
+				vi10 = vi10 | 0x9000;
+				vi10 = vi10 | vi05;
+
+				MY_LOG("00002b18 0a2a1802: ISW.w        %08x (vi10), 2, %08x (vi03),", vi10, vi03);
+
+				*VIF_AS_I(vi03, 2, VIF_REG_W) = vi10;
+			}
+
+			vi03 += 9;
+
+			vf05 = VIF_LOAD_F(vi03, 2);
+
+			vi06 = vi09 & vi06;
+			vi08 = vi05 | vi06;
+			vi08 = vi08 | vi07;
+
+			vi07 = Clip(vf10.w, vf10);
+
+			vi10 = vf05.wi;
+			vf08 = vf04 + (vf03 * vf05.z) + (vf02 * vf05.y) + (vf01 * vf05.x);
+
+			if (vi08 != 0) {
+				vi11 = vi11 | 0x9000;
+				vi11 = vi11 | vi06;
+				*VIF_AS_I(vi03, -4, VIF_REG_W) = vi11;
+			}
+
+			vi02 -= 3;
+
+			vf06 = VIF_LOAD_F(vi03, 5);
+
+			vi07 = vi09 & vi07;
+			vi08 = vi05 | vi06;
+			vi08 = vi08 | vi07;
+
+			vi05 = Clip(vf08.w, vf08);
+
+			vi11 = vf06.wi;
+			vf09 = vf04 + (vf03 * vf06.z) + (vf02 * vf06.y) + (vf01 * vf06.x);
+
+			if (vi08 != 0) {
+				vi12 = vi12 | 0x9000;
+				vi12 = vi12 | vi07;
+				*VIF_AS_I(vi03, -1, VIF_REG_W) = vi12;
+			}
+
+			vf07 = VIF_LOAD_F(vi03, 8);
 		}
 	}
 
@@ -430,14 +545,8 @@ namespace VU1Emu {
 		return true;
 	}
 
-	void KickVertexFromReg(int vtxReg, int primReg)
+	void KickVertexFromReg(int vtxReg)
 	{
-		// This could sit outside this function, only needs to be done once for each set of vtxs.
-		edpkt_data* pkt = reinterpret_cast<edpkt_data*>(VIF_AS_F(primReg, 0));
-		HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pkt);
-		const uint prim = pGifTag->PRIM;
-		Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim));
-
 		// ST (float, float) and Q (float)
 		edF32VECTOR4 STQ = VIF_LOAD_F(vtxReg, 0);
 		edF32VECTOR4 RGBA = VIF_LOAD_F(vtxReg, 1);
@@ -459,6 +568,18 @@ namespace VU1Emu {
 
 		Renderer::SetVertexSkip(skip & 0x8000);
 		Renderer::KickVertex(x, y, z);
+	}
+
+	void EmulateXGKICK(int primReg)
+	{
+		edpkt_data* pkt = reinterpret_cast<edpkt_data*>(VIF_AS_F(primReg, 0));
+		HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pkt);
+		const uint prim = pGifTag->PRIM;
+		Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim));
+
+		for (int i = 0; i < pGifTag->NLOOP; i++) {
+			KickVertexFromReg(primReg + 1 + (i * 3));
+		}
 	}
 
 	void _$Clipping()
@@ -489,8 +610,6 @@ namespace VU1Emu {
 
 		// Vertex buffer
 		vi03 = vi15 + 1;
-
-		// HERE
 
 		vf07 = VIF_LOAD_F(vi03, 2);
 		vf06 = VIF_LOAD_F(vi03, 1);
@@ -527,6 +646,10 @@ namespace VU1Emu {
 			vf11 = VIF_LOAD_F(vi03, 0);
 
 			vi09 = VIF_F_TO_I(vf13.w);
+			auto tempvi09 = vi09;
+
+			MY_LOG("IAND         00000003 (vi01), 0000f000 (vi10), %08x (vi09),", vi09);
+
 			vi01 = 0xf000 & vi09;
 			vi09 = vi12 & vi09;
 
@@ -777,7 +900,7 @@ namespace VU1Emu {
 									*reinterpret_cast<int*>(&vf22.y) = float_to_int4(vf19.y);
 
 									// _$Clipping_ConvertLoop_NoFog
-									for (; vi13 > 0; vi13 -= 3) {
+									while (vi13 > 0) {
 										*reinterpret_cast<int*>(&vf22.z) = (int)vf19.z;
 
 										vf14 = VIF_LOAD_F(vi04, 4);
@@ -786,6 +909,8 @@ namespace VU1Emu {
 
 										*VIF_AS_F(vi04, 1) = vf18;
 										*VIF_AS_F(vi04, 2) = vf22;
+
+										vi13 -= 3;
 
 										// RGBA
 										*reinterpret_cast<int*>(&vf14.x) = (int)vf14.x;
@@ -835,17 +960,9 @@ namespace VU1Emu {
 										*reinterpret_cast<int*>(&vf22.y) = float_to_int4(vf19.y);
 
 										*VIF_AS_F(vi04, -1) = vf21;
-
-										//KickVertexFromReg(vi04 - 9, vf28.yi);
-										//KickVertexFromReg(vi04 - 6, vf28.yi);
-										//KickVertexFromReg(vi04 - 3, vf28.yi);
 									}
 
-									const int base = *reinterpret_cast<int*>(&vf28.y);
-
-									for (int i = 0; i < vtxCount; i++) {
-										KickVertexFromReg(base + 1 + (i * 3), vf28.yi);
-									}
+									EmulateXGKICK(vf28.yi);
 
 									vi05 = *reinterpret_cast<int*>(&vf28.y);
 									vi05 = *reinterpret_cast<int*>(&vf28.y);
@@ -879,47 +996,90 @@ namespace VU1Emu {
 
 	void _$GouraudMapping_No_Fog_16_2()
 	{
-		vf05 = VIF_LOAD_F(vi00, 1);
+		// Vtx addr base.
+		vi03 = vi15 + 1;
 
-		// Obj to Screen matrix
+		// Unused.
+		vf05 = VIF_LOAD_F(vi04, 1);
+
+		vf17 = VIF_LOAD_F(vi03, 2);
+
+		// Obj to Screen matrix.
 		vf04 = VIF_LOAD_F(vi00, 19);
 		vf03 = VIF_LOAD_F(vi00, 18);
 		vf02 = VIF_LOAD_F(vi00, 17);
 		vf01 = VIF_LOAD_F(vi00, 16);
 
+		vf27 = VIF_LOAD_F(vi03, 5);
+		vf16 = VIF_LOAD_F(vi03, 0);
+
+		vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+
+		// Vtx count.
 		vi02 = vi14;
-		vi03 = vi15 + 1;
 
-		for (vi02 = vi02; vi02 > 0; vi02 -= 1) {
-			vf17 = VIF_LOAD_F(vi03, 0);
-			vf27 = VIF_LOAD_F(vi03, 2);
+		vf17 = VIF_LOAD_F(vi03, 8);
 
-			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
-			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
+		vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
+		Q = 1.0f / vf18.w;
+
+		vf26 = VIF_LOAD_F(vi03, 3);
+		vf27 = VIF_LOAD_F(vi03, 11);
+
+		vf20.xyz = vf16.xyz * Q;
+		vf19.xyz = vf18.xyz * Q;
+		Q = 1.0f / vf28.w;
+
+		vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+
+		while (vi02 > 0) {
+			vf16 = VIF_LOAD_F(vi03, 6);
+
+			// STQ
+			(*VIF_AS_F(vi03, 0)).xyz = vf20.xyz;
+
+			// Vertex positions (int4 x, int4 y, float z)
+			*reinterpret_cast<int*>(&vf21.x) = float_to_int4(vf19.x);
+			*reinterpret_cast<int*>(&vf21.y) = float_to_int4(vf19.y);
+			*reinterpret_cast<int*>(&vf21.z) = (int)vf19.z;
+
+			vf30 = vf26 * Q;
+			vf29 = vf28 * Q;
 			Q = 1.0f / vf18.w;
 
-			vf19.xyz = vf18.xyz * Q;
+			vf17 = VIF_LOAD_F(vi03, 14);
 
-			Q = 1.0f / vf28.w;
-			vf21 = vf17 * Q;
+			vi02 -= 2;
+			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
 
-			vf29.xyz = vf28.xyz * Q;
+			// XYZ Skip
+			(*VIF_AS_F(vi03, 2)).xyz = vf21.xyz;
+
+			vf26 = VIF_LOAD_F(vi03, 9);
+
+			vi03 += 6;
+
+			// STQ
+			(*VIF_AS_F(vi03, -3)).xyz = vf30.xyz;
 
 			// Vertex positions (int4 x, int4 y, float z)
 			*reinterpret_cast<int*>(&vf31.x) = float_to_int4(vf29.x);
 			*reinterpret_cast<int*>(&vf31.y) = float_to_int4(vf29.y);
 			*reinterpret_cast<int*>(&vf31.z) = (int)vf29.z;
 
-			// STQ
-			(*VIF_AS_F(vi03, 0)).xyz = vf21.xyz;
+			vf20 = vf16 * Q;
+			vf19 = vf18 * Q;
+			Q = 1.0f / vf28.w;
+
+			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+
+			vf27 = VIF_LOAD_F(vi03, 11);
 
 			// XYZ Skip
-			(*VIF_AS_F(vi03, 2)).xyz = vf31.xyz;
-
-			KickVertexFromReg(vi03, vi15);
-
-			vi03 += 3;
+			(*VIF_AS_F(vi03, -1)).xyz = vf31.xyz;
 		}
+
+		EmulateXGKICK(vi15);
 	}
 
 	void RunCode(int addr) 
@@ -987,6 +1147,31 @@ namespace VU1Emu {
 		const auto dst = GetFakeMem() + (addr << 4);
 		memcpy(dst, data, size);
 	}
+
+	void KickCallback(int reg) {
+		EmulateXGKICK(reg / 0x10);
+		//KickVertexFromReg(reg);
+	}
+}
+
+constexpr size_t vu1BlockSize = 0x800;
+
+void VU1Emu::SendVu1Code(unsigned char* pCode, size_t size)
+{
+	const edpkt_data* const pHeader = reinterpret_cast<edpkt_data*>(pCode);
+
+	unsigned char* pBlockStart = pCode + sizeof(edpkt_data);
+
+	unsigned char* pDst = gVu1Code;
+
+	while (pBlockStart < (pCode + size)) {
+		memcpy(pDst, pBlockStart, vu1BlockSize);
+
+		pDst += vu1BlockSize;
+
+		pBlockStart += 0x8;
+		pBlockStart += vu1BlockSize;
+	}
 }
 
 void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
@@ -1018,7 +1203,21 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
+			//memcpy(gFakeMemInterpreter, GetFakeMem(), FAKE_VU1_MEM_SIZE);
+
 			RunCode(pRunTag->addr);
+
+			if (false) {
+				RunCode(pRunTag->addr);
+			}
+			else {
+
+				//pcsx2_VU::SetKickCallback(KickCallback);
+				//pcsx2_VU::SetMicro(gVu1Code);
+				//pcsx2_VU::SetMem(gFakeMemInterpreter);
+				//pcsx2_VU::Execute(pRunTag->addr);
+			}
+
 		}
 		else {
 			WriteTag* pTag = (WriteTag*)(&(pVifPkt->asU32[3]));
@@ -1081,6 +1280,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 
 void VU1Emu::SetVifItop(uint newItop)
 {
+	pcsx2_VU::SetItop(newItop);
 	itop = newItop;
 }
 

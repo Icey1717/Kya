@@ -167,7 +167,7 @@ void CinematicManager::LevelLoading_End()
 		if (bVar1) {
 			CCinematic::Load(pCinematic, 0);
 		}
-		if (pCinematic->intOrPtrField != 0) {
+		if (pCinematic->state != CS_Stopped) {
 			ActorGlobalFunc_001c84a0(pCinematic);
 		}
 		pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xfffffffb;
@@ -194,7 +194,7 @@ bool CinematicManager::LevelLoading_Manage()
 		IMPLEMENTATION_GUARD(CCinematic::Manage(this->pCinematic));
 		bVar1 = false;
 		if ((this->pCinematic->flags_0x4 & 8) == 0) {
-			bVar1 = this->pCinematic->intOrPtrField != 0;
+			bVar1 = this->pCinematic->state != CS_Stopped;
 		}
 	}
 	return bVar1;
@@ -295,7 +295,7 @@ void CinematicManager::Level_Manage()
 			iVar1 = iVar1 + 1;
 		} while (iVar1 < this->activeCinematicCount);
 	}
-	if ((this->pCinematic != (CCinematic*)0x0) && (this->pCinematic->intOrPtrField == 0)) {
+	if ((this->pCinematic != (CCinematic*)0x0) && (this->pCinematic->state == CS_Stopped)) {
 		this->pCinematic = (CCinematic*)0x0;
 		this->field_0x20 = -1;
 		this->field_0x24 = -1;
@@ -321,7 +321,7 @@ void CinematicManager::Level_SectorChange(int param_2, int param_3)
 		}
 		else {
 			if (((param_3 != -1) && (this->pCinematic != pCVar1)) && (pCVar1->cineBankLoadStage_0x2b4 == 4)) {
-				bVar2 = pCVar1->intOrPtrField != 0;
+				bVar2 = pCVar1->state != CS_Stopped;
 				if ((bVar2) && (bVar2)) {
 					pCVar1->flags_0x8 = pCVar1->flags_0x8 & 0xffffff7f;
 					pCVar1->flags_0x8 = pCVar1->flags_0x8 | 0x100;
@@ -336,7 +336,7 @@ void CinematicManager::Level_SectorChange(int param_2, int param_3)
 		ppCVar3 = ppCVar3 + 1;
 	}
 	if (((param_2 == -1) && (pCVar1 = this->pCinematic, pCVar1 != (CCinematic*)0x0)) &&
-		((bVar2 = pCVar1->intOrPtrField != 0, bVar2 && (((pCVar1->flags_0x4 & 8) != 0 && (bVar2)))))) {
+		((bVar2 = pCVar1->state != CS_Stopped, bVar2 && (((pCVar1->flags_0x4 & 8) != 0 && (bVar2)))))) {
 		pCVar1->flags_0x8 = pCVar1->flags_0x8 & 0xffffff7f;
 		pCVar1->flags_0x8 = pCVar1->flags_0x8 | 0x100;
 	}
@@ -567,7 +567,7 @@ void ConditionedOperationArray::Perform()
 
 void CCinematic::Create(ByteCode* pByteCode)
 {
-	float* pfVar1;
+	S_STREAM_FOG_DEF* pfVar1;
 	int* piVar2;
 	float fVar3;
 	float fVar4;
@@ -622,12 +622,11 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->flags_0x4 = uVar5;
 	fVar13 = pByteCode->GetF32();
 	this->field_0x30 = fVar13;
-	pfVar1 = (float*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(pfVar1 + 4);
-	this->field_0x34 = *pfVar1;
-	this->field_0x38 = pfVar1[1];
-	this->field_0x3c = pfVar1[2];
-	this->field_0x40 = pfVar1[3];
+
+	pfVar1 = (S_STREAM_FOG_DEF*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(pfVar1 + 1);
+	this->streamFogDef = *pfVar1;
+
 	iVar7 = pByteCode->GetS32();
 	this->intFieldC = iVar7;
 	iVar7 = pByteCode->GetS32();
@@ -817,7 +816,7 @@ void CCinematic::Init()
 	this->flags_0x8 = this->flags_0x8 & ~uVar4;
 	this->count_0x2d8 = 0;
 	this->cineBankLoadStage_0x2b4 = 0;
-	this->intOrPtrField = 0;
+	this->state = CS_Stopped;
 	pTVar1 = GetTimer();
 	this->field_0x88 = pTVar1->scaledTotalTime;
 	if ((this->flags_0x8 & 0x10) != 0) {
@@ -890,7 +889,7 @@ void CCinematic::Start()
 	int cinematicLibraryVersion;
 
 	this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
-	if (this->intOrPtrField == 0) {
+	if (this->state == CS_Stopped) {
 		bVar7 = (this->flags_0x4 & 1) != 0;
 		if (bVar7) {
 			bVar7 = (this->flags_0x8 & 0x400) != 0;
@@ -972,8 +971,7 @@ void CCinematic::Start()
 				this->matrix_0x120 = local_70;
 				
 				if (this->prtBuffer == 1) {
-					IMPLEMENTATION_GUARD(
-					FUN_001b9b70(0, (int)Scene::_pinstance, (int)&this->field_0x34);)
+					Scene::_pinstance->PushFogAndClippingSettings(0.0f, &this->streamFogDef);
 				}
 				if (this->pMeshInfo != (ed_g3d_manager*)0x0) {
 					IMPLEMENTATION_GUARD(
@@ -1069,12 +1067,12 @@ void CCinematic::Start()
 					}
 				}
 				if (bVar7) {
-					this->intOrPtrField = 1;
+					this->state = CS_Interpolate;
 					pTVar8 = GetTimer();
 					this->field_0x88 = pTVar8->scaledTotalTime;
 				}
 				else {
-					this->intOrPtrField = 2;
+					this->state = CS_Playing;
 					pTVar8 = GetTimer();
 					this->field_0x88 = pTVar8->scaledTotalTime;
 					this->cinFileData.Initialize();
@@ -1305,8 +1303,7 @@ bool CCinematic::LoadInternal(long mode)
 	iVar4 = CMessageFile::get_default_language();
 	edStrCat(acStack1024, g_languageSuffixPtr[iVar4]);
 	/* \\Cine\\ */
-	edStrCatMulti(acStack512, pLVar2->levelPath, pLVar2->aLevelInfo[pLVar2->currentLevelID].levelName, 0x42b960, acStack1024, 0
-	);
+	edStrCatMulti(acStack512, pLVar2->levelPath, pLVar2->aLevelInfo[pLVar2->currentLevelID].levelName, "\\Cine\\", acStack1024, NULL);
 	bVar3 = true;
 	if (((gVideoConfig.omode != 2) && ((this->flags_0x4 & 0x8000000) != 0)) &&
 		(pDebugBank = edFileOpen(acStack512, 9), pDebugBank != (edFILEH*)0x0)) {
@@ -1314,8 +1311,7 @@ bool CCinematic::LoadInternal(long mode)
 		bVar3 = false;
 	}
 	if (bVar3) {
-		edStrCatMulti(acStack512, pLVar2->levelPath, pLVar2->aLevelInfo[pLVar2->currentLevelID].levelName, 0x42b960,
-			this->pBankName_0x50, 0);
+		edStrCatMulti(acStack512, pLVar2->levelPath, pLVar2->aLevelInfo[pLVar2->currentLevelID].levelName, "\\Cine\\", this->pBankName_0x50, NULL);
 	}
 	memset(&local_420, 0, sizeof(edCBankInstall));
 	local_420.filePath = acStack512;
@@ -1484,14 +1480,14 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 	edAnmAnim* outAnimationInfo;
 	ulong uVar3;
 	int iVar4;
-	char* pcVar5;
-	char* pcVar6;
+	const char* pcVar5;
+	const char* pcVar6;
 	CinFileContainer* piVar7;
 	uint counter;
 	edBANK_ENTRY_INFO outFileData;
-	byte localisedAudioFileName[524];
+	char localisedAudioFileName[524];
 	int iStack4;
-	char* suffix;
+	const char* suffix;
 	edCBankBufferEntry* bankObj;
 
 	outMeshInfo = (ed_g3d_manager*)0x0;
@@ -1520,7 +1516,6 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 	else {
 		/* Drops in here for the air tunnel cutscene */
 		if (objectType == edResCollection::COT_Sound) {
-#if 0
 			if (type2 == 0) {
 				/* Background sound drops in here
 				   This second check is probably for if the sound file contains voice audio */
@@ -1535,13 +1530,13 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 						pcVar6 = pcVar5;
 						pcVar5 = pcVar6 + -1;
 					} while (*pcVar5 != '\\');
-					edStrCopy((char*)localisedAudioFileName, fileName);
-					localisedAudioFileName[(int)(pcVar6 + -(int)fileName)] = 0;
-					iVar4 = GetLanguageID_00336b30();
-					edStrCat((char*)localisedAudioFileName, g_languageSuffixPtr[iVar4]);
-					edStrCat((char*)localisedAudioFileName, "\\");
-					edStrCat((char*)localisedAudioFileName, suffix);
-					fileName = (char*)localisedAudioFileName;
+					edStrCopy(localisedAudioFileName, fileName);
+					localisedAudioFileName[((char*)pcVar6) -((char*)fileName)] = '\0';
+					iVar4 = CMessageFile::get_default_language();
+					edStrCat(localisedAudioFileName, g_languageSuffixPtr[iVar4]);
+					edStrCat(localisedAudioFileName, "\\");
+					edStrCat(localisedAudioFileName, suffix);
+					fileName = localisedAudioFileName;
 				}
 				counter = 0;
 				/* Sound file will go through to here regardless of language */
@@ -1564,9 +1559,9 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 				}
 			}
 			else {
-				outMeshInfo = (ed_g3d_manager*)AudioManager::GetSampleByName((int)Scene::ptable.g_GlobalSoundPtr_00451698, (byte*)fileName);
+				IMPLEMENTATION_GUARD(
+				outMeshInfo = (ed_g3d_manager*)AudioManager::GetSampleByName((int)Scene::ptable.g_GlobalSoundPtr_00451698, (byte*)fileName);)
 			}
-#endif
 		}
 		else {
 			/* First cutscene object load falls into here
@@ -1700,14 +1695,14 @@ void CCinematic::Manage()
 		//		(EventChunk_24*)this->intFieldC, &(pCVar3->character).characterBase.actorBase.currentLocation
 		//		, 0), iVar2 == 2)) {
 		//	this->flags_0x8 = this->flags_0x8 & 0xfffffdff;
-		//	bVar1 = this->intOrPtrField != 0;
+		//	bVar1 = this->state != CS_Stopped;
 		//	if ((bVar1) && (((this->flags_0x4 & 8) != 0 && (bVar1)))) {
 		//		this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
 		//		this->flags_0x8 = this->flags_0x8 | 0x100;
 		//	}
 		//}
 		//else {
-		//	if ((((this->flags_0x8 & 0x200) == 0) && (this->intOrPtrField == 0)) && ((this->flags_0x8 & 0x80) == 0)) {
+		//	if ((((this->flags_0x8 & 0x200) == 0) && (this->state == CS_Stopped)) && ((this->flags_0x8 & 0x80) == 0)) {
 		//		UsedInCutsceneManagerUpdateB(this, (Actor*)0x0, 0);
 		//	}
 		//}
@@ -1728,16 +1723,17 @@ void CCinematic::Manage()
 		//IMPLEMENTATION_GUARD(
 		//UsedInCutsceneManagerUpdateC((MagicalSwitch_20*)this->field_0x258, (Actor*)0x0);)
 	}
-	if ((this->intOrPtrField != 0) && ((GameFlags & 0x20) == 0)) {
+	if ((this->state != CS_Stopped) && ((GameFlags & 0x20) == 0)) {
 		// #HACK
-		if (this->totalCutsceneDelta < 1.0f) {
-			//IncrementCutsceneDelta();
+		//if (this->totalCutsceneDelta < 1.0f) 
+		{
+			IncrementCutsceneDelta();
 		}
-		else {
-			this->totalCutsceneDelta = 1.0f;
-		}
+		//else {
+		//	this->totalCutsceneDelta = 1.0f;
+		//}
 	}
-	if (this->intOrPtrField == 0) {
+	if (this->state == CS_Stopped) {
 		iVar2 = this->cineBankLoadStage_0x2b4;
 		if (iVar2 != 4) {
 			if (iVar2 == 3) {
@@ -1757,11 +1753,11 @@ void CCinematic::Manage()
 		}
 	}
 	else {
-		if (this->intOrPtrField == 2) {
+		if (this->state == CS_Playing) {
 			ManageState_Playing();
 		}
 		else {
-			if (this->intOrPtrField == 1) {
+			if (this->state == CS_Interpolate) {
 				IMPLEMENTATION_GUARD(
 				ManageState_InterpolateBegin(this);)
 			}
@@ -1804,7 +1800,7 @@ void CCinematic::ManageState_Playing()
 	if (bVar2 == false) {
 		/* Cutscene has ended */
 		if ((this->flags_0x4 & 8) == 0) {
-			if (this->intOrPtrField != 0) {
+			if (this->state != CS_Stopped) {
 				this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
 				this->flags_0x8 = this->flags_0x8 | 0x100;
 			}
@@ -1865,7 +1861,7 @@ void CCinematic::ManageState_Playing()
 				iVar7 = iVar7 + 1;
 			}
 			if ((iVar4 <= iVar7) || (*(float*)&((this->cinFileData).pCinTag)->field_0x4 <= (float)piVar1[iVar7 + 1])) {
-				if (this->intOrPtrField != 0) {
+				if (this->state != CS_Stopped) {
 					this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
 					this->flags_0x8 = this->flags_0x8 | 0x100;
 				}

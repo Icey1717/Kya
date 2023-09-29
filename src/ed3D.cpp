@@ -1389,6 +1389,11 @@ void ed3DDMALoadVU1MicroCode(void)
 		edDmaSync(SHELLDMA_CHANNEL_VIF1);
 		RENDER_LOG("DMA Begin ed3DDMALoadVU1MicroCode");
 		edDmaSend(SHELLDMA_CHANNEL_VIF1, (uint)vu1_micro);
+
+#ifdef PLATFORM_WIN
+		VU1Emu::SendVu1Code(vu1_micro, sizeof(vu1_micro));
+#endif
+
 		BYTE_004492e8 = 1;
 	}
 	return;
@@ -4422,7 +4427,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 #ifdef PLATFORM_WIN
 	Renderer::Draw();
 #endif
-	bHackDoOnce = true;
+	//bHackDoOnce = true;
 	return;
 }
 

@@ -143,7 +143,6 @@ public:
 void edFileNoWaitStackCallBack(edCFiler_28* param_1);
 
 void edFilePathSplit(char* param_1, char* param_2, char* param_3, char* param_4, char* param_5);
-char* edStrCat(char* buffer, char* suffix);
 
 edCFiler* edFileGetFiler(char* outString, char* filePath, long mode);
 void edFileSetPath(char* mode);

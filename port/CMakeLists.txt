@@ -10,6 +10,8 @@ add_subdirectory("Archive")
 
 add_subdirectory("ext/pss/pss")
 
+add_subdirectory("pcsx2/VU")
+
 add_subdirectory("Windows/Renderer")
 
 set(SOURCES 

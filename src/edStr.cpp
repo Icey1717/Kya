@@ -8,7 +8,7 @@ char* edStrReturnEndPtr(char* str)
 	return str;
 }
 
-int edStrLength(char* str)
+int edStrLength(const char* str)
 {
 	int iVar1;
 
@@ -17,7 +17,7 @@ int edStrLength(char* str)
 	return iVar1;
 }
 
-char* edStrCat(char* str1, char* str2)
+const char* edStrCat(char* str1, const char* str2)
 {
 	char* bufferPos;
 	char currentSuffixChar;

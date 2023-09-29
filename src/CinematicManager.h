@@ -180,6 +180,12 @@ struct CinFileContainer {
 	char* pData;
 };
 
+enum ECinematicState {
+	CS_Stopped,
+	CS_Interpolate,
+	CS_Playing
+};
+
 struct CCinematic {
 	void InitInternalData();
 	CCinematic();
@@ -215,7 +221,7 @@ struct CCinematic {
 	int field_0x28;
 	int field_0x2c;
 	float field_0x30;
-	float field_0x34;
+	S_STREAM_FOG_DEF streamFogDef;
 	float field_0x38;
 	float field_0x3c;
 	undefined4 field_0x40;
@@ -235,7 +241,7 @@ struct CCinematic {
 	undefined4 field_0x78;
 	undefined4 field_0x7c;
 	float field_0x80;
-	int intOrPtrField;
+	ECinematicState state;
 	float field_0x88;
 	int intFieldC;
 	int field_0x90;

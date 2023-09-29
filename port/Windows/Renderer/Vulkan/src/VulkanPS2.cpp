@@ -94,6 +94,18 @@ namespace Renderer {
 		size_t tail;
 	} m_index;
 
+	void ResetVertIndexBuffers()
+	{
+		assert(m_index.tail == 0 || m_index.buff[m_index.tail - 1] + 1 == m_vertex.next);
+
+		if (m_index.tail == 0)
+		{
+			m_vertex.next = 0;
+		}
+
+		m_vertex.head = m_vertex.tail = m_vertex.next; // remove unused vertices from the end of the vertex buffer
+	}
+
 	enum GS_PRIM
 	{
 		GS_POINTLIST = 0,
@@ -174,10 +186,12 @@ namespace Renderer {
 	}
 
 	void SetPrim(GIFReg::PrimPacked prim) {
+		ResetVertIndexBuffers();
 		PS2::GetGSState().PRIM = { prim.PRIM, prim.IIP, prim.TME, prim.FGE, prim.ABE, prim.AA1, prim.FST, prim.CTXT, prim.FIX };
 	}
 
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix) {
+		ResetVertIndexBuffers();
 		PS2::GetGSState().PRIM = { prim, iip, tme, fge, abe, aa1, fst, ctxt, fix };
 	}
 
@@ -1882,12 +1896,11 @@ void Renderer::Draw() {
 		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(Renderer::m_index.tail), 1, 0, 0, 0);
 
 	}
-	Renderer::m_index.tail = 0;
-	Renderer::m_vertex.head = 0;
-	Renderer::m_vertex.tail = 0;
-	Renderer::m_vertex.next = 0;
-	Renderer::m_vertex.xy_tail = 0;
-
+	m_index.tail = 0;
+	m_vertex.head = 0;
+	m_vertex.tail = 0;
+	m_vertex.next = 0;
+	m_vertex.xy_tail = 0;
 	state.bTexSet = false;
 }
 

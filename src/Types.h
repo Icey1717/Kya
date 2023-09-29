@@ -325,7 +325,9 @@ union alignas(16)
 #define EDITOR_BUILD PLATFORM_WIN
 
 #ifdef PLATFORM_WIN
-//#define ENABLE_MY_LOG
+#ifdef _DEBUG
+#define ENABLE_MY_LOG
+#endif
 #else
 //#define ENABLE_MY_LOG
 #endif
