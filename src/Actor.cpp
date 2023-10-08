@@ -7,6 +7,7 @@ CActor::CActor()
 	this->aComponents = (ComponentEntry*)0x0;
 	this->actorFieldS = 0;
 	this->typeID = -1;
+	this->adjustedMagnitude = 0.0f;
 }
 
 void CActor::PreInit()
@@ -131,40 +132,40 @@ void CActor::Init()
 void CActor::ChangeDisplayState(int state)
 {
 	//CShadow* pCVar1;
-	//uint ret;
-	//float BfloatB;
-	//
-	//if (state == 0) {
-	//	pCVar1 = (pActor->data).pShadow;
-	//	if (pCVar1 != (CShadow*)0x0) {
-	//		(**(code**)(*(int*)pCVar1 + 0x14))();
-	//	}
-	//	(pActor->data).flags = (pActor->data).flags & 0xfffffeff;
-	//}
-	//else {
-	//	pCVar1 = (pActor->data).pShadow;
-	//	if (pCVar1 != (CShadow*)0x0) {
-	//		(**(code**)(*(int*)pCVar1 + 0x14))();
-	//	}
-	//	(pActor->data).flags = (pActor->data).flags | 0x100;
-	//}
-	//ret = (pActor->data).flags;
-	//BfloatB = ((pActor->data).subObjA)->floatFieldB;
-	//if (((ret & 0x100) == 0) || (BfloatB < (pActor->data).adjustedMagnitude)) {
+	uint ret;
+	float BfloatB;
+
+	if (state == 0) {
+		//pCVar1 = this->pShadow;
+		//if (pCVar1 != (CShadow*)0x0) {
+		//	(**(code**)(*(int*)pCVar1 + 0x14))();
+		//}
+		this->flags = this->flags & 0xfffffeff;
+	}
+	else {
+		//pCVar1 = this->pShadow;
+		//if (pCVar1 != (CShadow*)0x0) {
+		//	(**(code**)(*(int*)pCVar1 + 0x14))();
+		//}
+		this->flags = this->flags | 0x100;
+	}
+	ret = this->flags;
+	//BfloatB = (this->subObjA)->floatFieldB;
+	//if (((ret & 0x100) == 0) || (BfloatB < this->adjustedMagnitude)) {
 	//	if ((ret & 0x4000) != 0) {
-	//		(*(code*)pActor->pVTable->ChangeVisibleState)(pActor, 0);
+	//		this->ChangeVisibleState(0);
 	//	}
 	//}
 	//else {
-	//	ret = CCameraManager::IsSphereVisible(BfloatB, CCameraManager::_gThis, &(pActor->data).sphereCentre);
+	//	ret = CCameraManager::IsSphereVisible(BfloatB, CCameraManager::_gThis, &this->sphereCentre);
 	//	if (ret == 0) {
-	//		if (((pActor->data).flags & 0x4000) != 0) {
-	//			(*(code*)pActor->pVTable->ChangeVisibleState)(pActor, 0);
+	//		if ((this->flags & 0x4000) != 0) {
+	//			this->ChangeVisibleState(0);
 	//		}
 	//	}
 	//	else {
-	//		if (((pActor->data).flags & 0x4000) == 0) {
-	//			(*(code*)pActor->pVTable->ChangeVisibleState)(pActor, 1);
+	//		if ((this->flags & 0x4000) == 0) {
+	//			this->ChangeVisibleState(1);
 	//		}
 	//	}
 	//}

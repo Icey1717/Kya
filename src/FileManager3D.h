@@ -13,7 +13,7 @@ struct ed_g3d_manager {
 	char* LIA;
 	char* CAMA;
 	char* SPRA;
-	char* HALL;
+	struct MeshData_HALL* HALL;
 	char* CSTA;
 	char* GEOM;
 	char* MBNA;

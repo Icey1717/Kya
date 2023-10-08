@@ -559,10 +559,10 @@ void CSectorManager::S_COMP_SLOT::InstallCallback()
 	ed3DHierarchyCopyHashCode(&this->meshInfo);
 	pMVar4 = gHierarchyManagerFirstFreeNode;
 	pSubSubObjArray = gHierarchyManagerBuffer;
-	pMeshData = (this->meshInfo).HALL;
+	pMeshData = (char*)(this->meshInfo).HALL;
 	pCameraPanMasterHeader = pStaticMeshMaster->pHeirListA;
 	meshSize = edChunckGetNb(pMeshData + 0x10, pMeshData + *(int*)(pMeshData + 8));
-	pcVar6 = edHashcodeGet(0x43494d414e5944, (MeshData_HASH*)((this->meshInfo).HALL + 0x10));
+	pcVar6 = edHashcodeGet(0x43494d414e5944, (ed_Chunck*)((this->meshInfo).HALL + 1));
 	iVar8 = 0;
 	if (pcVar6 != (char*)0x0) {
 		iVar8 = *(int*)(pcVar6 + 8);

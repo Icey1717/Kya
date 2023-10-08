@@ -41,6 +41,8 @@ struct CActor : public CObject {
 
 	int typeID;
 
+	float adjustedMagnitude;
+
 	CActor();
 
 	void PreInit();

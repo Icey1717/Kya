@@ -335,6 +335,19 @@ PACK( struct LayerHeaderPacked {
 	char field_0x10;
 });
 
+PACK(struct MeshData_HALL {
+	char header[4];
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	int totalSize;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+};)
+
 struct ed_viewport;
 struct edFCamera;
 
@@ -363,6 +376,7 @@ bool edDListTermMaterial(edDList_material* pMaterial);
 char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
+void ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMeshCount);
 
 void ed3DLinkG2DToG3D(ed_g3d_manager* pMeshInfo, TextureInfo* pTextureInfo);
 
@@ -385,12 +399,47 @@ struct FxFogProp {
 	uint field_0x14;
 };
 
+PACK(struct MeshTransformObjData_Packed {
+	int pObj; // char*
+	short field_0x4;
+	short field_0x6;
+});
+
+PACK(struct ed_g3d_hierarchy {
+	edF32MATRIX4 transformA;
+	edF32MATRIX4 transformB;
+	Hash_8 hash;
+	byte field_0x88;
+	byte field_0x89;
+	ushort bRenderShadow;
+	int pShadowAnimMatrix; // edF32MATRIX4*
+	int pLinkTransformData; // MeshTransformData*
+	int field_0x94; // undefined*
+	int pTextureInfo; // undefined*
+	ushort count_0x9c;
+	ushort flags_0x9e;
+	int pLightingMatrixFuncObj_0xa0; // LightingMatrixFuncObj*
+	int field_0xa4; // edF32MATRIX4*
+	int pAnimMatrix; // edF32MATRIX4*
+	short subMeshParentCount_0xac;
+	byte size_0xae;
+	undefined field_0xaf;
+	MeshTransformObjData_Packed aSubArray[4];
+});
+
+PACK(struct ed_Chunck {
+	uint hash;
+	int field_0x4;
+	int field_0x8;
+	int field_0xc;
+});
+
 void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo);
 
 void ed3DScenePushCluster(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo);
 
 uint edChunckGetNb(char* pStart, char* pEnd);
-char* edHashcodeGet(Hash_8 meshHashValue, struct MeshData_HASH* textureObjMatBuffer);
+char* edHashcodeGet(Hash_8 meshHashValue, ed_Chunck* pChunck);
 
 edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand);
 edpkt_data* ed3DFlushFullAlphaInit(edpkt_data* pRenderCommand);
