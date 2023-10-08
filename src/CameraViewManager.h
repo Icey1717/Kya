@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "Actor.h"
 #include "edVideo/CameraStack.h"
 
 enum ECameraType {
@@ -63,10 +64,6 @@ struct astruct_12 {
 	float field_0x18;
 	float field_0x1c;
 	float field_0x20;
-};
-
-struct CObject {
-	undefined4 field_0x4;
 };
 
 struct SpecificCondition {

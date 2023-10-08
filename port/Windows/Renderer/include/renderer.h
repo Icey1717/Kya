@@ -75,6 +75,7 @@ namespace Renderer
 	void SetTEX(GIFReg::GSTex tex);
 	void SetTest(GIFReg::GSTest test);
 	void SetClamp(GIFReg::GSClamp clamp);
+	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void SetImagePointer(TextureData inImage);
 
@@ -83,6 +84,9 @@ namespace Renderer
 	RenderDelegate& GetRenderDelegate();
 
 	void SetHeadless(bool bValue);
+
+	bool& GetUseComplexBlending();
+	void ResetRenderer();
 
 	namespace Debug {
 		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* szLabel);

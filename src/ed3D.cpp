@@ -4184,6 +4184,13 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 				Renderer::SetAlpha(alpha.A, alpha.B, alpha.C, alpha.D, alpha.FIX);
 			}
 			break;
+			case SCE_GS_COLCLAMP:
+			{
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands COLCLAMP: %llx (%llx)", pkt.cmdA, pkt.cmdB);
+				GIFReg::GSColClamp colClamp = *reinterpret_cast<GIFReg::GSColClamp*>(&pkt.cmdA);
+				Renderer::SetColClamp(colClamp);
+			}
+			break;
 			case SCE_GS_TEST_1:
 			{
 				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEST: %llx (%llx)", pkt.cmdA, pkt.cmdB);

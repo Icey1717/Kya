@@ -1,10 +1,10 @@
 #include "CinScene.h"
 #include "CinResCollection.h"
-#include "Cinematic.h"
 
 #include "port/pointer_conv.h"
 #include "MathOps.h"
 #include <string>
+#include "Cinematic.h"
 
 #define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
 
@@ -56,7 +56,7 @@ void edSceneCamera::Initialize()
 	((edCinCamInterface*)LOAD_SECTION(pInternal->cinCam))->Activate();
 }
 
-float* edAnmSubControler::GetClosestKeyIndex(float param_1, int* param_3)
+float* edAnmSubControler::GetClosestKeyIndex(float time, int* outIndex)
 {
 	ushort uVar1;
 	int iVar2;
@@ -68,17 +68,17 @@ float* edAnmSubControler::GetClosestKeyIndex(float param_1, int* param_3)
 	uVar1 = peVar4->keyCount;
 	pfVar5 = peVar4->keyTimes;
 	uVar3 = (uint)uVar1;
-	if (param_1 < pfVar5[uVar3 - 1]) {
+	if (time < pfVar5[uVar3 - 1]) {
 		IMPLEMENTATION_GUARD();
 		peVar4 = peVar4 + 1;
-		if ((((8 < uVar1) && (iVar2 = (int)(uVar1 - 1) >> 2, *(float*)(&peVar4->keyCount + iVar2 * 2) <= param_1)) &&
+		if ((((8 < uVar1) && (iVar2 = (int)(uVar1 - 1) >> 2, *(float*)(&peVar4->keyCount + iVar2 * 2) <= time)) &&
 			(peVar4 = (edAnmSubControlerTag*)(&peVar4->keyCount + iVar2 * 2),
-				*(float*)(&peVar4->keyCount + iVar2 * 2) <= param_1)) &&
+				*(float*)(&peVar4->keyCount + iVar2 * 2) <= time)) &&
 			(peVar4 = (edAnmSubControlerTag*)(&peVar4->keyCount + iVar2 * 2),
-				*(float*)(&peVar4->keyCount + iVar2 * 2) <= param_1)) {
+				*(float*)(&peVar4->keyCount + iVar2 * 2) <= time)) {
 			peVar4 = (edAnmSubControlerTag*)(&peVar4->keyCount + iVar2 * 2);
 		}
-		for (; *(float*)peVar4 <= param_1; peVar4 = (edAnmSubControlerTag*)&peVar4->keyTimes) {
+		for (; *(float*)peVar4 <= time; peVar4 = (edAnmSubControlerTag*)&peVar4->keyTimes) {
 		}
 		peVar4 = (edAnmSubControlerTag*)((int)peVar4 - (int)pfVar5);
 		if ((int)peVar4 < 0) {
@@ -86,8 +86,58 @@ float* edAnmSubControler::GetClosestKeyIndex(float param_1, int* param_3)
 		}
 		uVar3 = (int)peVar4 >> 2;
 	}
-	*param_3 = uVar3 - 1;
+	*outIndex = uVar3 - 1;
 	return pfVar5 + (uVar3 - 1);
+}
+
+bool edAnimatedProperty::GetVector3Value(float time, float* outValue)
+{
+	ushort uVar1;
+	edAnimatedPropertyTag* peVar2;
+	bool bVar3;
+	float* piVar4;
+	float delta;
+	int local_10;
+	int local_c[2];
+
+	peVar2 = this->pData;
+
+	edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(peVar2 + 1);
+
+	uVar1 = pTag->keyCount;
+
+	edAnmSubControler local_4 = { pTag };
+
+	piVar4 = pTag->keyTimes;
+	if (time < pTag->keyTimes[0]) {
+		bVar3 = false;
+	}
+	else {
+		local_4.GetKeyIndicesAndRatioSafe(time, &local_10, local_c, 0);
+		delta = piVar4[local_c[0]] - piVar4[local_10];
+		if (delta != 0.0f) {
+			delta = (time - piVar4[local_10]) / delta;
+		}
+		edF32Vector3LERPSoft(delta, (edF32VECTOR3*)outValue, (edF32VECTOR3*)(piVar4 + uVar1 + local_10 * 3), (edF32VECTOR3*)(piVar4 + uVar1 + local_c[0] * 3));
+		bVar3 = true;
+	}
+	return bVar3;
+}
+
+bool edAnimatedProperty::GetKeyIndexAndTime(float currentTime, int* outIndex, float* outTime)
+{
+	bool bVar1;
+	float* pfVar2;
+
+	edAnmSubControlerTag* pSubControllerTag = (edAnmSubControlerTag*)(this->pData + 1);
+	edAnmSubControler keyframeBufferStart = { pSubControllerTag };
+
+	bVar1 = pSubControllerTag->keyTimes[0] <= currentTime;
+	if (bVar1) {
+		pfVar2 = keyframeBufferStart.GetClosestKeyIndexSafe(currentTime, outIndex);
+		*outTime = currentTime - *pfVar2;
+	}
+	return bVar1;
 }
 
 float edAnmSubControler::GetKeyIndicesAndRatioSafe(float currentPlayTime, int* outKeyFrame, int* outNextKeyframe, uchar param_5)
@@ -235,6 +285,67 @@ float edAnmSubControler::GetKeyIndicesAndRatioSafe(float currentPlayTime, int* o
 	return fVar4;
 }
 
+float* edAnmSubControler::GetClosestKeyIndexSafe(float time, int* outIndex)
+{
+	ushort uVar1;
+	float* pKeyTimes;
+	int iVar3;
+	uint uVar4;
+	edAnmSubControlerTag* peVar5;
+	uint uVar6;
+
+	peVar5 = this->pData;
+	uVar1 = peVar5->keyCount;
+	uVar6 = (uint)uVar1;
+	pKeyTimes = peVar5->keyTimes;
+	if (uVar6 < 2) {
+		/* If we don't have enough keyframes to interpolate between then just return out */
+		*outIndex = 0;
+	}
+	else {
+		uVar4 = (uint)uVar1;
+		if (time < pKeyTimes[uVar4 - 1]) {
+			peVar5 = peVar5 + 1;
+
+			if ((((8 < uVar1) && (iVar3 = (int)(uVar6 - 1) >> 2, *(float*)(&peVar5->keyCount + iVar3 * 2) <= time)) &&
+				(peVar5 = (edAnmSubControlerTag*)(&peVar5->keyCount + iVar3 * 2),
+					*(float*)(&peVar5->keyCount + iVar3 * 2) <= time)) &&
+				(peVar5 = (edAnmSubControlerTag*)(&peVar5->keyCount + iVar3 * 2),
+					*(float*)(&peVar5->keyCount + iVar3 * 2) <= time)) {
+				peVar5 = (edAnmSubControlerTag*)(&peVar5->keyCount + iVar3 * 2);
+			}
+
+			for (; *(float*)peVar5 <= time; peVar5 = (edAnmSubControlerTag*)&peVar5->keyTimes) {
+			}
+
+			int diff = ((char*)peVar5 - (char*)pKeyTimes);
+
+			if (diff < 0) {
+				IMPLEMENTATION_GUARD();
+				diff = ((int)&peVar5->field_0x2 + 1);
+			}
+
+			uVar4 = diff >> 2;
+		}
+		iVar3 = uVar4 - 1;
+		*outIndex = iVar3;
+		if (iVar3 < 0) {
+			iVar3 = 0;
+		}
+		else {
+			if (((int)uVar6 <= iVar3) && (iVar3 = iVar3 % (int)uVar6, uVar6 == 0)) {
+#ifdef PLATFORM_PS2
+				trap(7);
+#else
+				assert(false);
+#endif
+			}
+		}
+		pKeyTimes = pKeyTimes + iVar3;
+	}
+	return pKeyTimes;
+}
+
 bool edAnimatedProperty::GetQuaternionValue(float currentPlayTime, edF32VECTOR4* outVector)
 {
 	ushort uVar1;
@@ -303,7 +414,7 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 	int locationNextKeyframeB;
 	int scaleCurrentKeyFrame;
 	int scaleNextKeyframe;
-	edF32VECTOR4 outLocation;
+	edF32VECTOR3 outLocation;
 	//float* local_18;
 	//float* locationKeyFrameData;
 	//float* keyframeCountPtr;
@@ -323,8 +434,8 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 		bVar4 = false;
 		bVar5 = false;
 		trackIndex = pCVar2->trackCount;
-		edAnimatedPropertyTag* pAnimProp = (edAnimatedPropertyTag*)(pCVar2->name + pCVar2->field_0x4 + -0x14);
-		//cutsceneElementPtr = (float*)(pCVar2->name + pCVar2->field_0x4 + -0x14);
+		edAnimatedPropertyTag* pAnimProp = (edAnimatedPropertyTag*)(((char*)pCVar2) + pCVar2->trackDataOffset);
+	
 		if (0 < trackIndex) {
 			do {
 				trackIndex = trackIndex + -1;
@@ -351,15 +462,14 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 							}
 							else {
 								edAnmSubControler local_18 = { pTag };
-								local_18.GetKeyIndicesAndRatioSafe(currentPlayTime, &local_48, &local_44, 0)
-									;
+								local_18.GetKeyIndicesAndRatioSafe(currentPlayTime, &local_48, &local_44, 0);
 								currentKeyframePlayTime = baseKeyframeData[local_44] - baseKeyframeData[local_48];
 								if (currentKeyframePlayTime != 0.0) {
 									currentKeyframePlayTime = (currentPlayTime - baseKeyframeData[local_48]) / currentKeyframePlayTime;
 								}
-								edF32Vector3LERPSoft(currentKeyframePlayTime, &outVector,
-									(edF32VECTOR4*)(baseKeyframeData + keyframeCount + local_48 * 3),
-									(edF32VECTOR4*)(baseKeyframeData + keyframeCount + local_44 * 3));
+								edF32Vector3LERPSoft(currentKeyframePlayTime, &outVector.xyz,
+									(edF32VECTOR3*)(baseKeyframeData + keyframeCount + local_48 * 3),
+									(edF32VECTOR3*)(baseKeyframeData + keyframeCount + local_44 * 3));
 								ret = true;
 							}
 							if (ret) {
@@ -390,9 +500,9 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 									}
 									/* Work out a transform based on the two key frames and current keyframe play time */
 									edF32Vector3LERPSoft
-									(currentKeyframePlayTime, &outVector,
-										(edF32VECTOR4*)(baseKeyframeData + keyframeCount + locationCurrentKeyFrame * 3),
-										(edF32VECTOR4*)(baseKeyframeData + keyframeCount + locationNextKeyframe * 3));
+									(currentKeyframePlayTime, &outVector.xyz,
+										(edF32VECTOR3*)(baseKeyframeData + keyframeCount + locationCurrentKeyFrame * 3),
+										(edF32VECTOR3*)(baseKeyframeData + keyframeCount + locationNextKeyframe * 3));
 									ret = true;
 								}
 								/* Apply the transform */
@@ -425,8 +535,8 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 							}
 							/* Work out a transform based on the two key frames and current keyframe play time  */
 							edF32Vector3LERPSoft(currentKeyframePlayTime, &outLocation,
-								(edF32VECTOR4*)(baseKeyframeData + keyframeCount + locationCurrentKeyframeB * 3),
-								(edF32VECTOR4*)(baseKeyframeData + keyframeCount + locationNextKeyframeB * 3));
+								(edF32VECTOR3*)(baseKeyframeData + keyframeCount + locationCurrentKeyframeB * 3),
+								(edF32VECTOR3*)(baseKeyframeData + keyframeCount + locationNextKeyframeB * 3));
 							ret = true;
 						}
 						if (ret) {
@@ -489,142 +599,25 @@ edScene::edScene(edSCENEtag* pTag)
 	this->pTag = pTag;
 }
 
-PACK(
-	struct CineCreatureObjectHeader {
-	int field_0x0;
-	int field_0x4;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	int field_0x10;
-	int cutNameActor; // CutsceneNameActorB*
-});
+struct edSceneActor {
+	edSceneActor(CineCreatureObject* pInObj) : pObj(pInObj) {}
 
-PACK(
-	struct CineCreatureObject : public edCinActorInterface {
-	CineCreatureObjectHeader header;
-	char name[32];
-	edF32VECTOR4 field_0x38;
-	int meshID;
-	int textureID;
-	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 field_0x60;
-	undefined field_0x70;
-	undefined field_0x71;
-	undefined field_0x72;
-	undefined field_0x73;
-	undefined field_0x74;
-	undefined field_0x75;
-	undefined field_0x76;
-	undefined field_0x77;
-	undefined field_0x78;
-	undefined field_0x79;
-	undefined field_0x7a;
-	undefined field_0x7b;
-	undefined field_0x7c;
-	undefined field_0x7d;
-	undefined field_0x7e;
-	undefined field_0x7f;
-	undefined field_0x80;
-	undefined field_0x81;
-	undefined field_0x82;
-	undefined field_0x83;
-	undefined field_0x84;
-	undefined field_0x85;
-	undefined field_0x86;
-	undefined field_0x87;
-	undefined field_0x88;
-	undefined field_0x89;
-	undefined field_0x8a;
-	undefined field_0x8b;
-	undefined field_0x8c;
-	undefined field_0x8d;
-	undefined field_0x8e;
-	undefined field_0x8f;
-	undefined field_0x90;
-	undefined field_0x91;
-	undefined field_0x92;
-	undefined field_0x93;
-	undefined field_0x94;
-	undefined field_0x95;
-	undefined field_0x96;
-	undefined field_0x97;
-	undefined field_0x98;
-	undefined field_0x99;
-	undefined field_0x9a;
-	undefined field_0x9b;
-	undefined field_0x9c;
-	undefined field_0x9d;
-	undefined field_0x9e;
-	undefined field_0x9f;
-	undefined field_0xa0;
-	undefined field_0xa1;
-	undefined field_0xa2;
-	undefined field_0xa3;
-	undefined field_0xa4;
-	undefined field_0xa5;
-	undefined field_0xa6;
-	undefined field_0xa7;
-	undefined field_0xa8;
-	undefined field_0xa9;
-	undefined field_0xaa;
-	undefined field_0xab;
-	undefined field_0xac;
-	undefined field_0xad;
-	undefined field_0xae;
-	undefined field_0xaf;
-	undefined field_0xb0;
-	undefined field_0xb1;
-	undefined field_0xb2;
-	undefined field_0xb3;
-	undefined field_0xb4;
-	undefined field_0xb5;
-	undefined field_0xb6;
-	undefined field_0xb7;
-	undefined field_0xb8;
-	undefined field_0xb9;
-	undefined field_0xba;
-	undefined field_0xbb;
-	undefined field_0xbc;
-	undefined field_0xbd;
-	undefined field_0xbe;
-	undefined field_0xbf;
-	undefined field_0xc0;
-	undefined field_0xc1;
-	undefined field_0xc2;
-	undefined field_0xc3;
-	undefined field_0xc4;
-	undefined field_0xc5;
-	undefined field_0xc6;
-	undefined field_0xc7;
-	undefined field_0xc8;
-	undefined field_0xc9;
-	undefined field_0xca;
-	undefined field_0xcb;
-	undefined field_0xcc;
-	undefined field_0xcd;
-	undefined field_0xce;
-	undefined field_0xcf;
-	undefined field_0xd0;
-	undefined field_0xd1;
-	undefined field_0xd2;
-	undefined field_0xd3;
-	undefined field_0xd4;
-	undefined field_0xd5;
-	undefined field_0xd6;
-	undefined field_0xd7;
-	undefined field_0xd8;
-	undefined field_0xd9;
-});
-
-struct edSceneActorVirtual {
 	CineCreatureObject* pObj;
-	bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection);
+
+	void Initialize();
+	virtual bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection) { return true; }
+	virtual bool Timeslice(float currentPlayTime, edResCollection& resCollection);
+};
+
+void edSceneActor::Initialize()
+{
+	edCinActorInterface* pCinActor = (edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface);
+	pCinActor->Initialize();
+}
+
+struct edSceneActorVirtual : public edSceneActor {
+	edSceneActorVirtual(CineCreatureObject* pInObj) : edSceneActor(pInObj) {}
+	virtual bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection);
 };
 
 bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection)
@@ -681,8 +674,339 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 		creationTag.bHasMesh = (resCollection.pData[cineCreatureObject->meshID * 3 + 1].field_0x0 & 0x80000000U) != 0;
 	}
 	creationTag.field_0x30 = (cineCreatureObject->field_0x38).w;
-	bVar1 = cinGameInterface.CreateActor((edCinActorInterface**)&this->pObj, &creationTag);
+	bVar1 = cinGameInterface.CreateActor((edCinActorInterface**)&this->pObj->pCinActorInterface, &creationTag);
 	return bVar1 != false;
+}
+
+bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollection)
+{
+	ushort uVar1;
+	short sVar2;
+	bool bUpdateRotationSuccess;
+	float* currentKeyframePtr;
+	bool bFrameDirected;
+	float* keyframeBodyPtr;
+	//int* trackSeekPos;
+	int* pTrackDataStart;
+	int numTracks;
+	float fVar4;
+	edF32VECTOR4 outRotation;
+	int local_b8;
+	int local_b4;
+	int local_b0;
+	int local_ac;
+	int local_a8;
+	int local_a4;
+	int locationOutKeyframe;
+	int locationOutNextKeyframe;
+	int local_98;
+	int local_94;
+	int local_90;
+	int soundFileInfoObj;
+	float soundStart;
+	float soundStop;
+	int* local_78;
+	int local_74;
+	int local_70;
+	edF32VECTOR3 local_68;
+	edF32VECTOR4 locationOutVector;
+	edAnmSubControler local_48;
+	edAnmSubControler soundTrackBuffer;
+	edAnmSubControler local_40;
+	edAnmSubControler local_3c;
+	edAnmSubControler local_38;
+	edAnmSubControler local_34;
+	edAnmSubControler local_30;
+	edAnmSubControler local_2c;
+	edAnmSubControler locationSceStart;
+	edAnmSubControler local_24;
+	int local_20;
+	int local_1c;
+	int local_18;
+	int soundKeyframe;
+	int local_10;
+	int local_c;
+	int local_8;
+	edAnimatedProperty animatedProp;
+	CineCreatureObject* pCineCreature;
+	uint currentTrackType;
+	edCinActorInterface* pCinActorInterface;
+
+	/* Load the element start buffer into v1 */
+	pCineCreature = this->pObj;
+	pCinActorInterface = (edCinActorInterface*)LOAD_SECTION(pCineCreature->pCinActorInterface);
+
+	numTracks = pCineCreature->trackCount;
+	edAnimatedPropertyTag* pAnimProp = (edAnimatedPropertyTag*)(((char*)pCineCreature) + pCineCreature->trackDataOffset);
+	/* Move along the seek position to the first track */
+	bFrameDirected = pCinActorInterface->OnFrameDirected();
+	if (bFrameDirected != 0) {
+		while (bUpdateRotationSuccess = 0 < numTracks, numTracks = numTracks + -1, bUpdateRotationSuccess) {
+			currentTrackType = pAnimProp->type;
+			animatedProp = { pAnimProp };
+			if (currentTrackType == 0x73d8ccae) {
+				IMPLEMENTATION_GUARD(
+				locationOutVector.w = (float)(trackSeekPos + 3);
+				local_1c = 0;
+				if ((float)trackSeekPos[4] <= currentPlayTime) {
+					currentKeyframePtr =
+						edAnmSubControler::GetClosestKeyIndexSafe
+						(currentPlayTime, (edAnmSubControler*)&locationOutVector.w, &local_1c);
+					pTrackDataStart =
+						(int*)((int)animatedProp + 0xc) +
+						(uint) * (ushort*)((int)animatedProp + 0xc) + local_1c * 2;
+					local_98 = pTrackDataStart[1];
+					local_94 = resCollection->pData[pTrackDataStart[1] * 3 + 2].field_0x0;
+					local_90 = pTrackDataStart[2];
+					(*(code*)pCinActorInterface->vt->SetMessage)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
+				})
+			}
+			else {
+				if (currentTrackType == 0xd9cee9bc) {
+					IMPLEMENTATION_GUARD(
+					local_48 = (edAnmSubControlerTag*)(trackSeekPos + 3);
+					local_18 = 0;
+					if ((float)trackSeekPos[4] <= currentPlayTime) {
+						currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_48, &local_18);
+						(*(code*)pCinActorInterface->vt->SetSubtitle)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
+					})
+				}
+				else {
+					if (currentTrackType == 0x6e756fb7) {
+						IMPLEMENTATION_GUARD(
+						soundTrackBuffer = (edAnmSubControlerTag*)(trackSeekPos + 3);
+						soundKeyframe = 0;
+						/* Get the number of keyframes in this track */
+						/* Check some time */
+						if ((float)trackSeekPos[4] <= currentPlayTime) {
+							currentKeyframePtr =
+								edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &soundTrackBuffer, &soundKeyframe);
+							keyframeBodyPtr =
+								(float*)((int*)((int)animatedProp + 0xc) +
+									(uint) * (ushort*)((int)animatedProp + 0xc) + soundKeyframe * 3);
+							soundFileInfoObj = resCollection->pData[(int)keyframeBodyPtr[1] * 3 + 2].field_0x0;
+							soundStart = keyframeBodyPtr[2];
+							soundStop = keyframeBodyPtr[3];
+							(*(code*)pCinActorInterface->vt->SetSound)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
+						})
+					}
+					else {
+						if (currentTrackType == 0xdbd3d7c5) {
+							IMPLEMENTATION_GUARD(
+							local_40 = (edAnmSubControlerTag*)(trackSeekPos + 3);
+							local_10 = 0;
+							if ((float)trackSeekPos[4] <= currentPlayTime) {
+								currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_40, &local_10);
+								(*(code*)pCinActorInterface->vt->SetLipsynch)
+									((currentPlayTime - *currentKeyframePtr) +
+										(float)((int*)((uint) * (ushort*)((int)animatedProp + 0xc) * 4 +
+											(int)animatedProp))[local_10 * 2 + 5], pCinActorInterface);
+							})
+						}
+						else {
+							if (currentTrackType == 0xd9dec42c) {
+								IMPLEMENTATION_GUARD_LOG(
+								local_3c = (edAnmSubControlerTag*)(trackSeekPos + 3);
+								local_c = 0;
+								if ((float)trackSeekPos[4] <= currentPlayTime) {
+									currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_3c, &local_c);
+									pTrackDataStart =
+										(int*)((int)animatedProp + 0xc) +
+										(uint) * (ushort*)((int)animatedProp + 0xc) + local_c * 2;
+									local_78 = pTrackDataStart + 1;
+									local_74 = resCollection->pData[pTrackDataStart[1] * 3 + 2].field_0x0;
+									local_70 = pTrackDataStart[2];
+									(*(code*)pCinActorInterface->vt->SetParticles)
+										(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
+								})
+							}
+							else {
+								edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+								if (currentTrackType == 0xdcd2e210) {
+									local_38 = { pTag };
+									float* pKeyTimes = pTag->keyTimes;
+									local_8 = 0;
+									if (pKeyTimes[0] <= currentPlayTime) {
+										currentKeyframePtr = local_38.GetClosestKeyIndexSafe(currentPlayTime, &local_8);
+										float fVar6 = currentPlayTime - *currentKeyframePtr;
+										pTrackDataStart =(int*)((uint) * (ushort*)((ulong)pAnimProp + 0xc) * 4 + (ulong)pAnimProp) + 4;
+
+										struct AnimTagData {
+											int field_0x0;
+											float field_0x4;
+											float field_0x8;
+											int field_0xc;
+											float field_0x10;											
+										};
+
+										AnimTagData* piVar4 = (AnimTagData*)(pTrackDataStart + local_8 * 5);
+										edCinActorInterface::ANIM_PARAMStag local_f0;
+										local_f0.field_0x4 = piVar4->field_0x4 + fVar6 * piVar4->field_0x8;
+										local_f0.field_0x0 = resCollection.pData[piVar4->field_0x0 * 3 + 2].field_0x0;
+										local_f0.field_0x8 = (piVar4->field_0xc & 1U) != 0;
+										float fVar5 = piVar4->field_0x10;
+										if ((fVar5 <= fVar6) || (local_8 < 1)) {
+											local_f0.field_0xc = 0;
+										}
+										else {
+											pTrackDataStart = pTrackDataStart + local_8 * 5;
+											if ((fVar5 == 0.0) || (fVar6 <= 0.0)) {
+												local_f0.field_0x18 = 0.0;
+											}
+											else {
+												local_f0.field_0x18 = fVar6 / fVar5;
+											}
+											local_f0.field_0xc = resCollection.pData[pTrackDataStart[-5] * 3 + 2].field_0x0;
+											local_f0.field_0x14 = (pTrackDataStart[-2] & 1U) != 0;
+											if (local_8 < 2) {
+												local_f0.field_0x10 = (float)((int*)((ulong)pAnimProp + 0x10))[local_8];
+											}
+											else {
+												currentKeyframePtr = (float*)((int*)((ulong)pAnimProp + 0x10) + local_8);
+												local_f0.field_0x10 = *currentKeyframePtr - currentKeyframePtr[-1];
+											}
+											local_f0.field_0x10 =
+												(local_f0.field_0x10 - 0.01818182) * (float)pTrackDataStart[-3] + (float)pTrackDataStart[-4];
+										}
+										pCinActorInterface->SetAnim(&local_f0);
+									}
+								}
+								else {
+									if (currentTrackType == 0x64c8d3b1) {
+										/* ROTATION */
+										sVar2 = pAnimProp->propType;
+										if (sVar2 == 2) {
+											bUpdateRotationSuccess = animatedProp.GetQuaternionValue(currentPlayTime, &outRotation);
+											if (bUpdateRotationSuccess != false) {
+												pCinActorInterface->SetHeadingQuat(outRotation.x, outRotation.y, outRotation.z, outRotation.w);
+											}
+										}
+										else {
+											if (sVar2 == 1) {
+												IMPLEMENTATION_GUARD(
+												uVar1 = *(ushort*)(trackSeekPos + 3);
+												pTrackDataStart = trackSeekPos + 4;
+												if (currentPlayTime < (float)trackSeekPos[4]) {
+													bUpdateRotationSuccess = false;
+												}
+												else {
+													local_34 = (edAnmSubControlerTag*)(trackSeekPos + 3);
+													edAnmSubControler::GetKeyIndicesAndRatioSafe
+													(currentPlayTime, &local_34, &local_b8, &local_b4, '\0');
+													fVar4 = (float)pTrackDataStart[local_b4] - (float)pTrackDataStart[local_b8];
+													if (fVar4 != 0.0) {
+														fVar4 = (currentPlayTime - (float)pTrackDataStart[local_b8]) / fVar4;
+													}
+													edF32Vector3LERPSoft
+													(fVar4, &outRotation, (edF32VECTOR4*)(pTrackDataStart + uVar1 + local_b8 * 3),
+														(edF32VECTOR4*)(pTrackDataStart + uVar1 + local_b4 * 3));
+													bUpdateRotationSuccess = true;
+												}
+												if (bUpdateRotationSuccess) {
+													(*(code*)pCinActorInterface->vt->SetHeadingQuat)
+														(outRotation.x, outRotation.y, outRotation.z, pCinActorInterface);
+												})
+											}
+											else {
+												if (sVar2 == 0) {
+													IMPLEMENTATION_GUARD(
+													uVar1 = *(ushort*)(trackSeekPos + 3);
+													pTrackDataStart = trackSeekPos + 4;
+													if (currentPlayTime < (float)trackSeekPos[4]) {
+														bUpdateRotationSuccess = false;
+													}
+													else {
+														local_30 = (edAnmSubControlerTag*)(trackSeekPos + 3);
+														edAnmSubControler::GetKeyIndicesAndRatioSafe
+														(currentPlayTime, &local_30, &local_b0, &local_ac, '\0');
+														fVar4 = (float)pTrackDataStart[local_ac] - (float)pTrackDataStart[local_b0];
+														if (fVar4 != 0.0) {
+															fVar4 = (currentPlayTime - (float)pTrackDataStart[local_b0]) / fVar4;
+														}
+														edF32Vector3LERPSoft
+														(fVar4, &outRotation, (edF32VECTOR4*)(pTrackDataStart + uVar1 + local_b0 * 3),
+															(edF32VECTOR4*)(pTrackDataStart + uVar1 + local_ac * 3));
+														bUpdateRotationSuccess = true;
+													}
+													if (bUpdateRotationSuccess) {
+														(*(code*)pCinActorInterface->vt->SetHeadingQuat)
+															(outRotation.x, outRotation.y, outRotation.z, pCinActorInterface);
+													})
+												}
+											}
+										}
+									}
+									else {
+										edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+										if (currentTrackType == 0x6c6163b8) {
+											ushort keyframeCount = pTag->keyCount;
+											float* pKeyTimes = pTag->keyTimes;
+											if (currentPlayTime < pKeyTimes[0]) {
+												bUpdateRotationSuccess = false;
+											}
+											else {
+												local_2c = { pTag };
+												local_2c.GetKeyIndicesAndRatioSafe(currentPlayTime, &local_a8, &local_a4, 0);
+												fVar4 = pKeyTimes[local_a4] - pKeyTimes[local_a8];
+												if (fVar4 != 0.0f) {
+													fVar4 = (currentPlayTime - pKeyTimes[local_a8]) / fVar4;
+												}
+												edF32Vector3LERPSoft(fVar4, &local_68, 
+													(edF32VECTOR3*)(pKeyTimes + keyframeCount + local_a8 * 3),
+													(edF32VECTOR3*)(pKeyTimes + keyframeCount + local_a4 * 3));
+												bUpdateRotationSuccess = true;
+											}
+											if (bUpdateRotationSuccess) {
+												pCinActorInterface->SetScale(local_68.x, local_68.y, local_68.z);
+											}
+										}
+										else {
+											if (currentTrackType == 0xd7e2d8c4) {
+												ushort keyframeCount = pTag->keyCount;
+												float* pKeyTimes = pTag->keyTimes;
+												if (currentPlayTime < pKeyTimes[0]) {
+													bUpdateRotationSuccess = false;
+												}
+												else {
+													locationSceStart = { pTag };
+													/* LOCATION */
+													locationSceStart.GetKeyIndicesAndRatioSafe(currentPlayTime, &locationOutKeyframe, &locationOutNextKeyframe, 0);
+													
+													fVar4 = pKeyTimes[locationOutNextKeyframe] - pKeyTimes[locationOutKeyframe];
+													if (fVar4 != 0.0f) {
+														fVar4 = (currentPlayTime - pKeyTimes[locationOutKeyframe]) / fVar4;
+													}
+													/* Also responsible for leaves */
+													edF32Vector3LERPSoft(fVar4, &locationOutVector.xyz,
+														(edF32VECTOR3*)(pKeyTimes + keyframeCount + locationOutKeyframe * 3),
+														(edF32VECTOR3*)(pKeyTimes + keyframeCount + locationOutNextKeyframe * 3));
+													bUpdateRotationSuccess = true;
+												}
+												if (bUpdateRotationSuccess) {
+													pCinActorInterface->SetPos(locationOutVector.x, locationOutVector.y, locationOutVector.z);
+												}
+											}
+											else {
+												if ((currentTrackType == 0xd2df4b2c) && (pTag->keyTimes[0] <= currentPlayTime)) {
+													local_24 = { pTag };
+													local_24.GetClosestKeyIndexSafe(currentPlayTime, &local_20);
+													pCinActorInterface->SetVisibility(*(char*)(((char*)pAnimProp) + local_20 + (uint)uVar1 * 4 + 0x10) != '\0');
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			/* Move to the next element section */
+			pAnimProp = (edAnimatedPropertyTag*)(((char*)pAnimProp) + pAnimProp->size);
+		}
+		pCinActorInterface->OnFrameDirected();
+	}
+	return true;
 }
 
 edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterface& loadObj)
@@ -706,14 +1030,14 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 	//edSceneLight_VTable* local_14;
 	CameraInfo* cachedReturn;
 	CameraInfo* cineCamera;
-	edResCollectionInternal* resPtr;
+	edResCollectionTag* resPtr;
 	char* fileBuffer;
 
 	if (inFileBuffer == (void*)0x0) {
 		dataPtr = (edSCENEtag*)0x0;
 	}
 	else {
-		resPtr = (edResCollectionInternal*)0x0;
+		resPtr = (edResCollectionTag*)0x0;
 		dataPtr = (edSCENEtag*)0x0;
 		fileBuffer = (char*)inFileBuffer;
 		if ((char*)inFileBuffer < (char*)inFileBuffer + fileLength) {
@@ -721,7 +1045,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 				seekCounter = *(int*)fileBuffer;
 				/* If the data we read from the buffer == 'DATA' */
 				if (seekCounter == 0x21534552) {
-					resPtr = (edResCollectionInternal*)(fileBuffer + 8);
+					resPtr = (edResCollectionTag*)(fileBuffer + 8);
 				}
 				else {
 					/* If the data we read from the buffer == 'RES!' */
@@ -799,23 +1123,17 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 						}
 						else {
 							if (iVar1 == 0x551369d) {
-								CUTSCENE_LOG(LogLevel::Warning, "Skipping edSceneScenery::Create\n");
-								//cachedReturn = (CameraInfo*)pCVar3;
-								//edSceneScenery::Create((int*)&cachedReturn, loadObj, &resPtr);
+								edSceneScenery scenery = { (edSceneSceneryTag*)pCVar3 };
+								edResCollection resCol = { resPtr };
+								scenery.Create(loadObj, resCol);
 							}
 							else {
 								/* Sets up cutscene named elements
 								   Example: SC_SOUND_EMITTER or A983538304 or ARAIGNOSBLACK_TOONPLAYER_L0 */
 								if (iVar1 == 0x395f05b1) {
-
-									CUTSCENE_LOG(LogLevel::Warning, "Skipping Virtual Actor\n");
-									edSceneActorVirtual virtualActor;
-									virtualActor.pObj = (CineCreatureObject*)pCVar3;
+									edSceneActorVirtual virtualActor = { (CineCreatureObject*)pCVar3 };
 									edResCollection resCol = { resPtr };
 									virtualActor.Create(loadObj, resCol);
-									//local_1c = &edSceneLight_VTable_00441ca0;
-									//cineCreature = (CameraInfo*)pCVar3;
-									//(*(code*)edSceneLight_VTable_00441ca0.Create)(&cineCreature, loadObj);
 								}
 								else {
 									if (iVar1 == 0x3d4c64aa) {
@@ -882,10 +1200,9 @@ bool edScene::Initialize()
 				}
 				else {
 					if (iVar2 == 0x395f05b1) {
-						CUTSCENE_LOG(LogLevel::Warning, "Skipping Actor\n");
-						//local_14 = &edSceneActorVirtual_VTable_00441ca0;
-						//local_18 = (CameraInfo*)pBuffer;
-						//edSceneActor::Initialize((edSceneActor*)&local_18);
+						CineCreatureObject* pInternal = (CineCreatureObject*)pBuffer;
+						edSceneActor sceneActor = { (CineCreatureObject*)pInternal };
+						sceneActor.Initialize();
 					}
 					else {
 						if (iVar2 == 0x3d4c64aa) {
@@ -919,7 +1236,6 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 	//edSceneLight_VTable* local_24;
 	//edSceneLight local_20;
 	//edSceneLight_VTable* local_1c;
-	//edSceneActor local_18;
 	//edSceneLight_VTable* local_14;
 	//edSceneActor sceSeekPtr;
 	//edSceneLight_VTable* local_c;
@@ -928,7 +1244,7 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 
 	iVar1 = 0;
 	numElements = this->pTag->size;
-	edResCollection local_4 = { (edResCollectionInternal*)LOAD_SECTION(this->pTag->pCollection) };
+	edResCollection local_4 = { (edResCollectionTag*)LOAD_SECTION(this->pTag->pCollection) };
 	sceSeek = (char*)(this->pTag + 1);
 	if (0 < numElements) {
 		do {
@@ -946,10 +1262,9 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 				}
 				else {
 					if (elementType == 0x395f05b1) {
-						//local_14 = &edSceneActorVirtual_VTable_00441ca0;
-						//local_18 = (int)sceSeek;
-						///* Runs in tunnel cutscene */
-						//edSceneActor::Timeslice(currentPlayTime, &local_18, &local_4);
+						CineCreatureObject* pInternal = (CineCreatureObject*)sceSeek;
+						edSceneActor sceneActor = { (CineCreatureObject*)pInternal };
+						sceneActor.Timeslice(currentPlayTime, local_4);
 					}
 					else {
 						if (elementType == 0x3d4c64aa) {
@@ -973,4 +1288,34 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 		} while (iVar1 < numElements);
 	}
 	return true;
+}
+
+void edSceneScenery::Create(edCinGameInterface& loadObj, edResCollection& collection)
+{
+	edCinGameInterface::SCENERY_CREATIONtag creationTag;
+	edSceneSceneryTag* pSceneryTag;
+
+	pSceneryTag = this->pTag;
+	/* This name is the root name of the mesh and texture combo
+	   Example: AIRLIFT_TO_NATIV.g2d and AIRLIFT_TO_NATIV.G3D would be
+	   AIRLIFT_TO_NATIV */
+	strcpy((char*)&creationTag, pSceneryTag->name);
+	if (pSceneryTag->textureOffset == -1) {
+		creationTag.szTexturePath = (char*)0x0;
+		creationTag.textureType = 0;
+	}
+	else {
+		creationTag.szTexturePath = collection.GetResFilename(pSceneryTag->textureOffset);
+		creationTag.textureType = (collection.pData[pSceneryTag->textureOffset * 3 + 1].field_0x0 & 0x80000000U) != 0;
+	}
+	if (pSceneryTag->meshOffset == -1) {
+		creationTag.szMeshPath = (char*)0x0;
+		creationTag.meshType = 0;
+	}
+	else {
+		creationTag.szMeshPath = collection.GetResFilename(pSceneryTag->meshOffset);
+		creationTag.meshType = (collection.pData[pSceneryTag->meshOffset * 3 + 1].field_0x0 & 0x80000000U) != 0;
+	}
+	loadObj.CreateScenery((edCinSceneryInterface**)(this->pTag + 1), &creationTag);
+	return;
 }

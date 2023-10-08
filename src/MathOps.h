@@ -37,11 +37,12 @@ void ed3DComputeLocalToProjectionMatrix(float x, float y, float yMin, float yMax
 uint GetGreaterPower2Val(uint value);
 
 float edF32ATan2Soft(float a, float b);
+void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler);
 void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder);
 edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* order);
 void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrder, float* rotationAngles);
 void edQuatShortestSLERPHard(float delta, edF32VECTOR4* outRotation, edF32VECTOR4* currentRotation, edF32VECTOR4* targetRotation);
-void edF32Vector3LERPSoft(float delta, edF32VECTOR4* outWorldLocation, edF32VECTOR4* currentLocation, edF32VECTOR4* targetLocation);
+void edF32Vector3LERPSoft(float delta, edF32VECTOR3* outWorldLocation, edF32VECTOR3* currentLocation, edF32VECTOR3* targetLocation);
 void edF32Vector4AddHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 
 void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1);

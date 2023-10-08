@@ -51,7 +51,7 @@ struct ManagerContainer {
 	struct CPathManager* g_PathManager_004516a0;
 	struct CActorManager* g_ActorManager_004516a4;
 	struct EventManager* g_EventManager_006f5080;
-	struct CinematicManager* g_CinematicManagerPtr_004516ac;
+	struct CCinematicManager* g_CinematicManagerPtr_004516ac;
 	struct LightManager* g_LightManager_004516b0;
 	struct Manager_C_Alt* g_ManagerC_Alt_004516b4;
 	struct CFxManager* g_EffectsManager_004516b8;

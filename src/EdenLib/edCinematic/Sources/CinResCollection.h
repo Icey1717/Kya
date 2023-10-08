@@ -5,7 +5,7 @@
 
 struct edCinGameInterface;
 
-struct edResCollectionInternal {
+struct edResCollectionTag {
 	int field_0x0;
 };
 
@@ -21,7 +21,7 @@ struct edResCollection {
 		COT_Scene = 3,
 	};
 
-	edResCollectionInternal* pData;
+	edResCollectionTag* pData;
 
 	char* GetResFilename(const int offset);
 	void FlushAllResources(edCinGameInterface& cinGameInterface);

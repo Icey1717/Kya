@@ -6,7 +6,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 	//ManagerFunctionData* pMVar1;
 	undefined* puVar2;
 	int actorCount;
-	Actor* (*papAVar3)[187];
+	void* papAVar3;
 	int* pAlloc;
 	int* piVar4;
 	AnimationController* pAVar5;
@@ -25,16 +25,15 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 	actorCount = pMemoryStream->GetS32();
 	this->actorCount_0x58 = actorCount;
 	if (this->actorCount_0x58 < 1) {
-		//this->actorArray_0x54 = (Actor * (*)[187])0x0;
-		//this->componentsToUpdate = (Actor**)0x0;
-		//this->elementArrayStart = (Actor**)0x0;
+		this->aActors = (CActor**)0x0;
+		this->componentsToUpdate = (void**)0x0;
+		this->elementArrayStart = (void**)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		papAVar3 = (Actor * (*)[187])operator.new.array((long)(this->actorCount_0x58 * 0xc));
-		this->actorArray_0x54 = papAVar3;
-		this->componentsToUpdate = (Actor**)(*this->actorArray_0x54 + this->actorCount_0x58);
-		this->elementArrayStart = (Actor**)(this->componentsToUpdate + this->actorCount_0x58);)
+		papAVar3 = (new void*)[this->actorCount_0x58 * 3];
+		this->aActors = (CActor**)papAVar3;
+		this->componentsToUpdate = (void**)(this->aActors + this->actorCount_0x58);
+		this->elementArrayStart = (void**)(this->componentsToUpdate + this->actorCount_0x58);
 	}
 	for (; 0 < actorCount; actorCount = actorCount + -1) {
 		IMPLEMENTATION_GUARD(
@@ -49,7 +48,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 		(pKVar12->actorBase).data.index_0x20 = iVar11;
 		(pKVar12->actorBase).data.typeID = uVar13;
 		(*(code*)((pKVar12->actorBase).pVTable)->deserializeFunc)();
-		(*this->actorArray_0x54)[iVar11] = (Actor*)pKVar12;
+		(*this->aActors)[iVar11] = (Actor*)pKVar12;
 		)
 	}
 	if (this->actorCount_0x58 != 0) {
@@ -65,7 +64,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 			iVar6 = 0;
 			piVar4 = pAlloc;
 			do {
-				iVar2 = *(Actor**)((int)*this->actorArray_0x54 + iVar6);
+				iVar2 = *(Actor**)((int)*this->aActors + iVar6);
 				if ((iVar2->data).field_0x110 == (undefined*)0x0) {
 					*piVar4 = 0;
 				}
@@ -122,7 +121,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 			piVar4 = pAlloc;
 			do {
 				iVar12 = *piVar4;
-				pActorBase = *(Actor**)((int)*this->actorArray_0x54 + iVar11);
+				pActorBase = *(Actor**)((int)*this->aActors + iVar11);
 				if (iVar12 != 0) {
 					iVar6 = this->field_0x7c;
 					puVar2 = this->field_0x78;

@@ -10,7 +10,56 @@
 #endif
 #include "ScenaricCondition.h"
 #include "TranslatedTextData.h"
+
 #include "EdenLib/edCinematic/Sources/Cinematic.h"
+
+struct ed_g2d_manager;
+struct ed_g3d_manager;
+struct CActorCinematic;
+struct CActor;
+
+class CBWCinActor : public edCinActorInterface {
+public:
+	virtual bool Initialize();
+	virtual bool SetVisibility(bool bVisible);
+	virtual bool OnFrameDirected();
+	virtual bool SetPos(float newX, float newY, float newZ);
+	virtual bool SetHeadingEuler(float x, float y, float z, bool param_5);
+	virtual bool SetHeadingQuat(float x, float y, float z, float w);
+	virtual bool SetScale(float x, float y, float z);
+	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
+	void SetupTransform();
+
+	CActor* pParent;
+	int field_0x8;
+
+	edF32VECTOR4 nextPos;
+	edF32VECTOR4 field_0xe0;
+	edF32VECTOR4 field_0xf0;
+	edF32VECTOR4 field_0x100;
+	undefined field_0x110;
+	undefined field_0x111;
+	undefined field_0x112;
+	undefined field_0x113;
+	undefined field_0x114;
+	undefined field_0x115;
+	undefined field_0x116;
+	undefined field_0x117;
+	undefined field_0x118;
+	undefined field_0x119;
+	undefined field_0x11a;
+	undefined field_0x11b;
+	undefined field_0x11c;
+	undefined field_0x11d;
+	undefined field_0x11e;
+	undefined field_0x11f;
+	undefined field_0x120;
+	undefined field_0x121;
+	undefined field_0x122;
+	undefined field_0x123;
+	int field_0x124;
+	void SetupTransform(edF32VECTOR4* vectorA, edF32VECTOR4* vectorB, edF32VECTOR4* vectorC, int intFieldA);
+};
 
 class CBWCinCam : public edCinCamInterface {
 public:
@@ -26,7 +75,8 @@ class CBWitchCin : public edCinGameInterface {
 public:
 	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*);
 	virtual char* GetResource(edResCollection::RES_TYPE type1, long type2, const char* fileName, int* bufferLengthOut);
-	virtual bool CreateActor(edCinActorInterface** ppActorInterface, const edCinGameInterface::ACTORV_CREATIONtag* pTag);
+	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
+	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag);
 	virtual bool ReleaseResource(void*, bool);
 
 	CBWCinCam BWCinCam_Obj;
@@ -186,8 +236,32 @@ enum ECinematicState {
 	CS_Playing
 };
 
+struct ed_sound_sample {
+	undefined field_0x0;
+	undefined field_0x1;
+	undefined field_0x2;
+	undefined field_0x3;
+	uint field_0x4;
+	uint flags;
+	uint field_0xc;
+	undefined* field_0x10;
+	undefined* field_0x14;
+};
+
+struct CCineActorConfig {
+	CCineActorConfig();
+	CActor* pActor;
+	uint flags;
+	float field_0x8;
+	float field_0xc;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+};
+
 struct CCinematic {
 	void InitInternalData();
+	void SetupInternalData();
+
 	CCinematic();
 	void Create(struct ByteCode* pByteCode);
 	void Init();
@@ -197,13 +271,17 @@ struct CCinematic {
 	bool LoadInternal(long mode);
 	void Install();
 	bool LoadCineBnk(bool mode);
-	int* InstallResource(edResCollection::RES_TYPE objectType, bool type2, const char* fileName, struct ed_g2d_manager* textureObj, int* bufferLengthOut);
+	int* InstallResource(edResCollection::RES_TYPE objectType, bool type2, const char* fileName, ed_g2d_manager* textureObj, int* bufferLengthOut);
+	CActorCinematic* NewCinematicActor(const edCinGameInterface::ACTORV_CREATIONtag* pTag, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
+	CCineActorConfig* GetActorConfig(CActor* pActor);
 
 	void Manage();
 	void ManageState_Playing();
 
 	bool TimeSlice(float currentPlayTime);
 	void IncrementCutsceneDelta();
+
+	void InstallSounds();
 
 	int prtBuffer;
 	uint flags_0x4;
@@ -214,7 +292,7 @@ struct CCinematic {
 	byte field_0x12;
 	byte field_0x13;
 	char* fileName;
-	uint field_0x18;
+	uint actorCinematicCount;
 	int field_0x1c;
 	uint count_0x20;
 	uint field_0x24;
@@ -247,8 +325,8 @@ struct CCinematic {
 	int field_0x90;
 	int field_0x94;
 	int field_0x98;
-	uint objCount_0x9c;
-	struct CineActorConfig* field_0xa0;
+	int cineActorConfigCount;
+	CCineActorConfig* aCineActorConfig;
 	undefined field_0xa4;
 	undefined field_0xa5;
 	undefined field_0xa6;
@@ -296,10 +374,10 @@ struct CCinematic {
 	CMessageFile textData;
 	struct ed_g3d_manager* pMeshInfo;
 	struct edNODE* pMeshTransform;
-	//struct ACutsceneActor** pCutsceneSubInfo;
-	int numObjects_0x218;
-	int* subObjBasePtr;
-	undefined4 count_0x220;
+	CActorCinematic** ppActorCinematics;
+	int loadedActorCinematicListCount;
+	CActorCinematic* aActorCinematic;
+	int loadedActorCinematicCount;
 	int count_0x224;
 	//struct CineSunHolder* pCineSunHolderArray;
 	int count_0x22c;
@@ -336,9 +414,9 @@ struct CCinematic {
 	edCBankBuffer cineBank;
 	int cineBankLoadStage_0x2b4;
 	int soundCount_0x2b8;
-	int sound_0x2bc;
-	int playingSounds_0x2c0;
-	undefined4 field_0x2c4;
+	ed_sound_sample* sound_0x2bc;
+	char** playingSounds_0x2c0;
+	char* field_0x2c4;
 	float field_0x2c8;
 	float field_0x2cc;
 	float field_0x2d0;
@@ -351,9 +429,9 @@ struct CCinematic {
 	int field_0x2ec;
 };
 
-class CinematicManager : public Manager {
+class CCinematicManager : public Manager {
 public:
-	CinematicManager::CinematicManager();
+	CCinematicManager::CCinematicManager();
 
 	virtual void Game_Init();
 	virtual void Game_Term() {}
@@ -371,12 +449,14 @@ public:
 
 	void WillLoadCinematic();
 
+	CCinematic* GetCurCinematic();
+
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;
 	struct CCameraCinematic* pCameraLocationObj;
 	struct CCinematic** ppCinematicObjB_B;
 	int activeCinematicCount;
-	struct CCinematic* pCinematicB_0x18;
+	struct CCinematic* pCurCinematic;
 	struct CCinematic* pCinematic;
 	int field_0x20;
 	int field_0x24;
@@ -420,6 +500,6 @@ public:
 	undefined field_0xbf;
 };
 
-extern CinematicManager* g_CinematicManager_0048efc;
+extern CCinematicManager* g_CinematicManager_0048efc;
 
 #endif // _CINEMATICMANAGER_H

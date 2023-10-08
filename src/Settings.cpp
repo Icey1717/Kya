@@ -61,7 +61,7 @@ void CSettings::SetSettingsToGlobal()
 	int iVar5;
 	long lVar6;
 	float fVar7;
-	CinematicManager* pCVar2;
+	CCinematicManager* pCVar2;
 	LANGUAGE currentLanguageID;
 
 	//pGVar4 = Scene::ptable.g_GlobalSoundPtr_00451698;

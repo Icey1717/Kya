@@ -49,7 +49,7 @@ bool edCinematic::Create(edCinGameInterface& pInterface, void* pCinFileBuffer, i
 		/* Set the read and data start points */
 		pSeekPos = (char*)(this->pCinTag + 1);
 		for (readData = pCinTag->srcCount; readData != 0; readData = readData + -1) {
-			edResCollection edResCol = { (edResCollectionInternal*)resPtr };
+			edResCollection edResCol = { (edResCollectionTag*)resPtr };
 			edCinematicSource edSrc = { (edCinematicSourceInternal*)pSeekPos };
 			edSrc.Create(pInterface, edResCol);
 			pSeekPos = (char*)((ulong)pSeekPos + 0xc);
@@ -99,20 +99,22 @@ bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& res
 	}
 	else {
 		if (dataValue == 2) {
-			//local_c = (int*)0x0;
-			//(*(code*)loadObj->vt->GetSourceAudioInterface)(loadObj, &local_c);
-			//pcVar1 = edResCollection::GetResFilename(resPtr, (*ppSource)->offset);
-			//(**(code**)(*local_c + 8))(local_c, pcVar1);
-			//(*ppSource)->pFileData = (char*)local_c;
+			IMPLEMENTATION_GUARD_AUDIO(
+			local_c = (int*)0x0;
+			(*(code*)loadObj->vt->GetSourceAudioInterface)(loadObj, &local_c);
+			pcVar1 = edResCollection::GetResFilename(resPtr, (*ppSource)->offset);
+			(**(code**)(*local_c + 8))(local_c, pcVar1);
+			(*ppSource)->pFileData = (char*)local_c;)
 		}
 		else {
 			if (dataValue == 3) {
-				//local_10 = (int*)0x0;
-				//(*(code*)loadObj->vt->GetSourceSubtitleInterface)(loadObj, &local_10);
-				//dataValue = (*ppSource)->offset;
-				//pcVar1 = edResCollection::GetResFilename(resPtr, dataValue);
-				//(**(code**)(*local_10 + 8))(local_10, pcVar1, ((uint)(*resPtr)[dataValue * 3 + 1].pData & 0x80000000) != 0);
-				//(*ppSource)->pFileData = (char*)local_10;
+				IMPLEMENTATION_GUARD_AUDIO(
+				local_10 = (int*)0x0;
+				(*(code*)loadObj->vt->GetSourceSubtitleInterface)(loadObj, &local_10);
+				dataValue = (*ppSource)->offset;
+				pcVar1 = edResCollection::GetResFilename(resPtr, dataValue);
+				(**(code**)(*local_10 + 8))(local_10, pcVar1, ((uint)(*resPtr)[dataValue * 3 + 1].pData & 0x80000000) != 0);
+				(*ppSource)->pFileData = (char*)local_10;)
 			}
 		}
 	}
@@ -133,13 +135,13 @@ bool edCinematicSource::Initialize()
 	}
 	else {
 		if (iVar2 == 2) {
-			//IMPLEMENTATION_GUARD(
-			//(**(code**)(*(int*)peVar1->pFileData + 0xc))();)
+			IMPLEMENTATION_GUARD_AUDIO(
+			(**(code**)(*(int*)peVar1->pFileData + 0xc))();)
 		}
 		else {
 			if (iVar2 == 3) {
-				//IMPLEMENTATION_GUARD(
-				//(**(code**)(*(int*)peVar1->pFileData + 0xc))();)
+				IMPLEMENTATION_GUARD_AUDIO(
+				(**(code**)(*(int*)peVar1->pFileData + 0xc))();)
 			}
 		}
 	}
@@ -219,7 +221,7 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 	undefined4 local_20;
 	float local_1c;
 	int local_18;
-	//edAnimatedProperty local_14;
+	edAnimatedProperty local_14;
 	edCinematicSource sceFileB;
 	int local_c;
 	//edAnmSubControler local_8;
@@ -310,27 +312,29 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 	}
 	i = this->pCinTag->field_0x14;
 	while (i = i + -1, -1 < i) {
-		IMPLEMENTATION_GUARD(
-		local_14 = (int)peVar5;
-		if (*(short*)peVar5 == 3) {
+		edAnimatedPropertyTag* pAnimTag = (edAnimatedPropertyTag*)peVar5;
+		edAnimatedProperty local_14 = { pAnimTag };
+		if (pAnimTag->propType == 3) {
 			local_18 = 0;
-			iVar3 = edAnimatedProperty::GetKeyIndexAndTime(adjustedDelta.durationA, &local_14, &local_18, &local_1c);
-			if (iVar3 != 0) {
-				pfVar2 = &this->headerPtr->field_0x0 +
-					*(int*)((int)((uint) * (ushort*)(local_14 + 0xc) * 4 + local_14) + local_18 * 0x14 + 0x10) * 3;
-				adjustedDelta.durationB = (float)this->pRes[(int)pfVar2[0xc] * 3 + 2].pData;
-				(**(code**)(*(int*)pfVar2[0xd] + 0x14))(local_1c);
+			bool bValidKey = local_14.GetKeyIndexAndTime(adjustedDelta.durationA, &local_18, &local_1c);
+			if (bValidKey != false) {
+				IMPLEMENTATION_GUARD();
+				//pfVar2 = &this->headerPtr->field_0x0 +
+				//	*(int*)((int)((uint) * (ushort*)(local_14 + 0xc) * 4 + local_14) + local_18 * 0x14 + 0x10) * 3;
+				//adjustedDelta.durationB = (float)this->pRes[(int)pfVar2[0xc] * 3 + 2].pData;
+				//(**(code**)(*(int*)pfVar2[0xd] + 0x14))(local_1c);
 			}
 		}
 		else {
-			if ((*(short*)peVar5 == 4) &&
-				(iVar3 = edAnimatedProperty::GetVector3Value(adjustedDelta.durationA, (int*)&local_14, &local_28), iVar3 != 0))
-			{
-				(**(code**)(**(int**)(&this->headerPtr[1].field_0x8 + *(int*)(local_14 + 8) * 0xc) + 0x10))
-					(local_28, local_24, local_20);
+			bool bValidVector;
+			if ((pAnimTag->propType == 4) &&
+				(bValidVector = local_14.GetVector3Value(adjustedDelta.durationA, &local_28), bValidVector != false)) {
+				IMPLEMENTATION_GUARD();
+				//(**(code**)(**(int**)(&this->headerPtr[1].field_0x8 + *(int*)(local_14 + 8) * 0xc) + 0x10))
+				//	(local_28, local_24, local_20);
 			}
 		}
-		peVar5 = (astruct_8*)((int)peVar5 + (int)*(float*)((int)peVar5 + 4));)
+		pAnimTag = (edAnimatedPropertyTag*)(((char*)pAnimTag) + pAnimTag->size);
 	}
 	return bVar1;
 }

@@ -19,6 +19,7 @@
 #include "DebugCamera.h"
 #include "TextureCache.h"
 #include "../../../src/CinematicManager.h"
+#include "../../../src/port/vu1_emu.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -111,6 +112,7 @@ namespace DebugMenu_Internal {
 	static bool bShowTextureList = false;
 	static bool bShowFramebuffers = false;
 	static bool bShowCutsceneMenu = true;
+	static bool bShowRenderingMenu = true;
 
 	void DrawMenu() {
 		ImGui::BeginMainMenuBar();
@@ -136,6 +138,10 @@ namespace DebugMenu_Internal {
 			if (ImGui::MenuItem("Texture List"))
 			{
 				bShowTextureList = !bShowTextureList;
+			}
+			if (ImGui::MenuItem("Rendering"))
+			{
+				bShowRenderingMenu = !bShowRenderingMenu;
 			}
 
 			ImGui::EndMenu();
@@ -230,6 +236,19 @@ namespace DebugMenu_Internal {
 					// Seek to the end of the video here
 				}
 			}
+		}
+
+		// End the ImGui window
+		ImGui::End();
+	}
+
+	void ShowRenderingMenu() {
+		// Create a new ImGui window
+		ImGui::Begin("Rendering", &bShowCutsceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
+
+		ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
+		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
+			Renderer::ResetRenderer();
 		}
 
 		// End the ImGui window
@@ -512,6 +531,10 @@ namespace DebugMenu_Internal {
 
 		if (bShowCutsceneMenu) {
 			ShowCutsceneMenu();
+		}
+
+		if (bShowRenderingMenu) {
+			ShowRenderingMenu();
 		}
 
 		MaterialPreviewer::Update();

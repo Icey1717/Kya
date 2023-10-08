@@ -6,27 +6,27 @@
 #include <string>
 #include <optional>
 #include "pcsx2/Selectors.h"
+#include "VulkanShader.h"
 
 namespace PipelineDebug
 {
 	struct ConfigData
 	{
 		std::string topology;
-		std::string gsConfig;
-		std::string psConfig;
-		std::string vsConfig;
+		size_t hash;
 	};
 }
 
 namespace PS2 {
+
 	struct PipelineKey
 	{
-		std::string gsHash;
-		std::string psHash;
-		std::string vsHash;
+		Shader::ShaderDefinitions shaderDefinitions;
 		VkPrimitiveTopology topology;
 		PipelineSelector pipelineSelector;
 		PipelineDebug::ConfigData debugData;
+
+		std::string ToString() const;
 	};
 
 	struct PipelineKeyHash
@@ -35,9 +35,9 @@ namespace PS2 {
 			size_t hash = 0;
 			// combine the hash of the string and the primitive topology
 			std::hash<std::string> stringHasher;
-			hash ^= stringHasher(key.gsHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-			hash ^= stringHasher(key.psHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-			hash ^= stringHasher(key.vsHash) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= stringHasher(key.shaderDefinitions.gsDef) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= stringHasher(key.shaderDefinitions.psDef) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= stringHasher(key.shaderDefinitions.vsDef) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 			hash ^= std::hash<int>()(key.topology) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 			hash ^= PipelineSelectorHash()(key.pipelineSelector) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 			return hash;
@@ -109,11 +109,11 @@ namespace PS2 {
 	using PipelineMap = std::unordered_map<PipelineKey, Renderer::Pipeline, PipelineKeyHash>;
 
 	inline bool operator==(const PipelineKey& lhs, const PipelineKey& rhs) {
-		return lhs.gsHash == rhs.gsHash && lhs.psHash == rhs.psHash && lhs.pipelineSelector.key == rhs.pipelineSelector.key && lhs.topology == rhs.topology;
+		PipelineKeyHash hasher;
+		return hasher(lhs) == hasher(rhs);
 	}
 
 	void CreateDefaultRenderPass();
-	void CreateGraphicsPipelines();
 	PipelineMap& GetPipelines();
 
 	const Renderer::Pipeline& GetPipeline(const PS2::PipelineKey& key);

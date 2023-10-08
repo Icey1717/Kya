@@ -6,6 +6,7 @@
 #include "GSState.h"
 #include "Pipeline.h"
 #include "renderer.h"
+#include "UniformBuffer.h"
 
 namespace Renderer {
 	struct TextureData;
@@ -50,19 +51,59 @@ namespace PS2 {
 		std::vector<VkDescriptorSet> descriptorSets;
 	};
 
+	struct PSSamplerSelector
+	{
+		union
+		{
+			struct
+			{
+				uint32_t tau : 1;
+				uint32_t tav : 1;
+				uint32_t ltf : 1;
+			};
+
+			uint32_t key;
+		};
+
+		operator uint32_t() { return key & 0x7; }
+
+		PSSamplerSelector() : key(0) {}
+	};
+
+	struct GSTexImageConstantBuffer {
+		PS2::VSConstantBuffer vertexConstBuffer;
+		PS2::PSConstantBuffer pixelConstBuffer;
+		std::vector<VkBuffer> vextexUniformBuffers;
+		std::vector<VkDeviceMemory> vertexUniformBuffersMemory;
+		std::vector<VkBuffer> pixelUniformBuffers;
+		std::vector<VkDeviceMemory> pixelUniformBuffersMemory;
+
+		void CreateUniformBuffers();
+		void UpdateUniformBuffers();
+
+		inline const VkBuffer& GetVertexConstantUniformBuffer(const int index) { return vextexUniformBuffers[index]; }
+		inline const VkBuffer& GetPixelConstantUniformBuffer(const int index) { return pixelUniformBuffers[index]; }
+
+		inline VSConstantBuffer& GetVertexConstantBufferData() { return vertexConstBuffer; }
+		inline PSConstantBuffer& GetPixelConstantBufferData() { return pixelConstBuffer; }
+	};
+
 	struct GSTexImage {
 		GSTexImage(const Renderer::ImageData& inImageData);
 
-		VkImage image;
-		VkDeviceMemory imageMemory;
-		VkImageView imageView;
+		VkImage image = VK_NULL_HANDLE;
+		VkDeviceMemory imageMemory = VK_NULL_HANDLE;
+		VkImageView imageView = VK_NULL_HANDLE;
 
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
+		VkBuffer stagingBuffer = VK_NULL_HANDLE;
+		VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
 
-		VkSampler sampler;
+		VkSampler sampler = VK_NULL_HANDLE;
+		PSSamplerSelector samplerSelector;
 
 		Renderer::ImageData imageData;
+
+		GSTexImageConstantBuffer constantBuffer;
 
 		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
 
@@ -83,8 +124,12 @@ namespace PS2 {
 		const GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline);
 		const GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline);
 
-		void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
-		void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
+		void CreateSampler(bool bPalette = false);
+		void UpdateSampler();
+		void UpdateSampler(PSSamplerSelector selector);
+
+		//void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
+		//void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
 	};
 
 	struct TextureDebug {
@@ -131,7 +176,8 @@ namespace PS2 {
 	public:
 		GSTexEntry& Create(const GIFReg::GSTex& TEX);
 		GSTexEntry& Lookup(const GIFReg::GSTex& TEX);
-		const std::vector<GSTexEntry>& GetEntries() { return texcache; }
+		const std::vector<GSTexEntry>& GetEntries() const { return texcache; }
+		std::vector<GSTexEntry>& GetEntries() { return texcache; }
 	};
 
 	inline GSTexKey CreateKeyFromTEX(const GIFReg::GSTex& TEX) {

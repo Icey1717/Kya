@@ -428,9 +428,12 @@ struct SectorManagerSubObj {
 	int field_0xc;
 };
 
+#define IMPLEMENTATION_GUARD_AUDIO(x)
+#define IMPLEMENTATION_GUARD_LOG(x)
+
 #ifdef PLATFORM_WIN
 #include <assert.h>
-#define IMPLEMENTATION_GUARD(x) assert(false);
+#define IMPLEMENTATION_GUARD(x) assert(false); 
 #else
 #define IMPLEMENTATION_GUARD(x) MY_LOG("Hit an assert! %s, %d\n", __FILE__, __LINE__);
 #endif

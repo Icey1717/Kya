@@ -8,9 +8,84 @@
 #include <iomanip>
 #include <cstdlib>
 #include <filesystem>
+#include <assert.h>
 #include "hash.h"
 #include "archive.h"
 #include "ShaderConfig.h"
+
+#include <thread>
+#include <queue>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
+
+class JobPool {
+public:
+	JobPool(int numThreads) : stop(false) {
+		for (int i = 0; i < numThreads; ++i) {
+			workers.emplace_back([this] {
+				while (true) {
+					std::function<void()> task;
+
+					{
+						std::unique_lock<std::mutex> lock(queueMutex);
+
+						// Wait for a task if the queue is empty
+						condition.wait(lock, [this] { return stop || !tasks.empty(); });
+
+						// Check if we should stop
+						if (stop && tasks.empty()) {
+							return;
+						}
+
+						// Get the next task from the queue
+						task = std::move(tasks.front());
+						tasks.pop();
+					}
+
+					// Execute the task
+					task();
+				}
+				});
+		}
+	}
+
+	// Add a task to the job pool
+	template <typename Func>
+	void addTask(Func&& func) {
+		{
+			std::lock_guard<std::mutex> lock(queueMutex);
+			tasks.emplace(std::forward<Func>(func));
+		}
+
+		// Notify one worker thread to pick up the task
+		condition.notify_one();
+	}
+
+	// Wait for all tasks to finish and stop the worker threads
+	void waitAndStop() {
+		{
+			std::lock_guard<std::mutex> lock(queueMutex);
+			stop = true;
+		}
+
+		// Notify all worker threads to stop
+		condition.notify_all();
+
+		// Join all worker threads
+		for (std::thread& worker : workers) {
+			worker.join();
+		}
+	}
+
+private:
+	std::vector<std::thread> workers;
+	std::queue<std::function<void()>> tasks;
+	std::mutex queueMutex;
+	std::condition_variable condition;
+	bool stop;
+};
+
 
 std::vector<std::string> gParsedFiles;
 
@@ -38,11 +113,11 @@ void ConvertToSPIRV(const std::string& configName, const std::string& entryPoint
 	int result = std::system(command.c_str());
 
 	if (result == 0) {
-		gParsedFiles.push_back(outputName);
+		//gParsedFiles.push_back(outputName);
 	}
 
 	// For this demonstration, let's assume the conversion is successful
-	std::cout << "Converting HLSL to SPIR-V for config: " << configName << " and arguments: " << arguments<< std::endl;
+	//std::cout << "Converting HLSL to SPIR-V for config: " << configName << " and arguments: " << arguments<< std::endl;
 }
 
 void CreateDirectory(std::string name) {
@@ -73,72 +148,116 @@ void DeleteDirectory(std::string name) {
 	}
 }
 
-int main() {
-	DeleteDirectory(shaderOutputDirectoryPS2);
-	CreateDirectory(shaderOutputDirectoryPS2);
+class ShaderCompiler {
+public:
+	MacroSet macroSet;
+	std::string type;
+	std::string entry;
+	std::string extension;
+	std::string macroPrefix;
 
-	for (int VS_TME : VS_TME_VALUES) {
-		for (int VS_FST : VS_FST_VALUES) {
+private:
+	struct Config {
+		std::string name;
+		std::string definition;
+	};
+
+	void GeneratePermutations(std::vector<Config>& currentConfig,
+		std::vector<std::vector<Config>>& allConfigs,
+		size_t macroIndex) {
+		if (macroIndex == macroSet.size()) {
+			// Base case: We have a complete configuration
+			allConfigs.push_back(currentConfig);
+			return;
+		}
+
+		const auto& macro = macroSet[macroIndex];
+		for (int value : macro.second) {
+			Config config;
+			config.name = macroPrefix + "_" + macro.first + "_" + std::to_string(value);
+			config.definition = "-D" + macroPrefix + "_" + macro.first + "=" + std::to_string(value);
+			currentConfig.push_back(config);
+
+			// Recursively generate configurations for the next macro
+			GeneratePermutations(currentConfig, allConfigs, macroIndex + 1);
+
+			// Remove the last added config for backtracking
+			currentConfig.pop_back();
+		}
+	}
+
+	void GeneratePermutations(std::vector<std::vector<Config>>& allConfigs) {
+		std::vector<Config> currentConfig;
+		GeneratePermutations(currentConfig, allConfigs, 0);
+	}
+
+public:
+	void Compile() {
+		assert(!macroSet.empty());
+		assert(!type.empty());
+		assert(!entry.empty());
+		assert(!extension.empty());
+		assert(!macroPrefix.empty());
+
+		JobPool pool(16);
+
+		std::vector<std::vector<Config>> allConfigs;
+		GeneratePermutations(allConfigs);
+
+		for (auto& configs : allConfigs) {
 			std::stringstream configName;
-			configName << "VS_TME_" << VS_TME
-				<< "VS_FST_" << VS_FST;
-			std::string configDefinitions = "-DVS_TME=" + std::to_string(VS_TME)
-				+ " -DVS_FST=" + std::to_string(VS_FST);
+			std::stringstream configDefinition;
+
+			for (auto& config : configs) {
+				configName << config.name;
+				configDefinition << config.definition << " ";
+			}
 
 			// Compute the MD5 hash for the configuration
 			std::string shaderHash = GetMD5String(configName.str());
 
-			// Convert HLSL to SPIR-V for the current configuration
-			ConvertToSPIRV("vs_6_0", "vs_main", shaderHash + ".vs.spv", configDefinitions);
-		}
-	}
+			std::string configDefString = configDefinition.str();
 
-	for (int PS_ATST : PS_ATST_VALUES) {
-		for (int PS_FOG : PS_FOG_VALUES) {
-			for (int PS_TFX : PS_TFX_VALUES) {
-				std::stringstream configName;
-				configName << "PS_ATST_" << PS_ATST
-					<< "PS_FOG_" << PS_FOG
-					<< "PS_TFX_" << PS_TFX;
-				std::string configDefinitions = "-DPS_ATST=" + std::to_string(PS_ATST)
-					+ " -DPS_FOG=" + std::to_string(PS_FOG)
-					+ " -DPS_TFX=" + std::to_string(PS_TFX);
-
-				// Compute the MD5 hash for the configuration
-				std::string shaderHash = GetMD5String(configName.str());
-
+			pool.addTask([=]() {
 				// Convert HLSL to SPIR-V for the current configuration
-				ConvertToSPIRV("ps_6_0", "ps_main", shaderHash + ".ps.spv", configDefinitions);
-			}
+				ConvertToSPIRV(type.c_str(), entry.c_str(), shaderHash + extension.c_str(), configDefString);
+				});
+
+			gParsedFiles.push_back(shaderHash + extension.c_str());
 		}
+
+		pool.waitAndStop();
+
+		// Print the generated configurations
+		//for (const auto& config : allConfigs) {
+		//	for (const Config& entry : config) {
+		//		std::cout << "Config name: " << entry.name << ", Definition: " << entry.definition << std::endl;
+		//	}
+		//	std::cout << "---------------------" << std::endl;
+		//}
+	}
+};
+
+int main() {
+	DeleteDirectory(shaderOutputDirectoryPS2);
+	CreateDirectory(shaderOutputDirectoryPS2);
+
+	// Vertex
+	{
+		ShaderCompiler compiler = { VS_MACROS, "vs_6_0", "vs_main", ".vs.spv", "VS" };
+		compiler.Compile();
 	}
 
-	//ConvertToSPIRV("ps_6_0", "ps_main", "ps2.ps.spv", "");
+	// Fragment
+	{
+		ShaderCompiler compiler = { PS_MACROS, "ps_6_0", "ps_main", ".ps.spv", "PS" };
+		compiler.Compile();
+	}
 
-	// Iterate through all possible configurations
-	for (int GS_PRIM : GS_PRIM_VALUES) {
-		for (int GS_POINT : GS_POINT_VALUES) {
-			for (int GS_LINE : GS_LINE_VALUES) {
-				for (int GS_IIP : GS_IIP_VALUES) {
-					std::stringstream configName;
-					configName << "GS_PRIM_" << GS_PRIM 
-						<< "_POINT_" << GS_POINT 
-						<< "_LINE_" << GS_LINE 
-						<< "_IIP_" << GS_IIP;
-
-					std::string configDefinitions = "-DGS_PRIM=" + std::to_string(GS_PRIM)
-						+ " -DGS_POINT=" + std::to_string(GS_POINT)
-						+ " -DGS_LINE=" + std::to_string(GS_LINE)
-						+ " -DGS_IIP=" + std::to_string(GS_IIP);
-
-					// Compute the MD5 hash for the configuration
-					std::string shaderHash = GetMD5String(configName.str());
-
-					// Convert HLSL to SPIR-V for the current configuration
-					ConvertToSPIRV("gs_6_0", "gs_main", shaderHash + ".gs.spv", configDefinitions);
-				}
-			}
-		}
+	// Geometry
+	{
+		ShaderCompiler compiler = { GS_MACROS, "gs_6_0", "gs_main", ".gs.spv", "GS" };
+		compiler.Compile();
 	}
 
 	Archive::PackFiles(gParsedFiles, shaderOutputDirectoryPS2 + "\\Shaders_PS2.pack");

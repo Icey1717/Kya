@@ -40,8 +40,8 @@ extern std::string ShiftJIS_ConvertString(const char* src, int maxlen);
 typedef void FnType_Void();
 typedef FnType_Void* Fnptr_Void;
 
-//#define VUM_LOG(fmt, ...)
-#define VUM_LOG(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "VU", fmt, __VA_ARGS__)
+#define VUM_LOG(fmt, ...)
+//#define VUM_LOG(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "VU", fmt, __VA_ARGS__)
 #define CPU_LOG(...)
 
 //extern char* disVU0MicroUF(u32 code, u32 pc);

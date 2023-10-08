@@ -10,9 +10,10 @@ namespace VU1Emu {
 
 #define FAKE_VU1_MEM_SIZE 0x100000
 	char gFakeMem[FAKE_VU1_MEM_SIZE] = {};
-	unsigned char gFakeMemInterpreter[FAKE_VU1_MEM_SIZE] = {};
 
 	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
+
+	bool bEnableInterpreter = false;
 
 	char* GetFakeMem() {
 		return gFakeMem;
@@ -567,12 +568,8 @@ namespace VU1Emu {
 			RGBA.wi,
 			STQ.z);
 
-		if (x == 0xcff0 && vtxReg == 0x61) {
-			skip = skip;
-		}
-
 		//Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x S: %f, T: %f, Q: %f", vtxReg, x, y, z, skip, STQ.x, STQ.y, STQ.z);
-		Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x", vtxReg, x, y, z, skip);
+		//Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x", vtxReg, x, y, z, skip);
 
 		Renderer::SetVertexSkip(skip & 0x8000);
 		Renderer::KickVertex(x, y, z);
@@ -678,10 +675,10 @@ namespace VU1Emu {
 
 				auto tempvi01 = vi01;
 				vi01 = vi08 | vi09;
-				if (tempvi01 == 0) {
+				if (tempvi01 == 0) { // Goto _$ClipSecondEdge
 
 					vi01 = vi07 | vi08;
-					if (vi07 == 0) {
+					if (vi07 == 0) { // Goto _$ClipFirstEdge
 
 						vf22.w = (VIF_LOAD_F(vi03, -4)).w;
 
@@ -708,7 +705,7 @@ namespace VU1Emu {
 
 					tempvi01 = vi01;
 					vi01 = vi08 & vi09;
-					if (tempvi01 != 0) {
+					if (tempvi01 != 0) { // Goto _$TestSecondEdge
 
 						vf26 = vf08 - vf05;
 
@@ -739,77 +736,80 @@ namespace VU1Emu {
 						*VIF_AS_F(vi04, -2) = vf21;
 						*VIF_AS_F(vi04, -1) = vf22;
 					}
-				}
 
-				// _$TestSecondEdge
-
-				tempvi01 = vi01;
-				vi01 = vi09 | vi07;
-				if (tempvi01 == 0) {
-
-					vi01 = vi08 | vi09;
-					if (vi08 == 0) {
-
-						vf22.w = (VIF_LOAD_F(vi03, -1)).w;
-
-						vf21 = vf09;
-
-						Q = 1.0f / vf10.w;
-
-						vf20.xyz = vf08.xyz * Q;
-						vf22.xyz = vf10.xyz * Q;
-
-						vi04 += 3;
-						vi13 += 1;
-
-						(*VIF_AS_F(vi04, -3)).xyz = vf20.xyz;
-						*VIF_AS_F(vi04, -2) = vf21;
-						*VIF_AS_F(vi04, -1) = vf22;
-					}
-
-					// _$ClipSecondEdge
-
-					vf20.xyz = vf10.xyz - vf30.w;
-					vf22.xyz = vf10.xyz - vf13.xyz;
-					vf21 = vf12 - vf09;
+					// _$TestSecondEdge
 
 					tempvi01 = vi01;
-					vi01 = vi09 & vi07;
-					if (tempvi01 != 0) {
-						vf26 = vf11 - vf08;
+					vi01 = vi09 | vi07;
+					if (tempvi01 == 0) { // Goto _$ClipThirdEdge
 
-						Q = vf20.z / vf22.z;
+						vi01 = vi08 | vi09;
+						if (vi08 == 0) { // Goto _$ClipSecondEdge
 
-						vi13 += 1;
-						vi04 += 3;
+							vf22.w = (VIF_LOAD_F(vi03, -1)).w;
 
-						ACC = vf10;
-						vf22.xyz = ACC.xyz - (vf22.xyz * Q);
+							vf21 = vf09;
 
-						ACC = vf09;
-						vf21 = ACC + (vf21 * Q);
+							Q = 1.0f / vf10.w;
 
-						ACC = vf08;
-						vf26.xyz = ACC.xyz + (vf26.xyz * Q);
+							vf20.xyz = vf08.xyz * Q;
+							vf22.xyz = vf10.xyz * Q;
 
-						ACC.xyz = vf30.xyz * vf22.xyz;
-						vf23.xyz = ACC.xyz + (vf31.xyz * 1.0f);
+							vi04 += 3;
+							vi13 += 1;
 
-						vi05 = Clip(1.0f, vf23);
-						vi05 = vi05 & vi06;
-						vf22.w = *reinterpret_cast<float*>(&vi05);
-
-						(*VIF_AS_F(vi04, -3)).xyz = vf26.xyz;
-						*VIF_AS_F(vi04, -2) = vf21;
-						*VIF_AS_F(vi04, -1) = vf22;
+							(*VIF_AS_F(vi04, -3)).xyz = vf20.xyz;
+							*VIF_AS_F(vi04, -2) = vf21;
+							*VIF_AS_F(vi04, -1) = vf22;
+						}
 					}
+					else {
+						goto _$ClipThirdEdge;
+					}
+				}
+
+				// _$ClipSecondEdge
+
+				vf20.xyz = vf10.xyz - vf30.w;
+				vf22.xyz = vf10.xyz - vf13.xyz;
+				vf21 = vf12 - vf09;
+
+				tempvi01 = vi01;
+				vi01 = vi09 & vi07;
+				if (tempvi01 != 0) { // Goto _$TestThirdEdge
+					vf26 = vf11 - vf08;
+
+					Q = vf20.z / vf22.z;
+
+					vi13 += 1;
+					vi04 += 3;
+
+					ACC = vf10;
+					vf22.xyz = ACC.xyz - (vf22.xyz * Q);
+
+					ACC = vf09;
+					vf21 = ACC + (vf21 * Q);
+
+					ACC = vf08;
+					vf26.xyz = ACC.xyz + (vf26.xyz * Q);
+
+					ACC.xyz = vf30.xyz * vf22.xyz;
+					vf23.xyz = ACC.xyz + (vf31.xyz * 1.0f);
+
+					vi05 = Clip(1.0f, vf23);
+					vi05 = vi05 & vi06;
+					vf22.w = *reinterpret_cast<float*>(&vi05);
+
+					(*VIF_AS_F(vi04, -3)).xyz = vf26.xyz;
+					*VIF_AS_F(vi04, -2) = vf21;
+					*VIF_AS_F(vi04, -1) = vf22;
 				}
 
 				// _$TestThirdEdge
 
-				if (vi01 == 0) {
+				if (vi01 == 0) { // Goto _$EndOfClippingNear
 					vi01 = vi09 | vi07;
-					if (vi09 == 0) {
+					if (vi09 == 0) { // Goto _$ClipThirdEdge
 
 						vf22.w = (VIF_LOAD_F(vi03, 2)).w;
 
@@ -828,13 +828,14 @@ namespace VU1Emu {
 						*VIF_AS_F(vi04, -1) = vf22;
 					}
 
+_$ClipThirdEdge:
 					// _$ClipThirdEdge
 
 					vf20.xyz = vf13.xyz - vf30.w;
 					vf22.xyz = vf13.xyz - vf07.xyz;
 					vf21 = vf06 - vf12;
 
-					if (vi01 != 0) {
+					if (vi01 != 0) { // Goto _$EndOfClippingNear
 						vf26 = vf05 - vf11;
 
 						Q = vf20.z / vf22.z;
@@ -1214,16 +1215,16 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
-			static bool bEmulateCode = true;
-			if (bEmulateCode) {
-				RunCode(pRunTag->addr);
-			}
-			else {
 
+			if (bEnableInterpreter) {
 				pcsx2_VU::SetKickCallback(KickCallback);
 				pcsx2_VU::SetMicro(gVu1Code);
 				pcsx2_VU::SetMem((unsigned char*)gFakeMem);
 				pcsx2_VU::Execute(pRunTag->addr);
+			}
+			else {
+
+				RunCode(pRunTag->addr);
 			}
 
 		}
@@ -1310,4 +1311,9 @@ void VU1Emu::UpdateMemory(edpkt_data* pVifPkt, edpkt_data* pEnd)
 		}
 		pVifPkt++;
 	}
+}
+
+bool& VU1Emu::GetInterpreterEnabled()
+{
+	return bEnableInterpreter;
 }

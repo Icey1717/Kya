@@ -226,7 +226,8 @@ struct alignas(16) GSHWDrawConfig
 				// Hack
 				u32 tcoffsethack : 1;
 				u32 urban_chaos_hle : 1;
-				u32 tales_of_abyss_hle : 1;
+				u32 clr1 : 1;
+				//u32 tales_of_abyss_hle : 1;
 				u32 tex_is_fb : 1; // Jak Shadows
 				u32 automatic_lod : 1;
 				u32 manual_lod : 1;

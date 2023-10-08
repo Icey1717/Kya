@@ -1940,7 +1940,7 @@ bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 		pAVar6 = (Actor*)0x0;
 		if (iVar1 != -1) {
 			IMPLEMENTATION_GUARD(
-			pAVar6 = (*(Scene::ptable.g_ActorManager_004516a4)->actorArray_0x54)[iVar1];)
+			pAVar6 = (*(Scene::ptable.g_ActorManager_004516a4)->aActors)[iVar1];)
 		}
 		switch (this->field_0x8) {
 		case 0:

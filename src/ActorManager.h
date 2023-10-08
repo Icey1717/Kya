@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "LargeObject.h"
 
+struct CActor;
+
 struct CActorManager : public Manager {
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 
@@ -45,11 +47,11 @@ struct CActorManager : public Manager {
 	undefined field_0x4e;
 	undefined field_0x4f;
 	struct ActorManagerSector* pActorManagerSectorArray;
-	//struct Actor* [187] * actorArray_0x54;
+	CActor** aActors;
 	int actorCount_0x58;
-	struct Actor** componentsToUpdate;
+	void** componentsToUpdate;
 	int componentEnd;
-	struct Actor** elementArrayStart;
+	void** elementArrayStart;
 	int numElements;
 	struct AnimationController* pAnimationControllerArray_0x6c;
 	int count_0x70;

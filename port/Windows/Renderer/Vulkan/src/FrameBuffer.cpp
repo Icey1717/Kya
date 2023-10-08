@@ -131,7 +131,6 @@ void FrameBuffer::ExecuteClearPass()
 
 void FrameBuffer::ExecuteFinalPass()
 {
-	// Begin the grayscale render pass
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassBeginInfo.renderPass = finalPass;
@@ -145,7 +144,6 @@ void FrameBuffer::ExecuteFinalPass()
 
 	vkCmdBeginRenderPass(GetCurrentCommandBuffer(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	// Bind the grayscale pipeline
 	vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline.pipeline);
 
 	vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, finalPipeline.layout, 0, 1, &finalPipeline.descriptorSets[GetCurrentFrame()], 0, nullptr);

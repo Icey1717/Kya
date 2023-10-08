@@ -1147,37 +1147,11 @@ void PS2::GSTexImage::CreateResources(const bool bPalette)
 	VulkanImage::CreateImage(width, height , format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
 
-	VkSamplerCreateInfo samplerInfo{};
-	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = bPalette ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
-	samplerInfo.minFilter = bPalette ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
-
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-	VkPhysicalDeviceProperties properties{};
-	vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
-
-	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-
-	samplerInfo.anisotropyEnable = VK_FALSE;
-	samplerInfo.maxAnisotropy = 0.0f;
-
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
-
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerInfo.mipLodBias = 0.0f;
-	samplerInfo.minLod = -FLT_MAX;
-	samplerInfo.maxLod = FLT_MAX;
-
-	if (vkCreateSampler(GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
+	if (bPalette) {
+		CreateSampler(true);
 	}
+
+	constantBuffer.CreateUniformBuffers();
 }
 
 
@@ -1217,15 +1191,17 @@ const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::P
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = imageView;
+
+		assert(sampler != VK_NULL_HANDLE);
 		imageInfo.sampler = sampler;
 
 		VkDescriptorBufferInfo vertexConstantBuffer{};
-		vertexConstantBuffer.buffer = GetVertexConstantUniformBuffer(i);
+		vertexConstantBuffer.buffer = constantBuffer.GetVertexConstantUniformBuffer(i);
 		vertexConstantBuffer.offset = 0;
 		vertexConstantBuffer.range = sizeof(VSConstantBuffer);
 
 		VkDescriptorBufferInfo pixelConstantBuffer{};
-		pixelConstantBuffer.buffer = GetPixelConstantUniformBuffer(i);
+		pixelConstantBuffer.buffer = constantBuffer.GetPixelConstantUniformBuffer(i);
 		pixelConstantBuffer.offset = 0;
 		pixelConstantBuffer.range = sizeof(PSConstantBuffer);
 
@@ -1256,6 +1232,70 @@ const PS2::GSTexDescriptor& PS2::GSTexImage::GetDescriptorSets(const Renderer::P
 	return gsDescriptor;
 }
 
+void PS2::GSTexImage::CreateSampler(bool bPalette /*= false*/)
+{
+	VkSamplerCreateInfo samplerInfo{};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+	if (bPalette) {
+		samplerInfo.magFilter = VK_FILTER_NEAREST;
+		samplerInfo.minFilter = VK_FILTER_NEAREST;
+
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	}
+	else {
+		samplerInfo.magFilter = samplerSelector.ltf ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+		samplerInfo.minFilter = samplerSelector.ltf ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+
+		samplerInfo.addressModeU = samplerSelector.tau ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeV = samplerSelector.tav ? VK_SAMPLER_ADDRESS_MODE_REPEAT: VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	}
+
+	VkPhysicalDeviceProperties properties{};
+	vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
+
+	//samplerInfo.anisotropyEnable = VK_TRUE;
+	//samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+	samplerInfo.anisotropyEnable = VK_FALSE;
+	samplerInfo.maxAnisotropy = 0.0f;
+
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
+
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.minLod = -FLT_MAX;
+	samplerInfo.maxLod = FLT_MAX;
+
+	if (vkCreateSampler(GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create texture sampler!");
+	}
+}
+
+void PS2::GSTexImage::UpdateSampler(PSSamplerSelector selector)
+{
+	if (sampler == VK_NULL_HANDLE) {
+		samplerSelector = selector;
+		CreateSampler();
+	}
+	else {
+		if (selector.key != samplerSelector.key) {
+			assert(false);
+		}
+	}
+}
+
+void PS2::GSTexImage::UpdateSampler()
+{
+	UpdateSampler(samplerSelector);
+}
+
 namespace PS2_Internal {
 	PS2::TextureCache gTextureCache;
 }
@@ -1284,4 +1324,38 @@ PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX)
 PS2::TextureCache& PS2::GetTextureCache()
 {
 	return gTextureCache;
+}
+
+void PS2::GSTexImageConstantBuffer::CreateUniformBuffers()
+{
+	const VkDeviceSize vertexBufferSize = sizeof(VSConstantBuffer);
+	const VkDeviceSize pixelBufferSize = sizeof(PSConstantBuffer);
+
+	vextexUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	vertexUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+
+	pixelUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+	pixelUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vextexUniformBuffers[i], vertexUniformBuffersMemory[i]);
+		CreateBuffer(pixelBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pixelUniformBuffers[i], pixelUniformBuffersMemory[i]);
+	}
+}
+
+void PS2::GSTexImageConstantBuffer::UpdateUniformBuffers()
+{
+	{
+		void* data;
+		vkMapMemory(GetDevice(), vertexUniformBuffersMemory[GetCurrentFrame()], 0, sizeof(VSConstantBuffer), 0, &data);
+		memcpy(data, &vertexConstBuffer, sizeof(VSConstantBuffer));
+		vkUnmapMemory(GetDevice(), vertexUniformBuffersMemory[GetCurrentFrame()]);
+	}
+
+	{
+		void* data;
+		vkMapMemory(GetDevice(), pixelUniformBuffersMemory[GetCurrentFrame()], 0, sizeof(PSConstantBuffer), 0, &data);
+		memcpy(data, &pixelConstBuffer, sizeof(PSConstantBuffer));
+		vkUnmapMemory(GetDevice(), pixelUniformBuffersMemory[GetCurrentFrame()]);
+	}
 }

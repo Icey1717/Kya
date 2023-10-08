@@ -127,12 +127,11 @@ namespace PS2 {
 	}
 
 	void ResetBuffer();
-	void CreateUniformBuffers();
-	void UpdateUniformBuffers();
-
-	const VkBuffer& GetVertexConstantUniformBuffer(const int index);
-	const VkBuffer& GetPixelConstantUniformBuffer(const int index);
-
-	VSConstantBuffer& GetVertexConstantBufferData();
-	PSConstantBuffer& GetPixelConstantBufferData();
+	void CreateVertexUniformBuffers();
+	
+	//const VkBuffer& GetVertexConstantUniformBuffer(const int index);
+	//const VkBuffer& GetPixelConstantUniformBuffer(const int index);
+	//
+	//VSConstantBuffer& GetVertexConstantBufferData();
+	//PSConstantBuffer& GetPixelConstantBufferData();
 }

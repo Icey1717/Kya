@@ -9,153 +9,19 @@
 #include <iterator>
 #include "pcsx2/VKBuilders.h"
 #include "pcsx2/Selectors.h"
+#include "log.h"
 
 namespace PS2_Internal {
 	std::unordered_map<PS2::PipelineKey, Renderer::Pipeline, PS2::PipelineKeyHash> graphicsPipelines;
 	VkRenderPass renderPass;
 
-	Renderer::Pipeline CreateGraphicsPipeline(const PS2::PipelineKey& key) {
-		const std::string vsFilePath = "shaders/ps2/ps2.vs.spv";
-		const std::string gsFilePath = "shaders/ps2/" + key.gsHash + ".gs.spv";
-		const std::string psFilePath = "shaders/ps2/" + key.psHash + ".ps.spv";
-
-		Renderer::Pipeline pipeline;
-		auto vertShader = Shader::ReflectedModule(vsFilePath.c_str(), VK_SHADER_STAGE_VERTEX_BIT, true);
-		auto geomShader = Shader::ReflectedModule(gsFilePath.c_str(), VK_SHADER_STAGE_GEOMETRY_BIT, true);
-		auto fragShader = Shader::ReflectedModule(psFilePath.c_str(), VK_SHADER_STAGE_FRAGMENT_BIT, true);
-
-		pipeline.key = key;
-
-		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, geomShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
-
-		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-		constexpr size_t vertSize = sizeof(Renderer::GSVertex);
-		assert(vertShader.reflectData.bindingDescription.stride == vertSize);
-
-		auto attributeDescriptions = vertShader.reflectData.attributeDescriptions;
-
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-		vertexInputInfo.pVertexBindingDescriptions = &vertShader.reflectData.bindingDescription;
-		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssembly.topology = key.topology;
-		inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-		VkPipelineViewportStateCreateInfo viewportState{};
-		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportState.viewportCount = 1;
-		viewportState.scissorCount = 1;
-
-		VkPipelineRasterizationStateCreateInfo rasterizer{};
-		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterizer.depthClampEnable = VK_FALSE;
-		rasterizer.rasterizerDiscardEnable = VK_FALSE;
-		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterizer.lineWidth = 1.0f;
-		rasterizer.cullMode = VK_CULL_MODE_NONE;
-		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-		rasterizer.depthBiasEnable = VK_FALSE;
-
-		VkPipelineMultisampleStateCreateInfo multisampling{};
-		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisampling.sampleShadingEnable = VK_FALSE;
-		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-		//colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		//colorBlendAttachment.blendEnable = blendState.abe;
-
-		//if (blendState.abe) {
-		//	colorBlendAttachment.srcColorBlendFactor = (VkBlendFactor)blendState.;
-		//	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-		//	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-		//
-		//	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		//	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		//	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-		//}		
-
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_TRUE;
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-		VkPipelineDepthStencilStateCreateInfo depthStencilAttachment{};
-		depthStencilAttachment.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencilAttachment.depthTestEnable = VK_FALSE;
-		depthStencilAttachment.depthWriteEnable = VK_TRUE;
-		depthStencilAttachment.depthCompareOp = VK_COMPARE_OP_LESS;
-		depthStencilAttachment.depthBoundsTestEnable = VK_FALSE;
-		depthStencilAttachment.minDepthBounds = 0.0f; // Optional
-		depthStencilAttachment.maxDepthBounds = 1.0f; // Optional
-		depthStencilAttachment.stencilTestEnable = VK_FALSE;
-		depthStencilAttachment.front = {}; // Optional
-		depthStencilAttachment.back = {}; // Optional
-
-		VkPipelineColorBlendStateCreateInfo colorBlending{};
-		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlending.logicOpEnable = VK_FALSE;
-		colorBlending.logicOp = VK_LOGIC_OP_COPY;
-		colorBlending.attachmentCount = 1;
-		colorBlending.pAttachments = &colorBlendAttachment;
-		colorBlending.blendConstants[0] = 0.0f;
-		colorBlending.blendConstants[1] = 0.0f;
-		colorBlending.blendConstants[2] = 0.0f;
-		colorBlending.blendConstants[3] = 0.0f;
-
-		std::vector<VkDynamicState> dynamicStates = {
-			VK_DYNAMIC_STATE_VIEWPORT,
-			VK_DYNAMIC_STATE_SCISSOR
-		};
-		VkPipelineDynamicStateCreateInfo dynamicState{};
-		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-		dynamicState.pDynamicStates = dynamicStates.data();
-
-		pipeline.AddBindings(Renderer::EBindingStage::Vertex, vertShader.reflectData);
-		pipeline.AddBindings(Renderer::EBindingStage::Geometry, geomShader.reflectData);
-		pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
-		pipeline.CreateDescriptorSetLayouts();
-		pipeline.CreateLayout();
-
-		VkGraphicsPipelineCreateInfo pipelineInfo{};
-		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = 3;
-		pipelineInfo.pStages = shaderStages;
-		pipelineInfo.pVertexInputState = &vertexInputInfo;
-		pipelineInfo.pInputAssemblyState = &inputAssembly;
-		pipelineInfo.pViewportState = &viewportState;
-		pipelineInfo.pRasterizationState = &rasterizer;
-		pipelineInfo.pMultisampleState = &multisampling;
-		pipelineInfo.pColorBlendState = &colorBlending;
-		pipelineInfo.pDepthStencilState = &depthStencilAttachment;
-		pipelineInfo.pDynamicState = &dynamicState;
-		pipelineInfo.layout = pipeline.layout;
-		pipelineInfo.renderPass = renderPass;
-		pipelineInfo.subpass = 0;
-		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-		if (vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline.pipeline) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create graphics pipeline!");
-		}
-
-		return pipeline;
-	}
-
 	Renderer::Pipeline CreateGraphicsPipelinePCSX2(const PS2::PipelineKey& key) 
 	{
-		const std::string gsFilePath = "shaders/ps2/" + key.gsHash + ".gs.spv";
-		const std::string psFilePath = "shaders/ps2/" + key.psHash + ".ps.spv";
-		const std::string vsFilePath = "shaders/ps2/" + key.vsHash + ".vs.spv";
+		std::string gsFilePath;
+		std::string psFilePath;
+		std::string vsFilePath;
+
+		Shader::CompileShaders(key.shaderDefinitions, vsFilePath, psFilePath, gsFilePath);
 
 		Renderer::Pipeline pipeline;
 		auto vertShader = Shader::ReflectedModule(vsFilePath.c_str(), VK_SHADER_STAGE_VERTEX_BIT, true);
@@ -394,46 +260,6 @@ void PS2::CreateDefaultRenderPass()
 	SetObjectName("PS2 Render Pass", (uint64_t)PS2_Internal::renderPass, VK_OBJECT_TYPE_RENDER_PASS);
 }
 
-void PS2::CreateGraphicsPipelines() {
-	//const std::vector<VkPrimitiveTopology> TOPOLOGY_VALUES = { VK_PRIMITIVE_TOPOLOGY_POINT_LIST, VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
-	//
-	//for (VkPrimitiveTopology TOPOLOGY : TOPOLOGY_VALUES)
-	//{
-	//	for (int GS_PRIM : GS_PRIM_VALUES) {
-	//		for (int GS_POINT : GS_POINT_VALUES) {
-	//			for (int GS_LINE : GS_LINE_VALUES) {
-	//				for (int GS_IIP : GS_IIP_VALUES) {
-	//					const std::string GS_CONFIG_NAME = "GS_PRIM_" + std::to_string(GS_PRIM)
-	//						+ "_POINT_" + std::to_string(GS_POINT)
-	//						+ "_LINE_" + std::to_string(GS_LINE)
-	//						+ "_IIP_" + std::to_string(GS_IIP);						
-	//
-	//					// Compute a hash value for the string
-	//					const std::string gsHash = GetMD5String(GS_CONFIG_NAME);
-	//					const std::string gsFilePath = "shaders/ps2/" + gsHash + ".gs.spv";
-	//
-	//					for (int PS_ATST : PS_ATST_VALUES) {
-	//						for (int PS_FOG : PS_FOG_VALUES) {
-	//							const std::string PS_CONFIG_NAME = "PS_ATST_" + std::to_string(PS_ATST)
-	//								+ "PS_FOG_" + std::to_string(PS_FOG);
-	//
-	//							const PipelineDebug::ConfigData debugData = { PipelineDebug::gTopologyNames[(int)TOPOLOGY], GS_CONFIG_NAME , PS_CONFIG_NAME };
-	//
-	//							// Compute a hash value for the string
-	//							const std::string psHash = GetMD5String(PS_CONFIG_NAME);
-	//							const std::string psFilePath = "shaders/ps2/" + psHash + ".ps.spv";
-	//
-	//							const PipelineKey key = { gsHash, psHash, TOPOLOGY, debugData };
-	//							PS2_Internal::graphicsPipelines.emplace(key, PS2_Internal::CreateGraphicsPipeline(TOPOLOGY, "shaders/ps2/ps2.vs.spv", gsFilePath.c_str(), psFilePath.c_str(), debugData));
-	//						}
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-}
-
 PS2::PipelineMap& PS2::GetPipelines()
 {
 	return PS2_Internal::graphicsPipelines;
@@ -442,10 +268,17 @@ PS2::PipelineMap& PS2::GetPipelines()
 const Renderer::Pipeline& PS2::GetPipeline(const PipelineKey& key)
 {
 	auto& pipeline = PS2_Internal::graphicsPipelines[key];
+	size_t hash = PipelineKeyHash()(key);
 
 	if (pipeline.pipeline == VK_NULL_HANDLE) {
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "PS2::GetPipeline Cache miss, creating pipeline for hash: %llx - %s", hash, key.ToString().c_str());
+
 		pipeline = PS2_Internal::CreateGraphicsPipelinePCSX2(key);
+		pipeline.key.debugData.hash = PipelineKeyHash()(key);
 	}
+
+	assert(pipeline.key.debugData.hash == hash);
+	assert(key.pipelineSelector.bs.key == pipeline.key.pipelineSelector.bs.key);
 
 	return pipeline;
 }
@@ -580,4 +413,18 @@ std::vector<VkWriteDescriptorSet> Renderer::DescriptorWriteList::CreateWriteDesc
 	}
 
 	return descriptorWrites;
+}
+
+std::string PS2::PipelineKey::ToString() const
+{
+	std::string info = "Pipeline Key:";
+	info += " VS: ";
+	info += shaderDefinitions.vsDef;
+	info += " GS: ";
+	info += shaderDefinitions.gsDef;
+	info += " PS: ";
+	info += shaderDefinitions.psDef;
+	info += " Topology: ";
+	info += debugData.topology;
+	return info;
 }

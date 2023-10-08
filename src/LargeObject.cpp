@@ -216,7 +216,7 @@ Scene::Scene()
 	//Manager_C* pMVar6;
 	//Manager_10* pMVar7;
 	//ActorManager* pActorManager;
-	CinematicManager* pNewCinematicObject;
+	CCinematicManager* pNewCinematicObject;
 	//Manager_C_Alt* pMVar8;
 	//EffectsManager* pEVar9;
 	//EventManager* pEventManager;
@@ -332,7 +332,7 @@ Scene::Scene()
 	//	*g_CinematicManager_0045166c = &g_ManagerDefaultFuncData_0043a4e0;
 	//	*g_CinematicManager_0045166c = &ManagerFunctionData_0043dc90;
 	//}
-	pNewCinematicObject = new CinematicManager();
+	pNewCinematicObject = new CCinematicManager();
 	Scene::ptable.g_CinematicManagerPtr_004516ac = pNewCinematicObject;
 	//g_AnimManager_00451668 = (AnimManager*)Allocate(0x1c);
 	//if (g_AnimManager_00451668 != (AnimManager*)0x0) {

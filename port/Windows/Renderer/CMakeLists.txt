@@ -79,3 +79,23 @@ target_include_directories(Renderer PUBLIC "include")
 target_include_directories(Renderer PRIVATE "Shaders/config")
 
 add_dependencies(Renderer Shaders)
+
+set(DXC_COMPILER "$ENV{VULKAN_SDK}/Bin/dxc.exe")
+set(SHADER_OUTPUT_FOLDER "${CMAKE_SOURCE_DIR}/bin/WIN/shaders")
+set( PS2_SHADER_SRC_DIR "G:/repos/Kya/port/Windows/Renderer/Shaders/src/ps2/ps2.hlsl")
+
+
+cmake_path(NATIVE_PATH PS2_SHADER_SRC_DIR PS2_SHADER_SRC_DIR)
+string(REPLACE "\\" "\\\\" PS2_SHADER_SRC_DIR ${PS2_SHADER_SRC_DIR})
+
+cmake_path(NATIVE_PATH DXC_COMPILER DXC_COMPILER)
+string(REPLACE "\\" "\\\\" DXC_COMPILER ${DXC_COMPILER})
+
+cmake_path(NATIVE_PATH SHADER_OUTPUT_FOLDER SHADER_OUTPUT_FOLDER)
+string(REPLACE "\\" "\\\\" SHADER_OUTPUT_FOLDER ${SHADER_OUTPUT_FOLDER})
+
+target_compile_definitions(Renderer PRIVATE
+	SHADER_OUTPUT_FOLDER="${SHADER_OUTPUT_FOLDER}"
+	DXC_COMPILER="${DXC_COMPILER}"
+	PS2_SHADER_SRC_DIR="${PS2_SHADER_SRC_DIR}"
+)

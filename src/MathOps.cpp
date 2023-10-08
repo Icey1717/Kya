@@ -587,6 +587,28 @@ float edF32ATan2Soft(float a, float b)
 	return fVar3;
 }
 
+void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler)
+{
+	float fVar1;
+	edF32MATRIX4 m0;
+
+	if ((0.0001f < fabs(rotEuler->z)) || (0.0001f < fabs(rotEuler->x))) {
+		edF32Matrix4FromEulerSoft(&m0, rotEuler, "XYZ");
+		rotQuat->x = m0.ca;
+		rotQuat->y = m0.cb;
+		rotQuat->z = m0.cc;
+		rotQuat->w = m0.cd;
+	}
+	else {
+		fVar1 = rotEuler->y;
+		rotQuat->x = cosf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS((fVar1 - 1.570796) * 1303.797) + 0.5) & 0x1fff];
+		rotQuat->y = 0.0f;
+		rotQuat->z = sinf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS(fVar1 * 1303.797) + 0.5) & 0x1fff];
+		rotQuat->w = 0.0f;
+	}
+	return;
+}
+
 void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder)
 {
 	float* pfVar1;
@@ -805,7 +827,7 @@ void edQuatShortestSLERPHard(float delta, edF32VECTOR4* outRotation, edF32VECTOR
 	return;
 }
 
-void edF32Vector3LERPSoft(float delta, edF32VECTOR4* outWorldLocation, edF32VECTOR4* currentLocation, edF32VECTOR4* targetLocation)
+void edF32Vector3LERPSoft(float delta, edF32VECTOR3* outWorldLocation, edF32VECTOR3* currentLocation, edF32VECTOR3* targetLocation)
 {
 	float remainingKeyframePlayTime;
 

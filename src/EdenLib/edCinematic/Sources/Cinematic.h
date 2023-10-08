@@ -23,7 +23,34 @@ struct edCinCamInterface {
 };
 
 struct edCinActorInterface {
-	
+	struct ANIM_PARAMStag {
+		uint field_0x0;
+		float field_0x4;
+		char field_0x8;
+		undefined field_0x9;
+		undefined field_0xa;
+		undefined field_0xb;
+		uint field_0xc;
+		float field_0x10;
+		char field_0x14;
+		undefined field_0x15;
+		undefined field_0x16;
+		undefined field_0x17;
+		float field_0x18;
+	};
+
+	virtual bool Initialize() = 0;
+	virtual bool SetVisibility(bool bVisible) = 0;
+	virtual bool OnFrameDirected() = 0;
+	virtual bool SetPos(float newX, float newY, float newZ) = 0;
+	virtual bool SetHeadingEuler(float x, float y, float z, bool param_5) = 0;
+	virtual bool SetHeadingQuat(float x, float y, float z, float w) = 0;
+	virtual bool SetScale(float x, float y, float z) = 0;
+	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag) = 0;
+};
+
+struct edCinSceneryInterface {
+
 };
 
 struct edCinGameInterface 
@@ -63,9 +90,21 @@ struct edCinGameInterface
 		edF32VECTOR4 vectorFieldC;
 	};
 
+	struct SCENERY_CREATIONtag {
+		char name[32];
+		char* szMeshPath;
+		byte meshType;
+		undefined field_0x25;
+		undefined field_0x26;
+		undefined field_0x27;
+		char* szTexturePath;
+		byte textureType;
+	};
+
 	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*) = 0;
 	virtual char* GetResource(edResCollection::RES_TYPE type1, long type2, const char* fileName, int* bufferLengthOut) = 0;
-	virtual bool CreateActor(edCinActorInterface** ppActorInterface, const edCinGameInterface::ACTORV_CREATIONtag* pTag) = 0;
+	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag) = 0;
+	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag) = 0;
 	virtual bool ReleaseResource(void*, bool) = 0;
 };
 

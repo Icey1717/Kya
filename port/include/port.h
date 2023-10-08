@@ -565,8 +565,23 @@ inline ulong SetPrimWin(A prim, B iip, C tme, D fge, E abe, F aa1, G fst, H ctxt
 #define SCE_GS_SET_PRIM SCE_GS_SET_PRIM_PS2
 #endif
 
+#define SCE_GS_SET_COLCLAMP_PS2(clamp) ((ulong)(clamp))
+
+#ifdef PLATFORM_WIN
+template<typename A>
+inline ulong SetClampWin(A clamp)
+{
+	Renderer::SetColClamp({ clamp });
+	return SCE_GS_SET_COLCLAMP_PS2(clamp);
+}
+
+#define SCE_GS_SET_COLCLAMP(clamp) \
+	 SetClampWin(clamp)
+#else
+#define SCE_GS_SET_COLCLAMP SCE_GS_SET_COLCLAMP_PS2
+#endif
+
 #define SCE_GS_SET_PRMODECONT(ac) ((ulong)(ac))
-#define SCE_GS_SET_COLCLAMP(clamp) ((ulong)(clamp))
 #define SCE_GS_SET_DTHE(dthe) ((ulong)(dthe))
 
 #define SCE_GS_NOINTERLACE		(0)

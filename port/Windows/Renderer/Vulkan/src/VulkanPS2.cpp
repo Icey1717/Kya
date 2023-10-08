@@ -19,45 +19,12 @@
 #include "pcsx2/Selectors.h"
 
 namespace PS2_Internal {
+	bool bUseComplexBlending = true;
 
 	PS2::GSState state;
 
 	PS2::GSState& GetGSState() {
 		return state;
-	}
-
-	void createDescriptorSets() {
-		for (auto& pipeline : PS2::GetPipelines()) {
-			pipeline.second.CreateDescriptorSets();
-
-			for (size_t frameIndex = 0; frameIndex < MAX_FRAMES_IN_FLIGHT; frameIndex++) {
-				VkDescriptorBufferInfo vertexConstantBuffer{};
-				vertexConstantBuffer.buffer = PS2::GetVertexConstantUniformBuffer(frameIndex);
-				vertexConstantBuffer.offset = 0;
-				vertexConstantBuffer.range = sizeof(PS2::VSConstantBuffer);
-
-				VkDescriptorBufferInfo pixelConstantBuffer{};
-				pixelConstantBuffer.buffer = PS2::GetPixelConstantUniformBuffer(frameIndex);
-				pixelConstantBuffer.offset = 0;
-				pixelConstantBuffer.range = sizeof(PS2::PSConstantBuffer);
-
-				Renderer::DescriptorWriteList writeList;
-				writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-				writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &pixelConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-
-				std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(pipeline.second.descriptorSets[frameIndex], pipeline.second.descriptorSetLayoutBindings);
-
-				if (descriptorWrites.size() > 0) {
-					vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-				}
-			}
-		}
-	}
-
-	void createDescriptorPool() {
-		for (auto& pipeline : PS2::GetPipelines()) {
-			pipeline.second.CreateDescriptorPool();
-		}
 	}
 
 	Renderer::GSVertex MakeVertex(uint16_t x, uint16_t y, uint32_t z) {
@@ -79,6 +46,15 @@ HardwareState& GetHardwareState() {
 namespace Renderer {
 #define ASSERT(...)
 #define RESTRICT
+
+	bool& GetUseComplexBlending() {
+		return PS2_Internal::bUseComplexBlending;
+	}
+
+	void ResetRenderer() {
+		PS2::GetTextureCache().GetEntries().clear();
+		PS2::GetPipelines().clear();
+	}
 
 	struct
 	{
@@ -210,6 +186,11 @@ namespace Renderer {
 	void SetClamp(GIFReg::GSClamp clamp)
 	{
 		PS2::GetGSState().CLAMP = clamp;
+	}
+
+	void SetColClamp(GIFReg::GSColClamp colClamp)
+	{
+		PS2::GetGSState().COLCLAMP = colClamp;
 	}
 
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z)
@@ -561,9 +542,10 @@ namespace PS2
 {
 	GSHWDrawConfig m_conf = {};
 
-	void EmulateAtst(const int pass)
+	void EmulateAtst(const int pass, PS2::GSTexImage& tex)
 	{
-		auto& ps_cb = GetPixelConstantBufferData();
+		PSConstantBuffer& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
+
 		static const uint32_t inverted_atst[] = { ATST_ALWAYS, ATST_NEVER, ATST_GEQUAL, ATST_GREATER, ATST_NOTEQUAL, ATST_LESS, ATST_LEQUAL, ATST_EQUAL };
 		int atst = (pass == 2) ? inverted_atst[GetGSState().TEST.ATST] : GetGSState().TEST.ATST;
 
@@ -615,9 +597,11 @@ namespace PS2
 		TFX_NONE = 4,
 	};
 
-	void EmulateTextureSampler()
+	void EmulateTextureSampler(PS2::GSTexImage& tex)
 	{
 		auto& state = PS2::GetGSState();
+		auto& vs_cb = tex.constantBuffer.GetVertexConstantBufferData();
+		auto& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
 
 		// Warning fetch the texture PSM format rather than the context format. The latter could have been corrected in the texture cache for depth.
 		//const GSLocalMemory::psm_t &psm = GSLocalMemory::m_psm[state.TEX.PSM];
@@ -635,13 +619,13 @@ namespace PS2
 		m_conf.ps.wms = (wms & 2) ? wms : 0;
 		m_conf.ps.wmt = (wmt & 2) ? wmt : 0;
 
-		int w = 0; //tex->m_texture->GetWidth();
-		int h = 0; //tex->m_texture->GetHeight();
+		//int w = 0; //tex->m_texture->GetWidth();
+		//int h = 0; //tex->m_texture->GetHeight();
 
 		int tw = (int)(1 << state.TEX.TW);
 		int th = (int)(1 << state.TEX.TH);
 
-		GSVector4 WH(tw, th, w, h);
+		GSVector4 WH(tw, th, tex.width, tex.height);
 
 		// Depth + bilinear filtering isn't done yet (And I'm not sure we need it anyway but a game will prove me wrong)
 		// So of course, GTA set the linear mode, but sampling is done at texel center so it is equivalent to nearest sampling
@@ -762,9 +746,9 @@ namespace PS2
 
 		m_conf.ps.point_sampler = !bilinear || shader_emulated_sampler;
 
-		//GSVector4 TextureScale = GSVector4(0.0625f) / WH.xyxy();
-		//vs_cb.Texture_Scale_Offset.x = TextureScale.x;
-		//vs_cb.Texture_Scale_Offset.y = TextureScale.y;
+		GSVector4 TextureScale = GSVector4(0.0625f) / WH.xyxy();
+		vs_cb.Texture_Scale_Offset.x = TextureScale.x;
+		vs_cb.Texture_Scale_Offset.y = TextureScale.y;
 
 		if (state.PRIM.FST)
 		{
@@ -773,8 +757,8 @@ namespace PS2
 			m_conf.ps.fst = 1;
 		}
 
-		//ps_cb.WH = WH;
-		//ps_cb.HalfTexel = GSVector4(-0.5f, 0.5f).xxyy() / WH.zwzw();
+		ps_cb.WH = WH;
+		ps_cb.HalfTexel = GSVector4(-0.5f, 0.5f).xxyy() / WH.zwzw();
 		//if (complex_wms_wmt)
 		//{
 		//	ps_cb.MskFix = GSVector4i(state.CLAMP.MINU, state.CLAMP.MINV, state.CLAMP.MAXU, state.CLAMP.MAXV);
@@ -797,10 +781,14 @@ namespace PS2
 		//	ASSERT(!tex->m_target);
 		//}
 
+		PSSamplerSelector ps_ssel{};
+
 		// Only enable clamping in CLAMP mode. REGION_CLAMP will be done manually in the shader
-		//m_ps_ssel.tau = (wms != CLAMP_CLAMP);
-		//m_ps_ssel.tav = (wmt != CLAMP_CLAMP);
-		//m_ps_ssel.ltf = bilinear && !shader_emulated_sampler;
+		ps_ssel.tau = (wms != CLAMP_CLAMP);
+		ps_ssel.tav = (wmt != CLAMP_CLAMP);
+		ps_ssel.ltf = bilinear && !shader_emulated_sampler;
+
+		tex.UpdateSampler(ps_ssel);
 	}
 
 	enum HWBlendFlags
@@ -1018,7 +1006,148 @@ namespace PS2
 #define GL_INS(...)
 #define GL_PERF(...)
 
-	void EmulateBlending(int rt_alpha_min, int rt_alpha_max, bool& DATE_PRIMID, bool& DATE_BARRIER, bool& blending_alpha_pass, Renderer::GS_PRIM_CLASS primclass)
+	void EmulateBlending_Simple(Renderer::GS_PRIM_CLASS primclass, PS2::GSTexImage& tex)
+	{
+		PSConstantBuffer& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
+
+		// Partial port of OGL SW blending. Currently only works for accumulation blend.
+		auto ALPHA = PS2::GetGSState().ALPHA;
+		auto PRIM = PS2::GetGSState().PRIM;
+		auto PABE = PS2::GetGSState().PABE;
+		const GIFReg::GSColClamp& COLCLAMP = PS2::GetGSState().COLCLAMP;
+		bool sw_blending = false;
+
+		// No blending so early exit
+		if (!(PRIM.ABE || (PRIM.AA1 && primclass == Renderer::GS_LINE_CLASS)))
+		{
+			m_conf.blend = {};
+			return;
+		}
+
+
+
+		//m_om_bsel.abe = 1;
+		//m_om_bsel.a = ALPHA.A;
+		//m_om_bsel.b = ALPHA.B;
+		//m_om_bsel.c = ALPHA.C;
+		//m_om_bsel.d = ALPHA.D;
+
+		//uint8 blend_index = uint8(((ALPHA.A * 3 + ALPHA.B) * 3 + ALPHA.C) * 3 + ALPHA.D);
+		//int blend_flag = m_dev->GetBlendFlags(blend_index);
+
+		uint8_t blend_index = static_cast<uint8_t>(((ALPHA.A * 3 + ALPHA.B) * 3 + ALPHA.C) * 3 + ALPHA.D);
+		const HWBlend blend_preliminary = GetBlend(blend_index, true);
+		const int blend_flag = blend_preliminary.flags;
+
+		m_conf.blend = { true, (u8)blend_preliminary.src, (u8)blend_preliminary.dst, (u8)blend_preliminary.op, m_conf.ps.blend_c == 2, ALPHA.FIX };
+
+		if (PABE.PABE)
+		{
+			if (ALPHA.A == 0 && ALPHA.B == 1 && ALPHA.C == 0 && ALPHA.D == 1)
+			{
+				// this works because with PABE alpha blending is on when alpha >= 0x80, but since the pixel shader
+				// cannot output anything over 0x80 (== 1.0) blending with 0x80 or turning it off gives the same result
+
+				m_conf.blend.enable = 0;
+			}
+			else
+			{
+				//Breath of Fire Dragon Quarter triggers this in battles. Graphics are fine though.
+				//ASSERT(0);
+			}
+		}
+
+		// SW free blend.
+		bool free_blend = !!(blend_flag & (BLEND_NO_BAR | BLEND_ACCU));
+
+		// Do the multiplication in shader for blending accumulation: Cs*As + Cd or Cs*Af + Cd
+		bool accumulation_blend = !!(blend_flag & BLEND_ACCU);
+
+		switch (AccurateBlendingUnit)
+		{
+		case AccBlendLevel::High:
+		case AccBlendLevel::Medium:
+		case AccBlendLevel::Basic:
+			sw_blending |= free_blend;
+			// fall through
+		default: break;
+		}
+
+		if (COLCLAMP.CLAMP == 0)
+		{
+			if (accumulation_blend)
+			{
+				// fprintf(stderr, "%d: COLCLIP HDR mode with accumulation blend\n", s_n);
+				sw_blending = true;
+				m_conf.ps.hdr = 1;
+			}
+			else if (sw_blending)
+			{
+				// So far only BLEND_NO_BAR should hit this path, it's faster than standard HDR algo.
+				// Note: Isolate the code to BLEND_NO_BAR if other blending conditions are added.
+				// fprintf(stderr, "%d: COLCLIP SW ENABLED (blending is %d/%d/%d/%d)\n", s_n, ALPHA.A, ALPHA.B, ALPHA.C, ALPHA.D);
+				m_conf.ps.colclip = 1;
+			}
+			else
+			{
+				// fprintf(stderr, "%d: COLCLIP HDR mode\n", s_n);
+				m_conf.ps.hdr = 1;
+			}
+		}
+
+		/*fprintf(stderr, "%d: BLEND_INFO: %d/%d/%d/%d. Clamp:%d. Prim:%d number %d (sw %d)\n",
+			s_n, ALPHA.A, ALPHA.B, ALPHA.C, ALPHA.D, m_env.COLCLAMP.CLAMP, m_vt.m_primclass, m_vertex.next, sw_blending);*/
+
+		if (sw_blending)
+		{
+			m_conf.ps.blend_a = ALPHA.A;
+			m_conf.ps.blend_b = ALPHA.B;
+			m_conf.ps.blend_c = ALPHA.C;
+			m_conf.ps.blend_d = ALPHA.D;
+
+			if (accumulation_blend)
+			{
+				m_conf.blend = { true, CONST_ONE, CONST_ONE, (u8)blend_preliminary.op, false, 0 };
+
+				if (ALPHA.A == 2) {
+					// The blend unit does a reverse subtraction so it means
+					// the shader must output a positive value.
+					// Replace 0 - Cs by Cs - 0
+					m_conf.ps.blend_a = ALPHA.B;
+					m_conf.ps.blend_b = 2;
+				}
+				// Remove the addition/substraction from the SW blending
+				m_conf.ps.blend_d = 2;
+			}
+			else
+			{
+				// Disable HW blending
+				// Only BLEND_NO_BAR should hit this code path for now.
+				m_conf.blend.enable = 0;
+			}
+
+			// Require the fix alpha vlaue
+			if (ALPHA.C == 2)
+				ps_cb.Af.x = (float)ALPHA.FIX / 128.0f;
+		}
+		else
+		{
+			m_conf.ps.clr1 = !!(blend_flag & BLEND_C_CLR);
+			// FIXME: When doing HW blending with a 24 bit frambuffer and ALPHA.C == 1 (Ad) it should be handled
+			// as if Ad = 1.0f. As with OGL side it is probably best to set m_om_bsel.c = 1 (Af) and use
+			// AFIX = 0x80 (Af = 1.0f).
+		}
+
+		// HW blend can handle Cd output.
+		bool color_dest_blend = !!(blend_flag & BLEND_CD);
+
+		if (color_dest_blend) {
+			// Output is Cd, set rgb write to 0.
+			m_conf.colormask.wrgba &= 0x8;
+		}
+	}
+
+	void EmulateBlending_Complex(int rt_alpha_min, int rt_alpha_max, bool& DATE_PRIMID, bool& DATE_BARRIER, bool& blending_alpha_pass, Renderer::GS_PRIM_CLASS primclass)
 	{
 		auto PRIM = PS2::GetGSState().PRIM;
 		auto PABE = PS2::GetGSState().PABE;
@@ -1757,29 +1886,38 @@ void Renderer::Draw() {
 	auto primclass = GetPrimClass(state.PRIM.PRIM);
 	g_GSSelector.prim = primclass;
 
-	PS2::EmulateAtst(1);
-
-	if (state.bTexSet) {
-		PS2::EmulateTextureSampler();
-	}
-	else {
-		PS2::m_conf.ps.tfx = 4;
-	}
+	LogTex("Lookup", state.TEX);
+	PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX);
 
 	// Blend
 	int blend_alpha_min = 0, blend_alpha_max = 255;
 	bool DATE_PRIMID = false;
 	bool DATE_BARRIER = false;
-	
+
 	bool blending_alpha_pass = false;
 	if ((!state.IsOpaque() || state.ALPHA.IsBlack()) /* && rt */ && (PS2::m_conf.colormask.wrgba & 0x7))
 	{
-		PS2::EmulateBlending(blend_alpha_min, blend_alpha_max, DATE_PRIMID, DATE_BARRIER, blending_alpha_pass, primclass);
+		if (PS2_Internal::bUseComplexBlending) {
+			PS2::EmulateBlending_Complex(blend_alpha_min, blend_alpha_max, DATE_PRIMID, DATE_BARRIER, blending_alpha_pass, primclass);
+		}
+		else {
+			PS2::EmulateBlending_Simple(primclass, tex.value.image);
+		}
 	}
 	else
 	{
 		PS2::m_conf.blend = {}; // No blending please
 		PS2::m_conf.ps.no_color1 = true;
+	}
+
+	PS2::EmulateAtst(1, tex.value.image);
+
+	if (state.bTexSet) {
+		PS2::EmulateTextureSampler(tex.value.image);
+	}
+	else {
+		tex.value.image.UpdateSampler();
+		PS2::m_conf.ps.tfx = 4;
 	}
 
 	if (state.PRIM.FGE)
@@ -1798,38 +1936,37 @@ void Renderer::Draw() {
 	PS2::m_conf.vs.tme = state.PRIM.TME;
 	PS2::m_conf.vs.fst = state.PRIM.FST;
 
-	const std::string GS_CONFIG_NAME = std::string("GS_PRIM_") + std::to_string(g_GSSelector.prim)
-		+ std::string("_POINT_") + std::to_string(g_GSSelector.point)
-		+ std::string("_LINE_") + std::to_string(g_GSSelector.line)
-		+ std::string("_IIP_") + std::to_string(g_GSSelector.iip);
+	const std::string GS_CONFIG_NAME = 
+		  std::string("-DGS_PRIM=") + std::to_string(g_GSSelector.prim) + " "
+		+ std::string("-DGS_POINT=") + std::to_string(g_GSSelector.point) + " "
+		+ std::string("-DGS_LINE=") + std::to_string(g_GSSelector.line) + " "
+		+ std::string("-DGS_IIP=") + std::to_string(g_GSSelector.iip);
 
-	const std::string gsHash = GetMD5String(GS_CONFIG_NAME);
+	const std::string PS_CONFIG_NAME = 
+		  std::string("-DPS_ATST=") + std::to_string(PS2::m_conf.ps.atst) + " "
+		+ std::string("-DPS_FOG=") + std::to_string(PS2::m_conf.ps.fog) + " "
+		+ std::string("-DPS_COLCLIP=") + std::to_string(PS2::m_conf.ps.colclip) + " "
+		+ std::string("-DPS_BLEND_A=") + std::to_string(PS2::m_conf.ps.blend_a) + " "
+		+ std::string("-DPS_BLEND_B=") + std::to_string(PS2::m_conf.ps.blend_b) + " "
+		+ std::string("-DPS_BLEND_C=") + std::to_string(PS2::m_conf.ps.blend_c) + " "
+		+ std::string("-DPS_BLEND_D=") + std::to_string(PS2::m_conf.ps.blend_d) + " "
+		+ std::string("-DPS_TFX=") + std::to_string(PS2::m_conf.ps.tfx);
 
-	const std::string PS_CONFIG_NAME = std::string("PS_ATST_") + std::to_string(PS2::m_conf.ps.atst)
-		+ std::string("PS_FOG_") + std::to_string(PS2::m_conf.ps.fog)
-		+ std::string("PS_TFX_") + std::to_string(PS2::m_conf.ps.tfx);
-
-	const std::string psHash = GetMD5String(PS_CONFIG_NAME);
-
-	const std::string VS_CONFIG_NAME = std::string("VS_TME_") + std::to_string(PS2::m_conf.vs.tme)
-		+ std::string("VS_FST_") + std::to_string(PS2::m_conf.vs.fst);
-
-	const std::string vsHash = GetMD5String(VS_CONFIG_NAME);
+	const std::string VS_CONFIG_NAME = 
+		  std::string("-DVS_TME=") + std::to_string(PS2::m_conf.vs.tme) + " "
+		+ std::string("-DVS_FST=") + std::to_string(PS2::m_conf.vs.fst);
 
 	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "DATE: %d DATM: %d", state.TEST.DATE, state.TEST.DATM);
 
-	const PipelineDebug::ConfigData debugData = { PipelineDebug::gTopologyNames[(int)topology], GS_CONFIG_NAME , PS_CONFIG_NAME, VS_CONFIG_NAME };
+	const PipelineDebug::ConfigData debugData = { PipelineDebug::gTopologyNames[(int)topology]};
 
 	PS2::UpdateHWPipelineSelector(PS2::m_conf, PS2::m_pipelineSelector);
 
-	const PS2::PipelineKey key = { gsHash, psHash, vsHash, topology, PS2::m_pipelineSelector, debugData };
+	const PS2::PipelineKey key = { {GS_CONFIG_NAME, PS_CONFIG_NAME, VS_CONFIG_NAME}, topology, PS2::m_pipelineSelector, debugData };
 	
 	auto pipeline = PS2::GetPipeline(key);
 
-	LogTex("Lookup", state.TEX);
 	{
-		PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX);
-
 		if (!hwState.bActivePass || hwState.FBP != state.FRAME.FBP) {
 
 			if (hwState.bActivePass) {
@@ -1863,7 +2000,9 @@ void Renderer::Draw() {
 			viewport.minDepth = 0.0f;
 			viewport.maxDepth = 1.0f;
 			vkCmdSetViewport(GetCurrentCommandBuffer(), 0, 1, &viewport);
+		}
 
+		{
 			float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
 			float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
 			float ox = Renderer::OFX;
@@ -1871,11 +2010,10 @@ void Renderer::Draw() {
 			float ox2 = -1.0f / GetRTSize().x;
 			float oy2 = -1.0f / GetRTSize().y;
 
-			PS2::GetVertexConstantBufferData().Texture_Scale_Offset = GSVector4(0.0f);
-			PS2::GetVertexConstantBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
-			PS2::GetVertexConstantBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
+			tex.value.image.constantBuffer.GetVertexConstantBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
+			tex.value.image.constantBuffer.GetVertexConstantBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
 
-			PS2::UpdateUniformBuffers();
+			tex.value.image.constantBuffer.UpdateUniformBuffers();
 		}
 
 		vkCmdSetScissor(GetCurrentCommandBuffer(), 0, 1, &hwState.scissor);
@@ -1907,10 +2045,7 @@ void Renderer::Draw() {
 void PS2::Setup()
 {
 	CreateDefaultRenderPass();
-	//CreateGraphicsPipelines();
-	//PS2_Internal::createDescriptorPool();
-	CreateUniformBuffers();
-	//PS2_Internal::createDescriptorSets();
+	CreateVertexUniformBuffers();
 
 	Renderer::m_vertex.buff = (Renderer::GSVertex*)_aligned_malloc(sizeof(Renderer::GSVertex) * Renderer::VertexIndexBufferSize, 32);
 	Renderer::m_index.buff = (uint16_t*)_aligned_malloc(sizeof(uint16_t) * Renderer::VertexIndexBufferSize, 32);

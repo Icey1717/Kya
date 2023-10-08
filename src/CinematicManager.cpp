@@ -19,8 +19,10 @@
 #include "kya.h"
 #include "FrontendManager.h"
 #include "InputManager.h"
+#include "Actor_Cinematic.h"
+#include "ActorManager.h"
 
-CinematicManager* g_CinematicManager_0048efc;
+CCinematicManager* g_CinematicManager_0048efc;
 
 #define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
 
@@ -94,7 +96,7 @@ void BWCinActor::InitCinMsgs(void)
 }
 
 
-CinematicManager::CinematicManager()
+CCinematicManager::CCinematicManager()
 {
 	pCinematic = (CCinematic*)0x0;
 	field_0x20 = -1;
@@ -104,20 +106,20 @@ CinematicManager::CinematicManager()
 	numCutscenes_0x8 = 0;
 	ppCinematicObjB_B = (CCinematic**)0x0;
 	activeCinematicCount = 0;
-	pCinematicB_0x18 = (CCinematic*)0x0;
+	pCurCinematic = (CCinematic*)0x0;
 	field_0x28 = 0;
 	field_0x2c = 0;
 	return;
 }
 
-void CinematicManager::Game_Init()
+void CCinematicManager::Game_Init()
 {
 	BWCinActor::InitCinMsgs();
 	this->bInitialized = 1;
 	return;
 }
 
-void CinematicManager::LevelLoading_Begin()
+void CCinematicManager::LevelLoading_Begin()
 {
 	CCameraCinematic* pCinematicCamera;
 	CCameraCinematic* pCamera;
@@ -141,11 +143,11 @@ void CinematicManager::LevelLoading_Begin()
 	return;
 }
 
-void CinematicManager::LevelLoading_End()
+void CCinematicManager::LevelLoading_End()
 {
 	CCinematic* pCinematic;
 	bool bVar1;
-	CinematicManager* pCVar2;
+	CCinematicManager* pCVar2;
 
 	pCVar2 = g_CinematicManager_0048efc;
 	pCinematic = this->pCinematic;
@@ -156,9 +158,9 @@ void CinematicManager::LevelLoading_End()
 			bVar1 = false;
 		}
 		if (bVar1) {
-			g_CinematicManager_0048efc->pCinematicB_0x18 = pCinematic;
+			g_CinematicManager_0048efc->pCurCinematic = pCinematic;
 			(**(code**)(*(int*)&(pCinematic->cinematicLoadObject).soundObject + 0x10))();
-			pCVar2->pCinematicB_0x18 = (CCinematic*)0x0;
+			pCVar2->pCurCinematic = (CCinematic*)0x0;
 		}
 		bVar1 = (pCinematic->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
 		if (bVar1) {
@@ -181,7 +183,7 @@ void CinematicManager::LevelLoading_End()
 	return;
 }
 
-bool CinematicManager::LevelLoading_Manage()
+bool CCinematicManager::LevelLoading_Manage()
 {
 	bool bVar1;
 
@@ -200,7 +202,7 @@ bool CinematicManager::LevelLoading_Manage()
 	return bVar1;
 }
 
-void CinematicManager::Level_Init()
+void CCinematicManager::Level_Init()
 {
 	float fVar1;
 	float fVar2;
@@ -236,7 +238,7 @@ void CinematicManager::Level_Init()
 	return;
 }
 
-void CinematicManager::Level_AddAll(ByteCode* pByteCode)
+void CCinematicManager::Level_AddAll(ByteCode* pByteCode)
 {
 	int iVar1;
 	CCinematic** ppCVar2;
@@ -281,7 +283,7 @@ void CinematicManager::Level_AddAll(ByteCode* pByteCode)
 	return;
 }
 
-void CinematicManager::Level_Manage()
+void CCinematicManager::Level_Manage()
 {
 	int iVar1;
 
@@ -303,7 +305,7 @@ void CinematicManager::Level_Manage()
 	return;
 }
 
-void CinematicManager::Level_SectorChange(int param_2, int param_3)
+void CCinematicManager::Level_SectorChange(int param_2, int param_3)
 {
 	CCinematic* pCVar1;
 	bool bVar2;
@@ -344,7 +346,7 @@ void CinematicManager::Level_SectorChange(int param_2, int param_3)
 }
 
 
-void CinematicManager::WillLoadCinematic()
+void CCinematicManager::WillLoadCinematic()
 {
 	bool bVar1;
 	int* piVar2;
@@ -413,32 +415,20 @@ void CinematicManager::WillLoadCinematic()
 	return;
 }
 
-
-
-struct CineActorConfig {
-	int field_0x0;
-	uint field_0x4;
-	float field_0x8;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-	float field_0x18;
-	float field_0x1c;
-	float field_0x20;
-	float field_0x24;
-	float field_0x28;
-	float field_0x2c;
-};
+CCinematic* CCinematicManager::GetCurCinematic()
+{
+	return this->pCurCinematic;
+}
 
 void CCinematic::InitInternalData()
 {
 	this->baseB = -1;
 	this->flags_0x4 = 0;
 	*(undefined4*)&this->field_0x10 = 0;
-	this->subObjBasePtr = (int*)0x0;
-	this->count_0x220 = 0;
-	//this->pCutsceneSubInfo = (ACutsceneActor**)0x0;
-	this->numObjects_0x218 = 0;
+	this->aActorCinematic = (CActorCinematic*)0x0;
+	this->loadedActorCinematicCount = 0;
+	this->ppActorCinematics = (CActorCinematic**)0x0;
+	this->loadedActorCinematicListCount = 0;
 	this->fileInfoStart = (CinFileContainer*)0x0;
 	this->cinFileCount = 0;
 	(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
@@ -463,10 +453,81 @@ void CCinematic::InitInternalData()
 	return;
 }
 
+void CCinematic::SetupInternalData()
+{
+	uint uVar1;
+	int* piVar2;
+	CActorCinematic* pCVar3;
+	CActorCinematic** ppCVar4;
+	//BWCinSunLight* pBVar5;
+	//BWCinSpotLight* pBVar6;
+	void* pvVar7;
+	int iVar8;
+
+	if ((this->baseB == 0) || ((this->flags_0x4 & 0x40000) != 0)) {
+		this->baseB = -1;
+	}
+	uVar1 = this->actorCinematicCount;
+	if (uVar1 == 0) {
+		this->aActorCinematic = (CActorCinematic*)0x0;
+	}
+	else {
+		this->aActorCinematic = new CActorCinematic[uVar1];
+	}
+	iVar8 = this->field_0x1c + this->actorCinematicCount;
+	if (iVar8 == 0) {
+		this->ppActorCinematics = (CActorCinematic**)0x0;
+	}
+	else {
+		ppCVar4 = new CActorCinematic*[uVar1];
+		this->ppActorCinematics = ppCVar4;
+	}
+	//uVar1 = this->count_0x20;
+	//if (uVar1 == 0) {
+	//	this->pCineSunHolderArray = (BWCinSunLight*)0x0;
+	//}
+	//else {
+	//	piVar2 = (int*)operator.new.array((long)(int)(uVar1 * 0xc0 + 0x10));
+	//	pBVar5 = (BWCinSunLight*)
+	//		__construct_new_array(piVar2, BWCinSunLight::BWCinSunLight, BWCinSunLight::~BWCinSunLight, 0xc0, uVar1);
+	//	this->pCineSunHolderArray = pBVar5;
+	//}
+	//uVar1 = this->field_0x24;
+	//if (uVar1 == 0) {
+	//	this->pCineSpotHolderArray = (BWCinSpotLight*)0x0;
+	//}
+	//else {
+	//	piVar2 = (int*)operator.new.array((long)(int)(uVar1 * 0xd0 + 0x10));
+	//	pBVar6 = (BWCinSpotLight*)
+	//		__construct_new_array(piVar2, BWCinSpotLight::BWCinSpotLight, BWCinSpotLight::~BWCinSpotLight, 0xd0, uVar1);
+	//	this->pCineSpotHolderArray = pBVar6;
+	//}
+	if (this->field_0x28 == 0) {
+		this->particleSectionStart = 0;
+		this->buffer_0x2e4 = 0;
+		this->field_0x2ec = 0;
+		this->count_0x2e8 = 0;
+	}
+	else {
+		//pvVar7 = operator.new.array((long)(this->field_0x28 * 0x218));
+		//this->particleSectionStart = (int)pvVar7;
+		//this->count_0x2e8 = this->field_0x28;
+		//this->count_0x2e8 = this->count_0x2e8 << 1;
+		//if (this->count_0x2e8 < 8) {
+		//	this->count_0x2e8 = 8;
+		//}
+		//pvVar7 = operator.new.array((long)(this->count_0x2e8 * 0x1c));
+		//this->buffer_0x2e4 = (int)pvVar7;
+		//pvVar7 = edMemAlloc(H_MAIN, this->field_0x2c * this->count_0x2e8);
+		//this->field_0x2ec = (int)pvVar7;
+	}
+	return;
+}
+
 CCinematic::CCinematic()
 {
-	this->objCount_0x9c = 0;
-	this->field_0xa0 = (CineActorConfig*)0x0;
+	this->cineActorConfigCount = 0;
+	this->aCineActorConfig = (CCineActorConfig*)0x0;
 	//(this->cinematicLoadObject).BWitchCin_Obj = (BWitchCin*)&edCinGameInterface_VTable_0043dd70;
 	//(this->cinematicLoadObject).BWitchCin_Obj = (BWitchCin*)&BWitchCin_VTable_0043dea0;
 	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.vt = &BWCinSourceAudio_VTable_0043dd50;
@@ -574,14 +635,14 @@ void CCinematic::Create(ByteCode* pByteCode)
 	uint uVar5;
 	char* pcVar6;
 	int iVar7;
-	CineActorConfig* piVar7;
-	CineActorConfig* ppCVar8;
+	CCineActorConfig* piVar7;
+	CCineActorConfig* ppCVar8;
 	int iVar8;
 	uint uVar9;
 	uint uVar10;
 	ulong uVar11;
 	int iVar12;
-	CineActorConfig* piVar13;
+	CCineActorConfig* piVar13;
 	float fVar13;
 
 	this->flags_0x8 = 0;
@@ -599,7 +660,10 @@ void CCinematic::Create(ByteCode* pByteCode)
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create File %s", this->fileName);
 
 	uVar5 = pByteCode->GetS32();
-	this->field_0x18 = uVar5;
+	this->actorCinematicCount = uVar5;
+
+	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Actor Cinematic Count %d", this->actorCinematicCount);
+
 	iVar7 = pByteCode->GetS32();
 	this->field_0x1c = iVar7;
 	uVar5 = pByteCode->GetS32();
@@ -648,41 +712,27 @@ void CCinematic::Create(ByteCode* pByteCode)
 	fVar13 = pByteCode->GetF32();
 	this->field_0x68 = fVar13;
 	uVar5 = pByteCode->GetS32();
-	this->objCount_0x9c = uVar5;
-	uVar5 = this->objCount_0x9c;
+	this->cineActorConfigCount = uVar5;
+	uVar5 = this->cineActorConfigCount;
 	if (uVar5 != 0) {
-		this->field_0xa0 = new CineActorConfig[uVar5 + 0x10];
+		this->aCineActorConfig = new CCineActorConfig[uVar5];
 		iVar7 = 0;
-		if (0 < (int)this->objCount_0x9c) {
-			iVar12 = 0;
+		if (0 < this->cineActorConfigCount) {
 			do {
-				piVar13 = (CineActorConfig*)((int)&this->field_0xa0->field_0x0 + iVar12);
+				piVar13 = &this->aCineActorConfig[iVar7];
 				iVar8 = pByteCode->GetS32();
-				piVar13->field_0x0 = iVar8;
+				piVar13->pActor = (CActor*)iVar8;
 				uVar5 = pByteCode->GetU32();
-				piVar13->field_0x4 = uVar5;
+				piVar13->flags = uVar5;
 				fVar13 = pByteCode->GetF32();
 				piVar13->field_0x8 = fVar13;
 				fVar13 = pByteCode->GetF32();
 				piVar13->field_0xc = fVar13;
 				iVar7 = iVar7 + 1;
-				piVar13->field_0xc = piVar13->field_0xc * 0.01745329;
-				fVar4 = gF32Vertex4Zero.w;
-				fVar3 = gF32Vertex4Zero.z;
-				fVar13 = gF32Vertex4Zero.y;
-				piVar13->field_0x10 = gF32Vertex4Zero.x;
-				piVar13->field_0x14 = fVar13;
-				piVar13->field_0x18 = fVar3;
-				piVar13->field_0x1c = fVar4;
-				fVar4 = gF32Vector4Zero.w;
-				fVar3 = gF32Vector4Zero.z;
-				fVar13 = gF32Vector4Zero.y;
-				piVar13->field_0x20 = gF32Vector4Zero.x;
-				piVar13->field_0x24 = fVar13;
-				piVar13->field_0x28 = fVar3;
-				piVar13->field_0x2c = fVar4;
-				iVar12 = iVar12 + 0x30;
-			} while (iVar7 < (int)this->objCount_0x9c);
+				piVar13->field_0xc = piVar13->field_0xc * 0.01745329f;
+				piVar13->field_0x10 = gF32Vertex4Zero;
+				piVar13->field_0x20 = gF32Vertex4Zero;
+			} while (iVar7 < this->cineActorConfigCount);
 		}
 	}
 	this->cond_0x248.Create(pByteCode);
@@ -747,7 +797,27 @@ void CCinematic::Create(ByteCode* pByteCode)
 	if (this->field_0x4c == 0) {
 		this->flags_0x8 = this->flags_0x8 | 8;
 	}
-	//SetupInternalData(this);
+	SetupInternalData();
+	return;
+}
+
+template<typename T>
+struct S_STREAM_REF {
+	static void Init(T* pObj);
+};
+
+template<typename CCineActorConfig>
+void S_STREAM_REF<CCineActorConfig>::Init(CCineActorConfig* pObj)
+{
+	CActor* pCVar1;
+
+	if (pObj->pActor == (CActor*)0xffffffff) {
+		pCVar1 = (CActor*)0x0;
+	}
+	else {
+		pCVar1 = ((Scene::ptable.g_ActorManager_004516a4)->aActors)[(int)pObj->pActor];
+	}
+	pObj->pActor = pCVar1;
 	return;
 }
 
@@ -766,16 +836,14 @@ void CCinematic::Init()
 	//SetupCheckpointEventData_00119990((CheckpointManagerSubObjA*)&this->field_0x98);
 	//LinkCheckpointActor_00119a00((CheckpointManagerSubObjB*)&this->field_0x44);
 	iVar6 = 0;
-	//if (0 < (int)this->objCount_0x9c) {
-	//	iVar5 = 0;
-	//	do {
-	//		LinkCheckpointActor_00119a00((CheckpointManagerSubObjB*)((int)&this->field_0xa0->field_0x0 + iVar5));
-	//		iVar6 = iVar6 + 1;
-	//		iVar5 = iVar5 + 0x30;
-	//	} while (iVar6 < (int)this->objCount_0x9c);
-	//}
-	//for (iVar6 = *this->field_0x25c; iVar6 != 0; iVar6 = iVar6 + -1) {
-	//}
+	if (0 < this->cineActorConfigCount) {
+		do {
+			S_STREAM_REF<CCineActorConfig>::Init(&this->aCineActorConfig[iVar6]);
+			iVar6 = iVar6 + 1;
+		} while (iVar6 < this->cineActorConfigCount);
+	}
+	for (iVar6 = *this->field_0x25c; iVar6 != 0; iVar6 = iVar6 + -1) {
+	}
 	piVar2 = this->field_0x24c;
 	iVar6 = 0;
 	//if (0 < *piVar2) {
@@ -863,7 +931,7 @@ void CCinematic::Start()
 	uint uVar3;
 	uint uVar4;
 	CActorHero* pAVar5;
-	CinematicManager* pCVar6;
+	CCinematicManager* pCVar6;
 	bool bVar7;
 	Timer* pTVar8;
 	edNODE* pMVar9;
@@ -910,7 +978,7 @@ void CCinematic::Start()
 				if (this->intFieldC != 0) {
 					this->flags_0x8 = this->flags_0x8 | 0x200;
 				}
-				pCVar6->pCinematicB_0x18 = this;
+				pCVar6->pCurCinematic = this;
 				/* Takes in a bank header and file name, and returns index of file in bank
 				   Example: Start_ff_Montage_SceneMontage.cin returns 59. */
 				iVar16 = (this->cineBank).pBankFileAccessObject->get_index(this->fileName);
@@ -936,8 +1004,8 @@ void CCinematic::Start()
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 					edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 				}
-				this->numObjects_0x218 = 0;
-				this->count_0x220 = 0;
+				this->loadedActorCinematicListCount = 0;
+				this->loadedActorCinematicCount = 0;
 				this->count_0x224 = 0;
 				this->count_0x22c = 0;
 				this->numberOfParticles = 0;
@@ -1020,7 +1088,7 @@ void CCinematic::Start()
 				}
 				bVar7 = false;
 				if ((this->flags_0x8 & 0x800) == 0) {
-					uVar3 = this->objCount_0x9c;
+					uVar3 = this->cineActorConfigCount;
 					iVar16 = 0;
 					if (0 < (int)uVar3) {
 						iVar15 = 0;
@@ -1086,7 +1154,7 @@ void CCinematic::Start()
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 					edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 				}
-				pCVar6->pCinematicB_0x18 = (CCinematic*)0x0;
+				pCVar6->pCurCinematic = (CCinematic*)0x0;
 				if ((this->flags_0x4 & 2) == 0) {
 					this->flags_0x8 = this->flags_0x8 | 0x1400;
 				}
@@ -1273,7 +1341,10 @@ char* g_languageSuffixPtr[5] = {
 
 void _gCinSoundCallback(bool bSuccess, void* pObj)
 {
-	MY_LOG("Ignoring sound: \n");
+	if (bSuccess != false) {
+		((CCinematic*)pObj)->InstallSounds();
+	}
+	return;
 }
 
 
@@ -1548,10 +1619,10 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 						   Example:
 						   d:\projects\b-witch\resource\build\level\cinematiques\loading\rsc_cin_airlift_to_native\wav\master_mono.vag
 							*/
-						result = edStrICmp(*(byte**)(this->playingSounds_0x2c0 + iVar4), (byte*)fileName);
+						result = edStrICmp((byte*)this->playingSounds_0x2c0[counter], (byte*)fileName);
 						if (result == 0) {
 							/* We already have the sound file loaded, return it here */
-							return (int*)(this->sound_0x2bc + counter * 0x18);
+							return (int*)(&this->sound_0x2bc[counter]);
 						}
 						counter = counter + 1;
 						iVar4 = iVar4 + 4;
@@ -1600,16 +1671,16 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 						piVar7->pData = (char*)outFileData.fileBufferStart;
 						pMVar1 = Scene::ptable.g_Manager208_00451694;
 						if (objectType == edResCollection::COT_Particle) {
-							//IMPLEMENTATION_GUARD(
-							//uVar3 = LoadCutsceneParticle
-							//((ParticleData*)(this->particleSectionStart + this->numberOfParticles * 0x218),
-							//	(byte*)outFileData.fileBufferStart, outFileData.size, bankObj);
-							//iVar4 = -1;
-							//if (uVar3 != 0) {
-							//	iVar4 = this->numberOfParticles;
-							//	this->numberOfParticles = iVar4 + 1;
-							//}
-							//)
+							IMPLEMENTATION_GUARD_LOG(
+							uVar3 = LoadCutsceneParticle
+							((ParticleData*)(this->particleSectionStart + this->numberOfParticles * 0x218),
+								(byte*)outFileData.fileBufferStart, outFileData.size, bankObj);
+							iVar4 = -1;
+							if (uVar3 != 0) {
+								iVar4 = this->numberOfParticles;
+								this->numberOfParticles = iVar4 + 1;
+							}
+							)
 							/* For particles we store the number of particle objects. */
 							piVar7->pData = (char*)(iVar4 + 1);
 						}
@@ -1676,6 +1747,62 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 	return (int*)outMeshInfo;
 }
 
+CActorCinematic* CCinematic::NewCinematicActor(const edCinGameInterface::ACTORV_CREATIONtag* pTag, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D)
+{
+	int iVar1;
+	int iVar2;
+	CActorCinematic* pCVar3;
+	int iVar4;
+	CActorCinematic* pNewCinematicActor;
+
+	pNewCinematicActor = (CActorCinematic*)0x0;
+	iVar1 = this->loadedActorCinematicCount;
+	iVar4 = 0;
+	if (0 < iVar1) {
+		do {
+			pCVar3 = &this->aActorCinematic[iVar1];
+			iVar1 = edStrICmp((byte*)pCVar3->name, (byte*)pTag->name);
+			if (iVar1 == 0) {
+				pNewCinematicActor = pCVar3;
+			}
+			iVar1 = this->loadedActorCinematicCount;
+			iVar4 = iVar4 + 1;
+		} while (iVar4 < iVar1);
+	}
+	if (pNewCinematicActor == (CActorCinematic*)0x0) {
+		pNewCinematicActor = &this->aActorCinematic[iVar1];
+		pNewCinematicActor->Create(pTag, pG3D, pG2D, Scene::_scene_handleA);
+		pNewCinematicActor->PreInit();
+		pNewCinematicActor->Init();
+		this->loadedActorCinematicCount = this->loadedActorCinematicCount + 1;
+		this->ppActorCinematics[this->loadedActorCinematicListCount] = pNewCinematicActor;
+
+		this->loadedActorCinematicListCount = this->loadedActorCinematicListCount + 1;
+	}
+	return pNewCinematicActor;
+}
+
+CCineActorConfig* CCinematic::GetActorConfig(CActor* pActor)
+{
+	CCineActorConfig* pCVar1;
+	int iVar2;
+
+	if (pActor->typeID != 1) {
+		iVar2 = 0;
+		if (0 < this->cineActorConfigCount) {
+			pCVar1 = this->aCineActorConfig;
+			do {
+				if (pActor == pCVar1->pActor) {
+					return pCVar1;
+				}
+				iVar2 = iVar2 + 1;
+				pCVar1 = pCVar1 + 1;
+			} while (iVar2 < this->cineActorConfigCount);
+		}
+	}
+	return (CCineActorConfig*)0x0;
+}
+
 void CCinematic::Manage()
 {
 	uint soundInfo;
@@ -1727,7 +1854,7 @@ void CCinematic::Manage()
 		// #HACK
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
-			//this->totalCutsceneDelta = 2.05f;
+			//this->totalCutsceneDelta = 20.5f;
 			IncrementCutsceneDelta();
 		}
 		//else {
@@ -1791,13 +1918,13 @@ void CCinematic::ManageState_Playing()
 	//BWCinSourceAudio* cinematicSoundObject;
 	float fVar8;
 	float fVar9;
-	CinematicManager* someGlobal;
+	CCinematicManager* someGlobal;
 
 	someGlobal = g_CinematicManager_0048efc;
-	g_CinematicManager_0048efc->pCinematicB_0x18 = this;
+	g_CinematicManager_0048efc->pCurCinematic = this;
 	bVar2 = TimeSlice(this->totalCutsceneDelta);
 	/* Check if the cutscene is over */
-	someGlobal->pCinematicB_0x18 = (CCinematic*)0x0;
+	someGlobal->pCurCinematic = (CCinematic*)0x0;
 	if (bVar2 == false) {
 		/* Cutscene has ended */
 		if ((this->flags_0x4 & 8) == 0) {
@@ -1814,7 +1941,7 @@ void CCinematic::ManageState_Playing()
 				bVar2 = false;
 			}
 			if (bVar2) {
-				someGlobal->pCinematicB_0x18 = this;
+				someGlobal->pCurCinematic = this;
 				(*(code*)cinematicSoundObject->vt->Stop)(cinematicSoundObject);
 				iVar4 = CMessageFile::get_default_language();
 				lVar6 = (long)(&this->intFieldE)[iVar4];
@@ -1823,7 +1950,7 @@ void CCinematic::ManageState_Playing()
 				}
 				BWCinSourceAudio::Create(cinematicSoundObject, lVar6);
 				(*(code*)cinematicSoundObject->vt->Play)(cinematicSoundObject);
-				someGlobal->pCinematicB_0x18 = (CCinematic*)0x0;
+				someGlobal->pCurCinematic = (CCinematic*)0x0;
 				this->totalCutsceneDelta = this->field_0x30;
 			}
 			else {
@@ -1909,7 +2036,7 @@ void CCinematic::IncrementCutsceneDelta()
 		deltaTime = timeController->cutsceneDeltaTime;
 	}
 	else {
-		deltaTime = 0.0;
+		deltaTime = 0.0f;
 	}
 	/* This is true for cutscenes */
 	//pBVar2 = &(this->cinematicLoadObject).BWCinSourceAudio_Obj;
@@ -1917,8 +2044,8 @@ void CCinematic::IncrementCutsceneDelta()
 		/* Increment float by 0.2 in cutscene manager  */
 		deltaTime = this->totalCutsceneDelta + deltaTime;
 		this->totalCutsceneDelta = deltaTime;
-		if (deltaTime < 0.0) {
-			this->totalCutsceneDelta = 0.0;
+		if (deltaTime < 0.0f) {
+			this->totalCutsceneDelta = 0.0f;
 		}
 	}
 	else {
@@ -1927,16 +2054,150 @@ void CCinematic::IncrementCutsceneDelta()
 		if (iVar1 == -1) {
 			iVar1 = this->intFieldD;
 		}
-		fVar3 = -1.0; // (float)(*(code*)pBVar2->vt->field_0x1c)(pBVar2, iVar1);
-		if (fVar3 == -1.0) {
+		fVar3 = -1.0f; // (float)(*(code*)pBVar2->vt->field_0x1c)(pBVar2, iVar1);
+		if (fVar3 == -1.0f) {
 			this->totalCutsceneDelta = this->totalCutsceneDelta + deltaTime;
 		}
 		else {
 			this->totalCutsceneDelta = fVar3;
 		}
 	}
-	if (this->totalCutsceneDelta < 0.0) {
-		this->totalCutsceneDelta = 0.0;
+	if (this->totalCutsceneDelta < 0.0f) {
+
+		this->totalCutsceneDelta = 0.0f;
+	}
+	return;
+}
+
+void BWBankManagerGetFileNames(edCBankBufferEntry* pBankEntry, ushort type, ushort stype, int* pCount, char*** ppPtrArray, char** pszOutIopPath)
+{
+	bool bVar1;
+	uint uVar2;
+	int iVar3;
+	char** pvVar4;
+	char* szIopPath;
+	int iVar5;
+	int iVar6;
+	uint uVar7;
+	uint local_228;
+	edBANK_ENTRY_INFO local_220;
+	char acStack512[512];
+
+	local_228 = (((uint)type) << 0x10) | (uint)stype;
+	uVar2 = pBankEntry->get_element_count();
+	iVar5 = 0;
+	iVar6 = 0;
+	uVar7 = 0;
+	if (uVar2 != 0) {
+		do {
+			bVar1 = pBankEntry->get_info(uVar7, &local_220, acStack512);
+			if (bVar1 == false) break;
+			if ((local_220.type << 0x10 | local_220.stype) == local_228) {
+				iVar3 = edStrLength(acStack512);
+				iVar6 = iVar6 + 1;
+				iVar5 = iVar5 + iVar3 + 1;
+			}
+			uVar7 = uVar7 + 1;
+		} while (uVar7 < uVar2);
+	}
+	pvVar4 = (char**)edMemAlloc(TO_HEAP(H_MAIN), iVar6 << 2);
+	*ppPtrArray = pvVar4;
+	szIopPath = (char*)edMemAlloc(TO_HEAP(H_MAIN), iVar5);
+	*pszOutIopPath = szIopPath;
+	szIopPath = *pszOutIopPath;
+	iVar5 = 0;
+	uVar7 = 0;
+	if (uVar2 != 0) {
+		iVar6 = 0;
+		do {
+			bVar1 = pBankEntry->get_info(uVar7, &local_220, szIopPath);
+			if (bVar1 == false) break;
+			if ((local_220.type << 0x10 | local_220.stype) == local_228) {
+				iVar5 = iVar5 + 1;
+				(*ppPtrArray)[uVar7] = szIopPath;
+				iVar6 = iVar6 + 4;
+				iVar3 = edStrLength(szIopPath);
+				szIopPath = szIopPath + iVar3 + 1;
+			}
+			uVar7 = uVar7 + 1;
+		} while (uVar7 < uVar2);
+	}
+	*pCount = iVar5;
+	return;
+}
+
+void CCinematic::InstallSounds()
+{
+	bool uVar1;
+	bool bSuccess;
+	ed_sound_sample* aSamples;
+	uint elementCount;
+	uint size;
+	uint inFileIndex;
+	int offset;
+	edBANK_ENTRY_INFO bankEntry;
+
+	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
+	}
+	BWBankManagerGetFileNames((this->cineBank).pBankFileAccessObject, 3, 1, &this->soundCount_0x2b8, &this->playingSounds_0x2c0, &this->field_0x2c4);
+	this->cineBankLoadStage_0x2b4 = 2;
+	if (this->soundCount_0x2b8 != 0) {
+		aSamples = (ed_sound_sample*)edMemAlloc(TO_HEAP(H_MAIN), this->soundCount_0x2b8 * sizeof(ed_sound_sample));
+		this->sound_0x2bc = aSamples;
+		elementCount = (this->cineBank).pBankFileAccessObject->get_element_count();
+		size = 0;
+		inFileIndex = 0;
+		if (elementCount != 0) {
+			do {
+				bSuccess = (this->cineBank).pBankFileAccessObject->get_info(inFileIndex, &bankEntry, (char*)0x0);
+				if (bSuccess != false) {
+					if (bankEntry.size == 0) {
+#ifdef PLATFORM_PS2
+						trap(7);
+#else
+						assert(false);
+#endif
+					}
+					if (0x40 % (int)bankEntry.size == 0) {
+						offset = 0x40;
+					}
+					else {
+						if (bankEntry.size == 0) {
+#ifdef PLATFORM_PS2
+							trap(7);
+#else
+							assert(false);
+#endif
+						}
+						offset = (0x40 / (int)bankEntry.size + 1) * bankEntry.size;
+					}
+					size = size + offset;
+				}
+				inFileIndex = inFileIndex + 1;
+			} while (inFileIndex < elementCount);
+		}
+		//bSuccess = CanAllocate_00184640(Scene::ptable.g_GlobalSoundPtr_00451698, size, 0x1400);
+		//if (bSuccess == false) {
+		//	*(undefined4*)this->sound_0x2bc = 0;
+		//}
+		//else {
+		//	size = 0;
+		//	if (elementCount != 0) {
+		//		offset = 0;
+		//		do {
+		//			bSuccess = edCBankBufferEntry::get_info((this->cineBank).pBankFileAccessObject, size, &bankEntry, (char*)0x0);
+		//			if ((bSuccess != false) && ((bankEntry.type << 0x10 | bankEntry.stype) == 0x30001)) {
+		//				edSoundSampleLoad(bankEntry.fileBufferStart, (ed_sound_sample*)(&this->sound_0x2bc->field_0x0 + offset), 1);
+		//				offset = offset + 0x18;
+		//			}
+		//			size = size + 1;
+		//		} while (size < elementCount);
+		//	}
+		//}
+	}
+	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
+		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	}
 	return;
 }
@@ -1990,37 +2251,49 @@ bool edCinematic::ExtractVersions(int size, int* cinematicLibraryVersion, int* c
 //	return (char*)LOAD_SECTION(resInfo->pData);
 //}
 
-bool CBWitchCin::CreateActor(edCinActorInterface** ppActorInterface, const edCinGameInterface::ACTORV_CREATIONtag* pTag)
+bool CBWitchCin::CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag)
 {
-	TextureInfo* textureObj;
+	ed_g2d_manager* textureObj;
 	ed_g3d_manager* meshInfoObj;
-	long lVar1;
+	CActorCinematic* lVar1;
 	edCinActorInterface* cutsceneObject;
-	int iStack4;
+	int resourceSize;
 	CCinematic* pCinematic;
 
 	meshInfoObj = (ed_g3d_manager*)0x0;
-	textureObj = (TextureInfo*)0x0;
-	pCinematic = g_CinematicManager_0048efc->pCinematicB_0x18;
+	textureObj = (ed_g2d_manager*)0x0;
+	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
 	if ((pTag->meshName != 0) && ((char*)pTag->textureName != (char*)0x0)) {
-		textureObj = (TextureInfo*)
-			pCinematic->InstallResource(edResCollection::COT_MeshTexture, (ulong)pTag->bHasTexture,
-				(char*)pTag->textureName, (ed_g2d_manager*)0x0, &iStack4);
-		if (textureObj == (TextureInfo*)0x0) {
+		textureObj = (ed_g2d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshTexture, pTag->bHasTexture, pTag->textureName, (ed_g2d_manager*)0x0, &resourceSize);
+		if (textureObj == (ed_g2d_manager*)0x0) {
 			IMPLEMENTATION_GUARD();
-			//textureObj = 3DFileManager::LoadDefaultTexture_001a65d0(Scene::ptable.g_FileManager3D_00451664);
+			//textureObj = Scene::ptable.g_FileManager3D_00451664.LoadDefaultTexture_001a65d0(Scene::ptable.g_FileManager3D_00451664);
 		}
-		meshInfoObj = (ed_g3d_manager*)
-			pCinematic->InstallResource(edResCollection::COT_MeshModel, (ulong)pTag->bHasMesh, (char*)pTag->meshName
-				, (ed_g2d_manager*)textureObj, &iStack4);
+		meshInfoObj = (ed_g3d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshModel, pTag->bHasMesh, pTag->meshName, textureObj, &resourceSize);
 	}
 	/* Sound files can go in here */
-	//lVar1 = Cinematic::NewCinematicActor(pCinematic, (char*)pTag, meshInfoObj, (ed_g2d_manager*)textureObj);
-	//cutsceneObject = (edCinActorInterface*)((int)lVar1 + 0x180);
-	//Cinematic::Func(cutsceneObject, &pTag->vectorFieldA, &pTag->vectorFieldB,
+	lVar1 = pCinematic->NewCinematicActor(pTag, meshInfoObj, textureObj);
+	lVar1->behaviourCinematic.cinActor.SetupTransform(&pTag->vectorFieldA, &pTag->vectorFieldB, &pTag->vectorFieldC, 0);
 
-	//	&pTag->vectorFieldC, (ed_g3d_manager*)0x0);
-	*ppActorInterface = (edCinActorInterface*)STORE_SECTION(cutsceneObject);
+	// HACK! Don't write 8 bytes here on win!
+	int* pInt = (int*)ppActorInterface;
+	*pInt = STORE_SECTION(&lVar1->behaviourCinematic.cinActor);
+	return true;
+}
+
+bool CBWitchCin::CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag)
+{
+	ed_g2d_manager* ret;
+	ed_g3d_manager* outMeshInfo;
+	int iStack4;
+	CCinematic* pCinematic;
+
+	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
+	/* Load the texture */
+	ret = (ed_g2d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshTexture, (ulong)pTag->textureType, pTag->szTexturePath, (ed_g2d_manager*)0x0, &iStack4);
+	/* Load the mesh */
+	outMeshInfo = (ed_g3d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshModel, (ulong)pTag->meshType, pTag->szMeshPath, ret, &iStack4);
+	pCinematic->pMeshInfo = outMeshInfo;
 	return true;
 }
 
@@ -2032,7 +2305,7 @@ bool CBWitchCin::ReleaseResource(void*, bool)
 bool CBWitchCin::GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*)
 {
 	*pCinCam = &this->BWCinCam_Obj;
-	g_CinematicManager_0048efc->pCinematicB_0x18->flags_0x8 = g_CinematicManager_0048efc->pCinematicB_0x18->flags_0x8 | 2;
+	g_CinematicManager_0048efc->pCurCinematic->flags_0x8 = g_CinematicManager_0048efc->pCurCinematic->flags_0x8 | 2;
 	return true;
 }
 
@@ -2047,7 +2320,7 @@ char* CBWitchCin::GetResource(edResCollection::RES_TYPE type1, long type2, const
 		fileBufferStart = (int*)1;
 	}
 	else {
-		fileBufferStart = g_CinematicManager_0048efc->pCinematicB_0x18->InstallResource(type1, type2, fileName, (ed_g2d_manager*)0x0, bufferLengthOut);
+		fileBufferStart = g_CinematicManager_0048efc->pCurCinematic->InstallResource(type1, type2, fileName, (ed_g2d_manager*)0x0, bufferLengthOut);
 	}
 	return (char*)fileBufferStart;
 }
@@ -2061,7 +2334,7 @@ bool CBWCinCam::Activate()
 	float fVar5;
 	float fVar6;
 
-	pCVar1 = g_CinematicManager_0048efc->pCinematicB_0x18;
+	pCVar1 = g_CinematicManager_0048efc->pCurCinematic;
 	pCVar2 = g_CinematicManager_0048efc->pCameraLocationObj;
 	if (((pCVar1->flags_0x4 & 0x800) == 0) && ((pCVar1->flags_0x8 & 0x800) == 0)) {
 		iVar3 = pCVar1->field_0x64;
@@ -2096,7 +2369,7 @@ bool CBWCinCam::Initialize(bool param_2, uint* flags)
 
 bool CBWCinCam::SetFov(float fov)
 {
-	if (((g_CinematicManager_0048efc->pCinematicB_0x18->flags_0x4 & 0x200) != 0) &&
+	if (((g_CinematicManager_0048efc->pCurCinematic->flags_0x4 & 0x200) != 0) &&
 		(CameraManager::_gThis->aspectRatio == 1.777778f)) {
 		fov = fov * 0.75f;
 	}
@@ -2106,7 +2379,7 @@ bool CBWCinCam::SetFov(float fov)
 
 bool CBWCinCam::SetPos(float x, float y, float z)
 {
-	CinematicManager* pCVar1;
+	CCinematicManager* pCVar1;
 	edF32VECTOR4 outLocation;
 	CCameraCinematic* pCinCam;
 
@@ -2115,7 +2388,7 @@ bool CBWCinCam::SetPos(float x, float y, float z)
 	outLocation.x = x;
 	outLocation.y = y;
 	outLocation.z = z;
-	sceVu0ApplyMatrix(&outLocation, &g_CinematicManager_0048efc->pCinematicB_0x18->matrix_0x120, &outLocation);
+	sceVu0ApplyMatrix(&outLocation, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120, &outLocation);
 	pCinCam = pCVar1->pCameraLocationObj;
 	pCinCam->transformationMatrix.rowT = outLocation;
 	return true;
@@ -2124,13 +2397,13 @@ bool CBWCinCam::SetPos(float x, float y, float z)
 bool CBWCinCam::SetHeadingQuat(float x, float y, float z, float w)
 {
 	CCinematic* pCVar1;
-	CinematicManager* pCVar2;
+	CCinematicManager* pCVar2;
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
 	CCameraCinematic* pCinCam;
 
 	pCVar2 = g_CinematicManager_0048efc;
-	pCVar1 = g_CinematicManager_0048efc->pCinematicB_0x18;
+	pCVar1 = g_CinematicManager_0048efc->pCurCinematic;
 	local_50.x = x;
 	local_50.y = y;
 	local_50.z = z;
@@ -2149,7 +2422,7 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 	CCinematic* pCVar1;
 	CCameraCinematic* pCVar2;
 	float* pfVar3;
-	CinematicManager* pCVar4;
+	CCinematicManager* pCVar4;
 	float* pfVar5;
 	float* pfVar6;
 	edF32MATRIX4 auStack96;
@@ -2159,7 +2432,7 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 	float local_8;
 
 	pCVar4 = g_CinematicManager_0048efc;
-	pCVar1 = g_CinematicManager_0048efc->pCinematicB_0x18;
+	pCVar1 = g_CinematicManager_0048efc->pCurCinematic;
 	if (param_5 == false) {
 		newLookAt.w = 1.0;
 		newLookAt.x = x;
@@ -2189,4 +2462,280 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 	}
 	pCVar2->lookAt = newLookAt;
 	return true;
+}
+
+bool CBWCinActor::Initialize()
+{
+	CActor* pCVar1;
+	CCinematic* pCVar2;
+
+	pCVar2 = g_CinematicManager_0048efc->GetCurCinematic();
+	if ((pCVar2->flags_0x4 & 0x4000) == 0) {
+		this->field_0x8 = 2;
+	}
+	else {
+		this->field_0x8 = 0;
+	}
+	pCVar1 = this->pParent;
+	if ((pCVar1->flags & 0x800000) == 0) {
+		pCVar1->CinematicMode_Enter(0);
+	}
+	else {
+		pCVar1->SetState(3, -1);
+	}
+	return true;
+}
+
+bool CBWCinActor::OnFrameDirected()
+{
+	bool bVar1;
+	CCinematic* pCVar2;
+	CActor* pActor;
+
+	pCVar2 = g_CinematicManager_0048efc->GetCurCinematic();
+	bVar1 = pCVar2->state != CS_Interpolate;
+	if (bVar1) {
+		pActor = this->pParent;
+		pActor->flags = pActor->flags & 0xffffffbf;
+
+		pActor->EvaluateDisplayState();
+	}
+	return bVar1;
+}
+
+bool CBWCinActor::SetPos(float newX, float newY, float newZ)
+{
+	CCinematic* pCinematic;
+	float fVar1;
+	//CCollisionRay CStack80;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 transformedLocation;
+	edF32VECTOR4 newLocation;
+	//CollisionData* pCollision;
+
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	newLocation.w = 1.0f;
+	newLocation.x = newX;
+	newLocation.y = newY;
+	newLocation.z = newZ;
+	sceVu0ApplyMatrix(&newLocation, &pCinematic->matrix_0x120, &newLocation);
+	if ((this->field_0x8 & 1U) != 0) {
+		IMPLEMENTATION_GUARD(
+		local_30.x = 0.0;
+		local_30.y = -1.0f;
+		local_30.z = 0.0;
+		local_30.w = 0.0;
+		transformedLocation.x = newLocation.x;
+		transformedLocation.z = newLocation.z;
+		transformedLocation.w = newLocation.w;
+		pCollision = (this->pParent->data).pCollisionData;
+		if (pCollision == (CollisionData*)0x0) {
+			transformedLocation.y = newLocation.y + 0.2;
+		}
+		else {
+			transformedLocation.y = newLocation.y + ((pCollision->vectorFieldB).y - (this->pParent->data).currentLocation.y);
+		}
+		CCollisionRay::CCollisionRay(10.0, &CStack80, &transformedLocation, &local_30);
+		fVar1 = CCollisionRay::Intersect
+		(&CStack80, 3, this->pParent, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+		if (fVar1 != 1e+30) {
+			newLocation.y = transformedLocation.y + fVar1 * local_30.y;
+			newLocation.x = transformedLocation.x;
+			newLocation.z = transformedLocation.z;
+			newLocation.w = transformedLocation.w;
+		})
+	}
+	(this->nextPos).x = newLocation.x;
+	(this->nextPos).y = newLocation.y;
+	(this->nextPos).z = newLocation.z;
+
+	(this->nextPos).w = newLocation.w;
+	this->pParent->flags = this->pParent->flags & 0xffdfffff;
+	return true;
+}
+
+bool CBWCinActor::SetHeadingEuler(float x, float y, float z, bool param_5)
+{
+	CActor* pParent;
+	CCinematic* pCinematic;
+	edF32MATRIX4 transformationMatrix;
+	edF32VECTOR3 newRotation;
+
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	if (param_5 != false) {
+		newRotation.x = x * 0.01745329f;
+		newRotation.y = y * 0.01745329f;
+		newRotation.z = z * 0.01745329f;
+		edF32Matrix4FromEulerSoft(&transformationMatrix, &newRotation, "XYZ");
+		edF32Matrix4MulF32Matrix4Hard(&transformationMatrix, &transformationMatrix, &pCinematic->matrix_0x120);
+		edF32Matrix4ToEulerSoft(&transformationMatrix, &newRotation, "XYZ");
+		pParent = this->pParent;
+		pParent->rotationEuler.x = newRotation.x;
+		pParent->rotationEuler.y = newRotation.y;
+		pParent->rotationEuler.z = newRotation.z;
+		SetVectorFromAngles(&pParent->rotationQuat, &pParent->rotationEuler);
+	}
+	return true;
+}
+
+bool CBWCinActor::SetHeadingQuat(float x, float y, float z, float w)
+{
+	CCinematic* pCinematic;
+	edF32VECTOR4 rotationVector;
+	edF32VECTOR3 newRotation;
+	edF32MATRIX4 rotationMatrix;
+	CActor* pParent;
+
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	rotationVector.x = x;
+	rotationVector.y = y;
+	rotationVector.z = z;
+	rotationVector.w = w;
+	edQuatToMatrix4Hard(&rotationVector, &rotationMatrix);
+	edF32Matrix4MulF32Matrix4Hard(&rotationMatrix, &rotationMatrix, &pCinematic->matrix_0x120);
+	edF32Matrix4ToEulerSoft(&rotationMatrix, &newRotation, "XYZ");
+	pParent = this->pParent;
+	pParent->rotationEuler.x = newRotation.x;
+	pParent->rotationEuler.y = newRotation.y;
+
+	pParent->rotationEuler.z = newRotation.z;
+	SetVectorFromAngles(&pParent->rotationQuat, &pParent->rotationEuler);
+	return true;
+}
+
+bool CBWCinActor::SetScale(float x, float y, float z)
+{
+	this->pParent->SetScale(x, y, z);
+	return true;
+}
+
+bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
+{
+	char cVar1;
+	char cVar2;
+	//CAnimation* pAnimationController;
+	uint uVar3;
+	uint uVar4;
+	//edAnmLayer* peVar5;
+	bool bVar6;
+	CCinematic* pCinematic;
+	CCineActorConfig* pCVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	//edAnmStage local_30;
+	//edAnmStage local_20;
+	//edAnmStage local_10;
+
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	pCVar7 = pCinematic->GetActorConfig(this->pParent);
+	bVar6 = (this->field_0x8 & 2U) == 0;
+	if ((pCVar7 == (CCineActorConfig*)0x0) || ((pCVar7->flags & 8) == 0)) {
+		IMPLEMENTATION_GUARD_LOG(
+		pAnimationController = (this->pParent->data).pAnimationController;
+		if (pAnimationController != (CAnimation*)0x0) {
+			edAnmMetaAnimator::SetLayerTimeWarper(0.0, pAnimationController, 0);
+			uVar3 = pTag->field_0xc;
+			uVar4 = pTag->field_0x0;
+			if ((uVar3 == 0) || (bVar6)) {
+				peVar5 = pAnimationController->pAnimData;
+				cVar1 = pTag->field_0x8;
+				fVar8 = pTag->field_0x4;
+				peVar5->animPlayState = 0;
+				edAnmLayer::SetRawAnim(peVar5, uVar4, cVar1 != '\0', 0xfffffffe);
+				edAnmStage::ComputeAnimParams
+				(fVar8, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0, &local_10, 0,
+					(ulong)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+				(peVar5->currentAnimDesc).state.time_0x10 = local_10.time_0x0;
+				(peVar5->currentAnimDesc).state.time_0xc = local_10.time_0x4;
+			}
+			else {
+				peVar5 = pAnimationController->pAnimData;
+				cVar1 = pTag->field_0x14;
+				fVar9 = pTag->field_0x18;
+				cVar2 = pTag->field_0x8;
+				fVar8 = pTag->field_0x4;
+				fVar10 = pTag->field_0x10;
+				peVar5->animPlayState = 0;
+				edAnmLayer::SetRawAnim(peVar5, uVar3, cVar1 != '\0', uVar3 + 1);
+				edAnmLayer::SetRawAnim(peVar5, uVar4, cVar2 != '\0', uVar4 + 2);
+				peVar5->field_0xbc = 1.0;
+				edAnmLayer::MorphingStartDT(peVar5);
+				(peVar5->currentAnimDesc).field_0x4c = 1.0;
+				(peVar5->nextAnimDesc).field_0x4c = fVar9;
+				edAnmStage::ComputeAnimParams
+				(fVar10, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0, &local_20, 0,
+					(ulong)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+				(peVar5->currentAnimDesc).state.time_0x10 = local_20.time_0x0;
+				(peVar5->currentAnimDesc).state.time_0xc = local_20.time_0x4;
+				edAnmStage::ComputeAnimParams
+				(fVar8, (peVar5->nextAnimDesc).state.keyStartTime_0x14, 0.0, &local_30, 0,
+					(ulong)(((peVar5->nextAnimDesc).state.currentAnimDataFlags & 1) != 0));
+				(peVar5->nextAnimDesc).state.time_0x10 = local_30.time_0x0;
+				(peVar5->nextAnimDesc).state.time_0xc = local_30.time_0x4;
+			}
+		})
+	}
+	else {
+		pParent->CinematicMode_SetAnimation(pTag, bVar6);
+	}
+	return true;
+}
+
+bool CBWCinActor::SetVisibility(bool bVisible)
+{
+	CActor* pActor;
+
+	if (bVisible == false) {
+		pActor = this->pParent;
+		pActor->flags = pActor->flags & 0xffffff7f;
+		pActor->flags = pActor->flags | 0x20;
+		pActor->EvaluateDisplayState();
+	}
+	else {
+		pActor = this->pParent;
+		pActor->flags = pActor->flags | 0x80;
+		pActor->flags = pActor->flags & 0xffffffdf;
+		pActor->EvaluateDisplayState();
+	}
+	return true;
+}
+
+void CBWCinActor::SetupTransform(edF32VECTOR4* vectorA, edF32VECTOR4* vectorB, edF32VECTOR4* vectorC, int intFieldA)
+{
+	float z;
+	float fVar1;
+	float w;
+	float fVar2;
+	float y;
+	float fVar3;
+
+	y = vectorA->y;
+	z = vectorA->z;
+	w = vectorA->w;
+	(this->field_0xe0).x = vectorA->x;
+	(this->field_0xe0).y = y;
+	(this->field_0xe0).z = z;
+	(this->field_0xe0).w = w;
+	fVar3 = vectorB->y;
+	fVar1 = vectorB->z;
+	fVar2 = vectorB->w;
+	(this->field_0xf0).x = vectorB->x;
+	(this->field_0xf0).y = fVar3;
+	(this->field_0xf0).z = fVar1;
+	(this->field_0xf0).w = fVar2;
+	fVar3 = vectorC->y;
+	fVar1 = vectorC->z;
+	fVar2 = vectorC->w;
+	(this->field_0x100).x = vectorC->x;
+	(this->field_0x100).y = fVar3;
+	(this->field_0x100).z = fVar1;
+	(this->field_0x100).w = fVar2;
+	this->field_0x124 = intFieldA;
+	return;
+}
+
+CCineActorConfig::CCineActorConfig()
+{
+	this->flags = 0;
 }
