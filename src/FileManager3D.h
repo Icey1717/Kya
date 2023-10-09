@@ -4,23 +4,25 @@
 #include "Types.h"
 #include "LargeObject.h"
 
+struct ed_Chunck;
+
 struct ed_g3d_manager {
 	char* fileBufferStart;
 	char* field_0x4;
 	int fileLengthA;
 	undefined4 field_0xc;
-	char* OBJA;
-	char* LIA;
-	char* CAMA;
-	char* SPRA;
-	struct MeshData_HALL* HALL;
-	char* CSTA;
-	char* GEOM;
-	char* MBNA;
-	char* INFA;
+	ed_Chunck* OBJA;
+	ed_Chunck* LIA;
+	ed_Chunck* CAMA;
+	ed_Chunck* SPRA;
+	ed_Chunck* HALL;
+	ed_Chunck* CSTA;
+	ed_Chunck* GEOM;
+	ed_Chunck* MBNA;
+	ed_Chunck* INFA;
 	int fileLengthB;
-	char* CDZA;
-	char* ANMA;
+	ed_Chunck* CDZA;
+	ed_Chunck* ANMA;
 };
 
 struct Mesh {

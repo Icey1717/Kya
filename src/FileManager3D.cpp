@@ -33,7 +33,7 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 		pMVar4 = this->pMeshDataArray + iVar1;
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
-			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, pMVar4->pTextureInfo, 0xc, &pMVar4->meshInfo);
+			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
 		}
 		this->pMeshInfo = &pMVar4->meshInfo;
 		ed3DScenePushCluster(Scene::_scene_handleA, this->pMeshInfo);
@@ -49,7 +49,7 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 		pMVar4 = this->pMeshDataArray + iVar1;
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
-			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, pMVar4->pTextureInfo, 0xc, &pMVar4->meshInfo);
+			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
 		}
 		IMPLEMENTATION_GUARD(pMVar3 = ed3DHierarchyAddToScene(Scene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
 		this->pMeshTransformParent = pMVar3;
@@ -151,14 +151,14 @@ void FileManager3D::Level_Create(ByteCode* pMemoryStream)
 	this->levelSectorTextureIndex = 0;
 	iVar1 = pMemoryStream->GetS32();
 	this->meshCount = iVar1;
-	pMVar2 = (Mesh*)AllocateFunc_001002a0((long)(this->meshCount * sizeof(Mesh)));
+	pMVar2 = new Mesh[this->meshCount];
 	this->pMeshDataArray = pMVar2;
 	for (iVar1 = this->meshCount; 0 < iVar1; iVar1 = iVar1 + -1) {
 		pMemoryStream->GetS32();
 	}
 	iVar1 = pMemoryStream->GetS32();
 	this->textureCount = iVar1;
-	pTVar3 = (TextureInfo*)AllocateFunc_001002a0((long)(this->textureCount * sizeof(TextureInfo)));
+	pTVar3 = new TextureInfo[this->textureCount];
 	this->pTextureInfoArray = pTVar3;
 	pMemoryStream->GetS32();
 	pMVar2 = this->pMeshDataArray;

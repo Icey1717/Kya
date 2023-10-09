@@ -4,7 +4,9 @@
 #include "Types.h"
 #include "EdenLib/edCinematic/Sources/Cinematic.h"
 
+struct edNODE;
 struct CActor;
+struct ed_g3d_hierarchy;
 
 struct CBehaviour {
 	virtual void Init(CActor* pOwner) {}
@@ -35,9 +37,13 @@ struct CActor : public CObject {
 	int dlistPatchId;
 	uint actorFieldS;
 
+	edNODE* pMeshNode;
+
 	edF32VECTOR3 rotationEuler;
 	edF32VECTOR4 rotationQuat;
 	edF32VECTOR4 scale;
+
+	ed_g3d_hierarchy* pHier;
 
 	int typeID;
 

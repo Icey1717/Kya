@@ -536,9 +536,9 @@ void CSectorManager::S_COMP_SLOT::InstallCallback()
 	pSectorManager = Scene::ptable.g_SectorManager_00451670;
 	p3DFileManager = Scene::ptable.g_FileManager3D_00451664;
 	pStaticMeshMaster = Scene::_scene_handleA;
-	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, (TextureInfo*)&this->textureInfo, 0xc, &this->meshInfo);
+	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, &this->textureInfo, 0xc, &this->meshInfo);
 	pTextureInfo = p3DFileManager->GetCommonSectorG2D();
-	ed3DLinkG2DToG3D(&this->meshInfo, pTextureInfo);
+	ed3DLinkG2DToG3D(&this->meshInfo, (ed_g2d_manager*)pTextureInfo);
 	ed3DScenePushCluster(pStaticMeshMaster, &this->meshInfo);
 	if (pFileData == (char*)0x0) {
 		this->pMeshTransform = (edNODE*)0x0;

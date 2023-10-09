@@ -7,6 +7,7 @@
 #include "delegate.h"
 #endif
 
+
 PACK(
 	struct ed_hash_code {
 	Hash_8 field_0x0;
@@ -17,19 +18,27 @@ PACK(
 	undefined field_0xf;
 };)
 
+PACK(struct ed_Chunck {
+	uint hash;
+	short field_0x4;
+	short field_0x6;
+	int size;
+	int field_0xc;
+});
+
 struct ed_g2d_manager {
 	char* textureFileBufferStart;
 	int textureFileLengthA;
-	char* textureHeaderStart;
-	char* pMAT_HASH;
-	char* pT2DA;
-	char* pPALL;
+	ed_Chunck* textureHeaderStart;
+	ed_Chunck* pMAT_HASH;
+	ed_Chunck* pT2DA;
+	ed_Chunck* pPALL;
 	byte field_0x18;
 	byte field_0x19;
 	byte field_0x1a;
 	byte field_0x1b;
 	int textureFileLengthB;
-	char* pANMA;
+	ed_Chunck* pANMA;
 	undefined field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;
@@ -69,7 +78,7 @@ struct MeshTransformDataBase {
 	struct ed_g3d_hierarchy* pLinkTransformData;
 	undefined* field_0x94;
 	undefined* pTextureInfo;
-	ushort count_0x9c;
+	ushort lodCount;
 	ushort flags_0x9e;
 	struct ed_3d_hierarchy_setup* pHierarchySetup;
 	edF32MATRIX4* pMatrixPkt;
@@ -91,7 +100,7 @@ struct ed_3d_hierarchy_node {
 };
 
 struct TextureInfo {
-	ed_g2d_manager field_0x0;
+	ed_g2d_manager pManager;
 	char* pFileBuffer;
 };
 
@@ -335,19 +344,6 @@ PACK( struct LayerHeaderPacked {
 	char field_0x10;
 });
 
-PACK(struct MeshData_HALL {
-	char header[4];
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	int totalSize;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-};)
-
 struct ed_viewport;
 struct edFCamera;
 
@@ -364,7 +360,7 @@ Multidelegate<edDList_material*>& ed3DGetMaterialUnloadedDelegate();
 Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
 #endif
 
-ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int* outInt, TextureInfo* textureObj, int unknown, ed_g3d_manager* pMeshInfo);
+ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int* outInt, ed_g2d_manager* textureObj, int unknown, ed_g3d_manager* pMeshInfo);
 
 
 void Init3D(void);
@@ -375,10 +371,11 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, in
 bool edDListTermMaterial(edDList_material* pMaterial);
 char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
+edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
 void ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMeshCount);
 
-void ed3DLinkG2DToG3D(ed_g3d_manager* pMeshInfo, TextureInfo* pTextureInfo);
+void ed3DLinkG2DToG3D(ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo);
 
 struct HierarchyAnm {
 	void Install(struct MeshData_ANHR* pInANHR, int length, ed_g3d_manager* pMeshInfo, ed_3D_Scene* pStaticMeshMaster);
@@ -399,7 +396,7 @@ struct FxFogProp {
 	uint field_0x14;
 };
 
-PACK(struct MeshTransformObjData_Packed {
+PACK(struct ed3DLod {
 	int pObj; // char*
 	short field_0x4;
 	short field_0x6;
@@ -416,7 +413,7 @@ PACK(struct ed_g3d_hierarchy {
 	int pLinkTransformData; // MeshTransformData*
 	int field_0x94; // undefined*
 	int pTextureInfo; // undefined*
-	ushort count_0x9c;
+	ushort lodCount;
 	ushort flags_0x9e;
 	int pLightingMatrixFuncObj_0xa0; // LightingMatrixFuncObj*
 	int field_0xa4; // edF32MATRIX4*
@@ -424,14 +421,7 @@ PACK(struct ed_g3d_hierarchy {
 	short subMeshParentCount_0xac;
 	byte size_0xae;
 	undefined field_0xaf;
-	MeshTransformObjData_Packed aSubArray[4];
-});
-
-PACK(struct ed_Chunck {
-	uint hash;
-	int field_0x4;
-	int field_0x8;
-	int field_0xc;
+	ed3DLod aLods[4];
 });
 
 void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo);
@@ -450,6 +440,9 @@ void ed3DResetTime(void);
 void ed3DSetDeltaTime(int newTime);
 
 FxFogProp* ed3DGetFxFogProp(void);
+
+ed_g3d_hierarchy* ed3DG3DHierarchyGetFromIndex(ed_g3d_manager* pMeshInfo, int count);
+void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

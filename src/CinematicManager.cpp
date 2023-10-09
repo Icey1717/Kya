@@ -1702,7 +1702,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 									else {
 										if (objectType == edResCollection::COT_MeshModel) {
 											outMeshInfo = ed3DInstallG3D(outFileData.fileBufferStart, outFileData.size, 0, &iStack4,
-												(TextureInfo*)textureObj, 0xc, (ed_g3d_manager*)0x0);
+												textureObj, 0xc, (ed_g3d_manager*)0x0);
 											piVar7->pData = (char*)outMeshInfo;
 										}
 										else {
