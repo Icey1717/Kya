@@ -7,3 +7,6 @@
 [submodule "port/Test/ext/googletest"]
 	path = port/Test/ext/googletest
 	url = https://github.com/google/googletest.git
+[submodule "port/Job/thread-pool"]
+	path = port/Job/thread-pool
+	url = https://github.com/bshoshany/thread-pool.git
