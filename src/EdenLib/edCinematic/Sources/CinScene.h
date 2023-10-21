@@ -22,7 +22,7 @@ PACK(
 	int pCinActorInterface; // edCinActorInterface*
 
 	char name[32];
-	edF32VECTOR4 field_0x38;
+	edF32VECTOR4 boundingSphere;
 	int meshID;
 	int textureID;
 	edF32VECTOR4 field_0x50;

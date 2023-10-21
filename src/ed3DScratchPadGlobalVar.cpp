@@ -1,9 +1,12 @@
 #include "ed3DScratchPadGlobalVar.h"
+#include "Rendering/DisplayList.h"
+#include "Types.h"
+#include "ed3D.h"
 
 #ifdef PLATFORM_PS2
 edF32MATRIX4* WorldToCamera_Matrix = (edF32MATRIX4*)0x70000000;
 #else
-char gwScratchPad[0x4000] = {};
+char gwScratchPad[0x10000] = {};
 edF32MATRIX4* WorldToCamera_Matrix = (edF32MATRIX4*)gwScratchPad;
 #endif
 
@@ -31,6 +34,13 @@ char* gPad1 = (char*)WorldToCamera_Matrix + 0x364;
 char* gPad2 = (char*)WorldToCamera_Matrix + 0x368;
 char* gPad3 = (char*)WorldToCamera_Matrix + 0x36c;
 SceneConfig* gRenderSceneConfig_SPR = (SceneConfig*)((char*)WorldToCamera_Matrix + 0x370);
-RenderInfo* gRender_info_SPR = (RenderInfo*)((char*)WorldToCamera_Matrix + 0x4c0);
+
+#ifdef PLATFORM_WIN
+ScratchPadRenderInfo* gRender_info_SPR		= (ScratchPadRenderInfo*)	(((char*)WorldToCamera_Matrix) + 0x370 + sizeof(SceneConfig));
+edF32VECTOR4* gBoundSphereCenter			= (edF32VECTOR4*)			(((char*)WorldToCamera_Matrix) + 0x370 + sizeof(SceneConfig) + sizeof(ScratchPadRenderInfo));
+AnimScratchpad* PTR_AnimScratchpad_00449554 = (AnimScratchpad*)			(((char*)WorldToCamera_Matrix) + 0x370 + sizeof(SceneConfig) + sizeof(ScratchPadRenderInfo) + sizeof(edF32VECTOR4));
+#else
+ScratchPadRenderInfo* gRender_info_SPR = (ScratchPadRenderInfo*)((char*)WorldToCamera_Matrix + 0x4c0);
 edF32VECTOR4* gBoundSphereCenter = (edF32VECTOR4*)((char*)WorldToCamera_Matrix + 0x4e0);
 AnimScratchpad* PTR_AnimScratchpad_00449554 = (AnimScratchpad*)((char*)WorldToCamera_Matrix + 0x4f0);
+#endif

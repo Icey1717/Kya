@@ -6,7 +6,7 @@ struct ed_g2d_material;
 union edF32VECTOR4;
 struct edFCamera;
 struct SceneConfig;
-struct RenderInfo;
+struct ScratchPadRenderInfo;
 union edF32VECTOR3;
 union AnimScratchpad;
 
@@ -36,7 +36,7 @@ extern char* gPad1;
 extern char* gPad2;
 extern char* gPad3;
 extern SceneConfig* gRenderSceneConfig_SPR;
-extern RenderInfo* gRender_info_SPR;
+extern ScratchPadRenderInfo* gRender_info_SPR;
 extern edF32VECTOR4* gBoundSphereCenter;
 extern AnimScratchpad* PTR_AnimScratchpad_00449554;
 

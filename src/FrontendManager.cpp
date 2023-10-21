@@ -172,7 +172,7 @@ void FrontendManager::Game_Init()
 	pCVar3 = edViewportNew(&local_8, pVidModeDataA, pVidModeDataB, 2);
 	this->pViewport = pCVar3;
 	edViewportSetBackgroundColor(this->pViewport, 0, 0, 0);
-	Frontend::_scene_handle = ed3DSceneCreate(&CameraManager::_gFrontEndCamera, this->pViewport, 1);
+	Frontend::_scene_handle = ed3DSceneCreate(&CCameraManager::_gFrontEndCamera, this->pViewport, 1);
 
 	edF32Matrix4SetIdentityHard(&this->field_0x10);
 	pMVar1 = Scene::ptable.g_Manager170_00451674;

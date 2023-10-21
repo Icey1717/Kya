@@ -20,7 +20,11 @@ typedef unsigned char    u_char;
 typedef unsigned int    uint;
 typedef unsigned int    uint3;
 typedef unsigned long long    ulong;
+#ifdef PLATFORM_PS2
 typedef unsigned uint128 __attribute__((mode(TI)));
+#else
+typedef unsigned uint128;
+#endif
 typedef unsigned char    undefined1;
 typedef unsigned short    undefined2;
 typedef unsigned int    undefined3;
@@ -427,6 +431,14 @@ struct SectorManagerSubObj {
 	struct CSectorHierarchy* pWindSectorObj;
 	int field_0xc;
 };
+
+// Overload the * operator as a non-member function
+inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
+{
+	edF32VECTOR4 ret;
+	ret = rhs.rowT + (rhs.rowZ * lhs.z) + (rhs.rowY * lhs.y) + (rhs.rowX * lhs.x);
+	return ret;
+}
 
 #define IMPLEMENTATION_GUARD_AUDIO(x)
 #define IMPLEMENTATION_GUARD_LOG(x)

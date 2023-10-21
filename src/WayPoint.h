@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "LargeObject.h"
 
-struct CWayPointManager : public Manager {
+struct CWayPointManager : public CObjectManager {
 	CWayPointManager();
 
 	virtual void Level_Init() {}

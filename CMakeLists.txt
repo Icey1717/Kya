@@ -83,6 +83,8 @@ set(main_src
 	"${src_root}/SectorManager.h"
 	"${src_root}/ActorManager.cpp"
 	"${src_root}/ActorManager.h"
+	"${src_root}/AnmManager.cpp"
+	"${src_root}/AnmManager.h"
 	"${src_root}/CinematicManager.cpp"
 	"${src_root}/CinematicManager.h"
 	"${src_root}/CameraViewManager.cpp"
@@ -91,6 +93,8 @@ set(main_src
 	"${src_root}/ScenaricCondition.h"
 	"${src_root}/InputManager.cpp"
 	"${src_root}/InputManager.h"
+	"${src_root}/ActorFactory.cpp"
+	"${src_root}/ActorFactory.h"
 	"${src_root}/Rendering/DisplayList.cpp"
 	"${src_root}/Rendering/DisplayList.h"
 	"${src_root}/Rendering/DisplayListData.cpp"
@@ -264,7 +268,7 @@ else()
 		"src"
 	)
 
-	target_link_libraries(Kya PUBLIC Port Log VU)
+	target_link_libraries(Kya PUBLIC Port Log VU Job)
 endif()
 
 set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )

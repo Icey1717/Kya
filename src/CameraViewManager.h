@@ -7569,8 +7569,8 @@ struct ActiveCamManager {
 	bool SwitchActiveCam(float param_1, Camera* pCamera, SWITCH_MODE switchMode);
 };
 
-struct CameraManager : public Manager {
-	CameraManager();
+struct CCameraManager : public CObjectManager {
+	CCameraManager();
 	virtual void Game_Init();
 	virtual void LevelLoading_Begin();
 	virtual bool LevelLoading_Manage();
@@ -7586,8 +7586,11 @@ struct CameraManager : public Manager {
 	Camera* AddCamera(ECameraType type, struct ByteCode* pMemoryStream, char* objName);
 	Camera* GetDefGameCamera(ECameraType type);
 
+	bool IsSphereVisible(float param_1, edF32VECTOR4* param_3, float* param_4);
+	bool IsSphereVisible(float other, edF32VECTOR4* pSphere);
+
 	bool PushCamera(Camera* pCamera, int param_3);
-	static CameraManager* _gThis;
+	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
 
 	float time_0x4;

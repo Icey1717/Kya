@@ -640,11 +640,9 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 	creationTag.vectorFieldC.x = (cineCreatureObject->field_0x60).w;
 	creationTag.vectorFieldC.y = *(float*)&cineCreatureObject->field_0x70;
 	creationTag.vectorFieldC.z = *(float*)&cineCreatureObject->field_0x74;
-	creationTag.vectorFieldC.w = 1.0;
-	creationTag.field_0x40 = (cineCreatureObject->field_0x38).x;
-	creationTag.field_0x44 = (cineCreatureObject->field_0x38).y;
-	creationTag.field_0x48 = (cineCreatureObject->field_0x38).z;
-	creationTag.field_0x4c = (cineCreatureObject->field_0x38).w;
+	creationTag.vectorFieldC.w = 1.0f;
+	creationTag.boundingSphere = cineCreatureObject->boundingSphere;
+
 	/* Loads the name of the player into this buffer.
 	   Example: ARAIGNOSBLACK_TOONPLAYER_L0 */
 	strcpy((char*)&creationTag, cineCreatureObject->name);
@@ -673,7 +671,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 		creationTag.bHasMesh = (resCollection.pData[cineCreatureObject->meshID * 3 + 1].field_0x0 & 0x80000000U) != 0;
 	}
-	creationTag.field_0x30 = (cineCreatureObject->field_0x38).w;
+	creationTag.field_0x30 = (cineCreatureObject->boundingSphere).w;
 	bVar1 = cinGameInterface.CreateActor((edCinActorInterface**)&this->pObj->pCinActorInterface, &creationTag);
 	return bVar1 != false;
 }

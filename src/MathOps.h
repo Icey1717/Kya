@@ -8,6 +8,7 @@
 #endif
 
 extern edF32MATRIX4 gF32Matrix4Zero;
+extern edF32VECTOR3 gF32Vector3Zero;
 extern edF32MATRIX4 gF32Matrix4Unit;
 extern edF32VECTOR4 gF32Vertex4Zero;
 extern edF32VECTOR4 gF32Vector4Zero;
@@ -53,5 +54,7 @@ void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32MATR
 void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0);
 
 void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0);
+
+void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1);
 
 #endif // _MATH_OPS_H

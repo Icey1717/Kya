@@ -276,6 +276,9 @@ void edVideoFlip(void)
 	/* Render scene */
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 6, (void*)0x0);
+#ifdef PLATFORM_WIN
+	VU1Emu::Wait();
+#endif
 	edDmaSyncPath();
 	_ManageFade();
 	/* Render UI */

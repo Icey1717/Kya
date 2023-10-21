@@ -17,12 +17,14 @@ struct CBehaviourCinematic : public CBehaviour {
 	CBWCinActor cinActor;
 
 	virtual void Init(CActor* pOwner);
+	virtual bool Begin(CActor* pOwner, int newState, int newAnimationType);
 };
 
 struct CActorCinematic : public CActor {
 	CActorCinematic();
 	void Create(const edCinGameInterface::ACTORV_CREATIONtag* pGameInterface, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D, ed_3D_Scene* pScene);
 	virtual void Init();
+	virtual void CinematicMode_Enter(bool bSetState);
 
 	ComponentList<1> components;
 	CBehaviourCinematic behaviourCinematic;

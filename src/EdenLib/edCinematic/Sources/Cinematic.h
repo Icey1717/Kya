@@ -81,10 +81,7 @@ struct edCinGameInterface
 		undefined field_0x3d;
 		undefined field_0x3e;
 		undefined field_0x3f;
-		float field_0x40;
-		float field_0x44;
-		float field_0x48;
-		float field_0x4c;
+		edF32VECTOR4 boundingSphere;
 		edF32VECTOR4 vectorFieldA;
 		edF32VECTOR4 vectorFieldB;
 		edF32VECTOR4 vectorFieldC;

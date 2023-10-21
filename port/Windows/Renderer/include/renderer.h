@@ -50,12 +50,37 @@ namespace Renderer
 		PaletteMap palettes;
 	};
 
+	struct DrawBuffer {
+		DrawBuffer();
+		~DrawBuffer();
+
+		struct Index
+		{
+			uint16_t* buff;
+			size_t tail;
+		};
+
+		struct Vertex
+		{
+			Renderer::GSVertex* buff;
+			size_t head, tail, next, maxcount; // head: first vertex, tail: last vertex + 1, next: last indexed + 1
+			size_t xy_tail;
+			uint64_t xy[4];
+		};
+
+		Index index;
+		Vertex vertex;
+	};
+
 	void Setup();
 	void RenderImage(char* imageData, int width, int height);
 	void WaitUntilReady();
 	void Present();
 	void SetScissor(int x, int y, uint32_t width, uint32_t height);
 	void Draw();
+	void Draw(DrawBuffer& drawBuffer);
+
+	DrawBuffer& GetDefaultDrawBuffer();
 
 	void SetVertexSkip(uint32_t inSkip);
 
@@ -68,7 +93,12 @@ namespace Renderer
 
 	void SetPrim(GIFReg::PrimPacked prim);
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);
+
+	// Variation that uses GS State to fill in PRIM, STQ, RGBA
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z);
+
+	// Variation that contains all data in vtxInfo.
+	void KickVertex(const GSVertex& vtx, GIFReg::GSPrim primReg, uint32_t skip, DrawBuffer& drawBuffer);
 
 	void SetAlpha(uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint8_t fix);
 

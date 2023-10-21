@@ -6,8 +6,9 @@
 
 struct CActor;
 
-struct CActorManager : public Manager {
+struct CActorManager : public CObjectManager {
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	struct ActorManagerAnimLinkData* field_0x4;
 	struct Actor* pActorArray_0x8;

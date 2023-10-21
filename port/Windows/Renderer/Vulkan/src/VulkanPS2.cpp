@@ -56,30 +56,18 @@ namespace Renderer {
 		PS2::GetPipelines().clear();
 	}
 
-	struct
-	{
-		Renderer::GSVertex* buff;
-		size_t head, tail, next, maxcount; // head: first vertex, tail: last vertex + 1, next: last indexed + 1
-		size_t xy_tail;
-		uint64_t xy[4];
-	} m_vertex;
-
-	struct
-	{
-		uint16_t* buff;
-		size_t tail;
-	} m_index;
+	DrawBuffer m_drawBuffer;
 
 	void ResetVertIndexBuffers()
 	{
-		assert(m_index.tail == 0 || m_index.buff[m_index.tail - 1] + 1 == m_vertex.next);
+		assert(m_drawBuffer.index.tail == 0 || m_drawBuffer.index.buff[m_drawBuffer.index.tail - 1] + 1 == m_drawBuffer.vertex.next);
 
-		if (m_index.tail == 0)
+		if (m_drawBuffer.index.tail == 0)
 		{
-			m_vertex.next = 0;
+			m_drawBuffer.vertex.next = 0;
 		}
 
-		m_vertex.head = m_vertex.tail = m_vertex.next; // remove unused vertices from the end of the vertex buffer
+		m_drawBuffer.vertex.head = m_drawBuffer.vertex.tail = m_drawBuffer.vertex.next; // remove unused vertices from the end of the vertex buffer
 	}
 
 	enum GS_PRIM
@@ -193,18 +181,31 @@ namespace Renderer {
 		PS2::GetGSState().COLCLAMP = colClamp;
 	}
 
+	DrawBuffer& GetDefaultDrawBuffer()
+	{
+		return m_drawBuffer;
+	}
+
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z)
 	{
-		uint32_t skip = Skip;
-		GS_PRIM prim = (GS_PRIM)PS2::GetGSState().PRIM.PRIM;
-		assert(m_vertex.tail < m_vertex.maxcount + 3);
+		KickVertex(PS2_Internal::MakeVertex(x, y, z), PS2::GetGSState().PRIM, Skip, m_drawBuffer);
+	}
 
-		size_t head = m_vertex.head;
-		size_t tail = m_vertex.tail;
-		size_t next = m_vertex.next;
-		size_t xy_tail = m_vertex.xy_tail;
+	void KickVertex(const GSVertex& vtx, GIFReg::GSPrim primReg, uint32_t skip, DrawBuffer& drawBuffer)
+	{
+		GS_PRIM prim = (GS_PRIM)primReg.PRIM;
+		assert(drawBuffer.vertex.tail < drawBuffer.vertex.maxcount + 3);
 
-		m_vertex.buff[m_vertex.tail] = PS2_Internal::MakeVertex(x, y, z);
+		const uint32_t x = vtx.XY[0];
+		const uint32_t y = vtx.XY[1];
+		const uint32_t z = vtx.Z;
+
+		size_t head = drawBuffer.vertex.head;
+		size_t tail = drawBuffer.vertex.tail;
+		size_t next = drawBuffer.vertex.next;
+		size_t xy_tail = drawBuffer.vertex.xy_tail;
+
+		drawBuffer.vertex.buff[drawBuffer.vertex.tail] = vtx;
 
 		GSVector4i m_ofxy = GSVector4i(
 			0x8000,
@@ -216,10 +217,10 @@ namespace Renderer {
 		v1.x = x | ((uint32_t)y << 0x10);
 
 		GSVector4i xy = v1.xxxx().u16to32().sub32(m_ofxy);
-		GSVector4i::storel(&m_vertex.xy[xy_tail & 3], xy.upl64(xy.sra32(4).zwzw()).ps32());
+		GSVector4i::storel(&drawBuffer.vertex.xy[xy_tail & 3], xy.upl64(xy.sra32(4).zwzw()).ps32());
 
-		m_vertex.tail = ++tail;
-		m_vertex.xy_tail = ++xy_tail;
+		drawBuffer.vertex.tail = ++tail;
+		drawBuffer.vertex.xy_tail = ++xy_tail;
 
 		size_t n = 0;
 
@@ -246,10 +247,10 @@ namespace Renderer {
 		{
 			GSVector4i v0, v1, v2, v3, pmin, pmax;
 		
-			v0 = GSVector4i::loadl(&m_vertex.xy[(xy_tail + 1) & 3]); // T-3
-			v1 = GSVector4i::loadl(&m_vertex.xy[(xy_tail + 2) & 3]); // T-2
-			v2 = GSVector4i::loadl(&m_vertex.xy[(xy_tail + 3) & 3]); // T-1
-			v3 = GSVector4i::loadl(&m_vertex.xy[(xy_tail - m) & 3]); // H
+			v0 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 1) & 3]); // T-3
+			v1 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 2) & 3]); // T-2
+			v2 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 3) & 3]); // T-1
+			v3 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail - m) & 3]); // H
 		
 			GSVector4 cross;
 		
@@ -339,14 +340,14 @@ namespace Renderer {
 			case GS_TRIANGLELIST:
 			case GS_SPRITE:
 			case GS_INVALID:
-				m_vertex.tail = head; // no need to check or grow the buffer length
+				drawBuffer.vertex.tail = head; // no need to check or grow the buffer length
 				break;
 			case GS_LINESTRIP:
 			case GS_TRIANGLESTRIP:
-				m_vertex.head = head + 1;
+				drawBuffer.vertex.head = head + 1;
 				// fall through
 			case GS_TRIANGLEFAN:
-				if (tail >= m_vertex.maxcount) assert(false); // in case too many vertices were skipped
+				if (tail >= drawBuffer.vertex.maxcount) assert(false); // in case too many vertices were skipped
 				break;
 			default:
 				__assume(0);
@@ -355,80 +356,80 @@ namespace Renderer {
 			return;
 		}
 
-		if (tail >= m_vertex.maxcount) assert(false);
+		if (tail >= drawBuffer.vertex.maxcount) assert(false);
 
-		uint16_t* RESTRICT buff = &m_index.buff[m_index.tail];
+		uint16_t* RESTRICT buff = &drawBuffer.index.buff[drawBuffer.index.tail];
 
 		switch (prim)
 		{
 		case GS_POINTLIST:
 			buff[0] = head + 0;
-			m_vertex.head = head + 1;
-			m_vertex.next = head + 1;
-			m_index.tail += 1;
+			drawBuffer.vertex.head = head + 1;
+			drawBuffer.vertex.next = head + 1;
+			drawBuffer.index.tail += 1;
 			break;
 		case GS_LINELIST:
 			buff[0] = head + 0;
 			buff[1] = head + 1;
-			m_vertex.head = head + 2;
-			m_vertex.next = head + 2;
-			m_index.tail += 2;
+			drawBuffer.vertex.head = head + 2;
+			drawBuffer.vertex.next = head + 2;
+			drawBuffer.index.tail += 2;
 			break;
 		case GS_LINESTRIP:
 			if (next < head)
 			{
-				m_vertex.buff[next + 0] = m_vertex.buff[head + 0];
-				m_vertex.buff[next + 1] = m_vertex.buff[head + 1];
+				drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
+				drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
 				head = next;
-				m_vertex.tail = next + 2;
+				drawBuffer.vertex.tail = next + 2;
 			}
 			buff[0] = head + 0;
 			buff[1] = head + 1;
-			m_vertex.head = head + 1;
-			m_vertex.next = head + 2;
-			m_index.tail += 2;
+			drawBuffer.vertex.head = head + 1;
+			drawBuffer.vertex.next = head + 2;
+			drawBuffer.index.tail += 2;
 			break;
 		case GS_TRIANGLELIST:
 			buff[0] = head + 0;
 			buff[1] = head + 1;
 			buff[2] = head + 2;
-			m_vertex.head = head + 3;
-			m_vertex.next = head + 3;
-			m_index.tail += 3;
+			drawBuffer.vertex.head = head + 3;
+			drawBuffer.vertex.next = head + 3;
+			drawBuffer.index.tail += 3;
 			break;
 		case GS_TRIANGLESTRIP:
 			if (next < head)
 			{
-				m_vertex.buff[next + 0] = m_vertex.buff[head + 0];
-				m_vertex.buff[next + 1] = m_vertex.buff[head + 1];
-				m_vertex.buff[next + 2] = m_vertex.buff[head + 2];
+				drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
+				drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
+				drawBuffer.vertex.buff[next + 2] = drawBuffer.vertex.buff[head + 2];
 				head = next;
-				m_vertex.tail = next + 3;
+				drawBuffer.vertex.tail = next + 3;
 			}
 			buff[0] = head + 0;
 			buff[1] = head + 1;
 			buff[2] = head + 2;
-			m_vertex.head = head + 1;
-			m_vertex.next = head + 3;
-			m_index.tail += 3;
+			drawBuffer.vertex.head = head + 1;
+			drawBuffer.vertex.next = head + 3;
+			drawBuffer.index.tail += 3;
 			break;
 		case GS_TRIANGLEFAN:
 			// TODO: remove gaps, next == head && head < tail - 3 || next > head && next < tail - 2 (very rare)
 			buff[0] = head + 0;
 			buff[1] = tail - 2;
 			buff[2] = tail - 1;
-			m_vertex.next = tail;
-			m_index.tail += 3;
+			drawBuffer.vertex.next = tail;
+			drawBuffer.index.tail += 3;
 			break;
 		case GS_SPRITE:
 			buff[0] = head + 0;
 			buff[1] = head + 1;
-			m_vertex.head = head + 2;
-			m_vertex.next = head + 2;
-			m_index.tail += 2;
+			drawBuffer.vertex.head = head + 2;
+			drawBuffer.vertex.next = head + 2;
+			drawBuffer.index.tail += 2;
 			break;
 		case GS_INVALID:
-			m_vertex.tail = head;
+			drawBuffer.vertex.tail = head;
 			break;
 		default:
 			__assume(0);
@@ -1834,11 +1835,15 @@ namespace PipelineDebug
 }
 
 void Renderer::Draw() {
-	if (Renderer::m_index.tail == 0) {
+	Draw(m_drawBuffer);
+}
+
+void Renderer::Draw(DrawBuffer& drawBuffer) {
+	if (drawBuffer.index.tail == 0) {
 		return;
 	}
 
-	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: %d", Renderer::m_index.tail);
+	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: %d", drawBuffer.index.tail);
 
 	g_GSSelector.ResetStates();
 	PS2::m_conf.ps = GSHWDrawConfig::PSSelector();
@@ -2005,8 +2010,8 @@ void Renderer::Draw() {
 		{
 			float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
 			float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
-			float ox = Renderer::OFX;
-			float oy = Renderer::OFY;
+			float ox = OFX;
+			float oy = OFY;
 			float ox2 = -1.0f / GetRTSize().x;
 			float oy2 = -1.0f / GetRTSize().y;
 
@@ -2020,8 +2025,8 @@ void Renderer::Draw() {
 
 		vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-		const VkDeviceSize vertexOffset = PS2::MapVertices(Renderer::m_vertex.buff, Renderer::m_vertex.tail);
-		const VkDeviceSize indexOffset = PS2::MapIndices(Renderer::m_index.buff, Renderer::m_index.tail);
+		const VkDeviceSize vertexOffset = PS2::MapVertices(drawBuffer.vertex.buff, drawBuffer.vertex.tail);
+		const VkDeviceSize indexOffset = PS2::MapIndices(drawBuffer.index.buff, drawBuffer.index.tail);
 
 		VkBuffer vertexBuffers[] = { PS2::GetVertexBuffer() };
 		VkDeviceSize offsets[] = { vertexOffset };
@@ -2031,25 +2036,38 @@ void Renderer::Draw() {
 
 		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
 
-		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(Renderer::m_index.tail), 1, 0, 0, 0);
+		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(drawBuffer.index.tail), 1, 0, 0, 0);
 
 	}
-	m_index.tail = 0;
-	m_vertex.head = 0;
-	m_vertex.tail = 0;
-	m_vertex.next = 0;
-	m_vertex.xy_tail = 0;
+
+	drawBuffer.index.tail = 0;
+	drawBuffer.vertex.head = 0;
+	drawBuffer.vertex.tail = 0;
+	drawBuffer.vertex.next = 0;
+	drawBuffer.vertex.xy_tail = 0;
 	state.bTexSet = false;
+}
+
+Renderer::DrawBuffer::DrawBuffer()
+	: index({})
+	, vertex({})
+{
+	vertex.buff = (Renderer::GSVertex*)_aligned_malloc(sizeof(Renderer::GSVertex) * Renderer::VertexIndexBufferSize, 32);
+	index.buff = (uint16_t*)_aligned_malloc(sizeof(uint16_t) * Renderer::VertexIndexBufferSize, 32);
+	vertex.maxcount = Renderer::VertexIndexBufferSize;
+}
+
+Renderer::DrawBuffer::~DrawBuffer()
+{
+	_aligned_free(vertex.buff);
+	_aligned_free(index.buff);
+	vertex.maxcount = Renderer::VertexIndexBufferSize;
 }
 
 void PS2::Setup()
 {
 	CreateDefaultRenderPass();
 	CreateVertexUniformBuffers();
-
-	Renderer::m_vertex.buff = (Renderer::GSVertex*)_aligned_malloc(sizeof(Renderer::GSVertex) * Renderer::VertexIndexBufferSize, 32);
-	Renderer::m_index.buff = (uint16_t*)_aligned_malloc(sizeof(uint16_t) * Renderer::VertexIndexBufferSize, 32);
-	Renderer::m_vertex.maxcount = Renderer::VertexIndexBufferSize;
 }
 
 void PS2::BeginFrame()

@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "LargeObject.h"
 
-struct CFxManager : public Manager {
+struct CFxManager : public CObjectManager {
 
 	CFxManager();
 	void AddPool(ByteCode* pMemoryStream);

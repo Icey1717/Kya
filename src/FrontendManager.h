@@ -9,7 +9,7 @@ struct CFrontendMagicGauge {
 	void Magic_SetDisplay(unsigned char bNewVisible);
 };
 
-struct FrontendManager : public Manager {
+struct FrontendManager : public CObjectManager {
 	FrontendManager();
 	virtual void Game_Init();
 

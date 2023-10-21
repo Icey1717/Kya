@@ -582,7 +582,7 @@ struct LevelInfo {
 
 typedef int SCENARIC_VARIABLE;
 
-class LevelScheduleManager : public Manager {
+class LevelScheduleManager : public CObjectManager {
 public:
 	LevelScheduleManager();
 

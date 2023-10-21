@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "LargeObject.h"
 
-struct CPathManager : public Manager{
+struct CPathManager : public CObjectManager{
 	CPathManager();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 	struct Actor_3C* field_0x4;

@@ -123,10 +123,10 @@ void CCinematicManager::LevelLoading_Begin()
 {
 	CCameraCinematic* pCinematicCamera;
 	CCameraCinematic* pCamera;
-	CameraManager* pCameraManager;
+	CCameraManager* pCameraManager;
 
-	pCameraManager = CameraManager::_gThis;
-	pCinematicCamera = (CCameraCinematic*)CameraManager::_gThis->GetDefGameCamera(CT_Cinematic);
+	pCameraManager = CCameraManager::_gThis;
+	pCinematicCamera = (CCameraCinematic*)CCameraManager::_gThis->GetDefGameCamera(CT_Cinematic);
 	this->pCameraLocationObj = pCinematicCamera;
 	if (this->pCinematic != (CCinematic*)0x0) {
 		this->pCameraLocationObj->SetTransform(&this->matrix_0x70);
@@ -211,7 +211,7 @@ void CCinematicManager::Level_Init()
 	CCinematic** pCVar5;
 	int iVar5;
 
-	pCVar4 = (CCameraCinematic*)CameraManager::_gThis->GetDefGameCamera(CT_Cinematic);
+	pCVar4 = (CCameraCinematic*)CCameraManager::_gThis->GetDefGameCamera(CT_Cinematic);
 	this->pCameraLocationObj = pCVar4;
 	this->field_0x34 = 0;
 	this->field_0x38 = 0;
@@ -374,7 +374,7 @@ void CCinematicManager::WillLoadCinematic()
 			}
 			if ((bVar1) &&
 				((pCinematic->baseB == -1 ||
-					(pCinematic->baseB == ((Scene::ptable.g_SectorManager_00451670)->baseSector).field_0x0)))) {
+					(pCinematic->baseB == ((Scene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID)))) {
 				pCinematic->pActor = (Actor*)0x0;
 				if ((pCinematic->flags_0x8 & 0x800) == 0) {
 					piVar2 = pCinematic->field_0x24c;
@@ -1149,7 +1149,7 @@ void CCinematic::Start()
 				if ((this->flags_0x8 & 2) != 0) {
 					this->cinematicLoadObject.BWCinCam_Obj.Activate();
 					this->cinFileData.Timeslice(0.0f, &FStack224);
-					CameraManager::_gThis->PushCamera((Camera*)pCVar6->pCameraLocationObj, 1);
+					CCameraManager::_gThis->PushCamera((Camera*)pCVar6->pCameraLocationObj, 1);
 				}
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 					edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
@@ -2370,7 +2370,7 @@ bool CBWCinCam::Initialize(bool param_2, uint* flags)
 bool CBWCinCam::SetFov(float fov)
 {
 	if (((g_CinematicManager_0048efc->pCurCinematic->flags_0x4 & 0x200) != 0) &&
-		(CameraManager::_gThis->aspectRatio == 1.777778f)) {
+		(CCameraManager::_gThis->aspectRatio == 1.777778f)) {
 		fov = fov * 0.75f;
 	}
 	g_CinematicManager_0048efc->pCameraLocationObj->fov = fov;
@@ -2417,7 +2417,6 @@ bool CBWCinCam::SetHeadingQuat(float x, float y, float z, float w)
 }
 
 bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
-
 {
 	CCinematic* pCVar1;
 	CCameraCinematic* pCVar2;
@@ -2466,22 +2465,22 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 
 bool CBWCinActor::Initialize()
 {
-	CActor* pCVar1;
-	CCinematic* pCVar2;
+	CActor* pActor;
+	CCinematic* pCinematic;
 
-	pCVar2 = g_CinematicManager_0048efc->GetCurCinematic();
-	if ((pCVar2->flags_0x4 & 0x4000) == 0) {
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	if ((pCinematic->flags_0x4 & 0x4000) == 0) {
 		this->field_0x8 = 2;
 	}
 	else {
 		this->field_0x8 = 0;
 	}
-	pCVar1 = this->pParent;
-	if ((pCVar1->flags & 0x800000) == 0) {
-		pCVar1->CinematicMode_Enter(0);
+	pActor = this->pParent;
+	if ((pActor->flags & 0x800000) == 0) {
+		pActor->CinematicMode_Enter(false);
 	}
 	else {
-		pCVar1->SetState(3, -1);
+		pActor->SetState(3, -1);
 	}
 	return true;
 }

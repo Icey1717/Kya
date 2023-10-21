@@ -60,14 +60,14 @@ struct LightingMatrixSubSubObj {
 };
 
 struct ed_3d_hierarchy_setup {
-	char* field_0x0;
-	union edF32VECTOR4* pVector_0x4;
+	char* clipping_0x0;
+	union edF32VECTOR4* pBoundingSphere;
 	struct LightingMatrixSubSubObj* pLightData;
-	char* field_0xc;
+	ed_3d_hierarchy_setup* pNext;
 	float* field_0x10;
 };
 
-struct MeshTransformDataBase {
+struct ed_3d_hierarchy {
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
 	Hash_8 hash;
@@ -75,7 +75,7 @@ struct MeshTransformDataBase {
 	undefined field_0x89;
 	ushort bRenderShadow;
 	union edF32MATRIX4* pShadowAnimMatrix;
-	struct ed_g3d_hierarchy* pLinkTransformData;
+	struct ed_3d_hierarchy* pLinkTransformData;
 	undefined* field_0x94;
 	undefined* pTextureInfo;
 	ushort lodCount;
@@ -89,19 +89,30 @@ struct MeshTransformDataBase {
 };
 
 struct MeshTransformObjData {
-	char* pObj;
+	ed_hash_code* pObj;
 	short field_0x4;
 	short field_0x6;
 };
 
 struct ed_3d_hierarchy_node {
-	MeshTransformDataBase base;
+	ed_3d_hierarchy base;
 	MeshTransformObjData aSubArray[4];
 };
 
 struct TextureInfo {
 	ed_g2d_manager pManager;
 	char* pFileBuffer;
+};
+
+struct ScratchPadRenderInfo {
+	edF32MATRIX4* pSharedMeshTransform;
+	edF32MATRIX4* pMeshTransformMatrix;
+	int field_0x8;
+	ed_3d_hierarchy_setup* pHierarchySetup;
+	uint flags;
+	float field_0x14;
+	undefined4 field_0x18;
+	ed_3d_hierarchy_node* pMeshTransformData;
 };
 
 struct ed3DConfig {
@@ -377,9 +388,19 @@ void ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMesh
 
 void ed3DLinkG2DToG3D(ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo);
 
-struct HierarchyAnm {
+PACK(
+struct S_HIERANM_ANIM {
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	float field_0xc[];
+});
+
+class CHierarchyAnm {
+public:
 	void Install(struct MeshData_ANHR* pInANHR, int length, ed_g3d_manager* pMeshInfo, ed_3D_Scene* pStaticMeshMaster);
-	uint UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, int* pFileData, int param_5);
+	bool UpdateMatrix(float param_1, edF32MATRIX4* pMatrix, S_HIERANM_ANIM* pHierAnim, int param_5);
+	void Manage(float param_1, float param_2, ed_3D_Scene* pScene, int param_5);
 
 	MeshData_ANHR* pThis;
 
@@ -410,17 +431,17 @@ PACK(struct ed_g3d_hierarchy {
 	byte field_0x89;
 	ushort bRenderShadow;
 	int pShadowAnimMatrix; // edF32MATRIX4*
-	int pLinkTransformData; // MeshTransformData*
+	int pLinkTransformData; // ed_3d_hierarchy*
 	int field_0x94; // undefined*
 	int pTextureInfo; // undefined*
 	ushort lodCount;
 	ushort flags_0x9e;
-	int pLightingMatrixFuncObj_0xa0; // LightingMatrixFuncObj*
+	int pHierarchySetup; // ed_3d_hierarchy_setup*
 	int field_0xa4; // edF32MATRIX4*
 	int pAnimMatrix; // edF32MATRIX4*
 	short subMeshParentCount_0xac;
 	byte size_0xae;
-	undefined field_0xaf;
+	char GlobalAlhaON;
 	ed3DLod aLods[4];
 });
 
@@ -443,6 +464,19 @@ FxFogProp* ed3DGetFxFogProp(void);
 
 ed_g3d_hierarchy* ed3DG3DHierarchyGetFromIndex(ed_g3d_manager* pMeshInfo, int count);
 void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag);
+void ed3DSetMeshTransformFlag_002abd80(edNODE* pNode, ushort flag);
+void ed3DSetMeshTransformFlag_002abff0(edNODE* pNode, ushort flag);
+void ed3DHierarchySetSetup(ed_3d_hierarchy* pHier, ed_3d_hierarchy_setup* pHierarchySetup);
+
+struct SceneConfig;
+struct edSurface;
+struct ed_surface_desc;
+
+SceneConfig* ed3DSceneGetConfig(ed_3D_Scene* pStaticMeshMaster);
+edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData);
+
+void ed3DHierarchyNodeSetRenderOn(ed_3D_Scene* pScene, edNODE* pNode);
+void ed3DHierarchyNodeSetRenderOff(ed_3D_Scene* pScene, edNODE* pNode);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

@@ -39,7 +39,7 @@ struct ed_3D_Shadow_Config {
 };
 
 struct SceneConfig {
-	undefined* field_0x0;
+	int field_0x0; // undefined* 
 	float clipValue_0x4;
 	float nearClip;
 	float farClip;
@@ -50,8 +50,8 @@ struct SceneConfig {
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;
-	struct FrustumData frustumA;
-	struct FrustumData frustumB;
+	FrustumData frustumA;
+	FrustumData frustumB;
 	edF32VECTOR4 field_0xe0;
 	ByteColor3 fogCol_0xf0;
 	undefined field_0xf3;
@@ -67,13 +67,13 @@ struct SceneConfig {
 	undefined field_0xfd;
 	undefined field_0xfe;
 	undefined field_0xff;
-	struct ed_3D_Shadow_Config pShadowConfig;
+	ed_3D_Shadow_Config pShadowConfig;
 	undefined field_0x125;
 	undefined field_0x126;
 	undefined field_0x127;
 	int field_0x128;
 	int field_0x12c;
-	struct ed_3D_Light_Config pLightConfig;
+	ed_3D_Light_Config pLightConfig;
 	undefined field_0x13c;
 	undefined field_0x13d;
 	undefined field_0x13e;

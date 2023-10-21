@@ -21,31 +21,31 @@ extern StaticEdFileBase StaticEdFileBase_004497f0;
 
 bool CheckFunc_00401fd0(StaticEdFileBase* param_1);
 
-struct CSectorManager : public Manager {
+struct CSector {
+public:
+	void InstallCallback();
+	void Load(int param_2, int param_3, bool bFileFlag);
+	void Level_Manage(int sectID, int param_3);
+	int desiredSectorID;
+	int sectorIndex;
+	int loadStage_0x8;
+	edCBankBuffer bankObject;
+	ed_g3d_manager meshInfo;
+	ed_g2d_manager textureInfo;
+	undefined* pManager100Obj;
+	ed_g3d_manager meshInfoB;
+	ed_g2d_manager textureInfoB;
+	struct edNODE* pMeshTransform;
+	struct edNODE* pMeshTransformParent_0x130;
+	float field_0x134;
+	CHierarchyAnm pANHR;
+	int sectID;
+	int currentSectorID;
+};
+
+struct CSectorManager : public CObjectManager {
 	
 public:
-
-	struct S_COMP_SLOT {
-	public:
-		void InstallCallback();
-		void Load(int param_2, int param_3, bool bFileFlag);
-		int field_0x0;
-		int sectorIndex;
-		int loadStage_0x8;
-		edCBankBuffer bankObject;
-		ed_g3d_manager meshInfo;
-		ed_g2d_manager textureInfo;
-		undefined* pManager100Obj;
-		ed_g3d_manager meshInfoB;
-		ed_g2d_manager textureInfoB;
-		struct edNODE* pMeshTransform;
-		struct edNODE* pMeshTransformParent_0x130;
-		float field_0x134;
-		HierarchyAnm pANHR;
-		int sectID;
-		int field_0x140;
-	};
-
 	CSectorManager();
 
 	void Level_ClearInternalData();
@@ -57,6 +57,8 @@ public:
 	virtual void Level_Install();
 	virtual void Level_Init();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
+	virtual void Level_Manage();
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 	// End Manager
 
 	void Level_Create(ByteCode* pMemoryStream);
@@ -95,12 +97,12 @@ public:
 	undefined field_0x42;
 	undefined field_0x43;
 	struct SectorManagerSubObj subObjArray[30];
-	struct S_COMP_SLOT baseSector;
+	CSector baseSector;
 	int count_0x368;
 	int field_0x36c;
 	undefined4 field_0x370;
 	int sectDataCount;
-	S_COMP_SLOT* sectorArray;
+	CSector* sectorArray;
 	undefined4 field_0x37c;
 	CSectorHierarchy* pSectorHierarchy;
 	undefined4 field_0x384;

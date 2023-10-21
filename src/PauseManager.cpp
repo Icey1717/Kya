@@ -146,7 +146,7 @@ int FUN_00284930(void)
 void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 {
 	CCinematicManager* pCVar1;
-	CameraManager* pCVar2;
+	CCameraManager* pCVar2;
 	GlobalSound_00451698* pGVar3;
 	undefined4 uVar4;
 	float fVar5;

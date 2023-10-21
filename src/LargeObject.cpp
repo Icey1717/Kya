@@ -33,6 +33,7 @@
 #include "Fx.h"
 #include "PathManager.h"
 #include "ActorManager.h"
+#include "AnmManager.h"
 
 Scene* Scene::_pinstance = NULL;
 
@@ -44,78 +45,6 @@ ed_3D_Scene* Scene::_scene_handleB = NULL;
 ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10] = { 0 };
 
 uint GameFlags = 0;
-
-edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
-{
-	ed_surface_desc* pVidModeCopy;
-	edSurface* pFrameBuffer;
-	ZBufferTags* pTags;
-	int zBufferFormat;
-
-	pVidModeCopy = (ed_surface_desc*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
-	*pVidModeCopy = *pVidModeData;
-
-	pFrameBuffer = (edSurface*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(edSurface));
-	memset(pFrameBuffer, 0, sizeof(edSurface));
-
-	pFrameBuffer->pSurfaceDesc = pVidModeCopy;
-	pFrameBuffer->pSurfaceDesc->pLink_0xc = pFrameBuffer;
-
-	if (pVidModeData->bUseGlobalFrameBuffer == false) {
-		pFrameBuffer->frameBasePtr = (uint)gFXBufAddr >> 5;
-		pFrameBuffer->data_0xc = (char*)gFXBufAddr;
-	}
-	if ((pVidModeData->flags_0x8 & 8) != 0) {
-		pTags = (ZBufferTags*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
-		pFrameBuffer->pZTags = pTags;
-
-		// TAG
-		pTags->commandBuffer[0].cmdA = SCE_GIF_SET_TAG(
-			2,					// NLOOP
-			SCE_GS_TRUE,		// EOP
-			SCE_GS_FALSE,		// PRE
-			0,					// PRIM
-			SCE_GIF_PACKED,		// FLG
-			1					// NREG
-		);
-		pTags->commandBuffer[0].cmdB = SCE_GIF_PACKED_AD;
-
-		// Z BUFFER
-		zBufferFormat = edSurfaceGetZBufferBpp(pFrameBuffer->pSurfaceDesc->pixelStoreMode);
-		pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
-			pFrameBuffer->frameBasePtr,	// ZBP
-			zBufferFormat,				// PSM
-			0							// ZMASK
-		);
-		pTags->commandBuffer[1].cmdB = SCE_GS_ZBUF_1;
-
-		// Z TEST
-		pTags->commandBuffer[2].cmdA = SCE_GS_SET_TEST(
-			0,	// ATE 
-			0,	// ATST
-			0,	// AREF
-			0,	// AFAIL
-			0,	// DATE
-			0,	// DATM
-			1,	// ZTE
-			3	// ZTST
-		);
-		pTags->commandBuffer[2].cmdB = SCE_GS_TEST_1;
-	}
-	pFrameBuffer->pNext = pFrameBuffer;
-	return pFrameBuffer;
-}
-
-SceneConfig* ed3DSceneGetConfig(ed_3D_Scene* pStaticMeshMaster)
-{
-	SceneConfig* pCVar1;
-
-	pCVar1 = (SceneConfig*)0x0;
-	if (pStaticMeshMaster != (ed_3D_Scene*)0xffffffff) {
-		pCVar1 = &pStaticMeshMaster->sceneConfig;
-	}
-	return pCVar1;
-}
 
 ed_3D_Scene* gShadowScene = NULL;
 
@@ -206,7 +135,7 @@ Scene::Scene()
 	//HelpManager* pHelpManager;
 	PauseManager* pPVar2;
 	//MapManager* pMVar3;
-	CameraManager* pCameraViewmanager;
+	CCameraManager* pCameraViewmanager;
 	CSectorManager* pSectorManager;
 	//LightManager* pLightManager;
 	FileManager3D* p3DFileManager;
@@ -296,7 +225,7 @@ Scene::Scene()
 	pPVar2 = new PauseManager();
 	Scene::ptable.g_PauseManager_00451688 = pPVar2;
 	Scene::ptable.g_MapManager_0045168c = new MapManager;
-	pCameraViewmanager = new CameraManager;
+	pCameraViewmanager = new CCameraManager;
 	Scene::ptable.g_CameraManager_0045167c = pCameraViewmanager;
 	pSectorManager = new CSectorManager;
 	Scene::ptable.g_SectorManager_00451670 = pSectorManager;
@@ -334,11 +263,9 @@ Scene::Scene()
 	//}
 	pNewCinematicObject = new CCinematicManager();
 	Scene::ptable.g_CinematicManagerPtr_004516ac = pNewCinematicObject;
-	//g_AnimManager_00451668 = (AnimManager*)Allocate(0x1c);
-	//if (g_AnimManager_00451668 != (AnimManager*)0x0) {
-	//	g_AnimManager_00451668->pManagerFunctionData = &g_ManagerDefaultFuncData_0043a4e0;
-	//	g_AnimManager_00451668->pManagerFunctionData = &g_levelLoadFuncPtr;
-	//}
+
+	Scene::ptable.g_AnimManager_00451668 = new CAnimationManager;
+
 	//pMVar8 = (Manager_C_Alt*)Allocate(0xc);
 	//if (pMVar8 != (Manager_C_Alt*)0x0) {
 	//	uVar17 = SetupManagerC_Alt_0019ef50(pMVar8);
@@ -418,13 +345,13 @@ void Scene::CreateScene(void)
 
 void Game_Init(void)
 {
-	Manager** ppMVar1;
+	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (Manager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&Scene::ptable;
 	do {
-		if (*ppMVar1 != (Manager*)0x0) {
+		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Game_Init();
 		}
 		iVar2 = iVar2 + 1;
@@ -436,13 +363,13 @@ void Game_Init(void)
 
 void Scene::LevelLoading_Draw(void)
 {
-	Manager** ppMVar1;
+	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (Manager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&Scene::ptable;
 	do {
-		if (*ppMVar1 != (Manager*)0x0) {
+		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->LevelLoading_Draw();
 		}
 		iVar2 = iVar2 + 1;
@@ -455,16 +382,16 @@ void Scene::LevelLoading_Draw(void)
 void Scene::LevelLoading_Begin(void)
 {
 	Timer* pTimeController;
-	Manager** loadLoopObject;
+	CObjectManager** loadLoopObject;
 	int iVar1;
 
 	pTimeController = GetTimer();
 	pTimeController->ResetGameTimers();
 	ed3DResetTime();
 	iVar1 = 0;
-	loadLoopObject = (Manager**)&Scene::ptable;
+	loadLoopObject = (CObjectManager**)&Scene::ptable;
 	do {
-		if (*loadLoopObject != (Manager*)0x0) {
+		if (*loadLoopObject != (CObjectManager*)0x0) {
 			(*loadLoopObject)->LevelLoading_Begin();
 		}
 		iVar1 = iVar1 + 1;
@@ -476,16 +403,16 @@ void Scene::LevelLoading_Begin(void)
 bool Scene::LevelLoading_Manage()
 {
 	bool bVar1;
-	Manager** loopFunc;
+	CObjectManager** loopFunc;
 	int iVar2;
 	bool bVar3;
 
 	bVar3 = false;
 	HandleFogAndClippingSettings();
 	iVar2 = 0;
-	loopFunc = (Manager**)&Scene::ptable;
+	loopFunc = (CObjectManager**)&Scene::ptable;
 	do {
-		if ((*loopFunc != (Manager*)0x0) && (bVar1 = (*loopFunc)->LevelLoading_Manage(), bVar1 != false)) {
+		if ((*loopFunc != (CObjectManager*)0x0) && (bVar1 = (*loopFunc)->LevelLoading_Manage(), bVar1 != false)) {
 			bVar3 = true;
 		}
 		iVar2 = iVar2 + 1;
@@ -496,13 +423,13 @@ bool Scene::LevelLoading_Manage()
 
 void Scene::LevelLoading_End(void)
 {
-	Manager** ppMVar1;
+	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (Manager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&Scene::ptable;
 	do {
-		if (*ppMVar1 != (Manager*)0x0) {
+		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->LevelLoading_End();
 		}
 		iVar2 = iVar2 + 1;
@@ -513,13 +440,13 @@ void Scene::LevelLoading_End(void)
 
 void Scene::Level_Install(void)
 {
-	Manager** ppMVar1;
+	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (Manager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&Scene::ptable;
 	do {
-		if (*ppMVar1 != (Manager*)0x0) {
+		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Level_Install();
 		}
 		iVar2 = iVar2 + 1;
@@ -550,7 +477,7 @@ void Scene::Level_Init()
 {
 	undefined4* puVar1;
 	Timer* pTimeController;
-	Manager** loadFuncPtr;
+	CObjectManager** loadFuncPtr;
 	int loopCounter;
 
 	if (this->curState != 0) {
@@ -596,10 +523,10 @@ void Scene::Level_Init()
 	//EffectsManager::Level_PreInit((EffectsManager*)Scene::ptable[22]);
 	loopCounter = 0;
 	/* Init loop Initially points at 006db5b0 */
-	loadFuncPtr = (Manager**)&Scene::ptable;
+	loadFuncPtr = (CObjectManager**)&Scene::ptable;
 	do {
 		/* This will call load functions */
-		if (*loadFuncPtr != (Manager*)0x0) {
+		if (*loadFuncPtr != (CObjectManager*)0x0) {
 			(*loadFuncPtr)->Level_Init();
 		}
 		loopCounter = loopCounter + 1;
@@ -707,7 +634,7 @@ void Scene::HandleCurState()
 
 void Scene::Level_Manage()
 {
-	Manager** ppMVar1;
+	CObjectManager** ppMVar1;
 	int iVar2;
 
 	if (this->field_0x48 == 0) {
@@ -727,9 +654,9 @@ void Scene::Level_Manage()
 	//EmptyFunction();
 	if ((GameFlags & 0x20) == 0) {
 		iVar2 = 0;
-		ppMVar1 = (Manager**)&Scene::ptable;
+		ppMVar1 = (CObjectManager**)&Scene::ptable;
 		do {
-			if (*ppMVar1 != (Manager*)0x0) {
+			if (*ppMVar1 != (CObjectManager*)0x0) {
 				(*ppMVar1)->Level_Manage();
 			}
 			iVar2 = iVar2 + 1;
@@ -738,9 +665,9 @@ void Scene::Level_Manage()
 	}
 	else {
 		iVar2 = 0;
-		ppMVar1 = (Manager**)&Scene::ptable;
+		ppMVar1 = (CObjectManager**)&Scene::ptable;
 		do {
-			if (*ppMVar1 != (Manager*)0x0) {
+			if (*ppMVar1 != (CObjectManager*)0x0) {
 				(*ppMVar1)->Level_ManagePaused();
 			}
 			iVar2 = iVar2 + 1;
@@ -753,13 +680,13 @@ void Scene::Level_Manage()
 
 void UpdateObjectsMain(void)
 {
-	Manager** ppMVar1;
+	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (Manager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&Scene::ptable;
 	do {
-		if (*ppMVar1 != (Manager*)0x0) {
+		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Level_Draw();
 		}
 		iVar2 = iVar2 + 1;
@@ -1046,4 +973,28 @@ void Scene::PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream
 		pfVar1->field_0x4 = other;
 	}
 	return;
+}
+
+void Scene::Level_SectorChange(int oldSectorId, int newSectorId)
+{
+	CObjectManager* pLVar1;
+	CObjectManager** pMVar2;
+	int iVar3;
+
+	iVar3 = 0;
+	pMVar2 = (CObjectManager**)&ptable;
+	do {
+		pLVar1 = *pMVar2;
+		if (pLVar1 != (CObjectManager*)0x0) {
+			pLVar1->Level_SectorChange(oldSectorId, newSectorId);
+		}
+		iVar3 = iVar3 + 1;
+		pMVar2 = pMVar2 + 1;
+	} while (iVar3 < 0x18);
+	return;
+}
+
+ed_3D_Scene* GetStaticMeshMasterA_001031b0(void)
+{
+	return Scene::_scene_handleA;
 }

@@ -38,7 +38,7 @@ struct ParticleInfo {
 	struct edDList_material* materialInfoArray_0x8;
 };
 
-struct FileManager3D : public Manager {
+struct FileManager3D : public CObjectManager {
 	FileManager3D();
 
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);

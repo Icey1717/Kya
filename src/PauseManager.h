@@ -197,7 +197,7 @@ public:
 	undefined4 field_0x104;
 };
 
-class PauseManager : public Manager {
+class PauseManager : public CObjectManager {
 
 public:
 	PauseManager();

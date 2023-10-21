@@ -11,14 +11,14 @@
 
 #define EDFCAMERA_LOG(level, format, ...) MY_LOG_CATEGORY("edFCamera", level, format, ##__VA_ARGS__)
 
-CameraManager* CameraManager::_gThis = NULL;
-CameraManager* g_CameraViewManager_00448e9c = NULL;
+CCameraManager* CCameraManager::_gThis = NULL;
+CCameraManager* g_CameraViewManager_00448e9c = NULL;
 edFCamera _gDisplayCamera = { 0 };
 edFCamera gSceneCameras[10] = { 0 };
 
-edFCamera CameraManager::_gFrontEndCamera = { 0 };
+edFCamera CCameraManager::_gFrontEndCamera = { 0 };
 
-CameraManager::CameraManager()
+CCameraManager::CCameraManager()
 {
 	//FUN_003fedc0((long)&this->field_0x710);
 	_gThis = this;
@@ -27,7 +27,7 @@ CameraManager::CameraManager()
 	return;
 }
 
-void CameraManager::Game_Init()
+void CCameraManager::Game_Init()
 {
 	this->aspectRatio = 1.333333f;
 	return;
@@ -199,7 +199,7 @@ char* s_Cinematic_0042ae88 = "Cinematic";
 char* s_Frontend_0042ae98 = "Frontend";
 char* s_Shadow_Sun_0042aea8 = "Shadow Sun";
 
-void CameraManager::Level_Init(bool bProcessEvents)
+void CCameraManager::Level_Init(bool bProcessEvents)
 {
 	float fVar1;
 	float fVar2;
@@ -208,7 +208,7 @@ void CameraManager::Level_Init(bool bProcessEvents)
 	ECameraType EVar4;
 	int iVar5;
 	int iVar6;
-	CameraManager* pCVar7;
+	CCameraManager* pCVar7;
 	int pEVar8;
 	ByteCode newView;
 
@@ -338,7 +338,7 @@ void CameraManager::Level_Init(bool bProcessEvents)
 			if ((EVar4 == 0x14) && (iVar6 = 0, pCVar7 = this, (frontend->flags_0xc & 0x200000) != 0)) {
 				IMPLEMENTATION_GUARD(
 				for (; (*(int*)&pCVar7->field_0xa38 != 0 && (iVar6 < 0x10)); iVar6 = iVar6 + 1) {
-					pCVar7 = (CameraManager*)&pCVar7->time_0x4;
+					pCVar7 = (CCameraManager*)&pCVar7->time_0x4;
 				}
 				if (iVar6 < 0x10) {
 					*(Camera**)(&this->field_0xa38 + iVar6 * 4) = frontend;
@@ -356,12 +356,12 @@ void CameraManager::Level_Init(bool bProcessEvents)
 	return;
 }
 
-void CameraManager::Level_Init()
+void CCameraManager::Level_Init()
 {
 	Level_Init(true);
 }
 
-void CameraManager::Func_001947e0()
+void CCameraManager::Func_001947e0()
 {
 	undefined4 uVar1;
 	ECameraType EVar2;
@@ -370,7 +370,7 @@ void CameraManager::Func_001947e0()
 	int iVar4;
 	undefined4* puVar5;
 	undefined4* puVar6;
-	CameraManager** ppCVar7;
+	CCameraManager** ppCVar7;
 	int local_230;
 	undefined4 local_22c[67];
 	int local_120[68];
@@ -382,7 +382,7 @@ void CameraManager::Func_001947e0()
 	}
 }
 
-float CameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
+float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 {
 	long lVar1;
 	float fVar2;
@@ -423,7 +423,7 @@ void edF32Matrix4TransposeHard(edF32MATRIX4* m0)
 	return;
 }
 
-void CameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
+void CCameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
 {
 	float* pfVar1;
 	float fVar2;
@@ -481,7 +481,7 @@ void CameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
 	return;
 }
 
-void CameraManager::BuildDisplayMatrix()
+void CCameraManager::BuildDisplayMatrix()
 {
 	float fVar1;
 	float fVar2;
@@ -548,7 +548,7 @@ void CameraManager::BuildDisplayMatrix()
 	return;
 }
 
-void CameraManager::Level_Manage()
+void CCameraManager::Level_Manage()
 {
 	SWITCH_MODE switchMode;
 	CCameraShadow* pCVar1;
@@ -701,13 +701,13 @@ void CameraManager::Level_Manage()
 	return;
 }
 
-void CameraManager::LevelLoading_Begin()
+void CCameraManager::LevelLoading_Begin()
 {
 	Level_Init(false);
 	return;
 }
 
-bool CameraManager::LevelLoading_Manage()
+bool CCameraManager::LevelLoading_Manage()
 {
 	Level_Manage();
 	return false;
@@ -721,7 +721,7 @@ void edFCameraSetSizeRatioFov(float halfFOV, float aspectRatio, float sizeRatio,
 	return;
 }
 
-void CameraManager::Level_ClearInternalData()
+void CCameraManager::Level_ClearInternalData()
 {
 	edFCamera* m0;
 	int iVar2;
@@ -780,7 +780,7 @@ void CameraManager::Level_ClearInternalData()
 	return;
 }
 
-Camera* CameraManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, char* objName)
+Camera* CCameraManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, char* objName)
 {
 	Camera* pCVar1;
 	Camera* pCVar2;
@@ -921,7 +921,7 @@ Camera* CameraManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, char
 	return pCVar9;
 }
 
-Camera* CameraManager::GetDefGameCamera(ECameraType type)
+Camera* CCameraManager::GetDefGameCamera(ECameraType type)
 {
 	Camera* pCVar1;
 	ECameraType EVar2;
@@ -934,7 +934,69 @@ Camera* CameraManager::GetDefGameCamera(ECameraType type)
 	return pCVar1;
 }
 
+bool CCameraManager::IsSphereVisible(float param_1, edF32VECTOR4* param_3, float* param_4)
+{
+	float fVar1;
+	bool bVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar3 = param_3->x - (this->field_0x460).x;
+	fVar4 = param_3->y - (this->field_0x460).y;
+	fVar5 = param_3->z - (this->field_0x460).z;
+	fVar6 = param_3->w;
+	fVar1 = fVar3 * (this->field_0x450).x + fVar4 * (this->field_0x450).y + fVar5 * (this->field_0x450).z;
+	*param_4 = fVar1;
+	if ((fVar1 + param_3->w < 0.0f) || (param_1 < fVar1 - param_3->w)) {
+		bVar2 = false;
+	}
+	else {
+		bVar2 = 0.0f <= (this->matrix_0x410).ad * fVar3 + (this->matrix_0x410).bd * fVar4 + (this->matrix_0x410).cd * fVar5 +
+			(this->matrix_0x410).dd * fVar6 &&
+			(0.0f <= (this->matrix_0x410).ac * fVar3 + (this->matrix_0x410).bc * fVar4 + (this->matrix_0x410).cc * fVar5
+				+ (this->matrix_0x410).dc * fVar6 &&
+				(0.0f <= (this->matrix_0x410).aa * fVar3 + (this->matrix_0x410).ba * fVar4 + (this->matrix_0x410).ca * fVar5
+					+ (this->matrix_0x410).da * fVar6 &&
+					0.0f <= (this->matrix_0x410).ab * fVar3 + (this->matrix_0x410).bb * fVar4 + (this->matrix_0x410).cb * fVar5 +
+					(this->matrix_0x410).db * fVar6));
+	}
+	return bVar2;
+}
+
+bool CCameraManager::IsSphereVisible(float other, edF32VECTOR4* pSphere)
+{
+	float fVar1;
+	bool bVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar3 = pSphere->x - (this->field_0x460).x;
+	fVar4 = pSphere->y - (this->field_0x460).y;
+	fVar5 = pSphere->z - (this->field_0x460).z;
+	fVar6 = pSphere->w;
+	fVar1 = fVar3 * (this->field_0x450).x + fVar4 * (this->field_0x450).y + fVar5 * (this->field_0x450).z;
+	if ((fVar1 + pSphere->w < 0.0f) || (other < fVar1 - pSphere->w)) {
+		bVar2 = false;
+	}
+	else {
+		bVar2 = 0.0f <= (this->matrix_0x410).ad * fVar3 + (this->matrix_0x410).bd * fVar4 + (this->matrix_0x410).cd * fVar5 +
+			(this->matrix_0x410).dd * fVar6 &&
+			(0.0f <= (this->matrix_0x410).ac * fVar3 + (this->matrix_0x410).bc * fVar4 + (this->matrix_0x410).cc * fVar5
+				+ (this->matrix_0x410).dc * fVar6 &&
+				(0.0f <= (this->matrix_0x410).aa * fVar3 + (this->matrix_0x410).ba * fVar4 + (this->matrix_0x410).ca * fVar5
+					+ (this->matrix_0x410).da * fVar6 &&
+					0.0f <= (this->matrix_0x410).ab * fVar3 + (this->matrix_0x410).bb * fVar4 + (this->matrix_0x410).cb * fVar5 +
+					(this->matrix_0x410).db * fVar6));
+	}
+	return bVar2;
+}
+
 Camera::Camera(ByteCode* pMemoryStream)
+	: CObject()
 {
 	CheckpointManagerSubObjB* pCVar1;
 	int* piVar2;
@@ -944,9 +1006,6 @@ Camera::Camera(ByteCode* pMemoryStream)
 	float fVar6;
 	edF32VECTOR4 local_10;
 
-	//this->pVTable = (CameraFunctionData*)&ParticleDataBase::VTable_0043a3b0;
-	this->field_0x4 = 0xffffffff;
-	//this->pVTable = &VTable_0043d130;
 	this->specCondition.pData = (int*)0x0;
 	this->pNextCameraView_0xa4 = (Camera*)0x0;
 	*(undefined*)&this->field_0xa0 = 0;
@@ -990,7 +1049,7 @@ Camera::Camera(ByteCode* pMemoryStream)
 	(this->transformationMatrix).ac = local_10.z;
 	(this->transformationMatrix).ad = 0.0f;
 	iVar3 = pMemoryStream->GetS32();
-	this->field_0x4 = iVar3;
+	this->objectId = iVar3;
 	iVar3 = pMemoryStream->GetS32();
 	this->field_0x8 = iVar3;
 	uVar4 = pMemoryStream->GetU32();
@@ -1048,8 +1107,8 @@ Camera::Camera(ByteCode* pMemoryStream)
 }
 
 Camera::Camera()
+	:CObject()
 {
-	this->field_0x4 = 0xffffffff;
 	(this->specCondition).pData = (int*)0x0;
 	this->pNextCameraView_0xa4 = (Camera*)0x0;
 	edF32Matrix4SetIdentityHard(&this->transformationMatrix);
@@ -1059,7 +1118,7 @@ Camera::Camera()
 	this->field_0x50.z = 0.0f;
 	this->field_0x50.w = 0.0f;
 	*(undefined*)&this->field_0xa0 = 0;
-	this->field_0x4 = 0xffffffff;
+	this->objectId = -1;
 	this->field_0x8 = -1;
 	this->field_0x8c = 0.0f;
 	Func_0x34(0x0);
@@ -1706,8 +1765,6 @@ void CameraSet3DPos(edFCamera* pCamera)
 	return;
 }
 
-edF32VECTOR3 gF32Vector3Zero = {};
-
 CCameraExt::CCameraExt()
 {
 	float fVar1;
@@ -1870,7 +1927,7 @@ CCameraMouseAroundPersoSpecial::CCameraMouseAroundPersoSpecial()
 	this->isSpecial = 1;
 }
 
-bool CameraManager::PushCamera(Camera* pCamera, int param_3)
+bool CCameraManager::PushCamera(Camera* pCamera, int param_3)
 {
 	SWITCH_MODE switchMode;
 	Camera* pCamera_00;

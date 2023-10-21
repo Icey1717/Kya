@@ -5,6 +5,7 @@
 #define absf std::abs
 
 edF32MATRIX4 gF32Matrix4Zero = { };
+edF32VECTOR3 gF32Vector3Zero = { };
 edF32MATRIX4 gF32Matrix4Unit = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vertex4Zero = { 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vector4Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -1036,3 +1037,44 @@ void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4*
 	return;
 }
 
+void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+
+	fVar13 = v1->x;
+	fVar14 = v1->y;
+	fVar15 = v1->z;
+	fVar16 = v1->w;
+	fVar1 = m0->ab;
+	fVar2 = m0->ac;
+	fVar3 = m0->ad;
+	fVar4 = m0->bb;
+	fVar5 = m0->bc;
+	fVar6 = m0->bd;
+	fVar7 = m0->cb;
+	fVar8 = m0->cc;
+	fVar9 = m0->cd;
+	fVar10 = m0->db;
+	fVar11 = m0->dc;
+	fVar12 = m0->dd;
+	v0->x = m0->aa * fVar13 + m0->ba * fVar14 + m0->ca * fVar15 + m0->da * fVar16;
+	v0->y = fVar1 * fVar13 + fVar4 * fVar14 + fVar7 * fVar15 + fVar10 * fVar16;
+	v0->z = fVar2 * fVar13 + fVar5 * fVar14 + fVar8 * fVar15 + fVar11 * fVar16;
+	v0->w = fVar3 * fVar13 + fVar6 * fVar14 + fVar9 * fVar15 + fVar12 * fVar16;
+	return;
+}

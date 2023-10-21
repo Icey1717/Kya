@@ -429,7 +429,7 @@ struct CCinematic {
 	int field_0x2ec;
 };
 
-class CCinematicManager : public Manager {
+class CCinematicManager : public CObjectManager {
 public:
 	CCinematicManager::CCinematicManager();
 
@@ -445,7 +445,7 @@ public:
 	virtual void Level_AddAll(struct ByteCode* pByteCode);
 	virtual void Level_Manage();
 
-	virtual void Level_SectorChange(int param_2, int param_3);
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	void WillLoadCinematic();
 

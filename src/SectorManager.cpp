@@ -13,8 +13,8 @@
 CSectorManager::CSectorManager()
 {
 	(this->baseSector).pANHR.pThis = 0;
-	edF32Matrix4SetIdentityHard(&HierarchyAnm::_gscale_mat);
-	(this->baseSector).field_0x0 = -1;
+	edF32Matrix4SetIdentityHard(&CHierarchyAnm::_gscale_mat);
+	(this->baseSector).desiredSectorID = -1;
 	(this->baseSector).sectorIndex = -1;
 	(this->baseSector).bankObject.pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 	(this->baseSector).pMeshTransform = (edNODE*)0x0;
@@ -37,13 +37,13 @@ void CSectorManager::Level_ClearInternalData()
 
 	(this->baseSector).sectID = -1;
 	pSVar2 = this->subObjArray;
-	(this->baseSector).field_0x140 = -1;
+	(this->baseSector).currentSectorID = -1;
 	this->field_0x36c = 1;
 	iVar1 = 0x1e;
 	this->field_0x384 = 0;
 	this->count_0x368 = 0;
 	this->sectDataCount = 0;
-	this->sectorArray = (S_COMP_SLOT*)0x0;
+	this->sectorArray = (CSector*)0x0;
 	this->field_0x37c = 0;
 	this->field_0x370 = 1;
 	do {
@@ -122,7 +122,7 @@ void CSectorManager::LevelLoading_Begin()
 {
 	SectorManagerSubObj* pLVar1;
 	int* piVar2;
-	S_COMP_SLOT* pSVar3;
+	CSector* pSVar3;
 	ulong uVar4;
 	uint uVar5;
 	uint uVar6;
@@ -198,17 +198,17 @@ void CSectorManager::LevelLoading_Begin()
 	}
 	uVar8 = this->sectDataCount;
 	if (uVar8 == 0) {
-		this->sectorArray = (S_COMP_SLOT*)0x0;
+		this->sectorArray = (CSector*)0x0;
 	}
 	else {
-		this->sectorArray = new S_COMP_SLOT[uVar8];
+		this->sectorArray = new CSector[uVar8];
 		iVar13 = 0;
 		if (0 < this->sectDataCount) {
 			iVar10 = 0;
 			do {
 				iVar13 = iVar13 + 1;
 				this->sectorArray[iVar13].sectID = -1;
-				this->sectorArray[iVar13].field_0x140 = 0;
+				this->sectorArray[iVar13].currentSectorID = 0;
 			} while (iVar13 < this->sectDataCount);
 		}
 		local_110[0] = 0;
@@ -286,8 +286,8 @@ void CSectorManager::LevelLoading_Begin()
 			}
 			if ((int)uVar8 < this->sectDataCount) {
 				*(char*)&this->subObjArray[local_8].field_0xc = (char)uVar8;
-				if (this->sectorArray[uVar8].field_0x140 < local_190[local_8]) {
-					this->sectorArray[uVar8].field_0x140 = local_190[local_8];
+				if (this->sectorArray[uVar8].currentSectorID < local_190[local_8]) {
+					this->sectorArray[uVar8].currentSectorID = local_190[local_8];
 				}
 			}
 			else {
@@ -304,7 +304,7 @@ void CSectorManager::LevelLoading_Begin()
 				iVar11 = 0;
 				do {
 					iVar10 = iVar10 + 1;
-					*(int*)((int)&this->sectorArray->field_0x140 + iVar11) = iVar13;
+					*(int*)((int)&this->sectorArray->currentSectorID + iVar11) = iVar13;
 					iVar11 = iVar11 + 0x144;
 				} while (iVar10 < this->sectDataCount);
 			}
@@ -334,7 +334,7 @@ bool CSectorManager::LevelLoading_Manage()
 	bool bVar5;
 	bool bVar6;
 	bool bVar7;
-	S_COMP_SLOT* pSectData;
+	CSector* pSectData;
 	int iVar8;
 	int iVar9;
 	int iVar10;
@@ -356,7 +356,7 @@ bool CSectorManager::LevelLoading_Manage()
 				iVar10 = 0;
 				iVar8 = 0;
 				while ((iVar10 < this->sectDataCount && (bVar6))) {
-					pSectData = (S_COMP_SLOT*)((int)&this->sectorArray->field_0x0 + iVar8);
+					pSectData = (CSector*)((int)&this->sectorArray->desiredSectorID + iVar8);
 					iVar9 = pSectData->sectID;
 					if (iVar9 != -1) {
 						if (pSectData->loadStage_0x8 == 1) {
@@ -372,7 +372,7 @@ bool CSectorManager::LevelLoading_Manage()
 						}
 						else {
 							iVar2 = this->field_0x36c;
-							iVar4 = pSectData->field_0x140;
+							iVar4 = pSectData->currentSectorID;
 							memset(&BStack96, 0, sizeof(edCBankInstall));
 							pSectData->bankObject.initialize(iVar4 + 0x1000, 1, &BStack96);
 							if (iVar9 == -1) {
@@ -412,9 +412,9 @@ bool CSectorManager::LevelLoading_Manage()
 				if (0 < this->sectDataCount) {
 					iVar8 = 0;
 					do {
-						S_COMP_SLOT* pSector = &this->sectorArray[iVar10];
+						CSector* pSector = &this->sectorArray[iVar10];
 						if (pSector->sectID == -1) {
-							iVar2 = pSector->field_0x140;
+							iVar2 = pSector->currentSectorID;
 							memset(&BStack64, 0, sizeof(edCBankInstall));
 							pSector->bankObject.initialize(iVar2 + 0x1000, 1, &BStack64);
 							*(undefined4*)(iVar9 + 8) = 0;
@@ -436,7 +436,7 @@ bool CheckFunc_00401fd0(StaticEdFileBase* param_1)
 	return param_1->field_0x4 == 0;
 }
 
-void CSectorManager::S_COMP_SLOT::InstallCallback()
+void CSector::InstallCallback()
 {
 	edLIST* pCameraPanMasterHeader;
 	CSectorHierarchy* pWindSectorObj;
@@ -553,7 +553,7 @@ void CSectorManager::S_COMP_SLOT::InstallCallback()
 			IMPLEMENTATION_GUARD(3DFileManager::SetupBackground(p3DFileManager, this->pMeshTransform));
 		})
 	}
-	this->field_0x0 = this->sectorIndex;
+	this->desiredSectorID = this->sectorIndex;
 	this->sectorIndex = -1;
 	this->pANHR.Install((MeshData_ANHR*)pAnimHierarchy, local_40, &this->meshInfo, pStaticMeshMaster);
 	ed3DHierarchyCopyHashCode(&this->meshInfo);
@@ -581,7 +581,7 @@ void CSectorManager::S_COMP_SLOT::InstallCallback()
 		edNODE::Func_002ac980(pMVar7, &sStack2);)
 	}
 	this->pMeshTransformParent_0x130 = pMVar7;
-	pWindSectorObj = pSectorManager->subObjArray[this->field_0x0].pWindSectorObj;
+	pWindSectorObj = pSectorManager->subObjArray[this->desiredSectorID].pWindSectorObj;
 	do {
 		if (pWindSectorObj == (CSectorHierarchy*)0x0) {
 			fVar14 = edTimerTimeGet();
@@ -624,12 +624,12 @@ void CSectorManager::S_COMP_SLOT::InstallCallback()
 void _gSectorInstallCallback(bool index, void* pSector)
 {
 	if (index != false) {
-		((CSectorManager::S_COMP_SLOT*)pSector)->InstallCallback();
+		((CSector*)pSector)->InstallCallback();
 	}
 	return;
 }
 
-void CSectorManager::S_COMP_SLOT::Load(int sectorIndex, int param_3, bool bFileFlag)
+void CSector::Load(int sectorIndex, int param_3, bool bFileFlag)
 {
 	int iVar1;
 	char cVar2;
@@ -647,7 +647,7 @@ void CSectorManager::S_COMP_SLOT::Load(int sectorIndex, int param_3, bool bFileF
 	if (bVar3 != false) {
 		fVar5 = edTimerTimeGet();
 		this->field_0x134 = fVar5;
-		this->field_0x0 = -1;
+		this->desiredSectorID = -1;
 		this->sectorIndex = sectorIndex;
 		peVar4 = (this->bankObject).pBankFileAccessObject;
 		if (peVar4 != (edCBankBufferEntry*)0x0) {
@@ -695,7 +695,7 @@ void CSectorManager::Level_Install()
 	bool bVar2;
 	bool bVar3;
 	int iVar4;
-	S_COMP_SLOT* pvVar4;
+	CSector* pvVar4;
 	int iVar5;
 	edCBankInstall BStack64;
 	edCBankInstall BStack32;
@@ -736,7 +736,7 @@ void CSectorManager::Level_Install()
 				}
 			}
 			iVar5 = iVar5 + 1;
-			iVar4 = iVar4 + sizeof(S_COMP_SLOT);
+			iVar4 = iVar4 + sizeof(CSector);
 		} while (iVar5 < this->sectDataCount);
 	}
 	return;
@@ -752,7 +752,7 @@ void CSectorManager::Level_Init()
 
 	pSVar5 = Scene::ptable.g_SectorManager_00451670;
 	iVar1 = this->field_0x36c;
-	iVar2 = (this->baseSector).field_0x0;
+	iVar2 = (this->baseSector).desiredSectorID;
 	iVar3 = (this->baseSector).sectID;
 	if ((iVar3 != iVar2) || (iVar1 == 0)) {
 		if (iVar3 != iVar2) {
@@ -810,8 +810,95 @@ void CSectorManager::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
+void CSectorManager::Level_Manage()
+{
+	CSector* pSector;
+	int iVar1;
+	int iVar2;
+
+	this->baseSector.Level_Manage((this->baseSector).sectID, this->field_0x36c);
+	iVar2 = (this->baseSector).desiredSectorID;
+	iVar1 = (this->baseSector).currentSectorID;
+	if (iVar1 != iVar2) {
+		Scene::_pinstance->Level_SectorChange(iVar1, iVar2);
+		(this->baseSector).currentSectorID = (this->baseSector).desiredSectorID;
+	}
+	iVar2 = 0;
+	if (0 < this->sectDataCount) {
+		IMPLEMENTATION_GUARD(
+		iVar1 = 0;
+		do {
+			pSector = (CSector*)((int)&this->sectorArray->desiredSectorID + iVar1);
+			::Level_Manage(pSector, pSector->sectID, (long)this->field_0x36c);
+			iVar2 = iVar2 + 1;
+			iVar1 = iVar1 + 0x144;
+		} while (iVar2 < this->sectDataCount);)
+	}
+	return;
+}
+
+void CSectorManager::Level_SectorChange(int oldSectorId, int newSectorId)
+{
+	uint flags;
+
+	if ((newSectorId != -1) && (flags = this->subObjArray[newSectorId].flags, this->field_0x37c != flags)) {
+		IMPLEMENTATION_GUARD(
+		SetupCompanionSectors(this, flags);)
+	}
+	return;
+}
+
 void CSectorManager::Level_Create(ByteCode* pMemoryStream)
 {
 	pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + 4;
+	return;
+}
+
+void CSector::Level_Manage(int sectID, int param_3)
+{
+	int iVar1;
+	uint* puVar2;
+	bool bVar3;
+	bool bVar4;
+	Timer* pTVar5;
+	ed_3D_Scene* peVar6;
+	edCBankBufferEntry* pBank;
+
+	iVar1 = this->loadStage_0x8;
+	if (iVar1 == 2) {
+		puVar2 = (uint*)(Scene::ptable.g_SectorManager_00451670)->subObjArray[this->desiredSectorID].pFileData;
+		pTVar5 = Timer::GetTimer();
+		peVar6 = GetStaticMeshMasterA_001031b0();
+		this->pANHR.Manage(pTVar5->cutsceneDeltaTime, (float)puVar2[8], peVar6, 1);
+		if (this->pMeshTransform != (edNODE*)0x0) {
+			IMPLEMENTATION_GUARD(
+			3DFileManager::ManageBackground(Scene::ptable.g_FileManager3D_00451664, this->pMeshTransform, *puVar2);)
+		}
+		if (this->desiredSectorID != sectID) {
+			IMPLEMENTATION_GUARD(
+			Flush(this);
+			this->loadStage_0x8 = 0;)
+		}
+	}
+	else {
+		if (iVar1 == 1) {
+			if (param_3 == 0) {
+				(this->bankObject).pBankFileAccessObject->wait();
+			}
+			pBank = (this->bankObject).pBankFileAccessObject;
+			bVar3 = false;
+			if ((pBank != (edCBankBufferEntry*)0x0) && (bVar4 = pBank->is_loaded(), bVar4 != false)) {
+				bVar3 = true;
+			}
+			if (bVar3) {
+				this->loadStage_0x8 = 2;
+			}
+		}
+		else {
+			if ((iVar1 == 0) && (sectID != -1)) {
+				this->Load(sectID, param_3, true);
+			}
+		}
+	}
 	return;
 }

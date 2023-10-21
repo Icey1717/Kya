@@ -1491,21 +1491,21 @@ void SetObjectName(const char* name, const uint64_t objHandle, const VkObjectTyp
 void Renderer::Debug::BeginLabel(const VkCommandBuffer& cmdBuffer, const char* szLabel)
 {
 #ifdef _DEBUG
-	VkDebugUtilsLabelEXT labelInfo{};
-	labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-	labelInfo.pLabelName = szLabel;
-	static auto pvkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdBeginDebugUtilsLabelEXT");
-	assert(pvkCmdBeginDebugUtilsLabelEXT);
-	pvkCmdBeginDebugUtilsLabelEXT(cmdBuffer, &labelInfo);
+	//VkDebugUtilsLabelEXT labelInfo{};
+	//labelInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+	//labelInfo.pLabelName = szLabel;
+	//static auto pvkCmdBeginDebugUtilsLabelEXT = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdBeginDebugUtilsLabelEXT");
+	//assert(pvkCmdBeginDebugUtilsLabelEXT);
+	//pvkCmdBeginDebugUtilsLabelEXT(cmdBuffer, &labelInfo);
 #endif
 }
 
 void Renderer::Debug::EndLabel(const VkCommandBuffer& cmdBuffer)
 {
 #ifdef _DEBUG
-	static auto pvkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdEndDebugUtilsLabelEXT");
-	assert(pvkCmdEndDebugUtilsLabelEXT);
-	pvkCmdEndDebugUtilsLabelEXT(cmdBuffer);
+	//static auto pvkCmdEndDebugUtilsLabelEXT = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdEndDebugUtilsLabelEXT");
+	//assert(pvkCmdEndDebugUtilsLabelEXT);
+	//pvkCmdEndDebugUtilsLabelEXT(cmdBuffer);
 #endif
 }
 
@@ -1513,14 +1513,14 @@ void Renderer::Debug::EndLabel(const VkCommandBuffer& cmdBuffer)
 void Renderer::Debug::BeginLabel(const char* szLabel)
 {
 #ifdef _DEBUG
-	BeginLabel(GetCurrentCommandBuffer(), szLabel);
+	//BeginLabel(GetCurrentCommandBuffer(), szLabel);
 #endif
 }
 
 void Renderer::Debug::EndLabel()
 {
 #ifdef _DEBUG
-	EndLabel(GetCurrentCommandBuffer());
+	//EndLabel(GetCurrentCommandBuffer());
 #endif
 }
 

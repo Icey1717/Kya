@@ -5,7 +5,7 @@
 #include "LargeObject.h"
 #include "edC/edCBank.h"
 
-struct MapManager : public Manager {
+struct MapManager : public CObjectManager {
 	int field_0x4;
 	undefined4 field_0x8;
 	float field_0xc;

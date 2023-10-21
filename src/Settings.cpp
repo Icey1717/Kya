@@ -54,7 +54,7 @@ void CSettings::SetSettingsToGlobal()
 {
 	int iVar1;
 	uint uVar2;
-	CameraManager* pCVar3;
+	CCameraManager* pCVar3;
 	//GlobalSound_00451698* pGVar4;
 	LANGUAGE prevLanguageID;
 	LocalizationManager* pManager;

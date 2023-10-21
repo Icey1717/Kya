@@ -5,7 +5,7 @@
 #include "LargeObject.h"
 #include "TranslatedTextData.h"
 
-class LocalizationManager : public Manager {
+class LocalizationManager : public CObjectManager {
 
 public:
 	LocalizationManager();

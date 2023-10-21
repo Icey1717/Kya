@@ -1,5 +1,6 @@
 #include "ActorManager.h"
 #include "MemoryStream.h"
+#include "CameraViewManager.h"
 
 void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 {
@@ -148,6 +149,77 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 			} while (actorCount < this->actorCount_0x58);
 		}
 		edMemFree(pAlloc);)
+	}
+	return;
+}
+
+void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
+{
+	int iVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	int iVar8;
+	CActor* pCVar9;
+	CActor* pActor;
+	Actor* pOtherActor;
+
+	if (oldSectorId != -1) {
+		pCVar9 = (CActor*)this->elementArrayStart;
+		for (iVar8 = this->numElements; 0 < iVar8; iVar8 = iVar8 + -1) {
+			IMPLEMENTATION_GUARD(
+			pActor = *(CActor**)pCVar9;
+			if (oldSectorId == (pActor->data).field_0x0) {
+				CActor::EvaluateManageState(pActor);
+				CActor::EvaluateDisplayState(pActor);
+			}
+			pCVar9 = (CActor*)((int)pCVar9 + 4);)
+		}
+	}
+	if (newSectorId == -1) {
+		IMPLEMENTATION_GUARD(
+		SetWorldBox((int)&this->kyaChild, (undefined8*)this->pActorManagerSectorArray, 0);)
+	}
+	else {
+		IMPLEMENTATION_GUARD_LOG(
+		SetWorldBox((int)&this->kyaChild, (undefined8*)(this->pActorManagerSectorArray + newSectorId),
+			(long)*(int*)((Scene::ptable.g_SectorManager_00451670)->subObjArray[newSectorId].pFileData + 8) & 1);)
+	}
+	fVar5 = (CCameraManager::_gThis->transformationMatrix).da;
+	fVar6 = (CCameraManager::_gThis->transformationMatrix).db;
+	fVar7 = (CCameraManager::_gThis->transformationMatrix).dc;
+	this->numElements = 0;
+	pCVar9 = (CActor*)this->aActors;
+	for (iVar8 = this->actorCount_0x58; 0 < iVar8; iVar8 = iVar8 + -1) {
+		IMPLEMENTATION_GUARD(
+		pOtherActor = *(Actor**)pCVar9;
+		iVar1 = (pOtherActor->actorBase).data.field_0x0;
+		if ((iVar1 == newSectorId) || (iVar1 == -1)) {
+			if (iVar1 == newSectorId) {
+				fVar2 = (pOtherActor->actorBase).data.sphereCentre.x - fVar5;
+				fVar3 = (pOtherActor->actorBase).data.sphereCentre.y - fVar6;
+				fVar4 = (pOtherActor->actorBase).data.sphereCentre.z - fVar7;
+				(pOtherActor->actorBase).data.adjustedMagnitude =
+					SQRT(fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4) - (pOtherActor->actorBase).data.sphereCentre.w;
+			}
+			CActor::EvaluateManageState((CActor*)pOtherActor);
+			CActor::EvaluateDisplayState((CActor*)pOtherActor);
+			this->elementArrayStart[this->numElements] = pOtherActor;
+			this->numElements = this->numElements + 1;
+			CActor::UpdateClusterNode((CActor*)pOtherActor);
+		}
+		pCVar9 = (CActor*)((int)pCVar9 + 4);)
+	}
+	for (iVar8 = 0; iVar8 < this->actorCount_0x58; iVar8 = iVar8 + 1) {
+		IMPLEMENTATION_GUARD(
+		pCVar9 = this->aActors[iVar8];
+		iVar1 = (pCVar9->data).field_0x0;
+		if ((newSectorId == iVar1) || (oldSectorId == iVar1)) {
+			(*(code*)pCVar9->pVTable->field_0x3c)(pCVar9, oldSectorId, newSectorId);
+		})
 	}
 	return;
 }

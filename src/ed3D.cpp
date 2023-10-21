@@ -36,6 +36,7 @@
 
 #include <string.h>
 #include "ed3DScratchPadGlobalVar.h"
+#include "AnmManager.h"
 
 #define SHELLDMA_TAG_ID_CNT (0x10)
 #define SHELLDMA_TAG_ID_REF (0x30)
@@ -88,7 +89,7 @@ bool bHackDoOnce = false;
 int gCurTime = 0;
 int gStepTime = 0;
 
-edF32MATRIX4 HierarchyAnm::_gscale_mat = {
+edF32MATRIX4 CHierarchyAnm::_gscale_mat = {
 	0.6954f, 0.0f, 0.0f, 0.0f,
 	0.0f, 0.6954f, 0.0f, 0.0f,
 	0.0f, 0.0f, 0.6954f, 0.0f,
@@ -225,9 +226,8 @@ PACK(
 	int field_0x24; // char*
 	int field_0x28; // char*
 	int field_0x2c; // char*
-	short bUseShadowMatrix_0x30;
-	undefined field_0x32;
-	undefined field_0x33;
+	short shadowFlags;
+	ushort field_0x32;
 	int pDMA_Matrix; // ed_dma_matrix*
 	byte field_0x38;
 	byte cameraPanIndex;
@@ -235,7 +235,7 @@ PACK(
 	int pTextureDataMystery; // ed_Bound_Sphere_packet*
 });
 
-MeshTransformDataBase* gpCurHierarchy = NULL;
+ed_3d_hierarchy* gpCurHierarchy = NULL;
 undefined* pOldFANGifTag = NULL;
 
 ed_3d_hierarchy_node* gHierarchyManagerBuffer = NULL;
@@ -661,7 +661,7 @@ union RenderFrameUnion_2c
 
 struct ed_dma_matrix : public edLIST {
 	edF32MATRIX4* pObjToWorld;
-	MeshTransformDataBase* pMeshTransformData;
+	ed_3d_hierarchy* pMeshTransformData;
 	int flags_0x28;
 	float normalScale;
 };
@@ -747,18 +747,18 @@ void ed3DFXClearALLFXSendedTOVRAM(void)
 	return;
 }
 
-MeshTransformDataBase MeshTransformDataBase_0048cad0 = { 0 };
+ed_3d_hierarchy ed_3d_hierarchy_0048cad0 = { 0 };
 
 void ed3DPrimlistMatrixBufferReset(void)
 {
 	DmaMatrixDefault = DmaMatrixBuffer;
-	MeshTransformDataBase_0048cad0.pMatrixPkt = (edF32MATRIX4*)0x0;
+	ed_3d_hierarchy_0048cad0.pMatrixPkt = (edF32MATRIX4*)0x0;
 	DmaMatrixBufferCurrentMax = DmaMatrixBufferMax;
 	gNodeDmaMatrix = pNodeManRender;
 	gNodeDmaStrip = pNodeManRender;
 	DmaMatrixBufferCurrent = DmaMatrixBuffer + 1;
 	DmaMatrixBuffer->pObjToWorld = &gF32Matrix4Unit;
-	DmaMatrixDefault->pMeshTransformData = &MeshTransformDataBase_0048cad0;
+	DmaMatrixDefault->pMeshTransformData = &ed_3d_hierarchy_0048cad0;
 	DmaMatrixDefault->normalScale = 1.0;
 	(DmaMatrixDefault)->pNext = (edNODE*)DmaMatrixDefault;
 	(DmaMatrixDefault)->pPrev = (edNODE*)DmaMatrixDefault;
@@ -766,7 +766,7 @@ void ed3DPrimlistMatrixBufferReset(void)
 	(DmaMatrixDefault)->field_0x10 = 0;
 	(DmaMatrixDefault)->nodeCount = 0;
 	(DmaMatrixDefault)->header.mode = 0;
-	DmaMatrixDefault->pMeshTransformData = &MeshTransformDataBase_0048cad0;
+	DmaMatrixDefault->pMeshTransformData = &ed_3d_hierarchy_0048cad0;
 	return;
 }
 
@@ -1059,7 +1059,7 @@ void ed3DFlushListInit(void)
 
 	gVRAMBufferFlush = 0;
 	previous_flush3DMat = (ed_g2d_material*)0x0;
-	gpCurHierarchy = (MeshTransformDataBase*)0x0;
+	gpCurHierarchy = (ed_3d_hierarchy*)0x0;
 	gpLastMaterial = (ed_dma_material*)0x0;
 	if (gCurRenderList == 0) {
 		GifRefPktCurMax = ged3DConfig.field_0x28 * 0x10;
@@ -1658,7 +1658,7 @@ ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mo
 
 void ed3DFlushMatrixReset(void)
 {
-	gpCurHierarchy = (MeshTransformDataBase*)0xefefefef;
+	gpCurHierarchy = (ed_3d_hierarchy*)0xefefefef;
 	return;
 }
 
@@ -1675,17 +1675,6 @@ void ed3DFlushSceneInit(void)
 	return;
 }
 
-struct RenderInfo {
-	union edF32MATRIX4* pSharedMeshTransform;
-	union edF32MATRIX4* pMeshTransformMatrix;
-	int field_0x8;
-	struct ed_3d_hierarchy_setup* pLightingMatrixFuncObj;
-	uint flags_0x10;
-	float field_0x14;
-	undefined4 field_0x18;
-	struct ed_3d_hierarchy_node* pMeshTransformData;
-};
-
 union AnimScratchpad {
 	struct {
 		int field_0x0;
@@ -1693,7 +1682,11 @@ union AnimScratchpad {
 		undefined4 field_0x8;
 		undefined4 field_0xc;
 	};
-	edpkt_data asPkt;
+	struct {
+		ulong a;
+		ulong b;
+	};
+	edpkt_data pkt;
 };
 
 edF32MATRIX4 gCurLOD_WorldToCamera_Matrix = { 0 };
@@ -2156,6 +2149,10 @@ edpkt_data* ed3DSceneAddContextPacket(ed_3D_Scene* pScene, edpkt_data* pPkt)
 	pRVar1 = pPkt + 4;
 
 	if (pScene->pViewport != (ed_viewport*)0x0) {
+#ifdef PLATFORM_WIN
+		VU1Emu::Wait();
+#endif // PLATFORM_WIN
+
 		pRVar1 = ed3DAddViewportContextPacket(pScene->pViewport, pRVar1);
 	}
 	return pRVar1;
@@ -2316,10 +2313,10 @@ edpkt_data* ed3DHierachyCheckForGlobalAlpha(edpkt_data* pRenderCommand, ed_g2d_l
 		gGlobalAlhaON = 0x80;
 	}
 	else {
-		if (((gpCurHierarchy == (MeshTransformDataBase*)0x0) || (gpCurHierarchy == (MeshTransformDataBase*)0x0000ffff))
+		if (((gpCurHierarchy == (ed_3d_hierarchy*)0x0) || (gpCurHierarchy == (ed_3d_hierarchy*)0x0000ffff))
 			|| (gpCurHierarchy->GlobalAlhaON == 0xff)) {
-			if (((gGlobalAlhaON != 0x80) && (gpCurHierarchy != (MeshTransformDataBase*)0x0)) &&
-				(((gpCurHierarchy != (MeshTransformDataBase*)0x0000ffff &&
+			if (((gGlobalAlhaON != 0x80) && (gpCurHierarchy != (ed_3d_hierarchy*)0x0)) &&
+				(((gpCurHierarchy != (ed_3d_hierarchy*)0x0000ffff &&
 					(((gpCurHierarchy->GlobalAlhaON == -1 && (gCurViewportUsed != (ed_viewport*)0x0)) &&
 						(gGlobalAlhaON = 0x80, pLAY != (ed_g2d_layer*)0x0)))) && ((pLAY->flags_0x0 & 0xfc) == 0)))) {
 				IMPLEMENTATION_GUARD();
@@ -2454,7 +2451,7 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_X_SPR, edF32VECTOR4*), &gCamNormal_X);
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_Y_SPR, edF32VECTOR4*), &gCamNormal_Y);
 	*g_pCurFlareObj2WorldMtx = m1;
-	if (((pDmaMatrix->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
+	if (((pDmaMatrix->pMeshTransformData == (ed_3d_hierarchy*)0x0) ||
 		(puVar1 = pDmaMatrix->pMeshTransformData->pHierarchySetup, puVar1 == (ed_3d_hierarchy_setup*)0x0))
 		|| (pLVar1 = puVar1->pLightData, pLVar1 == (LightingMatrixSubSubObj*)0x0)) {
 		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
@@ -2586,7 +2583,7 @@ edF32MATRIX4* ed3DPKTCopyMatrixPacket(edF32MATRIX4* pMatrixBuffer, ed_dma_matrix
 	vectorB->x = vectorC->x;
 	vectorB->y = vectorC->y;
 	vectorB->w = 0.0078125f;
-	if (((pDmaMatrix->pMeshTransformData == (MeshTransformDataBase*)0x0) ||
+	if (((pDmaMatrix->pMeshTransformData == (ed_3d_hierarchy*)0x0) ||
 		(pLVar2 = pDmaMatrix->pMeshTransformData->pHierarchySetup, pLVar2 == (ed_3d_hierarchy_setup*)0x0))
 		|| (pfVar3 = pLVar2->field_0x10, pfVar3 == (float*)0x0)) {
 		gVU1_AnimST_NormalExtruder_Scratch->z = FLOAT_00448a04;
@@ -2608,7 +2605,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 {
 	ushort uVar1;
 	edNODE* peVar2;
-	MeshTransformDataBase* pMVar3;
+	ed_3d_hierarchy* pMVar3;
 	float fVar4;
 	bool bVar5;
 	edpkt_data* pRVar6;
@@ -2627,7 +2624,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 		if (uVar1 == 4) {
 			IMPLEMENTATION_GUARD(
 				if (((pMVar2->pRenderInput[1].subCommandBufferCount & 0x280) == 0) &&
-					(pDmaMatrix->pMeshTransformData != &MeshTransformDataBase_0048cad0)) {
+					(pDmaMatrix->pMeshTransformData != &ed_3d_hierarchy_0048cad0)) {
 					bVar11 = 1;
 				})
 		}
@@ -2641,7 +2638,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 		}
 		pMVar10 = gPKTMatrixCur;
 		pMVar3 = pDmaMatrix->pMeshTransformData;
-		if (pMVar3 != (MeshTransformDataBase*)0x0) break;
+		if (pMVar3 != (ed_3d_hierarchy*)0x0) break;
 		pMVar10 = pDmaMatrix->pObjToWorld;
 		bVar5 = false;
 
@@ -2682,8 +2679,8 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 			}
 			return pRVar6;)
 		}
-		pDmaMatrix->pMeshTransformData = &MeshTransformDataBase_0048cad0;
-		RENDER_LOG("Storing pMeshTransformData %p", &MeshTransformDataBase_0048cad0);
+		pDmaMatrix->pMeshTransformData = &ed_3d_hierarchy_0048cad0;
+		RENDER_LOG("Storing pMeshTransformData %p", &ed_3d_hierarchy_0048cad0);
 	}
 	if (pMVar3->pMatrixPkt == (edF32MATRIX4*)0x0) {
 		pMVar3->pMatrixPkt = gPKTMatrixCur;
@@ -2817,17 +2814,17 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0076, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c010076
-	pPkt[1] = PTR_AnimScratchpad_00449554->asPkt;
+	pPkt[1] = PTR_AnimScratchpad_00449554->pkt;
 
 	pPkt[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt[2].asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt[2].asU32[3] = SCE_VIF1_SET_UNPACK(0x0198, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c01019800000000;
-	pPkt[3] = PTR_AnimScratchpad_00449554->asPkt;
+	pPkt[3] = PTR_AnimScratchpad_00449554->pkt;
 
 	pPkt[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt[4].asU32[2] = SCE_VIF1_SET_NOP(0);
 	pPkt[4].asU32[3] = SCE_VIF1_SET_UNPACK(0x02ba, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c0102ba00000000;
-	pPkt[5] = PTR_AnimScratchpad_00449554->asPkt;
+	pPkt[5] = PTR_AnimScratchpad_00449554->pkt;
 
 	ppuVar15 = pPkt + 6;
 	if ((uVar2 & 2) != 0) {
@@ -2844,7 +2841,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			ppuVar15 = pPkt + 7;
 		}
 	}
-	if (((peVar3->flags_0x0 & 0x10000) != 0) && (gpCurHierarchy != (MeshTransformDataBase*)0x0)) {
+	if (((peVar3->flags_0x0 & 0x10000) != 0) && (gpCurHierarchy != (ed_3d_hierarchy*)0x0)) {
 		pAnimIndexes = (short*)((int)peVar3 + peVar3->vifListOffset + -0x30);
 		if ((peVar3->flags_0x0 & 0x8000000) == 0) {
 			uVar16 = 0x394;
@@ -2860,7 +2857,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 				iVar14 = 7;
 			}
 		}
-		if ((peVar3->bUseShadowMatrix_0x30 == 0) || (peVar15 = gpCurHierarchy->pShadowAnimMatrix, peVar15 == (edF32MATRIX4*)0x0)) {
+		if ((peVar3->shadowFlags == 0) || (peVar15 = gpCurHierarchy->pShadowAnimMatrix, peVar15 == (edF32MATRIX4*)0x0)) {
 			peVar15 = gpCurHierarchy->pAnimMatrix;
 		}
 
@@ -2897,8 +2894,8 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 		}
 	}
-	if (((gpCurHierarchy == (MeshTransformDataBase*)0x0) || (gpCurHierarchy == (MeshTransformDataBase*)0x0000ffff))
-		|| (gpCurHierarchy == &MeshTransformDataBase_0048cad0)) {
+	if (((gpCurHierarchy == (ed_3d_hierarchy*)0x0) || (gpCurHierarchy == (ed_3d_hierarchy*)0x0000ffff))
+		|| (gpCurHierarchy == &ed_3d_hierarchy_0048cad0)) {
 		peVar3->flags_0x0 = peVar3->flags_0x0 & 0xfffffff7;
 	}
 	else {
@@ -3271,7 +3268,10 @@ void ed3DFlushStrip(edNODE* pNode)
 					ppuVar6->cmdA = gOptionFlagCNT[ed3DVU1BufferCur].cmdA;
 					ppuVar6->cmdB = gOptionFlagCNT[ed3DVU1BufferCur].cmdB;
 
-					ppuVar6[1] = PTR_AnimScratchpad_00449554->asPkt;
+					// ????? HACK ???????????????????????????????????????????????
+					//ppuVar6[1] = PTR_AnimScratchpad_00449554->pkt;
+					ppuVar6[1].cmdA = PTR_AnimScratchpad_00449554->a;
+					ppuVar6[1].cmdB = PTR_AnimScratchpad_00449554->b;
 
 					ppuVar6[2] = gRefOptionsforVU1Buf[ed3DVU1BufferCur];
 
@@ -3536,7 +3536,7 @@ void ed3DFlushStrip(edNODE* pNode)
 			}
 		}
 	}
-	if ((*gShadowRenderMask != 0) && (pRenderInput->bUseShadowMatrix_0x30 != 0)) {
+	if ((*gShadowRenderMask != 0) && (pRenderInput->shadowFlags != 0)) {
 		ppuVar6->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 		ppuVar6->cmdB = 0;
 		ppuVar6->asU32[2] = SCE_VIF1_SET_FLUSHA(0);
@@ -3730,7 +3730,7 @@ edF32VECTOR4 Vector_004489cc = { 1.0f, 1.0f, 1.0f, 1.0f };
 void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 {
 	byte bVar1;
-	MeshTransformDataBase* pMVar2;
+	ed_3d_hierarchy* pMVar2;
 	float fVar3;
 	edNODE_MANAGER* pMVar4;
 	edpkt_data* pRVar5;
@@ -3749,10 +3749,10 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 	puVar14 = g_VifRefPktCur;
 	pMVar2 = pRenderData->pMeshTransformData;
 	/* Previous mesh may use the same base transform, so check if its different here. */
-	if ((gpCurHierarchy != pMVar2) || (pMVar2 == (MeshTransformDataBase*)0x0)) {
+	if ((gpCurHierarchy != pMVar2) || (pMVar2 == (ed_3d_hierarchy*)0x0)) {
 		gpCurHierarchy = pMVar2;
-		if (pMVar2 == (MeshTransformDataBase*)0x0) {
-			gpCurHierarchy = (MeshTransformDataBase*)0x0000ffff;
+		if (pMVar2 == (ed_3d_hierarchy*)0x0) {
+			gpCurHierarchy = (ed_3d_hierarchy*)0x0000ffff;
 		}
 
 		g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stMatrixHeader));
@@ -4427,7 +4427,7 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 		ed3DFlushMaterialManageGIFPacket(pRenderMeshData);
 	}
 #ifdef PLATFORM_WIN
-	Renderer::Draw();
+	VU1Emu::QueueDraw();
 #endif
 	//bHackDoOnce = true;
 	return;
@@ -6042,30 +6042,21 @@ PACK(struct MeshHeader {
 });
 
 PACK(struct MeshData_OBJ {
-	char field_0x0[4];
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined4 field_0xa;
-	undefined field_0xe;
-	undefined field_0xf;
+	ed_Chunck field_0x0;
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
 	undefined field_0x13;
 	int count_0x14;
-	edF32VECTOR4 field_0x18;
+	edF32VECTOR4 boundingSphere;
 	undefined field_0x28;
 	undefined field_0x29;
 	undefined field_0x2a;
 	undefined field_0x2b;
-	int field_0x2c; //struct ed_3d_strip*
+	int p3DStrip; //struct ed_3d_strip*
 });
 
-uint ed3DTestBoundingSphereObject(edF32VECTOR4* param_1)
+uint ed3DTestBoundingSphereObject(edF32VECTOR4* pSphere)
 {
 	float* pfVar1;
 	uint uVar2;
@@ -6073,11 +6064,11 @@ uint ed3DTestBoundingSphereObject(edF32VECTOR4* param_1)
 	float fVar4;
 	float fVar5;
 
+	ED3D_LOG(LogLevel::Verbose, "ed3DTestBoundingSphereObject flags: 0x%x ", gRender_info_SPR->flags);
+
 	uVar2 = 1;
-	fVar4 = param_1->w * gRender_info_SPR->field_0x14;
-	if (((gRender_info_SPR->flags_0x10 & 0x10) == 0) ||
-		(pfVar1 = (float*)gRender_info_SPR->pLightingMatrixFuncObj->field_0x0,
-			pfVar1 == (float*)0x0)) {
+	fVar4 = pSphere->w * gRender_info_SPR->field_0x14;
+	if (((gRender_info_SPR->flags & 0x10) == 0) || (pfVar1 = (float*)gRender_info_SPR->pHierarchySetup->clipping_0x0, pfVar1 == (float*)0x0)) {
 		fVar3 = (gRenderSceneConfig_SPR->frustumA).field_0x50.w;
 	}
 	else {
@@ -6172,15 +6163,558 @@ uint ed3DTestBoundingSphereObject(edF32VECTOR4* param_1)
 	return uVar2;
 }
 
+uint ed3DTestBoundingSphereObjectNoZFar(edF32VECTOR4* pSphere)
+{
+	uint result;
+	float fVar1;
+	float z;
+	float fVar2;
 
-void ed3DRenderObject(MeshHeader* pMeshHeader, undefined* pTextureInfo)
+	result = 1;
+	z = gBoundSphereCenter->z;
+	fVar1 = (gRenderSceneConfig_SPR->frustumB).field_0x40.w;
+	fVar2 = pSphere->w * gRender_info_SPR->field_0x14;
+	if (z < fVar1) {
+		if (-(z - fVar1) < fVar2) {
+			result = 2;
+		}
+	}
+	else {
+		if (fVar2 <= -(fVar1 - z)) {
+			return 4;
+		}
+		result = 2;
+	}
+	fVar1 = gBoundSphereCenter->x;
+	if (fVar1 <= 0.0) {
+		fVar1 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.ba * -fVar1 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.bc * -z;
+		if (0.0 < fVar1) {
+			if (fVar1 <= fVar2) {
+				result = 2;
+			}
+		}
+		else {
+			if (fVar2 < -fVar1) {
+				return 4;
+			}
+			result = 2;
+		}
+	}
+	else {
+		fVar1 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.aa * -fVar1 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.ac * -z;
+		if (0.0 < fVar1) {
+			if (fVar1 <= fVar2) {
+				result = 2;
+			}
+		}
+		else {
+			if (fVar2 < -fVar1) {
+				return 4;
+			}
+			result = 2;
+		}
+	}
+	fVar1 = gBoundSphereCenter->y;
+	if (fVar1 <= 0.0) {
+		fVar1 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.cb * fVar1 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.cc * -z;
+		if (0.0 < fVar1) {
+			if (fVar1 <= fVar2) {
+				result = 2;
+			}
+		}
+		else {
+			result = 4;
+			if (-fVar1 <= fVar2) {
+				result = 2;
+			}
+		}
+	}
+	else {
+		fVar1 = (gRenderSceneConfig_SPR->frustumB).frustumMatrix.db * fVar1 +
+			(gRenderSceneConfig_SPR->frustumB).frustumMatrix.dc * -z;
+		if (0.0 < fVar1) {
+			if (fVar1 <= fVar2) {
+				result = 2;
+			}
+		}
+		else {
+			result = 4;
+			if (-fVar1 <= fVar2) {
+				result = 2;
+			}
+		}
+	}
+	return result;
+}
+
+void _ed3DLinkStripToViewport(ed_3d_strip* pRenderInput, ed_hash_code* pTextureInfo)
+{
+	int iVar1;
+	int iVar2;
+	edF32MATRIX4* peVar3;
+	bool bVar4;
+	edF32VECTOR4* peVar5;
+	EVectorMode_A EVar6;
+	ed_g2d_material* peVar7;
+	uint uVar8;
+	//ed_g3d_Anim_def* peVar9;
+	long lVar10;
+	ed_3d_strip* puVar9;
+	int iVar11;
+	int* piVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+	float fVar17;
+	float fVar18;
+	float fVar19;
+	float fVar20;
+	float fVar21;
+	float fVar22;
+	float fVar23;
+	float fVar24;
+	float in_vf9w;
+	float extraout_vf9w;
+	float extraout_vf9w_00;
+	float extraout_vf9w_01;
+	float extraout_vf9w_02;
+	float extraout_vf9w_03;
+	float extraout_vf9w_04;
+	float extraout_vf9w_05;
+	edF32VECTOR4 eStack16;
+
+	if ((pRenderInput->flags_0x0 & 0x2000) != 0) {
+		return;
+	}
+	if (((pRenderInput->flags_0x0 & 0x10000) != 0) &&
+		((gRender_info_SPR->pMeshTransformData->base).pAnimMatrix == (edF32MATRIX4*)0x0)) {
+		return;
+	}
+	peVar7 = (ed_g2d_material*)0x0;
+	if (pRenderInput->materialIndex != -1) {
+		peVar7 = ed3DG2DGetG2DMaterialFromIndex(pTextureInfo, (int)pRenderInput->materialIndex);
+		if (((gRender_info_SPR->pMeshTransformData != (ed_3d_hierarchy_node*)0x0) &&
+			((gRender_info_SPR->pMeshTransformData->base).GlobalAlhaON != -1)) && (peVar7 != (ed_g2d_material*)0x0)) {
+			peVar7->pDMA_Material = 0x0;
+		}
+		in_vf9w = extraout_vf9w;
+		if ((peVar7 != (ed_g2d_material*)0x0) && ((peVar7->field_0x2 & 1) != 0)) {
+			return;
+		}
+	}
+	pRenderInput->pDMA_Matrix = 0x0;
+	peVar5 = gBoundSphereCenter;
+	if (gRender_info_SPR->field_0x8 == 8) {
+		pRenderInput->flags_0x0 = pRenderInput->flags_0x0 | 3;
+	LAB_00297ee8:
+		bVar4 = true;
+	}
+	else {
+		if (gRender_info_SPR->field_0x8 == 1) {
+			pRenderInput->flags_0x0 = pRenderInput->flags_0x0 & 0xfffffffc;
+			goto LAB_00297ee8;
+		}
+		if ((pRenderInput->flags_0x0 & 0x10000) != 0) {
+			pRenderInput->flags_0x0 = pRenderInput->flags_0x0 | 3;
+			goto LAB_00297ee8;
+		}
+		fVar13 = (pRenderInput->boundingSphere).y;
+		fVar14 = (pRenderInput->boundingSphere).z;
+		gBoundSphereCenter->x = (pRenderInput->boundingSphere).x;
+		peVar5->y = fVar13;
+		peVar5->z = fVar14;
+		gBoundSphereCenter->w = 1.0;
+		peVar5 = gBoundSphereCenter;
+		peVar3 = gRender_info_SPR->pMeshTransformMatrix;
+		fVar21 = gBoundSphereCenter->x;
+		fVar22 = gBoundSphereCenter->y;
+		fVar23 = gBoundSphereCenter->z;
+		fVar24 = gBoundSphereCenter->w;
+		fVar13 = peVar3->ab;
+		fVar14 = peVar3->ac;
+		fVar15 = peVar3->bb;
+		fVar16 = peVar3->bc;
+		fVar17 = peVar3->cb;
+		fVar18 = peVar3->cc;
+		fVar19 = peVar3->db;
+		fVar20 = peVar3->dc;
+		gBoundSphereCenter->x = peVar3->aa * fVar21 + peVar3->ba * fVar22 + peVar3->ca * fVar23 + peVar3->da * fVar24;
+		peVar5->y = fVar13 * fVar21 + fVar15 * fVar22 + fVar17 * fVar23 + fVar19 * fVar24;
+		peVar5->z = fVar14 * fVar21 + fVar16 * fVar22 + fVar18 * fVar23 + fVar20 * fVar24;
+		peVar5->w = in_vf9w;
+		uVar8 = ed3DTestBoundingSphereObject(&pRenderInput->boundingSphere);
+		bVar4 = false;
+		in_vf9w = extraout_vf9w_00;
+		if (uVar8 != 4) {
+			if (pRenderInput->pTextureDataMystery == 0x0) {
+				pRenderInput->flags_0x0 = pRenderInput->flags_0x0 & 0xfffffffc;
+				if (uVar8 != 1) {
+					uVar8 = ed3DTestBoundingSphereObjectNoZFar(&pRenderInput->boundingSphere);
+					in_vf9w = extraout_vf9w_05;
+					if (uVar8 == 1) {
+						pRenderInput->flags_0x0 = pRenderInput->flags_0x0 & 0xfffffffc;
+					}
+					else {
+						uVar8 = pRenderInput->flags_0x0;
+						if ((uVar8 & 0x1000) == 0) {
+							pRenderInput->flags_0x0 = uVar8 | 3;
+						}
+						else {
+							pRenderInput->flags_0x0 = uVar8 | 1;
+						}
+					}
+				}
+			}
+			else {
+				if (uVar8 != 1) {
+					pRenderInput->flags_0x0 = pRenderInput->flags_0x0 | 3;
+					if ((pRenderInput->flags_0x0 & 0x1000) == 0) {
+						EVar6 = ed3DTestBoundingSphereZNearOnly(&pRenderInput->boundingSphere);
+						if (EVar6 == VM_1) {
+							pRenderInput->flags_0x0 = pRenderInput->flags_0x0 & 0xfffffffc;
+							EVar6 = ed3DTestBoundingSphereSide(&pRenderInput->boundingSphere);
+							bVar4 = true;
+							in_vf9w = extraout_vf9w_02;
+							if (EVar6 == VM_1) goto LAB_00297eec;
+							pRenderInput->flags_0x0 = pRenderInput->flags_0x0 | 1;
+							if ((peVar7 == (ed_g2d_material*)0x0) || ((peVar7 != (ed_g2d_material*)0x0 && (peVar7->count_0x0 < 2))))
+							{
+								lVar10 = ed3DCheckSpherePacket(pRenderInput);
+								in_vf9w = extraout_vf9w_03;
+								goto joined_r0x00297e70;
+							}
+						}
+						else {
+							if ((peVar7 == (ed_g2d_material*)0x0) ||
+								((in_vf9w = extraout_vf9w_01, peVar7 != (ed_g2d_material*)0x0 && (peVar7->count_0x0 < 2)))) {
+								lVar10 = ed3DCheckSpherePacket(pRenderInput);
+								in_vf9w = extraout_vf9w_04;
+							joined_r0x00297e70:
+								bVar4 = false;
+								if (lVar10 == 0) goto LAB_00297eec;
+							}
+						}
+					}
+					else {
+						pRenderInput->flags_0x0 = pRenderInput->flags_0x0 & 0xfffffffd;
+					}
+				}
+			}
+			goto LAB_00297ee8;
+		}
+	}
+LAB_00297eec:
+	// #HACK !!!
+	return;
+	if (!bVar4) {
+		return;
+	}
+	if ((peVar7 != (ed_g2d_material*)0x0) && (peVar7->count_0x0 != 0)) {
+		IMPLEMENTATION_GUARD(
+		iVar1 = *(int*)(peVar7 + 1);
+		uVar8 = *(uint*)(iVar1 + 0x10);
+		piVar12 = *(int**)(iVar1 + 0x14);
+		iVar11 = 0;
+		if (*(short*)(iVar1 + 0x2c) != 0) {
+			iVar2 = *(int*)(iVar1 + 0x30);
+			*(uint*)(iVar1 + 0x14) = (uint)piVar12 & 0xfffffbff;
+			peVar5 = gBoundSphereCenter;
+			if (((uint)piVar12 & 0x10) == 0) {
+			LAB_0029800c:
+				if (((uint)piVar12 & 2) == 0) {
+					pRenderInput->flags_0x0 = pRenderInput->flags_0x0 & 0xfffffdff;
+				}
+				else {
+					peVar9 = (ed_g3d_Anim_def*)ed3DG2DAnimTexGet((TextureData_TEX_Internal*)(iVar2 + 0x10));
+					ed3DManageAnim(peVar9);
+					pRenderInput->flags_0x0 = pRenderInput->flags_0x0 | 0x200;
+				}
+			}
+			else {
+				fVar14 = (pRenderInput->boundingSphere).y;
+				fVar13 = (pRenderInput->boundingSphere).z;
+				gBoundSphereCenter->x = (pRenderInput->boundingSphere).x;
+				peVar5->y = fVar14;
+				peVar5->z = fVar13;
+				gBoundSphereCenter->w = 1.0;
+				peVar5 = gBoundSphereCenter;
+				peVar3 = gRender_info_SPR->pMeshTransformMatrix;
+				fVar21 = gBoundSphereCenter->x;
+				fVar22 = gBoundSphereCenter->y;
+				fVar23 = gBoundSphereCenter->z;
+				fVar24 = gBoundSphereCenter->w;
+				fVar13 = peVar3->ab;
+				fVar14 = peVar3->ac;
+				fVar15 = peVar3->bb;
+				fVar16 = peVar3->bc;
+				fVar17 = peVar3->cb;
+				fVar18 = peVar3->cc;
+				fVar19 = peVar3->db;
+				fVar20 = peVar3->dc;
+				gBoundSphereCenter->x = peVar3->aa * fVar21 + peVar3->ba * fVar22 + peVar3->ca * fVar23 + peVar3->da * fVar24;
+				peVar5->y = fVar13 * fVar21 + fVar15 * fVar22 + fVar17 * fVar23 + fVar19 * fVar24;
+				peVar5->z = fVar14 * fVar21 + fVar16 * fVar22 + fVar18 * fVar23 + fVar20 * fVar24;
+				peVar5->w = in_vf9w;
+				fVar13 = *(float*)(iVar2 + 0x28);
+				if (fVar13 <= 0.0) {
+					fVar13 = gAnimSTMaxDist;
+				}
+				if (-gBoundSphereCenter->z < fVar13) {
+					bVar4 = true;
+				}
+				else {
+					bVar4 = false;
+					if (-gBoundSphereCenter->z - fVar13 < (pRenderInput->boundingSphere).w) {
+						bVar4 = true;
+					}
+				}
+				if (!bVar4) goto LAB_0029800c;
+				pRenderInput->flags_0x0 = pRenderInput->flags_0x0 | 0x200;
+			}
+			if (*(int*)(iVar2 + 0x20) == 0) {
+				if (*(int*)(iVar2 + 0x18) != 0) {
+					iVar11 = *(int*)(*(int*)(iVar2 + 0x18) + 8) + 0x10;
+				}
+			}
+			else {
+				iVar1 = *(int*)(iVar2 + (uint) * (ushort*)(iVar1 + 0x2e) * 0x10 + 0x38);
+				if (iVar1 != 0) {
+					iVar11 = *(int*)(iVar1 + 8) + 0x10;
+				}
+			}
+			if ((pRenderInput->flags_0x0 & 4) != 0) {
+				peVar9 = ed3DG3DAnimGet(pRenderInput);
+				ed3DManageAnim(peVar9);
+			}
+			goto LAB_002980e4;
+		}
+		if (((uint)piVar12 & 0x800) != 0) goto LAB_002980e4;
+		)
+	}
+	iVar11 = 0;
+	uVar8 = 0;
+	piVar12 = (int*)0x0;
+	peVar7 = gDefault_Material_Current;
+LAB_002980e4:
+	IMPLEMENTATION_GUARD(
+	ed3DLinkStripManageLinkToDMA(pRenderInput, uVar8, piVar12, &eStack16, (int)peVar7, iVar11);)
+	return;
+}
+
+void _ed3DLinkStripShadowToViewport(ed_3d_strip* pStrip, ed_hash_code* pHashCode)
+{
+	edF32MATRIX4* peVar1;
+	void* pvVar2;
+	int iVar3;
+	edF32VECTOR4* peVar4;
+	ed_g2d_material* peVar5;
+	EVectorMode_A EVar6;
+	bool bVar7;
+	uint uVar8;
+	long lVar9;
+	edNODE* peVar10;
+	undefined2* puVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+	float fVar17;
+	float fVar18;
+	float fVar19;
+	float fVar20;
+	float fVar21;
+	float fVar22;
+	float fVar23;
+	float in_vf9w;
+	float extraout_vf9w;
+	edF32VECTOR4 eStack32;
+	ed_g2d_bitmap* local_10;
+	int* local_c;
+	uint local_8;
+	ed_g2d_material* local_4;
+
+	pStrip->pDMA_Matrix = 0x0;
+	if ((*gShadowRenderMask & (uint)(ushort)(pStrip->shadowFlags | pStrip->field_0x32)) == 0) {
+		return;
+	}
+	if (pStrip->materialIndex == -1) {
+		local_4 = (ed_g2d_material*)0x0;
+	}
+	else {
+		local_4 = ed3DG2DGetG2DMaterialFromIndex(pHashCode, (int)pStrip->materialIndex);
+		if ((local_4 != (ed_g2d_material*)0x0) && ((local_4->field_0x2 & 1) != 0)) {
+			return;
+		}
+		in_vf9w = extraout_vf9w;
+		if ((local_4 != (ed_g2d_material*)0x0) && (1 < local_4->count_0x0)) {
+			return;
+		}
+	}
+	peVar5 = local_4;
+	if (((pStrip->flags_0x0 & 0x10000) != 0) &&
+		((gRender_info_SPR->pMeshTransformData->base).pAnimMatrix == (edF32MATRIX4*)0x0)) {
+		return;
+	}
+	pStrip->pDMA_Matrix = 0x0;
+	peVar4 = gBoundSphereCenter;
+	if (gRender_info_SPR->field_0x8 == 8) {
+		pStrip->flags_0x0 = pStrip->flags_0x0 | 3;
+	}
+	else {
+		if (gRender_info_SPR->field_0x8 == 1) {
+			pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffc;
+		}
+		else {
+			if ((pStrip->flags_0x0 & 0x10000) == 0) {
+				fVar12 = (pStrip->boundingSphere).y;
+				fVar13 = (pStrip->boundingSphere).z;
+				gBoundSphereCenter->x = (pStrip->boundingSphere).x;
+				peVar4->y = fVar12;
+				peVar4->z = fVar13;
+				gBoundSphereCenter->w = 1.0;
+				peVar4 = gBoundSphereCenter;
+				peVar1 = gRender_info_SPR->pMeshTransformMatrix;
+				fVar20 = gBoundSphereCenter->x;
+				fVar21 = gBoundSphereCenter->y;
+				fVar22 = gBoundSphereCenter->z;
+				fVar23 = gBoundSphereCenter->w;
+				fVar12 = peVar1->ab;
+				fVar13 = peVar1->ac;
+				fVar14 = peVar1->bb;
+				fVar15 = peVar1->bc;
+				fVar16 = peVar1->cb;
+				fVar17 = peVar1->cc;
+				fVar18 = peVar1->db;
+				fVar19 = peVar1->dc;
+				gBoundSphereCenter->x = peVar1->aa * fVar20 + peVar1->ba * fVar21 + peVar1->ca * fVar22 + peVar1->da * fVar23;
+				peVar4->y = fVar12 * fVar20 + fVar14 * fVar21 + fVar16 * fVar22 + fVar18 * fVar23;
+				peVar4->z = fVar13 * fVar20 + fVar15 * fVar21 + fVar17 * fVar22 + fVar19 * fVar23;
+				peVar4->w = in_vf9w;
+				uVar8 = ed3DTestBoundingSphereObject(&pStrip->boundingSphere);
+				bVar7 = false;
+				if (uVar8 == 4) goto LAB_00298420;
+				if (pStrip->pTextureDataMystery == 0x0) {
+					pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffc;
+					if (uVar8 != 1) {
+						uVar8 = ed3DTestBoundingSphereObjectNoZFar(&pStrip->boundingSphere);
+						if (uVar8 == 1) {
+							pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffc;
+						}
+						else {
+							uVar8 = pStrip->flags_0x0;
+							if ((uVar8 & 0x1000) == 0) {
+								pStrip->flags_0x0 = uVar8 | 3;
+							}
+							else {
+								pStrip->flags_0x0 = uVar8 | 1;
+							}
+						}
+					}
+				}
+				else {
+					if (uVar8 != 1) {
+						pStrip->flags_0x0 = pStrip->flags_0x0 | 3;
+						if ((pStrip->flags_0x0 & 0x1000) == 0) {
+							EVar6 = ed3DTestBoundingSphereZNearOnly(&pStrip->boundingSphere);
+							if (EVar6 == VM_1) {
+								pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffc;
+								EVar6 = ed3DTestBoundingSphereSide(&pStrip->boundingSphere);
+								bVar7 = true;
+								if (EVar6 == VM_1) goto LAB_00298420;
+								pStrip->flags_0x0 = pStrip->flags_0x0 | 1;
+								if ((peVar5 == (ed_g2d_material*)0x0) ||
+									((peVar5 != (ed_g2d_material*)0x0 && (peVar5->count_0x0 < 2)))) {
+									lVar9 = ed3DCheckSpherePacket(pStrip);
+									goto joined_r0x002983a4;
+								}
+							}
+							else {
+								if ((peVar5 == (ed_g2d_material*)0x0) ||
+									((peVar5 != (ed_g2d_material*)0x0 && (peVar5->count_0x0 < 2)))) {
+									lVar9 = ed3DCheckSpherePacket(pStrip);
+								joined_r0x002983a4:
+									bVar7 = false;
+									if (lVar9 == 0) goto LAB_00298420;
+								}
+							}
+						}
+						else {
+							pStrip->flags_0x0 = pStrip->flags_0x0 & 0xfffffffd;
+						}
+					}
+				}
+			}
+			else {
+				pStrip->flags_0x0 = pStrip->flags_0x0 | 3;
+			}
+		}
+	}
+	bVar7 = true;
+LAB_00298420:
+	if (bVar7) {
+		IMPLEMENTATION_GUARD(
+		if ((*gShadowRenderMask & (uint)(ushort)pStrip->bUseShadowMatrix_0x30) != 0) {
+			bVar7 = ed3DLinkStripShadowManageMaterial(pStrip, &local_4, &local_8, (uint*)&local_c, &local_10);
+			if (bVar7 == false) {
+				return;
+			}
+			ed3DLinkStripManageLinkToDMA(pStrip, local_8, local_c, &eStack32, (int)local_4, (int)local_10);
+		}
+		if ((*gShadowRenderMask & (uint) * (ushort*)&pStrip->field_0x32) != 0) {
+			pvVar2 = (gPrim_List_Shadow[gCurRenderList].node.pPrev)->pPrev->pData;
+			if ((pprevious_shadow_dma_matrix == (ed_dma_matrix*)0x0) ||
+				(pprevious_shadow_dma_matrix->pObjToWorld != gRender_info_SPR->pSharedMeshTransform)) {
+				pprevious_shadow_dma_matrix = ed3DListCreateDmaMatrixNode(gRender_info_SPR, gRender_info_SPR->pMeshTransformData)
+					;
+				iVar3 = *(int*)((int)pvVar2 + 0x14);
+				puVar11 = (undefined2*)(*(int*)(iVar3 + 4) + *(int*)(iVar3 + 0xc) * 0x10);
+				*(ed_dma_matrix**)(puVar11 + 6) = pprevious_shadow_dma_matrix;
+				*puVar11 = 2;
+				*(int*)(iVar3 + 0xc) = *(int*)(iVar3 + 0xc) + 1;
+				*(int*)((int)pvVar2 + 0x1c) = *(int*)((int)pvVar2 + 0x1c) + 1;
+				*(undefined4*)(puVar11 + 2) = *(undefined4*)((int)pvVar2 + 0xc);
+				*(undefined2**)((int)pvVar2 + 0xc) = puVar11;
+				pvVar2 = (pprevious_shadow_dma_matrix->list).node.pData;
+				peVar10 = (edNODE*)(*(int*)((int)pvVar2 + 4) + *(int*)((int)pvVar2 + 0xc) * 0x10);
+				peVar10->pData = pStrip;
+				*(undefined2*)&peVar10->header = 3;
+				*(short*)((int)&peVar10->header + 2) = (short)pStrip->flags_0x0;
+				*(int*)((int)pvVar2 + 0xc) = *(int*)((int)pvVar2 + 0xc) + 1;
+				(pprevious_shadow_dma_matrix->list).nodeCount = (pprevious_shadow_dma_matrix->list).nodeCount + 1;
+				peVar10->pPrev = (pprevious_shadow_dma_matrix->list).node.pPrev;
+				peVar10->pNext = (edNODE*)pStrip->pDMA_Matrix;
+				(pprevious_shadow_dma_matrix->list).node.pPrev = peVar10;
+			}
+			else {
+				pvVar2 = (pprevious_shadow_dma_matrix->list).node.pData;
+				peVar10 = (edNODE*)(*(int*)((int)pvVar2 + 4) + *(int*)((int)pvVar2 + 0xc) * 0x10);
+				peVar10->pData = pStrip;
+				*(undefined2*)&peVar10->header = 3;
+				*(short*)((int)&peVar10->header + 2) = (short)pStrip->flags_0x0;
+				*(int*)((int)pvVar2 + 0xc) = *(int*)((int)pvVar2 + 0xc) + 1;
+				(pprevious_shadow_dma_matrix->list).nodeCount = (pprevious_shadow_dma_matrix->list).nodeCount + 1;
+				peVar10->pPrev = (pprevious_shadow_dma_matrix->list).node.pPrev;
+				peVar10->pNext = (edNODE*)pStrip->pDMA_Matrix;
+				(pprevious_shadow_dma_matrix->list).node.pPrev = peVar10;
+			}
+		})
+	}
+	return;
+}
+
+void ed3DRenderObject(ed_hash_code* pMeshHeader, ed_hash_code* pTextureInfo)
 {
 	bool bVar1;
 	edF32MATRIX4* pMVar2;
 	edF32VECTOR4* pVVar3;
 	uint uVar4;
 	int iVar5;
-	edF32VECTOR4* pVVar6;
+	edF32VECTOR4* pSphere;
 	int iVar7;
 	int meshCount;
 	ed_3d_strip* pRenderInput;
@@ -6192,78 +6726,56 @@ void ed3DRenderObject(MeshHeader* pMeshHeader, undefined* pTextureInfo)
 	float fVar13;
 	float fVar14;
 	float fVar15;
-	float fVar16;
-	float fVar17;
-	float fVar18;
-	float fVar19;
+	float x;
+	float y;
+	float z;
+	float w;
 	float in_vf9w;
 	MeshData_OBJ* pMeshOBJ;
 
-	pVVar3 = gBoundSphereCenter;
-	pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pMeshHeader->pOBJ);
-	pRenderInput = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->field_0x2c);
+	ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject %s", pMeshHeader->field_0x0.name);
+
+	pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pMeshHeader->pData);
+	pRenderInput = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->p3DStrip);
 	if (pRenderInput == (ed_3d_strip*)0x0) {
 		return;
 	}
 	meshCount = pMeshOBJ->count_0x14;
-	if ((gRender_info_SPR->flags_0x10 & 0x10) != 0) {
-		pVVar6 = gRender_info_SPR->pLightingMatrixFuncObj->pVector_0x4;
+	if ((gRender_info_SPR->flags & 0x10) != 0) {
+		pSphere = gRender_info_SPR->pHierarchySetup->pBoundingSphere;
 		iVar7 = 8;
-		if (pVVar6 != (edF32VECTOR4*)0x0) goto LAB_002b0d68;
+		if (pSphere != (edF32VECTOR4*)0x0) goto LAB_002b0d68;
 	}
-	pVVar6 = &pMeshOBJ->field_0x18;
+	pSphere = &pMeshOBJ->boundingSphere;
 	iVar7 = 2;
 LAB_002b0d68:
-	fVar8 = pVVar6->y;
-	fVar9 = pVVar6->z;
-	gBoundSphereCenter->x = pVVar6->x;
-	pVVar3->y = fVar8;
-	pVVar3->z = fVar9;
+	gBoundSphereCenter->xyz = pSphere->xyz;
 	gBoundSphereCenter->w = 1.0;
-	pVVar3 = gBoundSphereCenter;
-	pMVar2 = gRender_info_SPR->pMeshTransformMatrix;
-	fVar16 = gBoundSphereCenter->x;
-	fVar17 = gBoundSphereCenter->y;
-	fVar18 = gBoundSphereCenter->z;
-	fVar19 = gBoundSphereCenter->w;
-	fVar8 = pMVar2->ab;
-	fVar9 = pMVar2->ac;
-	fVar10 = pMVar2->bb;
-	fVar11 = pMVar2->bc;
-	fVar12 = pMVar2->cb;
-	fVar13 = pMVar2->cc;
-	fVar14 = pMVar2->db;
-	fVar15 = pMVar2->dc;
-	gBoundSphereCenter->x =
-		pMVar2->aa * fVar16 + pMVar2->ba * fVar17 + pMVar2->ca * fVar18 + pMVar2->da * fVar19;
-	pVVar3->y = fVar8 * fVar16 + fVar10 * fVar17 + fVar12 * fVar18 + fVar14 * fVar19;
-	pVVar3->z = fVar9 * fVar16 + fVar11 * fVar17 + fVar13 * fVar18 + fVar15 * fVar19;
-	pVVar3->w = in_vf9w;
-	uVar4 = ed3DTestBoundingSphereObject(pVVar6);
+
+	*gBoundSphereCenter = *gBoundSphereCenter * *gRender_info_SPR->pMeshTransformMatrix;
+
+	uVar4 = ed3DTestBoundingSphereObject(pSphere);
 	if (uVar4 != 4) {
 		if (uVar4 == 1) {
 			gRender_info_SPR->field_0x8 = 1;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-				iVar5 = ed3DTestBoundingSphereObjectNoZFar(pVVar6);
+			iVar5 = ed3DTestBoundingSphereObjectNoZFar(pSphere);
 			if (iVar5 != 1) {
 				gRender_info_SPR->field_0x8 = iVar7;
-			})
+			}
 		}
 		if (*gShadowRenderMask == 0) {
-			IMPLEMENTATION_GUARD(
 				while (bVar1 = meshCount != 0, meshCount = meshCount + -1, bVar1) {
 					_ed3DLinkStripToViewport(pRenderInput, pTextureInfo);
-					pRenderInput = pRenderInput->pNext;
-				})
+					pRenderInput = (ed_3d_strip*)LOAD_SECTION(pRenderInput->pNext);
+				}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
 				while (bVar1 = meshCount != 0, meshCount = meshCount + -1, bVar1) {
 					_ed3DLinkStripShadowToViewport(pRenderInput, pTextureInfo);
-					pRenderInput = pRenderInput->pNext;
-				})
+					pRenderInput = (ed_3d_strip*)LOAD_SECTION(pRenderInput->pNext);
+				}
 		}
 	}
 	return;
@@ -6272,7 +6784,7 @@ LAB_002b0d68:
 void ed3DRenderSonHierarchy(ed_3d_hierarchy_node* pMeshTransformData)
 {
 	short sVar1;
-	MeshHeader* pMeshHeader;
+	ed_hash_code* pMeshHeader;
 	MeshTransformObjData* pMVar2;
 	edF32MATRIX4* pMVar3;
 	float fVar4;
@@ -6284,29 +6796,35 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy_node* pMeshTransformData)
 			if (((pMeshTransformData->base).flags_0x9e & 0x80) == 0) {
 				(pMeshTransformData->base).size_0xae = 0xff;
 			}
-			edF32Matrix4MulF32Matrix4Hard(&MStack64, &(pMeshTransformData->base).transformB,
-				WorldToCamera_Matrix);
+			edF32Matrix4MulF32Matrix4Hard(&MStack64, &(pMeshTransformData->base).transformB, WorldToCamera_Matrix);
 			pMVar3 = &(pMeshTransformData->base).transformB;
 			gRender_info_SPR->pMeshTransformMatrix = &MStack64;
 			gRender_info_SPR->pMeshTransformData = pMeshTransformData;
-			gRender_info_SPR->pLightingMatrixFuncObj =
-				(pMeshTransformData->base).pHierarchySetup;
+			gRender_info_SPR->pHierarchySetup = (pMeshTransformData->base).pHierarchySetup;
 			gRender_info_SPR->pSharedMeshTransform = pMVar3;
-			gRender_info_SPR->flags_0x10 =
-				(uint)(pMeshTransformData->base).flags_0x9e;
+			gRender_info_SPR->flags = (uint)(pMeshTransformData->base).flags_0x9e;
+
+			ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy flags: 0x%x", gRender_info_SPR->flags);
+
+			if ((((uint)(pMeshTransformData->base).flags_0x9e & 0x10) != 0)) {
+				assert((pMeshTransformData->base).pHierarchySetup != NULL);
+			}
+
+			//assert((((uint)(pMeshTransformData->base).flags_0x9e & 0x10) == 0) || (pMeshTransformData->base).pHierarchySetup != NULL);
+
 			fVar4 = ed3DMatrixGetBigerScale(pMVar3);
 			gRender_info_SPR->field_0x14 = fVar4;
 			gRender_info_SPR->field_0x18 = 0;
 			gRender_info_SPR->field_0x8 = 1;
 			(pMeshTransformData->base).pMatrixPkt = (edF32MATRIX4*)0x0;
-			pMeshHeader = (MeshHeader*)pMVar2->pObj;
-			if (((pMeshHeader != (MeshHeader*)0x0) && (sVar1 = pMVar2->field_0x4, sVar1 != 2)) && (sVar1 != 1)) {
+			pMeshHeader = pMVar2->pObj;
+			if (((pMeshHeader != (ed_hash_code*)0x0) && (sVar1 = pMVar2->field_0x4, sVar1 != 2)) && (sVar1 != 1)) {
 				if (sVar1 == 3) {
 					IMPLEMENTATION_GUARD(ed3DRenderSprite(pMeshHeader, (pMeshTransformData->base).pTextureInfo + 0x10));
 				}
 				else {
 					if (sVar1 == 0) {
-						ed3DRenderObject(pMeshHeader, (pMeshTransformData->base).pTextureInfo + 0x10);
+						ed3DRenderObject(pMeshHeader, (ed_hash_code*)((pMeshTransformData->base).pTextureInfo + 0x10));
 					}
 				}
 			}
@@ -6335,17 +6853,22 @@ void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy_node* pMeshTransformData)
 		if (((pMeshTransformData->base).flags_0x9e & 0x80) == 0) {
 			(pMeshTransformData->base).size_0xae = 0xff;
 		}
-		if ((pMVar4 != (MeshTransformObjData*)0x0) && (pMVar4->pObj != (char*)0x0)) {
+		if ((pMVar4 != (MeshTransformObjData*)0x0) && (pMVar4->pObj != (ed_hash_code*)0x0)) {
 			edF32Matrix4MulF32Matrix4Hard(&MStack64, &(pMeshTransformData->base).transformB,
 				WorldToCamera_Matrix);
 			pMVar6 = &(pMeshTransformData->base).transformB;
 			gRender_info_SPR->pMeshTransformMatrix = &MStack64;
 			gRender_info_SPR->pMeshTransformData = pMeshTransformData;
-			gRender_info_SPR->pLightingMatrixFuncObj =
-				(pMeshTransformData->base).pHierarchySetup;
+			gRender_info_SPR->pHierarchySetup = (pMeshTransformData->base).pHierarchySetup;
 			gRender_info_SPR->pSharedMeshTransform = pMVar6;
-			gRender_info_SPR->flags_0x10 =
-				(uint)(pMeshTransformData->base).flags_0x9e;
+			gRender_info_SPR->flags = (uint)(pMeshTransformData->base).flags_0x9e;
+
+			ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchyForShadow flags: 0x%x", gRender_info_SPR->flags);
+
+			if ((((uint)(pMeshTransformData->base).flags_0x9e & 0x10) != 0)) {
+				assert((pMeshTransformData->base).pHierarchySetup != NULL);
+			}
+
 			fVar7 = ed3DMatrixGetBigerScale(pMVar6);
 			gRender_info_SPR->field_0x14 = fVar7;
 			gRender_info_SPR->field_0x18 = 0;
@@ -6354,13 +6877,13 @@ void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy_node* pMeshTransformData)
 			if (sVar3 == 3) {
 				IMPLEMENTATION_GUARD(
 					MeshHeader::ReadRenderTransform_002b0e80
-					((MeshHeader*)pMVar4->pObj, (pMeshTransformData->base).pTextureInfo + 0x10);)
+					(pMVar4->pObj, (pMeshTransformData->base).pTextureInfo + 0x10);)
 			}
 			else {
 				if (((sVar3 != 2) && (sVar3 != 1)) && (sVar3 == 0)) {
 					if (((pMeshTransformData->base).flags_0x9e & 0x100) == 0) {
-						ed3DRenderObject
-						((MeshHeader*)pMVar4->pObj, (pMeshTransformData->base).pTextureInfo + 0x10);
+						MY_LOG("ed3DRenderSonHierarchyForShadow Get texture hash code %p -> %p", pMeshTransformData, (pMeshTransformData->base).pTextureInfo);
+						ed3DRenderObject(pMVar4->pObj, (ed_hash_code*)((pMeshTransformData->base).pTextureInfo + 0x10));
 					}
 					else {
 						IMPLEMENTATION_GUARD(
@@ -8993,13 +9516,13 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 int gLoadedClusterCount = 0;
 
 PACK(struct MeshData_ANHR {
-	char field_0x0[4];
+	uint hash;
 	undefined field_0x4;
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
-	uint field_0x8;
-	uint field_0xc;
+	uint otherEntryCount;
+	uint fileDataEntryCount;
 });
 
 union ObbFloat
@@ -9008,32 +9531,20 @@ union ObbFloat
 	float number;
 };
 
-PACK(struct astruct_16 {
-	int field_0x0;
-	int field_0x4;
-	uint field_0x8;
-	uint field_0xc;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
+PACK(struct ANHR_Internal {
+	int pHierNode; // edNode*
+	int pHierNodeData; // ed_3d_hierarchy_node*
+	int pHierAnimStream; // S_HIERANM_ANIM
+	uint nodeChunkCount;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
 	float field_0x1c;
-	uint fileCount;
-	undefined field_0x24;
-	undefined field_0x25;
-	undefined field_0x26;
-	undefined field_0x27;
+	uint flags;
+	float field_0x24;
 	float field_0x28;
 	float field_0x2c;
-	ObbFloat field_0x30;
+	ObbFloat pObbFloat;
 	float field_0x34;
 });
 
@@ -9057,7 +9568,7 @@ void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo)
 
 int g_LoadedStaticMeshCount_004493a4 = 0;
 
-edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_hierarchy* p3DA, ed_g3d_hierarchy* p3DB)
+edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_hierarchy* p3DA, ed_3d_hierarchy* p3DB)
 {
 	edNODE* pMVar1;
 	undefined8 uVar2;
@@ -9074,7 +9585,6 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	edF32MATRIX4* pTVar12;
 	uint uVar13;
 	ed_3d_hierarchy_node* pMVar14;
-	ushort* puVar15;
 	edNODE* pNewNode;
 	edNODE_MANAGER* pCameraPanHeader;
 
@@ -9108,25 +9618,27 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 
 	*pMVar11 = *pMVar10;
 	pCVar8 = pHierNode + uVar13;
-	puVar15 = &(pCVar8->base).flags_0x9e;
 	pMVar11 = &gF32Matrix4Unit;
 	iVar5 = 8;
 	(pCVar8->base).hash = p3DA->hash;
 	(pCVar8->base).field_0x88 = p3DA->field_0x88;
 	(pCVar8->base).field_0x89 = p3DA->field_0x89;
 	(pCVar8->base).bRenderShadow = p3DA->bRenderShadow;
-	(pCVar8->base).pShadowAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(p3DA->pShadowAnimMatrix);
-	(pCVar8->base).pLinkTransformData = (ed_g3d_hierarchy*)LOAD_SECTION(p3DA->pLinkTransformData);
+	(pCVar8->base).pShadowAnimMatrix = (edF32MATRIX4*)(p3DA->pShadowAnimMatrix); //(edF32MATRIX4*)LOAD_SECTION(p3DA->pShadowAnimMatrix);
+	(pCVar8->base).pLinkTransformData = (ed_3d_hierarchy*)LOAD_SECTION(p3DA->pLinkTransformData);
 	(pCVar8->base).field_0x94 = (undefined*)LOAD_SECTION(p3DA->field_0x94);
 	(pCVar8->base).pTextureInfo = (undefined*)LOAD_SECTION(p3DA->pTextureInfo);
+
+	MY_LOG("ed3DHierarchyAddNode Resolved texture hash code %p -> %p", pCVar8, (pCVar8->base).pTextureInfo);
+
 	(pCVar8->base).lodCount = p3DA->lodCount;
 	(pCVar8->base).flags_0x9e = p3DA->flags_0x9e;
-	(pCVar8->base).pHierarchySetup = (ed_3d_hierarchy_setup*)LOAD_SECTION(p3DA->pLightingMatrixFuncObj_0xa0);
+	(pCVar8->base).pHierarchySetup = (ed_3d_hierarchy_setup*)LOAD_SECTION(p3DA->pHierarchySetup);
 	(pCVar8->base).pMatrixPkt = (edF32MATRIX4*)LOAD_SECTION(p3DA->field_0xa4);
 	(pCVar8->base).pAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(p3DA->pAnimMatrix);
 	(pCVar8->base).subMeshParentCount_0xac = p3DA->subMeshParentCount_0xac;
 	(pCVar8->base).size_0xae = p3DA->size_0xae;
-	(pCVar8->base).GlobalAlhaON = *(char*)&p3DA->field_0xaf;
+	(pCVar8->base).GlobalAlhaON = p3DA->GlobalAlhaON;
 
 	*pMVar6 = *pMVar11;
 
@@ -9135,7 +9647,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 		if (iVar5 < (int)(uint)p3DA->lodCount) {
 			pfVar7 = p3DA->aLods + iVar5;
 			pcVar9 = pMVar14->aSubArray + iVar5;
-			pcVar9->pObj = (char*)LOAD_SECTION(pfVar7->pObj);
+			pcVar9->pObj = (ed_hash_code*)LOAD_SECTION(pfVar7->pObj);
 			pcVar9->field_0x4 = pfVar7->field_0x4;
 			pcVar9->field_0x6 = pfVar7->field_0x6;
 		}
@@ -9152,7 +9664,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	(pCVar8->base).field_0x94 = (undefined*)p3DB;
 	pMVar8 = pHierNode + uVar13;
 	if ((pCVar8->base).subMeshParentCount_0xac == 0) {
-		*puVar15 = *puVar15 | 8;
+		(pCVar8->base).flags_0x9e = (pCVar8->base).flags_0x9e | 8;
 	}
 	(pMVar8->base).flags_0x9e = (pMVar8->base).flags_0x9e & 0xfffc;
 	(pMVar8->base).flags_0x9e = (pMVar8->base).flags_0x9e | 0x800;
@@ -9163,7 +9675,184 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 
 edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_manager* pMeshInfo, char* szString)
 {
-	
+	ed_Chunck* iVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	ed_Chunck* pChunck;
+	uint uVar6;
+	ed_Chunck* peVar7;
+	int subMeshCount;
+	edNODE* pMeshTransformParent;
+	edNODE* peVar9;
+	edNODE* peVar10;
+	edNODE* peVar11;
+	edNODE* peVar12;
+	edNODE* peVar13;
+	edNODE* peVar14;
+	edNODE* pNewNode;
+	uint uVar15;
+	ed_hash_code* pHashCode;
+	uint uVar16;
+	ed_hash_code* peVar17;
+	ed_hash_code* local_1f0;
+	edNODE* local_1d4;
+	uint local_1d0;
+	ed_hash_code* local_1a0;
+	edNODE* local_184;
+	uint local_180;
+	ed_hash_code* local_150;
+	edNODE* local_134;
+	uint local_130;
+	ed_hash_code* local_100;
+	edNODE* local_e4;
+	uint local_e0;
+	ed_hash_code* local_b0;
+	edNODE* local_94;
+	uint local_90;
+	ed_hash_code* local_60;
+	edNODE* local_44;
+	uint local_40;
+	edNODE* local_8;
+	short sStack2;
+	ed_Chunck* pMeshHALL;
+
+	peVar7 = (ed_Chunck*)0x0;
+	pMeshHALL = pMeshInfo->HALL;
+	pHashCode = (ed_hash_code*)(pMeshHALL + 2);
+	uVar6 = edChunckGetNb((char*)(pMeshHALL + 1), (char*)pMeshHALL + pMeshHALL->size);
+	uVar6 = (uVar6 & 0xffff) - 1;
+	if (szString == (char*)0x0) {
+		int subMeshIndex = -1;
+		peVar17 = pHashCode;
+		for (uVar15 = 0; uVar15 < uVar6; uVar15 = uVar15 + 1) {
+			ed_Chunck* pHierChunk = (ed_Chunck*)LOAD_SECTION(peVar17->pData);
+			ed_g3d_hierarchy* pHier = (ed_g3d_hierarchy*)(pHierChunk + 1);
+
+			subMeshCount = pHier->subMeshParentCount_0xac;
+			if (subMeshIndex < subMeshCount) {
+				peVar7 = (ed_Chunck*)LOAD_SECTION(peVar17->pData);
+				subMeshIndex = subMeshCount;
+			}
+			peVar17 = peVar17 + 1;
+		}
+	}
+	else {
+		IMPLEMENTATION_GUARD(
+		peVar7 = ed3DG3DHierarchyGetChunk(pMeshInfo, szString);)
+	}
+	pMeshTransformParent = (edNODE*)0x0;
+	if (peVar7 != (ed_Chunck*)0x0) {
+		pMeshTransformParent = ed3DHierarchyAddNode(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(peVar7 + 1), (ed_3d_hierarchy*)0x0);
+		local_8 = (edNODE*)0x0;
+		peVar17 = pHashCode;
+		for (uVar16 = 0; uVar16 < uVar6; uVar16 = uVar16 + 1) {
+			iVar1 = (ed_Chunck*)LOAD_SECTION(peVar17->pData);
+			
+			ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(iVar1 + 1);
+
+			ed_3d_hierarchy_node* pNewHierNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pNewHier->pLinkTransformData);
+
+			if ((ed_Chunck*)pNewHierNode == peVar7) {
+				IMPLEMENTATION_GUARD();
+				peVar9 = ed3DHierarchyAddNode(pList, pHierNode, pNode, pNewHier, (ed_3d_hierarchy*)pMeshTransformParent->pData);
+				local_44 = (edNODE*)0x0;
+				local_60 = pHashCode;
+				for (local_40 = 0; local_40 < uVar6; local_40 = local_40 + 1) {
+					iVar2 = local_60->pData;
+					if (*(int*)(iVar2 + 0xa0) == (int)iVar1) {
+						peVar10 = ed3DHierarchyAddNode
+						(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(iVar2 + 0x10),
+							(ed_3d_hierarchy*)peVar9->pData);
+						local_94 = (edNODE*)0x0;
+						local_b0 = pHashCode;
+						for (local_90 = 0; local_90 < uVar6; local_90 = local_90 + 1) {
+							iVar3 = local_b0->pData;
+							if (*(int*)(iVar3 + 0xa0) == iVar2) {
+								peVar11 = ed3DHierarchyAddNode
+								(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(iVar3 + 0x10),
+									(ed_3d_hierarchy*)peVar10->pData);
+								local_e4 = (edNODE*)0x0;
+								local_100 = pHashCode;
+								for (local_e0 = 0; local_e0 < uVar6; local_e0 = local_e0 + 1) {
+									iVar4 = local_100->pData;
+									if (*(int*)(iVar4 + 0xa0) == iVar3) {
+										peVar12 = ed3DHierarchyAddNode
+										(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(iVar4 + 0x10),
+											(ed_3d_hierarchy*)peVar11->pData);
+										local_134 = (edNODE*)0x0;
+										local_150 = pHashCode;
+										for (local_130 = 0; local_130 < uVar6; local_130 = local_130 + 1) {
+											iVar5 = local_150->pData;
+											if (*(int*)(iVar5 + 0xa0) == iVar4) {
+												peVar13 = ed3DHierarchyAddNode
+												(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(iVar5 + 0x10),
+													(ed_3d_hierarchy*)peVar12->pData);
+												local_184 = (edNODE*)0x0;
+												local_1a0 = pHashCode;
+												for (local_180 = 0; local_180 < uVar6; local_180 = local_180 + 1) {
+													uVar15 = local_1a0->pData;
+													if (*(int*)(uVar15 + 0xa0) == iVar5) {
+														peVar14 = ed3DHierarchyAddNode
+														(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(uVar15 + 0x10),
+															(ed_3d_hierarchy*)peVar13->pData);
+														local_1d4 = (edNODE*)0x0;
+														local_1f0 = pHashCode;
+														for (local_1d0 = 0; local_1d0 < uVar6; local_1d0 = local_1d0 + 1) {
+															pChunck = (ed_Chunck*)local_1f0->pData;
+															if (pChunck[10].hash == uVar15) {
+																pNewNode = ed3DHierarchyAddNode
+																(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(pChunck + 1),
+																	(ed_3d_hierarchy*)peVar14->pData);
+																IMPLEMENTATION_GUARD(
+																ed3DHierarchyAddSonsToList
+																(pList, pHierNode, pNode, pChunck, pNewNode, (ed_hash_code*)pHashCode, uVar6);
+																if (local_1d4 != (edNODE*)0x0) {
+																	local_1d4 = pNewNode;
+																})
+															}
+															local_1f0 = local_1f0 + 1;
+														}
+														if (local_184 != (edNODE*)0x0) {
+															local_184 = peVar14;
+														}
+													}
+													local_1a0 = local_1a0 + 1;
+												}
+												if (local_134 != (edNODE*)0x0) {
+													local_134 = peVar13;
+												}
+											}
+											local_150 = local_150 + 1;
+										}
+										if (local_e4 != (edNODE*)0x0) {
+											local_e4 = peVar12;
+										}
+									}
+									local_100 = local_100 + 1;
+								}
+								if (local_94 != (edNODE*)0x0) {
+									local_94 = peVar11;
+								}
+							}
+							local_b0 = local_b0 + 1;
+						}
+						if (local_44 != (edNODE*)0x0) {
+							local_44 = peVar10;
+						}
+					}
+					local_60 = local_60 + 1;
+				}
+				if (local_8 != (edNODE*)0x0) {
+					local_8 = peVar9;
+				}
+			}
+			peVar17 = peVar17 + 1;
+		}
+		ed3DHierarchyRefreshSonNumbers(pMeshTransformParent, &sStack2);
+	}
+	return pMeshTransformParent;
 }
 
 
@@ -9221,7 +9910,7 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 		ed_3d_hierarchy_node* pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
 
 		if (pNode == (ed_3d_hierarchy_node*)pChunck) {
-			peVar7 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHier, (ed_g3d_hierarchy*)pNewNode->pData);
+			peVar7 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHier, (ed_3d_hierarchy*)pNewNode->pData);
 			local_24 = (edNODE*)0x0;
 			local_40 = pHashCode;
 			for (local_20 = 0; local_20 < count; local_20 = local_20 + 1) {
@@ -9233,7 +9922,7 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 
 				if (*(ed_Chunck**)(pcVar1 + 0xa0) == iVar1) {
 					peVar8 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar1 + 0x10),
-						(ed_g3d_hierarchy*)peVar7->pData);
+						(ed_3d_hierarchy*)peVar7->pData);
 					local_74 = (edNODE*)0x0;
 					local_90 = pHashCode;
 					for (local_70 = 0; local_70 < count; local_70 = local_70 + 1) {
@@ -9241,7 +9930,7 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 						if (*(char**)(pcVar2 + 0xa0) == (char*)pcVar1) {
 							peVar9 = ed3DHierarchyAddNode
 							(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar2 + 0x10),
-								(ed_g3d_hierarchy*)peVar8->pData);
+								(ed_3d_hierarchy*)peVar8->pData);
 							local_c4 = (edNODE*)0x0;
 							local_e0 = pHashCode;
 							for (local_c0 = 0; local_c0 < count; local_c0 = local_c0 + 1) {
@@ -9249,7 +9938,7 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 								if (*(char**)(pcVar3 + 0xa0) == pcVar2) {
 									peVar10 = ed3DHierarchyAddNode
 									(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar3 + 0x10),
-										(ed_g3d_hierarchy*)peVar9->pData);
+										(ed_3d_hierarchy*)peVar9->pData);
 									local_114 = (edNODE*)0x0;
 									local_130 = pHashCode;
 									for (local_110 = 0; local_110 < count; local_110 = local_110 + 1) {
@@ -9257,15 +9946,15 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 										if (*(char**)(pcVar4 + 0xa0) == pcVar3) {
 											peVar11 = ed3DHierarchyAddNode
 											(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar4 + 0x10),
-												(ed_g3d_hierarchy*)peVar10->pData);
+												(ed_3d_hierarchy*)peVar10->pData);
 											local_164 = (edNODE*)0x0;
 											local_180 = pHashCode;
 											for (local_160 = 0; local_160 < count; local_160 = local_160 + 1) {
 												peVar5 = (ed_3d_hierarchy_setup*)local_180->pData;
-												if (peVar5[8].field_0x0 == pcVar4) {
+												if (peVar5[8].clipping_0x0 == pcVar4) {
 													peVar12 = ed3DHierarchyAddNode
 													(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)&peVar5->field_0x10,
-														(ed_g3d_hierarchy*)peVar11->pData);
+														(ed_3d_hierarchy*)peVar11->pData);
 													local_1b4 = (edNODE*)0x0;
 													local_1d0 = pHashCode;
 													for (local_1b0 = 0; local_1b0 < count; local_1b0 = local_1b0 + 1) {
@@ -9274,7 +9963,7 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 															peVar13 = ed3DHierarchyAddNode
 															(pList, pHierNode, pParentNode,
 																(ed_g3d_hierarchy*)&(peVar6->base).transformA.ba,
-																(ed_g3d_hierarchy*)peVar12->pData);
+																(ed_3d_hierarchy*)peVar12->pData);
 															local_204 = (edNODE*)0x0;
 															local_220 = pHashCode;
 															for (local_200 = 0; local_200 < count; local_200 = local_200 + 1) {
@@ -9284,7 +9973,7 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 																pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
 
 																if (pNode == peVar6) {
-																	pNewNode_00 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHier, (ed_g3d_hierarchy*)peVar13->pData);
+																	pNewNode_00 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHier, (ed_3d_hierarchy*)peVar13->pData);
 																	ed3DHierarchyAddSonsToList
 																	(pList, pHierNode, pParentNode, pChunck_00, pNewNode_00, pHashCode, count);
 																	if (local_204 != (edNODE*)0x0) {
@@ -9342,35 +10031,38 @@ void ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMesh
 {
 	ushort uVar1;
 	ulong uVar2;
-	ed_g3d_hierarchy* pDVar4;
+	ed_3d_hierarchy_node* pDVar4;
 	ulong uVar3;
 	short local_2;
-	ed_g3d_hierarchy* pDVar1;
+	ed_3d_hierarchy_node* pDVar1;
 
 	local_2 = 0;
-	pDVar1 = (ed_g3d_hierarchy*)pMeshTransformParent->pData;
-	pDVar4 = (ed_g3d_hierarchy*)pMeshTransformParent->pPrev->pData;
-	if ((ed_g3d_hierarchy*)pDVar4->pLinkTransformData == pDVar1) {
+	pDVar1 = (ed_3d_hierarchy_node*)pMeshTransformParent->pData;
+
+	MY_LOG("ed3DHierarchyRefreshSonNumbers hierarchy: %p", pDVar1);
+
+	pDVar4 = (ed_3d_hierarchy_node*)pMeshTransformParent->pPrev->pData;
+	if ((ed_3d_hierarchy_node*)pDVar4->base.pLinkTransformData == pDVar1) {
 		IMPLEMENTATION_GUARD();
 		uVar1 = 0;
 		uVar3 = (ulong)pMeshTransformParent->pPrev;
-		while (uVar2 = (ulong)uVar1, (ed_g3d_hierarchy*)pDVar4->pLinkTransformData == pDVar1) {
+		while (uVar2 = (ulong)uVar1, (ed_3d_hierarchy_node*)pDVar4->base.pLinkTransformData == pDVar1) {
 			ed3DHierarchyRefreshSonNumbers((edNODE*)uVar3, &local_2);
 			uVar1 = uVar1 + local_2;
 			uVar3 = uVar2;
-			pDVar4 = *(ed_g3d_hierarchy**)((ulong)uVar2 + 0xc);
+			pDVar4 = *(ed_3d_hierarchy_node**)((ulong)uVar2 + 0xc);
 		}
-		pDVar1->subMeshParentCount_0xac = uVar1;
+		pDVar1->base.subMeshParentCount_0xac = uVar1;
 		*outMeshCount = uVar1 + 1;
 	}
 	else {
-		pDVar1->subMeshParentCount_0xac = 0;
+		pDVar1->base.subMeshParentCount_0xac = 0;
 		*outMeshCount = 1;
 	}
 	return;
 }
 
-uint HierarchyAnm::UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, int* pFileData, int param_5)
+bool CHierarchyAnm::UpdateMatrix(float param_1, edF32MATRIX4* pMatrix, S_HIERANM_ANIM* pHierAnim, int param_5)
 {
 	int iVar1;
 	int iVar2;
@@ -9378,11 +10070,11 @@ uint HierarchyAnm::UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, in
 	float* pfVar4;
 	float* pfVar5;
 	float* pfVar6;
-	float* pfVar7;
-	edF32VECTOR4* pVVar8;
-	float* pfVar9;
-	edF32VECTOR4* pVVar10;
-	float fVar11;
+	float* pfVar8;
+	edF32VECTOR4* peVar9;
+	edF32VECTOR4* peVar10;
+	edF32VECTOR4* pfVar7;
+	edF32VECTOR4* peVar11;
 	float fVar12;
 	float fVar13;
 	float fVar14;
@@ -9390,133 +10082,138 @@ uint HierarchyAnm::UpdateMatrix(float param_1, ed_3d_hierarchy_node* param_3, in
 	float fVar16;
 	float fVar17;
 	float fVar18;
-	uint local_50;
+	float fVar19;
+	bool bSuccess;
 	edF32VECTOR4 local_30;
-	edF32VECTOR4 VStack32;
+	edF32VECTOR4 eStack32;
 	int local_10;
 	int local_c;
 	float local_8;
 
-	pfVar5 = (float*)(pFileData + 3);
-	iVar1 = *pFileData;
-	fVar14 = 0.0f;
-	iVar2 = pFileData[1];
-	iVar3 = pFileData[2];
+	pfVar5 = pHierAnim->field_0xc;
+	iVar1 = pHierAnim->field_0x0;
+	fVar15 = 0.0;
+	iVar2 = pHierAnim->field_0x4;
+	iVar3 = pHierAnim->field_0x8;
 	pfVar4 = pfVar5 + iVar1 + 1;
-	local_50 = 0;
+	bSuccess = false;
 	pfVar6 = pfVar4 + iVar2 + 1;
-	pfVar9 = (float*)((ulong)pfVar6 + (iVar3 + 1) * 4 + 0xf); // &0xfffffff0);
-	fVar13 = pfVar5[iVar1];
-	pVVar10 = (edF32VECTOR4*)(pfVar9 + iVar1 * 4);
-	pVVar8 = pVVar10 + iVar2;
-	if (0.0f < fVar13) {
+	pfVar7 = (edF32VECTOR4*)((ulong)pfVar6 + (iVar3 + 1) * 4 + 0xf & 0xfffffffffffffff0);
+	fVar14 = pfVar5[iVar1];
+	peVar11 = pfVar7 + iVar1;
+	peVar10 = peVar11 + iVar2;
+	if (0.0f < fVar14) {
 		if (param_5 == 0) {
-			fVar14 = param_1;
-			if (fVar13 - 1e-06f < param_1) {
-				local_50 = 1;
-				fVar14 = fVar13 - 1e-06f;
+			fVar15 = param_1;
+			if (fVar14 - 1e-06f < param_1) {
+				bSuccess = true;
+				fVar15 = fVar14 - 1e-06f;
 			}
 		}
 		else {
-			fVar14 = fmodf(param_1, fVar13);
+			fVar15 = fmodf(param_1, fVar14);
 		}
 	}
 	if (iVar2 == 0) {
-		edF32Matrix4SetIdentityHard(&param_3->base.transformA);
+		edF32Matrix4SetIdentityHard(pMatrix);
 	}
 	else {
-		pfVar7 = pfVar4;
+		pfVar8 = pfVar4;
 		if (iVar2 == 1) {
-			edQuatToMatrix4Hard(pVVar10, &param_3->base.transformA);
+			edQuatToMatrix4Hard(peVar11, pMatrix);
 		}
 		else {
-			for (; *pfVar7 <= fVar14; pfVar7 = pfVar7 + 1) {
+			for (; *pfVar8 <= fVar15; pfVar8 = pfVar8 + 1) {
 			}
-			pfVar4 = (float*)((int)pfVar7 - (int)pfVar4);
-			if ((int)pfVar4 < 0) {
-				pfVar4 = (float*)((int)pfVar4 + 3);
+
+			int size = (char*)pfVar8 - (char*)pfVar4;
+
+			if (size < 0) {
+				size = size + 3;
 			}
-			local_c = (int)pfVar4 >> 2;
+			local_c = size >> 2;
 			local_10 = local_c + -1;
-			local_8 = (fVar14 - pfVar7[-1]) / (*pfVar7 - pfVar7[-1]);
+			local_8 = (fVar15 - pfVar8[-1]) / (*pfVar8 - pfVar8[-1]);
 			if (iVar2 == local_c) {
 				local_c = 0;
 			}
-			IMPLEMENTATION_GUARD(
-				InterpolateRotation(local_8, &VStack32, pVVar10 + local_10, pVVar10 + local_c);
-			edQuatToMatrix4Hard(&VStack32, &param_3->base.transformA);)
+			edQuatShortestSLERPHard(local_8, &eStack32, peVar11 + local_10, peVar11 + local_c);
+			edQuatToMatrix4Hard(&eStack32, pMatrix);
 		}
 	}
 	if (iVar1 != 0) {
 		pfVar4 = pfVar5;
 		if (iVar1 == 1) {
-			fVar12 = pfVar9[1];
-			fVar13 = pfVar9[2];
-			fVar11 = pfVar9[3];
-			(param_3->base).transformA.da = *pfVar9;
-			(param_3->base).transformA.db = fVar12;
-			(param_3->base).transformA.dc = fVar13;
-			(param_3->base).transformA.dd = fVar11;
+			fVar13 = pfVar7->y;
+			fVar14 = pfVar7->z;
+			fVar12 = pfVar7->w;
+			pMatrix->da = pfVar7->x;
+			pMatrix->db = fVar13;
+			pMatrix->dc = fVar14;
+			pMatrix->dd = fVar12;
 		}
 		else {
-			for (; *pfVar4 <= fVar14; pfVar4 = pfVar4 + 1) {
+			for (; *pfVar4 <= fVar15; pfVar4 = pfVar4 + 1) {
 			}
-			pfVar5 = (float*)((int)pfVar4 - (int)pfVar5);
-			if ((int)pfVar5 < 0) {
-				pfVar5 = (float*)((int)pfVar5 + 3);
+
+			int size = (char*)pfVar4 - (char*)pfVar5;
+			if (size < 0) {
+				size = size + 3;
 			}
-			local_c = (int)pfVar5 >> 2;
+			local_c = size >> 2;
 			local_10 = local_c + -1;
-			local_8 = (fVar14 - pfVar4[-1]) / (*pfVar4 - pfVar4[-1]);
+			local_8 = (fVar15 - pfVar4[-1]) / (*pfVar4 - pfVar4[-1]);
 			if (iVar1 == local_c) {
 				local_c = 0;
 			}
-			pfVar4 = pfVar9 + local_c * 4;
-			pfVar9 = pfVar9 + local_10 * 4;
-			fVar11 = pfVar9[1];
-			fVar12 = pfVar9[2];
-			fVar15 = pfVar9[3];
-			fVar16 = pfVar4[1];
-			fVar17 = pfVar4[2];
-			fVar18 = pfVar4[3];
-			fVar13 = 1.0 - local_8;
-			(param_3->base).transformA.da = *pfVar4 * local_8 + *pfVar9 * fVar13;
-			(param_3->base).transformA.db = fVar16 * local_8 + fVar11 * fVar13;
-			(param_3->base).transformA.dc = fVar17 * local_8 + fVar12 * fVar13;
-			(param_3->base).transformA.dd = fVar18 * local_8 + fVar15 * fVar13;
-			(param_3->base).transformA.dd = 1.0;
+			peVar9 = pfVar7 + local_c;
+			peVar11 = pfVar7 + local_10;
+			fVar12 = peVar11->y;
+			fVar13 = peVar11->z;
+			fVar16 = peVar11->w;
+			fVar17 = peVar9->y;
+			fVar18 = peVar9->z;
+			fVar19 = peVar9->w;
+			fVar14 = 1.0f - local_8;
+			pMatrix->da = peVar9->x * local_8 + peVar11->x * fVar14;
+			pMatrix->db = fVar17 * local_8 + fVar12 * fVar14;
+			pMatrix->dc = fVar18 * local_8 + fVar13 * fVar14;
+			pMatrix->dd = fVar19 * local_8 + fVar16 * fVar14;
+			pMatrix->dd = 1.0f;
 		}
 	}
 	if (iVar3 != 0) {
 		pfVar4 = pfVar6;
 		if (iVar3 != 1) {
-			for (; *pfVar4 <= fVar14; pfVar4 = pfVar4 + 1) {
+			for (; *pfVar4 <= fVar15; pfVar4 = pfVar4 + 1) {
 			}
-			pfVar6 = (float*)((int)pfVar4 - (int)pfVar6);
-			if ((int)pfVar6 < 0) {
-				pfVar6 = (float*)((int)pfVar6 + 3);
+
+			int size = (char*)pfVar4 - (char*)pfVar6;
+			if (size < 0) {
+				size = size + 3;
 			}
-			local_c = (int)pfVar6 >> 2;
+			local_c = size >> 2;
+
 			local_10 = local_c + -1;
-			local_8 = (fVar14 - pfVar4[-1]) / (*pfVar4 - pfVar4[-1]);
+			local_8 = (fVar15 - pfVar4[-1]) / (*pfVar4 - pfVar4[-1]);
 			if (iVar3 == local_c) {
 				local_c = 0;
 			}
-			pVVar10 = pVVar8 + local_c;
-			pVVar8 = pVVar8 + local_10;
-			fVar14 = 1.0 - local_8;
-			local_30.x = pVVar10->x * local_8 + pVVar8->x * fVar14;
-			local_30.y = pVVar10->y * local_8 + pVVar8->y * fVar14;
-			local_30.z = pVVar10->z * local_8 + pVVar8->z * fVar14;
-			local_30.w = pVVar10->w * local_8 + pVVar8->w * fVar14;
-			pVVar8 = &local_30;
+			peVar11 = peVar10 + local_c;
+			peVar10 = peVar10 + local_10;
+			fVar15 = 1.0f - local_8;
+			local_30.x = peVar11->x * local_8 + peVar10->x * fVar15;
+			local_30.y = peVar11->y * local_8 + peVar10->y * fVar15;
+			local_30.z = peVar11->z * local_8 + peVar10->z * fVar15;
+			local_30.w = peVar11->w * local_8 + peVar10->w * fVar15;
+			peVar10 = &local_30;
 		}
-		_gscale_mat.aa = pVVar8->x;
-		_gscale_mat.bb = pVVar8->y;
-		_gscale_mat.cc = pVVar8->z;
-		edF32Matrix4MulF32Matrix4Hard(&param_3->base.transformA, &_gscale_mat, &param_3->base.transformA);
+		_gscale_mat.aa = peVar10->x;
+		_gscale_mat.bb = peVar10->y;
+		_gscale_mat.cc = peVar10->z;
+		edF32Matrix4MulF32Matrix4Hard(pMatrix, &_gscale_mat, pMatrix);
 	}
-	return local_50;
+	return bSuccess;
 }
 
 struct MeshData_OBB
@@ -9534,7 +10231,7 @@ ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool
 	ed_Chunck* piVar2;
 	int iVar3;
 	MeshTransformObjData* pMVar4;
-	char* pcVar5;
+	ed_hash_code* pcVar5;
 	ed_Chunck* pMVar6;
 	uint uVar7;
 	ushort* puVar8;
@@ -9550,11 +10247,11 @@ ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool
 			uVar7 = *puVar8 - 1;
 		}
 		pcVar5 = pMeshTransformData->aSubArray[uVar7].pObj;
-		if (pcVar5 == (char*)0x0) {
+		if (pcVar5 == (ed_hash_code*)0x0) {
 			pcVar5 = pMeshTransformData->aSubArray[0].pObj;
 		}
 		/* Look for .obj */
-		if ((pcVar5 != (char*)0x0) && (piVar2 = (ed_Chunck*)LOAD_SECTION(*(int*)(pcVar5 + 8)), piVar2->hash == 0x2e4a424f)) {
+		if ((pcVar5 != (ed_hash_code*)0x0) && (piVar2 = (ed_Chunck*)LOAD_SECTION(pcVar5->pData), piVar2->hash == 0x2e4a424f)) {
 			iVar3 = piVar2->size;
 			for (pMVar6 = edChunckGetFirst((char*)piVar2 + piVar2->field_0xc, (char*)piVar2 + iVar3);
 				pMVar6 != (ed_Chunck*)0x0;
@@ -9612,26 +10309,30 @@ int NodeIndexFromID(ushort** param_1, uint key)
 	return iVar3;
 }
 
-void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* pMeshInfo,
-	ed_3D_Scene* pStaticMeshMaster)
+struct NodeChunk {
+	uint nodeIndex;
+	int chunk; // char*
+};
+
+void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* pMeshInfo, ed_3D_Scene* pStaticMeshMaster)
 {
-	uint uVar1;
+	uint otherEntryCount;
 	ed_Chunck* pcVar2;
 	edLIST* pList;
 	ed_3d_hierarchy_node* pHierNode;
 	edNODE* pParentNode;
-	uint uVar3;
+	uint fileDatEntryCount;
 	char* pcVar4;
 	edNODE* pNewNode;
 	int iVar5;
-	ed_Chunck* pMVar6;
+	ed_Chunck* pSkeletonChunck;
 	ulong meshHashValue;
-	int* pcVar8;
+	int* aFileData;
 	float* pfVar7;
-	uint* puVar8;
+	NodeChunk* pCurNodeChunk;
 	uint uVar9;
-	uint* puVar10;
-	astruct_16* pMVar14;
+	S_HIERANM_ANIM* pHierAnimStream;
+	ANHR_Internal* pANHR_Internal;
 	uint uVar11;
 	uint uVar12;
 	uint uVar13;
@@ -9651,23 +10352,28 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 	else {
 		this->pThis = pInANHR;
 		pcVar1 = this->pThis;
-		uVar1 = pcVar1->field_0x8;
-		uVar3 = pcVar1->field_0xc;
-		pcVar8 = (int*)((char*)(pInANHR + 1) + uVar1 * 4);
-		for (uVar9 = 0; uVar11 = 0, uVar9 < uVar3; uVar9 = uVar9 + 1) {
-			pcVar8[uVar9] = (int)STORE_SECTION((char*)pInANHR + (int)pcVar8[uVar9]);
+		otherEntryCount = pcVar1->otherEntryCount;
+		fileDatEntryCount = pcVar1->fileDataEntryCount;
+
+		// aFileData starts after the 'other' entries.
+		aFileData = (int*)((char*)(pInANHR + 1) + (otherEntryCount * sizeof(int)));
+
+		// Take the offsets, and add them to the base and store the result ptr back into the packed struct.
+		for (uVar9 = 0; uVar11 = 0, uVar9 < fileDatEntryCount; uVar9 = uVar9 + 1) {
+			aFileData[uVar9] = (int)STORE_SECTION((char*)pInANHR + aFileData[uVar9]);
 		}
+
 		int* pBaseIndexes = (int*)(pInANHR + 1);
-		for (; uVar11 < uVar1; uVar11 = uVar11 + 1) {
-			pMVar14 = (astruct_16*)(pInANHR->field_0x0 + pBaseIndexes[uVar11]);
-			pBaseIndexes[uVar11] = (int)STORE_SECTION(pMVar14);
-			meshHashValue = ByteCode::BuildU64((int)pMVar14->field_0x0, (int)pMVar14->field_0x4);
+		for (; uVar11 < otherEntryCount; uVar11 = uVar11 + 1) {
+			pANHR_Internal = (ANHR_Internal*)((char*)pInANHR + pBaseIndexes[uVar11]);
+			pBaseIndexes[uVar11] = (int)STORE_SECTION(pANHR_Internal);
+			meshHashValue = ByteCode::BuildU64((int)pANHR_Internal->pHierNode, (int)pANHR_Internal->pHierNodeData);
 			ed3DHierarchyCopyHashCode(pMeshInfo);
 			pParentNode = gHierarchyManagerFirstFreeNode;
 			pHierNode = gHierarchyManagerBuffer;
 			pcVar2 = pMeshInfo->HALL;
 			pList = pStaticMeshMaster->pHeirListA;
-			uVar3 = edChunckGetNb((char*)(pcVar2 + 1), (char*)pcVar2 + pcVar2->size);
+			fileDatEntryCount = edChunckGetNb((char*)(pcVar2 + 1), (char*)pcVar2 + pcVar2->size);
 			pcVar4 = edHashcodeGet(meshHashValue, (ed_Chunck*)(pMeshInfo->HALL + 1));
 			if (pcVar4 == (char*)0x0) {
 				iVar5 = 0;
@@ -9680,45 +10386,46 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 			}
 			else {
 				ed_Chunck* pChunck = (ed_Chunck*)LOAD_SECTION(iVar5);
-				pNewNode = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pChunck + 1), (ed_g3d_hierarchy*)0x0);
-				ed3DHierarchyAddSonsToList(pList, pHierNode, pParentNode, (ed_Chunck*)LOAD_SECTION(iVar5), pNewNode, (ed_hash_code*)(pcVar2 + 2), (uVar3 & 0xffff) - 1);
+				pNewNode = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pChunck + 1), (ed_3d_hierarchy*)0x0);
+				ed3DHierarchyAddSonsToList(pList, pHierNode, pParentNode, (ed_Chunck*)LOAD_SECTION(iVar5), pNewNode, (ed_hash_code*)(pcVar2 + 2), (fileDatEntryCount & 0xffff) - 1);
 				ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 			}
-			pMVar14->field_0x0 = STORE_SECTION(pNewNode);
+			pANHR_Internal->pHierNode = STORE_SECTION(pNewNode);
 			if (pNewNode == (edNODE*)0x0) {
-				pMVar14->field_0x4 = 0x0;
-				pMVar14->field_0x8 = 0x0;
+				pANHR_Internal->pHierNodeData = 0x0;
+				pANHR_Internal->pHierAnimStream = 0x0;
 			}
 			else {
-				pMVar14->field_0x4 = STORE_SECTION(pNewNode->pData);
-				pMVar14->fileCount = pMVar14->fileCount | 0xa0000000;
-				if ((pMVar14->fileCount & 1) == 0) {
-					pMVar14->field_0x28 = 0.0;
+				pANHR_Internal->pHierNodeData = STORE_SECTION(pNewNode->pData);
+				pANHR_Internal->flags = pANHR_Internal->flags | 0xa0000000;
+				if ((pANHR_Internal->flags & 1) == 0) {
+					pANHR_Internal->field_0x28 = 0.0;
 				}
 				else {
-					fVar14 = pMVar14->field_0x28;
-					fVar16 = pMVar14->field_0x2c;
+					fVar14 = pANHR_Internal->field_0x28;
+					fVar16 = pANHR_Internal->field_0x2c;
 					iVar5 = rand();
-					pMVar14->field_0x28 = fVar14 + (fVar16 - fVar14) * ((float)iVar5 / 2.147484e+09f);
+					pANHR_Internal->field_0x28 = fVar14 + (fVar16 - fVar14) * ((float)iVar5 / 2.147484e+09f);
 				}
-				puVar15 = pMVar14->field_0x30.number;
-				fVar14 = pMVar14->field_0x34;
+				puVar15 = pANHR_Internal->pObbFloat.number;
+				fVar14 = pANHR_Internal->field_0x34;
 				iVar5 = rand();
-				pMVar14->field_0x2c = puVar15 + (fVar14 - puVar15) * ((float)iVar5 / 2.147484e+09f);
-				if ((pMVar14->fileCount & 4) != 0) {
-					IMPLEMENTATION_GUARD(ed3DHierarchySetSetup((ed_3d_hierarchy_node*)LOAD_SECTION(pMVar14->field_0x4), 0x40f070));
+				pANHR_Internal->field_0x2c = puVar15 + (fVar14 - puVar15) * ((float)iVar5 / 2.147484e+09f);
+				if ((pANHR_Internal->flags & 4) != 0) {
+					IMPLEMENTATION_GUARD(ed3DHierarchySetSetup((ed_3d_hierarchy_node*)LOAD_SECTION(pANHR_Internal->pHierNodeData), 0x40f070));
 				}
-				puVar10 = (uint*)LOAD_SECTION(pcVar8[(int)pMVar14->field_0x8]);
-				UpdateMatrix(pMVar14->field_0x28, (ed_3d_hierarchy_node*)LOAD_SECTION(pMVar14->field_0x4), (int*)puVar10,
-					pMVar14->fileCount & 1);
-				if (puVar10[2] == 0) {
+				pHierAnimStream = (S_HIERANM_ANIM*)LOAD_SECTION(aFileData[(int)pANHR_Internal->pHierAnimStream]);
+
+				UpdateMatrix(pANHR_Internal->field_0x28, (edF32MATRIX4*)LOAD_SECTION(pANHR_Internal->pHierNodeData), pHierAnimStream, pANHR_Internal->flags & 1);
+
+				if (pHierAnimStream->field_0x8 == 0) {
 					local_18 = 1.0;
 					local_1c = 1.0;
 					local_20 = 1.0;
 				}
 				else {
-					pfVar7 = (float*)(((int)puVar10 + (puVar10[2] + 1) * 4 + (puVar10[1] + 1) * 4 + (*puVar10 + 1) * 4 + 0x1b &
-						0xfffffff0) + *puVar10 * 0x10 + puVar10[1] * 0x10);
+					pfVar7 = (float*)((pHierAnimStream->field_0x0 + (pHierAnimStream->field_0x8 + 1) * 4 + (pHierAnimStream->field_0x4 + 1) * 4 + (pHierAnimStream->field_0x0 + 1) * 4 + 0x1b &
+						0xfffffff0) + pHierAnimStream->field_0x0 * 0x10 + pHierAnimStream->field_0x4 * 0x10);
 					local_20 = *pfVar7;
 					local_1c = pfVar7[1];
 					local_18 = pfVar7[2];
@@ -9730,43 +10437,474 @@ void HierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* p
 				if (local_20 <= abs(local_18)) {
 					local_20 = abs(local_18);
 				}
-				pMVar14->field_0x1c = pMVar14->field_0x1c * local_20 * 1.2;
-				if (((*puVar10 < 2) && (puVar10[1] < 2)) && (puVar10[2] < 2)) {
-					pMVar14->field_0x8 = 0x0;
+				pANHR_Internal->field_0x1c = pANHR_Internal->field_0x1c * local_20 * 1.2f;
+				if (((pHierAnimStream->field_0x0 < 2) && (pHierAnimStream->field_0x4 < 2)) && (pHierAnimStream->field_0x8 < 2)) {
+					pANHR_Internal->pHierAnimStream = 0x0;
 				}
 				else {
-					pMVar14->field_0x8 = STORE_SECTION(puVar10);
+					pANHR_Internal->pHierAnimStream = STORE_SECTION(pHierAnimStream);
 				}
-				pMVar6 = ed3DHierarchyNodeGetSkeletonChunck(pNewNode, 0);
-				if (pMVar6 == (ed_Chunck*)0x0) {
-					pMVar14->field_0x30.pObb_Internal = 0x0;
+				pSkeletonChunck = ed3DHierarchyNodeGetSkeletonChunck(pNewNode, 0);
+				if (pSkeletonChunck == (ed_Chunck*)0x0) {
+					pANHR_Internal->pObbFloat.pObb_Internal = 0x0;
 				}
 				else {
-					puVar10 = (uint*)(pMVar14 + 1);
-					pMVar14->field_0x30.pObb_Internal = STORE_SECTION(pMVar6 + 1);
-					local_8 = (ushort*)LOAD_SECTION(pMVar14->field_0x30.pObb_Internal);
-					uVar3 = pMVar14->field_0xc;
-					for (uVar9 = 0; uVar9 < uVar3; uVar9 = uVar9 + 1) {
-						uVar12 = NodeIndexFromID(&local_8, *puVar10);
-						*puVar10 = uVar12;
-						puVar10[1] = STORE_SECTION(LOAD_SECTION(pcVar8[puVar10[1]]));
-						puVar10 = puVar10 + 2;
+					NodeChunk* pNext = (NodeChunk*)(pANHR_Internal + 1);
+
+					pANHR_Internal->pObbFloat.pObb_Internal = STORE_SECTION(pSkeletonChunck + 1);
+					local_8 = (ushort*)LOAD_SECTION(pANHR_Internal->pObbFloat.pObb_Internal);
+					fileDatEntryCount = pANHR_Internal->nodeChunkCount;
+					for (uVar9 = 0; uVar9 < fileDatEntryCount; uVar9 = uVar9 + 1) {
+						pNext->nodeIndex = NodeIndexFromID(&local_8, pNext->nodeIndex);
+						pNext->chunk = STORE_SECTION(LOAD_SECTION(aFileData[pNext->chunk]));
+						pNext = pNext + 1;
 					}
-					puVar10 = (uint*)(pMVar14 + 1);
-					for (uVar9 = 0; uVar9 < uVar3; uVar9 = uVar9 + 1) {
-						puVar8 = puVar10;
-						for (uVar12 = uVar9; (*puVar8 != uVar9 + 1 && (uVar12 < uVar3)); uVar12 = uVar12 + 1) {
-							puVar8 = puVar8 + 2;
+					pNext = (NodeChunk*)(pANHR_Internal + 1);
+					for (uVar9 = 0; uVar9 < fileDatEntryCount; uVar9 = uVar9 + 1) {
+						pCurNodeChunk = pNext;
+						for (uVar12 = uVar9; (pCurNodeChunk->nodeIndex != uVar9 + 1 && (uVar12 < fileDatEntryCount)); uVar12 = uVar12 + 1) {
+							pCurNodeChunk = pCurNodeChunk + 1;
 						}
-						if (puVar8 != puVar10) {
-							uVar12 = *puVar8;
-							uVar13 = puVar8[1];
-							*puVar8 = *puVar10;
-							puVar8[1] = puVar10[1];
-							*puVar10 = uVar12;
-							puVar10[1] = uVar13;
+						if (pCurNodeChunk != pNext) {
+							NodeChunk cachedChunk = *pCurNodeChunk;
+							*pCurNodeChunk = *pNext;
+							*pNext = cachedChunk;
 						}
-						puVar10 = puVar10 + 2;
+						pNext = pNext + 1;
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
+SceneConfig* ed3DSceneGetConfig(ed_3D_Scene* pStaticMeshMaster)
+{
+	SceneConfig* pCVar1;
+
+	pCVar1 = (SceneConfig*)0x0;
+	if (pStaticMeshMaster != (ed_3D_Scene*)0xffffffff) {
+		pCVar1 = &pStaticMeshMaster->sceneConfig;
+	}
+	return pCVar1;
+}
+
+edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData)
+{
+	ed_surface_desc* pVidModeCopy;
+	edSurface* pFrameBuffer;
+	ZBufferTags* pTags;
+	int zBufferFormat;
+
+	pVidModeCopy = (ed_surface_desc*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ed_surface_desc));
+	*pVidModeCopy = *pVidModeData;
+
+	pFrameBuffer = (edSurface*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(edSurface));
+	memset(pFrameBuffer, 0, sizeof(edSurface));
+
+	pFrameBuffer->pSurfaceDesc = pVidModeCopy;
+	pFrameBuffer->pSurfaceDesc->pLink_0xc = pFrameBuffer;
+
+	if (pVidModeData->bUseGlobalFrameBuffer == false) {
+		pFrameBuffer->frameBasePtr = (uint)gFXBufAddr >> 5;
+		pFrameBuffer->data_0xc = (char*)gFXBufAddr;
+	}
+	if ((pVidModeData->flags_0x8 & 8) != 0) {
+		pTags = (ZBufferTags*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(ZBufferTags));
+		pFrameBuffer->pZTags = pTags;
+
+		// TAG
+		pTags->commandBuffer[0].cmdA = SCE_GIF_SET_TAG(
+			2,					// NLOOP
+			SCE_GS_TRUE,		// EOP
+			SCE_GS_FALSE,		// PRE
+			0,					// PRIM
+			SCE_GIF_PACKED,		// FLG
+			1					// NREG
+		);
+		pTags->commandBuffer[0].cmdB = SCE_GIF_PACKED_AD;
+
+		// Z BUFFER
+		zBufferFormat = edSurfaceGetZBufferBpp(pFrameBuffer->pSurfaceDesc->pixelStoreMode);
+		pTags->commandBuffer[1].cmdA = SCE_GS_SET_ZBUF(
+			pFrameBuffer->frameBasePtr,	// ZBP
+			zBufferFormat,				// PSM
+			0							// ZMASK
+		);
+		pTags->commandBuffer[1].cmdB = SCE_GS_ZBUF_1;
+
+		// Z TEST
+		pTags->commandBuffer[2].cmdA = SCE_GS_SET_TEST(
+			0,	// ATE 
+			0,	// ATST
+			0,	// AREF
+			0,	// AFAIL
+			0,	// DATE
+			0,	// DATM
+			1,	// ZTE
+			3	// ZTST
+		);
+		pTags->commandBuffer[2].cmdB = SCE_GS_TEST_1;
+	}
+	pFrameBuffer->pNext = pFrameBuffer;
+	return pFrameBuffer;
+}
+
+void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag)
+{
+	ushort uVar1;
+	ed_3d_hierarchy_node* peVar2;
+	ushort uVar3;
+	edNODE* peVar4;
+	edNODE* peVar5;
+	edNODE* peVar6;
+	edNODE* peVar7;
+	edNODE* peVar8;
+	edNODE* peVar9;
+	edNODE* peVar10;
+	edNODE* pNode_00;
+	uint local_90;
+	uint local_80;
+	uint local_70;
+	uint local_60;
+	uint local_50;
+	uint local_40;
+	uint local_30;
+	uint local_20;
+
+	uVar3 = ~flag;
+	peVar2 = (ed_3d_hierarchy_node*)pNode->pData;
+	uVar1 = (peVar2->base).subMeshParentCount_0xac;
+	(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+	ed3DSetSceneRender(peVar2, 1);
+	peVar8 = pNode->pPrev;
+	for (local_20 = (uint)uVar1; local_20 != 0; local_20 = local_20 - 1) {
+		ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar8->pData, 1);
+		peVar2 = (ed_3d_hierarchy_node*)peVar8->pData;
+		uVar1 = (peVar2->base).subMeshParentCount_0xac;
+		(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+		ed3DSetSceneRender(peVar2, 1);
+		peVar7 = peVar8->pPrev;
+		for (local_30 = (uint)uVar1; local_30 != 0; local_30 = local_30 - 1) {
+			ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar7->pData, 1);
+			peVar2 = (ed_3d_hierarchy_node*)peVar7->pData;
+			uVar1 = (peVar2->base).subMeshParentCount_0xac;
+			(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+			ed3DSetSceneRender(peVar2, 1);
+			peVar6 = peVar7->pPrev;
+			for (local_40 = (uint)uVar1; local_40 != 0; local_40 = local_40 - 1) {
+				ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar6->pData, 1);
+				peVar2 = (ed_3d_hierarchy_node*)peVar6->pData;
+				uVar1 = (peVar2->base).subMeshParentCount_0xac;
+				(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+				ed3DSetSceneRender(peVar2, 1);
+				peVar5 = peVar6->pPrev;
+				for (local_50 = (uint)uVar1; local_50 != 0; local_50 = local_50 - 1) {
+					ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar5->pData, 1);
+					peVar2 = (ed_3d_hierarchy_node*)peVar5->pData;
+					uVar1 = (peVar2->base).subMeshParentCount_0xac;
+					(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+					ed3DSetSceneRender(peVar2, 1);
+					peVar4 = peVar5->pPrev;
+					for (local_60 = (uint)uVar1; local_60 != 0; local_60 = local_60 - 1) {
+						ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar4->pData, 1);
+						peVar2 = (ed_3d_hierarchy_node*)peVar4->pData;
+						uVar1 = (peVar2->base).subMeshParentCount_0xac;
+						(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+						ed3DSetSceneRender(peVar2, 1);
+						peVar9 = peVar4->pPrev;
+						for (local_70 = (uint)uVar1; local_70 != 0; local_70 = local_70 - 1) {
+							ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar9->pData, 1);
+							peVar2 = (ed_3d_hierarchy_node*)peVar9->pData;
+							uVar1 = (peVar2->base).subMeshParentCount_0xac;
+							(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+							ed3DSetSceneRender(peVar2, 1);
+							peVar10 = peVar9->pPrev;
+							for (local_80 = (uint)uVar1; local_80 != 0; local_80 = local_80 - 1) {
+								ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar10->pData, 1);
+								peVar2 = (ed_3d_hierarchy_node*)peVar10->pData;
+								uVar1 = (peVar2->base).subMeshParentCount_0xac;
+								(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e & uVar3;
+								ed3DSetSceneRender(peVar2, 1);
+								pNode_00 = peVar10->pPrev;
+								for (local_90 = (uint)uVar1; local_90 != 0; local_90 = local_90 - 1) {
+									ed3DSetSceneRender((ed_3d_hierarchy_node*)pNode_00->pData, 1);
+									ed3DHierarchyNodeClrFlag(pNode_00, flag);
+									pNode_00 = pNode_00->pPrev;
+								}
+								peVar10 = peVar10->pPrev;
+							}
+							peVar9 = peVar9->pPrev;
+						}
+						peVar4 = peVar4->pPrev;
+					}
+					peVar5 = peVar5->pPrev;
+				}
+				peVar6 = peVar6->pPrev;
+			}
+			peVar7 = peVar7->pPrev;
+		}
+		peVar8 = peVar8->pPrev;
+	}
+	return;
+}
+
+void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag)
+{
+	ushort uVar1;
+	ed_3d_hierarchy_node* peVar2;
+	edNODE* peVar3;
+	edNODE* peVar4;
+	edNODE* peVar5;
+	edNODE* peVar6;
+	edNODE* peVar7;
+	edNODE* peVar8;
+	edNODE* peVar9;
+	edNODE* pNode_00;
+	uint local_80;
+	uint local_70;
+	uint local_60;
+	uint local_50;
+	uint local_40;
+	uint local_30;
+	uint local_20;
+	uint local_10;
+
+	peVar2 = (ed_3d_hierarchy_node*)pNode->pData;
+	uVar1 = (peVar2->base).subMeshParentCount_0xac;
+	(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+	ed3DSetSceneRender(peVar2, 1);
+	peVar7 = pNode->pPrev;
+	for (local_10 = (uint)uVar1; local_10 != 0; local_10 = local_10 - 1) {
+		ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar7->pData, 1);
+		peVar2 = (ed_3d_hierarchy_node*)peVar7->pData;
+		uVar1 = (peVar2->base).subMeshParentCount_0xac;
+		(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+		ed3DSetSceneRender(peVar2, 1);
+		peVar6 = peVar7->pPrev;
+		for (local_20 = (uint)uVar1; local_20 != 0; local_20 = local_20 - 1) {
+			ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar6->pData, 1);
+			peVar2 = (ed_3d_hierarchy_node*)peVar6->pData;
+			uVar1 = (peVar2->base).subMeshParentCount_0xac;
+			(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+			ed3DSetSceneRender(peVar2, 1);
+			peVar5 = peVar6->pPrev;
+			for (local_30 = (uint)uVar1; local_30 != 0; local_30 = local_30 - 1) {
+				ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar5->pData, 1);
+				peVar2 = (ed_3d_hierarchy_node*)peVar5->pData;
+				uVar1 = (peVar2->base).subMeshParentCount_0xac;
+				(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+				ed3DSetSceneRender(peVar2, 1);
+				peVar4 = peVar5->pPrev;
+				for (local_40 = (uint)uVar1; local_40 != 0; local_40 = local_40 - 1) {
+					ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar4->pData, 1);
+					peVar2 = (ed_3d_hierarchy_node*)peVar4->pData;
+					uVar1 = (peVar2->base).subMeshParentCount_0xac;
+					(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+					ed3DSetSceneRender(peVar2, 1);
+					peVar3 = peVar4->pPrev;
+					for (local_50 = (uint)uVar1; local_50 != 0; local_50 = local_50 - 1) {
+						ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar3->pData, 1);
+						peVar2 = (ed_3d_hierarchy_node*)peVar3->pData;
+						uVar1 = (peVar2->base).subMeshParentCount_0xac;
+						(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+						ed3DSetSceneRender(peVar2, 1);
+						peVar8 = peVar3->pPrev;
+						for (local_60 = (uint)uVar1; local_60 != 0; local_60 = local_60 - 1) {
+							ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar8->pData, 1);
+							peVar2 = (ed_3d_hierarchy_node*)peVar8->pData;
+							uVar1 = (peVar2->base).subMeshParentCount_0xac;
+							(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+							ed3DSetSceneRender(peVar2, 1);
+							peVar9 = peVar8->pPrev;
+							for (local_70 = (uint)uVar1; local_70 != 0; local_70 = local_70 - 1) {
+								ed3DSetSceneRender((ed_3d_hierarchy_node*)peVar9->pData, 1);
+								peVar2 = (ed_3d_hierarchy_node*)peVar9->pData;
+								uVar1 = (peVar2->base).subMeshParentCount_0xac;
+								(peVar2->base).flags_0x9e = (peVar2->base).flags_0x9e | flag;
+								ed3DSetSceneRender(peVar2, 1);
+								pNode_00 = peVar9->pPrev;
+								for (local_80 = (uint)uVar1; local_80 != 0; local_80 = local_80 - 1) {
+									ed3DSetSceneRender((ed_3d_hierarchy_node*)pNode_00->pData, 1);
+									ed3DHierarchyNodeSetFlag(pNode_00, flag);
+									pNode_00 = pNode_00->pPrev;
+								}
+								peVar9 = peVar9->pPrev;
+							}
+							peVar8 = peVar8->pPrev;
+						}
+						peVar3 = peVar3->pPrev;
+					}
+					peVar4 = peVar4->pPrev;
+				}
+				peVar5 = peVar5->pPrev;
+			}
+			peVar6 = peVar6->pPrev;
+		}
+		peVar7 = peVar7->pPrev;
+	}
+	return;
+}
+
+void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, int param_5)
+{
+	MeshData_ANHR* pMVar1;
+	uint uVar2;
+	edNODE* pNode;
+	float fVar3;
+	CCameraManager* pCVar4;
+	//edAnmSkeleton eVar5;
+	bool bVar6;
+	SceneConfig* pSVar7;
+	uint uVar8;
+	edF32MATRIX4* m0;
+	edF32MATRIX4* peVar9;
+	byte bVar10;
+	edF32MATRIX4* pMatrix;
+	int* piVar11;
+	uint uVar12;
+	ANHR_Internal* pAVar13;
+	float fVar14;
+	float fVar15;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	//edAnmSkeleton local_8;
+	float local_4;
+	ANHR_Internal* peVar3;
+
+	pCVar4 = CCameraManager::_gThis;
+	if (this->pThis != (MeshData_ANHR*)0x0) {
+		if (param_2 == 0.0) {
+			pSVar7 = ed3DSceneGetConfig(Scene::_scene_handleA);
+			param_2 = pSVar7->clipValue_0x4;
+		}
+		pMVar1 = this->pThis;
+		uVar2 = pMVar1->otherEntryCount;
+		for (uVar12 = 0; uVar12 < uVar2; uVar12 = uVar12 + 1) {
+			int* pNext = (int*)(pMVar1 + 1);
+			ANHR_Internal* peVar3 = (ANHR_Internal*)LOAD_SECTION(pNext[uVar12]);
+			pNode = (edNODE*)LOAD_SECTION(peVar3->pHierNode);
+			if (pNode != (edNODE*)0x0) {
+				local_4 = 0.0f;
+				local_20.x = peVar3->field_0x10;
+				local_20.y = peVar3->field_0x14;
+				local_20.z = peVar3->field_0x18;
+				fVar14 = 0.0f;
+				bVar6 = false;
+				local_20.w = 1.0f;
+
+				ed_3d_hierarchy_node* pHierNodeData = (ed_3d_hierarchy_node*)LOAD_SECTION(peVar3->pHierNodeData);
+
+				edF32Matrix4MulF32Vector4Hard(&local_20, &pHierNodeData->base.transformA, &local_20);
+				local_30.xyz = local_20.xyz;
+				local_30.w = peVar3->field_0x1c;
+				if ((peVar3->flags & 0x40000000) == 0) {
+					if ((peVar3->flags & 4) == 0) {
+						if ((param_5 == 0) || (uVar8 = pCVar4->IsSphereVisible(param_2, &local_30, &local_4), uVar8 != 0)) {
+							bVar6 = true;
+						}
+					}
+					else {
+						bVar6 = true;
+					}
+				}
+				if (bVar6) {
+					if ((peVar3->flags & 0x80000000) == 0) {
+						peVar3->flags = peVar3->flags | 0x80000000;
+						ed3DHierarchyNodeClrFlag(pNode, 0x40);
+					}
+
+					struct edAnmSkeletonTag {
+						ushort boneCount;
+					};
+
+					struct edAnmSkeleton {
+						edAnmSkeletonTag* pTag;
+					};
+
+					edAnmSkeleton skeleton = { (edAnmSkeletonTag*)LOAD_SECTION(peVar3->pObbFloat.pObb_Internal) };
+
+					m0 = TheAnimManager.GetMatrixBuffer(skeleton.pTag->boneCount);
+					pHierNodeData->base.pAnimMatrix = m0;
+					pHierNodeData->base.pShadowAnimMatrix = (edF32MATRIX4*)0x0;
+					uVar8 = peVar3->flags & 0x20000000;
+					peVar9 = m0 + skeleton.pTag->boneCount;
+					IMPLEMENTATION_GUARD_LOG(
+					if (uVar8 != 0) {
+						if ((peVar3->field_0x20 & 8) == 0) {
+							uVar8 = (uint)(local_4 < peVar3->field_0x24);
+						}
+						else {
+							if (CActorHero::_gThis == (CActorHero*)0x0) {
+								uVar8 = 0;
+							}
+							else {
+								fVar14 = local_20.x - (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.x;
+								fVar15 = local_20.y - (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.y;
+								fVar3 = local_20.z - (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.z;
+								fVar14 = fVar14 * fVar14 + fVar15 * fVar15 + fVar3 * fVar3;
+								uVar8 = 1;
+								if ((peVar3->field_0x28 <= 0.0) &&
+									(peVar3->field_0x24 * peVar3->field_0x24 <= fVar14)) {
+									uVar8 = 0;
+								}
+							}
+						}
+					}
+
+					);
+
+					// #HACK !!!
+					uVar8 = 0;
+
+					if (uVar8 == 0) {
+						for (; m0 < peVar9; m0 = m0 + 1) {
+							edF32Matrix4SetIdentityHard(m0);
+						}
+					}
+					else {
+						IMPLEMENTATION_GUARD_LOG(
+						bVar10 = 1;
+						fVar15 = peVar3->field_0x28 + param_1 * peVar3->field_0x2c;
+						peVar3->field_0x28 = fVar15;
+						uVar8 = peVar3->field_0x20 & 1;
+						if (peVar3->pHierAnimStream != (S_HIERANM_ANIM*)0x0) {
+							bVar6 = UpdateMatrix(fVar15, this, (edF32MATRIX4*)peVar3->pHierNodeData, peVar3->pHierAnimStream, uVar8);
+							bVar10 = bVar6 & 1;
+						}
+						eVar5 = skeleton;
+						edF32Matrix4SetIdentityHard(m0);
+						piVar11 = (int*)((int)eVar5 + 8);
+						pAVar13 = peVar3 + 1;
+						pMatrix = m0;
+						while (pMatrix = pMatrix + 1, pMatrix < peVar9) {
+							bVar6 = UpdateMatrix(fVar15, this, pMatrix, (S_HIERANM_ANIM*)pAVar13->pHierNodeData, uVar8);
+							bVar10 = bVar10 & bVar6;
+							if (0 < *piVar11) {
+								edF32Matrix4MulF32Matrix4Hard(pMatrix, pMatrix, m0 + *piVar11);
+							}
+							pAVar13 = (ANHR_Internal*)&pAVar13->pHierAnimStream;
+							piVar11 = piVar11 + 1;
+						}
+						skeleton.ApplyInvSkin(m0);
+						if (bVar10 != 0) {
+							if ((peVar3->field_0x20 & 2) != 0) {
+								peVar3->field_0x20 = peVar3->field_0x20 | 0x40000000;
+								ed3DHierarchyNodeSetFlag(pNode, 0x40);
+							}
+							if (((peVar3->field_0x20 & 0x11) == 0) &&
+								(((peVar3->field_0x20 & 8) == 0 ||
+									(*(float*)&peVar3->field_0x24 * *(float*)&peVar3->field_0x24 < fVar14)))) {
+								peVar3->field_0x28 = 0.0;
+							}
+						})
+					}
+				}
+				else {
+					if (((long)(int)peVar3->flags & 0xffffffff80000000U) != 0) {
+						peVar3->flags = (uint)((ulong)((long)(int)peVar3->flags << 0x21) >> 0x21);
+						ed3DHierarchyNodeSetFlag(pNode, 0x40);
 					}
 				}
 			}
@@ -9840,7 +10978,7 @@ edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d
 		pNewNode = (edNODE*)0x0;
 	}
 	else {
-		pNewNode = ed3DHierarchyAddNode(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(pChunck + 1), (ed_g3d_hierarchy*)0x0);
+		pNewNode = ed3DHierarchyAddNode(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(pChunck + 1), (ed_3d_hierarchy*)0x0);
 		ed3DHierarchyAddSonsToList(pList, pHierNode, pNode, pChunck, pNewNode, (ed_hash_code*)(pcVar1 + 2), (uVar1 & 0xffff) - 1);
 		ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 	}
@@ -9932,6 +11070,96 @@ ed_g3d_hierarchy* ed3DG3DHierarchyGetFromIndex(ed_g3d_manager* pMeshInfo, int co
 	return (ed_g3d_hierarchy*)(pLoaded + 0x10);
 }
 
+void ed3DObjectSetStripShadowCast(ed_hash_code* pHash, ushort flag, uint bApply)
+{
+	int iVar1;
+	ed_3d_strip* peVar2;
+
+	MeshData_OBJ* pObj = (MeshData_OBJ*)LOAD_SECTION(pHash->pData);
+
+	peVar2 = (ed_3d_strip*)LOAD_SECTION(pObj->p3DStrip);
+	if (peVar2 != (ed_3d_strip*)0x0) {
+		iVar1 = pObj->count_0x14;
+		if (bApply == 0) {
+			for (; iVar1 != 0; iVar1 = iVar1 + -1) {
+				peVar2->shadowFlags = peVar2->shadowFlags & ~flag;
+				peVar2 = (ed_3d_strip*)LOAD_SECTION(peVar2->pNext);
+			}
+		}
+		else {
+			for (; iVar1 != 0; iVar1 = iVar1 + -1) {
+				peVar2->shadowFlags = peVar2->shadowFlags | flag;
+				peVar2 = (ed_3d_strip*)LOAD_SECTION(peVar2->pNext);
+			}
+		}
+	}
+	return;
+}
+
+void ed3DG3DHierarchyNodeSetAndClrStripFlag(ed_g3d_hierarchy* pHier, ushort flag, byte param_3, uint param_4)
+{
+	short sVar1;
+	ed3DLod* peVar2;
+	float* pfVar3;
+	uint uVar4;
+	ed_hash_code* ppeVar5;
+	uint uVar6;
+
+	if (((pHier->flags_0x9e & 2) != 0) || ((pHier->flags_0x9e & 4) != 0)) {
+		if (param_3 == 0) {
+			pHier->flags_0x9e = pHier->flags_0x9e & 0xfdff;
+		}
+		else {
+			pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
+		}
+	}
+	uVar4 = (int)(char)param_3 & 0xff;
+	uVar6 = 0;
+	do {
+		while (true) {
+			if (pHier->lodCount <= uVar6) {
+				return;
+			}
+
+			ed3DLod* pLod = &pHier->aLods[uVar6];
+
+			sVar1 = pLod->field_0x4;
+			ppeVar5 = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
+			if (((sVar1 != 3) && (sVar1 != 2)) && (sVar1 != 1)) break;
+		LAB_0029f5e0:
+			uVar6 = uVar6 + 1;
+		}
+		if (sVar1 == 0) {
+			if (param_4 == 4) {
+				IMPLEMENTATION_GUARD(
+				ed3DObjectSetStripShadowReceive(ppeVar5, flag, uVar4);)
+			}
+			else {
+				if (param_4 == 2) {
+					if ((pHier->flags_0x9e & 0x100) == 0) {
+						ed3DObjectSetStripShadowCast(ppeVar5, flag, uVar4);
+					}
+					else {
+						IMPLEMENTATION_GUARD(
+						peVar2 = ed3DHierarcGetLOD(pHier, pHier->lodCount - 1);
+						if (peVar2 != (ed3DLod*)0x0) {
+							ed3DObjectSetStripShadowCast(peVar2->pObj, flag, uVar4);
+						})
+					}
+				}
+				else {
+					if (param_4 == 1) {
+						IMPLEMENTATION_GUARD(
+						ed3DObjectSetStripProperty(ppeVar5, flag, uVar4);)
+					}
+				}
+			}
+			goto LAB_0029f5e0;
+		}
+		uVar6 = uVar6 + 1;
+	} while (true);
+}
+
 void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag)
 {
 	ed_g3d_hierarchy* peVar1;
@@ -9949,12 +11177,16 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 
 		if (pChunck->hash == 0x52454948) {
 			while (pChunck->hash == 0x52454948) {
-				IMPLEMENTATION_GUARD(
-				if (peVar2[0x14].pObj != (ed_hash_code*)0x0) {
+				ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(pChunck + 1);
+
+				ed_3d_hierarchy_node* pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
+
+				if (pNode != (ed_3d_hierarchy_node*)0x0) {
+					IMPLEMENTATION_GUARD(
 					peVar1 = (ed_g3d_hierarchy*)(peVar2[0x14].pObj + 1);
 					while (peVar1 != (ed_g3d_hierarchy*)0x0) {
 						if (peVar1 == pHier) {
-							ed3DG3DHierarchyNodeSetAndClrStripFlag((ed_g3d_hierarchy*)(peVar2 + 2), flag, '\x01', 2);
+							ed3DG3DHierarchyNodeSetAndClrStripFlag((ed_g3d_hierarchy*)(peVar2 + 2), flag, 1, 2);
 							break;
 						}
 						if (peVar1->pLinkTransformData == (ed_3d_hierarchy_node*)0x0) {
@@ -9963,12 +11195,280 @@ void ed3DG3DHierarchySetStripShadowCastFlag(ed_g3d_hierarchy* pHier, ushort flag
 						else {
 							peVar1 = (ed_g3d_hierarchy*)&(peVar1->pLinkTransformData->base).transformA.ba;
 						}
-					}
+					})
 				}
-				pChunck = edChunckGetNext((char*)peVar2, (int*)0x0);)
+				pChunck = edChunckGetNext(pChunck, (char*)0x0);
 			}
-			//ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, '\x01', 2);
+			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 2);
 		}
+	}
+	return;
+}
+
+void ed3DSetMeshTransformFlag_002abd80(edNODE* pNode, ushort flag)
+{
+	ed_3d_hierarchy* pMVar1;
+	ushort uVar2;
+	edNODE* peVar3;
+	edNODE* peVar4;
+	edNODE* peVar5;
+	edNODE* peVar6;
+	edNODE* peVar7;
+	edNODE* peVar8;
+	edNODE* peVar9;
+	uint uVar10;
+	edNODE* local_90;
+	uint local_80;
+	uint local_70;
+	uint local_60;
+	uint local_50;
+	uint local_40;
+	uint local_30;
+	uint local_20;
+
+	uVar2 = ~flag;
+	pMVar1 = (ed_3d_hierarchy*)pNode->pData;
+	pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+	peVar7 = pNode->pPrev;
+	for (uVar10 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; uVar10 != 0; uVar10 = uVar10 - 1) {
+		pMVar1 = (ed_3d_hierarchy*)peVar7->pData;
+		pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+		peVar6 = peVar7->pPrev;
+		for (local_20 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_20 != 0; local_20 = local_20 - 1) {
+			pMVar1 = (ed_3d_hierarchy*)peVar6->pData;
+			pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+			peVar5 = peVar6->pPrev;
+			for (local_30 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_30 != 0; local_30 = local_30 - 1) {
+				pMVar1 = (ed_3d_hierarchy*)peVar5->pData;
+				pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+				peVar4 = peVar5->pPrev;
+				for (local_40 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_40 != 0; local_40 = local_40 - 1) {
+					pMVar1 = (ed_3d_hierarchy*)peVar4->pData;
+					pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+					peVar3 = peVar4->pPrev;
+					for (local_50 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_50 != 0; local_50 = local_50 - 1) {
+						pMVar1 = (ed_3d_hierarchy*)peVar3->pData;
+						pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+						peVar8 = peVar3->pPrev;
+						for (local_60 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_60 != 0; local_60 = local_60 - 1) {
+							pMVar1 = (ed_3d_hierarchy*)peVar8->pData;
+							pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+							peVar9 = peVar8->pPrev;
+							for (local_70 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_70 != 0; local_70 = local_70 - 1) {
+								pMVar1 = (ed_3d_hierarchy*)peVar9->pData;
+								pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
+								local_90 = peVar9->pPrev;
+								for (local_80 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_80 != 0; local_80 = local_80 - 1) {
+									ed3DSetMeshTransformFlag_002abd80(local_90, flag);
+									local_90 = local_90->pPrev;
+								}
+								peVar9 = peVar9->pPrev;
+							}
+							peVar8 = peVar8->pPrev;
+						}
+						peVar3 = peVar3->pPrev;
+					}
+					peVar4 = peVar4->pPrev;
+				}
+				peVar5 = peVar5->pPrev;
+			}
+			peVar6 = peVar6->pPrev;
+		}
+		peVar7 = peVar7->pPrev;
+	}
+	return;
+}
+
+void ed3DSetMeshTransformFlag_002abff0(edNODE* pNode, ushort flag)
+{
+	ed_3d_hierarchy* pMVar1;
+	edNODE* peVar2;
+	edNODE* peVar3;
+	edNODE* peVar4;
+	edNODE* peVar5;
+	edNODE* peVar6;
+	edNODE* peVar7;
+	edNODE* peVar8;
+	uint uVar9;
+	edNODE* local_80;
+	uint local_70;
+	uint local_60;
+	uint local_50;
+	uint local_40;
+	uint local_30;
+	uint local_20;
+	uint local_10;
+
+	pMVar1 = (ed_3d_hierarchy*)pNode->pData;
+	pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+	peVar6 = pNode->pPrev;
+	for (uVar9 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; uVar9 != 0; uVar9 = uVar9 - 1) {
+		pMVar1 = (ed_3d_hierarchy*)peVar6->pData;
+		pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+		peVar5 = peVar6->pPrev;
+		for (local_10 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_10 != 0; local_10 = local_10 - 1) {
+			pMVar1 = (ed_3d_hierarchy*)peVar5->pData;
+			pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+			peVar4 = peVar5->pPrev;
+			for (local_20 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_20 != 0; local_20 = local_20 - 1) {
+				pMVar1 = (ed_3d_hierarchy*)peVar4->pData;
+				pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+				peVar3 = peVar4->pPrev;
+				for (local_30 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_30 != 0; local_30 = local_30 - 1) {
+					pMVar1 = (ed_3d_hierarchy*)peVar3->pData;
+					pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+					peVar2 = peVar3->pPrev;
+					for (local_40 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_40 != 0; local_40 = local_40 - 1) {
+						pMVar1 = (ed_3d_hierarchy*)peVar2->pData;
+						pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+						peVar7 = peVar2->pPrev;
+						for (local_50 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_50 != 0; local_50 = local_50 - 1) {
+							pMVar1 = (ed_3d_hierarchy*)peVar7->pData;
+							pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+							peVar8 = peVar7->pPrev;
+							for (local_60 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_60 != 0; local_60 = local_60 - 1) {
+								pMVar1 = (ed_3d_hierarchy*)peVar8->pData;
+								pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
+								local_80 = peVar8->pPrev;
+								for (local_70 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_70 != 0; local_70 = local_70 - 1) {
+									ed3DSetMeshTransformFlag_002abff0(local_80, flag);
+									local_80 = local_80->pPrev;
+								}
+								peVar8 = peVar8->pPrev;
+							}
+							peVar7 = peVar7->pPrev;
+						}
+						peVar2 = peVar2->pPrev;
+					}
+					peVar3 = peVar3->pPrev;
+				}
+				peVar4 = peVar4->pPrev;
+			}
+			peVar5 = peVar5->pPrev;
+		}
+		peVar6 = peVar6->pPrev;
+	}
+	return;
+}
+
+void ed3DHierarchySetSetup(ed_3d_hierarchy* pHier, ed_3d_hierarchy_setup* pHierarchySetup)
+{
+	if (pHierarchySetup == (ed_3d_hierarchy_setup*)0x0) {
+		pHier->pHierarchySetup = (ed_3d_hierarchy_setup*)0x0;
+		pHier->flags_0x9e = pHier->flags_0x9e & 0xffef;
+	}
+	else {
+		pHier->pHierarchySetup = pHierarchySetup;
+		pHier->flags_0x9e = pHier->flags_0x9e | 0x10;
+	}
+
+	ED3D_LOG(LogLevel::Info, "ed3DHierarchySetSetup new flags: 0x%x pHierarchySetup: %p", pHier->flags_0x9e, pHier->pHierarchySetup);
+
+	return;
+}
+
+edNODE* ed3DHierarchyGetChildOrParent_002ac920(edNODE* pNode)
+{
+	ed_3d_hierarchy* peVar1;
+	edNODE* pReturnVal;
+	edNODE* peVar2;
+
+	while (peVar2 = pNode, peVar2 != (edNODE*)0x0) {
+		ed_3d_hierarchy* pHier = (ed_3d_hierarchy*)peVar2->pData;
+		peVar1 = pHier->pLinkTransformData;
+		pNode = (edNODE*)0x0;
+		pReturnVal = peVar2;
+		if (peVar1 != (ed_3d_hierarchy*)0x0) {
+			for (; pNode = peVar2, peVar2->pData != peVar1; peVar2 = peVar2->pNext) {
+			}
+		}
+	}
+	return pReturnVal;
+}
+
+void ed3DHierarchyJoinNodes_002ab840(edNODE* pNodeA, edNODE* pNodeB, edNODE* pNodeC)
+{
+	edNODE* peVar1;
+
+	peVar1 = pNodeC->pNext;
+	if (pNodeC != pNodeA) {
+		pNodeA->pNext->pPrev = pNodeB->pPrev;
+		pNodeB->pPrev->pNext = pNodeA->pNext;
+		pNodeA->pNext = peVar1;
+		pNodeB->pPrev = pNodeC;
+		peVar1->pPrev = pNodeA;
+		pNodeC->pNext = pNodeB;
+	}
+	return;
+}
+
+void ed3DHierarchyResetNode_002ac8b0(edNODE* pNodeA, edNODE* pNodeC)
+{
+	ed_3d_hierarchy* peVar1;
+	edNODE* pNodeB;
+	int iVar2;
+	short sStack2;
+
+	peVar1 = (ed_3d_hierarchy*)pNodeA->pData;
+	peVar1->pLinkTransformData = (ed_3d_hierarchy*)0x0;
+	pNodeB = pNodeA;
+	for (iVar2 = 0; iVar2 < (int)(uint)(ushort)peVar1->subMeshParentCount_0xac; iVar2 = iVar2 + 1) {
+		pNodeB = pNodeB->pPrev;
+	}
+	ed3DHierarchyJoinNodes_002ab840(pNodeA, pNodeB, pNodeC);
+	ed3DHierarchyRefreshSonNumbers(pNodeC, &sStack2);
+	return;
+}
+
+void ed3DHierarchyNodeUpdateScene(edLIST* pListA, edLIST* pListB, edNODE* pNode)
+{
+	ed_3d_hierarchy* peVar1;
+	edNODE* peVar2;
+	uint uVar3;
+	int iVar4;
+	edNODE* pNodeB;
+
+	peVar2 = ed3DHierarchyGetChildOrParent_002ac920(pNode);
+	if (peVar2 != pNode) {
+		ed3DHierarchyResetNode_002ac8b0(pNode, peVar2);
+	}
+	peVar1 = (ed_3d_hierarchy*)pNode->pData;
+	peVar2 = pListB->pPrev;
+	uVar3 = (uint)(ushort)peVar1->subMeshParentCount_0xac;
+	pNodeB = pNode;
+	for (iVar4 = 0; iVar4 < (int)uVar3; iVar4 = iVar4 + 1) {
+		pNodeB = pNodeB->pPrev;
+	}
+	pListA->nodeCount = pListA->nodeCount - uVar3;
+	pListB->nodeCount = pListB->nodeCount + (uint)(ushort)peVar1->subMeshParentCount_0xac;
+	ed3DHierarchyJoinNodes_002ab840(pNode, pNodeB, peVar2);
+	return;
+}
+
+void ed3DHierarchyNodeSetRenderOn(ed_3D_Scene* pScene, edNODE* pNode)
+{
+	ushort uVar1;
+
+	ed_3d_hierarchy* pHier = (ed_3d_hierarchy*)pNode->pData;
+
+	uVar1 = pHier->flags_0x9e;
+	if ((uVar1 & 1) == 0) {
+		pHier->flags_0x9e = uVar1 | 1;
+		ed3DHierarchyNodeUpdateScene(pScene->pHeirListA, pScene->pHeirListB, pNode);
+	}
+	return;
+}
+
+void ed3DHierarchyNodeSetRenderOff(ed_3D_Scene* pScene, edNODE* pNode)
+{
+	ushort uVar1;
+
+	ed_3d_hierarchy* pHier = (ed_3d_hierarchy*)pNode->pData;
+
+	uVar1 = pHier->flags_0x9e;
+	if ((uVar1 & 1) != 0) {
+		pHier ->flags_0x9e = uVar1 & 0xfffe;
+		ed3DHierarchyNodeUpdateScene(pScene->pHeirListB, pScene->pHeirListA, pNode);
 	}
 	return;
 }

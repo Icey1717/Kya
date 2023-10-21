@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "edMem.h"
 
-class Manager
+class CObjectManager
 {
 public:
 	virtual void Game_Init() {};
@@ -12,6 +12,7 @@ public:
 	virtual void LevelLoading_Begin() {};
 	virtual void LevelLoading_End() {};
 	virtual bool LevelLoading_Manage() { return false; }
+	virtual void Level_ClearAll() {}
 	virtual void LevelLoading_Draw() {};
 	virtual void Level_Install() {};
 	virtual void Level_Init() {};
@@ -21,7 +22,7 @@ public:
 	virtual void Level_ManagePaused() {};
 	virtual void Level_Draw() {};
 
-	virtual void Level_SectorChange(int param_2, int param_3) {}
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
 
 	void* operator new(size_t size)
 	{
@@ -34,12 +35,12 @@ PACK(
 struct ManagerContainer {
 	struct LevelScheduleManager* g_LevelScheduleManager_00451660;
 	struct FileManager3D * g_FileManager3D_00451664;
-	struct AnimManager* g_AnimManager_00451668;
+	struct CAnimationManager* g_AnimManager_00451668;
 	char* g_CinematicManager_0045166c;
 	struct CSectorManager* g_SectorManager_00451670;
 	struct Manager_170* g_Manager170_00451674;
 	struct LocalizationManager* g_LocalizationManager_00451678;
-	struct CameraManager* g_CameraManager_0045167c;
+	struct CCameraManager* g_CameraManager_0045167c;
 	struct FrontendManager* g_FrontendManager_00451680;
 	struct HelpManager* g_HelpManager_00451684;
 	struct PauseManager* g_PauseManager_00451688;
@@ -275,6 +276,8 @@ public:
 	bool LevelLoading_Manage(void);
 	void LevelLoading_Begin(void);
 
+	void Level_SectorChange(int oldSectorId, int newSectorId);
+
 	void HandleCurState();
 
 	static void CreateScene(void);
@@ -289,6 +292,8 @@ public:
 void Game_Init(void);
 void UpdateObjectsMain(void);
 void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK);
+
+ed_3D_Scene* GetStaticMeshMasterA_001031b0(void);
 
 extern byte gbDoMipmap;
 extern uint gMipmapK;
