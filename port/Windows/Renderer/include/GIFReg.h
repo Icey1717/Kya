@@ -66,6 +66,11 @@ namespace GIFReg
 		}
 	};
 
+	struct GSXYOffset {
+		uint32_t X;
+		uint32_t Y;
+	};
+
 	struct GSPrim {
 		uint32_t PRIM;
 		uint32_t IIP;

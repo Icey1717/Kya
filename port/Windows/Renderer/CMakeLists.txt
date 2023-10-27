@@ -38,7 +38,6 @@ set (SOURCES
 	"Vulkan/src/TextureCache.cpp"
 	"Vulkan/src/UniformBuffer.h"
 	"Vulkan/src/UniformBuffer.cpp"
-	"Vulkan/src/GSState.h"
 	"Vulkan/src/GSVector.h"
 	"Vulkan/src/pcsx2/VKBuilders.h"
 	"Vulkan/src/pcsx2/VKBuilders.cpp"
@@ -47,6 +46,7 @@ set (SOURCES
 	"include/renderer.h"
 	"include/GIFReg.h"
 	"include/delegate.h"
+	"include/GSState.h"
 )
 
 add_library(Renderer ${SOURCES})

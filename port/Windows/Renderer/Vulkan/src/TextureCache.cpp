@@ -13,19 +13,7 @@
 
 #define RESTRICT __restrict__
 
-Renderer::TextureData gImageData;
-
 #define LOG_TEXCACHE(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "Texture Cache", fmt, ##__VA_ARGS__);
-
-void Renderer::SetImagePointer(Renderer::TextureData inImage)
-{
-	gImageData = inImage;
-}
-
-const Renderer::TextureData& Renderer::GetImageData()
-{
-	return gImageData;
-}
 
 void Renderer::ImageData::Log(const char* prefix) const
 {
@@ -952,11 +940,11 @@ namespace PS2_Internal {
 }
 
 PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
-	: image(gImageData.image)
-	, paletteImage(gImageData.palettes[createInfo.key.value.CBP])
+	: image(createInfo.textureData.image)
+	, paletteImage(createInfo.textureData.palettes.at(createInfo.key.value.CBP))
 {
-	assert(gImageData.palettes[createInfo.key.value.CBP].canvasWidth);
-	assert(gImageData.palettes[createInfo.key.value.CBP].canvasHeight);
+	assert(createInfo.textureData.palettes.at(createInfo.key.value.CBP).canvasWidth);
+	assert(createInfo.textureData.palettes.at(createInfo.key.value.CBP).canvasHeight);
 
 	CreateResources();
 	UploadImage();
@@ -1300,17 +1288,17 @@ namespace PS2_Internal {
 	PS2::TextureCache gTextureCache;
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Create(const GIFReg::GSTex& TEX)
+PS2::GSTexEntry& PS2::TextureCache::Create(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palettes[TEX.CBP].pImage);
-	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key);
+	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, textureData.image.pImage, textureData.palettes[TEX.CBP].pImage);
+	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key, textureData);
 	texcache.emplace_back(GSTexEntry(createInfo));
 	return texcache.back();
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX)
+PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, gImageData.image.pImage, gImageData.palettes[TEX.CBP].pImage);
+	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, textureData.image.pImage, textureData.palettes[TEX.CBP].pImage);
 
 	for (auto& entry : texcache) {
 		if (entry == key) {
@@ -1318,7 +1306,7 @@ PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX)
 		}
 	}
 
-	return Create(TEX);
+	return Create(TEX, textureData);
 }
 
 PS2::TextureCache& PS2::GetTextureCache()

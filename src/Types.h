@@ -330,7 +330,7 @@ union alignas(16)
 
 #ifdef PLATFORM_WIN
 #ifdef _DEBUG
-#define ENABLE_MY_LOG
+//#define ENABLE_MY_LOG
 #endif
 #else
 //#define ENABLE_MY_LOG

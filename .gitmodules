@@ -10,3 +10,9 @@
 [submodule "port/Job/thread-pool"]
 	path = port/Job/thread-pool
 	url = https://github.com/bshoshany/thread-pool.git
+[submodule "port/Pool/recycle"]
+	path = port/Pool/recycle
+	url = https://github.com/steinwurf/recycle.git
+[submodule "port/Log/spdlog"]
+	path = port/Log/spdlog
+	url = https://github.com/gabime/spdlog.git

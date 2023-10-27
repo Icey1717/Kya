@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "renderer.h"
 #include "GIFReg.h"
 
 namespace PS2 {
@@ -52,6 +51,11 @@ namespace PS2 {
 			this->Q = Q;
 		}
 
+		inline void SetXYOffset(uint32_t X, uint32_t Y) {
+			this->XY.X = X;
+			this->XY.Y = Y;
+		}
+
 		uint8_t R;
 		uint8_t G;
 		uint8_t B;
@@ -85,6 +89,7 @@ namespace PS2 {
 		GIFReg::GSPabe PABE;
 		GIFReg::GSFrame FRAME;
 		GIFReg::GSTex TEX;
+		GIFReg::GSXYOffset XY;
 
 		bool bTexSet = false;
 

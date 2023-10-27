@@ -30,7 +30,7 @@ void PS2::ResetBuffer()
 
 void PS2::CreateVertexUniformBuffers() {
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		PS2_Internal::vertexBuffers.emplace_back(Renderer::VertexIndexBufferSize, Renderer::VertexIndexBufferSize);
+		PS2_Internal::vertexBuffers.emplace_back(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 	}
 }
 

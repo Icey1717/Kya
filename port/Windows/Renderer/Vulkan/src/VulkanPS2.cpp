@@ -56,18 +56,12 @@ namespace Renderer {
 		PS2::GetPipelines().clear();
 	}
 
-	DrawBuffer m_drawBuffer;
+	DrawBuffer gDrawBuffer;
+	TextureData gImageData;
 
 	void ResetVertIndexBuffers()
 	{
-		assert(m_drawBuffer.index.tail == 0 || m_drawBuffer.index.buff[m_drawBuffer.index.tail - 1] + 1 == m_drawBuffer.vertex.next);
-
-		if (m_drawBuffer.index.tail == 0)
-		{
-			m_drawBuffer.vertex.next = 0;
-		}
-
-		m_drawBuffer.vertex.head = m_drawBuffer.vertex.tail = m_drawBuffer.vertex.next; // remove unused vertices from the end of the vertex buffer
+		gDrawBuffer.Reset();
 	}
 
 	enum GS_PRIM
@@ -90,9 +84,6 @@ namespace Renderer {
 		GS_SPRITE_CLASS = 3,
 		GS_INVALID_CLASS = 7,
 	};
-
-	uint32_t OFX = 0;
-	uint32_t OFY = 0;
 
 	uint32_t Skip = 0;
 
@@ -117,8 +108,7 @@ namespace Renderer {
 
 	void SetXY(uint32_t x, uint32_t y)
 	{
-		OFX = x;
-		OFY = y;
+		PS2::GetGSState().SetXYOffset(x, y);
 	}
 
 	void SetST(float s, float t)
@@ -149,8 +139,14 @@ namespace Renderer {
 		PS2::GetGSState().TEST = NewTest;
 	}
 
-	void SetPrim(GIFReg::PrimPacked prim) {
-		ResetVertIndexBuffers();
+	void SetPrim(GIFReg::PrimPacked prim, DrawBuffer* pDrawBuffer /*= nullptr*/) {
+		if (!pDrawBuffer) {
+			ResetVertIndexBuffers();
+		}
+		else {
+			pDrawBuffer->Reset();
+		}
+
 		PS2::GetGSState().PRIM = { prim.PRIM, prim.IIP, prim.TME, prim.FGE, prim.ABE, prim.AA1, prim.FST, prim.CTXT, prim.FIX };
 	}
 
@@ -183,12 +179,12 @@ namespace Renderer {
 
 	DrawBuffer& GetDefaultDrawBuffer()
 	{
-		return m_drawBuffer;
+		return gDrawBuffer;
 	}
 
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z)
 	{
-		KickVertex(PS2_Internal::MakeVertex(x, y, z), PS2::GetGSState().PRIM, Skip, m_drawBuffer);
+		KickVertex(PS2_Internal::MakeVertex(x, y, z), PS2::GetGSState().PRIM, Skip, gDrawBuffer);
 	}
 
 	void KickVertex(const GSVertex& vtx, GIFReg::GSPrim primReg, uint32_t skip, DrawBuffer& drawBuffer)
@@ -206,6 +202,9 @@ namespace Renderer {
 		size_t xy_tail = drawBuffer.vertex.xy_tail;
 
 		drawBuffer.vertex.buff[drawBuffer.vertex.tail] = vtx;
+
+		uint32_t OFX = PS2::GetGSState().XY.X;
+		uint32_t OFY = PS2::GetGSState().XY.Y;
 
 		GSVector4i m_ofxy = GSVector4i(
 			0x8000,
@@ -543,41 +542,41 @@ namespace PS2
 {
 	GSHWDrawConfig m_conf = {};
 
-	void EmulateAtst(const int pass, PS2::GSTexImage& tex)
+	void EmulateAtst(const int pass, GSTexImage& tex, const GSState& state)
 	{
 		PSConstantBuffer& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
 
 		static const uint32_t inverted_atst[] = { ATST_ALWAYS, ATST_NEVER, ATST_GEQUAL, ATST_GREATER, ATST_NOTEQUAL, ATST_LESS, ATST_LEQUAL, ATST_EQUAL };
-		int atst = (pass == 2) ? inverted_atst[GetGSState().TEST.ATST] : GetGSState().TEST.ATST;
+		int atst = (pass == 2) ? inverted_atst[state.TEST.ATST] : state.TEST.ATST;
 
-		if (!GetGSState().TEST.ATE) return;
+		if (!state.TEST.ATE) return;
 
 		switch (atst)
 		{
 		case ATST_LESS:
-			ps_cb.FogColor_AREF.a = (float)GetGSState().TEST.AREF - 0.1f;
+			ps_cb.FogColor_AREF.a = (float)state.TEST.AREF - 0.1f;
 			m_conf.ps.atst = 1;
 			break;
 		case ATST_LEQUAL:
-			ps_cb.FogColor_AREF.a = (float)GetGSState().TEST.AREF - 0.1f + 1.0f;
+			ps_cb.FogColor_AREF.a = (float)state.TEST.AREF - 0.1f + 1.0f;
 			m_conf.ps.atst = 1;
 			break;
 		case ATST_GEQUAL:
 			// Maybe a -1 trick multiplication factor could be used to merge with ATST_LEQUAL case
-			ps_cb.FogColor_AREF.a = (float)GetGSState().TEST.AREF - 0.1f;
+			ps_cb.FogColor_AREF.a = (float)state.TEST.AREF - 0.1f;
 			m_conf.ps.atst = 2;
 			break;
 		case ATST_GREATER:
 			// Maybe a -1 trick multiplication factor could be used to merge with ATST_LESS case
-			ps_cb.FogColor_AREF.a = (float)GetGSState().TEST.AREF - 0.1f + 1.0f;
+			ps_cb.FogColor_AREF.a = (float)state.TEST.AREF - 0.1f + 1.0f;
 			m_conf.ps.atst = 2;
 			break;
 		case ATST_EQUAL:
-			ps_cb.FogColor_AREF.a = (float)GetGSState().TEST.AREF;
+			ps_cb.FogColor_AREF.a = (float)state.TEST.AREF;
 			m_conf.ps.atst = 3;
 			break;
 		case ATST_NOTEQUAL:
-			ps_cb.FogColor_AREF.a = (float)GetGSState().TEST.AREF;
+			ps_cb.FogColor_AREF.a = (float)state.TEST.AREF;
 			m_conf.ps.atst = 4;
 			break;
 
@@ -598,9 +597,8 @@ namespace PS2
 		TFX_NONE = 4,
 	};
 
-	void EmulateTextureSampler(PS2::GSTexImage& tex)
+	void EmulateTextureSampler(PS2::GSTexImage& tex, const GSState& state)
 	{
-		auto& state = PS2::GetGSState();
 		auto& vs_cb = tex.constantBuffer.GetVertexConstantBufferData();
 		auto& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
 
@@ -939,9 +937,9 @@ namespace PS2
 
 	bool m_sw_blending = false;
 
-	bool IsCoverageAlpha(Renderer::GS_PRIM_CLASS primclass)
+	bool IsCoverageAlpha(Renderer::GS_PRIM_CLASS primclass, const GSState& state)
 	{
-		auto PRIM = PS2::GetGSState().PRIM;
+		auto PRIM = state.PRIM;
 		return !PRIM.ABE && PRIM.AA1 && (primclass == Renderer::GS_LINE_CLASS || primclass == Renderer::GS_TRIANGLE_CLASS);
 	}
 
@@ -1007,15 +1005,15 @@ namespace PS2
 #define GL_INS(...)
 #define GL_PERF(...)
 
-	void EmulateBlending_Simple(Renderer::GS_PRIM_CLASS primclass, PS2::GSTexImage& tex)
+	void EmulateBlending_Simple(Renderer::GS_PRIM_CLASS primclass, GSTexImage& tex, const GSState& state)
 	{
 		PSConstantBuffer& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
 
 		// Partial port of OGL SW blending. Currently only works for accumulation blend.
-		auto ALPHA = PS2::GetGSState().ALPHA;
-		auto PRIM = PS2::GetGSState().PRIM;
-		auto PABE = PS2::GetGSState().PABE;
-		const GIFReg::GSColClamp& COLCLAMP = PS2::GetGSState().COLCLAMP;
+		auto ALPHA = state.ALPHA;
+		auto PRIM = state.PRIM;
+		auto PABE = state.PABE;
+		const GIFReg::GSColClamp& COLCLAMP = state.COLCLAMP;
 		bool sw_blending = false;
 
 		// No blending so early exit
@@ -1148,11 +1146,11 @@ namespace PS2
 		}
 	}
 
-	void EmulateBlending_Complex(int rt_alpha_min, int rt_alpha_max, bool& DATE_PRIMID, bool& DATE_BARRIER, bool& blending_alpha_pass, Renderer::GS_PRIM_CLASS primclass)
+	void EmulateBlending_Complex(int rt_alpha_min, int rt_alpha_max, bool& DATE_PRIMID, bool& DATE_BARRIER, bool& blending_alpha_pass, Renderer::GS_PRIM_CLASS primclass, const GSState& state)
 	{
-		auto PRIM = PS2::GetGSState().PRIM;
-		auto PABE = PS2::GetGSState().PABE;
-		auto FRAME = PS2::GetGSState().FRAME;
+		auto PRIM = state.PRIM;
+		auto PABE = state.PABE;
+		auto FRAME = state.FRAME;
 
 		{
 			// AA1: Don't enable blending on AA1, not yet implemented on hardware mode,
@@ -1179,8 +1177,8 @@ namespace PS2
 		features.texture_barrier = true;
 		features.dual_source_blend = false;
 
-		const GIFReg::GSAlpha& ALPHA = PS2::GetGSState().ALPHA;
-		const GIFReg::GSColClamp& COLCLAMP = PS2::GetGSState().COLCLAMP;
+		const GIFReg::GSAlpha& ALPHA = state.ALPHA;
+		const GIFReg::GSColClamp& COLCLAMP = state.COLCLAMP;
 		// AFIX: Afix factor.
 		uint8_t AFIX = ALPHA.FIX;
 
@@ -1202,7 +1200,7 @@ namespace PS2
 
 		// When AA1 is enabled and Alpha Blending is disabled, alpha blending done with coverage instead of alpha.
 		// We use a COV value of 128 (full coverage) in triangles (except the edge geometry, which we can't do easily).
-		if (IsCoverageAlpha(primclass))
+		if (IsCoverageAlpha(primclass, state))
 		{
 			m_conf.ps.fixed_one_a = 1;
 			m_conf.ps.blend_c = 0;
@@ -1834,11 +1832,19 @@ namespace PipelineDebug
 	};
 }
 
-void Renderer::Draw() {
-	Draw(m_drawBuffer);
+void Renderer::SetImagePointer(Renderer::TextureData inImage) {
+	gImageData = inImage;
 }
 
-void Renderer::Draw(DrawBuffer& drawBuffer) {
+Renderer::TextureData& Renderer::GetImagePointer() {
+	return gImageData;
+}
+
+void Renderer::Draw() {
+	Draw(gDrawBuffer, gImageData, PS2::GetGSState());
+}
+
+void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSState& state) {
 	if (drawBuffer.index.tail == 0) {
 		return;
 	}
@@ -1847,8 +1853,6 @@ void Renderer::Draw(DrawBuffer& drawBuffer) {
 
 	g_GSSelector.ResetStates();
 	PS2::m_conf.ps = GSHWDrawConfig::PSSelector();
-
-	PS2::GSState& state = PS2::GetGSState();
 
 	const bool unscale_pt_ln = false;
 
@@ -1892,7 +1896,7 @@ void Renderer::Draw(DrawBuffer& drawBuffer) {
 	g_GSSelector.prim = primclass;
 
 	LogTex("Lookup", state.TEX);
-	PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX);
+	PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, textureData);
 
 	// Blend
 	int blend_alpha_min = 0, blend_alpha_max = 255;
@@ -1903,10 +1907,10 @@ void Renderer::Draw(DrawBuffer& drawBuffer) {
 	if ((!state.IsOpaque() || state.ALPHA.IsBlack()) /* && rt */ && (PS2::m_conf.colormask.wrgba & 0x7))
 	{
 		if (PS2_Internal::bUseComplexBlending) {
-			PS2::EmulateBlending_Complex(blend_alpha_min, blend_alpha_max, DATE_PRIMID, DATE_BARRIER, blending_alpha_pass, primclass);
+			PS2::EmulateBlending_Complex(blend_alpha_min, blend_alpha_max, DATE_PRIMID, DATE_BARRIER, blending_alpha_pass, primclass, state);
 		}
 		else {
-			PS2::EmulateBlending_Simple(primclass, tex.value.image);
+			PS2::EmulateBlending_Simple(primclass, tex.value.image, state);
 		}
 	}
 	else
@@ -1915,10 +1919,10 @@ void Renderer::Draw(DrawBuffer& drawBuffer) {
 		PS2::m_conf.ps.no_color1 = true;
 	}
 
-	PS2::EmulateAtst(1, tex.value.image);
+	PS2::EmulateAtst(1, tex.value.image, state);
 
 	if (state.bTexSet) {
-		PS2::EmulateTextureSampler(tex.value.image);
+		PS2::EmulateTextureSampler(tex.value.image, state);
 	}
 	else {
 		tex.value.image.UpdateSampler();
@@ -2010,8 +2014,8 @@ void Renderer::Draw(DrawBuffer& drawBuffer) {
 		{
 			float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
 			float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
-			float ox = OFX;
-			float oy = OFY;
+			float ox = state.XY.X;
+			float oy = state.XY.Y;
 			float ox2 = -1.0f / GetRTSize().x;
 			float oy2 = -1.0f / GetRTSize().y;
 
@@ -2062,6 +2066,18 @@ Renderer::DrawBuffer::~DrawBuffer()
 	_aligned_free(vertex.buff);
 	_aligned_free(index.buff);
 	vertex.maxcount = Renderer::VertexIndexBufferSize;
+}
+
+void Renderer::DrawBuffer::Reset()
+{
+	assert(index.tail == 0 || index.buff[index.tail - 1] + 1 == vertex.next);
+
+	if (index.tail == 0)
+	{
+		vertex.next = 0;
+	}
+
+	vertex.head = vertex.tail = vertex.next; // remove unused vertices from the end of the vertex buffer
 }
 
 void PS2::Setup()

@@ -1,5 +1,7 @@
 set(TargetName "Log")
 
+add_subdirectory("spdlog")
+
 set(SOURCES 
 	"log.h" 
 )

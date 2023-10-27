@@ -13,6 +13,7 @@ struct UniformBufferObject {
 namespace Renderer {
 	extern bool gHeadless;
 	constexpr int VertexIndexBufferSize = 0x100000;
+	constexpr int VertexIndexBufferSizeGPU = 0x100000;
 }
 
 VkDevice GetDevice();

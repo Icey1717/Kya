@@ -7,6 +7,7 @@ namespace VU1Emu {
 	void SetVifItop(uint newItop);
 	void UpdateMemory(edpkt_data* pVifPkt, edpkt_data* pEnd);
 	bool& GetInterpreterEnabled();
+	bool& GetRunSingleThreaded();
 
 	void QueueDraw();
 

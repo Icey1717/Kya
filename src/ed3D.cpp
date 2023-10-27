@@ -48,8 +48,6 @@
 
 char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 
-bool bHackDoOnce = false;
-
 #ifdef PLATFORM_PS2
 #define RENDER_LABEL_BEGIN(...)
 #define RENDER_LABEL_END(...)
@@ -4241,10 +4239,6 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial pMaterial: %p | pBitmap: %p", pRenderMeshData->pMaterial, pRenderMeshData->pBitmap);
 
-	if (bHackDoOnce) {
-		return;
-	}
-
 	peVar6 = gpPKTDataRefMasPath3;
 	peVar5 = g_GifRefPktCur;
 	peVar3 = g_VifRefPktCur;
@@ -4429,7 +4423,6 @@ void ed3DFlushMaterial(ed_dma_material* pRenderMeshData)
 #ifdef PLATFORM_WIN
 	VU1Emu::QueueDraw();
 #endif
-	//bHackDoOnce = true;
 	return;
 }
 
@@ -7687,8 +7680,6 @@ void ed3DSceneRender(int, int, char*)
 	uint staticMeshMasterFlags;
 
 	RENDER_LABEL_BEGIN("ed3DSceneRender");
-
-	bHackDoOnce = false;
 
 	iVar4 = gIDProfileRender;
 	if (bcalcFrame == false) {

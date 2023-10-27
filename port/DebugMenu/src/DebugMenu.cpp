@@ -247,6 +247,7 @@ namespace DebugMenu_Internal {
 		ImGui::Begin("Rendering", &bShowCutsceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
+		ImGui::Checkbox("Single Threaded", &VU1Emu::GetRunSingleThreaded());
 		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
 			Renderer::ResetRenderer();
 		}

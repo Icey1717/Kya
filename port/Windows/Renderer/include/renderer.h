@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "delegate.h"
 #include "GIFReg.h"
+#include "GSState.h"
 
 // Forward decs for RenderDelegate
 typedef struct VkFramebuffer_T* VkFramebuffer;
@@ -68,6 +69,8 @@ namespace Renderer
 			uint64_t xy[4];
 		};
 
+		void Reset();
+
 		Index index;
 		Vertex vertex;
 	};
@@ -78,7 +81,7 @@ namespace Renderer
 	void Present();
 	void SetScissor(int x, int y, uint32_t width, uint32_t height);
 	void Draw();
-	void Draw(DrawBuffer& drawBuffer);
+	void Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSState& state);
 
 	DrawBuffer& GetDefaultDrawBuffer();
 
@@ -91,7 +94,7 @@ namespace Renderer
 	void SetFrame(int fbp, int fbw, int psm, int fbmask);
 	void SetTest(uint32_t ate, uint32_t atst, uint32_t aref, uint32_t afail, uint32_t date, uint32_t datm, uint32_t zte, uint32_t ztst);
 
-	void SetPrim(GIFReg::PrimPacked prim);
+	void SetPrim(GIFReg::PrimPacked prim, DrawBuffer* pDrawBuffer = nullptr);
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);
 
 	// Variation that uses GS State to fill in PRIM, STQ, RGBA
@@ -108,6 +111,7 @@ namespace Renderer
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void SetImagePointer(TextureData inImage);
+	TextureData& GetImagePointer();
 
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;
 

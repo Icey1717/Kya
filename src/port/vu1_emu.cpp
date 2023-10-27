@@ -5,7 +5,9 @@
 
 #include "PCSX2_VU.h"
 #include "log.h"
-#include "BS_thread_pool.hpp"
+
+#include <BS_thread_pool.hpp>
+#include <recycle/shared_pool.hpp>
 
 namespace VU1Emu {
 
@@ -16,6 +18,14 @@ namespace VU1Emu {
 	int gItop;
 
 	bool bEnableInterpreter = false;
+	bool bRunSingleThreaded = false;
+
+	namespace Debug {
+		constexpr bool bUseJobPool = true;
+		constexpr bool bDelayCoreExecution = true;
+		constexpr bool bUsePoolForDrawJobs = true;
+		constexpr bool bUsePoolForCores = true;
+	}
 
 	BS::thread_pool gJobPool(12);
 
@@ -109,7 +119,6 @@ namespace VU1Emu {
 
 	class Vu1Core
 	{
-		std::atomic_bool bRunning = true;
 		Renderer::DrawBuffer* pDrawBuffer;
 
 		char fakeMem[FAKE_VU1_MEM_SIZE] = {};
@@ -1188,29 +1197,19 @@ namespace VU1Emu {
 			edpkt_data* pkt = reinterpret_cast<edpkt_data*>(VIF_AS_F(primReg, 0));
 			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pkt);
 			const uint prim = pGifTag->PRIM;
-			Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim));
+			Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim), pDrawBuffer);
 
 			for (int i = 0; i < pGifTag->NLOOP; i++) {
 				KickVertexFromReg(primReg + 1 + (i * 3), prim);
 			}
 		}
 
-		bool GetIdle() {
-			return !bRunning;
-		}
-
-		void SetRunning() {
-			bRunning = true;
-		}
-
-		void SetIdle() {
-			bRunning = false;
+		void SetDrawBuffer(Renderer::DrawBuffer* pNewDrawBuffer) {
+			pDrawBuffer = pNewDrawBuffer;
 		}
 
 		Vu1Core(Renderer::DrawBuffer* pNewDrawBuffer) : pDrawBuffer(pNewDrawBuffer) { }
 		Vu1Core() : pDrawBuffer(nullptr) { }
-
-		Vu1Core(const Vu1Core& other) { }
 	};
 
 	void UnpackToAddr(uint addr, void* data, int size)
@@ -1226,32 +1225,42 @@ namespace VU1Emu {
 		interpreterCore.EmulateXGKICK(reg / 0x10);
 	}
 
+	using CorePtr = std::shared_ptr<Vu1Core>;
+
 	struct DrawJob
 	{
-		std::atomic_bool bComplete;
-		std::vector<Vu1Core> cores;
+		using JobPtr = std::shared_ptr<DrawJob>;
+
+		std::vector<CorePtr> cores;
 		Renderer::DrawBuffer buffer;
+		Renderer::TextureData textureData;
+		PS2::GSState state;
 
 		void Run() {
 			for (auto& core : cores) {
-				core.RunCode();
+				core->RunCode();
 			}
 
-			if (pLastJob) {
-				while (!pLastJob->bComplete) {
-					// wait
-				}
-			}
-
-			Renderer::Draw(buffer);
-
-			bComplete = true;
+			cores.clear();
 		}
 
-		DrawJob* pLastJob = nullptr;
+		void Draw() {
+			Renderer::Draw(buffer, textureData, state);
+		}
 	};
 
-	DrawJob* gNextJob;
+	struct lock_policy
+	{
+		using mutex_type = std::mutex;
+		using lock_type = std::lock_guard<mutex_type>;
+	};
+
+	recycle::shared_pool<DrawJob, lock_policy> gDrawJobPool;
+	recycle::shared_pool<Vu1Core, lock_policy> gCorePool;
+
+	DrawJob::JobPtr gNextJob;
+
+	std::vector<DrawJob::JobPtr> gFrameDraws;
 }
 
 constexpr size_t vu1BlockSize = 0x800;
@@ -1274,24 +1283,6 @@ void VU1Emu::SendVu1Code(unsigned char* pCode, size_t size)
 	}
 
 	pcsx2_VU::ResetVUMemory();
-}
-
-bool gRunSingleThreadEmulator = false;
-
-namespace VU1_CorePool 
-{
-	std::vector<VU1Emu::Vu1Core> cores;
-
-	VU1Emu::Vu1Core& GetIdleCore() {
-		for (auto& core : cores) {
-			if (core.GetIdle()) {
-				core.SetRunning();
-				return core;
-			}
-		}
-
-		return cores.emplace_back(nullptr);
-	}
 }
 
 void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
@@ -1331,41 +1322,28 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 				pcsx2_VU::Execute(pRunTag->addr);
 			}
 			else {
-				if (gRunSingleThreadEmulator) {
+				if (bRunSingleThreaded) {
 					static Vu1Core singleThreadCore(&Renderer::GetDefaultDrawBuffer());
 					singleThreadCore.Prepare(pFakeMem, gItop, pRunTag->addr);
 					singleThreadCore.RunCode();
 				}
 				else {
-#if 1
-#if 1
 					if (!gNextJob) {
-						gNextJob = new DrawJob;
+
+						gNextJob = Debug::bUsePoolForDrawJobs ? gDrawJobPool.allocate() : DrawJob::JobPtr(new DrawJob());
+						assert(gNextJob->cores.size() == 0);
 					}
 
-					Vu1Core& core = gNextJob->cores.emplace_back(&gNextJob->buffer);
-					core.Prepare(pFakeMem, gItop, pRunTag->addr);
-#else
-					Vu1Core& core = VU1_CorePool::GetIdleCore();
-					core.Prepare(pFakeMem, gItop, pRunTag->addr);
+					auto core = Debug::bUsePoolForCores ? gCorePool.allocate() : CorePtr(new Vu1Core());
+					core->SetDrawBuffer(&gNextJob->buffer);
+					core->Prepare(pFakeMem, gItop, pRunTag->addr);
 
-					gJobPool.push_task([&core]() {
-						core.RunCode();
-						core.SetIdle();
-						});
-#endif
-#else
-
-					Vu1Core* core = new Vu1Core;
-					core->Prepare(pFakeMem, gItop);
-					const ushort addr = pRunTag->addr;
-
-					gJobPool.push_task([addr, core]() {
-						core->RunCode(addr);
-						//core.SetIdle();
-						delete core;
-						});
-#endif
+					if (Debug::bDelayCoreExecution) {
+						gNextJob->cores.push_back(core);
+					}
+					else {
+						core->RunCode();
+					}
 
 					bStartedWork = true;
 				}
@@ -1462,30 +1440,49 @@ bool& VU1Emu::GetInterpreterEnabled()
 	return bEnableInterpreter;
 }
 
+bool& VU1Emu::GetRunSingleThreaded()
+{
+	return bRunSingleThreaded;
+}
+
 void VU1Emu::QueueDraw()
 {
-	if (gRunSingleThreadEmulator) {
+	if (bRunSingleThreaded) {
 		Renderer::Draw();
 	}
 	else {
-		gJobPool.push_task([]() {
-			gNextJob->Run();
-			});
+		gNextJob->textureData = Renderer::GetImagePointer();
+		gNextJob->state = PS2::GetGSState();
 
-		DrawJob* pNewJob = new DrawJob;
-		pNewJob->pLastJob = gNextJob;
-		gNextJob = pNewJob;
+		if (Debug::bUseJobPool) {
+			gFrameDraws.push_back(gNextJob);
+			gJobPool.push_task([pJob = std::move(gNextJob)]() {
+				pJob->Run();
+				});
+		}
+		else {
+			gNextJob->Run();		
+			gNextJob->Draw();
+			gNextJob.reset();
+		}
 	}
 }
 
 void VU1Emu::Wait()
 {
-	if (gRunSingleThreadEmulator) {
+	if (bRunSingleThreaded) {
 		return;
 	}
 	
 	if (bStartedWork) {
 		gJobPool.wait_for_tasks();
+
+		for (auto& pJob : gFrameDraws) {
+			pJob->Draw();
+		}
+
+		gFrameDraws.clear();
+
 		bStartedWork = false;
 	}
 }

@@ -8,12 +8,6 @@
 #include "renderer.h"
 #include "UniformBuffer.h"
 
-namespace Renderer {
-	struct TextureData;
-
-	const TextureData& GetImageData();
-}
-
 namespace PS2 {
 	struct GSTexKey {
 		GIFReg::GSTex value;
@@ -31,15 +25,18 @@ namespace PS2 {
 	};
 
 	struct GSTexValueCreateInfo {
-		GSTexValueCreateInfo(GSTexKey& inKey)
+		GSTexValueCreateInfo(GSTexKey& inKey, Renderer::TextureData& inTextureData)
 			: key(inKey)
+			, textureData(inTextureData)
 		{}
 
-		GSTexValueCreateInfo(const GSTexKey& inKey)
+		GSTexValueCreateInfo(const GSTexKey& inKey, Renderer::TextureData& inTextureData)
 			: key(inKey)
+			, textureData(inTextureData)
 		{}
 
 		const GSTexKey& key;
+		Renderer::TextureData textureData;
 	};
 
 	struct GSTexDescriptor {
@@ -174,8 +171,8 @@ namespace PS2 {
 		std::vector<GSTexEntry> texcache;
 
 	public:
-		GSTexEntry& Create(const GIFReg::GSTex& TEX);
-		GSTexEntry& Lookup(const GIFReg::GSTex& TEX);
+		GSTexEntry& Create(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData);
+		GSTexEntry& Lookup(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData);
 		const std::vector<GSTexEntry>& GetEntries() const { return texcache; }
 		std::vector<GSTexEntry>& GetEntries() { return texcache; }
 	};

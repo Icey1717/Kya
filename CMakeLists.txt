@@ -268,7 +268,7 @@ else()
 		"src"
 	)
 
-	target_link_libraries(Kya PUBLIC Port Log VU Job)
+	target_link_libraries(Kya PUBLIC Port Log VU Job steinwurf::recycle)
 endif()
 
 set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )
