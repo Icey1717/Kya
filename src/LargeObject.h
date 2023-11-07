@@ -21,6 +21,8 @@ public:
 	virtual void Level_Manage() {};
 	virtual void Level_ManagePaused() {};
 	virtual void Level_Draw() {};
+	virtual void Level_CheckpointReset() {};
+	virtual void Level_Reset() {};
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
 
@@ -29,6 +31,10 @@ public:
 		void* p = edMemAlloc(TO_HEAP(H_MAIN), size);
 		return p;
 	}
+};
+
+enum MANAGER_TYPE {
+	MO_GlobalDListManager = 0x17
 };
 
 PACK(
@@ -56,7 +62,7 @@ struct ManagerContainer {
 	struct LightManager* g_LightManager_004516b0;
 	struct Manager_C_Alt* g_ManagerC_Alt_004516b4;
 	struct CFxManager* g_EffectsManager_004516b8;
-	struct Manager_29b4* g_Manager29B4_004516bc;
+	struct CGlobalDListManager* g_GlobalDListManager_004516bc;
 });
 
 PACK(
@@ -72,10 +78,10 @@ struct FogClipEntry {
 	float field_0x4;
 };
 
-class Scene 
+class CScene 
 {
 public:
-	Scene();
+	CScene();
 
 	void* operator new(size_t size)
 	{
@@ -281,8 +287,9 @@ public:
 	void HandleCurState();
 
 	static void CreateScene(void);
+	static void* GetManager(MANAGER_TYPE type);
 
-	static Scene* _pinstance;
+	static CScene* _pinstance;
 	static struct ed_3D_Scene* _scene_handleA;
 	static struct ed_3D_Scene* _scene_handleB;
 
@@ -295,9 +302,13 @@ void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK);
 
 ed_3D_Scene* GetStaticMeshMasterA_001031b0(void);
 
+extern ed_3D_Scene* gShadowScene;
+
 extern byte gbDoMipmap;
 extern uint gMipmapK;
 extern uint gMipmapL;
+
+#define GAME_STATE_PAUSED 0x20
 
 extern uint GameFlags;
 

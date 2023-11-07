@@ -533,9 +533,9 @@ void CSector::InstallCallback()
 			unaff_s5_lo = meshSize;
 		} while (inFileIndex < uVar2);
 	}
-	pSectorManager = Scene::ptable.g_SectorManager_00451670;
-	p3DFileManager = Scene::ptable.g_FileManager3D_00451664;
-	pStaticMeshMaster = Scene::_scene_handleA;
+	pSectorManager = CScene::ptable.g_SectorManager_00451670;
+	p3DFileManager = CScene::ptable.g_FileManager3D_00451664;
+	pStaticMeshMaster = CScene::_scene_handleA;
 	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, &this->textureInfo, 0xc, &this->meshInfo);
 	pTextureInfo = p3DFileManager->GetCommonSectorG2D();
 	ed3DLinkG2DToG3D(&this->meshInfo, (ed_g2d_manager*)pTextureInfo);
@@ -657,7 +657,7 @@ void CSector::Load(int sectorIndex, int param_3, bool bFileFlag)
 		peVar4 = this->bankObject.get_free_entry();
 		(this->bankObject).pBankFileAccessObject = peVar4;
 		iVar1 = this->sectorIndex;
-		sectStringLength = edStrCopy(acStack64, (Scene::ptable.g_SectorManager_00451670)->szSectorFileRoot);
+		sectStringLength = edStrCopy(acStack64, (CScene::ptable.g_SectorManager_00451670)->szSectorFileRoot);
 		sectString = acStack64 + sectStringLength;
 		if (iVar1 < 10) {
 			*sectString = (char)iVar1 + '0';
@@ -750,20 +750,20 @@ void CSectorManager::Level_Init()
 	undefined* puVar4;
 	CSectorManager* pSVar5;
 
-	pSVar5 = Scene::ptable.g_SectorManager_00451670;
+	pSVar5 = CScene::ptable.g_SectorManager_00451670;
 	iVar1 = this->field_0x36c;
 	iVar2 = (this->baseSector).desiredSectorID;
 	iVar3 = (this->baseSector).sectID;
 	if ((iVar3 != iVar2) || (iVar1 == 0)) {
 		if (iVar3 != iVar2) {
 			if ((iVar3 != -1) &&
-				(puVar4 = (Scene::ptable.g_SectorManager_00451670)->subObjArray[iVar3].pFileData, puVar4 != (undefined*)0x0))
+				(puVar4 = (CScene::ptable.g_SectorManager_00451670)->subObjArray[iVar3].pFileData, puVar4 != (undefined*)0x0))
 			{
 				IMPLEMENTATION_GUARD(
-				Scene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar4 + 0xc));)
+				CScene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar4 + 0xc));)
 			}
 			if ((iVar2 != -1) && (puVar4 = pSVar5->subObjArray[iVar2].pFileData, puVar4 != (undefined*)0x0)) {
-				Scene::_pinstance->PushFogAndClippingSettings(*(float*)(puVar4 + 0x1c), (S_STREAM_FOG_DEF*)(puVar4 + 0xc));
+				CScene::_pinstance->PushFogAndClippingSettings(*(float*)(puVar4 + 0x1c), (S_STREAM_FOG_DEF*)(puVar4 + 0xc));
 			}
 		}
 		(this->baseSector).sectID = iVar2;
@@ -820,7 +820,7 @@ void CSectorManager::Level_Manage()
 	iVar2 = (this->baseSector).desiredSectorID;
 	iVar1 = (this->baseSector).currentSectorID;
 	if (iVar1 != iVar2) {
-		Scene::_pinstance->Level_SectorChange(iVar1, iVar2);
+		CScene::_pinstance->Level_SectorChange(iVar1, iVar2);
 		(this->baseSector).currentSectorID = (this->baseSector).desiredSectorID;
 	}
 	iVar2 = 0;
@@ -866,13 +866,13 @@ void CSector::Level_Manage(int sectID, int param_3)
 
 	iVar1 = this->loadStage_0x8;
 	if (iVar1 == 2) {
-		puVar2 = (uint*)(Scene::ptable.g_SectorManager_00451670)->subObjArray[this->desiredSectorID].pFileData;
+		puVar2 = (uint*)(CScene::ptable.g_SectorManager_00451670)->subObjArray[this->desiredSectorID].pFileData;
 		pTVar5 = Timer::GetTimer();
 		peVar6 = GetStaticMeshMasterA_001031b0();
 		this->pANHR.Manage(pTVar5->cutsceneDeltaTime, (float)puVar2[8], peVar6, 1);
 		if (this->pMeshTransform != (edNODE*)0x0) {
 			IMPLEMENTATION_GUARD(
-			3DFileManager::ManageBackground(Scene::ptable.g_FileManager3D_00451664, this->pMeshTransform, *puVar2);)
+			3DFileManager::ManageBackground(CScene::ptable.g_FileManager3D_00451664, this->pMeshTransform, *puVar2);)
 		}
 		if (this->desiredSectorID != sectID) {
 			IMPLEMENTATION_GUARD(

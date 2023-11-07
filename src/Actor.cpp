@@ -5,12 +5,16 @@
 #include "ActorFactory.h"
 #include "MathOps.h"
 #include "CameraViewManager.h"
+#include <string.h>
+#include <math.h>
+#include "TimeController.h"
 
 CActor::CActor()
 	: CObject()
 {
 	float fVar1;
 	float fVar2;
+	this->objectId = -1;
 	//this->field_0x134 = -1.0f;
 	//this->field_0x13c = 0;
 	//this->field_0x140 = 0;
@@ -19,14 +23,14 @@ CActor::CActor()
 	//this->funcData_0x150 = (undefined*)&CBehaviour::_vt;
 	//this->funcData_0x150 = (undefined*)&CBehaviourStand::_vt;
 	//this->index_0x20 = -1;
-	this->typeID = -1;
+	this->objectId = -1;
 	this->pCinData = (CinNamedObject30*)0x0;
 	this->subObjA = (KyaUpdateObjA*)0x0;
 	this->flags = 0;
-	//this->currentLocation.x = 0.0;
-	//this->currentLocation.y = 0.0;
-	//this->currentLocation.z = 0.0;
-	//this->currentLocation.w = 1.0;
+	this->currentLocation.x = 0.0f;
+	this->currentLocation.y = 0.0f;
+	this->currentLocation.z = 0.0f;
+	this->currentLocation.w = 1.0f;
 	this->scale.x = 1.0;
 	this->scale.y = 1.0;
 	this->scale.z = 1.0;
@@ -52,16 +56,16 @@ CActor::CActor()
 	this->sphereCentre.y = 0.0f;
 	this->sphereCentre.z = 0.0f;
 	this->sphereCentre.w = 0.0f;
-	//this->anotherSubObj = (astruct_1*)0x0;
+	this->pClusterNode = (CClusterNode*)0x0;
 	this->adjustedMagnitude = 0.0;
-	//this->pAnimationController = (CAnimation*)0x0;
+	this->pAnimationController = (CAnimation*)0x0;
 	//this->pCollisionData = (CollisionData*)0x0;
 	//this->pShadow = (CShadow*)0x0;
 	//this->actorFieldG = (Actor*)0x0;
 	this->aComponents = (int*)0x0;
 	this->curBehaviourId = -1;
 	this->prevBehaviourId = -1;
-	//this->actorState = AS_None;
+	this->actorState = AS_None;
 	//this->prevActorState = AS_None;
 	//this->timeA = 0.0;
 	//this->idleTimer = 0.0;
@@ -70,7 +74,7 @@ CActor::CActor()
 	//this->prevAnimType = AT_None;
 	//this->field_0xdc = 0;
 	//this->field_0xe0 = 1.0;
-	this->field_0xd = '\0';
+	this->field_0xd = 0;
 	//this->field_0xc = '\0';
 	//this->distanceToGround = (float)&DAT_bf800000;
 	//this->field_0xec = 3.0;
@@ -119,7 +123,7 @@ void CActor::PreInit()
 		IMPLEMENTATION_GUARD_LOG(
 		ReceiveMessage(this, 0x5d, 0);)
 	}
-	ComponentList<0>* pComponentList = (ComponentList<0>*)this->aComponents;
+	ComponentList<1>* pComponentList = (ComponentList<1>*)this->aComponents;
 	uVar5 = 0;
 	uVar4 = 0;
 	ComponentEntry* pEntry = pComponentList->aComponents;
@@ -154,15 +158,15 @@ void CActor::EvaluateDisplayState()
 	int iVar1;
 	uint uVar2;
 
-	iVar1 = this->field_0x0;
-	if ((iVar1 == ((Scene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
+	iVar1 = this->objectId;
+	if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
 		uVar2 = this->flags;
 		if ((uVar2 & 0x2000060) == 0) {
 			if ((uVar2 & 0x200) == 0) {
 				uVar2 = 1;
 			}
 			else {
-				uVar2 = uVar2 & 0x80 | (uint)('\0' < this->field_0xd);
+				uVar2 = uVar2 & 0x80 | (uint)(0 < this->field_0xd);
 			}
 			goto LAB_001033c0;
 		}
@@ -215,6 +219,147 @@ void CActor::Init()
 	return;
 }
 
+void CActor::Manage()
+{
+	uint uVar1;
+	uint* puVar2;
+	bool bVar3;
+	CBehaviour* pBehaviour;
+	Timer* pTimeController;
+	ulong uVar4;
+	float fVar5;
+
+	pBehaviour = GetBehaviour(this->curBehaviourId);
+	if (pBehaviour != (CBehaviour*)0x0) {
+		if ((GameFlags & GAME_STATE_PAUSED | this->flags & 0x400000) == 0) {
+			pBehaviour->Manage();
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			pBehaviour->ManageFrozen();)
+		}
+	}
+	uVar1 = this->flags;
+	fVar5 = (this->subObjA)->floatFieldB;
+	if (((uVar1 & 0x100) == 0) || (fVar5 < this->adjustedMagnitude)) {
+		if ((uVar1 & 0x4000) != 0) {
+			ChangeVisibleState(0);
+		}
+	}
+	else {
+		bVar3 = CCameraManager::_gThis->IsSphereVisible(fVar5, &this->sphereCentre);
+		if (bVar3 == false) {
+			if ((this->flags & 0x4000) != 0) {
+				ChangeVisibleState(0);
+			}
+		}
+		else {
+			if ((this->flags & 0x4000) == 0) {
+				ChangeVisibleState(1);
+			}
+		}
+	}
+	if (this->pAnimationController != (CAnimation*)0x0) {
+		IMPLEMENTATION_GUARD(
+		uVar4 = (ulong)(this->currentAnimType == AT_None);
+		if (this->actorState == New_Name_(3)) {
+			fVar5 = 0.0;
+			uVar4 = 0;
+		}
+		else {
+			if ((this->flags & 0x400000) == 0) {
+				pTimeController = GetTimer();
+				fVar5 = pTimeController->cutsceneDeltaTime;
+			}
+			else {
+				fVar5 = 0.0f;
+			}
+		}
+		CAnimation::Manage(fVar5, this->pAnimationController, this, (long)(int)this->flags & 0x4800, uVar4);)
+	}
+	//ActorFunc_00104c90((Actor*)this);
+	//puVar2 = (uint*)this->field_0x144;
+	//if (puVar2 != (uint*)0x0) {
+	//	(*(code*)this->pVTable->field_0x5c)(this);
+	//	for (; puVar2 != (uint*)0x0; puVar2 = (uint*)puVar2[0xe]) {
+	//		CActorSound::Manage(puVar2, this);
+	//	}
+	//}
+	//pTimeController = Timer::GetTimer();
+	//this->timeA = this->timeA + pTimeController->cutsceneDeltaTime;
+	//pTimeController = Timer::GetTimer();
+	//this->idleTimer = this->idleTimer + pTimeController->cutsceneDeltaTime;
+	return;
+}
+
+void CActor::ChangeManageState(int state)
+{
+	EActorState actorState;
+	ed_3d_hierarchy_node* pHierNode;
+	CAnimation* pAnimation;
+	CClusterNode* pClusterNode;
+	//AnimResult* pAVar4;
+	uint uVar5;
+	//CActorSound* pActorSound;
+
+	if (state == 0) {
+		IMPLEMENTATION_GUARD(
+		this->flags = this->flags & 0xfffffffb;
+		pClusterNode = this->pClusterNode;
+		if (pClusterNode != (CClusterNode*)0x0) {
+			CCluster::DeleteNode((CCluster*)&(CScene::ptable.g_ActorManager_004516a4)->cluster, pClusterNode);
+			this->pClusterNode = (CClusterNode*)0x0;
+		}
+		for (pActorSound = (CActorSound*)this->field_0x144; pActorSound != (CActorSound*)0x0;
+			pActorSound = *(CActorSound**)&pActorSound[1].field_0x4) {
+			CActorSound::DisableSounds(pActorSound);
+		}
+		pHierNode = this->p3DHierNode;
+		if (pHierNode != (ed_3d_hierarchy_node*)0x0) {
+			(pHierNode->base).pAnimMatrix = (edF32MATRIX4*)0x0;
+			(pHierNode->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
+		}
+		actorState = this->actorState;
+		if (actorState == AS_None) {
+			uVar5 = 0;
+		}
+		else {
+			pAVar4 = (*this->pVTable->GetStateCfg)(this, actorState);
+			uVar5 = pAVar4->flags_0x4 & 0x80;
+		}
+		if (uVar5 != 0) {
+			StateTransitionSoundFunc_00184470((int)CScene::ptable.g_GlobalSoundPtr_00451698);
+		})
+	}
+	else {
+		this->flags = this->flags | 4;
+		if ((this->pClusterNode == (CClusterNode*)0x0) && (this->typeID != 1)) {
+			IMPLEMENTATION_GUARD(
+			pClusterNode = CCluster::NewNode((CCluster*)&(CScene::ptable.g_ActorManager_004516a4)->cluster, this);
+			this->pClusterNode = pClusterNode;)
+		}
+		actorState = this->actorState;
+		if (actorState == AS_None) {
+			uVar5 = 0;
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			pAVar4 = (*this->pVTable->GetStateCfg)(this, actorState);
+			uVar5 = pAVar4->flags_0x4 & 0x80;)
+		}
+		if (uVar5 != 0) {
+			IMPLEMENTATION_GUARD(
+			StateTransitionSoundFunc_001844a0((int)CScene::ptable.g_GlobalSoundPtr_00451698);)
+		}
+	}
+	pAnimation = this->pAnimationController;
+	if (pAnimation != (CAnimation*)0x0) {
+		IMPLEMENTATION_GUARD(
+		CAnimation::StopEventTrack(pAnimation, state);)
+	}
+	return;
+}
+
 void CActor::ChangeDisplayState(int state)
 {
 	//CShadow* pCVar1;
@@ -239,22 +384,19 @@ void CActor::ChangeDisplayState(int state)
 	BfloatB = (this->subObjA)->floatFieldB;
 	if (((ret & 0x100) == 0) || (BfloatB < this->adjustedMagnitude)) {
 		if ((ret & 0x4000) != 0) {
-			IMPLEMENTATION_GUARD(
-			this->ChangeVisibleState(0);)
+			this->ChangeVisibleState(0);
 		}
 	}
 	else {
 		bool bSphereVisible = CCameraManager::_gThis->IsSphereVisible(BfloatB, &this->sphereCentre);
 		if (bSphereVisible == 0) {
 			if ((this->flags & 0x4000) != 0) {
-				IMPLEMENTATION_GUARD(
-				this->ChangeVisibleState(0);)
+				this->ChangeVisibleState(0);
 			}
 		}
 		else {
 			if ((this->flags & 0x4000) == 0) {
-				IMPLEMENTATION_GUARD(
-				this->ChangeVisibleState(1);)
+				this->ChangeVisibleState(1);
 			}
 		}
 	}
@@ -361,9 +503,50 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 
 }
 
+void CActor::ChangeVisibleState(int bVisible)
+{
+	edNODE* peVar1;
+	//CShadow* pCVar2;
+	bool bVar3;
+	ed_3D_Scene* peVar4;
+
+	if (bVisible == 0) {
+		peVar1 = this->pMeshNode;
+		if (peVar1 != (edNODE*)0x0) {
+			peVar4 = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOn(peVar4, peVar1);
+		}
+		//pCVar2 = this->pShadow;
+		//if (pCVar2 != (CShadow*)0x0) {
+		//	(**(code**)(*(int*)pCVar2 + 0x14))(pCVar2, 0);
+		//}
+		this->flags = this->flags & 0xffffbfff;
+	}
+	else {
+		peVar1 = this->pMeshNode;
+		if (peVar1 != (edNODE*)0x0) {
+			peVar4 = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOff(peVar4, peVar1);
+		}
+		//pCVar2 = this->pShadow;
+		//if (pCVar2 != (CShadow*)0x0) {
+		//	bVar3 = (this->flags & 0x4400) != 0;
+		//	if (bVar3) {
+		//		bVar3 = this->adjustedMagnitude <= (this->subObjA)->field_0x1c;
+		//	}
+		//	if (bVar3 != false) {
+		//		bVar3 = (this->flags & 0x100) != 0;
+		//	}
+		//	(**(code**)(*(int*)pCVar2 + 0x14))(pCVar2, bVar3);
+		//}
+		this->flags = this->flags | 0x4000;
+	}
+	return;
+}
+
 CBehaviour* CActor::GetBehaviour(int behaviourId)
 {
-	ComponentList<0>* pComponentList = (ComponentList<0>*)this->aComponents;
+	ComponentList<1>* pComponentList = (ComponentList<1>*)this->aComponents;
 	CBehaviour* pOutBehaviour = (CBehaviour*)0x0;
 
 	for (int i = 0; i < pComponentList->count; i++) {

@@ -1514,7 +1514,7 @@ void MainInit(int argc,char **argv)
 	edVideoInit();
 	SetVideoMode((short)gVideoConfig.omode, (short)gVideoConfig.screenWidth, (short)gVideoConfig.screenHeight, (short)gVideoConfig.field_0x8, 0);
 	//CheckControllers(&g_IniFile_00450750);
-	Scene::CreateScene();
+	CScene::CreateScene();
 	Game_Init();
 
 #ifdef PLATFORM_WIN
@@ -2014,7 +2014,7 @@ void PlayIntroVideo(long mode)
 
 void LoadingLoop(void)
 {
-	Scene* pSceneInstance;
+	CScene* pSceneInstance;
 	bool bVar2;
 	Timer* inTimeController;
 
@@ -2022,7 +2022,7 @@ void LoadingLoop(void)
 
 	/* These functions just run once */
 	PlayIntroVideo(0);
-	pSceneInstance = Scene::_pinstance;
+	pSceneInstance = CScene::_pinstance;
 	inTimeController = GetTimer();
 	pSceneInstance->LevelLoading_Begin();
 	do {
@@ -2055,7 +2055,7 @@ void GameLoop(void)
 {
 	//ActorState AVar1;
 	APlayer* pAVar2;
-	Scene* pLVar3;
+	CScene* pLVar3;
 	bool cVar4;
 	bool bVar4;
 	Timer* timeController;
@@ -2067,7 +2067,7 @@ void GameLoop(void)
 
 	MY_LOG("GameLoop Begin\n");
 
-	pLVar3 = Scene::_pinstance;
+	pLVar3 = CScene::_pinstance;
 	timeController = GetTimer();
 	do {
 		gCompatibilityHandlingPtr->IOPFunc_0x14(0);
@@ -2198,13 +2198,13 @@ void GameLoop(void)
 
 void LevelInit(void)
 {
-	Scene* pSceneInstance;
+	CScene* pSceneInstance;
 
 	MY_LOG("LevelInit Begin\n");
 
 	/* Cutscenes are played in here */
 	LoadingLoop();
-	pSceneInstance = Scene::_pinstance;
+	pSceneInstance = CScene::_pinstance;
 	pSceneInstance->Level_Install();
 	pSceneInstance->Level_Init();
 	MY_LOG("LevelInit End\n");

@@ -12,6 +12,7 @@ struct ed_3d_hierarchy_node;
 
 struct CBehaviour {
 	virtual void Init(CActor* pOwner) {}
+	virtual void Manage() {}
 	virtual bool Begin(CActor* pOwner, int newState, int newAnimationType) {}
 	virtual void End(int newBehaviourId) {}
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
@@ -34,6 +35,9 @@ struct CObject {
 	}
 
 	int objectId;
+
+	virtual bool IsKindOfObject(ulong kind) { return false; }
+	virtual bool InitDlistPatchable() { return false; }
 };
 
 struct KyaUpdateObjA {
@@ -79,9 +83,15 @@ struct CinNamedObject30 {
 	float floatFieldC;
 };
 
+enum EActorState {
+	AS_None = -1,
+};
+
+struct CClusterNode;
+struct CAnimation;
+
 struct CActor : public CObject {
-	int field_0x0;
-	char field_0xd;
+	byte field_0xd;
 	uint flags;
 	void* aComponents;
 
@@ -108,6 +118,7 @@ struct CActor : public CObject {
 
 	edF32VECTOR4 baseLocation;
 	edF32VECTOR4 sphereCentre;
+	edF32VECTOR4 currentLocation;
 
 	int typeID;
 	int prevBehaviourId;
@@ -116,6 +127,11 @@ struct CActor : public CObject {
 	int currentAnimType;
 
 	float adjustedMagnitude;
+
+	EActorState actorState;
+
+	CClusterNode* pClusterNode;
+	CAnimation* pAnimationController;
 
 	CActor();
 
@@ -126,11 +142,15 @@ struct CActor : public CObject {
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Init();
+	virtual void Manage();
+	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
 	virtual void SetState(int newState, int AnimationType);
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
 	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
+
+	void ChangeVisibleState(int bVisible);
 
 	CBehaviour* GetBehaviour(int behaviourId);
 

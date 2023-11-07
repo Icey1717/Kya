@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "ed3D.h"
+#include "edDlist.h"
 
 PACK(
 	struct SegmentPacked {

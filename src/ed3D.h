@@ -7,10 +7,19 @@
 #include "delegate.h"
 #endif
 
+union AnimScratchpad {
+	struct {
+		int field_0x0;
+		uint flags;
+		undefined4 field_0x8;
+		undefined4 field_0xc;
+	};
+	edpkt_data pkt;
+};
 
 PACK(
 	struct ed_hash_code {
-	Hash_8 field_0x0;
+	Hash_8 hash;
 	int pData; // char*
 	undefined field_0xc;
 	undefined field_0xd;
@@ -107,11 +116,11 @@ struct TextureInfo {
 struct ScratchPadRenderInfo {
 	edF32MATRIX4* pSharedMeshTransform;
 	edF32MATRIX4* pMeshTransformMatrix;
-	int field_0x8;
+	int boundingSphereTestResult;
 	ed_3d_hierarchy_setup* pHierarchySetup;
 	uint flags;
 	float field_0x14;
-	undefined4 field_0x18;
+	edpkt_data* pPkt;
 	ed_3d_hierarchy_node* pMeshTransformData;
 };
 
@@ -168,13 +177,6 @@ PACK(
 	ed_g2d_material body;
 });
 
-struct edDList_material {
-	struct ed_g2d_manager* textureInfo;
-	ed_g2d_material* pMAT;
-	int mode;
-	int Length;
-};
-
 struct edPSX2Header
 {
 	int pPkt;
@@ -184,7 +186,7 @@ struct edPSX2Header
 PACK(
 	struct ed_g2d_layer {
 	uint flags_0x0;
-	uint flags;
+	uint flags_0x4;
 	undefined field_0x8;
 	undefined field_0x9;
 	undefined field_0xa;
@@ -256,23 +258,6 @@ PACK(struct TextureData_PA32 {
 	undefined field_0xe;
 	undefined field_0xf;
 	ed_g2d_bitmap body;
-});
-
-PACK(
-	struct TextureData_HASH_Internal_MAT {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	int pMAT; // TextureData_MAT*
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
 });
 
 PACK(
@@ -365,21 +350,13 @@ struct DisplayListInternal;
 struct edCluster;
 struct edNODE;
 
-#ifdef PLATFORM_WIN
-Multidelegate<edDList_material*>& ed3DGetMaterialLoadedDelegate();
-Multidelegate<edDList_material*>& ed3DGetMaterialUnloadedDelegate();
-Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
-#endif
-
 ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int* outInt, ed_g2d_manager* textureObj, int unknown, ed_g3d_manager* pMeshInfo);
 
 
 void Init3D(void);
 ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outInt, ed_g2d_manager* pTextureInfo, ulong param_5);
-TextureData_HASH_Internal_MAT* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
-edDList_material* edDListCreatMaterialFromIndex(edDList_material* outObj, int index, ed_g2d_manager* textureInfoObj, int mode);
+ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
-bool edDListTermMaterial(edDList_material* pMaterial);
 char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
 edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);
@@ -445,6 +422,43 @@ PACK(struct ed_g3d_hierarchy {
 	ed3DLod aLods[4];
 });
 
+struct edVertex {
+	float x;
+	float y;
+	float z;
+	uint skip;
+};
+
+PACK(
+	struct ed_Bound_Sphere_packet {
+	edF32VECTOR3 field_0x0;
+	ushort field_0xc;
+	undefined field_0xe;
+	undefined field_0xf;
+}
+);
+
+PACK(
+	struct ed_3d_strip {
+	uint flags_0x0;
+	short materialIndex;
+	short field_0x6;
+	int vifListOffset;
+	int pNext; // ed_3d_strip*
+	edF32VECTOR4 boundingSphere;
+	int pSTBuf; // char*
+	int pColorBuf; // _rgba*
+	int pVertexBuf; // edVertex*
+	int field_0x2c; // char*
+	short shadowCastFlags;
+	short shadowReceiveFlags;
+	int pDMA_Matrix; // ed_dma_matrix*
+	byte field_0x38;
+	byte cameraPanIndex;
+	short meshSectionCount_0x3a;
+	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
+});
+
 void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo);
 
 void ed3DScenePushCluster(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo);
@@ -478,6 +492,8 @@ edSurface* ed3DShadowSurfaceNew(ed_surface_desc* pVidModeData);
 void ed3DHierarchyNodeSetRenderOn(ed_3D_Scene* pScene, edNODE* pNode);
 void ed3DHierarchyNodeSetRenderOff(ed_3D_Scene* pScene, edNODE* pNode);
 
+void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt);
+
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
 #endif
@@ -487,6 +503,25 @@ extern byte BYTE_00448a5c;
 extern edCluster* gCluster;
 extern edNODE* gHierarchyManagerFirstFreeNode;
 extern ed_3d_hierarchy_node* gHierarchyManagerBuffer;
+
+extern edpkt_data g_stMatrixHeader;
+extern edpkt_data g_stVertexGIFHeader;
+extern edpkt_data g_stVertexSTHeader[2];
+extern edpkt_data g_stGifTAG_Texture_NoFog[97];
+extern edpkt_data g_stGifTAG_Gouraud_NoFog[97];
+extern edpkt_data g_stVertexRGBAHeader;
+extern edpkt_data g_stVertexXYZHeader;
+extern edpkt_data g_stExecuteCode;
+
+#ifdef PLATFORM_WIN
+Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
+#endif
+
+#define SHELLDMA_TAG_ID_CNT (0x10)
+#define SHELLDMA_TAG_ID_REF (0x30)
+
+#define ED_VIF1_SET_TAG_CNT(qwc) ((ulong)(qwc) | ((ulong)SHELLDMA_TAG_ID_CNT << 24) | ((ulong)0xe << 32))
+#define ED_VIF1_SET_TAG_REF(qwc, addr) ((ulong)((ulong)(qwc) | ((ulong)SHELLDMA_TAG_ID_REF << 24))) | ((ulong)(addr) << 32)
 
 extern int gNbVertexDMA;
 

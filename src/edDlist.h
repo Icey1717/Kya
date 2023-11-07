@@ -41,38 +41,15 @@ struct DisplayList_0x10 {
 	undefined field_0xf;
 };
 
-struct MeshDrawRenderCommand {
-	uint field_0x0;
-	short field_0x4;
-	short field_0x6;
-	union edF32VECTOR4* field_0x8;
-	uint field_0xc;
-	edF32VECTOR4 field_0x10;
-	char* field_0x20;
-	char* field_0x24;
-	char* field_0x28;
-	char* field_0x2c;
-	short field_0x30;
-	short field_0x32;
-	short field_0x34;
-	short field_0x36;
-	byte field_0x38;
-	byte field_0x39;
-	short field_0x3a;
-	MeshDrawRenderCommand* field_0x3c;
-	uint field_0x40;
-	char* field_0x44;
-	undefined field_0x48;
-	undefined field_0x49;
-	char* field_0x4a;
-	undefined field_0x4e;
-	undefined field_0x4f;
-};
-
 struct DisplayListInternal;
 union edpkt_data;
 struct edDList_material;
 struct ed_viewport;
+struct ed_3D_Scene;
+struct ed_g2d_manager;
+struct ed_g2d_material;
+struct TextureData_HASH_Internal_MAT;
+struct ed_hash_code;
 
 extern int gNbUsedMaterial;
 extern int gCurRenderState;
@@ -82,7 +59,7 @@ extern int gNbStateAdded;
 extern edpkt_data* gCurStatePKT;
 extern int gbDispList;
 extern int gCurStatePKTSize;
-extern DisplayList_0x10* gBankMaterial;
+extern ed_hash_code* gBankMaterial;
 
 typedef enum DL_LINK_MODE {
 	LM_CALL = 2,
@@ -98,7 +75,14 @@ struct edDlistConfiguration {
 	int field_0x4;
 	int matrixCount;
 	int commandCount;
-	int field_0x10;
+	int bankMaterialCount;
+};
+
+struct edDList_material {
+	ed_g2d_manager* textureInfo;
+	ed_g2d_material* pMAT;
+	int mode;
+	int Length;
 };
 
 extern edDlistConfiguration edDlistConfig;
@@ -130,15 +114,30 @@ void edDListSetActiveViewPort(ed_viewport* pCamera);
 
 void edDlistAddtoView(DisplayListInternal* param_1);
 
-void edDListBegin(float x, float y, float z, ulong mode, int count);
+void edDListBegin(float x, float y, float z, uint mode, int count);
 
 void edDListColor4u8(byte r, byte g, byte b, byte a);
 
 void edDListTexCoo2f(float param_1, float param_2);
 void edDListVertex4f(float x, float y, float param_3, int param_4);
+void edDListSetProperty(uint type, uint value);
 
 void edDListEnd(void);
 
 void edDListLoadIdentity(void);
+
+DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList);
+DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, undefined8 param_6, DisplayListInternal* pInBuffer);
+void edDListSetSceneUsed(DisplayListInternal* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster);
+uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4, uint* param_5, uint* param_6);
+
+void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g2d_manager* textureInfoObj, uint mode);
+bool edDListTermMaterial(edDList_material* pMaterial);
+edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, int mode);
+
+#ifdef PLATFORM_WIN
+Multidelegate<edDList_material*>& edDListGetMaterialLoadedDelegate();
+Multidelegate<edDList_material*>& edDListGetMaterialUnloadedDelegate();
+#endif
 
 #endif //_EDDLIST_H

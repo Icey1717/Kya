@@ -279,7 +279,7 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 			}
 			else {
 				if (peVar5->keyType == 1) {
-					edAnmSubControler local_8 = { (edAnmSubControlerTag*)(peVar5 + 1) };
+					edAnmSubControler local_8 = edAnmSubControler((edAnmSubControlerTag*)(peVar5 + 1));
 					pfVar2 = local_8.GetClosestKeyIndex(adjustedDelta.durationA, &local_c);
 					uVar4 = (uint)local_8.pData->keyCount;
 					fVar7 = adjustedDelta.durationA - *pfVar2;
@@ -313,7 +313,7 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 	i = this->pCinTag->field_0x14;
 	while (i = i + -1, -1 < i) {
 		edAnimatedPropertyTag* pAnimTag = (edAnimatedPropertyTag*)peVar5;
-		edAnimatedProperty local_14 = { pAnimTag };
+		edAnimatedProperty local_14 = edAnimatedProperty(pAnimTag);
 		if (pAnimTag->propType == 3) {
 			local_18 = 0;
 			bool bValidKey = local_14.GetKeyIndexAndTime(adjustedDelta.durationA, &local_18, &local_1c);

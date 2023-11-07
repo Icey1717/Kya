@@ -124,22 +124,22 @@ void sceVu0ApplyMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1)
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 #if 1
-	m1->aa = m0->aa;
-	m1->ab = m0->ba;
-	m1->ac = m0->ca;
-	m1->ad = m0->da;
-	m1->ba = m0->ab;
-	m1->bb = m0->bb;
-	m1->bc = m0->cb;
-	m1->bd = m0->db;
-	m1->ca = m0->ac;
-	m1->cb = m0->bc;
-	m1->cc = m0->cc;
-	m1->cd = m0->dc;
-	m1->da = m0->ad;
-	m1->db = m0->bd;
-	m1->dc = m0->cd;
-	m1->dd = m0->dd;
+	m0->aa = m1->aa;
+	m0->ab = m1->ba;
+	m0->ac = m1->ca;
+	m0->ad = m1->da;
+	m0->ba = m1->ab;
+	m0->bb = m1->bb;
+	m0->bc = m1->cb;
+	m0->bd = m1->db;
+	m0->ca = m1->ac;
+	m0->cb = m1->bc;
+	m0->cc = m1->cc;
+	m0->cd = m1->dc;
+	m0->da = m1->ad;
+	m0->db = m1->bd;
+	m0->dc = m1->cd;
+	m0->dd = m1->dd;
 	return;
 #else
 	__asm__ __volatile__("\n\
@@ -1076,5 +1076,21 @@ void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECT
 	v0->y = fVar1 * fVar13 + fVar4 * fVar14 + fVar7 * fVar15 + fVar10 * fVar16;
 	v0->z = fVar2 * fVar13 + fVar5 * fVar14 + fVar8 * fVar15 + fVar11 * fVar16;
 	v0->w = fVar3 * fVar13 + fVar6 * fVar14 + fVar9 * fVar15 + fVar12 * fVar16;
+	return;
+}
+
+void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar1 = v1->y;
+	fVar2 = v1->z;
+	fVar3 = v1->w;
+	v0->x = v1->x * v1->x;
+	v0->y = fVar1 * fVar1;
+	v0->z = fVar2 * fVar2;
+	v0->w = fVar3 * fVar3;
 	return;
 }

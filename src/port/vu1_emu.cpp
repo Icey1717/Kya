@@ -18,7 +18,7 @@ namespace VU1Emu {
 	int gItop;
 
 	bool bEnableInterpreter = false;
-	bool bRunSingleThreaded = false;
+	bool bRunSingleThreaded = true;
 
 	namespace Debug {
 		constexpr bool bUseJobPool = true;
@@ -1428,7 +1428,16 @@ void VU1Emu::UpdateMemory(edpkt_data* pVifPkt, edpkt_data* pEnd)
 				UnpackToAddr(pTag->addr, pVifPkt + 1, pTag->count * 0x10);
 			}
 			else {
-				UnpackToAddr(pTag->addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x10);
+				uint addr = pTag->addr;
+				uint shift = pVifPkt->asU32[3] >> 15;
+				bool flg = shift & 1;
+
+				if (flg) {
+					addr += gItop;
+					addr = addr & 0x3ff;
+				}
+
+				UnpackToAddr(addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x10);
 			}
 		}
 		pVifPkt++;

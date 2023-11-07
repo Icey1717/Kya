@@ -159,7 +159,7 @@ void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* 
 					this->pPrev = (CMessageFile*)0x0;
 					this->pNext = (CMessageFile*)0x0;
 					gMessageManager.pMessage = this;
-					MY_LOG("Linking first message: %p\n", this);
+					MY_LOG("Linking first message: %p\n", (void*)this);
 				}
 				else {
 					pTVar4 = gMessageManager.pMessage->pNext;
@@ -171,7 +171,7 @@ void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* 
 					this->pPrev = pTVar3;
 					this->pNext = (CMessageFile*)0x0;
 					pTVar3->pNext = this;
-					MY_LOG("Linking next message: %p\n", this);
+					MY_LOG("Linking next message: %p\n", (void*)this);
 				}
 			}
 		}
@@ -294,7 +294,7 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 				this->pPrev = (CMessageFile*)0x0;
 				this->pNext = (CMessageFile*)0x0;
 				gMessageManager.pMessage = this;
-				MY_LOG("Linking first message: %p\n", this);
+				MY_LOG("Linking first message: %p\n", (void*)this);
 			}
 			else {
 				pTVar3 = gMessageManager.pMessage->pNext;
@@ -306,7 +306,7 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 				this->pPrev = pTVar2;
 				this->pNext = (CMessageFile*)0x0;
 				pTVar2->pNext = this;
-				MY_LOG("Linking next message: %p\n", this);
+				MY_LOG("Linking next message: %p\n", (void*)this);
 			}
 		}
 	}

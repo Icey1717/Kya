@@ -11,6 +11,7 @@
 #include <vector>
 #include <cstdio>
 #include "ed3D.h"
+#include "edDlist.h"
 #include "port/pointer_conv.h"
 #include "DebugMaterialPreviewer.h"
 #include "Callstack.h"
@@ -163,7 +164,7 @@ namespace DebugMenu_Internal {
 		// Create a new ImGui window
 		ImGui::Begin("Video Player Controls", &bShowCutsceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
 
-		auto pCinematicManager = g_CinematicManager_0048efc;
+		auto* pCinematicManager = g_CinematicManager_0048efc;
 
 		static int selectedCutsceneId = 0;
 
@@ -186,7 +187,7 @@ namespace DebugMenu_Internal {
 				// You can perform actions based on the selected option.
 			}
 
-			auto pCutscene = pCinematicManager->ppCinematicObjB_B[selectedCutsceneId];
+			auto* pCutscene = pCinematicManager->ppCinematicObjB_B[selectedCutsceneId];
 
 			if (pCutscene->cineBankLoadStage_0x2b4 == 4) {
 				// Play/Pause button
@@ -257,7 +258,7 @@ namespace DebugMenu_Internal {
 	}
 
 	void ShowTextureCache() {
-		auto texCache = PS2::GetTextureCache();
+		auto& texCache = PS2::GetTextureCache();
 		ImGui::Begin("Texture Cache", &bShowTextureCache, ImGuiWindowFlags_AlwaysAutoResize);
 
 		for (int i = 0; i < texCache.GetEntries().size(); i++) {
@@ -347,61 +348,61 @@ namespace DebugMenu_Internal {
 
 	void ShowLogWindow()
 	{
-		const auto& logMessages = Log::GetInstance().GetLogMessages();
-		auto& verboseLevels = Log::GetInstance().GetLogVerboseLevels();
-
-		ImGui::Begin("Log Window", &bShowLogWindow);
-
-		// Checkbox controls for verbose levels
-		for (int level = static_cast<int>(LogLevel::VeryVerbose); level < static_cast<int>(LogLevel::Max); ++level)
-		{
-			LogLevel logLevel = static_cast<LogLevel>(level);
-			ImGui::Checkbox(LogLevelToString(logLevel).c_str(), &verboseLevels[logLevel]);
-
-			if (level != static_cast<int>(LogLevel::Max) - 1) {
-				ImGui::SameLine();
-			}
-		}
-
-		int usage = 0;
-		for (const auto& log : logMessages)
-		{
-			//usage += log.second.capacity() + log.category.capacity();
-		}
-
-		ImGui::SameLine();
-		ImGui::Text("Usage: %dmb", usage / 1024 / 1024);
-
-		// Begin tab bar
-		if (ImGui::BeginTabBar("LogTabs"))
-		{
-			// Loop through log categories
-			for (auto& message : logMessages)
-			{
-				// Begin tab item for the category
-				if (ImGui::BeginTabItem(message.first.c_str()))
-				{
-					ImGui::BeginChild(message.first.c_str(), ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-
-					// Display log messages for the current category
-					for (const auto& log : message.second)
-					{
-						// Display log message if it belongs to the current category
-						if (verboseLevels[log.level])
-						{
-							ImGui::TextWrapped("%s", log.message.c_str());
-						}
-					}
-
-					ImGui::EndChild();
-					ImGui::EndTabItem();
-				}
-			}
-
-			ImGui::EndTabBar();
-		}
-
-		ImGui::End();
+		//const auto& logMessages = Log::GetInstance().GetLogMessages();
+		//auto& verboseLevels = Log::GetInstance().GetLogVerboseLevels();
+		//
+		//ImGui::Begin("Log Window", &bShowLogWindow);
+		//
+		//// Checkbox controls for verbose levels
+		//for (int level = static_cast<int>(LogLevel::VeryVerbose); level < static_cast<int>(LogLevel::Max); ++level)
+		//{
+		//	LogLevel logLevel = static_cast<LogLevel>(level);
+		//	ImGui::Checkbox(LogLevelToString(logLevel).c_str(), &verboseLevels[logLevel]);
+		//
+		//	if (level != static_cast<int>(LogLevel::Max) - 1) {
+		//		ImGui::SameLine();
+		//	}
+		//}
+		//
+		//int usage = 0;
+		//for (const auto& log : logMessages)
+		//{
+		//	//usage += log.second.capacity() + log.category.capacity();
+		//}
+		//
+		//ImGui::SameLine();
+		//ImGui::Text("Usage: %dmb", usage / 1024 / 1024);
+		//
+		//// Begin tab bar
+		//if (ImGui::BeginTabBar("LogTabs"))
+		//{
+		//	// Loop through log categories
+		//	for (auto& message : logMessages)
+		//	{
+		//		// Begin tab item for the category
+		//		if (ImGui::BeginTabItem(message.first.c_str()))
+		//		{
+		//			ImGui::BeginChild(message.first.c_str(), ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+		//
+		//			// Display log messages for the current category
+		//			for (const auto& log : message.second)
+		//			{
+		//				// Display log message if it belongs to the current category
+		//				if (verboseLevels[log.level])
+		//				{
+		//					ImGui::TextWrapped("%s", log.message.c_str());
+		//				}
+		//			}
+		//
+		//			ImGui::EndChild();
+		//			ImGui::EndTabItem();
+		//		}
+		//	}
+		//
+		//	ImGui::EndTabBar();
+		//}
+		//
+		//ImGui::End();
 	}
 
 	void ShowMaterialList() {
@@ -462,7 +463,7 @@ namespace DebugMenu_Internal {
 				bOpenedMaterial = true;
 				const int materialCount = GetMaterialCountFromTexture(textureList[selectedTextureIndex].pTexture);
 				textureMaterials.resize(materialCount);
-				DEBUG_LOG(LogLevel::Info, "Discovered %d materials for texture %p", materialCount, textureList[selectedTextureIndex].pTexture);
+				DEBUG_LOG(LogLevel::Info, "Discovered %d materials for texture %p", materialCount, (void*)textureList[selectedTextureIndex].pTexture);
 			}
 		}
 
@@ -483,7 +484,7 @@ namespace DebugMenu_Internal {
 				if (ImGui::Selectable(buttonText) || bOpenedMaterial) {
 					DEBUG_LOG(LogLevel::Info, "Selected material %d", i + 1);
 					if (material.textureInfo == nullptr) {
-						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture %p", i + 1, selectedTexture.pTexture);
+						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture %p", i + 1, (void*)selectedTexture.pTexture);
 						edDListCreatMaterialFromIndex(&material, i, selectedTexture.pTexture, 2);
 					}
 					selectedMaterialIndex = i;
@@ -559,7 +560,7 @@ double DebugMenu::GetDeltaTime()
 
 void DebugMenu::Init()
 {
-	ed3DGetMaterialLoadedDelegate() += DebugMenu_Internal::OnMaterialLoaded;
-	ed3DGetMaterialUnloadedDelegate() += DebugMenu_Internal::OnMaterialUnloaded;
+	edDListGetMaterialLoadedDelegate() += DebugMenu_Internal::OnMaterialLoaded;
+	edDListGetMaterialUnloadedDelegate() += DebugMenu_Internal::OnMaterialUnloaded;
 	ed3DGetTextureLoadedDelegate() += DebugMenu_Internal::OnTextureLoaded;
 }

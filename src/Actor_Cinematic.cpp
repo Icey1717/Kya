@@ -1,11 +1,39 @@
 #include "Actor_Cinematic.h"
 #include "ed3D.h"
 #include "edList.h"
+#include <string>
 
 
 CActorCinematic::CActorCinematic()
+	:CActor()
 {
-
+	//CSound* pSound;
+	//
+	//CActor::CActor((CActor*)this);
+	//this->pVTable = &_vt;
+	//pSound = &(this->behaviourCinematic).cinActor.soundStruct;
+	//(this->behaviourCinematic).pVtable = &CBehaviour::_vt;
+	//(this->behaviourCinematic).pVtable = &CBehaviourCinematic::_vt;
+	//(this->behaviourCinematic).cinActor.pVTable = &edCinActorInterface::_vt;
+	//(this->behaviourCinematic).cinActor.pVTable = (undefined*)&CBWCinActor::_vt;
+	//(this->behaviourCinematic).cinActor.pParent = (CActor*)0x0;
+	//CSound::CSound(pSound);
+	//pSound->vt = &CSoundSample::_vt;
+	//*(undefined4*)&(this->behaviourCinematic).cinActor.soundInternalStruct = 0;
+	//*(undefined4*)&(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x4 = 0;
+	//*(undefined4*)&(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x8 = 0;
+	//(this->behaviourCinematic).cinActor.soundInternalStruct.SoundStructPtr = (CSound*)0x0;
+	//(this->behaviourCinematic).cinActor.soundInternalStruct.SoundID = 0;
+	//(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x14 = 0;
+	//(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x18 = 0.0;
+	//(this->behaviourCinematic).cinActor.soundInternalStruct.field_0x1c = 0.0;
+	//(this->behaviourCinematic).cinActor.usedInInstCreate = -1;
+	//(this->behaviourCinematic).cinActor.field_0xbc = 0;
+	//(this->behaviourCinematic).cinActor.field_0xc0 = 0;
+	//GetParam1((long)&(this->behaviourCinematic).cinActor.field_0x110);
+	//(this->behaviourCinematic).field_0x140 = -1;
+	//(this->behaviourCinematic).field_0x144 = -1;
+	//CAnimation::CAnimation(&this->animationController);
 }
 
 void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGameInterface, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D, ed_3D_Scene* pScene)
@@ -215,6 +243,7 @@ bool CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 	(this->pOwner)->flags = (this->pOwner)->flags | 0x1000;
 	lVar3 = (long)*(int*)&(this->cinActor).field_0x124;
 	if (lVar3 != 0) {
+		IMPLEMENTATION_GUARD_LOG();
 		//FUN_00115ba0((long)(int)this->pOwner, (undefined4*)&(this->cinActor).field_0x110, lVar3, 0);
 	}
 	if (newState == -1) {
@@ -260,4 +289,96 @@ bool CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 		this->field_0x168 = -1.0f;
 	})
 	return bVar2;
+}
+
+void SetHierFlags_00295a30(ed_3d_hierarchy_node* pNode, byte param_2)
+{
+	(pNode->base).flags_0x9e = (pNode->base).flags_0x9e | 0x80;
+	(pNode->base).size_0xae = param_2;
+	return;
+}
+
+void CBehaviourCinematic::Manage()
+{
+	ed_3d_hierarchy_node* peVar1;
+	CActorCinematic* pCVar2;
+	EActorState AVar3;
+	bool bVar4;
+	CCinematic* pCinematic;
+	CCineActorConfig* pConfig;
+	long lVar5;
+	float fVar6;
+	float extraout_f0;
+	CActor* pCVar7;
+	float fVar8;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 local_10;
+
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	pConfig = pCinematic->GetActorConfig(this->pOwner);
+	local_10 = this->pOwner->currentLocation;
+	fVar6 = local_10.w;
+	peVar1 = this->pOwner->p3DHierNode;
+	local_10.w = fVar6;
+	if (peVar1 != (ed_3d_hierarchy_node*)0x0) {
+		SetHierFlags_00295a30(peVar1, 0);
+	}
+	if ((pConfig != (CCineActorConfig*)0x0) && ((pConfig->flags & 2) != 0)) {
+		IMPLEMENTATION_GUARD(
+		fVar6 = (float)(*(code*)this->pOwner->pVTable->CinematicMode_Manage)();)
+	}
+	pCVar2 = this->pOwner;
+	AVar3 = pCVar2->actorState;
+	if (AVar3 == 3) {
+		IMPLEMENTATION_GUARD(
+		edF32Matrix4FromEulerSoft(&eStack80, &(pCVar2->baseData).rotationEuler, "XYZ");
+		eStack80.da = (this->cinActor).nextPos.x;
+		eStack80.db = (this->cinActor).nextPos.y;
+		eStack80.dc = (this->cinActor).nextPos.z;
+		eStack80.dd = (this->cinActor).nextPos.w;
+		if ((pConfig == (CCineActorConfig*)0x0) || ((pConfig->flags & 4) == 0)) {
+			CActor::UpdatePosition((CActor*)this->pOwner, &eStack80, 1);
+		}
+		else {
+			(*(code*)this->pOwner->pVTable->CinematicMode_UpdateMatrix)();
+		}
+		pCVar2 = this->pOwner;
+		fVar8 = (pCVar2->baseData).currentLocation.y;
+		fVar6 = (pCVar2->baseData).currentLocation.z;
+		(pCVar2->baseData).vector_0x120.x = (pCVar2->baseData).currentLocation.x;
+		(pCVar2->baseData).vector_0x120.y = fVar8;
+		(pCVar2->baseData).vector_0x120.z = fVar6;
+		if ((this->field_0x178 == 3) || (this->field_0x178 == 2)) {
+			ManageLipsync(this);
+		})
+	}
+	else {
+		if (((AVar3 != 2) && (AVar3 == 1)))
+		{
+			// Guard hack check src.
+			IMPLEMENTATION_GUARD(
+			if (((AVar3 != 2) && (AVar3 == 1)) &&
+				(lVar5 = (*(code*)pCVar2->pVTable->CinematicMode_InterpolateTo)
+					(pCVar2, pConfig, &(this->cinActor).vectorFieldA, &pCinematic->matrix_0x120), fVar6 = extraout_f0
+					, lVar5 != 0)) {
+				fVar6 = (float)(*this->pOwner->pVTable->SetState)((CActor*)this->pOwner, 2, -1);
+			})
+		}
+	}
+	bVar4 = this->pOwner->IsKindOfObject(2);
+	if (bVar4 != false) {
+		IMPLEMENTATION_GUARD(
+		pCVar2 = this->pOwner;
+		CActorMoveable::ComputeRealMoving((ACharacterBase*)pCVar2, &local_10, fVar6);
+		if ((((CharacterBaseData*)&pCVar2->baseData)->actorBase).actorState == New_Name_(3)) {
+			fVar6 = *(float*)&(pCVar2->behaviourCinematic).cinActor.soundStruct.field_0x18;
+			pCVar7 = (pCVar2->behaviourCinematic).cinActor.pParent;
+			fVar8 = (float)(pCVar2->behaviourCinematic).cinActor.field_0x8;
+			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.x =
+				(float)(pCVar2->behaviourCinematic).cinActor.pVTable * fVar6;
+			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.y = (float)pCVar7 * fVar6;
+			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.z = fVar8 * fVar6;
+		})
+	}
+	return;
 }

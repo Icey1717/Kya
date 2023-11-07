@@ -23,6 +23,7 @@
 #include "PathManager.h"
 #include "ActorManager.h"
 #include "SectorManager.h"
+#include "DlistManager.h"
 
 
 LevelScheduleManager* LevelScheduleManager::gThis = NULL;
@@ -857,35 +858,34 @@ LAB_002e26c8:
 
 void BnkInstallScene(char* pFileData, int size)
 {
-	ByteCode MStack16;
+	ByteCode byteCode;
 
 	/* Origin: 0040e860 */
-	MStack16.Init(pFileData);
-	MStack16.GetChunk();
-	Scene::ptable.g_FileManager3D_00451664->Level_AddAll(&MStack16);
-	Scene::_pinstance->Level_Setup(&MStack16);
-	Scene::ptable.g_WayPointManager_0045169c->Level_AddAll(&MStack16);
-	Scene::ptable.g_PathManager_004516a0->Level_AddAll(&MStack16);
+	byteCode.Init(pFileData);
+	byteCode.GetChunk();
+	CScene::ptable.g_FileManager3D_00451664->Level_AddAll(&byteCode);
+	CScene::_pinstance->Level_Setup(&byteCode);
+	CScene::ptable.g_WayPointManager_0045169c->Level_AddAll(&byteCode);
+	CScene::ptable.g_PathManager_004516a0->Level_AddAll(&byteCode);
 	//(*(code*)(Scene::ptable.g_CollisionManager_00451690)->pManagerFunctionData->Level_AddAll)();
-	Scene::ptable.g_ActorManager_004516a4->Level_AddAll(&MStack16);
-	Scene::ptable.g_SectorManager_00451670->Level_AddAll(&MStack16);
-	//if (Scene::ptable.g_Manager29B4_004516bc != (Manager_29b4*)0x0) {
-	//	(*(code*)(Scene::ptable.g_Manager29B4_004516bc)->pManagerFunctionData[1].field_0x0)();
-	//}
-	MStack16.Term();
-	//ByteCodeDestructor(&MStack16, -1);
+	CScene::ptable.g_ActorManager_004516a4->Level_AddAll(&byteCode);
+	CScene::ptable.g_SectorManager_00451670->Level_AddAll(&byteCode);
+	if (CScene::ptable.g_GlobalDListManager_004516bc != (CGlobalDListManager*)0x0) {
+		CScene::ptable.g_GlobalDListManager_004516bc->Level_Create();
+	}
+	byteCode.Term();
 	return;
 }
 
 void BnkInstallSceneCfg(char* pFileData, int size)
 {
-	Scene* pScene;
+	CScene* pScene;
 	uint uVar2;
 	float fVar3;
 	ByteCode byteCode;
 	byteCode.Init(pFileData);
 	byteCode.GetChunk();
-	pScene = Scene::_pinstance;
+	pScene = CScene::_pinstance;
 	fVar3 = byteCode.GetF32();
 	pScene->field_0x1c = fVar3;
 	uVar2 = byteCode.GetU32();
@@ -894,12 +894,12 @@ void BnkInstallSceneCfg(char* pFileData, int size)
 	pScene->field_0x24 = fVar3;
 	byteCode.GetU32();
 	byteCode.GetU32();
-	Scene::ptable.g_FileManager3D_00451664->Level_Create(&byteCode);
+	CScene::ptable.g_FileManager3D_00451664->Level_Create(&byteCode);
 	//CCollisionManager::Level_Create(Scene::ptable.g_CollisionManager_00451690, &MStack16);
 	//CAnimManager::Level_Create(Scene::ptable.g_AnimManager_00451668, &MStack16);
 	byteCode.GetU32();
 	byteCode.GetU32();
-	Scene::ptable.g_SectorManager_00451670->Level_Create(&byteCode);
+	CScene::ptable.g_SectorManager_00451670->Level_Create(&byteCode);
 	//CActorManager::Level_LoadClassesInfo(Scene::ptable.g_ActorManager_004516a4, &MStack16);
 	//CCollisionManager::Level_PostCreate(Scene::ptable.g_CollisionManager_00451690);
 	//CFxParticleManager::Level_Create(&BStack16);
@@ -917,12 +917,12 @@ void BnkInstallG2D(char* pFileData, int length)
 	FileManager3D* pFVar1;
 	int iStack4;
 
-	pFVar1 = Scene::ptable.g_FileManager3D_00451664;
+	pFVar1 = CScene::ptable.g_FileManager3D_00451664;
 	ed3DInstallG2D
 	(pFileData, length, &iStack4,
 		(ed_g2d_manager*)
-		((Scene::ptable.g_FileManager3D_00451664)->pTextureInfoArray +
-			(Scene::ptable.g_FileManager3D_00451664)->textureLoadedCount), 1);
+		((CScene::ptable.g_FileManager3D_00451664)->pTextureInfoArray +
+			(CScene::ptable.g_FileManager3D_00451664)->textureLoadedCount), 1);
 	pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
 	pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
 	return;
@@ -934,9 +934,9 @@ void OnMeshLoaded_001a6380(char* pFileData, int length)
 	Mesh* pMVar2;
 	FileManager3D* pFVar3;
 
-	pFVar3 = Scene::ptable.g_FileManager3D_00451664;
-	iVar1 = (Scene::ptable.g_FileManager3D_00451664)->meshLoadedCount;
-	pMVar2 = (Scene::ptable.g_FileManager3D_00451664)->pMeshDataArray;
+	pFVar3 = CScene::ptable.g_FileManager3D_00451664;
+	iVar1 = (CScene::ptable.g_FileManager3D_00451664)->meshLoadedCount;
+	pMVar2 = (CScene::ptable.g_FileManager3D_00451664)->pMeshDataArray;
 	pMVar2[iVar1].fileLength = length;
 	pMVar2[iVar1].pFileData = pFileData;
 	pFVar3->meshLoadedCount = pFVar3->meshLoadedCount + 1;
@@ -1133,7 +1133,7 @@ void WillLoadFilefromBank(bool param_1, void* pObj)
 	pLVar1 = LevelScheduleManager::gThis;
 	if (param_1 != false) {
 		WillLoadFileFromBank
-		(Scene::ptable.g_GlobalSoundPtr_00451698,
+		(CScene::ptable.g_GlobalSoundPtr_00451698,
 			(LevelScheduleManager::gThis->levelIOPBank).pBankFileAccessObject);
 		pLVar1->loadStage_0x5b48 = 1;
 	}

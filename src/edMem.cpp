@@ -390,7 +390,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 							iVar2 = pHeap->freeBytes;
 							uVar13 = pHeap->nextBlock;
 							ulong testValue = (ulong)pcVar7 + (iVar2 - (ulong)(pReturn + size));
-							MY_LOG("edmemWorkAlloc test %p %d %p %x %llu", pcVar7, iVar2, pReturn, size, testValue);
+							MY_LOG("edmemWorkAlloc test %p %d %p %x %llu", (void*)pcVar7, iVar2, pReturn, size, testValue);
 							if (testValue == 0) {
 								if (sVar1 == -1) {
 									MY_LOG("edmemWorkAlloc nextFreeBlock %d", uVar13);

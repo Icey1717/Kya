@@ -81,7 +81,7 @@ namespace DebugCamera {
 	}
 
 	void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
-		auto pCameraManager = CCameraManager::_gThis->pActiveCamera;
+		auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
 		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;
 		edF32VECTOR4& cameraPosition = pCameraManager->transformationMatrix.rowT;
 		edF32MATRIX4& cameraDirection = pCameraManager->transformationMatrix;
@@ -141,7 +141,7 @@ namespace DebugCamera {
 	}
 
 	void UpdateCameraPosition(float deltaTime) {
-		auto pCameraManager = CCameraManager::_gThis->pActiveCamera;
+		auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
 		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;
 		edF32VECTOR4& cameraPosition = pCameraManager->transformationMatrix.rowT;
 		edF32MATRIX4& cameraDirection = pCameraManager->transformationMatrix;
@@ -220,7 +220,7 @@ void DebugCamera::ShowCamera()
 	// Get the display size
 	ImGui::Begin("Camera", nullptr);
 
-	auto pCameraManager = CCameraManager::_gThis->pActiveCamera;
+	auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
 	ImGui::Text("Position");
 	EditEdF32Vector4(pCameraManager->transformationMatrix.rowT);
 	ImGui::Text("LookAt");

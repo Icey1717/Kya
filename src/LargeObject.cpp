@@ -34,13 +34,14 @@
 #include "PathManager.h"
 #include "ActorManager.h"
 #include "AnmManager.h"
+#include "DlistManager.h"
 
-Scene* Scene::_pinstance = NULL;
+CScene* CScene::_pinstance = NULL;
 
-ManagerContainer Scene::ptable = { 0 };
+ManagerContainer CScene::ptable = { 0 };
 
-ed_3D_Scene* Scene::_scene_handleA = NULL;
-ed_3D_Scene* Scene::_scene_handleB = NULL;
+ed_3D_Scene* CScene::_scene_handleA = NULL;
+ed_3D_Scene* CScene::_scene_handleB = NULL;
 
 ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10] = { 0 };
 
@@ -67,11 +68,11 @@ ed_3D_Scene* ed3DShadowCreateScene(ed_3D_Scene* pTemplate, edFCamera* pCamera)
 
 	pVidModeDataA = pTemplate->pViewport->pColorBuffer;
 	pVidModeDataB = pTemplate->pViewport->pZBuffer;
-	if (0x100 < (uint)(pTemplate->sceneConfig).pShadowConfig.field_0x1c) {
-		(pTemplate->sceneConfig).pShadowConfig.field_0x1c = 0x100;
+	if (0x100 < (uint)(pTemplate->sceneConfig).pShadowConfig.texHeight) {
+		(pTemplate->sceneConfig).pShadowConfig.texHeight = 0x100;
 	}
-	uVar2 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.field_0x18);
-	uVar3 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.field_0x1c);
+	uVar2 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.texWidth);
+	uVar3 = GetGreaterPower2Val((pTemplate->sceneConfig).pShadowConfig.texHeight);
 	pCVar7 = (CameraObjParams*)0x8;
 	pCVar8 = &local_8;
 	pCVar1 = pCVar8;
@@ -109,8 +110,8 @@ ed_3D_Scene* ed3DShadowCreateScene(ed_3D_Scene* pTemplate, edFCamera* pCamera)
 	(pCVar6->pShadowConfig).field_0x23 = (pTemplate->sceneConfig).pShadowConfig.field_0x23;
 	(pCVar6->pShadowConfig).field_0x22 = (pTemplate->sceneConfig).pShadowConfig.field_0x22;
 	(pCVar6->pShadowConfig).field_0x24 = (pTemplate->sceneConfig).pShadowConfig.field_0x24;
-	(pCVar6->pShadowConfig).field_0x18 = (pTemplate->sceneConfig).pShadowConfig.field_0x18;
-	(pCVar6->pShadowConfig).field_0x1c = (pTemplate->sceneConfig).pShadowConfig.field_0x1c;
+	(pCVar6->pShadowConfig).texWidth = (pTemplate->sceneConfig).pShadowConfig.texWidth;
+	(pCVar6->pShadowConfig).texHeight = (pTemplate->sceneConfig).pShadowConfig.texHeight;
 	(pTemplate->sceneConfig).pShadowConfig.renderMask = 0;
 	gShadowScene = pStaticMeshMaster;
 	return pStaticMeshMaster;
@@ -126,7 +127,7 @@ ed_3D_Scene* ed3DSceneCastShadow(ed_3D_Scene* p3DScene, edFCamera* pCamera)
 	return pDisplayList;
 }
 
-Scene::Scene()
+CScene::CScene()
 {
 	void** errorPrinter;
 	//LocalizationManager* pManager;
@@ -158,7 +159,7 @@ Scene::Scene()
 	ed_3D_Scene* pSVar16;
 	undefined8 uVar17;
 	//Manager_29b4** ppMVar18;
-	Scene* puVar5;
+	CScene* puVar5;
 	int iVar19;
 	ed_3D_Scene** ppSVar20;
 	edFCamera* pCVar21;
@@ -200,13 +201,13 @@ Scene::Scene()
 	//	ppMVar18[-7] = (Manager_29b4*)0x0;
 	//	ppMVar18 = ppMVar18 + -8;
 	//} while (-1 < iVar19);
-	Scene::ptable.g_LevelScheduleManager_00451660 = new LevelScheduleManager();
+	CScene::ptable.g_LevelScheduleManager_00451660 = new LevelScheduleManager();
 	/* Initial load point at 006db5b0 */
-	if (Scene::ptable.g_LevelScheduleManager_00451660 != (LevelScheduleManager*)0x0) {
-		LevelScheduleManager::gThis = Scene::ptable.g_LevelScheduleManager_00451660;
+	if (CScene::ptable.g_LevelScheduleManager_00451660 != (LevelScheduleManager*)0x0) {
+		LevelScheduleManager::gThis = CScene::ptable.g_LevelScheduleManager_00451660;
 	}
 	pManager = new LocalizationManager();
-	Scene::ptable.g_LocalizationManager_00451678 = pManager;
+	CScene::ptable.g_LocalizationManager_00451678 = pManager;
 	//g_Manager1e4_00451678 = pManager;
 	//pMVar1 = (Manager_170*)Allocate(0x170);
 	//if (pMVar1 != (Manager_170*)0x0) {
@@ -215,7 +216,7 @@ Scene::Scene()
 	//}
 	//g_Manager170_00451674 = pMVar1;
 	pFrontendManager = new FrontendManager();
-	Scene::ptable.g_FrontendManager_00451680 = pFrontendManager;
+	CScene::ptable.g_FrontendManager_00451680 = pFrontendManager;
 	//pHelpManager = (HelpManager*)Allocate(0x1e4);
 	//if (pHelpManager != (HelpManager*)0x0) {
 	//	uVar17 = SetupHelpManager_0037bc70(pHelpManager);
@@ -223,19 +224,19 @@ Scene::Scene()
 	//}
 	//g_HelpManager_00451684 = pHelpManager;
 	pPVar2 = new PauseManager();
-	Scene::ptable.g_PauseManager_00451688 = pPVar2;
-	Scene::ptable.g_MapManager_0045168c = new MapManager;
+	CScene::ptable.g_PauseManager_00451688 = pPVar2;
+	CScene::ptable.g_MapManager_0045168c = new MapManager;
 	pCameraViewmanager = new CCameraManager;
-	Scene::ptable.g_CameraManager_0045167c = pCameraViewmanager;
+	CScene::ptable.g_CameraManager_0045167c = pCameraViewmanager;
 	pSectorManager = new CSectorManager;
-	Scene::ptable.g_SectorManager_00451670 = pSectorManager;
+	CScene::ptable.g_SectorManager_00451670 = pSectorManager;
 	//pLightManager = (LightManager*)Allocate(0x120);
 	//if (pLightManager != (LightManager*)0x0) {
 	//	pLightManager = LightManager::Constructor_002170a0(pLightManager);
 	//}
 	//g_LightManager_004516b0 = pLightManager;
 	p3DFileManager = new FileManager3D();
-	Scene::ptable.g_FileManager3D_00451664 = p3DFileManager;
+	CScene::ptable.g_FileManager3D_00451664 = p3DFileManager;
 	//pMVar4 = (Manager_100*)Allocate(100);
 	//if (pMVar4 != (Manager_100*)0x0) {
 	//	uVar17 = SetupManager100_00211eb0(pMVar4);
@@ -253,18 +254,18 @@ Scene::Scene()
 	//	inAllocatedMemory = (GlobalSound_00451698*)GlobalSoundConstructor(inAllocatedMemory);
 	//}
 	//g_GlobalSoundPtr_00451698 = inAllocatedMemory;
-	Scene::ptable.g_WayPointManager_0045169c = new CWayPointManager;
-	Scene::ptable.g_PathManager_004516a0 = new CPathManager;
-	Scene::ptable.g_ActorManager_004516a4 = new CActorManager;
+	CScene::ptable.g_WayPointManager_0045169c = new CWayPointManager;
+	CScene::ptable.g_PathManager_004516a0 = new CPathManager;
+	CScene::ptable.g_ActorManager_004516a4 = new CActorManager;
 	//g_CinematicManager_0045166c = (ManagerFunctionData**)Allocate(4);
 	//if (g_CinematicManager_0045166c != (ManagerFunctionData**)0x0) {
 	//	*g_CinematicManager_0045166c = &g_ManagerDefaultFuncData_0043a4e0;
 	//	*g_CinematicManager_0045166c = &ManagerFunctionData_0043dc90;
 	//}
 	pNewCinematicObject = new CCinematicManager();
-	Scene::ptable.g_CinematicManagerPtr_004516ac = pNewCinematicObject;
+	CScene::ptable.g_CinematicManagerPtr_004516ac = pNewCinematicObject;
 
-	Scene::ptable.g_AnimManager_00451668 = new CAnimationManager;
+	CScene::ptable.g_AnimManager_00451668 = new CAnimationManager;
 
 	//pMVar8 = (Manager_C_Alt*)Allocate(0xc);
 	//if (pMVar8 != (Manager_C_Alt*)0x0) {
@@ -272,18 +273,13 @@ Scene::Scene()
 	//	pMVar8 = (Manager_C_Alt*)uVar17;
 	//}
 	//g_ManagerC_Alt_004516b4 = pMVar8;
-	Scene::ptable.g_EffectsManager_004516b8 = new CFxManager;
+	CScene::ptable.g_EffectsManager_004516b8 = new CFxManager;
 	//pEventManager = (EventManager*)Allocate(0xc);
 	//if (pEventManager != (EventManager*)0x0) {
 	//	pEventManager = EventManager::Setup_0019e980(pEventManager);
 	//}
 	//g_EventManager_006f5080 = pEventManager;
-	//pMVar10 = (Manager_29b4*)Allocate(0x29b4);
-	//if (pMVar10 != (Manager_29b4*)0x0) {
-	//	uVar17 = SetupManager29b4_002d88c0(pMVar10);
-	//	pMVar10 = (Manager_29b4*)uVar17;
-	//}
-	//g_Manager29B4_004516bc = pMVar10;
+	CScene::ptable.g_GlobalDListManager_004516bc = new CGlobalDListManager;
 	peVar11 = edVideoGetInfo();
 	local_8.posY = 0;
 	local_8.posX = 0;
@@ -294,14 +290,14 @@ Scene::Scene()
 	pCVar14 = edViewportNew(&local_8, pVVar12, pVVar13, 3);
 	this->pViewportA = pCVar14;
 	edViewportSetBackgroundColor(this->pViewportA, 0, 0, 0);
-	Scene::_scene_handleA = ed3DSceneCreate(&_gDisplayCamera, this->pViewportA, 1);
-	Scene::_scene_handleA->ed3DSceneSetFlag(0x20);
-	Scene::_scene_handleA->ed3DSceneSetFogProperty(1);
-	Scene::_scene_handleA->SetFlag_002a5440(1);
-	pCVar15 = ed3DSceneGetConfig(Scene::_scene_handleA);
+	CScene::_scene_handleA = ed3DSceneCreate(&_gDisplayCamera, this->pViewportA, 1);
+	CScene::_scene_handleA->ed3DSceneSetFlag(0x20);
+	CScene::_scene_handleA->ed3DSceneSetFogProperty(1);
+	CScene::_scene_handleA->SetFlag_002a5440(1);
+	pCVar15 = ed3DSceneGetConfig(CScene::_scene_handleA);
 	pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
-	(pCVar15->pShadowConfig).field_0x18 = 0x200;
-	(pCVar15->pShadowConfig).field_0x1c = 0x100;
+	(pCVar15->pShadowConfig).texWidth = 0x200;
+	(pCVar15->pShadowConfig).texHeight = 0x100;
 	pCVar15->field_0x12c = pCVar15->field_0x14 * 800;
 	pCVar15->field_0x128 = 1;
 	(pCVar15->pShadowConfig).field_0x0 = 0;
@@ -319,12 +315,12 @@ Scene::Scene()
 	_scene_handleB->ed3DSceneSetFogProperty(0);
 	pCVar15 = ed3DSceneGetConfig(_scene_handleB);
 	pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
-	ed3DSceneGetConfig(Scene::_scene_handleA);
+	ed3DSceneGetConfig(CScene::_scene_handleA);
 	iVar19 = 0;
 	pCVar21 = gSceneCameras;
 	ppSVar20 = g_CameraPanStaticMasterArray_00451630;
 	do {
-		pSVar16 = ed3DSceneCastShadow(Scene::_scene_handleA, pCVar21);
+		pSVar16 = ed3DSceneCastShadow(CScene::_scene_handleA, pCVar21);
 		*ppSVar20 = pSVar16;
 		(*ppSVar20)->ed3DSceneSetFlag(4);
 		iVar19 = iVar19 + 1;
@@ -333,14 +329,14 @@ Scene::Scene()
 	} while (iVar19 < 10);
 	this->count_0x120 = 0;
 	this->field_0x11c = 0;
-	Scene::_pinstance = this;
+	CScene::_pinstance = this;
 	return;
 }
 
 
-void Scene::CreateScene(void)
+void CScene::CreateScene(void)
 {
-	new Scene;
+	new CScene;
 }
 
 void Game_Init(void)
@@ -349,7 +345,7 @@ void Game_Init(void)
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&CScene::ptable;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Game_Init();
@@ -361,13 +357,13 @@ void Game_Init(void)
 	return;
 }
 
-void Scene::LevelLoading_Draw(void)
+void CScene::LevelLoading_Draw(void)
 {
 	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&CScene::ptable;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->LevelLoading_Draw();
@@ -379,7 +375,7 @@ void Scene::LevelLoading_Draw(void)
 	return;
 }
 
-void Scene::LevelLoading_Begin(void)
+void CScene::LevelLoading_Begin(void)
 {
 	Timer* pTimeController;
 	CObjectManager** loadLoopObject;
@@ -389,7 +385,7 @@ void Scene::LevelLoading_Begin(void)
 	pTimeController->ResetGameTimers();
 	ed3DResetTime();
 	iVar1 = 0;
-	loadLoopObject = (CObjectManager**)&Scene::ptable;
+	loadLoopObject = (CObjectManager**)&CScene::ptable;
 	do {
 		if (*loadLoopObject != (CObjectManager*)0x0) {
 			(*loadLoopObject)->LevelLoading_Begin();
@@ -400,7 +396,7 @@ void Scene::LevelLoading_Begin(void)
 	return;
 }
 
-bool Scene::LevelLoading_Manage()
+bool CScene::LevelLoading_Manage()
 {
 	bool bVar1;
 	CObjectManager** loopFunc;
@@ -410,7 +406,7 @@ bool Scene::LevelLoading_Manage()
 	bVar3 = false;
 	HandleFogAndClippingSettings();
 	iVar2 = 0;
-	loopFunc = (CObjectManager**)&Scene::ptable;
+	loopFunc = (CObjectManager**)&CScene::ptable;
 	do {
 		if ((*loopFunc != (CObjectManager*)0x0) && (bVar1 = (*loopFunc)->LevelLoading_Manage(), bVar1 != false)) {
 			bVar3 = true;
@@ -421,13 +417,13 @@ bool Scene::LevelLoading_Manage()
 	return bVar3;
 }
 
-void Scene::LevelLoading_End(void)
+void CScene::LevelLoading_End(void)
 {
 	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&CScene::ptable;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->LevelLoading_End();
@@ -438,13 +434,13 @@ void Scene::LevelLoading_End(void)
 	return;
 }
 
-void Scene::Level_Install(void)
+void CScene::Level_Install(void)
 {
 	CObjectManager** ppMVar1;
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&CScene::ptable;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Level_Install();
@@ -473,7 +469,7 @@ void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK)
 	return;
 }
 
-void Scene::Level_Init()
+void CScene::Level_Init()
 {
 	undefined4* puVar1;
 	Timer* pTimeController;
@@ -509,7 +505,7 @@ void Scene::Level_Init()
 	this->fogFlags = pSVar1->flags;
 	this->field_0x48 = 0;
 	ed3DSetMipmapProp(true, this->mipmapL, this->mipmapK);
-	if ((Scene::ptable.g_FileManager3D_00451664)->pMeshTransformParent == (edNODE*)0x0) {
+	if ((CScene::ptable.g_FileManager3D_00451664)->pMeshTransformParent == (edNODE*)0x0) {
 		edViewportSetClearMask(this->pViewportA, 0);
 	}
 	else {
@@ -523,7 +519,7 @@ void Scene::Level_Init()
 	//EffectsManager::Level_PreInit((EffectsManager*)Scene::ptable[22]);
 	loopCounter = 0;
 	/* Init loop Initially points at 006db5b0 */
-	loadFuncPtr = (CObjectManager**)&Scene::ptable;
+	loadFuncPtr = (CObjectManager**)&CScene::ptable;
 	do {
 		/* This will call load functions */
 		if (*loadFuncPtr != (CObjectManager*)0x0) {
@@ -548,7 +544,7 @@ void Scene::Level_Init()
 	return;
 }
 
-void Scene::HandleCurState()
+void CScene::HandleCurState()
 {
 	Timer* pTVar1;
 	ulong uVar2;
@@ -632,14 +628,14 @@ void Scene::HandleCurState()
 	return;
 }
 
-void Scene::Level_Manage()
+void CScene::Level_Manage()
 {
 	CObjectManager** ppMVar1;
 	int iVar2;
 
 	if (this->field_0x48 == 0) {
 		if ((GameFlags & 0x200) != 0) {
-			Scene::_scene_handleA->RemoveFlag_002a53e0(4);
+			CScene::_scene_handleA->RemoveFlag_002a53e0(4);
 			_scene_handleB->RemoveFlag_002a53e0(4);
 			GameFlags = GameFlags & 0xfffffdff;
 		}
@@ -647,14 +643,14 @@ void Scene::Level_Manage()
 	else {
 		if ((GameFlags & 0x200) == 0) {
 			GameFlags = GameFlags | 0x200;
-			Scene::_scene_handleA->ed3DSceneSetFlag(4);
+			CScene::_scene_handleA->ed3DSceneSetFlag(4);
 			_scene_handleB->ed3DSceneSetFlag(4);
 		}
 	}
 	//EmptyFunction();
-	if ((GameFlags & 0x20) == 0) {
+	if ((GameFlags & GAME_STATE_PAUSED) == 0) {
 		iVar2 = 0;
-		ppMVar1 = (CObjectManager**)&Scene::ptable;
+		ppMVar1 = (CObjectManager**)&CScene::ptable;
 		do {
 			if (*ppMVar1 != (CObjectManager*)0x0) {
 				(*ppMVar1)->Level_Manage();
@@ -665,7 +661,7 @@ void Scene::Level_Manage()
 	}
 	else {
 		iVar2 = 0;
-		ppMVar1 = (CObjectManager**)&Scene::ptable;
+		ppMVar1 = (CObjectManager**)&CScene::ptable;
 		do {
 			if (*ppMVar1 != (CObjectManager*)0x0) {
 				(*ppMVar1)->Level_ManagePaused();
@@ -684,7 +680,7 @@ void UpdateObjectsMain(void)
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&Scene::ptable;
+	ppMVar1 = (CObjectManager**)&CScene::ptable;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Level_Draw();
@@ -698,7 +694,7 @@ void UpdateObjectsMain(void)
 
 char* s_Main_Camera_0042b460 = "Main Camera";
 
-void Scene::Level_Setup(ByteCode* pMemoryStream)
+void CScene::Level_Setup(ByteCode* pMemoryStream)
 {
 	undefined4* puVar1;
 	int* piVar2;
@@ -725,7 +721,7 @@ void Scene::Level_Setup(ByteCode* pMemoryStream)
 	iVar4 = pMemoryStream->GetS32();
 	this->mipmapK = iVar4;
 	/* Main Camera */
-	pCVar5 = (MainCamera*)Scene::ptable.g_CameraManager_0045167c->AddCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
+	pCVar5 = (MainCamera*)CScene::ptable.g_CameraManager_0045167c->AddCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
 	fVar5 = pMemoryStream->GetF32();
 	this->field_0x118 = fVar5;
 	pCVar5->field_0x2dc = fVar5;
@@ -734,18 +730,18 @@ void Scene::Level_Setup(ByteCode* pMemoryStream)
 	uVar3 = pMemoryStream->GetU32();
 	this->count_0x120 = uVar3;
 	LoadFunc_001b87b0();
-	Scene::ptable.g_MapManager_0045168c->OnLoadLevelBnk_003f9a60(pMemoryStream);
+	CScene::ptable.g_MapManager_0045168c->OnLoadLevelBnk_003f9a60(pMemoryStream);
 	iVar4 = pMemoryStream->GetS32();
 	this->field_0x28 = iVar4;
 	if (this->field_0x28 != -1) {
-		Scene::ptable.g_FileManager3D_00451664->InstanciateG2D(this->field_0x28);
+		CScene::ptable.g_FileManager3D_00451664->InstanciateG2D(this->field_0x28);
 	}
 	iVar4 = pMemoryStream->GetS32();
 	this->defaultTextureIndex_0x2c = iVar4;
 	//FUN_002cbc90((undefined4*)&this->field_0xfc);
 	iVar4 = pMemoryStream->GetS32();
 	this->field_0x30 = iVar4;
-	Scene::ptable.g_EffectsManager_004516b8->AddPool(pMemoryStream);
+	CScene::ptable.g_EffectsManager_004516b8->AddPool(pMemoryStream);
 	//local_4 = { };
 	local_4.Create(pMemoryStream);
 	local_4.Perform();
@@ -763,7 +759,7 @@ void Scene::Level_Setup(ByteCode* pMemoryStream)
 	return;
 }
 
-bool Scene::CheckFunc_001b9300()
+bool CScene::CheckFunc_001b9300()
 {
 	return this->curState - 6U < 2;
 }
@@ -797,8 +793,8 @@ void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height)
 	memset(local_8, 0, sizeof(local_8));
 	uVar8 = (ushort)uVar4;
 	uVar7 = (ushort)uVar5;
-	(pSVar3->pShadowConfig).field_0x18 = uVar4;
-	(pSVar3->pShadowConfig).field_0x1c = uVar5;
+	(pSVar3->pShadowConfig).texWidth = uVar4;
+	(pSVar3->pShadowConfig).texHeight = uVar5;
 	peVar1->posX = local_8[0];
 	peVar1->posY = local_8[1];
 	peVar1->screenWidth = uVar8;
@@ -812,7 +808,7 @@ void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height)
 	return;
 }
 
-void Scene::LoadFunc_001b87b0()
+void CScene::LoadFunc_001b87b0()
 {
 	SceneConfig* pCVar1;
 	ed_3D_Scene** ppSVar2;
@@ -826,7 +822,7 @@ void Scene::LoadFunc_001b87b0()
 	if (10 < this->count_0x120) {
 		this->count_0x120 = 10;
 	}
-	ed3DSceneGetConfig(Scene::_scene_handleA);
+	ed3DSceneGetConfig(CScene::_scene_handleA);
 	if (this->field_0x11c == 0) {
 		unaff_s2_lo = 0x200;
 		unaff_s1_lo = 0x100;
@@ -878,7 +874,7 @@ void _rgba::LerpRGBA(float alpha, _rgba param_3, _rgba param_4)
 	return;
 }
 
-void Scene::HandleFogAndClippingSettings()
+void CScene::HandleFogAndClippingSettings()
 {
 	S_STREAM_FOG_DEF* pSVar1;
 	Timer* pTVar2;
@@ -951,7 +947,7 @@ void Scene::HandleFogAndClippingSettings()
 	return;
 }
 
-void Scene::PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream)
+void CScene::PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream)
 {
 	FogClipEntry* pfVar1;
 
@@ -975,7 +971,7 @@ void Scene::PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream
 	return;
 }
 
-void Scene::Level_SectorChange(int oldSectorId, int newSectorId)
+void CScene::Level_SectorChange(int oldSectorId, int newSectorId)
 {
 	CObjectManager* pLVar1;
 	CObjectManager** pMVar2;
@@ -994,7 +990,12 @@ void Scene::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+void* CScene::GetManager(MANAGER_TYPE type)
+{
+	return (void*)&ptable.g_LevelScheduleManager_00451660[type];
+}
+
 ed_3D_Scene* GetStaticMeshMasterA_001031b0(void)
 {
-	return Scene::_scene_handleA;
+	return CScene::_scene_handleA;
 }

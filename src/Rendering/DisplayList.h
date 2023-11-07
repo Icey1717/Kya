@@ -10,6 +10,7 @@
 #include "../edList.h"
 
 union edF32VECTOR4;
+struct ed_3d_strip;
 
 struct FrustumData {
 	edF32MATRIX4 frustumMatrix;
@@ -30,8 +31,8 @@ struct ed_3D_Shadow_Config {
 	float field_0xc;
 	struct ed_viewport* pCamera_0x10;
 	struct ed_viewport* pViewport;
-	undefined4 field_0x18;
-	undefined4 field_0x1c;
+	int texWidth;
+	int texHeight;
 	undefined2 renderMask;
 	byte field_0x22;
 	byte field_0x23;
@@ -156,15 +157,20 @@ struct RenderCommandUint {
 	struct DisplayListInternal* pDisplayList;
 };
 
+union RenderInput {
+	union edpkt_data* pPkt;
+	ed_3d_strip* pStrip;
+};
+
 struct DisplayListInternalSubObj_60 {
 	struct RenderCommandUint aCommandArray[4];
-	byte field_0x40;
+	byte bActive;
 	byte field_0x41;
 	ushort type_0x42;
-	union edpkt_data* pRenderInput;
-	uint pCurDListBuf;
-	int field_0x4c;
-	uint field_0x50;
+	RenderInput pRenderInput;
+	union edpkt_data* pCurDListBuf;
+	int primType;
+	uint nbAddedVertex;
 	int nbMatrix;
 	union edF32MATRIX4* pCurMatrixArray;
 	undefined field_0x5c;
@@ -179,17 +185,17 @@ struct DisplayListInternal {
 	undefined field_0x2;
 	byte field_0x3;
 	ushort subCommandBufferCount;
-	undefined2 field_0x6;
+	ushort field_0x6;
 	undefined4 field_0x8;
 	char* pCommandBuffer;
-	struct MeshDrawRenderCommand* field_0x10;
+	union edpkt_data* field_0x10;
 	union edpkt_data* field_0x14;
 	union edpkt_data* pRenderCommands;
 	struct DisplayListInternalSubObj_60* pDisplayListInternalSubObj;
 	struct ed_3D_Scene* pStaticMeshMaster_0x20;
 	float field_0x24;
 	char* field_0x28;
-	char* field_0x2c;
+	DisplayListInternalSubObj_60** field_0x2c;
 };
 
 struct edCluster {
@@ -253,12 +259,24 @@ public:
 	int field_0x1c;
 };
 
+class CObject;
+
+struct S_EYES_BRIGHT_SHADOW {
+	undefined4 field_0x0;
+	CObject* pObject;
+	int field_0x8;
+	int field_0xc;
+};
+
 void GlobalDList_Init(void);
 bool GuiDList_BeginCurrent(void);
 void GlobalDList_AddToView(void);
 void GuiDList_EndCurrent(void);
 
+int GameDListPatch_Register(CObject* pObject, int param_2, int param_3);
+
+
 extern DisplayListInternal* gCurDListHandle;
-extern struct MeshDrawRenderCommand* gCurDListBuf;
+extern ed_3d_strip* gCurDListBuf;
 
 #endif // _DISPLAYLIST_H

@@ -12,7 +12,7 @@ edNODE* edlistClear(edLIST* pList, edNODE* pNode)
 	if ((edLIST*)pNode != pList) {
 		peVar2 = pNode->pPrev;
 		pvVar1 = (edNODE_MANAGER*)pList->pData;
-		if (pNode->header.typeField.unknown == 0) {
+		if (pNode->header.typeField.flags == 0) {
 			peVar2->pNext = pNode->pNext;
 			pNode->pNext->pPrev = peVar2;
 			pNode->header.typeField.type = 0;
@@ -97,7 +97,7 @@ edLIST* edListNew(int listCount, int nodeCount, EHeap heapID)
 		peVar2 = (edLIST*)0x0;
 	}
 
-	ED_LIST_LOG(LogLevel::Info, "Created new list: list count: %d, node count: %d, heapID: %d => %p", listCount, nodeCount, heapID, peVar2);
+	ED_LIST_LOG(LogLevel::Info, "Created new list: list count: %d, node count: %d, heapID: %d => %p", listCount, nodeCount, heapID, (void*)peVar2);
 
 	return peVar2;
 }
@@ -237,7 +237,7 @@ void edListApplyFunc(edLIST* pList, edListApply* pFunc)
 #ifdef EDITOR_BUILD
 void edListSetName(edLIST* pList, char* name)
 {
-	ED_LIST_LOG(LogLevel::Info, "Set list name: %p => %s", pList, name);
+	ED_LIST_LOG(LogLevel::Info, "Set list name: %p => %s", (void*)pList, name);
 	memcpy(pList->name, name, sizeof(pList->name));
 }
 #endif

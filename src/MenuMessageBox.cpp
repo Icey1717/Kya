@@ -42,7 +42,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	edCTextStyle local_c0;
 
 	uVar7 = flags & 1;
-	uVar2 = GameFlags & 0x20;
+	uVar2 = GameFlags & GAME_STATE_PAUSED;
 	//if ((uVar7 == 0) &&
 	//	(g_InputManager_00450960.pressedBitfield =
 	//		(InputBitfield)((uint)g_InputManager_00450960.pressedBitfield & 0xfffffeff), uVar2 == 0)) {
@@ -301,7 +301,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 				GlobalDList_AddToView();
 			}
 			//edDebugMenuLoop();
-			pViewport = (Scene::ptable.g_FrontendManager_00451680)->pViewport;
+			pViewport = (CScene::ptable.g_FrontendManager_00451680)->pViewport;
 			edViewportSetClearMask(pViewport, 0);
 			edVideoFlip();
 			edViewportSetClearMask(pViewport, 0xffffffff);

@@ -4,6 +4,7 @@
 #include "VulkanRenderer.h"
 #include <stdexcept>
 #include <array>
+#include <sstream>
 #include "VulkanShader.h"
 #include "VulkanBuffer.h"
 #include <unordered_map>
@@ -89,16 +90,16 @@ namespace Renderer {
 
 	void LogTex(const char* prefix, GIFReg::GSTex tex)
 	{
-		// Create a formatted log message string
-		std::ostringstream oss;
-		oss << "tbp: " << tex.TBP0 << ", tbw: " << tex.TBW << ", psm: " << tex.PSM
-			<< ", tw: " << tex.TW << ", th: " << tex.TH << ", tcc: " << tex.TCC
-			<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << " (0x" << std::hex << tex.CBP << "), cpsm: " << tex.CPSM
-			<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
-
-		// Log the formatted message
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %s", prefix, oss.str().c_str());
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %llx", prefix, tex.CMD);
+		//// Create a formatted log message string
+		//std::ostringstream oss;
+		//oss << "tbp: " << tex.TBP0 << ", tbw: " << tex.TBW << ", psm: " << tex.PSM
+		//	<< ", tw: " << tex.TW << ", th: " << tex.TH << ", tcc: " << tex.TCC
+		//	<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << " (0x" << std::hex << tex.CBP << "), cpsm: " << tex.CPSM
+		//	<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
+		//
+		//// Log the formatted message
+		//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %s", prefix, oss.str().c_str());
+		//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %llx", prefix, tex.CMD);
 	}
 
 	void SetVertexSkip(uint32_t inSkip)
@@ -1965,7 +1966,7 @@ void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSSta
 		  std::string("-DVS_TME=") + std::to_string(PS2::m_conf.vs.tme) + " "
 		+ std::string("-DVS_FST=") + std::to_string(PS2::m_conf.vs.fst);
 
-	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "DATE: %d DATM: %d", state.TEST.DATE, state.TEST.DATM);
+	//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "DATE: %d DATM: %d", state.TEST.DATE, state.TEST.DATM);
 
 	const PipelineDebug::ConfigData debugData = { PipelineDebug::gTopologyNames[(int)topology]};
 

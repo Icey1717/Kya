@@ -48,7 +48,7 @@ struct ed_viewport {
 ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, edSurface* pVidModeDataB, byte alpha);
 void edViewportUpdate(ed_viewport* pCamera, CameraObjParams* pParams, edSurface* pColorBuffer, edSurface* pZBuffer, byte alpha);
 void edViewportDel(ed_viewport* pCamera, bool bDestroyFrameBuffers);
-edpkt_data* edViewportUpdateEnv(ed_viewport* pCamera, edpkt_data* pCommandBuf);
+edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf);
 void edViewPortApplyDrawingEnv(ed_viewport* pCamera);
 void edViewportSetBackgroundColor(ed_viewport* pCamera, byte r, byte g, byte b);
 void edViewportSetClearMask(ed_viewport* pCamera, uint param_2);

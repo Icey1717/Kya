@@ -175,7 +175,7 @@ void FrontendManager::Game_Init()
 	Frontend::_scene_handle = ed3DSceneCreate(&CCameraManager::_gFrontEndCamera, this->pViewport, 1);
 
 	edF32Matrix4SetIdentityHard(&this->field_0x10);
-	pMVar1 = Scene::ptable.g_Manager170_00451674;
+	pMVar1 = CScene::ptable.g_Manager170_00451674;
 	iVar5 = 0;
 	wolfenFileName = MenuElementsBitmapNames;
 	pTexture = MenuBitmaps;

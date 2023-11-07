@@ -186,7 +186,7 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	else {
 		IMPLEMENTATION_GUARD_LOG(
 		SetWorldBox((int)&this->kyaChild, (undefined8*)(this->pActorManagerSectorArray + newSectorId),
-			(long)*(int*)((Scene::ptable.g_SectorManager_00451670)->subObjArray[newSectorId].pFileData + 8) & 1);)
+			(long)*(int*)((CScene::ptable.g_SectorManager_00451670)->subObjArray[newSectorId].pFileData + 8) & 1);)
 	}
 	fVar5 = (CCameraManager::_gThis->transformationMatrix).da;
 	fVar6 = (CCameraManager::_gThis->transformationMatrix).db;

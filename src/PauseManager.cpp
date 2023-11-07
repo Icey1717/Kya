@@ -151,8 +151,8 @@ void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
 	undefined4 uVar4;
 	float fVar5;
 
-	pGVar3 = Scene::ptable.g_GlobalSoundPtr_00451698;
-	pCVar2 = Scene::ptable.g_CameraManager_0045167c;
+	pGVar3 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	pCVar2 = CScene::ptable.g_CameraManager_0045167c;
 	pCVar1 = g_CinematicManager_0048efc;
 	//fVar5 = (Scene::ptable.g_GlobalSoundPtr_00451698)->field_0xbc * 12.0;
 	//if (fVar5 < 2.147484e+09) {
@@ -221,7 +221,7 @@ void PauseManager::Level_Init()
 			this->pSimpleMenu->SetFontValue_002f2d10(BootDataFont);
 			this->pSimpleMenu->SetFontValue_002f2d00(BootDataFont);
 			this->pSimpleMenu->SetFontValue_002f2cf0(BootDataFont);
-			this->pSimpleMenu->SetTranslatedTextData_002f2d20(&(Scene::ptable.g_LocalizationManager_00451678)->userInterfaceText);
+			this->pSimpleMenu->SetTranslatedTextData_002f2d20(&(CScene::ptable.g_LocalizationManager_00451678)->userInterfaceText);
 			pGVar3 = new SplashScreen();
 			this->pSplashScreen = pGVar3;
 			/* CDEURO/Frontend/kyatitle.g2d */
@@ -260,7 +260,7 @@ void PauseManager::Level_Draw()
 		if ((g_InputManager_00450960.pressedBitfield != 0) ||
 			(((this->field_0x34 == 0 &&
 				(EVar4 = this->pSimpleMenu->get_current_page(), EVar4 != PM_MainMenu)) ||
-				(bVar2 = Scene::_pinstance->CheckFunc_001b9300(), bVar2 != 0)))) {
+				(bVar2 = CScene::_pinstance->CheckFunc_001b9300(), bVar2 != 0)))) {
 			this->totalPlayTime = fVar9;
 		}
 		//pCinematicManager = g_CinematicManager_0048efc;

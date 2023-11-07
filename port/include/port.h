@@ -599,9 +599,10 @@ MY_LOG("--Gif Tag [mode=%s][pre=%d][prim=%d][nregs=%d][nloop=%d][qwc=%d][EOP=%d]
 
 #define DUMP_TAG_ADV(a) { Gif_Tag gifTag; \
 gifTag.setTag((u8*)&a, 1); \
-MY_LOG("SCE_GIF_SET_TAG(\n%d, // NLOOP\n%s, // EOP\n%s, // PRE\n%d, // PRIM\n%s, // FLG\n%d // NREG\n", \
+int primValueaoeusnthoaua = gifTag.tag.PRIM; \
+MY_LOG("SCE_GIF_SET_TAG(\n{}, // NLOOP\n{}, // EOP\n{}, // PRE\n{}, // PRIM\n{}, // FLG\n{} // NREG\n", \
 	gifTag.nLoop, gifTag.tag.EOP ? "SCE_GS_TRUE" : "SCE_GS_FALSE", \
-	gifTag.tag.PRE ? "SCE_GS_TRUE" : "SCE_GS_FALSE", gifTag.tag.PRIM, \
+	gifTag.tag.PRE ? "SCE_GS_TRUE" : "SCE_GS_FALSE", primValueaoeusnthoaua, \
 	GifTag_ModeStr[gifTag.tag.FLG], gifTag.nRegs); }
 
 /* DMAC */

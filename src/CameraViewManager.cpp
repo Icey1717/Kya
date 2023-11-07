@@ -8,6 +8,9 @@
 #include <libvu0.h>
 #endif
 #include "TimeController.h"
+#include "Rendering/DisplayList.h"
+#include "edDlist.h"
+#include "DlistManager.h"
 
 #define EDFCAMERA_LOG(level, format, ...) MY_LOG_CATEGORY("edFCamera", level, format, ##__VA_ARGS__)
 
@@ -114,7 +117,7 @@ bool ActiveCamManager::SwitchActiveCam(float param_1, Camera* pCamera, SWITCH_MO
 				IMPLEMENTATION_GUARD(
 				if ((iVar4 != -1) &&
 					(iVar3 = &this->field_0x0 + this->activeIndex * 0x50,
-						*(float*)(iVar3 + 0x4c) <= *(float*)(iVar3 + 0x48) * (Scene::ptable.g_CameraManager_0045167c)->time_0x4)) {
+						*(float*)(iVar3 + 0x4c) <= *(float*)(iVar3 + 0x48) * (CScene::ptable.g_CameraManager_0045167c)->time_0x4)) {
 					this->activeIndex = this->activeIndex + -1;
 					iVar4 = this->activeIndex;
 					pCVar2 = (Camera*)0x0;
@@ -250,8 +253,8 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 	_gFrontEndCamera.lookAt.w = (frontend->lookAt).w;
 	CameraSet3DPos(&_gFrontEndCamera);
 	edFCameraSetSizeRatioFov(0.03f, this->aspectRatio, this->pFrontendCamera_0x4e4->fov / 1.333333f, &_gFrontEndCamera);
-	this->field_0xa00 = Scene::_pinstance->field_0x11c;
-	this->field_0xa04 = Scene::_pinstance->count_0x120;
+	this->field_0xa00 = CScene::_pinstance->field_0x11c;
+	this->field_0xa04 = CScene::_pinstance->count_0x120;
 	if (bProcessEvents != false) {
 		pEVar8 = 0x0;
 		do {
@@ -303,7 +306,7 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 	this->field_0x4a0 = 0;
 	(this->transformationMatrix).rowT = gF32Vertex4Zero;
 	(this->shadowCameraLookat) = gF32Vertex4Zero;
-	this->field_0xa34 = 0.84f;
+	this->fov_0xa34 = 0.84f;
 	edF32Matrix4SetIdentityHard(&this->matrix_0x10);
 	this->field_0x710.ClearActiveCam();
 	this->field_0xa78 = 0;
@@ -494,7 +497,7 @@ void CCameraManager::BuildDisplayMatrix()
 	if (((this->pActiveCamera->flags_0xc & 0x20000) == 0) ||
 		((this->field_0x8 & 0x4000000) != 0)) {
 		edF32VECTOR4 oldT = (this->transformationMatrix).rowT;
-		edF32Matrix4FromEulerSoft(&this->transformationMatrix, &this->field_0xa08, "ZXY");
+		edF32Matrix4FromEulerSoft(&this->transformationMatrix, &this->angle_0xa08, "ZXY");
 		(this->transformationMatrix).rowT = oldT;
 	}
 	else {
@@ -537,7 +540,7 @@ void CCameraManager::BuildDisplayMatrix()
 	}
 	else {
 		if ((this->field_0x8 & 0x10000000) == 0) {
-			fVar1 = fVar1 + this->field_0xa34;
+			fVar1 = fVar1 + this->fov_0xa34;
 		}
 		else {
 			fVar1 = fVar1 + this->pMouseQuakeCamera_0x4e8->fov;
@@ -615,11 +618,11 @@ void CCameraManager::Level_Manage()
 					(this->shadowCameraLookat) = pCVar1->lookAt;
 
 					/* Focus object camera? */
-					this->field_0xa30 = pActiveCamera->GetDistance();
-					this->field_0xa34 = pActiveCamera->fov;
-					this->field_0xa08.alpha = pActiveCamera->GetAngleAlpha();
-					this->field_0xa08.beta = pActiveCamera->GetAngleBeta();
-					this->field_0xa08.gamma = pActiveCamera->GetAngleGamma();
+					this->distance_0xa30 = pActiveCamera->GetDistance();
+					this->fov_0xa34 = pActiveCamera->fov;
+					this->angle_0xa08.alpha = pActiveCamera->GetAngleAlpha();
+					this->angle_0xa08.beta = pActiveCamera->GetAngleBeta();
+					this->angle_0xa08.gamma = pActiveCamera->GetAngleGamma();
 				}
 			}
 			else {
@@ -660,11 +663,11 @@ void CCameraManager::Level_Manage()
 					(this->field_0x80).y = fVar13;
 					(this->field_0x80).z = fVar10;
 					(this->field_0x80).w = fVar11;
-					*(float*)&this->field_0xa08 = pfVar7[8];
+					*(float*)&this->angle_0xa08 = pfVar7[8];
 					*(float*)&this->field_0xa0c = pfVar7[9];
 					*(float*)&this->field_0xa10 = pfVar7[10];
-					*(float*)&this->field_0xa30 = pfVar7[0xb];
-					this->field_0xa34 = pfVar7[0xc];
+					*(float*)&this->distance_0xa30 = pfVar7[0xb];
+					this->fov_0xa34 = pfVar7[0xc];
 				})
 			}
 			pCVar8 = this->pInitialView_0x4b4;
@@ -696,7 +699,7 @@ void CCameraManager::Level_Manage()
 			CameraSet3DPos(&_gFrontEndCamera);
 			edFCameraSetSizeRatioFov (0.03f, this->aspectRatio, this->pFrontendCamera_0x4e4->fov / 1.333333f, &_gFrontEndCamera);
 		}
-		ed3DSceneComputeCameraToScreenMatrix(Scene::_scene_handleA, &this->matrix_0x10);
+		ed3DSceneComputeCameraToScreenMatrix(CScene::_scene_handleA, &this->matrix_0x10);
 	}
 	return;
 }
@@ -1137,7 +1140,7 @@ void Camera::Init()
 	//Actor* pAVar4;
 	edF32VECTOR3 local_10;
 
-	pEVar1 = Scene::ptable.g_EventManager_006f5080;
+	pEVar1 = CScene::ptable.g_EventManager_006f5080;
 	edF32Matrix4ToEulerSoft(&this->transformationMatrix, &local_10, "ZXY");
 	SetAngleAlpha(local_10.x);
 	SetAngleBeta(local_10.y);
@@ -1319,7 +1322,7 @@ void CCameraExt::Init()
 	//Actor* pAVar4;
 	edF32VECTOR3 local_10;
 
-	pEVar1 = Scene::ptable.g_EventManager_006f5080;
+	pEVar1 = CScene::ptable.g_EventManager_006f5080;
 	edF32Matrix4ToEulerSoft(&this->transformationMatrix, &local_10, "ZXY");
 	SetAngleAlpha(local_10.x);
 	SetAngleBeta(local_10.y);
@@ -1729,7 +1732,7 @@ void CameraSet3DPos(edFCamera* pCamera)
 	edF32VECTOR4 rotationVector;
 	edF32MATRIX4 transformedMatrix;
 
-	EDFCAMERA_LOG(LogLevel::Info, "CameraSet3DPos Updating position for camera: %p", pCamera);
+	EDFCAMERA_LOG(LogLevel::Info, "CameraSet3DPos Updating position for camera: %p", (void*)pCamera);
 	EDFCAMERA_LOG(LogLevel::Info, "Position: x=%f, y=%f, z=%f", pCamera->position.x, pCamera->position.y, pCamera->position.z);
 	EDFCAMERA_LOG(LogLevel::Info, "Look At : x=%f, y=%f, z=%f", pCamera->lookAt.x, pCamera->lookAt.y, pCamera->lookAt.z);
 
@@ -1780,15 +1783,46 @@ CCameraExt::CCameraExt()
 	return;
 }
 
+bool CCameraExt::IsKindOfObject(ulong kind)
+{
+	return (kind & 0x60) != 0;
+}
+
 CCameraShadow::CCameraShadow(ByteCode* pByteCode)
 {
 	int iVar1;
 
 	this->field_0x16cc = 0;
 	this->field_0x16c4 = 0;
-	//iVar1 = GameDListPatch_Register((CObject*)this, 0x2ee, 0);
-	//this->patchRegister = iVar1;
+	iVar1 = GameDListPatch_Register(this, 0x2ee, 0);
+	this->patchRegister = iVar1;
 	return;
+}
+
+bool CCameraShadow::InitDlistPatchable()
+{
+	CGlobalDListManager* pDlistmanager;
+	undefined8 uVar1;
+	int iVar2;
+
+	edDListLoadIdentity();
+	edDListUseMaterial((edDList_material*)0x0);
+	edDListSetProperty(4, this->sceneFlags);
+	edDListBegin(0.0f, 0.0f, 0.0f, 3, 0x2ee);
+	uVar1 = 0;
+	edDListColor4u8(0, 0, 0, 0x7f);
+	iVar2 = 0;
+	do {
+		edDListVertex4f(0.0f, 0.0f, 0.0f, (int)uVar1);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, (int)uVar1);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, (int)uVar1);
+		iVar2 = iVar2 + 1;
+	} while (iVar2 < 0xfa);
+	edDListEnd();
+	edDListSetProperty(4, 0);
+	pDlistmanager = (CGlobalDListManager*)CScene::GetManager(MO_GlobalDListManager);
+	pDlistmanager->SetActive(this->patchRegister, 1);
+	return true;
 }
 
 void CCameraShadow::Init()
@@ -1833,7 +1867,7 @@ bool CCameraShadow::Manage()
 
 	lVar8 = (long)(int)this;
 	bVar4 = Camera::Manage();
-	pLVar3 = Scene::ptable.g_LightManager_004516b0;
+	pLVar3 = CScene::ptable.g_LightManager_004516b0;
 	if (bVar4 == false) {
 		IMPLEMENTATION_GUARD();
 	}
@@ -1971,6 +2005,29 @@ bool CCameraManager::PushCamera(Camera* pCamera, int param_3)
 	return bSuccess;
 }
 
+void CCameraManager::ApplyActiveCamera()
+{
+	Camera* pCVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	pCVar1 = this->pActiveCamera;
+	if (pCVar1 != (Camera*)0x0) {
+
+		(this->transformationMatrix).rowT = (pCVar1->transformationMatrix).rowT;
+		this->shadowCameraLookat = pCVar1->lookAt;
+		
+		this->distance_0xa30 = this->pActiveCamera->GetDistance();
+		this->fov_0xa34 = this->pActiveCamera->fov;
+
+		(this->angle_0xa08).x = this->pActiveCamera->GetAngleAlpha();
+		(this->angle_0xa08).y = this->pActiveCamera->GetAngleBeta();
+		(this->angle_0xa08).z = this->pActiveCamera->GetAngleGamma();
+	}
+	return;
+}
+
 PACK(
 struct S_STREAM_SIMPLE_ACT_COND {
 	int field_0x0;
@@ -1997,7 +2054,7 @@ bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 		pAVar6 = (Actor*)0x0;
 		if (iVar1 != -1) {
 			IMPLEMENTATION_GUARD(
-			pAVar6 = (*(Scene::ptable.g_ActorManager_004516a4)->aActors)[iVar1];)
+			pAVar6 = (*(CScene::ptable.g_ActorManager_004516a4)->aActors)[iVar1];)
 		}
 		switch (this->field_0x8) {
 		case 0:

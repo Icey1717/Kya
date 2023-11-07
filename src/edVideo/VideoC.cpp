@@ -280,7 +280,7 @@ bool edSurfaceAlloc(edSurface* pFrameBuffer)
 		size = width * height * 4;
 	}
 
-	MY_LOG("edSurfaceAlloc Allocating surface for %p width: %x height: %x align: %x psm: %x size: %x", pFrameBuffer, width, height, align, psm, size);
+	MY_LOG("edSurfaceAlloc Allocating surface for %p width: %x height: %x align: %x psm: %x size: %x", (void*)pFrameBuffer, width, height, align, psm, size);
 
 	pvVar3 = edMemAllocAlign(TO_HEAP(H_VIDEO), size, align);
 	pFrameBuffer->data_0xc = (char*)pvVar3;

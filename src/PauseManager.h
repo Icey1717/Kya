@@ -8,6 +8,7 @@
 #endif
 #include "LargeObject.h"
 #include "ed3D.h"
+#include "edDlist.h"
 
 typedef enum EPauseMenu {
 	PM_Bonus = 13,
@@ -288,8 +289,8 @@ public:
 	float field_0x74;
 	float field_0x78;
 	uint flags_0x7c;
-	struct edDList_material materialInfo;
-	struct ed_g2d_manager textureInfo;
+	edDList_material materialInfo;
+	ed_g2d_manager textureInfo;
 };
 
 struct SplashScreen : public Sprite {

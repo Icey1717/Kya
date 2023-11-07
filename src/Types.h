@@ -132,6 +132,8 @@ struct InputSetupParams {
 EFileLoadMode GetFileLoadMode_00424d9c(void);
 InputSetupParams* edSysGetConfig(void);
 
+#define trap assert
+
 #ifdef PLATFORM_WIN
 #include "log.h"
 #endif
@@ -330,7 +332,7 @@ union alignas(16)
 
 #ifdef PLATFORM_WIN
 #ifdef _DEBUG
-//#define ENABLE_MY_LOG
+#define ENABLE_MY_LOG
 #endif
 #else
 //#define ENABLE_MY_LOG
@@ -457,6 +459,9 @@ inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 #endif
 
 #define UNPACK_V4_32 0x6c
+#define UNPACK_S32 0x60
 #define UNPACK_V4_32_MASKED 0x7c
+#define UNPACK_V4_8_MASKED 0x7e
+#define UNPACK_V2_16_MASKED 0x75
 
 #endif //_TYPES_H

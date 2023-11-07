@@ -106,7 +106,7 @@ bool edAnimatedProperty::GetVector3Value(float time, float* outValue)
 
 	uVar1 = pTag->keyCount;
 
-	edAnmSubControler local_4 = { pTag };
+	edAnmSubControler local_4 = edAnmSubControler(pTag);
 
 	piVar4 = pTag->keyTimes;
 	if (time < pTag->keyTimes[0]) {
@@ -130,7 +130,7 @@ bool edAnimatedProperty::GetKeyIndexAndTime(float currentTime, int* outIndex, fl
 	float* pfVar2;
 
 	edAnmSubControlerTag* pSubControllerTag = (edAnmSubControlerTag*)(this->pData + 1);
-	edAnmSubControler keyframeBufferStart = { pSubControllerTag };
+	edAnmSubControler keyframeBufferStart = edAnmSubControler(pSubControllerTag);
 
 	bVar1 = pSubControllerTag->keyTimes[0] <= currentTime;
 	if (bVar1) {
@@ -363,7 +363,7 @@ bool edAnimatedProperty::GetQuaternionValue(float currentPlayTime, edF32VECTOR4*
 
 	pTag = this->pData;
 	edAnmSubControlerTag* pSubTag = (edAnmSubControlerTag*)(pTag + 1);
-	edAnmSubControler rotationKeyframeData = { pSubTag };
+	edAnmSubControler rotationKeyframeData = edAnmSubControler(pSubTag);
 	uVar1 = pSubTag->keyCount;
 	baseRotationData = pSubTag->keyTimes;
 	if (currentPlayTime < pSubTag->keyTimes[0]) {
@@ -442,7 +442,7 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 				type = pAnimProp->type;
 				//rotationBaseData = cutsceneElementPtr;
 				if (type == 0x64c8d3b1) {
-					edAnimatedProperty anmProp = { pAnimProp };
+					edAnimatedProperty anmProp = edAnimatedProperty(pAnimProp);
 					sVar1 = pAnimProp->propType;
 					if (sVar1 == 2) {
 						ret = anmProp.GetQuaternionValue(currentPlayTime, &outVector);
@@ -461,7 +461,7 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 								ret = false;
 							}
 							else {
-								edAnmSubControler local_18 = { pTag };
+								edAnmSubControler local_18 = edAnmSubControler(pTag);
 								local_18.GetKeyIndicesAndRatioSafe(currentPlayTime, &local_48, &local_44, 0);
 								currentKeyframePlayTime = baseKeyframeData[local_44] - baseKeyframeData[local_48];
 								if (currentKeyframePlayTime != 0.0) {
@@ -486,7 +486,7 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 									ret = false;
 								}
 								else {
-									edAnmSubControler locationKeyFrameData = { pTag };
+									edAnmSubControler locationKeyFrameData = edAnmSubControler(pTag);
 									locationKeyFrameData.GetKeyIndicesAndRatioSafe
 									(currentPlayTime, &locationCurrentKeyFrame,
 										&locationNextKeyframe, 0);
@@ -523,7 +523,7 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 							ret = false;
 						}
 						else {
-							edAnmSubControler keyframeCountPtr = { pTag };
+							edAnmSubControler keyframeCountPtr = edAnmSubControler(pTag);
 							/* Camera goes in here */
 							keyframeCountPtr.GetKeyIndicesAndRatioSafe(currentPlayTime, &locationCurrentKeyframeB, &locationNextKeyframeB, 0);
 							/* Work out the duration through the current keyframe (again, this is already done inside the
@@ -554,7 +554,7 @@ bool edSceneCamera::Timeslice(float currentPlayTime)
 							}
 							else {
 								/* Maybe scale? */
-								edAnmSubControler scaleKeyframeData = { pTag };
+								edAnmSubControler scaleKeyframeData = edAnmSubControler(pTag);
 								keyframeCount = pTag->keyCount;
 								scaleKeyframeData.GetKeyIndicesAndRatioSafe(currentPlayTime, &scaleCurrentKeyFrame, &scaleNextKeyframe, 0);
 								currentKeyframePlayTime = baseKeyframeData[scaleNextKeyframe] - baseKeyframeData[scaleCurrentKeyFrame];
@@ -741,7 +741,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 	if (bFrameDirected != 0) {
 		while (bUpdateRotationSuccess = 0 < numTracks, numTracks = numTracks + -1, bUpdateRotationSuccess) {
 			currentTrackType = pAnimProp->type;
-			animatedProp = { pAnimProp };
+			animatedProp = edAnimatedProperty(pAnimProp);
 			if (currentTrackType == 0x73d8ccae) {
 				IMPLEMENTATION_GUARD(
 				locationOutVector.w = (float)(trackSeekPos + 3);
@@ -821,7 +821,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 							else {
 								edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(pAnimProp + 1);
 								if (currentTrackType == 0xdcd2e210) {
-									local_38 = { pTag };
+									local_38 = edAnmSubControler(pTag);
 									float* pKeyTimes = pTag->keyTimes;
 									local_8 = 0;
 									if (pKeyTimes[0] <= currentPlayTime) {
@@ -943,7 +943,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 												bUpdateRotationSuccess = false;
 											}
 											else {
-												local_2c = { pTag };
+												local_2c = edAnmSubControler(pTag);
 												local_2c.GetKeyIndicesAndRatioSafe(currentPlayTime, &local_a8, &local_a4, 0);
 												fVar4 = pKeyTimes[local_a4] - pKeyTimes[local_a8];
 												if (fVar4 != 0.0f) {
@@ -966,7 +966,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 													bUpdateRotationSuccess = false;
 												}
 												else {
-													locationSceStart = { pTag };
+													locationSceStart = edAnmSubControler(pTag);
 													/* LOCATION */
 													locationSceStart.GetKeyIndicesAndRatioSafe(currentPlayTime, &locationOutKeyframe, &locationOutNextKeyframe, 0);
 													
@@ -986,7 +986,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 											}
 											else {
 												if ((currentTrackType == 0xd2df4b2c) && (pTag->keyTimes[0] <= currentPlayTime)) {
-													local_24 = { pTag };
+													local_24 = edAnmSubControler(pTag);
 													local_24.GetClosestKeyIndexSafe(currentPlayTime, &local_20);
 													pCinActorInterface->SetVisibility(*(char*)(((char*)pAnimProp) + local_20 + (uint)uVar1 * 4 + 0x10) != '\0');
 												}
@@ -1129,7 +1129,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 								/* Sets up cutscene named elements
 								   Example: SC_SOUND_EMITTER or A983538304 or ARAIGNOSBLACK_TOONPLAYER_L0 */
 								if (iVar1 == 0x395f05b1) {
-									edSceneActorVirtual virtualActor = { (CineCreatureObject*)pCVar3 };
+									edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pCVar3);
 									edResCollection resCol = { resPtr };
 									virtualActor.Create(loadObj, resCol);
 								}
@@ -1199,7 +1199,7 @@ bool edScene::Initialize()
 				else {
 					if (iVar2 == 0x395f05b1) {
 						CineCreatureObject* pInternal = (CineCreatureObject*)pBuffer;
-						edSceneActor sceneActor = { (CineCreatureObject*)pInternal };
+						edSceneActor sceneActor = edSceneActor((CineCreatureObject*)pInternal);
 						sceneActor.Initialize();
 					}
 					else {
@@ -1261,7 +1261,7 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 				else {
 					if (elementType == 0x395f05b1) {
 						CineCreatureObject* pInternal = (CineCreatureObject*)sceSeek;
-						edSceneActor sceneActor = { (CineCreatureObject*)pInternal };
+						edSceneActor sceneActor = edSceneActor((CineCreatureObject*)pInternal);
 						sceneActor.Timeslice(currentPlayTime, local_4);
 					}
 					else {

@@ -11,6 +11,7 @@ namespace PointerConv
 int PointerConv::AddTextureSectionValue(void* value)
 {
 	TextureSections.push_back(value);
+
 	return TextureSections.size() - 1;
 }
 

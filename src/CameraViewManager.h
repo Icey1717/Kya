@@ -1093,6 +1093,9 @@ struct CCameraCinematic : public FrontendCameraView {
 struct CCameraExt : public Camera {
 	CCameraExt();
 
+	// CObject
+	virtual bool IsKindOfObject(ulong kind);
+
 	virtual void Init();
 	virtual void* GetTarget();
 	virtual float GetDistance();
@@ -1178,6 +1181,9 @@ struct CCameraMouseAroundPersoSpecial : public CCameraMouseAroundPerso {
 
 struct CCameraShadow : public CCameraExt {
 	CCameraShadow(ByteCode* pByteCode);
+
+	// CObject
+	virtual bool InitDlistPatchable();
 
 	virtual void Init();
 	virtual ECameraType GetMode();
@@ -7590,6 +7596,7 @@ struct CCameraManager : public CObjectManager {
 	bool IsSphereVisible(float other, edF32VECTOR4* pSphere);
 
 	bool PushCamera(Camera* pCamera, int param_3);
+	void ApplyActiveCamera();
 	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
 
@@ -8324,7 +8331,7 @@ struct CCameraManager : public CObjectManager {
 	int count_0x9fc; /* Created by retype action */
 	undefined4 field_0xa00;
 	undefined4 field_0xa04;
-	edF32VECTOR3 field_0xa08;
+	edF32VECTOR3 angle_0xa08;
 	undefined field_0xa14;
 	undefined field_0xa15;
 	undefined field_0xa16;
@@ -8338,8 +8345,8 @@ struct CCameraManager : public CObjectManager {
 	undefined field_0xa1e;
 	undefined field_0xa1f;
 	edF32VECTOR4 shadowCameraLookat;
-	float field_0xa30;
-	float field_0xa34;
+	float distance_0xa30;
+	float fov_0xa34;
 	undefined field_0xa38;
 	undefined field_0xa39;
 	undefined field_0xa3a;

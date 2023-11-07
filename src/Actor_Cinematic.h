@@ -18,6 +18,7 @@ struct CBehaviourCinematic : public CBehaviour {
 
 	virtual void Init(CActor* pOwner);
 	virtual bool Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void Manage();
 };
 
 struct CActorCinematic : public CActor {

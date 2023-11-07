@@ -183,6 +183,18 @@ PACK(
 });
 
 struct edAnimatedProperty {
+	edAnimatedProperty() 
+		: pData((edAnimatedPropertyTag*)0x0)
+	{
+
+	}
+
+	edAnimatedProperty(edAnimatedPropertyTag* pInData) 
+		: pData(pInData)
+	{
+
+	}
+
 	edAnimatedPropertyTag* pData;
 	bool GetQuaternionValue(float currentPlayTime, edF32VECTOR4* outVector);
 	bool GetKeyIndexAndTime(float currentTime, int* outIndex, float* outTime);
@@ -197,6 +209,18 @@ PACK(
 });
 
 struct edAnmSubControler {
+	edAnmSubControler()
+		: pData((edAnmSubControlerTag*)0x0)
+	{
+
+	}
+
+	edAnmSubControler(edAnmSubControlerTag* pInData)
+		: pData(pInData)
+	{
+
+	}
+
 	edAnmSubControlerTag* pData;
 	float* GetClosestKeyIndex(float time, int* outIndex);
 	float* GetClosestKeyIndexSafe(float time, int* outIndex);
