@@ -1,6 +1,5 @@
 #include "DebugMaterial.h"
 
-#include "pointer_conv.h"
 #include "ed3D.h"
 #include "edDlist.h"
 #include "DebugRenderer.h"

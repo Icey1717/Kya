@@ -79,48 +79,6 @@ void edF32Vector4NormalizeHard(float* v0, float* v1)
 	return;
 }
 
-void sceVu0ApplyMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-	float fVar14;
-	float fVar15;
-	float fVar16;
-
-	fVar13 = v1->x;
-	fVar14 = v1->y;
-	fVar15 = v1->z;
-	fVar16 = v1->w;
-	fVar1 = m0->ab;
-	fVar2 = m0->ac;
-	fVar3 = m0->ad;
-	fVar4 = m0->bb;
-	fVar5 = m0->bc;
-	fVar6 = m0->bd;
-	fVar7 = m0->cb;
-	fVar8 = m0->cc;
-	fVar9 = m0->cd;
-	fVar10 = m0->db;
-	fVar11 = m0->dc;
-	fVar12 = m0->dd;
-	v0->x = m0->aa * fVar13 + m0->ba * fVar14 + m0->ca * fVar15 + m0->da * fVar16;
-	v0->y = fVar1 * fVar13 + fVar4 * fVar14 + fVar7 * fVar15 + fVar10 * fVar16;
-	v0->z = fVar2 * fVar13 + fVar5 * fVar14 + fVar8 * fVar15 + fVar11 * fVar16;
-	v0->w = fVar3 * fVar13 + fVar6 * fVar14 + fVar9 * fVar15 + fVar12 * fVar16;
-	return;
-}
-
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 #if 1
@@ -256,22 +214,6 @@ void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTO
 	v0->y = fVar3 * fVar4 - fVar6 * fVar1;
 	v0->z = fVar1 * fVar5 - fVar4 * fVar2;
 	v0->w = in_vf0x;
-	return;
-}
-
-void ps2_vu0_sqr_vector(edF32VECTOR4* v0, edF32VECTOR4* v1)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-
-	fVar1 = v1->y;
-	fVar2 = v1->z;
-	fVar3 = v1->w;
-	v0->x = v1->x * v1->x;
-	v0->y = fVar1 * fVar1;
-	v0->z = fVar2 * fVar2;
-	v0->w = fVar3 * fVar3;
 	return;
 }
 
@@ -960,22 +902,22 @@ void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32MATR
 
 void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0)
 {
-	m0->da = 0.0;
-	m0->db = 0.0;
-	m0->dc = 0.0;
-	m0->dd = 1.0;
-	m0->ca = 0.0;
-	m0->cb = 0.0;
-	m0->cc = 1.0;
-	m0->cd = 0.0;
-	m0->ba = 0.0;
-	m0->bb = 1.0;
-	m0->bc = 0.0;
-	m0->bd = 0.0;
-	m0->aa = 1.0;
-	m0->ab = 0.0;
-	m0->ac = 0.0;
-	m0->ad = 0.0;
+	m0->da = 0.0f;
+	m0->db = 0.0f;
+	m0->dc = 0.0f;
+	m0->dd = 1.0f;
+	m0->ca = 0.0f;
+	m0->cb = 0.0f;
+	m0->cc = 1.0f;
+	m0->cd = 0.0f;
+	m0->ba = 0.0f;
+	m0->bb = 1.0f;
+	m0->bc = 0.0f;
+	m0->bd = 0.0f;
+	m0->aa = 1.0f;
+	m0->ab = 0.0f;
+	m0->ac = 0.0f;
+	m0->ad = 0.0f;
 	return;
 }
 
@@ -1092,5 +1034,88 @@ void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 	v0->y = fVar1 * fVar1;
 	v0->z = fVar2 * fVar2;
 	v0->w = fVar3 * fVar3;
+	return;
+}
+
+float edF32Vector4DotProductSoft(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	return v0->z * v1->z + v0->x * v1->x + v0->y * v1->y;
+}
+
+void edF32Vector4CrossProductSoft(edF32VECTOR4* resultVector, edF32VECTOR4* vector1, edF32VECTOR4* vector2)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar6 = vector2->z;
+	fVar2 = vector1->y;
+	fVar3 = vector2->y;
+	fVar4 = vector1->z;
+	fVar5 = vector2->x;
+	fVar1 = vector1->x;
+	resultVector->x = fVar2 * fVar6 - fVar4 * fVar3;
+	resultVector->y = fVar4 * fVar5 - fVar1 * fVar6;
+	resultVector->z = fVar1 * fVar3 - fVar2 * fVar5;
+	resultVector->w = 0.0f;
+	return;
+}
+
+void edF32Vector4NormalizeSoft(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float v1Magnitude;
+	float fVar1;
+
+	fVar1 = v1->x;
+	v1Magnitude = sqrtf(fVar1 * fVar1 + v1->y * v1->y + v1->z * v1->z);
+	v0->x = fVar1 / v1Magnitude;
+	v0->y = v1->y / v1Magnitude;
+	v0->z = v1->z / v1Magnitude;
+	v0->w = v1->w;
+	return;
+}
+
+void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0)
+{
+	float fVar1;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.y = 1.0f;
+	local_10.x = 0.0f;
+	local_10.z = 0.0f;
+	local_10.w = 0.0f;
+	fVar1 = edF32Vector4DotProductSoft(v0, &local_10);
+	if (0.999f < fabs(fVar1)) {
+		local_10.x = 0.0f;
+		local_10.z = 1.0f;
+		local_10.y = 0.0f;
+		local_10.w = 0.0f;
+	}
+	edF32Vector4CrossProductSoft(&local_20, &local_10, v0);
+	edF32Vector4NormalizeSoft(&local_20, &local_20);
+	edF32Vector4CrossProductSoft(&local_30, v0, &local_20);
+	edF32Vector4NormalizeSoft(&local_30, &local_30);
+	m0->aa = local_20.x;
+	m0->ab = local_20.y;
+	m0->ac = local_20.z;
+	m0->ad = local_20.w;
+	m0->ba = local_30.x;
+	m0->bb = local_30.y;
+	m0->bc = local_30.z;
+	m0->bd = local_30.w;
+	m0->ca = v0->x;
+	m0->cb = v0->y;
+	m0->cc = v0->z;
+	m0->cd = v0->w;
+	m0->da = 0.0f;
+	m0->db = 0.0f;
+	m0->dc = 0.0f;
+	m0->dd = 0.0f;
+	m0->dd = 1.0f;
 	return;
 }

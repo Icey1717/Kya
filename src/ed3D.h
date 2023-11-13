@@ -27,7 +27,7 @@ PACK(
 	undefined field_0xf;
 };)
 
-PACK(struct ed_Chunck {
+PACK(struct __attribute__((aligned(16))) ed_Chunck {
 	uint hash;
 	short field_0x4;
 	short field_0x6;
@@ -90,7 +90,7 @@ struct ed_3d_hierarchy {
 	ushort lodCount;
 	ushort flags_0x9e;
 	struct ed_3d_hierarchy_setup* pHierarchySetup;
-	edF32MATRIX4* pMatrixPkt;
+	edpkt_data* pMatrixPkt;
 	union edF32MATRIX4* pAnimMatrix;
 	short subMeshParentCount_0xac;
 	byte size_0xae;

@@ -28,15 +28,16 @@ public:
 	virtual bool SetHeadingQuat(float x, float y, float z, float w);
 	virtual bool SetScale(float x, float y, float z);
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
-	void SetupTransform();
+
+	void SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, int intFieldA);
 
 	CActor* pParent;
 	int field_0x8;
 
 	edF32VECTOR4 nextPos;
-	edF32VECTOR4 field_0xe0;
-	edF32VECTOR4 field_0xf0;
-	edF32VECTOR4 field_0x100;
+	edF32VECTOR4 position;
+	edF32VECTOR4 heading;
+	edF32VECTOR4 scale;
 	undefined field_0x110;
 	undefined field_0x111;
 	undefined field_0x112;
@@ -58,7 +59,6 @@ public:
 	undefined field_0x122;
 	undefined field_0x123;
 	int field_0x124;
-	void SetupTransform(edF32VECTOR4* vectorA, edF32VECTOR4* vectorB, edF32VECTOR4* vectorC, int intFieldA);
 };
 
 class CBWCinCam : public edCinCamInterface {

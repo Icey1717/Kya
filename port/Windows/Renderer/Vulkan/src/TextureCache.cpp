@@ -17,7 +17,7 @@
 
 void Renderer::ImageData::Log(const char* prefix) const
 {
-	LOG_TEXCACHE("%s bpp: %d, w: %d, h: %d, rw: %d, rh: %d field_0x6: %d", prefix, bpp, canvasWidth, canvasHeight, readWidth, readHeight, maxMipLevel);
+	LOG_TEXCACHE("{} bpp: {}, w: {}, h: {}, rw: {}, rh: {} field_0x6: {}", prefix, bpp, canvasWidth, canvasHeight, readWidth, readHeight, maxMipLevel);
 }
 
 namespace PS2_Internal {

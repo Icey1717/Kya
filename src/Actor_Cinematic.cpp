@@ -2,6 +2,8 @@
 #include "ed3D.h"
 #include "edList.h"
 #include <string>
+#include "MathOps.h"
+#include "FileManager3D.h"
 
 
 CActorCinematic::CActorCinematic()
@@ -34,6 +36,87 @@ CActorCinematic::CActorCinematic()
 	//(this->behaviourCinematic).field_0x140 = -1;
 	//(this->behaviourCinematic).field_0x144 = -1;
 	//CAnimation::CAnimation(&this->animationController);
+}
+
+ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)
+{
+	ed_Chunck* peVar1;
+
+	peVar1 = (ed_Chunck*)((char*)pChunk + pChunk->field_0xc);
+	if ((param_2 != (char*)0x0) && (param_2 <= (char*)peVar1)) {
+		peVar1 = (ed_Chunck*)0x0;
+	}
+	return peVar1;
+}
+
+void CActorCinematic::FUN_0011c1b0(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D)
+{
+	ed_Chunck* peVar1;
+	long* plVar2;
+	ed_Chunck* peVar3;
+	long* plVar4;
+	long* plVar5;
+	uint uVar6;
+	int iVar7;
+	int iVar8;
+	uint uVar9;
+	long local_20[4];
+
+	peVar3 = pG3D->MBNA;
+	peVar3 = edChunckGetSpecial(peVar3, (char*)peVar3 + peVar3->size);
+	uVar9 = peVar3->size - 0x10U >> 4;
+	if (1 < uVar9) {
+		IMPLEMENTATION_GUARD_LOG(
+		plVar4 = (long*)0x18;
+		plVar5 = local_20;
+		plVar2 = plVar5;
+		while (plVar2 != (long*)0x0) {
+			*(undefined*)plVar5 = 0;
+			plVar5 = (long*)((int)plVar5 + 1);
+			plVar4 = (long*)((int)plVar4 + -1);
+			plVar2 = plVar4;
+		}
+		iVar8 = 0;
+		iVar7 = 0;
+		plVar5 = local_20;
+		local_20[0] = s_BOOMY_P0BOOMY_P1BOOMY_P2_00435140._0_8_;
+		local_20[1] = s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._64_8_;
+		local_20[2] = s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._0_8_;
+		uVar6 = uVar9;
+		peVar1 = peVar3;
+		do {
+			while (true) {
+				if ((uVar6 == 0) || (2 < iVar8)) break;
+				if (*(long*)(peVar1 + 1) == *plVar5) {
+					plVar5 = plVar5 + 1;
+					iVar8 = iVar8 + 1;
+				}
+				uVar6 = uVar6 - 1;
+				peVar1 = peVar1 + 1;
+			}
+			iVar7 = iVar7 + 1;
+			uVar6 = uVar9;
+			peVar1 = peVar3;
+		} while (iVar7 < 3);
+		if (iVar8 == 3) {
+			iVar7 = LevelScheduleManager::FUN_002d9e40();
+			if (0 < iVar7) {
+				FUN_00115890((int)this, s_BOOMY_P0BOOMY_P1BOOMY_P2_00435140._0_8_, *(ulong*)(&DAT_00435138 + iVar7 * 8), (int)pG2D
+				);
+			}
+			uVar9 = LevelScheduleManager::FUN_002d9e50();
+			if (0 < (int)uVar9) {
+				FUN_00115890((int)this, s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._64_8_,
+					*(ulong*)(s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160 + uVar9 * 8 + 0x38), (int)pG2D);
+			}
+			iVar7 = LevelScheduleManager::FUN_002d9e00();
+			if (0 < iVar7) {
+				FUN_00115890((int)this, s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._0_8_,
+					*(ulong*)(s_BOOMY_P0BOOMY_P1BOOMY_P2_00435140 + iVar7 * 8 + 0x18), (int)pG2D);
+			}
+		})
+	}
+	return;
 }
 
 void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGameInterface, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D, ed_3D_Scene* pScene)
@@ -105,14 +188,12 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 				this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->field_0xcc;)
 			}
 			ed3DHierarchySetSetup(&this->p3DHierNode->base, &this->hierarchySetup);
-			IMPLEMENTATION_GUARD_LOG(
-			FUN_0011c1b0((int)this, (int)pG3D, (int)pG2D));
+			this->FUN_0011c1b0(pG3D, pG2D);
 		}
 	}
 	peVar1 = this->p3DHierNode;
 	if (peVar1 == (ed_3d_hierarchy_node*)0x0) {
-		IMPLEMENTATION_GUARD_LOG(
-		this->pMeshTransform = (ed_3d_hierarchy_node*)&this->field_0x580;)
+		this->pMeshTransform = &this->field_0x580;
 	}
 	else {
 		this->pMeshTransform = peVar1;
@@ -127,9 +208,9 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	//CActor::SetupLodInfo(this);
 	//CActor::SetupShadow((CActor*)this, (GroundObject*)0x0);
 	//CActor::SetupLighting(this);
-	//this->flags = this->flags | 0x100000;
-	//this->flags = this->flags | 0x1000;
-	//CActor::RestoreInitData((CActor*)this);
+	this->flags = this->flags | 0x100000;
+	this->flags = this->flags | 0x1000;
+	RestoreInitData();
 	//peVar2 = this->pMeshNode;
 	///* Doesn't go in here for tunnel */
 	//if (peVar2 != (edNODE*)0x0) {
@@ -330,27 +411,20 @@ void CBehaviourCinematic::Manage()
 	pCVar2 = this->pOwner;
 	AVar3 = pCVar2->actorState;
 	if (AVar3 == 3) {
-		IMPLEMENTATION_GUARD(
-		edF32Matrix4FromEulerSoft(&eStack80, &(pCVar2->baseData).rotationEuler, "XYZ");
-		eStack80.da = (this->cinActor).nextPos.x;
-		eStack80.db = (this->cinActor).nextPos.y;
-		eStack80.dc = (this->cinActor).nextPos.z;
-		eStack80.dd = (this->cinActor).nextPos.w;
+		edF32Matrix4FromEulerSoft(&eStack80, &pCVar2->rotationEuler, "XYZ");
+		eStack80.rowT = (this->cinActor).nextPos;
+
 		if ((pConfig == (CCineActorConfig*)0x0) || ((pConfig->flags & 4) == 0)) {
-			CActor::UpdatePosition((CActor*)this->pOwner, &eStack80, 1);
+			this->pOwner->UpdatePosition(&eStack80, 1);
 		}
 		else {
-			(*(code*)this->pOwner->pVTable->CinematicMode_UpdateMatrix)();
+			pOwner->CinematicMode_UpdateMatrix(&eStack80);
 		}
 		pCVar2 = this->pOwner;
-		fVar8 = (pCVar2->baseData).currentLocation.y;
-		fVar6 = (pCVar2->baseData).currentLocation.z;
-		(pCVar2->baseData).vector_0x120.x = (pCVar2->baseData).currentLocation.x;
-		(pCVar2->baseData).vector_0x120.y = fVar8;
-		(pCVar2->baseData).vector_0x120.z = fVar6;
-		if ((this->field_0x178 == 3) || (this->field_0x178 == 2)) {
-			ManageLipsync(this);
-		})
+		pCVar2->previousLocation = pCVar2->currentLocation.xyz;
+		//if ((this->field_0x178 == 3) || (this->field_0x178 == 2)) {
+		//	ManageLipsync(this);
+		//}
 	}
 	else {
 		if (((AVar3 != 2) && (AVar3 == 1)))
@@ -379,6 +453,26 @@ void CBehaviourCinematic::Manage()
 			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.y = (float)pCVar7 * fVar6;
 			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.z = fVar8 * fVar6;
 		})
+	}
+	return;
+}
+
+void CBehaviourCinematic::InitState(int newState)
+{
+	CCinematic* pCVar1;
+	CBWCinActor* pCVar2;
+	edF32MATRIX4 eStack64;
+
+	if (this->pOwner->actorState == 3) {
+		pCVar1 = g_CinematicManager_0048efc->GetCurCinematic();
+		pCVar2 = &this->cinActor;
+		pCVar2->SetPos((this->cinActor).position.x, (this->cinActor).position.y, (this->cinActor).position.z);
+		pCVar2->SetScale((this->cinActor).scale.x, (this->cinActor).scale.y, (this->cinActor).scale.z);
+		pCVar2->SetHeadingQuat((this->cinActor).heading.x, (this->cinActor).heading.y, (this->cinActor).heading.z, (this->cinActor).heading.w);
+		edQuatToMatrix4Hard(&(this->cinActor).heading, &eStack64);
+		eStack64.rowT = (this->cinActor).position;
+		edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, &pCVar1->matrix_0x120);
+		this->pOwner->CinematicMode_UpdateMatrix(&eStack64);
 	}
 	return;
 }

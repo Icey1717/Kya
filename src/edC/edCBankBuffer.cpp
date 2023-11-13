@@ -557,7 +557,7 @@ bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileDat
 	edCBankFileHeader* pBVar3;
 	uint inIndex;
 
-	IO_LOG(LogLevel::Info, "get_info for %d = %s\n", inFileIndex, DebugFindFilePath(this->fileBuffer, inFileIndex));
+	IO_LOG(LogLevel::Info, "get_info for {} = {}", inFileIndex, DebugFindFilePath(this->fileBuffer, inFileIndex));
 
 	pBVar3 = this->fileBuffer;
 	if (pBVar3 == (edCBankFileHeader*)0x0) {
@@ -838,7 +838,7 @@ int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, const char* i
 	int outIndex;
 	char cVar1;
 
-	IO_LOG(LogLevel::Info, "GetIndexFromFileHeader %s\n", inFileName);
+	IO_LOG(LogLevel::Info, "GetIndexFromFileHeader {}", inFileName);
 
 	if (bankBufferObj->field_0x30 == 0) {
 		pHeaderBase = (char*)0x0;
@@ -850,7 +850,7 @@ int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, const char* i
 	formattedFilename[0] = '\0';
 	/* Formats file in the format extension / file name */
 	fileNameLength = TreeInfo_OptimizeFilePath(formattedFilename + 1, inFileName);
-	IO_LOG_DISABLED(LogLevel::VeryVerbose, "GetIndexFromFileHeader formatted %s | %s %d\n", formattedFilename + 1, headerBasePath, fileNameLength);
+	IO_LOG_DISABLED(LogLevel::VeryVerbose, "GetIndexFromFileHeader formatted {} | {} {}", formattedFilename + 1, headerBasePath, fileNameLength);
 	outIndex = 0;
 	cVar1 = *headerBasePath;
 	while (cVar1 != '\0') {

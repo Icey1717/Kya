@@ -23,6 +23,7 @@
 #include "InputManager.h"
 #include "Actor_Cinematic.h"
 #include "ActorManager.h"
+#include "ActorHero.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
 
@@ -918,14 +919,6 @@ void CCinematic::Init()
 	return;
 }
 
-class CActorHero
-{
-public:
-	static CActorHero* _gThis;
-};
-
-CActorHero* CActorHero::_gThis = NULL;
-
 void CCinematic::Start()
 {
 	Actor* pAVar1;
@@ -1423,8 +1416,6 @@ void CCinematic::Install()
 	void* pvVar3;
 	uint uVar4;
 	int iVar5;
-	edF32MATRIX4* peVar6;
-	edF32MATRIX4* peVar7;
 	CCinematic* local_10;
 	undefined4 local_c;
 	CCinematic** local_4;
@@ -1451,26 +1442,17 @@ void CCinematic::Install()
 	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	}
-	peVar7 = &gF32Matrix4Unit;
-	peVar6 = &this->matrix_0x120;
-	iVar5 = 8;
-	do {
-		iVar5 = iVar5 + -1;
-		fVar1 = peVar7->ab;
-		peVar6->aa = peVar7->aa;
-		peVar7 = (edF32MATRIX4*)&peVar7->ac;
-		peVar6->ab = fVar1;
-		peVar6 = (edF32MATRIX4*)&peVar6->ac;
-	} while (0 < iVar5);
+	this->matrix_0x120 = gF32Matrix4Unit;
 	if (this->intFieldD != -1) {
 		this->flags_0x8 = this->flags_0x8 | 1;
 	}
 	this->cineBankLoadStage_0x2b4 = 4;
 	if (this->pActor != (Actor*)0x0) {
+		IMPLEMENTATION_GUARD();
 		local_4 = &local_10;
 		local_c = 0;
 		local_10 = this;
-		//(*(code*)((this->pActor->actorBase).pVTable)->interactWith)(this->pActor, 0, 0x7c, local_4);
+		//(*(code*)((this->pActor->actorBase).pVTable)->ReceiveMessage)(this->pActor, 0, 0x7c, local_4);
 	}
 	return;
 }
@@ -1655,7 +1637,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 			else {
 				/* Set a file length? */
 				*bufferLengthOut = outFileData.size;
-				CUTSCENE_LOG(LogLevel::Info, "File Size: 0x%X (%d)\n", outFileData.size, outFileData.size);
+				CUTSCENE_LOG(LogLevel::Info, "File Size: 0x{:x} ({})", outFileData.size, outFileData.size);
 				if (type2 == 0) {
 					/* File info start has a section for each file in the cutscene.
 					   We go to the correct section based on the file index we got out of the bank. */
@@ -1856,7 +1838,7 @@ void CCinematic::Manage()
 		// #HACK
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
-			//this->totalCutsceneDelta = 20.5f;
+			//this->totalCutsceneDelta = 1.034f;
 			IncrementCutsceneDelta();
 		}
 		//else {
@@ -2078,8 +2060,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 
 	pCVar4 = CCameraManager::_gThis;
 	peVar3 = &CCameraManager::_gThis->transformationMatrix;
-	for (i = 0; pActorManager = CScene::ptable.g_ActorManager_004516a4, i < this->loadedActorCinematicListCount; i = i + 1
-		) {
+	for (i = 0; pActorManager = CScene::ptable.g_ActorManager_004516a4, i < this->loadedActorCinematicListCount; i = i + 1) {
 		pCinematicActor = this->ppActorCinematics[i];
 		fVar16 = pCinematicActor->sphereCentre.x - peVar3->rowT.x;
 		fVar18 = pCinematicActor->sphereCentre.y - (pCVar4->transformationMatrix).rowT.y;
@@ -2600,11 +2581,11 @@ bool CBWCinCam::SetPos(float x, float y, float z)
 	CCameraCinematic* pCinCam;
 
 	pCVar1 = g_CinematicManager_0048efc;
-	outLocation.w = 1.0f;;
+	outLocation.w = 1.0f;
 	outLocation.x = x;
 	outLocation.y = y;
 	outLocation.z = z;
-	sceVu0ApplyMatrix(&outLocation, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120, &outLocation);
+	edF32Matrix4MulF32Vector4Hard(&outLocation, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120, &outLocation);
 	pCinCam = pCVar1->pCameraLocationObj;
 	pCinCam->transformationMatrix.rowT = outLocation;
 	return true;
@@ -2649,11 +2630,11 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 	pCVar4 = g_CinematicManager_0048efc;
 	pCVar1 = g_CinematicManager_0048efc->pCurCinematic;
 	if (param_5 == false) {
-		newLookAt.w = 1.0;
+		newLookAt.w = 1.0f;
 		newLookAt.x = x;
 		newLookAt.y = y;
 		newLookAt.z = z;
-		sceVu0ApplyMatrix(&newLookAt, &pCVar1->matrix_0x120, &newLookAt);
+		edF32Matrix4MulF32Vector4Hard(&newLookAt, &pCVar1->matrix_0x120, &newLookAt);
 	}
 	else {
 		pfVar5 = (float*)0xc;
@@ -2726,14 +2707,14 @@ bool CBWCinActor::SetPos(float newX, float newY, float newZ)
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 transformedLocation;
 	edF32VECTOR4 newLocation;
-	//CollisionData* pCollision;
+	CollisionData* pCollision;
 
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 	newLocation.w = 1.0f;
 	newLocation.x = newX;
 	newLocation.y = newY;
 	newLocation.z = newZ;
-	sceVu0ApplyMatrix(&newLocation, &pCinematic->matrix_0x120, &newLocation);
+	edF32Matrix4MulF32Vector4Hard(&newLocation, &pCinematic->matrix_0x120, &newLocation);
 	if ((this->field_0x8 & 1U) != 0) {
 		IMPLEMENTATION_GUARD(
 		local_30.x = 0.0;
@@ -2743,12 +2724,13 @@ bool CBWCinActor::SetPos(float newX, float newY, float newZ)
 		transformedLocation.x = newLocation.x;
 		transformedLocation.z = newLocation.z;
 		transformedLocation.w = newLocation.w;
-		pCollision = (this->pParent->data).pCollisionData;
+		pCollision = this->pParent->pCollisionData;
 		if (pCollision == (CollisionData*)0x0) {
 			transformedLocation.y = newLocation.y + 0.2;
 		}
 		else {
-			transformedLocation.y = newLocation.y + ((pCollision->vectorFieldB).y - (this->pParent->data).currentLocation.y);
+			IMPLEMENTATION_GUARD(
+			transformedLocation.y = newLocation.y + ((pCollision->vectorFieldB).y - (this->pParent->data).currentLocation.y);)
 		}
 		CCollisionRay::CCollisionRay(10.0, &CStack80, &transformedLocation, &local_30);
 		fVar1 = CCollisionRay::Intersect
@@ -2916,7 +2898,7 @@ bool CBWCinActor::SetVisibility(bool bVisible)
 	return true;
 }
 
-void CBWCinActor::SetupTransform(edF32VECTOR4* vectorA, edF32VECTOR4* vectorB, edF32VECTOR4* vectorC, int intFieldA)
+void CBWCinActor::SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, int intFieldA)
 {
 	float z;
 	float fVar1;
@@ -2925,27 +2907,9 @@ void CBWCinActor::SetupTransform(edF32VECTOR4* vectorA, edF32VECTOR4* vectorB, e
 	float y;
 	float fVar3;
 
-	y = vectorA->y;
-	z = vectorA->z;
-	w = vectorA->w;
-	(this->field_0xe0).x = vectorA->x;
-	(this->field_0xe0).y = y;
-	(this->field_0xe0).z = z;
-	(this->field_0xe0).w = w;
-	fVar3 = vectorB->y;
-	fVar1 = vectorB->z;
-	fVar2 = vectorB->w;
-	(this->field_0xf0).x = vectorB->x;
-	(this->field_0xf0).y = fVar3;
-	(this->field_0xf0).z = fVar1;
-	(this->field_0xf0).w = fVar2;
-	fVar3 = vectorC->y;
-	fVar1 = vectorC->z;
-	fVar2 = vectorC->w;
-	(this->field_0x100).x = vectorC->x;
-	(this->field_0x100).y = fVar3;
-	(this->field_0x100).z = fVar1;
-	(this->field_0x100).w = fVar2;
+	this->position = *position;
+	this->heading = *heading;
+	this->scale = *scale;
 	this->field_0x124 = intFieldA;
 	return;
 }

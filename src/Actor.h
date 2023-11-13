@@ -15,6 +15,7 @@ struct CBehaviour {
 	virtual void Manage() {}
 	virtual bool Begin(CActor* pOwner, int newState, int newAnimationType) {}
 	virtual void End(int newBehaviourId) {}
+	virtual void InitState(int newState) {}
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
 };
 
@@ -89,6 +90,7 @@ enum EActorState {
 
 struct CClusterNode;
 struct CAnimation;
+struct CollisionData;
 
 struct CActor : public CObject {
 	byte field_0xd;
@@ -119,6 +121,7 @@ struct CActor : public CObject {
 	edF32VECTOR4 baseLocation;
 	edF32VECTOR4 sphereCentre;
 	edF32VECTOR4 currentLocation;
+	edF32VECTOR3 previousLocation;
 
 	int typeID;
 	int prevBehaviourId;
@@ -127,11 +130,21 @@ struct CActor : public CObject {
 	int currentAnimType;
 
 	float adjustedMagnitude;
+	float distanceToGround;
+
+	undefined4 field_0x58;
+	float field_0xf0;
+
+	float timeA;
+	float idleTimer;
+	int numIdleLoops;
 
 	EActorState actorState;
+	EActorState prevActorState;
 
 	CClusterNode* pClusterNode;
 	CAnimation* pAnimationController;
+	CollisionData* pCollisionData;
 
 	CActor();
 
@@ -145,9 +158,10 @@ struct CActor : public CObject {
 	virtual void Manage();
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
-	virtual void SetState(int newState, int AnimationType);
+	virtual void SetState(int newState, int animType);
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
 	virtual void CinematicMode_Enter(bool bSetState);
+	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
 
 	void ChangeVisibleState(int bVisible);
@@ -156,6 +170,10 @@ struct CActor : public CObject {
 
 	void SetupClippingInfo();
 	void SetupDefaultPosition();
+
+	void RestoreInitData();
+	void UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision);
+	void UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision);
 };
 
 #endif // _ACTOR_H

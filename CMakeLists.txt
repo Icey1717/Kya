@@ -42,6 +42,8 @@ set(main_src
 	"${src_root}/Actor.h"
 	"${src_root}/Actor_Cinematic.cpp"
 	"${src_root}/Actor_Cinematic.h"
+	"${src_root}/ActorHero.cpp"
+	"${src_root}/ActorHero.h"
 	"${src_root}/IniFile.cpp"
 	"${src_root}/IniFile.h"
 	"${src_root}/Iop.cpp"

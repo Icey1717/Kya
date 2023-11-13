@@ -1672,28 +1672,12 @@ void CCameraCinematic::SetTransform(edF32MATRIX4* transformMatrix)
 {
 	float fVar1;
 	int iVar2;
-	edF32MATRIX4* peVar3;
-	edF32MATRIX4* peVar4;
-	edF32VECTOR4 local_10;
+	edF32VECTOR4 lookAt;
 
-	iVar2 = 8;
-	peVar3 = &transformationMatrix;
-	peVar4 = transformMatrix;
-	do {
-		iVar2 = iVar2 + -1;
-		fVar1 = peVar4->ab;
-		peVar3->aa = peVar4->aa;
-		peVar4 = (edF32MATRIX4*)&peVar4->ac;
-		peVar3->ab = fVar1;
-		peVar3 = (edF32MATRIX4*)&peVar3->ac;
-	} while (0 < iVar2);
+	this->transformationMatrix = *transformMatrix;
 	edF32Matrix4ToEulerSoft(transformMatrix, &this->field_0xb0, "ZXY");
-	edF32Vector4AddHard(&local_10, (edF32VECTOR4*)&this->transformationMatrix.da,
-		(edF32VECTOR4*)&transformMatrix->ca);
-	this->lookAt.x = local_10.x;
-	this->lookAt.y = local_10.y;
-	this->lookAt.z = local_10.z;
-	this->lookAt.w = local_10.w;
+	edF32Vector4AddHard(&lookAt, &this->transformationMatrix.rowT, &transformMatrix->rowZ);
+	this->lookAt = lookAt;
 	return;
 }
 
@@ -1732,9 +1716,9 @@ void CameraSet3DPos(edFCamera* pCamera)
 	edF32VECTOR4 rotationVector;
 	edF32MATRIX4 transformedMatrix;
 
-	EDFCAMERA_LOG(LogLevel::Info, "CameraSet3DPos Updating position for camera: %p", (void*)pCamera);
-	EDFCAMERA_LOG(LogLevel::Info, "Position: x=%f, y=%f, z=%f", pCamera->position.x, pCamera->position.y, pCamera->position.z);
-	EDFCAMERA_LOG(LogLevel::Info, "Look At : x=%f, y=%f, z=%f", pCamera->lookAt.x, pCamera->lookAt.y, pCamera->lookAt.z);
+	EDFCAMERA_LOG(LogLevel::Info, "CameraSet3DPos Updating position for camera: {:x}", (uintptr_t)pCamera);
+	EDFCAMERA_LOG(LogLevel::Info, "Position: x={}, y={}, z={}", pCamera->position.x, pCamera->position.y, pCamera->position.z);
+	EDFCAMERA_LOG(LogLevel::Info, "Look At : x={}, y={}, z={}", pCamera->lookAt.x, pCamera->lookAt.y, pCamera->lookAt.z);
 
 	transformedMatrix = gF32Matrix4Unit;
 

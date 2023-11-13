@@ -138,6 +138,20 @@ InputSetupParams* edSysGetConfig(void);
 #include "log.h"
 #endif
 
+union edF32VECTOR2 {
+	struct {
+		float x;
+		float y;
+	};
+
+	struct {
+		float alpha;
+		float beta;
+	};
+
+	float raw[2];
+};
+
 union edF32VECTOR3 {
 	struct {
 		float x;
@@ -224,6 +238,10 @@ union
 		edF32VECTOR3 xyz;
 	};
 
+	struct {
+		edF32VECTOR3 xy;
+	};
+
 	float raw[4];
 };
 
@@ -288,6 +306,46 @@ union
 #pragma pack(push,1)
 union alignas(16)
 #endif 
+	edF32MATRIX3 {
+	struct  __attribute__((aligned(16))) {
+		float aa;
+		float ab;
+		float ac;
+		float ad;
+		float ba;
+		float bb;
+		float bc;
+		float bd;
+		float ca;
+		float cb;
+		float cc;
+		float cd;
+	};
+
+	struct  __attribute__((aligned(16))) {
+		edF32VECTOR4 v0;
+		edF32VECTOR4 v1;
+		edF32VECTOR4 v2;
+	};
+
+	struct  __attribute__((aligned(16))) {
+		edF32VECTOR4 rowX;
+		edF32VECTOR4 rowY;
+		edF32VECTOR4 rowZ;
+	};
+
+	float raw[12];
+};
+#ifdef PLATFORM_WIN
+#pragma pack(pop)
+#endif
+
+#ifdef PLATFORM_PS2
+union
+#else
+#pragma pack(push,1)
+union alignas(16)
+#endif 
 	edF32MATRIX4 {
 	struct  __attribute__((aligned(16))) {
 		float aa;
@@ -323,6 +381,17 @@ union alignas(16)
 	};
 
 	float raw[16];
+
+	/* Unneeded
+	inline edF32MATRIX4 operator=(const edF32MATRIX3& rhs)
+	{
+		edF32MATRIX4 ret;
+		ret.rowX = rhs.rowX;
+		ret.rowY = rhs.rowY;
+		ret.rowZ = rhs.rowZ;
+		return ret;
+	}
+	*/
 };
 #ifdef PLATFORM_WIN
 #pragma pack(pop)
@@ -335,7 +404,8 @@ union alignas(16)
 #define ENABLE_MY_LOG
 #endif
 #else
-//#define ENABLE_MY_LOG
+#define uintptr_t int
+#define ENABLE_MY_LOG
 #endif
 
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
@@ -458,10 +528,32 @@ inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 #define RESOLVE_FONT_SUB_DATA(a) a
 #endif
 
-#define UNPACK_V4_32 0x6c
 #define UNPACK_S32 0x60
-#define UNPACK_V4_32_MASKED 0x7c
-#define UNPACK_V4_8_MASKED 0x7e
+#define UNPACK_S16 0x61
+#define UNPACK_S8 0x62
+#define UNPACK_V2_32 0x64
+#define UNPACK_V2_16 0x65
+#define UNPACK_V2_8 0x66
+#define UNPACK_V3_32 0x68
+#define UNPACK_V3_16 0x69
+#define UNPACK_V3_8 0x6a
+#define UNPACK_V4_32 0x6c
+#define UNPACK_V4_16 0x6d
+#define UNPACK_V4_8 0x6e
+#define UNPACK_V4_5 0x6f
+
+#define UNPACK_S32_MASKED 0x70
+#define UNPACK_S16_MASKED 0x71
+#define UNPACK_S8_MASKED 0x72
+#define UNPACK_V2_32_MASKED 0x74
 #define UNPACK_V2_16_MASKED 0x75
+#define UNPACK_V2_8_MASKED 0x76
+#define UNPACK_V3_32_MASKED 0x78
+#define UNPACK_V3_16_MASKED 0x79
+#define UNPACK_V3_8_MASKED 0x7a
+#define UNPACK_V4_32_MASKED 0x7c
+#define UNPACK_V4_16_MASKED 0x7d
+#define UNPACK_V4_8_MASKED 0x7e
+#define UNPACK_V4_5_MASKED 0x7f
 
 #endif //_TYPES_H

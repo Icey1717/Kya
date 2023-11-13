@@ -16,20 +16,18 @@ extern edF32VECTOR4 gF32Vector4Zero;
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 
 void edF32Vector4NormalizeHard(float* v0, float* v1);
-void sceVu0ApplyMatrix(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1);
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
 void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1);
 
 void edF32Vector4SubHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
-void ps2_vu0_sqr_vector(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void GetAnglesFromVector(edF32VECTOR4* pitchAngles, edF32VECTOR4* v0);
 
 void edF32Matrix4RotateXHard(float angle, edF32MATRIX4* m0, edF32MATRIX4* m1);
 void edF32Matrix4RotateYHard(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4* inputMatrix);
 
-void edF32Matrix4CopyHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
+void edF32Matrix4CopyHard(edF32MATRIX4* dst, edF32MATRIX4* src);
 void edF32Matrix4ScaleHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0);
 void edF32Matrix4RotateZHard(float t0, edF32MATRIX4* m0, edF32MATRIX4* m1);
 
@@ -58,5 +56,7 @@ void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4*
 void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1);
 
 void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
+
+void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0);
 
 #endif // _MATH_OPS_H

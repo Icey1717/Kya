@@ -463,7 +463,7 @@ namespace DebugMenu_Internal {
 				bOpenedMaterial = true;
 				const int materialCount = GetMaterialCountFromTexture(textureList[selectedTextureIndex].pTexture);
 				textureMaterials.resize(materialCount);
-				DEBUG_LOG(LogLevel::Info, "Discovered %d materials for texture %p", materialCount, (void*)textureList[selectedTextureIndex].pTexture);
+				DEBUG_LOG(LogLevel::Info, "Discovered %d materials for texture {}", materialCount, (uintptr_t)textureList[selectedTextureIndex].pTexture);
 			}
 		}
 
@@ -484,7 +484,7 @@ namespace DebugMenu_Internal {
 				if (ImGui::Selectable(buttonText) || bOpenedMaterial) {
 					DEBUG_LOG(LogLevel::Info, "Selected material %d", i + 1);
 					if (material.textureInfo == nullptr) {
-						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture %p", i + 1, (void*)selectedTexture.pTexture);
+						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture {}", i + 1, (uintptr_t)selectedTexture.pTexture);
 						edDListCreatMaterialFromIndex(&material, i, selectedTexture.pTexture, 2);
 					}
 					selectedMaterialIndex = i;

@@ -41,7 +41,7 @@ inline spdlog::level::level_enum LogLevelToSpdLog(LogLevel level)
 	switch (level)
 	{
 	case LogLevel::VeryVerbose:
-		return spdlog::level::debug;
+		return spdlog::level::info;
 	case LogLevel::Verbose:
 		return spdlog::level::info;
 	case LogLevel::Info:
@@ -75,7 +75,7 @@ public:
 
 
 private:
-	Log() {}
+	Log();
 	Log(const Log&) = delete;
 	Log& operator=(const Log&) = delete;
 };

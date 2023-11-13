@@ -17,7 +17,7 @@ namespace VU1Emu {
 	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
 	int gItop;
 
-	bool bEnableInterpreter = false;
+	bool bEnableInterpreter = true;
 	bool bRunSingleThreaded = true;
 
 	namespace Debug {
@@ -53,6 +53,12 @@ namespace VU1Emu {
 		ushort addr;
 		byte count;
 		byte type;
+	};
+
+	struct alignas(32) ExecTag {
+		ushort count;
+		byte pad;
+		byte cmd;
 	};
 
 	struct alignas(32) RunTag {
@@ -186,7 +192,7 @@ namespace VU1Emu {
 		void _$DrawingStart_XYZ32() 
 		{
 			vi15 = itop;
-			vi14 = VIF_LOAD_I(vi15, 0, 0);
+			vi14 = VIF_LOAD_I(vi15, 0, VIF_REG_X);
 			vi14 = (vi14 & 0xFF);
 			if (vi14 == 0) {
 				// JUMP
@@ -1116,6 +1122,169 @@ namespace VU1Emu {
 			EmulateXGKICK(vi15);
 		}
 
+		void _$DrawingBones_Rigid()
+		{
+			vi15 = itop;
+			vi14 = VIF_LOAD_I(vi15, 0, VIF_REG_X);
+			vi14 = (vi14 & 0xFF);
+			if (vi14 == 0) {
+				// JUMP
+				assert(false);
+			}
+
+			vi01 = VIF_LOAD_I(vi15, -1, VIF_REG_X);
+		}
+
+		void _$XYZW_16_ConvBones_Rigid()
+		{
+			vi04 = 0x400;
+			vi04 = vi04 & vi01;
+
+			if (vi04 != 0)
+			{
+				assert(false);
+			}
+		}
+
+		void _$XYZW_16_Conv_EndBones_Rigid()
+		{
+			vi02 = vi14;
+			vi03 = vi15 + 1;
+
+			vi04 = vi03 + 0xd8;
+			vi05 = 0x7ff;
+			vi06 = 0xc000;
+
+			vi09 = VIF_LOAD_I(vi03, 2, VIF_REG_W);
+
+			// Vtx data
+			vf25 = VIF_LOAD_F(vi03, 0);
+			vf27 = VIF_LOAD_F(vi03, 1);
+			vf29 = VIF_LOAD_F(vi03, 2);
+
+			vf31 = VIF_LOAD_F(vi04++, 0);
+
+			vi10 = vi09 & vi06;
+			vi09 = vi09 & vi05;
+
+			// Anim matrix.
+			vf21 = VIF_LOAD_F(vi09++, 0);
+			vf22 = VIF_LOAD_F(vi09++, 0);
+			vf23 = VIF_LOAD_F(vi09++, 0);
+			vf24 = VIF_LOAD_F(vi09++, 0);
+
+			vf19.x = int15_to_float(vf31.xi);
+			vf19.y = int15_to_float(vf31.yi);
+			vf19.z = int15_to_float(vf31.zi);
+
+			vf26.x = int12_to_float(vf25.xi);
+			vf26.y = int12_to_float(vf25.yi);
+
+			vf28 = ConvertFromInt(vf27);
+
+			vf31 = vf24 + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
+
+			while (vi02 > 0) {
+				vf30 = vf24 + (vf23 * vf29.z) + (vf22 * vf29.y) + (vf21 * vf29.x);
+
+				vi07 = VIF_LOAD_I(vi03, 5, VIF_REG_W);
+
+				// Vtx data
+				vf05 = VIF_LOAD_F(vi03, 3);
+				vf07 = VIF_LOAD_F(vi03, 4);
+				vf09 = VIF_LOAD_F(vi03, 5);
+
+				vf11 = VIF_LOAD_F(vi04++, 0);
+
+				*VIF_AS_I(vi03, 2, VIF_REG_W) = vi10;
+
+				(*VIF_AS_F(vi03, 0)).xy = vf26.xy;
+				(*VIF_AS_F(vi03, 1)).xyz = vf28.xyz;
+				(*VIF_AS_F(vi03, 2)).xyz = vf30.xyz;
+
+				(*VIF_AS_F(vi04, -2)).xyz = vf31.xyz;
+
+				vi08 = vi07 & vi06;
+				vi07 = vi07 & vi05;
+
+				// Anim matrix.
+				vf01 = VIF_LOAD_F(vi07++, 0);
+				vf02 = VIF_LOAD_F(vi07++, 0);
+				vf03 = VIF_LOAD_F(vi07++, 0);
+				vf04 = VIF_LOAD_F(vi07++, 0);
+
+				vi09 = VIF_LOAD_I(vi03, 8, VIF_REG_W);
+
+				// Vtx data
+				vf25 = VIF_LOAD_F(vi03, 6);
+				vf27 = VIF_LOAD_F(vi03, 7);
+				vf29 = VIF_LOAD_F(vi03, 8);
+
+				vf31 = VIF_LOAD_F(vi04++, 0);
+
+				vf12.x = int15_to_float(vf11.xi);
+				vf12.y = int15_to_float(vf11.yi);
+				vf12.z = int15_to_float(vf11.zi);
+
+				vf06.x = int12_to_float(vf05.xi);
+				vf06.y = int12_to_float(vf05.yi);
+
+				vf08 = ConvertFromInt(vf07);
+
+				vi10 = vi09 & vi06;
+				vi09 = vi09 & vi05;
+
+				vf11 = vf04 + (vf03 * vf12.z) + (vf02 * vf12.y) + (vf01 * vf12.x);
+				vf10 = vf04 + (vf03 * vf09.z) + (vf02 * vf09.y) + (vf01 * vf09.x);
+
+				// Anim matrix.
+				vf21 = VIF_LOAD_F(vi09++, 0);
+				vf22 = VIF_LOAD_F(vi09++, 0);
+				vf23 = VIF_LOAD_F(vi09++, 0);
+				vf24 = VIF_LOAD_F(vi09++, 0);
+
+				vf19.x = int15_to_float(vf31.xi);
+				vf19.y = int15_to_float(vf31.yi);
+				vf19.z = int15_to_float(vf31.zi);
+
+				vf26.x = int12_to_float(vf25.xi);
+				vf26.y = int12_to_float(vf25.yi);
+
+				vf28 = ConvertFromInt(vf27);
+
+				vi03 += 6;
+				vi02 -= 2;
+
+				*VIF_AS_I(vi03, -1, VIF_REG_W) = vi08;
+
+				(*VIF_AS_F(vi03, -3)).xy = vf06.xy;
+				(*VIF_AS_F(vi03, -2)).xyz = vf08.xyz;
+				(*VIF_AS_F(vi03, -1)).xyz = vf10.xyz;
+
+				(*VIF_AS_F(vi04, -2)).xyz = vf11.xyz;
+
+				vf31 = vf24 + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
+			}
+		}
+
+		void _$ParallelLightning_addcolor() {
+			vi04 = 16;
+			vi04 = vi04 & vi01;
+
+			if (vi04 != 0x0) {
+				IMPLEMENTATION_GUARD();
+			}
+		}
+
+		void _$Lightning_Ambiant() {
+			vi04 = 128;
+			vi04 = vi04 & vi01;
+
+			if (vi04 != 0) {
+				IMPLEMENTATION_GUARD();
+			}
+		}
+
 	public:
 
 		void Prepare(char* pMem, int inItop, int inAddr)
@@ -1132,10 +1301,103 @@ namespace VU1Emu {
 
 		void RunCode(int addr) 
 		{
+			MY_LOG("RunCode 0x{:x}", addr);
+
 			if (addr == 0x3) {
 				_$DrawingStart_XYZ32();
 				_$UnpackData_XYZ32();
 			
+				if ((vi01 & 0x400) != 0) {
+					// _$XYZW_16_Conv
+					IMPLEMENTATION_GUARD();
+				}
+
+				vi02 = VIF_LOAD_I(vi15, -1, VIF_REG_Y);
+
+				if ((vi02 & 0x1) != 0) {
+					// ???
+					IMPLEMENTATION_GUARD();
+				}
+
+				if ((vi01 & 0x8) != 0) {
+					// _$BF_Culling
+					IMPLEMENTATION_GUARD();
+				}
+
+				if ((vi01 & 0x20) != 0) {
+					// _$Alpha_Object
+					IMPLEMENTATION_GUARD();
+				}
+
+				if ((vi01 & 0x100) != 0) {
+					// _$Normal_Extruder
+					IMPLEMENTATION_GUARD();
+				}
+
+				if ((vi01 & 0x4) != 0) {
+					// _$Animation_RGBA
+					IMPLEMENTATION_GUARD();
+				}
+
+				if ((vi01 & 0x200) != 0) {
+					// _$Animation_ST
+					//IMPLEMENTATION_GUARD();
+				}
+
+				if ((vi01 & 0x1) != 0) {
+					if ((vi01 & 0x2) != 0) {
+						_$Culling_12_1();
+						_$ClippingRejection_12_1();
+						_$Clipping();
+
+					}
+					else {
+						_$NoClipCulling_12_1();
+					}
+				}
+
+				// _$Clipping_End (3b20)
+				_$GouraudMapping_No_Fog_16_2();
+			}
+			else {
+				_$DrawingBones_Rigid();
+
+				_$XYZW_16_ConvBones_Rigid();
+
+				_$XYZW_16_Conv_EndBones_Rigid();
+
+				_$ParallelLightning_addcolor();
+
+				_$Lightning_Ambiant();
+
+				// _$Lightning_Repack
+				vi03 = vi15 + 1;
+				vi02 = vi14;
+
+				vf01 = VIF_LOAD_F(vi00, 32);
+
+				while (vi02 > 0) {
+					vf03 = VIF_LOAD_F(vi03, 1);
+
+					vi03 += 3;
+					vi02--;
+
+					*reinterpret_cast<int*>(&vf06.x) = (int)vf03.x;
+					*reinterpret_cast<int*>(&vf06.y) = (int)vf03.y;
+					*reinterpret_cast<int*>(&vf06.z) = (int)vf03.z;
+					*reinterpret_cast<int*>(&vf06.w) = (int)vf03.w;
+
+					(*VIF_AS_F(vi03, -2)).xyz = vf06.xyz;
+				}
+
+				vi04 = 64;
+				vi04 = vi04 & vi01;
+
+				if (vi04 != 0) {
+					IMPLEMENTATION_GUARD();
+				}
+
+				// _$No_Env_Mapping
 				if ((vi01 & 0x400) != 0) {
 					// _$XYZW_16_Conv
 					IMPLEMENTATION_GUARD();
@@ -1212,7 +1474,7 @@ namespace VU1Emu {
 		Vu1Core() : pDrawBuffer(nullptr) { }
 	};
 
-	void UnpackToAddr(uint addr, void* data, int size)
+	void UnpackToAddr(uint addr, const void* data, int size)
 	{
 		const auto dst = GetFakeMem() + (addr << 4);
 		memcpy(dst, data, size);
@@ -1285,27 +1547,62 @@ void VU1Emu::SendVu1Code(unsigned char* pCode, size_t size)
 	pcsx2_VU::ResetVUMemory();
 }
 
+static void LogUpdate(const VU1Emu::WriteTag* const pTag) {
+	const uint shift = *reinterpret_cast<const uint*>(pTag) >> 15;
+	const bool flg = shift & 1;
+
+	const uint offset = (pTag->addr + VU1Emu::gItop) & 0x3ff;
+	MY_LOG("VU1Emu::UpdateMemory type: 0x{:x} addr: 0x{:x} (0x{:x}) size: 0x{:x} itop: 0x{:x}", pTag->type, pTag->addr, flg ? offset : pTag->addr, pTag->count, VU1Emu::gItop);
+};
+
+#define GET_VIF_CMD(cmd) (((unsigned int)cmd >> (3 << 3)) & 0xff)
+
 void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 {
 	int stcl = 0;
 	int stwl = 0;
 	edF32VECTOR4 strow = { 0.0f, 0.0f, 0.0f, 0.0f };
+	uint stmask = 0;
 	char* pFakeMem = GetFakeMem();
+
+	MY_LOG("ProcessVifList Begin");
 
 	while (pVifPkt->cmdA != 0x60000000) {
 		RunTag* pRunTag = (RunTag*)(&(pVifPkt->asU32[3]));
 
 		if (pVifPkt->asU32[3] == VIF_NOP) {
-			auto pOther = (RunTag*)(&(pVifPkt->asU32[0]));
+			ExecTag* pOther = (ExecTag*)(&(pVifPkt->asU32[0]));
 
 			if (pOther->cmd == 0x30) {
-				// Execute commands at addr
-				CyclePacket* pCycleMaskCmd = (CyclePacket*)LOAD_SECTION(pVifPkt->asU32[1]);
-				stcl = pCycleMaskCmd->cycle.cl;
-				stwl = pCycleMaskCmd->cycle.wl;
+				edpkt_data* pExecPktBase = (edpkt_data*)LOAD_SECTION(pVifPkt->asU32[1]);
 
-				if (pCycleMaskCmd->row.cmd == 0x30) {
-					strow = pCycleMaskCmd->rowData;
+				for (int i = 0; i < pOther->count; i++) {
+					edpkt_data* pExecPkt = pExecPktBase + i;
+					for (int j = 0; j < 4; j++) {
+						uint vifCmd = GET_VIF_CMD(pExecPkt->asU32[j]);
+
+						CyclePacket* pCycleMaskCmd = (CyclePacket*)pExecPkt;
+
+						switch (vifCmd) {
+						case 0x0:
+							// NOP
+							break;
+						case 0x1:
+							// Execute commands at addr
+							stcl = pCycleMaskCmd->cycle.cl;
+							stwl = pCycleMaskCmd->cycle.wl;
+							break;
+						case 0x20:
+							j++;
+							stmask = pExecPkt->asU32[j];
+							break;
+						case 0x30:
+							i++;
+							strow = pExecPkt[i].asVector;
+							i++;
+							break;
+						}
+					}
 				}
 			}
 			else {
@@ -1314,6 +1611,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
+			MY_LOG("ProcessVifList VIF_MSCAL");
 
 			if (bEnableInterpreter) {
 				pcsx2_VU::SetKickCallback(KickCallback);
@@ -1351,16 +1649,26 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 
 		}
 		else {
-			WriteTag* pTag = (WriteTag*)(&(pVifPkt->asU32[3]));
+			const WriteTag* const pTag = (WriteTag*)(&(pVifPkt->asU32[3]));
 
-			char* pWriteStart = pFakeMem + (((pTag->addr + gItop) << 4) & 0x3ff0);
+			const uint shift = pVifPkt->asU32[3] >> 15;
+			const bool flg = shift & 1;
+
+			// Need to handle non flagged packets?
+			assert(flg);
+
+			const uint offset = (((pTag->addr + gItop) << 4) & 0x3ff0);
+
+			char* pWriteStart = pFakeMem + offset;
 
 			const int dataSize = 0x10;
 
 			switch (pTag->type) {
-			case 0x7c:
-			case 0x6c:
+			case UNPACK_V4_32_MASKED:
+			case UNPACK_V4_32:
 			{
+				LogUpdate(pTag);
+
 				char* pUnpack = (char*)LOAD_SECTION(pVifPkt->asU32[1]);
 
 				for (int i = 0; i < pTag->count; i += 1) {
@@ -1369,10 +1677,11 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 				}
 			}
 			break;
-			case 0x75:
+			case UNPACK_V2_16_MASKED:
 			{
-				short* pUnpack = (short*)LOAD_SECTION(pVifPkt->asU32[1]);
+				LogUpdate(pTag);
 
+				short* pUnpack = (short*)LOAD_SECTION(pVifPkt->asU32[1]);
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
 
@@ -1386,8 +1695,31 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 				}
 			}
 			break;
-			case 0x7e:
+			case UNPACK_V4_16_MASKED:
 			{
+				LogUpdate(pTag);
+
+				short* pUnpack = (short*)LOAD_SECTION(pVifPkt->asU32[1]);
+
+				for (int i = 0; i < pTag->count; i += 1) {
+					void* const pStart = pWriteStart + (i * dataSize * stcl);
+
+					edF32VECTOR4* pV = (edF32VECTOR4*)pStart;
+					*pV = strow;
+
+					int* pI = (int*)pStart;
+					short* pU = pUnpack + (i * 4);
+					pI[0] = pU[0];
+					pI[1] = pU[1];
+					pI[2] = pU[2];
+					pI[3] = pU[3];
+				}
+			}
+			break;
+			case UNPACK_V4_8_MASKED:
+			{
+				LogUpdate(pTag);
+
 				byte* pUnpack = (byte*)LOAD_SECTION(pVifPkt->asU32[1]);
 
 				for (int i = 0; i < pTag->count; i += 1) {
@@ -1401,6 +1733,29 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 					pI[3] = pB[3];
 				}
 			}
+			break;
+			case UNPACK_S32:
+			case UNPACK_S16:
+			case UNPACK_S8:
+			case UNPACK_V2_32:
+			case UNPACK_V2_16:
+			case UNPACK_V2_8:
+			case UNPACK_V3_32:
+			case UNPACK_V3_16:
+			case UNPACK_V3_8:
+			case UNPACK_V4_16:
+			case UNPACK_V4_8:
+			case UNPACK_V4_5:
+			case UNPACK_S32_MASKED:
+			case UNPACK_S16_MASKED:
+			case UNPACK_S8_MASKED:
+			case UNPACK_V2_32_MASKED:
+			case UNPACK_V2_8_MASKED:
+			case UNPACK_V3_32_MASKED:
+			case UNPACK_V3_16_MASKED:
+			case UNPACK_V3_8_MASKED:
+			case UNPACK_V4_5_MASKED:
+				IMPLEMENTATION_GUARD();
 			break;
 			}
 		}
@@ -1418,12 +1773,17 @@ void VU1Emu::SetVifItop(uint newItop)
 #define CHECK_VIF_CMD(number, cmd) (((unsigned int)number >> (3 << 3)) & 0xff) == cmd
 #define GET_UNPACK_LENGTH(number) ((unsigned int)number >> (2 << 3)) & 0xff
 
-void VU1Emu::UpdateMemory(edpkt_data* pVifPkt, edpkt_data* pEnd)
+void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 {
+	MY_LOG("VU1Emu::UpdateMemory Begin 0x{:x} 0x{:x}", (uintptr_t)pVifPkt, (uintptr_t)pEnd);
+
 	while (pVifPkt < pEnd) {
 		WriteTag* pTag = (WriteTag*)(&(pVifPkt->asU32[3]));
 
 		if (pTag->type == UNPACK_V4_32 || pTag->type == UNPACK_V4_32_MASKED) {
+
+			LogUpdate(pTag);
+
 			if (pVifPkt->asU32[1] == 0xe) {
 				UnpackToAddr(pTag->addr, pVifPkt + 1, pTag->count * 0x10);
 			}
@@ -1439,6 +1799,35 @@ void VU1Emu::UpdateMemory(edpkt_data* pVifPkt, edpkt_data* pEnd)
 
 				UnpackToAddr(addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x10);
 			}
+		}
+		else if (pTag->type == UNPACK_S32) {
+			IMPLEMENTATION_GUARD();
+		}
+		else if (pTag->type == UNPACK_V4_8_MASKED) {
+
+			LogUpdate(pTag);
+
+			if (pVifPkt->asU32[1] == 0xe) {
+				UnpackToAddr(pTag->addr, pVifPkt + 1, pTag->count * 0x4);
+			}
+			else {
+				uint addr = pTag->addr;
+				uint shift = pVifPkt->asU32[3] >> 15;
+				bool flg = shift & 1;
+
+				if (flg) {
+					addr += gItop;
+					addr = addr & 0x3ff;
+				}
+
+				UnpackToAddr(addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x4);
+			}
+		}
+		else if (pTag->type == UNPACK_V2_16_MASKED) {
+			IMPLEMENTATION_GUARD();
+		}
+		else if (pTag->type == UNPACK_V4_16_MASKED) {
+			IMPLEMENTATION_GUARD();
 		}
 		pVifPkt++;
 	}

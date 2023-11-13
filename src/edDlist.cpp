@@ -327,7 +327,7 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pRenderTaskData)
 						bVar2 = true;
 						uVar7 = 0;
 						pDVar5 = pDisplayListInternal->pDisplayListInternalSubObj + uVar6;
-						pDVar8 = (edF32MATRIX4*)pDVar5;
+						pDVar8 = &pDVar5->matrix;
 						peVar4 = peVar9;
 						do {
 							if (pDVar5->nbMatrix != 0) {
@@ -344,7 +344,7 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pRenderTaskData)
 									if ((pRenderTaskData->isChild != 1) && (pDVar5->bActive != 0)) {
 										IMPLEMENTATION_GUARD(
 										ed3DLinkSpriteToViewport
-										((ed_3d_sprite*)pDVar5->pRenderInput, (edF32MATRIX4*)pDVar8, gBankMaterial, peVar4);
+										((ed_3d_sprite*)pDVar5->pRenderInput, pDVar8, gBankMaterial, peVar4);
 										peVar4 = (edF32MATRIX4*)0x0;)
 									}
 									goto LAB_002ce7c4;
@@ -867,7 +867,7 @@ void edDListSetActiveViewPort(ed_viewport* pViewport)
 #ifdef PLATFORM_WIN
 void LogBitmap(const char* prefix, ed_g2d_bitmap* pBitmap)
 {
-	EDDLIST_LOG(LogLevel::Verbose, "%s w: %d, h: %d, psm: %d maxMipLevel: %d", prefix, pBitmap->width, pBitmap->height, pBitmap->psm, pBitmap->maxMipLevel);
+	EDDLIST_LOG(LogLevel::Verbose, "{} w: {}, h: {}, psm: {} maxMipLevel: {}", prefix, pBitmap->width, pBitmap->height, pBitmap->psm, pBitmap->maxMipLevel);
 }
 
 Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap, int index) 
@@ -904,7 +904,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, e
 				const int paletteIndex = pPkt->asU32[1];
 				palettes[clutBasePtr] = { LOAD_SECTION(paletteIndex), pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel };
 
-				EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket PAL - CBP: %d (0x%x) w: %d h: %d rw: %d rh: %d psm: %d max mip: %d", clutBasePtr, clutBasePtr, pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel);
+				EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket PAL - CBP: {} (0x{:x}) w: {} h: {} rw: {} rh: {} psm: {} max mip: {}", clutBasePtr, clutBasePtr, pPaletteBitmap->width, pPaletteBitmap->height, palWidth, palHeight, pPaletteBitmap->psm, pPaletteBitmap->maxMipLevel);
 			}
 		}
 
@@ -924,7 +924,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, e
 		if (pPkt->cmdB == SCE_GS_BITBLTBUF) {
 			clutBasePtr = pPkt->asU32[1] & 0xFFFF;
 
-			EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket Found BITBLTBUF CBP: %d (0x%x)", clutBasePtr, clutBasePtr);
+			EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket Found BITBLTBUF CBP: {} (0x{:x})", clutBasePtr, clutBasePtr);
 			bCheckNext = false;
 		}
 
@@ -942,7 +942,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, e
 	assert(bSetTexDimensions);
 	assert(palettes.size() > 0);
 
-	EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket TEX - rw: %d (0x%x) rh: %d (0x%x)", texWidth, texWidth, texHeight, texHeight);
+	EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket TEX - rw: {} (0x{:x}) rh: {} (0x{:x})", texWidth, texWidth, texHeight, texHeight);
 
 	return { { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm, pTextureBitmap->maxMipLevel },
 		palettes };
@@ -1130,7 +1130,7 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 	local_10.z = 0.0;
 	local_10.x = inX;
 	local_10.y = inY;
-	sceVu0ApplyMatrix(&local_10, gCurMatrix + gNbMatrix, &local_10);
+	edF32Matrix4MulF32Vector4Hard(&local_10, gCurMatrix + gNbMatrix, &local_10);
 	pDVar1 = gCurDList;
 	x = gIncViewportX + (int)(local_10.x * 16.0);
 	y = gIncViewportY + (int)(local_10.y * 16.0);
@@ -1430,7 +1430,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	}
 	m0->type_0x42 = type;
 	m0->primType = gCurPrimType;
-	edF32Matrix4CopyHard((edF32MATRIX4*)m0, gCurMatrix + gNbMatrix);
+	edF32Matrix4CopyHard(&m0->matrix, gCurMatrix + gNbMatrix);
 	gNbVertexDMA = 0x48;
 	return;
 }
@@ -2176,11 +2176,10 @@ void edDListEnd(void)
 		if ((gCurDList->flags_0x0 & 1) == 0) {
 			if ((gCurDList->flags_0x0 & 2) != 0) {
 				pRVar2 = gCurDList->pRenderCommands;
-				IMPLEMENTATION_GUARD_LOG();
-				uVar3 = *(uint*)&gCurStatePKT->cmdA;
-				*(undefined4*)&gCurStatePKT->cmdA = 0;
-				*(uint*)&gCurStatePKT->cmdA =
-					uVar3 & 0xffff8000 | ((uint)((int)pRVar2 - (int)gCurStatePKT) >> 4) - 1 & 0x7fff;
+				int len = (int)((char*)pRVar2 - (char*)gCurStatePKT);
+				uVar3 = gCurStatePKT->asU32[0];
+				gCurStatePKT->asU32[0] = 0;
+				gCurStatePKT->asU32[0] = uVar3 & 0xffff8000 | (len >> 4) - 1 & 0x7fff;					
 			}
 		}
 		else {
@@ -2238,6 +2237,7 @@ void edDListEnd(void)
 
 void edDListLoadIdentity(void)
 {
+	MY_LOG("edDListLoadIdentity %d", gNbMatrix);
 	edF32Matrix4SetIdentityHard((gCurMatrix + gNbMatrix));
 	return;
 }

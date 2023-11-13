@@ -3,6 +3,7 @@
 
 void edAnmManager::Initialize(char* pBufferStart, int size)
 {
+	MY_LOG("edAnmManager::Initialize start: %p size: %x", (uintptr_t)pBufferStart, size);
 	this->pBufferStart_0x8010 = pBufferStart;
 	this->pBufferEnd_0x8014 = pBufferStart + size;
 	this->pBufferSeekPos_0x8018 = this->pBufferStart_0x8010;
@@ -27,6 +28,9 @@ void edAnmManager::Reset()
 edF32MATRIX4* edAnmManager::GetMatrixBuffer(int count)
 {
 	edF32MATRIX4* peVar1;
+
+	MY_LOG("edAnmManager::GetMatrixBuffer count: %x", count);
+	MY_LOG("edAnmManager::GetMatrixBuffer seek: %p end: %p", (uintptr_t)this->pBufferSeekPos_0x8018, (uintptr_t)this->pBufferEnd_0x8014);
 
 	peVar1 = (edF32MATRIX4*)this->pBufferSeekPos_0x8018;
 	if ((edF32MATRIX4*)this->pBufferEnd_0x8014 < peVar1 + count) {

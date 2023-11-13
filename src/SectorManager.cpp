@@ -512,7 +512,7 @@ void CSector::InstallCallback()
 						}
 						else {
 							if (uVar9 == 0x50001) {
-								MY_LOG("Sector::Init LoadTexture A: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								MY_LOG("Sector::Init LoadTexture A: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 								ed3DInstallG2D(local_20.fileBufferStart, local_20.size, &iStack8, &this->textureInfo, 1);
 							}
 							else {

@@ -20,8 +20,8 @@ struct FrustumData {
 
 struct ed_3D_Light_Config {
 	edF32VECTOR4* pLightAmbient;
-	edF32VECTOR4* pLightDirections;
-	edF32VECTOR4* pLightColorMatrix;
+	edF32MATRIX4* pLightDirections;
+	edF32MATRIX4* pLightColorMatrix;
 };
 
 struct ed_3D_Shadow_Config {
@@ -163,7 +163,10 @@ union RenderInput {
 };
 
 struct DisplayListInternalSubObj_60 {
-	struct RenderCommandUint aCommandArray[4];
+	union {
+		RenderCommandUint aCommandArray[4];
+		edF32MATRIX4 matrix;
+	};
 	byte bActive;
 	byte field_0x41;
 	ushort type_0x42;

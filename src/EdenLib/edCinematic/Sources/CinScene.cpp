@@ -43,7 +43,7 @@ void edSceneCamera::Create(edCinGameInterface& pCinematic)
 	//local_4 = (cameraInfoPtr->field_0x44).w;
 	strcpy(cameraName, cameraInfoPtr->name);
 
-	CUTSCENE_LOG(LogLevel::Info, "edSceneCamera::Create %s", cameraName);
+	CUTSCENE_LOG(LogLevel::Info, "edSceneCamera::Create {}", cameraName);
 
 	edCinCamInterface* cinCam;
 	pCinematic.GetCamera(&cinCam, &tag);
@@ -647,7 +647,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 	   Example: ARAIGNOSBLACK_TOONPLAYER_L0 */
 	strcpy((char*)&creationTag, cineCreatureObject->name);
 
-	CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create name: %s", cineCreatureObject->name);
+	CUTSCENE_LOG(LogLevel::Info, "\nedSceneActorVirtual::Create name: {}", cineCreatureObject->name);
 
 	if (cineCreatureObject->textureID == -1) {
 		creationTag.textureName = 0;
@@ -656,7 +656,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 	else {
 		creationTag.textureName = resCollection.GetResFilename(cineCreatureObject->textureID);
 
-		CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create texture %s", creationTag.textureName);
+		CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create texture {}", creationTag.textureName);
 
 		creationTag.bHasTexture = (resCollection.pData[cineCreatureObject->meshID * 3 + 1].field_0x0 & 0x80000000U) != 0;
 	}
@@ -667,7 +667,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 	else {
 		creationTag.meshName = resCollection.GetResFilename(cineCreatureObject->meshID);
 
-		CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create texture %s", creationTag.meshName);
+		CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create mesh {}", creationTag.meshName);
 
 		creationTag.bHasMesh = (resCollection.pData[cineCreatureObject->meshID * 3 + 1].field_0x0 & 0x80000000U) != 0;
 	}
@@ -678,7 +678,6 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollection)
 {
-	ushort uVar1;
 	short sVar2;
 	bool bUpdateRotationSuccess;
 	float* currentKeyframePtr;
@@ -986,9 +985,10 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 											}
 											else {
 												if ((currentTrackType == 0xd2df4b2c) && (pTag->keyTimes[0] <= currentPlayTime)) {
+													ushort keyframeCount = pTag->keyCount;
 													local_24 = edAnmSubControler(pTag);
 													local_24.GetClosestKeyIndexSafe(currentPlayTime, &local_20);
-													pCinActorInterface->SetVisibility(*(char*)(((char*)pAnimProp) + local_20 + (uint)uVar1 * 4 + 0x10) != '\0');
+													pCinActorInterface->SetVisibility(*(char*)(((char*)pAnimProp) + local_20 + (uint)keyframeCount * 4 + 0x10) != '\0');
 												}
 											}
 										}
