@@ -22,6 +22,10 @@ public:
 		}
 	}
 
+	void RemoveAll() {
+		delegates.clear();
+	}
+
 private:
 	std::vector<Delegate> delegates;
 };

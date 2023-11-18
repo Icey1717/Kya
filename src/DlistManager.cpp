@@ -204,6 +204,10 @@ void CGlobalDListManager::Level_Manage()
 	int iVar9;
 	//ParticleData_b8* piVar2;
 
+	// This is broken.
+	//IMPLEMENTATION_GUARD();
+	//return;
+
 	if (this->dlistCount != 0) {
 		if (this->field_0x1c == 1) {
 			pCVar1 = this->ppGlobalDlist->pDlistPatch;

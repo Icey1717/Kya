@@ -22,6 +22,16 @@
 #endif
 #include "../CameraViewManager.h"
 
+#ifdef PLATFORM_WIN
+Multidelegate<> gOnVideoFlip;
+
+Multidelegate<>& GetOnVideoFlip()
+{
+	return gOnVideoFlip;
+}
+#endif // PLATFORM_WIN
+
+
 edVideo_Globals edVideo_Globals_00449590 = { 0 };
 
 void _UpdateVideoInfo(void)
@@ -250,7 +260,7 @@ void edVideoWaitVsync(byte param_1)
 
 void edVideoFlip(void)
 {
-	RENDER_LOG("RefreshScreenRender\n");
+	RENDER_LOG("edVideoFlip\n");
 	// #Hack
 	edF32MATRIX4 matrix = {
 	0.534046, 0.453021, -0.713844, 0,
@@ -297,6 +307,11 @@ void edVideoFlip(void)
 	edVideoSwap();
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 7, (void*)0x0);
+
+#ifdef PLATFORM_WIN
+	gOnVideoFlip();
+#endif // PLATFORM_WIN
+
 	return;
 }
 

@@ -8,6 +8,11 @@
 
 #include <BS_thread_pool.hpp>
 #include <recycle/shared_pool.hpp>
+#include "edVideo/VideoD.h"
+
+#define VU_VTX_TRACE_LOG(format, ...) if (VU1Emu::bTracingVtx) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
+
+#define GET_VIF_CMD(cmd) (((unsigned int)cmd >> (3 << 3)) & 0xff)
 
 namespace VU1Emu {
 
@@ -17,8 +22,11 @@ namespace VU1Emu {
 	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
 	int gItop;
 
-	bool bEnableInterpreter = true;
+	bool bEnableInterpreter = false;
 	bool bRunSingleThreaded = true;
+	bool bTraceVtx = false;
+
+	bool bTracingVtx = false;
 
 	namespace Debug {
 		constexpr bool bUseJobPool = true;
@@ -189,17 +197,23 @@ namespace VU1Emu {
 			return fakeMem;
 		}
 
-		void _$DrawingStart_XYZ32() 
+		void _$DrawingStart_Shared()
 		{
 			vi15 = itop;
 			vi14 = VIF_LOAD_I(vi15, 0, VIF_REG_X);
 			vi14 = (vi14 & 0xFF);
 			if (vi14 == 0) {
 				// JUMP
+				// _$StopStrip
 				assert(false);
 			}
 
 			vi01 = VIF_LOAD_I(vi15, -1, 0);
+		}
+
+		void _$DrawingStart_XYZ32() 
+		{
+			_$DrawingStart_Shared();
 		}
 
 		void _$UnpackData_XYZ32_Loop(int count, edF32VECTOR4* pStartAddr) 
@@ -267,9 +281,6 @@ namespace VU1Emu {
 				if (vi08 != 0) {
 					vi10 = vi10 | 0xa000;
 					*VIF_AS_I(vi03, 2, VIF_REG_W) = vi10;
-
-					//uint* pFlag = (uint*)VIF_AS_I(vi03, 2, VIF_REG_W);
-					//*pFlag |= 0xa000;
 				}
 
 				vi06 = Clip(vf09.w, vf09);
@@ -280,9 +291,6 @@ namespace VU1Emu {
 				if (vi08 != 0) {
 					vi11 = vi11 | 0xa000;
 					*VIF_AS_I(vi03, 5, VIF_REG_W) = vi11;
-
-					//uint* pFlag = (uint*)VIF_AS_I(vi03, 5, VIF_REG_W);
-					//*pFlag |= 0xa000;
 				}
 
 				vi07 = Clip(vf10.w, vf10);
@@ -293,9 +301,6 @@ namespace VU1Emu {
 				if (vi08 != 0) {
 					vi12 = vi12 | 0xa000;
 					*VIF_AS_I(vi03, 8, VIF_REG_W) = vi12;
-
-					//uint* pFlag = (uint*)VIF_AS_I(vi03, 8, VIF_REG_W);
-					//*pFlag |= 0xa000;
 				}
 
 				vi03 += 9;
@@ -603,8 +608,9 @@ namespace VU1Emu {
 				RGBA.wi,
 				STQ.z);
 
-			//Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x S: %f, T: %f, Q: %f", vtxReg, x, y, z, skip, STQ.x, STQ.y, STQ.z);
-			//Log::GetInstance().AddLog(LogLevel::Info, "Vertex", "KickVertexFromReg %x x: %x y: %x, z: %x, skip: %x", vtxReg, x, y, z, skip);
+			VU_VTX_TRACE_LOG("KickVertexFromReg 0x{:x} | 0x{:x} S: {}, T: {}, Q: {}", vtxReg, vtxReg + 0, STQ.x, STQ.y, STQ.z);
+			VU_VTX_TRACE_LOG("KickVertexFromReg 0x{:x} | 0x{:x} r: 0x{:x} g: 0x{:x}, b: 0x{:x}, a: 0x{:x}", vtxReg, vtxReg + 1, RGBA.xi, RGBA.yi, RGBA.zi, RGBA.wi);
+			VU_VTX_TRACE_LOG("KickVertexFromReg 0x{:x} | 0x{:x} x: 0x{:x} y: 0x{:x}, z: 0x{:x}, skip: 0x{:x}", vtxReg, vtxReg + 2, x, y, z, skip);
 
 			Renderer::SetVertexSkip(skip & 0x8000);
 			Renderer::GSVertex vtx{ { STQ.x, STQ.y }, {RGBA.xi, RGBA.yi, RGBA.zi, RGBA.wi }, STQ.z, { x, y }, z, 0, 0 };
@@ -1042,6 +1048,7 @@ namespace VU1Emu {
 			// Unused.
 			//vf05 = VIF_LOAD_F(vi04, 1);
 
+			// XYZ (1)
 			vf17 = VIF_LOAD_F(vi03, 2);
 
 			// Obj to Screen matrix.
@@ -1050,73 +1057,99 @@ namespace VU1Emu {
 			vf02 = VIF_LOAD_F(vi00, 17);
 			vf01 = VIF_LOAD_F(vi00, 16);
 
+			// XYZ (2)
 			vf27 = VIF_LOAD_F(vi03, 5);
-			vf16 = VIF_LOAD_F(vi03, 0);
 
+			// STQ (1)
+			vf16 = VIF_LOAD_F(vi03, 0);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf16 0x{:x} S: {} T: {} Q: {}", vi03, vf16.x, vf16.y, vf16.z);
+
+			// XYZ to Screen
 			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
 
 			// Vtx count.
 			vi02 = vi14;
 
+			// XYZ (1)
 			vf17 = VIF_LOAD_F(vi03, 8);
 
+			// XYZ to Screen
 			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
 			Q = 1.0f / vf18.w;
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog Q 0x{:x} DIVQ: {}", vi03, Q);
 
+			// STQ (2)
 			vf26 = VIF_LOAD_F(vi03, 3);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf26 0x{:x} S: {} T: {} Q: {}", vi03 + 3, vf26.x, vf26.y, vf26.z);
+
+			// XYZ (2)
 			vf27 = VIF_LOAD_F(vi03, 11);
 
 			vf20.xyz = vf16.xyz * Q;
 			vf19.xyz = vf18.xyz * Q;
-			Q = 1.0f / vf28.w;
+			Q = 1.0f / vf28.w; // ?? IS THIS A BUG?
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog Q 0x{:x} DIVQ: {}", vi03 + 3, Q);
 
+			// XYZ to Screen
 			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
 
 			while (vi02 > 0) {
+
+				// STQ (1)
 				vf16 = VIF_LOAD_F(vi03, 6);
 
-				// STQ
+				// STQ (1)
 				(*VIF_AS_F(vi03, 0)).xyz = vf20.xyz;
+
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf20 0x{:x} S: {} T: {} Q: {}", vi03, vf20.x, vf20.y, vf20.z);
 
 				// Vertex positions (int4 x, int4 y, float z)
 				*reinterpret_cast<int*>(&vf21.x) = float_to_int4(vf19.x);
 				*reinterpret_cast<int*>(&vf21.y) = float_to_int4(vf19.y);
 				*reinterpret_cast<int*>(&vf21.z) = (int)vf19.z;
 
-				vf30 = vf26 * Q;
-				vf29 = vf28 * Q;
+				vf30.xyz = vf26.xyz * Q;
+				vf29.xyz = vf28.xyz * Q;
 				Q = 1.0f / vf18.w;
 
 				vf17 = VIF_LOAD_F(vi03, 14);
 
 				vi02 -= 2;
+
+				// XYZ to Screen
 				vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
 
 				// XYZ Skip
 				(*VIF_AS_F(vi03, 2)).xyz = vf21.xyz;
 
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf21 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vi03, vf21.xi, vf21.yi, vf21.zi);
+
 				vf26 = VIF_LOAD_F(vi03, 9);
 
 				vi03 += 6;
 
-				// STQ
+				// STQ (2)
 				(*VIF_AS_F(vi03, -3)).xyz = vf30.xyz;
+
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf30 0x{:x} S: {} T: {} Q: {}", vi03 - 3, vf30.x, vf30.y, vf30.z);
 
 				// Vertex positions (int4 x, int4 y, float z)
 				*reinterpret_cast<int*>(&vf31.x) = float_to_int4(vf29.x);
 				*reinterpret_cast<int*>(&vf31.y) = float_to_int4(vf29.y);
 				*reinterpret_cast<int*>(&vf31.z) = (int)vf29.z;
 
-				vf20 = vf16 * Q;
-				vf19 = vf18 * Q;
+				vf20.xyz = vf16.xyz * Q;
+				vf19.xyz = vf18.xyz * Q;
 				Q = 1.0f / vf28.w;
 
+				// XYZ to Screen
 				vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
 
 				vf27 = VIF_LOAD_F(vi03, 11);
 
 				// XYZ Skip
 				(*VIF_AS_F(vi03, -1)).xyz = vf31.xyz;
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf31 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vi03 - 3, vf31.xi, vf31.yi, vf31.zi);
 			}
 
 			EmulateXGKICK(vi15);
@@ -1124,15 +1157,7 @@ namespace VU1Emu {
 
 		void _$DrawingBones_Rigid()
 		{
-			vi15 = itop;
-			vi14 = VIF_LOAD_I(vi15, 0, VIF_REG_X);
-			vi14 = (vi14 & 0xFF);
-			if (vi14 == 0) {
-				// JUMP
-				assert(false);
-			}
-
-			vi01 = VIF_LOAD_I(vi15, -1, VIF_REG_X);
+			_$DrawingStart_Shared();
 		}
 
 		void _$XYZW_16_ConvBones_Rigid()
@@ -1149,6 +1174,8 @@ namespace VU1Emu {
 		void _$XYZW_16_Conv_EndBones_Rigid()
 		{
 			vi02 = vi14;
+
+			// vtx buffer reg.
 			vi03 = vi15 + 1;
 
 			vi04 = vi03 + 0xd8;
@@ -1158,9 +1185,11 @@ namespace VU1Emu {
 			vi09 = VIF_LOAD_I(vi03, 2, VIF_REG_W);
 
 			// Vtx data
-			vf25 = VIF_LOAD_F(vi03, 0);
-			vf27 = VIF_LOAD_F(vi03, 1);
-			vf29 = VIF_LOAD_F(vi03, 2);
+			vf25 = VIF_LOAD_F(vi03, 0); // STQ
+			vf27 = VIF_LOAD_F(vi03, 1); // RGBA
+			vf29 = VIF_LOAD_F(vi03, 2); // XYZ Skip
+
+			edF32VECTOR4* pSTQ = VIF_AS_F(vi03, 3);
 
 			vf31 = VIF_LOAD_F(vi04++, 0);
 
@@ -1190,9 +1219,9 @@ namespace VU1Emu {
 				vi07 = VIF_LOAD_I(vi03, 5, VIF_REG_W);
 
 				// Vtx data
-				vf05 = VIF_LOAD_F(vi03, 3);
-				vf07 = VIF_LOAD_F(vi03, 4);
-				vf09 = VIF_LOAD_F(vi03, 5);
+				vf05 = VIF_LOAD_F(vi03, 3); // STQ
+				vf07 = VIF_LOAD_F(vi03, 4); // RGBA
+				vf09 = VIF_LOAD_F(vi03, 5); // XYZ Skip
 
 				vf11 = VIF_LOAD_F(vi04++, 0);
 
@@ -1203,6 +1232,12 @@ namespace VU1Emu {
 				(*VIF_AS_F(vi03, 2)).xyz = vf30.xyz;
 
 				(*VIF_AS_F(vi04, -2)).xyz = vf31.xyz;
+
+				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf06 S: {} T: {} Q: {}", vi03, vf26.x, vf26.y, vf25.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf08 r: {:x} g: {:x} b: {:x}", vi03, vf28.x, vf28.y, vf28.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf10 x: {} y: {} z: {}", vi03, vf30.x, vf30.y, vf30.z);
+
+				//VU_VTX_TRACE_LOG("vf11 x: {} y: {} z: {}", vf31.x, vf31.y, vf31.z);
 
 				vi08 = vi07 & vi06;
 				vi07 = vi07 & vi05;
@@ -1226,6 +1261,7 @@ namespace VU1Emu {
 				vf12.y = int15_to_float(vf11.yi);
 				vf12.z = int15_to_float(vf11.zi);
 
+				// ST
 				vf06.x = int12_to_float(vf05.xi);
 				vf06.y = int12_to_float(vf05.yi);
 
@@ -1263,6 +1299,12 @@ namespace VU1Emu {
 
 				(*VIF_AS_F(vi04, -2)).xyz = vf11.xyz;
 
+				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf06 S: {} T: {} Q: {}", vi03 - 3, vf06.x, vf06.y, vf05.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf08 r: {:x} g: {:x} b: {:x}", vi03 - 3, vf08.x, vf08.y, vf08.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf10 x: {} y: {} z: {}", vi03 - 3, vf10.x, vf10.y, vf10.z);
+
+				//VU_VTX_TRACE_LOG("vf11 x: {} y: {} z: {}", vf11.x, vf11.y, vf11.z);
+
 				vf31 = vf24 + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
 			}
 		}
@@ -1277,6 +1319,145 @@ namespace VU1Emu {
 		}
 
 		void _$Lightning_Ambiant() {
+			vi04 = 128;
+			vi04 = vi04 & vi01;
+
+			if (vi04 != 0) {
+				IMPLEMENTATION_GUARD();
+			}
+		}
+
+		void _$Lightning_Repack()
+		{
+			vi03 = vi15 + 1;
+			vi02 = vi14;
+
+			vf01 = VIF_LOAD_F(vi00, 32);
+
+			while (vi02 > 0) {
+				vf03 = VIF_LOAD_F(vi03, 1);
+
+				vi03 += 3;
+				vi02--;
+
+				*reinterpret_cast<int*>(&vf06.x) = (int)vf03.x;
+				*reinterpret_cast<int*>(&vf06.y) = (int)vf03.y;
+				*reinterpret_cast<int*>(&vf06.z) = (int)vf03.z;
+				*reinterpret_cast<int*>(&vf06.w) = (int)vf03.w;
+
+				(*VIF_AS_F(vi03, -2)).xyz = vf06.xyz;
+
+				VU_VTX_TRACE_LOG("_$Lightning_Repack 0x{:x} vf08 r: {:x} g: {:x} b: {:x}", vi03 - 3, vf06.xi, vf06.yi, vf06.zi);
+			}
+		}
+
+		void _$Env_Mapping()
+		{
+			vi04 = 64;
+			vi04 = vi04 & vi01;
+
+			if (vi04 != 0) {
+				IMPLEMENTATION_GUARD();
+			}
+		}
+
+		void _$DrawingBones_Rigid_noNormal()
+		{
+			_$DrawingStart_Shared();
+		}
+
+		void _$XYZW_16_ConvBones_Rigid_noNormal()
+		{
+			vi04 = 0x400;
+			vi04 = vi04 & vi01;
+
+			if (vi04 != 0)
+			{
+				assert(false);
+			}
+		}
+
+		void _$XYZW_16_Conv_EndBones_Rigid_noNormal()
+		{
+			vi02 = vi14;
+			vi03 = vi15 + 1;
+
+			vi05 = 0x7ff;
+			vi06 = 0xc000;
+
+			vi12 = VIF_LOAD_I(vi03, 2, VIF_REG_W);
+
+			// Vtx data
+			vf15 = VIF_LOAD_F(vi03, 0);
+			vf19 = VIF_LOAD_F(vi03, 2);
+
+			vi13 = vi12 & vi06;
+			vi12 = vi12 & vi05;
+
+			// Anim matrix.
+			vf11 = VIF_LOAD_F(vi12++, 0);
+			vf12 = VIF_LOAD_F(vi12++, 0);
+			vf13 = VIF_LOAD_F(vi12++, 0);
+			vf14 = VIF_LOAD_F(vi12++, 0);
+
+			while (vi02 > 0) {
+				vi07 = VIF_LOAD_I(vi03, 5, VIF_REG_W);
+
+				// Vtx data
+				vf05 = VIF_LOAD_F(vi03, 3);
+				vf09 = VIF_LOAD_F(vi03, 5);
+
+				vf16.x = int12_to_float(vf15.xi);
+				vf16.y = int12_to_float(vf15.yi);
+
+				vi02 -= 2;
+
+				vi08 = vi07 & vi06;
+				vi07 = vi07 & vi05;
+
+				vf20 = vf24 + (vf13 * vf19.z) + (vf12 * vf19.y) + (vf11 * vf19.x);
+
+				// Anim matrix.
+				vf01 = VIF_LOAD_F(vi07++, 0);
+				vf02 = VIF_LOAD_F(vi07++, 0);
+				vf03 = VIF_LOAD_F(vi07++, 0);
+				vf04 = VIF_LOAD_F(vi07++, 0);
+
+				*VIF_AS_I(vi03, 2, VIF_REG_W) = vi13;
+
+				(*VIF_AS_F(vi03, 0)).xy = vf16.xy;
+				(*VIF_AS_F(vi03, 2)).xyz = vf20.xyz;
+
+				vi12 = VIF_LOAD_I(vi03, 8, VIF_REG_W);
+
+				// Vtx data
+				vf15 = VIF_LOAD_F(vi03, 6);
+				vf19 = VIF_LOAD_F(vi03, 8);
+
+				vf06.x = int12_to_float(vf05.xi);
+				vf06.y = int12_to_float(vf05.yi);
+
+				vi13 = vi12 & vi06;
+				vi12 = vi12 & vi05;
+
+				vf10 = vf24 + (vf03 * vf09.z) + (vf02 * vf09.y) + (vf01 * vf09.x);
+
+				// Anim matrix.
+				vf11 = VIF_LOAD_F(vi12++, 0);
+				vf12 = VIF_LOAD_F(vi12++, 0);
+				vf13 = VIF_LOAD_F(vi12++, 0);
+				vf14 = VIF_LOAD_F(vi12++, 0);
+
+				vi03 += 6;
+
+				*VIF_AS_I(vi03, -1, VIF_REG_W) = vi08;
+
+				(*VIF_AS_F(vi03, -3)).xy = vf06.xy;
+				(*VIF_AS_F(vi03, -1)).xyz = vf10.xyz;
+			}
+		}
+		void _$BonesRigid_Ambiant_Test()
+		{
 			vi04 = 128;
 			vi04 = vi04 & vi01;
 
@@ -1303,63 +1484,15 @@ namespace VU1Emu {
 		{
 			MY_LOG("RunCode 0x{:x}", addr);
 
-			if (addr == 0x3) {
+			bool bTestConv16 = true;
+
+			if (addr == 0x3 /*_$DrawingStart_XYZ32 (0x0018)*/) {
+				VU_VTX_TRACE_LOG("_$DrawingStart_XYZ32");
 				_$DrawingStart_XYZ32();
 				_$UnpackData_XYZ32();
-			
-				if ((vi01 & 0x400) != 0) {
-					// _$XYZW_16_Conv
-					IMPLEMENTATION_GUARD();
-				}
-
-				vi02 = VIF_LOAD_I(vi15, -1, VIF_REG_Y);
-
-				if ((vi02 & 0x1) != 0) {
-					// ???
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x8) != 0) {
-					// _$BF_Culling
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x20) != 0) {
-					// _$Alpha_Object
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x100) != 0) {
-					// _$Normal_Extruder
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x4) != 0) {
-					// _$Animation_RGBA
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x200) != 0) {
-					// _$Animation_ST
-					//IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x1) != 0) {
-					if ((vi01 & 0x2) != 0) {
-						_$Culling_12_1();
-						_$ClippingRejection_12_1();
-						_$Clipping();
-
-					}
-					else {
-						_$NoClipCulling_12_1();
-					}
-				}
-
-				// _$Clipping_End (3b20)
-				_$GouraudMapping_No_Fog_16_2();
 			}
-			else {
+			else if (addr == 0xfc /*_$DrawingBones_Rigid (0x07e0)*/) {
+				VU_VTX_TRACE_LOG("_$DrawingBones_Rigid");
 				_$DrawingBones_Rigid();
 
 				_$XYZW_16_ConvBones_Rigid();
@@ -1370,34 +1503,27 @@ namespace VU1Emu {
 
 				_$Lightning_Ambiant();
 
-				// _$Lightning_Repack
-				vi03 = vi15 + 1;
-				vi02 = vi14;
+				_$Lightning_Repack();
 
-				vf01 = VIF_LOAD_F(vi00, 32);
-
-				while (vi02 > 0) {
-					vf03 = VIF_LOAD_F(vi03, 1);
-
-					vi03 += 3;
-					vi02--;
-
-					*reinterpret_cast<int*>(&vf06.x) = (int)vf03.x;
-					*reinterpret_cast<int*>(&vf06.y) = (int)vf03.y;
-					*reinterpret_cast<int*>(&vf06.z) = (int)vf03.z;
-					*reinterpret_cast<int*>(&vf06.w) = (int)vf03.w;
-
-					(*VIF_AS_F(vi03, -2)).xyz = vf06.xyz;
-				}
-
-				vi04 = 64;
-				vi04 = vi04 & vi01;
-
-				if (vi04 != 0) {
-					IMPLEMENTATION_GUARD();
-				}
+				_$Env_Mapping();
 
 				// _$No_Env_Mapping
+			}
+			else if (addr == 0x156 /*_$DrawingBones_Rigid_noNormal (0x0ab0)*/) {
+				VU_VTX_TRACE_LOG("_$DrawingBones_Rigid_noNormal");
+				bTestConv16 = false;
+
+				_$DrawingBones_Rigid_noNormal();
+				_$XYZW_16_ConvBones_Rigid_noNormal();
+				_$XYZW_16_Conv_EndBones_Rigid_noNormal();
+
+				_$BonesRigid_Ambiant_Test();
+			}
+			else {
+				IMPLEMENTATION_GUARD();
+			}
+
+			if (bTestConv16) {
 				if ((vi01 & 0x400) != 0) {
 					// _$XYZW_16_Conv
 					IMPLEMENTATION_GUARD();
@@ -1409,47 +1535,47 @@ namespace VU1Emu {
 					// ???
 					IMPLEMENTATION_GUARD();
 				}
-
-				if ((vi01 & 0x8) != 0) {
-					// _$BF_Culling
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x20) != 0) {
-					// _$Alpha_Object
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x100) != 0) {
-					// _$Normal_Extruder
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x4) != 0) {
-					// _$Animation_RGBA
-					IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x200) != 0) {
-					// _$Animation_ST
-					//IMPLEMENTATION_GUARD();
-				}
-
-				if ((vi01 & 0x1) != 0) {
-					if ((vi01 & 0x2) != 0) {
-						_$Culling_12_1();
-						_$ClippingRejection_12_1();
-						_$Clipping();
-
-					}
-					else {
-						_$NoClipCulling_12_1();
-					}
-				}
-
-				// _$Clipping_End (3b20)
-				_$GouraudMapping_No_Fog_16_2();
 			}
+
+			if ((vi01 & 0x8) != 0) {
+				// _$BF_Culling
+				IMPLEMENTATION_GUARD();
+			}
+
+			if ((vi01 & 0x20) != 0) {
+				// _$Alpha_Object
+				IMPLEMENTATION_GUARD();
+			}
+
+			if ((vi01 & 0x100) != 0) {
+				// _$Normal_Extruder
+				IMPLEMENTATION_GUARD();
+			}
+
+			if ((vi01 & 0x4) != 0) {
+				// _$Animation_RGBA
+				IMPLEMENTATION_GUARD();
+			}
+
+			if ((vi01 & 0x200) != 0) {
+				// _$Animation_ST
+				//IMPLEMENTATION_GUARD();
+			}
+
+			if ((vi01 & 0x1) != 0) {
+				if ((vi01 & 0x2) != 0) {
+					_$Culling_12_1();
+					_$ClippingRejection_12_1();
+					_$Clipping();
+
+				}
+				else {
+					_$NoClipCulling_12_1();
+				}
+			}
+
+			// _$Clipping_End (3b20)
+			_$GouraudMapping_No_Fog_16_2();
 		}
 
 		void EmulateXGKICK(int primReg)
@@ -1460,6 +1586,11 @@ namespace VU1Emu {
 			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pkt);
 			const uint prim = pGifTag->PRIM;
 			Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim), pDrawBuffer);
+
+			if (pGifTag->NLOOP > 0x48) {
+				Log::GetInstance().ForceFlush();
+				assert(false);
+			}
 
 			for (int i = 0; i < pGifTag->NLOOP; i++) {
 				KickVertexFromReg(primReg + 1 + (i * 3), prim);
@@ -1523,9 +1654,16 @@ namespace VU1Emu {
 	DrawJob::JobPtr gNextJob;
 
 	std::vector<DrawJob::JobPtr> gFrameDraws;
-}
 
-constexpr size_t vu1BlockSize = 0x800;
+	constexpr size_t vu1BlockSize = 0x800;
+
+	struct UnpackOperation {
+		VU1Emu::WriteTag tag;
+		char* dst;
+	};
+
+	std::vector<UnpackOperation> gDelayedFlagWrites;
+}
 
 void VU1Emu::SendVu1Code(unsigned char* pCode, size_t size)
 {
@@ -1552,10 +1690,8 @@ static void LogUpdate(const VU1Emu::WriteTag* const pTag) {
 	const bool flg = shift & 1;
 
 	const uint offset = (pTag->addr + VU1Emu::gItop) & 0x3ff;
-	MY_LOG("VU1Emu::UpdateMemory type: 0x{:x} addr: 0x{:x} (0x{:x}) size: 0x{:x} itop: 0x{:x}", pTag->type, pTag->addr, flg ? offset : pTag->addr, pTag->count, VU1Emu::gItop);
+	VU_VTX_TRACE_LOG("VU1Emu::UpdateMemory type: 0x{:x} addr: 0x{:x} (0x{:x}) size: 0x{:x} itop: 0x{:x}", pTag->type, pTag->addr, flg ? offset : pTag->addr, pTag->count, VU1Emu::gItop);
 };
-
-#define GET_VIF_CMD(cmd) (((unsigned int)cmd >> (3 << 3)) & 0xff)
 
 void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 {
@@ -1566,6 +1702,27 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 	char* pFakeMem = GetFakeMem();
 
 	MY_LOG("ProcessVifList Begin");
+
+	// Toggle trace on.
+	if (bTraceVtx && !bTracingVtx) {
+		GetOnVideoFlip() += [](){
+			bTraceVtx = false;
+			bTracingVtx = false;
+			Log::GetInstance().ForceFlush();
+		};
+
+		bTracingVtx = true;
+		VU_VTX_TRACE_LOG("Toggling vertex trace! - Using Interpreter: {}", bEnableInterpreter);
+	}
+
+	for (auto& op : gDelayedFlagWrites) {
+		int addr = op.tag.addr;
+		addr += gItop;
+		addr = addr & 0x3ff;
+		UnpackToAddr(addr, op.dst, op.tag.count * 0x10);
+	}
+
+	gDelayedFlagWrites.clear();
 
 	while (pVifPkt->cmdA != 0x60000000) {
 		RunTag* pRunTag = (RunTag*)(&(pVifPkt->asU32[3]));
@@ -1611,9 +1768,11 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
-			MY_LOG("ProcessVifList VIF_MSCAL");
+			MY_LOG("ProcessVifList VIF_MSCAL - Using Interpreter: {} (addr: 0x{:x})", bEnableInterpreter, pRunTag->addr);
 
 			if (bEnableInterpreter) {
+				auto GetLocalFakeMem = [=]() {return pFakeMem; };
+				edF32VECTOR4* pV = VIF_AS_F(gItop, 4);
 				pcsx2_VU::SetKickCallback(KickCallback);
 				pcsx2_VU::SetMicro(gVu1Code);
 				pcsx2_VU::SetMem((unsigned char*)pFakeMem);
@@ -1786,6 +1945,9 @@ void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 
 			if (pVifPkt->asU32[1] == 0xe) {
 				UnpackToAddr(pTag->addr, pVifPkt + 1, pTag->count * 0x10);
+
+				// Jump forward count packets, since they can't be tags.
+				pVifPkt += pTag->count;
 			}
 			else {
 				uint addr = pTag->addr;
@@ -1793,11 +1955,14 @@ void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 				bool flg = shift & 1;
 
 				if (flg) {
+					// Flag writes not supported yet, itop isn't correct!
 					addr += gItop;
 					addr = addr & 0x3ff;
+					gDelayedFlagWrites.push_back({ *pTag, (char*)LOAD_SECTION(pVifPkt->asU32[1]) });
 				}
-
-				UnpackToAddr(addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x10);
+				else {
+					UnpackToAddr(addr, LOAD_SECTION(pVifPkt->asU32[1]), pTag->count * 0x10);
+				}
 			}
 		}
 		else if (pTag->type == UNPACK_S32) {
@@ -1809,6 +1974,11 @@ void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 
 			if (pVifPkt->asU32[1] == 0xe) {
 				UnpackToAddr(pTag->addr, pVifPkt + 1, pTag->count * 0x4);
+
+				IMPLEMENTATION_GUARD();
+				// NEED TO DO SAME AS V4 32
+				// Jump forward count packets, since they can't be tags.
+				pVifPkt += pTag->count - 1;
 			}
 			else {
 				uint addr = pTag->addr;
@@ -1841,6 +2011,11 @@ bool& VU1Emu::GetInterpreterEnabled()
 bool& VU1Emu::GetRunSingleThreaded()
 {
 	return bRunSingleThreaded;
+}
+
+bool& VU1Emu::GetTraceVtx()
+{
+	return bTraceVtx;
 }
 
 void VU1Emu::QueueDraw()

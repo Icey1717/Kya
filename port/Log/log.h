@@ -73,6 +73,8 @@ public:
 		asyncLog->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
 	}
 
+	void ForceFlush();
+
 
 private:
 	Log();

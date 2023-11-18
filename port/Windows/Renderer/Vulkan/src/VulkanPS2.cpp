@@ -1850,7 +1850,7 @@ void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSSta
 		return;
 	}
 
-	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: {}", drawBuffer.index.tail);
+	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: {0}(0x{0:x})", drawBuffer.index.tail);
 
 	g_GSSelector.ResetStates();
 	PS2::m_conf.ps = GSHWDrawConfig::PSSelector();

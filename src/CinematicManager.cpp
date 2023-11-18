@@ -1838,7 +1838,7 @@ void CCinematic::Manage()
 		// #HACK
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
-			//this->totalCutsceneDelta = 1.034f;
+			//this->totalCutsceneDelta = 2.736f;
 			IncrementCutsceneDelta();
 		}
 		//else {

@@ -249,6 +249,11 @@ namespace DebugMenu_Internal {
 
 		ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
 		ImGui::Checkbox("Single Threaded", &VU1Emu::GetRunSingleThreaded());
+
+		if (ImGui::Button("Enable Vertex Trace")) {
+			VU1Emu::GetTraceVtx() = true;
+		}
+
 		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
 			Renderer::ResetRenderer();
 		}

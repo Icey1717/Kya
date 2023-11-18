@@ -239,7 +239,7 @@ union
 	};
 
 	struct {
-		edF32VECTOR3 xy;
+		edF32VECTOR2 xy;
 	};
 
 	float raw[4];

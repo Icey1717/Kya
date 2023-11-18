@@ -122,7 +122,7 @@ void edDmaLoadFromFastRam_nowait(void* pSrc, uint qwc, void* pDest)
 #else
 	memcpy(pDest, pSrc, qwc);
 #endif
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam_nowait: Copying 0x%X (src: %p | dst: %p)", qwc, (void*)pSrc, (void*)pDest);
+	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam_nowait: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", qwc, (uintptr_t)pSrc, (uintptr_t)pDest);
 	return;
 }
 

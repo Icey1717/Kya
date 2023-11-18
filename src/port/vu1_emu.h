@@ -8,6 +8,7 @@ namespace VU1Emu {
 	void UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd);
 	bool& GetInterpreterEnabled();
 	bool& GetRunSingleThreaded();
+	bool& GetTraceVtx();
 
 	void QueueDraw();
 

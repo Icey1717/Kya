@@ -14,11 +14,12 @@
 
 #include "renderer.h"
 
-#include "pointer_conv.h"
+//#include "pointer_conv.h"
 #include "DebugRenderer.h"
 #include "Rendering/edCTextFont.h"
 #include "../../../src/MathOps.h"
 #include "../../Windows/Renderer/Vulkan/src/TextureCache.h"
+#include "../../../src/port/pointer_conv.h"
 
 // The function to be tested
 int Add(int a, int b) {

@@ -2673,7 +2673,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 		if (gFushListCounter == 0xe) {
 			IMPLEMENTATION_GUARD(pPkt = FUN_002a9220(pDmaMatrix->pObjToWorld, pPkt);)
 		}
-		pMVar10 = (edF32MATRIX4*)gPKTMatrixCur;
+		pRVar6 = gPKTMatrixCur;
 		pMVar3 = pDmaMatrix->pMeshTransformData;
 		if (pMVar3 != (ed_3d_hierarchy*)0x0) break;
 		pMVar10 = pDmaMatrix->pObjToWorld;
@@ -2716,7 +2716,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 	}
 	if (pMVar3->pMatrixPkt == (edpkt_data*)0x0) {
 		pMVar3->pMatrixPkt = gPKTMatrixCur;
-		gPKTMatrixCur = ed3DPKTCopyMatrixPacket((edpkt_data*)pMVar10, pDmaMatrix, bVar11);
+		gPKTMatrixCur = ed3DPKTCopyMatrixPacket(pRVar6, pDmaMatrix, bVar11);
 		if (bVar11 != 0) {
 			gPKTMatrixCur[0].asVector = pDmaMatrix->pObjToWorld->rowX;
 			gPKTMatrixCur[1].asVector = pDmaMatrix->pObjToWorld->rowY;
@@ -4494,7 +4494,7 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 	if (gFushListCounter != 0xe) {
 		if ((gbFirstTex == 0) && (pMaterial->pBitmap != (ed_g2d_bitmap*)0x0)) {
 			if (pMaterial->pMaterial->count_0x0 < 2) {
-				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterialManageGIFPacket Flushing new material gVRAMBufferFlush %d", gVRAMBufferFlush);
+				ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterialManageGIFPacket Flushing new material gVRAMBufferFlush {}", gVRAMBufferFlush);
 
 				edPSX2Header* pHeader = (edPSX2Header*)LOAD_SECTION(pMaterial->pBitmap->pPSX2);
 				edpkt_data* pPkt = (edpkt_data*)(LOAD_SECTION((pHeader + gVRAMBufferFlush)->pPkt));
@@ -6880,7 +6880,7 @@ void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB,
 		(pCurrentMaterial->list).field_0x10 = 0;
 		(pCurrentMaterial->list).nodeCount = 0;
 		(pCurrentMaterial->list).header.mode = 0;
-		pprevious_dma_matrix = ed3DListCreateDmaMatrixNode(gRender_info_SPR, (ed_3d_hierarchy*)gRender_info_SPR->pMeshTransformData);
+		pprevious_dma_matrix = ed3DListCreateDmaMatrixNode(gRender_info_SPR, &gRender_info_SPR->pMeshTransformData->base);
 		pLinkMaterial->pDMA_Material = STORE_SECTION(pCurrentMaterial);
 		pCurrentMaterial->pBitmap = pBitmap;
 		if ((pStrip->shadowCastFlags == 0) &&
@@ -7181,12 +7181,72 @@ void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB,
 	return;
 }
 
-static edF32MATRIX4 hackyMatrices[0x10] = 
+static edF32MATRIX4 hackyMatrices[0x100] = 
 { 
 	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
 	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
 	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
-	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
+	gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit , gF32Matrix4Unit,
 };
 
 void _ed3DLinkStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pTextureInfo)
@@ -11756,7 +11816,6 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 
 					if (uVar8 == 0) {
 						for (; m0 < peVar9; m0 = m0 + 1) {
-							MY_LOG("Is this it?");
 							edF32Matrix4SetIdentityHard(m0);
 						}
 					}
