@@ -12,7 +12,11 @@ namespace Shader {
 		std::string vsDef;
 	};
 
-	void CompileShaders(const ShaderDefinitions& shaderDefinitions, std::string& outVsFilename, std::string& outPsFilename, std::string& outGsFilename);
+	void CompileShader(const std::string& configName, const std::string& entryPoint, const std::string& inputName, const std::string& outputName, const std::string& arguments);
+	
+	namespace PS2 {
+		void CompileShaders(const ShaderDefinitions& shaderDefinitions, std::string& outVsFilename, std::string& outPsFilename, std::string& outGsFilename);
+	}
 
 	struct ReflectedModule {
 		ReflectedModule(const std::string& filename, const VkShaderStageFlagBits stage, bool bFromArchive = false);

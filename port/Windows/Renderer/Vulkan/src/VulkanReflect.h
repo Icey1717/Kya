@@ -12,7 +12,6 @@ struct DescriptorSetLayoutData {
 struct ReflectData {
 
 	std::vector<DescriptorSetLayoutData> setLayouts;
-	std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 
 	std::string entryPointname;
 
@@ -20,6 +19,9 @@ struct ReflectData {
 	inline std::vector<VkVertexInputAttributeDescription>& GetAttributes() { return attributeDescriptions; }
 
 	VkVertexInputBindingDescription bindingDescription;
+
+private:
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 };
 
 ReflectData reflectDescriptorSetLayout(const std::vector<char>& shaderCode);

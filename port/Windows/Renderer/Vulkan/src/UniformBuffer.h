@@ -2,6 +2,7 @@
 #include "GSVector.h"
 #include "VulkanIncludes.h"
 #include "renderer.h"
+#include "VulkanBuffer.h"
 
 namespace PS2 {
 	struct alignas(32) VSConstantBuffer
@@ -47,7 +48,7 @@ namespace PS2 {
 	};
 
 	template<typename VertexType, typename IndexType>
-	class VertexBufferPS2 {
+	class VertexBuffer {
 		VkBuffer vertexBuffer;
 		VkDeviceMemory vertexBufferMemory;
 		VkBuffer indexBuffer;
@@ -59,17 +60,21 @@ namespace PS2 {
 		int indexMax;
 
 	public:
-		VertexBufferPS2(int vertexCount, int indexCount)
+		VertexBuffer(const int vertexCount, const int indexCount)
 			: vertexHead(0)
 			, vertexMax(vertexCount)
 			, indexHead(0)
 			, indexMax(indexCount)
 		{
-			VkDeviceSize bufferSize = sizeof(VertexType) * vertexCount;
-			CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer, vertexBufferMemory);
+			if (vertexCount > 0) {
+				VkDeviceSize bufferSize = sizeof(VertexType) * vertexCount;
+				CreateBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer, vertexBufferMemory);
+			}
 
-			bufferSize = sizeof(IndexType) * indexCount;
-			CreateBuffer(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBuffer, indexBufferMemory);
+			if (indexCount > 0) {
+				VkDeviceSize bufferSize = sizeof(IndexType) * indexCount;
+				CreateBuffer(bufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBuffer, indexBufferMemory);
+			}
 		}
 
 		const VkBuffer& GetVertexBuffer() {
@@ -80,8 +85,8 @@ namespace PS2 {
 			return indexBuffer;
 		}
 
-		VkDeviceSize MapVertices(VertexType* buff, int vertexCount) {
-			assert(vertexHead + vertexCount < vertexMax);
+		VkDeviceSize MapVertices(const VertexType* buff, int vertexCount) {
+			assert(vertexHead + vertexCount <= vertexMax);
 			VkDeviceSize bufferSize = sizeof(VertexType) * vertexCount;
 			const VkDeviceSize bufferOffset = vertexHead * sizeof(VertexType);
 			void* data;
@@ -93,8 +98,8 @@ namespace PS2 {
 			return bufferOffset;
 		}
 
-		VkDeviceSize MapIndices(IndexType* buff, int indexCount) {
-			assert(indexHead + indexCount < indexMax);
+		VkDeviceSize MapIndices(const IndexType* buff, int indexCount) {
+			assert(indexHead + indexCount <= indexMax);
 			VkDeviceSize bufferSize = sizeof(IndexType) * indexCount;
 			const VkDeviceSize bufferOffset = indexHead * sizeof(IndexType);
 			void* data;
@@ -112,26 +117,40 @@ namespace PS2 {
 		}
 	};
 
-	VertexBufferPS2<Renderer::GSVertex, uint16_t>& GetBuffer();
-	const VkBuffer& GetVertexBuffer();
-	const VkBuffer& GetIndexBuffer();
+	template<typename VertexType, typename IndexType>
+	class FrameVertexBuffers {
+	public:
+		void Init(const int vertexCount, const int indexCount) {
+			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+				buffers.emplace_back(vertexCount, indexCount);
+			}
+		}
 
-	template<typename VertexType>
-	VkDeviceSize MapVertices(VertexType* buff, int vertexCount) {
-		return GetBuffer().MapVertices(buff, vertexCount);
-	}
+		VertexBuffer<VertexType, IndexType>& GetBuffer() {
+			return buffers[GetCurrentFrame()];
+		}
 
-	template<typename IndexType>
-	VkDeviceSize MapIndices(IndexType* buff, int indexCount) {
-		return GetBuffer().MapIndices(buff, indexCount);
-	}
+		const VkBuffer& GetVertexBuffer() {
+			return buffers[GetCurrentFrame()].GetVertexBuffer();
+		}
 
-	void ResetBuffer();
-	void CreateVertexUniformBuffers();
-	
-	//const VkBuffer& GetVertexConstantUniformBuffer(const int index);
-	//const VkBuffer& GetPixelConstantUniformBuffer(const int index);
-	//
-	//VSConstantBuffer& GetVertexConstantBufferData();
-	//PSConstantBuffer& GetPixelConstantBufferData();
+		const VkBuffer& GetIndexBuffer() {
+			return buffers[GetCurrentFrame()].GetIndexBuffer();
+		}
+
+		VkDeviceSize MapVertices(const VertexType* buff, int vertexCount) {
+			return GetBuffer().MapVertices(buff, vertexCount);
+		}
+
+		VkDeviceSize MapIndices(const IndexType* buff, int indexCount) {
+			return GetBuffer().MapIndices(buff, indexCount);
+		}
+
+		void Reset() {
+			buffers[GetCurrentFrame()].Reset();
+		}
+
+	private:
+		std::vector<PS2::VertexBuffer<VertexType, IndexType>> buffers;
+	};
 }

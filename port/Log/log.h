@@ -7,6 +7,8 @@
 
 using LogPtr = std::shared_ptr<spdlog::logger>;
 
+using LogMap = std::vector<std::pair<std::string, LogPtr>>;
+
 enum class LogLevel
 {
 	VeryVerbose,
@@ -65,15 +67,27 @@ public:
 	}
 
 	static LogPtr asyncLog;
+	LogMap logs;
 
 	//void AddLog(LogLevel level, const std::string& category, const char* format, ...);
 
 	template <typename... Args>
 	void AddLog(const LogLevel level, const std::string& category, const char* format, Args &&...args) {
 		asyncLog->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
+
+		for (auto& [cat, log] : logs) {
+			if (cat == category) {
+				log->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
+				return;
+			}
+		}
+
+		logs.emplace_back(category, CreateLog(category)).second->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
 	}
 
 	void ForceFlush();
+
+	LogPtr CreateLog(const std::string& category);
 
 
 private:

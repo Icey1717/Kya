@@ -696,7 +696,7 @@ struct edCBankStack {
 struct TypePairData {
 	uint type;
 	uint stype;
-	void (*pFunction[6])(char*, int);
+	bool (*pFunction[6])(char*, int);
 };
 
 // Debug

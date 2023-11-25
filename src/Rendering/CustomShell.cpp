@@ -126,7 +126,7 @@ void edDmaLoadFromFastRam_nowait(void* pSrc, uint qwc, void* pDest)
 	return;
 }
 
-bool edDmaLoadFromFastRam(void* pSrc, uint qwc, void* pDest)
+bool edDmaLoadFromFastRam(void* pSrc, uint size, void* pDest)
 {
 	DMA_Reg_Ptr* pReg;
 	uint madr;
@@ -143,13 +143,53 @@ bool edDmaLoadFromFastRam(void* pSrc, uint qwc, void* pDest)
 	SYNC(0);
 	pReg->SADR = (uint)pSrc;
 	SYNC(0);
-	pReg->QWC = qwc >> 4;
+	pReg->QWC = size >> 4;
 	SYNC(0);
 	pReg->CHCR = edDmaChannelList[8].QWC | 0x100;
 #else
-	memcpy(pDest, pSrc, qwc);
+	memcpy(pDest, pSrc, size);
 #endif
-	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam: Copying 0x%X (src: %p | dst: %p)", qwc, (void*)pSrc, (void*)pDest);
+	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadFromFastRam: Copying 0x%X (src: %p | dst: %p)", size, (void*)pSrc, (void*)pDest);
+	bVar2 = edDmaWaitDma(madr);
+	return bVar2;
+}
+
+bool edDmaLoadToFastRam(void* pSrc, uint size, void* pDst)
+{
+	DMA_Reg_Ptr* pReg;
+	uint madr;
+	bool bVar2;
+
+	madr = edDmaChannelList[9].MADR;
+	pReg = edDmaChannelList[9].pReg;
+#ifdef PLATFORM_PS2
+	if (size == 0) {
+		(edDmaChannelList[9].pReg)->TADR = (uint)pSrc;
+		SYNC(0);
+		pReg->SADR = pDst;
+	}
+	else {
+		(edDmaChannelList[9].pReg)->MADR = (uint)pSrc;
+		SYNC(0);
+		pReg->SADR = pDst;
+	}
+	SYNC(0);
+	pReg->QWC = size >> 4;
+	SYNC(0);
+	DPUT_D_PCR(madr);
+	SYNC(0);
+	DPUT_D_STAT(madr);
+	SYNC(0);
+	if (size == 0) {
+		pReg->CHCR = edDmaChannelList[9].QWC | 0x104;
+	}
+	else {
+		pReg->CHCR = edDmaChannelList[9].QWC | 0x100;
+	}
+#else
+	memcpy(pDst, pSrc, size);
+#endif
+	MY_LOG_CATEGORY("CustomShell", LogLevel::VeryVerbose, "edDmaLoadToFastRam: Copying 0x{:x} (src: 0x{:x} | dst: 0x{:x})", size, (uintptr_t)pSrc, (uintptr_t)pDst);
 	bVar2 = edDmaWaitDma(madr);
 	return bVar2;
 }

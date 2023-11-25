@@ -5,10 +5,18 @@
 
 struct edCinGameInterface;
 
+PACK(
 struct edResCollectionTag {
-	int field_0x0;
-};
+	uint flags;
+	int pData;
+	int size;
+});
 
+PACK(
+	struct edResCollectionHeader {
+	int resCount;
+	edResCollectionTag aTags[];
+});
 
 struct edResCollection {
 	enum RES_TYPE {
@@ -21,7 +29,7 @@ struct edResCollection {
 		COT_Scene = 3,
 	};
 
-	edResCollectionTag* pData;
+	edResCollectionHeader* pData;
 
 	char* GetResFilename(const int offset);
 	void FlushAllResources(edCinGameInterface& cinGameInterface);

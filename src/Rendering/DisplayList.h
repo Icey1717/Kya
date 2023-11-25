@@ -131,8 +131,8 @@ struct ed_3D_Scene {
 	undefined field_0x19e;
 	undefined field_0x19f;
 	struct edLIST* field_0x1a0;
-	struct edLIST* pHeirListA;
-	struct edLIST* pHeirListB;
+	struct edLIST* pHierListA;
+	struct edLIST* pHierListB;
 	int* field_0x1ac;
 	uint heirarchyListCount;
 	undefined field_0x1b4;

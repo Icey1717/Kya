@@ -20,10 +20,9 @@ void CWayPointManager::Level_AddAll(ByteCode* pMemoryStream)
 		this->field_0x4 = (ManagerC_24*)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD(
 		pMVar1 = (ManagerC_24*)pMemoryStream->currentSeekPos;
 		pMemoryStream->currentSeekPos = (char*)(pMVar1 + this->count_0x8);
-		this->field_0x4 = pMVar1;)
+		this->field_0x4 = pMVar1;
 	}
 	return;
 }

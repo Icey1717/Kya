@@ -74,10 +74,10 @@ public:
 class CBWitchCin : public edCinGameInterface {
 public:
 	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*);
-	virtual char* GetResource(edResCollection::RES_TYPE type1, long type2, const char* fileName, int* bufferLengthOut);
+	virtual char* GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut);
 	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
 	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag);
-	virtual bool ReleaseResource(void*, bool);
+	virtual bool ReleaseResource(uint, bool);
 
 	CBWCinCam BWCinCam_Obj;
 };

@@ -21,7 +21,7 @@ namespace PS2_Internal {
 		std::string psFilePath;
 		std::string vsFilePath;
 
-		Shader::CompileShaders(key.shaderDefinitions, vsFilePath, psFilePath, gsFilePath);
+		Shader::PS2::CompileShaders(key.shaderDefinitions, vsFilePath, psFilePath, gsFilePath);
 
 		Renderer::Pipeline pipeline;
 		auto vertShader = Shader::ReflectedModule(vsFilePath.c_str(), VK_SHADER_STAGE_VERTEX_BIT, true);
@@ -97,7 +97,7 @@ namespace PS2_Internal {
 		//assert(vertShader.reflectData.bindingDescription.stride == vertSize);
 		vertShader.reflectData.bindingDescription.stride = sizeof(Renderer::GSVertex);
 
-		auto attributeDescriptions = vertShader.reflectData.attributeDescriptions;
+		auto attributeDescriptions = vertShader.reflectData.GetAttributes();
 
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -321,21 +321,25 @@ void Renderer::Pipeline::CreateLayout()
 
 void Renderer::Pipeline::CreateDescriptorPool()
 {
-	Renderer::CreateDescriptorPool(descriptorSetLayoutBindings, descriptorPool);
+	if (descriptorSetLayoutBindings.size() > 0) {
+		Renderer::CreateDescriptorPool(descriptorSetLayoutBindings, descriptorPool);
+	}
 }
 
 void Renderer::Pipeline::CreateDescriptorSets()
 {
-	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
-	VkDescriptorSetAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-	allocInfo.pSetLayouts = layouts.data();
+	if (descriptorSetLayoutBindings.size() > 0) {
+		std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayouts[0]);
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = descriptorPool;
+		allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+		allocInfo.pSetLayouts = layouts.data();
 
-	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate descriptor sets!");
+		descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+		if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
+			throw std::runtime_error("failed to allocate descriptor sets!");
+		}
 	}
 }
 

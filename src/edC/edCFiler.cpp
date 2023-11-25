@@ -76,7 +76,7 @@ edCFiler* edFileGetFiler(char* szOutPath, char* szFilePath, long mode)
 	}
 	else {
 		length = edFilePathManager.CopyDrivePath(szOutPath);
-		MY_LOG("Inserted %s length %d", szOutPath, length);
+		MY_LOG("Inserted {} length {}", szOutPath, length);
 		currentCharacter = szOutPath + length;
 		pFiler = g_edCFiler_MCPtr_00448fd8;
 	}
@@ -146,7 +146,7 @@ LAB_00261138:
 				}
 				bufferPos = bufferPos + 1;
 
-				MY_LOG("Found filename: %s", bufferPos);
+				MY_LOG("Found filename: {}", bufferPos);
 
 			}
 			if ((*szFilePath == '/') || (*szFilePath == '\\')) {
@@ -158,7 +158,7 @@ LAB_00261138:
 				edFilePathManager.get_path(szOutPath);
 				currentCharacter = edStrReturnEndPtr(szOutPath);
 
-				MY_LOG("Added default unit %s", szOutPath);
+				MY_LOG("Added default unit {}", szOutPath);
 			}
 			cVar7 = '\0';
 			pcVar3 = local_200;
@@ -512,7 +512,7 @@ void edFileNoWaitStackCallBack(edCFiler_28* pFiler_28)
 					pDVar8->count_0x228 = pDVar8->count_0x228 + -1;
 				}
 				if (true) {
-					MY_LOG("Doing file action %s\n", g_FileActionNames[(int)(pFilerSubObj->internalBank).nextAction]);
+					MY_LOG("Doing file action {}\n", g_FileActionNames[(int)(pFilerSubObj->internalBank).nextAction]);
 					switch ((pFilerSubObj->internalBank).nextAction) {
 					case SEEK:
 						edSysHandlersCall(edFileHandlers.mainIdentifier,
@@ -580,7 +580,7 @@ void edFileNoWaitStackCallBack(edCFiler_28* pFiler_28)
 					pFiler = pDVar8->pOwningFiler;
 					pDVar8->action = EVar1;
 					EVar1 = pFiler_28->nextAction;
-					MY_LOG("Doing file action %s\n", g_FileActionNames[(int)EVar1]);
+					MY_LOG("Doing file action {}\n", g_FileActionNames[(int)EVar1]);
 					if (EVar1 == CLOSE) {
 						bVar2 = pFiler->close(pDVar8);
 						in_a3 = bVar2 & 0xff;

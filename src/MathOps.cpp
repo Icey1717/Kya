@@ -711,7 +711,7 @@ void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrd
 	return;
 }
 
-void edQuatShortestSLERPHard(float delta, edF32VECTOR4* outRotation, edF32VECTOR4* currentRotation, edF32VECTOR4* targetRotation)
+void edQuatShortestSLERPHard(float alpha, edF32VECTOR4* outRotation, edF32VECTOR4* currentRotation, edF32VECTOR4* targetRotation)
 {
 	bool bVar1;
 	float fVar2;
@@ -741,7 +741,7 @@ void edQuatShortestSLERPHard(float delta, edF32VECTOR4* outRotation, edF32VECTOR
 	else {
 		fVar3 = (((1.570729f - fVar5 * 0.2121144f) + fVar5 * fVar5 * 0.074261f) - fVar5 * fVar5 * fVar5 * 0.0187293f) * sqrtf(1.0f - fVar5);
 		fVar2 = 1.0f / sqrtf(1.0f - fVar5 * fVar5);
-		fVar4 = delta * fVar3;
+		fVar4 = alpha * fVar3;
 		fVar3 = fVar3 - fVar4;
 		fVar7 = fVar3 * fVar3;
 		fVar5 = fVar7 * fVar3 * fVar7;
@@ -770,7 +770,7 @@ void edQuatShortestSLERPHard(float delta, edF32VECTOR4* outRotation, edF32VECTOR
 	return;
 }
 
-void edF32Vector3LERPSoft(float delta, edF32VECTOR3* outWorldLocation, edF32VECTOR3* currentLocation, edF32VECTOR3* targetLocation)
+void edF32Vector3LERPSoft(float alpha, edF32VECTOR3* outWorldLocation, edF32VECTOR3* currentLocation, edF32VECTOR3* targetLocation)
 {
 	float remainingKeyframePlayTime;
 
@@ -783,10 +783,10 @@ void edF32Vector3LERPSoft(float delta, edF32VECTOR3* outWorldLocation, edF32VECT
 	else {
 		/* If the keyframes are different, find somewhere midway through based on current keyframe play
 		   time */
-		remainingKeyframePlayTime = 1.0 - delta;
-		outWorldLocation->x = targetLocation->x * delta + currentLocation->x * remainingKeyframePlayTime;
-		outWorldLocation->y = targetLocation->y * delta + currentLocation->y * remainingKeyframePlayTime;
-		outWorldLocation->z = targetLocation->z * delta + currentLocation->z * remainingKeyframePlayTime;
+		remainingKeyframePlayTime = 1.0 - alpha;
+		outWorldLocation->x = targetLocation->x * alpha + currentLocation->x * remainingKeyframePlayTime;
+		outWorldLocation->y = targetLocation->y * alpha + currentLocation->y * remainingKeyframePlayTime;
+		outWorldLocation->z = targetLocation->z * alpha + currentLocation->z * remainingKeyframePlayTime;
 	}
 	return;
 }

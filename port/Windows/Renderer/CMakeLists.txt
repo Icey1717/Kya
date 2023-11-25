@@ -51,7 +51,7 @@ set (SOURCES
 
 add_library(Renderer ${SOURCES})
 
-target_compile_features(Renderer PRIVATE cxx_std_17)
+#target_compile_features(Renderer PRIVATE cxx_std_20)
 
 set (ReflectPrintSrc
 	"ext/SPIRV-Reflect/common/output_stream.h"
@@ -82,11 +82,11 @@ add_dependencies(Renderer Shaders)
 
 set(DXC_COMPILER "$ENV{VULKAN_SDK}/Bin/dxc.exe")
 set(SHADER_OUTPUT_FOLDER "${CMAKE_SOURCE_DIR}/bin/WIN/shaders")
-set( PS2_SHADER_SRC_DIR "G:/repos/Kya/port/Windows/Renderer/Shaders/src/ps2/ps2.hlsl")
+set( SHADER_SRC_DIR "G:/repos/Kya/port/Windows/Renderer/Shaders/src/")
 
 
-cmake_path(NATIVE_PATH PS2_SHADER_SRC_DIR PS2_SHADER_SRC_DIR)
-string(REPLACE "\\" "\\\\" PS2_SHADER_SRC_DIR ${PS2_SHADER_SRC_DIR})
+cmake_path(NATIVE_PATH SHADER_SRC_DIR SHADER_SRC_DIR)
+string(REPLACE "\\" "\\\\" SHADER_SRC_DIR ${SHADER_SRC_DIR})
 
 cmake_path(NATIVE_PATH DXC_COMPILER DXC_COMPILER)
 string(REPLACE "\\" "\\\\" DXC_COMPILER ${DXC_COMPILER})
@@ -97,5 +97,5 @@ string(REPLACE "\\" "\\\\" SHADER_OUTPUT_FOLDER ${SHADER_OUTPUT_FOLDER})
 target_compile_definitions(Renderer PRIVATE
 	SHADER_OUTPUT_FOLDER="${SHADER_OUTPUT_FOLDER}"
 	DXC_COMPILER="${DXC_COMPILER}"
-	PS2_SHADER_SRC_DIR="${PS2_SHADER_SRC_DIR}"
+	SHADER_SRC_DIR="${SHADER_SRC_DIR}"
 )

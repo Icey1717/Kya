@@ -35,6 +35,7 @@
 #include "ActorManager.h"
 #include "AnmManager.h"
 #include "DlistManager.h"
+#include "CollisionManager.h"
 
 CScene* CScene::_pinstance = NULL;
 
@@ -237,11 +238,7 @@ CScene::CScene()
 	//g_LightManager_004516b0 = pLightManager;
 	p3DFileManager = new FileManager3D();
 	CScene::ptable.g_FileManager3D_00451664 = p3DFileManager;
-	//pMVar4 = (Manager_100*)Allocate(100);
-	//if (pMVar4 != (Manager_100*)0x0) {
-	//	uVar17 = SetupManager100_00211eb0(pMVar4);
-	//	pMVar4 = (Manager_100*)uVar17;
-	//}
+	CScene::ptable.g_CollisionManager_00451690 = new CCollisionManager;
 	//g_Manager100_00451690 = pMVar4;
 	//pMVar5 = (Manager_208*)Allocate(0x208);
 	//if (pMVar5 != (Manager_208*)0x0) {
@@ -505,7 +502,7 @@ void CScene::Level_Init()
 	this->fogFlags = pSVar1->flags;
 	this->field_0x48 = 0;
 	ed3DSetMipmapProp(true, this->mipmapL, this->mipmapK);
-	if ((CScene::ptable.g_FileManager3D_00451664)->pMeshTransformParent == (edNODE*)0x0) {
+	if ((CScene::ptable.g_FileManager3D_00451664)->pBackgroundNode == (edNODE*)0x0) {
 		edViewportSetClearMask(this->pViewportA, 0);
 	}
 	else {

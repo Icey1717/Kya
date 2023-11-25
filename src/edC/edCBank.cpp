@@ -82,11 +82,11 @@ edFILEH* edFileOpen(char* szFilePath, uint flags)
 	edFILEH* pDebugBank;
 	char szFilerPath[512];
 
-	MY_LOG("edFileOpen %s\n", szFilePath);
+	MY_LOG("edFileOpen {}\n", szFilePath);
 
 	pFiler = edFileGetFiler(szFilerPath, szFilePath, 0);
 
-	MY_LOG("edFileOpen Filer Path %s\n", szFilerPath);
+	MY_LOG("edFileOpen Filer Path {}\n", szFilerPath);
 
 	if (pFiler == (edCFiler*)0x0) {
 		pFile = (edFILEH*)0x0;

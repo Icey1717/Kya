@@ -285,7 +285,7 @@ namespace DebugMenu_Internal {
 	int gRenderFramebufferIndex = 0;
 
 	void ShowFramebuffers() {
-		auto& frameBuffers = FrameBuffer::GetAll();
+		auto& frameBuffers = PS2::FrameBuffer::GetAll();
 
 		// Get the display size
 		const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
@@ -329,10 +329,10 @@ namespace DebugMenu_Internal {
 	bool swapValue = false;
 
 	void ShowGame() {
-		if (!FrameBuffer::Exists(swapValue ? 0x100 : 0x80)) {
+		if (!PS2::FrameBuffer::Exists(swapValue ? 0x100 : 0x80)) {
 			return;
 		}
-		auto& frameBuffer = FrameBuffer::Get(swapValue ? 0x100 : 0x80);
+		auto& frameBuffer = PS2::FrameBuffer::Get(swapValue ? 0x100 : 0x80);
 		swapValue = !swapValue;
 
 		// Get the display size

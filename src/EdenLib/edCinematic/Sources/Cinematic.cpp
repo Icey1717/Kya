@@ -49,7 +49,7 @@ bool edCinematic::Create(edCinGameInterface& pInterface, void* pCinFileBuffer, i
 		/* Set the read and data start points */
 		pSeekPos = (char*)(this->pCinTag + 1);
 		for (readData = pCinTag->srcCount; readData != 0; readData = readData + -1) {
-			edResCollection edResCol = { (edResCollectionTag*)resPtr };
+			edResCollection edResCol = { (edResCollectionHeader*)resPtr };
 			edCinematicSource edSrc = { (edCinematicSourceInternal*)pSeekPos };
 			edSrc.Create(pInterface, edResCol);
 			pSeekPos = (char*)((ulong)pSeekPos + 0xc);

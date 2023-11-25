@@ -4,11 +4,17 @@
 #include "Types.h"
 #include "EdenLib/edCinematic/Sources/Cinematic.h"
 #include "ed3D.h"
+#include "Animation.h"
+#include "EdenLib/edAnim/AnmSkeleton.h"
 
 struct edNODE;
 struct CActor;
 struct ed_g3d_hierarchy;
 struct ed_3d_hierarchy_node;
+
+
+enum ACTOR_MESSAGE;
+typedef void* MSG_PARAM;
 
 struct CBehaviour {
 	virtual void Init(CActor* pOwner) {}
@@ -17,6 +23,7 @@ struct CBehaviour {
 	virtual void End(int newBehaviourId) {}
 	virtual void InitState(int newState) {}
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
+	virtual bool InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
 struct ComponentEntry {
@@ -89,8 +96,10 @@ enum EActorState {
 };
 
 struct CClusterNode;
-struct CAnimation;
+struct AnimMatrixData;
+
 struct CollisionData;
+struct CShadow;
 
 struct CActor : public CObject {
 	byte field_0xd;
@@ -123,10 +132,13 @@ struct CActor : public CObject {
 	edF32VECTOR4 currentLocation;
 	edF32VECTOR3 previousLocation;
 
+	undefined* field_0x110;
+
 	int typeID;
 	int prevBehaviourId;
 	int curBehaviourId;
 
+	int prevAnimType;
 	int currentAnimType;
 
 	float adjustedMagnitude;
@@ -145,6 +157,7 @@ struct CActor : public CObject {
 	CClusterNode* pClusterNode;
 	CAnimation* pAnimationController;
 	CollisionData* pCollisionData;
+	CShadow* pShadow;
 
 	CActor();
 
@@ -163,6 +176,11 @@ struct CActor : public CObject {
 	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
+	virtual uint IsLookingAt();
+	virtual void UpdateAnimEffects();
+	virtual void UpdatePostAnimEffects();
+	virtual void ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
+	virtual bool InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void ChangeVisibleState(int bVisible);
 
@@ -174,6 +192,8 @@ struct CActor : public CObject {
 	void RestoreInitData();
 	void UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision);
 	void UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision);
+
+	void PlayAnim(int inAnimType);
 };
 
 #endif // _ACTOR_H

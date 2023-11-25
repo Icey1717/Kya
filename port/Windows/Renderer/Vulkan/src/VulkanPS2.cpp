@@ -1821,6 +1821,8 @@ namespace PS2
 	}
 
 	PipelineSelector m_pipelineSelector;
+
+	PS2::FrameVertexBuffers<Renderer::GSVertex, uint16_t> gVertexBuffers;
 }
 
 namespace PipelineDebug
@@ -1983,7 +1985,7 @@ void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSSta
 				vkCmdEndRenderPass(GetCurrentCommandBuffer());
 			}
 
-			FrameBuffer& frameBuffer = FrameBuffer::Get(state.FRAME.FBP);
+			PS2::FrameBuffer& frameBuffer = PS2::FrameBuffer::Get(state.FRAME.FBP);
 
 			hwState.FBP = state.FRAME.FBP;
 			hwState.bActivePass = true;
@@ -2030,14 +2032,13 @@ void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSSta
 
 		vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-		const VkDeviceSize vertexOffset = PS2::MapVertices(drawBuffer.vertex.buff, drawBuffer.vertex.tail);
-		const VkDeviceSize indexOffset = PS2::MapIndices(drawBuffer.index.buff, drawBuffer.index.tail);
+		const VkDeviceSize vertexOffset = PS2::gVertexBuffers.MapVertices(drawBuffer.vertex.buff, drawBuffer.vertex.tail);
+		const VkDeviceSize indexOffset = PS2::gVertexBuffers.MapIndices(drawBuffer.index.buff, drawBuffer.index.tail);
 
-		VkBuffer vertexBuffers[] = { PS2::GetVertexBuffer() };
+		VkBuffer vertexBuffers[] = { PS2::gVertexBuffers.GetVertexBuffer() };
 		VkDeviceSize offsets[] = { vertexOffset };
 		vkCmdBindVertexBuffers(GetCurrentCommandBuffer(), 0, 1, vertexBuffers, offsets);
-
-		vkCmdBindIndexBuffer(GetCurrentCommandBuffer(), PS2::GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(GetCurrentCommandBuffer(), PS2::gVertexBuffers.GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
 
 		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
 
@@ -2084,12 +2085,13 @@ void Renderer::DrawBuffer::Reset()
 void PS2::Setup()
 {
 	CreateDefaultRenderPass();
-	CreateVertexUniformBuffers();
+
+	PS2::gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 }
 
 void PS2::BeginFrame()
 {
-	PS2::ResetBuffer();
+	PS2::gVertexBuffers.Reset();
 }
 
 void PS2::Cleanup()

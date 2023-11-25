@@ -1,5 +1,36 @@
 #include "AnmManager.h"
 #include "MathOps.h"
+#include "Actor.h"
+#include "Animation.h"
+#include "MemoryStream.h"
+
+void gAnimation_Callback_Layer0(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3)
+{
+	uint uVar1;
+	uint uVar2;
+	int iVar3;
+
+	iVar3 = 1;
+	uVar1 = 1;
+	do {
+		uVar2 = uVar1;
+		if ((pActor->pAnimationController->count_0x2c & uVar2) != 0) {
+			iVar3 = iVar3 + -1;
+		}
+		uVar1 = uVar2 << 1;
+	} while (iVar3 != 0);
+	/* WARNING: Could not recover jumptable at 0x0017f4c8. Too many branches */
+	/* WARNING: Treating indirect jump as call */
+	IMPLEMENTATION_GUARD(
+	(*(code*)pActor->pVTable->animFunc)(pActor, uVar2 & 0x7fffffff, pAnmMacroAnimator, param_3);)
+	return;
+}
+
+void gAnimation_Callback_Layer1(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
+void gAnimation_Callback_Layer2(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
+void gAnimation_Callback_Layer3(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
+
+AnimationCallback CAnimationManager::_gLayersCallbacks[4] = { gAnimation_Callback_Layer0, gAnimation_Callback_Layer1, gAnimation_Callback_Layer2, gAnimation_Callback_Layer3 };
 
 void edAnmManager::Initialize(char* pBufferStart, int size)
 {
@@ -42,6 +73,37 @@ edF32MATRIX4* edAnmManager::GetMatrixBuffer(int count)
 	return peVar1;
 }
 
+edANM_WRTS* edAnmManager::AllocWRTSBuffer()
+{
+	int iVar1;
+
+	iVar1 = 0;
+	do {
+		if (this->tempMatrixMemoryUsage[iVar1] == 0) {
+			this->tempMatrixMemoryUsage[iVar1] = 1;
+			return &this->tempMatrixBufferArray[iVar1];
+		}
+		iVar1 = iVar1 + 1;
+	} while (iVar1 < 4);
+	return (edANM_WRTS*)0x0;
+}
+
+void edAnmManager::FreeWRTSBuffer(edANM_WRTS* pBuffer)
+{
+	int iVar2;
+
+	iVar2 = 0;
+	while (true) {
+		if ((this->tempMatrixMemoryUsage[iVar2] != 0) && (pBuffer == &this->tempMatrixBufferArray[iVar2])) break;
+		iVar2 = iVar2 + 1;
+		if (3 < iVar2) {
+			return;
+		}
+	}
+	this->tempMatrixMemoryUsage[iVar2] = 0;
+	return;
+}
+
 edAnmManager TheAnimManager = {};
 
 #define NUM_ANIM_MATRIX_DATA 0xc0
@@ -52,9 +114,9 @@ void CAnimationManager::Game_Init()
 	edF32MATRIX4* puVar2;
 
 	this->pAnimKeyEntryData = (char*)0x0;
-	this->count_0x10 = 0;
+	this->levelAnimCount = 0;
 	this->loadedAnimKeyDataCount = 0;
-	this->pAnimKeyTable = (edAnmAnim**)0x0;
+	this->pAnimKeyTable = (edANM_HDR**)0x0;
 	pAVar1 = new AnimMatrixData[NUM_ANIM_MATRIX_DATA];
 	this->aAnimMatrixData = pAVar1;
 	puVar2 = new edF32MATRIX4[1360];
@@ -90,19 +152,19 @@ void CAnimationManager::Level_ClearAll()
 	do {
 		m0->usedByCount = 0;
 		m0->key_0x48 = 0xffffffff;
-		edF32Matrix4SetIdentityHard(&m0->field_0x0);
+		edF32Matrix4SetIdentityHard(&m0->matrix);
 		iVar1 = iVar1 + -1;
 		m0 = m0 + 1;
 	} while (0 < iVar1);
 
-	if (this->pAnimKeyTable != (edAnmAnim**)0x0) {
+	if (this->pAnimKeyTable != (edANM_HDR**)0x0) {
 		delete this->pAnimKeyTable;
 	}
 
 	this->pAnimKeyEntryData = (char*)0x0;
-	this->count_0x10 = 0;
+	this->levelAnimCount = 0;
 	this->loadedAnimKeyDataCount = 0;
-	this->pAnimKeyTable = (edAnmAnim**)0x0;
+	this->pAnimKeyTable = (edANM_HDR**)0x0;
 	return;
 }
 
@@ -114,4 +176,360 @@ void CAnimationManager::Level_Manage()
 void CAnimationManager::Level_ManagePaused()
 {
 	Level_Manage();
+}
+
+edANM_HDR* edAnmAnim::LoadFromMem(char* pInFileData, int size)
+{
+	int* pFileEnd;
+	AnimHeaderPacked* pFileData = (AnimHeaderPacked*)pInFileData;
+
+	pFileEnd = &pFileData->hash;
+	if (pFileData != (AnimHeaderPacked*)0x0) {
+		for (; pFileData < (AnimHeaderPacked*)((ulong)pFileEnd + size);
+			pFileData = (AnimHeaderPacked*)((ulong)&pFileData->field_0x8 + pFileData->offset)) {
+			if (pFileData->hash == 0x41544144) {
+				return (edANM_HDR*)&pFileData->field_0x8;
+			}
+			if ((pFileData->hash == 0x214d4e41) && (pFileData->field_0x8 != 1.1f)) {
+				return (edANM_HDR*)0x0;
+			}
+		}
+	}
+	return (edANM_HDR*)0x0;
+}
+
+void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4, uint flags)
+{
+	edANM_HDR* peVar1;
+	float fVar2;
+
+	if ((flags & 0x80000000) == 0) {
+		if (pHdr != (edANM_HDR*)0x0) {
+			this->pAnimKeyTableEntry = pHdr;
+			this->currentAnimDataFlags = this->pAnimKeyTableEntry->flags;
+		}
+		if ((flags & 0x40000000) != 0) {
+			this->currentAnimDataFlags = flags & 0xbfffffff;
+		}
+		this->flags = 0;
+		this->field_0x8 = 0;
+		this->keyStartTime_0x14 = 0.0;
+		this->keyDuration_0x18 = 0.0;
+		if (this->pAnimKeyTableEntry->field_0x4.asKey == 0) {
+			this->field_0x8 = 0;
+			peVar1 = this->pKeyDataArray[this->pAnimKeyTableEntry->keyIndex_0x8.asKey];
+			if ((this->currentAnimDataFlags & 1) == 0) {
+				fVar2 = peVar1->keyIndex_0x8.asTime;
+			}
+			else {
+				fVar2 = peVar1->field_0x4.asTime;
+			}
+			this->keyStartTime_0x14 = fVar2;
+			this->keyDuration_0x18 = peVar1->field_0x4.asTime - peVar1->keyIndex_0x8.asTime;
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			UpdateAnimParams(this);)
+		}
+		if (this->keyStartTime_0x14 < 0.0) {
+			this->keyStartTime_0x14 = 0.0;
+		}
+		if (this->keyDuration_0x18 < 0.0) {
+			this->keyDuration_0x18 = 0.0;
+		}
+		if (param_4 == false) {
+			this->time_0x10 = param_1;
+			fVar2 = 0.0;
+			if (0.0 < this->keyStartTime_0x14) {
+				fVar2 = param_1 / this->keyStartTime_0x14;
+			}
+			this->time_0xc = fVar2;
+		}
+		else {
+			this->time_0xc = param_1;
+			this->time_0x10 = param_1 * this->keyStartTime_0x14;
+		}
+	}
+	else {
+		if ((flags & 1) == 0) {
+			fVar2 = pHdr->keyIndex_0x8.asTime;
+		}
+		else {
+			fVar2 = pHdr->field_0x4.asTime;
+		}
+		this->keyStartTime_0x14 = fVar2;
+		this->keyDuration_0x18 = pHdr->field_0x4.asTime - pHdr->keyIndex_0x8.asTime;
+		this->currentAnimDataFlags = flags & 0xbfffffff | 2;
+		this->field_0x8 = 0;
+		this->flags = 0;
+		if (param_4 == false) {
+			this->time_0x10 = param_1;
+			fVar2 = 0.0f;
+			if (0.0f < this->keyStartTime_0x14) {
+				fVar2 = param_1 / this->keyStartTime_0x14;
+			}
+			this->time_0xc = fVar2;
+		}
+		else {
+			this->time_0xc = param_1;
+			this->time_0x10 = param_1 * this->keyStartTime_0x14;
+		}
+		this->pAnimKeyTableEntry = pHdr;
+	}
+	return;
+}
+
+void edAnmMacroAnimator::AnimateDT(float param_1)
+{
+	float fVar1;
+
+	fVar1 = 0.0f;
+	if (0.0f < this->keyStartTime_0x14) {
+		fVar1 = param_1 / this->keyStartTime_0x14;
+	}
+	this->time_0xc = this->time_0xc + fVar1;
+	fVar1 = this->time_0x10;
+	this->time_0x10 = fVar1 + param_1;
+	Animate();
+	if (((this->flags & 0x40000000) != 0) && (fVar1 < this->keyStartTime_0x14 - this->keyDuration_0x18)) {
+		this->flags = this->flags | 0x20000000;
+	}
+	return;
+}
+
+void edAnmMacroAnimator::Animate()
+{
+	uint uVar1;
+	edANM_HDR* peVar2;
+	int* piVar3;
+	float* pfVar4;
+	int iVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+
+	this->flags = 0;
+	uVar1 = this->currentAnimDataFlags;
+	if ((uVar1 & 0x80000000) == 0) {
+		peVar2 = this->pAnimKeyTableEntry;
+		iVar5 = peVar2->field_0x4.asKey;
+		if (iVar5 == 2) {
+			fVar8 = 0.0;
+			iVar5 = peVar2->keyIndex_0x8.asKey + -1;
+			if (-1 < iVar5) {
+				IMPLEMENTATION_GUARD(
+				pfVar4 = (float*)((int)peVar2 + iVar5 * 4 + peVar2->keyIndex_0x8 * 4 + 0xc);
+				piVar3 = (int*)((int)peVar2 + iVar5 * 4 + 0xc);
+				do {
+					fVar7 = *pfVar4;
+					fVar8 = fVar8 + fVar7;
+					if (0.0001 < fVar7) {
+						edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
+						edAnmStage::SetTimeAsRatio(0.0, &TheAnimStage);
+						edAnmStage::AnimBlendToWRTS(fVar7, &TheAnimStage);
+					}
+					iVar5 = iVar5 + -1;
+					pfVar4 = pfVar4 + -1;
+					piVar3 = piVar3 + -1;
+				} while (-1 < iVar5);)
+			}
+			if ((0.0 < fVar8) && (fVar8 < 1.0)) {
+				IMPLEMENTATION_GUARD(
+				edAnmStage::BlendDefaultRTSWithDestWRTS(1.0, &TheAnimStage, 1);)
+			}
+			this->flags = this->flags | 0x80000000;
+			this->flags = this->flags | 0x40000000;
+			this->time_0x10 = TheAnimStage.field_0x3c;
+			this->time_0xc = 1.0f;
+		}
+		else {
+			if (iVar5 == 4) {
+				iVar5 = peVar2->keyIndex_0x8.asKey;
+				if (iVar5 != 0) {
+					iVar6 = iVar5 + -1;
+					if (-1 < iVar6) {
+						IMPLEMENTATION_GUARD(
+						piVar3 = (int*)((int)peVar2 + iVar6 * 4 + 0xc);
+						pfVar4 = (float*)((int)peVar2 + iVar6 * 4 + iVar5 * 4 + 0xc);
+						do {
+							edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
+							edAnmStage::SetTimeAsRatio(*pfVar4, &TheAnimStage);
+							edAnmStage::AnimBlendToWRTS(1.0, &TheAnimStage);
+							iVar6 = iVar6 + -1;
+							piVar3 = piVar3 + -1;
+							pfVar4 = pfVar4 + -1;
+						} while (-1 < iVar6);)
+					}
+				}
+				this->flags = this->flags | 0x80000000;
+				this->flags = this->flags | 0x40000000;
+				this->time_0xc = 1.0;
+				this->time_0x10 = 0.0;
+			}
+			else {
+				if (iVar5 == 1) {
+					iVar5 = peVar2->keyIndex_0x8.asKey + -1;
+					if (-1 < iVar5) {
+						IMPLEMENTATION_GUARD(
+						pfVar4 = (float*)((int)peVar2 + iVar5 * 4 + peVar2->keyIndex_0x8 * 4 + 0xc);
+						piVar3 = (int*)((int)peVar2 + iVar5 * 4 + 0xc);
+						do {
+							if (0.0001 < *pfVar4) {
+								if ((this->currentAnimDataFlags & 1) == 0) {
+									edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
+								}
+								else {
+									edAnmStage::SetAnimLoop(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
+								}
+								edAnmStage::SetTimeAsRatio(this->time_0xc, &TheAnimStage);
+								edAnmStage::AnimBlendToWRTS(*pfVar4, &TheAnimStage);
+							}
+							iVar5 = iVar5 + -1;
+							pfVar4 = pfVar4 + -1;
+							piVar3 = piVar3 + -1;
+						} while (-1 < iVar5);)
+					}
+					if (TheAnimStage.field_0x4c != false) {
+						this->flags = this->flags | 0x80000000;
+					}
+					if (TheAnimStage.field_0x4d != false) {
+						this->flags = this->flags | 0x40000000;
+					}
+					fVar8 = TheAnimStage.field_0x40;
+					this->time_0xc = TheAnimStage.field_0x40;
+					this->time_0x10 = fVar8 * this->keyStartTime_0x14;
+				}
+				else {
+					if (iVar5 == 0) {
+						IMPLEMENTATION_GUARD(
+						if ((uVar1 & 1) == 0) {
+							edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[peVar2->keyIndex_0x8]);
+						}
+						else {
+							edAnmStage::SetAnimLoop(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[peVar2->keyIndex_0x8]);
+						}
+						edAnmStage::SetTime(this->time_0x10, &TheAnimStage);
+						edAnmStage::AnimToWRTS(&TheAnimStage);
+						this->time_0x10 = TheAnimStage._60_4_;
+						this->time_0xc = TheAnimStage._64_4_;
+						if (TheAnimStage.field_0x4c != false) {
+							this->flags = this->flags | 0x80000000;
+						}
+						if (TheAnimStage.field_0x4d != false) {
+							this->flags = this->flags | 0x40000000;
+						})
+					}
+				}
+			}
+		}
+	}
+	else {
+		if ((uVar1 & 1) == 0) {
+			TheAnimStage.SetAnim(this->pAnimKeyTableEntry);
+		}
+		else {
+			TheAnimStage.SetAnimLoop(this->pAnimKeyTableEntry);
+		}
+		TheAnimStage.SetTime(this->time_0x10);
+		TheAnimStage.AnimToWRTS();
+		this->time_0x10 = TheAnimStage.field_0x3c;
+		this->time_0xc = TheAnimStage.field_0x40;
+		if (TheAnimStage.field_0x4c != false) {
+			this->flags = this->flags | 0x80000000;
+		}
+		if (TheAnimStage.field_0x4d != false) {
+			this->flags = this->flags | 0x40000000;
+		}
+	}
+	return;
+}
+
+void edAnmMacroAnimator::UpdateAnimParams()
+{
+	edANM_HDR* peVar1;
+	int iVar2;
+	float* pfVar3;
+	int* piVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+
+	if (((this->currentAnimDataFlags & 4) != 0) && (this->pFunction != 0x0)) {
+		this->pFunction(this, this->pActor, this->animationType);
+	}
+	if (((this->currentAnimDataFlags & 0x80000000) == 0) && (peVar1 = this->pAnimKeyTableEntry, peVar1->field_0x4.asKey == 1)) {
+		iVar2 = peVar1->keyIndex_0x8.asKey;
+		fVar8 = 0.0;
+		this->keyDuration_0x18 = 0.0f;
+		iVar5 = iVar2 + -1;
+		this->keyStartTime_0x14 = 0.0f;
+		if (-1 < iVar5) {
+			IMPLEMENTATION_GUARD();
+			piVar4 = (int*)((int)peVar1 + iVar5 * 4 + 0xc);
+			pfVar3 = (float*)((int)peVar1 + iVar5 * 4 + iVar2 * 4 + 0xc);
+			do {
+				peVar1 = this->pKeyDataArray[*piVar4];
+				if ((this->currentAnimDataFlags & 1) == 0) {
+					fVar6 = peVar1->keyIndex_0x8.asTime;
+				}
+				else {
+					fVar6 = peVar1->field_0x4.asTime;
+				}
+				fVar7 = *pfVar3;
+				iVar5 = iVar5 + -1;
+				piVar4 = piVar4 + -1;
+				pfVar3 = pfVar3 + -1;
+				this->keyStartTime_0x14 = this->keyStartTime_0x14 + fVar6 * fVar7;
+				fVar8 = fVar8 + fVar7;
+				this->keyDuration_0x18 =
+					this->keyDuration_0x18 + fVar7 * (peVar1->field_0x4.asTime - peVar1->keyIndex_0x8.asTime);
+			} while (-1 < iVar5);
+		}
+		if (0.0f < fVar8) {
+			this->keyStartTime_0x14 = this->keyStartTime_0x14 / fVar8;
+			this->keyDuration_0x18 = this->keyDuration_0x18 / fVar8;
+		}
+		if (this->keyStartTime_0x14 < 0.0f) {
+			this->keyStartTime_0x14 = 0.0f;
+		}
+		if (this->keyDuration_0x18 < 0.0f) {
+			this->keyDuration_0x18 = 0.0f;
+		}
+		this->field_0x8 = 0;
+	}
+	return;
+}
+
+void CAnimationManager::Level_Create(ByteCode* pMemoryStream)
+{
+	int iVar1;
+	edANM_HDR** ppeVar2;
+	int iVar3;
+	AnimMatrixData* m0;
+
+	iVar1 = pMemoryStream->GetS32();
+	this->levelAnimCount = iVar1;
+	if (this->levelAnimCount < 1) {
+		this->pAnimKeyTable = (edANM_HDR**)0x0;
+	}
+	else {
+		ppeVar2 = new edANM_HDR*[levelAnimCount];
+		this->pAnimKeyTable = ppeVar2;
+
+		for (int i = 0; i < this->levelAnimCount; i++) {
+			pAnimKeyTable[i] = NULL;
+		}
+	}
+	pMemoryStream->GetS32();
+	m0 = this->aAnimMatrixData;
+	iVar1 = 0xc0;
+	do {
+		m0->usedByCount = 0;
+		m0->key_0x48 = 0xffffffff;
+		edF32Matrix4SetIdentityHard(&m0->matrix);
+		iVar1 = iVar1 + -1;
+		m0 = m0 + 1;
+	} while (0 < iVar1);
+	return;
 }

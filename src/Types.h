@@ -382,16 +382,13 @@ union alignas(16)
 
 	float raw[16];
 
-	/* Unneeded
-	inline edF32MATRIX4 operator=(const edF32MATRIX3& rhs)
+	inline edF32MATRIX4& operator=(const edF32MATRIX3& rhs)
 	{
-		edF32MATRIX4 ret;
-		ret.rowX = rhs.rowX;
-		ret.rowY = rhs.rowY;
-		ret.rowZ = rhs.rowZ;
-		return ret;
+		rowX = rhs.rowX;
+		rowY = rhs.rowY;
+		rowZ = rhs.rowZ;
+		return *this;
 	}
-	*/
 };
 #ifdef PLATFORM_WIN
 #pragma pack(pop)
@@ -513,7 +510,7 @@ inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 }
 
 #define IMPLEMENTATION_GUARD_AUDIO(x)
-#define IMPLEMENTATION_GUARD_LOG(x)
+#define IMPLEMENTATION_GUARD_LOG(x) MY_LOG("IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 
 #ifdef PLATFORM_WIN
 #include <assert.h>

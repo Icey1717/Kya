@@ -64,7 +64,7 @@ bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 	char acStack1024[512];
 	char acStack512[512];
 
-	MY_LOG("edCFiler_BNK::open %s\n", filePath);
+	MY_LOG("edCFiler_BNK::open {}\n", filePath);
 
 	iVar4 = 0;
 	do {
@@ -100,7 +100,7 @@ bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 			/* Look for the index of the file we want. */
 			iVar4 = get_entryindex_from_filename((edCBankFileHeader*)(pcVar3 + 8), acStack1024);
 			if (iVar4 == -1) {
-				MY_LOG("edCFiler_BNK::open ERROR could not find file index %s\n", acStack1024);
+				MY_LOG("edCFiler_BNK::open ERROR could not find file index {}\n", acStack1024);
 				bVar1 = false;
 			}
 			else {

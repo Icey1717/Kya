@@ -144,7 +144,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 #endif
 	int fileDescriptor;
 
-	MY_LOG("edCFiler_CDVD::open %s\n", unformatedFilePath);
+	MY_LOG("edCFiler_CDVD::open {}\n", unformatedFilePath);
 
 	/* First we have to change the format of the file path from <CDVD>0:\CDEURO\LEVEL\ to cdrom0:\CDEURO\LEVEL\ */
 	uVar5 = outFile->openFlags;
@@ -172,7 +172,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 		edStrCat(outString + fileDirectoryLength + fileNameLength, sz_DriveLetter_00431270);
 		/* At this point we will have a path like cdrom0:\CDEURO\LEVEL\PREINTRO\CINE\1c9de79b.bnk */
 
-		MY_LOG("edCFiler_CDVD::open Formatted path %s toc: %d\n", fullFilePath, toc.bLoaded);
+		MY_LOG("edCFiler_CDVD::open Formatted path {} toc: {}\n", fullFilePath, toc.bLoaded);
 
 #ifdef PLATFORM_WIN
 		FILE* fp = NULL;
@@ -287,7 +287,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 #ifdef PLATFORM_WIN
 			if (fp) {
 				bufferStart->fd = g_FileDescriptors.size();
-				MY_LOG("edCFiler_CDVD::open FILE: %d\n", bufferStart->fd);
+				MY_LOG("edCFiler_CDVD::open FILE: {}\n", bufferStart->fd);
 				g_FileDescriptors.push_back(fp);
 			}
 #endif
@@ -309,7 +309,7 @@ bool edCFiler_CDVD::close(edFILEH* pDebugBank)
 		bVar1 = false;
 	}
 	else {
-		MY_LOG("edCFiler_CDVD::close FILE: %d\n", piVar2->fd);
+		MY_LOG("edCFiler_CDVD::close FILE: {}\n", piVar2->fd);
 
 #ifdef PLATFORM_PS2
 		if ((pDebugBank->openFlags & 8) == 0) {
@@ -352,7 +352,7 @@ uint edCFiler_CDVD::read(edFILEH* pDebugBank, char* destination, uint requiredSi
 		readBytes = 0;
 	}
 	else {
-		MY_LOG("edCFiler_CDVD::read FILE: %d Offset: %u\n", paVar1->fd, requiredSize);
+		MY_LOG("edCFiler_CDVD::read FILE: {} Offset: %u\n", paVar1->fd, requiredSize);
 
 		if ((pDebugBank->openFlags & 8) == 0) {
 			iVar2 = 0;
@@ -410,7 +410,7 @@ bool edCFiler_CDVD::seek(edFILEH* pDebugBank)
 		bVar1 = false;
 	}
 	else {
-		MY_LOG("edCFiler_CDVD::seek FILE: %d Offset: %d\n", piVar2->fd, pDebugBank->seekOffset);
+		MY_LOG("edCFiler_CDVD::seek FILE: {} Offset: {}\n", piVar2->fd, pDebugBank->seekOffset);
 
 		if ((pDebugBank->openFlags & 8) == 0) {
 			do {
@@ -661,7 +661,7 @@ bool edCFiler_CDVD_Toc::InitTOC_0025d530(edCdlFolder* pFolder)
 	byte local_840[2108];
 	sceCdRMode local_4;
 
-	MY_LOG("Processing folder: %s\n", pFolder->name);
+	MY_LOG("Processing folder: {}\n", pFolder->name);
 
 	pFolder->pChild = this->pNextFreeEntry;
 	uVar16 = pFolder->size + 0x7ff >> 0xb;
@@ -779,7 +779,7 @@ bool edCFiler_CDVD_Toc::InitTOC_0025d530(edCdlFolder* pFolder)
 						iVar5 = iVar5 + 1;
 					} while (iVar5 < 0xc);
 
-					MY_LOG("    Copied name: %s\n", peVar14->name);
+					MY_LOG("    Copied name: {}\n", peVar14->name);
 				}
 				pbVar15 = pbVar15 + *pbVar15;
 				bVar8 = *pbVar15;
@@ -840,7 +840,7 @@ edCdlFolder* edCFiler_CDVD_Toc::FindEdCFile(char* filePath)
 			peVar4 = peVar4 + pcVar4->folderCount;
 			if (pcVar4->fileCount != 0) {
 				do {
-					MY_LOG("File: Comparing %s to %s\n", folderNameBuffer, (char*)peVar4);
+					MY_LOG("File: Comparing {} to {}\n", folderNameBuffer, (char*)peVar4);
 					iVar2 = edStrICmp((byte*)folderNameBuffer, (byte*)peVar4);
 					if (iVar2 == 0) {
 						return peVar4;
@@ -856,7 +856,7 @@ edCdlFolder* edCFiler_CDVD_Toc::FindEdCFile(char* filePath)
 		uVar3 = 0;
 		if (pcVar4->folderCount != 0) {
 			do {
-				MY_LOG("Folder: Comparing %s to %s\n", folderNameBuffer, (char*)peVar4);
+				MY_LOG("Folder: Comparing {} to {}\n", folderNameBuffer, (char*)peVar4);
 				iVar2 = edStrICmp((byte*)folderNameBuffer, (byte*)peVar4);
 				if (iVar2 == 0) {
 					bVar1 = true;

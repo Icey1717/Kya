@@ -658,7 +658,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 		CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create texture {}", creationTag.textureName);
 
-		creationTag.bHasTexture = (resCollection.pData[cineCreatureObject->meshID * 3 + 1].field_0x0 & 0x80000000U) != 0;
+		creationTag.bHasTexture = (resCollection.pData->aTags[cineCreatureObject->textureID].flags & 0x80000000U) != 0;
 	}
 	if (cineCreatureObject->meshID == -1) {
 		creationTag.meshName = 0;
@@ -669,7 +669,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 		CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create mesh {}", creationTag.meshName);
 
-		creationTag.bHasMesh = (resCollection.pData[cineCreatureObject->meshID * 3 + 1].field_0x0 & 0x80000000U) != 0;
+		creationTag.bHasMesh = (resCollection.pData->aTags[cineCreatureObject->meshID].flags & 0x80000000U) != 0;
 	}
 	creationTag.field_0x30 = (cineCreatureObject->boundingSphere).w;
 	bVar1 = cinGameInterface.CreateActor((edCinActorInterface**)&this->pObj->pCinActorInterface, &creationTag);
@@ -753,7 +753,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 						(int*)((int)animatedProp + 0xc) +
 						(uint) * (ushort*)((int)animatedProp + 0xc) + local_1c * 2;
 					local_98 = pTrackDataStart[1];
-					local_94 = resCollection->pData[pTrackDataStart[1] * 3 + 2].field_0x0;
+					local_94 = resCollection->pData[pTrackDataStart[1]].pData;
 					local_90 = pTrackDataStart[2];
 					(*(code*)pCinActorInterface->vt->SetMessage)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
 				})
@@ -781,7 +781,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 							keyframeBodyPtr =
 								(float*)((int*)((int)animatedProp + 0xc) +
 									(uint) * (ushort*)((int)animatedProp + 0xc) + soundKeyframe * 3);
-							soundFileInfoObj = resCollection->pData[(int)keyframeBodyPtr[1] * 3 + 2].field_0x0;
+							soundFileInfoObj = resCollection->pData[(int)keyframeBodyPtr[1]].pData;
 							soundStart = keyframeBodyPtr[2];
 							soundStop = keyframeBodyPtr[3];
 							(*(code*)pCinActorInterface->vt->SetSound)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
@@ -811,7 +811,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 										(int*)((int)animatedProp + 0xc) +
 										(uint) * (ushort*)((int)animatedProp + 0xc) + local_c * 2;
 									local_78 = pTrackDataStart + 1;
-									local_74 = resCollection->pData[pTrackDataStart[1] * 3 + 2].field_0x0;
+									local_74 = resCollection->pData[pTrackDataStart[1]].pData;
 									local_70 = pTrackDataStart[2];
 									(*(code*)pCinActorInterface->vt->SetParticles)
 										(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
@@ -839,21 +839,21 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 										AnimTagData* piVar4 = (AnimTagData*)(pTrackDataStart + local_8 * 5);
 										edCinActorInterface::ANIM_PARAMStag local_f0;
 										local_f0.field_0x4 = piVar4->field_0x4 + fVar6 * piVar4->field_0x8;
-										local_f0.field_0x0 = resCollection.pData[piVar4->field_0x0 * 3 + 2].field_0x0;
+										local_f0.pHdrA = resCollection.pData->aTags[piVar4->field_0x0].pData;
 										local_f0.field_0x8 = (piVar4->field_0xc & 1U) != 0;
 										float fVar5 = piVar4->field_0x10;
 										if ((fVar5 <= fVar6) || (local_8 < 1)) {
-											local_f0.field_0xc = 0;
+											local_f0.pHdrB = 0;
 										}
 										else {
 											pTrackDataStart = pTrackDataStart + local_8 * 5;
-											if ((fVar5 == 0.0) || (fVar6 <= 0.0)) {
-												local_f0.field_0x18 = 0.0;
+											if ((fVar5 == 0.0f) || (fVar6 <= 0.0f)) {
+												local_f0.field_0x18 = 0.0f;
 											}
 											else {
 												local_f0.field_0x18 = fVar6 / fVar5;
 											}
-											local_f0.field_0xc = resCollection.pData[pTrackDataStart[-5] * 3 + 2].field_0x0;
+											local_f0.pHdrB = resCollection.pData->aTags[pTrackDataStart[-5]].pData;
 											local_f0.field_0x14 = (pTrackDataStart[-2] & 1U) != 0;
 											if (local_8 < 2) {
 												local_f0.field_0x10 = (float)((int*)((ulong)pAnimProp + 0x10))[local_8];
@@ -863,7 +863,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 												local_f0.field_0x10 = *currentKeyframePtr - currentKeyframePtr[-1];
 											}
 											local_f0.field_0x10 =
-												(local_f0.field_0x10 - 0.01818182) * (float)pTrackDataStart[-3] + (float)pTrackDataStart[-4];
+												(local_f0.field_0x10 - 0.01818182f) * (float)pTrackDataStart[-3] + (float)pTrackDataStart[-4];
 										}
 										pCinActorInterface->SetAnim(&local_f0);
 									}
@@ -1028,14 +1028,14 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 	//edSceneLight_VTable* local_14;
 	CameraInfo* cachedReturn;
 	CameraInfo* cineCamera;
-	edResCollectionTag* resPtr;
+	edResCollectionHeader* resPtr;
 	char* fileBuffer;
 
 	if (inFileBuffer == (void*)0x0) {
 		dataPtr = (edSCENEtag*)0x0;
 	}
 	else {
-		resPtr = (edResCollectionTag*)0x0;
+		resPtr = (edResCollectionHeader*)0x0;
 		dataPtr = (edSCENEtag*)0x0;
 		fileBuffer = (char*)inFileBuffer;
 		if ((char*)inFileBuffer < (char*)inFileBuffer + fileLength) {
@@ -1043,7 +1043,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 				seekCounter = *(int*)fileBuffer;
 				/* If the data we read from the buffer == 'DATA' */
 				if (seekCounter == 0x21534552) {
-					resPtr = (edResCollectionTag*)(fileBuffer + 8);
+					resPtr = (edResCollectionHeader*)(fileBuffer + 8);
 				}
 				else {
 					/* If the data we read from the buffer == 'RES!' */
@@ -1069,33 +1069,31 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 			this->pTag = dataPtr;
 			seekCounter = 0;
 			this->pTag->pCollection = STORE_SECTION(resPtr);
-			int pcVar1 = resPtr->field_0x0;
-			filePath = (char*)((ulong)&resPtr[(ulong)pcVar1 * 3 + 1].field_0x0 + 1);
+			int pcVar1 = resPtr->resCount;
+			filePath = (char*)resPtr + pcVar1 * sizeof(edResCollectionTag) + sizeof(edResCollectionHeader) + 1;
 			if (0 < pcVar1) {
-				seekIncrement = 0;
+
 				do {
-					internalSeekPos = (char*)((ulong)&resPtr->field_0x0 + seekIncrement);
-					uVar2 = *(uint*)(internalSeekPos + 4) & 0x7fffffff;
+					edResCollectionTag* pResData = &resPtr->aTags[seekCounter];
+
+					uVar2 = pResData->flags & 0x7fffffff;
 					if (uVar2 == 7) {
 						/* Set some value along the res ptr */
-						*(char**)(internalSeekPos + 8) = filePath;
+						pResData->pData = STORE_SECTION(filePath);
 					}
 					else {
 						if ((uVar2 != 1) && (uVar2 != 4)) {
 							/* Will call Load Cutscene File */
-							returnPtr = loadObj.GetResource((edResCollection::RES_TYPE)uVar2,
-								(ulong)((*(uint*)(internalSeekPos + 4) & 0x80000000) != 0), filePath,
-								(int*)(internalSeekPos + 0xc));
+							returnPtr = loadObj.GetResource((edResCollection::RES_TYPE)uVar2, (pResData->flags & 0x80000000) != 0, filePath, &pResData->size);
 							/* Store the pointer we got back */
-							*(char**)(internalSeekPos + 8) = returnPtr;
+							pResData->pData = STORE_SECTION(returnPtr);
 							/* If the pointer we got back was null, then exit */
-							if (*(int*)(internalSeekPos + 8) == 0) {
+							if (pResData->pData == 0) {
 								return (edSCENEtag*)0x0;
 							}
 						}
 					}
 					seekCounter = seekCounter + 1;
-					seekIncrement = seekIncrement + 0xc;
 					filePath = filePath + (byte)filePath[-1];
 				} while (seekCounter < (ulong)pcVar1);
 			}
@@ -1242,7 +1240,7 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 
 	iVar1 = 0;
 	numElements = this->pTag->size;
-	edResCollection local_4 = { (edResCollectionTag*)LOAD_SECTION(this->pTag->pCollection) };
+	edResCollection local_4 = { (edResCollectionHeader*)LOAD_SECTION(this->pTag->pCollection) };
 	sceSeek = (char*)(this->pTag + 1);
 	if (0 < numElements) {
 		do {
@@ -1304,7 +1302,7 @@ void edSceneScenery::Create(edCinGameInterface& loadObj, edResCollection& collec
 	}
 	else {
 		creationTag.szTexturePath = collection.GetResFilename(pSceneryTag->textureOffset);
-		creationTag.textureType = (collection.pData[pSceneryTag->textureOffset * 3 + 1].field_0x0 & 0x80000000U) != 0;
+		creationTag.textureType = (collection.pData->aTags[pSceneryTag->textureOffset].flags & 0x80000000U) != 0;
 	}
 	if (pSceneryTag->meshOffset == -1) {
 		creationTag.szMeshPath = (char*)0x0;
@@ -1312,7 +1310,7 @@ void edSceneScenery::Create(edCinGameInterface& loadObj, edResCollection& collec
 	}
 	else {
 		creationTag.szMeshPath = collection.GetResFilename(pSceneryTag->meshOffset);
-		creationTag.meshType = (collection.pData[pSceneryTag->meshOffset * 3 + 1].field_0x0 & 0x80000000U) != 0;
+		creationTag.meshType = (collection.pData->aTags[pSceneryTag->meshOffset].flags & 0x80000000U) != 0;
 	}
 	loadObj.CreateScenery((edCinSceneryInterface**)(this->pTag + 1), &creationTag);
 	return;

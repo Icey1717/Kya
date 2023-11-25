@@ -123,7 +123,7 @@ void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* 
 	edBANK_ENTRY_INFO BStack544;
 	char acStack512[512];
 
-	MY_LOG("select_language: %s\n", pFilePath);
+	MY_LOG("select_language: {}\n", pFilePath);
 
 	bVar1 = false;
 	if (this->entryCount != 0) {
@@ -191,7 +191,7 @@ char* edFileOpen(char* filePath, uint* outSize, uint flags)
 	int iVar6;
 	char acStack512[512];
 
-	MY_LOG("MessageFile::edFileOpen %s\n", filePath);
+	MY_LOG("MessageFile::edFileOpen {}\n", filePath);
 
 	*outSize = 0;
 	pDebugBank = edFileOpen(filePath, flags | 1);
@@ -277,7 +277,7 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 		edStrCopy(this->field_0x8, filePath);
 	}
 
-	MY_LOG("MessageFile::select_language %s [%s]\n", filePath, g_LanguageSuffixArray_00425840[inLanguageID]);
+	MY_LOG("MessageFile::select_language {} [{}]\n", filePath, g_LanguageSuffixArray_00425840[inLanguageID]);
 
 	this->pBankAccessObj = (edCBankBufferEntry*)0x0;
 	this->languageID = inLanguageID;
@@ -286,7 +286,7 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 		pcVar5 = edFileOpen(acStack512, &this->size, 0);
 		this->pFileData = pcVar5;
 		if (this->pFileData == (char*)0x0) {
-			MY_LOG("MessageFile::select_language FAILED TO OPEN FILE: %s\n", acStack512);
+			MY_LOG("MessageFile::select_language FAILED TO OPEN FILE: {}\n", acStack512);
 			return;
 		}
 		if (this != (CMessageFile*)0x0) {
@@ -368,7 +368,7 @@ char* CMessageFile::get_message(ulong key, long mode)
 		}
 	}
 
-	//MY_LOG("MessageFile::get_message %c%c%c%c -> %s [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
+	//MY_LOG("MessageFile::get_message %c%c%c%c -> {} [%d]\n", LOC_KEY_TO_CHAR(key), pcVar1, mode);
 
 	return pcVar1;
 }

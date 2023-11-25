@@ -55,6 +55,15 @@ struct LoadLoopObject_418_18 {
 	SectorManagerSubObj aSubObj[6];
 };
 
+struct CChunk {
+	uint field_0x0;
+	uint field_0x4;
+	uint size;
+	int offset;
+
+	CChunk* FindNextSubChunk(CChunk* pChunk, uint param_3);
+};
+
 struct SaveBigAlloc {
 	undefined4 field_0x0;
 	undefined4 field_0x4;
@@ -596,7 +605,7 @@ public:
 	virtual void Level_Init();
 	// End Manager
 
-	void SetLevelToLoad_002dba90(int levelID, int elevatorID, int param_4);
+	void Level_FillRunInfo(int levelID, int elevatorID, int param_4);
 	void Level_LoadObjectives(ByteCode* pMemoryStream);
 
 	void MoreLoadLoopObjectSetup(bool param_2);
@@ -668,7 +677,7 @@ public:
 	undefined field_0x47;
 	struct SaveBigAlloc* pSaveData_0x48;
 	int pSaveDataEnd_0x4c;
-	SaveBigAlloc* aSaveDataArray[8];
+	CChunk* aSaveDataArray[8];
 	int currentSaveIndex;
 	undefined4 field_0x74;
 	int field_0x78;

@@ -24,6 +24,9 @@
 #include "ActorManager.h"
 #include "SectorManager.h"
 #include "DlistManager.h"
+#include "AnmManager.h"
+#include "Animation.h"
+#include "CollisionManager.h"
 
 
 LevelScheduleManager* LevelScheduleManager::gThis = NULL;
@@ -51,12 +54,13 @@ uint SearchForSection_002e3bf0(undefined* param_1, uint param_2, int param_3)
 	return param_2;
 }
 
-void LevelScheduleManager::SetLevelToLoad_002dba90(int levelID, int elevatorID, int param_4)
+void LevelScheduleManager::Level_FillRunInfo(int levelID, int elevatorID, int param_4)
 {
 	undefined* puVar1;
 	int iVar2;
 	uint uVar3;
 	LevelInfo* pcVar3;
+	CChunk* pCVar2;
 
 	if (aLevelInfo[levelID].levelName[0] == '\0') {
 		levelID = field_0x4;
@@ -84,15 +88,15 @@ void LevelScheduleManager::SetLevelToLoad_002dba90(int levelID, int elevatorID, 
 		}
 	}
 	else {
-		puVar1 = *(undefined**)(aLevelInfo[0].levelName + currentSaveIndex * 4 + -100);
-		uVar3 = SearchForSection_002e3bf0(puVar1, (uint)(puVar1 + 0x10), 0x44485342);
-		if (uVar3 != 0) {
-			currentSaveIndex = currentSaveIndex + 1;
-			*(uint*)(aLevelInfo[0].levelName + currentSaveIndex * 4 + -100) = uVar3;
+		IMPLEMENTATION_GUARD();
+		pCVar2 = this->aSaveDataArray[this->currentSaveIndex]->FindNextSubChunk(this->aSaveDataArray[this->currentSaveIndex] + 1, 0x44485342);
+		if (pCVar2 != (CChunk*)0x0) {
+			this->currentSaveIndex = this->currentSaveIndex + 1;
+			this->aSaveDataArray[this->currentSaveIndex] = pCVar2;
 		}
-		level_0x5b40 = *(int*)(uVar3 + 0x14);
-		*(undefined4*)(aLevelInfo[0].levelName + currentSaveIndex * 4 + -100) = 0;
-		currentSaveIndex = currentSaveIndex + -1;
+		this->level_0x5b40 = pCVar2[1].field_0x4;
+		this->aSaveDataArray[this->currentSaveIndex] = (CChunk*)0x0;
+		this->currentSaveIndex = this->currentSaveIndex + -1;
 	}
 	return;
 }
@@ -632,18 +636,18 @@ void LevelScheduleManager::Game_Init()
 	pSaveData_0x48 = lVar2;
 	pSaveDataEnd_0x4c = (int)(pSaveData_0x48 + 1);
 	memset(pSaveData_0x48, 0, 0x10000);
-	aSaveDataArray[0] = (SaveBigAlloc*)0x0;
-	aSaveDataArray[1] = (SaveBigAlloc*)0x0;
-	aSaveDataArray[2] = (SaveBigAlloc*)0x0;
-	aSaveDataArray[3] = (SaveBigAlloc*)0x0;
+	aSaveDataArray[0] = (CChunk*)0x0;
+	aSaveDataArray[1] = (CChunk*)0x0;
+	aSaveDataArray[2] = (CChunk*)0x0;
+	aSaveDataArray[3] = (CChunk*)0x0;
 	pLVar12 = aLevelInfo;
-	aSaveDataArray[4] = (SaveBigAlloc*)0x0;
+	aSaveDataArray[4] = (CChunk*)0x0;
 	iVar11 = 0;
-	aSaveDataArray[5] = (SaveBigAlloc*)0x0;
-	aSaveDataArray[6] = (SaveBigAlloc*)0x0;
-	aSaveDataArray[7] = (SaveBigAlloc*)0x0;
+	aSaveDataArray[5] = (CChunk*)0x0;
+	aSaveDataArray[6] = (CChunk*)0x0;
+	aSaveDataArray[7] = (CChunk*)0x0;
 	currentSaveIndex = 0;
-	aSaveDataArray[currentSaveIndex] = pSaveData_0x48;
+	aSaveDataArray[currentSaveIndex] = (CChunk*)pSaveData_0x48;
 	pObjectiveStreamBegin = 0;
 	pObjectiveStreamEnd = 0;
 	field_0x74 = 0;
@@ -848,15 +852,17 @@ LAB_002e26c8:
 	//FUN_002da9b0(inLoapLoopObject);
 	//FUN_002da2e0(inLoapLoopObject);
 	if (aLevelInfo[0xe].levelName[0] == '\0') {
-		SetLevelToLoad_002dba90(field_0x4, -1, -1);
+		Level_FillRunInfo(field_0x4, -1, -1);
 	}
 	else {
-		SetLevelToLoad_002dba90(0xe, -1, -1);
+		Level_FillRunInfo(0xe, -1, -1);
+		// #HACK
+		//Level_FillRunInfo(0xe, -1, -1);
 	}
 	return;
 }
 
-void BnkInstallScene(char* pFileData, int size)
+bool BnkInstallScene(char* pFileData, int size)
 {
 	ByteCode byteCode;
 
@@ -867,17 +873,19 @@ void BnkInstallScene(char* pFileData, int size)
 	CScene::_pinstance->Level_Setup(&byteCode);
 	CScene::ptable.g_WayPointManager_0045169c->Level_AddAll(&byteCode);
 	CScene::ptable.g_PathManager_004516a0->Level_AddAll(&byteCode);
+	IMPLEMENTATION_GUARD_LOG(
 	//(*(code*)(Scene::ptable.g_CollisionManager_00451690)->pManagerFunctionData->Level_AddAll)();
+	)
 	CScene::ptable.g_ActorManager_004516a4->Level_AddAll(&byteCode);
 	CScene::ptable.g_SectorManager_00451670->Level_AddAll(&byteCode);
 	if (CScene::ptable.g_GlobalDListManager_004516bc != (CGlobalDListManager*)0x0) {
 		CScene::ptable.g_GlobalDListManager_004516bc->Level_Create();
 	}
 	byteCode.Term();
-	return;
+	return false;
 }
 
-void BnkInstallSceneCfg(char* pFileData, int size)
+bool BnkInstallSceneCfg(char* pFileData, int size)
 {
 	CScene* pScene;
 	uint uVar2;
@@ -895,8 +903,8 @@ void BnkInstallSceneCfg(char* pFileData, int size)
 	byteCode.GetU32();
 	byteCode.GetU32();
 	CScene::ptable.g_FileManager3D_00451664->Level_Create(&byteCode);
-	//CCollisionManager::Level_Create(Scene::ptable.g_CollisionManager_00451690, &MStack16);
-	//CAnimManager::Level_Create(Scene::ptable.g_AnimManager_00451668, &MStack16);
+	CScene::ptable.g_CollisionManager_00451690->Level_Create(&byteCode);
+	CScene::ptable.g_AnimManager_00451668->Level_Create(&byteCode);
 	byteCode.GetU32();
 	byteCode.GetU32();
 	CScene::ptable.g_SectorManager_00451670->Level_Create(&byteCode);
@@ -904,15 +912,16 @@ void BnkInstallSceneCfg(char* pFileData, int size)
 	//CCollisionManager::Level_PostCreate(Scene::ptable.g_CollisionManager_00451690);
 	//CFxParticleManager::Level_Create(&BStack16);
 	//ByteCodeDestructor(&MStack16, -1);
-	return;
+	return false;
 }
 
-void OnSoundLoaded_00180ef0(char* pFileData, int param_2)
+bool BnkInstallSoundCfg(char* pFileData, int param_2)
 {
 	MY_LOG("MISSING HANDLER OnSoundLoaded_00180ef0\n");
+	return false;
 }
 
-void BnkInstallG2D(char* pFileData, int length)
+bool BnkInstallG2D(char* pFileData, int length)
 {
 	FileManager3D* pFVar1;
 	int iStack4;
@@ -925,10 +934,10 @@ void BnkInstallG2D(char* pFileData, int length)
 			(CScene::ptable.g_FileManager3D_00451664)->textureLoadedCount), 1);
 	pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
 	pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
-	return;
+	return false;
 }
 
-void OnMeshLoaded_001a6380(char* pFileData, int length)
+bool BnkInstallG3D(char* pFileData, int length)
 {
 	int iVar1;
 	Mesh* pMVar2;
@@ -940,23 +949,23 @@ void OnMeshLoaded_001a6380(char* pFileData, int length)
 	pMVar2[iVar1].fileLength = length;
 	pMVar2[iVar1].pFileData = pFileData;
 	pFVar3->meshLoadedCount = pFVar3->meshLoadedCount + 1;
-	return;
+	return false;
 }
 
-void OnLoadedFunc_00211480(char* pFileBuffer, int length)
+bool BnkInstallCol(char* pFileBuffer, int length)
 {
 	MY_LOG("MISSING HANDLER OnLoadedFunc_00211480\n");
-	//CollisionManager* pCVar1;
+	//CCollisionManager* pCVar1;
 	//int iVar2;
 	//
 	//pCVar1 = Scene::ptable.g_CollisionManager_00451690;
 	//iVar2 = LoadCollision_00251570(pFileBuffer, length, 0);
 	//*(undefined4*)(&pCVar1->field_0x20 + pCVar1->count_0x60 * 4) = *(undefined4*)(iVar2 + 0x44);
 	//pCVar1->count_0x60 = pCVar1->count_0x60 + 1;
-	return;
+	return false;
 }
 
-void OnEventLoaded_0019e750(char* pFileData, int length)
+bool BnkInstallEvents(char* pFileData, int length)
 {
 	MY_LOG("MISSING HANDLER OnEventLoaded_0019e750\n");
 	//EventManager* pEVar1;
@@ -977,10 +986,10 @@ void OnEventLoaded_0019e750(char* pFileData, int length)
 	//edEvent::SetFunctionData_0025a0c0((int*)edEvent::FunctionDataA_0040eba0);
 	//::EmptyFunction();
 	//ByteCodeDestructor(&MStack16, -1);
-	return;
+	return false;
 }
 
-void OnViewLoaded_0019a9e0(char* pFileData, int length)
+bool BnkInstallCameras(char* pFileData, int length)
 {
 	ByteCode MStack16;
 
@@ -991,10 +1000,10 @@ void OnViewLoaded_0019a9e0(char* pFileData, int length)
 	//(*(code*)g_CameraViewManager_00448e98->pManagerFunctionData->deserializeFunc)();
 	//::EmptyFunction();
 	//ByteCodeDestructor(&MStack16, -1);
-	return;
+	return false;
 }
 
-void OnLightLoaded_002172d0(char* pFileData, int length)
+bool BnkInstallLights(char* pFileData, int length)
 {
 	ByteCode MStack16;
 
@@ -1004,10 +1013,10 @@ void OnLightLoaded_002172d0(char* pFileData, int length)
 	//(*(code*)(Scene::ptable.g_LightManager_004516b0)->pManagerFunctionData->deserializeFunc)();
 	//::EmptyFunction();
 	//ByteCodeDestructor(&MStack16, -1);
-	return;
+	return false;
 }
 
-void OnEffectLoaded_001a0870(char* pFileData, int length)
+bool BnkInstallFxCfg(char* pFileData, int length)
 {
 	ByteCode MStack16;
 	MY_LOG("MISSING HANDLER OnEffectLoaded_001a0870\n");
@@ -1016,10 +1025,10 @@ void OnEffectLoaded_001a0870(char* pFileData, int length)
 	//(*(code*)(Scene::ptable.g_EffectsManager_004516b8)->pManagerFunctionData->deserializeFunc)();
 	//::EmptyFunction();
 	//ByteCodeDestructor(&MStack16, -1);
-	return;
+	return false;
 }
 
-void BnkInstallCinematic(char* pFileData, int length)
+bool BnkInstallCinematic(char* pFileData, int length)
 {
 	ByteCode MStack16;
 	MY_LOG("BnkInstallCinematic\n");
@@ -1027,38 +1036,227 @@ void BnkInstallCinematic(char* pFileData, int length)
 	MStack16.Init(pFileData);
 	g_CinematicManager_0048efc->Level_AddAll(&MStack16);
 	MStack16.Term();
-	return;
+	return false;
 }
 
-void NullTypePairFunc(char* pFileData, int param_2)
+bool BnkInstallAnim(char* pFileData, int length)
+{
+	CAnimationManager* pCVar1;
+	edANM_HDR* peVar2;
+
+	MY_LOG("BnkInstallAnim\n");
+
+	pCVar1 = CScene::ptable.g_AnimManager_00451668;
+	peVar2 = edAnmAnim::LoadFromMem(pFileData, length);
+	pCVar1->pAnimKeyTable[pCVar1->loadedAnimKeyDataCount] = peVar2;
+	pCVar1->loadedAnimKeyDataCount = pCVar1->loadedAnimKeyDataCount + 1;
+	return false;
+}
+
+bool BnkInstallSample(char* pFileData, int length)
+{
+	GlobalSound_00451698* pGVar1;
+	uint uVar2;
+
+	MY_LOG("BnkInstallSample\n");
+
+	IMPLEMENTATION_GUARD_AUDIO(
+
+	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	if (DAT_00448ef0 == 0) {
+		uVar2 = length - 0x30;
+		if ((uVar2 & 0x3f) != 0) {
+			uVar2 = (uVar2 & 0xffffffc0) + 0x40;
+		}
+		if (0x1ee3c0 - (CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xb4 < (int)uVar2) {
+			*(undefined4*)
+				((CScene::ptable.g_GlobalSoundPtr_00451698)->field_0x14 +
+					(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xc * 0x18) = 0;
+		}
+		else {
+			(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xb4 =
+				(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xb4 + uVar2;
+			edSoundSampleLoadNoWait(pFileData, (ed_sound_sample*)(pGVar1->field_0x14 + pGVar1->field_0xc * 0x18), 0);
+		}
+	}
+	pGVar1->field_0xc = pGVar1->field_0xc + 1;
+	if (pGVar1->field_0xc == pGVar1->field_0x8) {
+		pGVar1->field_0xc = 0;
+	})
+	return false;
+}
+
+bool BnkInstallBank(char* pFileData, int length)
+{
+	GlobalSound_00451698* pGVar1;
+
+	MY_LOG("BnkInstallBank\n");
+
+	IMPLEMENTATION_GUARD_AUDIO(
+
+	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	if (DAT_00448ef0 == 0) {
+		*(char**)(*(int*)&(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0x60 +
+			(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xc * 8) = pFileData;
+		*(int*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->field_0x60 + 4) = length;
+	}
+	pGVar1->field_0xc = pGVar1->field_0xc + 1;
+	if (pGVar1->field_0xc == pGVar1->field_0x48) {
+		pGVar1->field_0xc = 0;
+	})
+	return false;
+}
+
+bool BnkInstallBankHeader(char* pFileData, int length)
+{
+	GlobalSound_00451698* pGVar1;
+	undefined4* puVar2;
+	uint uVar3;
+
+	MY_LOG("BnkInstallBank\n");
+
+	IMPLEMENTATION_GUARD_AUDIO(
+
+	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	if (DAT_00448ef0 == 0) {
+		puVar2 = (undefined4*)
+			(*(int*)&(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0x60 +
+				(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xc * 8);
+		uVar3 = FUN_00267e20(*puVar2, pFileData, (long)(int)puVar2[1], (long)length);
+		*(uint*)(pGVar1->field_0x50 + pGVar1->field_0xc * 4) = uVar3;
+		*(undefined4*)&pGVar1->field_0xb8 = *(undefined4*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->field_0x60 + 4);
+		if ((*(uint*)&pGVar1->field_0xb8 & 0x3f) != 0) {
+			*(uint*)&pGVar1->field_0xb8 = (*(uint*)&pGVar1->field_0xb8 & 0xffffffc0) + 0x40;
+		}
+		pGVar1->field_0xb4 = pGVar1->field_0xb4 + *(int*)&pGVar1->field_0xb8;
+	}
+	pGVar1->field_0xc = pGVar1->field_0xc + 1;
+	if (pGVar1->field_0xc == pGVar1->field_0x48) {
+		pGVar1->field_0xc = 0;
+		edMemFree(*(void**)&pGVar1->field_0x60);
+	})
+	return false;
+}
+
+bool BnkInstallSong(char* pFileData, int length)
+{
+	GlobalSound_00451698* pGVar1;
+	uint uVar2;
+
+	MY_LOG("BnkInstallBank\n");
+
+	IMPLEMENTATION_GUARD_AUDIO(
+
+	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	if (DAT_00448ef0 == 0) {
+		uVar2 = FUN_00267d30(pFileData, (long)length);
+		*(uint*)(pGVar1->field_0x4c + pGVar1->field_0xc * 4) = uVar2;
+	}
+	pGVar1->field_0xc = pGVar1->field_0xc + 1;
+	if (pGVar1->field_0xc == pGVar1->field_0x44) {
+		pGVar1->field_0xc = 0;
+	})
+	return false;
+}
+
+bool BnkInstallDynCol(char* pFileData, int length)
+{
+	MY_LOG("BnkInstallDynCol\n");
+
+	IMPLEMENTATION_GUARD_LOG(
+
+	BankCollision_14** ppBVar1;
+	int iVar2;
+	BankCollision_14* pBVar3;
+
+	iVar2 = (CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8;
+	ppBVar1 = &(CScene::ptable.g_CollisionManager_00451690)->pBankCollisionData;
+	(CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8 = iVar2 + 1;
+	pBVar3 = *ppBVar1 + iVar2;
+	pBVar3->pBase = (astruct_11*)pFileData;
+	pBVar3->field_0x4 = length;
+	pBVar3->useCount_0xc = 0;
+	pBVar3->pNextFree = (astruct_11*)0x0;)
+	return false;
+}
+
+bool BnkInstallParticleManager(char* pFileData, int length)
+{
+	return false;
+}
+
+bool BnkInstallAnimMacro(char* pFileData, int length)
+{
+	MY_LOG("BnkInstallAnimMacro\n");
+
+	if (*(int*)pFileData != 0) {
+		(CScene::ptable.g_AnimManager_00451668)->pAnimKeyEntryData = pFileData + 4;
+	}
+	return false;
+}
+
+bool BnkInstallTrack(char* pFileData, int length)
+{
+	MY_LOG("BnkInstallAnimMacro\n");
+
+	IMPLEMENTATION_GUARD_LOG(
+	CTrackManager* pCVar1;
+	uint uVar2;
+	int* pBase;
+	CEventTrack* pCVar3;
+	int iVar4;
+	ByteCode BStack16;
+
+	BStack16.Init(pFileData);
+	BStack16.GetChunk();
+	pCVar1 = CScene::ptable.g_TrackManager_004516b4;
+	uVar2 = BStack16.GetU32();
+	pCVar1->trackCount = uVar2;
+	uVar2 = pCVar1->trackCount;
+	if (uVar2 != 0) {
+		pBase = (int*)operator.new.array((long)(int)(uVar2 * 0xc + 0x10));
+		pCVar3 = (CEventTrack*)__construct_new_array(pBase, CEventTrack::CEventTrack, CEventTrack::~CEventTrack, 0xc, uVar2);
+		pCVar1->aTracks = pCVar3;
+	}
+	pCVar3 = pCVar1->aTracks;
+	for (iVar4 = pCVar1->trackCount; iVar4 != 0; iVar4 = iVar4 + -1) {
+		CEventTrack::Add(pCVar3, &BStack16);
+		pCVar3 = pCVar3 + 1;
+	}
+	BStack16.Term();)
+	return false;
+}
+
+bool NullTypePairFunc(char* pFileData, int param_2)
 {
 	IMPLEMENTATION_GUARD();
+	return false;
 }
 
 TypePairData TableBankCallback[24] = {
-	{ 0x02, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x02, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x03, 4, { OnSoundLoaded_00180ef0, 0, 0, 0, 0, 0 } },
-	{ 0x03, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x03, 5, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x03, 6, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x03, 7, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x02, 1, { BnkInstallAnim, 0, 0, 0, 0, 0 } },
+	{ 0x02, 2, { BnkInstallAnimMacro, 0, 0, 0, 0, 0 } },
+	{ 0x03, 4, { BnkInstallSoundCfg, 0, 0, 0, 0, 0 } },
+	{ 0x03, 1, { BnkInstallSample, 0, 0, 0, 0, 0 } },
+	{ 0x03, 5, { BnkInstallSong, 0, 0, 0, 0, 0 } },
+	{ 0x03, 6, { BnkInstallBank, 0, 0, 0, 0, 0 } },
+	{ 0x03, 7, { BnkInstallBankHeader, 0, 0, 0, 0, 0 } },
 	{ 0x06, 1, { BnkInstallScene, 0, 0, 0, 0, 0 } },
 	{ 0x06, 2, { BnkInstallSceneCfg, 0, 0, 0, 0, 0 } },
-	{ 0x04, 1, { OnMeshLoaded_001a6380, 0, 0, 0, 0, 0 } },
+	{ 0x04, 1, { BnkInstallG3D, 0, 0, 0, 0, 0 } },
 	{ 0x05, 1, { BnkInstallG2D, 0, 0, 0, 0, 0 } },
-	{ 0x07, 1, { OnLoadedFunc_00211480, 0, 0, 0, 0, 0 } },
-	{ 0x07, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x08, 1, { OnEventLoaded_0019e750, 0, 0, 0, 0, 0 } },
-	{ 0x0A, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x0B, 1, { OnViewLoaded_0019a9e0, 0, 0, 0, 0, 0 } },
-	{ 0x0C, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x0F, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x10, 1, { OnLightLoaded_002172d0, 0, 0, 0, 0, 0 } },
-	{ 0x11, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
-	{ 0x09, 1, { OnEffectLoaded_001a0870, 0, 0, 0, 0, 0 } },
+	{ 0x07, 1, { BnkInstallCol, 0, 0, 0, 0, 0 } },
+	{ 0x07, 2, { BnkInstallDynCol, 0, 0, 0, 0, 0 } },
+	{ 0x08, 1, { BnkInstallEvents, 0, 0, 0, 0, 0 } },
+	{ 0x0A, 1, { BnkInstallTrack, 0, 0, 0, 0, 0 } },
+	{ 0x0B, 1, { BnkInstallCameras, 0, 0, 0, 0, 0 } },
+	{ 0x0C, 1, { NULL, 0, 0, 0, 0, 0 } },
+	{ 0x0F, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } }, // BnkInstallAstar
+	{ 0x10, 1, { BnkInstallLights, 0, 0, 0, 0, 0 } }, // BnkInstallLights
+	{ 0x11, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } }, // BnkInstallLiptracks
+	{ 0x09, 1, { BnkInstallFxCfg, 0, 0, 0, 0, 0 } },
 	{ 0x13, 1, { BnkInstallCinematic, 0, 0, 0, 0, 0 } },
-	{ 0x09, 2, { NullTypePairFunc, 0, 0, 0, 0, 0 } },
+	{ 0x09, 2, { BnkInstallParticleManager, 0, 0, 0, 0, 0 } },
 	{ 0xFFFFFFFF, 0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
 };
 
@@ -1451,4 +1649,15 @@ ScenarioVariable _gScenVarInfo[30] = { 0 };
 int LevelScheduleManager::ScenVar_Get(SCENARIC_VARIABLE param_1)
 {
 	return _gScenVarInfo[param_1].field_0x0;
+}
+
+CChunk* CChunk::FindNextSubChunk(CChunk* pChunk, uint param_3)
+{
+	for (; (pChunk < (CChunk*)((char*)&this[1].field_0x0 + this->offset) && (param_3 != pChunk->field_0x4));
+		pChunk = (CChunk*)((char*)&pChunk[1].field_0x0 + pChunk->offset)) {
+	}
+	if (((CChunk*)((char*)&this[1].field_0x0 + this->offset) <= pChunk) || (param_3 != pChunk->field_0x4)) {
+		pChunk = (CChunk*)0x0;
+	}
+	return pChunk;
 }

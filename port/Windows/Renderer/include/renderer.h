@@ -21,6 +21,13 @@ namespace Renderer
 		float4 f : COLOR1;
 	*/
 
+	struct alignas(32) GSVertexUnprocessed
+	{
+		float STQ[4];
+		uint32_t RGBA[4];
+		uint32_t XYZSkip[4];
+	};
+
 	struct alignas(32) GSVertex
 	{
 		float ST[2]; // S:0, T:4

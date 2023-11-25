@@ -23,12 +23,12 @@
 #include "Rendering/edCTextFormat.h"
 #include "kya.h"
 
-SimpleMenu g_PauseScreenData_004507f0;
+CSimpleMenu g_PauseScreenData_004507f0;
 
 PauseManager::PauseManager()
 {
-	pSimpleMenu = (SimpleMenu*)0x0;
-	pSplashScreen = (SplashScreen*)0x0;
+	pSimpleMenu = (CSimpleMenu*)0x0;
+	pSplashScreen = (CSplashScreen*)0x0;
 	field_0xd = 0;
 	field_0xe = 0;
 	field_0xf = 0;
@@ -48,10 +48,10 @@ PauseManager::PauseManager()
 
 void PauseManager::Game_Init()
 {
-	g_PauseScreenData_004507f0.SetFontValue_002f2d10(BootDataFont);
-	g_PauseScreenData_004507f0.SetFontValue_002f2d00(BootDataFont);
-	g_PauseScreenData_004507f0.SetFontValue_002f2cf0(BootDataFont);
-	g_PauseScreenData_004507f0.SetTranslatedTextData_002f2d20(NULL);
+	g_PauseScreenData_004507f0.set_font_title(BootDataFont);
+	g_PauseScreenData_004507f0.set_font_message(BootDataFont);
+	g_PauseScreenData_004507f0.set_font_help(BootDataFont);
+	g_PauseScreenData_004507f0.set_message_manager(NULL);
 	field_0xf = 0;
 	field_0x10 = 0;
 	field_0x11 = 0;
@@ -134,8 +134,6 @@ extern APlayer* g_PlayerActor_00448e10;
 
 uint UINT_00448eac;
 
-PauseStaticObj g_PauseStaticObj_0049c9d0 = { 0 };
-
 int INT_00483804 = 0;
 
 int FUN_00284930(void)
@@ -143,53 +141,56 @@ int FUN_00284930(void)
 	return INT_00483804;
 }
 
-void StaticPauseObjActivate_003c8bb0(PauseStaticObj* pPauseStaticObj)
+void CSettings::StoreGlobalSettings()
 {
 	CCinematicManager* pCVar1;
 	CCameraManager* pCVar2;
 	GlobalSound_00451698* pGVar3;
 	undefined4 uVar4;
-	float fVar5;
+	LANGUAGE LVar5;
+	float fVar6;
+	int iVar4;
 
 	pGVar3 = CScene::ptable.g_GlobalSoundPtr_00451698;
 	pCVar2 = CScene::ptable.g_CameraManager_0045167c;
 	pCVar1 = g_CinematicManager_0048efc;
-	//fVar5 = (Scene::ptable.g_GlobalSoundPtr_00451698)->field_0xbc * 12.0;
-	//if (fVar5 < 2.147484e+09) {
-	//	pPauseStaticObj->field_0x18 = (int)fVar5;
-	//}
-	//else {
-	//	pPauseStaticObj->field_0x18 = (int)(fVar5 - 2.147484e+09) | 0x80000000;
-	//}
-	//fVar5 = pGVar3->field_0xc0 * 12.0;
-	//if (fVar5 < 2.147484e+09) {
-	//	pPauseStaticObj->field_0x1c = (int)fVar5;
-	//}
-	//else {
-	//	pPauseStaticObj->field_0x1c = (int)(fVar5 - 2.147484e+09) | 0x80000000;
-	//}
-	uVar4 = FUN_00284930();
-	pPauseStaticObj->field_0x14 = uVar4;
-	pPauseStaticObj->setOffsetX = gVideoConfig.offsetX;
-	pPauseStaticObj->setOffsetY = gVideoConfig.offsetY;
-	if (pCVar2->aspectRatio == 1.777778f) {
-		pPauseStaticObj->field_0x9 = 1;
+	IMPLEMENTATION_GUARD_LOG(
+	fVar6 = (CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xbc * 12.0;
+	if (fVar6 < 2.147484e+09) {
+		this->field_0x18 = (int)fVar6;
 	}
 	else {
-		pPauseStaticObj->field_0x9 = 0;
+		this->field_0x18 = (int)(fVar6 - 2.147484e+09) | 0x80000000;
 	}
-	pPauseStaticObj->field_0x8 = pCVar1->bInitialized != 0;
-	uVar4 = CMessageFile::get_default_language();
-	pPauseStaticObj->languageID = uVar4;
-	pPauseStaticObj->field_0x0 = g_InputManager_00450960.field_0x14 != 0;
+	fVar6 = pGVar3->field_0xc0 * 12.0;
+	if (fVar6 < 2.147484e+09) {
+		this->field_0x1c = (int)fVar6;
+	}
+	else {
+		this->field_0x1c = (int)(fVar6 - 2.147484e+09) | 0x80000000;
+	}
+	iVar4 = edSoundOutputModeGet();
+	this->field_0x14 = iVar4;)
+	this->setOffsetX = gVideoConfig.offsetX;
+	this->setOffsetY = gVideoConfig.offsetY;
+	if (pCVar2->aspectRatio == 1.777778) {
+		this->bWidescreen = 1;
+	}
+	else {
+		this->bWidescreen = 0;
+	}
+	this->field_0x8 = pCVar1->bInitialized != 0;
+	LVar5 = CMessageFile::get_default_language();
+	this->languageID = LVar5;
+	this->field_0x0 = g_InputManager_00450960.field_0x14 != 0;
 	return;
 }
 
 void PauseManager::Level_Init()
 {
 	APlayer* pAVar1;
-	SimpleMenu* pPVar2;
-	SplashScreen* pGVar3;
+	CSimpleMenu* pSimpleMenu;
+	CSplashScreen* pSplashScreen;
 	Timer* pTVar4;
 	undefined8 uVar5;
 
@@ -214,26 +215,28 @@ void PauseManager::Level_Init()
 	}
 	UINT_00448eac = 0;
 	if ((GameFlags & 0x40) != 0) {
-		pPVar2 = new SimpleMenu();
-		if (pPVar2 != (SimpleMenu*)0x0) {
-			this->pSimpleMenu = pPVar2;
-			this->pSimpleMenu->Reset();
-			this->pSimpleMenu->SetFontValue_002f2d10(BootDataFont);
-			this->pSimpleMenu->SetFontValue_002f2d00(BootDataFont);
-			this->pSimpleMenu->SetFontValue_002f2cf0(BootDataFont);
-			this->pSimpleMenu->SetTranslatedTextData_002f2d20(&(CScene::ptable.g_LocalizationManager_00451678)->userInterfaceText);
-			pGVar3 = new SplashScreen();
-			this->pSplashScreen = pGVar3;
-			/* CDEURO/Frontend/kyatitle.g2d */
+		pSimpleMenu = new CSimpleMenu();
+		if (pSimpleMenu != (CSimpleMenu*)0x0) {
+			this->pSimpleMenu = pSimpleMenu;
+			this->pSimpleMenu->reset();
+			this->pSimpleMenu->set_font_title(BootDataFont);
+			this->pSimpleMenu->set_font_message(BootDataFont);
+			this->pSimpleMenu->set_font_help(BootDataFont);
+			this->pSimpleMenu->set_message_manager(&(CScene::ptable.g_LocalizationManager_00451678)->userInterfaceText);
+
+			pSplashScreen = new CSplashScreen();
+			this->pSplashScreen = pSplashScreen;
+		
 			this->pSplashScreen->Init(0.0f, "CDEURO/Frontend/kyatitle.g2d");
 			this->pSplashScreen->SetDrawLocation((float)gVideoConfig.screenWidth / 2.0f - 80.0f, ((float)gVideoConfig.screenHeight * 20.0f) / 512.0f,
 				(float)gVideoConfig.screenWidth / 2.0f + 80.0f, ((float)gVideoConfig.screenHeight * 220.0f) / 512.0f);
+
 			pTVar4 = GetTimer();
 			this->totalPlayTime = pTVar4->totalPlayTime;
 		}
 	}
 	this->field_0x34 = 1;
-	StaticPauseObjActivate_003c8bb0(&g_PauseStaticObj_0049c9d0);
+	gSettings.StoreGlobalSettings();
 	this->field_0x24 = 0;
 	return;
 }
@@ -253,7 +256,7 @@ void PauseManager::Level_Draw()
 	CCinematic* pCVar8;
 	float fVar9;
 
-	if ((this->pSimpleMenu != (SimpleMenu*)0x0) && (this->pSplashScreen != (SplashScreen*)0x0)) {
+	if ((this->pSimpleMenu != (CSimpleMenu*)0x0) && (this->pSplashScreen != (CSplashScreen*)0x0)) {
 		bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 		pTVar3 = GetTimer();
 		fVar9 = pTVar3->totalPlayTime;
@@ -269,7 +272,7 @@ void PauseManager::Level_Draw()
 		//index = 0;
 		//if (0 < iVar5) {
 		//	do {
-		//		pCVar6 = GetCutsceneData_001c50c0(pCinematicManager, index);
+		//		pCVar6 = GetCinematic(pCinematicManager, index);
 		//		if ((pCVar6->state != CS_Stopped) && ((pCVar6->flags_0x4 & 8) != 0)) {
 		//			pCVar8 = pCVar6;
 		//		}
@@ -338,12 +341,12 @@ void PauseManager::Level_Draw()
 	return;
 }
 
-SimpleMenu::SimpleMenu()
+CSimpleMenu::CSimpleMenu()
 {
-	Reset();
+	reset();
 }
 
-void SimpleMenu::Reset()
+void CSimpleMenu::reset()
 {
 	Timer* pTVar1;
 
@@ -367,9 +370,9 @@ void SimpleMenu::Reset()
 	return;
 }
 
-void SimpleMenu::SetMode(EPauseMenu mode)
+void CSimpleMenu::SetMode(EPauseMenu mode)
 {
-	Reset();
+	reset();
 	this->currentPage = mode;
 	this->field_0xcc = 0xfc9900ff;
 	this->field_0xd0 = 0xffffd2ff;
@@ -377,36 +380,36 @@ void SimpleMenu::SetMode(EPauseMenu mode)
 	return;
 }
 
-void SimpleMenu::SetFontValue_002f2cf0(edCTextFont* pFont)
+void CSimpleMenu::set_font_help(edCTextFont* pFont)
 {
 	pFontC = pFont;
 	return;
 }
 
-void SimpleMenu::SetFontValue_002f2d00(edCTextFont* pFont)
+void CSimpleMenu::set_font_message(edCTextFont* pFont)
 {
 	pFontB = pFont;
 	return;
 }
 
-void SimpleMenu::SetFontValue_002f2d10(edCTextFont* pFont)
+void CSimpleMenu::set_font_title(edCTextFont* pFont)
 {
 	pFontA = pFont;
 	return;
 }
 
-void SimpleMenu::SetTranslatedTextData_002f2d20(CMessageFile* pTextData)
+void CSimpleMenu::set_message_manager(CMessageFile* pTextData)
 {
 	pTranslatedTextData = pTextData;
 	return;
 }
 
-EPauseMenu SimpleMenu::get_current_page()
+EPauseMenu CSimpleMenu::get_current_page()
 {
 	return currentPage;
 }
 
-void SimpleMenu::perform_action()
+void CSimpleMenu::perform_action()
 {
 	if (this->pFunc_0x40 != 0x0) {
 		IMPLEMENTATION_GUARD();
@@ -702,7 +705,7 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 	return;
 }
 
-SplashScreen::SplashScreen()
+CSplashScreen::CSplashScreen()
 {
 	//(this->base).pVTable = &G2DObj_VTable_004446e0;
 	this->field_0x68 = 0;
@@ -722,7 +725,7 @@ SplashScreen::SplashScreen()
 	return;
 }
 
-bool SplashScreen::Init(float param_1, char* filePath)
+bool CSplashScreen::Init(float param_1, char* filePath)
 {
 	uint uVar1;
 	edFILEH* pLoadedFile;
@@ -783,7 +786,7 @@ bool SplashScreen::Init(float param_1, char* filePath)
 	return this->pTextureFileData != (char*)0x0;
 }
 
-bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
+bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 {
 	bool bVar1;
 	Timer* pTVar2;
@@ -954,7 +957,7 @@ bool SplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 	return param_2 == 0;
 }
 
-void SplashScreen::SetDrawLocation(float x, float y, float z, float w)
+void CSplashScreen::SetDrawLocation(float x, float y, float z, float w)
 {
 	(this->drawOffsets).x = x;
 	(this->drawOffsets).y = y;

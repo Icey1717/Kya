@@ -99,10 +99,10 @@ std::string convertToValidPath(const std::string& path) {
 }
 
 // Function to convert HLSL to SPIR-V using the DXC compiler
-void ConvertToSPIRV(const std::string& configName, const std::string& entryPoint, const std::string& outputName, const std::string& arguments) {
+void ConvertToSPIRV(const std::string& configName, const std::string& entryPoint, const std::string& inputName, const std::string& outputName, const std::string& arguments) {
 
 	std::string command = std::string(DXC_COMPILER) + " ";
-	command += "-spirv " + std::string(PS2_SHADER_SRC_DIR) + " ";
+	command += "-spirv " + std::string(SHADER_SRC_DIR) + " ";
 	command += "-DSHADER_MODEL=1" + std::string(" ");
 	command += "-T " + configName + " ";
 	command += "-E " + entryPoint + " ";

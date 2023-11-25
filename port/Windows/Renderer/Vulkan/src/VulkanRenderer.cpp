@@ -45,6 +45,20 @@ namespace Renderer {
 	bool gHeadless = false;
 }
 
+void Renderer::CreateCommandBuffers(CommandBufferVector& commandBuffers) {
+	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = GetCommandPool();
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+	if (vkAllocateCommandBuffers(GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate command buffers!");
+	}
+}
+
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
 #else
@@ -293,7 +307,7 @@ private:
 		createVertexBuffer();
 		createIndexBuffer();
 		createUniformBuffers();
-		createCommandBuffers();
+		Renderer::CreateCommandBuffers(commandBuffers);
 		createSyncObjects();
 	}
 
@@ -795,20 +809,6 @@ public:
 
 private:
 
-	void createCommandBuffers() {
-		commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = commandPool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-
-		if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate command buffers!");
-		}
-	}
-
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -960,7 +960,7 @@ public:
 
 		// Clear passes
 		Renderer::Debug::BeginLabel("Clear Passes");
-		for (auto& frameBuffer : FrameBuffer::GetAll()) {
+		for (auto& frameBuffer : PS2::FrameBuffer::GetAll()) {
 			frameBuffer.second.ExecuteClearPass();
 		}
 		Renderer::Debug::EndLabel();
@@ -991,7 +991,7 @@ public:
 		subresourceLayers.layerCount = 1;
 
 		// Clear passes
-		for (auto& frameBuffer : FrameBuffer::GetAll()) {
+		for (auto& frameBuffer : PS2::FrameBuffer::GetAll()) {
 			frameBuffer.second.ExecuteFinalPass();
 		}
 
@@ -1024,7 +1024,7 @@ public:
 		}
 
 #ifdef BLIT_TO_BACKBUFFER
-		auto& frameBuffer = FrameBuffer::Get(GetHardwareState().FBP);
+		auto& frameBuffer = PS2::FrameBuffer::Get(GetHardwareState().FBP);
 
 		VkCommandBuffer cmd = BeginSingleTimeCommands();
 		// Transition the swapchain image layout to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
@@ -1048,7 +1048,7 @@ public:
 		// Transition the swapchain image layout to VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 		VulkanImage::TransitionImageLayout(GetSwapchainImages()[presentImageIndex], GetSwapchainImageFormat(), VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmd);
 
-		for (auto& frameBuffer : FrameBuffer::GetAll()) {
+		for (auto& frameBuffer : PS2::FrameBuffer::GetAll()) {
 			VkImageBlit imageBlit = {};
 			imageBlit.srcSubresource = subresourceLayers;
 			imageBlit.srcOffsets[1] = { int32_t(GetRTSize().x / 2.5), GetRTSize().y / 2, 1 };

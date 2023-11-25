@@ -123,7 +123,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 {
 	ed_3d_hierarchy_node* peVar1;
 	edNODE* peVar2;
-	//MeshData_OBB* pMVar3;
+	ed_Chunck* pMVar3;
 	int value;
 	float fVar4;
 	float fVar5;
@@ -211,15 +211,15 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	this->flags = this->flags | 0x100000;
 	this->flags = this->flags | 0x1000;
 	RestoreInitData();
-	//peVar2 = this->pMeshNode;
+	peVar2 = this->pMeshNode;
 	///* Doesn't go in here for tunnel */
-	//if (peVar2 != (edNODE*)0x0) {
-	//	pMVar3 = ed3DHierarchyNodeGetSkeletonChunck(peVar2, false);
-	//	if (pMVar3 != (MeshData_OBB*)0x0) {
-	//		CAnimation::Create(&this->animationController, (CActor*)this, 5, (AnimationSubObj*)&this->field_0x2f0, 2);
-	//		this->pAnimationController = &this->animationController;
-	//	}
-	//}
+	if (peVar2 != (edNODE*)0x0) {
+		pMVar3 = ed3DHierarchyNodeGetSkeletonChunck(peVar2, false);
+		if (pMVar3 != (ed_Chunck*)0x0) {
+			this->animationController.Create(this, 5, this->anmLayers, 2);
+			this->pAnimationController = &this->animationController;
+		}
+	}
 	return;
 }
 

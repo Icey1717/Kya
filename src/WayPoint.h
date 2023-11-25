@@ -4,6 +4,11 @@
 #include "Types.h"
 #include "LargeObject.h"
 
+PACK(
+struct ManagerC_24 {
+	byte a[0x24];
+});
+
 struct CWayPointManager : public CObjectManager {
 	CWayPointManager();
 
@@ -13,7 +18,7 @@ struct CWayPointManager : public CObjectManager {
 
 
 	struct ManagerFunctionData* pManagerFunctionData;
-	struct ManagerC_24* field_0x4;
+	ManagerC_24* field_0x4;
 	int count_0x8;
 };
 

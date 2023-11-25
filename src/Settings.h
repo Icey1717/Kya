@@ -8,7 +8,7 @@ public:
 	static int GetMaxSaveBufferSize();
 	bool LoadFromBuffer(void* pDataV);
 	void SetSettingsToGlobal();
-
+	void StoreGlobalSettings();
 	bool field_0x0;
 	undefined field_0x1;
 	undefined field_0x2;

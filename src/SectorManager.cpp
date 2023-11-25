@@ -17,7 +17,7 @@ CSectorManager::CSectorManager()
 	(this->baseSector).desiredSectorID = -1;
 	(this->baseSector).sectorIndex = -1;
 	(this->baseSector).bankObject.pBankFileAccessObject = (edCBankBufferEntry*)0x0;
-	(this->baseSector).pMeshTransform = (edNODE*)0x0;
+	(this->baseSector).pBackgroundNode = (edNODE*)0x0;
 	(this->baseSector).pManager100Obj = (undefined*)0x0;
 	(this->baseSector).loadStage_0x8 = 0;
 	(this->baseSector).field_0x134 = 0.0;
@@ -118,6 +118,36 @@ void CSectorManager::Func_001fe620()
 	return;
 }
 
+template<typename T, int Size>
+class CFixedTable {
+public:
+	CFixedTable()
+	: entryCount(0)
+	{
+	}
+
+	int entryCount;
+	T entries[Size];
+
+	void Add(T value) {
+		if (this->entryCount < Size) {
+			this->entries[this->entryCount] = value;
+			this->entryCount++;
+		}
+	}
+
+	void Swap(T a, T b) {
+		T tmp;
+
+		// Access the element at position 'a' and store it in iVar1
+		tmp = (this->entries + a + -1)[1];
+
+		// Swap the values of elements at positions 'a' and 'b'
+		(this->entries + a + -1)[1] = (this->entries + b + -1)[1];
+		(this->entries + b + -1)[1] = tmp;
+	}
+};
+
 void CSectorManager::LevelLoading_Begin()
 {
 	SectorManagerSubObj* pLVar1;
@@ -136,7 +166,7 @@ void CSectorManager::LevelLoading_Begin()
 	SectorManagerSubObj* pcVar14;
 	LevelInfo* local_1a0;
 	int local_190[32];
-	int local_110[32];
+	//int local_110[32];
 	uint auStack144[31];
 	int local_14;
 	int local_10;
@@ -211,60 +241,51 @@ void CSectorManager::LevelLoading_Begin()
 				this->sectorArray[iVar13].currentSectorID = 0;
 			} while (iVar13 < this->sectDataCount);
 		}
-		local_110[0] = 0;
+
+		CFixedTable<int, 32> table;
+
 		uVar8 = 1;
 		if (0 < this->count_0x368) {
 			do {
 				if ((1 << (uVar8 & 0x1f) & uVar12) != 0) {
-					IMPLEMENTATION_GUARD(
 					local_4 = uVar8;
-					FUN_00200120((int)local_110, uVar8);)
+					table.Add(uVar8);
 				}
 				uVar8 = uVar8 + 1;
 			} while ((int)uVar8 <= this->count_0x368);
 		}
 		iVar13 = 0;
 		piVar2 = local_190;
-		do {
-			iVar13 = iVar13 + 6;
-			IMPLEMENTATION_GUARD(
-			*piVar2 = local_1a0->field_0x238[0].field_0x4;
-			piVar2[1] = local_1a0->field_0x238[0].field_0x14;
-			piVar2[2] = local_1a0->field_0x238[0].field_0x24;
-			piVar2[3] = local_1a0->field_0x238[0].field_0x34;
-			piVar2[4] = local_1a0->field_0x238[0].field_0x44;
-			piVar2[5] = local_1a0->field_0x238[0].field_0x54;)
-			piVar2 = piVar2 + 6;
-			local_1a0 = (LevelInfo*)&local_1a0->field_0x60;
-		} while (iVar13 < 0x1e);
+
+		for (int i = 0; i < 0x1e; i++) {
+			piVar2[i] = (int)local_1a0->aSectorSubObj[i].pFileData;
+		}
 		iVar13 = 0;
-		if (0 < local_110[0] + -1) {
-			piVar2 = local_110;
-			iVar10 = local_110[0];
+		if (0 < table.entryCount + -1) {
+			piVar2 = table.entries;
+			iVar10 = table.entryCount;
 			do {
 				iVar11 = iVar13 + 1;
 				if (iVar11 < iVar10) {
-					piVar9 = local_110 + iVar11;
+					piVar9 = table.entries + iVar11;
 					do {
-						local_10 = piVar9[1];
-						local_14 = piVar2[1];
-						if (local_190[piVar2[1]] < local_190[piVar9[1]]) {
-							IMPLEMENTATION_GUARD(
-							FUN_002000f0((int)local_110, iVar11, iVar13);)
+						if (local_190[table.entries[0]] < local_190[table.entries[1]]) {
+							table.Swap(iVar11, iVar13);
 						}
 						iVar11 = iVar11 + 1;
 						piVar9 = piVar9 + 1;
-						iVar10 = local_110[0];
-					} while (iVar11 < local_110[0]);
+						iVar10 = table.entryCount;
+					} while (iVar11 < table.entryCount);
 				}
 				iVar13 = iVar13 + 1;
 				piVar2 = piVar2 + 1;
 			} while (iVar13 < iVar10 + -1);
 		}
+
 		this->field_0x370 = 1;
 		iVar13 = 0;
-		piVar2 = local_110;
-		while ((iVar13 < local_110[0] && (this->field_0x370 != 0))) {
+		piVar2 = table.entries;
+		while ((iVar13 < table.entryCount && (this->field_0x370 != 0))) {
 			local_8 = piVar2[1];
 			uVar8 = ~(1 << (local_8 & 0x1f)) & auStack144[local_8];
 			uVar12 = 0;
@@ -296,6 +317,8 @@ void CSectorManager::LevelLoading_Begin()
 			piVar2 = piVar2 + 1;
 			iVar13 = iVar13 + 1;
 		}
+
+		IMPLEMENTATION_GUARD(
 		if (this->field_0x370 == 0) {
 			local_c = local_110[1];
 			iVar13 = local_190[local_110[1]];
@@ -318,7 +341,7 @@ void CSectorManager::LevelLoading_Begin()
 					pcVar14 = pcVar14 + 0x10;
 				} while (iVar13 <= this->count_0x368);)
 			}
-		}
+		})
 	}
 	(this->baseSector).sectID = -1;
 	this->field_0x36c = 1;
@@ -505,7 +528,7 @@ void CSector::InstallCallback()
 							MY_LOG("Sector::Init Init Collision: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 							//IMPLEMENTATION_GUARD(
 							//puVar3 = (undefined*)
-							//	CollisionManager::InstallColFile
+							//	CCollisionManager::InstallColFile
 							//	(Scene::ptable.g_CollisionManager_00451690,
 							//		(long)(int)local_20.fileBufferStart, (long)(int)local_20.length);
 							//this->pManager100Obj = puVar3;)
@@ -541,16 +564,16 @@ void CSector::InstallCallback()
 	ed3DLinkG2DToG3D(&this->meshInfo, (ed_g2d_manager*)pTextureInfo);
 	ed3DScenePushCluster(pStaticMeshMaster, &this->meshInfo);
 	if (pFileData == (char*)0x0) {
-		this->pMeshTransform = (edNODE*)0x0;
+		this->pBackgroundNode = (edNODE*)0x0;
 	}
 	else {
 		IMPLEMENTATION_GUARD(
 		3DFileManager::HideCommonBackground(p3DFileManager);
 		ed3DInstallG3D(pFileData, local_30, 0, &iStack8, (TextureInfo*)&this->textureInfoB, 0xc, &this->meshInfoB);
 		pMVar4 = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->meshInfoB, (char*)0x0);
-		this->pMeshTransform = pMVar4;
-		if (this->pMeshTransform != (edNODE*)0x0) {
-			IMPLEMENTATION_GUARD(3DFileManager::SetupBackground(p3DFileManager, this->pMeshTransform));
+		this->pBackgroundNode = pMVar4;
+		if (this->pBackgroundNode != (edNODE*)0x0) {
+			p3DFileManager->SetupBackground(this->pBackgroundNode);
 		})
 	}
 	this->desiredSectorID = this->sectorIndex;
@@ -560,7 +583,7 @@ void CSector::InstallCallback()
 	pMVar4 = gHierarchyManagerFirstFreeNode;
 	pSubSubObjArray = gHierarchyManagerBuffer;
 	pMeshData = (char*)(this->meshInfo).HALL;
-	pCameraPanMasterHeader = pStaticMeshMaster->pHeirListA;
+	pCameraPanMasterHeader = pStaticMeshMaster->pHierListA;
 	meshSize = edChunckGetNb(pMeshData + 0x10, pMeshData + *(int*)(pMeshData + 8));
 	pcVar6 = edHashcodeGet(0x43494d414e5944, (ed_Chunck*)((this->meshInfo).HALL + 1));
 	iVar8 = 0;
@@ -870,9 +893,9 @@ void CSector::Level_Manage(int sectID, int param_3)
 		pTVar5 = Timer::GetTimer();
 		peVar6 = GetStaticMeshMasterA_001031b0();
 		this->pANHR.Manage(pTVar5->cutsceneDeltaTime, (float)puVar2[8], peVar6, 1);
-		if (this->pMeshTransform != (edNODE*)0x0) {
+		if (this->pBackgroundNode != (edNODE*)0x0) {
 			IMPLEMENTATION_GUARD(
-			3DFileManager::ManageBackground(CScene::ptable.g_FileManager3D_00451664, this->pMeshTransform, *puVar2);)
+			3DFileManager::ManageBackground(CScene::ptable.g_FileManager3D_00451664, this->pBackgroundNode, *puVar2);)
 		}
 		if (this->desiredSectorID != sectID) {
 			IMPLEMENTATION_GUARD(

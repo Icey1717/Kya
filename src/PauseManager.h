@@ -9,6 +9,7 @@
 #include "LargeObject.h"
 #include "ed3D.h"
 #include "edDlist.h"
+#include "Settings.h"
 
 typedef enum EPauseMenu {
 	PM_Bonus = 13,
@@ -23,16 +24,16 @@ typedef enum EPauseMenu {
 	PM_SaveMenu = 3
 } EPauseMenu;
 
-struct SimpleMenu {
+struct CSimpleMenu {
 public:
-	SimpleMenu();
-	void Reset();
+	CSimpleMenu();
+	void reset();
 	void SetMode(EPauseMenu mode);
 
-	void SetFontValue_002f2cf0(struct edCTextFont* pFont);
-	void SetFontValue_002f2d00(struct edCTextFont* pFont);
-	void SetFontValue_002f2d10(struct edCTextFont* pFont);
-	void SetTranslatedTextData_002f2d20(struct CMessageFile* pTextData);
+	void set_font_help(struct edCTextFont* pFont);
+	void set_font_message(struct edCTextFont* pFont);
+	void set_font_title(struct edCTextFont* pFont);
+	void set_message_manager(struct CMessageFile* pTextData);
 	EPauseMenu get_current_page();
 	void perform_action();
 	struct CMessageFile* pTranslatedTextData;
@@ -231,8 +232,8 @@ public:
 	undefined field_0x25;
 	undefined field_0x26;
 	undefined field_0x27;
-	struct SimpleMenu* pSimpleMenu;
-	struct SplashScreen* pSplashScreen;
+	struct CSimpleMenu* pSimpleMenu;
+	struct CSplashScreen* pSplashScreen;
 	float totalPlayTime;
 	int field_0x34;
 };
@@ -293,9 +294,9 @@ public:
 	ed_g2d_manager textureInfo;
 };
 
-struct SplashScreen : public Sprite {
+struct CSplashScreen : public Sprite {
 public:
-	SplashScreen();
+	CSplashScreen();
 	bool Init(float param_1, char* filePath);
 	bool Manage(ulong param_2, bool param_3, bool param_4);
 	void SetDrawLocation(float x, float y, float z, float w);
@@ -326,6 +327,6 @@ struct PauseStaticObj {
 	uint field_0x1c;
 };
 
-extern PauseStaticObj g_PauseStaticObj_0049c9d0;
+extern CSettings gSettings;
 
 #endif // _PAUSEMANAGER_H

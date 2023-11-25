@@ -24,13 +24,13 @@ struct edCinCamInterface {
 
 struct edCinActorInterface {
 	struct ANIM_PARAMStag {
-		uint field_0x0;
+		int pHdrA; // edANM_HDR*
 		float field_0x4;
 		char field_0x8;
 		undefined field_0x9;
 		undefined field_0xa;
 		undefined field_0xb;
-		uint field_0xc;
+		int pHdrB; // edANM_HDR*
 		float field_0x10;
 		char field_0x14;
 		undefined field_0x15;
@@ -99,10 +99,10 @@ struct edCinGameInterface
 	};
 
 	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*) = 0;
-	virtual char* GetResource(edResCollection::RES_TYPE type1, long type2, const char* fileName, int* bufferLengthOut) = 0;
+	virtual char* GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut) = 0;
 	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag) = 0;
 	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag) = 0;
-	virtual bool ReleaseResource(void*, bool) = 0;
+	virtual bool ReleaseResource(uint, bool) = 0;
 };
 
 PACK(

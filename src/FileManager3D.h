@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "ed3D.h"
 
 struct ed_Chunck;
 
@@ -49,38 +50,12 @@ struct FileManager3D : public CObjectManager {
 	struct TextureInfo* GetCommonSectorG2D();
 	void Level_ClearInternalData();
 	void Level_Create(ByteCode* pMemoryStream);
+	void SetupBackground(edNODE* pNode);
+
 	struct ed_g3d_manager* pMeshInfo;
-	struct edNODE* pMeshTransformParent;
+	struct edNODE* pBackgroundNode;
 	struct edNODE* pLastMeshTransformParent;
-	char* field_0x10;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
-	undefined field_0x24;
-	undefined field_0x25;
-	undefined field_0x26;
-	undefined field_0x27;
-	undefined field_0x28;
-	undefined field_0x29;
-	undefined field_0x2a;
-	undefined field_0x2b;
-	undefined field_0x2c;
-	undefined field_0x2d;
-	undefined field_0x2e;
-	undefined field_0x2f;
+	ed_3d_hierarchy_setup backgroundHierarchySetup;
 	float field_0x30;
 	int meshCount;
 	int meshLoadedCount;

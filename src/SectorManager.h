@@ -35,7 +35,7 @@ public:
 	undefined* pManager100Obj;
 	ed_g3d_manager meshInfoB;
 	ed_g2d_manager textureInfoB;
-	struct edNODE* pMeshTransform;
+	struct edNODE* pBackgroundNode;
 	struct edNODE* pMeshTransformParent_0x130;
 	float field_0x134;
 	CHierarchyAnm pANHR;

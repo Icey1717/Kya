@@ -1,7 +1,8 @@
 #include "FileManager3D.h"
 #include <string.h>
 #include "MemoryStream.h"
-#include "ed3D.h"
+#include "edList.h"
+#include "port/pointer_conv.h"
 
 FileManager3D::FileManager3D()
 {
@@ -42,7 +43,7 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 	}
 	iVar1 = pMemoryStream->GetS32();
 	if (iVar1 == -1) {
-		this->pMeshTransformParent = (edNODE*)0x0;
+		this->pBackgroundNode = (edNODE*)0x0;
 	}
 	else {
 		iVar2 = pMemoryStream->GetS32();
@@ -51,11 +52,11 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
 			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
 		}
-		IMPLEMENTATION_GUARD(pMVar3 = ed3DHierarchyAddToScene(CScene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
-		this->pMeshTransformParent = pMVar3;
-		if (this->pMeshTransformParent != (edNODE*)0x0) {
-			3DFileManager::Func_001a6510(this, this->pMeshTransformParent);
-		})
+		pMVar3 = ed3DHierarchyAddToScene(CScene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
+		this->pBackgroundNode = pMVar3;
+		if (this->pBackgroundNode != (edNODE*)0x0) {
+			SetupBackground(this->pBackgroundNode);
+		}
 	}
 	return;
 }
@@ -104,7 +105,7 @@ void FileManager3D::Level_ClearInternalData()
 	this->textureLoadedCount = 0;
 	this->pTextureInfoArray = (TextureInfo*)0x0;
 	this->pMeshInfo = (ed_g3d_manager*)0x0;
-	this->pMeshTransformParent = (edNODE*)0x0;
+	this->pBackgroundNode = (edNODE*)0x0;
 	pPVar2 = this->pParticleInfoArray_0x50;
 	do {
 		pPVar2->ID = -1;
@@ -134,10 +135,10 @@ void FileManager3D::Level_ClearInternalData()
 		pPVar2[7].materialInfoArray_0x8 = (edDList_material*)0x0;
 		pPVar2 = pPVar2 + 8;
 	} while (0 < iVar3);
-	pvVar1 = memset(&this->field_0x10, 0, 0x20);
+	pvVar1 = memset(&this->backgroundHierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
 	this->field_0x30 = 10000.0f;
-	this->field_0x10 = (char*)&this->field_0x30;
-	*(undefined4*)&this->field_0x14 = 0;
+	this->backgroundHierarchySetup.clipping_0x0 = (char*)&this->field_0x30;
+	(this->backgroundHierarchySetup).pBoundingSphere = (edF32VECTOR4*)0x0;
 	return;
 }
 
@@ -175,5 +176,39 @@ void FileManager3D::Level_Create(ByteCode* pMemoryStream)
 			this->pTextureInfoArray[iVar1].pFileBuffer = NULL;
 		} while (iVar1 < this->textureCount);
 	}
+	return;
+}
+
+void FileManager3D::SetupBackground(edNODE* pNode)
+{
+	edNODE* pPrevNode;
+	MeshData_OBJ_Internal* piVar2;
+	uint uVar3;
+
+	ed_3d_hierarchy* pHier = (ed_3d_hierarchy*)pNode->pData;
+
+	if ((pNode->pData != (void*)0x0) && (uVar3 = pHier->subMeshParentCount_0xac, uVar3 != 0)) {
+		pPrevNode = pNode->pPrev;
+		for (; uVar3 != 0; uVar3 = uVar3 - 1) {
+
+			ed_3d_hierarchy* pPrevHier = (ed_3d_hierarchy*)pPrevNode->pData;
+			if (pPrevHier->hash.number == 0x4c464e99b2a49e87) {
+				piVar2 = ed3DHierarchyGetObject((ed_3d_hierarchy*)pPrevNode->pData);
+
+				ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(piVar2->p3DStrip);
+
+				pStrip->pDMA_Matrix.flagsA = 0x200;
+
+				//ed_dma_matrix* pMatrix = (ed_dma_matrix*)LOAD_SECTION(pStrip->pDMA_Matrix);
+				//
+				//pMatrix->
+				//
+				//IMPLEMENTATION_GUARD_LOG(
+				//*(undefined2*)(piVar2[7] + 0x34) = 0x200;)
+			}
+			pPrevNode = pPrevNode->pPrev;
+		}
+	}
+	ed3DHierarchyNodeSetSetup(pNode, &this->backgroundHierarchySetup);
 	return;
 }

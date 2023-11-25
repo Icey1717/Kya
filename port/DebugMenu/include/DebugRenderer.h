@@ -4,7 +4,9 @@
 
 typedef void* ImTextureID;
 
-struct FrameBuffer;
+namespace PS2 {
+	struct FrameBuffer;
+}
 struct edDList_material;
 
 namespace PS2 {
@@ -16,7 +18,7 @@ namespace PS2 {
 namespace DebugMenu {
 	void SetupRenderer();
 	ImTextureID AddTexture(const PS2::GSTexImage& texValue);
-	ImTextureID AddFrameBuffer(const FrameBuffer& frameBuffer);
+	ImTextureID AddFrameBuffer(const PS2::FrameBuffer& frameBuffer);
 
 	Renderer::TextureData LoadTextureData(edDList_material* pMaterial);
 }

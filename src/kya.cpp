@@ -1793,7 +1793,7 @@ void PlayIntroVideo(long mode)
 	undefined* promoFileName;
 
 	uVar4 = (uint)(gVideoConfig.omode == 3);
-	WTVersion = (uint)(g_PauseStaticObj_0049c9d0.field_0x9 == 0);
+	WTVersion = (uint)(gSettings.bWidescreen == 0);
 	if (mode == 0) {
 		if (LevelScheduleManager::gThis->nextLevelID == 1) {
 			bVar2 = false; // LevelScheduleManager::GetFirstRunOrSave(LevelScheduleManager::gThis, 1);
@@ -1806,14 +1806,14 @@ void PlayIntroVideo(long mode)
 				   First param is = "int_nw"
 				   Second param is "ufgsi" (US, French, German, Spanish, Italian) */
 				sprintf(introFileName, "%s%c", PTR_IntroVideoTitleStart[uVar4][WTVersion], s_ufgsi_004381a8[currentLanguage]);
-				if (g_PauseStaticObj_0049c9d0.field_0x8 != false) {
+				if (gSettings.field_0x8 != false) {
 					/* If we have subtitles on, append an 's' */
 					strcat(introFileName, s_SubtitleSuffix);
 				}
 				pTVar3 = GetTimer();
 				currentLanguage_videoPointer = new(VideoFile);
 				/* CDEURO/movies/ */
-				edStrCatMulti(introFilePath, szMoviesPath, introFileName, ".pss", "\0");
+				edStrCatMulti(introFilePath, szMoviesPath, introFileName, ".pss", NULL);
 				LoadVideoFromFilePath(currentLanguage_videoPointer, introFilePath);
 				do {
 					//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
@@ -2021,7 +2021,8 @@ void LoadingLoop(void)
 	MY_LOG("LoadLevel Begin\n");
 
 	/* These functions just run once */
-	PlayIntroVideo(0);
+	IMPLEMENTATION_GUARD_LOG(
+	PlayIntroVideo(0);)
 	pSceneInstance = CScene::_pinstance;
 	inTimeController = GetTimer();
 	pSceneInstance->LevelLoading_Begin();

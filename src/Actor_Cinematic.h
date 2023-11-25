@@ -29,6 +29,9 @@ struct CActorCinematic : public CActor {
 	virtual void Init();
 	virtual void CinematicMode_Enter(bool bSetState);
 
+	CAnimation animationController;
+	edAnmLayer anmLayers[2];
+
 	ComponentList<1> components;
 	CBehaviourCinematic behaviourCinematic;
 

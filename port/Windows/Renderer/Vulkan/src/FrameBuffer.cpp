@@ -7,7 +7,7 @@
 #include <array>
 #include "VulkanImage.h"
 
-FrameBuffer::FrameBufferMap passes;
+PS2::FrameBuffer::FrameBufferMap passes;
 
 // Custom res settings.
 const Vector2i rtsize = { 0x500, 0x400 };
@@ -105,7 +105,7 @@ static void CreateRenderPass(VkRenderPass& renderPass, bool bIsClear) {
 	}
 }
 
-void FrameBuffer::ExecuteClearPass()
+void PS2::FrameBuffer::ExecuteClearPass()
 {
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -129,7 +129,7 @@ void FrameBuffer::ExecuteClearPass()
 	vkCmdEndRenderPass(GetCurrentCommandBuffer());
 }
 
-void FrameBuffer::ExecuteFinalPass()
+void PS2::FrameBuffer::ExecuteFinalPass()
 {
 	VkRenderPassBeginInfo renderPassBeginInfo = {};
 	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -156,7 +156,7 @@ void FrameBuffer::ExecuteFinalPass()
 	vkCmdEndRenderPass(GetCurrentCommandBuffer());
 }
 
-void FrameBuffer::CreateFinalPassPipeline()
+void PS2::FrameBuffer::CreateFinalPassPipeline()
 {
 	{
 		const VkFormat format = GetSwapchainImageFormat();
@@ -300,6 +300,112 @@ void FrameBuffer::CreateFinalPassPipeline()
 	finalPipeline.CreateDescriptorPool();
 	finalPipeline.CreateDescriptorSets();
 
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = colorImageView;
+		imageInfo.sampler = sampler;
+
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = finalPipeline.descriptorSets[i];
+		descriptorWrites[0].dstBinding = 0;
+		descriptorWrites[0].dstArrayElement = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	}
+}
+
+PS2::FrameBuffer PS2::FrameBuffer::Create(Vector2i size, int FBP) {
+	FrameBuffer newBuffer = {};
+
+	newBuffer.FBP = FBP;
+
+	CreateRenderPass(newBuffer.clearPass, true);
+	SetObjectName("Framebuffer Clear Pass", (uint64_t)newBuffer.clearPass, VK_OBJECT_TYPE_RENDER_PASS);
+
+	CreateRenderPass(newBuffer.renderPass, false);
+	SetObjectName("Framebuffer Render Pass", (uint64_t)newBuffer.renderPass, VK_OBJECT_TYPE_RENDER_PASS);
+
+	newBuffer.SetupBase(size, newBuffer.renderPass, true);
+
+	newBuffer.CreateFinalPassPipeline();
+
+	{
+		char buff[256];
+		sprintf_s(buff, 256, "Framebuffer Object (%d, %d) FBP: %d", size.x, size.y, FBP);
+		SetObjectName(buff, (uint64_t)newBuffer.framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER);
+	}
+
+	newBuffer.ExecuteClearPass();
+
+	return newBuffer;
+}
+
+bool PS2::FrameBuffer::Exists(int FBP)
+{
+	const auto it = passes.find(FBP);
+	return it != passes.end();
+}
+
+PS2::FrameBuffer& PS2::FrameBuffer::Get(int FBP)
+{
+	auto it = passes.find(FBP);
+	if (it == passes.end()) {
+		passes.emplace(FBP, PS2::FrameBuffer::Create(rtsize, FBP));
+		return passes.at(FBP);
+	}
+
+	return it->second;
+}
+
+PS2::FrameBuffer::FrameBufferMap& PS2::FrameBuffer::GetAll()
+{
+	return passes;
+}
+
+void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& renderPass, bool bDepthAttachment)
+{
+	{
+		const VkFormat format = GetSwapchainImageFormat();
+		const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+		const VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+		VulkanImage::CreateImage(size.x, size.y, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, imageMemory);
+		VulkanImage::CreateImageView(colorImage, format, VK_IMAGE_ASPECT_COLOR_BIT, colorImageView);
+	}
+
+	if (bDepthAttachment)
+	{
+		VkFormat format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+		VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+		VkImageUsageFlags usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+		VulkanImage::CreateImage(size.x, size.y, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+		VulkanImage::CreateImageView(depthImage, format, VK_IMAGE_ASPECT_DEPTH_BIT, depthImageView);
+	}
+
+	std::vector<VkImageView> imageAttachments = { colorImageView };
+
+	if (bDepthAttachment) {
+		imageAttachments.push_back(depthImageView);
+	}
+
+	// Create the framebuffer that will use the color image as a render target
+	VkFramebufferCreateInfo framebufferCreateInfo = {};
+	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferCreateInfo.renderPass = renderPass;
+	framebufferCreateInfo.attachmentCount = imageAttachments.size();
+	framebufferCreateInfo.pAttachments = imageAttachments.data();
+	framebufferCreateInfo.width = size.x;
+	framebufferCreateInfo.height = size.y;
+	framebufferCreateInfo.layers = 1;
+	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
+
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.magFilter = VK_FILTER_LINEAR;
@@ -331,100 +437,4 @@ void FrameBuffer::CreateFinalPassPipeline()
 	if (vkCreateSampler(GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = colorImageView;
-		imageInfo.sampler = sampler;
-
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = finalPipeline.descriptorSets[i];
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pImageInfo = &imageInfo;
-
-		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-	}
-}
-
-FrameBuffer FrameBuffer::Create(Vector2i size, int FBP) {
-	FrameBuffer newBuffer = {};
-
-	newBuffer.FBP = FBP;
-
-	CreateRenderPass(newBuffer.clearPass, true);
-	SetObjectName("Framebuffer Clear Pass", (uint64_t)newBuffer.clearPass, VK_OBJECT_TYPE_RENDER_PASS);
-
-	CreateRenderPass(newBuffer.renderPass, false);
-	SetObjectName("Framebuffer Render Pass", (uint64_t)newBuffer.renderPass, VK_OBJECT_TYPE_RENDER_PASS);
-
-	{
-		const VkFormat format = GetSwapchainImageFormat();
-		const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-		const VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-		VulkanImage::CreateImage(size.x, size.y, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, newBuffer.colorImage, newBuffer.imageMemory);
-		VulkanImage::CreateImageView(newBuffer.colorImage, format, VK_IMAGE_ASPECT_COLOR_BIT, newBuffer.colorImageView);
-	}
-
-	{
-		VkFormat format = VK_FORMAT_D32_SFLOAT_S8_UINT;
-		VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-		VkImageUsageFlags usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-
-		VulkanImage::CreateImage(size.x, size.y, format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, newBuffer.depthImage, newBuffer.depthImageMemory);
-		VulkanImage::CreateImageView(newBuffer.depthImage, format, VK_IMAGE_ASPECT_DEPTH_BIT, newBuffer.depthImageView);
-	}
-
-	newBuffer.CreateFinalPassPipeline();
-
-	VkImageView imageAttachments[] = { newBuffer.colorImageView , newBuffer.depthImageView };
-
-	// Create the framebuffer that will use the color image as a render target
-	VkFramebufferCreateInfo framebufferCreateInfo = {};
-	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebufferCreateInfo.renderPass = newBuffer.renderPass;
-	framebufferCreateInfo.attachmentCount = 2;
-	framebufferCreateInfo.pAttachments = imageAttachments;
-	framebufferCreateInfo.width = size.x;
-	framebufferCreateInfo.height = size.y;
-	framebufferCreateInfo.layers = 1;
-	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, nullptr, &newBuffer.framebuffer);
-
-	{
-		char buff[256];
-		sprintf_s(buff, 256, "Framebuffer Object (%d, %d) FBP: %d", size.x, size.y, FBP);
-		SetObjectName(buff, (uint64_t)newBuffer.framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER);
-	}
-
-	newBuffer.ExecuteClearPass();
-
-	return newBuffer;
-}
-
-bool FrameBuffer::Exists(int FBP)
-{
-	const auto it = passes.find(FBP);
-	return it != passes.end();
-}
-
-FrameBuffer& FrameBuffer::Get(int FBP)
-{
-	auto it = passes.find(FBP);
-	if (it == passes.end()) {
-		passes.emplace(FBP, FrameBuffer::Create(rtsize, FBP));
-		return passes.at(FBP);
-	}
-
-	return it->second;
-}
-
-FrameBuffer::FrameBufferMap& FrameBuffer::GetAll()
-{
-	return passes;
 }

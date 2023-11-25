@@ -54,6 +54,7 @@ struct DMA_Register_Struct {
 
 void edDmaLoadFromFastRam_nowait(void* pSrc, uint qwc, void* pDest);
 bool edDmaLoadFromFastRam(void* pSrc, uint qwc, void* pDest);
+bool edDmaLoadToFastRam(void* pSrc, uint size, void* pDst);
 void edDmaFlushCache(void);
 int edDmaSyncPath(void);
 int edDmaSync(int channel);

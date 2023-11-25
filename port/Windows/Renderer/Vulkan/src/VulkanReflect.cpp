@@ -462,7 +462,7 @@ ReflectData reflectDescriptorSetLayout(const std::vector<char>& shaderCode) {
 		binding_description.stride = 0;  // computed below
 		binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		std::vector<VkVertexInputAttributeDescription>& attribute_descriptions = reflectData.attributeDescriptions;
+		std::vector<VkVertexInputAttributeDescription>& attribute_descriptions = reflectData.GetAttributes();
 		attribute_descriptions.reserve(input_vars.size());
 		for (size_t i_var = 0; i_var < input_vars.size(); ++i_var) {
 			const SpvReflectInterfaceVariable& refl_var = *(input_vars[i_var]);

@@ -14,6 +14,10 @@ namespace Renderer {
 	extern bool gHeadless;
 	constexpr int VertexIndexBufferSize = 0x100000;
 	constexpr int VertexIndexBufferSizeGPU = 0x100000;
+
+	using CommandBufferVector = std::vector<VkCommandBuffer>;
+
+	void CreateCommandBuffers(CommandBufferVector& commandBuffers);
 }
 
 VkDevice GetDevice();

@@ -51,7 +51,7 @@ struct ManagerContainer {
 	struct HelpManager* g_HelpManager_00451684;
 	struct PauseManager* g_PauseManager_00451688;
 	struct MapManager* g_MapManager_0045168c;
-	struct CollisionManager* g_CollisionManager_00451690;
+	struct CCollisionManager* g_CollisionManager_00451690;
 	struct Manager_208* g_Manager208_00451694;
 	struct GlobalSound_00451698* g_GlobalSoundPtr_00451698;
 	struct CWayPointManager* g_WayPointManager_0045169c;

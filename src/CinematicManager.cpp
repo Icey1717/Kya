@@ -658,14 +658,14 @@ void CCinematic::Create(ByteCode* pByteCode)
 	pcVar6 = pByteCode->GetString();
 	this->fileName = pcVar6;
 
-	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Bank A %s", this->pBankName_0x48);
-	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Bank B %s", this->pBankName_0x50);
-	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create File %s", this->fileName);
+	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Bank A {}", this->pBankName_0x48);
+	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Bank B {}", this->pBankName_0x50);
+	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create File {}", this->fileName);
 
 	uVar5 = pByteCode->GetS32();
 	this->actorCinematicCount = uVar5;
 
-	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Actor Cinematic Count %d", this->actorCinematicCount);
+	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Actor Cinematic Count {}", this->actorCinematicCount);
 
 	iVar7 = pByteCode->GetS32();
 	this->field_0x1c = iVar7;
@@ -1491,38 +1491,6 @@ bool CCinematic::LoadCineBnk(bool mode)
 	return this->cineBankLoadStage_0x2b4 == 3;
 }
 
-PACK(
-struct AnimHeaderPacked {
-	int hash;
-	int offset;
-	float field_0x8;
-});
-
-
-struct edAnmAnim {
-	static edAnmAnim* LoadFromMem(char* pFileData, int size);
-};
-
-edAnmAnim* edAnmAnim::LoadFromMem(char* pInFileData, int size)
-{
-	int* pFileEnd;
-	AnimHeaderPacked* pFileData = (AnimHeaderPacked*)pInFileData;
-
-	pFileEnd = &pFileData->hash;
-	if (pFileData != (AnimHeaderPacked*)0x0) {
-		for (; pFileData < (AnimHeaderPacked*)((ulong)pFileEnd + size);
-			pFileData = (AnimHeaderPacked*)((ulong)&pFileData->field_0x8 + pFileData->offset)) {
-			if (pFileData->hash == 0x41544144) {
-				return (edAnmAnim*)&pFileData->field_0x8;
-			}
-			if ((pFileData->hash == 0x214d4e41) && (pFileData->field_0x8 != 1.1f)) {
-				return (edAnmAnim*)0x0;
-			}
-		}
-	}
-	return (edAnmAnim*)0x0;
-}
-
 struct Manager_208;
 
 int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type2, const char* fileName, ed_g2d_manager* textureObj, int* bufferLengthOut)
@@ -1532,7 +1500,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 	int result;
 	ed_g2d_manager* outTextureInfo;
 	ed_g3d_manager* outMeshInfo;
-	edAnmAnim* outAnimationInfo;
+	edANM_HDR* outAnimationInfo;
 	ulong uVar3;
 	int iVar4;
 	const char* pcVar5;
@@ -2494,7 +2462,7 @@ bool CBWitchCin::CreateScenery(edCinSceneryInterface** ppActorInterface, const e
 	return true;
 }
 
-bool CBWitchCin::ReleaseResource(void*, bool)
+bool CBWitchCin::ReleaseResource(uint, bool)
 {
 	return true;
 }
@@ -2506,11 +2474,11 @@ bool CBWitchCin::GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface:
 	return true;
 }
 
-char* CBWitchCin::GetResource(edResCollection::RES_TYPE type1, long type2, const char* fileName, int* bufferLengthOut)
+char* CBWitchCin::GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut)
 {
 	int* fileBufferStart;
 
-	CUTSCENE_LOG(LogLevel::Info, "BWitchCin::GetResource %s\n", fileName);
+	CUTSCENE_LOG(LogLevel::Info, "BWitchCin::GetResource {}\n", fileName);
 
 	if ((type1 == edResCollection::COT_MeshModel) || (type1 == edResCollection::COT_MeshTexture)) {
 		*bufferLengthOut = 0;
@@ -2666,6 +2634,7 @@ bool CBWCinActor::Initialize()
 	CCinematic* pCinematic;
 
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	CUTSCENE_LOG(LogLevel::Info, "CBWCinActor::Initialize Adding CBWCinActor to {}", pCinematic->fileName);
 	if ((pCinematic->flags_0x4 & 0x4000) == 0) {
 		this->field_0x8 = 2;
 	}
@@ -2810,68 +2779,66 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 {
 	char cVar1;
 	char cVar2;
-	//CAnimation* pAnimationController;
-	uint uVar3;
-	uint uVar4;
-	//edAnmLayer* peVar5;
+	CAnimation* pAnimationController;
+	edANM_HDR* uVar3;
+	edANM_HDR* uVar4;
+	edAnmLayer* peVar5;
 	bool bVar6;
 	CCinematic* pCinematic;
 	CCineActorConfig* pCVar7;
 	float fVar8;
 	float fVar9;
 	float fVar10;
-	//edAnmStage local_30;
-	//edAnmStage local_20;
-	//edAnmStage local_10;
+	float local_30[4];
+	float local_20[4];
+	float local_10[4];
 
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 	pCVar7 = pCinematic->GetActorConfig(this->pParent);
 	bVar6 = (this->field_0x8 & 2U) == 0;
 	if ((pCVar7 == (CCineActorConfig*)0x0) || ((pCVar7->flags & 8) == 0)) {
-		IMPLEMENTATION_GUARD_LOG(
-		pAnimationController = (this->pParent->data).pAnimationController;
+		pAnimationController = this->pParent->pAnimationController;
 		if (pAnimationController != (CAnimation*)0x0) {
-			edAnmMetaAnimator::SetLayerTimeWarper(0.0, pAnimationController, 0);
-			uVar3 = pTag->field_0xc;
-			uVar4 = pTag->field_0x0;
+			pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(0.0f, 0);
+			uVar3 = (edANM_HDR*)LOAD_SECTION(pTag->pHdrB);
+			uVar4 = (edANM_HDR*)LOAD_SECTION(pTag->pHdrA);
 			if ((uVar3 == 0) || (bVar6)) {
-				peVar5 = pAnimationController->pAnimData;
+				peVar5 = pAnimationController->anmBinMetaAnimator.aAnimData;
 				cVar1 = pTag->field_0x8;
 				fVar8 = pTag->field_0x4;
 				peVar5->animPlayState = 0;
-				edAnmLayer::SetRawAnim(peVar5, uVar4, cVar1 != '\0', 0xfffffffe);
-				edAnmStage::ComputeAnimParams
-				(fVar8, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0, &local_10, 0,
-					(ulong)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
-				(peVar5->currentAnimDesc).state.time_0x10 = local_10.time_0x0;
-				(peVar5->currentAnimDesc).state.time_0xc = local_10.time_0x4;
+				peVar5->SetRawAnim(uVar4, cVar1 != '\0', 0xfffffffe);
+				edAnmStage::ComputeAnimParams(fVar8, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, 0,
+					(uint)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+				(peVar5->currentAnimDesc).state.time_0x10 = local_10[0];
+				(peVar5->currentAnimDesc).state.time_0xc = local_10[1];
 			}
 			else {
-				peVar5 = pAnimationController->pAnimData;
+				peVar5 = pAnimationController->anmBinMetaAnimator.aAnimData;
 				cVar1 = pTag->field_0x14;
 				fVar9 = pTag->field_0x18;
 				cVar2 = pTag->field_0x8;
 				fVar8 = pTag->field_0x4;
 				fVar10 = pTag->field_0x10;
 				peVar5->animPlayState = 0;
-				edAnmLayer::SetRawAnim(peVar5, uVar3, cVar1 != '\0', uVar3 + 1);
-				edAnmLayer::SetRawAnim(peVar5, uVar4, cVar2 != '\0', uVar4 + 2);
+				peVar5->SetRawAnim(uVar3, cVar1 != '\0', (uint)(uVar3 + 1));
+				peVar5->SetRawAnim(uVar4, cVar2 != '\0', (uint)(uVar4 + 2));
 				peVar5->field_0xbc = 1.0;
-				edAnmLayer::MorphingStartDT(peVar5);
-				(peVar5->currentAnimDesc).field_0x4c = 1.0;
+				peVar5->MorphingStartDT();
+				(peVar5->currentAnimDesc).field_0x4c = 1.0f;
 				(peVar5->nextAnimDesc).field_0x4c = fVar9;
 				edAnmStage::ComputeAnimParams
-				(fVar10, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0, &local_20, 0,
+				(fVar10, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0, local_20, 0,
 					(ulong)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
-				(peVar5->currentAnimDesc).state.time_0x10 = local_20.time_0x0;
-				(peVar5->currentAnimDesc).state.time_0xc = local_20.time_0x4;
+				(peVar5->currentAnimDesc).state.time_0x10 = local_20[0];
+				(peVar5->currentAnimDesc).state.time_0xc = local_20[1];
 				edAnmStage::ComputeAnimParams
-				(fVar8, (peVar5->nextAnimDesc).state.keyStartTime_0x14, 0.0, &local_30, 0,
+				(fVar8, (peVar5->nextAnimDesc).state.keyStartTime_0x14, 0.0, local_30, 0,
 					(ulong)(((peVar5->nextAnimDesc).state.currentAnimDataFlags & 1) != 0));
-				(peVar5->nextAnimDesc).state.time_0x10 = local_30.time_0x0;
-				(peVar5->nextAnimDesc).state.time_0xc = local_30.time_0x4;
+				(peVar5->nextAnimDesc).state.time_0x10 = local_30[0];
+				(peVar5->nextAnimDesc).state.time_0xc = local_30[1];
 			}
-		})
+		}
 	}
 	else {
 		pParent->CinematicMode_SetAnimation(pTag, bVar6);
