@@ -4,7 +4,7 @@
 
 namespace GIFReg
 {
-	struct PrimPacked
+	struct GSPrimPacked
 	{
 		uint32_t PRIM : 3;
 		uint32_t IIP : 1;
@@ -71,17 +71,17 @@ namespace GIFReg
 		uint32_t Y;
 	};
 
-	struct GSPrim {
-		uint32_t PRIM;
-		uint32_t IIP;
-		uint32_t TME;
-		uint32_t FGE;
-		uint32_t ABE;
-		uint32_t AA1;
-		uint32_t FST;
-		uint32_t CTXT;
-		uint32_t FIX;
-	};
+	//struct GSPrim {
+	//	uint32_t PRIM;
+	//	uint32_t IIP;
+	//	uint32_t TME;
+	//	uint32_t FGE;
+	//	uint32_t ABE;
+	//	uint32_t AA1;
+	//	uint32_t FST;
+	//	uint32_t CTXT;
+	//	uint32_t FIX;
+	//};
 
 	union GSClamp
 	{

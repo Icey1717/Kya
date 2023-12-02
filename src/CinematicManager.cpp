@@ -1039,15 +1039,15 @@ void CCinematic::Start()
 				if (this->pMeshInfo != (ed_g3d_manager*)0x0) {
 					IMPLEMENTATION_GUARD(
 					ed3DScenePushCluster(scene::_scene_handle, this->pMeshInfo);
-					iVar16 = FUN_00295c40((int)this->pMeshInfo, 0x43494d414e5944);
-					if (iVar16 != 0) {
-						FUN_0029f330(iVar16, 0xffff);
+					ed_g3d_hierarchy* pNewHier = ed3DG3DHierarchyGetFromHashcode(this->pMeshInfo, 0x43494d414e5944);
+					if (pNewHier != 0) {
+						ed3DG3DHierarchySetStripShadowReceiveFlag(pNewHier, 0xffff);
 					}
 					pMVar9 = ed3DHierarchyAddToSceneByHashcode(scene::_scene_handle, this->pMeshInfo, 0x43494d414e5944);
 					this->pMeshTransform = pMVar9;
 					if (this->pMeshTransform != (MeshTransformParent*)0x0) {
-						SetMeshTransformFlag_002abd80(this->pMeshTransform, 0xffff);
-						ClearMeshTransformFlag_002abff0(this->pMeshTransform, 0xffff);
+						ed3DSetMeshTransformFlag_002abd80(this->pMeshTransform, 0xffff);
+						ed3DSetMeshTransformFlag_002abff0(this->pMeshTransform, 0xffff);
 					})
 				}
 				pAVar5 = CActorHero::_gThis;
@@ -1807,7 +1807,8 @@ void CCinematic::Manage()
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
 			//this->totalCutsceneDelta = 2.736f;
-			IncrementCutsceneDelta();
+			this->totalCutsceneDelta = 17.79f;
+			//IncrementCutsceneDelta();
 		}
 		//else {
 		//	this->totalCutsceneDelta = 1.0f;

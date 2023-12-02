@@ -82,7 +82,7 @@ namespace PS2 {
 			this->ALPHA.FIX = fix;
 		}
 
-		GIFReg::GSPrim PRIM;
+		GIFReg::GSPrimPacked PRIM;
 		GIFReg::GSClamp CLAMP;
 		GIFReg::GSColClamp COLCLAMP;
 		GIFReg::GSAlpha ALPHA;

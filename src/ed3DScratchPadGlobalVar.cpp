@@ -45,6 +45,8 @@ struct edScratchPadData
 	edF32VECTOR4 gBoundSphereCenter;
 
 	AnimScratchpad PTR_AnimScratchpad_00449554;
+
+	byte pad[0x10000];
 });
 
 #ifdef PLATFORM_PS2

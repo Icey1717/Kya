@@ -269,22 +269,22 @@ void GlobalDList::Init()
 
 void ed_3D_Scene::RemoveFlag_002a53e0(uint flag)
 {
-	this->flags_0x4 = this->flags_0x4 & ~flag;
+	this->flags = this->flags & ~flag;
 	return;
 }
 
 void ed_3D_Scene::ed3DSceneSetFlag(uint flag)
 {
-	this->flags_0x4 = this->flags_0x4 | flag;
+	this->flags = this->flags | flag;
 }
 
 void ed_3D_Scene::ed3DSceneSetFogProperty(bool bValue)
 {
 	if (bValue == false) {
-		this->flags_0x4 = this->flags_0x4 & 0xffffffbf;
+		this->flags = this->flags & 0xffffffbf;
 	}
 	else {
-		this->flags_0x4 = this->flags_0x4 | 0x40;
+		this->flags = this->flags | 0x40;
 	}
 	return;
 }
@@ -292,10 +292,10 @@ void ed_3D_Scene::ed3DSceneSetFogProperty(bool bValue)
 void ed_3D_Scene::SetFlag_002a5440(bool bValue)
 {
 	if (bValue == false) {
-		this->flags_0x4 = this->flags_0x4 & 0xffffff7f;
+		this->flags = this->flags & 0xffffff7f;
 	}
 	else {
-		this->flags_0x4 = this->flags_0x4 | 0x80;
+		this->flags = this->flags | 0x80;
 	}
 	return;
 }

@@ -24,6 +24,7 @@ namespace VU1Emu {
 
 	bool bEnableInterpreter = false;
 	bool bRunSingleThreaded = true;
+	bool bRunSimplifiedCode = true;
 	bool bTraceVtx = false;
 
 	bool bTracingVtx = false;
@@ -106,6 +107,7 @@ namespace VU1Emu {
 
 #define VIF_LOAD_I(reg, row, off) *(int*)(GetLocalFakeMem() + (reg << 4) + (row << 4) + (off << 2))
 #define VIF_LOAD_F(reg, off) (*(edF32VECTOR4*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
+#define VIF_LOAD_M(reg, off) (*(edF32MATRIX4*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
 
 #define VIF_AS_I(reg, row, off) (int*)(GetLocalFakeMem() + (reg << 4) + (row << 4) + (off << 2))
 #define VIF_AS_F(reg, off) ((edF32VECTOR4*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
@@ -131,9 +133,18 @@ namespace VU1Emu {
 		return ret;
 	}
 
+	edF32VECTOR3 ConvertFromInt(const edF32VECTOR3& reg) {
+		edF32VECTOR3 ret = {
+			(float)(VIF_F_TO_I(reg.x)),
+			(float)(VIF_F_TO_I(reg.y)),
+			(float)(VIF_F_TO_I(reg.z))
+		};
+		return ret;
+	}
+
 	class Vu1Core
 	{
-		Renderer::DrawBuffer* pDrawBuffer;
+		PS2::BufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer;
 
 		char fakeMem[FAKE_VU1_MEM_SIZE] = {};
 
@@ -615,11 +626,8 @@ namespace VU1Emu {
 			Renderer::SetVertexSkip(skip & 0x8000);
 			Renderer::GSVertex vtx{ { STQ.x, STQ.y }, {RGBA.xi, RGBA.yi, RGBA.zi, RGBA.wi }, STQ.z, { x, y }, z, 0, 0 };
 
-			const GIFReg::PrimPacked pPrimPacked = *reinterpret_cast<const GIFReg::PrimPacked*>(&prim);
-
-			GIFReg::GSPrim compPrim = { pPrimPacked.PRIM, pPrimPacked.IIP, pPrimPacked.TME, pPrimPacked.FGE, pPrimPacked.ABE, pPrimPacked.AA1, pPrimPacked.FST, pPrimPacked.CTXT, pPrimPacked.FIX };
-
-			Renderer::KickVertex(vtx, compPrim, skip & 0x8000, *pDrawBuffer);
+			const GIFReg::GSPrimPacked pPrimPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&prim);
+			Renderer::KickVertex(vtx, pPrimPacked, skip & 0x8000, *pDrawBuffer);
 		}
 
 		void _$Clipping()
@@ -1057,41 +1065,55 @@ namespace VU1Emu {
 			vf02 = VIF_LOAD_F(vi00, 17);
 			vf01 = VIF_LOAD_F(vi00, 16);
 
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog obj to screen \n{}\n{}\n{}\n{}", vf01.ToString(), vf02.ToString(), vf03.ToString(), vf04.ToString());
+
+			// Just putting this down here for neatness of output.
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf17 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vi03, vf17.x, vf17.y, vf17.z, vf17.wi);
+
 			// XYZ (2)
 			vf27 = VIF_LOAD_F(vi03, 5);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf27 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vi03 + 3, vf27.x, vf27.y, vf27.z, vf27.wi);
 
 			// STQ (1)
 			vf16 = VIF_LOAD_F(vi03, 0);
-			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf16 0x{:x} S: {} T: {} Q: {}", vi03, vf16.x, vf16.y, vf16.z);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog STQ vf16 0x{:x} S: {} T: {} Q: {}", vi03, vf16.x, vf16.y, vf16.z);
 
 			// XYZ to Screen
 			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen vf18 0x{:x} x: {} y: {} z: {} w: {}", vi03, vf18.x, vf18.y, vf18.z, vf18.w);
 
 			// Vtx count.
 			vi02 = vi14;
 
 			// XYZ (1)
 			vf17 = VIF_LOAD_F(vi03, 8);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf17 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vi03 + 6, vf17.x, vf17.y, vf17.z, vf17.wi);
 
 			// XYZ to Screen
 			vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen vf28 0x{:x} x: {} y: {} z: {} w: {}", vi03 + 3, vf28.x, vf28.y, vf28.z, vf28.w);
+
 			Q = 1.0f / vf18.w;
 			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog Q 0x{:x} DIVQ: {}", vi03, Q);
 
 			// STQ (2)
 			vf26 = VIF_LOAD_F(vi03, 3);
-			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf26 0x{:x} S: {} T: {} Q: {}", vi03 + 3, vf26.x, vf26.y, vf26.z);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog STQ vf26 0x{:x} S: {} T: {} Q: {}", vi03 + 3, vf26.x, vf26.y, vf26.z);
 
 			// XYZ (2)
 			vf27 = VIF_LOAD_F(vi03, 11);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf27 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vi03 + 9, vf27.x, vf27.y, vf27.z, vf27.wi);
 
 			vf20.xyz = vf16.xyz * Q;
 			vf19.xyz = vf18.xyz * Q;
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ * Q vf19 0x{:x} x: {} y: {} z: {}", vi03, vf19.x, vf19.y, vf19.z);
+
 			Q = 1.0f / vf28.w; // ?? IS THIS A BUG?
 			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog Q 0x{:x} DIVQ: {}", vi03 + 3, Q);
 
 			// XYZ to Screen
 			vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen vf18 0x{:x} x: {} y: {} z: {} w: {}", vi03 + 6, vf18.x, vf18.y, vf18.z, vf18.w);
 
 			while (vi02 > 0) {
 
@@ -1100,8 +1122,7 @@ namespace VU1Emu {
 
 				// STQ (1)
 				(*VIF_AS_F(vi03, 0)).xyz = vf20.xyz;
-
-				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf20 0x{:x} S: {} T: {} Q: {}", vi03, vf20.x, vf20.y, vf20.z);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog STQ vf20 0x{:x} S: {} T: {} Q: {}", vi03, vf20.x, vf20.y, vf20.z);
 
 				// Vertex positions (int4 x, int4 y, float z)
 				*reinterpret_cast<int*>(&vf21.x) = float_to_int4(vf19.x);
@@ -1110,19 +1131,22 @@ namespace VU1Emu {
 
 				vf30.xyz = vf26.xyz * Q;
 				vf29.xyz = vf28.xyz * Q;
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ * Q vf29 0x{:x} x: {} y: {} z: {}", vi03 + 3, vf29.x, vf29.y, vf29.z);
 				Q = 1.0f / vf18.w;
 
+				// XYZ (1)
 				vf17 = VIF_LOAD_F(vi03, 14);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf17 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vi03 + 12, vf17.x, vf17.y, vf17.z, vf17.wi);
 
 				vi02 -= 2;
 
 				// XYZ to Screen
 				vf28 = vf04 + (vf03 * vf27.z) + (vf02 * vf27.y) + (vf01 * vf27.x);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen vf28 0x{:x} x: {} y: {} z: {} w: {}", vi03 + 9, vf28.x, vf28.y, vf28.z, vf28.w);
 
 				// XYZ Skip
 				(*VIF_AS_F(vi03, 2)).xyz = vf21.xyz;
-
-				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf21 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vi03, vf21.xi, vf21.yi, vf21.zi);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf21 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vi03, vf21.xi, vf21.yi, vf21.zi);
 
 				vf26 = VIF_LOAD_F(vi03, 9);
 
@@ -1130,8 +1154,7 @@ namespace VU1Emu {
 
 				// STQ (2)
 				(*VIF_AS_F(vi03, -3)).xyz = vf30.xyz;
-
-				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf30 0x{:x} S: {} T: {} Q: {}", vi03 - 3, vf30.x, vf30.y, vf30.z);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog STQ vf30 0x{:x} S: {} T: {} Q: {}", vi03 - 3, vf30.x, vf30.y, vf30.z);
 
 				// Vertex positions (int4 x, int4 y, float z)
 				*reinterpret_cast<int*>(&vf31.x) = float_to_int4(vf29.x);
@@ -1140,16 +1163,20 @@ namespace VU1Emu {
 
 				vf20.xyz = vf16.xyz * Q;
 				vf19.xyz = vf18.xyz * Q;
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ * Q vf19 0x{:x} x: {} y: {} z: {}", vi03, vf19.x, vf19.y, vf19.z);
 				Q = 1.0f / vf28.w;
 
 				// XYZ to Screen
 				vf18 = vf04 + (vf03 * vf17.z) + (vf02 * vf17.y) + (vf01 * vf17.x);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen vf18 0x{:x} x: {} y: {} z: {} w: {}", vi03 + 6, vf18.x, vf18.y, vf18.z, vf18.w);
 
+				// XYZ (2)
 				vf27 = VIF_LOAD_F(vi03, 11);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf27 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vi03 + 9, vf27.x, vf27.y, vf27.z, vf27.wi);
 
 				// XYZ Skip
 				(*VIF_AS_F(vi03, -1)).xyz = vf31.xyz;
-				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog vf31 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vi03 - 3, vf31.xi, vf31.yi, vf31.zi);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ vf31 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vi03 - 3, vf31.xi, vf31.yi, vf31.zi);
 			}
 
 			EmulateXGKICK(vi15);
@@ -1171,8 +1198,64 @@ namespace VU1Emu {
 			}
 		}
 
+		void _$XYZW_16_Conv_EndBones_Rigid_Simple()
+		{
+			const int vtxCount = vi14;
+			int vtxReg = vi15 + 1;
+
+			int otherReg = vtxReg + 0xd8;
+
+			const int animMatrixMask = 0x7ff;
+			const int flagsMask = 0xc000;
+
+			for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
+				// Vtx data
+				edF32VECTOR4* pSTQ = VIF_AS_F(vtxReg, 0);
+				edF32VECTOR4* pRGBA = VIF_AS_F(vtxReg, 1);
+				edF32VECTOR4* pXYZ = VIF_AS_F(vtxReg, 2);
+				edF32VECTOR4* pOther = VIF_AS_F(otherReg++, 0);
+
+				const int animMatrixReg = pXYZ->wi & animMatrixMask;
+				const edF32MATRIX4 animMatrix = VIF_LOAD_M(animMatrixReg, 0);
+
+
+				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
+				VU_VTX_TRACE_LOG("Bones_Rigid original RGBA r: {} g: {} b: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi);
+				VU_VTX_TRACE_LOG("Bones_Rigid original STQ S: {} T: {} Q: {}", vtxReg, pSTQ->xi, pSTQ->yi, pSTQ->z);
+
+				VU_VTX_TRACE_LOG("Bones_Rigid anim matrix addr: 0x{:x}\n{}", animMatrixReg, animMatrix.ToString());
+
+				// Drop the animation matrix from the flags.
+				pXYZ->wi = pXYZ->wi & flagsMask;
+
+				// Transform other to float.
+				pOther->x = int15_to_float(pOther->xi);
+				pOther->y = int15_to_float(pOther->yi);
+				pOther->z = int15_to_float(pOther->zi);
+
+				pOther->xyz = (*pOther * animMatrix).xyz;
+				pXYZ->xyz = (*pXYZ * animMatrix).xyz;
+
+				pSTQ->x = int12_to_float(pSTQ->xi);
+				pSTQ->y = int12_to_float(pSTQ->yi);
+
+				pRGBA->xyz = ConvertFromInt(pRGBA->xyz);
+
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed XYZ 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed RGBA r: {} g: {} b: {}", vtxReg, pRGBA->x, pRGBA->y, pRGBA->z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed STQ S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
+
+				vtxReg += 3;
+			}
+		}
+
 		void _$XYZW_16_Conv_EndBones_Rigid()
 		{
+			if (bRunSimplifiedCode) {
+				_$XYZW_16_Conv_EndBones_Rigid_Simple();
+				return;
+			}
+
 			vi02 = vi14;
 
 			// vtx buffer reg.
@@ -1189,7 +1272,7 @@ namespace VU1Emu {
 			vf27 = VIF_LOAD_F(vi03, 1); // RGBA
 			vf29 = VIF_LOAD_F(vi03, 2); // XYZ Skip
 
-			edF32VECTOR4* pSTQ = VIF_AS_F(vi03, 3);
+			VU_VTX_TRACE_LOG("Bones_Rigid original XYZ 0x{:x} vf29 x: {} y: {} z: {} w: 0x{:x}", vi03, vf29.x, vf29.y, vf29.z, vf29.wi);
 
 			vf31 = VIF_LOAD_F(vi04++, 0);
 
@@ -1201,6 +1284,8 @@ namespace VU1Emu {
 			vf22 = VIF_LOAD_F(vi09++, 0);
 			vf23 = VIF_LOAD_F(vi09++, 0);
 			vf24 = VIF_LOAD_F(vi09++, 0);
+
+			VU_VTX_TRACE_LOG("Bones_Rigid anim matrix addr: 0x{:x} \n{}\n{}\n{}\n{}", vi09 - 4, vf21.ToString(), vf22.ToString(), vf23.ToString(), vf24.ToString());
 
 			vf19.x = int15_to_float(vf31.xi);
 			vf19.y = int15_to_float(vf31.yi);
@@ -1214,6 +1299,7 @@ namespace VU1Emu {
 			vf31 = vf24 + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
 
 			while (vi02 > 0) {
+				// XYZ * anim matrix
 				vf30 = vf24 + (vf23 * vf29.z) + (vf22 * vf29.y) + (vf21 * vf29.x);
 
 				vi07 = VIF_LOAD_I(vi03, 5, VIF_REG_W);
@@ -1222,6 +1308,8 @@ namespace VU1Emu {
 				vf05 = VIF_LOAD_F(vi03, 3); // STQ
 				vf07 = VIF_LOAD_F(vi03, 4); // RGBA
 				vf09 = VIF_LOAD_F(vi03, 5); // XYZ Skip
+
+				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ 0x{:x} vf09 x: {} y: {} z: {} w: 0x{:x}", vi03 + 3, vf09.x, vf09.y, vf09.z, vf09.wi);
 
 				vf11 = VIF_LOAD_F(vi04++, 0);
 
@@ -1233,9 +1321,9 @@ namespace VU1Emu {
 
 				(*VIF_AS_F(vi04, -2)).xyz = vf31.xyz;
 
-				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf06 S: {} T: {} Q: {}", vi03, vf26.x, vf26.y, vf25.z);
-				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf08 r: {:x} g: {:x} b: {:x}", vi03, vf28.x, vf28.y, vf28.z);
-				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf10 x: {} y: {} z: {}", vi03, vf30.x, vf30.y, vf30.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed STQ  0x{:x} vf06 S: {} T: {} Q: {}", vi03, vf26.x, vf26.y, vf25.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed RGBA 0x{:x} vf08 r: {} g: {} b: {}", vi03, vf28.x, vf28.y, vf28.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed XYZ  0x{:x} vf10 x: {} y: {} z: {}", vi03, vf30.x, vf30.y, vf30.z);
 
 				//VU_VTX_TRACE_LOG("vf11 x: {} y: {} z: {}", vf31.x, vf31.y, vf31.z);
 
@@ -1248,12 +1336,16 @@ namespace VU1Emu {
 				vf03 = VIF_LOAD_F(vi07++, 0);
 				vf04 = VIF_LOAD_F(vi07++, 0);
 
+				VU_VTX_TRACE_LOG("Bones_Rigid anim matrix addr: 0x{:x} \n{}\n{}\n{}\n{}", vi07 - 4, vf01.ToString(), vf02.ToString(), vf03.ToString(), vf04.ToString());
+
 				vi09 = VIF_LOAD_I(vi03, 8, VIF_REG_W);
 
 				// Vtx data
 				vf25 = VIF_LOAD_F(vi03, 6);
 				vf27 = VIF_LOAD_F(vi03, 7);
 				vf29 = VIF_LOAD_F(vi03, 8);
+
+				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ 0x{:x} vf29 x: {} y: {} z: {} w: 0x{:x}", vi03 + 6, vf29.x, vf29.y, vf29.z, vf29.wi);
 
 				vf31 = VIF_LOAD_F(vi04++, 0);
 
@@ -1271,6 +1363,8 @@ namespace VU1Emu {
 				vi09 = vi09 & vi05;
 
 				vf11 = vf04 + (vf03 * vf12.z) + (vf02 * vf12.y) + (vf01 * vf12.x);
+
+				// XYZ * anim matrix
 				vf10 = vf04 + (vf03 * vf09.z) + (vf02 * vf09.y) + (vf01 * vf09.x);
 
 				// Anim matrix.
@@ -1278,6 +1372,8 @@ namespace VU1Emu {
 				vf22 = VIF_LOAD_F(vi09++, 0);
 				vf23 = VIF_LOAD_F(vi09++, 0);
 				vf24 = VIF_LOAD_F(vi09++, 0);
+
+				VU_VTX_TRACE_LOG("Bones_Rigid anim matrix addr: 0x{:x} \n{}\n{}\n{}\n{}", vi09 - 4, vf21.ToString(), vf22.ToString(), vf23.ToString(), vf24.ToString());
 
 				vf19.x = int15_to_float(vf31.xi);
 				vf19.y = int15_to_float(vf31.yi);
@@ -1299,9 +1395,9 @@ namespace VU1Emu {
 
 				(*VIF_AS_F(vi04, -2)).xyz = vf11.xyz;
 
-				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf06 S: {} T: {} Q: {}", vi03 - 3, vf06.x, vf06.y, vf05.z);
-				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf08 r: {:x} g: {:x} b: {:x}", vi03 - 3, vf08.x, vf08.y, vf08.z);
-				VU_VTX_TRACE_LOG("Bones_Rigid 0x{:x} vf10 x: {} y: {} z: {}", vi03 - 3, vf10.x, vf10.y, vf10.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed STQ  0x{:x} vf06 S: {} T: {} Q: {}", vi03 - 3, vf06.x, vf06.y, vf05.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed RGBA 0x{:x} vf08 r: {} g: {} b: {}", vi03 - 3, vf08.x, vf08.y, vf08.z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed XYZ  0x{:x} vf10 x: {} y: {} z: {}", vi03 - 3, vf10.x, vf10.y, vf10.z);
 
 				//VU_VTX_TRACE_LOG("vf11 x: {} y: {} z: {}", vf11.x, vf11.y, vf11.z);
 
@@ -1585,7 +1681,7 @@ namespace VU1Emu {
 			edpkt_data* pkt = reinterpret_cast<edpkt_data*>(VIF_AS_F(primReg, 0));
 			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pkt);
 			const uint prim = pGifTag->PRIM;
-			Renderer::SetPrim(*reinterpret_cast<const GIFReg::PrimPacked*>(&prim), pDrawBuffer);
+			Renderer::SetPrim(*reinterpret_cast<const GIFReg::GSPrimPacked*>(&prim), pDrawBuffer);
 
 			if (pGifTag->NLOOP > 0x48) {
 				Log::GetInstance().ForceFlush();
@@ -1597,11 +1693,11 @@ namespace VU1Emu {
 			}
 		}
 
-		void SetDrawBuffer(Renderer::DrawBuffer* pNewDrawBuffer) {
+		void SetDrawBuffer(PS2::BufferData<Renderer::GSVertex, uint16_t>* pNewDrawBuffer) {
 			pDrawBuffer = pNewDrawBuffer;
 		}
 
-		Vu1Core(Renderer::DrawBuffer* pNewDrawBuffer) : pDrawBuffer(pNewDrawBuffer) { }
+		Vu1Core(PS2::BufferData<Renderer::GSVertex, uint16_t>* pNewDrawBuffer) : pDrawBuffer(pNewDrawBuffer) { }
 		Vu1Core() : pDrawBuffer(nullptr) { }
 	};
 
@@ -1625,7 +1721,7 @@ namespace VU1Emu {
 		using JobPtr = std::shared_ptr<DrawJob>;
 
 		std::vector<CorePtr> cores;
-		Renderer::DrawBuffer buffer;
+		PS2::BufferData<Renderer::GSVertex, uint16_t> buffer;
 		Renderer::TextureData textureData;
 		PS2::GSState state;
 
@@ -1693,7 +1789,7 @@ static void LogUpdate(const VU1Emu::WriteTag* const pTag) {
 	VU_VTX_TRACE_LOG("VU1Emu::UpdateMemory type: 0x{:x} addr: 0x{:x} (0x{:x}) size: 0x{:x} itop: 0x{:x}", pTag->type, pTag->addr, flg ? offset : pTag->addr, pTag->count, VU1Emu::gItop);
 };
 
-void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
+void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 {
 	int stcl = 0;
 	int stwl = 0;
@@ -1768,6 +1864,11 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
+			if (!bRunCode) {
+				pVifPkt++;
+				continue;
+			}
+
 			MY_LOG("ProcessVifList VIF_MSCAL - Using Interpreter: {} (addr: 0x{:x})", bEnableInterpreter, pRunTag->addr);
 
 			if (bEnableInterpreter) {
@@ -2013,14 +2114,48 @@ bool& VU1Emu::GetRunSingleThreaded()
 	return bRunSingleThreaded;
 }
 
+bool& VU1Emu::GetRunSimplifiedCode()
+{
+	return bRunSimplifiedCode;
+}
+
 bool& VU1Emu::GetTraceVtx()
 {
 	return bTraceVtx;
 }
 
+char* VU1Emu::GetVertexDataStart()
+{
+	return GetFakeMem() + ((gItop) << 4);
+}
+
 void VU1Emu::QueueDraw()
 {
 	if (bRunSingleThreaded) {
+		if (bTracingVtx) {
+			auto& drawBuffer = Renderer::GetDefaultDrawBuffer();
+
+			VU_VTX_TRACE_LOG("VU1Emu::QueueDraw");
+			VU_VTX_TRACE_LOG("VU1Emu::QueueDraw Vertex count: {} Index count: {}", drawBuffer.vertex.tail, drawBuffer.index.tail);
+
+			VU_VTX_TRACE_LOG("VU1Emu::QueueDraw Vertices:");
+
+			for (int i = 0; i < drawBuffer.vertex.tail; i++) {
+				auto* pVertex = &drawBuffer.vertex.buff[i];
+				VU_VTX_TRACE_LOG("VU1Emu::QueueDraw 0x{:x} S: {} T: {} Q: {}", i, pVertex->ST[0], pVertex->ST[1], pVertex->Q);
+				VU_VTX_TRACE_LOG("VU1Emu::QueueDraw 0x{:x} X: {} Y: {} Z: {}", i, pVertex->XY[0], pVertex->XY[1], pVertex->Z);
+				VU_VTX_TRACE_LOG("VU1Emu::QueueDraw 0x{:x} R: {} G: {} B: {} A: {}", i, pVertex->RGBA[0], pVertex->RGBA[1], pVertex->RGBA[2], pVertex->RGBA[3]);
+			}
+
+			VU_VTX_TRACE_LOG("");
+			VU_VTX_TRACE_LOG("VU1Emu::QueueDraw Indices:");
+
+			for (int i = 0; i < drawBuffer.index.tail; i++) {
+				auto* pIndex = &drawBuffer.index.buff[i];
+				VU_VTX_TRACE_LOG("VU1Emu::QueueDraw 0x{:x} {}", i, *pIndex);
+			}
+		}
+
 		Renderer::Draw();
 	}
 	else {

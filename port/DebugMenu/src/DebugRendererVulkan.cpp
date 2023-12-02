@@ -21,6 +21,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "ed3D.h"
+#include "port/vu1_emu.h"
+#include "ed3DScratchPadGlobalVar.h"
+#include "port/pointer_conv.h"
+#include "port.h"
+
 namespace DebugRendererImgui {
 	VkRenderPass gImguiRenderPass;
 	Renderer::CommandBufferVector gCommandBuffers;
@@ -184,6 +190,11 @@ namespace DebugRendererImgui {
 	}
 }
 
+namespace DebugMenu_Internal {
+	extern edNODE* pNodeTest;
+	extern ed_3D_Scene* pSceneTest;
+}
+
 namespace DebugRendererMeshViewer
 {
 	Renderer::Pipeline gPipeline;
@@ -192,8 +203,19 @@ namespace DebugRendererMeshViewer
 	VkRenderPass gRenderPass;
 	Renderer::CommandBufferVector gCommandBuffers;
 
-	constexpr int gWidth = 0x100;
-	constexpr int gHeight = 0x100;
+	constexpr int gWidth = 0x500;
+	constexpr int gHeight = 0x400;
+
+	edpkt_data gPkt[0x100];
+
+	struct VertexConstantBuffer {
+		edF32MATRIX4 objToScreen;
+		edF32MATRIX4 worldToCamera;
+		edF32MATRIX4 objectToCamera;
+		edF32MATRIX4 animMatrices[0x18];
+	};
+
+	UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
 
 	void CreateRenderPass()
 	{
@@ -294,7 +316,7 @@ namespace DebugRendererMeshViewer
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
 		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-		rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
 
 		VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -346,14 +368,6 @@ namespace DebugRendererMeshViewer
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
 	}
-
-	const std::vector<Renderer::GSVertexUnprocessed> gVertices = {
-		{{-1.0f, -1.0f, 0.0f, 0.0f}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-		{{-1.0f, -1.0f, 0.0f, 0.0f}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-		{{-1.0f, -1.0f, 0.0f, 0.0f}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-		{{-1.0f, -1.0f, 0.0f, 0.0f}, {0, 0, 0, 0}, {0, 0, 0, 0}},
-	};
-
 	PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t> gVertexBuffers;
 
 	void Setup() 
@@ -363,7 +377,9 @@ namespace DebugRendererMeshViewer
 		Renderer::CreateCommandBuffers(gCommandBuffers);
 		CreatePipeline();
 
-		gVertexBuffers.Init(gVertices.size(), 0);
+		gVertexBuffers.Init(0x678, 0x2000);
+
+		gVertexConstantBuffer.Init();
 	}
 
 	void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent) {
@@ -401,21 +417,154 @@ namespace DebugRendererMeshViewer
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-		const VkRect2D scissor = { gWidth, gHeight };
+		const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.pipeline);
 
-		//vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
-		//vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gPipeline.descriptorSets[GetCurrentFrame()], 0, nullptr);
+		auto& bufferData = gVertexBuffers.GetBufferData();
 
-		const VkDeviceSize vertexOffset = gVertexBuffers.MapVertices(gVertices.data(), gVertices.size());
+		edNODE* pNode = DebugMenu_Internal::pNodeTest;
 
-		VkBuffer vertexBuffers[] = { gVertexBuffers.GetVertexBuffer() };
-		VkDeviceSize offsets[] = { vertexOffset };
-		vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
+		if (pNode) {
 
-		vkCmdDraw(cmd, 4, 1, 0, 0);
+			ed_3d_hierarchy* p3dHier = (ed_3d_hierarchy*)pNode->pData;
+			ed3DLod* pLod = ed3DChooseGoodLOD(p3dHier);
+			ed_hash_code* pObjHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
+			MeshData_OBJ* pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pObjHash->pData);
+
+			ed_3D_Scene* p3dScene = DebugMenu_Internal::pSceneTest;
+			ed_3d_strip* p3dStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->body.p3DStrip);
+
+			if (p3dStrip && p3dHier && p3dHier->pAnimMatrix) {
+				ed3DInitRenderEnvironement(p3dScene, 0);
+
+				std::vector<ed_3d_strip*> strips;
+
+				for (int stripIndex = 0; stripIndex < pMeshOBJ->body.stripCount; stripIndex++) {
+					strips.push_back(p3dStrip);
+					p3dStrip = (ed_3d_strip*)LOAD_SECTION(p3dStrip->pNext);
+				}
+
+				std::reverse(strips.begin(), strips.end());
+
+				for(auto& pCurrentStrip : strips) {
+
+					char* pVifList = ((char*)pCurrentStrip) + pCurrentStrip->vifListOffset;
+
+					short* pAnimIndexes = (short*)((char*)pCurrentStrip + pCurrentStrip->vifListOffset + -0x30);
+
+					VertexConstantBuffer& vertexConstantBuffer = gVertexConstantBuffer.GetBufferData();
+
+					uint incPacketSize = ed3DFlushStripGetIncPacket(pCurrentStrip, 0, 0);
+					uint partialMeshSectionCount = (uint)(ushort)pCurrentStrip->meshCount % 3;
+					ushort fullMeshSectionCount = (ushort)pCurrentStrip->meshCount - partialMeshSectionCount;
+					uint mode = 1;
+					uint maxAnimMatrixCount = 0;
+
+					ScratchPadRenderInfo renderInfo;
+					renderInfo.pSharedMeshTransform = &p3dHier->transformB;
+					renderInfo.biggerScale = ed3DMatrixGetBigerScale(&p3dHier->transformB);
+					auto pDma = ed3DListCreateDmaMatrixNode(&renderInfo, p3dHier);
+					ed3DPKTAddMatrixPacket(gPkt, pDma);
+					edF32MATRIX4* pObjToScreen = SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_SCREEN_MATRIX, edF32MATRIX4*);
+					edF32MATRIX4* pObjToCamera = SCRATCHPAD_ADDRESS_TYPE(OBJECT_TO_CAMERA_MATRIX_SPR, edF32MATRIX4*);
+
+					vertexConstantBuffer.objToScreen = *pObjToScreen;
+					vertexConstantBuffer.worldToCamera = *WorldToCamera_Matrix;
+					vertexConstantBuffer.objectToCamera = *pObjToCamera;
+
+					if ((pCurrentStrip->flags & 0x8000000) == 0) {
+						maxAnimMatrixCount = 0x18;
+					}
+					else {
+						if (mode < 2) {
+							maxAnimMatrixCount = 9;
+						}
+						else {
+							maxAnimMatrixCount = 7;
+						}
+					}
+
+					bool bVar1;
+					int animMatrixIndex = 0;
+
+					// Push anim matrices.
+					for (; (bVar1 = maxAnimMatrixCount != 0, maxAnimMatrixCount = maxAnimMatrixCount + -1, bVar1 && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1)
+					{
+						vertexConstantBuffer.animMatrices[animMatrixIndex] = p3dHier->pAnimMatrix[*pAnimIndexes];
+						animMatrixIndex++;
+					}
+
+					auto AddVertices = [&bufferData]() {
+						char* vtxStart = VU1Emu::GetVertexDataStart();
+
+						Gif_Tag gifTag;
+						gifTag.setTag((u8*)vtxStart, true);
+
+						vtxStart += 0x10;
+
+						for (int i = 0; i < gifTag.nLoop; i++) {
+							Renderer::GSVertexUnprocessed vtx;
+							memcpy(&vtx.STQ, vtxStart, sizeof(vtx.STQ));
+							memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
+							memcpy(&vtx.XYZSkip, vtxStart + 0x20, sizeof(vtx.XYZSkip));
+
+							const uint primReg = gifTag.tag.PRIM;
+							const GIFReg::GSPrimPacked primPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&primReg);
+
+							Renderer::KickVertex(vtx, primPacked, vtx.XYZSkip[3] & 0x8000, gVertexBuffers.GetBufferData());
+
+							vtxStart += 0x30;
+						};
+					};
+
+					if ((pCurrentStrip->flags & 4) == 0) {
+						while (bVar1 = partialMeshSectionCount != 0, partialMeshSectionCount = partialMeshSectionCount - 1, bVar1) {
+							VU1Emu::ProcessVifList((edpkt_data*)pVifList, false);
+							AddVertices();
+							pVifList = pVifList + incPacketSize * 0x10;
+						}
+
+						for (; fullMeshSectionCount != 0; fullMeshSectionCount = fullMeshSectionCount + -3) {
+
+							char* pVifListB = pVifList + incPacketSize * 0x10;
+							char* pVifListC = pVifList + incPacketSize * 0x20;
+
+							VU1Emu::ProcessVifList((edpkt_data*)pVifList, false);
+							AddVertices();
+							VU1Emu::ProcessVifList((edpkt_data*)pVifListB, false);
+							AddVertices();
+							VU1Emu::ProcessVifList((edpkt_data*)pVifListC, false);
+							AddVertices();
+
+							pVifList = pVifList + incPacketSize * 0x30;
+						}
+					}
+				}
+			}
+		}
+
+		if (bufferData.index.tail > 0) {
+
+			gVertexBuffers.BindData(cmd);
+			gVertexConstantBuffer.Update(GetCurrentFrame());
+
+			const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
+
+			Renderer::DescriptorWriteList writeList;
+			writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+
+			std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(gPipeline.descriptorSets[GetCurrentFrame()], gPipeline.descriptorSetLayoutBindings);
+
+			if (descriptorWrites.size() > 0) {
+				vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			}
+
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gPipeline.descriptorSets[GetCurrentFrame()], 0, nullptr);
+
+			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(bufferData.index.tail), 1, 0, 0, 0);
+		}
 
 		vkCmdEndRenderPass(cmd);
 
@@ -430,7 +579,8 @@ namespace DebugRendererMeshViewer
 		vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(GetGraphicsQueue());
 
-		gVertexBuffers.Reset();
+		gVertexBuffers.Reset();		
+		bufferData.ResetAfterDraw();
 	}
 }
 

@@ -1330,11 +1330,11 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 		iVar5 = 0x48;
 		uVar8 = uVar7;
 	}
-	gCurDListBuf->meshSectionCount_0x3a = uVar8;
+	gCurDListBuf->meshCount = uVar8;
 	gCurDListBuf->field_0x38 = (byte)iVar5;
-	gCurDListBuf->flags_0x0 = 0x4000000;
+	gCurDListBuf->flags = 0x4000000;
 	if (gbLight != 0) {
-		gCurDListBuf->flags_0x0 = gCurDListBuf->flags_0x0 | 0x10;
+		gCurDListBuf->flags = gCurDListBuf->flags | 0x10;
 	}
 	if (gShadowCast == 0) {
 		gCurDListBuf->shadowCastFlags = 0;
@@ -1348,7 +1348,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	}
 	else {
 		gbForceMaterialUse = true;
-		gCurDListBuf->flags_0x0 = gCurDListBuf->flags_0x0 | 0x2000;
+		gCurDListBuf->flags = gCurDListBuf->flags | 0x2000;
 		gCurDListBuf->shadowReceiveFlags = sVar3;
 	}
 	(gCurDListBuf->boundingSphere).x = x;
@@ -1983,7 +1983,7 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 
 	pColorBuf = (_rgba*)LOAD_SECTION(pStrip->pColorBuf);
 	pVertexBuf = (edVertex*)LOAD_SECTION(pStrip->pVertexBuf);
-	meshCount = (ushort)pStrip->meshSectionCount_0x3a - 1;
+	meshCount = (ushort)pStrip->meshCount - 1;
 	pSTBuf = (char*)LOAD_SECTION(pStrip->pSTBuf) + 0x10;
 
 	if ((gCurMaterial == (edDList_material*)0x0) && (gbForceMaterialUse == false)) {
@@ -2099,14 +2099,14 @@ void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 	pDVar5 = gCurDListHandle + gCurFlushState;
 	pDVar4 = pDVar5->pDisplayListInternalSubObj + (pDVar5->subCommandBufferCount - 1);
 	pStrip_00 = pDVar4->pRenderInput.pStrip;
-	pDVar4->pCurDListBuf = (edpkt_data*)((ulong)&pStrip_00->flags_0x0 + pStrip_00->vifListOffset);
-	pStrip_00->meshSectionCount_0x3a = pStrip->meshSectionCount_0x3a;
+	pDVar4->pCurDListBuf = (edpkt_data*)((char*)pStrip_00 + pStrip_00->vifListOffset);
+	pStrip_00->meshCount = pStrip->meshCount;
 	pStrip_00->field_0x38 = pStrip->field_0x38;
 	peVar1 = (edVertex*)LOAD_SECTION(pStrip->pVertexBuf);
 	uVar3 = 0;
-	while (uVar3 < (ushort)pStrip->meshSectionCount_0x3a) {
+	while (uVar3 < (ushort)pStrip->meshCount) {
 		ed_Bound_Sphere_packet* pSpherePkt = (ed_Bound_Sphere_packet*)LOAD_SECTION(pStrip->pBoundSpherePkt) + uVar3;
-		if (uVar3 == (ushort)pStrip_00->meshSectionCount_0x3a - 1) {
+		if (uVar3 == (ushort)pStrip_00->meshCount - 1) {
 			edDListFindBoundingSphere((edF32VECTOR4*)(peVar1 + uVar3 * 0x46), (uint)pStrip_00->field_0x38, pSpherePkt);
 			uVar3 = uVar3 + 1;
 		}
@@ -2138,7 +2138,7 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 	else {
 		iVar3 = iVar3 + 1;
 	}
-	pStrip->meshSectionCount_0x3a = (short)iVar3;
+	pStrip->meshCount = (short)iVar3;
 	if (iVar3 == 0) {
 		pStrip->field_0x38 = 0;
 	}
@@ -2148,9 +2148,9 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 	if (((gCurDList->flags_0x0 & 0x100) != 0) && (gCurStripPatchable == 0)) {
 		peVar1 = (edVertex*)LOAD_SECTION(pStrip->pVertexBuf);
 		uVar4 = 0;
-		while (uVar4 < (ushort)pStrip->meshSectionCount_0x3a) {
+		while (uVar4 < (ushort)pStrip->meshCount) {
 			ed_Bound_Sphere_packet* pSpherePkt = (ed_Bound_Sphere_packet*)LOAD_SECTION(pStrip->pBoundSpherePkt) + uVar4;
-			if (uVar4 == (ushort)pStrip->meshSectionCount_0x3a - 1) {
+			if (uVar4 == (ushort)pStrip->meshCount - 1) {
 				edDListFindBoundingSphere((edF32VECTOR4*)(peVar1 + uVar4 * 0x46), (uint)pStrip->field_0x38, pSpherePkt);
 				uVar4 = uVar4 + 1;
 			}

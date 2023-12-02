@@ -68,21 +68,17 @@ namespace PS2 {
 	};
 
 	struct GSTexImageConstantBuffer {
-		PS2::VSConstantBuffer vertexConstBuffer;
-		PS2::PSConstantBuffer pixelConstBuffer;
-		std::vector<VkBuffer> vextexUniformBuffers;
-		std::vector<VkDeviceMemory> vertexUniformBuffersMemory;
-		std::vector<VkBuffer> pixelUniformBuffers;
-		std::vector<VkDeviceMemory> pixelUniformBuffersMemory;
+		UniformBuffer<PS2::VSConstantBuffer> vertexConstBuffer;
+		UniformBuffer<PS2::PSConstantBuffer> pixelConstBuffer;
 
 		void CreateUniformBuffers();
 		void UpdateUniformBuffers();
 
-		inline const VkBuffer& GetVertexConstantUniformBuffer(const int index) { return vextexUniformBuffers[index]; }
-		inline const VkBuffer& GetPixelConstantUniformBuffer(const int index) { return pixelUniformBuffers[index]; }
+		inline const VkBuffer& GetVertexConstantUniformBuffer(const int index) { return vertexConstBuffer.GetBuffer(index); }
+		inline const VkBuffer& GetPixelConstantUniformBuffer(const int index) { return pixelConstBuffer.GetBuffer(index); }
 
-		inline VSConstantBuffer& GetVertexConstantBufferData() { return vertexConstBuffer; }
-		inline PSConstantBuffer& GetPixelConstantBufferData() { return pixelConstBuffer; }
+		inline VSConstantBuffer& GetVertexConstantBufferData() { return vertexConstBuffer.GetBufferData(); }
+		inline PSConstantBuffer& GetPixelConstantBufferData() { return pixelConstBuffer.GetBufferData(); }
 	};
 
 	struct GSTexImage {

@@ -136,6 +136,8 @@ InputSetupParams* edSysGetConfig(void);
 
 #ifdef PLATFORM_WIN
 #include "log.h"
+#include <sstream>
+#include <iomanip>
 #endif
 
 union edF32VECTOR2 {
@@ -243,6 +245,19 @@ union
 	};
 
 	float raw[4];
+
+#ifdef PLATFORM_WIN
+	inline std::string ToString() const {
+		const int printWidth = 10;
+
+		std::stringstream ss;
+		// Set the precision for floating-point values
+		ss << std::fixed << std::setprecision(4);
+		ss << std::setw(printWidth) << "(" << std::setw(printWidth) << x << ", " << std::setw(printWidth) << y
+			<< ", " << std::setw(printWidth) << z << ", " << std::setw(printWidth) << w << ")";
+		return ss.str();
+	}
+#endif
 };
 
 // Overload the * operator as a non-member function
@@ -389,6 +404,14 @@ union alignas(16)
 		rowZ = rhs.rowZ;
 		return *this;
 	}
+
+#ifdef PLATFORM_WIN
+	inline std::string ToString() const {
+		std::stringstream ss;
+		ss << rowX.ToString() << "\n" << rowY.ToString() << "\n" << rowZ.ToString() << "\n" << rowT.ToString();
+		return ss.str();
+	}
+#endif
 };
 #ifdef PLATFORM_WIN
 #pragma pack(pop)

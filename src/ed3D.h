@@ -8,6 +8,38 @@
 #include "edList.h"
 #endif
 
+#define MATRIX_PACKET_START_SPR		0x70000800
+#define CAM_NORMAL_X_SPR			0x70000800
+#define CAM_NORMAL_Y_SPR			0x70000810
+#define CAM_NORMAL_Y_SPR			0x70000810
+#define OBJ_TO_CULLING_MATRIX		0x70000820
+#define OBJ_TO_CLIPPING_MATRIX		0x70000860
+#define OBJ_TO_SCREEN_MATRIX		0x700008A0
+
+#define LIGHT_DIRECTIONS_MATRIX_SPR 0x70000a40
+#define LIGHT_COLOR_MATRIX_SPR		0x70000a50
+#define LIGHT_AMBIENT_MATRIX_SPR	0x70000a60
+
+#define OBJECT_TO_CAMERA_MATRIX_SPR	0x70000a60
+
+#ifdef PLATFORM_PS2
+#define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)addr
+#define SCRATCHPAD_ADDRESS_TYPE(addr, type) (type)addr
+#define SCRATCHPAD_READ_ADDRESS_TYPE(addr, type) (type)addr
+
+#define SCRATCHPAD_WRITE_ADDRESS_TYPE(addr, type, value) *((type*)addr) = value;
+#else
+#define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)((addr - 0x70000000) + (char*)WorldToCamera_Matrix)
+#define SCRATCHPAD_ADDRESS_TYPE(addr, type) (type)((addr - 0x70000000) + (char*)WorldToCamera_Matrix)
+#define SCRATCHPAD_READ_ADDRESS_TYPE(addr, type) *(type*)((addr - 0x70000000) + (char*)WorldToCamera_Matrix)
+
+#define SCRATCHPAD_WRITE_ADDRESS_TYPE(addr, type, value) do { \
+	type* destPtr = (type*)((addr - 0x70000000) + (char*)WorldToCamera_Matrix); \
+	*destPtr = value; \
+} while(0)
+
+#endif
+
 union AnimScratchpad {
 	struct {
 		int field_0x0;
@@ -62,6 +94,145 @@ struct ed_g2d_manager {
 	undefined field_0x2e;
 	undefined field_0x2f;
 };
+
+
+struct FrustumData {
+	edF32MATRIX4 frustumMatrix;
+	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 field_0x50;
+};
+
+struct ed_3D_Light_Config {
+	edF32VECTOR4* pLightAmbient;
+	edF32MATRIX4* pLightDirections;
+	edF32MATRIX4* pLightColorMatrix;
+};
+
+struct ed_3D_Shadow_Config {
+	undefined4 field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	struct ed_viewport* pCamera_0x10;
+	struct ed_viewport* pViewport;
+	int texWidth;
+	int texHeight;
+	undefined2 renderMask;
+	byte field_0x22;
+	byte field_0x23;
+	byte field_0x24;
+};
+
+struct SceneConfig {
+	int field_0x0; // undefined* 
+	float clipValue_0x4;
+	float nearClip;
+	float farClip;
+	uint field_0x10;
+	uint field_0x14;
+	float clipValue_0x18;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+	FrustumData frustumA;
+	FrustumData frustumB;
+	edF32VECTOR4 field_0xe0;
+	ByteColor3 fogCol_0xf0;
+	undefined field_0xf3;
+	undefined field_0xf4;
+	undefined field_0xf5;
+	undefined field_0xf6;
+	undefined field_0xf7;
+	undefined field_0xf8;
+	undefined field_0xf9;
+	undefined field_0xfa;
+	undefined field_0xfb;
+	undefined field_0xfc;
+	undefined field_0xfd;
+	undefined field_0xfe;
+	undefined field_0xff;
+	ed_3D_Shadow_Config pShadowConfig;
+	undefined field_0x125;
+	undefined field_0x126;
+	undefined field_0x127;
+	int field_0x128;
+	int field_0x12c;
+	ed_3D_Light_Config pLightConfig;
+	undefined field_0x13c;
+	undefined field_0x13d;
+	undefined field_0x13e;
+	undefined field_0x13f;
+	undefined field_0x140;
+	undefined field_0x141;
+	undefined field_0x142;
+	undefined field_0x143;
+	undefined field_0x144;
+	undefined field_0x145;
+	undefined field_0x146;
+	undefined field_0x147;
+	undefined field_0x148;
+	undefined field_0x149;
+	undefined field_0x14a;
+	undefined field_0x14b;
+	undefined field_0x14c;
+	undefined field_0x14d;
+	undefined field_0x14e;
+	undefined field_0x14f;
+};
+
+struct ed_3D_Scene {
+	void RemoveFlag_002a53e0(uint flag);
+	void ed3DSceneSetFlag(uint flag);
+	void ed3DSceneSetFogProperty(bool bValue);
+	void SetFlag_002a5440(bool bValue);
+
+	int bShadowScene;
+	uint flags;
+	struct edFCamera* pCamera;
+	struct ed_viewport* pViewport;
+	edLIST headerA;
+	edLIST headerB;
+	SceneConfig sceneConfig;
+	undefined field_0x18c;
+	undefined field_0x18d;
+	undefined field_0x18e;
+	undefined field_0x18f;
+	undefined field_0x190;
+	undefined field_0x191;
+	undefined field_0x192;
+	undefined field_0x193;
+	undefined field_0x194;
+	undefined field_0x195;
+	undefined field_0x196;
+	undefined field_0x197;
+	undefined field_0x198;
+	undefined field_0x199;
+	undefined field_0x19a;
+	undefined field_0x19b;
+	undefined field_0x19c;
+	undefined field_0x19d;
+	undefined field_0x19e;
+	undefined field_0x19f;
+	struct edLIST* field_0x1a0;
+	struct edLIST* pHierListA;
+	struct edLIST* pHierListB;
+	int* field_0x1ac;
+	uint heirarchyListCount;
+	undefined field_0x1b4;
+	undefined field_0x1b5;
+	undefined field_0x1b6;
+	undefined field_0x1b7;
+	undefined field_0x1b8;
+	undefined field_0x1b9;
+	undefined field_0x1ba;
+	undefined field_0x1bb;
+	undefined field_0x1bc;
+	undefined field_0x1bd;
+	undefined field_0x1be;
+	undefined field_0x1bf;
+};
+
 
 struct LightingMatrixSubSubObj {
 	union edF32VECTOR4* pLightAmbient;
@@ -126,7 +297,7 @@ struct ScratchPadRenderInfo {
 	int boundingSphereTestResult;
 	ed_3d_hierarchy_setup* pHierarchySetup;
 	uint flags;
-	float field_0x14;
+	float biggerScale;
 	edpkt_data* pPkt;
 	ed_3d_hierarchy* pMeshTransformData;
 };
@@ -450,7 +621,7 @@ union DMA_Matrix {
 
 PACK(
 	struct ed_3d_strip {
-	uint flags_0x0;
+	uint flags;
 	short materialIndex;
 	short field_0x6;
 	int vifListOffset;
@@ -465,7 +636,7 @@ PACK(
 	DMA_Matrix pDMA_Matrix; // ed_dma_matrix*
 	byte field_0x38;
 	byte cameraPanIndex;
-	short meshSectionCount_0x3a;
+	short meshCount;
 	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
 });
 
@@ -513,13 +684,14 @@ void ed3DHierarchyNodeSetRenderOff(ed_3D_Scene* pScene, edNODE* pNode);
 void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt);
 ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool mode);
 void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup);
+ed_dma_matrix* ed3DListCreateDmaMatrixNode(ScratchPadRenderInfo* pRenderInfo, ed_3d_hierarchy* pHierarchy);
 
 PACK(struct MeshData_OBJ_Internal {
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
 	undefined field_0x13;
-	int count_0x14;
+	int stripCount;
 	edF32VECTOR4 boundingSphere;
 	undefined field_0x28;
 	undefined field_0x29;
@@ -529,11 +701,17 @@ PACK(struct MeshData_OBJ_Internal {
 });
 
 PACK(struct MeshData_OBJ {
-	ed_Chunck field_0x0;
+	ed_Chunck chunk;
 	MeshData_OBJ_Internal body;
 });
 
 MeshData_OBJ_Internal* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier);
+ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy);
+uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, int param_2, long bUpdateInternal);
+edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix, byte param_3);
+edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix);
+float ed3DMatrixGetBigerScale(edF32MATRIX4* m0);
+int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
@@ -565,5 +743,9 @@ Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
 #define ED_VIF1_SET_TAG_REF(qwc, addr) ((ulong)((ulong)(qwc) | ((ulong)SHELLDMA_TAG_ID_REF << 24))) | ((ulong)(addr) << 32)
 
 extern int gNbVertexDMA;
+
+extern ed_3D_Scene* gScene3D;
+extern ed3DConfig ged3DConfig;
+extern edpkt_data* gPKTMatrixCur;
 
 #endif //_ED3D_H

@@ -32,6 +32,8 @@ namespace PS2_Internal {
 		const auto& state = GetGSState();
 		return Renderer::GSVertex{ { state.S, state.T }, {state.R, state.G, state.B, state.A }, state.Q, { x, y }, z, 0, 0 };
 	}
+
+	PS2::FrameVertexBuffers<Renderer::GSVertex, uint16_t> gVertexBuffers;
 }
 
 PS2::GSState& PS2::GetGSState() {
@@ -57,25 +59,12 @@ namespace Renderer {
 		PS2::GetPipelines().clear();
 	}
 
-	DrawBuffer gDrawBuffer;
 	TextureData gImageData;
 
 	void ResetVertIndexBuffers()
 	{
-		gDrawBuffer.Reset();
+		PS2_Internal::gVertexBuffers.GetBufferData().Reset();
 	}
-
-	enum GS_PRIM
-	{
-		GS_POINTLIST = 0,
-		GS_LINELIST = 1,
-		GS_LINESTRIP = 2,
-		GS_TRIANGLELIST = 3,
-		GS_TRIANGLESTRIP = 4,
-		GS_TRIANGLEFAN = 5,
-		GS_SPRITE = 6,
-		GS_INVALID = 7,
-	};
 
 	enum GS_PRIM_CLASS
 	{
@@ -140,7 +129,7 @@ namespace Renderer {
 		PS2::GetGSState().TEST = NewTest;
 	}
 
-	void SetPrim(GIFReg::PrimPacked prim, DrawBuffer* pDrawBuffer /*= nullptr*/) {
+	void SetPrim(GIFReg::GSPrimPacked prim, PS2::BufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer /*= nullptr*/) {
 		if (!pDrawBuffer) {
 			ResetVertIndexBuffers();
 		}
@@ -178,31 +167,26 @@ namespace Renderer {
 		PS2::GetGSState().COLCLAMP = colClamp;
 	}
 
-	DrawBuffer& GetDefaultDrawBuffer()
+	PS2::BufferData<Renderer::GSVertex, uint16_t>& GetDefaultDrawBuffer()
 	{
-		return gDrawBuffer;
+		return PS2_Internal::gVertexBuffers.GetBufferData();
 	}
 
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z)
 	{
-		KickVertex(PS2_Internal::MakeVertex(x, y, z), PS2::GetGSState().PRIM, Skip, gDrawBuffer);
+		auto vtx = PS2_Internal::MakeVertex(x, y, z);
+		KickVertex<GSVertex, uint16_t>(vtx, PS2::GetGSState().PRIM, Skip, GetDefaultDrawBuffer());
 	}
 
-	void KickVertex(const GSVertex& vtx, GIFReg::GSPrim primReg, uint32_t skip, DrawBuffer& drawBuffer)
-	{
-		GS_PRIM prim = (GS_PRIM)primReg.PRIM;
-		assert(drawBuffer.vertex.tail < drawBuffer.vertex.maxcount + 3);
+	template<>
+	void UpdateXyTail<GSVertexUnprocessed, uint16_t>(const GSVertexUnprocessed& vtx, PS2::BufferData<GSVertexUnprocessed, uint16_t>& drawBuffer, const size_t& xy_tail) {
+	}
 
+	template<>
+	void UpdateXyTail<GSVertex, uint16_t>(const GSVertex& vtx, PS2::BufferData<GSVertex, uint16_t>& drawBuffer, const size_t& xy_tail) {
 		const uint32_t x = vtx.XY[0];
 		const uint32_t y = vtx.XY[1];
 		const uint32_t z = vtx.Z;
-
-		size_t head = drawBuffer.vertex.head;
-		size_t tail = drawBuffer.vertex.tail;
-		size_t next = drawBuffer.vertex.next;
-		size_t xy_tail = drawBuffer.vertex.xy_tail;
-
-		drawBuffer.vertex.buff[drawBuffer.vertex.tail] = vtx;
 
 		uint32_t OFX = PS2::GetGSState().XY.X;
 		uint32_t OFY = PS2::GetGSState().XY.Y;
@@ -218,223 +202,253 @@ namespace Renderer {
 
 		GSVector4i xy = v1.xxxx().u16to32().sub32(m_ofxy);
 		GSVector4i::storel(&drawBuffer.vertex.xy[xy_tail & 3], xy.upl64(xy.sra32(4).zwzw()).ps32());
+	}
 
-		drawBuffer.vertex.tail = ++tail;
-		drawBuffer.vertex.xy_tail = ++xy_tail;
+	template<>
+	void TraceUpdateSkip<GSVertexUnprocessed, uint16_t>(uint32_t& skip, PS2::BufferData<GSVertexUnprocessed, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
+	{
 
-		size_t n = 0;
+	}
 
-		switch (prim)
-		{
-		case GS_POINTLIST: n = 1; break;
-		case GS_LINELIST: n = 2; break;
-		case GS_LINESTRIP: n = 2; break;
-		case GS_TRIANGLELIST: n = 3; break;
-		case GS_TRIANGLESTRIP: n = 3; break;
-		case GS_TRIANGLEFAN: n = 3; break;
-		case GS_SPRITE: n = 2; break;
-		case GS_INVALID: n = 1; break;
-		}
+	template<>
+	void TraceUpdateSkip<GSVertex, uint16_t>(uint32_t& skip, PS2::BufferData<GSVertex, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
+	{
+		uint32_t OFX = PS2::GetGSState().XY.X;
+		uint32_t OFY = PS2::GetGSState().XY.Y;
 
-		size_t m = tail - head;
+		GSVector4i v0, v1, v2, v3, pmin, pmax;
 
-		if (m < n)
-		{
-			return;
-		}
+		v0 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 1) & 3]); // T-3
+		v1 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 2) & 3]); // T-2
+		v2 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 3) & 3]); // T-1
+		v3 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail - m) & 3]); // H
 
-		if (skip == 0 && (prim != GS_TRIANGLEFAN || m <= 4)) // m_vertex.xy only knows about the last 4 vertices, head could be far behind for fan
-		{
-			GSVector4i v0, v1, v2, v3, pmin, pmax;
-		
-			v0 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 1) & 3]); // T-3
-			v1 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 2) & 3]); // T-2
-			v2 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail + 3) & 3]); // T-1
-			v3 = GSVector4i::loadl(&drawBuffer.vertex.xy[(xy_tail - m) & 3]); // H
-		
-			GSVector4 cross;
-		
-			switch (prim)
-			{
-			case GS_POINTLIST:
-				pmin = v2;
-				pmax = v2;
-				break;
-			case GS_LINELIST:
-			case GS_LINESTRIP:
-			case GS_SPRITE:
-				pmin = v2.min_i16(v1);
-				pmax = v2.max_i16(v1);
-				break;
-			case GS_TRIANGLELIST:
-			case GS_TRIANGLESTRIP:
-				pmin = v2.min_i16(v1.min_i16(v0));
-				pmax = v2.max_i16(v1.max_i16(v0));
-				break;
-			case GS_TRIANGLEFAN:
-				pmin = v2.min_i16(v1.min_i16(v3));
-				pmax = v2.max_i16(v1.max_i16(v3));
-				break;
-			default:
-				break;
-			}
-		
-			bool m_nativeres = true;
-			GSVector4i m_scissor;
-
-			m_scissor.u16[0] = (uint16_t)((hwState.scissor.offset.x << 4) + OFX - 0x8000);
-			m_scissor.u16[1] = (uint16_t)((hwState.scissor.offset.y << 4) + OFY - 0x8000);
-			m_scissor.u16[2] = (uint16_t)((hwState.scissor.extent.width << 4) + OFX - 0x8000);
-			m_scissor.u16[3] = (uint16_t)((hwState.scissor.extent.height << 4) + OFY - 0x8000);
-			
-			GSVector4i test = pmax.lt16(m_scissor) | pmin.gt16(m_scissor.zwzwl());
-			
-			switch (prim)
-			{
-			case GS_TRIANGLELIST:
-			case GS_TRIANGLESTRIP:
-			case GS_TRIANGLEFAN:
-			case GS_SPRITE:
-				// FIXME: GREG I don't understand the purpose of the m_nativeres check
-				// It impacts badly the number of draw call in the HW renderer.
-				test |= m_nativeres ? pmin.eq16(pmax).zwzwl() : pmin.eq16(pmax);
-				break;
-			default:
-				break;
-			}
-			
-			switch (prim)
-			{
-			case GS_TRIANGLELIST:
-			case GS_TRIANGLESTRIP:
-				// TODO: any way to do a 16-bit integer cross product?
-				// cross product is zero most of the time because either of the vertices are the same
-				/*
-				cross = GSVector4(v2.xyxyl().i16to32().sub32(v0.upl32(v1).i16to32())); // x20, y20, x21, y21
-				cross = cross * cross.wzwz(); // x20 * y21, y20 * x21
-				test |= GSVector4i::cast(cross == cross.yxwz());
-				*/
-				test = (test | v0 == v1) | (v1 == v2 | v0 == v2);
-				break;
-			case GS_TRIANGLEFAN:
-				/*
-				cross = GSVector4(v2.xyxyl().i16to32().sub32(v3.upl32(v1).i16to32())); // x23, y23, x21, y21
-				cross = cross * cross.wzwz(); // x23 * y21, y23 * x21
-				test |= GSVector4i::cast(cross == cross.yxwz());
-				*/
-				test = (test | v3 == v1) | (v1 == v2 | v3 == v2);
-				break;
-			default:
-				break;
-			}
-			
-			skip |= test.mask() & 15;
-		}
-
-		if (skip != 0)
-		{
-			switch (prim)
-			{
-			case GS_POINTLIST:
-			case GS_LINELIST:
-			case GS_TRIANGLELIST:
-			case GS_SPRITE:
-			case GS_INVALID:
-				drawBuffer.vertex.tail = head; // no need to check or grow the buffer length
-				break;
-			case GS_LINESTRIP:
-			case GS_TRIANGLESTRIP:
-				drawBuffer.vertex.head = head + 1;
-				// fall through
-			case GS_TRIANGLEFAN:
-				if (tail >= drawBuffer.vertex.maxcount) assert(false); // in case too many vertices were skipped
-				break;
-			default:
-				__assume(0);
-			}
-		
-			return;
-		}
-
-		if (tail >= drawBuffer.vertex.maxcount) assert(false);
-
-		uint16_t* RESTRICT buff = &drawBuffer.index.buff[drawBuffer.index.tail];
+		GSVector4 cross;
 
 		switch (prim)
 		{
 		case GS_POINTLIST:
-			buff[0] = head + 0;
-			drawBuffer.vertex.head = head + 1;
-			drawBuffer.vertex.next = head + 1;
-			drawBuffer.index.tail += 1;
+			pmin = v2;
+			pmax = v2;
 			break;
 		case GS_LINELIST:
-			buff[0] = head + 0;
-			buff[1] = head + 1;
-			drawBuffer.vertex.head = head + 2;
-			drawBuffer.vertex.next = head + 2;
-			drawBuffer.index.tail += 2;
-			break;
 		case GS_LINESTRIP:
-			if (next < head)
-			{
-				drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
-				drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
-				head = next;
-				drawBuffer.vertex.tail = next + 2;
-			}
-			buff[0] = head + 0;
-			buff[1] = head + 1;
-			drawBuffer.vertex.head = head + 1;
-			drawBuffer.vertex.next = head + 2;
-			drawBuffer.index.tail += 2;
+		case GS_SPRITE:
+			pmin = v2.min_i16(v1);
+			pmax = v2.max_i16(v1);
 			break;
 		case GS_TRIANGLELIST:
-			buff[0] = head + 0;
-			buff[1] = head + 1;
-			buff[2] = head + 2;
-			drawBuffer.vertex.head = head + 3;
-			drawBuffer.vertex.next = head + 3;
-			drawBuffer.index.tail += 3;
-			break;
 		case GS_TRIANGLESTRIP:
-			if (next < head)
-			{
-				drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
-				drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
-				drawBuffer.vertex.buff[next + 2] = drawBuffer.vertex.buff[head + 2];
-				head = next;
-				drawBuffer.vertex.tail = next + 3;
-			}
-			buff[0] = head + 0;
-			buff[1] = head + 1;
-			buff[2] = head + 2;
-			drawBuffer.vertex.head = head + 1;
-			drawBuffer.vertex.next = head + 3;
-			drawBuffer.index.tail += 3;
+			pmin = v2.min_i16(v1.min_i16(v0));
+			pmax = v2.max_i16(v1.max_i16(v0));
 			break;
 		case GS_TRIANGLEFAN:
-			// TODO: remove gaps, next == head && head < tail - 3 || next > head && next < tail - 2 (very rare)
-			buff[0] = head + 0;
-			buff[1] = tail - 2;
-			buff[2] = tail - 1;
-			drawBuffer.vertex.next = tail;
-			drawBuffer.index.tail += 3;
-			break;
-		case GS_SPRITE:
-			buff[0] = head + 0;
-			buff[1] = head + 1;
-			drawBuffer.vertex.head = head + 2;
-			drawBuffer.vertex.next = head + 2;
-			drawBuffer.index.tail += 2;
-			break;
-		case GS_INVALID:
-			drawBuffer.vertex.tail = head;
+			pmin = v2.min_i16(v1.min_i16(v3));
+			pmax = v2.max_i16(v1.max_i16(v3));
 			break;
 		default:
-			__assume(0);
+			break;
 		}
+
+		bool m_nativeres = true;
+		GSVector4i m_scissor;
+
+		m_scissor.u16[0] = (uint16_t)((hwState.scissor.offset.x << 4) + OFX - 0x8000);
+		m_scissor.u16[1] = (uint16_t)((hwState.scissor.offset.y << 4) + OFY - 0x8000);
+		m_scissor.u16[2] = (uint16_t)((hwState.scissor.extent.width << 4) + OFX - 0x8000);
+		m_scissor.u16[3] = (uint16_t)((hwState.scissor.extent.height << 4) + OFY - 0x8000);
+
+		GSVector4i test = pmax.lt16(m_scissor) | pmin.gt16(m_scissor.zwzwl());
+
+		switch (prim)
+		{
+		case GS_TRIANGLELIST:
+		case GS_TRIANGLESTRIP:
+		case GS_TRIANGLEFAN:
+		case GS_SPRITE:
+			// FIXME: GREG I don't understand the purpose of the m_nativeres check
+			// It impacts badly the number of draw call in the HW renderer.
+			test |= m_nativeres ? pmin.eq16(pmax).zwzwl() : pmin.eq16(pmax);
+			break;
+		default:
+			break;
+		}
+
+		switch (prim)
+		{
+		case GS_TRIANGLELIST:
+		case GS_TRIANGLESTRIP:
+			// TODO: any way to do a 16-bit integer cross product?
+			// cross product is zero most of the time because either of the vertices are the same
+			/*
+			cross = GSVector4(v2.xyxyl().i16to32().sub32(v0.upl32(v1).i16to32())); // x20, y20, x21, y21
+			cross = cross * cross.wzwz(); // x20 * y21, y20 * x21
+			test |= GSVector4i::cast(cross == cross.yxwz());
+			*/
+			test = (test | v0 == v1) | (v1 == v2 | v0 == v2);
+			break;
+		case GS_TRIANGLEFAN:
+			/*
+			cross = GSVector4(v2.xyxyl().i16to32().sub32(v3.upl32(v1).i16to32())); // x23, y23, x21, y21
+			cross = cross * cross.wzwz(); // x23 * y21, y23 * x21
+			test |= GSVector4i::cast(cross == cross.yxwz());
+			*/
+			test = (test | v3 == v1) | (v1 == v2 | v3 == v2);
+			break;
+		default:
+			break;
+		}
+
+		skip |= test.mask() & 15;
 	}
+
+	//void KickVertex(const GSVertex& vtx, GIFReg::GSPrim primReg, uint32_t skip, PS2::BufferData<GSVertex, uint16_t>& drawBuffer)
+	//{
+	//	GS_PRIM prim = (GS_PRIM)primReg.PRIM;
+	//	assert(drawBuffer.vertex.tail < drawBuffer.vertex.maxcount + 3);
+	//
+	//	size_t head = drawBuffer.vertex.head;
+	//	size_t tail = drawBuffer.vertex.tail;
+	//	size_t next = drawBuffer.vertex.next;
+	//	size_t xy_tail = drawBuffer.vertex.xy_tail;
+	//
+	//	drawBuffer.vertex.buff[drawBuffer.vertex.tail] = vtx;
+	//
+	//	UpdateXyTail(vtx, xy_tail, drawBuffer);
+	//
+	//	drawBuffer.vertex.tail = ++tail;
+	//	drawBuffer.vertex.xy_tail = ++xy_tail;
+	//
+	//	size_t n = 0;
+	//
+	//	switch (prim)
+	//	{
+	//	case GS_POINTLIST: n = 1; break;
+	//	case GS_LINELIST: n = 2; break;
+	//	case GS_LINESTRIP: n = 2; break;
+	//	case GS_TRIANGLELIST: n = 3; break;
+	//	case GS_TRIANGLESTRIP: n = 3; break;
+	//	case GS_TRIANGLEFAN: n = 3; break;
+	//	case GS_SPRITE: n = 2; break;
+	//	case GS_INVALID: n = 1; break;
+	//	}
+	//
+	//	size_t m = tail - head;
+	//
+	//	if (m < n)
+	//	{
+	//		return;
+	//	}
+	//
+	//	if (skip == 0 && (prim != GS_TRIANGLEFAN || m <= 4)) // m_vertex.xy only knows about the last 4 vertices, head could be far behind for fan
+	//	{
+	//		TraceUpdateSkip(skip, drawBuffer, prim, xy_tail, m);
+	//	}
+	//
+	//	if (skip != 0)
+	//	{
+	//		switch (prim)
+	//		{
+	//		case GS_POINTLIST:
+	//		case GS_LINELIST:
+	//		case GS_TRIANGLELIST:
+	//		case GS_SPRITE:
+	//		case GS_INVALID:
+	//			drawBuffer.vertex.tail = head; // no need to check or grow the buffer length
+	//			break;
+	//		case GS_LINESTRIP:
+	//		case GS_TRIANGLESTRIP:
+	//			drawBuffer.vertex.head = head + 1;
+	//			// fall through
+	//		case GS_TRIANGLEFAN:
+	//			if (tail >= drawBuffer.vertex.maxcount) assert(false); // in case too many vertices were skipped
+	//			break;
+	//		default:
+	//			__assume(0);
+	//		}
+	//
+	//		return;
+	//	}
+	//
+	//	if (tail >= drawBuffer.vertex.maxcount) assert(false);
+	//
+	//	uint16_t* RESTRICT buff = &drawBuffer.index.buff[drawBuffer.index.tail];
+	//
+	//	switch (prim)
+	//	{
+	//	case GS_POINTLIST:
+	//		buff[0] = head + 0;
+	//		drawBuffer.vertex.head = head + 1;
+	//		drawBuffer.vertex.next = head + 1;
+	//		drawBuffer.index.tail += 1;
+	//		break;
+	//	case GS_LINELIST:
+	//		buff[0] = head + 0;
+	//		buff[1] = head + 1;
+	//		drawBuffer.vertex.head = head + 2;
+	//		drawBuffer.vertex.next = head + 2;
+	//		drawBuffer.index.tail += 2;
+	//		break;
+	//	case GS_LINESTRIP:
+	//		if (next < head)
+	//		{
+	//			drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
+	//			drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
+	//			head = next;
+	//			drawBuffer.vertex.tail = next + 2;
+	//		}
+	//		buff[0] = head + 0;
+	//		buff[1] = head + 1;
+	//		drawBuffer.vertex.head = head + 1;
+	//		drawBuffer.vertex.next = head + 2;
+	//		drawBuffer.index.tail += 2;
+	//		break;
+	//	case GS_TRIANGLELIST:
+	//		buff[0] = head + 0;
+	//		buff[1] = head + 1;
+	//		buff[2] = head + 2;
+	//		drawBuffer.vertex.head = head + 3;
+	//		drawBuffer.vertex.next = head + 3;
+	//		drawBuffer.index.tail += 3;
+	//		break;
+	//	case GS_TRIANGLESTRIP:
+	//		if (next < head)
+	//		{
+	//			drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
+	//			drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
+	//			drawBuffer.vertex.buff[next + 2] = drawBuffer.vertex.buff[head + 2];
+	//			head = next;
+	//			drawBuffer.vertex.tail = next + 3;
+	//		}
+	//		buff[0] = head + 0;
+	//		buff[1] = head + 1;
+	//		buff[2] = head + 2;
+	//		drawBuffer.vertex.head = head + 1;
+	//		drawBuffer.vertex.next = head + 3;
+	//		drawBuffer.index.tail += 3;
+	//		break;
+	//	case GS_TRIANGLEFAN:
+	//		// TODO: remove gaps, next == head && head < tail - 3 || next > head && next < tail - 2 (very rare)
+	//		buff[0] = head + 0;
+	//		buff[1] = tail - 2;
+	//		buff[2] = tail - 1;
+	//		drawBuffer.vertex.next = tail;
+	//		drawBuffer.index.tail += 3;
+	//		break;
+	//	case GS_SPRITE:
+	//		buff[0] = head + 0;
+	//		buff[1] = head + 1;
+	//		drawBuffer.vertex.head = head + 2;
+	//		drawBuffer.vertex.next = head + 2;
+	//		drawBuffer.index.tail += 2;
+	//		break;
+	//	case GS_INVALID:
+	//		drawBuffer.vertex.tail = head;
+	//		break;
+	//	default:
+	//		__assume(0);
+	//	}
+	//}
 
 	void SetScissor(int x, int y, uint32_t width, uint32_t height) {
 		assert(x >= 0 && y >= 0);
@@ -1821,8 +1835,6 @@ namespace PS2
 	}
 
 	PipelineSelector m_pipelineSelector;
-
-	PS2::FrameVertexBuffers<Renderer::GSVertex, uint16_t> gVertexBuffers;
 }
 
 namespace PipelineDebug
@@ -1844,10 +1856,10 @@ Renderer::TextureData& Renderer::GetImagePointer() {
 }
 
 void Renderer::Draw() {
-	Draw(gDrawBuffer, gImageData, PS2::GetGSState());
+	Draw(GetDefaultDrawBuffer(), gImageData, PS2::GetGSState());
 }
 
-void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSState& state) {
+void Renderer::Draw(PS2::BufferData<Renderer::GSVertex, uint16_t>& drawBuffer, TextureData& textureData, PS2::GSState& state) {
 	if (drawBuffer.index.tail == 0) {
 		return;
 	}
@@ -2032,13 +2044,7 @@ void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSSta
 
 		vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-		const VkDeviceSize vertexOffset = PS2::gVertexBuffers.MapVertices(drawBuffer.vertex.buff, drawBuffer.vertex.tail);
-		const VkDeviceSize indexOffset = PS2::gVertexBuffers.MapIndices(drawBuffer.index.buff, drawBuffer.index.tail);
-
-		VkBuffer vertexBuffers[] = { PS2::gVertexBuffers.GetVertexBuffer() };
-		VkDeviceSize offsets[] = { vertexOffset };
-		vkCmdBindVertexBuffers(GetCurrentCommandBuffer(), 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(GetCurrentCommandBuffer(), PS2::gVertexBuffers.GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
+		PS2_Internal::gVertexBuffers.BindData(GetCurrentCommandBuffer());
 
 		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
 
@@ -2046,52 +2052,20 @@ void Renderer::Draw(DrawBuffer& drawBuffer, TextureData& textureData, PS2::GSSta
 
 	}
 
-	drawBuffer.index.tail = 0;
-	drawBuffer.vertex.head = 0;
-	drawBuffer.vertex.tail = 0;
-	drawBuffer.vertex.next = 0;
-	drawBuffer.vertex.xy_tail = 0;
+	drawBuffer.ResetAfterDraw();
 	state.bTexSet = false;
-}
-
-Renderer::DrawBuffer::DrawBuffer()
-	: index({})
-	, vertex({})
-{
-	vertex.buff = (Renderer::GSVertex*)_aligned_malloc(sizeof(Renderer::GSVertex) * Renderer::VertexIndexBufferSize, 32);
-	index.buff = (uint16_t*)_aligned_malloc(sizeof(uint16_t) * Renderer::VertexIndexBufferSize, 32);
-	vertex.maxcount = Renderer::VertexIndexBufferSize;
-}
-
-Renderer::DrawBuffer::~DrawBuffer()
-{
-	_aligned_free(vertex.buff);
-	_aligned_free(index.buff);
-	vertex.maxcount = Renderer::VertexIndexBufferSize;
-}
-
-void Renderer::DrawBuffer::Reset()
-{
-	assert(index.tail == 0 || index.buff[index.tail - 1] + 1 == vertex.next);
-
-	if (index.tail == 0)
-	{
-		vertex.next = 0;
-	}
-
-	vertex.head = vertex.tail = vertex.next; // remove unused vertices from the end of the vertex buffer
 }
 
 void PS2::Setup()
 {
 	CreateDefaultRenderPass();
 
-	PS2::gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
+	PS2_Internal::gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 }
 
 void PS2::BeginFrame()
 {
-	PS2::gVertexBuffers.Reset();
+	PS2_Internal::gVertexBuffers.Reset();
 }
 
 void PS2::Cleanup()

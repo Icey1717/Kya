@@ -26,6 +26,9 @@
 
 namespace DebugMenu_Internal {
 
+	edNODE* pNodeTest;
+	ed_3D_Scene* pSceneTest;
+
 	std::unordered_map<const PS2::GSTexEntry*, ImageTextureID> debugTextures;
 	std::vector<MaterialPreviewerEntry> materialList;
 
@@ -114,6 +117,7 @@ namespace DebugMenu_Internal {
 	static bool bShowFramebuffers = false;
 	static bool bShowCutsceneMenu = true;
 	static bool bShowRenderingMenu = true;
+	static bool bShowSceneMenu = true;
 
 	void DrawMenu() {
 		ImGui::BeginMainMenuBar();
@@ -143,6 +147,10 @@ namespace DebugMenu_Internal {
 			if (ImGui::MenuItem("Rendering"))
 			{
 				bShowRenderingMenu = !bShowRenderingMenu;
+			}
+			if (ImGui::MenuItem("Scene"))
+			{
+				bShowSceneMenu = !bShowSceneMenu;
 			}
 
 			ImGui::EndMenu();
@@ -247,8 +255,11 @@ namespace DebugMenu_Internal {
 		// Create a new ImGui window
 		ImGui::Begin("Rendering", &bShowCutsceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
 
-		ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
-		ImGui::Checkbox("Single Threaded", &VU1Emu::GetRunSingleThreaded());
+		if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
+			ImGui::Checkbox("Single Threaded", &VU1Emu::GetRunSingleThreaded());
+			ImGui::Checkbox("Simplified Code", &VU1Emu::GetRunSimplifiedCode());
+		}
 
 		if (ImGui::Button("Enable Vertex Trace")) {
 			VU1Emu::GetTraceVtx() = true;
@@ -511,6 +522,98 @@ namespace DebugMenu_Internal {
 		}
 	}
 
+	void ShowSceneMenu() {
+		ImGui::Begin("Scene", &bShowSceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
+
+		static int selectedScene = -1;
+
+		for (int i = 0; i < ged3DConfig.sceneCount; i++) {
+			char buttonText[256];
+			std::sprintf(buttonText, "gScene3D[%d]", i + 1);
+			if (ImGui::Selectable(buttonText)) {
+				selectedScene = i;
+			}
+		}
+
+		if (selectedScene != -1) {
+			pSceneTest = &gScene3D[selectedScene];
+
+			static bool bFilterAnim = true;
+			ImGui::Checkbox("Filter Anim", &bFilterAnim);
+
+			static edNODE* pSelectedNode = nullptr;
+
+			ImGui::Text("Shadow: %d", gScene3D[selectedScene].bShadowScene);
+			ImGui::Text("Flags: 0x%x", gScene3D[selectedScene].flags);
+			edNODE* pCurNode;
+			edLIST* pList = gScene3D[selectedScene].pHierListA;
+			if (((gScene3D[selectedScene].flags & 1) != 0) && ((gScene3D[selectedScene].flags & 4) == 0)) {
+				for (pCurNode = pList->pPrev; (edLIST*)pCurNode != pList; pCurNode = pCurNode->pPrev) {
+
+					ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pCurNode->pData;
+
+					if (pHierarchy && (pHierarchy->pAnimMatrix || !bFilterAnim)) {
+						char nodeText[256];
+						std::sprintf(nodeText, "Node: %p", pCurNode);
+						if (ImGui::Selectable(nodeText)) {
+							pSelectedNode = pCurNode;
+						}
+					}
+				}
+			}
+			else {
+				ImGui::Text("Flags disabled nodes");
+			}
+
+			if (pSelectedNode != nullptr) {
+				pNodeTest = pSelectedNode;
+
+				if (ImGui::CollapsingHeader("Node", ImGuiTreeNodeFlags_DefaultOpen)) {
+					ImGui::Text("Flags: %x", pSelectedNode->header.typeField.flags);
+					ImGui::Text("Type: %x", pSelectedNode->header.typeField.type);
+
+					if (ImGui::CollapsingHeader("Hierarchy", ImGuiTreeNodeFlags_DefaultOpen)) {
+						ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pSelectedNode->pData;
+
+						ImGui::Text("Flags: %x", pHierarchy->flags_0x9e);
+						ImGui::Text("Shadow: %d", pHierarchy->bRenderShadow);
+						ImGui::Text("Mesh Count: %d", pHierarchy->subMeshParentCount_0xac);
+						ImGui::Text("LOD Count: %d", pHierarchy->lodCount);
+						ImGui::Text("Anim Matrix: %d", pHierarchy->pAnimMatrix != nullptr);
+
+						if (((pHierarchy->flags_0x9e & 0x41) == 0) && (pHierarchy->lodCount != 0)) {
+
+							if (ImGui::CollapsingHeader("LOD", ImGuiTreeNodeFlags_DefaultOpen)) {
+								ed3DLod* pLod = ed3DChooseGoodLOD(pHierarchy);
+
+								ed_hash_code* pObjHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
+								ImGui::Text("Name: %s (0x%llx)", pObjHash->hash.name);
+								MeshData_OBJ* pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pObjHash->pData);
+
+								ImGui::Text("Strip Count: %d", pMeshOBJ->body.stripCount);
+								ImGui::Text("Bounding Sphere: x: %f, y: %f, z: %f, w: %f",
+									pMeshOBJ->body.boundingSphere.x,
+									pMeshOBJ->body.boundingSphere.y,
+									pMeshOBJ->body.boundingSphere.z,
+									pMeshOBJ->body.boundingSphere.w);
+
+								if (ImGui::CollapsingHeader("Strip", ImGuiTreeNodeFlags_DefaultOpen)) {
+									ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->body.p3DStrip);
+
+									ImGui::Text("Flags: %x", pStrip->flags);
+									ImGui::Text("Bounding Sphere: x: %f, y: %f, z: %f, w: %f", pStrip->boundingSphere.x, pStrip->boundingSphere.y, pStrip->boundingSphere.z, pStrip->boundingSphere.w);
+									ImGui::Text("Mesh Count: %d", pStrip->meshCount);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		ImGui::End();
+	}
+
 	void DrawInternal() {
 		if (bShowDemoWindow) {
 			ImGui::ShowDemoWindow(&bShowDemoWindow);
@@ -542,6 +645,10 @@ namespace DebugMenu_Internal {
 
 		if (bShowRenderingMenu) {
 			ShowRenderingMenu();
+		}
+
+		if (bShowSceneMenu) {
+			ShowSceneMenu();
 		}
 
 		MaterialPreviewer::Update();

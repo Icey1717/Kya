@@ -829,7 +829,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 				pAnimMatrix->ab = (float)(int)pTrack[1] * 3.051851e-05f;
 				uVar1 = pTrack[2];
 				if (uVar1 != 0)
-					IMPLEMENTATION_GUARD();
+					IMPLEMENTATION_GUARD_LOG(); // Needs a check
 				pAnimMatrix->ac = (float)((int)(short)uVar1 & 0xfffffffe) * 3.051851e-05f;
 				pAnimMatrix->ad =
 					sqrtf(1.0f - (pAnimMatrix->ac * pAnimMatrix->ac +

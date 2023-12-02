@@ -1316,34 +1316,12 @@ PS2::TextureCache& PS2::GetTextureCache()
 
 void PS2::GSTexImageConstantBuffer::CreateUniformBuffers()
 {
-	const VkDeviceSize vertexBufferSize = sizeof(VSConstantBuffer);
-	const VkDeviceSize pixelBufferSize = sizeof(PSConstantBuffer);
-
-	vextexUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-	vertexUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-
-	pixelUniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-	pixelUniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vextexUniformBuffers[i], vertexUniformBuffersMemory[i]);
-		CreateBuffer(pixelBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, pixelUniformBuffers[i], pixelUniformBuffersMemory[i]);
-	}
+	vertexConstBuffer.Init();
+	pixelConstBuffer.Init();
 }
 
 void PS2::GSTexImageConstantBuffer::UpdateUniformBuffers()
 {
-	{
-		void* data;
-		vkMapMemory(GetDevice(), vertexUniformBuffersMemory[GetCurrentFrame()], 0, sizeof(VSConstantBuffer), 0, &data);
-		memcpy(data, &vertexConstBuffer, sizeof(VSConstantBuffer));
-		vkUnmapMemory(GetDevice(), vertexUniformBuffersMemory[GetCurrentFrame()]);
-	}
-
-	{
-		void* data;
-		vkMapMemory(GetDevice(), pixelUniformBuffersMemory[GetCurrentFrame()], 0, sizeof(PSConstantBuffer), 0, &data);
-		memcpy(data, &pixelConstBuffer, sizeof(PSConstantBuffer));
-		vkUnmapMemory(GetDevice(), pixelUniformBuffersMemory[GetCurrentFrame()]);
-	}
+	vertexConstBuffer.Update(GetCurrentFrame());
+	pixelConstBuffer.Update(GetCurrentFrame());
 }

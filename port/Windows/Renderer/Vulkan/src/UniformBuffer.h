@@ -77,12 +77,20 @@ namespace PS2 {
 			}
 		}
 
-		const VkBuffer& GetVertexBuffer() {
+		const VkBuffer& GetVertexBuffer() const {
 			return vertexBuffer;
 		}
 
-		const VkBuffer& GetIndexBuffer() {
+		const VkBuffer& GetIndexBuffer() const {
 			return indexBuffer;
+		}
+
+		int GetVertexBufferMax() const {
+			return vertexMax;
+		}
+
+		int GetIndexBufferMax() const {
+			return indexMax;
 		}
 
 		VkDeviceSize MapVertices(const VertexType* buff, int vertexCount) {
@@ -124,6 +132,8 @@ namespace PS2 {
 			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 				buffers.emplace_back(vertexCount, indexCount);
 			}
+
+			bufferData.Init(vertexCount, indexCount);
 		}
 
 		VertexBuffer<VertexType, IndexType>& GetBuffer() {
@@ -138,12 +148,41 @@ namespace PS2 {
 			return buffers[GetCurrentFrame()].GetIndexBuffer();
 		}
 
-		VkDeviceSize MapVertices(const VertexType* buff, int vertexCount) {
-			return GetBuffer().MapVertices(buff, vertexCount);
+		int GetVertexBufferMax() const {
+			return bufferData.vertex.maxcount;
 		}
 
-		VkDeviceSize MapIndices(const IndexType* buff, int indexCount) {
-			return GetBuffer().MapIndices(buff, indexCount);
+		int GetIndexBufferMax() const {
+			return bufferData.index.maxcount;
+		}
+
+		BufferData<VertexType, IndexType>& GetBufferData() {
+			return bufferData;
+		}
+
+		VkDeviceSize MapVertexData() {
+			return GetBuffer().MapVertices(bufferData.vertex.buff, bufferData.vertex.tail);
+		}
+
+		VkDeviceSize MapIndexData() {
+			return GetBuffer().MapIndices(bufferData.index.buff, bufferData.index.tail);
+		}
+
+		void BindVertexData(const VkCommandBuffer& cmd) {
+			const VkDeviceSize vertexOffset = MapVertexData();
+			VkBuffer vertexBuffers[] = { GetVertexBuffer() };
+			VkDeviceSize offsets[] = { vertexOffset };
+			vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
+		}
+
+		void BindIndexData(const VkCommandBuffer& cmd) {
+			const VkDeviceSize indexOffset = MapIndexData();
+			vkCmdBindIndexBuffer(cmd, GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
+		}
+
+		void BindData(const VkCommandBuffer& cmd) {
+			BindVertexData(cmd);
+			BindIndexData(cmd);
 		}
 
 		void Reset() {
@@ -151,6 +190,7 @@ namespace PS2 {
 		}
 
 	private:
-		std::vector<PS2::VertexBuffer<VertexType, IndexType>> buffers;
+		std::vector<VertexBuffer<VertexType, IndexType>> buffers;
+		BufferData<VertexType, IndexType> bufferData;
 	};
 }
