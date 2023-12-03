@@ -18,10 +18,10 @@ struct GSVertexUprocessed
 struct VertexOutput
 {
     float4 position : POSITION;
-    float4 color : COLOR0;
+    //float4 color : COLOR0;
 };
 
-VertexOutput vs_main(GSVertexUprocessed input)
+VertexOutput vs_main(GSVertexUprocessed input, uint vertexID : SV_VertexID)
 {
     VertexOutput output;
     
@@ -63,19 +63,44 @@ VertexOutput vs_main(GSVertexUprocessed input)
     output.position = float4(screenSpace.xyz, input.XYZSkip.w);
 #endif
     
-    //float4 cameraSpace = mul(worldToCamera, float4(input.XYZSkip.xyz, 1.0f));
-    //output.position = float4(cameraSpace.xyz, input.XYZSkip.w);
+#if 0
+    float4 cameraSpace = mul(worldToCamera, float4(input.XYZSkip.xyz, 1.0f));
+    output.position = float4(cameraSpace.xyz, input.XYZSkip.w);
     
-    output.position = input.XYZSkip;
+    //output.position = input.XYZSkip;
+#endif
+    
+   // Full-screen quad vertex positions
+    float2 positions[4] =
+    {
+        float2(-1.0, -1.0),
+        float2(1.0, -1.0),
+        float2(-1.0, 1.0),
+        float2(1.0, 1.0)
+    };
 
     // Pass through color
-    output.color = float4(input.RGBA[0], input.RGBA[1], input.RGBA[2], input.RGBA[3]);
+    //output.color = float4(input.RGBA[0], input.RGBA[1], input.RGBA[2], input.RGBA[3]);
+    
+    // Pass the vertex position to the fragment shader
+    output.position = float4(positions[vertexID], 0.0, 1.0);
 
     return output;
 }
 
-float4 ps_main(VertexOutput input) : SV_Target
+float4 ps_main() : SV_TARGET
 {
-    // Output the color without any modification
-    return float4(input.color.r * input.position.x / 255.0, input.color.g / 255.0, input.color.b / 255.0, input.color.a / 255.0);
+    return float4(1.0, 0.0, 0.0, 1.0); // Red color for demonstration
 }
+
+//struct PSOutput
+//{
+//    float4 outColor : SV_TARGET;
+//};
+//
+//PSOutput ps_main(VertexOutput input)
+//{
+//    PSOutput output;
+//    output.outColor = float4(1.0, 0.0, 0.0, 1.0);
+//    return output;
+//}

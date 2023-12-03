@@ -13,7 +13,7 @@ struct VkExtent2D;
 
 namespace PS2 {
 	template<typename VertexType, typename IndexType>
-	struct BufferData {
+	struct DrawBufferData {
 
 		void Init(const int vertexCount, const int indexCount) {
 			vertex.buff = (VertexType*)_aligned_malloc(sizeof(VertexType) * vertexCount, 32);
@@ -22,7 +22,7 @@ namespace PS2 {
 			index.maxcount = indexCount;
 		}
 
-		~BufferData() {
+		~DrawBufferData() {
 			_aligned_free(vertex.buff);
 			_aligned_free(index.buff);
 		}
@@ -133,9 +133,9 @@ namespace Renderer
 	void Present();
 	void SetScissor(int x, int y, uint32_t width, uint32_t height);
 	void Draw();
-	void Draw(PS2::BufferData<GSVertex, uint16_t>& drawBuffer, TextureData& textureData, PS2::GSState& state);
+	void Draw(PS2::DrawBufferData<GSVertex, uint16_t>& drawBuffer, TextureData& textureData, PS2::GSState& state);
 
-	PS2::BufferData<GSVertex, uint16_t>& GetDefaultDrawBuffer();
+	PS2::DrawBufferData<GSVertex, uint16_t>& GetDefaultDrawBuffer();
 
 	void SetVertexSkip(uint32_t inSkip);
 
@@ -146,7 +146,7 @@ namespace Renderer
 	void SetFrame(int fbp, int fbw, int psm, int fbmask);
 	void SetTest(uint32_t ate, uint32_t atst, uint32_t aref, uint32_t afail, uint32_t date, uint32_t datm, uint32_t zte, uint32_t ztst);
 
-	void SetPrim(GIFReg::GSPrimPacked prim, PS2::BufferData<GSVertex, uint16_t>* pDrawBuffer = nullptr);
+	void SetPrim(GIFReg::GSPrimPacked prim, PS2::DrawBufferData<GSVertex, uint16_t>* pDrawBuffer = nullptr);
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);
 
 	// Variation that uses GS State to fill in PRIM, STQ, RGBA
@@ -154,13 +154,13 @@ namespace Renderer
 
 	// Variation that contains all data in vtxInfo.
 	template<typename VertexType, typename IndexType>
-	void UpdateXyTail(const VertexType& vtx, PS2::BufferData<VertexType, IndexType>& drawBuffer, const size_t& xy_tail);
+	void UpdateXyTail(const VertexType& vtx, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer, const size_t& xy_tail);
 
 	template<typename VertexType, typename IndexType>
-	void TraceUpdateSkip(uint32_t& skip, PS2::BufferData<VertexType, IndexType>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m);
+	void TraceUpdateSkip(uint32_t& skip, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m);
 
 	template<typename VertexType, typename IndexType>
-	void KickVertex(VertexType& vtx, GIFReg::GSPrimPacked primReg, uint32_t skip, PS2::BufferData<VertexType, IndexType>& drawBuffer)
+	void KickVertex(VertexType& vtx, GIFReg::GSPrimPacked primReg, uint32_t skip, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer)
 	{
 		GS_PRIM prim = (GS_PRIM)primReg.PRIM;
 		assert(drawBuffer.vertex.tail < drawBuffer.vertex.maxcount + 3);

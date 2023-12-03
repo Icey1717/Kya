@@ -1807,7 +1807,7 @@ void CCinematic::Manage()
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
 			//this->totalCutsceneDelta = 2.736f;
-			this->totalCutsceneDelta = 17.79f;
+			this->totalCutsceneDelta = 3.79f;
 			//IncrementCutsceneDelta();
 		}
 		//else {

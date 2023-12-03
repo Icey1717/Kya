@@ -19,15 +19,15 @@
 #include "CameraViewManager.h"
 #include "DebugCamera.h"
 #include "TextureCache.h"
-#include "../../../src/CinematicManager.h"
-#include "../../../src/port/vu1_emu.h"
+#include "CinematicManager.h"
+#include "port/vu1_emu.h"
+#include "DebugMeshViewer.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
-namespace DebugMenu_Internal {
+extern bool bOther;
 
-	edNODE* pNodeTest;
-	ed_3D_Scene* pSceneTest;
+namespace DebugMenu_Internal {
 
 	std::unordered_map<const PS2::GSTexEntry*, ImageTextureID> debugTextures;
 	std::vector<MaterialPreviewerEntry> materialList;
@@ -268,6 +268,8 @@ namespace DebugMenu_Internal {
 		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
 			Renderer::ResetRenderer();
 		}
+
+		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
 
 		// End the ImGui window
 		ImGui::End();
@@ -535,19 +537,20 @@ namespace DebugMenu_Internal {
 			}
 		}
 
+		ed_3D_Scene* pSelectedScene = nullptr;
+		static edNODE* pSelectedNode = nullptr;
+
 		if (selectedScene != -1) {
-			pSceneTest = &gScene3D[selectedScene];
+			pSelectedScene = &gScene3D[selectedScene];
 
 			static bool bFilterAnim = true;
 			ImGui::Checkbox("Filter Anim", &bFilterAnim);
 
-			static edNODE* pSelectedNode = nullptr;
-
-			ImGui::Text("Shadow: %d", gScene3D[selectedScene].bShadowScene);
-			ImGui::Text("Flags: 0x%x", gScene3D[selectedScene].flags);
+			ImGui::Text("Shadow: %d", pSelectedScene->bShadowScene);
+			ImGui::Text("Flags: 0x%x", pSelectedScene->flags);
 			edNODE* pCurNode;
-			edLIST* pList = gScene3D[selectedScene].pHierListA;
-			if (((gScene3D[selectedScene].flags & 1) != 0) && ((gScene3D[selectedScene].flags & 4) == 0)) {
+			edLIST* pList = pSelectedScene->pHierListA;
+			if (((pSelectedScene->flags & 1) != 0) && ((pSelectedScene->flags & 4) == 0)) {
 				for (pCurNode = pList->pPrev; (edLIST*)pCurNode != pList; pCurNode = pCurNode->pPrev) {
 
 					ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pCurNode->pData;
@@ -564,54 +567,13 @@ namespace DebugMenu_Internal {
 			else {
 				ImGui::Text("Flags disabled nodes");
 			}
-
-			if (pSelectedNode != nullptr) {
-				pNodeTest = pSelectedNode;
-
-				if (ImGui::CollapsingHeader("Node", ImGuiTreeNodeFlags_DefaultOpen)) {
-					ImGui::Text("Flags: %x", pSelectedNode->header.typeField.flags);
-					ImGui::Text("Type: %x", pSelectedNode->header.typeField.type);
-
-					if (ImGui::CollapsingHeader("Hierarchy", ImGuiTreeNodeFlags_DefaultOpen)) {
-						ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pSelectedNode->pData;
-
-						ImGui::Text("Flags: %x", pHierarchy->flags_0x9e);
-						ImGui::Text("Shadow: %d", pHierarchy->bRenderShadow);
-						ImGui::Text("Mesh Count: %d", pHierarchy->subMeshParentCount_0xac);
-						ImGui::Text("LOD Count: %d", pHierarchy->lodCount);
-						ImGui::Text("Anim Matrix: %d", pHierarchy->pAnimMatrix != nullptr);
-
-						if (((pHierarchy->flags_0x9e & 0x41) == 0) && (pHierarchy->lodCount != 0)) {
-
-							if (ImGui::CollapsingHeader("LOD", ImGuiTreeNodeFlags_DefaultOpen)) {
-								ed3DLod* pLod = ed3DChooseGoodLOD(pHierarchy);
-
-								ed_hash_code* pObjHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
-								ImGui::Text("Name: %s (0x%llx)", pObjHash->hash.name);
-								MeshData_OBJ* pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pObjHash->pData);
-
-								ImGui::Text("Strip Count: %d", pMeshOBJ->body.stripCount);
-								ImGui::Text("Bounding Sphere: x: %f, y: %f, z: %f, w: %f",
-									pMeshOBJ->body.boundingSphere.x,
-									pMeshOBJ->body.boundingSphere.y,
-									pMeshOBJ->body.boundingSphere.z,
-									pMeshOBJ->body.boundingSphere.w);
-
-								if (ImGui::CollapsingHeader("Strip", ImGuiTreeNodeFlags_DefaultOpen)) {
-									ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->body.p3DStrip);
-
-									ImGui::Text("Flags: %x", pStrip->flags);
-									ImGui::Text("Bounding Sphere: x: %f, y: %f, z: %f, w: %f", pStrip->boundingSphere.x, pStrip->boundingSphere.y, pStrip->boundingSphere.z, pStrip->boundingSphere.w);
-									ImGui::Text("Mesh Count: %d", pStrip->meshCount);
-								}
-							}
-						}
-					}
-				}
-			}
 		}
 
 		ImGui::End();
+
+		if (pSelectedScene && pSelectedNode) {
+			DebugMeshViewer::ShowNodeMenu(pSelectedScene, pSelectedNode);
+		}
 	}
 
 	void DrawInternal() {

@@ -283,7 +283,7 @@ const Renderer::Pipeline& PS2::GetPipeline(const PipelineKey& key)
 	return pipeline;
 }
 
-void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, ReflectData& reflectData) {
+void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, const ReflectData& reflectData) {
 	for (auto& layout : reflectData.GetLayouts()) {
 		descriptorSetLayoutBindings[layout.setNumber][bindingStage] = layout.bindings;
 	}

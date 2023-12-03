@@ -133,7 +133,7 @@ namespace PS2 {
 				buffers.emplace_back(vertexCount, indexCount);
 			}
 
-			bufferData.Init(vertexCount, indexCount);
+			drawBufferData.Init(vertexCount, indexCount);
 		}
 
 		VertexBuffer<VertexType, IndexType>& GetBuffer() {
@@ -149,23 +149,23 @@ namespace PS2 {
 		}
 
 		int GetVertexBufferMax() const {
-			return bufferData.vertex.maxcount;
+			return drawBufferData.vertex.maxcount;
 		}
 
 		int GetIndexBufferMax() const {
-			return bufferData.index.maxcount;
+			return drawBufferData.index.maxcount;
 		}
 
-		BufferData<VertexType, IndexType>& GetBufferData() {
-			return bufferData;
+		DrawBufferData<VertexType, IndexType>& GetDrawBufferData() {
+			return drawBufferData;
 		}
 
 		VkDeviceSize MapVertexData() {
-			return GetBuffer().MapVertices(bufferData.vertex.buff, bufferData.vertex.tail);
+			return GetBuffer().MapVertices(drawBufferData.vertex.buff, drawBufferData.vertex.tail);
 		}
 
 		VkDeviceSize MapIndexData() {
-			return GetBuffer().MapIndices(bufferData.index.buff, bufferData.index.tail);
+			return GetBuffer().MapIndices(drawBufferData.index.buff, drawBufferData.index.tail);
 		}
 
 		void BindVertexData(const VkCommandBuffer& cmd) {
@@ -191,6 +191,6 @@ namespace PS2 {
 
 	private:
 		std::vector<VertexBuffer<VertexType, IndexType>> buffers;
-		BufferData<VertexType, IndexType> bufferData;
+		DrawBufferData<VertexType, IndexType> drawBufferData;
 	};
 }

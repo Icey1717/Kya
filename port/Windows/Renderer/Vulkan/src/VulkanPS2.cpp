@@ -63,7 +63,7 @@ namespace Renderer {
 
 	void ResetVertIndexBuffers()
 	{
-		PS2_Internal::gVertexBuffers.GetBufferData().Reset();
+		PS2_Internal::gVertexBuffers.GetDrawBufferData().Reset();
 	}
 
 	enum GS_PRIM_CLASS
@@ -129,7 +129,7 @@ namespace Renderer {
 		PS2::GetGSState().TEST = NewTest;
 	}
 
-	void SetPrim(GIFReg::GSPrimPacked prim, PS2::BufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer /*= nullptr*/) {
+	void SetPrim(GIFReg::GSPrimPacked prim, PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer /*= nullptr*/) {
 		if (!pDrawBuffer) {
 			ResetVertIndexBuffers();
 		}
@@ -167,9 +167,9 @@ namespace Renderer {
 		PS2::GetGSState().COLCLAMP = colClamp;
 	}
 
-	PS2::BufferData<Renderer::GSVertex, uint16_t>& GetDefaultDrawBuffer()
+	PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& GetDefaultDrawBuffer()
 	{
-		return PS2_Internal::gVertexBuffers.GetBufferData();
+		return PS2_Internal::gVertexBuffers.GetDrawBufferData();
 	}
 
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z)
@@ -179,11 +179,11 @@ namespace Renderer {
 	}
 
 	template<>
-	void UpdateXyTail<GSVertexUnprocessed, uint16_t>(const GSVertexUnprocessed& vtx, PS2::BufferData<GSVertexUnprocessed, uint16_t>& drawBuffer, const size_t& xy_tail) {
+	void UpdateXyTail<GSVertexUnprocessed, uint16_t>(const GSVertexUnprocessed& vtx, PS2::DrawBufferData<GSVertexUnprocessed, uint16_t>& drawBuffer, const size_t& xy_tail) {
 	}
 
 	template<>
-	void UpdateXyTail<GSVertex, uint16_t>(const GSVertex& vtx, PS2::BufferData<GSVertex, uint16_t>& drawBuffer, const size_t& xy_tail) {
+	void UpdateXyTail<GSVertex, uint16_t>(const GSVertex& vtx, PS2::DrawBufferData<GSVertex, uint16_t>& drawBuffer, const size_t& xy_tail) {
 		const uint32_t x = vtx.XY[0];
 		const uint32_t y = vtx.XY[1];
 		const uint32_t z = vtx.Z;
@@ -205,13 +205,13 @@ namespace Renderer {
 	}
 
 	template<>
-	void TraceUpdateSkip<GSVertexUnprocessed, uint16_t>(uint32_t& skip, PS2::BufferData<GSVertexUnprocessed, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
+	void TraceUpdateSkip<GSVertexUnprocessed, uint16_t>(uint32_t& skip, PS2::DrawBufferData<GSVertexUnprocessed, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
 	{
 
 	}
 
 	template<>
-	void TraceUpdateSkip<GSVertex, uint16_t>(uint32_t& skip, PS2::BufferData<GSVertex, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
+	void TraceUpdateSkip<GSVertex, uint16_t>(uint32_t& skip, PS2::DrawBufferData<GSVertex, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
 	{
 		uint32_t OFX = PS2::GetGSState().XY.X;
 		uint32_t OFY = PS2::GetGSState().XY.Y;
@@ -1859,7 +1859,7 @@ void Renderer::Draw() {
 	Draw(GetDefaultDrawBuffer(), gImageData, PS2::GetGSState());
 }
 
-void Renderer::Draw(PS2::BufferData<Renderer::GSVertex, uint16_t>& drawBuffer, TextureData& textureData, PS2::GSState& state) {
+void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffer, TextureData& textureData, PS2::GSState& state) {
 	if (drawBuffer.index.tail == 0) {
 		return;
 	}

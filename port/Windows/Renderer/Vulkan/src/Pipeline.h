@@ -73,7 +73,7 @@ namespace Renderer {
 
 		PS2::PipelineKey key;
 
-		void AddBindings(const EBindingStage bindingStage, ReflectData& reflectData);
+		void AddBindings(const EBindingStage bindingStage, const ReflectData& reflectData);
 		void CreateDescriptorSetLayouts();
 		void CreateLayout();
 

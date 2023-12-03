@@ -144,7 +144,7 @@ namespace VU1Emu {
 
 	class Vu1Core
 	{
-		PS2::BufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer;
+		PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer;
 
 		char fakeMem[FAKE_VU1_MEM_SIZE] = {};
 
@@ -1203,7 +1203,7 @@ namespace VU1Emu {
 			const int vtxCount = vi14;
 			int vtxReg = vi15 + 1;
 
-			int otherReg = vtxReg + 0xd8;
+			int normalReg = vtxReg + 0xd8;
 
 			const int animMatrixMask = 0x7ff;
 			const int flagsMask = 0xc000;
@@ -1213,7 +1213,7 @@ namespace VU1Emu {
 				edF32VECTOR4* pSTQ = VIF_AS_F(vtxReg, 0);
 				edF32VECTOR4* pRGBA = VIF_AS_F(vtxReg, 1);
 				edF32VECTOR4* pXYZ = VIF_AS_F(vtxReg, 2);
-				edF32VECTOR4* pOther = VIF_AS_F(otherReg++, 0);
+				edF32VECTOR4* pNormal = VIF_AS_F(normalReg++, 0);
 
 				const int animMatrixReg = pXYZ->wi & animMatrixMask;
 				const edF32MATRIX4 animMatrix = VIF_LOAD_M(animMatrixReg, 0);
@@ -1229,11 +1229,11 @@ namespace VU1Emu {
 				pXYZ->wi = pXYZ->wi & flagsMask;
 
 				// Transform other to float.
-				pOther->x = int15_to_float(pOther->xi);
-				pOther->y = int15_to_float(pOther->yi);
-				pOther->z = int15_to_float(pOther->zi);
+				pNormal->x = int15_to_float(pNormal->xi);
+				pNormal->y = int15_to_float(pNormal->yi);
+				pNormal->z = int15_to_float(pNormal->zi);
 
-				pOther->xyz = (*pOther * animMatrix).xyz;
+				pNormal->xyz = (*pNormal * animMatrix).xyz;
 				pXYZ->xyz = (*pXYZ * animMatrix).xyz;
 
 				pSTQ->x = int12_to_float(pSTQ->xi);
@@ -1693,11 +1693,11 @@ namespace VU1Emu {
 			}
 		}
 
-		void SetDrawBuffer(PS2::BufferData<Renderer::GSVertex, uint16_t>* pNewDrawBuffer) {
+		void SetDrawBuffer(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pNewDrawBuffer) {
 			pDrawBuffer = pNewDrawBuffer;
 		}
 
-		Vu1Core(PS2::BufferData<Renderer::GSVertex, uint16_t>* pNewDrawBuffer) : pDrawBuffer(pNewDrawBuffer) { }
+		Vu1Core(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pNewDrawBuffer) : pDrawBuffer(pNewDrawBuffer) { }
 		Vu1Core() : pDrawBuffer(nullptr) { }
 	};
 
@@ -1721,7 +1721,7 @@ namespace VU1Emu {
 		using JobPtr = std::shared_ptr<DrawJob>;
 
 		std::vector<CorePtr> cores;
-		PS2::BufferData<Renderer::GSVertex, uint16_t> buffer;
+		PS2::DrawBufferData<Renderer::GSVertex, uint16_t> buffer;
 		Renderer::TextureData textureData;
 		PS2::GSState state;
 

@@ -8,10 +8,10 @@ void CopyBufferImmediate(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize si
 void CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 
-template<typename BufferData>
+template<typename BufferType>
 struct UniformBuffer {
 	void Init() {
-		const VkDeviceSize dataSize = sizeof(BufferData);
+		const VkDeviceSize dataSize = sizeof(BufferType);
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			CreateBuffer(dataSize,
@@ -23,12 +23,12 @@ struct UniformBuffer {
 
 	inline const VkBuffer& GetBuffer(const int index) { return buffers[index]; }
 
-	inline BufferData& GetBufferData() { return bufferData; }
+	inline BufferType& GetBufferData() { return bufferData; }
 
 	inline void Update(const int index) {
 		void* data;
-		vkMapMemory(GetDevice(), buffersMemory[index], 0, sizeof(BufferData), 0, &data);
-		memcpy(data, &bufferData, sizeof(BufferData));
+		vkMapMemory(GetDevice(), buffersMemory[index], 0, sizeof(BufferType), 0, &data);
+		memcpy(data, &bufferData, sizeof(BufferType));
 		vkUnmapMemory(GetDevice(), buffersMemory[index]);
 	}
 
@@ -36,12 +36,12 @@ struct UniformBuffer {
 		VkDescriptorBufferInfo descBufferInfo{};
 		descBufferInfo.buffer = buffers[index];
 		descBufferInfo.offset = 0;
-		descBufferInfo.range = sizeof(BufferData);
+		descBufferInfo.range = sizeof(BufferType);
 		return descBufferInfo;
 	}
 
 private:
-	BufferData bufferData;
+	BufferType bufferData;
 	std::array<VkBuffer, MAX_FRAMES_IN_FLIGHT> buffers;
 	std::array<VkDeviceMemory, MAX_FRAMES_IN_FLIGHT> buffersMemory;
 };

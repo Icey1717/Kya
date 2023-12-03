@@ -16,6 +16,7 @@ struct ReflectData {
 	std::string entryPointname;
 
 	inline std::vector<DescriptorSetLayoutData>& GetLayouts() { return setLayouts; }
+	inline const std::vector<DescriptorSetLayoutData>& GetLayouts() const { return setLayouts; }
 	inline std::vector<VkVertexInputAttributeDescription>& GetAttributes() { return attributeDescriptions; }
 
 	VkVertexInputBindingDescription bindingDescription;
