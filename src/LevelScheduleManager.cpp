@@ -63,7 +63,7 @@ void LevelScheduleManager::Level_FillRunInfo(int levelID, int elevatorID, int pa
 	CChunk* pCVar2;
 
 	if (aLevelInfo[levelID].levelName[0] == '\0') {
-		levelID = field_0x4;
+		levelID = nextLevelId;
 		elevatorID = -1;
 	}
 	nextLevelID = levelID;
@@ -659,7 +659,7 @@ void LevelScheduleManager::Game_Init()
 	loadStage_0x5b48 = 4;
 	field_0x84 = 0.0;
 	field_0x88 = 0.0;
-	field_0x4 = 0;
+	nextLevelId = 0;
 	currentLevelID = 0x10;
 	currentElevatorID = -1;
 	level_0x5b50 = 0x10;
@@ -756,7 +756,7 @@ void LevelScheduleManager::Game_Init()
 	} while (iVar11 < 0x10);
 	iVar11 = 0;
 LAB_002e26c8:
-	field_0x4 = iVar11;
+	nextLevelId = iVar11;
 	pSVar1 = pSaveData_0x48;
 	pSVar1->field_0x0 = 0x16660666;
 	pSVar1->field_0x4 = 0x56415342;
@@ -852,7 +852,7 @@ LAB_002e26c8:
 	//FUN_002da9b0(inLoapLoopObject);
 	//FUN_002da2e0(inLoapLoopObject);
 	if (aLevelInfo[0xe].levelName[0] == '\0') {
-		Level_FillRunInfo(field_0x4, -1, -1);
+		Level_FillRunInfo(nextLevelId, -1, -1);
 	}
 	else {
 		Level_FillRunInfo(0xe, -1, -1);

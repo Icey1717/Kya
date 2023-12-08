@@ -258,6 +258,22 @@ struct CCineActorConfig {
 	edF32VECTOR4 field_0x20;
 };
 
+PACK(
+struct S_STREAM_EVENT_CAMERA {
+	int field_0x0;
+	int field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	int pActor; // CActor*
+	int pEventChunk24_0x18; // EventChunk_24*
+	undefined4 field_0x1c;
+
+	void Init();
+	void Manage(CActor* pActor);
+	void SwitchOn(CActor* pActor);
+});
+
 struct CCinematic {
 	void InitInternalData();
 	void SetupInternalData();
@@ -389,9 +405,9 @@ struct CCinematic {
 	ConditionedOperationArray condArray_0x244;
 	ScenaricCondition cond_0x248;
 	int* field_0x24c;
-	int field_0x250;
+	S_STREAM_EVENT_CAMERA* pStreamEventCameraA;
 	int* field_0x254;
-	int field_0x258;
+	S_STREAM_EVENT_CAMERA* pStreamEventCameraB;
 	int* field_0x25c;
 	int intFieldE;
 	undefined field_0x264;

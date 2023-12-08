@@ -7,6 +7,8 @@
 
 #include "log.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 #include <cstdio>
@@ -34,7 +36,7 @@ namespace DebugMenu_Internal {
 
 	void OnMaterialLoaded(edDList_material* pNewMaterial) {
 		std::vector<DWORD64> backtrace;
-		CollectBacksTrace(backtrace);
+		CollectBacktrace(backtrace);
 		materialList.emplace_back(pNewMaterial, backtrace);
 	}
 
@@ -46,21 +48,43 @@ namespace DebugMenu_Internal {
 	}
 
 	struct TextureListEntry {
-		TextureListEntry(struct ed_g2d_manager* texture, std::vector<DWORD64> inBacktrace)
+		TextureListEntry(struct ed_g2d_manager* texture, std::vector<DWORD64> inBacktrace, std::string inName)
 			: pTexture(texture)
 			, callstackEntry(inBacktrace)
+			, name(inName)
 		{}
 
 		struct ed_g2d_manager* pTexture;
 		CallstackPreviewerEntry callstackEntry;
+		std::string name;
 	};
 
 	std::vector<TextureListEntry> textureList;
 
 	void OnTextureLoaded(ed_g2d_manager* pNewTexture) {
 		std::vector<DWORD64> backtrace;
-		CollectBacksTrace(backtrace);
-		textureList.emplace_back(pNewTexture, backtrace);
+		CollectBacktrace(backtrace);
+		textureList.emplace_back(pNewTexture, backtrace, ObjectNaming::GetNextObjectName());
+	}
+
+	struct MeshListEntry {
+		MeshListEntry(struct ed_g3d_manager* mesh, std::vector<DWORD64> inBacktrace, std::string inName)
+			: pMesh(mesh)
+			, callstackEntry(inBacktrace)
+			, name(inName)
+		{}
+
+		ed_g3d_manager* pMesh;
+		CallstackPreviewerEntry callstackEntry;
+		std::string name;
+	};
+
+	std::vector<MeshListEntry> meshList;
+
+	void OnMeshLoaded(ed_g3d_manager* pNewMesh) {
+		std::vector<DWORD64> backtrace;
+		CollectBacktrace(backtrace);
+		meshList.emplace_back(pNewMesh, backtrace, ObjectNaming::GetNextObjectName());
 	}
 
 	// Find or add function
@@ -109,58 +133,82 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	static bool bShowTextureCache = true;
-	static bool bShowDemoWindow = false;
-	static bool bShowLogWindow = true;
-	static bool bShowMaterialList = false;
-	static bool bShowTextureList = false;
-	static bool bShowFramebuffers = false;
-	static bool bShowCutsceneMenu = true;
-	static bool bShowRenderingMenu = true;
-	static bool bShowSceneMenu = true;
+	int selectedTextureIndex = -1;
+	int selectedMaterialIndex = -1;
+	std::vector<edDList_material> textureMaterials;
 
-	void DrawMenu() {
-		ImGui::BeginMainMenuBar();
+	int GetMaterialCountFromTexture(ed_g2d_manager* pTexture) {
+		int i = 0;
 
-		if (ImGui::BeginMenu("View"))
-		{
-			if (ImGui::MenuItem("Textures"))
-			{
-				bShowTextureCache = !bShowTextureCache;
-			}
-			if (ImGui::MenuItem("Demo"))
-			{
-				bShowDemoWindow = !bShowDemoWindow;
-			}
-			if (ImGui::MenuItem("Log"))
-			{
-				bShowLogWindow = !bShowLogWindow;
-			}
-			if (ImGui::MenuItem("Material List"))
-			{
-				bShowMaterialList = !bShowMaterialList;
-			}
-			if (ImGui::MenuItem("Texture List"))
-			{
-				bShowTextureList = !bShowTextureList;
-			}
-			if (ImGui::MenuItem("Rendering"))
-			{
-				bShowRenderingMenu = !bShowRenderingMenu;
-			}
-			if (ImGui::MenuItem("Scene"))
-			{
-				bShowSceneMenu = !bShowSceneMenu;
-			}
-
-			ImGui::EndMenu();
+		while (ed3DG2DGetMaterialFromIndex(pTexture, i)) {
+			i++;
 		}
 
-		ImGui::EndMainMenuBar();
+		return i;
 	}
 
-#include <stdio.h>
-#include <stdlib.h>
+	void ShowTextureList(bool* bOpen) {
+		ImGui::Begin("Texture List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		bool bOpenedMaterial = false;
+
+		auto ClearMaterials = [&]() {
+			for (auto& material : textureMaterials) {
+				edDListTermMaterial(&material);
+			}
+			textureMaterials.clear();
+			};
+
+		for (int i = 0; i < textureList.size(); i++) {
+			char buttonText[256];
+			std::sprintf(buttonText, "Texture %s", textureList[i].name.c_str());
+
+			if (ImGui::Selectable(buttonText)) {
+				ClearMaterials();
+				selectedTextureIndex = i;
+				bOpenedMaterial = true;
+				const int materialCount = GetMaterialCountFromTexture(textureList[selectedTextureIndex].pTexture);
+				textureMaterials.resize(materialCount);
+				DEBUG_LOG(LogLevel::Info, "Discovered %d materials for texture {}", materialCount, (uintptr_t)textureList[selectedTextureIndex].pTexture);
+			}
+		}
+
+		ImGui::End();
+
+		if (selectedTextureIndex >= 0) {
+			auto& selectedTexture = textureList[selectedTextureIndex];
+
+			static bool bOpen = true;
+			ImGui::Begin("Texture Previewer", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+			int i = 0;
+			for (auto& material : textureMaterials) {
+				char buttonText[256];
+				std::sprintf(buttonText, "Material %d", i + 1);
+				if (ImGui::Selectable(buttonText) || bOpenedMaterial) {
+					DEBUG_LOG(LogLevel::Info, "Selected material %d", i + 1);
+					if (material.textureInfo == nullptr) {
+						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture {}", i + 1, (uintptr_t)selectedTexture.pTexture);
+						edDListCreatMaterialFromIndex(&material, i, selectedTexture.pTexture, 2);
+					}
+					selectedMaterialIndex = i;
+					auto entry = MaterialPreviewerEntry(&textureMaterials[selectedMaterialIndex]);
+					entry.name = "None";
+					MaterialPreviewer::Open(entry);
+					bOpenedMaterial = false;
+				}
+				i++;
+			}
+
+			CallstackPreviewer::Show(selectedTexture.callstackEntry);
+
+			ImGui::End();
+
+			if (!bOpen) {
+				selectedTextureIndex = -1;
+			}
+		}
+	}
 
 	bool GetCutsceneName(void* pData, int index, const char** ppOut) {
 		auto* options = static_cast<std::vector<std::string>*>(pData);
@@ -168,9 +216,9 @@ namespace DebugMenu_Internal {
 		return true;
 	}
 
-	void ShowCutsceneMenu() {
+	void ShowCutsceneMenu(bool* bOpen) {
 		// Create a new ImGui window
-		ImGui::Begin("Video Player Controls", &bShowCutsceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Video Player Controls", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		auto* pCinematicManager = g_CinematicManager_0048efc;
 
@@ -251,9 +299,9 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	void ShowRenderingMenu() {
+	void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
-		ImGui::Begin("Rendering", &bShowCutsceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
@@ -275,9 +323,9 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	void ShowTextureCache() {
+	void ShowTextureCache(bool* bOpen) {
 		auto& texCache = PS2::GetTextureCache();
-		ImGui::Begin("Texture Cache", &bShowTextureCache, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Begin("Texture Cache", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		for (int i = 0; i < texCache.GetEntries().size(); i++) {
 			char buttonText[256]; // Buffer to hold the formatted text
@@ -297,7 +345,7 @@ namespace DebugMenu_Internal {
 
 	int gRenderFramebufferIndex = 0;
 
-	void ShowFramebuffers() {
+	void ShowFramebuffers(bool* bOpen) {
 		auto& frameBuffers = PS2::FrameBuffer::GetAll();
 
 		// Get the display size
@@ -305,7 +353,7 @@ namespace DebugMenu_Internal {
 		const ImVec2 windowSize(640.0f, 480.0f);
 		ImGui::SetNextWindowSize(windowSize);
 		ImVec2 windowPos = ImVec2((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
-		ImGui::Begin("FrameBuffer", nullptr, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
+		ImGui::Begin("FrameBuffer", bOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
 
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("Select Framebuffer")) {
@@ -364,7 +412,7 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	void ShowLogWindow()
+	void ShowLogWindow(bool* bOpen)
 	{
 		//const auto& logMessages = Log::GetInstance().GetLogMessages();
 		//auto& verboseLevels = Log::GetInstance().GetLogVerboseLevels();
@@ -423,8 +471,8 @@ namespace DebugMenu_Internal {
 		//ImGui::End();
 	}
 
-	void ShowMaterialList() {
-		ImGui::Begin("Material List", &bShowMaterialList, ImGuiWindowFlags_AlwaysAutoResize);
+	void ShowMaterialList(bool* bOpen) {
+		ImGui::Begin("Material List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		for (int i = 0; i < materialList.size(); i++) {
 			char buttonText[256]; // Buffer to hold the formatted text
@@ -444,88 +492,8 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	int GetMaterialCountFromTexture(ed_g2d_manager* pTexture) {
-		TextureData_HASH_Internal_MAT* pHash = nullptr;
-		int i = 0;
-
-		while (ed3DG2DGetMaterialFromIndex(pTexture, i)) {
-			i++;
-		}
-
-		return i;
-	}
-
-	int selectedTextureIndex = -1;
-	int selectedMaterialIndex = -1;
-	std::vector<edDList_material> textureMaterials;
-
-	void ShowTextureList() {
-		ImGui::Begin("Texture List", &bShowTextureList, ImGuiWindowFlags_AlwaysAutoResize);
-
-		bool bOpenedMaterial = false;
-
-		auto ClearMaterials = [&](){
-			for (auto& material : textureMaterials) {
-				edDListTermMaterial(&material);
-			}
-			textureMaterials.clear();
-		};
-
-		for (int i = 0; i < textureList.size(); i++) {
-			char buttonText[256];
-			std::sprintf(buttonText, "Texture %d", i + 1);
-
-			if (ImGui::Selectable(buttonText)) {
-				ClearMaterials();
-				selectedTextureIndex = i;
-				bOpenedMaterial = true;
-				const int materialCount = GetMaterialCountFromTexture(textureList[selectedTextureIndex].pTexture);
-				textureMaterials.resize(materialCount);
-				DEBUG_LOG(LogLevel::Info, "Discovered %d materials for texture {}", materialCount, (uintptr_t)textureList[selectedTextureIndex].pTexture);
-			}
-		}
-
-		ImGui::End();
-
-		if (selectedTextureIndex >= 0) {
-			auto& selectedTexture = textureList[selectedTextureIndex];
-
-			static bool bOpen = true;
-			ImGui::Begin("Texture Previewer", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-			TextureData_HASH_Internal_MAT* pHash = nullptr;
-
-			int i = 0;
-			for (auto& material : textureMaterials) {
-				char buttonText[256];
-				std::sprintf(buttonText, "Material %d", i + 1);
-				if (ImGui::Selectable(buttonText) || bOpenedMaterial) {
-					DEBUG_LOG(LogLevel::Info, "Selected material %d", i + 1);
-					if (material.textureInfo == nullptr) {
-						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture {}", i + 1, (uintptr_t)selectedTexture.pTexture);
-						edDListCreatMaterialFromIndex(&material, i, selectedTexture.pTexture, 2);
-					}
-					selectedMaterialIndex = i;
-					auto entry = MaterialPreviewerEntry(&textureMaterials[selectedMaterialIndex]);
-					entry.name = "None";
-					MaterialPreviewer::Open(entry);
-					bOpenedMaterial = false;
-				}
-				i++;
-			}
-
-			CallstackPreviewer::Show(selectedTexture.callstackEntry);
-
-			ImGui::End();
-
-			if (!bOpen) {
-				selectedTextureIndex = -1;
-			}
-		}
-	}
-
-	void ShowSceneMenu() {
-		ImGui::Begin("Scene", &bShowSceneMenu, ImGuiWindowFlags_AlwaysAutoResize);
+	void ShowSceneMenu(bool* bOpen) {
+		ImGui::Begin("Scene", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		static int selectedScene = -1;
 
@@ -537,11 +505,10 @@ namespace DebugMenu_Internal {
 			}
 		}
 
-		ed_3D_Scene* pSelectedScene = nullptr;
 		static edNODE* pSelectedNode = nullptr;
 
 		if (selectedScene != -1) {
-			pSelectedScene = &gScene3D[selectedScene];
+			ed_3D_Scene* pSelectedScene = &gScene3D[selectedScene];
 
 			static bool bFilterAnim = true;
 			ImGui::Checkbox("Filter Anim", &bFilterAnim);
@@ -571,47 +538,88 @@ namespace DebugMenu_Internal {
 
 		ImGui::End();
 
-		if (pSelectedScene && pSelectedNode) {
-			DebugMeshViewer::ShowNodeMenu(pSelectedScene, pSelectedNode);
+		if (pSelectedNode) {
+			DebugMeshViewer::ShowNodeMenu(pSelectedNode);
 		}
 	}
 
+	edNODE* pTestNode = nullptr;
+
+	void ShowMeshList(bool* bOpen) {
+		ImGui::Begin("Mesh List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		static edLIST* pList = ed3DHierarchyListInit();
+
+		for (int i = 0; i < meshList.size(); i++) {
+			char buttonText[256];
+			std::sprintf(buttonText, "Mesh %s", meshList[i].name.c_str());
+
+			if (ImGui::Selectable(buttonText)) {
+				pTestNode = ed3DHierarchyAddToList(pList, gHierarchyManagerBuffer, gHierarchyManagerFirstFreeNode, meshList[i].pMesh, NULL);
+
+				//meshList[i].pMesh->text
+			}
+		}
+
+		ImGui::End();
+
+		if (selectedTextureIndex >= 0) {
+			
+		}
+
+		if (pTestNode) {
+			DebugMeshViewer::ShowNodeMenu(pTestNode);
+		}
+	}
+
+	struct Menu {
+		void Show() {
+			if (bOpen) {
+				ShowFunction(&bOpen);
+			}
+		}
+
+		std::string name{};
+		std::function<void(bool*)> ShowFunction;
+		bool bOpen{};
+	};
+
+	static std::vector<Menu> gMenus = 
+	{
+		{"Demo", ImGui::ShowDemoWindow },
+		{"Log", ShowLogWindow },
+		{"Material List", ShowMaterialList },
+		{"Texture List", ShowTextureList },
+		{"Mesh List", ShowMeshList },
+		{"Framebuffers", ShowFramebuffers },
+		{"Cutscene", ShowCutsceneMenu },
+		{"Rendering", ShowRenderingMenu },
+		{"Scene", ShowSceneMenu },
+	};
+
+	void ForEachMenu(std::function<void(Menu&)> action) {
+		for (auto& currentMenu : gMenus) {
+			action(currentMenu);
+		}
+	}
+
+	void DrawMenu() {
+		ImGui::BeginMainMenuBar();
+
+		ForEachMenu([](Menu& menu) {
+			if (ImGui::MenuItem(menu.name.c_str()))
+			{
+				menu.bOpen = !menu.bOpen;
+			}
+			});
+
+		ImGui::EndMainMenuBar();
+	}
+
 	void DrawInternal() {
-		if (bShowDemoWindow) {
-			ImGui::ShowDemoWindow(&bShowDemoWindow);
-		}
-
-		if (bShowTextureCache) {
-			ShowTextureCache();
-		}
-
-		if (bShowLogWindow) {
-			ShowLogWindow();
-		}
-
-		if (bShowMaterialList) {
-			ShowMaterialList();
-		}
-
-		if (bShowTextureList) {
-			ShowTextureList();
-		}
-
-		if (bShowFramebuffers) {
-			ShowFramebuffers();
-		}
-
-		if (bShowCutsceneMenu) {
-			ShowCutsceneMenu();
-		}
-
-		if (bShowRenderingMenu) {
-			ShowRenderingMenu();
-		}
-
-		if (bShowSceneMenu) {
-			ShowSceneMenu();
-		}
+		ForEachMenu([](Menu& menu) {
+			menu.Show();
+			});
 
 		MaterialPreviewer::Update();
 		ShowGame();
@@ -637,4 +645,5 @@ void DebugMenu::Init()
 	edDListGetMaterialLoadedDelegate() += DebugMenu_Internal::OnMaterialLoaded;
 	edDListGetMaterialUnloadedDelegate() += DebugMenu_Internal::OnMaterialUnloaded;
 	ed3DGetTextureLoadedDelegate() += DebugMenu_Internal::OnTextureLoaded;
+	ed3DGetMeshLoadedDelegate() += DebugMenu_Internal::OnMeshLoaded;
 }

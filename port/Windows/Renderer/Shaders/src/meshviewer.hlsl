@@ -2,9 +2,9 @@
 
 cbuffer UniformBuffer : register(b0)
 {
-    float4x4 objToScreen;
-    float4x4 worldToCamera;
-    float4x4 objToCamera;
+    float4x4 model;
+    float4x4 view;
+    float4x4 proj;
     float4x4 animMatrices[0x18]; // Projection * View matrix
 };
 
@@ -18,7 +18,7 @@ struct GSVertexUprocessed
 struct VertexOutput
 {
     float4 position : POSITION;
-    //float4 color : COLOR0;
+    float4 color : COLOR0;
 };
 
 VertexOutput vs_main(GSVertexUprocessed input, uint vertexID : SV_VertexID)
@@ -63,44 +63,20 @@ VertexOutput vs_main(GSVertexUprocessed input, uint vertexID : SV_VertexID)
     output.position = float4(screenSpace.xyz, input.XYZSkip.w);
 #endif
     
-#if 0
-    float4 cameraSpace = mul(worldToCamera, float4(input.XYZSkip.xyz, 1.0f));
-    output.position = float4(cameraSpace.xyz, input.XYZSkip.w);
-    
-    //output.position = input.XYZSkip;
-#endif
-    
-   // Full-screen quad vertex positions
-    float2 positions[4] =
-    {
-        float2(-1.0, -1.0),
-        float2(1.0, -1.0),
-        float2(-1.0, 1.0),
-        float2(1.0, 1.0)
-    };
-
-    // Pass through color
-    //output.color = float4(input.RGBA[0], input.RGBA[1], input.RGBA[2], input.RGBA[3]);
-    
-    // Pass the vertex position to the fragment shader
-    output.position = float4(positions[vertexID], 0.0, 1.0);
-
+    float4 fixedPos = float4(input.XYZSkip.xyz, 1.0);
+    output.position = mul(proj, mul(view, mul(model, fixedPos)));
+    output.color = float4(input.RGBA[0] / 255.0, input.RGBA[1] / 255.0, input.RGBA[2] / 255.0, input.RGBA[3] / 255.0);
     return output;
 }
 
-float4 ps_main() : SV_TARGET
+struct PSOutput
 {
-    return float4(1.0, 0.0, 0.0, 1.0); // Red color for demonstration
-}
+    float4 outColor : SV_TARGET;
+};
 
-//struct PSOutput
-//{
-//    float4 outColor : SV_TARGET;
-//};
-//
-//PSOutput ps_main(VertexOutput input)
-//{
-//    PSOutput output;
-//    output.outColor = float4(1.0, 0.0, 0.0, 1.0);
-//    return output;
-//}
+PSOutput ps_main(VertexOutput input)
+{
+    PSOutput output;
+    output.outColor = input.color * input.position.x;
+    return output;
+}

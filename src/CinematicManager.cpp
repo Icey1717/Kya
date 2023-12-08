@@ -14,6 +14,8 @@
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
 #include <math.h>
+#else
+#include "port.h"
 #endif
 
 #include <assert.h>
@@ -382,7 +384,7 @@ void CCinematicManager::WillLoadCinematic()
 				if ((pCinematic->flags_0x8 & 0x800) == 0) {
 					piVar2 = pCinematic->field_0x24c;
 					bVar1 = false;
-					if ((piVar2 != (int*)0x0) && (pCinematic->field_0x250 != 0)) {
+					if ((piVar2 != (int*)0x0) && (pCinematic->pStreamEventCameraA != 0)) {
 						bVar1 = true;
 					}
 					if (bVar1) {
@@ -396,7 +398,7 @@ void CCinematicManager::WillLoadCinematic()
 								iVar3 = iVar3 + 0x1c;
 							} while (iVar4 < *piVar2);
 						}
-						//IMPLEMENTATION_GUARD(ActorGlobalFunc_00118b50((MagicalSwitch_20*)pCinematic->field_0x250, (Actor*)0x0));
+						pCinematic->pStreamEventCameraA->SwitchOn((CActor*)0x0);
 						piVar2 = pCinematic->field_0x24c;
 						iVar4 = 0;
 						if (0 < *piVar2) {
@@ -787,7 +789,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->field_0x24c = piVar2;
 	pcVar6 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar6 + 0x20;
-	this->field_0x250 = (int)pcVar6;
+	this->pStreamEventCameraA = (S_STREAM_EVENT_CAMERA*)pcVar6;
 	piVar2 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 	if (*piVar2 != 0) {
@@ -796,7 +798,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->field_0x254 = piVar2;
 	pcVar6 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar6 + 0x20;
-	this->field_0x258 = (int)pcVar6;
+	this->pStreamEventCameraB = (S_STREAM_EVENT_CAMERA*)pcVar6;
 	if (this->field_0x4c == 0) {
 		this->flags_0x8 = this->flags_0x8 | 8;
 	}
@@ -849,28 +851,30 @@ void CCinematic::Init()
 	}
 	piVar2 = this->field_0x24c;
 	iVar6 = 0;
-	//if (0 < *piVar2) {
-	//	iVar5 = 0;
-	//	do {
-	//		FUN_00119880((MagicalSwitch_1C*)((int)piVar2 + iVar5 + 4));
-	//		piVar2 = this->field_0x24c;
-	//		iVar6 = iVar6 + 1;
-	//		iVar5 = iVar5 + 0x1c;
-	//	} while (iVar6 < *piVar2);
-	//}
-	//FUN_00118db0((MagicalSwitch_20*)this->field_0x250);
+	if (0 < *piVar2) {
+		IMPLEMENTATION_GUARD(
+		iVar5 = 0;
+		do {
+			FUN_00119880((MagicalSwitch_1C*)((int)piVar2 + iVar5 + 4));
+			piVar2 = this->field_0x24c;
+			iVar6 = iVar6 + 1;
+			iVar5 = iVar5 + 0x1c;
+		} while (iVar6 < *piVar2);)
+	}
+	this->pStreamEventCameraA->Init();
 	piVar2 = this->field_0x254;
 	iVar6 = 0;
-	//if (0 < *piVar2) {
-	//	iVar5 = 0;
-	//	do {
-	//		FUN_00119880((MagicalSwitch_1C*)((int)piVar2 + iVar5 + 4));
-	//		piVar2 = this->field_0x254;
-	//		iVar6 = iVar6 + 1;
-	//		iVar5 = iVar5 + 0x1c;
-	//	} while (iVar6 < *piVar2);
-	//}
-	//FUN_00118db0((MagicalSwitch_20*)this->field_0x258);
+	if (0 < *piVar2) {
+		IMPLEMENTATION_GUARD(
+		iVar5 = 0;
+		do {
+			FUN_00119880((MagicalSwitch_1C*)((int)piVar2 + iVar5 + 4));
+			piVar2 = this->field_0x254;
+			iVar6 = iVar6 + 1;
+			iVar5 = iVar5 + 0x1c;
+		} while (iVar6 < *piVar2);)
+	}
+	this->pStreamEventCameraB->Init();
 	if (this->field_0x25c == (int*)0x0) {
 		iVar6 = 0;
 	}
@@ -1144,7 +1148,7 @@ void CCinematic::Start()
 				if ((this->flags_0x8 & 2) != 0) {
 					this->cinematicLoadObject.BWCinCam_Obj.Activate();
 					this->cinFileData.Timeslice(0.0f, &FStack224);
-					CCameraManager::_gThis->PushCamera((Camera*)pCVar6->pCameraLocationObj, 1);
+					CCameraManager::_gThis->PushCamera((CCamera*)pCVar6->pCameraLocationObj, 1);
 				}
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 					edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
@@ -1653,12 +1657,14 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 									}
 									else {
 										if (objectType == edResCollection::COT_MeshModel) {
+											NAME_NEXT_OBJECT(fileName);
 											outMeshInfo = ed3DInstallG3D(outFileData.fileBufferStart, outFileData.size, 0, &iStack4,
 												textureObj, 0xc, (ed_g3d_manager*)0x0);
 											piVar7->pData = (char*)outMeshInfo;
 										}
 										else {
 											if (objectType == edResCollection::COT_MeshTexture) {
+												NAME_NEXT_OBJECT(fileName);
 												outTextureInfo =
 													ed3DInstallG2D(outFileData.fileBufferStart, outFileData.size, &iStack4, (ed_g2d_manager*)0x0,
 														1);
@@ -1788,26 +1794,24 @@ void CCinematic::Manage()
 	}
 	bVar1 = this->field_0x24c != (int*)0x0;
 	if (bVar1) {
-		bVar1 = this->field_0x250 != 0;
+		bVar1 = this->pStreamEventCameraA != 0;
 	}
 	if (bVar1) {
-		//IMPLEMENTATION_GUARD(
-		//UsedInCutsceneManagerUpdateC((MagicalSwitch_20*)this->field_0x250, (Actor*)0x0);)
+		this->pStreamEventCameraA->Manage((CActor*)0x0);
 	}
 	bVar1 = this->field_0x254 != (int*)0x0;
 	if (bVar1) {
-		bVar1 = this->field_0x258 != 0;
+		bVar1 = this->pStreamEventCameraB != 0;
 	}
 	if (bVar1) {
-		//IMPLEMENTATION_GUARD(
-		//UsedInCutsceneManagerUpdateC((MagicalSwitch_20*)this->field_0x258, (Actor*)0x0);)
+		this->pStreamEventCameraA->Manage((CActor*)0x0);
 	}
 	if ((this->state != CS_Stopped) && ((GameFlags & GAME_STATE_PAUSED) == 0)) {
 		// #HACK
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
-			//this->totalCutsceneDelta = 2.736f;
-			this->totalCutsceneDelta = 3.79f;
+			this->totalCutsceneDelta = 7.09;
+			//this->totalCutsceneDelta = 3.79f;
 			//IncrementCutsceneDelta();
 		}
 		//else {
@@ -2885,4 +2889,142 @@ void CBWCinActor::SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, 
 CCineActorConfig::CCineActorConfig()
 {
 	this->flags = 0;
+}
+
+void S_STREAM_EVENT_CAMERA::Init()
+{
+	struct EventChunk_24* pEVar1;
+	CActor* pCVar2;
+
+	this->field_0x8 = this->field_0x8 * this->field_0x8;
+	this->field_0x4 = (uint)((ulong)((long)this->field_0x4 << 0x23) >> 0x23);
+	this->field_0x1c = 0;
+	if (this->pActor == -1) {
+		pCVar2 = (CActor*)0x0;
+	}
+	else {
+		pCVar2 = (CScene::ptable.g_ActorManager_004516a4)->aActors[(int)this->pActor];
+	}
+	this->pActor = STORE_SECTION(pCVar2);
+	pEVar1 = (EventChunk_24*)0x0;
+	if (this->pEventChunk24_0x18 != -1) {
+		IMPLEMENTATION_GUARD(
+		pEVar1 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8,
+			(int)this->pEventChunk24_0x18);)
+	}
+	this->pEventChunk24_0x18 = STORE_SECTION(pEVar1);
+	return;
+}
+
+void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
+{
+	undefined* puVar1;
+	EventChunk_24* pEVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	bool bVar6;
+	Timer* pTVar7;
+	uint uVar8;
+	uint uVar9;
+	float fVar10;
+
+	if ((this->field_0x4 & 0x40000000U) != 0) {
+		IMPLEMENTATION_GUARD(
+		pTVar7 = GetTimer();
+		fVar10 = pTVar7->scaledTotalTime - (float)this->field_0x1c;
+		if (this->field_0xc <= fVar10) {
+			bVar6 = false;
+			if (((this->field_0x4 & 1U) != 0) &&
+				((0.4 <= g_InputManager_00450960.field_0x5fc || (((uint)g_InputManager_00450960.pressedBitfield & 0x7f0) != 0))
+					)) {
+				bVar6 = true;
+			}
+			if ((this->field_0x8 != 0.0) &&
+				(fVar3 = (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.x -
+					(pActor->data).currentLocation.x,
+					fVar4 = (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.y -
+					(pActor->data).currentLocation.y,
+					fVar5 = (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.z -
+					(pActor->data).currentLocation.z, this->field_0x8 <= fVar3 * fVar3 + fVar4 * fVar4 + fVar5 * fVar5)) {
+				bVar6 = true;
+			}
+			if (this->field_0x10 <= fVar10) {
+				bVar6 = true;
+			}
+			puVar1 = this->pActor;
+			if ((puVar1 != (undefined*)0x0) && (pEVar2 = this->pEventChunk24_0x18, pEVar2 != (EventChunk_24*)0x0)) {
+				uVar9 = this->field_0x4 & 0x20000000;
+				this->field_0x4 = this->field_0x4 & 0xdfffffff;
+				if ((puVar1 != (undefined*)0x0) &&
+					((pEVar2 != (EventChunk_24*)0x0 &&
+						(uVar8 = edEventComputeZoneAgainstVertex
+						((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, pEVar2,
+							(edF32VECTOR4*)(puVar1 + 0x30), 0), (uVar8 & 1) != 0)))) {
+					this->field_0x4 = this->field_0x4 | 0x20000000;
+				}
+				uVar8 = this->field_0x4;
+				if ((uVar8 & 0x20000000) == 0) {
+					if ((uVar8 & 0x20) != 0) {
+						bVar6 = true;
+					}
+					if ((uVar9 != 0) && ((this->field_0x4 & 8U) != 0)) {
+						bVar6 = true;
+					}
+				}
+				else {
+					if ((uVar8 & 0x10) != 0) {
+						bVar6 = true;
+					}
+					if ((uVar9 == 0) && ((this->field_0x4 & 4U) != 0)) {
+						bVar6 = true;
+					}
+				}
+			}
+			if ((bVar6) && ((this->field_0x4 & 0x40000000U) != 0)) {
+				if ((CCamera*)this->field_0x0 != (CCamera*)0xffffffff) {
+					CCameraManager::PopCamera(CCameraManager::_gThis, (CCamera*)this->field_0x0);
+					this->field_0x4 = this->field_0x4 & 0xbfffffff;
+				}
+				if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+					if (pActor == (CActor*)0x0) {
+						pActor = (CActor*)CActorHero::_gThis;
+					}
+					edEventComputeZoneAgainstVertex(pActor, (CActor*)CActorHero::_gThis, 0x26, (ActorCompareStruct*)0x0);
+				}
+			}
+		})
+	}
+	return;
+}
+
+void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
+{
+	int iVar1;
+	Timer* pTVar2;
+	uint uVar3;
+
+	uVar3 = this->field_0x4;
+	if (((((uVar3 & 2) == 0) || ((uVar3 & 0x80000000) == 0)) && ((uVar3 & 0x40000000) == 0)) &&
+		((this->field_0x0 != -1 &&
+			(iVar1 = CCameraManager::_gThis->PushCamera(this->field_0x0, 0), iVar1 != 0)))) {
+		IMPLEMENTATION_GUARD(
+		this->field_0x4 = this->field_0x4 | 0xc0000000;
+		if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+			if (pActor == (CActor*)0x0) {
+				pActor = (CActor*)CActorHero::_gThis;
+			}
+			edEventComputeZoneAgainstVertex(pActor, (CActor*)CActorHero::_gThis, 0x25, (ActorCompareStruct*)0x0);
+		}
+		pTVar2 = GetTimer();
+		this->field_0x1c = pTVar2->scaledTotalTime;
+		this->field_0x4 = this->field_0x4 & 0xdfffffff;
+		if (((this->pActor != (undefined*)0x0) && (this->pEventChunk24_0x18 != (EventChunk_24*)0x0)) &&
+			(uVar3 = edEventComputeZoneAgainstVertex
+			((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, this->pEventChunk24_0x18,
+				(edF32VECTOR4*)(this->pActor + 0x30), 0), (uVar3 & 1) != 0)) {
+			this->field_0x4 = this->field_0x4 | 0x20000000;
+		})
+	}
+	return;
 }

@@ -8,7 +8,7 @@
 #include <vector>	// For storing callstack
 #include <DbgHelp.h>
 
-inline void CollectBacksTrace(std::vector<DWORD64>& backtrace) {
+inline void CollectBacktrace(std::vector<DWORD64>& backtrace) {
 	const int maxFrames = 64;
 	void* stackFrames[maxFrames];
 
@@ -68,7 +68,7 @@ inline void CollectCallstack(std::vector<std::string>& callstack, const std::vec
 
 inline void CollectCallstack(std::vector<std::string>& callstack) {
 	std::vector<DWORD64> backtrace;
-	CollectBacksTrace(backtrace);
+	CollectBacktrace(backtrace);
 	CollectCallstack(callstack, backtrace);
 }
 #endif

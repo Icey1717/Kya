@@ -7,6 +7,8 @@
 
 #if defined(PLATFORM_PS2)
 #include <eekernel.h>
+#else
+#include "port.h"
 #endif
 #include "../edStr.h"
 
@@ -354,6 +356,8 @@ void edCBankFileHeader::apply_callback(TypePairData* pTypePairData, int mode)
 				}
 
 				IO_LOG(LogLevel::Info, "Executing for %s\n", DebugFindFilePath(this, uVar3));
+
+				NAME_NEXT_OBJECT(DebugFindFilePath(this, uVar3));
 
 				FileHeaderFileData* pFileHeaderData = (FileHeaderFileData*)(pFileHeaderStart + iVar4 + 8);
 				puVar8->pFunction[mode](this->header + pFileHeaderData->offset - 8, pFileHeaderData->size);

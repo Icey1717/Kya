@@ -962,6 +962,8 @@ PS2::GSTexValue::GSTexValue(const Renderer::TextureData& inTextureData, uint32_t
 	}
 
 	UploadImage();
+
+	image.CreateSampler(false);
 }
 
 void PS2::GSTexValue::Cleanup() {

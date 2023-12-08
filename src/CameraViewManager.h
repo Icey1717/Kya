@@ -72,9 +72,9 @@ struct SpecificCondition {
 	bool IsVerified();
 };
 
-struct Camera : public CObject {
-	Camera();
-	Camera(struct ByteCode* pMemoryStream);
+struct CCamera : public CObject {
+	CCamera();
+	CCamera(struct ByteCode* pMemoryStream);
 
 	virtual void Init();
 	virtual bool Manage();
@@ -116,10 +116,10 @@ struct Camera : public CObject {
 	undefined field_0xa1;
 	undefined field_0xa2;
 	undefined field_0xa3;
-	struct Camera* pNextCameraView_0xa4;
+	struct CCamera* pNextCameraView_0xa4;
 };
 
-struct CameraView : public Camera
+struct CameraView : public CCamera
 {
 	CameraView(struct ByteCode* pMemoryStream);
 
@@ -1061,7 +1061,7 @@ struct edFCamera {
 void CameraSet3DPos(edFCamera* pCamera);
 void edFCameraSetSizeRatioFov(float halfFOV, float aspectRatio, float sizeRatio, edFCamera* pCamera);
 
-struct FrontendCameraView : public Camera {
+struct FrontendCameraView : public CCamera {
 	undefined field_0xa8;
 	undefined field_0xa9;
 	undefined field_0xaa;
@@ -1090,7 +1090,7 @@ struct CCameraCinematic : public FrontendCameraView {
 	undefined field_0xbf;
 };
 
-struct CCameraExt : public Camera {
+struct CCameraExt : public CCamera {
 	CCameraExt();
 
 	// CObject
@@ -6851,7 +6851,7 @@ struct CCameraShadow : public CCameraExt {
 };
 
 struct ActiveCamManager {
-	void SetActiveCam(Camera* pCamera);
+	void SetActiveCam(CCamera* pCamera);
 	void ClearActiveCam();
 	ActiveCamManager();
 	undefined field_0x0;
@@ -7571,8 +7571,8 @@ struct ActiveCamManager {
 	undefined field_0x2cd;
 	undefined field_0x2ce;
 	undefined field_0x2cf;
-	struct Camera* pActiveCamera;
-	bool SwitchActiveCam(float param_1, Camera* pCamera, SWITCH_MODE switchMode);
+	struct CCamera* pActiveCamera;
+	bool SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_MODE switchMode);
 };
 
 struct CCameraManager : public CObjectManager {
@@ -7589,13 +7589,14 @@ struct CCameraManager : public CObjectManager {
 
 	void Level_Init(bool bProcessEvents);
 	void Level_ClearInternalData();
-	Camera* AddCamera(ECameraType type, struct ByteCode* pMemoryStream, char* objName);
-	Camera* GetDefGameCamera(ECameraType type);
+	CCamera* AddCamera(ECameraType type, struct ByteCode* pMemoryStream, char* objName);
+	CCamera* GetDefGameCamera(ECameraType type);
 
 	bool IsSphereVisible(float param_1, edF32VECTOR4* param_3, float* param_4);
 	bool IsSphereVisible(float other, edF32VECTOR4* pSphere);
 
-	bool PushCamera(Camera* pCamera, int param_3);
+	bool PushCamera(int cameraIndex, int param_3);
+	bool PushCamera(CCamera* pCamera, int param_3);
 	void ApplyActiveCamera();
 	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
@@ -8297,11 +8298,11 @@ struct CCameraManager : public CObjectManager {
 	undefined field_0x4b1;
 	undefined field_0x4b2;
 	undefined field_0x4b3;
-	Camera* pInitialView_0x4b4;
-	Camera* pActiveCamera;
+	CCamera* pInitialView_0x4b4;
+	CCamera* pActiveCamera;
 	CCameraShadow* aCameraShadow[10];
 	FrontendCameraView* pFrontendCamera_0x4e4;
-	Camera* pMouseQuakeCamera_0x4e8;
+	CCamera* pMouseQuakeCamera_0x4e8;
 	CCameraStack cameraStack;
 	undefined field_0x708;
 	undefined field_0x709;
@@ -8311,7 +8312,7 @@ struct CCameraManager : public CObjectManager {
 	undefined field_0x70d;
 	undefined field_0x70e;
 	undefined field_0x70f;
-	ActiveCamManager field_0x710;
+	ActiveCamManager activeCamManager;
 	
 	undefined field_0x9e4;
 	undefined field_0x9e5;

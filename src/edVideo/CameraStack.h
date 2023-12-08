@@ -14,26 +14,26 @@ typedef enum SWITCH_MODE {
 
 struct CameraStackEntry {
 	uint field_0x0;
-	struct Camera* pCamera;
+	struct CCamera* pCamera;
 };
 
 struct CCameraStack {
-	Camera* FindActivableCameraInStack(uint param_2);
+	CCamera* FindActivableCameraInStack(uint param_2);
 	bool FindCameraState();
 	int GetCurHeroState(void);
-	bool Contains(Camera* pCamera);
-	bool Pop(Camera* pCamera);
-	bool Push(Camera* pCamera, int param_3);
-	void SetMainCamera(Camera* pCamera);
+	bool Contains(CCamera* pCamera);
+	bool Pop(CCamera* pCamera);
+	bool Push(CCamera* pCamera, int param_3);
+	void SetMainCamera(CCamera* pCamera);
 	bool Manage();
 	void Reset();
 	CCameraStack();
 
 	CameraStackEntry aCameras[64];
 	float field_0x200;
-	struct Camera* pActiveCamera;
+	struct CCamera* pActiveCamera;
 	int stackSize;
-	Camera* field_0x20c;
+	CCamera* field_0x20c;
 	undefined4 field_0x210;
 	enum SWITCH_MODE switchMode;
 	float field_0x218;

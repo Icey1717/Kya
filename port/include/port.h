@@ -1,9 +1,9 @@
 #pragma once
 
-#ifdef PLATFORM_WIN
-#include "port/vu1_emu.h"
+
 #include "renderer.h"
-#endif
+#include <string>
+#include <optional>
 
 struct sceCdCLOCK {
 	unsigned int second;
@@ -720,3 +720,9 @@ MY_LOG("SCE_GIF_SET_TAG(\n{}, // NLOOP\n{}, // EOP\n{}, // PRE\n{}, // PRIM\n{},
 
 #define SCE_VIF1_SET_UNPACKR(vuaddr, num, cmd, irq) ((u_int)((vuaddr) | 0x8000) | ((u_int)(num) << 16) | ((u_int)(0x60 | (cmd)) << 24) | ((u_int)(irq) << 31))
 
+
+namespace ObjectNaming
+{
+	void SetNextObjectName(const char* newName);
+	std::string GetNextObjectName();
+}

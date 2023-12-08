@@ -5,17 +5,18 @@
 
 struct ed_3D_Scene;
 struct edNODE;
+struct ed_3d_hierarchy;
 
 namespace DebugMeshViewer {
 
-	constexpr int gWidth = 0x500;
-	constexpr int gHeight = 0x400;
+	constexpr int gWidth = 0x400;
+	constexpr int gHeight = 0x300;
 
 	struct VertexConstantBuffer {
 		edF32MATRIX4 model;
 		edF32MATRIX4 view;
 		edF32MATRIX4 proj;
-		edF32MATRIX4 animMatrices[0x18];
+		edF32MATRIX4 animMatrices[0x20][0x18];
 	};
 
 	// Implented via renderer backend.
@@ -24,7 +25,9 @@ namespace DebugMeshViewer {
 
 	bool& GetUseGlslPipeline();
 
-	void ShowNodeMenu(ed_3D_Scene* p3dScene, edNODE* pNode);
+	void ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy);
+	void ShowPreviewer(ed_3d_hierarchy* pHierarchy);
+	void ShowNodeMenu(edNODE* pNode);
 
 	void OnFrameBufferCreated(const ImTextureID& image);
 }

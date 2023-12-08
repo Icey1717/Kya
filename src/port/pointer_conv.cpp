@@ -1,6 +1,8 @@
 #include "pointer_conv.h"
 #include <assert.h>
 
+
+
 #ifdef PLATFORM_WIN
 namespace PointerConv
 {

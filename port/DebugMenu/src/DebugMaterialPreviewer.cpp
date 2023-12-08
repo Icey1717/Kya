@@ -317,6 +317,16 @@ void MaterialPreviewer::Open(MaterialPreviewerEntry& entry)
 	PaletteSelector::gPaletteMap = textureData.palettes;
 }
 
+void MaterialPreviewer::Open(ed_g2d_material* pMaterial)
+{
+	Reset();
+
+	const auto textureData = DebugMenu::LoadTextureData(pMaterial);
+	PaletteSelector::gPaletteMap = textureData.palettes;
+
+	gOpenMaterial = DebugMaterialPtr(new DebugHelpers::DebugMaterial(pMaterial, textureData.palettes.begin()->first));
+}
+
 void MaterialPreviewer::Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name)
 {
 	Reset();

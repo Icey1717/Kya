@@ -6,10 +6,11 @@
 #include <string>
 
 struct edDList_material;
+struct ed_g2d_material;
 
 namespace DebugHelpers {
 	struct DebugMaterialKey {
-		DebugMaterialKey(edDList_material* pInMaterial)
+		DebugMaterialKey(void* pInMaterial)
 			: pMaterial(pInMaterial)
 			, texID(nullptr)
 		{}
@@ -19,14 +20,14 @@ namespace DebugHelpers {
 			, texID(inTexID)
 		{}
 
-		edDList_material* pMaterial;
+		void* pMaterial;
 		ImTextureID texID;
 
 		bool operator==(const DebugMaterialKey* other) const {
 			return pMaterial == other->pMaterial && texID == other->texID;
 		}
 
-		bool operator==(const edDList_material* other) const {
+		bool operator==(const void* other) const {
 			return pMaterial == other;
 		}
 	};
@@ -34,6 +35,7 @@ namespace DebugHelpers {
 	struct DebugMaterial {
 		DebugMaterial(edDList_material* pInMaterial, uint32_t CBP, bool bCreateTexID = true);
 		DebugMaterial(const PS2::GSTexValue& inTexture, ImTextureID inTexID);
+		DebugMaterial(ed_g2d_material* pInMaterial, uint32_t CBP, bool bCreateTexID = true);
 
 		DebugMaterialKey key;
 		PS2::GSTexValue texture;

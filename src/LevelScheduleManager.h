@@ -623,7 +623,7 @@ public:
 	static LevelScheduleManager* gThis;
 
 	struct ManagerFunctionData* pManagerFunctionData;
-	int field_0x4;
+	int nextLevelId;
 	char levelPath[14];
 	undefined field_0x16;
 	undefined field_0x17;

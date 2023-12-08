@@ -6,6 +6,8 @@
 #include "FrameBuffer.h"
 #include "backends/imgui_impl_vulkan.h"
 
+#include <array>
+
 namespace DebugMeshViewer {
 	namespace Vulkan {
 
@@ -37,10 +39,25 @@ namespace DebugMeshViewer {
 			colorAttachmentRef.attachment = 0;
 			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+			VkAttachmentDescription depthAttachment{};
+			depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+
+			VkAttachmentReference depthAttachmentRef{};
+			depthAttachmentRef.attachment = 1;
+			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 			VkSubpassDescription subpass{};
 			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 			subpass.colorAttachmentCount = 1;
 			subpass.pColorAttachments = &colorAttachmentRef;
+			subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
 			VkSubpassDependency dependency{};
 			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -50,10 +67,12 @@ namespace DebugMeshViewer {
 			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+			std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+
 			VkRenderPassCreateInfo renderPassCreateInfo{};
 			renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassCreateInfo.attachmentCount = 1;
-			renderPassCreateInfo.pAttachments = &colorAttachment;
+			renderPassCreateInfo.attachmentCount = attachments.size();
+			renderPassCreateInfo.pAttachments = attachments.data();
 			renderPassCreateInfo.subpassCount = 1;
 			renderPassCreateInfo.pSubpasses = &subpass;
 			renderPassCreateInfo.dependencyCount = 1;
@@ -68,7 +87,7 @@ namespace DebugMeshViewer {
 
 		void CreateFramebuffer()
 		{
-			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, false);
+			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, true);
 		}
 
 		void CreatePipeline(Shader::ReflectedModule& vertShader, Shader::ReflectedModule& fragShader, Renderer::Pipeline& pipeline)
@@ -151,6 +170,12 @@ namespace DebugMeshViewer {
 			dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 			dynamicState.pDynamicStates = dynamicStates.data();
 
+			VkPipelineDepthStencilStateCreateInfo depthState{};
+			depthState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			depthState.depthTestEnable = VK_TRUE;
+			depthState.depthWriteEnable = VK_TRUE;
+			depthState.depthCompareOp = VK_COMPARE_OP_LESS;
+
 			VkGraphicsPipelineCreateInfo pipelineInfo{};
 			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 			pipelineInfo.stageCount = 2;
@@ -161,6 +186,7 @@ namespace DebugMeshViewer {
 			pipelineInfo.pRasterizationState = &rasterizer;
 			pipelineInfo.pMultisampleState = &multisampling;
 			pipelineInfo.pColorBlendState = &colorBlending;
+			pipelineInfo.pDepthStencilState = &depthState;
 			pipelineInfo.pDynamicState = &dynamicState;
 			pipelineInfo.layout = pipeline.layout;
 			pipelineInfo.renderPass = gRenderPass;
@@ -172,28 +198,28 @@ namespace DebugMeshViewer {
 			}
 		}
 
-		void CreatePipelineHlsl()
+		void CreatePipelineGlsl()
 		{
 			auto vertShader = Shader::ReflectedModule("shaders/meshviewer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, false);
 			auto fragShader = Shader::ReflectedModule("shaders/meshviewer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, false);
-			CreatePipeline(vertShader, fragShader, gPipelineHlsl);
+			CreatePipeline(vertShader, fragShader, gPipelineGlsl);
 		}
 
-		void CreatePipelineGlsl()
+		void CreatePipelineHlsl()
 		{
-			Shader::CompileShader("vs_6_0", "vs_main", "meshviewer.hlsl", "shaders/meshviewer.vert.spv", "");
-			Shader::CompileShader("ps_6_0", "ps_main", "meshviewer.hlsl", "shaders/meshviewer.frag.spv", "");
-			auto vertShader = Shader::ReflectedModule("shaders/meshviewer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-			auto fragShader = Shader::ReflectedModule("shaders/meshviewer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
-			CreatePipeline(vertShader, fragShader, gPipelineGlsl);
+			Shader::CompileShader("vs_6_0", "vs_main", "meshviewer.hlsl", "shaders/meshviewer_hlsl.vert.spv", "");
+			Shader::CompileShader("ps_6_0", "ps_main", "meshviewer.hlsl", "shaders/meshviewer_hlsl.frag.spv", "");
+			auto vertShader = Shader::ReflectedModule("shaders/meshviewer_hlsl.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+			auto fragShader = Shader::ReflectedModule("shaders/meshviewer_hlsl.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+			CreatePipeline(vertShader, fragShader, gPipelineHlsl);
 		}
 
 		void CreateFramebufferSampler() 
 		{
 			VkSamplerCreateInfo samplerCreateInfo{};
 			samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-			samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-			samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+			samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
+			samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
 			samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 			samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 			samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
@@ -203,7 +229,7 @@ namespace DebugMeshViewer {
 			samplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
 			samplerCreateInfo.compareEnable = VK_FALSE;
 			samplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-			samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 			samplerCreateInfo.mipLodBias = 0.0f;
 			samplerCreateInfo.minLod = 0.0f;
 			samplerCreateInfo.maxLod = 0.0f;
@@ -259,9 +285,11 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = { gWidth, gHeight };
 
-	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
+	std::array<VkClearValue, 2> clearColors;
+	clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
+	clearColors[1] = { {1.0f, 0.0f } };
+	renderPassInfo.clearValueCount = clearColors.size();
+	renderPassInfo.pClearValues = clearColors.data();
 
 	vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 

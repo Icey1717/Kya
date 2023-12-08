@@ -9728,10 +9728,16 @@ void ed3DPrepareG2D(ed_g2d_manager* textureInfoObj, ulong mode)
 
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*> onTextureLoadedDelegate;
+Multidelegate<ed_g3d_manager*> onMeshLoadedDelegate;
 
 Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate()
 {
 	return onTextureLoadedDelegate;
+}
+
+Multidelegate<ed_g3d_manager*>& ed3DGetMeshLoadedDelegate()
+{
+	return onMeshLoadedDelegate;
 }
 #endif
 
@@ -10466,6 +10472,11 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 			ed3DPrepareG3D(1, meshInfoObj, textureObj, unknown);
 		}
 	}
+
+#ifdef PLATFORM_WIN
+	onMeshLoadedDelegate(meshInfoObj);
+#endif
+
 	return meshInfoObj;
 }
 

@@ -8,6 +8,7 @@ namespace PS2 {
 	struct FrameBuffer;
 }
 struct edDList_material;
+struct ed_g2d_material;
 
 namespace PS2 {
 	struct GSTexEntry;
@@ -21,4 +22,5 @@ namespace DebugMenu {
 	ImTextureID AddFrameBuffer(const PS2::FrameBuffer& frameBuffer);
 
 	Renderer::TextureData LoadTextureData(edDList_material* pMaterial);
+	Renderer::TextureData LoadTextureData(ed_g2d_material* pMaterial);
 }

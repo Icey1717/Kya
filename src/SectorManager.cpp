@@ -10,6 +10,10 @@
 #include "ScenaricCondition.h"
 #include "MemoryStream.h"
 
+#ifdef PLATFORM_WIN
+#include "port.h"
+#endif
+
 CSectorManager::CSectorManager()
 {
 	(this->baseSector).pANHR.pThis = 0;
@@ -540,6 +544,7 @@ void CSector::InstallCallback()
 							}
 							else {
 								MY_LOG("Sector::Init Mesh: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 								pMeshData = local_20.fileBufferStart;
 								meshSize = local_20.size;
 								if (uVar9 != 0x40001) {

@@ -2,7 +2,7 @@
 #include "TimeController.h"
 #include "CameraViewManager.h"
 
-Camera* CCameraStack::FindActivableCameraInStack(uint param_2)
+CCamera* CCameraStack::FindActivableCameraInStack(uint param_2)
 {
 	ECameraType EVar1;
 	CameraStackEntry* pCVar2;
@@ -26,7 +26,7 @@ Camera* CCameraStack::FindActivableCameraInStack(uint param_2)
 				if (EVar1 == CT_Cinematic) {
 					iVar3 = this->stackSize;
 					for (pCVar2 = this->aCameras + iVar3;
-						(-1 < iVar3 && ((Camera*)(&pCVar2->field_0x0)[1] != this->pActiveCamera)); pCVar2 = pCVar2 + -1) {
+						(-1 < iVar3 && ((CCamera*)(&pCVar2->field_0x0)[1] != this->pActiveCamera)); pCVar2 = pCVar2 + -1) {
 						iVar3 = iVar3 + -1;
 					}
 					if (-1 < iVar3) goto LAB_00198768;
@@ -57,7 +57,7 @@ bool CCameraStack::FindCameraState()
 {
 	bool bVar1;
 	uint uVar2;
-	Camera* pCVar3;
+	CCamera* pCVar3;
 	CameraStackEntry* pCVar4;
 	int iVar5;
 
@@ -73,7 +73,7 @@ bool CCameraStack::FindCameraState()
 		if ((pCVar3->field_0x8c != 0.0) && (0.0 < this->field_0x200)) {
 			iVar5 = this->stackSize;
 			pCVar4 = this->aCameras + iVar5;
-			for (; ((Camera*)(&pCVar4->field_0x0)[1] != pCVar3 && (0 < iVar5)); iVar5 = iVar5 + -1) {
+			for (; ((CCamera*)(&pCVar4->field_0x0)[1] != pCVar3 && (0 < iVar5)); iVar5 = iVar5 + -1) {
 				pCVar4 = pCVar4 + -1;
 			}
 			if (0 < iVar5) {
@@ -146,20 +146,20 @@ int CCameraStack::GetCurHeroState(void)
 	//return 4;
 }
 
-bool CCameraStack::Contains(Camera* pCamera)
+bool CCameraStack::Contains(CCamera* pCamera)
 {
 	CameraStackEntry* pCVar1;
 	int iVar2;
 
 	iVar2 = this->stackSize;
-	for (pCVar1 = this->aCameras + iVar2; (-1 < iVar2 && ((Camera*)(&pCVar1->field_0x0)[1] != pCamera));
+	for (pCVar1 = this->aCameras + iVar2; (-1 < iVar2 && ((CCamera*)(&pCVar1->field_0x0)[1] != pCamera));
 		pCVar1 = pCVar1 + -1) {
 		iVar2 = iVar2 + -1;
 	}
 	return -1 < iVar2;
 }
 
-bool CCameraStack::Pop(Camera* pCamera)
+bool CCameraStack::Pop(CCamera* pCamera)
 {
 	int iVar1;
 	bool uVar2;
@@ -172,7 +172,7 @@ bool CCameraStack::Pop(Camera* pCamera)
 	else {
 		iVar1 = this->stackSize;
 		pCVar2 = this->aCameras + iVar1;
-		for (iVar3 = iVar1; ((Camera*)(&pCVar2->field_0x0)[1] != pCamera && (0 < iVar3)); iVar3 = iVar3 + -1) {
+		for (iVar3 = iVar1; ((CCamera*)(&pCVar2->field_0x0)[1] != pCamera && (0 < iVar3)); iVar3 = iVar3 + -1) {
 			pCVar2 = pCVar2 + -1;
 		}
 		uVar2 = false;
@@ -205,7 +205,7 @@ bool CCameraStack::Pop(Camera* pCamera)
 	return uVar2;
 }
 
-bool CCameraStack::Push(Camera* pCamera, int param_3)
+bool CCameraStack::Push(CCamera* pCamera, int param_3)
 {
 	int iVar1;
 	bool uVar1;
@@ -244,7 +244,7 @@ bool CCameraStack::Push(Camera* pCamera, int param_3)
 	return uVar1;
 }
 
-void CCameraStack::SetMainCamera(Camera* pCamera)
+void CCameraStack::SetMainCamera(CCamera* pCamera)
 {
 	this->aCameras[0].field_0x0 = 0;
 	this->aCameras[0].pCamera = pCamera;
@@ -276,7 +276,7 @@ bool CCameraStack::Manage()
 			else {
 				iVar1 = this->stackSize;
 				pCVar4 = this->aCameras + iVar1;
-				for (iVar5 = iVar1; ((Camera*)(&pCVar4->field_0x0)[1] != this->pActiveCamera && (0 < iVar5));
+				for (iVar5 = iVar1; ((CCamera*)(&pCVar4->field_0x0)[1] != this->pActiveCamera && (0 < iVar5));
 					iVar5 = iVar5 + -1) {
 					pCVar4 = pCVar4 + -1;
 				}
@@ -343,25 +343,25 @@ void CCameraStack::Reset()
 	pCVar1 = this;
 	do {
 		pCVar1->aCameras[0].field_0x0 = 0;
-		pCVar1->aCameras[0].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[0].pCamera = (CCamera*)0x0;
 		iVar2 = iVar2 + 8;
 		pCVar1->aCameras[1].field_0x0 = 0;
-		pCVar1->aCameras[1].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[1].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[2].field_0x0 = 0;
-		pCVar1->aCameras[2].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[2].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[3].field_0x0 = 0;
-		pCVar1->aCameras[3].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[3].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[4].field_0x0 = 0;
-		pCVar1->aCameras[4].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[4].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[5].field_0x0 = 0;
-		pCVar1->aCameras[5].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[5].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[6].field_0x0 = 0;
-		pCVar1->aCameras[6].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[6].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[7].field_0x0 = 0;
-		pCVar1->aCameras[7].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[7].pCamera = (CCamera*)0x0;
 		pCVar1 = (CCameraStack*)(pCVar1->aCameras + 8);
 	} while (iVar2 < 0x40);
-	this->pActiveCamera = (Camera*)0x0;
+	this->pActiveCamera = (CCamera*)0x0;
 	return;
 }
 
@@ -379,24 +379,24 @@ CCameraStack::CCameraStack()
 	pCVar1 = this;
 	do {
 		pCVar1->aCameras[0].field_0x0 = 0;
-		pCVar1->aCameras[0].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[0].pCamera = (CCamera*)0x0;
 		iVar2 = iVar2 + 8;
 		pCVar1->aCameras[1].field_0x0 = 0;
-		pCVar1->aCameras[1].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[1].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[2].field_0x0 = 0;
-		pCVar1->aCameras[2].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[2].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[3].field_0x0 = 0;
-		pCVar1->aCameras[3].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[3].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[4].field_0x0 = 0;
-		pCVar1->aCameras[4].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[4].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[5].field_0x0 = 0;
-		pCVar1->aCameras[5].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[5].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[6].field_0x0 = 0;
-		pCVar1->aCameras[6].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[6].pCamera = (CCamera*)0x0;
 		pCVar1->aCameras[7].field_0x0 = 0;
-		pCVar1->aCameras[7].pCamera = (Camera*)0x0;
+		pCVar1->aCameras[7].pCamera = (CCamera*)0x0;
 		pCVar1 = (CCameraStack*)(pCVar1->aCameras + 8);
 	} while (iVar2 < 0x40);
-	this->pActiveCamera = (Camera*)0x0;
+	this->pActiveCamera = (CCamera*)0x0;
 	return;
 }

@@ -9,6 +9,7 @@
 #include <libdma.h>
 #else
 #include "port.h"
+#include "port/vu1_emu.h"
 #endif
 #include <assert.h>
 

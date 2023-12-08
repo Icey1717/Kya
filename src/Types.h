@@ -428,6 +428,12 @@ union alignas(16)
 #define ENABLE_MY_LOG
 #endif
 
+#ifdef PLATFORM_WIN
+#define NAME_NEXT_OBJECT ObjectNaming::SetNextObjectName
+#else
+#define NAME_NEXT_OBJECT(...)
+#endif
+
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
 
 #ifdef ENABLE_MY_LOG

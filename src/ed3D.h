@@ -712,6 +712,9 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix);
 float ed3DMatrixGetBigerScale(edF32MATRIX4* m0);
 int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode);
+edLIST* ed3DHierarchyListInit(void);
+edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_manager* pMeshInfo, char* szString);
+ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
@@ -734,6 +737,7 @@ extern edpkt_data g_stExecuteCode;
 
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
+Multidelegate<ed_g3d_manager*>& ed3DGetMeshLoadedDelegate();
 #endif
 
 #define SHELLDMA_TAG_ID_CNT (0x10)

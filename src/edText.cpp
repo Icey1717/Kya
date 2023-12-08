@@ -124,6 +124,8 @@ bool edTextInit(void)
 	bool bVar1;
 	bool uVar1;
 
+	NAME_NEXT_OBJECT("Default Font");
+
 	bVar1 = edTextInstallFont(g_PackedFontPtr_004324d0);
 	if (bVar1 == false) {
 		uVar1 = false;

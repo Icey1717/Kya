@@ -17,7 +17,8 @@ add_subdirectory("pcsx2/VU")
 add_subdirectory("Windows/Renderer")
 
 set(SOURCES 
-	"Windows/WindowsFunctions.cpp" 
+	"Windows/WindowsFunctions.cpp"
+	"src/ObjectNaming.cpp"
 	"include/port.h"
 )
 

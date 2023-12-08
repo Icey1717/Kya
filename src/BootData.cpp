@@ -11,6 +11,8 @@
 
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
+#else
+#include "port/pointer_conv.h"
 #endif
 
 edCBankBuffer BootData_BankBuffer = { 0 };
@@ -91,6 +93,9 @@ void InstallBootData(void)
 	pIconTexture = BootBitmaps;
 	do {
 		messagesFilePointer = *ppcVar2;
+
+		NAME_NEXT_OBJECT(messagesFilePointer);
+
 		fileIndex = BootData_BankBufferEntry->get_index(messagesFilePointer);
 		if (fileIndex == -1) {
 			edDebugPrintf("\r\nFile: %s\r\n", messagesFilePointer);
@@ -114,6 +119,8 @@ void InstallBootData(void)
 	else {
 		BootDataFont = (edCTextFont*)get_element(BootData_BankBufferEntry, iVar3);
 	}
+
+	NAME_NEXT_OBJECT(sz_MediumFontFileName_00448b60);
 	edTextInstallFont(BootDataFont);
 	if ((FontPacked_2C*)BootDataFont->pSubData != (FontPacked_2C*)0x0) {
 		//BootDataFont->pSubData->pOverrideData = USHORT_ARRAY_0048fc60;

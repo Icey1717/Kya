@@ -226,7 +226,7 @@ void PauseManager::Level_Init()
 
 			pSplashScreen = new CSplashScreen();
 			this->pSplashScreen = pSplashScreen;
-		
+			NAME_NEXT_OBJECT("CDEURO/Frontend/kyatitle.g2d");
 			this->pSplashScreen->Init(0.0f, "CDEURO/Frontend/kyatitle.g2d");
 			this->pSplashScreen->SetDrawLocation((float)gVideoConfig.screenWidth / 2.0f - 80.0f, ((float)gVideoConfig.screenHeight * 20.0f) / 512.0f,
 				(float)gVideoConfig.screenWidth / 2.0f + 80.0f, ((float)gVideoConfig.screenHeight * 220.0f) / 512.0f);
