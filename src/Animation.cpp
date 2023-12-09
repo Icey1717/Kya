@@ -1266,7 +1266,6 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					}
 				}
 				else {
-					IMPLEMENTATION_GUARD(
 					do {
 						dataCount = (int)dataCount >> 1;
 						if (pfVar7[dataCount] <= time) break;
@@ -1283,18 +1282,18 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					iVar3 = (int)pfVar7 >> 2;
 					iVar8 = iVar3 + -1;
 					if (iVar8 == 0) {
-						fVar12 = 0.0;
-						if (0.0 < *pfVar9) {
+						fVar12 = 0.0f;
+						if (0.0f < *pfVar9) {
 							fVar12 = time / *pfVar9;
 						}
 					}
 					else {
-						fVar12 = 0.0;
+						fVar12 = 0.0f;
 						fVar11 = *pfVar9 - pfVar9[-1];
-						if (0.0 < fVar11) {
+						if (0.0f < fVar11) {
 							fVar12 = (time - pfVar9[-1]) / fVar11;
 						}
-					})
+					}
 				}
 			}
 			else {

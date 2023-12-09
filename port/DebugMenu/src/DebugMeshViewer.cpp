@@ -37,6 +37,8 @@ namespace DebugMeshViewer {
 			ed_3d_strip* p3dStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->body.p3DStrip);
 
 			if (p3dStrip && p3dHier) {
+				VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
+				int maxAnimIndex = 0;
 
 				std::vector<ed_3d_strip*> strips;
 
@@ -50,6 +52,7 @@ namespace DebugMeshViewer {
 				std::reverse(strips.begin(), strips.end());
 
 				for (int stripIndex = 0; stripIndex < strips.size(); stripIndex++) {
+					assert(stripIndex < gMaxStripIndex);
 					auto& pCurrentStrip = strips[stripIndex];
 
 					MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Strip: 0x{:x}", (uintptr_t)pCurrentStrip);
@@ -61,8 +64,6 @@ namespace DebugMeshViewer {
 					char* pVifList = ((char*)pCurrentStrip) + pCurrentStrip->vifListOffset;
 
 					short* pAnimIndexes = (short*)((char*)pCurrentStrip + pCurrentStrip->vifListOffset + -0x30);
-
-					VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
 
 					uint incPacketSize = ed3DFlushStripGetIncPacket(pCurrentStrip, 0, 0);
 					uint partialMeshSectionCount = (uint)(ushort)pCurrentStrip->meshCount % 3;
@@ -119,29 +120,14 @@ namespace DebugMeshViewer {
 						}
 					}
 
-					bool bVar1;
+					bool bValidAnimIndex;
 					int animMatrixIndex = 0;
-
-					if (p3dHier->pAnimMatrix) {
-						// Push anim matrices.
-						for (; (bVar1 = maxAnimMatrixCount != 0, maxAnimMatrixCount = maxAnimMatrixCount + -1, bVar1 && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1) {
-							MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Assigning {} -> {}", *pAnimIndexes, animMatrixIndex);
-
-							if (gAnimate) {
-								vertexConstantBuffer.animMatrices[stripIndex][animMatrixIndex] = p3dHier->pAnimMatrix[*pAnimIndexes];
-							}
-							else {
-								edF32Matrix4SetIdentityHard(&vertexConstantBuffer.animMatrices[stripIndex][animMatrixIndex]);
-							}
-
-							animMatrixIndex++;
-						}
-					}
-					else {
-						for (; (bVar1 = maxAnimMatrixCount != 0, maxAnimMatrixCount = maxAnimMatrixCount + -1, bVar1 && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1) {
-							edF32Matrix4SetIdentityHard(&vertexConstantBuffer.animMatrices[stripIndex][animMatrixIndex]);
-							animMatrixIndex++;
-						}
+					for (; (bValidAnimIndex = maxAnimMatrixCount != 0, maxAnimMatrixCount = maxAnimMatrixCount + -1, bValidAnimIndex && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1) {
+						assert(animMatrixIndex < gMaxStripIndex);
+						MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Assigning {} -> {},{}", *pAnimIndexes, stripIndex, animMatrixIndex);
+						vertexConstantBuffer.animStripToIndex[stripIndex][animMatrixIndex].index = *pAnimIndexes;
+						maxAnimIndex = std::max<int>(maxAnimIndex, *pAnimIndexes);
+						animMatrixIndex++;
 					}
 
 					MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Final anim index: {}", animMatrixIndex);
@@ -176,7 +162,7 @@ namespace DebugMeshViewer {
 					};
 
 					if ((pCurrentStrip->flags & 4) == 0) {
-						while (bVar1 = partialMeshSectionCount != 0, partialMeshSectionCount = partialMeshSectionCount - 1, bVar1) {
+						while (bValidAnimIndex = partialMeshSectionCount != 0, partialMeshSectionCount = partialMeshSectionCount - 1, bValidAnimIndex) {
 							VU1Emu::ProcessVifList((edpkt_data*)pVifList, false);
 							AddVertices();
 							pVifList = pVifList + incPacketSize * 0x10;
@@ -196,6 +182,16 @@ namespace DebugMeshViewer {
 
 							pVifList = pVifList + incPacketSize * 0x30;
 						}
+					}
+				}
+
+				assert(maxAnimIndex < gMaxAnimMatrices);
+
+				for (int i = 0; i <= maxAnimIndex; i++) {
+					edF32Matrix4SetIdentityHard(&vertexConstantBuffer.animMatrices[i]);
+
+					if (p3dHier->pAnimMatrix && gAnimate) {
+						vertexConstantBuffer.animMatrices[i] = p3dHier->pAnimMatrix[i];
 					}
 				}
 			}

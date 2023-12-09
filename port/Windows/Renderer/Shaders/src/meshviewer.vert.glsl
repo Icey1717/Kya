@@ -4,7 +4,8 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
     mat4 proj;
-	mat4 animMatrices[0x20][0x18];
+	mat4 animMatrices[0x60];
+	uint animStripToIndex[0x20][0x20];
 } ubo;
 
 layout(location = 0) in ivec2 inST;
@@ -28,7 +29,9 @@ void main() {
 	uint animIndex = anim - 0x3dc;
     animIndex = animIndex / 4;
 
-	mat4 animMatrix = ubo.animMatrices[stripIndex][animIndex];
+	uint intoAnimMatrices = ubo.animStripToIndex[stripIndex][animIndex];
+
+	mat4 animMatrix = ubo.animMatrices[intoAnimMatrices];
 
 	vec4 fixedPos = vec4(inPosition, 1.0);
     vec4 pos = ubo.proj * ubo.view * ubo.model * animMatrix * fixedPos;
