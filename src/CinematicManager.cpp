@@ -1807,6 +1807,7 @@ void CCinematic::Manage()
 		this->pStreamEventCameraA->Manage((CActor*)0x0);
 	}
 	if ((this->state != CS_Stopped) && ((GameFlags & GAME_STATE_PAUSED) == 0)) {
+
 		// #HACK
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
@@ -1817,6 +1818,8 @@ void CCinematic::Manage()
 		//else {
 		//	this->totalCutsceneDelta = 1.0f;
 		//}
+
+		CUTSCENE_LOG(LogLevel::Verbose, "CCinematic::Manage Updating cutscene time: {}", this->totalCutsceneDelta);
 	}
 	if (this->state == CS_Stopped) {
 		iVar2 = this->cineBankLoadStage_0x2b4;
@@ -2036,8 +2039,8 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 	for (i = 0; pActorManager = CScene::ptable.g_ActorManager_004516a4, i < this->loadedActorCinematicListCount; i = i + 1) {
 		pCinematicActor = this->ppActorCinematics[i];
 		fVar16 = pCinematicActor->sphereCentre.x - peVar3->rowT.x;
-		fVar18 = pCinematicActor->sphereCentre.y - (pCVar4->transformationMatrix).rowT.y;
-		fVar19 = pCinematicActor->sphereCentre.z - (pCVar4->transformationMatrix).rowT.z;
+		fVar18 = pCinematicActor->sphereCentre.y - peVar3->rowT.y;
+		fVar19 = pCinematicActor->sphereCentre.z - peVar3->rowT.z;
 		pCinematicActor->adjustedMagnitude = sqrtf(fVar16 * fVar16 + fVar18 * fVar18 + fVar19 * fVar19) - pCinematicActor->sphereCentre.w;
 		if ((pCinematicActor->flags & 4) == 0) {
 			pCinematicActor->ChangeManageState(1);
@@ -2443,7 +2446,7 @@ bool CBWitchCin::CreateActor(edCinActorInterface** ppActorInterface, edCinGameIn
 	}
 	/* Sound files can go in here */
 	lVar1 = pCinematic->NewCinematicActor(pTag, meshInfoObj, textureObj);
-	lVar1->behaviourCinematic.cinActor.SetupTransform(&pTag->vectorFieldA, &pTag->vectorFieldB, &pTag->vectorFieldC, 0);
+	lVar1->behaviourCinematic.cinActor.SetupTransform(&pTag->position, &pTag->heading, &pTag->scale, 0);
 
 	// HACK! Don't write 8 bytes here on win!
 	int* pInt = (int*)ppActorInterface;

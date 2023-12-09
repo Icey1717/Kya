@@ -24,6 +24,7 @@
 #include "CinematicManager.h"
 #include "port/vu1_emu.h"
 #include "DebugMeshViewer.h"
+#include "TimeController.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -223,6 +224,7 @@ namespace DebugMenu_Internal {
 		auto* pCinematicManager = g_CinematicManager_0048efc;
 
 		static int selectedCutsceneId = 0;
+		static bool bSelectedFirstPlaying = false;
 
 		if (pCinematicManager->activeCinematicCount > 0) {
 			if (selectedCutsceneId > pCinematicManager->activeCinematicCount) {
@@ -241,6 +243,15 @@ namespace DebugMenu_Internal {
 				// Handle the selected option change here
 				// The selected option index will be stored in 'selectedOption'
 				// You can perform actions based on the selected option.
+			}
+
+			if (!bSelectedFirstPlaying) {
+				for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
+					if (pCinematicManager->ppCinematicObjB_B[i]->state == CS_Playing) {
+						selectedCutsceneId = i;
+						bSelectedFirstPlaying = true;
+					}
+				}
 			}
 
 			auto* pCutscene = pCinematicManager->ppCinematicObjB_B[selectedCutsceneId];
@@ -284,6 +295,25 @@ namespace DebugMenu_Internal {
 
 				// Seek bar for video playback
 				ImGui::SliderFloat("##seekbar", &currentTime, 0.0f, totalTime);
+
+				static bool bCutsceneStepEnabled = false;
+				ImGui::Checkbox("Custom Time Control", &bCutsceneStepEnabled);
+
+				if (bCutsceneStepEnabled) {
+					static float cutsceneStepTime = 28.812f;
+					pCutscene->totalCutsceneDelta = cutsceneStepTime;
+
+					if (ImGui::Button("<<")) {
+						auto pTimer = Timer::GetTimer();
+						cutsceneStepTime -= pTimer->cutsceneDeltaTime;
+					}
+					ImGui::SameLine();
+					if (ImGui::Button(">>")) {
+						auto pTimer = Timer::GetTimer();
+						cutsceneStepTime += pTimer->cutsceneDeltaTime;
+					}
+
+				}
 			}
 			else {
 				// Jump to end button
@@ -592,7 +622,7 @@ namespace DebugMenu_Internal {
 		{"Texture List", ShowTextureList },
 		{"Mesh List", ShowMeshList },
 		{"Framebuffers", ShowFramebuffers },
-		{"Cutscene", ShowCutsceneMenu },
+		{"Cutscene", ShowCutsceneMenu, true },
 		{"Rendering", ShowRenderingMenu },
 		{"Scene", ShowSceneMenu },
 	};

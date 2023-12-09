@@ -289,7 +289,7 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 							pbVar12 = pbVar12 + 1;
 							pMVar3 = (edDList_material*)this->field_0x38[bVar1];
 							local_10.pMaterialInfoA = (edDList_material*)pMVar3->textureInfo;
-							fVar13 = (float)pMVar3->Length;
+							fVar13 = (float)pMVar3->index;
 							unaff_f28 = *(float*)((int)(pMVar3 + 1) + 4);
 							in_f27 = *(float*)((int)(pMVar3 + 1) + 8);
 							unaff_f26 = *(float*)((int)(pMVar3 + 1) + 0xc);

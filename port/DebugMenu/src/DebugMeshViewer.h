@@ -7,6 +7,8 @@ struct ed_3D_Scene;
 struct edNODE;
 struct ed_3d_hierarchy;
 
+namespace PS2 { struct GSTexEntry; }
+
 namespace DebugMeshViewer {
 
 	constexpr int gWidth = 0x400;
@@ -32,6 +34,9 @@ namespace DebugMeshViewer {
 	VertexConstantBuffer& GetVertexConstantBuffer();
 
 	bool& GetUseGlslPipeline();
+	bool& GetWireframe();
+
+	PS2::GSTexEntry& GetTextureEntry();
 
 	void ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy);
 	void ShowPreviewer(ed_3d_hierarchy* pHierarchy);

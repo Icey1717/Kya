@@ -823,18 +823,22 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 				pAnimMatrix->ad = pfVar2[3];
 			}
 			else {
-				ushort* pTrack = (ushort*)pfVar2;
+				short* pTrack = (short*)pfVar2;
 
 				pAnimMatrix->aa = (float)(int)pTrack[0] * 3.051851e-05f;
 				pAnimMatrix->ab = (float)(int)pTrack[1] * 3.051851e-05f;
-				uVar1 = pTrack[2];
-				if (uVar1 != 0)
-					IMPLEMENTATION_GUARD_LOG(); // Needs a check
-				pAnimMatrix->ac = (float)((int)(short)uVar1 & 0xfffffffe) * 3.051851e-05f;
-				pAnimMatrix->ad =
-					sqrtf(1.0f - (pAnimMatrix->ac * pAnimMatrix->ac +
-						pAnimMatrix->aa * pAnimMatrix->aa + pAnimMatrix->ab * pAnimMatrix->ab));
-				if ((uVar1 & 1) != 0) {
+
+				uint thirdAxis = pTrack[2];
+				
+				pAnimMatrix->ac = (float)((int)(thirdAxis & 0xfffffffe)) * 3.051851e-05f;
+
+				float sum = (pAnimMatrix->ac * pAnimMatrix->ac +
+					pAnimMatrix->aa * pAnimMatrix->aa + pAnimMatrix->ab * pAnimMatrix->ab);
+
+				assert(sum < 1.0f);
+
+				pAnimMatrix->ad = sqrtf(1.0f - sum);
+				if ((thirdAxis & 1) != 0) {
 					pAnimMatrix->ad = -pAnimMatrix->ad;
 				}
 			}

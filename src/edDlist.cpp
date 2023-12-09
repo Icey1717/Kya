@@ -1315,7 +1315,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 		gCurDListBuf->materialIndex = -1;
 	}
 	else {
-		gCurDListBuf->materialIndex = (short)gCurMaterial->Length;
+		gCurDListBuf->materialIndex = (short)gCurMaterial->index;
 	}
 	gCurDListBuf->field_0x6 = -1;
 	gCurDListBuf->cameraPanIndex = 0;
@@ -2482,7 +2482,7 @@ void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g
 	someGlobalBuffer = gBankMaterial + counter;
 	someGlobalBuffer->hash = pHASH_MAT->hash;
 	someGlobalBuffer->pData = STORE_SECTION(pHASH_MAT);
-	outObj->Length = counter;
+	outObj->index = counter;
 	gNbUsedMaterial = gNbUsedMaterial + 1;
 	outObj->mode = mode;
 	outObj->textureInfo = textureInfoObj;
@@ -2496,15 +2496,12 @@ void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g
 
 bool edDListTermMaterial(edDList_material* pMaterial)
 {
-	char** ppcVar1;
-
-	IMPLEMENTATION_GUARD(
-	if ((gBankMaterial[pMaterial->Length].hash.number != 0) &&
-		(ppcVar1 = &(char*)LOAD_SECTION(gBankMaterial->pData), ppcVar1[pMaterial->Length * 4] != (char*)0x0)) {
-		gBankMaterial[pMaterial->Length].hash = 0;
-		ppcVar1[pMaterial->Length * 4] = (char*)0x0;
+	if ((gBankMaterial[pMaterial->index].hash.number != 0) &&
+		(gBankMaterial[pMaterial->index].pData != 0x0)) {
+		gBankMaterial[pMaterial->index].hash = 0;
+		gBankMaterial[pMaterial->index].pData = 0;
 		gNbUsedMaterial = gNbUsedMaterial + -1;
-	})
+	}
 
 #ifdef PLATFORM_WIN
 		onMaterialUnloadedDelegate(pMaterial);

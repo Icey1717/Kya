@@ -11,8 +11,25 @@
 namespace DebugMeshViewer {
 	namespace Vulkan {
 
-		Renderer::Pipeline gPipelineHlsl;
-		Renderer::Pipeline gPipelineGlsl;
+		struct PipelineKey {
+			union {
+				struct {
+				uint32_t bWireframe:1;
+				uint32_t bGlsl:1;
+				} options;
+
+				uint32_t key{};
+			};
+		};
+
+		struct PipelineCreateInfo {
+			std::string vertShaderFilename;
+			std::string fragShaderFilename;
+			
+			PipelineKey key;
+		};
+
+		std::unordered_map<size_t, Renderer::Pipeline> gPipelines;
 		Renderer::FrameBufferBase gFrameBuffer;
 
 		VkSampler gFrameBufferSampler;
@@ -90,8 +107,12 @@ namespace DebugMeshViewer {
 			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, true);
 		}
 
-		void CreatePipeline(Shader::ReflectedModule& vertShader, Shader::ReflectedModule& fragShader, Renderer::Pipeline& pipeline)
+		void CreatePipeline(const PipelineCreateInfo& createInfo)
 		{
+			Renderer::Pipeline& pipeline = gPipelines[createInfo.key.key];
+			auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
+			auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
+
 			pipeline.AddBindings(Renderer::EBindingStage::Vertex, vertShader.reflectData);
 			pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
 			pipeline.CreateDescriptorSetLayouts();
@@ -129,7 +150,7 @@ namespace DebugMeshViewer {
 			rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 			rasterizer.depthClampEnable = VK_FALSE;
 			rasterizer.rasterizerDiscardEnable = VK_FALSE;
-			rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+			rasterizer.polygonMode = createInfo.key.options.bWireframe ? VK_POLYGON_MODE_LINE :  VK_POLYGON_MODE_FILL;
 			rasterizer.lineWidth = 1.0f;
 			rasterizer.cullMode = VK_CULL_MODE_NONE; //VK_CULL_MODE_BACK_BIT;
 			rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -200,18 +221,29 @@ namespace DebugMeshViewer {
 
 		void CreatePipelineGlsl()
 		{
-			auto vertShader = Shader::ReflectedModule("shaders/meshviewer.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, false);
-			auto fragShader = Shader::ReflectedModule("shaders/meshviewer.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, false);
-			CreatePipeline(vertShader, fragShader, gPipelineGlsl);
+			PipelineKey key; 
+			key.options.bGlsl = true;
+			key.options.bWireframe = false;
+			PipelineCreateInfo createInfo { "shaders/meshviewer.vert.spv" , "shaders/meshviewer.frag.spv", key };
+			CreatePipeline(createInfo);
+
+			createInfo.key.options.bWireframe = true;
+			CreatePipeline(createInfo);
 		}
 
 		void CreatePipelineHlsl()
 		{
 			Shader::CompileShader("vs_6_0", "vs_main", "meshviewer.hlsl", "shaders/meshviewer_hlsl.vert.spv", "");
 			Shader::CompileShader("ps_6_0", "ps_main", "meshviewer.hlsl", "shaders/meshviewer_hlsl.frag.spv", "");
-			auto vertShader = Shader::ReflectedModule("shaders/meshviewer_hlsl.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-			auto fragShader = Shader::ReflectedModule("shaders/meshviewer_hlsl.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
-			CreatePipeline(vertShader, fragShader, gPipelineHlsl);
+
+			PipelineKey key;
+			key.options.bGlsl = false;
+			key.options.bWireframe = false;
+			PipelineCreateInfo createInfo{ "shaders/meshviewer_hlsl.vert.spv" , "shaders/meshviewer_hlsl.frag.spv", key };
+			CreatePipeline(createInfo);
+
+			createInfo.key.options.bWireframe = true;
+			CreatePipeline(createInfo);
 		}
 
 		void CreateFramebufferSampler() 
@@ -305,7 +337,13 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-	auto& pipeline = GetUseGlslPipeline() ? gPipelineGlsl : gPipelineHlsl;
+	PipelineKey pipelineKey;
+	pipelineKey.options.bWireframe = GetWireframe();
+	pipelineKey.options.bGlsl = GetUseGlslPipeline();
+
+	assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
+
+	auto& pipeline = gPipelines[pipelineKey.key];
 
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 

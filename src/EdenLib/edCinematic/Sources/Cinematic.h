@@ -82,9 +82,9 @@ struct edCinGameInterface
 		undefined field_0x3e;
 		undefined field_0x3f;
 		edF32VECTOR4 boundingSphere;
-		edF32VECTOR4 vectorFieldA;
-		edF32VECTOR4 vectorFieldB;
-		edF32VECTOR4 vectorFieldC;
+		edF32VECTOR4 position;
+		edF32VECTOR4 heading;
+		edF32VECTOR4 scale;
 	};
 
 	struct SCENERY_CREATIONtag {

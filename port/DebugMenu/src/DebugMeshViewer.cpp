@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "DebugMaterialPreviewer.h"
 #include "edDlist.h"
+#include "TextureCache.h"
 
 #define MESH_PREVIEWER_LOG(level, format, ...) MY_LOG_CATEGORY("Mesh Previewer", level, format, ##__VA_ARGS__)
 
@@ -21,7 +22,13 @@ namespace DebugMeshViewer {
 	bool gAnimate = true;
 	bool gRotate = false;
 	bool gUseGlslPipeline = true;
+	bool gWireframe = false;
 	ImTextureID gMeshViewerTexture;
+
+	PS2::TextureCache gTextureCache;
+
+	ed_g2d_material* gMaterial;
+	Renderer::TextureData gTextureData;
 
 	int gSoloStripIndex = -1;
 
@@ -208,7 +215,16 @@ bool& DebugMeshViewer::GetUseGlslPipeline()
 	return gUseGlslPipeline;
 }
 
-ed_g2d_material* gMaterial;
+bool& DebugMeshViewer::GetWireframe()
+{
+	return gWireframe;
+}
+
+PS2::GSTexEntry& DebugMeshViewer::GetTextureEntry()
+{
+	const GIFReg::GSTex TEX{};
+	return gTextureCache.Lookup(TEX, gTextureData);
+}
 
 void DebugMeshViewer::ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy)
 {
@@ -264,11 +280,13 @@ void DebugMeshViewer::ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy)
 								auto pLayer = (ed_g2d_layer_header*)LOAD_SECTION(*(int*)(pMaterial + 1));
 
 								ed_g2d_bitmap* pBitMap = nullptr;
+								ed_g2d_bitmap* pOther = nullptr;
 								if (pLayer->body.field_0x1c != 0) {
 									auto pTexData = (TextureData_TEX*)LOAD_SECTION(pLayer->body.pTex);
 									
 									
 									if (pTexData->body.palette == 0) {
+										assert(false);
 										TextureData_HASH_Internal_PA32* pPA32 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(pTexData->body.hashCode.pData);
 										if (pPA32 != (TextureData_HASH_Internal_PA32*)0x0) {
 											TextureData_PA32* pPA32Internal = (TextureData_PA32*)LOAD_SECTION(pPA32->pPA32);
@@ -283,7 +301,17 @@ void DebugMeshViewer::ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy)
 										if (pCode->pData != 0) {
 											pBitMap = (ed_g2d_bitmap*)((char*)LOAD_SECTION(pCode->pData) + 0x10);
 										}
+
+										TextureData_HASH_Internal_PA32* pPA32 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(pTexData->body.hashCode.pData);
+										if (pPA32 != (TextureData_HASH_Internal_PA32*)0x0) {
+											TextureData_PA32* pPA32Internal = (TextureData_PA32*)LOAD_SECTION(pPA32->pPA32);
+											pOther = &pPA32Internal->body;
+										}
 									}
+								}
+
+								if (pBitMap && pOther) {
+									gTextureData = MakeTextureDataFromPacket(pOther, pBitMap, 0);
 								}
 							}
 						}
@@ -302,6 +330,8 @@ void DebugMeshViewer::ShowPreviewer(ed_3d_hierarchy* pHierarchy)
 		ImGui::Checkbox("Animate", &gAnimate);
 		ImGui::SameLine();
 		ImGui::Checkbox("Rotate", &gRotate);
+		ImGui::SameLine();
+		ImGui::Checkbox("Wireframe", &GetWireframe());
 		ImGui::Image(gMeshViewerTexture, ImVec2(gWidth, gHeight));
 		ImGui::End();
 	}

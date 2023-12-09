@@ -629,18 +629,11 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 	/* This sets up objects for a cutscene, and gives them a name
 	   Example: SC_SOUND_EMITTER */
 	cineCreatureObject = this->pObj;
-	creationTag.vectorFieldA.x = (cineCreatureObject->field_0x50).x;
-	creationTag.vectorFieldA.y = (cineCreatureObject->field_0x50).y;
-	creationTag.vectorFieldA.z = (cineCreatureObject->field_0x50).z;
-	creationTag.vectorFieldA.w = 1.0;
-	creationTag.vectorFieldB.x = (cineCreatureObject->field_0x50).w;
-	creationTag.vectorFieldB.y = (cineCreatureObject->field_0x60).x;
-	creationTag.vectorFieldB.z = (cineCreatureObject->field_0x60).y;
-	creationTag.vectorFieldB.w = (cineCreatureObject->field_0x60).z;
-	creationTag.vectorFieldC.x = (cineCreatureObject->field_0x60).w;
-	creationTag.vectorFieldC.y = *(float*)&cineCreatureObject->field_0x70;
-	creationTag.vectorFieldC.z = *(float*)&cineCreatureObject->field_0x74;
-	creationTag.vectorFieldC.w = 1.0f;
+	creationTag.position.xyz = cineCreatureObject->position;
+	creationTag.position.w = 1.0;
+	creationTag.heading = cineCreatureObject->heading;
+	creationTag.scale.xyz = cineCreatureObject->scale;
+	creationTag.scale.w = 1.0f;
 	creationTag.boundingSphere = cineCreatureObject->boundingSphere;
 
 	/* Loads the name of the player into this buffer.
@@ -648,6 +641,10 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 	strcpy((char*)&creationTag, cineCreatureObject->name);
 
 	CUTSCENE_LOG(LogLevel::Info, "\nedSceneActorVirtual::Create name: {}", cineCreatureObject->name);
+
+	CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create position: {}", creationTag.position.ToString());
+	CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create heading: {}", creationTag.heading.ToString());
+	CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create scale: {}", creationTag.scale.ToString());
 
 	if (cineCreatureObject->textureID == -1) {
 		creationTag.textureName = 0;
@@ -865,6 +862,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 											local_f0.field_0x10 =
 												(local_f0.field_0x10 - 0.01818182f) * (float)pTrackDataStart[-3] + (float)pTrackDataStart[-4];
 										}
+										CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} anim: ", this->pObj->name);
 										pCinActorInterface->SetAnim(&local_f0);
 									}
 								}
@@ -875,6 +873,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 										if (sVar2 == 2) {
 											bUpdateRotationSuccess = animatedProp.GetQuaternionValue(currentPlayTime, &outRotation);
 											if (bUpdateRotationSuccess != false) {
+												CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
 												pCinActorInterface->SetHeadingQuat(outRotation.x, outRotation.y, outRotation.z, outRotation.w);
 											}
 										}
@@ -926,6 +925,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 														bUpdateRotationSuccess = true;
 													}
 													if (bUpdateRotationSuccess) {
+														CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
 														(*(code*)pCinActorInterface->vt->SetHeadingQuat)
 															(outRotation.x, outRotation.y, outRotation.z, pCinActorInterface);
 													})
@@ -954,6 +954,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 												bUpdateRotationSuccess = true;
 											}
 											if (bUpdateRotationSuccess) {
+												CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} scale: {}", this->pObj->name, local_68.ToString());
 												pCinActorInterface->SetScale(local_68.x, local_68.y, local_68.z);
 											}
 										}
@@ -980,6 +981,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 													bUpdateRotationSuccess = true;
 												}
 												if (bUpdateRotationSuccess) {
+													CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} pos: {}", this->pObj->name, locationOutVector.ToString());
 													pCinActorInterface->SetPos(locationOutVector.x, locationOutVector.y, locationOutVector.z);
 												}
 											}
@@ -988,7 +990,10 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 													ushort keyframeCount = pTag->keyCount;
 													local_24 = edAnmSubControler(pTag);
 													local_24.GetClosestKeyIndexSafe(currentPlayTime, &local_20);
-													pCinActorInterface->SetVisibility(*(char*)(((char*)pAnimProp) + local_20 + (uint)keyframeCount * 4 + 0x10) != '\0');
+
+													const bool visibilityValue = (*(char*)(((char*)pAnimProp) + local_20 + (uint)keyframeCount * 4 + 0x10)) != '\0';
+													CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} vis: {}", this->pObj->name, visibilityValue);
+													pCinActorInterface->SetVisibility(visibilityValue);
 												}
 											}
 										}

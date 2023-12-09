@@ -8253,9 +8253,9 @@ struct CCameraManager : public CObjectManager {
 	edF32MATRIX4 field_0x350;
 	edF32MATRIX4 transMatrix_0x390;
 	edF32MATRIX4 worldToCamera_0x3d0;
-	edF32MATRIX4 matrix_0x410;
+	edF32MATRIX4 frustumPlane;
 	edF32VECTOR4 field_0x450;
-	edF32VECTOR4 field_0x460;
+	edF32VECTOR4 frustumLocation;
 	float aspectRatio;
 	float field_0x474;
 	float field_0x478;

@@ -61,21 +61,21 @@ void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 	return;
 }
 
-void edF32Vector4NormalizeHard(float* v0, float* v1)
+void edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;
 	float fVar2;
 	float fVar3;
 	float fVar4;
 
-	fVar1 = *v1;
-	fVar2 = v1[1];
-	fVar3 = v1[2];
-	fVar4 = 1.0 / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0);
-	*v0 = fVar1 * fVar4;
-	v0[1] = fVar2 * fVar4;
-	v0[2] = fVar3 * fVar4;
-	v0[3] = 0.0;
+	fVar1 = v1->x;
+	fVar2 = v1->y;
+	fVar3 = v1->z;
+	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0);
+	v0->x = fVar1 * fVar4;
+	v0->y = fVar2 * fVar4;
+	v0->z = fVar3 * fVar4;
+	v0->w = 0.0f;
 	return;
 }
 
@@ -877,27 +877,28 @@ void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1)
 	return;
 }
 
-void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32MATRIX4* m2)
+void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* dst, edF32MATRIX4* m1, edF32MATRIX4* m2)
 {
-	m0->aa = m1->aa * m2->aa + m1->ab * m2->ba + m1->ac * m2->ca + m1->ad * m2->da;
-	m0->ab = m1->aa * m2->ab + m1->ab * m2->bb + m1->ac * m2->cb + m1->ad * m2->db;
-	m0->ac = m1->aa * m2->ac + m1->ab * m2->bc + m1->ac * m2->cc + m1->ad * m2->dc;
-	m0->ad = m1->aa * m2->ad + m1->ab * m2->bd + m1->ac * m2->cd + m1->ad * m2->dd;
+	edF32MATRIX4 m1_copy = *m1;
+	dst->aa = m1_copy.aa * m2->aa + m1_copy.ab * m2->ba + m1_copy.ac * m2->ca + m1_copy.ad * m2->da;
+	dst->ab = m1_copy.aa * m2->ab + m1_copy.ab * m2->bb + m1_copy.ac * m2->cb + m1_copy.ad * m2->db;
+	dst->ac = m1_copy.aa * m2->ac + m1_copy.ab * m2->bc + m1_copy.ac * m2->cc + m1_copy.ad * m2->dc;
+	dst->ad = m1_copy.aa * m2->ad + m1_copy.ab * m2->bd + m1_copy.ac * m2->cd + m1_copy.ad * m2->dd;
 
-	m0->ba = m1->ba * m2->aa + m1->bb * m2->ba + m1->bc * m2->ca + m1->bd * m2->da;
-	m0->bb = m1->ba * m2->ab + m1->bb * m2->bb + m1->bc * m2->cb + m1->bd * m2->db;
-	m0->bc = m1->ba * m2->ac + m1->bb * m2->bc + m1->bc * m2->cc + m1->bd * m2->dc;
-	m0->bd = m1->ba * m2->ad + m1->bb * m2->bd + m1->bc * m2->cd + m1->bd * m2->dd;
+	dst->ba = m1_copy.ba * m2->aa + m1_copy.bb * m2->ba + m1_copy.bc * m2->ca + m1_copy.bd * m2->da;
+	dst->bb = m1_copy.ba * m2->ab + m1_copy.bb * m2->bb + m1_copy.bc * m2->cb + m1_copy.bd * m2->db;
+	dst->bc = m1_copy.ba * m2->ac + m1_copy.bb * m2->bc + m1_copy.bc * m2->cc + m1_copy.bd * m2->dc;
+	dst->bd = m1_copy.ba * m2->ad + m1_copy.bb * m2->bd + m1_copy.bc * m2->cd + m1_copy.bd * m2->dd;
 
-	m0->ca = m1->ca * m2->aa + m1->cb * m2->ba + m1->cc * m2->ca + m1->cd * m2->da;
-	m0->cb = m1->ca * m2->ab + m1->cb * m2->bb + m1->cc * m2->cb + m1->cd * m2->db;
-	m0->cc = m1->ca * m2->ac + m1->cb * m2->bc + m1->cc * m2->cc + m1->cd * m2->dc;
-	m0->cd = m1->ca * m2->ad + m1->cb * m2->bd + m1->cc * m2->cd + m1->cd * m2->dd;
+	dst->ca = m1_copy.ca * m2->aa + m1_copy.cb * m2->ba + m1_copy.cc * m2->ca + m1_copy.cd * m2->da;
+	dst->cb = m1_copy.ca * m2->ab + m1_copy.cb * m2->bb + m1_copy.cc * m2->cb + m1_copy.cd * m2->db;
+	dst->cc = m1_copy.ca * m2->ac + m1_copy.cb * m2->bc + m1_copy.cc * m2->cc + m1_copy.cd * m2->dc;
+	dst->cd = m1_copy.ca * m2->ad + m1_copy.cb * m2->bd + m1_copy.cc * m2->cd + m1_copy.cd * m2->dd;
 
-	m0->da = m1->da * m2->aa + m1->db * m2->ba + m1->dc * m2->ca + m1->dd * m2->da;
-	m0->db = m1->da * m2->ab + m1->db * m2->bb + m1->dc * m2->cb + m1->dd * m2->db;
-	m0->dc = m1->da * m2->ac + m1->db * m2->bc + m1->dc * m2->cc + m1->dd * m2->dc;
-	m0->dd = m1->da * m2->ad + m1->db * m2->bd + m1->dc * m2->cd + m1->dd * m2->dd;
+	dst->da = m1_copy.da * m2->aa + m1_copy.db * m2->ba + m1_copy.dc * m2->ca + m1_copy.dd * m2->da;
+	dst->db = m1_copy.da * m2->ab + m1_copy.db * m2->bb + m1_copy.dc * m2->cb + m1_copy.dd * m2->db;
+	dst->dc = m1_copy.da * m2->ac + m1_copy.db * m2->bc + m1_copy.dc * m2->cc + m1_copy.dd * m2->dc;
+	dst->dd = m1_copy.da * m2->ad + m1_copy.db * m2->bd + m1_copy.dc * m2->cd + m1_copy.dd * m2->dd;
 }
 
 void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0)

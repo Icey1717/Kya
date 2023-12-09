@@ -15,7 +15,7 @@ extern edF32VECTOR4 gF32Vector4Zero;
 
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 
-void edF32Vector4NormalizeHard(float* v0, float* v1);
+void edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
 void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1);
 
@@ -47,7 +47,7 @@ void edF32Vector4AddHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
 void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1);
 
-void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32MATRIX4* m2);
+void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* dst, edF32MATRIX4* m1, edF32MATRIX4* m2);
 
 void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0);
 

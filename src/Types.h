@@ -168,6 +168,19 @@ union edF32VECTOR3 {
 	};
 
 	float raw[3];
+
+#ifdef PLATFORM_WIN
+	inline std::string ToString() const {
+		const int printWidth = 10;
+
+		std::stringstream ss;
+		// Set the precision for floating-point values
+		ss << std::fixed << std::setprecision(4);
+		ss << std::setw(printWidth) << "(" << std::setw(printWidth) << x << ", " << std::setw(printWidth) << y
+			<< ", " << std::setw(printWidth) << z << ")";
+		return ss.str();
+	}
+#endif
 };
 
 inline edF32VECTOR3 operator-(const edF32VECTOR3& lhs, const edF32VECTOR3& rhs)

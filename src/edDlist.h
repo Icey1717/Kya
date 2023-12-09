@@ -82,7 +82,7 @@ struct edDList_material {
 	ed_g2d_manager* textureInfo;
 	ed_g2d_material* pMAT;
 	int mode;
-	int Length;
+	int index;
 };
 
 extern edDlistConfiguration edDlistConfig;

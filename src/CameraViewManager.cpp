@@ -440,9 +440,9 @@ void CCameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 eStack16;
 
-	edF32Vector4ScaleHard(1.0f / (param_1 / 1.333333f), &eStack16, (edF32VECTOR4*)&m0->ca);
-	edF32Vector4ScaleHard(1.0f, &eStack48, (edF32VECTOR4*)&m0->ba);
-	edF32Vector4ScaleHard(this->aspectRatio, &eStack32, (edF32VECTOR4*)m0);
+	edF32Vector4ScaleHard(1.0f / (param_1 / 1.333333f), &eStack16, &m0->rowZ);
+	edF32Vector4ScaleHard(1.0f, &eStack48, &m0->rowY);
+	edF32Vector4ScaleHard(this->aspectRatio, &eStack32, &m0->rowX);
 	edF32Vector4AddHard(&eStack64, &eStack16, &eStack32);
 	edF32Vector4AddHard(&eStack64, &eStack64, &eStack48);
 	edF32Vector4AddHard(&eStack80, &eStack16, &eStack32);
@@ -451,36 +451,28 @@ void CCameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
 	edF32Vector4AddHard(&eStack96, &eStack96, &eStack48);
 	edF32Vector4SubHard(&eStack112, &eStack16, &eStack32);
 	edF32Vector4SubHard(&eStack112, &eStack112, &eStack48);
-	edF32Vector4CrossProductHard((edF32VECTOR4*)&this->matrix_0x410, &eStack80, &eStack64);
-	edF32Vector4NormalizeHard((float*)&this->matrix_0x410, (float*)&this->matrix_0x410);
-	edF32Vector4CrossProductHard((edF32VECTOR4*)&(this->matrix_0x410).ba, &eStack96, &eStack112);
-	pfVar1 = &(this->matrix_0x410).ba;
-	edF32Vector4NormalizeHard(pfVar1, pfVar1);
-	edF32Vector4CrossProductHard((edF32VECTOR4*)&(this->matrix_0x410).ca, &eStack64, &eStack96);
-	pfVar1 = &(this->matrix_0x410).ca;
-	edF32Vector4NormalizeHard(pfVar1, pfVar1);
-	edF32Vector4CrossProductHard((edF32VECTOR4*)&(this->matrix_0x410).da, &eStack112, &eStack80);
-	pfVar1 = &(this->matrix_0x410).da;
-	edF32Vector4NormalizeHard(pfVar1, pfVar1);
-	edF32Matrix4TransposeHard(&this->matrix_0x410);
-	(this->matrix_0x410).dd = 1.0;
-	(this->matrix_0x410).dc = 1.0;
-	(this->matrix_0x410).db = 1.0;
-	(this->matrix_0x410).da = 1.0;
-	fVar4 = m0->cb;
-	fVar2 = m0->cc;
-	fVar3 = m0->cd;
-	(this->field_0x450).x = m0->ca;
-	(this->field_0x450).y = fVar4;
-	(this->field_0x450).z = fVar2;
-	(this->field_0x450).w = fVar3;
-	fVar4 = m0->db;
-	fVar2 = m0->dc;
-	fVar3 = m0->dd;
-	(this->field_0x460).x = m0->da;
-	(this->field_0x460).y = fVar4;
-	(this->field_0x460).z = fVar2;
-	(this->field_0x460).w = fVar3;
+
+	edF32Vector4CrossProductHard(&this->frustumPlane.rowX, &eStack80, &eStack64);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowX, &this->frustumPlane.rowX);
+
+	edF32Vector4CrossProductHard(&this->frustumPlane.rowY, &eStack96, &eStack112);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowY, &this->frustumPlane.rowY);
+
+	edF32Vector4CrossProductHard(&this->frustumPlane.rowZ, &eStack64, &eStack96);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowZ, &this->frustumPlane.rowZ);
+
+	edF32Vector4CrossProductHard(&this->frustumPlane.rowT, &eStack112, &eStack80);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowT, &this->frustumPlane.rowT);
+
+	edF32Matrix4TransposeHard(&this->frustumPlane);
+	(this->frustumPlane).dd = 1.0f;
+	(this->frustumPlane).dc = 1.0f;
+	(this->frustumPlane).db = 1.0f;
+	(this->frustumPlane).da = 1.0f;
+
+	this->field_0x450 = m0->rowZ;
+	this->frustumLocation = m0->rowT;
+
 	return;
 }
 
@@ -937,7 +929,7 @@ CCamera* CCameraManager::GetDefGameCamera(ECameraType type)
 	return pCVar1;
 }
 
-bool CCameraManager::IsSphereVisible(float param_1, edF32VECTOR4* param_3, float* param_4)
+bool CCameraManager::IsSphereVisible(float param_1, edF32VECTOR4* pSphere, float* param_4)
 {
 	float fVar1;
 	bool bVar2;
@@ -946,24 +938,24 @@ bool CCameraManager::IsSphereVisible(float param_1, edF32VECTOR4* param_3, float
 	float fVar5;
 	float fVar6;
 
-	fVar3 = param_3->x - (this->field_0x460).x;
-	fVar4 = param_3->y - (this->field_0x460).y;
-	fVar5 = param_3->z - (this->field_0x460).z;
-	fVar6 = param_3->w;
+	fVar3 = pSphere->x - (this->frustumLocation).x;
+	fVar4 = pSphere->y - (this->frustumLocation).y;
+	fVar5 = pSphere->z - (this->frustumLocation).z;
+	fVar6 = pSphere->w;
 	fVar1 = fVar3 * (this->field_0x450).x + fVar4 * (this->field_0x450).y + fVar5 * (this->field_0x450).z;
 	*param_4 = fVar1;
-	if ((fVar1 + param_3->w < 0.0f) || (param_1 < fVar1 - param_3->w)) {
+	if ((fVar1 + pSphere->w < 0.0f) || (param_1 < fVar1 - pSphere->w)) {
 		bVar2 = false;
 	}
 	else {
-		bVar2 = 0.0f <= (this->matrix_0x410).ad * fVar3 + (this->matrix_0x410).bd * fVar4 + (this->matrix_0x410).cd * fVar5 +
-			(this->matrix_0x410).dd * fVar6 &&
-			(0.0f <= (this->matrix_0x410).ac * fVar3 + (this->matrix_0x410).bc * fVar4 + (this->matrix_0x410).cc * fVar5
-				+ (this->matrix_0x410).dc * fVar6 &&
-				(0.0f <= (this->matrix_0x410).aa * fVar3 + (this->matrix_0x410).ba * fVar4 + (this->matrix_0x410).ca * fVar5
-					+ (this->matrix_0x410).da * fVar6 &&
-					0.0f <= (this->matrix_0x410).ab * fVar3 + (this->matrix_0x410).bb * fVar4 + (this->matrix_0x410).cb * fVar5 +
-					(this->matrix_0x410).db * fVar6));
+		bVar2 = 0.0f <= (this->frustumPlane).ad * fVar3 + (this->frustumPlane).bd * fVar4 + (this->frustumPlane).cd * fVar5 +
+			(this->frustumPlane).dd * fVar6 &&
+			(0.0f <= (this->frustumPlane).ac * fVar3 + (this->frustumPlane).bc * fVar4 + (this->frustumPlane).cc * fVar5
+				+ (this->frustumPlane).dc * fVar6 &&
+				(0.0f <= (this->frustumPlane).aa * fVar3 + (this->frustumPlane).ba * fVar4 + (this->frustumPlane).ca * fVar5
+					+ (this->frustumPlane).da * fVar6 &&
+					0.0f <= (this->frustumPlane).ab * fVar3 + (this->frustumPlane).bb * fVar4 + (this->frustumPlane).cb * fVar5 +
+					(this->frustumPlane).db * fVar6));
 	}
 	return bVar2;
 }
@@ -977,23 +969,23 @@ bool CCameraManager::IsSphereVisible(float other, edF32VECTOR4* pSphere)
 	float fVar5;
 	float fVar6;
 
-	fVar3 = pSphere->x - (this->field_0x460).x;
-	fVar4 = pSphere->y - (this->field_0x460).y;
-	fVar5 = pSphere->z - (this->field_0x460).z;
+	fVar3 = pSphere->x - (this->frustumLocation).x;
+	fVar4 = pSphere->y - (this->frustumLocation).y;
+	fVar5 = pSphere->z - (this->frustumLocation).z;
 	fVar6 = pSphere->w;
 	fVar1 = fVar3 * (this->field_0x450).x + fVar4 * (this->field_0x450).y + fVar5 * (this->field_0x450).z;
 	if ((fVar1 + pSphere->w < 0.0f) || (other < fVar1 - pSphere->w)) {
 		bVar2 = false;
 	}
 	else {
-		bVar2 = 0.0f <= (this->matrix_0x410).ad * fVar3 + (this->matrix_0x410).bd * fVar4 + (this->matrix_0x410).cd * fVar5 +
-			(this->matrix_0x410).dd * fVar6 &&
-			(0.0f <= (this->matrix_0x410).ac * fVar3 + (this->matrix_0x410).bc * fVar4 + (this->matrix_0x410).cc * fVar5
-				+ (this->matrix_0x410).dc * fVar6 &&
-				(0.0f <= (this->matrix_0x410).aa * fVar3 + (this->matrix_0x410).ba * fVar4 + (this->matrix_0x410).ca * fVar5
-					+ (this->matrix_0x410).da * fVar6 &&
-					0.0f <= (this->matrix_0x410).ab * fVar3 + (this->matrix_0x410).bb * fVar4 + (this->matrix_0x410).cb * fVar5 +
-					(this->matrix_0x410).db * fVar6));
+		bVar2 = 0.0f <= (this->frustumPlane).ad * fVar3 + (this->frustumPlane).bd * fVar4 + (this->frustumPlane).cd * fVar5 +
+			(this->frustumPlane).dd * fVar6 &&
+			(0.0f <= (this->frustumPlane).ac * fVar3 + (this->frustumPlane).bc * fVar4 + (this->frustumPlane).cc * fVar5
+				+ (this->frustumPlane).dc * fVar6 &&
+				(0.0f <= (this->frustumPlane).aa * fVar3 + (this->frustumPlane).ba * fVar4 + (this->frustumPlane).ca * fVar5
+					+ (this->frustumPlane).da * fVar6 &&
+					0.0f <= (this->frustumPlane).ab * fVar3 + (this->frustumPlane).bb * fVar4 + (this->frustumPlane).cb * fVar5 +
+					(this->frustumPlane).db * fVar6));
 	}
 	return bVar2;
 }
@@ -1032,7 +1024,7 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	(this->lookAt).z = local_10.z;
 	(this->lookAt).w = 1.0f;
 	edF32Vector4SubHard(&local_10, &this->lookAt, (edF32VECTOR4*)&(this->transformationMatrix).da);
-	edF32Vector4NormalizeHard((TO_SCE_VECTOR)&local_10, (TO_SCE_VECTOR)&local_10);
+	edF32Vector4NormalizeHard(&local_10, &local_10);
 	(this->transformationMatrix).ca = local_10.x;
 	(this->transformationMatrix).cb = local_10.y;
 	(this->transformationMatrix).cc = local_10.z;
@@ -1726,7 +1718,7 @@ void CameraSet3DPos(edFCamera* pCamera)
 	rowDiffVector.y = (pCamera->position).y - (pCamera->lookAt).y;
 	rowDiffVector.z = (pCamera->position).z - (pCamera->lookAt).z;
 	rowDiffVector.w = (pCamera->position).w - (pCamera->lookAt).w;
-	edF32Vector4NormalizeHard((float*)&rowDiffVector, (float*)&rowDiffVector);
+	edF32Vector4NormalizeHard(&rowDiffVector, &rowDiffVector);
 	GetAnglesFromVector(&rotationVector, &rowDiffVector);
 	if (pCamera->rotationZ != 0.0) {
 		edF32Matrix4RotateZHard(pCamera->rotationZ, &transformedMatrix, &transformedMatrix);

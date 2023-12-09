@@ -1859,24 +1859,24 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 		v0->x = 1.0f;
 	}
 	else {
-		edF32Vector4NormalizeHard((float*)v0, (float*)v0);
+		edF32Vector4NormalizeHard(v0, v0);
 	}
 	sceVu0InverseMatrix(&local_40, WorldToCamera_Matrix);
 	gCamNormal_X = local_40.rowX;
 
 	//MY_LOG("Vec A");
 	//PRINT_VECTOR(&Vector_0048c310);
-	edF32Vector4NormalizeHard((float*)&gCamNormal_X, (float*)&gCamNormal_X);
+	edF32Vector4NormalizeHard(&gCamNormal_X, &gCamNormal_X);
 	gCamNormal_Y = local_40.rowY;
 
 	//MY_LOG("Vec B");
 	//PRINT_VECTOR(&Vector_0048c320);
-	edF32Vector4NormalizeHard((float*)&gCamNormal_Y, (float*)&gCamNormal_Y);
+	edF32Vector4NormalizeHard(&gCamNormal_Y, &gCamNormal_Y);
 	gCamNormal_Z = local_40.rowZ;
 
 	//MY_LOG("Vec C");
 	//PRINT_VECTOR(&Vector_0048c330);
-	edF32Vector4NormalizeHard((float*)&gCamNormal_Z, (float*)&gCamNormal_Z);
+	edF32Vector4NormalizeHard(&gCamNormal_Z, &gCamNormal_Z);
 	gCamPos = gRenderCamera->position;
 
 	fVar2 = gRenderCamera->halfFOV / gRenderCamera->verticalHalfFOV;
