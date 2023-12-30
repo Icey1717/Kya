@@ -19,16 +19,16 @@ void HardwareRenderer::ProcessVertices(char* vtxStart)
 		memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
 		memcpy(&vtx.XYZSkip, vtxStart + 0x20, sizeof(vtx.XYZSkip));
 
-		const uint vtxAnimMatrix = ((vtx.XYZSkip[3] & 0x7ff) - 0x3dc) / 4;
+		const uint vtxAnimMatrix = ((vtx.XYZSkip.Skip & 0x7ff) - 0x3dc) / 4;
 
 		const uint primReg = gifTag.tag.PRIM;
 		const GIFReg::GSPrimPacked primPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&primReg);
 
-		const uint skip = vtx.XYZSkip[3] & 0x8000;
+		const uint skip = vtx.XYZSkip.Skip & 0x8000;
 
 		const uint shiftedStripIndex = /*stripIndex*/ 0 << 16;
 
-		vtx.XYZSkip[3] |= shiftedStripIndex;
+		vtx.XYZSkip.Skip |= shiftedStripIndex;
 
 		Renderer::KickVertex(vtx, primPacked, skip, Renderer::GetHardwareDrawBuffer());
 

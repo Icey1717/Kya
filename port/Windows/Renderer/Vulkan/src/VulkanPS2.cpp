@@ -1851,7 +1851,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 	}
 
 	PS2::m_conf.vs.tme = state.PRIM.TME;
-	//PS2::m_conf.vs.hdw = 0;
+	PS2::m_conf.vs.hdw = bHardware;
 	PS2::m_conf.vs.fst = state.PRIM.FST;
 
 	const std::string GS_CONFIG_NAME = 
@@ -1872,7 +1872,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 
 	const std::string VS_CONFIG_NAME = 
 		  std::string("-DVS_TME=") + std::to_string(PS2::m_conf.vs.tme) + " "
-		//+ std::string("-DVS_HDW=") + std::to_string(PS2::m_conf.vs.hdw) + " "
+		+ std::string("-DVS_HDW=") + std::to_string(PS2::m_conf.vs.hdw) + " "
 		+ std::string("-DVS_FST=") + std::to_string(PS2::m_conf.vs.fst);
 
 	//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "DATE: %d DATM: %d", state.TEST.DATE, state.TEST.DATM);

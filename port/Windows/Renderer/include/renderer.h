@@ -101,9 +101,17 @@ namespace Renderer
 
 	struct alignas(32) GSVertexUnprocessed
 	{
-		float STQ[4];
+		struct {
+			uint32_t ST[2];
+			float Q;
+			float _pad;
+		} STQ;
 		uint32_t RGBA[4];
-		uint32_t XYZSkip[4];
+
+		struct {
+			float XYZ[3];
+			uint32_t Skip;
+		} XYZSkip;
 	};
 
 	struct alignas(32) GSVertex

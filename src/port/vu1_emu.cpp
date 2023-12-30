@@ -24,7 +24,7 @@ namespace VU1Emu {
 	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
 	int gItop;
 
-	bool bEnableHardwareDraw = false;
+	bool bEnableHardwareDraw = true;
 	bool bEnableInterpreter = false;
 	bool bRunSingleThreaded = true;
 	bool bRunSimplifiedCode = true;
