@@ -31,7 +31,8 @@ const VkBuffer& GetUniformBuffer(int index);
 const VkQueue& GetGraphicsQueue();
 const VkCommandPool& GetCommandPool();
 const VkExtent2D& GetSwapchainExtent();
-void SetObjectName(const char* name, const uint64_t objHandle, const VkObjectType objType);
+
+void SetObjectName(const uint64_t objHandle, const VkObjectType objType, const char* format, ...);
 
 GLFWwindow* GetGLFWWindow();
 VkInstance GetInstance();

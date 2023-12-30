@@ -17,6 +17,7 @@
 #include <limits>
 #include <assert.h>
 #include "log.h"
+#include "VulkanRenderer.h"
 
 #define pxAssert assert
 
@@ -201,6 +202,8 @@ VkPipelineLayout Vulkan::PipelineLayoutBuilder::Create(VkDevice device)
 		LOG_VULKAN_ERROR(res, "vkCreatePipelineLayout() failed: ");
 		return VK_NULL_HANDLE;
 	}
+
+	SetObjectName(reinterpret_cast<uint64_t>(layout), VK_OBJECT_TYPE_PIPELINE_LAYOUT, "PS2 Pipeline Layout");
 
 	Clear();
 	return layout;

@@ -19,6 +19,22 @@
 #include "log.h"
 #include "pcsx2/Selectors.h"
 
+namespace PS2
+{
+	namespace Hardware {
+		FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t> gVertexBuffers;
+
+		void Setup() {
+			gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
+		}
+	}
+}
+
+PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>& Renderer::GetHardwareDrawBuffer()
+{
+	return PS2::Hardware::gVertexBuffers.GetDrawBufferData();
+}
+
 namespace PS2_Internal {
 	bool bUseComplexBlending = true;
 
@@ -76,6 +92,7 @@ namespace Renderer {
 	void ResetVertIndexBuffers()
 	{
 		PS2_Internal::gVertexBuffers.GetDrawBufferData().Reset();
+		PS2::Hardware::gVertexBuffers.GetDrawBufferData().Reset();
 	}
 
 	enum GS_PRIM_CLASS
@@ -1723,12 +1740,18 @@ void Renderer::Draw() {
 	Draw(GetDefaultDrawBuffer(), gImageData, PS2::GetGSState());
 }
 
-void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffer, TextureData& textureData, PS2::GSState& state) {
-	if (drawBuffer.index.tail == 0) {
+void Renderer::Draw(PS2::DrawBufferBase& drawBuffer) {
+	Draw(drawBuffer, gImageData, PS2::GetGSState(), true);
+}
+
+void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, PS2::GSState& state, bool bHardware) {
+	const int tail = drawBuffer.GetIndexTail();
+
+	if (tail == 0) {
 		return;
 	}
 
-	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: {0}(0x{0:x})", drawBuffer.index.tail);
+	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: {0}(0x{0:x})", tail);
 
 	g_GSSelector.ResetStates();
 	PS2::m_conf.ps = GSHWDrawConfig::PSSelector();
@@ -1782,6 +1805,13 @@ void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffe
 	bool DATE_PRIMID = false;
 	bool DATE_BARRIER = false;
 
+	if (state.FRAME.FBMSK == 0) {
+		PS2::m_conf.colormask = GSHWDrawConfig::ColorMaskSelector(0xf);
+	}
+	else {
+		PS2::m_conf.colormask = GSHWDrawConfig::ColorMaskSelector(0);
+	}
+
 	bool blending_alpha_pass = false;
 	if ((!state.IsOpaque() || state.ALPHA.IsBlack()) /* && rt */ && (PS2::m_conf.colormask.wrgba & 0x7))
 	{
@@ -1808,8 +1838,7 @@ void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffe
 		PS2::m_conf.ps.tfx = 4;
 	}
 
-	if (state.PRIM.FGE)
-	{
+	if (state.PRIM.FGE)	{
 		PS2::m_conf.ps.fog = 1;
 
 		//GSVector4 fc = GSVector4::rgba32(m_env.FOGCOL.u32[0]);
@@ -1822,6 +1851,7 @@ void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffe
 	}
 
 	PS2::m_conf.vs.tme = state.PRIM.TME;
+	//PS2::m_conf.vs.hdw = 0;
 	PS2::m_conf.vs.fst = state.PRIM.FST;
 
 	const std::string GS_CONFIG_NAME = 
@@ -1842,6 +1872,7 @@ void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffe
 
 	const std::string VS_CONFIG_NAME = 
 		  std::string("-DVS_TME=") + std::to_string(PS2::m_conf.vs.tme) + " "
+		//+ std::string("-DVS_HDW=") + std::to_string(PS2::m_conf.vs.hdw) + " "
 		+ std::string("-DVS_FST=") + std::to_string(PS2::m_conf.vs.fst);
 
 	//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "DATE: %d DATM: %d", state.TEST.DATE, state.TEST.DATM);
@@ -1850,9 +1881,11 @@ void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffe
 
 	PS2::UpdateHWPipelineSelector(PS2::m_conf, PS2::m_pipelineSelector);
 
-	const PS2::PipelineKey key = { {GS_CONFIG_NAME, PS_CONFIG_NAME, VS_CONFIG_NAME}, topology, PS2::m_pipelineSelector, debugData };
+	const int stride = bHardware ? sizeof(Renderer::GSVertexUnprocessed) : sizeof(Renderer::GSVertex);
+
+	const PS2::PipelineKey key = { {GS_CONFIG_NAME, PS_CONFIG_NAME, VS_CONFIG_NAME}, topology, stride, PS2::m_pipelineSelector, debugData };
 	
-	auto pipeline = PS2::GetPipeline(key);
+	auto& pipeline = PS2::GetPipeline(key);
 
 	{
 		if (!hwState.bActivePass || hwState.FBP != state.FRAME.FBP) {
@@ -1923,11 +1956,16 @@ void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffe
 
 		vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-		PS2_Internal::gVertexBuffers.BindData(GetCurrentCommandBuffer());
+		if (bHardware) {
+			PS2::Hardware::gVertexBuffers.BindData(GetCurrentCommandBuffer());
+		}
+		else {
+			PS2_Internal::gVertexBuffers.BindData(GetCurrentCommandBuffer());
+		}
 
 		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
 
-		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(drawBuffer.index.tail), 1, 0, 0, 0);
+		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(tail), 1, 0, 0, 0);
 
 	}
 
@@ -1940,6 +1978,7 @@ void PS2::Setup()
 	CreateDefaultRenderPass();
 
 	PS2_Internal::gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
+	PS2::Hardware::gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 
 	PS2_Internal::gVertexConstBuffer.Init();
 	PS2_Internal::gPixelConstBuffer.Init();
@@ -1948,6 +1987,7 @@ void PS2::Setup()
 void PS2::BeginFrame()
 {
 	PS2_Internal::gVertexBuffers.Reset();
+	PS2::Hardware::gVertexBuffers.Reset();
 }
 
 void PS2::Cleanup()

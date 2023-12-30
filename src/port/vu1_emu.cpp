@@ -10,6 +10,8 @@
 #include <recycle/shared_pool.hpp>
 #include "edVideo/VideoD.h"
 
+#include "hardware_draw.h"
+
 #define VU_VTX_TRACE_LOG(format, ...) if (VU1Emu::bTracingVtx) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
 
 #define GET_VIF_CMD(cmd) (((unsigned int)cmd >> (3 << 3)) & 0xff)
@@ -22,6 +24,7 @@ namespace VU1Emu {
 	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
 	int gItop;
 
+	bool bEnableHardwareDraw = false;
 	bool bEnableInterpreter = false;
 	bool bRunSingleThreaded = true;
 	bool bRunSimplifiedCode = true;
@@ -1935,7 +1938,11 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 
 			MY_LOG("ProcessVifList VIF_MSCAL - Using Interpreter: {} (addr: 0x{:x})", bEnableInterpreter, pRunTag->addr);
 
-			if (bEnableInterpreter) {
+			if (bEnableHardwareDraw) {
+				// Just add the vertices here.
+				HardwareRenderer::ProcessVertices(GetVertexDataStart());
+			}
+			else if (bEnableInterpreter) {
 				auto GetLocalFakeMem = [=]() {return pFakeMem; };
 				edF32VECTOR4* pV = VIF_AS_F(gItop, 4);
 				pcsx2_VU::SetKickCallback(KickCallback);
@@ -2195,10 +2202,8 @@ char* VU1Emu::GetVertexDataStart()
 
 void VU1Emu::QueueDraw()
 {
-	if (bRunSingleThreaded) {
+	auto TraceVertex = [](auto& drawBuffer) {
 		if (bTracingVtx) {
-			auto& drawBuffer = Renderer::GetDefaultDrawBuffer();
-
 			VU_VTX_TRACE_LOG("VU1Emu::QueueDraw");
 			VU_VTX_TRACE_LOG("VU1Emu::QueueDraw Vertex count: {} Index count: {}", drawBuffer.vertex.tail, drawBuffer.index.tail);
 
@@ -2219,6 +2224,13 @@ void VU1Emu::QueueDraw()
 				VU_VTX_TRACE_LOG("VU1Emu::QueueDraw 0x{:x} {}", i, *pIndex);
 			}
 		}
+	};
+
+	if (bEnableHardwareDraw) {
+		Renderer::Draw(Renderer::GetHardwareDrawBuffer());
+	}
+	else if (bRunSingleThreaded) {
+		TraceVertex(Renderer::GetDefaultDrawBuffer());
 
 		Renderer::Draw();
 	}

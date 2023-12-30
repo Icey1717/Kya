@@ -23,6 +23,7 @@ namespace PS2 {
 	{
 		Shader::ShaderDefinitions shaderDefinitions;
 		VkPrimitiveTopology topology;
+		int stride;
 		PipelineSelector pipelineSelector;
 		PipelineDebug::ConfigData debugData;
 
@@ -39,6 +40,7 @@ namespace PS2 {
 			hash ^= stringHasher(key.shaderDefinitions.psDef) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 			hash ^= stringHasher(key.shaderDefinitions.vsDef) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 			hash ^= std::hash<int>()(key.topology) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+			hash ^= std::hash<int>()(key.stride) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 			hash ^= PipelineSelectorHash()(key.pipelineSelector) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
 			return hash;
 		}

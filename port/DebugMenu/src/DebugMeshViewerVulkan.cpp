@@ -100,7 +100,7 @@ namespace DebugMeshViewer {
 				throw std::runtime_error("failed to create render pass!");
 			}
 
-			SetObjectName("Mesh Viewer Pass", (uint64_t)gRenderPass, VK_OBJECT_TYPE_RENDER_PASS);
+			SetObjectName(reinterpret_cast<uint64_t>(gRenderPass), VK_OBJECT_TYPE_RENDER_PASS, "Mesh Viewer Pass");
 		}
 
 		void CreateFramebuffer()

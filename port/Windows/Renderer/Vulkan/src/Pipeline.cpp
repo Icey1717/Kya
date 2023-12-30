@@ -92,10 +92,10 @@ namespace PS2_Internal {
 
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-		constexpr size_t vertSize = sizeof(Renderer::GSVertex);
+		//constexpr size_t vertSize = sizeof(Renderer::GSVertex);
 		// Don't actually need the stride to be reflected, just use the vertex size and we pad the rest.
 		//assert(vertShader.reflectData.bindingDescription.stride == vertSize);
-		vertShader.reflectData.bindingDescription.stride = sizeof(Renderer::GSVertex);
+		vertShader.reflectData.bindingDescription.stride = key.stride;
 
 		auto attributeDescriptions = vertShader.reflectData.GetAttributes();
 
@@ -178,8 +178,7 @@ namespace PS2_Internal {
 		VkPipeline vkpipeline = gpb.Create(GetDevice()); // , g_vulkan_shader_cache->GetPipelineCache(true));
 		if (vkpipeline != VK_NULL_HANDLE)
 		{
-			Vulkan::SetObjectName(
-				GetDevice(), vkpipeline, "TFX Pipeline %08X/%llX%08X", p.vs.key, p.ps.key_hi, p.ps.key_lo);
+			SetObjectName(reinterpret_cast<uint64_t>(vkpipeline), VK_OBJECT_TYPE_PIPELINE, "TFX Pipeline %08X/%llX%08X", p.vs.key, p.ps.key_hi, p.ps.key_lo);
 		}
 
 		pipeline.pipeline = vkpipeline;
@@ -257,7 +256,7 @@ void PS2::CreateDefaultRenderPass()
 		throw std::runtime_error("failed to create render pass!");
 	}
 
-	SetObjectName("PS2 Render Pass", (uint64_t)PS2_Internal::renderPass, VK_OBJECT_TYPE_RENDER_PASS);
+	SetObjectName(reinterpret_cast<uint64_t>(PS2_Internal::renderPass), VK_OBJECT_TYPE_RENDER_PASS, "PS2 Default Render Pass");
 }
 
 PS2::PipelineMap& PS2::GetPipelines()
@@ -267,15 +266,18 @@ PS2::PipelineMap& PS2::GetPipelines()
 
 const Renderer::Pipeline& PS2::GetPipeline(const PipelineKey& key)
 {
-	auto& pipeline = PS2_Internal::graphicsPipelines[key];
 	size_t hash = PipelineKeyHash()(key);
 
-	if (pipeline.pipeline == VK_NULL_HANDLE) {
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "PS2::GetPipeline Cache miss, creating pipeline for hash: %llx - %s", hash, key.ToString().c_str());
+	if (PS2_Internal::graphicsPipelines.find(key) == PS2_Internal::graphicsPipelines.end()) {
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "PS2::GetPipeline Cache miss, creating pipeline for hash: {:x} - {}", hash, key.ToString().c_str());
 
-		pipeline = PS2_Internal::CreateGraphicsPipelinePCSX2(key);
-		pipeline.key.debugData.hash = PipelineKeyHash()(key);
+		PS2_Internal::graphicsPipelines[key] = PS2_Internal::CreateGraphicsPipelinePCSX2(key);
+		PS2_Internal::graphicsPipelines[key].key.debugData.hash = PipelineKeyHash()(key);
+
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "PS2::GetPipeline Created 0x{:x}", (uintptr_t)&PS2_Internal::graphicsPipelines[key]);
 	}
+
+	auto& pipeline = PS2_Internal::graphicsPipelines[key];
 
 	assert(pipeline.key.debugData.hash == hash);
 	assert(key.pipelineSelector.bs.key == pipeline.key.pipelineSelector.bs.key);
@@ -294,15 +296,40 @@ void Renderer::Pipeline::CreateDescriptorSetLayouts()
 	descriptorSetLayouts.resize(descriptorSetLayoutBindings.size());
 
 	for (auto& layoutSet : descriptorSetLayoutBindings) {
-		auto descriptorSet = Renderer::CollectDescriptorSets(layoutSet.second);
+		const int layoutSetIndex = layoutSet.first;
+
+		const auto& layoutMap = layoutSet.second;
+
+		auto descriptorSet = Renderer::CollectDescriptorSets(layoutMap);
 
 		VkDescriptorSetLayoutCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		createInfo.bindingCount = descriptorSet.size();
 		createInfo.pBindings = descriptorSet.data();
 
-		if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, nullptr, &descriptorSetLayouts[layoutSet.first]) != VK_SUCCESS) {
+		if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, nullptr, &descriptorSetLayouts[layoutSetIndex]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create descriptor set layout!");
+		}
+
+		{
+			int vtxCount = 0;
+			int geomCount = 0;
+			int fragCount = 0;
+
+			if (layoutMap.find(EBindingStage::Vertex) != layoutMap.end()) {
+				vtxCount = layoutMap.at(EBindingStage::Vertex).size();
+			}
+
+			if (layoutMap.find(EBindingStage::Geometry) != layoutMap.end()) {
+				geomCount = layoutMap.at(EBindingStage::Geometry).size();
+			}
+
+			if (layoutMap.find(EBindingStage::Fragment) != layoutMap.end()) {
+				fragCount = layoutMap.at(EBindingStage::Fragment).size();
+			}
+
+			SetObjectName(reinterpret_cast<uint64_t>(descriptorSetLayouts[layoutSetIndex]), VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+				"Pipeline Descriptor Set Layout (set index: %d binding count: %d, [vtx: %d geom: %d frag: %d])", layoutSetIndex, createInfo.bindingCount, vtxCount, geomCount, fragCount);
 		}
 	}
 }
@@ -317,6 +344,8 @@ void Renderer::Pipeline::CreateLayout()
 	if (vkCreatePipelineLayout(GetDevice(), &pipelineLayoutInfo, nullptr, &layout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
+
+	SetObjectName(reinterpret_cast<uint64_t>(layout), VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Renderer Pipeline Layout (Layout Count: %d)", pipelineLayoutInfo.setLayoutCount);
 }
 
 void Renderer::Pipeline::CreateDescriptorPool()
@@ -339,6 +368,10 @@ void Renderer::Pipeline::CreateDescriptorSets()
 		descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 		if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate descriptor sets!");
+		}
+
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			SetObjectName(reinterpret_cast<uint64_t>(descriptorSets[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "Pipeline descriptor set %d", i);
 		}
 	}
 }

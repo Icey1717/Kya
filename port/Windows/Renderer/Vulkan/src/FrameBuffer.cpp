@@ -326,20 +326,16 @@ PS2::FrameBuffer PS2::FrameBuffer::Create(Vector2i size, int FBP) {
 	newBuffer.FBP = FBP;
 
 	CreateRenderPass(newBuffer.clearPass, true);
-	SetObjectName("Framebuffer Clear Pass", (uint64_t)newBuffer.clearPass, VK_OBJECT_TYPE_RENDER_PASS);
+	SetObjectName(reinterpret_cast<uint64_t>(newBuffer.clearPass), VK_OBJECT_TYPE_RENDER_PASS, "Framebuffer Clear Pass (%d, %d) FBP: %d", size.x, size.y, FBP);
 
 	CreateRenderPass(newBuffer.renderPass, false);
-	SetObjectName("Framebuffer Render Pass", (uint64_t)newBuffer.renderPass, VK_OBJECT_TYPE_RENDER_PASS);
+	SetObjectName(reinterpret_cast<uint64_t>(newBuffer.renderPass), VK_OBJECT_TYPE_RENDER_PASS, "Framebuffer Render Pass (%d, %d) FBP: %d", size.x, size.y, FBP);
 
 	newBuffer.SetupBase(size, newBuffer.renderPass, true);
 
 	newBuffer.CreateFinalPassPipeline();
 
-	{
-		char buff[256];
-		sprintf_s(buff, 256, "Framebuffer Object (%d, %d) FBP: %d", size.x, size.y, FBP);
-		SetObjectName(buff, (uint64_t)newBuffer.framebuffer, VK_OBJECT_TYPE_FRAMEBUFFER);
-	}
+	SetObjectName(reinterpret_cast<uint64_t>(newBuffer.framebuffer), VK_OBJECT_TYPE_FRAMEBUFFER, "Framebuffer Object (%d, %d) FBP: %d", size.x, size.y, FBP);
 
 	newBuffer.ExecuteClearPass();
 

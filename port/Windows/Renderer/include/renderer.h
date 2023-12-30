@@ -12,8 +12,13 @@ typedef struct VkCommandBuffer_T* VkCommandBuffer;
 struct VkExtent2D;
 
 namespace PS2 {
+	struct DrawBufferBase {
+		virtual size_t GetIndexTail() const = 0;
+		virtual void ResetAfterDraw() = 0;
+	};
+
 	template<typename VertexType, typename IndexType>
-	struct DrawBufferData {
+	struct DrawBufferData : public DrawBufferBase {
 
 		void Init(const int vertexCount, const int indexCount) {
 			vertex.buff = (VertexType*)_aligned_malloc(sizeof(VertexType) * vertexCount, 32);
@@ -53,7 +58,11 @@ namespace PS2 {
 			vertex.head = vertex.tail = vertex.next; // remove unused vertices from the end of the vertex buffer
 		}
 
-		void ResetAfterDraw() {
+		virtual size_t GetIndexTail() const {
+			return index.tail;
+		}
+
+		virtual void ResetAfterDraw() {
 			index.tail = 0;
 			vertex.head = 0;
 			vertex.tail = 0;
@@ -133,9 +142,11 @@ namespace Renderer
 	void Present();
 	void SetScissor(int x, int y, uint32_t width, uint32_t height);
 	void Draw();
-	void Draw(PS2::DrawBufferData<GSVertex, uint16_t>& drawBuffer, TextureData& textureData, PS2::GSState& state);
+	void Draw(PS2::DrawBufferBase& drawBuffer);
+	void Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, PS2::GSState& state, bool bHardware = false);
 
 	PS2::DrawBufferData<GSVertex, uint16_t>& GetDefaultDrawBuffer();
+	PS2::DrawBufferData<GSVertexUnprocessed, uint16_t>& GetHardwareDrawBuffer();
 
 	void SetVertexSkip(uint32_t inSkip);
 

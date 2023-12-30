@@ -1227,25 +1227,27 @@ void PS2::GSTexImage::Cleanup()
 
 const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::Pipeline& pipeline)
 {
-	auto& gsDescriptor = descriptorMap[&pipeline];
+	auto& descriptorSets = descriptorMap[&pipeline];
 
 	// Create descriptor pool based on the descriptor set count from the shader
-	Renderer::CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, gsDescriptor.descriptorPool);
+	Renderer::CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorSets.descriptorPool);
 
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.descriptorSetLayouts[0]);
 
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = gsDescriptor.descriptorPool;
+	allocInfo.descriptorPool = descriptorSets.descriptorPool;
 	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	allocInfo.pSetLayouts = layouts.data();
 
-	gsDescriptor.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, gsDescriptor.descriptorSets.data()) != VK_SUCCESS) {
+	descriptorSets.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.descriptorSets.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		SetObjectName(reinterpret_cast<uint64_t>(descriptorSets.descriptorSets[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "GSTexImage descriptor set %d", i);
+
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = imageView;
@@ -1263,21 +1265,26 @@ const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::P
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
 
-		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(gsDescriptor.descriptorSets[i], pipeline.descriptorSetLayoutBindings);
+		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings);
 
 		if (descriptorWrites.size() > 0) {
 			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 		}
 	}
 
-	return gsDescriptor;
+	return descriptorSets;
 }
 
 const PS2::GSTexDescriptor& PS2::GSTexImage::GetDescriptorSets(const Renderer::Pipeline& pipeline)
 {
 	auto& gsDescriptor = descriptorMap[&pipeline];
 
+	Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Looking for descriptor sets this: 0x{:x}, pipeline: 0x{:x}, Found: {}", (uintptr_t)this, (uintptr_t)&pipeline, gsDescriptor.descriptorPool != VK_NULL_HANDLE);
+	Log::GetInstance().ForceFlush();
+
 	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
+		Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
+		Log::GetInstance().ForceFlush();
 		return AddDescriptorSets(pipeline);
 	}
 

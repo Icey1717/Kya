@@ -98,7 +98,7 @@ void VulkanImage::UpdateImage(char* pixelData)
 void VulkanImage::CreateTextureImage(char* pixelData) {
 	CreateImage(texWidth, texHeight, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 	UpdateImage(pixelData);
-	SetObjectName("Texture Color Image", (uint64_t)textureImage, VK_OBJECT_TYPE_IMAGE);
+	SetObjectName(reinterpret_cast<uint64_t>(textureImage), VK_OBJECT_TYPE_IMAGE, "Texture Color Image (%d, %d)", texWidth, texHeight);
 }
 
 void VulkanImage::CreateTextureImageView() {

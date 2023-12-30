@@ -28,6 +28,8 @@ set (SOURCES
 	"Vulkan/src/VulkanReflect.cpp"
 	"Vulkan/src/VulkanPS2.h"
 	"Vulkan/src/VulkanPS2.cpp"
+	"Vulkan/src/VulkanHardwarePS2.h"
+	"Vulkan/src/VulkanHardwarePS2.cpp"
 	"Vulkan/src/VulkanShader.h"
 	"Vulkan/src/VulkanShader.cpp"
 	"Vulkan/src/FrameBuffer.h"

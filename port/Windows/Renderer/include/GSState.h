@@ -93,7 +93,7 @@ namespace PS2 {
 
 		bool bTexSet = false;
 
-		inline bool GSState::IsOpaque() const
+		inline bool GSState::IsOpaque()
 		{
 			if (PRIM.AA1)
 				return false;

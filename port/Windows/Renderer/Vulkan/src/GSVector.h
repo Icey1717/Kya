@@ -2655,7 +2655,7 @@ public:
 		*this = GSVector4(v) + (m_x4f800000 & GSVector4::cast(v.sra32(31)));
 	}
 
-	__forceinline explicit GSVector4(const GSVector4i& v);
+	//__forceinline explicit GSVector4(const GSVector4i& v);
 
 	__forceinline static GSVector4 cast(const GSVector4i& v);
 

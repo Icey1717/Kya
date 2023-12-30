@@ -26,6 +26,7 @@
 #include "VulkanCommands.h"
 #include "FrameBuffer.h"
 #include "log.h"
+#include "VulkanHardwarePS2.h"
 
 //constexpr uint32_t WIDTH = 640;
 //constexpr uint32_t HEIGHT = 480;
@@ -638,7 +639,7 @@ private:
 			throw std::runtime_error("failed to create render pass!");
 		}
 
-		SetObjectName("Global Render Pass", (uint64_t)renderPass, VK_OBJECT_TYPE_RENDER_PASS);
+		SetObjectName(reinterpret_cast<uint64_t>(renderPass), VK_OBJECT_TYPE_RENDER_PASS, "Global Render Pass");
 	}
 
 	void createGraphicsPipeline() {
@@ -715,6 +716,8 @@ private:
 		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
+
+		SetObjectName(reinterpret_cast<uint64_t>(pipelineLayout), VK_OBJECT_TYPE_PIPELINE_LAYOUT, "Image Renderer Pipeline Layout");
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -1391,6 +1394,7 @@ public:
 		if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT && messageType > VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
 			std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 			Log::GetInstance().AddLog(LogLevel::Info, "Validation", pCallbackData->pMessage);
+			Log::GetInstance().ForceFlush();
 		}
 		return VK_FALSE;
 	}
@@ -1491,15 +1495,30 @@ const VkExtent2D& GetSwapchainExtent()
 	return app.GetSwapchainExtent();
 }
 
-void SetObjectName(const char* name, const uint64_t objHandle, const VkObjectType objType)
+void SetObjectName(const uint64_t objHandle, const VkObjectType objType, const char* format, ...)
 {
 #ifdef _DEBUG
+	// Use a buffer and vsnprintf to handle printf-style arguments
+	va_list args;
+	va_start(args, format);
+
+	// Determine the size of the buffer needed
+	size_t size = std::vsnprintf(nullptr, 0, format, args) + 1;
+
+	// Allocate a buffer
+	std::unique_ptr<char[]> buffer(new char[size]);
+
+	// Format the string into the buffer
+	std::vsnprintf(buffer.get(), size, format, args);
+
+	va_end(args);
+
 	// Set the debug name using vkSetDebugUtilsObjectNameEXT
 	VkDebugUtilsObjectNameInfoEXT objectNameInfo{};
 	objectNameInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
 	objectNameInfo.objectType = objType;
-	objectNameInfo.objectHandle = (uint64_t)objHandle;
-	objectNameInfo.pObjectName = name;
+	objectNameInfo.objectHandle = objHandle;
+	objectNameInfo.pObjectName = buffer.get();
 
 	static auto pvkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(GetInstance(), "vkSetDebugUtilsObjectNameEXT");
 	assert(pvkSetDebugUtilsObjectNameEXT);

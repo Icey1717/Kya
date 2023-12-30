@@ -280,6 +280,8 @@ else()
 	list(APPEND main_src	
 		"${src_root}/port/vu1_emu.cpp"
 		"${src_root}/port/vu1_emu.h"
+		"${src_root}/port/hardware_draw.cpp"
+		"${src_root}/port/hardware_draw.h"
 	)
 endif()
 

@@ -430,32 +430,4 @@ namespace Vulkan
 	// clang-format on
 
 #endif
-
-	static inline void SetObjectName(
-		VkDevice device, void* object_handle, VkObjectType object_type, const char* format, va_list ap)
-	{
-#ifdef ENABLE_VULKAN_DEBUG_OBJECTS
-		if (!vkSetDebugUtilsObjectNameEXT)
-		{
-			return;
-		}
-
-		const std::string str(StringUtil::StdStringFromFormatV(format, ap));
-		const VkDebugUtilsObjectNameInfoEXT nameInfo{VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT, nullptr,
-			object_type, reinterpret_cast<uint64_t>(object_handle), str.c_str()};
-		vkSetDebugUtilsObjectNameEXT(device, &nameInfo);
-#endif
-	}
-
-	template <typename T>
-	static inline void SetObjectName(VkDevice device, T object_handle, const char* format, ...)
-	{
-#ifdef ENABLE_VULKAN_DEBUG_OBJECTS
-		std::va_list ap;
-		va_start(ap, format);
-		SetObjectName(device, reinterpret_cast<void*>((typename VkObjectTypeMap<T>::type)object_handle),
-			VkObjectTypeMap<T>::value, format, ap);
-		va_end(ap);
-#endif
-	}
 } // namespace Vulkan

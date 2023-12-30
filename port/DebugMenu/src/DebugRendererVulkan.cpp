@@ -98,7 +98,7 @@ namespace DebugRendererImgui {
 			throw std::runtime_error("failed to create render pass!");
 		}
 
-		SetObjectName("Imgui Render Pass", (uint64_t)gImguiRenderPass, VK_OBJECT_TYPE_RENDER_PASS);
+		SetObjectName(reinterpret_cast<uint64_t>(gImguiRenderPass), VK_OBJECT_TYPE_RENDER_PASS, "Imgui Render Pass");
 
 		ImGui::CreateContext();
 		ImGui::StyleColorsDark();
