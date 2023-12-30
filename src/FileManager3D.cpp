@@ -4,14 +4,21 @@
 #include "edList.h"
 #include "port/pointer_conv.h"
 
-FileManager3D::FileManager3D()
+#ifdef PLATFORM_WIN
+#include "port.h"
+#endif
+
+#include "edDlist.h"
+#include "CameraViewManager.h"
+
+C3DFileManager::C3DFileManager()
 {
 	this->pParticleInfoArray_0x50 = new ParticleInfo[0x600];
 	Level_ClearInternalData();
 	return;
 }
 
-void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
+void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 {
 	int iVar1;
 	int iVar2;
@@ -49,6 +56,8 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 		iVar2 = pMemoryStream->GetS32();
 		pMVar4 = this->pMeshDataArray + iVar1;
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
+			NAME_NEXT_OBJECT("Level Mesh %d", iVar2);
+
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
 			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
 		}
@@ -61,7 +70,7 @@ void FileManager3D::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
-int FileManager3D::InstanciateG2D(int index)
+int C3DFileManager::InstanciateG2D(int index)
 {
 	ParticleInfo* pPVar1;
 	int iVar2;
@@ -86,12 +95,12 @@ int FileManager3D::InstanciateG2D(int index)
 	return iVar2;
 }
 
-TextureInfo* FileManager3D::GetCommonSectorG2D()
+TextureInfo* C3DFileManager::GetCommonSectorG2D()
 {
 	return this->pTextureInfoArray + this->levelSectorTextureIndex;
 }
 
-void FileManager3D::Level_ClearInternalData()
+void C3DFileManager::Level_ClearInternalData()
 {
 	void* pvVar1;
 	ParticleInfo* pPVar2;
@@ -142,7 +151,7 @@ void FileManager3D::Level_ClearInternalData()
 	return;
 }
 
-void FileManager3D::Level_Create(ByteCode* pMemoryStream)
+void C3DFileManager::Level_Create(ByteCode* pMemoryStream)
 {
 	int iVar1;
 	Mesh* pMVar2;
@@ -172,14 +181,22 @@ void FileManager3D::Level_Create(ByteCode* pMemoryStream)
 	iVar1 = 0;
 	if (0 < this->textureCount) {
 		do {
-			iVar1 = iVar1 + 1;
 			this->pTextureInfoArray[iVar1].pFileBuffer = NULL;
+			iVar1 = iVar1 + 1;
 		} while (iVar1 < this->textureCount);
 	}
 	return;
 }
 
-void FileManager3D::SetupBackground(edNODE* pNode)
+void C3DFileManager::HideCommonBackground()
+{
+	if (this->pBackgroundNode != (edNODE*)0x0) {
+		ed3DHierarchyNodeSetRenderOn(CScene::_scene_handleA, this->pBackgroundNode);
+	}
+	return;
+}
+
+void C3DFileManager::SetupBackground(edNODE* pNode)
 {
 	edNODE* pPrevNode;
 	MeshData_OBJ_Internal* piVar2;
@@ -198,17 +215,82 @@ void FileManager3D::SetupBackground(edNODE* pNode)
 				ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(piVar2->p3DStrip);
 
 				pStrip->pDMA_Matrix.flagsA = 0x200;
-
-				//ed_dma_matrix* pMatrix = (ed_dma_matrix*)LOAD_SECTION(pStrip->pDMA_Matrix);
-				//
-				//pMatrix->
-				//
-				//IMPLEMENTATION_GUARD_LOG(
-				//*(undefined2*)(piVar2[7] + 0x34) = 0x200;)
 			}
 			pPrevNode = pPrevNode->pPrev;
 		}
 	}
 	ed3DHierarchyNodeSetSetup(pNode, &this->backgroundHierarchySetup);
 	return;
+}
+
+void C3DFileManager::ManageBackground(edNODE* pNode, uint flags)
+{
+	ed_3d_hierarchy* peVar1;
+	edF32MATRIX4* peVar2;
+	CCameraManager* pCVar3;
+	edNODE* peVar4;
+	uint uVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+
+	pCVar3 = CScene::ptable.g_CameraManager_0045167c;
+	if (((pNode != (edNODE*)0x0) && ((flags & 1) != 0)) && (peVar1 = (ed_3d_hierarchy*)pNode->pData, peVar1 != (ed_3d_hierarchy*)0x0)) {
+		uVar5 = (uint)(ushort)peVar1->subMeshParentCount_0xac;
+		if (uVar5 == 0) {
+			(peVar1->transformA).rowT = ((CScene::ptable.g_CameraManager_0045167c)->transformationMatrix).rowT;
+		}
+		else {
+			peVar4 = pNode->pPrev;
+			if (uVar5 != 0) {
+				peVar2 = &(CScene::ptable.g_CameraManager_0045167c)->transformationMatrix;
+				do {
+					peVar1 = (ed_3d_hierarchy*)peVar4->pData;
+					if (peVar1->hash.number != 0x4c464e99b2a49e87) {
+						(peVar1->transformA).rowT = (pCVar3->transformationMatrix).rowT;
+					}
+					uVar5 = uVar5 - 1;
+					peVar4 = peVar4->pPrev;
+				} while (uVar5 != 0);
+			}
+		}
+	}
+	return;
+}
+
+ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
+{
+	Mesh* pMVar1;
+	int iStack4;
+
+	pMVar1 = this->pMeshDataArray + meshIndex;
+	if (pMVar1->pTextureInfo == (TextureInfo*)0x0) {
+		NAME_NEXT_OBJECT("Common (%d, %d)", meshIndex, textureIndex);
+
+		pMVar1->pTextureInfo = this->pTextureInfoArray + textureIndex;
+		ed3DInstallG3D(pMVar1->pFileData, pMVar1->fileLength, 0, &iStack4, &pMVar1->pTextureInfo->pManager, 0xc,
+			&pMVar1->meshInfo);
+	}
+	return &pMVar1->meshInfo;
+}
+
+ed_g2d_manager* C3DFileManager::GetActorsCommonMaterial(int index)
+{
+	return &this->pTextureInfoArray[index].pManager;
+}
+
+ed_g2d_manager* C3DFileManager::GetActorsCommonMeshMaterial(int index)
+{
+	return &this->pMeshDataArray[index].pTextureInfo->pManager;
+}
+
+ed_g2d_manager* C3DFileManager::LoadDefaultTexture_001a65d0()
+{
+	TextureInfo* pTVar1;
+
+	pTVar1 = (TextureInfo*)0x0;
+	if (CScene::_pinstance->defaultTextureIndex_0x2c != -1) {
+		pTVar1 = this->pTextureInfoArray + CScene::_pinstance->defaultTextureIndex_0x2c;
+	}
+	return &pTVar1->pManager;
 }

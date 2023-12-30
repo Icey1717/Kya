@@ -10,6 +10,18 @@
 #include <array>
 #include "UniformBuffer.h"
 #include "log.h"
+#include "TextureCacheRowOffset.h"
+
+static const int* rowOffset[8] = {
+	rowOffset32,
+	rowOffset32,
+	rowOffset32,
+	rowOffset32,
+	rowOffset32,
+	rowOffset32,
+	rowOffset32,
+	rowOffset32,
+};
 
 #define RESTRICT __restrict__
 
@@ -616,6 +628,7 @@ namespace PS2_Internal {
 		const int dstSmallBlockHeight = 16;
 		int xBlocks = std::min<int>(dstBigBlockSize, width) / dstSmallBlockWidth;
 		int yBlocks = std::min<int>(dstBigBlockSize, height) / dstSmallBlockHeight;
+
 		int _offset = dstpitch * (dstSmallBlockHeight);
 
 		const int sourceBlockStride = blockSize * dstSmallBlockWidth;
@@ -937,6 +950,51 @@ namespace PS2_Internal {
 		ExpandCLUT64_T32(s2, s0, s1, s2, s3, &d[64]);
 		ExpandCLUT64_T32(s3, s0, s1, s2, s3, &d[96]);
 	}
+
+	void WriteImageX(int psm, int len, void* src, uint32_t* dst, int rw, int rh)
+	{
+		if (len <= 0) return;
+
+		const uint8_t* pb = (uint8_t*)src;
+		const uint16_t* pw = (uint16_t*)src;
+		const uint32_t* pd = (uint32_t*)src;
+
+		//uint32 bp = BITBLTBUF.DBP;
+		//uint32 bw = BITBLTBUF.DBW;
+		//psm_t* psm = &m_psm[BITBLTBUF.DPSM];
+
+		int x = 0;
+		int y = 0;
+		int sx = (int)0;
+		int ex = sx + (int)rw;
+
+		switch (psm)
+		{
+		case 0x20:
+
+			len /= 4;
+
+			while (len > 0)
+			{
+				constexpr int yOffsets[8] = {0x0, 0x2, 0x10, 0x12, 0x20, 0x22, 0x30, 0x32};
+
+				assert(y < 8);
+
+				uint32_t addr = yOffsets[y];
+				const int* offset = rowOffset[y & 7];
+
+				for (; len > 0 && x < ex; len--, x++, pd++)
+				{
+					dst[addr + offset[x]] = *pd;
+					//WritePixel32(addr + offset[x], *pd);
+				}
+
+				if (x >= ex) { x = sx; y++; }
+			}
+
+			break;
+		}
+	}
 }
 
 PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
@@ -995,7 +1053,12 @@ void PS2::GSTexValue::UploadImage()
 
 	uint8_t* const pPaletteWriteData = paletteImage.writeBuffer.data();
 
-	WriteImageBlock<0, 8, 8, 32>(0, textureImageData.readWidth, 0, textureImageData.readHeight, (uint8_t*)textureImageData.pImage, pWriteData, textureImageData.readWidth * 4);
+	if (textureImageData.readHeight < 8) {
+		WriteImageX(32, 0x40, textureImageData.pImage, (uint32_t*)pWriteData, textureImageData.readWidth, textureImageData.readHeight);
+	}
+	else {
+		WriteImageBlock<0, 8, 8, 32>(0, textureImageData.readWidth, 0, textureImageData.readHeight, (uint8_t*)textureImageData.pImage, pWriteData, textureImageData.readWidth * 4);
+	}
 	
 	if (paletteImage.imageData.readHeight < 8) {
 		WriteImageTopBottom<0, 8, 8, 16>(0, paletteImage.imageData.readWidth, 0, paletteImage.imageData.readHeight, (uint8_t*)paletteImage.imageData.pImage, pPaletteWriteData, paletteImage.imageData.readWidth * 4);
@@ -1048,18 +1111,25 @@ void PS2::GSTexValue::UploadImage()
 		}
 	}
 	else if (textureImageData.bpp == 8) {
-		for (int y = 0; y < yBlocks; y++) {
-			for (int x = 0; x < xBlocks; x++) {
-				const int dstOffset = (dstBigBlockSize * 4 * x) + (dstBigBlockSize * dstBigBlockSize * 8 * y);
-				ReadTextureBlock8(pWriteData + (x * 0x800) + (y * 0x1000 * 0x8)
-					, pReadData + dstOffset
-					, textureImageData.canvasWidth * 4
-					, paletteImage
-					, textureImageData.canvasWidth
-					, textureImageData.canvasHeight
-					, xBlocks
-					, yBlocks
-					, ((uint8_t*)debugData.paletteIndexes.data()) + dstOffset);
+		if (textureImageData.readHeight < 8) {
+			assert(textureImageData.readWidth == 4 && textureImageData.readHeight == 4);
+			debugData.paletteIndexes.resize(16 * 16);
+			ReadAndExpandBlock8_32(pWriteData, pReadData, 0x20, paletteImage, (uint8_t*)debugData.paletteIndexes.data());
+		}
+		else {
+			for (int y = 0; y < yBlocks; y++) {
+				for (int x = 0; x < xBlocks; x++) {
+					const int dstOffset = (dstBigBlockSize * 4 * x) + (dstBigBlockSize * dstBigBlockSize * 8 * y);
+					ReadTextureBlock8(pWriteData + (x * 0x800) + (y * 0x1000 * 0x8)
+						, pReadData + dstOffset
+						, textureImageData.canvasWidth * 4
+						, paletteImage
+						, textureImageData.canvasWidth
+						, textureImageData.canvasHeight
+						, xBlocks
+						, yBlocks
+						, ((uint8_t*)debugData.paletteIndexes.data()) + dstOffset);
+				}
 			}
 		}
 	}
@@ -1140,8 +1210,6 @@ void PS2::GSTexImage::CreateResources(const bool bPalette)
 	if (bPalette) {
 		CreateSampler(true);
 	}
-
-	constantBuffer.CreateUniformBuffers();
 }
 
 
@@ -1185,19 +1253,13 @@ const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::P
 		assert(sampler != VK_NULL_HANDLE);
 		imageInfo.sampler = sampler;
 
-		VkDescriptorBufferInfo vertexConstantBuffer{};
-		vertexConstantBuffer.buffer = constantBuffer.GetVertexConstantUniformBuffer(i);
-		vertexConstantBuffer.offset = 0;
-		vertexConstantBuffer.range = sizeof(VSConstantBuffer);
 
-		VkDescriptorBufferInfo pixelConstantBuffer{};
-		pixelConstantBuffer.buffer = constantBuffer.GetPixelConstantUniformBuffer(i);
-		pixelConstantBuffer.offset = 0;
-		pixelConstantBuffer.range = sizeof(PSConstantBuffer);
 
 		Renderer::DescriptorWriteList writeList;
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &pixelConstantBuffer, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		const VkDescriptorBufferInfo vertexDescBufferInfo = PS2::GetVertexUniformBuffer().GetDescBufferInfo(GetCurrentFrame());
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		const VkDescriptorBufferInfo fragmentDescBufferInfo = PS2::GetPixelUniformBuffer().GetDescBufferInfo(GetCurrentFrame());
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
 
@@ -1314,16 +1376,4 @@ PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX, Renderer::T
 PS2::TextureCache& PS2::GetTextureCache()
 {
 	return gTextureCache;
-}
-
-void PS2::GSTexImageConstantBuffer::CreateUniformBuffers()
-{
-	vertexConstBuffer.Init();
-	pixelConstBuffer.Init();
-}
-
-void PS2::GSTexImageConstantBuffer::UpdateUniformBuffers()
-{
-	vertexConstBuffer.Update(GetCurrentFrame());
-	pixelConstBuffer.Update(GetCurrentFrame());
 }

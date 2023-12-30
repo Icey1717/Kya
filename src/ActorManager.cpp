@@ -1,6 +1,32 @@
 #include "ActorManager.h"
 #include "MemoryStream.h"
 #include "CameraViewManager.h"
+#include "ActorFactory.h"
+#include "SectorManager.h"
+
+void CActorManager::Level_Init()
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+
+	IMPLEMENTATION_GUARD_LOG(
+	CActorManager::PrecomputeSectorsBoundindBoxes(this);
+	CCluster::Init(&this->cluster, this->actorCount, this->pActorManagerSectorArray, 0););
+
+	for (int i = 0; i < this->actorCount; i++) {
+		this->aActors[i]->PreInit();
+	}
+
+	for (int i = 0; i < this->actorCount; i++) {
+		this->aActors[i]->Init();
+	}
+
+	if (((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID == -1) {
+		this->Level_SectorChange(-1, -1);
+	}
+	return;
+}
 
 void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 {
@@ -17,51 +43,65 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 	//ManagerFunctionData** ppMVar9;
 	uint uVar10;
 	int iVar11;
-	Actor* pKVar12;
+	CActor* pKVar12;
 	int iVar12;
 	uint uVar13;
 	Actor* pActorBase;
 	Actor* iVar2;
 
 	actorCount = pMemoryStream->GetS32();
-	this->actorCount_0x58 = actorCount;
-	if (this->actorCount_0x58 < 1) {
+	this->actorCount = actorCount;
+
+	ACTOR_LOG(LogLevel::Info, "CActorManager::Level_AddAll count: {}", actorCount);
+
+	if (this->actorCount < 1) {
 		this->aActors = (CActor**)0x0;
 		this->componentsToUpdate = (void**)0x0;
 		this->elementArrayStart = (void**)0x0;
 	}
 	else {
-		papAVar3 = (new void*)[this->actorCount_0x58 * 3];
+		papAVar3 = new void*[this->actorCount * 3];
 		this->aActors = (CActor**)papAVar3;
-		this->componentsToUpdate = (void**)(this->aActors + this->actorCount_0x58);
-		this->elementArrayStart = (void**)(this->componentsToUpdate + this->actorCount_0x58);
+		this->componentsToUpdate = (void**)(this->aActors + this->actorCount);
+		this->elementArrayStart = (void**)(this->componentsToUpdate + this->actorCount);
 	}
+
+	ACTOR_CLASS lastClass;
+
 	for (; 0 < actorCount; actorCount = actorCount + -1) {
-		IMPLEMENTATION_GUARD(
-		ByteCode::GetChunk(pMemoryStream);
-		iVar11 = ByteCode::GetS32(pMemoryStream);
-		uVar13 = ByteCode::GetU32(pMemoryStream);
-		/* Get the type data from the db. */
-		ppMVar9 = &this->pVTable + uVar13 * 4;
-		pMVar1 = ppMVar9[0x26];
-		ppMVar9[0x26] = (ManagerFunctionData*)((int)&pMVar1->field_0x0 + 1);
-		pKVar12 = (Actor*)((int)&ppMVar9[0x24]->field_0x0 + (int)pMVar1 * (int)ppMVar9[0x27]);
-		(pKVar12->actorBase).data.index_0x20 = iVar11;
-		(pKVar12->actorBase).data.typeID = uVar13;
-		(*(code*)((pKVar12->actorBase).pVTable)->deserializeFunc)();
-		(*this->aActors)[iVar11] = (Actor*)pKVar12;
-		)
+
+		pMemoryStream->GetChunk();
+		iVar11 = pMemoryStream->GetS32();
+		uVar13 = pMemoryStream->GetU32();
+
+		CClassInfo* pClassInfo = &this->aClassInfo[uVar13];
+		CActor* pKVar12 = (CActor*)(((char*)pClassInfo->aActors) + (pClassInfo->allocatedCount * pClassInfo->size));
+
+		pClassInfo->allocatedCount = pClassInfo->allocatedCount + 1;
+
+		pKVar12->actorManagerIndex = iVar11;
+		pKVar12->typeID = (ACTOR_CLASS)uVar13;
+
+		ACTOR_LOG(LogLevel::Info, "{0} type: 0x{1:x} ({1})", actorCount, pKVar12->typeID);
+
+		Log::GetInstance().ForceFlush();
+
+		pKVar12->Create(pMemoryStream);
+
+		lastClass = pKVar12->typeID;
+
+		this->aActors[iVar11] = pKVar12;
 	}
-	if (this->actorCount_0x58 != 0) {
-		IMPLEMENTATION_GUARD(
+	if (this->actorCount != 0) {
+		IMPLEMENTATION_GUARD_LOG(
 		edMemSetFlags(H_MAIN, 0x100);
-		pAlloc = (int*)operator.new.array((long)(this->actorCount_0x58 << 2));
+		pAlloc = (int*)operator.new.array((long)(this->actorCount << 2));
 		edMemClearFlags(H_MAIN, 0x100);
 		actorCount = 0;
 		uVar13 = 0;
 		iVar12 = 0;
 		iVar11 = 0;
-		if (0 < this->actorCount_0x58) {
+		if (0 < this->actorCount) {
 			iVar6 = 0;
 			piVar4 = pAlloc;
 			do {
@@ -90,7 +130,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 				iVar11 = iVar11 + 1;
 				iVar6 = iVar6 + 4;
 				piVar4 = piVar4 + 1;
-			} while (iVar11 < this->actorCount_0x58);
+			} while (iVar11 < this->actorCount);
 		}
 		if (actorCount != 0) {
 			this->count_0x70 = 0;
@@ -117,7 +157,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 			this->pActor_0x84 = (undefined*)piVar4;
 		}
 		actorCount = 0;
-		if (0 < this->actorCount_0x58) {
+		if (0 < this->actorCount) {
 			iVar11 = 0;
 			piVar4 = pAlloc;
 			do {
@@ -146,7 +186,7 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 				actorCount = actorCount + 1;
 				iVar11 = iVar11 + 4;
 				piVar4 = piVar4 + 1;
-			} while (actorCount < this->actorCount_0x58);
+			} while (actorCount < this->actorCount);
 		}
 		edMemFree(pAlloc);)
 	}
@@ -193,8 +233,8 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	fVar7 = (CCameraManager::_gThis->transformationMatrix).dc;
 	this->numElements = 0;
 	pCVar9 = (CActor*)this->aActors;
-	for (iVar8 = this->actorCount_0x58; 0 < iVar8; iVar8 = iVar8 + -1) {
-		IMPLEMENTATION_GUARD(
+	for (iVar8 = this->actorCount; 0 < iVar8; iVar8 = iVar8 + -1) {
+		IMPLEMENTATION_GUARD_LOG(
 		pOtherActor = *(Actor**)pCVar9;
 		iVar1 = (pOtherActor->actorBase).data.field_0x0;
 		if ((iVar1 == newSectorId) || (iVar1 == -1)) {
@@ -213,8 +253,8 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 		}
 		pCVar9 = (CActor*)((int)pCVar9 + 4);)
 	}
-	for (iVar8 = 0; iVar8 < this->actorCount_0x58; iVar8 = iVar8 + 1) {
-		IMPLEMENTATION_GUARD(
+	for (iVar8 = 0; iVar8 < this->actorCount; iVar8 = iVar8 + 1) {
+		IMPLEMENTATION_GUARD_LOG(
 		pCVar9 = this->aActors[iVar8];
 		iVar1 = (pCVar9->data).field_0x0;
 		if ((newSectorId == iVar1) || (oldSectorId == iVar1)) {
@@ -222,4 +262,42 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 		})
 	}
 	return;
+}
+
+void CActorManager::Level_LoadClassesInfo(struct ByteCode* pMemoryStream)
+{
+	int actorCount;
+	int classId;
+	CClassInfo* pClassInfo;
+	int totalCount;
+	CActor* pAVar4;
+
+	actorCount = pMemoryStream->GetS32();
+	if (0 < actorCount) {
+		for (int i = 0; i < actorCount; i++) {
+			classId = pMemoryStream->GetS32();
+			pClassInfo = &this->aClassInfo[classId];
+			totalCount = pMemoryStream->GetS32();
+			pClassInfo->totalCount = totalCount;
+			pClassInfo->allocatedCount = 0;
+			if (pClassInfo->totalCount != 0) {
+				pClassInfo->aActors = CActorFactory::Factory((ACTOR_CLASS)classId, pClassInfo->totalCount, &pClassInfo->size);
+			}
+		}
+	}
+	return;
+}
+
+CActor* CActorManager::GetActorByHashcode(int hashCode)
+{
+	CActor* pCVar1;
+	int iVar1;
+
+	for (int i = 0; i < this->actorCount; i++) {
+		if (hashCode == this->aActors[i]->subObjA->hashCode) {
+			return this->aActors[i];
+		}
+	}
+
+	return (CActor*)0x0;
 }

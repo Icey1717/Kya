@@ -26,6 +26,7 @@
 #include "Actor_Cinematic.h"
 #include "ActorManager.h"
 #include "ActorHero.h"
+#include "Actor.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
 
@@ -380,7 +381,7 @@ void CCinematicManager::WillLoadCinematic()
 			if ((bVar1) &&
 				((pCinematic->baseB == -1 ||
 					(pCinematic->baseB == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID)))) {
-				pCinematic->pActor = (Actor*)0x0;
+				pCinematic->pActor = (CActor*)0x0;
 				if ((pCinematic->flags_0x8 & 0x800) == 0) {
 					piVar2 = pCinematic->field_0x24c;
 					bVar1 = false;
@@ -438,7 +439,7 @@ void CCinematic::InitInternalData()
 	this->cinFileCount = 0;
 	(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 	this->totalCutsceneDelta = 0.0;
-	this->pActor = (Actor*)0x0;
+	this->pActor = (CActor*)0x0;
 	this->pMeshInfo = (ed_g3d_manager*)0x0;
 	this->pMeshTransform = (edNODE*)0x0;
 	this->soundCount_0x2b8 = 0;
@@ -479,12 +480,12 @@ void CCinematic::SetupInternalData()
 	else {
 		this->aActorCinematic = new CActorCinematic[uVar1];
 	}
-	iVar8 = this->field_0x1c + this->actorCinematicCount;
+	iVar8 = this->nonCinematicOnlyActorCount + this->actorCinematicCount;
 	if (iVar8 == 0) {
 		this->ppActorCinematics = (CActorCinematic**)0x0;
 	}
 	else {
-		ppCVar4 = new CActorCinematic*[uVar1];
+		ppCVar4 = new CActorCinematic*[iVar8];
 		this->ppActorCinematics = ppCVar4;
 	}
 	//uVar1 = this->count_0x20;
@@ -670,7 +671,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Actor Cinematic Count {}", this->actorCinematicCount);
 
 	iVar7 = pByteCode->GetS32();
-	this->field_0x1c = iVar7;
+	this->nonCinematicOnlyActorCount = iVar7;
 	uVar5 = pByteCode->GetS32();
 	this->count_0x20 = uVar5;
 	uVar5 = pByteCode->GetS32();
@@ -852,7 +853,7 @@ void CCinematic::Init()
 	piVar2 = this->field_0x24c;
 	iVar6 = 0;
 	if (0 < *piVar2) {
-		IMPLEMENTATION_GUARD(
+		IMPLEMENTATION_GUARD_LOG(
 		iVar5 = 0;
 		do {
 			FUN_00119880((MagicalSwitch_1C*)((int)piVar2 + iVar5 + 4));
@@ -865,7 +866,7 @@ void CCinematic::Init()
 	piVar2 = this->field_0x254;
 	iVar6 = 0;
 	if (0 < *piVar2) {
-		IMPLEMENTATION_GUARD(
+		IMPLEMENTATION_GUARD_LOG(
 		iVar5 = 0;
 		do {
 			FUN_00119880((MagicalSwitch_1C*)((int)piVar2 + iVar5 + 4));
@@ -1041,18 +1042,17 @@ void CCinematic::Start()
 					CScene::_pinstance->PushFogAndClippingSettings(0.0f, &this->streamFogDef);
 				}
 				if (this->pMeshInfo != (ed_g3d_manager*)0x0) {
-					IMPLEMENTATION_GUARD(
-					ed3DScenePushCluster(scene::_scene_handle, this->pMeshInfo);
+					ed3DScenePushCluster(CScene::_scene_handleA, this->pMeshInfo);
 					ed_g3d_hierarchy* pNewHier = ed3DG3DHierarchyGetFromHashcode(this->pMeshInfo, 0x43494d414e5944);
 					if (pNewHier != 0) {
 						ed3DG3DHierarchySetStripShadowReceiveFlag(pNewHier, 0xffff);
 					}
-					pMVar9 = ed3DHierarchyAddToSceneByHashcode(scene::_scene_handle, this->pMeshInfo, 0x43494d414e5944);
+					pMVar9 = ed3DHierarchyAddToSceneByHashcode(CScene::_scene_handleA, this->pMeshInfo, 0x43494d414e5944);
 					this->pMeshTransform = pMVar9;
-					if (this->pMeshTransform != (MeshTransformParent*)0x0) {
+					if (this->pMeshTransform != (edNODE*)0x0) {
 						ed3DSetMeshTransformFlag_002abd80(this->pMeshTransform, 0xffff);
 						ed3DSetMeshTransformFlag_002abff0(this->pMeshTransform, 0xffff);
-					})
+					}
 				}
 				pAVar5 = CActorHero::_gThis;
 				if (CActorHero::_gThis != (CActorHero*)0x0) {
@@ -1076,7 +1076,7 @@ void CCinematic::Start()
 				}
 				uVar3 = this->flags_0x4;
 				if ((uVar3 & 0x280000) != 0) {
-					IMPLEMENTATION_GUARD(
+					IMPLEMENTATION_GUARD_LOG(
 					FUN_00182db0(0x3f800000, (int)CScene::ptable.g_GlobalSoundPtr_00451698, uVar3 & 0x80000, uVar3 & 0x200000);)
 				}
 				if ((this->flags_0x4 & 0x100) == 0) {
@@ -1092,7 +1092,7 @@ void CCinematic::Start()
 					if (0 < (int)uVar3) {
 						iVar15 = 0;
 						do {
-							IMPLEMENTATION_GUARD(
+							IMPLEMENTATION_GUARD_LOG(
 							ppiVar14 = (int**)((int)&this->field_0xa0->field_0x0 + iVar15);
 							piVar10 = *ppiVar14;
 							if (piVar10 != (int*)0x0) {
@@ -1124,9 +1124,9 @@ void CCinematic::Start()
 									bVar7 = true;
 								}
 							}
+							)
 							iVar16 = iVar16 + 1;
 							iVar15 = iVar15 + 0x30;
-							)
 						} while (iVar16 < (int)uVar3);
 					}
 					if ((this->flags_0x4 & 0x1000) != 0) {
@@ -1157,7 +1157,7 @@ void CCinematic::Start()
 				if ((this->flags_0x4 & 2) == 0) {
 					this->flags_0x8 = this->flags_0x8 | 0x1400;
 				}
-				if (this->pActor != (Actor*)0x0) {
+				if (this->pActor != (CActor*)0x0) {
 					IMPLEMENTATION_GUARD(
 					local_14 = 2;
 					local_10 = &local_18;
@@ -1451,7 +1451,7 @@ void CCinematic::Install()
 		this->flags_0x8 = this->flags_0x8 | 1;
 	}
 	this->cineBankLoadStage_0x2b4 = 4;
-	if (this->pActor != (Actor*)0x0) {
+	if (this->pActor != (CActor*)0x0) {
 		IMPLEMENTATION_GUARD();
 		local_4 = &local_10;
 		local_c = 0;
@@ -1646,7 +1646,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 							}
 							else {
 								if (objectType == (edResCollection::RES_TYPE)6) {
-									IMPLEMENTATION_GUARD(
+									IMPLEMENTATION_GUARD_LOG(
 									iVar4 = FUN_001ad730((int)CScene::ptable.g_Manager208_00451694, (int)outFileData.fileBufferStart);
 									piVar7->pData = *(int*)(&pMVar1->field_0x8 + iVar4 * 4);)
 								}
@@ -1686,7 +1686,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 						if (objectType == edResCollection::COT_MeshModel) {
 							IMPLEMENTATION_GUARD(
 							outMeshInfo = 3DFileManager::GetMeshInfoAtAddress_001a6dd0
-							(CScene::ptable.g_FileManager3D_00451664, (int)outFileData.fileBufferStart);)
+							(CScene::ptable.g_C3DFileManager_00451664, (int)outFileData.fileBufferStart);)
 						}
 						else {
 							outMeshInfo = (ed_g3d_manager*)outFileData.fileBufferStart;
@@ -1694,7 +1694,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 								IMPLEMENTATION_GUARD(
 								outMeshInfo = (ed_g3d_manager*)
 									3DFileManager::GetTextureInfoAtAddress_001a6d60
-									(CScene::ptable.g_FileManager3D_00451664, (int)outFileData.fileBufferStart);)
+									(CScene::ptable.g_C3DFileManager_00451664, (int)outFileData.fileBufferStart);)
 							}
 						}
 					}
@@ -1811,7 +1811,7 @@ void CCinematic::Manage()
 		// #HACK
 		//if (this->totalCutsceneDelta < 1.0f) 
 		{
-			//this->totalCutsceneDelta = 7.09;
+			//this->totalCutsceneDelta = 17.09;
 			//this->totalCutsceneDelta = 29.3129902f;
 			IncrementCutsceneDelta();
 		}
@@ -2375,6 +2375,36 @@ void CCinematic::InstallSounds()
 	return;
 }
 
+CActor* CCinematic::GetActorByHashcode(int hashCode)
+{
+	CActor* pCVar1;
+	CActor* pCVar2;
+	int iVar2;
+	int iVar3;
+
+	if (((((this->flags_0x4 & 0x8000) != 0) && (this->field_0x44 != 0)) && (this->pActor != (CActor*)0x0)) &&
+		(hashCode == *(int*)(*(int*)(this->field_0x44 + 0x1c) + 0x28))) {
+		hashCode = this->pActor->subObjA->hashCode;
+	}
+	pCVar2 = (CActor*)0x0;
+	iVar3 = 0;
+	iVar2 = 0;
+	while ((iVar3 < this->loadedActorCinematicListCount && (pCVar2 == (CActor*)0x0))) {
+		pCVar1 = this->ppActorCinematics[iVar3];
+		if (hashCode == pCVar1->subObjA->hashCode) {
+			pCVar2 = pCVar1;
+		}
+		iVar2 = iVar2 + 4;
+		iVar3 = iVar3 + 1;
+	}
+	if (pCVar2 == (CActor*)0x0) {
+		pCVar2 = CScene::ptable.g_ActorManager_004516a4->GetActorByHashcode(hashCode);
+		this->ppActorCinematics[this->loadedActorCinematicListCount] = (CActorCinematic*)pCVar2;
+		this->loadedActorCinematicListCount = this->loadedActorCinematicListCount + 1;
+	}
+	return pCVar2;
+}
+
 bool edCinematic::ExtractVersions(int size, int* cinematicLibraryVersion, int* cinematicCompilerVersion)
 {
 	char* peVar1;
@@ -2440,7 +2470,7 @@ bool CBWitchCin::CreateActor(edCinActorInterface** ppActorInterface, edCinGameIn
 		textureObj = (ed_g2d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshTexture, pTag->bHasTexture, pTag->textureName, (ed_g2d_manager*)0x0, &resourceSize);
 		if (textureObj == (ed_g2d_manager*)0x0) {
 			IMPLEMENTATION_GUARD();
-			//textureObj = Scene::ptable.g_FileManager3D_00451664.LoadDefaultTexture_001a65d0(Scene::ptable.g_FileManager3D_00451664);
+			//textureObj = Scene::ptable.g_C3DFileManager_00451664.LoadDefaultTexture_001a65d0(Scene::ptable.g_C3DFileManager_00451664);
 		}
 		meshInfoObj = (ed_g3d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshModel, pTag->bHasMesh, pTag->meshName, textureObj, &resourceSize);
 	}
@@ -2451,6 +2481,38 @@ bool CBWitchCin::CreateActor(edCinActorInterface** ppActorInterface, edCinGameIn
 	// HACK! Don't write 8 bytes here on win!
 	int* pInt = (int*)ppActorInterface;
 	*pInt = STORE_SECTION(&lVar1->behaviourCinematic.cinActor);
+	return true;
+}
+
+bool CBWitchCin::GetActor(edCinActorInterface** ppActorInterface, int hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag)
+{
+	CActor* pActor;
+	ed_g2d_manager* textureObj;
+	ed_g3d_manager* pMeshManager;
+	CBehaviourCinematic* pCVar1;
+	int iStack4;
+	CCinematic* pCinematic;
+
+	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
+	pActor = pCinematic->GetActorByHashcode(hashCode);
+	pMeshManager = (ed_g3d_manager*)0x0;
+	if ((((pTag->bHasMesh == false) || (pTag->bHasTexture == false)) && (pTag->meshName != (char*)0x0)) &&
+		(pTag->textureName != (char*)0x0)) {
+		textureObj = (ed_g2d_manager*)
+			pCinematic->InstallResource(edResCollection::COT_MeshTexture, (ulong)pTag->bHasTexture, pTag->textureName, (ed_g2d_manager*)0x0, &iStack4);
+		if (textureObj == (ed_g2d_manager*)0x0) {
+			textureObj = CScene::ptable.g_C3DFileManager_00451664->LoadDefaultTexture_001a65d0();
+		}
+		pMeshManager = (ed_g3d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshModel, (ulong)pTag->bHasMesh, pTag->meshName, textureObj, &iStack4);
+	}
+	pCVar1 = (CBehaviourCinematic*)pActor->GetBehaviour(1);
+	pCVar1->cinActor.SetupTransform(&pTag->position, &pTag->heading, &pTag->scale, pMeshManager);
+
+	// HACK! Don't write 8 bytes here on win!
+	int* pInt = (int*)ppActorInterface;
+	*pInt = STORE_SECTION(&pCVar1->cinActor);
+
+	//*ppActorInterface = (edCinActorInterface*)&pCVar1->cinActor;
 	return true;
 }
 
@@ -2582,6 +2644,7 @@ bool CBWCinCam::SetHeadingQuat(float x, float y, float z, float w)
 	local_50.z = z;
 	local_50.w = w;
 	edQuatToMatrix4Hard(&local_50, &eStack64);
+
 	edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, &pCVar1->matrix_0x120);
 	pCinCam = pCVar2->pCameraLocationObj;
 	eStack64.rowT = pCinCam->transformationMatrix.rowT;
@@ -2766,13 +2829,13 @@ bool CBWCinActor::SetHeadingQuat(float x, float y, float z, float w)
 	rotationVector.z = z;
 	rotationVector.w = w;
 	edQuatToMatrix4Hard(&rotationVector, &rotationMatrix);
+
 	edF32Matrix4MulF32Matrix4Hard(&rotationMatrix, &rotationMatrix, &pCinematic->matrix_0x120);
 	edF32Matrix4ToEulerSoft(&rotationMatrix, &newRotation, "XYZ");
-	pParent = this->pParent;
-	pParent->rotationEuler.x = newRotation.x;
-	pParent->rotationEuler.y = newRotation.y;
 
-	pParent->rotationEuler.z = newRotation.z;
+	pParent = this->pParent;
+	pParent->rotationEuler = newRotation;
+
 	SetVectorFromAngles(&pParent->rotationQuat, &pParent->rotationEuler);
 	return true;
 }
@@ -2788,8 +2851,8 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 	char cVar1;
 	char cVar2;
 	CAnimation* pAnimationController;
-	edANM_HDR* uVar3;
-	edANM_HDR* uVar4;
+	edANM_HDR* pDstAnimation;
+	edANM_HDR* pSrcAnimation;
 	edAnmLayer* peVar5;
 	bool bVar6;
 	CCinematic* pCinematic;
@@ -2808,14 +2871,14 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 		pAnimationController = this->pParent->pAnimationController;
 		if (pAnimationController != (CAnimation*)0x0) {
 			pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(0.0f, 0);
-			uVar3 = (edANM_HDR*)LOAD_SECTION(pTag->pHdrB);
-			uVar4 = (edANM_HDR*)LOAD_SECTION(pTag->pHdrA);
-			if ((uVar3 == 0) || (bVar6)) {
+			pDstAnimation = (edANM_HDR*)LOAD_SECTION(pTag->dstAnim.pHdr);
+			pSrcAnimation = (edANM_HDR*)LOAD_SECTION(pTag->srcAnim.pHdr);
+			if ((pDstAnimation == 0) || (bVar6)) {
 				peVar5 = pAnimationController->anmBinMetaAnimator.aAnimData;
-				cVar1 = pTag->field_0x8;
-				fVar8 = pTag->field_0x4;
+				cVar1 = pTag->srcAnim.field_0x8;
+				fVar8 = pTag->srcAnim.field_0x4;
 				peVar5->animPlayState = 0;
-				peVar5->SetRawAnim(uVar4, cVar1 != '\0', 0xfffffffe);
+				peVar5->SetRawAnim(pSrcAnimation, cVar1 != '\0', 0xfffffffe);
 				edAnmStage::ComputeAnimParams(fVar8, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, 0,
 					(uint)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 				(peVar5->currentAnimDesc).state.time_0x10 = local_10[0];
@@ -2823,14 +2886,14 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 			}
 			else {
 				peVar5 = pAnimationController->anmBinMetaAnimator.aAnimData;
-				cVar1 = pTag->field_0x14;
+				cVar1 = pTag->dstAnim.field_0x8;
 				fVar9 = pTag->field_0x18;
-				cVar2 = pTag->field_0x8;
-				fVar8 = pTag->field_0x4;
-				fVar10 = pTag->field_0x10;
+				cVar2 = pTag->srcAnim.field_0x8;
+				fVar8 = pTag->srcAnim.field_0x4;
+				fVar10 = pTag->dstAnim.field_0x4;
 				peVar5->animPlayState = 0;
-				peVar5->SetRawAnim(uVar3, cVar1 != '\0', (uint)(uVar3 + 1));
-				peVar5->SetRawAnim(uVar4, cVar2 != '\0', (uint)(uVar4 + 2));
+				peVar5->SetRawAnim(pDstAnimation, cVar1 != '\0', (uint)(pDstAnimation + 1));
+				peVar5->SetRawAnim(pSrcAnimation, cVar2 != '\0', (uint)(pSrcAnimation + 2));
 				peVar5->field_0xbc = 1.0;
 				peVar5->MorphingStartDT();
 				(peVar5->currentAnimDesc).field_0x4c = 1.0f;
@@ -2873,7 +2936,7 @@ bool CBWCinActor::SetVisibility(bool bVisible)
 	return true;
 }
 
-void CBWCinActor::SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, int intFieldA)
+void CBWCinActor::SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, ed_g3d_manager* pMeshManager)
 {
 	float z;
 	float fVar1;
@@ -2885,7 +2948,7 @@ void CBWCinActor::SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, 
 	this->position = *position;
 	this->heading = *heading;
 	this->scale = *scale;
-	this->field_0x124 = intFieldA;
+	this->pAltModelManager = pMeshManager;
 	return;
 }
 

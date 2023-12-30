@@ -855,9 +855,9 @@ LAB_002e26c8:
 		Level_FillRunInfo(nextLevelId, -1, -1);
 	}
 	else {
-		Level_FillRunInfo(0xe, -1, -1);
-		// #HACK
 		//Level_FillRunInfo(0xe, -1, -1);
+		// #HACK
+		Level_FillRunInfo(0xe, -1, -1);
 	}
 	return;
 }
@@ -869,7 +869,7 @@ bool BnkInstallScene(char* pFileData, int size)
 	/* Origin: 0040e860 */
 	byteCode.Init(pFileData);
 	byteCode.GetChunk();
-	CScene::ptable.g_FileManager3D_00451664->Level_AddAll(&byteCode);
+	CScene::ptable.g_C3DFileManager_00451664->Level_AddAll(&byteCode);
 	CScene::_pinstance->Level_Setup(&byteCode);
 	CScene::ptable.g_WayPointManager_0045169c->Level_AddAll(&byteCode);
 	CScene::ptable.g_PathManager_004516a0->Level_AddAll(&byteCode);
@@ -902,13 +902,13 @@ bool BnkInstallSceneCfg(char* pFileData, int size)
 	pScene->field_0x24 = fVar3;
 	byteCode.GetU32();
 	byteCode.GetU32();
-	CScene::ptable.g_FileManager3D_00451664->Level_Create(&byteCode);
+	CScene::ptable.g_C3DFileManager_00451664->Level_Create(&byteCode);
 	CScene::ptable.g_CollisionManager_00451690->Level_Create(&byteCode);
 	CScene::ptable.g_AnimManager_00451668->Level_Create(&byteCode);
 	byteCode.GetU32();
 	byteCode.GetU32();
 	CScene::ptable.g_SectorManager_00451670->Level_Create(&byteCode);
-	//CActorManager::Level_LoadClassesInfo(Scene::ptable.g_ActorManager_004516a4, &MStack16);
+	CScene::ptable.g_ActorManager_004516a4->Level_LoadClassesInfo(&byteCode);
 	//CCollisionManager::Level_PostCreate(Scene::ptable.g_CollisionManager_00451690);
 	//CFxParticleManager::Level_Create(&BStack16);
 	//ByteCodeDestructor(&MStack16, -1);
@@ -923,15 +923,15 @@ bool BnkInstallSoundCfg(char* pFileData, int param_2)
 
 bool BnkInstallG2D(char* pFileData, int length)
 {
-	FileManager3D* pFVar1;
+	C3DFileManager* pFVar1;
 	int iStack4;
 
-	pFVar1 = CScene::ptable.g_FileManager3D_00451664;
+	pFVar1 = CScene::ptable.g_C3DFileManager_00451664;
 	ed3DInstallG2D
 	(pFileData, length, &iStack4,
 		(ed_g2d_manager*)
-		((CScene::ptable.g_FileManager3D_00451664)->pTextureInfoArray +
-			(CScene::ptable.g_FileManager3D_00451664)->textureLoadedCount), 1);
+		((CScene::ptable.g_C3DFileManager_00451664)->pTextureInfoArray +
+			(CScene::ptable.g_C3DFileManager_00451664)->textureLoadedCount), 1);
 	pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
 	pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
 	return false;
@@ -941,11 +941,11 @@ bool BnkInstallG3D(char* pFileData, int length)
 {
 	int iVar1;
 	Mesh* pMVar2;
-	FileManager3D* pFVar3;
+	C3DFileManager* pFVar3;
 
-	pFVar3 = CScene::ptable.g_FileManager3D_00451664;
-	iVar1 = (CScene::ptable.g_FileManager3D_00451664)->meshLoadedCount;
-	pMVar2 = (CScene::ptable.g_FileManager3D_00451664)->pMeshDataArray;
+	pFVar3 = CScene::ptable.g_C3DFileManager_00451664;
+	iVar1 = (CScene::ptable.g_C3DFileManager_00451664)->meshLoadedCount;
+	pMVar2 = (CScene::ptable.g_C3DFileManager_00451664)->pMeshDataArray;
 	pMVar2[iVar1].fileLength = length;
 	pMVar2[iVar1].pFileData = pFileData;
 	pFVar3->meshLoadedCount = pFVar3->meshLoadedCount + 1;
@@ -1227,9 +1227,15 @@ bool BnkInstallTrack(char* pFileData, int length)
 	return false;
 }
 
-bool NullTypePairFunc(char* pFileData, int param_2)
+bool BnkInstallAstar(char* pFileData, int length)
 {
-	IMPLEMENTATION_GUARD();
+	MY_LOG("BnkInstallAstar\n");
+	return false;
+}
+
+bool BnkInstallLiptracks(char* pFileData, int length)
+{
+	MY_LOG("BnkInstallLiptracks\n");
 	return false;
 }
 
@@ -1251,9 +1257,9 @@ TypePairData TableBankCallback[24] = {
 	{ 0x0A, 1, { BnkInstallTrack, 0, 0, 0, 0, 0 } },
 	{ 0x0B, 1, { BnkInstallCameras, 0, 0, 0, 0, 0 } },
 	{ 0x0C, 1, { NULL, 0, 0, 0, 0, 0 } },
-	{ 0x0F, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } }, // BnkInstallAstar
-	{ 0x10, 1, { BnkInstallLights, 0, 0, 0, 0, 0 } }, // BnkInstallLights
-	{ 0x11, 1, { NullTypePairFunc, 0, 0, 0, 0, 0 } }, // BnkInstallLiptracks
+	{ 0x0F, 1, { BnkInstallAstar, 0, 0, 0, 0, 0 } },
+	{ 0x10, 1, { BnkInstallLights, 0, 0, 0, 0, 0 } },
+	{ 0x11, 1, { BnkInstallLiptracks, 0, 0, 0, 0, 0 } },
 	{ 0x09, 1, { BnkInstallFxCfg, 0, 0, 0, 0, 0 } },
 	{ 0x13, 1, { BnkInstallCinematic, 0, 0, 0, 0, 0 } },
 	{ 0x09, 2, { BnkInstallParticleManager, 0, 0, 0, 0, 0 } },

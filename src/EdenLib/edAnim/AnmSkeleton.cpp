@@ -1,7 +1,7 @@
 #include "AnmSkeleton.h"
 
-edANM_SKELETON _AnmSkeleton = { 0, 0 };
-edAnmSkeleton edAnmSkeleton::TheNullOne = { &_AnmSkeleton };
+edANM_SKELETON _AnmSkeleton = edANM_SKELETON( 0, 0 );
+edAnmSkeleton edAnmSkeleton::TheNullOne = edAnmSkeleton(&_AnmSkeleton);
 
 int edAnmSkeleton::NodeIndexFromID(uint key)
 {

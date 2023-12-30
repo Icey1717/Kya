@@ -12,6 +12,23 @@ namespace ed3D
 	struct MeshData_ANHR;
 }
 
+struct ByteCode;
+struct S_HIERANM_HIER;
+
+struct CSectorHierarchy {
+	ulong field_0x0;
+	CSectorHierarchy* pNext;
+	edNODE* pNode;
+	S_HIERANM_HIER* pHier;
+	uint flags;
+	byte alpha;
+	byte field_0x19;
+	float field_0x20;
+	float field_0x24;
+
+	void Create(ByteCode* pByteCode);
+};
+
 struct StaticEdFileBase {
 	struct edCFiler* pEdFileBase;
 	undefined4 field_0x4;
@@ -30,11 +47,11 @@ public:
 	int sectorIndex;
 	int loadStage_0x8;
 	edCBankBuffer bankObject;
-	ed_g3d_manager meshInfo;
-	ed_g2d_manager textureInfo;
+	ed_g3d_manager sectorMesh;
+	ed_g2d_manager sectorTexture;
 	undefined* pManager100Obj;
-	ed_g3d_manager meshInfoB;
-	ed_g2d_manager textureInfoB;
+	ed_g3d_manager backgroundMesh;
+	ed_g2d_manager backgroundTexture;
 	struct edNODE* pBackgroundNode;
 	struct edNODE* pMeshTransformParent_0x130;
 	float field_0x134;

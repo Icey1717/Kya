@@ -34,7 +34,19 @@ namespace PS2_Internal {
 	}
 
 	PS2::FrameVertexBuffers<Renderer::GSVertex, uint16_t> gVertexBuffers;
+
+	UniformBuffer<PS2::VSConstantBuffer> gVertexConstBuffer;
+	UniformBuffer<PS2::PSConstantBuffer> gPixelConstBuffer;
 }
+
+UniformBuffer<PS2::VSConstantBuffer>& PS2::GetVertexUniformBuffer() {
+	return PS2_Internal::gVertexConstBuffer;
+}
+
+UniformBuffer<PS2::PSConstantBuffer>& PS2::GetPixelUniformBuffer() {
+	return PS2_Internal::gPixelConstBuffer;
+}
+
 
 PS2::GSState& PS2::GetGSState() {
 	return PS2_Internal::GetGSState();
@@ -302,154 +314,6 @@ namespace Renderer {
 		skip |= test.mask() & 15;
 	}
 
-	//void KickVertex(const GSVertex& vtx, GIFReg::GSPrim primReg, uint32_t skip, PS2::BufferData<GSVertex, uint16_t>& drawBuffer)
-	//{
-	//	GS_PRIM prim = (GS_PRIM)primReg.PRIM;
-	//	assert(drawBuffer.vertex.tail < drawBuffer.vertex.maxcount + 3);
-	//
-	//	size_t head = drawBuffer.vertex.head;
-	//	size_t tail = drawBuffer.vertex.tail;
-	//	size_t next = drawBuffer.vertex.next;
-	//	size_t xy_tail = drawBuffer.vertex.xy_tail;
-	//
-	//	drawBuffer.vertex.buff[drawBuffer.vertex.tail] = vtx;
-	//
-	//	UpdateXyTail(vtx, xy_tail, drawBuffer);
-	//
-	//	drawBuffer.vertex.tail = ++tail;
-	//	drawBuffer.vertex.xy_tail = ++xy_tail;
-	//
-	//	size_t n = 0;
-	//
-	//	switch (prim)
-	//	{
-	//	case GS_POINTLIST: n = 1; break;
-	//	case GS_LINELIST: n = 2; break;
-	//	case GS_LINESTRIP: n = 2; break;
-	//	case GS_TRIANGLELIST: n = 3; break;
-	//	case GS_TRIANGLESTRIP: n = 3; break;
-	//	case GS_TRIANGLEFAN: n = 3; break;
-	//	case GS_SPRITE: n = 2; break;
-	//	case GS_INVALID: n = 1; break;
-	//	}
-	//
-	//	size_t m = tail - head;
-	//
-	//	if (m < n)
-	//	{
-	//		return;
-	//	}
-	//
-	//	if (skip == 0 && (prim != GS_TRIANGLEFAN || m <= 4)) // m_vertex.xy only knows about the last 4 vertices, head could be far behind for fan
-	//	{
-	//		TraceUpdateSkip(skip, drawBuffer, prim, xy_tail, m);
-	//	}
-	//
-	//	if (skip != 0)
-	//	{
-	//		switch (prim)
-	//		{
-	//		case GS_POINTLIST:
-	//		case GS_LINELIST:
-	//		case GS_TRIANGLELIST:
-	//		case GS_SPRITE:
-	//		case GS_INVALID:
-	//			drawBuffer.vertex.tail = head; // no need to check or grow the buffer length
-	//			break;
-	//		case GS_LINESTRIP:
-	//		case GS_TRIANGLESTRIP:
-	//			drawBuffer.vertex.head = head + 1;
-	//			// fall through
-	//		case GS_TRIANGLEFAN:
-	//			if (tail >= drawBuffer.vertex.maxcount) assert(false); // in case too many vertices were skipped
-	//			break;
-	//		default:
-	//			__assume(0);
-	//		}
-	//
-	//		return;
-	//	}
-	//
-	//	if (tail >= drawBuffer.vertex.maxcount) assert(false);
-	//
-	//	uint16_t* RESTRICT buff = &drawBuffer.index.buff[drawBuffer.index.tail];
-	//
-	//	switch (prim)
-	//	{
-	//	case GS_POINTLIST:
-	//		buff[0] = head + 0;
-	//		drawBuffer.vertex.head = head + 1;
-	//		drawBuffer.vertex.next = head + 1;
-	//		drawBuffer.index.tail += 1;
-	//		break;
-	//	case GS_LINELIST:
-	//		buff[0] = head + 0;
-	//		buff[1] = head + 1;
-	//		drawBuffer.vertex.head = head + 2;
-	//		drawBuffer.vertex.next = head + 2;
-	//		drawBuffer.index.tail += 2;
-	//		break;
-	//	case GS_LINESTRIP:
-	//		if (next < head)
-	//		{
-	//			drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
-	//			drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
-	//			head = next;
-	//			drawBuffer.vertex.tail = next + 2;
-	//		}
-	//		buff[0] = head + 0;
-	//		buff[1] = head + 1;
-	//		drawBuffer.vertex.head = head + 1;
-	//		drawBuffer.vertex.next = head + 2;
-	//		drawBuffer.index.tail += 2;
-	//		break;
-	//	case GS_TRIANGLELIST:
-	//		buff[0] = head + 0;
-	//		buff[1] = head + 1;
-	//		buff[2] = head + 2;
-	//		drawBuffer.vertex.head = head + 3;
-	//		drawBuffer.vertex.next = head + 3;
-	//		drawBuffer.index.tail += 3;
-	//		break;
-	//	case GS_TRIANGLESTRIP:
-	//		if (next < head)
-	//		{
-	//			drawBuffer.vertex.buff[next + 0] = drawBuffer.vertex.buff[head + 0];
-	//			drawBuffer.vertex.buff[next + 1] = drawBuffer.vertex.buff[head + 1];
-	//			drawBuffer.vertex.buff[next + 2] = drawBuffer.vertex.buff[head + 2];
-	//			head = next;
-	//			drawBuffer.vertex.tail = next + 3;
-	//		}
-	//		buff[0] = head + 0;
-	//		buff[1] = head + 1;
-	//		buff[2] = head + 2;
-	//		drawBuffer.vertex.head = head + 1;
-	//		drawBuffer.vertex.next = head + 3;
-	//		drawBuffer.index.tail += 3;
-	//		break;
-	//	case GS_TRIANGLEFAN:
-	//		// TODO: remove gaps, next == head && head < tail - 3 || next > head && next < tail - 2 (very rare)
-	//		buff[0] = head + 0;
-	//		buff[1] = tail - 2;
-	//		buff[2] = tail - 1;
-	//		drawBuffer.vertex.next = tail;
-	//		drawBuffer.index.tail += 3;
-	//		break;
-	//	case GS_SPRITE:
-	//		buff[0] = head + 0;
-	//		buff[1] = head + 1;
-	//		drawBuffer.vertex.head = head + 2;
-	//		drawBuffer.vertex.next = head + 2;
-	//		drawBuffer.index.tail += 2;
-	//		break;
-	//	case GS_INVALID:
-	//		drawBuffer.vertex.tail = head;
-	//		break;
-	//	default:
-	//		__assume(0);
-	//	}
-	//}
-
 	void SetScissor(int x, int y, uint32_t width, uint32_t height) {
 		assert(x >= 0 && y >= 0);
 		hwState.scissor.offset = { x, y };
@@ -559,7 +423,7 @@ namespace PS2
 
 	void EmulateAtst(const int pass, GSTexImage& tex, const GSState& state)
 	{
-		PSConstantBuffer& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
+		PSConstantBuffer& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
 
 		static const uint32_t inverted_atst[] = { ATST_ALWAYS, ATST_NEVER, ATST_GEQUAL, ATST_GREATER, ATST_NOTEQUAL, ATST_LESS, ATST_LEQUAL, ATST_EQUAL };
 		int atst = (pass == 2) ? inverted_atst[state.TEST.ATST] : state.TEST.ATST;
@@ -614,8 +478,8 @@ namespace PS2
 
 	void EmulateTextureSampler(PS2::GSTexImage& tex, const GSState& state)
 	{
-		auto& vs_cb = tex.constantBuffer.GetVertexConstantBufferData();
-		auto& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
+		auto& vs_cb = PS2_Internal::gVertexConstBuffer.GetBufferData();
+		auto& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
 
 		// Warning fetch the texture PSM format rather than the context format. The latter could have been corrected in the texture cache for depth.
 		//const GSLocalMemory::psm_t &psm = GSLocalMemory::m_psm[state.TEX.PSM];
@@ -1022,7 +886,7 @@ namespace PS2
 
 	void EmulateBlending_Simple(Renderer::GS_PRIM_CLASS primclass, GSTexImage& tex, const GSState& state)
 	{
-		PSConstantBuffer& ps_cb = tex.constantBuffer.GetPixelConstantBufferData();
+		PSConstantBuffer& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
 
 		// Partial port of OGL SW blending. Currently only works for accumulation blend.
 		auto ALPHA = state.ALPHA;
@@ -2034,11 +1898,26 @@ void Renderer::Draw(PS2::DrawBufferData<Renderer::GSVertex, uint16_t>& drawBuffe
 			float ox2 = -1.0f / GetRTSize().x;
 			float oy2 = -1.0f / GetRTSize().y;
 
-			tex.value.image.constantBuffer.GetVertexConstantBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
-			tex.value.image.constantBuffer.GetVertexConstantBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
+			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
+			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
 
-			tex.value.image.constantBuffer.UpdateUniformBuffers();
+			PS2_Internal::gVertexConstBuffer.Update(GetCurrentFrame());
 		}
+
+#if 0
+		Renderer::DescriptorWriteList writeList;
+		const VkDescriptorBufferInfo vertexDescBufferInfo = PS2_Internal::gVertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		const VkDescriptorBufferInfo fragmentDescBufferInfo = PS2_Internal::gPixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+
+		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings);
+
+		if (descriptorWrites.size() > 0) {
+			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		}
+#endif
+
 
 		vkCmdSetScissor(GetCurrentCommandBuffer(), 0, 1, &hwState.scissor);
 
@@ -2061,6 +1940,9 @@ void PS2::Setup()
 	CreateDefaultRenderPass();
 
 	PS2_Internal::gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
+
+	PS2_Internal::gVertexConstBuffer.Init();
+	PS2_Internal::gPixelConstBuffer.Init();
 }
 
 void PS2::BeginFrame()

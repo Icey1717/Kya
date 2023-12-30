@@ -39,8 +39,8 @@ struct ParticleInfo {
 	struct edDList_material* materialInfoArray_0x8;
 };
 
-struct FileManager3D : public CObjectManager {
-	FileManager3D();
+struct C3DFileManager : public CObjectManager {
+	C3DFileManager();
 
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 
@@ -50,7 +50,17 @@ struct FileManager3D : public CObjectManager {
 	struct TextureInfo* GetCommonSectorG2D();
 	void Level_ClearInternalData();
 	void Level_Create(ByteCode* pMemoryStream);
+
+	void HideCommonBackground();
 	void SetupBackground(edNODE* pNode);
+	void ManageBackground(edNODE* pNode, uint flags);
+
+	ed_g3d_manager* GetG3DManager(int meshIndex, int textureIndex);
+
+	ed_g2d_manager* GetActorsCommonMaterial(int index);
+	ed_g2d_manager* GetActorsCommonMeshMaterial(int index);
+
+	ed_g2d_manager * LoadDefaultTexture_001a65d0();
 
 	struct ed_g3d_manager* pMeshInfo;
 	struct edNODE* pBackgroundNode;

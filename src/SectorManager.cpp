@@ -13,6 +13,7 @@
 #ifdef PLATFORM_WIN
 #include "port.h"
 #endif
+#include "port/pointer_conv.h"
 
 CSectorManager::CSectorManager()
 {
@@ -26,10 +27,10 @@ CSectorManager::CSectorManager()
 	(this->baseSector).loadStage_0x8 = 0;
 	(this->baseSector).field_0x134 = 0.0;
 	(this->baseSector).pMeshTransformParent_0x130 = (edNODE*)0x0;
-	memset(&(this->baseSector).textureInfo, 0, sizeof(ed_g2d_manager));
-	memset(&(this->baseSector).meshInfo, 0, sizeof(ed_g3d_manager));
-	memset(&(this->baseSector).textureInfoB, 0, sizeof(ed_g2d_manager));
-	memset(&(this->baseSector).meshInfoB, 0, sizeof(ed_g3d_manager));
+	memset(&(this->baseSector).sectorTexture, 0, sizeof(ed_g2d_manager));
+	memset(&(this->baseSector).sectorMesh, 0, sizeof(ed_g3d_manager));
+	memset(&(this->baseSector).backgroundTexture, 0, sizeof(ed_g2d_manager));
+	memset(&(this->baseSector).backgroundMesh, 0, sizeof(ed_g3d_manager));
 	Level_ClearInternalData();
 	return;
 }
@@ -75,18 +76,6 @@ void CSectorManager::Level_ClearInternalData()
 	this->pSectorHierarchy = (CSectorHierarchy*)0;
 	return;
 }
-
-struct S_HIERANM_HIER;
-
-struct CSectorHierarchy {
-	undefined8 field_0x0;
-	CSectorHierarchy* pNext;
-	edNODE* pNode;
-	S_HIERANM_HIER* pHier;
-	uint flags;
-	byte aplha;
-	byte field_0x19;
-};
 
 
 void CSectorManager::Func_001fe620()
@@ -465,11 +454,11 @@ bool CheckFunc_00401fd0(StaticEdFileBase* param_1)
 
 void CSector::InstallCallback()
 {
-	edLIST* pCameraPanMasterHeader;
+	edLIST* pList;
 	CSectorHierarchy* pWindSectorObj;
 	ed_3D_Scene* pStaticMeshMaster;
-	ed_3d_hierarchy_node* pSubSubObjArray;
-	FileManager3D* p3DFileManager;
+	ed_3d_hierarchy_node* pHierNode;
+	C3DFileManager* p3DFileManager;
 	CSectorManager* pSectorManager;
 	bool bVar1;
 	uint uVar2;
@@ -478,7 +467,7 @@ void CSector::InstallCallback()
 	edNODE* pMVar4;
 	uint meshSize;
 	char* pcVar6;
-	edNODE* pMVar7;
+	edNODE* pNewNode;
 	int iVar8;
 	uint uVar9;
 	int** ppiVar10;
@@ -512,38 +501,39 @@ void CSector::InstallCallback()
 			if (bVar1 == false) break;
 			uVar9 = local_20.type << 0x10 | local_20.stype;
 			if (uVar9 == 0x170001) {
-				MY_LOG("Sector::Init Anim Heirarchy: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+				MY_LOG("Sector::Init Anim Heirarchy: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 				pAnimHierarchy = local_20.fileBufferStart;
 				local_40 = local_20.size;
 			}
 			else {
 				if (uVar9 == 0x50003) {
-					MY_LOG("Sector::Init LoadTexture B: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
-					ed3DInstallG2D(local_20.fileBufferStart, local_20.size, &iStack8, &this->textureInfoB, 1);
+					MY_LOG("Sector::Init Background Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+					ed3DInstallG2D(local_20.fileBufferStart, local_20.size, &iStack8, &this->backgroundTexture, 1);
 				}
 				else {
 					if (uVar9 == 0x40002) {
-						MY_LOG("Sector::Init UNKNOWN: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+						MY_LOG("Sector::Init Background Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 						local_30 = local_20.size;
 						pFileData = local_20.fileBufferStart;
 					}
 					else {
 						if (uVar9 == 0x70001) {
-							MY_LOG("Sector::Init Init Collision: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
-							//IMPLEMENTATION_GUARD(
-							//puVar3 = (undefined*)
-							//	CCollisionManager::InstallColFile
-							//	(Scene::ptable.g_CollisionManager_00451690,
-							//		(long)(int)local_20.fileBufferStart, (long)(int)local_20.length);
-							//this->pManager100Obj = puVar3;)
+							MY_LOG("Sector::Init Init Collision: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+							IMPLEMENTATION_GUARD_LOG(
+								puVar3 = (undefined*)
+								CCollisionManager::InstallColFile
+								(Scene::ptable.g_CollisionManager_00451690,
+									(long)(int)local_20.fileBufferStart, (long)(int)local_20.length);
+							this->pManager100Obj = puVar3;)
 						}
 						else {
 							if (uVar9 == 0x50001) {
-								MY_LOG("Sector::Init LoadTexture A: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
-								ed3DInstallG2D(local_20.fileBufferStart, local_20.size, &iStack8, &this->textureInfo, 1);
+								MY_LOG("Sector::Init Sector Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								ed3DInstallG2D(local_20.fileBufferStart, local_20.size, &iStack8, &this->sectorTexture, 1);
 							}
 							else {
-								MY_LOG("Sector::Init Mesh: %s\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								MY_LOG("Sector::Init Sector Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 								pMeshData = local_20.fileBufferStart;
 								meshSize = local_20.size;
@@ -562,53 +552,49 @@ void CSector::InstallCallback()
 		} while (inFileIndex < uVar2);
 	}
 	pSectorManager = CScene::ptable.g_SectorManager_00451670;
-	p3DFileManager = CScene::ptable.g_FileManager3D_00451664;
+	p3DFileManager = CScene::ptable.g_C3DFileManager_00451664;
 	pStaticMeshMaster = CScene::_scene_handleA;
-	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, &this->textureInfo, 0xc, &this->meshInfo);
+	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, &this->sectorTexture, 0xc, &this->sectorMesh);
 	pTextureInfo = p3DFileManager->GetCommonSectorG2D();
-	ed3DLinkG2DToG3D(&this->meshInfo, (ed_g2d_manager*)pTextureInfo);
-	ed3DScenePushCluster(pStaticMeshMaster, &this->meshInfo);
+	ed3DLinkG2DToG3D(&this->sectorMesh, (ed_g2d_manager*)pTextureInfo);
+	ed3DScenePushCluster(pStaticMeshMaster, &this->sectorMesh);
 	if (pFileData == (char*)0x0) {
 		this->pBackgroundNode = (edNODE*)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		3DFileManager::HideCommonBackground(p3DFileManager);
-		ed3DInstallG3D(pFileData, local_30, 0, &iStack8, (TextureInfo*)&this->textureInfoB, 0xc, &this->meshInfoB);
-		pMVar4 = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->meshInfoB, (char*)0x0);
+		NAME_NEXT_OBJECT("Background");
+		p3DFileManager->HideCommonBackground();
+		ed3DInstallG3D(pFileData, local_30, 0, &iStack8, &this->backgroundTexture, 0xc, &this->backgroundMesh);
+		pMVar4 = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->backgroundMesh, (char*)0x0);
 		this->pBackgroundNode = pMVar4;
 		if (this->pBackgroundNode != (edNODE*)0x0) {
 			p3DFileManager->SetupBackground(this->pBackgroundNode);
-		})
+		}
 	}
 	this->desiredSectorID = this->sectorIndex;
 	this->sectorIndex = -1;
-	this->pANHR.Install((MeshData_ANHR*)pAnimHierarchy, local_40, &this->meshInfo, pStaticMeshMaster);
-	ed3DHierarchyCopyHashCode(&this->meshInfo);
+	this->pANHR.Install((MeshData_ANHR*)pAnimHierarchy, local_40, &this->sectorMesh, pStaticMeshMaster);
+	ed3DHierarchyCopyHashCode(&this->sectorMesh);
 	pMVar4 = gHierarchyManagerFirstFreeNode;
-	pSubSubObjArray = gHierarchyManagerBuffer;
-	pMeshData = (char*)(this->meshInfo).HALL;
-	pCameraPanMasterHeader = pStaticMeshMaster->pHierListA;
-	meshSize = edChunckGetNb(pMeshData + 0x10, pMeshData + *(int*)(pMeshData + 8));
-	pcVar6 = edHashcodeGet(0x43494d414e5944, (ed_Chunck*)((this->meshInfo).HALL + 1));
-	iVar8 = 0;
-	if (pcVar6 != (char*)0x0) {
-		iVar8 = *(int*)(pcVar6 + 8);
+	pHierNode = gHierarchyManagerBuffer;
+	ed_Chunck* pHALL = (this->sectorMesh).HALL;
+	pList = pStaticMeshMaster->pHierListA;
+	meshSize = edChunckGetNb((char*)(pHALL + 1), (char*)pHALL + pHALL->size);
+	ed_hash_code* pHashCode = (ed_hash_code*)edHashcodeGet(0x43494d414e5944, (ed_Chunck*)((this->sectorMesh).HALL + 1));
+	ed_Chunck* pChunck = 0;
+	if (pHashCode != (ed_hash_code*)0x0) {
+		pChunck = (ed_Chunck*)LOAD_SECTION(pHashCode->pData);
 	}
-	if (iVar8 == 0) {
-		pMVar7 = (edNODE*)0x0;
+	if (pChunck == (ed_Chunck*)0x0) {
+		pNewNode = (edNODE*)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		pMVar7 = edLIST::Func_002ab920
-		(pCameraPanMasterHeader, pSubSubObjArray, pMVar4, (undefined8*)(iVar8 + 0x10),
-			(ed_3d_hierarchy_node*)0x0);
-		edLIST::Func_002ad020
-		(pCameraPanMasterHeader, pSubSubObjArray, pMVar4, iVar8, (int)pMVar7, (int)(pMeshData + 0x20),
-			(meshSize & 0xffff) - 1);
-		edNODE::Func_002ac980(pMVar7, &sStack2);)
+		pNewNode = ed3DHierarchyAddNode(pList, pHierNode, pMVar4, (ed_g3d_hierarchy*)(pChunck + 1), (ed_3d_hierarchy*)0x0);
+		ed3DHierarchyAddSonsToList
+		(pList, pHierNode, pMVar4, pChunck, pNewNode, (ed_hash_code*)(pHALL + 2), (meshSize & 0xffff) - 1);
+		ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 	}
-	this->pMeshTransformParent_0x130 = pMVar7;
+	this->pMeshTransformParent_0x130 = pNewNode;
 	pWindSectorObj = pSectorManager->subObjArray[this->desiredSectorID].pWindSectorObj;
 	do {
 		if (pWindSectorObj == (CSectorHierarchy*)0x0) {
@@ -899,8 +885,7 @@ void CSector::Level_Manage(int sectID, int param_3)
 		peVar6 = GetStaticMeshMasterA_001031b0();
 		this->pANHR.Manage(pTVar5->cutsceneDeltaTime, (float)puVar2[8], peVar6, 1);
 		if (this->pBackgroundNode != (edNODE*)0x0) {
-			IMPLEMENTATION_GUARD(
-			3DFileManager::ManageBackground(CScene::ptable.g_FileManager3D_00451664, this->pBackgroundNode, *puVar2);)
+			CScene::ptable.g_C3DFileManager_00451664->ManageBackground(this->pBackgroundNode, *puVar2);
 		}
 		if (this->desiredSectorID != sectID) {
 			IMPLEMENTATION_GUARD(
@@ -928,5 +913,20 @@ void CSector::Level_Manage(int sectID, int param_3)
 			}
 		}
 	}
+	return;
+}
+
+void CSectorHierarchy::Create(ByteCode* pByteCode)
+{
+	ulong uVar1;
+
+	uVar1 = pByteCode->GetU64();
+	this->field_0x0 = uVar1;
+	this->pNext = (CSectorHierarchy*)0x0;
+	this->pNode = (edNODE*)0x0;
+	this->pHier = (S_HIERANM_HIER*)0x0;
+	this->alpha = 0x80;
+	this->field_0x19 = 0;
+	this->flags = 0x20000000;
 	return;
 }

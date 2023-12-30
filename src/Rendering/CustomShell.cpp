@@ -166,12 +166,12 @@ bool edDmaLoadToFastRam(void* pSrc, uint size, void* pDst)
 	if (size == 0) {
 		(edDmaChannelList[9].pReg)->TADR = (uint)pSrc;
 		SYNC(0);
-		pReg->SADR = pDst;
+		pReg->SADR = (uint)pDst;
 	}
 	else {
 		(edDmaChannelList[9].pReg)->MADR = (uint)pSrc;
 		SYNC(0);
-		pReg->SADR = pDst;
+		pReg->SADR = (uint)pDst;
 	}
 	SYNC(0);
 	pReg->QWC = size >> 4;

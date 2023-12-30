@@ -594,7 +594,7 @@ edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char
 {
 	edF32VECTOR4* puVar2;
 	edF32VECTOR4* puVar3;
-	float* pfVar4;
+	float* pRow;
 	float fVar5;
 	float fVar6;
 	float fVar7;
@@ -603,60 +603,64 @@ edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char
 	float fVar10;
 	float fVar11;
 	edF32VECTOR4 local_20;
-	int local_10;
-	int local_c;
-	int local_8;
+	int firstOrderIndex;
+	int secondOrderIndex;
+	int thirdOrderIndex;
 	edF32VECTOR4* puVar1;
-	char xChar;
-	char yChar;
-	char zChar;
+	char firstChar;
+	char secondChar;
+	char thirdChar;
 
-	puVar2 = (edF32VECTOR4*)0xc;
-	xChar = *order;
-	yChar = order[1];
-	zChar = order[2];
-	puVar3 = &local_20;
-	local_10 = xChar + -0x58;
-	local_c = yChar + -0x58;
-	local_8 = zChar + -0x58;
-	puVar1 = puVar3;
-	while (puVar1 != (edF32VECTOR4*)0x0) {
-		*(undefined*)&puVar3->x = 0;
-		puVar3 = (edF32VECTOR4*)((ulong)&puVar3->x + 1);
-		puVar2 = (edF32VECTOR4*)((ulong)&puVar2[-1].w + 3);
-		puVar1 = puVar2;
-	}
-	fVar5 = ((edF32VECTOR3*)((ulong)v0 + (xChar + -0x58) * 4))->x;
-	fVar6 = ((edF32VECTOR3*)((ulong)v0 + (yChar + -0x58) * 4))->x;
-	fVar7 = ((edF32VECTOR3*)((ulong)v0 + (zChar + -0x58) * 4))->x;
-	pfVar4 = &m0->aa + local_10 * 4;
-	fVar8 = sinf(fVar5);
-	fVar10 = cosf(fVar5);
-	fVar11 = sinf(fVar6);
-	fVar9 = cosf(fVar6);
-	fVar5 = sinf(fVar7);
-	fVar6 = cosf(fVar7);
-	pfVar4[local_10] = fVar11 * fVar5;
-	pfVar4[local_c] = fVar11 * fVar6;
-	pfVar4[local_8] = -fVar9;
-	pfVar4[3] = 0.0;
-	pfVar4 = &m0->aa + local_c * 4;
-	pfVar4[local_10] = fVar9 * fVar10 * fVar5 - fVar8 * fVar6;
-	pfVar4[local_c] = fVar8 * fVar5 + fVar10 * fVar6 * fVar9;
-	pfVar4[local_8] = fVar11 * fVar10;
-	pfVar4[3] = 0.0;
-	pfVar4 = &m0->aa + local_8 * 4;
-	pfVar4[local_10] = fVar10 * fVar6 + fVar9 * fVar8 * fVar5;
-	pfVar4[local_c] = fVar9 * fVar8 * fVar6 - fVar10 * fVar5;
-	pfVar4[local_8] = fVar8 * fVar11;
-	pfVar4[3] = 0.0;
-	fVar7 = gF32Vertex4Zero.w;
-	fVar6 = gF32Vertex4Zero.z;
-	fVar5 = gF32Vertex4Zero.y;
-	m0->da = gF32Vertex4Zero.x;
-	m0->db = fVar5;
-	m0->dc = fVar6;
-	m0->dd = fVar7;
+	//puVar2 = (edF32VECTOR4*)0xc;
+
+	firstChar = order[0];
+	secondChar = order[1];
+	thirdChar = order[2];
+
+	//puVar3 = &local_20;
+
+	firstOrderIndex = firstChar + -0x58;
+	secondOrderIndex = secondChar + -0x58;
+	thirdOrderIndex = thirdChar + -0x58;
+
+	//puVar1 = puVar3;
+	//while (puVar1 != (edF32VECTOR4*)0x0) {
+	//	*(undefined*)&puVar3->x = 0;
+	//	puVar3 = (edF32VECTOR4*)((ulong)&puVar3->x + 1);
+	//	puVar2 = (edF32VECTOR4*)((ulong)&puVar2[-1].w + 3);
+	//	puVar1 = puVar2;
+	//}
+
+	fVar5 = v0->raw[firstOrderIndex];
+	fVar6 = v0->raw[secondOrderIndex];
+	fVar7 = v0->raw[thirdOrderIndex];
+
+	fVar8 = cosf(fVar5);
+	fVar10 = sinf(fVar5);
+	fVar11 = cosf(fVar6);
+	fVar9 = sinf(fVar6);
+	fVar5 = cosf(fVar7);
+	fVar6 = sinf(fVar7);
+
+	pRow = m0->vector[firstOrderIndex].raw;
+	pRow[firstOrderIndex] = fVar11 * fVar5;
+	pRow[secondOrderIndex] = fVar11 * fVar6;
+	pRow[thirdOrderIndex] = -fVar9;
+	pRow[3] = 0.0f;
+
+	pRow = m0->vector[secondOrderIndex].raw;
+	pRow[firstOrderIndex] = fVar9 * fVar10 * fVar5 - fVar8 * fVar6;
+	pRow[secondOrderIndex] = fVar8 * fVar5 + fVar10 * fVar6 * fVar9;
+	pRow[thirdOrderIndex] = fVar11 * fVar10;
+	pRow[3] = 0.0f;
+
+	pRow = m0->vector[thirdOrderIndex].raw;
+	pRow[firstOrderIndex] = fVar10 * fVar6 + fVar9 * fVar8 * fVar5;
+	pRow[secondOrderIndex] = fVar9 * fVar8 * fVar6 - fVar10 * fVar5;
+	pRow[thirdOrderIndex] = fVar8 * fVar11;
+	pRow[3] = 0.0f;
+
+	m0->rowT = gF32Vertex4Zero;
 	return m0;
 }
 

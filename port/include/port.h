@@ -723,6 +723,6 @@ MY_LOG("SCE_GIF_SET_TAG(\n{}, // NLOOP\n{}, // EOP\n{}, // PRE\n{}, // PRIM\n{},
 
 namespace ObjectNaming
 {
-	void SetNextObjectName(const char* newName);
+	void SetNextObjectName(const char* format, ...);
 	std::string GetNextObjectName();
 }

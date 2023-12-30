@@ -5,12 +5,12 @@
 
 #ifdef PLATFORM_WIN
 #include "delegate.h"
-#include "edList.h"
 #endif
+
+#include "edList.h"
 
 #define MATRIX_PACKET_START_SPR		0x70000800
 #define CAM_NORMAL_X_SPR			0x70000800
-#define CAM_NORMAL_Y_SPR			0x70000810
 #define CAM_NORMAL_Y_SPR			0x70000810
 #define OBJ_TO_CULLING_MATRIX		0x70000820
 #define OBJ_TO_CLIPPING_MATRIX		0x70000860
@@ -248,6 +248,13 @@ struct ed_3d_hierarchy_setup {
 	float* field_0x10;
 };
 
+
+PACK(struct ed3DLod {
+	int pObj; // char*
+	short field_0x4;
+	short field_0x6;
+});
+
 struct ed_3d_hierarchy {
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
@@ -258,7 +265,7 @@ struct ed_3d_hierarchy {
 	union edF32MATRIX4* pShadowAnimMatrix;
 	struct ed_3d_hierarchy* pLinkTransformData;
 	undefined* field_0x94;
-	undefined* pTextureInfo;
+	char* pTextureInfo;
 	ushort lodCount;
 	ushort flags_0x9e;
 	struct ed_3d_hierarchy_setup* pHierarchySetup;
@@ -269,16 +276,26 @@ struct ed_3d_hierarchy {
 	char GlobalAlhaON;
 };
 
-//struct ed3DLod {
-//	ed_hash_code* pObj;
-//	short field_0x4;
-//	short field_0x6;
-//};
-
-PACK(struct ed3DLod {
-	int pObj; // char*
-	short field_0x4;
-	short field_0x6;
+PACK(struct ed_g3d_hierarchy {
+	edF32MATRIX4 transformA;
+	edF32MATRIX4 transformB;
+	Hash_8 hash;
+	byte field_0x88;
+	byte field_0x89;
+	ushort bRenderShadow;
+	int pShadowAnimMatrix; // edF32MATRIX4*
+	int pLinkTransformData; // ed_3d_hierarchy*
+	int field_0x94; // undefined*
+	int pTextureInfo; // undefined*
+	ushort lodCount;
+	ushort flags_0x9e;
+	int pHierarchySetup; // ed_3d_hierarchy_setup*
+	int pMatrixPkt; // edpkt_data*
+	int pAnimMatrix; // edF32MATRIX4*
+	short subMeshParentCount_0xac;
+	byte size_0xae;
+	char GlobalAlhaON;
+	ed3DLod aLods[4];
 });
 
 struct ed_3d_hierarchy_node {
@@ -572,28 +589,6 @@ struct FxFogProp {
 	uint field_0x14;
 };
 
-PACK(struct ed_g3d_hierarchy {
-	edF32MATRIX4 transformA;
-	edF32MATRIX4 transformB;
-	Hash_8 hash;
-	byte field_0x88;
-	byte field_0x89;
-	ushort bRenderShadow;
-	int pShadowAnimMatrix; // edF32MATRIX4*
-	int pLinkTransformData; // ed_3d_hierarchy*
-	int field_0x94; // undefined*
-	int pTextureInfo; // undefined*
-	ushort lodCount;
-	ushort flags_0x9e;
-	int pHierarchySetup; // ed_3d_hierarchy_setup*
-	int field_0xa4; // edF32MATRIX4*
-	int pAnimMatrix; // edF32MATRIX4*
-	short subMeshParentCount_0xac;
-	byte size_0xae;
-	char GlobalAlhaON;
-	ed3DLod aLods[4];
-});
-
 struct edVertex {
 	float x;
 	float y;
@@ -649,11 +644,12 @@ struct ed_dma_matrix : public edLIST {
 };
 
 void ed3DHierarchyCopyHashCode(ed_g3d_manager* pMeshInfo);
+edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_hierarchy* p3DA, ed_3d_hierarchy* p3DB);
 
 void ed3DScenePushCluster(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo);
 
 uint edChunckGetNb(char* pStart, char* pEnd);
-char* edHashcodeGet(Hash_8 meshHashValue, ed_Chunck* pChunck);
+ed_hash_code* edHashcodeGet(Hash_8 meshHashValue, ed_Chunck* pChunck);
 
 edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand);
 edpkt_data* ed3DFlushFullAlphaInit(edpkt_data* pRenderCommand);
@@ -714,7 +710,21 @@ float ed3DMatrixGetBigerScale(edF32MATRIX4* m0);
 int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode);
 edLIST* ed3DHierarchyListInit(void);
 edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, ed_g3d_manager* pMeshInfo, char* szString);
+void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pParentNode, ed_Chunck* pChunck, edNODE* pNewNode,
+	ed_hash_code* pHashCode, uint count);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index);
+
+ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier);
+int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode);
+int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier);
+void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData);
+ed_hash_code* ed3DG2DGetMaterial(ed_g2d_manager* pTextureInfo, ulong hash);
+ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong hash);
+void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag);
+
+uint ed3DTestBoundingSphereObjectNoZFar(edF32VECTOR4* pSphere);
+
+ed3DLod* ed3DHierarcGetLOD(ed_g3d_hierarchy* pHier, uint index);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

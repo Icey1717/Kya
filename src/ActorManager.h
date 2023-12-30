@@ -4,11 +4,24 @@
 #include "Types.h"
 #include "LargeObject.h"
 
-struct CActor;
+class CActor;
+
+struct CClassInfo {
+	CActor* aActors;
+	int totalCount;
+	int allocatedCount;
+	int size;
+};
 
 struct CActorManager : public CObjectManager {
+
+	virtual void Level_Init();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+
+	void Level_LoadClassesInfo(struct ByteCode* pMemoryStream);
+
+	CActor* GetActorByHashcode(int hashCode);
 
 	struct ActorManagerAnimLinkData* field_0x4;
 	struct Actor* pActorArray_0x8;
@@ -49,7 +62,7 @@ struct CActorManager : public CObjectManager {
 	undefined field_0x4f;
 	struct ActorManagerSector* pActorManagerSectorArray;
 	CActor** aActors;
-	int actorCount_0x58;
+	int actorCount;
 	void** componentsToUpdate;
 	int componentEnd;
 	void** elementArrayStart;
@@ -63,7 +76,7 @@ struct CActorManager : public CObjectManager {
 	undefined* pActor_0x84;
 	int field_0x88;
 	int field_0x8c;
-	//struct ActorTypeData field_0x90[87];
+	CClassInfo aClassInfo[ACTOR_NUM_CLASSES];
 };
 
 #endif // _ACTOR_MANAGER_H

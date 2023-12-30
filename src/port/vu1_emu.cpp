@@ -608,6 +608,10 @@ namespace VU1Emu {
 			int y = XYZSkip.yi;
 			int z = XYZSkip.zi;
 
+			//assert(x < 5000000);
+			//assert(y < 5000000);
+			//assert(z < 5000000);
+
 			uint skip = XYZSkip.wi;
 
 			Renderer::SetST(STQ.x, STQ.y);
@@ -1048,8 +1052,64 @@ namespace VU1Emu {
 			return;
 		}
 
+		void _$GouraudMapping_No_Fog_16_2_Simple()
+		{
+			const int vtxCount = vi14;
+			int vtxReg = vi15 + 1;
+
+			const edF32MATRIX4 objToScreen = VIF_LOAD_M(vi00, 16);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog objToScreen matrix: \n{}", objToScreen.ToString());
+
+			for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
+				// Vtx data
+				edF32VECTOR4* pSTQ = VIF_AS_F(vtxReg, 0);
+				edF32VECTOR4* pRGBA = VIF_AS_F(vtxReg, 1);
+				edF32VECTOR4* pXYZ = VIF_AS_F(vtxReg, 2);
+
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ  0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog RGBA 0x{:x} r: {} g: {} b: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog STQ  0x{:x} S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
+
+				edF32VECTOR4 screenVtx = *pXYZ * objToScreen;
+
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen 0x{:x} x: {} y: {} z: {} w: {}", vtxReg, screenVtx.x, screenVtx.y, screenVtx.z, screenVtx.w);
+
+				float invW = 1.0f / fabs(screenVtx.w);
+
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog Q 0x{:x} DIVQ: {}", vtxReg, invW);
+
+				pSTQ->xyz = pSTQ->xyz * invW;
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog ST * Q 0x{:x} x: {} y: {} z: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
+
+				screenVtx.xyz = screenVtx.xyz * invW;
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ * Q 0x{:x} x: {} y: {} z: {}", vtxReg, screenVtx.x, screenVtx.y, screenVtx.z);
+
+				// Vertex positions (int4 x, int4 y, float z)
+				*reinterpret_cast<int*>(&screenVtx.x) = float_to_int4(screenVtx.x);
+				*reinterpret_cast<int*>(&screenVtx.y) = float_to_int4(screenVtx.y);
+				*reinterpret_cast<int*>(&screenVtx.z) = (int)screenVtx.z;
+
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vtxReg, screenVtx.xi, screenVtx.yi, screenVtx.zi);
+
+				pXYZ->xyz = screenVtx.xyz;
+
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog transformed XYZ  0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->xi, pXYZ->yi, pXYZ->zi, pXYZ->wi);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog transformed RGBA 0x{:x} r: {} g: {} b: {} a: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi, pRGBA->zi);
+				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog transformed STQ  0x{:x} S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
+
+				vtxReg += 3;
+			}
+
+			EmulateXGKICK(vi15);
+		}
+
 		void _$GouraudMapping_No_Fog_16_2()
 		{
+			if (bRunSimplifiedCode) {
+				_$GouraudMapping_No_Fog_16_2_Simple();
+				return;
+			}
+
 			// Vtx addr base.
 			vi03 = vi15 + 1;
 
@@ -1219,9 +1279,9 @@ namespace VU1Emu {
 				const edF32MATRIX4 animMatrix = VIF_LOAD_M(animMatrixReg, 0);
 
 
-				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
-				VU_VTX_TRACE_LOG("Bones_Rigid original RGBA r: {} g: {} b: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi);
-				VU_VTX_TRACE_LOG("Bones_Rigid original STQ S: {} T: {} Q: {}", vtxReg, pSTQ->xi, pSTQ->yi, pSTQ->z);
+				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ  0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
+				VU_VTX_TRACE_LOG("Bones_Rigid original RGBA 0x{:x} r: {} g: {} b: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi);
+				VU_VTX_TRACE_LOG("Bones_Rigid original STQ  0x{0:x} S: {1} (0x{1:x}) T: {2} (0x{2:x}) Q: {3:.2f}", vtxReg, pSTQ->xi, pSTQ->yi, pSTQ->z);
 
 				VU_VTX_TRACE_LOG("Bones_Rigid anim matrix addr: 0x{:x}\n{}", animMatrixReg, animMatrix.ToString());
 
@@ -1241,9 +1301,9 @@ namespace VU1Emu {
 
 				pRGBA->xyz = ConvertFromInt(pRGBA->xyz);
 
-				VU_VTX_TRACE_LOG("Bones_Rigid transformed XYZ 0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
-				VU_VTX_TRACE_LOG("Bones_Rigid transformed RGBA r: {} g: {} b: {}", vtxReg, pRGBA->x, pRGBA->y, pRGBA->z);
-				VU_VTX_TRACE_LOG("Bones_Rigid transformed STQ S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed XYZ  0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed RGBA 0x{:x} r: {} g: {} b: {}", vtxReg, pRGBA->x, pRGBA->y, pRGBA->z);
+				VU_VTX_TRACE_LOG("Bones_Rigid transformed STQ  0x{:x} S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
 
 				vtxReg += 3;
 			}
@@ -1615,6 +1675,10 @@ namespace VU1Emu {
 
 				_$BonesRigid_Ambiant_Test();
 			}
+			else if (addr == 0x19) {
+				// _$DrawingStart_XYZ32_Normal
+				IMPLEMENTATION_GUARD();
+			}
 			else {
 				IMPLEMENTATION_GUARD();
 			}
@@ -1640,7 +1704,7 @@ namespace VU1Emu {
 
 			if ((vi01 & 0x20) != 0) {
 				// _$Alpha_Object
-				IMPLEMENTATION_GUARD();
+				IMPLEMENTATION_GUARD_LOG();
 			}
 
 			if ((vi01 & 0x100) != 0) {
@@ -1683,7 +1747,7 @@ namespace VU1Emu {
 			const uint prim = pGifTag->PRIM;
 			Renderer::SetPrim(*reinterpret_cast<const GIFReg::GSPrimPacked*>(&prim), pDrawBuffer);
 
-			if (pGifTag->NLOOP > 0x48) {
+			if (pGifTag->NLOOP > 0x60) {
 				Log::GetInstance().ForceFlush();
 				assert(false);
 			}

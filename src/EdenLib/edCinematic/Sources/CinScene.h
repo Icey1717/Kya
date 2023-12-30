@@ -14,10 +14,7 @@ PACK(
 	undefined field_0x9;
 	undefined field_0xa;
 	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
+	int actorHashCode;
 	int trackCount;
 	int pCinActorInterface; // edCinActorInterface*
 

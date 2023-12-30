@@ -1,5 +1,9 @@
 #version 450
 
+float int12_to_float(int x) {
+    return float(x) * 0.000244140625;
+}
+
 layout(binding = 0) uniform UniformBufferObject {
     mat4 model;
     mat4 view;
@@ -40,5 +44,8 @@ void main() {
     fragColor.y = inColor.y / 255.0;
     fragColor.z = inColor.z / 255.0;
     fragColor.w = inColor.w / 255.0;
-    fragTexCoord = vec4(vec2(inST), inQ);
+
+	vec2 outST = vec2(int12_to_float(inST.x), int12_to_float(inST.y));
+
+    fragTexCoord = vec4(outST, inQ);
 }

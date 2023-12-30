@@ -8419,6 +8419,8 @@ struct CCameraManager : public CObjectManager {
 	undefined field_0xa7f;
 };
 
+float GetAngleYFromVector(edF32VECTOR4* v0);
+
 extern edFCamera _gDisplayCamera;
 extern edFCamera gSceneCameras[10];
 

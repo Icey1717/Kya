@@ -193,4 +193,7 @@ namespace PS2 {
 		std::vector<VertexBuffer<VertexType, IndexType>> buffers;
 		DrawBufferData<VertexType, IndexType> drawBufferData;
 	};
+
+	UniformBuffer<PS2::VSConstantBuffer>& GetVertexUniformBuffer();
+	UniformBuffer<PS2::PSConstantBuffer>& GetPixelUniformBuffer();
 }

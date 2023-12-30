@@ -27,6 +27,9 @@ set(SOURCES
 
 add_library(${TargetName} ${SOURCES})
 
-target_link_libraries(${TargetName} PRIVATE Renderer Log Kya Dbghelp.lib imgui)
+add_subdirectory("ext/gizmo")
+add_subdirectory("ext/magic_enum")
+
+target_link_libraries(${TargetName} PRIVATE Renderer Log Kya Dbghelp.lib imgui Gizmo magic_enum)
 
 target_include_directories(${TargetName} PUBLIC "include")

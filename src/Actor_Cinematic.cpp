@@ -4,6 +4,7 @@
 #include <string>
 #include "MathOps.h"
 #include "FileManager3D.h"
+#include "MemoryStream.h"
 
 
 CActorCinematic::CActorCinematic()
@@ -49,47 +50,102 @@ ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)
 	return peVar1;
 }
 
-void CActorCinematic::FUN_0011c1b0(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D)
+#define CHAR_TO_UINT64(str) \
+    (static_cast<uint64_t>(str[0]) | \
+     (static_cast<uint64_t>(str[1]) << 8) | \
+     (static_cast<uint64_t>(str[2]) << 16) | \
+     (static_cast<uint64_t>(str[3]) << 24) | \
+     (static_cast<uint64_t>(str[4]) << 32) | \
+     (static_cast<uint64_t>(str[5]) << 40) | \
+     (static_cast<uint64_t>(str[6]) << 48) | \
+     (static_cast<uint64_t>(str[7]) << 56))
+
+ulong gBoomyHashCodes[4] = {
+	0x0,
+	CHAR_TO_UINT64("BOOMY_P0"),
+	CHAR_TO_UINT64("BOOMY_P1"),
+	CHAR_TO_UINT64("BOOMY_P2"),
+};
+
+ulong gFightHashCodes[8] = {
+	0x0,
+	CHAR_TO_UINT64("FIGHT_01"),
+	CHAR_TO_UINT64("FIGHT_02"),
+	CHAR_TO_UINT64("FIGHT_03"),
+	CHAR_TO_UINT64("FIGHT_04"),
+	CHAR_TO_UINT64("FIGHT_05"),
+	CHAR_TO_UINT64("FIGHT_06"),
+	CHAR_TO_UINT64("FIGHT_07"),
+};
+
+ulong gMedallionHashCodes[9] = {
+	CHAR_TO_UINT64("FIGHT_08"),
+	CHAR_TO_UINT64("MED_01\0\0"),
+	CHAR_TO_UINT64("MED_02\0\0"),
+	CHAR_TO_UINT64("MED_03\0\0"),
+	CHAR_TO_UINT64("MED_04\0\0"),
+	CHAR_TO_UINT64("MED_05\0\0"),
+	CHAR_TO_UINT64("MED_06\0\0"),
+	CHAR_TO_UINT64("MED_07\0\0"),
+	CHAR_TO_UINT64("MED_08\0\0"),
+};
+
+int GetBoomyLevel() {
+	IMPLEMENTATION_GUARD_LOG();
+	return 0;
+}
+
+int GetMedallionLevel() {
+	IMPLEMENTATION_GUARD_LOG();
+	return 0;
+}
+
+int GetFightLevel() {
+	IMPLEMENTATION_GUARD_LOG();
+	return 0;
+}
+
+void CActorCinematic::PatchMaterialForCutscene(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D)
 {
 	ed_Chunck* peVar1;
-	long* plVar2;
+	ulong* puVar2;
 	ed_Chunck* peVar3;
-	long* plVar4;
-	long* plVar5;
+	ulong* puVar4;
+	ulong* puVar5;
 	uint uVar6;
 	int iVar7;
-	int iVar8;
+	int foundEquipmentHashes;
 	uint uVar9;
-	long local_20[4];
+	ulong local_20[4];
 
 	peVar3 = pG3D->MBNA;
 	peVar3 = edChunckGetSpecial(peVar3, (char*)peVar3 + peVar3->size);
 	uVar9 = peVar3->size - 0x10U >> 4;
 	if (1 < uVar9) {
-		IMPLEMENTATION_GUARD_LOG(
-		plVar4 = (long*)0x18;
-		plVar5 = local_20;
-		plVar2 = plVar5;
-		while (plVar2 != (long*)0x0) {
-			*(undefined*)plVar5 = 0;
-			plVar5 = (long*)((int)plVar5 + 1);
-			plVar4 = (long*)((int)plVar4 + -1);
-			plVar2 = plVar4;
-		}
-		iVar8 = 0;
+		//puVar4 = (ulong*)0x18;
+		//puVar5 = local_20;
+		//puVar2 = puVar5;
+		//while (puVar2 != (ulong*)0x0) {
+		//	*(undefined*)puVar5 = 0;
+		//	puVar5 = (ulong*)((int)puVar5 + 1);
+		//	puVar4 = (ulong*)((int)puVar4 + -1);
+		//	puVar2 = puVar4;
+		//}
+
+		foundEquipmentHashes = 0;
 		iVar7 = 0;
-		plVar5 = local_20;
-		local_20[0] = s_BOOMY_P0BOOMY_P1BOOMY_P2_00435140._0_8_;
-		local_20[1] = s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._64_8_;
-		local_20[2] = s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._0_8_;
+		puVar5 = local_20;
+		local_20[0] = gBoomyHashCodes[1];
+		local_20[1] = gMedallionHashCodes[1];
+		local_20[2] = gFightHashCodes[1];
 		uVar6 = uVar9;
 		peVar1 = peVar3;
 		do {
 			while (true) {
-				if ((uVar6 == 0) || (2 < iVar8)) break;
-				if (*(long*)(peVar1 + 1) == *plVar5) {
-					plVar5 = plVar5 + 1;
-					iVar8 = iVar8 + 1;
+				if ((uVar6 == 0) || (2 < foundEquipmentHashes)) break;
+				if (*(ulong*)(peVar1 + 1) == *puVar5) {
+					puVar5 = puVar5 + 1;
+					foundEquipmentHashes = foundEquipmentHashes + 1;
 				}
 				uVar6 = uVar6 - 1;
 				peVar1 = peVar1 + 1;
@@ -98,23 +154,21 @@ void CActorCinematic::FUN_0011c1b0(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D)
 			uVar6 = uVar9;
 			peVar1 = peVar3;
 		} while (iVar7 < 3);
-		if (iVar8 == 3) {
-			iVar7 = LevelScheduleManager::FUN_002d9e40();
+
+		if (foundEquipmentHashes == 3) {
+			iVar7 = GetBoomyLevel();
 			if (0 < iVar7) {
-				FUN_00115890((int)this, s_BOOMY_P0BOOMY_P1BOOMY_P2_00435140._0_8_, *(ulong*)(&DAT_00435138 + iVar7 * 8), (int)pG2D
-				);
+				this->SV_PatchMaterial(gBoomyHashCodes[1], gBoomyHashCodes[iVar7], pG2D);
 			}
-			uVar9 = LevelScheduleManager::FUN_002d9e50();
+			uVar9 = GetMedallionLevel();
 			if (0 < (int)uVar9) {
-				FUN_00115890((int)this, s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._64_8_,
-					*(ulong*)(s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160 + uVar9 * 8 + 0x38), (int)pG2D);
+				this->SV_PatchMaterial(gMedallionHashCodes[1], gMedallionHashCodes[uVar9], pG2D);
 			}
-			iVar7 = LevelScheduleManager::FUN_002d9e00();
+			iVar7 = GetFightLevel();
 			if (0 < iVar7) {
-				FUN_00115890((int)this, s_FIGHT_01FIGHT_02FIGHT_03FIGHT_04_00435160._0_8_,
-					*(ulong*)(s_BOOMY_P0BOOMY_P1BOOMY_P2_00435140 + iVar7 * 8 + 0x18), (int)pG2D);
+				this->SV_PatchMaterial(gFightHashCodes[1], gFightHashCodes[iVar7], pG2D);
 			}
-		})
+		}
 	}
 	return;
 }
@@ -150,8 +204,8 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	(this->otherSectionStart).field_0x30 = 1e+10f;
 	(this->otherSectionStart).flags_0x48 = 1;
 	(this->otherSectionStart).field_0x4c = 1.0f;
-	//this->index_0x20 = -1;
-	this->typeID = 1;
+	this->actorManagerIndex = -1;
+	this->typeID = CINEMATIC;
 	for (value = 0; (value < 0x1f && (pGameInterface->name[value] != '\0')); value = value + 1) {
 		/* Copy the name into the cine object */
 		this->name[value] = pGameInterface->name[value];
@@ -188,7 +242,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 				this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->field_0xcc;)
 			}
 			ed3DHierarchySetSetup(&this->p3DHierNode->base, &this->hierarchySetup);
-			this->FUN_0011c1b0(pG3D, pG2D);
+			this->PatchMaterialForCutscene(pG3D, pG2D);
 		}
 	}
 	peVar1 = this->p3DHierNode;
@@ -201,7 +255,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	//this->field_0x110 = (undefined*)0x0;
 	this->components.count = 1;
 	this->components.aComponents[0].id = 1;
-	this->components.aComponents[0].pComponent = &behaviourCinematic;
+	this->components.aComponents[0].SetBehaviour(&behaviourCinematic);
 	this->aComponents = (void*)&this->components;
 	this->SetupDefaultPosition();
 	this->SetupClippingInfo();
@@ -244,6 +298,18 @@ void CActorCinematic::CinematicMode_Enter(bool bSetState)
 	this->flags = this->flags | 0x80;
 	this->flags = this->flags & 0xffffffdf;
 	this->EvaluateDisplayState();
+	return;
+}
+
+void CBehaviourCinematic::Create(ByteCode* pByteCode)
+{
+	int iVar1;
+
+	iVar1 = pByteCode->GetS32();
+	this->field_0x140 = iVar1;
+	if (this->field_0x140 == 1) {
+		this->field_0x140 = -1;
+	}
 	return;
 }
 
@@ -321,11 +387,13 @@ bool CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 	long lVar3;
 	float fVar4;
 
+	ed_g3d_manager* peVar1;
+
 	(this->pOwner)->flags = (this->pOwner)->flags | 0x1000;
-	lVar3 = (long)*(int*)&(this->cinActor).field_0x124;
-	if (lVar3 != 0) {
-		IMPLEMENTATION_GUARD_LOG();
-		//FUN_00115ba0((long)(int)this->pOwner, (undefined4*)&(this->cinActor).field_0x110, lVar3, 0);
+	peVar1 = (this->cinActor).pAltModelManager;
+	if (peVar1 != (ed_g3d_manager*)0x0) {
+		IMPLEMENTATION_GUARD();
+		//CActor::SV_SwitchToModel((CActor *)this->pOwner,&(this->cinActor).alternateModel,peVar1,(edF32VECTOR4 *)0x0);
 	}
 	if (newState == -1) {
 		this->pOwner->SetState(3, -1);
@@ -475,4 +543,171 @@ void CBehaviourCinematic::InitState(int newState)
 		this->pOwner->CinematicMode_UpdateMatrix(&eStack64);
 	}
 	return;
+}
+
+bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int param_3)
+{
+	bool bVar1;
+	int iVar2;
+	bool bVar3;
+	float fVar4;
+
+	bVar3 = false;
+	switch (param_2) {
+	case 6:
+		IMPLEMENTATION_GUARD(
+		bVar3 = this->field_0x144 != -1;
+		if (bVar3) {
+			if ((bVar3) && (this->field_0x148 != -1)) {
+				this->field_0x14c = this->field_0x148;
+				this->field_0x148 = -1;
+				this->field_0x160 = 0.0;
+				this->field_0x164 = 0.5;
+				if (this->field_0x148 == -1) {
+					fVar4 = 0.0;
+				}
+				else {
+					fVar4 = 1.0;
+					if (this->field_0x14c == -1) {
+						this->field_0x154 = 0.0;
+						fVar4 = 1.0;
+					}
+				}
+				if (this->field_0x144 != -1) {
+					this->field_0x150 = this->field_0x154;
+					this->field_0x158 = fVar4;
+					this->field_0x15c = 0.5;
+				}
+			}
+			this->field_0x168 = (float)&DAT_bf800000;
+		})
+		bVar3 = true;
+		break;
+	case 7:
+		IMPLEMENTATION_GUARD(
+		this->field_0x168 = 0.0;)
+		bVar3 = true;
+		break;
+	case 8:
+		iVar2 = -1;
+		switch (param_3) {
+		case 0:
+			break;
+		case 1:
+			iVar2 = 1;
+			break;
+		case 2:
+			iVar2 = 2;
+			break;
+		case 3:
+			iVar2 = 5;
+			break;
+		case 4:
+			iVar2 = 3;
+			break;
+		case 5:
+			iVar2 = 0;
+			break;
+		case 6:
+			iVar2 = 4;
+		}
+		IMPLEMENTATION_GUARD(
+		bVar1 = this->field_0x144 != -1;
+		bVar3 = true;
+		if (bVar1) {
+			if ((bVar1) && (this->field_0x148 != -1)) {
+				this->field_0x14c = this->field_0x148;
+				this->field_0x148 = -1;
+				this->field_0x160 = 0.0;
+				this->field_0x164 = 0.5;
+				if (this->field_0x148 == -1) {
+					fVar4 = 0.0;
+				}
+				else {
+					fVar4 = 1.0;
+					if (this->field_0x14c == -1) {
+						this->field_0x154 = 0.0;
+						fVar4 = 1.0;
+					}
+				}
+				if (this->field_0x144 != -1) {
+					this->field_0x150 = this->field_0x154;
+					this->field_0x158 = fVar4;
+					this->field_0x15c = 0.5;
+				}
+			}
+			this->field_0x168 = (float)&DAT_bf800000;
+		}
+		if ((this->field_0x144 != -1) && (iVar2 != this->field_0x148)) {
+			this->field_0x14c = this->field_0x148;
+			this->field_0x148 = iVar2;
+			this->field_0x160 = 0.0;
+			this->field_0x164 = 0.5;
+			if (this->field_0x148 == -1) {
+				fVar4 = 0.0;
+			}
+			else {
+				fVar4 = 1.0;
+				if (this->field_0x14c == -1) {
+					this->field_0x154 = 0.0;
+					fVar4 = 1.0;
+				}
+			}
+			if (this->field_0x144 != -1) {
+				this->field_0x150 = this->field_0x154;
+				this->field_0x158 = fVar4;
+				this->field_0x15c = 0.5;
+			}
+		})
+		break;
+	case 0xb:
+		IMPLEMENTATION_GUARD(
+		CAnimation::PhysicalLayerFromLayerId((this->pOwner->baseData).pAnimationController, 4);
+		iVar2 = this->field_0x178;
+		if (((iVar2 == 3) || (iVar2 == 2)) || ((iVar2 == 1 || (iVar2 == 0)))) {
+			this->field_0x178 = 2;
+		})
+		break;
+	case 0xc:
+		IMPLEMENTATION_GUARD(
+		CAnimation::PhysicalLayerFromLayerId((this->pOwner->baseData).pAnimationController, 4);
+		iVar2 = this->field_0x178;
+		if ((((iVar2 == 3) || (iVar2 == 2)) || (iVar2 == 1)) || (iVar2 == 0)) {
+			this->field_0x178 = 3;
+		})
+		break;
+	case 0xd:
+		IMPLEMENTATION_GUARD(
+		edEventComputeZoneAgainstVertex
+		((CActor*)this->pOwner, (CActor*)this->pOwner, (long)param_3, (ActorCompareStruct*)0x0);
+		bVar3 = true;)
+		break;
+	case 0xe:
+		IMPLEMENTATION_GUARD(
+		if ((this->pOwner->baseData).typeID == 0x54) {
+			FUN_00404a70((int*)this->pOwner, (long)param_3 & 0xff);
+		})
+		break;
+	case 0xf:
+	case 0x10:
+	case 0x11:
+		IMPLEMENTATION_GUARD(
+		if ((this->pOwner->baseData).typeID == 6) {
+			if (param_2 == 0x11) {
+				LevelScheduleManager::ScenVar_Set(0xf, 1);
+			}
+			else {
+				if (param_2 == 0x10) {
+					LevelScheduleManager::ScenVar_Set(10, param_3);
+				}
+				else {
+					if (param_2 == 0xf) {
+						LevelScheduleManager::ScenVar_Set(9, param_3);
+					}
+				}
+			}
+			LevelScheduleManager::ActorGlobalFunc_002db5b0();
+		})
+	}
+	return bVar3;
 }

@@ -300,7 +300,7 @@ namespace DebugMenu_Internal {
 				ImGui::Checkbox("Custom Time Control", &bCutsceneStepEnabled);
 
 				if (bCutsceneStepEnabled) {
-					static float cutsceneStepTime = 28.812f;
+					static float cutsceneStepTime = 7.84f;
 					pCutscene->totalCutsceneDelta = cutsceneStepTime;
 
 					if (ImGui::Button("<<")) {
@@ -540,7 +540,7 @@ namespace DebugMenu_Internal {
 		if (selectedScene != -1) {
 			ed_3D_Scene* pSelectedScene = &gScene3D[selectedScene];
 
-			static bool bFilterAnim = true;
+			static bool bFilterAnim = false;
 			ImGui::Checkbox("Filter Anim", &bFilterAnim);
 
 			ImGui::Text("Shadow: %d", pSelectedScene->bShadowScene);

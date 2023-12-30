@@ -4,11 +4,12 @@
 #include "edDlist.h"
 #include "DebugRenderer.h"
 
-DebugHelpers::DebugMaterial::DebugMaterial(edDList_material* pInMaterial, uint32_t CBP, bool bCreateTexID)
+DebugHelpers::DebugMaterial::DebugMaterial(edDList_material* pInMaterial, uint32_t inCBP, bool bCreateTexID)
 	: key(pInMaterial)
-	, texture(DebugMenu::LoadTextureData(pInMaterial), CBP)
+	, texture(DebugMenu::LoadTextureData(pInMaterial), inCBP)
 	, texID(bCreateTexID ? DebugMenu::AddTexture(texture.image) : nullptr)
 	, paletteTexID(bCreateTexID ? DebugMenu::AddTexture(texture.paletteImage) : nullptr)
+	, CBP(inCBP)
 {
 
 }
@@ -17,15 +18,17 @@ DebugHelpers::DebugMaterial::DebugMaterial(const PS2::GSTexValue& inTexture, ImT
 	: key(inTexture, inTexID)
 	, texture(inTexture)
 	, texID(inTexID)
+	, CBP(0)
 {
 
 }
 
-DebugHelpers::DebugMaterial::DebugMaterial(ed_g2d_material* pInMaterial, uint32_t CBP, bool bCreateTexID)
+DebugHelpers::DebugMaterial::DebugMaterial(ed_g2d_material* pInMaterial, uint32_t inCBP, bool bCreateTexID)
 	: key(pInMaterial)
-	, texture(DebugMenu::LoadTextureData(pInMaterial), CBP)
+	, texture(DebugMenu::LoadTextureData(pInMaterial), inCBP)
 	, texID(bCreateTexID ? DebugMenu::AddTexture(texture.image) : nullptr)
 	, paletteTexID(bCreateTexID ? DebugMenu::AddTexture(texture.paletteImage) : nullptr)
+	, CBP(inCBP)
 {
 
 }

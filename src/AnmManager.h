@@ -7,7 +7,7 @@
 struct edAnmMacroAnimator;
 class CActor;
 
-typedef void (*AnimationCallback)(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint32_t param_3);
+typedef void (*AnimationCallback)(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3);
 
 PACK(
 	struct AnimHeaderPacked {

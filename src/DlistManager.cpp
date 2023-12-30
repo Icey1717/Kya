@@ -373,10 +373,10 @@ void CGlobalDListManager::Level_Create()
 	//	puVar4[-5] = 0;
 	//	puVar4 = puVar4 + -6;
 	//} while (-1 < iVar7);
-	iVar7 = (CScene::ptable.g_ActorManager_004516a4)->actorCount_0x58;
+	iVar7 = (CScene::ptable.g_ActorManager_004516a4)->actorCount;
 	iVar10 = 0;
 	if (0 < iVar7) {
-		IMPLEMENTATION_GUARD(
+		IMPLEMENTATION_GUARD_LOG(
 		iVar9 = 0;
 		do {
 			iVar2 = 0;
@@ -737,7 +737,7 @@ bool CGlobalDListManager::SetActive(int param_2, int param_3)
 	uVar1 = false;
 	if (iVar1 == 1) {
 		if ((this->field_0x14 == param_2 >> 0x10) || (param_2 >> 0x10 == 0)) {
-			IMPLEMENTATION_GUARD(
+			IMPLEMENTATION_GUARD_LOG(
 			uVar1 = _AddCallFuncElement(this, param_2, 1, param_3);)
 		}
 		else {

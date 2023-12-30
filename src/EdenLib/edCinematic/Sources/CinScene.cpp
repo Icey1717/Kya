@@ -8,6 +8,12 @@
 
 #define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
 
+#ifdef PLATFORM_WIN
+#define CUTSCENE_LOG_WIN(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
+#else
+#define CUTSCENE_LOG_WIN(...)
+#endif
+
 struct edSceneCamera
 {
 	CameraInfo* pInternal;
@@ -69,7 +75,7 @@ float* edAnmSubControler::GetClosestKeyIndex(float time, int* outIndex)
 	pfVar5 = peVar4->keyTimes;
 	uVar3 = (uint)uVar1;
 	if (time < pfVar5[uVar3 - 1]) {
-		IMPLEMENTATION_GUARD();
+		IMPLEMENTATION_GUARD_LOG();
 		peVar4 = peVar4 + 1;
 		if ((((8 < uVar1) && (iVar2 = (int)(uVar1 - 1) >> 2, *(float*)(&peVar4->keyCount + iVar2 * 2) <= time)) &&
 			(peVar4 = (edAnmSubControlerTag*)(&peVar4->keyCount + iVar2 * 2),
@@ -642,9 +648,9 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 	CUTSCENE_LOG(LogLevel::Info, "\nedSceneActorVirtual::Create name: {}", cineCreatureObject->name);
 
-	CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create position: {}", creationTag.position.ToString());
-	CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create heading: {}", creationTag.heading.ToString());
-	CUTSCENE_LOG(LogLevel::Info, "edSceneActorVirtual::Create scale: {}", creationTag.scale.ToString());
+	CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActorVirtual::Create position: {}", creationTag.position.ToString());
+	CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActorVirtual::Create heading: {}", creationTag.heading.ToString());
+	CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActorVirtual::Create scale: {}", creationTag.scale.ToString());
 
 	if (cineCreatureObject->textureID == -1) {
 		creationTag.textureName = 0;
@@ -671,6 +677,66 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 	creationTag.field_0x30 = (cineCreatureObject->boundingSphere).w;
 	bVar1 = cinGameInterface.CreateActor((edCinActorInterface**)&this->pObj->pCinActorInterface, &creationTag);
 	return bVar1 != false;
+}
+
+struct edSceneActorBehavior : public edSceneActor {
+	edSceneActorBehavior(CineCreatureObject* pInObj) : edSceneActor(pInObj) {}
+	virtual bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection);
+};
+
+bool edSceneActorBehavior::Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection)
+{
+	CineCreatureObject* cineCreatureObject;
+	long lVar2;
+	edCinGameInterface::ACTORV_CREATIONtag creationTag;
+
+	cineCreatureObject = this->pObj;
+	resCollection.pData = resCollection.pData;
+	creationTag.position.x = (cineCreatureObject->position).x;
+	creationTag.position.y = (cineCreatureObject->position).y;
+	creationTag.position.z = (cineCreatureObject->position).z;
+	creationTag.position.w = 1.0;
+	creationTag.heading.x = (cineCreatureObject->heading).x;
+	creationTag.heading.y = (cineCreatureObject->heading).y;
+	creationTag.heading.z = (cineCreatureObject->heading).z;
+	creationTag.heading.w = (cineCreatureObject->heading).w;
+	creationTag.scale.x = (cineCreatureObject->scale).x;
+	creationTag.scale.y = (cineCreatureObject->scale).y;
+	creationTag.scale.z = (cineCreatureObject->scale).z;
+	creationTag.scale.w = 1.0;
+	creationTag.boundingSphere.x = (cineCreatureObject->boundingSphere).x;
+	creationTag.boundingSphere.y = (cineCreatureObject->boundingSphere).y;
+	creationTag.boundingSphere.z = (cineCreatureObject->boundingSphere).z;
+	creationTag.boundingSphere.w = 1.0;
+
+	CUTSCENE_LOG(LogLevel::Info, "\nedSceneActorBehavior::Create name: {}", cineCreatureObject->name);
+
+	CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActorBehavior::Create position: {}", creationTag.position.ToString());
+	CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActorBehavior::Create heading: {}", creationTag.heading.ToString());
+	CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActorBehavior::Create scale: {}", creationTag.scale.ToString());
+
+	if (cineCreatureObject->textureID == -1) {
+		creationTag.textureName = (char*)0x0;
+		creationTag.bHasTexture = false;
+	}
+	else {
+		creationTag.textureName = resCollection.GetResFilename(cineCreatureObject->textureID);
+		CUTSCENE_LOG(LogLevel::Info, "edSceneActorBehavior::Create texture {}", creationTag.textureName);
+		creationTag.bHasTexture = (resCollection.pData->aTags[cineCreatureObject->textureID].flags & 0x80000000) != 0;
+	}
+	if (cineCreatureObject->meshID == -1) {
+		creationTag.meshName = (char*)0x0;
+		creationTag.bHasMesh = false;
+	}
+	else {
+		creationTag.meshName = resCollection.GetResFilename(cineCreatureObject->meshID);
+		CUTSCENE_LOG(LogLevel::Info, "edSceneActorBehavior::Create mesh {}", creationTag.meshName);
+		creationTag.bHasMesh = (resCollection.pData->aTags[cineCreatureObject->meshID].flags & 0x80000000) != 0;
+	}
+	creationTag.field_0x30 = (cineCreatureObject->boundingSphere).w;
+	strcpy(creationTag.name, cineCreatureObject->name);
+	lVar2 = cinGameInterface.GetActor((edCinActorInterface**)&this->pObj->pCinActorInterface, this->pObj->actorHashCode, &creationTag);
+	return lVar2 != 0;
 }
 
 bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollection)
@@ -786,7 +852,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 					}
 					else {
 						if (currentTrackType == 0xdbd3d7c5) {
-							IMPLEMENTATION_GUARD(
+							IMPLEMENTATION_GUARD_LOG(
 							local_40 = (edAnmSubControlerTag*)(trackSeekPos + 3);
 							local_10 = 0;
 							if ((float)trackSeekPos[4] <= currentPlayTime) {
@@ -826,7 +892,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 										pTrackDataStart =(int*)((uint) * (ushort*)((ulong)pAnimProp + 0xc) * 4 + (ulong)pAnimProp) + 4;
 
 										struct AnimTagData {
-											int field_0x0;
+											int animResIndex;
 											float field_0x4;
 											float field_0x8;
 											int field_0xc;
@@ -835,12 +901,12 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 
 										AnimTagData* piVar4 = (AnimTagData*)(pTrackDataStart + local_8 * 5);
 										edCinActorInterface::ANIM_PARAMStag local_f0;
-										local_f0.field_0x4 = piVar4->field_0x4 + fVar6 * piVar4->field_0x8;
-										local_f0.pHdrA = resCollection.pData->aTags[piVar4->field_0x0].pData;
-										local_f0.field_0x8 = (piVar4->field_0xc & 1U) != 0;
+										local_f0.srcAnim.field_0x4 = piVar4->field_0x4 + fVar6 * piVar4->field_0x8;
+										local_f0.srcAnim.pHdr = resCollection.pData->aTags[piVar4->animResIndex].pData;
+										local_f0.srcAnim.field_0x8 = (piVar4->field_0xc & 1U) != 0;
 										float fVar5 = piVar4->field_0x10;
 										if ((fVar5 <= fVar6) || (local_8 < 1)) {
-											local_f0.pHdrB = 0;
+											local_f0.dstAnim.pHdr = 0;
 										}
 										else {
 											pTrackDataStart = pTrackDataStart + local_8 * 5;
@@ -850,17 +916,16 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 											else {
 												local_f0.field_0x18 = fVar6 / fVar5;
 											}
-											local_f0.pHdrB = resCollection.pData->aTags[pTrackDataStart[-5]].pData;
-											local_f0.field_0x14 = (pTrackDataStart[-2] & 1U) != 0;
+											local_f0.dstAnim.pHdr = resCollection.pData->aTags[pTrackDataStart[-5]].pData;
+											local_f0.dstAnim.field_0x8 = (pTrackDataStart[-2] & 1U) != 0;
 											if (local_8 < 2) {
-												local_f0.field_0x10 = (float)((int*)((ulong)pAnimProp + 0x10))[local_8];
+												local_f0.dstAnim.field_0x4 = (float)((int*)((ulong)pAnimProp + 0x10))[local_8];
 											}
 											else {
 												currentKeyframePtr = (float*)((int*)((ulong)pAnimProp + 0x10) + local_8);
-												local_f0.field_0x10 = *currentKeyframePtr - currentKeyframePtr[-1];
+												local_f0.dstAnim.field_0x4 = *currentKeyframePtr - currentKeyframePtr[-1];
 											}
-											local_f0.field_0x10 =
-												(local_f0.field_0x10 - 0.01818182f) * (float)pTrackDataStart[-3] + (float)pTrackDataStart[-4];
+											local_f0.dstAnim.field_0x4 = (local_f0.dstAnim.field_0x4 - 0.01818182f) * (float)pTrackDataStart[-3] + (float)pTrackDataStart[-4];
 										}
 										CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} anim: ", this->pObj->name);
 										pCinActorInterface->SetAnim(&local_f0);
@@ -873,7 +938,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 										if (sVar2 == 2) {
 											bUpdateRotationSuccess = animatedProp.GetQuaternionValue(currentPlayTime, &outRotation);
 											if (bUpdateRotationSuccess != false) {
-												CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
+												CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
 												pCinActorInterface->SetHeadingQuat(outRotation.x, outRotation.y, outRotation.z, outRotation.w);
 											}
 										}
@@ -925,7 +990,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 														bUpdateRotationSuccess = true;
 													}
 													if (bUpdateRotationSuccess) {
-														CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
+														CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
 														(*(code*)pCinActorInterface->vt->SetHeadingQuat)
 															(outRotation.x, outRotation.y, outRotation.z, pCinActorInterface);
 													})
@@ -954,7 +1019,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 												bUpdateRotationSuccess = true;
 											}
 											if (bUpdateRotationSuccess) {
-												CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} scale: {}", this->pObj->name, local_68.ToString());
+												CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} scale: {}", this->pObj->name, local_68.ToString());
 												pCinActorInterface->SetScale(local_68.x, local_68.y, local_68.z);
 											}
 										}
@@ -981,7 +1046,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 													bUpdateRotationSuccess = true;
 												}
 												if (bUpdateRotationSuccess) {
-													CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} pos: {}", this->pObj->name, locationOutVector.ToString());
+													CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} pos: {}", this->pObj->name, locationOutVector.ToString());
 													pCinActorInterface->SetPos(locationOutVector.x, locationOutVector.y, locationOutVector.z);
 												}
 											}
@@ -1138,10 +1203,9 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 								}
 								else {
 									if (iVar1 == 0x3d4c64aa) {
-										CUTSCENE_LOG(LogLevel::Warning, "Skipping Behaviour Actor\n");
-										//local_14 = &edSceneLight_VTable_00441cb0;
-										//local_18 = (CameraInfo*)pCVar3;
-										//(*(code*)edSceneLight_VTable_00441cb0.Create)(&local_18, loadObj);
+										edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pCVar3);
+										edResCollection resCol = { resPtr };
+										behaviorActor.Create(loadObj, resCol);
 									}
 									else {
 										if (iVar1 == 0x2a043536) {
@@ -1201,16 +1265,13 @@ bool edScene::Initialize()
 				}
 				else {
 					if (iVar2 == 0x395f05b1) {
-						CineCreatureObject* pInternal = (CineCreatureObject*)pBuffer;
-						edSceneActor sceneActor = edSceneActor((CineCreatureObject*)pInternal);
-						sceneActor.Initialize();
+						edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pBuffer);
+						virtualActor.Initialize();
 					}
 					else {
 						if (iVar2 == 0x3d4c64aa) {
-							CUTSCENE_LOG(LogLevel::Warning, "Skipping Actor\n");
-							//local_c = &edSceneLight_VTable_00441cb0;
-							//local_10 = (CameraInfo*)pBuffer;
-							//edSceneActor::Initialize((edSceneActor*)&local_10);
+							edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pBuffer);
+							behaviorActor.Initialize();
 						}
 						else {
 							if (iVar2 == 0x2a043536) {
@@ -1263,15 +1324,13 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 				}
 				else {
 					if (elementType == 0x395f05b1) {
-						CineCreatureObject* pInternal = (CineCreatureObject*)sceSeek;
-						edSceneActor sceneActor = edSceneActor((CineCreatureObject*)pInternal);
-						sceneActor.Timeslice(currentPlayTime, local_4);
+						edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)sceSeek);
+						virtualActor.Timeslice(currentPlayTime, local_4);
 					}
 					else {
 						if (elementType == 0x3d4c64aa) {
-							//local_c = &edSceneLight_VTable_00441cb0;
-							//sceSeekPtr = (int)sceSeek;
-							//edSceneActor::Timeslice(currentPlayTime, &sceSeekPtr, &local_4);
+							edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)sceSeek);
+							behaviorActor.Timeslice(currentPlayTime, local_4);
 						}
 						else {
 							CameraInfo* camInfo = (CameraInfo*)sceSeek;

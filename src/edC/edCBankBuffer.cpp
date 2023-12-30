@@ -355,7 +355,7 @@ void edCBankFileHeader::apply_callback(TypePairData* pTypePairData, int mode)
 					pFileHeaderStart = (char*)(((char*)this - 8) + this->fileHeaderDataOffset);
 				}
 
-				IO_LOG(LogLevel::Info, "Executing for %s\n", DebugFindFilePath(this, uVar3));
+				IO_LOG(LogLevel::Info, "Executing for {}\n", DebugFindFilePath(this, uVar3));
 
 				NAME_NEXT_OBJECT(DebugFindFilePath(this, uVar3));
 

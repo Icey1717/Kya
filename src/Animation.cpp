@@ -4,6 +4,8 @@
 #include "Actor.h"
 #include "MathOps.h"
 #include "Rendering/CustomShell.h"
+#include <math.h>
+#include <assert.h>
 
 #define ANIMATION_LOG(level, format, ...) MY_LOG_CATEGORY("Animation", level, format, ##__VA_ARGS__)
 
@@ -97,7 +99,7 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 	//CEventTrack* pCVar4;
 	edAnmSkeleton* peVar5;
 	//AnimationCallback puVar6;
-	int iVar7;
+	int layerIndex;
 	uint uVar8;
 
 	this->pMatrixData_0x10 = (AnimMatrixData*)0x0;
@@ -119,45 +121,37 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 	this->anmBinMetaAnimator.SetLayerProperties(layerCount);
 	this->anmBinMetaAnimator.SetLayerResourceArray(-1, pCVar2->pAnimKeyTable);
 	this->anmBinMetaAnimator.SetAnimStatesBinary(pCVar2->pAnimKeyEntryData);
-	iVar7 = (this->anmBinMetaAnimator).layerCount;
-	if (iVar7 != 0) {
-		//puVar6 = CAnimationManager::_gLayersCallbacks + iVar7;
-		//iVar3 = iVar7 * 0xd8;
+	layerIndex = (this->anmBinMetaAnimator).layerCount;
+	if (layerIndex != 0) {
 		do {
-			//puVar6 = puVar6 + -1;
-			iVar7 = iVar7 + -1;
-			this->anmBinMetaAnimator.aAnimData[iVar7].Reset();
-			this->anmBinMetaAnimator.SetLayerMacroAnimCallback(iVar7, CAnimationManager::_gLayersCallbacks[iVar7]);
-			this->anmBinMetaAnimator.SetLayerMacroAnimUserParams(iVar7, pActor);
-			//iVar3 = iVar3 + -0xd8;
-		} while (iVar7 != 0);
+			layerIndex = layerIndex + -1;
+			this->anmBinMetaAnimator.aAnimData[layerIndex].Reset();
+			this->anmBinMetaAnimator.SetLayerMacroAnimCallback(layerIndex, CAnimationManager::_gLayersCallbacks[layerIndex]);
+			this->anmBinMetaAnimator.SetLayerMacroAnimUserParams(layerIndex, pActor);
+		} while (layerIndex != 0);
 	}
 	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
 		IMPLEMENTATION_GUARD(
-			iVar7 = 0;
+			layerIndex = 0;
 		for (uVar8 = this->count_0x2c; uVar8 != 0; uVar8 = uVar8 >> 1) {
 			if ((uVar8 & 1) != 0) {
-				iVar3 = edAnmBinMetaAnimator::GetAnimEventTrackID(this, iVar7);
+				iVar3 = edAnmBinMetaAnimator::GetAnimEventTrackID(this, layerIndex);
 				if (iVar3 != -1) {
 					pCVar4 = CTrackManager::GetTrack(CScene::ptable.g_TrackManager_004516b4, iVar3);
 					CEventTrack::Stop(pCVar4);
 				}
-				iVar7 = iVar7 + 1;
+				layerIndex = layerIndex + 1;
 			}
 		})
 	}
-	iVar7 = (this->anmBinMetaAnimator).layerCount;
-	if (iVar7 != 0) {
-		//puVar6 = CAnimationManager::_gLayersCallbacks + iVar7;
-		//iVar3 = iVar7 * 0xd8;
+	layerIndex = (this->anmBinMetaAnimator).layerCount;
+	if (layerIndex != 0) {
 		do {
-			//puVar6 = puVar6 + -1;
-			iVar7 = iVar7 + -1;
-			this->anmBinMetaAnimator.aAnimData[iVar7].Reset();
-			this->anmBinMetaAnimator.SetLayerMacroAnimCallback(iVar7, CAnimationManager::_gLayersCallbacks[iVar7]);
-			this->anmBinMetaAnimator.SetLayerMacroAnimUserParams(iVar7, pActor);
-			//iVar3 = iVar3 + -0xd8;
-		} while (iVar7 != 0);
+			layerIndex = layerIndex + -1;
+			this->anmBinMetaAnimator.aAnimData[layerIndex].Reset();
+			this->anmBinMetaAnimator.SetLayerMacroAnimCallback(layerIndex, CAnimationManager::_gLayersCallbacks[layerIndex]);
+			this->anmBinMetaAnimator.SetLayerMacroAnimUserParams(layerIndex, pActor);
+		} while (layerIndex != 0);
 	}
 	return;
 }
@@ -192,110 +186,120 @@ void edAnmStage::SetActor(edANM_SKELETON* pSkeleton)
 
 	(this->anmSkeleton).pTag = pSkeleton;
 	peVar1 = (this->anmSkeleton).pTag;
-	this->field_0x10 = (edF32MATRIX3*)((ulong)&peVar1->boneCount + ((uint)peVar1->boneCount * 0xc + 0x13 & 0xfffffff0));
+	this->pConstantMatrixData = (edF32MATRIX3*)((ulong)&peVar1->boneCount + ((uint)peVar1->boneCount * 0xc + 0x13 & 0xfffffff0));
 	return;
 }
 
 void edAnmStage::SetDestinationWRTS(edANM_WRTS* pMatrixBuffer, int count)
 {
-	edANM_WRTS* peVar1;
-	edANM_WRTS* peVar2;
+	edF32MATRIX4* peVar1;
+	edF32MATRIX4* peVar2;
 
 	this->pRelativeTransformMatrixBuffer = pMatrixBuffer;
+
 	if (count != 0) {
+
 		if (count == -1) {
 			count = ((this->anmSkeleton).pTag)->boneCount;
 		}
-		peVar2 = this->pRelativeTransformMatrixBuffer;
-		peVar1 = (edANM_WRTS*)(peVar2->matrices + count);
+
+		peVar2 = this->pRelativeTransformMatrixBuffer->matrices;
+		peVar1 = peVar2 + count;
 		if (peVar2 < peVar1) {
 			if (8 < (ulong)peVar1 + (0x3f - (ulong)peVar2) >> 6) {
 				do {
-					peVar2->matrices[0].da = -1.0f;
-					peVar2->matrices[1].da = -1.0f;
-					peVar2->matrices[2].da = -1.0f;
-					peVar2->matrices[3].da = -1.0f;
-					peVar2->matrices[4].da = -1.0f;
-					peVar2->matrices[5].da = -1.0f;
-					peVar2->matrices[6].da = -1.0f;
-					peVar2->matrices[7].da = -1.0f;
-					peVar2 = peVar2 + 1;
-				} while (peVar2 < peVar1 + -1);
+					peVar2[0].da = -1.0f;
+					peVar2[1].da = -1.0f;
+					peVar2[2].da = -1.0f;
+					peVar2[3].da = -1.0f;
+					peVar2[4].da = -1.0f;
+					peVar2[5].da = -1.0f;
+					peVar2[6].da = -1.0f;
+					peVar2[7].da = -1.0f;
+					peVar2 = peVar2 + 8;
+				} while (peVar2 < peVar1 + -8);
 			}
-			for (; peVar2 < peVar1; peVar2 = (edANM_WRTS*)(peVar2->matrices + 1)) {
-				peVar2->matrices[0].da = -1.0f;
+
+			for (; peVar2 < peVar1; peVar2 = peVar2 + 1) {
+				peVar2->da = -1.0f;
 			}
 		}
 	}
 	return;
 }
 
-void edAnmStage::BlendToDestWRTS(float alpha, edF32MATRIX4* m0, edF32MATRIX4* m1)
+void edAnmStage::BlendToDestWRTS(float alpha, edF32MATRIX4* pSrc, edF32MATRIX4* pDst)
 {
 	undefined8 uVar1;
 	float fVar2;
 	float fVar3;
-	edF32MATRIX3* peVar4;
-	edF32MATRIX3* peVar6;
-	edANM_WRTS* pMatrixBuffer;
-	edF32MATRIX3* targetRotation;
-	edF32MATRIX3* currentRotation;
+	edF32MATRIX3* pConstantMatrixDataEnd;
+	edF32MATRIX3* pConstantMatrixData;
+	edF32MATRIX4* pMatrixBuffer;
+	edF32MATRIX3* pCurrentDstMatrix;
+	edF32MATRIX3* pCurrentSrcMatrix;
 	float fVar5;
 	float fVar6;
 	float fVar7;
 	float fVar8;
 	float fVar9;
 
-	pMatrixBuffer = this->pRelativeTransformMatrixBuffer;
-	peVar6 = this->field_0x10;
-	peVar4 = peVar6 + ((this->anmSkeleton).pTag)->boneCount;
-	for (; peVar6 < peVar4; peVar6 = peVar6 + 1) {
-		currentRotation = peVar6;
-		if (m0->da != -1.0f) {
-			currentRotation = (edF32MATRIX3*)m0;
+	pMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices;
+	pConstantMatrixData = this->pConstantMatrixData;
+	pConstantMatrixDataEnd = pConstantMatrixData + ((this->anmSkeleton).pTag)->boneCount;
+	for (; pConstantMatrixData < pConstantMatrixDataEnd; pConstantMatrixData = pConstantMatrixData + 1) {
+
+		pCurrentSrcMatrix = pConstantMatrixData;
+		if (pSrc->da != -1.0f) {
+			pCurrentSrcMatrix = (edF32MATRIX3*)pSrc;
 		}
-		targetRotation = peVar6;
-		if (m1->da != -1.0f) {
-			targetRotation = (edF32MATRIX3*)m1;
+
+		pCurrentDstMatrix = pConstantMatrixData;
+		if (pDst->da != -1.0f) {
+			pCurrentDstMatrix = (edF32MATRIX3*)pDst;
 		}
-		if (currentRotation == targetRotation) {
-			if (currentRotation == peVar6) {
-				pMatrixBuffer->matrices[0].da = -1.0f;
+
+		if (pCurrentSrcMatrix == pCurrentDstMatrix) {
+			if (pCurrentSrcMatrix == pConstantMatrixData) {
+				// Inherited neither src or dst.
+				pMatrixBuffer->da = -1.0f;
 			}
 			else {
-				pMatrixBuffer->matrices[0] = *currentRotation;
-				pMatrixBuffer->matrices[0].da = 1.0f;
+				// Just src.
+				*pMatrixBuffer = *pCurrentSrcMatrix;
+				pMatrixBuffer->da = 1.0f;
 			}
 		}
 		else {
-			edQuatShortestSLERPHard(alpha, &pMatrixBuffer->matrices->rowX, &currentRotation->rowX, &targetRotation->rowX);
-			fVar3 = currentRotation->bb;
-			fVar5 = currentRotation->bc;
-			fVar6 = currentRotation->bd;
-			fVar7 = targetRotation->bb;
-			fVar8 = targetRotation->bc;
-			fVar9 = targetRotation->bd;
+			// Blend.
+			edQuatShortestSLERPHard(alpha, &pMatrixBuffer->rowX, &pCurrentSrcMatrix->rowX, &pCurrentDstMatrix->rowX);
+			fVar3 = pCurrentSrcMatrix->bb;
+			fVar5 = pCurrentSrcMatrix->bc;
+			fVar6 = pCurrentSrcMatrix->bd;
+			fVar7 = pCurrentDstMatrix->bb;
+			fVar8 = pCurrentDstMatrix->bc;
+			fVar9 = pCurrentDstMatrix->bd;
 			fVar2 = 1.0f - alpha;
-			pMatrixBuffer->matrices[0].ba = targetRotation->ba * alpha + currentRotation->ba * fVar2;
-			pMatrixBuffer->matrices[0].bb = fVar7 * alpha + fVar3 * fVar2;
-			pMatrixBuffer->matrices[0].bc = fVar8 * alpha + fVar5 * fVar2;
-			pMatrixBuffer->matrices[0].bd = fVar9 * alpha + fVar6 * fVar2;
-			fVar3 = currentRotation->cb;
-			fVar5 = currentRotation->cc;
-			fVar6 = currentRotation->cd;
-			fVar7 = targetRotation->cb;
-			fVar8 = targetRotation->cc;
-			fVar9 = targetRotation->cd;
+			pMatrixBuffer->ba = pCurrentDstMatrix->ba * alpha + pCurrentSrcMatrix->ba * fVar2;
+			pMatrixBuffer->bb = fVar7 * alpha + fVar3 * fVar2;
+			pMatrixBuffer->bc = fVar8 * alpha + fVar5 * fVar2;
+			pMatrixBuffer->bd = fVar9 * alpha + fVar6 * fVar2;
+			fVar3 = pCurrentSrcMatrix->cb;
+			fVar5 = pCurrentSrcMatrix->cc;
+			fVar6 = pCurrentSrcMatrix->cd;
+			fVar7 = pCurrentDstMatrix->cb;
+			fVar8 = pCurrentDstMatrix->cc;
+			fVar9 = pCurrentDstMatrix->cd;
 			fVar2 = 1.0f - alpha;
-			pMatrixBuffer->matrices[0].ca = targetRotation->ca * alpha + currentRotation->ca * fVar2;
-			pMatrixBuffer->matrices[0].cb = fVar7 * alpha + fVar3 * fVar2;
-			pMatrixBuffer->matrices[0].cc = fVar8 * alpha + fVar5 * fVar2;
-			pMatrixBuffer->matrices[0].cd = fVar9 * alpha + fVar6 * fVar2;
-			pMatrixBuffer->matrices[0].da = 1.0;
+			pMatrixBuffer->ca = pCurrentDstMatrix->ca * alpha + pCurrentSrcMatrix->ca * fVar2;
+			pMatrixBuffer->cb = fVar7 * alpha + fVar3 * fVar2;
+			pMatrixBuffer->cc = fVar8 * alpha + fVar5 * fVar2;
+			pMatrixBuffer->cd = fVar9 * alpha + fVar6 * fVar2;
+			pMatrixBuffer->da = 1.0f;
 		}
-		m0 = m0 + 1;
-		m1 = m1 + 1;
-		pMatrixBuffer = (edANM_WRTS*)(pMatrixBuffer->matrices + 1);
+		pSrc = pSrc + 1;
+		pDst = pDst + 1;
+		pMatrixBuffer = pMatrixBuffer + 1;
 	}
 	return;
 }
@@ -357,7 +361,7 @@ void edAnmStage::ToonWRTSToGlobalMatrices(uchar mode)
 	pMeshSectionDataMap = (this->anmSkeleton).pTag;
 	pFrameMatrixData = this->pFrameMatrixData;
 	pRelativeTransformMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices;
-	peVar8 = (edF32MATRIX3*)this->field_0x10;
+	peVar8 = this->pConstantMatrixData;
 	meshSectionCount = pMeshSectionDataMap->boneCount;
 	pFrameMatrixEnd = pFrameMatrixData + meshSectionCount;
 	for (; pMeshSectionDataMap = pMeshSectionDataMap + 1, pFrameMatrixData < pFrameMatrixEnd;
@@ -485,6 +489,8 @@ void edAnmStage::ToonWRTSToGlobalMatrices(uchar mode)
 				fVar14 = pVecB->w;
 			} while (iVar7 != 0);
 		}
+
+		// If we are using constant data.
 		if (pCurrentRelativeTransform == peVar8) {
 			pRelativeTransformMatrixBuffer->rowZ = pCurrentRelativeTransform->rowZ;
 		}
@@ -587,41 +593,29 @@ void edAnmStage::ToonWRTSToGlobalMatrices(uchar mode)
 			uint c = (a * 2) + (b);
 			pVectorArray = (edF32VECTOR4*)((char*)peVar1 + c);
 			for (; pFrameMatrixData < pFrameMatrixEnd; pFrameMatrixData = pFrameMatrixData + 1) {
-				fVar19 = pRelativeTransformMatrixBuffer->ca;
-				fVar23 = pRelativeTransformMatrixBuffer->cb;
-				fVar28 = pRelativeTransformMatrixBuffer->cc;
-				fVar22 = pFrameMatrixData->aa * fVar19;
-				fVar38 = pFrameMatrixData->ab * fVar19;
-				fVar35 = pFrameMatrixData->ac * fVar19;
-				fVar19 = pFrameMatrixData->ad * fVar19;
-				fVar26 = pFrameMatrixData->ba * fVar23;
-				fVar27 = pFrameMatrixData->bb * fVar23;
-				fVar40 = pFrameMatrixData->bc * fVar23;
-				fVar23 = pFrameMatrixData->bd * fVar23;
-				fVar31 = pFrameMatrixData->ca * fVar28;
-				fVar32 = pFrameMatrixData->cb * fVar28;
-				fVar36 = pFrameMatrixData->cc * fVar28;
-				fVar28 = pFrameMatrixData->cd * fVar28;
+
+				float xScale = pRelativeTransformMatrixBuffer->ca;
+				float yScale = pRelativeTransformMatrixBuffer->cb;
+				float zScale = pRelativeTransformMatrixBuffer->cc;
+
+				edF32VECTOR4 scaledRowX = pFrameMatrixData->rowX * xScale;
+				edF32VECTOR4 scaledRowY = pFrameMatrixData->rowY * yScale;
+				edF32VECTOR4 scaledRowZ = pFrameMatrixData->rowZ * zScale;
+
 				fVar20 = pVectorArray->x;
 				fVar24 = pVectorArray->y;
 				fVar29 = pVectorArray->z;
 				fVar33 = pVectorArray->w;
-				pFrameMatrixData->aa = fVar22;
-				pFrameMatrixData->ab = fVar38;
-				pFrameMatrixData->ac = fVar35;
-				pFrameMatrixData->ad = fVar19;
-				pFrameMatrixData->ba = fVar26;
-				pFrameMatrixData->bb = fVar27;
-				pFrameMatrixData->bc = fVar40;
-				pFrameMatrixData->bd = fVar23;
-				pFrameMatrixData->ca = fVar31;
-				pFrameMatrixData->cb = fVar32;
-				pFrameMatrixData->cc = fVar36;
-				pFrameMatrixData->cd = fVar28;
-				pFrameMatrixData->da = fVar22 * fVar20 + fVar26 * fVar24 + fVar31 * fVar29 + pFrameMatrixData->da * fVar33;
-				pFrameMatrixData->db = fVar38 * fVar20 + fVar27 * fVar24 + fVar32 * fVar29 + pFrameMatrixData->db * fVar33;
-				pFrameMatrixData->dc = fVar35 * fVar20 + fVar40 * fVar24 + fVar36 * fVar29 + pFrameMatrixData->dc * fVar33;
-				pFrameMatrixData->dd = fVar19 * fVar20 + fVar23 * fVar24 + fVar28 * fVar29 + pFrameMatrixData->dd * fVar33;
+
+				pFrameMatrixData->rowX = scaledRowX;
+				pFrameMatrixData->rowY = scaledRowY;
+				pFrameMatrixData->rowZ = scaledRowZ;
+
+				pFrameMatrixData->da = scaledRowX.x * fVar20 + scaledRowY.x * fVar24 + scaledRowZ.x * fVar29 + pFrameMatrixData->da * fVar33;
+				pFrameMatrixData->db = scaledRowX.y * fVar20 + scaledRowY.y * fVar24 + scaledRowZ.y * fVar29 + pFrameMatrixData->db * fVar33;
+				pFrameMatrixData->dc = scaledRowX.z * fVar20 + scaledRowY.z * fVar24 + scaledRowZ.z * fVar29 + pFrameMatrixData->dc * fVar33;
+				pFrameMatrixData->dd = scaledRowX.w * fVar20 + scaledRowY.w * fVar24 + scaledRowZ.w * fVar29 + pFrameMatrixData->dd * fVar33;
+
 				pRelativeTransformMatrixBuffer = pRelativeTransformMatrixBuffer + 1;
 				pVectorArray = pVectorArray + 1;
 			}
@@ -747,6 +741,14 @@ struct edANM_RTS_Key_Hdr
 
 struct edANM_RTS 
 {
+	edANM_RTS() {
+
+	}
+
+	edANM_RTS(edANM_RTS_Key_Hdr* pInAnm) : pAnm(pInAnm) {
+
+	}
+
 	edANM_RTS_Key_Hdr* pAnm;
 };
 
@@ -1070,7 +1072,6 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					}
 				}
 				else {
-					IMPLEMENTATION_GUARD(
 					do {
 						dataCount = (int)dataCount >> 1;
 						if (pfVar7[dataCount] <= time) break;
@@ -1080,25 +1081,25 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					}
 					for (pfVar9 = pfVar7 + dataCount; *pfVar9 <= time; pfVar9 = pfVar9 + 1) {
 					}
-					pfVar7 = (float*)((int)pfVar9 - (int)pfVar7);
-					if ((int)pfVar7 < 0) {
-						pfVar7 = (float*)((int)pfVar7 + 3);
+					int dataSize = ((char*)pfVar9 - (char*)pfVar7);
+					if (dataSize < 0) {
+						dataSize = dataSize + 3;
 					}
-					iVar3 = (int)pfVar7 >> 2;
+					iVar3 = dataSize >> 2;
 					iVar8 = iVar3 + -1;
 					if (iVar8 == 0) {
-						fVar12 = 0.0;
+						fVar12 = 0.0f;
 						if (0.0 < *pfVar9) {
 							fVar12 = time / *pfVar9;
 						}
 					}
 					else {
-						fVar12 = 0.0;
+						fVar12 = 0.0f;
 						fVar11 = *pfVar9 - pfVar9[-1];
-						if (0.0 < fVar11) {
+						if (0.0f < fVar11) {
 							fVar12 = (time - pfVar9[-1]) / fVar11;
 						}
-					})
+					}
 				}
 			}
 			else {
@@ -1418,11 +1419,11 @@ void edAnmStage::AnimToWRTS()
 		pKeyData = (edANM_RTS_Key_Hdr*)((char*)pKeyData + pKeyData->keyOffset)) {
 		if (((pKeyData->flags & 7) != 0) &&
 			(iVar2 = this->anmSkeleton.edAnmSkeleton::NodeIndexFromID(pKeyData->nodeId), iVar2 != -1)) {
-			puVar3 = this->field_0x10 + iVar2;
+			puVar3 = this->pConstantMatrixData + iVar2;
 
 			animMatrix = *puVar3;
 
-			pCurrentKeyData = { pKeyData };
+			pCurrentKeyData = edANM_RTS(pKeyData);
 			edAnmTransformCtrl::GetValue(this->field_0x3c, &pCurrentKeyData, &animMatrix);
 			pMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices + iVar2;
 			*pMatrixBuffer = animMatrix;
@@ -1542,7 +1543,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			pActor->UpdatePostAnimEffects();
 			(peVar2->base).pAnimMatrix = pFrameMatrixData;
 			(peVar2->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
-			local_4 = { pSkeleton };
+			local_4 = edAnmSkeleton(pSkeleton);
 			for (m0 = this->pMatrixData_0x10; m0 != (AnimMatrixData*)0x0; m0 = m0->pPrev) {
 				IMPLEMENTATION_GUARD(
 				local_4.UnskinNMatrices((edF32MATRIX4*)m0, pFrameMatrixData, (int)m0->field_0x4c, 1);)
@@ -1803,6 +1804,10 @@ void edAnmBinMetaAnimator::SetLayerTimeWarper(float value, int index)
 
 struct edAnmStateParser
 {
+	edAnmStateParser() {}
+
+	edAnmStateParser(int* inField) : field_0x0(inField) {}
+
 	int* field_0x0;
 	edAnmStateDesc* BuildDesc(edAnmStateDesc* pAnimation, int animType, int origAnimType);
 };
@@ -1829,7 +1834,7 @@ void edAnmBinMetaAnimator::SetAnim(int animType, int origAnimType)
 	edAnmStateDesc NewAnimation;
 	edAnmStateParser local_4;
 
-	local_4 = { (int*)((char*)this->pAnimKeyEntryData + this->pAnimKeyEntryData[animType] + 4) };
+	local_4 = edAnmStateParser((int*)((char*)this->pAnimKeyEntryData + this->pAnimKeyEntryData[animType] + 4));
 	pLayer = this->aAnimData;
 	local_4.BuildDesc(&NewAnimation, animType, origAnimType);
 	pLayer->SetAnim(&NewAnimation);

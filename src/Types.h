@@ -102,6 +102,49 @@ enum EFileLoadMode {
 	New_Name_3 = 3
 };
 
+
+enum ACTOR_CLASS {
+	CINEMATIC = 1,
+	BOOMY = 5,
+	ACTOR_HERO_PRIVATE = 6,
+	MICKEN = 7,
+	WOLFEN = 9,
+	NATIV = 0xa,
+	MOVING_PLATFORM = 0xd,
+	BONUS = 0xe,
+	ROPE = 0xf,
+	GRAVITY_AWARE = 0x10,
+	SWITCH = 0x11,
+	WIND = 0x12,
+	COMMANDER = 0x13,
+	AMBER = 0x14,
+	FRUIT = 0x16,
+	BRIDGE = 0x17,
+	CLUSTERISER = 0x18,
+	COMPANION = 0x19,
+	DCA = 0x1b,
+	PROJECTILE = 0x1c,
+	CHECKPOINT_MANAGER = 0x1e,
+	WEAPON = 0x20,
+	ARAIGNOS = 0x21,
+	TELEPORTER = 0x24,
+	AMORTOS = 0x29,
+	TRAP = 0x2c,
+	FX = 0x2e,
+	MONEY = 0x32,
+	BOX = 0x35,
+	ATON = 0x38,
+	BASIC_BOX = 0x39,
+	NATIV_CMD = 0x3c,
+	FOG_MANAGER = 0x3d,
+	SHOOT = 0x3e,
+	SHOCKER = 0x4b,
+	BLAZER = 0x4c,
+	SHOCKER_CMD = 0x50,
+	RUNE = 0x51,
+	BONUS_FOUNTAIN = 0x52,
+};
+
 struct IopPaths {
 	char* pIopRoot;
 	char* pImgName;
@@ -410,6 +453,8 @@ union alignas(16)
 
 	float raw[16];
 
+	edF32VECTOR4 vector[4];
+
 	inline edF32MATRIX4& operator=(const edF32MATRIX3& rhs)
 	{
 		rowX = rhs.rowX;
@@ -438,11 +483,11 @@ union alignas(16)
 #endif
 #else
 #define uintptr_t int
-#define ENABLE_MY_LOG
+//#define ENABLE_MY_LOG
 #endif
 
 #ifdef PLATFORM_WIN
-#define NAME_NEXT_OBJECT ObjectNaming::SetNextObjectName
+#define NAME_NEXT_OBJECT(format, ...) ObjectNaming::SetNextObjectName(format, __VA_ARGS__)
 #else
 #define NAME_NEXT_OBJECT(...)
 #endif
@@ -594,5 +639,7 @@ inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 #define UNPACK_V4_16_MASKED 0x7d
 #define UNPACK_V4_8_MASKED 0x7e
 #define UNPACK_V4_5_MASKED 0x7f
+
+#define ACTOR_NUM_CLASSES 0x57
 
 #endif //_TYPES_H

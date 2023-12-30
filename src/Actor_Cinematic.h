@@ -15,16 +15,20 @@ struct CActorCinematic;
 struct CBehaviourCinematic : public CBehaviour {
 	CActorCinematic* pOwner;
 	CBWCinActor cinActor;
+	int field_0x140;
 
+	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual bool Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void Manage();
 	virtual void InitState(int newState);
+
+	bool CinematicMode_InterpreteCinMessage(int param_2, int param_3);
 };
 
 struct CActorCinematic : public CActor {
 	CActorCinematic();
-	void FUN_0011c1b0(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
+	void PatchMaterialForCutscene(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
 	void Create(const edCinGameInterface::ACTORV_CREATIONtag* pGameInterface, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D, ed_3D_Scene* pScene);
 	virtual void Init();
 	virtual void CinematicMode_Enter(bool bSetState);
@@ -32,7 +36,7 @@ struct CActorCinematic : public CActor {
 	CAnimation animationController;
 	edAnmLayer anmLayers[2];
 
-	ComponentList<1> components;
+	BehaviourList<1> components;
 	CBehaviourCinematic behaviourCinematic;
 
 	ed_3d_hierarchy_node field_0x580;

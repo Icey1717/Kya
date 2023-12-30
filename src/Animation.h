@@ -12,7 +12,7 @@ struct edAnmStage {
 	undefined4 field_0x4;
 	float field_0x8;
 	edF32MATRIX4* pFrameMatrixData;
-	edF32MATRIX3* field_0x10;
+	edF32MATRIX3* pConstantMatrixData;
 	struct AnimMatrix* pAnimMatrix;
 	struct edANM_WRTS* pRelativeTransformMatrixBuffer;
 	edAnmSkeleton anmSkeleton;

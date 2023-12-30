@@ -148,6 +148,16 @@ struct ed_3d_octree {
 };
 
 PACK(
+struct ClusterDetails {
+	int field_0x20; // int*
+	int field_0x24; // int*
+	ushort count_0x28; // int*
+	ushort clusterHierCount;
+	int field_0x2c; // int*
+	int field_0x30; // int*
+});
+
+PACK(
 	struct MeshData_CDQU {
 	char field_0x0[4];
 	undefined field_0x4;
@@ -166,11 +176,7 @@ PACK(
 	ushort field_0x1a;
 	ushort field_0x1c;
 	undefined2 field_0x1e;
-	int field_0x20; // int*
-	int field_0x24; // int*
-	int field_0x28; // int*
-	int field_0x2c; // int*
-	int field_0x30; // int*
+	ClusterDetails clusterDetails;
 	int field_0x34; // int*
 	int field_0x38; // uint*
 	int field_0x3c; // uint*
@@ -872,7 +878,7 @@ void ed3DDMAGeneratePacketRefHeader(void)
 	return;
 }
 
-edpkt_data* g_RenderCommandVidMem_004492a0 = NULL;
+edpkt_data* g_stGifReferencesPacket = NULL;
 edpkt_data* g_GifRefPktCurMax = NULL;
 char* g_ScratchBase_004493d0 = NULL;
 edpkt_data* gPKTMatrixCur = NULL;
@@ -975,12 +981,12 @@ void ed3DDMAInit(uint countA, int countB)
 	}
 	ed3D_Allocator_00449248.end = pcVar2;
 #ifdef PLATFORM_PS2
-	g_RenderCommandVidMem_004492a0 = (edpkt_data*)(((ulong)(lVar3 << 0x24) >> 0x24) | 0x30000000);
+	g_stGifReferencesPacket = (edpkt_data*)(((ulong)(lVar3 << 0x24) >> 0x24) | 0x30000000);
 #else
-	g_RenderCommandVidMem_004492a0 = (edpkt_data*)malloc(0x1000);
+	g_stGifReferencesPacket = (edpkt_data*)malloc(countB * 2 * sizeof(edpkt_data));
 #endif
-	g_GifRefPktCur = g_RenderCommandVidMem_004492a0;
-	g_GifRefPktCurMax = g_RenderCommandVidMem_004492a0 + countB;
+	g_GifRefPktCur = g_stGifReferencesPacket;
+	g_GifRefPktCurMax = g_stGifReferencesPacket + countB;
 	return;
 }
 
@@ -1010,17 +1016,17 @@ void ed3DFlushListInit(void)
 	gpLastMaterial = (ed_dma_material*)0x0;
 	if (gCurRenderList == 0) {
 		GifRefPktCurMax = ged3DConfig.field_0x28 * 0x10;
-		g_GifRefPktCur = g_RenderCommandVidMem_004492a0;
+		g_GifRefPktCur = g_stGifReferencesPacket;
 		g_VifRefPktCur = g_stVifReferencesPacket;
 		uVar1 = g_VideoMemorySize_00449280 >> 1;
 	}
 	else {
 		g_VifRefPktCur = g_stVifReferencesPacket + (g_VideoMemorySize_00449280 >> 1);
 		GifRefPktCurMax = ged3DConfig.field_0x28 * 0x20;
-		g_GifRefPktCur = g_RenderCommandVidMem_004492a0 + ged3DConfig.field_0x28;
+		g_GifRefPktCur = g_stGifReferencesPacket + ged3DConfig.field_0x28;
 		uVar1 = g_VideoMemorySize_00449280;
 	}
-	g_GifRefPktCurMax = (edpkt_data*)((ulong)&g_RenderCommandVidMem_004492a0->cmdA + GifRefPktCurMax);
+	g_GifRefPktCurMax = (edpkt_data*)((ulong)&g_stGifReferencesPacket->cmdA + GifRefPktCurMax);
 	g_VifRefPktCurMax = g_stVifReferencesPacket + uVar1;
 	gpPKTDataRefMasPath3 = (edpkt_data*)0x0;
 	gbFirstTex = 1;
@@ -2948,8 +2954,10 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			animMatrixDestAddr = animMatrixDestAddr + 4;
 		}
 
+#ifdef PLATFORM_WIN
 		ED3D_LOG(LogLevel::Info, "ed3DFlushStripInit Processing anim matrix transfer pkts remainder: {}", maxAnimMatrixCount);
 		VU1Emu::UpdateMemory(SCRATCHPAD_ADDRESS(0x70000800), ppuVar15);
+#endif
 
 		if (gBackupPKT != (edpkt_data*)0x0) {
 			edDmaSync(SHELLDMA_CHANNEL_VIF0);
@@ -6144,6 +6152,229 @@ LAB_00297870:
 	return;
 }
 
+edF32VECTOR4* ed3DGetHierarchyFirstLODSphere(ed_g3d_hierarchy* pHier)
+{
+	ed_hash_code* peVar1;
+	edF32VECTOR4* peVar2;
+	int iVar3;
+	ed3DLod* peVar4;
+
+	peVar4 = pHier->aLods;
+	for (iVar3 = 0; (peVar1 = (ed_hash_code*)LOAD_SECTION(peVar4->pObj), peVar1 == (ed_hash_code*)0x0 && (iVar3 < (int)(uint)pHier->lodCount));
+		iVar3 = iVar3 + 1) {
+		peVar4 = peVar4 + 1;
+	}
+	peVar2 = (edF32VECTOR4*)0x0;
+	if (peVar1 != (ed_hash_code*)0x0) {
+		peVar2 = &((MeshData_OBJ*)LOAD_SECTION(peVar1->pData))->body.boundingSphere;
+	}
+	return peVar2;
+}
+
+edF32VECTOR4 center$1208;
+
+ed3DLod* ed3DClusterChooseGoodLOD(ed_g3d_hierarchy* pHier, edF32VECTOR4* pSphere)
+{
+	ed_3d_hierarchy_setup* peVar1;
+	ed3DLod* peVar2;
+	int iVar2;
+	uint uVar3;
+	float fVar4;
+	edF32VECTOR4 local_10;
+
+	if (pHier->lodCount == 0) {
+		peVar2 = (ed3DLod*)0x0;
+		pHier->size_0xae = 0xff;
+	}
+	else {
+		edF32Matrix4MulF32Vector4Hard(&local_10, WorldToCamera_Matrix, pSphere);
+		edF32Vector4SquareHard(&local_10, &local_10);
+		fVar4 = gRenderFovCoef * (local_10.z + local_10.x + local_10.y);
+		if ((pHier->pHierarchySetup == 0x0) ||
+			(peVar1 = ((ed_3d_hierarchy_setup*)LOAD_SECTION(pHier->pHierarchySetup))->pNext, peVar1 == (ed_3d_hierarchy_setup*)0x0)) {
+			peVar2 = pHier->aLods;
+			uVar3 = 0;
+			while ((uVar3 < pHier->lodCount) && ((float)((int)peVar2->field_0x6 * (int)peVar2->field_0x6) <= fVar4)) {
+				peVar2 = peVar2 + 1;
+				uVar3 = uVar3 + 1 & 0xffff;
+			}
+			if (uVar3 == pHier->lodCount) {
+				peVar2 = (ed3DLod*)0x0;
+				pHier->size_0xae = 0xff;
+			}
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			for (uVar3 = 0; (uVar3 < pHier->lodCount && ((float)(&peVar1->clipping_0x0)[uVar3] <= fVar4));
+				uVar3 = uVar3 + 1 & 0xffff) {
+			}
+			if (uVar3 == pHier->lodCount) {
+				pHier->size_0xae = (byte)uVar3;
+				return (ed3DLod*)0x0;
+			}
+			peVar2 = (ed3DLod*)(pHier[1].hash + uVar3 * 8 + -0x80);)
+		}
+		pHier->size_0xae = (byte)uVar3;
+	}
+	return peVar2;
+}
+
+void ed3DRenderClusterObject(ed_hash_code* pHashA, ed_hash_code* pHashB, uint param_3)
+
+{
+	edF32MATRIX4* peVar1;
+	edF32VECTOR4* pBoundSphereCenter;
+	EVectorMode_A EVar3;
+	uint uVar4;
+	edF32VECTOR4* pSphere;
+	int stripCount;
+	ed_3d_strip* pStrip;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+	float fVar17;
+	float fVar18;
+	float in_vf9w;
+	edF32VECTOR4 local_10;
+	MeshData_OBJ* pObj;
+
+	pObj = (MeshData_OBJ*)LOAD_SECTION(pHashA->pData);
+	pStrip = (ed_3d_strip*)LOAD_SECTION((pObj->body).p3DStrip);
+	if (pStrip == (ed_3d_strip*)0x0) {
+		return;
+	}
+	gRender_info_SPR->pMeshTransformMatrix = WorldToCamera_Matrix;
+	pBoundSphereCenter = gBoundSphereCenter;
+	stripCount = (pObj->body).stripCount;
+	if ((gRender_info_SPR->flags & 0x10) != 0) {
+		pSphere = gRender_info_SPR->pHierarchySetup->pBoundingSphere;
+		iVar6 = 8;
+		if (pSphere != (edF32VECTOR4*)0x0) goto LAB_002b181c;
+	}
+	pSphere = &local_10;
+	iVar6 = 2;
+	local_10.x = (pObj->body).boundingSphere.x;
+	local_10.y = (pObj->body).boundingSphere.y;
+	local_10.z = (pObj->body).boundingSphere.z;
+	local_10.w = (pObj->body).boundingSphere.w;
+LAB_002b181c:
+
+	gBoundSphereCenter->xyz = pSphere->xyz;
+	gBoundSphereCenter->w = 1.0f;
+
+	/*
+	pBoundSphereCenter = gBoundSphereCenter;
+	peVar1 = gRender_info_SPR->pMeshTransformMatrix;
+	fVar15 = gBoundSphereCenter->x;
+	fVar16 = gBoundSphereCenter->y;
+	fVar17 = gBoundSphereCenter->z;
+	fVar18 = gBoundSphereCenter->w;
+	fVar7 = peVar1->ab;
+	fVar8 = peVar1->ac;
+	fVar9 = peVar1->bb;
+	fVar10 = peVar1->bc;
+	fVar11 = peVar1->cb;
+	fVar12 = peVar1->cc;
+	fVar13 = peVar1->db;
+	fVar14 = peVar1->dc;
+	gBoundSphereCenter->x = peVar1->aa * fVar15 + peVar1->ba * fVar16 + peVar1->ca * fVar17 + peVar1->da * fVar18;
+	pBoundSphereCenter->y = fVar7 * fVar15 + fVar9 * fVar16 + fVar11 * fVar17 + fVar13 * fVar18;
+	pBoundSphereCenter->z = fVar8 * fVar15 + fVar10 * fVar16 + fVar12 * fVar17 + fVar14 * fVar18;
+	pBoundSphereCenter->w = in_vf9w;
+	*/
+
+	*gBoundSphereCenter = *gBoundSphereCenter * *gRender_info_SPR->pMeshTransformMatrix;
+
+	EVar3 = ed3DTestBoundingSphere(pSphere);
+	if (EVar3 != VM_4) {
+		gRender_info_SPR->boundingSphereTestResult = 1;
+		if ((EVar3 != VM_1) && (uVar4 = ed3DTestBoundingSphereObjectNoZFar(pSphere), uVar4 != 1)) {
+			gRender_info_SPR->boundingSphereTestResult = iVar6;
+		}
+		if (param_3 == 0) {
+			for (; stripCount != 0; stripCount = stripCount + -1) {
+				ed3DLinkClusterStripToViewport(pStrip, pHashB);
+				pStrip = (ed_3d_strip*)LOAD_SECTION(pStrip->pNext);
+			}
+		}
+		else {
+			if (param_3 == 3) {
+				for (; stripCount != 0; stripCount = stripCount + -1) {
+					IMPLEMENTATION_GUARD_LOG(
+					ed3DLinkClusterSpriteToViewport(pStrip, gRender_info_SPR->boundingSphereTestResult, pHashB);)
+					pStrip = (ed_3d_strip*)LOAD_SECTION(pStrip->pNext);
+				}
+			}
+		}
+	}
+	return;
+}
+
+void ed3DRenderClusterHierarchy(ed_g3d_hierarchy* pHier)
+{
+	short sVar1;
+	char* pcVar2;
+	ed_hash_code* pHashA;
+	edF32VECTOR4* peVar3;
+	ed3DLod* peVar4;
+	char* peVar5;
+	ed_hash_code* pHashB;
+
+	if (((pHier->flags_0x9e & 0x40) == 0) && (pHier->lodCount != 0)) {
+		gRender_info_SPR->pHierarchySetup = (ed_3d_hierarchy_setup*)LOAD_SECTION(pHier->pHierarchySetup);
+		if ((gRender_info_SPR->pHierarchySetup == (ed_3d_hierarchy_setup*)0x0) ||
+			(peVar3 = gRender_info_SPR->pHierarchySetup->pBoundingSphere, peVar3 == (edF32VECTOR4*)0x0)) {
+			peVar3 = ed3DGetHierarchyFirstLODSphere(pHier);
+		}
+		if (peVar3 != (edF32VECTOR4*)0x0) {
+			center$1208.x = peVar3->x;
+			center$1208.y = peVar3->y;
+			center$1208.z = peVar3->z;
+			peVar4 = ed3DClusterChooseGoodLOD(pHier, &center$1208);
+			if (peVar4 != (ed3DLod*)0x0) {
+				pcVar2 = (char*)LOAD_SECTION(pHier->pTextureInfo);
+				gRender_info_SPR->pSharedMeshTransform = (edF32MATRIX4*)0x0;
+				gRender_info_SPR->pMeshTransformMatrix = WorldToCamera_Matrix;
+				gRender_info_SPR->flags = (uint)pHier->flags_0x9e;
+				gRender_info_SPR->biggerScale = 1.0f;
+				gRender_info_SPR->pPkt = (edpkt_data*)0x0;
+				gRender_info_SPR->pMeshTransformData = (ed_3d_hierarchy*)pHier;
+				pHashA = (ed_hash_code*)LOAD_SECTION(peVar4->pObj);
+				pHashB = (ed_hash_code*)(pcVar2 + 0x10);
+				if (pHashA != (ed_hash_code*)0x0) {
+					sVar1 = peVar4->field_0x4;
+					if (sVar1 == 3) {
+						ed3DRenderClusterObject(pHashA, pHashB, 3);
+					}
+					else {
+						if ((sVar1 != 2) && (sVar1 != 1)) {
+							if (sVar1 != 0) {
+								peVar5 = (char*)LOAD_SECTION(pHier->pLinkTransformData);
+								goto LAB_002b1758;
+							}
+							ed3DRenderClusterObject(pHashA, pHashB, 0);
+						}
+					}
+				}
+			}
+		}
+	}
+	peVar5 = (char*)LOAD_SECTION(pHier->pLinkTransformData);
+LAB_002b1758:
+	if (peVar5 != (char*)0x0) {
+		ed3DRenderClusterHierarchy((ed_g3d_hierarchy*)(peVar5 + 0x10));
+	}
+	return;
+}
+
 void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 {
 	bool bVar1;
@@ -6161,7 +6392,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	uint uVar14;
 	ulong uVar15;
 	long lVar16;
-	ushort* puVar17;
+	ed_hash_code* puVar17;
 	ushort* pStripCounts;
 	uint uVar19;
 	uint uVar20;
@@ -6218,7 +6449,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 		}
 		bVar6 = true;
 	}
-	uVar9 = (uint) * (ushort*)((ulong)&pcVar3->field_0x2c + 2);
+	uVar9 = (uint) * (ushort*)((ulong)&pcVar3->clusterDetails.field_0x2c + 2);
 	if (uVar9 != 0) {
 		IMPLEMENTATION_GUARD();
 		iVar10 = *(int*)pcVar3[1].field_0x0;
@@ -6230,18 +6461,18 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 		}
 		bVar6 = true;
 	}
-	uVar9 = (uint) * (ushort*)((ulong)&pcVar3->field_0x28 + 2);
+	uVar9 = pcVar3->clusterDetails.clusterHierCount;
 	if (uVar9 != 0) {
-		IMPLEMENTATION_GUARD();
-		puVar17 = pcVar3[1].aClusterStripCounts + 2;
+		puVar17 = (ed_hash_code*)((char*)pcVar3 + 0x60);
+
 		while (bVar1 = uVar9 != 0, uVar9 = uVar9 - 1, bVar1) {
-			//ed3DRenderClusterHierarchy((long)(*(int*)(puVar17 + 4) + 0x10));
-			puVar17 = puVar17 + 8;
+			ed3DRenderClusterHierarchy((ed_g3d_hierarchy*)(((char*)LOAD_SECTION(puVar17->pData)) + 0x10));
+			puVar17 = puVar17 + 1;
 		}
 	}
 	if (!bVar6) {
 		IMPLEMENTATION_GUARD();
-		uVar2 = *(ushort*)((ulong)&pcVar3->field_0x28 + 2);
+		uVar2 = pcVar3->clusterDetails.clusterHierCount;
 		uVar9 = 0;
 		uVar15 = 0;
 		iVar10 = 0;
@@ -6502,10 +6733,7 @@ ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy)
 	uint uVar5;
 	uint uVar6;
 	float fVar7;
-	float afStack64[12];
-	float local_10;
-	float local_c;
-	float local_8;
+	edF32MATRIX4 eStack64;
 
 	lodCount = pHierarchy->lodCount;
 	if (lodCount < 2) {
@@ -6520,14 +6748,12 @@ ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy)
 	else {
 		uVar5 = (uint)pHierarchy->size_0xae;
 		if (uVar5 == 0xff) {
-			IMPLEMENTATION_GUARD(
-				edF32Matrix4MulF32Matrix4Hard(afStack64, &pHierarchy->transformB,
-					&gCurLOD_WorldToCamera_Matrix);
+			edF32Matrix4MulF32Matrix4Hard(&eStack64, &pHierarchy->transformB, &gCurLOD_WorldToCamera_Matrix);
 			pLVar2 = pHierarchy->pHierarchySetup;
-			fVar7 = gCurLOD_RenderFOVCoef * (local_8 * local_8 + local_10 * local_10 + local_c * local_c);
-			if ((pLVar2 == (ed_3d_hierarchy_setup*)0x0) || (pcVar3 = pLVar2->field_0xc, pcVar3 == (char*)0x0)) {
-				uVar5 = (uint)pHierarchy->count_0x9c;
-				pLod = pHierarchy->aSubArray;
+			fVar7 = gCurLOD_RenderFOVCoef * (eStack64.dc * eStack64.dc + eStack64.da * eStack64.da + eStack64.db * eStack64.db);
+			if ((pLVar2 == (ed_3d_hierarchy_setup*)0x0) || (pcVar3 = (char*)pLVar2->pNext, pcVar3 == (char*)0x0)) {
+				uVar5 = (uint)pHierarchy->lodCount;
+				pLod = (ed3DLod*)(pHierarchy + 1);
 				uVar6 = 0;
 				while ((uVar6 < uVar5 && ((float)((int)pLod->field_0x6 * (int)pLod->field_0x6) <= fVar7))) {
 					pLod = pLod + 1;
@@ -6538,16 +6764,17 @@ ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy)
 				}
 			}
 			else {
-				uVar5 = (uint)pHierarchy->count_0x9c;
+				uVar5 = (uint)pHierarchy->lodCount;
 				for (uVar6 = 0; (uVar6 < uVar5 && (*(float*)(pcVar3 + uVar6 * 4) <= fVar7)); uVar6 = uVar6 + 1 & 0xffff) {
 				}
 				if (uVar6 == uVar5) {
 					pHierarchy->size_0xae = (byte)uVar6;
 					return (ed3DLod*)0x0;
 				}
-				pLod = pHierarchy->aSubArray + uVar6;
+				pLod = (ed3DLod*)(pHierarchy + 1);
+				pLod = pLod + uVar6;
 			}
-			pHierarchy->size_0xae = (byte)uVar6;)
+			pHierarchy->size_0xae = (byte)uVar6;
 		}
 		else {
 			pLod = (ed3DLod*)(pHierarchy + 1);
@@ -7775,6 +8002,14 @@ void ed3DRenderObject(ed_hash_code* pObjHash, ed_hash_code* pTextureInfo)
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderObject {}({:x})", pObjHash->hash.name, pObjHash->hash.number);
 
+	// HACK
+	//if (pObjHash->hash.number == 0x5f539d9598849ba1) {
+	//	
+	//}
+	//else {
+	//	return;
+	//}
+
 	pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pObjHash->pData);
 	pRenderInput = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->body.p3DStrip);
 	if (pRenderInput == (ed_3d_strip*)0x0) {
@@ -7890,7 +8125,7 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 			pObjHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
 			if (((pObjHash != (ed_hash_code*)0x0) && (sVar1 = pLod->field_0x4, sVar1 != 2)) && (sVar1 != 1)) {
 				if (sVar1 == 3) {
-					IMPLEMENTATION_GUARD(ed3DRenderSprite(pObjHash, pHierarchy->pTextureInfo + 0x10));
+					IMPLEMENTATION_GUARD_LOG(ed3DRenderSprite(pObjHash, pHierarchy->pTextureInfo + 0x10));
 				}
 				else {
 					if (sVar1 == 0) {
@@ -7956,15 +8191,13 @@ void ed3DRenderSonHierarchyForShadow(ed_3d_hierarchy* pMeshTransformData)
 						ed3DRenderObject((ed_hash_code*)LOAD_SECTION(pMVar4->pObj), (ed_hash_code*)(pMeshTransformData->pTextureInfo + 0x10));
 					}
 					else {
-						IMPLEMENTATION_GUARD(
-							cVar1 = pMeshTransformData->GlobalAlhaON;
+						cVar1 = pMeshTransformData->GlobalAlhaON;
 						pMeshTransformData->GlobalAlhaON = -1;
-						ppMVar5 = (MeshHeader**)
-							Func_00295a50(pMeshTransformData, (long)(int)(pMeshTransformData->count_0x9c - 1));
-						if (ppMVar5 != (MeshHeader**)0x0) {
-							ed3DRenderObject(*ppMVar5, pMeshTransformData->pTextureInfo + 0x10);
+						ed3DLod* peVar3 = ed3DHierarcGetLOD((ed_g3d_hierarchy*)pMeshTransformData, pMeshTransformData->lodCount - 1);
+						if (peVar3 != (ed3DLod*)0x0) {
+							ed3DRenderObject((ed_hash_code*)LOAD_SECTION(peVar3->pObj), (ed_hash_code*)(pMeshTransformData->pTextureInfo + 0x10));
 						}
-						pMeshTransformData->field_0xaf = cVar1;)
+						pMeshTransformData->GlobalAlhaON = cVar1;
 					}
 				}
 			}
@@ -9759,7 +9992,7 @@ ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outIn
 			pTexturePool = pOutTexture + 1;
 		}
 	}
-	if ((pOutTexture == (ed_g2d_manager*)0x0) || (memset(pOutTexture, 0, 0x30), fileBufferStart == (char*)0x0)) {
+	if ((pOutTexture == (ed_g2d_manager*)0x0) || (memset(pOutTexture, 0, sizeof(ed_g2d_manager)), fileBufferStart == (char*)0x0)) {
 		bVar1 = pOutTexture != pTextureInfo;
 		pOutTexture = (ed_g2d_manager*)0x0;
 		if (bVar1) {
@@ -10037,17 +10270,17 @@ char* edHashCodeGet(Hash_8 hash, int* texHashPtr, int hashCount, uint triedHashe
 	return (char*)puVar2;
 }
 
-char* edHashcodeGet(Hash_8 hash, ed_Chunck* pChunck)
+ed_hash_code* edHashcodeGet(Hash_8 hash, ed_Chunck* pChunck)
 {
-	char* pcVar1;
+	ed_hash_code* pcVar1;
 
 	/* If the first value in the texture obj buffer is HASH or MBNK */
 	if ((pChunck->hash == 0x48534148) || (pChunck->hash == 0x4b4e424d)) {
-		pcVar1 = edHashCodeGet(hash, (int*)(pChunck + 1), pChunck->field_0xc - 0x10U >> 5, 0,
+		pcVar1 = (ed_hash_code*)edHashCodeGet(hash, (int*)(pChunck + 1), pChunck->field_0xc - 0x10U >> 5, 0,
 			pChunck->field_0xc - 0x10U >> 4);
 	}
 	else {
-		pcVar1 = (char*)0x0;
+		pcVar1 = (ed_hash_code*)0x0;
 	}
 	return pcVar1;
 }
@@ -10077,7 +10310,7 @@ void ed3DPrepareMaterialBank(ed_Chunck* pMBNA, ed_g2d_manager* pTextureInfo)
 	int iVar1;
 	ed_Chunck* puVar2;
 	uint uVar3;
-	char* pcVar4;
+	ed_hash_code* pcVar4;
 	ed_Chunck* pMBNK;
 
 	iVar1 = pMBNA->size;
@@ -10101,7 +10334,7 @@ void ed3DPrepareMaterialBank(ed_Chunck* pMBNA, ed_g2d_manager* pTextureInfo)
 				MBNK* pMBNKActual = (MBNK*)(pMBNK + 1);
 
 				pcVar4 = edHashcodeGet(pMBNKActual->hash, pTextureInfo->pMAT_HASH);
-				if (pcVar4 != (char*)0x0) {
+				if (pcVar4 != (ed_hash_code*)0x0) {
 					pMBNKActual->pDst = STORE_SECTION(pcVar4);
 				}
 				uVar3 = (uVar3 & 0xffff) - 1;
@@ -10120,18 +10353,14 @@ struct astruct_14 {
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	int* field_0x10;
-	int* field_0x14;
-	int* field_0x18;
-	int* field_0x1c;
-	int* field_0x20;
+	ClusterDetails clusterDetails;
 	short field_0x24;
 };
 
 int INT_0044935c = 0;
 bool BOOL_00449370 = false;
 
-void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo, int param_5, long param_6)
+void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo, int param_5, long numSections)
 {
 	ushort uVar1;
 	ed_Chunck* piVar2;
@@ -10147,7 +10376,7 @@ void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* 
 	bool sectionBufferIsEmpty;
 
 	sectionBufferIsEmpty = (pCDQU->field_0x1c & 1) == 0;
-	if (param_6 == 0) {
+	if (numSections == 0) {
 		if (sectionBufferIsEmpty) {
 			uVar8 = 0;
 			pCDQU->field_0x1c = pCDQU->field_0x1c | 1;
@@ -10159,12 +10388,8 @@ void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* 
 			} while (uVar6 < 0xd);
 			INT_0044935c = 0x60;
 			local_30.field_0xc = '\0';
-			local_30.field_0x10 = (int*)pCDQU->field_0x20;
-			local_30.field_0x14 = (int*)pCDQU->field_0x24;
-			local_30.field_0x18 = (int*)pCDQU->field_0x28;
-			local_30.field_0x1c = (int*)pCDQU->field_0x2c;
-			local_30.field_0x20 = (int*)pCDQU->field_0x30;
-			piVar4 = (ed_Chunck*)pCDQU->field_0x30;
+			local_30.clusterDetails = pCDQU->clusterDetails;
+			piVar4 = (ed_Chunck*)pCDQU->clusterDetails.field_0x30;
 			piVar2 = (ed_Chunck*)pCDQU->field_0x34;
 			local_30.field_0x4 = (int*)pTextureInfo;
 			local_30.field_0x8 = (int*)param_5;
@@ -10222,11 +10447,7 @@ LAB_002a40c4:
 			IMPLEMENTATION_GUARD();
 			if (sectionBufferIsEmpty) {
 				aStack96.field_0xc = '\0';
-				aStack96.field_0x10 = (int*)pCDQU->field_0x20;
-				aStack96.field_0x14 = (int*)pCDQU->field_0x24;
-				aStack96.field_0x18 = (int*)pCDQU->field_0x28;
-				aStack96.field_0x1c = (int*)pCDQU->field_0x24;
-				aStack96.field_0x20 = (int*)pCDQU->field_0x30;
+				aStack96.clusterDetails = pCDQU->clusterDetails;
 				aStack96.field_0x4 = (int*)pTextureInfo;
 				aStack96.field_0x8 = (int*)param_5;
 				IMPLEMENTATION_GUARD(puVar5 = ed3DPrepareAllSprite((int)piVar4, &aStack96, (int)(pCDQU->field_0x30 + 4), 4));
@@ -10236,7 +10457,7 @@ LAB_002a40c4:
 		}
 		else {
 			if ((offset == 0x55514443) || (offset == 0x434f4443)) {
-				ed3DPrepareClusterTree((MeshData_CDQU*)(piVar4 + 4), param_2, pMeshInfo, pTextureInfo, param_5, param_6);
+				ed3DPrepareClusterTree((MeshData_CDQU*)(piVar4 + 4), param_2, pMeshInfo, pTextureInfo, param_5, numSections);
 			}
 		}
 	}
@@ -10594,14 +10815,14 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	(pCVar8->base).pShadowAnimMatrix = (edF32MATRIX4*)(p3DA->pShadowAnimMatrix); //(edF32MATRIX4*)LOAD_SECTION(p3DA->pShadowAnimMatrix);
 	(pCVar8->base).pLinkTransformData = (ed_3d_hierarchy*)LOAD_SECTION(p3DA->pLinkTransformData);
 	(pCVar8->base).field_0x94 = (undefined*)LOAD_SECTION(p3DA->field_0x94);
-	(pCVar8->base).pTextureInfo = (undefined*)LOAD_SECTION(p3DA->pTextureInfo);
+	(pCVar8->base).pTextureInfo = (char*)LOAD_SECTION(p3DA->pTextureInfo);
 
 	MY_LOG("ed3DHierarchyAddNode Resolved texture hash code {:x} -> {:x}", (uintptr_t)pCVar8, (uintptr_t)(pCVar8->base).pTextureInfo);
 
 	(pCVar8->base).lodCount = p3DA->lodCount;
 	(pCVar8->base).flags_0x9e = p3DA->flags_0x9e;
 	(pCVar8->base).pHierarchySetup = (ed_3d_hierarchy_setup*)LOAD_SECTION(p3DA->pHierarchySetup);
-	(pCVar8->base).pMatrixPkt = (edpkt_data*)LOAD_SECTION(p3DA->field_0xa4);
+	(pCVar8->base).pMatrixPkt = (edpkt_data*)LOAD_SECTION(p3DA->pMatrixPkt);
 	(pCVar8->base).pAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(p3DA->pAnimMatrix);
 	(pCVar8->base).subMeshParentCount_0xac = p3DA->subMeshParentCount_0xac;
 	(pCVar8->base).size_0xae = p3DA->size_0xae;
@@ -10740,191 +10961,6 @@ edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, e
 	}
 	return pMeshTransformParent;
 }
-/*
-{
-	ed_Chunck* iVar1;
-	ed_Chunck* iVar2;
-	int iVar3;
-	int iVar4;
-	int iVar5;
-	ed_Chunck* pChunck;
-	uint uVar6;
-	ed_Chunck* peVar7;
-	int subMeshCount;
-	edNODE* pMeshTransformParent;
-	edNODE* peVar9;
-	edNODE* peVar10;
-	edNODE* peVar11;
-	edNODE* peVar12;
-	edNODE* peVar13;
-	edNODE* peVar14;
-	edNODE* pNewNode;
-	uint uVar15;
-	ed_hash_code* pHashCode;
-	uint uVar16;
-	ed_hash_code* peVar17;
-	ed_hash_code* local_1f0;
-	edNODE* local_1d4;
-	uint local_1d0;
-	ed_hash_code* local_1a0;
-	edNODE* local_184;
-	uint local_180;
-	ed_hash_code* local_150;
-	edNODE* local_134;
-	uint local_130;
-	ed_hash_code* local_100;
-	edNODE* local_e4;
-	uint local_e0;
-	ed_hash_code* local_b0;
-	edNODE* local_94;
-	uint local_90;
-	ed_hash_code* local_60;
-	edNODE* local_44;
-	uint local_40;
-	edNODE* local_8;
-	short sStack2;
-	ed_Chunck* pMeshHALL;
-
-	peVar7 = (ed_Chunck*)0x0;
-	pMeshHALL = pMeshInfo->HALL;
-	pHashCode = (ed_hash_code*)(pMeshHALL + 2);
-	uVar6 = edChunckGetNb((char*)(pMeshHALL + 1), (char*)pMeshHALL + pMeshHALL->size);
-	uVar6 = (uVar6 & 0xffff) - 1;
-	if (szString == (char*)0x0) {
-		int subMeshIndex = -1;
-		peVar17 = pHashCode;
-		for (uVar15 = 0; uVar15 < uVar6; uVar15 = uVar15 + 1) {
-			ed_Chunck* pHierChunk = (ed_Chunck*)LOAD_SECTION(peVar17->pData);
-			ed_g3d_hierarchy* pHier = (ed_g3d_hierarchy*)(pHierChunk + 1);
-
-			subMeshCount = pHier->subMeshParentCount_0xac;
-			if (subMeshIndex < subMeshCount) {
-				peVar7 = (ed_Chunck*)LOAD_SECTION(peVar17->pData);
-				subMeshIndex = subMeshCount;
-			}
-			peVar17 = peVar17 + 1;
-		}
-	}
-	else {
-		IMPLEMENTATION_GUARD(
-		peVar7 = ed3DG3DHierarchyGetChunk(pMeshInfo, szString);)
-	}
-	pMeshTransformParent = (edNODE*)0x0;
-	if (peVar7 != (ed_Chunck*)0x0) {
-		pMeshTransformParent = ed3DHierarchyAddNode(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(peVar7 + 1), (ed_3d_hierarchy*)0x0);
-		local_8 = (edNODE*)0x0;
-		peVar17 = pHashCode;
-		for (uVar16 = 0; uVar16 < uVar6; uVar16 = uVar16 + 1) {
-			iVar1 = (ed_Chunck*)LOAD_SECTION(peVar17->pData);
-			
-			ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(iVar1 + 1);
-
-			ed_3d_hierarchy_node* pNewHierNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pNewHier->pLinkTransformData);
-
-			if ((ed_Chunck*)pNewHierNode == peVar7) {
-				peVar9 = ed3DHierarchyAddNode(pList, pHierNode, pNode, pNewHier, (ed_3d_hierarchy*)pMeshTransformParent->pData);
-				local_44 = (edNODE*)0x0;
-				local_60 = pHashCode;
-				for (local_40 = 0; local_40 < uVar6; local_40 = local_40 + 1) {
-					iVar2 = (ed_Chunck*)LOAD_SECTION(local_60->pData);
-
-					ed_g3d_hierarchy* pHier2 = (ed_g3d_hierarchy*)(iVar2 + 1);
-					ed_3d_hierarchy_node* pNode2 = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier2->pLinkTransformData);
-
-					if ((ed_Chunck*)pNode2 == iVar1) {
-						peVar10 = ed3DHierarchyAddNode(pList, pHierNode, pNode, pHier2, (ed_3d_hierarchy*)peVar9->pData);
-						local_94 = (edNODE*)0x0;
-						local_b0 = pHashCode;
-						for (local_90 = 0; local_90 < uVar6; local_90 = local_90 + 1) {
-							IMPLEMENTATION_GUARD();
-							iVar3 = local_b0->pData;
-							if (*(int*)(iVar3 + 0xa0) == (int)iVar2) {
-								peVar11 = ed3DHierarchyAddNode
-								(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(iVar3 + 0x10),
-									(ed_3d_hierarchy*)peVar10->pData);
-								local_e4 = (edNODE*)0x0;
-								local_100 = pHashCode;
-								for (local_e0 = 0; local_e0 < uVar6; local_e0 = local_e0 + 1) {
-									iVar4 = local_100->pData;
-									if (*(int*)(iVar4 + 0xa0) == iVar3) {
-										peVar12 = ed3DHierarchyAddNode
-										(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(iVar4 + 0x10),
-											(ed_3d_hierarchy*)peVar11->pData);
-										local_134 = (edNODE*)0x0;
-										local_150 = pHashCode;
-										for (local_130 = 0; local_130 < uVar6; local_130 = local_130 + 1) {
-											iVar5 = local_150->pData;
-											if (*(int*)(iVar5 + 0xa0) == iVar4) {
-												peVar13 = ed3DHierarchyAddNode
-												(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(iVar5 + 0x10),
-													(ed_3d_hierarchy*)peVar12->pData);
-												local_184 = (edNODE*)0x0;
-												local_1a0 = pHashCode;
-												for (local_180 = 0; local_180 < uVar6; local_180 = local_180 + 1) {
-													uVar15 = local_1a0->pData;
-													if (*(int*)(uVar15 + 0xa0) == iVar5) {
-														peVar14 = ed3DHierarchyAddNode
-														(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(uVar15 + 0x10),
-															(ed_3d_hierarchy*)peVar13->pData);
-														local_1d4 = (edNODE*)0x0;
-														local_1f0 = pHashCode;
-														for (local_1d0 = 0; local_1d0 < uVar6; local_1d0 = local_1d0 + 1) {
-															pChunck = (ed_Chunck*)local_1f0->pData;
-															if (pChunck[10].hash == uVar15) {
-																pNewNode = ed3DHierarchyAddNode
-																(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(pChunck + 1),
-																	(ed_3d_hierarchy*)peVar14->pData);
-																IMPLEMENTATION_GUARD(
-																ed3DHierarchyAddSonsToList
-																(pList, pHierNode, pNode, pChunck, pNewNode, (ed_hash_code*)pHashCode, uVar6);
-																if (local_1d4 != (edNODE*)0x0) {
-																	local_1d4 = pNewNode;
-																})
-															}
-															local_1f0 = local_1f0 + 1;
-														}
-														if (local_184 != (edNODE*)0x0) {
-															local_184 = peVar14;
-														}
-													}
-													local_1a0 = local_1a0 + 1;
-												}
-												if (local_134 != (edNODE*)0x0) {
-													local_134 = peVar13;
-												}
-											}
-											local_150 = local_150 + 1;
-										}
-										if (local_e4 != (edNODE*)0x0) {
-											local_e4 = peVar12;
-										}
-									}
-									local_100 = local_100 + 1;
-								}
-								if (local_94 != (edNODE*)0x0) {
-									local_94 = peVar11;
-								}
-							}
-							local_b0 = local_b0 + 1;
-						}
-						if (local_44 != (edNODE*)0x0) {
-							local_44 = peVar10;
-						}
-					}
-					local_60 = local_60 + 1;
-				}
-				if (local_8 != (edNODE*)0x0) {
-					local_8 = peVar9;
-				}
-			}
-			peVar17 = peVar17 + 1;
-		}
-		ed3DHierarchyRefreshSonNumbers(pMeshTransformParent, &sStack2);
-	}
-	return pMeshTransformParent;
-}
-*/
-
 
 void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pParentNode, ed_Chunck* pChunck, edNODE* pNewNode,
 	ed_hash_code* pHashCode, uint count)
@@ -10984,12 +11020,12 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 			local_40 = pHashCode;
 			for (local_20 = 0; local_20 < count; local_20 = local_20 + 1) {
 				pcVar1 = (ed_Chunck*)LOAD_SECTION(local_40->pData);
-				pHier = (ed_g3d_hierarchy*)(iVar1 + 1);
+				pHier = (ed_g3d_hierarchy*)(pcVar1 + 1);
 				pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
-				ed_Chunck* a = *(ed_Chunck**)(pcVar1 + 0xa0);
-				IMPLEMENTATION_GUARD();
+				ed_Chunck* pNextChunk = (ed_Chunck*)(pHier + 1);
 
-				if (*(ed_Chunck**)(pcVar1 + 0xa0) == iVar1) {
+				if (pNextChunk == iVar1) {
+					IMPLEMENTATION_GUARD();
 					peVar8 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar1 + 0x10),
 						(ed_3d_hierarchy*)peVar7->pData);
 					local_74 = (edNODE*)0x0;
@@ -11348,7 +11384,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 	ed_3d_hierarchy_node* pHierNode;
 	edNODE* pParentNode;
 	uint fileDatEntryCount;
-	char* pcVar4;
+	ed_hash_code* pcVar4;
 	edNODE* pNewNode;
 	int iVar5;
 	ed_Chunck* pSkeletonChunck;
@@ -11401,11 +11437,11 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 			pList = pStaticMeshMaster->pHierListA;
 			fileDatEntryCount = edChunckGetNb((char*)(pcVar2 + 1), (char*)pcVar2 + pcVar2->size);
 			pcVar4 = edHashcodeGet(meshHashValue, (ed_Chunck*)(pMeshInfo->HALL + 1));
-			if (pcVar4 == (char*)0x0) {
+			if (pcVar4 == (ed_hash_code*)0x0) {
 				iVar5 = 0;
 			}
 			else {
-				iVar5 = *(int*)(pcVar4 + 8);
+				iVar5 = pcVar4->pData;
 			}
 			if (iVar5 == 0) {
 				pNewNode = (edNODE*)0x0;
@@ -11450,9 +11486,15 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 					local_20 = 1.0;
 				}
 				else {
-					pfVar7 = (float*)((pHierAnimStream->field_0x0 + (pHierAnimStream->field_0x8 + 1) * 4 + (pHierAnimStream->field_0x4 + 1) * 4 + (pHierAnimStream->field_0x0 + 1) * 4 + 0x1b &
-						0xfffffff0) + pHierAnimStream->field_0x0 * 0x10 + pHierAnimStream->field_0x4 * 0x10);
-					local_20 = *pfVar7;
+					int offsetA = pHierAnimStream->field_0x8 * 4 + pHierAnimStream->field_0x4 * 4 + pHierAnimStream->field_0x0 * 4 + -5;
+					int offsetB = pHierAnimStream->field_0x0 * 0x10 + pHierAnimStream->field_0x4 * 0x10;
+
+					ulong pStart = ((ulong)pHierAnimStream[2].field_0xc + offsetA) & 0xfffffffffffffff0U;
+					pStart += offsetB;
+
+					pfVar7 = (float*)pStart;
+
+					local_20 = pfVar7[0];
 					local_1c = pfVar7[1];
 					local_18 = pfVar7[2];
 				}
@@ -11479,7 +11521,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 
 					pANHR_Internal->pObbFloat.pObb_Internal = STORE_SECTION(pSkeletonChunck + 1);
 
-					local_8 = { (edANM_SKELETON*)LOAD_SECTION(pANHR_Internal->pObbFloat.pObb_Internal) };
+					local_8 = edAnmSkeleton((edANM_SKELETON*)LOAD_SECTION(pANHR_Internal->pObbFloat.pObb_Internal));
 					fileDatEntryCount = pANHR_Internal->nodeChunkCount;
 					for (uVar9 = 0; uVar9 < fileDatEntryCount; uVar9 = uVar9 + 1) {
 						pNext->nodeIndex = local_8.NodeIndexFromID(pNext->nodeIndex);
@@ -11850,7 +11892,7 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 
 					MY_LOG("pObb_Internal %x", peVar3->pObbFloat.pObb_Internal);
 
-					edAnmSkeleton skeleton = { (edANM_SKELETON*)LOAD_SECTION(peVar3->pObbFloat.pObb_Internal) };
+					edAnmSkeleton skeleton = edAnmSkeleton((edANM_SKELETON*)LOAD_SECTION(peVar3->pObbFloat.pObb_Internal));
 
 					m0 = TheAnimManager.GetMatrixBuffer(skeleton.pTag->boneCount);
 					pHierNodeData->base.pAnimMatrix = m0;
@@ -11982,7 +12024,7 @@ edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d
 	ed_3d_hierarchy_node* pHierNode;
 	edNODE* pNode;
 	uint uVar1;
-	char* pcVar2;
+	ed_hash_code* pcVar2;
 	edNODE* pNewNode;
 	ed_Chunck* pChunck;
 	short sStack2;
@@ -11996,8 +12038,8 @@ edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d
 	uVar1 = edChunckGetNb((char*)(pcVar1 + 1), (char*)pcVar1 + pcVar1->size);
 	pcVar2 = edHashcodeGet(hash, (ed_Chunck*)(pMeshInfo->HALL + 1));
 	pChunck = (ed_Chunck*)0x0;
-	if (pcVar2 != (char*)0x0) {
-		pChunck = *(ed_Chunck**)(pcVar2 + 8);
+	if (pcVar2 != (ed_hash_code*)0x0) {
+		pChunck = (ed_Chunck*)LOAD_SECTION(pcVar2->pData);
 	}
 	if (pChunck == (ed_Chunck*)0x0) {
 		pNewNode = (edNODE*)0x0;
@@ -12119,6 +12161,43 @@ void ed3DObjectSetStripShadowCast(ed_hash_code* pHash, ushort flag, uint bApply)
 	return;
 }
 
+void ed3DObjectSetStripShadowReceive(ed_hash_code* pHash, ushort param_2, uint param_3)
+{
+	int iVar1;
+	ed_3d_strip* peVar2;
+
+	MeshData_OBJ* pObj = (MeshData_OBJ*)LOAD_SECTION(pHash->pData);
+
+	peVar2 = (ed_3d_strip*)LOAD_SECTION((pObj->body).p3DStrip);
+	if (peVar2 != (ed_3d_strip*)0x0) {
+		iVar1 = (pObj->body).stripCount;
+		if (param_3 == 0) {
+			for (; iVar1 != 0; iVar1 = iVar1 + -1) {
+				peVar2->shadowReceiveFlags = peVar2->shadowReceiveFlags & ~param_2;
+				peVar2 = (ed_3d_strip*)LOAD_SECTION(peVar2->pNext);
+			}
+		}
+		else {
+			for (; iVar1 != 0; iVar1 = iVar1 + -1) {
+				peVar2->shadowReceiveFlags = peVar2->shadowReceiveFlags | param_2;
+				peVar2 = (ed_3d_strip*)LOAD_SECTION(peVar2->pNext);
+			}
+		}
+	}
+	return;
+}
+
+ed3DLod* ed3DHierarcGetLOD(ed_g3d_hierarchy* pHier, uint index)
+{
+	ed3DLod* peVar1;
+
+	peVar1 = (ed3DLod*)0x0;
+	if (index < pHier->lodCount) {
+		peVar1 = pHier->aLods + index;
+	}
+	return peVar1;
+}
+
 void ed3DG3DHierarchyNodeSetAndClrStripFlag(ed_g3d_hierarchy* pHier, ushort flag, byte param_3, uint param_4)
 {
 	short sVar1;
@@ -12155,8 +12234,7 @@ void ed3DG3DHierarchyNodeSetAndClrStripFlag(ed_g3d_hierarchy* pHier, ushort flag
 		}
 		if (sVar1 == 0) {
 			if (param_4 == 4) {
-				IMPLEMENTATION_GUARD(
-				ed3DObjectSetStripShadowReceive(ppeVar5, flag, uVar4);)
+				ed3DObjectSetStripShadowReceive(ppeVar5, flag, uVar4);
 			}
 			else {
 				if (param_4 == 2) {
@@ -12164,11 +12242,10 @@ void ed3DG3DHierarchyNodeSetAndClrStripFlag(ed_g3d_hierarchy* pHier, ushort flag
 						ed3DObjectSetStripShadowCast(ppeVar5, flag, uVar4);
 					}
 					else {
-						IMPLEMENTATION_GUARD(
 						peVar2 = ed3DHierarcGetLOD(pHier, pHier->lodCount - 1);
 						if (peVar2 != (ed3DLod*)0x0) {
-							ed3DObjectSetStripShadowCast(peVar2->pObj, flag, uVar4);
-						})
+							ed3DObjectSetStripShadowCast((ed_hash_code*)LOAD_SECTION(peVar2->pObj), flag, uVar4);
+						}
 					}
 				}
 				else {
@@ -12606,4 +12683,122 @@ MeshData_OBJ_Internal* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier)
 		}
 	}
 	return piVar3;
+}
+
+int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode)
+{
+	int iVar1;
+	int iVar2;
+
+	if ((*(int*)&pHashCode[-1].hash == 0x48534148) || (iVar1 = -1, *(int*)&pHashCode[-1].hash == 0x4b4e424d /*MBNK*/)) {
+		iVar2 = *(int*)&pHashCode[-1].field_0xc + -0x10;
+		iVar1 = iVar2 >> 4;
+		if (iVar2 < 0) {
+			iVar1 = *(int*)&pHashCode[-1].field_0xc + -1 >> 4;
+		}
+	}
+	return iVar1;
+}
+
+
+ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier)
+{
+	ed_hash_code* peVar1;
+
+	if (pHier->pTextureInfo == (char*)0x0) {
+		peVar1 = (ed_hash_code*)0x0;
+	}
+	else {
+		peVar1 = (ed_hash_code*)((char*)pHier->pTextureInfo + 0x10);
+	}
+	return peVar1;
+}
+
+int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier)
+{
+	ed_hash_code* pHashCode;
+	int iVar1;
+
+	pHashCode = ed3DHierarchyGetMaterialBank(pHier);
+	iVar1 = ed3DG2DGetG2DNbMaterials(pHashCode);
+	return iVar1 * 0x10 + 0x10;
+}
+
+void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData)
+{
+	char* __src;
+	ed_hash_code* pHashCode;
+	int iVar1;
+
+	__src = pHier->pTextureInfo;
+	pHashCode = ed3DHierarchyGetMaterialBank(pHier);
+	iVar1 = ed3DG2DGetG2DNbMaterials(pHashCode);
+	memcpy(pData, __src, iVar1 * 0x10 + 0x10);
+	pHier->pTextureInfo = (char*)pData;
+	return pData;
+}
+
+ed_hash_code* ed3DG2DGetMaterial(ed_g2d_manager* pTextureInfo, ulong hash)
+{
+	ed_hash_code* pcVar1;
+
+	pcVar1 = edHashcodeGet(hash, pTextureInfo->pMAT_HASH);
+	return pcVar1;
+}
+
+ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong hash)
+{
+	ed_hash_code* pcVar1;
+	ed_g3d_hierarchy* peVar1;
+
+	pcVar1 = (ed_hash_code*)edHashcodeGet(hash, pG3d->HALL + 1);
+	if ((pcVar1 == (ed_hash_code*)0x0) || (pcVar1->pData == 0x0)) {
+		peVar1 = (ed_g3d_hierarchy*)0x0;
+	}
+	else {
+		peVar1 = (ed_g3d_hierarchy*)((char*)LOAD_SECTION(pcVar1->pData) + 0x10);
+	}
+	return peVar1;
+}
+
+void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag)
+{
+	ed_g3d_hierarchy* peVar1;
+	ed_Chunck* peVar2;
+	uint peVar3;
+
+	pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
+	if (pHier != (ed_g3d_hierarchy*)0x0) {
+		if (((pHier->flags_0x9e & 2) != 0) || ((pHier->flags_0x9e & 4) != 0)) {
+			pHier->flags_0x9e = pHier->flags_0x9e | 0x200;
+		}
+		peVar2 = (ed_Chunck*)((char*)pHier - sizeof(ed_Chunck));
+
+		if (peVar2->hash == 0x52454948 /*HIER*/) {
+			peVar3 = peVar2->hash;
+			while (peVar3 == 0x52454948 /*HIER*/) {
+				ed_Chunck* pNextChunk = (ed_Chunck*)(pHier->aLods);
+
+				if (pNextChunk->hash != 0) {
+					peVar1 = (ed_g3d_hierarchy*)(pNextChunk + 1);
+					while (peVar1 != (ed_g3d_hierarchy*)0x0) {
+						if (peVar1 == pHier) {
+							ed3DG3DHierarchyNodeSetAndClrStripFlag((ed_g3d_hierarchy*)(&peVar2->hash + 4), flag, 1, 4);
+							break;
+						}
+						if (peVar1->pLinkTransformData == 0x0) {
+							peVar1 = (ed_g3d_hierarchy*)0x0;
+						}
+						else {
+							peVar1 = (ed_g3d_hierarchy*)((ed_Chunck*)LOAD_SECTION(peVar1->pLinkTransformData) + 1);
+						}
+					}
+				}
+				peVar2 = edChunckGetNext(peVar2, (char*)0x0);
+				peVar3 = peVar2->hash;
+			}
+			ed3DG3DHierarchyNodeSetAndClrStripFlag(pHier, flag, 1, 4);
+		}
+	}
+	return;
 }

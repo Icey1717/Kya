@@ -487,18 +487,28 @@ private:
 		}
 
 		{
-			VkPhysicalDeviceFeatures deviceFeatures{};
-			vkGetPhysicalDeviceFeatures(physicalDevice, &deviceFeatures);
+			VkPhysicalDeviceVulkan13Features deviceFeatures13 { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
+			VkPhysicalDeviceFeatures2 deviceFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+			deviceFeatures.pNext = &deviceFeatures13;
 
-			assert(deviceFeatures.samplerAnisotropy);
-			assert(deviceFeatures.geometryShader);
-			assert(deviceFeatures.fillModeNonSolid);
+
+			vkGetPhysicalDeviceFeatures2(physicalDevice, &deviceFeatures);
+
+			assert(deviceFeatures.features.samplerAnisotropy);
+			assert(deviceFeatures.features.geometryShader);
+			assert(deviceFeatures.features.fillModeNonSolid);
+			assert(deviceFeatures13.synchronization2);
 		}
 
-		VkPhysicalDeviceFeatures deviceFeatures{};
-		deviceFeatures.samplerAnisotropy = VK_TRUE;
-		deviceFeatures.geometryShader = VK_TRUE;
-		deviceFeatures.fillModeNonSolid = VK_TRUE;
+		VkPhysicalDeviceFeatures2 deviceFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+		deviceFeatures.features.samplerAnisotropy = VK_TRUE;
+		deviceFeatures.features.geometryShader = VK_TRUE;
+		deviceFeatures.features.fillModeNonSolid = VK_TRUE;
+
+		VkPhysicalDeviceVulkan13Features deviceFeatures13{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
+		deviceFeatures13.synchronization2 = VK_TRUE;
+
+		deviceFeatures.pNext = &deviceFeatures13;
 
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -506,7 +516,7 @@ private:
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-		createInfo.pEnabledFeatures = &deviceFeatures;
+		createInfo.pNext = &deviceFeatures;
 
 		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
@@ -1246,10 +1256,10 @@ public:
 			swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
 		}
 
-		VkPhysicalDeviceFeatures supportedFeatures;
-		vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
+		VkPhysicalDeviceFeatures2 supportedFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
+		vkGetPhysicalDeviceFeatures2(device, &supportedFeatures);
 
-		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.features.samplerAnisotropy;
 	}
 
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device) {

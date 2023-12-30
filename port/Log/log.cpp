@@ -6,7 +6,8 @@
 const std::string logPath = "logs/";
 
 //LogPtr Log::asyncLog = spdlog::stdout_color_mt("console");
-LogPtr Log::asyncLog = spdlog::basic_logger_mt<spdlog::async_factory_nonblock>("async_file_logger", "logs/async_log.txt", true);
+//LogPtr Log::asyncLog = spdlog::basic_logger_mt<spdlog::async_factory>("async_file_logger", "logs/async_log.txt", true);
+LogPtr Log::asyncLog = spdlog::basic_logger_st("async_file_logger", "logs/async_log.txt", true);
 
 void Log::ForceFlush()
 {

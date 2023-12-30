@@ -7,6 +7,7 @@
 #include "backends/imgui_impl_vulkan.h"
 
 #include <array>
+#include "TextureCache.h"
 
 namespace DebugMeshViewer {
 	namespace Vulkan {
@@ -354,12 +355,19 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 		gVertexBuffers.BindData(cmd);
 		gVertexConstantBuffer.Update(GetCurrentFrame());
 
-		const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
+		auto& tex = GetTextureEntry();
+		tex.value.image.UpdateSampler();
 
-		int testSize = sizeof(DebugMeshViewer::VertexConstantBuffer);
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = tex.value.image.imageView;
+		imageInfo.sampler = tex.value.image.sampler;
+
+		const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
 
 		Renderer::DescriptorWriteList writeList;
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
 		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(pipeline.descriptorSets[GetCurrentFrame()], pipeline.descriptorSetLayoutBindings);
 

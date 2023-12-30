@@ -26,4 +26,5 @@ public:
 	int size;
 	char* currentSeekPos;
 };
+
 #endif // _MEMORYSTREAM_H

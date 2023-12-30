@@ -10,6 +10,9 @@
 #include "TimeController.h"
 #include "AnmManager.h"
 #include "port/pointer_conv.h"
+#include "MemoryStream.h"
+#include "PoolAllocators.h"
+#include "Actor_Cinematic.h"
 
 CActor::CActor()
 	: CObject()
@@ -24,7 +27,7 @@ CActor::CActor()
 	//this->field_0x148 = 0;
 	//this->funcData_0x150 = (undefined*)&CBehaviour::_vt;
 	//this->funcData_0x150 = (undefined*)&CBehaviourStand::_vt;
-	//this->index_0x20 = -1;
+	this->actorManagerIndex = -1;
 	this->objectId = -1;
 	this->pCinData = (CinNamedObject30*)0x0;
 	this->subObjA = (KyaUpdateObjA*)0x0;
@@ -105,7 +108,7 @@ void CActor::PreInit()
 	int componentCount;
 	int outIntB;
 	int outIntA;
-	ComponentEntry* pCVar2;
+	BehaviourEntry* pCVar2;
 	CBehaviour* pComponent;
 	CShadow* pGVar1;
 	
@@ -126,13 +129,13 @@ void CActor::PreInit()
 	if ((((this->actorFieldS & 1) != 0) && (this != (CActor*)0x0)) && ((this->flags & 0x2000000) == 0)) {
 		ReceiveMessage(this, (ACTOR_MESSAGE)0x5d, 0);
 	}
-	ComponentList<1>* pComponentList = (ComponentList<1>*)this->aComponents;
+	BehaviourList<1>* pComponentList = (BehaviourList<1>*)this->aComponents;
 	uVar5 = 0;
 	uVar4 = 0;
-	ComponentEntry* pEntry = pComponentList->aComponents;
+	BehaviourEntry* pEntry = pComponentList->aComponents;
 
 	for (componentCount = pComponentList->count; componentCount != 0; componentCount = componentCount + -1) {
-		pComponent = pEntry->pComponent;
+		pComponent = pEntry->GetBehaviour();
 
 
 		if (pComponent != (CBehaviour*)0x0) {
@@ -149,8 +152,8 @@ void CActor::PreInit()
 	}
 	this->dlistPatchId = -1;
 	if (uVar5 + uVar4 != 0) {
-		IMPLEMENTATION_GUARD(
-		iVar3 = GameDListPatch_Register((CObject*)this, uVar5, uVar4);)
+		IMPLEMENTATION_GUARD_LOG(
+		iVar3 = GameDListPatch_Register(this, uVar5, uVar4);)
 		this->dlistPatchId = iVar3;
 	}
 	return;
@@ -207,6 +210,194 @@ void CActor::SetScale(float x, float y, float z)
 bool CActor::IsKindOfObject(ulong kind)
 {
 	return (kind & 1) != 0;
+}
+
+ulong ed3DComputeHashCode(char* inString)
+{
+	size_t sVar1;
+	char currentCharacter;
+	uint uVar2;
+	ulong uVar3;
+	ulong local_8;
+	bool isTildeOrCurlyBracket;
+
+	local_8 = 0;
+	sVar1 = strlen(inString);
+	uVar3 = 0;
+	while (true) {
+		uVar2 = (uint)uVar3;
+		if (sVar1 <= uVar3) break;
+		currentCharacter = inString[uVar2];
+		isTildeOrCurlyBracket = false;
+		if (('`' < currentCharacter) && (currentCharacter < '{')) {
+			isTildeOrCurlyBracket = true;
+		}
+		if (isTildeOrCurlyBracket) {
+			currentCharacter = currentCharacter + -0x20;
+		}
+		uVar3 = uVar2 + 1;
+		*(char*)((char*)&local_8 + (uVar2 & 7)) = *(char*)((char*)&local_8 + (uVar2 & 7)) + currentCharacter;
+	}
+	return local_8;
+}
+
+void CActor::Create(ByteCode* pByteCode)
+{
+	CinNamedObject30* pCVar1;
+	KyaUpdateObjA* pKVar2;
+	CollisionData* pCVar3;
+	char* newPos;
+	char* pcVar4;
+	char* inString;
+	char* newPos_00;
+	ulong lVar5;
+	ulong uVar6;
+	int iVar7;
+	int iVar8;
+	int* piVar9;
+	MeshTextureHash* pMVar9;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	MeshTextureHash local_110[16];
+	ScenaricCondition local_4;
+
+	ACTOR_LOG(LogLevel::Info, "CActor::Create {}", pByteCode->GetString());
+
+	Log::GetInstance().ForceFlush();
+
+	pByteCode->Align(4);
+	pCVar1 = (CinNamedObject30*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(pCVar1 + 1);
+	this->pCinData = pCVar1;
+	piVar9 = (int*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(piVar9 + 1);
+	if (*piVar9 != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar9 * 8;
+	}
+	this->field_0x110 = (undefined*)piVar9;
+	if (*(int*)this->field_0x110 < 1) {
+		this->field_0x110 = (undefined*)0x0;
+	}
+	newPos = pByteCode->GetPosition();
+	pByteCode->Align(4);
+	piVar9 = (int*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(piVar9 + 1);
+	if (*piVar9 != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar9 * 8;
+	}
+	iVar7 = *piVar9;
+	piVar9 = piVar9 + 1;
+	if (0 < iVar7) {
+		for (; 0 < iVar7; iVar7 = iVar7 + -1) {
+			pcVar4 = pByteCode->GetPosition();
+			pByteCode->SetPosition(pcVar4 + piVar9[1]);
+			piVar9 = piVar9 + 2;
+		}
+	}
+	iVar7 = pByteCode->GetS32();
+	iVar8 = 0;
+	if (0 < iVar7) {
+		pMVar9 = local_110;
+		do {
+			pcVar4 = pByteCode->GetString();
+			inString = pByteCode->GetString();
+			lVar5 = ed3DComputeHashCode(pcVar4);
+			pMVar9->meshHash = lVar5;
+			lVar5 = ed3DComputeHashCode(inString);
+			pMVar9->textureHash = lVar5;
+			iVar8 = iVar8 + 1;
+			pMVar9 = pMVar9 + 1;
+		} while (iVar8 < iVar7);
+	}
+	pKVar2 = (KyaUpdateObjA*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(pKVar2 + 1);
+	this->subObjA = pKVar2;
+	pKVar2 = this->subObjA;
+	if (pKVar2->mainComponentID_0x0 == 1) {
+		pKVar2->mainComponentID_0x0 = -1;
+	}
+	this->actorFieldS = *(uint*)&(this->subObjA)->field_0x38;
+	this->objectId = (this->subObjA)->field_0x24;
+	if (this->objectId == 0) {
+		this->objectId = -1;
+	}
+	SetupModel(iVar7, local_110);
+	SetupDefaultPosition();
+	this->hierarchySetup.clipping_0x0 = (char*)&(this->subObjA)->floatFieldB;
+	this->hierarchySetup.pBoundingSphere = &(this->subObjA)->boundingSphere;
+	//this->field_0xcc = (this->subObjA)->field_0x2c;
+	//this->field_0xd0 = (this->subObjA)->field_0x30;
+	//this->field_0xd4 = 10000.0;
+	//this->field_0xd8 = 1e+10;
+	//fVar11 = this->field_0xcc;
+	//this->field_0xcc = fVar11 * fVar11;
+	//fVar11 = this->field_0xd0;
+	//this->field_0xd0 = fVar11 * fVar11;
+	//fVar11 = this->field_0xd4;
+	//this->field_0xd4 = fVar11 * fVar11;
+	//fVar11 = this->field_0xd8;
+	//this->field_0xd8 = fVar11 * fVar11;
+	//this->field_0xdc = 1;
+	//if (((this->subObjA)->flags_0x48 & 1) != 0) {
+	//	this->field_0xdc = this->field_0xdc | 2;
+	//}
+	//if (((this->subObjA)->flags_0x48 & 2) == 0) {
+	//	this->field_0xdc = this->field_0xdc | 4;
+	//}
+	//this->field_0xe0 = (this->subObjA)->field_0x4c;
+	//if ((CActorFactory::gClassProperties[this->typeID].flags_0x0 & 0x20) != 0) {
+	//	this->actorFieldS = this->actorFieldS | 0x10;
+	//}
+	//if (CActorFactory::gClassProperties[this->typeID].field_0x14 == 0) {
+	//	this->actorFieldS = this->actorFieldS & 0xffffffef;
+	//}
+	//if ((this->actorFieldS & 0x80) != 0) {
+	//	FUN_00115ea0(this, 0);
+	//}
+	local_4.field_0x0 = 0;
+	local_4.Create(pByteCode);
+	uVar6 = local_4.IsVerified();
+	if (uVar6 == 0) {
+		this->flags = this->flags | 0x2000000;
+	}
+	newPos_00 = pByteCode->GetPosition();
+	pByteCode->SetPosition(newPos);
+	LoadBehaviours(pByteCode);
+	pByteCode->SetPosition(newPos_00);
+	if (((this->actorFieldS & 4) != 0) && (pCVar3 = this->pCollisionData, pCVar3 != (CollisionData*)0x0)) {
+		IMPLEMENTATION_GUARD(
+		pCVar3->flags_0x0 = pCVar3->flags_0x0 | 0x20000;)
+	}
+	pCVar1 = this->pCinData;
+	fVar12 = pCVar1->floatFieldA;
+	fVar11 = pCVar1->floatFieldC;
+	fVar13 = pCVar1->floatFieldB;
+	this->scale.x = fVar12;
+	this->scale.y = fVar13;
+	this->scale.z = fVar11;
+	this->scale.w = 1.0;
+	if (((fVar12 == 1.0) && (fVar13 == 1.0)) && (fVar11 == 1.0)) {
+		this->flags = this->flags & 0xfbffffff;
+	}
+	else {
+		this->flags = this->flags | 0x4000000;
+	}
+	pCVar1 = this->pCinData;
+	fVar11 = (pCVar1->vectorThree_0x18).y;
+	fVar12 = (pCVar1->vectorThree_0x18).z;
+	this->rotationEuler.x = (pCVar1->vectorThree_0x18).x;
+	this->rotationEuler.y = fVar11;
+	this->rotationEuler.z = fVar12;
+	this->field_0x58 = 0;
+	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler);
+	UpdatePosition(&this->baseLocation, true);
+	this->flags = this->flags | 0x80000;
+	this->distanceToGround = -1.0f;
+	this->flags = this->flags & 0xffdfffff;
+	this->field_0xf0 = -1;
+	//this->field_0xec = 3.0f;
+	return;
 }
 
 void CActor::Init()
@@ -336,7 +527,7 @@ void CActor::ChangeManageState(int state)
 	else {
 		this->flags = this->flags | 4;
 		if ((this->pClusterNode == (CClusterNode*)0x0) && (this->typeID != 1)) {
-			IMPLEMENTATION_GUARD(
+			IMPLEMENTATION_GUARD_LOG(
 			pClusterNode = CCluster::NewNode((CCluster*)&(CScene::ptable.g_ActorManager_004516a4)->cluster, this);
 			this->pClusterNode = pClusterNode;)
 		}
@@ -539,7 +730,7 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 
 void CActor::CinematicMode_Enter(bool bSetState)
 {
-	//CollisionData* pCVar1;
+	CollisionData* pCVar1;
 	CCinematic* pCinematic;
 	CCineActorConfig* pActorConfig;
 
@@ -560,19 +751,20 @@ void CActor::CinematicMode_Enter(bool bSetState)
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 	pActorConfig = pCinematic->GetActorConfig(this);
 	if (pActorConfig != (CCineActorConfig*)0x0) {
-		IMPLEMENTATION_GUARD(
 		if ((pActorConfig->flags & 0x20) == 0) {
-			(*(code*)this->pVTable->CinematicMode_InterpreteCinMessage)(0, 0x3f800000, this, 4, 0);
+			this->CinematicMode_InterpreteCinMessage(0.0f, 1.0f, 4, 0);
 		}
 		else {
-			(*(code*)this->pVTable->CinematicMode_InterpreteCinMessage)(0, 0x3f800000, this, 3, 0);
+			this->CinematicMode_InterpreteCinMessage(0.0f, 1.0f, 3, 0);
 		}
 		if (((pActorConfig->flags & 0x80) != 0) && (pCVar1 = this->pCollisionData, pCVar1 != (CollisionData*)0x0)) {
-			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfff7efff;
+			IMPLEMENTATION_GUARD(
+			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfff7efff;)
 		}
-		if (((pActorConfig->flags & 0x100) != 0) && (this->actorFieldG != (Actor*)0x0)) {
-			(*(code*)this->pVTable->field_0xd0)(this, 0, 0, 1, 0);
-		})
+		if (((pActorConfig->flags & 0x100) != 0) && (this->actorFieldG != (CActor*)0x0)) {
+			IMPLEMENTATION_GUARD(
+			(*(code*)this->pVTable->field_0xd0)(this, 0, 0, 1, 0);)
+		}
 	}
 	return;
 }
@@ -586,8 +778,8 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 {
 	char cVar1;
 	char cVar2;
-	edANM_HDR* pHdr;
-	edANM_HDR* pHdr_00;
+	edANM_HDR* pDstHdr;
+	edANM_HDR* pSrcHdr;
 	edAnmLayer* peVar3;
 	float fVar4;
 	float fVar5;
@@ -600,14 +792,14 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 	pAnimation = this->pAnimationController;
 	if (pAnimation != (CAnimation*)0x0) {
 		pAnimation->anmBinMetaAnimator.SetLayerTimeWarper(0.0f, 0);
-		pHdr = (edANM_HDR*)LOAD_SECTION(pTag->pHdrB);
-		pHdr_00 = (edANM_HDR*)LOAD_SECTION(pTag->pHdrA);
-		if ((pHdr == (edANM_HDR*)0x0) || (param_3 != 0)) {
+		pDstHdr = (edANM_HDR*)LOAD_SECTION(pTag->dstAnim.pHdr);
+		pSrcHdr = (edANM_HDR*)LOAD_SECTION(pTag->srcAnim.pHdr);
+		if ((pDstHdr == (edANM_HDR*)0x0) || (param_3 != 0)) {
 			peVar3 = (pAnimation->anmBinMetaAnimator).aAnimData;
-			cVar1 = pTag->field_0x8;
-			fVar4 = pTag->field_0x4;
+			cVar1 = pTag->srcAnim.field_0x8;
+			fVar4 = pTag->srcAnim.field_0x4;
 			peVar3->animPlayState = 0;
-			peVar3->SetRawAnim(pHdr_00, (uint)(cVar1 != '\0'), 0xfffffffe);
+			peVar3->SetRawAnim(pSrcHdr, (uint)(cVar1 != '\0'), 0xfffffffe);
 			edAnmStage::ComputeAnimParams
 			(fVar4, (peVar3->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, false,
 				(uint)(((peVar3->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
@@ -616,14 +808,14 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 		}
 		else {
 			peVar3 = (pAnimation->anmBinMetaAnimator).aAnimData;
-			cVar1 = pTag->field_0x14;
+			cVar1 = pTag->dstAnim.field_0x8;
 			fVar5 = pTag->field_0x18;
-			cVar2 = pTag->field_0x8;
-			fVar4 = pTag->field_0x4;
-			fVar6 = pTag->field_0x10;
+			cVar2 = pTag->srcAnim.field_0x8;
+			fVar4 = pTag->srcAnim.field_0x4;
+			fVar6 = pTag->dstAnim.field_0x4;
 			peVar3->animPlayState = 0;
-			peVar3->SetRawAnim(pHdr, (uint)(cVar1 != '\0'), (int)&pHdr->flags + 1);
-			peVar3->SetRawAnim(pHdr_00, (uint)(cVar2 != '\0'), (int)&pHdr_00->flags + 2);
+			peVar3->SetRawAnim(pDstHdr, (uint)(cVar1 != '\0'), (int)&pDstHdr->flags + 1);
+			peVar3->SetRawAnim(pSrcHdr, (uint)(cVar2 != '\0'), (int)&pSrcHdr->flags + 2);
 			peVar3->field_0xbc = 1.0f;
 			peVar3->MorphingStartDT();
 			(peVar3->currentAnimDesc).field_0x4c = 1.0f;
@@ -997,12 +1189,12 @@ void CActor::ChangeVisibleState(int bVisible)
 
 CBehaviour* CActor::GetBehaviour(int behaviourId)
 {
-	ComponentList<1>* pComponentList = (ComponentList<1>*)this->aComponents;
+	BehaviourList<1>* pComponentList = (BehaviourList<1>*)this->aComponents;
 	CBehaviour* pOutBehaviour = (CBehaviour*)0x0;
 
 	for (int i = 0; i < pComponentList->count; i++) {
 		if (pComponentList->aComponents[i].id == behaviourId) {
-			pOutBehaviour = pComponentList->aComponents[i].pComponent;
+			pOutBehaviour = pComponentList->aComponents[i].GetBehaviour();
 		}
 	}
 
@@ -1013,6 +1205,19 @@ void CActor::SetupClippingInfo()
 {
 	this->hierarchySetup.clipping_0x0 = 0x0;
 	this->hierarchySetup.pBoundingSphere = &this->subObjA->boundingSphere;
+}
+
+void SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1)
+{
+	float fVar1;
+	edF32MATRIX4 m0;
+
+	edF32Matrix4FromEulerSoft(&m0, v1, "XYZ");
+	v0->x = 0.0;
+	fVar1 = GetAngleYFromVector(&m0.rowZ);
+	v0->y = fVar1;
+	v0->z = 0.0;
+	return;
 }
 
 void CActor::SetupDefaultPosition()
@@ -1035,12 +1240,11 @@ void CActor::SetupDefaultPosition()
 	if (fabs(namedObj30->floatFieldC - 1.0f) <= 0.0001f) {
 		namedObj30->floatFieldC = 1.0f;
 	}
-	if ((CActorFactory::gClassProperties[this->typeID].flags_0x0 & 2) != 0) {
-		IMPLEMENTATION_GUARD(
+	if ((CActorFactory::gClassProperties[this->typeID].flags & 2) != 0) {
 		v0 = &(this->pCinData)->vectorThree_0x18;
-		SV_BuildAngleWithOnlyY(v0, v0);)
+		SV_BuildAngleWithOnlyY(v0, v0);
 	}
-	if ((CActorFactory::gClassProperties[this->typeID].flags_0x0 & 0x800) == 0) {
+	if ((CActorFactory::gClassProperties[this->typeID].flags & 0x800) == 0) {
 		this->flags = this->flags & 0xffffefff;
 	}
 	else {
@@ -1167,7 +1371,6 @@ void CActor::UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision)
 		this->sphereCentre.xyz = local_a0.xyz;
 		fVar6 = this->scale.y;
 		fVar5 = this->scale.x;
-		IMPLEMENTATION_GUARD();
 		fVar5 = (float)((int)fVar5 * (uint)(fVar6 < fVar5) | (int)fVar6 * (uint)(fVar6 >= fVar5));
 		fVar6 = this->scale.z;
 		this->sphereCentre.w =
@@ -1282,6 +1485,242 @@ void CActor::PlayAnim(int inAnimType)
 	return;
 }
 
+void CActor::LoadBehaviours(ByteCode* pByteCode)
+{
+	int iVar1;
+	char* pcVar2;
+	char* pcVar3;
+	char* pcVar4;
+	int componentCount;
+	BehaviourEntry* pComponentStrm;
+
+	pByteCode->Align(4);
+
+#ifdef PLATFORM_WIN
+	static_assert(sizeof(BehaviourEntry) == 8, "BehaviourEntry must be 8 bytes to match serialized data!");
+	static_assert(offsetof(BehaviourList<1>, aComponents) == 4, "Components array must be 4 bytes ahead of count!");
+#endif
+
+	BehaviourList<1>* pComponentList = (BehaviourList<1>*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)&pComponentList->aComponents;
+	if (pComponentList->count != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (pComponentList->count * sizeof(BehaviourEntry));
+	}
+
+	this->aComponents = pComponentList;
+	componentCount = pComponentList->count;
+	if (0 < componentCount) {
+		if (((this->flags & 0x2000000) == 0) ||
+			((CActorFactory::gClassProperties[this->typeID].flags & 0x40000) == 0)) {
+			for (; 0 < componentCount; componentCount = componentCount + -1) {
+				BehaviourEntry* pEntry = &pComponentList->aComponents[componentCount - 1];
+
+				int componentStrmLen = pEntry->GetSize();
+
+				CBehaviour* pNewBehaviour = this->BuildBehaviour(pEntry->id);
+				pEntry->SetBehaviour(pNewBehaviour);
+
+				pcVar2 = pByteCode->GetPosition();
+				if (pEntry->GetBehaviour() != (CBehaviour*)0x0) {
+					pEntry->GetBehaviour()->Create(pByteCode);
+				}
+				pcVar3 = pByteCode->GetPosition();
+
+				int processedLen = pcVar3 - pcVar2;
+
+				if (processedLen != componentStrmLen) {
+					pByteCode->SetPosition(pcVar2 + componentStrmLen);
+				}
+			}
+		}
+		else {
+			for (; 0 < componentCount; componentCount = componentCount + -1) {
+				BehaviourEntry* pEntry = &pComponentList->aComponents[componentCount - 1];
+				pcVar4 = pByteCode->GetPosition();
+				pByteCode->SetPosition(pcVar4 + pEntry->GetSize());
+			}
+			pComponentList->count = 0;
+			(this->subObjA)->mainComponentID_0x0 = -1;
+		}
+	}
+	return;
+}
+
+void CActor::SetupModel(int count, MeshTextureHash* aHashes)
+{
+	CinNamedObject30* pCVar1;
+	int index;
+	ed_3d_hierarchy_node* peVar2;
+	CollisionData* pCollisionData;
+
+	pCVar1 = this->pCinData;
+	SV_SetModel(pCVar1->meshIndex, pCVar1->textureIndex, count, aHashes);
+	if (this->pMeshTransform == (ed_3d_hierarchy_node*)0x0) {
+		peVar2 = (ed_3d_hierarchy_node*)NewPool_edF32MATRIX4(1);
+		this->pMeshTransform = peVar2;
+	}
+	index = (this->pCinData)->collisionDataIndex;
+	if (index != -1) {
+		IMPLEMENTATION_GUARD_LOG(
+		pCollisionData = CCollisionManager::NewCCollision(CScene::ptable.g_CollisionManager_00451690);
+		CCollision::Create(pCollisionData, this, index);
+		this->pCollisionData = pCollisionData;
+		if ((CActorFactory::gClassProperties[this->typeID].field_0x4 & 0x200) != 0) {
+			CCollision::PatchObbTreeFlagsRecurse(pCollisionData->pCollisionDataSubObjA, 0x200, 0xffffffffffffffff, 0);
+		}
+		if ((CActorFactory::gClassProperties[this->typeID].field_0x4 & 0x8000) != 0) {
+			pCollisionData->flags_0x0 = pCollisionData->flags_0x0 | 0x800;
+		}
+		if ((CActorFactory::gClassProperties[this->typeID].field_0x4 & 0x10000) != 0) {
+			pCollisionData->flags_0x0 = pCollisionData->flags_0x0 & 0xfffbffff;
+		})
+	}
+	return;
+}
+
+void CActor::SV_SetModel(int meshIndex, int textureIndex, int count, MeshTextureHash* aHashes)
+{
+	ed_g3d_manager* pMeshInfo;
+	ed_g2d_manager* pTVar1;
+	ed_g2d_manager* pTVar2;
+	ed_g2d_manager* pTextureInfo;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	pMeshInfo = (ed_g3d_manager*)0x0;
+	pTextureInfo = (ed_g2d_manager*)0x0;
+	if (textureIndex == -1) {
+		textureIndex = CScene::_pinstance->defaultTextureIndex_0x2c;
+	}
+	if ((meshIndex != -1) && (textureIndex != -1)) {
+		pMeshInfo = pFileManager->GetG3DManager(meshIndex, textureIndex);
+		pTVar1 = pFileManager->GetActorsCommonMaterial(textureIndex);
+		pTVar2 = pFileManager->GetActorsCommonMeshMaterial(meshIndex);
+		if (pTVar2 != pTVar1) {
+			pTextureInfo = pTVar1;
+		}
+	}
+	SV_SetModel(pMeshInfo, count, aHashes, pTextureInfo);
+	return;
+}
+
+void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo)
+{
+	ed_3d_hierarchy_node* pHier;
+	ed_g2d_manager* pTextureInfo_00;
+	ed_g3d_hierarchy* peVar1;
+	edNODE* peVar2;
+	int iVar3;
+	void* pvVar4;
+	ed_hash_code* pHashCode;
+	ed_3D_Scene* peVar5;
+	void* uVar6;
+	ed_hash_code* lVar7;
+	ed_hash_code* peVar8;
+	int iVar9;
+	ulong uVar10;
+	int iVar11;
+
+	if (pMeshInfo == (ed_g3d_manager*)0x0) {
+		this->pHier = (ed_g3d_hierarchy*)0x0;
+		this->pMeshNode = (edNODE*)0x0;
+		this->p3DHierNode = (ed_3d_hierarchy_node*)0x0;
+		this->pMBNK = 0;
+		this->pMeshTransform = (ed_3d_hierarchy_node*)0x0;
+	}
+	else {
+		pTextureInfo_00 = CScene::ptable.g_C3DFileManager_00451664->LoadDefaultTexture_001a65d0();
+		if (pTextureInfo_00 != (ed_g2d_manager*)0x0) {
+			ed3DLinkG2DToG3D(pMeshInfo, pTextureInfo_00);
+		}
+		peVar1 = ed3DG3DHierarchyGetFromIndex(pMeshInfo, 0);
+		this->pHier = peVar1;
+		peVar1 = this->pHier;
+		if (peVar1 != (ed_g3d_hierarchy*)0x0) {
+			if ((CActorFactory::gClassProperties[this->typeID].flags & 0x1000) != 0) {
+				if (1 < peVar1->lodCount) {
+					peVar1->flags_0x9e = peVar1->flags_0x9e | 0x100;
+				}
+				ed3DG3DHierarchySetStripShadowCastFlag(this->pHier, 0xffff);
+			}
+			if ((CActorFactory::gClassProperties[this->typeID].flags & 0x2000) != 0) {
+				IMPLEMENTATION_GUARD_LOG(
+				ed3DG3DHierarchySetStripShadowReceiveFlag(this->pHier, 0xffff);)
+			}
+		}
+		peVar2 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pMeshInfo, (char*)0x0);
+		this->pMeshNode = peVar2;
+		this->p3DHierNode = (ed_3d_hierarchy_node*)(this->pMeshNode)->pData;
+		this->pMeshTransform = this->p3DHierNode;
+		peVar2 = this->pMeshNode;
+		if (peVar2 != (edNODE*)0x0) {
+			ed3DSetMeshTransformFlag_002abd80(peVar2, 0xffff);
+			if ((CActorFactory::gClassProperties[this->typeID].flags & 0x1000) != 0) {
+				ed3DSetMeshTransformFlag_002abff0(this->pMeshNode, 1);
+			}
+			if ((CActorFactory::gClassProperties[this->typeID].flags & 0x2000) != 0) {
+				ed3DSetMeshTransformFlag_002abff0(this->pMeshNode, 0xffff);
+			}
+		}
+		if ((((CActorFactory::gClassProperties[this->typeID].flags & 0x4000) == 0) &&
+			(pTextureInfo == (ed_g2d_manager*)0x0)) && (count == 0)) {
+			this->pMBNK = 0;
+		}
+		else {
+			iVar3 = ed3DHierarchyBankMatGetSize((ed_3d_hierarchy*)this->p3DHierNode);
+			pvVar4 = edMemAlloc(TO_HEAP(H_MAIN), iVar3);
+			uVar6 = ed3DHierarchyBankMatInstanciate((ed_3d_hierarchy*)this->p3DHierNode, pvVar4);
+			this->pMBNK = uVar6;
+		}
+		if (pTextureInfo != (ed_g2d_manager*)0x0) {
+			IMPLEMENTATION_GUARD(
+			ed3DHierarchyBankMatLinkG2D(this->p3DHierNode, pTextureInfo);
+			ed3DHierarchyBankMatLinkG2D(this->p3DHierNode, pTextureInfo_00);)
+		}
+		if (((count != 0) && (pHier = this->p3DHierNode, pHier != (ed_3d_hierarchy_node*)0x0)) &&
+			(pTextureInfo_00 != (ed_g2d_manager*)0x0)) {
+			pHashCode = ed3DHierarchyGetMaterialBank((ed_3d_hierarchy*)pHier);
+			iVar3 = ed3DG2DGetG2DNbMaterials(pHashCode);
+			iVar11 = 0;
+			if (0 < count) {
+				do {
+					uVar10 = aHashes->meshHash;
+					lVar7 = ed3DG2DGetMaterial(pTextureInfo_00, aHashes->textureHash);
+					if ((lVar7 != (ed_hash_code*)0x0) && (iVar9 = 0, peVar8 = pHashCode, 0 < iVar3)) {
+						do {
+							if (uVar10 == peVar8->hash.number) {
+								pHashCode[iVar9].pData = STORE_SECTION(lVar7);
+								break;
+							}
+							iVar9 = iVar9 + 1;
+							peVar8 = peVar8 + 1;
+						} while (iVar9 < iVar3);
+					}
+					iVar11 = iVar11 + 1;
+					aHashes = aHashes + 1;
+				} while (iVar11 < count);
+			}
+		}
+		memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
+		if (1 < ((this->p3DHierNode)->base).lodCount) {
+			this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->field_0xcc;
+		}
+		ed3DHierarchySetSetup(&this->p3DHierNode->base, &this->hierarchySetup);
+		((this->p3DHierNode)->base).pAnimMatrix = (edF32MATRIX4*)0x0;
+		((this->p3DHierNode)->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
+		ed3DHierarchyNodeGetSkeletonChunck(this->pMeshNode, false);
+		if ((this->flags & 0x4000) == 0) {
+			peVar5 = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOn(peVar5, this->pMeshNode);
+		}
+		else {
+			peVar5 = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOff(peVar5, this->pMeshNode);
+		}
+	}
+	return;
+}
+
 void CBehaviour::GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites)
 {
 	*nbVertex = 0;
@@ -1294,3 +1733,256 @@ bool CBehaviour::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	return false;
 }
 
+int INT_00448e04 = 0;
+
+void CActorMovable::Create(ByteCode* pByteCode)
+{
+	float fVar1;
+
+	INT_00448e04 = INT_00448e04 + 1;
+	CActor::Create(pByteCode);
+	//CDynamic::Reset(&this->dynamic, (CActor*)this);
+	fVar1 = pByteCode->GetF32();
+	//(this->dynamic).field_0x54 = fVar1;
+	this->field_0x1c0 = 1e+30;
+	return;
+}
+
+int INT_00448e08 = 0;
+
+void CActorAutonomous::Create(ByteCode* pByteCode)
+{
+	float fVar1;
+	float fVar2;
+	edF32MATRIX4* peVar3;
+	uint uVar4;
+	long lVar5;
+	ByteCode* pBVar6;
+	float fVar7;
+
+	INT_00448e08 = INT_00448e08 + 1;
+	pBVar6 = pByteCode;
+	CActorMovable::Create(pByteCode);
+	//CDynamicExt::ClearLocalData(&this->dynamicExt);
+	//lVar5 = (*(code*)(this->base).base.pVTable[1].free)(this);
+	//if (lVar5 != 0) {
+	//	peVar3 = (edF32MATRIX4*)(*(code*)(this->base).base.pVTable[1].free)(this);
+	//	FUN_0019e4a0(peVar3);
+	//}
+	//this->field_0x2cc = 0;
+	//this->field_0x2c8 = 0;
+	if (this->pCollisionData != (CollisionData*)0x0) {
+		IMPLEMENTATION_GUARD(
+		(*(this->base).base.pVTable[1].IsKindOfObject)((CActor*)this, (int)pBVar6);)
+	}
+	uVar4 = pByteCode->GetU32();
+	//CLifeInterface::SetValueMax((float)uVar4, &this->field_0x2d0);
+	fVar7 = pByteCode->GetF32();
+	//(this->dynamicExt).base.rotationQuat.x = fVar7;
+	fVar7 = pByteCode->GetF32();
+	//(this->dynamicExt).base.rotationQuat.y = fVar7;
+	fVar7 = pByteCode->GetF32();
+	//(this->dynamicExt).base.rotationQuat.z = fVar7;
+	//fVar2 = gF32Vector4Zero.w;
+	//fVar1 = gF32Vector4Zero.z;
+	//fVar7 = gF32Vector4Zero.y;
+	//*(float*)&this->field_0x2f0 = gF32Vector4Zero.x;
+	//*(float*)&this->field_0x2f4 = fVar7;
+	//*(float*)&this->field_0x2f8 = fVar1;
+	//this->field_0x2fc = fVar2;
+	//this->field_0x308 = 3.141593;
+	//this->field_0x318 = -1.047198;
+	//this->field_0x31c = 1.047198;
+	//this->field_0x314 = 0.0;
+	//this->field_0x324 = -1.047198;
+	//this->field_0x328 = 1.047198;
+	//this->field_0x320 = 0.0;
+	//this->field_0x32c = 3396.333;
+	//this->field_0x330 = 3396.333;
+	return;
+}
+
+void CAddOnGenerator::Create(CActor* pActor, ByteCode* pByteCode)
+{
+	uint uVar1;
+	int iVar2;
+	int iVar3;
+	int* piVar4;
+	void* pvVar5;
+	int iVar6;
+	int iVar7;
+
+	//iVar6 = (pActor->data).objectId;
+	uVar1 = pByteCode->GetU32();
+	//this->field_0x0 = (ushort)uVar1 & 3;
+	uVar1 = pByteCode->GetU32();
+	//this->field_0x2 = (ushort)uVar1;
+	iVar2 = pByteCode->GetS32();
+	//this->field_0x4 = iVar2;
+	iVar2 = pByteCode->GetS32();
+	//this->currentOrbs_0x8 = iVar2;
+	iVar2 = pByteCode->GetS32();
+	//this->field_0xc = (float)iVar2 * 0.01;
+	this->subObj.Create(pByteCode);
+	//this->field_0x28 = 0;
+	//this->maxOrbs_0x2c = 0;
+	//this->field_0x30 = 0;
+	//if (_gAddOn_sectors == (void*)0x0) {
+	//	iVar7 = LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->currentLevelID].sectorCount_0x14 + 1;
+	//	_gAddOn_sectors = operator.new.array((long)(iVar7 * 0x10));
+	//	iVar2 = 0;
+	//	if (0 < iVar7) {
+	//		iVar3 = 0;
+	//		do {
+	//			iVar2 = iVar2 + 1;
+	//			*(undefined4*)((int)_gAddOn_sectors + iVar3) = 0;
+	//			*(undefined4*)((int)_gAddOn_sectors + iVar3 + 4) = 0;
+	//			*(undefined4*)((int)_gAddOn_sectors + iVar3 + 8) = 0;
+	//			*(undefined4*)((int)_gAddOn_sectors + iVar3 + 0xc) = 0;
+	//			iVar3 = iVar3 + 0x10;
+	//		} while (iVar2 < iVar7);
+	//	}
+	//}
+	//_gAddOn_NbTotalAddOn = _gAddOn_NbTotalAddOn + 1;
+	//(&_gAddOn_NbTotalMoneyInLevel)[(uint)this->field_0x2 * 4] =
+	//	(&_gAddOn_NbTotalMoneyInLevel)[(uint)this->field_0x2 * 4] + this->field_0x4;
+	//_gAddOn_NbTotalBonusInLevel = _gAddOn_NbTotalBonusInLevel + this->currentOrbs_0x8;
+	//if (iVar6 == -1) {
+	//	iVar6 = 0;
+	//}
+	//piVar4 = (int*)((int)_gAddOn_sectors + (uint)this->field_0x2 * 4 + iVar6 * 0x10);
+	//*piVar4 = *piVar4 + this->field_0x4;
+	//pvVar5 = (void*)(iVar6 * 0x10 + (int)_gAddOn_sectors);
+	//*(int*)((int)pvVar5 + 0xc) = *(int*)((int)pvVar5 + 0xc) + this->currentOrbs_0x8;
+	return;
+}
+
+void CAddOnGenerator_SubObj::Create(ByteCode* pByteCode)
+{
+	uint uVar1;
+	float fVar2;
+
+	uVar1 = pByteCode->GetU32();
+	if (uVar1 == 1) {
+		fVar2 = pByteCode->GetF32();
+		this->field_0x0 = fVar2 * 0.01745329f;
+		fVar2 = pByteCode->GetF32();
+		this->field_0x4 = fVar2 * 0.01745329f;
+		this->field_0x8 = 0.0;
+		fVar2 = pByteCode->GetF32();
+		this->field_0xc = fVar2 * 0.01745329f;
+		fVar2 = pByteCode->GetF32();
+		this->field_0x10 = fVar2;
+		fVar2 = pByteCode->GetF32();
+		this->field_0x14 = fVar2;
+	}
+	else {
+		this->field_0x0 = 0.7853982f;
+		this->field_0x4 = 0.3926991f;
+		this->field_0x8 = 0.0f;
+		this->field_0xc = 3.141593f;
+		this->field_0x10 = 3.0f;
+		this->field_0x14 = 2.5f;
+	}
+	return;
+}
+
+bool CActor::CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3)
+{
+	bool bSuccess;
+	CBehaviourCinematic* pBehaviourCinematic;
+
+	bSuccess = false;
+	pBehaviourCinematic = (CBehaviourCinematic*)GetBehaviour(1);
+	if (pBehaviourCinematic != (CBehaviourCinematic*)0x0) {
+		bSuccess = pBehaviourCinematic->CinematicMode_InterpreteCinMessage(param_2, param_3);
+	}
+	return bSuccess;
+}
+
+void CActor::SkipToNextActor(ByteCode* pByteCode) 
+{
+	ACTOR_LOG(LogLevel::Info, "CActor::Create SKIPPED");
+	CActor::Create(pByteCode);
+
+	char* pCurrent = pByteCode->currentSeekPos;
+
+	while (true) {
+		if (strncmp(pCurrent, "TSNI", 4) == 0) {
+			break;
+		}
+		pCurrent++;
+	}
+
+	pByteCode->currentSeekPos = pCurrent;
+}
+
+CBehaviour* CActor::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pCVar1;
+
+	if (behaviourType == 1) {
+		pCVar1 = (CBehaviour*)NewPool_CBehaviourCinematic(1);
+	}
+	else {
+		if (behaviourType == 0) {
+			pCVar1 = &this->standBehaviour;
+		}
+		else {
+			pCVar1 = (CBehaviour*)0x0;
+		}
+	}
+	return pCVar1;
+}
+
+void CBehaviourStand::Init(CActor* pOwner)
+{
+	this->pOwner = pOwner;
+}
+
+bool CBehaviourStand::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	if (newState == -1) {
+		this->pOwner->SetState(0, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+	return true;
+}
+
+bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial)
+{
+	int index;
+	bool bVar1;
+	ed_hash_code* pHashCode;
+	ed_hash_code* peVar2;
+	int iVar3;
+	ed_g2d_manager* pTextureInfo;
+	int iVar4;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	if (pMaterial == (ed_g2d_manager*)0x0) {
+		pMaterial = pFileManager->LoadDefaultTexture_001a65d0();
+	}
+	pHashCode = ed3DHierarchyGetMaterialBank((ed_3d_hierarchy*)this->p3DHierNode);
+	peVar2 = ed3DG2DGetMaterial(pMaterial, newHash);
+	iVar3 = ed3DG2DGetG2DNbMaterials(pHashCode);
+	iVar4 = 0;
+	if ((peVar2 == (ed_hash_code*)0x0) && (index = (this->pCinData)->textureIndex, index != -1)) {
+		pTextureInfo = pFileManager->GetActorsCommonMaterial(index);
+		peVar2 = ed3DG2DGetMaterial(pTextureInfo, newHash);
+	}
+	for (; (pHashCode->hash.number != originalHash && (iVar4 < iVar3)); iVar4 = iVar4 + 1) {
+		pHashCode = pHashCode + 1;
+	}
+	if ((iVar4 == iVar3) || (peVar2 == (ed_hash_code*)0x0)) {
+		bVar1 = false;
+	}
+	else {
+		pHashCode->pData = STORE_SECTION(peVar2);
+		bVar1 = true;
+	}
+	return bVar1;
+}

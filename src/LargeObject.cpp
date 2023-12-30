@@ -140,7 +140,7 @@ CScene::CScene()
 	CCameraManager* pCameraViewmanager;
 	CSectorManager* pSectorManager;
 	//LightManager* pLightManager;
-	FileManager3D* p3DFileManager;
+	C3DFileManager* p3DFileManager;
 	//Manager_100* pMVar4;
 	//Manager_208* pMVar5;
 	//GlobalSound_00451698* inAllocatedMemory;
@@ -236,8 +236,8 @@ CScene::CScene()
 	//	pLightManager = LightManager::Constructor_002170a0(pLightManager);
 	//}
 	//g_LightManager_004516b0 = pLightManager;
-	p3DFileManager = new FileManager3D();
-	CScene::ptable.g_FileManager3D_00451664 = p3DFileManager;
+	p3DFileManager = new C3DFileManager();
+	CScene::ptable.g_C3DFileManager_00451664 = p3DFileManager;
 	CScene::ptable.g_CollisionManager_00451690 = new CCollisionManager;
 	//g_Manager100_00451690 = pMVar4;
 	//pMVar5 = (Manager_208*)Allocate(0x208);
@@ -342,7 +342,7 @@ void Game_Init(void)
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&CScene::ptable;
+	ppMVar1 = CScene::ptable.aManagers;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Game_Init();
@@ -360,7 +360,7 @@ void CScene::LevelLoading_Draw(void)
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&CScene::ptable;
+	ppMVar1 = CScene::ptable.aManagers;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->LevelLoading_Draw();
@@ -382,7 +382,7 @@ void CScene::LevelLoading_Begin(void)
 	pTimeController->ResetGameTimers();
 	ed3DResetTime();
 	iVar1 = 0;
-	loadLoopObject = (CObjectManager**)&CScene::ptable;
+	loadLoopObject = CScene::ptable.aManagers;
 	do {
 		if (*loadLoopObject != (CObjectManager*)0x0) {
 			(*loadLoopObject)->LevelLoading_Begin();
@@ -403,7 +403,7 @@ bool CScene::LevelLoading_Manage()
 	bVar3 = false;
 	HandleFogAndClippingSettings();
 	iVar2 = 0;
-	loopFunc = (CObjectManager**)&CScene::ptable;
+	loopFunc = CScene::ptable.aManagers;
 	do {
 		if ((*loopFunc != (CObjectManager*)0x0) && (bVar1 = (*loopFunc)->LevelLoading_Manage(), bVar1 != false)) {
 			bVar3 = true;
@@ -420,7 +420,7 @@ void CScene::LevelLoading_End(void)
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&CScene::ptable;
+	ppMVar1 = CScene::ptable.aManagers;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->LevelLoading_End();
@@ -437,7 +437,7 @@ void CScene::Level_Install(void)
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&CScene::ptable;
+	ppMVar1 = CScene::ptable.aManagers;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Level_Install();
@@ -502,7 +502,7 @@ void CScene::Level_Init()
 	this->fogFlags = pSVar1->flags;
 	this->field_0x48 = 0;
 	ed3DSetMipmapProp(true, this->mipmapL, this->mipmapK);
-	if ((CScene::ptable.g_FileManager3D_00451664)->pBackgroundNode == (edNODE*)0x0) {
+	if ((CScene::ptable.g_C3DFileManager_00451664)->pBackgroundNode == (edNODE*)0x0) {
 		edViewportSetClearMask(this->pViewportA, 0);
 	}
 	else {
@@ -516,7 +516,7 @@ void CScene::Level_Init()
 	//EffectsManager::Level_PreInit((EffectsManager*)Scene::ptable[22]);
 	loopCounter = 0;
 	/* Init loop Initially points at 006db5b0 */
-	loadFuncPtr = (CObjectManager**)&CScene::ptable;
+	loadFuncPtr = CScene::ptable.aManagers;
 	do {
 		/* This will call load functions */
 		if (*loadFuncPtr != (CObjectManager*)0x0) {
@@ -647,7 +647,7 @@ void CScene::Level_Manage()
 	//EmptyFunction();
 	if ((GameFlags & GAME_STATE_PAUSED) == 0) {
 		iVar2 = 0;
-		ppMVar1 = (CObjectManager**)&CScene::ptable;
+		ppMVar1 = CScene::ptable.aManagers;
 		do {
 			if (*ppMVar1 != (CObjectManager*)0x0) {
 				(*ppMVar1)->Level_Manage();
@@ -658,7 +658,7 @@ void CScene::Level_Manage()
 	}
 	else {
 		iVar2 = 0;
-		ppMVar1 = (CObjectManager**)&CScene::ptable;
+		ppMVar1 = CScene::ptable.aManagers;
 		do {
 			if (*ppMVar1 != (CObjectManager*)0x0) {
 				(*ppMVar1)->Level_ManagePaused();
@@ -677,7 +677,7 @@ void UpdateObjectsMain(void)
 	int iVar2;
 
 	iVar2 = 0;
-	ppMVar1 = (CObjectManager**)&CScene::ptable;
+	ppMVar1 = CScene::ptable.aManagers;
 	do {
 		if (*ppMVar1 != (CObjectManager*)0x0) {
 			(*ppMVar1)->Level_Draw();
@@ -731,7 +731,7 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	iVar4 = pMemoryStream->GetS32();
 	this->field_0x28 = iVar4;
 	if (this->field_0x28 != -1) {
-		CScene::ptable.g_FileManager3D_00451664->InstanciateG2D(this->field_0x28);
+		CScene::ptable.g_C3DFileManager_00451664->InstanciateG2D(this->field_0x28);
 	}
 	iVar4 = pMemoryStream->GetS32();
 	this->defaultTextureIndex_0x2c = iVar4;
@@ -989,7 +989,7 @@ void CScene::Level_SectorChange(int oldSectorId, int newSectorId)
 
 void* CScene::GetManager(MANAGER_TYPE type)
 {
-	return (void*)&ptable.g_LevelScheduleManager_00451660[type];
+	return (void*)&ptable.aManagers[type];
 }
 
 ed_3D_Scene* GetStaticMeshMasterA_001031b0(void)

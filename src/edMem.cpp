@@ -140,7 +140,7 @@ int edMemGetMemoryAvailable(EHeap heapID)
 			}
 		}
 	}
-	MY_LOG("edMemGetMemoryAvailable 0x%X bytes\n", freeBytes);
+	MY_LOG("edMemGetMemoryAvailable 0x{:x} bytes\n", freeBytes);
 	return freeBytes;
 }
 
@@ -205,7 +205,7 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 	void* pNewAllocation;
 	int freeMemory;
 
-	MY_LOG("edMemAlloc id: %d, size: %d, align: %d, offset: %d\n", heap, size, align, offset);
+	MY_LOG("edMemAlloc id: {}, size: {}, align: {}, offset: {}\n", (int)heap, size, align, offset);
 
 	if (heap == TO_HEAP(H_INVALID)) {
 		/* edMemAlloc */
@@ -318,7 +318,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 								bool a = true; //freeBytes < pcVar8
 								bool b = size <= freeBytes;
 
-								MY_LOG("%d %d", a, b);
+								MY_LOG("{} {}", a, b);
 
 								if (a && b) {
 									pcVar4 = pNewHeap->pStartAddr;
@@ -390,10 +390,10 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 							iVar2 = pHeap->freeBytes;
 							uVar13 = pHeap->nextBlock;
 							ulong testValue = (ulong)pcVar7 + (iVar2 - (ulong)(pReturn + size));
-							MY_LOG("edmemWorkAlloc test %p %d %p %x %llu", (void*)pcVar7, iVar2, pReturn, size, testValue);
+							MY_LOG("edmemWorkAlloc test 0x{:x} {} 0x{:x} {:x} {}", (uintptr_t)pcVar7, iVar2, (uintptr_t)pReturn, size, testValue);
 							if (testValue == 0) {
 								if (sVar1 == -1) {
-									MY_LOG("edmemWorkAlloc nextFreeBlock %d", uVar13);
+									MY_LOG("edmemWorkAlloc nextFreeBlock {}", uVar13);
 									pMainMemHeader->nextFreeBlock = uVar13;
 								}
 								else {
@@ -454,7 +454,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 								pNewHeap->freeBytes = (ulong)(local_10 + -(ulong)pcVar7);
 								sVar5 = (short)((uint)((ulong)pNewHeap - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
 								if (sVar1 == -1) {
-									MY_LOG("Marking B %d", sVar5);
+									MY_LOG("Marking B {}", sVar5);
 									pMainMemHeader->nextFreeBlock = sVar5;
 								}
 								else {
@@ -607,7 +607,7 @@ void edmemWorkFree(S_MAIN_MEMORY_HEADER* pHeap)
 		}
 		if (unaff_s1_lo == -1) {
 			peVar5 = edmemGetMasterMemoryHeader(pHeap);
-			MY_LOG("Marking C %d", sVar8);
+			MY_LOG("Marking C {}", sVar8);
 			peVar5->nextFreeBlock = sVar8;
 		}
 		else {
@@ -765,7 +765,7 @@ S_MAIN_MEMORY_HEADER* edmemGetFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap, int 
 		peVar2->field_0x2 = 0xffff;
 		peVar2->nextBlock = 0xffff;
 
-		MY_LOG("edmemGetFreeMemoryHeader nextFreeBlock %d", -1);
+		MY_LOG("edmemGetFreeMemoryHeader nextFreeBlock {}", -1);
 		peVar2->nextFreeBlock = -1;
 		if (param_2 == 0) {
 			if (pHeap == (S_MAIN_MEMORY_HEADER*)0x0) {
@@ -790,7 +790,7 @@ S_MAIN_MEMORY_HEADER* edmemGetFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap, int 
 			peVar2->field_0xa = (short)((uint)((char*)pHeap - (char*)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
 			pHeap->field_0x1c = sVar1;
 
-			MY_LOG("edmemGetFreeMemoryHeader nextFreeBlock %d", sVar1);
+			MY_LOG("edmemGetFreeMemoryHeader nextFreeBlock {}", sVar1);
 			pHeap->nextFreeBlock = sVar1;
 		}
 	}

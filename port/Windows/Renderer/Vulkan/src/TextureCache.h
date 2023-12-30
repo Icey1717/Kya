@@ -67,20 +67,6 @@ namespace PS2 {
 		PSSamplerSelector() : key(0) {}
 	};
 
-	struct GSTexImageConstantBuffer {
-		UniformBuffer<PS2::VSConstantBuffer> vertexConstBuffer;
-		UniformBuffer<PS2::PSConstantBuffer> pixelConstBuffer;
-
-		void CreateUniformBuffers();
-		void UpdateUniformBuffers();
-
-		inline const VkBuffer& GetVertexConstantUniformBuffer(const int index) { return vertexConstBuffer.GetBuffer(index); }
-		inline const VkBuffer& GetPixelConstantUniformBuffer(const int index) { return pixelConstBuffer.GetBuffer(index); }
-
-		inline VSConstantBuffer& GetVertexConstantBufferData() { return vertexConstBuffer.GetBufferData(); }
-		inline PSConstantBuffer& GetPixelConstantBufferData() { return pixelConstBuffer.GetBufferData(); }
-	};
-
 	struct GSTexImage {
 		GSTexImage(const Renderer::ImageData& inImageData);
 
@@ -96,7 +82,7 @@ namespace PS2 {
 
 		Renderer::ImageData imageData;
 
-		GSTexImageConstantBuffer constantBuffer;
+		//GSTexImageConstantBuffer constantBuffer;
 
 		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
 
@@ -120,9 +106,6 @@ namespace PS2 {
 		void CreateSampler(bool bPalette = false);
 		void UpdateSampler();
 		void UpdateSampler(PSSamplerSelector selector);
-
-		//void CreateDescriptorSets(const Renderer::LayoutVector& descriptorSetLayouts, const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
-		//void CreateDescriptorPool(const Renderer::LayoutBindingMap& descriptorSetLayoutBindingsMap);
 	};
 
 	struct TextureDebug {

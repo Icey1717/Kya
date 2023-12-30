@@ -29,7 +29,7 @@ public:
 	virtual bool SetScale(float x, float y, float z);
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
 
-	void SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, int intFieldA);
+	void SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, ed_g3d_manager* pMeshManager);
 
 	CActor* pParent;
 	int field_0x8;
@@ -58,7 +58,7 @@ public:
 	undefined field_0x121;
 	undefined field_0x122;
 	undefined field_0x123;
-	int field_0x124;
+	ed_g3d_manager* pAltModelManager;
 };
 
 class CBWCinCam : public edCinCamInterface {
@@ -76,6 +76,7 @@ public:
 	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*);
 	virtual char* GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut);
 	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
+	virtual bool GetActor(edCinActorInterface** ppActorInterface, int hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
 	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag);
 	virtual bool ReleaseResource(uint, bool);
 
@@ -299,6 +300,8 @@ struct CCinematic {
 
 	void InstallSounds();
 
+	CActor* GetActorByHashcode(int hashCode);
+
 	int prtBuffer;
 	uint flags_0x4;
 	uint flags_0x8;
@@ -309,7 +312,7 @@ struct CCinematic {
 	byte field_0x13;
 	char* fileName;
 	uint actorCinematicCount;
-	int field_0x1c;
+	int nonCinematicOnlyActorCount;
 	uint count_0x20;
 	uint field_0x24;
 	int field_0x28;
@@ -400,7 +403,7 @@ struct CCinematic {
 	//struct CineSpotHolder* pCineSpotHolderArray;
 	CinFileContainer* fileInfoStart;
 	int cinFileCount;
-	struct Actor* pActor;
+	CActor* pActor;
 	float totalCutsceneDelta;
 	ConditionedOperationArray condArray_0x244;
 	ScenaricCondition cond_0x248;

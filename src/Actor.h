@@ -6,6 +6,10 @@
 #include "ed3D.h"
 #include "Animation.h"
 #include "EdenLib/edAnim/AnmSkeleton.h"
+#include "port/pointer_conv.h"
+
+
+#define ACTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Actor", level, format, ##__VA_ARGS__)
 
 struct edNODE;
 struct CActor;
@@ -13,31 +17,59 @@ struct ed_g3d_hierarchy;
 struct ed_3d_hierarchy_node;
 
 
-enum ACTOR_MESSAGE;
+enum ACTOR_MESSAGE {};
 typedef void* MSG_PARAM;
 
-struct CBehaviour {
+struct CBehaviour 
+{
+	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Init(CActor* pOwner) {}
 	virtual void Manage() {}
 	virtual bool Begin(CActor* pOwner, int newState, int newAnimationType) {}
 	virtual void End(int newBehaviourId) {}
 	virtual void InitState(int newState) {}
+	virtual void TermState() {}
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
 	virtual bool InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
-struct ComponentEntry {
-	int id;
-	CBehaviour* pComponent;
+struct CBehaviourStand : public CBehaviour
+{
+	virtual void Create(ByteCode* pByteCode) {}
+	virtual void Init(CActor* pOwner);
+	virtual bool Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState) {}
+	virtual void TermState() {}
+
+	CActor* pOwner;
 };
+
+PACK( struct BehaviourEntry {
+	int id;
+	int pBehaviour; // CBehaviour*
+
+	inline CBehaviour* GetBehaviour() {
+		return (CBehaviour*)LOAD_SECTION(pBehaviour);
+	}
+
+	inline void SetBehaviour(CBehaviour* pNewBehaviour) {
+		pBehaviour = STORE_SECTION(pNewBehaviour);
+	}
+
+	// Only valid when loading behaviours.
+	inline int GetSize() {
+		return pBehaviour;
+	}
+});
 
 template<int T>
-struct ComponentList {
+struct BehaviourList {
 	int count;
-	ComponentEntry aComponents[T];
+	BehaviourEntry aComponents[T];
 };
 
-struct CObject {
+class CObject {
+public:
 	CObject() {
 		objectId - -1;
 	}
@@ -48,6 +80,7 @@ struct CObject {
 	virtual bool InitDlistPatchable() { return false; }
 };
 
+PACK(
 struct KyaUpdateObjA {
 	int mainComponentID_0x0;
 	edF32VECTOR4 boundingSphere;
@@ -56,7 +89,7 @@ struct KyaUpdateObjA {
 	float field_0x1c;
 	float field_0x20;
 	int field_0x24;
-	int saveFlag_0x28;
+	int hashCode;
 	float field_0x2c;
 	float field_0x30;
 	undefined field_0x34;
@@ -78,7 +111,7 @@ struct KyaUpdateObjA {
 	undefined field_0x47;
 	uint flags_0x48;
 	float field_0x4c;
-};
+});
 
 struct CinNamedObject30 {
 	int meshIndex;
@@ -100,14 +133,23 @@ struct AnimMatrixData;
 
 struct CollisionData;
 struct CShadow;
+struct ByteCode;
 
-struct CActor : public CObject {
+struct MeshTextureHash {
+	ulong meshHash;
+	ulong textureHash;
+};
+
+class CActor : public CObject {
+public:
 	byte field_0xd;
 	uint flags;
 	void* aComponents;
 
 	int dlistPatchId;
 	uint actorFieldS;
+
+	int actorManagerIndex;
 
 	edNODE* pMeshNode;
 	ed_3d_hierarchy_node* p3DHierNode;
@@ -134,7 +176,7 @@ struct CActor : public CObject {
 
 	undefined* field_0x110;
 
-	int typeID;
+	ACTOR_CLASS typeID;
 	int prevBehaviourId;
 	int curBehaviourId;
 
@@ -159,6 +201,13 @@ struct CActor : public CObject {
 	CollisionData* pCollisionData;
 	CShadow* pShadow;
 
+	void* pMBNK;
+	undefined4 field_0xcc;
+
+	CBehaviourStand standBehaviour;
+
+	CActor* actorFieldG;
+
 	CActor();
 
 	void PreInit();
@@ -166,9 +215,18 @@ struct CActor : public CObject {
 
 	void SetScale(float x, float y, float z);
 
+	void LoadBehaviours(ByteCode* pByteCode);
+
+	void SetupModel(int count, MeshTextureHash* aHashes);
+
+	void SV_SetModel(int meshIndex, int textureIndex, int count, MeshTextureHash* aHashes);
+	void SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo);
+
 	virtual bool IsKindOfObject(ulong kind);
+	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Manage();
+	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
 	virtual void SetState(int newState, int animType);
@@ -181,6 +239,7 @@ struct CActor : public CObject {
 	virtual void UpdatePostAnimEffects();
 	virtual void ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
 	virtual bool InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
 
 	void ChangeVisibleState(int bVisible);
 
@@ -194,6 +253,61 @@ struct CActor : public CObject {
 	void UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision);
 
 	void PlayAnim(int inAnimType);
+
+	// #HACK
+	void SkipToNextActor(ByteCode* pByteCode);
+
+	bool SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial);
+};
+
+class CActorMovable : public CActor {
+public:
+	CActorMovable() {
+		IMPLEMENTATION_GUARD_LOG();
+	}
+
+	virtual void Create(ByteCode* pByteCode);
+
+	float field_0x1c0;
+};
+
+class CActorAutonomous : public CActorMovable {
+public:
+	CActorAutonomous() {
+		IMPLEMENTATION_GUARD_LOG();
+	}
+
+	virtual void Create(ByteCode* pByteCode);
+};
+
+
+class CAddOnGenerator_SubObj {
+public:
+	void Create(ByteCode* pByteCode);
+
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+};
+
+class CAddOnGenerator {
+public:
+	void Create(CActor* pActor, ByteCode* pByteCode);
+
+	CAddOnGenerator_SubObj subObj;
+};
+
+class CBehaviourAddOnBase {
+public:
+	virtual void Create(ByteCode* pByteCode) = 0;
+};
+
+struct ActorAndWaypoint {
+	CActor* pActor;
+	struct ManagerC_24* pWaypoint;
 };
 
 #endif // _ACTOR_H
