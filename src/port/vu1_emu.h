@@ -6,6 +6,7 @@ namespace VU1Emu {
 	void ProcessVifList(edpkt_data* pVifPkt, bool bRunCode = true);
 	void SetVifItop(uint newItop);
 	void UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd);
+	bool& GetHardwareDrawEnabled();
 	bool& GetInterpreterEnabled();
 	bool& GetRunSingleThreaded();
 	bool& GetRunSimplifiedCode();

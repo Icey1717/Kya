@@ -1073,11 +1073,24 @@ namespace VU1Emu {
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog RGBA 0x{:x} r: {} g: {} b: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi);
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog STQ  0x{:x} S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
 
+#if 0
+				{
+					edF32VECTOR4 a = objToScreen.rowX * pXYZ->x;
+					VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ  0x{:x} a x: {} y: {} z: {} w: {}", vtxReg, a.x, a.y, a.z, a.w);
+
+					a = objToScreen.rowY * pXYZ->y;
+					VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ  0x{:x} b x: {} y: {} z: {} w: {}", vtxReg, a.x, a.y, a.z, a.w);
+
+					a = objToScreen.rowZ * pXYZ->z;
+					VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ  0x{:x} c x: {} y: {} z: {} w: {}", vtxReg, a.x, a.y, a.z, a.w);
+				}
+#endif
+
 				edF32VECTOR4 screenVtx = *pXYZ * objToScreen;
 
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen 0x{:x} x: {} y: {} z: {} w: {}", vtxReg, screenVtx.x, screenVtx.y, screenVtx.z, screenVtx.w);
 
-				float invW = 1.0f / fabs(screenVtx.w);
+				float invW = 1.0f / screenVtx.w;
 
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog Q 0x{:x} DIVQ: {}", vtxReg, invW);
 
@@ -1641,7 +1654,7 @@ namespace VU1Emu {
 
 		void RunCode(int addr) 
 		{
-			MY_LOG("RunCode 0x{:x}", addr);
+			VU_VTX_TRACE_LOG("RunCode 0x{:x}", addr);
 
 			bool bTestConv16 = true;
 
@@ -1864,7 +1877,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 	uint stmask = 0;
 	char* pFakeMem = GetFakeMem();
 
-	MY_LOG("ProcessVifList Begin");
+	VU_VTX_TRACE_LOG("ProcessVifList Begin");
 
 	// Toggle trace on.
 	if (bTraceVtx && !bTracingVtx) {
@@ -1936,7 +1949,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 				continue;
 			}
 
-			MY_LOG("ProcessVifList VIF_MSCAL - Using Interpreter: {} (addr: 0x{:x})", bEnableInterpreter, pRunTag->addr);
+			VU_VTX_TRACE_LOG("ProcessVifList VIF_MSCAL - Using Interpreter: {} (addr: 0x{:x})", bEnableInterpreter, pRunTag->addr);
 
 			if (bEnableHardwareDraw) {
 				// Just add the vertices here.
@@ -2106,7 +2119,7 @@ void VU1Emu::SetVifItop(uint newItop)
 
 void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 {
-	MY_LOG("VU1Emu::UpdateMemory Begin 0x{:x} 0x{:x}", (uintptr_t)pVifPkt, (uintptr_t)pEnd);
+	VU_VTX_TRACE_LOG("VU1Emu::UpdateMemory Begin 0x{:x} 0x{:x}", (uintptr_t)pVifPkt, (uintptr_t)pEnd);
 
 	while (pVifPkt < pEnd) {
 		WriteTag* pTag = (WriteTag*)(&(pVifPkt->asU32[3]));
@@ -2173,6 +2186,11 @@ void VU1Emu::UpdateMemory(const edpkt_data* pVifPkt, const edpkt_data* pEnd)
 		}
 		pVifPkt++;
 	}
+}
+
+bool& VU1Emu::GetHardwareDrawEnabled()
+{
+	return bEnableHardwareDraw;
 }
 
 bool& VU1Emu::GetInterpreterEnabled()

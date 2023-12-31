@@ -2470,7 +2470,7 @@ void edF32Matrix4OrthonormalizeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 
 edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix, byte param_3)
 {
-	edF32MATRIX4* m1;
+	edF32MATRIX4* pObjToWorld;
 	LightingMatrixSubSubObj* pLVar1;
 	ed_3d_hierarchy_setup* pLVar2;
 	float* pfVar3;
@@ -2509,12 +2509,12 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	undefined* psVar1;
 	ed_3d_hierarchy_setup* puVar1;
 
-	m1 = pDmaMatrix->pObjToWorld;
+	pObjToWorld = pDmaMatrix->pObjToWorld;
 	RENDER_LOG("DMA Begin ed3DPKTCopyMatrixPacket");
 	edDmaSync(SHELLDMA_CHANNEL_VIF0);
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_X_SPR, edF32VECTOR4*), &gCamNormal_X);
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_Y_SPR, edF32VECTOR4*), &gCamNormal_Y);
-	*g_pCurFlareObj2WorldMtx = m1;
+	*g_pCurFlareObj2WorldMtx = pObjToWorld;
 	if (((pDmaMatrix->pMeshTransformData == (ed_3d_hierarchy*)0x0) ||
 		(puVar1 = pDmaMatrix->pMeshTransformData->pHierarchySetup, puVar1 == (ed_3d_hierarchy_setup*)0x0))
 		|| (pLVar1 = puVar1->pLightData, pLVar1 == (LightingMatrixSubSubObj*)0x0)) {
@@ -2547,10 +2547,10 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	}
 	else {
 		vectorA->w = 999.0f;
-		m1 = gF32Matrix4Unit_Scratch;
+		pObjToWorld = gF32Matrix4Unit_Scratch;
 	}
 
-	edF32MATRIX4 objToWorld = *m1;
+	edF32MATRIX4 objToWorld = *pObjToWorld;
 	edF32MATRIX4 worldToCamera = *WorldToCamera_Matrix;
 
 	edF32MATRIX4* pObjToCamera = SCRATCHPAD_ADDRESS_TYPE(OBJECT_TO_CAMERA_MATRIX_SPR, edF32MATRIX4*);
@@ -2632,7 +2632,11 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	pObjToScreen->dc = cameraToScreen.ac * pObjToCamera->da + cameraToScreen.bc * pObjToCamera->db + cameraToScreen.cc * pObjToCamera->dc + cameraToScreen.dc * pObjToCamera->dd;
 	pObjToScreen->dd = cameraToScreen.ad * pObjToCamera->da + cameraToScreen.bd * pObjToCamera->db + cameraToScreen.cd * pObjToCamera->dc + cameraToScreen.dd * pObjToCamera->dd;
 
-	edF32Matrix4OrthonormalizeHard(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), m1);
+#ifdef PLATFORM_WIN
+	Renderer::SetObjToScreen(pObjToScreen->raw);
+#endif
+
+	edF32Matrix4OrthonormalizeHard(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), pObjToWorld);
 	sceVu0InverseMatrix(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*));
 	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*),
 		SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*));
@@ -4954,6 +4958,7 @@ void ed3DFlushList(void)
 				while (peVar3 = pPrevList, peVar3 != pCurrentList) {
 					ED3D_LOG(LogLevel::Verbose, "");
 					ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
+
 					ed3DFlushMaterial((ed_dma_material*)(peVar3)->pData);
 					unaff_s1_lo = peVar3;
 					pPrevList = (edLIST*)(peVar3)->pPrev;

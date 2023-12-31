@@ -102,7 +102,7 @@ namespace Renderer
 	struct alignas(32) GSVertexUnprocessed
 	{
 		struct {
-			uint32_t ST[2];
+			int32_t ST[2];
 			float Q;
 			float _pad;
 		} STQ;
@@ -335,6 +335,7 @@ namespace Renderer
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void SetImagePointer(TextureData inImage);
+	void SetObjToScreen(float* pMatrix);
 	TextureData& GetImagePointer();
 
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;

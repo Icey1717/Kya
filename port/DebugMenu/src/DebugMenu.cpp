@@ -334,6 +334,7 @@ namespace DebugMenu_Internal {
 		ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Checkbox("Use Hardware Draw", &VU1Emu::GetHardwareDrawEnabled());
 			ImGui::Checkbox("Use Interpreter", &VU1Emu::GetInterpreterEnabled());
 			ImGui::Checkbox("Single Threaded", &VU1Emu::GetRunSingleThreaded());
 			ImGui::Checkbox("Simplified Code", &VU1Emu::GetRunSimplifiedCode());

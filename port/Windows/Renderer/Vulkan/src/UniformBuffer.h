@@ -10,6 +10,7 @@ namespace PS2 {
 		GSVector4 VertexScale;
 		GSVector4 VertexOffset;
 		GSVector4 Texture_Scale_Offset;
+		glm::mat4 ObjToScreen;
 
 		VSConstantBuffer()
 		{

@@ -1732,6 +1732,10 @@ void Renderer::SetImagePointer(Renderer::TextureData inImage) {
 	gImageData = inImage;
 }
 
+void Renderer::SetObjToScreen(float* pMatrix) {
+	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pMatrix, sizeof(glm::mat4));
+}
+
 Renderer::TextureData& Renderer::GetImagePointer() {
 	return gImageData;
 }
@@ -1746,6 +1750,11 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer) {
 
 void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, PS2::GSState& state, bool bHardware) {
 	const int tail = drawBuffer.GetIndexTail();
+
+	//if (tail != 2610 && tail != 132) {
+	//	drawBuffer.ResetAfterDraw();
+	//	return;
+	//}
 
 	if (tail == 0) {
 		return;
@@ -1933,23 +1942,10 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
+			//PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen = glm::identity<glm::mat4>();
 
 			PS2_Internal::gVertexConstBuffer.Update(GetCurrentFrame());
 		}
-
-#if 0
-		Renderer::DescriptorWriteList writeList;
-		const VkDescriptorBufferInfo vertexDescBufferInfo = PS2_Internal::gVertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-		const VkDescriptorBufferInfo fragmentDescBufferInfo = PS2_Internal::gPixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-
-		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings);
-
-		if (descriptorWrites.size() > 0) {
-			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-		}
-#endif
 
 
 		vkCmdSetScissor(GetCurrentCommandBuffer(), 0, 1, &hwState.scissor);
