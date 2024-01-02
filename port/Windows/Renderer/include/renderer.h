@@ -335,7 +335,7 @@ namespace Renderer
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void SetImagePointer(TextureData inImage);
-	void SetObjToScreen(float* pMatrix);
+	void SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen);
 	TextureData& GetImagePointer();
 
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;

@@ -412,7 +412,7 @@ void Renderer::CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutB
 	}
 }
 
-std::optional<VkWriteDescriptorSet> Renderer::DescriptorWriteList::AddWrite(Renderer::EBindingStage stage, VkDescriptorType type, const VkDescriptorSet& dstSet, int dstBinding)
+std::optional<VkWriteDescriptorSet> Renderer::DescriptorWriteList::AddWrite(Renderer::EBindingStage stage, VkDescriptorType type, const VkDescriptorSet& dstSet, int dstBinding) const
 {
 	for (auto& write : writes) {
 		if (write.stage == stage && write.descriptorType == type) {
@@ -433,7 +433,7 @@ std::optional<VkWriteDescriptorSet> Renderer::DescriptorWriteList::AddWrite(Rend
 	return std::nullopt;
 }
 
-std::vector<VkWriteDescriptorSet> Renderer::DescriptorWriteList::CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap)
+std::vector<VkWriteDescriptorSet> Renderer::DescriptorWriteList::CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap) const
 {
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 

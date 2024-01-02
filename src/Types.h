@@ -596,6 +596,45 @@ inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 	return ret;
 }
 
+//inline edF32MATRIX4 operator*(const edF32MATRIX4& m1, const edF32MATRIX4& m2) {
+//	edF32MATRIX4 result;
+//
+//	for (int i = 0; i < 4; ++i) {
+//		for (int j = 0; j < 4; ++j) {
+//			result.raw[i * 4 + j] = m1.raw[i * 4 + 0] * m2.raw[0 * 4 + j] +
+//				m1.raw[i * 4 + 1] * m2.raw[1 * 4 + j] +
+//				m1.raw[i * 4 + 2] * m2.raw[2 * 4 + j] +
+//				m1.raw[i * 4 + 3] * m2.raw[3 * 4 + j];
+//		}
+//	}
+//
+//	return result;
+//}
+
+/* Equivalent ^^^ */
+inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
+{
+	edF32MATRIX4 ret;
+	ret.aa = lhs.aa * rhs.aa + lhs.ba * rhs.ab + lhs.ca * rhs.ac + lhs.da * rhs.ad;
+	ret.ab = lhs.ab * rhs.aa + lhs.bb * rhs.ab + lhs.cb * rhs.ac + lhs.db * rhs.ad;
+	ret.ac = lhs.ac * rhs.aa + lhs.bc * rhs.ab + lhs.cc * rhs.ac + lhs.dc * rhs.ad;
+	ret.ad = lhs.ad * rhs.aa + lhs.bd * rhs.ab + lhs.cd * rhs.ac + lhs.dd * rhs.ad;
+	ret.ba = lhs.aa * rhs.ba + lhs.ba * rhs.bb + lhs.ca * rhs.bc + lhs.da * rhs.bd;
+	ret.bb = lhs.ab * rhs.ba + lhs.bb * rhs.bb + lhs.cb * rhs.bc + lhs.db * rhs.bd;
+	ret.bc = lhs.ac * rhs.ba + lhs.bc * rhs.bb + lhs.cc * rhs.bc + lhs.dc * rhs.bd;
+	ret.bd = lhs.ad * rhs.ba + lhs.bd * rhs.bb + lhs.cd * rhs.bc + lhs.dd * rhs.bd;
+	ret.ca = lhs.aa * rhs.ca + lhs.ba * rhs.cb + lhs.ca * rhs.cc + lhs.da * rhs.cd;
+	ret.cb = lhs.ab * rhs.ca + lhs.bb * rhs.cb + lhs.cb * rhs.cc + lhs.db * rhs.cd;
+	ret.cc = lhs.ac * rhs.ca + lhs.bc * rhs.cb + lhs.cc * rhs.cc + lhs.dc * rhs.cd;
+	ret.cd = lhs.ad * rhs.ca + lhs.bd * rhs.cb + lhs.cd * rhs.cc + lhs.dd * rhs.cd;
+	ret.da = lhs.aa * rhs.da + lhs.ba * rhs.db + lhs.ca * rhs.dc + lhs.da * rhs.dd;
+	ret.db = lhs.ab * rhs.da + lhs.bb * rhs.db + lhs.cb * rhs.dc + lhs.db * rhs.dd;
+	ret.dc = lhs.ac * rhs.da + lhs.bc * rhs.db + lhs.cc * rhs.dc + lhs.dc * rhs.dd;
+	ret.dd = lhs.ad * rhs.da + lhs.bd * rhs.db + lhs.cd * rhs.dc + lhs.dd * rhs.dd;
+	return ret;
+}
+
+
 #define IMPLEMENTATION_GUARD_AUDIO(x)
 #define IMPLEMENTATION_GUARD_LOG(x) MY_LOG("IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 

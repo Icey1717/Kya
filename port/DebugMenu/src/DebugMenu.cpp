@@ -574,7 +574,7 @@ namespace DebugMenu_Internal {
 		}
 	}
 
-	edNODE* pTestNode = nullptr;
+	edNODE* pNewNode = nullptr;
 
 	void ShowMeshList(bool* bOpen) {
 		ImGui::Begin("Mesh List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
@@ -586,20 +586,14 @@ namespace DebugMenu_Internal {
 			std::sprintf(buttonText, "Mesh %s", meshList[i].name.c_str());
 
 			if (ImGui::Selectable(buttonText)) {
-				pTestNode = ed3DHierarchyAddToList(pList, gHierarchyManagerBuffer, gHierarchyManagerFirstFreeNode, meshList[i].pMesh, NULL);
-
-				//meshList[i].pMesh->text
+				pNewNode = ed3DHierarchyAddToList(pList, gHierarchyManagerBuffer, gHierarchyManagerFirstFreeNode, meshList[i].pMesh, NULL);
 			}
 		}
 
 		ImGui::End();
 
-		if (selectedTextureIndex >= 0) {
-			
-		}
-
-		if (pTestNode) {
-			DebugMeshViewer::ShowNodeMenu(pTestNode);
+		if (pNewNode) {
+			DebugMeshViewer::ShowNodeMenu(pNewNode);
 		}
 	}
 

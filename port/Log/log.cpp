@@ -3,11 +3,18 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/include/spdlog/sinks/stdout_color_sinks.h"
 
-const std::string logPath = "logs/";
+static const std::string gLogPath = "logs/";
+//constexpr spdlog::level::level_enum gLogLevel = spdlog::level::trace;
+constexpr spdlog::level::level_enum gLogLevel = spdlog::level::off;
 
 //LogPtr Log::asyncLog = spdlog::stdout_color_mt("console");
 //LogPtr Log::asyncLog = spdlog::basic_logger_mt<spdlog::async_factory>("async_file_logger", "logs/async_log.txt", true);
 LogPtr Log::asyncLog = spdlog::basic_logger_st("async_file_logger", "logs/async_log.txt", true);
+
+static inline void InitLog(LogPtr pLog) {
+	pLog->set_pattern("%v");
+	pLog->set_level(gLogLevel);
+}
 
 void Log::ForceFlush()
 {
@@ -20,11 +27,13 @@ void Log::ForceFlush()
 
 LogPtr Log::CreateLog(const std::string& category)
 {
-	const std::string path = logPath + category + ".txt";
-	return spdlog::basic_logger_mt<spdlog::async_factory_nonblock>(category.c_str(), path.c_str(), true);
+	const std::string path = gLogPath + category + ".txt";
+	auto pNewLog = spdlog::basic_logger_mt<spdlog::async_factory_nonblock>(category.c_str(), path.c_str(), true);
+	InitLog(pNewLog);
+	return pNewLog;
 }
 
 Log::Log()
 {
-	asyncLog->set_pattern("%v");
+	InitLog(asyncLog);
 }

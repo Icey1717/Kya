@@ -269,9 +269,10 @@ bool& DebugMeshViewer::GetWireframe()
 
 PS2::GSTexEntry& DebugMeshViewer::GetTextureEntry()
 {
+	const uint32_t CBP = 0x380;
 	GIFReg::GSTex TEX{};
-	TEX.CBP = 0x380;
-	return gTextureCache.Lookup(TEX, gTextureData);
+	TEX.CBP = CBP;
+	return gTextureCache.Lookup(TEX, gTextureData, CBP);
 }
 
 void DebugMeshViewer::ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy)

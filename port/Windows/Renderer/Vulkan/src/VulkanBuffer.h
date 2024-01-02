@@ -32,7 +32,7 @@ struct UniformBuffer {
 		vkUnmapMemory(GetDevice(), buffersMemory[index]);
 	}
 
-	inline VkDescriptorBufferInfo GetDescBufferInfo(const int index) {
+	inline VkDescriptorBufferInfo GetDescBufferInfo(const int index) const {
 		VkDescriptorBufferInfo descBufferInfo{};
 		descBufferInfo.buffer = buffers[index];
 		descBufferInfo.offset = 0;

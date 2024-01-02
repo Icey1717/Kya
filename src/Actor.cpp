@@ -262,9 +262,9 @@ void CActor::Create(ByteCode* pByteCode)
 	MeshTextureHash local_110[16];
 	ScenaricCondition local_4;
 
-	ACTOR_LOG(LogLevel::Info, "CActor::Create {}", pByteCode->GetString());
+	char* name = pByteCode->GetString();
 
-	Log::GetInstance().ForceFlush();
+	ACTOR_LOG(LogLevel::Info, "CActor::Create {}", name);
 
 	pByteCode->Align(4);
 	pCVar1 = (CinNamedObject30*)pByteCode->currentSeekPos;

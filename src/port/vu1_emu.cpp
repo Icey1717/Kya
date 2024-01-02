@@ -24,7 +24,7 @@ namespace VU1Emu {
 	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
 	int gItop;
 
-	bool bEnableHardwareDraw = true;
+	bool bEnableHardwareDraw = false;
 	bool bEnableInterpreter = false;
 	bool bRunSingleThreaded = true;
 	bool bRunSimplifiedCode = true;
@@ -170,6 +170,7 @@ namespace VU1Emu {
 		int itop;
 		int addr;
 
+		edF32VECTOR4 vf00 = { 0.0f, 0.0f, 0.0f, 1.0f };
 		edF32VECTOR4 vf01;
 		edF32VECTOR4 vf02;
 		edF32VECTOR4 vf03;
@@ -205,6 +206,8 @@ namespace VU1Emu {
 		edF32VECTOR4 ACC;
 		float Q;
 
+		int I;
+
 		uint gClipflag = 0;
 
 		char* GetLocalFakeMem() {
@@ -230,11 +233,16 @@ namespace VU1Emu {
 			_$DrawingStart_Shared();
 		}
 
+		void _$DrawingStart_XYZ32_Normal()
+		{
+			_$DrawingStart_Shared();
+		}
+
 		void _$UnpackData_XYZ32_Loop(int count, edF32VECTOR4* pStartAddr) 
 		{
 			for (int i = 0; i < count; i++) {
-				pStartAddr[i].x = int12_to_float(*(int*)&pStartAddr[i].x);
-				pStartAddr[i].y = int12_to_float(*(int*)&pStartAddr[i].y);
+				pStartAddr[i].x = int12_to_float(pStartAddr[i].xi);
+				pStartAddr[i].y = int12_to_float(pStartAddr[i].yi);
 				pStartAddr += 2;
 			}
 		}
@@ -243,6 +251,186 @@ namespace VU1Emu {
 		{
 			vi03 = vi15 + 1;
 			_$UnpackData_XYZ32_Loop(vi14, VIF_AS_F(vi03, 0));
+		}
+
+		void _$UnpackData_XYZ32_Normal()
+		{
+			vi02 = vi14;
+			vi03 = vi15 + 1;
+			vi04 = vi03 + 216;
+
+			// Load ST 0
+			vf22 = VIF_LOAD_F(vi03, 0);
+
+			// Load RGBA 0
+			vf23 = VIF_LOAD_F(vi03, 1);
+
+			// Load Normal 0
+			vf24 = VIF_LOAD_F(vi04++, 0);
+
+			// ST 0 to float
+			vf25.x = int12_to_float(vf22.xi);
+			vf25.y = int12_to_float(vf22.yi);
+
+			// RGBA 0 to float
+			vf26.x = vf23.xi;
+			vf26.y = vf23.yi;
+			vf26.z = vf23.zi;
+			vf26.w = vf23.wi;
+
+			// Normal 0 to float
+			vf27.x = int15_to_float(vf24.xi);
+			vf27.y = int15_to_float(vf24.yi);
+			vf27.z = int15_to_float(vf24.zi);
+
+			// Load ST 1
+			vf04 = VIF_LOAD_F(vi03, 3);
+
+			// Load RGBA 1
+			vf05 = VIF_LOAD_F(vi03, 4);
+
+			// Load Normal 1
+			vf06 = VIF_LOAD_F(vi04++, 0);
+
+			// _$UnpackData_XYZ32_Normal_Loop
+
+			while (vi02 > 0) {
+				// Load ST 2
+				vf10 = VIF_LOAD_F(vi03, 6);
+
+				// Load RGBA 2
+				vf11 = VIF_LOAD_F(vi03, 7);
+
+				// Load Normal 2
+				vf12 = VIF_LOAD_F(vi04++, 0);
+
+				// ST 1 to float
+				vf07.x = int12_to_float(vf04.xi);
+				vf07.y = int12_to_float(vf04.yi);
+
+				// RGBA 1 to float
+				vf08.x = vf05.xi;
+				vf08.y = vf05.yi;
+				vf08.z = vf05.zi;
+				vf08.w = vf05.wi;
+
+				// Normal 1 to float
+				vf09.x = int15_to_float(vf06.xi);
+				vf09.y = int15_to_float(vf06.yi);
+				vf09.z = int15_to_float(vf06.zi);
+
+				// Store ST 0
+				VIF_AS_F(vi03, 0)->xy = vf25.xy;
+
+				// Store RGBA 0
+				VIF_AS_F(vi03, 1)->xyz = vf26.xyz;
+
+				// Store Normal 0
+				VIF_AS_F(vi04, -3)->xyz = vf27.xyz;
+
+				vi03 += 12;
+
+				// Load ST 3
+				vf16 = VIF_LOAD_F(vi03, -3);
+
+				// Load RGBA 3
+				vf17 = VIF_LOAD_F(vi03, -2);
+
+				// Load Normal 3
+				vf18 = VIF_LOAD_F(vi04++, 0);
+
+				// ST 2 to float
+				vf13.x = int12_to_float(vf10.xi);
+				vf13.y = int12_to_float(vf10.yi);
+
+				// RGBA 2 to float
+				vf14.x = vf11.xi;
+				vf14.y = vf11.yi;
+				vf14.z = vf11.zi;
+				vf14.w = vf11.wi;
+
+				// Normal 2 to float
+				vf15.x = int15_to_float(vf12.xi);
+				vf15.y = int15_to_float(vf12.yi);
+				vf15.z = int15_to_float(vf12.zi);
+
+				// Store ST 1
+				VIF_AS_F(vi03, -9)->xy = vf07.xy;
+
+				// Store RGBA 1
+				VIF_AS_F(vi03, -8)->xyz = vf08.xyz;
+
+				// Store Normal 1
+				VIF_AS_F(vi04, -3)->xyz = vf09.xyz;
+
+				vi02 -= 4;
+
+				// Load ST 0
+				vf22 = VIF_LOAD_F(vi03, 0);
+
+				// Load RGBA 0
+				vf23 = VIF_LOAD_F(vi03, 1);
+
+				// Load Normal 0
+				vf24 = VIF_LOAD_F(vi04++, 0);
+
+				// ST 3 to float
+				vf19.x = int12_to_float(vf16.xi);
+				vf19.y = int12_to_float(vf16.yi);
+
+				// RGBA 3 to float
+				vf20.x = vf17.xi;
+				vf20.y = vf17.yi;
+				vf20.z = vf17.zi;
+				vf20.w = vf17.wi;
+
+				// Normal 3 to float
+				vf21.x = int15_to_float(vf18.xi);
+				vf21.y = int15_to_float(vf18.yi);
+				vf21.z = int15_to_float(vf18.zi);
+
+				// Store ST 2
+				VIF_AS_F(vi03, -6)->xy = vf13.xy;
+
+				// Store RGBA 2
+				VIF_AS_F(vi03, -5)->xyz = vf14.xyz;
+
+				// Store Normal 2
+				VIF_AS_F(vi04, -3)->xyz = vf15.xyz;
+
+				// Load ST 1
+				vf04 = VIF_LOAD_F(vi03, 3);
+
+				// Load RGBA 1
+				vf05 = VIF_LOAD_F(vi03, 4);
+
+				// Load Normal 1
+				vf06 = VIF_LOAD_F(vi04++, 0);
+
+				// ST 0 to float
+				vf25.x = int12_to_float(vf22.xi);
+				vf25.y = int12_to_float(vf22.yi);
+
+				// RGBA 0 to float
+				vf26.x = vf23.xi;
+				vf26.y = vf23.yi;
+				vf26.z = vf23.zi;
+				vf26.w = vf23.wi;
+
+				// Normal 0 to float
+				vf27.x = int15_to_float(vf24.xi);
+				vf27.y = int15_to_float(vf24.yi);
+				vf27.z = int15_to_float(vf24.zi);
+
+				// Store ST 3
+				VIF_AS_F(vi03, -3)->xy = vf19.xy;
+
+				// Store RGBA 3
+				VIF_AS_F(vi03, -2)->xyz = vf20.xyz;
+
+				// Store Normal 3
+				VIF_AS_F(vi04, -3)->xyz = vf21.xyz;
+			}
 		}
 
 		uint Clip(float value, const edF32VECTOR4& reg)
@@ -1090,7 +1278,7 @@ namespace VU1Emu {
 
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen 0x{:x} x: {} y: {} z: {} w: {}", vtxReg, screenVtx.x, screenVtx.y, screenVtx.z, screenVtx.w);
 
-				float invW = 1.0f / screenVtx.w;
+				float invW = 1.0f / fabs(screenVtx.w);
 
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog Q 0x{:x} DIVQ: {}", vtxReg, invW);
 
@@ -1332,9 +1520,10 @@ namespace VU1Emu {
 				return;
 			}
 
+			// Vtx count
 			vi02 = vi14;
 
-			// vtx buffer reg.
+			// vtx data reg
 			vi03 = vi15 + 1;
 
 			vi04 = vi03 + 0xd8;
@@ -1438,6 +1627,7 @@ namespace VU1Emu {
 				vi10 = vi09 & vi06;
 				vi09 = vi09 & vi05;
 
+				// Normal * anim matrix
 				vf11 = vf04 + (vf03 * vf12.z) + (vf02 * vf12.y) + (vf01 * vf12.x);
 
 				// XYZ * anim matrix
@@ -1481,12 +1671,224 @@ namespace VU1Emu {
 			}
 		}
 
+		void _$Alpha_Object()
+		{
+			if ((vi01 & 0x20) != 0) {
+
+				// vtx data reg
+				vi03 = vi15 + 1;
+
+				// Vtx count
+				vi02 = vi14;
+
+				vf05 = VIF_LOAD_F(vi00, 61);
+
+				I = 128;
+
+				vf07 = vf00 * I;
+
+				vf06.x = vf05.xi;
+				vf06.y = vf05.yi;
+				vf06.z = vf05.zi;
+				vf06.w = vf05.wi;
+
+				Q = 1.0f / vf07.w;
+
+				// _$Alpha_Object_Loop
+				while (vi02 > 0) {
+					// Load RGBA
+					vf10 = VIF_LOAD_F(vi03, 1);
+
+					vf11.x = vf10.xi;
+					vf11.y = vf10.yi;
+					vf11.z = vf10.zi;
+					vf11.w = vf10.wi;
+
+					vf12.w = vf11.w * vf06.x;
+
+					vf13 = vf12 * Q;
+
+					vf14.xi = vf13.x;
+					vf14.yi = vf13.y;
+					vf14.zi = vf13.z;
+					vf14.wi = vf13.w;
+
+					vi03 += 3;
+					vi02 -= 1;
+
+					// Store RGBA
+					VIF_AS_F(vi03, -2)->w = vf14.w;
+				}
+			}
+		}
+
+		void _$XYZW_16_Conv()
+		{
+			if ((vi01 & 0x400) != 0) {
+				// Vtx data reg
+				vi03 = vi15 + 1;
+
+				// Vtx count
+				vi02 = vi14;
+
+				// Load XYZ 0
+				vf14 = VIF_LOAD_F(vi03, 2);
+
+				// Load XYZ 1
+				vf24 = VIF_LOAD_F(vi03, 5);
+
+				// Conv XYZ 0
+				vf15.x = int12_to_float(vf14.xi);
+				vf15.y = int12_to_float(vf14.yi);
+				vf15.z = int12_to_float(vf14.zi);
+
+				// _$XYZW_16_Conv_Loop
+				while (vi02 > 0) {
+					// Load XYZ 2
+					vf04 = VIF_LOAD_F(vi03, 8);
+
+					// Conv XYZ 1
+					vf25.x = int12_to_float(vf24.xi);
+					vf25.y = int12_to_float(vf24.yi);
+					vf25.z = int12_to_float(vf24.zi);
+
+					vi02 -= 3;
+
+					// Store XYZ 0
+					VIF_AS_F(vi03, 2)->xyz = vf15.xyz;
+
+					// XYZ 0
+					vf14 = VIF_LOAD_F(vi03, 11);
+
+					vi03 += 9;
+
+					// Conv XYZ 2
+					vf05.x = int12_to_float(vf04.xi);
+					vf05.y = int12_to_float(vf04.yi);
+					vf05.z = int12_to_float(vf04.zi);
+
+					// Store XYZ 1
+					VIF_AS_F(vi03, -4)->xyz = vf25.xyz;
+
+					// Load XYZ 1
+					vf24 = VIF_LOAD_F(vi03, 5);
+
+					// Conv XYZ 0
+					vf15.x = int12_to_float(vf14.xi);
+					vf15.y = int12_to_float(vf14.yi);
+					vf15.z = int12_to_float(vf14.zi);
+
+					// Store XYZ 2
+					VIF_AS_F(vi03, -1)->xyz = vf05.xyz;
+				}
+			}
+		}
+
 		void _$ParallelLightning_addcolor() {
 			vi04 = 16;
 			vi04 = vi04 & vi01;
 
 			if (vi04 != 0x0) {
-				IMPLEMENTATION_GUARD();
+				
+				// ???
+				vf06 = VIF_LOAD_F(vi00, 24);
+				vf07 = VIF_LOAD_F(vi00, 25);
+				vf08 = VIF_LOAD_F(vi00, 26);
+
+				vf09 = VIF_LOAD_F(vi00, 32);
+
+				// Vtx count
+				vi02 = vi14;
+
+				// Vtx data reg
+				vi03 = vi15 + 1;
+
+				// Normal reg
+				vi04 = vi03 + 216;
+
+				vf28 = vf09;
+				vf01 = vf09;
+
+				I = 255;
+				vf09.w = 1.0f;
+
+				// Normal 0
+				vf11 = VIF_LOAD_F(vi04++, 0);
+
+				// ???
+				vf02 = VIF_LOAD_F(vi00, 27);
+				vf03 = VIF_LOAD_F(vi00, 28);
+				vf04 = VIF_LOAD_F(vi00, 29);
+				vf05 = VIF_LOAD_F(vi00, 30);
+
+				vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+
+				// MAXx.xyzw
+				vf13.x = std::max<float>(vf12.x, 0.0f);
+				vf13.y = std::max<float>(vf12.y, 0.0f);
+				vf13.z = std::max<float>(vf12.z, 0.0f);
+				vf13.w = std::max<float>(vf12.w, 0.0f);
+
+				// Normal 1
+				vf11 = VIF_LOAD_F(vi04++, 0);
+
+				vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+
+				// RGBA 0
+				vf10 = VIF_LOAD_F(vi03, 1);
+
+				vf14 = vf09 + (vf05 * vf13.w) + (vf04 * vf13.z) + (vf03 * vf13.y) + (vf02 * vf13.x);
+
+				vf18 = vf10 * vf01.w;
+
+				// Normal 2
+				vf11 = VIF_LOAD_F(vi04++, 0);
+
+				// MAXx.xyzw
+				vf13.x = std::max<float>(vf12.x, 0.0f);
+				vf13.y = std::max<float>(vf12.y, 0.0f);
+				vf13.z = std::max<float>(vf12.z, 0.0f);
+				vf13.w = std::max<float>(vf12.w, 0.0f);
+
+				vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+
+				// _$ParallelLightning_mulcolor_Loop
+				while (vi02 > 0) {
+					vf15.x = std::min<float>(vf14.x, I);
+					vf15.y = std::min<float>(vf14.y, I);
+					vf15.z = std::min<float>(vf14.z, I);
+					vf15.w = std::min<float>(vf14.w, I);
+
+					// RGBA 1
+					vf10 = VIF_LOAD_F(vi03, 4);
+
+					vf14 = vf09 + (vf05 * vf13.w) + (vf04 * vf13.z) + (vf03 * vf13.y) + (vf02 * vf13.x);
+
+					vf16 = vf15 * vf18;
+
+					vf18 = vf10 * vf01.w;
+
+					// Normal 0
+					vf11 = VIF_LOAD_F(vi04++, 0);
+
+					vi02 -= 1;
+					vi03 += 3;
+
+					vf17.xi = vf16.x;
+					vf17.yi = vf16.y;
+					vf17.zi = vf16.z;
+					vf17.wi = vf16.w;
+
+					// MAXx.xyzw
+					vf13.x = std::max<float>(vf12.x, 0.0f);
+					vf13.y = std::max<float>(vf12.y, 0.0f);
+					vf13.z = std::max<float>(vf12.z, 0.0f);
+					vf13.w = std::max<float>(vf12.w, 0.0f);
+
+					vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+
+					(*VIF_AS_F(vi03, -2)).xyz = vf17.xyz;
+				}
 			}
 		}
 
@@ -1587,7 +1989,7 @@ namespace VU1Emu {
 				vi08 = vi07 & vi06;
 				vi07 = vi07 & vi05;
 
-				vf20 = vf24 + (vf13 * vf19.z) + (vf12 * vf19.y) + (vf11 * vf19.x);
+				vf20 = vf14 + (vf13 * vf19.z) + (vf12 * vf19.y) + (vf11 * vf19.x);
 
 				// Anim matrix.
 				vf01 = VIF_LOAD_F(vi07++, 0);
@@ -1612,7 +2014,7 @@ namespace VU1Emu {
 				vi13 = vi12 & vi06;
 				vi12 = vi12 & vi05;
 
-				vf10 = vf24 + (vf03 * vf09.z) + (vf02 * vf09.y) + (vf01 * vf09.x);
+				vf10 = vf04 + (vf03 * vf09.z) + (vf02 * vf09.y) + (vf01 * vf09.x);
 
 				// Anim matrix.
 				vf11 = VIF_LOAD_F(vi12++, 0);
@@ -1692,18 +2094,24 @@ namespace VU1Emu {
 				_$BonesRigid_Ambiant_Test();
 			}
 			else if (addr == 0x19) {
-				// _$DrawingStart_XYZ32_Normal
-				IMPLEMENTATION_GUARD();
+				_$DrawingStart_XYZ32_Normal();
+
+				_$UnpackData_XYZ32_Normal();
+
+				_$ParallelLightning_addcolor();
+
+				_$Lightning_Ambiant();
+
+				_$Lightning_Repack();
+
+				_$Env_Mapping();
 			}
 			else {
 				IMPLEMENTATION_GUARD();
 			}
 
 			if (bTestConv16) {
-				if ((vi01 & 0x400) != 0) {
-					// _$XYZW_16_Conv
-					IMPLEMENTATION_GUARD();
-				}
+				_$XYZW_16_Conv();
 
 				vi02 = VIF_LOAD_I(vi15, -1, VIF_REG_Y);
 
@@ -1718,10 +2126,7 @@ namespace VU1Emu {
 				IMPLEMENTATION_GUARD();
 			}
 
-			if ((vi01 & 0x20) != 0) {
-				// _$Alpha_Object
-				IMPLEMENTATION_GUARD_LOG();
-			}
+			_$Alpha_Object();
 
 			if ((vi01 & 0x100) != 0) {
 				// _$Normal_Extruder

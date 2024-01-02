@@ -11,6 +11,10 @@ void HardwareRenderer::ProcessVertices(char* vtxStart)
 	Gif_Tag gifTag;
 	gifTag.setTag((u8*)vtxStart, true);
 
+	const uint primReg = gifTag.tag.PRIM;
+	const GIFReg::GSPrimPacked primPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&primReg);
+	Renderer::SetPrim(primPacked);
+
 	vtxStart += 0x10;
 
 	for (int i = 0; i < gifTag.nLoop; i++) {
@@ -20,9 +24,6 @@ void HardwareRenderer::ProcessVertices(char* vtxStart)
 		memcpy(&vtx.XYZSkip, vtxStart + 0x20, sizeof(vtx.XYZSkip));
 
 		const uint vtxAnimMatrix = ((vtx.XYZSkip.Skip & 0x7ff) - 0x3dc) / 4;
-
-		const uint primReg = gifTag.tag.PRIM;
-		const GIFReg::GSPrimPacked primPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&primReg);
 
 		const uint skip = vtx.XYZSkip.Skip & 0x8000;
 

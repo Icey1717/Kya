@@ -11,16 +11,17 @@
 namespace PS2 {
 	struct GSTexKey {
 		GIFReg::GSTex value;
+		uint32_t CBP;
 		void* pBitmap;
 		void* pPalette;
 
-		static GSTexKey CreateFromTEX(const GIFReg::GSTex& TEX, void* pInBitmap, void* pInPalette) {
-			return { TEX, pInBitmap, pInPalette };
+		static GSTexKey CreateFromTEX(const GIFReg::GSTex& TEX, const uint32_t inCBP, void* pInBitmap, void* pInPalette) {
+			return { TEX, inCBP, pInBitmap, pInPalette };
 		}
 
 		bool operator==(const GSTexKey& other) const {
 			// #Hack this should probably key properly, using the pointers here is bad.
-			return value == other.value && pBitmap == other.pBitmap && pPalette == other.pPalette;
+			return value == other.value && CBP == other.CBP && pBitmap == other.pBitmap && pPalette == other.pPalette;
 		}
 	};
 
@@ -40,12 +41,20 @@ namespace PS2 {
 	};
 
 	struct GSTexDescriptor {
+		GSTexDescriptor();
+
 		const VkDescriptorSet& GetSet(int index) const {
 			return descriptorSets[index];
 		}
 
+		void UpdateSet(int index) const;
+
 		VkDescriptorPool descriptorPool;
 		std::vector<VkDescriptorSet> descriptorSets;
+		Renderer::LayoutBindingMap layoutBindingMap;
+
+		UniformBuffer<PS2::VSConstantBuffer> vertexConstBuffer;
+		UniformBuffer<PS2::PSConstantBuffer> pixelConstBuffer;
 	};
 
 	struct PSSamplerSelector
@@ -82,8 +91,6 @@ namespace PS2 {
 
 		Renderer::ImageData imageData;
 
-		//GSTexImageConstantBuffer constantBuffer;
-
 		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
 
 		uint32_t width;
@@ -100,8 +107,8 @@ namespace PS2 {
 		void CreateResources(const bool bTextureFiltering);
 		void Cleanup();
 
-		const GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline);
-		const GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline);
+		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline);
+		GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline);
 
 		void CreateSampler(bool bPalette = false);
 		void UpdateSampler();
@@ -150,8 +157,8 @@ namespace PS2 {
 		std::vector<GSTexEntry> texcache;
 
 	public:
-		GSTexEntry& Create(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData);
-		GSTexEntry& Lookup(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData);
+		GSTexEntry& Create(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData, const uint32_t CBP);
+		GSTexEntry& Lookup(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData, uint32_t CBP);
 		const std::vector<GSTexEntry>& GetEntries() const { return texcache; }
 		std::vector<GSTexEntry>& GetEntries() { return texcache; }
 	};

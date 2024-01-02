@@ -93,6 +93,12 @@ namespace PS2 {
 
 		bool bTexSet = false;
 
+		uint32_t CachedCBP[2];
+
+		uint32_t GetCBP() {
+			return CachedCBP[1];
+		}
+
 		inline bool GSState::IsOpaque()
 		{
 			if (PRIM.AA1)

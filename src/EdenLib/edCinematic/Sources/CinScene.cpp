@@ -833,7 +833,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 				}
 				else {
 					if (currentTrackType == 0x6e756fb7) {
-						IMPLEMENTATION_GUARD(
+						IMPLEMENTATION_GUARD_LOG(
 						soundTrackBuffer = (edAnmSubControlerTag*)(trackSeekPos + 3);
 						soundKeyframe = 0;
 						/* Get the number of keyframes in this track */

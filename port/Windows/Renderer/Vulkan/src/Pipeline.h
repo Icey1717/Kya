@@ -94,7 +94,7 @@ namespace Renderer {
 	struct DescriptorWriteList
 	{
 	private:
-		std::optional<VkWriteDescriptorSet> AddWrite(Renderer::EBindingStage stage, VkDescriptorType type, const VkDescriptorSet& dstSet, int dstBinding);
+		std::optional<VkWriteDescriptorSet> AddWrite(Renderer::EBindingStage stage, VkDescriptorType type, const VkDescriptorSet& dstSet, int dstBinding) const;
 
 	public:
 		void EmplaceWrite(const DescriptorWrite& write)
@@ -102,7 +102,7 @@ namespace Renderer {
 			writes.push_back(write);
 		}
 
-		std::vector<VkWriteDescriptorSet> CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap);
+		std::vector<VkWriteDescriptorSet> CreateWriteDescriptorSetList(const VkDescriptorSet& dstSet, const Renderer::LayoutBindingMap& layoutBindingMap) const;
 		std::vector<DescriptorWrite> writes;
 	};
 }

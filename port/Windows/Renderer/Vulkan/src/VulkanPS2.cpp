@@ -108,16 +108,16 @@ namespace Renderer {
 
 	void LogTex(const char* prefix, GIFReg::GSTex tex)
 	{
-		//// Create a formatted log message string
-		//std::ostringstream oss;
-		//oss << "tbp: " << tex.TBP0 << ", tbw: " << tex.TBW << ", psm: " << tex.PSM
-		//	<< ", tw: " << tex.TW << ", th: " << tex.TH << ", tcc: " << tex.TCC
-		//	<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << " (0x" << std::hex << tex.CBP << "), cpsm: " << tex.CPSM
-		//	<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
-		//
-		//// Log the formatted message
-		//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %s", prefix, oss.str().c_str());
-		//Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "%s - %llx", prefix, tex.CMD);
+		// Create a formatted log message string
+		std::ostringstream oss;
+		oss << "tbp: " << tex.TBP0 << ", tbw: " << tex.TBW << ", psm: " << tex.PSM
+			<< ", tw: " << tex.TW << ", th: " << tex.TH << ", tcc: " << tex.TCC
+			<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << " (0x" << std::hex << tex.CBP << "), cpsm: " << tex.CPSM
+			<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
+		
+		// Log the formatted message
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "{} - {}", prefix, oss.str().c_str());
+		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "{} - 0x{:x}", prefix, tex.CMD);
 	}
 
 	void SetVertexSkip(uint32_t inSkip)
@@ -177,8 +177,24 @@ namespace Renderer {
 	void SetTEX(GIFReg::GSTex tex)
 	{
 		LogTex("SetTEX", tex);
-		PS2::GetGSState().TEX = tex;
-		PS2::GetGSState().bTexSet = true;
+
+		auto& state = PS2::GetGSState();
+
+		state.TEX = tex;
+		state.bTexSet = true;
+
+		switch (tex.CLD) {
+		case 0:
+		case 1:
+			// Nothing.
+			break;
+		case 2:
+			state.CachedCBP[0] = tex.CBP;
+			break;
+		case 3:
+			state.CachedCBP[1] = tex.CBP;
+			break;
+		}
 	}
 
 	void SetTest(GIFReg::GSTest test)
@@ -1732,8 +1748,11 @@ void Renderer::SetImagePointer(Renderer::TextureData inImage) {
 	gImageData = inImage;
 }
 
-void Renderer::SetObjToScreen(float* pMatrix) {
-	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pMatrix, sizeof(glm::mat4));
+void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen) {
+	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().World, pWorld, sizeof(glm::mat4));
+	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().View, pView, sizeof(glm::mat4));
+	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().Proj, pProj, sizeof(glm::mat4));
+	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pScreen, sizeof(glm::mat4));
 }
 
 Renderer::TextureData& Renderer::GetImagePointer() {
@@ -1807,7 +1826,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 	g_GSSelector.prim = primclass;
 
 	LogTex("Lookup", state.TEX);
-	PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, textureData);
+	PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, textureData, state.GetCBP());
 
 	// Blend
 	int blend_alpha_min = 0, blend_alpha_max = 255;
@@ -1942,9 +1961,9 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
-			//PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen = glm::identity<glm::mat4>();
 
 			PS2_Internal::gVertexConstBuffer.Update(GetCurrentFrame());
+			PS2_Internal::gPixelConstBuffer.Update(GetCurrentFrame());
 		}
 
 
@@ -1957,6 +1976,14 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 		}
 		else {
 			PS2_Internal::gVertexBuffers.BindData(GetCurrentCommandBuffer());
+		}
+
+		{
+			tex.value.image.GetDescriptorSets(pipeline).vertexConstBuffer.GetBufferData() = PS2_Internal::gVertexConstBuffer.GetBufferData();
+			tex.value.image.GetDescriptorSets(pipeline).pixelConstBuffer.GetBufferData() = PS2_Internal::gPixelConstBuffer.GetBufferData();
+			tex.value.image.GetDescriptorSets(pipeline).vertexConstBuffer.Update(GetCurrentFrame());
+			tex.value.image.GetDescriptorSets(pipeline).pixelConstBuffer.Update(GetCurrentFrame());
+			//tex.value.image.GetDescriptorSets(pipeline).UpdateSet(GetCurrentFrame());
 		}
 
 		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);

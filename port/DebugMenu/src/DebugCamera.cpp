@@ -65,21 +65,6 @@ namespace DebugCamera {
 		}
 	}
 
-	edF32MATRIX4 operator*(const edF32MATRIX4& m1, const edF32MATRIX4& m2) {
-		edF32MATRIX4 result;
-
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
-				result.raw[i * 4 + j] = m1.raw[i * 4 + 0] * m2.raw[0 * 4 + j] +
-					m1.raw[i * 4 + 1] * m2.raw[1 * 4 + j] +
-					m1.raw[i * 4 + 2] * m2.raw[2 * 4 + j] +
-					m1.raw[i * 4 + 3] * m2.raw[3 * 4 + j];
-			}
-		}
-
-		return result;
-	}
-
 	void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 		auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
 		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;

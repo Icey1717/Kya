@@ -51,14 +51,14 @@ ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)
 }
 
 #define CHAR_TO_UINT64(str) \
-    (static_cast<uint64_t>(str[0]) | \
-     (static_cast<uint64_t>(str[1]) << 8) | \
-     (static_cast<uint64_t>(str[2]) << 16) | \
-     (static_cast<uint64_t>(str[3]) << 24) | \
-     (static_cast<uint64_t>(str[4]) << 32) | \
-     (static_cast<uint64_t>(str[5]) << 40) | \
-     (static_cast<uint64_t>(str[6]) << 48) | \
-     (static_cast<uint64_t>(str[7]) << 56))
+     (static_cast<unsigned long long>(str[0]) | \
+     (static_cast<unsigned long long>(str[1]) << 8) | \
+     (static_cast<unsigned long long>(str[2]) << 16) | \
+     (static_cast<unsigned long long>(str[3]) << 24) | \
+     (static_cast<unsigned long long>(str[4]) << 32) | \
+     (static_cast<unsigned long long>(str[5]) << 40) | \
+     (static_cast<unsigned long long>(str[6]) << 48) | \
+     (static_cast<unsigned long long>(str[7]) << 56))
 
 ulong gBoomyHashCodes[4] = {
 	0x0,

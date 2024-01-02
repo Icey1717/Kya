@@ -999,10 +999,10 @@ namespace PS2_Internal {
 
 PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
 	: image(createInfo.textureData.image)
-	, paletteImage(createInfo.textureData.palettes.at(createInfo.key.value.CBP))
+	, paletteImage(createInfo.textureData.palettes.at(createInfo.key.CBP))
 {
-	assert(createInfo.textureData.palettes.at(createInfo.key.value.CBP).canvasWidth);
-	assert(createInfo.textureData.palettes.at(createInfo.key.value.CBP).canvasHeight);
+	assert(createInfo.textureData.palettes.at(createInfo.key.CBP).canvasWidth);
+	assert(createInfo.textureData.palettes.at(createInfo.key.CBP).canvasHeight);
 
 	CreateResources();
 	UploadImage();
@@ -1134,7 +1134,8 @@ void PS2::GSTexValue::UploadImage()
 		}
 	}
 	else {
-		assert(false);
+		// Missing 32 bit texture support.
+		
 	}
 
 	for (int i = 0; i < debugData.paletteIndexes.size(); i++) {
@@ -1225,7 +1226,7 @@ void PS2::GSTexImage::Cleanup()
 	vkFreeMemory(GetDevice(), imageMemory, nullptr);
 }
 
-const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::Pipeline& pipeline)
+PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::Pipeline& pipeline)
 {
 	auto& descriptorSets = descriptorMap[&pipeline];
 
@@ -1239,6 +1240,8 @@ const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::P
 	allocInfo.descriptorPool = descriptorSets.descriptorPool;
 	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	allocInfo.pSetLayouts = layouts.data();
+
+	descriptorSets.layoutBindingMap = pipeline.descriptorSetLayoutBindings;
 
 	descriptorSets.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
 	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.descriptorSets.data()) != VK_SUCCESS) {
@@ -1258,9 +1261,9 @@ const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::P
 
 
 		Renderer::DescriptorWriteList writeList;
-		const VkDescriptorBufferInfo vertexDescBufferInfo = PS2::GetVertexUniformBuffer().GetDescBufferInfo(GetCurrentFrame());
+		const VkDescriptorBufferInfo vertexDescBufferInfo = descriptorSets.vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-		const VkDescriptorBufferInfo fragmentDescBufferInfo = PS2::GetPixelUniformBuffer().GetDescBufferInfo(GetCurrentFrame());
+		const VkDescriptorBufferInfo fragmentDescBufferInfo = descriptorSets.pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
@@ -1275,16 +1278,14 @@ const PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::P
 	return descriptorSets;
 }
 
-const PS2::GSTexDescriptor& PS2::GSTexImage::GetDescriptorSets(const Renderer::Pipeline& pipeline)
+PS2::GSTexDescriptor& PS2::GSTexImage::GetDescriptorSets(const Renderer::Pipeline& pipeline)
 {
 	auto& gsDescriptor = descriptorMap[&pipeline];
 
 	Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Looking for descriptor sets this: 0x{:x}, pipeline: 0x{:x}, Found: {}", (uintptr_t)this, (uintptr_t)&pipeline, gsDescriptor.descriptorPool != VK_NULL_HANDLE);
-	Log::GetInstance().ForceFlush();
 
 	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
 		Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
-		Log::GetInstance().ForceFlush();
 		return AddDescriptorSets(pipeline);
 	}
 
@@ -1359,28 +1360,59 @@ namespace PS2_Internal {
 	PS2::TextureCache gTextureCache;
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Create(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData)
+PS2::GSTexEntry& PS2::TextureCache::Create(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData, const uint32_t CBP)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, textureData.image.pImage, textureData.palettes[TEX.CBP].pImage);
+	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, CBP, textureData.image.pImage, textureData.palettes[CBP].pImage);
 	const GSTexValueCreateInfo createInfo = GSTexValueCreateInfo(key, textureData);
 	texcache.emplace_back(GSTexEntry(createInfo));
 	return texcache.back();
 }
 
-PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData)
+PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData, uint32_t CBP)
 {
-	const GSTexKey key = GSTexKey::CreateFromTEX(TEX, textureData.image.pImage, textureData.palettes[TEX.CBP].pImage);
+	if (textureData.palettes.find(CBP) != textureData.palettes.end()) {
+		const GSTexKey key = GSTexKey::CreateFromTEX(TEX, CBP, textureData.image.pImage, textureData.palettes[CBP].pImage);
 
-	for (auto& entry : texcache) {
-		if (entry == key) {
-			return entry;
+		for (auto& entry : texcache) {
+			if (entry == key) {
+				return entry;
+			}
 		}
 	}
+	else {
+		LOG_TEXCACHE("PS2::GSTexValue::GSTexValue MISSING PALETTE!!! CBP: {0} (0x{0:x})", CBP);
+		Log::GetInstance().ForceFlush();
+		assert(textureData.palettes.size() > 0);
+		CBP = textureData.palettes.begin()->first;
+	}
 
-	return Create(TEX, textureData);
+	return Create(TEX, textureData, CBP);
 }
 
 PS2::TextureCache& PS2::GetTextureCache()
 {
 	return gTextureCache;
+}
+
+PS2::GSTexDescriptor::GSTexDescriptor()
+{
+	descriptorPool = VK_NULL_HANDLE;
+	vertexConstBuffer.Init();
+	pixelConstBuffer.Init();
+}
+
+void PS2::GSTexDescriptor::UpdateSet(int index) const
+{
+	const VkDescriptorBufferInfo vertexDescBufferInfo = vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+	const VkDescriptorBufferInfo pixelDescBufferInfo = pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+
+	Renderer::DescriptorWriteList writeList;
+	writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+	writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &pixelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+
+	std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(GetSet(GetCurrentFrame()), layoutBindingMap);
+
+	if (descriptorWrites.size() > 0) {
+		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	}
 }
