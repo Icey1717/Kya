@@ -301,7 +301,7 @@ namespace DebugMenu_Internal {
 				ImGui::Checkbox("Custom Time Control", &bCutsceneStepEnabled);
 
 				if (bCutsceneStepEnabled) {
-					static float cutsceneStepTime = 7.84f;
+					static float cutsceneStepTime = 2.03536773f;
 					pCutscene->totalCutsceneDelta = cutsceneStepTime;
 
 					if (ImGui::Button("<<")) {
@@ -603,7 +603,7 @@ namespace DebugMenu_Internal {
 			if (pNewNode) {
 				DebugMeshViewer::ShowNodeMenu(pNewNode);
 			}
-			else {
+			else if (pSelectedMesh->CSTA) {
 				DebugMeshViewer::ShowClusterMenu(pSelectedMesh);
 			}
 		}

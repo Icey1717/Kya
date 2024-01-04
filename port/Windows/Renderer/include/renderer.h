@@ -348,6 +348,13 @@ namespace Renderer
 	void ResetRenderer();
 
 	namespace Debug {
+		template<typename... Args>
+		void BeginLabel(const char* format, Args... args) {
+			char buffer[512];
+			sprintf_s(buffer, 512, format, args...);
+			BeginLabel(buffer);
+		}
+
 		void BeginLabel(const VkCommandBuffer& cmdBuffer, const char* szLabel);
 		void EndLabel(const VkCommandBuffer& cmdBuffer);
 		void BeginLabel(const char* szLabel);

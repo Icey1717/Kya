@@ -1249,7 +1249,8 @@ namespace VU1Emu {
 			int vtxReg = vi15 + 1;
 
 			const edF32MATRIX4 objToScreen = VIF_LOAD_M(vi00, 16);
-			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog objToScreen matrix: \n{}", objToScreen.ToString());
+			//VU_VTX_TRACE_LOG("GouraudMapping_No_Fog objToScreen matrix: \n{}", objToScreen.ToString());
+			MY_LOG("GouraudMapping_No_Fog objToScreen matrix: \n{}", objToScreen.ToString());
 
 			for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
 				// Vtx data
@@ -2246,6 +2247,24 @@ namespace VU1Emu {
 	std::vector<UnpackOperation> gDelayedFlagWrites;
 }
 
+void VU1Emu::BeginFrame()
+{
+	// Toggle trace on.
+	if (bTraceVtx && !bTracingVtx) {
+		bTracingVtx = true;
+		VU_VTX_TRACE_LOG("Toggling vertex trace! - Using Interpreter: {}", bEnableInterpreter);
+	}
+}
+
+void VU1Emu::EndFrame()
+{
+	if (bTracingVtx) {
+		bTraceVtx = false;
+		bTracingVtx = false;
+		Log::GetInstance().ForceFlush();
+	}
+}
+
 void VU1Emu::SendVu1Code(unsigned char* pCode, size_t size)
 {
 	const edpkt_data* const pHeader = reinterpret_cast<edpkt_data*>(pCode);
@@ -2283,18 +2302,6 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 	char* pFakeMem = GetFakeMem();
 
 	VU_VTX_TRACE_LOG("ProcessVifList Begin");
-
-	// Toggle trace on.
-	if (bTraceVtx && !bTracingVtx) {
-		GetOnVideoFlip() += [](){
-			bTraceVtx = false;
-			bTracingVtx = false;
-			Log::GetInstance().ForceFlush();
-		};
-
-		bTracingVtx = true;
-		VU_VTX_TRACE_LOG("Toggling vertex trace! - Using Interpreter: {}", bEnableInterpreter);
-	}
 
 	for (auto& op : gDelayedFlagWrites) {
 		int addr = op.tag.addr;

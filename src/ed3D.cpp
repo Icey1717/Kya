@@ -49,7 +49,7 @@ char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 #define RENDER_LABEL_BEGIN(...)
 #define RENDER_LABEL_END(...)
 #else
-#define RENDER_LABEL_BEGIN(label) Renderer::Debug::BeginLabel(label)
+#define RENDER_LABEL_BEGIN(label, ...) Renderer::Debug::BeginLabel(label, ##__VA_ARGS__)
 #define RENDER_LABEL_END(label) Renderer::Debug::EndLabel()
 #endif
 
@@ -898,9 +898,9 @@ void ed3DDMAInit(uint countA, int countB)
 
 	gFANbuffers.asU32[0] = 0x22;
 	gFANbuffers.asU32[3] = 0xc000;
-	lVar3 = (ulong)ed3D_Allocator_00449248.end;
 	gFANbuffers.asU32[1] = 0x3e;
 	gFANbuffers.asU32[2] = 0x5a;
+	lVar3 = (ulong)ed3D_Allocator_00449248.end;
 	pcVar2 = ed3D_Allocator_00449248.end + countA * 0x10;
 	if (ed3D_Allocator_00449248.current < ed3D_Allocator_00449248.end + countA * 0x10) {
 		lVar3 = 0;
@@ -996,10 +996,6 @@ void ed3DFlushListInit(void)
 	ed3DPKTMatrixBufferFlip();
 	ed3D_SubAllocator_004491b8.current = ed3D_SubAllocator_004491b8.base;
 	g_pStartPktData = g_VifRefPktCur;
-
-#ifdef PLATFORM_WIN
-	g_pStartPortPktData = g_VifRefPktCur;
-#endif
 	return;
 }
 
@@ -1974,6 +1970,8 @@ edpkt_data* ed3DDMAGenerateGlobalPacket(edpkt_data* pPkt)
 	pPkt[4].asVector = gClipAddVector;
 	pPkt[5].asVector = gClipXY;
 	pPkt[6].asVector = gCamPos;
+
+	// Can be overwritten later.
 	pPkt[7].asVector = gCamNormal_X;
 	pPkt[8].asVector = gCamNormal_Y;
 	return pPkt + 9;
@@ -2478,6 +2476,8 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	Renderer::SetWorldViewProjScreen(pObjToWorld->raw, WorldToCamera_Matrix->raw, CameraToClipping_Matrix->raw, pObjToScreen->raw);
 #endif
 
+	ED3D_LOG(LogLevel::VeryVerbose, "ed3DPKTCopyMatrixPacket Obj To Screen: {}", pObjToScreen->ToString());
+
 	edF32Matrix4OrthonormalizeHard(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), pObjToWorld);
 	sceVu0InverseMatrix(SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(0x70000A00, edF32MATRIX4*));
 	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(0x70000920, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*),
@@ -2938,6 +2938,11 @@ void ed3DFlushStrip(edNODE* pNode)
 
 		pPktBufferA = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
+#ifdef PLATFORM_WIN
+		// Init stuff update.
+		VU1Emu::UpdateMemory(g_VifRefPktCur, pPktBufferA);
+#endif
+
 		if (SCRATCHPAD_ADDRESS(0x70003000) < pPktBufferA + (uint)(ushort)p3dStrip->meshCount * 2) {
 			uint pktLen = PKT_SIZE(pPktBufferA, gStartPKT_SPR);
 			edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
@@ -2945,11 +2950,6 @@ void ed3DFlushStrip(edNODE* pNode)
 			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
 			gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 		}
-
-#ifdef PLATFORM_WIN
-		// Init stuff update.
-		VU1Emu::UpdateMemory(g_VifRefPktCur, pPktBufferA);
-#endif
 
 		if ((p3dStrip->flags & 4) == 0) {
 			pPktBufferB = pPktBufferA;
@@ -3169,6 +3169,7 @@ void ed3DFlushStrip(edNODE* pNode)
 			gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
 			gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 		}
+
 		if ((p3dStrip->flags & 4) == 0) {
 			while (pRVar25 < meshSectionCount) {
 				bVar9 = pNextNode->header.byteFlags[0] & 3;
@@ -3227,6 +3228,7 @@ void ed3DFlushStrip(edNODE* pNode)
 						}
 						goto LAB_002a5dac;
 					}
+
 					if (SCRATCHPAD_ADDRESS(0x70003fff) < pPktBufferB + 0x80) {
 						uint pktLen = PKT_SIZE(pPktBufferB,gStartPKT_SPR);
 						edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
@@ -3861,6 +3863,8 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 						}
 					}
 				}
+
+				// If the size of our packet in scratch pad goes over 0x3000 bytes, copy it straight to gBackupPKT.
 				if (SCRATCHPAD_ADDRESS(0x70003000) < g_VifRefPktCur) {
 					uint pktLen = PKT_SIZE(g_VifRefPktCur, gStartPKT_SPR);
 					edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
@@ -3881,6 +3885,8 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 						IMPLEMENTATION_GUARD(ed3DFlushStripMultiTexture((int)pRVar5, (byte*)pMaterial));
 					}
 				}
+
+				// If the size of our packet in scratch pad goes over 0x3000 bytes, copy it straight to gBackupPKT.
 				if (SCRATCHPAD_ADDRESS(0x70003000) < g_VifRefPktCur) {
 					uint pktLen = PKT_SIZE(g_VifRefPktCur, gStartPKT_SPR);
 					edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
@@ -3890,8 +3896,11 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 				}
 			}
 		}
+
+		// Copy scratchpad data into g_VifRefPktCur.
 		uint pktLen = PKT_SIZE(g_VifRefPktCur, gStartPKT_SPR);
 		if (pktLen == 0) {
+			// No data, just restore the old ptr.
 			g_VifRefPktCur = gBackupPKT;
 		}
 		else {
@@ -4529,6 +4538,7 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size)
 			DoVif(opCodeL);
 			DoVif(opCodeH);
 
+			ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands Updating VIF Memory");
 			VU1Emu::UpdateMemory(&pkt, &pkt + 1);
 		}
 	}
@@ -4791,7 +4801,7 @@ void ed3DFlushList(void)
 
 		ED3D_LOG(LogLevel::Verbose, "\n-------------");
 		ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Processing: {}", gFushListCounter);
-		RENDER_LABEL_BEGIN("ed3DFlushList process list");
+		RENDER_LABEL_BEGIN("ed3DFlushList process list %d", gFushListCounter);
 
 		/* Get the camera type, and then add the flip index as there is two per type. */
 		pCurrentList = gPrim_List[gFushListCounter] + gCurRenderList;
@@ -4805,6 +4815,7 @@ void ed3DFlushList(void)
 				pvVar4 = (ed_dma_material*)(pPrevList)->pData;
 				pvVar4->flags = pvVar4->flags | 2;
 
+				// #Debug
 				materialCounter = 0;
 
 				while (peVar3 = pPrevList, peVar3 != pCurrentList) {
@@ -4826,7 +4837,14 @@ void ed3DFlushList(void)
 				}
 				pvVar3 = (ed_dma_material*)(pPrevList)->pData;
 				pvVar3->flags = pvVar3->flags | 2;
+
+				// #Debug
+				materialCounter = 0;
+
 				for (; pPrevList != pCurrentList; pPrevList = (edLIST*)(pPrevList)->pPrev) {
+					ED3D_LOG(LogLevel::Verbose, "");
+					ED3D_LOG(LogLevel::Verbose, "ed3DFlushList Material: {}/{}", gFushListCounter, materialCounter++);
+
 					ed3DFlushMaterial((ed_dma_material*)(pPrevList)->pData);
 					unaff_s1_lo = pPrevList;
 				}
@@ -5107,6 +5125,7 @@ void ed3DFlushShadowList(void)
 		g_VifRefPktCur->asU32[3] = SCE_VIF1_SET_FLUSHA(0);
 		g_VifRefPktCur = g_VifRefPktCur + 1;
 
+		IMPLEMENTATION_GUARD_LOG();
 		//g_VifRefPktCur = ed3DJitterShadow(g_VifRefPktCur);
 		g_VifRefPktCur = ed3DDMAGenerateGlobalPacket(g_VifRefPktCur);
 		g_VifRefPktCur = ed3DAddViewportContextPacket(gShadowRenderViewport, g_VifRefPktCur);
@@ -6574,7 +6593,7 @@ uint ed3DTestBoundingSphereObject(edF32VECTOR4* pSphere)
 	float fVar4;
 	float fVar5;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DTestBoundingSphereObject flags: 0x{:x} ", gRender_info_SPR->flags);
+	//ED3D_LOG(LogLevel::Verbose, "ed3DTestBoundingSphereObject flags: 0x{:x} ", gRender_info_SPR->flags);
 
 	uVar2 = 1;
 	fVar4 = pSphere->w * gRender_info_SPR->biggerScale;
@@ -7962,6 +7981,7 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 			}
 			ed3DInitVU1Globals();
 			g_VifRefPktCur = ed3DSceneAddContextPacket(pShadowScene, g_VifRefPktCur);
+
 			if (ged3DConfig.bEnableProfile != 0) {
 				IMPLEMENTATION_GUARD(
 					uVar5 = (uint)gIDProfileFlush >> 4;
@@ -8582,10 +8602,6 @@ void ed3DSceneRender(int, int, char*)
 		bcalcFrame = true;
 		g_VifRefPktCur = g_pStartPktData;
 		g_GifRefPktCur = g_pGifStart;
-
-#ifdef PLATFORM_WIN
-		g_pStartPortPktData = g_pStartPktData;
-#endif
 	}
 	else {
 		gCurViewportUsed = (ed_viewport*)0x0;
@@ -8643,11 +8659,17 @@ void ed3DSceneRender(int, int, char*)
 
 		// Up to scene.
 #ifdef PLATFORM_WIN
-		VU1Emu::UpdateMemory(g_pStartPktData, g_VifRefPktCur);
+		//VU1Emu::UpdateMemory(g_pStartPktData, g_VifRefPktCur);
 #endif
 
 		for (staticMeshMasterIndex = 0; staticMeshMasterIndex < (uint)ged3DConfig.sceneCount;
 			staticMeshMasterIndex = staticMeshMasterIndex + 1) {
+
+#ifdef PLATFORM_WIN
+			// Starting for each scene.
+			g_pStartPortPktData = g_VifRefPktCur;
+#endif
+
 			staticMeshMasterFlags = gScene3D[staticMeshMasterIndex].flags;
 			if ((((staticMeshMasterFlags & 1) != 0) && ((staticMeshMasterFlags & 4) == 0)) &&
 				(gScene3D[staticMeshMasterIndex].bShadowScene == 0)) {

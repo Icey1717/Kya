@@ -23,7 +23,7 @@ typedef unsigned long long    ulong;
 #ifdef PLATFORM_PS2
 typedef unsigned uint128 __attribute__((mode(TI)));
 #else
-typedef unsigned uint128;
+typedef unsigned uint128 __attribute__((mode(TI)));
 #endif
 typedef unsigned char    undefined1;
 typedef unsigned short    undefined2;
@@ -466,7 +466,7 @@ union alignas(16)
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
 		std::stringstream ss;
-		ss << rowX.ToString() << "\n" << rowY.ToString() << "\n" << rowZ.ToString() << "\n" << rowT.ToString();
+		ss << "\n" << rowX.ToString() << "\n" << rowY.ToString() << "\n" << rowZ.ToString() << "\n" << rowT.ToString();
 		return ss.str();
 	}
 #endif
