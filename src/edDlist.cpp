@@ -1318,7 +1318,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 		gCurDListBuf->materialIndex = (short)gCurMaterial->index;
 	}
 	gCurDListBuf->field_0x6 = -1;
-	gCurDListBuf->cameraPanIndex = 0;
+	gCurDListBuf->primListIndex = 0;
 	uVar8 = 0;
 	do {
 		uVar7 = uVar8;

@@ -181,6 +181,73 @@ struct SceneConfig {
 	undefined field_0x14f;
 };
 
+struct ed_3d_octree {
+	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 field_0x10;
+	ed_Chunck* pCDQU;
+	char* pCDQU_End;
+	ushort boundingSphereTestResult;
+	undefined field_0x2a;
+	undefined field_0x2b;
+	float field_0x2c;
+	float field_0x30;
+};
+
+PACK(
+	struct ClusterDetails {
+	int field_0x20; // int*
+	int field_0x24; // int*
+	ushort count_0x28; // int*
+	ushort clusterHierCount;
+	undefined field_0x2c;
+	undefined field_0x2d;
+	ushort spriteCount;
+	int field_0x30; // int*
+});
+
+PACK(
+	struct MeshData_CDQU {
+	ed_Chunck header;
+	ushort aClusterStripCounts[5];
+	ushort field_0x1a;
+	ushort field_0x1c;
+	undefined2 field_0x1e;
+	ClusterDetails clusterDetails;
+	int field_0x34; // int*
+	int field_0x38; // uint*
+	int field_0x3c; // uint*
+	int pMBNK; // char*
+	undefined field_0x44;
+	undefined field_0x45;
+	undefined field_0x46;
+	undefined field_0x47;
+	int p3DStrip; // ed_3d_strip*
+	int p3DSprite; // ed_3d_sprite*
+});
+
+PACK(struct MeshData_CSTA {
+	char CSTA_Header[4];
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	ed_Chunck chunk;
+	edF32VECTOR3 field_0x20;
+	undefined field_0x2c;
+	undefined field_0x2d;
+	undefined field_0x2e;
+	undefined field_0x2f;
+	edF32VECTOR4 field_0x30;
+};)
+
 struct ed_3D_Scene {
 	void RemoveFlag_002a53e0(uint flag);
 	void ed3DSceneSetFlag(uint flag);
@@ -191,8 +258,8 @@ struct ed_3D_Scene {
 	uint flags;
 	struct edFCamera* pCamera;
 	struct ed_viewport* pViewport;
-	edLIST headerA;
-	edLIST headerB;
+	edLIST meshClusterShadowList;
+	edLIST meshClusterList;
 	SceneConfig sceneConfig;
 	undefined field_0x18c;
 	undefined field_0x18d;
@@ -630,7 +697,7 @@ PACK(
 	short shadowReceiveFlags;
 	DMA_Matrix pDMA_Matrix; // ed_dma_matrix*
 	byte field_0x38;
-	byte cameraPanIndex;
+	byte primListIndex;
 	short meshCount;
 	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
 });
@@ -725,6 +792,8 @@ void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort f
 uint ed3DTestBoundingSphereObjectNoZFar(edF32VECTOR4* pSphere);
 
 ed3DLod* ed3DHierarcGetLOD(ed_g3d_hierarchy* pHier, uint index);
+
+ed_Chunck* edChunckGetFirst(char* pBuffStart, char* pBuffEnd);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

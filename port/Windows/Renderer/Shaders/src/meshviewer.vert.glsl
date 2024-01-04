@@ -30,16 +30,24 @@ void main() {
     uint anim = baseFlags & 0x7ff;
     uint flags = baseFlags & 0xc000;
 
-	uint animIndex = anim - 0x3dc;
-    animIndex = animIndex / 4;
+	if (anim > 0) {
+		uint animIndex = anim - 0x3dc;
+		animIndex = animIndex / 4;
 
-	uint intoAnimMatrices = ubo.animStripToIndex[stripIndex][animIndex];
+		uint intoAnimMatrices = ubo.animStripToIndex[stripIndex][animIndex];
 
-	mat4 animMatrix = ubo.animMatrices[intoAnimMatrices];
+		mat4 animMatrix = ubo.animMatrices[intoAnimMatrices];
 
-	vec4 fixedPos = vec4(inPosition, 1.0);
-    vec4 pos = ubo.proj * ubo.view * ubo.model * animMatrix * fixedPos;
-    gl_Position = pos;
+		vec4 fixedPos = vec4(inPosition, 1.0);
+		vec4 pos = ubo.proj * ubo.view * ubo.model * animMatrix * fixedPos;
+		gl_Position = pos;
+	}
+	else {
+		vec4 fixedPos = vec4(inPosition, 1.0);
+		vec4 pos = ubo.proj * ubo.view * ubo.model * fixedPos;
+		gl_Position = pos;
+	}
+
     fragColor.x = inColor.x / 255.0;
     fragColor.y = inColor.y / 255.0;
     fragColor.z = inColor.z / 255.0;

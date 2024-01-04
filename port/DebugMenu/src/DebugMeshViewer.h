@@ -6,6 +6,7 @@
 struct ed_3D_Scene;
 struct edNODE;
 struct ed_3d_hierarchy;
+struct ed_g3d_manager;
 
 namespace PS2 { struct GSTexEntry; }
 
@@ -38,9 +39,8 @@ namespace DebugMeshViewer {
 
 	PS2::GSTexEntry& GetTextureEntry();
 
-	void ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy);
-	void ShowPreviewer(ed_3d_hierarchy* pHierarchy);
 	void ShowNodeMenu(edNODE* pNode);
+	void ShowClusterMenu(ed_g3d_manager* pManager);
 
 	void OnFrameBufferCreated(const ImTextureID& image);
 }

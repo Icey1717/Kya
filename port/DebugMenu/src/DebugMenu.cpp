@@ -25,6 +25,7 @@
 #include "port/vu1_emu.h"
 #include "DebugMeshViewer.h"
 #include "TimeController.h"
+#include "FileManager3D.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -575,6 +576,7 @@ namespace DebugMenu_Internal {
 	}
 
 	edNODE* pNewNode = nullptr;
+	ed_g3d_manager* pSelectedMesh = nullptr;
 
 	void ShowMeshList(bool* bOpen) {
 		ImGui::Begin("Mesh List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
@@ -586,14 +588,24 @@ namespace DebugMenu_Internal {
 			std::sprintf(buttonText, "Mesh %s", meshList[i].name.c_str());
 
 			if (ImGui::Selectable(buttonText)) {
-				pNewNode = ed3DHierarchyAddToList(pList, gHierarchyManagerBuffer, gHierarchyManagerFirstFreeNode, meshList[i].pMesh, NULL);
+				pNewNode = nullptr;
+				pSelectedMesh = meshList[i].pMesh;
+
+				if (!pSelectedMesh->CSTA) {
+					pNewNode = ed3DHierarchyAddToList(pList, gHierarchyManagerBuffer, gHierarchyManagerFirstFreeNode, meshList[i].pMesh, NULL);
+				}
 			}
 		}
 
 		ImGui::End();
 
-		if (pNewNode) {
-			DebugMeshViewer::ShowNodeMenu(pNewNode);
+		if (pSelectedMesh) {
+			if (pNewNode) {
+				DebugMeshViewer::ShowNodeMenu(pNewNode);
+			}
+			else {
+				DebugMeshViewer::ShowClusterMenu(pSelectedMesh);
+			}
 		}
 	}
 
