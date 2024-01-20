@@ -156,11 +156,13 @@ struct edSceneSceneryTag {
 	char name[32];
 	int meshOffset;
 	int textureOffset;
+	int pInterface; // edCinSceneryInterface*
 });
 
 struct edSceneScenery {
 	edSceneSceneryTag* pTag;
 	void Create(edCinGameInterface& loadObj, edResCollection& resStartBuffer);
+	bool Destroy(edCinGameInterface& pInterface);
 };
 
 PACK(
@@ -273,6 +275,8 @@ struct edScene {
 	edSCENEtag* Create(void* inFileBuffer, uint fileLength, edCinGameInterface& loadObj);
 	bool Initialize();
 	bool Timeslice(float currentPlayTime, uint param_3);
+	bool Shutdown();
+	bool Destroy(edCinGameInterface& pInterface);
 };
 
 

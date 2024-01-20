@@ -14,12 +14,21 @@
 #define CUTSCENE_LOG_WIN(...)
 #endif
 
+PACK(
+	struct edSceneItemHeader {
+	int offset;
+	undefined4 field_0x4;
+	int type;
+});
+
 struct edSceneCamera
 {
 	CameraInfo* pInternal;
 	void Create(edCinGameInterface& pCinematic);
 	void Initialize();
 	bool Timeslice(float currentPlayTime);
+	void Shutdown();
+	bool Destroy(edCinGameInterface& pInterface);
 };
 
 void edSceneCamera::Create(edCinGameInterface& pCinematic)
@@ -52,6 +61,7 @@ void edSceneCamera::Create(edCinGameInterface& pCinematic)
 	CUTSCENE_LOG(LogLevel::Info, "edSceneCamera::Create {}", cameraName);
 
 	edCinCamInterface* cinCam;
+
 	pCinematic.GetCamera(&cinCam, &tag);
 	cameraInfoPtr->cinCam = STORE_SECTION(cinCam);
 	return;
@@ -60,6 +70,18 @@ void edSceneCamera::Create(edCinGameInterface& pCinematic)
 void edSceneCamera::Initialize()
 {
 	((edCinCamInterface*)LOAD_SECTION(pInternal->cinCam))->Activate();
+}
+
+void edSceneCamera::Shutdown()
+{
+	((edCinCamInterface*)LOAD_SECTION(pInternal->cinCam))->Shutdown();
+}
+
+bool edSceneCamera::Destroy(edCinGameInterface& pInterface)
+{
+	const bool bSuccess = pInterface.ReleaseCamera((edCinCamInterface*)LOAD_SECTION(this->pInternal->cinCam));
+	this->pInternal->cinCam = 0x0;
+	return bSuccess;
 }
 
 float* edAnmSubControler::GetClosestKeyIndex(float time, int* outIndex)
@@ -611,8 +633,11 @@ struct edSceneActor {
 	CineCreatureObject* pObj;
 
 	void Initialize();
-	virtual bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection) { return true; }
-	virtual bool Timeslice(float currentPlayTime, edResCollection& resCollection);
+	bool Timeslice(float currentPlayTime, edResCollection& resCollection);
+	void Shutdown();
+
+	virtual bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection) = 0;
+	virtual bool Destroy(edCinGameInterface& cinGameInterface) = 0;
 };
 
 void edSceneActor::Initialize()
@@ -621,9 +646,16 @@ void edSceneActor::Initialize()
 	pCinActor->Initialize();
 }
 
+void edSceneActor::Shutdown()
+{
+	edCinActorInterface* pCinActor = (edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface);
+	pCinActor->Shutdown();
+}
+
 struct edSceneActorVirtual : public edSceneActor {
 	edSceneActorVirtual(CineCreatureObject* pInObj) : edSceneActor(pInObj) {}
 	virtual bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection);
+	virtual bool Destroy(edCinGameInterface& cinGameInterface);
 };
 
 bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection)
@@ -674,14 +706,23 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 		creationTag.bHasMesh = (resCollection.pData->aTags[cineCreatureObject->meshID].flags & 0x80000000U) != 0;
 	}
+
 	creationTag.field_0x30 = (cineCreatureObject->boundingSphere).w;
 	bVar1 = cinGameInterface.CreateActor((edCinActorInterface**)&this->pObj->pCinActorInterface, &creationTag);
 	return bVar1 != false;
 }
 
+bool edSceneActorVirtual::Destroy(edCinGameInterface& cinGameInterface)
+{
+	const bool bSuccess = cinGameInterface.ReleaseActor((edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface));
+	this->pObj->pCinActorInterface = 0x0;
+	return bSuccess;
+}
+
 struct edSceneActorBehavior : public edSceneActor {
 	edSceneActorBehavior(CineCreatureObject* pInObj) : edSceneActor(pInObj) {}
 	virtual bool Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection);
+	virtual bool Destroy(edCinGameInterface& cinGameInterface);
 };
 
 bool edSceneActorBehavior::Create(edCinGameInterface& cinGameInterface, edResCollection& resCollection)
@@ -734,9 +775,17 @@ bool edSceneActorBehavior::Create(edCinGameInterface& cinGameInterface, edResCol
 		creationTag.bHasMesh = (resCollection.pData->aTags[cineCreatureObject->meshID].flags & 0x80000000) != 0;
 	}
 	creationTag.field_0x30 = (cineCreatureObject->boundingSphere).w;
+
 	strcpy(creationTag.name, cineCreatureObject->name);
 	lVar2 = cinGameInterface.GetActor((edCinActorInterface**)&this->pObj->pCinActorInterface, this->pObj->actorHashCode, &creationTag);
 	return lVar2 != 0;
+}
+
+bool edSceneActorBehavior::Destroy(edCinGameInterface& cinGameInterface)
+{
+	const bool bSuccess = cinGameInterface.ReleaseActor((edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface));
+	this->pObj->pCinActorInterface = 0x0;
+	return bSuccess;
 }
 
 bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollection)
@@ -1085,7 +1134,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 	uint uVar2;
 	char* internalSeekPos;
 	int seekCounter;
-	char* pCVar3;
+	edSceneItemHeader* pItemStream;
 	char* filePath;
 	int seekIncrement;
 	CameraInfo* local_30;
@@ -1170,10 +1219,10 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 			/* Load the rest of the cutscene assets */
 			seekIncrement = 0;
 			seekCounter = this->pTag->size;
-			pCVar3 = (char*)(this->pTag + 1);
+			pItemStream = (edSceneItemHeader*)(this->pTag + 1);
 			if (0 < seekCounter) {
 				do {
-					iVar1 = *(int*)(pCVar3 + 8);
+					iVar1 = pItemStream->type;
 					if (iVar1 == -0x2725f4b1) {
 						CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
 						//local_2c = &edSceneLight_VTable_00441cc0;
@@ -1189,7 +1238,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 						}
 						else {
 							if (iVar1 == 0x551369d) {
-								edSceneScenery scenery = { (edSceneSceneryTag*)pCVar3 };
+								edSceneScenery scenery = { (edSceneSceneryTag*)pItemStream };
 								edResCollection resCol = { resPtr };
 								scenery.Create(loadObj, resCol);
 							}
@@ -1197,19 +1246,19 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 								/* Sets up cutscene named elements
 								   Example: SC_SOUND_EMITTER or A983538304 or ARAIGNOSBLACK_TOONPLAYER_L0 */
 								if (iVar1 == 0x395f05b1) {
-									edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pCVar3);
+									edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pItemStream);
 									edResCollection resCol = { resPtr };
 									virtualActor.Create(loadObj, resCol);
 								}
 								else {
 									if (iVar1 == 0x3d4c64aa) {
-										edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pCVar3);
+										edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pItemStream);
 										edResCollection resCol = { resPtr };
 										behaviorActor.Create(loadObj, resCol);
 									}
 									else {
 										if (iVar1 == 0x2a043536) {
-											edSceneCamera pCamTest = { (CameraInfo*)pCVar3 };
+											edSceneCamera pCamTest = { (CameraInfo*)pItemStream };
 											pCamTest.Create(loadObj);
 										}
 									}
@@ -1218,8 +1267,7 @@ edSCENEtag* edScene::Create(void* inFileBuffer, uint fileLength, edCinGameInterf
 						}
 					}
 					seekIncrement = seekIncrement + 1;
-					int offset = *(int*)pCVar3;
-					pCVar3 = pCVar3 + offset;
+					pItemStream = (edSceneItemHeader*)((char*)pItemStream + pItemStream->offset);
 				} while (seekIncrement < seekCounter);
 			}
 			dataPtr = this->pTag;
@@ -1233,7 +1281,7 @@ bool edScene::Initialize()
 	int iVar1;
 	int iVar2;
 	int iVar3;
-	char* pBuffer;
+	edSceneItemHeader* pItemStream;
 	edSceneCamera local_28;
 	//edSceneLight_VTable* local_24;
 	edSceneCamera local_20;
@@ -1246,10 +1294,10 @@ bool edScene::Initialize()
 
 	iVar3 = 0;
 	iVar1 = this->pTag->size;
-	pBuffer = (char*)(this->pTag + 1);
+	pItemStream = (edSceneItemHeader*)(this->pTag + 1);
 	if (0 < iVar1) {
 		do {
-			iVar2 = *(int*)((ulong)pBuffer + 8);
+			iVar2 = pItemStream->type;
 			if (iVar2 == -0x2725f4b1) {
 				CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
 				//local_24 = &edSceneLight_VTable_00441cc0;
@@ -1265,17 +1313,17 @@ bool edScene::Initialize()
 				}
 				else {
 					if (iVar2 == 0x395f05b1) {
-						edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pBuffer);
+						edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pItemStream);
 						virtualActor.Initialize();
 					}
 					else {
 						if (iVar2 == 0x3d4c64aa) {
-							edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pBuffer);
+							edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pItemStream);
 							behaviorActor.Initialize();
 						}
 						else {
 							if (iVar2 == 0x2a043536) {
-								edSceneCamera sceneCamera = { (CameraInfo*)pBuffer };
+								edSceneCamera sceneCamera = { (CameraInfo*)pItemStream };
 								sceneCamera.Initialize();
 							}
 						}
@@ -1283,7 +1331,7 @@ bool edScene::Initialize()
 				}
 			}
 			iVar3 = iVar3 + 1;
-			pBuffer = (char*)((ulong)pBuffer + *(int*)pBuffer);
+			pItemStream = (edSceneItemHeader*)((char*)pItemStream + pItemStream->offset);
 		} while (iVar3 < iVar1);
 	}
 	return true;
@@ -1293,7 +1341,7 @@ bool edScene::Initialize()
 bool edScene::Timeslice(float currentPlayTime, uint param_3)
 {
 	int iVar1;
-	char* sceSeek;
+	edSceneItemHeader* pItemStream;
 	//edSceneLight local_28;
 	//edSceneLight_VTable* local_24;
 	//edSceneLight local_20;
@@ -1307,10 +1355,10 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 	iVar1 = 0;
 	numElements = this->pTag->size;
 	edResCollection local_4 = { (edResCollectionHeader*)LOAD_SECTION(this->pTag->pCollection) };
-	sceSeek = (char*)(this->pTag + 1);
+	pItemStream = (edSceneItemHeader*)(this->pTag + 1);
 	if (0 < numElements) {
 		do {
-			elementType = *(int*)(sceSeek + 8);
+			elementType = pItemStream->type;
 			if (elementType == -0x2725f4b1) {
 				//local_24 = &edSceneLight_VTable_00441cc0;
 				//local_28 = (int)sceSeek;
@@ -1324,16 +1372,16 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 				}
 				else {
 					if (elementType == 0x395f05b1) {
-						edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)sceSeek);
+						edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pItemStream);
 						virtualActor.Timeslice(currentPlayTime, local_4);
 					}
 					else {
 						if (elementType == 0x3d4c64aa) {
-							edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)sceSeek);
+							edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pItemStream);
 							behaviorActor.Timeslice(currentPlayTime, local_4);
 						}
 						else {
-							CameraInfo* camInfo = (CameraInfo*)sceSeek;
+							CameraInfo* camInfo = (CameraInfo*)pItemStream;
 							edSceneCamera cam = { camInfo };
 							if ((elementType == 0x2a043536) &&
 								(param_3 == camInfo->field_0xc)) {
@@ -1344,9 +1392,123 @@ bool edScene::Timeslice(float currentPlayTime, uint param_3)
 				}
 			}
 			iVar1 = iVar1 + 1;
-			sceSeek = sceSeek + *(int*)sceSeek;
+			pItemStream = (edSceneItemHeader*)((char*)pItemStream + pItemStream->offset);
 		} while (iVar1 < numElements);
 	}
+	return true;
+}
+
+bool edScene::Shutdown()
+{
+	int tagSize;
+	int itemType;
+	int iVar3;
+	edSceneItemHeader* pItemStream;
+
+	iVar3 = 0;
+	tagSize = this->pTag->size;
+	pItemStream = (edSceneItemHeader*)(this->pTag + 1);
+	if (0 < tagSize) {
+		do {
+			itemType = pItemStream->type;
+			if (itemType == -0x2725f4b1) {
+				CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
+				//local_24 = &edSceneLight_VTable_00441cc0;
+				//local_28 = peVar4;
+				//edSceneLight::Shutdown((int*)&local_28);
+			}
+			else {
+				if (itemType == -0x596394d9) {
+					CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
+					//local_1c = &edSceneLight_VTable_00441cd0;
+					//local_20 = peVar4;
+					//edSceneLight::Shutdown((int*)&local_20);
+				}
+				else {
+					if (itemType == 0x395f05b1) {
+						edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pItemStream);
+						virtualActor.Shutdown();
+					}
+					else {
+						if (itemType == 0x3d4c64aa) {
+							edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pItemStream);
+							behaviorActor.Shutdown();
+						}
+						else {
+							if (itemType == 0x2a043536) {
+								edSceneCamera sceneCamera = { (CameraInfo*)pItemStream };
+								sceneCamera.Shutdown();
+							}
+						}
+					}
+				}
+			}
+			iVar3 = iVar3 + 1;
+			pItemStream = (edSceneItemHeader*)((char*)pItemStream + pItemStream->offset);
+		} while (iVar3 < tagSize);
+	}
+	return true;
+}
+
+bool edScene::Destroy(edCinGameInterface& pInterface)
+{
+	int tagSize;
+	int itemType;
+	int iVar3;
+	edSceneItemHeader* pItemStream;
+	edResCollection local_4;
+
+	iVar3 = 0;
+	tagSize = this->pTag->size;
+	pItemStream = (edSceneItemHeader*)(this->pTag + 1);
+	if (0 < tagSize) {
+		do {
+			itemType = pItemStream->type;
+			if (itemType == -0x2725f4b1) {
+				CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
+				//local_2c = &edSceneLight_VTable_00441cc0;
+				//local_30 = pItemStream;
+				//(*(code*)edSceneLight_VTable_00441cc0.Destroy)(&local_30, pInterface);
+			}
+			else {
+				if (itemType == -0x596394d9) {
+					CUTSCENE_LOG(LogLevel::Warning, "Skipping Light\n");
+					//local_24 = &edSceneLight_VTable_00441cd0;
+					//local_28 = pItemStream;
+					//(*(code*)edSceneLight_VTable_00441cd0.Destroy)(&local_28, pInterface);
+				}
+				else {
+					if (itemType == 0x551369d) {
+						edSceneScenery scenery = { (edSceneSceneryTag*)pItemStream };
+						scenery.Destroy(pInterface);
+					}
+					else {
+						if (itemType == 0x395f05b1) {
+							edSceneActorVirtual virtualActor = edSceneActorVirtual((CineCreatureObject*)pItemStream);
+							virtualActor.Destroy(pInterface);
+						}
+						else {
+							if (itemType == 0x3d4c64aa) {
+								edSceneActorBehavior behaviorActor = edSceneActorBehavior((CineCreatureObject*)pItemStream);
+								behaviorActor.Destroy(pInterface);
+							}
+							else {
+								if (itemType == 0x2a043536) {
+									edSceneCamera sceneCamera = { (CameraInfo*)pItemStream };
+									sceneCamera.Destroy(pInterface);
+								}
+							}
+						}
+					}
+				}
+			}
+			iVar3 = iVar3 + 1;
+			pItemStream = (edSceneItemHeader*)((char*)pItemStream + pItemStream->offset);
+		} while (iVar3 < tagSize);
+	}
+
+	local_4 = { (edResCollectionHeader*)LOAD_SECTION(this->pTag->pCollection) };
+	local_4.FlushAllResources(pInterface);
 	return true;
 }
 
@@ -1376,6 +1538,13 @@ void edSceneScenery::Create(edCinGameInterface& loadObj, edResCollection& collec
 		creationTag.szMeshPath = collection.GetResFilename(pSceneryTag->meshOffset);
 		creationTag.meshType = (collection.pData->aTags[pSceneryTag->meshOffset].flags & 0x80000000U) != 0;
 	}
-	loadObj.CreateScenery((edCinSceneryInterface**)(this->pTag + 1), &creationTag);
+	loadObj.CreateScenery((edCinSceneryInterface**)&pSceneryTag->pInterface, &creationTag);
 	return;
+}
+
+bool edSceneScenery::Destroy(edCinGameInterface& pInterface)
+{
+	const bool bSuccess = pInterface.ReleaseScenery((edCinSceneryInterface*)LOAD_SECTION(this->pTag->pInterface));
+	this->pTag->pInterface = 0x0;
+	return bSuccess;
 }

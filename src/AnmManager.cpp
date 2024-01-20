@@ -401,23 +401,22 @@ void edAnmMacroAnimator::Animate()
 				}
 				else {
 					if (iVar5 == 0) {
-						IMPLEMENTATION_GUARD(
 						if ((uVar1 & 1) == 0) {
-							edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[peVar2->keyIndex_0x8]);
+							TheAnimStage.SetAnim(this->pKeyDataArray[peVar2->keyIndex_0x8.asKey]);
 						}
 						else {
-							edAnmStage::SetAnimLoop(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[peVar2->keyIndex_0x8]);
+							TheAnimStage.SetAnimLoop(this->pKeyDataArray[peVar2->keyIndex_0x8.asKey]);
 						}
-						edAnmStage::SetTime(this->time_0x10, &TheAnimStage);
-						edAnmStage::AnimToWRTS(&TheAnimStage);
-						this->time_0x10 = TheAnimStage._60_4_;
-						this->time_0xc = TheAnimStage._64_4_;
+						TheAnimStage.SetTime(this->time_0x10);
+						TheAnimStage.AnimToWRTS();
+						this->time_0x10 = TheAnimStage.field_0x3c;
+						this->time_0xc = TheAnimStage.field_0x40;
 						if (TheAnimStage.field_0x4c != false) {
 							this->flags = this->flags | 0x80000000;
 						}
 						if (TheAnimStage.field_0x4d != false) {
 							this->flags = this->flags | 0x40000000;
-						})
+						}
 					}
 				}
 			}

@@ -8,19 +8,25 @@
 #endif
 
 #include "edList.h"
+#include "LightManager.h"
 
-#define MATRIX_PACKET_START_SPR		0x70000800
-#define CAM_NORMAL_X_SPR			0x70000800
-#define CAM_NORMAL_Y_SPR			0x70000810
-#define OBJ_TO_CULLING_MATRIX		0x70000820
-#define OBJ_TO_CLIPPING_MATRIX		0x70000860
-#define OBJ_TO_SCREEN_MATRIX		0x700008A0
+#define MATRIX_PACKET_START_SPR				0x70000800 // 0x06
+#define CAM_NORMAL_X_SPR					0x70000800 // 0x06
+#define CAM_NORMAL_Y_SPR					0x70000810 // 0x07
+#define OBJ_TO_CULLING_MATRIX				0x70000820 // 0x08
+#define OBJ_TO_CLIPPING_MATRIX				0x70000860 // 0x0c
+#define OBJ_TO_SCREEN_MATRIX				0x700008A0 // 0x10
+#define OBJECT_TO_CAMERA_MATRIX_SPR			0x700008E0 // 0x14
 
-#define LIGHT_DIRECTIONS_MATRIX_SPR 0x70000a40
-#define LIGHT_COLOR_MATRIX_SPR		0x70000a50
-#define LIGHT_AMBIENT_MATRIX_SPR	0x70000a60
+#define OBJ_LIGHT_DIRECTIONS_MATRIX_SPR		0x70000920 // 0x18
+#define LIGHT_COLOR_MATRIX_SPR				0x70000950 // 0x1b
+#define ADJUSTED_LIGHT_AMBIENT_MATRIX_SPR	0x700009A0 // 0x20
+#define ANIM_ST_NORMAL_EXTRUDER_SPR			0x700009B0 // 0x21
+#define OBJ_TO_WORLD_INVERSE_NORMAL_SPR		0x70000A00 // 0x26
 
-#define OBJECT_TO_CAMERA_MATRIX_SPR	0x70000a60
+#define LIGHT_DIRECTIONS_MATRIX_PTR_SPR		0x70000a40 // 0x2a
+#define LIGHT_COLOR_MATRIX_PTR_SPR			0x70000a50 // 0x2b
+#define LIGHT_AMBIENT_MATRIX_PTR_SPR		0x70000a60 // 0x2c
 
 #ifdef PLATFORM_PS2
 #define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)addr
@@ -42,7 +48,7 @@
 
 union AnimScratchpad {
 	struct {
-		int field_0x0;
+		int vuFlags;
 		uint flags;
 		undefined4 field_0x8;
 		undefined4 field_0xc;
@@ -100,12 +106,6 @@ struct FrustumData {
 	edF32MATRIX4 frustumMatrix;
 	edF32VECTOR4 field_0x40;
 	edF32VECTOR4 field_0x50;
-};
-
-struct ed_3D_Light_Config {
-	edF32VECTOR4* pLightAmbient;
-	edF32MATRIX4* pLightDirections;
-	edF32MATRIX4* pLightColorMatrix;
 };
 
 struct ed_3D_Shadow_Config {
@@ -300,17 +300,10 @@ struct ed_3D_Scene {
 	undefined field_0x1bf;
 };
 
-
-struct LightingMatrixSubSubObj {
-	union edF32VECTOR4* pLightAmbient;
-	union edF32MATRIX4* pLightDirections;
-	union edF32MATRIX4* pLightColor;
-};
-
 struct ed_3d_hierarchy_setup {
 	char* clipping_0x0;
 	union edF32VECTOR4* pBoundingSphere;
-	struct LightingMatrixSubSubObj* pLightData;
+	struct ed_3D_Light_Config* pLightData;
 	ed_3d_hierarchy_setup* pNext;
 	float* field_0x10;
 };
@@ -791,9 +784,16 @@ void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort f
 
 uint ed3DTestBoundingSphereObjectNoZFar(edF32VECTOR4* pSphere);
 
+ed3DLod* ed3DHierarcGetLOD(ed_3d_hierarchy* pHier, uint index);
 ed3DLod* ed3DHierarcGetLOD(ed_g3d_hierarchy* pHier, uint index);
 
 ed_Chunck* edChunckGetFirst(char* pBuffStart, char* pBuffEnd);
+
+void ed3DHierarchyRemoveFromScene(ed_3D_Scene* pScene, edNODE* pNode);
+void ed3DScenePopCluster(ed_3D_Scene* pScene, ed_g3d_manager* pMeshInfo);
+
+void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo);
+void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

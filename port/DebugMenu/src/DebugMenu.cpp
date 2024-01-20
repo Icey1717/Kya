@@ -257,7 +257,7 @@ namespace DebugMenu_Internal {
 
 			auto* pCutscene = pCinematicManager->ppCinematicObjB_B[selectedCutsceneId];
 
-			if (pCutscene->cineBankLoadStage_0x2b4 == 4) {
+			if (pCutscene->cineBankLoadStage_0x2b4 == 4 && pCutscene->cinFileData.pCinTag) {
 				// Play/Pause button
 				if (pCutscene->state != CS_Stopped)
 				{

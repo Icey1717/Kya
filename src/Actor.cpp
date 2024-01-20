@@ -13,6 +13,7 @@
 #include "MemoryStream.h"
 #include "PoolAllocators.h"
 #include "Actor_Cinematic.h"
+#include "LightManager.h"
 
 CActor::CActor()
 	: CObject()
@@ -64,9 +65,9 @@ CActor::CActor()
 	this->pClusterNode = (CClusterNode*)0x0;
 	this->adjustedMagnitude = 0.0;
 	this->pAnimationController = (CAnimation*)0x0;
-	this->pCollisionData = (CollisionData*)0x0;
+	this->pCollisionData = (CCollision*)0x0;
 	this->pShadow = (CShadow*)0x0;
-	//this->actorFieldG = (Actor*)0x0;
+	this->actorFieldG = (CActor*)0x0;
 	this->aComponents = (int*)0x0;
 	this->curBehaviourId = -1;
 	this->prevBehaviourId = -1;
@@ -77,8 +78,8 @@ CActor::CActor()
 	this->field_0x110 = (undefined*)0x0;
 	this->currentAnimType = -1;
 	this->prevAnimType = -1;
-	//this->field_0xdc = 0;
-	//this->field_0xe0 = 1.0;
+	this->lightingFlags = 0;
+	this->lightingFloat_0xe0 = 1.0f;
 	this->field_0xd = 0;
 	//this->field_0xc = '\0';
 	this->distanceToGround = -1.0f;
@@ -112,7 +113,7 @@ void CActor::PreInit()
 	CBehaviour* pComponent;
 	CShadow* pGVar1;
 	
-	if (this->pCollisionData != (CollisionData*)0x0) {
+	if (this->pCollisionData != (CCollision*)0x0) {
 		IMPLEMENTATION_GUARD(
 		CCollision::Init();)
 	}
@@ -121,14 +122,19 @@ void CActor::PreInit()
 		IMPLEMENTATION_GUARD(
 		CShadow::Init(pGVar1, this->field_0x0);)
 	}
+	
 	this->flags = this->flags & 0xfffffffc;
 	this->flags = this->flags & 0xffffff5f;
+	
 	EvaluateDisplayState();
+	
 	this->flags = this->flags & 0xfffff7ff;
 	this->flags = this->flags & 0xffbfffff;
+
 	if ((((this->actorFieldS & 1) != 0) && (this != (CActor*)0x0)) && ((this->flags & 0x2000000) == 0)) {
 		ReceiveMessage(this, (ACTOR_MESSAGE)0x5d, 0);
 	}
+
 	BehaviourList<1>* pComponentList = (BehaviourList<1>*)this->aComponents;
 	uVar5 = 0;
 	uVar4 = 0;
@@ -150,11 +156,48 @@ void CActor::PreInit()
 		}
 		pEntry = pEntry + 1;
 	}
+
 	this->dlistPatchId = -1;
+	
 	if (uVar5 + uVar4 != 0) {
 		IMPLEMENTATION_GUARD_LOG(
 		iVar3 = GameDListPatch_Register(this, uVar5, uVar4);)
 		this->dlistPatchId = iVar3;
+	}
+	
+	return;
+}
+
+void CActor::EvaluateManageState()
+{
+	int iVar1;
+	ulong uVar2;
+
+	iVar1 = this->objectId;
+	if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
+		uVar2 = this->flags;
+		if ((uVar2 & 0x2000001) == 0) {
+			if ((uVar2 & 8) == 0) {
+				uVar2 = uVar2 & 2 | (ulong)(this->adjustedMagnitude <= (this->subObjA)->floatField);
+			}
+			else {
+				IMPLEMENTATION_GUARD(
+				uVar2 = uVar2 & 2 | this->field_0xc;)
+			}
+			goto LAB_001034b0;
+		}
+	}
+	uVar2 = 0;
+LAB_001034b0:
+	if ((this->flags & 4) == 0) {
+		if (uVar2 != 0) {
+			ChangeManageState(1);
+		}
+	}
+	else {
+		if (uVar2 == 0) {
+			ChangeManageState(0);
+		}
 	}
 	return;
 }
@@ -245,7 +288,7 @@ void CActor::Create(ByteCode* pByteCode)
 {
 	CinNamedObject30* pCVar1;
 	KyaUpdateObjA* pKVar2;
-	CollisionData* pCVar3;
+	CCollision* pCVar3;
 	char* newPos;
 	char* pcVar4;
 	char* inString;
@@ -265,6 +308,8 @@ void CActor::Create(ByteCode* pByteCode)
 	char* name = pByteCode->GetString();
 
 	ACTOR_LOG(LogLevel::Info, "CActor::Create {}", name);
+
+	memcpy(this->name, name, 64);
 
 	pByteCode->Align(4);
 	pCVar1 = (CinNamedObject30*)pByteCode->currentSeekPos;
@@ -314,8 +359,8 @@ void CActor::Create(ByteCode* pByteCode)
 	pByteCode->currentSeekPos = (char*)(pKVar2 + 1);
 	this->subObjA = pKVar2;
 	pKVar2 = this->subObjA;
-	if (pKVar2->mainComponentID_0x0 == 1) {
-		pKVar2->mainComponentID_0x0 = -1;
+	if (pKVar2->defaultBehaviourId == 1) {
+		pKVar2->defaultBehaviourId = -1;
 	}
 	this->actorFieldS = *(uint*)&(this->subObjA)->field_0x38;
 	this->objectId = (this->subObjA)->field_0x24;
@@ -338,14 +383,14 @@ void CActor::Create(ByteCode* pByteCode)
 	//this->field_0xd4 = fVar11 * fVar11;
 	//fVar11 = this->field_0xd8;
 	//this->field_0xd8 = fVar11 * fVar11;
-	//this->field_0xdc = 1;
-	//if (((this->subObjA)->flags_0x48 & 1) != 0) {
-	//	this->field_0xdc = this->field_0xdc | 2;
-	//}
-	//if (((this->subObjA)->flags_0x48 & 2) == 0) {
-	//	this->field_0xdc = this->field_0xdc | 4;
-	//}
-	//this->field_0xe0 = (this->subObjA)->field_0x4c;
+	this->lightingFlags = 1;
+	if (((this->subObjA)->flags_0x48 & 1) != 0) {
+		this->lightingFlags = this->lightingFlags | 2;
+	}
+	if (((this->subObjA)->flags_0x48 & 2) == 0) {
+		this->lightingFlags = this->lightingFlags | 4;
+	}
+	this->lightingFloat_0xe0 = (this->subObjA)->field_0x4c;
 	//if ((CActorFactory::gClassProperties[this->typeID].flags_0x0 & 0x20) != 0) {
 	//	this->actorFieldS = this->actorFieldS | 0x10;
 	//}
@@ -365,30 +410,21 @@ void CActor::Create(ByteCode* pByteCode)
 	pByteCode->SetPosition(newPos);
 	LoadBehaviours(pByteCode);
 	pByteCode->SetPosition(newPos_00);
-	if (((this->actorFieldS & 4) != 0) && (pCVar3 = this->pCollisionData, pCVar3 != (CollisionData*)0x0)) {
+	if (((this->actorFieldS & 4) != 0) && (pCVar3 = this->pCollisionData, pCVar3 != (CCollision*)0x0)) {
 		IMPLEMENTATION_GUARD(
 		pCVar3->flags_0x0 = pCVar3->flags_0x0 | 0x20000;)
 	}
 	pCVar1 = this->pCinData;
-	fVar12 = pCVar1->floatFieldA;
-	fVar11 = pCVar1->floatFieldC;
-	fVar13 = pCVar1->floatFieldB;
-	this->scale.x = fVar12;
-	this->scale.y = fVar13;
-	this->scale.z = fVar11;
-	this->scale.w = 1.0;
-	if (((fVar12 == 1.0) && (fVar13 == 1.0)) && (fVar11 == 1.0)) {
+	this->scale.xyz = pCVar1->scale;
+	this->scale.w = 1.0f;
+	if (((this->scale.x == 1.0f) && (this->scale.y == 1.0f)) && (this->scale.z == 1.0f)) {
 		this->flags = this->flags & 0xfbffffff;
 	}
 	else {
 		this->flags = this->flags | 0x4000000;
 	}
 	pCVar1 = this->pCinData;
-	fVar11 = (pCVar1->vectorThree_0x18).y;
-	fVar12 = (pCVar1->vectorThree_0x18).z;
-	this->rotationEuler.x = (pCVar1->vectorThree_0x18).x;
-	this->rotationEuler.y = fVar11;
-	this->rotationEuler.z = fVar12;
+	this->rotationEuler = pCVar1->rotationEuler;
 	this->field_0x58 = 0;
 	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler);
 	UpdatePosition(&this->baseLocation, true);
@@ -409,7 +445,7 @@ void CActor::Init()
 	//	CActorSound::Init(puVar1);
 	//}
 
-	this->SetBehaviour((this->subObjA)->mainComponentID_0x0, -1, -1);
+	this->SetBehaviour((this->subObjA)->defaultBehaviourId, -1, -1);
 	return;
 }
 
@@ -496,33 +532,40 @@ void CActor::ChangeManageState(int state)
 	//CActorSound* pActorSound;
 
 	if (state == 0) {
-		IMPLEMENTATION_GUARD(
 		this->flags = this->flags & 0xfffffffb;
 		pClusterNode = this->pClusterNode;
 		if (pClusterNode != (CClusterNode*)0x0) {
+			IMPLEMENTATION_GUARD(
 			CCluster::DeleteNode((CCluster*)&(CScene::ptable.g_ActorManager_004516a4)->cluster, pClusterNode);
-			this->pClusterNode = (CClusterNode*)0x0;
+			this->pClusterNode = (CClusterNode*)0x0;)
 		}
+
+		IMPLEMENTATION_GUARD_AUDIO(
 		for (pActorSound = (CActorSound*)this->field_0x144; pActorSound != (CActorSound*)0x0;
 			pActorSound = *(CActorSound**)&pActorSound[1].field_0x4) {
 			CActorSound::DisableSounds(pActorSound);
-		}
+		})
+
 		pHierNode = this->p3DHierNode;
 		if (pHierNode != (ed_3d_hierarchy_node*)0x0) {
 			(pHierNode->base).pAnimMatrix = (edF32MATRIX4*)0x0;
 			(pHierNode->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
 		}
+
 		actorState = this->actorState;
 		if (actorState == AS_None) {
 			uVar5 = 0;
 		}
 		else {
-			pAVar4 = (*this->pVTable->GetStateCfg)(this, actorState);
-			uVar5 = pAVar4->flags_0x4 & 0x80;
+			IMPLEMENTATION_GUARD_AUDIO(
+			pAVar4 = GetStateCfg(actorState);
+			uVar5 = pAVar4->flags_0x4 & 0x80;)
 		}
+
 		if (uVar5 != 0) {
-			StateTransitionSoundFunc_00184470((int)CScene::ptable.g_GlobalSoundPtr_00451698);
-		})
+			IMPLEMENTATION_GUARD_AUDIO(
+			StateTransitionSoundFunc_00184470((int)CScene::ptable.g_GlobalSoundPtr_00451698);)
+		}
 	}
 	else {
 		this->flags = this->flags | 4;
@@ -603,23 +646,21 @@ void CActor::SetState(int newState, int animType)
 	CAnimation* pAnimationController;
 	GlobalSound_00451698* pGVar2;
 	CBehaviour* pCVar3;
-	//AnimResult* pDesiredAnim;
+	AnimResult* pDesiredAnim;
 	uint uVar4;
 	uint uVar5;
 
 	pCVar3 = GetBehaviour(this->curBehaviourId);
 	if ((animType == -1) && (newState != AS_None)) {
-		IMPLEMENTATION_GUARD_LOG(
-		pDesiredAnim = (*pActor->pVTable->GetStateCfg)(pActor, newState);
-		animType = pDesiredAnim->field_0x0;)
+		pDesiredAnim = GetStateCfg(newState);
+		animType = pDesiredAnim->field_0x0;
 	}
 	pGVar2 = CScene::ptable.g_GlobalSoundPtr_00451698;
 	EVar1 = this->actorState;
 	if (EVar1 == newState) {
 		/* State is the same as our current state */
 		if (this->currentAnimType != animType) {
-			IMPLEMENTATION_GUARD(
-			PlayAnim(pActor, animType);)
+			PlayAnim(animType);
 		}
 	}
 	else {
@@ -628,9 +669,8 @@ void CActor::SetState(int newState, int animType)
 			uVar4 = 0;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			pDesiredAnim = (*pActor->pVTable->GetStateCfg)(pActor, EVar1);
-			uVar4 = pDesiredAnim->flags_0x4;)
+			pDesiredAnim = GetStateCfg(EVar1);
+			uVar4 = pDesiredAnim->flags_0x4;
 		}
 		if (newState == AS_None) {
 			uVar5 = 0;
@@ -652,8 +692,7 @@ void CActor::SetState(int newState, int animType)
 		}
 		if ((pCVar3 != (CBehaviour*)0x0) && (EVar1 = this->actorState, EVar1 != AS_None)) {
 			/* End old state? */
-			IMPLEMENTATION_GUARD(
-			(*(code*)pCVar3->pVTable->TermState)(pCVar3, EVar1, newState);)
+			pCVar3->TermState(EVar1, newState);
 		}
 		this->prevActorState = this->actorState;
 		this->actorState = (EActorState)newState;
@@ -662,8 +701,7 @@ void CActor::SetState(int newState, int animType)
 				pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 		}
 		if (this->actorState == AS_None) {
-			IMPLEMENTATION_GUARD(
-			PlayAnim(animType);)
+			PlayAnim(animType);
 		}
 		else {
 			PlayAnim(animType);
@@ -705,12 +743,11 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 					else {
 						this->SetState(-1, this->currentAnimType);
 					}
-					IMPLEMENTATION_GUARD();
 					pSVar3->End(behaviourId);
 				}
 				this->prevBehaviourId = this->curBehaviourId;
 				this->curBehaviourId = behaviourId;
-				if ((pComponent != (CBehaviour*)0x0) && pComponent->Begin(this, newState, animationType), this->dlistPatchId != -1) {
+				if ((pComponent != (CBehaviour*)0x0), pComponent->Begin(this, newState, animationType), this->dlistPatchId != -1) {
 					IMPLEMENTATION_GUARD(
 					iVar4 = GetManagerObject(MO_17);
 					ActorFunc_002d79e0(iVar4, this->dlistPatchId, 0, (Actor*)this));
@@ -730,11 +767,11 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 
 void CActor::CinematicMode_Enter(bool bSetState)
 {
-	CollisionData* pCVar1;
+	CCollision* pCVar1;
 	CCinematic* pCinematic;
 	CCineActorConfig* pActorConfig;
 
-	IMPLEMENTATION_GUARD_LOG(edEventComputeZoneAgainstVertex(this, this, 0x3e, (ActorCompareStruct*)0x0));
+	DoMessage(this, (ACTOR_MESSAGE)0x3e, 0x0);
 	if (bSetState == false) {
 		this->SetBehaviour(1, -1, -1);
 	}
@@ -757,7 +794,7 @@ void CActor::CinematicMode_Enter(bool bSetState)
 		else {
 			this->CinematicMode_InterpreteCinMessage(0.0f, 1.0f, 3, 0);
 		}
-		if (((pActorConfig->flags & 0x80) != 0) && (pCVar1 = this->pCollisionData, pCVar1 != (CollisionData*)0x0)) {
+		if (((pActorConfig->flags & 0x80) != 0) && (pCVar1 = this->pCollisionData, pCVar1 != (CCollision*)0x0)) {
 			IMPLEMENTATION_GUARD(
 			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfff7efff;)
 		}
@@ -858,7 +895,7 @@ void CActor::UpdatePostAnimEffects()
 	return;
 }
 
-void CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam)
+bool CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam)
 {
 	bool bHandled;
 	CBehaviour* pBehaviour;
@@ -871,15 +908,15 @@ void CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgPa
 		bHandled = pBehaviour->InterpretMessage(pSender, msg, pMsgParam);
 	}
 	if (bHandled == false) {
-		InterpretMessage(pSender, msg, pMsgParam);
+		bHandled = InterpretMessage(pSender, msg, pMsgParam);
 	}
-	return;
+	return bHandled;
 }
 
 bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	int iVar1;
-	CollisionData* pCVar2;
+	CCollision* pCVar2;
 	CActor* pCVar3;
 	bool bVar4;
 	long lVar5;
@@ -1003,7 +1040,7 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					EvaluateDisplayState();
 					this->flags = this->flags & 0xfffffffc;
 					pCVar2 = this->pCollisionData;
-					if (pCVar2 != (CollisionData*)0x0) {
+					if (pCVar2 != (CCollision*)0x0) {
 						pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;
 					}
 					bVar4 = true;)
@@ -1011,7 +1048,7 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				else {
 					if (msg == 0x5d) {
 						pCVar2 = this->pCollisionData;
-						if (pCVar2 != (CollisionData*)0x0) {
+						if (pCVar2 != (CCollision*)0x0) {
 							IMPLEMENTATION_GUARD(
 							pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xfff7efff;)
 						}
@@ -1023,11 +1060,11 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						this->flags = this->flags | 1;
 					}
 					else {
-						IMPLEMENTATION_GUARD(
 						if (msg == 0x32) {
 							pCVar2 = this->pCollisionData;
-							if ((pCVar2 != (CollisionData*)0x0) && (pMsgParam != (void*)0x0)) {
-								pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;
+							if ((pCVar2 != (CCollision*)0x0) && (pMsgParam != (void*)0x0)) {
+								IMPLEMENTATION_GUARD(
+								pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;)
 							}
 							this->flags = this->flags | 0x80;
 							this->flags = this->flags & 0xffffffdf;
@@ -1037,8 +1074,9 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						else {
 							if (msg == 0x31) {
 								pCVar2 = this->pCollisionData;
-								if ((pCVar2 != (CollisionData*)0x0) && (pMsgParam != (void*)0x0)) {
-									pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xfff7efff;
+								if ((pCVar2 != (CCollision*)0x0) && (pMsgParam != (void*)0x0)) {
+									IMPLEMENTATION_GUARD(
+									pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xfff7efff;)
 								}
 								this->flags = this->flags & 0xffffff7f;
 								this->flags = this->flags | 0x20;
@@ -1048,11 +1086,12 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							else {
 								if (msg == 0x3c) {
 									pCVar3 = this->actorFieldG;
-									ActorFunc_00104310(this);
-									(*(code*)this->pVTable->Reset)(this);
+									PreReset();
+									Reset();
 									if (((pCVar3 != (CActor*)0x0) && (pCVar3 != (CActor*)0x0)) &&
-										(((pCVar3->data).flags & 0x2000000) == 0)) {
-										(*(code*)pCVar3->pVTable->ReceiveMessage)(pCVar3, this, 0x3d, 0);
+										((pCVar3->flags & 0x2000000) == 0)) {
+										IMPLEMENTATION_GUARD(
+										(*(code*)pCVar3->pVTable->ReceiveMessage)(pCVar3, this, 0x3d, 0);)
 									}
 									bVar4 = true;
 								}
@@ -1089,11 +1128,12 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 												}
 												else {
 													if (msg == 7) {
-														/* WARNING: Load size is inaccurate */
-														iVar1 = *pMsgParam;
+														/* WARNING: Load size is inaccurate */														
+														iVar1 = *(int*)pMsgParam;
 														if (iVar1 == 5) {
+															IMPLEMENTATION_GUARD(
 															if (((this->pMeshTransform != (ed_3d_hierarchy_node*)0x0) &&
-																(pCVar2 = this->pCollisionData, pCVar2 != (CollisionData*)0x0)) &&
+																(pCVar2 = this->pCollisionData, pCVar2 != (CCollision*)0x0)) &&
 																(pCVar2->subObjFieldA != 0)) {
 																*(undefined4*)((int)pMsgParam + 0x20) = 0;
 																*(undefined4*)((int)pMsgParam + 0x24) =
@@ -1105,16 +1145,17 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 																	(edF32MATRIX4*)this->pMeshTransform,
 																	(edF32VECTOR4*)((int)pMsgParam + 0x20));
 																return true;
-															}
+															})
 														}
 														else {
 															if ((iVar1 == 1) || (iVar1 == 0)) {
+																IMPLEMENTATION_GUARD(
 																*(float*)((int)pMsgParam + 0x20) = gF32Vector4Zero.x;
 																*(float*)((int)pMsgParam + 0x24) = fVar6;
 																*(float*)((int)pMsgParam + 0x28) = fVar7;
 																*(float*)((int)pMsgParam + 0x2c) = fVar8;
 																pCVar2 = this->pCollisionData;
-																if ((pCVar2 != (CollisionData*)0x0) && (iVar1 = pCVar2->subObjFieldA, iVar1 != 0)) {
+																if ((pCVar2 != (CCollision*)0x0) && (iVar1 = pCVar2->subObjFieldA, iVar1 != 0)) {
 																	edF32Matrix4MulF32Vector4Hard
 																	((edF32VECTOR4*)((int)pMsgParam + 0x20),
 																		(edF32MATRIX4*)this->pMeshTransform, (edF32VECTOR4*)(iVar1 + 0xb0))
@@ -1123,7 +1164,7 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 																		(edF32VECTOR4*)((int)pMsgParam + 0x20),
 																		&this->currentLocation);
 																	return true;
-																}
+																})
 																return true;
 															}
 														}
@@ -1135,7 +1176,7 @@ bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 									}
 								}
 							}
-						})
+						}
 					}
 				}
 			}
@@ -1231,17 +1272,17 @@ void CActor::SetupDefaultPosition()
 	this->baseLocation.xyz = namedObj30->position;
 	this->baseLocation.w = 1.0;
 	namedObj30 = this->pCinData;
-	if (fabs(namedObj30->floatFieldA - 1.0f) <= 0.0001f) {
-		namedObj30->floatFieldA = 1.0f;
+	if (fabs(namedObj30->scale.x - 1.0f) <= 0.0001f) {
+		namedObj30->scale.x = 1.0f;
 	}
-	if (fabs(namedObj30->floatFieldB - 1.0f) <= 0.0001f) {
-		namedObj30->floatFieldB = 1.0f;
+	if (fabs(namedObj30->scale.y - 1.0f) <= 0.0001f) {
+		namedObj30->scale.y = 1.0f;
 	}
-	if (fabs(namedObj30->floatFieldC - 1.0f) <= 0.0001f) {
-		namedObj30->floatFieldC = 1.0f;
+	if (fabs(namedObj30->scale.z - 1.0f) <= 0.0001f) {
+		namedObj30->scale.z = 1.0f;
 	}
 	if ((CActorFactory::gClassProperties[this->typeID].flags & 2) != 0) {
-		v0 = &(this->pCinData)->vectorThree_0x18;
+		v0 = &(this->pCinData)->rotationEuler;
 		SV_BuildAngleWithOnlyY(v0, v0);
 	}
 	if ((CActorFactory::gClassProperties[this->typeID].flags & 0x800) == 0) {
@@ -1255,43 +1296,34 @@ void CActor::SetupDefaultPosition()
 
 void CActor::RestoreInitData()
 {
-	CollisionData* pCVar1;
+	CCollision* pCVar1;
 	CinNamedObject30* pCVar2;
 	float fVar3;
 	float fVar4;
 	float fVar5;
 
-	if (((this->actorFieldS & 4) != 0) && (pCVar1 = this->pCollisionData, pCVar1 != (CollisionData*)0x0)) {
+	if (((this->actorFieldS & 4) != 0) && (pCVar1 = this->pCollisionData, pCVar1 != (CCollision*)0x0)) {
 		IMPLEMENTATION_GUARD(
 		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x20000;)
 	}
 	pCVar2 = this->pCinData;
-	fVar4 = pCVar2->floatFieldA;
-	fVar3 = pCVar2->floatFieldC;
-	fVar5 = pCVar2->floatFieldB;
-	this->scale.x = fVar4;
-	this->scale.y = fVar5;
-	this->scale.z = fVar3;
-	this->scale.w = 1.0;
-	if (((fVar4 == 1.0) && (fVar5 == 1.0)) && (fVar3 == 1.0)) {
+	this->scale.xyz = pCVar2->scale;
+	this->scale.w = 1.0f;
+	if (((this->scale.x == 1.0f) && (this->scale.y == 1.0f)) && (this->scale.z == 1.0f)) {
 		this->flags = this->flags & 0xfbffffff;
 	}
 	else {
 		this->flags = this->flags | 0x4000000;
 	}
 	pCVar2 = this->pCinData;
-	fVar3 = (pCVar2->vectorThree_0x18).y;
-	fVar4 = (pCVar2->vectorThree_0x18).z;
-	this->rotationEuler.x = (pCVar2->vectorThree_0x18).x;
-	this->rotationEuler.y = fVar3;
-	this->rotationEuler.z = fVar4;
+	this->rotationEuler = pCVar2->rotationEuler;
 	this->field_0x58 = 0;
 	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler);
 	UpdatePosition(&this->baseLocation, true);
 	this->flags = this->flags | 0x80000;
 	this->distanceToGround = -1.0f;
 	this->flags = this->flags & 0xffdfffff;
-	this->field_0xf0 = -1;
+	this->field_0xf0 = 0xffff;
 	return;
 }
 
@@ -1299,7 +1331,7 @@ void CActor::UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision)
 {
 	ed_3d_hierarchy_node* pHier;
 	KyaUpdateObjA* pKVar1;
-	CollisionData* pCVar2;
+	CCollision* pCVar2;
 	CClusterNode* pSubObj;
 	int iVar3;
 	edF32MATRIX4* pIdentityMatrix;
@@ -1338,7 +1370,7 @@ void CActor::UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision)
 
 		this->sphereCentre.xyz = local_50.xyz;
 		this->sphereCentre.w = (pKVar1->boundingSphere).w;
-		if ((bUpdateCollision != false) && (pCVar2 = this->pCollisionData, pCVar2 != (CollisionData*)0x0)) {
+		if ((bUpdateCollision != false) && (pCVar2 = this->pCollisionData, pCVar2 != (CCollision*)0x0)) {
 			IMPLEMENTATION_GUARD(
 			CCollision::UpdateMatrix(pCVar2, &pHier->base.transformA);)
 		}
@@ -1377,7 +1409,7 @@ void CActor::UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision)
 			(pKVar1->boundingSphere).w * (float)((int)fVar6 * (uint)(fVar5 < fVar6) | (int)fVar5 * (uint)(fVar5 >= fVar6));
 		if (bUpdateCollision != false) {
 			pCVar2 = this->pCollisionData;
-			if (pCVar2 != (CollisionData*)0x0) {
+			if (pCVar2 != (CCollision*)0x0) {
 				IMPLEMENTATION_GUARD(
 				CCollision::UpdateMatrix(pCVar2, &eStack64);)
 			}
@@ -1395,7 +1427,7 @@ void CActor::UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision)
 {
 	ed_3d_hierarchy_node* pHier;
 	KyaUpdateObjA* pKVar1;
-	CollisionData* pCollisionData;
+	CCollision* pCollisionData;
 	CClusterNode* pSubObj;
 	int iVar2;
 	edF32MATRIX4* peVar4;
@@ -1438,7 +1470,7 @@ void CActor::UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision)
 		fVar6 = this->scale.z;
 		this->sphereCentre.w = (pKVar1->boundingSphere).w * (float)((int)fVar6 * (uint)(fVar5 < fVar6) | (int)fVar5 * (uint)(fVar5 >= fVar6));
 	}
-	if ((bUpdateCollision != 0) && (pCollisionData = this->pCollisionData, pCollisionData != (CollisionData*)0x0))
+	if ((bUpdateCollision != 0) && (pCollisionData = this->pCollisionData, pCollisionData != (CCollision*)0x0))
 	{
 		IMPLEMENTATION_GUARD(
 		CCollision::UpdateMatrix(pCollisionData, pPosition);)
@@ -1467,13 +1499,12 @@ void CActor::PlayAnim(int inAnimType)
 			animType = -1;
 			if (inAnimType != -1) {
 				/* Remove for T-Pose */
-				IMPLEMENTATION_GUARD(
-				animType = GetIdMacroAnim(this, inAnimType);)
+				animType = GetIdMacroAnim(inAnimType);
 			}
 			if (animType == -1) {
 				this->currentAnimType = -1;
 				IMPLEMENTATION_GUARD(
-				CAnimation::ResetLayers(pAnimationController, this);)
+					pAnimationController->ResetLayers(this);)
 			}
 			else {
 				this->prevAnimType = this->currentAnimType;
@@ -1540,7 +1571,7 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 				pByteCode->SetPosition(pcVar4 + pEntry->GetSize());
 			}
 			pComponentList->count = 0;
-			(this->subObjA)->mainComponentID_0x0 = -1;
+			(this->subObjA)->defaultBehaviourId = -1;
 		}
 	}
 	return;
@@ -1551,7 +1582,7 @@ void CActor::SetupModel(int count, MeshTextureHash* aHashes)
 	CinNamedObject30* pCVar1;
 	int index;
 	ed_3d_hierarchy_node* peVar2;
-	CollisionData* pCollisionData;
+	CCollision* pCollisionData;
 
 	pCVar1 = this->pCinData;
 	SV_SetModel(pCVar1->meshIndex, pCVar1->textureIndex, count, aHashes);
@@ -1735,6 +1766,23 @@ bool CBehaviour::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 int INT_00448e04 = 0;
 
+void CActor::Draw()
+{
+	CShadow* pShadow;
+	CBehaviour* pBehaviour;
+
+	pShadow = this->pShadow;
+	if (pShadow != (CShadow*)0x0) {
+		IMPLEMENTATION_GUARD(
+		pShadow->Draw(););
+	}
+	pBehaviour = GetBehaviour(this->curBehaviourId);
+	if (pBehaviour != (CBehaviour*)0x0) {
+		pBehaviour->Draw();
+	}
+	return;
+}
+
 void CActorMovable::Create(ByteCode* pByteCode)
 {
 	float fVar1;
@@ -1746,6 +1794,41 @@ void CActorMovable::Create(ByteCode* pByteCode)
 	//(this->dynamic).field_0x54 = fVar1;
 	this->field_0x1c0 = 1e+30;
 	return;
+}
+
+AnimResult CActor::gStateCfg_ACT[5] =
+{
+	{ 0, 4 },
+	{ 1, 0 },
+	{ 0, 0,},
+	{ 0, 0,},
+	{ 5, 0,}
+};
+
+uint CActor::_gBehaviourFlags_ACT[2] =
+{
+	0, 0
+};
+
+AnimResult* CActor::GetStateCfg(int state)
+{
+	assert(state < 4);
+	return gStateCfg_ACT + state;
+}
+
+uint CActor::GetBehaviourFlags(int state)
+{
+	uint uVar1;
+
+	assert(state < 2);
+
+	if (state == -1) {
+		uVar1 = 0;
+	}
+	else {
+		uVar1 = _gBehaviourFlags_ACT[state];
+	}
+	return uVar1;
 }
 
 int INT_00448e08 = 0;
@@ -1771,7 +1854,7 @@ void CActorAutonomous::Create(ByteCode* pByteCode)
 	//}
 	//this->field_0x2cc = 0;
 	//this->field_0x2c8 = 0;
-	if (this->pCollisionData != (CollisionData*)0x0) {
+	if (this->pCollisionData != (CCollision*)0x0) {
 		IMPLEMENTATION_GUARD(
 		(*(this->base).base.pVTable[1].IsKindOfObject)((CActor*)this, (int)pBVar6);)
 	}
@@ -1800,6 +1883,19 @@ void CActorAutonomous::Create(ByteCode* pByteCode)
 	//this->field_0x32c = 3396.333;
 	//this->field_0x330 = 3396.333;
 	return;
+}
+
+CBehaviour* CActorAutonomous::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pNewBehaviour;
+
+	if (behaviourType == 2) {
+		pNewBehaviour = new CBehaviourCatchByTrap;
+	}
+	else {
+		pNewBehaviour = CActor::BuildBehaviour(behaviourType);
+	}
+	return pNewBehaviour;
 }
 
 void CAddOnGenerator::Create(CActor* pActor, ByteCode* pByteCode)
@@ -1857,6 +1953,28 @@ void CAddOnGenerator::Create(CActor* pActor, ByteCode* pByteCode)
 	return;
 }
 
+void CActorMovable::SetState(int newState, int animType)
+{
+	if (newState != this->actorState) {
+		this->dynamic.field_0x58 = 1.0f;
+	}
+	CActor::SetState(newState, animType);
+	return;
+}
+
+bool CActor::DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags)
+{
+	bool uVar1;
+
+	if ((pReceiver == (CActor*)0x0) || ((pReceiver->flags & 0x2000000) != 0)) {
+		uVar1 = false;
+	}
+	else {
+		uVar1 = pReceiver->ReceiveMessage(this, type, flags);
+	}
+	return uVar1;
+}
+
 void CAddOnGenerator_SubObj::Create(ByteCode* pByteCode)
 {
 	uint uVar1;
@@ -1884,6 +2002,111 @@ void CAddOnGenerator_SubObj::Create(ByteCode* pByteCode)
 		this->field_0x10 = 3.0f;
 		this->field_0x14 = 2.5f;
 	}
+	return;
+}
+
+void CActor::PreReset()
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	CAnimation* pAnimation;
+	CinNamedObject30* pCinData;
+	CCollision* pCollision;
+
+	if ((this->flags & 4) != 0) {
+		ChangeManageState(0);
+	}
+	if ((this->flags & 0x100) != 0) {
+		ChangeDisplayState(0);
+	}
+	SetBehaviour(-1, -1, -1);
+	if (this->actorFieldG != (CActor*)0x0) {
+		IMPLEMENTATION_GUARD(
+		TieToActor(0, 0, 1, 0);)
+	}
+	pCollision = this->pCollisionData;
+	if (pCollision != (CCollision*)0x0) {
+		IMPLEMENTATION_GUARD(
+		pCollision->Reset();)
+	}
+	pAnimation = this->pAnimationController;
+	if (pAnimation != (CAnimation*)0x0) {
+		IMPLEMENTATION_GUARD(
+		pAnimation->Reset(this);)
+	}
+	if (((this->actorFieldS & 4) != 0) &&
+		(pCollision = this->pCollisionData, pCollision != (CCollision*)0x0)) {
+		IMPLEMENTATION_GUARD(
+		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x20000;)
+	}
+	pCinData = this->pCinData;
+	this->scale.xyz = pCinData->scale;
+	this->scale.w = 1.0f;
+	if (((this->scale.x == 1.0f) && (this->scale.y == 1.0f)) && (this->scale.z == 1.0f)) {
+		this->flags = this->flags & 0xfbffffff;
+	}
+	else {
+		this->flags = this->flags | 0x4000000;
+	}
+	pCinData = this->pCinData;
+	this->rotationEuler = pCinData->rotationEuler;
+	this->field_0x58 = 0;
+
+	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler);
+	UpdatePosition(&this->baseLocation, true);
+	this->flags = this->flags | 0x80000;
+	this->distanceToGround = -1.0f;
+	this->flags = this->flags & 0xffdfffff;
+	this->field_0xf0 = 0xffff;
+	this->flags = this->flags & 0xfffffffc;
+	this->flags = this->flags & 0xffffff5f;
+	EvaluateDisplayState();
+	this->flags = this->flags & 0xfffff7ff;
+	this->flags = this->flags & 0xffbfffff;
+	if ((((this->actorFieldS & 1) != 0) && (this != (CActor*)0x0)) && ((this->flags & 0x2000000) == 0)) {
+		ReceiveMessage(this, (ACTOR_MESSAGE)0x5d, 0);
+	}
+	return;
+}
+
+void SetHierFlags_00295a10(ed_3d_hierarchy* pHier)
+{
+	pHier->flags_0x9e = pHier->flags_0x9e & 0xff7f;
+	pHier->size_0xae = 0xff;
+	return;
+}
+
+void CActor::CinematicMode_Leave(int behaviourId)
+{
+	CCollision* pCVar1;
+	ed_3d_hierarchy_node* peVar2;
+	uint uVar3;
+	CCinematic* pCinematic;
+	CCineActorConfig* pCVar4;
+
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	pCVar4 = pCinematic->GetActorConfig(this);
+	if (((pCVar4 != (CCineActorConfig*)0x0) && ((pCVar4->flags & 0x80) != 0)) &&
+		(pCVar1 = this->pCollisionData, pCVar1 != (CCollision*)0x0)) {
+		IMPLEMENTATION_GUARD(
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x81000;)
+	}
+	peVar2 = this->p3DHierNode;
+	if (peVar2 != (ed_3d_hierarchy_node*)0x0) {
+		SetHierFlags_00295a10((ed_3d_hierarchy*)peVar2);
+	}
+	uVar3 = this->flags;
+	if ((uVar3 & 0x8000000) != 0) {
+		this->flags = uVar3 & 0xf7ffffff;
+		this->flags = this->flags & 0xffffff7f;
+		this->flags = this->flags | 0x20;
+		EvaluateDisplayState();
+	}
+	this->flags = this->flags & 0xff7fffff;
+	this->flags = this->flags & 0xffffffbf;
+	EvaluateDisplayState();
+	SetBehaviour(behaviourId, -1, -1);
 	return;
 }
 
@@ -1940,7 +2163,7 @@ void CBehaviourStand::Init(CActor* pOwner)
 	this->pOwner = pOwner;
 }
 
-bool CBehaviourStand::Begin(CActor* pOwner, int newState, int newAnimationType)
+void CBehaviourStand::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	if (newState == -1) {
 		this->pOwner->SetState(0, -1);
@@ -1948,7 +2171,7 @@ bool CBehaviourStand::Begin(CActor* pOwner, int newState, int newAnimationType)
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
 	}
-	return true;
+	return;
 }
 
 bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial)
@@ -1985,4 +2208,130 @@ bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager*
 		bVar1 = true;
 	}
 	return bVar1;
+}
+
+void CActor::ComputeLighting()
+{
+	CScene::ptable.g_LightManager_004516b0->ComputeLighting(this, this->lightingFlags, (ed_3D_Light_Config*)0x0, this->lightingFloat_0xe0);
+	return;
+}
+
+void CActor::SectorChange(int oldSectorId, int newSectorId)
+{
+	CBehaviour* pBehvaiour;
+
+	pBehvaiour = GetBehaviour(this->curBehaviourId);
+	if (pBehvaiour != (CBehaviour*)0x0) {
+		pBehvaiour->SectorChange(oldSectorId, newSectorId);
+	}
+	return;
+}
+
+void CActor::Reset()
+{
+	bool bVar1;
+	//CActorSound* pActorSound;
+	float fVar2;
+	float fVar3;
+	CAnimation* pAnimation;
+
+	this->vector_0x120 = this->currentLocation.xyz;
+	bVar1 = IsKindOfObject(2);
+	if (bVar1 == false) {
+		this->vector_0x12c = gF32Vector3Zero;
+	}
+	else {
+		IMPLEMENTATION_GUARD(
+		fVar2 = this[1].data.rotationQuat.y;
+		fVar3 = (float)this[1].data.typeID;
+		pAnimation = this[1].data.pAnimationController;
+		this->vector_0x12c.x = (float)this[1].data.actorManagerIndex * fVar2;
+		this->vector_0x12c.y = fVar3 * fVar2;
+		this->vector_0x12c.z = (float)pAnimation * fVar2;)
+	}
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	for (pActorSound = this->aActorSounds; pActorSound != (CActorSound*)0x0;
+		pActorSound = *(CActorSound**)&pActorSound[1].field_0x4) {
+		CActorSound::Reset(pActorSound);
+	})
+	SetBehaviour((this->subObjA)->defaultBehaviourId, -1, -1);
+	return;
+}
+
+int CActor::GetIdMacroAnim(int inAnimType)
+{
+	int iVar1;
+	int ret;
+	int* piVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+
+	piVar2 = (int*)this->field_0x110;
+	if ((piVar2 == (int*)0x0) || (iVar4 = *piVar2, iVar4 == 0)) {
+		ret = -1;
+	}
+	else {
+		iVar3 = iVar4 >> 1;
+		piVar2 = piVar2 + 1;
+		iVar5 = 0;
+		if (iVar3 != 0) {
+			do {
+				iVar1 = iVar3;
+				if (piVar2[iVar3 * 2] <= inAnimType) {
+					iVar1 = iVar4;
+					iVar5 = iVar3;
+				}
+				iVar4 = iVar1;
+				iVar3 = iVar5 + iVar4 >> 1;
+			} while (iVar3 != iVar5);
+		}
+		ret = -1;
+		if (inAnimType == piVar2[iVar5 * 2]) {
+			ret = (piVar2 + iVar5 * 2)[1];
+		}
+	}
+	return ret;
+}
+
+void CActor::UpdateVisibility()
+{
+	uint uVar1;
+	bool bVar2;
+	float other;
+
+	uVar1 = this->flags;
+	other = (this->subObjA)->floatFieldB;
+	if (((uVar1 & 0x100) == 0) || (other < this->adjustedMagnitude)) {
+		if ((uVar1 & 0x4000) != 0) {
+			ChangeVisibleState(0);
+		}
+	}
+	else {
+		bVar2 = CCameraManager::_gThis->IsSphereVisible(other, &this->sphereCentre);
+		if (bVar2 == false) {
+			if ((this->flags & 0x4000) != 0) {
+				ChangeVisibleState(0);
+			}
+		}
+		else {
+			if ((this->flags & 0x4000) == 0) {
+				ChangeVisibleState(1);
+			}
+		}
+	}
+	return;
+}
+
+void CActor::FUN_00101110(CActor* pOtherActor)
+{
+	CCollision* pCVar1;
+
+	pCVar1 = this->pCollisionData;
+	if (pCVar1 != (CCollision*)0x0) {
+		IMPLEMENTATION_GUARD(
+		pCVar1->actorField = pOtherActor;)
+	}
+	return;
 }

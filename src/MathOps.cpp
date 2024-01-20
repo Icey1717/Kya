@@ -9,6 +9,7 @@ edF32VECTOR3 gF32Vector3Zero = { };
 edF32MATRIX4 gF32Matrix4Unit = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vertex4Zero = { 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vector4Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
+edF32VECTOR4 gF32Vector4UnitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
 
 #define M_PI_2f 1.5707963f
 #define M_PIf 3.14159265f
@@ -1122,5 +1123,35 @@ void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0)
 	m0->dc = 0.0f;
 	m0->dd = 0.0f;
 	m0->dd = 1.0f;
+	return;
+}
+
+void edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float v1Magnitude;
+
+	fVar3 = gF32Vector4UnitZ.w;
+	fVar2 = gF32Vector4UnitZ.z;
+	fVar1 = gF32Vector4UnitZ.y;
+	v1Magnitude = sqrtf(v1->x * v1->x + v1->y * v1->y + v1->z * v1->z) + 0.0f;
+	if (v1Magnitude < g_TinyFloat_00448548) {
+		v0->x = gF32Vector4UnitZ.x;
+		v0->y = fVar1;
+		v0->z = fVar2;
+		v0->w = fVar3;
+	}
+	else {
+		v1Magnitude = 1.0f / v1Magnitude;
+		fVar1 = v1->y;
+		fVar2 = v1->z;
+		fVar3 = v1->w;
+		v0->x = v1->x * v1Magnitude;
+		v0->y = fVar1 * v1Magnitude;
+		v0->z = fVar2 * v1Magnitude;
+		v0->w = fVar3 * v1Magnitude;
+	}
 	return;
 }

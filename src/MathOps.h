@@ -12,6 +12,7 @@ extern edF32VECTOR3 gF32Vector3Zero;
 extern edF32MATRIX4 gF32Matrix4Unit;
 extern edF32VECTOR4 gF32Vertex4Zero;
 extern edF32VECTOR4 gF32Vector4Zero;
+extern edF32VECTOR4 gF32Vector4UnitZ;
 
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 
@@ -58,5 +59,9 @@ void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECT
 void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0);
+
+const float g_TinyFloat_00448548 = 1.0E-6f;
+
+void edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 #endif // _MATH_OPS_H

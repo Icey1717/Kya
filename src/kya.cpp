@@ -71,6 +71,7 @@ extern "C" {
 #include "Rendering/edCTextFont.h"
 #include "BootData.h"
 #include "SaveManagement.h"
+#include "EventManager.h"
 
 template<class T>
 T* CreateNew()
@@ -1494,7 +1495,7 @@ void MainInit(int argc,char **argv)
 	//	edMusicInit();
 	//	edSoundInit((float)&DAT_3f4ccccd);
 	//}
-	//edEventInit();
+	edEventInit();
 	/* Init_edBank */
 	edDebugPrintf("---- Init edBank \n");
 	edBankInit();

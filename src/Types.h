@@ -70,11 +70,16 @@ struct EdFileGlobal_10 {
 	undefined field_0xf;
 };
 
-struct _rgba {
-	byte r;
-	byte g;
-	byte b;
-	byte a;
+union _rgba {
+	struct
+	{
+		byte r;
+		byte g;
+		byte b;
+		byte a;
+	};
+
+	uint rgba;
 
 	_rgba() {}
 
@@ -102,6 +107,16 @@ enum EFileLoadMode {
 	New_Name_3 = 3
 };
 
+PACK(
+struct ed_zone_3d {
+	int field_0x0[3]; // ptr
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	uint flags;
+	int field_0x20; // edF32MATRIX4*
+};)
 
 enum ACTOR_CLASS {
 	CINEMATIC = 1,

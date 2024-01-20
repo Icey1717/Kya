@@ -9,20 +9,27 @@ class CObjectManager
 public:
 	virtual void Game_Init() {};
 	virtual void Game_Term() {};
+
 	virtual void LevelLoading_Begin() {};
 	virtual void LevelLoading_End() {};
 	virtual bool LevelLoading_Manage() { return false; }
-	virtual void Level_ClearAll() {}
 	virtual void LevelLoading_Draw() {};
+
 	virtual void Level_Install() {};
 	virtual void Level_Init() {};
 	virtual void Level_Term() {};
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream) {};
+	virtual void Level_ClearAll() {}
 	virtual void Level_Manage() {};
 	virtual void Level_ManagePaused() {};
 	virtual void Level_Draw() {};
-	virtual void Level_CheckpointReset() {};
+
+	virtual void Level_PreReset() {};
 	virtual void Level_Reset() {};
+
+	virtual void Level_PreCheckpointReset() {};
+	virtual void Level_CheckpointReset() {};
+
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
 
@@ -37,12 +44,14 @@ enum MANAGER_TYPE {
 	MO_GlobalDListManager = 0x17
 };
 
+struct CEventManager;
+
 union ManagerContainer {
 	struct {
 		struct LevelScheduleManager* g_LevelScheduleManager_00451660;
 		struct C3DFileManager* g_C3DFileManager_00451664;
 		struct CAnimationManager* g_AnimManager_00451668;
-		char* g_CinematicManager_0045166c;
+		struct CCinematicManagerB* g_CinematicManagerB_0045166c;
 		struct CSectorManager* g_SectorManager_00451670;
 		struct Manager_170* g_Manager170_00451674;
 		struct LocalizationManager* g_LocalizationManager_00451678;
@@ -52,14 +61,14 @@ union ManagerContainer {
 		struct PauseManager* g_PauseManager_00451688;
 		struct MapManager* g_MapManager_0045168c;
 		struct CCollisionManager* g_CollisionManager_00451690;
-		struct Manager_208* g_Manager208_00451694;
+		struct CLipTrackManager* g_LipTrackManager_00451694;
 		struct GlobalSound_00451698* g_GlobalSoundPtr_00451698;
 		struct CWayPointManager* g_WayPointManager_0045169c;
 		struct CPathManager* g_PathManager_004516a0;
 		struct CActorManager* g_ActorManager_004516a4;
-		struct EventManager* g_EventManager_006f5080;
+		CEventManager* g_EventManager_006f5080;
 		struct CCinematicManager* g_CinematicManagerPtr_004516ac;
-		struct LightManager* g_LightManager_004516b0;
+		struct CLightManager* g_LightManager_004516b0;
 		struct Manager_C_Alt* g_ManagerC_Alt_004516b4;
 		struct CFxManager* g_EffectsManager_004516b8;
 		struct CGlobalDListManager* g_GlobalDListManager_004516bc;

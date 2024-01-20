@@ -128,7 +128,8 @@ struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
 	void SetAnim(int animType, int origAnimType);
 };
 
-struct CAnimation {
+class CAnimation {
+public:
 	CAnimation();
 
 	bool UpdateCurSkeleton(CActor* pActor);

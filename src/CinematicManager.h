@@ -18,6 +18,18 @@ struct ed_g3d_manager;
 struct CActorCinematic;
 struct CActor;
 
+
+template<typename T>
+struct S_STREAM_REF {
+	void Init();
+
+	union {
+		T* pObj;
+		int index;
+	};
+};
+
+
 class CBWCinActor : public edCinActorInterface {
 public:
 	virtual bool Initialize();
@@ -28,6 +40,7 @@ public:
 	virtual bool SetHeadingQuat(float x, float y, float z, float w);
 	virtual bool SetScale(float x, float y, float z);
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
+	virtual bool Shutdown();
 
 	void SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, ed_g3d_manager* pMeshManager);
 
@@ -69,16 +82,24 @@ public:
 	virtual bool SetPos(float x, float y, float z);
 	virtual bool SetHeadingQuat(float x, float y, float z, float w);
 	virtual bool SetHeadingEuler(float x, float y, float z, bool param_5);
+	virtual bool Shutdown() { return true; }
 };
 
 class CBWitchCin : public edCinGameInterface {
 public:
-	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*);
+
 	virtual char* GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut);
+	virtual bool ReleaseResource(byte, bool, void*);
+
 	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
 	virtual bool GetActor(edCinActorInterface** ppActorInterface, int hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
+	virtual bool ReleaseActor(edCinActorInterface*);
+
 	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag);
-	virtual bool ReleaseResource(uint, bool);
+	virtual bool ReleaseScenery(edCinSceneryInterface*);
+
+	virtual bool GetCamera(edCinCamInterface** pCinCamInterface, const edCinCamInterface::CAMERA_CREATIONtag*);
+	virtual bool ReleaseCamera(edCinCamInterface*);
 
 	CBWCinCam BWCinCam_Obj;
 };
@@ -251,7 +272,7 @@ struct ed_sound_sample {
 
 struct CCineActorConfig {
 	CCineActorConfig();
-	CActor* pActor;
+	S_STREAM_REF<CActor> pActor;
 	uint flags;
 	float field_0x8;
 	float field_0xc;
@@ -273,6 +294,41 @@ struct S_STREAM_EVENT_CAMERA {
 	void Init();
 	void Manage(CActor* pActor);
 	void SwitchOn(CActor* pActor);
+	void Reset(CActor* pActor);
+});
+
+
+PACK(
+	struct S_STREAM_NTF_TARGET_BASE
+{
+	void Init();
+
+	union
+	{
+		int pRef; // CActor*
+		int index;
+	};
+
+	int cutsceneId;
+	uint flags;
+
+}); 
+
+struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
+{
+	void Reset();
+	bool Switch(CActor* pActor);
+
+	int messageId;
+	uint messageFlags;
+	int field_0x14;
+	undefined4 field_0x18;
+};
+
+PACK(
+struct S_STREAM_NTF_TARGET_SWITCH_LIST {
+	int count;
+	S_STREAM_NTF_TARGET_SWITCH aSwitches[];
 });
 
 struct CCinematic {
@@ -283,7 +339,10 @@ struct CCinematic {
 	void Create(struct ByteCode* pByteCode);
 	void Init();
 
+	void PreReset();
+
 	void Start();
+	void Stop();
 	void Load(long mode);
 	bool LoadInternal(long mode);
 	void Install();
@@ -292,6 +351,12 @@ struct CCinematic {
 	CActorCinematic* NewCinematicActor(const edCinGameInterface::ACTORV_CREATIONtag* pTag, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
 	CCineActorConfig* GetActorConfig(CActor* pActor);
 
+	void UninstallResources();
+
+	void Level_ClearAll();
+
+	void FUN_001c7390(bool param_2);
+
 	void Manage();
 	void ManageState_Playing();
 
@@ -299,6 +364,8 @@ struct CCinematic {
 	void IncrementCutsceneDelta();
 
 	void InstallSounds();
+
+	void Flush(bool param_2);
 
 	CActor* GetActorByHashcode(int hashCode);
 
@@ -319,10 +386,9 @@ struct CCinematic {
 	int field_0x2c;
 	float field_0x30;
 	S_STREAM_FOG_DEF streamFogDef;
-	float field_0x38;
-	float field_0x3c;
-	undefined4 field_0x40;
-	int field_0x44;
+
+	S_STREAM_REF<CActor> actorRefB;
+
 	char* pBankName_0x48;
 	int field_0x4c;
 	char* pBankName_0x50;
@@ -340,10 +406,12 @@ struct CCinematic {
 	float field_0x80;
 	ECinematicState state;
 	float field_0x88;
-	int intFieldC;
-	int field_0x90;
-	int field_0x94;
-	int field_0x98;
+
+	S_STREAM_REF<ed_zone_3d> zoneRefA;
+	S_STREAM_REF<CActor> actorHeroRef;
+	S_STREAM_REF<ed_zone_3d> zoneRefB;
+	S_STREAM_REF<ed_zone_3d> zoneRefC;
+	
 	int cineActorConfigCount;
 	CCineActorConfig* aCineActorConfig;
 	undefined field_0xa4;
@@ -407,9 +475,9 @@ struct CCinematic {
 	float totalCutsceneDelta;
 	ConditionedOperationArray condArray_0x244;
 	ScenaricCondition cond_0x248;
-	int* field_0x24c;
+	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchListA;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraA;
-	int* field_0x254;
+	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchListB;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraB;
 	int* field_0x25c;
 	int intFieldE;
@@ -448,6 +516,33 @@ struct CCinematic {
 	int field_0x2ec;
 };
 
+class CCinematicManagerB : public CObjectManager {
+public:
+	virtual void Game_Init() {};
+	virtual void Game_Term() {};
+
+	virtual void LevelLoading_Begin() {};
+	virtual void LevelLoading_End() {};
+	virtual bool LevelLoading_Manage();
+	virtual void LevelLoading_Draw() {};
+
+	virtual void Level_Init() {};
+	virtual void Level_Term() {};
+
+	virtual void Level_ClearAll() {}
+	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
+	virtual void Level_Draw() {};
+
+	virtual void Level_PreReset();
+	virtual void Level_Reset() {};
+
+	virtual void Level_PreCheckpointReset();
+	virtual void Level_CheckpointReset() {};
+
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
+};
+
 class CCinematicManager : public CObjectManager {
 public:
 	CCinematicManager::CCinematicManager();
@@ -469,6 +564,8 @@ public:
 	void WillLoadCinematic();
 
 	CCinematic* GetCurCinematic();
+
+	void NotifyCinematic(int cinematicIndex, CActor* pActor, int messageId, uint flags);
 
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;

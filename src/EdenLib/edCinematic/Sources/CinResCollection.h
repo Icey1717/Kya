@@ -23,6 +23,7 @@ struct edResCollection {
 		COT_Animation = 2,
 		COT_MeshModel = 1,
 		COT_MeshTexture = 4,
+		COT_LipTrack = 6,
 		COT_Particle = 8,
 		COT_Sound = 0,
 		COT_Text = 9,

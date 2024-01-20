@@ -187,19 +187,19 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	(this->namedObjSectionStart).meshIndex = -1;
 	(this->namedObjSectionStart).textureIndex = -1;
 	(this->namedObjSectionStart).collisionDataIndex = -1;
-	(this->namedObjSectionStart).floatFieldA = 1.0f;
-	(this->namedObjSectionStart).floatFieldB = 1.0f;
-	(this->namedObjSectionStart).floatFieldC = 1.0f;
+	(this->namedObjSectionStart).scale.x = 1.0f;
+	(this->namedObjSectionStart).scale.y = 1.0f;
+	(this->namedObjSectionStart).scale.z = 1.0f;
 	memset(&this->otherSectionStart, 0, sizeof(KyaUpdateObjA));
 	this->subObjA = (KyaUpdateObjA*)&this->otherSectionStart;
-	(this->otherSectionStart).mainComponentID_0x0 = -1;
+	(this->otherSectionStart).defaultBehaviourId = -1;
 	(this->otherSectionStart).boundingSphere.xyz = pGameInterface->boundingSphere.xyz;
 	(this->otherSectionStart).boundingSphere.w = pGameInterface->field_0x30 * 10.0f;
 	(this->otherSectionStart).floatFieldB = 1000.0f;
 	(this->otherSectionStart).floatField = 1000.0f;
 	(this->otherSectionStart).field_0x1c = 1000.0f;
 	(this->otherSectionStart).field_0x20 = 100.0f;
-	(this->otherSectionStart).count_0x3c = 1;
+	(this->otherSectionStart).animLayerCount = 1;
 	(this->otherSectionStart).field_0x2c = 1e+10f;
 	(this->otherSectionStart).field_0x30 = 1e+10f;
 	(this->otherSectionStart).flags_0x48 = 1;
@@ -306,9 +306,9 @@ void CBehaviourCinematic::Create(ByteCode* pByteCode)
 	int iVar1;
 
 	iVar1 = pByteCode->GetS32();
-	this->field_0x140 = iVar1;
-	if (this->field_0x140 == 1) {
-		this->field_0x140 = -1;
+	this->leaveCinematicBehaviourId = iVar1;
+	if (this->leaveCinematicBehaviourId == 1) {
+		this->leaveCinematicBehaviourId = -1;
 	}
 	return;
 }
@@ -380,7 +380,7 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 	return;
 }
 
-bool CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationType)
+void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	CActorCinematic* pCVar1;
 	bool bVar2;
@@ -437,7 +437,7 @@ bool CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 		}
 		this->field_0x168 = -1.0f;
 	})
-	return bVar2;
+	return;
 }
 
 void SetHierFlags_00295a30(ed_3d_hierarchy_node* pNode, byte param_2)
@@ -678,7 +678,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		break;
 	case 0xd:
 		IMPLEMENTATION_GUARD(
-		edEventComputeZoneAgainstVertex
+			CActor::DoMessage
 		((CActor*)this->pOwner, (CActor*)this->pOwner, (long)param_3, (ActorCompareStruct*)0x0);
 		bVar3 = true;)
 		break;

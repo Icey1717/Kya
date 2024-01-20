@@ -110,7 +110,8 @@ namespace VU1Emu {
 
 #define VIF_LOAD_I(reg, row, off) *(int*)(GetLocalFakeMem() + (reg << 4) + (row << 4) + (off << 2))
 #define VIF_LOAD_F(reg, off) (*(edF32VECTOR4*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
-#define VIF_LOAD_M(reg, off) (*(edF32MATRIX4*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
+#define VIF_LOAD_M3(reg, off) (*(edF32MATRIX3*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
+#define VIF_LOAD_M4(reg, off) (*(edF32MATRIX4*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
 
 #define VIF_AS_I(reg, row, off) (int*)(GetLocalFakeMem() + (reg << 4) + (row << 4) + (off << 2))
 #define VIF_AS_F(reg, off) ((edF32VECTOR4*)(GetLocalFakeMem() + (reg << 4) + (off << 4)))
@@ -170,7 +171,7 @@ namespace VU1Emu {
 		int itop;
 		int addr;
 
-		edF32VECTOR4 vf00 = { 0.0f, 0.0f, 0.0f, 1.0f };
+		const edF32VECTOR4 vf00 = { 0.0f, 0.0f, 0.0f, 1.0f };
 		edF32VECTOR4 vf01;
 		edF32VECTOR4 vf02;
 		edF32VECTOR4 vf03;
@@ -234,6 +235,16 @@ namespace VU1Emu {
 		}
 
 		void _$DrawingStart_XYZ32_Normal()
+		{
+			_$DrawingStart_Shared();
+		}
+
+		void _$DrawingBones_Rigid()
+		{
+			_$DrawingStart_Shared();
+		}
+
+		void _$DrawingBones_Rigid_noNormal()
 		{
 			_$DrawingStart_Shared();
 		}
@@ -828,10 +839,10 @@ namespace VU1Emu {
 		void _$Clipping()
 		{
 			// Obj to Screen matrix
-			vf04 = VIF_LOAD_F(vi00, 19);
-			vf03 = VIF_LOAD_F(vi00, 18);
-			vf02 = VIF_LOAD_F(vi00, 17);
-			vf01 = VIF_LOAD_F(vi00, 16);
+			vf04 = VIF_LOAD_F(vi00, 0x13);
+			vf03 = VIF_LOAD_F(vi00, 0x12);
+			vf02 = VIF_LOAD_F(vi00, 0x11);
+			vf01 = VIF_LOAD_F(vi00, 0x10);
 
 			// gFANbuffers
 			vf28 = VIF_LOAD_F(vi00, 0);
@@ -1248,9 +1259,8 @@ namespace VU1Emu {
 			const int vtxCount = vi14;
 			int vtxReg = vi15 + 1;
 
-			const edF32MATRIX4 objToScreen = VIF_LOAD_M(vi00, 16);
-			//VU_VTX_TRACE_LOG("GouraudMapping_No_Fog objToScreen matrix: \n{}", objToScreen.ToString());
-			MY_LOG("GouraudMapping_No_Fog objToScreen matrix: \n{}", objToScreen.ToString());
+			const edF32MATRIX4 objToScreen = VIF_LOAD_M4(vi00, 0x10);
+			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog objToScreen matrix: \n{}", objToScreen.ToString());
 
 			for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
 				// Vtx data
@@ -1325,10 +1335,10 @@ namespace VU1Emu {
 			vf17 = VIF_LOAD_F(vi03, 2);
 
 			// Obj to Screen matrix.
-			vf04 = VIF_LOAD_F(vi00, 19);
-			vf03 = VIF_LOAD_F(vi00, 18);
-			vf02 = VIF_LOAD_F(vi00, 17);
-			vf01 = VIF_LOAD_F(vi00, 16);
+			vf04 = VIF_LOAD_F(vi00, 0x13);
+			vf03 = VIF_LOAD_F(vi00, 0x12);
+			vf02 = VIF_LOAD_F(vi00, 0x11);
+			vf01 = VIF_LOAD_F(vi00, 0x10);
 
 			VU_VTX_TRACE_LOG("GouraudMapping_No_Fog obj to screen \n{}\n{}\n{}\n{}", vf01.ToString(), vf02.ToString(), vf03.ToString(), vf04.ToString());
 
@@ -1447,19 +1457,102 @@ namespace VU1Emu {
 			EmulateXGKICK(vi15);
 		}
 
-		void _$DrawingBones_Rigid()
+		void _$XYZW_16_ConvBones_Rigid_Simple()
 		{
-			_$DrawingStart_Shared();
+			if (vi01 & 0x400) {
+				vi01 = 0x7bff & vi01;
+
+				const int vtxCount = vi14;
+				int vtxReg = vi15 + 1;
+
+				for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
+					edF32VECTOR4* pXYZ = VIF_AS_F(vtxReg, 2);
+
+					VU_VTX_TRACE_LOG("_$XYZW_16_ConvBones_Rigid_Simple XYZ original 0x{:x} x: 0x{:x} y: 0x{:x} z: 0x{:x}", vi03, pXYZ->xi, pXYZ->yi, pXYZ->zi);
+
+					pXYZ->x = int12_to_float(pXYZ->xi);
+					pXYZ->y = int12_to_float(pXYZ->yi);
+					pXYZ->z = int12_to_float(pXYZ->zi);
+
+					VU_VTX_TRACE_LOG("_$XYZW_16_ConvBones_Rigid_Simple XYZ transformed 0x{:x} x: {} y: {} z: {}", vi03, pXYZ->x, pXYZ->y, pXYZ->z);
+
+					vtxReg += 3;
+				}
+			}
 		}
 
 		void _$XYZW_16_ConvBones_Rigid()
 		{
+			if (bRunSimplifiedCode) {
+				_$XYZW_16_ConvBones_Rigid_Simple();
+				return;
+			}
+
 			vi04 = 0x400;
 			vi04 = vi04 & vi01;
 
-			if (vi04 != 0)
-			{
-				assert(false);
+			if (vi04 != 0) {
+
+				// vtx data reg
+				vi03 = vi15;
+
+				// Vtx count
+				vi02 = vi14;
+
+				vi04 = 0x7bff;
+
+				// Load XYZ 0
+				vf14 = VIF_LOAD_F(vi03, 2);
+
+				// Load XYZ 1
+				vf24 = VIF_LOAD_F(vi03, 5);
+
+				// Conv XYZ 0
+				vf15.x = int12_to_float(vf14.xi);
+				vf15.y = int12_to_float(vf14.yi);
+				vf15.z = int12_to_float(vf14.zi);
+
+				vi01 = vi04 & vi01;
+
+				// _$XYZW_16_Conv_LoopBones_Rigid
+				while (vi02 > 0) {
+					// Load XYZ 2
+					vf04 = VIF_LOAD_F(vi03, 8);
+
+					// Conv XYZ 1
+					vf25.x = int12_to_float(vf24.xi);
+					vf25.y = int12_to_float(vf24.yi);
+					vf25.z = int12_to_float(vf24.zi);
+
+					vi02 -= 3;
+
+					// Store XYZ 0
+					VIF_AS_F(vi03, 2)->xyz = vf15.xyz;
+
+					// Load XYZ 0
+					vf14 = VIF_LOAD_F(vi03, 11);
+
+					vi03 += 9;
+
+					// Conv XYZ 2
+					vf05.x = int12_to_float(vf04.xi);
+					vf05.y = int12_to_float(vf04.yi);
+					vf05.z = int12_to_float(vf04.zi);
+
+					// Store XYZ 1
+					VIF_AS_F(vi03, -4)->xyz = vf25.xyz;
+
+					// Load XYZ 1
+					vf24 = VIF_LOAD_F(vi03, 5);
+
+					// Conv XYZ 0
+					vf15.x = int12_to_float(vf14.xi);
+					vf15.y = int12_to_float(vf14.yi);
+					vf15.z = int12_to_float(vf14.zi);
+
+					// Store XYZ 2
+					VIF_AS_F(vi03, -1)->xyz = vf05.xyz;
+				}
 			}
 		}
 
@@ -1481,7 +1574,7 @@ namespace VU1Emu {
 				edF32VECTOR4* pNormal = VIF_AS_F(normalReg++, 0);
 
 				const int animMatrixReg = pXYZ->wi & animMatrixMask;
-				const edF32MATRIX4 animMatrix = VIF_LOAD_M(animMatrixReg, 0);
+				const edF32MATRIX4 animMatrix = VIF_LOAD_M4(animMatrixReg, 0);
 
 
 				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ  0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
@@ -1785,18 +1878,101 @@ namespace VU1Emu {
 			}
 		}
 
-		void _$ParallelLightning_addcolor() {
+		void _$ParallelLightning_addcolor_Simple()
+		{
+			if (vi01 & 16) {
+				const int vtxCount = vi14;
+				int vtxReg = vi15 + 1;
+				int normalReg = vtxReg + 0xd8;
+
+				const edF32MATRIX3 lightDirections = VIF_LOAD_M3(vi00, 0x18);
+				const edF32MATRIX4 lightColors = VIF_LOAD_M4(vi00, 0x1b);
+
+				edF32VECTOR4 lightAmbient = VIF_LOAD_F(vi00, 0x20);
+				const edF32VECTOR4 lightAmbientAdjusted = { lightAmbient.x, lightAmbient.y, lightAmbient.z, 0.0f };
+
+				for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
+					edF32VECTOR4 normal = VIF_LOAD_F(normalReg++, 0);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Normal 0x{:x} x: {} y: {} z: {} w: {}", vtxReg, normal.x, normal.y, normal.z, normal.w);
+
+					normal = (lightDirections.rowZ * normal.z) + (lightDirections.rowY * normal.y) + (lightDirections.rowX * normal.x);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal 0x{:x} vf12 x: {} y: {} z: {} w: {}", vtxReg, normal.x, normal.y, normal.z, normal.w);
+
+					normal.x = std::max<float>(normal.x, 0.0f);
+					normal.y = std::max<float>(normal.y, 0.0f);
+					normal.z = std::max<float>(normal.z, 0.0f);
+					normal.w = std::max<float>(normal.w, 0.0f);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal maxed 0x{:x} vf12 x: {} y: {} z: {} w: {}", vtxReg, normal.x, normal.y, normal.z, normal.w);
+
+					normal = (lightAmbientAdjusted + vf00) + (lightColors.rowT * normal.w) + (lightColors.rowZ * normal.z) + (lightColors.rowY * normal.y) + (lightColors.rowX * normal.x);
+
+					normal.x = std::min<float>(normal.x, 255);
+					normal.y = std::min<float>(normal.y, 255);
+					normal.z = std::min<float>(normal.z, 255);
+					normal.w = std::min<float>(normal.w, 255);
+
+					edF32VECTOR4 rgba = VIF_LOAD_F(vtxReg, 1);
+
+					rgba = rgba * lightAmbient.w;
+
+					rgba = rgba * normal;
+
+					// RGBA 0 result
+					rgba.xi = rgba.x;
+					rgba.yi = rgba.y;
+					rgba.zi = rgba.z;
+					rgba.wi = rgba.w;
+
+					(*VIF_AS_F(vtxReg, 1)).xyz = rgba.xyz;
+
+					vtxReg += 3;
+				}
+			}
+		}
+
+		void _$ParallelLightning_addcolor()
+		{
+			if (bRunSimplifiedCode) {
+				_$ParallelLightning_addcolor_Simple();
+				return;
+			}
+
 			vi04 = 16;
 			vi04 = vi04 & vi01;
 
 			if (vi04 != 0x0) {
 				
-				// ???
-				vf06 = VIF_LOAD_F(vi00, 24);
-				vf07 = VIF_LOAD_F(vi00, 25);
-				vf08 = VIF_LOAD_F(vi00, 26);
+				// Light directions matrix
+				vf06 = VIF_LOAD_F(vi00, 0x18);
+				vf07 = VIF_LOAD_F(vi00, 0x19);
+				vf08 = VIF_LOAD_F(vi00, 0x1a);
 
-				vf09 = VIF_LOAD_F(vi00, 32);
+				vf06.x = -0.6192f;
+				vf06.y = 0.6087f;
+				vf06.z = 0.0f;
+				vf06.w = 0.0f;
+
+				vf07.x = -0.4442f;
+				vf07.y = 0.7061f;
+				vf07.z = 0.0f;
+				vf07.w = 0.0f;
+
+				vf08.x = 0.6475f;
+				vf08.y = 0.3618f;
+				vf08.z = 0.0f;
+				vf08.w = 0.0f;
+
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor light directions \n{}\n{}\n{}\n", vf06.ToString(), vf07.ToString(), vf08.ToString());
+
+				// Adjusted light ambient
+				vf09 = VIF_LOAD_F(vi00, 0x20);
+
+				vf09.x = 70.0568f;
+				vf09.y = 44.5816f;
+				vf09.z = 62.0958f;
+				vf09.w = 0.0078f;
+
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor adjusted light ambient vf09 x: {} y: {} z: {} w: {}", vf09.x, vf09.y, vf09.z, vf09.w);
 
 				// Vtx count
 				vi02 = vi14;
@@ -1807,89 +1983,162 @@ namespace VU1Emu {
 				// Normal reg
 				vi04 = vi03 + 216;
 
+				// Unused
 				vf28 = vf09;
+
+				// Adjusted light ambient copy
 				vf01 = vf09;
 
 				I = 255;
-				vf09.w = 1.0f;
+				vf09.w = 0.0f;
 
-				// Normal 0
+				// Load Normal 0
 				vf11 = VIF_LOAD_F(vi04++, 0);
+				vf11.x = 0.3259f;
+				vf11.y = -0.6334f;
+				vf11.z = -0.1107f;
+				vf11.w = 0.0f;
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Normal 0x{:x} vf11 x: {} y: {} z: {} w: {}", vi04 - 1, vf11.x, vf11.y, vf11.z, vf11.w);
 
-				// ???
-				vf02 = VIF_LOAD_F(vi00, 27);
-				vf03 = VIF_LOAD_F(vi00, 28);
-				vf04 = VIF_LOAD_F(vi00, 29);
-				vf05 = VIF_LOAD_F(vi00, 30);
+				// Light colour matrix
+				vf02 = VIF_LOAD_F(vi00, 0x1b);
+				vf03 = VIF_LOAD_F(vi00, 0x1c);
+				vf04 = VIF_LOAD_F(vi00, 0x1d);
+				vf05 = VIF_LOAD_F(vi00, 0x1e);
 
+				vf02.x = 79.61f;
+				vf02.y = 84.3866f;
+				vf02.z = 85.9788f;
+				vf02.w = 0.0f;
+
+				vf03.x = 103.493f;
+				vf03.y = 103.493f;
+				vf03.z = 103.493f;
+				vf03.w = 0.0f;
+
+				vf04.x = 0.0f;
+				vf04.y = 0.0f;
+				vf04.z = 0.0f;
+				vf04.w = 0.0f;
+
+				vf05.x = 0.0f;
+				vf05.y = 0.0f;
+				vf05.z = 0.0f;
+				vf05.w = 0.0f;
+
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor light color \n{}\n{}\n{}\n{}", vf02.ToString(), vf03.ToString(), vf04.ToString(), vf05.ToString());
+
+				// Normal 0 * Light directions
 				vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal 0x{:x} vf12 x: {} y: {} z: {} w: {}", vi04 - 1, vf12.x, vf12.y, vf12.z, vf12.w);
 
-				// MAXx.xyzw
+				// Normal 0 MAXx.xyzw
 				vf13.x = std::max<float>(vf12.x, 0.0f);
 				vf13.y = std::max<float>(vf12.y, 0.0f);
 				vf13.z = std::max<float>(vf12.z, 0.0f);
 				vf13.w = std::max<float>(vf12.w, 0.0f);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor maxed Normal 0x{:x} vf13 x: {} y: {} z: {} w: {}", vi04 - 1, vf13.x, vf13.y, vf13.z, vf13.w);
 
-				// Normal 1
+				// Load Normal 1
 				vf11 = VIF_LOAD_F(vi04++, 0);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor normal 0x{:x} vf11 x: {} y: {} z: {} w: {}", vi04 - 1, vf11.x, vf11.y, vf11.z, vf11.w);
 
+				// Normal 1 * Light directions
 				vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal 0x{:x} vf12 x: {} y: {} z: {} w: {}", vi04 - 1, vf12.x, vf12.y, vf12.z, vf12.w);
 
-				// RGBA 0
+				// Load RGBA 0
 				vf10 = VIF_LOAD_F(vi03, 1);
 
-				vf14 = vf09 + (vf05 * vf13.w) + (vf04 * vf13.z) + (vf03 * vf13.y) + (vf02 * vf13.x);
+				vf10.x = 25.0f;
+				vf10.y = 25.0f;
+				vf10.z = 25.0f;
+				vf10.w = 0.0f;
 
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor RGBA 0x{:x} vf10 r: {} g: {} b: {} a: 0x{:x}", vi03, vf10.x, vf10.y, vf10.z, vf10.wi);
+
+				// Maxed Normal 0 * Light colour
+				vf14 = (vf09 + vf00) + (vf05 * vf13.w) + (vf04 * vf13.z) + (vf03 * vf13.y) + (vf02 * vf13.x);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed light color 0x{:x} vf06 x: {} y: {} z: {} w: {}", vi04 - 1, vf14.x, vf14.y, vf14.z, vf14.w);
+
+				// RGBA 0 * Light ambient w
 				vf18 = vf10 * vf01.w;
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor RGBA 0x{:x} vf18 r: {} g: {} b: {} a: {}", vi03, vf18.x, vf18.y, vf18.z, vf18.w);
 
-				// Normal 2
+				// Load Normal 2
 				vf11 = VIF_LOAD_F(vi04++, 0);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Normal 0x{:x} vf11 x: {} y: {} z: {} w: {}", vi04 - 1, vf11.x, vf11.y, vf11.z, vf11.w);
 
-				// MAXx.xyzw
+				// Normal 1 MAXx.xyzw
 				vf13.x = std::max<float>(vf12.x, 0.0f);
 				vf13.y = std::max<float>(vf12.y, 0.0f);
 				vf13.z = std::max<float>(vf12.z, 0.0f);
 				vf13.w = std::max<float>(vf12.w, 0.0f);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor maxed Normal 0x{:x} vf13 x: {} y: {} z: {} w: {}", vi04 - 1, vf13.x, vf13.y, vf13.z, vf13.w);
 
+				// Normal 2 * Light directions
 				vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal 0x{:x} vf12 x: {} y: {} z: {} w: {}", vi04 - 1, vf12.x, vf12.y, vf12.z, vf12.w);
 
 				// _$ParallelLightning_mulcolor_Loop
 				while (vi02 > 0) {
+					// MINIi Light Color 0
 					vf15.x = std::min<float>(vf14.x, I);
 					vf15.y = std::min<float>(vf14.y, I);
 					vf15.z = std::min<float>(vf14.z, I);
 					vf15.w = std::min<float>(vf14.w, I);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor MINIi 0x{:x} vf15 x: {} y: {} z: {} w: {}", vi03, vf15.x, vf15.y, vf15.z, vf15.w);
 
-					// RGBA 1
+					// Load RGBA 1
 					vf10 = VIF_LOAD_F(vi03, 4);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor RGBA 0x{:x} vf10 r: {} g: {} b: {} a: 0x{:x}", vi03 + 3, vf10.x, vf10.y, vf10.z, vf10.wi);
 
-					vf14 = vf09 + (vf05 * vf13.w) + (vf04 * vf13.z) + (vf03 * vf13.y) + (vf02 * vf13.x);
+					// Normal 1 * Light colour
+					vf14 = (vf09 + vf00) + (vf05 * vf13.w) + (vf04 * vf13.z) + (vf03 * vf13.y) + (vf02 * vf13.x);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed light color 0x{:x} vf06 x: {} y: {} z: {} w: {}", vi04 - 1, vf14.x, vf14.y, vf14.z, vf14.w);
 
+					// MINIi * RGBA 0
 					vf16 = vf15 * vf18;
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Final RGBA 0x{:x} vf16 r: {} g: {} b: {} a: {}", vi03, vf16.x, vf16.y, vf16.z, vf16.w);
 
+					// RGBA 1 * Light ambient w
 					vf18 = vf10 * vf01.w;
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor RGBA 0x{:x} vf18 r: {} g: {} b: {} a: {}", vi03, vf18.x, vf18.y, vf18.z, vf18.w);
 
-					// Normal 0
+					// Load Normal 0
 					vf11 = VIF_LOAD_F(vi04++, 0);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Normal 0x{:x} vf11 x: {} y: {} z: {} w: {}", vi04 - 1, vf11.x, vf11.y, vf11.z, vf11.w);
 
 					vi02 -= 1;
 					vi03 += 3;
 
+					// RGBA 0 result
 					vf17.xi = vf16.x;
 					vf17.yi = vf16.y;
 					vf17.zi = vf16.z;
 					vf17.wi = vf16.w;
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Final RGBA integer 0x{:x} vf16 R: {} G: {} B: {} A: {}", vi03 - 3, vf17.xi, vf17.yi, vf17.zi, vf17.wi);
 
-					// MAXx.xyzw
+					// Normal 2 MAXx.xyzw
 					vf13.x = std::max<float>(vf12.x, 0.0f);
 					vf13.y = std::max<float>(vf12.y, 0.0f);
 					vf13.z = std::max<float>(vf12.z, 0.0f);
 					vf13.w = std::max<float>(vf12.w, 0.0f);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor maxed Normal 0x{:x} vf13 x: {} y: {} z: {} w: {}", vi04 - 1, vf13.x, vf13.y, vf13.z, vf13.w);
 
+					// Normal 0 * Light directions
 					vf12 = (vf08 * vf11.z) + (vf07 * vf11.y) + (vf06 * vf11.x);
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal 0x{:x} vf12 x: {} y: {} z: {} w: {}", vi04 - 1, vf12.x, vf12.y, vf12.z, vf12.w);
 
+					// Store RGBA 0
 					(*VIF_AS_F(vi03, -2)).xyz = vf17.xyz;
+
+					VU_VTX_TRACE_LOG("\n");
 				}
+			}
+			else {
+				_$Lightning_Ambiant();
+				_$Lightning_Repack();
 			}
 		}
 
@@ -1934,11 +2183,6 @@ namespace VU1Emu {
 			if (vi04 != 0) {
 				IMPLEMENTATION_GUARD();
 			}
-		}
-
-		void _$DrawingBones_Rigid_noNormal()
-		{
-			_$DrawingStart_Shared();
 		}
 
 		void _$XYZW_16_ConvBones_Rigid_noNormal()
@@ -2076,10 +2320,6 @@ namespace VU1Emu {
 
 				_$ParallelLightning_addcolor();
 
-				_$Lightning_Ambiant();
-
-				_$Lightning_Repack();
-
 				_$Env_Mapping();
 
 				// _$No_Env_Mapping
@@ -2100,10 +2340,6 @@ namespace VU1Emu {
 				_$UnpackData_XYZ32_Normal();
 
 				_$ParallelLightning_addcolor();
-
-				_$Lightning_Ambiant();
-
-				_$Lightning_Repack();
 
 				_$Env_Mapping();
 			}

@@ -20,6 +20,7 @@ struct edCinCamInterface {
 	virtual bool SetPos(float x, float y, float z) = 0;
 	virtual bool SetHeadingQuat(float x, float y, float z, float w) = 0;
 	virtual bool SetHeadingEuler(float x, float y, float z, bool param_5) = 0;
+	virtual bool Shutdown() = 0;
 };
 
 struct edCinActorInterface {
@@ -46,6 +47,7 @@ struct edCinActorInterface {
 	virtual bool SetHeadingQuat(float x, float y, float z, float w) = 0;
 	virtual bool SetScale(float x, float y, float z) = 0;
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag) = 0;
+	virtual bool Shutdown() = 0;
 };
 
 struct edCinSceneryInterface {
@@ -97,12 +99,18 @@ struct edCinGameInterface
 		byte textureType;
 	};
 
-	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*) = 0;
 	virtual char* GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut) = 0;
+	virtual bool ReleaseResource(byte, bool, void*) = 0;
+
 	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag) = 0;
 	virtual bool GetActor(edCinActorInterface** ppActorInterface, int hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag) = 0;
+	virtual bool ReleaseActor(edCinActorInterface*) = 0;
+
 	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag) = 0;
-	virtual bool ReleaseResource(uint, bool) = 0;
+	virtual bool ReleaseScenery(edCinSceneryInterface*) = 0;
+
+	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*) = 0;
+	virtual bool ReleaseCamera(edCinCamInterface*) = 0;
 };
 
 PACK(
@@ -116,6 +124,8 @@ struct edCinematicSource {
 	bool Create(edCinGameInterface& loadObj, edResCollection& resPtr);
 	bool Initialize();
 	bool Timeslice(float currentPlayTime, uint param_3);
+	bool Shutdown();
+	bool Destroy(edCinGameInterface& pCinGameInterface);
 	edCinematicSourceInternal* pInternal;
 };
 
@@ -165,12 +175,14 @@ struct edCinematicTag {
 struct edCinematic {
 	edCinematicTag* pCinTag;
 	int* fileStart;
-	edResCollection* pRes;
+	edResCollectionHeader* pRes;
 	bool ExtractVersions(int size, int* cinematicLibraryVersion, int* cinematicCompilerVersion);
 	bool Create(edCinGameInterface& pInterface, const char* fileName);
 	bool Create(edCinGameInterface& pInterface, void* cinFileBuffer, int bufferLength);
 	bool Initialize();
 	bool Timeslice(float deltaTime, FrameInfo* pFrameInfo);
+	bool Shutdown();
+	bool Destroy(edCinGameInterface& pCinGameInterface);
 };
 
 

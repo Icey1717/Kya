@@ -373,7 +373,7 @@ void CGlobalDListManager::Level_Create()
 	//	puVar4[-5] = 0;
 	//	puVar4 = puVar4 + -6;
 	//} while (-1 < iVar7);
-	iVar7 = (CScene::ptable.g_ActorManager_004516a4)->actorCount;
+	iVar7 = (CScene::ptable.g_ActorManager_004516a4)->nbActors;
 	iVar10 = 0;
 	if (0 < iVar7) {
 		IMPLEMENTATION_GUARD_LOG(

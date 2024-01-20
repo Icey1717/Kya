@@ -16,7 +16,7 @@ void FUN_003379e0(ByteCode* pByteCode)
 
 void CActorDCA::Create(ByteCode* pByteCode)
 {
-	CollisionData* pCVar1;
+	CCollision* pCVar1;
 	float fVar2;
 	int iVar3;
 	uint uVar4;

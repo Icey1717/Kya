@@ -5,7 +5,7 @@ CActorCompanion* CActorCompanion::_gThis = NULL;
 
 void CActorCompanion::Create(ByteCode* pByteCode)
 {
-	CollisionData* pCVar1;
+	CCollision* pCVar1;
 	int iVar2;
 	int* piVar3;
 

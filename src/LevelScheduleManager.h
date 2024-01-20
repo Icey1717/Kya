@@ -590,6 +590,7 @@ struct LevelInfo {
 };
 
 typedef int SCENARIC_VARIABLE;
+class CActor;
 
 class LevelScheduleManager : public CObjectManager {
 public:
@@ -617,6 +618,8 @@ public:
 	static int SaveGame_GetMaxBufferSize();
 
 	static int ScenVar_Get(SCENARIC_VARIABLE param_1);
+
+	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6);
 
 public:
 

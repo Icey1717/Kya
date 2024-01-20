@@ -12,13 +12,13 @@ void CActorManager::Level_Init()
 
 	IMPLEMENTATION_GUARD_LOG(
 	CActorManager::PrecomputeSectorsBoundindBoxes(this);
-	CCluster::Init(&this->cluster, this->actorCount, this->pActorManagerSectorArray, 0););
+	CCluster::Init(&this->cluster, this->nbActors, this->pActorManagerSectorArray, 0););
 
-	for (int i = 0; i < this->actorCount; i++) {
+	for (int i = 0; i < this->nbActors; i++) {
 		this->aActors[i]->PreInit();
 	}
 
-	for (int i = 0; i < this->actorCount; i++) {
+	for (int i = 0; i < this->nbActors; i++) {
 		this->aActors[i]->Init();
 	}
 
@@ -30,163 +30,259 @@ void CActorManager::Level_Init()
 
 void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 {
-	//ManagerFunctionData* pMVar1;
-	undefined* puVar2;
-	int actorCount;
-	void* papAVar3;
-	int* pAlloc;
-	int* piVar4;
-	AnimationController* pAVar5;
-	int iVar6;
-	int iVar7;
-	int iVar8;
-	//ManagerFunctionData** ppMVar9;
-	uint uVar10;
-	int iVar11;
-	CActor* pKVar12;
-	int iVar12;
-	uint uVar13;
-	Actor* pActorBase;
-	Actor* iVar2;
-
-	actorCount = pMemoryStream->GetS32();
-	this->actorCount = actorCount;
+	int actorCount = pMemoryStream->GetS32();
+	this->nbActors = actorCount;
 
 	ACTOR_LOG(LogLevel::Info, "CActorManager::Level_AddAll count: {}", actorCount);
 
-	if (this->actorCount < 1) {
+	if (this->nbActors < 1) {
 		this->aActors = (CActor**)0x0;
-		this->componentsToUpdate = (void**)0x0;
-		this->elementArrayStart = (void**)0x0;
+		this->aActiveActors = (CActor**)0x0;
+		this->aSectorActors = (CActor**)0x0;
 	}
 	else {
-		papAVar3 = new void*[this->actorCount * 3];
-		this->aActors = (CActor**)papAVar3;
-		this->componentsToUpdate = (void**)(this->aActors + this->actorCount);
-		this->elementArrayStart = (void**)(this->componentsToUpdate + this->actorCount);
+		this->aActors = new CActor*[this->nbActors * 3];
+		this->aActiveActors = this->aActors + this->nbActors;
+		this->aSectorActors = this->aActiveActors + this->nbActors;
 	}
 
+	// #Debug
 	ACTOR_CLASS lastClass;
 
 	for (; 0 < actorCount; actorCount = actorCount + -1) {
 
 		pMemoryStream->GetChunk();
-		iVar11 = pMemoryStream->GetS32();
-		uVar13 = pMemoryStream->GetU32();
+		int actorIndex = pMemoryStream->GetS32();
+		uint actorType = pMemoryStream->GetU32();
 
-		CClassInfo* pClassInfo = &this->aClassInfo[uVar13];
-		CActor* pKVar12 = (CActor*)(((char*)pClassInfo->aActors) + (pClassInfo->allocatedCount * pClassInfo->size));
+		CClassInfo* pClassInfo = &this->aClassInfo[actorType];
+		CActor* pActor = (CActor*)(((char*)pClassInfo->aActors) + (pClassInfo->allocatedCount * pClassInfo->size));
 
 		pClassInfo->allocatedCount = pClassInfo->allocatedCount + 1;
 
-		pKVar12->actorManagerIndex = iVar11;
-		pKVar12->typeID = (ACTOR_CLASS)uVar13;
+		pActor->actorManagerIndex = actorIndex;
+		pActor->typeID = (ACTOR_CLASS)actorType;
 
-		ACTOR_LOG(LogLevel::Info, "{0} type: 0x{1:x} ({1})", actorCount, pKVar12->typeID);
+		ACTOR_LOG(LogLevel::Info, "{0} type: 0x{1:x} ({1})", actorCount, pActor->typeID);
 
-		pKVar12->Create(pMemoryStream);
+		pActor->Create(pMemoryStream);
 
-		lastClass = pKVar12->typeID;
+		lastClass = pActor->typeID;
 
-		this->aActors[iVar11] = pKVar12;
+		this->aActors[actorIndex] = pActor;
 	}
-	if (this->actorCount != 0) {
-		IMPLEMENTATION_GUARD_LOG(
-		edMemSetFlags(H_MAIN, 0x100);
-		pAlloc = (int*)operator.new.array((long)(this->actorCount << 2));
-		edMemClearFlags(H_MAIN, 0x100);
-		actorCount = 0;
-		uVar13 = 0;
-		iVar12 = 0;
-		iVar11 = 0;
-		if (0 < this->actorCount) {
-			iVar6 = 0;
-			piVar4 = pAlloc;
-			do {
-				iVar2 = *(Actor**)((int)*this->aActors + iVar6);
-				if ((iVar2->data).field_0x110 == (undefined*)0x0) {
-					*piVar4 = 0;
+
+	if (this->nbActors != 0) {
+		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
+		int* aActorLayerCounts = new int[this->nbActors];
+		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
+
+		int animationCount = 0;
+		int animLayerCount = 0;
+		int shadowCount = 0;
+
+		if (0 < this->nbActors) {
+
+			for (int i = 0; i < this->nbActors; i++) {
+				CActor* pActor = this->aActors[i];
+
+				if (pActor->field_0x110 == (undefined*)0x0) {
+					aActorLayerCounts[i] = 0;
 				}
 				else {
-					actorCount = actorCount + 1;
-					iVar7 = 0;
-					iVar8 = 0;
-					uVar10 = 1;
+					animationCount = animationCount + 1;
+					int iVar7 = 0;
+					int iVar8 = 0;
+					uint uVar10 = 1;
 					do {
-						if ((((iVar2->data).subObjA)->count_0x3c & uVar10) != 0) {
+						if ((pActor->subObjA->animLayerCount & uVar10) != 0) {
 							iVar7 = iVar7 + 1;
 						}
 						iVar8 = iVar8 + 1;
 						uVar10 = uVar10 << 1;
 					} while (iVar8 < 4);
-					*piVar4 = iVar7;
-					uVar13 = uVar13 + iVar7;
+					aActorLayerCounts[i] = iVar7;
+					animLayerCount = animLayerCount + iVar7;
 				}
-				if (*(int*)&((iVar2->data).subObjA)->field_0x40 != 0) {
-					iVar12 = iVar12 + 1;
+
+				if (pActor->subObjA->field_0x40 != 0) {
+					shadowCount = shadowCount + 1;
 				}
-				iVar11 = iVar11 + 1;
-				iVar6 = iVar6 + 4;
-				piVar4 = piVar4 + 1;
-			} while (iVar11 < this->actorCount);
+			}
 		}
-		if (actorCount != 0) {
-			this->count_0x70 = 0;
-			this->field_0x74 = actorCount;
-			uVar10 = this->field_0x74;
-			piVar4 = (int*)operator.new.array((long)(int)(uVar10 * 0x58 + 0x10));
-			pAVar5 = (AnimationController*)
-				__construct_new_array
-				(piVar4, AnimationController::Constructor_00180ea0, AnimationController::Free_00180c10, 0x58,
-					uVar10);
-			this->pAnimationControllerArray_0x6c = pAVar5;
-			this->field_0x7c = 0;
-			this->field_0x80 = uVar13;
-			piVar4 = (int*)operator.new.array((long)(int)(uVar13 * 0xd8 + 0x10));
-			piVar4 = __construct_new_array(piVar4, (ActorConstructorA*)&LAB_00107a60, (ActorConstructorB*)0x0, 0xd8, uVar13);
-			this->field_0x78 = (undefined*)piVar4;
+
+		if (animationCount != 0) {
+			this->initializedAnimationCount = 0;
+			this->animationCount = animationCount;
+			this->aAnimation = new CAnimation[this->animationCount];
+
+			this->initalizedAnimLayerCount = 0;
+			this->animLayerCount = animLayerCount;
+			this->aAnimLayers = new edAnmLayer[animLayerCount];
 		}
-		if (iVar12 != 0) {
-			this->field_0x88 = 0;
-			this->field_0x8c = iVar12;
-			uVar13 = this->field_0x8c;
-			piVar4 = (int*)operator.new.array((long)(int)(uVar13 * 0x60 + 0x10));
-			piVar4 = __construct_new_array(piVar4, FUN_00113b20, FUN_001074d0, 0x60, uVar13);
-			this->pActor_0x84 = (undefined*)piVar4;
+
+		if (shadowCount != 0) {
+			this->initializedShadowCount = 0;
+			this->shadowCount = shadowCount;
+			this->aShadows = new CShadow[this->shadowCount];
 		}
-		actorCount = 0;
-		if (0 < this->actorCount) {
-			iVar11 = 0;
-			piVar4 = pAlloc;
-			do {
-				iVar12 = *piVar4;
-				pActorBase = *(Actor**)((int)*this->aActors + iVar11);
-				if (iVar12 != 0) {
-					iVar6 = this->field_0x7c;
-					puVar2 = this->field_0x78;
-					this->field_0x7c = iVar6 + iVar12;
-					iVar7 = this->count_0x70;
-					this->count_0x70 = iVar7 + 1;
-					pAVar5 = this->pAnimationControllerArray_0x6c;
-					(pActorBase->data).pAnimationController = pAVar5 + iVar7;
-					AnimationController::Setup_00180c60
-					(pAVar5 + iVar7, pActorBase, ((pActorBase->data).subObjA)->count_0x3c,
-						(AnimationSubObj*)(puVar2 + iVar6 * 0xd8), iVar12);
+
+		if (0 < this->nbActors) {
+			for (int i = 0; i < this->nbActors; i++) {
+				CActor* pActor = this->aActors[i];
+				const int layerCount = aActorLayerCounts[i];
+
+				if (layerCount != 0) {
+					pActor->pAnimationController = &this->aAnimation[this->initializedAnimationCount];
+
+					pActor->pAnimationController->Create(pActor, pActor->subObjA->animLayerCount, this->aAnimLayers + this->initalizedAnimLayerCount, layerCount);
+
+					this->initalizedAnimLayerCount += layerCount;
+					this->initializedAnimationCount++;
 				}
-				if (*(int*)&((pActorBase->data).subObjA)->field_0x40 == 0) {
-					Actor::SetupFunc_00105040(pActorBase, (GroundObject*)0x0);
+
+				if (pActor->subObjA->field_0x40 == 0) {
+					IMPLEMENTATION_GUARD_LOG(
+					pActor->SetupShadow((CShadow*)0x0);)
 				}
 				else {
-					iVar12 = this->field_0x88;
-					this->field_0x88 = iVar12 + 1;
-					Actor::SetupFunc_00105040(pActorBase, (GroundObject*)(this->pActor_0x84 + iVar12 * 0x60));
+					IMPLEMENTATION_GUARD_LOG(
+					pActor->SetupShadow(&this->aShadows[this->initializedShadowCount]);)
+					this->initializedShadowCount++;
 				}
-				actorCount = actorCount + 1;
-				iVar11 = iVar11 + 4;
-				piVar4 = piVar4 + 1;
-			} while (actorCount < this->actorCount);
+			}
 		}
-		edMemFree(pAlloc);)
+		delete[] aActorLayerCounts;
+	}
+	return;
+}
+
+void CActorManager::Level_Manage()
+{
+	int iVar1;
+	uint uVar2;
+	edF32VECTOR4 localVector;
+	int updatedComponentCount;
+	ulong uVar3;
+	ulong uVar4;
+	uint counter;
+	CActor** updatedComponentsArray;
+	CActor** ppSectorACtors;
+	CActor** ppCVar5;
+	CActor** ppActors;
+	CActor* pActor;
+	float eleX;
+	float eleY;
+	float eleZ;
+	
+	// Clusterizers
+	nbSectorActors = this->aClassInfo[0x18].totalCount;
+	for (counter = 0; (int)counter < nbSectorActors; counter = counter + 1) {
+		this->aClassInfo[0x18].aActors[counter].Manage();
+	}
+
+	localVector.xyz = CCameraManager::_gThis->transformationMatrix.rowT.xyz;
+
+	this->nbActiveActors = 0;
+
+	ppActors = this->aSectorActors;
+	updatedComponentsArray = this->aActiveActors;
+	ppSectorACtors = ppActors + this->nbSectorActors;
+	for (; ppActors < ppSectorACtors; ppActors = ppActors + 1) {
+		pActor = *ppActors;
+		if ((pActor->flags & 0x800000) == 0) {
+
+			eleX = pActor->sphereCentre.x - localVector.x;
+			eleY = pActor->sphereCentre.y - localVector.y;
+			eleZ = pActor->sphereCentre.z - localVector.z;
+			pActor->adjustedMagnitude = sqrtf(eleX * eleX + eleY * eleY + eleZ * eleZ) - pActor->sphereCentre.w;
+			uVar2 = pActor->flags;
+
+			if ((uVar2 & 8) == 0) {
+				uVar3 = (ulong)(pActor->adjustedMagnitude <= (pActor->subObjA)->floatField);
+			}
+			else {
+				if ((uVar2 & 0x10) == 0) {
+					IMPLEMENTATION_GUARD(
+					uVar3 = SEXT18(pActor->field_0xc);)
+				}
+				else {
+					IMPLEMENTATION_GUARD(
+					uVar3 = 0;
+					if ((pActor->field_0xc != '\0') &&
+						(pActor->adjustedMagnitude <= (pActor->subObjA)->floatField))
+					{
+						uVar3 = 1;
+					})
+				}
+			}
+			uVar4 = pActor->flags;
+			if (((uVar3 | uVar4 & 2) == 0) || ((uVar4 & 0x2000001) != 0)) {
+				if ((pActor->flags & 4) != 0) {
+					pActor->FUN_00101110((CActor*)0x0);
+					pActor->ChangeManageState(0);
+				}
+				pActor->UpdateVisibility();
+			}
+			else {
+				if ((uVar4 & 4) == 0) {
+					pActor->ChangeManageState(1);
+				}
+				pActor->FUN_00101110((CActor*)0x0);
+				*updatedComponentsArray = pActor;
+				updatedComponentsArray = updatedComponentsArray + 1;
+			}
+		}
+	}
+
+	updatedComponentCount = (char*)updatedComponentsArray - (char*)this->aActiveActors;
+	if (updatedComponentCount < 0) {
+		updatedComponentCount = updatedComponentCount + 3;
+	}
+
+	this->nbActiveActors = updatedComponentCount / sizeof(CActor*);
+
+	ppSectorACtors = this->aActiveActors;
+	ppCVar5 = ppSectorACtors + this->nbActiveActors;
+	for (; ppSectorACtors < ppCVar5; ppSectorACtors = ppSectorACtors + 1) {
+		/* Update animation */
+		(*ppSectorACtors)->Manage();
+	}
+
+	UpdateLinkedActors();
+	return;
+}
+
+void CActorManager::Level_Draw()
+{
+	CActor* pActor;
+	bool bShouldDraw;
+	CActor** pActorsEnd;
+	CActor** aActors;
+
+	if ((GameFlags & 0x200) == 0) {
+		aActors = this->aActiveActors;
+		pActorsEnd = aActors + this->nbActiveActors;
+		for (; aActors < pActorsEnd; aActors = aActors + 1) {
+			pActor = *aActors;
+			bShouldDraw = (pActor->flags & 0x4400) != 0;
+			if (bShouldDraw) {
+				bShouldDraw = pActor->adjustedMagnitude <= (pActor->subObjA)->field_0x1c;
+			}
+			if (bShouldDraw) {
+				pActor->Draw();
+			}
+		}
+	}
+	if ((GameFlags & 0x20) == 0) {
+		aActors = this->aSectorActors;
+		pActorsEnd = aActors + this->nbSectorActors;
+		for (; aActors < pActorsEnd; aActors = aActors + 1) {
+			pActor = *aActors;
+			if (((pActor->flags & 0x4000) != 0) && (pActor->p3DHierNode != (ed_3d_hierarchy_node*)0x0)) {
+				pActor->ComputeLighting();
+			}
+		}
 	}
 	return;
 }
@@ -201,22 +297,21 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	float fVar6;
 	float fVar7;
 	int iVar8;
-	CActor* pCVar9;
+	CActor** pActorItr;
 	CActor* pActor;
-	Actor* pOtherActor;
 
 	if (oldSectorId != -1) {
-		pCVar9 = (CActor*)this->elementArrayStart;
-		for (iVar8 = this->numElements; 0 < iVar8; iVar8 = iVar8 + -1) {
-			IMPLEMENTATION_GUARD(
-			pActor = *(CActor**)pCVar9;
-			if (oldSectorId == (pActor->data).field_0x0) {
-				CActor::EvaluateManageState(pActor);
-				CActor::EvaluateDisplayState(pActor);
+		pActorItr = this->aSectorActors;
+		for (iVar8 = this->nbSectorActors; 0 < iVar8; iVar8 = iVar8 + -1) {
+			pActor = *pActorItr;
+			if (oldSectorId == pActor->objectId) {
+				pActor->EvaluateManageState();
+				pActor->EvaluateDisplayState();
 			}
-			pCVar9 = (CActor*)((int)pCVar9 + 4);)
+			pActorItr = pActorItr + 1;
 		}
 	}
+
 	if (newSectorId == -1) {
 		IMPLEMENTATION_GUARD(
 		SetWorldBox((int)&this->kyaChild, (undefined8*)this->pActorManagerSectorArray, 0);)
@@ -226,37 +321,82 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 		SetWorldBox((int)&this->kyaChild, (undefined8*)(this->pActorManagerSectorArray + newSectorId),
 			(long)*(int*)((CScene::ptable.g_SectorManager_00451670)->subObjArray[newSectorId].pFileData + 8) & 1);)
 	}
-	fVar5 = (CCameraManager::_gThis->transformationMatrix).da;
-	fVar6 = (CCameraManager::_gThis->transformationMatrix).db;
-	fVar7 = (CCameraManager::_gThis->transformationMatrix).dc;
-	this->numElements = 0;
-	pCVar9 = (CActor*)this->aActors;
-	for (iVar8 = this->actorCount; 0 < iVar8; iVar8 = iVar8 + -1) {
-		IMPLEMENTATION_GUARD_LOG(
-		pOtherActor = *(Actor**)pCVar9;
-		iVar1 = (pOtherActor->actorBase).data.field_0x0;
+
+	const edF32VECTOR3 sphereOffset = (CCameraManager::_gThis->transformationMatrix).rowT.xyz;
+
+	this->nbSectorActors = 0;
+	pActorItr = this->aActors;
+	for (iVar8 = this->nbActors; 0 < iVar8; iVar8 = iVar8 + -1) {
+		pActor = *pActorItr;
+		iVar1 = pActor->objectId;
 		if ((iVar1 == newSectorId) || (iVar1 == -1)) {
 			if (iVar1 == newSectorId) {
-				fVar2 = (pOtherActor->actorBase).data.sphereCentre.x - fVar5;
-				fVar3 = (pOtherActor->actorBase).data.sphereCentre.y - fVar6;
-				fVar4 = (pOtherActor->actorBase).data.sphereCentre.z - fVar7;
-				(pOtherActor->actorBase).data.adjustedMagnitude =
-					SQRT(fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4) - (pOtherActor->actorBase).data.sphereCentre.w;
+				const edF32VECTOR3 sphereCentre = pActor->sphereCentre.xyz - sphereOffset;
+				pActor->adjustedMagnitude = sqrtf(sphereCentre.x * sphereCentre.x + sphereCentre.y * sphereCentre.y + sphereCentre.z * sphereCentre.z) - pActor->sphereCentre.w;
 			}
-			CActor::EvaluateManageState((CActor*)pOtherActor);
-			CActor::EvaluateDisplayState((CActor*)pOtherActor);
-			this->elementArrayStart[this->numElements] = pOtherActor;
-			this->numElements = this->numElements + 1;
-			CActor::UpdateClusterNode((CActor*)pOtherActor);
+			pActor->EvaluateManageState();
+			pActor->EvaluateDisplayState();
+			this->aSectorActors[this->nbSectorActors] = pActor;
+			this->nbSectorActors = this->nbSectorActors + 1;
+
+			IMPLEMENTATION_GUARD_LOG(
+			pActor->UpdateClusterNode();)
 		}
-		pCVar9 = (CActor*)((int)pCVar9 + 4);)
+
+		pActorItr = pActorItr + 1;
 	}
-	for (iVar8 = 0; iVar8 < this->actorCount; iVar8 = iVar8 + 1) {
-		IMPLEMENTATION_GUARD_LOG(
-		pCVar9 = this->aActors[iVar8];
-		iVar1 = (pCVar9->data).field_0x0;
+
+	for (iVar8 = 0; iVar8 < this->nbActors; iVar8 = iVar8 + 1) {
+		pActor = this->aActors[iVar8];
+		iVar1 = pActor->objectId;
 		if ((newSectorId == iVar1) || (oldSectorId == iVar1)) {
-			(*(code*)pCVar9->pVTable->field_0x3c)(pCVar9, oldSectorId, newSectorId);
+			pActor->SectorChange(oldSectorId, newSectorId);
+		}
+	}
+	return;
+}
+
+void CActorManager::UpdateLinkedActors()
+{
+	int iVar1;
+	edF32MATRIX4* m1;
+	CActor* pCVar2;
+	float fVar3;
+	edF32VECTOR3 local_50;
+	edF32MATRIX4 local_40;
+	//CActorFighterVTable* pActor;
+
+	for (pCVar2 = this->pActorArray_0x8; pCVar2 != (CActor*)0x0; pCVar2 = *(CActor**)&pCVar2->adjustedMagnitude) {
+		IMPLEMENTATION_GUARD(
+		pActor = pCVar2->pVTable;
+		iVar1 = (pCVar2->data).objectId;
+		if (((((ActorBaseData*)&pActor->actorBase)->flags & 4) != 0) && ((*(uint*)(iVar1 + 8) & 4) != 0)) {
+			m1 = CAnimation::GetCurBoneMatrix(*(CAnimation**)(iVar1 + 0x28), (pCVar2->data).flags);
+			edF32Matrix4MulF32Matrix4Hard(&local_40, m1, *(edF32MATRIX4**)(iVar1 + 0x94));
+			fVar3 = 1.0 / (SQRT(local_40.aa * local_40.aa + local_40.ab * local_40.ab + local_40.ac * local_40.ac) + 0.0);
+			local_40.aa = local_40.aa * fVar3;
+			local_40.ab = local_40.ab * fVar3;
+			local_40.ac = local_40.ac * fVar3;
+			local_40.ad = 0.0;
+			fVar3 = 1.0 / (SQRT(local_40.ba * local_40.ba + local_40.bb * local_40.bb + local_40.bc * local_40.bc) + 0.0);
+			local_40.ba = local_40.ba * fVar3;
+			local_40.bb = local_40.bb * fVar3;
+			local_40.bc = local_40.bc * fVar3;
+			local_40.bd = 0.0;
+			fVar3 = 1.0 / (SQRT(local_40.ca * local_40.ca + local_40.cb * local_40.cb + local_40.cc * local_40.cc) + 0.0);
+			local_40.ca = local_40.ca * fVar3;
+			local_40.cb = local_40.cb * fVar3;
+			local_40.cc = local_40.cc * fVar3;
+			local_40.cd = 0.0;
+			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).x = local_40.ca;
+			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).y = local_40.cb;
+			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).z = local_40.cc;
+			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).w = 0.0;
+			edF32Matrix4ToEulerSoft(&local_40, &local_50, s_XYZ_00427e10);
+			(((ActorBaseData*)&pActor->actorBase)->rotationEuler).x = local_50.x;
+			(((ActorBaseData*)&pActor->actorBase)->rotationEuler).y = local_50.y;
+			(((ActorBaseData*)&pActor->actorBase)->rotationEuler).z = local_50.z;
+			CActor::UpdatePosition((CActor*)pActor, &local_40, (pCVar2->data).actorFieldS);
 		})
 	}
 	return;
@@ -291,7 +431,7 @@ CActor* CActorManager::GetActorByHashcode(int hashCode)
 	CActor* pCVar1;
 	int iVar1;
 
-	for (int i = 0; i < this->actorCount; i++) {
+	for (int i = 0; i < this->nbActors; i++) {
 		if (hashCode == this->aActors[i]->subObjA->hashCode) {
 			return this->aActors[i];
 		}

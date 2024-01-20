@@ -5,6 +5,9 @@
 #include "LargeObject.h"
 
 class CActor;
+class CAnimation;
+class CShadow {};
+struct edAnmLayer;
 
 struct CClassInfo {
 	CActor* aActors;
@@ -17,14 +20,17 @@ struct CActorManager : public CObjectManager {
 
 	virtual void Level_Init();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
+	virtual void Level_Manage();
+	virtual void Level_Draw();
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
+	void UpdateLinkedActors();
 	void Level_LoadClassesInfo(struct ByteCode* pMemoryStream);
 
 	CActor* GetActorByHashcode(int hashCode);
 
 	struct ActorManagerAnimLinkData* field_0x4;
-	struct Actor* pActorArray_0x8;
+	CActor* pActorArray_0x8;
 	int field_0xc;
 	struct Kya* kyaChild;
 	float field_0x14;
@@ -61,21 +67,28 @@ struct CActorManager : public CObjectManager {
 	undefined field_0x4e;
 	undefined field_0x4f;
 	struct ActorManagerSector* pActorManagerSectorArray;
+
 	CActor** aActors;
-	int actorCount;
-	void** componentsToUpdate;
-	int componentEnd;
-	void** elementArrayStart;
-	int numElements;
-	struct AnimationController* pAnimationControllerArray_0x6c;
-	int count_0x70;
-	undefined4 field_0x74;
-	undefined* field_0x78;
-	undefined4 field_0x7c;
-	undefined4 field_0x80;
-	undefined* pActor_0x84;
-	int field_0x88;
-	int field_0x8c;
+	int nbActors;
+
+	CActor** aActiveActors;
+	int nbActiveActors;
+
+	CActor** aSectorActors;
+	int nbSectorActors;
+
+	CAnimation* aAnimation;
+	int initializedAnimationCount;
+	int animationCount;
+
+	edAnmLayer* aAnimLayers;
+	int initalizedAnimLayerCount;
+	int animLayerCount;
+
+	CShadow* aShadows;
+	int initializedShadowCount;
+	int shadowCount;
+
 	CClassInfo aClassInfo[ACTOR_NUM_CLASSES];
 };
 

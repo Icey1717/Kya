@@ -18,6 +18,8 @@ public:
 	void select_language(const char* filePath, LANGUAGE languageID);
 	void prepare_buffer();
 
+	int get_entry_count();
+
 	char* get_message(ulong key, long mode);
 
 	LANGUAGE languageID;

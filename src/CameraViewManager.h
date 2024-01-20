@@ -7598,11 +7598,13 @@ struct CCameraManager : public CObjectManager {
 	bool PushCamera(int cameraIndex, int param_3);
 	bool PushCamera(CCamera* pCamera, int param_3);
 	void ApplyActiveCamera();
+	bool PopCamera(CCamera* pCameraView);
+
 	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
 
 	float time_0x4;
-	uint field_0x8;
+	uint flags;
 	undefined field_0xc;
 	undefined field_0xd;
 	undefined field_0xe;

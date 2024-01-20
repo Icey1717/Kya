@@ -3,7 +3,7 @@
 
 void CActorGravityAware::Create(ByteCode* pByteCode)
 {
-	CollisionData* pCVar1;
+	CCollision* pCVar1;
 	CBehaviour* pCVar2;
 	int* piVar3;
 

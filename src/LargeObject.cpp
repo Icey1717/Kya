@@ -36,6 +36,8 @@
 #include "AnmManager.h"
 #include "DlistManager.h"
 #include "CollisionManager.h"
+#include "LightManager.h"
+#include "EventManager.h"
 
 CScene* CScene::_pinstance = NULL;
 
@@ -231,11 +233,7 @@ CScene::CScene()
 	CScene::ptable.g_CameraManager_0045167c = pCameraViewmanager;
 	pSectorManager = new CSectorManager;
 	CScene::ptable.g_SectorManager_00451670 = pSectorManager;
-	//pLightManager = (LightManager*)Allocate(0x120);
-	//if (pLightManager != (LightManager*)0x0) {
-	//	pLightManager = LightManager::Constructor_002170a0(pLightManager);
-	//}
-	//g_LightManager_004516b0 = pLightManager;
+	CScene::ptable.g_LightManager_004516b0 = new CLightManager;
 	p3DFileManager = new C3DFileManager();
 	CScene::ptable.g_C3DFileManager_00451664 = p3DFileManager;
 	CScene::ptable.g_CollisionManager_00451690 = new CCollisionManager;
@@ -254,12 +252,8 @@ CScene::CScene()
 	CScene::ptable.g_WayPointManager_0045169c = new CWayPointManager;
 	CScene::ptable.g_PathManager_004516a0 = new CPathManager;
 	CScene::ptable.g_ActorManager_004516a4 = new CActorManager;
-	//g_CinematicManager_0045166c = (ManagerFunctionData**)Allocate(4);
-	//if (g_CinematicManager_0045166c != (ManagerFunctionData**)0x0) {
-	//	*g_CinematicManager_0045166c = &g_ManagerDefaultFuncData_0043a4e0;
-	//	*g_CinematicManager_0045166c = &ManagerFunctionData_0043dc90;
-	//}
-	pNewCinematicObject = new CCinematicManager();
+	CScene::ptable.g_CinematicManagerB_0045166c = new CCinematicManagerB;
+	pNewCinematicObject = new CCinematicManager;
 	CScene::ptable.g_CinematicManagerPtr_004516ac = pNewCinematicObject;
 
 	CScene::ptable.g_AnimManager_00451668 = new CAnimationManager;
@@ -271,11 +265,7 @@ CScene::CScene()
 	//}
 	//g_ManagerC_Alt_004516b4 = pMVar8;
 	CScene::ptable.g_EffectsManager_004516b8 = new CFxManager;
-	//pEventManager = (EventManager*)Allocate(0xc);
-	//if (pEventManager != (EventManager*)0x0) {
-	//	pEventManager = EventManager::Setup_0019e980(pEventManager);
-	//}
-	//g_EventManager_006f5080 = pEventManager;
+	CScene::ptable.g_EventManager_006f5080 = new CEventManager;
 	CScene::ptable.g_GlobalDListManager_004516bc = new CGlobalDListManager;
 	peVar11 = edVideoGetInfo();
 	local_8.posY = 0;

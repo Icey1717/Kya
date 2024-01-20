@@ -27,6 +27,7 @@
 #include "AnmManager.h"
 #include "Animation.h"
 #include "CollisionManager.h"
+#include "EventManager.h"
 
 
 LevelScheduleManager* LevelScheduleManager::gThis = NULL;
@@ -857,7 +858,7 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		Level_FillRunInfo(0xe, -1, -1);
+		Level_FillRunInfo(0x1, -1, -1);
 	}
 	return;
 }
@@ -967,25 +968,22 @@ bool BnkInstallCol(char* pFileBuffer, int length)
 
 bool BnkInstallEvents(char* pFileData, int length)
 {
-	MY_LOG("MISSING HANDLER OnEventLoaded_0019e750\n");
-	//EventManager* pEVar1;
-	//uint* pFileData_00;
-	//uint uVar2;
-	//undefined4 uVar3;
-	//MemoryStream MStack16;
-	//
-	//MemoryStream::MemoryStream(&MStack16);
-	//MemoryStream::Init(&MStack16, pFileData);
-	//MemoryStream:::Func_00189a90(&MStack16);
-	//pEVar1 = Scene::ptable.g_EventManager_006f5080;
-	//pFileData_00 = (uint*)MemoryStream:::GetPosition(&MStack16);
-	//uVar2 = edEvent::AddChunk_002590c0(pFileData_00, 0);
-	//pEVar1->activeEventChunkID_0x8 = uVar2;
-	//uVar3 = edEvent::GetEventObjCount_00259610(pEVar1->activeEventChunkID_0x8);
-	//pEVar1->field_0x4 = uVar3;
-	//edEvent::SetFunctionData_0025a0c0((int*)edEvent::FunctionDataA_0040eba0);
-	//::EmptyFunction();
-	//ByteCodeDestructor(&MStack16, -1);
+	CEventManager* pCVar1;
+	uint* pFileData_00;
+	uint uVar2;
+	undefined4 uVar3;
+	ByteCode BStack16;
+
+	BStack16.Init(pFileData);
+	BStack16.GetChunk();
+	pCVar1 = CScene::ptable.g_EventManager_006f5080;
+	pFileData_00 = (uint*)BStack16.GetPosition();
+	uVar2 = edEventAddChunk(pFileData_00, 0);
+	pCVar1->activeChunkId = uVar2;
+	uVar3 = edEventGetChunkNbEvents(pCVar1->activeChunkId);
+	pCVar1->nbEvents = uVar3;
+	//edEventRegisterDrawingFunctions((int*)event_draw_func);
+	BStack16.Term();
 	return false;
 }
 
@@ -1009,10 +1007,8 @@ bool BnkInstallLights(char* pFileData, int length)
 
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
-	MY_LOG("MISSING HANDLER OnLightLoaded_002172d0\n");
-	//(*(code*)(Scene::ptable.g_LightManager_004516b0)->pManagerFunctionData->deserializeFunc)();
-	//::EmptyFunction();
-	//ByteCodeDestructor(&MStack16, -1);
+	CScene::ptable.g_LightManager_004516b0->Level_AddAll(&MStack16);
+	MStack16.Term();
 	return false;
 }
 
@@ -1655,6 +1651,58 @@ ScenarioVariable _gScenVarInfo[30] = { 0 };
 int LevelScheduleManager::ScenVar_Get(SCENARIC_VARIABLE param_1)
 {
 	return _gScenVarInfo[param_1].field_0x0;
+}
+
+int DAT_004253fc = 0;
+
+void LevelScheduleManager::Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6)
+{
+	int iVar1;
+	char cVar2;
+	bool bVar3;
+	CActor* pCVar4;
+	CSectorManager* pSectorManager;
+
+	if ((levelId == 0x10) || (levelId != this->currentLevelID)) {
+		if ((levelId != 0x10) && (bVar3 = CScene::_pinstance->CheckFunc_001b9300(), bVar3 == false)) {
+			IMPLEMENTATION_GUARD(
+			if ((levelId == 0) && (DAT_004253fc != 0)) {
+				levelId = 6;
+			}
+			Level_FillRunInfo(levelId, elevatorId, param_6);
+			this->level_0x5b3c = cutsceneId;
+			CScene::FUN_001b9350(CScene::_pinstance, false);)
+		}
+	}
+	else {
+		if ((-1 < elevatorId) && (elevatorId < *(int*)(this->levelPath + this->currentLevelID * 0x418 + -8 + 0xa8))) {
+			IMPLEMENTATION_GUARD(
+			iVar1 = *(int*)(this->levelPath + this->currentLevelID * 0x418 + -8 + elevatorId * 0x28 + 0xf0);
+			if ((iVar1 != -1) &&
+				(pCVar4 = CScene::ptable.g_ActorManager_004516a4->GetActorByHashcode(iVar1),
+					pSectorManager = CScene::ptable.g_SectorManager_00451670, pCVar4 != (CActor*)0x0)) {
+				iVar1 = (pCVar4->data).objectId;
+				cVar2 = '\0';
+				if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
+					if (cutsceneId != -1) {
+						cVar2 = CCinematicManager::RunSectorLoadingCinematic
+						(g_CinematicManager_0048efc, cutsceneId, pActor, elevatorId, param_6);
+					}
+				}
+				else {
+					cVar2 = CCinematicManager::RunSectorLoadingCinematic
+					(g_CinematicManager_0048efc, cutsceneId, pActor, elevatorId, param_6);
+					CSectorManager::SwitchToSector(pSectorManager, iVar1, (int)cVar2);
+				}
+				if (cVar2 == '\0') {
+					this->currentElevatorID = elevatorId;
+					this->level_0x5b50 = this->currentLevelID;
+					this->level_0x5b54 = param_6;
+				}
+			})
+		}
+	}
+	return;
 }
 
 CChunk* CChunk::FindNextSubChunk(CChunk* pChunk, uint param_3)

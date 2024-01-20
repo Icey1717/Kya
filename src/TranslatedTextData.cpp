@@ -65,6 +65,11 @@ void CMessageFile::prepare_buffer()
 	return;
 }
 
+int CMessageFile::get_entry_count()
+{
+	return this->entryCount;
+}
+
 CMessageFile::CMessageFile()
 {
 	pPrev = (CMessageFile*)0x0;

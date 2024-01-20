@@ -215,7 +215,7 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 	int pEVar8;
 	ByteCode newView;
 
-	this->field_0x8 = 0x21000000;
+	this->flags = 0x21000000;
 	/* Mouse Quake */
 	AddCamera(CT_MouseQuake, &newView, s_Mouse_Quake_0042ae48);
 	/* Mouse Around */
@@ -301,7 +301,7 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 				this->pActiveCamera = pCamera;
 			}
 		}
-		this->field_0x8 = this->field_0x8 & 0xfbffffff;
+		this->flags = this->flags & 0xfbffffff;
 	}
 	this->field_0x4a0 = 0;
 	(this->transformationMatrix).rowT = gF32Vertex4Zero;
@@ -487,7 +487,7 @@ void CCameraManager::BuildDisplayMatrix()
 	edF32MATRIX4* peVar7;
 
 	if (((this->pActiveCamera->flags_0xc & 0x20000) == 0) ||
-		((this->field_0x8 & 0x4000000) != 0)) {
+		((this->flags & 0x4000000) != 0)) {
 		edF32VECTOR4 oldT = (this->transformationMatrix).rowT;
 		edF32Matrix4FromEulerSoft(&this->transformationMatrix, &this->angle_0xa08, "ZXY");
 		(this->transformationMatrix).rowT = oldT;
@@ -497,11 +497,11 @@ void CCameraManager::BuildDisplayMatrix()
 	}
 	fVar1 = Manage_EarthQuake(&(this->transformationMatrix).rowT);
 	this->displayTransformMatrix = this->transformationMatrix;
-	if ((this->field_0x8 & 0x18000000) == 0x18000000) {
+	if ((this->flags & 0x18000000) == 0x18000000) {
 		this->displayTransformMatrix = this->aCameraShadow[0]->transformationMatrix;
 	}
 	else {
-		if ((this->field_0x8 & 0x10000000) != 0) {
+		if ((this->flags & 0x10000000) != 0) {
 			this->displayTransformMatrix = this->pMouseQuakeCamera_0x4e8->transformationMatrix;
 		}
 	}
@@ -527,11 +527,11 @@ void CCameraManager::BuildDisplayMatrix()
 
 	_gDisplayCamera.calculatedRotation = _gDisplayCamera.transformMatrix.rowX;
 
-	if ((this->field_0x8 & 0x18000000) == 0x18000000) {
+	if ((this->flags & 0x18000000) == 0x18000000) {
 		fVar1 = fVar1 + this->aCameraShadow[0]->fov;
 	}
 	else {
-		if ((this->field_0x8 & 0x10000000) == 0) {
+		if ((this->flags & 0x10000000) == 0) {
 			fVar1 = fVar1 + this->fov_0xa34;
 		}
 		else {
@@ -561,7 +561,7 @@ void CCameraManager::Level_Manage()
 	float fVar13;
 
 	if (this->pActiveCamera != (CCamera*)0x0) {
-		if ((this->field_0x8 & 0x1000000) == 0) {
+		if ((this->flags & 0x1000000) == 0) {
 			pTVar4 = GetTimer();
 			this->time_0x4 = pTVar4->cutsceneDeltaTime;
 		}
@@ -590,7 +590,7 @@ void CCameraManager::Level_Manage()
 					this->pActiveCamera = pCVar1;
 				}
 			}
-			puVar9 = &this->field_0x8;
+			puVar9 = &this->flags;
 			if (switchMode == SWITCH_MODE_B) {
 				*puVar9 = *puVar9 & 0xfbffffff;
 			}
@@ -603,7 +603,7 @@ void CCameraManager::Level_Manage()
 		if ((pTVar4->timeScale != 0.0f) || ((this->pActiveCamera->flags_0xc & 0x40000) != 0)) {
 			/* Camera? */
 			pActiveCamera->Manage();
-			if ((this->field_0x8 & 0x4000000) == 0) {
+			if ((this->flags & 0x4000000) == 0) {
 				pCVar1 = (CCameraShadow*)this->pActiveCamera;
 				if (pCVar1 != (CCameraShadow*)0x0) {
 					(this->transformationMatrix).rowT = pCVar1->transformationMatrix.rowT;
@@ -632,7 +632,7 @@ void CCameraManager::Level_Manage()
 						this->pActiveCamera = pCVar1;
 					}
 				}
-				puVar9 = &this->field_0x8;
+				puVar9 = &this->flags;
 				if ((this->activeCamManager).field_0x280 == -1) {
 					*puVar9 = *puVar9 & 0xfbffffff;
 				}
@@ -673,7 +673,7 @@ void CCameraManager::Level_Manage()
 			//IMPLEMENTATION_GUARD(
 			//Func_00194e00(this);)
 		}
-		if ((this->field_0x8 & 0x10000000) != 0) {
+		if ((this->flags & 0x10000000) != 0) {
 			//IMPLEMENTATION_GUARD(
 			//this->pMouseQuakeCamera_0x4e8->Manage();
 			//)
@@ -1126,7 +1126,7 @@ CCamera::CCamera()
 
 void CCamera::Init()
 {
-	EventManager* pEVar1;
+	CEventManager* pEVar1;
 	//EventChunk_24* pEVar2;
 	//CheckpointManagerSubObjB* pCVar3;
 	//Actor* pAVar4;
@@ -1211,7 +1211,7 @@ void CCamera::ManageEvent(int param_2, int param_3)
 					iVar2 = *piVar1;
 				}
 				if (iVar2 <= iVar5) break;
-				edEventComputeZoneAgainstVertex
+				CActor::DoMessage
 				((Actor*)this->field_0x84->field_0x4, *(Actor**)((int)piVar1 + iVar4 + 4), 0x2a,
 					(ActorCompareStruct*)(uint)(0.0 < fVar6));
 				iVar4 = iVar4 + 4;
@@ -1233,7 +1233,7 @@ void CCamera::ManageEvent(int param_2, int param_3)
 						iVar2 = *piVar1;
 					}
 					if (iVar2 <= iVar5) break;
-					edEventComputeZoneAgainstVertex
+					CActor::DoMessage
 					((Actor*)this->field_0x84->field_0x4, *(Actor**)((int)piVar1 + iVar4 + 4), 0x29,
 						(ActorCompareStruct*)(uint)(0.0 < fVar6));
 					iVar4 = iVar4 + 4;
@@ -1308,7 +1308,7 @@ float CCamera::GetAngleGamma()
 
 void CCameraExt::Init()
 {
-	EventManager* pEVar1;
+	CEventManager* pEVar1;
 	//EventChunk_24* pEVar2;
 	//CheckpointManagerSubObjB* pCVar3;
 	//Actor* pAVar4;
@@ -1823,7 +1823,7 @@ bool CCameraShadow::Manage()
 {
 	int iVar1;
 	CActorManager* pCVar2;
-	LightManager* pLVar3;
+	CLightManager* pLVar3;
 	bool bVar4;
 	int iVar5;
 	Actor* pActor;
@@ -1869,8 +1869,6 @@ ECameraType CCameraMouseQuake::GetMode()
 {
 	return CT_MouseQuake;
 }
-
-edF32VECTOR4 gF32Vector4UnitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
 
 void CCameraMouseQuake::Init()
 {
@@ -1947,7 +1945,7 @@ bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 	uint* puVar3;
 
 	if (((pCamera == (CCamera*)0x0) || (uVar2 = pCamera->specCondition.IsVerified(), uVar2 == 0)) ||
-		((this->field_0x8 & 0x20000000) == 0)) {
+		((this->flags & 0x20000000) == 0)) {
 		bSuccess = false;
 	}
 	else {
@@ -1967,7 +1965,7 @@ bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 					this->pActiveCamera = pCamera_00;
 				}
 			}
-			puVar3 = &this->field_0x8;
+			puVar3 = &this->flags;
 			if (switchMode == SWITCH_MODE_B) {
 				*puVar3 = *puVar3 & 0xfbffffff;
 			}
@@ -2005,7 +2003,7 @@ bool CCameraManager::PushCamera(int cameraIndex, int param_3)
 	}
 	if (((pActiveCamera == (CCamera*)0x0) ||
 		(bVar1 = pActiveCamera->specCondition.IsVerified(), bVar1 == false)) ||
-		((this->field_0x8 & 0x20000000) == 0)) {
+		((this->flags & 0x20000000) == 0)) {
 		bVar1 = false;
 	}
 	else {
@@ -2025,7 +2023,7 @@ bool CCameraManager::PushCamera(int cameraIndex, int param_3)
 					this->pActiveCamera = pCamera;
 				}
 			}
-			puVar5 = &this->field_0x8;
+			puVar5 = &this->flags;
 			if (switchMode == SWITCH_MODE_B) {
 				*puVar5 = *puVar5 & 0xfbffffff;
 			}
@@ -2060,6 +2058,46 @@ void CCameraManager::ApplyActiveCamera()
 		(this->angle_0xa08).z = this->pActiveCamera->GetAngleGamma();
 	}
 	return;
+}
+
+bool CCameraManager::PopCamera(CCamera* pCameraView)
+{
+	SWITCH_MODE switchMode;
+	CCamera* pCamera;
+	bool bSuccess;
+	ECameraType EVar1;
+	uint* puVar2;
+
+	if ((pCameraView == (CCamera*)0x0) ||
+		(bSuccess = this->cameraStack.Pop(pCameraView), bSuccess == false)) {
+		bSuccess = false;
+	}
+	else {
+		switchMode = (this->cameraStack).switchMode;
+		pCamera = (this->cameraStack).pActiveCamera;
+		bSuccess = this->activeCamManager.SwitchActiveCam((this->cameraStack).field_0x218, pCamera, switchMode);
+		if ((bSuccess == false) && (pCamera != (CCamera*)0x0)) {
+			EVar1 = pCamera->GetMode();
+			if (EVar1 == CT_ShadowSun) {
+				IMPLEMENTATION_GUARD(
+				this->pActiveCamera = pCamera;
+				pCamera[0x22].field_0x80 = (ed_zone_3d*)0xffffffff;
+				pCamera[0x22].field_0x84 = (ActorAndWaypoint*)0x0;)
+			}
+			else {
+				this->pActiveCamera = pCamera;
+			}
+		}
+		puVar2 = &this->flags;
+		if (switchMode == SWITCH_MODE_B) {
+			*puVar2 = *puVar2 & 0xfbffffff;
+		}
+		else {
+			*puVar2 = *puVar2 | 0x4000000;
+		}
+		bSuccess = true;
+	}
+	return bSuccess;
 }
 
 PACK(

@@ -10,11 +10,11 @@ bool edCinematic::Create(edCinGameInterface& pInterface, void* pCinFileBuffer, i
 	bool bVar1;
 	char* dataPtr;
 	char* pSeekPos;
-	edResCollection* resPtr;
+	edResCollectionHeader* resPtr;
 	char* seekPos;
 	int readData;
 
-	resPtr = (edResCollection*)0x0;
+	resPtr = (edResCollectionHeader*)0x0;
 	dataPtr = (char*)0x0;
 	seekPos = (char*)pCinFileBuffer;
 	/* This statement is always true? */
@@ -28,7 +28,7 @@ bool edCinematic::Create(edCinGameInterface& pInterface, void* pCinFileBuffer, i
 			else {
 				/* If the data we read from the buffer == 'RES!' */
 				if (readData == 0x21534552) {
-					resPtr = (edResCollection*)(seekPos + 8);
+					resPtr = (edResCollectionHeader*)(seekPos + 8);
 				}
 				else {
 					/* If the data we read from the buffer == 'CIN!' */
@@ -49,7 +49,7 @@ bool edCinematic::Create(edCinGameInterface& pInterface, void* pCinFileBuffer, i
 		/* Set the read and data start points */
 		pSeekPos = (char*)(this->pCinTag + 1);
 		for (readData = pCinTag->srcCount; readData != 0; readData = readData + -1) {
-			edResCollection edResCol = { (edResCollectionHeader*)resPtr };
+			edResCollection edResCol = { resPtr };
 			edCinematicSource edSrc = { (edCinematicSourceInternal*)pSeekPos };
 			edSrc.Create(pInterface, edResCol);
 			pSeekPos = (char*)((ulong)pSeekPos + 0xc);
@@ -155,6 +155,68 @@ bool edCinematicSource::Timeslice(float currentPlayTime, uint param_3)
 		   variable */
 		edScene scene = edScene((edSCENEtag*)LOAD_SECTION(this->pInternal->pTag));
 		scene.Timeslice(currentPlayTime, param_3);
+	}
+	return true;
+}
+
+bool edCinematicSource::Shutdown()
+{
+	edCinematicSourceInternal* peVar1;
+	int iVar2;
+	edScene eStack4;
+
+	peVar1 = this->pInternal;
+	iVar2 = peVar1->type;
+	if (iVar2 == 1) {
+		eStack4 = edScene((edSCENEtag*)LOAD_SECTION(peVar1->pTag));
+		eStack4.Shutdown();
+	}
+	else {
+		if (iVar2 == 2) {
+			IMPLEMENTATION_GUARD_LOG(
+			(**(code**)(*(int*)peVar1->pTag + 0x10))();)
+		}
+		else {
+			if (iVar2 == 3) {
+				IMPLEMENTATION_GUARD_LOG(
+				(**(code**)(*(int*)peVar1->pTag + 0x18))();)
+			}
+		}
+	}
+	return true;
+}
+
+bool edCinematicSource::Destroy(edCinGameInterface& pCinGameInterface)
+{
+	edCinematicSourceInternal* pSrcTag;
+	int type;
+	edSCENEtag* peVar3;
+	edScene eStack4;
+
+	pSrcTag = this->pInternal;
+	type = pSrcTag->type;
+	if (type == 1) {
+		eStack4 = edScene((edSCENEtag*)LOAD_SECTION(pSrcTag->pTag));
+		eStack4.Destroy(pCinGameInterface);
+		this->pInternal->pTag = 0x0;
+	}
+	else {
+		if (type == 2) {
+			IMPLEMENTATION_GUARD_LOG(
+			peVar3 = pSrcTag->pTag;
+			(**(code**)(*(int*)peVar3 + 0x18))(peVar3);
+			(*(code*)pCinGameInterface->vt->ReleaseSourceAudioInterface)(pCinGameInterface, peVar3);)
+			this->pInternal->pTag = 0x0;
+		}
+		else {
+			if (type == 3) {
+				IMPLEMENTATION_GUARD_LOG(
+				peVar3 = pSrcTag->pTag;
+				(**(code**)(*(int*)peVar3 + 0x1c))(peVar3);
+				(*(code*)pCinGameInterface->vt->ReleaseSourceSubtitleInterface)(pCinGameInterface, peVar3);)
+				this->pInternal->pTag = 0x0;
+			}
+		}
 	}
 	return true;
 }
@@ -342,4 +404,40 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 		pAnimTag = (edAnimatedPropertyTag*)(((char*)pAnimTag) + pAnimTag->size);
 	}
 	return bVar1;
+}
+
+bool edCinematic::Shutdown()
+{
+	int iVar1;
+	edCinematicSourceInternal* eVar2 = (edCinematicSourceInternal*)(this->pCinTag + 1);
+
+	for (iVar1 = this->pCinTag->srcCount; 0 < iVar1; iVar1 = iVar1 + -1) {
+		edCinematicSource local_8 = { eVar2 };
+		local_8.Shutdown();
+		eVar2 = eVar2 + 1;
+	}
+
+	return true;
+}
+
+bool edCinematic::Destroy(edCinGameInterface& pCinGameInterface)
+{
+	int iVar1;
+	edCinematicSourceInternal* eVar2;
+
+	if (this->fileStart != (int*)0x0) {
+		eVar2 = (edCinematicSourceInternal*)(this->pCinTag + 1);
+		for (iVar1 = this->pCinTag->srcCount; 0 < iVar1; iVar1 = iVar1 + -1) {
+			edCinematicSource local_8 = { eVar2 };
+			local_8.Destroy(pCinGameInterface);
+			eVar2 = eVar2 + 1;
+		}
+		edResCollection local_4 = { this->pRes };
+		local_4.FlushAllResources(pCinGameInterface);
+		pCinGameInterface.ReleaseResource(0xff, false, this->fileStart);
+		this->fileStart = (int*)0x0;
+		this->pRes = (edResCollectionHeader*)0x0;
+		this->pCinTag = (edCinematicTag*)0x0;
+	}
+	return true;
 }
