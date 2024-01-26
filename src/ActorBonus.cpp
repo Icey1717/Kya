@@ -30,3 +30,38 @@ void CActorBonus::Create(ByteCode* pByteCode)
 	//this->field_0x1f0 = (pKVar1->boundingSphere).w;
 	return;
 }
+
+
+
+CBehaviour* CActorBonus::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pCVar1;
+
+	if (behaviourType == 2) {
+		pCVar1 = (CBehaviour*)0x0;
+	}
+	else {
+		if (behaviourType == 6) {
+			pCVar1 = new CCBehaviourBonusAddOn;
+		}
+		else {
+			if (behaviourType == 5) {
+					pCVar1 = &this->field_0x200;
+			}
+			else {
+				if (behaviourType == 4) {
+					pCVar1 = new CBehaviourBonusPath;
+				}
+				else {
+					if (behaviourType == 3) {
+						pCVar1 = new CBehaviourBonusTurn;
+					}
+					else {
+						pCVar1 = CActor::BuildBehaviour(behaviourType);
+					}
+				}
+			}
+		}
+	}
+	return pCVar1;
+}

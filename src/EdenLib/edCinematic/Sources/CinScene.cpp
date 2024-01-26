@@ -643,6 +643,8 @@ struct edSceneActor {
 void edSceneActor::Initialize()
 {
 	edCinActorInterface* pCinActor = (edCinActorInterface*)LOAD_SECTION(this->pObj->pCinActorInterface);
+
+	CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Initialize Init {}", this->pObj->pCinActorInterface);
 	pCinActor->Initialize();
 }
 
@@ -976,7 +978,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 											}
 											local_f0.dstAnim.field_0x4 = (local_f0.dstAnim.field_0x4 - 0.01818182f) * (float)pTrackDataStart[-3] + (float)pTrackDataStart[-4];
 										}
-										CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} anim: ", this->pObj->name);
+										CUTSCENE_LOG(LogLevel::Verbose, "edSceneActor::Timeslice Key update name: {} anim: ", this->pObj->name);
 										pCinActorInterface->SetAnim(&local_f0);
 									}
 								}
@@ -987,7 +989,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 										if (sVar2 == 2) {
 											bUpdateRotationSuccess = animatedProp.GetQuaternionValue(currentPlayTime, &outRotation);
 											if (bUpdateRotationSuccess != false) {
-												CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
+												CUTSCENE_LOG_WIN(LogLevel::Verbose, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
 												pCinActorInterface->SetHeadingQuat(outRotation.x, outRotation.y, outRotation.z, outRotation.w);
 											}
 										}
@@ -1039,7 +1041,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 														bUpdateRotationSuccess = true;
 													}
 													if (bUpdateRotationSuccess) {
-														CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
+														CUTSCENE_LOG_WIN(LogLevel::Verbose, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
 														(*(code*)pCinActorInterface->vt->SetHeadingQuat)
 															(outRotation.x, outRotation.y, outRotation.z, pCinActorInterface);
 													})
@@ -1068,7 +1070,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 												bUpdateRotationSuccess = true;
 											}
 											if (bUpdateRotationSuccess) {
-												CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} scale: {}", this->pObj->name, local_68.ToString());
+												CUTSCENE_LOG_WIN(LogLevel::Verbose, "edSceneActor::Timeslice Key update name: {} scale: {}", this->pObj->name, local_68.ToString());
 												pCinActorInterface->SetScale(local_68.x, local_68.y, local_68.z);
 											}
 										}
@@ -1095,7 +1097,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 													bUpdateRotationSuccess = true;
 												}
 												if (bUpdateRotationSuccess) {
-													CUTSCENE_LOG_WIN(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} pos: {}", this->pObj->name, locationOutVector.ToString());
+													CUTSCENE_LOG_WIN(LogLevel::Verbose, "edSceneActor::Timeslice Key update name: {} pos: {}", this->pObj->name, locationOutVector.ToString());
 													pCinActorInterface->SetPos(locationOutVector.x, locationOutVector.y, locationOutVector.z);
 												}
 											}
@@ -1106,7 +1108,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 													local_24.GetClosestKeyIndexSafe(currentPlayTime, &local_20);
 
 													const bool visibilityValue = (*(char*)(((char*)pAnimProp) + local_20 + (uint)keyframeCount * 4 + 0x10)) != '\0';
-													CUTSCENE_LOG(LogLevel::Info, "edSceneActor::Timeslice Key update name: {} vis: {}", this->pObj->name, visibilityValue);
+													CUTSCENE_LOG(LogLevel::Verbose, "edSceneActor::Timeslice Key update name: {} vis: {}", this->pObj->name, visibilityValue);
 													pCinActorInterface->SetVisibility(visibilityValue);
 												}
 											}

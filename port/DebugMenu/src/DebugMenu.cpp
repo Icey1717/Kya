@@ -301,7 +301,7 @@ namespace DebugMenu_Internal {
 				ImGui::Checkbox("Custom Time Control", &bCutsceneStepEnabled);
 
 				if (bCutsceneStepEnabled) {
-					static float cutsceneStepTime = 2.03536773f;
+					static float cutsceneStepTime = 46.f;
 					pCutscene->totalCutsceneDelta = cutsceneStepTime;
 
 					if (ImGui::Button("<<")) {

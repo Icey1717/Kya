@@ -2,9 +2,10 @@
 
 extern EFileLoadMode g_FileLoadMode_00448810;
 
-InputManager g_InputManager_00450960 = { 0 };
+CPlayerInput gPlayerInput = { 0 };
+CPlayerInput gPlayerInput_2 = { 0 };
 
-bool InputManager::SoftReset()
+bool CPlayerInput::SoftReset()
 {
 	bool bVar1;
 
@@ -14,4 +15,17 @@ bool InputManager::SoftReset()
 		bVar1 = false;
 	}
 	return bVar1;
+}
+
+CPlayerInput* GetPlayerInput(int playerId)
+{
+	CPlayerInput* pPlayerInput;
+
+	if (playerId == 0) {
+		pPlayerInput = &gPlayerInput;
+	}
+	else {
+		pPlayerInput = &gPlayerInput_2;
+	}
+	return pPlayerInput;
 }

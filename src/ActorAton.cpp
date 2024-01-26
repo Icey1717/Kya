@@ -37,6 +37,19 @@ void CActorAton::Create(ByteCode* pByteCode)
 	return;
 }
 
+CBehaviour* CActorAton::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pBehaviour;
+
+	if (behaviourType == 3) {
+		pBehaviour = &this->behaviourAtonEscape;
+	}
+	else {
+		pBehaviour = CActorAutonomous::BuildBehaviour(behaviourType);
+	}
+	return pBehaviour;
+}
+
 void CPathPlaneArray::Create(ByteCode* pByteCode)
 {
 	int iVar1;

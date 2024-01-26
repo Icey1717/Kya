@@ -19,6 +19,16 @@ public:
 	int field_0x1c;
 };
 
+class CBehaviourAton : public CBehaviour
+{
+
+};
+
+class CBehaviourAtonEscape : public CBehaviourAton
+{
+
+};
+
 class CActorAton : public CActorAutonomous {
 public:
 	CActorAton(){
@@ -26,9 +36,11 @@ public:
 	}
 
 	virtual void Create(ByteCode* pByteCode);
+	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
 	CPathPlaneArray pathPlaneArray;
 	CBehaviourAddOnAton behaviourAddOn;
+	CBehaviourAtonEscape behaviourAtonEscape;
 };
 
 #endif //ACTOR_ATON_H

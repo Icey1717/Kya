@@ -81,7 +81,7 @@ union _rgba {
 
 	uint rgba;
 
-	_rgba() {}
+	_rgba() : rgba(0) {}
 
 	_rgba(byte ir, byte ig, byte ib, byte ia)
 		: r(ir)
@@ -324,7 +324,7 @@ union
 		std::stringstream ss;
 		// Set the precision for floating-point values
 		ss << std::fixed << std::setprecision(4);
-		ss << std::setw(printWidth) << "(" << std::setw(printWidth) << x << ", " << std::setw(printWidth) << y
+		ss << "(" << x << ", " << std::setw(printWidth) << y
 			<< ", " << std::setw(printWidth) << z << ", " << std::setw(printWidth) << w << ")";
 		return ss.str();
 	}
@@ -493,9 +493,7 @@ union alignas(16)
 #define EDITOR_BUILD PLATFORM_WIN
 
 #ifdef PLATFORM_WIN
-#ifdef _DEBUG
 #define ENABLE_MY_LOG
-#endif
 #else
 #define uintptr_t int
 //#define ENABLE_MY_LOG
@@ -513,15 +511,12 @@ union alignas(16)
 #if defined(PLATFORM_WIN)
 #define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
 #define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
-#define RENDER_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
-#define RENDER_LOGF(format, ...) Log::GetInstance().AddLog(LogLevel::VeryVerbose, "Rendering", format, ##__VA_ARGS__)
 
 #define MY_LOG_CATEGORY(category, level, format, ...) Log::GetInstance().AddLog(level, category, format, ##__VA_ARGS__)
 
 #else
 #include <eekernel.h>
 #define MY_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
-#define RENDER_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
 #define MY_LOG_CATEGORY(category, level, format, ...) scePrintf(format, ##__VA_ARGS__); scePrintf("\n")
 #endif
 
@@ -550,7 +545,6 @@ inline void PrintMatrix(edF32MATRIX4* matrix)
 
 #else
 #define MY_LOG(...)
-#define RENDER_LOG(...)
 #define MY_LOG_CATEGORY(...)
 #define PRINT_VECTOR(...)
 #define PRINT_MATRIX(...)
@@ -651,7 +645,7 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 
 
 #define IMPLEMENTATION_GUARD_AUDIO(x)
-#define IMPLEMENTATION_GUARD_LOG(x) MY_LOG("IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
+#define IMPLEMENTATION_GUARD_LOG(x) MY_LOG_CATEGORY("ImplementationGuard", LogLevel::Verbose, "IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 
 #ifdef PLATFORM_WIN
 #include <assert.h>

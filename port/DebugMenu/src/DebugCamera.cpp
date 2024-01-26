@@ -15,7 +15,7 @@
 GLFWwindow* GetGLFWWindow();
 
 namespace DebugCamera {
-	static float cameraSpeed = 100.f;
+	static float cameraSpeed = 10.f;
 	static float cameraSensitivity = 0.001f;
 	static float horizontalAngle = 3.14f;
 	static float verticalAngle = 0.0f;
@@ -68,7 +68,6 @@ namespace DebugCamera {
 	void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 		auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
 		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;
-		edF32VECTOR4& cameraPosition = pCameraManager->transformationMatrix.rowT;
 		edF32MATRIX4& cameraDirection = pCameraManager->transformationMatrix;
 
 		static bool firstMouse = true;
@@ -112,7 +111,9 @@ namespace DebugCamera {
 				0.0f, 0.0f,        0.0f, 1.0f
 		};
 
+		edF32MATRIX4 cameraDirection2 = pCameraManager->transformationMatrix;
 		cameraDirection = rotationX * rotationY * cameraDirection;
+		cameraDirection.rowT = cameraDirection2.rowT;
 	}
 
 	void SetActive(const bool bNewActive)
@@ -139,8 +140,9 @@ namespace DebugCamera {
 
 		float cameraSpeedDelta = cameraSpeed * deltaTime;
 
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			SetActive(false);
+		}
 
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			cameraPosition = { cameraPosition.x + forward.x * cameraSpeedDelta,

@@ -261,7 +261,7 @@ void edVideoWaitVsync(byte param_1)
 
 void edVideoFlip(void)
 {
-	RENDER_LOG("edVideoFlip\n");
+	MY_LOG_CATEGORY("Video", LogLevel::VeryVerbose, "edVideoFlip\n");
 
 #ifdef PLATFORM_WIN
 	VU1Emu::BeginFrame();

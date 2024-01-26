@@ -72,7 +72,7 @@ void edVideoClearVram(ulong r, ulong g, ulong b, ulong a)
 		edPacketWriteLong_0026a000(&eStack32, 0x40004000);
 		edPacketWriteLong_0026a000(&eStack32, 4);
 		edPacketClose_00269e70(&eStack32);
-		RENDER_LOG("DMA Begin edVideoClearVram\n");
+		MY_LOG_CATEGORY("Video", LogLevel::VeryVerbose, "DMA Begin edVideoClearVram\n");
 		edDmaSendN(SHELLDMA_CHANNEL_GIF, eStack32.pBuffer, eStack32.size_0x14);
 	}
 #endif

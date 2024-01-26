@@ -203,3 +203,113 @@ LAB_0015d240:
 #endif
 	return;
 }
+
+template<typename PlatformBehaviourType>
+struct PlatformHeader
+{
+	PlatformBehaviourType* aPlatforms;
+	PlatformHeader* pPrev;
+	int totalEntries;
+	int inUseEntries;
+
+	inline static PlatformBehaviourType* Get(PlatformHeader** pObj) {
+		PlatformBehaviourType* pBehaviour;
+
+		bool bRequiresNewHeader = true;
+
+		// Create the header if we don't already have one.
+		if (((*pObj) != (PlatformHeader*)0x0) &&
+			((*pObj)->inUseEntries + 1 <= (*pObj)->totalEntries)) {
+			bRequiresNewHeader = false;
+		}
+
+		PlatformHeader* pPrevHeader;
+		PlatformHeader* pCurHeader = (*pObj);
+
+		// If the header is new or needs extending, create some new behaviours.
+		if ((bRequiresNewHeader) && (pCurHeader = new PlatformHeader, pPrevHeader = (*pObj), pCurHeader != (PlatformHeader*)0x0)) {
+			pCurHeader->totalEntries = 0x20;
+			pCurHeader->aPlatforms = new PlatformBehaviourType[pCurHeader->totalEntries];
+			pCurHeader->pPrev = pPrevHeader;
+			pCurHeader->inUseEntries = 0;
+		}
+
+		(*pObj) = pCurHeader;
+
+		if ((*pObj)->totalEntries < (*pObj)->inUseEntries + 1) {
+			pBehaviour = (PlatformBehaviourType*)0x0;
+		}
+		else {
+			pBehaviour = &(*pObj)->aPlatforms[(*pObj)->inUseEntries];
+			(*pObj)->inUseEntries++;
+		}
+
+		return pBehaviour;
+	}
+};
+
+PlatformHeader<CBehaviourPlatformTrajectory>* gPlatform_00448e14;
+PlatformHeader<CBehaviourPlatformSlab>* gPlatform_00448e18;
+PlatformHeader<CBehaviourPlatformDestroyed>* gPlatform_00448e1c;
+PlatformHeader<CBehaviourPlatformStand>* gPlatform_00448e20;
+PlatformHeader<CBehaviourSelectorNew>* gPlatform_00448e24;
+PlatformHeader<CBehaviourSelectorSlave>* gPlatform_00448e28;
+
+CBehaviour* CActorMovingPlatform::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pBehaviour;
+
+	if (behaviourType < 0xb) {
+		switch (behaviourType) {
+		case 0x0:
+		case 0x1:
+			pBehaviour = CActor::BuildBehaviour(behaviourType);
+		break;
+		case 0x2:
+		{
+			pBehaviour = PlatformHeader<CBehaviourPlatformTrajectory>::Get(&gPlatform_00448e14);
+		}
+		break;
+		case 0x3:
+		{
+			pBehaviour = PlatformHeader<CBehaviourPlatformSlab>::Get(&gPlatform_00448e18);
+		}
+		break;
+		case 0x4:
+		{
+			pBehaviour = new CBehaviourTeleportRandom;
+		}
+		break;
+		case 0x5:
+		{
+			pBehaviour = new CBehaviourWeighingMachineSlave;
+		}
+		break;
+		case 0x6:
+		{
+			pBehaviour = PlatformHeader<CBehaviourPlatformDestroyed>::Get(&gPlatform_00448e1c);
+		}
+		break;
+		case 0x7:
+		{
+			pBehaviour = PlatformHeader<CBehaviourPlatformStand>::Get(&gPlatform_00448e20);
+		}
+		break;
+		case 0x8:
+		{
+			pBehaviour = PlatformHeader<CBehaviourSelectorSlave>::Get(&gPlatform_00448e28);
+		}
+		break;
+		case 0x9:
+		{
+			pBehaviour = PlatformHeader<CBehaviourSelectorNew>::Get(&gPlatform_00448e24);
+		}
+		break;
+		default:
+			assert(false);
+		}
+		return pBehaviour;
+	}
+	pBehaviour = CActor::BuildBehaviour(behaviourType);
+	return pBehaviour;
+}

@@ -71,7 +71,7 @@ PACK(struct __attribute__((aligned(16))) ed_Chunck {
 	short field_0x4;
 	short field_0x6;
 	int size;
-	int field_0xc;
+	int nextChunckOffset;
 });
 
 struct ed_g2d_manager {
@@ -312,7 +312,7 @@ struct ed_3d_hierarchy_setup {
 PACK(struct ed3DLod {
 	int pObj; // char*
 	short field_0x4;
-	short field_0x6;
+	short sizeBias;
 });
 
 struct ed_3d_hierarchy {
@@ -332,7 +332,7 @@ struct ed_3d_hierarchy {
 	edpkt_data* pMatrixPkt;
 	union edF32MATRIX4* pAnimMatrix;
 	short subMeshParentCount_0xac;
-	byte size_0xae;
+	byte desiredLod;
 	char GlobalAlhaON;
 };
 

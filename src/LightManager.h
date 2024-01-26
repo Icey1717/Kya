@@ -11,7 +11,8 @@ struct ByteCode;
 struct BaseShape;
 
 struct ZoneHolder {
-	ed_zone_3d* zone;
+	int zone;
+	ed_zone_3d* aZones;
 };
 
 struct ed_3D_Light_Config {
@@ -54,8 +55,8 @@ public:
 
 	_rgba colour_0x4;
 	ushort field_0x8;
-	short field_0xa;
-	ZoneHolder* field_0xc;
+	short referencedLightIndex;
+	ZoneHolder* pZoneHolder;
 	undefined* field_0x10;
 	undefined field_0x14;
 	undefined field_0x15;
@@ -100,14 +101,14 @@ public:
 
 	float ComputeCollision(CLight* pLightA, CLight* pLightB);
 
-	int field_0x8;
+	int referencedLightsCount;
 	int lightCount;
 	int sectorLightCount;
 	int sectorId;
 	int activeLightCount;
 	int bSectorListDirty;
 	int bActiveListDirty;
-	int field_0x38;
+	int nextFreeLightConfig;
 	ed_3D_Light_Config lightConfig;
 
 	CLight** aLights;

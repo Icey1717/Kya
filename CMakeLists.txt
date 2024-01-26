@@ -201,6 +201,8 @@ set (actor_src
 	"${src_root}/ActorBonus.h"
 	"${src_root}/ActorRope.cpp"
 	"${src_root}/ActorRope.h"
+	"${src_root}/ActorFighter.cpp"
+	"${src_root}/ActorFighter.h"
 	"${src_root}/ActorGravityAware.cpp"
 	"${src_root}/ActorGravityAware.h"
 	"${src_root}/ActorSwitch.cpp"

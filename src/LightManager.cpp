@@ -23,12 +23,12 @@ CLightManager::CLightManager()
 	edF32MATRIX4* peVar8;
 	edF32MATRIX4* peVar9;
 
-	this->field_0x8 = 0;
+	this->referencedLightsCount = 0;
 	this->lightCount = 0;
 	this->sectorLightCount = 0;
 	this->activeLightCount = 0;
 	
-	this->field_0x38 = 0;
+	this->nextFreeLightConfig = 0;
 	this->field_0xe4 = 0;
 	this->bSectorListDirty = 0;
 	this->bActiveListDirty = 0;
@@ -106,7 +106,7 @@ void CLightManager::Level_Manage()
 
 	*(this->lightConfig).pLightAmbient = gF32Vector4Zero;
 
-	this->field_0x38 = 0;
+	this->nextFreeLightConfig = 0;
 
 	*(this->lightConfig).pLightColorMatrix = gF32Matrix4Zero;
 	*(this->lightConfig).pLightDirections = gF32Matrix4Zero;
@@ -189,6 +189,9 @@ void CLightManager::ComputeLighting(CActor* pActor, uint flags, ed_3D_Light_Conf
 	if (((flags & 4) != 0) && (((pActor->flags & 0x1000000) == 0 || (4.0f <= pActor->distanceToGround)))) {
 		flags = flags & 0xfffffffb;
 	}
+
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting {} flags: {:x} location: {}", pActor->name, flags, location.ToString());
+
 	ComputeLighting((ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf0, param_1);
 
 	if (pActor->typeID == 6) {
@@ -210,7 +213,7 @@ void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocat
 	edF32MATRIX4* peVar7;
 	ed_3D_Light_Config* pConfig_00;
 	ed_3D_Light_Config* pConfig_01;
-	CLightConfig* pCVar8;
+	CLightConfig* pFullLightConfig;
 	CLightConfig* unaff_s4_lo;
 	float fVar9;
 	float fVar10;
@@ -229,24 +232,23 @@ void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocat
 	if (((((GameFlags & 0x20) == 0) && ((flags & 8) == 0)) &&
 		(pHier->pHierarchySetup->pLightData = &this->lightConfig, flags != 0)) && (this->activeLightCount != 0)) {
 		if (pConfig == (ed_3D_Light_Config*)0x0) {
-			iVar4 = this->field_0x38;
+			const int configIndex = this->nextFreeLightConfig;
 			flags = flags & 0xfffffffe;
 	
-			this->field_0x38 = iVar4 + 1;
-			fVar11 = gF32Vector4Zero.w;
-			fVar10 = gF32Vector4Zero.z;
-			fVar9 = gF32Vector4Zero.y;
-			pCVar8 = this->aLightConfigs + iVar4;
+			this->nextFreeLightConfig = configIndex + 1;
+			pFullLightConfig = this->aLightConfigs + configIndex;
 
-			pCVar8->lightAmbient = gF32Vector4Zero;
-			pCVar8->lightDirections = gF32Matrix4Unit;
-			pCVar8->lightColorMatrix = gF32Matrix4Unit;
+			pFullLightConfig->lightAmbient = gF32Vector4Zero;
+			pFullLightConfig->lightDirections = gF32Matrix4Unit;
+			pFullLightConfig->lightColorMatrix = gF32Matrix4Unit;
 
-			pCVar8->config.pLightAmbient = &pCVar8->lightAmbient;
-			pCVar8->config.pLightDirections = &pCVar8->lightDirections;
-			pCVar8->config.pLightColorMatrix = &pCVar8->lightColorMatrix;
+			pFullLightConfig->config.pLightAmbient = &pFullLightConfig->lightAmbient;
+			pFullLightConfig->config.pLightDirections = &pFullLightConfig->lightDirections;
+			pFullLightConfig->config.pLightColorMatrix = &pFullLightConfig->lightColorMatrix;
 
-			pConfig = &pCVar8->config;
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting using config: {} flags: {:x}", configIndex, flags);
+
+			pConfig = &pFullLightConfig->config;
 		}
 
 		pConfig_00 = pConfig;
@@ -423,8 +425,8 @@ void CLightManager::ComputeLighting(edF32VECTOR4* pLocation, ed_3D_Light_Config*
 	edF32VECTOR4* peVar1;
 	edF32VECTOR4* peVar2;
 	CLight* pLight;
-	bool bVar4;
-	ed_zone_3d* peVar5;
+	bool bValidZones;
+	int zoneCount;
 	long long lVar6;
 	int iVar7;
 	int iVar8;
@@ -438,12 +440,15 @@ void CLightManager::ComputeLighting(edF32VECTOR4* pLocation, ed_3D_Light_Config*
 	float fVar16;
 	LightingContext lightingContext;
 
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting location: {}", pLocation->ToString());
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting ambient:  {}", (this->lightConfig).pLightAmbient->ToString());
+
 	if (pConfig == (ed_3D_Light_Config*)0x0) {
 		IMPLEMENTATION_GUARD(
-		iVar8 = this->field_0x38;
+		iVar8 = this->nextFreeLightConfig;
 		peVar10 = &gF32Matrix4Unit;
 		iVar7 = 8;
-		this->field_0x38 = iVar8 + 1;
+		this->nextFreeLightConfig = iVar8 + 1;
 		fVar16 = gF32Vector4Zero.w;
 		fVar15 = gF32Vector4Zero.z;
 		fVar14 = gF32Vector4Zero.y;
@@ -477,6 +482,7 @@ void CLightManager::ComputeLighting(edF32VECTOR4* pLocation, ed_3D_Light_Config*
 		pConfig = &pCVar11->field_0x90;
 		(pCVar11->field_0x90).pLightColorMatrix = &pCVar11->field_0x50;)
 	}
+
 	*pConfig->pLightAmbient = *(this->lightConfig).pLightAmbient;
 
 	pConfig->pLightColorMatrix->rowX = gF32Vector4Zero;
@@ -497,41 +503,59 @@ void CLightManager::ComputeLighting(edF32VECTOR4* pLocation, ed_3D_Light_Config*
 	lightingContext.pLightAmbient = pConfig->pLightAmbient;
 	lightingContext.field_0x1c = 0;
 
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting active lights: {}", this->activeLightCount);
+
 	ppActiveLights = this->aActiveLights;
 	lightIndex = 0;
 	if (0 < this->activeLightCount) {
 		do {
 			pLight = *ppActiveLights;
 
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting light: {} flags: {:x}", lightIndex, pLight->colour_0x4.rgba);
+
 			if ((pLight->colour_0x4.rgba & 0x8000000) != 0) {
-				if (pLight->field_0xc == (ZoneHolder*)0x0) {
-					peVar5 = (ed_zone_3d*)0x0;
+				if (pLight->pZoneHolder == (ZoneHolder*)0x0) {
+					zoneCount = 0;
 				}
 				else {
-					peVar5 = pLight->field_0xc->zone;
+					zoneCount = pLight->pZoneHolder->zone;
 				}
-				bVar4 = peVar5 != (ed_zone_3d*)0x0;
+				bValidZones = zoneCount != 0;
 
-				if (!bVar4) {
+				if (!bValidZones) {
 					if ((int*)pLight->field_0x10 == (int*)0x0) {
 						iVar8 = 0;
 					}
 					else {
 						iVar8 = *(int*)pLight->field_0x10;
 					}
-					bVar4 = iVar8 != 0;
+					bValidZones = iVar8 != 0;
 				}
 
-				if ((!bVar4) ||
-					(iVar8 = pLight->TestIlluminationZones(pLocation, _test_zone_id$10480), iVar8 != 0)) {
+				LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting light: {} valid zones: {} ({} / {})", lightIndex, bValidZones, zoneCount, iVar8);
+
+				bool bIlluminationZoneTestPass;
+
+				if ((!bValidZones) ||
+					(bIlluminationZoneTestPass = pLight->TestIlluminationZones(pLocation, _test_zone_id$10480), bIlluminationZoneTestPass != 0)) {
 		
 					lVar6 = (long long)(char)(pLight->colour_0x4).b << 0x38;
 					iVar8 = (int)(lVar6 >> 0x3c);
+
+					LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting light: {} test passed! light index: {}", lightIndex, iVar8);
+
+					assert(iVar8 >= 0 && iVar8 < 4);
+
 					if (iVar8 < 4) {
 						lightingContext.pLightDirection = &pConfig->pLightDirections->vector[iVar8];
 						lightingContext.pLightColor = &pConfig->pLightColorMatrix->vector[iVar8];
 					}
+
 					pLight->DoLighting(&lightingContext);
+
+					LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting result direction: {}", lightingContext.pLightDirection->ToString());
+					LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting result color:     {}", lightingContext.pLightColor->ToString());
+					LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting result ambient:   {}", lightingContext.pLightAmbient->ToString());
 				}
 			}
 			lightIndex = lightIndex + 1 & 0xff;
@@ -1267,7 +1291,7 @@ void CLightTorch::Create(ByteCode* pByteCode)
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *pSVar1 * 4;
 	}
 
-	this->field_0xc = reinterpret_cast<ZoneHolder*>(pSVar1);
+	this->pZoneHolder = reinterpret_cast<ZoneHolder*>(pSVar1);
 
 	piVar2 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
@@ -1349,6 +1373,9 @@ void CLightManager::AddLight(ByteCode* pByteCode, CLight** ppOutLight)
 	}
 
 	(pLight->colour_0x4).a = (pLight->colour_0x4).a | 0x10;
+
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::AddLight Set flags light: {} flags: {:x}", pLight->referencedLightIndex, pLight->colour_0x4.rgba);
+
 	pLight->Activate();
 	if (ppOutLight != (CLight**)0x0) {
 		*ppOutLight = pLight;
@@ -1495,7 +1522,7 @@ CLight* CLightManager::CreateSimpleLight(ByteCode* pByteCode)
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (checkpointDataSize * 4);
 	}
 
-	pNewLight->field_0xc = pSVar13;
+	pNewLight->pZoneHolder = pSVar13;
 	piVar1 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
 	if (*piVar1 != 0) {
@@ -1517,7 +1544,7 @@ void CLightManager::Activate(CLight* pLight, int param_3)
 	color = pLight->colour_0x4;
 	if (lVar1 == -2) {
 		local_4.b = color.b;
-		lVar1 = ((long)(char)local_4.b << 0x3c) >> 0x3c;
+		lVar1 = ((long long)(char)local_4.b << 0x3c) >> 0x3c;
 	}
 	if (lVar1 == -3) {
 		local_4.rgba = color.rgba & 0xf7ffffff;
@@ -1539,6 +1566,9 @@ void CLightManager::Activate(CLight* pLight, int param_3)
 	local_4.b = (0xffffff0f & local_4.b) | a;
 
 	pLight->colour_0x4 = local_4;
+
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::Activate Set flags light: {} flags: {:x}", pLight->referencedLightIndex, pLight->colour_0x4.rgba);
+
 	this->bActiveListDirty = 1;
 	return;
 }
@@ -1549,13 +1579,13 @@ void CLightManager::Reference(CLight* pLight, int sectorId, bool param_4, bool p
 	CLight* pCVar2;
 	_rgba uVar3;
 	uint uVar4;
-	CLight** ppCVar5;
+	CLight** ppLights;
 	byte bVar6;
 	int iVar7;
 	CLight** pCVar8;
 	_rgba local_4;
 
-	pLight->field_0xa = (short)this->field_0x8;
+	pLight->referencedLightIndex = (short)this->referencedLightsCount;
 	bVar6 = 1;
 	if (param_4 != false) {
 		bVar6 = 0x41;
@@ -1576,12 +1606,16 @@ void CLightManager::Reference(CLight* pLight, int sectorId, bool param_4, bool p
 	if (param_6 < 0) {
 		local_4.rgba = uVar4 | uVar3.rgba & 0xfffff | 0x700000 | 0x20000000;
 	}
+
 	iVar7 = 1;
 	pLight->colour_0x4 = local_4;
-	iVar1 = this->field_0x8;
-	ppCVar5 = this->aLights;
-	ppCVar5[iVar1] = pLight;
-	pCVar8 = ppCVar5 + iVar1 + 1;
+
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::Reference Set flags light: {} flags: {:x}", pLight->referencedLightIndex, pLight->colour_0x4.rgba);
+
+	iVar1 = this->referencedLightsCount;
+	ppLights = this->aLights;
+	ppLights[iVar1] = pLight;
+	pCVar8 = ppLights + iVar1 + 1;
 	this->lightCount = this->lightCount + 1;
 	iVar1 = this->totalLightCount;
 	pCVar2 = (CLight*)this->aLights;
@@ -1598,12 +1632,12 @@ void CLightManager::Reference(CLight* pLight, int sectorId, bool param_4, bool p
 		} while (iVar7 < iVar1);
 	}
 
-	int diff = diff = (char*)pCVar8 - (char*)pCVar2;
+	int diff = (char*)pCVar8 - (char*)pCVar2;
 	if (diff < 0) {
 		diff = diff + 3;
 	}
 
-	this->field_0x8 = diff / sizeof(CLight*);
+	this->referencedLightsCount = diff / sizeof(CLight*);
 	this->bSectorListDirty = 1;
 	this->bActiveListDirty = 1;
 	return;
@@ -1694,6 +1728,9 @@ void CLightManager::BuildActiveList()
 			}
 			iVar7 = iVar7 + 1;
 			pLightA->colour_0x4 = local_4;
+
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::BuildActiveList A Set flags light: {} flags: {:x}", pLightA->referencedLightIndex, pLightA->colour_0x4.rgba);
+
 			ppSectorLights = ppSectorLights + 1;
 		} while (iVar7 < this->sectorLightCount);
 	}
@@ -1709,10 +1746,10 @@ void CLightManager::BuildActiveList()
 					(local_8.b = (byte)((uint)local_8.rgba >> 0x10), ((long long)(char)local_8.b << 0x38) >> 0x3c == -1)) &&
 					(lVar4 = (*ppSectorLights)->GetBaseShape((BaseShape**)0x0), lVar4 == 1)) {
 		
-					local_20[3] = 0.0;
-					local_20[2] = 0.0;
-					local_20[1] = 0.0;
-					local_20[0] = 0.0;
+					local_20[3] = 0.0f;
+					local_20[2] = 0.0f;
+					local_20[1] = 0.0f;
+					local_20[0] = 0.0f;
 
 					iVar7 = 0;
 					if (0 < this->activeLightCount) {
@@ -1750,6 +1787,8 @@ void CLightManager::BuildActiveList()
 					local_8.b = (0xffffff0f & local_4.b) | a;
 
 					(*ppSectorLights)->colour_0x4 = local_8;
+
+					LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::BuildActiveList B Set flags light: {} flags: {:x}", (*ppSectorLights)->referencedLightIndex, (*ppSectorLights)->colour_0x4.rgba);
 				}
 				iVar7 = this->activeLightCount;
 				iVar11 = iVar11 + 1;
@@ -1799,6 +1838,8 @@ void CLightManager::BuildActiveList()
 					local_8.b = (0xffffff0f & local_4.b) | a;
 
 					(*ppSectorLights)->colour_0x4 = local_8;
+					LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::BuildActiveList C Set flags light: {} flags: {:x}", (*ppSectorLights)->referencedLightIndex, (*ppSectorLights)->colour_0x4.rgba);
+
 				}
 				iVar11 = iVar11 + 1;
 				ppSectorLights = ppSectorLights + 1;
@@ -1829,7 +1870,7 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 	bool bVar1;
 	int shapeTypeA;
 	int shapeTypeB;
-	ed_zone_3d* peVar4;
+	int zoneCount;
 	int iVar5;
 	BaseShape* pBVar6;
 	int iVar7;
@@ -1857,13 +1898,13 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 		}
 	}
 	else {
-		if (pLightA->field_0xc == (ZoneHolder*)0x0) {
-			peVar4 = (ed_zone_3d*)0x0;
+		if (pLightA->pZoneHolder == (ZoneHolder*)0x0) {
+			zoneCount = 0;
 		}
 		else {
-			peVar4 = pLightA->field_0xc->zone;
+			zoneCount = pLightA->pZoneHolder->zone;
 		}
-		bVar1 = peVar4 != (ed_zone_3d*)0x0;
+		bVar1 = zoneCount != 0;
 		if (!bVar1) {
 			if ((int*)pLightA->field_0x10 == (int*)0x0) {
 				iVar5 = 0;
@@ -1874,13 +1915,13 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 			bVar1 = iVar5 != 0;
 		}
 		if (bVar1) {
-			if (pLightB->field_0xc == (ZoneHolder*)0x0) {
-				peVar4 = (ed_zone_3d*)0x0;
+			if (pLightB->pZoneHolder == (ZoneHolder*)0x0) {
+				zoneCount = 0;
 			}
 			else {
-				peVar4 = pLightB->field_0xc->zone;
+				zoneCount = pLightB->pZoneHolder->zone;
 			}
-			bVar1 = peVar4 != (ed_zone_3d*)0x0;
+			bVar1 = zoneCount != 0;
 			if (!bVar1) {
 				if ((int*)pLightB->field_0x10 == (int*)0x0) {
 					iVar5 = 0;
@@ -1891,11 +1932,11 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 				bVar1 = iVar5 != 0;
 			}
 			if (bVar1) {
-				if (pLightA->field_0xc == (ZoneHolder*)0x0) {
-					peVar4 = (ed_zone_3d*)0x0;
+				if (pLightA->pZoneHolder == (ZoneHolder*)0x0) {
+					zoneCount = 0;
 				}
 				else {
-					peVar4 = pLightA->field_0xc->zone;
+					zoneCount = pLightA->pZoneHolder->zone;
 				}
 				if ((int*)pLightB->field_0x10 == (int*)0x0) {
 					iVar5 = 0;
@@ -1903,22 +1944,22 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 				else {
 					iVar5 = *(int*)pLightB->field_0x10;
 				}
-				if ((0 < (int)peVar4) && (0 < iVar5)) {
-					for (iVar8 = 0; iVar8 < (int)peVar4; iVar8 = iVar8 + 1) {
+				if ((0 < zoneCount) && (0 < iVar5)) {
+					for (iVar8 = 0; iVar8 < zoneCount; iVar8 = iVar8 + 1) {
 						for (iVar7 = 0; iVar7 < iVar5; iVar7 = iVar7 + 1) {
 							IMPLEMENTATION_GUARD(
-							if ((&pLightA->field_0xc->pManagerC24_0x4)[iVar8] ==
+							if ((&pLightA->pZoneHolder->pManagerC24_0x4)[iVar8] ==
 								*(ManagerC_24**)(pLightB->field_0x10 + iVar7 * 4 + 4)) {
 								return 0.0;
 							})
 						}
 					}
 				}
-				if (pLightB->field_0xc == (ZoneHolder*)0x0) {
-					peVar4 = (ed_zone_3d*)0x0;
+				if (pLightB->pZoneHolder == (ZoneHolder*)0x0) {
+					zoneCount = 0;
 				}
 				else {
-					peVar4 = pLightB->field_0xc->zone;
+					zoneCount = pLightB->pZoneHolder->zone;
 				}
 				if ((int*)pLightA->field_0x10 == (int*)0x0) {
 					iVar5 = 0;
@@ -1926,11 +1967,11 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 				else {
 					iVar5 = *(int*)pLightA->field_0x10;
 				}
-				if ((0 < (int)peVar4) && (0 < iVar5)) {
-					for (iVar8 = 0; iVar8 < (int)peVar4; iVar8 = iVar8 + 1) {
+				if ((0 < zoneCount) && (0 < iVar5)) {
+					for (iVar8 = 0; iVar8 < zoneCount; iVar8 = iVar8 + 1) {
 						for (iVar7 = 0; iVar7 < iVar5; iVar7 = iVar7 + 1) {
 							IMPLEMENTATION_GUARD(
-							if ((&pLightB->field_0xc->pManagerC24_0x4)[iVar8] ==
+							if ((&pLightB->pZoneHolder->pManagerC24_0x4)[iVar8] ==
 								*(ManagerC_24**)(pLightA->field_0x10 + iVar7 * 4 + 4)) {
 								return 0.0;
 							})
@@ -2127,9 +2168,9 @@ float CLightConfig::ComputeShadow(ed_3D_Light_Config* pConfig, edF32VECTOR4* par
 
 CLight::CLight()
 {
-	this->field_0xc = (ZoneHolder*)0x0;
+	this->pZoneHolder = (ZoneHolder*)0x0;
 	this->field_0x10 = (undefined*)0x0;
-	this->field_0xa = -1;
+	this->referencedLightIndex = -1;
 	this->field_0x8 = 0;
 }
 
@@ -2151,12 +2192,16 @@ bool CLight::TestIlluminationZones(edF32VECTOR4* pLocation, int id)
 
 	pLightManager = CScene::ptable.g_LightManager_004516b0;
 	pEventManager = CScene::ptable.g_EventManager_006f5080;
+
 	if ((int*)this->field_0x10 == (int*)0x0) {
 		iVar3 = 0;
 	}
 	else {
 		iVar3 = *(int*)this->field_0x10;
 	}
+
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLight::TestIlluminationZones count: {}", iVar3);
+
 	iVar4 = 0;
 	if (0 < iVar3) {
 		iVar5 = 0;
@@ -2176,16 +2221,20 @@ bool CLight::TestIlluminationZones(edF32VECTOR4* pLocation, int id)
 			iVar5 = iVar5 + 4;
 		} while (iVar4 < iVar3);)
 	}
+
 	iVar3 = 0;
-	if ((int*)this->field_0xc != (int*)0x0) {
-		iVar3 = *(int*)this->field_0xc;
+	if (this->pZoneHolder->zone != 0) {
+		iVar3 = this->pZoneHolder->zone;
 	}
+
+	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLight::TestIlluminationZones count: {}", iVar3);
+
 	iVar4 = 0;
 	if (0 < iVar3) {
 		iVar5 = 0;
 		IMPLEMENTATION_GUARD(
 		do {
-			ppeVar2 = (ed_zone_3d**)(pLightManager->field_0xe0 + *(int*)(this->field_0xc + iVar5 + 4) * 0xc);
+			ppeVar2 = (ed_zone_3d**)(pLightManager->field_0xe0 + *(int*)(this->pZoneHolder + iVar5 + 4) * 0xc);
 			if ((id == -1) || (ppeVar2[2] != (ed_zone_3d*)id)) {
 				peVar1 = (ed_zone_3d*)
 					edEventComputeZoneAgainstVertex(pEventManager->activeEventChunkID_0x8, *ppeVar2, pLocation, 0);

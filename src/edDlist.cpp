@@ -279,7 +279,7 @@ void edDListSend2DList(edLIST* pList)
 		edDmaSyncPath();
 		static bool bDisp2D = 1;
 		if (bDisp2D != false) {
-			RENDER_LOG("DMA Begin RenderUI_002cea00\n");
+			EDDLIST_LOG(LogLevel::VeryVerbose, "DMA Begin RenderUI_002cea00\n");
 			edDmaSend_nowait(SHELLDMA_CHANNEL_GIF, (ulonglong*)pBuffer);
 		}
 		edDmaSyncPath();
@@ -2237,7 +2237,7 @@ void edDListEnd(void)
 
 void edDListLoadIdentity(void)
 {
-	MY_LOG("edDListLoadIdentity %d", gNbMatrix);
+	EDDLIST_LOG(LogLevel::Verbose, "edDListLoadIdentity {}", gNbMatrix);
 	edF32Matrix4SetIdentityHard((gCurMatrix + gNbMatrix));
 	return;
 }

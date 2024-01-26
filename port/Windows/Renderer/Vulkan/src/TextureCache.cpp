@@ -1046,7 +1046,7 @@ void PS2::GSTexValue::UploadImage()
 	textureImageData.Log("Uploading texture TEX - ");
 	paletteImage.imageData.Log("Uploading texture PAL - ");
 
-	LOG_TEXCACHE("Uploading texture - srcpitch: %d", textureImageData.readWidth * 4);
+	LOG_TEXCACHE("Uploading texture - srcpitch: {}", textureImageData.readWidth * 4);
 
 	uint8_t* const pWriteData = image.writeBuffer.data();
 	uint8_t* const pReadData = image.readBuffer.data();
@@ -1384,6 +1384,16 @@ PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX, Renderer::T
 		Log::GetInstance().ForceFlush();
 		assert(textureData.palettes.size() > 0);
 		CBP = textureData.palettes.begin()->first;
+
+		if (textureData.palettes.find(CBP) != textureData.palettes.end()) {
+			const GSTexKey key = GSTexKey::CreateFromTEX(TEX, CBP, textureData.image.pImage, textureData.palettes[CBP].pImage);
+
+			for (auto& entry : texcache) {
+				if (entry == key) {
+					return entry;
+				}
+			}
+		}
 	}
 
 	return Create(TEX, textureData, CBP);

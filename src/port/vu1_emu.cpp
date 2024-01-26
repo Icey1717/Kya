@@ -20,8 +20,8 @@ namespace VU1Emu {
 
 #define FAKE_VU1_MEM_SIZE 0x4000 // 16kb
 
-	char gFakeMem[FAKE_VU1_MEM_SIZE] = {};
-	unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
+	alignas(16) char gFakeMem[FAKE_VU1_MEM_SIZE] = {};
+	alignas(16) unsigned char gVu1Code[FAKE_VU1_MEM_SIZE] = {};
 	int gItop;
 
 	bool bEnableHardwareDraw = false;
@@ -150,7 +150,7 @@ namespace VU1Emu {
 	{
 		PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer;
 
-		char fakeMem[FAKE_VU1_MEM_SIZE] = {};
+		alignas(16) char fakeMem[FAKE_VU1_MEM_SIZE] = {};
 
 		int vi00 = 0; // Always zero?
 		int vi01;
@@ -1591,7 +1591,9 @@ namespace VU1Emu {
 				pNormal->y = int15_to_float(pNormal->yi);
 				pNormal->z = int15_to_float(pNormal->zi);
 
-				pNormal->xyz = (*pNormal * animMatrix).xyz;
+				const edF32VECTOR4 finalNormal = (animMatrix.rowT * vf00) + (animMatrix.rowZ * pNormal->z) + (animMatrix.rowY * pNormal->y) + (animMatrix.rowX * pNormal->x);
+
+				pNormal->xyz = finalNormal.xyz;
 				pXYZ->xyz = (*pXYZ * animMatrix).xyz;
 
 				pSTQ->x = int12_to_float(pSTQ->xi);
@@ -1655,7 +1657,7 @@ namespace VU1Emu {
 
 			vf28 = ConvertFromInt(vf27);
 
-			vf31 = vf24 + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
+			vf31 = (vf24 * vf00) + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
 
 			while (vi02 > 0) {
 				// XYZ * anim matrix
@@ -1722,7 +1724,7 @@ namespace VU1Emu {
 				vi09 = vi09 & vi05;
 
 				// Normal * anim matrix
-				vf11 = vf04 + (vf03 * vf12.z) + (vf02 * vf12.y) + (vf01 * vf12.x);
+				vf11 = (vf04 * vf00) + (vf03 * vf12.z) + (vf02 * vf12.y) + (vf01 * vf12.x);
 
 				// XYZ * anim matrix
 				vf10 = vf04 + (vf03 * vf09.z) + (vf02 * vf09.y) + (vf01 * vf09.x);
@@ -1761,7 +1763,7 @@ namespace VU1Emu {
 
 				//VU_VTX_TRACE_LOG("vf11 x: {} y: {} z: {}", vf11.x, vf11.y, vf11.z);
 
-				vf31 = vf24 + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
+				vf31 = (vf24 * vf00) + (vf23 * vf19.z) + (vf22 * vf19.y) + (vf21 * vf19.x);
 			}
 		}
 
@@ -1893,6 +1895,7 @@ namespace VU1Emu {
 
 				for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
 					edF32VECTOR4 normal = VIF_LOAD_F(normalReg++, 0);
+
 					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Normal 0x{:x} x: {} y: {} z: {} w: {}", vtxReg, normal.x, normal.y, normal.z, normal.w);
 
 					normal = (lightDirections.rowZ * normal.z) + (lightDirections.rowY * normal.y) + (lightDirections.rowX * normal.x);
@@ -1947,30 +1950,10 @@ namespace VU1Emu {
 				vf07 = VIF_LOAD_F(vi00, 0x19);
 				vf08 = VIF_LOAD_F(vi00, 0x1a);
 
-				vf06.x = -0.6192f;
-				vf06.y = 0.6087f;
-				vf06.z = 0.0f;
-				vf06.w = 0.0f;
-
-				vf07.x = -0.4442f;
-				vf07.y = 0.7061f;
-				vf07.z = 0.0f;
-				vf07.w = 0.0f;
-
-				vf08.x = 0.6475f;
-				vf08.y = 0.3618f;
-				vf08.z = 0.0f;
-				vf08.w = 0.0f;
-
 				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor light directions \n{}\n{}\n{}\n", vf06.ToString(), vf07.ToString(), vf08.ToString());
 
 				// Adjusted light ambient
 				vf09 = VIF_LOAD_F(vi00, 0x20);
-
-				vf09.x = 70.0568f;
-				vf09.y = 44.5816f;
-				vf09.z = 62.0958f;
-				vf09.w = 0.0078f;
 
 				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor adjusted light ambient vf09 x: {} y: {} z: {} w: {}", vf09.x, vf09.y, vf09.z, vf09.w);
 
@@ -1994,10 +1977,6 @@ namespace VU1Emu {
 
 				// Load Normal 0
 				vf11 = VIF_LOAD_F(vi04++, 0);
-				vf11.x = 0.3259f;
-				vf11.y = -0.6334f;
-				vf11.z = -0.1107f;
-				vf11.w = 0.0f;
 				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor Normal 0x{:x} vf11 x: {} y: {} z: {} w: {}", vi04 - 1, vf11.x, vf11.y, vf11.z, vf11.w);
 
 				// Light colour matrix
@@ -2005,26 +1984,6 @@ namespace VU1Emu {
 				vf03 = VIF_LOAD_F(vi00, 0x1c);
 				vf04 = VIF_LOAD_F(vi00, 0x1d);
 				vf05 = VIF_LOAD_F(vi00, 0x1e);
-
-				vf02.x = 79.61f;
-				vf02.y = 84.3866f;
-				vf02.z = 85.9788f;
-				vf02.w = 0.0f;
-
-				vf03.x = 103.493f;
-				vf03.y = 103.493f;
-				vf03.z = 103.493f;
-				vf03.w = 0.0f;
-
-				vf04.x = 0.0f;
-				vf04.y = 0.0f;
-				vf04.z = 0.0f;
-				vf04.w = 0.0f;
-
-				vf05.x = 0.0f;
-				vf05.y = 0.0f;
-				vf05.z = 0.0f;
-				vf05.w = 0.0f;
 
 				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor light color \n{}\n{}\n{}\n{}", vf02.ToString(), vf03.ToString(), vf04.ToString(), vf05.ToString());
 
@@ -2049,12 +2008,6 @@ namespace VU1Emu {
 
 				// Load RGBA 0
 				vf10 = VIF_LOAD_F(vi03, 1);
-
-				vf10.x = 25.0f;
-				vf10.y = 25.0f;
-				vf10.z = 25.0f;
-				vf10.w = 0.0f;
-
 				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor RGBA 0x{:x} vf10 r: {} g: {} b: {} a: 0x{:x}", vi03, vf10.x, vf10.y, vf10.z, vf10.wi);
 
 				// Maxed Normal 0 * Light colour

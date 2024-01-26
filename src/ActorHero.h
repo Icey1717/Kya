@@ -3,38 +3,9 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "ActorFighter.h"
 
-class CActorFighter : public CActorAutonomous
-{
-public:
-	CActorFighter() {
-		IMPLEMENTATION_GUARD_LOG()
-	}
-
-	virtual CBehaviour* BuildBehaviour(int behaviourType);
-
-	virtual bool IsFightRelated(int param_2);
-};
-
-class CBehaviourFighter : public CBehaviour
-{
-
-};
-
-class CBehaviourFighterSlave : public CBehaviourFighter
-{
-
-};
-
-class CBehaviourFighterRidden : public CBehaviourFighter
-{
-
-};
-
-class CBehaviourFighterProjected : public CBehaviourFighter
-{
-
-};
+struct CPlayerInput;
 
 struct AnimResultHero : public AnimResult {
 	uint heroFlags;
@@ -56,6 +27,14 @@ public:
 
 	float time_0x1538;
 	float time_0x153c;
+
+	int field_0x1014;
+	int field_0xff4;
+	float effort;
+
+	char* field_0xf24;
+
+	CPlayerInput* pPlayerInput;
 
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];

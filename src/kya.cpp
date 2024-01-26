@@ -1728,12 +1728,12 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 		if (param_2 != false) {
 			if (param_3 == false) {
 				uVar2 = 1;
-				if (((g_InputManager_00450960.pressedBitfield & 0x40000) == 0) && ((g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+				if (((gPlayerInput.pressedBitfield & 0x40000) == 0) && ((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 					uVar2 = 0;
 				}
 			}
 			else {
-				uVar2 = g_InputManager_00450960.pressedBitfield & 0x40000;
+				uVar2 = gPlayerInput.pressedBitfield & 0x40000;
 			}
 			if (uVar2 != 0) break;
 		}
@@ -1832,7 +1832,7 @@ void PlayIntroVideo(long mode)
 						}
 #endif
 					}
-					if (((uint)g_InputManager_00450960.pressedBitfield & 0x40000) != 0) break;
+					if (((uint)gPlayerInput.pressedBitfield & 0x40000) != 0) break;
 					currentLanguage = 1;
 					if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 						currentLanguage = hasVideoEnded();
@@ -1873,8 +1873,8 @@ void PlayIntroVideo(long mode)
 #endif
 							}
 							bVar2 = true;
-							if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
-								(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+							if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
+								(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 								bVar2 = false;
 							}
 							if (bVar2) break;
@@ -1912,8 +1912,8 @@ void PlayIntroVideo(long mode)
 #endif
 							}
 							bVar2 = true;
-							if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
-								(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+							if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
+								(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 								bVar2 = false;
 							}
 							if (bVar2) break;
@@ -1952,8 +1952,8 @@ void PlayIntroVideo(long mode)
 #endif
 						}
 						bVar2 = true;
-						if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
-							(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+						if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
+							(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 							bVar2 = false;
 						}
 						if (bVar2) break;
@@ -1995,8 +1995,8 @@ void PlayIntroVideo(long mode)
 #endif
 			}
 			bVar2 = true;
-			if ((((uint)g_InputManager_00450960.pressedBitfield & 0x40000) == 0) &&
-				(((uint)g_InputManager_00450960.pressedBitfield & 0x1000000) == 0)) {
+			if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
+				(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 				bVar2 = false;
 			}
 			if (bVar2) break;
@@ -2075,7 +2075,7 @@ void GameLoop(void)
 		gCompatibilityHandlingPtr->IOPFunc_0x14(0);
 		//PlayerInput::Update(timeController->cutsceneDeltaTime);
 		cVar4 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
-		bVar4 = g_InputManager_00450960.SoftReset();
+		bVar4 = gPlayerInput.SoftReset();
 		if (bVar4 != false) {
 			IMPLEMENTATION_GUARD();
 			//Scene::_pinstance->InitiateReset();
@@ -2121,8 +2121,8 @@ void GameLoop(void)
 				}
 			}
 			if ((((GameFlags & 0x8000) == 0) &&
-				((g_InputManager_00450960.pressedBitfield & 0x80000) != 0)) &&
-				(g_InputManager_00450960.buttonArray[18].floatFieldB == 0.0)) {
+				((gPlayerInput.pressedBitfield & 0x80000) != 0)) &&
+				(gPlayerInput.buttonArray[18].floatFieldB == 0.0)) {
 				if ((GameFlags & 8) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						IMPLEMENTATION_GUARD();
@@ -2134,12 +2134,12 @@ void GameLoop(void)
 					//LoadFrontendWithuRam00451684();
 				}
 			}
-			bVar4 = g_InputManager_00450960.buttonArray[6].floatFieldB != 0.0 ||
-				g_InputManager_00450960.buttonArray[10].floatFieldB != 0.0;
-			if ((g_InputManager_00450960.field_0x58 != 4) || (g_InputManager_00450960.field_0x34 != 4)) {
+			bVar4 = gPlayerInput.buttonArray[6].floatFieldB != 0.0 ||
+				gPlayerInput.buttonArray[10].floatFieldB != 0.0;
+			if ((gPlayerInput.field_0x58 != 4) || (gPlayerInput.field_0x34 != 4)) {
 				bVar4 = true;
 			}
-			if ((((g_InputManager_00450960.pressedBitfield & 0x8000000) != 0) && (!bVar4)) ||
+			if ((((gPlayerInput.pressedBitfield & 0x8000000) != 0) && (!bVar4)) ||
 				((GameFlags & 0x400) != 0)) {
 				if (((GameFlags & 0x10) == 0) || ((GameFlags & 0x400) != 0)) {
 					if ((GameFlags & 0x3c) == 0) {
@@ -2153,8 +2153,8 @@ void GameLoop(void)
 				}
 				GameFlags = GameFlags & 0xfffffbff;
 			}
-			if (((g_InputManager_00450960.pressedBitfield & 0x40000) != 0) &&
-				((g_InputManager_00450960.pressedBitfield & 0x80000) == 0)) {
+			if (((gPlayerInput.pressedBitfield & 0x40000) != 0) &&
+				((gPlayerInput.pressedBitfield & 0x80000) == 0)) {
 				if ((GameFlags & 4) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						if ((GameFlags & 0x800) == 0) {

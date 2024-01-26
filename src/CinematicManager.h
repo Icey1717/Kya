@@ -276,8 +276,8 @@ struct CCineActorConfig {
 	uint flags;
 	float field_0x8;
 	float field_0xc;
-	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 postCinematicLocation;
+	edF32VECTOR4 postCinematicRotationEuler;
 };
 
 PACK(
@@ -351,6 +351,8 @@ struct CCinematic {
 	CActorCinematic* NewCinematicActor(const edCinGameInterface::ACTORV_CREATIONtag* pTag, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
 	CCineActorConfig* GetActorConfig(CActor* pActor);
 
+	void Draw();
+
 	void UninstallResources();
 
 	void Level_ClearAll();
@@ -405,7 +407,7 @@ struct CCinematic {
 	undefined4 field_0x7c;
 	float field_0x80;
 	ECinematicState state;
-	float field_0x88;
+	float time_0x88;
 
 	S_STREAM_REF<ed_zone_3d> zoneRefA;
 	S_STREAM_REF<CActor> actorHeroRef;
@@ -558,6 +560,7 @@ public:
 
 	virtual void Level_AddAll(struct ByteCode* pByteCode);
 	virtual void Level_Manage();
+	virtual void Level_Draw();
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 

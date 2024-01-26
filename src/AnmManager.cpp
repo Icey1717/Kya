@@ -60,8 +60,8 @@ edF32MATRIX4* edAnmManager::GetMatrixBuffer(int count)
 {
 	edF32MATRIX4* peVar1;
 
-	MY_LOG("edAnmManager::GetMatrixBuffer count: %x", count);
-	MY_LOG("edAnmManager::GetMatrixBuffer seek: %p end: %p", (uintptr_t)this->pBufferSeekPos_0x8018, (uintptr_t)this->pBufferEnd_0x8014);
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmManager::GetMatrixBuffer count: %x", count);
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmManager::GetMatrixBuffer seek: %p end: %p", (uintptr_t)this->pBufferSeekPos_0x8018, (uintptr_t)this->pBufferEnd_0x8014);
 
 	peVar1 = (edF32MATRIX4*)this->pBufferSeekPos_0x8018;
 	if ((edF32MATRIX4*)this->pBufferEnd_0x8014 < peVar1 + count) {

@@ -5,6 +5,8 @@
 #include "AnmManager.h"
 #include "EdenLib/edAnim/AnmSkeleton.h"
 
+#define ANIMATION_LOG(level, format, ...) MY_LOG_CATEGORY("Animation", level, format, ##__VA_ARGS__)
+
 struct edAnmAnim;
 
 struct edAnmStage {
@@ -126,6 +128,8 @@ struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
 	void SetLayerMacroAnimUserParams(int index, CActor* pActor);
 	void SetLayerTimeWarper(float value, int index);
 	void SetAnim(int animType, int origAnimType);
+	int GetLayerAnimTime(int animIndex);
+	int GetAnimEventTrackID(int index);
 };
 
 class CAnimation {
@@ -137,23 +141,12 @@ public:
 	void StopEventTrack(int state);
 	void Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlayingAnimation);
 	void PlayAnim(CActor* pActor, int animType, int origAnimType);
+	void Reset(CActor* pActor);
 
 	edAnmBinMetaAnimator anmBinMetaAnimator;
 	edAnmSkeleton anmSkeleton;
 	AnimMatrixData* pMatrixData_0x10;
-	undefined4 field_0x14;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
+	float aTrackData[4];
 	edF32MATRIX3* pAnimMatrix;
 	undefined4 field_0x28;
 	uint count_0x2c;

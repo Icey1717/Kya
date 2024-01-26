@@ -12,6 +12,8 @@
 #endif
 #include "Rendering/CustomShell.h"
 
+#define CAMERA_LOG(level, format, ...) MY_LOG_CATEGORY("Camera", level, format, ##__VA_ARGS__)
+
 ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, edSurface* pVidModeDataB, byte alpha)
 {
 	ed_viewport* __s;
@@ -136,7 +138,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 	edpkt_data* pRVar21;
 	edpkt_data* pRVar22;
 
-	RENDER_LOG("edViewportUpdateEnv camera: %p (%d)", (void*)pViewport, pViewport->clearColor.a);
+	CAMERA_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv camera: 0x{:x} ({})", (uintptr_t)pViewport, pViewport->clearColor.a);
 
 	pVVar1 = pViewport->pColorBuffer->pSurfaceDesc->pLink_0xc;
 	pCommandBuf->cmdB = SCE_GIF_PACKED_AD;
@@ -225,7 +227,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 
 	if (((pViewport->clearColor.a & 2) != 0) || ((pViewport->clearColor.a & 1) != 0)) {
 
-		RENDER_LOG("edViewportUpdateEnv CLEAR");
+		CAMERA_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv CLEAR");
 
 		// FRAME
 		pRVar22->cmdA = SCE_GS_SET_FRAME(
@@ -444,7 +446,7 @@ void edViewPortApplyDrawingEnv(ed_viewport* pCamera)
 		edDmaFlushCache();
 		edDmaSyncPath();
 #ifdef PLATFORM_PS2
-		RENDER_LOG("DMA Begin edViewPortApplyDrawingEnv");
+		ED3D_LOG(LogLevel::VeryVerbose, "DMA Begin edViewPortApplyDrawingEnv");
 		edDmaSendN_nowait(SHELLDMA_CHANNEL_GIF, pCamera->pCameraObj390_0x24, pCamera->pCameraObj390_0x24->qwc);
 #endif
 	}

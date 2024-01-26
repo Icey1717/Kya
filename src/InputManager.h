@@ -23,7 +23,7 @@ struct InputTest {
 	undefined field_0x1f;
 };
 
-struct InputManager {
+struct CPlayerInput {
 
 public:
 	bool SoftReset();
@@ -397,6 +397,8 @@ public:
 	edF32VECTOR4 lAnalogStick;
 };
 
-extern InputManager g_InputManager_00450960;
+extern CPlayerInput gPlayerInput;
+
+CPlayerInput* GetPlayerInput(int playerId);
 
 #endif //_INPUT_MANAGER_H

@@ -182,7 +182,7 @@ void CSettings::StoreGlobalSettings()
 	this->field_0x8 = pCVar1->bInitialized != 0;
 	LVar5 = CMessageFile::get_default_language();
 	this->languageID = LVar5;
-	this->field_0x0 = g_InputManager_00450960.field_0x14 != 0;
+	this->field_0x0 = gPlayerInput.field_0x14 != 0;
 	return;
 }
 
@@ -260,7 +260,7 @@ void PauseManager::Level_Draw()
 		bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 		pTVar3 = GetTimer();
 		fVar9 = pTVar3->totalPlayTime;
-		if ((g_InputManager_00450960.pressedBitfield != 0) ||
+		if ((gPlayerInput.pressedBitfield != 0) ||
 			(((this->field_0x34 == 0 &&
 				(EVar4 = this->pSimpleMenu->get_current_page(), EVar4 != PM_MainMenu)) ||
 				(bVar2 = CScene::_pinstance->CheckFunc_001b9300(), bVar2 != 0)))) {
@@ -816,7 +816,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 	uVar8 = 0x7f;
 	pTVar2 = GetTimer();
 	fVar12 = pTVar2->totalTime;
-	if (((param_2 != 0) && (((uint)g_InputManager_00450960.releasedBitfield & 0x40000) != 0)) && (this->field_0xcc == 0))
+	if (((param_2 != 0) && (((uint)gPlayerInput.releasedBitfield & 0x40000) != 0)) && (this->field_0xcc == 0))
 	{
 		this->field_0xcc = 1;
 		pTVar2 = GetTimer();

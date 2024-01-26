@@ -5,10 +5,12 @@
 #include "MathOps.h"
 #include "FileManager3D.h"
 #include "MemoryStream.h"
+#include "TimeController.h"
+#include "ActorFactory.h"
 
 
 CActorCinematic::CActorCinematic()
-	:CActor()
+	: CActor()
 {
 	//CSound* pSound;
 	//
@@ -35,15 +37,15 @@ CActorCinematic::CActorCinematic()
 	//(this->behaviourCinematic).cinActor.field_0xc0 = 0;
 	//GetParam1((long)&(this->behaviourCinematic).cinActor.field_0x110);
 	//(this->behaviourCinematic).field_0x140 = -1;
-	//(this->behaviourCinematic).field_0x144 = -1;
-	//CAnimation::CAnimation(&this->animationController);
+	(this->behaviourCinematic).field_0x144 = -1;
+	this->animationController = CAnimation();
 }
 
 ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)
 {
 	ed_Chunck* peVar1;
 
-	peVar1 = (ed_Chunck*)((char*)pChunk + pChunk->field_0xc);
+	peVar1 = (ed_Chunck*)((char*)pChunk + pChunk->nextChunckOffset);
 	if ((param_2 != (char*)0x0) && (param_2 <= (char*)peVar1)) {
 		peVar1 = (ed_Chunck*)0x0;
 	}
@@ -200,10 +202,10 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	(this->otherSectionStart).field_0x1c = 1000.0f;
 	(this->otherSectionStart).field_0x20 = 100.0f;
 	(this->otherSectionStart).animLayerCount = 1;
-	(this->otherSectionStart).field_0x2c = 1e+10f;
-	(this->otherSectionStart).field_0x30 = 1e+10f;
+	(this->otherSectionStart).lodBiases[0] = 1e+10f;
+	(this->otherSectionStart).lodBiases[1] = 1e+10f;
 	(this->otherSectionStart).flags_0x48 = 1;
-	(this->otherSectionStart).field_0x4c = 1.0f;
+	(this->otherSectionStart).lightingFloat_0x4c = 1.0f;
 	this->actorManagerIndex = -1;
 	this->typeID = CINEMATIC;
 	for (value = 0; (value < 0x1f && (pGameInterface->name[value] != '\0')); value = value + 1) {
@@ -238,8 +240,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 			}
 			memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
 			if (1 < this->p3DHierNode->base.lodCount) {
-				IMPLEMENTATION_GUARD(
-				this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->field_0xcc;)
+				this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->lodBiases;
 			}
 			ed3DHierarchySetSetup(&this->p3DHierNode->base, &this->hierarchySetup);
 			this->PatchMaterialForCutscene(pG3D, pG2D);
@@ -261,7 +262,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	this->SetupClippingInfo();
 	//CActor::SetupLodInfo(this);
 	//CActor::SetupShadow((CActor*)this, (GroundObject*)0x0);
-	//CActor::SetupLighting(this);
+	this->SetupLighting();
 	this->flags = this->flags | 0x100000;
 	this->flags = this->flags | 0x1000;
 	RestoreInitData();
@@ -324,59 +325,60 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 
 	this->pOwner = (CActorCinematic*)pOwner;
 	(this->cinActor).pParent = (CActor*)this->pOwner;
-	//physLayer = CActor::GetIdMacroAnim((CActor*)this->pOwner, New_Name_(3));
-	//if (physLayer != -1) {
-	//	pActor = this->pOwner;
-	//	physLayer = CActor::GetIdMacroAnim((CActor*)pActor, New_Name_(3));
-	//	this->field_0x144 = physLayer;
-	//	if (this->field_0x144 != -1) {
-	//		this->field_0x14c = -1;
-	//		this->field_0x148 = -1;
-	//		this->field_0x160 = 0.0;
-	//		this->field_0x150 = 0.0;
-	//		this->field_0x154 = 0.0;
-	//		this->field_0x158 = 0.0;
-	//		this->field_0x15c = 1.0;
-	//		if (this->field_0x144 != -1) {
-	//			this->field_0x16c = 1.0;
-	//			this->field_0x170 = 2.0;
-	//			this->field_0x168 = 0.0;
-	//			this->field_0x174 = 0.3;
-	//			if ((this->field_0x144 != -1) && (this->field_0x148 != 0)) {
-	//				this->field_0x14c = this->field_0x148;
-	//				this->field_0x148 = 0;
-	//				this->field_0x160 = 0.0;
-	//				this->field_0x164 = 0.5;
-	//				if (this->field_0x148 == -1) {
-	//					fVar3 = 0.0;
-	//				}
-	//				else {
-	//					fVar3 = 0.3;
-	//					if (this->field_0x14c == -1) {
-	//						this->field_0x154 = 0.0;
-	//						fVar3 = 0.3;
-	//					}
-	//				}
-	//				if (this->field_0x144 != -1) {
-	//					this->field_0x150 = this->field_0x154;
-	//					this->field_0x158 = fVar3;
-	//					this->field_0x15c = 0.5;
-	//				}
-	//			}
-	//		}
-	//		pAnimationController = (pActor->baseData).pAnimationController;
-	//		bVar2 = CAnimation::IsLayerActive(pAnimationController, 2);
-	//		if (bVar2 == false) {
-	//			this->field_0x144 = -1;
-	//		}
-	//		else {
-	//			physLayer = CAnimation::PhysicalLayerFromLayerId(pAnimationController, 2);
-	//			pAVar1 = pAnimationController->pAnimData;
-	//			pAVar1[physLayer].field_0x0 = 3;
-	//			pAVar1[physLayer].field_0x4 = 0.0;
-	//		}
-	//	}
-	//}
+	physLayer = this->pOwner->GetIdMacroAnim(0x3);
+	if (physLayer != -1) {
+		pActor = this->pOwner;
+		physLayer = this->pOwner->GetIdMacroAnim(0x3);
+		this->field_0x144 = physLayer;
+		if (this->field_0x144 != -1) {
+			IMPLEMENTATION_GUARD_LOG(
+			this->field_0x14c = -1;
+			this->field_0x148 = -1;
+			this->field_0x160 = 0.0;
+			this->field_0x150 = 0.0;
+			this->field_0x154 = 0.0;
+			this->field_0x158 = 0.0;
+			this->field_0x15c = 1.0;
+			if (this->field_0x144 != -1) {
+				this->field_0x16c = 1.0;
+				this->field_0x170 = 2.0;
+				this->field_0x168 = 0.0;
+				this->field_0x174 = 0.3;
+				if ((this->field_0x144 != -1) && (this->field_0x148 != 0)) {
+					this->field_0x14c = this->field_0x148;
+					this->field_0x148 = 0;
+					this->field_0x160 = 0.0;
+					this->field_0x164 = 0.5;
+					if (this->field_0x148 == -1) {
+						fVar3 = 0.0;
+					}
+					else {
+						fVar3 = 0.3;
+						if (this->field_0x14c == -1) {
+							this->field_0x154 = 0.0;
+							fVar3 = 0.3;
+						}
+					}
+					if (this->field_0x144 != -1) {
+						this->field_0x150 = this->field_0x154;
+						this->field_0x158 = fVar3;
+						this->field_0x15c = 0.5;
+					}
+				}
+			}
+			pAnimationController = (pActor->baseData).pAnimationController;
+			bVar2 = CAnimation::IsLayerActive(pAnimationController, 2);
+			if (bVar2 == false) {
+				this->field_0x144 = -1;
+			}
+			else {
+				physLayer = CAnimation::PhysicalLayerFromLayerId(pAnimationController, 2);
+				pAVar1 = pAnimationController->pAnimData;
+				pAVar1[physLayer].field_0x0 = 3;
+				pAVar1[physLayer].field_0x4 = 0.0;
+			})
+		}
+	}
 	return;
 }
 
@@ -420,13 +422,13 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 			this->field_0x160 = 0.0f;
 			this->field_0x164 = 0.5f;
 			if (this->field_0x148 == -1) {
-				fVar4 = 0.0;
+				fVar4 = 0.0f;
 			}
 			else {
 				fVar4 = 1.0;
 				if (this->field_0x14c == -1) {
 					this->field_0x154 = 0.0f;
-					fVar4 = 1.0;
+					fVar4 = 1.0f;
 				}
 			}
 			if (this->field_0x144 != -1) {
@@ -440,10 +442,122 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 	return;
 }
 
+void CBehaviourCinematic::End(int newBehaviourId)
+{
+	edNODE* pNode;
+	CinNamedObject30* pCVar1;
+	CActorCinematic* pCVar2;
+	bool bVar3;
+	ed_3D_Scene* pScene;
+	CCinematic* pCinematic;
+	CCineActorConfig* pActorConfig;
+	Timer* pTVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR3 local_10;
+	CAnimation* pAnimation;
+
+	bVar3 = this->field_0x144 != -1;
+	if (bVar3) {
+		IMPLEMENTATION_GUARD_LOG(
+		if ((bVar3) && (this->field_0x148 != -1)) {
+			this->field_0x14c = this->field_0x148;
+			this->field_0x148 = -1;
+			this->field_0x160 = 0.0f;
+			this->field_0x164 = 0.5f;
+			if (this->field_0x148 == -1) {
+				fVar6 = 0.0f;
+			}
+			else {
+				fVar6 = 1.0;
+				if (this->field_0x14c == -1) {
+					this->field_0x154 = 0.0f;
+					fVar6 = 1.0f;
+				}
+			}
+			if (this->field_0x144 != -1) {
+				this->field_0x150 = this->field_0x154;
+				this->field_0x158 = fVar6;
+				this->field_0x15c = 0.5f;
+			}
+		}
+		this->field_0x168 = -1.0f;)
+	}
+
+	if ((this->cinActor).pAltModelManager != (ed_g3d_manager*)0x0) {
+		IMPLEMENTATION_GUARD(
+		FUN_001159f0((CActor*)this->pOwner, &(this->cinActor).alternateModel);)
+	}
+
+	pNode = this->pOwner->pMeshNode;
+	if ((pNode != (edNODE*)0x0) && ((this->pOwner->flags & 0x4000) != 0)) {
+		pScene = GetStaticMeshMasterA_001031b0();
+		ed3DHierarchyNodeSetRenderOff(pScene, pNode);
+	}
+
+	pAnimation = this->pOwner->pAnimationController;
+	if (pAnimation != (CAnimation*)0x0) {
+		pAnimation->Reset(this->pOwner);
+	}
+
+	this->pOwner->PlayAnim(-1);
+
+	pCVar1 = this->pOwner->pCinData;
+	this->pOwner->SetScaleVector((pCVar1->scale).x, (pCVar1->scale).y, (pCVar1->scale).z);
+
+	pCVar2 = this->pOwner;
+	if ((CActorFactory::gClassProperties[pCVar2->typeID].flags & 0x800) == 0) {
+		pCVar2->flags = pCVar2->flags & 0xffffefff;
+	}
+	else {
+		pCVar2->flags = pCVar2->flags | 0x1000;
+	}
+	if ((CActorFactory::gClassProperties[this->pOwner->typeID].flags & 2) != 0) {
+		this->pOwner->SV_BuildAngleWithOnlyY(&local_10, &this->pOwner->rotationEuler.xyz);
+		pCVar2 = this->pOwner;
+		pCVar2->rotationEuler.xyz = local_10;
+	}
+	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+	pActorConfig = pCinematic->GetActorConfig(this->pOwner);
+	if ((pActorConfig == (CCineActorConfig*)0x0) || ((pActorConfig->flags & 0x10) == 0)) {
+		SetVectorFromAngles(&this->pOwner->rotationQuat, &this->pOwner->rotationEuler.xyz);
+		this->pOwner->UpdatePosition(&this->pOwner->currentLocation, true);
+	}
+	else {
+		if ((pActorConfig->flags & 0x80000000) == 0) {
+			this->pOwner->flags = this->pOwner->flags & 0xffffefff;
+		}
+		else {
+			this->pOwner->flags = this->pOwner->flags | 0x1000;
+		}
+		pCVar2 = this->pOwner;
+		pCVar2->rotationEuler.xyz = pActorConfig->postCinematicRotationEuler.xyz;
+		SetVectorFromAngles(&this->pOwner->rotationQuat, &this->pOwner->rotationEuler.xyz);
+		this->pOwner->UpdatePosition(&pActorConfig->postCinematicLocation, true);
+	}
+
+	bVar3 = this->pOwner->IsKindOfObject(2);
+	if (bVar3 != false) {
+		IMPLEMENTATION_GUARD(
+		CDynamic::Reset((CDynamic*)&this->pOwner->components, this->pOwner);
+		bVar3 = this->pOwner->IsKindOfObject(4);
+		if (bVar3 != false) {
+			pCVar2 = this->pOwner;
+			pTVar5 = GetTimer();
+			(pCVar2->behaviourCinematic).cinActor.field_0xc0 = pTVar5->scaledTotalTime;
+		})
+	}
+
+	this->pOwner->flags = this->pOwner->flags & 0xffdfffff;
+
+	this->pOwner->ComputeAltitude();
+	return;
+}
+
 void SetHierFlags_00295a30(ed_3d_hierarchy_node* pNode, byte param_2)
 {
 	(pNode->base).flags_0x9e = (pNode->base).flags_0x9e | 0x80;
-	(pNode->base).size_0xae = param_2;
+	(pNode->base).desiredLod = param_2;
 	return;
 }
 
@@ -479,7 +593,7 @@ void CBehaviourCinematic::Manage()
 	pCVar2 = this->pOwner;
 	AVar3 = pCVar2->actorState;
 	if (AVar3 == 3) {
-		edF32Matrix4FromEulerSoft(&eStack80, &pCVar2->rotationEuler, "XYZ");
+		edF32Matrix4FromEulerSoft(&eStack80, &pCVar2->rotationEuler.xyz, "XYZ");
 		eStack80.rowT = (this->cinActor).nextPos;
 
 		if ((pConfig == (CCineActorConfig*)0x0) || ((pConfig->flags & 4) == 0)) {
@@ -662,7 +776,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		break;
 	case 0xb:
 		IMPLEMENTATION_GUARD(
-		CAnimation::PhysicalLayerFromLayerId((this->pOwner->baseData).pAnimationController, 4);
+		CAnimation::PhysicalLayerFromLayerId(this->pOwner->pAnimationController, 4);
 		iVar2 = this->field_0x178;
 		if (((iVar2 == 3) || (iVar2 == 2)) || ((iVar2 == 1 || (iVar2 == 0)))) {
 			this->field_0x178 = 2;
@@ -670,7 +784,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		break;
 	case 0xc:
 		IMPLEMENTATION_GUARD(
-		CAnimation::PhysicalLayerFromLayerId((this->pOwner->baseData).pAnimationController, 4);
+		CAnimation::PhysicalLayerFromLayerId(this->pOwner->pAnimationController, 4);
 		iVar2 = this->field_0x178;
 		if ((((iVar2 == 3) || (iVar2 == 2)) || (iVar2 == 1)) || (iVar2 == 0)) {
 			this->field_0x178 = 3;
@@ -684,7 +798,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		break;
 	case 0xe:
 		IMPLEMENTATION_GUARD(
-		if ((this->pOwner->baseData).typeID == 0x54) {
+		if (this->pOwner->typeID == 0x54) {
 			FUN_00404a70((int*)this->pOwner, (long)param_3 & 0xff);
 		})
 		break;
@@ -692,7 +806,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 	case 0x10:
 	case 0x11:
 		IMPLEMENTATION_GUARD(
-		if ((this->pOwner->baseData).typeID == 6) {
+		if (this->pOwner->typeID == 6) {
 			if (param_2 == 0x11) {
 				LevelScheduleManager::ScenVar_Set(0xf, 1);
 			}

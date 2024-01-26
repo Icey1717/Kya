@@ -1708,9 +1708,9 @@ void CameraSet3DPos(edFCamera* pCamera)
 	edF32VECTOR4 rotationVector;
 	edF32MATRIX4 transformedMatrix;
 
-	EDFCAMERA_LOG(LogLevel::Info, "CameraSet3DPos Updating position for camera: {:x}", (uintptr_t)pCamera);
-	EDFCAMERA_LOG(LogLevel::Info, "Position: x={}, y={}, z={}", pCamera->position.x, pCamera->position.y, pCamera->position.z);
-	EDFCAMERA_LOG(LogLevel::Info, "Look At : x={}, y={}, z={}", pCamera->lookAt.x, pCamera->lookAt.y, pCamera->lookAt.z);
+	EDFCAMERA_LOG(LogLevel::Verbose, "CameraSet3DPos Updating position for camera: {:x}", (uintptr_t)pCamera);
+	EDFCAMERA_LOG(LogLevel::Verbose, "Position: x={}, y={}, z={}", pCamera->position.x, pCamera->position.y, pCamera->position.z);
+	EDFCAMERA_LOG(LogLevel::Verbose, "Look At : x={}, y={}, z={}", pCamera->lookAt.x, pCamera->lookAt.y, pCamera->lookAt.z);
 
 	transformedMatrix = gF32Matrix4Unit;
 

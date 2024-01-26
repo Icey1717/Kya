@@ -43,9 +43,9 @@ inline spdlog::level::level_enum LogLevelToSpdLog(LogLevel level)
 	switch (level)
 	{
 	case LogLevel::VeryVerbose:
-		return spdlog::level::info;
+		return spdlog::level::trace;
 	case LogLevel::Verbose:
-		return spdlog::level::info;
+		return spdlog::level::debug;
 	case LogLevel::Info:
 		return spdlog::level::info;
 	case LogLevel::Warning:

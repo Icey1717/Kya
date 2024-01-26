@@ -162,13 +162,13 @@ void CActorManager::Level_Manage()
 	int iVar1;
 	uint uVar2;
 	edF32VECTOR4 localVector;
-	int updatedComponentCount;
+	int activeActorLen;
 	ulong uVar3;
 	ulong uVar4;
 	uint counter;
-	CActor** updatedComponentsArray;
-	CActor** ppSectorACtors;
-	CActor** ppCVar5;
+	CActor** ppActiveActors;
+	CActor** ppSectorActors;
+	CActor** ppActiveActorsEnd;
 	CActor** ppActors;
 	CActor* pActor;
 	float eleX;
@@ -176,8 +176,8 @@ void CActorManager::Level_Manage()
 	float eleZ;
 	
 	// Clusterizers
-	nbSectorActors = this->aClassInfo[0x18].totalCount;
-	for (counter = 0; (int)counter < nbSectorActors; counter = counter + 1) {
+	iVar1 = this->aClassInfo[0x18].totalCount;
+	for (counter = 0; (int)counter < iVar1; counter = counter + 1) {
 		this->aClassInfo[0x18].aActors[counter].Manage();
 	}
 
@@ -186,9 +186,9 @@ void CActorManager::Level_Manage()
 	this->nbActiveActors = 0;
 
 	ppActors = this->aSectorActors;
-	updatedComponentsArray = this->aActiveActors;
-	ppSectorACtors = ppActors + this->nbSectorActors;
-	for (; ppActors < ppSectorACtors; ppActors = ppActors + 1) {
+	ppActiveActors = this->aActiveActors;
+	ppSectorActors = ppActors + this->nbSectorActors;
+	for (; ppActors < ppSectorActors; ppActors = ppActors + 1) {
 		pActor = *ppActors;
 		if ((pActor->flags & 0x800000) == 0) {
 
@@ -229,24 +229,25 @@ void CActorManager::Level_Manage()
 					pActor->ChangeManageState(1);
 				}
 				pActor->FUN_00101110((CActor*)0x0);
-				*updatedComponentsArray = pActor;
-				updatedComponentsArray = updatedComponentsArray + 1;
+				*ppActiveActors = pActor;
+				ppActiveActors = ppActiveActors + 1;
 			}
 		}
 	}
 
-	updatedComponentCount = (char*)updatedComponentsArray - (char*)this->aActiveActors;
-	if (updatedComponentCount < 0) {
-		updatedComponentCount = updatedComponentCount + 3;
+	activeActorLen = (char*)ppActiveActors - (char*)this->aActiveActors;
+	if (activeActorLen < 0) {
+		IMPLEMENTATION_GUARD();
+		activeActorLen = activeActorLen + 3;
 	}
 
-	this->nbActiveActors = updatedComponentCount / sizeof(CActor*);
+	this->nbActiveActors = activeActorLen / sizeof(CActor*);
 
-	ppSectorACtors = this->aActiveActors;
-	ppCVar5 = ppSectorACtors + this->nbActiveActors;
-	for (; ppSectorACtors < ppCVar5; ppSectorACtors = ppSectorACtors + 1) {
+	ppActiveActors = this->aActiveActors;
+	ppActiveActorsEnd = ppActiveActors + this->nbActiveActors;
+	for (; ppActiveActors < ppActiveActorsEnd; ppActiveActors = ppActiveActors + 1) {
 		/* Update animation */
-		(*ppSectorACtors)->Manage();
+		(*ppActiveActors)->Manage();
 	}
 
 	UpdateLinkedActors();

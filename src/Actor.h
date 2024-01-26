@@ -92,16 +92,12 @@ struct KyaUpdateObjA {
 	float field_0x20;
 	int field_0x24;
 	int hashCode;
-	float field_0x2c;
-	float field_0x30;
+	float lodBiases[2];
 	undefined field_0x34;
 	undefined field_0x35;
 	undefined field_0x36;
 	undefined field_0x37;
-	undefined field_0x38;
-	undefined field_0x39;
-	undefined field_0x3a;
-	undefined field_0x3b;
+	int actorFieldS;
 	int animLayerCount;
 	int field_0x40;
 	undefined field_0x44;
@@ -109,7 +105,7 @@ struct KyaUpdateObjA {
 	undefined field_0x46;
 	undefined field_0x47;
 	uint flags_0x48;
-	float field_0x4c;
+	float lightingFloat_0x4c;
 });
 
 struct CinNamedObject30 {
@@ -159,7 +155,7 @@ public:
 	ed_3d_hierarchy_node* p3DHierNode;
 	ed_3d_hierarchy_node* pMeshTransform;
 
-	edF32VECTOR3 rotationEuler;
+	edF32VECTOR4 rotationEuler;
 	edF32VECTOR4 rotationQuat;
 	edF32VECTOR4 scale;
 
@@ -211,7 +207,6 @@ public:
 	CShadow* pShadow;
 
 	void* pMBNK;
-	undefined4 field_0xcc;
 
 	CBehaviourStand standBehaviour;
 
@@ -220,9 +215,12 @@ public:
 	static AnimResult gStateCfg_ACT[5];
 	static uint _gBehaviourFlags_ACT[2];
 
+	float lodBiases[4];
+
 	CActor();
 
 	void PreInit();
+	void SetScaleVector(float x, float y, float z);
 	void EvaluateManageState();
 	void EvaluateDisplayState();
 
@@ -271,6 +269,7 @@ public:
 
 	void SetupClippingInfo();
 	void SetupDefaultPosition();
+	void SetupLighting();
 
 	void PreReset();
 
@@ -287,11 +286,20 @@ public:
 	void SkipToNextActor(ByteCode* pByteCode);
 
 	bool SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial);
+
+	void SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1);
+
+	void FUN_00115ea0(uint param_2);
+
+	void ComputeAltitude();
 };
 
 class CDynamic
 {
 public:
+	edF32VECTOR4 rotationQuat;
+
+	uint flags;
 	float field_0x58;
 };
 

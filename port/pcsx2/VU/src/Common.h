@@ -41,6 +41,7 @@ typedef void FnType_Void();
 typedef FnType_Void* Fnptr_Void;
 
 #define VUM_LOG(fmt, ...)
+#define VUM_LOG_VERBOSE(fmt, ...) 
 //#define VUM_LOG(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "VU", fmt, __VA_ARGS__)
 #define CPU_LOG(...)
 

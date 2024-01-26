@@ -63,3 +63,31 @@ void CActorDCA::Create(ByteCode* pByteCode)
 	//this->field_0x4f0 = 3.0;
 	return;
 }
+
+CBehaviour* CActorDCA::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pBehaviour;
+
+	if (behaviourType == 5) {
+		pBehaviour = new CBhvTrajectory;
+	}
+	else {
+		if (behaviourType == 4) {
+			pBehaviour = &this->behaviourAiControlled;
+		}
+		else {
+			if (behaviourType == 3) {
+				pBehaviour = &this->behaviourControlled;
+			}
+			else {
+				if (behaviourType == 2) {
+					pBehaviour = &this->behaviourDefault;
+				}
+				else {
+					pBehaviour = CActor::BuildBehaviour(behaviourType);
+				}
+			}
+		}
+	}
+	return pBehaviour;
+}

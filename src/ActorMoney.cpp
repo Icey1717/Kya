@@ -29,3 +29,31 @@ void CActorMoney::Create(ByteCode* pByteCode)
 	//(this->field_0x28c).z = (pKVar1->boundingSphere).w;
 	return;
 }
+
+class CBehaviourMoneyFlock : public CBehaviour
+{
+
+};
+
+class CBehaviourMoneyAddOn : public CBehaviourMoneyFlock
+{
+
+};
+
+CBehaviour* CActorMoney::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pBehaviour;
+
+	if (behaviourType == 3) {
+		pBehaviour = new CBehaviourMoneyAddOn;
+	}
+	else {
+		if (behaviourType == 2) {
+			pBehaviour = new CBehaviourMoneyFlock;
+		}
+		else {
+			pBehaviour = (CBehaviour*)0x0;
+		}
+	}
+	return pBehaviour;
+}

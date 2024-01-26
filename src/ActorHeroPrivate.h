@@ -16,7 +16,10 @@ class CBehaviourHeroDefault : public CBehaviourHero
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
 
-	class CActorHeroPrivate* field_0xc;
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+
+	class CActorHeroPrivate* pHero;
 };
 
 class CBehaviourRideJamGut : public CBehaviour
@@ -32,9 +35,7 @@ class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut
 class CActorHeroPrivate : public CActorHero 
 {
 public:
-	CActorHeroPrivate() {
-		IMPLEMENTATION_GUARD_LOG()
-	}
+	CActorHeroPrivate();
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
@@ -43,6 +44,14 @@ public:
 	virtual void CinematicMode_Leave(int behaviourId);
 
 	int StateEvaluate();
+
+	void ClearLocalData();
+
+	void BehaviourHero_InitState(int newState);
+	void BehaviourHero_Manage();
+
+	void StateHeroStandInit(int param_2);
+	void StateHeroStand(int param_2);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 

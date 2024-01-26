@@ -52,17 +52,17 @@ static __ri bool _vuFMACflush(VURegs* VU)
 {
 	bool didflush = false;
 
-	VUM_LOG("Flushing FMACs");
+	VUM_LOG_VERBOSE("Flushing FMACs");
 
 	for (int i = VU->fmacreadpos; VU->fmaccount > 0; i = (i + 1) & 3)
 	{
 		if ((VU->cycle - VU->fmac[i].sCycle) < VU->fmac[i].Cycle)
 		{
-			VUM_LOG("Not flushing FMAC pipe[%d] (macflag=%x clipflag=%x statusflag=%x) r %d w %d", i, VU->fmac[i].macflag, VU->fmac[i].clipflag, VU->fmac[i].statusflag, VU->fmacreadpos, VU->fmacwritepos);
+			VUM_LOG_VERBOSE("Not flushing FMAC pipe[%d] (macflag=%x clipflag=%x statusflag=%x) r %d w %d", i, VU->fmac[i].macflag, VU->fmac[i].clipflag, VU->fmac[i].statusflag, VU->fmacreadpos, VU->fmacwritepos);
 			return didflush;
 		}
 
-		VUM_LOG("flushing FMAC pipe[%d] (macflag=%x clipflag=%x statusflag=%x) r %d w %d", i, VU->fmac[i].macflag, VU->fmac[i].clipflag, VU->fmac[i].statusflag, VU->fmacreadpos, VU->fmacwritepos);
+		VUM_LOG_VERBOSE("flushing FMAC pipe[%d] (macflag=%x clipflag=%x statusflag=%x) r %d w %d", i, VU->fmac[i].macflag, VU->fmac[i].clipflag, VU->fmac[i].statusflag, VU->fmacreadpos, VU->fmacwritepos);
 
 		// Clip flags (Affected by CLIP instruction)
 		if (VU->fmac[i].flagreg & (1 << REG_CLIP_FLAG))
@@ -89,7 +89,7 @@ static __ri bool _vuIALUflush(VURegs* VU)
 {
 	bool didflush = false;
 
-	VUM_LOG("Flushing ALU stalls");
+	VUM_LOG_VERBOSE("Flushing ALU stalls");
 
 	for (int i = VU->ialureadpos; VU->ialucount > 0; i = (i + 1) & 3)
 	{
@@ -340,7 +340,7 @@ static __ri void _vuAddFMACStalls(VURegs* VU, _VURegsNum* VUregsn, bool isUpper)
 {
 	int i = VU->fmacwritepos;
 
-	VUM_LOG("adding FMAC %s pipe[%d]; reg=%x xyzw=%x flagreg=%x target=%x current %x", isUpper ? "Upper" : "Lower", i, VUregsn->VFwrite, VUregsn->VFwxyzw, VUregsn->VIwrite, VU->cycle + 4, VU->cycle);
+	VUM_LOG_VERBOSE("adding FMAC %s pipe[%d]; reg=%x xyzw=%x flagreg=%x target=%x current %x", isUpper ? "Upper" : "Lower", i, VUregsn->VFwrite, VUregsn->VFwxyzw, VUregsn->VIwrite, VU->cycle + 4, VU->cycle);
 	VU->fmac[i].sCycle = VU->cycle;
 	VU->fmac[i].Cycle = 4;
 
