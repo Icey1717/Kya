@@ -144,8 +144,6 @@ CActorHeroPrivate::CActorHeroPrivate()
 
 void CActorHeroPrivate::Create(ByteCode* pByteCode)
 {
-	SkipToNextActor(pByteCode);
-
 	char* pcVar1;
 	uint uVar2;
 	CCamera* pCVar3;
@@ -168,6 +166,22 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->field_0x1610 = 1;
 	this->field_0x18dc = 1;
 	this->field_0xee0 = 0;
+
+	// HACK
+	{
+		CActorAutonomous::Create(pByteCode);
+
+		char* pCurrent = pByteCode->currentSeekPos;
+
+		while (true) {
+			if (strncmp(pCurrent, "TSNI", 4) == 0) {
+				break;
+			}
+			pCurrent++;
+		}
+
+		pByteCode->currentSeekPos = pCurrent;
+	}
 
 	//CActorFighter::Create(pByteCode);
 
@@ -417,11 +431,11 @@ void CActorHeroPrivate::Init()
 	//*(undefined4*)&this->field_0x1a50 = 0;
 	//*(undefined4*)&this->field_0xcc0 = 0;
 	this->field_0xee0 = 1;
-	//ACharacter::OnLoadFunc_0031dfe0((CActorFighter*)this);
-	//*(undefined4*)&this->field_0xf54 = 0;
-	//FUN_00147b40((int)this);
+	CActorFighter::Init();
+	this->field_0xf54 = 0;
+	ResetStdDefaultSettings();
 	//FUN_0032bfc0((int)this);
-	//LoadBoomies((CActorHero*)this);
+	ResetBoomyDefaultSettings();
 	//FUN_0013df70((int)this);
 	//FUN_0014cfe0((int)this);
 	//FUN_00369360();
@@ -755,6 +769,79 @@ void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 	return;
 }
 
+void CActorHeroPrivate::ResetStdDefaultSettings()
+{
+	IMPLEMENTATION_GUARD_LOG(
+	this->field_0x1040 = 9.77f;
+	this->field_0x1044 = 3.91f;
+	this->field_0x104c = 2.5f;
+	this->field_0x1050 = 5.4f;
+	this->field_0x1054 = 1.0f;
+	this->field_0x1058 = 15.0f;)
+	this->field_0x105c = 50.0f;
+	IMPLEMENTATION_GUARD_LOG(
+	this->field_0x1060 = 4.0f;
+	this->field_0x1150 = 17.0f;
+	this->field_0x1154 = 1.7f;
+	this->field_0x1158 = 0.2f;
+	this->field_0x115c = 0.18f;
+	this->field_0x1160 = 0.1f;
+	this->field_0x1164 = 1.5f;
+	this->field_0x1174 = 5.0f;
+	this->field_0x1178 = 1.9f;
+	this->field_0x117c = 1.4f;
+	this->field_0x1180 = 0.4f;
+	this->field_0x1184 = 0.1f;
+	this->field_0x1188 = 0.0f;
+	this->field_0x1430 = 1.396263f;
+	this->field_0x1570 = 0.6f;
+	this->field_0x1574 = 0.0f;)
+	return;
+}
+
+void CActorHeroPrivate::ResetBoomyDefaultSettings()
+{
+	uint* puVar1;
+	ulong uVar2;
+	IMPLEMENTATION_GUARD_LOG(
+
+	CScene::GetManager(MO_Camera);
+	(this->base).field_0x1ba0 = 0x41000000;
+	*(undefined4*)&(this->base).field_0x1b98 = 0;
+	*(undefined4*)&(this->base).field_0x1b9c = 0;
+	(this->base).field_0x1b94 = 0;
+	*(undefined**)&(this->base).field_0x1b90 = &DAT_bf800000;
+	*(undefined4*)&(this->base).field_0x1b64 = 0;
+	(this->base).field_0x1b68 = 0;
+	(this->base).field_0x1b6c = 0;
+	APlayer::StateHeroBoomySnipeBack2Stand_Term((CActorHero*)this, 0);
+	*(undefined4*)&(this->base).field_0x1b78 = 0;
+	(this->base).field_0x1b74 = 0;
+	*(undefined**)&(this->base).field_0x1000 = &DAT_bf800000;
+	*(undefined4*)&(this->base).field_0x1004 = 0x41200000;
+	*(undefined4*)&(this->base).field_0x1008 = 0x40a00000;
+	DisableLayer(this, 8);
+	SetMagicMode(this, 0);
+	uVar2 = FUN_0034cdc0();
+	if (uVar2 == 0) {
+		CAnimation::AddDisabledBone
+		((this->base).character.characterBase.base.base.data.pAnimationController, (this->base).animKey_0x1584);
+	}
+	else {
+		CAnimation::RemoveDisabledBone
+		((this->base).character.characterBase.base.base.data.pAnimationController, (this->base).animKey_0x1584);
+	}
+	/* BOOMY_1 */
+	(this->base).field_0x1ba4 = 0;
+	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_1_00429998);
+	*(uint**)&(this->base).field_0x1bb0 = puVar1;
+	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_2_004299a0);
+	*(uint**)&(this->base).field_0x1bb4 = puVar1;
+	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_3_004299a8);
+	(this->base).field_0x1bb8 = (undefined*)puVar1;)
+	return;
+}
+
 int CActorHeroPrivate::StateEvaluate()
 {
 	//InputManager* pIVar1;
@@ -1026,8 +1113,8 @@ void CActorHeroPrivate::ClearLocalData()
 	//this->field_0x1544 = 0.0;
 	//this->field_0x1558 = 0.0;
 	//*(undefined4*)&this->field_0x1018 = 0;
-	//this->field_0xa80 = 0.0;
-	//this->field_0xa84 = 0.0;
+	this->field_0xa80 = 0.0;
+	this->field_0xa84 = 0.0;
 	//*(undefined4*)&this->field_0xa88 = 0;
 	//CVectorDyn::Reset((undefined4*)&this->field_0xf70);
 	//SetJumpCfg(0.1, *(float*)&this->field_0x1050, *(float*)&this->field_0x1158, this->field_0x1150,
@@ -1066,8 +1153,7 @@ void CActorHeroPrivate::ClearLocalData()
 	//this->field_0x197c.pLightColorMatrix = (edF32MATRIX4*)&this->field_0x18fc.ab;
 	//this->field_0x1988 = (float)&this->field_0x193c.ab;
 	//CActor::SetAlpha((CActor*)this, 0x80);
-	//this->animKey_0x157c =
-	//	(uint)(*(float*)((int)&this->currentLocation + 4) + 20.0);
+	this->animKey_0x157c = this->currentLocation.y + 20.0f;
 	//*(undefined4*)&this->field_0x11f0 =
 	//	*(undefined4*)((int)&this->currentLocation + 4);
 	//_ResetHeroFight(this);
@@ -1084,7 +1170,8 @@ void CActorHeroPrivate::ClearLocalData()
 	//		*puVar2 = *puVar2 & 0xffffdfff;
 	//	}
 	//}
-	//*(undefined4*)&this->field_0xf54 = 0;
+
+	this->field_0xf54 = 0;
 
 	if (this == (CActorHeroPrivate*)CActorHero::_gThis) {
 		this->flags = this->flags | 2;
@@ -1175,6 +1262,18 @@ void CActorHeroPrivate::BehaviourHero_InitState(int newState)
 	}
 }
 
+void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
+{
+	switch (newState) {
+	case AS_None:
+		StateHeroStandInit(1);
+		break;
+	default:
+		assert(false);
+		break;
+	}
+}
+
 void CActorHeroPrivate::BehaviourHero_Manage()
 {
 	switch (this->actorState) {
@@ -1249,7 +1348,8 @@ void CActorHeroPrivate::StateHeroStand(int param_2)
 	if (param_2 != 0) {
 		iVar4 = this->currentAnimType;
 		if (iVar4 == 0xf0) {
-			//SV_UpdateValue(0.0f, 5.0f, &this->effort);
+			IMPLEMENTATION_GUARD(
+			SV_UpdateValue(0.0f, 5.0f, &this->effort);)
 			if (this->effort == 0.0f) {
 				IMPLEMENTATION_GUARD(
 				iVar4 = *(int*)(iVar2 + 4);
@@ -1294,18 +1394,16 @@ void CActorHeroPrivate::StateHeroStand(int param_2)
 
 	this->dynamic.rotationQuat = this->rotationQuat;
 
-	//SV_MOV_UpdateSpeedIntensity(0.0f, this->field_0x105c);
+	SV_MOV_UpdateSpeedIntensity(0.0f, this->field_0x105c);
 
-	IMPLEMENTATION_GUARD_LOG(
-	this->dynamic->flags = 0;
-	this->dynamic->field_0x54 = 0.0f;
-	this->dynamic->field_0x58 = 0.0f;
-	this->character.characterBase.dynamicExt.field_0x5c = 0;
-	this->character.characterBase.dynamicExt.field_0x6c = 0;);
+	this->dynamicExt.field_0x50.x = 0.0f;
+	this->dynamicExt.field_0x50.y = 0.0f;
+	this->dynamicExt.field_0x50.z = 0.0f;
+	this->dynamicExt.field_0x50.w = 0.0f;
 
-	/* Turn in place? */
-	//fVar14 = (float)(*(code*)this->character.characterBase.base.base.pVTable[1].field_0x0)
-	//	(0x40800000, this, 0x1002023b, 0);
+	this->dynamicExt.field_0x6c = 0.0f;
+
+	fVar14 = ManageDyn(4.0f, 0x1002023b, 0);
 
 	iVar4 = 0; // DetectGripablePrecipice(this);
 	if (iVar4 == 0) {
@@ -1607,6 +1705,95 @@ void CActorHeroPrivate::StateHeroStand(int param_2)
 	return;
 }
 
+float CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)
+{
+	Timer* pTVar4;
+	AnimResult* pAVar5;
+	uint uVar6;
+	int iVar7;
+	float fVar8;
+	float fVar9;
+	CActorsTable local_110;
+	int pCollision;
+	bool bVar2;
+	uint* puVar1;
+
+	if (this->field_0xf54 == 0) {
+		CActorAutonomous::ManageDyn(param_1, flags, pActorsTable);
+	}
+	else {
+		local_110.entryCount = 0;
+		bVar2 = false;
+		if (pActorsTable == (CActorsTable*)0x0) {
+			pActorsTable = &local_110;
+		}
+		CActorAutonomous::ManageDyn(param_1, flags, pActorsTable);
+		iVar7 = 0;
+		if (0 < pActorsTable->entryCount) {
+			do {
+				IMPLEMENTATION_GUARD()
+				if (pActorsTable->aEntries[iVar7] == this->field_0xf54) {
+					bVar2 = true;
+					break;
+				}
+				iVar7 = iVar7 + 1;
+			} while (iVar7 < pActorsTable->entryCount);
+		}
+		if (!bVar2) {
+			IMPLEMENTATION_GUARD(
+			puVar1 = *(uint**)(this->field_0xf54 + 0x2c);
+			*puVar1 = *puVar1 & 0xffffdfff;
+			iVar7 = (int)this->base.data.pCollisionData;
+			*(uint*)iVar7 = *(uint*)iVar7 | 0x4000;
+			this->field_0xf54 = 0;)
+		}
+	}
+	pTVar4 = GetTimer();
+	fVar8 = powf(0.9f, pTVar4->cutsceneDeltaTime * 50.0f);
+	fVar9 = 1.0f;
+	if ((fVar8 <= 1.0f) && (fVar9 = fVar8, fVar8 < 0.0f)) {
+		fVar9 = 0.0f;
+	}
+	fVar8 = 1.0f - fVar9;
+	this->field_0xa80 = fVar8 * this->dynamic.field_0x44 + fVar9 * this->field_0xa80;
+	this->field_0xa84 = fVar8 * this->dynamic.field_0x40 + fVar9 * this->field_0xa84;
+	fVar9 = fVar9 * this->field_0xa88 + fVar8 * this->dynamic.field_0x44 * this->dynamic.currentLocation.y;
+	this->field_0xa88 = fVar9;
+
+	iVar7 = this->actorState;
+	if (iVar7 == -1) {
+		uVar6 = 0;
+	}
+	else {
+		pAVar5 = this->GetStateCfg(iVar7);
+		uVar6 = pAVar5->flags_0x4 & 0x100;
+	}
+
+	if (uVar6 != 0) {
+		fVar9 = this->currentLocation.y + 20.0f;
+		this->animKey_0x157c = fVar9;
+	}
+	return fVar9;
+}
+
+void CActorHeroPrivate::StoreCollisionSphere()
+{
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.x = 0.4f;
+	local_10.y = 0.8f;
+	local_10.z = 0.4f;
+	local_10.w = 0.0f;
+	local_20.x = 0.0f;
+	local_20.z = 0.0f;
+	local_20.y = 0.78f;
+	local_20.w = 1.0f;
+	ChangeCollisionSphere(0.0f, &local_10, &local_20);
+	CActorAutonomous::StoreCollisionSphere();
+	return;
+}
+
 void CBehaviourHeroDefault::Manage()
 {
 	this->pHero->BehaviourHero_Manage();
@@ -1668,16 +1855,19 @@ void CBehaviourHeroDefault::Begin(CActor* pOwner, int newState, int newAnimation
 
 void CBehaviourHeroDefault::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	this->pHero->ResetBoomyDefaultSettings();
+	this->pHero = (CActorHeroPrivate*)0x0;
+	return;
 }
 
 void CBehaviourHeroDefault::InitState(int newState)
 {
-	pHero->BehaviourHero_InitState(newState);
+	this->pHero->BehaviourHero_InitState(newState);
 	return;
 }
 
 void CBehaviourHeroDefault::TermState(int oldState, int newState)
 {
-	IMPLEMENTATION_GUARD();
+	this->pHero->BehaviourHero_TermState(oldState, newState);
+	return;
 }

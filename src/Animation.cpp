@@ -1486,12 +1486,14 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 		}
 		if ((bHasFlag == 0) || (bVar4 = UpdateCurSkeleton(pActor), bVar4 == false)) {
 
-			if ((this->anmSkeleton).pTag == 0x0 && bHasFlag != 0) {
+#ifdef PLATFORM_WIN
+			if ((this->anmSkeleton).pTag == 0x0 && ((bHasFlag != 0) && (((pActor->p3DHierNode->base).flags_0x9e & 0x100) != 0))) {
 				Log::GetInstance().ForceFlush();
 				IMPLEMENTATION_GUARD_LOG();
+				assert(false);
 			}
+#endif
 
-			assert((this->anmSkeleton).pTag || bHasFlag == 0);
 			TheAnimStage.SetActor(edAnmSkeleton::TheNullOne.pTag);
 			pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
 			TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);

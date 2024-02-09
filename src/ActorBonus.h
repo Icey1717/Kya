@@ -2,7 +2,7 @@
 #define ACTOR_BONUS_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorMovable.h"
 
 class CBehaviourBonusBase : public CBehaviour
 {

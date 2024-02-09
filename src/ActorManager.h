@@ -16,6 +16,59 @@ struct CClassInfo {
 	int size;
 };
 
+struct ed_Bound_Box
+{
+	edF32VECTOR4 br;
+	edF32VECTOR4 tl;
+};
+
+class CClusterNode
+{
+public:
+	CClusterNode();
+
+	void Update(class CCluster* pCluster);
+
+	CActor* pActor;
+	CClusterNode* pNext;
+	CClusterNode* pPrev;
+	int nodeIndex;
+};
+
+struct edS32VECTOR3
+{
+	int x;
+	int y;
+	int z;
+};
+
+typedef void (ColCallbackFuncPtr)(CActor*, void*);
+
+class CCluster 
+{
+public:
+	CCluster();
+	void Init(int actorCount, ed_Bound_Box* pBoundBox, int param_4);
+	void SetWorldBox(ed_Bound_Box* pBoundBox, int param_3);
+	uint GetMapCoords(edS32VECTOR3* pOutCoords, edF32VECTOR4* pLocation);
+	void DeleteNode(CClusterNode* pNode);
+	CClusterNode* NewNode(CActor* pActor);
+
+	void ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pActor);
+
+	CClusterNode** ppNodes;
+
+	CClusterNode* field_0x34;
+
+	int nbClusterNodes;
+
+	CClusterNode* pClusterNode;
+	CClusterNode* aClusterNodes;
+
+	edF32VECTOR4 vectorA;
+	edF32VECTOR4 worldBox;
+};
+
 struct CActorManager : public CObjectManager {
 
 	virtual void Level_Init();
@@ -24,6 +77,7 @@ struct CActorManager : public CObjectManager {
 	virtual void Level_Draw();
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
+	void PrecomputeSectorsBoundindBoxes();
 	void UpdateLinkedActors();
 	void Level_LoadClassesInfo(struct ByteCode* pMemoryStream);
 
@@ -32,7 +86,6 @@ struct CActorManager : public CObjectManager {
 	struct ActorManagerAnimLinkData* field_0x4;
 	CActor* pActorArray_0x8;
 	int field_0xc;
-	struct Kya* kyaChild;
 	float field_0x14;
 	undefined field_0x18;
 	undefined field_0x19;
@@ -66,7 +119,9 @@ struct CActorManager : public CObjectManager {
 	undefined field_0x4d;
 	undefined field_0x4e;
 	undefined field_0x4f;
-	struct ActorManagerSector* pActorManagerSectorArray;
+	ed_Bound_Box* aSectorBoundingBoxes;
+
+	CCluster cluster;
 
 	CActor** aActors;
 	int nbActors;

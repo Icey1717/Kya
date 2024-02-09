@@ -62,7 +62,7 @@ void edResCollection::FlushAllResources(edCinGameInterface& cinGameInterface)
 		do {
 			pcVar1 = &this->pData->aTags[iVar3];
 			if (((pcVar1->flags & 0x80000000) == 0) && (pcVar1->pData != 0)) {
-				cinGameInterface.ReleaseResource(pcVar1->flags, false, LOAD_SECTION(pcVar1->pData));
+				cinGameInterface.ReleaseResource(pcVar1->flags, false, (void*)LOAD_SECTION(pcVar1->pData));
 				pcVar1->pData = 0;
 			}
 			iVar3 = iVar3 + -1;

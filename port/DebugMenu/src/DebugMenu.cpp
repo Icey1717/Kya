@@ -7,6 +7,8 @@
 
 #include "log.h"
 
+#include "DebugHelpers.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -26,6 +28,7 @@
 #include "DebugMeshViewer.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
+#include "ActorHeroPrivate.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -128,11 +131,11 @@ namespace DebugMenu_Internal {
 		const ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 
 		// Render the framerate counter
-		ImGui::SetNextWindowSize(windowSize);
-		ImGui::SetNextWindowPos(ImVec2(screenSize.x - windowSize.x - 10.0f, 10.0f), ImGuiCond_Always);
-		ImGui::Begin("Framerate Counter", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
-		ImGui::Text("FPS: %.1f", fps);
-		ImGui::End();
+ImGui::SetNextWindowSize(windowSize);
+ImGui::SetNextWindowPos(ImVec2(screenSize.x - windowSize.x - 10.0f, 10.0f), ImGuiCond_Always);
+ImGui::Begin("Framerate Counter", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+ImGui::Text("FPS: %.1f", fps);
+ImGui::End();
 	}
 
 	int selectedTextureIndex = -1;
@@ -216,6 +219,36 @@ namespace DebugMenu_Internal {
 		auto* options = static_cast<std::vector<std::string>*>(pData);
 		*ppOut = ((*options)[index]).c_str();
 		return true;
+	}
+
+	void ShowHeroMenu(bool* bOpen) {
+		// Create a new ImGui window
+		ImGui::Begin("Hero", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		CActorHero* pActorHero = CActorHeroPrivate::_gThis;
+
+		if (pActorHero) {
+			DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->currentLocation);
+			DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->rotationQuat);
+
+			if (ImGui::CollapsingHeader("Dynamic", ImGuiTreeNodeFlags_DefaultOpen)) {
+				DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->dynamic.rotationQuat);
+				DebugHelpers::ImGui::TextVector4("field_0x10", pActorHero->dynamic.field_0x10);
+				DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->dynamic.currentLocation);
+				DebugHelpers::ImGui::TextVector4("Horizontal Location", pActorHero->dynamic.horizontalLocation);
+
+				ImGui::Text("Flags: %x", pActorHero->flags);
+
+				ImGui::InputFloat("Intensity", &pActorHero->dynamic.intensity);
+				ImGui::InputFloat("field_0x40", &pActorHero->dynamic.field_0x40);
+				ImGui::InputFloat("field_0x44", &pActorHero->dynamic.field_0x44);
+				ImGui::InputFloat("field_0x54", &pActorHero->dynamic.field_0x54);
+				ImGui::InputFloat("field_0x58", &pActorHero->dynamic.field_0x58);
+			}
+		}
+
+		// End the ImGui window
+		ImGui::End();
 	}
 
 	void ShowCutsceneMenu(bool* bOpen) {
@@ -632,6 +665,8 @@ namespace DebugMenu_Internal {
 		{"Cutscene", ShowCutsceneMenu, true },
 		{"Rendering", ShowRenderingMenu },
 		{"Scene", ShowSceneMenu },
+		{"Hero", ShowHeroMenu, true },
+
 	};
 
 	void ForEachMenu(std::function<void(Menu&)> action) {

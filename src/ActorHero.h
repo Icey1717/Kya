@@ -8,6 +8,11 @@
 struct CPlayerInput;
 
 struct AnimResultHero : public AnimResult {
+	AnimResultHero(int inA, uint inB, uint inC)
+		: AnimResult(inA, inB)
+		, heroFlags(inC)
+	{}
+
 	uint heroFlags;
 };
 

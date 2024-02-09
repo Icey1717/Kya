@@ -2,7 +2,7 @@
 #define ACTOR_ATON_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CPathPlaneArray {
 public:

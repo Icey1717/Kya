@@ -8,6 +8,7 @@
 #include "EdenLib/edAnim/AnmSkeleton.h"
 #include "port/pointer_conv.h"
 
+#include <assert.h>
 
 #define ACTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Actor", level, format, ##__VA_ARGS__)
 
@@ -124,10 +125,22 @@ enum EActorState {
 struct CClusterNode;
 struct AnimMatrixData;
 
-struct CCollision;
+class CCollision;
+
+class CActorsTable
+{
+public:
+	int entryCount;
+	CActor* aEntries[59];
+};
+
 struct CShadow;
 struct ByteCode;
 struct AnimResult {
+	AnimResult() {}
+
+	AnimResult(int inA, uint inB) : field_0x0(inA), flags_0x4(inB) {}
+
 	int field_0x0;
 	uint flags_0x4;
 };
@@ -210,7 +223,7 @@ public:
 
 	CBehaviourStand standBehaviour;
 
-	CActor* actorFieldG;
+	CActor* pTiedActor;
 
 	static AnimResult gStateCfg_ACT[5];
 	static uint _gBehaviourFlags_ACT[2];
@@ -221,6 +234,7 @@ public:
 
 	void PreInit();
 	void SetScaleVector(float x, float y, float z);
+	bool SV_IsWorldBoundingSphereIntersectingSphere(edF32VECTOR4* param_2);
 	void EvaluateManageState();
 	void EvaluateDisplayState();
 
@@ -260,6 +274,7 @@ public:
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual void Reset();
 
+	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
 	void ChangeVisibleState(int bVisible);
 
 	void UpdateVisibility();
@@ -268,6 +283,7 @@ public:
 	CBehaviour* GetBehaviour(int behaviourId);
 
 	void SetupClippingInfo();
+	void SetupLodInfo();
 	void SetupDefaultPosition();
 	void SetupLighting();
 
@@ -292,53 +308,9 @@ public:
 	void FUN_00115ea0(uint param_2);
 
 	void ComputeAltitude();
+
+	void TieToActor(CActor* pTieActor, int carryMethod, int param_4);
 };
-
-class CDynamic
-{
-public:
-	edF32VECTOR4 rotationQuat;
-
-	uint flags;
-	float field_0x58;
-};
-
-class CActorMovable : public CActor {
-public:
-	CActorMovable() {
-		IMPLEMENTATION_GUARD_LOG();
-	}
-
-	virtual void Create(ByteCode* pByteCode);
-	virtual void SetState(int newState, int animType);
-
-	CDynamic dynamic;
-	float field_0x1c0;
-};
-
-class CBehaviourAutonomous : public CBehaviour 
-{
-public:
-
-};
-
-class CBehaviourCatchByTrap : public CBehaviourAutonomous
-{
-public:
-
-};
-
-class CActorAutonomous : public CActorMovable 
-{
-public:
-	CActorAutonomous() {
-		IMPLEMENTATION_GUARD_LOG();
-	}
-
-	virtual void Create(ByteCode* pByteCode);
-	virtual CBehaviour* BuildBehaviour(int behaviourType);
-};
-
 
 class CAddOnGenerator_SubObj 
 {

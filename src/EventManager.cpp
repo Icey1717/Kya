@@ -1,6 +1,11 @@
 #include "EventManager.h"
 #include "Actor.h"
 
+#if defined(PLATFORM_PS2)
+#include <libgraph.h>
+#endif
+
+
 CEventManagerInternal CEventManager::callbackFunctions = {};
 
 EventQueue EventQueue_00448fbc;
@@ -45,7 +50,7 @@ void edEventAllocateMessageQueue(int queueSize)
 
 CEventManager::CEventManager()
 {
-	edEventSetCallbackFunctions(EventCallbackGetActorPointer, EventCallbackGetActorPositionVector, EventCallbackGetActorIdent, EventCallbackSendAllMessages);
+	edEventSetCallbackFunctions((void*)EventCallbackGetActorPointer, (void*)EventCallbackGetActorPositionVector, (void*)EventCallbackGetActorIdent, (void*)EventCallbackSendAllMessages);
 	this->activeChunkId = -1;
 	edEventAllocateMessageQueue(0x40);
 }

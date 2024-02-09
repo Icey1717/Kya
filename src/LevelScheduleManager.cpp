@@ -28,6 +28,7 @@
 #include "Animation.h"
 #include "CollisionManager.h"
 #include "EventManager.h"
+#include "port/pointer_conv.h"
 
 
 LevelScheduleManager* LevelScheduleManager::gThis = NULL;
@@ -874,9 +875,7 @@ bool BnkInstallScene(char* pFileData, int size)
 	CScene::_pinstance->Level_Setup(&byteCode);
 	CScene::ptable.g_WayPointManager_0045169c->Level_AddAll(&byteCode);
 	CScene::ptable.g_PathManager_004516a0->Level_AddAll(&byteCode);
-	IMPLEMENTATION_GUARD_LOG(
-	//(*(code*)(Scene::ptable.g_CollisionManager_00451690)->pManagerFunctionData->Level_AddAll)();
-	)
+	CScene::ptable.g_CollisionManager_00451690->Level_AddAll(&byteCode);
 	CScene::ptable.g_ActorManager_004516a4->Level_AddAll(&byteCode);
 	CScene::ptable.g_SectorManager_00451670->Level_AddAll(&byteCode);
 	if (CScene::ptable.g_GlobalDListManager_004516bc != (CGlobalDListManager*)0x0) {
@@ -910,9 +909,8 @@ bool BnkInstallSceneCfg(char* pFileData, int size)
 	byteCode.GetU32();
 	CScene::ptable.g_SectorManager_00451670->Level_Create(&byteCode);
 	CScene::ptable.g_ActorManager_004516a4->Level_LoadClassesInfo(&byteCode);
-	//CCollisionManager::Level_PostCreate(Scene::ptable.g_CollisionManager_00451690);
+	CScene::ptable.g_CollisionManager_00451690->Level_PostCreate();
 	//CFxParticleManager::Level_Create(&BStack16);
-	//ByteCodeDestructor(&MStack16, -1);
 	return false;
 }
 
@@ -955,14 +953,13 @@ bool BnkInstallG3D(char* pFileData, int length)
 
 bool BnkInstallCol(char* pFileBuffer, int length)
 {
-	MY_LOG("MISSING HANDLER OnLoadedFunc_00211480\n");
-	//CCollisionManager* pCVar1;
-	//int iVar2;
-	//
-	//pCVar1 = Scene::ptable.g_CollisionManager_00451690;
-	//iVar2 = LoadCollision_00251570(pFileBuffer, length, 0);
-	//*(undefined4*)(&pCVar1->field_0x20 + pCVar1->count_0x60 * 4) = *(undefined4*)(iVar2 + 0x44);
-	//pCVar1->count_0x60 = pCVar1->count_0x60 + 1;
+	CCollisionManager* pCollisionManager;
+	edColG3D_OBB_TREE* pObbTree;
+
+	pCollisionManager = CScene::ptable.g_CollisionManager_00451690;
+	pObbTree = edColLoadStatic(pFileBuffer, length, 0);
+	pCollisionManager->aStaticCollisionRefs[pCollisionManager->staticCollisionCount] = (edObbTREE_DYN*)LOAD_SECTION(pObbTree->pObbTree);
+	pCollisionManager->staticCollisionCount = pCollisionManager->staticCollisionCount + 1;
 	return false;
 }
 
@@ -1157,22 +1154,17 @@ bool BnkInstallSong(char* pFileData, int length)
 
 bool BnkInstallDynCol(char* pFileData, int length)
 {
-	MY_LOG("BnkInstallDynCol\n");
+	int nextIndex;
+	BankCollision_14* pBankCollision;
 
-	IMPLEMENTATION_GUARD_LOG(
+	nextIndex = (CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8;
+	(CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8 = nextIndex + 1;
+	pBankCollision = &CScene::ptable.g_CollisionManager_00451690->pBankCollisionData[nextIndex];
 
-	BankCollision_14** ppBVar1;
-	int iVar2;
-	BankCollision_14* pBVar3;
-
-	iVar2 = (CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8;
-	ppBVar1 = &(CScene::ptable.g_CollisionManager_00451690)->pBankCollisionData;
-	(CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8 = iVar2 + 1;
-	pBVar3 = *ppBVar1 + iVar2;
-	pBVar3->pBase = (astruct_11*)pFileData;
-	pBVar3->field_0x4 = length;
-	pBVar3->useCount_0xc = 0;
-	pBVar3->pNextFree = (astruct_11*)0x0;)
+	pBankCollision->pBase = (DynColEntry*)pFileData;
+	pBankCollision->dynColSize = length;
+	pBankCollision->useCount_0xc = 0;
+	pBankCollision->pNextFree = (DynColEntry*)0x0;
 	return false;
 }
 

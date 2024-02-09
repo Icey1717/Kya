@@ -1256,11 +1256,6 @@ void CCamera::ManageEvent(int param_2, int param_3)
 	return;
 }
 
-float edF32Vector4GetDistHard(edF32VECTOR4* v0)
-{
-	return sqrtf(v0->x * v0->x + v0->y * v0->y + v0->z * v0->z) + 0.0;
-}
-
 float CCamera::GetDistance()
 {
 	float fVar1;

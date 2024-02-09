@@ -17,6 +17,7 @@ set(SOURCES
 	"src/DebugMeshViewerVulkan.h"
 	"src/DebugMeshViewerVulkan.cpp"
 	"src/DebugMenu.cpp"
+	"src/DebugHelpers.h"
 	"src/DebugMaterial.h"
 	"src/DebugMaterial.cpp"
 	"src/DebugRendererVulkan.cpp"

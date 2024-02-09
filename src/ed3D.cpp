@@ -1420,8 +1420,6 @@ edLIST* ed3DHierarchyListInit(void)
 	return pList;
 }
 
-float g_DefaultNearClip_0044851c = -0.001f;
-
 void ed3DShadowConfigSetDefault(ed_3D_Shadow_Config* pShadowConfig)
 {
 	pShadowConfig->field_0x0 = 0;
@@ -6585,7 +6583,7 @@ ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy)
 					pHierarchy->desiredLod = (byte)desiredLod;
 
 					// Is this always bad?
-					assert(false);
+					//assert(false);
 					return (ed3DLod*)0x0;
 				}
 				pLod = (ed3DLod*)(pHierarchy + 1);
@@ -9612,7 +9610,7 @@ void ed3DPreparedAllMaterial(ed_g2d_manager* textureInfoObj, ulong mode)
 
 void ed3DPrepareG2D(ed_g2d_manager* textureInfoObj, ulong mode)
 {
-	int iVar1;
+	int texHeaderSize;
 	edpkt_data* puVar2;
 	ed_Chunck* pBuffer;
 	char* fileBufferStart;
@@ -9621,11 +9619,14 @@ void ed3DPrepareG2D(ed_g2d_manager* textureInfoObj, ulong mode)
 	/* Can point at 004DA040 */
 	puVar2 = g_pStrippBufLastPos;
 	texHeaderStart = textureInfoObj->textureHeaderStart;
-	iVar1 = texHeaderStart->size;
-	if ((textureInfoObj != (ed_g2d_manager*)0x0) && (fileBufferStart = textureInfoObj->textureFileBufferStart, (*(uint*)(fileBufferStart + 4) & 1) == 0)) {
+	texHeaderSize = texHeaderStart->size;
+
+	uint* pFlags = reinterpret_cast<uint*>(textureInfoObj->textureFileBufferStart + 4);
+
+	if ((textureInfoObj != (ed_g2d_manager*)0x0) && ((*pFlags & 1) == 0)) {
 		IMPLEMENTATION_GUARD();
-		for (pBuffer = edChunckGetFirst((char*)(texHeaderStart + 1), (char*)texHeaderStart + iVar1); pBuffer != (ed_Chunck*)0x0;
-			pBuffer = edChunckGetNext(pBuffer, (char*)texHeaderStart + iVar1)) {
+		for (pBuffer = edChunckGetFirst((char*)(texHeaderStart + 1), (char*)texHeaderStart + texHeaderSize); pBuffer != (ed_Chunck*)0x0;
+			pBuffer = edChunckGetNext(pBuffer, (char*)texHeaderStart + texHeaderSize)) {
 			/* Check if the value in the buffer is 'LAYA' */
 			if (pBuffer->hash == 0x4159414c) {
 				//ed3DPrepareLayer(pBuffer, textureInfoObj);
@@ -9633,7 +9634,7 @@ void ed3DPrepareG2D(ed_g2d_manager* textureInfoObj, ulong mode)
 		}
 		ed3DPreparedAllMaterial(textureInfoObj, mode);
 		textureInfoObj->textureFileLengthB = (ulong)g_pStrippBufLastPos + (textureInfoObj->textureFileLengthB - (ulong)puVar2);
-		*(uint*)(fileBufferStart + 4) = *(uint*)(fileBufferStart + 4) | 1;
+		*pFlags = *pFlags | 1;
 	}
 	return;
 }
@@ -9779,67 +9780,67 @@ char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int index)
 	return pcVar1;
 }
 
-void ed3DPrepareG3DManageStruct(ed_g3d_manager* meshInfoObj, char* fileBufferStartA, int fileLengthA, char* fileBufferStartB, int fileLengthB)
+void ed3DPrepareG3DManageStruct(ed_g3d_manager* pMesh, char* fileBufferStartA, int fileLengthA, char* fileBufferStartB, int fileLengthB)
 {
-	ed_Chunck* piVar1;
-	int readValue;
+	ed_Chunck* pChunck;
+	int hash;
 
-	for (piVar1 = edChunckGetFirst(fileBufferStartB, fileBufferStartB + fileLengthB); piVar1 != (ed_Chunck*)0x0;
-		piVar1 = edChunckGetNext(piVar1, fileBufferStartB + fileLengthB)) {
-		readValue = piVar1->hash;
+	for (pChunck = edChunckGetFirst(fileBufferStartB, fileBufferStartB + fileLengthB); pChunck != (ed_Chunck*)0x0;
+		pChunck = edChunckGetNext(pChunck, fileBufferStartB + fileLengthB)) {
+		hash = pChunck->hash;
 		/* Is current value CDZA */
-		if (readValue == 0x415a4443) {
-			meshInfoObj->CDZA = piVar1;
+		if (hash == 0x415a4443) {
+			pMesh->CDZA = pChunck;
 		}
 		else {
 			/* Is current value INFA */
-			if (readValue == 0x41464e49) {
-				meshInfoObj->INFA = piVar1;
+			if (hash == 0x41464e49) {
+				pMesh->INFA = pChunck;
 			}
 			else {
 				/* Is current value MBNA */
-				if (readValue == 0x414e424d) {
-					meshInfoObj->MBNA = piVar1;
+				if (hash == 0x414e424d) {
+					pMesh->MBNA = pChunck;
 				}
 				else {
 					/* Is current value SPRA */
-					if (readValue == 0x41525053) {
-						meshInfoObj->SPRA = piVar1;
+					if (hash == 0x41525053) {
+						pMesh->SPRA = pChunck;
 					}
 					else {
 						/* Is current value CAMA */
-						if (readValue == 0x414d4143) {
-							meshInfoObj->CAMA = piVar1;
+						if (hash == 0x414d4143) {
+							pMesh->CAMA = pChunck;
 						}
 						else {
 							/* Is current value LIA. */
-							if (readValue == 0x2e41494c) {
-								meshInfoObj->LIA = piVar1;
+							if (hash == 0x2e41494c) {
+								pMesh->LIA = pChunck;
 							}
 							else {
 								/* Is current value CSTA */
-								if (readValue == 0x41545343) {
-									meshInfoObj->CSTA = piVar1;
+								if (hash == 0x41545343) {
+									pMesh->CSTA = pChunck;
 								}
 								else {
 									/* Is current value ANMA */
-									if (readValue == 0x414d4e41) {
-										meshInfoObj->ANMA = piVar1;
+									if (hash == 0x414d4e41) {
+										pMesh->ANMA = pChunck;
 									}
 									else {
 										/* Is current value HALL */
-										if (readValue == 0x4c4c4148) {
-											meshInfoObj->HALL = piVar1;
+										if (hash == 0x4c4c4148) {
+											pMesh->HALL = pChunck;
 										}
 										else {
 											/* Is current value OBJA */
-											if (readValue == 0x414a424f) {
-												meshInfoObj->OBJA = piVar1;
+											if (hash == 0x414a424f) {
+												pMesh->OBJA = pChunck;
 											}
 											else {
 												/* Is current value GEOM */
-												if (readValue == 0x4d4f4547) {
-													meshInfoObj->GEOM = piVar1;
+												if (hash == 0x4d4f4547) {
+													pMesh->GEOM = pChunck;
 												}
 											}
 										}
@@ -9852,52 +9853,53 @@ void ed3DPrepareG3DManageStruct(ed_g3d_manager* meshInfoObj, char* fileBufferSta
 			}
 		}
 	}
+
 	if (fileBufferStartA != fileBufferStartB) {
-		for (piVar1 = edChunckGetFirst(fileBufferStartA, fileBufferStartA + fileLengthA); piVar1 != (ed_Chunck*)0x0;
-			piVar1 = edChunckGetNext(piVar1, fileBufferStartA + fileLengthA)) {
-			readValue = piVar1->hash;
-			if (readValue == 0x415a4443) {
-				meshInfoObj->CDZA = piVar1;
+		for (pChunck = edChunckGetFirst(fileBufferStartA, fileBufferStartA + fileLengthA); pChunck != (ed_Chunck*)0x0;
+			pChunck = edChunckGetNext(pChunck, fileBufferStartA + fileLengthA)) {
+			hash = pChunck->hash;
+			if (hash == 0x415a4443) {
+				pMesh->CDZA = pChunck;
 			}
 			else {
-				if (readValue == 0x41464e49) {
-					meshInfoObj->INFA = piVar1;
+				if (hash == 0x41464e49) {
+					pMesh->INFA = pChunck;
 				}
 				else {
-					if (readValue == 0x414e424d) {
-						meshInfoObj->MBNA = piVar1;
+					if (hash == 0x414e424d) {
+						pMesh->MBNA = pChunck;
 					}
 					else {
-						if (readValue == 0x41525053) {
-							meshInfoObj->SPRA = piVar1;
+						if (hash == 0x41525053) {
+							pMesh->SPRA = pChunck;
 						}
 						else {
-							if (readValue == 0x414d4143) {
-								meshInfoObj->CAMA = piVar1;
+							if (hash == 0x414d4143) {
+								pMesh->CAMA = pChunck;
 							}
 							else {
-								if (readValue == 0x2e41494c) {
-									meshInfoObj->LIA = piVar1;
+								if (hash == 0x2e41494c) {
+									pMesh->LIA = pChunck;
 								}
 								else {
-									if (readValue == 0x41545343) {
-										meshInfoObj->CSTA = piVar1;
+									if (hash == 0x41545343) {
+										pMesh->CSTA = pChunck;
 									}
 									else {
-										if (readValue == 0x414d4e41) {
-											meshInfoObj->ANMA = piVar1;
+										if (hash == 0x414d4e41) {
+											pMesh->ANMA = pChunck;
 										}
 										else {
-											if (readValue == 0x4c4c4148) {
-												meshInfoObj->HALL = piVar1;
+											if (hash == 0x4c4c4148) {
+												pMesh->HALL = pChunck;
 											}
 											else {
-												if (readValue == 0x414a424f) {
-													meshInfoObj->OBJA = piVar1;
+												if (hash == 0x414a424f) {
+													pMesh->OBJA = pChunck;
 												}
 												else {
-													if (readValue == 0x4d4f4547) {
-														meshInfoObj->GEOM = piVar1;
+													if (hash == 0x4d4f4547) {
+														pMesh->GEOM = pChunck;
 													}
 												}
 											}
@@ -10143,7 +10145,7 @@ LAB_002a40c4:
 	return;
 }
 
-void ed3DPrepareClusterALL(bool param_1, ed_g3d_manager* meshInfoObj, ed_g2d_manager* textureInfo, int param_4)
+void ed3DPrepareClusterALL(bool bUnused, ed_g3d_manager* meshInfoObj, ed_g2d_manager* textureInfo, int param_4)
 {
 	int iVar1;
 	int iVar2;
@@ -10253,42 +10255,42 @@ int ed3DPrepareHierarchy(ed_g3d_hierarchy* pHIER, ed_g2d_manager* pTextureInfo)
 
 void ed3DPrepareHierarchyALL(ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo)
 {
-	char* pcVar1;
+	ed_Chunck* pcVar1;
 	uint uVar2;
-	char* pcVar3;
+	ed_hash_code* pcVar3;
 	uint uVar4;
 
-	pcVar1 = (char*)pMeshInfo->HALL;
-	pcVar3 = pcVar1 + 0x20;
-	uVar2 = edChunckGetNb(pcVar1 + 0x10, pcVar1 + *(int*)(pcVar1 + 8));
-	for (uVar4 = 0; uVar4 < (uVar2 & 0xffff) - 1; uVar4 = uVar4 + 1) {
-		ed3DPrepareHierarchy((ed_g3d_hierarchy*)(((char*)LOAD_SECTION(*(int*)(pcVar3 + 8))) + 0x10), pTextureInfo);
-		pcVar3 = pcVar3 + 0x10;
+	pcVar1 = pMeshInfo->HALL;
+	pcVar3 = reinterpret_cast<ed_hash_code*>(pcVar1 + 2);
+	uVar2 = edChunckGetNb(reinterpret_cast<char*>(pcVar1 + 1), reinterpret_cast<char*>(pcVar1) + pcVar1->size);
+	for (uVar4 = 0; uVar4 < uVar2 - 1; uVar4 = uVar4 + 1) {
+		ed3DPrepareHierarchy(reinterpret_cast<ed_g3d_hierarchy*>(LOAD_SECTION_CAST(char*, pcVar3->pData) + 0x10), pTextureInfo);
+		pcVar3 = pcVar3 + 1;
 	}
 	return;
 }
 
-void ed3DPrepareG3D(bool param_1, ed_g3d_manager* meshInfoObj, ed_g2d_manager* textureInfoObj, int unknown)
+void ed3DPrepareG3D(bool bUnused, ed_g3d_manager* pMesh, ed_g2d_manager* pTexture, int unknown)
 {
 	char* pAlloc;
 
-	if (textureInfoObj != (ed_g2d_manager*)0x0) {
-		ed3DPrepareMaterialBank(meshInfoObj->MBNA, textureInfoObj);
+	if (pTexture != (ed_g2d_manager*)0x0) {
+		ed3DPrepareMaterialBank(pMesh->MBNA, pTexture);
 	}
-	if (meshInfoObj->CSTA == (ed_Chunck*)0x0) {
-		ed3DPrepareHierarchyALL(meshInfoObj, textureInfoObj);
-		pAlloc = meshInfoObj->field_0x4;
+	if (pMesh->CSTA == (ed_Chunck*)0x0) {
+		ed3DPrepareHierarchyALL(pMesh, pTexture);
+		pAlloc = pMesh->field_0x4;
 	}
 	else {
-		ed3DPrepareClusterALL(param_1, meshInfoObj, textureInfoObj, unknown);
-		pAlloc = meshInfoObj->field_0x4;
+		ed3DPrepareClusterALL(bUnused, pMesh, pTexture, unknown);
+		pAlloc = pMesh->field_0x4;
 	}
 	if (pAlloc != (char*)0x0) {
 		edMemFree(pAlloc);
-		meshInfoObj->fileLengthB = meshInfoObj->fileLengthB + -meshInfoObj->field_0xc;
-		meshInfoObj->field_0xc = 0;
-		meshInfoObj->field_0x4 = (char*)0x0;
-		meshInfoObj->GEOM = (ed_Chunck*)0x0;
+		pMesh->fileLengthB = pMesh->fileLengthB + -pMesh->field_0xc;
+		pMesh->field_0xc = 0;
+		pMesh->field_0x4 = (char*)0x0;
+		pMesh->GEOM = (ed_Chunck*)0x0;
 	}
 	return;
 }
@@ -10359,7 +10361,7 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 				}
 				meshInfoObj->fileLengthB = fileLength;
 			}
-			ed3DPrepareG3D(1, meshInfoObj, textureObj, (long)unknown);
+			ed3DPrepareG3D(true, meshInfoObj, textureObj, (long)unknown);
 		}
 		else {
 			pcVar4 = (char*)(pFileData + 0x10);
@@ -10369,7 +10371,7 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 			meshInfoObj->field_0x4 = (char*)0x0;
 			meshInfoObj->field_0xc = 0;
 			meshInfoObj->fileLengthB = meshInfoObj->fileLengthA;
-			ed3DPrepareG3D(1, meshInfoObj, textureObj, unknown);
+			ed3DPrepareG3D(true, meshInfoObj, textureObj, unknown);
 		}
 	}
 

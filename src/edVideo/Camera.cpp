@@ -446,7 +446,7 @@ void edViewPortApplyDrawingEnv(ed_viewport* pCamera)
 		edDmaFlushCache();
 		edDmaSyncPath();
 #ifdef PLATFORM_PS2
-		ED3D_LOG(LogLevel::VeryVerbose, "DMA Begin edViewPortApplyDrawingEnv");
+		CAMERA_LOG(LogLevel::VeryVerbose, "DMA Begin edViewPortApplyDrawingEnv");
 		edDmaSendN_nowait(SHELLDMA_CHANNEL_GIF, pCamera->pCameraObj390_0x24, pCamera->pCameraObj390_0x24->qwc);
 #endif
 	}

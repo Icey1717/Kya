@@ -2,7 +2,7 @@
 #define ACTOR_WEAPON_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorMovable.h"
 
 class CActorWeapon : public CActorMovable {
 public:

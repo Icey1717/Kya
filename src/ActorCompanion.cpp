@@ -11,11 +11,11 @@ void CActorCompanion::Create(ByteCode* pByteCode)
 
 	CActorCompanion::_gThis = this;
 	CActorAutonomous::Create(pByteCode);
-	//pCVar1 = this->field_0x2c;
-	//if (pCVar1 != (CollisionData*)0x0) {
-	//	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x2000;
-	//	this->field_0x2c->flags_0x0 = this->field_0x2c->flags_0x0 & 0xffffefff;
-	//}
+	pCVar1 = this->pCollisionData;
+	if (pCVar1 != (CCollision*)0x0) {
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x2000;
+		pCVar1 ->flags_0x0 = pCVar1->flags_0x0 & 0xffffefff;
+	}
 	iVar2 = pByteCode->GetS32();
 	//this->field_0x358 = iVar2;
 	iVar2 = pByteCode->GetS32();

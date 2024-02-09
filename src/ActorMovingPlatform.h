@@ -2,7 +2,7 @@
 #define ACTOR_MOVING_PLATFORM_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorMovable.h"
 
 struct S_STREAM_MPF_NO_FRICTION_ZONE {
 	int field_0x0;

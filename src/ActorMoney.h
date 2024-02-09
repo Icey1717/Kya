@@ -2,7 +2,7 @@
 #define ACTOR_MONEY_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorMovable.h"
 
 class CActorMoney : public CActorMovable {
 public:

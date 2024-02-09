@@ -8,6 +8,7 @@
 #include "MathOps.h"
 #include "imgui.h"
 #include "DebugRenderer.h"
+#include "DebugHelpers.h"
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -19,23 +20,6 @@
 #include "FileManager3D.h"
 
 #define MESH_PREVIEWER_LOG(level, format, ...) MY_LOG_CATEGORY("Mesh Previewer", level, format, ##__VA_ARGS__)
-
-namespace DebugHelpers {
-	namespace ImGui {
-		static inline void TextVector4(const char* name, const edF32VECTOR4& v) {
-			::ImGui::Text("%s: x: %f, y: %f, z: %f, w: %f", name, v.x, v.y, v.z, v.w);
-		}
-
-		static inline void TextVector3(const char* name, const edF32VECTOR3& v) {
-			::ImGui::Text("%s: x: %f, y: %f, z: %f", name, v.x, v.y, v.z);
-		}
-
-		static inline void TextHash4(const char* name, const uint& hash) {
-			Hash_4 hash4 = hash;
-			::ImGui::Text("Hash: %c%c%c%c", hash4.name[0], hash4.name[1], hash4.name[2], hash4.name[3]);
-		}
-	}
-}
 
 namespace DebugMeshViewer {
 	bool gAnimate = true;

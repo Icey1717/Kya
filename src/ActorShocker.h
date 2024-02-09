@@ -2,7 +2,7 @@
 #define ACTOR_SHOCKER_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CActorShocker : public CActorAutonomous {
 public:

@@ -2,7 +2,7 @@
 #define ACTOR_MICKEN_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CActorMicken : public CActorAutonomous {
 public:

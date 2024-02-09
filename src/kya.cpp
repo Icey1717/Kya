@@ -1213,7 +1213,7 @@ void SplashFunc_002ba880(SplashParams* pParams, long param_2, uint param_3)
 	edPacketClose_00269e70(&packet);
 #if defined(PLATFORM_PS2)
 	edDmaFlushCache();
-	RENDER_LOG("DMA Begin SplashFunc_002ba880\n");
+	MY_LOG("DMA Begin SplashFunc_002ba880\n");
 	edDmaSend(SHELLDMA_CHANNEL_GIF, (uint)packet.pBuffer);
 #endif
 	return;

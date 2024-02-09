@@ -5,6 +5,10 @@
 #include "MemoryStream.h"
 #include "ActorCheckpointManager.h"
 
+#include <string.h>
+#include <math.h>
+#include "CollisionManager.h"
+
 #define LIGHT_MANAGER_LOG(level, format, ...) MY_LOG_CATEGORY("LightManager", level, format, ##__VA_ARGS__)
 
 edF32VECTOR4 gF32Vector4UnitY = { 0.0f, 1.0f, 0.0f, 0.0f };
@@ -174,18 +178,17 @@ void CLightManager::Level_SectorChange(int oldSectorId, int newSectorId)
 
 void CLightManager::ComputeLighting(CActor* pActor, uint flags, ed_3D_Light_Config* pConfig, float param_1)
 {
-	int iVar1;
+	edColPRIM_OBJECT* iVar1;
 	float fVar2;
 	edF32VECTOR4 location;
 	CCollision* pCollision;
 
 	location = pActor->currentLocation;
 	pCollision = pActor->pCollisionData;
-	if ((pCollision != (CCollision*)0x0))// && (iVar1 = pCollision->subObjFieldA, iVar1 != 0)) {
-	{
-		IMPLEMENTATION_GUARD();
-		location.y = location.y + *(float*)(iVar1 + 0xb4);
+	if ((pCollision != (CCollision*)0x0) && (iVar1 = pCollision->pObbPrim, iVar1 != 0)) {
+		location.y = location.y + iVar1->field_0xb0.y;
 	}
+
 	if (((flags & 4) != 0) && (((pActor->flags & 0x1000000) == 0 || (4.0f <= pActor->distanceToGround)))) {
 		flags = flags & 0xfffffffb;
 	}
@@ -1847,21 +1850,6 @@ void CLightManager::BuildActiveList()
 		}
 	}
 	this->bActiveListDirty = 0;
-	return;
-}
-
-void edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
-{
-	float v1Magnitude;
-	v1Magnitude = sqrtf(v1->x * v1->x + v1->y * v1->y + v1->z * v1->z) + 0.0f;
-
-	if (v1Magnitude < 1e-06f) {
-		*v0 = gF32Vector4Zero;
-	}
-	else {
-		v1Magnitude = 1.0f / v1Magnitude;
-		*v0 = *v1 * v1Magnitude;
-	}
 	return;
 }
 

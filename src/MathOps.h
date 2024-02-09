@@ -7,6 +7,8 @@
 #include <libvu0.h>
 #endif
 
+extern float g_DefaultNearClip_0044851c;
+
 extern edF32MATRIX4 gF32Matrix4Zero;
 extern edF32VECTOR3 gF32Vector3Zero;
 extern edF32MATRIX4 gF32Matrix4Unit;
@@ -63,5 +65,11 @@ void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0);
 const float g_TinyFloat_00448548 = 1.0E-6f;
 
 void edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1);
+float edF32Vector4GetDistHard(edF32VECTOR4* v0);
+float edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1);
+float edF32Vector4DotProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
+float edFIntervalUnitSrcLERP(float start, float end, float alpha);
+bool edProjectVectorOnPlane(float projectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int optionFlag);
+bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int mode);
 
 #endif // _MATH_OPS_H

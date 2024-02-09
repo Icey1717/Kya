@@ -277,6 +277,15 @@ inline edF32VECTOR3 operator*(const edF32VECTOR3& lhs, const float& rhs)
 	return ret;
 }
 
+inline edF32VECTOR3 operator+(const edF32VECTOR3& lhs, const float& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs.x + rhs;
+	ret.y = lhs.y + rhs;
+	ret.z = lhs.z + rhs;
+	return ret;
+}
+
 inline edF32VECTOR3 operator-(const edF32VECTOR3& lhs, const float& rhs)
 {
 	edF32VECTOR3 ret;
@@ -689,5 +698,36 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 #define UNPACK_V4_5_MASKED 0x7f
 
 #define ACTOR_NUM_CLASSES 0x57
+
+
+template<typename T, int Size>
+class CFixedTable {
+public:
+	CFixedTable()
+		: entryCount(0)
+	{
+	}
+
+	int entryCount;
+	T entries[Size];
+
+	inline void Add(T value) {
+		if (this->entryCount < Size) {
+			this->entries[this->entryCount] = value;
+			this->entryCount++;
+		}
+	}
+
+	inline void Swap(T a, T b) {
+		T tmp;
+
+		// Access the element at position 'a' and store it in iVar1
+		tmp = (this->entries + a + -1)[1];
+
+		// Swap the values of elements at positions 'a' and 'b'
+		(this->entries + a + -1)[1] = (this->entries + b + -1)[1];
+		(this->entries + b + -1)[1] = tmp;
+	}
+};
 
 #endif //_TYPES_H

@@ -2,7 +2,7 @@
 #define ACTOR_COMPANION_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CActorCompanion : public CActorAutonomous {
 public:

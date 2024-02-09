@@ -15,6 +15,8 @@ edF32VECTOR4 gF32Vector4UnitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
 #define M_PIf 3.14159265f
 #define M_2PIf 6.283185f
 
+float g_DefaultNearClip_0044851c = -0.001f;
+
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 {
 	float fVar1;
@@ -1154,4 +1156,87 @@ void edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 		v0->w = fVar3 * v1Magnitude;
 	}
 	return;
+}
+
+float edF32Vector4GetDistHard(edF32VECTOR4* v0)
+{
+	return sqrtf(v0->x * v0->x + v0->y * v0->y + v0->z * v0->z) + 0.0f;
+}
+
+float edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float v1Magnitude;
+	v1Magnitude = sqrtf(v1->x * v1->x + v1->y * v1->y + v1->z * v1->z) + 0.0f;
+
+	if (v1Magnitude < 1e-06f) {
+		*v0 = gF32Vector4Zero;
+	}
+	else {
+		v1Magnitude = 1.0f / v1Magnitude;
+		*v0 = *v1 * v1Magnitude;
+	}
+	return v1Magnitude;
+}
+
+float edF32Vector4DotProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	return v0->x * v1->x + v0->y * v1->y + v0->z * v1->z;
+}
+
+float edFIntervalUnitSrcLERP(float start, float end, float alpha)
+{
+	float fVar1;
+
+	fVar1 = end;
+	if (((0.0f < start) && (fVar1 = alpha, start < 1.0f)) && (alpha != end)) {
+		fVar1 = end + start * (alpha - end);
+	}
+	return fVar1;
+}
+
+bool edProjectVectorOnPlane(float projectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int optionFlag)
+{
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar3 = 1.0f;
+	if ((projectionFactor <= 1.0f) && (fVar3 = projectionFactor, projectionFactor < 0.0f)) {
+		fVar3 = 0.0f;
+	}
+	fVar2 = pPlaneNormal->x * pInput->x + pPlaneNormal->y * pInput->y + pPlaneNormal->z * pInput->z;
+	if ((optionFlag == 0) || (fVar2 <= 0.0f)) {
+		fVar2 = fVar2 * (fVar3 + 1.0f);
+
+		*pResult = (*pInput - *pPlaneNormal) * fVar2;
+		bVar1 = true;
+	}
+	else {
+		bVar1 = false;
+		*pResult = *pInput;
+	}
+	return bVar1;
+}
+
+bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int mode)
+{
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar3 = 1.0f;
+	if ((reflectionFactor <= 1.0f) && (fVar3 = reflectionFactor, reflectionFactor < 0.0f)) {
+		fVar3 = 0.0f;
+	}
+	fVar2 = pPlaneNormal->x * pInput->x + pPlaneNormal->y * pInput->y + pPlaneNormal->z * pInput->z;
+	if ((mode == 0) || (fVar2 <= 0.0f)) {
+		fVar2 = fVar2 * 2.0f;
+		*pResult = ((*pInput - *pPlaneNormal) * fVar2) * fVar3;
+		bVar1 = true;
+	}
+	else {
+		bVar1 = false;
+		*pResult = *pInput;
+	}
+	return bVar1;
 }

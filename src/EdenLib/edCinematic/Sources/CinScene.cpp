@@ -1458,7 +1458,6 @@ bool edScene::Destroy(edCinGameInterface& pInterface)
 	int itemType;
 	int iVar3;
 	edSceneItemHeader* pItemStream;
-	edResCollection local_4;
 
 	iVar3 = 0;
 	tagSize = this->pTag->size;
@@ -1508,9 +1507,8 @@ bool edScene::Destroy(edCinGameInterface& pInterface)
 			pItemStream = (edSceneItemHeader*)((char*)pItemStream + pItemStream->offset);
 		} while (iVar3 < tagSize);
 	}
-
-	local_4 = { (edResCollectionHeader*)LOAD_SECTION(this->pTag->pCollection) };
-	local_4.FlushAllResources(pInterface);
+	edResCollection resCol = { (edResCollectionHeader*)LOAD_SECTION(this->pTag->pCollection) };
+	resCol.FlushAllResources(pInterface);
 	return true;
 }
 

@@ -6,6 +6,7 @@
 #include "edC/edCBank.h"
 #include "FileManager3D.h"
 #include "ed3D.h"
+#include "EdenLib/edCollision/sources/edCollisions.h"
 
 namespace ed3D
 {
@@ -49,7 +50,7 @@ public:
 	edCBankBuffer bankObject;
 	ed_g3d_manager sectorMesh;
 	ed_g2d_manager sectorTexture;
-	undefined* pManager100Obj;
+	edObbTREE_DYN* pObbTree;
 	ed_g3d_manager backgroundMesh;
 	ed_g2d_manager backgroundTexture;
 	struct edNODE* pBackgroundNode;

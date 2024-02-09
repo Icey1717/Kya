@@ -69,7 +69,8 @@ bool Install(edCTextFont* pFont)
 								pSVar6 = (PagePacked*)((SegmentPacked*)(pcVar5 + 4) + pFont->pageOffset);
 								if (((pSVar6->header[0] == 'P') && (pSVar6->header[1] == 'A')) && ((pSVar6->header[2] == 'G' && (pSVar6->header[3] == 'E')))) {
 #ifdef PLATFORM_PS2
-									pcVar5 = (char*)((uint)(char*)&pSVar6->field_0x13 & 0xfffffff0);
+									char* intPtr = (char*)pSVar6 + 0x4 + 0xf;
+									pcVar5 = (char*)((int)intPtr & 0xfffffff0);
 #else
 									char* intPtr = (char*)pSVar6 + 0x4 + 0xf;
 									pcVar5 = (char*)((unsigned long long)intPtr & 0xfffffffffffffff0);

@@ -2,7 +2,7 @@
 #define ACTOR_NATIV_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CBehaviourNativ : public CBehaviour
 {

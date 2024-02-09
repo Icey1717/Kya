@@ -14,6 +14,7 @@
 #include "port.h"
 #endif
 #include "port/pointer_conv.h"
+#include "CollisionManager.h"
 
 CSectorManager::CSectorManager()
 {
@@ -23,7 +24,7 @@ CSectorManager::CSectorManager()
 	(this->baseSector).sectorIndex = -1;
 	(this->baseSector).bankObject.pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 	(this->baseSector).pBackgroundNode = (edNODE*)0x0;
-	(this->baseSector).pManager100Obj = (undefined*)0x0;
+	(this->baseSector).pObbTree = (edObbTREE_DYN*)0x0;
 	(this->baseSector).loadStage_0x8 = 0;
 	(this->baseSector).field_0x134 = 0.0;
 	(this->baseSector).pMeshTransformParent_0x130 = (edNODE*)0x0;
@@ -110,36 +111,6 @@ void CSectorManager::Func_001fe620()
 	}
 	return;
 }
-
-template<typename T, int Size>
-class CFixedTable {
-public:
-	CFixedTable()
-	: entryCount(0)
-	{
-	}
-
-	int entryCount;
-	T entries[Size];
-
-	void Add(T value) {
-		if (this->entryCount < Size) {
-			this->entries[this->entryCount] = value;
-			this->entryCount++;
-		}
-	}
-
-	void Swap(T a, T b) {
-		T tmp;
-
-		// Access the element at position 'a' and store it in iVar1
-		tmp = (this->entries + a + -1)[1];
-
-		// Swap the values of elements at positions 'a' and 'b'
-		(this->entries + a + -1)[1] = (this->entries + b + -1)[1];
-		(this->entries + b + -1)[1] = tmp;
-	}
-};
 
 void CSectorManager::LevelLoading_Begin()
 {
@@ -486,7 +457,7 @@ void CSector::InstallCallback()
 
 	pAnimHierarchy = (char*)0x0;
 	pFileData = (char*)0x0;
-	this->pManager100Obj = (undefined*)0x0;
+	this->pObbTree = (edObbTREE_DYN*)0x0;
 	local_40 = 0;
 	pcVar6 = (char*)0x0;
 	uVar2 = (this->bankObject).pBankFileAccessObject->get_element_count();
@@ -519,12 +490,7 @@ void CSector::InstallCallback()
 					else {
 						if (uVar9 == 0x70001) {
 							MY_LOG("Sector::Init Init Collision: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
-							IMPLEMENTATION_GUARD_LOG(
-								puVar3 = (undefined*)
-								CCollisionManager::InstallColFile
-								(Scene::ptable.g_CollisionManager_00451690,
-									(long)(int)bankEntry.fileBufferStart, (long)(int)bankEntry.length);
-							this->pManager100Obj = puVar3;)
+							this->pObbTree = CScene::ptable.g_CollisionManager_00451690->InstallColFile(bankEntry.fileBufferStart, bankEntry.size);
 						}
 						else {
 							if (uVar9 == 0x50001) {

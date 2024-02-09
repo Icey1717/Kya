@@ -2,7 +2,7 @@
 #define ACTOR_BOX_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CActorBox : public CActorAutonomous {
 public:

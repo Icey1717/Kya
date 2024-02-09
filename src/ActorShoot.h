@@ -2,7 +2,7 @@
 #define ACTOR_SHOOT_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CActorShoot : public CActorAutonomous {
 public:

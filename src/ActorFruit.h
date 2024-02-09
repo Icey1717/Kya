@@ -2,7 +2,7 @@
 #define ACTOR_FRUIT_H
 
 #include "Types.h"
-#include "Actor.h"
+#include "ActorAutonomous.h"
 
 class CActorFruit : public CActorAutonomous {
 public:
