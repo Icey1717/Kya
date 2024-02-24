@@ -738,7 +738,7 @@ void ed3DHierarchyNodeSetRenderOn(ed_3D_Scene* pScene, edNODE* pNode);
 void ed3DHierarchyNodeSetRenderOff(ed_3D_Scene* pScene, edNODE* pNode);
 
 void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt);
-ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool mode);
+ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool bGetFromHierarc);
 void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup);
 ed_dma_matrix* ed3DListCreateDmaMatrixNode(ScratchPadRenderInfo* pRenderInfo, ed_3d_hierarchy* pHierarchy);
 
@@ -817,6 +817,12 @@ extern edpkt_data g_stExecuteCode;
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
 Multidelegate<ed_g3d_manager*>& ed3DGetMeshLoadedDelegate();
+
+namespace ed3D {
+	namespace DebugOptions {
+		bool& GetForceHighestLod();
+	}
+}
 #endif
 
 #define SHELLDMA_TAG_ID_CNT (0x10)

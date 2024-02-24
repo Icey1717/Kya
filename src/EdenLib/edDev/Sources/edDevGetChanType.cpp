@@ -1,0 +1,2 @@
+#include "edDevGetChanType.h"
+

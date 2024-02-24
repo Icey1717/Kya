@@ -56,7 +56,9 @@ struct edCTextFormat {
 	void GetRect();
 	bool FormatString(char* pText, char* param_3);
 	bool FormatString(char* pText);
+
 	edCTextFormat();
+	edCTextFormat(edCTextStyle* pStyle);
 
 	float offsetX_0x0;
 	float offsetY_0x4;

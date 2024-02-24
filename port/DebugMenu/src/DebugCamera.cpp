@@ -127,10 +127,10 @@ namespace DebugCamera {
 	}
 
 	void UpdateCameraPosition(float deltaTime) {
-		auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
-		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;
-		edF32VECTOR4& cameraPosition = pCameraManager->transformationMatrix.rowT;
-		edF32MATRIX4& cameraDirection = pCameraManager->transformationMatrix;
+		auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
+		edF32VECTOR4& cameraLookAt = pActiveCamera->lookAt;
+		edF32VECTOR4& cameraPosition = pActiveCamera->transformationMatrix.rowT;
+		edF32MATRIX4& cameraDirection = pActiveCamera->transformationMatrix;
 
 		GLFWwindow* window = GetGLFWWindow();
 

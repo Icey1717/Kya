@@ -21,6 +21,24 @@ struct ed_3d_hierarchy_node;
 enum ACTOR_MESSAGE {};
 typedef void* MSG_PARAM;
 
+struct ActorMessage_7 {
+	int field_0x0;
+
+	edF32VECTOR4 field_0x20;
+};
+
+class CVision {
+public:
+	void Create(CActor* pActor, ByteCode* pByteCode);
+};
+
+class CPathFollowReader {
+public:
+	void Create(ByteCode* pByteCode);
+
+	int field_0x0;
+};
+
 struct CBehaviour 
 {
 	virtual void Create(ByteCode* pByteCode) {}
@@ -230,6 +248,8 @@ public:
 
 	float lodBiases[4];
 
+	ushort field_0xf4;
+
 	CActor();
 
 	void PreInit();
@@ -268,6 +288,7 @@ public:
 	virtual uint IsLookingAt();
 	virtual void UpdateAnimEffects();
 	virtual void UpdatePostAnimEffects();
+	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual bool ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
 	virtual bool InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
@@ -310,6 +331,14 @@ public:
 	void ComputeAltitude();
 
 	void TieToActor(CActor* pTieActor, int carryMethod, int param_4);
+
+	bool ColWithAToboggan();
+
+	bool PlayWaitingAnimation(float param_1, float param_2, int specialAnimType, int regularAnimType, byte idleLoopsToPlay);
+	bool SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, int mode);
+	void SV_UpdatePercent(float param_1, float param_2, float* pValue);
+	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
+	CActor* GetCollidingActor();
 };
 
 class CAddOnGenerator_SubObj 

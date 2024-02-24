@@ -21,6 +21,7 @@ public:
 	void Term(void);
 	char* Init(char* fileBuffer);
 	ByteCode();
+
 	char* data;
 	char* streamEnd;
 	int size;

@@ -73,6 +73,10 @@ public:
 
 	template <typename... Args>
 	void AddLog(const LogLevel level, const std::string& category, const char* format, Args &&...args) {
+		//if (category == "ed3D") {
+		//	return;
+		//}
+
 		asyncLog->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
 
 		for (auto& [cat, log] : logs) {

@@ -899,7 +899,7 @@ bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN*
 					fVar3 = eStack256.field_0x20.z;
 					fVar4 = eStack256.field_0x20.w;
 					if (-1 < iVar6) {
-						peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, (&pTriangle->p1)[_gtri_edge[iVar9][iVar6]]);
+						peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->points[_gtri_edge[iVar9][iVar6]]);
 						fVar10 = peVar1->x;
 						fVar2 = peVar1->y;
 						fVar3 = peVar1->z;
@@ -1061,7 +1061,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 
 				pColInfo->field_0x48 = 4;
 				pColInfo->field_0x40 = STORE_SECTION(pTriangle);
-				pColInfo->field_0x44 = pTriangle[1].p1;
+				pColInfo->field_0x44 = pTriangle->flags;
 			}
 		}
 	}
@@ -1152,13 +1152,164 @@ struct edColARRAY_PRIM_QUAD4 {
 struct edColPRIM_BOX_TRI4_IN {
 	edColOBJECT* pColObj;
 	edColOBJECT* pOtherColObj;
-	edF32MATRIX4* field_0x8;
+	edColPRIM_OBJECT* pData;
 	int aType;
-	undefined4 field_0x10;
-	undefined4 field_0x14;
-	undefined4 field_0x18;
-	edF32VECTOR4* field_0x1c;
+	edF32VECTOR4* field_0x10;
+	edF32VECTOR4* field_0x14;
+	edF32VECTOR4* field_0x18;
+	edF32TRIANGLE4* pTriangle;
 };
+
+struct edColPRIM_SPHERE_TRI4_IN {
+	edColOBJECT* pColObj;
+	edColOBJECT* pOtherColObj;
+	edColPRIM_OBJECT* pData;
+	int aType;
+	edF32VECTOR4* field_0x10;
+	edF32VECTOR4* field_0x14;
+	edF32VECTOR4* field_0x18;
+	edF32TRIANGLE4* pTriangle;
+};
+
+void edColComputeContactTriangle4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, edColINFO_OUT* pColInfoOut, uint param_4, void* param_5,
+	edColINFO* pColInfo, edF32TRIANGLE4* pTriangle, int param_8)
+{
+	edF32VECTOR4* peVar1;
+	edF32VECTOR4* peVar2;
+	int iVar3;
+	edColINFO* peVar4;
+	float* pfVar5;
+	edColDbObj_80* peVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	undefined4 in_vf0x;
+	edF32TRIANGLE4_INFOS local_90;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32MATRIX4 local_40;
+
+	if ((gColData.pActiveDatabase)->field_0x4 < gColConfig.field_0x8[gColData.activeDatabaseId + 2]) {
+		peVar6 = (gColData.pActiveDatabase)->field_0x10 + (gColData.pActiveDatabase)->field_0x4;
+		peVar6->field_0x72 = 0;
+		(gColData.pActiveDatabase)->field_0x4 = (gColData.pActiveDatabase)->field_0x4 + 1;
+	}
+	else {
+		peVar6 = (edColDbObj_80*)0x0;
+	}
+
+	if (peVar6 != (edColDbObj_80*)0x0) {
+		peVar6->pColObj = pColObj;
+		peVar6->pOtherColObj = pOtherColObj;
+
+		peVar6->field_0x30 = pColInfoOut->field_0x20;
+
+		peVar6->location = pColInfoOut->location;
+
+		peVar6->field_0x40 = pColInfoOut->field_0x10;
+		
+		peVar6->field_0x78 = pColInfoOut->field_0x44;
+		peVar6->quadFlags = pTriangle->flags;
+		peVar6->field_0x73 = (char)pColInfoOut->field_0x50;
+
+		if (param_8 == 0) {
+			peVar6->field_0x60 = (short)param_4;
+			peVar6->field_0x64 = param_5;
+			peVar6->field_0x62 = 4;
+			peVar6->pQuad = (edF32QUAD4*)pTriangle;
+		}
+		else {
+			peVar6->field_0x62 = (short)param_4;
+			peVar6->pQuad = (edF32QUAD4*)param_5;
+			peVar6->field_0x60 = 4;
+			peVar6->field_0x64 = pTriangle;
+		}
+
+		if (gColConfig.field_0x4 != 0) {
+			edColTriangle4GetInfo(&local_90, pTriangle);
+			peVar6->field_0x6c = pColInfo;
+			if (pColInfo == (edColINFO*)0x0) {
+				peVar6->field_0x70 = 1;
+				peVar6->field_0x71 = 1;
+			}
+			else {
+				peVar6->field_0x70 = pColInfo->field_0x4a;
+				peVar6->field_0x71 = pColInfo->field_0x4b;
+			}
+
+			peVar6->field_0x10 = pColInfoOut->field_0x30;
+
+			pColObj->field_0x6 = pColObj->field_0x6 + 1;
+			if (pOtherColObj != (edColOBJECT*)0x0) {
+				pOtherColObj->field_0x6 = pOtherColObj->field_0x6 + 1;
+			}
+			if (pColInfo != (edColINFO*)0x0) {
+				pColInfo->field_0x49 = 1;
+			}
+
+			local_60 = local_90.field_0x0;
+
+			peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
+			peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3);
+			local_70.x = peVar2->x - peVar1->x;
+			local_70.y = peVar2->y - peVar1->y;
+			local_70.z = peVar2->z - peVar1->z;
+			local_70.w = 0.0f;
+
+			edF32Vector4NormalizeHard(&local_70, &local_70);
+
+			local_40.aa = local_60.y * local_70.z - local_70.y * local_60.z;
+			local_40.ab = local_60.z * local_70.x - local_70.z * local_60.x;
+			local_40.ac = local_60.x * local_70.y - local_70.x * local_60.y;
+			local_40.ad = in_vf0x;
+			local_40.rowY = local_60;
+			local_40.rowZ = local_70;
+			local_40.rowT = *LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
+
+			if ((pColInfo != (edColINFO*)0x0) && ((pTriangle->flags & 0x80000000) == 0)) {
+				pColInfo->field_0x44 = 0x0;
+
+				pColInfo->field_0x0 = local_40;
+
+				pColInfo->field_0x48 = 4;
+				pColInfo->field_0x40 = STORE_SECTION(pTriangle);
+				pColInfo->field_0x44 = pTriangle->flags;
+			}
+		}
+	}
+	return;
+}
+
+void edColIntersectSphereTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_TRI4_IN* pPrimSphereTriIn, int param_3)
+{
+	edF32TRIANGLE4* pTriangle;
+	bool bVar1;
+	edF32MATRIX4* m0;
+	edF32TRIANGLE4_INFOS local_60;
+	edF32TRIANGLE4 local_40;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	pTriangle = pPrimSphereTriIn->pTriangle;
+	m0 = &pPrimSphereTriIn->pData->matrix_0x40;
+	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1));
+	local_40.p2 = STORE_SECTION(&eStack32);
+	edF32Matrix4MulF32Vector4Hard(LOAD_SECTION_CAST(edF32VECTOR4*, local_40.p2), m0, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2));
+	local_40.p3 = STORE_SECTION(&eStack16);
+	edF32Matrix4MulF32Vector4Hard(LOAD_SECTION_CAST(edF32VECTOR4*, local_40.p3), m0, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3));
+	local_40.p1 = STORE_SECTION(&eStack48);
+	local_40.flags = pTriangle->flags;
+
+	bVar1 = edColIntersectSphereUnitTriangle4(pColInfoOut, (edColPRIM_IN*)pPrimSphereTriIn, &local_40);
+	if (bVar1 != false) {
+		edColTriangle4GetInfo(&local_60, pTriangle);
+		pColInfoOut->location = local_60.field_0x0;
+		edColComputeContactTriangle4(pPrimSphereTriIn->pColObj, pPrimSphereTriIn->pOtherColObj, pColInfoOut, pPrimSphereTriIn->aType,
+			pPrimSphereTriIn->pData, &pPrimSphereTriIn->pData->colInfo, pTriangle, param_3);
+	}
+	return;
+}
 
 uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParams)
 {
@@ -1172,7 +1323,7 @@ uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParam
 	edColPRIM_OBJECT* pUVar8;
 	edColPRIM_OBJECT* pUVar9;
 	edColINFO_OUT eStack160;
-	//edColPRIM_SPHERE_TRI4_IN* local_40;
+	edColPRIM_SPHERE_TRI4_IN local_40;
 	edColPRIM_BOX_TRI4_IN local_20;
 
 	iVar1 = pParams->primSize;
@@ -1189,7 +1340,7 @@ uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParam
 		local_20.pColObj = peVar5;
 		IMPLEMENTATION_GUARD(
 		for (; pUVar8 < pUVar9; pUVar8 = (edColPRIM_OBJECT*)((int)&(pUVar8->field_0x0).aa + iVar1)) {
-			local_20.field_0x10 = &(pUVar8->field_0x0).da;
+			local_20.field_0x10 = &pUVar8->matrix_0x0.rowT;
 			local_20.field_0x14 = &pUVar8->field_0xc0;
 			local_20.field_0x18 = &pUVar8->field_0xd0;
 			local_20.field_0x8 = (edF32MATRIX4*)pUVar8;
@@ -1203,22 +1354,21 @@ uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParam
 	}
 	else {
 		if ((iVar4 == 0xb) || (iVar4 == 0xe)) {
-			IMPLEMENTATION_GUARD(
 			local_40.pOtherColObj = pParams->pOtherColObj;
-			local_40.field_0xc = pParams->aType;
+			local_40.aType = pParams->aType;
 			local_40.pColObj = peVar5;
-			for (; pUVar8 < pUVar9; pUVar8 = (edColPRIM_OBJECT*)((int)&(pUVar8->field_0x0).aa + iVar1)) {
-				local_40.field_0x10 = (edF32VECTOR4*)&(pUVar8->field_0x0).da;
+			for (; pUVar8 < pUVar9; pUVar8 = (edColPRIM_OBJECT*)((char*)pUVar8 + iVar1)) {
+				local_40.field_0x10 = &pUVar8->matrix_0x0.rowT;
 				local_40.field_0x14 = &pUVar8->field_0xc0;
 				local_40.field_0x18 = &pUVar8->field_0xd0;
 				local_40.pData = pUVar8;
 				for (peVar7 = peVar3; peVar7 < peVar3 + iVar2; peVar7 = peVar7 + 1) {
-					local_40.field_0x1c = (edF32TRIANGLE4*)peVar7;
+					local_40.pTriangle = (edF32TRIANGLE4*)peVar7;
 					edColIntersectSphereTriangle4(&eStack160, &local_40, 0);
 					uVar6 = uVar6 | eStack160.result;
-					peVar5->field_0x10 = uVar6;
+					peVar5->colResult = uVar6;
 				}
-			})
+			}
 		}
 		else {
 			uVar6 = 0;
@@ -1290,7 +1440,7 @@ uint edColArrayObjectPrimPenatratingArrayQuads4(edColARRAY_PRIM_QUAD4* pParams)
 					result = result | colInfoOut.result;
 
 					COLLISION_LOG(LogLevel::VeryVerbose, "edColArrayObjectPrimPenatratingArrayQuads4 intersect result: 0x{:x} result: 0x{:x}", colInfoOut.result, result);
-					pColObj->field_0x10 = result;
+					pColObj->colResult = result;
 				}
 			}
 		}

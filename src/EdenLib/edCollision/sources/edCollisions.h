@@ -44,7 +44,7 @@ struct edColOBJECT {
 	short nbPrim;
 	short nbPrimUsed;
 	int field_0xc;
-	uint field_0x10;
+	uint colResult;
 	int pDynObj; // edDynOBJECT* 
 	undefined4 field_0x18;
 	undefined4 field_0x1c;
@@ -271,9 +271,10 @@ struct edF32TRIANGLE4
 			int p3; // edF32Vector*
 		};
 
-		float points[3];
+		int points[3];
 	};
-	undefined4 pad;
+
+	uint flags;
 });
 
 PACK(

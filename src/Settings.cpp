@@ -122,8 +122,8 @@ void CSettings::SetSettingsToGlobal()
 	//if ((long)iVar1 != (long)iVar5) {
 	//	FUN_00181ef0(lVar6, (long)iVar1);
 	//}
-	//if ((ulong)this->field_0x0 != (long)g_InputManager_00450960.field_0x14) {
-	//	FUN_001b6d90((int)&g_InputManager_00450960, (ulong)this->field_0x0);
+	//if ((ulong)this->field_0x0 != (long)gPlayerInput.field_0x14) {
+	//	FUN_001b6d90((int)&gPlayerInput, (ulong)this->field_0x0);
 	//}
 	return;
 }

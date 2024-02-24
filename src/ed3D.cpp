@@ -85,6 +85,19 @@ char* s_ed3D_Initialsation_004333a0 = "ed3D Initialsation\n";
 #define LIST_TYPE_MATRIX	2
 #define LIST_TYPE_STRIP		3
 
+// Debug
+#ifdef PLATFORM_WIN
+namespace ed3D {
+	namespace DebugOptions {
+		bool gForceHighestLod = false;
+		bool& GetForceHighestLod()
+		{
+			return gForceHighestLod;
+		}
+	}
+}
+#endif
+
 int gCurTime = 0;
 int gStepTime = 0;
 byte BYTE_00448a5c = 1;
@@ -6550,6 +6563,13 @@ ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy)
 	edF32MATRIX4 cameraSpaceTransform;
 
 	lodCount = pHierarchy->lodCount;
+
+#ifdef PLATFORM_WIN
+	if (ed3D::DebugOptions::gForceHighestLod) {
+		lodCount = 1;
+	}
+#endif
+
 	if (lodCount < 2) {
 		pHierarchy->desiredLod = (char)lodCount - 1;
 		if (pHierarchy->desiredLod == 0xffffffff) {
@@ -8230,7 +8250,7 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 	//ProfileObject* pPVar9;
 	ed_3d_extra_stuff_param renderTaskData;
 
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRenderDlist 0x{:x} ({}) (child: {})", (void*)pStaticMeshMaster, GetStaticMeshMasterIndex(pStaticMeshMaster), pStaticMeshMaster->bShadowScene);
+	ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRenderDlist 0x{:x} ({}) (child: {})", (uintptr_t)pStaticMeshMaster, GetStaticMeshMasterIndex(pStaticMeshMaster), pStaticMeshMaster->bShadowScene);
 
 	iVar4 = gIDProfileFlush;
 	if (ged3DConfig.bEnableProfile != 0) {
@@ -11007,7 +11027,7 @@ struct MeshData_OBB
 	int field_0x12;
 };
 
-ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool mode)
+ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool bGetFromHierarc)
 {
 	byte desiredLod;
 	ed_3d_hierarchy* pMeshTransformData;
@@ -11027,7 +11047,7 @@ ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool
 
 		ED3D_LOG(LogLevel::VeryVerbose, "ed3DHierarchyNodeGetSkeletonChunck desired L.O.D: {}", desiredLod);
 
-		if ((mode != false) && ((pMeshTransformData->flags_0x9e & 0x100) != 0)) {
+		if ((bGetFromHierarc != false) && ((pMeshTransformData->flags_0x9e & 0x100) != 0)) {
 			ed3DHierarcGetLOD(pMeshTransformData, pMeshTransformData->lodCount - 1);
 			desiredLod = pMeshTransformData->lodCount - 1;
 			ED3D_LOG(LogLevel::VeryVerbose, "ed3DHierarchyNodeGetSkeletonChunck picked heirarc L.O.D: {}", desiredLod);
@@ -12645,3 +12665,5 @@ void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo)
 	pTextureInfo->textureFileLengthB = 0;
 	return;
 }
+
+

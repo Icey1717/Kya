@@ -11,10 +11,10 @@
 #include "edStr.h"
 
 EdFileGlobal_10 g_IniFile_00450750_mem;
-IniFile g_IniFile_00450750;
+CIniFile g_IniFile_00450750;
 
 
-bool IniFile::ReadHexValueFromFile(int* hexValue)
+bool CIniFile::ReadHexValueFromFile(int* hexValue)
 {
 	char currentCharA;
 	char currentCharB;
@@ -108,7 +108,7 @@ bool IniFile::ReadHexValueFromFile(int* hexValue)
 	return isValidChar;
 }
 
-bool IniFile::ReadInteger(int* outVal)
+bool CIniFile::ReadInteger(int* outVal)
 {
 	char currentChar;
 	char tempChar;
@@ -202,7 +202,7 @@ bool IniFile::ReadInteger(int* outVal)
 	return isSuccess;
 }
 
-IniFile::IniFile()
+CIniFile::CIniFile()
 {
 	name[0] = '\0';
 	currentSeekPosition = NULL;
@@ -210,7 +210,7 @@ IniFile::IniFile()
 	fileBufferStart = NULL;
 }
 
-IniFile::~IniFile()
+CIniFile::~CIniFile()
 {
 	if (fileBufferStart != NULL)
 	{
@@ -218,7 +218,7 @@ IniFile::~IniFile()
 	}
 }
 
-void IniFile::Load_001ab200(const char* inName, char* inFileBufferStart, int fileSize)
+void CIniFile::Load_001ab200(const char* inName, char* inFileBufferStart, int fileSize)
 {
 	strcpy(name, inName);
 	fileBufferStart = inFileBufferStart;
@@ -228,7 +228,7 @@ void IniFile::Load_001ab200(const char* inName, char* inFileBufferStart, int fil
 	return;
 }
 
-bool IniFile::ReadQuotedString(char* outValue)
+bool CIniFile::ReadQuotedString(char* outValue)
 {
 	char currentCharacter;
 	char tempCharacter;
@@ -290,7 +290,7 @@ bool IniFile::ReadQuotedString(char* outValue)
 
 
 
-bool IniFile::SeekToKey_001a7ed0(const char* key, bool bHasSection)
+bool CIniFile::SeekToKey_001a7ed0(const char* key, bool bHasSection)
 {
 	char cVar1;
 	char* pcVar2;
@@ -572,7 +572,7 @@ bool IniFile::SeekToKey_001a7ed0(const char* key, bool bHasSection)
 }
 
 
-bool IniFile::ReadInt_001a9830(char* section, char* key, int* outValue)
+bool CIniFile::ReadInt_001a9830(char* section, char* key, int* outValue)
 {
 	char currentChar;
 	char compareChar;
@@ -906,7 +906,7 @@ LAB_001aa4b8:
 
 
 
-bool IniFile::ReadString_001aa520(const char* section, const char* key, char* outValue)
+bool CIniFile::ReadString_001aa520(const char* section, const char* key, char* outValue)
 {
 	char cVar1;
 	char cVar2;

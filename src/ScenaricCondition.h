@@ -3,15 +3,60 @@
 
 #include "Types.h"
 
+typedef int SCENARIC_VARIABLE;
+
+struct S_STREAM_SIMPLE_COND {
+	int field_0x0;
+	SCENARIC_VARIABLE variable;
+	int field_0x8;
+	int field_0xc;
+};
+
+static_assert(sizeof(S_STREAM_SIMPLE_COND) == 0x10);
+
 struct ScenaricCondition {
 	char* field_0x0;
 	void Create(char* param_2);
 	void Create(struct ByteCode* pByteCode);
 	ulong IsVerified();
-	ulong IsVerified(struct S_STREAM_SIMPLE_COND* pCond, ulong param_2);
+	static ulong IsVerified(S_STREAM_SIMPLE_COND* pCond, int param_2);
 	int GetNumSimpleConds();
 	int GetDataSize();
 	uint* GetEndPtr();
+};
+
+struct CND_OP_HEADER {
+	int cndOpCount;
+};
+
+static_assert(sizeof(CND_OP_HEADER) == 0x4);
+
+struct COND_HEADER {
+	int condCount;
+};
+
+static_assert(sizeof(COND_HEADER) == 0x4);
+
+struct OP_HEADER {
+	int opCount;
+};
+
+static_assert(sizeof(OP_HEADER) == 0x4);
+
+struct S_STREAM_SIMPLE_OPERATION {
+	int scenVarId;
+	int opType;
+	int value;
+
+	void Perform();
+};
+
+static_assert(sizeof(S_STREAM_SIMPLE_OPERATION) == 0xc);
+
+struct ConditionedOperationArray {
+	CND_OP_HEADER* pHeader;
+	void Create(struct ByteCode* pByteCode);
+	void Perform();
 };
 
 #endif // _SCENARICCONDITION_H

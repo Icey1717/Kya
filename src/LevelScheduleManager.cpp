@@ -29,6 +29,8 @@
 #include "CollisionManager.h"
 #include "EventManager.h"
 #include "port/pointer_conv.h"
+#include "EventTrack.h"
+#include "ActorHero.h"
 
 
 LevelScheduleManager* LevelScheduleManager::gThis = NULL;
@@ -859,7 +861,7 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		Level_FillRunInfo(0x1, -1, -1);
+		Level_FillRunInfo(0xd, -1, -1);
 	}
 	return;
 }
@@ -1180,38 +1182,6 @@ bool BnkInstallAnimMacro(char* pFileData, int length)
 	if (*(int*)pFileData != 0) {
 		(CScene::ptable.g_AnimManager_00451668)->pAnimKeyEntryData = pFileData + 4;
 	}
-	return false;
-}
-
-bool BnkInstallTrack(char* pFileData, int length)
-{
-	MY_LOG("BnkInstallAnimMacro\n");
-
-	IMPLEMENTATION_GUARD_LOG(
-	CTrackManager* pCVar1;
-	uint uVar2;
-	int* pBase;
-	CEventTrack* pCVar3;
-	int iVar4;
-	ByteCode BStack16;
-
-	BStack16.Init(pFileData);
-	BStack16.GetChunk();
-	pCVar1 = CScene::ptable.g_TrackManager_004516b4;
-	uVar2 = BStack16.GetU32();
-	pCVar1->trackCount = uVar2;
-	uVar2 = pCVar1->trackCount;
-	if (uVar2 != 0) {
-		pBase = (int*)operator.new.array((long)(int)(uVar2 * 0xc + 0x10));
-		pCVar3 = (CEventTrack*)__construct_new_array(pBase, CEventTrack::CEventTrack, CEventTrack::~CEventTrack, 0xc, uVar2);
-		pCVar1->aTracks = pCVar3;
-	}
-	pCVar3 = pCVar1->aTracks;
-	for (iVar4 = pCVar1->trackCount; iVar4 != 0; iVar4 = iVar4 + -1) {
-		CEventTrack::Add(pCVar3, &BStack16);
-		pCVar3 = pCVar3 + 1;
-	}
-	BStack16.Term();)
 	return false;
 }
 
@@ -1634,15 +1604,41 @@ void LevelScheduleManager::LevelLoading_End()
 }
 
 struct ScenarioVariable {
-	int field_0x0;
+	int value;
 	int field_0x4;
 };
 
 ScenarioVariable _gScenVarInfo[30] = { 0 };
 
-int LevelScheduleManager::ScenVar_Get(SCENARIC_VARIABLE param_1)
+int LevelScheduleManager::ScenVar_Get(SCENARIC_VARIABLE scenVarId)
 {
-	return _gScenVarInfo[param_1].field_0x0;
+	return _gScenVarInfo[scenVarId].value;
+}
+
+void LevelScheduleManager::ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue)
+{
+	_gScenVarInfo[scenVarId].value = newValue;
+	return;
+}
+
+undefined4 DAT_00425424 = 0;
+
+void LevelScheduleManager::OnSceneVarSet()
+{
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	if (CActorHero::_gThis != (CActorHero*)0x0) {
+		if (CActorHero::_gThis->pActorBoomy != (CActorBoomy*)0x0) {
+			IMPLEMENTATION_GUARD(
+			pHero->DoMessage(pHero, 0x62, gBoomyLevel);
+			pHero->DoMessage(pHero->pBoomySnipeCamera_0xc94, 0x62, gBoomyLevel);)
+		}
+
+		pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x6b, (MSG_PARAM)DAT_00425424);
+		pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x79, 0);
+	}
+	return;
 }
 
 int DAT_004253fc = 0;

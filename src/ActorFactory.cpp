@@ -39,6 +39,16 @@
 #include "ActorBonusFountain.h"
 #include "ActorRune.h"
 #include "ActorBlazer.h"
+#include "ActorEventGenerator.h"
+#include "ActorWoof.h"
+
+class CActor_4e : public CActor {
+	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
+};
+
+class CActor_4f : public CActor {
+	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
+};
 
 CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 {
@@ -196,9 +206,26 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 			*outSize = sizeof(CActorBonusFountain);
 			return new CActorBonusFountain[count];
 			break;
+		case EVENT_GENERATOR:
+			*outSize = sizeof(CActorEventGenerator);
+			return new CActorEventGenerator[count];
+			break;
+		case WOOF:
+			*outSize = sizeof(CActorWoof);
+			return new CActorWoof[count];
+			break;
+		case ACTOR_4E:
+			*outSize = sizeof(CActor_4e);
+			return new CActor_4e[count];
+			break;
+		case ACTOR_4F:
+			*outSize = sizeof(CActor_4f);
+			return new CActor_4f[count];
+			break;
 		default:
 			classId;
 			IMPLEMENTATION_GUARD();
+			ACTOR_LOG(LogLevel::Info, "Unimplemented class: 0x{:x} ({})", classId, classId);
 			break;
 		}
 	}

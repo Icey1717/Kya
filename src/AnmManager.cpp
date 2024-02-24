@@ -4,7 +4,7 @@
 #include "Animation.h"
 #include "MemoryStream.h"
 
-void gAnimation_Callback_Layer0(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3)
+void gAnimation_Callback_Layer0(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint newAnim)
 {
 	uint uVar1;
 	uint uVar2;
@@ -19,10 +19,8 @@ void gAnimation_Callback_Layer0(edAnmMacroAnimator* pAnmMacroAnimator, CActor* p
 		}
 		uVar1 = uVar2 << 1;
 	} while (iVar3 != 0);
-	/* WARNING: Could not recover jumptable at 0x0017f4c8. Too many branches */
-	/* WARNING: Treating indirect jump as call */
-	IMPLEMENTATION_GUARD(
-	(*(code*)pActor->pVTable->animFunc)(pActor, uVar2 & 0x7fffffff, pAnmMacroAnimator, param_3);)
+
+	pActor->AnimEvaluate(uVar2 & 0x7fffffff, pAnmMacroAnimator, newAnim);
 	return;
 }
 
@@ -60,8 +58,8 @@ edF32MATRIX4* edAnmManager::GetMatrixBuffer(int count)
 {
 	edF32MATRIX4* peVar1;
 
-	ANIMATION_LOG(LogLevel::Verbose, "edAnmManager::GetMatrixBuffer count: %x", count);
-	ANIMATION_LOG(LogLevel::Verbose, "edAnmManager::GetMatrixBuffer seek: %p end: %p", (uintptr_t)this->pBufferSeekPos_0x8018, (uintptr_t)this->pBufferEnd_0x8014);
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmManager::GetMatrixBuffer count: 0x{:x}", count);
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmManager::GetMatrixBuffer seek: 0x{:x} end: 0x{:x}", (uintptr_t)this->pBufferSeekPos_0x8018, (uintptr_t)this->pBufferEnd_0x8014);
 
 	peVar1 = (edF32MATRIX4*)this->pBufferSeekPos_0x8018;
 	if ((edF32MATRIX4*)this->pBufferEnd_0x8014 < peVar1 + count) {
@@ -206,7 +204,7 @@ void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4
 	if ((flags & 0x80000000) == 0) {
 		if (pHdr != (edANM_HDR*)0x0) {
 			this->pAnimKeyTableEntry = pHdr;
-			this->currentAnimDataFlags = this->pAnimKeyTableEntry->flags;
+			this->currentAnimDataFlags = this->pAnimKeyTableEntry->count_0x0;
 		}
 		if ((flags & 0x40000000) != 0) {
 			this->currentAnimDataFlags = flags & 0xbfffffff;
@@ -228,19 +226,18 @@ void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4
 			this->keyDuration_0x18 = peVar1->field_0x4.asTime - peVar1->keyIndex_0x8.asTime;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			UpdateAnimParams(this);)
+			UpdateAnimParams();
 		}
-		if (this->keyStartTime_0x14 < 0.0) {
-			this->keyStartTime_0x14 = 0.0;
+		if (this->keyStartTime_0x14 < 0.0f) {
+			this->keyStartTime_0x14 = 0.0f;
 		}
-		if (this->keyDuration_0x18 < 0.0) {
-			this->keyDuration_0x18 = 0.0;
+		if (this->keyDuration_0x18 < 0.0f) {
+			this->keyDuration_0x18 = 0.0f;
 		}
 		if (param_4 == false) {
 			this->time_0x10 = param_1;
-			fVar2 = 0.0;
-			if (0.0 < this->keyStartTime_0x14) {
+			fVar2 = 0.0f;
+			if (0.0f < this->keyStartTime_0x14) {
 				fVar2 = param_1 / this->keyStartTime_0x14;
 			}
 			this->time_0xc = fVar2;
@@ -313,6 +310,9 @@ void edAnmMacroAnimator::Animate()
 	if ((uVar1 & 0x80000000) == 0) {
 		peVar2 = this->pAnimKeyTableEntry;
 		iVar5 = peVar2->field_0x4.asKey;
+
+		ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate count: {}", iVar5);
+
 		if (iVar5 == 2) {
 			fVar8 = 0.0;
 			iVar5 = peVar2->keyIndex_0x8.asKey + -1;
@@ -325,7 +325,7 @@ void edAnmMacroAnimator::Animate()
 					fVar8 = fVar8 + fVar7;
 					if (0.0001 < fVar7) {
 						edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
-						edAnmStage::SetTimeAsRatio(0.0, &TheAnimStage);
+						edAnmStage::SetTimeAsRatio(0.0f, &TheAnimStage);
 						edAnmStage::AnimBlendToWRTS(fVar7, &TheAnimStage);
 					}
 					iVar5 = iVar5 + -1;
@@ -363,38 +363,45 @@ void edAnmMacroAnimator::Animate()
 				}
 				this->flags = this->flags | 0x80000000;
 				this->flags = this->flags | 0x40000000;
-				this->time_0xc = 1.0;
-				this->time_0x10 = 0.0;
+				this->time_0xc = 1.0f;
+				this->time_0x10 = 0.0f;
 			}
 			else {
 				if (iVar5 == 1) {
 					iVar5 = peVar2->keyIndex_0x8.asKey + -1;
+					ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate count B: {}", iVar5);
+
 					if (-1 < iVar5) {
-						IMPLEMENTATION_GUARD(
-						pfVar4 = (float*)((int)peVar2 + iVar5 * 4 + peVar2->keyIndex_0x8 * 4 + 0xc);
-						piVar3 = (int*)((int)peVar2 + iVar5 * 4 + 0xc);
+						pfVar4 = (float*)((char*)peVar2 + iVar5 * 4 + peVar2->keyIndex_0x8.asKey * 4 + 0xc);
+						piVar3 = (int*)((char*)peVar2 + iVar5 * 4 + 0xc);
 						do {
-							if (0.0001 < *pfVar4) {
+							ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate time: {}", *pfVar4);
+							if (0.0001f < *pfVar4) {
 								if ((this->currentAnimDataFlags & 1) == 0) {
-									edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
+									TheAnimStage.SetAnim(this->pKeyDataArray[*piVar3]);
 								}
 								else {
-									edAnmStage::SetAnimLoop(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
+									TheAnimStage.SetAnimLoop(this->pKeyDataArray[*piVar3]);
 								}
-								edAnmStage::SetTimeAsRatio(this->time_0xc, &TheAnimStage);
-								edAnmStage::AnimBlendToWRTS(*pfVar4, &TheAnimStage);
+
+								TheAnimStage.SetTimeAsRatio(this->time_0xc);
+								TheAnimStage.AnimBlendToWRTS(*pfVar4);
 							}
+
 							iVar5 = iVar5 + -1;
 							pfVar4 = pfVar4 + -1;
 							piVar3 = piVar3 + -1;
-						} while (-1 < iVar5);)
+						} while (-1 < iVar5);
 					}
+
 					if (TheAnimStage.field_0x4c != false) {
 						this->flags = this->flags | 0x80000000;
 					}
+
 					if (TheAnimStage.field_0x4d != false) {
 						this->flags = this->flags | 0x40000000;
 					}
+
 					fVar8 = TheAnimStage.field_0x40;
 					this->time_0xc = TheAnimStage.field_0x40;
 					this->time_0x10 = fVar8 * this->keyStartTime_0x14;
@@ -459,14 +466,13 @@ void edAnmMacroAnimator::UpdateAnimParams()
 	}
 	if (((this->currentAnimDataFlags & 0x80000000) == 0) && (peVar1 = this->pAnimKeyTableEntry, peVar1->field_0x4.asKey == 1)) {
 		iVar2 = peVar1->keyIndex_0x8.asKey;
-		fVar8 = 0.0;
+		fVar8 = 0.0f;
 		this->keyDuration_0x18 = 0.0f;
 		iVar5 = iVar2 + -1;
 		this->keyStartTime_0x14 = 0.0f;
 		if (-1 < iVar5) {
-			IMPLEMENTATION_GUARD();
-			piVar4 = (int*)((int)peVar1 + iVar5 * 4 + 0xc);
-			pfVar3 = (float*)((int)peVar1 + iVar5 * 4 + iVar2 * 4 + 0xc);
+			piVar4 = (int*)((char*)peVar1 + iVar5 * 4 + 0xc);
+			pfVar3 = (float*)((char*)peVar1 + iVar5 * 4 + iVar2 * 4 + 0xc);
 			do {
 				peVar1 = this->pKeyDataArray[*piVar4];
 				if ((this->currentAnimDataFlags & 1) == 0) {
@@ -481,20 +487,23 @@ void edAnmMacroAnimator::UpdateAnimParams()
 				pfVar3 = pfVar3 + -1;
 				this->keyStartTime_0x14 = this->keyStartTime_0x14 + fVar6 * fVar7;
 				fVar8 = fVar8 + fVar7;
-				this->keyDuration_0x18 =
-					this->keyDuration_0x18 + fVar7 * (peVar1->field_0x4.asTime - peVar1->keyIndex_0x8.asTime);
+				this->keyDuration_0x18 = this->keyDuration_0x18 + fVar7 * (peVar1->field_0x4.asTime - peVar1->keyIndex_0x8.asTime);
 			} while (-1 < iVar5);
 		}
+
 		if (0.0f < fVar8) {
 			this->keyStartTime_0x14 = this->keyStartTime_0x14 / fVar8;
 			this->keyDuration_0x18 = this->keyDuration_0x18 / fVar8;
 		}
+
 		if (this->keyStartTime_0x14 < 0.0f) {
 			this->keyStartTime_0x14 = 0.0f;
 		}
+
 		if (this->keyDuration_0x18 < 0.0f) {
 			this->keyDuration_0x18 = 0.0f;
 		}
+
 		this->field_0x8 = 0;
 	}
 	return;

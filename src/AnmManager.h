@@ -7,6 +7,14 @@
 struct edAnmMacroAnimator;
 class CActor;
 
+struct AnimKeySomething {
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	float field_0xc;
+	float field_0x10;
+};
+
 typedef void (*AnimationCallback)(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3);
 
 PACK(

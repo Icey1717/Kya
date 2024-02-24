@@ -22,10 +22,12 @@
 #include "Rendering/edCTextStyle.h"
 #include "Rendering/edCTextFormat.h"
 #include "kya.h"
+#include "ActorHero.h"
+#include "SaveManagement.h"
 
 CSimpleMenu g_PauseScreenData_004507f0;
 
-PauseManager::PauseManager()
+CPauseManager::CPauseManager()
 {
 	pSimpleMenu = (CSimpleMenu*)0x0;
 	pSplashScreen = (CSplashScreen*)0x0;
@@ -46,7 +48,7 @@ PauseManager::PauseManager()
 	return;
 }
 
-void PauseManager::Game_Init()
+void CPauseManager::Game_Init()
 {
 	g_PauseScreenData_004507f0.set_font_title(BootDataFont);
 	g_PauseScreenData_004507f0.set_font_message(BootDataFont);
@@ -122,15 +124,12 @@ void DrawLoadingScreen_001b05e0(void)
 }
 
 
-void PauseManager::LevelLoading_Draw()
+void CPauseManager::LevelLoading_Draw()
 {
 	//PauseManagerFunc_001b0860(pPauseManager, 0);
 	DrawLoadingScreen_001b05e0();
 	return;
 }
-
-struct APlayer;
-extern APlayer* g_PlayerActor_00448e10;
 
 uint UINT_00448eac;
 
@@ -186,9 +185,9 @@ void CSettings::StoreGlobalSettings()
 	return;
 }
 
-void PauseManager::Level_Init()
+void CPauseManager::Level_Init()
 {
-	APlayer* pAVar1;
+	CActorHero* pAVar1;
 	CSimpleMenu* pSimpleMenu;
 	CSplashScreen* pSplashScreen;
 	Timer* pTVar4;
@@ -197,23 +196,25 @@ void PauseManager::Level_Init()
 	this->currentLevelID_0x18 = LevelScheduleManager::gThis->currentLevelID;
 	this->field_0x1c = 0;
 	this->field_0x20 = 0;
-	pAVar1 = g_PlayerActor_00448e10;
-	if (g_PlayerActor_00448e10 != (APlayer*)0x0) {
-		IMPLEMENTATION_GUARD();
+
+	pAVar1 = CActorHero::_gThis;
+	if (CActorHero::_gThis != (CActorHero*)0x0) {
 		if (this->field_0xe == 0) {
-			//g_PlayerActor_00448e10->field_0xaa0 = 0;
+			CActorHero::_gThis->bCanUseCheats = 0;
 		}
 		else {
-			//g_PlayerActor_00448e10->field_0xaa0 = 1;
+			CActorHero::_gThis->bCanUseCheats = 1;
 		}
 		if (this->field_0xf == 0) {
-			//pAVar1->field_0xaa4 = 0;
+			pAVar1->field_0xaa4 = 0;
 		}
 		else {
-			//pAVar1->field_0xaa4 = 1;
+			pAVar1->field_0xaa4 = 1;
 		}
 	}
+
 	UINT_00448eac = 0;
+
 	if ((GameFlags & 0x40) != 0) {
 		pSimpleMenu = new CSimpleMenu();
 		if (pSimpleMenu != (CSimpleMenu*)0x0) {
@@ -241,7 +242,7 @@ void PauseManager::Level_Init()
 	return;
 }
 
-void PauseManager::Level_Draw()
+void CPauseManager::Level_Draw()
 {
 	CCinematicManager* pCinematicManager;
 	LevelScheduleManager* pLevelScheduleManager;
@@ -266,43 +267,43 @@ void PauseManager::Level_Draw()
 				(bVar2 = CScene::_pinstance->CheckFunc_001b9300(), bVar2 != 0)))) {
 			this->totalPlayTime = fVar9;
 		}
-		//pCinematicManager = g_CinematicManager_0048efc;
-		//pCVar8 = (CinematicObjectB*)0x0;
-		//iVar5 = GetNumCutscenes_001c50b0(g_CinematicManager_0048efc);
-		//index = 0;
-		//if (0 < iVar5) {
-		//	do {
-		//		pCVar6 = GetCinematic(pCinematicManager, index);
-		//		if ((pCVar6->state != CS_Stopped) && ((pCVar6->flags_0x4 & 8) != 0)) {
-		//			pCVar8 = pCVar6;
-		//		}
-		//		index = index + 1;
-		//	} while (index < iVar5);
-		//}
+		pCinematicManager = g_CinematicManager_0048efc;
+		pCVar8 = (CCinematic*)0x0;
+		iVar5 = g_CinematicManager_0048efc->GetNumCutscenes_001c50b0();
+		index = 0;
+		if (0 < iVar5) {
+			do {
+				pCVar6 = pCinematicManager->GetCinematic(index);
+				if ((pCVar6->state != CS_Stopped) && ((pCVar6->flags_0x4 & 8) != 0)) {
+					pCVar8 = pCVar6;
+				}
+				index = index + 1;
+			} while (index < iVar5);
+		}
 		pLevelScheduleManager = LevelScheduleManager::gThis;
 		if (60.0f < fVar9 - this->totalPlayTime) {
 			this->pSplashScreen->Manage((long)this->field_0x34, false, bVar1);
-			//if (pCVar8 == (CinematicObjectB*)0x0) {
-			//	LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
-			//	if ((g_DebugCameraFlag_00448ea4 & 4) != 0) {
-			//		FUN_001b51e0();
-			//	}
-			//}
-			//else {
-			//	if (pCVar8->totalCutsceneDelta < 0.5) {
-			//		IMPLEMENTATION_GUARD();
-			//		//LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
-			//		//g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 | 2;
-			//	}
-			//}
+			if (pCVar8 == (CCinematic*)0x0) {
+				IMPLEMENTATION_GUARD(
+				LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
+				if ((g_DebugCameraFlag_00448ea4 & 4) != 0) {
+					FUN_001b51e0();
+				})
+			}
+			else {
+				if (pCVar8->totalCutsceneDelta < 0.5) {
+					IMPLEMENTATION_GUARD();
+					//LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
+					//g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 | 2;
+				}
+			}
 		}
 		else {
 			if ((GameFlags & 0x80) == 0) {
-				if ((long)this->field_0x34 == 0) {
+				if (this->field_0x34 == 0) {
 					bVar2 = GuiDList_BeginCurrent();
 					if (bVar2 != false) {
-						IMPLEMENTATION_GUARD();
-						//this->pSubObj108_0x28->draw(DrawGameMenu);
+						this->pSimpleMenu->draw(DrawGameMenu);
 						GuiDList_EndCurrent();
 					}
 					this->pSimpleMenu->perform_action();
@@ -312,7 +313,7 @@ void PauseManager::Level_Draw()
 					}
 				}
 				else {
-					bVar1 = this->pSplashScreen->Manage((long)this->field_0x34, false, bVar1);
+					bVar1 = this->pSplashScreen->Manage(this->field_0x34, false, bVar1);
 					this->field_0x34 = (int)bVar1;
 					if (this->field_0x34 == 0) {
 						g_PauseScreenData_004507f0.SetMode(PM_MainMenu);
@@ -357,11 +358,11 @@ void CSimpleMenu::reset()
 	this->screenState_0x1c = 0;
 	pTVar1 = GetTimer();
 	this->totalTime = pTVar1->totalTime;
-	this->field_0xcc = 0xfff609ff;
-	this->field_0xd0 = 0xff9000ff;
+	this->colorA = 0xfff609ff;
+	this->colorB = 0xff9000ff;
 	this->field_0xd4 = 0xffffffff;
 	this->field_0xd8 = 0x14;
-	this->field_0xf0 = 1.0;
+	this->field_0xf0 = 1.0f;
 	this->field_0xf4 = 0;
 	this->field_0xf8 = 0;
 	this->field_0xfc = 0;
@@ -374,10 +375,320 @@ void CSimpleMenu::SetMode(EPauseMenu mode)
 {
 	reset();
 	this->currentPage = mode;
-	this->field_0xcc = 0xfc9900ff;
-	this->field_0xd0 = 0xffffd2ff;
+	this->colorA = 0xfc9900ff;
+	this->colorB = 0xffffd2ff;
 	this->field_0xd4 = 0xe9e6e7ff;
 	return;
+}
+
+void CSimpleMenu::set_vertical_position(int verticalPos)
+{
+	this->verticalPos = verticalPos;
+	return;
+}
+
+float CSimpleMenu::draw_func(float param_2)
+{
+	edDList_material* pMaterialInfo;
+	bool bVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	float s;
+	float s_00;
+	float in_f23;
+	float unaff_f22;
+	float xPos;
+
+	iVar2 = this->horizontalAllignment;
+	xPos = 0.0f;
+	bVar1 = false;
+	if (iVar2 == 2) {
+		iVar2 = this->field_0xfc;
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 1;
+		}
+		unaff_f22 = (float)(this->verticalPos + (iVar2 >> 1));
+		xPos = (float)(gVideoConfig.screenWidth - this->horizontalPos);
+		if (this->field_0xf4 != 0) {
+			xPos = xPos - (float)this->field_0xf8;
+		}
+		iVar2 = this->field_0xf8;
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 1;
+		}
+		bVar1 = true;
+		in_f23 = xPos + (float)(iVar2 >> 1);
+	}
+	else {
+		if (iVar2 == 1) {
+			iVar2 = this->field_0xfc;
+			if (iVar2 < 0) {
+				iVar2 = iVar2 + 1;
+			}
+			iVar4 = this->field_0xf8;
+			unaff_f22 = (float)(this->verticalPos + (iVar2 >> 1));
+			iVar2 = iVar4;
+			if (iVar4 < 0) {
+				iVar2 = iVar4 + 1;
+			}
+			in_f23 = (float)(this->horizontalPos + (iVar2 >> 1));
+			xPos = (float)this->horizontalPos;
+			if (this->field_0xf4 != 0) {
+				xPos = xPos + (float)iVar4;
+			}
+			bVar1 = true;
+		}
+		else {
+			if (iVar2 == 0) {
+				iVar2 = this->field_0xfc;
+				if (iVar2 < 0) {
+					iVar2 = iVar2 + 1;
+				}
+				unaff_f22 = (float)(this->verticalPos + (iVar2 >> 1));
+				iVar2 = gVideoConfig.screenWidth;
+				if (gVideoConfig.screenWidth < 0) {
+					iVar2 = gVideoConfig.screenWidth + 1;
+				}
+				xPos = (float)(iVar2 >> 1);
+				if (this->field_0xf4 != 0) {
+					iVar2 = this->field_0xf8;
+					if (iVar2 < 0) {
+						iVar2 = iVar2 + 1;
+					}
+					xPos = xPos + (float)(iVar2 >> 1);
+				}
+				iVar2 = this->field_0xf8;
+				if (iVar2 < 0) {
+					iVar2 = iVar2 + 1;
+				}
+				bVar1 = true;
+				in_f23 = (xPos - param_2 / 2.0f) - (float)(iVar2 >> 1);
+			}
+		}
+	}
+	if ((this->field_0xf4 != 0) && (bVar1)) {
+		if (this->field_0x20 == this->selectedIndex) {
+			pMaterialInfo = (edDList_material*)this->field_0x100;
+		}
+		else {
+			pMaterialInfo = (edDList_material*)this->field_0x104;
+		}
+		edDListLoadIdentity();
+		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
+		edDListUseMaterial(pMaterialInfo);
+		s = 0.0f;
+		s_00 = 1.0f;
+		if (this->horizontalAllignment == 2) {
+			s_00 = 0.0f;
+			s = 1.0f;
+		}
+		iVar4 = 4;
+		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListTexCoo2f(s, s);
+		iVar2 = this->field_0xf8;
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 1;
+		}
+		iVar3 = this->field_0xfc;
+		if (iVar3 < 0) {
+			iVar3 = iVar3 + 1;
+		}
+		edDListVertex4f(in_f23 - (float)(iVar2 >> 1), unaff_f22 - (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListTexCoo2f(s_00, s);
+		iVar2 = this->field_0xf8;
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 1;
+		}
+		iVar3 = this->field_0xfc;
+		if (iVar3 < 0) {
+			iVar3 = iVar3 + 1;
+		}
+		edDListVertex4f(in_f23 + (float)(iVar2 >> 1), unaff_f22 - (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListTexCoo2f(s, s_00);
+		iVar2 = this->field_0xf8;
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 1;
+		}
+		iVar3 = this->field_0xfc;
+		if (iVar3 < 0) {
+			iVar3 = iVar3 + 1;
+		}
+		edDListVertex4f(in_f23 - (float)(iVar2 >> 1), unaff_f22 + (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListTexCoo2f(s_00, s_00);
+		iVar2 = this->field_0xf8;
+		if (iVar2 < 0) {
+			iVar2 = iVar2 + 1;
+		}
+		iVar3 = this->field_0xfc;
+		if (iVar3 < 0) {
+			iVar3 = iVar3 + 1;
+		}
+		edDListVertex4f(in_f23 + (float)(iVar2 >> 1), unaff_f22 + (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListEnd();
+	}
+	return xPos;
+}
+
+void CSimpleMenu::draw_option(char* pMessage, uint color)
+{
+	int iVar1;
+	Timer* pTVar2;
+	edCTextStyle* pNewFont;
+	float fVar3;
+	edCTextStyle textStyle;
+
+	textStyle.Reset();
+
+	if (this->bShadow == 0) {
+		textStyle.SetShadow(0);
+	}
+	else {
+		textStyle.SetShadow(0x100);
+		textStyle.alpha = 0xff;
+	}
+
+	textStyle.spaceSize = 6.0f;
+	textStyle.field_0x8c = this->field_0xdc;
+
+	if (this->field_0x20 == this->selectedIndex) {
+		if (this->screenState_0x1c == 1) {
+			textStyle.rgbaColour = this->colorB;
+		}
+		else {
+			if (this->screenState_0x1c == 2) {
+				pTVar2 = Timer::GetTimer();
+				fVar3 = fmodf(pTVar2->totalTime, 0.1f);
+				if (fVar3 < 0.05f) {
+					textStyle.rgbaColour = this->colorB;
+				}
+				else {
+					textStyle.rgbaColour = this->colorA;
+				}
+			}
+			else {
+				textStyle.rgbaColour = this->colorA;
+			}
+		}
+		textStyle.SetScale(this->selectedScaleX, this->selectedScaleY);
+	}
+	else {
+		textStyle.rgbaColour = this->colorA;
+		textStyle.SetScale(this->scaleX, this->scaleY);
+	}
+	if (color != 0) {
+		textStyle.rgbaColour = color;
+	}
+
+	iVar1 = this->horizontalAllignment;
+	if (iVar1 == 2) {
+		textStyle.SetHorizontalAlignment(1);
+	}
+	else {
+		if (iVar1 == 1) {
+			textStyle.SetHorizontalAlignment(0);
+		}
+		else {
+			if (iVar1 == 0) {
+				textStyle.SetHorizontalAlignment(2);
+			}
+		}
+	}
+
+	this->verticalPos = this->verticalPos + this->field_0x3c;
+	textStyle.SetFont(this->pFontB, false);
+	pNewFont = edTextStyleSetCurrent(&textStyle);
+
+	edCTextFormat textFormat = edCTextFormat(&textStyle);
+
+	textFormat.FormatString(pMessage);
+	fVar3 = draw_func(textFormat.field_0x8);
+	textFormat.Display(fVar3, (float)this->verticalPos);
+	edTextStyleSetCurrent(pNewFont);
+	this->field_0x20 = this->field_0x20 + 1;
+	return;
+}
+
+bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, char* pMessage, EPauseMenu mode, int param_5, uint color)
+{
+	bool bResult;
+	Timer* pTVar1;
+	int iVar2;
+	//SimpleMenuVTable** ppSVar3;
+
+	iVar2 = this->field_0x20;
+	draw_option(pMessage, color);
+	if (iVar2 == this->selectedIndex) {
+		if (helpMsgId != 0) {
+			iVar2 = 0xc2;
+			if (gVideoConfig.omode == 3) {
+				iVar2 = 0xe0;
+			}
+			IMPLEMENTATION_GUARD(
+			draw_help_line(this, helpMsgId, 0, iVar2 + this->counter_0x24 * -0x20, 0xffffffff);
+			this->counter_0x24 = this->counter_0x24 + 1;)
+		}
+
+		if (this->screenState_0x1c == 1) {
+			if (this->lastInput_0x14 == 5) {
+				this->screenState_0x1c = 2;
+				pTVar1 = Timer::GetTimer();
+				this->totalTime = pTVar1->totalTime;
+				if (mode == PM_None) {
+					on_cancel();
+				}
+				else {
+					on_validate();
+				}
+			}
+		}
+		else {
+			if (this->screenState_0x1c == 3) {
+				if (mode == PM_None) {
+					IMPLEMENTATION_GUARD(
+					this->field_0x2c = this->field_0x2c + -1;
+					ppSVar3 = &this->pVTable + this->field_0x2c * 3;
+					this->currentPage = (EPauseMenu)ppSVar3[0x15];
+					this->selectedIndex = (int)ppSVar3[0x16];
+					this->field_0x50 = (int)ppSVar3[0x17];)
+				}
+				else {
+					this->aHistory[this->field_0x2c].currentPage = this->currentPage;
+					this->aHistory[this->field_0x2c].selectedIndex = this->selectedIndex;
+					this->aHistory[this->field_0x2c].field_0x8 = this->field_0x50;
+					this->field_0x2c = this->field_0x2c + 1;
+					this->currentPage = mode;
+					this->selectedIndex = param_5;
+				}
+
+				this->screenState_0x1c = 4;
+				pTVar1 = Timer::GetTimer();
+				this->totalTime = pTVar1->totalTime;
+			}
+		}
+		bResult = true;
+	}
+	else {
+		bResult = false;
+	}
+
+	return bResult;
+}
+
+bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, ulong msgId, EPauseMenu mode, int param_5, uint color)
+
+{
+	bool bResult;
+	char* pMessage;
+
+	if (this->pTranslatedTextData == (CMessageFile*)0x0) {
+		pMessage = gMessageManager.get_message(msgId);
+	}
+	else {
+		pMessage = this->pTranslatedTextData->get_message(msgId, 0);
+	}
+	bResult = draw_option_type_page(helpMsgId, pMessage, mode, param_5, color);
+	return bResult;
 }
 
 void CSimpleMenu::set_font_help(edCTextFont* pFont)
@@ -420,6 +731,425 @@ void CSimpleMenu::perform_action()
 	return;
 }
 
+uint CSimpleMenu::get_action()
+{
+	uint uVar1;
+
+	uVar1 = 0;
+
+	if (this->screenState_0x1c == 1) {
+		if (((gPlayerInput.pressedBitfield & 0x100000) == 0) && ((gPlayerInput.pressedBitfield & 4) == 0)) {
+			if (((gPlayerInput.pressedBitfield & 0x200000) == 0) && ((gPlayerInput.pressedBitfield & 8) == 0)) {
+				if (((gPlayerInput.pressedBitfield & 0x400000) == 0) && ((gPlayerInput.pressedBitfield & 1) == 0)) {
+					if (((gPlayerInput.pressedBitfield & 0x800000) == 0) && ((gPlayerInput.pressedBitfield & 2) == 0)) {
+						uVar1 = 5;
+
+						if (((((gPlayerInput.pressedBitfield & 0x1000000) == 0) &&
+							(uVar1 = 8, (gPlayerInput.pressedBitfield & 0x4000000) == 0)) &&
+							(uVar1 = 6, (gPlayerInput.pressedBitfield & 0x20) == 0)) &&
+							(uVar1 = 7, (gPlayerInput.pressedBitfield & 0x40) == 0)) {
+							uVar1 = 0;
+						}
+					}
+					else {
+						uVar1 = 4;
+					}
+				}
+				else {
+					uVar1 = 3;
+				}
+			}
+			else {
+				uVar1 = 2;
+			}
+		}
+		else {
+			uVar1 = 1;
+		}
+	}
+	return uVar1;
+}
+
+void CSimpleMenu::draw_title(ulong msgHash, int offset)
+{
+	char* text;
+	int iVar1;
+	edCTextStyle* pNewFont;
+	edCTextStyle eStack192;
+
+	if (this->pTranslatedTextData == (CMessageFile*)0x0) {
+		text = gMessageManager.get_message(msgHash);
+	}
+	else {
+		text = this->pTranslatedTextData->get_message(msgHash, 0);
+	}
+
+	iVar1 = gVideoConfig.screenWidth;
+	if (gVideoConfig.screenWidth < 0) {
+		iVar1 = gVideoConfig.screenWidth + 1;
+	}
+
+	this->horizontalPos = iVar1 >> 1;
+
+	iVar1 = gVideoConfig.screenHeight;
+	if (gVideoConfig.screenHeight < 0) {
+		iVar1 = gVideoConfig.screenHeight + 1;
+	}
+
+	this->verticalPos = (iVar1 >> 1) + offset;
+
+	eStack192.Reset();
+	eStack192.SetShadow(0x100);
+	eStack192.rgbaColour = this->field_0xd4;
+	eStack192.alpha = 0xff;
+	eStack192.SetScale(this->field_0xf0, this->field_0xf0);
+	eStack192.SetHorizontalAlignment(2);
+	eStack192.SetVerticalAlignment(8);
+	eStack192.SetFont(this->pFontA, false);
+	pNewFont = edTextStyleSetCurrent(&eStack192);
+	edTextDraw((float)this->horizontalPos, (float)this->verticalPos, text);
+	edTextStyleSetCurrent(pNewFont);
+	this->field_0x3c = 0x28;
+	return;
+}
+
+void CSimpleMenu::draw_help_line(ulong msgId, int x, int y, uint color)
+{
+	char* pMsg;
+	int widthOffset;
+	int heightOffset;
+	edCTextStyle* pTextStyle;
+	edCTextStyle textStyle;
+
+	if ((gPlayerInput.disconnectedController == 0) && (this->screenState_0x1c == 1)) {
+		if (this->pTranslatedTextData == (CMessageFile*)0x0) {
+			pMsg = gMessageManager.get_message(msgId);
+		}
+		else {
+			pMsg = this->pTranslatedTextData->get_message(msgId, 0);
+		}
+
+		widthOffset = gVideoConfig.screenWidth;
+		if (gVideoConfig.screenWidth < 0) {
+			widthOffset = gVideoConfig.screenWidth + 1;
+		}
+
+		heightOffset = gVideoConfig.screenHeight;
+		if (gVideoConfig.screenHeight < 0) {
+			heightOffset = gVideoConfig.screenHeight + 1;
+		}
+
+		textStyle.Reset();
+		textStyle.SetShadow(0x100);
+		textStyle.alpha = 0xff;
+		textStyle.rgbaColour = color;
+		textStyle.SetScale(1.0f, 1.0f);
+		textStyle.SetHorizontalAlignment(2);
+		textStyle.SetVerticalAlignment(8);
+		textStyle.SetFont(this->pFontC, false);
+		pTextStyle = edTextStyleSetCurrent(&textStyle);
+		edTextDraw((float)(x + (widthOffset >> 1)), (float)(y + (heightOffset >> 1)), pMsg);
+		edTextStyleSetCurrent(pTextStyle);
+	}
+	return;
+}
+
+int gDebugLevelCheatEnabled_00449824 = 0;
+
+void CSimpleMenu::DrawMainMenu()
+{
+	CPauseManager* pCVar1;
+	bool bVar2;
+	SaveData5* pSVar3;
+	int iVar4;
+	int iVar5;
+
+	pCVar1 = CScene::ptable.g_PauseManager_00451688;
+	draw_title(0, -0x8c);
+
+	iVar5 = gSaveManagement.slotID_0x28;
+	if (gSaveManagement.slotID_0x28 == -1) {
+		iVar5 = 0;
+	}
+
+	IMPLEMENTATION_GUARD_LOG(
+	iVar4 = 0;
+	do {
+		pSVar3 = FUN_002f5230(&gSaveManagement, iVar4);
+		bVar2 = FUN_002f2e80(pSVar3);
+		if ((bVar2 != false) && (*(short*)&pSVar3[2].field_0x0 != 0)) {
+			FUN_00407850((ulong) * (ushort*)((int)&pSVar3[1].field_0x0 + 3));
+		}
+		iVar4 = iVar4 + 1;
+	} while (iVar4 < 4);)
+
+	iVar4 = gVideoConfig.screenHeight;
+	if (gVideoConfig.screenHeight < 0) {
+		iVar4 = gVideoConfig.screenHeight + 1;
+	}
+
+	
+	set_vertical_position((iVar4 >> 1) + 0x14);
+
+	if (gDebugLevelCheatEnabled_00449824 == 0) {
+		draw_option_type_page(0, 0x12020f181a4e4557, PM_InitialSave, iVar5, 0);
+	}
+	else {
+		draw_option_type_page(0, 0x12020f181a4e4557, PM_InitialSave, iVar5, 0xff0000ff);
+	}
+
+	draw_option_type_page(0, 0x91a091412094f41, PM_LoadMenu, iVar5, 0);
+	draw_option_type_page(0, 0x40a00065f4f5054, PM_OptionsMenu, 0, 0);
+	draw_option_type_page(0, 0x18164e555f424f4e, PM_Bonus, 0, 0);
+
+	IMPLEMENTATION_GUARD_LOG(
+	if (pCVar1->field_0x24 != 0) {
+		FUN_002f1b50(FUN_002f33e0, 0);
+		pCVar1->field_0x24 = 0;
+	})
+
+	gSettings.SetSettingsToGlobal();
+
+	gSettings.field_0x0 = gSettings.field_0x0;
+	gSettings.languageID = gSettings.languageID;
+	gSettings.field_0x8 = gSettings.field_0x8;
+	gSettings.bWidescreen = gSettings.bWidescreen;
+	gSettings.setOffsetX = gSettings.setOffsetX;
+	gSettings.setOffsetY = gSettings.setOffsetY;
+	gSettings.field_0x14 = gSettings.field_0x14;
+	gSettings.field_0x18 = gSettings.field_0x18;
+	gSettings.field_0x1c = gSettings.field_0x1c;
+	return;
+}
+
+void CSimpleMenu::DrawInitialSaveMenuHelp(ulong helpMsgId, uint color)
+{
+	int xOffset;
+
+	if (helpMsgId != 0) {
+		xOffset = 0xc2;
+		if (gVideoConfig.omode == 3) {
+			xOffset = 0xe0;
+		}
+		draw_help_line(helpMsgId, 0, xOffset + this->counter_0x24 * -0x20, color);
+		this->counter_0x24 = this->counter_0x24 + 1;
+	}
+	return;
+}
+
+uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
+{
+	bool bVar1;
+	int iVar2;
+	char* pcVar3;
+	EPauseMenu EVar4;
+	uint uVar5;
+
+	bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+	if (bVar1 == false) {
+		EVar4 = pMenu->get_current_page();
+		uVar5 = 1;
+		if (EVar4 == PM_Bonus) {
+			IMPLEMENTATION_GUARD(
+			DrawFunc_002f2a80(pMenu, 0x1d1a0c141c03454c, 0xffffffff);
+			DrawBonusScreen_001b3c70((long)(int)pMenu);)
+		}
+		else {
+			if (EVar4 == PM_DisplayOptions) {
+				IMPLEMENTATION_GUARD(
+				CSimpleMenu::MenuFrameCentering_Draw(pMenu, input);)
+			}
+			else {
+				if (EVar4 == PM_OptionsMenu) {
+					IMPLEMENTATION_GUARD(
+					CSimpleMenu::MenuFrameOption_Draw(pMenu);)
+				}
+				else {
+					if (EVar4 == PM_LoadMenu) {
+						IMPLEMENTATION_GUARD(
+						uVar5 = DrawLoadMenu_001b2ad0(pMenu);
+						uVar5 = uVar5 & 0xff;)
+					}
+					else {
+						if (EVar4 == PM_InitialSave) {
+							IMPLEMENTATION_GUARD(
+							uVar5 = DrawNewGameScreen_001b24b0(pMenu);
+							uVar5 = uVar5 & 0xff;)
+						}
+						else {
+							if (EVar4 == PM_MainMenu) {
+								pMenu->DrawMainMenu();
+								IMPLEMENTATION_GUARD_LOG(
+								CheatCodeSequence::Update_00407760(&gToggleDebugLevelCheatCode_004a5700);
+								CheatCodeSequence::Update_00407760(&gShowGalleryCheatCode_004a5760);
+								CheatCodeSequence::Update_00407760(&gRefillLifeCheatCode_004a5740);)
+							}
+						}
+					}
+				}
+			}
+		}
+		if ((((uVar5 != 0) && (EVar4 = pMenu->get_current_page(), EVar4 != PM_MainMenu)) &&
+			(EVar4 = pMenu->get_current_page(), EVar4 != PM_DisplayOptions)) &&
+			(EVar4 = pMenu->get_current_page(), EVar4 != PM_Bonus)) {
+			pMenu->DrawInitialSaveMenuHelp(0x1d1a0c141c03454c, 0xffffffff);
+		}
+	}
+	else {
+		IMPLEMENTATION_GUARD(
+		CSimpleMenu::set_vertical_spacing(pMenu, 0);
+		iVar2 = gVideoConfig.screenHeight;
+		if (gVideoConfig.screenHeight < 0) {
+			iVar2 = gVideoConfig.screenHeight + 1;
+		}
+		CSimpleMenu::set_vertical_position(pMenu, (iVar2 >> 1) + 0x3c);
+		FUN_002f2c60(pMenu);
+		pcVar3 = get_message(&gMessageManager, 0x52525f503700080c);
+		CSimpleMenu::draw_option(pMenu, pcVar3, 0xffffffff);
+		uVar5 = 1;)
+	}
+	return uVar5;
+}
+
+void CSimpleMenu::update_page()
+{
+	uint uVar1;
+	//SimpleMenuVTable** ppSVar2;
+
+	this->field_0x50 = this->field_0x20;
+	uVar1 = this->lastInput_0x14;
+	if (uVar1 == 8) {
+		if (this->field_0x2c != 0) {
+			this->field_0x2c = this->field_0x2c + -1;
+			IMPLEMENTATION_GUARD(
+			ppSVar2 = &this->pVTable + this->field_0x2c * 3;
+			this->currentPage = (EPauseMenu)ppSVar2[0x15];
+			this->selectedIndex = (int)ppSVar2[0x16];
+			this->field_0x50 = (int)ppSVar2[0x17];
+			(*(code*)this->pVTable->on_cancel)();)
+		}
+	}
+	else {
+		if (uVar1 == 2) {
+			if (this->field_0x50 != 0) {
+				this->selectedIndex = this->selectedIndex + 1;
+				if (this->selectedIndex == this->field_0x50) {
+					this->selectedIndex = 0;
+				}
+				if (1 < this->field_0x50) {
+					on_change_selection();
+				}
+			}
+		}
+		else {
+			if ((uVar1 == 1) && (this->field_0x50 != 0)) {
+				this->selectedIndex = this->selectedIndex + -1;
+				if (this->selectedIndex < 0) {
+					this->selectedIndex = this->field_0x50 + -1;
+				}
+				if (1 < this->field_0x50) {
+					on_change_selection();
+				}
+			}
+		}
+	}
+	return;
+}
+
+void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
+{
+	int iVar1;
+	char cVar2;
+	uint uVar3;
+	Timer* pTVar4;
+	long lVar5;
+
+	this->field_0x20 = 0;
+	this->counter_0x24 = 0;
+	this->field_0x3c = 0x28;
+	this->horizontalAllignment = 0;
+	this->field_0xdc = 6.0f;
+	this->selectedScaleX = 1.0f;
+	this->selectedScaleY = 1.0f;
+	this->scaleX = 1.0f;
+	this->scaleY = 1.0f;
+	this->bShadow = 1;
+	iVar1 = this->field_0x2c;
+	this->pFunc_0x40 = 0;
+	this->slotID_0x44 = 0;
+	uVar3 = get_action();
+	this->lastInput_0x14 = uVar3;
+	cVar2 = pInputFunc(this, this->lastInput_0x14);
+	if ((iVar1 == this->field_0x2c) && (cVar2 != '\0')) {
+		update_page();
+	}
+	iVar1 = this->screenState_0x1c;
+	if (iVar1 == 4) {
+		this->screenState_0x1c = 0;
+		pTVar4 = Timer::GetTimer();
+		this->totalTime = pTVar4->totalTime;
+	}
+	else {
+		if (iVar1 != 3) {
+			if (iVar1 == 2) {
+				lVar5 = disappear_draw();
+				if (lVar5 != 0) {
+					this->screenState_0x1c = 3;
+					pTVar4 = Timer::GetTimer();
+					this->totalTime = pTVar4->totalTime;
+				}
+			}
+			else {
+				if (iVar1 == 1) {
+					lVar5 = select_draw();
+					if (lVar5 != 0) {
+						this->screenState_0x1c = 2;
+						pTVar4 = Timer::GetTimer();
+						this->totalTime = pTVar4->totalTime;
+					}
+				}
+				else {
+					if ((iVar1 == 0) && (lVar5 = appear_draw(), lVar5 != 0)) {
+						this->screenState_0x1c = 1;
+						pTVar4 = Timer::GetTimer();
+						this->totalTime = pTVar4->totalTime;
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
+bool CSimpleMenu::select_draw()
+{
+	return false;
+}
+
+bool CSimpleMenu::appear_draw()
+{
+	return true;
+}
+
+bool CSimpleMenu::disappear_draw()
+{
+	return true;
+}
+
+void CSimpleMenu::on_validate()
+{
+
+}
+
+void CSimpleMenu::on_cancel()
+{
+
+}
+
+void CSimpleMenu::on_change_selection()
+{
+
+}
 
 float FLOAT_ARRAY_00448cd0[2] = { 1.0f, 1.0f };
 
@@ -816,7 +1546,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 	uVar8 = 0x7f;
 	pTVar2 = GetTimer();
 	fVar12 = pTVar2->totalTime;
-	if (((param_2 != 0) && (((uint)gPlayerInput.releasedBitfield & 0x40000) != 0)) && (this->field_0xcc == 0))
+	if (((param_2 != 0) && ((gPlayerInput.releasedBitfield & KEY_START) != 0)) && (this->field_0xcc == 0))
 	{
 		this->field_0xcc = 1;
 		pTVar2 = GetTimer();

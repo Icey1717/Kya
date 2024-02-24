@@ -1443,45 +1443,54 @@ bool edCTextFormat::FormatString(char* pText)
 
 edCTextFormat::edCTextFormat()
 {
-	undefined8 uVar1;
-	edCTextStyle* pFVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-	float fVar14;
-	float fVar15;
-	float fVar16;
-	float fVar17;
-	edCTextFormat* iVar18;
+	edCTextStyle* pCurStyle;
 
-	//RunInPlaceConstructor_00217450((undefined*)fontData_0x850, FontFileData::Constructor_0028c7c0, Free_00166e40, 0xc0, 0x11);
-	pFVar2 = pedTextCurrentStyle;
-	edF32Matrix4CopyHard(&fontData_0x850[0].m0, &pedTextCurrentStyle->m0);
-	edF32Matrix4CopyHard(&fontData_0x850[0].m1, &pedTextCurrentStyle->m1);
-	fontData_0x850[0].pFunction = pFVar2->pFunction;
-	fontData_0x850[0].flags_0x84 = pFVar2->flags_0x84;
-	fontData_0x850[0].pPackedFont = pFVar2->pPackedFont;
-	fontData_0x850[0].field_0x8c = pFVar2->field_0x8c;
-	fontData_0x850[0].field_0x90 = pFVar2->field_0x90;
-	fontData_0x850[0].spaceSize = pFVar2->spaceSize;
-	fontData_0x850[0].rotation = pFVar2->rotation;
-	fontData_0x850[0].xScale = pFVar2->xScale;
-	fontData_0x850[0].yScale = pFVar2->yScale;
-	fontData_0x850[0].horizontalSize = pFVar2->horizontalSize;
-	fontData_0x850[0].verticalSize = pFVar2->verticalSize;
-	fontData_0x850[0].shadowShiftX = pFVar2->shadowShiftX;
-	fontData_0x850[0].shadowShiftY = pFVar2->shadowShiftY;
-	fontData_0x850[0].rgbaColour = pFVar2->rgbaColour;
-	fontData_0x850[0].alpha = pFVar2->alpha;
-	fontData_0x850[0].altColour = pFVar2->altColour;
-	flags_0x28 = pFVar2->flags_0x84;
+	pCurStyle = pedTextCurrentStyle;
+	fontData_0x850[0].m0 = pedTextCurrentStyle->m0;
+	fontData_0x850[0].m1 = pedTextCurrentStyle->m1;
+
+	fontData_0x850[0].pFunction = pCurStyle->pFunction;
+	fontData_0x850[0].flags_0x84 = pCurStyle->flags_0x84;
+	fontData_0x850[0].pPackedFont = pCurStyle->pPackedFont;
+	fontData_0x850[0].field_0x8c = pCurStyle->field_0x8c;
+	fontData_0x850[0].field_0x90 = pCurStyle->field_0x90;
+	fontData_0x850[0].spaceSize = pCurStyle->spaceSize;
+	fontData_0x850[0].rotation = pCurStyle->rotation;
+	fontData_0x850[0].xScale = pCurStyle->xScale;
+	fontData_0x850[0].yScale = pCurStyle->yScale;
+	fontData_0x850[0].horizontalSize = pCurStyle->horizontalSize;
+	fontData_0x850[0].verticalSize = pCurStyle->verticalSize;
+	fontData_0x850[0].shadowShiftX = pCurStyle->shadowShiftX;
+	fontData_0x850[0].shadowShiftY = pCurStyle->shadowShiftY;
+	fontData_0x850[0].rgbaColour = pCurStyle->rgbaColour;
+	fontData_0x850[0].alpha = pCurStyle->alpha;
+	fontData_0x850[0].altColour = pCurStyle->altColour;
+
+	flags_0x28 = pCurStyle->flags_0x84;
 	return;
+}
+
+edCTextFormat::edCTextFormat(edCTextStyle* pStyle)
+{
+	fontData_0x850[0].m0 = pedTextCurrentStyle->m0;
+	fontData_0x850[0].m1 = pedTextCurrentStyle->m1;
+
+	fontData_0x850[0].pFunction = pStyle->pFunction;
+	fontData_0x850[0].flags_0x84 = pStyle->flags_0x84;
+	fontData_0x850[0].pPackedFont = pStyle->pPackedFont;
+	fontData_0x850[0].field_0x8c = pStyle->field_0x8c;
+	fontData_0x850[0].field_0x90 = pStyle->field_0x90;
+	fontData_0x850[0].spaceSize = pStyle->spaceSize;
+	fontData_0x850[0].rotation = pStyle->rotation;
+	fontData_0x850[0].xScale = pStyle->xScale;
+	fontData_0x850[0].yScale = pStyle->yScale;
+	fontData_0x850[0].horizontalSize = pStyle->horizontalSize;
+	fontData_0x850[0].verticalSize = pStyle->verticalSize;
+	fontData_0x850[0].shadowShiftX = pStyle->shadowShiftX;
+	fontData_0x850[0].shadowShiftY = pStyle->shadowShiftY;
+	fontData_0x850[0].rgbaColour = pStyle->rgbaColour;
+	fontData_0x850[0].alpha = pStyle->alpha;
+	fontData_0x850[0].altColour = pStyle->altColour;
+
+	flags_0x28 = pStyle->flags_0x84;
 }

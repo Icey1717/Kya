@@ -5,6 +5,9 @@ CActorHero* CActorHero::_gThis = (CActorHero*)0x0;
 AnimResultHero CActorHero::_gStateCfg_HRO[HERO_STATE_COUNT] = {
 	AnimResultHero( 0, 0, 0 ),
 	AnimResultHero( 0, 0x100, 0xC0401F ),
+	AnimResultHero( 0x83, 0x100, 0xC0401F ),
+	AnimResultHero( 0x84, 0x100, 0xC0401F ),
+	AnimResultHero( 0xfe, 0x102, 0xC4401F ),
 };
 
 uint CActorHero::_gStateCfg_ELE[HERO_BHVR_COUNT] = {

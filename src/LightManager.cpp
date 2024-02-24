@@ -1112,30 +1112,6 @@ public:
 	edF32VECTOR4 field_0xc0;
 };
 
-void edF32Vector4LERPHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-
-	fVar2 = v1->y;
-	fVar3 = v1->z;
-	fVar4 = v1->w;
-	fVar5 = v2->y;
-	fVar6 = v2->z;
-	fVar7 = v2->w;
-	fVar1 = 1.0f - t;
-	v0->x = v2->x * t + v1->x * fVar1;
-	v0->y = fVar5 * t + fVar2 * fVar1;
-	v0->z = fVar6 * t + fVar3 * fVar1;
-	v0->w = fVar7 * t + fVar4 * fVar1;
-	return;
-}
-
 void CLightTorch::Manage()
 {
 	CLightManager* pCVar1;

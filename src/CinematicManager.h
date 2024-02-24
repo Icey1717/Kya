@@ -18,18 +18,6 @@ struct ed_g3d_manager;
 struct CActorCinematic;
 struct CActor;
 
-
-template<typename T>
-struct S_STREAM_REF {
-	void Init();
-
-	union {
-		T* pObj;
-		int index;
-	};
-};
-
-
 class CBWCinActor : public edCinActorInterface {
 public:
 	virtual bool Initialize();
@@ -104,11 +92,7 @@ public:
 	CBWCinCam BWCinCam_Obj;
 };
 
-struct ConditionedOperationArray {
-	uint* field_0x0;
-	void Create(struct ByteCode* pByteCode);
-	void Perform();
-};
+
 
 struct CinematicFileDataHeader {
 	CutsceneHoldsDurations durationA;
@@ -569,6 +553,9 @@ public:
 	CCinematic* GetCurCinematic();
 
 	void NotifyCinematic(int cinematicIndex, CActor* pActor, int messageId, uint flags);
+
+	int GetNumCutscenes_001c50b0();
+	CCinematic* GetCinematic(int index);
 
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;

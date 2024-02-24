@@ -2142,6 +2142,7 @@ public:
 	struct edCFiler* field_0x8b4;
 };
 
+extern CSaveManagement gSaveManagement;
 
 void SaveManagementBootCheck(void);
 

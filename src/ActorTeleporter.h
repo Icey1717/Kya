@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "ScenaricCondition.h"
 
 class CActorTeleporter : public CActor {
 public:
@@ -11,6 +12,8 @@ public:
 	}
 
 	virtual void Create(ByteCode* pByteCode);
+
+	ConditionedOperationArray condOpArray;
 };
 
 #endif //ACTOR_TELEPORTER_H

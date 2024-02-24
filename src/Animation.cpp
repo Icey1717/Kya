@@ -6,6 +6,7 @@
 #include "Rendering/CustomShell.h"
 #include <math.h>
 #include <assert.h>
+#include "EventTrack.h"
 
 edAnmStage TheAnimStage;
 
@@ -132,18 +133,17 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 		} while (layerIndex != 0);
 	}
 	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
-		IMPLEMENTATION_GUARD(
-			layerIndex = 0;
+		layerIndex = 0;
 		for (uVar8 = this->count_0x2c; uVar8 != 0; uVar8 = uVar8 >> 1) {
 			if ((uVar8 & 1) != 0) {
-				iVar3 = edAnmBinMetaAnimator::GetAnimEventTrackID(this, layerIndex);
+				iVar3 = this->anmBinMetaAnimator.GetAnimEventTrackID(layerIndex);
 				if (iVar3 != -1) {
-					pCVar4 = CTrackManager::GetTrack(CScene::ptable.g_TrackManager_004516b4, iVar3);
-					CEventTrack::Stop(pCVar4);
+					CEventTrack* pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(iVar3);
+					pTrack->Reset();
 				}
 				layerIndex = layerIndex + 1;
 			}
-		})
+		}
 	}
 	layerIndex = (this->anmBinMetaAnimator).layerCount;
 	if (layerIndex != 0) {
@@ -160,7 +160,6 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 void CAnimation::StopEventTrack(int state)
 {
 	int trackId;
-	//CEventTrack* pCVar1;
 	int index;
 	uint uVar2;
 
@@ -168,13 +167,12 @@ void CAnimation::StopEventTrack(int state)
 		index = 0;
 		for (uVar2 = this->count_0x2c; uVar2 != 0; uVar2 = uVar2 >> 1) {
 			if ((uVar2 & 1) != 0) {
-				IMPLEMENTATION_GUARD(
-					trackId = edAnmBinMetaAnimator::GetAnimEventTrackID(this, index);
+				trackId = this->anmBinMetaAnimator.GetAnimEventTrackID(index);
 				if (trackId != -1) {
-					pCVar1 = CTrackManager::GetTrack(CScene::ptable.g_TrackManager_004516b4, trackId);
-					CEventTrack::Stop(pCVar1);
+					CEventTrack* pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(trackId);
+					pTrack->Reset();
 				}
-				index = index + 1;)
+				index = index + 1;
 			}
 		}
 	}
@@ -682,23 +680,50 @@ bool edAnmStage::ComputeAnimParams(float param_1, float param_2, float param_3, 
 
 void edAnmStage::SetAnim(edANM_HDR* pKeyData)
 {
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::SetAnim start: {} end: {}", pKeyData->keyIndex_0x8.asTime, pKeyData->field_0x4.asTime);
+
 	this->pKeyData = pKeyData;
 	this->bLoop = 0;
 	this->field_0x2c = pKeyData->keyIndex_0x8.asTime;
 	this->field_0x38 = 0.0f;
-	this->field_0x34 = pKeyData->field_0x4.asTime - (float)pKeyData->keyIndex_0x8.asTime;
+	this->field_0x34 = pKeyData->field_0x4.asTime - pKeyData->keyIndex_0x8.asTime;
 	this->field_0x30 = this->field_0x2c;
 	return;
 }
 
 void edAnmStage::SetAnimLoop(edANM_HDR* pKeyData)
 {
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::SetAnimLoop start: {} end: {}", pKeyData->keyIndex_0x8.asTime, pKeyData->field_0x4.asTime);
+
 	this->pKeyData = pKeyData;
 	this->bLoop = 1;
 	this->field_0x2c = pKeyData->field_0x4.asTime;
 	this->field_0x38 = 0.0f;
 	this->field_0x34 = pKeyData->field_0x4.asTime - pKeyData->keyIndex_0x8.asTime;
 	this->field_0x30 = this->field_0x2c;
+	return;
+}
+
+void edAnmStage::SetTimeAsRatio(float ratio)
+{
+	bool bVar1;
+	float aOutParams[4];
+
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::SetTimeAsRatio ratio: {}", ratio);
+
+	bVar1 = ComputeAnimParams(ratio * this->field_0x2c, this->field_0x2c, this->field_0x38, aOutParams, false, this->bLoop);
+	this->field_0x4c = bVar1;
+	this->field_0x3c = aOutParams[0];
+	this->field_0x40 = aOutParams[1];
+	this->field_0x44 = aOutParams[2];
+	this->field_0x48 = aOutParams[3];
+
+	bVar1 = this->bLoop != 0;
+	if ((bVar1) && (bVar1 = true, this->field_0x3c < this->field_0x2c - this->field_0x34)) {
+		bVar1 = false;
+	}
+
+	this->field_0x4d = bVar1;
 	return;
 }
 
@@ -1407,7 +1432,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 
 void edAnmStage::AnimToWRTS()
 {
-	uint uVar1;
+	int uVar1;
 	int iVar2;
 	edF32MATRIX3* puVar3;
 	edF32MATRIX4* pMatrixBuffer;
@@ -1415,9 +1440,9 @@ void edAnmStage::AnimToWRTS()
 	edF32MATRIX3 animMatrix;
 	edANM_RTS pCurrentKeyData;
 
-	uVar1 = this->pKeyData->flags;
+	uVar1 = this->pKeyData->count_0x0;
 	for (pKeyData = (edANM_RTS_Key_Hdr*)(this->pKeyData + 1);
-		(uVar1 = uVar1 - 1, -1 < (int)uVar1 && ((uint)this->field_0x24 <= (uint)pKeyData->keyCount));
+		(uVar1 = uVar1 - 1, -1 < uVar1 && ((uint)this->field_0x24 <= (uint)pKeyData->keyCount));
 		pKeyData = (edANM_RTS_Key_Hdr*)((char*)pKeyData + pKeyData->keyOffset)) {
 		if (((pKeyData->flags & 7) != 0) &&
 			(iVar2 = this->anmSkeleton.edAnmSkeleton::NodeIndexFromID(pKeyData->nodeId), iVar2 != -1)) {
@@ -1430,6 +1455,55 @@ void edAnmStage::AnimToWRTS()
 			pMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices + iVar2;
 			*pMatrixBuffer = animMatrix;
 			pMatrixBuffer->da = 1.0f;
+		}
+	}
+	return;
+}
+
+void edAnmStage::AnimBlendToWRTS(float param_1)
+{
+	int iVar1;
+	edF32MATRIX3* puVar2;
+	edF32MATRIX4* outRotation;
+	int uVar2;
+	float fVar3;
+	float alpha;
+	edF32MATRIX3 local_40;
+	edANM_RTS local_8;
+	edANM_RTS_Key_Hdr* local_4;
+
+	if (0.0001f <= param_1) {	
+		uVar2 = this->pKeyData->count_0x0;
+
+		for (local_4 = (edANM_RTS_Key_Hdr*)(this->pKeyData + 1); (uVar2 = uVar2 - 1, -1 < uVar2 && ((uint)this->field_0x24 <= local_4->keyCount));
+			local_4 = (edANM_RTS_Key_Hdr*)((char*)local_4 + local_4->keyOffset)) {
+			if (((local_4->flags & 7) != 0) && (iVar1 = this->anmSkeleton.NodeIndexFromID(local_4->nodeId), iVar1 != -1)) {
+				local_8 = edANM_RTS(local_4);
+				local_40 = this->pConstantMatrixData[iVar1];
+
+				edAnmTransformCtrl::GetValue(this->field_0x3c, &local_8, &local_40);
+
+				outRotation = this->pRelativeTransformMatrixBuffer->matrices + iVar1;
+
+				if (outRotation->da == -1.0f) {
+					*outRotation = local_40;
+
+					outRotation->da = param_1;
+				}
+				else {
+					fVar3 = outRotation->da + param_1;
+					alpha = param_1 / fVar3;
+					outRotation->da = fVar3;
+					if (0.01f < alpha) {
+						edQuatShortestSLERPHard(alpha, &outRotation->rowX, &outRotation->rowX, &local_40.rowX);
+						fVar3 = 1.0f - alpha;
+						outRotation->rowY = local_40.rowY * alpha + outRotation->rowY * fVar3;
+
+						fVar3 = 1.0f - alpha;
+						outRotation->rowZ = local_40.rowZ * alpha + outRotation->rowZ * fVar3;
+					}
+				}
+			}
 		}
 	}
 	return;
@@ -1465,8 +1539,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 	int* pCurrent;
 	int* pBaseStart;
 	float* pBaseEnd;
-	ushort boneCount;
-	CAnimation* pCVar23;
+	ushort prevLodBoneCount;
 	int* pOtherStart;
 	uint uVar25;
 	edF32MATRIX4* peVar26;
@@ -1477,15 +1550,19 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 	// HACK (Safety)
 	bool bSetSkeleton = false;
 
+	ANIMATION_LOG(LogLevel::Verbose, "CAnimation::Manage {}", pActor->name);
+
 	p3DHierNode = pActor->p3DHierNode;
+
 	if (p3DHierNode != (ed_3d_hierarchy_node*)0x0) {
 		peVar15 = (this->anmSkeleton).pTag;
-		boneCount = 0;
-		if (peVar15 != (edANM_SKELETON*)0x0) {
-			boneCount = peVar15->boneCount;
-		}
-		if ((bHasFlag == 0) || (bVar4 = UpdateCurSkeleton(pActor), bVar4 == false)) {
+		prevLodBoneCount = 0;
 
+		if (peVar15 != (edANM_SKELETON*)0x0) {
+			prevLodBoneCount = peVar15->boneCount;
+		}
+
+		if ((bHasFlag == 0) || (bVar4 = UpdateCurSkeleton(pActor), bVar4 == false)) {
 #ifdef PLATFORM_WIN
 			if ((this->anmSkeleton).pTag == 0x0 && ((bHasFlag != 0) && (((pActor->p3DHierNode->base).flags_0x9e & 0x100) != 0))) {
 				Log::GetInstance().ForceFlush();
@@ -1508,6 +1585,8 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 
 			assert(pSkeleton);
 
+			ANIMATION_LOG(LogLevel::Verbose, "CAnimation::Manage Using skeleton bone count: (0x{:x} | 0x{:x}) flags: 0x{:x}", prevLodBoneCount, pSkeleton->boneCount, pSkeleton->flags);
+
 			bSetSkeleton = true;
 
 			if ((pSkeleton->flags & 2) == 0) {
@@ -1520,22 +1599,27 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 				iVar5 = (ulong)pSkeleton + ((uint)uVar1 * 0xc + 0x13 & 0xfffffff0) + ((uint)uVar1 * 2 + (uint)uVar1) * 0x10 +
 					(uint)uVar1 * 0x10;
 			}
+
 			uVar25 = iVar5 - (ulong)pSkeleton;
 			if (uVar25 < 0x4001) {
 				pSkeleton = (edANM_SKELETON*)edSystemFastRamGetAddr();
 				edDmaLoadToFastRam((this->anmSkeleton).pTag, uVar25, pSkeleton);
 			}
+
 			TheAnimStage.SetActor(pSkeleton);
 			pFrameMatrixData = TheAnimManager.GetMatrixBuffer(pSkeleton->boneCount);
 			pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
 			TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
-			if ((boneCount == ((this->anmSkeleton).pTag)->boneCount) && (this->field_0x28 == 0)) {
+
+			if ((prevLodBoneCount == ((this->anmSkeleton).pTag)->boneCount) && (this->field_0x28 == 0)) {
 				TheAnimStage.pAnimMatrix = (AnimMatrix*)this->pAnimMatrix;
 			}
 			else {
 				TheAnimStage.pAnimMatrix = (AnimMatrix*)0x0;
 			}
+
 			TheAnimStage.pFrameMatrixData = pFrameMatrixData;
+
 			if (bPlayingAnimation == 0) {
 				this->anmBinMetaAnimator.AnimateDT(deltaTime);
 				uint isLooking = pActor->IsLookingAt();
@@ -1547,40 +1631,45 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 				pActor->UpdateAnimEffects();
 			}
 			else {
-				boneCount = pSkeleton->boneCount;
+				ushort boneCount = pSkeleton->boneCount;
 				for (peVar26 = pFrameMatrixData; peVar26 < pFrameMatrixData + boneCount; peVar26 = peVar26 + 1) {
 					edF32Matrix4SetIdentityHard(peVar26);
 				}
 			}
+
 			TheAnimStage.ToonWRTSToGlobalMatrices(1);
+
 			if ((AnimMatrix*)this->pAnimMatrix != (AnimMatrix*)0x0) {
 				IMPLEMENTATION_GUARD(
 				TheAnimStage.pAnimMatrix = (AnimMatrix*)this->pAnimMatrix;
 				edAnmStage::WRTSToPreviousPosture(&TheAnimStage);
 				this->field_0x28 = 0;)
 			}
+
 			pActor->UpdatePostAnimEffects();
+
 			(p3DHierNode->base).pAnimMatrix = pFrameMatrixData;
 			(p3DHierNode->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
+
 			local_4 = edAnmSkeleton(pSkeleton);
 			for (m0 = this->pMatrixData_0x10; m0 != (AnimMatrixData*)0x0; m0 = m0->pPrev) {
 				IMPLEMENTATION_GUARD(
 				local_4.UnskinNMatrices((edF32MATRIX4*)m0, pFrameMatrixData, (int)m0->field_0x4c, 1);)
 			}
+
 			iVar5 = 0;
-			pCVar23 = this;
 			if (0 < this->count_0x54) {
 				do {
-					peVar26 = pFrameMatrixData + pCVar23->field_0x38;
+					peVar26 = pFrameMatrixData + this->field_0x34[iVar5].field_0x4;
 					edF32Matrix4SetIdentityHard(peVar26);
 					peVar26->cc = 0.0f;
 					iVar5 = iVar5 + 1;
 					peVar26->bb = 0.0f;
 					peVar26->aa = 0.0f;
-					pCVar23 = (CAnimation*)&(pCVar23->anmBinMetaAnimator).pAnimKeyEntryData;
 				} while (iVar5 < this->count_0x54);
 			}
 		}
+
 		fVar28 = 0.0f;
 		if (((deltaTime != 0.0f) && (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1)) &&
 			((pActor->flags & 0x10000000) == 0)) {
@@ -1589,18 +1678,18 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			for (uVar25 = this->count_0x2c; uVar25 != 0; uVar25 = uVar25 >> 1) {
 				if ((uVar25 & 1) != 0) {
 					this->anmBinMetaAnimator.GetLayerAnimTime(iVar5);
-					fVar8 = fVar28 * 1000.0;
+					fVar8 = fVar28 * 1000.0f;
 					index = this->anmBinMetaAnimator.GetAnimEventTrackID(iVar5);
 					if (index != -1) {
-						IMPLEMENTATION_GUARD_LOG(
-						this_00 = CTrackManager::GetTrack(CScene::ptable.g_TrackManager_004516b4, index);
-						CEventTrack::Play(fVar8, (float)pCVar23->field_0x14, (CEventTrack*)this_00, 0, pActor);)
+						CEventTrack* pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(index);
+						pTrack->Play(fVar8, this->aTrackData[iVar5], 0, pActor);
 					}
 					this->aTrackData[iVar5] = fVar8;
 					iVar5 = iVar5 + 1;
 				}
 			}
 		}
+
 		if ((bHasFlag != 0) && (((pActor->p3DHierNode->base).flags_0x9e & 0x100) != 0)) {
 			peVar6 = ed3DHierarchyNodeGetSkeletonChunck(pActor->pMeshNode, true);
 			peVar6 = peVar6 + 1;
@@ -1608,7 +1697,9 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			assert(bSetSkeleton);
 
 			edANM_SKELETON* pOtherSkeleton = (edANM_SKELETON*)peVar6;
-			boneCount = pOtherSkeleton->boneCount;
+			ushort boneCount = pOtherSkeleton->boneCount;
+
+			ANIMATION_LOG(LogLevel::Verbose, "CAnimation::Manage Using skeleton bone count: 0x{:x} flags: 0x{:x}", pOtherSkeleton->boneCount, pOtherSkeleton->flags);
 
 			pWRTS = TheAnimManager.AllocWRTSBuffer();
 			TheAnimStage.SetActor(pOtherSkeleton);
@@ -1655,6 +1746,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			TheAnimManager.FreeWRTSBuffer(pWRTS);
 			(p3DHierNode->base).pShadowAnimMatrix = pFrameMatrixData;
 		}
+
 		TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);
 	}
 	return;
@@ -1664,35 +1756,37 @@ void CAnimation::PlayAnim(CActor* pActor, int animType, int origAnimType)
 {
 	bool bVar1;
 	int index;
-	//CEventTrack* pCVar2;
-	edAnmSkeleton* peVar3;
-	int iVar4;
+	char* peVar3;
+	int iVar3;
 	uint uVar5;
+
+	ANIMATION_LOG(LogLevel::Verbose, "CAnimation::PlayAnim {} type: {} originalType: {}", pActor->name, animType, origAnimType);
 
 	if (((((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) && (animType != this->currentAnimType_0x30)) &&
 		(this->currentAnimType_0x30 != -1)) {
-		iVar4 = 0;
+		iVar3 = 0;
 		for (uVar5 = this->count_0x2c; uVar5 != 0; uVar5 = uVar5 >> 1) {
 			if ((uVar5 & 1) != 0) {
-				IMPLEMENTATION_GUARD(
-				index = edAnmBinMetaAnimator::GetAnimEventTrackID(this, iVar4);
+				index = this->anmBinMetaAnimator.GetAnimEventTrackID(iVar3);
 				if (index != -1) {
-					pCVar2 = CTrackManager::GetTrack(CScene::ptable.g_TrackManager_004516b4, index);
-					CEventTrack::Stop(pCVar2);
+					CEventTrack* pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(index);
+					pTrack->Stop();
 				}
-				iVar4 = iVar4 + 1;)
+				iVar3 = iVar3 + 1;
 			}
 		}
 	}
+
 	this->anmBinMetaAnimator.SetAnim(animType, origAnimType);
 	this->currentAnimType_0x30 = animType;
-	peVar3 = &this->anmSkeleton;
-	iVar4 = 3;
+
+	peVar3 = (char*)&this->anmSkeleton;
+	iVar3 = 3;
 	do {
-		peVar3[5].pTag = (edANM_SKELETON*)0x0;
-		peVar3 = peVar3 + -1;
-		bVar1 = iVar4 != 0;
-		iVar4 = iVar4 + -1;
+		*(undefined4*)(peVar3 + 0x14) = 0;
+		peVar3 = peVar3 + -4;
+		bVar1 = iVar3 != 0;
+		iVar3 = iVar3 + -1;
 	} while (bVar1);
 	return;
 }
@@ -1876,6 +1970,8 @@ void edAnmMetaAnimator::AnimateDT(float deltaTime)
 {
 	int index;
 
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmMetaAnimator::AnimateDT layerCount: {}", this->layerCount);
+
 	index = 0;
 	if (0 < this->layerCount) {
 		do {
@@ -1893,8 +1989,8 @@ void edAnmLayer::Reset()
 	this->pFunction_0xc0 = 0x0;
 	(this->nextAnimDesc).animType = -1;
 	(this->currentAnimDesc).animType = -1;
-	this->field_0xd4 = 0.0;
-	this->playRate = 1.0;
+	this->field_0xd4 = 0.0f;
+	this->playRate = 1.0f;
 	return;
 }
 
@@ -1905,7 +2001,9 @@ void edAnmLayer::AnimateDT(float deltaTime)
 
 	this->field_0xcc = 0;
 	playTime = deltaTime * this->playRate;
+
 	do {
+		ANIMATION_LOG(LogLevel::Verbose, "edAnmMetaAnimator::AnimateDT state: {} play rate: {}", this->animPlayState, this->playRate);
 		bComplete = true;
 		if (this->animPlayState == 2) {
 			bComplete = MorphingDT(playTime);
@@ -1916,6 +2014,7 @@ void edAnmLayer::AnimateDT(float deltaTime)
 			}
 		}
 	} while (bComplete == false);
+
 	return;
 }
 
@@ -2127,9 +2226,9 @@ bool edAnmLayer::PlayingDT(float playTime)
 	(this->currentAnimDesc).state.field_0x30 = (this->currentAnimDesc).state.field_0x30 + playTime;
 	if (((this->nextAnimDesc).animType == -1) || (iVar1 = (this->nextAnimDesc).animMode, iVar1 == -4)) {
 		if (((this->currentAnimDesc).state.currentAnimDataFlags & 2) == 0) {
-			IMPLEMENTATION_GUARD(
-			edAnmMacroAnimator::UpdateAnimParams(&(this->currentAnimDesc).state);)
+			(this->currentAnimDesc).state.UpdateAnimParams();
 		}
+
 		peVar3 = TheAnimStage.pRelativeTransformMatrixBuffer;
 		if (this->field_0x0 != 0) {
 			pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
@@ -2199,7 +2298,7 @@ bool edAnmLayer::PlayingDT(float playTime)
 		if (-1 < this->field_0xb8) {
 			fVar4 = (float)this->field_0xb8 / 1000.0f;
 		}
-		(this->currentAnimDesc).state.Initialize(fVar4, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
+		(this->nextAnimDesc).state.Initialize(fVar4, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
 		bComplete = false;
 		this->animPlayState = 2;
 		(this->nextAnimDesc).field_0x4c = 0.0;
@@ -2217,7 +2316,7 @@ void edAnmLayer::SetRawAnim(edANM_HDR* pHdr, uint flags, uint type)
 
 	local_20.keyIndex_0x8.asKey = -1;
 	local_10 = 0;
-	local_20.flags = 0xfffffffe;
+	local_20.count_0x0 = -2;
 	local_14 = -1.0f;
 	local_20.field_0x4.asKey = -2;
 	if (type == 0xfffffffe) {
@@ -2276,7 +2375,7 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 	int iVar3;
 	edAnmStage* peVar4;
 	float fVar5;
-	uint AVar1;
+	int AVar1;
 
 	bVar1 = false;
 	if (this->animPlayState == 2) {
@@ -2305,12 +2404,12 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 	peVar4 = &TheAnimStage;
 	if ((iVar3 != 0) && (peVar2 = (this->currentAnimDesc).pHdrB, iVar3 != 0)) {
 		do {
-			AVar1 = peVar2->flags;
+			AVar1 = peVar2->count_0x0;
 			if (AVar1 == pNewAnimation->animType) {
 				peVar4 = (edAnmStage*)&peVar2->field_0x4;
 				break;
 			}
-			if ((AVar1 == 0xfffffffe) || (AVar1 == 0xffffffff)) {
+			if ((AVar1 == -2) || (AVar1 == -1)) {
 				peVar4 = (edAnmStage*)&peVar2->field_0x4;
 			}
 			iVar3 = iVar3 + -1;
@@ -2444,13 +2543,12 @@ void CAnimation::Reset(CActor* pActor)
 		iVar3 = 0;
 		for (uVar5 = this->count_0x2c; uVar5 != 0; uVar5 = uVar5 >> 1) {
 			if ((uVar5 & 1) != 0) {
-				IMPLEMENTATION_GUARD(
 				iVar1 = this->anmBinMetaAnimator.GetAnimEventTrackID(iVar3);
 				if (iVar1 != -1) {
-					pCVar2 = CTrackManager::GetTrack(CScene::ptable.g_TrackManager_004516b4, iVar1);
-					CEventTrack::Stop(pCVar2);
+					CEventTrack* pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(iVar1);
+					pTrack->Reset();
 				}
-				iVar3 = iVar3 + 1;)
+				iVar3 = iVar3 + 1;
 			}
 		}
 	}

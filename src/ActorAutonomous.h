@@ -31,16 +31,39 @@ public:
 	float field_0x4;
 	float field_0x8;
 	float field_0xc;
-	float field_0x10[4];
-	edF32VECTOR4 velocity;
-	edF32VECTOR4 field_0x30;
-	edF32VECTOR4 field_0x40;
-	edF32VECTOR4 field_0x50;
+	float aVelocityMagnitudes[3];
+	float field_0x1c;
+	edF32VECTOR4 aVelocity[3];
+	edF32VECTOR4 normalizedTranslation;
 
 	edF32VECTOR3 field_0x60;
 	float field_0x6c;
 
 	float scaledTotalTime;
+};
+
+class CInterface {
+public:
+	virtual float GetValue() = 0;
+};
+
+class CLifeInterface : public CInterface
+{
+public:
+	CLifeInterface();
+
+	int priority;
+	float currentValue;
+	float valueMax;
+	undefined4 field_0x10;
+
+	// CInterface
+	virtual float GetValue();
+
+	float GetValueMax();
+
+	void SetValueMax(float max);
+	void SetPriority(int newPriority);
 };
 
 class CActorAutonomous : public CActorMovable
@@ -59,6 +82,16 @@ public:
 	void _ManageDynamicFence(CActorsTable* pActorsTable);
 	virtual void StoreCollisionSphere();
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+
+	void ComputeSlidingForce(edF32VECTOR4* param_2, int param_3);
+
+	virtual void LifeRestore();
+	virtual CLifeInterface* GetLifeInterface();
+	virtual CLifeInterface* GetLifeInterfaceOther();
+
+	float field_0x2e4;
+
+	CLifeInterface lifeInterface;
 
 	CDynamicExt dynamicExt;
 

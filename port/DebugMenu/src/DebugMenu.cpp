@@ -30,6 +30,8 @@
 #include "FileManager3D.h"
 #include "ActorHeroPrivate.h"
 
+#include "input_functions.h"
+
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
 extern bool bOther;
@@ -221,6 +223,23 @@ ImGui::End();
 		return true;
 	}
 
+	char* GetStateName(int state) {
+		switch (state) {
+		case 0x73:
+			return "StateHeroStand";
+			break;
+		case 0x76:
+			return "StateHeroRun";
+			break;
+		case 0x3:
+			return "Cinematic";
+			break;
+		default:
+			assert(false);
+			break;
+		}
+	}
+
 	void ShowHeroMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Hero", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
@@ -228,6 +247,8 @@ ImGui::End();
 		CActorHero* pActorHero = CActorHeroPrivate::_gThis;
 
 		if (pActorHero) {
+			ImGui::Text("State: %s", GetStateName(pActorHero->actorState));
+
 			DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->currentLocation);
 			DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->rotationQuat);
 
@@ -244,6 +265,22 @@ ImGui::End();
 				ImGui::InputFloat("field_0x44", &pActorHero->dynamic.field_0x44);
 				ImGui::InputFloat("field_0x54", &pActorHero->dynamic.field_0x54);
 				ImGui::InputFloat("field_0x58", &pActorHero->dynamic.field_0x58);
+			}
+
+			if (ImGui::CollapsingHeader("DynamicExt", ImGuiTreeNodeFlags_DefaultOpen)) {
+				DebugHelpers::ImGui::TextVector4("Gravity", pActorHero->dynamicExt.gForceGravity);
+				DebugHelpers::ImGui::TextVector4("Translation", pActorHero->dynamicExt.normalizedTranslation);
+
+				ImGui::InputFloat("Gravity Scale", &pActorHero->dynamicExt.gravityScale);
+			}
+
+			if (ImGui::CollapsingHeader("Collision", ImGuiTreeNodeFlags_DefaultOpen)) {
+				ImGui::Text("Flags 0: %x", pActorHero->pCollisionData->flags_0x0);
+				ImGui::Text("Flags 4: %x", pActorHero->pCollisionData->flags_0x4);
+
+				if (ImGui::CollapsingHeader("Flags", ImGuiTreeNodeFlags_DefaultOpen)) {
+					ImGui::Text("On Plane: %d", pActorHero->pCollisionData->flags_0x4 & 1);
+				}
 			}
 		}
 
@@ -383,6 +420,8 @@ ImGui::End();
 		}
 
 		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
+
+		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
 
 		// End the ImGui window
 		ImGui::End();
@@ -719,3 +758,46 @@ void DebugMenu::Init()
 	ed3DGetTextureLoadedDelegate() += DebugMenu_Internal::OnTextureLoaded;
 	ed3DGetMeshLoadedDelegate() += DebugMenu_Internal::OnMeshLoaded;
 }
+
+static Input::InputFunctions gInputFunctions;
+
+Input::InputFunctions& DebugMenu::GetInputFunctions()
+{
+	gInputFunctions.pressed = GetKeyPressed;
+	gInputFunctions.released = GetKeyReleased;
+	gInputFunctions.analog = GetKeyAnalog;
+	return gInputFunctions;
+}
+
+std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
+	{ ROUTE_START,				ImGuiKey_Enter },
+	{ ROUTE_X,					ImGuiKey_A },
+	{ ROUTE_UP,					ImGuiKey_UpArrow },
+	{ ROUTE_DOWN,				ImGuiKey_DownArrow },
+	{ ROUTE_L_ANALOG_UP,		ImGuiKey_G },
+	{ ROUTE_L_ANALOG_DOWN,		ImGuiKey_H },
+	{ ROUTE_L_ANALOG_LEFT,		ImGuiKey_D },
+	{ ROUTE_L_ANALOG_RIGHT,		ImGuiKey_T },
+};
+
+bool DebugMenu::GetKeyPressed(uint32_t routeId)
+{
+	assert(gKeyMap.find(routeId) != gKeyMap.end());
+
+	return ImGui::IsKeyPressed(gKeyMap[routeId]);
+}
+
+bool DebugMenu::GetKeyReleased(uint32_t routeId)
+{
+	assert(gKeyMap.find(routeId) != gKeyMap.end());
+
+	return ImGui::IsKeyReleased(gKeyMap[routeId]);
+}
+
+float DebugMenu::GetKeyAnalog(uint32_t routeId)
+{
+	assert(gKeyMap.find(routeId) != gKeyMap.end());
+
+	return ImGui::IsKeyDown(gKeyMap[routeId]) ? 1.0f : 0.0f;
+}
+

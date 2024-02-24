@@ -693,7 +693,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 					this->field_0x15c = 0.5;
 				}
 			}
-			this->field_0x168 = (float)&DAT_bf800000;
+			this->field_0x168 = -1.0f;
 		})
 		bVar3 = true;
 		break;
@@ -750,7 +750,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 					this->field_0x15c = 0.5;
 				}
 			}
-			this->field_0x168 = (float)&DAT_bf800000;
+			this->field_0x168 = -1.0f;
 		}
 		if ((this->field_0x144 != -1) && (iVar2 != this->field_0x148)) {
 			this->field_0x14c = this->field_0x148;

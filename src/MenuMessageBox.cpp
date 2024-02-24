@@ -14,6 +14,9 @@
 #ifdef PLATFORM_PS2
 #include "libpc.h"
 #endif
+#include "InputManager.h"
+#include "LevelScheduleManager.h"
+#include "Iop.h"
 
 bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulong msgD)
 {
@@ -43,11 +46,10 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 
 	uVar7 = flags & 1;
 	uVar2 = GameFlags & GAME_STATE_PAUSED;
-	//if ((uVar7 == 0) &&
-	//	(g_InputManager_00450960.pressedBitfield =
-	//		(InputBitfield)((uint)g_InputManager_00450960.pressedBitfield & 0xfffffeff), uVar2 == 0)) {
-	//	FUN_001a7220(1);
-	//}
+	if ((uVar7 == 0) && (gPlayerInput.pressedBitfield = gPlayerInput.pressedBitfield & 0xfffffeff, uVar2 == 0)) {
+		IMPLEMENTATION_GUARD(
+		FUN_001a7220(1);)
+	}
 	fVar10 = ((float)gVideoConfig.screenHeight * 2.0f) / 2.5f;
 	x = (float)gVideoConfig.screenWidth / 2.0f;
 	fVar12 = ((float)gVideoConfig.screenWidth * 2.0f) / 2.5f;
@@ -222,7 +224,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 		cVar8 = false;
 		if ((flags & 2) == 0) {
 			pTVar3 = GetTimer();
-			//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+			CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
 			pTVar3 = GetTimer();
 			pTVar3->Update();
 			cVar1 = GuiDList_BeginCurrent();
@@ -239,7 +241,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 			fVar13 = fVar13 + 20.0;
 			pNewFont = edTextStyleGetCurrent();
 			edTextStyleSetCurrent(&local_c0);
-			bVar1 = true; //(*(*gCompatibilityHandlingPtr)->GetAnyControllerConnected)(gCompatibilityHandlingPtr, 0);
+			bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 			if (bVar1 == false) {
 				pcVar4 = gMessageManager.get_message(msgA);
 				edTextDraw(x, fVar13, pcVar4);
@@ -280,19 +282,22 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 				if ((flags & 4) == 0) {
 					iVar5 = 0x18;
 				}
-				//if ((param_4 == 0) || (((uint)g_InputManager_00450960.pressedBitfield & 1 << iVar5) == 0)) {
-				//	if ((param_5 != 0) &&
-				//		((((uint)g_InputManager_00450960.pressedBitfield & 0x4000000) != 0 &&
-				//			(cVar8 = true, LevelScheduleManager::gThis->currentLevelID != 0x10)))) {
-				//		FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);
-				//	}
-				//}
-				//else {
-				//	cVar8 = true;
-				//	if (LevelScheduleManager::gThis->currentLevelID != 0x10) {
-				//		FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);
-				//	}
-				//}
+
+				if ((msgC == 0) || ((gPlayerInput.pressedBitfield & 1 << iVar5) == 0)) {
+					if ((msgD != 0) &&
+						(((gPlayerInput.pressedBitfield & 0x4000000) != 0 &&
+							(cVar8 = true, LevelScheduleManager::gThis->currentLevelID != 0x10)))) {
+						IMPLEMENTATION_GUARD(
+						FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)
+					}
+				}
+				else {
+					cVar8 = true;
+					if (LevelScheduleManager::gThis->currentLevelID != 0x10) {
+						IMPLEMENTATION_GUARD(
+						FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);)
+					}
+				}
 			}
 		}
 		if ((flags & 2) == 0) {
@@ -307,10 +312,10 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 			edViewportSetClearMask(pViewport, 0xffffffff);
 		}
 	} while (((cVar8 == false) && (uVar7 == 0)) && ((GameFlags & 3) == 0));
-	//if ((uVar7 == 0) &&
-	//	(g_InputManager_00450960.pressedBitfield =
-	//		(InputBitfield)((uint)g_InputManager_00450960.pressedBitfield & 0xfffffeff), uVar2 == 0)) {
-	//	FUN_001a7220(0);
-	//}
+
+	if ((uVar7 == 0) && (gPlayerInput.pressedBitfield = gPlayerInput.pressedBitfield & 0xfffffeff, uVar2 == 0)) {
+		IMPLEMENTATION_GUARD(
+		FUN_001a7220(0);)
+	}
 	return cVar8;
 }

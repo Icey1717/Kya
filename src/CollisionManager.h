@@ -9,9 +9,9 @@
 
 struct s_collision_contact
 {
-	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 location;
 	edF32VECTOR4 field_0x10;
-	uint field_0x20;
+	uint materialFlags;
 	short nbCollisionsA;
 	short nbCollisionsB;
 };
@@ -85,7 +85,7 @@ struct MaterialTableEntry
 	float field_0x0;
 	float field_0x4;
 	float field_0x8;
-	float field_0xc;
+	float slidingCoefficient;
 	float field_0x10;
 };
 
@@ -119,6 +119,8 @@ public:
 	void Level_AddAll(ByteCode* pByteCode);
 
 	static bool IsASlidingGround(s_collision_contact* pContact);
+	static float GetMaterialSlidingCoef(s_collision_contact* pContact);
+
 
 	CCollision* NewCCollision();
 

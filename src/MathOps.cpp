@@ -884,6 +884,41 @@ void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1)
 	return;
 }
 
+float edFIntervalDotSrcLERP(float param_1, float param_2, float param_3)
+{
+	float fVar1;
+
+	fVar1 = param_2;
+	if (((-1.0f < param_1) && (fVar1 = param_3, param_1 < 1.0f)) && (param_3 != param_2)) {
+		fVar1 = param_2 + (param_1 + 1.0f) * (param_3 - param_2) * 0.5f;
+	}
+	return fVar1;
+}
+
+float edFIntervalLERP(float param_1, float param_2, float param_3, float param_4, float param_5)
+{
+	if (param_2 < param_3) {
+		if (param_1 <= param_2) {
+			return param_4;
+		}
+		if (param_3 <= param_1) {
+			return param_5;
+		}
+	}
+	else {
+		if (param_2 <= param_1) {
+			return param_4;
+		}
+		if (param_1 <= param_3) {
+			return param_5;
+		}
+	}
+	if ((param_5 != param_4) && (param_3 != param_2)) {
+		param_5 = param_4 + ((param_1 - param_2) * (param_5 - param_4)) / (param_3 - param_2);
+	}
+	return param_5;
+}
+
 void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* dst, edF32MATRIX4* m1, edF32MATRIX4* m2)
 {
 	edF32MATRIX4 m1_copy = *m1;
@@ -1198,17 +1233,18 @@ bool edProjectVectorOnPlane(float projectionFactor, edF32VECTOR4* pResult, edF32
 {
 	bool bVar1;
 	float fVar2;
-	float fVar3;
+	float clampedProjectionFactor;
 
-	fVar3 = 1.0f;
-	if ((projectionFactor <= 1.0f) && (fVar3 = projectionFactor, projectionFactor < 0.0f)) {
-		fVar3 = 0.0f;
+	clampedProjectionFactor = 1.0f;
+	if ((projectionFactor <= 1.0f) && (clampedProjectionFactor = projectionFactor, projectionFactor < 0.0f)) {
+		clampedProjectionFactor = 0.0f;
 	}
+
 	fVar2 = pPlaneNormal->x * pInput->x + pPlaneNormal->y * pInput->y + pPlaneNormal->z * pInput->z;
 	if ((optionFlag == 0) || (fVar2 <= 0.0f)) {
-		fVar2 = fVar2 * (fVar3 + 1.0f);
+		fVar2 = fVar2 * (clampedProjectionFactor + 1.0f);
 
-		*pResult = (*pInput - *pPlaneNormal) * fVar2;
+		*pResult = *pInput - (*pPlaneNormal * fVar2);
 		bVar1 = true;
 	}
 	else {
@@ -1231,7 +1267,7 @@ bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32
 	fVar2 = pPlaneNormal->x * pInput->x + pPlaneNormal->y * pInput->y + pPlaneNormal->z * pInput->z;
 	if ((mode == 0) || (fVar2 <= 0.0f)) {
 		fVar2 = fVar2 * 2.0f;
-		*pResult = ((*pInput - *pPlaneNormal) * fVar2) * fVar3;
+		*pResult = (*pInput - (*pPlaneNormal * fVar2)) * fVar3;
 		bVar1 = true;
 	}
 	else {
@@ -1239,4 +1275,57 @@ bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32
 		*pResult = *pInput;
 	}
 	return bVar1;
+}
+
+float edFIntervalUnitDstLERP(float param_1, float param_2, float param_3)
+{
+	float fVar1;
+
+	if (param_2 < param_3) {
+		if (param_1 <= param_2) {
+			return 0.0f;
+		}
+		if (param_3 <= param_1) {
+			return 1.0f;
+		}
+	}
+	else {
+		if (param_2 <= param_1) {
+			return 0.0f;
+		}
+		if (param_1 <= param_3) {
+			return 1.0f;
+		}
+	}
+	if (param_3 == param_2) {
+		fVar1 = 1.0f;
+	}
+	else {
+		fVar1 = (param_1 - param_2) / (param_3 - param_2);
+	}
+	return fVar1;
+}
+
+void edF32Vector4LERPHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+
+	fVar2 = v1->y;
+	fVar3 = v1->z;
+	fVar4 = v1->w;
+	fVar5 = v2->y;
+	fVar6 = v2->z;
+	fVar7 = v2->w;
+	fVar1 = 1.0f - t;
+	v0->x = v2->x * t + v1->x * fVar1;
+	v0->y = fVar5 * t + fVar2 * fVar1;
+	v0->z = fVar6 * t + fVar3 * fVar1;
+	v0->w = fVar7 * t + fVar4 * fVar1;
+	return;
 }

@@ -72,4 +72,10 @@ float edFIntervalUnitSrcLERP(float start, float end, float alpha);
 bool edProjectVectorOnPlane(float projectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int optionFlag);
 bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int mode);
 
+float edFIntervalDotSrcLERP(float param_1, float param_2, float param_3);
+float edFIntervalLERP(float param_1, float param_2, float param_3, float param_4, float param_5);
+float edFIntervalUnitDstLERP(float param_1, float param_2, float param_3);
+
+void edF32Vector4LERPHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
+
 #endif // _MATH_OPS_H

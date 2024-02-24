@@ -41,6 +41,7 @@ public:
 };
 
 enum MANAGER_TYPE {
+	MO_Camera = 0x7,
 	MO_GlobalDListManager = 0x17
 };
 
@@ -58,7 +59,7 @@ union ManagerContainer {
 		struct CCameraManager* g_CameraManager_0045167c;
 		struct FrontendManager* g_FrontendManager_00451680;
 		struct HelpManager* g_HelpManager_00451684;
-		struct PauseManager* g_PauseManager_00451688;
+		struct CPauseManager* g_PauseManager_00451688;
 		struct MapManager* g_MapManager_0045168c;
 		class CCollisionManager* g_CollisionManager_00451690;
 		struct CLipTrackManager* g_LipTrackManager_00451694;
@@ -69,7 +70,7 @@ union ManagerContainer {
 		CEventManager* g_EventManager_006f5080;
 		struct CCinematicManager* g_CinematicManagerPtr_004516ac;
 		struct CLightManager* g_LightManager_004516b0;
-		struct Manager_C_Alt* g_ManagerC_Alt_004516b4;
+		class CTrackManager* g_TrackManager_004516b4;
 		struct CFxManager* g_EffectsManager_004516b8;
 		struct CGlobalDListManager* g_GlobalDListManager_004516bc;
 	};
@@ -114,7 +115,7 @@ public:
 	float field_0x24;
 	int field_0x28;
 	int defaultTextureIndex_0x2c;
-	undefined4 field_0x30;
+	int defaultMaterialIndex;
 	undefined field_0x34;
 	undefined field_0x35;
 	undefined field_0x36;

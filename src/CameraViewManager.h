@@ -12,6 +12,7 @@ enum ECameraType {
 	CT_Death = 25,
 	CT_Frontend = 24,
 	CT_IntView = 11,
+	CT_Main = 3,
 	CT_KyaJamgut = 7,
 	CT_KyaWindWall = 5,
 	CT_MainCamera = 21,
@@ -21,11 +22,11 @@ enum ECameraType {
 	CT_SilverBoomy = 10
 };
 
-struct astruct_8 {
-	void Init(struct ByteCode* pMemoryStream);
-	uint field_0x0;
-	uint field_0x4;
-	uint field_0x8;
+struct CAMERA_CONFIG {
+	void Create(struct ByteCode* pMemoryStream);
+	uint flags;
+	S_STREAM_REF<CActor> pActorRefA;
+	S_STREAM_REF<CActor> pActorRefB;
 	float field_0xc;
 	float field_0x10;
 	float field_0x14;
@@ -33,22 +34,10 @@ struct astruct_8 {
 	float field_0x1c;
 	float field_0x20;
 	float field_0x24;
-	float field_0x28;
-	float field_0x2c;
-	float field_0x30;
-	float field_0x34;
-	float field_0x38;
-	float field_0x3c;
-	float field_0x40;
-	float field_0x44;
-	float field_0x48;
-	float field_0x4c;
-	float field_0x50;
-	float field_0x54;
-	float field_0x58;
-	float field_0x5c;
-	float field_0x60;
-	float field_0x64;
+	edF32VECTOR4 field_0x28;
+	edF32VECTOR4 field_0x38;
+	edF32VECTOR4 field_0x48;
+	edF32VECTOR4 field_0x58;
 	float field_0x68;
 	float field_0x6c;
 };
@@ -78,8 +67,9 @@ struct CCamera : public CObject {
 
 	virtual void Init();
 	virtual bool Manage();
-	virtual void ManageEvent(int param_2, int param_3);
-	virtual void* GetTarget() { return NULL; }
+	virtual bool AlertCamera(int param_2, int param_3, CCamera* param_4);
+	virtual CActor* GetTarget() { return NULL; }
+	virtual void SetTarget(CActor* pActor) {}
 	virtual float GetDistance();
 	virtual void SetDistance(float distance) {}
 	virtual float GetAngleAlpha();
@@ -119,9 +109,28 @@ struct CCamera : public CObject {
 	struct CCamera* pNextCameraView_0xa4;
 };
 
-struct CameraView : public CCamera
-{
-	CameraView(struct ByteCode* pMemoryStream);
+struct CCameraExt : public CCamera {
+	CCameraExt(struct ByteCode* pMemoryStream);
+	CCameraExt();
+
+
+	// CObject
+	virtual bool IsKindOfObject(ulong kind);
+
+	virtual void Init();
+	virtual CActor* GetTarget();
+	virtual void SetTarget(CActor* pActor);
+	virtual float GetDistance();
+	virtual void SetDistance(float distance);
+	virtual float GetAngleAlpha();
+	virtual float GetAngleBeta();
+	virtual float GetAngleGamma();
+	virtual void SetAngleAlpha(float angle);
+	virtual void SetAngleBeta(float angle);
+	virtual void SetAngleGamma(float angle);
+
+	void ComputeTargetPosition(edF32VECTOR4* param_2);
+	void ComputeTargetOffset(edF32VECTOR4* v0);
 
 	undefined field_0xa8;
 	undefined field_0xa9;
@@ -131,17 +140,88 @@ struct CameraView : public CCamera
 	undefined field_0xad;
 	undefined field_0xae;
 	undefined field_0xaf;
+	struct CActor* pActorView;
+	edF32VECTOR3 angles;
+	float distance;
+	undefined field_0xc4;
+	undefined field_0xc5;
+	undefined field_0xc6;
+	undefined field_0xc7;
+	undefined field_0xc8;
+	undefined field_0xc9;
+	undefined field_0xca;
+	undefined field_0xcb;
+	undefined field_0xcc;
+	undefined field_0xcd;
+	undefined field_0xce;
+	undefined field_0xcf;
+	float field_0xd0;
+	int field_0xd4;
+	undefined field_0xd8;
+	undefined field_0xd9;
+	undefined field_0xda;
+	undefined field_0xdb;
+	undefined field_0xdc;
+	undefined field_0xdd;
+	undefined field_0xde;
+	undefined field_0xdf;
+};
+
+struct CCamConfig : public CAMERA_CONFIG {
+	uint field_0x70;
+	undefined4 field_0x74;
+	undefined4 field_0x78;
+	undefined4 field_0x7c;
+	undefined4 field_0x80;
+	undefined4 field_0x84;
+	undefined field_0x88;
+	undefined field_0x89;
+	undefined field_0x8a;
+	undefined field_0x8b;
+	undefined4 field_0x8c;
+	undefined4 field_0x90;
+	undefined4 field_0x94;
+	undefined4 field_0x98;
+	undefined4 field_0x9c;
+	undefined4 field_0xa0;
+	undefined field_0xa4;
+	undefined field_0xa5;
+	undefined field_0xa6;
+	undefined field_0xa7;
+	undefined4 field_0xa8;
+	undefined4 field_0xac;
 	undefined4 field_0xb0;
 	undefined4 field_0xb4;
 	undefined4 field_0xb8;
 	undefined4 field_0xbc;
-	undefined4 field_0xc0;
+	float field_0xc0;
+	undefined4 field_0xc4;
+	undefined4 field_0xc8;
+	undefined4 field_0xcc;
+	undefined4 field_0xd0;
+
+	void ResetWithConfig();
 };
 
-struct MainCamera : public CameraView {
-	MainCamera(ECameraType type, struct ByteCode* pMemoryStream);
+
+class CCamFigData {
+public:
+	void Create(ByteCode* pByteCode);
+};
+
+struct CCameraGame : public CCameraExt {
+	CCameraGame(ECameraType type, struct ByteCode* pMemoryStream);
+	virtual void Init();
+	virtual void Reset();
+	virtual bool AlertCamera(int param_2, int param_3, CCamera* param_4);
 	virtual void SetMode(ECameraType type);
 	virtual ECameraType GetMode();
+
+	void UpdateTarget(edF32VECTOR4* v0, bool doSomething);
+	void InitFromConfig(CAMERA_CONFIG* pConfig);
+
+	void _ResetDataForCut(int param_2);
+
 	undefined4 field_0xc0;
 	undefined field_0xc4;
 	undefined field_0xc5;
@@ -155,112 +235,9 @@ struct MainCamera : public CameraView {
 	undefined field_0xcd;
 	undefined field_0xce;
 	undefined field_0xcf;
-	undefined field_0xd0;
-	undefined field_0xd1;
-	undefined field_0xd2;
-	undefined field_0xd3;
+	CActor* field_0xd0;
 	ECameraType cameraType_0xd4;
-	astruct_8 subObj_8;
-	undefined field_0x148;
-	undefined field_0x149;
-	undefined field_0x14a;
-	undefined field_0x14b;
-	undefined field_0x14c;
-	undefined field_0x14d;
-	undefined field_0x14e;
-	undefined field_0x14f;
-	undefined field_0x150;
-	undefined field_0x151;
-	undefined field_0x152;
-	undefined field_0x153;
-	undefined field_0x154;
-	undefined field_0x155;
-	undefined field_0x156;
-	undefined field_0x157;
-	undefined field_0x158;
-	undefined field_0x159;
-	undefined field_0x15a;
-	undefined field_0x15b;
-	undefined field_0x15c;
-	undefined field_0x15d;
-	undefined field_0x15e;
-	undefined field_0x15f;
-	undefined field_0x160;
-	undefined field_0x161;
-	undefined field_0x162;
-	undefined field_0x163;
-	undefined field_0x164;
-	undefined field_0x165;
-	undefined field_0x166;
-	undefined field_0x167;
-	undefined field_0x168;
-	undefined field_0x169;
-	undefined field_0x16a;
-	undefined field_0x16b;
-	undefined field_0x16c;
-	undefined field_0x16d;
-	undefined field_0x16e;
-	undefined field_0x16f;
-	undefined field_0x170;
-	undefined field_0x171;
-	undefined field_0x172;
-	undefined field_0x173;
-	undefined field_0x174;
-	undefined field_0x175;
-	undefined field_0x176;
-	undefined field_0x177;
-	undefined field_0x178;
-	undefined field_0x179;
-	undefined field_0x17a;
-	undefined field_0x17b;
-	undefined field_0x17c;
-	undefined field_0x17d;
-	undefined field_0x17e;
-	undefined field_0x17f;
-	undefined field_0x180;
-	undefined field_0x181;
-	undefined field_0x182;
-	undefined field_0x183;
-	undefined field_0x184;
-	undefined field_0x185;
-	undefined field_0x186;
-	undefined field_0x187;
-	undefined field_0x188;
-	undefined field_0x189;
-	undefined field_0x18a;
-	undefined field_0x18b;
-	undefined field_0x18c;
-	undefined field_0x18d;
-	undefined field_0x18e;
-	undefined field_0x18f;
-	undefined field_0x190;
-	undefined field_0x191;
-	undefined field_0x192;
-	undefined field_0x193;
-	undefined field_0x194;
-	undefined field_0x195;
-	undefined field_0x196;
-	undefined field_0x197;
-	undefined field_0x198;
-	undefined field_0x199;
-	undefined field_0x19a;
-	undefined field_0x19b;
-	undefined field_0x19c;
-	undefined field_0x19d;
-	undefined field_0x19e;
-	undefined field_0x19f;
-	undefined field_0x1a0;
-	undefined field_0x1a1;
-	undefined field_0x1a2;
-	undefined field_0x1a3;
-	undefined field_0x1a4;
-	undefined field_0x1a5;
-	undefined field_0x1a6;
-	undefined field_0x1a7;
-	undefined field_0x1a8;
-	undefined field_0x1a9;
-	undefined field_0x1aa;
-	undefined field_0x1ab;
+	CCamConfig cameraConfig;
 	undefined field_0x1ac;
 	undefined field_0x1ad;
 	undefined field_0x1ae;
@@ -281,22 +258,7 @@ struct MainCamera : public CameraView {
 	undefined field_0x1bd;
 	undefined field_0x1be;
 	undefined field_0x1bf;
-	undefined field_0x1c0;
-	undefined field_0x1c1;
-	undefined field_0x1c2;
-	undefined field_0x1c3;
-	undefined field_0x1c4;
-	undefined field_0x1c5;
-	undefined field_0x1c6;
-	undefined field_0x1c7;
-	undefined field_0x1c8;
-	undefined field_0x1c9;
-	undefined field_0x1ca;
-	undefined field_0x1cb;
-	undefined field_0x1cc;
-	undefined field_0x1cd;
-	undefined field_0x1ce;
-	undefined field_0x1cf;
+	edF32VECTOR4 field_0x1c0;
 	undefined field_0x1d0;
 	undefined field_0x1d1;
 	undefined field_0x1d2;
@@ -317,34 +279,13 @@ struct MainCamera : public CameraView {
 	undefined field_0x1e1;
 	undefined field_0x1e2;
 	undefined field_0x1e3;
-	undefined field_0x1e4;
-	undefined field_0x1e5;
-	undefined field_0x1e6;
-	undefined field_0x1e7;
+	float field_0x1e4;
 	undefined field_0x1e8;
 	undefined field_0x1e9;
 	undefined field_0x1ea;
 	undefined field_0x1eb;
-	undefined field_0x1ec;
-	undefined field_0x1ed;
-	undefined field_0x1ee;
-	undefined field_0x1ef;
-	undefined field_0x1f0;
-	undefined field_0x1f1;
-	undefined field_0x1f2;
-	undefined field_0x1f3;
-	undefined field_0x1f4;
-	undefined field_0x1f5;
-	undefined field_0x1f6;
-	undefined field_0x1f7;
-	undefined field_0x1f8;
-	undefined field_0x1f9;
-	undefined field_0x1fa;
-	undefined field_0x1fb;
-	undefined field_0x1fc;
-	undefined field_0x1fd;
-	undefined field_0x1fe;
-	undefined field_0x1ff;
+	undefined4 field_0x1ec;
+	edF32VECTOR4 gameLookAt;
 	undefined field_0x200;
 	undefined field_0x201;
 	undefined field_0x202;
@@ -441,38 +382,8 @@ struct MainCamera : public CameraView {
 	undefined field_0x25d;
 	undefined field_0x25e;
 	undefined field_0x25f;
-	undefined field_0x260;
-	undefined field_0x261;
-	undefined field_0x262;
-	undefined field_0x263;
-	undefined field_0x264;
-	undefined field_0x265;
-	undefined field_0x266;
-	undefined field_0x267;
-	undefined field_0x268;
-	undefined field_0x269;
-	undefined field_0x26a;
-	undefined field_0x26b;
-	undefined field_0x26c;
-	undefined field_0x26d;
-	undefined field_0x26e;
-	undefined field_0x26f;
-	undefined field_0x270;
-	undefined field_0x271;
-	undefined field_0x272;
-	undefined field_0x273;
-	undefined field_0x274;
-	undefined field_0x275;
-	undefined field_0x276;
-	undefined field_0x277;
-	undefined field_0x278;
-	undefined field_0x279;
-	undefined field_0x27a;
-	undefined field_0x27b;
-	undefined field_0x27c;
-	undefined field_0x27d;
-	undefined field_0x27e;
-	undefined field_0x27f;
+	edF32VECTOR4 field_0x260;
+	edF32VECTOR4 field_0x270;
 	undefined field_0x280;
 	undefined field_0x281;
 	undefined field_0x282;
@@ -505,22 +416,7 @@ struct MainCamera : public CameraView {
 	undefined field_0x29d;
 	undefined field_0x29e;
 	undefined field_0x29f;
-	undefined field_0x2a0;
-	undefined field_0x2a1;
-	undefined field_0x2a2;
-	undefined field_0x2a3;
-	undefined field_0x2a4;
-	undefined field_0x2a5;
-	undefined field_0x2a6;
-	undefined field_0x2a7;
-	undefined field_0x2a8;
-	undefined field_0x2a9;
-	undefined field_0x2aa;
-	undefined field_0x2ab;
-	undefined field_0x2ac;
-	undefined field_0x2ad;
-	undefined field_0x2ae;
-	undefined field_0x2af;
+	edF32VECTOR4 field_0x2a0;
 	undefined field_0x2b0;
 	undefined field_0x2b1;
 	undefined field_0x2b2;
@@ -563,22 +459,7 @@ struct MainCamera : public CameraView {
 	undefined field_0x2fd;
 	undefined field_0x2fe;
 	undefined field_0x2ff;
-	undefined field_0x300;
-	undefined field_0x301;
-	undefined field_0x302;
-	undefined field_0x303;
-	undefined field_0x304;
-	undefined field_0x305;
-	undefined field_0x306;
-	undefined field_0x307;
-	undefined field_0x308;
-	undefined field_0x309;
-	undefined field_0x30a;
-	undefined field_0x30b;
-	undefined field_0x30c;
-	undefined field_0x30d;
-	undefined field_0x30e;
-	undefined field_0x30f;
+	edF32VECTOR4 field_0x300;
 	undefined field_0x310;
 	undefined field_0x311;
 	undefined field_0x312;
@@ -611,22 +492,7 @@ struct MainCamera : public CameraView {
 	undefined field_0x32d;
 	undefined field_0x32e;
 	undefined field_0x32f;
-	undefined field_0x330;
-	undefined field_0x331;
-	undefined field_0x332;
-	undefined field_0x333;
-	undefined field_0x334;
-	undefined field_0x335;
-	undefined field_0x336;
-	undefined field_0x337;
-	undefined field_0x338;
-	undefined field_0x339;
-	undefined field_0x33a;
-	undefined field_0x33b;
-	undefined field_0x33c;
-	undefined field_0x33d;
-	undefined field_0x33e;
-	undefined field_0x33f;
+	edF32VECTOR4 field_0x330;
 	undefined4 field_0x340;
 	undefined field_0x344;
 	undefined field_0x345;
@@ -896,54 +762,15 @@ struct MainCamera : public CameraView {
 	undefined field_0x44d;
 	undefined field_0x44e;
 	undefined field_0x44f;
-	undefined field_0x450;
-	undefined field_0x451;
-	undefined field_0x452;
-	undefined field_0x453;
-	undefined field_0x454;
-	undefined field_0x455;
-	undefined field_0x456;
-	undefined field_0x457;
-	undefined field_0x458;
-	undefined field_0x459;
-	undefined field_0x45a;
-	undefined field_0x45b;
-	undefined field_0x45c;
-	undefined field_0x45d;
-	undefined field_0x45e;
-	undefined field_0x45f;
+	edF32VECTOR4 field_0x450;
 	undefined field_0x460;
 	undefined field_0x461;
 	undefined field_0x462;
 	undefined field_0x463;
-	undefined field_0x464;
-	undefined field_0x465;
-	undefined field_0x466;
-	undefined field_0x467;
-	undefined field_0x468;
-	undefined field_0x469;
-	undefined field_0x46a;
-	undefined field_0x46b;
-	undefined field_0x46c;
-	undefined field_0x46d;
-	undefined field_0x46e;
-	undefined field_0x46f;
-	undefined field_0x470;
-	undefined field_0x471;
-	undefined field_0x472;
-	undefined field_0x473;
-	undefined field_0x474;
-	undefined field_0x475;
-	undefined field_0x476;
-	undefined field_0x477;
-	undefined field_0x478;
-	undefined field_0x479;
-	undefined field_0x47a;
-	undefined field_0x47b;
-	undefined field_0x47c;
-	undefined field_0x47d;
-	undefined field_0x47e;
-	undefined field_0x47f;
+	float field_0x464;
+	float field_0x468;
+	float field_0x46c;
+	edF32VECTOR4 field_0x470;
 	undefined field_0x480;
 	undefined field_0x481;
 	undefined field_0x482;
@@ -1088,58 +915,6 @@ struct CCameraCinematic : public FrontendCameraView {
 	undefined field_0xbd;
 	undefined field_0xbe;
 	undefined field_0xbf;
-};
-
-struct CCameraExt : public CCamera {
-	CCameraExt();
-
-	// CObject
-	virtual bool IsKindOfObject(ulong kind);
-
-	virtual void Init();
-	virtual void* GetTarget();
-	virtual float GetDistance();
-	virtual void SetDistance(float distance);
-	virtual float GetAngleAlpha();
-	virtual float GetAngleBeta();
-	virtual float GetAngleGamma();
-	virtual void SetAngleAlpha(float angle);
-	virtual void SetAngleBeta(float angle);
-	virtual void SetAngleGamma(float angle);
-
-	undefined field_0xa8;
-	undefined field_0xa9;
-	undefined field_0xaa;
-	undefined field_0xab;
-	undefined field_0xac;
-	undefined field_0xad;
-	undefined field_0xae;
-	undefined field_0xaf;
-	struct Actor* pActorView;
-	edF32VECTOR3 angles;
-	float distance;
-	undefined field_0xc4;
-	undefined field_0xc5;
-	undefined field_0xc6;
-	undefined field_0xc7;
-	undefined field_0xc8;
-	undefined field_0xc9;
-	undefined field_0xca;
-	undefined field_0xcb;
-	undefined field_0xcc;
-	undefined field_0xcd;
-	undefined field_0xce;
-	undefined field_0xcf;
-	float field_0xd0;
-	int field_0xd4;
-	undefined field_0xd8;
-	undefined field_0xd9;
-	undefined field_0xda;
-	undefined field_0xdb;
-	undefined field_0xdc;
-	undefined field_0xdd;
-	undefined field_0xde;
-	undefined field_0xdf;
 };
 
 struct CCameraMouse : public CCameraExt {
@@ -7581,6 +7356,8 @@ struct CCameraManager : public CObjectManager {
 	virtual void LevelLoading_Begin();
 	virtual bool LevelLoading_Manage();
 	virtual void Level_Init();
+
+	void KeepSameParam(CCamera* pNewCamera, uint flag);
 	void Func_001947e0();
 	float Manage_EarthQuake(edF32VECTOR4* param_2);
 	void ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0);
@@ -7599,6 +7376,8 @@ struct CCameraManager : public CObjectManager {
 	bool PushCamera(CCamera* pCamera, int param_3);
 	void ApplyActiveCamera();
 	bool PopCamera(CCamera* pCameraView);
+
+	void SetMainCamera(CCamera* pCamera);
 
 	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;

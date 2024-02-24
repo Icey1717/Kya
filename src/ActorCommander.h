@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "CameraViewManager.h"
 
 class CTeamElt {
 public:
@@ -12,11 +13,6 @@ public:
 class ACommanderComponent_10 {};
 
 class CSquad {
-public:
-	void Create(ByteCode* pByteCode);
-};
-
-class CCamFigData {
 public:
 	void Create(ByteCode* pByteCode);
 };

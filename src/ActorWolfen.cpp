@@ -47,6 +47,9 @@ CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
 	case 0x18:
 		pBehaviour = new CBehaviourDCA;
 		break;
+	case 0x19:
+		pBehaviour = new CBehaviourAvoid;
+		break;
 	default:
 		assert(behaviourType < 7);
 		pBehaviour = CActorFighter::BuildBehaviour(behaviourType);

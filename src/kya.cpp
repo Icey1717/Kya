@@ -72,6 +72,7 @@ extern "C" {
 #include "BootData.h"
 #include "SaveManagement.h"
 #include "EventManager.h"
+#include "ActorHero.h"
 
 template<class T>
 T* CreateNew()
@@ -951,7 +952,7 @@ char* s_Video_0042b490 = "Video";
 
 GlobalVideoConfig gVideoConfig = {};
 
-void VideoReadConfig(IniFile* file)
+void VideoReadConfig(CIniFile* file)
 {
 	bool bVar1;
 	int iVar2;
@@ -1464,8 +1465,8 @@ void MainInit(int argc,char **argv)
 	edTextInit();
 	//edDebugPrintf(s_----_Init_edMath_0042b6b0);
 	//edMathInit();
-	//edDebugPrintf(s_----_Init_edDev_0042b6d0);
-	//edDevInit();
+	edDebugPrintf("---- Init edDev \n");
+	CPlayerInput::InitDev();
 	///* Should we init sound and music? */
 	//if (DAT_00448ef0 == 0) {
 	//	edDebugPrintf(s_----_Init_edMusic_0042b6f0); 6f0);
@@ -1514,7 +1515,7 @@ void MainInit(int argc,char **argv)
 	pVVar4->field_0x4 = 0;
 	edVideoInit();
 	SetVideoMode((short)gVideoConfig.omode, (short)gVideoConfig.screenWidth, (short)gVideoConfig.screenHeight, (short)gVideoConfig.field_0x8, 0);
-	//CheckControllers(&g_IniFile_00450750);
+	CPlayerInput::ReadConfig(&g_IniFile_00450750);
 	CScene::CreateScene();
 	Game_Init();
 
@@ -1704,7 +1705,7 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 	LoadVideoFromFilePath(display, file_path);
 
 	do {
-		//PlayerInput::Update(inTimeController->cutsceneDeltaTime);
+		CPlayerInput::Update(inTimeController->cutsceneDeltaTime);
 		inTimeController->Update();
 		if (display->fileReadSuccess != 0) {
 			fVar4 = 1.0;
@@ -1728,12 +1729,12 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 		if (param_2 != false) {
 			if (param_3 == false) {
 				uVar2 = 1;
-				if (((gPlayerInput.pressedBitfield & 0x40000) == 0) && ((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
+				if (((gPlayerInput.pressedBitfield & KEY_START) == 0) && ((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 					uVar2 = 0;
 				}
 			}
 			else {
-				uVar2 = gPlayerInput.pressedBitfield & 0x40000;
+				uVar2 = gPlayerInput.pressedBitfield & KEY_START;
 			}
 			if (uVar2 != 0) break;
 		}
@@ -1817,7 +1818,7 @@ void PlayIntroVideo(long mode)
 				edStrCatMulti(introFilePath, szMoviesPath, introFileName, ".pss", NULL);
 				LoadVideoFromFilePath(currentLanguage_videoPointer, introFilePath);
 				do {
-					//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+					CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
 					pTVar3->Update();
 					if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 						fVar5 = FUN_00284900();
@@ -1832,7 +1833,7 @@ void PlayIntroVideo(long mode)
 						}
 #endif
 					}
-					if (((uint)gPlayerInput.pressedBitfield & 0x40000) != 0) break;
+					if ((gPlayerInput.pressedBitfield & KEY_START) != 0) break;
 					currentLanguage = 1;
 					if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 						currentLanguage = hasVideoEnded();
@@ -1857,7 +1858,7 @@ void PlayIntroVideo(long mode)
 						edStrCatMulti(mysteryFilePathA, szMoviesPath, fileName, ".pss", "\0");
 						LoadVideoFromFilePath(currentLanguage_videoPointer, mysteryFilePathA);
 						do {
-							//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+							CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
 							pTVar3->Update();
 							if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 								fVar5 = FUN_00284900();
@@ -1873,8 +1874,8 @@ void PlayIntroVideo(long mode)
 #endif
 							}
 							bVar2 = true;
-							if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
-								(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
+							if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+								((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 								bVar2 = false;
 							}
 							if (bVar2) break;
@@ -1896,7 +1897,7 @@ void PlayIntroVideo(long mode)
 						edStrCatMulti(teaserFilePath, szMoviesPath, fileName, ".pss", "\0");
 						LoadVideoFromFilePath(currentLanguage_videoPointer, teaserFilePath);
 						do {
-							//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+							CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
 							pTVar3->Update();
 							if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 								fVar5 = FUN_00284900();
@@ -1912,8 +1913,8 @@ void PlayIntroVideo(long mode)
 #endif
 							}
 							bVar2 = true;
-							if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
-								(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
+							if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+								((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 								bVar2 = false;
 							}
 							if (bVar2) break;
@@ -1936,7 +1937,7 @@ void PlayIntroVideo(long mode)
 					edStrCatMulti(promoFilePath, szMoviesPath, fileName, ".pss", "\0");
 					LoadVideoFromFilePath(currentLanguage_videoPointer, promoFilePath);
 					do {
-						//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+						CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
 						pTVar3->Update();
 						if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 							fVar5 = FUN_00284900();
@@ -1952,8 +1953,8 @@ void PlayIntroVideo(long mode)
 #endif
 						}
 						bVar2 = true;
-						if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
-							(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
+						if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+							((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 							bVar2 = false;
 						}
 						if (bVar2) break;
@@ -1979,7 +1980,7 @@ void PlayIntroVideo(long mode)
 		edStrCatMulti(mysteryFilePathB, szMoviesPath, fileName, ".pss", "\0");
 		LoadVideoFromFilePath(currentLanguage_videoPointer, mysteryFilePathB);
 		do {
-			//PlayerInput::Update(pTVar3->cutsceneDeltaTime);
+			CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
 			pTVar3->Update();
 			if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 				fVar5 = FUN_00284900();
@@ -1995,8 +1996,8 @@ void PlayIntroVideo(long mode)
 #endif
 			}
 			bVar2 = true;
-			if ((((uint)gPlayerInput.pressedBitfield & 0x40000) == 0) &&
-				(((uint)gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
+			if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+				((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 				bVar2 = false;
 			}
 			if (bVar2) break;
@@ -2031,7 +2032,7 @@ void LoadingLoop(void)
 		/* This is the main loop that plays cutscenes
 
 		   This does not control any cutscene elements */
-		//PlayerInput::Update(inTimeController->cutsceneDeltaTime);
+		CPlayerInput::Update(inTimeController->cutsceneDeltaTime);
 		inTimeController->Update();
 		/* Play cutscene */
 		bVar2 = pSceneInstance->LevelLoading_Manage();
@@ -2050,19 +2051,16 @@ void LoadingLoop(void)
 	return;
 }
 
-struct APlayer;
-APlayer* g_PlayerActor_00448e10 = NULL;
-
 void GameLoop(void)
 {
-	//ActorState AVar1;
-	APlayer* pAVar2;
+	int AVar1;
+	CActorHero* pAVar2;
 	CScene* pLVar3;
 	bool cVar4;
 	bool bVar4;
 	Timer* timeController;
-	int* piVar5;
-	//AnimResult* pAVar6;
+	CLifeInterface* piVar5;
+	AnimResult* pAVar6;
 	uint uVar7;
 	ulong uVar8;
 	float fVar9;
@@ -2073,33 +2071,33 @@ void GameLoop(void)
 	timeController = GetTimer();
 	do {
 		gCompatibilityHandlingPtr->IOPFunc_0x14(0);
-		//PlayerInput::Update(timeController->cutsceneDeltaTime);
+		CPlayerInput::Update(timeController->cutsceneDeltaTime);
 		cVar4 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 		bVar4 = gPlayerInput.SoftReset();
 		if (bVar4 != false) {
 			IMPLEMENTATION_GUARD();
 			//Scene::_pinstance->InitiateReset();
 		}
-		pAVar2 = g_PlayerActor_00448e10;
+		pAVar2 = CActorHero::_gThis;
 		if ((GameFlags & 0xc0) == 0) {
-			if (g_PlayerActor_00448e10 != (APlayer*)0x0) {
-				IMPLEMENTATION_GUARD();
-				//piVar5 = (int*)(*(code*)g_PlayerActor_00448e10->pVTable->field_0x138)(g_PlayerActor_00448e10);
-				//fVar9 = (float)(**(code**)(*piVar5 + 0x24))();
-				//bVar4 = fVar9 - (pAVar2->character).characterBase.field_0x2e0 <= 0.0;
-				//if (!bVar4) {
-				//	AVar1 = (pAVar2->character).characterBase.actorBase.actorState;
-				//	if (AVar1 == AS_None) {
-				//		uVar7 = 0;
-				//	}
-				//	else {
-				//		pAVar6 = (*(pAVar2->pVTable->actorBase).getAnimForState)((AActorBase*)pAVar2, AVar1);
-				//		uVar7 = pAVar6->flags_0x4 & 1;
-				//	}
-				//	bVar4 = uVar7 != 0;
-				//}
-				//if (bVar4) goto LAB_001a7608;
+			if (CActorHero::_gThis != (CActorHero*)0x0) {
+				piVar5 = CActorHero::_gThis->GetLifeInterface();
+				fVar9 = piVar5->GetValue();
+				bVar4 = fVar9 - pAVar2->field_0x2e4 <= 0.0f;
+				if (!bVar4) {
+					AVar1 = pAVar2->actorState;
+					if (AVar1 == AS_None) {
+						uVar7 = 0;
+					}
+					else {
+						pAVar6 = pAVar2->GetStateCfg(AVar1);
+						uVar7 = pAVar6->flags_0x4 & 1;
+					}
+					bVar4 = uVar7 != 0;
+				}
+				if (bVar4) goto LAB_001a7608;
 			}
+
 			if (cVar4 != false) {
 				if ((GameFlags & 8) != 0) {
 					IMPLEMENTATION_GUARD();
@@ -2122,7 +2120,7 @@ void GameLoop(void)
 			}
 			if ((((GameFlags & 0x8000) == 0) &&
 				((gPlayerInput.pressedBitfield & 0x80000) != 0)) &&
-				(gPlayerInput.buttonArray[18].floatFieldB == 0.0)) {
+				(gPlayerInput.aButtons[18].clickValue == 0.0)) {
 				if ((GameFlags & 8) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						IMPLEMENTATION_GUARD();
@@ -2134,8 +2132,8 @@ void GameLoop(void)
 					//LoadFrontendWithuRam00451684();
 				}
 			}
-			bVar4 = gPlayerInput.buttonArray[6].floatFieldB != 0.0 ||
-				gPlayerInput.buttonArray[10].floatFieldB != 0.0;
+			bVar4 = gPlayerInput.aButtons[6].clickValue != 0.0 ||
+				gPlayerInput.aButtons[10].clickValue != 0.0;
 			if ((gPlayerInput.field_0x58 != 4) || (gPlayerInput.field_0x34 != 4)) {
 				bVar4 = true;
 			}
@@ -2153,7 +2151,7 @@ void GameLoop(void)
 				}
 				GameFlags = GameFlags & 0xfffffbff;
 			}
-			if (((gPlayerInput.pressedBitfield & 0x40000) != 0) &&
+			if (((gPlayerInput.pressedBitfield & KEY_START) != 0) &&
 				((gPlayerInput.pressedBitfield & 0x80000) == 0)) {
 				if ((GameFlags & 4) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
@@ -2182,6 +2180,7 @@ void GameLoop(void)
 			IMPLEMENTATION_GUARD();
 			//SetPaused_001b8c40(Scene::_pinstance, 1);
 		}
+
 		timeController->Update();
 		/* This may control cine cutscenes */
 		pLVar3->Level_Manage();

@@ -80,6 +80,11 @@ class CBehaviourWolfenUnknown : public CBehaviourWolfen
 public:
 };
 
+class CBehaviourAvoid : public CBehaviour
+{
+public:
+};
+
 class CActorWolfen : public CActorFighter 
 {
 public:

@@ -144,17 +144,21 @@ enum ACTOR_CLASS {
 	ARAIGNOS = 0x21,
 	TELEPORTER = 0x24,
 	AMORTOS = 0x29,
+	WOOF = 0x2a,
 	TRAP = 0x2c,
 	FX = 0x2e,
 	MONEY = 0x32,
 	BOX = 0x35,
 	ATON = 0x38,
 	BASIC_BOX = 0x39,
+	EVENT_GENERATOR = 0x3b,
 	NATIV_CMD = 0x3c,
 	FOG_MANAGER = 0x3d,
 	SHOOT = 0x3e,
 	SHOCKER = 0x4b,
 	BLAZER = 0x4c,
+	ACTOR_4E = 0x4e,
+	ACTOR_4F = 0x4f,
 	SHOCKER_CMD = 0x50,
 	RUNE = 0x51,
 	BONUS_FOUNTAIN = 0x52,
@@ -699,6 +703,15 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 
 #define ACTOR_NUM_CLASSES 0x57
 
+template<typename T>
+struct S_STREAM_REF {
+	void Init();
+
+	union {
+		T* pObj;
+		int index;
+	};
+};
 
 template<typename T, int Size>
 class CFixedTable {

@@ -47,8 +47,10 @@ struct edAnmStage {
 	static bool ComputeAnimParams(float param_1, float param_2, float param_3, float* param_4, bool param_5, int loopType);
 	void SetAnim(edANM_HDR* pKeyData);
 	void SetAnimLoop(edANM_HDR* pKeyData);
+	void SetTimeAsRatio(float ratio);
 	void SetTime(float time);
 	void AnimToWRTS();
+	void AnimBlendToWRTS(float param_1);
 
 };
 
@@ -58,7 +60,7 @@ union edANM_HDR_Internal {
 };
 
 struct edANM_HDR {
-	uint flags;
+	int count_0x0;
 	edANM_HDR_Internal field_0x4;
 	edANM_HDR_Internal keyIndex_0x8;
 };
@@ -143,6 +145,11 @@ public:
 	void PlayAnim(CActor* pActor, int animType, int origAnimType);
 	void Reset(CActor* pActor);
 
+	struct FrameMatrixData_8 {
+		uint field_0x0;
+		int field_0x4;
+	};
+
 	edAnmBinMetaAnimator anmBinMetaAnimator;
 	edAnmSkeleton anmSkeleton;
 	AnimMatrixData* pMatrixData_0x10;
@@ -151,32 +158,7 @@ public:
 	undefined4 field_0x28;
 	uint count_0x2c;
 	int currentAnimType_0x30;
-	uint field_0x34;
-	undefined4 field_0x38;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
-	undefined field_0x40;
-	undefined field_0x41;
-	undefined field_0x42;
-	undefined field_0x43;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
-	undefined field_0x48;
-	undefined field_0x49;
-	undefined field_0x4a;
-	undefined field_0x4b;
-	undefined field_0x4c;
-	undefined field_0x4d;
-	undefined field_0x4e;
-	undefined field_0x4f;
-	undefined field_0x50;
-	undefined field_0x51;
-	undefined field_0x52;
-	undefined field_0x53;
+	FrameMatrixData_8 field_0x34[4];
 	int count_0x54;
 };
 

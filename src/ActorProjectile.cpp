@@ -12,7 +12,9 @@ CBehaviour* CActorProjectile::BuildBehaviour(int behaviourType)
 
 	switch (behaviourType) {
 	case 0x3:
+	{
 		pBehaviour = &behaviourProjectileStand;
+	}
 		break;
 	case 0x4:
 		pBehaviour = new CBehaviourProjectileStraight;

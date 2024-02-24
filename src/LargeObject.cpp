@@ -38,6 +38,7 @@
 #include "CollisionManager.h"
 #include "LightManager.h"
 #include "EventManager.h"
+#include "EventTrack.h"
 
 CScene* CScene::_pinstance = NULL;
 
@@ -137,7 +138,7 @@ CScene::CScene()
 	//Manager_170* pMVar1;
 	FrontendManager* pFrontendManager;
 	//HelpManager* pHelpManager;
-	PauseManager* pPVar2;
+	CPauseManager* pPVar2;
 	//MapManager* pMVar3;
 	CCameraManager* pCameraViewmanager;
 	CSectorManager* pSectorManager;
@@ -226,7 +227,7 @@ CScene::CScene()
 	//	pHelpManager = (HelpManager*)uVar17;
 	//}
 	//g_HelpManager_00451684 = pHelpManager;
-	pPVar2 = new PauseManager();
+	pPVar2 = new CPauseManager();
 	CScene::ptable.g_PauseManager_00451688 = pPVar2;
 	CScene::ptable.g_MapManager_0045168c = new MapManager;
 	pCameraViewmanager = new CCameraManager;
@@ -257,13 +258,7 @@ CScene::CScene()
 	CScene::ptable.g_CinematicManagerPtr_004516ac = pNewCinematicObject;
 
 	CScene::ptable.g_AnimManager_00451668 = new CAnimationManager;
-
-	//pMVar8 = (Manager_C_Alt*)Allocate(0xc);
-	//if (pMVar8 != (Manager_C_Alt*)0x0) {
-	//	uVar17 = SetupManagerC_Alt_0019ef50(pMVar8);
-	//	pMVar8 = (Manager_C_Alt*)uVar17;
-	//}
-	//g_ManagerC_Alt_004516b4 = pMVar8;
+	CScene::ptable.g_TrackManager_004516b4 = new CTrackManager;
 	CScene::ptable.g_EffectsManager_004516b8 = new CFxManager;
 	CScene::ptable.g_EventManager_006f5080 = new CEventManager;
 	CScene::ptable.g_GlobalDListManager_004516bc = new CGlobalDListManager;
@@ -687,7 +682,7 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	int* piVar2;
 	uint uVar3;
 	int iVar4;
-	MainCamera* pCVar5;
+	CCameraGame* pCVar5;
 	float fVar5;
 	ConditionedOperationArray local_4;
 
@@ -708,7 +703,7 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	iVar4 = pMemoryStream->GetS32();
 	this->mipmapK = iVar4;
 	/* Main Camera */
-	pCVar5 = (MainCamera*)CScene::ptable.g_CameraManager_0045167c->AddCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
+	pCVar5 = (CCameraGame*)CScene::ptable.g_CameraManager_0045167c->AddCamera(CT_MainCamera, pMemoryStream, s_Main_Camera_0042b460);
 	fVar5 = pMemoryStream->GetF32();
 	this->field_0x118 = fVar5;
 	pCVar5->field_0x2dc = fVar5;
@@ -727,7 +722,7 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	this->defaultTextureIndex_0x2c = iVar4;
 	//FUN_002cbc90((undefined4*)&this->field_0xfc);
 	iVar4 = pMemoryStream->GetS32();
-	this->field_0x30 = iVar4;
+	this->defaultMaterialIndex = iVar4;
 	CScene::ptable.g_EffectsManager_004516b8->AddPool(pMemoryStream);
 	//local_4 = { };
 	local_4.Create(pMemoryStream);
@@ -979,7 +974,8 @@ void CScene::Level_SectorChange(int oldSectorId, int newSectorId)
 
 void* CScene::GetManager(MANAGER_TYPE type)
 {
-	return (void*)&ptable.aManagers[type];
+	CObjectManager* pManager = ptable.aManagers[type];
+	return (void*)pManager;
 }
 
 ed_3D_Scene* GetStaticMeshMasterA_001031b0(void)

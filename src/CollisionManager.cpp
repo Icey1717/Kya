@@ -8,6 +8,8 @@
 #include "SectorManager.h"
 #include "ActorHero.h"
 
+#include <math.h>
+
 MaterialTableEntry CCollisionManager::_material_table[MATERIAL_TABLE_SIZE] = {
 	{0.5235988f, 0.6981317f, 1.0471976f, 1.0f, 1.0f},
 	{0.5235988f, 0.6981317f, 1.0471976f, 1.0f, 1.0f},
@@ -43,6 +45,8 @@ CCollisionManager::CCollisionManager()
 	return;
 }
 
+int __bmat_tab_initialised = 0;
+
 void CCollisionManager::Level_Create(ByteCode* pMemoryStream)
 {
 	int iVar1;
@@ -71,18 +75,15 @@ void CCollisionManager::Level_Create(ByteCode* pMemoryStream)
 	}
 
 	IMPLEMENTATION_GUARD_LOG(
-	ClearStaticData();
+	ClearStaticData();)
 	if (__bmat_tab_initialised == 0) {
 		for (iVar1 = 0; iVar1 < MATERIAL_TABLE_SIZE; iVar1 = iVar1 + 1) {
-			*(float*)(&DAT_0040eaa0 + iVar1 * 0x14) =
-				g_FloatSineCurve_00472260[(int)(ABS(*(float*)(&DAT_0040eaa0 + iVar1 * 0x14) * 1303.797) + 0.5) & 0x1fff];
-			*(float*)(&DAT_0040eaa4 + iVar1 * 0x14) =
-				g_FloatSineCurve_00472260[(int)(ABS(*(float*)(&DAT_0040eaa4 + iVar1 * 0x14) * 1303.797) + 0.5) & 0x1fff];
-			*(float*)(&DAT_0040eaa8 + iVar1 * 0x14) =
-				g_FloatSineCurve_00472260[(int)(ABS(*(float*)(&DAT_0040eaa8 + iVar1 * 0x14) * 1303.797) + 0.5) & 0x1fff];
+			_material_table[iVar1].field_0x0 = cosf(_material_table[iVar1].field_0x0);
+			_material_table[iVar1].field_0x4 = cosf(_material_table[iVar1].field_0x4);
+			_material_table[iVar1].field_0x8 = cosf(_material_table[iVar1].field_0x8);
 		}
 		__bmat_tab_initialised = 1;
-	})
+	}
 
 	return;
 }
@@ -156,11 +157,22 @@ bool CCollisionManager::IsASlidingGround(s_collision_contact* pContact)
 {
 	uint uVar1;
 
-	uVar1 = pContact->field_0x20 & 0xf;
+	uVar1 = pContact->materialFlags & 0xf;
 	if (uVar1 == 0) {
-		uVar1 = CScene::_pinstance->field_0x30;
+		uVar1 = CScene::_pinstance->defaultMaterialIndex;
 	}
-	return (pContact->field_0x0).y < _material_table[uVar1].field_0x0;
+	return (pContact->location).y < _material_table[uVar1].field_0x0;
+}
+
+float CCollisionManager::GetMaterialSlidingCoef(s_collision_contact* pContact)
+{
+	uint uVar1;
+
+	uVar1 = pContact->materialFlags & 0xf;
+	if (uVar1 == 0) {
+		uVar1 = CScene::_pinstance->defaultMaterialIndex;
+	}
+	return _material_table[uVar1].slidingCoefficient;
 }
 
 CCollision* CCollisionManager::NewCCollision()
@@ -1099,9 +1111,9 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 	edColDbObj_80* peVar7;
 	edF32VECTOR4* peVar8;
 	CActor* pReceiver;
-	uint uVar9;
+	uint materialIndex;
 	uint uVar10;
-	uint uVar11;
+	uint quadFlags;
 	int iVar12;
 	edColDbObj_80* pColDbObj;
 	int iVar14;
@@ -1133,7 +1145,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 	//float fStack252;
 	//float fStack248;
 	//float fStack244;
-	//edF32VECTOR4 local_f0;
+	edF32VECTOR4 local_f0;
 	edF32VECTOR4 local_e0;
 	//float local_d0[4];
 	//int local_c0[48];
@@ -1157,17 +1169,17 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 	if (param_4 != 0) {
 		for (; iVar14 < 3; iVar14 = iVar14 + 1) {
 			s_collision_contact* pCollisionContact = this->aCollisionContact + iVar14;
-			pCollisionContact->field_0x0.x = 0.0f;
-			pCollisionContact->field_0x0.y = 0.0f;
-			pCollisionContact->field_0x0.z = 0.0f;
-			pCollisionContact->field_0x0.w = 0.0f;
+			pCollisionContact->location.x = 0.0f;
+			pCollisionContact->location.y = 0.0f;
+			pCollisionContact->location.z = 0.0f;
+			pCollisionContact->location.w = 0.0f;
 			pCollisionContact->field_0x10.x = 0.0f;
 			pCollisionContact->field_0x10.y = 0.0f;
 			pCollisionContact->field_0x10.z = 0.0f;
 			pCollisionContact->field_0x10.w = 0.0f;
 			pCollisionContact->nbCollisionsA = 0;
 			pCollisionContact->nbCollisionsB = 0;
-			pCollisionContact->field_0x20 = 0;
+			pCollisionContact->materialFlags = 0;
 		}
 	}
 
@@ -1190,8 +1202,8 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 	pColDbObj = (gColData.pActiveDatabase)->field_0x10;
 	peVar7 = pColDbObj + (gColData.pActiveDatabase)->field_0x4;
 	for (; pColDbObj < peVar7; pColDbObj = pColDbObj + 1) {
-		uVar11 = pColDbObj->quadFlags;
-		if (pColDbObj->field_0x78 < 0.0) {
+		quadFlags = pColDbObj->quadFlags;
+		if (pColDbObj->field_0x78 < 0.0f) {
 			pReceiver = (CActor*)0x0;
 			if (pColDbObj->pOtherColObj == (edColOBJECT*)0x0) {
 				iVar14 = 0;
@@ -1201,11 +1213,11 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 				pReceiver = pColDbObj->pOtherColObj->pActor;
 				if (pReceiver != (CActor*)0x0) {
 					pCVar2 = (pReceiver->data).pCollisionData;
-					uVar9 = pCVar2->flags_0x0;
-					if ((uVar9 & 0x2000) != 0) {
+					materialIndex = pCVar2->flags_0x0;
+					if ((materialIndex & 0x2000) != 0) {
 						pColDbObj->field_0x78 = 0.0;
 					}
-					if ((uVar9 & 0x8000) != 0) {
+					if ((materialIndex & 0x8000) != 0) {
 						local_c0[47] = 0;
 						CActor::DoMessage(pActor, pReceiver, 0x1c, 0);
 					}
@@ -1219,7 +1231,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 				}
 				iVar14 = 1;)
 			}
-			if ((((uVar11 & 0x200) != 0) && (this->pObbPrim != (edColPRIM_OBJECT*)0x0)) &&
+			if ((((quadFlags & 0x200) != 0) && (this->pObbPrim != (edColPRIM_OBJECT*)0x0)) &&
 				((this->pObbPrim->flags_0x80 & 0x200) != 0)) {
 				if (bVar4) {
 					IMPLEMENTATION_GUARD(
@@ -1247,56 +1259,49 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 							local_e0.y = local_e0.y + local_180.y;
 							local_e0.z = local_e0.z + local_180.z;
 							local_e0.w = local_e0.w + local_180.w;
-							pColDbObj->field_0x78 = 0.0;
+							pColDbObj->field_0x78 = 0.0f;
 						}
 					}
 					else {
-						pColDbObj->field_0x78 = 0.0;
+						pColDbObj->field_0x78 = 0.0f;
 					})
 				}
 				else {
-					pColDbObj->field_0x78 = 0.0;
+					pColDbObj->field_0x78 = 0.0f;
 				}
 			}
 
-			uVar9 = uVar11 & 0xf;
+			materialIndex = quadFlags & 0xf;
 
-			if (pColDbObj->field_0x78 < 0.0) {
-				if (uVar9 == 0) {
-					uVar9 = CScene::_pinstance->field_0x30;
+			if (pColDbObj->field_0x78 < 0.0f) {
+				if (materialIndex == 0) {
+					materialIndex = CScene::_pinstance->defaultMaterialIndex;
 				}
-				if ((pColDbObj->field_0x40).y < CCollisionManager::_material_table[uVar9].field_0x8) {
+
+				if ((pColDbObj->field_0x40).y < CCollisionManager::_material_table[materialIndex].field_0x8) {
 					uVar17 = 2;
-					if (-CCollisionManager::_material_table[uVar9].field_0x8 < (pColDbObj->field_0x40).y) {
+					if (-CCollisionManager::_material_table[materialIndex].field_0x8 < (pColDbObj->field_0x40).y) {
 						uVar17 = 0;
 					}
 				}
 				else {
-					IMPLEMENTATION_GUARD(
 					uVar17 = 1;
-					if (((this->flags_0x0 & 0x10) != 0) &&
-						(ABS((pColDbObj->location).y) < CCollisionManager::_material_table[uVar9].field_0x8)) {
-						fVar18 = (pColDbObj->location).x * (pColDbObj->field_0x40).x +
-							(pColDbObj->location).y * (pColDbObj->field_0x40).y +
-							(pColDbObj->location).z * (pColDbObj->field_0x40).z;
-						local_f0.x = (pColDbObj->field_0x40).x - (pColDbObj->location).x * fVar18;
-						local_f0.y = (pColDbObj->field_0x40).y - (pColDbObj->location).y * fVar18;
-						local_f0.z = (pColDbObj->field_0x40).z - (pColDbObj->location).z * fVar18;
-						local_f0.w = (pColDbObj->field_0x40).w - (pColDbObj->location).w * fVar18;
+					if (((this->flags_0x0 & 0x10) != 0) && (fabs((pColDbObj->location).y) < CCollisionManager::_material_table[materialIndex].field_0x8)) {
+						fVar18 = (pColDbObj->location).x * (pColDbObj->field_0x40).x + (pColDbObj->location).y * (pColDbObj->field_0x40).y + (pColDbObj->location).z * (pColDbObj->field_0x40).z;
+						local_f0 = pColDbObj->field_0x40 - (pColDbObj->location * fVar18);
+
 						edF32Vector4NormalizeHard(&local_f0, &local_f0);
-						if (CCollisionManager::_material_table[uVar9].field_0x8 <= local_f0.y) {
-							(pColDbObj->location).x = local_f0.x;
-							(pColDbObj->location).y = local_f0.y;
-							(pColDbObj->location).z = local_f0.z;
-							(pColDbObj->location).w = local_f0.w;
+
+						if (CCollisionManager::_material_table[materialIndex].field_0x8 <= local_f0.y) {
+							pColDbObj->location = local_f0;
 						}
-					})
+					}
 				}
 
-				if ((pColDbObj->location).y < CCollisionManager::_material_table[uVar9].field_0x8) {
+				if ((pColDbObj->location).y < CCollisionManager::_material_table[materialIndex].field_0x8) {
 					if (0.0f <= (pColDbObj->location).x * (pColDbObj->field_0x40).x + (pColDbObj->location).y * (pColDbObj->field_0x40).y + (pColDbObj->location).z * (pColDbObj->field_0x40).z) {
 						uVar10 = 2;
-						if (-CCollisionManager::_material_table[uVar9].field_0x8 < (pColDbObj->field_0x40).y) {
+						if (-CCollisionManager::_material_table[materialIndex].field_0x8 < (pColDbObj->field_0x40).y) {
 							uVar10 = 0;
 						}
 					}
@@ -1330,8 +1335,8 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 					}
 
 					pCollisionContact->field_0x10 = pCollisionContact->field_0x10 + pColDbObj->field_0x30;
-					pCollisionContact->field_0x0 = pCollisionContact->field_0x0 + pColDbObj->location;
-					pCollisionContact->field_0x20 = uVar11;
+					pCollisionContact->location = pCollisionContact->location + pColDbObj->location;
+					pCollisionContact->materialFlags = quadFlags;
 				}
 
 				if (uVar17 < 3) {
@@ -1347,25 +1352,25 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 		}
 	}
 
-	uVar11 = 0;
+	uint colIndex = 0;
 	if (param_4 != 0) {
-		for (; (int)uVar11 < 3; uVar11 = uVar11 + 1) {
-			s_collision_contact* pCollisionContact = this->aCollisionContact + uVar11;
+		for (; (int)colIndex < 3; colIndex = colIndex + 1) {
+			s_collision_contact* pCollisionContact = this->aCollisionContact + colIndex;
 
 			iVar14 = pCollisionContact->nbCollisionsA + pCollisionContact->nbCollisionsB;
 
 			if (iVar14 == 0) {
-				this->flags_0x4 = this->flags_0x4 & ~(byte)(1 << (uVar11 & 0x1f));
+				this->flags_0x4 = this->flags_0x4 & ~(byte)(1 << (colIndex & 0x1f));
 			}
 			else {
-				this->flags_0x4 = this->flags_0x4 | (byte)(1 << (uVar11 & 0x1f));
+				this->flags_0x4 = this->flags_0x4 | (byte)(1 << (colIndex & 0x1f));
 
 				fVar18 = 1.0f / (float)iVar14;
 				
 				pCollisionContact->field_0x10 = pCollisionContact->field_0x10 * fVar18;
 				pCollisionContact->field_0x10.w = 1.0f;
 
-				edF32Vector4SafeNormalize1Hard(&pCollisionContact->field_0x0, &pCollisionContact->field_0x0);
+				edF32Vector4SafeNormalize1Hard(&pCollisionContact->location, &pCollisionContact->location);
 			}
 		}
 	}

@@ -685,83 +685,9 @@ CCinematic::CCinematic()
 	//this->BWCinSourceSubtitle_Obj = (BWCinSourceSubtitle*)&BWCinSourceSubtitle_VTable_0043def0;
 	//(this->cinFileData).headerPtr = (CinematicFileDataHeader*)0x0;
 	this->textData = CMessageFile();
-	(this->condArray_0x244).field_0x0 = (uint*)0x0;
+	(this->condArray_0x244).pHeader = (CND_OP_HEADER*)0x0;
 	(this->cond_0x248).field_0x0 = (char*)0x0;
 	InitInternalData();
-	return;
-}
-
-void ConditionedOperationArray::Create(ByteCode* pByteCode)
-{
-	uint* puVar1;
-	int* piVar2;
-	int iVar3;
-	uint uVar4;
-
-	puVar1 = (uint*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(puVar1 + 1);
-	this->field_0x0 = puVar1;
-	uVar4 = 0;
-	if (*this->field_0x0 != 0) {
-		do {
-			piVar2 = (int*)pByteCode->currentSeekPos;
-			pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-			iVar3 = *piVar2;
-			if (iVar3 != 0) {
-				pByteCode->currentSeekPos = pByteCode->currentSeekPos + iVar3 * 0xc;
-			}
-			piVar2 = (int*)pByteCode->currentSeekPos;
-			pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-			iVar3 = *piVar2;
-			if (iVar3 != 0) {
-				pByteCode->currentSeekPos = pByteCode->currentSeekPos + iVar3 * 0x10;
-			}
-			uVar4 = uVar4 + 1;
-		} while (uVar4 < *this->field_0x0);
-	}
-	return;
-}
-
-void ConditionedOperationArray::Perform()
-{
-	int iVar1;
-	uint* puVar2;
-	ulong uVar3;
-	uint uVar4;
-	uint* puVar5;
-	S_STREAM_SIMPLE_COND* pCond;
-	uint* puVar6;
-	uint uVar7;
-	int iVar8;
-
-	puVar2 = this->field_0x0;
-	if (puVar2 != (uint*)0x0) {
-		uVar4 = 0;
-		puVar5 = puVar2 + 1;
-		if (*puVar2 != 0) {
-			IMPLEMENTATION_GUARD(
-			do {
-				uVar3 = 1;
-				puVar2 = puVar5 + *puVar5 * 3;
-				uVar7 = puVar2[1];
-				pCond = (S_STREAM_SIMPLE_COND*)(puVar2 + 2);
-				iVar1 = uVar7 * 4;
-				for (; 0 < (int)uVar7; uVar7 = uVar7 - 1) {
-					uVar3 = ScenaricCondition::IsVerified(pCond, uVar3);
-					pCond = pCond + 1;
-				}
-				if ((uVar3 != 0) && (iVar8 = 0, puVar6 = puVar5, 0 < (int)*puVar5)) {
-					do {
-						FUN_00117510((int*)(puVar6 + 1));
-						iVar8 = iVar8 + 1;
-						puVar6 = puVar6 + 3;
-					} while (iVar8 < (int)*puVar5);
-				}
-				uVar4 = uVar4 + 1;
-				puVar5 = puVar2 + iVar1 + 2;
-			} while (uVar4 < *this->field_0x0);)
-		}
-	}
 	return;
 }
 
@@ -2046,7 +1972,7 @@ void CCinematic::ManageState_Playing()
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
+			IMPLEMENTATION_GUARD_LOG(
 			bVar2 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
 			cinematicSoundObject = &(this->cinematicLoadObject).BWCinSourceAudio_Obj;
 			if ((bVar2) && (bVar2 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0)) {
@@ -2066,8 +1992,7 @@ void CCinematic::ManageState_Playing()
 				this->totalCutsceneDelta = this->field_0x30;
 			}
 			else {
-				this->totalCutsceneDelta =
-					this->field_0x30 + (this->totalCutsceneDelta - *(float*)&((this->cinFileData).pCinTag)->field_0x4);
+				this->totalCutsceneDelta = this->field_0x30 + (this->totalCutsceneDelta - *(float*)&((this->cinFileData).pCinTag)->field_0x4);
 				if ((this->flags_0x8 & 1) != 0) {
 					bVar2 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
 					fVar9 = this->totalCutsceneDelta;
@@ -2087,7 +2012,7 @@ void CCinematic::ManageState_Playing()
 		/* Cutscene is still playing */
 		if (((((this->flags_0x4 & 2) != 0) || ((this->flags_0x8 & 0x800) != 0)) &&
 			(((this->flags_0x8 & 0x1400) != 0 || ((this->flags_0x4 & 4) == 0)))) &&
-			(((GameFlags & 0x1c) == 0 && (((uint)gPlayerInput.pressedBitfield & 0x1000000) != 0)))) {
+			(((GameFlags & 0x1c) == 0 && ((gPlayerInput.pressedBitfield & 0x1000000) != 0)))) {
 			IMPLEMENTATION_GUARD(
 			/* The tunnel cutscene doesn't ever go in here */
 			piVar1 = this->field_0x25c;
@@ -3642,8 +3567,7 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 				fVar8 = pTag->srcAnim.field_0x4;
 				peVar5->animPlayState = 0;
 				peVar5->SetRawAnim(pSrcAnimation, cVar1 != '\0', 0xfffffffe);
-				edAnmStage::ComputeAnimParams(fVar8, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, 0,
-					(uint)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+				edAnmStage::ComputeAnimParams(fVar8, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, 0, (uint)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 				(peVar5->currentAnimDesc).state.time_0x10 = local_10[0];
 				(peVar5->currentAnimDesc).state.time_0xc = local_10[1];
 			}
@@ -3661,14 +3585,10 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 				peVar5->MorphingStartDT();
 				(peVar5->currentAnimDesc).field_0x4c = 1.0f;
 				(peVar5->nextAnimDesc).field_0x4c = fVar9;
-				edAnmStage::ComputeAnimParams
-				(fVar10, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0, local_20, 0,
-					(ulong)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+				edAnmStage::ComputeAnimParams(fVar10, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_20, 0,(uint)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 				(peVar5->currentAnimDesc).state.time_0x10 = local_20[0];
 				(peVar5->currentAnimDesc).state.time_0xc = local_20[1];
-				edAnmStage::ComputeAnimParams
-				(fVar8, (peVar5->nextAnimDesc).state.keyStartTime_0x14, 0.0, local_30, 0,
-					(ulong)(((peVar5->nextAnimDesc).state.currentAnimDataFlags & 1) != 0));
+				edAnmStage::ComputeAnimParams(fVar8, (peVar5->nextAnimDesc).state.keyStartTime_0x14, 0.0f, local_30, 0, (uint)(((peVar5->nextAnimDesc).state.currentAnimDataFlags & 1) != 0));
 				(peVar5->nextAnimDesc).state.time_0x10 = local_30[0];
 				(peVar5->nextAnimDesc).state.time_0xc = local_30[1];
 			}
@@ -3813,7 +3733,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 		if (this->field_0xc <= fVar10) {
 			bVar6 = false;
 			if (((this->field_0x4 & 1U) != 0) &&
-				((0.4 <= gPlayerInput.field_0x5fc || (((uint)gPlayerInput.pressedBitfield & 0x7f0) != 0))
+				((0.4 <= gPlayerInput.field_0x5fc || ((gPlayerInput.pressedBitfield & 0x7f0) != 0))
 					)) {
 				bVar6 = true;
 			}
@@ -4041,4 +3961,22 @@ void CCinematicManagerB::Level_PreCheckpointReset()
 			ppCinematic = ppCinematic + 1;
 	}
 	return;
+}
+
+int CCinematicManager::GetNumCutscenes_001c50b0()
+{
+	return this->numCutscenes_0x8;
+}
+
+CCinematic* CCinematicManager::GetCinematic(int index)
+{
+	CCinematic* pCinematic;
+
+	if ((index < 0) || (this->numCutscenes_0x8 <= index)) {
+		pCinematic = (CCinematic*)0x0;
+	}
+	else {
+		pCinematic = this->ppCinematicObjB_A[index];
+	}
+	return pCinematic;
 }

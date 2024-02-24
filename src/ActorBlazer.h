@@ -4,18 +4,6 @@
 #include "Types.h"
 #include "Actor.h"
 
-class CVision {
-public:
-	void Create(CActor* pActor, ByteCode* pByteCode);
-};
-
-class CPathFollowReader {
-public:
-	void Create(ByteCode* pByteCode);
-
-	int field_0x0;
-};
-
 class CActorBlazer : public CActor {
 public:
 	CActorBlazer(){

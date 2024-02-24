@@ -3,15 +3,15 @@
 
 #include "Types.h"
 
-class IniFile
+class CIniFile
 {
 public:
 	bool ReadHexValueFromFile(int* outVal);
 	bool ReadInteger(int* outVal);
 
-	IniFile();
+	CIniFile();
 
-	~IniFile();
+	~CIniFile();
 
 	void Load_001ab200(const char* inName, char* inFileBufferStart, int fileSize);
 	bool ReadQuotedString(char* outValue);
@@ -28,6 +28,6 @@ private:
 	char* endSeekPosition;
 };
 
-extern IniFile g_IniFile_00450750;
+extern CIniFile g_IniFile_00450750;
 
 #endif //_INIFILE_H

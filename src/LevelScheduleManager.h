@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include "LargeObject.h"
+#include "ScenaricCondition.h"
 
 struct SaveDataSection_44484c42 {
 	int field_0x0;
@@ -589,7 +590,6 @@ struct LevelInfo {
 	SectorManagerSubObj aSectorSubObj[30];
 };
 
-typedef int SCENARIC_VARIABLE;
 class CActor;
 
 class LevelScheduleManager : public CObjectManager {
@@ -617,7 +617,10 @@ public:
 
 	static int SaveGame_GetMaxBufferSize();
 
-	static int ScenVar_Get(SCENARIC_VARIABLE param_1);
+	static int ScenVar_Get(SCENARIC_VARIABLE scenVarId);
+	static void ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue);
+
+	static void OnSceneVarSet();
 
 	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6);
 
