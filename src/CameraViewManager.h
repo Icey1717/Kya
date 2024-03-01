@@ -222,6 +222,8 @@ struct CCameraGame : public CCameraExt {
 
 	void _ResetDataForCut(int param_2);
 
+	static int _b_use_fig_data;
+
 	undefined4 field_0xc0;
 	undefined field_0xc4;
 	undefined field_0xc5;

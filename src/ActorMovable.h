@@ -37,6 +37,7 @@ public:
 	virtual void SetState(int newState, int animType);
 
 	void SV_MOV_UpdateSpeedIntensity(float param_1, float param_2);
+	void SV_MOV_DecreaseSpeedIntensity(float param_1);
 
 	void ComputeRealMoving(edF32VECTOR4* delta, float param_3);
 

@@ -9,8 +9,8 @@
 #define ROUTE_L_ANALOG_UP 0x16
 #define ROUTE_L_ANALOG_DOWN 0x17
 
-#define ROUTE_L_ANALOG_LEFT 0x15
-#define ROUTE_L_ANALOG_RIGHT 0x14
+#define ROUTE_L_ANALOG_LEFT 0x14
+#define ROUTE_L_ANALOG_RIGHT 0x15
 
 namespace Input {
 

@@ -501,13 +501,11 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		(((0.001f < fabs(translation.x) || (0.001f < fabs(translation.z))) || ((pCollision->flags_0x0 & 0x800) != 0)))) {
 		edF32Vector4ScaleHard(-1.0f, &eStack192, &this->collisionContact.location);
 		edF32Vector4AddHard(&translation, &translation, &eStack192);
+		AUTONOMOUS_LOG(LogLevel::Verbose, "Translation result: {} collision contact: {}", translation.ToString(), this->collisionContact.location.ToString());
 	}
 
 	fVar15 = pTVar5->cutsceneDeltaTime;
-	translation.x = translation.x * fVar15;
-	translation.y = translation.y * fVar15;
-	translation.z = translation.z * fVar15;
-	translation.w = translation.w * fVar15;
+	translation = translation * fVar15;
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation delta time: {}", translation.ToString());
 

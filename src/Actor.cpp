@@ -713,12 +713,12 @@ void CActor::SetState(int newState, int animType)
 	uint uVar4;
 	uint uVar5;
 
-	ACTOR_LOG(LogLevel::Info, "CActor::SetState {} state: {} anim: {} (cur bhvr: {})", this->name, newState, animType, this->curBehaviourId);
+	ACTOR_LOG(LogLevel::Info, "CActor::SetState {} state: 0x{:x} anim: 0x{:x} (cur bhvr: 0x{:x})", this->name, newState, animType, this->curBehaviourId);
 
 	pCVar3 = GetBehaviour(this->curBehaviourId);
 	if ((animType == -1) && (newState != AS_None)) {
 		pDesiredAnim = GetStateCfg(newState);
-		animType = pDesiredAnim->field_0x0;
+		animType = pDesiredAnim->animId;
 	}
 	pGVar2 = CScene::ptable.g_GlobalSoundPtr_00451698;
 	EVar1 = this->actorState;
@@ -1543,6 +1543,8 @@ void CActor::PlayAnim(int inAnimType)
 	int animType;
 	CAnimation* pAnimationController;
 
+	ACTOR_LOG(LogLevel::Info, "CActor::PlayAnim {} 0x{:x}", this->name, inAnimType);
+
 	if (inAnimType != this->currentAnimType) {
 		/* Continue playing existing animation */
 		pAnimationController = this->pAnimationController;
@@ -2155,6 +2157,8 @@ void CActor::SkipToNextActor(ByteCode* pByteCode)
 	ACTOR_LOG(LogLevel::Info, "CActor::Create SKIPPED");
 	CActor::Create(pByteCode);
 
+	ACTOR_LOG(LogLevel::Info, "CActor::Create NAME: {}", this->name);
+
 	char* pCurrent = pByteCode->currentSeekPos;
 
 	while (true) {
@@ -2621,9 +2625,9 @@ bool CActor::PlayWaitingAnimation(float param_1, float param_2, int specialAnimT
 					if (this->prevAnimType == -1) {
 						if (this->actorState != -1) {
 							pAVar3 = this->GetStateCfg(this->actorState);
-							if (pAVar3->field_0x0 != -1) {
+							if (pAVar3->animId != -1) {
 								/* Not hit when standing still */
-								PlayAnim(pAVar3->field_0x0);
+								PlayAnim(pAVar3->animId);
 							}
 						}
 					}
@@ -2721,6 +2725,15 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 	return bSuccess;
 }
 
+void CActor::SV_GetBoneDefaultWorldPosition(uint param_2, edF32VECTOR4* param_3)
+{
+	edF32MATRIX4 eStack16;
+	IMPLEMENTATION_GUARD(
+	CAnimation::GetDefaultBoneMatrix(this->pAnimationController, param_2, (long)(int)&eStack16);
+	edF32Matrix4MulF32Vector4Hard(param_3, (edF32MATRIX4*)this->pMeshTransform, (edF32VECTOR4*)&eStack16.da);)
+	return;
+}
+
 void CActor::SV_UpdatePercent(float param_1, float param_2, float* pValue)
 {
 	Timer* pTVar1;
@@ -2735,6 +2748,39 @@ void CActor::SV_UpdatePercent(float param_1, float param_2, float* pValue)
 	}
 	*pValue = param_1 * (1.0 - fVar3) + *pValue * fVar3;
 	return;
+}
+
+bool CActor::SV_UpdateValue(float target, float speed, float* pValue)
+{
+	bool bVar1;
+	Timer* pTVar2;
+	float fVar3;
+	float fVar4;
+
+	if (*pValue == target) {
+		bVar1 = false;
+	}
+	else {
+		pTVar2 = GetTimer();
+		fVar4 = *pValue;
+		fVar3 = speed * pTVar2->cutsceneDeltaTime;
+		if (fVar4 < target) {
+			fVar4 = fVar4 + fVar3;
+			*pValue = fVar4;
+			if (target < fVar4) {
+				*pValue = target;
+			}
+		}
+		else {
+			fVar4 = fVar4 - fVar3;
+			*pValue = fVar4;
+			if (fVar4 <= target) {
+				*pValue = target;
+			}
+		}
+		bVar1 = *pValue == target;
+	}
+	return bVar1;
 }
 
 void CActor::UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4)
@@ -2797,4 +2843,90 @@ CActor* CActor::GetCollidingActor()
 		pCVar1 = this->pCollisionData->actorField;
 	}
 	return pCVar1;
+}
+
+void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float param_3)
+{
+	if (param_3 == 0.0f) {
+		this->field_0xc = param_1;
+		this->field_0x14 = 0.0f;
+		this->field_0x10 = 0.0f;
+		this->field_0x8 = 0.0f;
+		this->field_0x4 = 0.0f;
+		this->field_0x18 = 0.0f;
+		this->flags = 1;
+		this->field_0x20 = param_2;
+		this->field_0x1c = 0.0f;
+		this->field_0x24 = 0.0f;
+	}
+	else {
+		this->field_0xc = param_1;
+		this->field_0x10 = 0.0f;
+		this->field_0x14 = (param_2 * param_2 - param_1 * param_1) / (param_3 * 2.0f);
+		this->field_0x20 = param_1;
+		this->field_0x24 = this->field_0x14;
+		this->flags = 0;
+		this->field_0x4 = 0.0f;
+		this->field_0x18 = 0.0f;
+		this->field_0x1c = 0.0f;
+		this->field_0x8 = (param_2 - param_1) / this->field_0x14;
+	}
+	return;
+}
+
+void CScalarDyn::Reset()
+{
+	this->field_0x24 = 0.0f;
+	this->field_0x20 = 0.0f;
+	this->field_0x1c = 0.0f;
+	this->field_0x18 = 0.0f;
+	this->field_0x14 = 0.0f;
+	this->field_0x10 = 0.0f;
+	this->field_0xc = 0.0f;
+	this->field_0x8 = 0.0f;
+	this->field_0x4 = 0.0f;
+	this->flags = 1;
+	return;
+}
+
+bool CScalarDyn::IsFinished()
+{
+	return (this->flags & 1) != 0;
+}
+
+void CScalarDyn::Integrate(float param_1, float param_2)
+{
+	float fVar1;
+	float fVar2;
+
+	if ((param_2 != 0.0f) && (param_1 != 0.0f)) {
+		if (this->flags == 0) {
+			fVar1 = this->field_0x4 + param_1;
+			if ((this->field_0x8 <= fVar1) || (fabs(fVar1 - this->field_0x8) < 1e-06f)) {
+				fVar1 = this->field_0x8;
+				this->flags = 2;
+			}
+			else {
+				this->flags = 0;
+			}
+			fVar2 = this->field_0x4;
+			this->field_0x1c = (this->field_0x10 * (fVar1 * fVar1 * fVar1 - fVar2 * fVar2 * fVar2)) / 6.0f;
+			this->field_0x1c = this->field_0x1c + (this->field_0x14 * (fVar1 * fVar1 - fVar2 * fVar2)) / 2.0f;
+			this->field_0x1c = this->field_0x1c + this->field_0xc * (fVar1 - this->field_0x4);
+		}
+		else {
+			this->flags = 1;
+		}
+		this->field_0x18 = this->field_0x18 + this->field_0x1c;
+		this->field_0x4 = this->field_0x4 + param_1;
+		fVar1 = this->field_0x1c / param_2;
+		this->field_0x20 = fVar1;
+		this->field_0x24 = fVar1 / param_2;
+	}
+	return;
+}
+
+void CScalarDyn::Integrate(float param_1)
+{
+	Integrate(param_1, param_1);
 }

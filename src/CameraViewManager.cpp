@@ -1579,7 +1579,7 @@ void CCamFigData::Create(ByteCode* pByteCode)
 	return;
 }
 
-int _b_use_fig_data;
+int CCameraGame::_b_use_fig_data = 0;
 
 void CCamConfig::ResetWithConfig()
 {
@@ -2311,22 +2311,25 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 		}
 		else {
 			if (alertType == 1) {
-				IMPLEMENTATION_GUARD(
 				EVar3 = GetMode();
 				bVar1 = true;
 				if (EVar3 == 4) {
-					if ((((param_4 != 0) && (lVar8 = (**(code**)(*(int*)param_4 + 0xc))(param_4, 0x80), lVar8 != 0)) &&
-						((*(uint*)(param_4 + 0xc) & 1) == 0)) &&
-						(((*(uint*)(param_4 + 0xd8) & 0x2000) == 0 && (*(float*)(param_4 + 0x100) == 0.25)))) {
+					CCameraGame* pGameCamera = reinterpret_cast<CCameraGame*>(param_4);
+					if ((((param_4 != 0) && (lVar8 = param_4->IsKindOfObject(0x80), lVar8 != 0)) && ((pGameCamera->flags_0xc & 1) == 0)) &&
+						((((pGameCamera->cameraConfig).flags & 0x2000) == 0 && ((pGameCamera->cameraConfig).field_0x28.x == 0.25f)
+							))) {
 						bVar1 = false;
 					}
-					if ((bVar1) && ((param_4 == 0 || (lVar8 = (**(code**)(*(int*)param_4 + 0x14))(param_4), lVar8 != 4)))) {
+
+					if ((bVar1) && ((param_4 == 0 || (lVar8 = param_4->GetMode(), lVar8 != 4)))) {
 						if (_pfig_data != (CCamFigData*)0x0) {
-							_pfig_data->IsValid(1);
+							IMPLEMENTATION_GUARD(
+							_pfig_data->IsValid(1);)
 						}
-						CameraGame::_b_use_fig_data = 0;
+
+						CCameraGame::_b_use_fig_data = 0;
 					}
-				})
+				}
 			}
 		}
 		goto LAB_002c1448;

@@ -201,19 +201,19 @@ void CPlayerInput::Init(int bInitialActive)
 	this->aAnalogSticks[0].x = 0.0f;
 	this->aAnalogSticks[0].y = 0.0f;
 	this->aAnalogSticks[0].magnitude = 0.0f;
-	this->aAnalogSticks[0].field_0xc = 0.0f;
-	this->aAnalogSticks[0].field_0x1c = 0;
+	this->aAnalogSticks[0].prevMagnitude = 0.0f;
 	this->aAnalogSticks[0].downRouteId = 0;
-	this->aAnalogSticks[0].field_0x14 = 0;
 	this->aAnalogSticks[0].upRouteId = 0;
+	this->aAnalogSticks[0].rightRouteId = 0;
+	this->aAnalogSticks[0].leftRouteId = 0;
 	this->aAnalogSticks[1].x = 0.0;
 	this->aAnalogSticks[1].y = 0.0;
 	this->aAnalogSticks[1].magnitude = 0.0f;
-	this->aAnalogSticks[1].field_0xc = 0.0f;
-	this->aAnalogSticks[1].field_0x1c = 0;
+	this->aAnalogSticks[1].prevMagnitude = 0.0f;
 	this->aAnalogSticks[1].downRouteId = 0;
-	this->aAnalogSticks[1].field_0x14 = 0;
 	this->aAnalogSticks[1].upRouteId = 0;
+	this->aAnalogSticks[1].rightRouteId = 0;
+	this->aAnalogSticks[1].leftRouteId = 0;
 	(this->lAnalogStick).x = 0.0f;
 	(this->lAnalogStick).y = 0.0f;
 	(this->lAnalogStick).z = 0.0f;
@@ -224,16 +224,16 @@ void CPlayerInput::Init(int bInitialActive)
 	}
 
 	// L
-	this->aAnalogSticks[0].upRouteId = 0;
-	this->aAnalogSticks[0].field_0x14 = 1;
-	this->aAnalogSticks[0].downRouteId = 2;
-	this->aAnalogSticks[0].field_0x1c = 3;
+	this->aAnalogSticks[0].leftRouteId = 0;
+	this->aAnalogSticks[0].rightRouteId = 1;
+	this->aAnalogSticks[0].upRouteId = 2;
+	this->aAnalogSticks[0].downRouteId = 3;
 
 	// R
-	this->aAnalogSticks[1].upRouteId = 0xc;
-	this->aAnalogSticks[1].field_0x14 = 0xd;
-	this->aAnalogSticks[1].downRouteId = 0xe;
-	this->aAnalogSticks[1].field_0x1c = 0xf;
+	this->aAnalogSticks[1].leftRouteId = 0xc;
+	this->aAnalogSticks[1].rightRouteId = 0xd;
+	this->aAnalogSticks[1].upRouteId = 0xe;
+	this->aAnalogSticks[1].downRouteId = 0xf;
 	return;
 }
 
@@ -416,7 +416,7 @@ void CPlayerInput::ComputeForce()
 		}
 		else {
 			edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
-			if (1.0 < local_10.x) {
+			if (1.0f < local_10.x) {
 				puVar3 = 1.0f;
 			}
 			else {
@@ -586,13 +586,15 @@ void CPlayerInput::UpdateOne(float delta)
 
 	pAnalog = this->aAnalogSticks;
 	for (iVar5 = 0; iVar5 < 2; iVar5 = iVar5 + 1) {
-		pAnalog->field_0xc = pAnalog->magnitude;
+		pAnalog->prevMagnitude = pAnalog->magnitude;
 
-		fVar7 = this->aButtons[pAnalog->field_0x14].analogValue;
+		fVar7 = this->aButtons[pAnalog->rightRouteId].analogValue;
 		if (0.0f < fVar7) {
+			// Right
 			pAnalog->x = fVar7;
-			fVar7 = this->aButtons[pAnalog->downRouteId].analogValue;
+			fVar7 = this->aButtons[pAnalog->upRouteId].analogValue;
 			if (0.0f < fVar7) {
+				// Right and Up
 				pAnalog->y = fVar7;
 				fVar7 = edFIntervalUnitDstLERP(sqrtf(pAnalog->x * pAnalog->x + fVar7 * fVar7), 0.4f, 0.9f);
 				fVar9 = pAnalog->y / pAnalog->x;
@@ -604,8 +606,9 @@ void CPlayerInput::UpdateOne(float delta)
 				pAnalog->magnitude = fVar7;
 			}
 			else {
-				fVar7 = this->aButtons[pAnalog->field_0x1c].analogValue;
+				fVar7 = this->aButtons[pAnalog->downRouteId].analogValue;
 				if (0.0f < fVar7) {
+					// Right and Down
 					pAnalog->y = fVar7;
 					fVar7 = edFIntervalUnitDstLERP(sqrtf(pAnalog->x * pAnalog->x + fVar7 * fVar7), 0.4f, 0.9f);
 					fVar8 = pAnalog->y / pAnalog->x;
@@ -617,6 +620,7 @@ void CPlayerInput::UpdateOne(float delta)
 					pAnalog->magnitude = fVar7;
 				}
 				else {
+					// Right only
 					pAnalog->y = 0.0f;
 					fVar7 = pAnalog->x;
 					if (0.0f < fVar7) {
@@ -632,11 +636,14 @@ void CPlayerInput::UpdateOne(float delta)
 			}
 		}
 		else {
-			fVar7 = this->aButtons[pAnalog->upRouteId].analogValue;
+			// No right input
+			fVar7 = this->aButtons[pAnalog->leftRouteId].analogValue;
 			if (0.0f < fVar7) {
+				// Left
 				pAnalog->x = fVar7;
-				if (0.0f < this->aButtons[pAnalog->downRouteId].analogValue) {
-					pAnalog->y = this->aButtons[pAnalog->downRouteId].analogValue;
+				if (0.0f < this->aButtons[pAnalog->upRouteId].analogValue) {
+					// Left and up
+					pAnalog->y = this->aButtons[pAnalog->upRouteId].analogValue;
 					fVar7 = edFIntervalUnitDstLERP(sqrtf(pAnalog->x * pAnalog->x + pAnalog->y * pAnalog->y), 0.4f, 0.9f);
 					fVar8 = pAnalog->y / pAnalog->x;
 					pAnalog->x = sqrtf((fVar7 * fVar7) / (fVar8 * fVar8 + 1.0f));
@@ -646,8 +653,9 @@ void CPlayerInput::UpdateOne(float delta)
 					pAnalog->magnitude = fVar7;
 				}
 				else {
-					if (0.0f < this->aButtons[pAnalog->field_0x1c].analogValue) {
-						pAnalog->y = this->aButtons[pAnalog->field_0x1c].analogValue;
+					if (0.0f < this->aButtons[pAnalog->downRouteId].analogValue) {
+						// Left and down
+						pAnalog->y = this->aButtons[pAnalog->downRouteId].analogValue;
 						fVar7 = edFIntervalUnitDstLERP(sqrtf(pAnalog->x * pAnalog->x + pAnalog->y * pAnalog->y), 0.4f, 0.9f);
 						fVar8 = pAnalog->y / pAnalog->x;
 						pAnalog->x = sqrtf((fVar7 * fVar7) / (fVar8 * fVar8 + 1.0f));
@@ -657,6 +665,11 @@ void CPlayerInput::UpdateOne(float delta)
 						pAnalog->magnitude = fVar7;
 					}
 					else {
+						// Left only
+
+						// BUG!?
+
+#ifdef PLATFORM_PS2
 						pAnalog->y = 0.0f;
 						fVar7 = pAnalog->x;
 						if (0.0f < fVar7) {
@@ -667,19 +680,25 @@ void CPlayerInput::UpdateOne(float delta)
 							fVar7 = edFIntervalLERP(fVar7, -0.4f, -0.9f, 0.0f, -1.0f);
 							pAnalog->x = fVar7;
 						}
+#else
+						pAnalog->x = edFIntervalLERP(fVar7, 0.4f, 0.9f, 0.0f, -1.0f);
+#endif
 						pAnalog->magnitude = fabs(pAnalog->x);
 					}
 				}
 			}
 			else {
+				// No horizontal input.
 				pAnalog->x = 0.0f;
-				fVar7 = this->aButtons[pAnalog->downRouteId].analogValue;
+				fVar7 = this->aButtons[pAnalog->upRouteId].analogValue;
 				if (0.0f < fVar7) {
+					// Up
 					fVar7 = edFIntervalUnitDstLERP(fVar7, 0.4f, 0.9f);
 					pAnalog->y = fVar7;
 				}
 				else {
-					fVar7 = this->aButtons[pAnalog->field_0x1c].analogValue;
+					// Down
+					fVar7 = this->aButtons[pAnalog->downRouteId].analogValue;
 					if (0.0f < fVar7) {
 						fVar7 = edFIntervalLERP(fVar7, 0.4f, 0.9f, 0.0f, -1.0f);
 						pAnalog->y = fVar7;
@@ -688,6 +707,7 @@ void CPlayerInput::UpdateOne(float delta)
 						pAnalog->y = 0.0f;
 					}
 				}
+
 				pAnalog->magnitude = fabs(pAnalog->y);
 			}
 		}

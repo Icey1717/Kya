@@ -42,11 +42,11 @@
 #include "ActorEventGenerator.h"
 #include "ActorWoof.h"
 
-class CActor_4e : public CActor {
+class CActorBunch : public CActor {
 	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
 };
 
-class CActor_4f : public CActor {
+class CActorBrazul : public CActor {
 	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
 };
 
@@ -214,13 +214,13 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 			*outSize = sizeof(CActorWoof);
 			return new CActorWoof[count];
 			break;
-		case ACTOR_4E:
-			*outSize = sizeof(CActor_4e);
-			return new CActor_4e[count];
+		case BUNCH:
+			*outSize = sizeof(CActorBunch);
+			return new CActorBunch[count];
 			break;
-		case ACTOR_4F:
-			*outSize = sizeof(CActor_4f);
-			return new CActor_4f[count];
+		case BRAZUL:
+			*outSize = sizeof(CActorBrazul);
+			return new CActorBrazul[count];
 			break;
 		default:
 			classId;

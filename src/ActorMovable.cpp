@@ -58,6 +58,20 @@ void CActorMovable::SV_MOV_UpdateSpeedIntensity(float param_1, float param_2)
 	return;
 }
 
+void CActorMovable::SV_MOV_DecreaseSpeedIntensity(float param_1)
+{
+	Timer* pTVar1;
+	float fVar2;
+
+	pTVar1 = GetTimer();
+	fVar2 = (this->dynamic).intensity - param_1 * pTVar1->cutsceneDeltaTime;
+	(this->dynamic).intensity = fVar2;
+	if (fVar2 < 0.0f) {
+		(this->dynamic).intensity = 0.0f;
+	}
+	return;
+}
+
 void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta, float param_3)
 {
 	Timer* pTVar1;

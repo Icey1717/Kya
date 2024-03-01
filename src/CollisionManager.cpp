@@ -1100,7 +1100,7 @@ struct ColHeapEntryB {
 	undefined4 field_0x1c;
 };
 
-uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int param_4)
+uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int param_4)
 {
 	short sVar1;
 	CCollision* pCVar2;
@@ -1109,7 +1109,6 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 	undefined* puVar5;
 	uint* puVar6;
 	edColDbObj_80* peVar7;
-	edF32VECTOR4* peVar8;
 	CActor* pReceiver;
 	uint materialIndex;
 	uint uVar10;
@@ -1190,13 +1189,13 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 
 	bVar4 = (this->flags_0x4 & 2) == 0;
 	if (bVar4) {
-		bVar4 = 0.001f <= fabs(pVector->y);
+		bVar4 = 0.001f <= fabs(pTranslation->y);
 	}
 	if (!bVar4) {
-		bVar4 = 0.001f <= fabs(pVector->x);
+		bVar4 = 0.001f <= fabs(pTranslation->x);
 	}
 	if (!bVar4) {
-		bVar4 = 0.001f <= fabs(pVector->z);
+		bVar4 = 0.001f <= fabs(pTranslation->z);
 	}
 
 	pColDbObj = (gColData.pActiveDatabase)->field_0x10;
@@ -1231,6 +1230,9 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 				}
 				iVar14 = 1;)
 			}
+
+			COLLISION_LOG(LogLevel::Verbose, "Quad flags: 0x{:x} - {} Obb prim flags: 0x{:x} - {}", quadFlags, (quadFlags & 0x200) != 0, this->pObbPrim->flags_0x80, (this->pObbPrim->flags_0x80 & 0x200) != 0);
+
 			if ((((quadFlags & 0x200) != 0) && (this->pObbPrim != (edColPRIM_OBJECT*)0x0)) &&
 				((this->pObbPrim->flags_0x80 & 0x200) != 0)) {
 				if (bVar4) {
@@ -1392,26 +1394,27 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 		if (0 < iVar14) {
 			if (((this->flags_0x0 & 0x20) != 0) && (iVar15 = 0, (this->flags_0x4 & 2) != 0)) {
 				for (; iVar15 < 2; iVar15 = iVar15 + 1) {
-					IMPLEMENTATION_GUARD_LOG(
-					local_d0[iVar15 * 0x18 + 1] = 0.0;
-					local_c0[iVar15 * 0x18 + 0xd] = 0;)
+					//COLLISION_LOG(LogLevel::Verbose, "0: {}", stack0xfffffdb0[iVar15][0].field_0x0.ToString());
+					//COLLISION_LOG(LogLevel::Verbose, "1: {}", stack0xfffffdb0[iVar15][1].field_0x0.ToString());
+					//COLLISION_LOG(LogLevel::Verbose, "2: {}", stack0xfffffdb0[iVar15][2].field_0x0.ToString());
+					stack0xfffffdb0[iVar15][0].field_0x0.y = 0.0f;
+					stack0xfffffdb0[iVar15][2].field_0x0.y = 0.0f;
 				}
 			}
 
 			for (iVar15 = 0; iVar15 < 2; iVar15 = iVar15 + 1) {
-				peVar8 = local_120 + iVar15;
-				*peVar8 = gF32Vector4Zero;
+				local_120[iVar15] = gF32Vector4Zero;
 
 				for (iVar12 = 0; iVar12 < 3; iVar12 = iVar12 + 1) {
 
 					ColHeapEntryB* pEntry = &stack0xfffffdb0[iVar15][iVar12];
-					pEntry->field_0x0 = pEntry->field_0x0 + *peVar8;
+					local_120[iVar15] = pEntry->field_0x0 + local_120[iVar15];
 				}
 			}
 
 			if (iVar16 != 0) {
 				edF32VECTOR4 local_130;
-				edF32Vector4SafeNormalize0Hard(&local_130, peVar8);
+				edF32Vector4SafeNormalize0Hard(&local_130, &local_120[iVar15]);
 				fVar18 = local_130.x * local_120[1].x + local_130.y * local_120[1].y + local_130.z * local_120[1].z;
 
 				if (fVar18 < 0.0f) {
@@ -1437,12 +1440,12 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 
 		if (1e-12f <= local_e0.x * local_e0.x + local_e0.y * local_e0.y + local_e0.z * local_e0.z) {
 			if ((this->flags_0x0 & 0x40) == 0) {
-				*pVector = *pVector + local_e0;
+				*pTranslation = *pTranslation + local_e0;
 			}
 			else {
-				edF32Vector4SafeNormalize0Hard(&local_150, pVector);
-				fVar18 = (pVector->x + local_e0.x) * local_150.x + (pVector->y + local_e0.y) * local_150.y + (pVector->z + local_e0.z) * local_150.z;
-				*pVector = local_150 * fVar18;
+				edF32Vector4SafeNormalize0Hard(&local_150, pTranslation);
+				fVar18 = (pTranslation->x + local_e0.x) * local_150.x + (pTranslation->y + local_e0.y) * local_150.y + (pTranslation->z + local_e0.z) * local_150.z;
+				*pTranslation = local_150 * fVar18;
 			}
 
 			local_1a0 = 1;
@@ -1452,7 +1455,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pVector, int para
 	return local_1a0;
 }
 
-uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32MATRIX4* param_4, edF32VECTOR4* v0,	CActorsTable* param_6, CActor** param_7, int param_8)
+uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32MATRIX4* param_4, edF32VECTOR4* pTranslation,	CActorsTable* param_6, CActor** param_7, int param_8)
 {
 	int iVar1;
 	uint uVar2;
@@ -1495,7 +1498,7 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 		this->flags_0x4 = this->flags_0x4 & 0xf8;
 	}
 	else {
-		uVar2 = ResolveContacts(pActor, v0, param_8);
+		uVar2 = ResolveContacts(pActor, pTranslation, param_8);
 	}
 	return uVar2;
 }
@@ -1505,7 +1508,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	int* piVar1;
 	bool bVar2;
 	uint uVar3;
-	int iVar4;
+	int stepCount;
 	uint uVar5;
 	long lVar6;
 	uint matrixType;
@@ -1515,14 +1518,16 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	float fVar10;
 	float fVar11;
 	float fVar12;
-	edF32VECTOR4 local_190;
-	edF32VECTOR4 local_180;
-	edF32VECTOR4 local_170;
-	edF32VECTOR4 local_160;
+	edF32VECTOR4 currentTranslation;
+	edF32VECTOR4 resultPosition;
+	edF32VECTOR4 subdividedTranslation;
+	edF32VECTOR4 baseTranslation;
 	edF32MATRIX4 local_150;
 	CActorsTable local_110;
 	undefined4 local_8;
 	CActor* local_4;
+
+	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix {}", pActor->name);
 
 	local_110.entryCount = 0;
 	uVar3 = this->flags_0x0 & 0x480;
@@ -1547,7 +1552,9 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 			})
 		}
 	}
-	edF32Vector4SubHard(&local_160, &pMatrix->rowT, &(this->transformMatrix).rowT);
+	edF32Vector4SubHard(&baseTranslation, &pMatrix->rowT, &(this->transformMatrix).rowT);
+
+	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {}", baseTranslation.ToString());
 
 	local_150 = gF32Matrix4Unit;
 
@@ -1555,22 +1562,29 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	if ((this->flags_0x0 & 4) == 0) {
 		uVar9 = 0;
 		if ((this->pObbPrim == (edColPRIM_OBJECT*)0x0) || ((this->flags_0x0 & 0x10000) == 0)) {
-			iVar4 = 1;
+			stepCount = 1;
 		}
 		else {
 			IMPLEMENTATION_GUARD(
-			iVar4 = GetPrimNumDeltaSubdivisions(this->pObbPrim, this->primType, &local_160);)
+			stepCount = GetPrimNumDeltaSubdivisions(this->pObbPrim, this->primType, &baseTranslation);)
 		}
-		if (0x14 < iVar4) {
-			iVar4 = 0x14;
+		if (0x14 < stepCount) {
+			stepCount = 0x14;
 		}
-		float fStack356 = 1.0f / (float)iVar4;
-		local_170 = local_160 * fStack356;
-		local_180 = (this->transformMatrix).rowT;
+		float stepMultiplier = 1.0f / (float)stepCount;
+		subdividedTranslation = baseTranslation * stepMultiplier;
 
-		for (; iVar4 != 0; iVar4 = iVar4 + -1) {
-			local_190 = local_170;
-			pMatrix->rowT = local_180 + local_170;
+		resultPosition = (this->transformMatrix).rowT;
+
+		COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {} Original position: {} Step count: {}", 
+			baseTranslation.ToString(), resultPosition.ToString(), stepCount);
+
+		for (; stepCount != 0; stepCount = stepCount + -1) {
+			currentTranslation = subdividedTranslation;
+			pMatrix->rowT = resultPosition + subdividedTranslation;
+
+			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Current translation: {} New position: {} Step count: {}",
+				currentTranslation.ToString(), pMatrix->rowT.ToString(), stepCount);
 
 			if (bVar2) {
 				edF32Matrix4GetInverseOrthoHard(&local_150, pMatrix);
@@ -1579,9 +1593,9 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 			}
 			else {
 				local_150.dd = pMatrix->dd;
-				local_150.da = 0.0 - pMatrix->da;
-				local_150.db = 0.0 - pMatrix->db;
-				local_150.dc = 0.0 - pMatrix->dc;
+				local_150.da = 0.0f - pMatrix->da;
+				local_150.db = 0.0f - pMatrix->db;
+				local_150.dc = 0.0f - pMatrix->dc;
 				if ((this->flags_0x4 & 0x10) == 0) {
 					SetObbTreeMatrixNoRotationRecurse(this->pObbTree, pMatrix, &local_150);
 					this->flags_0x4 = this->flags_0x4 | 0x10;
@@ -1593,12 +1607,17 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 			if (0 < this->pDynCol->vertexCount) {
 				TransformG3DObbTreeVertices(this->pDynCol, matrixType, pMatrix);
 			}
-			uVar5 = CheckCollisions_OBBTree(pActor, pMatrix, &local_150, &local_190, pActorsTable, &local_4, param_6);
+			uVar5 = CheckCollisions_OBBTree(pActor, pMatrix, &local_150, &currentTranslation, pActorsTable, &local_4, param_6);
 			uVar9 = uVar9 | uVar5;
-			local_180 = local_180 + local_190;
+
+			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Out translation: {} - flag: {}", currentTranslation.ToString(), uVar9);
+
+			resultPosition = resultPosition + currentTranslation;
 		}
 
-		pMatrix->rowT = local_180;
+		pMatrix->rowT = resultPosition;
+
+		COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Final position: {}", pMatrix->rowT.ToString());
 
 		if (uVar9 != 0) {
 			if (bVar2) {
@@ -1628,8 +1647,8 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	}
 	else {
 		IMPLEMENTATION_GUARD(
-		CheckCollisions_RayIntersect(pActor, &(this->transformMatrix).rowT, &local_160, pActorsTable, param_6);)
-		pMatrix->rowT = (this->transformMatrix).rowT + local_160;
+		CheckCollisions_RayIntersect(pActor, &(this->transformMatrix).rowT, &baseTranslation, pActorsTable, param_6);)
+		pMatrix->rowT = (this->transformMatrix).rowT + baseTranslation;
 
 		if (bVar2) {
 			edF32Matrix4GetInverseOrthoHard(&local_150, pMatrix);

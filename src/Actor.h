@@ -157,15 +157,35 @@ struct ByteCode;
 struct AnimResult {
 	AnimResult() {}
 
-	AnimResult(int inA, uint inB) : field_0x0(inA), flags_0x4(inB) {}
+	AnimResult(int inA, uint inB) : animId(inA), flags_0x4(inB) {}
 
-	int field_0x0;
+	int animId;
 	uint flags_0x4;
 };
 
 struct MeshTextureHash {
 	ulong meshHash;
 	ulong textureHash;
+};
+
+class CScalarDyn {
+public:
+	void BuildFromSpeedDist(float param_1, float param_2, float param_3);
+	void Reset();
+	bool IsFinished();
+	void Integrate(float param_1);
+	void Integrate(float param_1, float param_2);
+
+	uint flags;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+	float field_0x20;
+	float field_0x24;
 };
 
 class CActor : public CObject {
@@ -335,8 +355,12 @@ public:
 	bool ColWithAToboggan();
 
 	bool PlayWaitingAnimation(float param_1, float param_2, int specialAnimType, int regularAnimType, byte idleLoopsToPlay);
+
+	void SV_GetBoneDefaultWorldPosition(uint param_2, edF32VECTOR4* param_3);
 	bool SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, int mode);
 	void SV_UpdatePercent(float param_1, float param_2, float* pValue);
+	bool CActor::SV_UpdateValue(float target, float speed, float* pValue);
+
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();
 };

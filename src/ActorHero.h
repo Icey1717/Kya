@@ -7,6 +7,12 @@
 
 #define STATE_HERO_STAND 0x73
 #define STATE_HERO_RUN 0x76
+#define STATE_HERO_JUMP_1_1_STAND 0x78
+#define STATE_HERO_JUMP_2_3_STAND 0x79
+#define STATE_HERO_JUMP_3_3_STAND 0x7a
+#define STATE_HERO_SLIDE_SLIP_A 0xe1
+#define STATE_HERO_SLIDE_SLIP_B 0xe2
+#define STATE_HERO_SLIDE_SLIP_C 0xe3
 
 struct CPlayerInput;
 class CActorBoomy;
@@ -20,7 +26,7 @@ struct AnimResultHero : public AnimResult {
 	uint heroFlags;
 };
 
-#define HERO_STATE_COUNT 5
+#define HERO_STATE_COUNT 200
 #define HERO_BHVR_COUNT 14
 
 #define ACTOR_HERO_LOG(level, format, ...) MY_LOG_CATEGORY("ActorHero", level, format, ##__VA_ARGS__)

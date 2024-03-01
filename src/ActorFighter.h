@@ -15,14 +15,21 @@ public:
 
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual void Create(ByteCode* pByteCode);
 
 	// CActorAutonomous
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 
 	virtual bool IsFightRelated(int param_2);
 
+	void ClearLocalData();
+
 	edF32VECTOR4 field_0x400;
 	edF32VECTOR4 field_0x410;
+
+	CScalarDyn field_0x37c;
+	CScalarDyn field_0x3a4;
+	CScalarDyn scalarDynJump;
 };
 
 class CBehaviourFighter : public CBehaviour

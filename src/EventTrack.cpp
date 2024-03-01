@@ -223,7 +223,7 @@ void CEventTrack::Play(float param_1, float param_2, undefined8 param_4, CActor*
 			if ((((param_2 <= fVar2) && (fVar2 < param_1)) ||
 				((param_1 < param_2 && ((param_2 <= fVar2 || (fVar2 < param_1)))))) ||
 				((param_2 == param_1 && (fVar2 == param_1)))) {
-				IMPLEMENTATION_GUARD(
+				IMPLEMENTATION_GUARD_LOG(
 				_PlayEvent(this, pEvent, pActor);)
 			}
 			uVar1 = uVar1 + 1;

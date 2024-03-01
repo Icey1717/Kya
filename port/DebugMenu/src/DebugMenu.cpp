@@ -32,6 +32,11 @@
 
 #include "input_functions.h"
 
+#include <fstream>
+#include <iostream>
+#include "InputManager.h"
+
+
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
 extern bool bOther;
@@ -225,11 +230,29 @@ ImGui::End();
 
 	char* GetStateName(int state) {
 		switch (state) {
-		case 0x73:
+		case STATE_HERO_STAND:
 			return "StateHeroStand";
 			break;
-		case 0x76:
+		case STATE_HERO_JUMP_1_1_STAND:
+			return "StateHeroJump_1_1_Stand";
+			break;
+		case STATE_HERO_JUMP_2_3_STAND:
+			return "StateHeroJump_2_3_Stand";
+			break;
+		case STATE_HERO_JUMP_3_3_STAND:
+			return "StateHeroJump_3_3_Stand";
+			break;
+		case STATE_HERO_RUN:
 			return "StateHeroRun";
+			break;
+		case STATE_HERO_SLIDE_SLIP_A:
+			return "StateHeroSlideSlipA";
+			break;
+		case STATE_HERO_SLIDE_SLIP_B:
+			return "StateHeroSlideSlipB";
+			break;
+		case STATE_HERO_SLIDE_SLIP_C:
+			return "StateHeroSlideSlipC";
 			break;
 		case 0x3:
 			return "Cinematic";
@@ -244,13 +267,21 @@ ImGui::End();
 		// Create a new ImGui window
 		ImGui::Begin("Hero", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
-		CActorHero* pActorHero = CActorHeroPrivate::_gThis;
+		CActorHeroPrivate* pActorHero = reinterpret_cast<CActorHeroPrivate*>(CActorHeroPrivate::_gThis);
 
 		if (pActorHero) {
 			ImGui::Text("State: %s", GetStateName(pActorHero->actorState));
 
 			DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->currentLocation);
 			DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->rotationQuat);
+			ImGui::InputFloat("Effort", &pActorHero->effort);
+
+			ImGui::Spacing();
+
+			DebugHelpers::ImGui::TextVector4("Control Direction", pActorHero->controlDirection);
+			ImGui::Text("Facing control direction: %d", pActorHero->bFacingControlDirection);
+
+			ImGui::Spacing();
 
 			if (ImGui::CollapsingHeader("Dynamic", ImGuiTreeNodeFlags_DefaultOpen)) {
 				DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->dynamic.rotationQuat);
@@ -267,12 +298,16 @@ ImGui::End();
 				ImGui::InputFloat("field_0x58", &pActorHero->dynamic.field_0x58);
 			}
 
+			ImGui::Spacing();
+
 			if (ImGui::CollapsingHeader("DynamicExt", ImGuiTreeNodeFlags_DefaultOpen)) {
 				DebugHelpers::ImGui::TextVector4("Gravity", pActorHero->dynamicExt.gForceGravity);
 				DebugHelpers::ImGui::TextVector4("Translation", pActorHero->dynamicExt.normalizedTranslation);
 
 				ImGui::InputFloat("Gravity Scale", &pActorHero->dynamicExt.gravityScale);
 			}
+
+			ImGui::Spacing();
 
 			if (ImGui::CollapsingHeader("Collision", ImGuiTreeNodeFlags_DefaultOpen)) {
 				ImGui::Text("Flags 0: %x", pActorHero->pCollisionData->flags_0x0);
@@ -281,6 +316,12 @@ ImGui::End();
 				if (ImGui::CollapsingHeader("Flags", ImGuiTreeNodeFlags_DefaultOpen)) {
 					ImGui::Text("On Plane: %d", pActorHero->pCollisionData->flags_0x4 & 1);
 				}
+			}
+
+			ImGui::Spacing();
+
+			if (ImGui::CollapsingHeader("Input", ImGuiTreeNodeFlags_DefaultOpen)) {
+				DebugHelpers::ImGui::TextVector4("Left Analog Stick", pActorHero->pPlayerInput->lAnalogStick);
 			}
 		}
 
@@ -516,63 +557,134 @@ ImGui::End();
 		ImGui::End();
 	}
 
-	void ShowLogWindow(bool* bOpen)
+	// Structure to hold category and its enabled status
+	struct CategoryEntry {
+		std::string name;
+		bool enabled;
+	};
+
+	// Function to add a new category to the configuration file
+	static void AddCategoryToConfigFile(const std::string& category, bool enabled) 
 	{
-		//const auto& logMessages = Log::GetInstance().GetLogMessages();
-		//auto& verboseLevels = Log::GetInstance().GetLogVerboseLevels();
-		//
-		//ImGui::Begin("Log Window", &bShowLogWindow);
-		//
-		//// Checkbox controls for verbose levels
-		//for (int level = static_cast<int>(LogLevel::VeryVerbose); level < static_cast<int>(LogLevel::Max); ++level)
-		//{
-		//	LogLevel logLevel = static_cast<LogLevel>(level);
-		//	ImGui::Checkbox(LogLevelToString(logLevel).c_str(), &verboseLevels[logLevel]);
-		//
-		//	if (level != static_cast<int>(LogLevel::Max) - 1) {
-		//		ImGui::SameLine();
-		//	}
-		//}
-		//
-		//int usage = 0;
-		//for (const auto& log : logMessages)
-		//{
-		//	//usage += log.second.capacity() + log.category.capacity();
-		//}
-		//
-		//ImGui::SameLine();
-		//ImGui::Text("Usage: %dmb", usage / 1024 / 1024);
-		//
-		//// Begin tab bar
-		//if (ImGui::BeginTabBar("LogTabs"))
-		//{
-		//	// Loop through log categories
-		//	for (auto& message : logMessages)
-		//	{
-		//		// Begin tab item for the category
-		//		if (ImGui::BeginTabItem(message.first.c_str()))
-		//		{
-		//			ImGui::BeginChild(message.first.c_str(), ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-		//
-		//			// Display log messages for the current category
-		//			for (const auto& log : message.second)
-		//			{
-		//				// Display log message if it belongs to the current category
-		//				if (verboseLevels[log.level])
-		//				{
-		//					ImGui::TextWrapped("%s", log.message.c_str());
-		//				}
-		//			}
-		//
-		//			ImGui::EndChild();
-		//			ImGui::EndTabItem();
-		//		}
-		//	}
-		//
-		//	ImGui::EndTabBar();
-		//}
-		//
-		//ImGui::End();
+		std::ofstream outFile("category_config.txt", std::ios::app); // Open file in append mode
+
+		if (!outFile.is_open()) {
+			// Handle error: unable to open file
+			std::cerr << "Error: Unable to open config file for writing." << std::endl;
+
+			// Attempt to create the file
+			std::ofstream createFile("category_config.txt");
+			if (!createFile.is_open()) {
+				// Handle error: unable to create file
+				std::cerr << "Error: Unable to create config file." << std::endl;
+				return;
+			}
+			createFile.close();
+
+			// Retry opening the file
+			outFile.open("category_config.txt", std::ios::app);
+			if (!outFile.is_open()) {
+				// Handle error: unable to open file even after creation
+				std::cerr << "Error: Unable to open config file for writing." << std::endl;
+				return;
+			}
+		}
+
+		// Write the new category and its enabled status to the file
+		outFile << category << " " << std::boolalpha << enabled << std::endl;
+
+		// Close the file
+		outFile.close();
+	}
+
+	// Function to update an existing entry in the configuration file
+	static void UpdateCategoryInConfigFile(const std::string& category, bool enabled) 
+	{
+		std::ifstream inFile("category_config.txt");
+		if (!inFile.is_open()) {
+			// Handle error: unable to open file
+			std::cerr << "Error: Config file not found. Creating a new one." << std::endl;
+
+			// Attempt to create the file
+			std::ofstream createFile("category_config.txt");
+			if (!createFile.is_open()) {
+				// Handle error: unable to create file
+				std::cerr << "Error: Unable to create config file." << std::endl;
+				return;
+			}
+			createFile.close();
+
+			// Retry opening the file
+			inFile.open("category_config.txt");
+			if (!inFile.is_open()) {
+				// Handle error: unable to open file even after creation
+				std::cerr << "Error: Unable to open config file for reading." << std::endl;
+				return;
+			}
+		}
+
+		bool bFound = false;
+
+		// Read the existing entries from the file into a vector of CategoryEntry
+		std::vector<CategoryEntry> entries;
+		std::string line;
+		while (std::getline(inFile, line)) {
+			std::istringstream iss(line);
+			std::string categoryName;
+			bool categoryEnabled;
+			if (iss >> categoryName >> std::boolalpha >> categoryEnabled) {
+				if (categoryName == category) {
+					// Update the enabled status for the specified category
+					bFound = true;
+					categoryEnabled = enabled;
+				}
+				entries.push_back({ categoryName, categoryEnabled });
+			}
+		}
+		inFile.close();
+
+		if (!bFound) {
+			// Add the new category to the file
+			AddCategoryToConfigFile(category, enabled);
+			return;
+		}
+
+		// Write the updated entries back to the file
+		std::ofstream outFile("category_config.txt");
+		if (!outFile.is_open()) {
+			// Handle error: unable to open file
+			std::cerr << "Error: Unable to open config file for writing." << std::endl;
+			return;
+		}
+
+		for (const auto& entry : entries) {
+			outFile << entry.name << " " << std::boolalpha << entry.enabled << std::endl;
+		}
+		outFile.close();
+	}
+
+	void ShowLogWindow(bool* bOpen)
+	{		
+		ImGui::Begin("Log Window", bOpen);
+		
+		// Checkbox controls for verbose levels
+		for (int level = static_cast<int>(LogLevel::VeryVerbose); level < static_cast<int>(LogLevel::Max); ++level)
+		{
+			// change this code to use a drop down list.
+			LogLevel logLevel = static_cast<LogLevel>(level);
+			if (ImGui::Selectable(LogLevelToString(logLevel).c_str())) {
+
+			}
+		}
+
+		for (auto& [category, log] : Log::GetInstance().GetLogs())
+		{
+			if (ImGui::Checkbox(category.c_str(), &log.bEnabled)) {
+				UpdateCategoryInConfigFile(category, log.bEnabled);
+			}
+		}
+		
+		ImGui::End();
 	}
 
 	void ShowMaterialList(bool* bOpen) {

@@ -31,11 +31,11 @@ struct AnalogStickData {
 	float x;
 	float y;
 	float magnitude;
-	float field_0xc;
+	float prevMagnitude;
+	int leftRouteId;
+	int rightRouteId;
 	int upRouteId;
-	int field_0x14;
 	int downRouteId;
-	uint field_0x1c;
 };
 
 class CIniFile;

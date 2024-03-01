@@ -1207,8 +1207,8 @@ float edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 		*v0 = gF32Vector4Zero;
 	}
 	else {
-		v1Magnitude = 1.0f / v1Magnitude;
-		*v0 = *v1 * v1Magnitude;
+		const float invMagnitude = 1.0f / v1Magnitude;
+		*v0 = *v1 * invMagnitude;
 	}
 	return v1Magnitude;
 }

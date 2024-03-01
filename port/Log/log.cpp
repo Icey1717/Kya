@@ -3,6 +3,8 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/include/spdlog/sinks/stdout_color_sinks.h"
 
+#include <fstream>
+
 static const std::string gLogPath = "logs/";
 //constexpr spdlog::level::level_enum gLogLevel = spdlog::level::trace;
 constexpr spdlog::level::level_enum gLogLevel = spdlog::level::trace;
@@ -21,7 +23,7 @@ void Log::ForceFlush()
 	asyncLog->flush();
 
 	for (auto& [cat, log] : logs) {
-		log->flush();
+		log.logPtr->flush();
 	}
 }
 
@@ -36,4 +38,37 @@ LogPtr Log::CreateLog(const std::string& category)
 Log::Log()
 {
 	InitLog(asyncLog);
+}
+
+static bool LoadCategoryEnabledStatusFromDisk(const std::string& category) {
+	// Assume the category enabled status is stored in a file named "category_config.txt"
+	// Format of the file: <category_name> <enabled_status>
+	// Example: "category1 true"
+
+	std::ifstream configFile("category_config.txt");
+	if (!configFile.is_open()) {
+		// Handle error: unable to open file
+		return true;
+	}
+
+	std::string categoryName;
+	bool enabledStatus;
+
+	while (configFile >> categoryName >> std::boolalpha >> enabledStatus) {
+		if (categoryName == category) {
+			configFile.close();
+			return enabledStatus;
+		}
+	}
+
+	// If the category is not found in the config file, assume it is enabled by default
+	configFile.close();
+	return true;
+}
+
+LogEntry::LogEntry(std::string category)
+{
+	bEnabled = LoadCategoryEnabledStatusFromDisk(category);
+
+	logPtr = Log::CreateLog(category);
 }

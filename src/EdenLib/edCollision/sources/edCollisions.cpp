@@ -1122,6 +1122,7 @@ void edColIntersectSphereQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_QUAD
 		}
 		iVar5 = iVar5 + 1;
 	} while (iVar5 < 2);
+
 	pColInfoOut->result = uVar4;
 	return;
 }

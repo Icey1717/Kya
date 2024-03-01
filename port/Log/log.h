@@ -7,7 +7,15 @@
 
 using LogPtr = std::shared_ptr<spdlog::logger>;
 
-using LogMap = std::vector<std::pair<std::string, LogPtr>>;
+struct LogEntry
+{
+	LogEntry(std::string category);
+
+	LogPtr logPtr;
+	bool bEnabled = true;
+};
+
+using LogMap = std::unordered_map<std::string, LogEntry>;
 
 enum class LogLevel
 {
@@ -69,29 +77,33 @@ public:
 	static LogPtr asyncLog;
 	LogMap logs;
 
-	//void AddLog(LogLevel level, const std::string& category, const char* format, ...);
-
 	template <typename... Args>
 	void AddLog(const LogLevel level, const std::string& category, const char* format, Args &&...args) {
-		//if (category == "ed3D") {
-		//	return;
-		//}
+		
+		// Find the log for the specified category.
+		auto pLog = logs.find(category);
 
-		asyncLog->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
-
-		for (auto& [cat, log] : logs) {
-			if (cat == category) {
-				log->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
-				return;
-			}
+		// Create the log if it does not exist.
+		if (pLog == logs.end()) {
+			logs.emplace(category, category);
+			pLog = logs.find(category);
 		}
 
-		logs.emplace_back(category, CreateLog(category)).second->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
+		// Early exit if the log is not enabled.
+		if (!pLog->second.bEnabled) {
+			return;
+		}
+
+		// Log to async log and the specified log.
+		asyncLog->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
+		pLog->second.logPtr->log(LogLevelToSpdLog(level), format, std::forward<Args>(args)...);
 	}
+
+	inline LogMap& GetLogs() { return logs; }
 
 	void ForceFlush();
 
-	LogPtr CreateLog(const std::string& category);
+	static LogPtr CreateLog(const std::string& category);
 
 
 private:
