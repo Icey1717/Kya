@@ -731,6 +731,43 @@ void CPlayerInput::UpdateOne(float delta)
 	return;
 }
 
+void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
+{
+	float fVar1;
+	//InputEventData local_4;
+
+	if ((((this->field_0x14 != 0) && (this->bDisconnected == 0)) && (this->portIndex != 0xffffffff)) &&
+		((this->field_0x38 != 0 || (this->field_0x5c != 0)))) {
+		IMPLEMENTATION_GUARD(
+		if (this->field_0x38 == 0) {
+			local_4.field_0x0 = 0;
+		}
+		else {
+			fVar1 = param_1 * 255.0;
+			if (fVar1 < 2.147484e+09) {
+				local_4.field_0x0 = (byte)(int)fVar1;
+			}
+			else {
+				local_4.field_0x0 = (byte)(int)(fVar1 - 2.147484e+09);
+			}
+		}
+		if (this->field_0x5c == 0) {
+			local_4.field_0x1 = 0;
+		}
+		else {
+			fVar1 = param_2 * 255.0;
+			if (fVar1 < 2.147484e+09) {
+				local_4.field_0x1 = (byte)(int)fVar1;
+			}
+			else {
+				local_4.field_0x1 = (byte)(int)(fVar1 - 2.147484e+09);
+			}
+		}
+		InputFunc_00399ab0(this->portIndex, &local_4);)
+	}
+	return;
+}
+
 void CPlayerInput::ReadConfig(CIniFile* pIniFile)
 {
 	int iVar1;

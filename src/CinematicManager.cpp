@@ -142,7 +142,7 @@ void CCinematicManager::LevelLoading_Begin()
 		pCamera->field_0x8c = 0.0f;
 		pCamera->switchMode = SWITCH_MODE_B;
 		pCamera->field_0x98 = 0.0f;
-		pCamera->field_0x94 = 1;
+		pCamera->field_0x94 = SWITCH_MODE_B;
 		pCamera->field_0x9c = 0.0f;
 		IMPLEMENTATION_GUARD();
 		//pCameraManager->PushCamera((Camera*)this->pCameraLocationObj, 1);
@@ -769,11 +769,11 @@ void CCinematic::Create(ByteCode* pByteCode)
 	fVar13 = pByteCode->GetF32();
 	this->field_0x58 = fVar13;
 	iVar7 = pByteCode->GetS32();
-	this->field_0x5c = iVar7;
+	this->field_0x5c = (SWITCH_MODE)iVar7;
 	fVar13 = pByteCode->GetF32();
 	this->field_0x60 = fVar13;
 	iVar7 = pByteCode->GetS32();
-	this->field_0x64 = iVar7;
+	this->field_0x64 = (SWITCH_MODE)iVar7;
 	fVar13 = pByteCode->GetF32();
 	this->field_0x68 = fVar13;
 
@@ -3248,7 +3248,7 @@ bool CBWCinCam::Activate()
 {
 	CCinematic* pCVar1;
 	CCameraCinematic* pCVar2;
-	int iVar3;
+	SWITCH_MODE iVar3;
 	SWITCH_MODE SVar4;
 	float fVar5;
 	float fVar6;
@@ -3258,7 +3258,7 @@ bool CBWCinCam::Activate()
 	if (((pCVar1->flags_0x4 & 0x800) == 0) && ((pCVar1->flags_0x8 & 0x800) == 0)) {
 		iVar3 = pCVar1->field_0x64;
 		fVar5 = pCVar1->field_0x68;
-		SVar4 = (SWITCH_MODE)pCVar1->field_0x5c;
+		SVar4 = pCVar1->field_0x5c;
 		fVar6 = pCVar1->field_0x60;
 		(pCVar2)->field_0x8c = pCVar1->field_0x58;
 		(pCVar2)->switchMode = SVar4;

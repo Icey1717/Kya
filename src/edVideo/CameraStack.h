@@ -3,15 +3,6 @@
 
 #include "Types.h"
 
-typedef enum SWITCH_MODE {
-	SWITCH_MODE_A = 0,
-	SWITCH_MODE_B = 1,
-	SWITCH_MODE_C = 2,
-	SWITCH_MODE_D = 3,
-	SWITCH_MODE_E = 4,
-	SWITCH_MODE_F = 5
-} SWITCH_MODE;
-
 struct CameraStackEntry {
 	uint field_0x0;
 	struct CCamera* pCamera;
@@ -20,7 +11,7 @@ struct CameraStackEntry {
 struct CCameraStack {
 	CCamera* FindActivableCameraInStack(uint param_2);
 	bool FindCameraState();
-	int GetCurHeroState(void);
+	static int GetCurHeroState(void);
 	bool Contains(CCamera* pCamera);
 	bool Pop(CCamera* pCamera);
 	bool Push(CCamera* pCamera, int param_3);

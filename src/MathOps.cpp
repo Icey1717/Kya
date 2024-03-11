@@ -10,6 +10,7 @@ edF32MATRIX4 gF32Matrix4Unit = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 edF32VECTOR4 gF32Vertex4Zero = { 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vector4Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
 edF32VECTOR4 gF32Vector4UnitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
+edF32VECTOR4 g_xVector = { 0.0f, 1.0f, 0.0f, 0.0f };
 
 #define M_PI_2f 1.5707963f
 #define M_PIf 3.14159265f
@@ -547,9 +548,9 @@ void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler)
 	}
 	else {
 		fVar1 = rotEuler->y;
-		rotQuat->x = cosf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS((fVar1 - 1.570796) * 1303.797) + 0.5) & 0x1fff];
+		rotQuat->x = sinf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS((fVar1 - 1.570796) * 1303.797) + 0.5) & 0x1fff];
 		rotQuat->y = 0.0f;
-		rotQuat->z = sinf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS(fVar1 * 1303.797) + 0.5) & 0x1fff];
+		rotQuat->z = cosf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS(fVar1 * 1303.797) + 0.5) & 0x1fff];
 		rotQuat->w = 0.0f;
 	}
 	return;
@@ -605,7 +606,7 @@ edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char
 	float fVar9;
 	float fVar10;
 	float fVar11;
-	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_20 = {};
 	int firstOrderIndex;
 	int secondOrderIndex;
 	int thirdOrderIndex;
@@ -895,26 +896,26 @@ float edFIntervalDotSrcLERP(float param_1, float param_2, float param_3)
 	return fVar1;
 }
 
-float edFIntervalLERP(float param_1, float param_2, float param_3, float param_4, float param_5)
+float edFIntervalLERP(float alpha, float param_2, float param_3, float param_4, float param_5)
 {
 	if (param_2 < param_3) {
-		if (param_1 <= param_2) {
+		if (alpha <= param_2) {
 			return param_4;
 		}
-		if (param_3 <= param_1) {
+		if (param_3 <= alpha) {
 			return param_5;
 		}
 	}
 	else {
-		if (param_2 <= param_1) {
+		if (param_2 <= alpha) {
 			return param_4;
 		}
-		if (param_1 <= param_3) {
+		if (alpha <= param_3) {
 			return param_5;
 		}
 	}
 	if ((param_5 != param_4) && (param_3 != param_2)) {
-		param_5 = param_4 + ((param_1 - param_2) * (param_5 - param_4)) / (param_3 - param_2);
+		param_5 = param_4 + ((alpha - param_2) * (param_5 - param_4)) / (param_3 - param_2);
 	}
 	return param_5;
 }
@@ -1327,5 +1328,85 @@ void edF32Vector4LERPHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECT
 	v0->y = fVar5 * t + fVar2 * fVar1;
 	v0->z = fVar6 * t + fVar3 * fVar1;
 	v0->w = fVar7 * t + fVar4 * fVar1;
+	return;
+}
+
+float GetAngleXFromVector(edF32VECTOR4* v0)
+{
+	float pitch;
+	float fVar1;
+
+	pitch = atan2f(-v0->y, sqrt(v0->z * v0->z + v0->x * v0->x));
+	/* Second Param: 6.283185 (2 Pi) */
+	fVar1 = fmodf(pitch, 6.283185f);
+	return fVar1;
+}
+
+float GetAngleYFromVector(edF32VECTOR4* v0)
+{
+	float fVar1;
+
+	fVar1 = atan2f(v0->x, v0->z);
+	fVar1 = fmodf(fVar1, 6.283185f);
+	return fVar1;
+}
+
+float edF32GetAnglesDelta(float t0, float t1)
+{
+	float fVar1;
+
+	fVar1 = fmodf(t1 - t0, 6.283185f);
+	if (fVar1 < -3.141593f) {
+		fVar1 = fVar1 + 6.283185f;
+	}
+	else {
+		if (3.141593f <= fVar1) {
+			fVar1 = fVar1 - 6.283185f;
+		}
+	}
+	return fVar1;
+}
+
+float edF32Between_2Pi(float param_1)
+{
+	float fVar1;
+
+	fVar1 = fmodf(param_1, 6.283185);
+	return fVar1;
+}
+
+float edF32Between_0_2Pi(float param_1)
+{
+	float fVar1;
+
+	fVar1 = fmodf(param_1, 6.283185f);
+	if (fVar1 < 0.0f) {
+		fVar1 = fVar1 + 6.283185f;
+	}
+	return fVar1;
+}
+
+float edF32Between_Pi(float param_1)
+{
+	float fVar1;
+
+	fVar1 = fmodf(param_1, 6.283185f);
+	if (fVar1 < -3.141593f) {
+		fVar1 = fVar1 + 6.283185f;
+	}
+	else {
+		if (3.141593f <= fVar1) {
+			fVar1 = fVar1 - 6.283185f;
+		}
+	}
+	return fVar1;
+}
+
+void edF32Vector4GetNegHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	v0->x = 0.0f - v1->x;
+	v0->y = 0.0f - v1->y;
+	v0->z = 0.0f - v1->z;
+	v0->w = v1->w;
 	return;
 }

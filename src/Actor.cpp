@@ -16,6 +16,7 @@
 #include "LightManager.h"
 #include "CollisionManager.h"
 #include "ActorManager.h"
+#include "InputManager.h"
 
 void CVision::Create(CActor* pActor, ByteCode* pByteCode)
 {
@@ -374,6 +375,10 @@ void CActor::Create(ByteCode* pByteCode)
 	ACTOR_LOG(LogLevel::Info, "CActor::Create {}", name);
 
 	memcpy(this->name, name, 64);
+
+	//if (strcmp(name, "KIM") == 0) {
+	//	memcpy(this->name, name, 64);
+	//}
 
 	pByteCode->Align(4);
 	pCVar1 = (CinNamedObject30*)pByteCode->currentSeekPos;
@@ -963,25 +968,25 @@ void CActor::UpdatePostAnimEffects()
 	return;
 }
 
-bool CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam)
+int CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam)
 {
-	bool bHandled;
+	int bHandled;
 	CBehaviour* pBehaviour;
 
 	pBehaviour = GetBehaviour(this->curBehaviourId);
 	if (pBehaviour == (CBehaviour*)0x0) {
-		bHandled = false;
+		bHandled = 0;
 	}
 	else {
 		bHandled = pBehaviour->InterpretMessage(pSender, msg, pMsgParam);
 	}
-	if (bHandled == false) {
+	if (bHandled == 0) {
 		bHandled = InterpretMessage(pSender, msg, pMsgParam);
 	}
 	return bHandled;
 }
 
-bool CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	int iVar1;
 	CCollision* pCVar2;
@@ -1826,9 +1831,9 @@ void CBehaviour::GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprit
 	return;
 }
 
-bool CBehaviour::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+int CBehaviour::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	return false;
+	return 0;
 }
 
 void CActor::Draw()
@@ -1989,9 +1994,9 @@ void CActor::SetupLighting()
 	return;
 }
 
-bool CActor::DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags)
+int CActor::DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags)
 {
-	bool uVar1;
+	int uVar1;
 
 	if ((pReceiver == (CActor*)0x0) || ((pReceiver->flags & 0x2000000) != 0)) {
 		uVar1 = false;
@@ -1999,6 +2004,7 @@ bool CActor::DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags)
 	else {
 		uVar1 = pReceiver->ReceiveMessage(this, type, flags);
 	}
+
 	return uVar1;
 }
 
@@ -2209,6 +2215,41 @@ bool CActor::SV_IsWorldBoundingSphereIntersectingSphere(edF32VECTOR4* param_2)
 	fVar3 = this->sphereCentre.z - param_2->z;
 	fVar4 = param_2->w;
 	return fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3 <= fVar5 * (fVar4 * 2.0f + fVar5) + fVar4 * fVar4;
+}
+
+bool CActor::SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox)
+{
+	undefined* puVar1;
+	bool bVar2;
+	undefined* puVar3;
+	undefined* puVar4;
+	float fVar5;
+	float fVar6;
+	undefined local_10[16];
+
+	fVar6 = (this->sphereCentre).w;
+	//puVar3 = &DAT_00000010;
+	//puVar4 = local_10;
+	//puVar1 = puVar4;
+	//while (puVar1 != (undefined*)0x0) {
+	//	*puVar4 = 0;
+	//	puVar4 = puVar4 + 1;
+	//	puVar3 = puVar3 + -1;
+	//	puVar1 = puVar3;
+	//}
+	
+	fVar5 = (this->sphereCentre).x;
+	if ((((pBoundingBox->field_0x10.x + fVar6 < fVar5) || (fVar5 < pBoundingBox->field_0x0.x - fVar6)) ||
+		(fVar5 = (this->sphereCentre).y, pBoundingBox->field_0x10.y + fVar6 < fVar5)) ||
+		(((fVar5 < pBoundingBox->field_0x0.y - fVar6 ||
+			(fVar5 = (this->sphereCentre).z, pBoundingBox->field_0x10.z + fVar6 < fVar5)) ||
+			(fVar5 < pBoundingBox->field_0x0.z - fVar6)))) {
+		bVar2 = false;
+	}
+	else {
+		bVar2 = true;
+	}
+	return bVar2;
 }
 
 CBehaviour* CActor::BuildBehaviour(int behaviourType)
@@ -2591,6 +2632,11 @@ bool CActor::ColWithAToboggan()
 	return bColWithAToboggan;
 }
 
+CPlayerInput* CActor::GetInputManager(int, int)
+{
+	return &gPlayerInput;
+}
+
 bool CActor::PlayWaitingAnimation(float param_1, float param_2, int specialAnimType, int regularAnimType, byte idleLoopsToPlay)
 {
 	edAnmLayer* peVar1;
@@ -2725,12 +2771,31 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 	return bSuccess;
 }
 
-void CActor::SV_GetBoneDefaultWorldPosition(uint param_2, edF32VECTOR4* param_3)
+void CActor::SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition)
 {
 	edF32MATRIX4 eStack16;
 	IMPLEMENTATION_GUARD(
 	CAnimation::GetDefaultBoneMatrix(this->pAnimationController, param_2, (long)(int)&eStack16);
-	edF32Matrix4MulF32Vector4Hard(param_3, (edF32MATRIX4*)this->pMeshTransform, (edF32VECTOR4*)&eStack16.da);)
+	edF32Matrix4MulF32Vector4Hard(pOutPosition, (edF32MATRIX4*)this->pMeshTransform, (edF32VECTOR4*)&eStack16.da);)
+	return;
+}
+
+void CActor::SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition)
+{
+	edF32MATRIX4* peVar1;
+	float z;
+	float w;
+	float y;
+	IMPLEMENTATION_GUARD(
+	peVar1 = CAnimation::GetCurBoneMatrix((this->actorBase).pAnimationController, boneIndex);
+	y = peVar1->db;
+	z = peVar1->dc;
+	w = peVar1->dd;
+	pOutPosition->x = peVar1->da;
+	pOutPosition->y = y;
+	pOutPosition->z = z;
+	pOutPosition->w = w;
+	edF32Matrix4MulF32Vector4Hard(pOutPosition, (edF32MATRIX4*)(this->actorBase).pMeshTransform, pOutPosition);)
 	return;
 }
 

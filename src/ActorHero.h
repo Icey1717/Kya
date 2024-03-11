@@ -10,6 +10,9 @@
 #define STATE_HERO_JUMP_1_1_STAND 0x78
 #define STATE_HERO_JUMP_2_3_STAND 0x79
 #define STATE_HERO_JUMP_3_3_STAND 0x7a
+
+#define STATE_HERO_JUMP_1_1_RUN 0x7b
+
 #define STATE_HERO_SLIDE_SLIP_A 0xe1
 #define STATE_HERO_SLIDE_SLIP_B 0xe2
 #define STATE_HERO_SLIDE_SLIP_C 0xe3
@@ -69,7 +72,13 @@ public:
 
 	uint TestState_IsInHit(uint inFlags);
 	uint TestState_IsOnAToboggan(uint inFlags);
+	uint TestState_IsGrippedOrClimbing(uint inFlags);
+	bool TestState_IsInCheatMode();
+	uint TestState_IsInTheWind(uint inFlags);
+	uint TestState_IsFlying(uint inFlags);
+	uint TestState_IsCrouched(uint inFlags);
 };
 
+extern ulong gBoomyHashCodes[4];
 
 #endif // _ACTOR_HERO_H

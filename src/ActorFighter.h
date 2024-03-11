@@ -13,9 +13,11 @@ public:
 		IMPLEMENTATION_GUARD_LOG()
 	}
 
+	virtual bool IsKindOfObject(ulong kind);
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void Create(ByteCode* pByteCode);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	// CActorAutonomous
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);

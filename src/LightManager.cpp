@@ -197,9 +197,8 @@ void CLightManager::ComputeLighting(CActor* pActor, uint flags, ed_3D_Light_Conf
 
 	ComputeLighting((ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf0, param_1);
 
-	if (pActor->typeID == 6) {
-		fVar2 = CLightConfig::ComputeShadow
-		((((pActor->p3DHierNode)->base).pHierarchySetup)->pLightData, &this->vector_0xf0);
+	if (pActor->typeID == ACTOR_HERO_PRIVATE) {
+		fVar2 = CLightConfig::ComputeShadow((((pActor->p3DHierNode)->base).pHierarchySetup)->pLightData, &this->vector_0xf0);
 		this->shadowValue = fVar2;
 	}
 	return;
@@ -2050,17 +2049,6 @@ void CLightConfig::Validate(ed_3D_Light_Config* pConfig, bool bDoColor)
 		}
 		peVar2->w = 0.0f;
 	}
-	return;
-}
-
-const edF32VECTOR4 g_xVector = { 0.0f, 1.0f, 0.0f, 0.0f };
-
-void edF32Vector4GetNegHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
-{
-	v0->x = 0.0f - v1->x;
-	v0->y = 0.0f - v1->y;
-	v0->z = 0.0f - v1->z;
-	v0->w = v1->w;
 	return;
 }
 

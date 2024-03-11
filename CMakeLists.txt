@@ -93,6 +93,8 @@ set(main_src
 	"${src_root}/AnmManager.h"
 	"${src_root}/CinematicManager.cpp"
 	"${src_root}/CinematicManager.h"
+	"${src_root}/CameraGame.cpp"
+	"${src_root}/CameraGame.h"
 	"${src_root}/CameraViewManager.cpp"
 	"${src_root}/CameraViewManager.h"
 	"${src_root}/ScenaricCondition.cpp"

@@ -226,14 +226,14 @@ void CSectorManager::LevelLoading_Begin()
 		}
 		iVar13 = 0;
 		if (0 < table.entryCount + -1) {
-			piVar2 = table.entries;
+			piVar2 = table.aEntries;
 			iVar10 = table.entryCount;
 			do {
 				iVar11 = iVar13 + 1;
 				if (iVar11 < iVar10) {
-					piVar9 = table.entries + iVar11;
+					piVar9 = table.aEntries + iVar11;
 					do {
-						if (local_190[table.entries[0]] < local_190[table.entries[1]]) {
+						if (local_190[table.aEntries[0]] < local_190[table.aEntries[1]]) {
 							table.Swap(iVar11, iVar13);
 						}
 						iVar11 = iVar11 + 1;
@@ -248,7 +248,7 @@ void CSectorManager::LevelLoading_Begin()
 
 		this->field_0x370 = 1;
 		iVar13 = 0;
-		piVar2 = table.entries;
+		piVar2 = table.aEntries;
 		while ((iVar13 < table.entryCount && (this->field_0x370 != 0))) {
 			local_8 = piVar2[1];
 			uVar8 = ~(1 << (local_8 & 0x1f)) & auStack144[local_8];

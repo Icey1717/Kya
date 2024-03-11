@@ -76,6 +76,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual float ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 

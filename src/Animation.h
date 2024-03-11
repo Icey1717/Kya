@@ -144,6 +144,7 @@ public:
 	void Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlayingAnimation);
 	void PlayAnim(CActor* pActor, int animType, int origAnimType);
 	void Reset(CActor* pActor);
+	AnimMatrixData* FindReggedBone(int bone);
 
 	struct FrameMatrixData_8 {
 		uint field_0x0;

@@ -42,6 +42,11 @@ struct edS32VECTOR3
 	int z;
 };
 
+struct S_BOUNDING_BOX {
+	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 field_0x10;
+};
+
 typedef void (ColCallbackFuncPtr)(CActor*, void*);
 
 class CCluster 
@@ -54,7 +59,8 @@ public:
 	void DeleteNode(CClusterNode* pNode);
 	CClusterNode* NewNode(CActor* pActor);
 
-	void ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pActor);
+	void ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pParams);
+	void ApplyCallbackToActorsIntersectingBox(S_BOUNDING_BOX* pBoundingBox, ColCallbackFuncPtr* pFunc, void* pParams);
 
 	CClusterNode** ppNodes;
 

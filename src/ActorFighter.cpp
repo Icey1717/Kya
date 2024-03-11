@@ -1,6 +1,11 @@
 #include "ActorFighter.h"
 #include "MathOps.h"
 
+bool CActorFighter::IsKindOfObject(ulong kind)
+{
+	return (kind & 0xf) != 0;
+}
+
 void CActorFighter::Init()
 {
 	CAnimation* pCVar1;
@@ -375,6 +380,118 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	iVar5 = ByteCode::GetS32(pByteCode);
 	this->field_0x910 = iVar5;)
 	return;
+}
+
+int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	bool bVar1;
+	AnimResult* pAVar2;
+	CBehaviour* pCVar3;
+	CLifeInterface* pCVar4;
+	int iVar5;
+	uint uVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+
+	if (msg == 0x12) {
+		IMPLEMENTATION_GUARD(
+		iVar5 = (this->characterBase).base.base.actorState;
+		uVar6 = 0;
+		if (iVar5 != -1) {
+			pAVar2 = (*((this->characterBase).base.base.pVTable)->GetStateCfg)((CActor*)this, iVar5);
+			uVar6 = pAVar2->flags_0x4;
+		}
+		if ((uVar6 & 0x2000000) == 0) {
+			pCVar4 = (*((this->characterBase).base.base.pVTable)->GetLifeInterface)((CActor*)this);
+			fVar7 = (float)(*(code*)pCVar4->pVtable->GetValue)();
+			if (((0.0 < fVar7) &&
+				(fVar7 = (pSender->currentLocation).x - (this->characterBase).base.base.currentLocation.x,
+					fVar8 = (pSender->currentLocation).z - (this->characterBase).base.base.currentLocation.z,
+					fVar7 * fVar7 + fVar8 * fVar8 <= 1.0)) &&
+				(ABS((pSender->currentLocation).y - (this->characterBase).base.base.currentLocation.y) <= 0.5)) {
+				fVar9 = (this->characterBase).base.base.rotationQuat.y;
+				fVar7 = (this->characterBase).base.base.rotationQuat.z;
+				fVar8 = (this->characterBase).base.base.rotationQuat.w;
+				*(float*)((int)pMsgParam + 0x10) = (this->characterBase).base.base.rotationQuat.x;
+				*(float*)((int)pMsgParam + 0x14) = fVar9;
+				*(float*)((int)pMsgParam + 0x18) = fVar7;
+				*(float*)((int)pMsgParam + 0x1c) = fVar8;
+				fVar9 = (this->characterBase).base.base.currentLocation.y;
+				fVar7 = (this->characterBase).base.base.currentLocation.z;
+				fVar8 = (this->characterBase).base.base.currentLocation.w;
+				*(float*)pMsgParam = (this->characterBase).base.base.currentLocation.x;
+				*(float*)((int)pMsgParam + 4) = fVar9;
+				*(float*)((int)pMsgParam + 8) = fVar7;
+				*(float*)((int)pMsgParam + 0xc) = fVar8;
+				return 10;
+			}
+		}
+		iVar5 = 0;)
+	}
+	else {
+		if (msg == 0x27) {
+			IMPLEMENTATION_GUARD(
+			bVar1 = (*((this->characterBase).base.base.pVTable)->IsFightRelated)
+				((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+			if (bVar1 == false) {
+				(*(code*)((this->characterBase).base.base.pVTable)->SetFightBehaviour)(this);
+				pCVar3 = CActor::GetBehaviour((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+				iVar5 = (*pCVar3->pVTable->InterpretMessage)(pCVar3, pSender, 0x27, (int)pMsgParam);
+			}
+			else {
+				iVar5 = 0;
+			})
+		}
+		else {
+			if ((msg == 0x66) || (msg == 0x65)) {
+				IMPLEMENTATION_GUARD(
+				iVar5 = (this->characterBase).base.base.actorState;
+				uVar6 = 0;
+				if (iVar5 != -1) {
+					pAVar2 = (*((this->characterBase).base.base.pVTable)->GetStateCfg)((CActor*)this, iVar5);
+					uVar6 = pAVar2->flags_0x4;
+				}
+				if (((uVar6 & 0x2000000) == 0) &&
+					(bVar1 = (*((this->characterBase).base.base.pVTable)->IsFightRelated)
+						((CActor*)this, (this->characterBase).base.base.curBehaviourId), bVar1 == false)) {
+					(*(code*)((this->characterBase).base.base.pVTable)->SetFightBehaviour)(this);
+					pCVar3 = CActor::GetBehaviour((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+					iVar5 = (*pCVar3->pVTable->InterpretMessage)(pCVar3, pSender, msg, (int)pMsgParam);
+				}
+				else {
+					iVar5 = 0;
+				})
+			}
+			else {
+				if (msg == 2) {
+					IMPLEMENTATION_GUARD(
+					iVar5 = (this->characterBase).base.base.actorState;
+					uVar6 = 0;
+					if (iVar5 != -1) {
+						pAVar2 = (*((this->characterBase).base.base.pVTable)->GetStateCfg)((CActor*)this, iVar5);
+						uVar6 = pAVar2->flags_0x4;
+					}
+					if (((uVar6 & 0x2000000) != 0) ||
+						(bVar1 = (*((this->characterBase).base.base.pVTable)->IsFightRelated)
+							((CActor*)this, (this->characterBase).base.base.curBehaviourId), bVar1 != false)) {
+						return 0;
+					}
+					/* WARNING: Load size is inaccurate */
+					iVar5 = *pMsgParam;
+					if (((iVar5 == 7) || (iVar5 == 8)) || (iVar5 == 10)) {
+						(*(code*)((this->characterBase).base.base.pVTable)->SetFightBehaviour)(this);
+						pCVar3 = CActor::GetBehaviour((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+						iVar5 = (*pCVar3->pVTable->InterpretMessage)(pCVar3, pSender, 2, (int)pMsgParam);
+						return iVar5;
+					})
+				}
+
+				iVar5 = CActorAutonomous::InterpretMessage(pSender, msg, pMsgParam);
+			}
+		}
+	}
+	return iVar5;
 }
 
 bool CActorFighter::IsFightRelated(int param_2)

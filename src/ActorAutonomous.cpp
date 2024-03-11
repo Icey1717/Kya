@@ -154,6 +154,55 @@ CBehaviour* CActorAutonomous::BuildBehaviour(int behaviourType)
 	return pNewBehaviour;
 }
 
+int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	bool bVar1;
+	int* piVar2;
+	edF32MATRIX4* peVar3;
+	CBehaviour* pCVar4;
+	int iVar5;
+	long lVar6;
+
+	if (msg == 0x3f) {
+		IMPLEMENTATION_GUARD(
+		bVar1 = (*((this->base).base.pVTable)->SetBehaviour)((CActor*)this, 2, -1, -1);
+		if (bVar1 == false) {
+			iVar5 = 0;
+		}
+		else {
+			pCVar4 = CActor::GetBehaviour((CActor*)this, (this->base).base.curBehaviourId);
+			pCVar4[4].pVTable = (CBehaviourVtable*)pSender;
+			iVar5 = 1;
+		})
+	}
+	else {
+		if (msg == 0x18) {
+			IMPLEMENTATION_GUARD(
+			lVar6 = (*(code*)((this->base).base.pVTable)->field_0x100)();
+			if (lVar6 != 0) {
+				peVar3 = (edF32MATRIX4*)(*(code*)((this->base).base.pVTable)->field_0x100)(this);
+				FUN_00123580(peVar3, (edF32MATRIX4*)pMsgParam);
+			}
+			iVar5 = 1;)
+		}
+		else {
+			if (msg == 0x17) {
+				IMPLEMENTATION_GUARD(
+				lVar6 = (*(code*)((this->base).base.pVTable)->field_0x100)();
+				if (lVar6 != 0) {
+					piVar2 = (int*)(*(code*)((this->base).base.pVTable)->field_0x100)(this);
+					FUN_00123810(piVar2, (float*)pMsgParam);
+				}
+				iVar5 = 1;)
+			}
+			else {
+				iVar5 = CActorMovable::InterpretMessage(pSender, msg, pMsgParam);
+			}
+		}
+	}
+	return iVar5;
+}
+
 void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 {
 	CCollision* pCVar1;

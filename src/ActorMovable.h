@@ -35,6 +35,7 @@ public:
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void SetState(int newState, int animType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void SV_MOV_UpdateSpeedIntensity(float param_1, float param_2);
 	void SV_MOV_DecreaseSpeedIntensity(float param_1);
@@ -43,6 +44,8 @@ public:
 
 	CDynamic dynamic;
 	float field_0x1c0;
+
+	edF32VECTOR3 vector_0x120c;
 };
 
 #endif //ACTOR_MOVABLE_H

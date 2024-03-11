@@ -7,6 +7,7 @@
 #include "MemoryStream.h"
 #include "TimeController.h"
 #include "ActorFactory.h"
+#include "ActorHero.h"
 
 
 CActorCinematic::CActorCinematic()
@@ -51,23 +52,6 @@ ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)
 	}
 	return peVar1;
 }
-
-#define CHAR_TO_UINT64(str) \
-     (static_cast<unsigned long long>(str[0]) | \
-     (static_cast<unsigned long long>(str[1]) << 8) | \
-     (static_cast<unsigned long long>(str[2]) << 16) | \
-     (static_cast<unsigned long long>(str[3]) << 24) | \
-     (static_cast<unsigned long long>(str[4]) << 32) | \
-     (static_cast<unsigned long long>(str[5]) << 40) | \
-     (static_cast<unsigned long long>(str[6]) << 48) | \
-     (static_cast<unsigned long long>(str[7]) << 56))
-
-ulong gBoomyHashCodes[4] = {
-	0x0,
-	CHAR_TO_UINT64("BOOMY_P0"),
-	CHAR_TO_UINT64("BOOMY_P1"),
-	CHAR_TO_UINT64("BOOMY_P2"),
-};
 
 ulong gFightHashCodes[8] = {
 	0x0,
@@ -538,14 +522,16 @@ void CBehaviourCinematic::End(int newBehaviourId)
 
 	bVar3 = this->pOwner->IsKindOfObject(2);
 	if (bVar3 != false) {
-		IMPLEMENTATION_GUARD(
-		CDynamic::Reset((CDynamic*)&this->pOwner->components, this->pOwner);
+		CActorMovable* pMoveable = reinterpret_cast<CActorMovable*>(this->pOwner);
+		pMoveable->dynamic.Reset(pMoveable);
+
 		bVar3 = this->pOwner->IsKindOfObject(4);
 		if (bVar3 != false) {
+			CActorAutonomous* pAutonomous = reinterpret_cast<CActorAutonomous*>(this->pOwner);
 			pCVar2 = this->pOwner;
 			pTVar5 = GetTimer();
-			(pCVar2->behaviourCinematic).cinActor.field_0xc0 = pTVar5->scaledTotalTime;
-		})
+			pAutonomous->dynamicExt.scaledTotalTime = pTVar5->scaledTotalTime;
+		}
 	}
 
 	this->pOwner->flags = this->pOwner->flags & 0xffdfffff;
@@ -623,18 +609,12 @@ void CBehaviourCinematic::Manage()
 	}
 	bVar4 = this->pOwner->IsKindOfObject(2);
 	if (bVar4 != false) {
-		IMPLEMENTATION_GUARD(
-		pCVar2 = this->pOwner;
-		CActorMoveable::ComputeRealMoving((ACharacterBase*)pCVar2, &local_10, fVar6);
-		if ((((CharacterBaseData*)&pCVar2->baseData)->actorBase).actorState == New_Name_(3)) {
-			fVar6 = *(float*)&(pCVar2->behaviourCinematic).cinActor.soundStruct.field_0x18;
-			pCVar7 = (pCVar2->behaviourCinematic).cinActor.pParent;
-			fVar8 = (float)(pCVar2->behaviourCinematic).cinActor.field_0x8;
-			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.x =
-				(float)(pCVar2->behaviourCinematic).cinActor.pVTable * fVar6;
-			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.y = (float)pCVar7 * fVar6;
-			(((CharacterBaseData*)&pCVar2->baseData)->actorBase).vector_0x12c.z = fVar8 * fVar6;
-		})
+		CActorMovable* pMoveable = reinterpret_cast<CActorMovable*>(this->pOwner);
+		pMoveable->ComputeRealMoving(&local_10, fVar6);
+		if (pMoveable->actorState == 0x3) {
+			fVar6 = (pMoveable->dynamic).field_0x44;
+			pMoveable->vector_0x120c = (pMoveable->dynamic).currentLocation.xyz * fVar6;
+		}
 	}
 	return;
 }
@@ -806,7 +786,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 	case 0x10:
 	case 0x11:
 		IMPLEMENTATION_GUARD(
-		if (this->pOwner->typeID == 6) {
+		if (this->pOwner->typeID == ACTOR_HERO_PRIVATE) {
 			if (param_2 == 0x11) {
 				LevelScheduleManager::ScenVar_Set(0xf, 1);
 			}

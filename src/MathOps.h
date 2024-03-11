@@ -15,6 +15,7 @@ extern edF32MATRIX4 gF32Matrix4Unit;
 extern edF32VECTOR4 gF32Vertex4Zero;
 extern edF32VECTOR4 gF32Vector4Zero;
 extern edF32VECTOR4 gF32Vector4UnitZ;
+extern edF32VECTOR4 g_xVector;
 
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 
@@ -77,5 +78,14 @@ float edFIntervalLERP(float param_1, float param_2, float param_3, float param_4
 float edFIntervalUnitDstLERP(float param_1, float param_2, float param_3);
 
 void edF32Vector4LERPHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
+
+float GetAngleXFromVector(edF32VECTOR4* v0);
+float GetAngleYFromVector(edF32VECTOR4* v0);
+float edF32GetAnglesDelta(float t0, float t1);
+float edF32Between_2Pi(float param_1);
+float edF32Between_0_2Pi(float param_1);
+float edF32Between_Pi(float param_1);
+
+void edF32Vector4GetNegHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 #endif // _MATH_OPS_H

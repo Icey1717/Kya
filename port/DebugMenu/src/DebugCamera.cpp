@@ -207,9 +207,9 @@ void DebugCamera::ShowCamera()
 	// Get the display size
 	ImGui::Begin("Camera", nullptr);
 
-	auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
+	auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
 	ImGui::Text("Position");
-	EditEdF32Vector4(pCameraManager->transformationMatrix.rowT);
+	EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
 	ImGui::Text("LookAt");
 	//EditEdF32Vector4(pCameraManager->lookAt);
 
@@ -236,6 +236,27 @@ void DebugCamera::ShowCamera()
 	if (ImGui::Checkbox("Debug Camera", &bActive))
 	{
 		SetActive(bActive);
+	}
+
+	if (ImGui::CollapsingHeader("Camera Stack", ImGuiTreeNodeFlags_DefaultOpen)) {
+		auto& cameraStack = CCameraManager::_gThis->cameraStack;
+		ImGui::Text("Camera Stack Size: %d", cameraStack.stackSize);
+
+		for (int i = 0; i < cameraStack.stackSize; i++) {
+			ImGui::Text("Camera: %u %d", cameraStack.aCameras[i].field_0x0, cameraStack.aCameras[i].pCamera->GetMode());
+		}
+	}
+
+	if (ImGui::CollapsingHeader("Camera List", ImGuiTreeNodeFlags_DefaultOpen)) {
+		// Show the total number of cameras
+		ImGui::Text("Total Cameras: %d (Active mode: %d)", CCameraManager::_gThis->loadedCameraCount_0x9f0, CCameraManager::_gThis->pActiveCamera->GetMode());
+
+		CCamera* pCamera = CCameraManager::_gThis->pInitialView_0x4b4;
+
+		while (pCamera != nullptr) {
+			ImGui::Text("Camera: %d", pCamera->GetMode());
+			pCamera = pCamera->pNextCameraView_0xa4;
+		}
 	}
 
 	if (bActive) {

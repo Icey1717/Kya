@@ -47,6 +47,7 @@ public:
 	virtual void SetState(int newState, int animType);
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Leave(int behaviourId);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	// Autonomous
 	virtual float ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
@@ -93,11 +94,16 @@ public:
 
 	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
 
+	void SetBoomyHairOff();
+	void SetBoomyHairOn();
+
 	CBehaviourHeroDefault behaviourHeroDefault;
 
 	CBehaviour behaviour_0x1c50;
 	CBehaviour behaviour_0x1e10;
 	CBehaviour behaviour_0x1fd0;
+
+	float field_0x1558;
 
 	float field_0xa80;
 	float field_0xa84;

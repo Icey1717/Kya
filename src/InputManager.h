@@ -42,7 +42,7 @@ class CIniFile;
 
 #define KEY_START 0x40000
 
-struct CPlayerInput {
+class CPlayerInput {
 
 public:
 	static void ReadConfig(CIniFile* pIniFile);
@@ -58,6 +58,8 @@ public:
 	float GetAngleWithPlayerStick(edF32VECTOR4* param_2);
 	void ComputeForce();
 	void UpdateOne(float delta);
+
+	void FUN_001b6e20(float param_1, float param_2);
 
 	int bActive;
 	int disconnectedController;

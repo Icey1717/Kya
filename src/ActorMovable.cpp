@@ -31,6 +31,38 @@ void CActorMovable::SetState(int newState, int animType)
 	return;
 }
 
+int CActorMovable::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int uVar1;
+
+	if (msg == 0x48) {
+		uVar1 = 1;
+		(this->dynamic).field_0x58 = 1.2f;
+	}
+	else {
+		if (msg == 0x47) {
+			(this->dynamic).field_0x58 = 1.0f;
+			uVar1 = 1;
+		}
+		else {
+			if (msg == 0x46) {
+				(this->dynamic).field_0x58 = 0.5f;
+				uVar1 = 1;
+			}
+			else {
+				if (msg == 0x45) {
+					uVar1 = 1;
+					(this->dynamic).field_0x58 = 0.8f;
+				}
+				else {
+					uVar1 = CActor::InterpretMessage(pSender, msg, pMsgParam);
+				}
+			}
+		}
+	}
+	return uVar1;
+}
+
 void CActorMovable::SV_MOV_UpdateSpeedIntensity(float param_1, float param_2)
 
 {

@@ -2,6 +2,14 @@
 
 CActorHero* CActorHero::_gThis = (CActorHero*)0x0;
 
+
+ulong gBoomyHashCodes[4] = {
+	0x0,
+	CHAR_TO_UINT64("BOOMY_P0"),
+	CHAR_TO_UINT64("BOOMY_P1"),
+	CHAR_TO_UINT64("BOOMY_P2"),
+};
+
 AnimResultHero CActorHero::_gStateCfg_HRO[HERO_STATE_COUNT] = {
 AnimResultHero(
 	0x0,
@@ -1089,3 +1097,72 @@ uint CActorHero::TestState_IsOnAToboggan(uint inFlags)
 	return inFlags & 0x8000;
 }
 
+uint CActorHero::TestState_IsGrippedOrClimbing(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+	return inFlags & 0xc0;
+}
+
+bool CActorHero::TestState_IsInCheatMode()
+{
+	int iVar1;
+	bool ret;
+
+	iVar1 = this->actorState;
+	ret = true;
+	if ((iVar1 != 0xa8) && (iVar1 != 0x129)) {
+		ret = false;
+	}
+
+	return ret;
+}
+
+uint CActorHero::TestState_IsInTheWind(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+	return inFlags & 0x800;
+}
+
+uint CActorHero::TestState_IsFlying(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+	return inFlags & 0x100000;
+}
+
+uint CActorHero::TestState_IsCrouched(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+	return inFlags & 0x20;
+}

@@ -42,6 +42,16 @@ typedef unsigned long    uint7;
 typedef unsigned int    u_int;
 #endif
 
+
+typedef enum SWITCH_MODE {
+	SWITCH_MODE_A = 0,
+	SWITCH_MODE_B = 1,
+	SWITCH_MODE_C = 2,
+	SWITCH_MODE_D = 3,
+	SWITCH_MODE_E = 4,
+	SWITCH_MODE_F = 5
+} SWITCH_MODE;
+
 union Hash_4
 {
 	char name[4];
@@ -722,25 +732,38 @@ public:
 	}
 
 	int entryCount;
-	T entries[Size];
+	T aEntries[Size];
 
 	inline void Add(T value) {
 		if (this->entryCount < Size) {
-			this->entries[this->entryCount] = value;
+			this->aEntries[this->entryCount] = value;
 			this->entryCount++;
 		}
+	}
+
+	inline bool IsInList(T value) {
+		for (int i = 0; i < this->entryCount; i++) {
+			if (this->aEntries[i] == value) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	inline void Swap(T a, T b) {
 		T tmp;
 
 		// Access the element at position 'a' and store it in iVar1
-		tmp = (this->entries + a + -1)[1];
+		tmp = (this->aEntries + a + -1)[1];
 
 		// Swap the values of elements at positions 'a' and 'b'
-		(this->entries + a + -1)[1] = (this->entries + b + -1)[1];
-		(this->entries + b + -1)[1] = tmp;
+		(this->aEntries + a + -1)[1] = (this->aEntries + b + -1)[1];
+		(this->aEntries + b + -1)[1] = tmp;
 	}
 };
+
+class CActor;
+typedef CFixedTable<CActor*, 64> CActorsTable;
 
 #endif //_TYPES_H

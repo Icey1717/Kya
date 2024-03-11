@@ -928,6 +928,71 @@ void CCluster::ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, Co
 	return;
 }
 
+edF32VECTOR4 edF32VECTOR4_00426880 = { 8.0f, 8.0f, 8.0f, 0.0f };
+
+void CCluster::ApplyCallbackToActorsIntersectingBox(S_BOUNDING_BOX* pBoundingBox, ColCallbackFuncPtr* pFunc, void* pParams)
+{
+	bool bVar1;
+	uint uVar2;
+	uint uVar3;
+	int iVar4;
+	int iVar5;
+	CClusterNode* pCVar6;
+	CClusterNode** ppCVar7;
+	CClusterNode** ppCVar8;
+	CClusterNode** ppCVar9;
+	int iVar10;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edS32VECTOR3 local_20;
+	edS32VECTOR3 local_10;
+
+	if (this->ppNodes != (CClusterNode**)0x0) {
+		for (pCVar6 = this->field_0x34; pCVar6 != (CClusterNode*)0x0; pCVar6 = pCVar6->pNext) {
+			bVar1 = pCVar6->pActor->SV_IsWorldBoundingSphereIntersectingBox(pBoundingBox);
+			if (bVar1 != false) {
+				pFunc(pCVar6->pActor, pParams);
+			}
+		}
+
+		local_40 = pBoundingBox->field_0x0 - edF32VECTOR4_00426880;
+		local_30 = pBoundingBox->field_0x10 + edF32VECTOR4_00426880;
+
+		uVar2 = GetMapCoords(&local_10, &local_40);
+		uVar3 = GetMapCoords(&local_20, &local_30);
+
+		if ((uVar2 & uVar3) == 0) {
+			iVar4 = local_20.y - local_10.y;
+			local_20.z = local_20.z - local_10.z;
+			local_20.x = local_20.x - local_10.x;
+			local_10.x = local_10.x + local_10.y * 0x400 + local_10.z * 0x20;
+			local_20.y = iVar4;
+			if (local_10.x == -1) {
+				ppCVar8 = &this->field_0x34;
+			}
+			else {
+				ppCVar8 = this->ppNodes + local_10.x;
+			}
+			for (; ppCVar7 = ppCVar8, iVar5 = local_20.z, -1 < iVar4; iVar4 = iVar4 + -1) {
+				for (; ppCVar9 = ppCVar7, iVar10 = local_20.x, -1 < iVar5; iVar5 = iVar5 + -1) {
+					for (; -1 < iVar10; iVar10 = iVar10 + -1) {
+						for (pCVar6 = *ppCVar9; pCVar6 != (CClusterNode*)0x0; pCVar6 = pCVar6->pNext) {
+							bVar1 = pCVar6->pActor->SV_IsWorldBoundingSphereIntersectingBox(pBoundingBox);
+							if (bVar1 != false) {
+								pFunc(pCVar6->pActor, pParams);
+							}
+						}
+						ppCVar9 = ppCVar9 + 1;
+					}
+					ppCVar7 = ppCVar7 + 0x20;
+				}
+				ppCVar8 = ppCVar8 + 0x400;
+			}
+		}
+	}
+	return;
+}
+
 CClusterNode::CClusterNode()
 {
 	this->pNext = (CClusterNode*)0x0;

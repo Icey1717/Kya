@@ -172,13 +172,16 @@ bool CCameraStack::Pop(CCamera* pCamera)
 	else {
 		iVar1 = this->stackSize;
 		pCVar2 = this->aCameras + iVar1;
-		for (iVar3 = iVar1; ((CCamera*)(&pCVar2->field_0x0)[1] != pCamera && (0 < iVar3)); iVar3 = iVar3 + -1) {
+
+		for (iVar3 = iVar1; (pCVar2->pCamera != pCamera && (0 < iVar3)); iVar3 = iVar3 + -1) {
 			pCVar2 = pCVar2 + -1;
 		}
+
 		uVar2 = false;
 		if (0 < iVar3) {
 			if (iVar3 < iVar1) {
 				pCVar2 = this->aCameras + iVar3;
+				IMPLEMENTATION_GUARD();
 				do {
 					iVar3 = iVar3 + 1;
 					pCVar2->field_0x0 = (&pCVar2->field_0x0)[2];
@@ -189,8 +192,8 @@ bool CCameraStack::Pop(CCamera* pCamera)
 			this->stackSize = this->stackSize + -1;
 			uVar2 = FindCameraState();
 			if (this->field_0x20c != 0) {
-				this->switchMode = *(SWITCH_MODE*)(this->field_0x20c + 0x94);
-				this->field_0x218 = *(float*)(this->field_0x20c + 0x9c);
+				this->switchMode = this->field_0x20c->field_0x94;
+				this->field_0x218 = this->field_0x20c->field_0x9c;
 			}
 			if (this->switchMode == SWITCH_MODE_A) {
 				this->switchMode = this->pActiveCamera->switchMode;

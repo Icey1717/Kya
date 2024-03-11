@@ -39,6 +39,7 @@
 #include "LightManager.h"
 #include "EventManager.h"
 #include "EventTrack.h"
+#include "CameraGame.h"
 
 CScene* CScene::_pinstance = NULL;
 

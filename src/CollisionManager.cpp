@@ -1012,14 +1012,14 @@ uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0)
 		local_170.field_0xc = (char*)0x0;
 		if (0 < local_110.entryCount) {
 			do {
-				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {}", pActor->name, local_110.entries[iVar5]->name);
+				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {}", pActor->name, local_110.aEntries[iVar5]->name);
 
-				CCollision* pCollision = local_110.entries[iVar5]->pCollisionData;
+				CCollision* pCollision = local_110.aEntries[iVar5]->pCollisionData;
 
 				local_170.pOtherColObj = pCollision->pColObj;
 				uVar3 = edObbTreeIntersectObbTree(&local_170, peVar1, pCollision->pObbTree);
 
-				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {} result: {}", pActor->name, local_110.entries[iVar5]->name, uVar3);
+				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {} result: {}", pActor->name, local_110.aEntries[iVar5]->name, uVar3);
 
 				uVar6 = uVar6 | uVar3;
 				iVar5 = iVar5 + 1;
@@ -1200,35 +1200,37 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 
 	pColDbObj = (gColData.pActiveDatabase)->field_0x10;
 	peVar7 = pColDbObj + (gColData.pActiveDatabase)->field_0x4;
+
 	for (; pColDbObj < peVar7; pColDbObj = pColDbObj + 1) {
 		quadFlags = pColDbObj->quadFlags;
+
 		if (pColDbObj->field_0x78 < 0.0f) {
 			pReceiver = (CActor*)0x0;
+
 			if (pColDbObj->pOtherColObj == (edColOBJECT*)0x0) {
 				iVar14 = 0;
 			}
 			else {
-				IMPLEMENTATION_GUARD(
-				pReceiver = pColDbObj->pOtherColObj->pActor;
+				pReceiver = LOAD_SECTION_CAST(CActor*, pColDbObj->pOtherColObj->pActor);
+
 				if (pReceiver != (CActor*)0x0) {
-					pCVar2 = (pReceiver->data).pCollisionData;
+					pCVar2 = pReceiver->pCollisionData;
 					materialIndex = pCVar2->flags_0x0;
+
 					if ((materialIndex & 0x2000) != 0) {
 						pColDbObj->field_0x78 = 0.0;
 					}
+
 					if ((materialIndex & 0x8000) != 0) {
-						local_c0[47] = 0;
-						CActor::DoMessage(pActor, pReceiver, 0x1c, 0);
+						// This could be incorrect?
+						stack0xfffffdb0[1][2].field_0x1c = 0;
+						pActor->DoMessage(pReceiver, (ACTOR_MESSAGE)0x1c, 0);
 					}
-					fVar20 = (pColDbObj->field_0x30).y;
-					fVar18 = (pColDbObj->field_0x30).z;
-					fVar19 = (pColDbObj->field_0x30).w;
-					(pCVar2->field_0x90).x = (pColDbObj->field_0x30).x;
-					(pCVar2->field_0x90).y = fVar20;
-					(pCVar2->field_0x90).z = fVar18;
-					(pCVar2->field_0x90).w = fVar19;
+
+					pCVar2->field_0x90 = pColDbObj->field_0x30;
 				}
-				iVar14 = 1;)
+
+				iVar14 = 1;
 			}
 
 			COLLISION_LOG(LogLevel::Verbose, "Quad flags: 0x{:x} - {} Obb prim flags: 0x{:x} - {}", quadFlags, (quadFlags & 0x200) != 0, this->pObbPrim->flags_0x80, (this->pObbPrim->flags_0x80 & 0x200) != 0);
@@ -1455,6 +1457,61 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 	return local_1a0;
 }
 
+void CCollision::PreprocessActorContacts(float param_1, CActor* pActor, CActorsTable* pTable, CActor** pOutActor)
+{
+	uint uVar1;
+	CActor* pNewEntry;
+	CCollision* pCVar2;
+	bool bVar3;
+	bool bVar4;
+	edColDbObj_80* peVar5;
+	edColDbObj_80* peVar6;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	undefined4 local_4;
+
+	bVar3 = false;
+	uVar1 = this->flags_0x0;
+	peVar6 = (gColData.pActiveDatabase)->field_0x10;
+	peVar5 = peVar6 + (gColData.pActiveDatabase)->field_0x4;
+
+	for (; peVar6 < peVar5; peVar6 = peVar6 + 1) {
+		pNewEntry = LOAD_SECTION_CAST(CActor*, peVar6->pOtherColObj->pActor);
+		pCVar2 = pNewEntry->pCollisionData;
+
+		if (((pTable != (CActorsTable*)0x0) && (peVar6->field_0x78 <= -param_1)) &&
+			(bVar4 = pTable->IsInList(pNewEntry), bVar4 == false)) {
+			pTable->Add(pNewEntry);
+		}
+
+		if ((pCVar2->pObbPrim != (edColPRIM_OBJECT*)0x0) && ((pCVar2->pObbPrim->flags_0x80 & 0x200) != 0)) {
+			if (((uVar1 & 0x200) != 0) && ((peVar6->field_0x78 < 0.0f && (0.5f < (peVar6->field_0x40).y)))) {
+				local_4 = 0;
+				pActor->DoMessage(pNewEntry, (ACTOR_MESSAGE)0x6a, 0);
+			}
+			if ((uVar1 & 0x100) != 0) {
+				if (peVar6->field_0x78 <= -0.3f) {
+					pCVar2->field_0x18 = pCVar2->field_0x18 + 2;
+					pCVar2->field_0x1c = pActor;
+				}
+
+				peVar6->field_0x78 = 0.0f;
+			}
+		}
+		if ((((((uVar1 & 0x400) == 0) && ((pCVar2->flags_0x0 & 0x80) != 0)) && ((pCVar2->flags_0x0 & 0x200000) == 0)) &&
+			(pNewEntry->pTiedActor != pActor)) && ((*pOutActor == (CActor*)0x0 || (pNewEntry == pActor->pTiedActor)))) {
+			if (!bVar3) {
+				ComputeG3DObbTreeLowestAndHighestVertices(&eStack32, &eStack48, 1, this->pDynCol);
+				bVar3 = true;
+			}
+			if (fabs(eStack32.y - (peVar6->field_0x30).y) <= 0.2f) {
+				*pOutActor = pNewEntry;
+			}
+		}
+	}
+	return;
+}
+
 uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32MATRIX4* param_4, edF32VECTOR4* pTranslation,	CActorsTable* param_6, CActor** param_7, int param_8)
 {
 	int iVar1;
@@ -1468,12 +1525,10 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 	if (((this->flags_0x0 & 0x502) != 0) && (uVar2 = CheckCollisionsWithActors(pActor, m0), uVar2 != 0)) {
 		if ((param_6 != (CActorsTable*)0x0) || (((this->flags_0x0 & 0x100) != 0 || ((this->flags_0x0 & 0x400) == 0)))) {
 			if ((this->flags_0x0 & 0x400) == 0) {
-				IMPLEMENTATION_GUARD(
-				PreprocessActorContacts(0.0, this, pActor, param_6, param_7);)
+				PreprocessActorContacts(0.0f, pActor, param_6, param_7);
 			}
 			else {
-				IMPLEMENTATION_GUARD(
-				PreprocessActorContacts(0.005, this, pActor, param_6, param_7);)
+				PreprocessActorContacts(0.005f, pActor, param_6, param_7);
 			}
 		}
 		if (((this->flags_0x0 & 0x400) != 0) || ((this->flags_0x0 & 2) == 0)) {

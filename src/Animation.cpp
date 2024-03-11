@@ -2565,3 +2565,15 @@ void CAnimation::Reset(CActor* pActor)
 	}
 	return;
 }
+
+AnimMatrixData* CAnimation::FindReggedBone(int bone)
+{
+	AnimMatrixData* pAVar1;
+
+	for (pAVar1 = this->pMatrixData_0x10; (pAVar1 != (AnimMatrixData*)0x0 && (bone != pAVar1->key_0x48));
+		pAVar1 = pAVar1->pPrev) {
+	}
+	return pAVar1;
+}
+
+

@@ -380,9 +380,9 @@ struct CCinematic {
 	char* pBankName_0x50;
 	undefined4 field_0x54;
 	float field_0x58;
-	int field_0x5c;
+	SWITCH_MODE field_0x5c;
 	float field_0x60;
-	int field_0x64;
+	SWITCH_MODE field_0x64;
 	float field_0x68;
 	int field_0x6c;
 	int field_0x70;

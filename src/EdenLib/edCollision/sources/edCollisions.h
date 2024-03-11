@@ -6,6 +6,12 @@
 
 #define COLLISION_LOG(level, format, ...) MY_LOG_CATEGORY("Collision", level, format, ##__VA_ARGS__)
 
+struct edColRAY_OBB_IN {
+	edF32VECTOR4* pLocation;
+	edF32VECTOR4* pDirection;
+	float lengthA;
+};
+
 PACK(
 	struct edF32QUAD4 {
 	int p1; // edF32VECTOR4*
@@ -80,6 +86,10 @@ struct edObbBOX
 });
 
 
+struct edColPRIM_RAY_UNIT_BOX_UNIT_IN {
+	edF32VECTOR4* field_0x0;
+	edF32VECTOR4* field_0x4;
+};
 
 PACK(
 	struct edColPRIM_OBJECT
@@ -153,30 +163,6 @@ PACK(
 	byte count_0x52;
 	undefined field_0x53;
 	int field_0x54[7]; // edObbTREE*
-	//undefined field_0x58;
-	//undefined field_0x59;
-	//undefined field_0x5a;
-	//undefined field_0x5b;
-	//undefined field_0x5c;
-	//undefined field_0x5d;
-	//undefined field_0x5e;
-	//undefined field_0x5f;
-	//undefined field_0x60;
-	//undefined field_0x61;
-	//undefined field_0x62;
-	//undefined field_0x63;
-	//undefined field_0x64;
-	//undefined field_0x65;
-	//undefined field_0x66;
-	//undefined field_0x67;
-	//undefined field_0x68;
-	//undefined field_0x69;
-	//undefined field_0x6a;
-	//undefined field_0x6b;
-	//undefined field_0x6c;
-	//undefined field_0x6d;
-	//undefined field_0x6e;
-	//undefined field_0x6f;
 });
 
 static_assert(sizeof(edObbTREE) == 0x70);
@@ -460,9 +446,26 @@ struct edColConfig {
 	int bSetMemFlags;
 };
 
+struct edColINFO_OUT
+{
+	edF32VECTOR4 location;
+	uint result;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 field_0x30;
+	float field_0x44;
+	int field_0x48;
+	int field_0x4c;
+	int field_0x50;
+};
+
 void edColComputeMatrices(edColPRIM_OBJECT* pPrimObj);
 edColG3D_OBB_TREE* edColLoadStatic(char* pFileBuffer, uint length, uint bConvertTriangles);
 uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObbTREE_DYN* pObbTreeA, edObbTREE_DYN* pObbTreeB);
+
+float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN* pObbTree, edColRAY_OBB_IN* pRay);
+
+float edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT_BOX_UNIT_IN* param_2);
 
 edColConfig* edColGetConfig(void);
 void edColInit(void);

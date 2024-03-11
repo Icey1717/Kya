@@ -10,13 +10,25 @@
 
 #include <assert.h>
 
+
+#define CHAR_TO_UINT64(str) \
+     (static_cast<unsigned long long>(str[0]) | \
+     (static_cast<unsigned long long>(str[1]) << 8) | \
+     (static_cast<unsigned long long>(str[2]) << 16) | \
+     (static_cast<unsigned long long>(str[3]) << 24) | \
+     (static_cast<unsigned long long>(str[4]) << 32) | \
+     (static_cast<unsigned long long>(str[5]) << 40) | \
+     (static_cast<unsigned long long>(str[6]) << 48) | \
+     (static_cast<unsigned long long>(str[7]) << 56))
+
 #define ACTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Actor", level, format, ##__VA_ARGS__)
 
 struct edNODE;
-struct CActor;
 struct ed_g3d_hierarchy;
 struct ed_3d_hierarchy_node;
+struct S_BOUNDING_BOX;
 
+class CPlayerInput;
 
 enum ACTOR_MESSAGE {};
 typedef void* MSG_PARAM;
@@ -51,7 +63,7 @@ struct CBehaviour
 	virtual void InitState(int newState) {}
 	virtual void TermState(int, int) {}
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
-	virtual bool InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
 struct CBehaviourStand : public CBehaviour
@@ -145,12 +157,7 @@ struct AnimMatrixData;
 
 class CCollision;
 
-class CActorsTable
-{
-public:
-	int entryCount;
-	CActor* aEntries[59];
-};
+//typedef CFixedTable<CActor*, 64> CActorsTable;
 
 struct CShadow;
 struct ByteCode;
@@ -275,6 +282,7 @@ public:
 	void PreInit();
 	void SetScaleVector(float x, float y, float z);
 	bool SV_IsWorldBoundingSphereIntersectingSphere(edF32VECTOR4* param_2);
+	bool SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox);
 	void EvaluateManageState();
 	void EvaluateDisplayState();
 
@@ -309,10 +317,11 @@ public:
 	virtual void UpdateAnimEffects();
 	virtual void UpdatePostAnimEffects();
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
-	virtual bool ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
-	virtual bool InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
 	virtual void CinematicMode_Leave(int behaviourId);
+	virtual CPlayerInput* GetInputManager(int, int);
 	virtual void Reset();
 
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
@@ -337,7 +346,7 @@ public:
 	void PlayAnim(int inAnimType);
 	int GetIdMacroAnim(int inAnimType);
 
-	bool DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags);
+	int DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags);
 
 	// #HACK
 	void SkipToNextActor(ByteCode* pByteCode);
@@ -356,7 +365,8 @@ public:
 
 	bool PlayWaitingAnimation(float param_1, float param_2, int specialAnimType, int regularAnimType, byte idleLoopsToPlay);
 
-	void SV_GetBoneDefaultWorldPosition(uint param_2, edF32VECTOR4* param_3);
+	void SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition);
+	void SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition);
 	bool SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, int mode);
 	void SV_UpdatePercent(float param_1, float param_2, float* pValue);
 	bool CActor::SV_UpdateValue(float target, float speed, float* pValue);
