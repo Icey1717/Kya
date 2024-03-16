@@ -131,11 +131,12 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 
 	edF32Vector4SubHard(&eStack80, this->aCameraLocations + this->cameraNum, this->aCameraLocations + this->cameraNum + -1);
 	
-	local_10.w = edF32Vector4DotProductHard(&eStack80, &eStack80);
-	if (0.01f < local_10.w) {
+	fVar4 = edF32Vector4DotProductHard(&eStack80, &eStack80);
+	if (0.01f < fVar4) {
 		iVar3 = this->cameraNum;
 		edF32Vector4SubHard(&local_120, this->aCameraLocations + iVar3 + -1, this->aCameraLocations + iVar3);
-		edF32Vector4NormalizeHard(&local_120, &local_120);
+		local_10.w = edF32Vector4NormalizeHard_Fixed(&local_120, &local_120);
+
 		CCollisionRay CStack320 = CCollisionRay(local_10.w, this->aCameraLocations + iVar3, &local_120);
 		fVar4 = CStack320.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_110, (_ray_info_out*)0x0);
 		local_70 = local_120;
@@ -1525,7 +1526,7 @@ void CCameraGame::_Normal_ManageIdle()
 	float fVar6;
 
 	fVar3 = 0.0f;
-	if (((CCamera::_gpcam_man->field_0xa7c == 0) || (0.05f <= this->field_0xd0->dynamic.intensity)) ||
+	if (((CCamera::_gpcam_man->field_0xa7c == 0) || (0.05f <= this->field_0xd0->dynamic.speed)) ||
 		(iVar1 = CCameraStack::GetCurHeroState(), iVar1 != 4)) {
 		(this->field_0x450).x = 0.0f;
 	}
@@ -1714,13 +1715,13 @@ void CCameraGame::FUN_002c8160()
 	}
 
 	if ((this->field_0x280 == 0) && (pCVar1 != (CActorHeroPrivate*)0x0)) {
-		this->field_0x1d8 = pCVar1->dynamic.field_0x40;
+		this->field_0x1d8 = pCVar1->dynamic.linearJerk;
 	}
 	else {
 		this->field_0x1d8 = 7.0f;
 	}
 
-	this->field_0x1dc = fabs(pCVar1->dynamic.field_0x44 * pCVar1->dynamic.currentLocation.y);
+	this->field_0x1dc = fabs(pCVar1->dynamic.linearAcceleration * pCVar1->dynamic.velocityDirectionEuler.y);
 	if (this->field_0x1d8 < fabs(this->field_0x1dc)) {
 		this->field_0x1b8 = 1;
 	}
@@ -1869,7 +1870,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 						bVar3 = true;
 					}
 
-					if ((bVar3) && (pCVar9->dynamic.field_0x44 * pCVar9->dynamic.currentLocation.y < 0.5f)) {
+					if ((bVar3) && (pCVar9->dynamic.linearAcceleration * pCVar9->dynamic.velocityDirectionEuler.y < 0.5f)) {
 						bVar4 = true;
 					}
 
@@ -2057,7 +2058,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 
 					pitch = edFIntervalLERP(pitch, 0.0f, 15.0f, 0.0f, 7.0f);
 					fVar11 = this->targetPitch;
-					calculatedPitch = GetAngleXFromVector(&field_0xd0->dynamic.currentLocation);
+					calculatedPitch = GetAngleXFromVector(&field_0xd0->dynamic.velocityDirectionEuler);
 					calculatedPitch = edF32GetAnglesDelta(fVar11, calculatedPitch);
 
 					pitch = edF32Between_Pi(this->targetPitch + pitch * (sinf(calculatedPitch) / cosf(calculatedPitch) / 2.414f) * CCamera::_gpcam_man->time_0x4);
@@ -2783,7 +2784,7 @@ void CCameraGame::_After_Manage_Alpha()
 							(uVar4 = pHero->TestState_IsGrippedOrClimbing(0xffffffff), uVar4 == 0)))) ||
 						((pHero != (CActorHero*)0x0 && (bVar1 = pHero->TestState_IsInCheatMode(), bVar1 != false)))) {
 						if ((pHero != (CActorHero*)0x0) && (uVar4 = pHero->TestState_IsInTheWind(0xffffffff), uVar4 != 0)) {
-							fVar6 = edFIntervalLERP(this->field_0xd0->dynamic.intensity, 3.0f, 6.0f, 0.01f, 0.8f);
+							fVar6 = edFIntervalLERP(this->field_0xd0->dynamic.speed, 3.0f, 6.0f, 0.01f, 0.8f);
 							fVar7 = (this->cameraConfig).targetPitch;
 							(this->cameraConfig).targetPitch = fVar7 + fVar6 * (1.047198f - fVar7);
 							this->field_0x240 = fVar5;
@@ -2947,11 +2948,11 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 
 
 	edF32Vector4SubHard(aeStack96, &this->transformationMatrix.rowT, &this->gameLookAt);
-	edF32Vector4NormalizeHard(aeStack96, aeStack96);
+	edF32Vector4NormalizeHard_Fixed(aeStack96, aeStack96);
 	edF32Vector4ScaleHard(this->field_0x208, aeStack96, aeStack96);
 	edF32Vector4AddHard(aeStack96, aeStack96, &this->gameLookAt);
 	edF32Vector4SubHard(aeStack96, &this->lookAt, aeStack96);
-	edF32Vector4NormalizeHard(aeStack96, aeStack96);
+	fVar4 = edF32Vector4NormalizeHard_Fixed(aeStack96, aeStack96);
 
 	this->distance = fVar4;
 
@@ -3151,7 +3152,7 @@ bool CCameraGame::Manage()
 				vectorG.y = 0.0f;
 			}
 
-			edF32Vector4NormalizeHard(&vectorG, &vectorG);
+			edF32Vector4NormalizeHard_Fixed(&vectorG, &vectorG);
 
 			this->transformationMatrix.rowZ = vectorG;
 			this->field_0x1b0 = this->field_0x1b0 & 0xffffffe1;
@@ -3188,7 +3189,7 @@ bool CCameraGame::Manage()
 					const static float FLOAT_00448a74 = 5.0f;
 
 					edF32Vector4SubHard(&eStack112, &g_CameraVectorBase.aCameraLocations[1], &this->transformationMatrix.rowT);
-					edF32Vector4NormalizeHard(&eStack112, &eStack112);
+					edF32Vector4NormalizeHard_Fixed(&eStack112, &eStack112);
 					edF32Vector4ScaleHard(FLOAT_00448a74 * CCamera::_gpcam_man->time_0x4, &eStack112, &eStack112);
 					edF32Vector4AddHard(&eStack128, (edF32VECTOR4*)&this->transformationMatrix.da, &eStack112);
 					edF32Vector4SubHard(&eStack112, &this->gameLookAt, &eStack128);

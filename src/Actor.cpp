@@ -123,7 +123,7 @@ CActor::CActor()
 	this->prevBehaviourId = -1;
 	this->actorState = AS_None;
 	this->prevActorState = AS_None;
-	this->timeA = 0.0f;
+	this->timeInAir = 0.0f;
 	this->idleTimer = 0.0f;
 	this->field_0x110 = (undefined*)0x0;
 	this->currentAnimType = -1;
@@ -585,7 +585,7 @@ void CActor::Manage()
 	//	}
 	//}
 	pTimeController = Timer::GetTimer();
-	this->timeA = this->timeA + pTimeController->cutsceneDeltaTime;
+	this->timeInAir = this->timeInAir + pTimeController->cutsceneDeltaTime;
 	pTimeController = Timer::GetTimer();
 	this->idleTimer = this->idleTimer + pTimeController->cutsceneDeltaTime;
 	return;
@@ -778,7 +778,7 @@ void CActor::SetState(int newState, int animType)
 				pCVar3->InitState(this->actorState);
 			}
 		}
-		this->timeA = 0.0f;
+		this->timeInAir = 0.0f;
 		this->idleTimer = 0.0f;
 		this->numIdleLoops = 0;
 	}
@@ -2717,14 +2717,14 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 		local_10.z = (this->rotationQuat).z;
 		local_10.w = 0.0f;
 
-		edF32Vector4NormalizeHard(&local_10, &local_10);
+		edF32Vector4NormalizeHard_Fixed(&local_10, &local_10);
 
 		local_20.x = pNewOrientation->x;
 		local_20.y = 0.0f;
 		local_20.z = pNewOrientation->z;
 		local_20.w = 0.0f;
 
-		edF32Vector4NormalizeHard(&local_20, &local_20);
+		edF32Vector4NormalizeHard_Fixed(&local_20, &local_20);
 
 		pTVar1 = GetTimer();
 		fVar4 = speed * pTVar1->cutsceneDeltaTime;
@@ -2755,7 +2755,7 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 
 			edF32Matrix4RotateYHard(fVar4, &eStack96, &gF32Matrix4Unit);
 			edF32Matrix4MulF32Vector4Hard(&local_10, &eStack96, &local_10);
-			edF32Vector4NormalizeHard(&local_10, &local_10);
+			edF32Vector4NormalizeHard_Fixed(&local_10, &local_10);
 
 			this->rotationQuat = local_10;
 		}

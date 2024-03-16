@@ -85,7 +85,7 @@ public:
 
 	void StateHeroJump_3_3(int param_2);
 
-	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, edF32VECTOR4* param_8);
+	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
 	void SetBoomyFunc(int param_2);
 	void IncreaseEffort(float param_1);
 
@@ -96,6 +96,9 @@ public:
 
 	void SetBoomyHairOff();
 	void SetBoomyHairOn();
+
+	int EvolutionBounceCanJump();
+	bool CanBounceAgainstWall();
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -149,12 +152,12 @@ public:
 	// Standard settings.
 	float field_0x1040;
 	float field_0x104c;
-	float field_0x1044;
+	float airRotationRate;
 	float runSpeed;
 	float field_0x1054;
 	float field_0x1058;
 	float field_0x105c;
-	float field_0x1060;
+	float airNoInputSpeed;
 	float field_0x1184;
 	float field_0x1574;
 
@@ -174,9 +177,9 @@ public:
 
 	int field_0xe3c;
 
-	float jmp_field_0x1130;
-	float jmp_field_0x1134;
-	float jmp_field_0x1138;
+	float airMinSpeed;
+	float airHorizontalSpeed;
+	float airControlSpeed;
 	float jmp_field_0x113c;
 	float jmp_field_0x1140;
 

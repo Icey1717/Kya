@@ -6,11 +6,11 @@
 namespace DebugHelpers {
 	namespace ImGui {
 		static inline void TextVector4(const char* name, const edF32VECTOR4& v) {
-			::ImGui::Text("%s: x: %f, y: %f, z: %f, w: %f", name, v.x, v.y, v.z, v.w);
+			::ImGui::Text("%s: x: %.3f, y: %.3f, z: %.3f, w: %.3f", name, v.x, v.y, v.z, v.w);
 		}
 
 		static inline void TextVector3(const char* name, const edF32VECTOR3& v) {
-			::ImGui::Text("%s: x: %f, y: %f, z: %f", name, v.x, v.y, v.z);
+			::ImGui::Text("%s: x: %.3f, y: %.3f, z: %.3f", name, v.x, v.y, v.z);
 		}
 
 		static inline void TextHash4(const char* name, const uint& hash) {

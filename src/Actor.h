@@ -252,7 +252,7 @@ public:
 	float lightingFloat_0xe0;
 	ushort field_0xf0;
 
-	float timeA;
+	float timeInAir;
 	float idleTimer;
 	int numIdleLoops;
 

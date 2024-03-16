@@ -254,6 +254,15 @@ ImGui::End();
 		case STATE_HERO_SLIDE_SLIP_C:
 			return "StateHeroSlideSlipC";
 			break;
+		case STATE_HERO_JUMP_1_1_RUN:
+			return "StateHeroJump_1_1_Run";
+			break;
+		case STATE_HERO_JUMP_2_3_RUN:
+			return "StateHeroJump_2_3_Run";
+			break;
+		case STATE_HERO_JUMP_3_3_RUN:
+			return "StateHeroJump_3_3_Run";
+			break;
 		case 0x3:
 			return "Cinematic";
 			break;
@@ -283,17 +292,21 @@ ImGui::End();
 
 			ImGui::Spacing();
 
+			if (ImGui::CollapsingHeader("Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
+				ImGui::Text("Time in air: %.3f", pActorHero->timeInAir);
+			}
+
 			if (ImGui::CollapsingHeader("Dynamic", ImGuiTreeNodeFlags_DefaultOpen)) {
 				DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->dynamic.rotationQuat);
 				DebugHelpers::ImGui::TextVector4("field_0x10", pActorHero->dynamic.field_0x10);
-				DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->dynamic.currentLocation);
-				DebugHelpers::ImGui::TextVector4("Horizontal Location", pActorHero->dynamic.horizontalLocation);
+				DebugHelpers::ImGui::TextVector4("Velocity Direction Euler", pActorHero->dynamic.velocityDirectionEuler);
+				DebugHelpers::ImGui::TextVector4("Horizontal Velocity Direction Euler", pActorHero->dynamic.horizontalVelocityDirectionEuler);
 
 				ImGui::Text("Flags: %x", pActorHero->flags);
 
-				ImGui::InputFloat("Intensity", &pActorHero->dynamic.intensity);
-				ImGui::InputFloat("field_0x40", &pActorHero->dynamic.field_0x40);
-				ImGui::InputFloat("field_0x44", &pActorHero->dynamic.field_0x44);
+				ImGui::InputFloat("Speed", &pActorHero->dynamic.speed);
+				ImGui::InputFloat("Linear Jerk", &pActorHero->dynamic.linearJerk);
+				ImGui::InputFloat("Linear Acceleration", &pActorHero->dynamic.linearAcceleration);
 				ImGui::InputFloat("field_0x54", &pActorHero->dynamic.field_0x54);
 				ImGui::InputFloat("field_0x58", &pActorHero->dynamic.field_0x58);
 			}

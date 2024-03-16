@@ -65,7 +65,14 @@ void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 	return;
 }
 
-void edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+float edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	// REPLACE ALL WITH edF32Vector4NormalizeHard_Fixed, then rename, messed this up.
+	IMPLEMENTATION_GUARD();
+	return 0.0f;
+}
+
+float edF32Vector4NormalizeHard_Fixed(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;
 	float fVar2;
@@ -75,12 +82,13 @@ void edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 	fVar1 = v1->x;
 	fVar2 = v1->y;
 	fVar3 = v1->z;
-	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0);
+	const float magnitude = sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f;
+	fVar4 = 1.0f / magnitude;
 	v0->x = fVar1 * fVar4;
 	v0->y = fVar2 * fVar4;
 	v0->z = fVar3 * fVar4;
 	v0->w = 0.0f;
-	return;
+	return magnitude;
 }
 
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
@@ -1164,7 +1172,7 @@ void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0)
 	return;
 }
 
-void edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
+float edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;
 	float fVar2;
@@ -1174,7 +1182,9 @@ void edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 	fVar3 = gF32Vector4UnitZ.w;
 	fVar2 = gF32Vector4UnitZ.z;
 	fVar1 = gF32Vector4UnitZ.y;
+
 	v1Magnitude = sqrtf(v1->x * v1->x + v1->y * v1->y + v1->z * v1->z) + 0.0f;
+
 	if (v1Magnitude < g_TinyFloat_00448548) {
 		v0->x = gF32Vector4UnitZ.x;
 		v0->y = fVar1;
@@ -1182,16 +1192,17 @@ void edF32Vector4SafeNormalize1Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 		v0->w = fVar3;
 	}
 	else {
-		v1Magnitude = 1.0f / v1Magnitude;
+		const float v1RecipricalMagnitude = 1.0f / v1Magnitude;
 		fVar1 = v1->y;
 		fVar2 = v1->z;
 		fVar3 = v1->w;
-		v0->x = v1->x * v1Magnitude;
-		v0->y = fVar1 * v1Magnitude;
-		v0->z = fVar2 * v1Magnitude;
-		v0->w = fVar3 * v1Magnitude;
+		v0->x = v1->x * v1RecipricalMagnitude;
+		v0->y = fVar1 * v1RecipricalMagnitude;
+		v0->z = fVar2 * v1RecipricalMagnitude;
+		v0->w = fVar3 * v1RecipricalMagnitude;
 	}
-	return;
+
+	return v1Magnitude;
 }
 
 float edF32Vector4GetDistHard(edF32VECTOR4* v0)

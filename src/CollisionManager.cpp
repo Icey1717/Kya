@@ -681,7 +681,7 @@ void CCollision::ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVerte
 			}
 		}
 		else {
-			edF32Vector4NormalizeHard(pLowestVertex, v1);
+			edF32Vector4NormalizeHard_Fixed(pLowestVertex, v1);
 		}
 
 		pLowestVertex->w = 1.0f;
@@ -1294,7 +1294,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 						fVar18 = (pColDbObj->location).x * (pColDbObj->field_0x40).x + (pColDbObj->location).y * (pColDbObj->field_0x40).y + (pColDbObj->location).z * (pColDbObj->field_0x40).z;
 						local_f0 = pColDbObj->field_0x40 - (pColDbObj->location * fVar18);
 
-						edF32Vector4NormalizeHard(&local_f0, &local_f0);
+						edF32Vector4NormalizeHard_Fixed(&local_f0, &local_f0);
 
 						if (CCollisionManager::_material_table[materialIndex].field_0x8 <= local_f0.y) {
 							pColDbObj->location = local_f0;

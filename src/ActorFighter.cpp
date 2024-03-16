@@ -649,7 +649,7 @@ void CActorFighter::ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, 
 	this->field_0x410 = iVar1->field_0xb0;
 	fVar2 = edF32Vector4GetDistHard(&this->field_0x410);
 	peVar1 = &this->field_0x400;
-	edF32Vector4NormalizeHard(peVar1, peVar1);
+	edF32Vector4NormalizeHard_Fixed(peVar1, peVar1);
 	peVar1 = &this->field_0x400;
 	edF32Vector4ScaleHard(fVar2, peVar1, peVar1);
 	this->field_0x400.w = 1.0f;

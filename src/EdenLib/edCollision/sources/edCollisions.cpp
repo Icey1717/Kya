@@ -582,7 +582,7 @@ void edColTriangle4GetInfo(edF32TRIANGLE4_INFOS* pInfo, edF32TRIANGLE4* pTriangl
 	(pInfo->field_0x0).y = fVar7 * fVar4 - fVar8 * fVar3;
 	(pInfo->field_0x0).z = fVar3 * fVar6 - fVar4 * fVar5;
 	(pInfo->field_0x0).w = in_vf0x;
-	edF32Vector4NormalizeHard(&pInfo->field_0x0, &pInfo->field_0x0);
+	edF32Vector4NormalizeHard_Fixed(&pInfo->field_0x0, &pInfo->field_0x0);
 	pInfo->field_0x10 = -((pInfo->field_0x0).x * peVar1->x + (pInfo->field_0x0).y * peVar1->y + (pInfo->field_0x0).z * peVar1->z);
 	return;
 }
@@ -827,7 +827,7 @@ float edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNI
 	eStack80.width = 0.5f;
 	eStack80.height = 0.5f;
 	eStack80.depth = 0.5f;
-	edF32Vector4NormalizeHard(&local_60, param_2->field_0x4);
+	edF32Vector4NormalizeHard_Fixed(&local_60, param_2->field_0x4);
 	fVar2 = edObbIntersectObbRay(&eStack80, param_2->field_0x0, &local_60);
 
 	if (0.0f <= fVar2) {
@@ -926,7 +926,7 @@ void edColGetNormalInWorldFromLocal(edF32VECTOR4* param_1, edF32MATRIX4* param_2
 	edF32Matrix4GetTransposeHard(&eStack64, param_2);
 	edF32Matrix4MulF32Vector4Hard(param_1, &eStack64, param_3);
 	param_1->w = 0.0f;
-	edF32Vector4NormalizeHard(param_1, param_1);
+	edF32Vector4NormalizeHard_Fixed(param_1, param_1);
 	return;
 }
 
@@ -1068,7 +1068,7 @@ bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN*
 			}
 
 			local_80.w = 1.0f;
-			edF32Vector4NormalizeHard(&local_90, &local_80);
+			edF32Vector4NormalizeHard_Fixed(&local_90, &local_80);
 			local_90.x = 0.0f - local_90.x;
 			local_90.y = 0.0f - local_90.y;
 			local_90.z = 0.0f - local_90.z;
@@ -1077,14 +1077,14 @@ bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN*
 			local_110 = local_80;
 
 			edColGetNormalInWorldFromLocal(&local_90, &m0->matrix_0x40, &local_90);
-			edF32Vector4NormalizeHard(&eStack288, &local_80);
+			edF32Vector4NormalizeHard_Fixed(&eStack288, &local_80);
 			eStack288.w = 1.0f;
 			edF32Matrix4MulF32Vector4Hard(&local_80, &m0->matrix_0x0, &local_80);
 			edF32Matrix4MulF32Vector4Hard(&local_130, &m0->matrix_0x0, &eStack288);
 			local_140 = local_130 - local_80;
 
 			fVar10 = edF32Vector4GetDistHard(&local_140);
-			edF32Vector4NormalizeHard(&local_110, &local_110);
+			edF32Vector4NormalizeHard_Fixed(&local_110, &local_110);
 			local_110.w = 1.0f;
 			edF32Matrix4MulF32Vector4Hard(&local_80, &m0->matrix_0x0, &local_110);
 			edColGetWorldVelocity(&local_30, &local_80, pPrimIn->field_0x10, pPrimIn->field_0x14, pPrimIn->field_0x18);
@@ -1747,7 +1747,7 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 			local_80.y = local_80.y * fVar5;
 			local_80.z = local_80.z * fVar5;
 			local_80.w = 1.0f;
-			edF32Vector4NormalizeHard(&local_90, &local_80);
+			edF32Vector4NormalizeHard_Fixed(&local_90, &local_80);
 			local_90.x = 0.0f - local_90.x;
 			local_90.y = 0.0f - local_90.y;
 			local_90.z = 0.0f - local_90.z;
@@ -1757,7 +1757,7 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 			local_110.z = local_80.z;
 			local_110.w = local_80.w;
 			edColGetNormalInWorldFromLocal(&local_90, &m0->matrix_0x40, &local_90);
-			edF32Vector4NormalizeHard(&eStack288, &local_80);
+			edF32Vector4NormalizeHard_Fixed(&eStack288, &local_80);
 			eStack288.w = 1.0f;
 			edF32Matrix4MulF32Vector4Hard(&local_80, &m0->matrix_0x0, &local_80);
 			edF32Matrix4MulF32Vector4Hard(&local_130, &m0->matrix_0x0, &eStack288);
@@ -1766,7 +1766,7 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 			local_140.z = local_130.z - local_80.z;
 			local_140.w = local_130.w - local_80.w;
 			fVar5 = edF32Vector4GetDistHard(&local_140);
-			edF32Vector4NormalizeHard(&local_110, &local_110);
+			edF32Vector4NormalizeHard_Fixed(&local_110, &local_110);
 			local_110.w = 1.0f;
 			edF32Matrix4MulF32Vector4Hard(&local_80, &m0->matrix_0x0, &local_110);
 			edColGetWorldVelocity(&local_30, &local_80, pParams->aCentre, pParams->field_0x14, pParams->field_0x18);
@@ -1986,7 +1986,7 @@ void edColIntersectBoxSphere(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_IN
 			local_d0.y = local_d0.y * fVar8;
 			local_d0.z = local_d0.z * fVar8;
 			local_d0.w = local_d0.w * fVar8;
-			edF32Vector4NormalizeHard(&pColInfoOut->field_0x10, &local_e0);
+			edF32Vector4NormalizeHard_Fixed(&pColInfoOut->field_0x10, &local_e0);
 			(pColInfoOut->field_0x20).x = local_d0.x;
 			(pColInfoOut->field_0x20).y = local_d0.y;
 			(pColInfoOut->field_0x20).z = local_d0.z;

@@ -286,7 +286,7 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 	edF32VECTOR4 aeStack544[3];
 	edF32VECTOR4 eStack496;
 	CActorsTable local_1e0;
-	edF32VECTOR4 eStack208;
+	edF32VECTOR4 newLocation;
 	edF32VECTOR4 eStack192;
 	edF32VECTOR4 horizontalTranslation;
 	edF32VECTOR4 local_a0;
@@ -295,9 +295,9 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 	edF32VECTOR4 local_70;
 	edF32VECTOR4 movementSurfaceNormal;
 	edF32VECTOR4 local_50;
-	edF32VECTOR4 local_40;
+	edF32VECTOR4 currentLocation;
 	edF32VECTOR4 local_30;
-	edF32VECTOR4 eStack32;
+	edF32VECTOR4 velocity;
 	edF32VECTOR4 translation;
 	CCollision* pCollision;
 
@@ -308,7 +308,7 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 	bVar3 = false;
 	uVar2 = this->dynamic.flags;
 
-	local_40 = this->currentLocation;
+	currentLocation = this->currentLocation;
 
 	this->dynamic.flags = 0;
 	uVar10 = flags | this->dynamic.field_0x4c;
@@ -336,24 +336,36 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 
 	if (((uVar10 & 0x100) != 0) && ((pCollision->flags_0x4 & 2) == 0)) {
 		if ((uVar10 & 0x100000) == 0) {
-			fVar15 = this->dynamic.field_0x44;
+			fVar15 = this->dynamic.linearAcceleration;
 			pTVar6 = GetTimer();
 			fVar15 = pTVar6->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
+
+			AUTONOMOUS_LOG(LogLevel::Verbose, "Acceleration: {} ({})", fVar15, this->dynamic.linearAcceleration);
 		}
 		else {
 			fVar15 = this->dynamicExt.field_0x6c;
 			pTVar6 = GetTimer();
 			fVar15 = pTVar6->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
+
+			AUTONOMOUS_LOG(LogLevel::Verbose, "Acceleration: {} ({})", fVar15, this->dynamicExt.field_0x6c);
+
 		}
 
 		edF32Vector4ScaleHard(fVar15, &eStack144, &this->dynamicExt.normalizedTranslation);
 		peVar9 = &this->dynamicExt.aVelocity[1];
+
+		AUTONOMOUS_LOG(LogLevel::Verbose, "eStack144 {} vel[1]: {} normalizedT: {}",
+			eStack144.ToString(), this->dynamicExt.aVelocity[1].ToString(), this->dynamicExt.normalizedTranslation.ToString());
+
 		edF32Vector4AddHard(peVar9, peVar9, &eStack144);
+
+		AUTONOMOUS_LOG(LogLevel::Verbose, "vel[1] result: {}", this->dynamicExt.aVelocity[1].ToString());
+
 		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aVelocity[1]);
 		this->dynamicExt.aVelocityMagnitudes[1] = fVar15;
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Unknown: {}", this->dynamicExt.aVelocity[0].ToString());
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Unknown: {}", this->dynamicExt.aVelocity[1].ToString());
 
 	if (this->pTiedActor == (CActor*)0x0) {
 		pTVar6 = GetTimer();
@@ -376,6 +388,7 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 	local_a0.w = 0.0f;
 
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
+		AUTONOMOUS_LOG(LogLevel::Verbose, "Vel {}: {}", iVar8, this->dynamicExt.aVelocity[iVar8].ToString());
 		edF32Vector4AddHard(&local_a0, &local_a0, &this->dynamicExt.aVelocity[iVar8]);
 	}
 
@@ -404,14 +417,20 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 	fVar15 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &translation);
 	this->dynamicExt.field_0x6c = fVar15;
 
+	AUTONOMOUS_LOG(LogLevel::Verbose, "New normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
+
 	local_30.x = translation.x;
 	local_30.y = translation.y;
 	local_30.z = translation.z;
 	local_30.w = translation.w;
-	edF32Vector4ScaleHard(this->dynamic.intensity, &eStack32, &this->dynamic.rotationQuat);
-	edF32Vector4AddHard(&translation, &translation, &eStack32);
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation rotation: {} translation: {} intensity: {}", this->dynamic.rotationQuat.ToString(), translation.ToString(), this->dynamic.intensity);
+	edF32Vector4ScaleHard(this->dynamic.speed, &velocity, &this->dynamic.rotationQuat);
+
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Calculated velocity: {} speed: {} rotation: {}", velocity.ToString(), this->dynamic.speed, this->dynamic.rotationQuat.ToString());
+
+	edF32Vector4AddHard(&translation, &translation, &velocity);
+
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation post velocity: {} ", translation.ToString());
 
 	if ((pCollision->flags_0x4 & 2) != 0) {
 		if ((uVar10 & 0x1000) == 0) {
@@ -539,11 +558,15 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 	if (((uVar10 & 0x40) != 0) || (bVar3)) {
 		fVar15 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &translation);
 		this->dynamicExt.field_0x6c = fVar15;
+
+		AUTONOMOUS_LOG(LogLevel::Verbose, "New normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
 	}
 
 	if (bVar4) {
 		fVar15 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &local_30);
 		this->dynamicExt.field_0x6c = fVar15;
+
+		AUTONOMOUS_LOG(LogLevel::Verbose, "New normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
 	}
 
 	if (((uVar10 & 0x10) != 0) &&
@@ -592,8 +615,8 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		}
 	}
 	else {
-		edF32Vector4AddHard(&eStack208, &this->currentLocation, &translation);
-		UpdatePosition(&eStack208, true);
+		edF32Vector4AddHard(&newLocation, &this->currentLocation, &translation);
+		UpdatePosition(&newLocation, true);
 	}
 
 	if ((uVar7 & 0x10000) == 0) {
@@ -607,6 +630,8 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 				this->dynamicExt.field_0x6c = sqrtf(this->dynamicExt.field_0x6c * this->dynamicExt.field_0x6c - fVar15 * fVar15);
 				this->dynamicExt.normalizedTranslation.y = 0.0f;
 
+				AUTONOMOUS_LOG(LogLevel::Verbose, "Reset normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
+
 				this->dynamic.field_0x10.x = 0.0f;
 				this->dynamic.field_0x10.y = 0.0f;
 				this->dynamic.field_0x10.z = 0.0f;
@@ -618,6 +643,8 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 			this->dynamicExt.normalizedTranslation.y = 0.0f;
 			this->dynamicExt.normalizedTranslation.z = 0.0f;
 			this->dynamicExt.normalizedTranslation.w = 0.0f;
+
+			AUTONOMOUS_LOG(LogLevel::Verbose, "Reset normalizedTranslation: {}", this->dynamicExt.normalizedTranslation.ToString());
 
 			this->dynamicExt.field_0x6c = 0.0f;
 
@@ -653,6 +680,8 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		this->dynamic.field_0x10.y = 0.0f;
 		this->dynamic.field_0x10.z = 0.0f;
 		this->dynamic.field_0x10.w = 0.0f;
+
+		AUTONOMOUS_LOG(LogLevel::Verbose, "Reset normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
 	}
 
 	IMPLEMENTATION_GUARD_LOG(
@@ -664,7 +693,7 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		fVar15 = this->dynamicExt.base.field_0x44;
 		iVar8 = (*(code*)(this->base.pVTable)->field_0x100)(this);
 		*(float*)(iVar8 + 0x44) = fVar15;
-		fVar15 = this->dynamicExt.base.intensity;
+		fVar15 = this->dynamicExt.base.speed;
 		iVar8 = (*(code*)(this->base.pVTable)->field_0x100)(this);
 		*(float*)(iVar8 + 0x48) = fVar15;
 		uVar16 = this->dynamicExt.base.field_0x4c;
@@ -716,8 +745,9 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		this->dynamic.flags = this->dynamic.flags | 2;
 	}
 
-	fVar15 = edF32Vector4DotProductHard(&translation, &eStack32);
-	if (fVar15 < 0.0) {
+	const float directionDot = edF32Vector4DotProductHard(&translation, &velocity);
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation . velocity: {} velocity: {} translation: {}", directionDot, velocity.ToString(), translation.ToString());
+	if (directionDot < 0.0) {
 		this->dynamic.flags = this->dynamic.flags | 1;
 	}
 
@@ -726,10 +756,10 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		this->dynamic.flags = this->dynamic.flags | 4;
 	}
 
-	ComputeRealMoving(&local_40, fVar15);
+	ComputeRealMoving(&currentLocation, directionDot);
 
 	fVar15 = 0.05f;
-	if (0.05f < this->dynamic.field_0x44) {
+	if (0.05f < this->dynamic.linearAcceleration) {
 		pTVar5 = GetTimer();
 		fVar15 = pTVar5->scaledTotalTime;
 		this->dynamicExt.scaledTotalTime = fVar15;
@@ -739,6 +769,7 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		IMPLEMENTATION_GUARD(
 		fVar15 = (float)(*(code*)(this->base.pVTable)->field_0x110)(this);)
 	}
+
 	return fVar15;
 }
 

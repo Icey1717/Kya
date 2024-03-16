@@ -16,14 +16,14 @@ public:
 
 	edF32VECTOR4 rotationQuat;
 	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 currentLocation;
-	edF32VECTOR4 horizontalLocation;
+	edF32VECTOR4 velocityDirectionEuler;
+	edF32VECTOR4 horizontalVelocityDirectionEuler;
 
 	uint flags;
 
-	float field_0x40;
-	float field_0x44;
-	float intensity;
+	float linearJerk;
+	float linearAcceleration;
+	float speed;
 	undefined4 field_0x4c;
 
 	float field_0x54;

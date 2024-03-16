@@ -612,8 +612,8 @@ void CBehaviourCinematic::Manage()
 		CActorMovable* pMoveable = reinterpret_cast<CActorMovable*>(this->pOwner);
 		pMoveable->ComputeRealMoving(&local_10, fVar6);
 		if (pMoveable->actorState == 0x3) {
-			fVar6 = (pMoveable->dynamic).field_0x44;
-			pMoveable->vector_0x120c = (pMoveable->dynamic).currentLocation.xyz * fVar6;
+			fVar6 = (pMoveable->dynamic).linearAcceleration;
+			pMoveable->vector_0x120c = (pMoveable->dynamic).velocityDirectionEuler.xyz * fVar6;
 		}
 	}
 	return;
