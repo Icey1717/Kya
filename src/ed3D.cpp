@@ -615,7 +615,7 @@ struct RenderFrame_30_B_DEPRECATED {
 
 struct ed_dma_material {
 	ed_g2d_material* pMaterial;
-	undefined4 field_0x4;
+	float field_0x4;
 	edLIST list;
 	uint flags;
 	ed_g2d_bitmap* pBitmap;
@@ -3913,7 +3913,7 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 				}
 				else {
 					if (sVar1 == LIST_TYPE_STRIP) {
-						IMPLEMENTATION_GUARD(ed3DFlushStripMultiTexture((int)pRVar5, (byte*)pMaterial));
+						IMPLEMENTATION_GUARD_LOG(ed3DFlushStripMultiTexture((int)pRVar5, (byte*)pMaterial));
 					}
 				}
 
@@ -3994,6 +3994,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 
 	puVar14 = g_VifRefPktCur;
 	pMVar2 = pRenderData->pMeshTransformData;
+
 	/* Previous mesh may use the same base transform, so check if its different here. */
 	if ((gpCurHierarchy != pMVar2) || (pMVar2 == (ed_3d_hierarchy*)0x0)) {
 		gpCurHierarchy = pMVar2;
@@ -4011,41 +4012,38 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 		pRVar5->asU32[2] = SCE_VIF1_SET_FLUSH(0);
 		pRVar5->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 	}
+
 	pMVar12 = pRenderData->pObjToWorld;
-	if (((1 < pMaterial->count_0x0) || (pMVar12 == &gF32Matrix4Unit)) && (uVar11 = 0, gFushListCounter != 0xe))
-	{
+
+	if (((1 < pMaterial->count_0x0) || (pMVar12 == &gF32Matrix4Unit)) && (uVar11 = 0, gFushListCounter != 0xe))	{
 		bVar1 = pMaterial->count_0x0;
+
 		for (; uVar11 < bVar1; uVar11 = uVar11 + 1) {
 			ed_g2d_layer* pTVar6 = ed3DGetG2DLayer(pMaterial, uVar11);
-			if (((pTVar6 != (ed_g2d_layer*)0x0) && (bVar4 = ed3DFXIsTrue(pTVar6), bVar4 != false)) ||
-				(pMVar10 == &gF32Matrix4Unit)) {
-				IMPLEMENTATION_GUARD(
-					m0 = (edF32MATRIX4*)(puVar14 + 3);
+
+			if (((pTVar6 != (ed_g2d_layer*)0x0) && (bVar4 = ed3DFXIsTrue(pTVar6), bVar4 != false)) || (pMVar10 == &gF32Matrix4Unit)) {
 				puVar14->cmdA = ED_VIF1_SET_TAG_CNT(6);
 				puVar14->cmdB = 0;
-				iVar8 = 8;
-				*(undefined4*)&puVar14->cmdB = 0;
-				*(undefined4*)((ulong)&puVar14->cmdB + 4) = 0x6c0603fa;
-				pMVar9 = &local_40;
-				pMVar10 = WorldToCamera_Matrix;
-				do {
-					iVar8 = iVar8 + -1;
-					fVar3 = pMVar10->ab;
-					pMVar9->aa = pMVar10->aa;
-					pMVar10 = (edF32MATRIX4*)&pMVar10->ac;
-					pMVar9->ab = fVar3;
-					pMVar9 = (edF32MATRIX4*)&pMVar9->ac;
-				} while (0 < iVar8);
-				if (local_40.ac + local_40.aa + local_40.ab != 0.0) {
-					edF32Vector4NormalizeHard((float*)&local_40, (float*)&local_40);
+	
+				puVar14->asU32[2] = SCE_VIF1_SET_NOP(0);
+				puVar14->asU32[3] = SCE_VIF1_SET_UNPACK(0x03fa, 0x06, UNPACK_V4_32, 0); // 0x6c0603fa;
+
+				local_40 = *WorldToCamera_Matrix;
+
+				if (local_40.ac + local_40.aa + local_40.ab != 0.0f) {
+					edF32Vector4NormalizeHard_Fixed(&local_40.rowX, &local_40.rowX);
 				}
-				if (local_40.bc + local_40.ba + local_40.bb != 0.0) {
-					edF32Vector4NormalizeHard(&local_40.ba, &local_40.ba);
+
+				if (local_40.bc + local_40.ba + local_40.bb != 0.0f) {
+					edF32Vector4NormalizeHard_Fixed(&local_40.rowY, &local_40.rowY);
 				}
-				if (local_40.cc + local_40.ca + local_40.cb != 0.0) {
-					edF32Vector4NormalizeHard(&local_40.ca, &local_40.ca);
+
+				if (local_40.cc + local_40.ca + local_40.cb != 0.0f) {
+					edF32Vector4NormalizeHard_Fixed(&local_40.rowZ, &local_40.rowZ);
 				}
+
 				edF32Matrix4GetTransposeHard(&local_40, &local_40);
+
 				iVar8 = 8;
 				local_40.aa = local_40.aa * Vector_004489bc.x;
 				local_40.ab = local_40.ab * Vector_004489bc.y;
@@ -4055,38 +4053,33 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 				local_40.bb = local_40.bb * Vector_004489cc.y;
 				local_40.bc = local_40.bc * Vector_004489cc.z;
 				local_40.bd = local_40.bd * Vector_004489cc.w;
-				*(float*)&puVar14[1].cmdA = local_40.aa;
-				*(float*)((ulong)&puVar14[1].cmdA + 4) = local_40.ab;
-				*(float*)&puVar14[1].cmdB = local_40.ac;
-				*(float*)((ulong)&puVar14[1].cmdB + 4) = local_40.ad;
-				*(float*)&puVar14[2].cmdA = local_40.ba;
-				*(float*)((ulong)&puVar14[2].cmdA + 4) = local_40.bb;
-				*(float*)&puVar14[2].cmdB = local_40.bc;
-				*(float*)((ulong)&puVar14[2].cmdB + 4) = local_40.bd;
-				pMVar9 = m0;
-				do {
-					iVar8 = iVar8 + -1;
-					fVar3 = pMVar12->ab;
-					pMVar9->aa = pMVar12->aa;
-					pMVar12 = (edF32MATRIX4*)&pMVar12->ac;
-					pMVar9->ab = fVar3;
-					pMVar9 = (edF32MATRIX4*)&pMVar9->ac;
-				} while (0 < iVar8);
-				*(undefined4*)&puVar14[6].cmdB = 0;
-				*(undefined4*)((ulong)&puVar14[6].cmdA + 4) = 0;
-				*(undefined4*)&puVar14[6].cmdA = 0;
-				*(undefined4*)((ulong)&puVar14[5].cmdB + 4) = 0;
-				*(undefined4*)((ulong)&puVar14[4].cmdB + 4) = 0;
-				*(undefined4*)((ulong)&puVar14[3].cmdB + 4) = 0;
-				*(undefined4*)((ulong)&puVar14[6].cmdB + 4) = 0x3f800000;
+
+				puVar14[1].asVector = local_40.rowX;
+				puVar14[2].asVector = local_40.rowY;
+
+				m0 = (edF32MATRIX4*)(puVar14 + 3);
+				*m0 = *pMVar12;
+
+				m0->rowT.x = 0.0f;
+				m0->rowT.y = 0.0f;
+				m0->rowT.z = 0.0f;
+				m0->rowT.w = 1.0f;
+
+				m0->rowX.w = 0.0f;
+				m0->rowY.w = 0.0f;
+				m0->rowZ.w = 0.0f;
+
+
 				sceVu0InverseMatrix(m0, m0);
 				edF32Matrix4GetTransposeHard(m0, m0);
-				puVar14 = puVar14 + 7;)
-					break;
+				puVar14 = puVar14 + 7;
+				break;
 			}
+
 			bVar1 = pMaterial->count_0x0;
 		}
 	}
+
 	g_VifRefPktCur = puVar14;
 	puVar14 = ed3DHierachyCheckForGlobalAlpha(puVar14, gCurLayer);
 	g_VifRefPktCur = puVar14;
@@ -4416,7 +4409,7 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 				g_GifRefPktCur = g_GifRefPktCur + 1;
 			}
 			else {
-				IMPLEMENTATION_GUARD(
+				IMPLEMENTATION_GUARD_LOG(
 					g_GifRefPktCur = ed3DFlushMultiTexture(pMaterial, g_GifRefPktCur, 0, gVRAMBufferFlush);)
 			}
 		}
@@ -6871,6 +6864,35 @@ inline void ed3DLinkMaterialToPrimList(ed_dma_material* pCurrentMaterial, int Pr
 	pCurList->pPrev = pNextNode;
 }
 
+void ed3DLinkStripManageLinkToDMALink(edLIST* pList, ed_dma_material* pMaterial, short param_3)
+{
+	ed_dma_material* pOtherMaterial;
+	edNODE_MANAGER* peVar1;
+	edNODE* peVar2;
+	edLIST* peVar3;
+	edLIST* peVar4;
+
+	peVar4 = (edLIST*)pList->pPrev;
+	pOtherMaterial = (ed_dma_material*)peVar4->pData;
+	peVar3 = pList;
+
+	while ((peVar4 != pList && (0.0f <= pMaterial->field_0x4 - pOtherMaterial->field_0x4))) {
+		peVar4 = (edLIST*)peVar4->pPrev;
+		peVar3 = (edLIST*)peVar3->pPrev;
+		pOtherMaterial = (ed_dma_material*)peVar4->pData;
+	}
+
+	peVar1 = (edNODE_MANAGER*)pList->pData;
+	peVar2 = peVar1->pNodeHead + peVar1->linkCount;
+	peVar2->pData = pMaterial;
+	peVar1->linkCount = peVar1->linkCount + 1;
+	pList->nodeCount = pList->nodeCount + 1;
+	peVar2->header.typeField.type = param_3;
+	peVar2->pPrev = (edNODE*)peVar4;
+	peVar3->pPrev = peVar2;
+	return;
+}
+
 void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB, edF32VECTOR4* pBoundingSphere, ed_g2d_material* pLinkMaterial, ed_g2d_bitmap* pBitmap)
 {
 	ed_dma_material* peVar1;
@@ -6879,7 +6901,7 @@ void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB,
 	ed_dma_matrix* pMVar7;
 	edNODE* peVar4;
 	edNODE* pNewMeshTransformSpecial;
-	ed_3d_hierarchy* peVar5;
+	edNODE_MANAGER* peVar5;
 	int* piVar6;
 	ed_dma_material* pCurrentMaterial;
 	uint uVar8;
@@ -6892,14 +6914,12 @@ void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB,
 	if ((((flagsB & 0x200) != 0) && ((flagsA & 0x80000000) != 0)) ||
 		((uVar8 = flagsA & 0xfc, uVar8 != 0 &&
 			((((flagsA & 0x80000000) == 0 && ((flagsA & 0x4000) == 0)) && ((flagsB & 0x40) == 0)))))) {
-		IMPLEMENTATION_GUARD(
 		if (gRender_info_SPR->boundingSphereTestResult == 1) {
-			pBoundingSphere->x = (pStrip->boundingSphere).x;
-			pBoundingSphere->y = (pStrip->boundingSphere).y;
-			pBoundingSphere->z = (pStrip->boundingSphere).z;
-			pBoundingSphere->w = 1.0;
+			pBoundingSphere->xyz = (pStrip->boundingSphere).xyz;
+			pBoundingSphere->w = 1.0f;
 			edF32Matrix4MulF32Vector4Hard(pBoundingSphere, gRender_info_SPR->pMeshTransformMatrix, pBoundingSphere);
 		}
+
 		pCurrentMaterial = DmaMaterialBufferCurrent;
 		pList = &DmaMaterialBufferCurrent->list;
 		ppCurrentMaterialMaterial = &DmaMaterialBufferCurrent->pMaterial;
@@ -6907,20 +6927,23 @@ void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB,
 		*ppCurrentMaterialMaterial = pLinkMaterial;
 		pCurrentMaterial->field_0x4 = pBoundingSphere->z;
 		pCurrentMaterial->flags = pCurrentMaterial->flags & 0xfffffffe;
-		(pCurrentMaterial->list).node.pNext = (edNODE*)pList;
-		(pCurrentMaterial->list).node.pPrev = (edNODE*)pList;
-		(pCurrentMaterial->list).node.pData = (ed_3d_hierarchy*)gNodeDmaMatrix;
+
+		(pCurrentMaterial->list).pNext = (edNODE*)pList;
+		(pCurrentMaterial->list).pPrev = (edNODE*)pList;
+		(pCurrentMaterial->list).pData = gNodeDmaMatrix;
 		(pCurrentMaterial->list).field_0x10 = 0;
 		(pCurrentMaterial->list).nodeCount = 0;
-		(pCurrentMaterial->list).node.header = 0;
+		(pCurrentMaterial->list).header.mode = 0;
+
 		pMVar7 = ed3DListCreateDmaMatrixNode(gRender_info_SPR, gRender_info_SPR->pMeshTransformData);
 		pCurrentMaterial->pBitmap = pBitmap;
-		if ((pStrip->shadowFlags == 0) &&
-			((((DAT_00449420 != '\0' && ((pStrip->flags_0x0 & 0x10000) != 0)) && ((pStrip->flags_0x0 & 0x2000) == 0)) ||
-				(((DAT_00448a08 != '\0' && (gRender_info_SPR->pMeshTransformData != (ed_3d_hierarchy_node*)0x0)) &&
+		if ((pStrip->shadowCastFlags == 0) &&
+			((((BYTE_00449420 != 0 && ((pStrip->flags & 0x10000) != 0)) && ((pStrip->flags & 0x2000) == 0)) ||
+				(((BYTE_00448a08 != 0 && (gRender_info_SPR->pMeshTransformData != (ed_3d_hierarchy*)0x0)) &&
 					((gRender_info_SPR->pMeshTransformData->flags_0x9e & 0x400) != 0)))))) {
 			ed3DLinkStripManageLinkToDMALink(gPrim_List[0xe] + gCurRenderList, pCurrentMaterial, 1);
-			peVar5 = (pCurrentMaterial->list).node.pData;
+
+			peVar5 = (edNODE_MANAGER*)(pCurrentMaterial->list).pData;
 		}
 		else {
 			if ((flagsA & 0x80000000) == 0) {
@@ -6929,38 +6952,42 @@ void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB,
 			else {
 				ed3DLinkStripManageLinkToDMALink(gPrim_List[7] + gCurRenderList, pCurrentMaterial, 1);
 			}
-			peVar5 = (pCurrentMaterial->list).node.pData;
+
+			peVar5 = (edNODE_MANAGER*)(pCurrentMaterial->list).pData;
 		}
-		peVar4 = (edNODE*)((int)(peVar5->transformA).ab + (int)(peVar5->transformA).ad * 0x10);
-		peVar4->pData = (ed_3d_hierarchy*)pMVar7;
-		*(undefined2*)&peVar4->header = 2;
-		(peVar5->transformA).ad = (float)((int)(peVar5->transformA).ad + 1);
+
+		peVar4 = peVar5->pNodeHead + peVar5->linkCount;
+		peVar4->pData = pMVar7;
+		peVar4->header.typeField.type = 2;
+		peVar5->linkCount = peVar5->linkCount + 1;
 		(pCurrentMaterial->list).nodeCount = (pCurrentMaterial->list).nodeCount + 1;
-		peVar4->pPrev = (pCurrentMaterial->list).node.pPrev;
-		(pCurrentMaterial->list).node.pPrev = peVar4;
+		peVar4->pPrev = (pCurrentMaterial->list).pPrev;
+		(pCurrentMaterial->list).pPrev = peVar4;
+
 		if ((ed_3d_hierarchy*)gRender_info_SPR->pPkt != (ed_3d_hierarchy*)0x0) {
-			peVar5 = (pMVar7->list).node.pData;
-			peVar4 = (edNODE*)((int)(peVar5->transformA).ab + (int)(peVar5->transformA).ad * 0x10);
-			peVar4->pData = (ed_3d_hierarchy*)gRender_info_SPR->pPkt;
-			*(undefined2*)&peVar4->header = 5;
-			(peVar5->transformA).ad = (float)((int)(peVar5->transformA).ad + 1);
-			(pMVar7->list).nodeCount = (pMVar7->list).nodeCount + 1;
-			peVar4->pPrev = (pMVar7->list).node.pPrev;
-			(pMVar7->list).node.pPrev = peVar4;
+			peVar5 = (edNODE_MANAGER*)pMVar7->pData;
+			peVar4 = peVar5->pNodeHead + peVar5->linkCount;
+			peVar4->pData = gRender_info_SPR->pPkt;
+			peVar4->header.typeField.type = 5;
+			peVar5->linkCount = peVar5->linkCount + 1;
+			pMVar7->nodeCount = pMVar7->nodeCount + 1;
+			peVar4->pPrev = pMVar7->pPrev;
+			pMVar7->pPrev = peVar4;
 		}
-		peVar5 = (pMVar7->list).node.pData;
-		peVar4 = (edNODE*)((int)(peVar5->transformA).ab + (int)(peVar5->transformA).ad * 0x10);
-		peVar4->pData = (ed_3d_hierarchy*)pStrip;
-		*(undefined2*)&peVar4->header = 3;
-		*(short*)((int)&peVar4->header + 2) = (short)pStrip->flags_0x0;
-		(peVar5->transformA).ad = (float)((int)(peVar5->transformA).ad + 1);
-		(pMVar7->list).nodeCount = (pMVar7->list).nodeCount + 1;
-		peVar4->pPrev = (pMVar7->list).node.pPrev;
+
+		peVar5 = (edNODE_MANAGER*)pMVar7->pData;
+		peVar4 = peVar5->pNodeHead + peVar5->linkCount;
+		peVar4->pData = pStrip;
+		peVar4->header.typeField.type = 3;
+		peVar4->header.typeField.flags = (short)pStrip->flags;
+		peVar5->linkCount = peVar5->linkCount + 1;
+		pMVar7->nodeCount = pMVar7->nodeCount + 1;
+		peVar4->pPrev = pMVar7->pPrev;
 		peVar4->pNext = (edNODE*)pStrip->pDMA_Matrix.pDMA_Matrix;
-		(pMVar7->list).node.pPrev = peVar4;
-		)
+		pMVar7->pPrev = peVar4;
 		return;
 	}
+
 	/* Boomy path */
 	peVar1 = (ed_dma_material*)LOAD_SECTION(pLinkMaterial->pDMA_Material);
 	if (peVar1 == (ed_dma_material*)0x0) {

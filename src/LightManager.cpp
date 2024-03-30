@@ -1912,7 +1912,7 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 						for (iVar7 = 0; iVar7 < iVar5; iVar7 = iVar7 + 1) {
 							IMPLEMENTATION_GUARD(
 							if ((&pLightA->pZoneHolder->pManagerC24_0x4)[iVar8] ==
-								*(ManagerC_24**)(pLightB->field_0x10 + iVar7 * 4 + 4)) {
+								*(CWayPoint**)(pLightB->field_0x10 + iVar7 * 4 + 4)) {
 								return 0.0;
 							})
 						}
@@ -1935,7 +1935,7 @@ float CLightManager::ComputeCollision(CLight* pLightA, CLight* pLightB)
 						for (iVar7 = 0; iVar7 < iVar5; iVar7 = iVar7 + 1) {
 							IMPLEMENTATION_GUARD(
 							if ((&pLightB->pZoneHolder->pManagerC24_0x4)[iVar8] ==
-								*(ManagerC_24**)(pLightA->field_0x10 + iVar7 * 4 + 4)) {
+								*(CWayPoint**)(pLightA->field_0x10 + iVar7 * 4 + 4)) {
 								return 0.0;
 							})
 						}

@@ -19,6 +19,9 @@
 #define STATE_HERO_SLIDE_SLIP_B 0xe2
 #define STATE_HERO_SLIDE_SLIP_C 0xe3
 
+#define STATE_HERO_SLIDE_A 0xe4
+#define STATE_HERO_SLIDE_B 0xe5
+
 struct CPlayerInput;
 class CActorBoomy;
 

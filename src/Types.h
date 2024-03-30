@@ -716,9 +716,10 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 template<typename T>
 struct S_STREAM_REF {
 	void Init();
+	T* Get();
 
 	union {
-		T* pObj;
+		int pObj;
 		int index;
 	};
 };
@@ -765,5 +766,9 @@ public:
 
 class CActor;
 typedef CFixedTable<CActor*, 64> CActorsTable;
+
+// This shows up when the VIF0 does an MR32.w to zero out the w element of the vector register.
+// Define it here and check wherever it shows up in the code to make sure an appropriate MR32.w inst is ther.
+const float in_vf0x = 0.0f;
 
 #endif //_TYPES_H

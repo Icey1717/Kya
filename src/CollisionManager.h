@@ -18,18 +18,33 @@ struct s_collision_contact
 
 class CActor;
 
+struct S_TIED_ACTOR_ENTRY {
+	CActor* pActor;
+	S_TIED_ACTOR_ENTRY* pNext;
+	S_TIED_ACTOR_ENTRY* pPrev;
+	int carryMethod;
+};
+
+struct S_CARRY_ACTOR_ENTRY {
+	edF32MATRIX4 m0;
+	edF32MATRIX4 m1;
+	int field_0x80;
+};
+
 class CCollision
 {
 public:
+
 	CCollision();
 
 	uint flags_0x0;
 	uint flags_0x4;
 	byte primType;
 
-	edColOBJECT* pColObj;
+	S_TIED_ACTOR_ENTRY* pTiedActorEntry;
+	S_CARRY_ACTOR_ENTRY* pCarryActorEntry;
 
-	edF32MATRIX4* pMatrix;
+	edColOBJECT* pColObj;
 
 	s_collision_contact aCollisionContact[3];
 
@@ -51,7 +66,6 @@ public:
 	int field_0x18;
 
 	CActor* field_0x1c;
-	undefined* field_0x20;
 
 	void Init() {}
 
@@ -62,6 +76,7 @@ public:
 
 	static edObbTREE_DYN* GetFirstObbPrimRecurse(edObbTREE_DYN* pObbTree);
 	static void PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, int param_3, int param_4);
+	static void SetObbTreePositionRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* pMatrix);
 	static void SetObbTreeMatrixNoRotationRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2, edF32MATRIX4* param_3);
 	static void SetObbTreePositionNoRotationRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2);
 	static void ComputeG3DObbTreeLowestAndHighestVertices(edF32VECTOR4* pHighestVertex, edF32VECTOR4* pLowestVertex, int param_3, edColG3D_OBB_TREE_DYN* pDynCol);
@@ -70,7 +85,7 @@ public:
 	static void SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2, edF32MATRIX4* param_3);
 	static void TransformG3DObbTreeVertices(edColG3D_OBB_TREE_DYN* pDynCol, int matrixType, edF32MATRIX4* pTransformMatrix);
 
-	uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0);
+	uint CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0);
 	uint CheckCollisionsWithScenery(int param_2);
 	uint ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int param_4);
 	void PreprocessActorContacts(float param_1, CActor* pActor, CActorsTable* pTable, CActor** pOutActor);
@@ -78,6 +93,14 @@ public:
 	void CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATRIX4* pMatrix, CActorsTable* pActorTable, CActor* param_5, int param_6);
 	void CheckCollisions_TranslateActor(CActor* pActor, edF32VECTOR4* param_3, CActorsTable* param_4, CActor* param_5, int param_6);
 	void UpdateMatrix(edF32MATRIX4* param_2);
+
+	void RegisterTiedActor(CActor* pActorTo, CActor* pActor, int carryMethod);
+	CActor* FindTiedActor(CActor* pActor);
+	float GetSubjectiveCarriedWeight();
+	float GetCarriedWeight();
+
+	void CheckCollisions_MoveActor(CActor* pActor, edF32MATRIX4* m0, CActorsTable* pActorsTable, CActor* pOtherActor, int param_6);
+	void CheckCollisions_MoveActor(CActor* pActor, edF32VECTOR4* pVector, CActorsTable* pActorsTable, CActor* pOtherActor, int param_6);
 };
 
 struct MaterialTableEntry
@@ -113,6 +136,10 @@ struct BankCollision_14
 
 class CCollisionManager : public CObjectManager {
 public:
+
+	static S_TIED_ACTOR_ENTRY _tied_actors_table[0x100];
+	static S_CARRY_ACTOR_ENTRY _carry_info_table[0x80];
+
 	CCollisionManager();
 	void Level_Create(ByteCode* pMemoryStream);
 	void Level_PostCreate();

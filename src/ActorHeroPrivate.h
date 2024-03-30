@@ -77,6 +77,8 @@ public:
 	void StateHeroSlideSlipInit();
 	void StateHeroSlideSlip(int nextState, bool boolA, bool boolB);
 
+	void StateHeroSlideInit(int param_2);
+
 	void StateHeroJump_1_3(int nextState);
 
 	void StateHeroJump_2_3Init();
@@ -99,6 +101,7 @@ public:
 
 	int EvolutionBounceCanJump();
 	bool CanBounceAgainstWall();
+	void ChangeCollisionSphereForLying(float param_2);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -113,6 +116,7 @@ public:
 	float field_0xa88;
 
 	undefined4 field_0x1a50;
+	int field_0x1094;
 
 	edF32VECTOR4 field_0xf00;
 
@@ -122,6 +126,9 @@ public:
 	int field_0x1a4c;
 
 	float field_0x1048;
+
+	edF32VECTOR4 field_0x10a0;
+	edF32VECTOR4 field_0x10b0;
 
 	uint field_0x15a0;
 
@@ -147,6 +154,7 @@ public:
 	// Run settings.
 	float field_0x1068;
 	float field_0x1074;
+	float field_0x1078;
 	float field_0x107c;
 
 	// Standard settings.

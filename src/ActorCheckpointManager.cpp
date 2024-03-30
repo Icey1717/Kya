@@ -1,16 +1,13 @@
 #include "ActorCheckpointManager.h"
 #include "MemoryStream.h"
 
-struct EventChunk_24 {};
-struct ManagerC_24 {};
-
 void CActorCheckpointManager::Create(ByteCode* pByteCode)
 {
 	int iVar1;
 	int* piVar2;
 	S_CHECKPOINT* pSVar3;
 	EventChunk_24* pEVar4;
-	ManagerC_24* pMVar5;
+	CWayPoint* pMVar5;
 	int iVar6;
 	uint uVar7;
 	ActorAndWaypoint* pAVar8;
@@ -31,11 +28,11 @@ void CActorCheckpointManager::Create(ByteCode* pByteCode)
 			do {
 				pEVar4 = (EventChunk_24*)pByteCode->GetS32();
 				//pSVar3->pEventChunk24_0x0 = pEVar4;
-				pMVar5 = (ManagerC_24*)pByteCode->GetS32();
+				pMVar5 = (CWayPoint*)pByteCode->GetS32();
 				//pSVar3->pManagerC24_0x4 = pMVar5;
 				iVar6 = pByteCode->GetS32();
 				//pSVar3->field_0x8 = iVar6;
-				pMVar5 = (ManagerC_24*)pByteCode->GetS32();
+				pMVar5 = (CWayPoint*)pByteCode->GetS32();
 				//pSVar3->pManagerC24_0xc = pMVar5;
 				uVar7 = pByteCode->GetU32();
 				//pSVar3->flags_0x10 = uVar7;

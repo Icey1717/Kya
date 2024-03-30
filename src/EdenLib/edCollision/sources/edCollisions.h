@@ -92,6 +92,50 @@ struct edColPRIM_RAY_UNIT_BOX_UNIT_IN {
 };
 
 PACK(
+	struct edColPRIM_SPHERE {
+	edF32MATRIX4 matrix_0x0;
+	edF32MATRIX4 matrix_0x40;
+	uint flags_0x80;
+	undefined field_0x84;
+	undefined field_0x85;
+	undefined field_0x86;
+	undefined field_0x87;
+	undefined field_0x88;
+	undefined field_0x89;
+	undefined field_0x8a;
+	undefined field_0x8b;
+	undefined field_0x8c;
+	undefined field_0x8d;
+	undefined field_0x8e;
+	undefined field_0x8f;
+};
+)
+
+static_assert(sizeof(edColPRIM_SPHERE) == 0x90);
+
+PACK(
+	struct edColPRIM_BOX {
+	edF32MATRIX4 matrix_0x0;
+	edF32MATRIX4 matrix_0x40;
+	uint flags_0x80;
+	undefined field_0x84;
+	undefined field_0x85;
+	undefined field_0x86;
+	undefined field_0x87;
+	undefined field_0x88;
+	undefined field_0x89;
+	undefined field_0x8a;
+	undefined field_0x8b;
+	undefined field_0x8c;
+	undefined field_0x8d;
+	undefined field_0x8e;
+	undefined field_0x8f;
+};
+)
+
+static_assert(sizeof(edColPRIM_BOX) == 0x90);
+
+PACK(
 	struct edColPRIM_OBJECT
 {
 	edF32MATRIX4 matrix_0x0;
@@ -465,7 +509,9 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 
 float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN* pObbTree, edColRAY_OBB_IN* pRay);
 
-float edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT_BOX_UNIT_IN* param_2);
+void edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT_BOX_UNIT_IN* pParams);
+
+void edColGetNormalInWorldFromLocal(edF32VECTOR4* param_1, edF32MATRIX4* param_2, edF32VECTOR4* param_3);
 
 edColConfig* edColGetConfig(void);
 void edColInit(void);

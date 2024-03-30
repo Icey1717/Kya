@@ -17,6 +17,7 @@
 #include "CollisionManager.h"
 #include "ActorManager.h"
 #include "InputManager.h"
+#include "PathManager.h"
 
 void CVision::Create(CActor* pActor, ByteCode* pByteCode)
 {
@@ -290,6 +291,7 @@ void CActor::SetScale(float x, float y, float z)
 	this->scale.y = y;
 	this->scale.z = z;
 	this->scale.w = 1.0f;
+
 	if (((x == 1.0f) && (y == 1.0f)) && (z == 1.0f)) {
 		this->flags = this->flags & 0xfbffffff;
 	}
@@ -376,7 +378,7 @@ void CActor::Create(ByteCode* pByteCode)
 
 	memcpy(this->name, name, 64);
 
-	//if (strcmp(name, "KIM") == 0) {
+	//if (strcmp(name, "ILOTFLOTTANT_MOYEN") == 0) {
 	//	memcpy(this->name, name, 64);
 	//}
 
@@ -1332,7 +1334,7 @@ void CActor::SetupDefaultPosition()
 
 	namedObj30 = this->pCinData;
 	this->baseLocation.xyz = namedObj30->position;
-	this->baseLocation.w = 1.0;
+	this->baseLocation.w = 1.0f;
 	namedObj30 = this->pCinData;
 	if (fabs(namedObj30->scale.x - 1.0f) <= 0.0001f) {
 		namedObj30->scale.x = 1.0f;
@@ -1496,6 +1498,8 @@ void CActor::UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision)
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
+	ACTOR_LOG(LogLevel::Verbose, "CActor::UpdatePosition {} {}", this->name, pPosition->ToString());
+
 	this->currentLocation = pPosition->rowT;
 
 	pHier = this->pMeshTransform;
@@ -1604,11 +1608,10 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 	this->aComponents = pComponentList;
 	componentCount = pComponentList->count;
 	if (0 < componentCount) {
-		if (((this->flags & 0x2000000) == 0) ||
-			((CActorFactory::gClassProperties[this->typeID].flags & 0x40000) == 0)) {
-			for (; 0 < componentCount; componentCount = componentCount + -1) {
-				BehaviourEntry* pEntry = &pComponentList->aComponents[componentCount - 1];
+		if (((this->flags & 0x2000000) == 0) || ((CActorFactory::gClassProperties[this->typeID].flags & 0x40000) == 0)) {
+			BehaviourEntry* pEntry = pComponentList->aComponents;;
 
+			for (; 0 < componentCount; componentCount = componentCount + -1) {
 				const int componentStrmLen = pEntry->GetSize();
 
 				ACTOR_LOG(LogLevel::Info, "CActor::LoadBehaviours {} {} id: {} length: {}", this->name, componentCount - 1, pEntry->id, componentStrmLen);
@@ -1630,6 +1633,8 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 				if (processedLen != componentStrmLen) {
 					pByteCode->SetPosition(pcVar2 + componentStrmLen);
 				}
+
+				pEntry = pEntry + 1;
 			}
 		}
 		else {
@@ -2494,16 +2499,10 @@ void CActor::ComputeAltitude()
 		local_30.w = edF32VECTOR4_0040e190.w;
 		pCVar2 = this->pCollisionData;
 		if ((pCVar2 == (CCollision*)0x0) || ((pCVar2->flags_0x0 & 0x40000) == 0)) {
-			local_40.x = this->currentLocation.x;
-			local_40.y = this->currentLocation.y;
-			local_40.z = this->currentLocation.z;
-			local_40.w = this->currentLocation.w;
+			local_40 = this->currentLocation;
 		}
 		else {
-			local_40.x = (pCVar2->vectorFieldA).x;
-			local_40.y = (pCVar2->vectorFieldA).y;
-			local_40.z = (pCVar2->vectorFieldA).z;
-			local_40.w = (pCVar2->vectorFieldA).w;
+			local_40 = pCVar2->vectorFieldA
 		}
 		local_40.y = local_40.y + 0.3;
 		CCollisionRay::CCollisionRay(this->field_0xec, &CStack96, &local_40, &local_30);
@@ -2544,7 +2543,7 @@ void CActor::ComputeAltitude()
 	return;
 }
 
-void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4)
+void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5)
 {
 	CActor* pCurrentTiedActor;
 	CCollision* pCVar2;
@@ -2579,9 +2578,10 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4)
 					return;
 				})
 			}
+
 			pCurrentTiedActor = this->pTiedActor;
-			if ((pCurrentTiedActor != (CActor*)0x0) &&
-				(((pTieActor != (CActor*)0x0 || ((this->flags & 0x20000) == 0)) || (param_4 == -1)))) {
+
+			if ((pCurrentTiedActor != (CActor*)0x0) && (((pTieActor != (CActor*)0x0 || ((this->flags & 0x20000) == 0)) || (param_4 == -1)))) {
 				IMPLEMENTATION_GUARD(
 				pCurrentTiedActor->pCollisionData->UnregisterTiedActor(this);
 				this->pTiedActor = (CActor*)0x0;
@@ -2593,8 +2593,9 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4)
 					this[1].data.lightingFlags = (uint)pTVar6->scaledTotalTime;
 				})
 			}
+
 			if (pTieActor != (CActor*)0x0) {
-				IMPLEMENTATION_GUARD(
+	
 				pTieActor->pCollisionData->RegisterTiedActor(pTieActor, this, carryMethod);
 				this->pTiedActor = pTieActor;
 				this->flags = this->flags | 0x40000;
@@ -2607,7 +2608,7 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4)
 					if (param_4 == -1) {
 						this->flags = this->flags | 0x20000;
 					}
-				})
+				}
 			}
 		}
 	}
@@ -2799,6 +2800,61 @@ void CActor::SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition)
 	return;
 }
 
+void CActor::SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* param_6)
+{
+	edF32MATRIX4 local_40;
+
+	ACTOR_LOG(LogLevel::VeryVerbose, "CActor::SV_UpdatePosition_Rel {} pPosition: {}", this->name, pPosition->ToString());
+
+	if (this->pTiedActor == (CActor*)0x0) {
+		if (param_3 != 0) {
+			if (param_6 != (edF32VECTOR4*)0x0) {
+				edF32Vector4AddHard(pPosition, pPosition, param_6);
+			}
+			if ((param_4 == 0) || (this->pCollisionData == (CCollision*)0x0)) {
+				UpdatePosition(pPosition, true);
+			}
+			else {
+				this->pCollisionData->CheckCollisions_MoveActor(this, pPosition, pActorsTable, 0, 1);
+			}
+		}
+	}
+	else {
+		if ((param_3 != 0) || ((this->flags & 0x40000) != 0)) {
+			edF32Matrix4FromEulerSoft(&local_40, &this->pCinData->rotationEuler, "XYZ");
+			local_40.rowT = *pPosition;
+			SV_UpdateMatrix_Rel(&local_40, param_3, param_4, pActorsTable, param_6);
+		}
+	}
+	return;
+}
+
+void CActor::SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0)
+{
+	S_CARRY_ACTOR_ENTRY* peVar1;
+	float fVar2;
+	int iVar3;
+	edF32MATRIX4* peVar4;
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 eStack64;
+
+	if ((this->pCollisionData == (CCollision*)0x0) ||
+		(peVar1 = this->pCollisionData->pCarryActorEntry, peVar4 = &peVar1->m1, peVar1 == (S_CARRY_ACTOR_ENTRY*)0x0)) {
+		edF32Matrix4FromEulerSoft(&eStack64, &this->pCinData->rotationEuler, "XYZ");
+		eStack64.rowT = this->baseLocation;
+
+		edF32Matrix4GetInverseOrthoHard(&eStack64, &eStack64);
+		edF32Matrix4FromEulerSoft(&eStack128, &this->rotationEuler.xyz, "XYZ");
+		eStack128.rowT = this->currentLocation;
+		edF32Matrix4MulF32Matrix4Hard(m0, &eStack64, &eStack128);
+	}
+	else {
+		*m0 = *peVar4;
+	}
+
+	return;
+}
+
 void CActor::SV_UpdatePercent(float param_1, float param_2, float* pValue)
 {
 	Timer* pTVar1;
@@ -2908,6 +2964,203 @@ CActor* CActor::GetCollidingActor()
 		pCVar1 = this->pCollisionData->actorField;
 	}
 	return pCVar1;
+}
+
+void CActor::SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* v0)
+{
+	edF32VECTOR3 local_10;
+
+	ACTOR_LOG(LogLevel::Verbose, "CActor::SV_UpdateMatrix_Rel {} {}", this->name, m0->rowT.ToString());
+
+	if ((this->pTiedActor != (CActor*)0x0) && ((param_3 != 0 || ((this->flags & 0x40000) != 0)))) {
+		this->flags = this->flags & 0xfffbffff;
+		SV_InheritMatrixFromTiedToActor(m0);
+		param_3 = 1;
+	}
+
+	if (param_3 != 0) {
+		if (v0 != (edF32VECTOR4*)0x0) {
+			edF32Vector4AddHard(&m0->rowT, &m0->rowT, v0);
+		}
+
+		edF32Matrix4ToEulerSoft(m0, &local_10, "XYZ");
+		(this->rotationEuler).xyz = local_10;
+
+		SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
+
+		if ((param_4 == 0) || (this->pCollisionData == (CCollision*)0x0)) {
+			UpdatePosition(m0, 1);
+		}
+		else {
+			this->pCollisionData->CheckCollisions_MoveActor(this, m0, pActorsTable, 0, 1);
+		}
+	}
+	return;
+}
+
+void CActor::SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0)
+{
+	CActor* pCVar1;
+	S_CARRY_ACTOR_ENTRY* pSVar2;
+	uint uVar3;
+	CActor* pCVar4;
+	int iVar5;
+	edF32MATRIX4* peVar6;
+	edF32MATRIX4* peVar7;
+	float fVar8;
+	edF32MATRIX4 eStack224;
+	edF32MATRIX4 eStack160;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 local_40;
+
+	pCVar4 = this->pTiedActor->pCollisionData->FindTiedActor(this);
+	pCVar1 = this->pTiedActor;
+
+	if ((pCVar1->pCollisionData == (CCollision*)0x0) || (pSVar2 = pCVar1->pCollisionData->pCarryActorEntry, peVar7 = &pSVar2->m1, pSVar2 == (S_CARRY_ACTOR_ENTRY*)0x0)) {
+		edF32Matrix4FromEulerSoft(&eStack160, &pCVar1->pCinData->rotationEuler, "XYZ");
+		eStack160.rowT = pCVar1->baseLocation;
+
+		edF32Matrix4GetInverseOrthoHard(&eStack160, &eStack160);
+		edF32Matrix4FromEulerSoft(&eStack224, &pCVar1->rotationEuler.xyz, "XYZ");
+
+		eStack224.rowT = pCVar1->currentLocation;
+
+		edF32Matrix4MulF32Matrix4Hard(&local_40, &eStack160, &eStack224);
+	}
+	else {
+		local_40 = *peVar7;
+	}
+
+	uVar3 = pCVar4->actorFieldS;
+	if (uVar3 != 0) {
+		if (uVar3 == 3) {
+			local_60 = m0->rowT;
+			edF32Matrix4MulF32Matrix4Hard(m0, m0, &local_40);
+			m0->rowT = local_60;
+			return;
+		}
+
+		if (uVar3 == 1) {
+			edF32Matrix4MulF32Vector4Hard(&local_50, &local_40, &m0->rowT);
+			fVar8 = GetAngleYFromVector(&local_40.rowZ);
+			edF32Matrix4RotateYHard(fVar8, m0, m0);
+			m0->rowT = local_50;
+			return;
+		}
+
+		if (uVar3 == 2) {
+			edF32Matrix4MulF32Vector4Hard(&m0->rowT, &local_40, &m0->rowT);
+			return;
+		}
+	}
+
+	edF32Matrix4MulF32Matrix4Hard(m0, m0, &local_40);
+	return;
+}
+
+bool CActor::SV_AmICarrying(CActor* pOther)
+{
+	CActor* pCVar1;
+
+	for (pCVar1 = pOther->pTiedActor; (pCVar1 != (CActor*)0x0 && (this != pCVar1)); pCVar1 = pCVar1->pTiedActor) {
+	}
+	return this == pCVar1;
+}
+
+int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* param_9)
+{
+	CCollision* pCVar1;
+	int iVar2;
+	uint uVar3;
+	int iVar4;
+	uint uVar5;
+	edF32MATRIX4 auStack96;
+	edF32VECTOR4 local_20;
+	S_PATHREADER_POS_INFO SStack16;
+
+	if (pPathFollowReaderAbs->pActor3C_0x0 == (CPathFollow*)0x0) {
+		iVar4 = 2;
+		if (pMatrix == (edF32MATRIX4*)0x0) {
+			local_20 = this->baseLocation;
+			SV_UpdatePosition_Rel(&local_20, 0, param_5, pActorsTable, param_8);
+		}
+		else {
+			edF32Matrix4FromEulerSoft(&auStack96, &this->pCinData->rotationEuler, "XYZ");
+			auStack96.rowT = this->baseLocation;
+			edF32Matrix4MulF32Matrix4Hard(&auStack96, pMatrix, &auStack96);
+			SV_UpdateMatrix_Rel(&auStack96, 1, param_5, pActorsTable, param_8);
+		}
+
+		if (param_9 != (S_PATHREADER_POS_INFO*)0x0) {
+			param_9->field_0x0 = 0;
+			param_9->field_0x4 = 0;
+			param_9->field_0x8 = 0.0;
+		}
+	}
+	else {
+		if (param_9 != (S_PATHREADER_POS_INFO*)0x0) {
+			param_9 = &SStack16;
+		}
+
+		if (param_4 == 0) {
+			if (pMatrix == (edF32MATRIX4*)0x0) {
+				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &local_20, (edF32VECTOR4*)0x0, param_9);
+				SV_UpdatePosition_Rel(&local_20, 1, param_5, pActorsTable, param_8);
+			}
+			else {
+				edF32Matrix4FromEulerSoft(&auStack96, &this->pCinData->rotationEuler, "XYZ");
+				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &auStack96.rowT, (edF32VECTOR4*)0x0, param_9);
+				edF32Matrix4MulF32Matrix4Hard(&auStack96, pMatrix, &auStack96);
+				SV_UpdateMatrix_Rel(&auStack96, 1, param_5, pActorsTable, param_8);
+			}
+		}
+		else {
+			iVar4 = pPathFollowReaderAbs->ComputeMatrix(param_1, &auStack96, 0, param_9);
+
+			if (pMatrix != (edF32MATRIX4*)0x0) {
+				edF32Matrix4MulF32Matrix4Hard(&auStack96, pMatrix, &auStack96);
+			}
+
+			SV_UpdateMatrix_Rel(&auStack96, 1, param_5, pActorsTable, param_8);
+		}
+
+		pCVar1 = this->pCollisionData;
+
+		if (pCVar1 != (CCollision*)0x0) {
+	
+			iVar2 = (int)pPathFollowReaderAbs->pActor3C_0x0->field_0x30;
+			if (iVar2 == 0) {
+				uVar5 = 0;
+			}
+			else {
+				IMPLEMENTATION_GUARD(
+				uVar5 = *(uint*)(iVar2 + pSVar6->field_0x4 * 4);)
+			}
+
+			uVar3 = pPathFollowReaderAbs->pActor3C_0x0->field_0x18;
+
+			if ((uVar3 & 2) != 0) {
+				if ((uVar5 & 2) == 0) {
+					pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffdfffff;
+				}
+				else {
+					pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x200000;
+				}
+			}
+
+			if ((uVar3 & 4) != 0) {
+				if ((uVar5 & 4) == 0) {
+					pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x100000;
+				}
+				else {
+					pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffefffff;
+				}
+			}
+		}
+	}
+
+	return iVar4;
 }
 
 void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float param_3)

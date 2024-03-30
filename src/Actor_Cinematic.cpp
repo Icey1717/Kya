@@ -566,17 +566,19 @@ void CBehaviourCinematic::Manage()
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 	pConfig = pCinematic->GetActorConfig(this->pOwner);
 	local_10 = this->pOwner->currentLocation;
-	fVar6 = local_10.w;
+
 	peVar1 = this->pOwner->p3DHierNode;
-	local_10.w = fVar6;
 	if (peVar1 != (ed_3d_hierarchy_node*)0x0) {
 		SetHierFlags_00295a30(peVar1, 0);
 	}
+
 	if ((pConfig != (CCineActorConfig*)0x0) && ((pConfig->flags & 2) != 0)) {
 		IMPLEMENTATION_GUARD(
-		fVar6 = (float)(*(code*)this->pOwner->pVTable->CinematicMode_Manage)();)
+		this->pOwner->CinematicMode_Manage();)
 	}
+
 	pCVar2 = this->pOwner;
+
 	AVar3 = pCVar2->actorState;
 	if (AVar3 == 3) {
 		edF32Matrix4FromEulerSoft(&eStack80, &pCVar2->rotationEuler.xyz, "XYZ");
@@ -603,14 +605,14 @@ void CBehaviourCinematic::Manage()
 				(lVar5 = (*(code*)pCVar2->pVTable->CinematicMode_InterpolateTo)
 					(pCVar2, pConfig, &(this->cinActor).vectorFieldA, &pCinematic->matrix_0x120), fVar6 = extraout_f0
 					, lVar5 != 0)) {
-				fVar6 = (float)(*this->pOwner->pVTable->SetState)((CActor*)this->pOwner, 2, -1);
+				this->pOwner->SetState(2, -1);
 			})
 		}
 	}
 	bVar4 = this->pOwner->IsKindOfObject(2);
 	if (bVar4 != false) {
 		CActorMovable* pMoveable = reinterpret_cast<CActorMovable*>(this->pOwner);
-		pMoveable->ComputeRealMoving(&local_10, fVar6);
+		pMoveable->ComputeRealMoving(&local_10);
 		if (pMoveable->actorState == 0x3) {
 			fVar6 = (pMoveable->dynamic).linearAcceleration;
 			pMoveable->vector_0x120c = (pMoveable->dynamic).velocityDirectionEuler.xyz * fVar6;

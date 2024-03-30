@@ -281,6 +281,7 @@ struct S_STREAM_EVENT_CAMERA {
 	void Reset(CActor* pActor);
 });
 
+static_assert(sizeof(S_STREAM_EVENT_CAMERA) == 0x20);
 
 PACK(
 	struct S_STREAM_NTF_TARGET_BASE

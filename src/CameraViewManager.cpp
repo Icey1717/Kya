@@ -1883,7 +1883,7 @@ void CCameraGame::InitFromConfig(CAMERA_CONFIG* pConfig)
 	this->cameraConfig.ResetWithConfig();
 
 	this->fov = this->cameraConfig.field_0x18;
-	SetTarget(this->cameraConfig.pActorRefA.pObj);
+	SetTarget(this->cameraConfig.pActorRefA.Get());
 	(this->cameraConfig).flags_0x70 = 0;
 	this->field_0x1ac = 0;
 	this->field_0x1b0 = 0;

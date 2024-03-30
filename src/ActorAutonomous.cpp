@@ -756,7 +756,7 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		this->dynamic.flags = this->dynamic.flags | 4;
 	}
 
-	ComputeRealMoving(&currentLocation, directionDot);
+	ComputeRealMoving(&currentLocation);
 
 	fVar15 = 0.05f;
 	if (0.05f < this->dynamic.linearAcceleration) {

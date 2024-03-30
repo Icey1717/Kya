@@ -40,6 +40,7 @@ extern "C" {
 #include <decode.h>
 #include <thread>
 #include "edC/edCFiler_CDVD.h"
+#include <tracy/Tracy.hpp>
 #endif
 
 #include "IniFile.h"
@@ -2066,6 +2067,7 @@ void GameLoop(void)
 	float fVar9;
 
 	MY_LOG("GameLoop Begin\n");
+	ZoneScoped;
 
 	pLVar3 = CScene::_pinstance;
 	timeController = GetTimer();

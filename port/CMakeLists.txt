@@ -12,6 +12,11 @@ add_subdirectory("Archive")
 
 add_subdirectory("ext/pss/pss")
 
+#Tracy profiler
+option(TRACY_ENABLE "" ON)
+option(TRACY_ON_DEMAND "" OFF)
+add_subdirectory("ext/tracy") 
+
 add_subdirectory("pcsx2/VU")
 
 add_subdirectory("Windows/Renderer")
@@ -26,6 +31,6 @@ add_library(Port ${SOURCES})
 
 target_include_directories(Port PUBLIC "include")
 
-target_link_libraries(Port PUBLIC Renderer pss)
+target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient)
 
 add_subdirectory(DebugMenu)

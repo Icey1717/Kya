@@ -14,6 +14,7 @@ extern edF32VECTOR3 gF32Vector3Zero;
 extern edF32MATRIX4 gF32Matrix4Unit;
 extern edF32VECTOR4 gF32Vertex4Zero;
 extern edF32VECTOR4 gF32Vector4Zero;
+extern edF32VECTOR4 gF32Vector4UnitX;
 extern edF32VECTOR4 gF32Vector4UnitZ;
 extern edF32VECTOR4 g_xVector;
 
@@ -45,6 +46,7 @@ float edF32ATan2Soft(float a, float b);
 void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler);
 void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder);
 edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* order);
+void edQuatFromMatrix4(edF32VECTOR4* v0, edF32MATRIX4* m0);
 void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrder, float* rotationAngles);
 void edQuatShortestSLERPHard(float alpha, edF32VECTOR4* outRotation, edF32VECTOR4* currentRotation, edF32VECTOR4* targetRotation);
 void edF32Vector3LERPSoft(float alpha, edF32VECTOR3* outWorldLocation, edF32VECTOR3* currentLocation, edF32VECTOR3* targetLocation);
@@ -89,5 +91,7 @@ float edF32Between_0_2Pi(float param_1);
 float edF32Between_Pi(float param_1);
 
 void edF32Vector4GetNegHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
+
+float edF32Vector4GetLengthSoft(edF32VECTOR4* v0);
 
 #endif // _MATH_OPS_H

@@ -18,4 +18,24 @@ namespace DebugHelpers {
 			::ImGui::Text("Hash: %c%c%c%c", hash4.name[0], hash4.name[1], hash4.name[2], hash4.name[3]);
 		}
 	}
+
+	// Function to write the matrix to a binary file
+	template<typename T>
+	void SaveTypeToFile(const char* filename, const T& data) {
+		std::ofstream file(filename, std::ios::binary);
+		if (file) {
+			file.write(reinterpret_cast<const char*>(&data), sizeof(T));
+			file.close();
+		}
+	}
+
+	// Function to read the matrix from a binary file
+	template<typename T>
+	void LoadTypeFromFile(const char* filename, T& data) {
+		std::ifstream file(filename, std::ios::binary);
+		if (file) {
+			file.read(reinterpret_cast<char*>(&data), sizeof(T));
+			file.close();
+		}
+	}
 }

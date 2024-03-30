@@ -195,6 +195,9 @@ public:
 	float field_0x24;
 };
 
+class CPathFollowReaderAbsolute;
+struct S_PATHREADER_POS_INFO;
+
 class CActor : public CObject {
 public:
 	// #Debug
@@ -359,7 +362,7 @@ public:
 
 	void ComputeAltitude();
 
-	void TieToActor(CActor* pTieActor, int carryMethod, int param_4);
+	void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
 
 	bool ColWithAToboggan();
 
@@ -367,9 +370,15 @@ public:
 
 	void SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition);
 	void SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition);
+	void SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* param_6);
+	void SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0);
 	bool SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, int mode);
 	void SV_UpdatePercent(float param_1, float param_2, float* pValue);
-	bool CActor::SV_UpdateValue(float target, float speed, float* pValue);
+	bool SV_UpdateValue(float target, float speed, float* pValue);
+	void SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* v0);
+	void SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0);
+	bool SV_AmICarrying(CActor* pOther);
+	int SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* param_9);
 
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();
@@ -402,7 +411,7 @@ public:
 
 struct ActorAndWaypoint {
 	CActor* pActor;
-	struct ManagerC_24* pWaypoint;
+	struct CWayPoint* pWaypoint;
 };
 
 #endif // _ACTOR_H

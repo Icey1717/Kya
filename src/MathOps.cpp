@@ -9,6 +9,7 @@ edF32VECTOR3 gF32Vector3Zero = { };
 edF32MATRIX4 gF32Matrix4Unit = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vertex4Zero = { 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vector4Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
+edF32VECTOR4 gF32Vector4UnitX = { 1.0f, 0.0f, 0.0f, 0.0f };
 edF32VECTOR4 gF32Vector4UnitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
 edF32VECTOR4 g_xVector = { 0.0f, 1.0f, 0.0f, 0.0f };
 
@@ -208,7 +209,6 @@ void edF32Vector4SubHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
 
 void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
 {
-	float in_vf0x;
 	float fVar1;
 	float fVar2;
 	float fVar3;
@@ -674,6 +674,73 @@ edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char
 
 	m0->rowT = gF32Vertex4Zero;
 	return m0;
+}
+
+void edQuatFromMatrix4(edF32VECTOR4* v0, edF32MATRIX4* m0)
+{
+	int iVar1;
+	int iVar2;
+	float* pfVar3;
+	float* pfVar4;
+	float* pfVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+
+	fVar10 = m0->bb;
+	fVar7 = m0->aa;
+	fVar8 = m0->cc;
+	fVar9 = fVar8 + fVar7 + fVar10;
+	if (0.0f < fVar9) {
+		fVar7 = sqrtf(fVar9 + 1.0f);
+		fVar8 = 0.5f / fVar7;
+		v0->w = fVar7 * 0.5f;
+		v0->x = fVar8 * (m0->cb - m0->bc);
+		v0->y = fVar8 * (m0->ac - m0->ca);
+		v0->z = fVar8 * (m0->ba - m0->ab);
+	}
+	else {
+		if (fVar10 < fVar7) {
+			iVar2 = 2;
+			if (fVar8 < fVar7) {
+				iVar2 = 0;
+				iVar1 = 1;
+				iVar6 = 2;
+			}
+			else {
+				iVar1 = 0;
+				iVar6 = 1;
+			}
+		}
+		else {
+			iVar2 = 2;
+			if (fVar8 < fVar10) {
+				iVar2 = 1;
+				iVar1 = 2;
+				iVar6 = 0;
+			}
+			else {
+				iVar1 = 0;
+				iVar6 = 1;
+			}
+		}
+
+		pfVar5 = &m0->aa + iVar1 * 4;
+		pfVar3 = &m0->aa + iVar2 * 4;
+		pfVar4 = &m0->aa + iVar6 * 4;
+
+		// #Cleanup
+		fVar7 = sqrtf(((pfVar3[iVar2] - pfVar5[iVar1]) - pfVar4[iVar6]) + 1.0f);
+		fVar8 = 0.5f / fVar7;
+		(&v0->x)[iVar2] = fVar7 * 0.5f;
+		v0->w = fVar8 * (pfVar4[iVar1] - pfVar5[iVar6]);
+		(&v0->x)[iVar1] = fVar8 * (pfVar5[iVar2] + pfVar3[iVar1]);
+		(&v0->x)[iVar6] = fVar8 * (pfVar4[iVar2] + pfVar3[iVar6]);
+	}
+
+	return;
 }
 
 void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrder, float* rotationAngles)
@@ -1420,4 +1487,9 @@ void edF32Vector4GetNegHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 	v0->z = 0.0f - v1->z;
 	v0->w = v1->w;
 	return;
+}
+
+float edF32Vector4GetLengthSoft(edF32VECTOR4* v0)
+{
+	return sqrtf(v0->w * v0->w + v0->z * v0->z + v0->y * v0->y + v0->x * v0->x);
 }

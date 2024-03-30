@@ -884,8 +884,15 @@ void S_STREAM_REF<CActor>::Init()
 	else {
 		pActor = ((CScene::ptable.g_ActorManager_004516a4)->aActors)[this->index];
 	}
-	this->pObj = pActor;
+
+	this->pObj = STORE_SECTION(pActor);
 	return;
+}
+
+template<>
+CActor* S_STREAM_REF<CActor>::Get()
+{
+	return LOAD_SECTION_CAST(CActor*, this->pObj);
 }
 
 template<>
@@ -898,8 +905,14 @@ void S_STREAM_REF<ed_zone_3d>::Init()
 	if (this->index != -1) {
 		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->index);
 	}
-	this->pObj = pZone;
+	this->pObj = STORE_SECTION(pZone);
 	return;
+}
+
+template<>
+ed_zone_3d* S_STREAM_REF<ed_zone_3d>::Get()
+{
+	return LOAD_SECTION_CAST(ed_zone_3d*, this->pObj);
 }
 
 void S_STREAM_NTF_TARGET_SWITCH::Reset()
@@ -919,6 +932,7 @@ void S_STREAM_NTF_TARGET_BASE::Init()
 	else {
 		pActor = ((CScene::ptable.g_ActorManager_004516a4)->aActors)[this->index];
 	}
+
 	this->pRef = STORE_SECTION(pActor);
 }
 
@@ -1184,7 +1198,7 @@ void CCinematic::Start()
 					if (0 < configCount) {
 						do {
 							CCineActorConfig* pCurrentConfig = &this->aCineActorConfig[currentConfigIndex];
-							CActor* pConfigActor = (pCurrentConfig->pActor).pObj;
+							CActor* pConfigActor = (pCurrentConfig->pActor).Get();
 							if (pConfigActor != (CActor*)0x0) {
 								if ((pCurrentConfig->flags & 0x10) != 0) {
 									pCurrentConfig->postCinematicLocation = pConfigActor->currentLocation;
@@ -1825,7 +1839,7 @@ CCineActorConfig* CCinematic::GetActorConfig(CActor* pActor)
 		if (0 < this->cineActorConfigCount) {
 			pCVar1 = this->aCineActorConfig;
 			do {
-				if (pActor == pCVar1->pActor.pObj) {
+				if (pActor == pCVar1->pActor.Get()) {
 					return pCVar1;
 				}
 				iVar2 = iVar2 + 1;
@@ -1845,8 +1859,8 @@ void CCinematic::Manage()
 	float fVar4;
 
 	if (this->zoneRefA.pObj != 0x0) {
-		pCVar3 = (CActorHero*)this->actorHeroRef.pObj;
-		if (this->actorHeroRef.pObj == (CActorHero*)0x0) {
+		pCVar3 = (CActorHero*)this->actorHeroRef.Get();
+		if (this->actorHeroRef.Get() == (CActorHero*)0x0) {
 			pCVar3 = CActorHero::_gThis;
 		}
 		IMPLEMENTATION_GUARD_LOG(
@@ -2615,7 +2629,7 @@ CActor* CCinematic::GetActorByHashcode(int hashCode)
 	int iVar3;
 
 	if (((((this->flags_0x4 & 0x8000) != 0) && (this->actorRefB.pObj != 0)) && (this->pActor != (CActor*)0x0)) &&
-		(hashCode == actorRefB.pObj->subObjA->hashCode)) {
+		(hashCode == actorRefB.Get()->subObjA->hashCode)) {
 		hashCode = this->pActor->subObjA->hashCode;
 	}
 
@@ -2988,7 +3002,7 @@ void CCinematic::FUN_001c7390(bool param_2)
 			if ((bVar2) && ((this->cineBank).pBankFileAccessObject == (edCBankBufferEntry*)0x0 || !bVar2)) {
 				bVar2 = true;
 				if (this->count_0x2d8 < 1) {
-					peVar1 = (this->zoneRefB).pObj;
+					peVar1 = (this->zoneRefB).Get();
 					bVar2 = false;
 					IMPLEMENTATION_GUARD_LOG(
 					if ((peVar1 != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
@@ -3054,7 +3068,7 @@ void CCinematic::Level_ClearAll()
 		Stop();
 	}
 	if (((this->cineBankLoadStage_0x2b4 == 4) && (this->state == CS_Stopped)) && ((this->flags_0x8 & 0x80) == 0)) {
-		pZone = (this->zoneRefB).pObj;
+		pZone = (this->zoneRefB).Get();
 		bVar1 = false;
 
 		IMPLEMENTATION_GUARD_LOG(

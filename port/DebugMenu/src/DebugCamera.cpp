@@ -11,6 +11,7 @@
 
 #include <sstream>
 #include <fstream>
+#include "DebugHelpers.h"
 
 GLFWwindow* GetGLFWWindow();
 
@@ -174,24 +175,6 @@ namespace DebugCamera {
 		UpdateCameraPosition(DebugMenu::GetDeltaTime());
 	}
 
-	// Function to write the matrix to a binary file
-	void SaveMatrixToFile(const edF32MATRIX4& matrix) {
-		std::ofstream file("matrix_data.bin", std::ios::binary);
-		if (file) {
-			file.write(reinterpret_cast<const char*>(&matrix), sizeof(edF32MATRIX4));
-			file.close();
-		}
-	}
-
-	// Function to read the matrix from a binary file
-	void LoadMatrixFromFile(edF32MATRIX4& matrix) {
-		std::ifstream file("matrix_data.bin", std::ios::binary);
-		if (file) {
-			file.read(reinterpret_cast<char*>(&matrix), sizeof(edF32MATRIX4));
-			file.close();
-		}
-	}
-
 }
 
 // ImGui widget to edit edF32VECTOR4
@@ -216,20 +199,20 @@ void DebugCamera::ShowCamera()
 	if (ImGui::Button("Save Matrix")) {
 		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
 		// Replace 'viewMatrix' below with your actual matrix variable.
-		SaveMatrixToFile(CCameraManager::_gThis->pActiveCamera->transformationMatrix);
+		DebugHelpers::SaveTypeToFile("camera.bin", CCameraManager::_gThis->pActiveCamera->transformationMatrix);
 	}
 
 	if (ImGui::Button("Load Matrix")) {
 		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
 		// Replace 'viewMatrix' below with your actual matrix variable.
-		LoadMatrixFromFile(CCameraManager::_gThis->pActiveCamera->transformationMatrix);
+		DebugHelpers::LoadTypeFromFile("camera.bin", CCameraManager::_gThis->pActiveCamera->transformationMatrix);
 	}
 
 	if (ImGui::Button("Copy Matrix")) {
 		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())
 		// Replace 'viewMatrix' below with your actual matrix variable.
 		edF32MATRIX4 matrix;
-		LoadMatrixFromFile(matrix);
+		DebugHelpers::LoadTypeFromFile("camera.bin", (matrix));
 		CopyMatrixCodeToClipboard(matrix);
 	}
 

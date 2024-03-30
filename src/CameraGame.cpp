@@ -91,8 +91,8 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 
 	if (1 < this->cameraNum) {
 		edF32Vector4SubHard(&local_a0, this->aCameraLocations + this->cameraNum, (edF32VECTOR4*)this);
-		edF32Vector4NormalizeHard(&local_a0, &local_a0);
-		CCollisionRay CStack192 = CCollisionRay(in_f0, (edF32VECTOR4*)this, &local_a0);
+		fVar4 = edF32Vector4NormalizeHard_Fixed(&local_a0, &local_a0);
+		CCollisionRay CStack192 = CCollisionRay(fVar4, (edF32VECTOR4*)this, &local_a0);
 		fVar4 = CStack192.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_90, (_ray_info_out*)0x0);
 
 		if (fVar4 == 1e+30f) {
@@ -107,7 +107,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 		}
 		else {
 			edF32Vector4SubHard(&local_e0, this->aCameraLocations + 2, (edF32VECTOR4*)this);
-			edF32Vector4NormalizeHard(&local_e0, &local_e0);
+			fVar4 = edF32Vector4NormalizeHard_Fixed(&local_e0, &local_e0);
 			CCollisionRay CStack256 = CCollisionRay(fVar4, this->aCameraLocations, &local_e0);
 			fVar4 = CStack256.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_d0, (_ray_info_out*)0x0);
 
@@ -2651,7 +2651,7 @@ void CCameraGame::_After_Manage_Beta()
 	float fVar4;
 	edF32VECTOR4 local_10;
 
-	if ((this->cameraConfig).pActorRefB.pObj == (CActor*)0x0) {
+	if ((this->cameraConfig).pActorRefB.Get() == (CActor*)0x0) {
 		EVar2 = GetMode();
 
 		if (EVar2 != 4) {
@@ -2681,7 +2681,7 @@ void CCameraGame::_After_Manage_Beta()
 	}
 	else {
 		pCVar1 = GetTarget();
-		edF32Vector4SubHard(&local_10, &((this->cameraConfig).pActorRefB.pObj)->currentLocation, &pCVar1->currentLocation);
+		edF32Vector4SubHard(&local_10, &((this->cameraConfig).pActorRefB.Get())->currentLocation, &pCVar1->currentLocation);
 		fVar3 = GetAngleYFromVector(&local_10);
 		fVar3 = edF32GetAnglesDelta(this->field_0x204, fVar3);
 		fVar3 = fVar3 * CCamera::_gpcam_man->time_0x4 * 2.0f;
@@ -3720,7 +3720,6 @@ void ComputeNormal(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* p
 {
 	float fVar1;
 	float fVar2;
-	float in_vf0x;
 	float fVar3;
 	float fVar4;
 	float fVar5;
@@ -3736,6 +3735,7 @@ void ComputeNormal(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* p
 	param_1->y = fVar1 * fVar4 - fVar2 * fVar3;
 	param_1->z = fVar3 * fVar6 - fVar4 * fVar5;
 	param_1->w = in_vf0x;
+
 	fVar3 = param_1->x;
 	fVar4 = param_1->y;
 	fVar5 = param_1->z;
@@ -3769,36 +3769,39 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 	edF32VECTOR4 local_10;
 
 	if ((((colType == 0xe) || (colType == 0xd)) || (colType == 10)) || (colType == 0xb)) {
-		IMPLEMENTATION_GUARD(
-		*pOutProps = (uint)(pColObj->matrix_0x70).ba;
+		edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColObj);
+
+		*pOutProps = pPrim->flags_0x80;
+
 		peVar1 = this->pDirection;
 		peVar2 = this->pLocation;
-		local_10.x = peVar1->x * distance + peVar2->x;
-		local_10.y = peVar1->y * distance + peVar2->y;
-		local_10.z = peVar1->z * distance + peVar2->z;
-		local_10.w = peVar1->w * distance + peVar2->w;
-		edF32Matrix4MulF32Vector4Hard(&local_20, (edF32MATRIX4*)&(pColObj->bbox).width, &local_10);
+
+		local_10 = *peVar1 * distance + *peVar2;
+
+		edF32Matrix4MulF32Vector4Hard(&local_20, &pPrim->matrix_0x40, &local_10);
 		if (colType == 10) {
-			if (ABS(local_20.x) <= ABS(local_20.y)) {
-				local_20.x = 0.0;
-				if (ABS(local_20.y) <= ABS(local_20.z)) {
-					local_20.y = 0.0;
+			if (fabs(local_20.x) <= fabs(local_20.y)) {
+				local_20.x = 0.0f;
+				if (fabs(local_20.y) <= fabs(local_20.z)) {
+					local_20.y = 0.0f;
 				}
 				else {
-					local_20.z = 0.0;
+					local_20.z = 0.0f;
 				}
 			}
 			else {
-				local_20.y = 0.0;
-				if (ABS(local_20.x) < ABS(local_20.z)) {
-					local_20.x = 0.0;
+				local_20.y = 0.0f;
+				if (fabs(local_20.x) < fabs(local_20.z)) {
+					local_20.x = 0.0f;
 				}
 				else {
-					local_20.z = 0.0;
+					local_20.z = 0.0f;
 				}
 			}
 		}
-		edColGetNormalInWorldFromLocal(pOutNormal, (edF32MATRIX4*)&(pColObj->bbox).width, &local_20);)
+
+		edColGetNormalInWorldFromLocal(pOutNormal, &pPrim->matrix_0x40, &local_20);
+
 	}
 	else {
 		if (colType == 8) {

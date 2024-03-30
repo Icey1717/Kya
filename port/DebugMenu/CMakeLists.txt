@@ -21,6 +21,8 @@ set(SOURCES
 	"src/DebugMaterial.h"
 	"src/DebugMaterial.cpp"
 	"src/DebugRendererVulkan.cpp"
+	"src/DebugSetting.cpp"
+	"src/DebugSetting.h"
 	"include/DebugRenderer.h"
 	"include/DebugMenu.h"
 	"include/Callstack.h"
@@ -31,6 +33,9 @@ add_library(${TargetName} ${SOURCES})
 add_subdirectory("ext/gizmo")
 add_subdirectory("ext/magic_enum")
 
-target_link_libraries(${TargetName} PRIVATE Renderer Log Kya Dbghelp.lib imgui Gizmo magic_enum)
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory("ext/json")
+
+target_link_libraries(${TargetName} PRIVATE Renderer Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json)
 
 target_include_directories(${TargetName} PUBLIC "include")

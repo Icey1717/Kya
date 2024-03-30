@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "Actor.h"
 
+struct EventChunk_24 {};
+class CWayPoint;
 
 struct S_CHECKPOINT {
 	ActorAndWaypoint* aActorWaypoints;

@@ -14,7 +14,7 @@ CActorHeroPrivate::CActorHeroPrivate()
 	
 	CActor();
 	//this->base.base.pVTable = &CActorMovable::_vt;
-	this->dynamic.field_0x54 = 0.0f;
+	this->dynamic.weightB = 0.0f;
 	//this->base.base.pVTable = &CActorAutonomous::_vt;
 	this->dynamicExt.gravityScale = 1.0f;
 	this->dynamicExt.field_0x4 = 0.0f;
@@ -2124,8 +2124,7 @@ void CActorHeroPrivate::ResetSlideDefaultSettings()
 	this->field_0x106c = 12.0f;
 	this->field_0x1070 = 35.0f;)
 	this->field_0x1074 = 2.094395f;
-	IMPLEMENTATION_GUARD_LOG(
-	this->field_0x1078 = 0.6f;)
+	this->field_0x1078 = 0.6f;
 	this->field_0x107c = 0.2f;
 	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x1080 = 100.0f;
@@ -2410,16 +2409,20 @@ void CActorHeroPrivate::ClearLocalData()
 	//this->field_0x102c.z = 1.0;
 	//this->field_0x102c.w = 0.0;
 	//this->field_0x103c = 0.0;
-	//*(undefined4*)&this->field_0x10a0 = 0;
-	//*(undefined4*)&this->field_0x10a4 = 0x3f800000;
-	//*(undefined4*)&this->field_0x10a8 = 0;
-	//*(undefined4*)&this->field_0x10ac = 0;
-	//*(undefined4*)&this->field_0x10b0 = 0;
-	//*(undefined4*)&this->field_0x10b4 = 0x3f800000;
-	//*(undefined4*)&this->field_0x10b8 = 0;
-	//*(undefined4*)&this->field_0x10bc = 0;
+	
+	this->field_0x10a0.x = 0.0f;
+	this->field_0x10a0.y = 1.0f;
+	this->field_0x10a0.z = 0.0f;
+	this->field_0x10a0.w = 0.0f;
+	
+	this->field_0x10b0.x = 0.0f;
+	this->field_0x10b0.y = 1.0f;
+	this->field_0x10b0.z = 0.0f;
+	this->field_0x10b0.w = 0.0f;
+	
 	//*(undefined4*)&this->field_0x1090 = 0;
-	//*(undefined4*)&this->field_0x1094 = 0;
+	this->field_0x1094 = 0;
+
 	this->slideSlipIntensity = 0.0f;
 	this->field_0x1454 = false;
 	this->field_0x1455 = 0;
@@ -2834,6 +2837,12 @@ LAB_00341590:
 	case STATE_HERO_SLIDE_SLIP_A:
 	case STATE_HERO_SLIDE_SLIP_B:
 		StateHeroSlideSlipInit();
+		break;
+	case STATE_HERO_SLIDE_B:
+		StateHeroSlideInit(1);
+		break;
+	case STATE_HERO_SLIDE_A:
+		StateHeroSlideInit(0);
 		break;
 	default:
 		assert(false);
@@ -3391,7 +3400,7 @@ void CActorHeroPrivate::StateHeroRun()
 
 	IncreaseEffort(1.0f);
 
-	if (((iVar2 == 0xd) && (this->pSoccerActor != (CActor*)0x0)) && (this->dynamic.field_0x54 == 60.0f)) {
+	if (((iVar2 == 0xd) && (this->pSoccerActor != (CActor*)0x0)) && (this->dynamic.weightB == 60.0f)) {
 		IMPLEMENTATION_GUARD(
 		fVar14 = this->field_0x105c;
 		fVar13 = this->field_0x1074;
@@ -3909,6 +3918,89 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 	} while (true);
 }
 
+void CActorHeroPrivate::StateHeroSlideInit(int param_2)
+{
+	CCollision* pCVar1;
+	int iVar2;
+	AnimResult* pAVar3;
+	uint uVar4;
+	edF32VECTOR4* peVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	pCVar1 = this->pCollisionData;
+
+	this->field_0xf00 = this->currentLocation;
+	this->field_0x10b0 = g_xVector;
+	this->field_0x10a0 = this->rotationQuat;
+
+	fVar6 = g_xVector.z;
+	fVar7 = g_xVector.x;
+
+	if (((pCVar1->flags_0x4 & 2) != 0) && (pCVar1->aCollisionContact[1].location.y < 0.999f)) {
+		fVar6 = pCVar1->aCollisionContact[1].location.z;
+		fVar7 = pCVar1->aCollisionContact[1].location.x;
+	}
+	if (0.0f < this->rotationQuat.z * fVar6 + this->rotationQuat.x * fVar7) {
+		this->field_0x1094 = 1;
+	}
+	else {
+		this->field_0x1094 = 0;
+	}
+
+	this->flags = this->flags | 0x1000;
+
+	iVar2 = this->prevActorState;
+	if (iVar2 == -1) {
+		uVar4 = 0;
+	}
+	else {
+		pAVar3 = GetStateCfg(iVar2);
+		uVar4 = pAVar3->flags_0x4 & 0x100;
+	}
+
+	if (((((uVar4 != 0) && (iVar2 = this->prevActorState, iVar2 != 0x7a)) &&
+		(iVar2 != 0x7d)) || (param_2 != 0)) && ((this->dynamic.linearJerk < this->field_0x104c && (0.0f < this->dynamic.velocityDirectionEuler.y)))) {
+		if (param_2 == 0) {
+			this->dynamicExt.normalizedTranslation.x = 0.0f;
+			this->dynamicExt.normalizedTranslation.y = 0.0f;
+			this->dynamicExt.normalizedTranslation.z = 0.0f;
+			this->dynamicExt.normalizedTranslation.w = 0.0f;
+
+			this->dynamicExt.field_0x6c = 0.0f;
+
+			ComputeSlidingForce(&eStack32, 0);
+			edF32Vector4ScaleHard(this->field_0x1078 * 10.0f, &eStack32, &eStack32);
+
+			peVar5 = this->dynamicExt.aVelocity;
+			edF32Vector4AddHard(peVar5, peVar5, &eStack32);
+			fVar6 = edF32Vector4GetDistHard(this->dynamicExt.aVelocity);
+			this->dynamicExt.aVelocityMagnitudes[0] = fVar6;
+		}
+		else {
+			this->dynamicExt.normalizedTranslation.x = 0.0f;
+			this->dynamicExt.normalizedTranslation.y = 0.0f;
+			this->dynamicExt.normalizedTranslation.z = 0.0f;
+			this->dynamicExt.normalizedTranslation.w = 0.0f;
+			this->dynamicExt.field_0x6c = 0.0f;
+			ComputeSlidingForce(&eStack16, 0);
+			edF32Vector4ScaleHard(this->field_0x1078 * 25.0f, &eStack16, &eStack16);
+
+			peVar5 = this->dynamicExt.aVelocity;
+			edF32Vector4AddHard(peVar5, peVar5, &eStack16);
+			fVar6 = edF32Vector4GetDistHard(this->dynamicExt.aVelocity);
+			this->dynamicExt.aVelocityMagnitudes[0] = fVar6;
+		}
+	}
+	if (param_2 != 0) {
+		ChangeCollisionSphereForLying(0.2f);
+	}
+	return;
+}
+
 void CActorHeroPrivate::StateHeroJump_1_3(int nextState)
 {
 	CPlayerInput* pCVar1;
@@ -4377,7 +4469,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 								else {
 									fVar11 = pCVar3->aAnalogSticks[0].magnitude;
 								}
-								if (0.3 < fVar11) {
+								if (0.3f < fVar11) {
 									this->field_0x1048 = 0.0f;
 									pCVar3 = this->pPlayerInput;
 									if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
@@ -4854,6 +4946,24 @@ bool CActorHeroPrivate::CanBounceAgainstWall()
 		bVar2 = false;
 	}
 	return bVar2;
+}
+
+void CActorHeroPrivate::ChangeCollisionSphereForLying(float param_2)
+{
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.x = 0.8f;
+	local_10.z = 0.8f;
+	local_10.y = 0.4f;
+	local_10.w = 0.0f;
+
+	local_20.x = 0.0f;
+	local_20.z = 0.0f;
+	local_20.y = 0.38f;
+	local_20.w = 1.0f;
+
+	ChangeCollisionSphere(param_2, &local_10, &local_20);
 }
 
 float CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)

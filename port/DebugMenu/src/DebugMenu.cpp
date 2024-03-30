@@ -3,7 +3,7 @@
 
 #include "FrameBuffer.h"
 
-#include "imgui.h"
+#include <imgui.h>
 
 #include "log.h"
 
@@ -35,6 +35,7 @@
 #include <fstream>
 #include <iostream>
 #include "InputManager.h"
+#include "DebugSetting.h"
 
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -138,11 +139,11 @@ namespace DebugMenu_Internal {
 		const ImVec2 screenSize = ImGui::GetIO().DisplaySize;
 
 		// Render the framerate counter
-ImGui::SetNextWindowSize(windowSize);
-ImGui::SetNextWindowPos(ImVec2(screenSize.x - windowSize.x - 10.0f, 10.0f), ImGuiCond_Always);
-ImGui::Begin("Framerate Counter", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
-ImGui::Text("FPS: %.1f", fps);
-ImGui::End();
+		ImGui::SetNextWindowSize(windowSize);
+		ImGui::SetNextWindowPos(ImVec2(screenSize.x - windowSize.x - 10.0f, 10.0f), ImGuiCond_Always);
+		ImGui::Begin("Framerate Counter", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+		ImGui::Text("FPS: %.1f", fps);
+		ImGui::End();
 	}
 
 	int selectedTextureIndex = -1;
@@ -272,14 +273,28 @@ ImGui::End();
 		}
 	}
 
+	DebugSetting::DoOnceBoolSetting gTeleportOnStart = { "Teleport On Start", false };
+
 	void ShowHeroMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Hero", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		if (ImGui::CollapsingHeader("Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
+			gTeleportOnStart.DrawImguiControl();
+		}
 
 		CActorHeroPrivate* pActorHero = reinterpret_cast<CActorHeroPrivate*>(CActorHeroPrivate::_gThis);
 
 		if (pActorHero) {
 			ImGui::Text("State: %s", GetStateName(pActorHero->actorState));
+
+			if (ImGui::Button("Save Hero Location")) {
+				DebugHelpers::SaveTypeToFile("hero.bin", pActorHero->currentLocation);
+			}
+
+			if (ImGui::Button("Load Hero Location") || gTeleportOnStart) {
+				DebugHelpers::LoadTypeFromFile("hero.bin", pActorHero->currentLocation);
+			}
 
 			DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->currentLocation);
 			DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->rotationQuat);
@@ -307,8 +322,8 @@ ImGui::End();
 				ImGui::InputFloat("Speed", &pActorHero->dynamic.speed);
 				ImGui::InputFloat("Linear Jerk", &pActorHero->dynamic.linearJerk);
 				ImGui::InputFloat("Linear Acceleration", &pActorHero->dynamic.linearAcceleration);
-				ImGui::InputFloat("field_0x54", &pActorHero->dynamic.field_0x54);
-				ImGui::InputFloat("field_0x58", &pActorHero->dynamic.field_0x58);
+				ImGui::InputFloat("Weight B", &pActorHero->dynamic.weightB);
+				ImGui::InputFloat("Weight A", &pActorHero->dynamic.weightA);
 			}
 
 			ImGui::Spacing();
@@ -342,9 +357,15 @@ ImGui::End();
 		ImGui::End();
 	}
 
+	DebugSetting::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
+
 	void ShowCutsceneMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Video Player Controls", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		if (ImGui::CollapsingHeader("Persistent Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
+			gSkipCutscenes.DrawImguiControl();
+		}
 
 		auto* pCinematicManager = g_CinematicManager_0048efc;
 
@@ -409,7 +430,7 @@ ImGui::End();
 				}
 
 				// Jump to end button
-				if (ImGui::Button("Jump to End"))
+				if (ImGui::Button("Jump to End") || gSkipCutscenes)
 				{
 					currentTime = totalTime;
 					// Seek to the end of the video here
