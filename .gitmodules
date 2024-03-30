@@ -16,3 +16,9 @@
 [submodule "port/Log/spdlog"]
 	path = port/Log/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "port/ext/json"]
+	path = port/DebugMenu/ext/json
+	url = https://github.com/nlohmann/json.git
+[submodule "port/ext/tracy"]
+	path = port/ext/tracy
+	url = https://github.com/wolfpld/tracy.git
