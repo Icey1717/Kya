@@ -1,4 +1,8 @@
 #include "ActorAutonomous.h"
+
+#include <string.h>
+#include <math.h>
+
 #include "MemoryStream.h"
 #include "TimeController.h"
 #include "MathOps.h"
@@ -883,6 +887,31 @@ CLifeInterface* CActorAutonomous::GetLifeInterfaceOther()
 	return &this->lifeInterface;
 }
 
+void CActorAutonomous::LifeDecrease(float amount)
+{
+	CLifeInterface* pCVar1;
+	CLifeInterface* pCVar2;
+	float fVar3;
+
+	if (this->field_0x2e4 <= 0.0f) {
+		pCVar1 = GetLifeInterfaceOther();
+		fVar3 = pCVar1->GetValue();
+
+		if (fVar3 <= amount) {
+			pCVar1 = GetLifeInterfaceOther();
+			pCVar1->SetValue(0);
+		}
+		else {
+			pCVar1 = GetLifeInterfaceOther();
+			pCVar2 = GetLifeInterfaceOther();
+
+			fVar3 = pCVar2->GetValue();
+			pCVar1->SetValue(fVar3 - amount);
+		}
+	}
+	return;
+}
+
 CLifeInterface::CLifeInterface()
 {
 	this->priority = 2;
@@ -894,12 +923,17 @@ CLifeInterface::CLifeInterface()
 
 float CLifeInterface::GetValue()
 {
-	return currentValue;
+	return this->currentValue;
+}
+
+void CLifeInterface::SetValue(float value)
+{
+	this->currentValue = value;
 }
 
 float CLifeInterface::GetValueMax()
 {
-	return valueMax;
+	return this->valueMax;
 }
 
 void CLifeInterface::SetValueMax(float max)

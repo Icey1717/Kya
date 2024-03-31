@@ -1,7 +1,10 @@
 #include "ActorMovable.h"
+
+#include <math.h>
+
 #include "MemoryStream.h"
 #include "MathOps.h"
-#include "TimeController.h""
+#include "TimeController.h"
 #include "CollisionManager.h"
 #include "ActorCheckpointManager.h"
 

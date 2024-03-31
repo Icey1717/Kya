@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.19.4)
 
+if (PS2)
+else()
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang")
+
 
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_EXTENSIONS YES)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 project(Kya)
 
@@ -170,8 +174,8 @@ set(main_src
 	"${src_root}/EdenLib/edCinematic/Sources/CinScene.h"
 	"${src_root}/EdenLib/edAnim/AnmSkeleton.cpp"
 	"${src_root}/EdenLib/edAnim/AnmSkeleton.h"
-	"${src_root}/EdenLib/edCollision/Sources/edCollisions.cpp"
-	"${src_root}/EdenLib/edCollision/Sources/edCollisions.h"
+	"${src_root}/EdenLib/edCollision/sources/edCollisions.cpp"
+	"${src_root}/EdenLib/edCollision/sources/edCollisions.h"
 	"${src_root}/EdenLib/edDev/Sources/ps2/_edDevScanPsxPorts.cpp"
 	"${src_root}/EdenLib/edDev/Sources/ps2/_edDevScanPsxPorts.h"
 	"${src_root}/EdenLib/edDev/Sources/ps2/_edDevScanPorts.cpp"
@@ -241,8 +245,6 @@ set(main_src
 	"${src_root}/edVideo/CameraStack.h"
 	"${src_root}/port/pointer_conv.cpp"
 	"${src_root}/port/pointer_conv.h"
-	"${src_root}/port/input.cpp"
-	"${src_root}/port/input.h"
 )
 
 set (actor_src
@@ -359,6 +361,8 @@ else()
 		"${src_root}/port/vu1_emu.h"
 		"${src_root}/port/hardware_draw.cpp"
 		"${src_root}/port/hardware_draw.h"
+		"${src_root}/port/input.cpp"
+		"${src_root}/port/input.h"
 	)
 endif()
 

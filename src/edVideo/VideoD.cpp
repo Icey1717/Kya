@@ -10,6 +10,7 @@
 #else
 #include "port.h"
 #include "port/vu1_emu.h"
+#include "profiling.h"
 #endif
 #include <assert.h>
 
@@ -21,7 +22,8 @@
 #include <chrono>
 #include <thread>
 #endif
-#include "../CameraViewManager.h"
+
+#include "CameraViewManager.h"
 
 #ifdef PLATFORM_WIN
 Multidelegate<> gOnVideoFlip;
@@ -262,11 +264,16 @@ void edVideoWaitVsync(byte param_1)
 void edVideoFlip(void)
 {
 	MY_LOG_CATEGORY("Video", LogLevel::VeryVerbose, "edVideoFlip\n");
+	ZONE_SCOPED;
 
 #ifdef PLATFORM_WIN
-	VU1Emu::BeginFrame();
-	Renderer::Present();
-	Renderer::WaitUntilReady();
+	{
+		ZONE_SCOPED_NAME("Win Begin");
+		VU1Emu::BeginFrame();
+		Renderer::Present();
+		FRAME_MARK;
+		Renderer::WaitUntilReady();
+	}
 #endif
 	/* Render scene */
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,

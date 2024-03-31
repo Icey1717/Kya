@@ -53,12 +53,16 @@ public:
 	virtual float ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 	virtual void StoreCollisionSphere();
 	virtual CLifeInterface* GetLifeInterface();
+	virtual void LifeDecrease(float amount);
 
 	void ResetStdDefaultSettings();
 	void ResetSlideDefaultSettings();
 	void ResetBoomyDefaultSettings();
+	void ResetWindDefaultSettings();
 
 	int StateEvaluate();
+	int ChooseStateLanding(float speed);
+
 	bool CanEnterToboggan();
 
 	void ClearLocalData();
@@ -86,6 +90,8 @@ public:
 	void StateHeroJump_2_3Term();
 
 	void StateHeroJump_3_3(int param_2);
+
+	void StateHeroFall(float param_1, int param_3);
 
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
 	void SetBoomyFunc(int param_2);
@@ -141,6 +147,8 @@ public:
 	float field_0x1b9c;
 
 	int field_0x1020;
+	int field_0x1420;
+	int field_0x1424;
 
 	int field_0x142c;
 	bool field_0x1454;
@@ -167,6 +175,7 @@ public:
 	float field_0x105c;
 	float airNoInputSpeed;
 	float field_0x1184;
+	float landSpeed;
 	float field_0x1574;
 
 	float animKey_0x157c;
@@ -197,7 +206,21 @@ public:
 
 	int field_0x1a10;
 
-	undefined4 jmp_field_0x1144 = 0;
+	float field_0x118c;
+
+	float field_0x10f4;
+
+	float field_0x1108;
+
+	float field_0x1410;
+	float field_0x1414;
+	float field_0x1418;
+	float field_0x141c;
+
+	float field_0x1548;
+	float field_0x155c;
+
+	undefined4 jmp_field_0x1144;
 	edF32VECTOR4 jmp_field_0x1120;
 };
 

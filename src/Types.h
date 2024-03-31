@@ -3,12 +3,18 @@
 
 #ifdef PLATFORM_PS2
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#define static_assert(...)
 #endif
 
 #ifdef PLATFORM_WIN
 #define PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop))
 #endif
 
+#ifdef  PLATFORM_PS2
+#define ZONE_SCOPED
+#define ZONE_SCOPED_NAME(...)
+#define FRAME_MARK
+#endif
 
 typedef unsigned char   undefined;
 
@@ -309,6 +315,15 @@ inline edF32VECTOR3 operator-(const edF32VECTOR3& lhs, const float& rhs)
 	return ret;
 }
 
+inline edF32VECTOR3 operator-(const float& lhs, const edF32VECTOR3& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs - rhs.x;
+	ret.y = lhs - rhs.y;
+	ret.z = lhs - rhs.z;
+	return ret;
+}
+
 #ifdef PLATFORM_PS2
 union
 #else
@@ -362,6 +377,16 @@ inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs)
 	ret.y = lhs.y * rhs.y;
 	ret.z = lhs.z * rhs.z;
 	ret.w = lhs.w * rhs.w;
+	return ret;
+}
+
+inline edF32VECTOR4 operator-(const float& lhs, const edF32VECTOR4& rhs)
+{
+	edF32VECTOR4 ret;
+	ret.x = lhs - rhs.x;
+	ret.y = lhs - rhs.y;
+	ret.z = lhs - rhs.z;
+	ret.w = lhs - rhs.w;
 	return ret;
 }
 

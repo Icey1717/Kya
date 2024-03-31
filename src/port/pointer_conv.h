@@ -21,6 +21,7 @@ namespace PointerConv
 #else
 #define STORE_SECTION(a) (int)(a)
 #define LOAD_SECTION(a) a
+#define LOAD_SECTION_CAST(type, a) ((type)a)
 #endif
 
 #endif //_POINTER_CONV_H

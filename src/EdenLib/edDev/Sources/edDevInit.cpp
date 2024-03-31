@@ -5,6 +5,11 @@
 #include "port/input.h"
 #endif
 
+#ifdef PLATFORM_PS2
+#include <eekernel.h>
+#endif // PLATFORM_PS2
+
+
 DevRoot edDevRoot;
 
 static EDDEV_PORT EDDEV_PORT_ARRAY_00497700[8];
@@ -180,25 +185,25 @@ int edDevInitPort(uint port, int slot, uint type)
 				pPVar2->socketNumber = iVar3;
 #endif
 #ifdef PLATFORM_PS2
-				pController->pEventFunc = _edDevDualShock2;
-				uVar2 = (*pController->pEventFunc)(0x90000000, pController, (InputEventData*)0x0);
-				pController->maxControlId = uVar2;
-				if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
-					result = -5;
-				}
-				else {
-					pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
-					uVar2 = (*pController->pEventFunc)(0x90000001, pController, (InputEventData*)0x0);
-					if (uVar2 == 0) {
-						pController->flags = pController->flags | 0x40000000;
-						pPVar2->state = 0;
-						pPVar2->prevState = 0;
-						pController->controllerId = edDevRoot.nbPorts;
-						g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
-						edDevRoot.nbPorts = edDevRoot.nbPorts + 1;
-						edDevRoot.nbPadD = edDevRoot.nbPadD + pController->maxControlId;
-					}
-				}
+				//pController->pEventFunc = _edDevDualShock2;
+				//uVar2 = (*pController->pEventFunc)(0x90000000, pController, (InputEventData*)0x0);
+				//pController->maxControlId = uVar2;
+				//if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
+				//	result = -5;
+				//}
+				//else {
+				//	pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
+				//	uVar2 = (*pController->pEventFunc)(0x90000001, pController, (InputEventData*)0x0);
+				//	if (uVar2 == 0) {
+				//		pController->flags = pController->flags | 0x40000000;
+				//		pPVar2->state = 0;
+				//		pPVar2->prevState = 0;
+				//		pController->controllerId = edDevRoot.nbPorts;
+				//		g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
+				//		edDevRoot.nbPorts = edDevRoot.nbPorts + 1;
+				//		edDevRoot.nbPadD = edDevRoot.nbPadD + pController->maxControlId;
+				//	}
+				//}
 #else
 				pController->pEventFunc = Input::_edDevKeyboard;
 

@@ -138,21 +138,21 @@ class CBehaviourSelector : public CBehaviour
 {
 public:
 	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 class CBehaviourSelectorSlave : public CBehaviourSelector
 {
 public:
 	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 class CBehaviourSelectorNew : public CBehaviourSelector
 {
 public:
 	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 PACK(

@@ -1,6 +1,7 @@
 #include "PathManager.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
+#include <math.h>
 
 CPathManager::CPathManager()
 {
@@ -165,8 +166,6 @@ void CPathFollowReaderAbsolute::Create(ByteCode* pByteCode)
 	iVar1 = pByteCode->GetS32();
 	fVar2 = pByteCode->GetF32();
 	fVar3 = pByteCode->GetF32();
-
-	Log::GetInstance().ForceFlush();
 
 	if ((pPathFollow != (CPathFollow*)0x0) && (pPathFollow != (CPathFollow*)0x0)) {
 		Create(fVar2, fVar3, pPathFollow, pPathFollow->mode, pPathFollow->type, iVar1, 0);

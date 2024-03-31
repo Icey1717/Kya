@@ -1,4 +1,7 @@
 #include "ActorBridge.h"
+
+#include <math.h>
+
 #include "MemoryStream.h"
 #include "MathOps.h"
 #include "CollisionManager.h"
@@ -723,7 +726,7 @@ void CActorBridge::Initialize()
 	peVar13 = &this->field_0x2f0.rowZ;
 	edF32Vector4ScaleHard(1.0f / fVar18, peVar13, peVar13);
 	edF32Vector4CrossProductHard(&this->field_0x2f0.rowX, &g_xVector, &this->field_0x2f0.rowZ);
-	edF32Vector4NormalizeHard_Fixed(&this->field_0x2f0.rowX, &this->field_0x2f0.rowX);
+	edF32Vector4NormalizeHard(&this->field_0x2f0.rowX, &this->field_0x2f0.rowX);
 	edF32Vector4CrossProductHard(&this->field_0x2f0.rowY, &this->field_0x2f0.rowZ, &this->field_0x2f0.rowX);
 	(this->field_0x2f0).rowT = local_20;
 	edF32Matrix4GetInverseOrthoHard(&eStack112, &this->field_0x2f0);
@@ -1019,8 +1022,7 @@ LAB_001e1120:
 					edF32Vector4SubHard(&auStack64.rowZ, &local_70, &local_80);
 					edF32Vector4NormalizeHard(&auStack64.rowZ, &auStack64.rowZ);
 					edF32Vector4SubHard(&auStack64.rowX, &local_60, &local_80);
-					edF32Vector4CrossProductHard
-					(&auStack64.rowY, &auStack64.rowZ, &auStack64.rowX);
+					edF32Vector4CrossProductHard(&auStack64.rowY, &auStack64.rowZ, &auStack64.rowX);
 					edF32Vector4NormalizeHard(&auStack64.rowY, &auStack64.rowY);
 					edF32Vector4CrossProductHard
 					(&auStack64.rowX, &auStack64.rowY, &auStack64.rowZ);
@@ -1041,9 +1043,9 @@ LAB_001e1120:
 					auStack64.cc = pVecB->z - pVecA->z;
 					auStack64.cd = 0.0f;
 
-					edF32Vector4NormalizeHard_Fixed(&auStack64.rowZ, &auStack64.rowZ);
+					edF32Vector4NormalizeHard(&auStack64.rowZ, &auStack64.rowZ);
 					edF32Vector4CrossProductHard(&auStack64.rowY, &auStack64.rowZ, &gF32Vector4UnitX);
-					edF32Vector4NormalizeHard_Fixed(&auStack64.rowY, &auStack64.rowY);
+					edF32Vector4NormalizeHard(&auStack64.rowY, &auStack64.rowY);
 					edF32Vector4CrossProductHard(&auStack64.rowX, &auStack64.rowY, &auStack64.rowZ);
 
 					auStack64.rowT.x = (pVecA->x + pVecB->x) * 0.5f;

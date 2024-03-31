@@ -1,4 +1,11 @@
 #include "InputManager.h"
+
+#include <math.h>
+
+#ifdef PLATFORM_PS2
+#include <eekernel.h>
+#endif
+
 #include "MathOps.h"
 #include "LargeObject.h"
 #include "CameraViewManager.h"

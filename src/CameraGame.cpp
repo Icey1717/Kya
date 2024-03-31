@@ -6,6 +6,7 @@
 #include "ActorManager.h"
 #include "ActorFactory.h"
 
+#include <math.h>
 
 struct CameraVectorBase {
 	bool FUN_002bf570(CCameraGame* pCamera);
@@ -91,7 +92,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 
 	if (1 < this->cameraNum) {
 		edF32Vector4SubHard(&local_a0, this->aCameraLocations + this->cameraNum, (edF32VECTOR4*)this);
-		fVar4 = edF32Vector4NormalizeHard_Fixed(&local_a0, &local_a0);
+		fVar4 = edF32Vector4NormalizeHard(&local_a0, &local_a0);
 		CCollisionRay CStack192 = CCollisionRay(fVar4, (edF32VECTOR4*)this, &local_a0);
 		fVar4 = CStack192.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_90, (_ray_info_out*)0x0);
 
@@ -107,7 +108,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 		}
 		else {
 			edF32Vector4SubHard(&local_e0, this->aCameraLocations + 2, (edF32VECTOR4*)this);
-			fVar4 = edF32Vector4NormalizeHard_Fixed(&local_e0, &local_e0);
+			fVar4 = edF32Vector4NormalizeHard(&local_e0, &local_e0);
 			CCollisionRay CStack256 = CCollisionRay(fVar4, this->aCameraLocations, &local_e0);
 			fVar4 = CStack256.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_d0, (_ray_info_out*)0x0);
 
@@ -135,7 +136,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 	if (0.01f < fVar4) {
 		iVar3 = this->cameraNum;
 		edF32Vector4SubHard(&local_120, this->aCameraLocations + iVar3 + -1, this->aCameraLocations + iVar3);
-		local_10.w = edF32Vector4NormalizeHard_Fixed(&local_120, &local_120);
+		local_10.w = edF32Vector4NormalizeHard(&local_120, &local_120);
 
 		CCollisionRay CStack320 = CCollisionRay(local_10.w, this->aCameraLocations + iVar3, &local_120);
 		fVar4 = CStack320.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_110, (_ray_info_out*)0x0);
@@ -2948,11 +2949,11 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 
 
 	edF32Vector4SubHard(aeStack96, &this->transformationMatrix.rowT, &this->gameLookAt);
-	edF32Vector4NormalizeHard_Fixed(aeStack96, aeStack96);
+	edF32Vector4NormalizeHard(aeStack96, aeStack96);
 	edF32Vector4ScaleHard(this->field_0x208, aeStack96, aeStack96);
 	edF32Vector4AddHard(aeStack96, aeStack96, &this->gameLookAt);
 	edF32Vector4SubHard(aeStack96, &this->lookAt, aeStack96);
-	fVar4 = edF32Vector4NormalizeHard_Fixed(aeStack96, aeStack96);
+	fVar4 = edF32Vector4NormalizeHard(aeStack96, aeStack96);
 
 	this->distance = fVar4;
 
@@ -3152,7 +3153,7 @@ bool CCameraGame::Manage()
 				vectorG.y = 0.0f;
 			}
 
-			edF32Vector4NormalizeHard_Fixed(&vectorG, &vectorG);
+			edF32Vector4NormalizeHard(&vectorG, &vectorG);
 
 			this->transformationMatrix.rowZ = vectorG;
 			this->field_0x1b0 = this->field_0x1b0 & 0xffffffe1;
@@ -3189,7 +3190,7 @@ bool CCameraGame::Manage()
 					const static float FLOAT_00448a74 = 5.0f;
 
 					edF32Vector4SubHard(&eStack112, &g_CameraVectorBase.aCameraLocations[1], &this->transformationMatrix.rowT);
-					edF32Vector4NormalizeHard_Fixed(&eStack112, &eStack112);
+					edF32Vector4NormalizeHard(&eStack112, &eStack112);
 					edF32Vector4ScaleHard(FLOAT_00448a74 * CCamera::_gpcam_man->time_0x4, &eStack112, &eStack112);
 					edF32Vector4AddHard(&eStack128, (edF32VECTOR4*)&this->transformationMatrix.da, &eStack112);
 					edF32Vector4SubHard(&eStack112, &this->gameLookAt, &eStack128);
@@ -3778,7 +3779,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 
 		local_10 = *peVar1 * distance + *peVar2;
 
-		edF32Matrix4MulF32Vector4Hard(&local_20, &pPrim->matrix_0x40, &local_10);
+		edF32Matrix4MulF32Vector4Hard(&local_20, &pPrim->worldTransform, &local_10);
 		if (colType == 10) {
 			if (fabs(local_20.x) <= fabs(local_20.y)) {
 				local_20.x = 0.0f;
@@ -3800,7 +3801,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 			}
 		}
 
-		edColGetNormalInWorldFromLocal(pOutNormal, &pPrim->matrix_0x40, &local_20);
+		edColGetNormalInWorldFromLocal(pOutNormal, &pPrim->worldTransform, &local_20);
 
 	}
 	else {

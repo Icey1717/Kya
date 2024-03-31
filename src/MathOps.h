@@ -21,7 +21,6 @@ extern edF32VECTOR4 g_xVector;
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 
 float edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
-float edF32Vector4NormalizeHard_Fixed(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
 void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1);

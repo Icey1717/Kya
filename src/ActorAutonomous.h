@@ -45,6 +45,7 @@ public:
 class CInterface {
 public:
 	virtual float GetValue() = 0;
+	virtual void SetValue(float value) = 0;
 };
 
 class CLifeInterface : public CInterface
@@ -59,6 +60,7 @@ public:
 
 	// CInterface
 	virtual float GetValue();
+	virtual void SetValue(float value);
 
 	float GetValueMax();
 
@@ -89,6 +91,7 @@ public:
 	virtual void LifeRestore();
 	virtual CLifeInterface* GetLifeInterface();
 	virtual CLifeInterface* GetLifeInterfaceOther();
+	virtual void LifeDecrease(float amount);
 
 	float field_0x2e4;
 

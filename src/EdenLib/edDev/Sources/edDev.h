@@ -155,7 +155,7 @@ struct Pad_180 {
 };
 
 typedef uint(*ControllerEventFuncPtr)(uint, EDDEV_PORT*, void*);
-typedef void(*ControllerConnectedFuncPtr)(uint32_t eventID);
+typedef void(*ControllerConnectedFuncPtr)(uint eventID);
 
 struct EDDEV_PORT {
 	uint controllerId;

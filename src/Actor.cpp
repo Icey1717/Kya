@@ -378,9 +378,9 @@ void CActor::Create(ByteCode* pByteCode)
 
 	memcpy(this->name, name, 64);
 
-	//if (strcmp(name, "ILOTFLOTTANT_MOYEN") == 0) {
-	//	memcpy(this->name, name, 64);
-	//}
+	if (strcmp(name, "TELEPORTER_LVL_DOOR_L1") == 0) {
+		memcpy(this->name, name, 64);
+	}
 
 	pByteCode->Align(4);
 	pCVar1 = (CinNamedObject30*)pByteCode->currentSeekPos;
@@ -1622,8 +1622,7 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 				pcVar2 = pByteCode->GetPosition();
 
 				if (pEntry->GetBehaviour() != (CBehaviour*)0x0) {
-					auto* pBhvr = pEntry->GetBehaviour();
-					pBhvr->Create(pByteCode);
+					pEntry->GetBehaviour()->Create(pByteCode);
 				}
 
 				pcVar3 = pByteCode->GetPosition();
@@ -2718,14 +2717,14 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 		local_10.z = (this->rotationQuat).z;
 		local_10.w = 0.0f;
 
-		edF32Vector4NormalizeHard_Fixed(&local_10, &local_10);
+		edF32Vector4NormalizeHard(&local_10, &local_10);
 
 		local_20.x = pNewOrientation->x;
 		local_20.y = 0.0f;
 		local_20.z = pNewOrientation->z;
 		local_20.w = 0.0f;
 
-		edF32Vector4NormalizeHard_Fixed(&local_20, &local_20);
+		edF32Vector4NormalizeHard(&local_20, &local_20);
 
 		pTVar1 = GetTimer();
 		fVar4 = speed * pTVar1->cutsceneDeltaTime;
@@ -2756,7 +2755,7 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 
 			edF32Matrix4RotateYHard(fVar4, &eStack96, &gF32Matrix4Unit);
 			edF32Matrix4MulF32Vector4Hard(&local_10, &eStack96, &local_10);
-			edF32Vector4NormalizeHard_Fixed(&local_10, &local_10);
+			edF32Vector4NormalizeHard(&local_10, &local_10);
 
 			this->rotationQuat = local_10;
 		}
@@ -2971,6 +2970,10 @@ void CActor::SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int param_4, CAc
 	edF32VECTOR3 local_10;
 
 	ACTOR_LOG(LogLevel::Verbose, "CActor::SV_UpdateMatrix_Rel {} {}", this->name, m0->rowT.ToString());
+
+	if (strcmp(this->name, "TELEPORTER_LVL_DOOR_L1") == 0) {
+		ACTOR_LOG(LogLevel::Verbose, "CActor::SV_UpdateMatrix_Rel {} {}", this->name, m0->rowT.ToString());
+	}
 
 	if ((this->pTiedActor != (CActor*)0x0) && ((param_3 != 0 || ((this->flags & 0x40000) != 0)))) {
 		this->flags = this->flags & 0xfffbffff;

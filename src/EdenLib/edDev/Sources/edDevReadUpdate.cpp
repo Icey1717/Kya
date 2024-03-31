@@ -1,6 +1,8 @@
 #include "edDevReadUpdate.h"
 #include "edDev.h"
 
+#include <string>
+
 void edDevReadUpdate(void)
 {
 	uint uVar1;

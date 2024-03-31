@@ -6,6 +6,9 @@
 
 #define COLLISION_LOG(level, format, ...) MY_LOG_CATEGORY("Collision", level, format, ##__VA_ARGS__)
 
+#define COL_TYPE_TREE 0x1
+#define COL_TYPE_PRIM_OBJ 0xe
+
 struct edColRAY_OBB_IN {
 	edF32VECTOR4* pLocation;
 	edF32VECTOR4* pDirection;
@@ -92,9 +95,9 @@ struct edColPRIM_RAY_UNIT_BOX_UNIT_IN {
 };
 
 PACK(
-	struct edColPRIM_SPHERE {
-	edF32MATRIX4 matrix_0x0;
-	edF32MATRIX4 matrix_0x40;
+struct edColPRIM_SPHERE {
+	edF32MATRIX4 vertices;
+	edF32MATRIX4 worldTransform;
 	uint flags_0x80;
 	undefined field_0x84;
 	undefined field_0x85;
@@ -108,15 +111,15 @@ PACK(
 	undefined field_0x8d;
 	undefined field_0x8e;
 	undefined field_0x8f;
-};
-)
+});
 
 static_assert(sizeof(edColPRIM_SPHERE) == 0x90);
 
 PACK(
-	struct edColPRIM_BOX {
-	edF32MATRIX4 matrix_0x0;
-	edF32MATRIX4 matrix_0x40;
+	struct edColPRIM_BOX 
+{
+	edF32MATRIX4 vertices;
+	edF32MATRIX4 worldTransform;
 	uint flags_0x80;
 	undefined field_0x84;
 	undefined field_0x85;
@@ -130,16 +133,16 @@ PACK(
 	undefined field_0x8d;
 	undefined field_0x8e;
 	undefined field_0x8f;
-};
-)
+});
+
 
 static_assert(sizeof(edColPRIM_BOX) == 0x90);
 
 PACK(
 	struct edColPRIM_OBJECT
 {
-	edF32MATRIX4 matrix_0x0;
-	edF32MATRIX4 matrix_0x40;
+	edF32MATRIX4 vertices;
+	edF32MATRIX4 worldTransform;
 	uint flags_0x80;
 	undefined field_0x84;
 	undefined field_0x85;
@@ -494,10 +497,10 @@ struct edColINFO_OUT
 {
 	edF32VECTOR4 location;
 	uint result;
-	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 field_0x20;
-	edF32VECTOR4 field_0x30;
-	float field_0x44;
+	edF32VECTOR4 normal;
+	edF32VECTOR4 intersectionPoint;
+	edF32VECTOR4 relativeVelocity;
+	float penetrationDepth;
 	int field_0x48;
 	int field_0x4c;
 	int field_0x50;

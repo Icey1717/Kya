@@ -84,6 +84,7 @@ public:
 	static void ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVertex, edF32VECTOR4* pLowestVertex, int param_3, edColPRIM_OBJECT* pPrimObj, byte type);
 	static void SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2, edF32MATRIX4* param_3);
 	static void TransformG3DObbTreeVertices(edColG3D_OBB_TREE_DYN* pDynCol, int matrixType, edF32MATRIX4* pTransformMatrix);
+	static float GetWallNormalYLimit(s_collision_contact* pContact);
 
 	uint CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0);
 	uint CheckCollisionsWithScenery(int param_2);

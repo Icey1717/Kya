@@ -6,6 +6,8 @@
 #include "PCSX2_VU.h"
 #include "log.h"
 
+#include "profiling.h"
+
 #include <BS_thread_pool.hpp>
 #include <recycle/shared_pool.hpp>
 #include "edVideo/VideoD.h"
@@ -217,6 +219,7 @@ namespace VU1Emu {
 
 		void _$DrawingStart_Shared()
 		{
+			ZONE_SCOPED;
 			vi15 = itop;
 			vi14 = VIF_LOAD_I(vi15, 0, VIF_REG_X);
 			vi14 = (vi14 & 0xFF);
@@ -251,6 +254,8 @@ namespace VU1Emu {
 
 		void _$UnpackData_XYZ32_Loop(int count, edF32VECTOR4* pStartAddr) 
 		{
+			ZONE_SCOPED;
+
 			for (int i = 0; i < count; i++) {
 				pStartAddr[i].x = int12_to_float(pStartAddr[i].xi);
 				pStartAddr[i].y = int12_to_float(pStartAddr[i].yi);
@@ -266,6 +271,8 @@ namespace VU1Emu {
 
 		void _$UnpackData_XYZ32_Normal()
 		{
+			ZONE_SCOPED;
+
 			vi02 = vi14;
 			vi03 = vi15 + 1;
 			vi04 = vi03 + 216;
@@ -460,6 +467,8 @@ namespace VU1Emu {
 
 		void _$NoClipCulling_12_1()
 		{
+			ZONE_SCOPED;
+
 			vi02 = vi14;
 			vi03 = vi15 + 1;
 
@@ -527,6 +536,8 @@ namespace VU1Emu {
 
 		void _$ClippingRejection_12_1_OLD()
 		{
+			ZONE_SCOPED;
+
 			vi02 = vi14;
 			vi03 = vi15 + 1;
 
@@ -587,6 +598,8 @@ namespace VU1Emu {
 
 		void _$ClippingRejection_12_1()
 		{
+			ZONE_SCOPED;
+
 			vi02 = vi14;
 			vi03 = vi15 + 1;
 
@@ -679,6 +692,8 @@ namespace VU1Emu {
 
 		void CopyClip()
 		{
+			ZONE_SCOPED;
+
 			vi05 = *reinterpret_cast<int*>(&vf28.x);
 
 			// GIF packet
@@ -702,6 +717,8 @@ namespace VU1Emu {
 
 		bool ClipLoopFunc(int inFlag, float inTest, int testReg) 
 		{
+			ZONE_SCOPED;
+
 			// _$Clipping_MinusY
 			vi04 = *reinterpret_cast<int*>(&vf28.y);
 			vi06 = *VIF_AS_I(vi04, 0, VIF_REG_X);
@@ -802,6 +819,8 @@ namespace VU1Emu {
 
 		void KickVertexFromReg(int vtxReg, uint prim)
 		{
+			ZONE_SCOPED;
+
 			// ST (float, float) and Q (float)
 			edF32VECTOR4 STQ = VIF_LOAD_F(vtxReg, 0);
 			edF32VECTOR4 RGBA = VIF_LOAD_F(vtxReg, 1);
@@ -838,6 +857,8 @@ namespace VU1Emu {
 
 		void _$Clipping()
 		{
+			ZONE_SCOPED;
+
 			// Obj to Screen matrix
 			vf04 = VIF_LOAD_F(vi00, 0x13);
 			vf03 = VIF_LOAD_F(vi00, 0x12);
@@ -1256,6 +1277,8 @@ namespace VU1Emu {
 
 		void _$GouraudMapping_No_Fog_16_2_Simple()
 		{
+			ZONE_SCOPED;
+
 			const int vtxCount = vi14;
 			int vtxReg = vi15 + 1;
 
@@ -1324,6 +1347,8 @@ namespace VU1Emu {
 				_$GouraudMapping_No_Fog_16_2_Simple();
 				return;
 			}
+
+			ZONE_SCOPED;
 
 			// Vtx addr base.
 			vi03 = vi15 + 1;
@@ -1459,6 +1484,8 @@ namespace VU1Emu {
 
 		void _$XYZW_16_ConvBones_Rigid_Simple()
 		{
+			ZONE_SCOPED;
+
 			if (vi01 & 0x400) {
 				vi01 = 0x7bff & vi01;
 
@@ -1487,6 +1514,8 @@ namespace VU1Emu {
 				_$XYZW_16_ConvBones_Rigid_Simple();
 				return;
 			}
+
+			ZONE_SCOPED;
 
 			vi04 = 0x400;
 			vi04 = vi04 & vi01;
@@ -1558,6 +1587,8 @@ namespace VU1Emu {
 
 		void _$XYZW_16_Conv_EndBones_Rigid_Simple()
 		{
+			ZONE_SCOPED;
+
 			const int vtxCount = vi14;
 			int vtxReg = vi15 + 1;
 
@@ -1615,6 +1646,8 @@ namespace VU1Emu {
 				_$XYZW_16_Conv_EndBones_Rigid_Simple();
 				return;
 			}
+
+			ZONE_SCOPED;
 
 			// Vtx count
 			vi02 = vi14;
@@ -1769,6 +1802,8 @@ namespace VU1Emu {
 
 		void _$Alpha_Object()
 		{
+			ZONE_SCOPED;
+
 			if ((vi01 & 0x20) != 0) {
 
 				// vtx data reg
@@ -1820,6 +1855,8 @@ namespace VU1Emu {
 
 		void _$XYZW_16_Conv()
 		{
+			ZONE_SCOPED;
+
 			if ((vi01 & 0x400) != 0) {
 				// Vtx data reg
 				vi03 = vi15 + 1;
@@ -1882,6 +1919,8 @@ namespace VU1Emu {
 
 		void _$ParallelLightning_addcolor_Simple()
 		{
+			ZONE_SCOPED;
+
 			if (vi01 & 16) {
 				const int vtxCount = vi14;
 				int vtxReg = vi15 + 1;
@@ -1939,6 +1978,8 @@ namespace VU1Emu {
 				_$ParallelLightning_addcolor_Simple();
 				return;
 			}
+
+			ZONE_SCOPED;
 
 			vi04 = 16;
 			vi04 = vi04 & vi01;
@@ -2096,6 +2137,8 @@ namespace VU1Emu {
 		}
 
 		void _$Lightning_Ambiant() {
+			ZONE_SCOPED;
+
 			vi04 = 128;
 			vi04 = vi04 & vi01;
 
@@ -2106,6 +2149,8 @@ namespace VU1Emu {
 
 		void _$Lightning_Repack()
 		{
+			ZONE_SCOPED;
+
 			vi03 = vi15 + 1;
 			vi02 = vi14;
 
@@ -2151,6 +2196,8 @@ namespace VU1Emu {
 
 		void _$XYZW_16_Conv_EndBones_Rigid_noNormal()
 		{
+			ZONE_SCOPED;
+
 			vi02 = vi14;
 			vi03 = vi15 + 1;
 
@@ -2228,6 +2275,7 @@ namespace VU1Emu {
 				(*VIF_AS_F(vi03, -1)).xyz = vf10.xyz;
 			}
 		}
+
 		void _$BonesRigid_Ambiant_Test()
 		{
 			vi04 = 128;
@@ -2254,6 +2302,8 @@ namespace VU1Emu {
 
 		void RunCode(int addr) 
 		{
+			ZONE_SCOPED;
+
 			VU_VTX_TRACE_LOG("RunCode 0x{:x}", addr);
 
 			bool bTestConv16 = true;
@@ -2484,6 +2534,7 @@ static void LogUpdate(const VU1Emu::WriteTag* const pTag) {
 
 void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 {
+	ZONE_SCOPED;
 	int stcl = 0;
 	int stwl = 0;
 	edF32VECTOR4 strow = { 0.0f, 0.0f, 0.0f, 0.0f };

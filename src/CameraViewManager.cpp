@@ -802,16 +802,16 @@ void CCameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
 	edF32Vector4SubHard(&eStack112, &eStack112, &eStack48);
 
 	edF32Vector4CrossProductHard(&this->frustumPlane.rowX, &eStack80, &eStack64);
-	edF32Vector4NormalizeHard_Fixed(&this->frustumPlane.rowX, &this->frustumPlane.rowX);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowX, &this->frustumPlane.rowX);
 
 	edF32Vector4CrossProductHard(&this->frustumPlane.rowY, &eStack96, &eStack112);
-	edF32Vector4NormalizeHard_Fixed(&this->frustumPlane.rowY, &this->frustumPlane.rowY);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowY, &this->frustumPlane.rowY);
 
 	edF32Vector4CrossProductHard(&this->frustumPlane.rowZ, &eStack64, &eStack96);
-	edF32Vector4NormalizeHard_Fixed(&this->frustumPlane.rowZ, &this->frustumPlane.rowZ);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowZ, &this->frustumPlane.rowZ);
 
 	edF32Vector4CrossProductHard(&this->frustumPlane.rowT, &eStack112, &eStack80);
-	edF32Vector4NormalizeHard_Fixed(&this->frustumPlane.rowT, &this->frustumPlane.rowT);
+	edF32Vector4NormalizeHard(&this->frustumPlane.rowT, &this->frustumPlane.rowT);
 
 	edF32Matrix4TransposeHard(&this->frustumPlane);
 	(this->frustumPlane).dd = 1.0f;
@@ -1373,7 +1373,7 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	(this->lookAt).z = local_10.z;
 	(this->lookAt).w = 1.0f;
 	edF32Vector4SubHard(&local_10, &this->lookAt, (edF32VECTOR4*)&(this->transformationMatrix).da);
-	edF32Vector4NormalizeHard_Fixed(&local_10, &local_10);
+	edF32Vector4NormalizeHard(&local_10, &local_10);
 	(this->transformationMatrix).ca = local_10.x;
 	(this->transformationMatrix).cb = local_10.y;
 	(this->transformationMatrix).cc = local_10.z;
@@ -2284,7 +2284,7 @@ void CameraSet3DPos(edFCamera* pCamera)
 	rowDiffVector.y = (pCamera->position).y - (pCamera->lookAt).y;
 	rowDiffVector.z = (pCamera->position).z - (pCamera->lookAt).z;
 	rowDiffVector.w = (pCamera->position).w - (pCamera->lookAt).w;
-	edF32Vector4NormalizeHard_Fixed(&rowDiffVector, &rowDiffVector);
+	edF32Vector4NormalizeHard(&rowDiffVector, &rowDiffVector);
 	GetAnglesFromVector(&rotationVector, &rowDiffVector);
 	if (pCamera->rotationZ != 0.0) {
 		edF32Matrix4RotateZHard(pCamera->rotationZ, &transformedMatrix, &transformedMatrix);

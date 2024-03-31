@@ -9,6 +9,7 @@
 #include "ActorHero.h"
 
 #include <math.h>
+#include <string.h>
 
 MaterialTableEntry CCollisionManager::_material_table[MATERIAL_TABLE_SIZE] = {
 	{0.5235988f, 0.6981317f, 1.0471976f, 1.0f, 1.0f},
@@ -24,8 +25,6 @@ MaterialTableEntry CCollisionManager::_material_table[MATERIAL_TABLE_SIZE] = {
 	{0.5235988f, 0.6981317f, 1.0471976f, 1.0f, 1.0f},
 	{0.5235988f, 0.6981317f, 1.0471976f, 1.0f, 1.0f},
 };
-
-#define COL_TYPE_PRIM_OBJ 0xe
 
 CCollisionManager::CCollisionManager()
 {
@@ -336,7 +335,7 @@ edColG3D_OBB_TREE_DYN* CCollisionManager::InstanciateDynCol(int index)
 					}
 					else {
 						iVar10 = 0;
-						if (bVar1 == 1) {
+						if (bVar1 == COL_TYPE_TREE) {
 							bVar1 = pObbTree->count_0x52;
 							for (; iVar10 < (int)(uint)bVar1; iVar10 = iVar10 + 1) {
 								edObbTREE_DYN* pNext = (edObbTREE_DYN*)((char*)pObbTreeBase + (pObbTree->field_0x54[iVar10] * sizeof(edObbTREE_DYN)));
@@ -419,15 +418,18 @@ void CCollision::SetupInternalData(CActor* pActor)
 	edColCollisionAddPrim(1, 1, (void*)0x0, this->pObbTree, 2, 0, (void*)0x0);
 	puVar1 = edColEnd(0);
 	this->pColObj = puVar1;
+
 	this->pColObj->pActor = STORE_SECTION(pActor);
 
 	this->pObbPrim = 0;
 	this->primType = 0;
+
 	pObbTree = GetFirstObbPrimRecurse(this->pObbTree);
 	if (pObbTree != 0) {
 		this->pObbPrim = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
 		this->primType = pObbTree->type;
 	}
+
 	return;
 }
 
@@ -516,13 +518,13 @@ edObbTREE_DYN* CCollision::GetFirstObbPrimRecurse(edObbTREE_DYN* pObbTree)
 
 	bVar1 = pObbTree->type;
 	if ((bVar1 != 0xe) && (bVar1 != 0xd)) {
-		if ((bVar1 == 1) && (iVar7 = 0, pObbTree->count_0x52 != 0)) {
+		if ((bVar1 == COL_TYPE_TREE) && (iVar7 = 0, pObbTree->count_0x52 != 0)) {
 			do {
 				pMainTree = (edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar7]);
 				bVar1 = pMainTree->type;
 				pResult = pMainTree;
 				if ((bVar1 != 0xe) && (bVar1 != 0xd)) {
-					if ((bVar1 == 1) && (iVar6 = 0, pMainTree->count_0x52 != 0)) {
+					if ((bVar1 == COL_TYPE_TREE) && (iVar6 = 0, pMainTree->count_0x52 != 0)) {
 						do {
 							pResult = GetFirstObbPrimRecurse((edObbTREE_DYN*)LOAD_SECTION(pMainTree->field_0x54[iVar6]));
 
@@ -540,7 +542,7 @@ edObbTREE_DYN* CCollision::GetFirstObbPrimRecurse(edObbTREE_DYN* pObbTree)
 				}
 
 				iVar7 = iVar7 + 1;
-			} while (iVar7 < (int)(uint)pObbTree->count_0x52);
+			} while (iVar7 < pObbTree->count_0x52);
 		}
 
 		pObbTree = (edObbTREE_DYN*)0x0;
@@ -551,40 +553,40 @@ edObbTREE_DYN* CCollision::GetFirstObbPrimRecurse(edObbTREE_DYN* pObbTree)
 
 void CCollision::PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, int param_3, int param_4)
 {
-	byte bVar1;
+	byte obbType;
 	int iVar2;
 	int iVar3;
 	int iVar4;
 	edObbTREE_DYN* peVar5;
 
-	bVar1 = pObbTree->type;
-	if (bVar1 == 1) {
+	obbType = pObbTree->type;
+	if (obbType == COL_TYPE_TREE) {
 		iVar4 = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
 				PatchObbTreeFlagsRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar4]), param_2, param_3, param_4);
 				iVar4 = iVar4 + 1;
-			} while (iVar4 < (int)(uint)pObbTree->count_0x52);
+			} while (iVar4 < pObbTree->count_0x52);
 		}
 	}
 	else {
-		if (bVar1 == 4) {
+		if (obbType == 4) {
 			IMPLEMENTATION_GUARD(
 			iVar4 = 0;
 			if (pObbTree->count_0x52 != 0) {
 				iVar2 = 0;
 				do {
 					iVar4 = iVar4 + 1;
-					iVar3 = (int)&(pObbTree->field_0x54->matrix_0x0).aa + iVar2;
+					iVar3 = (int)&(pObbTree->field_0x54->vertices).aa + iVar2;
 					*(uint*)(iVar3 + 0xc) = *(uint*)(iVar3 + 0xc) & param_3;
 					*(uint*)(iVar3 + 0xc) = *(uint*)(iVar3 + 0xc) | param_2;
 					*(uint*)(iVar3 + 0xc) = *(uint*)(iVar3 + 0xc) ^ param_4;
 					iVar2 = iVar2 + 0x10;
-				} while (iVar4 < (int)(uint)pObbTree->count_0x52);
+				} while (iVar4 < pObbTree->count_0x52);
 			})
 		}
 		else {
-			if (((bVar1 == COL_TYPE_PRIM_OBJ) || (bVar1 == 0xd)) && (iVar4 = 0, pObbTree->count_0x52 != 0)) {
+			if (((obbType == COL_TYPE_PRIM_OBJ) || (obbType == 0xd)) && (iVar4 = 0, pObbTree->count_0x52 != 0)) {
 				iVar2 = 0;
 				edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
 				do {					
@@ -593,7 +595,7 @@ void CCollision::PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, 
 					pPrimObj[iVar4].flags_0x80 = pPrimObj[iVar4].flags_0x80 ^ param_4;
 
 					iVar4 = iVar4 + 1;
-				} while (iVar4 < (int)(uint)pObbTree->count_0x52);
+				} while (iVar4 < pObbTree->count_0x52);
 			}
 		}
 	}
@@ -612,7 +614,7 @@ void CCollision::SetObbTreePositionRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4
 	bVar1 = pObbTree->type;
 	iVar2 = 0;
 
-	if (bVar1 == 1) {
+	if (bVar1 == COL_TYPE_TREE) {
 		for (; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
 			SetObbTreePositionRecurse(LOAD_SECTION_CAST(edObbTREE_DYN*, pObbTree->field_0x54[iVar2]), pMatrix);
 		}
@@ -623,21 +625,23 @@ void CCollision::SetObbTreePositionRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4
 			for (iVar2 = 0; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
 				peVar3 = pPrim + iVar2;
 
-				edF32Matrix4MulF32Vector4Hard(&peVar3->matrix_0x0.rowT, pMatrix, &peVar3->field_0xb0);
+				edF32Matrix4MulF32Vector4Hard(&peVar3->vertices.rowT, pMatrix, &peVar3->field_0xb0);
 
-				local_10.w = peVar3->matrix_0x0.rowT.w;
-				local_10.x = 0.0f - peVar3->matrix_0x0.rowT.x;
-				local_10.y = 0.0f - peVar3->matrix_0x0.rowT.y;
-				local_10.z = 0.0f - peVar3->matrix_0x0.rowT.z;
+				local_10.w = peVar3->vertices.rowT.w;
+				local_10.x = 0.0f - peVar3->vertices.rowT.x;
+				local_10.y = 0.0f - peVar3->vertices.rowT.y;
+				local_10.z = 0.0f - peVar3->vertices.rowT.z;
 
-				(peVar3->matrix_0x40).rowT.x = 0.0f;
-				(peVar3->matrix_0x40).rowT.y = 0.0f;
-				(peVar3->matrix_0x40).rowT.z = 0.0f;
-				(peVar3->matrix_0x40).rowT.w = 1.0f;
+				(peVar3->worldTransform).rowT.x = 0.0f;
+				(peVar3->worldTransform).rowT.y = 0.0f;
+				(peVar3->worldTransform).rowT.z = 0.0f;
+				(peVar3->worldTransform).rowT.w = 1.0f;
 
-				edF32Matrix4MulF32Vector4Hard(&local_10, &peVar3->matrix_0x40, &local_10);
+				edF32Matrix4MulF32Vector4Hard(&local_10, &peVar3->worldTransform, &local_10);
 
-				(peVar3->matrix_0x40).rowT = local_10;
+				(peVar3->worldTransform).rowT = local_10;
+
+				COLLISION_LOG(LogLevel::Verbose, "SetObbTreePositionRecurse new transform: {}", peVar3->worldTransform.ToString());
 			}
 		}
 	}
@@ -646,7 +650,7 @@ void CCollision::SetObbTreePositionRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4
 
 void CCollision::SetObbTreeMatrixNoRotationRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2, edF32MATRIX4* param_3)
 {
-	byte bVar1;
+	byte obbType;
 	edObbTREE_DYN* peVar2;
 	int iVar3;
 	int iVar4;
@@ -654,28 +658,31 @@ void CCollision::SetObbTreeMatrixNoRotationRecurse(edObbTREE_DYN* pObbTree, edF3
 	edF32VECTOR4 local_10;
 
 	edF32Matrix4TranslateHard(&pObbTree->bbox.transform, &pObbTree->matrix_0x70, &param_2->rowT);
-	bVar1 = pObbTree->type;
-	if (bVar1 == 1) {
+
+	obbType = pObbTree->type;
+
+	if (obbType == COL_TYPE_TREE) {
 		iVar4 = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
 				SetObbTreeMatrixNoRotationRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar4]), param_2, param_3);
 				iVar4 = iVar4 + 1;
-			} while (iVar4 < (int)(uint)pObbTree->count_0x52);
+			} while (iVar4 < pObbTree->count_0x52);
 		}
 	}
 	else {
-		if ((((bVar1 != 8) && (bVar1 != 4)) && ((bVar1 == COL_TYPE_PRIM_OBJ || (bVar1 == 0xd)))) && (iVar4 = 0, pObbTree->count_0x52 != 0))
+		if ((((obbType != 8) && (obbType != 4)) && ((obbType == COL_TYPE_PRIM_OBJ || (obbType == 0xd)))) && (iVar4 = 0, pObbTree->count_0x52 != 0))
 		{
 			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
 
 			do {
 				edColComputeMatrices(&pPrimObj[iVar4]);
-				edF32Matrix4TranslateHard(&pPrimObj[iVar4].matrix_0x0, &pPrimObj[iVar4].matrix_0x0, &param_2->rowT);
-				edF32Matrix4MulF32Vector4Hard(&local_10, &pPrimObj[iVar4].matrix_0x40, &param_3->rowT);
-				(pPrimObj[iVar4].matrix_0x40).rowT = local_10;
+				edF32Matrix4TranslateHard(&pPrimObj[iVar4].vertices, &pPrimObj[iVar4].vertices, &param_2->rowT);
+				edF32Matrix4MulF32Vector4Hard(&local_10, &pPrimObj[iVar4].worldTransform, &param_3->rowT);
+				(pPrimObj[iVar4].worldTransform).rowT = local_10;
+				COLLISION_LOG(LogLevel::Verbose, "SetObbTreeMatrixNoRotationRecurse new transform: {}", (pPrimObj[iVar4].worldTransform).ToString());
 				iVar4 = iVar4 + 1;
-			} while (iVar4 < (int)(uint)pObbTree->count_0x52);
+			} while (iVar4 < pObbTree->count_0x52);
 		}
 	}
 	return;
@@ -690,8 +697,8 @@ void CCollision::ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVerte
 
 	if ((param_3 == 0) && (pPrimObj->field_0xa0.z + pPrimObj->field_0xa0.x + pPrimObj->field_0xa0.y == 0.0f)) {
 	
-		*pHighestVertex = (pPrimObj->matrix_0x0).rowT;
-		*pLowestVertex = (pPrimObj->matrix_0x0).rowT;
+		*pHighestVertex = (pPrimObj->vertices).rowT;
+		*pLowestVertex = (pPrimObj->vertices).rowT;
 
 		if (type == 0xd) {
 			pHighestVertex->y = pHighestVertex->y - pPrimObj->field_0x90.y * 0.5f;
@@ -703,7 +710,7 @@ void CCollision::ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVerte
 		}
 	}
 	else {
-		v1 = &pPrimObj->matrix_0x40.rowY;
+		v1 = &pPrimObj->worldTransform.rowY;
 		if (type == 0xd) {
 			if (v1->x <= 0.0f) {
 				pLowestVertex->x = -1.0f;
@@ -711,13 +718,13 @@ void CCollision::ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVerte
 			else {
 				pLowestVertex->x = 0.5f;
 			}
-			if ((pPrimObj->matrix_0x40).bb <= 0.0f) {
+			if ((pPrimObj->worldTransform).bb <= 0.0f) {
 				pLowestVertex->y = -1.0f;
 			}
 			else {
 				pLowestVertex->y = 0.5f;
 			}
-			if ((pPrimObj->matrix_0x40).bc <= 0.0f) {
+			if ((pPrimObj->worldTransform).bc <= 0.0f) {
 				pLowestVertex->z = -1.0f;
 			}
 			else {
@@ -725,7 +732,7 @@ void CCollision::ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVerte
 			}
 		}
 		else {
-			edF32Vector4NormalizeHard_Fixed(pLowestVertex, v1);
+			edF32Vector4NormalizeHard(pLowestVertex, v1);
 		}
 
 		pLowestVertex->w = 1.0f;
@@ -735,8 +742,8 @@ void CCollision::ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVerte
 		pHighestVertex->z = 0.0f - pLowestVertex->z;
 		pHighestVertex->w = pLowestVertex->w;
 
-		edF32Matrix4MulF32Vector4Hard(pHighestVertex, &pPrimObj->matrix_0x0, pHighestVertex);
-		edF32Matrix4MulF32Vector4Hard(pLowestVertex, &pPrimObj->matrix_0x0, pLowestVertex);
+		edF32Matrix4MulF32Vector4Hard(pHighestVertex, &pPrimObj->vertices, pHighestVertex);
+		edF32Matrix4MulF32Vector4Hard(pLowestVertex, &pPrimObj->vertices, pLowestVertex);
 	}
 	return;
 }
@@ -751,13 +758,13 @@ void CCollision::SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* 
 
 	edF32Matrix4MulF32Matrix4Hard(&pObbTree->bbox.transform, &pObbTree->matrix_0x70, param_2);
 	bVar1 = pObbTree->type;
-	if (bVar1 == 1) {
+	if (bVar1 == COL_TYPE_TREE) {
 		iVar3 = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
 				SetObbTreeMatrixRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar3]), param_2, param_3);
 				iVar3 = iVar3 + 1;
-			} while (iVar3 < (int)(uint)pObbTree->count_0x52);
+			} while (iVar3 < pObbTree->count_0x52);
 		}
 	}
 	else {
@@ -765,10 +772,11 @@ void CCollision::SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* 
 			pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
 			do {
 				edColComputeMatrices(&pPrimObj[iVar3]);
-				edF32Matrix4MulF32Matrix4Hard(&pPrimObj[iVar3].matrix_0x0, &pPrimObj[iVar3].matrix_0x0, param_2);
-				edF32Matrix4MulF32Matrix4Hard(&pPrimObj[iVar3].matrix_0x40, param_3, &pPrimObj[iVar3].matrix_0x40);
+				edF32Matrix4MulF32Matrix4Hard(&pPrimObj[iVar3].vertices, &pPrimObj[iVar3].vertices, param_2);
+				edF32Matrix4MulF32Matrix4Hard(&pPrimObj[iVar3].worldTransform, param_3, &pPrimObj[iVar3].worldTransform);
+				COLLISION_LOG(LogLevel::Verbose, "SetObbTreeMatrixRecurse new transform: {}", (pPrimObj[iVar3].worldTransform).ToString());
 				iVar3 = iVar3 + 1;
-			} while (iVar3 < (int)(uint)pObbTree->count_0x52);
+			} while (iVar3 < pObbTree->count_0x52);
 		}
 	}
 	return;
@@ -783,13 +791,13 @@ void CCollision::ComputeObbTreeLowestAndHighestVerticesRecurse(edF32VECTOR4* pHi
 
 	colType = pObbTree->type;
 
-	if (colType == 1) {
+	if (colType == COL_TYPE_TREE) {
 		index = 0;
 		if (pObbTree->count_0x52 != 0) {
 			do {
 				ComputeObbTreeLowestAndHighestVerticesRecurse(pHighestVertex, pLowestVertex, param_3, (edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[index]));
 				index = index + 1;
-			} while (index < (int)(uint)pObbTree->count_0x52);
+			} while (index < pObbTree->count_0x52);
 		}
 	}
 	else {
@@ -806,7 +814,7 @@ void CCollision::ComputeObbTreeLowestAndHighestVerticesRecurse(edF32VECTOR4* pHi
 					*pLowestVertex = outLowestVertex;
 				}
 				index = index + 1;
-			} while (index < (int)(uint)pObbTree->count_0x52);
+			} while (index < pObbTree->count_0x52);
 		}
 	}
 	return;
@@ -870,6 +878,17 @@ void CCollision::TransformG3DObbTreeVertices(edColG3D_OBB_TREE_DYN* pDynCol, int
 	return;
 }
 
+float CCollision::GetWallNormalYLimit(s_collision_contact* pContact)
+{
+	uint uVar1;
+
+	uVar1 = pContact->materialFlags & 0xf;
+	if (uVar1 == 0) {
+		uVar1 = CScene::_pinstance->defaultMaterialIndex;
+	}
+	return CCollisionManager::_material_table[uVar1].field_0x8;
+}
+
 void CCollision::SetObbTreePositionNoRotationRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2)
 {
 	byte colType;
@@ -885,34 +904,37 @@ void CCollision::SetObbTreePositionNoRotationRecurse(edObbTREE_DYN* pObbTree, ed
 
 	(pObbTree->bbox.transform).rowT = param_2->rowT + pObbTree->matrix_0x70.rowT;
 	(pObbTree->bbox.transform).rowT.w = 1.0f;
+
 	colType = pObbTree->type;
 	iVar2 = 0;
-	if (colType == 1) {
-		for (; iVar2 < (int)(uint)pObbTree->count_0x52; iVar2 = iVar2 + 1) {
+
+	if (colType == COL_TYPE_TREE) {
+		for (; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
 			SetObbTreePositionNoRotationRecurse((edObbTREE_DYN*)LOAD_SECTION(pObbTree->field_0x54[iVar2]), param_2);
 		}
 	}
 	else {
 		if (((colType != 8) && (colType != 4)) && ((colType == 0xe || (colType == 0xd)))) {
 			edColPRIM_OBJECT* pPrimObj = (edColPRIM_OBJECT*)LOAD_SECTION(pObbTree->field_0x54[0]);
-			for (iVar2 = 0; iVar2 < (int)(uint)pObbTree->count_0x52; iVar2 = iVar2 + 1) {
+			for (iVar2 = 0; iVar2 < pObbTree->count_0x52; iVar2 = iVar2 + 1) {
 
-				pPrimObj[iVar2].matrix_0x0.rowT = param_2->rowT + pPrimObj[iVar2].field_0xb0;
-				pPrimObj[iVar2].matrix_0x0.rowT.w = 1.0f;
+				pPrimObj[iVar2].vertices.rowT = param_2->rowT + pPrimObj[iVar2].field_0xb0;
+				pPrimObj[iVar2].vertices.rowT.w = 1.0f;
 
-				local_10.w = pPrimObj[iVar2].matrix_0x0.rowT.w;
-				local_10.x = 0.0f - pPrimObj[iVar2].matrix_0x0.rowT.x;
-				local_10.y = 0.0f - pPrimObj[iVar2].matrix_0x0.rowT.y;
-				local_10.z = 0.0f - pPrimObj[iVar2].matrix_0x0.rowT.z;
+				local_10.w = pPrimObj[iVar2].vertices.rowT.w;
+				local_10.x = 0.0f - pPrimObj[iVar2].vertices.rowT.x;
+				local_10.y = 0.0f - pPrimObj[iVar2].vertices.rowT.y;
+				local_10.z = 0.0f - pPrimObj[iVar2].vertices.rowT.z;
 
-				(pPrimObj[iVar2].matrix_0x40).rowT.x = 0.0f;
-				(pPrimObj[iVar2].matrix_0x40).rowT.y = 0.0f;
-				(pPrimObj[iVar2].matrix_0x40).rowT.z = 0.0f;
-				(pPrimObj[iVar2].matrix_0x40).rowT.w = 1.0f;
+				(pPrimObj[iVar2].worldTransform).rowT.x = 0.0f;
+				(pPrimObj[iVar2].worldTransform).rowT.y = 0.0f;
+				(pPrimObj[iVar2].worldTransform).rowT.z = 0.0f;
+				(pPrimObj[iVar2].worldTransform).rowT.w = 1.0f;
 
-				edF32Matrix4MulF32Vector4Hard(&local_10, &pPrimObj[iVar2].matrix_0x40, &local_10);
+				edF32Matrix4MulF32Vector4Hard(&local_10, &pPrimObj[iVar2].worldTransform, &local_10);
 
-				(pPrimObj[iVar2].matrix_0x40).rowT = local_10;
+				(pPrimObj[iVar2].worldTransform).rowT = local_10;
+				COLLISION_LOG(LogLevel::Verbose, "SetObbTreePositionNoRotationRecurse new transform: {}", (pPrimObj[iVar2].worldTransform).ToString());
 			}
 		}
 	}
@@ -1010,66 +1032,66 @@ void gClusterCallback_Collision(CActor* pActor, void* pInParams)
 
 uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0)
 {
-	edObbTREE_DYN* peVar1;
-	int iVar2;
-	uint uVar3;
-	int* piVar4;
-	int iVar5;
-	uint uVar6;
-	edColINFO_OBBTREE_OBBTREE local_170;
-	edF32VECTOR4 eStack352;
-	edF32MATRIX4 eStack336;
-	CFixedTable<CActor*, 64> local_110;
-	ClusterCallbackParams local_8;
+	int entryCount;
+	uint lastResult;
+	int currentEntryIndex;
+	uint result;
+	edColINFO_OBBTREE_OBBTREE colInfoObbTreeObbTree;
+	edF32VECTOR4 worldBoundingSphere;
+	edF32MATRIX4 worldBoundingSphereMatrix;
+	CFixedTable<CActor*, 64> actorIntersectTable;
+	ClusterCallbackParams clusterCallbackParams;
 	CActorHero* pActorHero;
 
 	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {}", pActor->name);
 
-	local_8.pTable = &local_110;
-	uVar6 = 0;
-	local_110.entryCount = 0;
-	local_8.pActor = pActor;
-	edF32Matrix4ScaleHard(&eStack336, m0, &pActor->scale);
-	eStack336.rowT = m0->rowT;
+	clusterCallbackParams.pTable = &actorIntersectTable;
+	result = 0;
+	actorIntersectTable.entryCount = 0;
+	clusterCallbackParams.pActor = pActor;
 
-	pActor->ComputeWorldBoundingSphere(&eStack352, &eStack336);
+	edF32Matrix4ScaleHard(&worldBoundingSphereMatrix, m0, &pActor->scale);
+	worldBoundingSphereMatrix.rowT = m0->rowT;
+	pActor->ComputeWorldBoundingSphere(&worldBoundingSphere, &worldBoundingSphereMatrix);
 
 	pActorHero = CActorHero::_gThis;
+
 	if ((this->flags_0x0 & 0x20000) == 0) {
-		(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&eStack352, gClusterCallback_Collision, &local_8);
+		(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&worldBoundingSphere, gClusterCallback_Collision, &clusterCallbackParams);
 	}
 	else {
 		if ((CActorHero::_gThis != (CActorHero*)0x0) &&
-			(uVar3 = CActorHero::_gThis->SV_IsWorldBoundingSphereIntersectingSphere(&eStack352), uVar3 != 0)) {
-			gClusterCallback_Collision(pActorHero, &local_8);
+			(lastResult = CActorHero::_gThis->SV_IsWorldBoundingSphereIntersectingSphere(&worldBoundingSphere), lastResult != 0)) {
+			gClusterCallback_Collision(pActorHero, &clusterCallbackParams);
 		}
 	}
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} entry count: {}", pActor->name, local_110.entryCount);
+	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} entry count: {}", pActor->name, actorIntersectTable.entryCount);
 
-	iVar2 = local_110.entryCount;
-	if (local_110.entryCount != 0) {
-		peVar1 = this->pObbTree;
-		local_170.pColObj = this->pColObj;
-		iVar5 = 0;
-		local_170.field_0xc = (char*)0x0;
-		if (0 < local_110.entryCount) {
+	entryCount = actorIntersectTable.entryCount;
+	if (actorIntersectTable.entryCount != 0) {
+		colInfoObbTreeObbTree.pColObj = this->pColObj;
+		currentEntryIndex = 0;
+		colInfoObbTreeObbTree.field_0xc = (char*)0x0;
+
+		if (0 < actorIntersectTable.entryCount) {
 			do {
-				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {}", pActor->name, local_110.aEntries[iVar5]->name);
+				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {}", pActor->name, actorIntersectTable.aEntries[currentEntryIndex]->name);
 
-				CCollision* pCollision = local_110.aEntries[iVar5]->pCollisionData;
+				CCollision* pCollision = actorIntersectTable.aEntries[currentEntryIndex]->pCollisionData;
 
-				local_170.pOtherColObj = pCollision->pColObj;
-				uVar3 = edObbTreeIntersectObbTree(&local_170, peVar1, pCollision->pObbTree);
+				colInfoObbTreeObbTree.pOtherColObj = pCollision->pColObj;
+				lastResult = edObbTreeIntersectObbTree(&colInfoObbTreeObbTree, this->pObbTree, pCollision->pObbTree);
 
-				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {} result: {}", pActor->name, local_110.aEntries[iVar5]->name, uVar3);
+				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {} result: {}", pActor->name, actorIntersectTable.aEntries[currentEntryIndex]->name, lastResult);
 
-				uVar6 = uVar6 | uVar3;
-				iVar5 = iVar5 + 1;
-			} while (iVar5 < iVar2);
+				result = result | lastResult;
+				currentEntryIndex = currentEntryIndex + 1;
+			} while (currentEntryIndex < entryCount);
 		}
 	}
-	return uVar6;
+
+	return result;
 }
 
 uint CCollision::CheckCollisionsWithScenery(int param_2)
@@ -1168,10 +1190,8 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 	float fVar22;
 	float fVar23;
 	uint local_1a0;
-	//edF32VECTOR4 local_180;
-	//undefined8 local_170;
-	//float fStack360;
-	//float fStack356;
+	edF32VECTOR4 local_180;
+	edF32VECTOR4 local_170;
 	edF32VECTOR4 local_150;
 	//float local_140;
 	//float fStack316;
@@ -1280,37 +1300,28 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 			if ((((quadFlags & 0x200) != 0) && (this->pObbPrim != (edColPRIM_OBJECT*)0x0)) &&
 				((this->pObbPrim->flags_0x80 & 0x200) != 0)) {
 				if (bVar4) {
-					IMPLEMENTATION_GUARD(
-					if ((((this->flags_0x0 & 0x400000) == 0) || (pReceiver == (CActor*)0x0)) ||
-						((pActor->data).pTiedActor != (pReceiver->data).pTiedActor)) {
+					if ((((this->flags_0x0 & 0x400000) == 0) || (pReceiver == (CActor*)0x0)) || (pActor->pTiedActor != pReceiver->pTiedActor)) {
 						sVar1 = pColDbObj->field_0x62;
 						if (((sVar1 == 0xe) || (sVar1 == 0xb)) || ((sVar1 == 0xd || (sVar1 == 10)))) {
-							peVar3 = pColDbObj->pQuad;
-							edF32Matrix4MulF32Vector4Hard
-							((edF32VECTOR4*)&local_170, (edF32MATRIX4*)&peVar3[3].field_0x4,
-								(edF32VECTOR4*)((int)pColDbObj->field_0x64 + 0x30));
-							edColGetNormalInWorldFromLocal
-							((edF32VECTOR4*)&local_170, (edF32MATRIX4*)&peVar3[3].field_0x4, (edF32VECTOR4*)&local_170);
-							local_180.x = (float)local_170;
-							local_180.z = fStack360;
-							local_180.w = fStack356;
-							local_180.y = 0.0;
+							edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColDbObj->pQuad);
+
+							edF32VECTOR4* pQuad = reinterpret_cast<edF32VECTOR4*>((char*)pColDbObj->field_0x64 + 0x30);
+
+							edF32Matrix4MulF32Vector4Hard(&local_170, &pPrim->worldTransform, pQuad);
+							edColGetNormalInWorldFromLocal(&local_170, &pPrim->worldTransform, &local_170);
+							local_180.xyz = local_170.xyz;
+							local_180.y = 0.0f;
 							edF32Vector4SafeNormalize1Hard(&local_180, &local_180);
-							fVar18 = -pColDbObj->field_0x78 * 0.9;
-							local_180.x = local_180.x * fVar18;
-							local_180.y = local_180.y * fVar18;
-							local_180.z = local_180.z * fVar18;
-							local_180.w = local_180.w * fVar18;
-							local_e0.x = local_e0.x + local_180.x;
-							local_e0.y = local_e0.y + local_180.y;
-							local_e0.z = local_e0.z + local_180.z;
-							local_e0.w = local_e0.w + local_180.w;
+							fVar18 = -pColDbObj->field_0x78 * 0.9f;
+							local_180 = local_180 * fVar18;
+
+							local_e0 = local_e0 + local_180;
 							pColDbObj->field_0x78 = 0.0f;
 						}
 					}
 					else {
 						pColDbObj->field_0x78 = 0.0f;
-					})
+					}
 				}
 				else {
 					pColDbObj->field_0x78 = 0.0f;
@@ -1336,7 +1347,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 						fVar18 = (pColDbObj->location).x * (pColDbObj->field_0x40).x + (pColDbObj->location).y * (pColDbObj->field_0x40).y + (pColDbObj->location).z * (pColDbObj->field_0x40).z;
 						local_f0 = pColDbObj->field_0x40 - (pColDbObj->location * fVar18);
 
-						edF32Vector4NormalizeHard_Fixed(&local_f0, &local_f0);
+						edF32Vector4NormalizeHard(&local_f0, &local_f0);
 
 						if (CCollisionManager::_material_table[materialIndex].field_0x8 <= local_f0.y) {
 							pColDbObj->location = local_f0;
@@ -1580,6 +1591,7 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 			*(undefined4*)&(gColData.pActiveDatabase)->field_0x4 = 0;)
 		}
 	}
+
 	if ((this->flags_0x0 & 1) != 0) {
 		iVar1 = ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID;
 		uVar4 = (ulong)(iVar1 == pActor->objectId);
@@ -1590,6 +1602,7 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 		uVar3 = CheckCollisionsWithScenery(uVar4);
 		uVar2 = uVar2 | uVar3;
 	}
+
 	if (uVar2 == 0) {
 		uVar2 = 0;
 		this->flags_0x4 = this->flags_0x4 & 0xf8;

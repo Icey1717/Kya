@@ -6,6 +6,8 @@
 #include "GSState.h"
 #include "GSVector.h"
 
+#include "../../../include/profiling.h"
+
 // Forward decs for RenderDelegate
 typedef struct VkFramebuffer_T* VkFramebuffer;
 typedef struct VkCommandBuffer_T* VkCommandBuffer;

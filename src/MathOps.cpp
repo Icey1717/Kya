@@ -68,13 +68,6 @@ void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 
 float edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
-	// REPLACE ALL WITH edF32Vector4NormalizeHard_Fixed, then rename, messed this up.
-	IMPLEMENTATION_GUARD();
-	return 0.0f;
-}
-
-float edF32Vector4NormalizeHard_Fixed(edF32VECTOR4* v0, edF32VECTOR4* v1)
-{
 	float fVar1;
 	float fVar2;
 	float fVar3;
@@ -998,25 +991,26 @@ float edFIntervalLERP(float alpha, float param_2, float param_3, float param_4, 
 void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* dst, edF32MATRIX4* m1, edF32MATRIX4* m2)
 {
 	edF32MATRIX4 m1_copy = *m1;
-	dst->aa = m1_copy.aa * m2->aa + m1_copy.ab * m2->ba + m1_copy.ac * m2->ca + m1_copy.ad * m2->da;
-	dst->ab = m1_copy.aa * m2->ab + m1_copy.ab * m2->bb + m1_copy.ac * m2->cb + m1_copy.ad * m2->db;
-	dst->ac = m1_copy.aa * m2->ac + m1_copy.ab * m2->bc + m1_copy.ac * m2->cc + m1_copy.ad * m2->dc;
-	dst->ad = m1_copy.aa * m2->ad + m1_copy.ab * m2->bd + m1_copy.ac * m2->cd + m1_copy.ad * m2->dd;
+	edF32MATRIX4 m2_copy = *m2;
+	dst->aa = m1_copy.aa * m2_copy.aa + m1_copy.ab * m2_copy.ba + m1_copy.ac * m2_copy.ca + m1_copy.ad * m2_copy.da;
+	dst->ab = m1_copy.aa * m2_copy.ab + m1_copy.ab * m2_copy.bb + m1_copy.ac * m2_copy.cb + m1_copy.ad * m2_copy.db;
+	dst->ac = m1_copy.aa * m2_copy.ac + m1_copy.ab * m2_copy.bc + m1_copy.ac * m2_copy.cc + m1_copy.ad * m2_copy.dc;
+	dst->ad = m1_copy.aa * m2_copy.ad + m1_copy.ab * m2_copy.bd + m1_copy.ac * m2_copy.cd + m1_copy.ad * m2_copy.dd;
 
-	dst->ba = m1_copy.ba * m2->aa + m1_copy.bb * m2->ba + m1_copy.bc * m2->ca + m1_copy.bd * m2->da;
-	dst->bb = m1_copy.ba * m2->ab + m1_copy.bb * m2->bb + m1_copy.bc * m2->cb + m1_copy.bd * m2->db;
-	dst->bc = m1_copy.ba * m2->ac + m1_copy.bb * m2->bc + m1_copy.bc * m2->cc + m1_copy.bd * m2->dc;
-	dst->bd = m1_copy.ba * m2->ad + m1_copy.bb * m2->bd + m1_copy.bc * m2->cd + m1_copy.bd * m2->dd;
+	dst->ba = m1_copy.ba * m2_copy.aa + m1_copy.bb * m2_copy.ba + m1_copy.bc * m2_copy.ca + m1_copy.bd * m2_copy.da;
+	dst->bb = m1_copy.ba * m2_copy.ab + m1_copy.bb * m2_copy.bb + m1_copy.bc * m2_copy.cb + m1_copy.bd * m2_copy.db;
+	dst->bc = m1_copy.ba * m2_copy.ac + m1_copy.bb * m2_copy.bc + m1_copy.bc * m2_copy.cc + m1_copy.bd * m2_copy.dc;
+	dst->bd = m1_copy.ba * m2_copy.ad + m1_copy.bb * m2_copy.bd + m1_copy.bc * m2_copy.cd + m1_copy.bd * m2_copy.dd;
 
-	dst->ca = m1_copy.ca * m2->aa + m1_copy.cb * m2->ba + m1_copy.cc * m2->ca + m1_copy.cd * m2->da;
-	dst->cb = m1_copy.ca * m2->ab + m1_copy.cb * m2->bb + m1_copy.cc * m2->cb + m1_copy.cd * m2->db;
-	dst->cc = m1_copy.ca * m2->ac + m1_copy.cb * m2->bc + m1_copy.cc * m2->cc + m1_copy.cd * m2->dc;
-	dst->cd = m1_copy.ca * m2->ad + m1_copy.cb * m2->bd + m1_copy.cc * m2->cd + m1_copy.cd * m2->dd;
+	dst->ca = m1_copy.ca * m2_copy.aa + m1_copy.cb * m2_copy.ba + m1_copy.cc * m2_copy.ca + m1_copy.cd * m2_copy.da;
+	dst->cb = m1_copy.ca * m2_copy.ab + m1_copy.cb * m2_copy.bb + m1_copy.cc * m2_copy.cb + m1_copy.cd * m2_copy.db;
+	dst->cc = m1_copy.ca * m2_copy.ac + m1_copy.cb * m2_copy.bc + m1_copy.cc * m2_copy.cc + m1_copy.cd * m2_copy.dc;
+	dst->cd = m1_copy.ca * m2_copy.ad + m1_copy.cb * m2_copy.bd + m1_copy.cc * m2_copy.cd + m1_copy.cd * m2_copy.dd;
 
-	dst->da = m1_copy.da * m2->aa + m1_copy.db * m2->ba + m1_copy.dc * m2->ca + m1_copy.dd * m2->da;
-	dst->db = m1_copy.da * m2->ab + m1_copy.db * m2->bb + m1_copy.dc * m2->cb + m1_copy.dd * m2->db;
-	dst->dc = m1_copy.da * m2->ac + m1_copy.db * m2->bc + m1_copy.dc * m2->cc + m1_copy.dd * m2->dc;
-	dst->dd = m1_copy.da * m2->ad + m1_copy.db * m2->bd + m1_copy.dc * m2->cd + m1_copy.dd * m2->dd;
+	dst->da = m1_copy.da * m2_copy.aa + m1_copy.db * m2_copy.ba + m1_copy.dc * m2_copy.ca + m1_copy.dd * m2_copy.da;
+	dst->db = m1_copy.da * m2_copy.ab + m1_copy.db * m2_copy.bb + m1_copy.dc * m2_copy.cb + m1_copy.dd * m2_copy.db;
+	dst->dc = m1_copy.da * m2_copy.ac + m1_copy.db * m2_copy.bc + m1_copy.dc * m2_copy.cc + m1_copy.dd * m2_copy.dc;
+	dst->dd = m1_copy.da * m2_copy.ad + m1_copy.db * m2_copy.bd + m1_copy.dc * m2_copy.cd + m1_copy.dd * m2_copy.dd;
 }
 
 void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0)

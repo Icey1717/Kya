@@ -13,6 +13,7 @@
 #include "renderer.h"
 #include "port.h"
 #include "port/vu1_emu.h"
+#include "profiling.h"
 #endif
 
 #include "edVideo/VideoD.h"
@@ -1834,24 +1835,24 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 		v0->x = 1.0f;
 	}
 	else {
-		edF32Vector4NormalizeHard_Fixed(v0, v0);
+		edF32Vector4NormalizeHard(v0, v0);
 	}
 	sceVu0InverseMatrix(&local_40, WorldToCamera_Matrix);
 	gCamNormal_X = local_40.rowX;
 
 	//MY_LOG("Vec A");
 	//PRINT_VECTOR(&Vector_0048c310);
-	edF32Vector4NormalizeHard_Fixed(&gCamNormal_X, &gCamNormal_X);
+	edF32Vector4NormalizeHard(&gCamNormal_X, &gCamNormal_X);
 	gCamNormal_Y = local_40.rowY;
 
 	//MY_LOG("Vec B");
 	//PRINT_VECTOR(&Vector_0048c320);
-	edF32Vector4NormalizeHard_Fixed(&gCamNormal_Y, &gCamNormal_Y);
+	edF32Vector4NormalizeHard(&gCamNormal_Y, &gCamNormal_Y);
 	gCamNormal_Z = local_40.rowZ;
 
 	//MY_LOG("Vec C");
 	//PRINT_VECTOR(&Vector_0048c330);
-	edF32Vector4NormalizeHard_Fixed(&gCamNormal_Z, &gCamNormal_Z);
+	edF32Vector4NormalizeHard(&gCamNormal_Z, &gCamNormal_Z);
 	gCamPos = gRenderCamera->position;
 
 	fVar2 = gRenderCamera->halfFOV / gRenderCamera->verticalHalfFOV;
@@ -2935,6 +2936,7 @@ void ed3DFlushStrip(edNODE* pNode)
 	p3dStrip = (ed_3d_strip*)pNode->pData;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip 0x{:x} (From Node: 0x{:x})", (uintptr_t)p3dStrip, (uintptr_t)pNode);
+	ZONE_SCOPED;
 
 	pNextNode = pNode->pNext;
 	pVifList = ((char*)p3dStrip) + p3dStrip->vifListOffset;
@@ -4031,15 +4033,15 @@ void ed3DFlushMatrix(ed_dma_matrix* pRenderData, ed_g2d_material* pMaterial)
 				local_40 = *WorldToCamera_Matrix;
 
 				if (local_40.ac + local_40.aa + local_40.ab != 0.0f) {
-					edF32Vector4NormalizeHard_Fixed(&local_40.rowX, &local_40.rowX);
+					edF32Vector4NormalizeHard(&local_40.rowX, &local_40.rowX);
 				}
 
 				if (local_40.bc + local_40.ba + local_40.bb != 0.0f) {
-					edF32Vector4NormalizeHard_Fixed(&local_40.rowY, &local_40.rowY);
+					edF32Vector4NormalizeHard(&local_40.rowY, &local_40.rowY);
 				}
 
 				if (local_40.cc + local_40.ca + local_40.cb != 0.0f) {
-					edF32Vector4NormalizeHard_Fixed(&local_40.rowZ, &local_40.rowZ);
+					edF32Vector4NormalizeHard(&local_40.rowZ, &local_40.rowZ);
 				}
 
 				edF32Matrix4GetTransposeHard(&local_40, &local_40);
@@ -4811,6 +4813,7 @@ void ed3DFlushList(void)
 	int materialCounter;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushList");
+	ZONE_SCOPED;
 
 	RENDER_LABEL_BEGIN("ed3DFlushList");
 
@@ -7973,6 +7976,8 @@ uint ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 	ed_3d_extra_stuff_param renderTaskData;
 	edNODE* pCVar8;
 
+	ZONE_SCOPED;
+
 	ED3D_LOG(LogLevel::VeryVerbose, "\n--------------------------------------------");
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRenderOne Scene 0x{:x} ({}) (shadow: {})", (uintptr_t)pShadowScene, gSceneNames[GetStaticMeshMasterIndex(pShadowScene)], pShadowScene->bShadowScene);
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRenderOne Shadow Scene 0x{:x} ({}) (shadow: {})", (uintptr_t)pScene, gSceneNames[GetStaticMeshMasterIndex(pScene)], pScene->bShadowScene);
@@ -8677,6 +8682,7 @@ void ed3DSceneRender(int, int, char*)
 	uint staticMeshMasterFlags;
 
 	RENDER_LABEL_BEGIN("ed3DSceneRender");
+	ZONE_SCOPED;
 
 	iVar4 = gIDProfileRender;
 	if (bcalcFrame == false) {

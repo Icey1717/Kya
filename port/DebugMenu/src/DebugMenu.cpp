@@ -255,6 +255,9 @@ namespace DebugMenu_Internal {
 		case STATE_HERO_SLIDE_SLIP_C:
 			return "StateHeroSlideSlipC";
 			break;
+		case STATE_HERO_SLIDE_A:
+			return "StateHeroSlideA";
+			break;
 		case STATE_HERO_JUMP_1_1_RUN:
 			return "StateHeroJump_1_1_Run";
 			break;
@@ -263,6 +266,9 @@ namespace DebugMenu_Internal {
 			break;
 		case STATE_HERO_JUMP_3_3_RUN:
 			return "StateHeroJump_3_3_Run";
+			break;
+		case STATE_HERO_FALL_A:
+			return "StateHeroFallA";
 			break;
 		case 0x3:
 			return "Cinematic";

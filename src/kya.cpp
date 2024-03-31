@@ -40,7 +40,8 @@ extern "C" {
 #include <decode.h>
 #include <thread>
 #include "edC/edCFiler_CDVD.h"
-#include <tracy/Tracy.hpp>
+#include "profiling.h"
+
 #endif
 
 #include "IniFile.h"
@@ -2067,11 +2068,11 @@ void GameLoop(void)
 	float fVar9;
 
 	MY_LOG("GameLoop Begin\n");
-	ZoneScoped;
 
 	pLVar3 = CScene::_pinstance;
 	timeController = GetTimer();
 	do {
+		ZONE_SCOPED;
 		gCompatibilityHandlingPtr->IOPFunc_0x14(0);
 		CPlayerInput::Update(timeController->cutsceneDeltaTime);
 		cVar4 = gCompatibilityHandlingPtr->GetAnyControllerConnected();

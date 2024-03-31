@@ -9,6 +9,9 @@
 #include "PoolAllocators.h"
 #include "TimeController.h"
 
+#include <math.h>
+
+
 template<typename PlatformBehaviourType>
 struct PlatformHeader
 {
@@ -300,9 +303,6 @@ void CActorMovingPlatform::Init()
 	ed_zone_3d* peVar15;
 	S_STREAM_MPF_NO_FRICTION_ZONE* pNoFric;
 	CActor* pCVar16;
-
-	// HACK
-	pTiltData = nullptr;
 
 	this->movingPlatformFlags = this->movingPlatformFlags & 0xffffff0f;
 	this->pProperties->tiltStreamDef.Init();
