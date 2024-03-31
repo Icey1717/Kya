@@ -368,10 +368,14 @@ public:
 
 	bool PlayWaitingAnimation(float param_1, float param_2, int specialAnimType, int regularAnimType, byte idleLoopsToPlay);
 
+	bool UpdateNormal(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+
+	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	void SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition);
 	void SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition);
 	void SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* param_6);
 	void SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0);
+	bool SV_UpdateOrientation(float param_1, edF32VECTOR4* pOrientation);
 	bool SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, int mode);
 	void SV_UpdatePercent(float param_1, float param_2, float* pValue);
 	bool SV_UpdateValue(float target, float speed, float* pValue);

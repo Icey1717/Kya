@@ -270,6 +270,21 @@ namespace DebugMenu_Internal {
 		case STATE_HERO_FALL_A:
 			return "StateHeroFallA";
 			break;
+		case STATE_HERO_GRIP_B:
+			return "StateHeroGripB";
+			break;
+		case STATE_HERO_GRIP_HANG_IDLE:
+			return "StateHeroGripHangIdle";
+			break;
+		case STATE_HERO_GRIP_UP:
+			return "StateHeroGripUp";
+			break;
+		case STATE_HERO_JUMP_2_3_GRIP:
+			return "StateHeroJump_2_3_Grip";
+			break;
+		case STATE_HERO_GRIP_GRAB:
+			return "StateHeroGripGrab";
+			break;
 		case 0x3:
 			return "Cinematic";
 			break;

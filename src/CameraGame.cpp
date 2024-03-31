@@ -2412,7 +2412,7 @@ void CCameraGame::_Manage_Leash()
 	if ((uVar1 & 0x100) != 0) {
 		ClampFunc(puVar8);
 
-		if (this->field_0x230 == 1e+30) {
+		if (this->field_0x230 == 1e+30f) {
 			fVar11 = this->field_0x208;
 		}
 
@@ -3290,7 +3290,7 @@ bool CCameraGame::Manage()
 				if ((*pFlag & 0x40000) == 0) {
 					ClampFuncA(pFlag);
 				}
-				if (this->field_0x230 == 1e+30) {
+				if (this->field_0x230 == 1e+30f) {
 					*pFlag = *pFlag & 0xffffdfff;
 				}
 				else {
@@ -3380,7 +3380,7 @@ bool CCameraGame::Manage()
 					if ((*pFlag & 0x40000) == 0) {
 						ClampFuncA(pFlag);
 					}
-					if (this->field_0x230 == 1e+30) {
+					if (this->field_0x230 == 1e+30f) {
 						*pFlag = *pFlag & 0xffffdfff;
 					}
 					else {
@@ -3481,7 +3481,7 @@ bool CCameraGame::Manage()
 							ClampFuncA(pFlag);
 						}
 
-						if (this->field_0x230 == 1e+30) {
+						if (this->field_0x230 == 1e+30f) {
 							*pFlag = *pFlag & 0xffffdfff;
 						}
 

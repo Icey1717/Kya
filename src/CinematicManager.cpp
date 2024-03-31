@@ -3477,7 +3477,7 @@ bool CBWCinActor::SetPos(float newX, float newY, float newZ)
 		CCollisionRay::CCollisionRay(10.0, &CStack80, &transformedLocation, &local_30);
 		fVar1 = CCollisionRay::Intersect
 		(&CStack80, 3, this->pParent, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
-		if (fVar1 != 1e+30) {
+		if (fVar1 != 1e+30f) {
 			newLocation.y = transformedLocation.y + fVar1 * local_30.y;
 			newLocation.x = transformedLocation.x;
 			newLocation.z = transformedLocation.z;

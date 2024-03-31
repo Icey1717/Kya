@@ -58,9 +58,11 @@ public:
 	void ResetStdDefaultSettings();
 	void ResetSlideDefaultSettings();
 	void ResetBoomyDefaultSettings();
+	void ResetGripClimbDefaultSettings();
 	void ResetWindDefaultSettings();
 
 	int StateEvaluate();
+	int ChooseStateFall(int param_2);
 	int ChooseStateLanding(float speed);
 
 	bool CanEnterToboggan();
@@ -91,6 +93,12 @@ public:
 
 	void StateHeroJump_3_3(int param_2);
 
+	void StateHeroGrip(float param_1, int nextState, int param_4);
+
+	void StateHeroGripUp(float param_1, float param_2, int nextState, int param_5);
+
+	void StateHeroGripUpToJumpInit();
+
 	void StateHeroFall(float param_1, int param_3);
 
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
@@ -105,8 +113,14 @@ public:
 	void SetBoomyHairOff();
 	void SetBoomyHairOn();
 
+	void SetGripState();
+	int DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4, float* param_5, float* param_6, edF32VECTOR4* param_7);
+
 	int EvolutionBounceCanJump();
+
+	uint CanGrip(int param_2, edF32VECTOR4* pRotation);
 	bool CanBounceAgainstWall();
+
 	void ChangeCollisionSphereForLying(float param_2);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
@@ -132,6 +146,16 @@ public:
 	int field_0x1a4c;
 
 	float field_0x1048;
+
+	edF32VECTOR4 bounceLocation;
+	edF32VECTOR4 field_0x1460;
+	edF32VECTOR4 field_0x1490;
+
+	CActor* pCheckpointManagerSubObjA_0x14a4;
+
+	float field_0x14b0;
+	float field_0x14b4;
+	float field_0x151c;
 
 	edF32VECTOR4 field_0x10a0;
 	edF32VECTOR4 field_0x10b0;
