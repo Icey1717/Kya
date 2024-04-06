@@ -30,6 +30,19 @@
 #include "edDevGetChanClick.h"
 #include "edDevAddRouteList.h"
 #include "edDevAddRoute.h"
+#include "edDevGetChanAnalog.h"
+
+#define MOUSE_SUPPORT_EXTENSION_ENABLED
+
+#define INPUT_TYPE_DUALSHOCK 0x108
+#define INPUT_TYPE_MOUSE 0x010
+
+#define MOUSE_INPUT_BUTTON1 0x0
+#define MOUSE_INPUT_BUTTON2 0x1
+#define MOUSE_INPUT_BUTTON3 0x2
+#define MOUSE_INPUT_DX 0x3
+#define MOUSE_INPUT_DY 0x4
+#define MOUSE_INPUT_WHEEL 0x5
 
 struct EDDEV_ROUTE {
 	uint portId;

@@ -2085,6 +2085,180 @@ LAB_00344ed0:
 	return uVar20;
 }
 
+int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param_3, int param_4, uint* param_5)
+{
+	uint levelId;
+	bool bVar1;
+	CLifeInterface* pCVar2;
+	AnimResult* pAVar3;
+	uint uVar4;
+	undefined4 uVar5;
+	uint uVar6;
+	edF32MATRIX4* peVar7;
+	Timer* pTVar8;
+	edF32VECTOR4* v0;
+	long lVar10;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 eStack96;
+	undefined auStack80[76];
+	//e_ed_event_prim3d_type eStack4;
+	int iVar9;
+
+	uVar6 = *param_5;
+	lVar10 = (long)(int)uVar6;
+	levelId = param_5[1];
+	pCVar2 = GetLifeInterface();
+	fVar11 = pCVar2->GetValue();
+
+	bVar1 = fVar11 - this->field_0x2e4 <= 0.0f;
+
+	if (!bVar1) {
+		iVar9 = this->actorState;
+		if (iVar9 == -1) {
+			uVar4 = 0;
+		}
+		else {
+			pAVar3 = GetStateCfg(iVar9);
+			uVar4 = pAVar3->flags_0x4 & 1;
+		}
+		bVar1 = uVar4 != 0;
+	}
+
+	if (((!bVar1) && (this->field_0x1558 <= 0.0f)) || (iVar9 = 0, lVar10 == 1)) {
+		switch (uVar6) {
+		default:
+			iVar9 = CActor::InterpretEvent(param_2, (uint)(uint*)param_3, (uint)param_4, param_5);
+			break;
+		case 1:
+			IMPLEMENTATION_GUARD(
+			if ((param_3 == 2) && (bVar1 = CActorHero::TestState_IsInCheatMode((CActorHero*)this), bVar1 == false)) {
+				if (levelId == 3) {
+					this->field_0x2e4 = 10.0;
+					(*(this->base.base.pVTable)->SetBehaviour)((CActor*)this, 7, 0x9e, 0xffffffff);
+					lVar10 = (*(code*)(this->base.base.pVTable)->GetInputManager)(this, 1, 0);
+					if (lVar10 != 0) {
+						FloatFunc_001b66f0(1.0, 0.0, 0.2, 0.0, (float*)((int)lVar10 + 0x40), 0);
+					}
+					iVar9 = 1;
+				}
+				else {
+					if (levelId == 2) {
+						this->field_0x2e4 = 10.0;
+						(*(this->base.base.pVTable)->SetBehaviour)((CActor*)this, 7, 0x9d, 0xffffffff);
+						lVar10 = (*(code*)(this->base.base.pVTable)->GetInputManager)(this, 1, 0);
+						if (lVar10 != 0) {
+							FloatFunc_001b66f0(1.0, 0.0, 0.2, 0.0, (float*)((int)lVar10 + 0x40), 0);
+						}
+						iVar9 = 1;
+					}
+					else {
+						if (levelId == 1) {
+							this->field_0x2e4 = 10.0;
+							(*(this->base.base.pVTable)->SetBehaviour)
+								((CActor*)this, 7, 0xa2, 0xffffffff);
+							iVar9 = 1;
+						}
+						else {
+							if (levelId == 0) {
+								this->field_0x2e4 = 5.0;
+								if (this->base.base.curBehaviourId == 8) {
+									uVar5 = (*(this->base.base.pVTable)->GetLifeInterface)((CActor*)this);
+									fVar11 = (float)(**(code**)(*(int*)uVar5 + 0x24))(uVar5);
+									bVar1 = fVar11 - this->field_0x2e4 <= 0.0;
+									if (!bVar1) {
+										iVar9 = this->base.base.actorState;
+										if (iVar9 == -1) {
+											uVar6 = 0;
+										}
+										else {
+											pAVar3 = (*(this->base.base.pVTable)->GetStateCfg)
+												((CActor*)this, iVar9);
+											uVar6 = pAVar3->flags_0x4 & 1;
+										}
+										bVar1 = uVar6 != 0;
+									}
+									if (bVar1) {
+										return 0;
+									}
+								}
+								(*(this->base.base.pVTable)->SetBehaviour)
+									((CActor*)this, 7, 0xa1, 0xffffffff);
+								iVar9 = 1;
+							}
+							else {
+								this->field_0x2e4 = 10.0;
+								(*(this->base.base.pVTable)->SetBehaviour)
+									((CActor*)this, 7, 0x97, 0xffffffff);
+								iVar9 = 1;
+							}
+						}
+					}
+				}
+			}
+			else {
+				iVar9 = 1;
+			})
+			break;
+		case 2:
+		case 3:
+			IMPLEMENTATION_GUARD(
+			if ((param_3 == 2) && (levelId != 0xffffffff)) {
+				CSectorManager::SwitchToSector(CScene::ptable.g_SectorManager_00451670, levelId, (uint)(lVar10 == 2));
+			}
+			iVar9 = 1;)
+			break;
+		case 5:
+			IMPLEMENTATION_GUARD(
+			if (param_3 == 2) {
+				LevelScheduleManager::Level_Teleport
+				(LevelScheduleManager::gThis, (CActor*)this, levelId, param_5[2], param_5[3], 0xffffffff);
+			}
+			iVar9 = 1;)
+			break;
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+		case 10:
+		case 0xb:
+		case 0xc:
+		case 0xd:
+		case 0xe:
+		case 0xf:
+		case 0x10:
+			IMPLEMENTATION_GUARD_AUDIO(
+				CAudioManager::ReceiveEvent(CScene::ptable.g_AudioManager_00451698, (int*)param_2, lVar10, (uint*)param_3,
+				(long)(int)((uint)param_4 - 1), param_5 + 1);)
+			iVar9 = 1;
+			break;
+		case 0x15:
+			IMPLEMENTATION_GUARD(
+			if (levelId == 0x7f) {
+				peVar7 = (edF32MATRIX4*)
+					edEventGetChunkZonePrimitive
+					((CScene::ptable.g_EventManager_006f5080)->activeChunkId,
+						param_2->field_0x4->field_0x1c->pZone, 0, &eStack4);
+				edF32Matrix4GetInverseGaussSoft((edF32MATRIX4*)auStack80, peVar7);
+				edF32Vector4NormalizeHard(&eStack112, (edF32VECTOR4*)(auStack80 + 0x10));
+				fVar12 = this->base.dynamic.linearJerk;
+				fVar11 = 2.0;
+				if (2.0 <= fVar12) {
+					fVar11 = fVar12;
+				}
+				pTVar8 = GetTimer();
+				edF32Vector4ScaleHard((fVar11 * -1.5) / pTVar8->cutsceneDeltaTime, &eStack96, &eStack112);
+				v0 = this->dynamicExt.aVelocity;
+				edF32Vector4AddHard(v0, v0, &eStack96);
+				fVar11 = edF32Vector4GetDistHard(this->dynamicExt.aVelocity);
+				this->dynamicExt.aVelocityMagnitudes[0] = fVar11;
+			}
+			iVar9 = 0;)
+		}
+	}
+	return iVar9;
+}
 
 void CActorHeroPrivate::ResetStdDefaultSettings()
 {

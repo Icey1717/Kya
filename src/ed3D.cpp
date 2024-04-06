@@ -21,7 +21,7 @@
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoC.h"
 #include "Rendering/DisplayList.h"
-#include "edVideo/Camera.h"
+#include "edVideo/Viewport.h"
 
 #include "Rendering/CustomShell.h"
 #include "Types.h"

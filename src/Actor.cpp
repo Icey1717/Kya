@@ -2483,9 +2483,11 @@ void CActor::ComputeAltitude()
 
 	uVar1 = this->flags;
 	bVar3 = false;
+
 	if (((uVar1 & 0x100000) != 0) && ((uVar1 & 0x200000) == 0)) {
 		bVar3 = true;
 	}
+
 	if ((bVar3) || (this->distanceToGround == -1.0f)) {
 		IMPLEMENTATION_GUARD_LOG(
 		local_20.x = (float)edF32VECTOR4_0040e180._0_8_;
@@ -2538,8 +2540,14 @@ void CActor::ComputeAltitude()
 			this->distanceToGround = fVar4 - 0.3;
 		})
 	}
+
 	this->flags = this->flags & 0xffdfffff;
 	return;
+}
+
+int CActor::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+{
+	return *param_5 == 0;
 }
 
 void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5)
@@ -2612,6 +2620,167 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 		}
 	}
 	return;
+}
+
+int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+{
+	bool bVar1;
+	int iVar2;
+	CBehaviour* pCVar3;
+	CWayPoint* pCVar4;
+	int* piVar5;
+	long lVar6;
+	edF32VECTOR4 local_c0;
+	edF32VECTOR4 local_b0;
+	undefined4 local_a0[2];
+	undefined4 local_98;
+	int local_94;
+	edF32VECTOR4 local_80;
+	float local_70;
+	undefined4* local_14;
+	int local_10;
+	int local_c;
+	int local_8;
+	int local_4;
+
+	piVar5 = (int*)param_5;
+	iVar2 = *piVar5;
+	local_c = piVar5[1];
+	if (iVar2 == 0x16) {
+		switch (local_c) {
+		case 0:
+			local_a0[0] = 0;
+			local_98 = 0;
+			break;
+		case 1:
+		case 2:
+		case 5:
+			IMPLEMENTATION_GUARD(
+			if (local_c == 1) {
+				local_a0[0] = 1;
+			}
+			else {
+				if ((this->pCollisionData != (CCollision*)0x0) && ((this->pCollisionData->flags_0x4 & 2) == 0)) {
+					return 1;
+				}
+				local_a0[0] = 2;
+			}
+			local_98 = 1;
+			iVar2 = piVar5[3];
+			if (iVar2 == -1) {
+				local_80.x = (this->rotationQuat).x;
+				local_80.y = (this->rotationQuat).y;
+				local_80.z = (this->rotationQuat).z;
+				local_80.w = (this->rotationQuat).w;
+			}
+			else {
+				pCVar4 = (CWayPoint*)0x0;
+				local_b0.x = fRam00000000;
+				if (iVar2 != -1) {
+					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + iVar2;
+					local_b0.x = (pCVar4->field_0x0).x;
+				}
+				local_b0.y = (pCVar4->field_0x0).y;
+				local_b0.z = (pCVar4->field_0x0).z;
+				local_b0.w = 1.0;
+				edF32Vector4SubHard(&local_80, &this->currentLocation, &local_b0);
+				local_80.y = 0.0;
+				edF32Vector4SafeNormalize1Hard(&local_80, &local_80);
+			}
+			local_70 = (float)piVar5[4];
+			if (local_70 == 0.0) {
+				local_70 = 200.0;
+			})
+			break;
+		case 3:
+			IMPLEMENTATION_GUARD(
+			local_a0[0] = 10;
+			local_98 = 1;
+			iVar2 = piVar5[3];
+			if (iVar2 == -1) {
+				edF32Vector4ScaleHard((float)&DAT_bf800000, &local_80, &this->rotationQuat);
+			}
+			else {
+				pCVar4 = (CWayPoint*)0x0;
+				local_c0.x = fRam00000000;
+				if (iVar2 != -1) {
+					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + iVar2;
+					local_c0.x = (pCVar4->field_0x0).x;
+				}
+				local_c0.y = (pCVar4->field_0x0).y;
+				local_c0.z = (pCVar4->field_0x0).z;
+				local_c0.w = 1.0;
+				edF32Vector4SubHard(&local_80, &local_c0, &this->currentLocation);
+				local_80.y = 0.0;
+				edF32Vector4SafeNormalize1Hard(&local_80, &local_80);
+			}
+			local_70 = (float)piVar5[4];
+			if (local_70 == 0.0) {
+				local_70 = 700.0;
+			}
+			local_80.y = 0.707;
+			edF32Vector4NormalizeHard(&local_80, &local_80);)
+			break;
+		case 4:
+			local_98 = 0;
+			local_a0[0] = 6;
+		}
+		local_14 = local_a0;
+		local_94 = piVar5[2];
+		if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
+			iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)2, (MSG_PARAM)local_14);
+			return iVar2;
+		}
+		return 0;
+	}
+	if (iVar2 == 0x15) {
+		if (local_c != 0x7f) {
+			local_10 = piVar5[2];
+			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
+				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)local_c, (MSG_PARAM)local_10);
+				return iVar2;
+			}
+			return 0;
+		}
+	}
+	else {
+		if (iVar2 == 0x14) {
+			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
+				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)0xe, (MSG_PARAM)local_c);
+				return iVar2;
+			}
+			return 0;
+		}
+		if (iVar2 == 0x13) {
+			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
+				local_8 = local_c;
+				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)0x10, (MSG_PARAM)local_c);
+				return iVar2;
+			}
+			return 0;
+		}
+		if (iVar2 == 0x12) {
+			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
+				local_4 = local_c;
+				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)0xf, (MSG_PARAM)local_c);
+				return iVar2;
+			}
+			return 0;
+		}
+	}
+
+	lVar6 = 0;
+	pCVar3 = GetBehaviour(this->curBehaviourId);
+
+	if (pCVar3 != (CBehaviour*)0x0) {
+		lVar6 = pCVar3->InterpretEvent(pEventMessage, param_3, param_4, param_5);
+	}
+
+	if (lVar6 == 0) {
+		lVar6 = this->InterpretEvent(pEventMessage, param_3, param_4, param_5);
+	}
+
+	return (int)lVar6;
 }
 
 bool CActor::ColWithAToboggan()

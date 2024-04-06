@@ -15,7 +15,7 @@
 #include "LargeObject.h"
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
-#include "edVideo/Camera.h"
+#include "edVideo/Viewport.h"
 #include "edSystem.h"
 #include "edVideo/VideoD.h"
 #include "port/pointer_conv.h"

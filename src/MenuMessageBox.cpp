@@ -2,7 +2,7 @@
 #include "LargeObject.h"
 #include "Rendering/edCTextStyle.h"
 #include "TimeController.h"
-#include "edVideo/Camera.h"
+#include "edVideo/Viewport.h"
 #include "kya.h"
 #include "PauseManager.h"
 #include "TranslatedTextData.h"

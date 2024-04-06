@@ -48,6 +48,7 @@ public:
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	// Autonomous
 	virtual float ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);

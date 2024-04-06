@@ -19,10 +19,12 @@ static EDDEV_ROUTE EDDEV_ROUTE_ARRAY_0049acc0[0x100];
 void _edDevScanPorts(uint flags)
 {
 	edDevRoot.field_0x3c = 0;
+
 	if ((flags & 0xcaca0001) != 0xcaca0001) {
 		IMPLEMENTATION_GUARD_LOG(
 		_edDevScanPsxPorts();)
 	}
+
 	return;
 }
 
@@ -106,13 +108,13 @@ void _edDevInitRoot(void)
 		pPVar5->field_0x14 = 0;
 		pPVar5->bPressed = false;
 		pPVar5->bReleased = false;
-		pPVar5->field_0x18 = 0.6666667;
-		pPVar5->field_0x1c = 0.3333333;
-		pPVar5->rateA = 0.01;
-		pPVar5->rateB = 0.01;
-		pPVar5->field_0x28 = 0.0;
-		pPVar5->field_0x2c = 0.0;
-		pPVar5->field_0x30 = 1.0;
+		pPVar5->field_0x18 = 0.6666667f;
+		pPVar5->field_0x1c = 0.3333333f;
+		pPVar5->rateA = 0.01f;
+		pPVar5->rateB = 0.01f;
+		pPVar5->field_0x28 = 0.0f;
+		pPVar5->field_0x2c = 0.0f;
+		pPVar5->field_0x30 = 1.0f;
 		pPVar5 = pPVar5 + 1;
 	} while (uVar1 < 0x100);
 
@@ -138,6 +140,7 @@ void edDevInit(uint flags)
 static int g_ControllerCount_004497dc = 0;
 static Pad_180 Pad_180_ARRAY_00496b00[8];
 
+#pragma clang optimize off
 int edDevInitPort(uint port, int slot, uint type)
 {
 	undefined uVar1;
@@ -153,7 +156,7 @@ int edDevInitPort(uint port, int slot, uint type)
 	if (edDevRoot.nbPorts < edDevRoot.nbMaxPorts) {
 		result = 0;
 		pController = edDevRoot.aPorts + edDevRoot.nbPorts;
-		if (type == 0x108) {
+		if (type == INPUT_TYPE_DUALSHOCK) {
 			if (g_ControllerCount_004497dc < 8) {
 				if (pController->pPad180 == (Pad_180*)0x0) {
 					pController->pPad180 = Pad_180_ARRAY_00496b00 + g_ControllerCount_004497dc;
@@ -233,10 +236,39 @@ int edDevInitPort(uint port, int slot, uint type)
 		}
 		else {
 			result = 0;
+
+#ifdef MOUSE_SUPPORT_EXTENSION_ENABLED
+			if (type == INPUT_TYPE_MOUSE) {
+				pController->pEventFunc = Input::_edDevMouse;
+
+				uVar2 = pController->pEventFunc(0x90000000, pController, (void*)0x0);
+				pController->maxControlId = uVar2;
+
+				if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
+					result = -5;
+				}
+				else {
+					pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
+					uVar2 = pController->pEventFunc(0x90000001, pController, (void*)0x0);
+
+					if (uVar2 == 0) {
+						pController->flags = pController->flags | 0x40000000;
+						pPVar2->state = 0;
+						pPVar2->prevState = 0;
+						pController->controllerId = edDevRoot.nbPorts;
+						g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
+						edDevRoot.nbPorts = edDevRoot.nbPorts + 1;
+						edDevRoot.nbPadD = edDevRoot.nbPadD + pController->maxControlId;
+					}
+				}
+			}
+#endif
 		}
 	}
 	else {
 		result = -3;
 	}
+
 	return result;
 }
+#pragma clang optimize on

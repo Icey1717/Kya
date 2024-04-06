@@ -1,9 +1,15 @@
 #include "input.h"
 
 namespace Input {
-	constexpr uint numButtons = 0x18;
-
 	static InputFunctions gInputFunctions;
+
+	namespace KeyboardController {
+		constexpr uint numButtons = 0x18;
+	}
+
+	namespace Mouse {
+		constexpr uint numButtons = 0x6;
+	}
 }
 
 void Input::SetInputFunctions(InputFunctions inputFunctions)
@@ -35,7 +41,7 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 	uVar6 = 0;
 	switch (eventID) {
 	case 0x90000000:
-		uVar6 = numButtons;
+		uVar6 = KeyboardController::numButtons;
 		break;
 	case 0x90000001:
 		uVar6 = 0;
@@ -68,7 +74,7 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 			pPVar5->field_0x2c = 0.0f;
 			pPVar5->field_0x30 = 1.0f;
 			pPVar5 = pPVar5 + 1;
-		} while (uVar6 < 0x18);
+		} while (uVar6 < KeyboardController::numButtons);
 		uVar6 = 0;
 		break;
 	case 0x90000002:
@@ -123,7 +129,7 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 		break;
 	case 0x90000006:
 	{
-		pController->pPadD[ROUTE_START].bReleased = gInputFunctions.released(ROUTE_START);
+		pController->pPadD[ROUTE_START].bReleased = gInputFunctions.keyReleased(ROUTE_START);
 
 		//if (pController->pPadD[ROUTE_START].bReleased) {
 		//	pressIndex++;
@@ -131,24 +137,24 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 		//
 		//pController->pPadD[pressIndex].bPressed = true;
 
-		pController->pPadD[ROUTE_X].bPressed = gInputFunctions.pressed(ROUTE_X);
-		pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.pressed(ROUTE_DOWN);
-		pController->pPadD[ROUTE_UP].bPressed = gInputFunctions.pressed(ROUTE_UP);
+		pController->pPadD[ROUTE_X].bPressed = gInputFunctions.keyPressed(ROUTE_X);
+		pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_DOWN);
+		pController->pPadD[ROUTE_UP].bPressed = gInputFunctions.keyPressed(ROUTE_UP);
 
-		pController->pPadD[ROUTE_L_ANALOG_UP].bPressed = gInputFunctions.pressed(ROUTE_L_ANALOG_UP);
-		pController->pPadD[ROUTE_L_ANALOG_DOWN].bPressed = gInputFunctions.pressed(ROUTE_L_ANALOG_DOWN);
+		pController->pPadD[ROUTE_L_ANALOG_UP].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_UP);
+		pController->pPadD[ROUTE_L_ANALOG_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_DOWN);
 
-		pController->pPadD[ROUTE_L_ANALOG_LEFT].bPressed = gInputFunctions.pressed(ROUTE_L_ANALOG_LEFT);
-		pController->pPadD[ROUTE_L_ANALOG_RIGHT].bPressed = gInputFunctions.pressed(ROUTE_L_ANALOG_RIGHT);
+		pController->pPadD[ROUTE_L_ANALOG_LEFT].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_LEFT);
+		pController->pPadD[ROUTE_L_ANALOG_RIGHT].bPressed = gInputFunctions.keyPressed(ROUTE_L_ANALOG_RIGHT);
 
-		pController->pPadD[ROUTE_UP].analogValue = gInputFunctions.analog(ROUTE_UP);
-		pController->pPadD[ROUTE_DOWN].analogValue = gInputFunctions.analog(ROUTE_DOWN);
+		pController->pPadD[ROUTE_UP].analogValue = gInputFunctions.keyAnalog(ROUTE_UP);
+		pController->pPadD[ROUTE_DOWN].analogValue = gInputFunctions.keyAnalog(ROUTE_DOWN);
 
-		pController->pPadD[ROUTE_L_ANALOG_UP].analogValue = gInputFunctions.analog(ROUTE_L_ANALOG_UP);
-		pController->pPadD[ROUTE_L_ANALOG_DOWN].analogValue = gInputFunctions.analog(ROUTE_L_ANALOG_DOWN);
+		pController->pPadD[ROUTE_L_ANALOG_UP].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_UP);
+		pController->pPadD[ROUTE_L_ANALOG_DOWN].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_DOWN);
 
-		pController->pPadD[ROUTE_L_ANALOG_LEFT].analogValue = gInputFunctions.analog(ROUTE_L_ANALOG_LEFT);
-		pController->pPadD[ROUTE_L_ANALOG_RIGHT].analogValue = gInputFunctions.analog(ROUTE_L_ANALOG_RIGHT);
+		pController->pPadD[ROUTE_L_ANALOG_LEFT].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_LEFT);
+		pController->pPadD[ROUTE_L_ANALOG_RIGHT].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_RIGHT);
 
 		//pController->pPadD[pressIndex].bPressed = true;
 		//pressIndex++;
@@ -167,3 +173,76 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 	}
 	return uVar6;
 }
+
+#pragma clang optimize off
+uint Input::_edDevMouse(uint eventID, EDDEV_PORT* pController, void* param_3)
+{
+	uint uVar6;
+	Pad_d* pPVar5;
+
+	uVar6 = 0;
+
+	switch (eventID) {
+	case 0x90000000:
+		uVar6 = Mouse::numButtons;
+		break;
+	case 0x90000001:
+	{
+		uVar6 = 0;
+		pController->flags = 0x210;
+		pController->pDisconnectedHandler = (ControllerConnectedFuncPtr)0x0;
+		pController->pConnectedHandler = (ControllerConnectedFuncPtr)0x0;
+		pController->field_0x2c = 0;
+
+		pPVar5 = pController->pPadD;
+		do {
+			if ((uVar6 < 8) || (0xb < uVar6)) {
+				pPVar5->type = 3;
+			}
+			else {
+				pPVar5->type = 1;
+			}
+			pPVar5->field_0x4 = 0;
+			uVar6 = uVar6 + 1;
+			pPVar5->analogValue = 0.0f;
+			pPVar5->field_0xc = 0;
+			pPVar5->clickValue = 0.0f;
+			pPVar5->field_0x14 = 0;
+			pPVar5->bPressed = false;
+			pPVar5->bReleased = false;
+			pPVar5->field_0x18 = 0.6666667f;
+			pPVar5->field_0x1c = 0.3333333f;
+			pPVar5->rateA = 0.01f;
+			pPVar5->rateB = 0.01f;
+			pPVar5->field_0x28 = 0.0f;
+			pPVar5->field_0x2c = 0.0f;
+			pPVar5->field_0x30 = 1.0f;
+			pPVar5 = pPVar5 + 1;
+		} while (uVar6 < Mouse::numButtons);
+
+		uVar6 = 0;
+		}
+		break;
+	case 0x90000002:
+	case 0x90000003:
+		// Do nothing for now.
+		break;
+	case 0x90000006:
+	{
+		pController->pPadD[MOUSE_INPUT_BUTTON1].clickValue = gInputFunctions.mousePressed(MOUSE_INPUT_BUTTON1);
+		pController->pPadD[MOUSE_INPUT_BUTTON2].clickValue = gInputFunctions.mousePressed(MOUSE_INPUT_BUTTON2);
+		pController->pPadD[MOUSE_INPUT_BUTTON3].clickValue = gInputFunctions.mousePressed(MOUSE_INPUT_BUTTON3);
+
+		pController->pPadD[MOUSE_INPUT_DX].analogValue = gInputFunctions.mouseAnalog(MOUSE_INPUT_DX);
+		pController->pPadD[MOUSE_INPUT_DY].analogValue = gInputFunctions.mouseAnalog(MOUSE_INPUT_DY);
+		pController->pPadD[MOUSE_INPUT_WHEEL].analogValue = gInputFunctions.mouseAnalog(MOUSE_INPUT_WHEEL);
+	}
+	break;
+	default:
+		IMPLEMENTATION_GUARD();
+		break;
+	}
+
+	return uVar6;
+}
+#pragma clang optimize on

@@ -320,27 +320,27 @@ void LevelScheduleManager::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo
 		pLVar3->pFileData = (undefined*)0x0;
 		pLVar3->flags = 0;
 		iVar2 = iVar2 + 6;
-		pLVar3->pWindSectorObj = (CSectorHierarchy*)0x0;
+		pLVar3->aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pLVar3->field_0xc = 0;
 		pLVar3[1].pFileData = (undefined*)0x0;
 		pLVar3[1].flags = 0;
-		pLVar3[1].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pLVar3[1].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pLVar3[1].field_0xc = 0;
 		pLVar3[2].pFileData = (undefined*)0x0;
 		pLVar3[2].flags = 0;
-		pLVar3[2].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pLVar3[2].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pLVar3[2].field_0xc = 0;
 		pLVar3[3].pFileData = (undefined*)0x0;
 		pLVar3[3].flags = 0;
-		pLVar3[3].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pLVar3[3].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pLVar3[3].field_0xc = 0;
 		pLVar3[4].pFileData = (undefined*)0x0;
 		pLVar3[4].flags = 0;
-		pLVar3[4].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pLVar3[4].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pLVar3[4].field_0xc = 0;
 		pLVar3[5].pFileData = (undefined*)0x0;
 		pLVar3[5].flags = 0;
-		pLVar3[5].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pLVar3[5].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pLVar3[5].field_0xc = 0;
 		pLVar3 = pLVar3 + 6;
 	} while (iVar2 < 0x1e);
@@ -408,7 +408,7 @@ uint* LevelScheduleManager::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int 
 						iVar4 = local_4.GetNumSimpleConds();
 						if (iVar4 != 0) {
 							uVar12 = uVar12 + 1;
-							pcVar8->pWindSectorObj = (CSectorHierarchy*)((int)pcVar8->pWindSectorObj + 1);
+							pcVar8->aSectorHierarchies = (CSectorHierarchy*)((int)pcVar8->aSectorHierarchies + 1);
 							iVar4 = local_4.GetDataSize();
 							iVar13 = iVar13 + iVar4;
 						}

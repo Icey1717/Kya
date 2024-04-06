@@ -1,7 +1,7 @@
 #include "VideoD.h"
 #include "VideoB.h"
 #include "edSystem.h"
-#include "Camera.h"
+#include "Viewport.h"
 #include "edDlist.h"
 
 #ifdef PLATFORM_PS2

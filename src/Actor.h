@@ -27,6 +27,7 @@ struct edNODE;
 struct ed_g3d_hierarchy;
 struct ed_3d_hierarchy_node;
 struct S_BOUNDING_BOX;
+struct edCEventMessage;
 
 class CPlayerInput;
 
@@ -64,6 +65,7 @@ struct CBehaviour
 	virtual void TermState(int, int) {}
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
 };
 
 struct CBehaviourStand : public CBehaviour
@@ -322,6 +324,7 @@ public:
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual CPlayerInput* GetInputManager(int, int);
@@ -363,6 +366,8 @@ public:
 	void ComputeAltitude();
 
 	void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+
+	int ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	bool ColWithAToboggan();
 

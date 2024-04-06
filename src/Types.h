@@ -123,17 +123,6 @@ enum EFileLoadMode {
 	New_Name_3 = 3
 };
 
-PACK(
-struct ed_zone_3d {
-	int field_0x0[3]; // ptr
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-	float field_0x18;
-	uint flags;
-	int field_0x20; // edF32MATRIX4*
-};)
-
 enum ACTOR_CLASS {
 	CINEMATIC = 1,
 	BOOMY = 5,
@@ -641,7 +630,7 @@ enum LANGUAGE
 struct SectorManagerSubObj {
 	uint flags;
 	undefined* pFileData;
-	struct CSectorHierarchy* pWindSectorObj;
+	CSectorHierarchy* aSectorHierarchies;
 	int field_0xc;
 };
 
@@ -789,11 +778,22 @@ public:
 	}
 };
 
+
+PACK(
+	struct ed_zone_3d {
+	int field_0x0[3]; // ptr
+	edF32VECTOR4 boundSphere;
+	uint flags;
+	int pMatrix; // edF32MATRIX4*
+};)
+
 class CActor;
 typedef CFixedTable<CActor*, 64> CActorsTable;
 
 // This shows up when the VIF0 does an MR32.w to zero out the w element of the vector register.
 // Define it here and check wherever it shows up in the code to make sure an appropriate MR32.w inst is ther.
 const float in_vf0x = 0.0f;
+
+#define CAMERA_HACK_ACTIVE 0x10000000
 
 #endif //_TYPES_H

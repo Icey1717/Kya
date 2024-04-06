@@ -5,24 +5,11 @@
 #include "LargeObject.h"
 #include "Actor.h"
 #include "edVideo/CameraStack.h"
+#include "camera.h"
 
 #define CAMERA_LOG(level, format, ...) MY_LOG_CATEGORY("Camera", level, format, ##__VA_ARGS__)
 
-enum ECameraType {
-	CT_AroundSpecial = 2,
-	CT_Cinematic = 22,
-	CT_Death = 25,
-	CT_Frontend = 24,
-	CT_IntView = 11,
-	CT_Main = 3,
-	CT_KyaJamgut = 7,
-	CT_KyaWindWall = 5,
-	CT_MainCamera = 21,
-	CT_MouseAround = 1,
-	CT_MouseQuake = 0,
-	CT_ShadowSun = 12,
-	CT_SilverBoomy = 10
-};
+struct CCameraMouseQuake;
 
 struct edFCamera {
 	edF32VECTOR4 position;
@@ -124,122 +111,6 @@ struct astruct_12 {
 	float field_0x20;
 };
 
-struct SpecificCondition {
-	int* pData;
-
-	bool IsVerified();
-};
-
-struct CCamera : public CObject {
-	CCamera();
-	CCamera(struct ByteCode* pMemoryStream);
-
-	virtual void Init();
-	virtual bool Manage();
-	virtual bool AlertCamera(int param_2, int param_3, CCamera* param_4);
-	virtual CActor* GetTarget() { return NULL; }
-	virtual void SetTarget(CActor* pActor) {}
-	virtual void SetOtherTarget(CActor* pNewTarget);
-	virtual float GetDistance();
-	virtual void SetDistance(float distance) {}
-	virtual float GetAngleAlpha();
-	virtual float GetAngleBeta();
-	virtual float GetAngleGamma();
-	virtual void SetAngleAlpha(float angle) { };
-	virtual void SetAngleBeta(float angle) { };
-	virtual void SetAngleGamma(float angle) { };
-	virtual void SetMode(ECameraType type) {}
-	virtual ECameraType GetMode();
-
-	virtual void ResetEvent() {}
-
-	static CCameraManager* _gpcam_man;
-
-	int field_0x8;
-	uint flags_0xc;
-	edF32MATRIX4 transformationMatrix;
-	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 lookAt;
-	CActor* pOtherTarget;
-	float fov;
-	SpecificCondition specCondition;
-	undefined4 field_0x7c;
-	struct EventChunk_24* field_0x80;
-	struct CheckpointManagerSubObjB* field_0x84;
-	float field_0x88;
-	float field_0x8c;
-	SWITCH_MODE switchMode;
-	SWITCH_MODE field_0x94;
-	float field_0x98;
-	float field_0x9c;
-	undefined field_0xa0;
-	undefined field_0xa1;
-	undefined field_0xa2;
-	undefined field_0xa3;
-	struct CCamera* pNextCameraView_0xa4;
-};
-
-struct CCameraExt : public CCamera {
-	CCameraExt(struct ByteCode* pMemoryStream);
-	CCameraExt();
-
-
-	// CObject
-	virtual bool IsKindOfObject(ulong kind);
-
-	// CCamera
-	virtual void Init();
-	virtual CActor* GetTarget();
-	virtual void SetTarget(CActor* pActor);
-	virtual float GetDistance();
-	virtual void SetDistance(float distance);
-	virtual float GetAngleAlpha();
-	virtual float GetAngleBeta();
-	virtual float GetAngleGamma();
-	virtual void SetAngleAlpha(float angle);
-	virtual void SetAngleBeta(float angle);
-	virtual void SetAngleGamma(float angle);
-	// CCamera
-
-	virtual edF32VECTOR3* GetAngles();
-
-	void ComputeTargetPosition(edF32VECTOR4* param_2);
-	void ComputeTargetOffset(edF32VECTOR4* v0);
-
-	undefined field_0xa8;
-	undefined field_0xa9;
-	undefined field_0xaa;
-	undefined field_0xab;
-	undefined field_0xac;
-	undefined field_0xad;
-	undefined field_0xae;
-	undefined field_0xaf;
-	struct CActor* pActorView;
-	edF32VECTOR3 angles;
-	float distance;
-	undefined field_0xc4;
-	undefined field_0xc5;
-	undefined field_0xc6;
-	undefined field_0xc7;
-	undefined field_0xc8;
-	undefined field_0xc9;
-	undefined field_0xca;
-	undefined field_0xcb;
-	undefined field_0xcc;
-	undefined field_0xcd;
-	undefined field_0xce;
-	undefined field_0xcf;
-	float field_0xd0;
-	int field_0xd4;
-	undefined field_0xd8;
-	undefined field_0xd9;
-	undefined field_0xda;
-	undefined field_0xdb;
-	undefined field_0xdc;
-	undefined field_0xdd;
-	undefined field_0xde;
-	undefined field_0xdf;
-};
 
 struct CCamConfig : public CAMERA_CONFIG {
 	uint flags_0x70;
@@ -283,71 +154,6 @@ public:
 void CameraSet3DPos(edFCamera* pCamera);
 void edFCameraSetSizeRatioFov(float halfFOV, float aspectRatio, float sizeRatio, edFCamera* pCamera);
 
-struct FrontendCameraView : public CCamera {
-	undefined field_0xa8;
-	undefined field_0xa9;
-	undefined field_0xaa;
-	undefined field_0xab;
-	undefined field_0xac;
-	undefined field_0xad;
-	undefined field_0xae;
-	undefined field_0xaf;
-};
-
-struct CCameraCinematic : public FrontendCameraView {
-	CCameraCinematic();
-
-	void SetTransform(edF32MATRIX4* transformMatrix);
-
-	virtual ECameraType GetMode(void);
-	virtual void Init();
-	virtual float GetAngleAlpha();
-	virtual float GetAngleBeta();
-	virtual float GetAngleGamma();
-
-	edF32VECTOR3 field_0xb0;
-	undefined field_0xbc;
-	undefined field_0xbd;
-	undefined field_0xbe;
-	undefined field_0xbf;
-};
-
-struct CCameraMouse : public CCameraExt {
-	CCameraMouse();
-};
-
-struct CCameraMouseQuake : public CCameraMouse {
-	CCameraMouseQuake();
-
-	virtual ECameraType GetMode();
-	virtual void Init();
-};
-
-struct CCameraMouseAroundPerso : public CCameraMouse {
-	CCameraMouseAroundPerso();
-
-	virtual ECameraType GetMode();
-	virtual void Init();
-
-	edF32VECTOR4 field_0xe0;
-	int isSpecial;
-	undefined field_0xf4;
-	undefined field_0xf5;
-	undefined field_0xf6;
-	undefined field_0xf7;
-	undefined field_0xf8;
-	undefined field_0xf9;
-	undefined field_0xfa;
-	undefined field_0xfb;
-	undefined field_0xfc;
-	undefined field_0xfd;
-	undefined field_0xfe;
-	undefined field_0xff;
-};
-
-struct CCameraMouseAroundPersoSpecial : public CCameraMouseAroundPerso {
-	CCameraMouseAroundPersoSpecial();
-};
 
 struct CCameraShadow : public CCameraExt {
 	CCameraShadow(ByteCode* pByteCode);
@@ -6076,7 +5882,8 @@ struct ActiveCamManager {
 	bool SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_MODE switchMode);
 };
 
-struct CCameraManager : public CObjectManager {
+class CCameraManager : public CObjectManager {
+public:
 	CCameraManager();
 	virtual void Game_Init();
 	virtual void LevelLoading_Begin();
@@ -6810,8 +6617,8 @@ struct CCameraManager : public CObjectManager {
 	CCamera* pInitialView_0x4b4;
 	CCamera* pActiveCamera;
 	CCameraShadow* aCameraShadow[10];
-	FrontendCameraView* pFrontendCamera_0x4e4;
-	CCamera* pMouseQuakeCamera_0x4e8;
+	CCamera* pFrontendCamera_0x4e4;
+	CCameraMouseQuake* pMouseQuakeCamera_0x4e8;
 	CCameraStack cameraStack;
 	undefined field_0x708;
 	undefined field_0x709;
@@ -6927,8 +6734,6 @@ struct CCameraManager : public CObjectManager {
 	undefined field_0xa7e;
 	undefined field_0xa7f;
 };
-
-float GetAngleYFromVector(edF32VECTOR4* v0);
 
 extern edFCamera _gDisplayCamera;
 extern edFCamera gSceneCameras[10];

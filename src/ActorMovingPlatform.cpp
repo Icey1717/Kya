@@ -724,7 +724,7 @@ void CActorMovingPlatform::ForceCarriedStuff()
 		do {
 			S_STREAM_REF<ed_zone_3d>* pEntry = &this->field_0x248->aEntries[iVar5];
 			if (pEntry->Get() != 0) {
-				pEntry->Get()->field_0x20 = STORE_SECTION(&this->field_0x200);
+				pEntry->Get()->pMatrix = STORE_SECTION(&this->field_0x200);
 			}
 			iVar5 = iVar5 + 1;
 		} while (iVar5 < iVar2);

@@ -15,8 +15,12 @@
 namespace Input {
 
 	struct InputFunctions {
-		std::function<bool(uint)> pressed;
-		std::function<bool(uint)> released;
-		std::function<float(uint)> analog;
+		std::function<bool(uint)> keyPressed;
+		std::function<bool(uint)> keyReleased;
+		std::function<float(uint)> keyAnalog;
+
+		std::function<bool(uint)> mousePressed;
+		std::function<bool(uint)> mouseReleased;
+		std::function<float(uint)> mouseAnalog;
 	};
 }

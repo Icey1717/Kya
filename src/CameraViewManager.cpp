@@ -13,9 +13,10 @@
 #include "DlistManager.h"
 #include "ActorHero.h"
 
+#include "camera.h"
+#include "CameraCinematic.h"
+#include "CameraMouseQuake.h"
 #include "CameraGame.h"
-
-#define EDFCAMERA_LOG(level, format, ...) MY_LOG_CATEGORY("edFCamera", level, format, ##__VA_ARGS__)
 
 CCameraManager* CCameraManager::_gThis = NULL;
 CCameraManager* CCamera::_gpcam_man = NULL;
@@ -528,33 +529,27 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 	AddCamera(CT_AroundSpecial, &newView, s_Around_Special_0042ae68);
 	/* Debug Quake */
 	frontend = AddCamera(CT_MouseQuake, &newView, s_Debug_Quake_0042ae78);
-	this->pMouseQuakeCamera_0x4e8 = frontend;
+	this->pMouseQuakeCamera_0x4e8 = reinterpret_cast<CCameraMouseQuake*>(frontend);
 	/* Cinematic */
 	AddCamera(CT_Cinematic, &newView, s_Cinematic_0042ae88);
 	/* Frontend */
 	frontend = AddCamera(CT_Frontend, &newView, s_Frontend_0042ae98);
-	this->pFrontendCamera_0x4e4 = (FrontendCameraView*)frontend;
+	this->pFrontendCamera_0x4e4 = frontend;
 	frontend = this->pFrontendCamera_0x4e4;
-	(frontend->lookAt).x = 0.0;
-	(frontend->lookAt).y = 0.0;
-	(frontend->lookAt).z = 10.0;
-	(frontend->lookAt).w = 1.0;
+	(frontend->lookAt).x = 0.0f;
+	(frontend->lookAt).y = 0.0f;
+	(frontend->lookAt).z = 10.0f;
+	(frontend->lookAt).w = 1.0f;
 	frontend = this->pFrontendCamera_0x4e4;
-	(frontend->transformationMatrix).da = 0.0;
-	(frontend->transformationMatrix).db = 0.0;
-	(frontend->transformationMatrix).dc = 0.0;
-	(frontend->transformationMatrix).dd = 1.0;
-	this->pFrontendCamera_0x4e4->fov = 0.3333333;
+	(frontend->transformationMatrix).da = 0.0f;
+	(frontend->transformationMatrix).db = 0.0f;
+	(frontend->transformationMatrix).dc = 0.0f;
+	(frontend->transformationMatrix).dd = 1.0f;
+	this->pFrontendCamera_0x4e4->fov = 0.3333333f;
 	frontend = this->pFrontendCamera_0x4e4;
-	_gFrontEndCamera.position.x = (frontend->transformationMatrix).da;
-	_gFrontEndCamera.position.y = (frontend->transformationMatrix).db;
-	_gFrontEndCamera.position.z = (frontend->transformationMatrix).dc;
-	_gFrontEndCamera.position.w = (frontend->transformationMatrix).dd;
+	_gFrontEndCamera.position = (frontend->transformationMatrix).rowT;
 	frontend = this->pFrontendCamera_0x4e4;
-	_gFrontEndCamera.lookAt.x = (frontend->lookAt).x;
-	_gFrontEndCamera.lookAt.y = (frontend->lookAt).y;
-	_gFrontEndCamera.lookAt.z = (frontend->lookAt).z;
-	_gFrontEndCamera.lookAt.w = (frontend->lookAt).w;
+	_gFrontEndCamera.lookAt = frontend->lookAt;
 	CameraSet3DPos(&_gFrontEndCamera);
 	edFCameraSetSizeRatioFov(0.03f, this->aspectRatio, this->pFrontendCamera_0x4e4->fov / 1.333333f, &_gFrontEndCamera);
 	this->field_0xa00 = CScene::_pinstance->field_0x11c;
@@ -852,7 +847,7 @@ void CCameraManager::BuildDisplayMatrix()
 		this->displayTransformMatrix = this->aCameraShadow[0]->transformationMatrix;
 	}
 	else {
-		if ((this->flags & 0x10000000) != 0) {
+		if ((this->flags & CAMERA_HACK_ACTIVE) != 0) {
 			this->displayTransformMatrix = this->pMouseQuakeCamera_0x4e8->transformationMatrix;
 		}
 	}
@@ -882,7 +877,7 @@ void CCameraManager::BuildDisplayMatrix()
 		fVar1 = fVar1 + this->aCameraShadow[0]->fov;
 	}
 	else {
-		if ((this->flags & 0x10000000) == 0) {
+		if ((this->flags & CAMERA_HACK_ACTIVE) == 0) {
 			fVar1 = fVar1 + this->fov_0xa34;
 		}
 		else {
@@ -898,7 +893,7 @@ void CCameraManager::Level_Manage()
 {
 	SWITCH_MODE switchMode;
 	CCameraShadow* pCVar1;
-	FrontendCameraView* pFVar2;
+	CCamera* pFVar2;
 	bool bVar3;
 	Timer* pTVar4;
 	ECameraType EVar5;
@@ -1021,20 +1016,15 @@ void CCameraManager::Level_Manage()
 			Func_00194e00(this);)
 		}
 
-		if ((this->flags & 0x10000000) != 0) {
-			IMPLEMENTATION_GUARD(
+		if ((this->flags & CAMERA_HACK_ACTIVE) != 0) {
 			this->pMouseQuakeCamera_0x4e8->Manage();
-			)
 		}
 
 		BuildDisplayMatrix();
-		if (this->pFrontendCamera_0x4e4 != (FrontendCameraView*)0x0) {
+		if (this->pFrontendCamera_0x4e4 != (CCamera*)0x0) {
 			this->pFrontendCamera_0x4e4->Manage();
 			pFVar2 = this->pFrontendCamera_0x4e4;
-			_gFrontEndCamera.position.x = pFVar2->transformationMatrix.da;
-			_gFrontEndCamera.position.y = pFVar2->transformationMatrix.db;
-			_gFrontEndCamera.position.z = pFVar2->transformationMatrix.dc;
-			_gFrontEndCamera.position.w = pFVar2->transformationMatrix.dd;
+			_gFrontEndCamera.position = pFVar2->transformationMatrix.rowT;
 			pFVar2 = this->pFrontendCamera_0x4e4;
 			_gFrontEndCamera.lookAt = pFVar2->lookAt;
 			CameraSet3DPos(&_gFrontEndCamera);
@@ -1117,8 +1107,8 @@ void CCameraManager::Level_ClearInternalData()
 	this->count_0x9fc = 0;
 	this->pInitialView_0x4b4 = (CCamera*)0x0;
 	this->pActiveCamera = (CCamera*)0x0;
-	this->pFrontendCamera_0x4e4 = (FrontendCameraView*)0x0;
-	this->pMouseQuakeCamera_0x4e8 = (CCamera*)0x0;
+	this->pFrontendCamera_0x4e4 = (CCamera*)0x0;
+	this->pMouseQuakeCamera_0x4e8 = (CCameraMouseQuake*)0x0;
 	this->field_0xa78 = 0;
 	this->time_0x4 = 0.0;
 	return;
@@ -1235,7 +1225,7 @@ CCamera* CCameraManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, ch
 		})
 		break;
 	case CT_Frontend:
-		newObjectPtr = new FrontendCameraView();
+		newObjectPtr = new CCamera();
 		break;
 	case CT_Death:
 		IMPLEMENTATION_GUARD(
@@ -1339,425 +1329,6 @@ bool CCameraManager::IsSphereVisible(float other, edF32VECTOR4* pSphere)
 	return bVar2;
 }
 
-CCamera::CCamera(ByteCode* pMemoryStream)
-	: CObject()
-{
-	CheckpointManagerSubObjB* pCVar1;
-	int* piVar2;
-	int iVar3;
-	uint uVar4;
-	EventChunk_24* pEVar5;
-	float fVar6;
-	edF32VECTOR4 local_10;
-
-	this->specCondition.pData = (int*)0x0;
-	this->pNextCameraView_0xa4 = (CCamera*)0x0;
-	*(undefined*)&this->field_0xa0 = 0;
-	SetOtherTarget(0);
-	fVar6 = pMemoryStream->GetF32();
-	this->fov = fVar6;
-	local_10.x = pMemoryStream->GetF32();
-	local_10.y = pMemoryStream->GetF32();
-	local_10.z = pMemoryStream->GetF32();
-	local_10.w = 1.0;
-	(this->transformationMatrix).da = local_10.x;
-	(this->transformationMatrix).db = local_10.y;
-	(this->transformationMatrix).dc = local_10.z;
-	(this->transformationMatrix).dd = 1.0f;
-	local_10.x = pMemoryStream->GetF32();
-	local_10.y = pMemoryStream->GetF32();
-	local_10.z = pMemoryStream->GetF32();
-	local_10.w = 1.0;
-	(this->lookAt).x = local_10.x;
-	(this->lookAt).y = local_10.y;
-	(this->lookAt).z = local_10.z;
-	(this->lookAt).w = 1.0f;
-	edF32Vector4SubHard(&local_10, &this->lookAt, (edF32VECTOR4*)&(this->transformationMatrix).da);
-	edF32Vector4NormalizeHard(&local_10, &local_10);
-	(this->transformationMatrix).ca = local_10.x;
-	(this->transformationMatrix).cb = local_10.y;
-	(this->transformationMatrix).cc = local_10.z;
-	(this->transformationMatrix).cd = local_10.w;
-	local_10.x = pMemoryStream->GetF32();
-	local_10.y = pMemoryStream->GetF32();
-	local_10.z = pMemoryStream->GetF32();
-	local_10.w = 0.0;
-	(this->transformationMatrix).ba = local_10.x;
-	(this->transformationMatrix).bb = local_10.y;
-	(this->transformationMatrix).bc = local_10.z;
-	(this->transformationMatrix).bd = 0.0;
-	edF32Vector4CrossProductHard(&local_10, (edF32VECTOR4*)&(this->transformationMatrix).ba, (edF32VECTOR4*)&(this->transformationMatrix).ca);
-	local_10.w = 0.0;
-	(this->transformationMatrix).aa = local_10.x;
-	(this->transformationMatrix).ab = local_10.y;
-	(this->transformationMatrix).ac = local_10.z;
-	(this->transformationMatrix).ad = 0.0f;
-	iVar3 = pMemoryStream->GetS32();
-	this->objectId = iVar3;
-	iVar3 = pMemoryStream->GetS32();
-	this->field_0x8 = iVar3;
-	uVar4 = pMemoryStream->GetU32();
-	this->flags_0xc = uVar4 | 0x200000;
-	fVar6 = pMemoryStream->GetF32();
-	this->field_0x50.x = fVar6;
-	fVar6 = pMemoryStream->GetF32();
-	this->field_0x50.y = fVar6;
-	fVar6 = pMemoryStream->GetF32();
-	this->field_0x50.z = fVar6;
-	this->field_0x50.w = 0.0f;
-	if ((this->flags_0xc & 2) == 0) {
-		this->field_0x8c = 0.0f;
-		this->switchMode = SWITCH_MODE_F;
-		this->field_0x98 = 0.8f;
-		this->field_0x94 = SWITCH_MODE_A;
-		this->field_0x9c = 0.8f;
-	}
-	else {
-		pEVar5 = (EventChunk_24*)pMemoryStream->GetS32();
-		//this->field_0x80 = pEVar5;
-		//pCVar1 = (CheckpointManagerSubObjB*)pMemoryStream->currentSeekPos;
-		//pMemoryStream->currentSeekPos = (char*)&pCVar1->field_0x4;
-		//if (pCVar1->pActor_0x0 != (AActorBase*)0x0) {
-		//	pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + (int)pCVar1->pActor_0x0 * 4;
-		//}
-		//this->field_0x84 = pCVar1;
-		//piVar2 = (int*)pMemoryStream->currentSeekPos;
-		//pMemoryStream->currentSeekPos = (char*)(piVar2 + 1);
-		//if (*piVar2 != 0) {
-		//	pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar2 * 4;
-		//}
-		//this->field_0x88 = (float)piVar2;
-		fVar6 = pMemoryStream->GetF32();
-		this->field_0x8c = fVar6;
-		iVar3 = pMemoryStream->GetS32();
-		this->switchMode = (SWITCH_MODE)iVar3;
-		fVar6 = pMemoryStream->GetF32();
-		this->field_0x98 = fVar6;
-		iVar3 = pMemoryStream->GetS32();
-		this->field_0x94 = (SWITCH_MODE)iVar3;
-		fVar6 = pMemoryStream->GetF32();
-		this->field_0x9c = fVar6;
-		if (this->field_0x80 == (EventChunk_24*)0xffffffff) {
-			this->flags_0xc = this->flags_0xc & 0xfffffffd;
-		}
-	}
-	piVar2 = (int*)pMemoryStream->currentSeekPos;
-	pMemoryStream->currentSeekPos = (char*)(piVar2 + 1);
-	if (*piVar2 != 0) {
-		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar2 * 0x10;
-	}
-	(this->specCondition).pData = (int*)piVar2;
-	return;
-}
-
-CCamera::CCamera()
-	:CObject()
-{
-	(this->specCondition).pData = (int*)0x0;
-	this->pNextCameraView_0xa4 = (CCamera*)0x0;
-	edF32Matrix4SetIdentityHard(&this->transformationMatrix);
-	this->flags_0xc = 0x200000;
-	this->field_0x50.x = 0.0f;
-	this->field_0x50.y = 0.0f;
-	this->field_0x50.z = 0.0f;
-	this->field_0x50.w = 0.0f;
-	*(undefined*)&this->field_0xa0 = 0;
-	this->objectId = -1;
-	this->field_0x8 = -1;
-	this->field_0x8c = 0.0f;
-	SetOtherTarget(0x0);
-	this->switchMode = SWITCH_MODE_A;
-	this->field_0x98 = 0.8f;
-	this->field_0x94 = SWITCH_MODE_A;
-	this->field_0x9c = 0.8f;
-	return;
-}
-
-void CCamera::Init()
-{
-	CEventManager* pEVar1;
-	//EventChunk_24* pEVar2;
-	//CheckpointManagerSubObjB* pCVar3;
-	//Actor* pAVar4;
-	edF32VECTOR3 local_10;
-
-	pEVar1 = CScene::ptable.g_EventManager_006f5080;
-	edF32Matrix4ToEulerSoft(&this->transformationMatrix, &local_10, "ZXY");
-	SetAngleAlpha(local_10.x);
-	SetAngleBeta(local_10.y);
-	SetAngleGamma(local_10.z);
-	if ((this->flags_0xc & 2) != 0) {
-		IMPLEMENTATION_GUARD(
-		this->field_0x7c = 0;
-		pEVar2 = (EventChunk_24*)0x0;
-		if (this->field_0x80 != (EventChunk_24*)0xffffffff) {
-			pEVar2 = edEventGetChunkZone(pEVar1->activeEventChunkID_0x8, (int)this->field_0x80);
-		}
-		this->field_0x80 = pEVar2;
-		pCVar3 = this->field_0x84;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
-		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
-		}
-		pCVar3 = (CheckpointManagerSubObjB*)this->field_0x88;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
-		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
-		})
-	}
-	return;
-}
-
-bool CCamera::Manage()
-{
-	CActor* pActorA;
-	bool returnVal;
-	CActor* pAVar1;
-	void* actorAddrA;
-
-	if ((this->flags_0xc & 0x800000) == 0) {
-		this->flags_0xc = this->flags_0xc | 0x800000;
-		actorAddrA = GetTarget();
-		if (actorAddrA != 0) {
-			pActorA = GetTarget();
-			pAVar1 = pActorA->pTiedActor;
-			if (pAVar1 == (CActor*)0x0) {
-				pAVar1 = GetTarget();
-				pAVar1 = pAVar1->GetCollidingActor();
-			}
-			SetOtherTarget(pAVar1);
-		}
-		returnVal = false;
-	}
-	else {
-		returnVal = true;
-	}
-	return returnVal;
-}
-
-bool CCamera::AlertCamera(int param_2, int param_3, CCamera* param_4)
-{
-	int* piVar1;
-	int iVar2;
-	uint* puVar3;
-	int iVar4;
-	int iVar5;
-	float fVar6;
-
-	if (param_2 == 1) {
-		fVar6 = this->field_0x8c;
-		if ((this->flags_0xc & 2) != 0) {
-			iVar5 = 0;
-			iVar4 = 0;
-			IMPLEMENTATION_GUARD(
-			while (true) {
-				piVar1 = (int*)this->field_0x88;
-				iVar2 = 0;
-				if (piVar1 != (int*)0x0) {
-					iVar2 = *piVar1;
-				}
-				if (iVar2 <= iVar5) break;
-				CActor::DoMessage
-				((Actor*)this->field_0x84->field_0x4, *(Actor**)((int)piVar1 + iVar4 + 4), 0x2a,
-					(ActorCompareStruct*)(uint)(0.0 < fVar6));
-				iVar4 = iVar4 + 4;
-				iVar5 = iVar5 + 1;
-			})
-		}
-	}
-	else {
-		if (param_2 == 2) {
-			fVar6 = this->field_0x8c;
-			if ((this->flags_0xc & 2) != 0) {
-				IMPLEMENTATION_GUARD(
-				iVar5 = 0;
-				iVar4 = 0;
-				while (true) {
-					piVar1 = (int*)this->field_0x88;
-					iVar2 = 0;
-					if (piVar1 != (int*)0x0) {
-						iVar2 = *piVar1;
-					}
-					if (iVar2 <= iVar5) break;
-					CActor::DoMessage
-					((Actor*)this->field_0x84->field_0x4, *(Actor**)((int)piVar1 + iVar4 + 4), 0x29,
-						(ActorCompareStruct*)(uint)(0.0 < fVar6));
-					iVar4 = iVar4 + 4;
-					iVar5 = iVar5 + 1;
-				})
-			}
-		}
-		else {
-			if (param_2 == 0) {
-				puVar3 = &this->flags_0xc;
-				if (param_3 == 0) {
-					*puVar3 = *puVar3 & 0xffefffff;
-				}
-				else {
-					*puVar3 = *puVar3 | 0x100000;
-				}
-			}
-		}
-	}
-
-	return false;
-}
-
-void CCamera::SetOtherTarget(CActor* pNewTarget)
-{
-	this->pOtherTarget = pNewTarget;
-	return;
-}
-
-float CCamera::GetDistance()
-{
-	float fVar1;
-	edF32VECTOR4 eStack16;
-
-	edF32Vector4SubHard(&eStack16, &this->lookAt, &(this->transformationMatrix).rowT);
-	fVar1 = edF32Vector4GetDistHard(&eStack16);
-	return fVar1;
-}
-
-float CCamera::GetAngleAlpha()
-{
-	return GetAngleXFromVector(&(this->transformationMatrix).rowZ);
-}
-
-float CCamera::GetAngleBeta()
-{
-	return GetAngleYFromVector(&(this->transformationMatrix).rowZ);
-}
-
-float CCamera::GetAngleGamma()
-{
-	return 0.0f;
-}
-
-void CCameraExt::Init()
-{
-	CEventManager* pEVar1;
-	//EventChunk_24* pEVar2;
-	//CheckpointManagerSubObjB* pCVar3;
-	//Actor* pAVar4;
-	edF32VECTOR3 local_10;
-
-	pEVar1 = CScene::ptable.g_EventManager_006f5080;
-
-	edF32Matrix4ToEulerSoft(&this->transformationMatrix, &local_10, "ZXY");
-	SetAngleAlpha(local_10.x);
-	SetAngleBeta(local_10.y);
-	SetAngleGamma(local_10.z);
-
-	if ((this->flags_0xc & 2) != 0) {
-		IMPLEMENTATION_GUARD(
-			this->field_0x7c = 0;
-		pEVar2 = (EventChunk_24*)0x0;
-		if (this->field_0x80 != (EventChunk_24*)0xffffffff) {
-			pEVar2 = edEventGetChunkZone(pEVar1->activeEventChunkID_0x8, (int)this->field_0x80);
-		}
-		this->field_0x80 = pEVar2;
-		pCVar3 = this->field_0x84;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
-		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
-		}
-		pCVar3 = (CheckpointManagerSubObjB*)this->field_0x88;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
-		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
-		})
-	}
-	return;
-}
-
-CActor* CCameraExt::GetTarget()
-{
-	return this->pActorView;
-}
-
-void CCameraExt::SetTarget(CActor* pActor)
-{
-	this->pActorView = pActor;
-}
-
-float CCameraExt::GetDistance()
-{
-	return this->distance;
-}
-
-void CCameraExt::SetDistance(float distance)
-{
-	this->distance = distance;
-	return;
-}
-
-float CCameraExt::GetAngleAlpha()
-{
-	return this->angles.alpha;
-}
-
-float CCameraExt::GetAngleBeta()
-{
-	return this->angles.beta;
-}
-
-float CCameraExt::GetAngleGamma()
-{
-	return this->angles.gamma;
-}
-
-void CCameraExt::SetAngleAlpha(float angle)
-{
-	(this->angles).alpha = angle;
-	return;
-}
-
-void CCameraExt::SetAngleBeta(float angle)
-{
-	(this->angles).beta = angle;
-	return;
-}
-
-void CCameraExt::SetAngleGamma(float angle)
-{
-	(this->angles).gamma = angle;
-	return;
-}
-
-edF32VECTOR3* CCameraExt::GetAngles()
-{
-	return &this->angles;
-}
-
-ECameraType CCamera::GetMode()
-{
-	EDFCAMERA_LOG(LogLevel::Info, "CCamera::GetMode Found CT_Frontend: 0x{:x}", (int)CT_Frontend);
-	return CT_Frontend;
-}
-
-CCameraExt::CCameraExt(ByteCode* pMemoryStream)
-	: CCamera(pMemoryStream)
-{
-	this->pActorView = (CActor*)0x0;
-	this->distance = 0.0f;
-	this->angles = gF32Vector3Zero;
-	return;
-}
-
-CCameraExt::CCameraExt()
-	: CCamera()
-{
-	this->pActorView = (CActor*)0x0;
-	this->distance = 0.0f;
-	this->angles = gF32Vector3Zero;
-	return;
-}
-
 CCamFigData* _pfig_data;
 
 void CCamFigData::Create(ByteCode* pByteCode)
@@ -1839,8 +1410,6 @@ void CCamFigData::Create(ByteCode* pByteCode)
 	return;
 }
 
-int CCameraGame::_b_use_fig_data = 0;
-
 void CCamConfig::ResetWithConfig()
 {
 	this->field_0x74 = this->field_0xc;
@@ -1865,224 +1434,6 @@ void CCamConfig::ResetWithConfig()
 	this->field_0xb8 = 0;
 	this->field_0xcc = this->field_0x68;
 	this->field_0xd0 = this->field_0x6c;
-	return;
-}
-
-void CCameraGame::InitFromConfig(CAMERA_CONFIG* pConfig)
-{
-	bool bVar1;
-	ECameraType EVar2;
-	CCamConfig* pCVar3;
-	uint* puVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-
-	*static_cast<CAMERA_CONFIG*>(&this->cameraConfig) = *pConfig;
-
-	this->cameraConfig.ResetWithConfig();
-
-	this->fov = this->cameraConfig.field_0x18;
-	SetTarget(this->cameraConfig.pActorRefA.Get());
-	(this->cameraConfig).flags_0x70 = 0;
-	this->field_0x1ac = 0;
-	this->field_0x1b0 = 0;
-	this->field_0x1b4 = 0;
-	puVar4 = &(this->cameraConfig).flags_0x70;
-
-	if ((this->cameraConfig.flags & 0x100) == 0) {
-		bVar1 = this->cameraConfig.field_0x38.w != 0.0f;
-		if ((!bVar1) && (bVar1 = true, this->cameraConfig.field_0x48.x == 0.0f)) {
-			bVar1 = false;
-		}
-		pCVar3 = &this->cameraConfig;
-		if (bVar1) {
-			pCVar3->flags = pCVar3->flags | 0x100;
-		}
-		else {
-			pCVar3->flags = pCVar3->flags & 0xfffffeff;
-		}
-	}
-
-	pCVar3 = &this->cameraConfig;
-	if (this->cameraConfig.field_0x1c == 0.0) {
-		pCVar3->flags = pCVar3->flags & 0xfffffdff;
-	}
-	else {
-		pCVar3->flags = pCVar3->flags | 0x200;
-	}
-
-	EVar2 = GetMode();
-	if ((EVar2 == CT_Main) && (this->field_0x8 == -100)) {
-		this->cameraConfig.flags = this->cameraConfig.flags | 2;
-		this->cameraConfig.flags = this->cameraConfig.flags | 0x80;
-		this->cameraConfig.flags = this->cameraConfig.flags | 0x800;
-	}
-
-	*puVar4 = *puVar4 | 0x100;
-	if ((this->cameraConfig.flags & 2) == 0) {
-		*puVar4 = *puVar4 & 0xffffffdf;
-	}
-	else {
-		*puVar4 = *puVar4 | 0x20;
-	}
-	if ((this->cameraConfig.flags & 0x80) == 0) {
-		*puVar4 = *puVar4 & 0xffffffbf;
-	}
-	else {
-		*puVar4 = *puVar4 | 0x40;
-	}
-	if ((this->cameraConfig.flags & 0x800) == 0) {
-		*puVar4 = *puVar4 & 0xffffff7f;
-	}
-	else {
-		*puVar4 = *puVar4 | 0x80;
-	}
-	if ((this->cameraConfig.flags & 4) == 0) {
-		*puVar4 = *puVar4 & 0xfffffffb;
-	}
-	else {
-		*puVar4 = *puVar4 | 4;
-	}
-	if ((this->cameraConfig.flags & 0x10) == 0) {
-		*puVar4 = *puVar4 & 0xfffffff7;
-	}
-	else {
-		*puVar4 = *puVar4 | 8;
-	}
-	return;
-}
-
-void CCameraExt::ComputeTargetOffset(edF32VECTOR4* v0)
-{
-	undefined8 uVar1;
-	char cVar2;
-	CActor* pReceiver;
-	CActor* this_00;
-	CActor* pOutActor;
-	edF32VECTOR4 local_50;
-	ActorMessage_7 auStack64;
-
-	cVar2 = false;
-	if ((this->flags_0xc & 1) != 0) {
-		auStack64.field_0x0 = 5;
-		auStack64.field_0x20 = gF32Vector4Zero;
-		pReceiver = GetTarget();
-		this_00 = GetTarget();
-		cVar2 = this_00->DoMessage(pReceiver, (ACTOR_MESSAGE)7, (MSG_PARAM)&auStack64);
-		if (cVar2 != false) {
-			*v0 = auStack64.field_0x20;
-		}
-	}
-
-	if (cVar2 == false) {
-		local_50 = this->field_0x50;
-
-		if ((this->flags_0xc & 0x80) == 0) {
-			*v0 = local_50;
-		}
-		else {
-			pOutActor = GetTarget();
-			edF32Matrix4MulF32Vector4Hard(v0, &pOutActor->pMeshTransform->base.transformA, &local_50);
-		}
-	}
-	return;
-}
-
-void CCameraExt::ComputeTargetPosition(edF32VECTOR4* param_2)
-{
-	bool bVar1;
-	CActor* this_00;
-	CActor* pReceiver;
-	CActor* pOutActor;
-	edF32VECTOR4 local_20;
-
-	this_00 = GetTarget();
-	pReceiver = GetTarget();
-	bVar1 = this_00->DoMessage(pReceiver, (ACTOR_MESSAGE)0x49, (MSG_PARAM)&local_20);
-	if (bVar1 == false) {
-		pOutActor = GetTarget();
-		*param_2 = pOutActor->currentLocation;
-	}
-	else {
-		*param_2 = local_20;
-	}
-	return;
-}
-
-void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
-{
-	ECameraType EVar1;
-	CActor* pActorA;
-	CActor* pCVar2;
-	CActor* pActorB;
-	CActorHero* pHero;
-	uint uVar3;
-	long lVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-
-	fVar5 = 1.0;
-	ComputeTargetOffset(v0);
-	EVar1 = GetMode();
-	if (((EVar1 == CT_Main) &&
-		(pActorA = GetTarget(), pActorA->typeID == ACTOR_HERO_PRIVATE)) && ((this->field_0x2ec & 1) == 0)) {
-		pHero = (CActorHero*)GetTarget();
-		lVar4 = pHero->IsFightRelated(pHero->curBehaviourId);
-		if (lVar4 != 0) {
-			v0->x = 0.0f;
-			v0->y = 1.4f;
-			v0->z = 0.0f;
-		}
-	}
-	EVar1 = GetMode();
-	if (((EVar1 == 9) && ((this->flags_0xc & 1) != 0)) && (pActorB = GetTarget(), pActorB->typeID == ACTOR_HERO_PRIVATE)) {
-		v0->x = 0.0f;
-		v0->y = 0.72f;
-		v0->z = 0.0f;
-	}
-
-	if (((this->flags_0xc & 1) == 0) &&
-		(pCVar2 = GetTarget(), pCVar2->typeID == ACTOR_HERO_PRIVATE)) {
-		pHero = (CActorHero*)GetTarget();
-		IMPLEMENTATION_GUARD_LOG(
-		uVar3 = pHero->TestState_IsCrouched(0xffffffff);
-		if (uVar3 != 0) {
-			v0->y = (float)&DAT_3f333333;
-		})
-	}
-
-	fVar7 = (this->cameraConfig).field_0x58.x;
-	if (this->field_0x208 < fVar7 - 0.001f) {
-		fVar5 = edFIntervalUnitDstLERP(this->field_0x208, (this->cameraConfig).field_0x58.y, fVar7);
-		v0->x = v0->x * fVar5;
-		v0->z = v0->z * fVar5;
-	}
-	EVar1 = GetMode();
-	if (EVar1 == CT_KyaJamgut) {
-		fVar5 = 1.0f;
-	}
-	else {
-		if (this->field_0x208 < (this->cameraConfig).field_0x58.x - 0.001f) {
-			fVar5 = edFIntervalUnitSrcLERP(fVar5, 0.5f, 0.05f);
-		}
-		else {
-			fVar5 = 0.05f;
-		}
-
-		EVar1 = GetMode();
-		if ((((EVar1 == CT_Main) && (v0->y = v0->y - 0.15f, ((this->cameraConfig).flags & 0x20000) != 0)) &&
-			((this->field_0x2ec & 1) != 0)) && ((this->field_0x2ec & 2) == 0)) {
-			v0->x = 0.0f;
-			v0->z = 0.0f;
-		}
-	}
-
-	if (doSomething != false) {
-		edF32Vector4LERPHard(fVar5, v0, &this->field_0x2a0, v0);
-		this->field_0x2a0 = *v0;
-	}
 	return;
 }
 
@@ -2206,64 +1557,6 @@ bool astruct_12::Init(struct ByteCode* pMemoryStream)
 	return uVar1 == 1;
 }
 
-CCameraCinematic::CCameraCinematic()
-{
-	(this->fov) = 0.6f;
-	this->transformationMatrix.rowT = gF32Vertex4Zero;
-	this->lookAt = gF32Vertex4Zero;
-	ResetEvent();
-	(this->field_0x8) = -100;
-	(this->flags_0xc) = (this->flags_0xc) | 0x37c;
-	(this->switchMode) = SWITCH_MODE_B;
-	(this->field_0x98) = 0.8f;
-	(this->field_0x94) = SWITCH_MODE_A;
-	(this->field_0x9c) = 0.8f;
-	(this->field_0xb0).x = 0.0f;
-	(this->field_0xb0).y = 0.0f;
-	(this->field_0xb0).z = 0.0f;
-	return;
-}
-
-
-void CCameraCinematic::SetTransform(edF32MATRIX4* transformMatrix)
-{
-	float fVar1;
-	int iVar2;
-	edF32VECTOR4 lookAt;
-
-	this->transformationMatrix = *transformMatrix;
-	edF32Matrix4ToEulerSoft(transformMatrix, &this->field_0xb0, "ZXY");
-	edF32Vector4AddHard(&lookAt, &this->transformationMatrix.rowT, &transformMatrix->rowZ);
-	this->lookAt = lookAt;
-	return;
-}
-
-ECameraType CCameraCinematic::GetMode(void)
-{
-	EDFCAMERA_LOG(LogLevel::Info, "CCamera::GetMode Found CT_Cinematic: 0x{:x}", (int)CT_Cinematic);
-	return CT_Cinematic;
-}
-
-void CCameraCinematic::Init()
-{
-	CCamera::Init();
-	this->flags_0xc = this->flags_0xc | 0x20000;
-}
-
-float CCameraCinematic::GetAngleAlpha()
-{
-	return (this->field_0xb0).alpha;
-}
-
-float CCameraCinematic::GetAngleBeta()
-{
-	return (this->field_0xb0).beta;
-}
-
-float CCameraCinematic::GetAngleGamma()
-{
-	return (this->field_0xb0).gamma;
-}
 
 void CameraSet3DPos(edFCamera* pCamera)
 {
@@ -2308,11 +1601,6 @@ void CameraSet3DPos(edFCamera* pCamera)
 	(pCamera->calculatedRotation).z = fVar1;
 	(pCamera->calculatedRotation).w = fVar2;
 	return;
-}
-
-bool CCameraExt::IsKindOfObject(ulong kind)
-{
-	return (kind & 0x60) != 0;
 }
 
 CCameraShadow::CCameraShadow(ByteCode* pByteCode)
@@ -2405,91 +1693,6 @@ bool CCameraShadow::Manage()
 	return bVar4;
 }
 
-CCameraMouse::CCameraMouse()
-{
-	this->field_0xd4 = -1;
-	this->field_0xd0 = 1.0;
-	this->flags_0xc = this->flags_0xc | 0x40000;
-}
-
-CCameraMouseQuake::CCameraMouseQuake()
-{
-	this->fov = 0.6f;
-}
-
-ECameraType CCameraMouseQuake::GetMode()
-{
-	EDFCAMERA_LOG(LogLevel::Info, "CCamera::GetMode Found CT_MouseQuake: 0x{:x}", (int)CT_MouseQuake);
-	return CT_MouseQuake;
-}
-
-void CCameraMouseQuake::Init()
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-
-	CCameraExt::Init();
-	this->SetDistance(6.0f);
-	this->SetAngleAlpha(0.0f);
-	this->SetAngleBeta(0.0f);
-	this->SetAngleGamma(0.0f);
-	this->transformationMatrix.da = gF32Vertex4Zero.x;
-	this->transformationMatrix.db = gF32Vertex4Zero.y;
-	this->transformationMatrix.dc = gF32Vertex4Zero.z;
-	this->transformationMatrix.dd = gF32Vertex4Zero.w;
-	this->lookAt.x = 0.0;
-	this->lookAt.y = 0.0;
-	this->lookAt.z = 1.0;
-	this->lookAt.w = 1.0;
-	fVar3 = gF32Vector4UnitZ.w;
-	fVar2 = gF32Vector4UnitZ.z;
-	fVar1 = gF32Vector4UnitZ.y;
-	this->transformationMatrix.ca = gF32Vector4UnitZ.x;
-	this->transformationMatrix.cb = fVar1;
-	this->transformationMatrix.cc = fVar2;
-	this->transformationMatrix.cd = fVar3;
-	this->flags_0xc = this->flags_0xc | 0x20000;
-	this->field_0x8 = -0x9f;
-	return;
-}
-
-CCameraMouseAroundPerso::CCameraMouseAroundPerso()
-{
-	this->isSpecial = 0;
-}
-
-ECameraType CCameraMouseAroundPerso::GetMode()
-{
-	ECameraType EVar1;
-
-	EVar1 = CT_AroundSpecial;
-	if (this->isSpecial == 0) {
-		EVar1 = CT_MouseAround;
-	}
-
-	EDFCAMERA_LOG(LogLevel::Info, "CCamera::GetMode Found: 0x{:x}", (int)EVar1);
-	return EVar1;
-}
-
-void CCameraMouseAroundPerso::Init()
-{
-	CCameraExt::Init();
-	this->fov = 0.84;
-	(this->field_0xe0).x = 0.0;
-	(this->field_0xe0).y = 1.4;
-	(this->field_0xe0).z = 0.0;
-	(this->field_0xe0).w = 0.0;
-	this->flags_0xc = this->flags_0xc | 0x20001;
-	this->field_0x8 = -0x9f;
-	return;
-}
-
-CCameraMouseAroundPersoSpecial::CCameraMouseAroundPersoSpecial()
-{
-	this->isSpecial = 1;
-}
-
 bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 {
 	SWITCH_MODE switchMode;
@@ -2511,10 +1714,11 @@ bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 			bSuccess = this->activeCamManager.SwitchActiveCam((this->cameraStack).field_0x218, pCamera_00, switchMode);
 			if ((bSuccess == false) && (pCamera_00 != (CCamera*)0x0)) {
 				EVar1 = pCamera_00->GetMode();
+				CCameraShadow* pShadowCam = (CCameraShadow*)pCamera_00;
 				if (EVar1 == CT_ShadowSun) {
 					this->pActiveCamera = pCamera_00;
-					pCamera_00[0x22].field_0x80 = (EventChunk_24*)0xffffffff;
-					pCamera_00[0x22].field_0x84 = (CheckpointManagerSubObjB*)0x0;
+					pShadowCam->sceneIndex = -1;
+					pShadowCam->sceneFlags = 0;
 				}
 				else {
 					this->pActiveCamera = pCamera_00;
@@ -2527,6 +1731,7 @@ bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 			else {
 				*puVar3 = *puVar3 | 0x4000000;
 			}
+
 			(this->cameraStack).field_0x200 = pCamera->field_0x8c;
 		}
 		bSuccess = true;
@@ -2571,8 +1776,9 @@ bool CCameraManager::PushCamera(int cameraIndex, int param_3)
 				EVar2 = pCamera->GetMode();
 				if (EVar2 == CT_ShadowSun) {
 					this->pActiveCamera = pCamera;
-					pCamera[0x22].field_0x80 = (EventChunk_24*)0xffffffff;
-					pCamera[0x22].field_0x84 = (CheckpointManagerSubObjB*)0x0;
+					CCameraShadow* pShadowCam = (CCameraShadow*)pCamera;
+					pShadowCam->sceneIndex = -1;
+					pShadowCam->sceneFlags = 0;
 				}
 				else {
 					this->pActiveCamera = pCamera;
@@ -2681,129 +1887,6 @@ void CCameraManager::SetMainCamera(CCamera* pCamera)
 		this->flags = this->flags & 0xfbffffff;
 	}
 	return;
-}
-
-PACK(
-struct S_STREAM_SIMPLE_ACT_COND {
-	int field_0x0;
-	int field_0x4;
-	int field_0x8;
-	float field_0xc;
-
-	bool IsVerified(bool bDefault);
-});
-
-bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
-{
-	int iVar1;
-	//ActorState AVar2;
-	bool bVar3;
-	bool bVar4;
-	//AnimResult* pAVar4;
-	uint uVar5;
-	CActor* pAVar6;
-
-	iVar1 = this->field_0x4;
-	bVar4 = bDefault;
-	if (iVar1 != -1) {
-		pAVar6 = (CActor*)0x0;
-		if (iVar1 != -1) {
-			IMPLEMENTATION_GUARD(
-			pAVar6 = (*(CScene::ptable.g_ActorManager_004516a4)->aActors)[iVar1];)
-		}
-		switch (this->field_0x8) {
-		case 0:
-			IMPLEMENTATION_GUARD(
-			AVar2 = (pAVar6->data).actorState;
-			if (AVar2 == AS_None) {
-				bVar4 = false;
-			}
-			else {
-				pAVar4 = (*pAVar6->pVTable->getAnimForState)(pAVar6, AVar2);
-				bVar4 = (bool)((byte)pAVar4->flags_0x4 & 1);
-			})
-			break;
-		case 1:
-			IMPLEMENTATION_GUARD(
-			AVar2 = (pAVar6->data).actorState;
-			if (AVar2 == AS_None) {
-				uVar5 = 0;
-			}
-			else {
-				pAVar4 = (*pAVar6->pVTable->getAnimForState)(pAVar6, AVar2);
-				uVar5 = pAVar4->flags_0x4 & 1;
-			}
-			bVar4 = uVar5 == 0;)
-			break;
-		case 2:
-			IMPLEMENTATION_GUARD(
-			bVar3 = (*pAVar6->pVTable->checkFuncA)(pAVar6, 2);
-			if (bVar3 == false) {
-				bVar4 = true;
-			}
-			else {
-				bVar4 = this->field_0xc < pAVar6[1].data.anotherVector.y;
-			})
-			break;
-		case 3:
-			IMPLEMENTATION_GUARD(
-			bVar3 = (*pAVar6->pVTable->checkFuncA)(pAVar6, 2);
-			if (bVar3 == false) {
-				bVar4 = true;
-			}
-			else {
-				bVar4 = pAVar6[1].data.anotherVector.y < this->field_0xc;
-			})
-			break;
-		case 4:
-			IMPLEMENTATION_GUARD(
-			bVar4 = ((pAVar6->data).flags & 0x2000001) == 0;)
-			break;
-		case 5:
-			IMPLEMENTATION_GUARD(
-			bVar4 = (bool)((byte)(pAVar6->data).flags & 1);)
-			break;
-		default:
-			bVar4 = true;
-		}
-		iVar1 = this->field_0x0;
-		if (iVar1 == 2) {
-			bVar4 = (bool)(bVar4 ^ bDefault);
-		}
-		else {
-			if (iVar1 == 1) {
-				bVar4 = (bool)(bVar4 | bDefault);
-			}
-			else {
-				if (iVar1 == 0) {
-					bVar4 = (bool)(bVar4 & bDefault);
-				}
-			}
-		}
-	}
-	return bVar4;
-}
-
-bool SpecificCondition::IsVerified()
-{
-	int* piVar1;
-	bool bDefault;
-	S_STREAM_SIMPLE_ACT_COND* pSimpleActCond;
-	int iVar2;
-
-	piVar1 = this->pData;
-	if (piVar1 == (int*)0x0) {
-		bDefault = true;
-	}
-	else {
-		bDefault = true;
-		pSimpleActCond = (S_STREAM_SIMPLE_ACT_COND*)(piVar1 + 1);
-		for (iVar2 = *piVar1; 0 < iVar2; iVar2 = iVar2 + -1) {
-			bDefault = pSimpleActCond->IsVerified(bDefault);
-			pSimpleActCond = pSimpleActCond + 1;
-		}
-	}
-	return bDefault;
 }
 
 float CCameraManager::FUN_00197970(edF32VECTOR4* param_2)

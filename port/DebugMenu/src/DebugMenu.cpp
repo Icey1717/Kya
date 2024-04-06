@@ -930,9 +930,13 @@ static Input::InputFunctions gInputFunctions;
 
 Input::InputFunctions& DebugMenu::GetInputFunctions()
 {
-	gInputFunctions.pressed = GetKeyPressed;
-	gInputFunctions.released = GetKeyReleased;
-	gInputFunctions.analog = GetKeyAnalog;
+	gInputFunctions.keyPressed = GetKeyPressed;
+	gInputFunctions.keyReleased = GetKeyReleased;
+	gInputFunctions.keyAnalog = GetKeyAnalog;
+
+	gInputFunctions.mousePressed = GetMousePressed;
+	gInputFunctions.mouseReleased = GetMouseReleased;
+	gInputFunctions.mouseAnalog = GetMouseAnalog;
 	return gInputFunctions;
 }
 
@@ -968,3 +972,44 @@ float DebugMenu::GetKeyAnalog(uint32_t routeId)
 	return ImGui::IsKeyDown(gKeyMap[routeId]) ? 1.0f : 0.0f;
 }
 
+bool DebugMenu::GetMousePressed(uint32_t routeId)
+{
+	if (routeId == MOUSE_INPUT_BUTTON1) {
+		return ImGui::IsMouseDown(ImGuiMouseButton_Left);
+	}
+	else if (routeId == MOUSE_INPUT_BUTTON2) {
+		return ImGui::IsMouseDown(ImGuiMouseButton_Middle);
+	}
+	else if (routeId == MOUSE_INPUT_BUTTON3) {
+		return ImGui::IsMouseDown(ImGuiMouseButton_Right);
+	}
+
+	return false;
+}
+
+bool DebugMenu::GetMouseReleased(uint32_t routeId)
+{
+	return false;
+}
+
+namespace DebugCamera {
+	extern float gMouseDeltaX;
+	extern float gMouseDeltaY;
+}
+
+float DebugMenu::GetMouseAnalog(uint32_t routeId)
+{
+	float delta = 0.0f;
+
+	if (routeId == MOUSE_INPUT_DX) {
+		delta = DebugCamera::gMouseDeltaX;
+	}
+	else if (routeId == MOUSE_INPUT_DY) {
+		delta = DebugCamera::gMouseDeltaY;
+	}
+	else if (routeId == MOUSE_INPUT_WHEEL) {
+		delta = ImGui::GetIO().MouseWheel;
+	}
+
+	return delta;
+}

@@ -10,4 +10,5 @@ namespace Input {
 	void SetInputFunctions(InputFunctions inputFunctions);
 	
 	uint _edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3);
+	uint _edDevMouse(uint eventID, EDDEV_PORT* pController, void* param_3);
 }

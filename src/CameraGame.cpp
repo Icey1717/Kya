@@ -8,6 +8,8 @@
 
 #include <math.h>
 
+int CCameraGame::_b_use_fig_data = 0;
+
 struct CameraVectorBase {
 	bool FUN_002bf570(CCameraGame* pCamera);
 	void FUN_002bfc60();
@@ -2963,6 +2965,167 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 		this->targetPitch = fVar4;
 		fVar4 = GetAngleYFromVector(aeStack96);
 		this->field_0x204 = fVar4;
+	}
+	return;
+}
+
+void CCameraGame::InitFromConfig(CAMERA_CONFIG* pConfig)
+{
+	bool bVar1;
+	ECameraType EVar2;
+	CCamConfig* pCVar3;
+	uint* puVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+
+	*static_cast<CAMERA_CONFIG*>(&this->cameraConfig) = *pConfig;
+
+	this->cameraConfig.ResetWithConfig();
+
+	this->fov = this->cameraConfig.field_0x18;
+	SetTarget(this->cameraConfig.pActorRefA.Get());
+	(this->cameraConfig).flags_0x70 = 0;
+	this->field_0x1ac = 0;
+	this->field_0x1b0 = 0;
+	this->field_0x1b4 = 0;
+	puVar4 = &(this->cameraConfig).flags_0x70;
+
+	if ((this->cameraConfig.flags & 0x100) == 0) {
+		bVar1 = this->cameraConfig.field_0x38.w != 0.0f;
+		if ((!bVar1) && (bVar1 = true, this->cameraConfig.field_0x48.x == 0.0f)) {
+			bVar1 = false;
+		}
+		pCVar3 = &this->cameraConfig;
+		if (bVar1) {
+			pCVar3->flags = pCVar3->flags | 0x100;
+		}
+		else {
+			pCVar3->flags = pCVar3->flags & 0xfffffeff;
+		}
+	}
+
+	pCVar3 = &this->cameraConfig;
+	if (this->cameraConfig.field_0x1c == 0.0) {
+		pCVar3->flags = pCVar3->flags & 0xfffffdff;
+	}
+	else {
+		pCVar3->flags = pCVar3->flags | 0x200;
+	}
+
+	EVar2 = GetMode();
+	if ((EVar2 == CT_Main) && (this->field_0x8 == -100)) {
+		this->cameraConfig.flags = this->cameraConfig.flags | 2;
+		this->cameraConfig.flags = this->cameraConfig.flags | 0x80;
+		this->cameraConfig.flags = this->cameraConfig.flags | 0x800;
+	}
+
+	*puVar4 = *puVar4 | 0x100;
+	if ((this->cameraConfig.flags & 2) == 0) {
+		*puVar4 = *puVar4 & 0xffffffdf;
+	}
+	else {
+		*puVar4 = *puVar4 | 0x20;
+	}
+	if ((this->cameraConfig.flags & 0x80) == 0) {
+		*puVar4 = *puVar4 & 0xffffffbf;
+	}
+	else {
+		*puVar4 = *puVar4 | 0x40;
+	}
+	if ((this->cameraConfig.flags & 0x800) == 0) {
+		*puVar4 = *puVar4 & 0xffffff7f;
+	}
+	else {
+		*puVar4 = *puVar4 | 0x80;
+	}
+	if ((this->cameraConfig.flags & 4) == 0) {
+		*puVar4 = *puVar4 & 0xfffffffb;
+	}
+	else {
+		*puVar4 = *puVar4 | 4;
+	}
+	if ((this->cameraConfig.flags & 0x10) == 0) {
+		*puVar4 = *puVar4 & 0xfffffff7;
+	}
+	else {
+		*puVar4 = *puVar4 | 8;
+	}
+	return;
+}
+
+void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
+{
+	ECameraType EVar1;
+	CActor* pActorA;
+	CActor* pCVar2;
+	CActor* pActorB;
+	CActorHero* pHero;
+	uint uVar3;
+	long lVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+
+	fVar5 = 1.0;
+	ComputeTargetOffset(v0);
+	EVar1 = GetMode();
+	if (((EVar1 == CT_Main) &&
+		(pActorA = GetTarget(), pActorA->typeID == ACTOR_HERO_PRIVATE)) && ((this->field_0x2ec & 1) == 0)) {
+		pHero = (CActorHero*)GetTarget();
+		lVar4 = pHero->IsFightRelated(pHero->curBehaviourId);
+		if (lVar4 != 0) {
+			v0->x = 0.0f;
+			v0->y = 1.4f;
+			v0->z = 0.0f;
+		}
+	}
+	EVar1 = GetMode();
+	if (((EVar1 == 9) && ((this->flags_0xc & 1) != 0)) && (pActorB = GetTarget(), pActorB->typeID == ACTOR_HERO_PRIVATE)) {
+		v0->x = 0.0f;
+		v0->y = 0.72f;
+		v0->z = 0.0f;
+	}
+
+	if (((this->flags_0xc & 1) == 0) &&
+		(pCVar2 = GetTarget(), pCVar2->typeID == ACTOR_HERO_PRIVATE)) {
+		pHero = (CActorHero*)GetTarget();
+		IMPLEMENTATION_GUARD_LOG(
+			uVar3 = pHero->TestState_IsCrouched(0xffffffff);
+		if (uVar3 != 0) {
+			v0->y = (float)&DAT_3f333333;
+		})
+	}
+
+	fVar7 = (this->cameraConfig).field_0x58.x;
+	if (this->field_0x208 < fVar7 - 0.001f) {
+		fVar5 = edFIntervalUnitDstLERP(this->field_0x208, (this->cameraConfig).field_0x58.y, fVar7);
+		v0->x = v0->x * fVar5;
+		v0->z = v0->z * fVar5;
+	}
+	EVar1 = GetMode();
+	if (EVar1 == CT_KyaJamgut) {
+		fVar5 = 1.0f;
+	}
+	else {
+		if (this->field_0x208 < (this->cameraConfig).field_0x58.x - 0.001f) {
+			fVar5 = edFIntervalUnitSrcLERP(fVar5, 0.5f, 0.05f);
+		}
+		else {
+			fVar5 = 0.05f;
+		}
+
+		EVar1 = GetMode();
+		if ((((EVar1 == CT_Main) && (v0->y = v0->y - 0.15f, ((this->cameraConfig).flags & 0x20000) != 0)) &&
+			((this->field_0x2ec & 1) != 0)) && ((this->field_0x2ec & 2) == 0)) {
+			v0->x = 0.0f;
+			v0->z = 0.0f;
+		}
+	}
+
+	if (doSomething != false) {
+		edF32Vector4LERPHard(fVar5, v0, &this->field_0x2a0, v0);
+		this->field_0x2a0 = *v0;
 	}
 	return;
 }

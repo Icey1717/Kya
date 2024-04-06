@@ -6,7 +6,7 @@
 #ifdef PLATFORM_WIN
 #include "port.h"
 #endif
-#include "Camera.h"
+#include "Viewport.h"
 #include "../kya.h"
 
 edSurface* psurf = NULL;

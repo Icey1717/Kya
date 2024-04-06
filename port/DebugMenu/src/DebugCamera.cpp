@@ -12,6 +12,7 @@
 #include <sstream>
 #include <fstream>
 #include "DebugHelpers.h"
+#include "Debug.h"
 
 GLFWwindow* GetGLFWWindow();
 
@@ -66,6 +67,19 @@ namespace DebugCamera {
 		}
 	}
 
+	float gMouseDeltaX = 0.0f;
+	float gMouseDeltaY = 0.0f;
+
+	void CameraHackCallback(GLFWwindow* window, double xpos, double ypos) {
+		static double lastX = xpos;
+		gMouseDeltaX = static_cast<float>(xpos - lastX);
+		lastX = xpos;
+
+		static double lastY = ypos;
+		gMouseDeltaY = static_cast<float>(lastY - ypos);
+		lastY = ypos;
+	}
+
 	void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
 		auto* pCameraManager = CCameraManager::_gThis->pActiveCamera;
 		edF32VECTOR4& cameraLookAt = pCameraManager->lookAt;
@@ -117,14 +131,14 @@ namespace DebugCamera {
 		cameraDirection.rowT = cameraDirection2.rowT;
 	}
 
-	void SetActive(const bool bNewActive)
+	void SetActive(const bool bNewActive, GLFWcursorposfun callback)
 	{
 		bActive = bNewActive;
 		GLFWwindow* window = GetGLFWWindow();
 		glfwSetInputMode(window, GLFW_CURSOR, bNewActive ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 
 		static GLFWcursorposfun og = NULL;
-		og = glfwSetCursorPosCallback(window, bNewActive ? MouseCallback : og);
+		og = glfwSetCursorPosCallback(window, bNewActive ? callback : og);
 	}
 
 	void UpdateCameraPosition(float deltaTime) {
@@ -140,10 +154,6 @@ namespace DebugCamera {
 		edF32VECTOR4 forward = { cameraDirection.rowZ.x, cameraDirection.rowZ.y, cameraDirection.rowZ.z, 1.0f };
 
 		float cameraSpeedDelta = cameraSpeed * deltaTime;
-
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-			SetActive(false);
-		}
 
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			cameraPosition = { cameraPosition.x + forward.x * cameraSpeedDelta,
@@ -190,6 +200,15 @@ void DebugCamera::ShowCamera()
 	// Get the display size
 	ImGui::Begin("Camera", nullptr);
 
+	if (ImGui::Button("Toggle Camera Hack")) {
+		ToggleCameraHack();
+		SetActive(true, CameraHackCallback);
+	}
+
+	if (glfwGetKey(GetGLFWWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		SetActive(false, nullptr);
+	}
+
 	auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
 	ImGui::Text("Position");
 	EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
@@ -218,7 +237,7 @@ void DebugCamera::ShowCamera()
 
 	if (ImGui::Checkbox("Debug Camera", &bActive))
 	{
-		SetActive(bActive);
+		SetActive(bActive, MouseCallback);
 	}
 
 	if (ImGui::CollapsingHeader("Camera Stack", ImGuiTreeNodeFlags_DefaultOpen)) {

@@ -1,5 +1,6 @@
 #include "CinematicManager.h"
 #include "CameraViewManager.h"
+#include "CameraCinematic.h"
 #include "MemoryStream.h"
 #include "FileManager3D.h"
 #include "Rendering/CameraPanMasterHeader.h"
@@ -2826,10 +2827,12 @@ void CCinematic::PreReset()
 	if (this->state != CS_Stopped) {
 		Stop();
 	}
+
 	uVar4 = 0x27f4;
 	if ((this->flags_0x4 & 0x10000000) != 0) {
 		uVar4 = 0x27d4;
 	}
+
 	this->flags_0x8 = this->flags_0x8 & ~uVar4;
 	this->count_0x2d8 = 0;
 	this->totalCutsceneDelta = 0.0;
@@ -3730,7 +3733,6 @@ void S_STREAM_EVENT_CAMERA::Init()
 void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 {
 	undefined* puVar1;
-	EventChunk_24* pEVar2;
 	float fVar3;
 	float fVar4;
 	float fVar5;

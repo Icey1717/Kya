@@ -4,7 +4,7 @@
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
 #include "PauseManager.h"
-#include "edVideo/Camera.h"
+#include "edVideo/Viewport.h"
 
 #include <string.h>
 #include "edVideo/VideoA.h"

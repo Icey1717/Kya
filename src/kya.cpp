@@ -75,6 +75,7 @@ extern "C" {
 #include "SaveManagement.h"
 #include "EventManager.h"
 #include "ActorHero.h"
+#include "Debug.h"
 
 template<class T>
 T* CreateNew()
@@ -1444,8 +1445,8 @@ void MainInit(int argc,char **argv)
 		edMemFree(pFileBuffer);
 	}
 
-	//edDebugPrintf(s_----_Init_edDebug_0042b610);
-	//edDebugInit();
+	edDebugPrintf("---- Init edDebug \n");
+	edDebugInit();
 	//edDebugPrintf(s_----_Init_edCluster_0042b630);
 	//edClusterConfig = edClusterGetConfig();
 	//edClusterConfig->field_0x0 = 6;

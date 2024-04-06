@@ -8,7 +8,7 @@
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
-#include "edVideo/Camera.h"
+#include "edVideo/Viewport.h"
 #include "edDlist.h"
 #include "edMem.h"
 #include <string.h>

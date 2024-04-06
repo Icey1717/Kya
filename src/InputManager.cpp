@@ -27,100 +27,100 @@ static int gPortStatus[NUM_CONTROLLER_PORTS];
 static EDDEV_ROUTE PlayerInput_DefaultConfig[32] =
 {
 {
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x14
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x15
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x16
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x17
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x6
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x0
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x1
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x4
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x5
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x7
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x3
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xA
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x10
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x11
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x12
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x13
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xC
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xE
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xB
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x8
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xC
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xE
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xF
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0xD
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x6
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x5
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x4
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x2
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x3
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x0
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x1
 },{
-0x108,
+INPUT_TYPE_DUALSHOCK,
 0x7
 }
 };
@@ -252,7 +252,7 @@ RouteEntry PlayerInputConfig_DevicesList[10] = {
 	{ 0x103, "GUN" },
 	{ 0x106, "GUNCON" },
 	{ 0x107, "DUALSHOCK" },
-	{ 0x108, "DUALSHOCK2" },
+	{ INPUT_TYPE_DUALSHOCK, "DUALSHOCK2" },
 	{ 0x10E, "JOGCON" },
 	{ 0x000, "" },
 };
@@ -800,7 +800,7 @@ void CPlayerInput::ReadConfig(CIniFile* pIniFile)
 	if (iVar1 != 0) {
 		do {
 			MaxControllers = edDevGetDevType(port);
-			if (MaxControllers == 0x108) {
+			if (MaxControllers == INPUT_TYPE_DUALSHOCK) {
 				MaxControllers = edDevGetDevConnected(port);
 				if (MaxControllers == 0x40000000) {
 					/* Port %d disconnected\n */
@@ -899,7 +899,7 @@ void ControllerDisconnectedHandler(uint index)
 	/* Controller %d disconnected\n */
 	edDebugPrintf("Controller %d disconnected\n", index);
 	devType = edDevGetDevType(index);
-	if (devType == 0x108) {
+	if (devType == INPUT_TYPE_DUALSHOCK) {
 		if (index == gPlayerInput.portIndex) {
 			gPlayerInput.bDisconnected = 1;
 		}
@@ -919,7 +919,7 @@ void ControllerConnectedHandler(uint port)
 	/* Controller %d reconnected\n */
 	edDebugPrintf("Controller %d reconnected\n", port);
 	devType = edDevGetDevType(port);
-	if (devType == 0x108) {
+	if (devType == INPUT_TYPE_DUALSHOCK) {
 		if (port == gPlayerInput.portIndex) {
 			gPlayerInput.bDisconnected = 0;
 		}
@@ -944,8 +944,12 @@ void CPlayerInput::InitDev()
 	gPlayerInput_2.portIndex = 0xffffffff;
 
 	edDevInit(0xcaca0001);
-	edDevInitPort(0, 0, 0x108);
-	edDevInitPort(1, 0, 0x108);
+	edDevInitPort(0, 0, INPUT_TYPE_DUALSHOCK);
+	edDevInitPort(1, 0, INPUT_TYPE_DUALSHOCK);
+
+#ifdef MOUSE_SUPPORT_EXTENSION_ENABLED
+	edDevInitPort(0, 0, INPUT_TYPE_MOUSE);
+#endif
 
 	gPlayerInput.bDisconnected = 1;
 	index = 0;
@@ -956,7 +960,7 @@ void CPlayerInput::InitDev()
 		do {
 			uVar2 = edDevGetDevType(index);
 			uVar1 = gPlayerInput.portIndex;
-			if (uVar2 == 0x108) {
+			if (uVar2 == INPUT_TYPE_DUALSHOCK) {
 				RegisterControllerDisconectedHandler(index, ControllerDisconnectedHandler);
 				RegisterControllerConnectedHandler(index, ControllerConnectedHandler);
 

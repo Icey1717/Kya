@@ -56,22 +56,22 @@ void CSectorManager::Level_ClearInternalData()
 		pSVar2->flags = 0;
 		pSVar2->pFileData = (undefined*)0x0;
 		iVar1 = iVar1 + -6;
-		pSVar2->pWindSectorObj = (CSectorHierarchy*)0x0;
+		pSVar2->aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pSVar2[1].flags = 0;
 		pSVar2[1].pFileData = (undefined*)0x0;
-		pSVar2[1].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pSVar2[1].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pSVar2[2].flags = 0;
 		pSVar2[2].pFileData = (undefined*)0x0;
-		pSVar2[2].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pSVar2[2].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pSVar2[3].flags = 0;
 		pSVar2[3].pFileData = (undefined*)0x0;
-		pSVar2[3].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pSVar2[3].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pSVar2[4].flags = 0;
 		pSVar2[4].pFileData = (undefined*)0x0;
-		pSVar2[4].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pSVar2[4].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pSVar2[5].flags = 0;
 		pSVar2[5].pFileData = (undefined*)0x0;
-		pSVar2[5].pWindSectorObj = (CSectorHierarchy*)0x0;
+		pSVar2[5].aSectorHierarchies = (CSectorHierarchy*)0x0;
 		pSVar2 = pSVar2 + 6;
 	} while (0 < iVar1);
 	this->pSectorHierarchy = (CSectorHierarchy*)0;
@@ -153,7 +153,7 @@ void CSectorManager::LevelLoading_Begin()
 		pcVar14 = this->subObjArray;
 		pLVar1 = &local_1a0->aSectorSubObj[1];
 		do {
-			uVar8 = (uint)pLVar1->pWindSectorObj;
+			uVar8 = (uint)pLVar1->aSectorHierarchies;
 			puVar7 = (uint*)pLVar1->flags;
 			for (iVar10 = pLVar1->field_0xc; iVar10 != 0; iVar10 = iVar10 + -1) {
 				IMPLEMENTATION_GUARD(
@@ -426,7 +426,7 @@ bool CheckFunc_00401fd0(StaticEdFileBase* param_1)
 void CSector::InstallCallback()
 {
 	edLIST* pList;
-	CSectorHierarchy* pWindSectorObj;
+	CSectorHierarchy* pSectorHierarchy;
 	ed_3D_Scene* pStaticMeshMaster;
 	ed_3d_hierarchy_node* pHierNode;
 	C3DFileManager* p3DFileManager;
@@ -561,16 +561,17 @@ void CSector::InstallCallback()
 		ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 	}
 	this->pMeshTransformParent_0x130 = pNewNode;
-	pWindSectorObj = pSectorManager->subObjArray[this->desiredSectorID].pWindSectorObj;
+	pSectorHierarchy = pSectorManager->subObjArray[this->desiredSectorID].aSectorHierarchies;
 	do {
-		if (pWindSectorObj == (CSectorHierarchy*)0x0) {
+		if (pSectorHierarchy == (CSectorHierarchy*)0x0) {
 			fVar14 = edTimerTimeGet();
 			this->field_0x134 = fVar14 - this->field_0x134;
 			pSectorManager->Func_001fe620();
 			return;
 		}
+
 		IMPLEMENTATION_GUARD(
-		lVar13 = pWindSectorObj->field_0x0;
+		lVar13 = pSectorHierarchy->field_0x0;
 		if (lVar13 != 0) {
 			iVar8 = this->field_0x138;
 			if (iVar8 != 0) {
@@ -594,10 +595,10 @@ void CSector::InstallCallback()
 				iVar8 = *piVar11;
 			}
 			if (iVar8 != 0) {
-				CSectorHierarchy::Setup_001fd8c0(pWindSectorObj, iVar8, piVar11);
+				CSectorHierarchy::Sector_Enter(pSectorHierarchy, iVar8, piVar11);
 			}
 		}
-		pWindSectorObj = pWindSectorObj->pWindSectorObj;)
+		pSectorHierarchy = pSectorHierarchy->pSectorHierarchy;)
 	} while (true);
 }
 
