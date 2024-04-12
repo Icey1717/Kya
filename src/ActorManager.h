@@ -5,6 +5,7 @@
 #include "LargeObject.h"
 
 class CActor;
+class CCluster;
 class CAnimation;
 class CShadow {};
 struct edAnmLayer;
@@ -27,7 +28,8 @@ class CClusterNode
 public:
 	CClusterNode();
 
-	void Update(class CCluster* pCluster);
+	void Insert(CCluster* pCluster, CActor* pActor);
+	void Update(CCluster* pCluster);
 
 	CActor* pActor;
 	CClusterNode* pNext;
@@ -48,21 +50,29 @@ struct S_BOUNDING_BOX {
 };
 
 typedef void (ColCallbackFuncPtr)(CActor*, void*);
+typedef bool (CritenionFunc)(CActor*, void*);
+
 
 class CCluster 
 {
 public:
 	CCluster();
 	void Init(int actorCount, ed_Bound_Box* pBoundBox, int param_4);
+	void Term();
 	void SetWorldBox(ed_Bound_Box* pBoundBox, int param_3);
 	uint GetMapCoords(edS32VECTOR3* pOutCoords, edF32VECTOR4* pLocation);
 	void DeleteNode(CClusterNode* pNode);
 	CClusterNode* NewNode(CActor* pActor);
 
+	bool GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, edF32VECTOR4* pLocation, CritenionFunc* pFunc, void* pData);
+
 	void ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pParams);
 	void ApplyCallbackToActorsIntersectingBox(S_BOUNDING_BOX* pBoundingBox, ColCallbackFuncPtr* pFunc, void* pParams);
 
 	CClusterNode** ppNodes;
+
+	undefined2 field_0x30;
+	undefined2 field_0x32;
 
 	CClusterNode* field_0x34;
 
@@ -88,6 +98,7 @@ struct CActorManager : public CObjectManager {
 	void Level_LoadClassesInfo(struct ByteCode* pMemoryStream);
 
 	CActor* GetActorByHashcode(int hashCode);
+	void GetActorsByClassID(int classId, CActorsTable* pOutList);
 
 	struct ActorManagerAnimLinkData* field_0x4;
 	CActor* pActorArray_0x8;

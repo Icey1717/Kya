@@ -1677,14 +1677,13 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 
 			for (uVar25 = this->count_0x2c; uVar25 != 0; uVar25 = uVar25 >> 1) {
 				if ((uVar25 & 1) != 0) {
-					this->anmBinMetaAnimator.GetLayerAnimTime(iVar5);
-					fVar8 = fVar28 * 1000.0f;
+					fVar8 = this->anmBinMetaAnimator.GetLayerAnimTime(iVar5, 0);
 					index = this->anmBinMetaAnimator.GetAnimEventTrackID(iVar5);
 					if (index != -1) {
 						CEventTrack* pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(index);
-						pTrack->Play(fVar8, this->aTrackData[iVar5], 0, pActor);
+						pTrack->Play(fVar8 * 1000.0f, this->aTrackData[iVar5], 0, pActor);
 					}
-					this->aTrackData[iVar5] = fVar8;
+					this->aTrackData[iVar5] = fVar8 * 1000.0f;
 					iVar5 = iVar5 + 1;
 				}
 			}
@@ -1936,9 +1935,29 @@ void edAnmBinMetaAnimator::SetAnim(int animType, int origAnimType)
 	return;
 }
 
-int edAnmBinMetaAnimator::GetLayerAnimTime(int animIndex)
+int edAnmBinMetaAnimator::GetAnimType_00242330(int animIndex)
 {
 	return this->aAnimData[animIndex].animPlayState;
+}
+
+float edAnmMetaAnimator::GetLayerAnimTime(int animIndex, int param_3)
+{
+	edAnmLayer* peVar1;
+	float fVar2;
+
+	peVar1 = this->aAnimData + animIndex;
+	if (peVar1->animPlayState == 0) {
+		fVar2 = 0.0f;
+	}
+	else {
+		if (param_3 == 0) {
+			fVar2 = (peVar1->currentAnimDesc).state.time_0x10;
+		}
+		else {
+			fVar2 = (peVar1->currentAnimDesc).state.time_0xc;
+		}
+	}
+	return fVar2;
 }
 
 int edAnmBinMetaAnimator::GetAnimEventTrackID(int index)

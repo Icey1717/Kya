@@ -309,7 +309,7 @@ void CActorFighter::Create(ByteCode* pByteCode)
 		this->field_0x800 = 1.0;
 	}
 	else {
-		this->field_0x800 = (float)&DAT_bf800000;
+		this->field_0x800 = -1.0f;
 	}
 	uVar4 = ByteCode::GetU32(pByteCode);
 	if (uVar4 == 0) {
@@ -653,6 +653,26 @@ void CActorFighter::ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, 
 	peVar1 = &this->field_0x400;
 	edF32Vector4ScaleHard(fVar2, peVar1, peVar1);
 	this->field_0x400.w = 1.0f;
+	return;
+}
+
+void CActorFighter::UpdateCollisionSphere()
+{
+	edColPRIM_OBJECT* peVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	CActorAutonomous::UpdateCollisionSphere();
+	peVar1 = this->pCollisionData->pObbPrim;
+
+	this->field_0x410 = peVar1->field_0xb0;
+
+	fVar2 = edF32Vector4GetDistHard(&this->field_0x410);
+	edF32Vector4NormalizeHard(&this->field_0x400, &this->field_0x400);
+	edF32Vector4ScaleHard(fVar2, &this->field_0x400, &this->field_0x400);
+	(this->field_0x400).w = 1.0f;
+
 	return;
 }
 

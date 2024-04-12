@@ -35,6 +35,11 @@ class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut
 
 };
 
+class CFxHandle
+{
+
+};
+
 class CActorHeroPrivate : public CActorHero 
 {
 public:
@@ -51,7 +56,7 @@ public:
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	// Autonomous
-	virtual float ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
+	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 	virtual void StoreCollisionSphere();
 	virtual CLifeInterface* GetLifeInterface();
 	virtual void LifeDecrease(float amount);
@@ -77,6 +82,9 @@ public:
 	void StateHeroStandInit(int bCheckEffort);
 	void StateHeroStandTerm();
 	void StateHeroStand(int bCheckEffort);
+
+	void StateHeroTobogganInit();
+	void StateHeroToboggan(int param_2);
 
 	inline void StateHeroRunTerm() {}
 	void StateHeroRun();
@@ -118,13 +126,28 @@ public:
 	int DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4, float* param_5, float* param_6, edF32VECTOR4* param_7);
 
 	int EvolutionBounceCanJump();
+	bool EvolutionTobogganCanJump();
+	bool EvolutionTobogganUnknown();
 
 	uint CanGrip(int param_2, edF32VECTOR4* pRotation);
 	bool CanBounceAgainstWall();
 
 	void ChangeCollisionSphereForLying(float param_2);
+	void ChangeCollisionSphereForToboggan(float param_2);
+
+	void ConvertSpeedPlayerToSpeedSumForceExt();
+	void BeginToboggan();
+	void SlideOnToboggan(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, edF32VECTOR4* param_7, uint dynFlags);
+
+	void AdjustLocalMatrixFromNormal(float param_1, edF32VECTOR4* pNormal);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
+
+	CFxHandle* field_0x10fc;
+	int* field_0x1100;
+
+	float field_0x15c4;
+	float field_0x15c8;
 
 	CBehaviour behaviour_0x1c50;
 	CBehaviour behaviour_0x1e10;
@@ -159,7 +182,7 @@ public:
 	float field_0x151c;
 
 	edF32VECTOR4 field_0x10a0;
-	edF32VECTOR4 field_0x10b0;
+	edF32VECTOR4 normalValue;
 
 	uint field_0x15a0;
 
@@ -190,6 +213,14 @@ public:
 	float field_0x1078;
 	float field_0x107c;
 
+	float field_0x10c0;
+	float field_0x10c4;
+	float field_0x10c8;
+	float field_0x10cc;
+	float field_0x10d0;
+	float field_0x10d4;
+	float field_0x10f0;
+
 	// Standard settings.
 	float field_0x1040;
 	float field_0x104c;
@@ -216,6 +247,10 @@ public:
 	CLifeInterface field_0xee4;
 
 	CCamera* pMainCamera;
+	CCamera* pCameraViewBase_0xab0;
+
+	CCamera* pJamgutCamera_0x15b8;
+	CCamera* pIntViewCamera_0x15bc;
 
 	int field_0xe3c;
 
@@ -243,6 +278,7 @@ public:
 	float field_0x141c;
 
 	float field_0x1548;
+	float field_0x154c;
 	float field_0x155c;
 
 	undefined4 jmp_field_0x1144;

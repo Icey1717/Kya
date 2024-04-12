@@ -146,4 +146,9 @@ struct CCameraExt : public CCamera {
 	undefined field_0xdf;
 };
 
+struct S_CAMERA_STREAM_REF {
+	int entryCount;
+	S_STREAM_REF<CCamera> aEntries[];
+};
+
 #endif // _CAMERA_H

@@ -32,6 +32,10 @@
 #define STATE_HERO_SLIDE_A 0xe4
 #define STATE_HERO_SLIDE_B 0xe5
 
+#define STATE_HERO_TOBOGGAN_3 0xe8
+#define STATE_HERO_TOBOGGAN_2 0xed
+#define STATE_HERO_TOBOGGAN 0xee
+
 struct CPlayerInput;
 class CActorBoomy;
 
@@ -55,6 +59,9 @@ public:
 	static CActorHero* _gThis;
 
 	uint heroFlags;
+
+	int lastCheckPointSector;
+	int field_0xea0;
 
 	int bCanUseCheats;
 	int field_0xaa4;

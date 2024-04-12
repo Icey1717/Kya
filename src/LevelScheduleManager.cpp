@@ -22,7 +22,6 @@
 #include "WayPoint.h"
 #include "PathManager.h"
 #include "ActorManager.h"
-#include "SectorManager.h"
 #include "DlistManager.h"
 #include "AnmManager.h"
 #include "Animation.h"
@@ -33,7 +32,7 @@
 #include "ActorHero.h"
 
 
-LevelScheduleManager* LevelScheduleManager::gThis = NULL;
+CLevelScheduler* CLevelScheduler::gThis = NULL;
 
 const char* g_CD_LevelPath_00433bf8 = "CDEURO/Level/";
 const char* g_szRouter_00433c08 = "Router";
@@ -41,7 +40,7 @@ const char* g_szSetPath_00433c10 = "SetPath";
 const char* g_szAddLevel_00433c48 = "AddLevel";
 const char* g_szNoPathError_00433c20 = "No path found in .INI -> use default !\n";
 
-LevelScheduleManager::LevelScheduleManager()
+CLevelScheduler::CLevelScheduler()
 {
 	pSaveData_0x48 = (SaveBigAlloc*)0x0;
 	pSaveDataEnd_0x4c = 0;
@@ -58,7 +57,7 @@ uint SearchForSection_002e3bf0(undefined* param_1, uint param_2, int param_3)
 	return param_2;
 }
 
-void LevelScheduleManager::Level_FillRunInfo(int levelID, int elevatorID, int param_4)
+void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4)
 {
 	undefined* puVar1;
 	int iVar2;
@@ -105,7 +104,7 @@ void LevelScheduleManager::Level_FillRunInfo(int levelID, int elevatorID, int pa
 	return;
 }
 
-void LevelScheduleManager::Level_LoadObjectives(ByteCode* pMemoryStream)
+void CLevelScheduler::Level_LoadObjectives(ByteCode* pMemoryStream)
 {
 	int* piVar1;
 	int iVar2;
@@ -135,6 +134,11 @@ void LevelScheduleManager::Level_LoadObjectives(ByteCode* pMemoryStream)
 	this->pObjectiveStreamEnd = piVar1;
 	return;
 }
+
+
+struct LoadLoopObject_418_18 {
+	SectorManagerSubObj aSubObj[6];
+};
 
 void SetupLevelInfo_002d97c0(LevelInfo* pLevelInfo, bool param_2)
 {
@@ -189,7 +193,7 @@ void SetupLevelInfo_002d97c0(LevelInfo* pLevelInfo, bool param_2)
 	return;
 }
 
-void LevelScheduleManager::MoreLoadLoopObjectSetup(bool param_2)
+void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 {
 	float fVar1;
 	float fVar2;
@@ -299,11 +303,11 @@ void LevelScheduleManager::MoreLoadLoopObjectSetup(bool param_2)
 TypePairData g_LevelInfoTypePairData_004256e0 = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
 char* g_szLevelInfoBnkPath_00433c60 = "Info/levels.bnk";
 
-void LevelScheduleManager::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo)
+void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo)
 {
 	ulong uVar1;
 	int iVar2;
-	SectorManagerSubObj* pLVar3;
+	SectorManagerSubObjOther* pLVar3;
 
 	uVar1 = ByteCode::BuildU64(*(int*)(fileData + 0x18), *(int*)(fileData + 0x1c));
 	pLevelInfo->field_0x0 = uVar1;
@@ -320,27 +324,27 @@ void LevelScheduleManager::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo
 		pLVar3->pFileData = (undefined*)0x0;
 		pLVar3->flags = 0;
 		iVar2 = iVar2 + 6;
-		pLVar3->aSectorHierarchies = (CSectorHierarchy*)0x0;
+		pLVar3->aSectorHierarchies = 0x0;
 		pLVar3->field_0xc = 0;
 		pLVar3[1].pFileData = (undefined*)0x0;
 		pLVar3[1].flags = 0;
-		pLVar3[1].aSectorHierarchies = (CSectorHierarchy*)0x0;
+		pLVar3[1].aSectorHierarchies = 0x0;
 		pLVar3[1].field_0xc = 0;
 		pLVar3[2].pFileData = (undefined*)0x0;
 		pLVar3[2].flags = 0;
-		pLVar3[2].aSectorHierarchies = (CSectorHierarchy*)0x0;
+		pLVar3[2].aSectorHierarchies = 0x0;
 		pLVar3[2].field_0xc = 0;
 		pLVar3[3].pFileData = (undefined*)0x0;
 		pLVar3[3].flags = 0;
-		pLVar3[3].aSectorHierarchies = (CSectorHierarchy*)0x0;
+		pLVar3[3].aSectorHierarchies = 0x0;
 		pLVar3[3].field_0xc = 0;
 		pLVar3[4].pFileData = (undefined*)0x0;
 		pLVar3[4].flags = 0;
-		pLVar3[4].aSectorHierarchies = (CSectorHierarchy*)0x0;
+		pLVar3[4].aSectorHierarchies = 0x0;
 		pLVar3[4].field_0xc = 0;
 		pLVar3[5].pFileData = (undefined*)0x0;
 		pLVar3[5].flags = 0;
-		pLVar3[5].aSectorHierarchies = (CSectorHierarchy*)0x0;
+		pLVar3[5].aSectorHierarchies = 0x0;
 		pLVar3[5].field_0xc = 0;
 		pLVar3 = pLVar3 + 6;
 	} while (iVar2 < 0x1e);
@@ -362,7 +366,7 @@ void LevelScheduleManager::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo
 	return;
 }
 
-uint* LevelScheduleManager::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int count, LevelInfo* pLevelInfo)
+uint* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int count, LevelInfo* pLevelInfo)
 {
 	uint uVar1;
 	uint uVar2;
@@ -372,7 +376,7 @@ uint* LevelScheduleManager::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int 
 	int* piVar6;
 	void* pvVar7;
 	void* __src;
-	SectorManagerSubObj* pcVar8;
+	SectorManagerSubObjOther* pcVar8;
 	int iVar9;
 	int iVar10;
 	uint* puVar11;
@@ -408,7 +412,7 @@ uint* LevelScheduleManager::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int 
 						iVar4 = local_4.GetNumSimpleConds();
 						if (iVar4 != 0) {
 							uVar12 = uVar12 + 1;
-							pcVar8->aSectorHierarchies = (CSectorHierarchy*)((int)pcVar8->aSectorHierarchies + 1);
+							pcVar8->aSectorHierarchies = pcVar8->aSectorHierarchies + 1;
 							iVar4 = local_4.GetDataSize();
 							iVar13 = iVar13 + iVar4;
 						}
@@ -481,7 +485,7 @@ uint* LevelScheduleManager::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int 
 	return puVar5;
 }
 
-void LevelScheduleManager::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, LevelInfo* pLevelInfo)
+void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, LevelInfo* pLevelInfo)
 {
 	int iVar1;
 	undefined8* puVar2;
@@ -526,7 +530,7 @@ void LevelScheduleManager::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int
 	return;
 }
 
-void LevelScheduleManager::Levels_LoadInfoBank()
+void CLevelScheduler::Levels_LoadInfoBank()
 {
 	MY_LOG("LevelScheduleManager::Levels_LoadInfoBank\n");
 
@@ -610,7 +614,7 @@ void LevelScheduleManager::Levels_LoadInfoBank()
 	return;
 }
 
-int LevelScheduleManager::SaveGame_GetMaxBufferSize()
+int CLevelScheduler::SaveGame_GetMaxBufferSize()
 {
 	return 0x10000;
 }
@@ -618,7 +622,7 @@ int LevelScheduleManager::SaveGame_GetMaxBufferSize()
 int INT_ARRAY_0048ed60[16] = { 0 };
 int INT_ARRAY_0048eda0[16] = { 0 };
 
-void LevelScheduleManager::Game_Init()
+void CLevelScheduler::Game_Init()
 {
 	SaveBigAlloc* pSVar1;
 	bool bVar2;
@@ -870,6 +874,8 @@ bool BnkInstallScene(char* pFileData, int size)
 {
 	ByteCode byteCode;
 
+	MY_LOG("BnkInstallScene\n");
+
 	/* Origin: 0040e860 */
 	byteCode.Init(pFileData);
 	byteCode.GetChunk();
@@ -889,6 +895,8 @@ bool BnkInstallScene(char* pFileData, int size)
 
 bool BnkInstallSceneCfg(char* pFileData, int size)
 {
+	MY_LOG("BnkInstallSceneCfg\n");
+
 	CScene* pScene;
 	uint uVar2;
 	float fVar3;
@@ -927,6 +935,8 @@ bool BnkInstallG2D(char* pFileData, int length)
 	C3DFileManager* pFVar1;
 	int iStack4;
 
+	MY_LOG("BnkInstallG2D\n");
+
 	pFVar1 = CScene::ptable.g_C3DFileManager_00451664;
 	ed3DInstallG2D
 	(pFileData, length, &iStack4,
@@ -944,6 +954,8 @@ bool BnkInstallG3D(char* pFileData, int length)
 	Mesh* pMVar2;
 	C3DFileManager* pFVar3;
 
+	MY_LOG("BnkInstallG3D\n");
+
 	pFVar3 = CScene::ptable.g_C3DFileManager_00451664;
 	iVar1 = (CScene::ptable.g_C3DFileManager_00451664)->meshLoadedCount;
 	pMVar2 = (CScene::ptable.g_C3DFileManager_00451664)->pMeshDataArray;
@@ -957,6 +969,8 @@ bool BnkInstallCol(char* pFileBuffer, int length)
 {
 	CCollisionManager* pCollisionManager;
 	edColG3D_OBB_TREE* pObbTree;
+
+	MY_LOG("BnkInstallCol\n");
 
 	pCollisionManager = CScene::ptable.g_CollisionManager_00451690;
 	pObbTree = edColLoadStatic(pFileBuffer, length, 0);
@@ -972,6 +986,8 @@ bool BnkInstallEvents(char* pFileData, int length)
 	uint uVar2;
 	undefined4 uVar3;
 	ByteCode BStack16;
+
+	MY_LOG("BnkInstallEvents\n");
 
 	BStack16.Init(pFileData);
 	BStack16.GetChunk();
@@ -990,6 +1006,8 @@ bool BnkInstallCameras(char* pFileData, int length)
 {
 	ByteCode MStack16;
 
+	MY_LOG("BnkInstallCameras\n");
+
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
 
@@ -1003,6 +1021,8 @@ bool BnkInstallCameras(char* pFileData, int length)
 bool BnkInstallLights(char* pFileData, int length)
 {
 	ByteCode MStack16;
+
+	MY_LOG("BnkInstallLights\n");
 
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
@@ -1159,6 +1179,8 @@ bool BnkInstallDynCol(char* pFileData, int length)
 	int nextIndex;
 	BankCollision_14* pBankCollision;
 
+	MY_LOG("BnkInstallDynCol\n");
+
 	nextIndex = (CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8;
 	(CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8 = nextIndex + 1;
 	pBankCollision = &CScene::ptable.g_CollisionManager_00451690->pBankCollisionData[nextIndex];
@@ -1290,13 +1312,13 @@ void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBufferEnt
 
 void WillLoadFilefromBank(bool param_1, void* pObj)
 {
-	LevelScheduleManager* pLVar1;
+	CLevelScheduler* pLVar1;
 
-	pLVar1 = LevelScheduleManager::gThis;
+	pLVar1 = CLevelScheduler::gThis;
 	if (param_1 != false) {
 		WillLoadFileFromBank
 		(CScene::ptable.g_GlobalSoundPtr_00451698,
-			(LevelScheduleManager::gThis->levelIOPBank).pBankFileAccessObject);
+			(CLevelScheduler::gThis->levelIOPBank).pBankFileAccessObject);
 		pLVar1->loadStage_0x5b48 = 1;
 	}
 	return;
@@ -1306,7 +1328,7 @@ const char* sz_bankSlash = "/";
 const char* sz_LevelBank_00433bd8 = "Level.bnk";
 const char* sz_LevelIOPBankName = "LevelIOP.bnk";
 
-void LevelScheduleManager::LevelLoading_Begin()
+void CLevelScheduler::LevelLoading_Begin()
 {
 	edCBankBufferEntry* pBankBuffer;
 	int cachedNextLevelID;
@@ -1363,7 +1385,7 @@ bool edMusicAreAllMusicDataLoaded()
 	return _edSoundAreAllSoundDataLoaded(_edMusicLastTransferIndex);
 }
 
-bool LevelScheduleManager::LevelLoading_Manage()
+bool CLevelScheduler::LevelLoading_Manage()
 {
 	edCBankBufferEntry* pBVar1;
 	bool bVar1;
@@ -1414,7 +1436,7 @@ bool LevelScheduleManager::LevelLoading_Manage()
 	return this->loadStage_0x5b48 != 4;
 }
 
-void LevelScheduleManager::Level_Install()
+void CLevelScheduler::Level_Install()
 {
 	edCBankInstall SStack32;
 
@@ -1424,7 +1446,7 @@ void LevelScheduleManager::Level_Install()
 	return;
 }
 
-void LevelScheduleManager::Level_Init()
+void CLevelScheduler::Level_Init()
 {
 	uint** ppuVar1;
 	float fVar2;
@@ -1595,7 +1617,7 @@ void LevelScheduleManager::Level_Init()
 	return;
 }
 
-void LevelScheduleManager::LevelLoading_End()
+void CLevelScheduler::LevelLoading_End()
 {
 	this->currentLevelID = this->nextLevelID;
 	this->nextLevelID = 0x10;
@@ -1610,12 +1632,12 @@ struct ScenarioVariable {
 
 ScenarioVariable _gScenVarInfo[30] = { 0 };
 
-int LevelScheduleManager::ScenVar_Get(SCENARIC_VARIABLE scenVarId)
+int CLevelScheduler::ScenVar_Get(SCENARIC_VARIABLE scenVarId)
 {
 	return _gScenVarInfo[scenVarId].value;
 }
 
-void LevelScheduleManager::ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue)
+void CLevelScheduler::ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue)
 {
 	_gScenVarInfo[scenVarId].value = newValue;
 	return;
@@ -1623,7 +1645,7 @@ void LevelScheduleManager::ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue
 
 undefined4 DAT_00425424 = 0;
 
-void LevelScheduleManager::OnSceneVarSet()
+void CLevelScheduler::OnSceneVarSet()
 {
 	CActorHero* pHero;
 
@@ -1643,7 +1665,7 @@ void LevelScheduleManager::OnSceneVarSet()
 
 int DAT_004253fc = 0;
 
-void LevelScheduleManager::Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6)
+void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6)
 {
 	int iVar1;
 	char cVar2;

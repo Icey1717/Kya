@@ -39,15 +39,18 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 		pMemoryStream->GetS32();
 		this->levelSectorTextureIndex = iVar2;
 		pMVar4 = this->pMeshDataArray + iVar1;
+
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
 			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
 		}
+
 		this->pMeshInfo = &pMVar4->meshInfo;
 		ed3DScenePushCluster(CScene::_scene_handleA, this->pMeshInfo);
 		pMVar3 = ed3DHierarchyAddToSceneByHashcode(CScene::_scene_handleA, this->pMeshInfo, 0x43494d414e5944);
 		this->pLastMeshTransformParent = pMVar3;
 	}
+
 	iVar1 = pMemoryStream->GetS32();
 	if (iVar1 == -1) {
 		this->pBackgroundNode = (edNODE*)0x0;
@@ -61,12 +64,15 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
 			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
 		}
+
 		pMVar3 = ed3DHierarchyAddToScene(CScene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
 		this->pBackgroundNode = pMVar3;
+
 		if (this->pBackgroundNode != (edNODE*)0x0) {
 			SetupBackground(this->pBackgroundNode);
 		}
 	}
+
 	return;
 }
 

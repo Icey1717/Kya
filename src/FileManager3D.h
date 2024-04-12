@@ -26,11 +26,16 @@ struct ed_g3d_manager {
 	ed_Chunck* ANMA;
 };
 
+#define NAME_MESH 1
+
 struct Mesh {
 	char* pFileData;
 	int fileLength;
 	struct ed_g3d_manager meshInfo;
 	struct TextureInfo* pTextureInfo;
+#if NAME_MESH
+	char name[256];
+#endif
 };
 
 struct ParticleInfo {

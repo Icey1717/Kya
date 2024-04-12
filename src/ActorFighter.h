@@ -21,6 +21,7 @@ public:
 
 	// CActorAutonomous
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+	virtual void UpdateCollisionSphere();
 
 	virtual bool IsFightRelated(int param_2);
 

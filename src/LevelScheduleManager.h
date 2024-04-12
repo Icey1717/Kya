@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "LargeObject.h"
 #include "ScenaricCondition.h"
+#include "SectorManager.h"
 
 struct SaveDataSection_44484c42 {
 	int field_0x0;
@@ -50,10 +51,6 @@ struct SaveDataSection_56454c42 {
 	uint field_0x8;
 	int field_0xc;
 	struct SaveDataSection_44484c42 sec;
-};
-
-struct LoadLoopObject_418_18 {
-	SectorManagerSubObj aSubObj[6];
 };
 
 struct CChunk {
@@ -587,14 +584,14 @@ struct LevelInfo {
 	undefined field_0x235;
 	undefined field_0x236;
 	undefined field_0x237;
-	SectorManagerSubObj aSectorSubObj[30];
+	SectorManagerSubObjOther aSectorSubObj[30];
 };
 
 class CActor;
 
-class LevelScheduleManager : public CObjectManager {
+class CLevelScheduler : public CObjectManager {
 public:
-	LevelScheduleManager();
+	CLevelScheduler();
 
 	// Begin Manager
 	virtual void Game_Init();
@@ -626,7 +623,7 @@ public:
 
 public:
 
-	static LevelScheduleManager* gThis;
+	static CLevelScheduler* gThis;
 
 	struct ManagerFunctionData* pManagerFunctionData;
 	int nextLevelId;

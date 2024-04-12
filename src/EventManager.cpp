@@ -256,6 +256,54 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	return 2;
 }
 
+int edEventComputeZoneAgainstVertex(int index, ed_zone_3d* pZone, edF32VECTOR4* param_3, long mode)
+{
+	int iVar1;
+
+	iVar1 = edEventComputeZoneAgainstVertex(pedEventChunks[index], pZone, param_3, (uint)mode);
+	return iVar1;
+}
+
+int edEventGetChunkZoneNbInclusivePrimitives(int param_1, ed_zone_3d* param_2)
+{
+	int iVar1;
+
+	iVar1 = 0;
+	if (param_2->field_0x0[0] != 0x0) {
+		iVar1 = *LOAD_SECTION_CAST(int*, param_2->field_0x0[0]);
+	}
+	if (param_2->field_0x0[2] != 0x0) {
+		iVar1 = iVar1 + *LOAD_SECTION_CAST(int*, param_2->field_0x0[2]);
+	}
+	return iVar1;
+}
+
+edF32MATRIX4* edEventGetChunkZonePrimitive(uint param_1, ed_zone_3d* param_2, uint param_3, e_ed_event_prim3d_type* param_4)
+{
+	ed_event_chunk* peVar1;
+	uint uVar2;
+	uint* puVar3;
+
+	puVar3 = LOAD_SECTION_CAST(uint*, param_2->field_0x0[0]);
+	peVar1 = pedEventChunks[param_1];
+
+	if (puVar3 == (uint*)0x0) {
+		puVar3 = (uint*)param_2->field_0x0[2];
+	}
+	else {
+		uVar2 = *puVar3;
+		if (uVar2 <= param_3) {
+			puVar3 = LOAD_SECTION_CAST(uint*, param_2->field_0x0[2]);
+			param_3 = param_3 - uVar2;
+		}
+	}
+
+	uVar2 = puVar3[param_3 + 1];
+	*param_4 = (uint)peVar1->field_0x8[uVar2];
+
+	return peVar1->aMatrices + uVar2;
+}
+
 void _edEventAddMessage(ed_event_chunk* pEventChunk, uint param_2, _ed_event_collider_test* param_3)
 {
 	edCEventMessage* peVar1;

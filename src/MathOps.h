@@ -62,6 +62,8 @@ void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4*
 
 void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1);
 
+bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_2);
+
 void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0);

@@ -627,13 +627,6 @@ enum LANGUAGE
 	AUTO
 };
 
-struct SectorManagerSubObj {
-	uint flags;
-	undefined* pFileData;
-	CSectorHierarchy* aSectorHierarchies;
-	int field_0xc;
-};
-
 // Overload the * operator as a non-member function
 inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 {
@@ -727,10 +720,15 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 
 #define ACTOR_NUM_CLASSES 0x57
 
+#include "port/pointer_conv.h"
+
 template<typename T>
 struct S_STREAM_REF {
 	void Init();
-	T* Get();
+
+	T* Get() {
+		return (T*)LOAD_SECTION(this->pObj);
+	}
 
 	union {
 		int pObj;

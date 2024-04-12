@@ -1497,7 +1497,7 @@ void MainInit(int argc,char **argv)
 	//		soundConfig->field_0x14 = 0x3c;
 	//	}
 	//	edMusicInit();
-	//	edSoundInit((float)&DAT_3f4ccccd);
+	//	edSoundInit(0.8f);
 	//}
 	edEventInit();
 	/* Init_edBank */
@@ -1800,7 +1800,7 @@ void PlayIntroVideo(long mode)
 	uVar4 = (uint)(gVideoConfig.omode == 3);
 	WTVersion = (uint)(gSettings.bWidescreen == 0);
 	if (mode == 0) {
-		if (LevelScheduleManager::gThis->nextLevelID == 1) {
+		if (CLevelScheduler::gThis->nextLevelID == 1) {
 			bVar2 = false; // LevelScheduleManager::GetFirstRunOrSave(LevelScheduleManager::gThis, 1);
 			if (bVar2 == false) {
 				if (uVar4 == 1) {
@@ -1849,7 +1849,7 @@ void PlayIntroVideo(long mode)
 			}
 		}
 		else {
-			if ((LevelScheduleManager::gThis->nextLevelID == 0xe) &&
+			if ((CLevelScheduler::gThis->nextLevelID == 0xe) &&
 				//(currentLanguage = LevelScheduleManager::GetParamFromDat004253d4(1), currentLanguage == 0xe)) {
 				(currentLanguage = 0, currentLanguage == 0xe)) {
 				/* Fail the above check on normal run, then return to end of function. */
@@ -2235,7 +2235,7 @@ int main_internal(int argc, char** argv)
 	printf("arcg = %d\nargv = %s\n", argc, *argv);
 	MainInit(argc, argv);
 	//std::this_thread::sleep_for(std::chrono::duration<double>(10.0));
-	if (LevelScheduleManager::gThis->nextLevelID == 0xe) {
+	if (CLevelScheduler::gThis->nextLevelID == 0xe) {
 		videoModeSpecifier = 'n';
 		if (gVideoConfig.omode == SCE_GS_PAL) {
 			videoModeSpecifier = 'p';

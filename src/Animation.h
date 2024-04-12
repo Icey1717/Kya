@@ -120,6 +120,7 @@ struct edAnmMetaAnimator {
 
 	void SetLayerProperties(int count);
 	void SetLayerResourceArray(int index, edANM_HDR** pAnimManagerKeyData);
+	float GetLayerAnimTime(int animIndex, int param_3);
 	void AnimateDT(float deltaTime);
 };
 
@@ -130,7 +131,7 @@ struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
 	void SetLayerMacroAnimUserParams(int index, CActor* pActor);
 	void SetLayerTimeWarper(float value, int index);
 	void SetAnim(int animType, int origAnimType);
-	int GetLayerAnimTime(int animIndex);
+	int GetAnimType_00242330(int animIndex);
 	int GetAnimEventTrackID(int index);
 };
 

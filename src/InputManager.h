@@ -59,6 +59,8 @@ public:
 	void ComputeForce();
 	void UpdateOne(float delta);
 
+	void ComputeForce3D(edF32VECTOR4* pOutForce);
+
 	void FUN_001b6e20(float param_1, float param_2);
 
 	int bActive;

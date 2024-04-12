@@ -286,14 +286,14 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 				if ((msgC == 0) || ((gPlayerInput.pressedBitfield & 1 << iVar5) == 0)) {
 					if ((msgD != 0) &&
 						(((gPlayerInput.pressedBitfield & 0x4000000) != 0 &&
-							(cVar8 = true, LevelScheduleManager::gThis->currentLevelID != 0x10)))) {
+							(cVar8 = true, CLevelScheduler::gThis->currentLevelID != 0x10)))) {
 						IMPLEMENTATION_GUARD(
 						FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)
 					}
 				}
 				else {
 					cVar8 = true;
-					if (LevelScheduleManager::gThis->currentLevelID != 0x10) {
+					if (CLevelScheduler::gThis->currentLevelID != 0x10) {
 						IMPLEMENTATION_GUARD(
 						FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);)
 					}

@@ -790,19 +790,19 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		IMPLEMENTATION_GUARD(
 		if (this->pOwner->typeID == ACTOR_HERO_PRIVATE) {
 			if (param_2 == 0x11) {
-				LevelScheduleManager::ScenVar_Set(0xf, 1);
+				CLevelScheduler::ScenVar_Set(0xf, 1);
 			}
 			else {
 				if (param_2 == 0x10) {
-					LevelScheduleManager::ScenVar_Set(10, param_3);
+					CLevelScheduler::ScenVar_Set(10, param_3);
 				}
 				else {
 					if (param_2 == 0xf) {
-						LevelScheduleManager::ScenVar_Set(9, param_3);
+						CLevelScheduler::ScenVar_Set(9, param_3);
 					}
 				}
 			}
-			LevelScheduleManager::ActorGlobalFunc_002db5b0();
+			CLevelScheduler::ActorGlobalFunc_002db5b0();
 		})
 	}
 	return bVar3;

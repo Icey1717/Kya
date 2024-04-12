@@ -285,6 +285,15 @@ namespace DebugMenu_Internal {
 		case STATE_HERO_GRIP_GRAB:
 			return "StateHeroGripGrab";
 			break;
+		case STATE_HERO_TOBOGGAN_3:
+			return "StateHeroToboggan3";
+			break;
+		case STATE_HERO_TOBOGGAN_2:
+			return "StateHeroToboggan2";
+		break;
+		case STATE_HERO_TOBOGGAN:
+			return "StateHeroToboggan";
+			break;
 		case 0x3:
 			return "Cinematic";
 			break;

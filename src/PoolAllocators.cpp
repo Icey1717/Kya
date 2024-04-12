@@ -253,3 +253,63 @@ float* NewPool_edF32(int count)
 
 	return peVar7;
 }
+
+void** NewPool_Pointer(int count)
+{
+	int iVar1;
+	bool bVar2;
+	void** ppvVar3;
+	PoolAllocator* pPVar4;
+	PoolAllocator* pPVar5;
+	void* pvVar6;
+	void** peVar7;
+	int iVar8;
+
+	bVar2 = true;
+	if ((g_U32_allocator != (PoolAllocator*)0x0) &&
+		(g_U32_allocator->free + count <= g_U32_allocator->size)) {
+		bVar2 = false;
+	}
+
+	pPVar5 = g_U32_allocator;
+
+	if (bVar2) {
+		if (count < 0x21) {
+			pPVar5 = new PoolAllocator;
+			pPVar4 = g_U32_allocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				pPVar5->size = 0x20;
+				pvVar6 = new void*[pPVar5->size];
+				pPVar5->pValue = pvVar6;
+				pPVar5->pAllocator = pPVar4;
+				pPVar5->free = 0;
+			}
+		}
+		else {
+			pPVar5 = new PoolAllocator;
+			pPVar4 = g_U32_allocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				pPVar5->size = count;
+				pvVar6 = new void* [pPVar5->size];
+				pPVar5->pValue = pvVar6;
+				pPVar5->pAllocator = pPVar4;
+				pPVar5->free = 0;
+			}
+		}
+	}
+
+	g_U32_allocator = pPVar5;
+	iVar1 = g_U32_allocator->free;
+	iVar8 = iVar1 + count;
+
+	if (g_U32_allocator->size < iVar8) {
+		peVar7 = (void**)0x0;
+	}
+	else {
+		ppvVar3 = &g_U32_allocator->pValue;
+		g_U32_allocator->free = iVar8;
+		peVar7 = (void**)((char*)*ppvVar3 + iVar1 * sizeof(void*));
+	}
+
+	return peVar7;
+}

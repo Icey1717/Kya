@@ -49,7 +49,7 @@ struct CEventManager;
 
 union ManagerContainer {
 	struct {
-		struct LevelScheduleManager* g_LevelScheduleManager_00451660;
+		struct CLevelScheduler* g_LevelScheduleManager_00451660;
 		struct C3DFileManager* g_C3DFileManager_00451664;
 		struct CAnimationManager* g_AnimManager_00451668;
 		struct CCinematicManagerB* g_CinematicManagerB_0045166c;

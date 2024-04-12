@@ -30,6 +30,20 @@ struct CSectorHierarchy {
 	void Create(ByteCode* pByteCode);
 };
 
+struct SectorManagerSubObj {
+	uint flags;
+	undefined* pFileData;
+	CSectorHierarchy* aSectorHierarchies;
+	byte field_0xc;
+};
+
+struct SectorManagerSubObjOther {
+	uint flags;
+	undefined* pFileData;
+	int aSectorHierarchies;
+	uint* field_0xc;
+};
+
 struct StaticEdFileBase {
 	struct edCFiler* pEdFileBase;
 	undefined4 field_0x4;
@@ -41,6 +55,9 @@ bool CheckFunc_00401fd0(StaticEdFileBase* param_1);
 
 struct CSector {
 public:
+	CSector() {
+		bankObject.pBankFileAccessObject = 0;
+	}
 	void InstallCallback();
 	void Load(int param_2, int param_3, bool bFileFlag);
 	void Level_Manage(int sectID, int param_3);
@@ -67,7 +84,7 @@ public:
 	CSectorManager();
 
 	void Level_ClearInternalData();
-	void Func_001fe620();
+	void InstallEnterSector();
 
 	// Manager
 	virtual void LevelLoading_Begin();
@@ -78,6 +95,8 @@ public:
 	virtual void Level_Manage();
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 	// End Manager
+
+	void SetupCompanionSectors(uint flags);
 
 	void Level_Create(ByteCode* pMemoryStream);
 
@@ -114,7 +133,7 @@ public:
 	undefined field_0x41;
 	undefined field_0x42;
 	undefined field_0x43;
-	struct SectorManagerSubObj subObjArray[30];
+	SectorManagerSubObj subObjArray[30];
 	CSector baseSector;
 	int count_0x368;
 	int field_0x36c;

@@ -87,7 +87,7 @@ void DrawLoadingScreen_001b05e0(void)
 		if (0xff < (uint)localAlpha) {
 			localAlpha = (0x40 - (localAlpha - 0x100U)) * 0xff >> 6;
 		}
-		bIsLoadingScreen = LevelScheduleManager::gThis->nextLevelID != 0xf;
+		bIsLoadingScreen = CLevelScheduler::gThis->nextLevelID != 0xf;
 		if (!bIsLoadingScreen) {
 			localAlpha = 0xff;
 		}
@@ -193,7 +193,7 @@ void CPauseManager::Level_Init()
 	Timer* pTVar4;
 	undefined8 uVar5;
 
-	this->currentLevelID_0x18 = LevelScheduleManager::gThis->currentLevelID;
+	this->currentLevelID_0x18 = CLevelScheduler::gThis->currentLevelID;
 	this->field_0x1c = 0;
 	this->field_0x20 = 0;
 
@@ -245,7 +245,7 @@ void CPauseManager::Level_Init()
 void CPauseManager::Level_Draw()
 {
 	CCinematicManager* pCinematicManager;
-	LevelScheduleManager* pLevelScheduleManager;
+	CLevelScheduler* pLevelScheduleManager;
 	bool bVar1;
 	bool bVar2;
 	Timer* pTVar3;
@@ -280,12 +280,12 @@ void CPauseManager::Level_Draw()
 				index = index + 1;
 			} while (index < iVar5);
 		}
-		pLevelScheduleManager = LevelScheduleManager::gThis;
+		pLevelScheduleManager = CLevelScheduler::gThis;
 		if (60.0f < fVar9 - this->totalPlayTime) {
 			this->pSplashScreen->Manage((long)this->field_0x34, false, bVar1);
 			if (pCVar8 == (CCinematic*)0x0) {
 				IMPLEMENTATION_GUARD(
-				LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
+				CLevelScheduler::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
 				if ((g_DebugCameraFlag_00448ea4 & 4) != 0) {
 					FUN_001b51e0();
 				})

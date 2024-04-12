@@ -37,7 +37,7 @@ void SaveManagementBootCheck(void)
 	BootData_GetResource("icon.sys", &gSaveManagementInfoIconSys);
 	/* KYA.ICO */
 	BootData_GetResource("KYA.ICO", &gSaveManagementInfoFileIco);
-	iVar2 = LevelScheduleManager::SaveGame_GetMaxBufferSize();
+	iVar2 = CLevelScheduler::SaveGame_GetMaxBufferSize();
 	gSaveManagement.pBigAlloc_0x34 = (SaveBigAlloc*)edMemAlloc(TO_HEAP(H_MAIN), 0x10000);
 	gSaveManagement.gameSaveMaxBufferSize = iVar2;
 	if (gSaveManagement.pBigAlloc_0x34 == (SaveBigAlloc*)0x0) {

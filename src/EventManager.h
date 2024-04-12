@@ -117,9 +117,15 @@ public:
 	static CEventManagerInternal callbackFunctions;
 };
 
+typedef uint e_ed_event_prim3d_type;
+
 void edEventInit(void);
 uint edEventAddChunk(void* pFileData, uint mode);
 uint edEventGetChunkNbEvents(int eventIndex);
 ed_zone_3d* edEventGetChunkZone(uint chunkId, uint zoneId);
+int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZone, edF32VECTOR4* pLocation, uint mode);
+int edEventComputeZoneAgainstVertex(int index, ed_zone_3d* pZone, edF32VECTOR4* param_3, long mode);
+int edEventGetChunkZoneNbInclusivePrimitives(int param_1, ed_zone_3d* param_2);
+edF32MATRIX4* edEventGetChunkZonePrimitive(uint param_1, ed_zone_3d* param_2, uint param_3, e_ed_event_prim3d_type* param_4);
 
 #endif // EVENT_MANAGER_H

@@ -8,6 +8,7 @@
 #include <string.h>
 #include <math.h>
 #include "CollisionManager.h"
+#include "EventManager.h"
 
 #define LIGHT_MANAGER_LOG(level, format, ...) MY_LOG_CATEGORY("LightManager", level, format, ##__VA_ARGS__)
 
@@ -971,6 +972,7 @@ public:
 
 	virtual void Manage() { return; }
 	virtual int GetBaseShape(BaseShape** ppBaseShape);
+	virtual edF32VECTOR4* GetPosition() { return &this->baseShape.position; }
 
 	BaseShape baseShape;
 	FullColorModel colorModel;
@@ -1007,6 +1009,7 @@ public:
 
 	virtual void Manage() { return; }
 	virtual int GetBaseShape(BaseShape** ppBaseShape);
+	virtual edF32VECTOR4* GetPosition() { return &this->baseShape.position; }
 
 	BaseShape baseShape;
 	FullColorModel colorModel;
@@ -1032,6 +1035,7 @@ public:
 
 	virtual void Manage();
 	virtual bool DoLighting(LightingContext* pContext);
+	virtual edF32VECTOR4* GetPosition() { return &this->baseShape.position; }
 
 	BaseShapeA baseShape;
 	SimplestColorModel colorModel;
@@ -1062,6 +1066,7 @@ public:
 
 	virtual void Manage() { return; }
 	virtual int GetBaseShape(BaseShape** ppBaseShape);
+	virtual edF32VECTOR4* GetPosition() { return &this->baseShape.position; }
 	virtual void Create(ByteCode* pByteCode);
 
 	BaseShapeB baseShape;
@@ -1100,6 +1105,7 @@ public:
 
 	virtual void Manage();
 	virtual int GetBaseShape(BaseShape** ppBaseShape);
+	virtual edF32VECTOR4* GetPosition() { return &this->baseShape.position; }
 	virtual void Create(ByteCode* pByteCode);
 
 	FullColorModel colorModel;
@@ -2201,4 +2207,29 @@ bool CLight::TestIlluminationZones(edF32VECTOR4* pLocation, int id)
 		} while (iVar4 < iVar3);)
 	}
 	return true;
+}
+
+bool CLight::IsInCluster(ed_zone_3d* pZone)
+{
+	CEventManager* pEventManager;
+	edF32VECTOR4* pPosition;
+	int iVar3;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	pPosition = GetPosition();
+	iVar3 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, pPosition, 0);
+	return iVar3 != 2;
+}
+
+void CLightManager::SetManagedByCluster(CLight* pLight)
+{
+	(pLight->colour_0x4).a = (pLight->colour_0x4).a | 4;
+	return;
+}
+
+template<>
+void S_STREAM_REF<CLight>::Init()
+{
+	this->pObj = STORE_SECTION(&CScene::ptable.g_LightManager_004516b0->aLights[this->index]);
+	return;
 }

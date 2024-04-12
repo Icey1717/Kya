@@ -206,10 +206,10 @@ CScene::CScene()
 	//	ppMVar18[-7] = (Manager_29b4*)0x0;
 	//	ppMVar18 = ppMVar18 + -8;
 	//} while (-1 < iVar19);
-	CScene::ptable.g_LevelScheduleManager_00451660 = new LevelScheduleManager();
+	CScene::ptable.g_LevelScheduleManager_00451660 = new CLevelScheduler();
 	/* Initial load point at 006db5b0 */
-	if (CScene::ptable.g_LevelScheduleManager_00451660 != (LevelScheduleManager*)0x0) {
-		LevelScheduleManager::gThis = CScene::ptable.g_LevelScheduleManager_00451660;
+	if (CScene::ptable.g_LevelScheduleManager_00451660 != (CLevelScheduler*)0x0) {
+		CLevelScheduler::gThis = CScene::ptable.g_LevelScheduleManager_00451660;
 	}
 	pManager = new LocalizationManager();
 	CScene::ptable.g_LocalizationManager_00451678 = pManager;
@@ -728,7 +728,7 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	//local_4 = { };
 	local_4.Create(pMemoryStream);
 	local_4.Perform();
-	LevelScheduleManager::gThis->Level_LoadObjectives(pMemoryStream);
+	CLevelScheduler::gThis->Level_LoadObjectives(pMemoryStream);
 	iVar4 = pMemoryStream->GetS32();
 	this->field_0x10c = iVar4;
 	iVar4 = pMemoryStream->GetS32();

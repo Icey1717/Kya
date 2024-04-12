@@ -31,7 +31,7 @@ ulong ScenaricCondition::IsVerified(S_STREAM_SIMPLE_COND* pCond, int param_2)
 	int iVar2;
 	ulong uVar3;
 
-	iVar2 = LevelScheduleManager::ScenVar_Get(pCond->variable);
+	iVar2 = CLevelScheduler::ScenVar_Get(pCond->variable);
 	iVar1 = pCond->field_0xc;
 	switch (pCond->field_0x8) {
 	case 0:
@@ -151,7 +151,7 @@ void S_STREAM_SIMPLE_OPERATION::Perform()
 	int scenVarValue;
 	int type;
 
-	scenVarValue = LevelScheduleManager::ScenVar_Get(this->scenVarId);
+	scenVarValue = CLevelScheduler::ScenVar_Get(this->scenVarId);
 	type = this->opType;
 	if (type == 4) {
 		scenVarValue = scenVarValue / this->value;
@@ -179,8 +179,8 @@ void S_STREAM_SIMPLE_OPERATION::Perform()
 			}
 		}
 	}
-	LevelScheduleManager::ScenVar_Set(this->scenVarId, scenVarValue);
-	LevelScheduleManager::OnSceneVarSet();
+	CLevelScheduler::ScenVar_Set(this->scenVarId, scenVarValue);
+	CLevelScheduler::OnSceneVarSet();
 	return;
 }
 

@@ -57,6 +57,7 @@ struct CCameraGame : public CCameraExt {
 	void CameraFunc_002c5b50();
 	void FUN_002c8160();
 	void FUN_002c7ee0();
+	void FUN_00199c20(edF32VECTOR4* param_2, edF32VECTOR4* param_3);
 	void FUN_002bee80();
 
 	void ClampFunc(uint* puVar5);

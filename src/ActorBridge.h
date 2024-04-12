@@ -6,11 +6,6 @@
 
 class CWayPoint;
 
-struct S_ACTOR_STREAM_REF {
-	int entryCount;
-	S_STREAM_REF<CActor> aEntries[];
-};
-
 static_assert(sizeof(S_STREAM_REF<CActor>) == 4);
 
 

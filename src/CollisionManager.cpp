@@ -11,6 +11,66 @@
 #include <math.h>
 #include <string.h>
 
+struct ClusterCallbackParams
+{
+	CActorsTable* pTable;
+	CActor* pActor;
+};
+
+void CCollisionManager::ClearStaticData()
+{
+	S_TIED_ACTOR_ENTRY* pSVar1;
+	int iVar2;
+	S_CARRY_ACTOR_ENTRY* pSVar3;
+
+	iVar2 = 0x100;
+	pSVar1 = CCollisionManager::_tied_actors_table;
+	do {
+		pSVar1->pActor = (CActor*)0x0;
+		pSVar1->pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		iVar2 = iVar2 + -8;
+		pSVar1->pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[1].pActor = (CActor*)0x0;
+		pSVar1[1].pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[1].pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[2].pActor = (CActor*)0x0;
+		pSVar1[2].pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[2].pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[3].pActor = (CActor*)0x0;
+		pSVar1[3].pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[3].pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[4].pActor = (CActor*)0x0;
+		pSVar1[4].pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[4].pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[5].pActor = (CActor*)0x0;
+		pSVar1[5].pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[5].pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[6].pActor = (CActor*)0x0;
+		pSVar1[6].pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[6].pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[7].pActor = (CActor*)0x0;
+		pSVar1[7].pNext = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1[7].pPrev = (S_TIED_ACTOR_ENTRY*)0x0;
+		pSVar1 = pSVar1 + 8;
+	} while (0 < iVar2);
+
+	iVar2 = 0x80;
+	pSVar3 = CCollisionManager::_carry_info_table;
+	do {
+		pSVar3->field_0x80 = 0;
+		pSVar3[1].field_0x80 = 0;
+		iVar2 = iVar2 + -8;
+		pSVar3[2].field_0x80 = 0;
+		pSVar3[3].field_0x80 = 0;
+		pSVar3[4].field_0x80 = 0;
+		pSVar3[5].field_0x80 = 0;
+		pSVar3[6].field_0x80 = 0;
+		pSVar3[7].field_0x80 = 0;
+		pSVar3 = pSVar3 + 8;
+	} while (0 < iVar2);
+	return;
+}
+
 MaterialTableEntry CCollisionManager::_material_table[MATERIAL_TABLE_SIZE] = {
 	{0.5235988f, 0.6981317f, 1.0471976f, 1.0f, 1.0f},
 	{0.5235988f, 0.6981317f, 1.0471976f, 1.0f, 1.0f},
@@ -73,8 +133,8 @@ void CCollisionManager::Level_Create(ByteCode* pMemoryStream)
 		this->pBankCollisionData[iVar1].field_0x8 = iVar3;
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	ClearStaticData();)
+	ClearStaticData();
+
 	if (__bmat_tab_initialised == 0) {
 		for (iVar1 = 0; iVar1 < MATERIAL_TABLE_SIZE; iVar1 = iVar1 + 1) {
 			_material_table[iVar1].field_0x0 = cosf(_material_table[iVar1].field_0x0);
@@ -889,6 +949,44 @@ float CCollision::GetWallNormalYLimit(s_collision_contact* pContact)
 	return CCollisionManager::_material_table[uVar1].field_0x8;
 }
 
+int CCollision::GetPrimNumDeltaSubdivisions(edColPRIM_OBJECT* pPrimObj, byte colType, edF32VECTOR4* param_3)
+{
+	float fVar1;
+	int iVar2;
+	float fVar3;
+	edF32VECTOR4 local_10;
+
+	iVar2 = 1;
+
+	edF32Matrix4MulF32Vector4Hard(&local_10, &pPrimObj->worldTransform, param_3);
+	if (colType == 0xd) {
+		fVar1 = 0.0f;
+
+		for (iVar2 = 0; iVar2 < 3; iVar2 = iVar2 + 1) {
+			local_10.raw[iVar2] = fabs(local_10.raw[iVar2]);
+
+			fVar3 = local_10.raw[iVar2];
+
+			if (fVar3 <= fVar1) {
+				fVar3 = fVar1;
+			}
+
+			fVar1 = fVar3;
+		}
+
+		iVar2 = (int)(fVar1 * 4.0f + 1.0f);
+	}
+	else {
+		if (colType == 0xe) {
+			fVar1 = edF32Vector4GetDistHard(&local_10);
+
+			iVar2 = (int)(fVar1 * 2.0f + 1.0f);
+		}
+	}
+
+	return iVar2;
+}
+
 void CCollision::SetObbTreePositionNoRotationRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2)
 {
 	byte colType;
@@ -1003,12 +1101,6 @@ void CCollision::UpdateMatrix(edF32MATRIX4* param_2)
 	}
 	return;
 }
-
-struct ClusterCallbackParams
-{
-	CFixedTable<CActor*, 64>* pTable;
-	CActor* pActor;
-};
 
 void gClusterCallback_Collision(CActor* pActor, void* pInParams)
 {
@@ -1675,8 +1767,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 			stepCount = 1;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			stepCount = GetPrimNumDeltaSubdivisions(this->pObbPrim, this->primType, &baseTranslation);)
+			stepCount = GetPrimNumDeltaSubdivisions(this->pObbPrim, this->primType, &baseTranslation);
 		}
 		if (0x14 < stepCount) {
 			stepCount = 0x14;

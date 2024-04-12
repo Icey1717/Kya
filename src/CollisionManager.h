@@ -85,6 +85,7 @@ public:
 	static void SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2, edF32MATRIX4* param_3);
 	static void TransformG3DObbTreeVertices(edColG3D_OBB_TREE_DYN* pDynCol, int matrixType, edF32MATRIX4* pTransformMatrix);
 	static float GetWallNormalYLimit(s_collision_contact* pContact);
+	static int GetPrimNumDeltaSubdivisions(edColPRIM_OBJECT* pPrimObj, byte colType, edF32VECTOR4* param_3);
 
 	uint CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0);
 	uint CheckCollisionsWithScenery(int param_2);
@@ -151,6 +152,8 @@ public:
 
 
 	CCollision* NewCCollision();
+
+	void ClearStaticData();
 
 	edColG3D_OBB_TREE_DYN* InstanciateDynCol(int index);
 	edObbTREE_DYN* InstallColFile(char* pFile, uint size);

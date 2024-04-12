@@ -1134,6 +1134,124 @@ void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECT
 	return;
 }
 
+bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_2)
+{
+	float* pfVar1;
+	bool bVar2;
+	int iVar3;
+	int iVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	float local_a0[4];
+	float* local_90[4];
+
+	float auStack128[8];
+	float auStack96[8];
+	float auStack64[8];
+	float afStack32[8];
+
+	// Is this correct?
+	IMPLEMENTATION_GUARD_LOG();
+
+	local_90[0] = afStack32;
+	local_90[1] = auStack64;
+	local_90[2] = auStack96;
+	local_90[3] = auStack128;
+
+	for (iVar5 = 0; iVar5 < 4; iVar5 = iVar5 + 1) {
+		for (iVar4 = 0; iVar4 < 4; iVar4 = iVar4 + 1) {
+			local_90[iVar5][iVar4] = (&param_2->aa)[iVar5 * 4 + iVar4];
+
+			if (iVar5 == iVar4) {
+				local_90[iVar5][iVar4 + 4] = 1.0f;
+			}
+			else {
+				local_90[iVar5][iVar4 + 4] = 0.0f;
+			}
+		}
+	}
+
+	iVar5 = 0;
+	while (true) {
+		if (3 < iVar5) {
+			for (iVar5 = 0; iVar5 < 4; iVar5 = iVar5 + 1) {
+				fVar6 = fabs(local_90[iVar5][iVar5] / local_a0[iVar5]);
+				iVar3 = iVar5;
+				iVar4 = iVar5;
+
+				while (iVar4 = iVar4 + 1, iVar4 < 4) {
+					if (fVar6 < fabs(local_90[iVar4][iVar5] / local_a0[iVar4])) {
+						fVar6 = fabs(local_90[iVar4][iVar5] / local_a0[iVar4]);
+						iVar3 = iVar4;
+					}
+				}
+
+				iVar4 = iVar5;
+				if (iVar3 != iVar5) {
+					pfVar1 = local_90[iVar5];
+					local_90[iVar5] = local_90[iVar3];
+					local_90[iVar3] = pfVar1;
+					fVar6 = local_a0[iVar5];
+					local_a0[iVar5] = local_a0[iVar3];
+					local_a0[iVar3] = fVar6;
+				}
+
+				while (iVar4 = iVar4 + 1, iVar4 < 4) {
+					fVar7 = local_90[iVar5][iVar5];
+					fVar6 = local_90[iVar4][iVar5];
+					local_90[iVar4][iVar5] = 0.0f;
+					iVar3 = iVar5;
+
+					while (iVar3 = iVar3 + 1, iVar3 < 8) {
+						local_90[iVar4][iVar3] = local_90[iVar4][iVar3] - (fVar6 / fVar7) * local_90[iVar5][iVar3];
+					}
+				}
+			}
+
+			iVar5 = 3;
+
+			if (fabs(*(float*)((ulong)local_90[3] + 0xc)) < g_TinyFloat_00448548) {
+				bVar2 = false;
+			}
+			else {
+				for (; iVar4 = iVar5, 0 < iVar5; iVar5 = iVar5 + -1) {
+					while (iVar4 = iVar4 + -1, -1 < iVar4) {
+						fVar7 = local_90[iVar5][iVar5];
+						fVar6 = local_90[iVar4][iVar5];
+						iVar3 = iVar4;
+						while (iVar3 = iVar3 + 1, iVar3 < 8) {
+							local_90[iVar4][iVar3] = local_90[iVar4][iVar3] - (fVar6 / fVar7) * local_90[iVar5][iVar3];
+						}
+					}
+				}
+
+				for (iVar5 = 0; iVar5 < 4; iVar5 = iVar5 + 1) {
+					for (iVar4 = 0; iVar4 < 4; iVar4 = iVar4 + 1) {
+						(&param_1->aa)[iVar5 * 4 + iVar4] = local_90[iVar5][iVar4 + 4] / local_90[iVar5][iVar5];
+					}
+				}
+
+				bVar2 = true;
+			}
+			return bVar2;
+		}
+
+		local_a0[iVar5] = fabs(*local_90[iVar5]);
+
+		for (iVar4 = 1; iVar4 < 4; iVar4 = iVar4 + 1) {
+			if (local_a0[iVar5] < fabs(local_90[iVar5][iVar4])) {
+				local_a0[iVar5] = fabs(local_90[iVar5][iVar4]);
+			}
+		}
+
+		if (local_a0[iVar5] < g_TinyFloat_00448548) break;
+
+		iVar5 = iVar5 + 1;
+	}
+	return false;
+}
+
 void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;

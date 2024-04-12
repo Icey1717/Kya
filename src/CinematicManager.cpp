@@ -891,12 +891,6 @@ void S_STREAM_REF<CActor>::Init()
 }
 
 template<>
-CActor* S_STREAM_REF<CActor>::Get()
-{
-	return LOAD_SECTION_CAST(CActor*, this->pObj);
-}
-
-template<>
 void S_STREAM_REF<ed_zone_3d>::Init()
 {
 	ed_zone_3d* pZone;
@@ -908,12 +902,6 @@ void S_STREAM_REF<ed_zone_3d>::Init()
 	}
 	this->pObj = STORE_SECTION(pZone);
 	return;
-}
-
-template<>
-ed_zone_3d* S_STREAM_REF<ed_zone_3d>::Get()
-{
-	return LOAD_SECTION_CAST(ed_zone_3d*, this->pObj);
 }
 
 void S_STREAM_NTF_TARGET_SWITCH::Reset()
@@ -1440,7 +1428,7 @@ void _gCinSoundCallback(bool bSuccess, void* pObj)
 bool CCinematic::LoadInternal(long mode)
 {
 	char cVar1;
-	LevelScheduleManager* pLVar2;
+	CLevelScheduler* pLVar2;
 	bool bVar3;
 	int iVar4;
 	edFILEH* pDebugBank;
@@ -1450,7 +1438,7 @@ bool CCinematic::LoadInternal(long mode)
 	char acStack1024[512];
 	char acStack512[512];
 
-	pLVar2 = LevelScheduleManager::gThis;
+	pLVar2 = CLevelScheduler::gThis;
 	edStrCopy(acStack1024, this->pBankName_0x50);
 	iVar4 = edStrLength(acStack1024);
 	pcVar6 = acStack1024 + iVar4;
@@ -1560,8 +1548,8 @@ bool CCinematic::LoadCineBnk(bool mode)
 
 	/* Loads a bank file from the cine folder
 	   Example: CDEURO/LEVEL/PREINTRO/CINE/1c9de79b.bnk */
-	edStrCatMulti(outFilePath, LevelScheduleManager::gThis->levelPath,
-		LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->currentLevelID].levelName, "\\Cine\\",
+	edStrCatMulti(outFilePath, CLevelScheduler::gThis->levelPath,
+		CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].levelName, "\\Cine\\",
 		this->pBankName_0x48, NULL);
 	memset(&filePathContainer, 0, sizeof(edCBankInstall));
 	filePathContainer.filePath = outFilePath;
@@ -1687,7 +1675,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 				bankObj = (this->cineBank).pBankFileAccessObject;
 			}
 			else {
-				bankObj = (LevelScheduleManager::gThis->levelBank).pBankFileAccessObject;
+				bankObj = (CLevelScheduler::gThis->levelBank).pBankFileAccessObject;
 			}
 			/* Get the file index from the bank file */
 			iVar4 = bankObj->get_index(fileName);
@@ -2208,12 +2196,12 @@ void CCinematic::Stop()
 			}
 			if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
 				IMPLEMENTATION_GUARD(
-				LevelScheduleManager::HoldsGetActorFunc_002dc200
-				(LevelScheduleManager::gThis, g_CinematicManager_0048efc->field_0x20,
-					LevelScheduleManager::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);)
+				CLevelScheduler::HoldsGetActorFunc_002dc200
+				(CLevelScheduler::gThis, g_CinematicManager_0048efc->field_0x20,
+					CLevelScheduler::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);)
 			}
 			else {
-				LevelScheduleManager::gThis->Level_Teleport((CActor*)0x0, this->field_0x6c, this->field_0x70, this->field_0x74, -1);
+				CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->field_0x6c, this->field_0x70, this->field_0x74, -1);
 			}
 		}
 		this->flags_0x8 = this->flags_0x8 & 0xfffff7ff;
@@ -2871,7 +2859,7 @@ void CCinematic::PreReset()
 	if (((this->flags_0x4 & 0x800) != 0) &&
 		((this->baseB == -1 ||
 			(this->baseB ==
-				LevelScheduleManager::gThis->aLevelInfo[LevelScheduleManager::gThis->currentLevelID].sectorStartIndex)))) {
+				CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].sectorStartIndex)))) {
 		IMPLEMENTATION_GUARD(
 		UsedInCutsceneManagerUpdateB(this, (Actor*)0x0, 0);)
 	}

@@ -74,7 +74,7 @@ void CActorAutonomous::Create(ByteCode* pByteCode)
 	//	peVar3 = (edF32MATRIX4*)(*(code*)this->base.pVTable[1].free)(this);
 	//	FUN_0019e4a0(peVar3);
 	//}
-	this->field_0x2cc = 0;
+	this->bCollisionSphereDirty = 0;
 	//this->field_0x2c8 = 0;
 	if (this->pCollisionData != (CCollision*)0x0) {
 		StoreCollisionSphere();
@@ -115,9 +115,9 @@ void CActorAutonomous::Init()
 	float fVar5;
 
 	IMPLEMENTATION_GUARD_LOG(
-	pCVar1 = (*(((this->base).base.pVTable)->actorBase).getPerception)((CActorWolfen*)this);
+	pCVar1 = (*((this->pVTable)->actorBase).getPerception)((CActorWolfen*)this);
 	if (pCVar1 != (CVision*)0x0) {
-		pCVar1 = (*(((this->base).base.pVTable)->actorBase).getPerception)((CActorWolfen*)this);
+		pCVar1 = (*((this->pVTable)->actorBase).getPerception)((CActorWolfen*)this);
 		fVar5 = this->currentLocation.y;
 		fVar3 = this->currentLocation.z;
 		fVar4 = this->currentLocation.w;
@@ -125,7 +125,7 @@ void CActorAutonomous::Init()
 		(pCVar1->baseLocation_0x10).y = fVar5;
 		(pCVar1->baseLocation_0x10).z = fVar3;
 		(pCVar1->baseLocation_0x10).w = fVar4;
-		pCVar1 = (*(((this->base).base.pVTable)->actorBase).getPerception)((CActorWolfen*)this);
+		pCVar1 = (*((this->pVTable)->actorBase).getPerception)((CActorWolfen*)this);
 		fVar5 = this->rotationQuat.y;
 		fVar3 = this->rotationQuat.z;
 		fVar4 = this->rotationQuat.w;
@@ -169,12 +169,12 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 	if (msg == 0x3f) {
 		IMPLEMENTATION_GUARD(
-		bVar1 = (*((this->base).base.pVTable)->SetBehaviour)((CActor*)this, 2, -1, -1);
+		bVar1 = (*(this->pVTable)->SetBehaviour)((CActor*)this, 2, -1, -1);
 		if (bVar1 == false) {
 			iVar5 = 0;
 		}
 		else {
-			pCVar4 = CActor::GetBehaviour((CActor*)this, (this->base).base.curBehaviourId);
+			pCVar4 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
 			pCVar4[4].pVTable = (CBehaviourVtable*)pSender;
 			iVar5 = 1;
 		})
@@ -182,9 +182,9 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	else {
 		if (msg == 0x18) {
 			IMPLEMENTATION_GUARD(
-			lVar6 = (*(code*)((this->base).base.pVTable)->field_0x100)();
+			lVar6 = (*(code*)(this->pVTable)->field_0x100)();
 			if (lVar6 != 0) {
-				peVar3 = (edF32MATRIX4*)(*(code*)((this->base).base.pVTable)->field_0x100)(this);
+				peVar3 = (edF32MATRIX4*)(*(code*)(this->pVTable)->field_0x100)(this);
 				FUN_00123580(peVar3, (edF32MATRIX4*)pMsgParam);
 			}
 			iVar5 = 1;)
@@ -192,9 +192,9 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 		else {
 			if (msg == 0x17) {
 				IMPLEMENTATION_GUARD(
-				lVar6 = (*(code*)((this->base).base.pVTable)->field_0x100)();
+				lVar6 = (*(code*)(this->pVTable)->field_0x100)();
 				if (lVar6 != 0) {
-					piVar2 = (int*)(*(code*)((this->base).base.pVTable)->field_0x100)(this);
+					piVar2 = (int*)(*(code*)(this->pVTable)->field_0x100)(this);
 					FUN_00123810(piVar2, (float*)pMsgParam);
 				}
 				iVar5 = 1;)
@@ -267,7 +267,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 	return;
 }
 
-float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)
+void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)
 {
 	byte bVar1;
 	uint uVar2;
@@ -769,12 +769,11 @@ float CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		this->dynamicExt.scaledTotalTime = fVar15;
 	}
 
-	if (this->field_0x2cc != 0) {
-		IMPLEMENTATION_GUARD(
-		fVar15 = (float)(*(code*)(this->base.pVTable)->field_0x110)(this);)
+	if (this->bCollisionSphereDirty != 0) {
+		UpdateCollisionSphere();
 	}
 
-	return fVar15;
+	return;
 }
 
 void CActorAutonomous::StoreCollisionSphere()
@@ -803,7 +802,7 @@ void CActorAutonomous::ChangeCollisionSphere(float param_1, edF32VECTOR4* param_
 		if (param_1 == 0.0) {
 			peVar1->field_0x90 = *param_3;
 			peVar1->field_0xb0 = *param_4;
-			this->field_0x2cc = 0;
+			this->bCollisionSphereDirty = 0;
 		}
 		else {
 			pTVar2 = GetTimer();
@@ -819,11 +818,55 @@ void CActorAutonomous::ChangeCollisionSphere(float param_1, edF32VECTOR4* param_
 
 			this->field_0x2bc = local_10.xyz;
 			this->field_0x2c8 = param_1 + pTVar2->scaledTotalTime;
-			this->field_0x2cc = 1;
+			this->bCollisionSphereDirty = 1;
 		}
 		pCollision->InvalidatePrims();
 	}
 	return;
+}
+
+void CActorAutonomous::UpdateCollisionSphere()
+{
+	CCollision* pCol;
+	edColPRIM_OBJECT* peVar1;
+	Timer* pTVar2;
+	float fVar3;
+	float fVar4;
+	edF32VECTOR4 local_10;
+
+	pCol = this->pCollisionData;
+	peVar1 = pCol->pObbPrim;
+	pTVar2 = GetTimer();
+
+	if (this->field_0x2c8 < pTVar2->scaledTotalTime) {
+		peVar1->field_0x90.xyz = this->field_0x298;
+		(peVar1->field_0x90).w = 0.0f;
+
+		(peVar1->field_0xb0).xyz = this->field_0x2a4;
+		(peVar1->field_0xb0).w = 1.0f;
+		this->bCollisionSphereDirty = 0;
+	}
+	else {
+		pTVar2 = GetTimer();
+		local_10.w = pTVar2->cutsceneDeltaTime;
+
+		local_10.x = (this->field_0x2b0).x * local_10.w;
+		local_10.y = (this->field_0x2b0).y * local_10.w;
+		local_10.z = (this->field_0x2b0).z * local_10.w;
+
+		local_10.w = local_10.w * 0.0f;
+		edF32Vector4AddHard(&peVar1->field_0x90, &peVar1->field_0x90, &local_10);
+
+		local_10.w = pTVar2->cutsceneDeltaTime;
+		local_10.x = (this->field_0x2bc).x * local_10.w;
+		local_10.y = (this->field_0x2bc).y * local_10.w;
+		local_10.z = (this->field_0x2bc).z * local_10.w;
+		local_10.w = local_10.w * 0.0f;
+
+		edF32Vector4AddHard(&peVar1->field_0xb0, &peVar1->field_0xb0, &local_10);
+	}
+
+	pCol->InvalidatePrims();
 }
 
 void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int param_3)

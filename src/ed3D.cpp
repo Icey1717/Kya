@@ -2119,6 +2119,58 @@ void ed3DClustersRenderComputeSceneHierarchyList(ed_3D_Scene* pStaticMeshMaster)
 	return;
 }
 
+uint ed3DClusterGetEdgeWithSon(uint param_1, uchar param_2)
+
+{
+	uint uVar1;
+	int iVar2;
+	uint uVar3;
+	uint auStack48[12];
+
+	uVar1 = 0;
+	if (param_2 == 1) {
+		uVar3 = 8;
+		iVar2 = 4;
+
+		auStack48[8] = 0xa;
+		auStack48[9] = 0x6;
+		auStack48[10] = 0x9;
+		auStack48[11] = 0x5;
+
+		do {
+			if ((param_1 & uVar3) != 0) {
+				uVar1 = uVar1 | auStack48[iVar2 + 8];
+			}
+
+			iVar2 = iVar2 + -1;
+			uVar3 = uVar3 >> 1;
+		} while (iVar2 != 0);
+	}
+	else {
+		uVar3 = 0x80;
+		iVar2 = 8;
+
+		auStack48[0] = 0x10a;
+		auStack48[1] = 0x286;
+		auStack48[2] = 0x409;
+		auStack48[3] = 0x805;
+		auStack48[4] = 0x1a0;
+		auStack48[5] = 0x260;
+		auStack48[6] = 0x490;
+		auStack48[7] = 0x850;
+
+		do {
+			if ((param_1 & uVar3) != 0) {
+				uVar1 = uVar1 | auStack48[iVar2];
+			}
+
+			iVar2 = iVar2 + -1;
+			uVar3 = uVar3 >> 1;
+		} while (iVar2 != 0);
+	}
+	return uVar1;
+}
+
 void ed3DSceneSortClusters(ed_3D_Scene* pScene)
 {
 	edLIST* peVar1;
@@ -6236,11 +6288,11 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	edF32MATRIX4* pMVar5;
 	bool bProcessedStrip;
 	edF32VECTOR4* pVVar7;
-	int* piVar8;
+	ed_Chunck* piVar8;
 	uint uVar9;
 	int iVar10;
 	char cVar11;
-	int* piVar12;
+	char* piVar12;
 	ed_3d_strip* p3DStrip;
 	uint uVar14;
 	ulong uVar15;
@@ -6327,23 +6379,27 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	}
 
 	if (!bProcessedStrip) {
-		IMPLEMENTATION_GUARD();
 		uVar2 = pCDQU->clusterDetails.clusterHierCount;
 		uVar9 = 0;
 		uVar15 = 0;
 		iVar10 = 0;
 		uVar19 = 1;
+
 		if (uVar2 != 0) {
 			iVar10 = (uint)uVar2 * 0x10 + 0x10;
 		}
-		piVar8 = (int*)edChunckGetFirst((char*)((int)pStripCounts + iVar10 + 0x40), p3DOctree->pCDQU_End);
+
+		piVar8 = edChunckGetFirst(reinterpret_cast<char*>(pStripCounts) + iVar10 + 0x40, p3DOctree->pCDQU_End);
 		while (true) {
 			uVar14 = (uint)uVar15;
-			if (piVar8 == (int*)0x0) break;
+
+			if (piVar8 == (ed_Chunck*)0x0) break;
+
 			local_1d4[uVar14 * 0x10 + 1] = p3DOctree->field_0x30;
-			if ((*piVar8 == 0x55514443) || (*piVar8 == 0x434f4443)) {
+
+			if ((piVar8->hash == 0x55514443) || (piVar8->hash == 0x434f4443)) {
 				if (p3DOctree->boundingSphereTestResult == 2) {
-					if (local_1d4[uVar14 * 0x10 + 1] == 1.0) {
+					if (local_1d4[uVar14 * 0x10 + 1] == 1.0f) {
 						IMPLEMENTATION_GUARD(ed3DCalculSubBoxQuadTree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar14));
 						fVar21 = extraout_vf9w;
 					}
@@ -6351,6 +6407,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 						IMPLEMENTATION_GUARD(ed3DCalculSubBoxOctree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar15));
 						fVar21 = extraout_vf9w_00;
 					}
+
 					local_230.x = *(float*)(auStack544 + uVar14 * 0x40 + 0x30);
 					local_230.y = local_1f0[uVar14 * 0x10 + 1];
 					local_230.z = local_1f0[uVar14 * 0x10 + 2];
@@ -6366,8 +6423,8 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 						local_1d8[uVar14 * 0x20] = 4;
 					}
 					else {
-						(&local_1e0)[uVar14 * 0x10] = piVar8;
-						(&local_1dc)[uVar14 * 0x10] = (int)piVar8 + piVar8[2];
+						(&local_1e0)[uVar14 * 0x10] = (int*)piVar8;
+						(&local_1dc)[uVar14 * 0x10] = (int)reinterpret_cast<char*>(piVar8) + piVar8->size;
 						local_1d8[uVar14 * 0x20] = (short)iVar10;
 						local_1d4[uVar14 * 0x10] = local_230.w;
 						local_240.x = local_230.x;
@@ -6382,17 +6439,18 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 					}
 				}
 				else {
-					if (local_1d4[uVar14 * 0x10 + 1] == 1.0) {
+					if (local_1d4[uVar14 * 0x10 + 1] == 1.0f) {
 						IMPLEMENTATION_GUARD(ed3DCalculSubBoxQuadTree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar14));
 					}
 					else {
 						IMPLEMENTATION_GUARD(ed3DCalculSubBoxOctree((float*)(auStack544 + uVar14 * 0x40 + 0x20), (float*)p3DOctree, uVar15));
 					}
+
 					local_260.x = *(float*)(auStack544 + uVar14 * 0x40 + 0x30);
 					local_260.y = local_1f0[uVar14 * 0x10 + 1];
 					local_260.z = local_1f0[uVar14 * 0x10 + 2];
-					(&local_1e0)[uVar14 * 0x10] = piVar8;
-					(&local_1dc)[uVar14 * 0x10] = (int)piVar8 + piVar8[2];
+					(&local_1e0)[uVar14 * 0x10] = (int*)piVar8;
+					(&local_1dc)[uVar14 * 0x10] = (int)reinterpret_cast<char*>(piVar8) + piVar8->size;
 					local_1d8[uVar14 * 0x20] = 1;
 					local_260.w = 1.0;
 					local_230.x = local_260.x;
@@ -6404,15 +6462,18 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 					local_270.x = local_270.x + local_270.y + local_270.z;
 					local_1d4[uVar14 * 0x10 + 2] = local_270.x;
 				}
-				piVar12 = (int*)p3DOctree->pCDQU_End;
+
+				piVar12 = p3DOctree->pCDQU_End;
 			}
 			else {
-				piVar12 = (int*)p3DOctree->pCDQU_End;
+				piVar12 = p3DOctree->pCDQU_End;
 			}
+
 			uVar19 = uVar19 << 1;
 			uVar15 = (int)(uVar14 + 1);
-			piVar8 = (int*)edChunckGetNext((ed_Chunck*)piVar8, (char*)piVar12);
+			piVar8 = edChunckGetNext(piVar8, piVar12);
 		}
+
 		if (uVar15 != 0) {
 			IMPLEMENTATION_GUARD(ed3DRenderClusterSortOctreeSons((ed_3d_octree*)auStack544, (int)(auStack544 + 0x20), uVar14));
 			lVar16 = 0;
@@ -6424,15 +6485,18 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 				lVar16 = (long)((int)lVar16 + 1);
 			}
 		}
+
 		fVar21 = p3DOctree->field_0x30;
-		if (fVar21 < 2.147484e+09) {
+
+		if (fVar21 < 2.147484e+09f) {
 			cVar11 = (char)(int)fVar21;
 		}
 		else {
-			cVar11 = (char)(int)(fVar21 - 2.147484e+09);
+			cVar11 = (char)(int)(fVar21 - 2.147484e+09f);
 		}
-		uVar9 = 0; IMPLEMENTATION_GUARD(ed3DClusterGetEdgeWithSon(uVar9, cVar11));
-		if ((long)(int)uVar9 != 0) {
+
+		uVar9 = ed3DClusterGetEdgeWithSon(uVar9, cVar11);
+		if (uVar9 != 0) {
 			IMPLEMENTATION_GUARD(ed3DRenderEdge((short*)pStripCounts, (long)(int)uVar9, (uint)p3DOctree->boundingSphereTestResult, stripCountArrayEntryIndex));
 		}
 	}

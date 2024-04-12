@@ -80,11 +80,12 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual float ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
+	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 
 	void _ManageDynamicFence(CActorsTable* pActorsTable);
 	virtual void StoreCollisionSphere();
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+	virtual void UpdateCollisionSphere();
 
 	void ComputeSlidingForce(edF32VECTOR4* param_2, int param_3);
 
@@ -109,7 +110,7 @@ public:
 	edF32VECTOR3 field_0x2bc;
 
 	float field_0x2c8;
-	undefined4 field_0x2cc;
+	undefined4 bCollisionSphereDirty;
 
 	byte field_0x344;
 

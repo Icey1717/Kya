@@ -738,6 +738,24 @@ void CPlayerInput::UpdateOne(float delta)
 	return;
 }
 
+void CPlayerInput::ComputeForce3D(edF32VECTOR4* pOutForce)
+{
+	CCameraManager* pCameraManager;
+	edF32VECTOR4 yTranslation;
+	edF32VECTOR4 xTranslation;
+
+	pCameraManager = CCameraManager::_gThis;
+
+	if (CCameraManager::_gThis != (CCameraManager*)0x0) {
+		edF32Vector4ScaleHard(-this->aAnalogSticks[0].x, &xTranslation, &CCameraManager::_gThis->transformationMatrix.rowX);
+		edF32Vector4ScaleHard(this->aAnalogSticks[0].y, &yTranslation, &(pCameraManager->transformationMatrix).rowZ);
+		edF32Vector4AddHard(pOutForce, &xTranslation, &yTranslation);
+		edF32Vector4SafeNormalize0Hard(pOutForce, pOutForce);
+	}
+
+	return;
+}
+
 void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
 {
 	float fVar1;

@@ -206,19 +206,18 @@ void CActorManager::Level_Manage()
 			}
 			else {
 				if ((uVar2 & 0x10) == 0) {
-					IMPLEMENTATION_GUARD(
-					uVar3 = SEXT18(pActor->field_0xc);)
+					uVar3 = pActor->state_0x10;
 				}
 				else {
-					IMPLEMENTATION_GUARD(
 					uVar3 = 0;
-					if ((pActor->field_0xc != '\0') &&
-						(pActor->adjustedMagnitude <= (pActor->subObjA)->floatField))
+
+					if ((pActor->state_0x10 != 0) && (pActor->adjustedMagnitude <= (pActor->subObjA)->floatField))
 					{
 						uVar3 = 1;
-					})
+					}
 				}
 			}
+
 			uVar4 = pActor->flags;
 			if (((uVar3 | uVar4 & 2) == 0) || ((uVar4 & 0x2000001) != 0)) {
 				if ((pActor->flags & 4) != 0) {
@@ -629,6 +628,62 @@ CActor* CActorManager::GetActorByHashcode(int hashCode)
 	return (CActor*)0x0;
 }
 
+void CActorManager::GetActorsByClassID(int classId, CActorsTable* pOutList)
+{
+	int iVar1;
+	CActor** pList;
+	int curIndex;
+	int totalCount;
+	CClassInfo* pClassInfo;
+	CActor** ppCVar3;
+	int iVar4;
+	int iVar5;
+	int iVar6;
+	int iVar7;
+	int iVar8;
+	int iVar9;
+	int iVar10;
+
+	totalCount = this->aClassInfo[classId].totalCount;
+	pClassInfo = &this->aClassInfo[classId];
+
+	if (0x40 < totalCount) {
+		totalCount = 0x40;
+	}
+
+	curIndex = 0;
+	if (0 < totalCount) {
+		pList = pOutList->aEntries;
+		if (8 < totalCount) {
+			do {
+				IMPLEMENTATION_GUARD(); // CHECK CORRECT
+				pList[curIndex + 0] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 0) * pClassInfo->size);
+				pList[curIndex + 1] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 1) * pClassInfo->size);
+				pList[curIndex + 2] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 2) * pClassInfo->size);
+				pList[curIndex + 3] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 3) * pClassInfo->size);
+				pList[curIndex + 4] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 4) * pClassInfo->size);
+				pList[curIndex + 5] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 5) * pClassInfo->size);
+				pList[curIndex + 6] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 6) * pClassInfo->size);
+				pList[curIndex + 7] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 7) * pClassInfo->size);
+
+				curIndex = curIndex + 8;
+			} while (curIndex < totalCount + -8);
+		}
+
+		if (curIndex < totalCount) {
+			ppCVar3 = pOutList->aEntries + curIndex + -1;
+			do {
+				ppCVar3[1] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 0) * pClassInfo->size);
+				curIndex = curIndex + 1;
+				ppCVar3 = ppCVar3 + 1;
+			} while (curIndex < totalCount);
+		}
+	}
+
+	pOutList->entryCount = curIndex;
+	return;
+}
+
 CCluster::CCluster()
 {
 	this->ppNodes = (CClusterNode**)0x0;
@@ -650,7 +705,7 @@ void CCluster::Init(int actorCount, ed_Bound_Box* pBoundBox, int param_4)
 	int iVar3;
 	int iVar4;
 
-	this->ppNodes = new CClusterNode* [0x2000];
+	this->ppNodes = new CClusterNode*[0x2000];
 	iVar4 = 0;
 	do {
 		this->ppNodes[iVar4] = (CClusterNode*)0x0;
@@ -679,6 +734,27 @@ void CCluster::Init(int actorCount, ed_Bound_Box* pBoundBox, int param_4)
 	this->pClusterNode = this->aClusterNodes;
 
 	SetWorldBox(pBoundBox, param_4);
+	return;
+}
+
+void CCluster::Term()
+{
+	if (this->ppNodes != (CClusterNode**)0x0) {
+		delete[] this->ppNodes;
+	}
+
+	if (this->aClusterNodes != (CClusterNode*)0x0) {
+		delete[] this->aClusterNodes;
+	}
+
+	this->ppNodes = (CClusterNode**)0x0;
+	this->aClusterNodes = (CClusterNode*)0x0;
+	this->nbClusterNodes = 0;
+	this->field_0x30 = 0;
+	this->field_0x32 = 0;
+	this->field_0x34 = (CClusterNode*)0x0;
+	this->pClusterNode = (CClusterNode*)0x0;
+
 	return;
 }
 
@@ -859,6 +935,41 @@ CClusterNode* CCluster::NewNode(CActor* pActor)
 	return pCVar1;
 }
 
+struct ClusterCriterionCallbackParams
+{
+	CActorsTable* pTable;
+	CritenionFunc* pFunc;
+	void* pData;
+};
+
+void gClusterCallback_GetActorsWithCriterion(CActor* pActor, void* pData)
+{
+	bool bResult;
+
+	ClusterCriterionCallbackParams* pParams = (ClusterCriterionCallbackParams*)pData;
+
+	bResult = pParams->pFunc(pActor, pParams->pData);
+
+	if (bResult != false) {
+		pParams->pTable->Add(pActor);
+	}
+
+	return;
+}
+
+bool CCluster::GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, edF32VECTOR4* pLocation, CritenionFunc* pFunc, void* pData)
+{
+	ClusterCriterionCallbackParams local_10;
+
+	local_10.pTable = pTable;
+	local_10.pFunc = pFunc;
+	local_10.pData = pData;
+
+	ApplyCallbackToActorsIntersectingSphere(pLocation, gClusterCallback_GetActorsWithCriterion, &local_10);
+
+	return pTable->entryCount != 0;
+}
+
 void CCluster::ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pParams)
 {
 	CClusterNode* pCVar1;
@@ -998,6 +1109,50 @@ CClusterNode::CClusterNode()
 	this->pPrev = (CClusterNode*)0x0;
 	this->nodeIndex = -2;
 	this->pActor = (CActor*)0x0;
+}
+
+void CClusterNode::Insert(CCluster* pCluster, CActor* pActor)
+{
+	uint uVar1;
+	CClusterNode** ppCVar2;
+	int iVar3;
+	edF32VECTOR4 local_20;
+	edS32VECTOR3 local_10;
+
+	this->pActor = pActor;
+
+	if (8.0f < (pActor->sphereCentre).w) {
+		iVar3 = -1;
+	}
+	else {
+		local_20.xyz = (pActor->sphereCentre).xyz;
+		local_20.w = 1.0f;
+
+		uVar1 = pCluster->GetMapCoords(&local_10, &local_20);
+
+		iVar3 = -1;
+		if (uVar1 == 0) {
+			iVar3 = local_10.x + local_10.y * 0x400 + local_10.z * 0x20;
+		}
+	}
+
+	ppCVar2 = &pCluster->field_0x34;
+	if (iVar3 == -1) {
+		this->nodeIndex = -1;
+	}
+	else {
+		ppCVar2 = pCluster->ppNodes + iVar3;
+		this->nodeIndex = iVar3;
+	}
+
+	this->pNext = *ppCVar2;
+	if (*ppCVar2 != (CClusterNode*)0x0) {
+		(*ppCVar2)->pPrev = this;
+	}
+
+	this->pPrev = (CClusterNode*)0x0;
+	*ppCVar2 = this;
+	return;
 }
 
 void CClusterNode::Update(CCluster* pCluster)

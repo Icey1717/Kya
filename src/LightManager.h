@@ -49,9 +49,11 @@ public:
 	virtual void Activate();
 	virtual bool DoLighting(LightingContext* pContext) { return false; }
 	virtual int GetBaseShape(BaseShape** ppBaseShape) { return 0; }
+	virtual edF32VECTOR4* GetPosition() { return NULL; }
 	virtual void Create(ByteCode* pByteCode) {}
 
 	bool TestIlluminationZones(edF32VECTOR4* pLocation, int id);
+	bool IsInCluster(ed_zone_3d* pZone);
 
 	_rgba colour_0x4;
 	ushort field_0x8;
@@ -70,6 +72,11 @@ public:
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;
+};
+
+struct S_LIGHT_STREAM_REF {
+	int entryCount;
+	S_STREAM_REF<CLight> aEntries[];
 };
 
 class CLightManager : public CObjectManager {
@@ -100,6 +107,8 @@ public:
 	void BuildActiveList();
 
 	float ComputeCollision(CLight* pLightA, CLight* pLightB);
+
+	void SetManagedByCluster(CLight* pLight);
 
 	int referencedLightsCount;
 	int lightCount;

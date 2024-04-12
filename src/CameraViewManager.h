@@ -5914,6 +5914,7 @@ public:
 
 	float FUN_00197970(edF32VECTOR4* param_2);
 
+	CCamera* GetScenaricCamera(int index);
 	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
 

@@ -205,8 +205,9 @@ public:
 	// #Debug
 	char name[64];
 
-	byte field_0xd;
 	uint flags;
+	byte state_0x10;
+	byte field_0x11;
 	void* aComponents;
 
 	int dlistPatchId;
@@ -307,6 +308,7 @@ public:
 	virtual void Manage();
 	virtual void Draw();
 	virtual void ComputeLighting();
+	virtual void Reset();
 	virtual void SectorChange(int oldSectorId, int newSectorId);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void ChangeManageState(int state);
@@ -321,6 +323,7 @@ public:
 	virtual uint IsLookingAt();
 	virtual void UpdateAnimEffects();
 	virtual void UpdatePostAnimEffects();
+	virtual bool Can_0x9c();
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
@@ -328,7 +331,6 @@ public:
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual CPlayerInput* GetInputManager(int, int);
-	virtual void Reset();
 
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
 	void ChangeVisibleState(int bVisible);
@@ -370,6 +372,8 @@ public:
 	int ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	bool ColWithAToboggan();
+	bool ColWithLava();
+	bool ColWithCactus();
 
 	bool PlayWaitingAnimation(float param_1, float param_2, int specialAnimType, int regularAnimType, byte idleLoopsToPlay);
 
@@ -421,6 +425,11 @@ public:
 struct ActorAndWaypoint {
 	CActor* pActor;
 	struct CWayPoint* pWaypoint;
+};
+
+struct S_ACTOR_STREAM_REF {
+	int entryCount;
+	S_STREAM_REF<CActor> aEntries[];
 };
 
 #endif // _ACTOR_H

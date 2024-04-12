@@ -1896,3 +1896,40 @@ float CCameraManager::FUN_00197970(edF32VECTOR4* param_2)
 	edF32Matrix4MulF32Vector4Hard(&eStack16, &this->worldToCamera_0x3d0, param_2);
 	return (eStack16.y * this->aspectRatio) / (eStack16.z * this->fov_0xa34);
 }
+
+CCamera* CCameraManager::GetScenaricCamera(int index)
+
+{
+	CCamera* pCVar1;
+	int iVar2;
+	int iVar3;
+
+	pCVar1 = (CCamera*)0x0;
+
+	if (index != -1) {
+		pCVar1 = this->pInitialView_0x4b4;
+		iVar2 = this->count_0x9fc + index;
+		iVar3 = 0;
+		if (0 < iVar2) {
+			do {
+				if (pCVar1->pNextCameraView_0xa4 != (CCamera*)0x0) {
+					pCVar1 = pCVar1->pNextCameraView_0xa4;
+				}
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < iVar2);
+		}
+	}
+
+	return pCVar1;
+}
+
+template<>
+void S_STREAM_REF<CCamera>::Init()
+{
+	CCamera* pCVar1;
+
+	pCVar1 = CScene::ptable.g_CameraManager_0045167c->GetScenaricCamera(this->index);
+
+	this->pObj = STORE_SECTION(pCVar1);
+	return;
+}

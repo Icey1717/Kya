@@ -70,13 +70,11 @@ CActor::CActor()
 	float fVar1;
 	float fVar2;
 	this->objectId = -1;
-	//this->field_0x134 = -1.0f;
-	//this->field_0x13c = 0;
+	//this->field_0x138 = -1.0f;
 	//this->field_0x140 = 0;
 	//this->field_0x144 = 0;
-	//this->field_0x148 = 0;
-	//this->funcData_0x150 = (undefined*)&CBehaviour::_vt;
-	//this->funcData_0x150 = (undefined*)&CBehaviourStand::_vt;
+	//this->aActorSounds = (CActorSound*)0x0;
+	//this->field_0x14c = 0;
 	this->actorManagerIndex = -1;
 	this->objectId = -1;
 	this->pCinData = (CinNamedObject30*)0x0;
@@ -90,14 +88,14 @@ CActor::CActor()
 	this->scale.y = 1.0;
 	this->scale.z = 1.0;
 	this->scale.w = 1.0;
-	this->rotationEuler.x = 0.0;
-	this->rotationEuler.y = 0.0;
-	this->rotationEuler.z = 0.0;
-	//*(undefined4*)&this->field_0x58 = 0;
-	this->rotationQuat.x = 0.0;
-	this->rotationQuat.y = 0.0;
-	this->rotationQuat.z = 0.0;
-	this->rotationQuat.w = 0.0;
+	this->rotationEuler.x = 0.0f;
+	this->rotationEuler.y = 0.0f;
+	this->rotationEuler.z = 0.0f;
+	this->rotationEuler.w = 0.0f;
+	this->rotationQuat.x = 0.0f;
+	this->rotationQuat.y = 0.0f;
+	this->rotationQuat.z = 0.0f;
+	this->rotationQuat.w = 0.0f;
 	this->pMeshNode = (edNODE*)0x0;
 	this->p3DHierNode = (ed_3d_hierarchy_node*)0x0;
 	this->pHier = (ed_g3d_hierarchy*)0x0;
@@ -131,11 +129,11 @@ CActor::CActor()
 	this->prevAnimType = -1;
 	this->lightingFlags = 0;
 	this->lightingFloat_0xe0 = 1.0f;
-	this->field_0xd = 0;
-	//this->field_0xc = '\0';
+	this->field_0x11 = 0;
+	this->state_0x10 = 0;
 	this->distanceToGround = -1.0f;
-	//this->field_0xec = 3.0;
-	//this->field_0xf0 = -1;
+	this->field_0xf0 = 3.0f;
+	this->field_0xf4 = 0xffff;
 	fVar2 = gF32Vector3Zero.z;
 	fVar1 = gF32Vector3Zero.y;
 
@@ -143,12 +141,10 @@ CActor::CActor()
 
 	fVar2 = gF32Vector3Zero.z;
 	fVar1 = gF32Vector3Zero.y;
-	//this->vector_0x12c.x = gF32Vector3Zero.x;
-	//this->vector_0x12c.y = fVar1;
-	//this->vector_0x12c.z = fVar2;
-	//this->field_0x138 = 0;
-	//this->field_0x134 = 0.0;
-	//this->field_0x94 = 0;
+	this->vector_0x12c = gF32Vector3Zero;
+	//this->field_0x13c = 0;
+	//this->field_0x138 = 0.0;
+	//this->field_0x98 = 0;
 	return;
 }
 
@@ -231,8 +227,7 @@ void CActor::EvaluateManageState()
 				uVar2 = uVar2 & 2 | (ulong)(this->adjustedMagnitude <= (this->subObjA)->floatField);
 			}
 			else {
-				IMPLEMENTATION_GUARD(
-				uVar2 = uVar2 & 2 | this->field_0xc;)
+				uVar2 = uVar2 & 2 | this->state_0x10;
 			}
 			goto LAB_001034b0;
 		}
@@ -265,7 +260,7 @@ void CActor::EvaluateDisplayState()
 				uVar2 = 1;
 			}
 			else {
-				uVar2 = uVar2 & 0x80 | (uint)(0 < this->field_0xd);
+				uVar2 = uVar2 & 0x80 | (uint)(0 < this->state_0x10);
 			}
 			goto LAB_001033c0;
 		}
@@ -349,6 +344,44 @@ void CActor::FUN_00115ea0(uint param_2)
 		}
 	}
 	return;
+}
+
+bool CActor::Can_0x9c()
+{
+	bool bVar1;
+	uint uVar2;
+	AnimResult* pAVar3;
+
+	if (this->actorState == -1) {
+		uVar2 = 0;
+	}
+	else {
+		pAVar3 = GetStateCfg(this->actorState);
+		uVar2 = pAVar3->flags_0x4;
+	}
+
+	bVar1 = (uVar2 & 1) == 0;
+
+	if (bVar1) {
+		bVar1 = (this->flags & 4) != 0;
+	}
+
+	if (bVar1) {
+		bVar1 = (this->actorFieldS & 0x60) != 0;
+	}
+
+	if (bVar1) {
+		if (this->actorState == -1) {
+			uVar2 = 0;
+		}
+		else {
+			pAVar3 = GetStateCfg(this->actorState);
+			uVar2 = pAVar3->flags_0x4 & 0x40;
+		}
+		bVar1 = uVar2 != 0;
+	}
+
+	return bVar1;
 }
 
 void CActor::Create(ByteCode* pByteCode)
@@ -2698,7 +2731,7 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 			local_98 = 1;
 			iVar2 = piVar5[3];
 			if (iVar2 == -1) {
-				edF32Vector4ScaleHard((float)&DAT_bf800000, &local_80, &this->rotationQuat);
+				edF32Vector4ScaleHard(-1.0f, &local_80, &this->rotationQuat);
 			}
 			else {
 				pCVar4 = (CWayPoint*)0x0;
@@ -2799,6 +2832,70 @@ bool CActor::ColWithAToboggan()
 		bColWithAToboggan = uVar2 == 5;
 	}
 	return bColWithAToboggan;
+}
+
+bool CActor::ColWithCactus()
+{
+	CCollision* pCVar1;
+	bool bVar2;
+	uint uVar3;
+
+	pCVar1 = this->pCollisionData;
+	bVar2 = false;
+	if ((pCVar1 != (CCollision*)0x0) && (bVar2 = (pCVar1->flags_0x4 & 7) != 0, bVar2)) {
+		uVar3 = pCVar1->aCollisionContact[1].materialFlags & 0xf;
+		if (uVar3 == 0) {
+			uVar3 = CScene::_pinstance->defaultMaterialIndex;
+		}
+		bVar2 = uVar3 == 7;
+		if (!bVar2) {
+			uVar3 = pCVar1->aCollisionContact[0].materialFlags & 0xf;
+			if (uVar3 == 0) {
+				uVar3 = CScene::_pinstance->defaultMaterialIndex;
+			}
+			bVar2 = uVar3 == 7;
+		}
+		if (!bVar2) {
+			uVar3 = pCVar1->aCollisionContact[2].materialFlags & 0xf;
+			if (uVar3 == 0) {
+				uVar3 = CScene::_pinstance->defaultMaterialIndex;
+			}
+			bVar2 = uVar3 == 7;
+		}
+	}
+	return bVar2;
+}
+
+bool CActor::ColWithLava()
+{
+	CCollision* pCVar1;
+	bool bVar2;
+	uint uVar3;
+
+	pCVar1 = this->pCollisionData;
+	bVar2 = false;
+	if ((pCVar1 != (CCollision*)0x0) && (bVar2 = (pCVar1->flags_0x4 & 7) != 0, bVar2)) {
+		uVar3 = pCVar1->aCollisionContact[1].materialFlags & 0xf;
+		if (uVar3 == 0) {
+			uVar3 = CScene::_pinstance->defaultMaterialIndex;
+		}
+		bVar2 = uVar3 == 3;
+		if (!bVar2) {
+			uVar3 = pCVar1->aCollisionContact[0].materialFlags & 0xf;
+			if (uVar3 == 0) {
+				uVar3 = CScene::_pinstance->defaultMaterialIndex;
+			}
+			bVar2 = uVar3 == 3;
+		}
+		if (!bVar2) {
+			uVar3 = pCVar1->aCollisionContact[2].materialFlags & 0xf;
+			if (uVar3 == 0) {
+				uVar3 = CScene::_pinstance->defaultMaterialIndex;
+			}
+			bVar2 = uVar3 == 3;
+		}
+	}
+	return bVar2;
 }
 
 CPlayerInput* CActor::GetInputManager(int, int)
