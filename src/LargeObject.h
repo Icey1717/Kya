@@ -120,7 +120,7 @@ public:
 	undefined field_0x35;
 	undefined field_0x36;
 	undefined field_0x37;
-	undefined8 field_0x38;
+	ulong field_0x38;
 	int curState;
 	undefined4 field_0x44;
 	undefined4 field_0x48;
@@ -285,6 +285,8 @@ public:
 	void LoadFunc_001b87b0(void);
 
 	void HandleFogAndClippingSettings();
+
+	void PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream);
 	void PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream);
 
 	void Level_Install(void);

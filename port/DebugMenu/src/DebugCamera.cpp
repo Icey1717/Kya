@@ -13,6 +13,7 @@
 #include <fstream>
 #include "DebugHelpers.h"
 #include "Debug.h"
+#include "../../../src/TimeController.h"
 
 GLFWwindow* GetGLFWWindow();
 
@@ -70,14 +71,24 @@ namespace DebugCamera {
 	float gMouseDeltaX = 0.0f;
 	float gMouseDeltaY = 0.0f;
 
-	void CameraHackCallback(GLFWwindow* window, double xpos, double ypos) {
-		static double lastX = xpos;
-		gMouseDeltaX = static_cast<float>(xpos - lastX);
-		lastX = xpos;
+	constexpr float gDeadzone = 5.f;
 
-		static double lastY = ypos;
-		gMouseDeltaY = static_cast<float>(lastY - ypos);
-		lastY = ypos;
+	void CameraHackCallback(GLFWwindow* window, double xpos, double ypos) {
+		if (bActive) {
+			{
+				static double lastX = xpos;
+				const float delta = static_cast<float>(xpos - lastX);
+				gMouseDeltaX = fabs(delta) > gDeadzone ? delta : 0.0f;
+				lastX = xpos;
+			}
+
+			{
+				static double lastY = ypos;
+				const float delta = static_cast<float>(lastY - ypos);
+				gMouseDeltaY = fabs(delta) > gDeadzone ? delta : 0.0f;
+				lastY = ypos;
+			}
+		}
 	}
 
 	void MouseCallback(GLFWwindow* window, double xpos, double ypos) {
@@ -195,6 +206,8 @@ void EditEdF32Vector4(edF32VECTOR4& vector) {
 	ImGui::InputFloat("W", &vector.w);
 }
 
+static bool bShouldEnableMouseLock = true;
+
 void DebugCamera::ShowCamera()
 {
 	// Get the display size
@@ -202,10 +215,19 @@ void DebugCamera::ShowCamera()
 
 	if (ImGui::Button("Toggle Camera Hack")) {
 		ToggleCameraHack();
-		SetActive(true, CameraHackCallback);
+
+		if (bShouldEnableMouseLock) {
+			SetActive(true, CameraHackCallback);
+			bShouldEnableMouseLock = false;
+		}
+		else {
+			bShouldEnableMouseLock = true;
+		}
 	}
 
 	if (glfwGetKey(GetGLFWWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		gMouseDeltaX = 0.0f;
+		gMouseDeltaY = 0.0f;
 		SetActive(false, nullptr);
 	}
 
@@ -214,6 +236,21 @@ void DebugCamera::ShowCamera()
 	EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
 	ImGui::Text("LookAt");
 	//EditEdF32Vector4(pCameraManager->lookAt);
+
+	{
+		static bool bFixAtLocation = false;
+		ImGui::Checkbox("Fix at location", &bFixAtLocation);
+
+		if (bFixAtLocation && pActiveCamera) {
+			GetTimer()->timeScale = 0.0f;
+			//pActiveCamera->transformationMatrix = {
+			//-0.0707696, 0, -0.997493, 0,
+			//-0.907605, 0.414858, 0.0643923, 0,
+			//0.413818, 0.909886, -0.0293593, 0,
+			//214.523, 33.5794, -9.72168, 1,
+			//};
+		}
+	}
 
 	if (ImGui::Button("Save Matrix")) {
 		// Assuming you have access to the transformation matrix (e.g., camera.GetViewMatrix())

@@ -2676,9 +2676,14 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 	int local_8;
 	int local_4;
 
+	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveEvent {} {}", this->name, param_4);
+
 	piVar5 = (int*)param_5;
 	iVar2 = *piVar5;
 	local_c = piVar5[1];
+
+	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveEvent {} type: {} param: {}", this->name, iVar2, local_c);
+
 	if (iVar2 == 0x16) {
 		switch (local_c) {
 		case 0:

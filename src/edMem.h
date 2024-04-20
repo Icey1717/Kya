@@ -42,6 +42,17 @@ struct edHeapParams {
 	int offset;
 };
 
+
+#ifdef PLATFORM_WIN
+#pragma pack(push,1)
+struct VirtualMemory {
+	S_MAIN_MEMORY_HEADER g_heap_004a5780[0x1000];
+	//char g_memory[0x1685100];
+	char g_memory[0x1F85100];
+};
+#pragma  pack(pop)
+#endif // PLATFORM_WIN
+
 int edMemGetMemoryAvailable(EHeap heapID);
 void* edMemGetLocalAddress(void* pAlloc);
 void* edMemAlloc(EHeap heapID, size_t size);
@@ -56,6 +67,8 @@ void edmemSetReadOnly(S_MAIN_MEMORY_HEADER* pHeap);
 int edMemGetAvailable(EHeap heapID);
 void DebugDump(EHeap heapID, long mode);
 S_MAIN_MEMORY_HEADER* edmemGetFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap, int param_2);
+
+S_MAIN_MEMORY_HEADER* edmemGetMainHeader();
 S_MAIN_MEMORY_HEADER* edmemGetMainHeader(void* heapID);
 S_MAIN_MEMORY_HEADER* edmemGetMasterMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap);
 void edmemFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap);
@@ -85,6 +98,8 @@ void _edSystemInitVideoHandlers(void);
 
 extern edHeapParams g_SystemHeap_0042df0;
 extern uint g_MemWorkSizeB;
+
+extern S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370;
 
 #define TO_HEAP(a) (void*)a
 

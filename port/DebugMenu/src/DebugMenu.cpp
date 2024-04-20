@@ -36,6 +36,8 @@
 #include <iostream>
 #include "InputManager.h"
 #include "DebugSetting.h"
+#include "../../../src/Rendering/DisplayList.h"
+#include "../../../src/SectorManager.h"
 
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -258,6 +260,12 @@ namespace DebugMenu_Internal {
 		case STATE_HERO_SLIDE_A:
 			return "StateHeroSlideA";
 			break;
+		case STATE_HERO_SLIDE_B:
+			return "StateHeroSlideB";
+			break;
+		case STATE_HERO_U_TURN:
+			return "StateHeroUTurn";
+			break;
 		case STATE_HERO_JUMP_1_1_RUN:
 			return "StateHeroJump_1_1_Run";
 			break;
@@ -287,6 +295,12 @@ namespace DebugMenu_Internal {
 			break;
 		case STATE_HERO_TOBOGGAN_3:
 			return "StateHeroToboggan3";
+			break;
+		case STATE_HERO_TOBOGGAN_JUMP_1:
+			return "StateHeroTobogganJump1";
+			break;
+		case STATE_HERO_TOBOGGAN_JUMP_2:
+			return "StateHeroTobogganJump2";
 			break;
 		case STATE_HERO_TOBOGGAN_2:
 			return "StateHeroToboggan2";
@@ -381,6 +395,18 @@ namespace DebugMenu_Internal {
 			if (ImGui::CollapsingHeader("Input", ImGuiTreeNodeFlags_DefaultOpen)) {
 				DebugHelpers::ImGui::TextVector4("Left Analog Stick", pActorHero->pPlayerInput->lAnalogStick);
 			}
+		}
+
+		// End the ImGui window
+		ImGui::End();
+	}
+
+	void ShowSectorMenu(bool* bOpen) {
+		// Create a new ImGui window
+		ImGui::Begin("Sector", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		if (ImGui::Button("Switch Sector")) {
+			CScene::ptable.g_SectorManager_00451670->SwitchToSector(4, true);
 		}
 
 		// End the ImGui window
@@ -505,6 +531,8 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
+	DebugSetting::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
+
 	void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
@@ -523,6 +551,8 @@ namespace DebugMenu_Internal {
 		if (ImGui::Checkbox("Complex Blending", &Renderer::GetUseComplexBlending())) {
 			Renderer::ResetRenderer();
 		}
+
+		gDisplyScale.DrawImguiControl();
 
 		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
 
@@ -607,13 +637,13 @@ namespace DebugMenu_Internal {
 
 		// Get the display size
 		const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-		const ImVec2 windowSize(640.0f, 480.0f);
+		const ImVec2 windowSize(640.0f * gDisplyScale, 480.0f * gDisplyScale);
 		ImGui::SetNextWindowSize(windowSize);
 		ImVec2 windowPos = ImVec2((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
 		ImGui::SetNextWindowPos(windowPos);
 		ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
 
-		const ImVec2 image_size(640.0f * 2.5f, 480.0f * 2.0f);
+		const ImVec2 image_size(640.0f * 2.5f * gDisplyScale, 480.0f * 2.0f * gDisplyScale);
 		// Use ImGui::Image to display the image
 		const ImTextureID gFrameBuffer = DebugMenu::AddFrameBuffer(frameBuffer);
 		ImGui::Image(gFrameBuffer, image_size);
@@ -786,6 +816,7 @@ namespace DebugMenu_Internal {
 		}
 
 		static edNODE* pSelectedNode = nullptr;
+		static ed_g3d_manager* pMeshInfo = nullptr;
 
 		if (selectedScene != -1) {
 			ed_3D_Scene* pSelectedScene = &gScene3D[selectedScene];
@@ -795,24 +826,47 @@ namespace DebugMenu_Internal {
 
 			ImGui::Text("Shadow: %d", pSelectedScene->bShadowScene);
 			ImGui::Text("Flags: 0x%x", pSelectedScene->flags);
-			edNODE* pCurNode;
-			edLIST* pList = pSelectedScene->pHierListA;
-			if (((pSelectedScene->flags & 1) != 0) && ((pSelectedScene->flags & 4) == 0)) {
-				for (pCurNode = pList->pPrev; (edLIST*)pCurNode != pList; pCurNode = pCurNode->pPrev) {
 
-					ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pCurNode->pData;
+			if (ImGui::CollapsingHeader("Hierarchy")) {
+				edNODE* pCurNode;
+				edLIST* pList = pSelectedScene->pHierListA;
+				if (((pSelectedScene->flags & 1) != 0) && ((pSelectedScene->flags & 4) == 0)) {
+					for (pCurNode = pList->pPrev; (edLIST*)pCurNode != pList; pCurNode = pCurNode->pPrev) {
 
-					if (pHierarchy && (pHierarchy->pAnimMatrix || !bFilterAnim)) {
-						char nodeText[256];
-						std::sprintf(nodeText, "Node: %p", pCurNode);
-						if (ImGui::Selectable(nodeText)) {
-							pSelectedNode = pCurNode;
+						ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pCurNode->pData;
+
+						if (pHierarchy && (pHierarchy->pAnimMatrix || !bFilterAnim)) {
+							char nodeText[256];
+							std::sprintf(nodeText, "Node: %p", pCurNode);
+							if (ImGui::Selectable(nodeText)) {
+								pSelectedNode = pCurNode;
+							}
 						}
 					}
 				}
+				else {
+					ImGui::Text("Flags disabled nodes");
+				}
 			}
-			else {
-				ImGui::Text("Flags disabled nodes");
+
+			if (ImGui::CollapsingHeader("Mesh Nodes")) {
+				edNODE* pClusterNode;
+
+				if ((pSelectedScene->bShadowScene != 1) && ((pSelectedScene->flags & 8) == 0)) {
+					for (pClusterNode = (edNODE*)(pSelectedScene->meshClusterList).pPrev;
+						(edLIST*)pClusterNode != &pSelectedScene->meshClusterList; pClusterNode = pClusterNode->pPrev) {
+						edCluster* pCluster = (edCluster*)pClusterNode->pData;
+
+						char nodeText[256];
+						std::sprintf(nodeText, "Cluster: %p (%p)", pClusterNode, pCluster->pMeshInfo->CSTA);
+						if (ImGui::Selectable(nodeText)) {
+							ed_g3d_manager* pMesh;
+							if (((pCluster->flags & 2) == 0) && (pMesh = pCluster->pMeshInfo, pMesh->CSTA != (ed_Chunck*)0x0)) {
+								pMeshInfo = pMesh;
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -820,6 +874,10 @@ namespace DebugMenu_Internal {
 
 		if (pSelectedNode) {
 			DebugMeshViewer::ShowNodeMenu(pSelectedNode);
+		}
+
+		if (pMeshInfo) {
+			DebugMeshViewer::ShowClusterMenu(pMeshInfo);
 		}
 	}
 
@@ -857,6 +915,35 @@ namespace DebugMenu_Internal {
 		}
 	}
 
+	void ShowMemoryMenu(bool* bOpen) {
+		ImGui::Begin("Memory", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		ImGui::Text("Main Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_MAIN)));
+		ImGui::Text("Memkit Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_MEMKIT)));
+		ImGui::Text("Scratchpad Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_SCRATCHPAD)));
+		ImGui::Text("Video Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_VIDEO)));
+
+		if (ImGui::Button("Dump Memory")) {
+			std::ofstream inFile("memory_dump.bin", std::ios::binary);
+			assert(inFile.is_open());
+
+			const char* pMem = reinterpret_cast<const char*>(edmemGetMainHeader());
+			inFile.write(pMem, sizeof(VirtualMemory));
+			inFile.close();
+		}
+
+		if (ImGui::Button("Load Memory")) {
+			std::ifstream inFile("memory_dump.bin", std::ios::binary);
+			assert(inFile.is_open());
+
+			char* pMem = reinterpret_cast<char*>(edmemGetMainHeader());
+			inFile.read(pMem, sizeof(VirtualMemory));
+			inFile.close();
+		}
+
+		ImGui::End();
+	}
+
 	struct Menu {
 		void Show() {
 			if (bOpen) {
@@ -881,6 +968,8 @@ namespace DebugMenu_Internal {
 		{"Rendering", ShowRenderingMenu },
 		{"Scene", ShowSceneMenu },
 		{"Hero", ShowHeroMenu, true },
+		{"Sector", ShowSectorMenu, true },
+		{"Memory", ShowMemoryMenu, true },
 
 	};
 

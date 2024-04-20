@@ -183,24 +183,27 @@ void CPlayerInput::Init(int bInitialActive)
 	this->aButtons[6].bActive = 1;
 
 	this->field_0x14 = 1;
-	this->field_0x1c = 0.0f;
-	this->field_0x20 = 0;
-	*(undefined4*)&this->field_0x24 = 0;
-	*(undefined4*)&this->field_0x28 = 0;
-	*(undefined4*)&this->field_0x2c = 0;
-	this->field_0x30 = 0.0f;
-	this->field_0x34 = 4;
-	*(undefined4*)&this->field_0x3c = 0;
-	this->field_0x38 = 0;
-	this->field_0x40 = 0.0f;
-	*(undefined4*)&this->field_0x44 = 0;
-	*(undefined4*)&this->field_0x48 = 0;
-	*(undefined4*)&this->field_0x4c = 0;
-	*(undefined4*)&this->field_0x50 = 0;
-	this->field_0x54 = 0.0f;
-	this->field_0x58 = 4;
-	*(undefined4*)&this->field_0x60 = 0;
-	this->field_0x5c = 0;
+	
+	(this->field_0x1c).field_0x0 = 0.0f;
+	(this->field_0x1c).field_0x4 = 0.0f;
+	(this->field_0x1c).field_0x8 = 0.0f;
+	(this->field_0x1c).field_0xc = 0.0f;
+	(this->field_0x1c).field_0x10 = 0.0f;
+	(this->field_0x1c).field_0x14 = 0.0f;
+	(this->field_0x1c).field_0x18 = 4;
+	(this->field_0x1c).field_0x20 = 0;
+	(this->field_0x1c).field_0x1c = 0;
+
+	(this->field_0x40).field_0x0 = 0.0f;
+	(this->field_0x40).field_0x4 = 0.0f;
+	(this->field_0x40).field_0x8 = 0.0f;
+	(this->field_0x40).field_0xc = 0.0f;
+	(this->field_0x40).field_0x10 = 0.0f;
+	(this->field_0x40).field_0x14 = 0.0f;
+	(this->field_0x40).field_0x18 = 4;
+	(this->field_0x40).field_0x20 = 0;
+	(this->field_0x40).field_0x1c = 0;
+
 	this->pressedBitfield = 0;
 	this->releasedBitfield = 0;
 	this->field_0x5ec = 0;
@@ -762,18 +765,18 @@ void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
 	//InputEventData local_4;
 
 	if ((((this->field_0x14 != 0) && (this->bDisconnected == 0)) && (this->portIndex != 0xffffffff)) &&
-		((this->field_0x38 != 0 || (this->field_0x5c != 0)))) {
+		((this->field_0x1c.field_0x1c != 0 || (this->field_0x40.field_0x1c != 0)))) {
 		IMPLEMENTATION_GUARD(
 		if (this->field_0x38 == 0) {
 			local_4.field_0x0 = 0;
 		}
 		else {
 			fVar1 = param_1 * 255.0;
-			if (fVar1 < 2.147484e+09) {
+			if (fVar1 < 2.147484e+09f) {
 				local_4.field_0x0 = (byte)(int)fVar1;
 			}
 			else {
-				local_4.field_0x0 = (byte)(int)(fVar1 - 2.147484e+09);
+				local_4.field_0x0 = (byte)(int)(fVar1 - 2.147484e+09f);
 			}
 		}
 		if (this->field_0x5c == 0) {
@@ -781,11 +784,11 @@ void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
 		}
 		else {
 			fVar1 = param_2 * 255.0;
-			if (fVar1 < 2.147484e+09) {
+			if (fVar1 < 2.147484e+09f) {
 				local_4.field_0x1 = (byte)(int)fVar1;
 			}
 			else {
-				local_4.field_0x1 = (byte)(int)(fVar1 - 2.147484e+09);
+				local_4.field_0x1 = (byte)(int)(fVar1 - 2.147484e+09f);
 			}
 		}
 		InputFunc_00399ab0(this->portIndex, &local_4);)
@@ -1000,5 +1003,63 @@ void CPlayerInput::InitDev()
 	do {
 		fVar4 = edTimerTimeGet();
 	} while (fVar4 - fVar3 < 2.0f);)
+	return;
+}
+
+void CPlayerInput::FUN_001b66f0(float param_1, float param_2, float param_3, float param_4, CPlayerInputSubObj* param_5, int param_6)
+{
+	Timer* pTVar1;
+	float fVar2;
+
+	fVar2 = param_4 + param_2 + param_3;
+
+	if (fVar2 != 0.0f) {
+		if (10.0f < fVar2) {
+			fVar2 = 10.0f / fVar2;
+			param_2 = param_2 * fVar2;
+			param_3 = param_3 * fVar2;
+			param_4 = param_4 * fVar2;
+		}
+
+		param_5->field_0x0 = param_1;
+		param_5->field_0x4 = param_2;
+		param_5->field_0x8 = param_3;
+		param_5->field_0xc = param_4;
+
+		if ((GameFlags & 0x20) == 0) {
+			pTVar1 = GetTimer();
+			param_5->field_0x10 = pTVar1->scaledTotalTime;
+			param_5->field_0x20 = 0;
+		}
+		else {
+			pTVar1 = GetTimer();
+			param_5->field_0x10 = pTVar1->totalTime;
+			param_5->field_0x20 = 1;
+		}
+
+		param_5->field_0x18 = 0;
+
+		if (param_6 == 0) {
+			param_5->field_0x14 = 0.0f;
+		}
+		else {
+			fVar2 = edFIntervalLERP(param_5->field_0x14, 0.0f, param_1, 0.0f, param_2);
+			param_5->field_0x10 = param_5->field_0x10 - fVar2;
+
+			if (param_5->field_0x14 == param_5->field_0x0) {
+				if ((GameFlags & 0x20) == 0) {
+					pTVar1 = GetTimer();
+					param_5->field_0x10 = pTVar1->scaledTotalTime;
+				}
+				else {
+					pTVar1 = GetTimer();
+					param_5->field_0x10 = pTVar1->totalTime;
+				}
+
+				param_5->field_0x18 = 1;
+			}
+		}
+	}
+
 	return;
 }

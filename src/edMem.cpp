@@ -955,7 +955,8 @@ void memMastersInit(void)
 	S_MAIN_MEMORY_HEADER* pHeader;
 
 	pHeader = MemoryMasterBlock.pHeapMainHeaders;
-	MemoryMasterBlock.pHeapMainHeaders->flags = 2;
+
+	pHeader->flags = 2;
 	pHeader->funcTableID = 0xff;
 	pHeader->maxStackLevel = 0xff;
 	pHeader->pStartAddr = (char*)0xffffffff;
@@ -970,6 +971,7 @@ void memMastersInit(void)
 	pHeader->nextBlock = 0xffff;
 	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
 	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+
 	pHeader[1].flags = 0x96;
 	pHeader[1].funcTableID = 0;
 	pHeader[1].maxStackLevel = 0;
@@ -986,6 +988,7 @@ void memMastersInit(void)
 	pHeader[1].nextBlock = 0xffff;
 	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
 	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+
 	pHeader[2].flags = 0x96;
 	pHeader[2].funcTableID = 0;
 	pHeader[2].maxStackLevel = 0;
@@ -1001,6 +1004,7 @@ void memMastersInit(void)
 	pHeader[2].nextBlock = 0xffff;
 	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
 	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+
 	pHeader[3].flags = 0x96;
 	pHeader[3].funcTableID = 0;
 	pHeader[3].maxStackLevel = 0;
@@ -1016,6 +1020,7 @@ void memMastersInit(void)
 	pHeader[3].nextBlock = 0xffff;
 	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
 	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+
 	pHeader[4].flags = 0x86;
 	pHeader[4].funcTableID = 1;
 	pHeader[4].maxStackLevel = 0;
@@ -1031,6 +1036,7 @@ void memMastersInit(void)
 	pHeader[4].nextBlock = 0xffff;
 	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
 	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
+
 	MemoryMasterBlock.heapID = MemoryMasterBlock.maxHeaders;
 	return;
 }
@@ -1050,6 +1056,18 @@ void memDebugInformationInit(void)
 	return;
 }
 
+
+#ifdef PLATFORM_WIN
+S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = NULL;
+#else
+S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = (S_MAIN_MEMORY_HEADER*)0x004a5780;
+#endif
+
+S_MAIN_MEMORY_HEADER* edmemGetMainHeader()
+{
+	return g_HeapPtr_0040f370;
+}
+
 void edMemInit(short headerCount)
 {
 	MemoryMasterBlock.maxHeaders = 0;
@@ -1059,6 +1077,7 @@ void edMemInit(short headerCount)
 	MemoryMasterBlock.pHeapMainHeaders = (S_MAIN_MEMORY_HEADER*)g_SystemHeap_0042df0.startAddress;
 	MemoryMasterBlock.headerCount = headerCount;
 	MemoryMasterBlock.freeHeaders = headerCount;
+
 	edMemStackLevelPush();
 	memMemoryHeadersBlockInit();
 	memMastersInit();

@@ -155,18 +155,18 @@ void CSettings::StoreGlobalSettings()
 	pCVar1 = g_CinematicManager_0048efc;
 	IMPLEMENTATION_GUARD_LOG(
 	fVar6 = (CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xbc * 12.0;
-	if (fVar6 < 2.147484e+09) {
+	if (fVar6 < 2.147484e+09f) {
 		this->field_0x18 = (int)fVar6;
 	}
 	else {
-		this->field_0x18 = (int)(fVar6 - 2.147484e+09) | 0x80000000;
+		this->field_0x18 = (int)(fVar6 - 2.147484e+09f) | 0x80000000;
 	}
 	fVar6 = pGVar3->field_0xc0 * 12.0;
-	if (fVar6 < 2.147484e+09) {
+	if (fVar6 < 2.147484e+09f) {
 		this->field_0x1c = (int)fVar6;
 	}
 	else {
-		this->field_0x1c = (int)(fVar6 - 2.147484e+09) | 0x80000000;
+		this->field_0x1c = (int)(fVar6 - 2.147484e+09f) | 0x80000000;
 	}
 	iVar4 = edSoundOutputModeGet();
 	this->field_0x14 = iVar4;)
@@ -1321,30 +1321,30 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 	}
 	else {
 		fVar4 = (float)(uint)this->field_0x30[0] * param_3;
-		if (fVar4 < 2.147484e+09) {
+		if (fVar4 < 2.147484e+09f) {
 			r = (byte)(int)fVar4;
 			bVar2 = this->field_0x30[1];
 		}
 		else {
-			r = (byte)(int)(fVar4 - 2.147484e+09);
+			r = (byte)(int)(fVar4 - 2.147484e+09f);
 			bVar2 = this->field_0x30[1];
 		}
 		fVar4 = (float)(uint)bVar2 * param_3;
-		if (fVar4 < 2.147484e+09) {
+		if (fVar4 < 2.147484e+09f) {
 			g = (byte)(int)fVar4;
 			bVar2 = this->field_0x30[2];
 		}
 		else {
-			g = (byte)(int)(fVar4 - 2.147484e+09);
+			g = (byte)(int)(fVar4 - 2.147484e+09f);
 			bVar2 = this->field_0x30[2];
 		}
 		fVar4 = (float)(uint)bVar2 * param_3;
-		if (fVar4 < 2.147484e+09) {
+		if (fVar4 < 2.147484e+09f) {
 			b = (byte)(int)fVar4;
 			bVar2 = this->field_0x30[3];
 		}
 		else {
-			b = (byte)(int)(fVar4 - 2.147484e+09);
+			b = (byte)(int)(fVar4 - 2.147484e+09f);
 			bVar2 = this->field_0x30[3];
 		}
 		edDListColor4u8(r, g, b, bVar2);

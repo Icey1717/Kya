@@ -930,6 +930,51 @@ void CScene::HandleFogAndClippingSettings()
 	return;
 }
 
+
+void CScene::PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream)
+{
+	S_STREAM_FOG_DEF* pSVar1;
+	float* pfVar2;
+	FogClipEntry* pFVar3;
+	FogClipEntry* pFVar4;
+	float fVar5;
+
+	if ((pFogStream->flags & 1) == 0) {
+		pfVar2 = &this->aFogClipStack[this->fogClipSettingStackSize + -10].field_0x4;
+		pFVar3 = (FogClipEntry*)(pfVar2 + 0x13);
+
+		for (pFVar4 = this->aFogClipStack; (pFVar4 <= pFVar3 && (pFVar4->pStreamDef != pFogStream)); pFVar4 = pFVar4 + 1) {
+		}
+
+		if (pFVar4 <= pFVar3) {
+			if (pFVar4 == pFVar3) {
+				pSVar1 = pFVar3->pStreamDef;
+				this->field_0xd8 = pSVar1->clipValue_0x0;
+				this->field_0xdc = pSVar1->field_0x4;
+				this->prevFogRGBA = pSVar1->fogRGBA;
+				this->prevFogFlags = pSVar1->flags;
+				fVar5 = pfVar2[0x14];
+				this->field_0xd4 = fVar5;
+				fVar5 = fVar5 - this->field_0xd0;
+				this->field_0xd0 = fVar5;
+
+				if (fVar5 < 0.0f) {
+					this->field_0xd0 = 0.0f;
+				}
+			}
+			else {
+				for (; pFVar4 < pFVar3; pFVar4 = pFVar4 + 1) {
+					pFVar4->pStreamDef = pFVar4[1].pStreamDef;
+					pFVar4->field_0x4 = pFVar4[1].field_0x4;
+				}
+			}
+
+			this->fogClipSettingStackSize = this->fogClipSettingStackSize + -1;
+		}
+	}
+	return;
+}
+
 void CScene::PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream)
 {
 	FogClipEntry* pfVar1;

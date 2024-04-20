@@ -140,7 +140,36 @@ void edDevInit(uint flags)
 static int g_ControllerCount_004497dc = 0;
 static Pad_180 Pad_180_ARRAY_00496b00[8];
 
-#pragma clang optimize off
+#ifdef MOUSE_SUPPORT_EXTENSION_ENABLED
+int edDevInitPortMouse(EDDEV_PORT* pController)
+{
+	int result = 0;
+
+	pController->pEventFunc = Input::_edDevMouse;
+
+	uint uVar2 = pController->pEventFunc(0x90000000, pController, (void*)0x0);
+	pController->maxControlId = uVar2;
+
+	if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
+		result = -5;
+	}
+	else {
+		pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
+		uVar2 = pController->pEventFunc(0x90000001, pController, (void*)0x0);
+
+		if (uVar2 == 0) {
+			pController->flags = pController->flags | 0x40000000;
+			pController->controllerId = edDevRoot.nbPorts;
+			g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
+			edDevRoot.nbPorts = edDevRoot.nbPorts + 1;
+			edDevRoot.nbPadD = edDevRoot.nbPadD + pController->maxControlId;
+		}
+	}
+
+	return result;
+}
+#endif
+
 int edDevInitPort(uint port, int slot, uint type)
 {
 	undefined uVar1;
@@ -152,6 +181,8 @@ int edDevInitPort(uint port, int slot, uint type)
 	int result;
 	//scePad2SocketParam local_20;
 	Pad_180* pPVar2;
+
+	uVar2 = 1;
 
 	if (edDevRoot.nbPorts < edDevRoot.nbMaxPorts) {
 		result = 0;
@@ -239,28 +270,7 @@ int edDevInitPort(uint port, int slot, uint type)
 
 #ifdef MOUSE_SUPPORT_EXTENSION_ENABLED
 			if (type == INPUT_TYPE_MOUSE) {
-				pController->pEventFunc = Input::_edDevMouse;
-
-				uVar2 = pController->pEventFunc(0x90000000, pController, (void*)0x0);
-				pController->maxControlId = uVar2;
-
-				if (edDevRoot.nbMaxPadD < edDevRoot.nbPadD + pController->maxControlId) {
-					result = -5;
-				}
-				else {
-					pController->pPadD = edDevRoot.aPadD + edDevRoot.nbPadD;
-					uVar2 = pController->pEventFunc(0x90000001, pController, (void*)0x0);
-
-					if (uVar2 == 0) {
-						pController->flags = pController->flags | 0x40000000;
-						pPVar2->state = 0;
-						pPVar2->prevState = 0;
-						pController->controllerId = edDevRoot.nbPorts;
-						g_ControllerCount_004497dc = g_ControllerCount_004497dc + 1;
-						edDevRoot.nbPorts = edDevRoot.nbPorts + 1;
-						edDevRoot.nbPadD = edDevRoot.nbPadD + pController->maxControlId;
-					}
-				}
+				result = edDevInitPortMouse(pController);
 			}
 #endif
 		}
@@ -271,4 +281,3 @@ int edDevInitPort(uint port, int slot, uint type)
 
 	return result;
 }
-#pragma clang optimize on

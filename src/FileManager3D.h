@@ -56,6 +56,7 @@ struct C3DFileManager : public CObjectManager {
 	void Level_ClearInternalData();
 	void Level_Create(ByteCode* pMemoryStream);
 
+	void ShowCommonBackground();
 	void HideCommonBackground();
 	void SetupBackground(edNODE* pNode);
 	void ManageBackground(edNODE* pNode, uint flags);

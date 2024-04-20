@@ -157,6 +157,7 @@ public:
 
 	edColG3D_OBB_TREE_DYN* InstanciateDynCol(int index);
 	edObbTREE_DYN* InstallColFile(char* pFile, uint size);
+	void UninstallColFile(edObbTREE_DYN* pObbTree);
 
 	int bankCollisionCount;
 	int loadedBankCount_0x8;

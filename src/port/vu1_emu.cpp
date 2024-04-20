@@ -2291,6 +2291,7 @@ namespace VU1Emu {
 		void Prepare(char* pMem, int inItop, int inAddr)
 		{
 			memcpy(fakeMem, pMem, FAKE_VU1_MEM_SIZE);
+			assert(inItop < 0x8000);
 			itop = inItop;
 			addr = inAddr;
 		}

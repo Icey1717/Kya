@@ -76,6 +76,7 @@ extern "C" {
 #include "EventManager.h"
 #include "ActorHero.h"
 #include "Debug.h"
+#include "MenuMessageBox.h"
 
 template<class T>
 T* CreateNew()
@@ -1530,9 +1531,9 @@ void MainInit(int argc,char **argv)
 	bool bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
 	/* This doesn't seem to trigger on main run. */
 	if (bVar1 != false) {
-		IMPLEMENTATION_GUARD();
-		//DrawPopup_0034e1f0(8, 0, 0x52525f503700080c, 0x171d0d0b190f111a, 0);
+		MenuMessageBoxDisplay(8, 0, 0x52525f503700080c, 0x171d0d0b190f111a, 0);
 	}
+
 	SaveManagementBootCheck();
 	return;
 }
@@ -2136,11 +2137,12 @@ void GameLoop(void)
 					//LoadFrontendWithuRam00451684();
 				}
 			}
-			bVar4 = gPlayerInput.aButtons[6].clickValue != 0.0 ||
-				gPlayerInput.aButtons[10].clickValue != 0.0;
-			if ((gPlayerInput.field_0x58 != 4) || (gPlayerInput.field_0x34 != 4)) {
+
+			bVar4 = gPlayerInput.aButtons[6].clickValue != 0.0f || gPlayerInput.aButtons[10].clickValue != 0.0f;
+			if ((gPlayerInput.field_0x40.field_0x18 != 4) || (gPlayerInput.field_0x1c.field_0x18 != 4)) {
 				bVar4 = true;
 			}
+
 			if ((((gPlayerInput.pressedBitfield & 0x8000000) != 0) && (!bVar4)) ||
 				((GameFlags & 0x400) != 0)) {
 				if (((GameFlags & 0x10) == 0) || ((GameFlags & 0x400) != 0)) {
@@ -2155,8 +2157,8 @@ void GameLoop(void)
 				}
 				GameFlags = GameFlags & 0xfffffbff;
 			}
-			if (((gPlayerInput.pressedBitfield & KEY_START) != 0) &&
-				((gPlayerInput.pressedBitfield & 0x80000) == 0)) {
+
+			if (((gPlayerInput.pressedBitfield & KEY_START) != 0) && ((gPlayerInput.pressedBitfield & 0x80000) == 0)) {
 				if ((GameFlags & 4) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						if ((GameFlags & 0x800) == 0) {

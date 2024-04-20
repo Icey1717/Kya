@@ -109,6 +109,8 @@ public:
 	float ComputeCollision(CLight* pLightA, CLight* pLightB);
 
 	void SetManagedByCluster(CLight* pLight);
+	void EnterManagedCluster(CLight* pLight);
+	void LeaveManagedCluster(CLight* pLight);
 
 	int referencedLightsCount;
 	int lightCount;

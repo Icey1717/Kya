@@ -511,11 +511,14 @@ void DebugMeshViewer::ShowNodeMenu(edNODE* pNode)
 void ShowOctreeMenu(const ed_3d_octree& octree) 
 {
 	if (ImGui::CollapsingHeader("Octree", ImGuiTreeNodeFlags_DefaultOpen)) {
-		DebugHelpers::ImGui::TextVector4("field_0x0", octree.field_0x0);
-		DebugHelpers::ImGui::TextVector4("field_0x10", octree.field_0x10);
+		MeshData_CDQU* pCDQU = reinterpret_cast<MeshData_CDQU*>(octree.pCDQU);
 
-		DebugHelpers::ImGui::TextHash4("CDQU Hash:", octree.pCDQU->hash);
-		ImGui::Text("CDQU Size: %d (0x%x)", octree.pCDQU->size, octree.pCDQU->size);
+		DebugHelpers::ImGui::TextVector4("field_0x0", octree.field_0x0);
+
+		DebugHelpers::ImGui::TextVector4("world Location", octree.worldLocation);
+
+		DebugHelpers::ImGui::TextHash4("CDQU Hash:", pCDQU->header.hash);
+		ImGui::Text("CDQU Size: %d (0x%x)", pCDQU->header.size, pCDQU->header.size);
 
 		ImGui::Text("boundingSphereTestResult: %u", octree.boundingSphereTestResult);
 
@@ -526,12 +529,31 @@ void ShowOctreeMenu(const ed_3d_octree& octree)
 
 		ImGui::Text("Strip Count: %u", stripCount);
 
+		if (ImGui::CollapsingHeader("Cluster Hier", ImGuiTreeNodeFlags_DefaultOpen)) {
+			uint clusterHierCount = pCDQU->clusterDetails.clusterHierCount;
+
+			if (clusterHierCount != 0) {
+				ed_hash_code* puVar17 = (ed_hash_code*)((char*)pCDQU + 0x60);
+				bool bVar1;
+
+				while (bVar1 = clusterHierCount != 0, clusterHierCount = clusterHierCount - 1, bVar1) {
+
+					char label[256];
+					sprintf(label, "Cluster Hier: %s (0x%x)", puVar17->hash.name, puVar17->hash.number);
+					if (ImGui::Selectable(label)) {
+					}
+					puVar17 = puVar17 + 1;
+				}
+			}
+		}
+
+
 		ImGui::InputInt("Strip", &DebugMeshViewer::gOctreeStrip);
 		DebugMeshViewer::gOctreeStrip = std::clamp<uint>(DebugMeshViewer::gOctreeStrip, 0, stripCount - 1);
 
 		ImGui::End();
 
-		DebugMeshViewer::ShowPreviewer(&octree);
+		//DebugMeshViewer::ShowPreviewer(&octree);
 	}
 	else {
 		ImGui::End();
@@ -555,8 +577,8 @@ void DebugMeshViewer::ShowClusterMenu(ed_g3d_manager* pManager)
 	if (pCSTA->chunk.hash == 0x414f4443) {
 		local_90.xyz = pCSTA->field_0x20;
 		octreeB.field_0x0.w = 0.0f;
-		octreeB.field_0x10.xyz = pCSTA->field_0x30.xyz;
-		octreeB.field_0x10.w = 1.0f;
+		octreeB.worldLocation.xyz = pCSTA->worldLocation.xyz;
+		octreeB.worldLocation.w = 1.0f;
 		local_90.w = 0.0f;
 		octreeB.field_0x0.xyz = local_90.xyz;
 		edF32Vector4SquareHard(&local_90, &local_90);
@@ -573,8 +595,8 @@ void DebugMeshViewer::ShowClusterMenu(ed_g3d_manager* pManager)
 		if (pCSTA->chunk.hash == 0x41514443) {
 			local_a0.xyz = pCSTA->field_0x20;
 			octreeA.field_0x0.w = 0.0f;
-			octreeA.field_0x10.xyz = pCSTA->field_0x30.xyz;
-			octreeA.field_0x10.w = 1.0f;
+			octreeA.worldLocation.xyz = pCSTA->worldLocation.xyz;
+			octreeA.worldLocation.w = 1.0f;
 			local_a0.w = 0.0f;
 			octreeA.field_0x0.xyz = local_a0.xyz;
 			edF32Vector4SquareHard(&local_a0, &local_a0);

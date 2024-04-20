@@ -86,6 +86,7 @@ public:
 	virtual void StoreCollisionSphere();
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	virtual void UpdateCollisionSphere();
+	virtual void RestoreCollisionSphere(float param_2);
 
 	void ComputeSlidingForce(edF32VECTOR4* param_2, int param_3);
 

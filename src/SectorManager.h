@@ -61,6 +61,7 @@ public:
 	void InstallCallback();
 	void Load(int param_2, int param_3, bool bFileFlag);
 	void Level_Manage(int sectID, int param_3);
+	void Flush();
 	int desiredSectorID;
 	int sectorIndex;
 	int loadStage_0x8;
@@ -99,6 +100,10 @@ public:
 	void SetupCompanionSectors(uint flags);
 
 	void Level_Create(ByteCode* pMemoryStream);
+
+	void SwitchToSector(int sectID, bool param_3);
+
+	void Flush();
 
 	char szSectorFileRoot[32];
 	undefined field_0x24;

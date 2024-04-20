@@ -86,6 +86,8 @@ public:
 	void StateHeroTobogganInit();
 	void StateHeroToboggan(int param_2);
 
+	void StateHeroTobogganJump(int param_2, int param_3, int param_4, int nextState);
+
 	inline void StateHeroRunTerm() {}
 	void StateHeroRun();
 
@@ -93,6 +95,11 @@ public:
 	void StateHeroSlideSlip(int nextState, bool boolA, bool boolB);
 
 	void StateHeroSlideInit(int param_2);
+	void StateHeroSlideTerm(int param_2);
+
+	void StateHeroUTurnInit();
+	void StateHeroUTurn();
+	void StateHeroUTurnTerm();
 
 	void StateHeroJump_1_3(int nextState);
 
@@ -117,6 +124,10 @@ public:
 	void BuildHorizontalSpeedVector(float runSpeed, float param_2, float param_3, float param_4, float param_5);
 	void ConvertSpeedSumForceExtToSpeedPlayer2D();
 
+	void RestoreVerticalOrientation();
+
+	bool DetectGripablePrecipice();
+
 	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
 
 	void SetBoomyHairOff();
@@ -138,8 +149,15 @@ public:
 	void ConvertSpeedPlayerToSpeedSumForceExt();
 	void BeginToboggan();
 	void SlideOnToboggan(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, edF32VECTOR4* param_7, uint dynFlags);
+	bool TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4* param_3, CActor* pActor);
+
+	void Landing();
 
 	void AdjustLocalMatrixFromNormal(float param_1, edF32VECTOR4* pNormal);
+
+	bool GetNormalInFrontOf(float rayLength, edF32VECTOR4* pRayDirection, edF32VECTOR4* param_4, uint flags, edF32VECTOR4* pHitLocation, CActor** pActor);
+
+	void SetInvincible(float t0, int param_3);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -182,6 +200,7 @@ public:
 	float field_0x151c;
 
 	edF32VECTOR4 field_0x10a0;
+	edF32VECTOR4 field_0x1030;
 	edF32VECTOR4 normalValue;
 
 	uint field_0x15a0;
@@ -219,6 +238,7 @@ public:
 	float field_0x10cc;
 	float field_0x10d0;
 	float field_0x10d4;
+	edF32VECTOR4 field_0x10e0;
 	float field_0x10f0;
 
 	// Standard settings.
@@ -232,9 +252,11 @@ public:
 	float airNoInputSpeed;
 	float field_0x1184;
 	float landSpeed;
+	float field_0x1430;
 	float field_0x1574;
 
 	float animKey_0x157c;
+	float field_0x11f0;
 
 	float field_0x1160;
 	float field_0x1164;
@@ -269,6 +291,7 @@ public:
 	float field_0x118c;
 
 	float field_0x10f4;
+	float field_0x10f8;
 
 	float field_0x1108;
 
@@ -280,6 +303,7 @@ public:
 	float field_0x1548;
 	float field_0x154c;
 	float field_0x155c;
+	undefined4 field_0x1560;
 
 	undefined4 jmp_field_0x1144;
 	edF32VECTOR4 jmp_field_0x1120;

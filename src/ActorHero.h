@@ -5,6 +5,9 @@
 #include "Actor.h"
 #include "ActorFighter.h"
 
+#define SCENE_VAR_BOUNCE_JUMP 0x7
+#define SCENE_VAR_MAX_HEALTH 0x14
+
 #define STATE_HERO_STAND 0x73
 #define STATE_HERO_RUN 0x76
 #define STATE_HERO_JUMP_1_1_STAND 0x78
@@ -32,7 +35,11 @@
 #define STATE_HERO_SLIDE_A 0xe4
 #define STATE_HERO_SLIDE_B 0xe5
 
+#define STATE_HERO_U_TURN 0xe7
+
 #define STATE_HERO_TOBOGGAN_3 0xe8
+#define STATE_HERO_TOBOGGAN_JUMP_1 0xea
+#define STATE_HERO_TOBOGGAN_JUMP_2 0xeb
 #define STATE_HERO_TOBOGGAN_2 0xed
 #define STATE_HERO_TOBOGGAN 0xee
 
@@ -99,6 +106,8 @@ public:
 	uint TestState_IsInTheWind(uint inFlags);
 	uint TestState_IsFlying(uint inFlags);
 	uint TestState_IsCrouched(uint inFlags);
+
+	bool FUN_0014cb60(edF32VECTOR4* v0);
 };
 
 extern ulong gBoomyHashCodes[4];

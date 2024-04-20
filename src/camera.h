@@ -57,6 +57,9 @@ struct CCamera : public CObject {
 	virtual void SetAngleGamma(float angle) { };
 	virtual void SetMode(ECameraType type) {}
 
+	void EnterManagedCluster();
+	void LeaveManagedCluster();
+
 	static CCameraManager* _gpcam_man;
 
 	int field_0x8;
@@ -78,7 +81,7 @@ struct CCamera : public CObject {
 	SWITCH_MODE field_0x94;
 	float field_0x98;
 	float field_0x9c;
-	byte field_0xa0;
+	byte nbManagedByClusters;
 	undefined field_0xa1;
 	undefined field_0xa2;
 	undefined field_0xa3;

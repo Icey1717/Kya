@@ -44,7 +44,7 @@ void CBehaviourClusteriserZones::Create(ByteCode* pByteCode)
 					pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
 				}
 
-				puVar6->field_0xc = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
+				puVar6->pActorStreamRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
 				piVar2 = (int*)pByteCode->currentSeekPos;
 				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 				if (*piVar2 != 0) {
@@ -52,25 +52,25 @@ void CBehaviourClusteriserZones::Create(ByteCode* pByteCode)
 				}
 				puVar6->field_0x10 = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
 				puVar6->nbActors = 0;
-				puVar6->field_0x18 = 0;
+				puVar6->aActors = (CActor**)0x0;
 
 				piVar2 = (int*)pByteCode->currentSeekPos;
 				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 				if (*piVar2 != 0) {
 					pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
 				}
-				puVar6->field_0x1c = reinterpret_cast<S_CAMERA_STREAM_REF*>(piVar2);;
-				puVar6->nbEvents = 0;
-				puVar6->field_0x24 = 0;
+				puVar6->pCameraStreamRef = reinterpret_cast<S_CAMERA_STREAM_REF*>(piVar2);
+				puVar6->nbCameras = 0;
+				puVar6->aCameras = (CCamera**)0x0;
 
 				piVar2 = (int*)pByteCode->currentSeekPos;
 				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 				if (*piVar2 != 0) {
 					pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
 				}
-				puVar6->field_0x28 = reinterpret_cast<S_LIGHT_STREAM_REF*>(piVar2);;
+				puVar6->pLightStreamRef = reinterpret_cast<S_LIGHT_STREAM_REF*>(piVar2);
 				puVar6->nbLights = 0;
-				puVar6->field_0x30 = 0;
+				puVar6->aLights = (CLight**)0x0;
 
 				piVar2 = (int*)pByteCode->currentSeekPos;
 				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
@@ -80,6 +80,7 @@ void CBehaviourClusteriserZones::Create(ByteCode* pByteCode)
 				puVar6->field_0x34 = piVar2;
 				iVar5 = pByteCode->GetS32();
 				puVar6->field_0x8.index = iVar5;
+
 				iVar1 = iVar1 + 1;
 			} while (iVar1 < this->nbZoneClusters);
 		}
@@ -176,7 +177,7 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 			pZoneCluster = this->aZoneClusters + iVar21;
 			pZoneCluster->field_0x4.Init();
 
-			pSVar14 = pZoneCluster->field_0xc;
+			pSVar14 = pZoneCluster->pActorStreamRef;
 			for (pCVar11 = pSVar14->entryCount; pCVar11 != 0x0; pCVar11 = pCVar11 - 1)
 			{
 				pSVar14->aEntries[pCVar11 - 1].Init();
@@ -188,14 +189,14 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 				pSVar14->aEntries[pCVar11 - 1].Init();
 			}
 
-			S_CAMERA_STREAM_REF* pCameraStreamRef = pZoneCluster->field_0x1c;
+			S_CAMERA_STREAM_REF* pCameraStreamRef = pZoneCluster->pCameraStreamRef;
 
 			for (pCVar11 = pCameraStreamRef->entryCount; pCVar11 != 0x0; pCVar11 = pCVar11 - 1)
 			{
 				pCameraStreamRef->aEntries[pCVar11 - 1].Init();
 			}
 
-			S_LIGHT_STREAM_REF* pLightStreamRef = pZoneCluster->field_0x28;
+			S_LIGHT_STREAM_REF* pLightStreamRef = pZoneCluster->pLightStreamRef;
 
 			for (pCVar11 = pLightStreamRef->entryCount; pCVar11 != 0x0; pCVar11 = pCVar11 - 1)
 			{
@@ -211,14 +212,14 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 			if ((pZoneCluster->flags & 0x30) != 0) {
 				iVar12 = 0;
 
-				if (pZoneCluster->field_0xc->entryCount != 0x0) {
-					iVar12 = pZoneCluster->field_0xc->entryCount;
+				if (pZoneCluster->pActorStreamRef != (S_ACTOR_STREAM_REF*)0x0) {
+					iVar12 = pZoneCluster->pActorStreamRef->entryCount;
 				}
 
 				iVar13 = 0;
 				if (0 < iVar12) {
 					do {
-						pActor = pZoneCluster->field_0xc->aEntries[iVar13].Get();
+						pActor = pZoneCluster->pActorStreamRef->aEntries[iVar13].Get();
 
 						if (pActor != (CActor*)0x0) {
 							if ((pZoneCluster->flags & 0x10) != 0) {
@@ -249,14 +250,14 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 
 			if ((pZoneCluster->flags & 0x80) != 0) {
 				iVar12 = 0;
-				if (pZoneCluster->field_0x28->entryCount != 0x0) {
-					iVar12 = pZoneCluster->field_0x28->entryCount;
+				if (pZoneCluster->pLightStreamRef != 0x0) {
+					iVar12 = pZoneCluster->pLightStreamRef->entryCount;
 				}
 
 				iVar13 = 0;
 				if (0 < iVar12) {
 					do {
-						CLight* pLight = pZoneCluster->field_0x28->aEntries[iVar13].Get();
+						CLight* pLight = pZoneCluster->pLightStreamRef->aEntries[iVar13].Get();
 
 						if (pLight != (CLight*)0x0) {
 							pLightManager->SetManagedByCluster(pLight);
@@ -276,13 +277,14 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 					pZoneCluster->nbActors = uVar9;
 
 					if (pZoneCluster->nbActors != 0) {
-						pZoneCluster->field_0x18 = (CActor**)NewPool_Pointer(pZoneCluster->nbActors);
+						pZoneCluster->aActors = (CActor**)NewPool_Pointer(pZoneCluster->nbActors);
 						iVar12 = 0;
 						if (0 < pZoneCluster->nbActors) {
 							ppCVar20 = aActors;
 							do {
 								pActor = *ppCVar20;
-								pZoneCluster->field_0x18[iVar12] = pActor;
+								pZoneCluster->aActors[iVar12] = pActor;
+
 								if ((pZoneCluster->flags & 0x10) != 0) {
 									if ((pZoneCluster->flags & 0x100) == 0) {
 										pActor->flags = pActor->flags | 8;
@@ -293,9 +295,11 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 										pActor->flags = pActor->flags | 0x18;
 										pActor->EvaluateManageState();
 									}
+
 									IMPLEMENTATION_GUARD_LOG(
 									(*(code*)pActor->pVTable->field_0xd4)(pActor, pZoneCluster->field_0x8);)
 								}
+
 								if ((pZoneCluster->flags & 0x20) != 0) {
 									pActor->flags = pActor->flags | 0x200;
 									pActor->EvaluateDisplayState();
@@ -325,9 +329,9 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 						}
 					}
 
-					pZoneCluster->nbEvents = iVar12;
+					pZoneCluster->nbCameras = iVar12;
 
-					if (pZoneCluster->nbEvents != 0) {
+					if (pZoneCluster->nbCameras != 0) {
 						IMPLEMENTATION_GUARD(
 						iVar12 = NewPool_Pointer((long)(int)pZoneCluster->nbEvents);
 						pZoneCluster->field_0x24 = iVar12;
@@ -519,12 +523,236 @@ void CBehaviourClusteriserZones::End(int newBehaviourId)
 
 void CBehaviourClusteriserZones::TriggerManageClusterOff(_S_ZONE_CLUSTER* pZoneCluster)
 {
-	IMPLEMENTATION_GUARD();
+	CActor* pCVar1;
+	CLight* pLight;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	CCamera* pCamera;
+	CLightManager* pLightManager;
+
+	pZoneCluster->flags = pZoneCluster->flags & 0xbfffffff;
+
+	if ((pZoneCluster->flags & 0x30) != 0) {
+		iVar4 = 0;
+		if (0 < pZoneCluster->nbActors) {
+			do {
+				pCVar1 = pZoneCluster->aActors[iVar4];
+				if ((pZoneCluster->flags & 0x10) != 0) {
+					pCVar1->state_0x10 = pCVar1->state_0x10 - 1;
+					pCVar1->EvaluateManageState();
+				}
+
+				if ((pZoneCluster->flags & 0x20) != 0) {
+					pCVar1->field_0x11 = pCVar1->field_0x11 - 1;
+					pCVar1->EvaluateDisplayState();
+				}
+
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < pZoneCluster->nbActors);
+		}
+
+		iVar4 = 0;
+		if (pZoneCluster->pActorStreamRef != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar4 = pZoneCluster->pActorStreamRef->entryCount;
+		}
+
+		iVar2 = 0;
+		if (0 < iVar4) {
+			do {
+				pCVar1 = pZoneCluster->pActorStreamRef->aEntries[iVar2].Get();
+
+				if (pCVar1 != (CActor*)0x0) {
+					if ((pZoneCluster->flags & 0x10) != 0) {
+						pCVar1->state_0x10 = pCVar1->state_0x10 - 1;
+						pCVar1->EvaluateManageState();
+					}
+
+					if ((pZoneCluster->flags & 0x20) != 0) {
+						pCVar1->field_0x11 = pCVar1->field_0x11 - 1;
+						pCVar1->EvaluateDisplayState();
+					}
+				}
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < iVar4);
+		}
+	}
+
+	if ((pZoneCluster->flags & 0x40) != 0) {
+		iVar4 = 0;
+		if (0 < pZoneCluster->nbCameras) {
+			do {
+				pZoneCluster->aCameras[iVar4]->LeaveManagedCluster();
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < pZoneCluster->nbCameras);
+		}
+
+		iVar4 = 0;
+		if (pZoneCluster->pCameraStreamRef != (S_CAMERA_STREAM_REF*)0x0) {
+			iVar4 = pZoneCluster->pCameraStreamRef->entryCount;
+		}
+
+		iVar2 = 0;
+		if (0 < iVar4) {
+			do {
+				pCamera = pZoneCluster->pCameraStreamRef->aEntries[iVar2].Get();
+				if (pCamera != (CCamera*)0x0) {
+					pCamera->LeaveManagedCluster();
+				}
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < iVar4);
+		}
+	}
+
+	pLightManager = CScene::ptable.g_LightManager_004516b0;
+	if ((pZoneCluster->flags & 0x80) != 0) {
+		iVar4 = 0;
+		if (0 < pZoneCluster->nbLights) {
+			do {
+				pLightManager->LeaveManagedCluster(pZoneCluster->aLights[iVar4]);
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < pZoneCluster->nbLights);
+		}
+
+		iVar4 = 0;
+		if (pZoneCluster->pLightStreamRef != (S_LIGHT_STREAM_REF*)0x0) {
+			iVar4 = pZoneCluster->pLightStreamRef->entryCount;
+		}
+
+		iVar2 = 0;
+		if (0 < iVar4) {
+			do {
+				pLight = pZoneCluster->pLightStreamRef->aEntries[iVar2].Get();
+
+				if (pLight != (CLight*)0x0) {
+					pLightManager->LeaveManagedCluster(pLight);
+				}
+
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < iVar4);
+		}
+	}
+
+	TriggerSceneries(pZoneCluster, 0);
+
+	return;
 }
 
 void CBehaviourClusteriserZones::TriggerManageClusterOn(_S_ZONE_CLUSTER* pZoneCluster)
 {
-	IMPLEMENTATION_GUARD();
+	CActor* pCVar1;
+	CLight* pLight;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	CCamera* pCamera;
+	CLightManager* pLightManager;
+
+	pZoneCluster->flags = pZoneCluster->flags | 0x40000000;
+
+	if ((pZoneCluster->flags & 0x30) != 0) {
+		iVar4 = 0;
+		if (0 < pZoneCluster->nbActors) {
+			do {
+				pCVar1 = pZoneCluster->aActors[iVar4];
+				if ((pZoneCluster->flags & 0x10) != 0) {
+					pCVar1->state_0x10 = pCVar1->state_0x10 + 1;
+					pCVar1->EvaluateManageState();
+				}
+
+				if ((pZoneCluster->flags & 0x20) != 0) {
+					pCVar1->field_0x11 = pCVar1->field_0x11 + 1;
+					pCVar1->EvaluateDisplayState();
+				}
+
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < pZoneCluster->nbActors);
+		}
+
+		iVar4 = 0;
+		if (pZoneCluster->pActorStreamRef != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar4 = pZoneCluster->pActorStreamRef->entryCount;
+		}
+
+		iVar2 = 0;
+		if (0 < iVar4) {
+			do {
+				pCVar1 = pZoneCluster->pActorStreamRef->aEntries[iVar2].Get();
+
+				if (pCVar1 != (CActor*)0x0) {
+					if ((pZoneCluster->flags & 0x10) != 0) {
+						pCVar1->state_0x10 = pCVar1->state_0x10 + 1;
+						pCVar1->EvaluateManageState();
+					}
+
+					if ((pZoneCluster->flags & 0x20) != 0) {
+						pCVar1->field_0x11 = pCVar1->field_0x11 + 1;
+						pCVar1->EvaluateDisplayState();
+					}
+				}
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < iVar4);
+		}
+	}
+
+	if ((pZoneCluster->flags & 0x40) != 0) {
+		iVar4 = 0;
+		if (0 < pZoneCluster->nbCameras) {
+			do {
+				pZoneCluster->aCameras[iVar4]->EnterManagedCluster();
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < pZoneCluster->nbCameras);
+		}
+
+		iVar4 = 0;
+		if (pZoneCluster->pCameraStreamRef != (S_CAMERA_STREAM_REF*)0x0) {
+			iVar4 = pZoneCluster->pCameraStreamRef->entryCount;
+		}
+
+		iVar2 = 0;
+		if (0 < iVar4) {
+			do {
+				pCamera = pZoneCluster->pCameraStreamRef->aEntries[iVar2].Get();
+				if (pCamera != (CCamera*)0x0) {
+					pCamera->EnterManagedCluster();
+				}
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < iVar4);
+		}
+	}
+
+	pLightManager = CScene::ptable.g_LightManager_004516b0;
+	if ((pZoneCluster->flags & 0x80) != 0) {
+		iVar4 = 0;
+		if (0 < pZoneCluster->nbLights) {
+			do {
+				pLightManager->EnterManagedCluster(pZoneCluster->aLights[iVar4]);
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < pZoneCluster->nbLights);
+		}
+
+		iVar4 = 0;
+		if (pZoneCluster->pLightStreamRef != (S_LIGHT_STREAM_REF*)0x0) {
+			iVar4 = pZoneCluster->pLightStreamRef->entryCount;
+		}
+
+		iVar2 = 0;
+		if (0 < iVar4) {
+			do {
+				pLight = pZoneCluster->pLightStreamRef->aEntries[iVar2].Get();
+
+				if (pLight != (CLight*)0x0) {
+					pLightManager->EnterManagedCluster(pLight);
+				}
+
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < iVar4);
+		}
+	}
+
+	TriggerSceneries(pZoneCluster, 1);
+
+	return;
 }
 
 void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster, int param_3)

@@ -51,26 +51,6 @@ void edSystemInit_Reset(void)
 }
 #endif
 
-#ifdef PLATFORM_WIN
-#pragma pack(push,1)
-struct VirtualMemory {
-	S_MAIN_MEMORY_HEADER g_heap_004a5780[0x1000];
-	//char g_memory[0x1685100];
-	char g_memory[0x1F85100];
-};
-#pragma  pack(pop)
-
-S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = NULL;
-#else
-S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = (S_MAIN_MEMORY_HEADER*)0x004a5780;
-#endif
-
-S_MAIN_MEMORY_HEADER* edmemGetMainHeader()
-{
-	return g_HeapPtr_0040f370;
-}
-
-
 bool _edSystemInit(int argc, char** argv)
 {
 	bool bVar1;

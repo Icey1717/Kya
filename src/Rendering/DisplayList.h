@@ -82,7 +82,7 @@ struct edCluster {
 	undefined field_0xf;
 	struct ed_g3d_manager* pMeshInfo;
 	uint flags;
-	float field_0x18;
+	float distanceToCamera;
 	undefined field_0x1c;
 	undefined field_0x1d;
 	undefined field_0x1e;

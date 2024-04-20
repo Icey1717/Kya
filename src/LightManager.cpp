@@ -2227,6 +2227,28 @@ void CLightManager::SetManagedByCluster(CLight* pLight)
 	return;
 }
 
+void CLightManager::EnterManagedCluster(CLight* pLight)
+{
+	if ((pLight->colour_0x4).g == 0) {
+		this->bActiveListDirty = 1;
+	}
+
+	(pLight->colour_0x4).g = (pLight->colour_0x4).g + 1;
+
+	return;
+}
+
+void CLightManager::LeaveManagedCluster(CLight* pLight)
+{
+	(pLight->colour_0x4).g = (pLight->colour_0x4).g - 1;
+
+	if ((pLight->colour_0x4).g == 0) {
+		this->bActiveListDirty = 1;
+	}
+
+	return;
+}
+
 template<>
 void S_STREAM_REF<CLight>::Init()
 {

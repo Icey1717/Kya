@@ -904,11 +904,11 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 									if ((bool)local_3b0) {
 										pcVar41 = (char*)-(float)pcVar41;
 									}
-									if ((float)pcVar41 < 2.147484e+09) {
+									if ((float)pcVar41 < 2.147484e+09f) {
 										unaff_s0_lo = (char*)(int)(float)pcVar41;
 									}
 									else {
-										unaff_s0_lo = (char*)((int)((float)pcVar41 - 2.147484e+09) | 0x80000000);
+										unaff_s0_lo = (char*)((int)((float)pcVar41 - 2.147484e+09f) | 0x80000000);
 									}
 									if ((int)unaff_s0_lo < 0) {
 										fVar12 = (float)((uint)unaff_s0_lo >> 1 | (uint)unaff_s0_lo & 1);
@@ -918,11 +918,11 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 										fVar12 = (float)(int)unaff_s0_lo;
 									}
 									fVar12 = ((float)pcVar41 - fVar12) * 100000.0f;
-									if (fVar12 < 2.147484e+09) {
+									if (fVar12 < 2.147484e+09f) {
 										unaff_s5_lo = (uint)fVar12;
 									}
 									else {
-										unaff_s5_lo = (int)(fVar12 - 2.147484e+09) | 0x80000000;
+										unaff_s5_lo = (int)(fVar12 - 2.147484e+09f) | 0x80000000;
 									}
 								}
 								else {

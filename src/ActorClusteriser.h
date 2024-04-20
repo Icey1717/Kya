@@ -7,6 +7,7 @@
 class CActorClusteriser;
 class CCluster;
 class CClusterNode;
+class CCamera;
 
 struct S_LIGHT_STREAM_REF;
 struct S_CAMERA_STREAM_REF;
@@ -19,16 +20,16 @@ public:
 		uint flags;
 		S_STREAM_REF<ed_zone_3d> field_0x4;
 		S_STREAM_REF<ed_zone_3d> field_0x8;
-		S_ACTOR_STREAM_REF* field_0xc;
+		S_ACTOR_STREAM_REF* pActorStreamRef;
 		S_ACTOR_STREAM_REF* field_0x10;
 		int nbActors;
-		CActor** field_0x18;
-		S_CAMERA_STREAM_REF* field_0x1c;
-		int nbEvents;
-		undefined4 field_0x24;
-		S_LIGHT_STREAM_REF* field_0x28;
+		CActor** aActors;
+		S_CAMERA_STREAM_REF* pCameraStreamRef;
+		int nbCameras;
+		CCamera** aCameras;
+		S_LIGHT_STREAM_REF* pLightStreamRef;
 		int nbLights;
-		undefined4 field_0x30;
+		CLight** aLights;
 		int* field_0x34;
 	};
 

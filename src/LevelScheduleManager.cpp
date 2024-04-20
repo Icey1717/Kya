@@ -31,6 +31,113 @@
 #include "EventTrack.h"
 #include "ActorHero.h"
 
+struct ScenarioVariable {
+	int defaultValue;
+	int currentValue;
+};
+
+ScenarioVariable _gScenVarInfo[98] = {
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x64, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0xFFFFFFFF, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x1, 0x0},
+	{0x32, 0x0},
+	{0x1F4, 0x0},
+
+	// Health
+	{0x32, 0x0},
+	{0x32, 0x0},
+	{0xFA, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+	{0x0, 0x0},
+};
 
 CLevelScheduler* CLevelScheduler::gThis = NULL;
 
@@ -199,108 +306,118 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	float fVar2;
 	float fVar3;
 	//MapManager* pMVar4;
-	undefined4* puVar5;
-	LoadLoopObject_50* pLVar6;
-	int iVar7;
-	LevelInfo* pLVar8;
+	ScenarioVariable* pSVar5;
+	int iVar6;
+	LoadLoopObject_50* pLVar7;
+	undefined4* puVar8;
+	int iVar9;
+	LevelInfo* pLevelInfo;
 
-	iVar7 = 0;
-	pLVar8 = aLevelInfo;
+	iVar9 = 0;
+	pLevelInfo = this->aLevelInfo;
 	do {
-		SetupLevelInfo_002d97c0(pLVar8, param_2);
-		iVar7 = iVar7 + 1;
-		pLVar8 = pLVar8 + 1;
-	} while (iVar7 < 0x10);
+		SetupLevelInfo_002d97c0(pLevelInfo, param_2);
+		iVar9 = iVar9 + 1;
+		pLevelInfo = pLevelInfo + 1;
+	} while (iVar9 < 0x10);
+
 	if (param_2 != false) {
-		field_0x4210 = 0;
-		objCount_0x4218 = 0;
-		field_0x5620 = 0;
+		this->field_0x4210 = 0;
+		this->objCount_0x4218 = 0;
+		this->field_0x5620 = 0;
 	}
-	field_0x5b30 = 0;
-	*(undefined4*)&field_0x4214 = 0;
-	iVar7 = 0;
-	//puVar5 = &DAT_004253d0;
-	//do {
-	//	iVar7 = iVar7 + 8;
-	//	puVar5[1] = *puVar5;
-	//	puVar5[3] = puVar5[2];
-	//	puVar5[5] = puVar5[4];
-	//	puVar5[7] = puVar5[6];
-	//	puVar5[9] = puVar5[8];
-	//	puVar5[0xb] = puVar5[10];
-	//	puVar5[0xd] = puVar5[0xc];
-	//	puVar5[0xf] = puVar5[0xe];
-	//	puVar5 = puVar5 + 0x10;
-	//} while (iVar7 < 0x5a);
-	//pLVar6 = field_0x4220;
-	//(&DAT_004253d4)[iVar7 * 2] = (&DAT_004253d0)[iVar7 * 2];
-	//(&DAT_004253dc)[iVar7 * 2] = (&DAT_004253d8)[iVar7 * 2];
-	//iVar7 = 0;
-	//if (0 < objCount_0x4218) {
+
+	this->field_0x5b30 = 0;
+	this->field_0x4214 = 0;
+
+
+	pSVar5 = _gScenVarInfo;
+	iVar9 = 0;
+	do {
+		iVar6 = iVar9;
+		iVar9 = iVar6 + 8;
+		pSVar5->currentValue = pSVar5->defaultValue;
+		pSVar5[1].currentValue = pSVar5[1].defaultValue;
+		pSVar5[2].currentValue = pSVar5[2].defaultValue;
+		pSVar5[3].currentValue = pSVar5[3].defaultValue;
+		pSVar5[4].currentValue = pSVar5[4].defaultValue;
+		pSVar5[5].currentValue = pSVar5[5].defaultValue;
+		pSVar5[6].currentValue = pSVar5[6].defaultValue;
+		pSVar5[7].currentValue = pSVar5[7].defaultValue;
+		pSVar5 = pSVar5 + 8;
+	} while (iVar9 < 0x5a);
+
+	pLVar7 = this->field_0x4220;
+
+	_gScenVarInfo[iVar9].currentValue = _gScenVarInfo[iVar9].defaultValue;
+	_gScenVarInfo[iVar9 + 1].currentValue = _gScenVarInfo[iVar9 + 1].defaultValue;
+
+	//iVar9 = 0;
+	//if (0 < this->objCount_0x4218) {
 	//	do {
-	//		pLVar6->field_0x24 = 0x20;
-	//		pLVar6->field_0x28 = 0;
-	//		iVar7 = iVar7 + 1;
-	//		pLVar6->field_0x2c = 0;
-	//		pLVar6->field_0x40 = 0;
-	//		fVar3 = sceVu0FVECTOR_00431710.w;
-	//		fVar2 = sceVu0FVECTOR_00431710.z;
-	//		fVar1 = sceVu0FVECTOR_00431710.y;
-	//		pLVar6->field_0x30 = sceVu0FVECTOR_00431710.x;
-	//		pLVar6->field_0x34 = fVar1;
-	//		pLVar6->field_0x38 = fVar2;
-	//		pLVar6->field_0x3c = fVar3;
-	//		pLVar6 = pLVar6 + 1;
-	//	} while (iVar7 < objCount_0x4218);
+	//		pLVar7->field_0x24 = 0x20;
+	//		pLVar7->field_0x28 = 0;
+	//		iVar9 = iVar9 + 1;
+	//		pLVar7->field_0x2c = 0;
+	//		pLVar7->field_0x40 = 0;
+	//		fVar3 = gF32Vertex4Zero.w;
+	//		fVar2 = gF32Vertex4Zero.z;
+	//		fVar1 = gF32Vertex4Zero.y;
+	//		(pLVar7->field_0x30).x = gF32Vertex4Zero.x;
+	//		(pLVar7->field_0x30).y = fVar1;
+	//		(pLVar7->field_0x30).z = fVar2;
+	//		(pLVar7->field_0x30).w = fVar3;
+	//		pLVar7 = pLVar7 + 1;
+	//	} while (iVar9 < this->objCount_0x4218);
 	//}
-	//puVar5 = (undefined4*)&field_0x5630;
-	//iVar7 = 0;
-	//if (0 < field_0x5620) {
+	//puVar8 = (undefined4*)&this->field_0x5630;
+	//iVar9 = 0;
+	//if (0 < this->field_0x5620) {
 	//	do {
 	//		if (param_2 != false) {
-	//			*puVar5 = 0xffffffff;
-	//			puVar5[1] = 0x10;
-	//			puVar5[2] = 0;
-	//			fVar3 = sceVu0FVECTOR_00431710.w;
-	//			fVar2 = sceVu0FVECTOR_00431710.z;
-	//			fVar1 = sceVu0FVECTOR_00431710.y;
-	//			puVar5[4] = sceVu0FVECTOR_00431710.x;
-	//			puVar5[5] = fVar1;
-	//			puVar5[6] = fVar2;
-	//			puVar5[7] = fVar3;
-	//			fVar3 = g_ZVector.w;
-	//			fVar2 = g_ZVector.z;
-	//			fVar1 = g_ZVector.y;
-	//			puVar5[8] = g_ZVector.x;
-	//			puVar5[9] = fVar1;
-	//			puVar5[10] = fVar2;
-	//			puVar5[0xb] = fVar3;
-	//			puVar5[0xc] = 0x20;
-	//			puVar5[0xd] = 0;
-	//			*(undefined8*)(puVar5 + 0xe) = 0;
-	//			puVar5[0x10] = 0x20;
-	//			puVar5[0x11] = 0;
-	//			*(undefined8*)(puVar5 + 0x12) = 0;
-	//			puVar5[0x14] = 0x20;
-	//			puVar5[0x15] = 0;
-	//			*(undefined8*)(puVar5 + 0x16) = 0;
-	//			puVar5[0x18] = 0x20;
-	//			puVar5[0x19] = 0;
-	//			*(undefined8*)(puVar5 + 0x1a) = 0;
-	//			puVar5[0x1c] = 0x20;
-	//			puVar5[0x1d] = 0;
-	//			*(undefined8*)(puVar5 + 0x1e) = 0;
+	//			*puVar8 = 0xffffffff;
+	//			puVar8[1] = 0x10;
+	//			puVar8[2] = 0;
+	//			fVar3 = gF32Vertex4Zero.w;
+	//			fVar2 = gF32Vertex4Zero.z;
+	//			fVar1 = gF32Vertex4Zero.y;
+	//			puVar8[4] = gF32Vertex4Zero.x;
+	//			puVar8[5] = fVar1;
+	//			puVar8[6] = fVar2;
+	//			puVar8[7] = fVar3;
+	//			fVar3 = gF32Vector4UnitZ.w;
+	//			fVar2 = gF32Vector4UnitZ.z;
+	//			fVar1 = gF32Vector4UnitZ.y;
+	//			puVar8[8] = gF32Vector4UnitZ.x;
+	//			puVar8[9] = fVar1;
+	//			puVar8[10] = fVar2;
+	//			puVar8[0xb] = fVar3;
+	//			puVar8[0xc] = 0x20;
+	//			puVar8[0xd] = 0;
+	//			*(undefined8*)(puVar8 + 0xe) = 0;
+	//			puVar8[0x10] = 0x20;
+	//			puVar8[0x11] = 0;
+	//			*(undefined8*)(puVar8 + 0x12) = 0;
+	//			puVar8[0x14] = 0x20;
+	//			puVar8[0x15] = 0;
+	//			*(undefined8*)(puVar8 + 0x16) = 0;
+	//			puVar8[0x18] = 0x20;
+	//			puVar8[0x19] = 0;
+	//			*(undefined8*)(puVar8 + 0x1a) = 0;
+	//			puVar8[0x1c] = 0x20;
+	//			puVar8[0x1d] = 0;
+	//			*(undefined8*)(puVar8 + 0x1e) = 0;
 	//		}
-	//		iVar7 = iVar7 + 1;
-	//		puVar5 = puVar5 + 0x20;
-	//	} while (iVar7 < field_0x5620);
+	//		iVar9 = iVar9 + 1;
+	//		puVar8 = puVar8 + 0x20;
+	//	} while (iVar9 < this->field_0x5620);
 	//}
-	//pMVar4 = (MapManager*)GetManagerObject(MO_Map);
+	//pMVar4 = (MapManager*)CScene::GetManager(MO_Map);
 	//MapManager::SetupFunc_003f8150(pMVar4);
 	return;
 }
 
-TypePairData g_LevelInfoTypePairData_004256e0 = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
+TypePairData _gLevelsTableBankCallback = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
 char* g_szLevelInfoBnkPath_00433c60 = "Info/levels.bnk";
 
 void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo)
@@ -554,7 +671,7 @@ void CLevelScheduler::Levels_LoadInfoBank()
 
 	memset(&infoLevelsPathPtr, 0, sizeof(edCBankInstall));
 	bank.initialize(0x10000, 1, &infoLevelsPathPtr);
-	bank.bank_buffer_setcb(&g_LevelInfoTypePairData_004256e0);
+	bank.bank_buffer_setcb(&_gLevelsTableBankCallback);
 	/* CDEURO/LEVEL/ + Info/levels.bnk */
 	levelInfoFilePath[0] = '\0';
 	edStrCatMulti(levelInfoFilePath, levelPath, "Info/levels.bnk", 0);
@@ -1625,21 +1742,14 @@ void CLevelScheduler::LevelLoading_End()
 	return;
 }
 
-struct ScenarioVariable {
-	int value;
-	int field_0x4;
-};
-
-ScenarioVariable _gScenVarInfo[30] = { 0 };
-
 int CLevelScheduler::ScenVar_Get(SCENARIC_VARIABLE scenVarId)
 {
-	return _gScenVarInfo[scenVarId].value;
+	return _gScenVarInfo[scenVarId].currentValue;
 }
 
 void CLevelScheduler::ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue)
 {
-	_gScenVarInfo[scenVarId].value = newValue;
+	_gScenVarInfo[scenVarId].currentValue = newValue;
 	return;
 }
 

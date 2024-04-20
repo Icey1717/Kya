@@ -5882,6 +5882,16 @@ struct ActiveCamManager {
 	bool SwitchActiveCam(float param_1, CCamera* pCamera, SWITCH_MODE switchMode);
 };
 
+
+struct CAM_QUAKE {
+	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 field_0x10;
+	int field_0x20;
+	float field_0x24;
+	float field_0x28;
+	float field_0x2c;
+};
+
 class CCameraManager : public CObjectManager {
 public:
 	CCameraManager();
@@ -5915,6 +5925,9 @@ public:
 	float FUN_00197970(edF32VECTOR4* param_2);
 
 	CCamera* GetScenaricCamera(int index);
+
+	void SetEarthQuake(CAM_QUAKE* pCamQuake);
+
 	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
 
@@ -6577,44 +6590,8 @@ public:
 	float field_0x474;
 	float field_0x478;
 	float field_0x47c;
-	edF32VECTOR3 field_0x480;
-	undefined field_0x48c;
-	undefined field_0x48d;
-	undefined field_0x48e;
-	undefined field_0x48f;
-	undefined field_0x490;
-	undefined field_0x491;
-	undefined field_0x492;
-	undefined field_0x493;
-	undefined field_0x494;
-	undefined field_0x495;
-	undefined field_0x496;
-	undefined field_0x497;
-	undefined field_0x498;
-	undefined field_0x499;
-	undefined field_0x49a;
-	undefined field_0x49b;
-	undefined field_0x49c;
-	undefined field_0x49d;
-	undefined field_0x49e;
-	undefined field_0x49f;
-	undefined4 field_0x4a0;
-	undefined field_0x4a4;
-	undefined field_0x4a5;
-	undefined field_0x4a6;
-	undefined field_0x4a7;
-	undefined field_0x4a8;
-	undefined field_0x4a9;
-	undefined field_0x4aa;
-	undefined field_0x4ab;
-	undefined field_0x4ac;
-	undefined field_0x4ad;
-	undefined field_0x4ae;
-	undefined field_0x4af;
-	undefined field_0x4b0;
-	undefined field_0x4b1;
-	undefined field_0x4b2;
-	undefined field_0x4b3;
+	CAM_QUAKE field_0x480;
+	undefined4 field_0x4b0;
 	CCamera* pInitialView_0x4b4;
 	CCamera* pActiveCamera;
 	CCameraShadow* aCameraShadow[10];

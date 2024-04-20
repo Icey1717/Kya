@@ -545,6 +545,7 @@ void CSector::InstallCallback()
 			else {
 				if (uVar9 == 0x50003) {
 					MY_LOG("Sector::Init Background Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+					NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
 					ed3DInstallG2D(bankEntry.fileBufferStart, bankEntry.size, &iStack8, &this->backgroundTexture, 1);
 				}
 				else {
@@ -806,8 +807,7 @@ void CSectorManager::Level_Init()
 			if ((iVar3 != -1) &&
 				(puVar4 = (CScene::ptable.g_SectorManager_00451670)->subObjArray[iVar3].pFileData, puVar4 != (undefined*)0x0))
 			{
-				IMPLEMENTATION_GUARD(
-				CScene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar4 + 0xc));)
+				CScene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar4 + 0xc));
 			}
 			if ((iVar2 != -1) && (puVar4 = pSVar5->subObjArray[iVar2].pFileData, puVar4 != (undefined*)0x0)) {
 				CScene::_pinstance->PushFogAndClippingSettings(*(float*)(puVar4 + 0x1c), (S_STREAM_FOG_DEF*)(puVar4 + 0xc));
@@ -889,8 +889,7 @@ void CSectorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	uint flags;
 
 	if ((newSectorId != -1) && (flags = this->subObjArray[newSectorId].flags, this->field_0x37c != flags)) {
-		IMPLEMENTATION_GUARD(
-		SetupCompanionSectors(this, flags);)
+		SetupCompanionSectors(flags);
 	}
 	return;
 }
@@ -898,6 +897,72 @@ void CSectorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 void CSectorManager::Level_Create(ByteCode* pMemoryStream)
 {
 	pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + 4;
+	return;
+}
+
+void CSectorManager::SwitchToSector(int sectID, bool param_3)
+{
+	int iVar1;
+	undefined* puVar2;
+	CSectorManager* pCVar3;
+
+	SECTOR_LOG(LogLevel::Info, "CSectorManager::SwitchToSector Switching to sector: {} - {}", sectID, param_3);
+
+	pCVar3 = CScene::ptable.g_SectorManager_00451670;
+
+	iVar1 = (this->baseSector).sectID;
+
+	SECTOR_LOG(LogLevel::Info, "CSectorManager::SwitchToSector Current sector: {}", iVar1);
+
+	if ((iVar1 != sectID) || (param_3 == false)) {
+		if (iVar1 != sectID) {
+			if ((iVar1 != -1) && (puVar2 = (CScene::ptable.g_SectorManager_00451670)->subObjArray[iVar1].pFileData, puVar2 != (undefined*)0x0))
+			{
+				CScene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar2 + 0xc));
+			}
+
+			if ((sectID != -1) && (puVar2 = pCVar3->subObjArray[sectID].pFileData, puVar2 != (undefined*)0x0)) {
+				CScene::_pinstance->PushFogAndClippingSettings(*(float*)(puVar2 + 0x1c), (S_STREAM_FOG_DEF*)(puVar2 + 0xc));
+			}
+		}
+
+		(this->baseSector).sectID = sectID;
+
+		this->field_0x36c = (int)param_3;
+	}
+
+	return;
+}
+
+void CSectorManager::Flush()
+{
+	CSectorHierarchy* pCVar1;
+	edNODE* peVar2;
+	int iVar3;
+	CActorsTable local_110;
+	int* piStack4;
+
+	local_110.entryCount = 0;
+	CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(CLUSTERISER, &local_110);
+
+	iVar3 = 0;
+	if (0 < local_110.entryCount) {
+		do {
+			//::EmptyFunction();
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < local_110.entryCount);
+	}
+
+	for (pCVar1 = this->pSectorHierarchy; pCVar1 != (CSectorHierarchy*)0x0; pCVar1 = pCVar1->pNext) {
+		IMPLEMENTATION_GUARD(
+		if ((pCVar1->field_0x19 != 0) &&
+			((peVar2 = (edNODE*)Func_001fe870(this, pCVar1->field_0x0, &piStack4), peVar2 == (edNODE*)0x0 ||
+				(peVar2 != pCVar1->pNode)))) {
+			pCVar1->field_0x19 = 0;
+			pCVar1->pNode = (edNODE*)0x0;
+			pCVar1->pHier = (S_HIERANM_HIER*)0x0;
+		})
+	}
 	return;
 }
 
@@ -921,9 +986,8 @@ void CSector::Level_Manage(int sectID, int param_3)
 			CScene::ptable.g_C3DFileManager_00451664->ManageBackground(this->pBackgroundNode, *puVar2);
 		}
 		if (this->desiredSectorID != sectID) {
-			IMPLEMENTATION_GUARD(
-			Flush(this);
-			this->loadStage_0x8 = 0;)
+			Flush();
+			this->loadStage_0x8 = 0;
 		}
 	}
 	else {
@@ -946,6 +1010,77 @@ void CSector::Level_Manage(int sectID, int param_3)
 			}
 		}
 	}
+	return;
+}
+
+void CSector::Flush()
+{
+	CSectorHierarchy* pSectorHierarchy;
+	uint uVar2;
+	edNODE* pNode;
+	ed_3D_Scene* pScene;
+	C3DFileManager* p3DFileManager;
+	CSectorManager* pSectorManager;
+	uint uVar3;
+	MeshData_ANHR* pMVar4;
+
+	pSectorManager = CScene::ptable.g_SectorManager_00451670;
+	p3DFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	pScene = CScene::_scene_handleA;
+
+	for (pSectorHierarchy = (CScene::ptable.g_SectorManager_00451670)->subObjArray[this->desiredSectorID].aSectorHierarchies;
+		pSectorHierarchy != (CSectorHierarchy*)0x0; pSectorHierarchy = pSectorHierarchy->pNext) {
+		pSectorHierarchy->field_0x19 = 0;
+		pSectorHierarchy->pNode = (edNODE*)0x0;
+		pSectorHierarchy->pHier = (S_HIERANM_HIER*)0x0;
+	}
+
+	if (this->pMeshTransformParent_0x130 != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(pScene, this->pMeshTransformParent_0x130);
+		this->pMeshTransformParent_0x130 = (edNODE*)0x0;
+	}
+
+	pMVar4 = (this->pANHR).pThis;
+	if (pMVar4 != (MeshData_ANHR*)0x0) {
+		uVar2 = pMVar4->otherEntryCount;
+
+		int* pNext = (int*)(pMVar4 + 1);
+
+		uVar3 = 0;
+		if (uVar2 != 0) {
+			do {
+				ANHR_Internal* peVar3 = LOAD_SECTION_CAST(ANHR_Internal*, pNext[uVar3]);
+
+				if (peVar3->pHierNode != 0x0) {
+					ed3DHierarchyRemoveFromScene(pScene, LOAD_SECTION_CAST(edNODE*, peVar3->pHierNode));
+				}
+
+				uVar3 = uVar3 + 1;
+			} while (uVar3 < uVar2);
+		}
+
+		(this->pANHR).pThis = (MeshData_ANHR*)0x0;
+	}
+
+	ed3DScenePopCluster(pScene, &this->sectorMesh);
+	ed3DUnInstallG3D(&this->sectorMesh);
+	ed3DUnInstallG2D(&this->sectorTexture);
+
+	if (this->pBackgroundNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(pScene, this->pBackgroundNode);
+		ed3DUnInstallG3D(&this->backgroundMesh);
+		ed3DUnInstallG2D(&this->backgroundTexture);
+		this->pBackgroundNode = (edNODE*)0x0;
+		p3DFileManager->ShowCommonBackground();
+	}
+
+	if (this->pObbTree != (edObbTREE_DYN*)0x0) {
+		CScene::ptable.g_CollisionManager_00451690->UninstallColFile(this->pObbTree);
+	}
+
+	pSectorManager->Flush();
+	this->desiredSectorID = -1;
+	this->sectorIndex = -1;
 	return;
 }
 

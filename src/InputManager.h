@@ -42,12 +42,26 @@ class CIniFile;
 
 #define KEY_START 0x40000
 
+struct CPlayerInputSubObj {
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	int field_0x18;
+	int field_0x1c;
+	float field_0x20;
+};
+
 class CPlayerInput {
 
 public:
 	static void ReadConfig(CIniFile* pIniFile);
 	static void Update(float delta);
 	static void InitDev();
+
+	static void FUN_001b66f0(float param_1, float param_2, float param_3, float param_4, CPlayerInputSubObj* param_5, int param_6);
 
 	static int RegisterControllerDisconectedHandler(uint index, ControllerConnectedFuncPtr pNewHandler);
 	static int RegisterControllerConnectedHandler(uint index, ControllerConnectedFuncPtr pNewHandler);
@@ -70,54 +84,8 @@ public:
 	float floatFieldA;
 	int field_0x14;
 	uint portIndex;
-	float field_0x1c;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
-	undefined field_0x24;
-	undefined field_0x25;
-	undefined field_0x26;
-	undefined field_0x27;
-	undefined field_0x28;
-	undefined field_0x29;
-	undefined field_0x2a;
-	undefined field_0x2b;
-	undefined field_0x2c;
-	undefined field_0x2d;
-	undefined field_0x2e;
-	undefined field_0x2f;
-	float field_0x30;
-	int field_0x34;
-	int field_0x38;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
-	float field_0x40;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
-	undefined field_0x48;
-	undefined field_0x49;
-	undefined field_0x4a;
-	undefined field_0x4b;
-	undefined field_0x4c;
-	undefined field_0x4d;
-	undefined field_0x4e;
-	undefined field_0x4f;
-	undefined field_0x50;
-	undefined field_0x51;
-	undefined field_0x52;
-	undefined field_0x53;
-	float field_0x54;
-	int field_0x58;
-	int field_0x5c;
-	undefined field_0x60;
-	undefined field_0x61;
-	undefined field_0x62;
-	undefined field_0x63;
+	CPlayerInputSubObj field_0x1c;
+	CPlayerInputSubObj field_0x40;
 	EDDEV_ROUTE aRoutes[32];
 	uint aRouteIndexes[32];
 	InputTest aButtons[32];

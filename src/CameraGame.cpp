@@ -125,8 +125,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 				this->cameraNum = this->cameraNum + -1;
 
 				if (this->cameraNum == 2) {
-					IMPLEMENTATION_GUARD(
-					FUN_002bfc60(this);)
+					FUN_002bfc60();
 				}
 			}
 		}
@@ -3258,6 +3257,7 @@ bool CCameraGame::Manage()
 			if ((local_v0_lo_96 != (CActor*)0x0) &&
 				(pActorA = GetTarget(), pActorA->typeID == ACTOR_HERO_PRIVATE)) {
 				pActorB = GetTarget();
+
 				if (pActorB->curBehaviourId == 8) {
 					/* Generic camera does not go in here (Val is 7) */
 					pCVar1 = pActorB->GetBehaviour(pActorB->curBehaviourId);
@@ -3265,8 +3265,9 @@ bool CCameraGame::Manage()
 					*(CBehaviourVtable**)&this->field_0x1ec = pCVar1[0x23].pVTable;)
 				}
 				else {
-					*(undefined4*)&this->field_0x1ec = 0;
+					this->field_0x1ec = (CActorHeroPrivate*)0x0;
 				}
+
 				pFlag = &(this->cameraConfig).flags_0x70;
 				if (pActorB->curBehaviourId == 8) {
 					*pFlag = *pFlag | 0x2000000;
@@ -3275,6 +3276,7 @@ bool CCameraGame::Manage()
 					*pFlag = *pFlag & 0xfdffffff;
 				}
 			}
+
 			GetMode();
 			UpdateTarget(&vectorA, true);
 			pActorC = GetTarget();

@@ -1166,3 +1166,43 @@ uint CActorHero::TestState_IsCrouched(uint inFlags)
 	}
 	return inFlags & 0x20;
 }
+
+bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)
+{
+	ed_zone_3d* pZone;
+	int* piVar1;
+	CEventManager* pCVar2;
+	bool ret;
+	uint uVar3;
+	int iVar4;
+	int iVar5;
+	int iVar6;
+
+	pCVar2 = CScene::ptable.g_EventManager_006f5080;
+
+	if (2.24f <= CScene::_pinstance->field_0x1c) {
+		iVar6 = 0;
+		iVar5 = 0;
+		IMPLEMENTATION_GUARD(
+		while (true) {
+			piVar1 = *(int**)&this->field_0xe48;
+			iVar4 = 0;
+			if (piVar1 != (int*)0x0) {
+				iVar4 = *piVar1;
+			}
+			if (iVar4 <= iVar6) goto LAB_0014cc18;
+			pZone = *(ed_zone_3d**)((int)piVar1 + iVar5 + 4);
+			if ((pZone != (ed_zone_3d*)0x0) &&
+				(uVar3 = edEventComputeZoneAgainstVertex(pCVar2->activeChunkId, pZone, v0, 0), (uVar3 & 1) != 0)) break;
+			iVar5 = iVar5 + 4;
+			iVar6 = iVar6 + 1;
+		}
+		ret = true;)
+	}
+	else {
+	LAB_0014cc18:
+		ret = false;
+	}
+
+	return ret;
+}

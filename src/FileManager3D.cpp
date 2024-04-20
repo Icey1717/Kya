@@ -194,6 +194,14 @@ void C3DFileManager::Level_Create(ByteCode* pMemoryStream)
 	return;
 }
 
+void C3DFileManager::ShowCommonBackground()
+{
+	if (this->pBackgroundNode != (edNODE*)0x0) {
+		ed3DHierarchyNodeSetRenderOff(CScene::_scene_handleA, this->pBackgroundNode);
+	}
+	return;
+}
+
 void C3DFileManager::HideCommonBackground()
 {
 	if (this->pBackgroundNode != (edNODE*)0x0) {

@@ -869,6 +869,21 @@ void CActorAutonomous::UpdateCollisionSphere()
 	pCol->InvalidatePrims();
 }
 
+void CActorAutonomous::RestoreCollisionSphere(float param_2)
+{
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.xyz = this->field_0x280;
+	local_10.w = 0.0f;
+
+	local_20.xyz = this->field_0x28c;
+	local_20.w = 1.0f;
+
+	ChangeCollisionSphere(param_2, &local_10, &local_20);
+	return;
+}
+
 void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int param_3)
 {
 	CCollision* pCVar1;
@@ -916,7 +931,8 @@ void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int para
 
 void CActorAutonomous::LifeRestore()
 {
-	GetLifeInterfaceOther()->SetValueMax(GetLifeInterfaceOther()->GetValueMax());
+	ACTOR_LOG(LogLevel::Info, "CActorAutonomous::LifeRestore Restoring life to max {}", GetLifeInterfaceOther()->GetValueMax());
+	GetLifeInterfaceOther()->SetValue(GetLifeInterfaceOther()->GetValueMax());
 	return;
 }
 
@@ -981,6 +997,7 @@ float CLifeInterface::GetValueMax()
 
 void CLifeInterface::SetValueMax(float max)
 {
+	ACTOR_LOG(LogLevel::Info, "CLifeInterface::SetValueMax Setting max life to {}", max);
 	this->valueMax = max;
 	return;
 }

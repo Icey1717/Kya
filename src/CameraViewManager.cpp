@@ -602,7 +602,7 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 		}
 		this->flags = this->flags & 0xfbffffff;
 	}
-	this->field_0x4a0 = 0;
+	this->field_0x480.field_0x20 = 0;
 	(this->transformationMatrix).rowT = gF32Vertex4Zero;
 	(this->shadowCameraLookat) = gF32Vertex4Zero;
 	this->fov_0xa34 = 0.84f;
@@ -731,21 +731,101 @@ void CCameraManager::Func_001947e0()
 
 float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 {
-	long lVar1;
+	ulong uVar1;
 	float fVar2;
 	float fVar3;
-	float t;
+	float fVar4;
 	edF32VECTOR4 local_10;
 
-	t = 1.0;
-	local_10.x = (this->field_0x480).x;
-	local_10.y = (this->field_0x480).y;
-	local_10.z = (this->field_0x480).z;
-	fVar3 = 0.0;
-	if ((this->field_0x4a0 & 1) != 0) {
-		IMPLEMENTATION_GUARD();
+	fVar2 = 1.0f;
+	local_10.xyz = (this->field_0x480).field_0x0.xyz;
+	fVar4 = 0.0f;
+
+	if (((this->field_0x480).field_0x20 & 1U) != 0) {
+		fVar3 = this->field_0x4b0;
+
+		fVar4 = (this->field_0x480).field_0x28;
+
+		if (fVar3 < fVar4) {
+			fVar2 = fVar3 / fVar4;
+		}
+		else {
+			fVar4 = fVar4 + (this->field_0x480).field_0x24;
+
+			if (fVar4 < fVar3) {
+				fVar2 = (this->field_0x480).field_0x2c;
+				fVar2 = ((fVar2 + fVar4) - fVar3) / fVar2;
+			}
+		}
+
+		if (((this->field_0x480).field_0x20 & 4U) != 0) {
+			IMPLEMENTATION_GUARD(
+			local_10.x = (this->field_0x480).field_0x0.x *
+				edFCosinus
+				[(int)(ABS((this->field_0x4b0 * (this->field_0x480).field_0x10.x - 1.570796) * 1303.797) + 0.5) &
+				0x1fff];)
+		}
+
+		if (((this->field_0x480).field_0x20 & 2U) != 0) {
+			fVar4 = (this->field_0x480).field_0x0.x;
+			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+			CScene::_pinstance->field_0x38 = uVar1;
+			local_10.x = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0f - (this->field_0x480).field_0x0.x * 0.5f;
+		}
+
+		if (((this->field_0x480).field_0x20 & 0x10U) != 0) {
+			IMPLEMENTATION_GUARD(
+			local_10.y = (this->field_0x480).field_0x0.y *
+				edFCosinus
+				[(int)(ABS((this->field_0x4b0 * (this->field_0x480).field_0x10.y - 1.570796) * 1303.797) + 0.5) &
+				0x1fff];)
+		}
+
+		if (((this->field_0x480).field_0x20 & 8U) != 0) {
+			fVar4 = (this->field_0x480).field_0x0.y;
+			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+			CScene::_pinstance->field_0x38 = uVar1;
+			local_10.y = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0f - (this->field_0x480).field_0x0.y * 0.5f;
+		}
+
+		if (((this->field_0x480).field_0x20 & 0x40U) != 0) {
+			IMPLEMENTATION_GUARD(
+			local_10.z = (this->field_0x480).field_0x0.z *
+				edFCosinus
+				[(int)(ABS((this->field_0x4b0 * (this->field_0x480).field_0x10.z - 1.570796) * 1303.797) + 0.5) &
+				0x1fff];)
+		}
+
+		if (((this->field_0x480).field_0x20 & 0x20U) != 0) {
+			IMPLEMENTATION_GUARD(
+			fVar4 = (this->field_0x480).field_0x0.z;
+			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+			CScene::_pinstance->field_0x38 = uVar1;
+			local_10.z = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0 - (this->field_0x480).field_0x0.z * 0.5;)
+		}
+
+		local_10.w = 0.0f;
+		fVar4 = (this->field_0x480).field_0x0.w;
+
+		if (((this->field_0x480).field_0x20 & 0x80U) != 0) {
+			IMPLEMENTATION_GUARD(
+			fVar4 = (this->field_0x480).field_0x0.w;
+			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+			CScene::_pinstance->field_0x38 = uVar1;
+			fVar4 = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0 - (this->field_0x480).field_0x0.w * 0.5;)
+		}
+
+		edF32Vector4ScaleHard(fVar2, &local_10, &local_10);
+		edF32Matrix4MulF32Vector4Hard(&local_10, &this->transformationMatrix, &local_10);
+		edF32Vector4AddHard(param_2, param_2, &local_10);
+		this->field_0x4b0 = this->field_0x4b0 + this->time_0x4;
+
+		if ((this->field_0x480).field_0x2c + (this->field_0x480).field_0x24 + (this->field_0x480).field_0x28 <= this->field_0x4b0) {
+			(this->field_0x480).field_0x20 = (this->field_0x480).field_0x20 & 0xfffffffe;
+		}
 	}
-	return fVar3 * t;
+
+	return fVar4 * fVar2;
 }
 
 void edF32Matrix4TransposeHard(edF32MATRIX4* m0)
@@ -1921,6 +2001,34 @@ CCamera* CCameraManager::GetScenaricCamera(int index)
 	}
 
 	return pCVar1;
+}
+
+void CCameraManager::SetEarthQuake(CAM_QUAKE* pCamQuake)
+{
+	undefined8 uVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	CAM_QUAKE* puVar5;
+
+	if (pCamQuake == (CAM_QUAKE*)0x0) {
+		(this->field_0x480).field_0x20 = 0;
+	}
+	else {
+		this->field_0x480.field_0x0 = pCamQuake->field_0x0;
+		this->field_0x480.field_0x10 = pCamQuake->field_0x10;
+
+		(this->field_0x480).field_0x20 = pCamQuake->field_0x20;
+
+		(this->field_0x480).field_0x24 = pCamQuake->field_0x24;
+		(this->field_0x480).field_0x28 = pCamQuake->field_0x28;
+		(this->field_0x480).field_0x2c = pCamQuake->field_0x2c;
+
+		(this->field_0x480).field_0x20 = (this->field_0x480).field_0x20 | 1;
+
+		this->field_0x4b0 = 0;
+	}
+	return;
 }
 
 template<>

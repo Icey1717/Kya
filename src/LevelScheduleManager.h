@@ -694,10 +694,7 @@ public:
 	undefined field_0x8f;
 	LevelInfo aLevelInfo[16];
 	int field_0x4210;
-	undefined field_0x4214;
-	undefined field_0x4215;
-	undefined field_0x4216;
-	undefined field_0x4217;
+	undefined4 field_0x4214;
 	int objCount_0x4218;
 	undefined field_0x421c;
 	undefined field_0x421d;

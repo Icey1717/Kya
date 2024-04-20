@@ -2,6 +2,7 @@
 
 #include "MathOps.h"
 #include "MemoryStream.h"
+#include "CameraViewManager.h"
 
 PACK(
 	struct S_STREAM_SIMPLE_ACT_COND {
@@ -138,7 +139,7 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 
 	this->specCondition.pData = (int*)0x0;
 	this->pNextCameraView_0xa4 = (CCamera*)0x0;
-	this->field_0xa0 = 0;
+	this->nbManagedByClusters = 0;
 	SetOtherTarget(0);
 	fVar6 = pMemoryStream->GetF32();
 	this->fov = fVar6;
@@ -251,7 +252,7 @@ CCamera::CCamera()
 	this->field_0x50.y = 0.0f;
 	this->field_0x50.z = 0.0f;
 	this->field_0x50.w = 0.0f;
-	this->field_0xa0 = 0;
+	this->nbManagedByClusters = 0;
 	this->objectId = -1;
 	this->field_0x8 = -1;
 	this->field_0x8c = 0.0f;
@@ -439,6 +440,74 @@ ECameraType CCamera::GetMode()
 	return CT_Frontend;
 }
 
+void CCamera::EnterManagedCluster()
+{
+	ECameraType EVar1;
+
+	this->nbManagedByClusters = this->nbManagedByClusters + 1;
+
+	if ((this->flags_0xc & 0x200000) == 0) {
+		this->flags_0xc = this->flags_0xc | 0x200000;
+
+		EVar1 = GetMode();
+		if (EVar1 == 0x14) {
+			IMPLEMENTATION_GUARD(
+			_gpcam_man->AddSmoothCamera(this);)
+		}
+	}
+
+	return;
+}
+
+void CCamera::LeaveManagedCluster()
+{
+	int* piVar1;
+	bool bVar2;
+	int iVar3;
+	ECameraType EVar4;
+	int iVar5;
+	int iVar6;
+	float fVar7;
+
+	this->nbManagedByClusters = this->nbManagedByClusters - 1;
+
+	if ((this->nbManagedByClusters == 0) && ((this->flags_0xc & 0x200000) != 0)) {
+		this->flags_0xc = this->flags_0xc & 0xffdfffff;
+
+		bVar2 = _gpcam_man->cameraStack.Contains(this);
+
+		if (bVar2 != false) {
+			IMPLEMENTATION_GUARD(
+			this->field_0x7c = 0;
+			fVar7 = this->field_0x8c;
+			iVar6 = 0;
+			if ((this->flags_0xc & 2) != 0) {
+				iVar5 = 0;
+				while (true) {
+					piVar1 = (int*)this->field_0x88;
+					iVar3 = 0;
+					if (piVar1 != (int*)0x0) {
+						iVar3 = *piVar1;
+					}
+					if (iVar3 <= iVar6) break;
+					this->field_0x84->pWaypoint->DoMessage(*(CActor**)((int)piVar1 + iVar5 + 4), 0x2a, (uint)(0.0 < fVar7));
+					iVar5 = iVar5 + 4;
+					iVar6 = iVar6 + 1;
+				}
+			})
+
+			_gpcam_man->PopCamera(this);
+		}
+
+		EVar4 = GetMode();
+		if (EVar4 == 0x14) {
+			IMPLEMENTATION_GUARD(
+			_gpcam_man->RemoveSmoothCamera(this);)
+		}
+	}
+
+	return;
+}
 
 void CCameraExt::Init()
 {

@@ -25,7 +25,7 @@ static const int* rowOffset[8] = {
 
 #define RESTRICT __restrict__
 
-#define LOG_TEXCACHE(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "Texture Cache", fmt, ##__VA_ARGS__);
+#define LOG_TEXCACHE(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "TextureCache", fmt, ##__VA_ARGS__);
 
 void Renderer::ImageData::Log(const char* prefix) const
 {
@@ -1346,7 +1346,7 @@ void PS2::GSTexImage::UpdateSampler(PSSamplerSelector selector)
 	}
 	else {
 		if (selector.key != samplerSelector.key) {
-			assert(false);
+			//assert(false);
 		}
 	}
 }

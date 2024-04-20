@@ -109,6 +109,8 @@ union _rgba {
 	void LerpRGBA(float alpha, _rgba param_3, _rgba param_4);
 };
 
+static_assert(sizeof(_rgba) == 4, "sizeof(_rgba) != 4");
+
 struct ByteColor3 {
 	byte r;
 	byte g;

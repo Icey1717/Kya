@@ -31,8 +31,8 @@
 //constexpr uint32_t WIDTH = 640;
 //constexpr uint32_t HEIGHT = 480;
 
-constexpr uint32_t WIDTH = 1920;
-constexpr uint32_t HEIGHT = 1080;
+constexpr uint32_t WIDTH = 2500;
+constexpr uint32_t HEIGHT = 1300;
 
 const std::vector<const char*> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"

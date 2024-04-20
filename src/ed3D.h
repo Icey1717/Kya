@@ -66,6 +66,8 @@ PACK(
 	undefined field_0xf;
 };)
 
+static_assert(sizeof(ed_hash_code) == 0x10, "Invalid ed_hash_code size");
+
 PACK(struct __attribute__((aligned(16))) ed_Chunck {
 	uint hash;
 	short field_0x4;
@@ -183,7 +185,7 @@ struct SceneConfig {
 
 struct ed_3d_octree {
 	edF32VECTOR4 field_0x0;
-	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 worldLocation;
 	ed_Chunck* pCDQU;
 	char* pCDQU_End;
 	ushort boundingSphereTestResult;
@@ -245,7 +247,7 @@ PACK(struct MeshData_CSTA {
 	undefined field_0x2d;
 	undefined field_0x2e;
 	undefined field_0x2f;
-	edF32VECTOR4 field_0x30;
+	edF32VECTOR4 worldLocation;
 };)
 
 struct ed_3D_Scene {
@@ -336,6 +338,40 @@ struct ed_3d_hierarchy {
 	char GlobalAlhaON;
 };
 
+PACK(struct MeshData_ANHR {
+	uint hash;
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	uint otherEntryCount;
+	uint fileDataEntryCount;
+});
+
+
+union ObbFloat
+{
+	int pObb_Internal;
+	float number;
+};
+
+PACK(struct ANHR_Internal {
+	int pHierNode; // edNode*
+	int pHierNodeData; // ed_3d_hierarchy_node*
+	int pHierAnimStream; // S_HIERANM_ANIM
+	uint nodeChunkCount;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+	uint flags;
+	float field_0x24;
+	float field_0x28;
+	float field_0x2c;
+	ObbFloat pObbFloat;
+	float field_0x34;
+});
+
 PACK(struct ed_g3d_hierarchy {
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
@@ -353,7 +389,7 @@ PACK(struct ed_g3d_hierarchy {
 	int pMatrixPkt; // edpkt_data*
 	int pAnimMatrix; // edF32MATRIX4*
 	short subMeshParentCount_0xac;
-	byte size_0xae;
+	byte desiredLod;
 	char GlobalAlhaON;
 	ed3DLod aLods[4];
 });

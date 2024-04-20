@@ -10,24 +10,23 @@ struct ed_event {
 	uint flags;
 	int pZone; // ed_zone_3d*
 	undefined4 field_0x8;
-	uint field_0xc;
+	uint nbColliders;
 };
 
 struct _ed_event_collider_test {
 	edF32VECTOR4 field_0x0;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
+	byte field_0x10[4];
 	int field_0x14;
-	int field_0x18; // ?
+	int pActorRef; // ed_event_actor_ref*
 	int field_0x1c; // ed_event*
 	int field_0x20[4]; // ?
 };
 
+static_assert(sizeof(_ed_event_collider_test) == 0x30);
+
 struct edCEventMessage {
-	uint field_0x0;
-	_ed_event_collider_test* field_0x4;
+	uint colliderId;
+	_ed_event_collider_test* pEventCollider;
 	ed_event_chunk* pEventChunk;
 };
 
