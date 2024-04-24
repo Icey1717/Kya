@@ -14,6 +14,8 @@ struct AnimKeySomething {
 	float field_0xc;
 	float field_0x10;
 	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
 };
 
 typedef void (*AnimationCallback)(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3);
@@ -56,7 +58,7 @@ struct edAnmMacroAnimator {
 	float field_0x30;
 
 	void Initialize(float param_1, edANM_HDR* pHdr, bool param_4, uint param_5);
-	void AnimateDT(float param_1);
+	void AnimateDT(float time);
 	void Animate();
 	void UpdateAnimParams();
 };

@@ -303,6 +303,7 @@ struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
 {
 	void Reset();
 	bool Switch(CActor* pActor);
+	bool PostSwitch(CActor* pActor);
 
 	int messageId;
 	uint messageFlags;

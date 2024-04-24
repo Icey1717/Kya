@@ -63,6 +63,17 @@ struct edANM_HDR {
 	int count_0x0;
 	edANM_HDR_Internal field_0x4;
 	edANM_HDR_Internal keyIndex_0x8;
+	float pData[];
+};
+
+static_assert(sizeof(edANM_HDR) == 0xc, "Invalid edANM_HDR size");
+
+struct edAnmMacroBlendN {
+	edAnmMacroBlendN() {}
+	edAnmMacroBlendN(edANM_HDR* pInHdr)
+		: pHdr(pInHdr) {}
+
+	edANM_HDR* pHdr;
 };
 
 struct AnimDesc {

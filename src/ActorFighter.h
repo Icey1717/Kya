@@ -17,6 +17,7 @@ public:
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void Create(ByteCode* pByteCode);
+	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	// CActorAutonomous

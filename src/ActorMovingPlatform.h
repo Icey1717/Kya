@@ -61,9 +61,11 @@ public:
 
 struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_BASE {
 	void Reset();
+	bool SwitchOn(CActor* pActor);
 
-	undefined4 field_0x0;
-	char field_0x18[0xc];
+	int messageId;
+	uint messageFlags;
+	char field_0x18[0x8];
 };
 
 static_assert(sizeof(S_STREAM_NTF_TARGET_ONOFF) == 0x1c);
@@ -72,6 +74,8 @@ struct S_MOVING_PLATFORM_TARGET_STREAM {
 	int entryCount;
 	S_STREAM_NTF_TARGET_ONOFF aEntries[];
 };
+
+class CSound;
 
 class CBehaviourPlatformSlab : public CBehaviourPlatform
 {
@@ -89,7 +93,7 @@ public:
 	float field_0x14;
 	float field_0x18;
 	float field_0x1c;
-	int field_0x20;
+	S_STREAM_REF<CSound> field_0x20;
 	float field_0x24;
 	float field_0x28;
 	CActor* field_0x2c;
@@ -156,23 +160,15 @@ public:
 };
 
 PACK(
+struct AudioSetupParams {
+	int field_0x0;
+	int field_0x4;
+});
+
+PACK(
 struct CActorMovingPlatform_SubObj {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
+	AudioSetupParams field_0x0;
+	AudioSetupParams field_0x8;
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
@@ -189,10 +185,7 @@ struct CActorMovingPlatform_SubObj {
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
+	uint field_0x20;
 	uint flags_0x24;
 	int field_0x28;
 	float field_0x2c;
@@ -223,36 +216,11 @@ static_assert(sizeof(S_STREAM_REF<ed_zone_3d>) == 0x4);
 
 PACK(
 struct S_BRIDGE_CAMERA_STREAM_ENTRY {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	S_STREAM_NTF_TARGET_BASE streamTarget;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
+	int field_0x0;
+	uint field_0x4;
+	S_STREAM_NTF_TARGET_SWITCH streamTarget;
 	S_STREAM_EVENT_CAMERA streamCameraEvent;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
+	int field_0x44;
 });
 
 static_assert(sizeof(S_BRIDGE_CAMERA_STREAM_ENTRY) == 0x48);
@@ -273,9 +241,12 @@ public:
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual AnimResult* GetStateCfg(int state);
+	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
 
 	bool Slab_MoveAndDetectCarriedObject(CBehaviourPlatformSlab* pBehaviour, int param_3);
 	void ManageNoFrictionZones(int param_2);
+
+	bool StateTrajectory(float currentFillAmount, CBehaviourPlatformTrajectory* pBehaviour, bool param_4);
 
 	void Platform_UpdatePosition(edF32VECTOR4* pPosition, int param_3, CActorsTable* pActorsTable);
 	void Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbsolute* pPathFollowerAbs, int param_3, int param_4, S_TRAJ_POS* pTrajPos, CActorsTable* pActorsTable, edF32VECTOR4* param_7);
@@ -288,6 +259,8 @@ public:
 	void BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehaviour);
 
 	void GenericManage(int param_2, int param_3, int param_4, int param_5);
+
+	void StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehaviour);
 
 	int noFrictionZoneCount;
 	S_STREAM_MPF_NO_FRICTION_ZONE* aNoFrictionZones;
@@ -304,9 +277,9 @@ public:
 	uint movingPlatformFlags;
 	edF32MATRIX4 field_0x200;
 
-	S_BRIDGE_ACTOR_STREAM* field_0x244;
-	S_BRIDGE_ZONE_STREAM* field_0x248;
-	S_BRIDGE_CAMERA_STREAM* field_0x254;
+	S_BRIDGE_ACTOR_STREAM* pActorStream;
+	S_BRIDGE_ZONE_STREAM* pZoneStream;
+	S_BRIDGE_CAMERA_STREAM* pCameraStream;
 };
 
 #endif //ACTOR_MOVING_PLATFORM_H

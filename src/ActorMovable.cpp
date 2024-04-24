@@ -188,6 +188,98 @@ void CActorMovable::SetState(int newState, int animType)
 	return;
 }
 
+bool CActorMovable::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
+{
+	CCollision* pCol;
+	uint uVar1;
+	Timer* pTVar2;
+	float fVar3;
+	edF32VECTOR3 local_90;
+	edF32MATRIX4 eStack128;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	if ((this->flags & 0x1000) == 0) {
+		edF32Matrix4MulF32Vector4Hard(&local_40, m0, &this->rotationQuat);
+		local_40.y = 0.0f;
+		edF32Vector4SafeNormalize1Hard(&local_40, &local_40);
+		this->rotationQuat = local_40;
+		GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+	}
+	else {
+		edF32Matrix4FromEulerSoft(&eStack128, &this->rotationEuler.xyz, "XYZ");
+		edF32Matrix4MulF32Matrix4Hard(&eStack128, &eStack128, m0);
+		edF32Matrix4ToEulerSoft(&eStack128, &local_90, "XYZ");
+		this->rotationEuler.xyz = local_90;
+	}
+
+	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, &this->currentLocation);
+	edF32Vector4SubHard(&local_10, &eStack48, &this->currentLocation);
+	edF32Matrix4MulF32Vector4Hard(&this->dynamic.rotationQuat, m0, &this->dynamic.rotationQuat);
+
+	pCol = this->pCollisionData;
+	if (pCol == (CCollision*)0x0) {
+		UpdatePosition(&eStack48, true);
+	}
+	else {
+		uVar1 = pCol->flags_0x0;
+		pCol->flags_0x0 = pCol->flags_0x0 | 0x400000;
+		pCol->flags_0x0 = pCol->flags_0x0 & 0xfffeffff;
+		pCol->CheckCollisions_MoveActor((CActor*)this, &eStack48, (CActorsTable*)0x0, pActor, 0);
+		pCol->flags_0x0 = pCol->flags_0x0 & 0xffbfffff;
+
+		if ((uVar1 & 0x10000) != 0) {
+			pCol->flags_0x0 = pCol->flags_0x0 | 0x10000;
+		}
+	}
+
+	if (this->pTiedActor == pActor) {
+		if ((pActor->pCollisionData == (CCollision*)0x0) || (((pActor->pCollisionData->flags_0x0 & 0x100000) != 0 && ((this->flags & 0x20000) == 0)))) {
+			pTVar2 = GetTimer();
+
+			if (pTVar2->cutsceneDeltaTime == 0.0f) {
+				local_10.x = 0.0f;
+				local_10.y = 0.0f;
+				local_10.z = 0.0f;
+				local_10.w = 0.0f;
+			}
+			else {
+				fVar3 = 1.0f / pTVar2->cutsceneDeltaTime;
+				local_10 = local_10 * fVar3;
+			}
+
+			fVar3 = edF32Vector4SafeNormalize0Hard(&eStack32, &local_10);
+			if (30.0f < fVar3) {
+				edF32Vector4ScaleHard(30.0f, &local_10, &eStack32);
+			}
+
+			if (pTVar2->cutsceneDeltaTime == 0.0) {
+				local_10.x = 0.0f;
+				local_10.y = 0.0f;
+				local_10.z = 0.0f;
+				local_10.w = 0.0f;
+			}
+			else {
+				fVar3 = 1.0f / pTVar2->cutsceneDeltaTime;
+				local_10 = local_10 * fVar3;
+			}
+
+			(this->dynamic).field_0x10 = local_10;
+		}
+		else {
+			(this->dynamic).field_0x10.x = 0.0f;
+			(this->dynamic).field_0x10.y = 0.0f;
+			(this->dynamic).field_0x10.z = 0.0f;
+			(this->dynamic).field_0x10.w = 0.0f;
+		}
+	}
+
+	this->flags = this->flags & 0xffdfffff;
+	return true;
+}
+
 int CActorMovable::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	int uVar1;
@@ -473,9 +565,8 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 					}
 
 					if (pTiltStreamRef->field_0x0 == -1) {
-						IMPLEMENTATION_GUARD(
-						_edQuatFromAngAxis(fVar8, &eStack160, (edF32VECTOR3*)pTiltData);
-						edQuatMul((float*)&local_20, (float*)&local_20, (float*)&eStack160);)
+						_edQuatFromAngAxis(fVar8, &eStack160, &pTiltData->field_0x0.xyz);
+						edQuatMul(&local_20, &local_20, &eStack160);
 					}
 					else {
 						fVar6 = fVar6 + fVar8;
@@ -631,55 +722,6 @@ void CDynamic::Reset(CActor* pActor)
 	else {
 		this->rotationQuat = pActor->rotationQuat;
 	}
-	return;
-}
-
-void edQuatInverse(edF32VECTOR4* param_1, edF32VECTOR4* param_2)
-{
-	param_1->x = -param_2->x;
-	param_1->y = -param_2->y;
-	param_1->z = -param_2->z;
-	param_1->w = param_2->w;
-	return;
-}
-
-void edQuatMul(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-
-	fVar8 = param_3->z;
-	fVar2 = param_2->y;
-	fVar3 = param_3->x;
-	fVar4 = param_2->w;
-	fVar5 = param_3->w;
-	fVar6 = param_2->x;
-	fVar7 = param_3->y;
-	fVar1 = param_2->z;
-	param_1->x = (fVar2 * fVar8 + fVar6 * fVar5 + fVar4 * fVar3) - fVar1 * fVar7;
-	param_1->y = fVar1 * fVar3 + fVar2 * fVar5 + (fVar4 * fVar7 - fVar6 * fVar8);
-	param_1->z = fVar1 * fVar5 + ((fVar6 * fVar7 + fVar4 * fVar8) - fVar2 * fVar3);
-	param_1->w = ((fVar4 * fVar5 - fVar6 * fVar3) - fVar2 * fVar7) - fVar1 * fVar8;
-	return;
-}
-
-void edQuatNormalize(edF32VECTOR4* v0, edF32VECTOR4* v1)
-{
-	float fVar1;
-	float fVar2;
-
-	fVar2 = v1->x;
-	fVar1 = 1.0f / sqrtf(v1->w * v1->w + v1->z * v1->z + v1->y * v1->y + fVar2 * fVar2);
-	v0->x = fVar2 * fVar1;
-	v0->y = v1->y * fVar1;
-	v0->z = v1->z * fVar1;
-	v0->w = v1->w * fVar1;
 	return;
 }
 

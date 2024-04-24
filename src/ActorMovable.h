@@ -87,6 +87,7 @@ public:
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void SetState(int newState, int animType);
+	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	void SV_MOV_UpdateSpeedIntensity(float param_1, float param_2);

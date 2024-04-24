@@ -421,6 +421,19 @@ inline edF32VECTOR4 operator-(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs)
 	return ret;
 }
 
+
+struct edS32VECTOR3
+{
+	int x;
+	int y;
+	int z;
+};
+
+struct S_BOUNDING_BOX {
+	edF32VECTOR4 minPoint;
+	edF32VECTOR4 maxPoint;
+};
+
 #ifdef PLATFORM_WIN
 #pragma pack(pop)
 #endif

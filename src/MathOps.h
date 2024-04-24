@@ -19,6 +19,11 @@ extern edF32VECTOR4 gF32Vector4UnitZ;
 extern edF32VECTOR4 g_xVector;
 
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
+void edQuatInverse(edF32VECTOR4* param_1, edF32VECTOR4* param_2);
+void edQuatMul(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3);
+void edQuatNormalize(edF32VECTOR4* v0, edF32VECTOR4* v1);
+
+void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 
 float edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 

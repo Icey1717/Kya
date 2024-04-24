@@ -313,10 +313,10 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	}
 	uVar4 = ByteCode::GetU32(pByteCode);
 	if (uVar4 == 0) {
-		this->field_0x368 = (float)((uint)this->field_0x368 & 0xffffffef);
+		this->field_0x368 = (this->field_0x368 & 0xffffffef);
 	}
 	else {
-		this->field_0x368 = (float)((uint)this->field_0x368 | 0x10);
+		this->field_0x368 = (this->field_0x368 | 0x10);
 	}
 	fVar7 = ByteCode::GetF32(pByteCode);
 	this->field_0x50c = fVar7;
@@ -380,6 +380,36 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	iVar5 = ByteCode::GetS32(pByteCode);
 	this->field_0x910 = iVar5;)
 	return;
+}
+
+bool CActorFighter::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
+{
+	uint uVar1;
+	int iVar2;
+
+	//iVar2 = &this->field_0x880;
+	CActorAutonomous::CarriedByActor(pActor, m0);
+
+	IMPLEMENTATION_GUARD_LOG(
+	uVar1 = 0;
+	if (this->field_0x8e0 != 0) {
+		do {
+			edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)(iVar2 + 0x20), m0, (edF32VECTOR4*)(iVar2 + 0x20));
+			uVar1 = uVar1 + 1;
+			iVar2 = iVar2 + 0x30;
+		} while (uVar1 < (uint)this->field_0x8e0);
+	}
+
+	if ((this->field_0x368 & 0x1000) != 0) {
+		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&this->field_0x4a0, m0, (edF32VECTOR4*)&this->field_0x4a0);
+		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&this->field_0x4b0, m0, (edF32VECTOR4*)&this->field_0x4b0);
+	}
+
+	if (this->actorState - 0x52U < 2) {
+		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&this->field_0x690, m0, (edF32VECTOR4*)&this->field_0x690);
+	})
+
+	return true;
 }
 
 int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
@@ -515,20 +545,20 @@ void CActorFighter::ClearLocalData()
 
 	IMPLEMENTATION_GUARD_LOG(
 
-		this->field_0x368 = (float)((uint)this->field_0x368 | 2);
-	this->field_0x368 = (float)((uint)this->field_0x368 | 4);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xfffffffe);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xffffffdf);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xffffffbf);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xffffff7f);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xfffffeff);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xfffffdff);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xfffffbff);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xffffefff);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xffffdfff);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xffffbfff);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xffff7fff);
-	this->field_0x368 = (float)((uint)this->field_0x368 & 0xfffeffff);
+		this->field_0x368 = (this->field_0x368 | 2);
+	this->field_0x368 = (this->field_0x368 | 4);
+	this->field_0x368 = (this->field_0x368 & 0xfffffffe);
+	this->field_0x368 = (this->field_0x368 & 0xffffffdf);
+	this->field_0x368 = (this->field_0x368 & 0xffffffbf);
+	this->field_0x368 = (this->field_0x368 & 0xffffff7f);
+	this->field_0x368 = (this->field_0x368 & 0xfffffeff);
+	this->field_0x368 = (this->field_0x368 & 0xfffffdff);
+	this->field_0x368 = (this->field_0x368 & 0xfffffbff);
+	this->field_0x368 = (this->field_0x368 & 0xffffefff);
+	this->field_0x368 = (this->field_0x368 & 0xffffdfff);
+	this->field_0x368 = (this->field_0x368 & 0xffffbfff);
+	this->field_0x368 = (this->field_0x368 & 0xffff7fff);
+	this->field_0x368 = (this->field_0x368 & 0xfffeffff);
 	this->field_0x350 = 0;
 	this->field_0x354 = 0;
 	this->field_0x36c = 1;

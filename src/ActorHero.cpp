@@ -1164,7 +1164,23 @@ uint CActorHero::TestState_IsCrouched(uint inFlags)
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
+
 	return inFlags & 0x20;
+}
+
+uint CActorHero::TestState_IsOnCeiling(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x200;
 }
 
 bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)

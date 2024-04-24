@@ -663,6 +663,28 @@ void CCameraManager::Level_Init()
 	Level_Init(true);
 }
 
+void CCameraManager::Level_SectorChange(int oldSectorId, int newSectorId)
+{
+	int iVar1;
+	CCamera* pCamera;
+
+	pCamera = this->pInitialView_0x4b4;
+	this->cameraStack.Level_SectorChange(oldSectorId);
+
+	for (; pCamera != (CCamera*)0x0; pCamera = pCamera->pNextCameraView_0xa4) {
+		if ((oldSectorId == pCamera->objectId) && (oldSectorId != -1)) {
+			pCamera->flags_0xc = pCamera->flags_0xc & 0xffdfffff;
+		}
+
+		iVar1 = pCamera->objectId;
+		if ((newSectorId == iVar1) || (iVar1 == -1)) {
+			pCamera->flags_0xc = pCamera->flags_0xc | 0x200000;
+		}
+	}
+
+	return;
+}
+
 void CCameraManager::KeepSameParam(CCamera* pNewCamera, uint flag)
 {
 	bool bVar1;
@@ -995,11 +1017,13 @@ void CCameraManager::Level_Manage()
 			pTVar4 = GetTimer();
 			this->time_0x4 = pTVar4->lastFrameTime;
 		}
+
 		pCVar8 = this->pInitialView_0x4b4;
 		do {
 			pCVar8->flags_0xc = pCVar8->flags_0xc & 0xff7fffff;
 			pCVar8 = pCVar8->pNextCameraView_0xa4;
 		} while (pCVar8 != (CCamera*)0x0);
+
 		bVar3 = this->cameraStack.Manage();
 		if (bVar3 != false) {
 			switchMode = (this->cameraStack).switchMode;
@@ -1024,11 +1048,13 @@ void CCameraManager::Level_Manage()
 				*puVar9 = *puVar9 | 0x4000000;
 			}
 		}
+
 		Func_001947e0();
+
 		pTVar4 = GetTimer();
 		if ((pTVar4->timeScale != 0.0f) || ((this->pActiveCamera->flags_0xc & 0x40000) != 0)) {
-			/* Camera? */
 			pActiveCamera->Manage();
+
 			if ((this->flags & 0x4000000) == 0) {
 				pCVar1 = (CCameraShadow*)this->pActiveCamera;
 				if (pCVar1 != (CCameraShadow*)0x0) {
@@ -1408,8 +1434,6 @@ bool CCameraManager::IsSphereVisible(float other, edF32VECTOR4* pSphere)
 	}
 	return bVar2;
 }
-
-CCamFigData* _pfig_data;
 
 void CCamFigData::Create(ByteCode* pByteCode)
 {
@@ -1804,6 +1828,7 @@ bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 					this->pActiveCamera = pCamera_00;
 				}
 			}
+
 			puVar3 = &this->flags;
 			if (switchMode == SWITCH_MODE_B) {
 				*puVar3 = *puVar3 & 0xfbffffff;

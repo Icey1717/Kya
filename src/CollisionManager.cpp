@@ -10,6 +10,7 @@
 
 #include <math.h>
 #include <string.h>
+#include "CollisionRay.h"
 
 struct ClusterCallbackParams
 {
@@ -955,15 +956,31 @@ void CCollision::TransformG3DObbTreeVertices(edColG3D_OBB_TREE_DYN* pDynCol, int
 	return;
 }
 
-float CCollision::GetWallNormalYLimit(s_collision_contact* pContact)
+float CCollisionManager::GetWallNormalYLimit(s_collision_contact* pContact)
 {
 	uint uVar1;
 
 	uVar1 = pContact->materialFlags & 0xf;
+
 	if (uVar1 == 0) {
 		uVar1 = CScene::_pinstance->defaultMaterialIndex;
 	}
-	return CCollisionManager::_material_table[uVar1].field_0x8;
+
+	return _material_table[uVar1].field_0x8;
+}
+
+float CCollisionManager::GetGroundSpeedDecreaseNormalYLimit(s_collision_contact* pContact)
+
+{
+	uint uVar1;
+
+	uVar1 = pContact->materialFlags & 0xf;
+
+	if (uVar1 == 0) {
+		uVar1 = CScene::_pinstance->defaultMaterialIndex;
+	}
+
+	return _material_table[uVar1].field_0x4;
 }
 
 int CCollision::GetPrimNumDeltaSubdivisions(edColPRIM_OBJECT* pPrimObj, byte colType, edF32VECTOR4* param_3)
@@ -1002,6 +1019,140 @@ int CCollision::GetPrimNumDeltaSubdivisions(edColPRIM_OBJECT* pPrimObj, byte col
 	}
 
 	return iVar2;
+}
+
+bool CCollision::IsVertexAboveAndAgainstObbTree(edF32VECTOR4* v0, edObbTREE_DYN* pObbTree)
+{
+	bool bVar1;
+	float fVar2;
+	CCollisionRay local_30;
+	void* peStack8;
+	uint uStack4;
+
+	static edF32VECTOR4 ray_dir = { 0.0f, -1.0f, 0.0f, 0.0f };
+
+	local_30.lengthB.z = v0->z;
+	local_30.lengthB.w = v0->w;
+	local_30.pLocation = &local_30.lengthB;
+	local_30.lengthB.x = v0->x;
+	local_30.pDirection = &ray_dir;
+	local_30.lengthB.y = v0->y + 0.1f;
+	local_30.lengthA = 0.25f;
+	fVar2 = edObbIntersectObbTreeRayPrim(&peStack8, &uStack4, pObbTree, &local_30);
+	bVar1 = 0.0f <= fVar2;
+	if ((bVar1) && (bVar1 = true, local_30.lengthA <= fVar2)) {
+		bVar1 = false;
+	}
+	return bVar1;
+}
+
+float CCollision::GetPrimDistanceFromPosition(edColPRIM_OBJECT* param_1, byte param_2, edF32VECTOR4* param_3)
+{
+	int iVar1;
+	float fVar2;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	edF32Matrix4MulF32Vector4Hard(&local_10, &param_1->worldTransform, param_3);
+
+	if (param_2 == 0xe) {
+		local_10.w = 0.0f;
+		edF32Vector4SafeNormalize0Hard(&local_20, &local_10);
+		local_20.w = 1.0f;
+	}
+	else {
+		if (param_2 == 0xd) {
+			local_20 = local_10;
+
+			if (0.5f <= fabs(local_20.x)) {
+				iVar1 = 1;
+
+				if (local_20.x <= 0.0f) {
+					iVar1 = -1;
+				}
+
+				local_20.x = (float)iVar1 * 0.5f;
+			}
+
+			if (0.5f <= fabs(local_20.y)) {
+				iVar1 = 1;
+
+				if (local_20.y <= 0.0f) {
+					iVar1 = -1;
+				}
+
+				local_20.y = (float)iVar1 * 0.5f;
+			}
+
+			if (0.5f <= fabs(local_10.z)) {
+				iVar1 = 1;
+				if (local_10.z <= 0.0f) {
+					iVar1 = -1;
+				}
+
+				local_20.z = (float)iVar1 * 0.5f;
+			}
+		}
+	}
+
+	edF32Matrix4MulF32Vector4Hard(&local_20, &param_1->vertices, &local_20);
+	local_20 = local_20 - *param_3;
+	fVar2 = edF32Vector4GetDistHard(&local_20);
+
+	return fVar2;
+}
+
+float CCollision::GetWallNormalYLimit(s_collision_contact* pContact)
+{
+	return CCollisionManager::GetWallNormalYLimit(pContact);
+}
+
+float CCollision::GetObbTreeDistanceFromPosition(edObbTREE_DYN* pObbTree, edF32VECTOR4* v0)
+{
+	edObbTREE* peVar1;
+	int iVar2;
+	int iVar3;
+	float fVar4;
+	float fVar5;
+
+	fVar5 = 1e+30f;
+	fVar4 = 1e+30f;
+
+	if (pObbTree->type == 1) {
+		iVar3 = 0;
+		fVar4 = fVar5;
+
+		if (pObbTree->count_0x52 != 0) {
+			do {
+				fVar4 = GetObbTreeDistanceFromPosition(LOAD_SECTION_CAST(edObbTREE_DYN*, pObbTree->field_0x54[iVar3]), v0);
+
+				if (fVar5 <= fVar4) {
+					fVar4 = fVar5;
+				}
+
+				iVar3 = iVar3 + 1;
+				fVar5 = fVar4;
+			} while (iVar3 < pObbTree->count_0x52);
+		}
+	}
+	else {
+		iVar3 = 0;
+		if (pObbTree->count_0x52 != 0) {
+			edColPRIM_OBJECT* pPrimObj = LOAD_SECTION_CAST(edColPRIM_OBJECT*, pObbTree->field_0x54[0]);
+			do {
+				fVar4 = GetPrimDistanceFromPosition(pPrimObj + iVar3, pObbTree->type, v0);
+
+				if (fVar5 <= fVar4) {
+					fVar4 = fVar5;
+				}
+
+				iVar3 = iVar3 + 1;
+				fVar5 = fVar4;
+			} while (iVar3 < pObbTree->count_0x52);
+		}
+	}
+
+	return fVar4;
 }
 
 void CCollision::SetObbTreePositionNoRotationRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2)
@@ -1118,6 +1269,85 @@ void CCollision::UpdateMatrix(edF32MATRIX4* param_2)
 	}
 	return;
 }
+
+
+void CCollision::TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRIX4* m0, CActor* param_5)
+{
+	CActor* pCVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	CActor* pCVar5;
+	CActor* pCVar6;
+	bool bVar7;
+	int iVar8;
+	int iVar9;
+	edF32MATRIX4 local_a0;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 local_40;
+
+	fVar2 = m0->da - (this->transformMatrix).da;
+	fVar3 = m0->db - (this->transformMatrix).db;
+	fVar4 = m0->dc - (this->transformMatrix).dc;
+
+	local_60.x = m0->aa - (this->transformMatrix).aa;
+	local_60.y = m0->bb - (this->transformMatrix).bb;
+	local_60.z = m0->cc - (this->transformMatrix).cc;
+	local_60.w = 0.0f;
+
+	if (fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4 + local_60.x * local_60.x + local_60.y * local_60.y + local_60.z * local_60.z != 0.0f) {
+		if ((this->transformMatrix).cc + (this->transformMatrix).aa + (this->transformMatrix).bb == 3.0f) {
+			local_a0.rowX = gF32Matrix4Unit.rowX;
+			local_a0.rowY = gF32Matrix4Unit.rowY;
+			local_a0.rowZ = gF32Matrix4Unit.rowZ;
+			
+			local_a0.dd = (this->transformMatrix).dd;
+			local_a0.da = 0.0f - (this->transformMatrix).da;
+			local_a0.db = 0.0f - (this->transformMatrix).db;
+			local_a0.dc = 0.0f - (this->transformMatrix).dc;
+		}
+		else {
+			edF32Matrix4GetInverseOrthoHard(&local_a0, &this->transformMatrix);
+		}
+
+		edF32Matrix4MulF32Matrix4Hard(&local_40, &local_a0, m0);
+
+		iVar9 = param_3->entryCount;
+
+		while (0 < iVar9) {
+			iVar8 = iVar9 + -1;
+			pCVar1 = param_3->aEntries[iVar9 + -1];
+			iVar9 = iVar8;
+
+			if ((param_5 != pCVar1) && (pCVar1->flags = pCVar1->flags | 0x40000, (CActorFactory::gClassProperties[pCVar1->typeID].flags & 0x40) != 0))
+			{
+				bVar7 = true;
+				if ((pActor != pCVar1->pTiedActor) &&
+					((pCVar1->pCollisionData != (CCollision*)0x0 && ((pCVar1->pCollisionData->flags_0x0 & 0x80) != 0)))) {
+					bVar7 = false;
+				}
+
+				if (((bVar7) && (pCVar6 = pCVar1->pTiedActor, pCVar6 != (CActor*)0x0)) && (pCVar6 != pActor)) {
+					for (; pCVar5 = pActor, pCVar6->pTiedActor != (CActor*)0x0; pCVar6 = pCVar6->pTiedActor) {
+					}
+					for (; pCVar5->pTiedActor != (CActor*)0x0; pCVar5 = pCVar5->pTiedActor) {
+					}
+					if (pCVar6 == pCVar5) {
+						bVar7 = false;
+					}
+				}
+				if (bVar7) {
+					pCVar1->CarriedByActor(pActor, &local_40);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+
 
 void gClusterCallback_Collision(CActor* pActor, void* pInParams)
 {
@@ -1711,7 +1941,7 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 	uint uVar3;
 	ulong uVar4;
 
-	//gColData._20_4_ = gColData._16_4_;
+	gColData.field_0x14 = gColData.field_0x10;
 	(gColData.pActiveDatabase)->field_0x4 = 0;
 
 	uVar2 = 0;
@@ -1727,9 +1957,8 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 
 		if (((this->flags_0x0 & 0x400) != 0) || ((this->flags_0x0 & 2) == 0)) {
 			uVar2 = 0;
-			IMPLEMENTATION_GUARD(
-			gColData._20_4_ = gColData._16_4_;
-			*(undefined4*)&(gColData.pActiveDatabase)->field_0x4 = 0;)
+			gColData.field_0x14 = gColData.field_0x10;
+			(gColData.pActiveDatabase)->field_0x4 = 0;
 		}
 	}
 
@@ -1786,25 +2015,28 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	uVar3 = this->flags_0x0 & 0x480;
 	bVar2 = pMatrix->cc + pMatrix->aa + pMatrix->bb != 3.0f;
 	matrixType = (uint)bVar2;
+
 	if (uVar3 != 0) {
 		if (pActorsTable == (CActorsTable*)0x0) {
 			pActorsTable = &local_110;
 		}
+
 		if ((this->flags_0x0 & 0x80) != 0) {
-			IMPLEMENTATION_GUARD(
-			for (ppiVar8 = (int**)this->field_0x20; ppiVar8 != (int**)0x0; ppiVar8 = (int**)ppiVar8[2]) {
-				CFixedTable::Add((int*)pActorsTable, (int)*ppiVar8);
-				lVar6 = (**(code**)(**ppiVar8 + 0xc))();
-				if (lVar6 != 0) {
-					piVar1 = *ppiVar8;
-					piVar1[0x5c] = 0;
-					piVar1[0x5d] = 0;
-					piVar1[0x5e] = 0;
-					piVar1[0x5f] = 0;
+			S_TIED_ACTOR_ENTRY* pSVar7;
+			for (pSVar7 = this->pTiedActorEntry; pSVar7 != (S_TIED_ACTOR_ENTRY*)0x0; pSVar7 = pSVar7->pPrev) {
+				pActorsTable->Add(pSVar7->pActor);
+				bVar2 = pSVar7->pActor->IsKindOfObject(2);
+				if (bVar2 != false) {
+					CActorMovable* pCVar1 = (CActorMovable*)pSVar7->pActor;
+					(pCVar1->dynamic).field_0x10.x = 0.0f;
+					(pCVar1->dynamic).field_0x10.y = 0.0f;
+					(pCVar1->dynamic).field_0x10.z = 0.0f;
+					(pCVar1->dynamic).field_0x10.w = 0.0f;
 				}
-			})
+			}
 		}
 	}
+
 	edF32Vector4SubHard(&baseTranslation, &pMatrix->rowT, &(this->transformMatrix).rowT);
 
 	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {}", baseTranslation.ToString());
@@ -1930,8 +2162,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 		}
 	}
 	if ((uVar3 != 0) && ((pActorsTable->entryCount != 0 || (this->pTiedActorEntry != (S_TIED_ACTOR_ENTRY*)0x0)))) {
-		IMPLEMENTATION_GUARD(
-		TranslateList(this, pActor, pActorsTable, pMatrix, param_5);)
+		TranslateList(pActor, pActorsTable, pMatrix, param_5);
 	}
 	this->transformMatrix = *pMatrix;
 	
@@ -2049,7 +2280,7 @@ LAB_00212060:
 			pCarryActorEntry = peVar2;
 		}
 
-		if (pCarryActorEntry == (S_CARRY_ACTOR_ENTRY*)0x0) {
+		if (pCarryActorEntry != (S_CARRY_ACTOR_ENTRY*)0x0) {
 			edF32Matrix4FromEulerSoft(&pCarryActorEntry->m0, &pActorTo->pCinData->rotationEuler, "XYZ");
 			pCarryActorEntry->m0.rowT = pActorTo->baseLocation;
 
@@ -2057,6 +2288,37 @@ LAB_00212060:
 			edF32Matrix4MulF32Matrix4Hard(&pCarryActorEntry->m1, &pCarryActorEntry->m0, &this->transformMatrix);
 		}
 	}
+	return;
+}
+
+void CCollision::UnregisterTiedActor(CActor* pActor)
+{
+	S_TIED_ACTOR_ENTRY* pSVar1;
+
+	for (pSVar1 = this->pTiedActorEntry; (pSVar1 != (S_TIED_ACTOR_ENTRY*)0x0 && (pActor != pSVar1->pActor));
+		pSVar1 = pSVar1->pPrev) {
+	}
+
+	if (pSVar1 != (S_TIED_ACTOR_ENTRY*)0x0) {
+		if (pSVar1->pNext == (S_TIED_ACTOR_ENTRY*)0x0) {
+			this->pTiedActorEntry = pSVar1->pPrev;
+		}
+		else {
+			pSVar1->pNext->pPrev = pSVar1->pPrev;
+		}
+
+		if (pSVar1->pPrev != (S_TIED_ACTOR_ENTRY*)0x0) {
+			pSVar1->pPrev->pNext = pSVar1->pNext;
+		}
+
+		pSVar1->pActor = (CActor*)0x0;
+		if ((this->pTiedActorEntry == (S_TIED_ACTOR_ENTRY*)0x0) && (this->pCarryActorEntry != (S_CARRY_ACTOR_ENTRY*)0x0))
+		{
+			this->pCarryActorEntry->field_0x80 = 0;
+			this->pCarryActorEntry = (S_CARRY_ACTOR_ENTRY*)0x0;
+		}
+	}
+
 	return;
 }
 

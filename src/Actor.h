@@ -34,6 +34,15 @@ class CPlayerInput;
 enum ACTOR_MESSAGE {};
 typedef void* MSG_PARAM;
 
+
+struct SPEED_DYN {
+	void Init(float param_1, float param_2);
+	float UpdateLerp(float target);
+
+	float field_0x0;
+	float field_0x4;
+};
+
 struct ActorMessage_7 {
 	int field_0x0;
 
@@ -120,7 +129,7 @@ struct KyaUpdateObjA {
 	int defaultBehaviourId;
 	edF32VECTOR4 boundingSphere;
 	float floatFieldB; /* Created by retype action */
-	float floatField;
+	float visibilityDistance;
 	float field_0x1c;
 	float field_0x20;
 	int field_0x24;
@@ -199,6 +208,7 @@ public:
 
 class CPathFollowReaderAbsolute;
 struct S_PATHREADER_POS_INFO;
+struct edAnmMacroBlendN;
 
 class CActor : public CObject {
 public:
@@ -249,14 +259,15 @@ public:
 	int prevAnimType;
 	int currentAnimType;
 
-	float adjustedMagnitude;
+	float distanceToCamera;
 	float distanceToGround;
 
 	undefined4 field_0x58;
 
 	uint lightingFlags;
 	float lightingFloat_0xe0;
-	ushort field_0xf0;
+	float field_0xf0;
+	ushort field_0xf4;
 
 	float timeInAir;
 	float idleTimer;
@@ -280,8 +291,6 @@ public:
 	static uint _gBehaviourFlags_ACT[2];
 
 	float lodBiases[4];
-
-	ushort field_0xf4;
 
 	CActor();
 
@@ -326,10 +335,12 @@ public:
 	virtual bool Can_0x9c();
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
+	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
 	virtual void CinematicMode_Leave(int behaviourId);
+	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual CPlayerInput* GetInputManager(int, int);
 
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
@@ -392,6 +403,7 @@ public:
 	void SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0);
 	bool SV_AmICarrying(CActor* pOther);
 	int SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* param_9);
+	static void SV_Blend3AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN* param_3, uint param_4, uint param_5, uint param_6);
 
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();

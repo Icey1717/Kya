@@ -84,8 +84,11 @@ public:
 	static void ComputePrimLowestAndHighestVertices(edF32VECTOR4* pHighestVertex, edF32VECTOR4* pLowestVertex, int param_3, edColPRIM_OBJECT* pPrimObj, byte type);
 	static void SetObbTreeMatrixRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* param_2, edF32MATRIX4* param_3);
 	static void TransformG3DObbTreeVertices(edColG3D_OBB_TREE_DYN* pDynCol, int matrixType, edF32MATRIX4* pTransformMatrix);
-	static float GetWallNormalYLimit(s_collision_contact* pContact);
 	static int GetPrimNumDeltaSubdivisions(edColPRIM_OBJECT* pPrimObj, byte colType, edF32VECTOR4* param_3);
+	static bool IsVertexAboveAndAgainstObbTree(edF32VECTOR4* v0, edObbTREE_DYN* pObbTree);
+	static float GetObbTreeDistanceFromPosition(edObbTREE_DYN* pObbTree, edF32VECTOR4* v0);
+	static float GetPrimDistanceFromPosition(edColPRIM_OBJECT* param_1, byte param_2, edF32VECTOR4* param_3);
+	static float GetWallNormalYLimit(s_collision_contact* pContact);
 
 	uint CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0);
 	uint CheckCollisionsWithScenery(int param_2);
@@ -95,8 +98,11 @@ public:
 	void CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATRIX4* pMatrix, CActorsTable* pActorTable, CActor* param_5, int param_6);
 	void CheckCollisions_TranslateActor(CActor* pActor, edF32VECTOR4* param_3, CActorsTable* param_4, CActor* param_5, int param_6);
 	void UpdateMatrix(edF32MATRIX4* param_2);
+	void TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRIX4* m0, CActor* param_5);
+
 
 	void RegisterTiedActor(CActor* pActorTo, CActor* pActor, int carryMethod);
+	void UnregisterTiedActor(CActor* pActor);
 	CActor* FindTiedActor(CActor* pActor);
 	float GetSubjectiveCarriedWeight();
 	float GetCarriedWeight();
@@ -149,6 +155,10 @@ public:
 
 	static bool IsASlidingGround(s_collision_contact* pContact);
 	static float GetMaterialSlidingCoef(s_collision_contact* pContact);
+
+	static float GetWallNormalYLimit(s_collision_contact* pContact);
+	static float GetGroundSpeedDecreaseNormalYLimit(s_collision_contact* pContact);
+
 
 
 	CCollision* NewCCollision();

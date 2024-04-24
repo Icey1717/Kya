@@ -251,27 +251,27 @@ int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* 
 
 				if (this->field_0x1c == 0) {
 					if (fVar8 < param_1) {
-						IMPLEMENTATION_GUARD(
 						iVar5 = iVar4 * 4;
-						for (; fVar10 = fVar8, fVar8 < param_1;
-							fVar8 = fVar8 + fVar10 + (*(float*)((int)this->field_0x10 + iVar5) - fVar7)) {
+						for (; fVar10 = fVar8, fVar8 < param_1; fVar8 = fVar8 + fVar10 + (this->field_0x10[iVar4] - fVar7)) {
 							pfVar2 = this->pActor3C_0x0->field_0x2c;
 							if (pfVar2 == (float*)0x0) {
 								fVar10 = 0.0f;
 							}
 							else {
-								fVar10 = *(float*)((int)pfVar2 + iVar5);
+								fVar10 = pfVar2[iVar4];
 							}
+
 							pfVar2 = this->pActor3C_0x0->field_0x2c;
 							iVar5 = iVar5 + -4;
 							iVar4 = iVar4 + -1;
+
 							if (pfVar2 == (float*)0x0) {
 								fVar7 = 0.0f;
 							}
 							else {
-								fVar7 = *(float*)((int)pfVar2 + iVar5);
+								fVar7 = pfVar2[iVar4];
 							}
-						})
+						}
 					}
 
 					pfVar2 = this->pActor3C_0x0->field_0x2c;
@@ -438,62 +438,6 @@ int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* para
 		}
 	}
 	return iVar1;
-}
-
-void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
-{
-	bool bVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-
-	fVar2 = param_3->x * param_4->x + param_3->y * param_4->y + param_3->z * param_4->z + param_3->w * param_4->w;
-	bVar1 = fVar2 < 0.0f;
-
-	if (bVar1) {
-		fVar2 = -fVar2;
-	}
-
-	if (0.999999f < fVar2) {
-		fVar3 = param_4->y;
-		fVar2 = param_4->z;
-		fVar4 = param_4->w;
-		param_2->x = param_4->x;
-		param_2->y = fVar3;
-		param_2->z = fVar2;
-		param_2->w = fVar4;
-	}
-	else {
-		fVar2 = acosf(fVar2);
-		fVar3 = sinf(fVar2);
-		fVar3 = 1.0f / fVar3;
-		fVar4 = sinf(fVar2 - param_1 * fVar2);
-		fVar4 = fVar3 * fVar4;
-		fVar2 = sinf(param_1 * fVar2);
-		fVar3 = fVar3 * fVar2;
-
-		if (bVar1) {
-			fVar3 = -fVar3;
-		}
-
-		fVar2 = param_3->y;
-		fVar5 = param_3->z;
-		fVar6 = param_3->w;
-		fVar7 = param_4->y;
-		fVar8 = param_4->z;
-		fVar9 = param_4->w;
-
-		param_2->x = param_3->x * fVar4 + param_4->x * fVar3;
-		param_2->y = fVar2 * fVar4 + fVar7 * fVar3;
-		param_2->z = fVar5 * fVar4 + fVar8 * fVar3;
-		param_2->w = fVar6 * fVar4 + fVar9 * fVar3;
-	}
-	return;
 }
 
 int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatrix, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* param_5)

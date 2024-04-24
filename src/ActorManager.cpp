@@ -163,16 +163,15 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 void CActorManager::Level_Manage()
 {
 	int iVar1;
-	uint uVar2;
-	edF32VECTOR4 localVector;
+	uint actorFlags;
+	edF32VECTOR4 cameraLocation;
 	int activeActorLen;
-	ulong uVar3;
-	ulong uVar4;
+	bool bShouldBeActive;
 	uint counter;
 	CActor** ppActiveActors;
-	CActor** ppSectorActors;
+	CActor** ppSectorActorsEnd;
 	CActor** ppActiveActorsEnd;
-	CActor** ppActors;
+	CActor** ppSectorActors;
 	CActor* pActor;
 	float eleX;
 	float eleY;
@@ -184,55 +183,75 @@ void CActorManager::Level_Manage()
 		this->aClassInfo[0x18].aActors[counter].Manage();
 	}
 
-	localVector.xyz = CCameraManager::_gThis->transformationMatrix.rowT.xyz;
+	cameraLocation.xyz = CCameraManager::_gThis->transformationMatrix.rowT.xyz;
 
 	this->nbActiveActors = 0;
 
-	ppActors = this->aSectorActors;
+	ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage nbActors: {} camera location: {}", this->nbActors, cameraLocation.ToString());
+
+	ppSectorActors = this->aSectorActors;
 	ppActiveActors = this->aActiveActors;
-	ppSectorActors = ppActors + this->nbSectorActors;
-	for (; ppActors < ppSectorActors; ppActors = ppActors + 1) {
-		pActor = *ppActors;
+	ppSectorActorsEnd = ppSectorActors + this->nbSectorActors;
+
+	for (; ppSectorActors < ppSectorActorsEnd; ppSectorActors = ppSectorActors + 1) {
+		pActor = *ppSectorActors;
+
 		if ((pActor->flags & 0x800000) == 0) {
 
-			eleX = pActor->sphereCentre.x - localVector.x;
-			eleY = pActor->sphereCentre.y - localVector.y;
-			eleZ = pActor->sphereCentre.z - localVector.z;
-			pActor->adjustedMagnitude = sqrtf(eleX * eleX + eleY * eleY + eleZ * eleZ) - pActor->sphereCentre.w;
-			uVar2 = pActor->flags;
+			eleX = pActor->sphereCentre.x - cameraLocation.x;
+			eleY = pActor->sphereCentre.y - cameraLocation.y;
+			eleZ = pActor->sphereCentre.z - cameraLocation.z;
+			pActor->distanceToCamera = sqrtf(eleX * eleX + eleY * eleY + eleZ * eleZ) - pActor->sphereCentre.w;
 
-			if ((uVar2 & 8) == 0) {
-				uVar3 = (ulong)(pActor->adjustedMagnitude <= (pActor->subObjA)->floatField);
+			actorFlags = pActor->flags;
+
+			ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage sector actor: {} distance: {} flags: 0x{:x}", pActor->name, pActor->distanceToCamera, actorFlags);
+
+			if ((actorFlags & 8) == 0) {
+				bShouldBeActive = pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance;
+				ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage distance check sector actor: {} {} <= {} result: {}", 
+					pActor->name, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
 			}
 			else {
-				if ((uVar2 & 0x10) == 0) {
-					uVar3 = pActor->state_0x10;
+				if ((actorFlags & 0x10) == 0) {
+					bShouldBeActive = pActor->state_0x10;
+					ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage state check sector actor: {} state: {} result: {}", 
+						pActor->name, pActor->state_0x10, bShouldBeActive);
 				}
 				else {
-					uVar3 = 0;
+					bShouldBeActive = false;
 
-					if ((pActor->state_0x10 != 0) && (pActor->adjustedMagnitude <= (pActor->subObjA)->floatField))
+					ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage state and distance check sector actor: {} state: {} distance: {} <= {} result: {}", 
+						pActor->name, pActor->state_0x10, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
+
+					if ((pActor->state_0x10 != 0) && (pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance))
 					{
-						uVar3 = 1;
+						bShouldBeActive = true;
 					}
 				}
 			}
 
-			uVar4 = pActor->flags;
-			if (((uVar3 | uVar4 & 2) == 0) || ((uVar4 & 0x2000001) != 0)) {
+			ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage sector actor: {} shouldBeActive: {}", pActor->name, bShouldBeActive);
+
+			actorFlags = pActor->flags;
+			if (((bShouldBeActive | actorFlags & 2) == 0) || ((actorFlags & 0x2000001) != 0)) {
 				if ((pActor->flags & 4) != 0) {
 					pActor->FUN_00101110((CActor*)0x0);
 					pActor->ChangeManageState(0);
 				}
+
 				pActor->UpdateVisibility();
 			}
 			else {
-				if ((uVar4 & 4) == 0) {
+				if ((actorFlags & 4) == 0) {
 					pActor->ChangeManageState(1);
 				}
+
 				pActor->FUN_00101110((CActor*)0x0);
 				*ppActiveActors = pActor;
 				ppActiveActors = ppActiveActors + 1;
+
+				ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage active actor: {}", pActor->name);
 			}
 		}
 	}
@@ -270,7 +289,7 @@ void CActorManager::Level_Draw()
 			pActor = *aActors;
 			bShouldDraw = (pActor->flags & 0x4400) != 0;
 			if (bShouldDraw) {
-				bShouldDraw = pActor->adjustedMagnitude <= (pActor->subObjA)->field_0x1c;
+				bShouldDraw = pActor->distanceToCamera <= (pActor->subObjA)->field_0x1c;
 			}
 			if (bShouldDraw) {
 				pActor->Draw();
@@ -333,7 +352,7 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 		if ((iVar1 == newSectorId) || (iVar1 == -1)) {
 			if (iVar1 == newSectorId) {
 				const edF32VECTOR3 sphereCentre = pActor->sphereCentre.xyz - sphereOffset;
-				pActor->adjustedMagnitude = sqrtf(sphereCentre.x * sphereCentre.x + sphereCentre.y * sphereCentre.y + sphereCentre.z * sphereCentre.z) - pActor->sphereCentre.w;
+				pActor->distanceToCamera = sqrtf(sphereCentre.x * sphereCentre.x + sphereCentre.y * sphereCentre.y + sphereCentre.z * sphereCentre.z) - pActor->sphereCentre.w;
 			}
 			pActor->EvaluateManageState();
 			pActor->EvaluateDisplayState();
@@ -554,7 +573,7 @@ void CActorManager::UpdateLinkedActors()
 	edF32MATRIX4 local_40;
 	//CActorFighterVTable* pActor;
 
-	for (pCVar2 = this->pActorArray_0x8; pCVar2 != (CActor*)0x0; pCVar2 = *(CActor**)&pCVar2->adjustedMagnitude) {
+	for (pCVar2 = this->pActorArray_0x8; pCVar2 != (CActor*)0x0; pCVar2 = *(CActor**)&pCVar2->distanceToCamera) {
 		IMPLEMENTATION_GUARD(
 		pActor = pCVar2->pVTable;
 		iVar1 = (pCVar2->data).objectId;
@@ -1060,13 +1079,14 @@ void CCluster::ApplyCallbackToActorsIntersectingBox(S_BOUNDING_BOX* pBoundingBox
 	if (this->ppNodes != (CClusterNode**)0x0) {
 		for (pCVar6 = this->field_0x34; pCVar6 != (CClusterNode*)0x0; pCVar6 = pCVar6->pNext) {
 			bVar1 = pCVar6->pActor->SV_IsWorldBoundingSphereIntersectingBox(pBoundingBox);
+
 			if (bVar1 != false) {
 				pFunc(pCVar6->pActor, pParams);
 			}
 		}
 
-		local_40 = pBoundingBox->field_0x0 - edF32VECTOR4_00426880;
-		local_30 = pBoundingBox->field_0x10 + edF32VECTOR4_00426880;
+		local_40 = pBoundingBox->minPoint - edF32VECTOR4_00426880;
+		local_30 = pBoundingBox->maxPoint + edF32VECTOR4_00426880;
 
 		uVar2 = GetMapCoords(&local_10, &local_40);
 		uVar3 = GetMapCoords(&local_20, &local_30);
@@ -1077,29 +1097,36 @@ void CCluster::ApplyCallbackToActorsIntersectingBox(S_BOUNDING_BOX* pBoundingBox
 			local_20.x = local_20.x - local_10.x;
 			local_10.x = local_10.x + local_10.y * 0x400 + local_10.z * 0x20;
 			local_20.y = iVar4;
+
 			if (local_10.x == -1) {
 				ppCVar8 = &this->field_0x34;
 			}
 			else {
 				ppCVar8 = this->ppNodes + local_10.x;
 			}
+
 			for (; ppCVar7 = ppCVar8, iVar5 = local_20.z, -1 < iVar4; iVar4 = iVar4 + -1) {
 				for (; ppCVar9 = ppCVar7, iVar10 = local_20.x, -1 < iVar5; iVar5 = iVar5 + -1) {
 					for (; -1 < iVar10; iVar10 = iVar10 + -1) {
 						for (pCVar6 = *ppCVar9; pCVar6 != (CClusterNode*)0x0; pCVar6 = pCVar6->pNext) {
 							bVar1 = pCVar6->pActor->SV_IsWorldBoundingSphereIntersectingBox(pBoundingBox);
+
 							if (bVar1 != false) {
 								pFunc(pCVar6->pActor, pParams);
 							}
 						}
+
 						ppCVar9 = ppCVar9 + 1;
 					}
+
 					ppCVar7 = ppCVar7 + 0x20;
 				}
+
 				ppCVar8 = ppCVar8 + 0x400;
 			}
 		}
 	}
+
 	return;
 }
 

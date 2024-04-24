@@ -97,14 +97,14 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	if (*piVar5 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * sizeof(S_BRIDGE_ACTOR_STREAM_ENTRY);
 	}
-	this->field_0x244 = (S_BRIDGE_ACTOR_STREAM*)piVar5;
+	this->pActorStream = (S_BRIDGE_ACTOR_STREAM*)piVar5;
 
 	piVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar5 + 1);
 	if (*piVar5 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * sizeof(S_BRIDGE_ZONE_STREAM);
 	}
-	this->field_0x248 = (S_BRIDGE_ZONE_STREAM*)piVar5;
+	this->pZoneStream = (S_BRIDGE_ZONE_STREAM*)piVar5;
 
 	uVar4 = pByteCode->GetS32();
 	this->noFrictionZoneCount = uVar4;
@@ -135,7 +135,7 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	if (*piVar5 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * 0x48;
 	}
-	this->field_0x254 = (S_BRIDGE_CAMERA_STREAM*)piVar5;
+	this->pCameraStream = (S_BRIDGE_CAMERA_STREAM*)piVar5;
 
 	pcVar1 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar1 + sizeof(CActorMovingPlatform_SubObj);
@@ -145,141 +145,174 @@ void CActorMovingPlatform::Create(ByteCode* pByteCode)
 	this->field_0x1f0 = (CActor*)0x0;
 	this->field_0x1f4 = (CinNamedObject30*)0x0;
 	this->field_0x1f8 = (CActor*)0x0;
+
+	
 	piVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar5 + 1);
 	if (*piVar5 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * 0x10;
 	}
-	//this->field_0x1dc = piVar5;
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	this->field_0x1dc = piVar5;)
+
 	piVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar5 + 1);
 	if (*piVar5 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar5 * 0x10;
 	}
-#if 0
+
+	IMPLEMENTATION_GUARD_AUDIO(
 	this->field_0x1e0 = piVar5;
-	pcVar1 = this->field_0x1d0;
-	fVar12 = *(float*)(pcVar1 + 0x14);
-	*(undefined4*)(pcVar1 + 0x14) = *(undefined4*)(pcVar1 + 0x18);
-	*(float*)(this->field_0x1d0 + 0x18) = -fVar12;
-	puVar2 = *(uint**)&this->field_0x2c;
-	if (puVar2 != (uint*)0x0) {
-		*puVar2 = *puVar2 & 0xffffffc4;
-		*puVar2 = *puVar2 | 0x1800480;
-		if ((*(uint*)(this->field_0x1d0 + 0x24) & 0x40) != 0) {
-			*puVar2 = *puVar2 | 0x100;
+	)
+
+	CActorMovingPlatform_SubObj* pCVar3 = this->pProperties;
+	float fVar17 = pCVar3->field_0x14;
+	pCVar3->field_0x14 = pCVar3->field_0x18;
+	this->pProperties->field_0x18 = -fVar17;
+
+	CCollision* pCVar4 = this->pCollisionData;
+	if (pCVar4 != (CCollision*)0x0) {
+		pCVar4->flags_0x0 = pCVar4->flags_0x0 & 0xffffffc4;
+		pCVar4->flags_0x0 = pCVar4->flags_0x0 | 0x1800480;
+
+		if ((this->pProperties->flags_0x24 & 0x40) != 0) {
+			pCVar4->flags_0x0 = pCVar4->flags_0x0 | 0x100;
 		}
-		if ((*(uint*)(this->field_0x1d0 + 0x24) & 0x400000) != 0) {
-			*puVar2 = *puVar2 | 0x200;
+
+		if ((this->pProperties->flags_0x24 & 0x400000) != 0) {
+			pCVar4->flags_0x0 = pCVar4->flags_0x0 | 0x200;
 		}
-		if ((*(uint*)(this->field_0x1d0 + 0x24) & 0x4000) != 0) {
-			*puVar2 = *puVar2 & 0xffefffff;
+
+		if ((this->pProperties->flags_0x24 & 0x4000) != 0) {
+			pCVar4->flags_0x0 = pCVar4->flags_0x0 & 0xffefffff;
 		}
-		uVar9 = 0;
-		if ((*(uint*)(this->field_0x1d0 + 0x24) & 0x80) != 0) {
-			uVar9 = 0x400;
+
+		uint uVar6 = this->pProperties->flags_0x24;
+		uint uVar12 = 0;
+		if ((uVar6 & 0x80) != 0) {
+			uVar12 = 0x400;
 		}
-		if ((*(uint*)(this->field_0x1d0 + 0x24) & 0x100) != 0) {
-			uVar9 = uVar9 | 0x800;
+		if ((uVar6 & 0x100) != 0) {
+			uVar12 = uVar12 | 0x800;
 		}
-		if (uVar9 != 0) {
-			CCollision::PatchObbTreeFlagsRecurse((CollisionDataSubObj_176*)puVar2[4], uVar9, 0xffffffffffffffff, 0);
+		if (uVar12 != 0) {
+			CCollision::PatchObbTreeFlagsRecurse(pCVar4->pObbTree, uVar12, -1, 0);
 		}
 	}
-	if (this->field_0x254 == (int*)0x0) {
-		iVar11 = 0;
+
+	int iVar15;
+	if (this->pCameraStream == (S_BRIDGE_CAMERA_STREAM*)0x0) {
+		iVar15 = 0;
 	}
 	else {
-		iVar11 = *this->field_0x254;
+		iVar15 = this->pCameraStream->entryCount;
 	}
-	iVar7 = 0;
-	if (0 < iVar11) {
-		iVar10 = 0;
+
+	int iVar9 = 0;
+	if (0 < iVar15) {
 		do {
-			iVar3 = *(int*)((int)this->field_0x254 + iVar10 + 4);
-			if (iVar3 == 0xe) {
-				this->field_0x1d8 = this->field_0x1d8 | 8;
+			S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &pCameraStream->aEntries[iVar9];
+
+			if (pEntry->field_0x0 == 0xe) {
+				this->movingPlatformFlags = this->movingPlatformFlags | 8;
 			}
 			else {
-				if ((iVar3 == 0xc) || (iVar3 == 0xb)) {
-					this->field_0x1d8 = this->field_0x1d8 | 4;
+				if ((pEntry->field_0x0 == 0xc) || (pEntry->field_0x0 == 0xb)) {
+					this->movingPlatformFlags = this->movingPlatformFlags | 4;
 				}
 			}
-			iVar7 = iVar7 + 1;
-			iVar10 = iVar10 + 0x48;
-		} while (iVar7 < iVar11);
+
+			iVar9 = iVar9 + 1;
+		} while (iVar9 < iVar15);
 	}
-	if ((*(uint*)(this->field_0x1d0 + 0x24) & 0x1000) != 0) {
-		this->field_0x1d8 = this->field_0x1d8 | 4;
+
+	if ((this->pProperties->flags_0x24 & 0x1000) != 0) {
+		this->movingPlatformFlags = this->movingPlatformFlags | 4;
 	}
-	if ((*(uint*)(this->field_0x1d0 + 0x24) & 0x400) != 0) {
-		this->field_0x1d8 = this->field_0x1d8 | 8;
+	if ((this->pProperties->flags_0x24 & 0x400) != 0) {
+		this->movingPlatformFlags = this->movingPlatformFlags | 8;
 	}
-	uVar9 = 0;
-	iVar7 = 0;
-	if (0 < iVar11) {
-		piVar5 = this->field_0x254;
+
+	uint uVar16 = 0;
+	iVar9 = 0;
+	if (0 < iVar15) {
+		S_BRIDGE_CAMERA_STREAM* pSVar13 = this->pCameraStream;
 		do {
-			if (piVar5[0x12] != -1) {
-				uVar9 = SEXT48((int)uVar9 + 1);
+			if (pSVar13->aEntries[iVar9].field_0x44 != -1) {
+				uVar16 = uVar16 + 1;
 			}
-			iVar7 = iVar7 + 1;
-			piVar5 = piVar5 + 0x12;
-		} while (iVar7 < iVar11);
+
+			iVar9 = iVar9 + 1;
+		} while (iVar9 < iVar15);
 	}
-	if (3 < uVar9) {
-		uVar9 = 3;
+
+	if (3 < uVar16) {
+		uVar16 = 3;
 	}
-	piVar5 = (int*)this->field_0x1d0;
-	iVar11 = *piVar5;
-	if (iVar11 == -1) {
-		iVar11 = piVar5[1];
+
+	pCVar3 = this->pProperties;
+	iVar15 = (pCVar3->field_0x0).field_0x0;
+	if (iVar15 == -1) {
+		iVar15 = (pCVar3->field_0x0).field_0x4;
 	}
-	if (iVar11 == -1) {
-		iVar11 = piVar5[2];
-		if (iVar11 == -1) {
-			iVar11 = piVar5[3];
+	if (iVar15 == -1) {
+		iVar15 = (pCVar3->field_0x8).field_0x0;
+		if (iVar15 == -1) {
+			iVar15 = (pCVar3->field_0x8).field_0x4;
 		}
-		if (iVar11 == -1) goto LAB_0015d240;
+		if (iVar15 == -1) goto LAB_0015d240;
 	}
-	this->field_0x1d8 = this->field_0x1d8 | 1;
+
+	this->movingPlatformFlags = this->movingPlatformFlags | 1;
+
 LAB_0015d240:
-	pCVar8 = CActor::GetBehaviour((CActor*)this, 7);
-	if ((pCVar8 != (CBehaviour*)0x0) &&
-		(pCVar8 = CActor::GetBehaviour((CActor*)this, 7), pCVar8[2].pVTable != (CBehaviourVtable*)0xffffffff)) {
-		this->field_0x1d8 = this->field_0x1d8 | 1;
+	CBehaviour* pCVar10 = CActor::GetBehaviour(7);
+	CBehaviourPlatformStand* pStand;
+	if ((pCVar10 != (CBehaviour*)0x0) &&
+		(pStand = (CBehaviourPlatformStand*)CActor::GetBehaviour(7), pStand->field_0x8 != -1)) {
+		this->movingPlatformFlags = this->movingPlatformFlags | 1;
 	}
-	pCVar8 = CActor::GetBehaviour((CActor*)this, 3);
-	if ((pCVar8 != (CBehaviour*)0x0) &&
-		(pCVar8 = CActor::GetBehaviour((CActor*)this, 3), pCVar8[8].pVTable != (CBehaviourVtable*)0xffffffff)) {
-		this->field_0x1d8 = this->field_0x1d8 | 2;
-	}
-	pCVar8 = CActor::GetBehaviour((CActor*)this, 8);
-	if ((pCVar8 != (CBehaviour*)0x0) || (pCVar8 = CActor::GetBehaviour((CActor*)this, 9), pCVar8 != (CBehaviour*)0x0)) {
-		pCVar8 = CActor::GetBehaviour((CActor*)this, 8);
-		if (pCVar8 == (CBehaviour*)0x0) {
-			pCVar8 = CActor::GetBehaviour((CActor*)this, 9);
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	CBehaviour* pCVar10 = CActor::GetBehaviour(3);
+	CBehaviourPlatformSlab* pSlab;
+	if ((pCVar10 != (CBehaviour*)0x0) &&
+		(pSlab = CActor::GetBehaviour(3), pSlab->field_0x20.Get()-> != (CBehaviourVtable*)0xffffffff)) {
+		this->movingPlatformFlags = this->movingPlatformFlags | 2;
+	})
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	CBehaviour* pCVar10 = CActor::GetBehaviour(8);
+	if ((pCVar10 != (CBehaviour*)0x0) || (pCVar10 = CActor::GetBehaviour(9), pCVar10 != (CBehaviour*)0x0)
+		) {
+		pCVar10 = CActor::GetBehaviour(8);
+		if (pCVar10 == (CBehaviour*)0x0) {
+			pCVar10 = CActor::GetBehaviour(9);
 		}
-		if (pCVar8[5].pVTable != (CBehaviourVtable*)0xffffffff) {
-			this->field_0x1d8 = this->field_0x1d8 | 2;
+		if (pCVar10[5].pVTable != (CBehaviourVtable*)0xffffffff) {
+			this->movingPlatformFlags = this->movingPlatformFlags | 2;
 		}
+	})
+
+	if ((this->movingPlatformFlags & 2) != 0) {
+		uVar16 = uVar16 + 1;
 	}
-	if ((this->field_0x1d8 & 2) != 0) {
-		uVar9 = SEXT48((int)uVar9 + 1);
+	if ((this->movingPlatformFlags & 1) != 0) {
+		uVar16 = uVar16 + 1;
 	}
-	if ((this->field_0x1d8 & 1) != 0) {
-		uVar9 = SEXT48((int)uVar9 + 1);
-	}
-	if (uVar9 == 0) {
-		this->field_0x240 = (int*)0x0;
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	if (uVar16 == 0) {
+		this->pActorSound = (CActorSound*)0x0;
 	}
 	else {
-		piVar5 = CActor::CreateActorSound((CActor*)this, uVar9);
-		this->field_0x240 = piVar5;
+		pCVar11 = (CActorSound*)CActor::CreateActorSound((CActor*)this, uVar16);
+		this->pActorSound = pCVar11;
 	}
 	this->field_0x1e4 = 0;
-	this->field_0x1e8 = 0;
-#endif
+	this->field_0x1e8 = (CSound*)0x0;)
+
 	return;
 }
 
@@ -320,16 +353,16 @@ void CActorMovingPlatform::Init()
 	this->field_0x200 = gF32Matrix4Unit;
 
 	{
-		S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = this->field_0x244->aEntries;
-		for (iVar10 = this->field_0x244->entryCount; iVar10 != 0; iVar10 = iVar10 + -1) {
+		S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = this->pActorStream->aEntries;
+		for (iVar10 = this->pActorStream->entryCount; iVar10 != 0; iVar10 = iVar10 + -1) {
 			pEntry->actorRef.Init();
 			pEntry = pEntry + 1;
 		}
 	}
 
 	{
-		S_STREAM_REF<ed_zone_3d>* pEntry = this->field_0x248->aEntries;
-		for (iVar10 = this->field_0x248->entryCount; iVar10 != 0; iVar10 = iVar10 + -1) {
+		S_STREAM_REF<ed_zone_3d>* pEntry = this->pZoneStream->aEntries;
+		for (iVar10 = this->pZoneStream->entryCount; iVar10 != 0; iVar10 = iVar10 + -1) {
 			pEntry->Init();
 			pEntry = pEntry + 1;
 		}
@@ -353,8 +386,8 @@ void CActorMovingPlatform::Init()
 	}
 
 	{
-		S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = this->field_0x254->aEntries;
-		for (iVar10 = this->field_0x254->entryCount; iVar10 != 0; iVar10 = iVar10 + -1) {
+		S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = this->pCameraStream->aEntries;
+		for (iVar10 = this->pCameraStream->entryCount; iVar10 != 0; iVar10 = iVar10 + -1) {
 			pEntry->streamTarget.Init();
 			pEntry->streamCameraEvent.Init();
 
@@ -484,12 +517,11 @@ bool CActorMovingPlatform::Slab_MoveAndDetectCarriedObject(CBehaviourPlatformSla
 			if ((((pBehaviour->field_0x2c != (CActor*)0x0) && (pBehaviour->field_0x24 != 0.0f)) && (bVar6 = SV_AmICarrying(pBehaviour->field_0x2c), bVar6 == false)) &&
 				((pCVar3 = pBehaviour->field_0x2c, (pCVar3->flags & 4) != 0 && (bVar6 = pCVar3->IsKindOfObject(2), bVar6 != false)))) {
 				pCVar4 = (CActorMovable*)pBehaviour->field_0x2c;
-				IMPLEMENTATION_GUARD(
-				fVar9 = FUN_00212560(this->pCollisionData->pObbTree, pCVar4->currentLocation);
+				fVar9 = CCollision::GetObbTreeDistanceFromPosition(this->pCollisionData->pObbTree, &pCVar4->currentLocation);
 				if (fVar9 <= 0.3f) {
 					fVar9 = pCVar4->GetCumulatedWeight();
 					bVar5 = pBehaviour->field_0x10 <= fVar8 + fVar9;
-				})
+				}
 			}
 		}
 	}
@@ -588,9 +620,8 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 	}
 
 	if (bPush != false) {
-		IMPLEMENTATION_GUARD(
 		param_3 = 1;
-		local_10.y = -(this->pTiltData->pushData).oscValue.field_0x0;)
+		local_10.y = -(this->pTiltData->pushData).oscValue.field_0x0;
 	}
 
 	if (this->pTiltData == (S_TILT_DATA*)0x0) {
@@ -606,31 +637,32 @@ void CActorMovingPlatform::Platform_UpdatePosition(edF32VECTOR4* pPosition, int 
 		}
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		edQuatToMatrix4Hard(&this->pTiltData->field_0x10, &eStack80);
-		edF32Matrix4FromEulerSoft(&eStack144, (edF32VECTOR3*)(*(int*)&this->field_0x18 + 0x18), (char*)&PTR_DAT_00429cc8);
-		eStack144.da = pPosition->x;
-		eStack144.db = pPosition->y;
-		eStack144.dc = pPosition->z;
-		eStack144.dd = pPosition->w;
+		ACTOR_LOG(LogLevel::Verbose, "CActorMovingPlatform::Platform_UpdatePosition Tilt {} {}", this->name, this->pTiltData->oscQuat.field_0x0.ToString());
+
+		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.field_0x0, &eStack80);
+		edF32Matrix4FromEulerSoft(&eStack144, &this->pCinData->rotationEuler, "XYZ");
+		eStack144.rowT = *pPosition;
 		edF32Matrix4MulF32Matrix4Hard(&eStack144, &eStack80, &eStack144);
-		CActor::SV_UpdateMatrix_Rel((CActor*)this, &eStack144, 1, 1, pActorsTable, &local_10);)
+
+		ACTOR_LOG(LogLevel::Verbose, "CActorMovingPlatform::Platform_UpdatePosition {} {}", this->name, eStack144.ToString());
+
+		SV_UpdateMatrix_Rel(&eStack144, 1, 1, pActorsTable, &local_10);
 	}
 
-	if (this->field_0x248 == (S_BRIDGE_ZONE_STREAM*)0x0) {
+	if (this->pZoneStream == (S_BRIDGE_ZONE_STREAM*)0x0) {
 		iVar2 = 0;
 	}
 	else {
-		iVar2 = this->field_0x248->entryCount;
+		iVar2 = this->pZoneStream->entryCount;
 	}
 
 	if (iVar2 == 0) {
 
-		if (this->field_0x244 == (S_BRIDGE_ACTOR_STREAM*)0x0) {
+		if (this->pActorStream == (S_BRIDGE_ACTOR_STREAM*)0x0) {
 			iVar2 = 0;
 		}
 		else {
-			iVar2 = this->field_0x244->entryCount;
+			iVar2 = this->pActorStream->entryCount;
 		}
 
 		if ((iVar2 == 0) && (this->noFrictionZoneCount == 0)) goto LAB_0015b1b0;
@@ -694,18 +726,18 @@ void CActorMovingPlatform::ForceCarriedStuff()
 	int iVar5;
 	CActor* piVar1;
 
-	if (this->field_0x244 == (S_BRIDGE_ACTOR_STREAM*)0x0) {
+	if (this->pActorStream == (S_BRIDGE_ACTOR_STREAM*)0x0) {
 		iVar2 = 0;
 	}
 	else {
-		iVar2 = this->field_0x244->entryCount;
+		iVar2 = this->pActorStream->entryCount;
 	}
 
 	iVar5 = 0;
 	if (0 < iVar2) {
 		iVar4 = 0;
 		do {
-			S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = &this->field_0x244->aEntries[iVar5];
+			S_BRIDGE_ACTOR_STREAM_ENTRY* pEntry = &this->pActorStream->aEntries[iVar5];
 			if (pEntry->actorRef.Get() != (CActor*)0x0) {
 				pEntry->actorRef.Get()->TieToActor(this, pEntry->carryMethod, 1, &this->field_0x200);
 			}
@@ -714,15 +746,15 @@ void CActorMovingPlatform::ForceCarriedStuff()
 	}
 
 	iVar2 = 0;
-	if (this->field_0x248 != (S_BRIDGE_ZONE_STREAM*)0x0) {
-		iVar2 = this->field_0x248->entryCount;
+	if (this->pZoneStream != (S_BRIDGE_ZONE_STREAM*)0x0) {
+		iVar2 = this->pZoneStream->entryCount;
 	}
 
 	iVar5 = 0;
 	if (0 < iVar2) {
 		iVar4 = 0;
 		do {
-			S_STREAM_REF<ed_zone_3d>* pEntry = &this->field_0x248->aEntries[iVar5];
+			S_STREAM_REF<ed_zone_3d>* pEntry = &this->pZoneStream->aEntries[iVar5];
 			if (pEntry->Get() != 0) {
 				pEntry->Get()->pMatrix = STORE_SECTION(&this->field_0x200);
 			}
@@ -797,20 +829,20 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			this->movingPlatformFlags = this->movingPlatformFlags & 0xffffffdf;
 
 			iVar10 = 0;
-			if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-				iVar10 = this->field_0x254->entryCount;
+			if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+				iVar10 = this->pCameraStream->entryCount;
 			}
 
 			iVar9 = 0;
 			if (0 < iVar10) {
-				IMPLEMENTATION_GUARD(
-				iVar7 = 0;
 				do {
-					iVar3 = (int)&this->field_0x254->entryCount + iVar7;
-					if (*(int*)(iVar3 + 4) == 6) {
-						S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar3 + 0x28), (CActor*)this);
+					S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &this->pCameraStream->aEntries[iVar9];
+					if (pEntry->field_0x4 == 6) {
+						pEntry->streamTarget.Switch(this);
+						pEntry->streamTarget.PostSwitch(this);
+						pEntry->streamCameraEvent.SwitchOn(this);
+
+						IMPLEMENTATION_GUARD_AUDIO(
 						piVar6 = *(int**)(iVar3 + 0x48);
 						if (piVar6 != (int*)0x0) {
 							uVar4 = *(uint*)&this->pActorSound->field_0x4;
@@ -825,11 +857,11 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 									break;
 								}
 							}
-						}
+						})
 					}
+
 					iVar9 = iVar9 + 1;
-					iVar7 = iVar7 + 0x48;
-				} while (iVar9 < iVar10);)
+				} while (iVar9 < iVar10);
 			}
 		}
 	}
@@ -841,8 +873,8 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 				SetBehaviour(6, -1, -1);
 
 				iVar10 = 0;
-				if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-					iVar10 = this->field_0x254->entryCount;
+				if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+					iVar10 = this->pCameraStream->entryCount;
 				}
 
 				iVar9 = 0;
@@ -850,7 +882,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 					iVar7 = 0;
 					IMPLEMENTATION_GUARD(
 					do {
-						iVar3 = (int)&this->field_0x254->entryCount + iVar7;
+						iVar3 = (int)&this->pCameraStream->entryCount + iVar7;
 						if (*(int*)(iVar3 + 4) == 7) {
 							S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
 							S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
@@ -878,20 +910,20 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			}
 
 			iVar10 = 0;
-			if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-				iVar10 = this->field_0x254->entryCount;
+			if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+				iVar10 = this->pCameraStream->entryCount;
 			}
 
 			iVar9 = 0;
 			if (0 < iVar10) {
-				iVar7 = 0;
-				IMPLEMENTATION_GUARD(
 				do {
-					iVar3 = (int)&this->field_0x254->entryCount + iVar7;
-					if (*(int*)(iVar3 + 4) == 5) {
-						S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar3 + 0x28), (CActor*)this);
+					S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &this->pCameraStream->aEntries[iVar9];
+					if (pEntry->field_0x4 == 5) {
+						pEntry->streamTarget.Switch(this);
+						pEntry->streamTarget.PostSwitch(this);
+						pEntry->streamCameraEvent.SwitchOn(this);
+
+						IMPLEMENTATION_GUARD_AUDIO(
 						piVar6 = *(int**)(iVar3 + 0x48);
 						if (piVar6 != (int*)0x0) {
 							uVar4 = *(uint*)&this->pActorSound->field_0x4;
@@ -906,24 +938,24 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 									break;
 								}
 							}
-						}
+						})
 					}
 					iVar9 = iVar9 + 1;
 					iVar7 = iVar7 + 0x48;
-				} while (iVar9 < iVar10);)
+				} while (iVar9 < iVar10);
 			}
 		}
 	}
 
 	iVar10 = 0;
-	if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-		iVar10 = this->field_0x254->entryCount;
+	if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+		iVar10 = this->pCameraStream->entryCount;
 	}
 
 	iVar9 = 0;
 	if (0 < iVar10) {
 		do {
-			this->field_0x254->aEntries[iVar9].streamCameraEvent.Manage(this);
+			this->pCameraStream->aEntries[iVar9].streamCameraEvent.Manage(this);
 			iVar9 = iVar9 + 1;
 		} while (iVar9 < iVar10);
 	}
@@ -994,7 +1026,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			})
 		}
 		else {
-			IMPLEMENTATION_GUARD(
+			IMPLEMENTATION_GUARD_AUDIO(
 			piVar6 = this->field_0x1dc;
 			iVar10 = 0;
 			if (piVar6 != (int*)0x0) {
@@ -1050,7 +1082,8 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			if (uVar4 == 0) {
 				CActor::PlayAnim(0);
 			}
-			IMPLEMENTATION_GUARD(
+
+			IMPLEMENTATION_GUARD_AUDIO(
 			iVar10 = (this->pProperties->field_0x8).field_0x0;
 
 			if (this->field_0x1e0 == (int*)0x0) {
@@ -1074,10 +1107,12 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 					piVar6 = piVar6 + 4;
 				} while (iVar7 < iVar9);
 			}
+
 			this->field_0x1e8 = iVar10;
 			if ((int*)this->field_0x1e8 != (int*)0x0) {
 				CActorSound::SoundStart(this->pActorSound, (CActor*)this, 0, (int*)this->field_0x1e8, 1, 0, (float**)0x0);
 			}
+
 			uVar4 = *(uint*)&this->pProperties->field_0x20;
 			if (uVar4 != 0xffffffff) {
 				if (((this->field_0x1f8 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
@@ -1091,56 +1126,57 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 					CParticlesManager::GetDynamicFx
 					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1f4, uVar4, 0xffffffffffffffff);
 				}
-			}
+			})
+
 			pCVar1 = this->field_0x1f0;
 			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
 				(bVar2 = true, this->field_0x1ec != pCVar1->pCinData)) {
 				bVar2 = false;
 			}
+
 			if (((bVar2) && (pCVar1 != (CActor*)0x0)) &&
 				((this->field_0x1ec != (CinNamedObject30*)0x0 && (this->field_0x1ec == pCVar1->pCinData)))) {
-				(*(code*)pCVar1->pVTable->Manage)(&DAT_bf800000);
+				pCVar1->Manage();
 			}
+
 			pCVar1 = this->field_0x1f8;
 			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
 				(bVar2 = true, this->field_0x1f4 != pCVar1->pCinData)) {
 				bVar2 = false;
 			}
+
 			if (bVar2) {
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1f4 == pCVar1->pCinData)) {
-					(pCVar1->currentLocation).x = this->currentLocation.x;
-					(pCVar1->currentLocation).y = this->currentLocation.y;
-					(pCVar1->currentLocation).z = this->currentLocation.z;
-					(pCVar1->currentLocation).w = this->currentLocation.w;
+					pCVar1->currentLocation = this->currentLocation;
 				}
 				pCVar1 = this->field_0x1f8;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1f4 == pCVar1->pCinData)) {
-					(pCVar1->rotationEuler).x = this->rotationEuler.x;
-					(pCVar1->rotationEuler).y = this->rotationEuler.y;
-					(pCVar1->rotationEuler).z = this->rotationEuler.z;
-					(pCVar1->rotationEuler).w = this->rotationEuler.w;
+					pCVar1->rotationEuler = this->rotationEuler;
 				}
 				pCVar1 = this->field_0x1f8;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1f4 == pCVar1->pCinData)) {
-					(*(code*)pCVar1->pVTable->InitDlistPatchable)(0, 0);
+					pCVar1->InitDlistPatchable();
 				}
 			}
+
 			iVar10 = 0;
-			if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-				iVar10 = this->field_0x254->entryCount;
+			if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+				iVar10 = this->pCameraStream->entryCount;
 			}
+
 			iVar9 = 0;
 			if (0 < iVar10) {
-				iVar7 = 0;
 				do {
-					iVar3 = (int)&this->field_0x254->entryCount + iVar7;
-					if (*(int*)(iVar3 + 4) == 10) {
-						S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar3 + 0x28), (CActor*)this);
+					S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &this->pCameraStream->aEntries[iVar9];
+					if (pEntry->field_0x4 == 10) {
+						pEntry->streamTarget.Switch(this);
+						pEntry->streamTarget.PostSwitch(this);
+						pEntry->streamCameraEvent.SwitchOn(this);
+
+						IMPLEMENTATION_GUARD_AUDIO(
 						piVar6 = *(int**)(iVar3 + 0x48);
 						if (piVar6 != (int*)0x0) {
 							uVar4 = *(uint*)&this->pActorSound->field_0x4;
@@ -1155,27 +1191,30 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 									break;
 								}
 							}
-						}
+						})
 					}
 					iVar9 = iVar9 + 1;
-					iVar7 = iVar7 + 0x48;
 				} while (iVar9 < iVar10);
 			}
-			this->movingPlatformFlags = this->movingPlatformFlags & 0xffffffef;)
+
+			this->movingPlatformFlags = this->movingPlatformFlags & 0xffffffef;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
 			iVar10 = this->actorState;
+
 			if (iVar10 == -1) {
 				uVar4 = 0;
 			}
 			else {
-				pAVar5 = (*(this->pVTable)->GetStateCfg)((CActor*)this, iVar10);
+				pAVar5 = GetStateCfg(iVar10);
 				uVar4 = pAVar5->flags_0x4 & 1;
 			}
+
 			if (uVar4 == 0) {
-				CActor::PlayAnim((CActor*)this, New_Name_(6));
+				PlayAnim(0x6);
 			}
+
+			IMPLEMENTATION_GUARD_AUDIO(
 			iVar10 = (this->pProperties->field_0x0).field_0x0;
 			if (this->field_0x1dc == (int*)0x0) {
 				iVar9 = 0;
@@ -1183,6 +1222,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 			else {
 				iVar9 = *this->field_0x1dc;
 			}
+
 			iVar7 = 0;
 			if (0 < iVar9) {
 				piVar6 = this->field_0x1dc;
@@ -1197,11 +1237,13 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 					piVar6 = piVar6 + 4;
 				} while (iVar7 < iVar9);
 			}
+
 			this->field_0x1e4 = iVar10;
-			if ((int*)this->field_0x1e4 != (int*)0x0) {
-				CActorSound::SoundStart(this->pActorSound, (CActor*)this, 0, (int*)this->field_0x1e4, 1, 0, (float**)0x0);
-			}
-			uVar4 = *(uint*)&this->pProperties->field_0x1c;
+			if (this->field_0x1e4 != (CSound*)0x0) {
+				CActorSound::SoundStart(this->pActorSound, (CActor*)this, 0, this->field_0x1e4, 1, 0, (float**)0x0);
+			})
+
+			uVar4 = this->pProperties->field_0x1c;
 			if (uVar4 != 0xffffffff) {
 				if (((this->field_0x1f0 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
 					(this->field_0x1ec != this->field_0x1f0->pCinData)) {
@@ -1210,60 +1252,65 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 				else {
 					bVar2 = true;
 				}
+
 				if (!bVar2) {
+					IMPLEMENTATION_GUARD_LOG(
 					CParticlesManager::GetDynamicFx
-					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1ec, uVar4, 0xffffffffffffffff);
+					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1ec, uVar4, 0xffffffffffffffff);)
 				}
 			}
+
 			pCVar1 = this->field_0x1f8;
 			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
 				(bVar2 = true, this->field_0x1f4 != pCVar1->pCinData)) {
 				bVar2 = false;
 			}
+
 			if ((((bVar2) && (pCVar1 != (CActor*)0x0)) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
 				(this->field_0x1f4 == pCVar1->pCinData)) {
-				(*(code*)pCVar1->pVTable->Manage)(&DAT_bf800000);
+				pCVar1->Manage();
 			}
+
 			pCVar1 = this->field_0x1f0;
 			if (((pCVar1 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
 				(bVar2 = true, this->field_0x1ec != pCVar1->pCinData)) {
 				bVar2 = false;
 			}
+
 			if (bVar2) {
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1ec == pCVar1->pCinData)) {
-					(pCVar1->currentLocation).x = this->currentLocation.x;
-					(pCVar1->currentLocation).y = this->currentLocation.y;
-					(pCVar1->currentLocation).z = this->currentLocation.z;
-					(pCVar1->currentLocation).w = this->currentLocation.w;
+					pCVar1->currentLocation = this->currentLocation;
 				}
+
 				pCVar1 = this->field_0x1f0;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1ec == pCVar1->pCinData)) {
-					(pCVar1->rotationEuler).x = this->rotationEuler.x;
-					(pCVar1->rotationEuler).y = this->rotationEuler.y;
-					(pCVar1->rotationEuler).z = this->rotationEuler.z;
-					(pCVar1->rotationEuler).w = this->rotationEuler.w;
+					pCVar1->rotationEuler = this->rotationEuler;
 				}
+
 				pCVar1 = this->field_0x1f0;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1ec == pCVar1->pCinData)) {
-					(*(code*)pCVar1->pVTable->InitDlistPatchable)(0, 0);
+					pCVar1->InitDlistPatchable();
 				}
 			}
+
 			iVar10 = 0;
-			if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-				iVar10 = this->field_0x254->entryCount;
+			if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+				iVar10 = this->pCameraStream->entryCount;
 			}
+
 			iVar9 = 0;
 			if (0 < iVar10) {
-				iVar7 = 0;
 				do {
-					iVar3 = (int)&this->field_0x254->entryCount + iVar7;
-					if (*(int*)(iVar3 + 4) == 9) {
-						S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar3 + 0xc), (CActor*)this);
-						S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar3 + 0x28), (CActor*)this);
+					S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &this->pCameraStream->aEntries[iVar9];
+					if (pEntry->field_0x4 == 9) {
+						pEntry->streamTarget.Switch(this);
+						pEntry->streamTarget.PostSwitch(this);
+						pEntry->streamCameraEvent.SwitchOn(this);
+
+						IMPLEMENTATION_GUARD_AUDIO(
 						piVar6 = *(int**)(iVar3 + 0x48);
 						if (piVar6 != (int*)0x0) {
 							uVar4 = *(uint*)&this->pActorSound->field_0x4;
@@ -1278,15 +1325,16 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 									break;
 								}
 							}
-						}
+						})
 					}
 					iVar9 = iVar9 + 1;
-					iVar7 = iVar7 + 0x48;
 				} while (iVar9 < iVar10);
 			}
-			this->movingPlatformFlags = this->movingPlatformFlags | 0x10;)
+
+			this->movingPlatformFlags = this->movingPlatformFlags | 0x10;
 		}
 	}
+
 	return;
 }
 
@@ -1402,8 +1450,8 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 	if (param_4 != 0) {
 		iVar8 = 0;
 
-		if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-			iVar8 = this->field_0x254->entryCount;
+		if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+			iVar8 = this->pCameraStream->entryCount;
 		}
 
 		iVar12 = 0;
@@ -1411,7 +1459,7 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 			iVar10 = 0;
 			IMPLEMENTATION_GUARD(
 			do {
-				iVar9 = (int)&this->field_0x254->entryCount + iVar10;
+				iVar9 = (int)&this->pCameraStream->entryCount + iVar10;
 				if ((*(int*)(iVar9 + 4) == 4) && ((long)sVar7 == (long)*(int*)(iVar9 + 8))) {
 					S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar9 + 0xc), (CActor*)this);
 					S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar9 + 0xc), (CActor*)this);
@@ -1438,19 +1486,19 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 		}
 	}
 
-	if (this->field_0x248 == (S_BRIDGE_ZONE_STREAM*)0x0) {
+	if (this->pZoneStream == (S_BRIDGE_ZONE_STREAM*)0x0) {
 		iVar8 = 0;
 	}
 	else {
-		iVar8 = this->field_0x248->entryCount;
+		iVar8 = this->pZoneStream->entryCount;
 	}
 
 	if (iVar8 == 0) {
-		if (this->field_0x244 == (S_BRIDGE_ACTOR_STREAM*)0x0) {
+		if (this->pActorStream == (S_BRIDGE_ACTOR_STREAM*)0x0) {
 			iVar8 = 0;
 		}
 		else {
-			iVar8 = this->field_0x244->entryCount;
+			iVar8 = this->pActorStream->entryCount;
 		}
 		if ((iVar8 == 0) && (this->noFrictionZoneCount == 0)) goto LAB_0015aa10;
 	}
@@ -1501,6 +1549,233 @@ LAB_0015aa10:
 	return;
 }
 
+bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPlatformTrajectory* pBehaviour, bool param_4)
+{
+	int* piVar1;
+	uint uVar2;
+	bool bVar3;
+	bool bVar4;
+	int iVar5;
+	ulong uVar6;
+	int iVar7;
+	uint uVar8;
+	int iVar9;
+	int iVar10;
+	float fVar11;
+	float fVar12;
+	bool bBarDepleted;
+
+	GetTimer();
+	bVar4 = false;
+
+	if ((pBehaviour->pathFollowReaderAbs).pActor3C_0x0 != (CPathFollow*)0x0) {
+		bBarDepleted = false;
+		bVar3 = false;
+		bVar4 = true;
+
+		if ((param_4 != false) && (currentFillAmount < 0.0f)) {
+			currentFillAmount = 0.0f;
+			bBarDepleted = true;
+		}
+
+		uVar6 = (long)(int)this->pProperties->flags_0x24 & 0x20;
+
+		if ((uVar6 != 0) && (fVar11 = fmodf(currentFillAmount, (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4), (pBehaviour->pathFollowReaderAbs).field_0xc <= fVar11)) {
+			fVar12 = fmodf((pBehaviour->currentFillAmount_0x38).field_0x0, (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4);
+			fVar11 = (pBehaviour->pathFollowReaderAbs).field_0xc;
+			if (fVar12 < fVar11) {
+				bBarDepleted = true;
+				bVar3 = true;
+				currentFillAmount = fVar11;
+			}
+		}
+
+		(pBehaviour->currentFillAmount_0x38).field_0x0 = currentFillAmount;
+
+		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 1, 1, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+		if (bBarDepleted) {
+			/* Reached zero bar filled. Transition back to inactive state. */
+			SetState(6, -1);
+
+			iVar10 = 0;
+			if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+				iVar10 = this->pCameraStream->entryCount;
+			}
+
+			iVar9 = 0;
+			if (0 < iVar10) {
+				do {
+					S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &pCameraStream->aEntries[iVar9];
+					if (pEntry->field_0x4 == 0) {
+						pEntry->streamTarget.Switch(this);
+						pEntry->streamTarget.PostSwitch(this);
+						pEntry->streamCameraEvent.SwitchOn(this);
+
+						IMPLEMENTATION_GUARD_AUDIO(
+						piVar1 = *(int**)(iVar5 + 0x48);
+						if (piVar1 != (int*)0x0) {
+							uVar2 = *(uint*)&this->pActorSound->field_0x4;
+							uVar8 = (uint)((this->movingPlatformFlags & 1) != 0);
+							if ((this->movingPlatformFlags & 2) != 0) {
+								uVar8 = uVar8 + 1;
+							}
+							for (; uVar8 < uVar2; uVar8 = uVar8 + 1) {
+								iVar5 = CActorSound::IsInstanceAlive(this->pActorSound, uVar8);
+								if (iVar5 == 0) {
+									CActorSound::SoundStart(this->pActorSound, (CActor*)this, uVar8, piVar1, 1, 0, (float**)0x0);
+									break;
+								}
+							}
+						})
+					}
+
+					iVar9 = iVar9 + 1;
+				} while (iVar9 < iVar10);
+			}
+
+			bVar4 = false;
+			if (bVar3) {
+				iVar10 = 0;
+				if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+					iVar10 = this->pCameraStream->entryCount;
+				}
+
+				iVar9 = 0;
+				if (0 < iVar10) {
+					do {
+						S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &pCameraStream->aEntries[iVar9];
+						if (pEntry->field_0x4 == 1) {
+							pEntry->streamTarget.Switch(this);
+							pEntry->streamTarget.PostSwitch(this);
+							pEntry->streamCameraEvent.SwitchOn(this);
+
+							IMPLEMENTATION_GUARD_AUDIO(
+							piVar1 = *(int**)(iVar5 + 0x48);
+							if (piVar1 != (int*)0x0) {
+								uVar2 = *(uint*)&this->pActorSound->field_0x4;
+								uVar8 = (uint)((this->movingPlatformFlags & 1) != 0);
+								if ((this->movingPlatformFlags & 2) != 0) {
+									uVar8 = uVar8 + 1;
+								}
+								for (; uVar8 < uVar2; uVar8 = uVar8 + 1) {
+									iVar5 = CActorSound::IsInstanceAlive(this->pActorSound, uVar8);
+									if (iVar5 == 0) {
+										CActorSound::SoundStart(this->pActorSound, (CActor*)this, uVar8, piVar1, 1, 0, (float**)0x0);
+										break;
+									}
+								}
+							})
+						}
+
+						iVar9 = iVar9 + 1;
+					} while (iVar9 < iVar10);
+				}
+			}
+		}
+		else {
+			if (uVar6 == 1) {
+				bVar4 = false;
+			}
+			else {
+				if (uVar6 == 2) {
+					uVar2 = this->pProperties->flags_0x24;
+					bBarDepleted = false;
+
+					if ((uVar2 & 0x200) == 0) {
+						if ((uVar2 & 0x30) != 0) {
+							(pBehaviour->currentFillAmount_0x38).field_0x0 = pBehaviour->field_0x28;
+						}
+						SetState(6, -1);
+						bBarDepleted = true;
+					}
+					else {
+						/* Transition to open state. */
+						(pBehaviour->currentFillAmount_0x38).field_0x0 = (pBehaviour->pathFollowReaderAbs).barFullAmount_0x4;
+						SetState(7, -1);
+					}
+
+					iVar10 = 0;
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar10 = this->pCameraStream->entryCount;
+					}
+
+					iVar9 = 0;
+					if (0 < iVar10) {
+						do {
+							S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &pCameraStream->aEntries[iVar9];
+							if (pEntry->field_0x4 == 2) {
+								pEntry->streamTarget.Switch(this);
+								pEntry->streamTarget.PostSwitch(this);
+								pEntry->streamCameraEvent.SwitchOn(this);
+
+								IMPLEMENTATION_GUARD_AUDIO(
+								piVar1 = *(int**)(iVar5 + 0x48);
+								if (piVar1 != (int*)0x0) {
+									uVar2 = *(uint*)&this->pActorSound->field_0x4;
+									uVar8 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar8 = uVar8 + 1;
+									}
+									for (; uVar8 < uVar2; uVar8 = uVar8 + 1) {
+										iVar5 = CActorSound::IsInstanceAlive(this->pActorSound, uVar8);
+										if (iVar5 == 0) {
+											CActorSound::SoundStart(this->pActorSound, (CActor*)this, uVar8, piVar1, 1, 0, (float**)0x0);
+											break;
+										}
+									}
+								})
+							}
+							iVar9 = iVar9 + 1;
+						} while (iVar9 < iVar10);
+					}
+
+					bVar4 = false;
+					if (bBarDepleted) {
+						iVar10 = 0;
+						if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+							iVar10 = this->pCameraStream->entryCount;
+						}
+
+						iVar9 = 0;
+						if (0 < iVar10) {
+							do {
+								S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = &pCameraStream->aEntries[iVar9];
+								if (pEntry->field_0x4 == 0) {
+									pEntry->streamTarget.Switch(this);
+									pEntry->streamTarget.PostSwitch(this);
+									pEntry->streamCameraEvent.SwitchOn(this);
+
+									IMPLEMENTATION_GUARD_AUDIO(
+									piVar1 = *(int**)(iVar5 + 0x48);
+									if (piVar1 != (int*)0x0) {
+										uVar2 = *(uint*)&this->pActorSound->field_0x4;
+										uVar8 = (uint)((this->movingPlatformFlags & 1) != 0);
+										if ((this->movingPlatformFlags & 2) != 0) {
+											uVar8 = uVar8 + 1;
+										}
+										for (; uVar8 < uVar2; uVar8 = uVar8 + 1) {
+											iVar5 = CActorSound::IsInstanceAlive(this->pActorSound, uVar8);
+											if (iVar5 == 0) {
+												CActorSound::SoundStart(this->pActorSound, (CActor*)this, uVar8, piVar1, 1, 0, (float**)0x0);
+												break;
+											}
+										}
+									})
+								}
+
+								iVar9 = iVar9 + 1;
+							} while (iVar9 < iVar10);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return bVar4;
+}
+
 void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajectory* pBehaviour)
 {
 	int* piVar1;
@@ -1520,9 +1795,8 @@ void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajecto
 
 	switch (this->actorState) {
 	case 5:
-		IMPLEMENTATION_GUARD(
-		bVar3 = StateTrajectory(currentFillAmount, this, pBehaviour, false);
-		local_4 = (int)bVar3;)
+		bVar3 = StateTrajectory(currentFillAmount, pBehaviour, false);
+		local_4 = (int)bVar3;
 		break;
 	case 6:
 		Platform_UpdateMatrixOnTrajectory(&pBehaviour->pathFollowReaderAbs, 0, 0, &pBehaviour->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
@@ -1538,15 +1812,15 @@ void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajecto
 			SetState(9, -1);
 			iVar9 = 0;
 
-			if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-				iVar9 = this->field_0x254->entryCount;
+			if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+				iVar9 = this->pCameraStream->entryCount;
 			}
 			iVar8 = 0;
 			if (0 < iVar9) {
 				iVar6 = 0;
 				IMPLEMENTATION_GUARD(
 				do {
-					iVar4 = (int)&this->field_0x254->entryCount + iVar6;
+					iVar4 = (int)&this->pCameraStream->entryCount + iVar6;
 					if (*(int*)(iVar4 + 4) == 3) {
 						S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
 						S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
@@ -1587,14 +1861,14 @@ void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajecto
 		if (currentFillAmount == pBehaviour->field_0x34) {
 			SetState(6, -1);
 			iVar9 = 0;
-			if (this->field_0x254 != (S_BRIDGE_CAMERA_STREAM*)0x0) {
-				iVar9 = this->field_0x254->entryCount;
+			if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+				iVar9 = this->pCameraStream->entryCount;
 			}
 			iVar8 = 0;
 			if (0 < iVar9) {
 				iVar6 = 0;
 				do {
-					iVar4 = (int)&this->field_0x254->entryCount + iVar6;
+					iVar4 = (int)&this->pCameraStream->entryCount + iVar6;
 					if (*(int*)(iVar4 + 4) == 0) {
 						S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
 						S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
@@ -1709,6 +1983,8 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 	iVar6 = this->actorState;
 	iVar5 = 0;
 
+	ACTOR_LOG(LogLevel::Verbose, "CActorMovingPlatform::BehaviourSlab_Manage: state: {}", iVar6);
+
 	if (iVar6 == 0xe) {
 		bVar1 = Slab_MoveAndDetectCarriedObject(pBehaviour, 0);
 
@@ -1781,8 +2057,7 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 			}
 			else {
 				if (iVar6 == 0xc) {
-					IMPLEMENTATION_GUARD(
-					StateSwitchSlabOff2On(pBehaviour);)
+					StateSwitchSlabOff2On(pBehaviour);
 					iVar5 = 1;
 				}
 				else {
@@ -1796,6 +2071,120 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 
 	GenericManage(1, iVar5, -1, -1);
 
+	return;
+}
+
+void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehaviour)
+{
+	//CSound* pSound;
+	bool bVar1;
+	bool bVar2;
+	Timer* pTVar3;
+	S_MOVING_PLATFORM_TARGET_STREAM* pSVar4;
+	int iVar5;
+	int iVar6;
+	float fVar7;
+
+	pTVar3 = GetTimer();
+	pBehaviour->field_0x24 = pBehaviour->field_0x24 + pBehaviour->field_0x14 * pTVar3->cutsceneDeltaTime;
+	fVar7 = pBehaviour->field_0x18;
+	bVar1 = fVar7 <= pBehaviour->field_0x24;
+	if (bVar1) {
+		pBehaviour->field_0x24 = fVar7;
+	}
+
+	bVar2 = Slab_MoveAndDetectCarriedObject(pBehaviour, 1);
+	if (bVar2 == false) {
+		SetState(0xe, -1);
+	}
+	else {
+		if (bVar1) {
+			IMPLEMENTATION_GUARD_AUDIO(
+			pSound = (CSound*)(pBehaviour->field_0x20).field_0x0;
+			if (pSound != (CSound*)0x0) {
+				CActorSound::SoundStart
+				(this->pActorSound, (CActor*)this, (uint)((this->movingPlatformFlags & 1) != 0), pSound, 1, 0,
+					(float**)0x0);
+			})
+
+			pSVar4 = pBehaviour->pTargetStream;
+			iVar6 = 0;
+			if (0 < pSVar4->entryCount) {
+				do {
+					pSVar4->aEntries[iVar6].SwitchOn(this);
+					pSVar4 = pBehaviour->pTargetStream;
+					iVar6 = iVar6 + 1;
+				} while (iVar6 < pSVar4->entryCount);
+			}
+
+			pBehaviour->streamEventCamera->SwitchOn(this);
+
+			SetState(0xd, -1);
+
+			if ((this->pProperties->flags_0x24 & 0x40000) != 0) {
+				DoMessage(this, (ACTOR_MESSAGE)0x36, (MSG_PARAM)0);
+			}
+		}
+	}
+	return;
+}
+
+void CActorMovingPlatform::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix)
+{
+	CActor* pCVar1;
+	CBehaviourPlatformTrajectory* pBehaviour;
+	float fVar2;
+	edF32MATRIX4 eStack272;
+	edF32MATRIX4 local_d0;
+	edF32MATRIX4 local_90;
+	edF32MATRIX4 local_50;
+	S_PATHREADER_POS_INFO SStack16;
+
+	if (((this->curBehaviourId == 2) && (this->pCollisionData != (CCollision*)0x0)) && ((this->flags & 0x400000) == 0)) {
+		pBehaviour = (CBehaviourPlatformTrajectory*)GetBehaviour(this->curBehaviourId);
+
+		fVar2 = BehaviourTrajectory_ComputeTime(pBehaviour);
+		if ((fVar2 == (pBehaviour->currentFillAmount_0x38).field_0x0) || ((pBehaviour->pathFollowReaderAbs).pActor3C_0x0 == (CPathFollow*)0x0)) {
+			CActor::FillThisFrameExpectedDifferentialMatrix(pMatrix);
+		}
+		else {
+			if ((this->pProperties->flags_0x24 & 2) == 0) {
+				edF32Matrix4FromEulerSoft(&local_50, &(this->pCinData)->rotationEuler, "XYZ");
+				local_90 = local_50;
+				pBehaviour->pathFollowReaderAbs.ComputePosition(fVar2, &local_50.rowT, (edF32VECTOR4*)0x0, &SStack16);
+				pBehaviour->pathFollowReaderAbs.ComputePosition((pBehaviour->currentFillAmount_0x38).field_0x0, &local_90.rowT, (edF32VECTOR4*)0x0, &SStack16);
+			}
+			else {
+				pBehaviour->pathFollowReaderAbs.ComputeMatrix(fVar2, &local_50, (edF32VECTOR4*)0x0, &SStack16);
+				pBehaviour->pathFollowReaderAbs.ComputeMatrix((pBehaviour->currentFillAmount_0x38).field_0x0, &local_90, (edF32VECTOR4*)0x0, &SStack16);
+			}
+
+			if (local_90.cc + local_90.aa + local_90.bb == 3.0) {
+				local_d0.rowX = gF32Matrix4Unit.rowX;
+				local_d0.rowY = gF32Matrix4Unit.rowY;
+				local_d0.rowZ = gF32Matrix4Unit.rowZ;
+
+				local_d0.da = 0.0f - local_90.da;
+				local_d0.db = 0.0f - local_90.db;
+				local_d0.dc = 0.0f - local_90.dc;
+				local_d0.dd = local_90.dd;
+			}
+			else {
+				edF32Matrix4GetInverseOrthoHard(&local_d0, &local_90);
+			}
+
+			edF32Matrix4MulF32Matrix4Hard(pMatrix, &local_d0, &local_50);
+
+			pCVar1 = this->pTiedActor;
+			if (pCVar1 != (CActor*)0x0) {
+				pCVar1->FillThisFrameExpectedDifferentialMatrix(&eStack272);
+				edF32Matrix4MulF32Matrix4Hard(pMatrix, &eStack272, pMatrix);
+			}
+		}
+	}
+	else {
+		CActor::FillThisFrameExpectedDifferentialMatrix(pMatrix);
+	}
 	return;
 }
 
@@ -2342,7 +2731,7 @@ void CBehaviourPlatformSlab::Create(ByteCode* pByteCode)
 	fVar4 = pByteCode->GetF32();
 	this->field_0x1c = fVar4;
 	iVar3 = pByteCode->GetS32();
-	this->field_0x20 = iVar3;
+	this->field_0x20.index = iVar3;
 	return;
 }
 
@@ -2372,6 +2761,8 @@ void CBehaviourPlatformSlab::Init(CActor* pOwner)
 
 void CBehaviourPlatformSlab::Manage()
 {
+	ACTOR_LOG(LogLevel::Verbose, "CBehaviourPlatformSlab::Manage");
+
 	this->streamEventCamera->Manage(this->pOwner);
 	this->pOwner->BehaviourSlab_Manage(this);
 }
@@ -2453,4 +2844,37 @@ void S_STREAM_NTF_TARGET_ONOFF::Reset()
 {
 	this->flags = this->flags & 1;
 	return;
+}
+
+bool S_STREAM_NTF_TARGET_ONOFF::SwitchOn(CActor* pActor)
+{
+	uint uVar1;
+	bool bVar2;
+	bool uVar3;
+
+	uVar1 = this->flags;
+	uVar3 = false;
+	bVar2 = true;
+
+	if (((uVar1 & 1) != 0) && ((uVar1 & 0x40000000) != 0)) {
+		bVar2 = false;
+	}
+
+	if (bVar2) {
+		this->flags = this->flags | 0x40000000;
+
+		if (this->messageId != 0) {
+			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->messageId, this->messageFlags);
+
+			if (pActor == (CActor*)0x0) {
+				pActor = (CActor*)LOAD_SECTION(this->pRef);
+			}
+
+			if (pActor != (CActor*)0x0) {
+				uVar3 = pActor->DoMessage(pActor, (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
+			}
+		}
+	}
+
+	return uVar3;
 }

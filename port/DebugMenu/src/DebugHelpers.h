@@ -2,6 +2,7 @@
 
 #include "Types.h"
 #include "imgui.h"
+#include <fstream>
 
 namespace DebugHelpers {
 	namespace ImGui {

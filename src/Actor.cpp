@@ -18,6 +18,8 @@
 #include "ActorManager.h"
 #include "InputManager.h"
 #include "PathManager.h"
+#include "CollisionRay.h"
+#include "ActorAutonomous.h"
 
 void CVision::Create(CActor* pActor, ByteCode* pByteCode)
 {
@@ -112,7 +114,7 @@ CActor::CActor()
 	this->sphereCentre.z = 0.0f;
 	this->sphereCentre.w = 0.0f;
 	this->pClusterNode = (CClusterNode*)0x0;
-	this->adjustedMagnitude = 0.0;
+	this->distanceToCamera = 0.0;
 	this->pAnimationController = (CAnimation*)0x0;
 	this->pCollisionData = (CCollision*)0x0;
 	this->pShadow = (CShadow*)0x0;
@@ -224,7 +226,7 @@ void CActor::EvaluateManageState()
 		uVar2 = this->flags;
 		if ((uVar2 & 0x2000001) == 0) {
 			if ((uVar2 & 8) == 0) {
-				uVar2 = uVar2 & 2 | (ulong)(this->adjustedMagnitude <= (this->subObjA)->floatField);
+				uVar2 = uVar2 & 2 | (ulong)(this->distanceToCamera <= (this->subObjA)->visibilityDistance);
 			}
 			else {
 				uVar2 = uVar2 & 2 | this->state_0x10;
@@ -536,8 +538,8 @@ void CActor::Create(ByteCode* pByteCode)
 	this->flags = this->flags | 0x80000;
 	this->distanceToGround = -1.0f;
 	this->flags = this->flags & 0xffdfffff;
-	this->field_0xf0 = -1;
-	//this->field_0xec = 3.0f;
+	this->field_0xf4 = 0xffff;
+	this->field_0xf0 = 3.0f;
 	return;
 }
 
@@ -564,6 +566,8 @@ void CActor::Manage()
 	ulong uVar4;
 	float fVar5;
 
+	ACTOR_LOG(LogLevel::Info, "CActor::Manage {}", this->name);
+
 	pBehaviour = GetBehaviour(this->curBehaviourId);
 	if (pBehaviour != (CBehaviour*)0x0) {
 		if ((GameFlags & GAME_STATE_PAUSED | this->flags & 0x400000) == 0) {
@@ -574,9 +578,10 @@ void CActor::Manage()
 			pBehaviour->ManageFrozen();)
 		}
 	}
+
 	uVar1 = this->flags;
 	fVar5 = (this->subObjA)->floatFieldB;
-	if (((uVar1 & 0x100) == 0) || (fVar5 < this->adjustedMagnitude)) {
+	if (((uVar1 & 0x100) == 0) || (fVar5 < this->distanceToCamera)) {
 		if ((uVar1 & 0x4000) != 0) {
 			ChangeVisibleState(0);
 		}
@@ -594,6 +599,7 @@ void CActor::Manage()
 			}
 		}
 	}
+
 	if (this->pAnimationController != (CAnimation*)0x0) {
 		uVar4 = this->currentAnimType == -1;
 		if (this->actorState == 3) {
@@ -611,7 +617,10 @@ void CActor::Manage()
 		}
 		this->pAnimationController->Manage(fVar5, this, this->flags & 0x4800, uVar4);
 	}
-	//ActorFunc_00104c90((Actor*)this);
+
+	ComputeAltitude();
+
+	IMPLEMENTATION_GUARD_AUDIO(
 	//puVar2 = (uint*)this->field_0x144;
 	//if (puVar2 != (uint*)0x0) {
 	//	(*(code*)this->pVTable->field_0x5c)(this);
@@ -619,8 +628,11 @@ void CActor::Manage()
 	//		CActorSound::Manage(puVar2, this);
 	//	}
 	//}
+	)
+
 	pTimeController = Timer::GetTimer();
 	this->timeInAir = this->timeInAir + pTimeController->cutsceneDeltaTime;
+
 	pTimeController = Timer::GetTimer();
 	this->idleTimer = this->idleTimer + pTimeController->cutsceneDeltaTime;
 	return;
@@ -722,7 +734,7 @@ void CActor::ChangeDisplayState(int state)
 	}
 	ret = this->flags;
 	BfloatB = (this->subObjA)->floatFieldB;
-	if (((ret & 0x100) == 0) || (BfloatB < this->adjustedMagnitude)) {
+	if (((ret & 0x100) == 0) || (BfloatB < this->distanceToCamera)) {
 		if ((ret & 0x4000) != 0) {
 			this->ChangeVisibleState(0);
 		}
@@ -849,10 +861,13 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 					else {
 						this->SetState(-1, this->currentAnimType);
 					}
+
 					pSVar3->End(behaviourId);
 				}
+
 				this->prevBehaviourId = this->curBehaviourId;
 				this->curBehaviourId = behaviourId;
+
 				if (pComponent != (CBehaviour*)0x0) {
 					pComponent->Begin(this, newState, animationType);
 
@@ -1312,7 +1327,7 @@ void CActor::ChangeVisibleState(int bVisible)
 		if (pCVar2 != (CShadow*)0x0) {
 			bVar3 = (this->flags & 0x4400) != 0;
 			if (bVar3) {
-				bVar3 = this->adjustedMagnitude <= (this->subObjA)->field_0x1c;
+				bVar3 = this->distanceToCamera <= (this->subObjA)->field_0x1c;
 			}
 			if (bVar3 != false) {
 				bVar3 = (this->flags & 0x100) != 0;
@@ -1420,7 +1435,7 @@ void CActor::RestoreInitData()
 	this->flags = this->flags | 0x80000;
 	this->distanceToGround = -1.0f;
 	this->flags = this->flags & 0xffdfffff;
-	this->field_0xf0 = 0xffff;
+	this->field_0xf4 = 0xffff;
 	return;
 }
 
@@ -2128,7 +2143,7 @@ void CActor::PreReset()
 	this->flags = this->flags | 0x80000;
 	this->distanceToGround = -1.0f;
 	this->flags = this->flags & 0xffdfffff;
-	this->field_0xf0 = 0xffff;
+	this->field_0xf4 = 0xffff;
 	this->flags = this->flags & 0xfffffffc;
 	this->flags = this->flags & 0xffffff5f;
 	EvaluateDisplayState();
@@ -2257,36 +2272,28 @@ bool CActor::SV_IsWorldBoundingSphereIntersectingSphere(edF32VECTOR4* param_2)
 bool CActor::SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox)
 {
 	undefined* puVar1;
-	bool bVar2;
+	bool bIsIntersecting;
 	undefined* puVar3;
 	undefined* puVar4;
 	float fVar5;
 	float fVar6;
-	undefined local_10[16];
+	edF32VECTOR4 local_10;
 
-	fVar6 = (this->sphereCentre).w;
-	//puVar3 = &DAT_00000010;
-	//puVar4 = local_10;
-	//puVar1 = puVar4;
-	//while (puVar1 != (undefined*)0x0) {
-	//	*puVar4 = 0;
-	//	puVar4 = puVar4 + 1;
-	//	puVar3 = puVar3 + -1;
-	//	puVar1 = puVar3;
-	//}
-	
+	fVar6 = (this->sphereCentre).w;	
 	fVar5 = (this->sphereCentre).x;
-	if ((((pBoundingBox->field_0x10.x + fVar6 < fVar5) || (fVar5 < pBoundingBox->field_0x0.x - fVar6)) ||
-		(fVar5 = (this->sphereCentre).y, pBoundingBox->field_0x10.y + fVar6 < fVar5)) ||
-		(((fVar5 < pBoundingBox->field_0x0.y - fVar6 ||
-			(fVar5 = (this->sphereCentre).z, pBoundingBox->field_0x10.z + fVar6 < fVar5)) ||
-			(fVar5 < pBoundingBox->field_0x0.z - fVar6)))) {
-		bVar2 = false;
+
+	if ((((pBoundingBox->maxPoint.x + fVar6 < fVar5) || (fVar5 < pBoundingBox->minPoint.x - fVar6)) ||
+		(fVar5 = (this->sphereCentre).y, pBoundingBox->maxPoint.y + fVar6 < fVar5)) || (((fVar5 < pBoundingBox->minPoint.y - fVar6 ||
+			(fVar5 = (this->sphereCentre).z, pBoundingBox->maxPoint.z + fVar6 < fVar5)) || (fVar5 < pBoundingBox->minPoint.z - fVar6)))) {
+		bIsIntersecting = false;
 	}
 	else {
-		bVar2 = true;
+		bIsIntersecting = true;
 	}
-	return bVar2;
+
+	COLLISION_LOG(LogLevel::VeryVerbose, "CActor::SV_IsWorldBoundingSphereIntersectingBox {} {}", this->name, bIsIntersecting);
+
+	return bIsIntersecting;
 }
 
 CBehaviour* CActor::BuildBehaviour(int behaviourType)
@@ -2453,7 +2460,7 @@ void CActor::UpdateVisibility()
 
 	uVar1 = this->flags;
 	other = (this->subObjA)->floatFieldB;
-	if (((uVar1 & 0x100) == 0) || (other < this->adjustedMagnitude)) {
+	if (((uVar1 & 0x100) == 0) || (other < this->distanceToCamera)) {
 		if ((uVar1 & 0x4000) != 0) {
 			ChangeVisibleState(0);
 		}
@@ -2503,78 +2510,99 @@ void CActor::SetScaleVector(float x, float y, float z)
 
 void CActor::ComputeAltitude()
 {
-	uint uVar1;
+	uint actorFlags;
 	CCollision* pCVar2;
-	bool bVar3;
+	bool bUpdateAltitude;
 	float fVar4;
 	//CCollisionRay CStack96;
-	edF32VECTOR4 local_40;
-	edF32VECTOR4 local_30;
+	edF32VECTOR4 rayLocation;
+	edF32VECTOR4 rayDirection;
 	edF32VECTOR4 local_20;
-	//_ray_info_out local_10;
+	_ray_info_out local_10;
 	CShadow* pShadow;
 
-	uVar1 = this->flags;
-	bVar3 = false;
+	actorFlags = this->flags;
+	bUpdateAltitude = false;
 
-	if (((uVar1 & 0x100000) != 0) && ((uVar1 & 0x200000) == 0)) {
-		bVar3 = true;
+	if (((actorFlags & 0x100000) != 0) && ((actorFlags & 0x200000) == 0)) {
+		bUpdateAltitude = true;
 	}
 
-	if ((bVar3) || (this->distanceToGround == -1.0f)) {
-		IMPLEMENTATION_GUARD_LOG(
-		local_20.x = (float)edF32VECTOR4_0040e180._0_8_;
-		local_20.y = (float)((ulong)edF32VECTOR4_0040e180._0_8_ >> 0x20);
-		local_20.z = edF32VECTOR4_0040e180.z;
-		local_20.w = edF32VECTOR4_0040e180.w;
-		local_30.x = (float)edF32VECTOR4_0040e190._0_8_;
-		local_30.y = (float)((ulong)edF32VECTOR4_0040e190._0_8_ >> 0x20);
-		local_30.z = edF32VECTOR4_0040e190.z;
-		local_30.w = edF32VECTOR4_0040e190.w;
+	ACTOR_LOG(LogLevel::VeryVerbose, "CActor::ComputeAltitude {} flags: 0x{:x} bUpdateAltitude: {} before distance: {}", this->name, actorFlags, bUpdateAltitude, this->distanceToGround);
+
+	if ((bUpdateAltitude) || (this->distanceToGround == -1.0f)) {
+		static edF32VECTOR4 edF32VECTOR4_0040e180 = { 0.0f, 1.0f, 0.0f, 0.0f };
+		static edF32VECTOR4 edF32VECTOR4_0040e190 = { 0.0f, -1.0f, 0.0f, 0.0f };
+
+		local_20 = edF32VECTOR4_0040e180;
+		rayDirection = edF32VECTOR4_0040e190;
+
 		pCVar2 = this->pCollisionData;
 		if ((pCVar2 == (CCollision*)0x0) || ((pCVar2->flags_0x0 & 0x40000) == 0)) {
-			local_40 = this->currentLocation;
+			rayLocation = this->currentLocation;
 		}
 		else {
-			local_40 = pCVar2->vectorFieldA
+			rayLocation = pCVar2->highestVertex;
 		}
-		local_40.y = local_40.y + 0.3;
-		CCollisionRay::CCollisionRay(this->field_0xec, &CStack96, &local_40, &local_30);
-		fVar4 = CCollisionRay::Intersect(&CStack96, 3, this, (CActor*)0x0, 0x40000048, &local_20, &local_10);
+
+		rayLocation.y = rayLocation.y + 0.3f;
+		CCollisionRay CStack96 = CCollisionRay(this->field_0xf0, &rayLocation, &rayDirection);
+		fVar4 = CStack96.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000048, &local_20, &local_10);
 		this->distanceToGround = fVar4;
+
 		if (fVar4 == 1e+30f) {
-			this->distanceToGround = this->field_0xec;
+			this->distanceToGround = this->field_0xf0;
 			this->flags = this->flags & 0xfeffffff;
-			this->field_0xf0 = 0xffff;
+			this->field_0xf4 = 0xffff;
 		}
 		else {
-			this->field_0xf0 = local_10.pVector_0x4._2_2_;
+			this->field_0xf4 = local_10.type_0x4[1];
 			this->flags = this->flags | 0x1000000;
+
 			if (local_10.pActor_0x0 != (CActor*)0x0) {
 				this->flags = this->flags & 0xfeffffff;
 			}
 		}
+
+		ACTOR_LOG(LogLevel::VeryVerbose, "CActor::ComputeAltitude {} after distance: {}", this->name, this->distanceToGround);
+
 		pShadow = this->pShadow;
 		if (pShadow != (CShadow*)0x0) {
-			local_40.y = local_40.y - this->distanceToGround;
-			(pShadow->base).field_0x10.x = local_40.x;
-			(pShadow->base).field_0x10.y = local_40.y;
-			(pShadow->base).field_0x10.z = local_40.z;
-			(pShadow->base).field_0x10.w = local_40.w;
+			IMPLEMENTATION_GUARD(
+			rayLocation.y = rayLocation.y - this->distanceToGround;
+			(pShadow->base).field_0x10.x = rayLocation.x;
+			(pShadow->base).field_0x10.y = rayLocation.y;
+			(pShadow->base).field_0x10.z = rayLocation.z;
+			(pShadow->base).field_0x10.w = rayLocation.w;
 			(pShadow->base).field_0x4c = this->rotationEuler.y;
 			CShadowShared::SetIntensity(1.0 - this->distanceToGround / this->field_0xec, pShadow);
 			(pShadow->base).field_0x20.x = local_20.x;
 			(pShadow->base).field_0x20.y = local_20.y;
 			(pShadow->base).field_0x20.z = local_20.z;
-			(pShadow->base).field_0x20.w = local_20.w;
+			(pShadow->base).field_0x20.w = local_20.w;)
 		}
+
 		fVar4 = this->distanceToGround;
-		if (fVar4 < this->field_0xec) {
-			this->distanceToGround = fVar4 - 0.3;
-		})
+		if (fVar4 < this->field_0xf0) {
+			this->distanceToGround = fVar4 - 0.3f;
+			ACTOR_LOG(LogLevel::VeryVerbose, "CActor::ComputeAltitude {} adjust after distance: {}", this->name, this->distanceToGround);
+		}
 	}
 
 	this->flags = this->flags & 0xffdfffff;
+	return;
+}
+
+void CActor::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix)
+{
+	edF32MATRIX4* peVar3;
+
+	if (this->pTiedActor == (CActor*)0x0) {
+		*pMatrix = gF32Matrix4Unit;
+	}
+	else {
+		this->pTiedActor->FillThisFrameExpectedDifferentialMatrix(pMatrix);
+	}
 	return;
 }
 
@@ -2591,6 +2619,8 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 	bool bVar4;
 	uint uVar5;
 	Timer* pTVar6;
+
+	ACTOR_LOG(LogLevel::Info, "CActor::TieToActor {} -> {}", this->name, pTieActor ? pTieActor->name : "None");
 
 	pCurrentTiedActor = this->pTiedActor;
 	if (pCurrentTiedActor == pTieActor) {
@@ -2622,7 +2652,6 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 			pCurrentTiedActor = this->pTiedActor;
 
 			if ((pCurrentTiedActor != (CActor*)0x0) && (((pTieActor != (CActor*)0x0 || ((this->flags & 0x20000) == 0)) || (param_4 == -1)))) {
-				IMPLEMENTATION_GUARD(
 				pCurrentTiedActor->pCollisionData->UnregisterTiedActor(this);
 				this->pTiedActor = (CActor*)0x0;
 				this->flags = this->flags & 0xfffeffff;
@@ -2630,8 +2659,9 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 				bVar4 = this->IsKindOfObject(4);
 				if (bVar4 != false) {
 					pTVar6 = GetTimer();
-					this[1].data.lightingFlags = (uint)pTVar6->scaledTotalTime;
-				})
+					CActorAutonomous* pAutonomous = reinterpret_cast<CActorAutonomous*>(this);
+					(pAutonomous->dynamicExt).scaledTotalTime = pTVar6->scaledTotalTime;
+				}
 			}
 
 			if (pTieActor != (CActor*)0x0) {
@@ -2901,6 +2931,23 @@ bool CActor::ColWithLava()
 		}
 	}
 	return bVar2;
+}
+
+bool CActor::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
+{
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	edF32Matrix4MulF32Vector4Hard(&local_10, m0, &this->rotationQuat);
+	local_10.y = 0.0f;
+	edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
+	this->rotationQuat = local_10;
+	GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+	edF32Matrix4MulF32Vector4Hard(&eStack32, m0, &this->currentLocation);
+	UpdatePosition(&eStack32, true);
+
+	this->flags = this->flags & 0xffdfffff;
+	return true;
 }
 
 CPlayerInput* CActor::GetInputManager(int, int)
@@ -3396,7 +3443,7 @@ CActor* CActor::GetCollidingActor()
 	return pCVar1;
 }
 
-void CActor::SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* v0)
+void CActor::SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int bCheckCollisions, CActorsTable* pActorsTable, edF32VECTOR4* v0)
 {
 	edF32VECTOR3 local_10;
 
@@ -3422,7 +3469,7 @@ void CActor::SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int param_4, CAc
 
 		SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
 
-		if ((param_4 == 0) || (this->pCollisionData == (CCollision*)0x0)) {
+		if ((bCheckCollisions == 0) || (this->pCollisionData == (CCollision*)0x0)) {
 			UpdatePosition(m0, 1);
 		}
 		else {
@@ -3600,6 +3647,21 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 bool CActor::UpdateNormal(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
 {
 	return SV_Vector4SLERP(param_1, param_3, param_4);
+}
+
+void CActor::SV_Blend3AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN* param_3, uint param_4, uint param_5, uint param_6)
+{
+	float* piVar1;
+	float fVar1;
+
+	fVar1 = (1.0 - r2) - r1;
+	piVar1 = param_3->pHdr->pData + param_3->pHdr->keyIndex_0x8.asKey;
+	piVar1[param_4] = fVar1;
+	if (fVar1 < 0.0) {
+		piVar1[param_4] = 0.0;
+	}
+	piVar1[param_5] = r1;
+	piVar1[param_6] = r2;
 }
 
 void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float param_3)

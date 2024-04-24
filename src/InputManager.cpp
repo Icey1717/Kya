@@ -387,6 +387,37 @@ float CPlayerInput::GetAngleWithPlayerStick(edF32VECTOR4* param_2)
 	return fVar3;
 }
 
+void CPlayerInput::GetPadRelativeToNormal2D(edF32VECTOR4* param_2, float* param_3, float* param_4, float* param_5)
+{
+	float fVar1;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.x = param_2->x;
+	local_10.z = param_2->z;
+	local_10.w = param_2->w;
+	local_10.y = 0.0f;
+
+	fVar1 = edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
+	*param_5 = fVar1;
+	local_30.x = local_10.x;
+	local_30.y = local_10.y;
+	local_30.z = local_10.z;
+	local_30.w = local_10.w;
+	local_20.z = local_10.x;
+	local_20.y = 0.0f;
+	local_20.x = -local_10.z;
+	local_20.w = 0.0f;
+	edF32Vector4ScaleHard(this->aAnalogSticks[0].magnitude, &eStack64, &this->lAnalogStick);
+	fVar1 = edF32Vector4DotProductHard(&eStack64, &local_20);
+	*param_3 = fVar1;
+	fVar1 = edF32Vector4DotProductHard(&eStack64, &local_30);
+	*param_4 = fVar1;
+	return;
+}
+
 CPlayerInput* GetPlayerInput(int playerId)
 {
 	CPlayerInput* pPlayerInput;

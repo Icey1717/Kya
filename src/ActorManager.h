@@ -37,18 +37,6 @@ public:
 	int nodeIndex;
 };
 
-struct edS32VECTOR3
-{
-	int x;
-	int y;
-	int z;
-};
-
-struct S_BOUNDING_BOX {
-	edF32VECTOR4 field_0x0;
-	edF32VECTOR4 field_0x10;
-};
-
 typedef void (ColCallbackFuncPtr)(CActor*, void*);
 typedef bool (CritenionFunc)(CActor*, void*);
 

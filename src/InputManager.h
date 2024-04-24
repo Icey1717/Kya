@@ -70,6 +70,7 @@ public:
 	void ScanPorts();
 	bool SoftReset();
 	float GetAngleWithPlayerStick(edF32VECTOR4* param_2);
+	void GetPadRelativeToNormal2D(edF32VECTOR4* param_2, float* param_3, float* param_4, float* param_5);
 	void ComputeForce();
 	void UpdateOne(float delta);
 

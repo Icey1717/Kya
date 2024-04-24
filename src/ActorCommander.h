@@ -24,6 +24,7 @@ public:
 	}
 
 	virtual void Create(ByteCode* pByteCode);
+	virtual void Manage();
 
 	uint eventIndex_0x178;
 	uint eventID_0x17c;
@@ -34,6 +35,9 @@ public:
 	ACommanderComponent_10* aComponent_0x170;
 
 	int count_0x16c;
+
+	int bInCombat_0x1b0;
+
 	int count_0x2ec;
 };
 

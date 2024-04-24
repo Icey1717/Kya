@@ -18,6 +18,7 @@ struct CCameraStack {
 	void SetMainCamera(CCamera* pCamera);
 	bool Manage();
 	void Reset();
+	void Level_SectorChange(int oldSectorId);
 	CCameraStack();
 
 	CameraStackEntry aCameras[64];

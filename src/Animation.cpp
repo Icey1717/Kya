@@ -2050,6 +2050,8 @@ bool edAnmLayer::MorphingDT(float playTime)
 	float fVar5;
 	float fVar6;
 
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmLayer::MorphingDT playTime: {}", playTime);
+
 	if (((this->nextAnimDesc).animMode == -6) && (TheAnimStage.pAnimMatrix == (AnimMatrix*)0x0)) {
 		fVar6 = (this->nextAnimDesc).state.time_0x10;
 		(this->currentAnimDesc).state.field_0x30 = 0.0f;
@@ -2070,21 +2072,26 @@ bool edAnmLayer::MorphingDT(float playTime)
 		this->animPlayState = 1;
 		return false;
 	}
+
 	if (((this->currentAnimDesc).state.currentAnimDataFlags & 2) == 0) {
 		(this->currentAnimDesc).state.UpdateAnimParams();
 	}
+
 	if (((this->nextAnimDesc).state.currentAnimDataFlags & 2) == 0) {
 		(this->nextAnimDesc).state.UpdateAnimParams();
 	}
+
 	if (this->field_0xbc == -1.0f) {
 		(this->currentAnimDesc).field_0x4c = (this->nextAnimDesc).state.keyDuration_0x18;
 	}
 	else {
 		(this->currentAnimDesc).field_0x4c = this->field_0xbc;
 	}
+
 	fVar6 = (this->nextAnimDesc).field_0x4c + playTime;
 	(this->nextAnimDesc).field_0x4c = fVar6;
 	peVar2 = TheAnimStage.pRelativeTransformMatrixBuffer;
+
 	if ((this->currentAnimDesc).field_0x4c <= fVar6) {
 		fVar6 = (this->nextAnimDesc).state.time_0x10;
 		(this->currentAnimDesc).state.field_0x30 = 0.0f;
@@ -2104,6 +2111,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 		this->animPlayState = 1;
 		return false;
 	}
+
 	fVar6 = this->field_0xd4 * 65535.0f;
 	if (fVar6 < 2.147484e+09f) {
 		TheAnimStage.field_0x24 = (int)fVar6;
@@ -2111,6 +2119,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 	else {
 		TheAnimStage.field_0x24 = (int)(fVar6 - 2.147484e+09f) | 0x80000000;
 	}
+
 	fVar6 = this->field_0xbc;
 	if (fVar6 == -1.0f) {
 		fVar6 = (this->nextAnimDesc).state.keyDuration_0x18;
@@ -2134,10 +2143,12 @@ bool edAnmLayer::MorphingDT(float playTime)
 		TheAnimStage.SetDestinationWRTS(unaff_s3_lo, -1);
 		unaff_s4_lo = peVar2;
 	}
+
 	peVar2 = TheAnimStage.pRelativeTransformMatrixBuffer;
 	pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
 	pMatrixBuffer_00 = TheAnimManager.AllocWRTSBuffer();
 	TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
+
 	switch ((this->nextAnimDesc).animMode) {
 	default:
 		IMPLEMENTATION_GUARD((this->currentAnimDesc).state.AnimateIT(0.0f));
@@ -2192,6 +2203,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 	case -1:
 		(this->currentAnimDesc).state.AnimateDT(playTime);
 	}
+
 	TheAnimStage.SetDestinationWRTS(pMatrixBuffer_00, -1);
 	iVar1 = this->field_0xb8;
 	if (iVar1 == -1) {
@@ -2241,6 +2253,8 @@ bool edAnmLayer::PlayingDT(float playTime)
 	edANM_WRTS* pMatrixBuffer;
 	edANM_WRTS* unaff_s1_lo;
 	float fVar4;
+
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmLayer::PlayingDT playTime: {}", playTime);
 
 	(this->currentAnimDesc).state.field_0x30 = (this->currentAnimDesc).state.field_0x30 + playTime;
 	if (((this->nextAnimDesc).animType == -1) || (iVar1 = (this->nextAnimDesc).animMode, iVar1 == -4)) {

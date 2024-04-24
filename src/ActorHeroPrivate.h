@@ -52,6 +52,7 @@ public:
 	virtual void SetState(int newState, int animType);
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Leave(int behaviourId);
+	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
@@ -95,11 +96,16 @@ public:
 	void StateHeroSlideSlip(int nextState, bool boolA, bool boolB);
 
 	void StateHeroSlideInit(int param_2);
+	void StateHeroSlide(int param_2);
 	void StateHeroSlideTerm(int param_2);
 
 	void StateHeroUTurnInit();
 	void StateHeroUTurn();
 	void StateHeroUTurnTerm();
+
+	void StateHeroRollInit();
+	void StateHeroRoll();
+	void StateHeroRollTerm() {}
 
 	void StateHeroJump_1_3(int nextState);
 
@@ -117,6 +123,11 @@ public:
 
 	void StateHeroFall(float param_1, int param_3);
 
+	void StateHeroFlyInit();
+
+	void StateHeroGlideInit();
+
+	void SetJumpCfgFromGround(float param_1);
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
 	void SetBoomyFunc(int param_2);
 	void IncreaseEffort(float param_1);
@@ -128,6 +139,7 @@ public:
 
 	bool DetectGripablePrecipice();
 
+	int SlideOnGround(float param_1, float param_2, float param_3, float param_4, uint flags);
 	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
 
 	void SetBoomyHairOff();
@@ -155,11 +167,14 @@ public:
 
 	void AdjustLocalMatrixFromNormal(float param_1, edF32VECTOR4* pNormal);
 
+	void ConvertSpeedSumForceExtToSpeedPlayer();
 	bool GetNormalInFrontOf(float rayLength, edF32VECTOR4* pRayDirection, edF32VECTOR4* param_4, uint flags, edF32VECTOR4* pHitLocation, CActor** pActor);
 
 	void SetInvincible(float t0, int param_3);
 
 	CBehaviourHeroDefault behaviourHeroDefault;
+
+	SPEED_DYN field_0xcb4;
 
 	CFxHandle* field_0x10fc;
 	int* field_0x1100;
@@ -172,10 +187,6 @@ public:
 	CBehaviour behaviour_0x1fd0;
 
 	float field_0x1558;
-
-	float field_0xa80;
-	float field_0xa84;
-	float field_0xa88;
 
 	undefined4 field_0x1a50;
 	int field_0x1094;
@@ -216,6 +227,7 @@ public:
 	int field_0x1020;
 	int field_0x1420;
 	int field_0x1424;
+	int field_0x1428;
 
 	int field_0x142c;
 	bool field_0x1454;
@@ -228,9 +240,12 @@ public:
 
 	// Run settings.
 	float field_0x1068;
+	float field_0x106c;
 	float field_0x1074;
 	float field_0x1078;
 	float field_0x107c;
+	float field_0x1080;
+	float field_0x1084;
 
 	float field_0x10c0;
 	float field_0x10c4;
@@ -261,6 +276,9 @@ public:
 	float field_0x1160;
 	float field_0x1164;
 
+	float field_0x1174;
+	float field_0x1180;
+
 	CActor* field_0xf18;
 	CActor* pSoccerActor;
 
@@ -269,7 +287,7 @@ public:
 	CLifeInterface field_0xee4;
 
 	CCamera* pMainCamera;
-	CCamera* pCameraViewBase_0xab0;
+	CCamera* pCameraKyaJamgut;
 
 	CCamera* pJamgutCamera_0x15b8;
 	CCamera* pIntViewCamera_0x15bc;
@@ -295,12 +313,17 @@ public:
 
 	float field_0x1108;
 
+	float field_0x11f4;
+	float field_0x11f8;
+	float field_0x11fc;
+
+	undefined4 field_0x11ec;
+
 	float field_0x1410;
 	float field_0x1414;
 	float field_0x1418;
 	float field_0x141c;
 
-	float field_0x1548;
 	float field_0x154c;
 	float field_0x155c;
 	undefined4 field_0x1560;

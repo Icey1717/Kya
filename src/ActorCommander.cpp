@@ -89,6 +89,66 @@ void CActorCommander::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CActorCommander::Manage()
+{
+	int iVar1;
+	undefined8 uVar2;
+	long lVar3;
+	int iVar4;
+	float fVar5;
+	edF32VECTOR4 eStack112;
+	edF32MATRIX4 eStack96;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+	CTeamElt* piVar1;
+
+	if (this->pTiedActor != (CActor*)0x0) {
+		local_10 = this->baseLocation;
+		local_20 = this->currentLocation;
+		SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+		IMPLEMENTATION_GUARD_LOG(
+		iVar1 = CSquad::NbElt(&this->squad);
+		if (iVar1 != 0) {
+			edF32Vector4SubHard(&eStack112, &this->currentLocation, &local_20);
+			edF32Matrix4TranslateHard(&eStack96, &gF32Matrix4Unit, &eStack112);
+			FUN_00352d90((int)&(this->squad).chessboard, &eStack96);
+		})
+	}
+
+	IMPLEMENTATION_GUARD_LOG(
+	(*(code*)(this->pVTable)->field_0xfc)(this);
+	ACommander::UpdateFunc_00171170(this);
+	ACommander::UpdateFunc_00170e20(this);
+	ACommander::UpdateFunc_00170cc0(this);
+	ACommander::UpdateFunc_00170b70(this);
+	ACommander::UpdateFunc_00170a20(this);
+	(this->checkpointData_0x190).pWaypoint = (CWayPoint*)0x0;
+	iVar1 = 0;
+	if (0 < this->count_0x2ec) {
+		iVar4 = 0;
+		do {
+			piVar1 = *(CTeamElt**)((int)&this->aTeamElt->pEnemyActor + iVar4);
+			uVar2 = (**(code**)(piVar1->field_0x0 + 0x138))(piVar1);
+			fVar5 = (float)(**(code**)(*(int*)uVar2 + 0x24))(uVar2);
+			if (((0.0 < fVar5) && (lVar3 = (**(code**)(piVar1->field_0x0 + 0xc))(piVar1, 0x10), lVar3 != 0)) &&
+				((*(uint*)&piVar1[0x7a].field_0x8 & 7) != 0)) {
+				(this->checkpointData_0x190).pWaypoint =
+					(CWayPoint*)((int)&(((this->checkpointData_0x190).pWaypoint)->field_0x0).x + 1);
+			}
+			iVar1 = iVar1 + 1;
+			iVar4 = iVar4 + 0x18;
+		} while (iVar1 < this->count_0x2ec);
+	})
+
+	this->bInCombat_0x1b0 = 0;
+	CActor::Manage();
+	IMPLEMENTATION_GUARD_LOG(
+	_UpdateCamera();
+	this->field_0x2f4 = 0;)
+	return;
+}
+
 void CSquad::Create(ByteCode* pByteCode)
 {
 	uint uVar1;

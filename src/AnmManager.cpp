@@ -276,18 +276,23 @@ void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4
 	return;
 }
 
-void edAnmMacroAnimator::AnimateDT(float param_1)
+void edAnmMacroAnimator::AnimateDT(float time)
 {
 	float fVar1;
 
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::AnimateDT time: {}", time);
+
 	fVar1 = 0.0f;
 	if (0.0f < this->keyStartTime_0x14) {
-		fVar1 = param_1 / this->keyStartTime_0x14;
+		fVar1 = time / this->keyStartTime_0x14;
 	}
 	this->time_0xc = this->time_0xc + fVar1;
+
 	fVar1 = this->time_0x10;
-	this->time_0x10 = fVar1 + param_1;
+	this->time_0x10 = fVar1 + time;
+
 	Animate();
+
 	if (((this->flags & 0x40000000) != 0) && (fVar1 < this->keyStartTime_0x14 - this->keyDuration_0x18)) {
 		this->flags = this->flags | 0x20000000;
 	}
@@ -311,7 +316,7 @@ void edAnmMacroAnimator::Animate()
 		peVar2 = this->pAnimKeyTableEntry;
 		iVar5 = peVar2->field_0x4.asKey;
 
-		ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate count: {}", iVar5);
+		ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate mode: {}", iVar5);
 
 		if (iVar5 == 2) {
 			fVar8 = 0.0;
@@ -372,10 +377,14 @@ void edAnmMacroAnimator::Animate()
 					ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate count B: {}", iVar5);
 
 					if (-1 < iVar5) {
-						pfVar4 = (float*)((char*)peVar2 + iVar5 * 4 + peVar2->keyIndex_0x8.asKey * 4 + 0xc);
-						piVar3 = (int*)((char*)peVar2 + iVar5 * 4 + 0xc);
+						int* pAfterHeader = reinterpret_cast<int*>(peVar2 + 1);
+
+						piVar3 = reinterpret_cast<int*>(pAfterHeader + iVar5);
+						pfVar4 = reinterpret_cast<float*>(piVar3 + peVar2->keyIndex_0x8.asKey);
+
 						do {
 							ANIMATION_LOG(LogLevel::Verbose, "edAnmMacroAnimator::Animate time: {}", *pfVar4);
+
 							if (0.0001f < *pfVar4) {
 								if ((this->currentAnimDataFlags & 1) == 0) {
 									TheAnimStage.SetAnim(this->pKeyDataArray[*piVar3]);
@@ -436,6 +445,7 @@ void edAnmMacroAnimator::Animate()
 		else {
 			TheAnimStage.SetAnimLoop(this->pAnimKeyTableEntry);
 		}
+
 		TheAnimStage.SetTime(this->time_0x10);
 		TheAnimStage.AnimToWRTS();
 		this->time_0x10 = TheAnimStage.field_0x3c;

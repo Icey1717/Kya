@@ -38,6 +38,7 @@
 #include "DebugSetting.h"
 #include "../../../src/Rendering/DisplayList.h"
 #include "../../../src/SectorManager.h"
+#include "DebugHero.h"
 
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -231,189 +232,29 @@ namespace DebugMenu_Internal {
 		return true;
 	}
 
-	char* GetStateName(int state) {
-		switch (state) {
-		case STATE_HERO_STAND:
-			return "StateHeroStand";
-			break;
-		case STATE_HERO_JUMP_1_1_STAND:
-			return "StateHeroJump_1_1_Stand";
-			break;
-		case STATE_HERO_JUMP_2_3_STAND:
-			return "StateHeroJump_2_3_Stand";
-			break;
-		case STATE_HERO_JUMP_3_3_STAND:
-			return "StateHeroJump_3_3_Stand";
-			break;
-		case STATE_HERO_RUN:
-			return "StateHeroRun";
-			break;
-		case STATE_HERO_SLIDE_SLIP_A:
-			return "StateHeroSlideSlipA";
-			break;
-		case STATE_HERO_SLIDE_SLIP_B:
-			return "StateHeroSlideSlipB";
-			break;
-		case STATE_HERO_SLIDE_SLIP_C:
-			return "StateHeroSlideSlipC";
-			break;
-		case STATE_HERO_SLIDE_A:
-			return "StateHeroSlideA";
-			break;
-		case STATE_HERO_SLIDE_B:
-			return "StateHeroSlideB";
-			break;
-		case STATE_HERO_U_TURN:
-			return "StateHeroUTurn";
-			break;
-		case STATE_HERO_JUMP_1_1_RUN:
-			return "StateHeroJump_1_1_Run";
-			break;
-		case STATE_HERO_JUMP_2_3_RUN:
-			return "StateHeroJump_2_3_Run";
-			break;
-		case STATE_HERO_JUMP_3_3_RUN:
-			return "StateHeroJump_3_3_Run";
-			break;
-		case STATE_HERO_FALL_A:
-			return "StateHeroFallA";
-			break;
-		case STATE_HERO_GRIP_B:
-			return "StateHeroGripB";
-			break;
-		case STATE_HERO_GRIP_HANG_IDLE:
-			return "StateHeroGripHangIdle";
-			break;
-		case STATE_HERO_GRIP_UP:
-			return "StateHeroGripUp";
-			break;
-		case STATE_HERO_JUMP_2_3_GRIP:
-			return "StateHeroJump_2_3_Grip";
-			break;
-		case STATE_HERO_GRIP_GRAB:
-			return "StateHeroGripGrab";
-			break;
-		case STATE_HERO_TOBOGGAN_3:
-			return "StateHeroToboggan3";
-			break;
-		case STATE_HERO_TOBOGGAN_JUMP_1:
-			return "StateHeroTobogganJump1";
-			break;
-		case STATE_HERO_TOBOGGAN_JUMP_2:
-			return "StateHeroTobogganJump2";
-			break;
-		case STATE_HERO_TOBOGGAN_2:
-			return "StateHeroToboggan2";
-		break;
-		case STATE_HERO_TOBOGGAN:
-			return "StateHeroToboggan";
-			break;
-		case 0x3:
-			return "Cinematic";
-			break;
-		default:
-			assert(false);
-			break;
-		}
-	}
-
-	DebugSetting::DoOnceBoolSetting gTeleportOnStart = { "Teleport On Start", false };
-
-	void ShowHeroMenu(bool* bOpen) {
-		// Create a new ImGui window
-		ImGui::Begin("Hero", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		if (ImGui::CollapsingHeader("Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
-			gTeleportOnStart.DrawImguiControl();
-		}
-
-		CActorHeroPrivate* pActorHero = reinterpret_cast<CActorHeroPrivate*>(CActorHeroPrivate::_gThis);
-
-		if (pActorHero) {
-			ImGui::Text("State: %s", GetStateName(pActorHero->actorState));
-
-			if (ImGui::Button("Save Hero Location")) {
-				DebugHelpers::SaveTypeToFile("hero.bin", pActorHero->currentLocation);
-			}
-
-			if (ImGui::Button("Load Hero Location") || gTeleportOnStart) {
-				DebugHelpers::LoadTypeFromFile("hero.bin", pActorHero->currentLocation);
-			}
-
-			DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->currentLocation);
-			DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->rotationQuat);
-			ImGui::InputFloat("Effort", &pActorHero->effort);
-
-			ImGui::Spacing();
-
-			DebugHelpers::ImGui::TextVector4("Control Direction", pActorHero->controlDirection);
-			ImGui::Text("Facing control direction: %d", pActorHero->bFacingControlDirection);
-
-			ImGui::Spacing();
-
-			if (ImGui::CollapsingHeader("Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
-				ImGui::Text("Time in air: %.3f", pActorHero->timeInAir);
-			}
-
-			if (ImGui::CollapsingHeader("Dynamic", ImGuiTreeNodeFlags_DefaultOpen)) {
-				DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->dynamic.rotationQuat);
-				DebugHelpers::ImGui::TextVector4("field_0x10", pActorHero->dynamic.field_0x10);
-				DebugHelpers::ImGui::TextVector4("Velocity Direction Euler", pActorHero->dynamic.velocityDirectionEuler);
-				DebugHelpers::ImGui::TextVector4("Horizontal Velocity Direction Euler", pActorHero->dynamic.horizontalVelocityDirectionEuler);
-
-				ImGui::Text("Flags: %x", pActorHero->flags);
-
-				ImGui::InputFloat("Speed", &pActorHero->dynamic.speed);
-				ImGui::InputFloat("Linear Jerk", &pActorHero->dynamic.linearJerk);
-				ImGui::InputFloat("Linear Acceleration", &pActorHero->dynamic.linearAcceleration);
-				ImGui::InputFloat("Weight B", &pActorHero->dynamic.weightB);
-				ImGui::InputFloat("Weight A", &pActorHero->dynamic.weightA);
-			}
-
-			ImGui::Spacing();
-
-			if (ImGui::CollapsingHeader("DynamicExt", ImGuiTreeNodeFlags_DefaultOpen)) {
-				DebugHelpers::ImGui::TextVector4("Gravity", pActorHero->dynamicExt.gForceGravity);
-				DebugHelpers::ImGui::TextVector4("Translation", pActorHero->dynamicExt.normalizedTranslation);
-
-				ImGui::InputFloat("Gravity Scale", &pActorHero->dynamicExt.gravityScale);
-			}
-
-			ImGui::Spacing();
-
-			if (ImGui::CollapsingHeader("Collision", ImGuiTreeNodeFlags_DefaultOpen)) {
-				ImGui::Text("Flags 0: %x", pActorHero->pCollisionData->flags_0x0);
-				ImGui::Text("Flags 4: %x", pActorHero->pCollisionData->flags_0x4);
-
-				if (ImGui::CollapsingHeader("Flags", ImGuiTreeNodeFlags_DefaultOpen)) {
-					ImGui::Text("On Plane: %d", pActorHero->pCollisionData->flags_0x4 & 1);
-				}
-			}
-
-			ImGui::Spacing();
-
-			if (ImGui::CollapsingHeader("Input", ImGuiTreeNodeFlags_DefaultOpen)) {
-				DebugHelpers::ImGui::TextVector4("Left Analog Stick", pActorHero->pPlayerInput->lAnalogStick);
-			}
-		}
-
-		// End the ImGui window
-		ImGui::End();
-	}
-
 	void ShowSectorMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Sector", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
-		if (ImGui::Button("Switch Sector")) {
-			CScene::ptable.g_SectorManager_00451670->SwitchToSector(4, true);
+		ImGui::Text("Current Sector: %d", CScene::ptable.g_SectorManager_00451670->baseSector.currentSectorID);
+
+		for (int i = 0; i < 5; i++) {
+			char buttonText[256]; // Buffer to hold the formatted text
+
+			// Format the text using sprintf
+			std::sprintf(buttonText, "Switch Sector %d", i);
+
+			// Create a button for each sector
+			if (ImGui::Button(buttonText)) {
+				CScene::ptable.g_SectorManager_00451670->SwitchToSector(i, true);
+			}
 		}
 
 		// End the ImGui window
 		ImGui::End();
 	}
 
-	DebugSetting::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
+	Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
 
 	void ShowCutsceneMenu(bool* bOpen) {
 		// Create a new ImGui window
@@ -531,7 +372,7 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	DebugSetting::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
+	Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
 
 	void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
@@ -967,7 +808,7 @@ namespace DebugMenu_Internal {
 		{"Cutscene", ShowCutsceneMenu, true },
 		{"Rendering", ShowRenderingMenu },
 		{"Scene", ShowSceneMenu },
-		{"Hero", ShowHeroMenu, true },
+		{"Hero", Debug::Hero::ShowHeroMenu, true },
 		{"Sector", ShowSectorMenu, true },
 		{"Memory", ShowMemoryMenu, true },
 

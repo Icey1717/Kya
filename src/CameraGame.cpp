@@ -7,8 +7,10 @@
 #include "ActorFactory.h"
 
 #include <math.h>
+#include "CollisionRay.h"
 
 int CCameraGame::_b_use_fig_data = 0;
+CCamFigData* CCameraGame::_pfig_data = NULL;
 
 struct CameraVectorBase {
 	bool FUN_002bf570(CCameraGame* pCamera);
@@ -96,7 +98,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 		edF32Vector4SubHard(&local_a0, this->aCameraLocations + this->cameraNum, (edF32VECTOR4*)this);
 		fVar4 = edF32Vector4NormalizeHard(&local_a0, &local_a0);
 		CCollisionRay CStack192 = CCollisionRay(fVar4, (edF32VECTOR4*)this, &local_a0);
-		fVar4 = CStack192.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_90, (_ray_info_out*)0x0);
+		fVar4 = CStack192.Intersect(RAY_FLAG_SCENERY, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_90, (_ray_info_out*)0x0);
 
 		if (fVar4 == 1e+30f) {
 			if (g_CameraVectorBase.cameraNum != 1) {
@@ -112,7 +114,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 			edF32Vector4SubHard(&local_e0, this->aCameraLocations + 2, (edF32VECTOR4*)this);
 			fVar4 = edF32Vector4NormalizeHard(&local_e0, &local_e0);
 			CCollisionRay CStack256 = CCollisionRay(fVar4, this->aCameraLocations, &local_e0);
-			fVar4 = CStack256.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_d0, (_ray_info_out*)0x0);
+			fVar4 = CStack256.Intersect(RAY_FLAG_SCENERY, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_d0, (_ray_info_out*)0x0);
 
 			if ((fVar4 == 1e+30f) || (this->flags == 0)) {
 				for (iVar3 = 1; iVar3 < this->cameraNum; iVar3 = iVar3 + 1) {
@@ -140,7 +142,7 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 		local_10.w = edF32Vector4NormalizeHard(&local_120, &local_120);
 
 		CCollisionRay CStack320 = CCollisionRay(local_10.w, this->aCameraLocations + iVar3, &local_120);
-		fVar4 = CStack320.Intersect(1, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_110, (_ray_info_out*)0x0);
+		fVar4 = CStack320.Intersect(RAY_FLAG_SCENERY, (CActor*)0x0, (CActor*)0x0, 0x40000004, &local_110, (_ray_info_out*)0x0);
 		local_70 = local_120;
 
 		local_80 = local_110;
@@ -335,10 +337,10 @@ void CCameraGame::Reset()
 
 	this->field_0x270 = gF32Vector4Zero;
 
-	*(undefined4*)&this->field_0x280 = 0;
-	*(undefined4*)&this->field_0x1bc = 0;
-	*(undefined4*)&this->field_0x20c = 0;
-	*(undefined4*)&this->field_0x214 = 0x40000000;
+	this->field_0x280 = 0;
+	this->field_0x1bc = 0;
+	this->field_0x20c = 0.0f;
+	this->field_0x214 = 2.0f;
 
 	this->pitchDyn.Init(0.0f, this->cameraConfig.field_0x34);
 
@@ -805,8 +807,6 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 
 	EVar2 = GetMode();
 	if (EVar2 == CT_KyaJamgut) {
-		IMPLEMENTATION_GUARD(
-
 		// This should be fixed, but it just sets the values to 0 for the vectors and matrices #fix
 		//peVar3 = (edF32VECTOR4*)&DAT_00000010;
 		//peVar4 = &local_130;
@@ -817,19 +817,22 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 		//	peVar3 = (edF32VECTOR4*)((int)&peVar3[-1].w + 3);
 		//	peVar1 = peVar3;
 		//}
+
 		local_130.z = -this->field_0x208;
+
 		edF32Matrix4RotateXHard(this->targetPitch, &eStack272, &gF32Matrix4Unit);
 		edF32Matrix4RotateYHard(this->field_0x204, &eStack272, &eStack272);
 		edF32Matrix4MulF32Vector4Hard(&local_130, &eStack272, &local_130);
 		edF32Vector4AddHard(&eStack288, &this->gameLookAt, &local_130);
 		edF32Vector4SubHard(&local_130, translation, &eStack288);
 		fVar5 = edF32Vector4GetDistHard(&local_130);
-		(this->view).distance = fVar5;
+
+		this->distance = fVar5;
 		fVar5 = GetAngleXFromVector(&local_130);
-		(this->view).angles.x = fVar5;
+		this->angles.x = fVar5;
 		fVar5 = GetAngleYFromVector(&local_130);
-		(this->view).angles.y = fVar5;
-		FUN_002c03f0(this);)
+		this->angles.y = fVar5;
+		_Toboggan_UpdateCameraData();
 	}
 	else {
 		if (((((EVar2 == 4) || (EVar2 == 9)) || (EVar2 == 8)) || ((EVar2 == 6 || (EVar2 == CT_KyaWindWall)))) ||
@@ -875,13 +878,13 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 		}
 	}
 
-	if ((((this->flags_0xc & 0x37c) != 0x37c) && (this->pOtherTarget != (CActor*)0x0)) &&
-		(((this->cameraConfig).flags_0x70 & 0x2000000) == 0)) {
-		IMPLEMENTATION_GUARD(
-		FUN_00199ce0(this, &eStack80);
+	if ((((this->flags_0xc & 0x37c) != 0x37c) && (this->pOtherTarget != (CActor*)0x0)) && (((this->cameraConfig).flags_0x70 & 0x2000000) == 0)) {
+		FillThisFrameExpectedDifferentialMatrix(&eStack80);
+
 		m0 = &this->transformationMatrix;
+
 		if (((this->cameraConfig).flags & 0x4000) == 0) {
-			peVar4 = (edF32VECTOR4*)&this->transformationMatrix.da;
+			peVar4 = &this->transformationMatrix.rowT;
 			edF32Matrix4MulF32Vector4Hard(peVar4, &eStack80, peVar4);
 			peVar4 = &this->lookAt;
 			edF32Matrix4MulF32Vector4Hard(peVar4, &eStack80, peVar4);
@@ -891,20 +894,81 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 			peVar4 = &this->lookAt;
 			edF32Matrix4MulF32Vector4Hard(peVar4, &eStack80, peVar4);
 		}
-		local_60 = this->transformationMatrix.da;
-		local_5c = this->transformationMatrix.db;
-		local_58 = this->transformationMatrix.dc;
-		local_54 = this->transformationMatrix.dd;
-		local_70.x = this->transformationMatrix.ca;
-		local_70.y = this->transformationMatrix.cb;
-		local_70.z = this->transformationMatrix.cc;
-		local_70.w = this->transformationMatrix.cd;
+
+		local_60 = this->transformationMatrix.rowT;
+		local_70 = this->transformationMatrix.rowZ;
 		edF32Matrix4BuildFromVectorUnitSoft(&this->transformationMatrix, &local_70);
-		this->transformationMatrix.da = local_60;
-		this->transformationMatrix.db = local_5c;
-		this->transformationMatrix.dc = local_58;
-		this->transformationMatrix.dd = local_54;)
+		this->transformationMatrix.rowT = local_60;
 	}
+
+	return;
+}
+
+void CCameraGame::_Toboggan_UpdateCameraData()
+{
+	CActor* pTarget;
+	edF32MATRIX4* m0;
+	float fVar2;
+	edF32VECTOR4 eStack288;
+	edF32VECTOR4 eStack272;
+	edF32MATRIX4 eStack256;
+	edF32MATRIX4 eStack192;
+	edF32VECTOR4 eStack128;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	edF32VECTOR3 local_10;
+
+	pTarget = GetTarget();
+	edF32Matrix4CopyHard(&eStack192, &pTarget->pMeshTransform->base.transformA);
+
+	local_20.x = 0.0f;
+	local_20.y = 0.0f;
+	local_20.z = GetDistance();
+	local_20.z = -local_20.z;
+	local_20.w = 0.0f;
+
+	edQuatFromMatrix4(&eStack48, &eStack192);
+	edQuatNormalize(&eStack64, &eStack48);
+	edQuatShortestSLERPAccurate((this->field_0x470).y, &eStack128, &this->field_0x450, &eStack64);
+	edQuatShortestSLERPAccurate((this->field_0x470).z, &eStack112, &this->field_0x450, &eStack64);
+	edQuatShortestSLERPAccurate((this->field_0x470).w, &eStack96, &this->field_0x450, &eStack64);
+	edQuatShortestSLERPAccurate(this->field_0x480, &eStack80, &this->field_0x450, &eStack64);
+
+	pTarget = GetTarget();
+	if (pTarget->typeID == 6) {
+		CActorHeroPrivate* pHero = reinterpret_cast<CActorHeroPrivate*>(GetTarget());
+		fVar2 = pHero->field_0xa80;
+	}
+	else {
+		fVar2 = this->field_0xd0->dynamic.linearAcceleration;
+	}
+
+	fVar2 = edFIntervalLERP(fVar2, this->field_0x46c, (this->field_0x470).x, this->field_0x464, this->field_0x468);
+	this->field_0x460 = (uint)fVar2;
+
+	edQuatShortestSLERPAccurate(fVar2, &eStack272, &eStack80, &eStack112);
+	edQuatShortestSLERPAccurate(fVar2, &eStack288, &eStack96, &eStack128);
+	edQuatShortestSLERPAccurate(fVar2 * 2.0f * (1.0f - fVar2), &this->field_0x450, &eStack272, &eStack288);
+	edQuatNormalize(&this->field_0x450, &this->field_0x450);
+	edQuatToMatrix4Hard(&this->field_0x450, &this->transformationMatrix);
+
+	local_10.x = (this->cameraConfig).field_0x88;
+	local_10.y = (this->cameraConfig).field_0x38.z;
+	local_10.z = 0.0f;
+
+	fVar2 = (this->cameraConfig).field_0x88;
+	(this->cameraConfig).field_0x88 = fVar2 + ((this->cameraConfig).baseTargetPitch - fVar2) * 0.05f;
+
+	edF32Matrix4FromEulerSoft(&eStack256, &local_10, "ZXY");
+	m0 = &this->transformationMatrix;
+	edF32Matrix4MulF32Matrix4Hard(m0, &eStack256, m0);
+	edF32Matrix4MulF32Vector4Hard(&local_20, &this->transformationMatrix, &local_20);
+	edF32Vector4AddHard(&this->transformationMatrix.rowT, &this->lookAt, &local_20);
+	edF32Matrix4ToEulerSoft(&this->transformationMatrix, &this->angles, "ZXY");
 
 	return;
 }
@@ -1364,8 +1428,7 @@ void CCameraGame::FUN_00199c20(edF32VECTOR4* param_2, edF32VECTOR4* param_3)
 			local_40 = gF32Matrix4Unit;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			(*(code*)pCVar1->pVTable->field_0xec)();)
+			pCVar1->FillThisFrameExpectedDifferentialMatrix(&local_40);
 		}
 
 		edF32Matrix4MulF32Vector4Hard(param_2, &local_40, param_3);
@@ -1677,7 +1740,7 @@ void CCameraGame::CameraFunc_002c5b50()
 		CCollisionRay CStack48 = CCollisionRay(fVar5, this->field_0x204, fVar7 + 0.8f, &this->gameLookAt, &eStack16);
 		edF32Vector4ScaleHard(-1.0f, &eStack16, &eStack16);
 		pCVar3 = GetTarget();
-		fVar6 = CStack48.Intersect(this->field_0x210, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0,	(_ray_info_out*)0x0);
+		fVar6 = CStack48.Intersect(this->cameraRayFlags, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0,	(_ray_info_out*)0x0);
 		this->field_0x228 = fVar6;
 	}
 
@@ -1712,7 +1775,7 @@ void CCameraGame::CameraFunc_002c5b50()
 		CCollisionRay CStack96 = CCollisionRay(fVar5, this->field_0x204, fVar7 + 0.8f, &this->gameLookAt, &eStack64);
 		edF32Vector4ScaleHard(-1.0f, &eStack64, &eStack64);
 		pCVar3 = GetTarget();
-		fVar6 = CStack96.Intersect(this->field_0x210, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+		fVar6 = CStack96.Intersect(this->cameraRayFlags, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 		this->field_0x22c = fVar6;
 	}
 
@@ -2053,7 +2116,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 						   Suspect that these are here for cinematic shots (getting shot from a cannon) */
 						CCollisionRay CStack96 = CCollisionRay(1.6f, &local_30, &local_20);
 						pCVar7 = GetTarget();
-						fVar11 = CStack96.Intersect(this->field_0x210, pCVar7, (CActor*)0x0, 0x40000004, &eStack64, &_Stack16);
+						fVar11 = CStack96.Intersect(this->cameraRayFlags, pCVar7, (CActor*)0x0, 0x40000004, &eStack64, &_Stack16);
 						fVar10 = edF32Vector4DotProductHard(&eStack64, &local_20);
 						if ((fVar11 != 1e+30f) && (fVar10 <= 0.0f)) {
 							local_30.y = local_30.y + (fVar11 - 0.8f);
@@ -2086,7 +2149,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 						   Suspect that these are here for cinematic shots (getting shot from a cannon) */
 						CCollisionRay CStack128 = CCollisionRay(1.6f, &local_30, &local_20);
 						pCVar7 = GetTarget();
-						fVar11 = CStack128.Intersect(this->field_0x210, pCVar7, (CActor*)0x0, 0x40000004, &eStack64, &_Stack16);
+						fVar11 = CStack128.Intersect(this->cameraRayFlags, pCVar7, (CActor*)0x0, 0x40000004, &eStack64, &_Stack16);
 
 						fVar10 = edF32Vector4DotProductHard(&eStack64, &local_20);
 
@@ -2298,7 +2361,7 @@ void CCameraGame::ClampFunc(uint* puVar5)
 		CCollisionRay CStack48 = CCollisionRay(fVar8, fVar6, fVar7, &this->gameLookAt, &eStack16);
 		edF32Vector4ScaleHard(-1.0f, &eStack16, &eStack16);
 		CActor* pCVar3 = GetTarget();
-		fVar6 = CStack48.Intersect(this->field_0x210, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+		fVar6 = CStack48.Intersect(this->cameraRayFlags, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 		this->field_0x238 = fVar6;
 	}
 }
@@ -2499,7 +2562,7 @@ void CCameraGame::_Manage_Leash()
 			edF32Vector4SubHard(&eStack112, &this->transformationMatrix.rowT, &eStack96);
 			CCollisionRay CStack160 = CCollisionRay(1.6f, &eStack112, &local_80);
 			pCVar4 = GetTarget();
-			fVar10 = CStack160.Intersect(this->field_0x210, pCVar4, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			fVar10 = CStack160.Intersect(this->cameraRayFlags, pCVar4, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			this->field_0x234 = fVar10;
 		}
 
@@ -2880,7 +2943,7 @@ void CCameraGame::_After_Manage_Alpha()
 							edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &local_50);
 							CCollisionRay CStack112 = CCollisionRay(fVar5 * 4.0f, &this->gameLookAt, &local_50);
 							pCVar3 = GetTarget();
-							fVar5 = CStack112.Intersect(3, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+							fVar5 = CStack112.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 							if (fVar5 == 1e+30f) {
 								fVar5 = this->field_0x23c * 2.0f;
 							}
@@ -3026,6 +3089,20 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 		this->targetPitch = fVar4;
 		fVar4 = GetAngleYFromVector(aeStack96);
 		this->field_0x204 = fVar4;
+	}
+	return;
+}
+
+void CCameraGame::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix)
+{
+	CActor* pCVar1;
+
+	pCVar1 = this->pOtherTarget;
+	if (pCVar1 == (CActor*)0x0) {
+		*pMatrix = gF32Matrix4Unit;
+	}
+	else {
+		pCVar1->FillThisFrameExpectedDifferentialMatrix(pMatrix);
 	}
 	return;
 }
@@ -3252,7 +3329,8 @@ bool CCameraGame::Manage()
 	else {
 		bValidValue = CCamera::Manage();
 		if (bValidValue == false) {
-			this->field_0x210 = 3;
+			this->cameraRayFlags = RAY_FLAG_SCENERY | RAY_FLAG_ACTOR;
+
 			local_v0_lo_96 = GetTarget();
 			if ((local_v0_lo_96 != (CActor*)0x0) &&
 				(pActorA = GetTarget(), pActorA->typeID == ACTOR_HERO_PRIVATE)) {
@@ -3454,8 +3532,7 @@ bool CCameraGame::Manage()
 					CCollisionRay::CCollisionRay(floatC, floatA, floatB, &CStack464, &this->gameLookAt, &eStack432);
 					edF32Vector4ScaleHard(-1.0f, &eStack432, &eStack432);
 					pActorB = GetTarget();
-					floatA = CCollisionRay::Intersect
-					(&CStack464, this->field_0x210, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0,
+					floatA = CCollisionRay::Intersect(&CStack464, this->cameraRayFlags, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0,
 						(_ray_info_out*)0x0);
 					this->field_0x220 = floatA;
 				}
@@ -3480,8 +3557,7 @@ bool CCameraGame::Manage()
 					CCollisionRay::CCollisionRay(floatC, floatA, floatB, &CStack512, &this->gameLookAt, &eStack480);
 					edF32Vector4ScaleHard(-1.0f, &eStack480, &eStack480);
 					pActorB = GetTarget();
-					floatA = CCollisionRay::Intersect
-					(&CStack512, this->field_0x210, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0,
+					floatA = CCollisionRay::Intersect(&CStack512, this->cameraRayFlags, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0,
 						(_ray_info_out*)0x0);
 					this->field_0x224 = floatA;
 				}
@@ -3542,7 +3618,7 @@ bool CCameraGame::Manage()
 						CCollisionRay CStack368 = CCollisionRay(floatC, floatA, floatB, &this->gameLookAt, &eStack336);
 						edF32Vector4ScaleHard(-1.0f, &eStack336, &eStack336);
 						pActorB = GetTarget();
-						floatA = CStack368.Intersect(this->field_0x210, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+						floatA = CStack368.Intersect(this->cameraRayFlags, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 						this->field_0x220 = floatA;
 					}
 
@@ -3568,7 +3644,7 @@ bool CCameraGame::Manage()
 						CCollisionRay CStack416 = CCollisionRay(floatC, floatA, floatB, &this->gameLookAt, &eStack384);
 						edF32Vector4ScaleHard(-1.0f, &eStack384, &eStack384);
 						pActorB = GetTarget();
-						floatA = CStack416.Intersect(this->field_0x210, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+						floatA = CStack416.Intersect(this->cameraRayFlags, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 						this->field_0x224 = floatA;
 					}
 
@@ -3639,7 +3715,7 @@ bool CCameraGame::Manage()
 							CCollisionRay CStack272 = CCollisionRay(floatC, floatA, floatB, &this->gameLookAt, &eStack240);
 							edF32Vector4ScaleHard(-1.0f, &eStack240, &eStack240);
 							pActorB = GetTarget();
-							floatA = CStack272.Intersect(this->field_0x210, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+							floatA = CStack272.Intersect(this->cameraRayFlags, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 							this->field_0x220 = floatA;
 						}
 
@@ -3668,7 +3744,7 @@ bool CCameraGame::Manage()
 							CCollisionRay CStack320 = CCollisionRay(floatC, floatA, floatB, &this->gameLookAt, &eStack288);
 							edF32Vector4ScaleHard(-1.0f, &eStack288, &eStack288);
 							pActorB = GetTarget();
-							floatA = CStack320.Intersect(this->field_0x210, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+							floatA = CStack320.Intersect(this->cameraRayFlags, pActorB, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 							this->field_0x224 = floatA;
 						}
 
@@ -3768,357 +3844,6 @@ bool CCameraGame::Manage()
 	}
 
 	return bValidValue;
-}
-
-CCollisionRay::CCollisionRay(float f0, float f1, float f2, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection)
-{
-	edF32MATRIX4 localMatrix;
-
-	edF32Matrix4RotateXHard(f0, &localMatrix, &gF32Matrix4Unit);
-	edF32Matrix4RotateYHard(f1, &localMatrix, &localMatrix);
-	edF32Matrix4MulF32Vector4Hard(pDirection, &localMatrix, &gF32Vector4UnitZ);
-	this->pLocation = pLocation;
-	this->pDirection = pDirection;
-	this->lengthA = f2;
-	this->lengthB = f2;
-	return;
-}
-
-CCollisionRay::CCollisionRay(float f0, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection)
-{
-	this->pLocation = pLocation;
-	this->pDirection = pDirection;
-	this->lengthA = f0;
-	this->lengthB = f0;
-}
-
-float CCollisionRay::Intersect(uint type, CActor* pActor, CActor* pOther, uint flags, edF32VECTOR4* pOutVector, _ray_info_out* pResultData)
-{
-	float fVar1;
-	float fVar2;
-	edF32VECTOR4 outVector;
-	_ray_info_out outResult;
-
-	fVar1 = 1e+30f;
-	if ((type & 2) != 0) {
-		fVar1 = IntersectActors(pActor, pOther, flags, pOutVector, pResultData);
-	}
-
-	if ((type & 1) != 0) {
-		if (pOutVector == (edF32VECTOR4*)0x0) {
-			fVar2 = IntersectScenery((edF32VECTOR4*)0x0, &outResult);
-		}
-		else {
-			fVar2 = IntersectScenery(&outVector, &outResult);
-		}
-		if (fVar2 < fVar1) {
-			if (pOutVector != (edF32VECTOR4*)0x0) {
-				*pOutVector = outVector;
-			}
-			fVar1 = fVar2;
-			if (pResultData != (_ray_info_out*)0x0) {
-				pResultData->pActor_0x0 = outResult.pActor_0x0;
-				pResultData->pVector_0x4 = outResult.pVector_0x4;
-				pResultData->type_0x8 = outResult.type_0x8;
-			}
-		}
-	}
-	return fVar1;
-}
-
-struct ClusterCallbackParams_0x10 {
-	CFixedTable<CActor*, 64>* pTable;
-	CActor* pActor;
-	CActor* pOtherActor;
-	uint flags;
-};
-
-void gClusterCallback_GetActorsRay(CActor* pActor, void* pInParams)
-{
-	ClusterCallbackParams_0x10* pParams = reinterpret_cast<ClusterCallbackParams_0x10*>(pInParams);
-
-	if ((((pActor->pCollisionData != (CCollision*)0x0) && (pParams->pActor != pActor)) &&
-		(pParams->pOtherActor != pActor)) &&
-		(((pParams->flags & 0x3fffffff & CActorFactory::gClassProperties[pActor->typeID].field_0x4) != 0 &&
-			((pActor->pCollisionData->flags_0x0 & 0x80000) != 0)))) {
-		pParams->pTable->Add(pActor);
-	}
-}
-
-float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint flags, edF32VECTOR4* pOutVector, _ray_info_out* pOutResult)
-{
-	edF32VECTOR4* peVar1;
-	edF32VECTOR4* peVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	ClusterCallbackParams_0x10 local_150;
-	S_BOUNDING_BOX boundingBox;
-	edF32VECTOR4 local_120;
-	CFixedTable<CActor*, 64> local_110;
-
-	local_110.entryCount = 0;
-	fVar4 = this->lengthA;
-	peVar1 = this->pLocation;
-	peVar2 = this->pDirection;
-	fVar6 = peVar2->x * fVar4 + peVar1->x;
-	fVar3 = peVar2->y * fVar4 + peVar1->y;
-	fVar4 = peVar2->z * fVar4 + peVar1->z;
-	fVar5 = peVar1->x;
-	boundingBox.field_0x0.x = (float)((int)fVar6 * (uint)(fVar6 < fVar5) | (int)fVar5 * (uint)(fVar6 >= fVar5));
-	fVar5 = peVar1->x;
-	boundingBox.field_0x10.x = (float)((int)fVar6 * (uint)(fVar5 < fVar6) | (int)fVar5 * (uint)(fVar5 >= fVar6));
-	fVar6 = peVar1->y;
-	boundingBox.field_0x0.y = (float)((int)fVar3 * (uint)(fVar3 < fVar6) | (int)fVar6 * (uint)(fVar3 >= fVar6));
-	fVar6 = peVar1->y;
-	boundingBox.field_0x10.y = (float)((int)fVar3 * (uint)(fVar6 < fVar3) | (int)fVar6 * (uint)(fVar6 >= fVar3));
-	fVar6 = peVar1->z;
-	boundingBox.field_0x0.z = (float)((int)fVar4 * (uint)(fVar4 < fVar6) | (int)fVar6 * (uint)(fVar4 >= fVar6));
-	fVar6 = peVar1->z;
-	boundingBox.field_0x10.z = (float)((int)fVar4 * (uint)(fVar6 < fVar4) | (int)fVar6 * (uint)(fVar6 >= fVar4));
-	boundingBox.field_0x0.w = 1.0f;
-	boundingBox.field_0x10.w = 1.0f;
-
-	local_150.pTable = &local_110;
-	local_150.pActor = pActor;
-	local_150.pOtherActor = pOtherActor;
-	local_150.flags = flags;
-	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingBox(&boundingBox, gClusterCallback_GetActorsRay, &local_150);
-	fVar6 = IntersectActorsTable(&local_110, pOutVector, pOutResult);
-	return fVar6;
-}
-
-float CCollisionRay::IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0, _ray_info_out* pOutResult)
-{
-	CActor* pCVar1;
-	int counter;
-	uint uVar2;
-	CActor* pCVar3;
-	void* unaff_s7_lo;
-	float fVar4;
-	float fVar5;
-	edF32VECTOR4* pLocalVector;
-	edF32VECTOR4 localVector;
-	void* local_c;
-	uint local_8;
-	uint local_4;
-	int total;
-
-	fVar5 = 1e+30f;
-	pCVar3 = (CActor*)0x0;
-	uVar2 = 0;
-	local_4 = 0;
-	this->lengthA = this->lengthB;
-	total = pTable->entryCount;
-	counter = 0;
-	if (0 < total) {
-		do {
-			pCVar1 = pTable->aEntries[counter];
-			fVar4 = edObbIntersectObbTreeRayPrim(&local_c, &local_8, pCVar1->pCollisionData->pObbTree, this);
-			if ((0.0f <= fVar4) && (fVar4 < fVar5)) {
-				this->lengthA = fVar4;
-				fVar5 = fVar4;
-				pCVar3 = pCVar1;
-				uVar2 = local_8;
-				unaff_s7_lo = local_c;
-			}
-			counter = counter + 1;
-		} while (counter < total);
-	}
-	if (fVar5 != 1e+30f) {	
-		pLocalVector = v0;
-		if (v0 == (edF32VECTOR4*)0x0) {
-			pLocalVector = &localVector;
-		}
-
-		ComputeIntersectionNormalAndProps(fVar5, unaff_s7_lo, uVar2, pLocalVector, &local_4);
-	}
-
-	if (pOutResult != (_ray_info_out*)0x0) {
-		pOutResult->pActor_0x0 = pCVar3;
-		pOutResult->pVector_0x4 = local_4;
-		pOutResult->type_0x8 = uVar2;
-	}
-
-	return fVar5;
-}
-
-void ComputeNormal(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-
-	fVar3 = param_3->x - param_2->x;
-	fVar5 = param_3->y - param_2->y;
-	fVar1 = param_3->z - param_2->z;
-	fVar4 = param_4->x - param_2->x;
-	fVar6 = param_4->y - param_2->y;
-	fVar2 = param_4->z - param_2->z;
-	param_1->x = fVar5 * fVar2 - fVar6 * fVar1;
-	param_1->y = fVar1 * fVar4 - fVar2 * fVar3;
-	param_1->z = fVar3 * fVar6 - fVar4 * fVar5;
-	param_1->w = in_vf0x;
-
-	fVar3 = param_1->x;
-	fVar4 = param_1->y;
-	fVar5 = param_1->z;
-	fVar6 = 1.0f / (sqrtf(fVar3 * fVar3 + fVar4 * fVar4 + fVar5 * fVar5) + 0.0f);
-	param_1->x = fVar3 * fVar6;
-	param_1->y = fVar4 * fVar6;
-	param_1->z = fVar5 * fVar6;
-	param_1->w = 0.0f;
-	return;
-}
-
-float edDistPointToPlane(edF32VECTOR4* subvector2, edF32VECTOR4* innerProductVector, edF32VECTOR4* subVector1)
-{
-	float fVar1;
-	edF32VECTOR4 outputVector;
-
-	edF32Vector4SubHard(&outputVector, subVector1, subvector2);
-	fVar1 = edF32Vector4DotProductHard(&outputVector, innerProductVector);
-	return fVar1;
-}
-
-void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pColObj, int colType, edF32VECTOR4* pOutNormal,	uint* pOutProps)
-{
-	edF32VECTOR4* peVar1;
-	edF32VECTOR4* peVar2;
-	float fVar3;
-	float fVar4;
-	edF32VECTOR4 local_40;
-	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
-	edF32VECTOR4 local_10;
-
-	if ((((colType == 0xe) || (colType == 0xd)) || (colType == 10)) || (colType == 0xb)) {
-		edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColObj);
-
-		*pOutProps = pPrim->flags_0x80;
-
-		peVar1 = this->pDirection;
-		peVar2 = this->pLocation;
-
-		local_10 = *peVar1 * distance + *peVar2;
-
-		edF32Matrix4MulF32Vector4Hard(&local_20, &pPrim->worldTransform, &local_10);
-		if (colType == 10) {
-			if (fabs(local_20.x) <= fabs(local_20.y)) {
-				local_20.x = 0.0f;
-				if (fabs(local_20.y) <= fabs(local_20.z)) {
-					local_20.y = 0.0f;
-				}
-				else {
-					local_20.z = 0.0f;
-				}
-			}
-			else {
-				local_20.y = 0.0f;
-				if (fabs(local_20.x) < fabs(local_20.z)) {
-					local_20.x = 0.0f;
-				}
-				else {
-					local_20.z = 0.0f;
-				}
-			}
-		}
-
-		edColGetNormalInWorldFromLocal(pOutNormal, &pPrim->worldTransform, &local_20);
-
-	}
-	else {
-		if (colType == 8) {
-			edF32QUAD4* pQuad = reinterpret_cast<edF32QUAD4*>(pColObj);
-			*pOutProps = pQuad->flags;
-
-			peVar1 = this->pDirection;
-			peVar2 = this->pLocation;
-			local_10 = *peVar1 * distance + *peVar2;
-
-			ComputeNormal(&local_30, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3));
-			ComputeNormal(&local_40, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3), LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4));
-
-			fVar3 = edDistPointToPlane(LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), &local_30, &local_10);
-			fVar4 = edDistPointToPlane(LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1), &local_40, &local_10);
-
-			if (fVar3 <= fVar4) {
-				*pOutNormal = local_30;
-			}
-			else {
-				*pOutNormal = local_40;
-			}
-		}
-		else {
-			if (colType == 4) {
-				edF32TRIANGLE4* pTriangle = reinterpret_cast<edF32TRIANGLE4*>(pColObj);
-				*pOutProps = pTriangle->flags;
-				ComputeNormal(pOutNormal, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1), LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2), LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3));
-			}
-			else {
-				*pOutProps = 0;
-				pOutNormal->x = 0.0f;
-				pOutNormal->y = -1.0f;
-				pOutNormal->z = 0.0f;
-				pOutNormal->w = 0.0f;
-			}
-		}
-	}
-	return;
-}
-
-float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* pOutResult)
-{
-	int iVar1;
-	CCollisionManager* pCVar2;
-	void* unaff_s0_lo;
-	uint finalType;
-	edObbTREE_DYN** ppeVar3;
-	int iVar4;
-	float fVar5;
-	float fVar6;
-	edF32VECTOR4 eStack32;
-	void* local_c;
-	uint outType;
-	uint local_4;
-
-	pCVar2 = CScene::ptable.g_CollisionManager_00451690;
-	fVar6 = 1e+30f;
-	iVar4 = 0;
-	finalType = 0;
-	local_4 = 0;
-	this->lengthA = this->lengthB;
-	iVar1 = pCVar2->staticCollisionCount;
-	ppeVar3 = pCVar2->aStaticCollisionRefs;
-	if (0 < iVar1) {
-		do {
-			fVar5 = edObbIntersectObbTreeRayPrim(&local_c, &outType, *ppeVar3, this);
-			if ((0.0f <= fVar5) && (fVar5 < fVar6)) {
-				this->lengthA = fVar5;
-				fVar6 = fVar5;
-				finalType = outType;
-				unaff_s0_lo = local_c;
-			}
-			iVar4 = iVar4 + 1;
-			ppeVar3 = ppeVar3 + 1;
-		} while (iVar4 < iVar1);
-	}
-	if (fVar6 != 1e+30f) {
-		if (pOutVector == (edF32VECTOR4*)0x0) {
-			pOutVector = &eStack32;
-		}
-		ComputeIntersectionNormalAndProps(fVar6, unaff_s0_lo, finalType, pOutVector, &local_4);
-	}
-	if (pOutResult != (_ray_info_out*)0x0) {
-		pOutResult->pActor_0x0 = (CActor*)0x0;
-		pOutResult->pVector_0x4 = local_4;
-		pOutResult->type_0x8 = finalType;
-	}
-	return fVar6;
 }
 
 void SPEED_DYN::Init(float param_1, float param_2)

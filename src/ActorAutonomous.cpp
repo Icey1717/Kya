@@ -158,6 +158,17 @@ CBehaviour* CActorAutonomous::BuildBehaviour(int behaviourType)
 	return pNewBehaviour;
 }
 
+bool CActorAutonomous::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
+{
+	bool bVar1;
+	Timer* pTVar2;
+
+	pTVar2 = GetTimer();
+	(this->dynamicExt).scaledTotalTime = pTVar2->scaledTotalTime;
+	bVar1 = CActorMovable::CarriedByActor(pActor, m0);
+	return bVar1;
+}
+
 int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	bool bVar1;
@@ -881,6 +892,52 @@ void CActorAutonomous::RestoreCollisionSphere(float param_2)
 	local_20.w = 1.0f;
 
 	ChangeCollisionSphere(param_2, &local_10, &local_20);
+	return;
+}
+
+void CActorAutonomous::ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4)
+{
+	Timer* pTVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar3 = 0.001f;
+	if (0.001f <= param_1) {
+		fVar3 = param_1;
+	}
+
+	fVar2 = this->dynamic.linearAcceleration;
+	fVar3 = (fVar2 * fVar2) / (fVar3 * fVar3);
+
+	if ((param_4 == 0) || (1.0f <= fVar3)) {
+		pTVar1 = GetTimer();
+		edF32Vector4ScaleHard(-fVar3 / pTVar1->cutsceneDeltaTime, pFrictionForce, &(this->dynamicExt).normalizedTranslation);
+	}
+	else {
+		*pFrictionForce = gF32Vector4Zero;
+	}
+
+	return;
+}
+
+void CActorAutonomous::ComputeFrictionForce(float param_1, edF32VECTOR4* pFrictionForce, int param_4)
+{
+	Timer* pTVar1;
+	float fVar2;
+
+	if (param_4 == 0) {
+		fVar2 = this->dynamic.linearAcceleration;
+		pTVar1 = GetTimer();
+		fVar2 = pTVar1->cutsceneDeltaTime * -param_1 * fVar2 * fVar2;
+	}
+	else {
+		fVar2 = (this->dynamicExt).field_0x6c;
+		pTVar1 = GetTimer();
+		fVar2 = pTVar1->cutsceneDeltaTime * -param_1 * fVar2 * fVar2;
+	}
+
+	edF32Vector4ScaleHard(fVar2, pFrictionForce, &(this->dynamicExt).normalizedTranslation);
+
 	return;
 }
 

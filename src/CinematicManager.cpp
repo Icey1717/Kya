@@ -1839,6 +1839,38 @@ CCineActorConfig* CCinematic::GetActorConfig(CActor* pActor)
 	return (CCineActorConfig*)0x0;
 }
 
+bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
+{
+	uint uVar1;
+	bool bVar2;
+	int iVar3;
+	undefined uVar4;
+
+	uVar1 = this->flags;
+	uVar4 = 0;
+	bVar2 = true;
+	if (((uVar1 & 1) != 0) && ((uVar1 & 0x80000000) != 0)) {
+		bVar2 = false;
+	}
+	if (bVar2) {
+		this->flags = this->flags | 0x80000000;
+
+		if (this->field_0x14 != 0) {
+			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->field_0x14, this->flags);
+
+			if (pActor == (CActor*)0x0) {
+				pActor = LOAD_SECTION_CAST(CActor*, this->pRef);
+			}
+
+			if (pActor != (CActor*)0x0) {
+				iVar3 = pActor->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, (MSG_PARAM)this->flags);
+				uVar4 = (undefined)iVar3;
+			}
+		}
+	}
+	return (bool)uVar4;
+}
+
 void CCinematic::Manage()
 {
 	uint soundInfo;
@@ -2276,7 +2308,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 		fVar16 = pCinematicActor->sphereCentre.x - peVar3->rowT.x;
 		fVar18 = pCinematicActor->sphereCentre.y - peVar3->rowT.y;
 		fVar19 = pCinematicActor->sphereCentre.z - peVar3->rowT.z;
-		pCinematicActor->adjustedMagnitude = sqrtf(fVar16 * fVar16 + fVar18 * fVar18 + fVar19 * fVar19) - pCinematicActor->sphereCentre.w;
+		pCinematicActor->distanceToCamera = sqrtf(fVar16 * fVar16 + fVar18 * fVar18 + fVar19 * fVar19) - pCinematicActor->sphereCentre.w;
 		if ((pCinematicActor->flags & 4) == 0) {
 			pCinematicActor->ChangeManageState(1);
 		}
@@ -2948,21 +2980,27 @@ bool S_STREAM_NTF_TARGET_SWITCH::Switch(CActor* pActor)
 	uVar1 = this->flags;
 	uVar3 = false;
 	bVar2 = true;
+
 	if (((uVar1 & 1) != 0) && ((uVar1 & 0x40000000) != 0)) {
 		bVar2 = false;
 	}
+
 	if (bVar2) {
 		this->flags = this->flags | 0x40000000;
+
 		if (this->messageId != 0) {
 			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->messageId, this->messageFlags);
+
 			if (pActor == (CActor*)0x0) {
 				pActor = (CActor*)LOAD_SECTION(this->pRef);
 			}
+
 			if (pActor != (CActor*)0x0) {
 				uVar3 = pActor->DoMessage(pActor, (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
 			}
 		}
 	}
+
 	return uVar3;
 }
 

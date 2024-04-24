@@ -60,6 +60,8 @@ set(main_src
 	"${src_root}/edSystem.h"
 	"${src_root}/edText.cpp"
 	"${src_root}/edText.h"
+	"${src_root}/CollisionRay.cpp"
+	"${src_root}/CollisionRay.h"
 	"${src_root}/ed3D.cpp"
 	"${src_root}/ed3D.h"
 	"${src_root}/edDlist.cpp"

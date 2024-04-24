@@ -2,43 +2,8 @@
 #define _CAMERA_GAME_H
 
 #include "CameraViewManager.h"
-#include "EdenLib/edCollision/sources/edCollisions.h"
-
-struct _ray_info_out {
-	CActor* pActor_0x0;
-	uint pVector_0x4;
-	uint type_0x8;
-};
-
-class CCollisionRay : public edColRAY_OBB_IN
-{
-public:
-	CCollisionRay() {}
-	CCollisionRay(float f0, float f1, float f2, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection);
-	CCollisionRay(float f0, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection);
-	float Intersect(uint type, CActor* pActor, CActor* pOther, uint flags, edF32VECTOR4* pOutVector, _ray_info_out* pResultData);
-	float IntersectActors(CActor* pActor, CActor* pOtherActor, uint flags, edF32VECTOR4* pOutVector, _ray_info_out* pOutResult);
-	float IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0, _ray_info_out* pOutResult);
-	void ComputeIntersectionNormalAndProps(float distance, void* pColObj, int colType, edF32VECTOR4* pOutNormal, uint* pOutProps);
-	float IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* pOutResult);
-
-
-	undefined4 field_0xc;
-	float lengthB;
-	undefined4 field_0x14;
-	undefined4 field_0x18;
-	undefined4 field_0x1c;
-};
 
 class CActorHeroPrivate;
-
-struct SPEED_DYN {
-	void Init(float param_1, float param_2);
-	float UpdateLerp(float target);
-
-	float field_0x0;
-	float field_0x4;
-};
 
 struct CCameraGame : public CCameraExt {
 	CCameraGame(ECameraType type, struct ByteCode* pMemoryStream);
@@ -68,6 +33,7 @@ struct CCameraGame : public CCameraExt {
 
 	float _Manage_TargetPos(edF32VECTOR4* v0);
 	void _UpdateCameraData(edF32VECTOR4* translation);
+	void _Toboggan_UpdateCameraData();
 
 	void _UpdateAngleAlphaData();
 	void _UpdateAngleBetaData();
@@ -79,7 +45,10 @@ struct CCameraGame : public CCameraExt {
 	void _After_Manage_Alpha();
 	void CameraGetWorldTranslation(edF32VECTOR4* outTranslation);
 
+	void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
+
 	static int _b_use_fig_data;
+	static CCamFigData* _pfig_data;
 
 	CActorHeroPrivate* field_0xd0;
 	ECameraType cameraType_0xd4;
@@ -102,15 +71,9 @@ struct CCameraGame : public CCameraExt {
 	float targetPitch;
 	float field_0x204;
 	float field_0x208;
-	undefined field_0x20c;
-	undefined field_0x20d;
-	undefined field_0x20e;
-	undefined field_0x20f;
-	uint field_0x210;
-	undefined field_0x214;
-	undefined field_0x215;
-	undefined field_0x216;
-	undefined field_0x217;
+	float field_0x20c;
+	uint cameraRayFlags;
+	float field_0x214;
 	undefined field_0x218;
 	undefined field_0x219;
 	undefined field_0x21a;

@@ -29,6 +29,7 @@ void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 	float fVar6;
 	float fVar7;
 	float fVar8;
+	float fVar9;
 	float x;
 	float y;
 	float z;
@@ -38,6 +39,7 @@ void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 	y = v0->y;
 	z = v0->z;
 	w = v0->w;
+
 	fVar1 = (y + 0.0f) * (y + 0.0f) + (z + 0.0f) * (z + 0.0f);
 	fVar7 = (x + 0.0f) * (z + 0.0f) + (w + 0.0f) * (y + 0.0f);
 	fVar3 = (x + 0.0f) * (y + 0.0f) - (w + 0.0f) * (z + 0.0f);
@@ -46,23 +48,133 @@ void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 	fVar6 = (y + 0.0f) * (z + 0.0f) - (w + 0.0f) * (x + 0.0f);
 	fVar4 = (y + 0.0f) * (z + 0.0f) + (w + 0.0f) * (x + 0.0f);
 	fVar8 = (x + 0.0f) * (x + 0.0f) + (y + 0.0f) * (y + 0.0f);
-	x = (x + 0.0f) * (z + 0.0f) - (w + 0.0f) * (y + 0.0f);
+	fVar9 = (x + 0.0f) * (z + 0.0f) - (w + 0.0f) * (y + 0.0f);
+
 	m0->aa = (0.0f - (fVar1 + fVar1)) + 1.0f;
 	m0->ab = fVar3 + fVar3;
 	m0->ac = fVar7 + fVar7;
 	m0->ad = 0.0f;
+
 	m0->ba = fVar2 + fVar2;
 	m0->bb = (0.0f - (fVar5 + fVar5)) + 1.0f;
 	m0->bc = fVar6 + fVar6;
 	m0->bd = 0.0f;
-	m0->ca = x + x;
+
+	m0->ca = fVar9 + fVar9;
 	m0->cb = fVar4 + fVar4;
 	m0->cc = (0.0f - (fVar8 + fVar8)) + 1.0f;
 	m0->cd = 0.0f;
-	m0->da = 1.0f;
+
+	m0->da = 0.0f;
 	m0->db = 0.0f;
 	m0->dc = 0.0f;
-	m0->dd = 0.0f;
+	m0->dd = 1.0f;
+	return;
+}
+
+
+void edQuatInverse(edF32VECTOR4* param_1, edF32VECTOR4* param_2)
+{
+	param_1->x = -param_2->x;
+	param_1->y = -param_2->y;
+	param_1->z = -param_2->z;
+	param_1->w = param_2->w;
+	return;
+}
+
+void edQuatMul(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+
+	fVar8 = param_3->z;
+	fVar2 = param_2->y;
+	fVar3 = param_3->x;
+	fVar4 = param_2->w;
+	fVar5 = param_3->w;
+	fVar6 = param_2->x;
+	fVar7 = param_3->y;
+	fVar1 = param_2->z;
+	param_1->x = (fVar2 * fVar8 + fVar6 * fVar5 + fVar4 * fVar3) - fVar1 * fVar7;
+	param_1->y = fVar1 * fVar3 + fVar2 * fVar5 + (fVar4 * fVar7 - fVar6 * fVar8);
+	param_1->z = fVar1 * fVar5 + ((fVar6 * fVar7 + fVar4 * fVar8) - fVar2 * fVar3);
+	param_1->w = ((fVar4 * fVar5 - fVar6 * fVar3) - fVar2 * fVar7) - fVar1 * fVar8;
+	return;
+}
+
+void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
+{
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+
+	fVar2 = param_3->x * param_4->x + param_3->y * param_4->y + param_3->z * param_4->z + param_3->w * param_4->w;
+	bVar1 = fVar2 < 0.0f;
+
+	if (bVar1) {
+		fVar2 = -fVar2;
+	}
+
+	if (0.999999f < fVar2) {
+		fVar3 = param_4->y;
+		fVar2 = param_4->z;
+		fVar4 = param_4->w;
+		param_2->x = param_4->x;
+		param_2->y = fVar3;
+		param_2->z = fVar2;
+		param_2->w = fVar4;
+	}
+	else {
+		fVar2 = acosf(fVar2);
+		fVar3 = sinf(fVar2);
+		fVar3 = 1.0f / fVar3;
+		fVar4 = sinf(fVar2 - param_1 * fVar2);
+		fVar4 = fVar3 * fVar4;
+		fVar2 = sinf(param_1 * fVar2);
+		fVar3 = fVar3 * fVar2;
+
+		if (bVar1) {
+			fVar3 = -fVar3;
+		}
+
+		fVar2 = param_3->y;
+		fVar5 = param_3->z;
+		fVar6 = param_3->w;
+		fVar7 = param_4->y;
+		fVar8 = param_4->z;
+		fVar9 = param_4->w;
+
+		param_2->x = param_3->x * fVar4 + param_4->x * fVar3;
+		param_2->y = fVar2 * fVar4 + fVar7 * fVar3;
+		param_2->z = fVar5 * fVar4 + fVar8 * fVar3;
+		param_2->w = fVar6 * fVar4 + fVar9 * fVar3;
+	}
+	return;
+}
+
+void edQuatNormalize(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float fVar1;
+	float fVar2;
+
+	fVar2 = v1->x;
+	fVar1 = 1.0f / sqrtf(v1->w * v1->w + v1->z * v1->z + v1->y * v1->y + fVar2 * fVar2);
+	v0->x = fVar2 * fVar1;
+	v0->y = v1->y * fVar1;
+	v0->z = v1->z * fVar1;
+	v0->w = v1->w * fVar1;
 	return;
 }
 

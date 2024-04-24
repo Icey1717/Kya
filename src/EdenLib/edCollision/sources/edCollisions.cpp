@@ -712,7 +712,6 @@ bool edColIntersectRayTriangle4(float* pOutDistance, edColRAY_TRIANGLE4_IN* pRay
 float FLOAT_004485a4 = 1.0E30f;
 
 bool edObbRayPlaneClip(float param_1, float param_2, float* param_3, float* param_4)
-
 {
 	bool bVar1;
 
@@ -739,10 +738,13 @@ bool edObbRayPlaneClip(float param_1, float param_2, float* param_3, float* para
 			bVar1 = param_2 <= 0.0f;
 		}
 	}
+
+	COLLISION_LOG(LogLevel::Verbose, "edObbRayPlaneClip bVar1: {} f1: {} f2: {}", bVar1, *param_3, *param_4);
+
 	return bVar1;
 }
 
-float edObbIntersectObbRay(edObbBOX* pBox, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
+float edObbIntersectObbRay(edObbBOX* pBox, edF32VECTOR4* pRayStart, edF32VECTOR4* pRayEnd)
 {
 	float fVar1;
 	float fVar2;
@@ -762,21 +764,23 @@ float edObbIntersectObbRay(edObbBOX* pBox, edF32VECTOR4* param_2, edF32VECTOR4* 
 	bool bVar16;
 	bool bVar17;
 	bool bVar18;
-	float puVar19;
+	float distance;
 	float fVar19;
 	float local_8;
 	float local_4;
 
+	COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbRay pRayStart: {} pRayEnd: {}", pRayStart->ToString(), pRayEnd->ToString());
+
 	fVar12 = FLOAT_004485a4;
-	fVar1 = param_2->x - (pBox->transform).da;
-	fVar5 = param_2->y - (pBox->transform).db;
-	fVar6 = param_2->z - (pBox->transform).dc;
+	fVar1 = pRayStart->x - (pBox->transform).da;
+	fVar5 = pRayStart->y - (pBox->transform).db;
+	fVar6 = pRayStart->z - (pBox->transform).dc;
 	fVar2 = fVar1 * (pBox->transform).aa + fVar5 * (pBox->transform).ab + fVar6 * (pBox->transform).ac;
 	fVar3 = fVar1 * (pBox->transform).ba + fVar5 * (pBox->transform).bb + fVar6 * (pBox->transform).bc;
 	fVar1 = fVar1 * (pBox->transform).ca + fVar5 * (pBox->transform).cb + fVar6 * (pBox->transform).cc;
-	fVar5 = param_3->x * (pBox->transform).aa + param_3->y * (pBox->transform).ab + param_3->z * (pBox->transform).ac;
-	fVar6 = param_3->x * (pBox->transform).ba + param_3->y * (pBox->transform).bb + param_3->z * (pBox->transform).bc;
-	fVar4 = param_3->x * (pBox->transform).ca + param_3->y * (pBox->transform).cb + param_3->z * (pBox->transform).cc;
+	fVar5 = pRayEnd->x * (pBox->transform).aa + pRayEnd->y * (pBox->transform).ab + pRayEnd->z * (pBox->transform).ac;
+	fVar6 = pRayEnd->x * (pBox->transform).ba + pRayEnd->y * (pBox->transform).bb + pRayEnd->z * (pBox->transform).bc;
+	fVar4 = pRayEnd->x * (pBox->transform).ca + pRayEnd->y * (pBox->transform).cb + pRayEnd->z * (pBox->transform).cc;
 	local_4 = 0.0f;
 	local_8 = FLOAT_004485a4;
 	fVar19 = 0.0f;
@@ -786,27 +790,35 @@ float edObbIntersectObbRay(edObbBOX* pBox, edF32VECTOR4* param_2, edF32VECTOR4* 
 	bVar16 = edObbRayPlaneClip(-fVar6, fVar3 - pBox->height, &local_4, &local_8);
 	bVar17 = edObbRayPlaneClip(fVar4, -fVar1 - pBox->depth, &local_4, &local_8);
 	bVar18 = edObbRayPlaneClip(-fVar4, fVar1 - pBox->depth, &local_4, &local_8);
+
 	bVar11 = false;
 	bVar10 = false;
 	bVar9 = false;
 	bVar8 = false;
 	bVar7 = false;
+
 	if ((bVar13 != false) && (bVar14 != false)) {
 		bVar7 = true;
 	}
+
 	if ((bVar7) && (bVar15 != false)) {
 		bVar8 = true;
 	}
+
 	if ((bVar8) && (bVar16 != false)) {
 		bVar9 = true;
 	}
+
 	if ((bVar9) && (bVar17 != false)) {
 		bVar10 = true;
 	}
+
 	if ((bVar10) && (bVar18 != false)) {
 		bVar11 = true;
 	}
+
 	bVar7 = false;
+
 	if (bVar11) {
 		bVar8 = true;
 		if ((local_4 == fVar19) && (local_8 == fVar12)) {
@@ -816,24 +828,30 @@ float edObbIntersectObbRay(edObbBOX* pBox, edF32VECTOR4* param_2, edF32VECTOR4* 
 			bVar7 = true;
 		}
 	}
+
 	if (bVar7) {
-		puVar19 = 0.0f;
+		distance = 0.0f;
+
 		if (0.0f < local_4) {
 			if (local_8 < FLOAT_004485a4) {
-				puVar19 = (float)((int)local_4 * (uint)(local_4 < local_8) | (int)local_8 * (uint)(local_4 >= local_8));
+				distance = std::min(local_4, local_8); //(float)((int)local_4 * (uint)(local_4 < local_8) | (int)local_8 * (uint)(local_4 >= local_8));
 			}
 		}
 		else {
-			puVar19 = -1.0f;
+			distance = -1.0f;
+
 			if (local_8 < FLOAT_004485a4) {
 				return 0.0f;
 			}
 		}
 	}
 	else {
-		puVar19 = -1.0f;
+		distance = -1.0f;
 	}
-	return puVar19;
+
+	COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbRay distance: {}", distance);
+
+	return distance;
 }
 
 void edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT_BOX_UNIT_IN* pParams)
@@ -841,15 +859,20 @@ void edColIntersectRayUnitBoxUnit(edColINFO_OUT* pColInfoOut, edColPRIM_RAY_UNIT
 	edF32VECTOR4* peVar1;
 	float fVar2;
 	edF32VECTOR4 local_60;
-	edObbBOX eStack80;
+	edObbBOX obbBox;
+
+	COLLISION_LOG(LogLevel::Verbose, "edColIntersectRayUnitBoxUnit");
+	COLLISION_LOG(LogLevel::Verbose, "pParams->field_0x0: {} pParams->field_0x4: {}", pParams->field_0x0->ToString(), pParams->field_0x4->ToString());
 
 	pColInfoOut->result = 0;
-	edF32Matrix4SetIdentityHard(&eStack80.transform);
-	eStack80.width = 0.5f;
-	eStack80.height = 0.5f;
-	eStack80.depth = 0.5f;
+
+	edF32Matrix4SetIdentityHard(&obbBox.transform);
+	obbBox.width = 0.5f;
+	obbBox.height = 0.5f;
+	obbBox.depth = 0.5f;
+
 	edF32Vector4NormalizeHard(&local_60, pParams->field_0x4);
-	fVar2 = edObbIntersectObbRay(&eStack80, pParams->field_0x0, &local_60);
+	fVar2 = edObbIntersectObbRay(&obbBox, pParams->field_0x0, &local_60);
 
 	if (0.0f <= fVar2) {
 		local_60.xyz = local_60.xyz * fVar2;
@@ -4456,7 +4479,7 @@ edColOBJECT* edColEnd(edDynOBJECT* pDynObj)
 	return gColTD.pCurColObj + -1;
 }
 
-uint VectorFunc_00254520(edObbTREE_DYN* pObbTree, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
+uint CheckRayObbTreeIntersection (edObbTREE_DYN* pObbTree, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
 {
 	float fVar1;
 	float fVar2;
@@ -4501,9 +4524,9 @@ uint VectorFunc_00254520(edObbTREE_DYN* pObbTree, edF32VECTOR4* param_2, edF32VE
 	fVar23 = param_3->w;
 	fVar12 = (pObbTree->bbox).transform.ab;
 	fVar11 = (pObbTree->bbox).transform.aa;
-	fVar1 = 0.0 - (fVar11 * fVar13 + fVar12 * fVar14 + fVar4 * fVar15);
-	fVar2 = 0.0 - (fVar5 * fVar13 + fVar6 * fVar14 + fVar7 * fVar15);
-	fVar15 = 0.0 - (fVar8 * fVar13 + fVar9 * fVar14 + fVar10 * fVar15);
+	fVar1 = 0.0f - (fVar11 * fVar13 + fVar12 * fVar14 + fVar4 * fVar15);
+	fVar2 = 0.0f - (fVar5 * fVar13 + fVar6 * fVar14 + fVar7 * fVar15);
+	fVar15 = 0.0f - (fVar8 * fVar13 + fVar9 * fVar14 + fVar10 * fVar15);
 	fVar13 = fVar11 * fVar16 + fVar12 * fVar17 + fVar4 * fVar18 + fVar1 * fVar19;
 	fVar14 = fVar5 * fVar16 + fVar6 * fVar17 + fVar7 * fVar18 + fVar2 * fVar19;
 	fVar16 = fVar8 * fVar16 + fVar9 * fVar17 + fVar10 * fVar18 + fVar15 * fVar19;
@@ -4513,6 +4536,7 @@ uint VectorFunc_00254520(edObbTREE_DYN* pObbTree, edF32VECTOR4* param_2, edF32VE
 	fVar12 = (pObbTree->bbox).width;
 	fVar11 = (pObbTree->bbox).height;
 	fVar4 = (pObbTree->bbox).depth;
+
 	return (uint)(fVar12 < fVar13) + (((uint)(fVar13 < -fVar12) << 0x17) >> 0x16) +
 		(((uint)(fVar11 < fVar14) << 0x17) >> 0x15) + (((uint)(fVar14 < -fVar11) << 0x17) >> 0x14) +
 		(((uint)(fVar4 < fVar16) << 0x17) >> 0x13) + (((uint)(fVar16 < -fVar4) << 0x17) >> 0x12) &
@@ -4599,7 +4623,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	int iVar10;
 	int iVar11;
 	float fVar12;
-	float puVar13;
+	float distance;
 	float fVar13;
 	float fVar14;
 	float fVar15;
@@ -4616,10 +4640,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	float fVar26;
 	float fVar27;
 	edF32VECTOR4 local_610;
-	float local_600;
-	float fStack1532;
-	float fStack1528;
-	float fStack1524;
+	edF32VECTOR4 local_600;
 	float local_5f0;
 	float fStack1516;
 	float fStack1512;
@@ -4635,40 +4656,19 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	float fStack1444;
 	int local_590;
 	edF32VECTOR4 local_570;
-	float local_560;
-	float fStack1372;
-	float fStack1368;
-	float fStack1364;
-	float local_550;
-	float fStack1356;
-	float fStack1352;
-	float fStack1348;
-	float local_540;
-	float fStack1340;
-	float fStack1336;
-	float fStack1332;
+	edF32VECTOR4 local_560;
+	edF32VECTOR4 local_550;
+	edF32VECTOR4 local_540;
 	undefined auStack1328[32];
-	float local_510;
-	float fStack1292;
-	float fStack1288;
-	float fStack1284;
+	edF32VECTOR4 local_510;
 	int local_4f0;
 	edF32VECTOR4 local_4d0;
-	float local_4c0;
-	float fStack1212;
-	float fStack1208;
-	float fStack1204;
-	float local_4b0;
-	float fStack1196;
-	float fStack1192;
-	float fStack1188;
+	edF32VECTOR4 local_4c0;
+	edF32VECTOR4 local_4b0;
 	edF32VECTOR4 local_4a0;
 	//TraceData48 TStack1168;
 	edF32VECTOR4 local_430;
-	float local_420;
-	float fStack1052;
-	float fStack1048;
-	float fStack1044;
+	edF32VECTOR4 local_420;
 	edF32VECTOR4 local_410;
 	edF32VECTOR4 local_400;
 	//TraceData48 TStack1008;
@@ -4686,11 +4686,12 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	edF32VECTOR4* local_20[2];
 	int local_18[2];
 	edColRAY_TRIANGLE4_IN local_10;
-	float local_4;
+	float outDistance;
 
-	puVar13 = -1.0f;
+	distance = -1.0f;
 	uVar8 = 0;
-	local_4 = -1.0f;
+	outDistance = -1.0f;
+
 	local_18[0] = INT_ARRAY_00448910[0];
 	local_18[1] = INT_ARRAY_00448910[1];
 	fVar12 = pRay->lengthA;
@@ -4699,18 +4700,28 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	endLocation.xyz = (pDirection->xyz * fVar12) + pLocation->xyz;
 	endLocation.w = 1.0f;
 	local_360[0] = pObbTree;
-	uVar6 = VectorFunc_00254520(pObbTree, pRay->pLocation, &endLocation);
+	uVar6 = CheckRayObbTreeIntersection(pObbTree, pRay->pLocation, &endLocation);
+
+	COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
+
 	if (uVar6 == 0) {
 		bVar5 = false;
 		do {
 			iVar11 = 0;
 			local_18[bVar5 ^ 1] = 0;
+
 			while (iVar11 < local_18[uVar8]) {
 				peVar4 = local_360[uVar8 * 100 + iVar11];
 				bVar1 = peVar4->type;
+				COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim type 0x{:x}", bVar1);
+
 				if (bVar1 == COL_TYPE_TREE) {
+					COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim count {}", peVar4->count_0x52);
+
 					for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
-						uVar6 = VectorFunc_00254520(LOAD_SECTION_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]), pRay->pLocation, &endLocation);
+						uVar6 = CheckRayObbTreeIntersection(LOAD_SECTION_CAST(edObbTREE_DYN*, peVar4->field_0x54[iVar7]), pRay->pLocation, &endLocation);
+						COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim CheckRayObbTreeIntersection {}", uVar6);
+
 						if (uVar6 == 0) {
 							uVar6 = uVar8 != 0 ^ 1;
 							if (local_18[uVar6] < 100) {
@@ -4719,23 +4730,26 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 							}
 						}
 					}
+
 					iVar11 = iVar11 + 1;
 				}
 				else {
 					if (bVar1 == 0xd) {
 						edColPRIM_OBJECT* pPrim = LOAD_SECTION_CAST(edColPRIM_OBJECT*, peVar4->field_0x54[0]);
+						COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim PRIM count {}", peVar4->count_0x52);
+
 						for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 							pDirection = pRay->pDirection;
 							pLocation = pRay->pLocation;
 
-							fVar22 = pDirection->x;
-							fVar24 = pDirection->y;
-							fVar26 = pDirection->z;
-							float fVar28 = pDirection->w;
-							float fVar30 = pLocation->x;
-							float fVar32 = pLocation->y;
-							float fVar34 = pLocation->z;
-							float fVar36 = pLocation->w;
+							fVar22 = pLocation->x;
+							fVar24 = pLocation->y;
+							fVar26 = pLocation->z;
+							float fVar28 = pLocation->w;
+							float fVar30 = pDirection->x;
+							float fVar32 = pDirection->y;
+							float fVar34 = pDirection->z;
+							float fVar36 = pDirection->w;
 
 							fVar13 = (pPrim->worldTransform).aa;
 							fVar14 = (pPrim->worldTransform).ab;
@@ -4761,49 +4775,62 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 							local_5e0.y = fVar14 * fVar22 + fVar18 * fVar24 + fVar23 * fVar26 + fVar31 * fVar28;
 							local_5e0.z = fVar15 * fVar22 + fVar19 * fVar24 + fVar25 * fVar26 + fVar33 * fVar28;
 							local_5e0.w = fVar16 * fVar22 + fVar20 * fVar24 + fVar27 * fVar26 + fVar35 * fVar28;
+
 							local_5f0.x = fVar13 * fVar30 + fVar17 * fVar32 + fVar21 * fVar34 + fVar29 * fVar36;
 							local_5f0.y = fVar14 * fVar30 + fVar18 * fVar32 + fVar23 * fVar34 + fVar31 * fVar36;
 							local_5f0.z = fVar15 * fVar30 + fVar19 * fVar32 + fVar25 * fVar34 + fVar33 * fVar36;
 							local_5f0.w = fVar16 * fVar30 + fVar20 * fVar32 + fVar27 * fVar34 + fVar35 * fVar36;
 
-							edColPRIM_RAY_UNIT_BOX_UNIT_IN local_38;
-							local_38.field_0x4 = &local_5f0;
-							local_38.field_0x0 = &local_5e0;
+							edColPRIM_RAY_UNIT_BOX_UNIT_IN primRayUnitBoxUnitIn;
+							primRayUnitBoxUnitIn.field_0x4 = &local_5f0;
+							primRayUnitBoxUnitIn.field_0x0 = &local_5e0;
 
-							edColINFO_OUT eStack1488;
+							edColINFO_OUT colOut;
 
-							edColIntersectRayUnitBoxUnit(&eStack1488, &local_38);
+							edColIntersectRayUnitBoxUnit(&colOut, &primRayUnitBoxUnitIn);
 
-							if (eStack1488.result != 0) {
-								local_600 = (pPrim->vertices).aa * eStack1488.intersectionPoint.x +
-									(pPrim->vertices).ba * eStack1488.intersectionPoint.y +
-									(pPrim->vertices).ca * eStack1488.intersectionPoint.z +
-									(pPrim->vertices).da * eStack1488.intersectionPoint.w;
-								fStack1532 = (pPrim->vertices).ab * eStack1488.intersectionPoint.x +
-									(pPrim->vertices).bb * eStack1488.intersectionPoint.y +
-									(pPrim->vertices).cb * eStack1488.intersectionPoint.z +
-									(pPrim->vertices).db * eStack1488.intersectionPoint.w;
-								fStack1528 = (pPrim->vertices).ac * eStack1488.intersectionPoint.x +
-									(pPrim->vertices).bc * eStack1488.intersectionPoint.y +
-									(pPrim->vertices).cc * eStack1488.intersectionPoint.z +
-									(pPrim->vertices).dc * eStack1488.intersectionPoint.w;
-								fStack1524 = (pPrim->vertices).ad * eStack1488.intersectionPoint.x +
-									(pPrim->vertices).bd * eStack1488.intersectionPoint.y +
-									(pPrim->vertices).cd * eStack1488.intersectionPoint.z +
-									(pPrim->vertices).dd * eStack1488.intersectionPoint.w;
+							COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit result {}", colOut.result);
+
+							if (colOut.result != 0) {
+								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit intersectionPoint {}", colOut.intersectionPoint.ToString());
+								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit vertices {}", pPrim->vertices.ToString());
+
+								local_600.x = (pPrim->vertices).aa * colOut.intersectionPoint.x +
+									(pPrim->vertices).ba * colOut.intersectionPoint.y +
+									(pPrim->vertices).ca * colOut.intersectionPoint.z +
+									(pPrim->vertices).da * colOut.intersectionPoint.w;
+
+								local_600.y = (pPrim->vertices).ab * colOut.intersectionPoint.x +
+									(pPrim->vertices).bb * colOut.intersectionPoint.y +
+									(pPrim->vertices).cb * colOut.intersectionPoint.z +
+									(pPrim->vertices).db * colOut.intersectionPoint.w;
+
+								local_600.z = (pPrim->vertices).ac * colOut.intersectionPoint.x +
+									(pPrim->vertices).bc * colOut.intersectionPoint.y +
+									(pPrim->vertices).cc * colOut.intersectionPoint.z +
+									(pPrim->vertices).dc * colOut.intersectionPoint.w;
+
+								local_600.w = (pPrim->vertices).ad * colOut.intersectionPoint.x +
+									(pPrim->vertices).bd * colOut.intersectionPoint.y +
+									(pPrim->vertices).cd * colOut.intersectionPoint.z +
+									(pPrim->vertices).dd * colOut.intersectionPoint.w;
 
 								pLocation = pRay->pLocation;
 
-								local_610.x = local_600 - pLocation->x;
-								local_610.y = fStack1532 - pLocation->y;
-								local_610.z = fStack1528 - pLocation->z;
-								local_610.w = fStack1524 - pLocation->w;
+								local_610 = local_600 - *pLocation;
 
-								local_4 = edF32Vector4GetDistHard(&local_610);
-								if ((local_4 < puVar13) || ((puVar13 < 0.0f && (local_4 <= pRay->lengthA)))) {
+								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim local_600: {}", local_600.ToString());
+								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim pLocation {}", pLocation->ToString());
+								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim local_610 {}", local_610.ToString());
+
+								outDistance = edF32Vector4GetDistHard(&local_610);
+
+								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim outDistance {} distance: {} ray length: {}", outDistance, distance, pRay->lengthA);
+
+								if ((outDistance < distance) || ((distance < 0.0f && (outDistance <= pRay->lengthA)))) {
 									*pOutHit = pPrim;
 									*pOutType = 10;
-									puVar13 = local_4;
+									distance = outDistance;
 								}
 							}
 
@@ -4864,35 +4891,32 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 								edColIntersectRayUnitBoxUnit(&eStack1488, &local_38);
 
 								if (eStack1488.result != 0) {
-									local_600 = (pBox->vertices).aa * eStack1488.intersectionPoint.x +
+									local_600.x = (pBox->vertices).aa * eStack1488.intersectionPoint.x +
 										(pBox->vertices).ba * eStack1488.intersectionPoint.y +
 										(pBox->vertices).ca * eStack1488.intersectionPoint.z +
 										(pBox->vertices).da * eStack1488.intersectionPoint.w;
-									fStack1532 = (pBox->vertices).ab * eStack1488.intersectionPoint.x +
+									local_600.y = (pBox->vertices).ab * eStack1488.intersectionPoint.x +
 										(pBox->vertices).bb * eStack1488.intersectionPoint.y +
 										(pBox->vertices).cb * eStack1488.intersectionPoint.z +
 										(pBox->vertices).db * eStack1488.intersectionPoint.w;
-									fStack1528 = (pBox->vertices).ac * eStack1488.intersectionPoint.x +
+									local_600.z = (pBox->vertices).ac * eStack1488.intersectionPoint.x +
 										(pBox->vertices).bc * eStack1488.intersectionPoint.y +
 										(pBox->vertices).cc * eStack1488.intersectionPoint.z +
 										(pBox->vertices).dc * eStack1488.intersectionPoint.w;
-									fStack1524 = (pBox->vertices).ad * eStack1488.intersectionPoint.x +
+									local_600.w = (pBox->vertices).ad * eStack1488.intersectionPoint.x +
 										(pBox->vertices).bd * eStack1488.intersectionPoint.y +
 										(pBox->vertices).cd * eStack1488.intersectionPoint.z +
 										(pBox->vertices).dd * eStack1488.intersectionPoint.w;
 
 									pLocation = pRay->pLocation;
 
-									local_610.x = local_600 - pLocation->x;
-									local_610.y = fStack1532 - pLocation->y;
-									local_610.z = fStack1528 - pLocation->z;
-									local_610.w = fStack1524 - pLocation->w;
+									local_610 = local_600 - *pLocation;
 
-									local_4 = edF32Vector4GetDistHard(&local_610);
-									if ((local_4 < puVar13) || ((puVar13 < 0.0f && (local_4 <= pRay->lengthA)))) {
+									outDistance = edF32Vector4GetDistHard(&local_610);
+									if ((outDistance < distance) || ((distance < 0.0f && (outDistance <= pRay->lengthA)))) {
 										*pOutHit = pBox;
 										*pOutType = 10;
-										puVar13 = local_4;
+										distance = outDistance;
 									}
 								}
 
@@ -4949,33 +4973,31 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 									edColINFO_OUT eStack1168;
 									edColIntersectRayUnitSphereUnit(&eStack1168, &local_28);
 									if (eStack1168.result != 0) {
-										local_4c0 = (pPrim->vertices).aa * eStack1168.intersectionPoint.x +
+										local_4c0.x = (pPrim->vertices).aa * eStack1168.intersectionPoint.x +
 											(pPrim->vertices).ba * eStack1168.intersectionPoint.y +
 											(pPrim->vertices).ca * eStack1168.intersectionPoint.z +
 											(pPrim->vertices).da * eStack1168.intersectionPoint.w;
-										fStack1212 = (pPrim->vertices).ab * eStack1168.intersectionPoint.x +
+										local_4c0.y = (pPrim->vertices).ab * eStack1168.intersectionPoint.x +
 											(pPrim->vertices).bb * eStack1168.intersectionPoint.y +
 											(pPrim->vertices).cb * eStack1168.intersectionPoint.z +
 											(pPrim->vertices).db * eStack1168.intersectionPoint.w;
-										fStack1208 = (pPrim->vertices).ac * eStack1168.intersectionPoint.x +
+										local_4c0.z = (pPrim->vertices).ac * eStack1168.intersectionPoint.x +
 											(pPrim->vertices).bc * eStack1168.intersectionPoint.y +
 											(pPrim->vertices).cc * eStack1168.intersectionPoint.z +
 											(pPrim->vertices).dc * eStack1168.intersectionPoint.w;
-										fStack1204 = (pPrim->vertices).ad * eStack1168.intersectionPoint.x +
+										local_4c0.w = (pPrim->vertices).ad * eStack1168.intersectionPoint.x +
 											(pPrim->vertices).bd * eStack1168.intersectionPoint.y +
 											(pPrim->vertices).cd * eStack1168.intersectionPoint.z +
 											(pPrim->vertices).dd * eStack1168.intersectionPoint.w;
+
 										pDirection = pRay->pLocation;
-										local_4d0.x = local_4c0 - pDirection->x;
-										local_4d0.y = fStack1212 - pDirection->y;
-										local_4d0.z = fStack1208 - pDirection->z;
-										local_4d0.w = fStack1204 - pDirection->w;
-										local_4 = edF32Vector4GetDistHard(&local_4d0);
-										if ((local_4 < puVar13) ||
-											((puVar13 < 0.0f && (local_4 <= pRay->lengthA)))) {
+										local_4d0 = local_4c0 - *pDirection;
+
+										outDistance = edF32Vector4GetDistHard(&local_4d0);
+										if ((outDistance < distance) || ((distance < 0.0f && (outDistance <= pRay->lengthA)))) {
 											*pOutHit = pPrim;
 											*pOutType = 0xb;
-											puVar13 = local_4;
+											distance = outDistance;
 										}
 									}
 
@@ -5032,34 +5054,31 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 										edColIntersectRayUnitSphereUnit(&eStack1008, &local_20);
 
 										if (eStack1008.result != 0) {
-											local_420 = (pSphere->vertices).aa * eStack1008.intersectionPoint.x +
+											local_420.x = (pSphere->vertices).aa * eStack1008.intersectionPoint.x +
 												(pSphere->vertices).ba * eStack1008.intersectionPoint.y +
 												(pSphere->vertices).ca * eStack1008.intersectionPoint.z +
 												(pSphere->vertices).da * eStack1008.intersectionPoint.w;
-											fStack1052 = (pSphere->vertices).ab * eStack1008.intersectionPoint.x +
+											local_420.y = (pSphere->vertices).ab * eStack1008.intersectionPoint.x +
 												(pSphere->vertices).bb * eStack1008.intersectionPoint.y +
 												(pSphere->vertices).cb * eStack1008.intersectionPoint.z +
 												(pSphere->vertices).db * eStack1008.intersectionPoint.w;
-											fStack1048 = (pSphere->vertices).ac * eStack1008.intersectionPoint.x +
+											local_420.z = (pSphere->vertices).ac * eStack1008.intersectionPoint.x +
 												(pSphere->vertices).bc * eStack1008.intersectionPoint.y +
 												(pSphere->vertices).cc * eStack1008.intersectionPoint.z +
 												(pSphere->vertices).dc * eStack1008.intersectionPoint.w;
-											fStack1044 = (pSphere->vertices).ad * eStack1008.intersectionPoint.x +
+											local_420.w = (pSphere->vertices).ad * eStack1008.intersectionPoint.x +
 												(pSphere->vertices).bd * eStack1008.intersectionPoint.y +
 												(pSphere->vertices).cd * eStack1008.intersectionPoint.z +
 												(pSphere->vertices).dd * eStack1008.intersectionPoint.w;
 
 											pDirection = pRay->pLocation;
-											local_430.x = local_420 - pDirection->x;
-											local_430.y = fStack1052 - pDirection->y;
-											local_430.z = fStack1048 - pDirection->z;
-											local_430.w = fStack1044 - pDirection->w;
-											local_4 = edF32Vector4GetDistHard(&local_430);
+											local_430 = local_420 - *pDirection;
+											outDistance = edF32Vector4GetDistHard(&local_430);
 
-											if ((local_4 < puVar13) || ((puVar13 < 0.0f && (local_4 <= pRay->lengthA)))) {
+											if ((outDistance < distance) || ((distance < 0.0f && (outDistance <= pRay->lengthA)))) {
 												*pOutHit = (edObbTREE_DYN*)pSphere;
 												*pOutType = 0xb;
-												puVar13 = local_4;
+												distance = outDistance;
 											}
 										}
 
@@ -5091,13 +5110,13 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 												local_10.pRayOrigin = pRay->pLocation;
 												local_10.pRayDirection = pRay->pDirection;
 
-												edColIntersectRayTriangle4(&local_4, &local_10);
+												edColIntersectRayTriangle4(&outDistance, &local_10);
 
-												if ((((local_4 != -8888.0f) && (local_4 != -9999.0f)) && (0.0f <= local_4)) &&
-													((local_4 < puVar13 || ((puVar13 < 0.0f && (local_4 <= pRay->lengthA)))))) {
+												if ((((outDistance != -8888.0f) && (outDistance != -9999.0f)) && (0.0f <= outDistance)) &&
+													((outDistance < distance || ((distance < 0.0f && (outDistance <= pRay->lengthA)))))) {
 													*pOutHit = pQuad;
 													*pOutType = 8;
-													puVar13 = local_4;
+													distance = outDistance;
 												}
 											}
 
@@ -5119,13 +5138,13 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 													(uint) * (ushort*)&(peVar9->bbox).transform.ab * 0x10);
 												local_10.pRayOrigin = pRay->pLocation;
 												local_10.pRayDirection = pRay->pDirection;
-												edColIntersectRayTriangle4((float*)&local_4, &local_10);
-												if ((((local_4 != -8888.0) && (local_4 != -9999.0)) && (0.0 <= local_4)) &&
-													((local_4 < puVar13 ||
-														((puVar13 < 0.0 && (local_4 <= pRay->lengthA)))))) {
+												edColIntersectRayTriangle4((float*)&outDistance, &local_10);
+												if ((((outDistance != -8888.0) && (outDistance != -9999.0)) && (0.0 <= outDistance)) &&
+													((outDistance < distance ||
+														((distance < 0.0 && (outDistance <= pRay->lengthA)))))) {
 													*pOutHit = peVar9;
 													*pOutType = 5;
-													puVar13 = local_4;
+													distance = outDistance;
 												}
 												peVar9 = (edObbTREE_DYN*)&(peVar9->bbox).transform.bc;
 											})
@@ -5138,13 +5157,13 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 													local_10.pRayDirection = pRay->pDirection;
 													local_10.pTriangle = pTriangle;
 
-													edColIntersectRayTriangle4(&local_4, &local_10);
+													edColIntersectRayTriangle4(&outDistance, &local_10);
 
-													if ((((local_4 != -8888.0f) && (local_4 != -9999.0f)) && (0.0f <= local_4))
-														&& ((local_4 < puVar13 || ((puVar13 < 0.0f && (local_4 <= pRay->lengthA)))))) {
+													if ((((outDistance != -8888.0f) && (outDistance != -9999.0f)) && (0.0f <= outDistance))
+														&& ((outDistance < distance || ((distance < 0.0f && (outDistance <= pRay->lengthA)))))) {
 														*pOutHit = pTriangle;
 														*pOutType = 4;
-														puVar13 = local_4;
+														distance = outDistance;
 													}
 
 													pTriangle = pTriangle + 1;
@@ -5159,9 +5178,11 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 					iVar11 = iVar11 + 1;
 				}
 			}
+
 			uVar8 = uVar8 != 0 ^ 1;
 			bVar5 = uVar8 != 0;
 		} while (local_18[uVar8] != 0);
 	}
-	return puVar13;
+
+	return distance;
 }

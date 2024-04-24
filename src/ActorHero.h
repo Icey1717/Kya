@@ -19,8 +19,12 @@
 #define STATE_HERO_JUMP_3_3_RUN 0x7d
 
 #define STATE_HERO_FALL_A 0x7e
+#define STATE_HERO_FALL_B 0x7f
+
+#define STATE_HERO_ROLL 0x8a
 
 #define STATE_HERO_GRIP_B 0xbc
+#define STATE_HERO_GRIP_C 0xbd
 #define STATE_HERO_GRIP_HANG_IDLE 0xbf
 
 #define STATE_HERO_GRIP_UP 0xc6
@@ -42,6 +46,8 @@
 #define STATE_HERO_TOBOGGAN_JUMP_2 0xeb
 #define STATE_HERO_TOBOGGAN_2 0xed
 #define STATE_HERO_TOBOGGAN 0xee
+
+#define STATE_HERO_GLIDE 0xf0
 
 struct CPlayerInput;
 class CActorBoomy;
@@ -91,6 +97,12 @@ public:
 
 	CActorBoomy* pActorBoomy;
 
+	// Hero goes at least up to 0x1548 given CCameraStack::GetCurHeroState
+	float field_0x1548;
+	float field_0xa80;
+	float field_0xa84;
+	float field_0xa88;
+
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];
 
@@ -106,6 +118,7 @@ public:
 	uint TestState_IsInTheWind(uint inFlags);
 	uint TestState_IsFlying(uint inFlags);
 	uint TestState_IsCrouched(uint inFlags);
+	uint TestState_IsOnCeiling(uint inFlags);
 
 	bool FUN_0014cb60(edF32VECTOR4* v0);
 };

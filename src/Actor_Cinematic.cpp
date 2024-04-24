@@ -182,7 +182,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	(this->otherSectionStart).boundingSphere.xyz = pGameInterface->boundingSphere.xyz;
 	(this->otherSectionStart).boundingSphere.w = pGameInterface->field_0x30 * 10.0f;
 	(this->otherSectionStart).floatFieldB = 1000.0f;
-	(this->otherSectionStart).floatField = 1000.0f;
+	(this->otherSectionStart).visibilityDistance = 1000.0f;
 	(this->otherSectionStart).field_0x1c = 1000.0f;
 	(this->otherSectionStart).field_0x20 = 100.0f;
 	(this->otherSectionStart).animLayerCount = 1;
@@ -496,11 +496,13 @@ void CBehaviourCinematic::End(int newBehaviourId)
 	else {
 		pCVar2->flags = pCVar2->flags | 0x1000;
 	}
+
 	if ((CActorFactory::gClassProperties[this->pOwner->typeID].flags & 2) != 0) {
 		this->pOwner->SV_BuildAngleWithOnlyY(&local_10, &this->pOwner->rotationEuler.xyz);
 		pCVar2 = this->pOwner;
 		pCVar2->rotationEuler.xyz = local_10;
 	}
+
 	pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
 	pActorConfig = pCinematic->GetActorConfig(this->pOwner);
 	if ((pActorConfig == (CCineActorConfig*)0x0) || ((pActorConfig->flags & 0x10) == 0)) {
@@ -514,6 +516,7 @@ void CBehaviourCinematic::End(int newBehaviourId)
 		else {
 			this->pOwner->flags = this->pOwner->flags | 0x1000;
 		}
+
 		pCVar2 = this->pOwner;
 		pCVar2->rotationEuler.xyz = pActorConfig->postCinematicRotationEuler.xyz;
 		SetVectorFromAngles(&this->pOwner->rotationQuat, &this->pOwner->rotationEuler.xyz);

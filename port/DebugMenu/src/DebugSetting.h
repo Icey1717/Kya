@@ -5,9 +5,10 @@
 #include <nlohmann/json.hpp>
 
 
-namespace DebugSetting {
+namespace Debug {
 	using Settings = std::optional<nlohmann::json>;
 
+	void SaveSettings(Settings settings);
 	Settings LoadSettings(bool bCreateIfNotExisting = false);
 
 	template<typename SettingType>
@@ -26,9 +27,30 @@ namespace DebugSetting {
 			}
 		}
 
+		bool UpdateValue()
+		{
+			Settings settings = LoadSettings(true);
+
+			if (settings) {
+				(*settings)[name.c_str()] = value;
+				SaveSettings(settings);
+				return true;
+			}
+
+			return false;
+		}
+
 		bool DrawImguiControl();
 
 		virtual operator SettingType() const { return value; }
+		virtual operator SettingType&() { return value; }
+
+		inline Setting& operator=(const SettingType& newValue) {
+			value = newValue;
+			UpdateValue();
+			return *this;
+		}
+
 
 	protected:
 		std::string name;

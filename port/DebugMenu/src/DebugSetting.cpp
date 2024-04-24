@@ -4,27 +4,18 @@
 #include <optional>
 #include <imgui.h>
 
-namespace DebugSetting {
+namespace Debug {
 	const char* gSettingsFile = "settings.json";
-
-	template<typename SettingType>
-	bool UpdateValue(const char* name, SettingType value)
-	{
-		Settings settings = LoadSettings(true);
-
-		if (settings) {
-			(*settings)[name] = value;
-			std::ofstream file(gSettingsFile);
-			file << *settings;
-			file.close();
-			return true;
-		}
-
-		return false;
-	}
 }
 
-DebugSetting::Settings DebugSetting::LoadSettings(bool bCreateIfNotExisting /*= false*/)
+void Debug::SaveSettings(Settings settings)
+{
+	std::ofstream file(gSettingsFile);
+	file << *settings;
+	file.close();
+}
+
+Debug::Settings Debug::LoadSettings(bool bCreateIfNotExisting /*= false*/)
 {
 	Settings settings;
 
@@ -44,20 +35,20 @@ DebugSetting::Settings DebugSetting::LoadSettings(bool bCreateIfNotExisting /*= 
 }
 
 template<>
-bool DebugSetting::Setting<bool>::DrawImguiControl()
+bool Debug::Setting<bool>::DrawImguiControl()
 {
 	if (ImGui::Checkbox(name.c_str(), &value)) {
-		return UpdateValue(name.c_str(), value);
+		return UpdateValue();
 	}
 
 	return true;
 }
 
 template<>
-bool DebugSetting::Setting<float>::DrawImguiControl()
+bool Debug::Setting<float>::DrawImguiControl()
 {
 	if (ImGui::InputFloat(name.c_str(), &value)) {
-		return UpdateValue(name.c_str(), value);
+		return UpdateValue();
 	}
 
 	return true;

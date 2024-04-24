@@ -421,14 +421,8 @@ struct GlobalCollisionData {
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
+	undefined4 field_0x10;
+	undefined4 field_0x14;
 	undefined* field_0x18;
 	undefined field_0x1c;
 	undefined field_0x1d;

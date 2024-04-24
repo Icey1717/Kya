@@ -5895,10 +5895,13 @@ struct CAM_QUAKE {
 class CCameraManager : public CObjectManager {
 public:
 	CCameraManager();
+
+	// CObjectManager
 	virtual void Game_Init();
 	virtual void LevelLoading_Begin();
 	virtual bool LevelLoading_Manage();
 	virtual void Level_Init();
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	void KeepSameParam(CCamera* pNewCamera, uint flag);
 	void Func_001947e0();
@@ -6715,6 +6718,5 @@ public:
 
 extern edFCamera _gDisplayCamera;
 extern edFCamera gSceneCameras[10];
-extern CCamFigData* _pfig_data;
 
 #endif // _CAMERA_VIEW_MANAGER_H

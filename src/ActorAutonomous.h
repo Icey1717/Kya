@@ -78,6 +78,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
@@ -88,6 +89,8 @@ public:
 	virtual void UpdateCollisionSphere();
 	virtual void RestoreCollisionSphere(float param_2);
 
+	void ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
+	void ComputeFrictionForce(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
 	void ComputeSlidingForce(edF32VECTOR4* param_2, int param_3);
 
 	virtual void LifeRestore();

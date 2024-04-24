@@ -196,7 +196,7 @@ void CLightManager::ComputeLighting(CActor* pActor, uint flags, ed_3D_Light_Conf
 
 	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting {} flags: {:x} location: {}", pActor->name, flags, location.ToString());
 
-	ComputeLighting((ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf0, param_1);
+	ComputeLighting((ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf4, param_1);
 
 	if (pActor->typeID == ACTOR_HERO_PRIVATE) {
 		fVar2 = CLightConfig::ComputeShadow((((pActor->p3DHierNode)->base).pHierarchySetup)->pLightData, &this->vector_0xf0);

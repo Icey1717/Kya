@@ -13,7 +13,8 @@
 #include <fstream>
 #include "DebugHelpers.h"
 #include "Debug.h"
-#include "../../../src/TimeController.h"
+#include "TimeController.h"
+#include "CameraGame.h"
 
 GLFWwindow* GetGLFWWindow();
 
@@ -236,6 +237,16 @@ void DebugCamera::ShowCamera()
 	EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
 	ImGui::Text("LookAt");
 	//EditEdF32Vector4(pCameraManager->lookAt);
+
+	if (pActiveCamera->GetMode() == CT_Main) {
+		if (ImGui::Button("Disable Collision")) {
+			CCameraGame* pGameCamera = static_cast<CCameraGame*>(pActiveCamera);
+
+			if (pGameCamera) {
+				pGameCamera->cameraRayFlags = 0;
+			}
+		}
+	}
 
 	{
 		static bool bFixAtLocation = false;

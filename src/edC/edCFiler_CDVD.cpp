@@ -123,7 +123,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 	u_char uVar2;
 	byte bVar3;
 	byte bVar4;
-	uint uVar5;
+	uint openFlags;
 	bool openSuccess;
 	int fileDirectoryLength;
 	char* pcVar6;
@@ -147,8 +147,9 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 	MY_LOG("edCFiler_CDVD::open {}\n", unformatedFilePath);
 
 	/* First we have to change the format of the file path from <CDVD>0:\CDEURO\LEVEL\ to cdrom0:\CDEURO\LEVEL\ */
-	uVar5 = outFile->openFlags;
+	openFlags = outFile->openFlags;
 	fileDirectoryLength = 0;
+
 	do {
 		if (aContainerInUse[fileDirectoryLength] == 0) {
 			aContainerInUse[fileDirectoryLength] = 1;
@@ -159,7 +160,9 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 		fileDirectoryLength = fileDirectoryLength + 1;
 		bufferStart = (CDFileContainer*)0x0;
 	} while (fileDirectoryLength < 0x10);
+
 	openSuccess = false;
+
 	if (bufferStart != (CDFileContainer*)0x0) {
 		edFilePathSplit((char*)0x0, fileDirectory, (char*)0x0, (char*)0x0, unformatedFilePath);
 		/* File path starts with 'cdrom' */
@@ -175,6 +178,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 		MY_LOG("edCFiler_CDVD::open Formatted path {} toc: {}\n", fullFilePath, toc.bLoaded);
 
 #ifdef PLATFORM_WIN
+		// For windows, create a file handle.
 		FILE* fp = NULL;
 #endif
 
@@ -219,7 +223,9 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 				edDebugPrintf(sz_FileNotFound_00431280);
 			}
 		}
+
 		fileDirectoryLength = 0;
+
 		if (ret == 0) {
 			pbVar8 = aContainerInUse;
 			do {
@@ -261,7 +267,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 			/* Copy file name into object */
 			*(undefined2*)&pDVar7->field_0xe = *(undefined2*)&pDVar7->field_0x6;
 			edStrCopy(pDVar7->name, (bufferStart->file).name);
-			if ((uVar5 & 8) == 0) {
+			if ((openFlags & 8) == 0) {
 #if defined(PLATFORM_PS2)
 				bufferStart->fd = -1;
 				fileDescriptor = bufferStart->fd;
@@ -272,7 +278,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 					fileDescriptor = bufferStart->fd;
 				}
 				outFile->pFileData = bufferStart;
-				if ((uVar5 & 0x10) != 0) {
+				if ((openFlags & 0x10) != 0) {
 					pNewIopBuf = sceSifAllocSysMemory(0, 0x28010, (void*)0x0);
 					iopBuf = (char*)pNewIopBuf;
 					sceCdStInit(0x50, 5, (uint)(iopBuf + 0xf) & 0xfffffff0);
@@ -295,6 +301,7 @@ bool edCFiler_CDVD::open(edFILEH* outFile, char* unformatedFilePath)
 			openSuccess = true;
 		}
 	}
+
 	return openSuccess;
 }
 
