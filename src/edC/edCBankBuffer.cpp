@@ -109,7 +109,7 @@ char* DebugFindFilePath(edCBankFileHeader* pBVar3, int inFileIndex)
 		do {
 			uint uVar2 = pBVar3->get_index(inIndex, 0);
 			if ((uVar2 == inFileIndex) &&
-				(returnFileBufferStart = edCBankFileHeader_GetIopPath_00246460(pBVar3, inIndex),
+				(returnFileBufferStart = pBVar3->get_entry_filename(inIndex),
 					returnFileBufferStart != (char*)0x0)) {
 				break;
 			}
@@ -370,36 +370,39 @@ void edCBankFileHeader::apply_callback(TypePairData* pTypePairData, int mode)
 	return;
 }
 
-FileHeaderFileData* get_entry(edCBankFileHeader* pFileHeader, int fileIndex)
+FileHeaderFileData* edCBankFileHeader::get_entry(int fileIndex)
 {
 	char* pcVar1;
 
-	if (pFileHeader->fileHeaderDataOffset == 0) {
+	if (this->fileHeaderDataOffset == 0) {
 		pcVar1 = (char*)0x0;
 	}
 	else {
-		pcVar1 = pFileHeader->header + pFileHeader->fileHeaderDataOffset + -8;
+		pcVar1 = this->header + this->fileHeaderDataOffset + -8;
 	}
 	return (FileHeaderFileData*)(pcVar1 + fileIndex * 0x10 + 8);
 }
 
-char* edCBankFileHeader_GetFileBufferStartFromFileIndex(edCBankFileHeader* pFileData, int fileIndex)
+char* edCBankFileHeader::get_entry_data(int fileIndex) 
 {
 	char* pcVar1;
 
 	pcVar1 = (char*)0x0;
-	if (pFileData->fileHeaderDataOffset != 0) {
-		pcVar1 = pFileData->header + pFileData->fileHeaderDataOffset + -8;
+
+	if (this->fileHeaderDataOffset != 0) {
+		pcVar1 = this->header + this->fileHeaderDataOffset + -8;
 	}
+
 	FileHeaderFileData* pFileHeaderData = (FileHeaderFileData*)(pcVar1 + fileIndex * 0x10 + 8);
-	return pFileData->header + pFileHeaderData->offset + -8;
+
+	return this->header + pFileHeaderData->offset + -8;
 }
 
-char sz_DefaultIopPath_00466d50[512] = { 0 };
-char* PTR_DAT_00448f44 = NULL;
-int INT_00448f48 = 0;
+char FileBuffer[512] = { 0 };
+char* FileNamePtr = NULL;
+int CurrentIndex = 0;
 
-void CopyIopPath_00246b50(char* param_1, char* param_2)
+void TreeInfo_UnOptimizeFilePath(char* param_1, char* param_2)
 {
 	char cVar1;
 	char* pcVar2;
@@ -441,7 +444,7 @@ void CopyIopPath_00246b50(char* param_1, char* param_2)
 
 // Recursive function that returns a pointer to a string
 // Takes a pointer to a null-terminated string as input
-char* DecodeStringFromBinaryTree_002469a0(char* input)
+char* TreeInfo_Recurse(char* input)
 {
 	char cVar1;
 	char* pcVar2;
@@ -478,21 +481,21 @@ char* DecodeStringFromBinaryTree_002469a0(char* input)
 				return pcVar3;
 			}
 			uVar6 = uVar6 - 1;
-			pcVar3 = DecodeStringFromBinaryTree_002469a0(pcVar3);
+			pcVar3 = TreeInfo_Recurse(pcVar3);
 		} while (pcVar3 != (char*)0x0);
 		pcVar2 = pcVar2 + iVar7;
 		if (rightShifteValue != 0) {
 			do {
 				iVar7 = iVar7 + -1;
 				pcVar2 = pcVar2 + -1;
-				pcVar3 = PTR_DAT_00448f44 + -1;
-				PTR_DAT_00448f44 = PTR_DAT_00448f44 + -1;
+				pcVar3 = FileNamePtr + -1;
+				FileNamePtr = FileNamePtr + -1;
 				*pcVar3 = *pcVar2;
 			} while (iVar7 != 0);
 		}
 		pcVar2 = (char*)0x0;
-		pcVar3 = PTR_DAT_00448f44 + -1;
-		PTR_DAT_00448f44 = PTR_DAT_00448f44 + -1;
+		pcVar3 = FileNamePtr + -1;
+		FileNamePtr = FileNamePtr + -1;
 		*pcVar3 = '\\';
 	}
 	else {
@@ -501,53 +504,59 @@ char* DecodeStringFromBinaryTree_002469a0(char* input)
 			pcVar2 = input + 2;
 		}
 		iVar7 = (int)lVar5;
-		if (INT_00448f48 == 0) {
+		if (CurrentIndex == 0) {
 			pcVar2 = pcVar2 + iVar7;
 			if (lVar5 != 0) {
 				do {
 					iVar7 = iVar7 + -1;
 					pcVar2 = pcVar2 + -1;
-					pcVar3 = PTR_DAT_00448f44 + -1;
-					PTR_DAT_00448f44 = PTR_DAT_00448f44 + -1;
+					pcVar3 = FileNamePtr + -1;
+					FileNamePtr = FileNamePtr + -1;
 					*pcVar3 = *pcVar2;
 				} while (iVar7 != 0);
 			}
 			pcVar2 = (char*)0x0;
-			pcVar3 = PTR_DAT_00448f44 + -1;
-			PTR_DAT_00448f44 = PTR_DAT_00448f44 + -1;
+			pcVar3 = FileNamePtr + -1;
+			FileNamePtr = FileNamePtr + -1;
 			*pcVar3 = '\\';
 		}
 		else {
-			INT_00448f48 = INT_00448f48 + -1;
+			CurrentIndex = CurrentIndex + -1;
 			pcVar2 = pcVar2 + iVar7;
 		}
 	}
 	return pcVar2;
 }
 
-char* edCBankFileHeader_GetIopPath_00246460(edCBankFileHeader* fileBuffer, int inIndex)
+char* edCBankFileHeader::get_entry_filename(int inIndex)
 {
 	char cVar1;
 	char* pcVar2;
 	char local_108[264];
 
 	pcVar2 = (char*)0x0;
-	if (fileBuffer->field_0x30 != 0) {
-		pcVar2 = fileBuffer->header + fileBuffer->field_0x30 + -8;
+
+	if (this->field_0x30 != 0) {
+		pcVar2 = this->header + this->field_0x30 + -8;
 	}
-	PTR_DAT_00448f44 = local_108 + 0x107;
+
+	FileNamePtr = local_108 + 0x107;
 	local_108[263] = '\0';
 	cVar1 = pcVar2[8];
 	pcVar2 = pcVar2 + 8;
-	INT_00448f48 = inIndex;
-	while ((cVar1 != '\0' && (pcVar2 = DecodeStringFromBinaryTree_002469a0(pcVar2), pcVar2 != (char*)0x0))) {
+	CurrentIndex = inIndex;
+
+	while ((cVar1 != '\0' && (pcVar2 = TreeInfo_Recurse(pcVar2), pcVar2 != (char*)0x0))) {
 		cVar1 = *pcVar2;
 	}
-	if (*PTR_DAT_00448f44 == '\\') {
-		PTR_DAT_00448f44 = PTR_DAT_00448f44 + 1;
+
+	if (*FileNamePtr == '\\') {
+		FileNamePtr = FileNamePtr + 1;
 	}
-	CopyIopPath_00246b50(sz_DefaultIopPath_00466d50, PTR_DAT_00448f44);
-	return sz_DefaultIopPath_00466d50;
+
+	TreeInfo_UnOptimizeFilePath(FileBuffer, FileNamePtr);
+
+	return FileBuffer;
 }
 
 
@@ -577,14 +586,14 @@ bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileDat
 			else {
 				outFileData->type = (uint)pTypeData->type;
 				outFileData->stype = (uint)pTypeData->stype;
-				pFileHeader = get_entry(this->fileBuffer, inFileIndex);
+				pFileHeader = this->fileBuffer->get_entry(inFileIndex);
 				if (pFileHeader == (FileHeaderFileData*)0x0) {
 					bVar1 = false;
 				}
 				else {
 					outFileData->size = pFileHeader->size;
 					outFileData->crc = pFileHeader->crc;
-					returnFileBufferStart = edCBankFileHeader_GetFileBufferStartFromFileIndex(this->fileBuffer, inFileIndex);
+					returnFileBufferStart = this->fileBuffer->get_entry_data(inFileIndex);
 					outFileData->fileBufferStart = returnFileBufferStart;
 					if (outIopPath != (char*)0x0) {
 						*outIopPath = '\0';
@@ -594,7 +603,7 @@ bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileDat
 							do {
 								uVar2 = pBVar3->get_index(inIndex, 0);
 								if ((uVar2 == inFileIndex) &&
-									(returnFileBufferStart = edCBankFileHeader_GetIopPath_00246460(this->fileBuffer, inIndex),
+									(returnFileBufferStart = this->fileBuffer->get_entry_filename(inIndex),
 										returnFileBufferStart != (char*)0x0)) {
 									edStrCopy(outIopPath, returnFileBufferStart);
 									break;
@@ -830,7 +839,7 @@ char* TreeInfo_RecurseWhileCountingIndexesUsingReference(char* headerBaseFilePat
 	return basePathChar;
 }
 
-int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, const char* inFileName)
+int edCBankFileHeader::get_entryindex_from_filename(const char* inFileName)
 {
 	char* pHeaderBase;
 	int fileNameLength;
@@ -844,11 +853,11 @@ int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, const char* i
 
 	IO_LOG(LogLevel::Info, "GetIndexFromFileHeader {}", inFileName);
 
-	if (bankBufferObj->field_0x30 == 0) {
+	if (this->field_0x30 == 0) {
 		pHeaderBase = (char*)0x0;
 	}
 	else {
-		pHeaderBase = bankBufferObj->header + bankBufferObj->field_0x30 + -8;
+		pHeaderBase = this->header + this->field_0x30 + -8;
 	}
 	headerBasePath = pHeaderBase + 8;
 	formattedFilename[0] = '\0';
@@ -875,7 +884,7 @@ LAB_00246280:
 	uVar2 = 0xffffffff;
 	if (-1 < inIndex) {
 		/* Ensure we found the right index? */
-		uVar2 = bankBufferObj->get_index(inIndex, 0);
+		uVar2 = this->get_index(inIndex, 0);
 	}
 	return (int)uVar2;
 }
@@ -886,14 +895,14 @@ int edCBankBufferEntry::get_index(const char* inFileName)
 
 	iVar1 = 0;
 	if (this->fileBuffer != (edCBankFileHeader*)0x0) {
-		iVar1 = get_entryindex_from_filename(this->fileBuffer, inFileName);
+		iVar1 = this->fileBuffer->get_entryindex_from_filename(inFileName);
 	}
 	return iVar1;
 }
 
-char* get_element(edCBankBufferEntry* bankObj, int fileIndex)
+char* edCBankBufferEntry::get_element(int fileIndex)
 {
-	return edCBankFileHeader_GetFileBufferStartFromFileIndex(bankObj->fileBuffer, fileIndex);
+	return this->fileBuffer->get_entry_data(fileIndex);
 }
 
 void edCBankBufferEntry::wait()

@@ -69,7 +69,7 @@ char* Bank::GetResource(char* fileName, edBANK_ENTRY_INFO* param_3)
 	else {
 		fileBuffer = (char*)0x0;
 		if (param_3 == (edBANK_ENTRY_INFO*)0x0) {
-			fileBuffer = get_element(this->pAccessObj, fileIndex);
+			fileBuffer = this->pAccessObj->get_element(fileIndex);
 		}
 		else {
 			bVar1 = this->pAccessObj->get_info(fileIndex, param_3, (char*)0x0);

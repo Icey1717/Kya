@@ -846,14 +846,14 @@ void CLevelScheduler::Game_Init()
 	INT_ARRAY_0048ed60[6] = 0;
 	strcpy(levelPath, g_CD_LevelPath_00433bf8);
 	/* Try read [Router] - SetPath from INI file */
-	bVar2 = g_IniFile_00450750.ReadString_001aa520(g_szRouter_00433c08, g_szSetPath_00433c10, levelPath);
+	bVar2 = gIniFile.ReadString_001aa520(g_szRouter_00433c08, g_szSetPath_00433c10, levelPath);
 	if (bVar2 == false) {
 		/* No path found in .INI -> use default !\n */
 		edDebugPrintf(g_szNoPathError_00433c20);
 	}
 	/* Try read [Router] - AddLevel from INI file  */
 	local_80[0] = '\0';
-	g_IniFile_00450750.ReadString_001aa520(g_szRouter_00433c08, g_szAddLevel_00433c48, local_80);
+	gIniFile.ReadString_001aa520(g_szRouter_00433c08, g_szAddLevel_00433c48, local_80);
 	pLVar12 = aLevelInfo;
 	iVar11 = 0;
 	do {

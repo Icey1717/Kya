@@ -10,8 +10,13 @@ struct edCFiler_BNK_8 {
 	struct FileHeaderFileData* pFileData;
 };
 
+struct edCFiler_Bnk_static_header {
+	char header[8];
+	edCBankFileHeader fileHeader;
+};
+
 struct edCFiler_Bnk_static {
-	char* pFileData;
+	edCFiler_Bnk_static_header* pFileData;
 	char path[512];
 	char diskPath[512];
 };

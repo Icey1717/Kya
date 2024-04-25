@@ -28,6 +28,6 @@ private:
 	char* endSeekPosition;
 };
 
-extern CIniFile g_IniFile_00450750;
+extern CIniFile gIniFile;
 
 #endif //_INIFILE_H

@@ -11,7 +11,7 @@
 #include "edStr.h"
 
 EdFileGlobal_10 g_IniFile_00450750_mem;
-CIniFile g_IniFile_00450750;
+CIniFile gIniFile;
 
 
 bool CIniFile::ReadHexValueFromFile(int* hexValue)

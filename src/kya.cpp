@@ -972,7 +972,7 @@ void VideoReadConfig(CIniFile* file)
 		isNTSC = 1;
 		videoMode = SCE_GS_PAL;
 		/* Video - SetVideoMode */
-		bVar1 = g_IniFile_00450750.ReadString_001aa520(s_Video_0042b490, "SetVideoMode", outVideoMode);
+		bVar1 = gIniFile.ReadString_001aa520(s_Video_0042b490, "SetVideoMode", outVideoMode);
 		if ((bVar1 != false) && (iVar2 = edStrCmp(outVideoMode, "NTSC"), iVar2 == 0)) {
 			screenHeight = 0x1c0;
 			isNTSC = 0;
@@ -980,7 +980,7 @@ void VideoReadConfig(CIniFile* file)
 		}
 		/* Video - SetFrequency */
 		videoFrequency = 0;
-		bVar1 = g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetFrequency", &videoFrequency);
+		bVar1 = gIniFile.ReadInt_001a9830(s_Video_0042b490, "SetFrequency", &videoFrequency);
 		if ((bVar1 != false) && (videoFrequency == 0x3c)) {
 			isNTSC = 0;
 		}
@@ -989,8 +989,8 @@ void VideoReadConfig(CIniFile* file)
 		gVideoConfig.screenHeight = screenHeight;
 		gVideoConfig.isNTSC = isNTSC;
 		gVideoConfig.omode = videoMode;
-		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetX", &gVideoConfig.offsetX);
-		g_IniFile_00450750.ReadInt_001a9830(s_Video_0042b490, "SetOffsetY", &gVideoConfig.offsetY);
+		gIniFile.ReadInt_001a9830(s_Video_0042b490, "SetOffsetX", &gVideoConfig.offsetX);
+		gIniFile.ReadInt_001a9830(s_Video_0042b490, "SetOffsetY", &gVideoConfig.offsetY);
 	}
 	return;
 }
@@ -1428,8 +1428,8 @@ void MainInit(int argc,char **argv)
 	pFileBuffer = LoadFileFromDisk(g_szIni_0042b5b8, &fileSize);
 	if (pFileBuffer != (char*)0x0) 
 	{
-		g_IniFile_00450750.Load_001ab200(g_szIni_0042b5b8, pFileBuffer, fileSize);
-		VideoReadConfig(&g_IniFile_00450750);
+		gIniFile.Load_001ab200(g_szIni_0042b5b8, pFileBuffer, fileSize);
+		VideoReadConfig(&gIniFile);
 	}
 
 	SetupDoubleBuffer_00405ba0();
@@ -1519,7 +1519,7 @@ void MainInit(int argc,char **argv)
 	pVVar4->field_0x4 = 0;
 	edVideoInit();
 	SetVideoMode((short)gVideoConfig.omode, (short)gVideoConfig.screenWidth, (short)gVideoConfig.screenHeight, (short)gVideoConfig.field_0x8, 0);
-	CPlayerInput::ReadConfig(&g_IniFile_00450750);
+	CPlayerInput::ReadConfig(&gIniFile);
 	CScene::CreateScene();
 	Game_Init();
 

@@ -562,11 +562,17 @@ PACK(struct FileTypeData {
 	ushort type;
 });
 
-PACK(struct edCBankFileHeader {
+struct FileHeaderFileData;
+
+struct edCBankFileHeader {
 	void apply_callback(struct TypePairData* pTypePairData, int mode);
 	void unpack();
 	void analyse() {}
 	uint get_index(int inIndex, int mode);
+	char* get_entry_filename(int inIndex);
+	char* get_entry_data(int fileIndex);
+	int get_entryindex_from_filename(const char* inFileName);
+	FileHeaderFileData* get_entry(int fileIndex);
 
 	char header[4];
 	uint flags_0x4;
@@ -592,7 +598,9 @@ PACK(struct edCBankFileHeader {
 	int field_0x30;
 	uint field_0x34;
 	int field_0x38;
-});
+};
+
+static_assert(sizeof(edCBankFileHeader) == 0x3c, "edCBankFileHeader is the wrong size");
 
 PACK(struct FileHeaderFileData {
 	int offset;
@@ -631,6 +639,7 @@ struct edCBankBufferEntry {
 	int get_index(const char* inFileName);
 	bool get_info(int inFileIndex, struct edBANK_ENTRY_INFO* outFileData, char* outIopPath);
 	int get_element_count();
+	char* get_element(int fileIndex);
 
 	struct edCBankBuffer* header;
 	int* field_0x4;
@@ -705,13 +714,5 @@ char* DebugFindFilePath(edCBankFileHeader* pBVar3, int inFileIndex);
 void edFileNoWaitStackFlush(void);
 
 uint edFileGetSize(edFILEH* param_1);
-
-FileHeaderFileData* get_entry(edCBankFileHeader* pFileHeader, int fileIndex);
-char* edCBankFileHeader_GetFileBufferStartFromFileIndex(edCBankFileHeader* pFileData, int fileIndex);
-char* edCBankFileHeader_GetIopPath_00246460(edCBankFileHeader* fileBuffer, int inIndex);
-int get_entryindex_from_filename(edCBankFileHeader* bankBufferObj, const char* inFileName);
-char* get_element(edCBankBufferEntry* bankObj, int fileIndex);
-
-void load(edCBankBufferEntry* pBankAccessObject);
 
 #endif //_EDCBANKBUFFER_H

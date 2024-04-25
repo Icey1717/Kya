@@ -102,7 +102,7 @@ void InstallBootData(void)
 			messagesFilePointer = (char*)0x0;
 		}
 		else {
-			messagesFilePointer = get_element(BootData_BankBufferEntry, fileIndex);
+			messagesFilePointer = BootData_BankBufferEntry->get_element(fileIndex);
 		}
 		pIconTexture->Install(messagesFilePointer);
 		puVar1 = sz_MediumFontFileName_00448b60;
@@ -117,7 +117,7 @@ void InstallBootData(void)
 		BootDataFont = (edCTextFont*)0x0;
 	}
 	else {
-		BootDataFont = (edCTextFont*)get_element(BootData_BankBufferEntry, iVar3);
+		BootDataFont = (edCTextFont*)BootData_BankBufferEntry->get_element(iVar3);
 	}
 
 	NAME_NEXT_OBJECT(sz_MediumFontFileName_00448b60);
@@ -290,7 +290,7 @@ char* BootData_GetResource(char* fileName, edBANK_ENTRY_INFO* outIconFileData)
 	else {
 		fileBufferStart = (char*)0x0;
 		if (outIconFileData == (edBANK_ENTRY_INFO*)0x0) {
-			fileBufferStart = get_element(BootData_BankBufferEntry, fileIndex);
+			fileBufferStart = BootData_BankBufferEntry->get_element(fileIndex);
 		}
 		else {
 			bVar1 = BootData_BankBufferEntry->get_info(fileIndex, outIconFileData, (char*)0x0);

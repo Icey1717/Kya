@@ -47,7 +47,7 @@ bool edCFiler_BNK::get_physical_filename(char* outFilePath, char* pathBuff)
 }
 
 edCFiler_Bnk_static BnkUnitTable[4];
-edFILEH* g_LastBank_00448f50 = NULL;
+edFILEH* edBankFilerCurrentDirtyFileHandle = NULL;
 
 bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 {
@@ -96,9 +96,9 @@ bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 			pcVar3 = edStrChr(filePath, '>');
 			pcVar3 = edStrChr(pcVar3 + 1, ':');
 			edStrCopy(acStack1024, pcVar3 + 1);
-			pcVar3 = pAlreadyLoadedData->pFileData;
+			edCFiler_Bnk_static_header* pStaticFileHeader = pAlreadyLoadedData->pFileData;
 			/* Look for the index of the file we want. */
-			iVar4 = get_entryindex_from_filename((edCBankFileHeader*)(pcVar3 + 8), acStack1024);
+			iVar4 = pStaticFileHeader->fileHeader.get_entryindex_from_filename(acStack1024);
 			if (iVar4 == -1) {
 				MY_LOG("edCFiler_BNK::open ERROR could not find file index {}\n", acStack1024);
 				bVar1 = false;
@@ -122,8 +122,8 @@ bool edCFiler_BNK::open(edFILEH* pOutData, char* filePath)
 				}
 				else {
 					bufferStart->pDebugBankData = pDVar5;
-					g_LastBank_00448f50 = pDVar5;
-					puVar6 = get_entry((edCBankFileHeader*)(pcVar3 + 8), iVar4);
+					edBankFilerCurrentDirtyFileHandle = pDVar5;
+					puVar6 = pStaticFileHeader->fileHeader.get_entry(iVar4);
 					uVar7 = edFileSeek(bufferStart->pDebugBankData, puVar6->offset, ED_SEEK_SET);
 					if (uVar7 == 0) {
 						pDVar5->pOwningFiler->close(pDVar5);
@@ -336,7 +336,7 @@ bool edCFiler_BNK::mount_unit(char* filePath, char* bankPath)
 		if (__s != (edCFiler_Bnk_static*)0x0) {
 			edStrCopy(__s->diskPath, outString);
 			pcVar3 = edBankFilerReadHeader(TO_HEAP(H_MAIN), bankPath, 1, (edFILEH**)0x0);
-			__s->pFileData = pcVar3;
+			__s->pFileData = (edCFiler_Bnk_static_header*)pcVar3;
 			bSuccess = true;
 		}
 	}
