@@ -1,7 +1,8 @@
 #include "LevelScheduleManager.h"
 #include "IniFile.h"
 #include "edMem.h"
-#include "edC/edCBank.h"
+#include "edBankFile.h"
+#include "edBankStackFile.h"
 
 #include <string.h>
 #include <stdio.h>

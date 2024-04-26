@@ -1,6 +1,6 @@
 #include "FrontendManager.h"
-#include "edC/edCBankBuffer.h"
-#include "edC/edCBank.h"
+#include "edBankBuffer.h"
+#include "edBankStackFile.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
 #include "PauseManager.h"

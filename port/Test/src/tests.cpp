@@ -148,7 +148,7 @@ TEST(IO, MenuSplashOpen) {
 				fileSize = pLoadedFile->count_0x228;
 			}
 		}
-		SetClose_0025bf60(pLoadedFile);
+		edFileClose(pLoadedFile);
 	}
 
 	if (pTextureFileData != (char*)0x0) {

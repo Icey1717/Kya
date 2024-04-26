@@ -16,6 +16,8 @@
 #include "MathOps.h"
 #include <math.h>
 
+#include "edFile.h"
+
 #ifdef PLATFORM_WIN
 #include "renderer.h"
 #endif
@@ -1482,7 +1484,7 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 				iVar2 = pLoadedFile->count_0x228;
 			}
 		}
-		SetClose_0025bf60(pLoadedFile);
+		edFileClose(pLoadedFile);
 	}
 	pcVar3 = this->pTextureFileData;
 	if (pcVar3 != (char*)0x0) {

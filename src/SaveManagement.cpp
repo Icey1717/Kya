@@ -10,6 +10,9 @@
 #include "kya.h"
 #include <string.h>
 
+#include "edFilePath.h"
+#include "edFileFiler.h"
+
 #ifdef PLATFORM_PS2
 #include "libpc.h"
 #include <stdio.h>

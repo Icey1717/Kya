@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
-#include "edC/edCBank.h"
+#include "EdenLib/edBank/include/edBankBuffer.h"
 
 #ifdef PLATFORM_PS2
 #include <libvu0.h>

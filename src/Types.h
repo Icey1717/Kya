@@ -809,4 +809,15 @@ const float in_vf0x = 0.0f;
 
 #define CAMERA_HACK_ACTIVE 0x10000000
 
+enum EBankAction
+{
+	BANK_ACTION_3 = 3,
+	BANK_ACTION_5 = 5,
+	CLOSE = 4,
+	LOAD = 0,
+	OPEN = 6,
+	READ_STREAM = 2,
+	SEEK = 1
+};
+
 #endif //_TYPES_H

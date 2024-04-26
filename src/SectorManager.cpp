@@ -10,6 +10,9 @@
 #include "ScenaricCondition.h"
 #include "MemoryStream.h"
 
+#include "edBankStackFile.h"
+#include "edBankFile.h"
+
 #ifdef PLATFORM_WIN
 #include "port.h"
 #endif

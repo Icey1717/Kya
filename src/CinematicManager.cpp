@@ -12,6 +12,10 @@
 #include "edStr.h"
 #include "port/pointer_conv.h"
 
+#include "edBankFile.h"
+#include "edBankStackFile.h"
+#include "edFile.h"
+
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
 #include <math.h>

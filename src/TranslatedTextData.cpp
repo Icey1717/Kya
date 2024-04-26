@@ -1,9 +1,8 @@
 #include "TranslatedTextData.h"
 #include "edMem.h"
-#include "edC/edCBankBuffer.h"
+#include "edBankBuffer.h"
 #include <stdio.h>
-#include "edC/edCBank.h"
-#include "edC/edCFiler.h"
+#include "edFile.h"
 #include <assert.h>
 #include "edStr.h"
 #include "PauseManager.h"
@@ -182,83 +181,6 @@ void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* 
 		}
 	}
 	return;
-}
-
-char* edFileOpen(char* filePath, uint* outSize, uint flags)
-{
-	byte bVar1;
-	edFILEH* pDebugBank;
-	edCFiler* peVar2;
-	uint uVar3;
-	char* pReadBuffer;
-	edCFiler_28* peVar4;
-	byte* pbVar5;
-	int iVar6;
-	char acStack512[512];
-
-	MY_LOG("MessageFile::edFileOpen {}\n", filePath);
-
-	*outSize = 0;
-	pDebugBank = edFileOpen(filePath, flags | 1);
-	if (pDebugBank == (edFILEH*)0x0) {
-		pReadBuffer = (char*)0x0;
-	}
-	else {
-		peVar2 = edFileGetFiler(acStack512, filePath, 0);
-		if (peVar2 == (edCFiler*)0x0) {
-			pReadBuffer = (char*)0x0;
-		}
-		else {
-			uVar3 = 0;
-			if ((pDebugBank->openFlags & 6) == 0) {
-				uVar3 = (pDebugBank->field_0x10).fileSize;
-				//peVar7 = peVar2->pVTable;
-			}
-			else {
-				//peVar7 = peVar2->pVTable;
-			}
-
-			uVar3 = peVar2->getalignedsize(uVar3);
-			*outSize = uVar3;
-			pReadBuffer = (char*)edMemAllocAlignBoundary(edFileLoadInfo.heap, *outSize, (uint)edFileLoadInfo.align,
-				(uint)edFileLoadInfo.offset);
-			edFileLoadInfo.offset = 0;
-			edFileLoadInfo.heap = TO_HEAP(H_MAIN);
-			edFileLoadInfo.align = 0x40;
-			peVar4 = peVar2->GetGlobalC_0x1c();
-			SetBankReadStream(peVar4, pDebugBank, pReadBuffer, *outSize);
-			peVar4 = peVar2->GetGlobalC_0x1c();
-			SetBankClose(peVar4, pDebugBank);
-			if ((pDebugBank->openFlags & 8) == 0) {
-				edFileGetFiler(pDebugBank->pOwningFiler);
-				iVar6 = 0;
-				do {
-					if (&g_DebugBankDataArray_00469bf0[iVar6] == pDebugBank) {
-						bVar1 = g_DebugBankLoadFlag_00469be0[iVar6];
-						goto LAB_0025bac8;
-					}
-					iVar6 = iVar6 + 1;
-				} while (iVar6 < 0x10);
-				bVar1 = 0;
-			LAB_0025bac8:
-				if (bVar1 == 0) {
-					bVar1 = 1;
-				}
-				else {
-					bVar1 = pDebugBank->bInUse;
-				}
-			}
-			else {
-				bVar1 = 1;
-			}
-			if (bVar1 == 0) {
-				*outSize = 0;
-				edMemFree(pReadBuffer);
-				pReadBuffer = (char*)0x0;
-			}
-		}
-	}
-	return pReadBuffer;
 }
 
 void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)

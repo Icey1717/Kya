@@ -39,7 +39,6 @@ extern "C" {
 #include <renderer.h>
 #include <decode.h>
 #include <thread>
-#include "edC/edCFiler_CDVD.h"
 #include "profiling.h"
 
 #endif
@@ -52,8 +51,6 @@ extern "C" {
 #include "edPacket.h"
 #include "edSystem.h"
 #include "LargeObject.h"
-#include "edC/edCFiler.h"
-#include "edC/edCBank.h"
 #include "TimeController.h"
 #include "LevelScheduleManager.h"
 #include "edText.h"
@@ -77,6 +74,12 @@ extern "C" {
 #include "ActorHero.h"
 #include "Debug.h"
 #include "MenuMessageBox.h"
+
+#include "edFileFiler.h"
+#include "edFile.h"
+#include "edBank.h"
+#include "_ps2/_edFileFilerCDVD.h"
+#include "edFilePath.h"
 
 template<class T>
 T* CreateNew()
@@ -1306,7 +1309,7 @@ void Init_edFile(void)
 	return;
 }
 
-bool LoadBNK(char* bnkTitle, char* bnkPath)
+bool edFileMount(char* bnkTitle, char* bnkPath)
 {
 	bool uVar1;
 	edCFiler* peVar1;
@@ -1509,7 +1512,7 @@ void MainInit(int argc,char **argv)
 	//edDebugPrintf(s_--------------------------------_0042b780);
 	//Game_Init();
 	///* <BNK>0: CDEURO/menu/Messages.bnk */
-	LoadBNK(sz_BNK_Messages_Drive, sz_BNK_Messages_Path);
+	edFileMount(sz_BNK_Messages_Drive, sz_BNK_Messages_Path);
 	SetLanguageID_00336b40();
 	InstallBootData();
 	/* Init_edVideo */
@@ -1633,7 +1636,7 @@ void LoadVideoFromFilePath(VideoFile* display, char* inFileName)
 
 #endif
 
-	get_physical_filename(fileName, inFileName);
+	edFileGetPhysicalFileName(fileName, inFileName);
 
 #ifdef PLATFORM_WIN
 	char* pcVar6 = edFilePathGetFilePath(fileName);

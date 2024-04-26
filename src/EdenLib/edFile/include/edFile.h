@@ -1,50 +1,41 @@
-#ifndef _EDCFILER_CDVD_H
-#define _EDCFILER_CDVD_H
+#ifndef _ED_FILE_H
+#define _ED_FILE_H
 
 #include "Types.h"
-#include "edCFiler.h"
-#include "edCBankBuffer.h"
+#include "edMem.h"
 
-// Might not be traditonally in the header here. Exposing them for windows.
-char* edFilePathGetFilePath(char* inString);
-#if defined(PLATFORM_WIN)
-char* FormatForPC(char* inString);
-#endif
+class edCFiler;
 
-class edCFiler_CDVD_Toc {
-public:
-	bool Initialize(edCdlFolder* pFolder, int size);
-	bool InitTOC_0025d530(edCdlFolder* pFolder);
-	edCdlFolder* FindEdCFile(char* filePath);
-	bool LoadFromTOC(sceCdlFILE* pOutFileData, char* filePath);
+struct CDFileContainer;
 
-	byte bLoaded;
+struct DebugBankDataInternal {
+	undefined field_0x0;
 	undefined field_0x1;
 	undefined field_0x2;
 	undefined field_0x3;
-	struct edCdlFolder* pBaseFolder;
-	struct edCdlFolder* pCurrentFolder;
-	int offset;
-	struct edCdlFolder* pNextFreeEntry;
-	int objCount_0x14;
-};
-
-class edCFiler_CDVD : public edCFiler
-{
-public:
-	edCFiler_CDVD();
-
-	virtual bool configure(char* path, ETableOfContentsInitMode mode, edFILE_PARAMETER* param_4);
-	virtual bool initialize();
-	virtual edCFiler_28* GetGlobalC_0x1c();
-	virtual bool get_physical_filename(char* filePathOut, char* pathBuff);
-	virtual bool open(edFILEH* outFile, char* unformatedFilePath);
-	virtual bool close(edFILEH* pDebugBank);
-	virtual uint read(edFILEH* pDebugBank, char* destination, uint requiredSize);
-	virtual bool seek(edFILEH* pDebugBank);
-	virtual bool isnowaitcmdend(edCFiler_28_Internal* pEdFilerInternal);
-
-private:
+	undefined field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	uint fileSize;
+	int field_0x14;
+	char name[4];
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+	undefined field_0x20;
+	undefined field_0x21;
+	undefined field_0x22;
+	undefined field_0x23;
 	undefined field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;
@@ -541,27 +532,85 @@ private:
 	undefined field_0x211;
 	undefined field_0x212;
 	undefined field_0x213;
-	byte aContainerInUse[16];
-	CDFileContainer aFileContainers[16];
-	edCFiler_28 field_0x4a4[24];
-	undefined field_0x864;
-	undefined field_0x865;
-	undefined field_0x866;
-	undefined field_0x867;
-	undefined field_0x868;
-	undefined field_0x869;
-	undefined field_0x86a;
-	undefined field_0x86b;
-	undefined field_0x86c;
-	undefined field_0x86d;
-	undefined field_0x86e;
-	undefined field_0x86f;
-	edCFiler_CDVD_Toc toc;
-	char* iopBuf;
-	byte field_0x88c;
-	byte field_0x88d;
+	undefined field_0x214;
+	undefined field_0x215;
+	undefined field_0x216;
+	undefined field_0x217;
 };
 
-extern edCFiler_CDVD edFiler_CDVD;;
+struct edFILEH {
+	edCFiler* pOwningFiler;
+	CDFileContainer* pFileData;
+	int seekOffset; /* Created by retype action */
+	uint openFlags;
+	DebugBankDataInternal field_0x10;
+	int count_0x228;
+	byte bInUse;
+	undefined field_0x22d;
+	undefined field_0x22e;
+	undefined field_0x22f;
+	EBankAction action;
+};
 
-#endif //_EDCFILER_CDVD_H
+enum ESeekMode {
+	ED_SEEK_SET,
+	ED_SEEK_CUR,
+	ED_SEEK_END
+};
+
+
+struct edSysHandlerFile {
+	edSysHandlerFile(struct edSysHandlersNodeTable* inNodeParent, int inMaxEventID, int inMainIdentifier)
+		: nodeParent(inNodeParent)
+		, maxEventID(inMaxEventID)
+		, mainIdentifier(inMainIdentifier)
+	{
+
+	}
+
+	struct edSysHandlersNodeTable* nodeParent;
+	struct edSysHandlersPoolEntry* entries[16];
+	int maxEventID;
+	int mainIdentifier;
+};
+
+extern byte edFileHandleTable[16];
+extern edFILEH edFileHandleData[16];
+
+void* GetInternalData_0025b2e0(edFILEH* pDebugBankData);
+
+char* edFileOpen(char* filePath, uint* outSize, uint flags);
+edFILEH* edFileOpen(char* filePath, uint flags);
+uint GetFileSize_0025bd70(edFILEH* pDebugBank);
+bool SetRead_0025be80(edFILEH* pDebugBank, char* param_2, uint size);
+byte edFileRead(edFILEH* pDebugBank, char* pReadBuffer, uint someSize);
+
+bool SetBankReadStream(class edCFiler_28* param_1, edFILEH* pDebugBank, char* pReadBuffer, uint someSize);
+
+bool edFileSeek(edFILEH* pDebugBank, uint seekOffset, ESeekMode mode);
+bool edFileClose(edFILEH* pDebugBank);
+bool SetBankClose(edCFiler_28* param_1, edFILEH* pDataBank);
+
+bool edFileFlush(void);
+
+void edFileNoWaitStackFlush(void);
+
+uint edFileGetSize(edFILEH* param_1);
+
+void edFileNoWaitStackCallBack(edCFiler_28* param_1);
+
+void edFileSetPath(char* mode);
+bool edFileInit(void);
+bool edFileGetPhysicalFileName(char* filePathOut, char* filePathIn);
+
+struct edFileLoadConfig {
+	EHeap heap;
+	ushort align;
+	ushort offset;
+};
+
+extern edFileLoadConfig edFileLoadInfo;
+
+extern edSysHandlerFile edFileHandlers;
+
+#endif //_ED_FILE_H

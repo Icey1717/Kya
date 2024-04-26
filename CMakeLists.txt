@@ -144,8 +144,6 @@ set(main_src
 	"${src_root}/edC/edCFiler.h"
 	"${src_root}/edC/edCFiler_Static.cpp"
 	"${src_root}/edC/edCFiler_Static.h"
-	"${src_root}/edC/edCFiler_CDVD.cpp"
-	"${src_root}/edC/edCFiler_CDVD.h"
 	"${src_root}/MathOps.cpp"
 	"${src_root}/MathOps.h"
 	"${src_root}/TimeController.cpp"
@@ -243,6 +241,33 @@ set(main_src
 	"${src_root}/EdenLib/edDev/Sources/edDevAddRoute.cpp"
 	"${src_root}/EdenLib/edDev/Sources/edDevAddRoute.h"
 	"${src_root}/EdenLib/edDev/Sources/edDev.h"
+
+	"${src_root}/EdenLib/edBank/sources/edBank.cpp"
+	"${src_root}/EdenLib/edBank/sources/edBankBuffer.cpp"
+	"${src_root}/EdenLib/edBank/sources/edBankDebug.cpp"
+	"${src_root}/EdenLib/edBank/sources/edBankFile.cpp"
+	"${src_root}/EdenLib/edBank/sources/edBankFiler.cpp"
+	"${src_root}/EdenLib/edBank/sources/edBankStackFile.cpp"
+
+	"${src_root}/EdenLib/edBank/include/edBank.h"
+	"${src_root}/EdenLib/edBank/include/edBankBuffer.h"
+	"${src_root}/EdenLib/edBank/include/edBankDebug.h"
+	"${src_root}/EdenLib/edBank/include/edBankFile.h"
+	"${src_root}/EdenLib/edBank/include/edBankFiler.h"
+	"${src_root}/EdenLib/edBank/include/edBankStackFile.h"
+
+	"${src_root}/EdenLib/edFile/include/edFileFiler.h"
+	"${src_root}/EdenLib/edFile/include/edFile.h"
+	"${src_root}/EdenLib/edFile/include/edFilePath.h"
+	"${src_root}/EdenLib/edFile/include/edFileCRC32.h"
+	"${src_root}/EdenLib/edFile/include/_ps2/_edFileFilerCDVD.h"
+
+	"${src_root}/EdenLib/edFile/sources/edFileFiler.cpp"
+	"${src_root}/EdenLib/edFile/sources/edFile.cpp"
+	"${src_root}/EdenLib/edFile/sources/edFilePath.cpp"
+	"${src_root}/EdenLib/edFile/sources/edFileCRC32.cpp"
+	"${src_root}/EdenLib/edFile/sources/_ps2/_edFileFilerCDVD.cpp"
+
 	"${src_root}/edVideo/VideoA.cpp"
 	"${src_root}/edVideo/VideoA.h"
 	"${src_root}/edVideo/VideoB.cpp"
@@ -424,7 +449,7 @@ else()
 	add_dependencies(Kya sync_files)
 endif()
 
-target_include_directories(Kya PRIVATE ${src_root})
+target_include_directories(Kya PRIVATE ${src_root} "${src_root}/EdenLib/edBank/include" "${src_root}/EdenLib/edFile/include")
 
 if (PS2)
 	target_include_directories(Kya PRIVATE ${ps2_src_root})

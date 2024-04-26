@@ -3,10 +3,10 @@
 
 #include "Types.h"
 #include "LargeObject.h"
-#include "edC/edCBank.h"
 #include "FileManager3D.h"
 #include "ed3D.h"
 #include "EdenLib/edCollision/sources/edCollisions.h"
+#include "EdenLib/edBank/include/edBankBuffer.h"
 
 namespace ed3D
 {

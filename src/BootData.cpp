@@ -1,5 +1,6 @@
 #include "BootData.h"
-#include "edC/edCBank.h"
+#include "edBankBuffer.h"
+#include "edBankStackFile.h"
 #include "PauseManager.h"
 #include "edText.h"
 #include "Rendering/edCTextFont.h"
@@ -14,6 +15,7 @@
 #else
 #include "port/pointer_conv.h"
 #endif
+#include "FrontendManager.h"
 
 edCBankBuffer BootData_BankBuffer = { 0 };
 edCBankBufferEntry* BootData_BankBufferEntry = NULL;

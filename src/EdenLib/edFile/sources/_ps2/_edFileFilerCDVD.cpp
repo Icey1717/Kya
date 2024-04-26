@@ -1,4 +1,4 @@
-#include "edCFiler_CDVD.h"
+#include "_ps2/_edFileFilerCDVD.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -12,9 +12,11 @@
 #endif
 
 #include "edSystem.h"
+#include "edFile.h"
 
 #include <assert.h>
-#include "../edStr.h"
+#include "edStr.h"
+#include "edFilePath.h"
 
 edCFiler_CDVD edFiler_CDVD;
 
@@ -62,28 +64,16 @@ bool edCFiler_CDVD::configure(char* path, ETableOfContentsInitMode mode, edFILE_
 
 bool edCFiler_CDVD::initialize()
 {
-	baseData.pDriveName_0x0 = sz_CDVD_Drive_004312f8;
-	iopBuf = 0;
+	this->pDriveName_0x0 = sz_CDVD_Drive_004312f8;
+	this->iopBuf = 0;
 	set_default_unit(sz_DriveLetter_00431300);
-	baseData.field_0x4 = 0x61;
+	this->field_0x4 = 0x61;
 	return true;
 }
 
 edCFiler_28* edCFiler_CDVD::GetGlobalC_0x1c()
 {
 	return field_0x4a4;
-}
-
-char* edFilePathGetFilePath(char* inString)
-{
-	char* ret;
-
-	/* Takes a string and finds the first colon, then returns the address of the first character after the found colon */
-	ret = edStrChr(inString, ':');
-	if (ret != (char*)0x0) {
-		ret = ret + 1;
-	}
-	return ret;
 }
 
 #if defined(PLATFORM_WIN)
@@ -928,4 +918,10 @@ bool edCFiler_CDVD::get_physical_filename(char* filePathOut, char* pathBuff)
 		bVar1 = true;
 	}
 	return bVar1;
+}
+
+void _edFileCDVDAddFiler(void)
+{
+	edFilerList.add_filer(&edFiler_CDVD);
+	return;
 }
