@@ -22,3 +22,9 @@
 [submodule "port/ext/tracy"]
 	path = port/ext/tracy
 	url = https://github.com/wolfpld/tracy.git
+[submodule "src/EdenLib/edBank"]
+	path = src/EdenLib/edBank
+	url = https://github.com/Icey1717/edBank.git
+[submodule "src/EdenLib/edFile"]
+	path = src/EdenLib/edFile
+	url = https://github.com/Icey1717/edFile.git
