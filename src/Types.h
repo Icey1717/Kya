@@ -820,4 +820,16 @@ enum EBankAction
 	SEEK = 1
 };
 
+#if defined(PLATFORM_PS2)
+#include <libcdvd.h>
+#else
+struct sceCdlFILE {
+	uint lsn; /* File location on disc */
+	uint size; /* File size */
+	char name[16]; /* File name (body) */
+	u_char date[8]; /* Date */
+	uint flag; /* File flag */
+};
+#endif
+
 #endif //_TYPES_H

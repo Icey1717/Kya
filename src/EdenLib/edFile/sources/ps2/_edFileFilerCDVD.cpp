@@ -43,7 +43,6 @@ edCFiler_CDVD::edCFiler_CDVD()
 	toc.offset = 0;
 	toc.pNextFreeEntry = (edCdlFolder*)0x0;
 	toc.objCount_0x14 = 0;
-	//__register_global_object((undefined*)&edFiler_CDVD, Free_0025c560, &EdFileGlobal_10_0046c350);
 	return;
 }
 
