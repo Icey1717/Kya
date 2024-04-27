@@ -78,7 +78,7 @@ extern "C" {
 #include "edFileFiler.h"
 #include "edFile.h"
 #include "edBank.h"
-#include "_ps2/_edFileFilerCDVD.h"
+#include "ps2/_edFileFilerCDVD.h"
 #include "edFilePath.h"
 
 template<class T>

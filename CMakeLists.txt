@@ -260,13 +260,13 @@ set(main_src
 	"${src_root}/EdenLib/edFile/include/edFile.h"
 	"${src_root}/EdenLib/edFile/include/edFilePath.h"
 	"${src_root}/EdenLib/edFile/include/edFileCRC32.h"
-	"${src_root}/EdenLib/edFile/include/_ps2/_edFileFilerCDVD.h"
+	"${src_root}/EdenLib/edFile/include/ps2/_edFileFilerCDVD.h"
 
 	"${src_root}/EdenLib/edFile/sources/edFileFiler.cpp"
 	"${src_root}/EdenLib/edFile/sources/edFile.cpp"
 	"${src_root}/EdenLib/edFile/sources/edFilePath.cpp"
 	"${src_root}/EdenLib/edFile/sources/edFileCRC32.cpp"
-	"${src_root}/EdenLib/edFile/sources/_ps2/_edFileFilerCDVD.cpp"
+	"${src_root}/EdenLib/edFile/sources/ps2/_edFileFilerCDVD.cpp"
 
 	"${src_root}/edVideo/VideoA.cpp"
 	"${src_root}/edVideo/VideoA.h"

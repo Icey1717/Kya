@@ -2,7 +2,7 @@
 #include "edSystem.h"
 #include "edMem.h"
 
-#include "_ps2/_edFileFilerCDVD.h"
+#include "ps2/_edFileFilerCDVD.h"
 #include "edVideo/VideoD.h"
 
 byte edFileHandleTable[16];
