@@ -2,3 +2,6 @@ out
 bin
 .vs
 assets
+ps2/backup
+ps2/ezmpegstr
+ps2/*
