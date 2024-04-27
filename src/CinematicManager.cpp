@@ -13,7 +13,6 @@
 #include "port/pointer_conv.h"
 
 #include "edBankFile.h"
-#include "edBankStackFile.h"
 #include "edFile.h"
 
 #ifdef PLATFORM_PS2
@@ -1332,7 +1331,7 @@ void CCinematic::Start()
 	return;
 }
 
-TypePairData _gCinTableBankCallback[1] = {-1, -1, 0x0, 0, 0, 0, 0, 0};
+edCBankCallback _gCinTableBankCallback[1] = {-1, -1, 0x0, 0, 0, 0, 0, 0};
 
 void CCinematic::Load(long mode)
 {

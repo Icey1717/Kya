@@ -12,7 +12,7 @@ edCBankStack edBankStack;
 
 void edBankStackFileCallBack(int idA, int idB, char* pReadBuffer)
 {
-	TypePairData* pTypePairData;
+	edCBankCallback* pTypePairData;
 	void* puVar1;
 	LoadBankFileFunc pLVar2;
 	edFILEH* pDVar3;
@@ -24,7 +24,7 @@ void edBankStackFileCallBack(int idA, int idB, char* pReadBuffer)
 	if (edBankStack.loadedBanks != 0) {
 		pcVar1 = (edCFiler_Bnk_static_header*)edBankStack.aBankQueue[edBankStack.currentIndex].pReadBuffer;
 		if ((edCFiler_Bnk_static_header*)pReadBuffer == pcVar1) {
-			pTypePairData = (TypePairData*)edBankStack.aBankQueue[edBankStack.currentIndex].pBankTypePairData_0xc;
+			pTypePairData = (edCBankCallback*)edBankStack.aBankQueue[edBankStack.currentIndex].pBankTypePairData_0xc;
 			puVar1 = edBankStack.aBankQueue[edBankStack.currentIndex].pObjectReference_0x10;
 			(edBankStack.aBankQueue[edBankStack.currentIndex].pBankHeader_0x0)->accessFlag = 0;
 

@@ -1,6 +1,5 @@
 #include "FrontendManager.h"
 #include "edBankBuffer.h"
-#include "edBankStackFile.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
 #include "PauseManager.h"
@@ -19,7 +18,7 @@ struct Bank {
 	edCBankBufferEntry* pAccessObj;
 	edCBankBuffer bankData;
 	void Init(int param_2, int size);
-	bool BankLoad(char* path, char* fileName, TypePairData* pTypePairData);
+	bool BankLoad(char* path, char* fileName, edCBankCallback* pTypePairData);
 	char* GetResource(char* fileName, edBANK_ENTRY_INFO* param_3);
 	bool BankUnload();
 	void Term();
@@ -34,14 +33,14 @@ void Bank::Init(int param_2, int size)
 	return;
 }
 
-bool Bank::BankLoad(char* path, char* fileName, TypePairData* pTypePairData)
+bool Bank::BankLoad(char* path, char* fileName, edCBankCallback* pTypePairData)
 {
 	bool bVar1;
 	edCBankBufferEntry* peVar2;
 	edCBankInstall local_a0;
 	char filePath[128];
 
-	if (pTypePairData != (TypePairData*)0x0) {
+	if (pTypePairData != (edCBankCallback*)0x0) {
 		this->bankData.bank_buffer_setcb(pTypePairData);
 	}
 	memset(&local_a0, 0, sizeof(edCBankInstall));

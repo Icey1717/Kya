@@ -9,6 +9,7 @@ void edCBankDebug::buffer_link(edCBankBuffer* pBankBuffer)
 		if (this->bankCount == 1) {
 			this->pNextBank->pNextBank = pBankBuffer;
 			this->pNextBank->pPrevBank = pBankBuffer;
+
 			pBankBuffer->pNextBank = this->pNextBank;
 			pBankBuffer->pPrevBank = this->pNextBank;
 		}
@@ -25,8 +26,10 @@ void edCBankDebug::buffer_link(edCBankBuffer* pBankBuffer)
 				this->pNextBank->pPrevBank = pBankBuffer;
 			}
 		}
+
 		this->bankCount = this->bankCount + 1;
 	}
+
 	return;
 }
 
@@ -36,6 +39,7 @@ void edCBankDebug::buffer_unlink(edCBankBuffer* pBankBuffer)
 		this->bankCount = this->bankCount + -1;
 		pBankBuffer->pNextBank->pPrevBank = pBankBuffer->pPrevBank;
 		pBankBuffer->pPrevBank->pNextBank = pBankBuffer->pNextBank;
+
 		if (this->bankCount == 0) {
 			this->pNextBank = (edCBankBuffer*)0x0;
 		}
@@ -44,8 +48,10 @@ void edCBankDebug::buffer_unlink(edCBankBuffer* pBankBuffer)
 				this->pNextBank = pBankBuffer->pNextBank;
 			}
 		}
+
 		pBankBuffer->pNextBank = (edCBankBuffer*)0x0;
 		pBankBuffer->pPrevBank = (edCBankBuffer*)0x0;
 	}
+
 	return;
 }

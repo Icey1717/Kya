@@ -13,128 +13,140 @@ char* sz_CloseBankBufferError_0042fbc0 = "Can't close header of bank of bank!!\n
 
 edCFiler_Bnk_static_header* edCBankBuffer::get_entry(int index)
 {
-	return (edCFiler_Bnk_static_header*)(&this->pBankBuffer->header + index * 9);
+	return (edCFiler_Bnk_static_header*)(&this->aBankBufferEntries->pBankBuffer + index * 9);
 }
 
-void edCBankBuffer::initialize(int size, int param_3, edCBankInstall* bankPathContainer)
+void edCBankBuffer::initialize(int size, int nbBankBufferEntries, edCBankInstall* pBankInstall)
 {
-	int iVar1;
-	edCBankBufferEntry* peVar2;
-	int* piVar3;
-	edCBankBufferEntry* peVar4;
-	uint bankFlags;
-	uint uVar5;
-	edCBankBuffer* local_s2_lo_56;
+	int fileSize;
+	edCBankBufferEntry* pBankBufferEntry;
+	char* pFileBuffer;
+	char* pBufferStart;
+	uint bankBufferEntryIndex;
+	uint bankBufferSize;
 
 	edBankDebug.buffer_link(this);
+
 	this->size = size;
-	this->fileFlagA = bankPathContainer->fileFlagA;
-	this->createFlagA = param_3;
-	this->pBankTypePairData = (TypePairData*)0x0;
+	this->fileFlagA = pBankInstall->fileFlagA;
+	this->nbBankBufferEntries = nbBankBufferEntries;
+	this->pBankCallback = (edCBankCallback*)0x0;
 	this->flagB = 0;
-	this->flagC = 0;
+	this->nbBankBufferEntriesInUse = 0;
 	this->firstField = 0;
-	this->heapID = bankPathContainer->heapID;
+	this->heapID = pBankInstall->heapID;
+
 	if (this->heapID == TO_HEAP(H_INVALID)) {
 		this->heapID = TO_HEAP(H_MAIN);
 	}
+
 	if (_edBankAllowNoWait == 0) {
 		this->fileFlagA = this->fileFlagA & 0xfffffffb;
 	}
+
 	if ((this->fileFlagA & 1U) != 0) {
-		this->createFlagA = this->createFlagA + 1;
+		this->nbBankBufferEntries = this->nbBankBufferEntries + 1;
 	}
-	uVar5 = this->createFlagA * 0x24;
-	if ((uVar5 & 0x7ff) == 0) {
-		iVar1 = this->size;
+
+	bankBufferSize = this->nbBankBufferEntries * sizeof(edCBankBufferEntry);
+	if ((bankBufferSize & 0x7ff) == 0) {
+		fileSize = this->size;
 	}
 	else {
-		uVar5 = ((uVar5 >> 0xb) + 1) * 0x800;
-		iVar1 = this->size;
+		bankBufferSize = ((bankBufferSize >> 0xb) + 1) * 0x800;
+		fileSize = this->size;
 	}
-	peVar2 = (edCBankBufferEntry*)edMemAllocAlign(this->heapID, (long)(int)(iVar1 + uVar5), 0x800);
-	this->pBankBuffer = peVar2;
-	memset(this->pBankBuffer, 0, uVar5);
+
+	this->aBankBufferEntries = (edCBankBufferEntry*)edMemAllocAlign(this->heapID, fileSize + bankBufferSize, 0x800);
+	memset(this->aBankBufferEntries, 0, bankBufferSize);
+
 	if ((this->fileFlagA & 1U) != 0) {
-		bankFlags = 0;
-		for (peVar2 = this->pBankBuffer; (bankFlags < (uint)this->createFlagA && (peVar2->field_0x4 != (int*)0x0)); peVar2 = (edCBankBufferEntry*)&peVar2->field_0x24) {
-			bankFlags = bankFlags + 1;
+		bankBufferEntryIndex = 0;
+		for (pBankBufferEntry = this->aBankBufferEntries; (bankBufferEntryIndex < this->nbBankBufferEntries && (pBankBufferEntry->pFileBuffer != (char*)0x0)); pBankBufferEntry = pBankBufferEntry + 1) {
+			bankBufferEntryIndex = bankBufferEntryIndex + 1;
 		}
-		if (bankFlags == this->createFlagA) {
-			peVar2 = (edCBankBufferEntry*)0x0;
+
+		if (bankBufferEntryIndex == this->nbBankBufferEntries) {
+			pBankBufferEntry = (edCBankBufferEntry*)0x0;
 		}
 		else {
-			peVar2->headerComponent = 0;
-			peVar2->header = this;
-			uVar5 = this->createFlagA * 0x24;
-			if ((uVar5 & 0x7ff) == 0) {
-				peVar4 = this->pBankBuffer;
+			pBankBufferEntry->headerComponent = 0;
+			pBankBufferEntry->pBankBuffer = this;
+			bankBufferSize = this->nbBankBufferEntries * sizeof(edCBankBufferEntry);
+
+			if ((bankBufferSize & 0x7ff) == 0) {
+				pBufferStart = reinterpret_cast<char*>(this->aBankBufferEntries);
 			}
 			else {
-				uVar5 = ((uVar5 >> 0xb) + 1) * 0x800;
-				peVar4 = this->pBankBuffer;
+				bankBufferSize = ((bankBufferSize >> 0xb) + 1) * 0x800;
+				pBufferStart = reinterpret_cast<char*>(this->aBankBufferEntries);
 			}
-			peVar2->field_0x4 = (int*)((int)&peVar4->header + this->flagB + uVar5);
-			this->flagC = this->flagC + 1;
+
+			pBankBufferEntry->pFileBuffer = pBufferStart + this->flagB + bankBufferSize;
+			this->nbBankBufferEntriesInUse = this->nbBankBufferEntriesInUse + 1;
 		}
-		uVar5 = 1;
-		peVar2->headerComponent = 1;
+
+		bankBufferSize = 1;
+		pBankBufferEntry->headerComponent = 1;
+
 		if ((this->fileFlagA & 4U) != 0) {
-			uVar5 = 9;
+			bankBufferSize = 9;
 		}
-		piVar3 = (int*)edBankFilerReadHeader(this->heapID, bankPathContainer->filePath, uVar5, &peVar2->pLoadedData);
-		peVar2->field_0x4 = piVar3;
-		peVar2->fileBuffer = (edCBankFileHeader*)(piVar3 + 2);
-		peVar2->field_0x14 = piVar3[0x11];
-		((edCBankFileHeader*)(piVar3 + 2))->analyse();
+
+		pFileBuffer = edBankFilerReadHeader(this->heapID, pBankInstall->filePath, bankBufferSize, &pBankBufferEntry->pFile);
+		pBankBufferEntry->pFileBuffer = pFileBuffer;
+		pBankBufferEntry->pFileHeader = reinterpret_cast<edCBankFileHeader*>(pFileBuffer + FILE_DATA_TAG_SIZE);
+		pBankBufferEntry->field_0x14 = *reinterpret_cast<int*>(pBankBufferEntry->pFileHeader + 1);
+		pBankBufferEntry->pFileHeader->analyse();
 	}
 	return;
 }
 
-void edCBankBuffer::bank_buffer_setcb(TypePairData* pTypePairData)
+void edCBankBuffer::bank_buffer_setcb(edCBankCallback* pNewBankCallback)
 {
-	this->pBankTypePairData = pTypePairData;
+	this->pBankCallback = pNewBankCallback;
 	return;
 }
 
-bool edCBankBuffer::file_access(edCBankBufferEntry* pBankFileAccessObject, edCBankInstall* filePathPtr, long param_4, bool someFlag)
+bool edCBankBuffer::file_access(edCBankBufferEntry* pBankBufferEntry, edCBankInstall* pBankInstall, long param_4, bool someFlag)
 {
-	edCBankFileHeader* bankBufferObj;
+	edCBankFileHeader* pBankFileHeader;
 	uint* puVar1;
-	edFILEH* pDebugBank;
+	edFILEH* pFile;
 	uint uVar2;
-	edCBankBufferEntry* peVar3;
+	char* peVar3;
 	ulong uVar4;
 	uint uVar5;
 	char* pReadBuffer;
 	uint unaff_s7_lo;
-	edCBankStackElement local_20;
-	int fileBufferData;
+	edCBankStackElement bankStackElement;
+	int accessFlag;
 
-	if (pBankFileAccessObject->accessFlag != 0) {
-	
+	if (pBankBufferEntry->accessFlag != 0) {	
 		edDebugPrintf("edCBankBufferEntry::file_access: Wait for end of previous loading operation \n");
-		fileBufferData = pBankFileAccessObject->accessFlag;
-		while (fileBufferData != 0) {
+		accessFlag = pBankBufferEntry->accessFlag;
+		while (accessFlag != 0) {
 			edFileNoWaitStackFlush();
-			fileBufferData = pBankFileAccessObject->accessFlag;
+			accessFlag = pBankBufferEntry->accessFlag;
 		}
 	}
+
 	if (someFlag == false) {
 		uVar2 = 1;
-		if (((this->fileFlagA & 4U) != 0) || ((filePathPtr->fileFlagA & 4U) != 0)) {
+		if (((this->fileFlagA & 4U) != 0) || ((pBankInstall->fileFlagA & 4U) != 0)) {
 			uVar2 = 9;
 		}
-		pDebugBank = edFileOpen(filePathPtr->filePath, uVar2 | 1);
-		if (pDebugBank == (edFILEH*)0x0) {
+
+		pFile = edFileOpen(pBankInstall->filePath, uVar2 | 1);
+		if (pFile == (edFILEH*)0x0) {
 			/* edCBankBuffer: Can't open file\n */
 			edDebugPrintf(sz_CannotOpenFile_0042fc60);
 			return false;
 		}
-		uVar2 = edFileGetSize(pDebugBank);
+		uVar2 = edFileGetSize(pFile);
 	}
 	else {
-		if (pBankFileAccessObject->headerComponent != 0) {
+		if (pBankBufferEntry->headerComponent != 0) {
 			/* edCBankBuffer::file_access: Can't replace header of bank of bank!!\n */
 			edDebugPrintf(sz_CannotReplaceHeader_0042fbf0);
 			return false;
@@ -156,64 +168,72 @@ bool edCBankBuffer::file_access(edCBankBufferEntry* pBankFileAccessObject, edCBa
 		//	return false;
 		//}
 	}
-	pBankFileAccessObject->pObjectReference = filePathPtr->pObjectReference;
-	if ((param_4 == 0) || ((long)(int)pBankFileAccessObject->fileBuffer == 0)) {
+	pBankBufferEntry->pObjectReference = pBankInstall->pObjectReference;
+	if ((param_4 == 0) || ((long)(int)pBankBufferEntry->pFileHeader == 0)) {
 		if ((uint)(this->size - this->flagB) < uVar2) {
 			/* // edCBankBuffer: Not enough space in the bank buffer to add a bank \n */
 			edDebugPrintf("// edCBankBufferEntry: Not enough space in the bank buffer to add a bank \n");
 			return false;
 		}
-		uVar5 = this->createFlagA * 0x24;
+
+		uVar5 = this->nbBankBufferEntries * sizeof(edCBankBufferEntry);
 		if ((uVar5 & 0x7ff) == 0) {
-			peVar3 = this->pBankBuffer;
+			peVar3 = reinterpret_cast<char*>(this->aBankBufferEntries);
 		}
 		else {
 			uVar5 = ((uVar5 >> 0xb) + 1) * 0x800;
-			peVar3 = this->pBankBuffer;
+			peVar3 = reinterpret_cast<char*>(this->aBankBufferEntries);
 		}
-		pReadBuffer = (char*)((char*)&peVar3->header + this->flagB + uVar5);
-		pBankFileAccessObject->field_0x4 = (int*)pReadBuffer;
-		pBankFileAccessObject->fileBuffer = (edCBankFileHeader*)(pReadBuffer + 8);
-		pBankFileAccessObject->pLoadedData = (edFILEH*)0x0;
-		pBankFileAccessObject->field_0x14 = uVar2;
+
+		pReadBuffer = peVar3 + this->flagB + uVar5;
+		pBankBufferEntry->pFileBuffer = pReadBuffer;
+		pBankBufferEntry->pFileHeader = reinterpret_cast<edCBankFileHeader*>(pReadBuffer + FILE_DATA_TAG_SIZE);
+		pBankBufferEntry->pFile = (edFILEH*)0x0;
+		pBankBufferEntry->field_0x14 = uVar2;
 	}
 	else {
 		IMPLEMENTATION_GUARD();
 		//edCBankFileHeader_get_entry_typepair((long)(int)pBankFileAccessObject->fileBuffer, pBankHeader->pBankTypePairData, 1, pBankFileAccessObject->pObjectReference);
-		pReadBuffer = (char*)pBankFileAccessObject->field_0x4;
+		pReadBuffer = pBankBufferEntry->pFileBuffer;
 	}
-	pBankFileAccessObject->accessFlag = 1;
-	local_20.pBankTypePairData_0xc = this->pBankTypePairData;
-	local_20.pObjectReference_0x10 = filePathPtr->pObjectReference;
-	local_20.fileFlagB_0x18 = filePathPtr->fileFlagA;
-	local_20.pDebugBankData = pDebugBank;
+
+	pBankBufferEntry->accessFlag = 1;
+	bankStackElement.pBankTypePairData_0xc = this->pBankCallback;
+	bankStackElement.pObjectReference_0x10 = pBankInstall->pObjectReference;
+	bankStackElement.fileFlagB_0x18 = pBankInstall->fileFlagA;
+	bankStackElement.pDebugBankData = pFile;
 	if (someFlag != false) {
-		local_20.pDebugBankData = (edFILEH*)0x0;
+		bankStackElement.pDebugBankData = (edFILEH*)0x0;
 	}
-	local_20.fileFunc_0x14 = filePathPtr->fileFunc;
-	local_20.pBankHeader_0x0 = pBankFileAccessObject;
-	local_20.pReadBuffer = pReadBuffer;
-	edBankStack.add_file(&local_20);
-	if (filePathPtr->fileFlagE == 0) {
+	bankStackElement.fileFunc_0x14 = pBankInstall->fileFunc;
+	bankStackElement.pBankHeader_0x0 = pBankBufferEntry;
+	bankStackElement.pReadBuffer = pReadBuffer;
+	edBankStack.add_file(&bankStackElement);
+
+	if (pBankInstall->fileFlagE == 0) {
 		this->flagB = this->flagB + uVar2;
 	}
 	else {
-		this->flagB = this->flagB + filePathPtr->fileFlagE;
+		this->flagB = this->flagB + pBankInstall->fileFlagE;
 	}
+
 	if (someFlag != false) {
-		edFileSeek(pDebugBank, unaff_s7_lo, ED_SEEK_SET);
+		edFileSeek(pFile, unaff_s7_lo, ED_SEEK_SET);
 	}
-	edFileRead(pDebugBank, pReadBuffer, uVar2);
+
+	edFileRead(pFile, pReadBuffer, uVar2);
+
 	if (someFlag == false) {
-		edFileClose(pDebugBank);
+		edFileClose(pFile);
 	}
-	if ((((this->fileFlagA & 4U) == 0) && ((filePathPtr->fileFlagA & 4U) == 0)) && (pBankFileAccessObject->accessFlag != 0)) {
+
+	if ((((this->fileFlagA & 4U) == 0) && ((pBankInstall->fileFlagA & 4U) == 0)) && (pBankBufferEntry->accessFlag != 0)) {
 		/* edCBankBuffer::file_access: Wait for end of previous loading operation \n */
 		edDebugPrintf("edCBankBufferEntry::file_access: Wait for end of previous loading operation \n");
-		fileBufferData = pBankFileAccessObject->accessFlag;
-		while (fileBufferData != 0) {
+		accessFlag = pBankBufferEntry->accessFlag;
+		while (accessFlag != 0) {
 			edFileNoWaitStackFlush();
-			fileBufferData = pBankFileAccessObject->accessFlag;
+			accessFlag = pBankBufferEntry->accessFlag;
 		}
 	}
 	return true;
@@ -246,47 +266,54 @@ void edCBankBuffer::terminate()
 	edBankDebug.buffer_unlink(this);
 
 	if ((this->fileFlagA & 1U) != 0) {
-		edFileClose(this->pBankBuffer->pLoadedData);
-		edMemFree(this->pBankBuffer->field_0x4);
-		memset(this->pBankBuffer, 0, 0x24);
+		edFileClose(this->aBankBufferEntries->pFile);
+		edMemFree(this->aBankBufferEntries->pFileBuffer);
+		memset(this->aBankBufferEntries, 0, sizeof(edCBankBufferEntry));
 	}
 
-	edMemFree(this->pBankBuffer);
-	memset(this, 0, 0x38);
+	edMemFree(this->aBankBufferEntries);
+	memset(this, 0, sizeof(edCBankBuffer));
 	return;
 }
 
 edCBankBufferEntry* edCBankBuffer::get_free_entry()
 {
-	edCBankBufferEntry* returnBankPtr;
-	edCBankBufferEntry* peVar1;
-	uint uVar2;
+	edCBankBufferEntry* pFreeEntry;
+	char* peVar1;
+	uint nextFreeEntryId;
+	uint offset;
 
-	uVar2 = 0;
-	for (returnBankPtr = this->pBankBuffer; (uVar2 < (uint)this->createFlagA && (returnBankPtr->field_0x4 != (int*)0x0)); returnBankPtr = (edCBankBufferEntry*)&returnBankPtr->field_0x24) {
-		uVar2 = uVar2 + 1;
+	nextFreeEntryId = 0;
+
+	for (pFreeEntry = this->aBankBufferEntries; (nextFreeEntryId < (uint)this->nbBankBufferEntries && (pFreeEntry->pFileBuffer != (char*)0x0)); pFreeEntry = pFreeEntry + 1) {
+		nextFreeEntryId = nextFreeEntryId + 1;
 	}
-	if (uVar2 == this->createFlagA) {
-		returnBankPtr = (edCBankBufferEntry*)0x0;
+
+	if (nextFreeEntryId == this->nbBankBufferEntries) {
+		pFreeEntry = (edCBankBufferEntry*)0x0;
 	}
 	else {
-		returnBankPtr->headerComponent = 0;
-		returnBankPtr->header = this;
-		uVar2 = this->createFlagA * 0x24;
-		if ((uVar2 & 0x7ff) == 0) {
-			peVar1 = this->pBankBuffer;
+		pFreeEntry->headerComponent = 0;
+		pFreeEntry->pBankBuffer = this;
+		offset = this->nbBankBufferEntries * sizeof(edCBankBufferEntry);
+
+		if ((offset & 0x7ff) == 0) {
+			peVar1 = reinterpret_cast<char*>(this->aBankBufferEntries);
 		}
 		else {
-			uVar2 = ((uVar2 >> 0xb) + 1) * 0x800;
-			peVar1 = this->pBankBuffer;
+			offset = ((offset >> 0xb) + 1) * 0x800;
+			peVar1 = reinterpret_cast<char*>(this->aBankBufferEntries);
 		}
-		returnBankPtr->field_0x4 = (int*)((int)&peVar1->header + this->flagB + uVar2);
-		this->flagC = this->flagC + 1;
+
+		pFreeEntry->pFileBuffer = peVar1 + this->flagB + offset;
+
+		this->nbBankBufferEntriesInUse = this->nbBankBufferEntriesInUse + 1;
 	}
-	return returnBankPtr;
+
+	return pFreeEntry;
 }
 
-bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileData, char* outIopPath)
+bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* pBankEntryInfoOut, char* outIopPath)
 {
 	bool bVar1;
 	FileTypeData* pTypeData;
@@ -296,9 +323,9 @@ bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileDat
 	edCBankFileHeader* pBVar3;
 	uint inIndex;
 
-	IO_LOG(LogLevel::Info, "get_info for {} = {}", inFileIndex, DebugFindFilePath(this->fileBuffer, inFileIndex));
+	IO_LOG(LogLevel::Info, "get_info for {} = {}", inFileIndex, DebugFindFilePath(this->pFileHeader, inFileIndex));
 
-	pBVar3 = this->fileBuffer;
+	pBVar3 = this->pFileHeader;
 	if (pBVar3 == (edCBankFileHeader*)0x0) {
 		bVar1 = false;
 	}
@@ -310,31 +337,31 @@ bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileDat
 				bVar1 = false;
 			}
 			else {
-				outFileData->type = (uint)pTypeData->type;
-				outFileData->stype = (uint)pTypeData->stype;
-				pFileHeader = this->fileBuffer->get_entry(inFileIndex);
+				pBankEntryInfoOut->type = (uint)pTypeData->type;
+				pBankEntryInfoOut->stype = (uint)pTypeData->stype;
+				pFileHeader = this->pFileHeader->get_entry(inFileIndex);
 				if (pFileHeader == (FileHeaderFileData*)0x0) {
 					bVar1 = false;
 				}
 				else {
-					outFileData->size = pFileHeader->size;
-					outFileData->crc = pFileHeader->crc;
-					returnFileBufferStart = this->fileBuffer->get_entry_data(inFileIndex);
-					outFileData->fileBufferStart = returnFileBufferStart;
+					pBankEntryInfoOut->size = pFileHeader->size;
+					pBankEntryInfoOut->crc = pFileHeader->crc;
+					returnFileBufferStart = this->pFileHeader->get_entry_data(inFileIndex);
+					pBankEntryInfoOut->fileBufferStart = returnFileBufferStart;
 					if (outIopPath != (char*)0x0) {
 						*outIopPath = '\0';
-						pBVar3 = this->fileBuffer;
+						pBVar3 = this->pFileHeader;
 						inIndex = 0;
 						if (pBVar3->fileCount != 0) {
 							do {
 								uVar2 = pBVar3->get_index(inIndex, 0);
 								if ((uVar2 == inFileIndex) &&
-									(returnFileBufferStart = this->fileBuffer->get_entry_filename(inIndex),
+									(returnFileBufferStart = this->pFileHeader->get_entry_filename(inIndex),
 										returnFileBufferStart != (char*)0x0)) {
 									edStrCopy(outIopPath, returnFileBufferStart);
 									break;
 								}
-								pBVar3 = this->fileBuffer;
+								pBVar3 = this->pFileHeader;
 								inIndex = inIndex + 1;
 							} while (inIndex < pBVar3->fileCount);
 						}
@@ -349,19 +376,19 @@ bool edCBankBufferEntry::get_info(int inFileIndex, edBANK_ENTRY_INFO* outFileDat
 
 char* edCBankBufferEntry::get_element(int fileIndex)
 {
-	return this->fileBuffer->get_entry_data(fileIndex);
+	return this->pFileHeader->get_entry_data(fileIndex);
 }
 
 
 int edCBankBufferEntry::get_index(const char* inFileName)
 {
-	int iVar1;
+	int index;
 
-	iVar1 = 0;
-	if (this->fileBuffer != (edCBankFileHeader*)0x0) {
-		iVar1 = this->fileBuffer->get_entryindex_from_filename(inFileName);
+	index = 0;
+	if (this->pFileHeader != (edCBankFileHeader*)0x0) {
+		index = this->pFileHeader->get_entryindex_from_filename(inFileName);
 	}
-	return iVar1;
+	return index;
 }
 
 
@@ -369,23 +396,24 @@ int edCBankBufferEntry::get_element_count()
 {
 	int ret;
 
-	if (this->fileBuffer == (edCBankFileHeader*)0x0) {
+	if (this->pFileHeader == (edCBankFileHeader*)0x0) {
 		ret = 0;
 	}
 	else {
-		ret = this->fileBuffer->fileCount;
+		ret = this->pFileHeader->fileCount;
 	}
+
 	return ret;
 }
 
-bool edCBankBufferEntry::install(edCBankInstall* pLoadData)
+bool edCBankBufferEntry::install(edCBankInstall* pBankInstall)
 {
 	int iVar1;
-	bool bVar2;
+	bool bSuccess;
 	LoadBankFileFunc pLoadFunc;
 
-	if ((pLoadData == (edCBankInstall*)0x0) || (this->header == (edCBankBuffer*)0x0)) {
-		bVar2 = false;
+	if ((pBankInstall == (edCBankInstall*)0x0) || (this->pBankBuffer == (edCBankBuffer*)0x0)) {
+		bSuccess = false;
 	}
 	else {
 		if (this->accessFlag != 0) {
@@ -397,86 +425,96 @@ bool edCBankBufferEntry::install(edCBankInstall* pLoadData)
 				iVar1 = this->accessFlag;
 			}
 		}
-		pLoadFunc = pLoadData->fileFunc;
+
+		pLoadFunc = pBankInstall->fileFunc;
 		if (pLoadFunc != (LoadBankFileFunc)0x0) {
-			(*pLoadFunc)(false, pLoadData->pObjectReference);
+			(*pLoadFunc)(false, pBankInstall->pObjectReference);
 		}
-		((edCBankFileHeader*)this->fileBuffer)->apply_callback(this->header->pBankTypePairData, 0);
+
+		this->pFileHeader->apply_callback(this->pBankBuffer->pBankCallback, 0);
+
 		if (pLoadFunc != (LoadBankFileFunc)0x0) {
-			(*pLoadFunc)(true, pLoadData->pObjectReference);
+			(*pLoadFunc)(true, pBankInstall->pObjectReference);
 		}
-		((edCBankFileHeader*)this->fileBuffer)->analyse();
-		bVar2 = true;
+
+		this->pFileHeader->analyse();
+
+		bSuccess = true;
 	}
-	return bVar2;
+
+	return bSuccess;
 }
 
 bool edCBankBufferEntry::close()
 {
-	int iVar1;
-	edCBankBuffer* peVar2;
+	int access;
+	edCBankBuffer* pBankBuff;
 	edCBankFileHeader* fileBuffer;
-	bool bVar3;
+	bool bSuccess;
 
-	if (this->header == (edCBankBuffer*)0x0) {
-		bVar3 = false;
+	if (this->pBankBuffer == (edCBankBuffer*)0x0) {
+		bSuccess = false;
 	}
 	else {
 		if (this->accessFlag != 0) {
 			/* edCBankBuffer::file_access: Wait for end of previous loading operation \n */
 			edDebugPrintf("edCBankBufferEntry::file_access: Wait for end of previous loading operation \n");
-			iVar1 = this->accessFlag;
-			while (iVar1 != 0) {
+			access = this->accessFlag;
+			while (access != 0) {
 				edFileNoWaitStackFlush();
-				iVar1 = this->accessFlag;
+				access = this->accessFlag;
 			}
 		}
-		peVar2 = this->header;
+
+		pBankBuff = this->pBankBuffer;
 		if (this->accessFlag != 0) {
 			/* edCBankBuffer::file_access: Wait for end of previous loading operation \n */
 			edDebugPrintf("edCBankBufferEntry::file_access: Wait for end of previous loading operation \n");
-			iVar1 = this->accessFlag;
-			while (iVar1 != 0) {
+			access = this->accessFlag;
+			while (access != 0) {
 				edFileNoWaitStackFlush();
-				iVar1 = this->accessFlag;
+				access = this->accessFlag;
 			}
 		}
 		if (this->headerComponent == 0) {
-			fileBuffer = this->fileBuffer;
-			peVar2->flagB = peVar2->flagB - fileBuffer->sizePacked;
-			peVar2->flagC = peVar2->flagC + -1;
-			fileBuffer->apply_callback(peVar2->pBankTypePairData, 5);
+			fileBuffer = this->pFileHeader;
+			pBankBuff->flagB = pBankBuff->flagB - fileBuffer->sizePacked;
+			pBankBuff->nbBankBufferEntriesInUse = pBankBuff->nbBankBufferEntriesInUse + -1;
+			fileBuffer->apply_callback(pBankBuff->pBankCallback, 5);
 			memset(this, 0, sizeof(edCBankBufferEntry));
-			bVar3 = true;
+			bSuccess = true;
 		}
 		else {
 			/* Can't close header of bank of bank!!\n */
 			edDebugPrintf(sz_CloseBankBufferError_0042fbc0);
-			bVar3 = false;
+			bSuccess = false;
 		}
 	}
-	return bVar3;
+	return bSuccess;
 }
 
-bool edCBankBufferEntry::load(edCBankInstall* file)
+bool edCBankBufferEntry::load(edCBankInstall* pBankInstall)
 {
 	bool ret;
-	int fileOutputStart;
+	int access;
 
-	if ((file == (edCBankInstall*)0x0) || (this->header == (edCBankBuffer*)0x0)) {
+	if ((pBankInstall == (edCBankInstall*)0x0) || (this->pBankBuffer == (edCBankBuffer*)0x0)) {
 		ret = false;
 	}
 	else {
 		if (this->accessFlag != 0) {
 			/* edCBankBuffer::file_access: Wait for end of previous loading operation \n */
 			edDebugPrintf("edCBankBufferEntry::file_access: Wait for end of previous loading operation \n");
-			fileOutputStart = this->accessFlag;
-			while (fileOutputStart != 0) {
+			access = this->accessFlag;
+
+			while (access != 0) {
 				edFileNoWaitStackFlush();
-				fileOutputStart = this->accessFlag;
+				access = this->accessFlag;
 			}
 		}
-		ret = this->header->file_access(this, file, 0, (this->header->fileFlagA & 1U) != 0);
+
+		ret = this->pBankBuffer->file_access(this, pBankInstall, 0, (this->pBankBuffer->fileFlagA & 1U) != 0);
 	}
+
 	return ret;
 }

@@ -10,7 +10,6 @@
 #include "ScenaricCondition.h"
 #include "MemoryStream.h"
 
-#include "edBankStackFile.h"
 #include "edBankFile.h"
 
 #ifdef PLATFORM_WIN
@@ -541,36 +540,36 @@ void CSector::InstallCallback()
 			if (bVar1 == false) break;
 			uVar9 = bankEntry.type << 0x10 | bankEntry.stype;
 			if (uVar9 == 0x170001) {
-				MY_LOG("Sector::Init Anim Heirarchy: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+				MY_LOG("Sector::Init Anim Heirarchy: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 				pAnimHierarchy = bankEntry.fileBufferStart;
 				local_40 = bankEntry.size;
 			}
 			else {
 				if (uVar9 == 0x50003) {
-					MY_LOG("Sector::Init Background Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
-					NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+					MY_LOG("Sector::Init Background Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+					NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 					ed3DInstallG2D(bankEntry.fileBufferStart, bankEntry.size, &iStack8, &this->backgroundTexture, 1);
 				}
 				else {
 					if (uVar9 == 0x40002) {
-						MY_LOG("Sector::Init Background Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+						MY_LOG("Sector::Init Background Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 						local_30 = bankEntry.size;
 						pFileData = bankEntry.fileBufferStart;
 					}
 					else {
 						if (uVar9 == 0x70001) {
-							MY_LOG("Sector::Init Init Collision: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+							MY_LOG("Sector::Init Init Collision: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 							this->pObbTree = CScene::ptable.g_CollisionManager_00451690->InstallColFile(bankEntry.fileBufferStart, bankEntry.size);
 						}
 						else {
 							if (uVar9 == 0x50001) {
-								MY_LOG("Sector::Init Sector Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
-								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								MY_LOG("Sector::Init Sector Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 								ed3DInstallG2D(bankEntry.fileBufferStart, bankEntry.size, &iStack8, &this->sectorTexture, 1);
 							}
 							else {
-								MY_LOG("Sector::Init Sector Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
-								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->fileBuffer, inFileIndex));
+								MY_LOG("Sector::Init Sector Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 								pMeshData = bankEntry.fileBufferStart;
 								meshSize = bankEntry.size;
 								if (uVar9 != 0x40001) {

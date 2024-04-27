@@ -2,7 +2,6 @@
 #include "IniFile.h"
 #include "edMem.h"
 #include "edBankFile.h"
-#include "edBankStackFile.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -418,7 +417,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	return;
 }
 
-TypePairData _gLevelsTableBankCallback = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
+edCBankCallback _gLevelsTableBankCallback = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
 char* g_szLevelInfoBnkPath_00433c60 = "Info/levels.bnk";
 
 void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo)
@@ -1337,7 +1336,7 @@ bool BnkInstallLiptracks(char* pFileData, int length)
 	return false;
 }
 
-TypePairData TableBankCallback[24] = {
+edCBankCallback TableBankCallback[24] = {
 	{ 0x02, 1, { BnkInstallAnim, 0, 0, 0, 0, 0 } },
 	{ 0x02, 2, { BnkInstallAnimMacro, 0, 0, 0, 0, 0 } },
 	{ 0x03, 4, { BnkInstallSoundCfg, 0, 0, 0, 0, 0 } },

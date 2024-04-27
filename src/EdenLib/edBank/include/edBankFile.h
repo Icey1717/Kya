@@ -14,7 +14,7 @@ PACK(struct FileTypeData {
 	ushort type;
 });
 
-struct TypePairData {
+struct edCBankCallback {
 	uint type;
 	uint stype;
 	bool (*pFunction[6])(char*, int);
@@ -34,7 +34,7 @@ static_assert(sizeof(FileHeaderFileData) == 0x10, "FileHeaderFileData is the wro
 
 class edCBankFileHeader {
 public:
-	void apply_callback(TypePairData* pTypePairData, int mode);
+	void apply_callback(edCBankCallback* pTypePairData, int mode);
 	void unpack();
 	void analyse();
 	uint get_index(int inIndex, int mode);
@@ -78,7 +78,7 @@ struct edCFiler_Bnk_static_header {
 
 static_assert(sizeof(edCBankFileHeader) == 0x3c, "edCBankFileHeader is the wrong size");
 
-char* edBankFilerReadHeader(EHeap heapID, char* filePath, uint flags, edFILEH** outLoadedData);
+char* edBankFilerReadHeader(EHeap heapID, char* filePath, uint flags, edFILEH** ppFile);
 
 void edDataLZ77Unpack(byte* param_1, byte* param_2, int param_3);
 

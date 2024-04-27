@@ -10,10 +10,10 @@ char FileBuffer[512] = { 0 };
 char* FileNamePtr = NULL;
 int CurrentIndex = 0;
 
-char* edBankFilerReadHeader(EHeap heapID, char* filePath, uint flags, edFILEH** outLoadedData)
+char* edBankFilerReadHeader(EHeap heapID, char* filePath, uint flags, edFILEH** ppFile)
 {
 	byte bVar1;
-	edFILEH* pDebugBank;
+	edFILEH* pFile;
 	uint uVar2;
 	char* __dest;
 	char* pReadBuffer;
@@ -22,21 +22,25 @@ char* edBankFilerReadHeader(EHeap heapID, char* filePath, uint flags, edFILEH** 
 	uint __n;
 
 	pReadBuffer = acStack4096;
-	if (((uint)pReadBuffer & 0x7ff) != 0) {
-		pReadBuffer = (char*)((((long long)pReadBuffer >> 0xb) + 1) * 0x800);
+	if (((ulong)pReadBuffer & 0x7ff) != 0) {
+		pReadBuffer = (char*)((((ulong)pReadBuffer >> 0xb) + 1) * 0x800);
 	}
-	pDebugBank = edFileOpen(filePath, flags);
-	if (pDebugBank == (edFILEH*)0x0) {
+
+	pFile = edFileOpen(filePath, flags);
+
+	if (pFile == (edFILEH*)0x0) {
 		__dest = (char*)0x0;
 	}
 	else {
-		uVar2 = edFileGetSize(pDebugBank);
+		uVar2 = edFileGetSize(pFile);
+
 		if (uVar2 < 0x40) {
 			__dest = (char*)0x0;
 		}
 		else {
 			memset(pReadBuffer, 0, 0x800);
-			bVar1 = edFileRead(pDebugBank, pReadBuffer, 0x800);
+
+			bVar1 = edFileRead(pFile, pReadBuffer, 0x800);
 			if (bVar1 == 0) {
 				__dest = (char*)0x0;
 			}
@@ -59,22 +63,23 @@ char* edBankFilerReadHeader(EHeap heapID, char* filePath, uint flags, edFILEH** 
 					}
 					else {
 						memcpy(__dest, pReadBuffer, 0x800);
-						edFileRead(pDebugBank, __dest + 0x800, size - 0x800);
+						edFileRead(pFile, __dest + 0x800, size - 0x800);
 						edFileFlush();
 						if (__n != size) {
 							edMemShrink(__dest, __n);
 						}
 					}
-					if (outLoadedData == (edFILEH**)0x0) {
-						edFileClose(pDebugBank);
+					if (ppFile == (edFILEH**)0x0) {
+						edFileClose(pFile);
 					}
 					else {
-						*outLoadedData = pDebugBank;
+						*ppFile = pFile;
 					}
 				}
 			}
 		}
 	}
+
 	return __dest;
 }
 
@@ -462,19 +467,19 @@ FileHeaderFileData* edCBankFileHeader::get_entry(int fileIndex)
 	return (FileHeaderFileData*)(pcVar1 + fileIndex * 0x10 + 8);
 }
 
-void edCBankFileHeader::apply_callback(TypePairData* pTypePairData, int mode)
+void edCBankFileHeader::apply_callback(edCBankCallback* pTypePairData, int mode)
 {
 	bool bVar1;
 	char* pFileHeaderStart;
 	FileTypeData* puVar3;
-	TypePairData* puVar8;
+	edCBankCallback* puVar8;
 	uint uVar3;
 	int iVar4;
 	int iVar5;
 
 	IO_LOG(LogLevel::Info, "Looking up type pair entry: %d | file count: %d\n", mode, this->fileCount);
 
-	if ((pTypePairData != (TypePairData*)0x0) && (uVar3 = 0, this->fileCount != 0)) {
+	if ((pTypePairData != (edCBankCallback*)0x0) && (uVar3 = 0, this->fileCount != 0)) {
 		iVar5 = 0;
 		iVar4 = 0;
 		do {
@@ -502,9 +507,9 @@ void edCBankFileHeader::apply_callback(TypePairData* pTypePairData, int mode)
 					puVar8 = puVar8 + 1;
 				} while (puVar8->type != 0xffffffff);
 			}
-			puVar8 = (TypePairData*)0x0;
+			puVar8 = (edCBankCallback*)0x0;
 		LAB_00246698:
-			if ((puVar8 != (TypePairData*)0x0) && (puVar8->pFunction[mode] != NULL)) {
+			if ((puVar8 != (edCBankCallback*)0x0) && (puVar8->pFunction[mode] != NULL)) {
 				pFileHeaderStart = 0;
 				if (this->fileHeaderDataOffset != 0) {
 					pFileHeaderStart = (char*)(((char*)this - 8) + this->fileHeaderDataOffset);

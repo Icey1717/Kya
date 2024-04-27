@@ -3,24 +3,15 @@
 
 #include "Types.h"
 #include "edMem.h"
+#include "edBankBuffer.h"
 
-typedef void(*LoadBankFileFunc)(bool, void*);
-
-struct edCBankInstall {
-	char* filePath;
-	int fileFlagA;
-	void* pObjectReference;
-	LoadBankFileFunc fileFunc;
-	EHeap heapID;
-	int fileFlagE;
-};
 
 class edCBankStackElement {
 public:
-	struct edCBankBufferEntry* pBankHeader_0x0;
+	edCBankBufferEntry* pBankHeader_0x0;
 	char* pReadBuffer;
-	struct edFILEH* pDebugBankData;
-	struct TypePairData* pBankTypePairData_0xc;
+	edFILEH* pDebugBankData;
+	edCBankCallback* pBankTypePairData_0xc;
 	void* pObjectReference_0x10;
 	LoadBankFileFunc fileFunc_0x14;
 	int fileFlagB_0x18;
