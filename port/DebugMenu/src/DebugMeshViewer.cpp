@@ -258,27 +258,30 @@ namespace DebugMeshViewer {
 			ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 			ed_g2d_bitmap* pBitmap = (ed_g2d_bitmap*)0x0;
 			ed_g2d_bitmap* pOther = (ed_g2d_bitmap*)0x0;
+
 			if (pLayer->bHasPalette != 0) {
-				TextureData_TEX* iVar2 = (TextureData_TEX*)LOAD_SECTION(pLayer->pTex);
-				if ((iVar2->body).palette == 0) {
-					TextureData_HASH_Internal_PA32* pTVar5 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).hashCode.pData);
-					if (pTVar5 != (TextureData_HASH_Internal_PA32*)0x0) {
-						TextureData_PA32* pPA = (TextureData_PA32*)LOAD_SECTION(pTVar5->pPA32);
-						pBitmap = (ed_g2d_bitmap*)&pPA->body;
+				ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
+				ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
+
+				if (pTexture->palette == 0) {
+					ed_hash_code* pTVar5 = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+					if (pTVar5 != (ed_hash_code*)0x0) {
+						ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pTVar5->pData);
+						pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
 					}
 				}
 				else {
-					ed_hash_code* pAfterHash = (ed_hash_code*)(iVar2 + 1);
+					ed_hash_code* pAfterHash = (ed_hash_code*)(pTexture + 1);
 					int iVar4 = pAfterHash[(uint)pLayer->field_0x1e].pData;
 					if (iVar4 != 0) {
 						ed_hash_code* pHash = (ed_hash_code*)LOAD_SECTION(iVar4);
 						pBitmap = (ed_g2d_bitmap*)(((char*)LOAD_SECTION(pHash->pData)) + 0x10);
 					}
 
-					TextureData_HASH_Internal_PA32* pPA32 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(iVar2->body.hashCode.pData);
-					if (pPA32 != (TextureData_HASH_Internal_PA32*)0x0) {
-						TextureData_PA32* pPA32Internal = (TextureData_PA32*)LOAD_SECTION(pPA32->pPA32);
-						pOther = &pPA32Internal->body;
+					ed_hash_code* pPA32Hash = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+					if (pPA32Hash != (ed_hash_code*)0x0) {
+						ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pPA32Hash->pData);
+						pOther = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
 					}
 				}
 			}

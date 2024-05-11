@@ -493,7 +493,7 @@ PACK(
 	byte field_0x1b;
 	short bHasPalette;
 	ushort field_0x1e;
-	int pTex; // TextureData_TEX*
+	int pTex; // ed_Chunck*
 });
 
 
@@ -505,49 +505,8 @@ PACK(struct ed_g2d_bitmap {
 	int pPSX2; //edpkt_data*
 });
 
-PACK(struct TextureData_MATA {
-	Hash_4 header;
-	undefined4 field_0x4;
-	undefined4 size_0x8;
-	int field_0xc;
-});
-
-PACK(struct TextureData_PA32 {
-	Hash_4 header;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	ed_g2d_bitmap body;
-});
-
 PACK(
-	struct TextureData_HASH_Internal_PA32 {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	int pPA32; // TextureData_PA32*
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-});
-
-PACK(
-	struct TextureData_TEX_Internal {
+	struct ed_g2d_texture {
 	ed_hash_code hashCode;
 	int palette;
 	int field_0x14; // edF32VECTOR4*
@@ -556,57 +515,6 @@ PACK(
 	undefined field_0x1d;
 	undefined field_0x1e;
 	undefined field_0x1f;
-});
-
-PACK(
-	struct TextureData_TEX {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	TextureData_TEX_Internal body;
-});
-
-PACK(struct MeshData_HASH {
-	Hash_4 header;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	int field_0xc;
-});
-
-PACK( struct LayerHeaderPacked {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	int field_0x8;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	char field_0x10;
 });
 
 struct ed_viewport;
@@ -626,7 +534,7 @@ void Init3D(void);
 ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, ed_g2d_manager* pManager, int param_5);
 ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
-char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
+ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
 edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);

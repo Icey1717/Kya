@@ -668,11 +668,11 @@ void edDListBlendFunc50(void)
 
 ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHasPalette, ed_g2d_bitmap** pOutAddr)
 {
-	TextureData_HASH_Internal_PA32* pTVar1;
+	ed_hash_code* pTVar1;
 	ed_g2d_bitmap* pTVar2;
-	TextureData_TEX* iVar2;
+	ed_Chunck* pTEX;
 	ed_Chunck* pLAY;
-	TextureData_HASH_Internal_PA32* iVar3;
+	ed_hash_code* iVar3;
 
 	*bHasPalette = false;
 	*pOutAddr = (ed_g2d_bitmap*)0x0;
@@ -689,37 +689,46 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHas
 
 		if (((pLAY != (ed_Chunck*)0xfffffff0) && (pLAY != (ed_Chunck*)0xfffffff0)) && (pLayer->bHasPalette != 0)) {
 
-			iVar2 = LOAD_SECTION_CAST(TextureData_TEX*, pLayer->pTex);
+			pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
+			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
+
 			pTVar2 = (ed_g2d_bitmap *)0x0;
 
-			if (iVar2 == (TextureData_TEX*)0xfffffff0) {
+			if (pTEX == (ed_Chunck*)0xfffffff0) {
 				return (ed_g2d_bitmap*)0x0;
 			}
 
-			if ((iVar2->body).palette != 0) {
+			if (pTexture->palette != 0) {
 				*bHasPalette = true;
 
-				iVar3 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(((ed_hash_code*)(iVar2 + 1))[(uint)pLayer->field_0x1e].pData);
+				ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pTexture + 1);
+				iVar3 = LOAD_SECTION_CAST(ed_hash_code*, pHashCode[pLayer->field_0x1e].pData);
 
 				if (iVar3 != 0) {
-					pTVar2 = &((TextureData_PA32*)LOAD_SECTION(iVar3->pPA32))->body;
+					ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, iVar3->pData);
+					pTVar2 = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
 				}
 
-				pTVar1 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).hashCode.pData);
+				pTVar1 = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
 				if (pTVar1 == 0) {
 					return pTVar2;
 				}
 
-				*pOutAddr = &((TextureData_PA32*)LOAD_SECTION(pTVar1->pPA32))->body;
+				ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pTVar1->pData);
+				*pOutAddr = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
 				return pTVar2;
 			}
-			pTVar1 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).hashCode.pData);
+
+			pTVar1 = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
 			if (pTVar1 == 0) {
 				return (ed_g2d_bitmap*)0x0;
 			}
-			return &((TextureData_PA32*)LOAD_SECTION(pTVar1->pPA32))->body;
+
+			ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pTVar1->pData);
+			return reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
 		}
 	}
+
 	return (ed_g2d_bitmap*)0x0;
 }
 
