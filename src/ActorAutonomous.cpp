@@ -12,6 +12,127 @@ int INT_00448e08 = 0;
 
 #define AUTONOMOUS_LOG(level, format, ...) MY_LOG_CATEGORY("Autonomous", level, format, ##__VA_ARGS__)
 
+void CActorWindState::AddWind(_wind_param_in* pParams)
+{
+	if (0.0f <= pParams->field_0x0) {
+		this->field_0xc = (pParams->field_0x0 + (float)this->field_0x0 * this->field_0xc) / (float)(this->field_0x0 + 1);
+	}
+
+	if (0.0f <= pParams->field_0x4) {
+		this->field_0x10 = (pParams->field_0x4 + (float)this->field_0x0 * this->field_0x10) / (float)(this->field_0x0 + 1);
+	}
+
+	if (0.0f <= pParams->field_0x10) {
+		this->field_0x14 = (pParams->field_0x10 + (float)this->field_0x0 * this->field_0x14) / (float)(this->field_0x0 + 1);
+	}
+
+	if (0.0f <= pParams->field_0x14) {
+		this->field_0x18 = (pParams->field_0x14 + (float)this->field_0x0 * this->field_0x18) / (float)(this->field_0x0 + 1);
+	}
+
+	if (pParams->field_0x8 != 0) {
+		this->field_0x4 = this->field_0x4 + 1;
+	}
+
+	if (pParams->field_0xc != 0) {
+		this->field_0x8 = this->field_0x8 + 1;
+	}
+
+	this->field_0x1c = (pParams->field_0x18 + (float)this->field_0x0 * this->field_0x1c) / (float)(this->field_0x0 + 1);
+	this->field_0x20 = (pParams->field_0x1c + (float)this->field_0x0 * this->field_0x20) / (float)(this->field_0x0 + 1);
+	this->field_0x24 = (pParams->field_0x20 + (float)this->field_0x0 * this->field_0x24) / (float)(this->field_0x0 + 1);
+
+	if (pParams->field_0x24 != 0) {
+		this->field_0x28 = this->field_0x28 + 1;
+	}
+
+	if (pParams->field_0x28 != (CWayPoint*)0x0) {
+		this->field_0x2c = pParams->field_0x28;
+		this->field_0x30 = pParams->field_0x2c;
+		this->field_0x34 = pParams->field_0x30;
+	}
+
+	this->field_0x0 = this->field_0x0 + 1;
+
+	return;
+}
+
+void CActorWindState::SubWind(_wind_param_in* pParams)
+{
+	int iVar1;
+
+	iVar1 = this->field_0x0;
+	if (iVar1 < 2) {
+		if (iVar1 == 1) {
+			Reset();
+		}
+	}
+	else {
+		if (0.0f <= pParams->field_0x0) {
+			this->field_0xc = ((float)iVar1 * this->field_0xc - pParams->field_0x0) / (float)(iVar1 + -1);
+		}
+
+		if (0.0f <= pParams->field_0x4) {
+			this->field_0x10 = ((float)this->field_0x0 * this->field_0x10 - pParams->field_0x4) / (float)(this->field_0x0 + -1);
+		}
+
+		if (pParams->field_0x8 != 0) {
+			this->field_0x4 = this->field_0x4 + -1;
+		}
+
+		if (pParams->field_0xc != 0) {
+			this->field_0x8 = this->field_0x8 + -1;
+		}
+
+		if (0.0f <= pParams->field_0x10) {
+			this->field_0x14 = ((float)this->field_0x0 * this->field_0x14 - pParams->field_0x10) / (float)(this->field_0x0 + -1);
+		}
+
+		if (0.0f <= pParams->field_0x14) {
+			this->field_0x18 = ((float)this->field_0x0 * this->field_0x18 - pParams->field_0x14) / (float)(this->field_0x0 + -1);
+		}
+
+		this->field_0x1c = ((float)this->field_0x0 * this->field_0x1c - pParams->field_0x18) / (float)(this->field_0x0 + -1);
+		this->field_0x20 = ((float)this->field_0x0 * this->field_0x20 - pParams->field_0x1c) / (float)(this->field_0x0 + -1);
+		this->field_0x24 = ((float)this->field_0x0 * this->field_0x24 - pParams->field_0x20) / (float)(this->field_0x0 + -1);
+
+		if (pParams->field_0x24 != 0) {
+			this->field_0x28 = this->field_0x28 + -1;
+		}
+
+		this->field_0x2c = (CWayPoint*)0x0;
+		this->field_0x30 = 0.0f;
+		this->field_0x34 = 0.0f;
+		this->field_0x0 = this->field_0x0 + -1;
+	}
+
+	return;
+}
+
+void CActorWindState::Reset()
+{
+	this->field_0x0 = 0;
+	this->field_0x4 = 0;
+	this->field_0x8 = 0;
+	this->field_0xc = 0.0f;
+	this->field_0x10 = 4.0f;
+	this->field_0x14 = 0.0f;
+	this->field_0x18 = 0.0f;
+	this->field_0x1c = 0.0f;
+	this->field_0x20 = 1.0f;
+	this->field_0x24 = 1.0f;
+	this->field_0x28 = 0;
+	this->field_0x2c = (CWayPoint*)0x0;
+	this->field_0x30 = 0.0f;
+	this->field_0x34 = 0.0f;
+	this->field_0x40 = 0.0f;
+	this->field_0x44 = 0.0f;
+	this->field_0x48 = 0.0f;
+	this->field_0x4c = 0.0f;
+	this->field_0x38 = 0.0f;
+	return;
+}
+
 CDynamicExt::CDynamicExt()
 {
 	this->gravityScale = 1.0f;
@@ -69,13 +190,13 @@ void CActorAutonomous::Create(ByteCode* pByteCode)
 	pBVar6 = pByteCode;
 	CActorMovable::Create(pByteCode);
 	this->dynamicExt.ClearLocalData();
-	//lVar5 = (*(code*)this->base.pVTable[1].free)(this);
-	//if (lVar5 != 0) {
-	//	peVar3 = (edF32MATRIX4*)(*(code*)this->base.pVTable[1].free)(this);
-	//	FUN_0019e4a0(peVar3);
-	//}
+	CActorWindState* pCVar3 = GetWindState();
+	if (pCVar3 != (CActorWindState*)0x0) {
+		pCVar3 = GetWindState();
+		pCVar3->Reset();
+	}
 	this->bCollisionSphereDirty = 0;
-	//this->field_0x2c8 = 0;
+	this->field_0x2c8 = 0.0f;
 	if (this->pCollisionData != (CCollision*)0x0) {
 		StoreCollisionSphere();
 	}
@@ -192,23 +313,19 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	}
 	else {
 		if (msg == 0x18) {
-			IMPLEMENTATION_GUARD(
-			lVar6 = (*(code*)(this->pVTable)->field_0x100)();
-			if (lVar6 != 0) {
-				peVar3 = (edF32MATRIX4*)(*(code*)(this->pVTable)->field_0x100)(this);
-				FUN_00123580(peVar3, (edF32MATRIX4*)pMsgParam);
+			CActorWindState* pWindState = GetWindState();
+			if (pWindState != (CActorWindState*)0x0) {
+				GetWindState()->SubWind((_wind_param_in*)pMsgParam);
 			}
-			iVar5 = 1;)
+			iVar5 = 1;
 		}
 		else {
 			if (msg == 0x17) {
-				IMPLEMENTATION_GUARD(
-				lVar6 = (*(code*)(this->pVTable)->field_0x100)();
-				if (lVar6 != 0) {
-					piVar2 = (int*)(*(code*)(this->pVTable)->field_0x100)(this);
-					FUN_00123810(piVar2, (float*)pMsgParam);
+				CActorWindState* pWindState = GetWindState();
+				if (pWindState != (CActorWindState*)0x0) {
+					GetWindState()->AddWind((_wind_param_in*)pMsgParam);
 				}
-				iVar5 = 1;)
+				iVar5 = 1;
 			}
 			else {
 				iVar5 = CActorMovable::InterpretMessage(pSender, msg, pMsgParam);
@@ -362,7 +479,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 			pTVar6 = GetTimer();
 			fVar15 = pTVar6->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
 
-			AUTONOMOUS_LOG(LogLevel::Verbose, "Acceleration: {} ({})", fVar15, this->dynamicExt.field_0x6c);
+			AUTONOMOUS_LOG(LogLevel::Verbose, "dynamicExt.field_0x6c: {} ({})", fVar15, this->dynamicExt.field_0x6c);
 
 		}
 
@@ -699,25 +816,24 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		AUTONOMOUS_LOG(LogLevel::Verbose, "Reset normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	lVar11 = (*(code*)(this->base.pVTable)->field_0x100)(this);
-	if (lVar11 != 0) {
-		fVar15 = this->dynamicExt.base.field_0x40;
-		iVar8 = (*(code*)(this->base.pVTable)->field_0x100)(this);
-		*(float*)(iVar8 + 0x40) = fVar15;
-		fVar15 = this->dynamicExt.base.field_0x44;
-		iVar8 = (*(code*)(this->base.pVTable)->field_0x100)(this);
-		*(float*)(iVar8 + 0x44) = fVar15;
-		fVar15 = this->dynamicExt.base.speed;
-		iVar8 = (*(code*)(this->base.pVTable)->field_0x100)(this);
-		*(float*)(iVar8 + 0x48) = fVar15;
-		uVar16 = this->dynamicExt.base.field_0x4c;
-		iVar8 = (*(code*)(this->base.pVTable)->field_0x100)(this);
-		*(undefined4*)(iVar8 + 0x4c) = uVar16;
-		fVar15 = this->dynamicExt.base.field_0x10.z;
-		iVar8 = (*(code*)(this->base.pVTable)->field_0x100)(this);
-		*(float*)(iVar8 + 0x38) = fVar15;
-	})
+	CActorWindState* pCVar7 = GetWindState();
+	if (pCVar7 != (CActorWindState*)0x0) {
+		float fVar14 = (this->dynamicExt).aVelocity[2].x;
+		pCVar7 = GetWindState();
+		pCVar7->field_0x40 = fVar14;
+		fVar14 = (this->dynamicExt).aVelocity[2].y;
+		pCVar7 = GetWindState();
+		pCVar7->field_0x44 = fVar14;
+		fVar14 = (this->dynamicExt).aVelocity[2].z;
+		pCVar7 = GetWindState();
+		pCVar7->field_0x48 = fVar14;
+		fVar14 = (this->dynamicExt).aVelocity[2].w;
+		pCVar7 = GetWindState();
+		pCVar7->field_0x4c = fVar14;
+		fVar14 = (this->dynamicExt).aVelocityMagnitudes[2];
+		pCVar7 = GetWindState();
+		pCVar7->field_0x38 = fVar14;
+	}
 
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
 		this->dynamicExt.aVelocity[iVar8].x = 0.0f;

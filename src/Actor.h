@@ -193,6 +193,8 @@ public:
 	bool IsFinished();
 	void Integrate(float param_1);
 	void Integrate(float param_1, float param_2);
+	float GetInstantSpeed();
+	bool OnLastValidSample();
 
 	uint flags;
 	float field_0x4;
@@ -302,6 +304,7 @@ public:
 	void EvaluateDisplayState();
 
 	void SetScale(float x, float y, float z);
+	void SnapOrientation(float x, float y, float z);
 
 	void LoadBehaviours(ByteCode* pByteCode);
 
@@ -357,6 +360,8 @@ public:
 	void SetupLighting();
 
 	void PreReset();
+
+	edF32VECTOR4* GetTopPosition();
 
 	void RestoreInitData();
 	void UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision);

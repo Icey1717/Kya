@@ -134,12 +134,16 @@ namespace PS2 {
 		GSTexImage image;
 		GSTexImage paletteImage;
 
+		void* pMaterial;
+
 		TextureDebug debugData;
 	};
 
 	struct GSTexEntry {
 		GSTexKey key;
 		GSTexValue value;
+
+		int cleanCounter = 0;
 
 		GSTexEntry(const GSTexValueCreateInfo& createInfo)
 			: key(createInfo.key)
@@ -161,6 +165,9 @@ namespace PS2 {
 		GSTexEntry& Lookup(const GIFReg::GSTex& TEX, Renderer::TextureData& textureData, uint32_t CBP);
 		const std::vector<GSTexEntry>& GetEntries() const { return texcache; }
 		std::vector<GSTexEntry>& GetEntries() { return texcache; }
+
+		// Removes all texture cache entries that belong to that ed_g2d_material.
+		void RemoveByMaterial(void* pMaterial);
 	};
 
 	inline GSTexKey CreateKeyFromTEX(const GIFReg::GSTex& TEX) {

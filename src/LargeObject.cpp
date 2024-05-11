@@ -147,7 +147,7 @@ CScene::CScene()
 	C3DFileManager* p3DFileManager;
 	//Manager_100* pMVar4;
 	//Manager_208* pMVar5;
-	//GlobalSound_00451698* inAllocatedMemory;
+	//CAudioManager* inAllocatedMemory;
 	//Manager_C* pMVar6;
 	//Manager_10* pMVar7;
 	//ActorManager* pActorManager;
@@ -246,9 +246,9 @@ CScene::CScene()
 	//	pMVar5 = (Manager_208*)uVar17;
 	//}
 	//g_Manager208_00451694 = pMVar5;
-	//inAllocatedMemory = (GlobalSound_00451698*)Allocate(0x2e8);
-	//if (inAllocatedMemory != (GlobalSound_00451698*)0x0) {
-	//	inAllocatedMemory = (GlobalSound_00451698*)GlobalSoundConstructor(inAllocatedMemory);
+	//inAllocatedMemory = (CAudioManager*)Allocate(0x2e8);
+	//if (inAllocatedMemory != (CAudioManager*)0x0) {
+	//	inAllocatedMemory = (CAudioManager*)GlobalSoundConstructor(inAllocatedMemory);
 	//}
 	//g_GlobalSoundPtr_00451698 = inAllocatedMemory;
 	CScene::ptable.g_WayPointManager_0045169c = new CWayPointManager;

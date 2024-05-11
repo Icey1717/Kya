@@ -2906,7 +2906,7 @@ void VU1Emu::QueueDraw()
 		Renderer::Draw();
 	}
 	else {
-		gNextJob->textureData = Renderer::GetImagePointer();
+		gNextJob->textureData = Renderer::GetTextureData();
 		gNextJob->state = PS2::GetGSState();
 
 		if (Debug::bUseJobPool) {

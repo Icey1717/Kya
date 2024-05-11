@@ -1100,3 +1100,111 @@ void CSectorHierarchy::Create(ByteCode* pByteCode)
 	this->flags = 0x20000000;
 	return;
 }
+
+void CSectorHierarchy::Init(int param_2)
+{
+	MeshData_ANHR* pMVar1;
+	char* pcVar2;
+	edNODE* peVar3;
+	ed_g3d_manager* peVar4;
+	long lVar5;
+	uint uVar6;
+	int iVar7;
+	CSector* pCVar8;
+	MeshData_ANHR* pMVar9;
+	S_HIERANM_HIER* pHier;
+	S_HIERANM_HIER* local_4;
+	CSectorManager* pSectormanager;
+
+	pSectormanager = CScene::ptable.g_SectorManager_00451670;
+	if (this->field_0x0 != 0) {
+		if (param_2 == -1) {
+			this->pNext = (CScene::ptable.g_SectorManager_00451670)->pSectorHierarchy;
+			pSectormanager->pSectorHierarchy = this;
+			IMPLEMENTATION_GUARD(
+			peVar3 = (edNODE*)CSectorManager::Func_001fe870(pSectormanager, this->field_0x0, (int**)&local_4);
+			if (peVar3 != (edNODE*)0x0) {
+				Sector_Enter(this, peVar3, local_4);
+			})
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			pcVar2 = (CScene::ptable.g_SectorManager_00451670)->szSectorFileRoot;
+			this->pNext = *(CSectorHierarchy**)(pcVar2 + param_2 * 0x10 + -4 + 0x4c);
+			*(CSectorHierarchy**)(pcVar2 + param_2 * 0x10 + -4 + 0x4c) = this;
+			pCVar8 = &pSectormanager->baseSector;
+			if (param_2 != (pSectormanager->baseSector).desiredSectorID) {
+				iVar7 = 0;
+				if (0 < pSectormanager->sectDataCount) {
+					pCVar8 = pSectormanager->sectorArray;
+					do {
+						if (param_2 == pCVar8->desiredSectorID) goto LAB_001fdad8;
+						iVar7 = iVar7 + 1;
+						pCVar8 = pCVar8 + 1;
+					} while (iVar7 < pSectormanager->sectDataCount);
+				}
+				pCVar8 = (CSector*)0x0;
+			}
+		LAB_001fdad8:
+			if (pCVar8 != (CSector*)0x0) {
+				if ((pCVar8->loadStage_0x8 == 2) || ((pCVar8->loadStage_0x8 == 1 && (pCVar8->sectorIndex == -1)))) {
+					peVar4 = &pCVar8->sectorMesh;
+				}
+				else {
+					peVar4 = (ed_g3d_manager*)0x0;
+				}
+				if (peVar4 != (ed_g3d_manager*)0x0) {
+					lVar5 = this->field_0x0;
+					if (lVar5 != 0) {
+						pMVar1 = (pCVar8->pANHR).pThis;
+						if (pMVar1 != (MeshData_ANHR*)0x0) {
+							pMVar9 = pMVar1 + 1;
+							uVar6 = 0;
+							if (pMVar1->otherEntryCount != 0) {
+								do {
+									pHier = *(S_HIERANM_HIER**)pMVar9->field_0x0;
+									if ((*(int*)&pHier->field_0x4 != 0) && (lVar5 == *(long*)(*(int*)&pHier->field_0x4 + 0x80)))
+										goto LAB_001fdb90;
+									uVar6 = uVar6 + 1;
+									pMVar9 = (MeshData_ANHR*)&pMVar9->field_0x4;
+								} while (uVar6 < pMVar1->otherEntryCount);
+							}
+						}
+						pHier = (S_HIERANM_HIER*)0x0;
+					LAB_001fdb90:
+						if (pHier == (S_HIERANM_HIER*)0x0) {
+							peVar3 = (edNODE*)Func_001fff60(pCVar8->pMeshTransformParent_0x130, lVar5);
+						}
+						else {
+							peVar3 = *(edNODE**)pHier;
+						}
+						if (peVar3 != (edNODE*)0x0) {
+							Sector_Enter(this, peVar3, pHier);
+						}
+					}
+				}
+			})
+		}
+	}
+	return;
+}
+
+void CSectorHierarchy::SetHiddenOn()
+{
+	S_HIERANM_HIER* pSVar1;
+
+	if ((this->flags & 0x40000000) == 0) {
+		this->flags = this->flags | 0x40000000;
+		pSVar1 = this->pHier;
+		if (pSVar1 == (S_HIERANM_HIER*)0x0) {
+			if (this->pNode != (edNODE*)0x0) {
+				ed3DHierarchyNodeSetFlag(this->pNode, 0x40);
+			}
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			pSVar1->flags_0x20 = pSVar1->flags_0x20 | 0x40000000;)
+		}
+	}
+	return;
+}

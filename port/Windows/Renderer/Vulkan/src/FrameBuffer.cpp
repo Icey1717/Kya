@@ -100,7 +100,7 @@ static void CreateRenderPass(VkRenderPass& renderPass, bool bIsClear) {
 	renderPassInfo.dependencyCount = 2;
 	renderPassInfo.pDependencies = dependencies;
 
-	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, GetAllocator(), &renderPass) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create render pass!");
 	}
 }
@@ -194,7 +194,7 @@ void PS2::FrameBuffer::CreateFinalPassPipeline()
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
 
-	vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &finalPass);
+	vkCreateRenderPass(GetDevice(), &renderPassInfo, GetAllocator(), &finalPass);
 
 	VkImageView imageAttachments[] = { finalImageView };
 
@@ -207,7 +207,7 @@ void PS2::FrameBuffer::CreateFinalPassPipeline()
 	framebufferCreateInfo.width = GetRTSize().x;
 	framebufferCreateInfo.height = GetRTSize().y;
 	framebufferCreateInfo.layers = 1;
-	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, nullptr, &finalFramebuffer);
+	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, GetAllocator(), &finalFramebuffer);
 
 	auto vertShader = Shader::ReflectedModule("shaders/fullscreen.vert.spv", VK_SHADER_STAGE_VERTEX_BIT, false);
 	auto fragShader = Shader::ReflectedModule("shaders/gray.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT, false);
@@ -295,7 +295,7 @@ void PS2::FrameBuffer::CreateFinalPassPipeline()
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-	vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &finalPipeline.pipeline);
+	vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &finalPipeline.pipeline);
 
 	finalPipeline.CreateDescriptorPool();
 	finalPipeline.CreateDescriptorSets();
@@ -400,7 +400,7 @@ void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& ren
 	framebufferCreateInfo.width = size.x;
 	framebufferCreateInfo.height = size.y;
 	framebufferCreateInfo.layers = 1;
-	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, nullptr, &framebuffer);
+	vkCreateFramebuffer(GetDevice(), &framebufferCreateInfo, GetAllocator(), &framebuffer);
 
 	VkSamplerCreateInfo samplerInfo{};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -430,7 +430,7 @@ void Renderer::FrameBufferBase::SetupBase(Vector2i size, const VkRenderPass& ren
 	samplerInfo.minLod = -FLT_MAX;
 	samplerInfo.maxLod = FLT_MAX;
 
-	if (vkCreateSampler(GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+	if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }

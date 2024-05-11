@@ -56,31 +56,41 @@ union AnimScratchpad {
 	edpkt_data pkt;
 };
 
-PACK(
-	struct ed_hash_code {
+struct ed_hash_code {
 	Hash_8 hash;
 	int pData; // char*
 	undefined field_0xc;
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-};)
+};
 
 static_assert(sizeof(ed_hash_code) == 0x10, "Invalid ed_hash_code size");
 
-PACK(struct __attribute__((aligned(16))) ed_Chunck {
+struct __attribute__((aligned(16))) ed_Chunck {
 	uint hash;
 	short field_0x4;
 	short field_0x6;
 	int size;
 	int nextChunckOffset;
-});
+
+	// Debug
+	inline std::string GetHeaderString() const {
+		// convert hash into chars
+		char hashStr[5];
+		memcpy(hashStr, &hash, 4);
+		hashStr[4] = 0;
+		return std::string(hashStr);
+	}
+};
+
+static_assert(sizeof(ed_Chunck) == 0x10, "Invalid ed_Chunck size");
 
 struct ed_g2d_manager {
-	char* textureFileBufferStart;
+	char* pFileBuffer;
 	int textureFileLengthA;
-	ed_Chunck* textureHeaderStart;
-	ed_Chunck* pMAT_HASH;
+	ed_Chunck* pTextureChunk;
+	ed_Chunck* pMATA_HASH;
 	ed_Chunck* pT2DA;
 	ed_Chunck* pPALL;
 	byte field_0x18;
@@ -400,7 +410,7 @@ struct ed_3d_hierarchy_node {
 };
 
 struct TextureInfo {
-	ed_g2d_manager pManager;
+	ed_g2d_manager manager;
 	char* pFileBuffer;
 };
 
@@ -448,24 +458,7 @@ PACK(
 	int pDMA_Material; // ed_dma_material*
 	int pCommandBufferTexture; // RenderCommand*
 	int commandBufferTextureSize;
-});
-
-PACK(
-	struct TextureData_MAT {
-	Hash_4 header;
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	ed_g2d_material body;
+	int aLayers[];
 });
 
 struct edPSX2Header
@@ -498,24 +491,9 @@ PACK(
 	undefined field_0x19;
 	undefined field_0x1a;
 	byte field_0x1b;
-	short field_0x1c;
+	short bHasPalette;
 	ushort field_0x1e;
 	int pTex; // TextureData_TEX*
-});
-
-PACK(
-	struct ed_g2d_layer_header {
-	Hash_4 header;
-	uint field_0x4;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	ed_g2d_layer body;
 });
 
 
@@ -645,7 +623,7 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 
 
 void Init3D(void);
-ed_g2d_manager* ed3DInstallG2D(char* fileBufferStart, int fileLength, int* outInt, ed_g2d_manager* pTextureInfo, ulong param_5);
+ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, ed_g2d_manager* pManager, int param_5);
 ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
 char* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
@@ -811,6 +789,10 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index);
 
 ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier);
+
+// Possibly an inlined function that doesn't exist in the compiled code.
+int ed3DG2DGetG2DNbMaterials(ed_Chunck* pChunck);
+
 int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode);
 int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier);
 void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData);
@@ -830,6 +812,8 @@ void ed3DScenePopCluster(ed_3D_Scene* pScene, ed_g3d_manager* pMeshInfo);
 
 void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo);
 void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo);
+
+void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
@@ -851,7 +835,7 @@ extern edpkt_data g_stVertexXYZHeader;
 extern edpkt_data g_stExecuteCode;
 
 #ifdef PLATFORM_WIN
-Multidelegate<ed_g2d_manager*>& ed3DGetTextureLoadedDelegate();
+Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureLoadedDelegate();
 Multidelegate<ed_g3d_manager*>& ed3DGetMeshLoadedDelegate();
 
 namespace ed3D {

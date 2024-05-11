@@ -107,14 +107,12 @@ namespace edCSysHandlerPool
 	bool initialize(edSysHandlersNodeTable* pNode, int count)
 	{
 		bool bVar1;
-		int* pBase;
 		edSysHandlersPoolEntry* peVar2;
 		int iVar3;
 
 		if (pNode->pPoolStart == (edSysHandlersPoolEntry*)0x0) {
 			pNode->maxPoolEntries = count;
-			pBase = (int*)AllocateFunc_001002a0((long)(count * sizeof(edSysHandlersPoolEntry) + 0x10));
-			peVar2 = (edSysHandlersPoolEntry*)pBase; // (edSysHandlersPoolEntry*)RunActorInitFunctions_00217580(pBase, Constructor_002911d0, Free_002911f0, 0x10, count);
+			peVar2 = new edSysHandlersPoolEntry[count];
 			pNode->pPoolStart = peVar2;
 			if (pNode->pPoolStart == (edSysHandlersPoolEntry*)0x0) {
 				/* edCSysHandlerPool::initialize: Unable to allocate resource pool */

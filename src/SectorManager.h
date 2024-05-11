@@ -16,7 +16,8 @@ namespace ed3D
 struct ByteCode;
 struct S_HIERANM_HIER;
 
-struct CSectorHierarchy {
+class CSectorHierarchy {
+public:
 	ulong field_0x0;
 	CSectorHierarchy* pNext;
 	edNODE* pNode;
@@ -24,10 +25,10 @@ struct CSectorHierarchy {
 	uint flags;
 	byte alpha;
 	byte field_0x19;
-	float field_0x20;
-	float field_0x24;
 
 	void Create(ByteCode* pByteCode);
+	void Init(int param_2);
+	void SetHiddenOn();
 };
 
 struct SectorManagerSubObj {

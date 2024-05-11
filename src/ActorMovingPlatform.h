@@ -119,14 +119,14 @@ class CBehaviourWeighingMachine : public CBehaviourPlatform
 {
 public:
 	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 class CBehaviourWeighingMachineSlave : public CBehaviourWeighingMachine
 {
 public:
 	virtual void Create(ByteCode* pByteCode);
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
 
 	CPathFollowReaderAbsolute pathFollowReaderAbs;
 };
@@ -135,7 +135,7 @@ class CBehaviourTeleportRandom : public CBehaviourWeighingMachine
 {
 public:
 	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 class CBehaviourSelector : public CBehaviour

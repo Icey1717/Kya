@@ -37,3 +37,6 @@ void SetObjectName(const uint64_t objHandle, const VkObjectType objType, const c
 GLFWwindow* GetGLFWWindow();
 VkInstance GetInstance();
 uint32_t GetGraphicsQueueFamily();
+
+VkAllocationCallbacks* GetAllocator();
+uint32_t GetAllocationCount();

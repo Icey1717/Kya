@@ -254,11 +254,12 @@ namespace DebugMeshViewer {
 		}
 
 		if ((pStripMaterial != (ed_g2d_material*)0x0) && (pStripMaterial->count_0x0 != 0)) {
-			ed_g2d_layer_header* iVar1 = (ed_g2d_layer_header*)LOAD_SECTION(*(int*)(pStripMaterial + 1));
+			ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pStripMaterial->aLayers[0]);
+			ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 			ed_g2d_bitmap* pBitmap = (ed_g2d_bitmap*)0x0;
 			ed_g2d_bitmap* pOther = (ed_g2d_bitmap*)0x0;
-			if ((iVar1->body).field_0x1c != 0) {
-				TextureData_TEX* iVar2 = (TextureData_TEX*)LOAD_SECTION((iVar1->body).pTex);
+			if (pLayer->bHasPalette != 0) {
+				TextureData_TEX* iVar2 = (TextureData_TEX*)LOAD_SECTION(pLayer->pTex);
 				if ((iVar2->body).palette == 0) {
 					TextureData_HASH_Internal_PA32* pTVar5 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION((iVar2->body).hashCode.pData);
 					if (pTVar5 != (TextureData_HASH_Internal_PA32*)0x0) {
@@ -268,7 +269,7 @@ namespace DebugMeshViewer {
 				}
 				else {
 					ed_hash_code* pAfterHash = (ed_hash_code*)(iVar2 + 1);
-					int iVar4 = pAfterHash[(uint)(iVar1->body).field_0x1e].pData;
+					int iVar4 = pAfterHash[(uint)pLayer->field_0x1e].pData;
 					if (iVar4 != 0) {
 						ed_hash_code* pHash = (ed_hash_code*)LOAD_SECTION(iVar4);
 						pBitmap = (ed_g2d_bitmap*)(((char*)LOAD_SECTION(pHash->pData)) + 0x10);
@@ -282,7 +283,7 @@ namespace DebugMeshViewer {
 				}
 			}
 
-			gTextureData = MakeTextureDataFromPacket(pOther, pBitmap, 0);
+			gTextureData = MakeTextureDataFromPacket(pStripMaterial, pOther, pBitmap, 0);
 		}
 	}
 

@@ -18,6 +18,8 @@ extern edF32VECTOR4 gF32Vector4UnitX;
 extern edF32VECTOR4 gF32Vector4UnitZ;
 extern edF32VECTOR4 g_xVector;
 
+float edDistPointToPlane(edF32VECTOR4* subvector2, edF32VECTOR4* innerProductVector, edF32VECTOR4* subVector1);
+
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 void edQuatInverse(edF32VECTOR4* param_1, edF32VECTOR4* param_2);
 void edQuatMul(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3);

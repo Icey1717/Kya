@@ -146,7 +146,7 @@ void CSettings::StoreGlobalSettings()
 {
 	CCinematicManager* pCVar1;
 	CCameraManager* pCVar2;
-	GlobalSound_00451698* pGVar3;
+	CAudioManager* pGVar3;
 	undefined4 uVar4;
 	LANGUAGE LVar5;
 	float fVar6;

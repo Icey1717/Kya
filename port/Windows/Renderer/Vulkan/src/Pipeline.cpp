@@ -252,7 +252,7 @@ void PS2::CreateDefaultRenderPass()
 	renderPassInfo.dependencyCount = 2;
 	renderPassInfo.pDependencies = dependencies;
 
-	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &PS2_Internal::renderPass) != VK_SUCCESS) {
+	if (vkCreateRenderPass(GetDevice(), &renderPassInfo, GetAllocator(), &PS2_Internal::renderPass) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create render pass!");
 	}
 
@@ -307,7 +307,7 @@ void Renderer::Pipeline::CreateDescriptorSetLayouts()
 		createInfo.bindingCount = descriptorSet.size();
 		createInfo.pBindings = descriptorSet.data();
 
-		if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, nullptr, &descriptorSetLayouts[layoutSetIndex]) != VK_SUCCESS) {
+		if (vkCreateDescriptorSetLayout(GetDevice(), &createInfo, GetAllocator(), &descriptorSetLayouts[layoutSetIndex]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create descriptor set layout!");
 		}
 
@@ -341,7 +341,7 @@ void Renderer::Pipeline::CreateLayout()
 	pipelineLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
 	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 
-	if (vkCreatePipelineLayout(GetDevice(), &pipelineLayoutInfo, nullptr, &layout) != VK_SUCCESS) {
+	if (vkCreatePipelineLayout(GetDevice(), &pipelineLayoutInfo, GetAllocator(), &layout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 
@@ -407,7 +407,7 @@ void Renderer::CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutB
 	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, GetAllocator(), &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }

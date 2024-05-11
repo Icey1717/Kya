@@ -47,7 +47,9 @@
 #define STATE_HERO_TOBOGGAN_2 0xed
 #define STATE_HERO_TOBOGGAN 0xee
 
-#define STATE_HERO_GLIDE 0xf0
+#define STATE_HERO_GLIDE_1 0xf0
+#define STATE_HERO_GLIDE_2 0xf1
+#define STATE_HERO_GLIDE_3 0xf2
 
 struct CPlayerInput;
 class CActorBoomy;
@@ -119,6 +121,7 @@ public:
 	uint TestState_IsFlying(uint inFlags);
 	uint TestState_IsCrouched(uint inFlags);
 	uint TestState_IsOnCeiling(uint inFlags);
+	uint TestState_IsGripped(uint inFlags);
 
 	bool FUN_0014cb60(edF32VECTOR4* v0);
 };

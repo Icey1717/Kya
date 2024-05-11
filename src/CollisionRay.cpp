@@ -257,16 +257,6 @@ void ComputeNormal(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* p
 	return;
 }
 
-float edDistPointToPlane(edF32VECTOR4* subvector2, edF32VECTOR4* innerProductVector, edF32VECTOR4* subVector1)
-{
-	float fVar1;
-	edF32VECTOR4 outputVector;
-
-	edF32Vector4SubHard(&outputVector, subVector1, subvector2);
-	fVar1 = edF32Vector4DotProductHard(&outputVector, innerProductVector);
-	return fVar1;
-}
-
 void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pColObj, int colType, edF32VECTOR4* pOutNormal, uint* pOutProps)
 {
 	edF32VECTOR4* peVar1;

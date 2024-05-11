@@ -1,7 +1,9 @@
 #pragma once
 
-namespace Debug {
-	namespace Hero {
+namespace Debug
+{
+	namespace Texture 
+	{
 		void ShowMenu(bool* bOpen);
 	}
 }

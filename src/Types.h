@@ -67,6 +67,8 @@ union Hash_4
 	Hash_4(uint inNumber) { number = inNumber; }
 };
 
+#include <string>
+
 union Hash_8
 {
 	char name[8];
@@ -74,6 +76,19 @@ union Hash_8
 
 	Hash_8() { number = 0; }
 	Hash_8(ulong inNumber) { number = inNumber; }
+
+	// Debug
+	inline std::string ToString() const {
+		// convert hash into chars
+		char buff[64];
+
+		char hashBuff[9];
+		memcpy(hashBuff, &name, 8);
+		hashBuff[8] = 0;
+
+		sprintf(buff, "%s(0x%llx)", hashBuff, number);
+		return std::string(buff);
+	}
 };
 
 struct EdFileGlobal_10 {

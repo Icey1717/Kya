@@ -1000,6 +1000,7 @@ namespace PS2_Internal {
 PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
 	: image(createInfo.textureData.image)
 	, paletteImage(createInfo.textureData.palettes.at(createInfo.key.CBP))
+	, pMaterial(createInfo.textureData.pMaterial)
 {
 	assert(createInfo.textureData.palettes.at(createInfo.key.CBP).canvasWidth);
 	assert(createInfo.textureData.palettes.at(createInfo.key.CBP).canvasHeight);
@@ -1011,6 +1012,7 @@ PS2::GSTexValue::GSTexValue(const GSTexValueCreateInfo& createInfo)
 PS2::GSTexValue::GSTexValue(const Renderer::TextureData& inTextureData, uint32_t CBP)
 	: image(inTextureData.image)
 	, paletteImage(inTextureData.palettes.at(CBP))
+	, pMaterial(inTextureData.pMaterial)
 {
 	assert(inTextureData.palettes.at(CBP).canvasWidth);
 	assert(inTextureData.palettes.at(CBP).canvasHeight);
@@ -1210,20 +1212,25 @@ void PS2::GSTexImage::CreateResources(const bool bPalette)
 
 	if (bPalette) {
 		CreateSampler(true);
+		SetObjectName(reinterpret_cast<uint64_t>(sampler), VK_OBJECT_TYPE_SAMPLER, "GSTexImage Image Sampler (%d, %d)  pallete: %d", width, height, bPalette);
 	}
+
+	SetObjectName(reinterpret_cast<uint64_t>(image), VK_OBJECT_TYPE_IMAGE, "GSTexImage Image (%d, %d) pallete: %d", width, height, bPalette);
+	SetObjectName(reinterpret_cast<uint64_t>(imageMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "GSTexImage Image Memory (%d, %d)  pallete: %d", width, height, bPalette);
+	SetObjectName(reinterpret_cast<uint64_t>(imageView), VK_OBJECT_TYPE_IMAGE_VIEW, "GSTexImage Image View (%d, %d)  pallete: %d", width, height, bPalette);
 }
 
 
 void PS2::GSTexImage::Cleanup()
 {
-	vkDestroySampler(GetDevice(), sampler, nullptr);
+	vkDestroySampler(GetDevice(), sampler, GetAllocator());
 
-	vkDestroyBuffer(GetDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(GetDevice(), stagingBufferMemory, nullptr);
+	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());
+	vkFreeMemory(GetDevice(), stagingBufferMemory, GetAllocator());
 
-	vkDestroyImageView(GetDevice(), imageView, nullptr);
-	vkDestroyImage(GetDevice(), image, nullptr);
-	vkFreeMemory(GetDevice(), imageMemory, nullptr);
+	vkDestroyImageView(GetDevice(), imageView, GetAllocator());
+	vkDestroyImage(GetDevice(), image, GetAllocator());
+	vkFreeMemory(GetDevice(), imageMemory, GetAllocator());
 }
 
 PS2::GSTexDescriptor& PS2::GSTexImage::AddDescriptorSets(const Renderer::Pipeline& pipeline)
@@ -1333,7 +1340,7 @@ void PS2::GSTexImage::CreateSampler(bool bPalette /*= false*/)
 	samplerInfo.minLod = -FLT_MAX;
 	samplerInfo.maxLod = FLT_MAX;
 
-	if (vkCreateSampler(GetDevice(), &samplerInfo, nullptr, &sampler) != VK_SUCCESS) {
+	if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
@@ -1397,6 +1404,19 @@ PS2::GSTexEntry& PS2::TextureCache::Lookup(const GIFReg::GSTex& TEX, Renderer::T
 	}
 
 	return Create(TEX, textureData, CBP);
+}
+
+void PS2::TextureCache::RemoveByMaterial(void* pMaterial)
+{
+	for (auto it = texcache.begin(); it != texcache.end(); ) {
+		if (it->value.pMaterial == pMaterial) {
+			it->cleanCounter = 1;
+			++it;
+		}
+		else {
+			++it;
+		}
+	}
 }
 
 PS2::TextureCache& PS2::GetTextureCache()

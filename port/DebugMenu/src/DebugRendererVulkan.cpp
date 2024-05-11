@@ -51,7 +51,7 @@ namespace DebugRendererImgui {
 			pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
 			pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
 			pool_info.pPoolSizes = pool_sizes;
-			if (vkCreateDescriptorPool(GetDevice(), &pool_info, nullptr, &imguiPool) != VK_SUCCESS) {
+			if (vkCreateDescriptorPool(GetDevice(), &pool_info, GetAllocator(), &imguiPool) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create descriptor pool!");
 			}
 		}
@@ -94,7 +94,7 @@ namespace DebugRendererImgui {
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
-		if (vkCreateRenderPass(GetDevice(), &renderPassInfo, nullptr, &gImguiRenderPass) != VK_SUCCESS) {
+		if (vkCreateRenderPass(GetDevice(), &renderPassInfo, GetAllocator(), &gImguiRenderPass) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
 		}
 
@@ -114,7 +114,7 @@ namespace DebugRendererImgui {
 		initInfo.MinImageCount = minImageCount;
 		initInfo.ImageCount = MAX_FRAMES_IN_FLIGHT;
 		initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-		initInfo.Allocator = nullptr;
+		initInfo.Allocator = GetAllocator();
 		initInfo.CheckVkResultFn = nullptr;
 		ImGui_ImplVulkan_Init(&initInfo, gImguiRenderPass);
 		ImGui_ImplGlfw_InitForVulkan(GetGLFWWindow(), true);
@@ -238,7 +238,7 @@ ImTextureID DebugMenu::AddFrameBuffer(const PS2::FrameBuffer& frameBuffer)
 		samplerCreateInfo.maxLod = 0.0f;
 
 		VkSampler sampler;
-		VkResult result = vkCreateSampler(GetDevice(), &samplerCreateInfo, nullptr, &sampler);
+		VkResult result = vkCreateSampler(GetDevice(), &samplerCreateInfo, GetAllocator(), &sampler);
 		if (result != VK_SUCCESS) {
 			// Handle sampler creation failure
 		}

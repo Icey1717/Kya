@@ -314,52 +314,52 @@ private:
 
 	void cleanupSwapChain() {
 		for (auto framebuffer : swapChainFramebuffers) {
-			vkDestroyFramebuffer(device, framebuffer, nullptr);
+			vkDestroyFramebuffer(device, framebuffer, GetAllocator());
 		}
 
 		for (auto imageView : swapChainImageViews) {
-			vkDestroyImageView(device, imageView, nullptr);
+			vkDestroyImageView(device, imageView, GetAllocator());
 		}
 
-		vkDestroySwapchainKHR(device, swapChain, nullptr);
+		vkDestroySwapchainKHR(device, swapChain, GetAllocator());
 	}
 
 	void cleanup() {
 		cleanupSwapChain();
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroyBuffer(GetDevice(), uniformBuffers[i], nullptr);
-			vkFreeMemory(GetDevice(), uniformBuffersMemory[i], nullptr);
+			vkDestroyBuffer(GetDevice(), uniformBuffers[i], GetAllocator());
+			vkFreeMemory(GetDevice(), uniformBuffersMemory[i], GetAllocator());
 		}
 
 		PS2::Cleanup();
 
-		vkDestroyPipeline(device, graphicsPipeline, nullptr);
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyRenderPass(device, renderPass, nullptr);
+		vkDestroyPipeline(device, graphicsPipeline, GetAllocator());
+		vkDestroyPipelineLayout(device, pipelineLayout, GetAllocator());
+		vkDestroyRenderPass(device, renderPass, GetAllocator());
 
-		vkDestroyBuffer(device, indexBuffer, nullptr);
-		vkFreeMemory(device, indexBufferMemory, nullptr);
+		vkDestroyBuffer(device, indexBuffer, GetAllocator());
+		vkFreeMemory(device, indexBufferMemory, GetAllocator());
 
-		vkDestroyBuffer(device, vertexBuffer, nullptr);
-		vkFreeMemory(device, vertexBufferMemory, nullptr);
+		vkDestroyBuffer(device, vertexBuffer, GetAllocator());
+		vkFreeMemory(device, vertexBufferMemory, GetAllocator());
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
-			vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
-			vkDestroyFence(device, inFlightFences[i], nullptr);
+			vkDestroySemaphore(device, renderFinishedSemaphores[i], GetAllocator());
+			vkDestroySemaphore(device, imageAvailableSemaphores[i], GetAllocator());
+			vkDestroyFence(device, inFlightFences[i], GetAllocator());
 		}
 
-		vkDestroyCommandPool(device, commandPool, nullptr);
+		vkDestroyCommandPool(device, commandPool, GetAllocator());
 
-		vkDestroyDevice(device, nullptr);
+		vkDestroyDevice(device, GetAllocator());
 
 		if (enableValidationLayers) {
-			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, GetAllocator());
 		}
 
-		vkDestroySurfaceKHR(instance, surface, nullptr);
-		vkDestroyInstance(instance, nullptr);
+		vkDestroySurfaceKHR(instance, surface, GetAllocator());
+		vkDestroyInstance(instance, GetAllocator());
 
 		glfwDestroyWindow(window);
 
@@ -418,7 +418,7 @@ private:
 			createInfo.pNext = nullptr;
 		}
 
-		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
+		if (vkCreateInstance(&createInfo, GetAllocator(), &instance) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create instance!");
 		}
 	}
@@ -530,7 +530,7 @@ private:
 			createInfo.enabledLayerCount = 0;
 		}
 
-		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
+		if (vkCreateDevice(physicalDevice, &createInfo, GetAllocator(), &device) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create logical device!");
 		}
 
@@ -578,7 +578,7 @@ private:
 		createInfo.presentMode = presentMode;
 		createInfo.clipped = VK_TRUE;
 
-		if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+		if (vkCreateSwapchainKHR(device, &createInfo, GetAllocator(), &swapChain) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create swap chain!");
 		}
 
@@ -635,7 +635,7 @@ private:
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
-		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+		if (vkCreateRenderPass(device, &renderPassInfo, GetAllocator(), &renderPass) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render pass!");
 		}
 
@@ -713,7 +713,7 @@ private:
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = &GetDescriptorSetLayout();
 
-		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, GetAllocator(), &pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
 
@@ -735,7 +735,7 @@ private:
 		pipelineInfo.subpass = 0;
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+		if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &graphicsPipeline) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics pipeline!");
 		}
 	}
@@ -757,7 +757,7 @@ private:
 			framebufferInfo.height = swapChainExtent.height;
 			framebufferInfo.layers = 1;
 
-			if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+			if (vkCreateFramebuffer(device, &framebufferInfo, GetAllocator(), &swapChainFramebuffers[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create framebuffer!");
 			}
 		}
@@ -771,7 +771,7 @@ private:
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+		if (vkCreateCommandPool(device, &poolInfo, GetAllocator(), &commandPool) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create graphics command pool!");
 		}
 	}
@@ -783,6 +783,8 @@ private:
 		VkDeviceMemory stagingBufferMemory;
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
+		SetObjectName(reinterpret_cast<uint64_t>(stagingBufferMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "Vertex staging buffer memory");
+
 		void* data;
 		vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, vertices.data(), (size_t)bufferSize);
@@ -790,10 +792,13 @@ private:
 
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
+		SetObjectName(reinterpret_cast<uint64_t>(vertexBuffer), VK_OBJECT_TYPE_BUFFER, "Vertex buffer");
+		SetObjectName(reinterpret_cast<uint64_t>(vertexBufferMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "Vertex buffer memory");
+
 		CopyBufferImmediate(stagingBuffer, vertexBuffer, bufferSize);
 
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
+		vkDestroyBuffer(device, stagingBuffer, GetAllocator());
+		vkFreeMemory(device, stagingBufferMemory, GetAllocator());
 	}
 
 	void createIndexBuffer() {
@@ -803,6 +808,8 @@ private:
 		VkDeviceMemory stagingBufferMemory;
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
+		SetObjectName(reinterpret_cast<uint64_t>(stagingBufferMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "Index staging buffer memory");
+
 		void* data;
 		vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
 		memcpy(data, indices.data(), (size_t)bufferSize);
@@ -810,10 +817,13 @@ private:
 
 		CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
 
+		SetObjectName(reinterpret_cast<uint64_t>(indexBuffer), VK_OBJECT_TYPE_BUFFER, "Index buffer");
+		SetObjectName(reinterpret_cast<uint64_t>(indexBufferMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "Index buffer memory");
+
 		CopyBufferImmediate(stagingBuffer, indexBuffer, bufferSize);
 
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
+		vkDestroyBuffer(device, stagingBuffer, GetAllocator());
+		vkFreeMemory(device, stagingBufferMemory, GetAllocator());
 	}
 
 public:
@@ -899,9 +909,9 @@ private:
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
-				vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS ||
-				vkCreateFence(device, &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+			if (vkCreateSemaphore(device, &semaphoreInfo, GetAllocator(), &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+				vkCreateSemaphore(device, &semaphoreInfo, GetAllocator(), &renderFinishedSemaphores[i]) != VK_SUCCESS ||
+				vkCreateFence(device, &fenceInfo, GetAllocator(), &inFlightFences[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create synchronization objects for a frame!");
 			}
 		}
@@ -915,6 +925,10 @@ private:
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+
+			char bufferName[256];
+			sprintf(bufferName, "Uniform buffer memory %d", i);
+			SetObjectName(reinterpret_cast<uint64_t>(uniformBuffersMemory[i]), VK_OBJECT_TYPE_DEVICE_MEMORY, bufferName);
 		}
 	}
 
@@ -1402,10 +1416,40 @@ public:
 
 ImageRendererApp app;
 
+static VkAllocationCallbacks* gAllocator = nullptr;
+
 namespace Renderer
 {
+	// Global variable to track allocation count
+	static std::atomic<uint32_t> gAllocationCount(0);
+
+	void* Alloc(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
+		// You can replace this with your custom memory allocator
+		gAllocationCount++;
+		return _aligned_malloc(size, alignment);
+	}
+
+	void* ReAlloc(void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
+		// You can replace this with your custom memory reallocator
+		return _aligned_realloc(pOriginal, size, alignment);
+	}
+
+	void Free(void* pUserData, void* pMemory) {
+		// You can replace this with your custom memory deallocator
+		if (pMemory) {
+			gAllocationCount--;
+			_aligned_free(pMemory);
+		}
+	}
+
 	void Setup()
 	{
+		gAllocator = new VkAllocationCallbacks();
+		gAllocator->pUserData = nullptr;
+		gAllocator->pfnAllocation = Alloc;
+		gAllocator->pfnReallocation = ReAlloc;
+		gAllocator->pfnFree = Free;
+
 		if (!gHeadless) {
 			app.setup();
 		}
@@ -1576,4 +1620,14 @@ VkInstance GetInstance()
 uint32_t GetGraphicsQueueFamily()
 {
 	return app.GetGraphicsQueueFamily();
+}
+
+VkAllocationCallbacks* GetAllocator()
+{
+	return gAllocator;
+}
+
+uint32_t GetAllocationCount()
+{
+	return Renderer::gAllocationCount;
 }

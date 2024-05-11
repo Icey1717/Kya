@@ -48,7 +48,7 @@ Renderer::TextureData DebugMenu::LoadTextureData(edDList_material* pMaterial)
 				pPaletteBitmap = edDListGetG2DBitmap(pMaterial->pMAT, 0, &bHasPalette, &pTextureBitmap);
 
 				if (pPaletteBitmap != (ed_g2d_bitmap*)0x0 && pTextureBitmap != (ed_g2d_bitmap*)0x0) {
-					return MakeTextureDataFromPacket(pTextureBitmap, pPaletteBitmap, 0);
+					return MakeTextureDataFromPacket(pMaterial->pMAT, pTextureBitmap, pPaletteBitmap, 0);
 				}
 			}
 		}
@@ -69,7 +69,7 @@ Renderer::TextureData DebugMenu::LoadTextureData(ed_g2d_material* pMaterial)
 	pPaletteBitmap = edDListGetG2DBitmap(pMaterial, 0, &bHasPalette, &pTextureBitmap);
 
 	if (pPaletteBitmap != (ed_g2d_bitmap*)0x0 && pTextureBitmap != (ed_g2d_bitmap*)0x0) {
-		return MakeTextureDataFromPacket(pTextureBitmap, pPaletteBitmap, 0);
+		return MakeTextureDataFromPacket(pMaterial, pTextureBitmap, pPaletteBitmap, 0);
 	}
 
 	return Renderer::TextureData();

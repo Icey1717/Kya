@@ -6,6 +6,53 @@
 #include "ActorMovable.h"
 #include "CollisionManager.h"
 
+class CWayPoint;
+
+struct _wind_param_in {
+	float field_0x0;
+	float field_0x4;
+	int field_0x8;
+	int field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+	float field_0x20;
+	uint field_0x24;
+	CWayPoint* field_0x28;
+	float field_0x2c;
+	float field_0x30;
+};
+
+struct CActorWindState {
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+	float field_0x20;
+	float field_0x24;
+	int field_0x28;
+	CWayPoint* field_0x2c;
+	float field_0x30;
+	float field_0x34;
+
+	// Potentially just for CActorHero
+	float field_0x38;
+	float field_0x3c;
+	float field_0x40;
+	float field_0x44;
+	float field_0x48;
+	float field_0x4c;
+
+	void AddWind(_wind_param_in* pParams);
+	void SubWind(_wind_param_in* pParams);
+	void Reset();
+};
+
 class CBehaviourAutonomous : public CBehaviour
 {
 public:
@@ -82,6 +129,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
+	virtual CActorWindState* GetWindState() { return (CActorWindState*)0x0; }
 
 	void _ManageDynamicFence(CActorsTable* pActorsTable);
 	virtual void StoreCollisionSphere();

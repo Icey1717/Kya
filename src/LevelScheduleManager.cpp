@@ -1055,11 +1055,7 @@ bool BnkInstallG2D(char* pFileData, int length)
 	MY_LOG("BnkInstallG2D\n");
 
 	pFVar1 = CScene::ptable.g_C3DFileManager_00451664;
-	ed3DInstallG2D
-	(pFileData, length, &iStack4,
-		(ed_g2d_manager*)
-		((CScene::ptable.g_C3DFileManager_00451664)->pTextureInfoArray +
-			(CScene::ptable.g_C3DFileManager_00451664)->textureLoadedCount), 1);
+	ed3DInstallG2D(pFileData, length, &iStack4, &pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].manager, 1);
 	pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
 	pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
 	return false;
@@ -1187,7 +1183,7 @@ bool BnkInstallAnim(char* pFileData, int length)
 
 bool BnkInstallSample(char* pFileData, int length)
 {
-	GlobalSound_00451698* pGVar1;
+	CAudioManager* pGVar1;
 	uint uVar2;
 
 	MY_LOG("BnkInstallSample\n");
@@ -1220,7 +1216,7 @@ bool BnkInstallSample(char* pFileData, int length)
 
 bool BnkInstallBank(char* pFileData, int length)
 {
-	GlobalSound_00451698* pGVar1;
+	CAudioManager* pGVar1;
 
 	MY_LOG("BnkInstallBank\n");
 
@@ -1241,7 +1237,7 @@ bool BnkInstallBank(char* pFileData, int length)
 
 bool BnkInstallBankHeader(char* pFileData, int length)
 {
-	GlobalSound_00451698* pGVar1;
+	CAudioManager* pGVar1;
 	undefined4* puVar2;
 	uint uVar3;
 
@@ -1272,7 +1268,7 @@ bool BnkInstallBankHeader(char* pFileData, int length)
 
 bool BnkInstallSong(char* pFileData, int length)
 {
-	GlobalSound_00451698* pGVar1;
+	CAudioManager* pGVar1;
 	uint uVar2;
 
 	MY_LOG("BnkInstallBank\n");
@@ -1363,7 +1359,7 @@ edCBankCallback TableBankCallback[24] = {
 	{ 0xFFFFFFFF, 0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
 };
 
-void WillLoadFileFromBank(struct GlobalSound_00451698* param_1, edCBankBufferEntry* pBankBuffer)
+void WillLoadFileFromBank(struct CAudioManager* param_1, edCBankBufferEntry* pBankBuffer)
 {
 	bool bVar1;
 	uint uVar2;

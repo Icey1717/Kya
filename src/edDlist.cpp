@@ -639,8 +639,10 @@ void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 {
 	if (index < pMAT_Internal->count_0x0) {
 		int* hash = (int*)(pMAT_Internal + 1);
-		ed_g2d_layer_header* pLAY = (ed_g2d_layer_header*)LOAD_SECTION(hash[index]);
-		pLAY->body.flags_0x0 |= flag;
+		ed_Chunck* pLAY = (ed_Chunck*)LOAD_SECTION(hash[index]);
+
+		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+		pLayer->flags_0x0 |= flag;
 	}
 	return;
 }
@@ -669,21 +671,25 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHas
 	TextureData_HASH_Internal_PA32* pTVar1;
 	ed_g2d_bitmap* pTVar2;
 	TextureData_TEX* iVar2;
-	ed_g2d_layer_header* iVar1;
+	ed_Chunck* pLAY;
 	TextureData_HASH_Internal_PA32* iVar3;
 
 	*bHasPalette = false;
 	*pOutAddr = (ed_g2d_bitmap*)0x0;
+
 	if (pMAT != (ed_g2d_material*)0x0) {
 		if (pMAT->count_0x0 == 0) {
 			return (ed_g2d_bitmap*)0x0;
 		}
+
 		int* hash = (int*)(pMAT + 1);
-		iVar1 = (ed_g2d_layer_header*)LOAD_SECTION(hash[offset]);
+		pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[offset]);
 
-		if (((iVar1 != (ed_g2d_layer_header*)0xfffffff0) && (iVar1 != (ed_g2d_layer_header*)0xfffffff0)) && ((iVar1->body).field_0x1c != 0)) {
+		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 
-			iVar2 = (TextureData_TEX*)LOAD_SECTION(iVar1->body.pTex);
+		if (((pLAY != (ed_Chunck*)0xfffffff0) && (pLAY != (ed_Chunck*)0xfffffff0)) && (pLayer->bHasPalette != 0)) {
+
+			iVar2 = LOAD_SECTION_CAST(TextureData_TEX*, pLayer->pTex);
 			pTVar2 = (ed_g2d_bitmap *)0x0;
 
 			if (iVar2 == (TextureData_TEX*)0xfffffff0) {
@@ -693,7 +699,7 @@ ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHas
 			if ((iVar2->body).palette != 0) {
 				*bHasPalette = true;
 
-				iVar3 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(((ed_hash_code*)(iVar2 + 1))[(uint)(iVar1->body).field_0x1e].pData);
+				iVar3 = (TextureData_HASH_Internal_PA32*)LOAD_SECTION(((ed_hash_code*)(iVar2 + 1))[(uint)pLayer->field_0x1e].pData);
 
 				if (iVar3 != 0) {
 					pTVar2 = &((TextureData_PA32*)LOAD_SECTION(iVar3->pPA32))->body;
@@ -870,7 +876,7 @@ void LogBitmap(const char* prefix, ed_g2d_bitmap* pBitmap)
 	EDDLIST_LOG(LogLevel::Verbose, "{} w: {}, h: {}, psm: {} maxMipLevel: {}", prefix, pBitmap->width, pBitmap->height, pBitmap->psm, pBitmap->maxMipLevel);
 }
 
-Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap, int index) 
+Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, ed_g2d_bitmap* pTextureBitmap, ed_g2d_bitmap* pPaletteBitmap, int index)
 {
 	LogBitmap("MakeTextureDataFromPacket TEX", pTextureBitmap);
 	LogBitmap("MakeTextureDataFromPacket PAL", pPaletteBitmap);
@@ -944,7 +950,7 @@ Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_bitmap* pTextureBitmap, e
 
 	EDDLIST_LOG(LogLevel::Verbose, "MakeTextureDataFromPacket TEX - rw: {} (0x{:x}) rh: {} (0x{:x})", texWidth, texWidth, texHeight, texHeight);
 
-	return { { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm, pTextureBitmap->maxMipLevel },
+	return { pMaterial, { LOAD_SECTION(imageIndex), pTextureBitmap->width, pTextureBitmap->height, texWidth, texHeight, pTextureBitmap->psm, pTextureBitmap->maxMipLevel },
 		palettes };
 }
 #endif
@@ -998,7 +1004,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 
 #ifdef PLATFORM_WIN
-					Renderer::SetImagePointer(MakeTextureDataFromPacket(pTextureBitmap, pPaletteBitmap, 0));
+					Renderer::SetTextureData(MakeTextureDataFromPacket(pMaterialInfo->pMAT, pTextureBitmap, pPaletteBitmap, 0));
 #endif
 				}
 
@@ -2467,28 +2473,30 @@ Multidelegate<edDList_material*>& edDListGetMaterialUnloadedDelegate()
 }
 #endif
 
-void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g2d_manager* textureInfoObj, uint mode)
+void edDListInitMaterial(edDList_material* pDlistMaterial, ed_hash_code* pHASH_MAT, ed_g2d_manager* pManager, uint mode)
 {
-	ed_hash_code* someGlobalBuffer;
+	ed_hash_code* pNewHashCode;
 	uint counter;
 
 	counter = 0;
-	memset(outObj, 0, sizeof(edDList_material));
-	outObj->pMAT = (ed_g2d_material*)((char*)LOAD_SECTION(pHASH_MAT->pData) + sizeof(ed_hash_code));
+	memset(pDlistMaterial, 0, sizeof(edDList_material));
+
+	pDlistMaterial->pMAT = (ed_g2d_material*)((char*)LOAD_SECTION(pHASH_MAT->pData) + sizeof(ed_hash_code));
 	while (true) {
 		if ((gBankMaterial[counter].hash.number == 0) || (edDlistConfig.bankMaterialCount - 1U <= counter)) break;
 		counter = counter + 1;
 	}
-	someGlobalBuffer = gBankMaterial + counter;
-	someGlobalBuffer->hash = pHASH_MAT->hash;
-	someGlobalBuffer->pData = STORE_SECTION(pHASH_MAT);
-	outObj->index = counter;
+
+	pNewHashCode = gBankMaterial + counter;
+	pNewHashCode->hash = pHASH_MAT->hash;
+	pNewHashCode->pData = STORE_SECTION(pHASH_MAT);
+	pDlistMaterial->index = counter;
 	gNbUsedMaterial = gNbUsedMaterial + 1;
-	outObj->mode = mode;
-	outObj->textureInfo = textureInfoObj;
+	pDlistMaterial->mode = mode;
+	pDlistMaterial->pManager = pManager;
 
 #ifdef PLATFORM_WIN
-	onMaterialLoadedDelegate(outObj);
+	onMaterialLoadedDelegate(pDlistMaterial);
 #endif
 
 	return;
@@ -2513,6 +2521,8 @@ bool edDListTermMaterial(edDList_material* pMaterial)
 edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, int mode)
 {
 	ed_hash_code* pHASH_MAT;
+
+	EDDLIST_LOG(LogLevel::Verbose, "edDListCreatMaterialFromIndex {}", index);
 
 	pHASH_MAT = ed3DG2DGetMaterialFromIndex(pTextureInfo, index);
 	if (pHASH_MAT == (ed_hash_code*)0x0) {

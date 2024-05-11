@@ -150,7 +150,7 @@ void Vulkan::DescriptorSetLayoutBuilder::SetPushFlag()
 VkDescriptorSetLayout Vulkan::DescriptorSetLayoutBuilder::Create(VkDevice device)
 {
 	VkDescriptorSetLayout layout;
-	VkResult res = vkCreateDescriptorSetLayout(device, &m_ci, nullptr, &layout);
+	VkResult res = vkCreateDescriptorSetLayout(device, &m_ci, GetAllocator(), &layout);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateDescriptorSetLayout() failed: ");
@@ -196,7 +196,7 @@ void Vulkan::PipelineLayoutBuilder::Clear()
 VkPipelineLayout Vulkan::PipelineLayoutBuilder::Create(VkDevice device)
 {
 	VkPipelineLayout layout;
-	VkResult res = vkCreatePipelineLayout(device, &m_ci, nullptr, &layout);
+	VkResult res = vkCreatePipelineLayout(device, &m_ci, GetAllocator(), &layout);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreatePipelineLayout() failed: ");
@@ -296,7 +296,7 @@ VkPipeline Vulkan::GraphicsPipelineBuilder::Create(
 	VkDevice device, VkPipelineCache pipeline_cache, bool clear /* = true */)
 {
 	VkPipeline pipeline;
-	VkResult res = vkCreateGraphicsPipelines(device, pipeline_cache, 1, &m_ci, nullptr, &pipeline);
+	VkResult res = vkCreateGraphicsPipelines(device, pipeline_cache, 1, &m_ci, GetAllocator(), &pipeline);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateGraphicsPipelines() failed: ");
@@ -610,7 +610,7 @@ VkPipeline Vulkan::ComputePipelineBuilder::Create(
 	VkDevice device, VkPipelineCache pipeline_cache /*= VK_NULL_HANDLE*/, bool clear /*= true*/)
 {
 	VkPipeline pipeline;
-	VkResult res = vkCreateComputePipelines(device, pipeline_cache, 1, &m_ci, nullptr, &pipeline);
+	VkResult res = vkCreateComputePipelines(device, pipeline_cache, 1, &m_ci, GetAllocator(), &pipeline);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateComputePipelines() failed: ");
@@ -669,7 +669,7 @@ void Vulkan::SamplerBuilder::Clear()
 VkSampler Vulkan::SamplerBuilder::Create(VkDevice device, bool clear /* = true */)
 {
 	VkSampler sampler;
-	VkResult res = vkCreateSampler(device, &m_ci, nullptr, &sampler);
+	VkResult res = vkCreateSampler(device, &m_ci, GetAllocator(), &sampler);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateSampler() failed: ");
@@ -938,7 +938,7 @@ void Vulkan::FramebufferBuilder::Clear()
 VkFramebuffer Vulkan::FramebufferBuilder::Create(VkDevice device, bool clear /*= true*/)
 {
 	VkFramebuffer fb;
-	VkResult res = vkCreateFramebuffer(device, &m_ci, nullptr, &fb);
+	VkResult res = vkCreateFramebuffer(device, &m_ci, GetAllocator(), &fb);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateFramebuffer() failed: ");
@@ -991,7 +991,7 @@ void Vulkan::RenderPassBuilder::Clear()
 VkRenderPass Vulkan::RenderPassBuilder::Create(VkDevice device, bool clear /*= true*/)
 {
 	VkRenderPass rp;
-	VkResult res = vkCreateRenderPass(device, &m_ci, nullptr, &rp);
+	VkResult res = vkCreateRenderPass(device, &m_ci, GetAllocator(), &rp);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateRenderPass() failed: ");
@@ -1077,7 +1077,7 @@ void Vulkan::BufferViewBuilder::Clear()
 VkBufferView Vulkan::BufferViewBuilder::Create(VkDevice device, bool clear /*= true*/)
 {
 	VkBufferView bv;
-	VkResult res = vkCreateBufferView(device, &m_ci, nullptr, &bv);
+	VkResult res = vkCreateBufferView(device, &m_ci, GetAllocator(), &bv);
 	if (res != VK_SUCCESS)
 	{
 		LOG_VULKAN_ERROR(res, "vkCreateBufferView() failed: ");

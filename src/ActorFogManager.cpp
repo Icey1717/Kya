@@ -1,6 +1,5 @@
 #include "ActorFogManager.h"
 #include "MemoryStream.h"
-#include "SectorManager.h"
 
 void CActorFogManager::Create(ByteCode* pByteCode)
 {
@@ -8,7 +7,7 @@ void CActorFogManager::Create(ByteCode* pByteCode)
 	int iVar1;
 	int* piVar2;
 	int iVar3;
-	CSectorHierarchy* pHier;
+	CFogHierarchy* pHier;
 	float fVar4;
 
 	CActor::Create(pByteCode);
@@ -16,7 +15,7 @@ void CActorFogManager::Create(ByteCode* pByteCode)
 	this->field_0x16c = iVar1;
 	count = this->field_0x16c;
 	if (count != 0) {
-		this->field_0x170 = new CSectorHierarchy[this->field_0x16c];
+		this->field_0x170 = new CFogHierarchy[this->field_0x16c];
 		iVar1 = 0;
 		if (0 < this->field_0x16c) {
 			iVar3 = 0;

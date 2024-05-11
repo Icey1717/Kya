@@ -4,16 +4,120 @@
 #include "Types.h"
 #include "Actor.h"
 #include "SectorManager.h"
+#include "CinematicManager.h"
 
-class CActorWind : public CActor {
+#define IMPLEMENTATION_GUARD_WIND_FX(x) 
+
+class CActorWind;
+class CWayPoint;
+
+struct NotifyWindParam
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
+};
+
+class CFxWind : public CObject
+{
+
+};
+
+class CBehaviourWind : public CBehaviour 
+{
+	// CBehaviour
+	virtual void Create() {}
+	virtual void Manage();
+	virtual void ManageFrozen();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { return 0; }
+
+	CActorWind* pOwner;
+};
+
+struct S_TARGET_STREAM_REF
+{
+	int entryCount;
+	S_STREAM_NTF_TARGET_SWITCH aEntries[];
+};
+
+class CActorWind : public CActor 
+{
 public:
-	CActorWind(){
-		IMPLEMENTATION_GUARD_LOG()
-	}
-
+	// CActor
 	virtual void Create(ByteCode* pByteCode);
+	virtual void Init();
+	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual AnimResult* GetStateCfg(int state);
+
+	void BehaviourWind_Manage();
+
+	float ComputeCurTime();
+	int ComputeStateFromTime(float* pTime);
+	void ComputeSpeedsInterpoltation();
+
+	void ResetTiming();
+
+	void NotifyActorInWindArea(float param_1, CActor* pNotifyActor);
 
 	CSectorHierarchy sectorObj;
+	CBehaviourWind behaviourWind;
+
+	uint nbFxWind;
+	CFxWind* aFxWind;
+
+	uint field_0x160;
+	float field_0x164;
+	float field_0x168;
+	float field_0x16c;
+	float field_0x170;
+	float field_0x174;
+	float field_0x178;
+	float field_0x17c;
+	float field_0x180;
+	float field_0x184;
+	float field_0x188;
+	float field_0x18c;
+	uint field_0x190;
+	float field_0x194;
+	float field_0x198;
+	float field_0x19c;
+	float field_0x1a0;
+	float field_0x1a4;
+	S_STREAM_REF<CWayPoint> field_0x1a8;
+	float field_0x1ac;
+	float field_0x1b0;
+
+	S_STREAM_REF<ed_zone_3d> field_0x1b8;
+	S_ACTOR_STREAM_REF* field_0x1bc;
+	S_STREAM_REF<ed_zone_3d> field_0x1c4;
+
+	S_STREAM_REF<CWayPoint> field_0x1cc;
+
+	S_TARGET_STREAM_REF* field_0x1d0;
+	S_STREAM_EVENT_CAMERA* field_0x1d4;
+	S_TARGET_STREAM_REF* field_0x1d8;
+	S_STREAM_EVENT_CAMERA* field_0x1dc;
+	S_TARGET_STREAM_REF* field_0x1e0;
+	S_STREAM_EVENT_CAMERA* field_0x1e4;
+
+	edF32MATRIX4* field_0x1e8;
+	int* field_0x1ec;
+	undefined4 field_0x1f0;
+	float field_0x1fc;
+
+	float field_0x1f4;
+	float field_0x1f8;
+
+	float field_0x200;
+	float field_0x204;
+	float field_0x208;
+	float field_0x20c;
+	float field_0x210;
+	float time_0x214;
+	uint field_0x218;
+
+	ed_zone_3d* field_0x21c;
 };
 
 #endif //ACTOR_WIND_H

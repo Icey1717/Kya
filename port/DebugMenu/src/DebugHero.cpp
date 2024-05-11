@@ -100,8 +100,14 @@ namespace Debug {
 			case STATE_HERO_TOBOGGAN:
 				return "StateHeroToboggan";
 				break;
-			case STATE_HERO_GLIDE:
-				return "StateHeroGlide";
+			case STATE_HERO_GLIDE_1:
+				return "StateHeroGlide1";
+				break;
+			case STATE_HERO_GLIDE_2:
+				return "StateHeroGlide2";
+				break;
+			case STATE_HERO_GLIDE_3:
+				return "StateHeroGlide3";
 				break;
 			case 0x3:
 				return "Cinematic";
@@ -205,7 +211,7 @@ namespace Debug {
 	}
 }
 
-void Debug::Hero::ShowHeroMenu(bool* bOpen) 
+void Debug::Hero::ShowMenu(bool* bOpen) 
 {
 	// Create a new ImGui window
 	ImGui::Begin("Hero", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
@@ -222,16 +228,19 @@ void Debug::Hero::ShowHeroMenu(bool* bOpen)
 		ShowCheckpointMenu();
 
 		ImGui::Spacing();
+		ImGui::Spacing();
 
 		DebugHelpers::ImGui::TextVector4("Current Location", pActorHero->currentLocation);
 		DebugHelpers::ImGui::TextVector4("Rotation Quat", pActorHero->rotationQuat);
 		ImGui::InputFloat("Effort", &pActorHero->effort);
 
 		ImGui::Spacing();
+		ImGui::Spacing();
 
 		DebugHelpers::ImGui::TextVector4("Control Direction", pActorHero->controlDirection);
 		ImGui::Text("Facing control direction: %d", pActorHero->bFacingControlDirection);
 
+		ImGui::Spacing();
 		ImGui::Spacing();
 
 		if (ImGui::CollapsingHeader("Actor", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -254,6 +263,7 @@ void Debug::Hero::ShowHeroMenu(bool* bOpen)
 		}
 
 		ImGui::Spacing();
+		ImGui::Spacing();
 
 		if (ImGui::CollapsingHeader("DynamicExt", ImGuiTreeNodeFlags_DefaultOpen)) {
 			DebugHelpers::ImGui::TextVector4("Gravity", pActorHero->dynamicExt.gForceGravity);
@@ -262,6 +272,7 @@ void Debug::Hero::ShowHeroMenu(bool* bOpen)
 			ImGui::InputFloat("Gravity Scale", &pActorHero->dynamicExt.gravityScale);
 		}
 
+		ImGui::Spacing();
 		ImGui::Spacing();
 
 		if (ImGui::CollapsingHeader("Collision", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -273,6 +284,7 @@ void Debug::Hero::ShowHeroMenu(bool* bOpen)
 			}
 		}
 
+		ImGui::Spacing();
 		ImGui::Spacing();
 
 		if (ImGui::CollapsingHeader("Input", ImGuiTreeNodeFlags_DefaultOpen)) {

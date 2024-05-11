@@ -43,7 +43,7 @@ namespace Shader_Internal {
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
 		VkShaderModule shaderModule;
-		if (vkCreateShaderModule(GetDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+		if (vkCreateShaderModule(GetDevice(), &createInfo, GetAllocator(), &shaderModule) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create shader module!");
 		}
 
@@ -83,7 +83,7 @@ Shader::ReflectedModule::ReflectedModule(const std::string& filename, const VkSh
 
 Shader::ReflectedModule::~ReflectedModule()
 {
-	vkDestroyShaderModule(GetDevice(), shaderModule, nullptr);
+	vkDestroyShaderModule(GetDevice(), shaderModule, GetAllocator());
 }
 
 namespace {

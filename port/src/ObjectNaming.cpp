@@ -36,3 +36,8 @@ std::string ObjectNaming::GetNextObjectName()
 	gName.reset();
 	return outName;
 }
+
+std::string ObjectNaming::CopyObjectName()
+{
+	return *gName;
+}

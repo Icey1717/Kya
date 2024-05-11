@@ -19,7 +19,7 @@ void VulkanImage::CreateImageView(const VkImage& image, VkFormat format, VkImage
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	if (vkCreateImageView(GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+	if (vkCreateImageView(GetDevice(), &viewInfo, GetAllocator(), &imageView) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture image view!");
 	}
 
@@ -38,22 +38,22 @@ VulkanImage::VulkanImage(char* splashFile, int width, int height)
 VulkanImage::~VulkanImage()
 {
 	if (textureSampler) {
-		vkDestroySampler(GetDevice(), textureSampler, nullptr);
+		vkDestroySampler(GetDevice(), textureSampler, GetAllocator());
 		textureSampler = NULL;
 	}
 
 	if (textureImageView) {
-		vkDestroyImageView(GetDevice(), textureImageView, nullptr);
+		vkDestroyImageView(GetDevice(), textureImageView, GetAllocator());
 		textureImageView = NULL;
 	}
 
 	if (textureImage) {
-		vkDestroyImage(GetDevice(), textureImage, nullptr);
+		vkDestroyImage(GetDevice(), textureImage, GetAllocator());
 		textureImage = NULL;
 	}
 
 	if (textureImageMemory) {
-		vkFreeMemory(GetDevice(), textureImageMemory, nullptr);
+		vkFreeMemory(GetDevice(), textureImageMemory, GetAllocator());
 		textureImageMemory = NULL;
 	}
 }
@@ -91,14 +91,15 @@ void VulkanImage::UpdateImage(char* pixelData)
 
 	TransitionImageLayout(textureImage, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	vkDestroyBuffer(GetDevice(), stagingBuffer, nullptr);
-	vkFreeMemory(GetDevice(), stagingBufferMemory, nullptr);
+	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());
+	vkFreeMemory(GetDevice(), stagingBufferMemory, GetAllocator());
 }
 
 void VulkanImage::CreateTextureImage(char* pixelData) {
 	CreateImage(texWidth, texHeight, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 	UpdateImage(pixelData);
 	SetObjectName(reinterpret_cast<uint64_t>(textureImage), VK_OBJECT_TYPE_IMAGE, "Texture Color Image (%d, %d)", texWidth, texHeight);
+	SetObjectName(reinterpret_cast<uint64_t>(textureImageMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "Texture Color Image Memory (%d, %d)", texWidth, texHeight);
 }
 
 void VulkanImage::CreateTextureImageView() {
@@ -134,7 +135,7 @@ void VulkanImage::CreateTextureSampler() {
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;
 
-	if (vkCreateSampler(GetDevice(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+	if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &textureSampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
@@ -155,7 +156,7 @@ void VulkanImage::CreateImage(uint32_t width, uint32_t height, VkFormat format, 
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateImage(GetDevice(), &imageInfo, nullptr, &image) != VK_SUCCESS) {
+	if (vkCreateImage(GetDevice(), &imageInfo, GetAllocator(), &image) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create image!");
 	}
 
@@ -167,7 +168,7 @@ void VulkanImage::CreateImage(uint32_t width, uint32_t height, VkFormat format, 
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
 
-	if (vkAllocateMemory(GetDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+	if (vkAllocateMemory(GetDevice(), &allocInfo, GetAllocator(), &imageMemory) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate image memory!");
 	}
 

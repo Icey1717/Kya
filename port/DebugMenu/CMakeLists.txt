@@ -22,6 +22,8 @@ set(SOURCES
 	"src/DebugHelpers.h"
 	"src/DebugMaterial.h"
 	"src/DebugMaterial.cpp"
+	"src/DebugTexture.h"
+	"src/DebugTexture.cpp"
 	"src/DebugRendererVulkan.cpp"
 	"src/DebugSetting.cpp"
 	"src/DebugSetting.h"
@@ -38,6 +40,6 @@ add_subdirectory("ext/magic_enum")
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory("ext/json")
 
-target_link_libraries(${TargetName} PRIVATE Renderer Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json)
+target_link_libraries(${TargetName} PRIVATE Renderer Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json)
 
 target_include_directories(${TargetName} PUBLIC "include")

@@ -63,7 +63,7 @@ union ManagerContainer {
 		struct MapManager* g_MapManager_0045168c;
 		class CCollisionManager* g_CollisionManager_00451690;
 		struct CLipTrackManager* g_LipTrackManager_00451694;
-		struct GlobalSound_00451698* g_GlobalSoundPtr_00451698;
+		struct CAudioManager* g_GlobalSoundPtr_00451698;
 		struct CWayPointManager* g_WayPointManager_0045169c;
 		struct CPathManager* g_PathManager_004516a0;
 		struct CActorManager* g_ActorManager_004516a4;

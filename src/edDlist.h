@@ -50,6 +50,7 @@ struct ed_g2d_manager;
 struct ed_g2d_material;
 struct TextureData_HASH_Internal_MAT;
 struct ed_hash_code;
+struct ed_dma_material;
 
 extern int gNbUsedMaterial;
 extern int gCurRenderState;
@@ -79,7 +80,7 @@ struct edDlistConfiguration {
 };
 
 struct edDList_material {
-	ed_g2d_manager* textureInfo;
+	ed_g2d_manager* pManager;
 	ed_g2d_material* pMAT;
 	int mode;
 	int index;
@@ -90,7 +91,7 @@ extern edDlistConfiguration edDlistConfig;
 extern edSysHandlerDisplayList sysHandler_0048cb90;
 
 #ifdef PLATFORM_WIN
-Renderer::TextureData MakeTextureDataFromPacket(struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap, int index);
+Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap, int index);
 #endif
 
 void edDListInit(void);

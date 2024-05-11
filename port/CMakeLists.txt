@@ -20,6 +20,7 @@ add_subdirectory("ext/tracy")
 add_subdirectory("pcsx2/VU")
 
 add_subdirectory("Windows/Renderer")
+add_subdirectory("Texture")
 
 set(SOURCES 
 	"Windows/WindowsFunctions.cpp"
@@ -31,6 +32,6 @@ add_library(Port ${SOURCES})
 
 target_include_directories(Port PUBLIC "include")
 
-target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient)
+target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient Texture)
 
 add_subdirectory(DebugMenu)

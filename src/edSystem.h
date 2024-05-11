@@ -35,7 +35,7 @@ struct edSysHandlersNodeParent {
 	edSysHandlersPoolEntry* pTypeArray_0x4[1];
 };
 
-extern edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;;
+extern edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;
 
 namespace edSystem
 {

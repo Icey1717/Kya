@@ -29,7 +29,7 @@ void CreateDescriptorSetLayout() {
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 	layoutInfo.pBindings = bindings.data();
 
-	if (vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+	if (vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, GetAllocator(), &descriptorSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
@@ -48,9 +48,9 @@ VulkanColorImage::VulkanColorImage(char* splashFile, int width, int height)
 
 VulkanColorImage::~VulkanColorImage()
 {
-	vkDestroyDescriptorPool(GetDevice(), descriptorPool, nullptr);
+	vkDestroyDescriptorPool(GetDevice(), descriptorPool, GetAllocator());
 
-	vkDestroyDescriptorSetLayout(GetDevice(), descriptorSetLayout, nullptr);
+	vkDestroyDescriptorSetLayout(GetDevice(), descriptorSetLayout, GetAllocator());
 }
 
 void VulkanColorImage::UpdateImage(char* newImage)
@@ -138,7 +138,7 @@ void VulkanColorImage::CreateDescriptorPool() {
 	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+	if (vkCreateDescriptorPool(GetDevice(), &poolInfo, GetAllocator(), &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }

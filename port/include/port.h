@@ -723,5 +723,10 @@ MY_LOG("SCE_GIF_SET_TAG(\n{}, // NLOOP\n{}, // EOP\n{}, // PRE\n{}, // PRIM\n{},
 namespace ObjectNaming
 {
 	void SetNextObjectName(const char* format, ...);
+
+	// Will reset object name to ensure only one object is named per call.
 	std::string GetNextObjectName();
+
+	// Will not reset the name, so you can call this multiple times to get the same name.
+	std::string CopyObjectName();
 }

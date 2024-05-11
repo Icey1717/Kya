@@ -87,7 +87,7 @@ namespace Renderer {
 		PS2::GetPipelines().clear();
 	}
 
-	TextureData gImageData;
+	TextureData gTextureData;
 
 	void ResetVertIndexBuffers()
 	{
@@ -1744,8 +1744,12 @@ namespace PipelineDebug
 	};
 }
 
-void Renderer::SetImagePointer(Renderer::TextureData inImage) {
-	gImageData = inImage;
+void Renderer::SetTextureData(Renderer::TextureData inTextureData) {
+	gTextureData = inTextureData;
+}
+
+void Renderer::RemoveByMaterial(void* pMaterial) {
+	PS2::GetTextureCache().RemoveByMaterial(pMaterial);
 }
 
 void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen) {
@@ -1755,16 +1759,16 @@ void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj,
 	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pScreen, sizeof(glm::mat4));
 }
 
-Renderer::TextureData& Renderer::GetImagePointer() {
-	return gImageData;
+Renderer::TextureData& Renderer::GetTextureData() {
+	return gTextureData;
 }
 
 void Renderer::Draw() {
-	Draw(GetDefaultDrawBuffer(), gImageData, PS2::GetGSState());
+	Draw(GetDefaultDrawBuffer(), gTextureData, PS2::GetGSState());
 }
 
 void Renderer::Draw(PS2::DrawBufferBase& drawBuffer) {
-	Draw(drawBuffer, gImageData, PS2::GetGSState(), true);
+	Draw(drawBuffer, gTextureData, PS2::GetGSState(), true);
 }
 
 void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, PS2::GSState& state, bool bHardware) {
@@ -1774,6 +1778,12 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 	//	drawBuffer.ResetAfterDraw();
 	//	return;
 	//}
+
+	{
+		drawBuffer.ResetAfterDraw();
+		state.bTexSet = false;
+		return;
+	}
 
 	if (tail == 0) {
 		return;
@@ -2011,13 +2021,24 @@ void PS2::BeginFrame()
 {
 	PS2_Internal::gVertexBuffers.Reset();
 	PS2::Hardware::gVertexBuffers.Reset();
+
+	for (auto& entry : PS2::GetTextureCache().GetEntries()) {
+		if (entry.cleanCounter > 0) {
+			entry.cleanCounter++;
+
+			if (entry.cleanCounter > 10) {
+				entry.value.Cleanup();
+				entry.cleanCounter = 0;
+			}
+		}
+	}
 }
 
 void PS2::Cleanup()
 {
 	for (auto& pipeline : PS2::GetPipelines()) {
-		vkDestroyPipeline(GetDevice(), pipeline.second.pipeline, nullptr);
-		vkDestroyPipelineLayout(GetDevice(), pipeline.second.layout, nullptr);
+		vkDestroyPipeline(GetDevice(), pipeline.second.pipeline, GetAllocator());
+		vkDestroyPipelineLayout(GetDevice(), pipeline.second.layout, GetAllocator());
 	}
 	
 	//vkDestroyRenderPass(GetDevice(), PS2_Internal::renderPassPs2, nullptr);

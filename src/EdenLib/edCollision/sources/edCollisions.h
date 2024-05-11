@@ -180,10 +180,7 @@ PACK(
 	undefined field_0x13d;
 	undefined field_0x13e;
 	undefined field_0x13f;
-	undefined field_0x140;
-	undefined field_0x141;
-	undefined field_0x142;
-	undefined field_0x143;
+	uint field_0x140;
 	undefined field_0x144;
 	undefined field_0x145;
 	undefined field_0x146;

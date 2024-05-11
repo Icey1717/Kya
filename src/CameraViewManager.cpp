@@ -322,6 +322,7 @@ bool ActiveCamManager::FUN_003feb30()
 				pAVar6 = this->aEntries + 1;
 				do {
 					*pAVar15 = *pAVar6;
+					iVar16 = iVar16 + 1;
 					pAVar15 = pAVar15 + 1;
 					pAVar6 = pAVar6 + 1;
 				} while (iVar16 < this->activeIndex + 1);

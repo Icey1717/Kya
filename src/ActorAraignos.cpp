@@ -3,7 +3,7 @@
 
 void CActorAraignos::Create(ByteCode* pByteCode)
 {
-	GlobalSound_00451698* pGVar1;
+	CAudioManager* pGVar1;
 	CPathManager* pCVar2;
 	int iVar3;
 	uint uVar4;

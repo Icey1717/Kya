@@ -27,3 +27,18 @@ void CWayPointManager::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
+template<>
+void S_STREAM_REF<CWayPoint>::Init()
+{
+	CWayPoint* pZone;
+
+	if (this->index == -1) {
+		pZone = (CWayPoint*)0x0;
+	}
+	else {
+		pZone = (CScene::ptable.g_WayPointManager_0045169c)->aWaypoints + this->index;
+	}
+
+	this->pObj = STORE_SECTION(pZone);
+	return;
+}

@@ -26,6 +26,7 @@
 #include "CinematicManager.h"
 #include "port/vu1_emu.h"
 #include "DebugMeshViewer.h"
+#include "DebugTexture.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
 #include "ActorHeroPrivate.h"
@@ -39,6 +40,7 @@
 #include "../../../src/Rendering/DisplayList.h"
 #include "../../../src/SectorManager.h"
 #include "DebugHero.h"
+#include "../../Windows/Renderer/Vulkan/src/VulkanRenderer.h"
 
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -77,7 +79,7 @@ namespace DebugMenu_Internal {
 
 	std::vector<TextureListEntry> textureList;
 
-	void OnTextureLoaded(ed_g2d_manager* pNewTexture) {
+	void OnTextureLoaded(ed_g2d_manager* pNewTexture, std::string name) {
 		std::vector<DWORD64> backtrace;
 		CollectBacktrace(backtrace);
 		textureList.emplace_back(pNewTexture, backtrace, ObjectNaming::GetNextObjectName());
@@ -203,7 +205,7 @@ namespace DebugMenu_Internal {
 				std::sprintf(buttonText, "Material %d", i + 1);
 				if (ImGui::Selectable(buttonText) || bOpenedMaterial) {
 					DEBUG_LOG(LogLevel::Info, "Selected material %d", i + 1);
-					if (material.textureInfo == nullptr) {
+					if (material.pManager == nullptr) {
 						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture {}", i + 1, (uintptr_t)selectedTexture.pTexture);
 						edDListCreatMaterialFromIndex(&material, i, selectedTexture.pTexture, 2);
 					}
@@ -782,6 +784,8 @@ namespace DebugMenu_Internal {
 			inFile.close();
 		}
 
+		ImGui::Text("VkAllocations: %u", GetAllocationCount());
+
 		ImGui::End();
 	}
 
@@ -808,9 +812,10 @@ namespace DebugMenu_Internal {
 		{"Cutscene", ShowCutsceneMenu, true },
 		{"Rendering", ShowRenderingMenu },
 		{"Scene", ShowSceneMenu },
-		{"Hero", Debug::Hero::ShowHeroMenu, true },
+		{"Hero", Debug::Hero::ShowMenu, true },
 		{"Sector", ShowSectorMenu, true },
 		{"Memory", ShowMemoryMenu, true },
+		{"Texture", Debug::Texture::ShowMenu, true },
 
 	};
 

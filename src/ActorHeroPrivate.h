@@ -58,6 +58,7 @@ public:
 
 	// Autonomous
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
+	virtual CActorWindState* GetWindState();
 	virtual void StoreCollisionSphere();
 	virtual CLifeInterface* GetLifeInterface();
 	virtual void LifeDecrease(float amount);
@@ -126,6 +127,7 @@ public:
 	void StateHeroFlyInit();
 
 	void StateHeroGlideInit();
+	void StateHeroGlide(int param_2, int nextState);
 
 	void SetJumpCfgFromGround(float param_1);
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
@@ -141,6 +143,7 @@ public:
 
 	int SlideOnGround(float param_1, float param_2, float param_3, float param_4, uint flags);
 	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
+	void MoveInFreeFall(float param_1, float param_2, float param_3, float param_4, float param_5, int param_7);
 
 	void SetBoomyHairOff();
 	void SetBoomyHairOn();
@@ -157,6 +160,7 @@ public:
 
 	void ChangeCollisionSphereForLying(float param_2);
 	void ChangeCollisionSphereForToboggan(float param_2);
+	void ChangeCollisionSphereForGlide(float param_1, float param_2);
 
 	void ConvertSpeedPlayerToSpeedSumForceExt();
 	void BeginToboggan();
@@ -167,6 +171,8 @@ public:
 
 	void AdjustLocalMatrixFromNormal(float param_1, edF32VECTOR4* pNormal);
 
+	bool UpdateOrientationFromWind(edF32VECTOR4* v0, edF32VECTOR4* v1);
+
 	void ConvertSpeedSumForceExtToSpeedPlayer();
 	bool GetNormalInFrontOf(float rayLength, edF32VECTOR4* pRayDirection, edF32VECTOR4* param_4, uint flags, edF32VECTOR4* pHitLocation, CActor** pActor);
 
@@ -176,8 +182,13 @@ public:
 
 	SPEED_DYN field_0xcb4;
 
+	CActorWindState field_0x1190;
+
 	CFxHandle* field_0x10fc;
 	int* field_0x1100;
+
+	float field_0x13cc;
+	float field_0x13d0;
 
 	float field_0x15c4;
 	float field_0x15c8;
@@ -200,6 +211,7 @@ public:
 
 	float field_0x1048;
 
+	edF32VECTOR4 field_0x1400;
 	edF32VECTOR4 bounceLocation;
 	edF32VECTOR4 field_0x1460;
 	edF32VECTOR4 field_0x1490;
@@ -317,7 +329,10 @@ public:
 	float field_0x11f8;
 	float field_0x11fc;
 
-	undefined4 field_0x11ec;
+	float field_0x11ec;
+	float field_0x11e0;
+	float field_0x11e4;
+	float field_0x11e8;
 
 	float field_0x1410;
 	float field_0x1414;

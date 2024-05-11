@@ -142,6 +142,8 @@ namespace Renderer
 	using PaletteMap = std::unordered_map<int, ImageData>;
 
 	struct TextureData {
+		// ed_g2d_material that the texture is associated with.
+		void* pMaterial;
 		ImageData image;
 		PaletteMap palettes;
 	};
@@ -336,13 +338,15 @@ namespace Renderer
 	void SetClamp(GIFReg::GSClamp clamp);
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
-	void SetImagePointer(TextureData inImage);
+	void SetTextureData(TextureData inTextureData);
 	void SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen);
-	TextureData& GetImagePointer();
+	TextureData& GetTextureData();
 
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;
 
 	RenderDelegate& GetRenderDelegate();
+
+	void RemoveByMaterial(void* pMaterial);
 
 	void SetHeadless(bool bValue);
 

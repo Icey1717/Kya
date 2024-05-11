@@ -4,6 +4,7 @@
 #include "DebugRenderer.h"
 
 #include "port/input.h"
+#include "Texture.h"
 
 #include <csignal>
 #include "log.h"
@@ -19,6 +20,7 @@ int main(int argc, char** argv) {
 	Renderer::Setup();
 	DebugMenu::SetupRenderer();
 	DebugMenu::Init();
+	Renderer::Kya::TextureLibrary::Init();
 	Input::SetInputFunctions(DebugMenu::GetInputFunctions());
 	main_internal(argc, argv);
 }

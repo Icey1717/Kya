@@ -19,6 +19,16 @@ edF32VECTOR4 g_xVector = { 0.0f, 1.0f, 0.0f, 0.0f };
 
 float g_DefaultNearClip_0044851c = -0.001f;
 
+float edDistPointToPlane(edF32VECTOR4* subvector2, edF32VECTOR4* innerProductVector, edF32VECTOR4* subVector1)
+{
+	float fVar1;
+	edF32VECTOR4 outputVector;
+
+	edF32Vector4SubHard(&outputVector, subVector1, subvector2);
+	fVar1 = edF32Vector4DotProductHard(&outputVector, innerProductVector);
+	return fVar1;
+}
+
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0)
 {
 	float fVar1;

@@ -42,7 +42,7 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
-			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
+			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, &pMVar4->pTextureInfo->manager, 0xc, &pMVar4->meshInfo);
 		}
 
 		this->pMeshInfo = &pMVar4->meshInfo;
@@ -62,7 +62,7 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 			NAME_NEXT_OBJECT("Level Mesh %d", iVar2);
 
 			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
-			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->pManager, 0xc, &pMVar4->meshInfo);
+			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->manager, 0xc, &pMVar4->meshInfo);
 		}
 
 		pMVar3 = ed3DHierarchyAddToScene(CScene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
@@ -282,7 +282,7 @@ ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
 		NAME_NEXT_OBJECT("Common (%d, %d)", meshIndex, textureIndex);
 
 		pMVar1->pTextureInfo = this->pTextureInfoArray + textureIndex;
-		ed3DInstallG3D(pMVar1->pFileData, pMVar1->fileLength, 0, &iStack4, &pMVar1->pTextureInfo->pManager, 0xc,
+		ed3DInstallG3D(pMVar1->pFileData, pMVar1->fileLength, 0, &iStack4, &pMVar1->pTextureInfo->manager, 0xc,
 			&pMVar1->meshInfo);
 	}
 	return &pMVar1->meshInfo;
@@ -290,12 +290,12 @@ ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
 
 ed_g2d_manager* C3DFileManager::GetActorsCommonMaterial(int index)
 {
-	return &this->pTextureInfoArray[index].pManager;
+	return &this->pTextureInfoArray[index].manager;
 }
 
 ed_g2d_manager* C3DFileManager::GetActorsCommonMeshMaterial(int index)
 {
-	return &this->pMeshDataArray[index].pTextureInfo->pManager;
+	return &this->pMeshDataArray[index].pTextureInfo->manager;
 }
 
 ed_g2d_manager* C3DFileManager::LoadDefaultTexture_001a65d0()
@@ -306,5 +306,5 @@ ed_g2d_manager* C3DFileManager::LoadDefaultTexture_001a65d0()
 	if (CScene::_pinstance->defaultTextureIndex_0x2c != -1) {
 		pTVar1 = this->pTextureInfoArray + CScene::_pinstance->defaultTextureIndex_0x2c;
 	}
-	return &pTVar1->pManager;
+	return &pTVar1->manager;
 }

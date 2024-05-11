@@ -298,6 +298,62 @@ void CActor::SetScale(float x, float y, float z)
 	return;
 }
 
+void CActor::SnapOrientation(float x, float y, float z)
+{
+	edF32VECTOR3* peVar1;
+	float* pfVar2;
+	float fVar3;
+	float fVar4;
+
+	if ((x != 0.0f) && (peVar1 = &this->pCinData->rotationEuler, peVar1 != (edF32VECTOR3*)0x0)) {
+		fVar4 = peVar1->x;
+		if (fVar4 < 0.0f) {
+			fVar4 = -fVar4;
+		}
+		fVar4 = fVar4 + x * 0.5f;
+		fVar3 = fmodf(fVar4, x);
+		if (peVar1->x < 0.0f) {
+			peVar1->x = -(fVar4 - fVar3);
+		}
+		else {
+			peVar1->x = fVar4 - fVar3;
+		}
+	}
+
+	if ((y != 0.0f) && (pfVar2 = &(this->pCinData->rotationEuler).y, pfVar2 != (float*)0x0)) {
+		fVar4 = *pfVar2;
+		if (fVar4 < 0.0f) {
+			fVar4 = -fVar4;
+		}
+		fVar4 = fVar4 + y * 0.5f;
+		fVar3 = fmodf(fVar4, y);
+		if (*pfVar2 < 0.0f) {
+			*pfVar2 = -(fVar4 - fVar3);
+		}
+		else {
+			*pfVar2 = fVar4 - fVar3;
+		}
+	}
+
+	if ((z != 0.0f) && (pfVar2 = &(this->pCinData->rotationEuler).z, pfVar2 != (float*)0x0)) {
+		fVar4 = *pfVar2;
+		if (fVar4 < 0.0f) {
+			fVar4 = -fVar4;
+		}
+		fVar4 = fVar4 + z * 0.5f;
+		fVar3 = fmodf(fVar4, z);
+		if (*pfVar2 < 0.0f) {
+			*pfVar2 = -(fVar4 - fVar3);
+		}
+		else {
+			*pfVar2 = fVar4 - fVar3;
+		}
+	}
+
+	RestoreInitData();
+	return;
+}
+
 bool CActor::IsKindOfObject(ulong kind)
 {
 	return (kind & 1) != 0;
@@ -759,7 +815,7 @@ void CActor::SetState(int newState, int animType)
 {
 	EActorState EVar1;
 	CAnimation* pAnimationController;
-	GlobalSound_00451698* pGVar2;
+	CAudioManager* pGVar2;
 	CBehaviour* pCVar3;
 	AnimResult* pDesiredAnim;
 	uint uVar4;
@@ -2155,6 +2211,20 @@ void CActor::PreReset()
 	return;
 }
 
+edF32VECTOR4* CActor::GetTopPosition()
+{
+	edF32VECTOR4* peVar1;
+
+	if (this->pCollisionData == (CCollision*)0x0) {
+		peVar1 = &this->currentLocation;
+	}
+	else {
+		peVar1 = &this->pCollisionData->lowestVertex;
+	}
+
+	return peVar1;
+}
+
 void SetHierFlags_00295a10(ed_3d_hierarchy* pHier)
 {
 	pHier->flags_0x9e = pHier->flags_0x9e & 0xff7f;
@@ -2639,14 +2709,13 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 				((pTieActor == (CActor*)0x0 || (pCurrentTiedActor != pTieActor->pTiedActor)))) {
 				pCVar3 = pCurrentTiedActor->pCollisionData;
 				uVar5 = pCVar3->flags_0x0;
-				IMPLEMENTATION_GUARD(
 				if (((uVar5 & 0x80) != 0) &&
 					(((uVar5 & 0x200000) == 0 &&
 						(uVar5 = CCollision::IsVertexAboveAndAgainstObbTree(&pCVar2->highestVertex, pCVar3->pObbTree), uVar5 != 0))))
 				{
 					this->flags = this->flags & 0xfffeffff;
 					return;
-				})
+				}
 			}
 
 			pCurrentTiedActor = this->pTiedActor;
@@ -3748,4 +3817,17 @@ void CScalarDyn::Integrate(float param_1, float param_2)
 void CScalarDyn::Integrate(float param_1)
 {
 	Integrate(param_1, param_1);
+}
+
+float CScalarDyn::GetInstantSpeed()
+{
+	float fVar1;
+
+	fVar1 = this->field_0x4;
+	return this->field_0xc + (fVar1 * this->field_0x10 * fVar1) / 2.0f + this->field_0x14 * fVar1;
+}
+
+bool CScalarDyn::OnLastValidSample()
+{
+	return (this->flags & 2) != 0;
 }
