@@ -81,7 +81,7 @@ struct edDlistConfiguration {
 
 struct edDList_material {
 	ed_g2d_manager* pManager;
-	ed_g2d_material* pMAT;
+	ed_g2d_material* pMaterial;
 	int mode;
 	int index;
 };

@@ -1176,8 +1176,8 @@ Sprite::Sprite()
 	//}
 	this->field_0x10 = 0;
 	this->field_0x14 = -0.5f;
-	this->field_0x18 = (float)(uint)this->field_0x38;
-	this->field_0x1c = (float)(uint)this->field_0x3a;
+	this->fWidth = (float)(uint)this->iWidth;
+	this->fHeight = (float)(uint)this->iHeight;
 	this->field_0x20 = 0;
 	this->field_0x24 = 0;
 	this->field_0x28 = 1.0;
@@ -1201,22 +1201,27 @@ Sprite::Sprite()
 
 void Sprite::Install(char* pFileBuffer)
 {
-	ed_g2d_material* pMAT_Internal;
-	ushort* puVar1;
+	ed_g2d_material* pMaterial;
+	ed_g2d_bitmap* pBitmap;
 	int iStack4;
 
-	ed3DInstallG2D(pFileBuffer, *(int*)(pFileBuffer + 8), &iStack4, &this->textureInfo, 0);
+	ed3DInstallG2D(pFileBuffer, *(int*)(pFileBuffer + 8), &iStack4, &this->textureManager, 0);
+
 	this->flags_0x7c = this->flags_0x7c | 2;
 	this->field_0x4 = 0;
-	pMAT_Internal = ed3DG2DGetG2DMaterialFromIndex(&this->textureInfo, 0);
-	puVar1 = (ushort*)ed3DG2DGetBitmapFromMaterial(pMAT_Internal, 0);
-	edDListCreatMaterialFromIndex(&this->materialInfo, 0, &this->textureInfo, 2);
+
+	pMaterial = ed3DG2DGetG2DMaterialFromIndex(&this->textureManager, 0);
+	pBitmap = ed3DG2DGetBitmapFromMaterial(pMaterial, 0);
+
+	edDListCreatMaterialFromIndex(&this->materialInfo, 0, &this->textureManager, 2);
+
 	this->flags_0x7c = this->flags_0x7c | 1;
-	this->field_0x38 = *puVar1;
-	this->field_0x3a = puVar1[1];
+	this->iWidth = pBitmap->width;
+	this->iHeight = pBitmap->height;
 	this->pMaterialInfo = &this->materialInfo;
-	this->field_0x18 = (float)(uint)this->field_0x38;
-	this->field_0x1c = (float)(uint)this->field_0x3a;
+	this->fWidth = (float)(uint)this->iWidth;
+	this->fHeight = (float)(uint)this->iHeight;
+
 	return;
 }
 
@@ -1243,10 +1248,10 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 	float local_4;
 
 	if (param_4 == param_6) {
-		param_6 = param_4 + (float)(uint)this->field_0x38;
+		param_6 = param_4 + (float)(uint)this->iWidth;
 	}
 	if (param_5 == param_7) {
-		param_7 = param_5 + (float)(uint)this->field_0x3a;
+		param_7 = param_5 + (float)(uint)this->iHeight;
 	}
 	edDListUseMaterial(&this->materialInfo);
 	edDListLoadIdentity();
@@ -1463,7 +1468,7 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 	edFILEH* pLoadedFile;
 	int iVar2;
 	char* pcVar3;
-	ushort* puVar4;
+	ed_g2d_bitmap* pBitmap;
 	Timer* pTVar5;
 	ed_g2d_material* pMaterialSection;
 	float fVar6;
@@ -1486,21 +1491,23 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 		}
 		edFileClose(pLoadedFile);
 	}
+
 	pcVar3 = this->pTextureFileData;
 	if (pcVar3 != (char*)0x0) {
-		ed3DInstallG2D(pcVar3, *(int*)(pcVar3 + 8), &iStack4, &this->textureInfo, 0);
+		ed3DInstallG2D(pcVar3, *(int*)(pcVar3 + 8), &iStack4, &this->textureManager, 0);
 		this->flags_0x7c = this->flags_0x7c | 2;
 		this->field_0x4 = 0;
-		pMaterialSection = ed3DG2DGetG2DMaterialFromIndex(&this->textureInfo, 0);
-		puVar4 = (ushort*)ed3DG2DGetBitmapFromMaterial(pMaterialSection, 0);
-		edDListCreatMaterialFromIndex(&this->materialInfo, 0, &this->textureInfo, 2);
+		pMaterialSection = ed3DG2DGetG2DMaterialFromIndex(&this->textureManager, 0);
+		pBitmap = ed3DG2DGetBitmapFromMaterial(pMaterialSection, 0);
+		edDListCreatMaterialFromIndex(&this->materialInfo, 0, &this->textureManager, 2);
 		this->flags_0x7c = this->flags_0x7c | 1;
-		this->field_0x38 = *puVar4;
-		this->field_0x3a = puVar4[1];
+		this->iWidth = pBitmap->width;
+		this->iHeight = pBitmap->height;
 		this->pMaterialInfo = &this->materialInfo;
-		this->field_0x18 = (float)(uint)this->field_0x38;
-		this->field_0x1c = (float)(uint)this->field_0x3a;
+		this->fWidth = (float)(uint)this->iWidth;
+		this->fHeight = (float)(uint)this->iHeight;
 	}
+
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	this->field_0xc8 = param_1;
 	if (param_1 <= 0.0f) {

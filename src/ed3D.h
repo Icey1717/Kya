@@ -59,10 +59,7 @@ union AnimScratchpad {
 struct ed_hash_code {
 	Hash_8 hash;
 	int pData; // char*
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
+	char _pad[4];
 };
 
 static_assert(sizeof(ed_hash_code) == 0x10, "Invalid ed_hash_code size");
@@ -452,9 +449,9 @@ struct ed3DConfig {
 
 PACK(
 	struct ed_g2d_material {
-	byte count_0x0;
+	byte nbLayers;
 	undefined field_0x1;
-	ushort field_0x2;
+	ushort flags;
 	int pDMA_Material; // ed_dma_material*
 	int pCommandBufferTexture; // RenderCommand*
 	int commandBufferTextureSize;
@@ -464,7 +461,7 @@ PACK(
 struct edPSX2Header
 {
 	int pPkt;
-	int field_0x4;
+	int size;
 };
 
 PACK(
@@ -491,8 +488,8 @@ PACK(
 	undefined field_0x19;
 	undefined field_0x1a;
 	byte field_0x1b;
-	short bHasPalette;
-	ushort field_0x1e;
+	short bHasTexture;
+	ushort paletteId;
 	int pTex; // ed_Chunck*
 });
 
@@ -508,7 +505,7 @@ PACK(struct ed_g2d_bitmap {
 PACK(
 	struct ed_g2d_texture {
 	ed_hash_code hashCode;
-	int palette;
+	int bHasPalette;
 	int field_0x14; // edF32VECTOR4*
 	float field_0x18;
 	undefined field_0x1c;
@@ -532,9 +529,9 @@ ed_g3d_manager* ed3DInstallG3D(char* pFileData, int fileLength, ulong flags, int
 
 void Init3D(void);
 ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, ed_g2d_manager* pManager, int param_5);
-ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
-ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pTextureInfo, int index);
-ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMAT_Internal, int param_2);
+ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pManager, int index);
+ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int index);
+ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
 edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);

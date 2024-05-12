@@ -42,13 +42,13 @@ Renderer::TextureData DebugMenu::LoadTextureData(edDList_material* pMaterial)
 
 	if (pMaterial != (edDList_material*)0x0) {
 		if ((pMaterial->mode & 4U) == 0) {
-			if (pMaterial->pMAT != (ed_g2d_material*)0x0) {
+			if (pMaterial->pMaterial != (ed_g2d_material*)0x0) {
 				bHasPalette = false;
 				pTextureBitmap = (ed_g2d_bitmap*)0x0;
-				pPaletteBitmap = edDListGetG2DBitmap(pMaterial->pMAT, 0, &bHasPalette, &pTextureBitmap);
+				pPaletteBitmap = edDListGetG2DBitmap(pMaterial->pMaterial, 0, &bHasPalette, &pTextureBitmap);
 
 				if (pPaletteBitmap != (ed_g2d_bitmap*)0x0 && pTextureBitmap != (ed_g2d_bitmap*)0x0) {
-					return MakeTextureDataFromPacket(pMaterial->pMAT, pTextureBitmap, pPaletteBitmap, 0);
+					return MakeTextureDataFromPacket(pMaterial->pMaterial, pTextureBitmap, pPaletteBitmap, 0);
 				}
 			}
 		}

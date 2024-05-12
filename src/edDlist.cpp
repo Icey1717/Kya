@@ -637,7 +637,7 @@ void edDListPatchGifTag2D(void)
 
 void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 {
-	if (index < pMAT_Internal->count_0x0) {
+	if (index < pMAT_Internal->nbLayers) {
 		int* hash = (int*)(pMAT_Internal + 1);
 		ed_Chunck* pLAY = (ed_Chunck*)LOAD_SECTION(hash[index]);
 
@@ -652,9 +652,9 @@ void edDListBlendSet(uint mode)
 	if ((((gbInsideBegin == false) &&
 		(gBlendMode = mode & 0xff,
 			gCurMaterial != (edDList_material*)0x0)) &&
-		(gCurMaterial->pMAT != (ed_g2d_material*)0x0)) &&
+		(gCurMaterial->pMaterial != (ed_g2d_material*)0x0)) &&
 		(gBlendMode == 1)) {
-		ApplyFlag_0029f1e0(gCurMaterial->pMAT, 0, 4);
+		ApplyFlag_0029f1e0(gCurMaterial->pMaterial, 0, 4);
 	}
 	return;
 }
@@ -666,66 +666,65 @@ void edDListBlendFunc50(void)
 	return;
 }
 
-ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMAT, int offset, bool* bHasPalette, ed_g2d_bitmap** pOutAddr)
+ed_g2d_bitmap* edDListGetG2DBitmap(ed_g2d_material* pMaterial, int offset, bool* bHasPalette, ed_g2d_bitmap** ppBitmap)
 {
-	ed_hash_code* pTVar1;
-	ed_g2d_bitmap* pTVar2;
+	ed_hash_code* pTextureHashCode;
+	ed_g2d_bitmap* pBitmap;
 	ed_Chunck* pTEX;
 	ed_Chunck* pLAY;
-	ed_hash_code* iVar3;
+	ed_hash_code* pPaletteHashCode;
 
 	*bHasPalette = false;
-	*pOutAddr = (ed_g2d_bitmap*)0x0;
+	*ppBitmap = (ed_g2d_bitmap*)0x0;
 
-	if (pMAT != (ed_g2d_material*)0x0) {
-		if (pMAT->count_0x0 == 0) {
+	if (pMaterial != (ed_g2d_material*)0x0) {
+		if (pMaterial->nbLayers == 0) {
 			return (ed_g2d_bitmap*)0x0;
 		}
 
-		int* hash = (int*)(pMAT + 1);
-		pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[offset]);
+		pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMaterial->aLayers[offset]);
 
 		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 
-		if (((pLAY != (ed_Chunck*)0xfffffff0) && (pLAY != (ed_Chunck*)0xfffffff0)) && (pLayer->bHasPalette != 0)) {
+		if (((pLAY != (ed_Chunck*)0xfffffff0) && (pLAY != (ed_Chunck*)0xfffffff0)) && (pLayer->bHasTexture != 0)) {
 
 			pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
 
-			pTVar2 = (ed_g2d_bitmap *)0x0;
+			pBitmap = (ed_g2d_bitmap *)0x0;
 
 			if (pTEX == (ed_Chunck*)0xfffffff0) {
 				return (ed_g2d_bitmap*)0x0;
 			}
 
-			if (pTexture->palette != 0) {
+			if (pTexture->bHasPalette != 0) {
 				*bHasPalette = true;
 
 				ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pTexture + 1);
-				iVar3 = LOAD_SECTION_CAST(ed_hash_code*, pHashCode[pLayer->field_0x1e].pData);
+				pPaletteHashCode = LOAD_SECTION_CAST(ed_hash_code*, pHashCode[pLayer->paletteId].pData);
 
-				if (iVar3 != 0) {
-					ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, iVar3->pData);
-					pTVar2 = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
+				if (pPaletteHashCode != (ed_hash_code*)0x0) {
+					ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pPaletteHashCode->pData);
+					pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 				}
 
-				pTVar1 = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
-				if (pTVar1 == 0) {
-					return pTVar2;
+				pTextureHashCode = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+				if (pTextureHashCode == 0) {
+					return pBitmap;
 				}
 
-				ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pTVar1->pData);
-				*pOutAddr = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
-				return pTVar2;
+				ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pTextureHashCode->pData);
+				*ppBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
+				return pBitmap;
 			}
 
-			pTVar1 = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
-			if (pTVar1 == 0) {
+			pTextureHashCode = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+			if (pTextureHashCode == 0) {
 				return (ed_g2d_bitmap*)0x0;
 			}
 
-			ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pTVar1->pData);
-			return reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
+			ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pTextureHashCode->pData);
+			return reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 		}
 	}
 
@@ -992,10 +991,10 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 	}
 	if (pMaterialInfo != (edDList_material*)0x0) {
 		if ((pMaterialInfo->mode & 4U) == 0) {
-			if (pMaterialInfo->pMAT != (ed_g2d_material*)0x0) {
+			if (pMaterialInfo->pMaterial != (ed_g2d_material*)0x0) {
 				bHasPalette = false;
 				pTextureBitmap = (ed_g2d_bitmap*)0x0;
-				pPaletteBitmap = edDListGetG2DBitmap(pMaterialInfo->pMAT, 0, &bHasPalette, &pTextureBitmap);
+				pPaletteBitmap = edDListGetG2DBitmap(pMaterialInfo->pMaterial, 0, &bHasPalette, &pTextureBitmap);
 				pDVar6 = pDVar5->aCommandArray;
 				if (pPaletteBitmap != (ed_g2d_bitmap*)0x0) {
 					pDVar5->aCommandArray[0].pCommandBuffer = ((edpkt_data*)LOAD_SECTION(pPaletteBitmap->pPSX2)) + 0x4;
@@ -1013,11 +1012,11 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 
 #ifdef PLATFORM_WIN
-					Renderer::SetTextureData(MakeTextureDataFromPacket(pMaterialInfo->pMAT, pTextureBitmap, pPaletteBitmap, 0));
+					Renderer::SetTextureData(MakeTextureDataFromPacket(pMaterialInfo->pMaterial, pTextureBitmap, pPaletteBitmap, 0));
 #endif
 				}
 
-				pDVar6->pCommandBuffer = (edpkt_data*)((char*)LOAD_SECTION(pMaterialInfo->pMAT->pCommandBufferTexture) + 0x10);
+				pDVar6->pCommandBuffer = (edpkt_data*)((char*)LOAD_SECTION(pMaterialInfo->pMaterial->pCommandBufferTexture) + 0x10);
 
 				if ((bHasPalette != false) && (0x3ffff < (uint)pTextureBitmap->width * (uint)pTextureBitmap->height)) {
 					*(uint*)((int)&pDVar6->pCommandBuffer[1].cmdA + 4) =
@@ -1061,14 +1060,14 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 #endif
 
 #ifdef PLATFORM_WIN
-				ProcessTextureCommands(pDVar6->pCommandBuffer, pMaterialInfo->pMAT->commandBufferTextureSize);
+				ProcessTextureCommands(pDVar6->pCommandBuffer, pMaterialInfo->pMaterial->commandBufferTextureSize);
 #endif
 
 				pDVar6->type = LM_REF_1;
-				pDVar6->size = pMaterialInfo->pMAT->commandBufferTextureSize * 0x10 - 0x10;
+				pDVar6->size = pMaterialInfo->pMaterial->commandBufferTextureSize * 0x10 - 0x10;
 				gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 				pDVar5 = (DisplayListInternalSubObj_60*)(pDVar6 + 1);
-				if (pMaterialInfo->pMAT->count_0x0 != 0) {
+				if (pMaterialInfo->pMaterial->nbLayers != 0) {
 					edDListBlendSet(1);
 					pDVar6[1].pCommandBuffer = pRVar1;
 					goto LAB_002cba4c;
@@ -2490,7 +2489,10 @@ void edDListInitMaterial(edDList_material* pDlistMaterial, ed_hash_code* pHASH_M
 	counter = 0;
 	memset(pDlistMaterial, 0, sizeof(edDList_material));
 
-	pDlistMaterial->pMAT = (ed_g2d_material*)((char*)LOAD_SECTION(pHASH_MAT->pData) + sizeof(ed_hash_code));
+	ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pHASH_MAT->pData);
+
+	pDlistMaterial->pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
+
 	while (true) {
 		if ((gBankMaterial[counter].hash.number == 0) || (edDlistConfig.bankMaterialCount - 1U <= counter)) break;
 		counter = counter + 1;

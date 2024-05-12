@@ -173,16 +173,16 @@ public:
 	struct edDList_material* pMaterialInfo;
 	undefined4 field_0x10;
 	float field_0x14;
-	float field_0x18;
-	float field_0x1c;
+	float fWidth;
+	float fHeight;
 	undefined4 field_0x20;
 	undefined4 field_0x24;
 	float field_0x28;
 	float field_0x2c;
 	byte field_0x30[4];
 	undefined4 field_0x34;
-	ushort field_0x38;
-	ushort field_0x3a;
+	ushort iWidth;
+	ushort iHeight;
 	undefined field_0x3c;
 	undefined field_0x3d;
 	undefined field_0x3e;
@@ -213,7 +213,7 @@ public:
 	float field_0x78;
 	uint flags_0x7c;
 	edDList_material materialInfo;
-	ed_g2d_manager textureInfo;
+	ed_g2d_manager textureManager;
 };
 
 struct CSplashScreen : public Sprite {
