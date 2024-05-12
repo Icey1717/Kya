@@ -139,6 +139,11 @@ namespace Renderer
 		void Log(const char* prefix) const;
 	};
 
+	struct SimpleTexture
+	{
+		SimpleTexture(const Renderer::ImageData& bitmap, const Renderer::ImageData& palette);
+	};
+
 	using PaletteMap = std::unordered_map<int, ImageData>;
 
 	struct TextureData {

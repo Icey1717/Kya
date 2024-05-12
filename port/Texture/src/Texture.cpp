@@ -1,6 +1,7 @@
 #include "Texture.h"
 #include "ed3D.h"
 #include "Log.h"
+#include "renderer.h"
 
 #define TEXTURE_LOG(level, format, ...) MY_LOG_CATEGORY("Texture", level, format, ##__VA_ARGS__)
 
@@ -9,6 +10,59 @@ namespace Renderer
 	namespace Kya
 	{
 		TextureLibrary gTextureLibrary;
+
+		struct CombinedImageData
+		{
+			ImageData bitmap;
+			ImageData palette;
+		};
+
+		void ProcessCommandList(ImageData& imageData, edpkt_data* pPkt, int size)
+		{
+			for (int i = 0; i < size; i++) {
+				if ((pPkt->asU32[0] >> 28) == 0x03) {
+					imageData.pImage = LOAD_SECTION(pPkt->asU32[1]);
+				}
+
+				if (pPkt->cmdB == 0x52) {
+					imageData.readWidth = pPkt->asU32[0];
+					imageData.readHeight = pPkt->asU32[1];
+				}
+
+				pPkt++;
+			}
+
+			assert(imageData.pImage);
+			assert(imageData.readWidth != 0);
+			assert(imageData.readHeight != 0);
+		}
+
+		CombinedImageData CreateFromBitmap(KyaBitmap& bitmap, KyaBitmap& palette)
+		{
+			CombinedImageData combinedImageData;
+			const ed_g2d_bitmap* pBitmap = bitmap.GetBitmap();
+
+			combinedImageData.bitmap.canvasWidth = pBitmap->width;
+			combinedImageData.bitmap.canvasHeight = pBitmap->height;
+			combinedImageData.bitmap.bpp = pBitmap->psm;
+			combinedImageData.bitmap.maxMipLevel = pBitmap->maxMipLevel;
+
+			const ed_g2d_bitmap* pPalette = palette.GetBitmap();
+
+			combinedImageData.palette.canvasWidth = pPalette->width;
+			combinedImageData.palette.canvasHeight = pPalette->height;
+			combinedImageData.palette.bpp = pPalette->psm;
+			combinedImageData.palette.maxMipLevel = pPalette->maxMipLevel;
+
+			Texture::CommandList commandList = palette.GetUploadCommands()[0];
+
+			const int commandSizePerBitmap = commandList.size / 2;
+
+			ProcessCommandList(combinedImageData.bitmap, commandList.pList, commandSizePerBitmap);
+			ProcessCommandList(combinedImageData.palette, commandList.pList + commandSizePerBitmap, commandSizePerBitmap);
+
+			return combinedImageData;
+		}
 	}
 }
 
@@ -63,7 +117,7 @@ void Renderer::Kya::Texture::ProcessMaterial(ed_g2d_material* pMaterial)
 	}
 }
 
-void Renderer::Kya::Texture::Material::ProcessLayer(ed_g2d_layer* pLayer)
+void Renderer::Kya::KyaMaterial::ProcessLayer(ed_g2d_layer* pLayer)
 {
 	Layer& layer = layers.emplace_back();
 	layer.pLayer = pLayer;
@@ -80,7 +134,7 @@ void Renderer::Kya::Texture::Material::ProcessLayer(ed_g2d_layer* pLayer)
 	}
 }
 
-void Renderer::Kya::Texture::Material::Layer::ProcessTexture(ed_g2d_texture* pTexture)
+void Renderer::Kya::KyaLayer::ProcessTexture(ed_g2d_texture* pTexture)
 {
 	Texture& texture = textures.emplace_back();
 	texture.pTexture = pTexture;
@@ -105,16 +159,21 @@ void Renderer::Kya::Texture::Material::Layer::ProcessTexture(ed_g2d_texture* pTe
 		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::Texture::Material::Layer::ProcessTexture Palette chunk header: {}", pT2D->GetHeaderString());
 		ed_g2d_bitmap* pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 		texture.palette.SetBitmap(pBitmap);
+
+		const CombinedImageData combinedImageData = CreateFromBitmap(texture.bitmap, texture.palette);
+
+		// Try create a simple texture
+		texture.pSimpleTexture = new SimpleTexture(combinedImageData.bitmap, combinedImageData.palette);
 	}
 }
 
-void Renderer::Kya::Texture::Material::Layer::Texture::Bitmap::SetBitmap(ed_g2d_bitmap* pBitmap)
+void Renderer::Kya::KyaBitmap::SetBitmap(ed_g2d_bitmap* pBitmap)
 {
 	this->pBitmap = pBitmap;
 	UpdateCommands();
 }
 
-void Renderer::Kya::Texture::Material::Layer::Texture::Bitmap::UpdateCommands()
+void Renderer::Kya::KyaBitmap::UpdateCommands()
 {
 	if (pBitmap->pPSX2) {
 		edPSX2Header* pHeader = LOAD_SECTION_CAST(edPSX2Header*, pBitmap->pPSX2);

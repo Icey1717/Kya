@@ -11,8 +11,11 @@ struct ed_g2d_texture;
 struct ed_g2d_bitmap;
 union edpkt_data;
 
+
 namespace Renderer
 {
+	struct SimpleTexture;
+
 	namespace Kya 
 	{
 		class Texture
@@ -32,6 +35,9 @@ namespace Renderer
 					{
 						struct Bitmap {
 							void SetBitmap(ed_g2d_bitmap* pBitmap);
+							ed_g2d_bitmap* GetBitmap() const { return pBitmap; }
+
+							CommandList* GetUploadCommands() { return uploadCommands; }
 						private:
 							void UpdateCommands();
 
@@ -43,6 +49,8 @@ namespace Renderer
 
 						Bitmap bitmap;
 						Bitmap palette;
+
+						SimpleTexture* pSimpleTexture = nullptr;
 					};
 
 					void ProcessTexture(ed_g2d_texture* pTexture);
@@ -71,6 +79,11 @@ namespace Renderer
 
 			std::vector<Material> materials;
 		};
+
+		using KyaMaterial = Texture::Material;
+		using KyaLayer = Texture::Material::Layer;
+		using KyaTexture = Texture::Material::Layer::Texture;
+		using KyaBitmap = Texture::Material::Layer::Texture::Bitmap;
 
 		class TextureLibrary
 		{

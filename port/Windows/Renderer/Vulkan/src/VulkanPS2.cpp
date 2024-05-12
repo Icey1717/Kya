@@ -1779,11 +1779,11 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 	//	return;
 	//}
 
-	{
-		drawBuffer.ResetAfterDraw();
-		state.bTexSet = false;
-		return;
-	}
+	//{
+	//	drawBuffer.ResetAfterDraw();
+	//	state.bTexSet = false;
+	//	return;
+	//}
 
 	if (tail == 0) {
 		return;
