@@ -88,6 +88,7 @@ namespace Renderer {
 	}
 
 	TextureData gTextureData;
+	SimpleTexture* gBoundTexture = nullptr;
 
 	void ResetVertIndexBuffers()
 	{
@@ -454,7 +455,7 @@ namespace PS2
 {
 	GSHWDrawConfig m_conf = {};
 
-	void EmulateAtst(const int pass, GSTexImage& tex, const GSState& state)
+	void EmulateAtst(const int pass, const GSState& state)
 	{
 		PSConstantBuffer& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
 
@@ -509,7 +510,7 @@ namespace PS2
 		TFX_NONE = 4,
 	};
 
-	void EmulateTextureSampler(PS2::GSTexImage& tex, const GSState& state)
+	PSSamplerSelector EmulateTextureSampler(int width, int height, const GSState& state)
 	{
 		auto& vs_cb = PS2_Internal::gVertexConstBuffer.GetBufferData();
 		auto& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
@@ -536,7 +537,7 @@ namespace PS2
 		int tw = (int)(1 << state.TEX.TW);
 		int th = (int)(1 << state.TEX.TH);
 
-		GSVector4 WH(tw, th, tex.width, tex.height);
+		GSVector4 WH(tw, th, width, height);
 
 		// Depth + bilinear filtering isn't done yet (And I'm not sure we need it anyway but a game will prove me wrong)
 		// So of course, GTA set the linear mode, but sampling is done at texel center so it is equivalent to nearest sampling
@@ -699,7 +700,7 @@ namespace PS2
 		ps_ssel.tav = (wmt != CLAMP_CLAMP);
 		ps_ssel.ltf = bilinear && !shader_emulated_sampler;
 
-		tex.UpdateSampler(ps_ssel);
+		return ps_ssel;
 	}
 
 	enum HWBlendFlags
@@ -917,7 +918,7 @@ namespace PS2
 #define GL_INS(...)
 #define GL_PERF(...)
 
-	void EmulateBlending_Simple(Renderer::GS_PRIM_CLASS primclass, GSTexImage& tex, const GSState& state)
+	void EmulateBlending_Simple(Renderer::GS_PRIM_CLASS primclass, const GSState& state)
 	{
 		PSConstantBuffer& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
 
@@ -1744,11 +1745,18 @@ namespace PipelineDebug
 	};
 }
 
-void Renderer::SetTextureData(Renderer::TextureData inTextureData) {
-	gTextureData = inTextureData;
+//void Renderer::SetTextureData(Renderer::TextureData inTextureData) {
+//	gTextureData = inTextureData;
+//}
+
+void Renderer::BindTexture(SimpleTexture* pNewTexture)
+{
+	assert(pNewTexture);
+	gBoundTexture = pNewTexture;
 }
 
-void Renderer::RemoveByMaterial(void* pMaterial) {
+void Renderer::RemoveByMaterial(void* pMaterial) 
+{
 	PS2::GetTextureCache().RemoveByMaterial(pMaterial);
 }
 
@@ -1764,14 +1772,14 @@ Renderer::TextureData& Renderer::GetTextureData() {
 }
 
 void Renderer::Draw() {
-	Draw(GetDefaultDrawBuffer(), gTextureData, PS2::GetGSState());
+	Draw(GetDefaultDrawBuffer(), gBoundTexture, PS2::GetGSState());
 }
 
 void Renderer::Draw(PS2::DrawBufferBase& drawBuffer) {
-	Draw(drawBuffer, gTextureData, PS2::GetGSState(), true);
+	Draw(drawBuffer, gBoundTexture, PS2::GetGSState(), true);
 }
 
-void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, PS2::GSState& state, bool bHardware) {
+void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTexture, PS2::GSState& state, bool bHardware) {
 	const int tail = drawBuffer.GetIndexTail();
 
 	//if (tail != 2610 && tail != 132) {
@@ -1779,11 +1787,11 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 	//	return;
 	//}
 
-	{
-		drawBuffer.ResetAfterDraw();
-		state.bTexSet = false;
-		return;
-	}
+	//{
+	//	drawBuffer.ResetAfterDraw();
+	//	state.bTexSet = false;
+	//	return;
+	//}
 
 	if (tail == 0) {
 		return;
@@ -1836,7 +1844,8 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 	g_GSSelector.prim = primclass;
 
 	LogTex("Lookup", state.TEX);
-	PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, textureData, state.GetCBP());
+	//PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, textureData, state.GetCBP());
+	PS2::GSSimpleTexture* pTextureData = pBoundTexture->pRenderer;
 
 	// Blend
 	int blend_alpha_min = 0, blend_alpha_max = 255;
@@ -1857,7 +1866,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 			PS2::EmulateBlending_Complex(blend_alpha_min, blend_alpha_max, DATE_PRIMID, DATE_BARRIER, blending_alpha_pass, primclass, state);
 		}
 		else {
-			PS2::EmulateBlending_Simple(primclass, tex.value.image, state);
+			PS2::EmulateBlending_Simple(primclass, state);
 		}
 	}
 	else
@@ -1866,15 +1875,18 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 		PS2::m_conf.ps.no_color1 = true;
 	}
 
-	PS2::EmulateAtst(1, tex.value.image, state);
+	PS2::EmulateAtst(1, state);
+
+	PS2::PSSamplerSelector samplerSelector;
 
 	if (state.bTexSet) {
-		PS2::EmulateTextureSampler(tex.value.image, state);
+		samplerSelector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, state);
 	}
 	else {
-		tex.value.image.UpdateSampler();
 		PS2::m_conf.ps.tfx = 4;
 	}
+
+	pTextureData->UpdateSamplerSelector(samplerSelector);
 
 	if (state.PRIM.FGE)	{
 		PS2::m_conf.ps.fog = 1;
@@ -1989,14 +2001,13 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, P
 		}
 
 		{
-			tex.value.image.GetDescriptorSets(pipeline).vertexConstBuffer.GetBufferData() = PS2_Internal::gVertexConstBuffer.GetBufferData();
-			tex.value.image.GetDescriptorSets(pipeline).pixelConstBuffer.GetBufferData() = PS2_Internal::gPixelConstBuffer.GetBufferData();
-			tex.value.image.GetDescriptorSets(pipeline).vertexConstBuffer.Update(GetCurrentFrame());
-			tex.value.image.GetDescriptorSets(pipeline).pixelConstBuffer.Update(GetCurrentFrame());
-			//tex.value.image.GetDescriptorSets(pipeline).UpdateSet(GetCurrentFrame());
+			pTextureData->GetDescriptorSets(pipeline).vertexConstBuffer.GetBufferData() = PS2_Internal::gVertexConstBuffer.GetBufferData();
+			pTextureData->GetDescriptorSets(pipeline).pixelConstBuffer.GetBufferData() = PS2_Internal::gPixelConstBuffer.GetBufferData();
+			pTextureData->GetDescriptorSets(pipeline).vertexConstBuffer.Update(GetCurrentFrame());
+			pTextureData->GetDescriptorSets(pipeline).pixelConstBuffer.Update(GetCurrentFrame());
 		}
 
-		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &tex.value.image.GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
+		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
 
 		vkCmdDrawIndexed(GetCurrentCommandBuffer(), static_cast<uint32_t>(tail), 1, 0, 0, 0);
 

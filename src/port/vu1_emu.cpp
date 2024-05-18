@@ -2460,7 +2460,7 @@ namespace VU1Emu {
 		}
 
 		void Draw() {
-			Renderer::Draw(buffer, textureData, state);
+			//Renderer::Draw(buffer, textureData, state);
 		}
 	};
 

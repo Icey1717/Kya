@@ -1688,12 +1688,7 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pi
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = imageView;
-
-		assert(sampler != VK_NULL_HANDLE);
-		//imageInfo.sampler = sampler;
-		assert(false);
-
-
+		imageInfo.sampler = GetSampler(samplerSelector);
 
 		Renderer::DescriptorWriteList writeList;
 		const VkDescriptorBufferInfo vertexDescBufferInfo = descriptorSets.vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());

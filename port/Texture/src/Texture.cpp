@@ -61,7 +61,7 @@ namespace Renderer
 			}
 		}
 
-		CombinedImageData CreateFromBitmap(G2D::Bitmap& bitmap, G2D::Bitmap& palette)
+		CombinedImageData CreateFromBitmapAndPalette(G2D::Bitmap& bitmap, G2D::Bitmap& palette)
 		{
 			CombinedImageData combinedImageData;
 			const ed_g2d_bitmap* pBitmap = bitmap.GetBitmap();
@@ -77,13 +77,15 @@ namespace Renderer
 
 			const ed_g2d_bitmap* pPalette = palette.GetBitmap();
 
-			combinedImageData.palette.canvasWidth = pPalette->width;
-			combinedImageData.palette.canvasHeight = pPalette->height;
-			combinedImageData.palette.bpp = pPalette->psm;
-			combinedImageData.palette.maxMipLevel = pPalette->maxMipLevel;
-			assert(combinedImageData.palette.maxMipLevel == 1);
+			if (pPalette) {
+				combinedImageData.palette.canvasWidth = pPalette->width;
+				combinedImageData.palette.canvasHeight = pPalette->height;
+				combinedImageData.palette.bpp = pPalette->psm;
+				combinedImageData.palette.maxMipLevel = pPalette->maxMipLevel;
+				assert(combinedImageData.palette.maxMipLevel == 1);
+			}
 
-			G2D::CommandList commandList = palette.GetUploadCommandsDefault();
+			G2D::CommandList commandList = pPalette ? palette.GetUploadCommandsDefault() : bitmap.GetUploadCommandsDefault();
 
 			ProcessCommandList(combinedImageData, commandList);
 
@@ -160,6 +162,19 @@ void Renderer::Kya::G2D::Material::ProcessLayer(ed_g2d_layer* pLayer)
 	}
 }
 
+Renderer::SimpleTexture* Renderer::Kya::G2D::Material::FindRenderTextureFromBitmap(ed_g2d_bitmap* pBitmap) const
+{
+	for (auto& layer : layers) {
+		for (auto& texture : layer.textures) {
+			if (texture.bitmap.GetBitmap() == pBitmap || texture.palette.GetBitmap() == pBitmap) {
+				return texture.pSimpleTexture;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
 {
 	G2D::Texture& texture = textures.emplace_back();
@@ -185,14 +200,14 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
 		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture Palette chunk header: {}", pT2D->GetHeaderString());
 		ed_g2d_bitmap* pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 		texture.palette.SetBitmap(pBitmap);
-
-		const CombinedImageData combinedImageData = CreateFromBitmap(texture.bitmap, texture.palette);
-
-		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture bitmap mips: {}", combinedImageData.bitmaps.size());
-
-		// Try create a simple texture
-		texture.pSimpleTexture = new SimpleTexture(combinedImageData);
 	}
+
+	const CombinedImageData combinedImageData = CreateFromBitmapAndPalette(texture.bitmap, texture.palette);
+
+	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture bitmap mips: {}", combinedImageData.bitmaps.size());
+
+	// Try create a simple texture
+	texture.pSimpleTexture = new SimpleTexture(combinedImageData);
 }
 
 void Renderer::Kya::G2D::Bitmap::SetBitmap(ed_g2d_bitmap* pBitmap)
@@ -228,6 +243,15 @@ const Renderer::Kya::G2D::Material* Renderer::Kya::TextureLibrary::FindMaterial(
 			}
 		}
 	}
+}
+
+void Renderer::Kya::TextureLibrary::BindFromDmaMaterial(const ed_dma_material* pMaterial) const
+{
+	const G2D::Material* pRendererMaterial = FindMaterial(pMaterial->pMaterial);
+	assert(pRendererMaterial);
+	Renderer::SimpleTexture* pRendererTexture = pRendererMaterial->FindRenderTextureFromBitmap(pMaterial->pBitmap);
+	assert(pRendererTexture);
+	Renderer::BindTexture(pRendererTexture);
 }
 
 void Renderer::Kya::TextureLibrary::AddTexture(ed_g2d_manager* pManager, std::string name)

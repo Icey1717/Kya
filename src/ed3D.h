@@ -514,6 +514,14 @@ PACK(
 	undefined field_0x1f;
 });
 
+struct ed_dma_material {
+	ed_g2d_material* pMaterial;
+	float field_0x4;
+	edLIST list;
+	uint flags;
+	ed_g2d_bitmap* pBitmap;
+};
+
 struct ed_viewport;
 struct edFCamera;
 

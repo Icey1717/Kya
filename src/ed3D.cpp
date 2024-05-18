@@ -40,6 +40,10 @@
 #include "AnmManager.h"
 #include "ActorHero.h"
 
+#ifdef PLATFORM_WIN
+#include "Texture.h"
+#endif
+
 #define ED_3D_HIDDEN_FLAG 0x40
 
 #define ED3D_LOG(level, format, ...) MY_LOG_CATEGORY("ed3D", level, format, ##__VA_ARGS__)
@@ -613,15 +617,6 @@ struct RenderFrame_30_B_DEPRECATED {
 	int flags_0x28;
 	float field_0x2c;
 };
-
-struct ed_dma_material {
-	ed_g2d_material* pMaterial;
-	float field_0x4;
-	edLIST list;
-	uint flags;
-	ed_g2d_bitmap* pBitmap;
-};
-
 
 ed_dma_material* DmaMaterialBuffer[2] = { 0 };
 ed_dma_material* DmaMaterialBufferMax[2] = { 0 };
@@ -4552,7 +4547,7 @@ void ed3DFlushMaterialManageGIFPacket(ed_dma_material* pMaterial)
 		// Send even if gbFirstTex is true.
 #ifdef PLATFORM_WIN
 		if (pMaterial->pBitmap) {
-			Renderer::SetTextureData(MakeTextureDataFromPacket(pMaterial->pMaterial, gCurBitmap, pMaterial->pBitmap, gVRAMBufferFlush));
+			Renderer::Kya::GetTextureLibrary().BindFromDmaMaterial(pMaterial);
 		}
 #endif
 

@@ -24,6 +24,10 @@
 #include "MathOps.h"
 #include "edList.h"
 
+#ifdef PLATFORM_WIN
+#include "Texture.h"
+#endif
+
 #define EDDLIST_LOG(level, format, ...) MY_LOG_CATEGORY("edDList", level, format, ##__VA_ARGS__)
 
 edLIST* gDList_2D[2] = { 0 };
@@ -1012,7 +1016,9 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 
 #ifdef PLATFORM_WIN
-					Renderer::SetTextureData(MakeTextureDataFromPacket(pMaterialInfo->pMaterial, pTextureBitmap, pPaletteBitmap, 0));
+					//Renderer::SetTextureData(MakeTextureDataFromPacket(pMaterialInfo->pMaterial, pTextureBitmap, pPaletteBitmap, 0));
+					const Renderer::Kya::G2D::Material* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(pMaterialInfo->pMaterial);
+					Renderer::BindTexture(pMaterial->layers.front().textures.front().pSimpleTexture);
 #endif
 				}
 

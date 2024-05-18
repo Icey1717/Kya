@@ -171,7 +171,7 @@ namespace Renderer
 	void SetScissor(int x, int y, uint32_t width, uint32_t height);
 	void Draw();
 	void Draw(PS2::DrawBufferBase& drawBuffer);
-	void Draw(PS2::DrawBufferBase& drawBuffer, TextureData& textureData, PS2::GSState& state, bool bHardware = false);
+	void Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTexture, PS2::GSState& state, bool bHardware = false);
 
 	PS2::DrawBufferData<GSVertex, uint16_t>& GetDefaultDrawBuffer();
 	PS2::DrawBufferData<GSVertexUnprocessed, uint16_t>& GetHardwareDrawBuffer();
@@ -354,7 +354,8 @@ namespace Renderer
 	void SetClamp(GIFReg::GSClamp clamp);
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
-	void SetTextureData(TextureData inTextureData);
+	//void SetTextureData(TextureData inTextureData);
+	void BindTexture(SimpleTexture* pNewTexture);
 	void SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen);
 	TextureData& GetTextureData();
 

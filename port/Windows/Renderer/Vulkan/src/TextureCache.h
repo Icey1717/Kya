@@ -86,6 +86,10 @@ namespace PS2 {
 		uint32_t width;
 		uint32_t height;
 
+		PSSamplerSelector samplerSelector;
+
+		inline void UpdateSamplerSelector(const PSSamplerSelector& selector) { samplerSelector = selector; }
+
 		void CreateResources(const bool bPalette);
 		void UploadData(int bufferSize, uint8_t* readBuffer);
 

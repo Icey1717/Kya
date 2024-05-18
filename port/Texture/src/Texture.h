@@ -11,6 +11,7 @@ struct ed_g2d_texture;
 struct ed_g2d_bitmap;
 union edpkt_data;
 
+struct ed_dma_material;
 
 namespace Renderer
 {
@@ -64,6 +65,8 @@ namespace Renderer
 
 				void ProcessLayer(ed_g2d_layer* pLayer);
 
+				SimpleTexture* FindRenderTextureFromBitmap(ed_g2d_bitmap* pBitmap) const;
+
 				ed_g2d_material* pMaterial = nullptr;
 				CommandList renderCommands;
 				std::vector<Layer> layers;
@@ -105,6 +108,8 @@ namespace Renderer
 			}
 
 			const G2D::Material* FindMaterial(const ed_g2d_material* pMaterial) const;
+
+			void BindFromDmaMaterial(const ed_dma_material* pMaterial) const;
 
 			inline int GetTextureCount() const { return gTextures.size(); }
 
