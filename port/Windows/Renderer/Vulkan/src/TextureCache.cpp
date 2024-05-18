@@ -1419,6 +1419,61 @@ void PS2::TextureCache::RemoveByMaterial(void* pMaterial)
 	}
 }
 
+std::unordered_map<uint32_t, VkSampler> gSamplerCache;
+
+VkSampler& PS2::GetSampler(const PSSamplerSelector& selector, bool bPalette)
+{
+	if (gSamplerCache.find(selector.key) == gSamplerCache.end()) {
+		VkSamplerCreateInfo samplerInfo{};
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+		if (bPalette) {
+			samplerInfo.magFilter = VK_FILTER_NEAREST;
+			samplerInfo.minFilter = VK_FILTER_NEAREST;
+
+			samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		}
+		else {
+			samplerInfo.magFilter = selector.ltf ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+			samplerInfo.minFilter = selector.ltf ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+
+			samplerInfo.addressModeU = selector.tau ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samplerInfo.addressModeV = selector.tav ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+			samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		}
+
+		VkPhysicalDeviceProperties properties{};
+		vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
+
+		//samplerInfo.anisotropyEnable = VK_TRUE;
+		//samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+
+		samplerInfo.anisotropyEnable = VK_FALSE;
+		samplerInfo.maxAnisotropy = 0.0f;
+
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_NEVER;
+
+		samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		samplerInfo.mipLodBias = 0.0f;
+		samplerInfo.minLod = -FLT_MAX;
+		samplerInfo.maxLod = FLT_MAX;
+
+		VkSampler sampler;
+		if (vkCreateSampler(GetDevice(), &samplerInfo, GetAllocator(), &sampler) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create texture sampler!");
+		}
+
+		gSamplerCache[selector.key] = sampler;
+	}
+
+	return gSamplerCache[selector.key];
+}
+
 PS2::TextureCache& PS2::GetTextureCache()
 {
 	return gTextureCache;
@@ -1455,8 +1510,11 @@ uint8_t gPaletteReadScratch[0x100000];
 
 uint8_t gPaletteIndexesScratch[0x100000];
 
-Renderer::SimpleTexture::SimpleTexture(const Renderer::ImageData& bitmap, const Renderer::ImageData& palette)
+Renderer::SimpleTexture::SimpleTexture(const CombinedImageData& imageData)
 {
+	const ImageData& bitmap = imageData.bitmaps.front();
+	const ImageData& palette = imageData.palette;
+
 	const VkDeviceSize bufferSize = bitmap.canvasWidth * bitmap.canvasHeight * 4;
 
 	const int pixelPerByte = (32 / bitmap.bpp);
@@ -1556,7 +1614,115 @@ Renderer::SimpleTexture::SimpleTexture(const Renderer::ImageData& bitmap, const 
 
 	}
 
-	if (!Renderer::gHeadless) {
-		//image.UploadData(bufferSize, image.readBuffer);
+	pRenderer = new PS2::GSSimpleTexture();
+	pRenderer->width = bitmap.canvasWidth;
+	pRenderer->height = bitmap.canvasHeight;
+	pRenderer->imageData = bitmap;
+	pRenderer->CreateResources(false);
+	pRenderer->UploadData(bufferSize, gBitmapReadScratch);
+}
+
+void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
+{
+	const VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+	width = bPalette ? imageData.readWidth : imageData.canvasWidth;
+	height = bPalette ? imageData.readHeight : imageData.canvasHeight;
+
+	VulkanImage::CreateImage(width, height , format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
+	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
+	
+	SetObjectName(reinterpret_cast<uint64_t>(image), VK_OBJECT_TYPE_IMAGE, "GSTexImage Image (%d, %d) pallete: %d", width, height, bPalette);
+	SetObjectName(reinterpret_cast<uint64_t>(imageMemory), VK_OBJECT_TYPE_DEVICE_MEMORY, "GSTexImage Image Memory (%d, %d)  pallete: %d", width, height, bPalette);
+	SetObjectName(reinterpret_cast<uint64_t>(imageView), VK_OBJECT_TYPE_IMAGE_VIEW, "GSTexImage Image View (%d, %d)  pallete: %d", width, height, bPalette);
+}
+
+void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)
+{
+	VkBuffer stagingBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(GetDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, readBuffer, static_cast<size_t>(bufferSize));
+	vkUnmapMemory(GetDevice(), stagingBufferMemory);
+
+	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	VulkanImage::CopyBufferToImage(stagingBuffer, image, width, height);
+	
+	VulkanImage::TransitionImageLayout(image, VK_FORMAT_B8G8R8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	vkFreeMemory(GetDevice(), stagingBufferMemory, GetAllocator());
+	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());
+}
+
+PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pipeline& pipeline)
+{
+	auto& descriptorSets = descriptorMap[&pipeline];
+
+	// Create descriptor pool based on the descriptor set count from the shader
+	Renderer::CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorSets.descriptorPool);
+
+	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.descriptorSetLayouts[0]);
+
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorSets.descriptorPool;
+	allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	allocInfo.pSetLayouts = layouts.data();
+
+	descriptorSets.layoutBindingMap = pipeline.descriptorSetLayoutBindings;
+
+	descriptorSets.descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+	if (vkAllocateDescriptorSets(GetDevice(), &allocInfo, descriptorSets.descriptorSets.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		SetObjectName(reinterpret_cast<uint64_t>(descriptorSets.descriptorSets[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "GSTexImage descriptor set %d", i);
+
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = imageView;
+
+		assert(sampler != VK_NULL_HANDLE);
+		//imageInfo.sampler = sampler;
+		assert(false);
+
+
+
+		Renderer::DescriptorWriteList writeList;
+		const VkDescriptorBufferInfo vertexDescBufferInfo = descriptorSets.vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		const VkDescriptorBufferInfo fragmentDescBufferInfo = descriptorSets.pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
+
+		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings);
+
+		if (descriptorWrites.size() > 0) {
+			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		}
+	}
+
+	return descriptorSets;
+}
+
+PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pipeline& pipeline)
+{
+	auto& gsDescriptor = descriptorMap[&pipeline];
+
+	Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Looking for descriptor sets this: 0x{:x}, pipeline: 0x{:x}, Found: {}", (uintptr_t)this, (uintptr_t)&pipeline, gsDescriptor.descriptorPool != VK_NULL_HANDLE);
+
+	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
+		Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
+		return AddDescriptorSets(pipeline);
+	}
+
+	return gsDescriptor;
 }

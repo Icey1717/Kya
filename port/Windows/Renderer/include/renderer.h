@@ -14,6 +14,8 @@ typedef struct VkCommandBuffer_T* VkCommandBuffer;
 struct VkExtent2D;
 
 namespace PS2 {
+	struct GSSimpleTexture;
+
 	struct DrawBufferBase {
 		virtual size_t GetIndexTail() const = 0;
 		virtual void ResetAfterDraw() = 0;
@@ -139,9 +141,18 @@ namespace Renderer
 		void Log(const char* prefix) const;
 	};
 
+	struct CombinedImageData
+	{
+		// One bitmap per mip level.
+		std::vector<ImageData> bitmaps;
+		ImageData palette;
+	};
+
 	struct SimpleTexture
 	{
-		SimpleTexture(const Renderer::ImageData& bitmap, const Renderer::ImageData& palette);
+		SimpleTexture(const CombinedImageData& imageData);
+
+		PS2::GSSimpleTexture* pRenderer;
 	};
 
 	using PaletteMap = std::unordered_map<int, ImageData>;

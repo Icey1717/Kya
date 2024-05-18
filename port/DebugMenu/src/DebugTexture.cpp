@@ -2,17 +2,22 @@
 
 #include <imgui.h>
 
+#include "TextureCache.h"
+
 #include "Texture.h"
 #include "ed3D.h"
 #include "port.h"
+#include "backends/imgui_impl_vulkan.h"
 
 namespace Debug
 {
 	namespace Texture
 	{
-		static const Renderer::Kya::Texture* gSelectedTexture = nullptr;
+		static const Renderer::Kya::G2D* gSelectedTexture = nullptr;
 
 		static const ed_g2d_material* gSelectedMaterial = nullptr;
+
+		static bool bOpenFirstMaterial = false;
 
 		static void ShowList(bool* bOpen)
 		{
@@ -20,10 +25,11 @@ namespace Debug
 
 			auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
 
-			textureLibrary.ForEach([&](const Renderer::Kya::Texture& texture) {
+			textureLibrary.ForEach([&](const Renderer::Kya::G2D& texture) {
 				if (ImGui::Selectable(texture.GetName().c_str())) {
 					gSelectedTexture = &texture;
 					gSelectedMaterial = nullptr;
+					bOpenFirstMaterial = true;
 				}
 			});
 
@@ -121,22 +127,27 @@ namespace Debug
 				break;
 				case SCE_GS_BITBLTBUF:
 				{
-					ImGui::Text("SCE_GS_BITBLTBUF");
+					ImGui::Text("SCE_GS_BITBLTBUF CBP: %d (0x%x)", pkt.asU32[1] & 0xFFFF, pkt.asU32[1] & 0xFFFF);
 				}
 				break;
 				case SCE_GS_TRXPOS:
 				{
-					ImGui::Text("SCE_GS_TRXPOS");
+					ImGui::Text("SCE_GS_TRXPOS X: %d Y: %d", pkt.asU32[0], pkt.asU32[1]);
 				}
 				break;
 				case SCE_GS_TRXREG:
 				{
-					ImGui::Text("SCE_GS_TRXREG");
+					ImGui::Text("SCE_GS_TRXREG W: %d H: %d", pkt.asU32[0], pkt.asU32[1]);
 				}
 				break;
 				case SCE_GS_TRXDIR:
 				{
 					ImGui::Text("SCE_GS_TRXDIR");
+				}
+				break;
+				case SCE_GS_TEXFLUSH:
+				{
+					ImGui::Text("SCE_GS_TEXFLUSH");
 				}
 				break;
 				default:
@@ -339,10 +350,38 @@ namespace Debug
 
 							ed_g2d_bitmap* pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
 
-							ListBitmapDetails(pBitmap);							
+							ListBitmapDetails(pBitmap);
 						}
 					}
 				}
+			}
+
+			ImGui::End();
+
+			ImGui::Begin("Preview", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+			auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
+			const auto& texture = textureLibrary.FindMaterial(gSelectedMaterial);
+
+			if (texture->layers.begin()->textures.begin()->pSimpleTexture) {
+				static PS2::GSSimpleTexture* pRenderer = nullptr;
+				static VkDescriptorSet textureId;
+
+				if (pRenderer != texture->layers.begin()->textures.begin()->pSimpleTexture->pRenderer) {
+					if (pRenderer != nullptr) {
+						ImGui_ImplVulkan_RemoveTexture(textureId);
+					}
+
+					pRenderer = texture->layers.begin()->textures.begin()->pSimpleTexture->pRenderer;
+
+					PS2::PSSamplerSelector sel;
+					VkSampler& sampler = PS2::GetSampler(sel);
+
+					textureId = ImGui_ImplVulkan_AddTexture(sampler, pRenderer->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				}
+				
+				//ImGui::Image(textureId, ImVec2(pRenderer->width, pRenderer->height));
+				ImGui::Image(textureId, ImVec2(300, 300));
 			}
 
 			ImGui::End();
@@ -403,8 +442,9 @@ namespace Debug
 					if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_DefaultOpen)) {
 						for (int i = 0; i < nbMaterials; ++i) {
 							const ed_hash_code* pHashCode = pHashCodes + i;
-							if (ImGui::Selectable(pHashCode->hash.ToString().c_str())) {
+							if (ImGui::Selectable(pHashCode->hash.ToString().c_str()) || bOpenFirstMaterial) {
 								gSelectedMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i);
+								bOpenFirstMaterial = false;
 							}
 						}
 					}
@@ -430,6 +470,12 @@ namespace Debug
 void Debug::Texture::ShowMenu(bool* bOpen)
 {
 	ImGui::Begin("Texture", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+	auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
+	ImGui::Text("Count: %d", textureLibrary.GetTextureCount());
+
+	ImGui::Spacing();
+	ImGui::Spacing();
 
 	if (ImGui::Button("Toggle Texture List")) {
 		gShowTextureList = !gShowTextureList;

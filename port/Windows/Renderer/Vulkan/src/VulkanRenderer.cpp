@@ -1421,12 +1421,13 @@ static VkAllocationCallbacks* gAllocator = nullptr;
 namespace Renderer
 {
 	// Global variable to track allocation count
-	static std::atomic<uint32_t> gAllocationCount(0);
+	static std::array<std::vector<void*>, VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE + 1> gAllocations;
 
 	void* Alloc(void* pUserData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
 		// You can replace this with your custom memory allocator
-		gAllocationCount++;
-		return _aligned_malloc(size, alignment);
+		void* pNew = _aligned_malloc(size, alignment);
+		gAllocations[allocationScope].push_back(pNew);
+		return pNew;
 	}
 
 	void* ReAlloc(void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
@@ -1435,9 +1436,15 @@ namespace Renderer
 	}
 
 	void Free(void* pUserData, void* pMemory) {
-		// You can replace this with your custom memory deallocator
 		if (pMemory) {
-			gAllocationCount--;
+			for (auto& alloc : gAllocations) {
+				auto it = std::find(alloc.begin(), alloc.end(), pMemory);
+				if (it != alloc.end()) {
+					alloc.erase(it);
+					break;
+				}
+			}
+
 			_aligned_free(pMemory);
 		}
 	}
@@ -1627,7 +1634,7 @@ VkAllocationCallbacks* GetAllocator()
 	return gAllocator;
 }
 
-uint32_t GetAllocationCount()
+uint32_t GetAllocationCount(VkSystemAllocationScope scope)
 {
-	return Renderer::gAllocationCount;
+	return Renderer::gAllocations[scope].size();
 }

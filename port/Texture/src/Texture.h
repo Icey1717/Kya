@@ -18,7 +18,7 @@ namespace Renderer
 
 	namespace Kya 
 	{
-		class Texture
+		class G2D
 		{
 		public:
 			struct CommandList
@@ -38,6 +38,9 @@ namespace Renderer
 							ed_g2d_bitmap* GetBitmap() const { return pBitmap; }
 
 							CommandList* GetUploadCommands() { return uploadCommands; }
+
+							// Upload commands are double bufferred but we only use the first one.
+							CommandList GetUploadCommandsDefault() { return uploadCommands[0]; }
 						private:
 							void UpdateCommands();
 
@@ -66,10 +69,16 @@ namespace Renderer
 				std::vector<Layer> layers;
 			};
 
-			Texture(ed_g2d_manager* pManager, std::string name);
+			using Layer = G2D::Material::Layer;
+			using Texture = G2D::Material::Layer::Texture;
+			using Bitmap = G2D::Material::Layer::Texture::Bitmap;
+
+			G2D(ed_g2d_manager* pManager, std::string name);
 
 			inline const std::string& GetName() const { return name; }
 			inline ed_g2d_manager* GetManager() const { return pManager; }
+
+			inline const std::vector<Material>& GetMaterials() const { return materials; }
 
 		private:
 			void ProcessMaterial(ed_g2d_material* pMaterial);
@@ -80,15 +89,10 @@ namespace Renderer
 			std::vector<Material> materials;
 		};
 
-		using KyaMaterial = Texture::Material;
-		using KyaLayer = Texture::Material::Layer;
-		using KyaTexture = Texture::Material::Layer::Texture;
-		using KyaBitmap = Texture::Material::Layer::Texture::Bitmap;
-
 		class TextureLibrary
 		{
 		public:
-			using ForEachTexture = std::function<void(const Texture&)>;
+			using ForEachTexture = std::function<void(const G2D&)>;
 
 			static void Init();
 
@@ -100,10 +104,14 @@ namespace Renderer
 				}
 			}
 
+			const G2D::Material* FindMaterial(const ed_g2d_material* pMaterial) const;
+
+			inline int GetTextureCount() const { return gTextures.size(); }
+
 		private:
 			static void AddTexture(ed_g2d_manager* pManager, std::string name);
 
-			std::vector<Texture> gTextures;
+			std::vector<G2D> gTextures;
 		};
 
 		const TextureLibrary& GetTextureLibrary();

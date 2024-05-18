@@ -76,6 +76,27 @@ namespace PS2 {
 		PSSamplerSelector() : key(0) {}
 	};
 
+	struct GSSimpleTexture {
+		VkImage image = VK_NULL_HANDLE;
+		VkDeviceMemory imageMemory = VK_NULL_HANDLE;
+		VkImageView imageView = VK_NULL_HANDLE;
+
+		Renderer::ImageData imageData;
+
+		uint32_t width;
+		uint32_t height;
+
+		void CreateResources(const bool bPalette);
+		void UploadData(int bufferSize, uint8_t* readBuffer);
+
+		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline);
+		GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline);
+
+		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
+	};
+
+	VkSampler& GetSampler(const PSSamplerSelector& selector, bool bPalette = false);
+
 	struct GSTexImage {
 		GSTexImage(const Renderer::ImageData& inImageData);
 
@@ -104,7 +125,7 @@ namespace PS2 {
 
 		void UploadData(int bufferSize, std::vector<uint8_t>& readBuffer);
 
-		void CreateResources(const bool bTextureFiltering);
+		void CreateResources(const bool bPalette);
 		void Cleanup();
 
 		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline);
