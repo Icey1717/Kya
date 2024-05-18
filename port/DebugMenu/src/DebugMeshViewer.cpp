@@ -30,8 +30,6 @@ namespace DebugMeshViewer {
 	glm::mat4 gGizmoMatrix;
 	ImTextureID gMeshViewerTexture;
 
-	PS2::TextureCache gTextureCache;
-
 	ed_g2d_material* gMaterial;
 	Renderer::TextureData gTextureData;
 
@@ -479,14 +477,6 @@ bool& DebugMeshViewer::GetWireframe()
 	return gWireframe;
 }
 
-PS2::GSTexEntry& DebugMeshViewer::GetTextureEntry()
-{
-	const uint32_t CBP = 0x380;
-	GIFReg::GSTex TEX{};
-	TEX.CBP = CBP;
-	return gTextureCache.Lookup(TEX, gTextureData, CBP);
-}
-
 void DebugMeshViewer::ShowNodeMenu(edNODE* pNode)
 {
 	ImGui::Begin("Node", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
@@ -507,10 +497,6 @@ void DebugMeshViewer::ShowNodeMenu(edNODE* pNode)
 	if (bShowPreview) {
 		ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pNode->pData;
 		ShowPreviewer(pHierarchy);
-	}
-
-	if (gMaterial != nullptr) {
-		MaterialPreviewer::Open(gMaterial);
 	}
 }
 

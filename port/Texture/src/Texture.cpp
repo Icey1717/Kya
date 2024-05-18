@@ -175,6 +175,25 @@ Renderer::SimpleTexture* Renderer::Kya::G2D::Material::FindRenderTextureFromBitm
 	return nullptr;
 }
 
+bool Renderer::Kya::G2D::Material::GetInUse() const
+{
+	auto& inUseTextures = Renderer::GetInUseTextures();
+
+	for (auto& layer : layers) {
+		for (auto& texture : layer.textures) {
+			if (texture.pSimpleTexture) {
+				for (auto& inUseTexture : inUseTextures) {
+					if (inUseTexture == texture.pSimpleTexture) {
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
 {
 	G2D::Texture& texture = textures.emplace_back();

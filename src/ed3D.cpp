@@ -13196,8 +13196,6 @@ void RemoveTexturesG3D(ed_g3d_manager* pMeshInfo)
 
 				ed_hash_code* pHash = LOAD_SECTION_CAST(ed_hash_code*, pMaterialHash->pData);
 
-				Renderer::RemoveByMaterial(LOAD_SECTION_CAST(ed_Chunck*, pHash->pData) + 1);
-
 				materialCount = materialCount - 1;
 				pMBNK = pMBNK + 1;
 			}
@@ -13210,7 +13208,6 @@ void RemoveTexturesG3D(ed_g3d_manager* pMeshInfo)
 void RemoveTexturesG2D(ed_g2d_manager* pTextureInfo)
 {
 	auto pHash = ed3DG2DGetMaterialFromIndex(pTextureInfo, 0);
-	Renderer::RemoveByMaterial(pHash + 1);
 }
 #endif
 

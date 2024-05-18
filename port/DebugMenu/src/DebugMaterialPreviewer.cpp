@@ -7,7 +7,7 @@
 #include <memory>
 #include "DebugRenderer.h"
 #include "magic_enum.hpp"
-
+/*
 namespace DebugMenu_Internal
 {
 	using DebugMaterialPtr = std::shared_ptr<DebugHelpers::DebugMaterial>;
@@ -562,3 +562,4 @@ void MaterialPreviewer::Reset()
 	zoomLevel = 1.0f;
 	scrollOffset = ImVec2(0.0f, 0.0f);
 }
+*/

@@ -37,9 +37,9 @@ struct MaterialPreviewerEntry {
 };
 
 namespace MaterialPreviewer {
-	void Update();
-	void Open(MaterialPreviewerEntry& entry);
-	void Open(ed_g2d_material* pMaterial);
-	void Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name);
-	void Reset();
+	//void Update();
+	//void Open(MaterialPreviewerEntry& entry);
+	//void Open(ed_g2d_material* pMaterial);
+	//void Open(const PS2::GSTexValue& texValue, const ImageTextureID& texIDs, std::string name);
+	//void Reset();
 };

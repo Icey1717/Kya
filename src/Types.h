@@ -86,6 +86,13 @@ union Hash_8
 		memcpy(hashBuff, &name, 8);
 		hashBuff[8] = 0;
 
+		// replace newlines with spaces
+		for (int i = 0; i < 8; i++) {
+			if (hashBuff[i] == '\n') {
+				hashBuff[i] = ' ';
+			}
+		}
+
 		sprintf(buff, "%s(0x%llx)", hashBuff, number);
 		return std::string(buff);
 	}

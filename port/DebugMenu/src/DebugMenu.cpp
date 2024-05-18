@@ -105,26 +105,6 @@ namespace DebugMenu_Internal {
 		meshList.emplace_back(pNewMesh, backtrace, ObjectNaming::GetNextObjectName());
 	}
 
-	// Find or add function
-	static ImageTextureID FindOrAddTexture(const PS2::GSTexEntry& texEntry)
-	{
-		printf("%p", &texEntry);
-		auto it = debugTextures.find(&texEntry);
-		if (it != debugTextures.end())
-		{
-			// Texture already exists in the map
-			return it->second;
-		}
-		else
-		{
-			// Texture does not exist, add it to the map
-			ImTextureID newImageTextureID = DebugMenu::AddTexture(texEntry.value.image);
-			ImTextureID newPaletteTextureID = DebugMenu::AddTexture(texEntry.value.paletteImage);
-			debugTextures[&texEntry] = { newImageTextureID, newPaletteTextureID };
-			return debugTextures[&texEntry];
-		}
-	}
-
 	double deltaTime;
 
 	void Update() {
@@ -163,69 +143,6 @@ namespace DebugMenu_Internal {
 		}
 
 		return i;
-	}
-
-	void ShowTextureList(bool* bOpen) {
-		ImGui::Begin("Texture List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		bool bOpenedMaterial = false;
-
-		auto ClearMaterials = [&]() {
-			for (auto& material : textureMaterials) {
-				edDListTermMaterial(&material);
-			}
-			textureMaterials.clear();
-			};
-
-		for (int i = 0; i < textureList.size(); i++) {
-			char buttonText[256];
-			std::sprintf(buttonText, "Texture %s", textureList[i].name.c_str());
-
-			if (ImGui::Selectable(buttonText)) {
-				ClearMaterials();
-				selectedTextureIndex = i;
-				bOpenedMaterial = true;
-				const int materialCount = GetMaterialCountFromTexture(textureList[selectedTextureIndex].pTexture);
-				textureMaterials.resize(materialCount);
-				DEBUG_LOG(LogLevel::Info, "Discovered %d materials for texture {}", materialCount, (uintptr_t)textureList[selectedTextureIndex].pTexture);
-			}
-		}
-
-		ImGui::End();
-
-		if (selectedTextureIndex >= 0) {
-			auto& selectedTexture = textureList[selectedTextureIndex];
-
-			static bool bOpen = true;
-			ImGui::Begin("Texture Previewer", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-			int i = 0;
-			for (auto& material : textureMaterials) {
-				char buttonText[256];
-				std::sprintf(buttonText, "Material %d", i + 1);
-				if (ImGui::Selectable(buttonText) || bOpenedMaterial) {
-					DEBUG_LOG(LogLevel::Info, "Selected material %d", i + 1);
-					if (material.pManager == nullptr) {
-						DEBUG_LOG(LogLevel::Info, "Loading material %d from texture {}", i + 1, (uintptr_t)selectedTexture.pTexture);
-						edDListCreatMaterialFromIndex(&material, i, selectedTexture.pTexture, 2);
-					}
-					selectedMaterialIndex = i;
-					auto entry = MaterialPreviewerEntry(&textureMaterials[selectedMaterialIndex]);
-					entry.name = "None";
-					MaterialPreviewer::Open(entry);
-					bOpenedMaterial = false;
-				}
-				i++;
-			}
-
-			CallstackPreviewer::Show(selectedTexture.callstackEntry);
-
-			ImGui::End();
-
-			if (!bOpen) {
-				selectedTextureIndex = -1;
-			}
-		}
 	}
 
 	bool GetCutsceneName(void* pData, int index, const char** ppOut) {
@@ -402,26 +319,6 @@ namespace DebugMenu_Internal {
 		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
 
 		// End the ImGui window
-		ImGui::End();
-	}
-
-	void ShowTextureCache(bool* bOpen) {
-		auto& texCache = PS2::GetTextureCache();
-		ImGui::Begin("Texture Cache", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		for (int i = 0; i < texCache.GetEntries().size(); i++) {
-			char buttonText[256]; // Buffer to hold the formatted text
-
-			// Format the text using sprintf
-			std::sprintf(buttonText, "Cached Texture %d", i + 1);
-
-			if (ImGui::Selectable(buttonText)) {
-				auto& selectedMaterial = texCache.GetEntries()[i];
-				std::string name = "Material " + std::to_string(i + 1);
-				MaterialPreviewer::Open(selectedMaterial.value, FindOrAddTexture(selectedMaterial), name);
-			}
-		}
-
 		ImGui::End();
 	}
 
@@ -624,27 +521,6 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	void ShowMaterialList(bool* bOpen) {
-		ImGui::Begin("Material List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		for (int i = 0; i < materialList.size(); i++) {
-			char buttonText[256]; // Buffer to hold the formatted text
-
-			// Format the text using sprintf
-			std::sprintf(buttonText, "Material %d", i + 1);
-
-			if (ImGui::Selectable(buttonText)) {
-				std::string name = "Material " + std::to_string(i + 1);
-
-				auto& selectedMaterial = materialList[i];
-				selectedMaterial.name = name;
-				MaterialPreviewer::Open(selectedMaterial);
-			}
-		}
-
-		ImGui::End();
-	}
-
 	void ShowSceneMenu(bool* bOpen) {
 		ImGui::Begin("Scene", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -813,8 +689,6 @@ namespace DebugMenu_Internal {
 	{
 		{"Demo", ImGui::ShowDemoWindow },
 		{"Log", ShowLogWindow },
-		{"Material List", ShowMaterialList },
-		{"Texture List", ShowTextureList },
 		{"Mesh List", ShowMeshList },
 		{"Framebuffers", ShowFramebuffers },
 		{"Cutscene", ShowCutsceneMenu, true },
@@ -851,7 +725,6 @@ namespace DebugMenu_Internal {
 			menu.Show();
 			});
 
-		MaterialPreviewer::Update();
 		ShowGame();
 		DrawMenu();
 		DebugCamera::ShowCamera();

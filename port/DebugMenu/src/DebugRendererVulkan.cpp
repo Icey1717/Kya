@@ -193,11 +193,6 @@ void DebugMenu::SetupRenderer()
 	Renderer::GetRenderDelegate() += DebugRendererImgui::Render;
 }
 
-ImTextureID DebugMenu::AddTexture(const PS2::GSTexImage& texImage)
-{
-	return ImGui_ImplVulkan_AddTexture(texImage.sampler, texImage.imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-}
-
 struct DebugFrameBuffer {
 	DebugFrameBuffer(ImTextureID inTexID, VkSampler inSampler)
 		: texID(inTexID)

@@ -83,12 +83,13 @@ namespace Renderer {
 	}
 
 	void ResetRenderer() {
-		PS2::GetTextureCache().GetEntries().clear();
 		PS2::GetPipelines().clear();
 	}
 
 	TextureData gTextureData;
 	SimpleTexture* gBoundTexture = nullptr;
+
+	InUseTextureList gInUseTextures;
 
 	void ResetVertIndexBuffers()
 	{
@@ -1755,11 +1756,6 @@ void Renderer::BindTexture(SimpleTexture* pNewTexture)
 	gBoundTexture = pNewTexture;
 }
 
-void Renderer::RemoveByMaterial(void* pMaterial) 
-{
-	PS2::GetTextureCache().RemoveByMaterial(pMaterial);
-}
-
 void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen) {
 	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().World, pWorld, sizeof(glm::mat4));
 	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().View, pView, sizeof(glm::mat4));
@@ -1769,6 +1765,10 @@ void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj,
 
 Renderer::TextureData& Renderer::GetTextureData() {
 	return gTextureData;
+}
+
+const Renderer::InUseTextureList& Renderer::GetInUseTextures() {
+	return gInUseTextures;
 }
 
 void Renderer::Draw() {
@@ -1844,6 +1844,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 	g_GSSelector.prim = primclass;
 
 	LogTex("Lookup", state.TEX);
+	gInUseTextures.push_back(pBoundTexture);
 	//PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, textureData, state.GetCBP());
 	PS2::GSSimpleTexture* pTextureData = pBoundTexture->pRenderer;
 
@@ -2033,16 +2034,7 @@ void PS2::BeginFrame()
 	PS2_Internal::gVertexBuffers.Reset();
 	PS2::Hardware::gVertexBuffers.Reset();
 
-	for (auto& entry : PS2::GetTextureCache().GetEntries()) {
-		if (entry.cleanCounter > 0) {
-			entry.cleanCounter++;
-
-			if (entry.cleanCounter > 10) {
-				entry.value.Cleanup();
-				entry.cleanCounter = 0;
-			}
-		}
-	}
+	Renderer::gInUseTextures.clear();
 }
 
 void PS2::Cleanup()

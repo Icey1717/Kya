@@ -37,8 +37,6 @@ namespace DebugMeshViewer {
 	bool& GetUseGlslPipeline();
 	bool& GetWireframe();
 
-	PS2::GSTexEntry& GetTextureEntry();
-
 	void ShowNodeMenu(edNODE* pNode);
 	void ShowClusterMenu(ed_g3d_manager* pManager);
 

@@ -155,6 +155,9 @@ namespace Renderer
 		PS2::GSSimpleTexture* pRenderer;
 	};
 
+	using InUseTextureList = std::vector<SimpleTexture*>;
+	const InUseTextureList& GetInUseTextures();
+
 	using PaletteMap = std::unordered_map<int, ImageData>;
 
 	struct TextureData {
@@ -362,8 +365,6 @@ namespace Renderer
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;
 
 	RenderDelegate& GetRenderDelegate();
-
-	void RemoveByMaterial(void* pMaterial);
 
 	void SetHeadless(bool bValue);
 

@@ -25,11 +25,26 @@ namespace Debug
 
 			auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
 
+			static bool bOnlyInUse = false;
+			ImGui::Checkbox("Only in use", &bOnlyInUse);
+
 			textureLibrary.ForEach([&](const Renderer::Kya::G2D& texture) {
-				if (ImGui::Selectable(texture.GetName().c_str())) {
-					gSelectedTexture = &texture;
-					gSelectedMaterial = nullptr;
-					bOpenFirstMaterial = true;
+				bool bFound = true;
+
+				if (bOnlyInUse) {
+					bFound = false;
+
+					for (auto& material : texture.GetMaterials()) {
+						bFound |= material.GetInUse();
+					}
+				}
+
+				if (bFound) {
+					if (ImGui::Selectable(texture.GetName().c_str())) {
+						gSelectedTexture = &texture;
+						gSelectedMaterial = nullptr;
+						bOpenFirstMaterial = true;
+					}
 				}
 			});
 
@@ -445,6 +460,11 @@ namespace Debug
 							if (ImGui::Selectable(pHashCode->hash.ToString().c_str()) || bOpenFirstMaterial) {
 								gSelectedMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i);
 								bOpenFirstMaterial = false;
+							}
+
+							if (gSelectedTexture->GetMaterials()[i].GetInUse()) {
+								ImGui::SameLine();
+								ImGui::TextColored(sValidColor, "(In Use)");
 							}
 						}
 					}

@@ -67,6 +67,8 @@ namespace Renderer
 
 				SimpleTexture* FindRenderTextureFromBitmap(ed_g2d_bitmap* pBitmap) const;
 
+				bool GetInUse() const;
+
 				ed_g2d_material* pMaterial = nullptr;
 				CommandList renderCommands;
 				std::vector<Layer> layers;
