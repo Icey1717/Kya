@@ -262,6 +262,7 @@ union edF32VECTOR3 {
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
+#ifdef USE_STRING_STREAMS
 		const int printWidth = 10;
 
 		std::stringstream ss;
@@ -270,6 +271,11 @@ union edF32VECTOR3 {
 		ss << std::setw(printWidth) << "(" << std::setw(printWidth) << x << ", " << std::setw(printWidth) << y
 			<< ", " << std::setw(printWidth) << z << ")";
 		return ss.str();
+#else
+		char buff[256];
+		sprintf_s(buff, 256, "(%.4f, %.4f, %.4f)", x, y, z);
+		return buff;
+#endif
 	}
 #endif
 };
@@ -370,6 +376,7 @@ union
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
+#ifdef USE_STRING_STREAMS
 		const int printWidth = 10;
 
 		std::stringstream ss;
@@ -378,6 +385,11 @@ union
 		ss << "(" << x << ", " << std::setw(printWidth) << y
 			<< ", " << std::setw(printWidth) << z << ", " << std::setw(printWidth) << w << ")";
 		return ss.str();
+#else
+		char buff[256];
+		sprintf_s(buff, 256, "(%.4f, %.4f, %.4f, %.4f)", x, y, z, w);
+		return buff;
+#endif
 	}
 #endif
 };
@@ -554,9 +566,15 @@ union alignas(16)
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
+#ifdef USE_STRING_STREAMS
 		std::stringstream ss;
 		ss << "\n" << rowX.ToString() << "\n" << rowY.ToString() << "\n" << rowZ.ToString() << "\n" << rowT.ToString();
 		return ss.str();
+#else
+	char buff[256];
+	sprintf_s(buff, 256, "%s\n%s\n%s\n%s", rowX.ToString().c_str(), rowY.ToString().c_str(), rowZ.ToString().c_str(), rowT.ToString().c_str());
+	return buff;
+#endif
 	}
 #endif
 };

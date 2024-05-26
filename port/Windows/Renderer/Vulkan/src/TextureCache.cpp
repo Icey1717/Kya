@@ -24,7 +24,7 @@ static const int* rowOffset[8] = {
 	rowOffset32,
 };
 
-#define LOG_TEXCACHE(fmt, ...) MY_LOG_CATEGORY(LogLevel::Info, "TextureCache", fmt, ##__VA_ARGS__);
+#define LOG_TEXCACHE(fmt, ...) MY_LOG_CATEGORY("TextureCache", LogLevel::Info, fmt, ##__VA_ARGS__);
 
 void Renderer::ImageData::Log(const char* prefix) const
 {

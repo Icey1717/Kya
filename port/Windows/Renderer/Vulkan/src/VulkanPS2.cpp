@@ -109,6 +109,7 @@ namespace Renderer {
 
 	static std::string TexToString(const GIFReg::GSTex tex)
 	{
+#ifdef USE_STRING_STREAMS
 		// Create a formatted log message string
 		std::ostringstream oss;
 		oss << "tbp: " << tex.TBP0 << ", tbw: " << tex.TBW << ", psm: " << tex.PSM
@@ -117,6 +118,10 @@ namespace Renderer {
 			<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
 
 		return oss.str();
+#else
+		// Todo
+		return std::string();
+#endif
 	}
 
 	void LogTex(const char* prefix, const GIFReg::GSTex tex)
