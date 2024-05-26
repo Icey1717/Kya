@@ -11,6 +11,8 @@ include_directories("ext/glm")
 
 add_subdirectory("ext/SPIRV-Reflect")
 
+add_subdirectory("Vulkan/src/pcsx2/TextureUpload")
+
 add_subdirectory("ext/imgui")
 
 set (SOURCES
@@ -40,7 +42,6 @@ set (SOURCES
 	"Vulkan/src/TextureCache.cpp"
 	"Vulkan/src/UniformBuffer.h"
 	"Vulkan/src/UniformBuffer.cpp"
-	"Vulkan/src/GSVector.h"
 	"Vulkan/src/pcsx2/VKBuilders.h"
 	"Vulkan/src/pcsx2/VKBuilders.cpp"
 	"Vulkan/src/pcsx2/Selectors.h"
@@ -68,13 +69,16 @@ if (RENDERER_HEADLESS OR FORCE_RENDERER_HEADLESS)
 	target_compile_definitions(Renderer PRIVATE HEADLESS)
 endif()
 
+	target_compile_definitions(Renderer PRIVATE "PLATFORM_WIN")
+
 add_library(reflect-print ${ReflectPrintSrc})
 target_link_libraries(reflect-print PRIVATE ${Vulkan_LIBRARIES} spirv-reflect-static)
 target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")
 
 target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive)
+target_link_libraries(Renderer PUBLIC TextureUpload)
 
-target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR} "${CMAKE_CURRENT_LIST_DIR}/Vulkan/src")
+target_include_directories(Renderer PUBLIC ${Vulkan_INCLUDE_DIRS} ${CMAKE_CURRENT_LIST_DIR} "${CMAKE_CURRENT_LIST_DIR}/Vulkan/src" "${CMAKE_SOURCE_DIR}/port/include")
 
 target_include_directories(Renderer PUBLIC "include")
 

@@ -566,12 +566,7 @@ union alignas(16)
 
 #define EDITOR_BUILD PLATFORM_WIN
 
-#ifdef PLATFORM_WIN
-#define ENABLE_MY_LOG
-#else
-#define uintptr_t int
-//#define ENABLE_MY_LOG
-#endif
+#include "Logging.h"
 
 #ifdef PLATFORM_WIN
 #define NAME_NEXT_OBJECT(format, ...) ObjectNaming::SetNextObjectName(format, __VA_ARGS__)
@@ -581,61 +576,7 @@ union alignas(16)
 
 #define LOC_KEY_TO_CHAR(key) key & 0xff, (key >> 8) & 0xff, (key >> 16) & 0xff, (key >> 24) & 0xff
 
-#ifdef ENABLE_MY_LOG
-#if defined(PLATFORM_WIN)
-#define scePrintf(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "PS2", format, ##__VA_ARGS__)
-#define MY_LOG(format, ...) Log::GetInstance().AddLog(LogLevel::Info, "General", format, ##__VA_ARGS__)
-
-#define MY_LOG_CATEGORY(category, level, format, ...) Log::GetInstance().AddLog(level, category, format, ##__VA_ARGS__)
-
-#else
-#include <eekernel.h>
-#define MY_LOG(...) scePrintf(##__VA_ARGS__); scePrintf("\n")
-#define MY_LOG_CATEGORY(category, level, format, ...) scePrintf(format, ##__VA_ARGS__); scePrintf("\n")
-#endif
-
-#include <stdio.h>
-
-#include <stdlib.h>
-
-inline void PrintVector(edF32VECTOR4* vector)
-{
-	//MY_LOG("%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
-	char buff[256] = { 0 };
-	sprintf(buff, "%5.2f, %5.2f, %5.2f, %5.2f\n", vector->x, vector->y, vector->z, vector->w);
-	MY_LOG("%s", buff);
-}
-
-inline void PrintMatrix(edF32MATRIX4* matrix)
-{
-	PrintVector((edF32VECTOR4*)&matrix->aa);
-	PrintVector((edF32VECTOR4*)&matrix->ba);
-	PrintVector((edF32VECTOR4*)&matrix->ca);
-	PrintVector((edF32VECTOR4*)&matrix->da);
-}
-
-#define PRINT_VECTOR(a) PrintVector(a)
-#define PRINT_MATRIX(a) PrintMatrix(a)
-
-#else
-#define MY_LOG(...)
-#define MY_LOG_CATEGORY(...)
-#define PRINT_VECTOR(...)
-#define PRINT_MATRIX(...)
-
-#ifdef PLATFORM_WIN
-#define scePrintf(...)
-#endif
-#endif
-
 #define edDebugPrintf scePrintf
-
-
-#ifdef PLATFORM_WIN
-//typedef float		sceVu0FVECTOR[4];
-//typedef float		sceVu0FMATRIX[4][4];
-
-#endif
 
 union edpkt_data {
 	uint128 asU128;
@@ -647,12 +588,6 @@ union edpkt_data {
 	uint asU32[4];
 	edF32VECTOR4 asVector;
 };
-
-#define TO_SCE_MTX float(*)[4]
-#define TO_SCE_VECTOR float*
-
-//#define PRINT_VECTOR(a) MY_LOG("%.02f, %.02f, %.02f, %.02f\n", ((float*)&a)[0], ((float*)&a)[1], ((float*)&a)[2], ((float*)&a)[3])
-//#define PRINT_MATRIX(a) PRINT_VECTOR((float*)&a); PRINT_VECTOR(((float*)&a) + 4); PRINT_VECTOR(((float*)&a) + 8); PRINT_VECTOR(((float*)&a) + 12)
 
 enum LANGUAGE
 {
@@ -672,22 +607,6 @@ inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 	return ret;
 }
 
-//inline edF32MATRIX4 operator*(const edF32MATRIX4& m1, const edF32MATRIX4& m2) {
-//	edF32MATRIX4 result;
-//
-//	for (int i = 0; i < 4; ++i) {
-//		for (int j = 0; j < 4; ++j) {
-//			result.raw[i * 4 + j] = m1.raw[i * 4 + 0] * m2.raw[0 * 4 + j] +
-//				m1.raw[i * 4 + 1] * m2.raw[1 * 4 + j] +
-//				m1.raw[i * 4 + 2] * m2.raw[2 * 4 + j] +
-//				m1.raw[i * 4 + 3] * m2.raw[3 * 4 + j];
-//		}
-//	}
-//
-//	return result;
-//}
-
-/* Equivalent ^^^ */
 inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 {
 	edF32MATRIX4 ret;

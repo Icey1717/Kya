@@ -4,7 +4,66 @@
 
 namespace GIFReg
 {
-	struct GSPrimPacked
+	union GSBitBltBuf
+	{
+		struct {
+			uint32_t SBP : 14;
+			uint32_t _PAD1 : 2;
+			uint32_t SBW : 6;
+			uint32_t _PAD2 : 2;
+			uint32_t SPSM : 6;
+			uint32_t _PAD3 : 2;
+			uint32_t DBP : 14;
+			uint32_t _PAD4 : 2;
+			uint32_t DBW : 6;
+			uint32_t _PAD5 : 2;
+			uint32_t DPSM : 6;
+			uint32_t _PAD6 : 2;
+		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
+	};
+
+	union GSTrxPos
+	{
+		struct {
+			uint32_t SSAX : 11;
+			uint32_t _PAD1 : 5;
+			uint32_t SSAY : 11;
+			uint32_t _PAD2 : 5;
+			uint32_t DSAX : 11;
+			uint32_t _PAD3 : 5;
+			uint32_t DSAY : 11;
+			uint32_t DIRY : 1;
+			uint32_t DIRX : 1;
+			uint32_t _PAD4 : 3;
+		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
+	};
+
+	union GSTrxReg
+	{
+		struct {
+			uint32_t RRW : 12;
+			uint32_t _PAD1 : 20;
+			uint32_t RRH : 12;
+			uint32_t _PAD2 : 20;
+		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
+	};
+
+	struct GSPrim
 	{
 		uint32_t PRIM : 3;
 		uint32_t IIP : 1;
@@ -70,18 +129,6 @@ namespace GIFReg
 		uint32_t X;
 		uint32_t Y;
 	};
-
-	//struct GSPrim {
-	//	uint32_t PRIM;
-	//	uint32_t IIP;
-	//	uint32_t TME;
-	//	uint32_t FGE;
-	//	uint32_t ABE;
-	//	uint32_t AA1;
-	//	uint32_t FST;
-	//	uint32_t CTXT;
-	//	uint32_t FIX;
-	//};
 
 	union GSClamp
 	{

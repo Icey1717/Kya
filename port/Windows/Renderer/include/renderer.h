@@ -4,7 +4,6 @@
 #include "delegate.h"
 #include "GIFReg.h"
 #include "GSState.h"
-#include "GSVector.h"
 
 #include "../../../include/profiling.h"
 
@@ -133,10 +132,13 @@ namespace Renderer
 		void* pImage = nullptr;
 		uint32_t canvasWidth = 0;
 		uint32_t canvasHeight = 0;
-		uint32_t readWidth = 0;
-		uint32_t readHeight = 0;
 		uint32_t bpp = 0;
 		uint32_t maxMipLevel = 0;
+
+		// Full commands for uploading the image.
+		GIFReg::GSBitBltBuf bitBltBuf;
+		GIFReg::GSTrxPos trxPos;
+		GIFReg::GSTrxReg trxReg;
 
 		void Log(const char* prefix) const;
 	};
@@ -146,6 +148,7 @@ namespace Renderer
 		// One bitmap per mip level.
 		std::vector<ImageData> bitmaps;
 		ImageData palette;
+		GIFReg::GSTex tex;
 	};
 
 	struct SimpleTexture
@@ -188,7 +191,7 @@ namespace Renderer
 	void SetFrame(int fbp, int fbw, int psm, int fbmask);
 	void SetTest(uint32_t ate, uint32_t atst, uint32_t aref, uint32_t afail, uint32_t date, uint32_t datm, uint32_t zte, uint32_t ztst);
 
-	void SetPrim(GIFReg::GSPrimPacked prim, PS2::DrawBufferData<GSVertex, uint16_t>* pDrawBuffer = nullptr);
+	void SetPrim(GIFReg::GSPrim prim, PS2::DrawBufferData<GSVertex, uint16_t>* pDrawBuffer = nullptr);
 	void SetPrim(uint32_t prim, uint32_t iip, uint32_t tme, uint32_t fge, uint32_t abe, uint32_t aa1, uint32_t fst, uint32_t ctxt, uint32_t fix);
 
 	// Variation that uses GS State to fill in PRIM, STQ, RGBA
@@ -202,7 +205,7 @@ namespace Renderer
 	void TraceUpdateSkip(uint32_t& skip, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m);
 
 	template<typename VertexType, typename IndexType>
-	void KickVertex(VertexType& vtx, GIFReg::GSPrimPacked primReg, uint32_t skip, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer)
+	void KickVertex(VertexType& vtx, GIFReg::GSPrim primReg, uint32_t skip, PS2::DrawBufferData<VertexType, IndexType>& drawBuffer)
 	{
 		GS_PRIM prim = (GS_PRIM)primReg.PRIM;
 		assert(drawBuffer.vertex.tail < drawBuffer.vertex.maxcount + 3);
@@ -272,7 +275,7 @@ namespace Renderer
 
 		if (tail >= drawBuffer.vertex.maxcount) assert(false);
 
-		uint16_t* RESTRICT buff = &drawBuffer.index.buff[drawBuffer.index.tail];
+		uint16_t* buff = &drawBuffer.index.buff[drawBuffer.index.tail];
 
 		switch (prim)
 		{

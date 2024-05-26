@@ -82,7 +82,7 @@ namespace PS2 {
 			this->ALPHA.FIX = fix;
 		}
 
-		GIFReg::GSPrimPacked PRIM;
+		GIFReg::GSPrim PRIM;
 		GIFReg::GSClamp CLAMP;
 		GIFReg::GSColClamp COLCLAMP;
 		GIFReg::GSAlpha ALPHA;
@@ -99,7 +99,7 @@ namespace PS2 {
 			return CachedCBP[1];
 		}
 
-		inline bool GSState::IsOpaque()
+		inline bool IsOpaque()
 		{
 			if (PRIM.AA1)
 				return false;

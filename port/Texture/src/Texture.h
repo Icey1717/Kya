@@ -50,6 +50,7 @@ namespace Renderer
 						};
 
 						ed_g2d_texture* pTexture = nullptr;
+						Layer* pParent = nullptr;
 
 						Bitmap bitmap;
 						Bitmap palette;
@@ -60,6 +61,8 @@ namespace Renderer
 					void ProcessTexture(ed_g2d_texture* pTexture);
 
 					ed_g2d_layer* pLayer = nullptr;
+					Material* pParent = nullptr;
+
 					std::vector<Texture> textures;
 				};
 
@@ -70,6 +73,8 @@ namespace Renderer
 				bool GetInUse() const;
 
 				ed_g2d_material* pMaterial = nullptr;
+				G2D* pParent = nullptr;
+
 				CommandList renderCommands;
 				std::vector<Layer> layers;
 			};

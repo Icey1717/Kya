@@ -125,7 +125,7 @@ void Vulkan::LogVulkanResult(const char* func_name, VkResult res, const char* ms
 	va_end(ap);
 
 	//Console.Error("(%s) %s (%d: %s)", func_name, real_msg.c_str(), static_cast<int>(res), VkResultToString(res));
-	Log::GetInstance().AddLog(LogLevel::Error, "(%s) %s (%d: %s)", func_name, real_msg.c_str(), static_cast<int>(res), VkResultToString(res));
+	VULKAN_LOG(LogLevel::Error, "(%s) %s (%d: %s)", func_name, real_msg.c_str(), static_cast<int>(res), VkResultToString(res));
 }
 
 Vulkan::DescriptorSetLayoutBuilder::DescriptorSetLayoutBuilder()

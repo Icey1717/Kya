@@ -45,6 +45,13 @@ namespace Debug
 						gSelectedMaterial = nullptr;
 						bOpenFirstMaterial = true;
 					}
+
+					if (texture.GetMaterials().size() > 0 && texture.GetMaterials().front().layers.size() > 0 && texture.GetMaterials().front().layers.front().textures.size() > 0) {
+						ImGui::SameLine();
+
+						auto bm = texture.GetMaterials().front().layers.front().textures.front().bitmap.GetBitmap();
+						ImGui::Text("(%d, %d) psm: %d", bm->width, bm->height, bm->psm);
+					}
 				}
 			});
 
@@ -82,7 +89,13 @@ namespace Debug
 				switch (pkt.asU32[2]) {
 				case SCE_GS_TEX0_1:
 				{
+					GIFReg::GSTex tex = *reinterpret_cast<GIFReg::GSTex*>(&pkt.cmdA);
 					ImGui::Text("TEX0_1");
+					ImGui::Text("CBP: 0x%x CLD: %d CPSM: %d CSA: %d CSM: %d",
+						tex.CBP, tex.CLD, tex.CPSM, tex.CSA, tex.CSM);
+					ImGui::Text("PSM: %d TBP0: 0x%x TBW: %d TCC: %d TFX: %d TW: %d (%d) TH: %d (%d)",
+						tex.PSM, tex.TBP0, tex.TBW, tex.TCC, tex.TFX, tex.TW, 1 << tex.TW, tex.TH, 1 << tex.TH);
+
 					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX0: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 					//SendTextureCommandsFromPacked(pkt.cmdA);
 				}
@@ -142,7 +155,10 @@ namespace Debug
 				break;
 				case SCE_GS_BITBLTBUF:
 				{
-					ImGui::Text("SCE_GS_BITBLTBUF CBP: %d (0x%x)", pkt.asU32[1] & 0xFFFF, pkt.asU32[1] & 0xFFFF);
+					GIFReg::GSBitBltBuf bitbltbuf = *reinterpret_cast<GIFReg::GSBitBltBuf*>(&pkt.cmdA);
+					ImGui::Text("SCE_GS_BITBLTBUF");
+					ImGui::Text("DBP: 0x%x DBW: %d DPSM: %d SBP: 0x%x SBW: %d SPSM: %d",
+						bitbltbuf.DBP, bitbltbuf.DBW, bitbltbuf.DPSM, bitbltbuf.SBP, bitbltbuf.SBW, bitbltbuf.SPSM);
 				}
 				break;
 				case SCE_GS_TRXPOS:
@@ -157,7 +173,7 @@ namespace Debug
 				break;
 				case SCE_GS_TRXDIR:
 				{
-					ImGui::Text("SCE_GS_TRXDIR");
+					ImGui::Text("SCE_GS_TRXDIR W: %d H: %d", pkt.asU32[0], pkt.asU32[1]);
 				}
 				break;
 				case SCE_GS_TEXFLUSH:
@@ -382,7 +398,9 @@ namespace Debug
 				static PS2::GSSimpleTexture* pRenderer = nullptr;
 				static VkDescriptorSet textureId;
 
-				if (pRenderer != texture->layers.begin()->textures.begin()->pSimpleTexture->pRenderer) {
+				static bool bLinearSampler = false;
+
+				if (ImGui::Checkbox("Linear", &bLinearSampler) || pRenderer != texture->layers.begin()->textures.begin()->pSimpleTexture->pRenderer) {
 					if (pRenderer != nullptr) {
 						ImGui_ImplVulkan_RemoveTexture(textureId);
 					}
@@ -390,13 +408,17 @@ namespace Debug
 					pRenderer = texture->layers.begin()->textures.begin()->pSimpleTexture->pRenderer;
 
 					PS2::PSSamplerSelector sel;
+
+					sel.ltf = bLinearSampler;
+
 					VkSampler& sampler = PS2::GetSampler(sel);
 
 					textureId = ImGui_ImplVulkan_AddTexture(sampler, pRenderer->imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 				}
 				
 				//ImGui::Image(textureId, ImVec2(pRenderer->width, pRenderer->height));
-				ImGui::Image(textureId, ImVec2(300, 300));
+				float aspectRatio = static_cast<float>(pRenderer->width) / static_cast<float>(pRenderer->height);
+				ImGui::Image(textureId, ImVec2(256.0f, 256.0f / aspectRatio));
 			}
 
 			ImGui::End();
@@ -457,7 +479,11 @@ namespace Debug
 					if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_DefaultOpen)) {
 						for (int i = 0; i < nbMaterials; ++i) {
 							const ed_hash_code* pHashCode = pHashCodes + i;
-							if (ImGui::Selectable(pHashCode->hash.ToString().c_str()) || bOpenFirstMaterial) {
+
+							char buff[256];
+							sprintf_s(buff, 256, "%d - %s", i, pHashCode->hash.ToString().c_str());
+
+							if (ImGui::Selectable(buff) || bOpenFirstMaterial) {
 								gSelectedMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i);
 								bOpenFirstMaterial = false;
 							}

@@ -851,7 +851,7 @@ namespace VU1Emu {
 			Renderer::SetVertexSkip(skip & 0x8000);
 			Renderer::GSVertex vtx{ { STQ.x, STQ.y }, {RGBA.xi, RGBA.yi, RGBA.zi, RGBA.wi }, STQ.z, { x, y }, z, 0, 0 };
 
-			const GIFReg::GSPrimPacked pPrimPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&prim);
+			const GIFReg::GSPrim pPrimPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&prim);
 			Renderer::KickVertex(vtx, pPrimPacked, skip & 0x8000, *pDrawBuffer);
 		}
 
@@ -2407,7 +2407,7 @@ namespace VU1Emu {
 			edpkt_data* pkt = reinterpret_cast<edpkt_data*>(VIF_AS_F(primReg, 0));
 			HW_Gif_Tag* pGifTag = (HW_Gif_Tag*)(pkt);
 			const uint prim = pGifTag->PRIM;
-			Renderer::SetPrim(*reinterpret_cast<const GIFReg::GSPrimPacked*>(&prim), pDrawBuffer);
+			Renderer::SetPrim(*reinterpret_cast<const GIFReg::GSPrim*>(&prim), pDrawBuffer);
 
 			if (pGifTag->NLOOP > 0x60) {
 				Log::GetInstance().ForceFlush();

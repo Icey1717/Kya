@@ -11,6 +11,7 @@
 #include "UniformBuffer.h"
 #include "log.h"
 #include "TextureCacheRowOffset.h"
+#include "TextureUpload.h"
 
 static const int* rowOffset[8] = {
 	rowOffset32,
@@ -23,13 +24,19 @@ static const int* rowOffset[8] = {
 	rowOffset32,
 };
 
-#define RESTRICT __restrict__
-
-#define LOG_TEXCACHE(fmt, ...) Log::GetInstance().AddLog(LogLevel::Info, "TextureCache", fmt, ##__VA_ARGS__);
+#define LOG_TEXCACHE(fmt, ...) MY_LOG_CATEGORY(LogLevel::Info, "TextureCache", fmt, ##__VA_ARGS__);
 
 void Renderer::ImageData::Log(const char* prefix) const
 {
-	LOG_TEXCACHE("{} bpp: {}, w: {}, h: {}, rw: {}, rh: {} field_0x6: {}", prefix, bpp, canvasWidth, canvasHeight, readWidth, readHeight, maxMipLevel);
+	LOG_TEXCACHE("{} bpp: {}, w: {}, h: {}, maxMipLevel: {}", prefix, bpp, canvasWidth, canvasHeight, maxMipLevel);
+
+	LOG_TEXCACHE("SCE_GS_BITBLTBUF DBP: 0x{:x} DBW: {} DPSM: {} SBP: 0x%x SBW: {} SPSM: {}",
+		bitBltBuf.DBP, bitBltBuf.DBW, bitBltBuf.DPSM, bitBltBuf.SBP, bitBltBuf.SBW, bitBltBuf.SPSM);
+
+	LOG_TEXCACHE("SCE_GS_TRXREG W: {} H: {}", trxReg.RRW, trxReg.RRH);
+
+	uint32_t* pAsU8 = reinterpret_cast<uint32_t*>(pImage);
+	LOG_TEXCACHE("First 16 bytes: 0x{:x} 0x{:x} 0x{:x} 0x{:x}", pAsU8[0], pAsU8[1], pAsU8[2], pAsU8[3]);
 }
 
 namespace PS2_Internal {
@@ -389,12 +396,12 @@ namespace PS2_Internal {
 	//static std::vector<uint32_t> ConvertPalette(int bpp, const Renderer::ImageData& pal)
 	//{
 	//	std::vector<uint32_t> newPal;
-	//	newPal.resize(pal.readWidth * pal.readHeight);
+	//	newPal.resize(pal.trxReg.RRW * pal.trxReg.RRH);
 	//
 	//	if (bpp == 8) {
 	//		uint32_t* palVal = (uint32_t*)pal.pImage;
 	//
-	//		for (int j = 0; j < ((pal.readWidth * pal.readHeight) / 32); j += 1)
+	//		for (int j = 0; j < ((pal.trxReg.RRW * pal.trxReg.RRH) / 32); j += 1)
 	//		{
 	//			for (int i = 0; i < 2; i += 1)
 	//			{
@@ -1092,109 +1099,28 @@ Renderer::SimpleTexture::SimpleTexture(const CombinedImageData& imageData)
 
 	const VkDeviceSize bufferSize = bitmap.canvasWidth * bitmap.canvasHeight * 4;
 
-	const int pixelPerByte = (32 / bitmap.bpp);
+	if (bitmap.trxReg.RRW == (1 << imageData.tex.TW) && bitmap.trxReg.RRH == (1 << imageData.tex.TH)) {
+		gPaletteIndexesScratch[0] = 0;
+	}
+
+	if (palette.pImage && palette.canvasWidth) {
+		palette.Log("Uploading texture PAL - ");
+		TextureUpload::UploadPalette(reinterpret_cast<uint8_t*>(palette.pImage), palette.bitBltBuf.CMD, palette.trxPos.CMD, palette.trxReg.CMD, imageData.tex.CMD);
+	}
 
 	bitmap.Log("Uploading texture TEX - ");
-	palette.Log("Uploading texture PAL - ");
+	auto* pOut = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.tex.CMD);
 
-	LOG_TEXCACHE("Uploading texture - srcpitch: {}", bitmap.readWidth * 4);
+	uint8_t* pResult = gBitmapReadScratch;
 
-	uint8_t* const pWriteData = gBitmapWriteScratch;
-	uint8_t* const pReadData = gBitmapReadScratch;
-
-	uint8_t* const pPaletteWriteData = gPaletteWriteScratch;
-
-	if (bitmap.readHeight < 8) {
-		WriteImageX(32, 0x40, bitmap.pImage, (uint32_t*)pWriteData, bitmap.readWidth, bitmap.readHeight);
-	}
-	else {
-		WriteImageBlock<0, 8, 8, 32>(0, bitmap.readWidth, 0, bitmap.readHeight, (uint8_t*)bitmap.pImage, pWriteData, bitmap.readWidth * 4);
-	}
-
-	if (palette.readHeight < 8) {
-		WriteImageTopBottom<0, 8, 8, 16>(0, palette.readWidth, 0, palette.readHeight, (uint8_t*)palette.pImage, pPaletteWriteData, palette.readWidth * 4);
-	}
-	else {
-		WriteImageBlock<0, 8, 8, 16>(0, palette.readWidth, 0, palette.readHeight, (uint8_t*)palette.pImage, pPaletteWriteData, palette.readWidth * 4);
-	}
-
-	std::vector<uint16_t> clut;
-	clut.resize(2048);
-
-	uint16_t* const pClutWriteData = clut.data();
-
-	if (bitmap.bpp == 4) {
-		WriteCLUT_T32_I4_CSM1((uint32_t*)pPaletteWriteData, pClutWriteData);
-	}
-	else if (bitmap.bpp == 8) {
-		WriteCLUT_T32_I8_CSM1((uint32_t*)pPaletteWriteData, pClutWriteData);
-	}
-
-	uint32_t* const pClutReadData = (uint32_t*)gPaletteReadScratch;
-
-	if (bitmap.bpp == 4) {
-		ReadCLUT_T32_I4(pClutWriteData, pClutReadData);
-
-		memcpy(pClutWriteData, pClutReadData, sizeof(clut[0]) * clut.size());
-		ExpandCLUT64_T32_I8((uint32_t*)pClutWriteData, (uint64_t*)pClutReadData);
-	}
-	else if (bitmap.bpp == 8) {
-		ReadCLUT_T32_I8(pClutWriteData, pClutReadData);
-	}
-
-	const int yBlocks = std::max<int>(1, (bitmap.canvasHeight / dstBigBlockSize));
-	const int xBlocks = std::max<int>(1, (bitmap.canvasWidth / dstBigBlockSize));
-
-	if (bitmap.bpp == 4) {
-		const int writeOffset = pixelPerByte * bitmap.canvasWidth;
-
-		for (int y = 0; y < yBlocks; y++) {
-			for (int x = 0; x < xBlocks; x++) {
-				const int dstOffset = (dstBigBlockSize * bitmap.bpp * x) + (dstBigBlockSize * dstBigBlockSize * 8 * y);
-				ReadTextureBlock4(gBitmapWriteScratch + (x * writeOffset) + (y * writeOffset * 0x8)
-					, gBitmapReadScratch + dstOffset
-					, bitmap.canvasWidth * 4
-					, gPaletteReadScratch
-					, bitmap.canvasWidth
-					, bitmap.canvasHeight
-					, gPaletteIndexesScratch + dstOffset);
-			}
-		}
-	}
-	else if (bitmap.bpp == 8) {
-		if (bitmap.readHeight < 8) {
-			assert(bitmap.readWidth == 4 && bitmap.readHeight == 4);
-			//debugData.paletteIndexes.resize(16 * 16);
-			ReadAndExpandBlock8_32(pWriteData, pReadData, 0x20, gPaletteReadScratch, gPaletteIndexesScratch);
-		}
-		else {
-			for (int y = 0; y < yBlocks; y++) {
-				for (int x = 0; x < xBlocks; x++) {
-					const int dstOffset = (dstBigBlockSize * 4 * x) + (dstBigBlockSize * dstBigBlockSize * 8 * y);
-					ReadTextureBlock8(pWriteData + (x * 0x800) + (y * 0x1000 * 0x8)
-						, pReadData + dstOffset
-						, bitmap.canvasWidth * 4
-						, gPaletteReadScratch
-						, bitmap.canvasWidth
-						, bitmap.canvasHeight
-						, xBlocks
-						, yBlocks
-						, gPaletteIndexesScratch + dstOffset);
-				}
-			}
-		}
-	}
-	else {
-		// Missing 32 bit texture support.
-
-	}
+	pResult = pOut;
 
 	pRenderer = new PS2::GSSimpleTexture();
 	pRenderer->width = bitmap.canvasWidth;
 	pRenderer->height = bitmap.canvasHeight;
 	pRenderer->imageData = bitmap;
 	pRenderer->CreateResources(false);
-	pRenderer->UploadData(bufferSize, gBitmapReadScratch);
+	pRenderer->UploadData(bufferSize, pResult);
 }
 
 void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
@@ -1203,8 +1129,8 @@ void PS2::GSSimpleTexture::CreateResources(const bool bPalette)
 	const VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
 	const VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-	width = bPalette ? imageData.readWidth : imageData.canvasWidth;
-	height = bPalette ? imageData.readHeight : imageData.canvasHeight;
+	width = bPalette ? imageData.trxReg.RRW : imageData.canvasWidth;
+	height = bPalette ? imageData.trxReg.RRH : imageData.canvasHeight;
 
 	VulkanImage::CreateImage(width, height , format, tiling, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, image, imageMemory);
 	VulkanImage::CreateImageView(image, format, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
@@ -1287,10 +1213,10 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pi
 {
 	auto& gsDescriptor = descriptorMap[&pipeline];
 
-	Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Looking for descriptor sets this: 0x{:x}, pipeline: 0x{:x}, Found: {}", (uintptr_t)this, (uintptr_t)&pipeline, gsDescriptor.descriptorPool != VK_NULL_HANDLE);
+	LOG_TEXCACHE("PS2::GSTexImage::GetDescriptorSets Looking for descriptor sets this: 0x{:x}, pipeline: 0x{:x}, Found: {}", (uintptr_t)this, (uintptr_t)&pipeline, gsDescriptor.descriptorPool != VK_NULL_HANDLE);
 
 	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
-		Log::GetInstance().AddLog(LogLevel::Verbose, "TexImage", "PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
+		LOG_TEXCACHE("PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
 		return AddDescriptorSets(pipeline);
 	}
 

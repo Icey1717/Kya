@@ -923,7 +923,7 @@ private:
 		uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 		uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
 
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
 
 			char bufferName[256];
@@ -1407,8 +1407,8 @@ public:
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT && messageType > VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
 			std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-			Log::GetInstance().AddLog(LogLevel::Info, "Validation", pCallbackData->pMessage);
-			Log::GetInstance().ForceFlush();
+			MY_LOG_CATEGORY("Validation", LogLevel::Info, "{}", pCallbackData->pMessage);
+			FLUSH_LOG();
 		}
 		return VK_FALSE;
 	}

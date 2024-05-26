@@ -12,7 +12,25 @@ namespace Renderer
 	{
 		TextureLibrary gTextureLibrary;
 
-		void ProcessCommandList(CombinedImageData& imageData, const G2D::CommandList& commandList)
+		void ProcessRenderCommandList(CombinedImageData& imageData, const G2D::CommandList& commandList)
+		{
+			bool bSet = false;
+			edpkt_data* pPkt = commandList.pList;
+
+			for (int i = 0; i < commandList.size; i++) {
+				if (pPkt->asU32[2] == SCE_GS_TEX0_1) {
+					assert(!bSet);
+					imageData.tex.CMD = pPkt->cmdA;
+					bSet = true;
+				}
+
+				pPkt++;
+			}
+
+			assert(bSet);
+		}
+
+		void ProcessUploadCommandList(CombinedImageData& imageData, const G2D::CommandList& commandList)
 		{
 			// The first sets of data will be MIP levels for the texture, with the last one the palette data.
 
@@ -26,8 +44,8 @@ namespace Renderer
 				if (pPkt->asU32[2] == SCE_GIF_PACKED_AD) {
 					if (pCurrentImage) {
 						assert(pCurrentImage->pImage);
-						assert(pCurrentImage->readWidth != 0);
-						assert(pCurrentImage->readHeight != 0);
+						assert(pCurrentImage->trxReg.RRW != 0);
+						assert(pCurrentImage->trxReg.RRH != 0);
 					}
 
 					const bool bNextCommandIsTexFlush = pPkt[1].asU32[2] == SCE_GS_TEXFLUSH;
@@ -53,8 +71,17 @@ namespace Renderer
 
 				if (pPkt->cmdB == SCE_GS_TRXREG) {
 					assert(pCurrentImage);
-					pCurrentImage->readWidth = pPkt->asU32[0];
-					pCurrentImage->readHeight = pPkt->asU32[1];
+					pCurrentImage->trxReg.CMD = pPkt->cmdA;
+				}
+
+				if (pPkt->cmdB == SCE_GS_TRXPOS) {
+					assert(pCurrentImage);
+					pCurrentImage->trxPos.CMD = pPkt->cmdA;
+				}
+
+				if (pPkt->cmdB == SCE_GS_BITBLTBUF) {
+					assert(pCurrentImage);
+					pCurrentImage->bitBltBuf.CMD = pPkt->cmdA;
 				}
 
 				pPkt++;
@@ -63,7 +90,7 @@ namespace Renderer
 
 		CombinedImageData CreateFromBitmapAndPalette(G2D::Bitmap& bitmap, G2D::Bitmap& palette)
 		{
-			CombinedImageData combinedImageData;
+			CombinedImageData combinedImageData{};
 			const ed_g2d_bitmap* pBitmap = bitmap.GetBitmap();
 
 			combinedImageData.bitmaps.resize(pBitmap->maxMipLevel);
@@ -87,7 +114,7 @@ namespace Renderer
 
 			G2D::CommandList commandList = pPalette ? palette.GetUploadCommandsDefault() : bitmap.GetUploadCommandsDefault();
 
-			ProcessCommandList(combinedImageData, commandList);
+			ProcessUploadCommandList(combinedImageData, commandList);
 
 			return combinedImageData;
 		}
@@ -110,7 +137,7 @@ Renderer::Kya::G2D::G2D(ed_g2d_manager* pManager, std::string name)
 	for (int i = 0; i < nbMaterials; ++i) {
 		const ed_hash_code* pHashCode = pHashCodes + i;
 
-		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::G2D Processing material: {}", pHashCode->hash.ToString());
+		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::G2D Processing material {}/{} hash: {}", i, nbMaterials, pHashCode->hash.ToString());
 
 		ed_g2d_material* pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i);
 
@@ -126,6 +153,7 @@ void Renderer::Kya::G2D::ProcessMaterial(ed_g2d_material* pMaterial)
 
 	Material& material = materials.emplace_back();
 	material.pMaterial = pMaterial;
+	material.pParent = this;
 
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessMaterial Nb layers: {} flags: 0x{:x}", pMaterial->nbLayers, pMaterial->flags);
 
@@ -149,6 +177,7 @@ void Renderer::Kya::G2D::Material::ProcessLayer(ed_g2d_layer* pLayer)
 {
 	Layer& layer = layers.emplace_back();
 	layer.pLayer = pLayer;
+	layer.pParent = this;
 
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Material::ProcessLayer Layer flags 0x0: 0x{:x} flags 0x4: 0x{:x} field 0x1b: {} bHasTexture: {} paletteId: {}", 
 		pLayer->flags_0x0, pLayer->flags_0x4, pLayer->field_0x1b, pLayer->bHasTexture, pLayer->paletteId);
@@ -198,6 +227,7 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
 {
 	G2D::Texture& texture = textures.emplace_back();
 	texture.pTexture = pTexture;
+	texture.pParent = this;
 
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture Texture hash: {} field 0x14: {} bHasPalette: {}",
 		pTexture->hashCode.hash.ToString(), pTexture->field_0x14, pTexture->bHasPalette);
@@ -221,7 +251,9 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
 		texture.palette.SetBitmap(pBitmap);
 	}
 
-	const CombinedImageData combinedImageData = CreateFromBitmapAndPalette(texture.bitmap, texture.palette);
+	CombinedImageData combinedImageData = CreateFromBitmapAndPalette(texture.bitmap, texture.palette);
+
+	ProcessRenderCommandList(combinedImageData, pParent->renderCommands);
 
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture bitmap mips: {}", combinedImageData.bitmaps.size());
 

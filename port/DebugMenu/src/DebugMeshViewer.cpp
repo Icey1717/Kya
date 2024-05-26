@@ -171,7 +171,7 @@ namespace DebugMeshViewer {
 				}
 
 				const uint primReg = gifTag.tag.PRIM;
-				const GIFReg::GSPrimPacked primPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&primReg);
+				const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
 				const uint skip = vtx.XYZSkip.Skip & 0x8000;
 

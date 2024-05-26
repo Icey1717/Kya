@@ -1819,8 +1819,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 
 	fVar5 = pStaticMeshMaster->pCamera->halfFOV;
 	memcpy(gRenderCamera, pStaticMeshMaster->pCamera, sizeof(edFCamera));
-	//MY_LOG("Matrix + 2");
-	//PRINT_MATRIX(gRenderCamera->aMatrices + 2);
+
 	edF32Matrix4CopyHard(WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
 	if (mode != 0) {
 		edF32Matrix4CopyHard(&gCurLOD_WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
@@ -2635,8 +2634,6 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 		if (pMVar3 != (ed_3d_hierarchy*)0x0) break;
 		pMVar10 = pDmaMatrix->pObjToWorld;
 		bVar5 = false;
-
-		//PRINT_MATRIX(pMVar10);
 
 		if ((((pMVar10->ac + pMVar10->aa + pMVar10->ab == 1.0f) &&
 			(bVar5 = false, pMVar10->bc + pMVar10->ba + pMVar10->bb == 1.0f)) &&

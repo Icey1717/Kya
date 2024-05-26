@@ -269,12 +269,12 @@ const Renderer::Pipeline& PS2::GetPipeline(const PipelineKey& key)
 	size_t hash = PipelineKeyHash()(key);
 
 	if (PS2_Internal::graphicsPipelines.find(key) == PS2_Internal::graphicsPipelines.end()) {
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "PS2::GetPipeline Cache miss, creating pipeline for hash: {:x} - {}", hash, key.ToString().c_str());
+		VULKAN_LOG(LogLevel::Verbose, "PS2::GetPipeline Cache miss, creating pipeline for hash: {:x} - {}", hash, key.ToString().c_str());
 
 		PS2_Internal::graphicsPipelines[key] = PS2_Internal::CreateGraphicsPipelinePCSX2(key);
 		PS2_Internal::graphicsPipelines[key].key.debugData.hash = PipelineKeyHash()(key);
 
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "PS2::GetPipeline Created 0x{:x}", (uintptr_t)&PS2_Internal::graphicsPipelines[key]);
+		VULKAN_LOG(LogLevel::Verbose, "PS2::GetPipeline Created 0x{:x}", (uintptr_t)&PS2_Internal::graphicsPipelines[key]);
 	}
 
 	auto& pipeline = PS2_Internal::graphicsPipelines[key];

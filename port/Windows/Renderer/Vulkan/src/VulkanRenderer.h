@@ -4,6 +4,10 @@
 
 #include <vector>
 
+#include "logging.h"
+
+#define VULKAN_LOG(level, format, ...) MY_LOG_CATEGORY("Vulkan", level, format, ##__VA_ARGS__)
+
 struct UniformBufferObject {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;

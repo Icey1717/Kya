@@ -12,7 +12,7 @@ void HardwareRenderer::ProcessVertices(char* vtxStart)
 	gifTag.setTag((u8*)vtxStart, true);
 
 	const uint primReg = gifTag.tag.PRIM;
-	const GIFReg::GSPrimPacked primPacked = *reinterpret_cast<const GIFReg::GSPrimPacked*>(&primReg);
+	const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 	Renderer::SetPrim(primPacked);
 
 	vtxStart += 0x10;

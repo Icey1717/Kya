@@ -76,7 +76,6 @@ HardwareState& GetHardwareState() {
 
 namespace Renderer {
 #define ASSERT(...)
-#define RESTRICT
 
 	bool& GetUseComplexBlending() {
 		return PS2_Internal::bUseComplexBlending;
@@ -108,7 +107,7 @@ namespace Renderer {
 
 	uint32_t Skip = 0;
 
-	void LogTex(const char* prefix, GIFReg::GSTex tex)
+	static std::string TexToString(const GIFReg::GSTex tex)
 	{
 		// Create a formatted log message string
 		std::ostringstream oss;
@@ -116,10 +115,15 @@ namespace Renderer {
 			<< ", tw: " << tex.TW << ", th: " << tex.TH << ", tcc: " << tex.TCC
 			<< ", tfx: " << tex.TFX << ", cbp: " << tex.CBP << " (0x" << std::hex << tex.CBP << "), cpsm: " << tex.CPSM
 			<< ", csm: " << tex.CSM << ", csa: " << tex.CSA << ", cld: " << tex.CLD;
-		
+
+		return oss.str();
+	}
+
+	void LogTex(const char* prefix, const GIFReg::GSTex tex)
+	{		
 		// Log the formatted message
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "{} - {}", prefix, oss.str().c_str());
-		Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "{} - 0x{:x}", prefix, tex.CMD);
+		VULKAN_LOG(LogLevel::Verbose, "{} - {}", prefix, TexToString(tex));
+		VULKAN_LOG(LogLevel::Verbose, "{} - 0x{:x}", prefix, tex.CMD);
 	}
 
 	void SetVertexSkip(uint32_t inSkip)
@@ -160,7 +164,7 @@ namespace Renderer {
 		PS2::GetGSState().TEST = NewTest;
 	}
 
-	void SetPrim(GIFReg::GSPrimPacked prim, PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer /*= nullptr*/) {
+	void SetPrim(GIFReg::GSPrim prim, PS2::DrawBufferData<Renderer::GSVertex, uint16_t>* pDrawBuffer /*= nullptr*/) {
 		if (!pDrawBuffer) {
 			ResetVertIndexBuffers();
 		}
@@ -300,10 +304,10 @@ namespace Renderer {
 		bool m_nativeres = true;
 		GSVector4i m_scissor;
 
-		m_scissor.u16[0] = (uint16_t)((hwState.scissor.offset.x << 4) + OFX - 0x8000);
-		m_scissor.u16[1] = (uint16_t)((hwState.scissor.offset.y << 4) + OFY - 0x8000);
-		m_scissor.u16[2] = (uint16_t)((hwState.scissor.extent.width << 4) + OFX - 0x8000);
-		m_scissor.u16[3] = (uint16_t)((hwState.scissor.extent.height << 4) + OFY - 0x8000);
+		m_scissor.U16[0] = (uint16_t)((hwState.scissor.offset.x << 4) + OFX - 0x8000);
+		m_scissor.U16[1] = (uint16_t)((hwState.scissor.offset.y << 4) + OFY - 0x8000);
+		m_scissor.U16[2] = (uint16_t)((hwState.scissor.extent.width << 4) + OFX - 0x8000);
+		m_scissor.U16[3] = (uint16_t)((hwState.scissor.extent.height << 4) + OFY - 0x8000);
 
 		GSVector4i test = pmax.lt16(m_scissor) | pmin.gt16(m_scissor.zwzwl());
 
@@ -1779,25 +1783,31 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer) {
 	Draw(drawBuffer, gBoundTexture, PS2::GetGSState(), true);
 }
 
-void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTexture, PS2::GSState& state, bool bHardware) {
+//#define DISABLE_DRAW
+
+void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTexture, PS2::GSState& state, bool bHardware) 
+{
 	const int tail = drawBuffer.GetIndexTail();
 
+	// HACK
 	//if (tail != 2610 && tail != 132) {
 	//	drawBuffer.ResetAfterDraw();
 	//	return;
 	//}
 
-	//{
-	//	drawBuffer.ResetAfterDraw();
-	//	state.bTexSet = false;
-	//	return;
-	//}
+#ifdef DISABLE_DRAW
+	{
+		drawBuffer.ResetAfterDraw();
+		state.bTexSet = false;
+		return;
+	}
+#endif
 
 	if (tail == 0) {
 		return;
 	}
 
-	Log::GetInstance().AddLog(LogLevel::Verbose, "RendererPS2", "Draw: {0}(0x{0:x})", tail);
+	VULKAN_LOG(LogLevel::Verbose, "Draw: {0}(0x{0:x})", tail);
 
 	g_GSSelector.ResetStates();
 	PS2::m_conf.ps = GSHWDrawConfig::PSSelector();
@@ -1845,7 +1855,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 
 	LogTex("Lookup", state.TEX);
 	gInUseTextures.push_back(pBoundTexture);
-	//PS2::GSTexEntry& tex = PS2::GetTextureCache().Lookup(state.TEX, textureData, state.GetCBP());
+
 	PS2::GSSimpleTexture* pTextureData = pBoundTexture->pRenderer;
 
 	// Blend
