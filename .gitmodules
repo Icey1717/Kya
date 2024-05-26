@@ -28,3 +28,9 @@
 [submodule "src/EdenLib/edFile"]
 	path = src/EdenLib/edFile
 	url = https://github.com/Icey1717/edFile.git
+[submodule "port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/ext/xbyak"]
+	path = port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/ext/xbyak
+	url = https://github.com/herumi/xbyak.git
+[submodule "port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/ext/xxHash"]
+	path = port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/ext/xxHash
+	url = https://github.com/Cyan4973/xxHash.git
