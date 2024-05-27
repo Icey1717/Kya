@@ -41,6 +41,7 @@
 #include "../../../src/SectorManager.h"
 #include "DebugHero.h"
 #include "../../Windows/Renderer/Vulkan/src/VulkanRenderer.h"
+#include "DebugMesh.h"
 
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -99,7 +100,7 @@ namespace DebugMenu_Internal {
 
 	std::vector<MeshListEntry> meshList;
 
-	void OnMeshLoaded(ed_g3d_manager* pNewMesh) {
+	void OnMeshLoaded(ed_g3d_manager* pNewMesh, std::string name) {
 		std::vector<DWORD64> backtrace;
 		CollectBacktrace(backtrace);
 		meshList.emplace_back(pNewMesh, backtrace, ObjectNaming::GetNextObjectName());
@@ -698,6 +699,7 @@ namespace DebugMenu_Internal {
 		{"Sector", ShowSectorMenu, true },
 		{"Memory", ShowMemoryMenu, true },
 		{"Texture", Debug::Texture::ShowMenu, true },
+		{"Mesh", Debug::Mesh::ShowMenu, true },
 
 	};
 

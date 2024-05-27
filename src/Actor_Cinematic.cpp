@@ -167,6 +167,8 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	int value;
 	float fVar4;
 	float fVar5;
+
+	ACTOR_LOG(LogLevel::Info, "CActorCinematic::Create");
 	
 	memset(&this->namedObjSectionStart, 0, sizeof(CinNamedObject30));
 	this->pCinData = &this->namedObjSectionStart;
@@ -176,6 +178,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	(this->namedObjSectionStart).scale.x = 1.0f;
 	(this->namedObjSectionStart).scale.y = 1.0f;
 	(this->namedObjSectionStart).scale.z = 1.0f;
+
 	memset(&this->otherSectionStart, 0, sizeof(KyaUpdateObjA));
 	this->subObjA = (KyaUpdateObjA*)&this->otherSectionStart;
 	(this->otherSectionStart).defaultBehaviourId = -1;
@@ -190,29 +193,37 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	(this->otherSectionStart).lodBiases[1] = 1e+10f;
 	(this->otherSectionStart).flags_0x48 = 1;
 	(this->otherSectionStart).lightingFloat_0x4c = 1.0f;
+
 	this->actorManagerIndex = -1;
 	this->typeID = CINEMATIC;
+
 	for (value = 0; (value < 0x1f && (pGameInterface->name[value] != '\0')); value = value + 1) {
 		/* Copy the name into the cine object */
 		this->name[value] = pGameInterface->name[value];
 	}
+
 	/* Add a null term on */
 	this->name[value] = '\0';
+
 	if (pG3D != (ed_g3d_manager*)0x0) {
 		ed_g3d_hierarchy* pHier = ed3DG3DHierarchyGetFromIndex(pG3D, 0);
 		this->pHier = pHier;
 		pHier = this->pHier;
+
 		if (pHier != (ed_g3d_hierarchy*)0x0) {
 			if (1 < pHier->lodCount) {
 				pHier->flags_0x9e = pHier->flags_0x9e | 0x100;
 			}
 			ed3DG3DHierarchySetStripShadowCastFlag(this->pHier, 0xffff);
 		}
+
 		peVar2 = ed3DHierarchyAddToScene(pScene, pG3D, (char*)0x0);
 		this->pMeshNode = peVar2;
+
 		peVar2 = this->pMeshNode;
 		if (peVar2 != (edNODE*)0x0) {
 			this->p3DHierNode = (ed_3d_hierarchy_node*)peVar2->pData;
+
 			ed3DSetMeshTransformFlag_002abd80(this->pMeshNode, 0xffff);
 
 			CCinematic* pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
@@ -222,14 +233,18 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 			else {
 				ed3DSetMeshTransformFlag_002abff0(this->pMeshNode, 1);
 			}
+
 			memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
+
 			if (1 < this->p3DHierNode->base.lodCount) {
 				this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->lodBiases;
 			}
+
 			ed3DHierarchySetSetup(&this->p3DHierNode->base, &this->hierarchySetup);
 			this->PatchMaterialForCutscene(pG3D, pG2D);
 		}
 	}
+
 	peVar1 = this->p3DHierNode;
 	if (peVar1 == (ed_3d_hierarchy_node*)0x0) {
 		this->pMeshTransform = &this->field_0x580;
@@ -237,7 +252,8 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	else {
 		this->pMeshTransform = peVar1;
 	}
-	//this->field_0x110 = (undefined*)0x0;
+
+	this->field_0x110 = (undefined*)0x0;
 	this->components.count = 1;
 	this->components.aComponents[0].id = 1;
 	this->components.aComponents[0].SetBehaviour(&behaviourCinematic);
@@ -247,11 +263,14 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	this->SetupLodInfo();
 	//CActor::SetupShadow((CActor*)this, (GroundObject*)0x0);
 	this->SetupLighting();
+
 	this->flags = this->flags | 0x100000;
 	this->flags = this->flags | 0x1000;
+
 	RestoreInitData();
+
 	peVar2 = this->pMeshNode;
-	///* Doesn't go in here for tunnel */
+
 	if (peVar2 != (edNODE*)0x0) {
 		pMVar3 = ed3DHierarchyNodeGetSkeletonChunck(peVar2, false);
 		if (pMVar3 != (ed_Chunck*)0x0) {
@@ -259,6 +278,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 			this->pAnimationController = &this->animationController;
 		}
 	}
+
 	return;
 }
 

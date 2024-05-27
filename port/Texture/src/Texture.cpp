@@ -4,7 +4,7 @@
 #include "renderer.h"
 #include "port.h"
 
-#define TEXTURE_LOG(level, format, ...) MY_LOG_CATEGORY("Texture", level, format, ##__VA_ARGS__)
+#define TEXTURE_LOG(level, format, ...) MY_LOG_CATEGORY("TextureLibrary", level, format, ##__VA_ARGS__)
 
 namespace Renderer
 {

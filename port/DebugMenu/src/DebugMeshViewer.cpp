@@ -355,9 +355,11 @@ namespace DebugMeshViewer {
 
 		uint stripCount = GetOctreeStripCount(p3DOctree);
 
+		MeshData_PSX2* pPSX2 = reinterpret_cast<MeshData_PSX2*>(pCDQU + 1);
+
 		if (stripCount != 0) {
-			ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pCDQU->p3DStrip);
-			char* pMBNK = (char*)LOAD_SECTION(pCDQU->pMBNK);
+			ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pPSX2->p3DStrip);
+			char* pMBNK = (char*)LOAD_SECTION(pPSX2->pMBNK);
 
 			for (; stripCount != 0; stripCount = stripCount - 1) {
 				if (stripCount == (gOctreeStrip + 1)) {
@@ -503,48 +505,48 @@ void DebugMeshViewer::ShowNodeMenu(edNODE* pNode)
 void ShowOctreeMenu(const ed_3d_octree& octree) 
 {
 	if (ImGui::CollapsingHeader("Octree", ImGuiTreeNodeFlags_DefaultOpen)) {
-		MeshData_CDQU* pCDQU = reinterpret_cast<MeshData_CDQU*>(octree.pCDQU);
-
-		DebugHelpers::ImGui::TextVector4("field_0x0", octree.field_0x0);
-
-		DebugHelpers::ImGui::TextVector4("world Location", octree.worldLocation);
-
-		DebugHelpers::ImGui::TextHash4("CDQU Hash:", pCDQU->header.hash);
-		ImGui::Text("CDQU Size: %d (0x%x)", pCDQU->header.size, pCDQU->header.size);
-
-		ImGui::Text("boundingSphereTestResult: %u", octree.boundingSphereTestResult);
-
-		ImGui::Text("field_0x2c: %f", octree.field_0x2c);
-		ImGui::Text("field_0x30: %f", octree.field_0x30);
-
-		uint stripCount = DebugMeshViewer::GetOctreeStripCount(&octree);
-
-		ImGui::Text("Strip Count: %u", stripCount);
-
-		if (ImGui::CollapsingHeader("Cluster Hier", ImGuiTreeNodeFlags_DefaultOpen)) {
-			uint clusterHierCount = pCDQU->clusterDetails.clusterHierCount;
-
-			if (clusterHierCount != 0) {
-				ed_hash_code* puVar17 = (ed_hash_code*)((char*)pCDQU + 0x60);
-				bool bVar1;
-
-				while (bVar1 = clusterHierCount != 0, clusterHierCount = clusterHierCount - 1, bVar1) {
-
-					char label[256];
-					sprintf(label, "Cluster Hier: %s (0x%x)", puVar17->hash.name, puVar17->hash.number);
-					if (ImGui::Selectable(label)) {
-					}
-					puVar17 = puVar17 + 1;
-				}
-			}
-		}
-
-
-		ImGui::InputInt("Strip", &DebugMeshViewer::gOctreeStrip);
-		DebugMeshViewer::gOctreeStrip = std::clamp<uint>(DebugMeshViewer::gOctreeStrip, 0, stripCount - 1);
-
-		ImGui::End();
-
+		//MeshData_CDQU* pCDQU = reinterpret_cast<MeshData_CDQU*>(octree.pCDQU);
+		//
+		//DebugHelpers::ImGui::TextVector4("field_0x0", octree.field_0x0);
+		//
+		//DebugHelpers::ImGui::TextVector4("world Location", octree.worldLocation);
+		//
+		//DebugHelpers::ImGui::TextHash4("CDQU Hash:", pCDQU->header.hash);
+		//ImGui::Text("CDQU Size: %d (0x%x)", pCDQU->header.size, pCDQU->header.size);
+		//
+		//ImGui::Text("boundingSphereTestResult: %u", octree.boundingSphereTestResult);
+		//
+		//ImGui::Text("field_0x2c: %f", octree.field_0x2c);
+		//ImGui::Text("field_0x30: %f", octree.field_0x30);
+		//
+		//uint stripCount = DebugMeshViewer::GetOctreeStripCount(&octree);
+		//
+		//ImGui::Text("Strip Count: %u", stripCount);
+		//
+		//if (ImGui::CollapsingHeader("Cluster Hier", ImGuiTreeNodeFlags_DefaultOpen)) {
+		//	uint clusterHierCount = pCDQU->clusterDetails.clusterHierCount;
+		//
+		//	if (clusterHierCount != 0) {
+		//		ed_hash_code* puVar17 = (ed_hash_code*)((char*)pCDQU + 0x60);
+		//		bool bVar1;
+		//
+		//		while (bVar1 = clusterHierCount != 0, clusterHierCount = clusterHierCount - 1, bVar1) {
+		//
+		//			char label[256];
+		//			sprintf(label, "Cluster Hier: %s (0x%x)", puVar17->hash.name, puVar17->hash.number);
+		//			if (ImGui::Selectable(label)) {
+		//			}
+		//			puVar17 = puVar17 + 1;
+		//		}
+		//	}
+		//}
+		//
+		//
+		//ImGui::InputInt("Strip", &DebugMeshViewer::gOctreeStrip);
+		//DebugMeshViewer::gOctreeStrip = std::clamp<uint>(DebugMeshViewer::gOctreeStrip, 0, stripCount - 1);
+		//
+		//ImGui::End();
+		//
 		//DebugMeshViewer::ShowPreviewer(&octree);
 	}
 	else {
@@ -578,7 +580,7 @@ void DebugMeshViewer::ShowClusterMenu(ed_g3d_manager* pManager)
 		octreeB.field_0x30 = 0.0f;
 		local_90.x = local_90.x + local_90.y + local_90.z;
 		octreeB.field_0x2c = sqrtf(local_90.x) * 0.5f;
-		octreeB.pCDQU = edChunckGetFirst((char*)(pCSTA + 1), (char*)0x0);
+		octreeB.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
 		octreeB.pCDQU_End = reinterpret_cast<char*>(octreeA.pCDQU) + octreeA.pCDQU->size;
 
 		ShowOctreeMenu(octreeB);
@@ -596,7 +598,7 @@ void DebugMeshViewer::ShowClusterMenu(ed_g3d_manager* pManager)
 			octreeA.boundingSphereTestResult = 2;
 			local_a0.x = local_a0.x + local_a0.y + local_a0.z;
 			octreeA.field_0x2c = sqrtf(local_a0.x) * 0.5;
-			octreeA.pCDQU = edChunckGetFirst((char*)(pCSTA + 1), (char*)0x0);
+			octreeA.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
 			octreeA.pCDQU_End = reinterpret_cast<char*>(octreeA.pCDQU) + octreeA.pCDQU->size;
 
 			ShowOctreeMenu(octreeA);

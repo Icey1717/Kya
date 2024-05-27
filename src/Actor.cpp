@@ -1836,9 +1836,11 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 	}
 	else {
 		pTextureInfo_00 = CScene::ptable.g_C3DFileManager_00451664->LoadDefaultTexture_001a65d0();
+
 		if (pTextureInfo_00 != (ed_g2d_manager*)0x0) {
 			ed3DLinkG2DToG3D(pMeshInfo, pTextureInfo_00);
 		}
+
 		peVar1 = ed3DG3DHierarchyGetFromIndex(pMeshInfo, 0);
 		this->pHier = peVar1;
 		peVar1 = this->pHier;

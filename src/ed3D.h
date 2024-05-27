@@ -83,8 +83,10 @@ struct __attribute__((aligned(16))) ed_Chunck {
 
 static_assert(sizeof(ed_Chunck) == 0x10, "Invalid ed_Chunck size");
 
+struct GXD_FileHeader;
+
 struct ed_g2d_manager {
-	char* pFileBuffer;
+	GXD_FileHeader* pFileBuffer;
 	int textureFileLengthA;
 	ed_Chunck* pTextureChunk;
 	ed_Chunck* pMATA_HASH;
@@ -202,8 +204,7 @@ struct ed_3d_octree {
 	float field_0x30;
 };
 
-PACK(
-	struct ClusterDetails {
+struct ClusterDetails {
 	int field_0x20; // int*
 	int field_0x24; // int*
 	ushort count_0x28; // int*
@@ -211,20 +212,30 @@ PACK(
 	undefined field_0x2c;
 	undefined field_0x2d;
 	ushort spriteCount;
-	int field_0x30; // int*
-});
 
-PACK(
-	struct MeshData_CDQU {
-	ed_Chunck header;
+	int field_0x30; // int*
+};
+
+static_assert(sizeof(ClusterDetails) == 0x14);
+
+struct MeshData_CDQU {
+	undefined4 field0x0;
+	undefined4 field0x4;
+	undefined4 field0x8;
+	undefined4 field0xc;
 	ushort aClusterStripCounts[5];
 	ushort field_0x1a;
-	ushort field_0x1c;
+	ushort flags_0x1c;
 	undefined2 field_0x1e;
 	ClusterDetails clusterDetails;
 	int field_0x34; // int*
 	int field_0x38; // uint*
 	int field_0x3c; // uint*
+};
+
+static_assert(sizeof(MeshData_CDQU) == 0x40);
+
+struct MeshData_PSX2 {
 	int pMBNK; // char*
 	undefined field_0x44;
 	undefined field_0x45;
@@ -232,7 +243,33 @@ PACK(
 	undefined field_0x47;
 	int p3DStrip; // ed_3d_strip*
 	int p3DSprite; // ed_3d_sprite*
-});
+};
+
+//PACK(
+//	struct MeshData_CDQU {
+//	undefined4 field0x0;
+//	undefined4 field0x4;
+//	undefined4 field0x8;
+//	undefined4 field0xc;
+//	ushort aClusterStripCounts[5];
+//	ushort field_0x1a;
+//	ushort flags_0x1c;
+//	undefined2 field_0x1e;
+//	ClusterDetails clusterDetails;
+//	int field_0x34; // int*
+//	int field_0x38; // uint*
+//	int field_0x3c; // uint*
+//	int pMBNK; // char*
+//
+//	// Extended?
+// int pMBNK; // char*
+//	undefined field_0x44;
+//	undefined field_0x45;
+//	undefined field_0x46;
+//	undefined field_0x47;
+//	int p3DStrip; // ed_3d_strip*
+//	int p3DSprite; // ed_3d_sprite*
+//});
 
 PACK(struct MeshData_CSTA {
 	char CSTA_Header[4];
@@ -318,11 +355,13 @@ struct ed_3d_hierarchy_setup {
 };
 
 
-PACK(struct ed3DLod {
+struct ed3DLod {
 	int pObj; // char*
 	short field_0x4;
 	short sizeBias;
-});
+};
+
+static_assert(sizeof(ed3DLod) == 0x8, "Invalid ed3DLod size");
 
 struct ed_3d_hierarchy {
 	edF32MATRIX4 transformA;
@@ -635,7 +674,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 
 void ed3DScenePushCluster(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo);
 
-uint edChunckGetNb(char* pStart, char* pEnd);
+uint edChunckGetNb(void* pStart, char* pEnd);
 ed_hash_code* edHashcodeGet(Hash_8 meshHashValue, ed_Chunck* pChunck);
 
 edpkt_data* ed3DFlushFullAlphaTerm(edpkt_data* pRenderCommand);
@@ -718,7 +757,7 @@ uint ed3DTestBoundingSphereObjectNoZFar(edF32VECTOR4* pSphere);
 ed3DLod* ed3DHierarcGetLOD(ed_3d_hierarchy* pHier, uint index);
 ed3DLod* ed3DHierarcGetLOD(ed_g3d_hierarchy* pHier, uint index);
 
-ed_Chunck* edChunckGetFirst(char* pBuffStart, char* pBuffEnd);
+ed_Chunck* edChunckGetFirst(void* pBuffStart, char* pBuffEnd);
 
 void ed3DHierarchyRemoveFromScene(ed_3D_Scene* pScene, edNODE* pNode);
 void ed3DScenePopCluster(ed_3D_Scene* pScene, ed_g3d_manager* pMeshInfo);
@@ -749,7 +788,7 @@ extern edpkt_data g_stExecuteCode;
 
 #ifdef PLATFORM_WIN
 Multidelegate<ed_g2d_manager*, std::string>& ed3DGetTextureLoadedDelegate();
-Multidelegate<ed_g3d_manager*>& ed3DGetMeshLoadedDelegate();
+Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate();
 
 namespace ed3D {
 	namespace DebugOptions {

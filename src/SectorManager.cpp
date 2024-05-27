@@ -540,35 +540,35 @@ void CSector::InstallCallback()
 			if (bVar1 == false) break;
 			uVar9 = bankEntry.type << 0x10 | bankEntry.stype;
 			if (uVar9 == 0x170001) {
-				MY_LOG("Sector::Init Anim Heirarchy: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+				SECTOR_LOG(LogLevel::Info, "Sector::Init Anim Heirarchy: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 				pAnimHierarchy = bankEntry.fileBufferStart;
 				local_40 = bankEntry.size;
 			}
 			else {
 				if (uVar9 == 0x50003) {
-					MY_LOG("Sector::Init Background Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+					SECTOR_LOG(LogLevel::Info, "Sector::Init Background Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 					NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 					ed3DInstallG2D(bankEntry.fileBufferStart, bankEntry.size, &iStack8, &this->backgroundTexture, 1);
 				}
 				else {
 					if (uVar9 == 0x40002) {
-						MY_LOG("Sector::Init Background Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+						SECTOR_LOG(LogLevel::Info, "Sector::Init Background Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 						local_30 = bankEntry.size;
 						pFileData = bankEntry.fileBufferStart;
 					}
 					else {
 						if (uVar9 == 0x70001) {
-							MY_LOG("Sector::Init Init Collision: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+							SECTOR_LOG(LogLevel::Info, "Sector::Init Init Collision: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 							this->pObbTree = CScene::ptable.g_CollisionManager_00451690->InstallColFile(bankEntry.fileBufferStart, bankEntry.size);
 						}
 						else {
 							if (uVar9 == 0x50001) {
-								MY_LOG("Sector::Init Sector Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+								SECTOR_LOG(LogLevel::Info, "Sector::Init Sector Texture: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 								ed3DInstallG2D(bankEntry.fileBufferStart, bankEntry.size, &iStack8, &this->sectorTexture, 1);
 							}
 							else {
-								MY_LOG("Sector::Init Sector Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
+								SECTOR_LOG(LogLevel::Info, "Sector::Init Sector Mesh: {}\n", DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 								NAME_NEXT_OBJECT(DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex));
 								pMeshData = bankEntry.fileBufferStart;
 								meshSize = bankEntry.size;
@@ -589,10 +589,14 @@ void CSector::InstallCallback()
 	pSectorManager = CScene::ptable.g_SectorManager_00451670;
 	p3DFileManager = CScene::ptable.g_C3DFileManager_00451664;
 	pStaticMeshMaster = CScene::_scene_handleA;
+
 	ed3DInstallG3D(pMeshData, meshSize, 0, &iStack8, &this->sectorTexture, 0xc, &this->sectorMesh);
+
 	pTextureInfo = p3DFileManager->GetCommonSectorG2D();
-	ed3DLinkG2DToG3D(&this->sectorMesh, (ed_g2d_manager*)pTextureInfo);
+	ed3DLinkG2DToG3D(&this->sectorMesh, &pTextureInfo->manager);
+
 	ed3DScenePushCluster(pStaticMeshMaster, &this->sectorMesh);
+
 	if (pFileData == (char*)0x0) {
 		this->pBackgroundNode = (edNODE*)0x0;
 	}
@@ -614,7 +618,7 @@ void CSector::InstallCallback()
 	pHierNode = gHierarchyManagerBuffer;
 	ed_Chunck* pHALL = (this->sectorMesh).HALL;
 	pList = pStaticMeshMaster->pHierListA;
-	meshSize = edChunckGetNb((char*)(pHALL + 1), (char*)pHALL + pHALL->size);
+	meshSize = edChunckGetNb(pHALL + 1, (char*)pHALL + pHALL->size);
 	ed_hash_code* pHashCode = (ed_hash_code*)edHashcodeGet(0x43494d414e5944, (ed_Chunck*)((this->sectorMesh).HALL + 1));
 	ed_Chunck* pChunck = 0;
 	if (pHashCode != (ed_hash_code*)0x0) {

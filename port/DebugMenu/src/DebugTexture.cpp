@@ -8,6 +8,7 @@
 #include "ed3D.h"
 #include "port.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "DebugHelpers.h"
 
 namespace Debug
 {
@@ -57,14 +58,6 @@ namespace Debug
 
 			ImGui::End();
 		}
-
-		static ImVec4 sValidColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
-		static ImVec4 sInvalidColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-
-		static void DrawValidPointer(char* fmt, void* p) 
-		{
-			ImGui::TextColored(p ? sValidColor : sInvalidColor, fmt, p);
-		};
 
 		static int ListGifTagDetails(edpkt_data* aPkt)
 		{
@@ -216,13 +209,13 @@ namespace Debug
 						case 0x30:
 						{
 							ImGui::Text("IMAGE");
-							DrawValidPointer("Image: %p", LOAD_SECTION(pkt.asU32[1]));
+							DebugHelpers::TextValidValue("Image: %p", LOAD_SECTION(pkt.asU32[1]));
 						}
 						break;
 						case 0x50:
 						{
 							ImGui::Text("OTHER");
-							DrawValidPointer("Other: %p", LOAD_SECTION(pkt.asU32[1]));
+							DebugHelpers::TextValidValue("Other: %p", LOAD_SECTION(pkt.asU32[1]));
 						}
 						break;
 						case 0x70:
@@ -238,14 +231,6 @@ namespace Debug
 			}
 		}
 
-		static void ListChunckDetails(ed_Chunck* pChunck)
-		{
-			ImGui::Text("Chunk Details");
-			ImGui::Text("Header: %s", pChunck->GetHeaderString().c_str());
-			ImGui::Text("Size: %d (0x%x)", pChunck->size, pChunck->size);
-			ImGui::Text("Next Chunk Offset: %d (0x%x)", pChunck->nextChunckOffset, pChunck->nextChunckOffset);
-		}
-
 		static void ListBitmapDetails(ed_g2d_bitmap* pBitmap)
 		{
 			ImGui::Text("Bitmap Details");
@@ -253,7 +238,7 @@ namespace Debug
 			ImGui::Text("Height: %d", pBitmap->height);
 			ImGui::Text("PSM: %d", pBitmap->psm);
 			ImGui::Text("Max Mip Level: %d", pBitmap->maxMipLevel);
-			DrawValidPointer("PSX2: %p", LOAD_SECTION(pBitmap->pPSX2));
+			DebugHelpers::TextValidValue("PSX2: %p", LOAD_SECTION(pBitmap->pPSX2));
 
 			if (pBitmap->pPSX2 && ImGui::CollapsingHeader("PSX2")) {
 				// We have two header structures (double buffered).
@@ -261,7 +246,7 @@ namespace Debug
 				edPSX2Header* pHeader = LOAD_SECTION_CAST(edPSX2Header*, pBitmap->pPSX2);
 
 				ImGui::Text("[0]");
-				DrawValidPointer("List: %p", LOAD_SECTION(pHeader[0].pPkt));
+				DebugHelpers::TextValidValue("List: %p", LOAD_SECTION(pHeader[0].pPkt));
 				ImGui::Text("size: %d (0x%x)", pHeader[0].size, pHeader[0].size);
 
 				if (pHeader[0].pPkt && ImGui::CollapsingHeader("[0] Command Buffer Contents")) {
@@ -272,7 +257,7 @@ namespace Debug
 				ImGui::Spacing();
 
 				ImGui::Text("[1]");
-				DrawValidPointer("List: %p", LOAD_SECTION(pHeader[1].pPkt));
+				DebugHelpers::TextValidValue("List: %p", LOAD_SECTION(pHeader[1].pPkt));
 				ImGui::Text("size: %d (0x%x)", pHeader[1].size, pHeader[1].size);
 
 				if (pHeader[1].pPkt && ImGui::CollapsingHeader("[1] Command Buffer Contents")) {
@@ -292,8 +277,8 @@ namespace Debug
 			ImGui::Spacing();
 			ImGui::Spacing();
 
-			DrawValidPointer("DMA Material: %p", LOAD_SECTION(gSelectedMaterial->pDMA_Material));
-			DrawValidPointer("Command Buffer Texture: %p", LOAD_SECTION(gSelectedMaterial->pCommandBufferTexture));
+			DebugHelpers::TextValidValue("DMA Material: %p", LOAD_SECTION(gSelectedMaterial->pDMA_Material));
+			DebugHelpers::TextValidValue("Command Buffer Texture: %p", LOAD_SECTION(gSelectedMaterial->pCommandBufferTexture));
 
 			ImGui::Text("Command Buffer Texture Size: %d", gSelectedMaterial->commandBufferTextureSize);
 
@@ -310,7 +295,7 @@ namespace Debug
 				if (ImGui::CollapsingHeader(buffer)) {
 					ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, gSelectedMaterial->aLayers[i]);
 
-					ListChunckDetails(pLAY);
+					DebugHelpers::ListChunckDetails(pLAY);
 
 					ImGui::Spacing();
 					ImGui::Spacing();
@@ -323,14 +308,14 @@ namespace Debug
 					ImGui::Text("Field 0x1b: %d", pLayer->field_0x1b);
 					ImGui::Text("bHasTexture: %d", pLayer->bHasTexture);
 					ImGui::Text("Palette ID: %d", pLayer->paletteId);
-					DrawValidPointer("TEX: %p", LOAD_SECTION(pLayer->pTex));
+					DebugHelpers::TextValidValue("TEX: %p", LOAD_SECTION(pLayer->pTex));
 
 					ImGui::Spacing();
 					ImGui::Spacing();
 
 					if (pLayer->bHasTexture && ImGui::CollapsingHeader("Texture")) {
 						ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
-						ListChunckDetails(pTEX);
+						DebugHelpers::ListChunckDetails(pTEX);
 
 						ImGui::Spacing();
 						ImGui::Spacing();
@@ -356,7 +341,7 @@ namespace Debug
 
 								ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pBitmapHashCode->pData);
 
-								ListChunckDetails(pT2D);
+								DebugHelpers::ListChunckDetails(pT2D);
 
 								ImGui::Spacing();
 								ImGui::Spacing();
@@ -374,7 +359,7 @@ namespace Debug
 							ed_hash_code* pPaletteHashCode = LOAD_SECTION_CAST(ed_hash_code*, pPaletteHashCodes[pLayer->paletteId].pData);
 							ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pPaletteHashCode->pData);
 
-							ListChunckDetails(pT2D);
+							DebugHelpers::ListChunckDetails(pT2D);
 
 							ImGui::Spacing();
 							ImGui::Spacing();
@@ -441,12 +426,12 @@ namespace Debug
 			auto* pManager = gSelectedTexture->GetManager();
 
 			if (pManager) {
-				DrawValidPointer("File Buffer: %p", pManager->pFileBuffer);
-				DrawValidPointer("*2D* (Texture Chunk): %p", pManager->pTextureChunk);
-				DrawValidPointer("MATA (Hash): %p", pManager->pMATA_HASH);
-				DrawValidPointer("T2DA: %p", pManager->pT2DA);
-				DrawValidPointer("PALL: %p", pManager->pPALL);
-				DrawValidPointer("ANMA: %p", pManager->pANMA);
+				DebugHelpers::TextValidValue("File Buffer: %p", pManager->pFileBuffer);
+				DebugHelpers::TextValidValue("*2D* (Texture Chunk): %p", pManager->pTextureChunk);
+				DebugHelpers::TextValidValue("MATA (Hash): %p", pManager->pMATA_HASH);
+				DebugHelpers::TextValidValue("T2DA: %p", pManager->pT2DA);
+				DebugHelpers::TextValidValue("PALL: %p", pManager->pPALL);
+				DebugHelpers::TextValidValue("ANMA: %p", pManager->pANMA);
 
 				ImGui::Spacing();
 				ImGui::Spacing();
@@ -490,7 +475,7 @@ namespace Debug
 
 							if (gSelectedTexture->GetMaterials()[i].GetInUse()) {
 								ImGui::SameLine();
-								ImGui::TextColored(sValidColor, "(In Use)");
+								ImGui::TextColored(DebugHelpers::sValidColor, "(In Use)");
 							}
 						}
 					}

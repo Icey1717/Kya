@@ -24,6 +24,8 @@ set(SOURCES
 	"src/DebugMaterial.cpp"
 	"src/DebugTexture.h"
 	"src/DebugTexture.cpp"
+	"src/DebugMesh.h"
+	"src/DebugMesh.cpp"
 	"src/DebugRendererVulkan.cpp"
 	"src/DebugSetting.cpp"
 	"src/DebugSetting.h"

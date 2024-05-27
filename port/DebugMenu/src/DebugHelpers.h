@@ -3,6 +3,7 @@
 #include "Types.h"
 #include "imgui.h"
 #include <fstream>
+#include "ed3D.h"
 
 namespace DebugHelpers {
 	namespace ImGui {
@@ -18,6 +19,23 @@ namespace DebugHelpers {
 			Hash_4 hash4 = hash;
 			::ImGui::Text("Hash: %c%c%c%c", hash4.name[0], hash4.name[1], hash4.name[2], hash4.name[3]);
 		}
+	}
+
+	const ImVec4 sValidColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+	const ImVec4 sInvalidColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+	template<typename T>
+	inline void TextValidValue(char* fmt, T p)
+	{
+		::ImGui::TextColored(p ? sValidColor : sInvalidColor, fmt, p);
+	};
+
+	inline void ListChunckDetails(ed_Chunck* pChunck)
+	{
+		::ImGui::Text("Chunk Details");
+		::ImGui::Text("Header: %s", pChunck->GetHeaderString().c_str());
+		::ImGui::Text("Size: %d (0x%x)", pChunck->size, pChunck->size);
+		::ImGui::Text("Next Chunk Offset: %d (0x%x)", pChunck->nextChunckOffset, pChunck->nextChunckOffset);
 	}
 
 	// Function to write the matrix to a binary file

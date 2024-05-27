@@ -7,8 +7,18 @@
 
 struct ed_Chunck;
 
+struct GXD_FileHeader
+{
+	undefined4 field_0x0;
+	uint flags;
+	undefined4 field_0x8;
+	uint hash;
+};
+
+static_assert(sizeof(GXD_FileHeader) == 0x10);
+
 struct ed_g3d_manager {
-	char* fileBufferStart;
+	GXD_FileHeader* fileBufferStart;
 	char* field_0x4;
 	int fileLengthA;
 	undefined4 field_0xc;

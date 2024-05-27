@@ -1794,6 +1794,8 @@ CActorCinematic* CCinematic::NewCinematicActor(const edCinGameInterface::ACTORV_
 	int iVar4;
 	CActorCinematic* pNewCinematicActor;
 
+	CUTSCENE_LOG(LogLevel::Info, "CCinematic::NewCinematicActor");
+
 	pNewCinematicActor = (CActorCinematic*)0x0;
 	iVar1 = this->loadedActorCinematicCount;
 	iVar4 = 0;
