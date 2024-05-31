@@ -237,7 +237,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 			memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
 
 			if (1 < this->p3DHierNode->base.lodCount) {
-				this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->lodBiases;
+				this->hierarchySetup.pLodBiases = this->lodBiases;
 			}
 
 			ed3DHierarchySetSetup(&this->p3DHierNode->base, &this->hierarchySetup);
@@ -563,10 +563,10 @@ void CBehaviourCinematic::End(int newBehaviourId)
 	return;
 }
 
-void SetHierFlags_00295a30(ed_3d_hierarchy_node* pNode, byte param_2)
+void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod)
 {
 	(pNode->base).flags_0x9e = (pNode->base).flags_0x9e | 0x80;
-	(pNode->base).desiredLod = param_2;
+	(pNode->base).desiredLod = desiredLod;
 	return;
 }
 
@@ -590,9 +590,10 @@ void CBehaviourCinematic::Manage()
 	pConfig = pCinematic->GetActorConfig(this->pOwner);
 	local_10 = this->pOwner->currentLocation;
 
+	// Force cinematic mesh to always use lod 0
 	peVar1 = this->pOwner->p3DHierNode;
 	if (peVar1 != (ed_3d_hierarchy_node*)0x0) {
-		SetHierFlags_00295a30(peVar1, 0);
+		ed3DLockLOD(peVar1, 0);
 	}
 
 	if ((pConfig != (CCineActorConfig*)0x0) && ((pConfig->flags & 2) != 0)) {

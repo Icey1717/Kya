@@ -48,18 +48,18 @@
 
 extern bool bOther;
 
-namespace DebugMenu_Internal {
+namespace Debug {
 
-	std::unordered_map<const PS2::GSTexEntry*, ImageTextureID> debugTextures;
-	std::vector<MaterialPreviewerEntry> materialList;
+	static std::unordered_map<const PS2::GSTexEntry*, ImageTextureID> debugTextures;
+	static std::vector<MaterialPreviewerEntry> materialList;
 
-	void OnMaterialLoaded(edDList_material* pNewMaterial) {
+	static void OnMaterialLoaded(edDList_material* pNewMaterial) {
 		std::vector<DWORD64> backtrace;
 		CollectBacktrace(backtrace);
 		materialList.emplace_back(pNewMaterial, backtrace);
 	}
 
-	void OnMaterialUnloaded(edDList_material* pMaterial) {
+	static void OnMaterialUnloaded(edDList_material* pMaterial) {
 		auto it = std::find(materialList.begin(), materialList.end(), pMaterial);
 		if (it != materialList.end()) {
 			materialList.erase(it);
@@ -78,9 +78,9 @@ namespace DebugMenu_Internal {
 		std::string name;
 	};
 
-	std::vector<TextureListEntry> textureList;
+	static std::vector<TextureListEntry> textureList;
 
-	void OnTextureLoaded(ed_g2d_manager* pNewTexture, std::string name) {
+	static void OnTextureLoaded(ed_g2d_manager* pNewTexture, std::string name) {
 		std::vector<DWORD64> backtrace;
 		CollectBacktrace(backtrace);
 		textureList.emplace_back(pNewTexture, backtrace, ObjectNaming::GetNextObjectName());
@@ -98,17 +98,17 @@ namespace DebugMenu_Internal {
 		std::string name;
 	};
 
-	std::vector<MeshListEntry> meshList;
+	static std::vector<MeshListEntry> meshList;
 
-	void OnMeshLoaded(ed_g3d_manager* pNewMesh, std::string name) {
+	static void OnMeshLoaded(ed_g3d_manager* pNewMesh, std::string name) {
 		std::vector<DWORD64> backtrace;
 		CollectBacktrace(backtrace);
 		meshList.emplace_back(pNewMesh, backtrace, ObjectNaming::GetNextObjectName());
 	}
 
-	double deltaTime;
+	static double deltaTime;
 
-	void Update() {
+	static void Update() {
 		// Calculate the framerate
 		static double prevTime = 0.0;
 		double currentTime = glfwGetTime();
@@ -116,7 +116,7 @@ namespace DebugMenu_Internal {
 		prevTime = currentTime;
 	}
 
-	void ShowFrameCounter() {
+	static void ShowFrameCounter() {
 		double fps = 1.0 / deltaTime;
 
 		const ImVec2 windowSize(100.0f, 25.0f);
@@ -132,11 +132,11 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	int selectedTextureIndex = -1;
-	int selectedMaterialIndex = -1;
-	std::vector<edDList_material> textureMaterials;
+	static int selectedTextureIndex = -1;
+	static int selectedMaterialIndex = -1;
+	static std::vector<edDList_material> textureMaterials;
 
-	int GetMaterialCountFromTexture(ed_g2d_manager* pTexture) {
+	static int GetMaterialCountFromTexture(ed_g2d_manager* pTexture) {
 		int i = 0;
 
 		while (ed3DG2DGetMaterialFromIndex(pTexture, i)) {
@@ -146,13 +146,13 @@ namespace DebugMenu_Internal {
 		return i;
 	}
 
-	bool GetCutsceneName(void* pData, int index, const char** ppOut) {
+	static bool GetCutsceneName(void* pData, int index, const char** ppOut) {
 		auto* options = static_cast<std::vector<std::string>*>(pData);
 		*ppOut = ((*options)[index]).c_str();
 		return true;
 	}
 
-	void ShowSectorMenu(bool* bOpen) {
+	static void ShowSectorMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Sector", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -174,9 +174,9 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
+	static Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
 
-	void ShowCutsceneMenu(bool* bOpen) {
+	static void ShowCutsceneMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Video Player Controls", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -292,9 +292,9 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
+	static Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
 
-	void ShowRenderingMenu(bool* bOpen) {
+	static void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -325,7 +325,7 @@ namespace DebugMenu_Internal {
 
 	int gRenderFramebufferIndex = 0;
 
-	void ShowFramebuffers(bool* bOpen) {
+	static void ShowFramebuffers(bool* bOpen) {
 		auto& frameBuffers = PS2::FrameBuffer::GetAll();
 
 		// Get the display size
@@ -367,9 +367,9 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	bool swapValue = false;
+	static bool swapValue = false;
 
-	void ShowGame() {
+	static void ShowGame() {
 		if (!PS2::FrameBuffer::Exists(swapValue ? 0x100 : 0x80)) {
 			return;
 		}
@@ -498,7 +498,7 @@ namespace DebugMenu_Internal {
 		outFile.close();
 	}
 
-	void ShowLogWindow(bool* bOpen)
+	static void ShowLogWindow(bool* bOpen)
 	{		
 		ImGui::Begin("Log Window", bOpen);
 		
@@ -522,7 +522,7 @@ namespace DebugMenu_Internal {
 		ImGui::End();
 	}
 
-	void ShowSceneMenu(bool* bOpen) {
+	static void ShowSceneMenu(bool* bOpen) {
 		ImGui::Begin("Scene", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		static int selectedScene = -1;
@@ -601,10 +601,10 @@ namespace DebugMenu_Internal {
 		}
 	}
 
-	edNODE* pNewNode = nullptr;
-	ed_g3d_manager* pSelectedMesh = nullptr;
+	static edNODE* pNewNode = nullptr;
+	static ed_g3d_manager* pSelectedMesh = nullptr;
 
-	void ShowMeshList(bool* bOpen) {
+	static void ShowMeshList(bool* bOpen) {
 		ImGui::Begin("Mesh List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		static edLIST* pList = ed3DHierarchyListInit();
@@ -635,7 +635,7 @@ namespace DebugMenu_Internal {
 		}
 	}
 
-	void ShowMemoryMenu(bool* bOpen) {
+	static void ShowMemoryMenu(bool* bOpen) {
 		ImGui::Begin("Memory", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		ImGui::Text("Main Heap Size: 0x%x", edMemGetMemoryAvailable(TO_HEAP(H_MAIN)));
@@ -703,13 +703,13 @@ namespace DebugMenu_Internal {
 
 	};
 
-	void ForEachMenu(std::function<void(Menu&)> action) {
+	static void ForEachMenu(std::function<void(Menu&)> action) {
 		for (auto& currentMenu : gMenus) {
 			action(currentMenu);
 		}
 	}
 
-	void DrawMenu() {
+	static void DrawMenu() {
 		ImGui::BeginMainMenuBar();
 
 		ForEachMenu([](Menu& menu) {
@@ -722,10 +722,12 @@ namespace DebugMenu_Internal {
 		ImGui::EndMainMenuBar();
 	}
 
-	void DrawInternal() {
+	static void DrawInternal() {
 		ForEachMenu([](Menu& menu) {
 			menu.Show();
 			});
+
+		Texture::Update();
 
 		ShowGame();
 		DrawMenu();
@@ -736,21 +738,21 @@ namespace DebugMenu_Internal {
 
 void DebugMenu::BuildImguiCommands()
 {
-	DebugMenu_Internal::Update();
-	DebugMenu_Internal::DrawInternal();
+	Debug::Update();
+	Debug::DrawInternal();
 }
 
 double DebugMenu::GetDeltaTime()
 {
-	return DebugMenu_Internal::deltaTime;
+	return Debug::deltaTime;
 }
 
 void DebugMenu::Init()
 {
-	edDListGetMaterialLoadedDelegate() += DebugMenu_Internal::OnMaterialLoaded;
-	edDListGetMaterialUnloadedDelegate() += DebugMenu_Internal::OnMaterialUnloaded;
-	ed3DGetTextureLoadedDelegate() += DebugMenu_Internal::OnTextureLoaded;
-	ed3DGetMeshLoadedDelegate() += DebugMenu_Internal::OnMeshLoaded;
+	edDListGetMaterialLoadedDelegate() += Debug::OnMaterialLoaded;
+	edDListGetMaterialUnloadedDelegate() += Debug::OnMaterialUnloaded;
+	ed3DGetTextureLoadedDelegate() += Debug::OnTextureLoaded;
+	ed3DGetMeshLoadedDelegate() += Debug::OnMeshLoaded;
 }
 
 static Input::InputFunctions gInputFunctions;

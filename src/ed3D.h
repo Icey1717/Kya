@@ -10,6 +10,9 @@
 #include "edList.h"
 #include "LightManager.h"
 
+#define HASH_CODE_HASH 0x48534148
+#define HASH_CODE_MBNK 0x4b4e424d
+
 #define MATRIX_PACKET_START_SPR				0x70000800 // 0x06
 #define CAM_NORMAL_X_SPR					0x70000800 // 0x06
 #define CAM_NORMAL_Y_SPR					0x70000810 // 0x07
@@ -350,14 +353,14 @@ struct ed_3d_hierarchy_setup {
 	char* clipping_0x0;
 	union edF32VECTOR4* pBoundingSphere;
 	struct ed_3D_Light_Config* pLightData;
-	ed_3d_hierarchy_setup* pNext;
+	float* pLodBiases;
 	float* field_0x10;
 };
 
 
 struct ed3DLod {
 	int pObj; // char*
-	short field_0x4;
+	short renderType;
 	short sizeBias;
 };
 
@@ -367,7 +370,7 @@ struct ed_3d_hierarchy {
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
 	Hash_8 hash;
-	byte field_0x88;
+	byte bSceneRender;
 	undefined field_0x89;
 	ushort bRenderShadow;
 	union edF32MATRIX4* pShadowAnimMatrix;
@@ -437,12 +440,12 @@ PACK(struct ed_g3d_hierarchy {
 	short subMeshParentCount_0xac;
 	byte desiredLod;
 	char GlobalAlhaON;
-	ed3DLod aLods[4];
+	ed3DLod aLods[];
 });
 
 struct ed_3d_hierarchy_node {
 	ed_3d_hierarchy base;
-	ed3DLod aSubArray[4];
+	ed3DLod aLods[];
 };
 
 struct TextureInfo {
@@ -708,7 +711,7 @@ ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool
 void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup);
 ed_dma_matrix* ed3DListCreateDmaMatrixNode(ScratchPadRenderInfo* pRenderInfo, ed_3d_hierarchy* pHierarchy);
 
-PACK(struct MeshData_OBJ_Internal {
+PACK(struct ed_g3d_object {
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;
@@ -722,12 +725,7 @@ PACK(struct MeshData_OBJ_Internal {
 	int p3DStrip; //struct ed_3d_strip*
 });
 
-PACK(struct MeshData_OBJ {
-	ed_Chunck chunk;
-	MeshData_OBJ_Internal body;
-});
-
-MeshData_OBJ_Internal* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier);
+ed_g3d_object* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier);
 ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy);
 uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, int param_2, long bUpdateInternal);
 edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix, byte param_3);

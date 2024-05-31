@@ -5,6 +5,7 @@
 #include "Mesh.h"
 #include "FileManager3D.h"
 #include "DebugHelpers.h"
+#include "DebugTexture.h"
 
 namespace Debug
 {
@@ -104,10 +105,67 @@ namespace Debug
 					ImGui::Text("subMeshParentCount_0xac: %d", gSelectedHierarchy->subMeshParentCount_0xac);
 					ImGui::Text("desiredLod: %d", gSelectedHierarchy->desiredLod);
 					ImGui::Text("GlobalAlhaON: %d", gSelectedHierarchy->GlobalAlhaON);
+
+					ImGui::Spacing();
+					ImGui::Spacing();
+
+					for (int i = 0; i < gSelectedHierarchy->lodCount; i++) {
+						char buff[256];
+						sprintf_s(buff, "LOD %d", i);
+
+						if (ImGui::CollapsingHeader(buff, ImGuiTreeNodeFlags_DefaultOpen)) {
+							ed3DLod* pLod = gSelectedHierarchy->aLods + i;
+
+							DebugHelpers::TextValidValue("pObj: %p", LOAD_SECTION(pLod->pObj));
+							ImGui::Text("renderType: %u", pLod->renderType);
+							ImGui::Text("sizeBias: %f", pLod->sizeBias);
+
+							ed_hash_code* pHash = LOAD_SECTION_CAST(ed_hash_code*, pLod->pObj);
+							ImGui::Text("Hash: %s", i, pHash->hash.ToString().c_str());
+						}
+					}
 				}
 			}
 
 			return;
+		}
+
+		static void ListMbnaDetails(ed_g3d_manager* pManager)
+		{
+			DebugHelpers::ListChunckDetails(pManager->MBNA);
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ed_Chunck* pMBNK = pManager->MBNA + 1;
+			DebugHelpers::ListChunckDetails(pMBNK);
+
+			// Technically there can be stuff in between this, maybe should change this to get chunk call.
+			assert(pMBNK->hash == HASH_CODE_MBNK);
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			if (ImGui::CollapsingHeader("Materials", ImGuiTreeNodeFlags_DefaultOpen)) {
+				const int matHashNb = (pMBNK->size - sizeof(ed_Chunck)) / sizeof(ed_hash_code);
+
+				ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pMBNK + 1);
+
+				for (int i = 0; i < matHashNb; i++) {
+					char buff[256];
+					sprintf_s(buff, 256, "%d - %s", i, pHashCode->hash.ToString().c_str());
+
+					if (ImGui::Selectable(buff)) {
+						ed_hash_code* pMatHash = LOAD_SECTION_CAST(ed_hash_code*, pHashCode->pData);
+						ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pMatHash->pData);
+						
+						const ed_g2d_material* pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
+						Texture::ShowMaterialDetails(pMaterial);
+					}
+
+					pHashCode++;
+				}
+			}
 		}
 
 		static void ShowMeshDetails()
@@ -155,6 +213,12 @@ namespace Debug
 				if (pManager->HALL) {
 					if (ImGui::CollapsingHeader("HALL", ImGuiTreeNodeFlags_DefaultOpen)) {
 						ListHallDetails(pManager);
+					}
+				}
+
+				if (pManager->MBNA) {
+					if (ImGui::CollapsingHeader("MBNA")) {
+						ListMbnaDetails(pManager);
 					}
 				}
 			}

@@ -296,17 +296,18 @@ namespace DebugMeshViewer {
 
 		if (p3dHier) {
 			ed3DLod* pLod = ed3DChooseGoodLOD(p3dHier);
-			ed_hash_code* pObjHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
+			ed_hash_code* pLodHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
 
-			if (pObjHash) {
-				MeshData_OBJ* pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pObjHash->pData);
+			if (pLodHash) {
+				ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pLodHash->pData);
+				ed_g3d_object* pMeshOBJ = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
 
-				ed_3d_strip* p3dStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->body.p3DStrip);
+				ed_3d_strip* p3dStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->p3DStrip);
 
 				int maxAnimIndex = 0;
 
 				if (p3dStrip) {
-					maxAnimIndex = RenderStripList(p3dStrip, pMeshOBJ->body.stripCount, true);
+					maxAnimIndex = RenderStripList(p3dStrip, pMeshOBJ->stripCount, true);
 				}
 
 				if (p3dHier) {
@@ -396,24 +397,26 @@ namespace DebugMeshViewer {
 
 					if (pLod) {
 
-						ed_hash_code* pObjHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
-						ImGui::Text("Name: %s (0x%llx)", pObjHash->hash.name);
-						MeshData_OBJ* pMeshOBJ = (MeshData_OBJ*)LOAD_SECTION(pObjHash->pData);
+						ed_hash_code* pLodHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
+						ImGui::Text("Name: %s (0x%llx)", pLodHash->hash.name);
 
-						ImGui::Text("Strip Count: %d", pMeshOBJ->body.stripCount);
+						ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pLodHash->pData);
+						ed_g3d_object* pMeshOBJ = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
+
+						ImGui::Text("Strip Count: %d", pMeshOBJ->stripCount);
 
 						ImGui::InputInt("Strip Isolate", &gIsolateStripIndex);
-						gIsolateStripIndex = std::clamp<int>(gIsolateStripIndex, -1, pMeshOBJ->body.stripCount - 1);
+						gIsolateStripIndex = std::clamp<int>(gIsolateStripIndex, -1, pMeshOBJ->stripCount - 1);
 
 						ImGui::InputInt("Strip Highlight", &gHighlightStripIndex);
-						gHighlightStripIndex = std::clamp<int>(gHighlightStripIndex, -1, pMeshOBJ->body.stripCount - 1);
+						gHighlightStripIndex = std::clamp<int>(gHighlightStripIndex, -1, pMeshOBJ->stripCount - 1);
 
 						ImGui::InputInt("Anim Matrix Highlight", &gHighlightAnimMatrixIndex);
 
-						DebugHelpers::ImGui::TextVector4("Bounding Sphere", pMeshOBJ->body.boundingSphere);
+						DebugHelpers::ImGui::TextVector4("Bounding Sphere", pMeshOBJ->boundingSphere);
 
 						if (ImGui::CollapsingHeader("Strip", ImGuiTreeNodeFlags_DefaultOpen)) {
-							ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->body.p3DStrip);
+							ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->p3DStrip);
 
 							ImGui::Text("Flags: %x", pStrip->flags);
 							DebugHelpers::ImGui::TextVector4("Bounding Sphere", pStrip->boundingSphere);

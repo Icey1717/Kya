@@ -1912,7 +1912,7 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 		memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
 
 		if (1 < ((this->p3DHierNode)->base).lodCount) {
-			this->hierarchySetup.pNext = (ed_3d_hierarchy_setup*)&this->lodBiases;
+			this->hierarchySetup.pLodBiases = this->lodBiases;
 		}
 
 		ed3DHierarchySetSetup(&this->p3DHierNode->base, &this->hierarchySetup);
@@ -2227,7 +2227,7 @@ edF32VECTOR4* CActor::GetTopPosition()
 	return peVar1;
 }
 
-void SetHierFlags_00295a10(ed_3d_hierarchy* pHier)
+void ed3DUnLockLOD(ed_3d_hierarchy* pHier)
 {
 	pHier->flags_0x9e = pHier->flags_0x9e & 0xff7f;
 	pHier->desiredLod = 0xff;
@@ -2253,7 +2253,7 @@ void CActor::CinematicMode_Leave(int behaviourId)
 	}
 	peVar2 = this->p3DHierNode;
 	if (peVar2 != (ed_3d_hierarchy_node*)0x0) {
-		SetHierFlags_00295a10((ed_3d_hierarchy*)peVar2);
+		ed3DUnLockLOD((ed_3d_hierarchy*)peVar2);
 	}
 	uVar3 = this->flags;
 	if ((uVar3 & 0x8000000) != 0) {

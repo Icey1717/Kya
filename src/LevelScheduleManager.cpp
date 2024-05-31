@@ -10,6 +10,8 @@
 #if defined(PLATFORM_PS2)
 #include <eekernel.h>
 #include <libvu0.h>
+#else
+#include "port.h"
 #endif
 
 #include "edSystem.h"
@@ -30,6 +32,8 @@
 #include "port/pointer_conv.h"
 #include "EventTrack.h"
 #include "ActorHero.h"
+
+#define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
 struct ScenarioVariable {
 	int defaultValue;
@@ -649,7 +653,7 @@ void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int coun
 
 void CLevelScheduler::Levels_LoadInfoBank()
 {
-	MY_LOG("LevelScheduleManager::Levels_LoadInfoBank\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "LevelScheduleManager::Levels_LoadInfoBank\n");
 
 	char cVar1;
 	int iVar2;
@@ -991,7 +995,7 @@ bool BnkInstallScene(char* pFileData, int size)
 {
 	ByteCode byteCode;
 
-	MY_LOG("BnkInstallScene\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallScene\n");
 
 	/* Origin: 0040e860 */
 	byteCode.Init(pFileData);
@@ -1012,7 +1016,7 @@ bool BnkInstallScene(char* pFileData, int size)
 
 bool BnkInstallSceneCfg(char* pFileData, int size)
 {
-	MY_LOG("BnkInstallSceneCfg\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallSceneCfg\n");
 
 	CScene* pScene;
 	uint uVar2;
@@ -1043,7 +1047,7 @@ bool BnkInstallSceneCfg(char* pFileData, int size)
 
 bool BnkInstallSoundCfg(char* pFileData, int param_2)
 {
-	MY_LOG("MISSING HANDLER OnSoundLoaded_00180ef0\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "MISSING HANDLER OnSoundLoaded_00180ef0\n");
 	return false;
 }
 
@@ -1052,29 +1056,36 @@ bool BnkInstallG2D(char* pFileData, int length)
 	C3DFileManager* pFVar1;
 	int iStack4;
 
-	MY_LOG("BnkInstallG2D\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallG2D: {}\n", ObjectNaming::CopyObjectName());
 
 	pFVar1 = CScene::ptable.g_C3DFileManager_00451664;
-	ed3DInstallG2D(pFileData, length, &iStack4, &pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].manager, 1);
-	pFVar1->pTextureInfoArray[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
+	ed3DInstallG2D(pFileData, length, &iStack4, &pFVar1->aCommonLevelTextures[pFVar1->textureLoadedCount].manager, 1);
+	pFVar1->aCommonLevelTextures[pFVar1->textureLoadedCount].pFileBuffer = pFileData;
 	pFVar1->textureLoadedCount = pFVar1->textureLoadedCount + 1;
 	return false;
 }
 
 bool BnkInstallG3D(char* pFileData, int length)
 {
-	int iVar1;
-	Mesh* pMVar2;
-	C3DFileManager* pFVar3;
+	int newMeshIndex;
+	Mesh* aMeshes;
+	C3DFileManager* pFileManager;
 
-	MY_LOG("BnkInstallG3D\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallG3D: {}\n", ObjectNaming::CopyObjectName());
 
-	pFVar3 = CScene::ptable.g_C3DFileManager_00451664;
-	iVar1 = (CScene::ptable.g_C3DFileManager_00451664)->meshLoadedCount;
-	pMVar2 = (CScene::ptable.g_C3DFileManager_00451664)->pMeshDataArray;
-	pMVar2[iVar1].fileLength = length;
-	pMVar2[iVar1].pFileData = pFileData;
-	pFVar3->meshLoadedCount = pFVar3->meshLoadedCount + 1;
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+
+	newMeshIndex = pFileManager->meshLoadedCount;
+
+	aMeshes = pFileManager->aCommonLevelMeshes;
+	aMeshes[newMeshIndex].fileLength = length;
+	aMeshes[newMeshIndex].pFileData = pFileData;
+
+#ifdef PLATFORM_WIN
+	aMeshes[newMeshIndex].name = ObjectNaming::CopyObjectName();
+#endif
+
+	pFileManager->meshLoadedCount = pFileManager->meshLoadedCount + 1;
 	return false;
 }
 
@@ -1083,7 +1094,7 @@ bool BnkInstallCol(char* pFileBuffer, int length)
 	CCollisionManager* pCollisionManager;
 	edColG3D_OBB_TREE* pObbTree;
 
-	MY_LOG("BnkInstallCol\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallCol\n");
 
 	pCollisionManager = CScene::ptable.g_CollisionManager_00451690;
 	pObbTree = edColLoadStatic(pFileBuffer, length, 0);
@@ -1100,7 +1111,7 @@ bool BnkInstallEvents(char* pFileData, int length)
 	undefined4 uVar3;
 	ByteCode BStack16;
 
-	MY_LOG("BnkInstallEvents\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallEvents\n");
 
 	BStack16.Init(pFileData);
 	BStack16.GetChunk();
@@ -1119,12 +1130,12 @@ bool BnkInstallCameras(char* pFileData, int length)
 {
 	ByteCode MStack16;
 
-	MY_LOG("BnkInstallCameras\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallCameras\n");
 
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
 
-	MY_LOG("MISSING HANDLER OnViewLoaded_0019a9e0\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "MISSING HANDLER OnViewLoaded_0019a9e0\n");
 	//(*(code*)g_CameraViewManager_00448e98->pManagerFunctionData->deserializeFunc)();
 	//::EmptyFunction();
 	//ByteCodeDestructor(&MStack16, -1);
@@ -1135,7 +1146,7 @@ bool BnkInstallLights(char* pFileData, int length)
 {
 	ByteCode MStack16;
 
-	MY_LOG("BnkInstallLights\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallLights\n");
 
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
@@ -1147,7 +1158,7 @@ bool BnkInstallLights(char* pFileData, int length)
 bool BnkInstallFxCfg(char* pFileData, int length)
 {
 	ByteCode MStack16;
-	MY_LOG("MISSING HANDLER OnEffectLoaded_001a0870\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "MISSING HANDLER OnEffectLoaded_001a0870\n");
 
 	MStack16.Init(pFileData);
 	//(*(code*)(Scene::ptable.g_EffectsManager_004516b8)->pManagerFunctionData->deserializeFunc)();
@@ -1159,7 +1170,7 @@ bool BnkInstallFxCfg(char* pFileData, int length)
 bool BnkInstallCinematic(char* pFileData, int length)
 {
 	ByteCode MStack16;
-	MY_LOG("BnkInstallCinematic\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallCinematic\n");
 
 	MStack16.Init(pFileData);
 	g_CinematicManager_0048efc->Level_AddAll(&MStack16);
@@ -1172,7 +1183,7 @@ bool BnkInstallAnim(char* pFileData, int length)
 	CAnimationManager* pCVar1;
 	edANM_HDR* peVar2;
 
-	MY_LOG("BnkInstallAnim\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallAnim\n");
 
 	pCVar1 = CScene::ptable.g_AnimManager_00451668;
 	peVar2 = edAnmAnim::LoadFromMem(pFileData, length);
@@ -1186,7 +1197,7 @@ bool BnkInstallSample(char* pFileData, int length)
 	CAudioManager* pGVar1;
 	uint uVar2;
 
-	MY_LOG("BnkInstallSample\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallSample\n");
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
@@ -1218,7 +1229,7 @@ bool BnkInstallBank(char* pFileData, int length)
 {
 	CAudioManager* pGVar1;
 
-	MY_LOG("BnkInstallBank\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallBank\n");
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
@@ -1241,7 +1252,7 @@ bool BnkInstallBankHeader(char* pFileData, int length)
 	undefined4* puVar2;
 	uint uVar3;
 
-	MY_LOG("BnkInstallBank\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallBank\n");
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
@@ -1271,7 +1282,7 @@ bool BnkInstallSong(char* pFileData, int length)
 	CAudioManager* pGVar1;
 	uint uVar2;
 
-	MY_LOG("BnkInstallBank\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallBank\n");
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
@@ -1292,7 +1303,7 @@ bool BnkInstallDynCol(char* pFileData, int length)
 	int nextIndex;
 	BankCollision_14* pBankCollision;
 
-	MY_LOG("BnkInstallDynCol\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallDynCol\n");
 
 	nextIndex = (CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8;
 	(CScene::ptable.g_CollisionManager_00451690)->loadedBankCount_0x8 = nextIndex + 1;
@@ -1312,7 +1323,7 @@ bool BnkInstallParticleManager(char* pFileData, int length)
 
 bool BnkInstallAnimMacro(char* pFileData, int length)
 {
-	MY_LOG("BnkInstallAnimMacro\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallAnimMacro\n");
 
 	if (*(int*)pFileData != 0) {
 		(CScene::ptable.g_AnimManager_00451668)->pAnimKeyEntryData = pFileData + 4;
@@ -1322,13 +1333,13 @@ bool BnkInstallAnimMacro(char* pFileData, int length)
 
 bool BnkInstallAstar(char* pFileData, int length)
 {
-	MY_LOG("BnkInstallAstar\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallAstar\n");
 	return false;
 }
 
 bool BnkInstallLiptracks(char* pFileData, int length)
 {
-	MY_LOG("BnkInstallLiptracks\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallLiptracks\n");
 	return false;
 }
 

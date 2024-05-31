@@ -413,6 +413,27 @@ namespace Debug
 			}
 		}
 
+		void ShowMaterialDetails(const ed_g2d_material* pMaterial)
+		{
+			gSelectedMaterial = pMaterial;
+
+			// Try find the texture related to the material.
+			auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
+			textureLibrary.ForEach([&](const Renderer::Kya::G2D& texture) {
+				auto* pManager = texture.GetManager();
+
+				if (pManager->pMATA_HASH) {
+					const int nbMaterials = ed3DG2DGetG2DNbMaterials(pManager->pMATA_HASH);
+
+					for (int i = 0; i < nbMaterials; ++i) {
+						if (ed_g2d_material* pTextureMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i); pMaterial == pTextureMaterial) {
+							gSelectedTexture = &texture;
+						}
+					}
+				}
+			});
+		}
+
 		static void ShowTextureDetails()
 		{
 			bool bOpen = true;
@@ -488,10 +509,6 @@ namespace Debug
 				gSelectedTexture = nullptr;
 				gSelectedMaterial = nullptr;
 			}
-
-			if (gSelectedMaterial) {
-				ShowMaterialDetails();
-			}
 		}
 	}
 
@@ -517,8 +534,15 @@ void Debug::Texture::ShowMenu(bool* bOpen)
 	if (gShowTextureList) {
 		ShowList(&gShowTextureList);
 	}
+}
 
+void Debug::Texture::Update()
+{
 	if (gSelectedTexture) {
 		ShowTextureDetails();
+	}
+
+	if (gSelectedMaterial) {
+		ShowMaterialDetails();
 	}
 }

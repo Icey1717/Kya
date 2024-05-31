@@ -41,10 +41,10 @@ struct ed_g3d_manager {
 struct Mesh {
 	char* pFileData;
 	int fileLength;
-	struct ed_g3d_manager meshInfo;
-	struct TextureInfo* pTextureInfo;
+	ed_g3d_manager meshInfo;
+	TextureInfo* pTextureInfo;
 #if NAME_MESH
-	char name[256];
+	std::string name;
 #endif
 };
 
@@ -85,11 +85,11 @@ struct C3DFileManager : public CObjectManager {
 	float field_0x30;
 	int meshCount;
 	int meshLoadedCount;
-	struct Mesh* pMeshDataArray;
+	struct Mesh* aCommonLevelMeshes;
 	int levelSectorTextureIndex;
 	int textureCount;
 	int textureLoadedCount;
-	struct TextureInfo* pTextureInfoArray;
+	struct TextureInfo* aCommonLevelTextures;
 	struct ParticleInfo* pParticleInfoArray_0x50;
 };
 

@@ -34,14 +34,16 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 		this->pLastMeshTransformParent = (edNODE*)0x0;
 	}
 	else {
-		iVar1 = pMemoryStream->GetS32();
-		iVar2 = pMemoryStream->GetS32();
+		const int commonLevelMeshIndex = pMemoryStream->GetS32();
+		const int commonLevelTextureIndex = pMemoryStream->GetS32();
 		pMemoryStream->GetS32();
-		this->levelSectorTextureIndex = iVar2;
-		pMVar4 = this->pMeshDataArray + iVar1;
+		this->levelSectorTextureIndex = commonLevelTextureIndex;
+		pMVar4 = this->aCommonLevelMeshes + commonLevelMeshIndex;
+
+		NAME_NEXT_OBJECT("%s", pMVar4->name.c_str());
 
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
-			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
+			pMVar4->pTextureInfo = this->aCommonLevelTextures + commonLevelTextureIndex;
 			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack4, &pMVar4->pTextureInfo->manager, 0xc, &pMVar4->meshInfo);
 		}
 
@@ -51,17 +53,17 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 		this->pLastMeshTransformParent = pMVar3;
 	}
 
-	iVar1 = pMemoryStream->GetS32();
-	if (iVar1 == -1) {
+	const int commonLevelMeshIndex = pMemoryStream->GetS32();
+	if (commonLevelMeshIndex == -1) {
 		this->pBackgroundNode = (edNODE*)0x0;
 	}
 	else {
-		iVar2 = pMemoryStream->GetS32();
-		pMVar4 = this->pMeshDataArray + iVar1;
+		const int commonLevelTextureIndex = pMemoryStream->GetS32();
+		pMVar4 = this->aCommonLevelMeshes + commonLevelMeshIndex;
 		if (pMVar4->pTextureInfo == (TextureInfo*)0x0) {
-			NAME_NEXT_OBJECT("Level Mesh %d", iVar2);
+			NAME_NEXT_OBJECT("%s", pMVar4->name.c_str());
 
-			pMVar4->pTextureInfo = this->pTextureInfoArray + iVar2;
+			pMVar4->pTextureInfo = this->aCommonLevelTextures + commonLevelTextureIndex;
 			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->manager, 0xc, &pMVar4->meshInfo);
 		}
 
@@ -103,7 +105,7 @@ int C3DFileManager::InstanciateG2D(int index)
 
 TextureInfo* C3DFileManager::GetCommonSectorG2D()
 {
-	return this->pTextureInfoArray + this->levelSectorTextureIndex;
+	return this->aCommonLevelTextures + this->levelSectorTextureIndex;
 }
 
 void C3DFileManager::Level_ClearInternalData()
@@ -115,10 +117,10 @@ void C3DFileManager::Level_ClearInternalData()
 	iVar3 = 0x80;
 	this->meshCount = 0;
 	this->meshLoadedCount = 0;
-	this->pMeshDataArray = (Mesh*)0x0;
+	this->aCommonLevelMeshes = (Mesh*)0x0;
 	this->textureCount = 0;
 	this->textureLoadedCount = 0;
-	this->pTextureInfoArray = (TextureInfo*)0x0;
+	this->aCommonLevelTextures = (TextureInfo*)0x0;
 	this->pMeshInfo = (ed_g3d_manager*)0x0;
 	this->pBackgroundNode = (edNODE*)0x0;
 	pPVar2 = this->pParticleInfoArray_0x50;
@@ -168,16 +170,16 @@ void C3DFileManager::Level_Create(ByteCode* pMemoryStream)
 	iVar1 = pMemoryStream->GetS32();
 	this->meshCount = iVar1;
 	pMVar2 = new Mesh[this->meshCount];
-	this->pMeshDataArray = pMVar2;
+	this->aCommonLevelMeshes = pMVar2;
 	for (iVar1 = this->meshCount; 0 < iVar1; iVar1 = iVar1 + -1) {
 		pMemoryStream->GetS32();
 	}
 	iVar1 = pMemoryStream->GetS32();
 	this->textureCount = iVar1;
 	pTVar3 = new TextureInfo[this->textureCount];
-	this->pTextureInfoArray = pTVar3;
+	this->aCommonLevelTextures = pTVar3;
 	pMemoryStream->GetS32();
-	pMVar2 = this->pMeshDataArray;
+	pMVar2 = this->aCommonLevelMeshes;
 	for (iVar1 = this->meshCount; 0 < iVar1; iVar1 = iVar1 + -1) {
 		pMVar2->fileLength = 0;
 		pMVar2->pFileData = (char*)0x0;
@@ -187,7 +189,7 @@ void C3DFileManager::Level_Create(ByteCode* pMemoryStream)
 	iVar1 = 0;
 	if (0 < this->textureCount) {
 		do {
-			this->pTextureInfoArray[iVar1].pFileBuffer = NULL;
+			this->aCommonLevelTextures[iVar1].pFileBuffer = NULL;
 			iVar1 = iVar1 + 1;
 		} while (iVar1 < this->textureCount);
 	}
@@ -213,7 +215,7 @@ void C3DFileManager::HideCommonBackground()
 void C3DFileManager::SetupBackground(edNODE* pNode)
 {
 	edNODE* pPrevNode;
-	MeshData_OBJ_Internal* piVar2;
+	ed_g3d_object* piVar2;
 	uint uVar3;
 
 	ed_3d_hierarchy* pHier = (ed_3d_hierarchy*)pNode->pData;
@@ -274,28 +276,28 @@ void C3DFileManager::ManageBackground(edNODE* pNode, uint flags)
 
 ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
 {
-	Mesh* pMVar1;
+	Mesh* pCommonLevelMesh;
 	int iStack4;
 
-	pMVar1 = this->pMeshDataArray + meshIndex;
-	if (pMVar1->pTextureInfo == (TextureInfo*)0x0) {
-		NAME_NEXT_OBJECT("Common (%d, %d)", meshIndex, textureIndex);
+	pCommonLevelMesh = this->aCommonLevelMeshes + meshIndex;
+	if (pCommonLevelMesh->pTextureInfo == (TextureInfo*)0x0) {
+		NAME_NEXT_OBJECT("%s", pCommonLevelMesh->name.c_str());
 
-		pMVar1->pTextureInfo = this->pTextureInfoArray + textureIndex;
-		ed3DInstallG3D(pMVar1->pFileData, pMVar1->fileLength, 0, &iStack4, &pMVar1->pTextureInfo->manager, 0xc,
-			&pMVar1->meshInfo);
+		pCommonLevelMesh->pTextureInfo = this->aCommonLevelTextures + textureIndex;
+		ed3DInstallG3D(pCommonLevelMesh->pFileData, pCommonLevelMesh->fileLength, 0, &iStack4, &pCommonLevelMesh->pTextureInfo->manager, 0xc,
+			&pCommonLevelMesh->meshInfo);
 	}
-	return &pMVar1->meshInfo;
+	return &pCommonLevelMesh->meshInfo;
 }
 
 ed_g2d_manager* C3DFileManager::GetActorsCommonMaterial(int index)
 {
-	return &this->pTextureInfoArray[index].manager;
+	return &this->aCommonLevelTextures[index].manager;
 }
 
 ed_g2d_manager* C3DFileManager::GetActorsCommonMeshMaterial(int index)
 {
-	return &this->pMeshDataArray[index].pTextureInfo->manager;
+	return &this->aCommonLevelMeshes[index].pTextureInfo->manager;
 }
 
 ed_g2d_manager* C3DFileManager::LoadDefaultTexture_001a65d0()
@@ -304,7 +306,7 @@ ed_g2d_manager* C3DFileManager::LoadDefaultTexture_001a65d0()
 
 	pTVar1 = (TextureInfo*)0x0;
 	if (CScene::_pinstance->defaultTextureIndex_0x2c != -1) {
-		pTVar1 = this->pTextureInfoArray + CScene::_pinstance->defaultTextureIndex_0x2c;
+		pTVar1 = this->aCommonLevelTextures + CScene::_pinstance->defaultTextureIndex_0x2c;
 	}
 	return &pTVar1->manager;
 }
