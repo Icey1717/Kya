@@ -11271,14 +11271,14 @@ edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, e
 void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pParentNode, ed_Chunck* pChunck, edNODE* pNewNode,
 	ed_hash_code* pHashCode, uint count)
 {
-	ed_Chunck* pcVar1;
+	ed_Chunck* pHierChunkB;
 	char* pcVar2;
 	char* pcVar3;
 	char* pcVar4;
 	ed_3d_hierarchy_setup* peVar5;
 	ed_3d_hierarchy_node* peVar6;
 	ed_Chunck* pChunck_00;
-	edNODE* peVar7;
+	edNODE* pNewHierNodeA;
 	edNODE* peVar8;
 	edNODE* peVar9;
 	edNODE* peVar10;
@@ -11286,9 +11286,9 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 	edNODE* peVar12;
 	edNODE* peVar13;
 	edNODE* pNewNode_00;
-	uint uVar14;
-	edNODE* peVar15;
-	ed_hash_code* peVar16;
+	uint currentIndexA;
+	edNODE* pResultNodeA;
+	ed_hash_code* pHashCodeA;
 	ed_hash_code* local_220;
 	edNODE* local_204;
 	uint local_200;
@@ -11307,38 +11307,39 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 	ed_hash_code* local_90;
 	edNODE* local_74;
 	uint local_70;
-	ed_hash_code* local_40;
-	edNODE* local_24;
-	uint local_20;
-	ed_Chunck* iVar1;
+	ed_hash_code* pHashCodeB;
+	edNODE* pResultNodeB;
+	uint currentIndexB;
+	ed_Chunck* pHierChunkA;
 
-	peVar15 = (edNODE*)0x0;
-	peVar16 = pHashCode;
-	for (uVar14 = 0; uVar14 < count; uVar14 = uVar14 + 1) {
-		iVar1 = (ed_Chunck*)LOAD_SECTION(peVar16->pData);
+	pResultNodeA = (edNODE*)0x0;
+	pHashCodeA = pHashCode;
 
-		ed_g3d_hierarchy* pHier = (ed_g3d_hierarchy*)(iVar1 + 1);
-		ed_3d_hierarchy_node* pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
+	for (currentIndexA = 0; currentIndexA < count; currentIndexA = currentIndexA + 1) {
+		pHierChunkA = LOAD_SECTION_CAST(ed_Chunck*, pHashCodeA->pData);
+		ed_g3d_hierarchy* pHierarchy = (ed_g3d_hierarchy*)(pHierChunkA + 1);
+		ed_3d_hierarchy_node* pHierarchyNode = LOAD_SECTION_CAST(ed_3d_hierarchy_node*, pHierarchy->pLinkTransformData);
 
-		if (pNode == (ed_3d_hierarchy_node*)pChunck) {
-			peVar7 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHier, (ed_3d_hierarchy*)pNewNode->pData);
-			local_24 = (edNODE*)0x0;
-			local_40 = pHashCode;
-			for (local_20 = 0; local_20 < count; local_20 = local_20 + 1) {
-				pcVar1 = (ed_Chunck*)LOAD_SECTION(local_40->pData);
-				pHier = (ed_g3d_hierarchy*)(pcVar1 + 1);
-				pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
-				ed_Chunck* pNextChunk = (ed_Chunck*)(pHier + 1);
+		if (pHierarchyNode == (ed_3d_hierarchy_node*)pChunck) {
+			pNewHierNodeA = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHierarchy, (ed_3d_hierarchy*)pNewNode->pData);
 
-				if (pNextChunk == iVar1) {
+			pResultNodeB = (edNODE*)0x0;
+			pHashCodeB = pHashCode;
+
+			for (currentIndexB = 0; currentIndexB < count; currentIndexB = currentIndexB + 1) {
+				pHierChunkB = LOAD_SECTION_CAST(ed_Chunck*, pHashCodeB->pData);
+				pHierarchy = (ed_g3d_hierarchy*)(pHierChunkB + 1);
+				pHierarchyNode = LOAD_SECTION_CAST(ed_3d_hierarchy_node*, pHierarchy->pLinkTransformData);
+
+				if (pHierarchyNode == (ed_3d_hierarchy_node*)pHierChunkA) {
 					IMPLEMENTATION_GUARD();
-					peVar8 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar1 + 0x10),
-						(ed_3d_hierarchy*)peVar7->pData);
+					pHierarchy = (ed_g3d_hierarchy*)(pHierChunkB + 1);
+					peVar8 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHierarchy, (ed_3d_hierarchy*)pNewHierNodeA->pData);
 					local_74 = (edNODE*)0x0;
 					local_90 = pHashCode;
 					for (local_70 = 0; local_70 < count; local_70 = local_70 + 1) {
 						pcVar2 = (char*)LOAD_SECTION(local_90->pData);
-						if (*(char**)(pcVar2 + 0xa0) == (char*)pcVar1) {
+						if (*(char**)(pcVar2 + 0xa0) == (char*)pHierChunkB) {
 							peVar9 = ed3DHierarchyAddNode
 							(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)(pcVar2 + 0x10),
 								(ed_3d_hierarchy*)peVar8->pData);
@@ -11380,11 +11381,11 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 															for (local_200 = 0; local_200 < count; local_200 = local_200 + 1) {
 																pChunck_00 = (ed_Chunck*)local_220->pData;
 
-																pHier = (ed_g3d_hierarchy*)(pChunck_00 + 1);
-																pNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHier->pLinkTransformData);
+																pHierarchy = (ed_g3d_hierarchy*)(pChunck_00 + 1);
+																pHierarchyNode = (ed_3d_hierarchy_node*)LOAD_SECTION(pHierarchy->pLinkTransformData);
 
-																if (pNode == peVar6) {
-																	pNewNode_00 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHier, (ed_3d_hierarchy*)peVar13->pData);
+																if (pHierarchyNode == peVar6) {
+																	pNewNode_00 = ed3DHierarchyAddNode(pList, pHierNode, pParentNode, pHierarchy, (ed_3d_hierarchy*)peVar13->pData);
 																	ed3DHierarchyAddSonsToList
 																	(pList, pHierNode, pParentNode, pChunck_00, pNewNode_00, pHashCode, count);
 																	if (local_204 != (edNODE*)0x0) {
@@ -11423,17 +11424,17 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 						}
 						local_90 = local_90 + 1;
 					}
-					if (local_24 != (edNODE*)0x0) {
-						local_24 = peVar8;
+					if (pResultNodeB != (edNODE*)0x0) {
+						pResultNodeB = peVar8;
 					}
 				}
-				local_40 = local_40 + 1;
+				pHashCodeB = pHashCodeB + 1;
 			}
-			if (peVar15 != (edNODE*)0x0) {
-				peVar15 = peVar7;
+			if (pResultNodeA != (edNODE*)0x0) {
+				pResultNodeA = pNewHierNodeA;
 			}
 		}
-		peVar16 = peVar16 + 1;
+		pHashCodeA = pHashCodeA + 1;
 	}
 	return;
 }

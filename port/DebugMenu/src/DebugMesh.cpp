@@ -85,11 +85,11 @@ namespace Debug
 							while (stripIndex < pObject->stripCount) {
 								DebugMeshViewer::AddPreviewerStrip(pCurrentStrip, pMaterialBank);
 
-								pCurrentStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCurrentStrip->pNext);
-
 								if (stripIndex == gSelectedStripIndex) {
 									pStrip = pCurrentStrip;
 								}
+
+								pCurrentStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCurrentStrip->pNext);
 
 								stripIndex++;
 							}
@@ -157,35 +157,10 @@ namespace Debug
 			}
 		}
 
-		static void ListHallDetails(ed_g3d_manager* pManager)
+		static void ShowHierarchyDetails(ed_g3d_manager* pManager)
 		{
-			DebugHelpers::ListChunckDetails(pManager->HALL);
-
-			ImGui::Spacing();
-			ImGui::Spacing();
-
-			ed_Chunck* pHASH = pManager->HALL + 1;
-
-			DebugHelpers::ListChunckDetails(pHASH);
-
-			ImGui::Spacing();
-			ImGui::Spacing();
-
-			ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pHASH + 1);
-			const int chunkNb = edChunckGetNb(pHASH, reinterpret_cast<char*>(pManager->HALL) + pManager->HALL->size);
-
-			ImGui::Text("Number of Hashes: %d", chunkNb - 1);
-
-			for (int curIndex = 0; curIndex < chunkNb - 1; curIndex = curIndex + 1) {
-				char buff[256];
-				sprintf_s(buff, 256, "%d - %s", curIndex, pHashCode->hash.ToString().c_str());
-
-				if (gSelectedHierarchy == nullptr || ImGui::Selectable(buff)) {
-					gSelectedHierarchy = ed3DG3DHierarchyGetFromIndex(pManager, curIndex);
-				}
-
-				pHashCode = pHashCode + 1;
-			}
+			bool bOpen = true;
+			ImGui::Begin("Hierarchy Details", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 			if (gSelectedHierarchy) {
 				if (ImGui::CollapsingHeader("Hierarchy", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -236,7 +211,7 @@ namespace Debug
 						char buff[256];
 						sprintf_s(buff, "LOD %d", i);
 
-						if (ImGui::CollapsingHeader(buff, ImGuiTreeNodeFlags_DefaultOpen)) {
+						if (ImGui::CollapsingHeader(buff)) {
 							ed3DLod* pLod = gSelectedHierarchy->aLods + i;
 							ShowLodDetails(pManager, pLod);
 						}
@@ -245,6 +220,45 @@ namespace Debug
 					DebugMeshViewer::ShowPreviewer();
 				}
 			}
+
+			ImGui::End();
+
+			if (!bOpen) {
+				gSelectedHierarchy = nullptr;
+			}
+		}
+
+		static void ListHallDetails(ed_g3d_manager* pManager)
+		{
+			DebugHelpers::ListChunckDetails(pManager->HALL);
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ed_Chunck* pHASH = pManager->HALL + 1;
+
+			DebugHelpers::ListChunckDetails(pHASH);
+
+			ImGui::Spacing();
+			ImGui::Spacing();
+
+			ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pHASH + 1);
+			const int chunkNb = edChunckGetNb(pHASH, reinterpret_cast<char*>(pManager->HALL) + pManager->HALL->size);
+
+			ImGui::Text("Number of Hashes: %d", chunkNb - 1);
+
+			for (int curIndex = 0; curIndex < chunkNb - 1; curIndex = curIndex + 1) {
+				char buff[256];
+				sprintf_s(buff, 256, "%d - %s", curIndex, pHashCode->hash.ToString().c_str());
+
+				if (gSelectedHierarchy == nullptr || ImGui::Selectable(buff)) {
+					gSelectedHierarchy = ed3DG3DHierarchyGetFromIndex(pManager, curIndex);
+				}
+
+				pHashCode = pHashCode + 1;
+			}
+
+			ShowHierarchyDetails(pManager);
 
 			return;
 		}
