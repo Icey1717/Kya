@@ -1797,6 +1797,7 @@ CActorCinematic* CCinematic::NewCinematicActor(const edCinGameInterface::ACTORV_
 	CUTSCENE_LOG(LogLevel::Info, "CCinematic::NewCinematicActor");
 
 	pNewCinematicActor = (CActorCinematic*)0x0;
+
 	iVar1 = this->loadedActorCinematicCount;
 	iVar4 = 0;
 	if (0 < iVar1) {
@@ -1810,6 +1811,7 @@ CActorCinematic* CCinematic::NewCinematicActor(const edCinGameInterface::ACTORV_
 			iVar4 = iVar4 + 1;
 		} while (iVar4 < iVar1);
 	}
+
 	if (pNewCinematicActor == (CActorCinematic*)0x0) {
 		pNewCinematicActor = &this->aActorCinematic[iVar1];
 		pNewCinematicActor->Create(pTag, pG3D, pG2D, CScene::_scene_handleA);

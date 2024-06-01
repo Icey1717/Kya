@@ -7,6 +7,8 @@ struct ed_3D_Scene;
 struct edNODE;
 struct ed_3d_hierarchy;
 struct ed_g3d_manager;
+struct ed_3d_strip;
+struct ed_hash_code;
 
 namespace PS2 { struct GSTexEntry; }
 
@@ -33,6 +35,7 @@ namespace DebugMeshViewer {
 	// Implented via renderer backend.
 	PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>& GetDrawBufferData();
 	VertexConstantBuffer& GetVertexConstantBuffer();
+	void SetBoundTexture(Renderer::SimpleTexture* pSimpleTexture);
 
 	bool& GetUseGlslPipeline();
 	bool& GetWireframe();
@@ -41,4 +44,7 @@ namespace DebugMeshViewer {
 	void ShowClusterMenu(ed_g3d_manager* pManager);
 
 	void OnFrameBufferCreated(const ImTextureID& image);
+
+	void AddPreviewerStrip(ed_3d_strip* pStrip, ed_hash_code* pMBNK);
+	void ShowPreviewer();
 }

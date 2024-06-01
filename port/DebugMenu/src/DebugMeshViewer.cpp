@@ -18,11 +18,12 @@
 #include "TextureCache.h"
 #include "gizmo.h"
 #include "FileManager3D.h"
+#include "Texture.h"
 
 #define MESH_PREVIEWER_LOG(level, format, ...) MY_LOG_CATEGORY("Mesh Previewer", level, format, ##__VA_ARGS__)
 
 namespace DebugMeshViewer {
-	bool gAnimate = true;
+	bool gAnimate = false;
 	bool gRotate = false;
 	bool gUseGlslPipeline = true;
 	bool gWireframe = false;
@@ -36,34 +37,12 @@ namespace DebugMeshViewer {
 	int gIsolateStripIndex = -1;
 	int gHighlightStripIndex = -1;
 	int gHighlightAnimMatrixIndex = -1;
-	std::vector<std::vector<int>> gStripBoneIndexes;
-
-	void ShowStripBoneIndexes() 
-	{
-		ImGui::Begin("Strip To Bone", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-
-		// Iterate through the outer vector
-		for (size_t i = 0; i < gStripBoneIndexes.size(); ++i) {
-			// Display a label for the inner vector
-			ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Strip %zu", i);
-
-			// Iterate through the inner vector
-			for (size_t j = 0; j < gStripBoneIndexes[i].size(); ++j) {
-				// Display the value
-				ImGui::Text("    [%zu][%zu]: %d", i, j, gStripBoneIndexes[i][j]);
-			}
-		}
-
-		ImGui::End();
-	}
 
 	void RenderStrip(ed_3d_strip* pCurrentStrip, const int stripIndex, int& maxAnimIndex, const bool bAnimate)
 	{
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Strip: 0x{:x}", (uintptr_t)pCurrentStrip);
 
 		VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
-
-		auto& currentStripBoneList = gStripBoneIndexes.emplace_back();
 
 		char* pVifList = ((char*)pCurrentStrip) + pCurrentStrip->vifListOffset;
 
@@ -138,8 +117,6 @@ namespace DebugMeshViewer {
 				MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Assigning {} -> {},{}", *pAnimIndexes, stripIndex, animMatrixIndex);
 				vertexConstantBuffer.animStripToIndex[stripIndex][animMatrixIndex].index = *pAnimIndexes;
 				maxAnimIndex = std::max<int>(maxAnimIndex, *pAnimIndexes);
-
-				currentStripBoneList.push_back(*pAnimIndexes);
 
 				animMatrixIndex++;
 			}
@@ -245,48 +222,19 @@ namespace DebugMeshViewer {
 			pStripMaterial = (ed_g2d_material*)0x0;
 		}
 		else {
-			pStripMaterial = ed3DG2DGetG2DMaterialFromIndex(pMBNK, (int)pStrip->materialIndex);
+			pStripMaterial = ed3DG2DGetG2DMaterialFromIndex(pMBNK, pStrip->materialIndex);
 			if ((pStripMaterial != (ed_g2d_material*)0x0) && ((pStripMaterial->flags & 1) != 0)) {
 				return;
 			}
 		}
 
-		if ((pStripMaterial != (ed_g2d_material*)0x0) && (pStripMaterial->nbLayers != 0)) {
-			ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pStripMaterial->aLayers[0]);
-			ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
-			ed_g2d_bitmap* pBitmap = (ed_g2d_bitmap*)0x0;
-			ed_g2d_bitmap* pOther = (ed_g2d_bitmap*)0x0;
+		const Renderer::Kya::G2D::Material* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(pStripMaterial);
 
-			if (pLayer->bHasTexture != 0) {
-				ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
-				ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
-
-				if (pTexture->bHasPalette == 0) {
-					ed_hash_code* pTVar5 = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
-					if (pTVar5 != (ed_hash_code*)0x0) {
-						ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pTVar5->pData);
-						pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
-					}
-				}
-				else {
-					ed_hash_code* pAfterHash = (ed_hash_code*)(pTexture + 1);
-					int iVar4 = pAfterHash[(uint)pLayer->paletteId].pData;
-					if (iVar4 != 0) {
-						ed_hash_code* pHash = (ed_hash_code*)LOAD_SECTION(iVar4);
-						ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pHash->pData);
-						pOther = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
-					}
-
-					ed_hash_code* pPA32Hash = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
-					if (pPA32Hash != (ed_hash_code*)0x0) {
-						ed_hash_code* pPaletteHashCode = (ed_hash_code*)LOAD_SECTION(iVar4);
-						ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pPaletteHashCode->pData);
-						pOther = reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
-					}
-				}
-			}
-
-			gTextureData = MakeTextureDataFromPacket(pStripMaterial, pOther, pBitmap, 0);
+		if (pMaterial) {
+			// Check layers and textures to make sure they are size 1
+			assert(pMaterial->layers.size() == 1);
+			assert(pMaterial->layers.begin()->textures.size() == 1);
+			SetBoundTexture(pMaterial->layers.begin()->textures.begin()->pSimpleTexture);
 		}
 	}
 
@@ -378,6 +326,24 @@ namespace DebugMeshViewer {
 		return GetDrawBufferData().index.tail > 0;
 	}
 
+	bool UpdateDrawBuffer(ed_3d_strip* pStrip)
+	{
+		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
+
+		int maxAnimIndex;
+		RenderStrip(pStrip, 0, maxAnimIndex, false);
+
+		VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
+
+		for (int i = 0; i < gMaxAnimMatrices; i++) {
+			edF32Matrix4SetIdentityHard(&vertexConstantBuffer.animMatrices[i]);
+		}
+
+		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer End");
+
+		return GetDrawBufferData().index.tail > 0;
+	}
+
 	void ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy)
 	{
 		auto pTextureInfo = (ed_hash_code*)(pHierarchy->pTextureInfo + 0x10);
@@ -442,13 +408,9 @@ namespace DebugMeshViewer {
 		}
 	}
 
-	template<typename DataType>
-	void ShowPreviewer(DataType* pData)
+	void ShowPreviewerWindow()
 	{
-		gStripBoneIndexes.clear();
-
-		if (UpdateDrawBuffer(pData))
-		{
+		if (GetDrawBufferData().index.tail > 0) {
 			ImGui::Begin("Mesh Previewer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::Checkbox("Animate", &gAnimate);
 			ImGui::SameLine();
@@ -466,9 +428,20 @@ namespace DebugMeshViewer {
 
 			ImGui::Image(gMeshViewerTexture, ImVec2(gWidth, gHeight));
 			ImGui::End();
-
-			ShowStripBoneIndexes();
 		}
+	}
+
+	template<typename DataType>
+	void AddPreviewerData(DataType* pData)
+	{
+		UpdateDrawBuffer(pData);
+	}
+
+	template<typename DataType>
+	void ShowPreviewer(DataType* pData)
+	{
+		UpdateDrawBuffer(pData);
+		ShowPreviewerWindow();
 	}
 }
 
@@ -616,4 +589,15 @@ void DebugMeshViewer::ShowClusterMenu(ed_g3d_manager* pManager)
 void DebugMeshViewer::OnFrameBufferCreated(const ImTextureID& image)
 {
 	gMeshViewerTexture = image;
+}
+
+void DebugMeshViewer::AddPreviewerStrip(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
+{
+	UpdateMaterial(pStrip, pMBNK);
+	UpdateDrawBuffer(pStrip);
+}
+
+void DebugMeshViewer::ShowPreviewer()
+{
+	ShowPreviewerWindow();
 }

@@ -41,6 +41,8 @@ namespace DebugMeshViewer {
 		UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
 		PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t> gVertexBuffers;
 
+		Renderer::SimpleTexture* pBoundTexture = nullptr;
+
 		void CreateRenderPass()
 		{
 			VkAttachmentDescription colorAttachment{};
@@ -281,6 +283,10 @@ namespace DebugMeshViewer {
 	VertexConstantBuffer& GetVertexConstantBuffer() {
 		return Vulkan::gVertexConstantBuffer.GetBufferData();
 	}
+
+	void SetBoundTexture(Renderer::SimpleTexture* pSimpleTexture) {
+		Vulkan::pBoundTexture = pSimpleTexture;
+	}
 }
 
 void DebugMeshViewer::Vulkan::Setup()
@@ -355,31 +361,29 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 		gVertexBuffers.BindData(cmd);
 		gVertexConstantBuffer.Update(GetCurrentFrame());
 
-		//Renderer::Kya::GetTextureLibrary().FindMaterial();
-
-		//auto& tex = GetTextureEntry();
-		//tex.value.image.UpdateSampler();
-		//
-		//VkDescriptorImageInfo imageInfo{};
-		//imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		//imageInfo.imageView = tex.value.image.imageView;
-		//imageInfo.sampler = tex.value.image.sampler;
-		//
-		//const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
-		//
-		//Renderer::DescriptorWriteList writeList;
-		//writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-		//writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-		//
-		//std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(pipeline.descriptorSets[GetCurrentFrame()], pipeline.descriptorSetLayoutBindings);
-		//
-		//if (descriptorWrites.size() > 0) {
-		//	vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-		//}
-		//
-		//vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pipeline.descriptorSets[GetCurrentFrame()], 0, nullptr);
-		//
-		//vkCmdDrawIndexed(cmd, static_cast<uint32_t>(bufferData.index.tail), 1, 0, 0, 0);
+		PS2::GSSimpleTexture* pTextureData = pBoundTexture->pRenderer;
+		VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
+		
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = pTextureData->imageView;
+		imageInfo.sampler = sampler;
+		
+		const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
+		
+		Renderer::DescriptorWriteList writeList;
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+		
+		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(pipeline.descriptorSets[GetCurrentFrame()], pipeline.descriptorSetLayoutBindings);
+		
+		if (descriptorWrites.size() > 0) {
+			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		}
+		
+		vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pipeline.descriptorSets[GetCurrentFrame()], 0, nullptr);
+		
+		vkCmdDrawIndexed(cmd, static_cast<uint32_t>(bufferData.index.tail), 1, 0, 0, 0);
 	}
 
 	vkCmdEndRenderPass(cmd);
