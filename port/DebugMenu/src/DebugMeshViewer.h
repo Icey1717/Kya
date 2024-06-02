@@ -32,10 +32,12 @@ namespace DebugMeshViewer {
 		PaddedIndex animStripToIndex[gMaxStripIndex][gMaxStripIndex];
 	};
 
+	using PreviewerVertexBufferData = PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>;
+	PreviewerVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture);
+	int GetPreviewerDrawCommandCount();
+
 	// Implented via renderer backend.
-	PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>& GetDrawBufferData();
 	VertexConstantBuffer& GetVertexConstantBuffer();
-	void SetBoundTexture(Renderer::SimpleTexture* pSimpleTexture);
 
 	bool& GetUseGlslPipeline();
 	bool& GetWireframe();

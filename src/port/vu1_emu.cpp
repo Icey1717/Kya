@@ -14,6 +14,11 @@
 
 #include "hardware_draw.h"
 
+// ISPC
+#ifdef ENABLE_ISPC
+#include "vtx.h"
+#endif
+
 #define VU_VTX_TRACE_LOG(format, ...) if (VU1Emu::bTracingVtx) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
 
 #define GET_VIF_CMD(cmd) (((unsigned int)cmd >> (3 << 3)) & 0xff)
@@ -1341,8 +1346,27 @@ namespace VU1Emu {
 			EmulateXGKICK(vi15);
 		}
 
+		void _$GouraudMapping_No_Fog_16_2_ispc()
+		{
+#ifdef ENABLE_ISPC
+			const int vtxCount = vi14;
+			int vtxReg = vi15 + 1;
+			edF32MATRIX4 objToScreen = VIF_LOAD_M4(vi00, 0x10);
+			edF32VECTOR4* pSTQ = VIF_AS_F(vtxReg, 0);
+			edF32VECTOR4* pRGBA = VIF_AS_F(vtxReg, 1);
+			edF32VECTOR4* pXYZ = VIF_AS_F(vtxReg, 2);
+			//ispc::gouraudMappingNoFog(vtxCount, vtxReg, reinterpret_cast<float(*)[4]>(&objToScreen), reinterpret_cast<ispc::float4*>(pSTQ), reinterpret_cast<ispc::float4*>(pRGBA), reinterpret_cast<ispc::float4*>(pXYZ));
+			return;
+#endif
+		}
+
 		void _$GouraudMapping_No_Fog_16_2()
 		{
+#ifdef ENABLE_ISPC
+			//_$GouraudMapping_No_Fog_16_2_ispc();
+			//return;
+#endif
+
 			if (bRunSimplifiedCode) {
 				_$GouraudMapping_No_Fog_16_2_Simple();
 				return;

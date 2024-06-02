@@ -30,7 +30,6 @@ namespace DebugMeshViewer {
 	bool gUseGizmo = false;
 	glm::mat4 gGizmoMatrix;
 	ImTextureID gMeshViewerTexture;
-
 	ed_g2d_material* gMaterial;
 	Renderer::TextureData gTextureData;
 
@@ -38,7 +37,7 @@ namespace DebugMeshViewer {
 	int gHighlightStripIndex = -1;
 	int gHighlightAnimMatrixIndex = -1;
 
-	void RenderStrip(ed_3d_strip* pCurrentStrip, const int stripIndex, int& maxAnimIndex, const bool bAnimate)
+	void RenderStrip(ed_3d_strip* pCurrentStrip, const int stripIndex, int& maxAnimIndex, const bool bAnimate, PreviewerVertexBufferData& vertexBufferData)
 	{
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Strip: 0x{:x}", (uintptr_t)pCurrentStrip);
 
@@ -124,7 +123,7 @@ namespace DebugMeshViewer {
 			MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Final anim index: {}", animMatrixIndex);
 		}
 
-		auto AddVertices = [stripIndex]() {
+		auto AddVertices = [stripIndex, &vertexBufferData]() {
 			char* vtxStart = VU1Emu::GetVertexDataStart();
 
 			Gif_Tag gifTag;
@@ -156,7 +155,7 @@ namespace DebugMeshViewer {
 
 				vtx.XYZSkip.Skip |= shiftedStripIndex;
 
-				Renderer::KickVertex(vtx, primPacked, skip, GetDrawBufferData());
+				Renderer::KickVertex(vtx, primPacked, skip, vertexBufferData);
 
 				vtxStart += 0x30;
 			};
@@ -191,30 +190,30 @@ namespace DebugMeshViewer {
 	int RenderStripList(ed_3d_strip* p3dStrip, int stripCount, const bool bAnimate) 
 	{
 		int maxAnimIndex = 0;
-		std::vector<ed_3d_strip*> strips;
-
-		for (int stripIndex = 0; stripIndex < stripCount; stripIndex++) {
-			strips.push_back(p3dStrip);
-			p3dStrip = (ed_3d_strip*)LOAD_SECTION(p3dStrip->pNext);
-		}
-
-		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Found {} strips", strips.size());
-
-		std::reverse(strips.begin(), strips.end());
-
-		for (int stripIndex = 0; stripIndex < strips.size(); stripIndex++) {
-			if (gIsolateStripIndex != -1 && gIsolateStripIndex != stripIndex) {
-				continue;
-			}
-
-			auto& pCurrentStrip = strips[stripIndex];
-			RenderStrip(pCurrentStrip, stripIndex, maxAnimIndex, bAnimate);
-		}
+		//std::vector<ed_3d_strip*> strips;
+		//
+		//for (int stripIndex = 0; stripIndex < stripCount; stripIndex++) {
+		//	strips.push_back(p3dStrip);
+		//	p3dStrip = (ed_3d_strip*)LOAD_SECTION(p3dStrip->pNext);
+		//}
+		//
+		//MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Found {} strips", strips.size());
+		//
+		//std::reverse(strips.begin(), strips.end());
+		//
+		//for (int stripIndex = 0; stripIndex < strips.size(); stripIndex++) {
+		//	if (gIsolateStripIndex != -1 && gIsolateStripIndex != stripIndex) {
+		//		continue;
+		//	}
+		//
+		//	auto& pCurrentStrip = strips[stripIndex];
+		//	RenderStrip(pCurrentStrip, stripIndex, maxAnimIndex, bAnimate);
+		//}
 
 		return maxAnimIndex;
 	}
 
-	void UpdateMaterial(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
+	PreviewerVertexBufferData* UpdateMaterial(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 	{
 		ed_g2d_material* pStripMaterial;
 
@@ -224,7 +223,7 @@ namespace DebugMeshViewer {
 		else {
 			pStripMaterial = ed3DG2DGetG2DMaterialFromIndex(pMBNK, pStrip->materialIndex);
 			if ((pStripMaterial != (ed_g2d_material*)0x0) && ((pStripMaterial->flags & 1) != 0)) {
-				return;
+				return nullptr;
 			}
 		}
 
@@ -234,49 +233,51 @@ namespace DebugMeshViewer {
 			// Check layers and textures to make sure they are size 1
 			assert(pMaterial->layers.size() == 1);
 			assert(pMaterial->layers.begin()->textures.size() == 1);
-			SetBoundTexture(pMaterial->layers.begin()->textures.begin()->pSimpleTexture);
+			return &AddPreviewerDrawCommand(pMaterial->layers.begin()->textures.begin()->pSimpleTexture);
 		}
+
+		return nullptr;
 	}
 
 	// Returns whether we prepared any indices.
-	bool UpdateDrawBuffer(ed_3d_hierarchy* p3dHier) {
-		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
-
-		if (p3dHier) {
-			ed3DLod* pLod = ed3DChooseGoodLOD(p3dHier);
-			ed_hash_code* pLodHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
-
-			if (pLodHash) {
-				ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pLodHash->pData);
-				ed_g3d_object* pMeshOBJ = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
-
-				ed_3d_strip* p3dStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->p3DStrip);
-
-				int maxAnimIndex = 0;
-
-				if (p3dStrip) {
-					maxAnimIndex = RenderStripList(p3dStrip, pMeshOBJ->stripCount, true);
-				}
-
-				if (p3dHier) {
-					VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
-					assert(maxAnimIndex < gMaxAnimMatrices);
-
-					for (int i = 0; i <= maxAnimIndex; i++) {
-						edF32Matrix4SetIdentityHard(&vertexConstantBuffer.animMatrices[i]);
-
-						if (p3dHier->pAnimMatrix && gAnimate) {
-							vertexConstantBuffer.animMatrices[i] = p3dHier->pAnimMatrix[i];
-						}
-					}
-				}
-			}
-		}
-
-		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer End");
-
-		return GetDrawBufferData().index.tail > 0;
-	}
+	//bool UpdateDrawBuffer(ed_3d_hierarchy* p3dHier, PreviewerVertexBufferData& vertexBufferData) {
+	//	MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
+	//
+	//	if (p3dHier) {
+	//		ed3DLod* pLod = ed3DChooseGoodLOD(p3dHier);
+	//		ed_hash_code* pLodHash = (ed_hash_code*)LOAD_SECTION(pLod->pObj);
+	//
+	//		if (pLodHash) {
+	//			ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pLodHash->pData);
+	//			ed_g3d_object* pMeshOBJ = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
+	//
+	//			ed_3d_strip* p3dStrip = (ed_3d_strip*)LOAD_SECTION(pMeshOBJ->p3DStrip);
+	//
+	//			int maxAnimIndex = 0;
+	//
+	//			if (p3dStrip) {
+	//				maxAnimIndex = RenderStripList(p3dStrip, pMeshOBJ->stripCount, true);
+	//			}
+	//
+	//			if (p3dHier) {
+	//				VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
+	//				assert(maxAnimIndex < gMaxAnimMatrices);
+	//
+	//				for (int i = 0; i <= maxAnimIndex; i++) {
+	//					edF32Matrix4SetIdentityHard(&vertexConstantBuffer.animMatrices[i]);
+	//
+	//					if (p3dHier->pAnimMatrix && gAnimate) {
+	//						vertexConstantBuffer.animMatrices[i] = p3dHier->pAnimMatrix[i];
+	//					}
+	//				}
+	//			}
+	//		}
+	//	}
+	//
+	//	MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer End");
+	//
+	//	return GetDrawBufferData().index.tail > 0;
+	//}
 
 	int gOctreeStrip = 0;
 
@@ -296,42 +297,42 @@ namespace DebugMeshViewer {
 		return (uint)pStripCounts[stripCountArrayEntryIndex];
 	}
 
-	bool UpdateDrawBuffer(const ed_3d_octree* p3DOctree) 
-	{
-		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
+	//bool UpdateDrawBuffer(const ed_3d_octree* p3DOctree, PreviewerVertexBufferData& vertexBufferData)
+	//{
+	//	MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
+	//
+	//	MeshData_CDQU* pCDQU = (MeshData_CDQU*)p3DOctree->pCDQU;
+	//
+	//	uint stripCount = GetOctreeStripCount(p3DOctree);
+	//
+	//	MeshData_PSX2* pPSX2 = reinterpret_cast<MeshData_PSX2*>(pCDQU + 1);
+	//
+	//	if (stripCount != 0) {
+	//		ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pPSX2->p3DStrip);
+	//		char* pMBNK = (char*)LOAD_SECTION(pPSX2->pMBNK);
+	//
+	//		for (; stripCount != 0; stripCount = stripCount - 1) {
+	//			if (stripCount == (gOctreeStrip + 1)) {
+	//				auto& vertexBuffer = UpdateMaterial(pStrip, (ed_hash_code*)(pMBNK + 0x10));
+	//				int maxAnimIndex;
+	//				RenderStrip(pStrip, 0, maxAnimIndex, false, vertexBuffer);
+	//			}
+	//
+	//			pStrip = (ed_3d_strip*)LOAD_SECTION(pStrip->pNext);
+	//		}
+	//	}
+	//
+	//	MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer End");
+	//
+	//	return vertexBufferData.index.tail > 0;
+	//}
 
-		MeshData_CDQU* pCDQU = (MeshData_CDQU*)p3DOctree->pCDQU;
-
-		uint stripCount = GetOctreeStripCount(p3DOctree);
-
-		MeshData_PSX2* pPSX2 = reinterpret_cast<MeshData_PSX2*>(pCDQU + 1);
-
-		if (stripCount != 0) {
-			ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(pPSX2->p3DStrip);
-			char* pMBNK = (char*)LOAD_SECTION(pPSX2->pMBNK);
-
-			for (; stripCount != 0; stripCount = stripCount - 1) {
-				if (stripCount == (gOctreeStrip + 1)) {
-					UpdateMaterial(pStrip, (ed_hash_code*)(pMBNK + 0x10));
-					int maxAnimIndex;
-					RenderStrip(pStrip, 0, maxAnimIndex, false);
-				}
-
-				pStrip = (ed_3d_strip*)LOAD_SECTION(pStrip->pNext);
-			}
-		}
-
-		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer End");
-
-		return GetDrawBufferData().index.tail > 0;
-	}
-
-	bool UpdateDrawBuffer(ed_3d_strip* pStrip)
+	bool UpdateDrawBuffer(ed_3d_strip* pStrip, PreviewerVertexBufferData& vertexBufferData)
 	{
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Begin");
 
 		int maxAnimIndex;
-		RenderStrip(pStrip, 0, maxAnimIndex, false);
+		RenderStrip(pStrip, 0, maxAnimIndex, false, vertexBufferData);
 
 		VertexConstantBuffer& vertexConstantBuffer = GetVertexConstantBuffer();
 
@@ -341,7 +342,7 @@ namespace DebugMeshViewer {
 
 		MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer End");
 
-		return GetDrawBufferData().index.tail > 0;
+		return vertexBufferData.index.tail > 0;
 	}
 
 	void ShowHierarchyMenu(ed_3d_hierarchy* pHierarchy)
@@ -410,7 +411,7 @@ namespace DebugMeshViewer {
 
 	void ShowPreviewerWindow()
 	{
-		if (GetDrawBufferData().index.tail > 0) {
+		if (GetPreviewerDrawCommandCount() > 0) {
 			ImGui::Begin("Mesh Previewer", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 			ImGui::Checkbox("Animate", &gAnimate);
 			ImGui::SameLine();
@@ -440,10 +441,11 @@ namespace DebugMeshViewer {
 	template<typename DataType>
 	void ShowPreviewer(DataType* pData)
 	{
-		UpdateDrawBuffer(pData);
+		//UpdateDrawBuffer(pData);
 		ShowPreviewerWindow();
 	}
-}
+} // DebugMeshViewer
+
 
 bool& DebugMeshViewer::GetUseGlslPipeline()
 {
@@ -593,8 +595,11 @@ void DebugMeshViewer::OnFrameBufferCreated(const ImTextureID& image)
 
 void DebugMeshViewer::AddPreviewerStrip(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 {
-	UpdateMaterial(pStrip, pMBNK);
-	UpdateDrawBuffer(pStrip);
+	auto* pVertexBufferData = UpdateMaterial(pStrip, pMBNK);
+
+	if (pVertexBufferData) {
+		UpdateDrawBuffer(pStrip, *pVertexBufferData);
+	}
 }
 
 void DebugMeshViewer::ShowPreviewer()

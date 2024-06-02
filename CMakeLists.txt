@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.19.4)
 
+include("src/port/ispc/ispc.cmake")
+
 if (PS2)
 else()
 set(CMAKE_C_COMPILER "clang")
@@ -12,6 +14,16 @@ set (CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 project(Kya)
+
+message("Detecting ISPC")
+message("$ENV{ISPC}")
+
+if(NOT "$ENV{ISPC}" STREQUAL "")
+	set("ENABLE_ISPC" ON)
+	set(CMAKE_ISPC_COMPILER "$ENV{ISPC}")
+else()
+	set("ENABLE_ISPC" OFF)
+endif()
 
 if (PS2)
 	message("PS2 Build")
@@ -403,6 +415,17 @@ else()
 	)
 endif()
 
+if (${ENABLE_ISPC})
+	# Specify your ISPC source files
+	set(ISPC_SOURCES
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/port/ispc/simple.ispc"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/port/ispc/vtx.ispc"
+	)
+
+	# Compile ISPC sources
+	compile_ispc(ISPC_OBJECTS TARGET Kya SOURCES ${ISPC_SOURCES})
+endif()
+
 # add the executable
 if (PS2)
 	add_executable(Kya 
@@ -482,6 +505,12 @@ else()
 	)
 
 	target_link_libraries(Kya PUBLIC Port Log VU Job steinwurf::recycle)
+
+	if (ENABLE_ISPC)
+		target_sources(Kya PRIVATE ${ISPC_OBJECTS})
+		target_include_directories(Kya PRIVATE "${ISPC_INCLUDE_DIR}")
+		target_compile_definitions(Kya PRIVATE "ENABLE_ISPC")
+	endif()
 endif()
 
 set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )
