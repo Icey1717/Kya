@@ -123,8 +123,12 @@ namespace DebugMeshViewer {
 			MESH_PREVIEWER_LOG(LogLevel::Verbose, "UpdateDrawBuffer Final anim index: {}", animMatrixIndex);
 		}
 
-		auto AddVertices = [stripIndex, &vertexBufferData]() {
+		const uint stripFlags = pCurrentStrip->flags;
+
+		auto AddVertices = [stripIndex, stripFlags, &vertexBufferData]() {
 			char* vtxStart = VU1Emu::GetVertexDataStart();
+
+			int* pFlag = reinterpret_cast<int*>(vtxStart - 0x10);
 
 			Gif_Tag gifTag;
 			gifTag.setTag((u8*)vtxStart, true);
@@ -132,6 +136,34 @@ namespace DebugMeshViewer {
 			vtxStart += 0x10;
 
 			for (int i = 0; i < gifTag.nLoop; i++) {
+				const int addr = VU1Emu::GetExecVuCodeAddr();
+
+				int drawMode = 0;
+
+				if ((stripFlags & 0x400) != 0) {
+					drawMode = 1;
+				}
+
+				//if (addr == 0x3 /*_$DrawingStart_XYZ32 (0x0018)*/) {
+				//	//VU_VTX_TRACE_LOG("_$DrawingStart_XYZ32");
+				//	drawMode = 1;
+				//}
+				//else if (addr == 0xfc /*_$DrawingBones_Rigid (0x07e0)*/) {
+				//	//VU_VTX_TRACE_LOG("_$DrawingBones_Rigid");
+				//	drawMode = 2;
+				//}
+				//else if (addr == 0x156 /*_$DrawingBones_Rigid_noNormal (0x0ab0)*/) {
+				//	//VU_VTX_TRACE_LOG("_$DrawingBones_Rigid_noNormal");
+				//	drawMode = 3;
+				//}
+				//else if (addr == 0x19) {
+				//	//_$DrawingStart_XYZ32_Normal();
+				//	drawMode = 4;
+				//}
+				//else {
+				//	IMPLEMENTATION_GUARD();
+				//}
+
 				Renderer::GSVertexUnprocessed vtx;
 				memcpy(&vtx.STQ, vtxStart, sizeof(vtx.STQ));
 				memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
@@ -152,8 +184,8 @@ namespace DebugMeshViewer {
 				const uint skip = vtx.XYZSkip.Skip & 0x8000;
 
 				const uint shiftedStripIndex = stripIndex << 16;
-
-				vtx.XYZSkip.Skip |= shiftedStripIndex;
+				//vtx.XYZSkip.Skip |= shiftedStripIndex;
+				vtx.XYZSkip.Skip |= (drawMode << 16);
 
 				Renderer::KickVertex(vtx, primPacked, skip, vertexBufferData);
 
@@ -165,7 +197,7 @@ namespace DebugMeshViewer {
 			bool bCompletedPartial;
 
 			while (bCompletedPartial = partialMeshSectionCount != 0, partialMeshSectionCount = partialMeshSectionCount - 1, bCompletedPartial) {
-				VU1Emu::ProcessVifList((edpkt_data*)pVifList, false);
+				VU1Emu::ProcessVifList((edpkt_data*)pVifList, true);
 				AddVertices();
 				pVifList = pVifList + incPacketSize * 0x10;
 			}

@@ -9087,6 +9087,9 @@ void ed3DSceneRender(int, int, char*)
 	uint staticMeshMasterIndex;
 	uint staticMeshMasterFlags;
 
+	// HACK: This is a hack to prevent the game from rendering.
+	//return;
+
 	RENDER_LABEL_BEGIN("ed3DSceneRender");
 	ZONE_SCOPED;
 

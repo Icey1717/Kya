@@ -16,6 +16,8 @@ namespace VU1Emu {
 
 	char* GetVertexDataStart();
 
+	int GetExecVuCodeAddr();
+
 	void QueueDraw();
 
 	// Multithread

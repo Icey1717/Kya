@@ -39,6 +39,8 @@ namespace VU1Emu {
 
 	bool bTracingVtx = false;
 
+	int gExecVuCodeAddr = 0;
+
 	namespace Debug {
 		constexpr bool bUseJobPool = true;
 		constexpr bool bDelayCoreExecution = true;
@@ -234,7 +236,7 @@ namespace VU1Emu {
 				assert(false);
 			}
 
-			vi01 = VIF_LOAD_I(vi15, -1, 0);
+			vi01 = VIF_LOAD_I(vi15, -1, VIF_REG_X);
 		}
 
 		void _$DrawingStart_XYZ32() 
@@ -2622,6 +2624,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
 			if (!bRunCode) {
+				gExecVuCodeAddr = pRunTag->addr;
 				pVifPkt++;
 				continue;
 			}
@@ -2893,6 +2896,11 @@ bool& VU1Emu::GetTraceVtx()
 char* VU1Emu::GetVertexDataStart()
 {
 	return GetFakeMem() + ((gItop) << 4);
+}
+
+int VU1Emu::GetExecVuCodeAddr()
+{
+	return gExecVuCodeAddr;
 }
 
 void VU1Emu::QueueDraw()

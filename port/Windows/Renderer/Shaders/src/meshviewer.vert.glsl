@@ -1,13 +1,13 @@
 #version 450
 
 float int12_to_float(int x) {
-    return float(x) * 0.000244140625;
+	return float(x) * 0.000244140625;
 }
 
 layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
-    mat4 view;
-    mat4 proj;
+	mat4 model;
+	mat4 view;
+	mat4 proj;
 	mat4 animMatrices[0x60];
 	uint animStripToIndex[0x20][0x20];
 } ubo;
@@ -27,8 +27,20 @@ void main() {
 
 	uint stripIndex = inFlags >> 16;
 
-    uint anim = baseFlags & 0x7ff;
-    uint flags = baseFlags & 0xc000;
+	uint anim = baseFlags & 0x7ff;
+	uint flags = baseFlags & 0xc000;
+
+	vec4 fixedPos = vec4(inPosition, 1.0);
+
+	if (stripIndex == 0) {
+		fixedPos = vec4(inPosition, 1.0);
+	}
+	else {
+		fixedPos.x = int12_to_float(floatBitsToInt(inPosition.x));
+		fixedPos.y = int12_to_float(floatBitsToInt(inPosition.y));
+		fixedPos.z = int12_to_float(floatBitsToInt(inPosition.z));
+		fixedPos.w = 1.0;
+	}
 
 	if (anim > 0) {
 		uint animIndex = anim - 0x3dc;
@@ -38,20 +50,18 @@ void main() {
 
 		mat4 animMatrix = ubo.animMatrices[intoAnimMatrices];
 
-		vec4 fixedPos = vec4(inPosition, 1.0);
 		vec4 pos = ubo.proj * ubo.view * ubo.model * animMatrix * fixedPos;
 		gl_Position = pos;
 	}
 	else {
-		vec4 fixedPos = vec4(inPosition, 1.0);
 		vec4 pos = ubo.proj * ubo.view * ubo.model * fixedPos;
 		gl_Position = pos;
 	}
 
-    fragColor.x = inColor.x / 255.0;
-    fragColor.y = inColor.y / 255.0;
-    fragColor.z = inColor.z / 255.0;
-    fragColor.w = inColor.w / 255.0;
+	fragColor.x = inColor.x / 255.0;
+	fragColor.y = inColor.y / 255.0;
+	fragColor.z = inColor.z / 255.0;
+	fragColor.w = inColor.w / 255.0;
 
 	vec2 outST = vec2(int12_to_float(inST.x), int12_to_float(inST.y));
 
