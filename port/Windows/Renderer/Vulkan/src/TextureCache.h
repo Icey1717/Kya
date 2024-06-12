@@ -16,12 +16,11 @@ namespace PS2 {
 			return descriptorSets[index];
 		}
 
-		void UpdateSet(int index) const;
-
 		VkDescriptorPool descriptorPool;
 		std::vector<VkDescriptorSet> descriptorSets;
 		Renderer::LayoutBindingMap layoutBindingMap;
 
+		// These need to be refactored!
 		UniformBuffer<PS2::VSConstantBuffer> vertexConstBuffer;
 		UniformBuffer<PS2::PSConstantBuffer> pixelConstBuffer;
 	};
@@ -64,6 +63,9 @@ namespace PS2 {
 
 		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline);
 		GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline);
+
+		void UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList);
+		void UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList);
 
 		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;
 	};

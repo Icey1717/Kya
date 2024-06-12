@@ -1327,6 +1327,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	gCurInfPosForBegin = (uint)gCurDList->subCommandBufferCount;
 	gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 	pStrip = gCurDListBuf;
+
 	if (gCurDList->field_0x2c != (DisplayListInternalSubObj_60**)0x0) {
 		gCurDList->field_0x2c[gCurDList->field_0x6] = m0;
 		gCurDList->field_0x6 = gCurDList->field_0x6 + 1;
@@ -1337,7 +1338,8 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	else {
 		gCurDListBuf->materialIndex = (short)gCurMaterial->index;
 	}
-	gCurDListBuf->field_0x6 = -1;
+
+	gCurDListBuf->cachedIncPacket = -1;
 	gCurDListBuf->primListIndex = 0;
 	uVar8 = 0;
 	do {

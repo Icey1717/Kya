@@ -38,6 +38,8 @@ set (SOURCES
 	"Vulkan/src/FrameBuffer.cpp"
 	"Vulkan/src/Pipeline.h"
 	"Vulkan/src/Pipeline.cpp"
+	"Vulkan/src/NativeRenderer.h"
+	"Vulkan/src/NativeRenderer.cpp"
 	"Vulkan/src/TextureCache.h"
 	"Vulkan/src/TextureCache.cpp"
 	"Vulkan/src/UniformBuffer.h"
@@ -53,6 +55,9 @@ set (SOURCES
 )
 
 add_library(Renderer ${SOURCES})
+
+target_compile_definitions(Renderer PUBLIC "GLFW_INCLUDE_VULKAN")
+target_compile_definitions(Renderer PUBLIC "GLM_FORCE_RADIANS")
 
 #target_compile_features(Renderer PRIVATE cxx_std_20)
 

@@ -643,11 +643,10 @@ union DMA_Matrix {
 	};
 };
 
-PACK(
-	struct ed_3d_strip {
+struct ed_3d_strip {
 	uint flags;
 	short materialIndex;
-	short field_0x6;
+	short cachedIncPacket;
 	int vifListOffset;
 	int pNext; // ed_3d_strip*
 	edF32VECTOR4 boundingSphere;
@@ -662,12 +661,14 @@ PACK(
 	byte primListIndex;
 	short meshCount;
 	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
-});
+};
+
+static_assert(sizeof(ed_3d_strip) == 0x40, "Invalid ed_3d_strip size");
 
 
 struct ed_dma_matrix : public edLIST {
 	edF32MATRIX4* pObjToWorld;
-	ed_3d_hierarchy* pMeshTransformData;
+	ed_3d_hierarchy* pHierarchy;
 	int flags_0x28;
 	float normalScale;
 };
@@ -727,7 +728,7 @@ PACK(struct ed_g3d_object {
 
 ed_g3d_object* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier);
 ed3DLod* ed3DChooseGoodLOD(ed_3d_hierarchy* pHierarchy);
-uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, int param_2, long bUpdateInternal);
+uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, bool param_2, bool bCachedSizeDirty);
 edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix, byte param_3);
 edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix);
 float ed3DMatrixGetBigerScale(edF32MATRIX4* m0);
@@ -791,6 +792,7 @@ Multidelegate<ed_g3d_manager*, std::string>& ed3DGetMeshLoadedDelegate();
 namespace ed3D {
 	namespace DebugOptions {
 		bool& GetForceHighestLod();
+		bool& GetDisableClusterRendering();
 	}
 }
 #endif

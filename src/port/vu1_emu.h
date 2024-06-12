@@ -13,6 +13,7 @@ namespace VU1Emu {
 	bool& GetRunSingleThreaded();
 	bool& GetRunSimplifiedCode();
 	bool& GetTraceVtx();
+	bool& GetForceAnimMatrixIdentity();
 
 	char* GetVertexDataStart();
 

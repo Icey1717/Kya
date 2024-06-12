@@ -175,6 +175,7 @@ namespace Debug {
 	}
 
 	static Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
+	static Debug::Setting<float> gCustomCutsceneTime = { "Custom Cutscene Time", 0.0f };
 
 	static void ShowCutsceneMenu(bool* bOpen) {
 		// Create a new ImGui window
@@ -263,8 +264,16 @@ namespace Debug {
 				ImGui::Checkbox("Custom Time Control", &bCutsceneStepEnabled);
 
 				if (bCutsceneStepEnabled) {
-					static float cutsceneStepTime = 46.f;
-					pCutscene->totalCutsceneDelta = cutsceneStepTime;
+					gCustomCutsceneTime.DrawImguiControl();
+					static float cutsceneStepTime = 0.0f;
+					pCutscene->totalCutsceneDelta = gCustomCutsceneTime + cutsceneStepTime;
+
+					pCutscene->totalCutsceneDelta = std::clamp(pCutscene->totalCutsceneDelta, 0.0f, totalTime - 1.0f);
+
+					if (ImGui::Button("Set to current")) {
+						gCustomCutsceneTime = gCustomCutsceneTime + cutsceneStepTime;
+						cutsceneStepTime = 0.0f;
+					}
 
 					if (ImGui::Button("<<")) {
 						auto pTimer = Timer::GetTimer();
@@ -293,6 +302,8 @@ namespace Debug {
 	}
 
 	static Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
+	static Debug::Setting<bool> gDisableClusterRendering = { "Disable Cluster Rendering", false };
+	static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
 
 	static void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
@@ -319,7 +330,27 @@ namespace Debug {
 
 		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
 
+		if (gDisableClusterRendering.DrawImguiControl()) {
+			ed3D::DebugOptions::GetDisableClusterRendering() = gDisableClusterRendering;
+		}
+
+		if (gForceAnimMatrixIdentity.DrawImguiControl()) {
+			VU1Emu::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
+		}
+
 		// End the ImGui window
+		ImGui::End();
+	}
+
+	static void ShowNativeFrameBuffer(bool* bOpen) {
+		ImGui::Begin("NativeFrameBuffer", bOpen);
+
+		const ImVec2 image_size(640.0f * 2.5f, 480.0f * 2.0f);
+
+		// Use ImGui::Image to display the image
+		static ImTextureID gFrameBuffer = DebugMenu::AddNativeFrameBuffer();
+		ImGui::Image(gFrameBuffer, image_size);
+
 		ImGui::End();
 	}
 
@@ -691,6 +722,7 @@ namespace Debug {
 		{"Demo", ImGui::ShowDemoWindow },
 		{"Log", ShowLogWindow },
 		{"Mesh List", ShowMeshList },
+		{"Native FrameBuffer", ShowNativeFrameBuffer },
 		{"Framebuffers", ShowFramebuffers },
 		{"Cutscene", ShowCutsceneMenu, true },
 		{"Rendering", ShowRenderingMenu },
@@ -753,6 +785,9 @@ void DebugMenu::Init()
 	edDListGetMaterialUnloadedDelegate() += Debug::OnMaterialUnloaded;
 	ed3DGetTextureLoadedDelegate() += Debug::OnTextureLoaded;
 	ed3DGetMeshLoadedDelegate() += Debug::OnMeshLoaded;
+
+	ed3D::DebugOptions::GetDisableClusterRendering() = Debug::gDisableClusterRendering;
+	VU1Emu::GetForceAnimMatrixIdentity() = Debug::gForceAnimMatrixIdentity;
 }
 
 static Input::InputFunctions gInputFunctions;

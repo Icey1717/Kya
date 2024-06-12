@@ -524,7 +524,7 @@ void CSector::InstallCallback()
 	short sStack2;
 
 #ifdef PLATFORM_WIN
-	char* pBackgroundFileName = nullptr;
+	std::string szBackgroundFileName;
 #endif
 
 	pAnimHierarchy = (char*)0x0;
@@ -557,7 +557,8 @@ void CSector::InstallCallback()
 				else {
 					if (uVar9 == 0x40002) {
 #ifdef PLATFORM_WIN
-						pBackgroundFileName = DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex);
+						char* pBackgroundFileName = DebugFindFilePath((this->bankObject).pBankFileAccessObject->pFileHeader, inFileIndex);
+						szBackgroundFileName = pBackgroundFileName;
 #endif
 						SECTOR_LOG(LogLevel::Info, "Sector::Init Background Mesh: {}\n", pBackgroundFileName);
 						local_30 = bankEntry.size;
@@ -608,7 +609,7 @@ void CSector::InstallCallback()
 		this->pBackgroundNode = (edNODE*)0x0;
 	}
 	else {
-		NAME_NEXT_OBJECT("%s", pBackgroundFileName);
+		NAME_NEXT_OBJECT("%s", szBackgroundFileName.c_str());
 		p3DFileManager->HideCommonBackground();
 		ed3DInstallG3D(pFileData, local_30, 0, &iStack8, &this->backgroundTexture, 0xc, &this->backgroundMesh);
 		pMVar4 = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->backgroundMesh, (char*)0x0);

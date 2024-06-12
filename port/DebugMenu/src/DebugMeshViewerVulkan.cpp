@@ -2,6 +2,7 @@
 #include "DebugMeshViewer.h"
 #include "UniformBuffer.h"
 #include "Pipeline.h"
+#include "NativeRenderer.h"
 #include "Types.h"
 #include "FrameBuffer.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -12,26 +13,9 @@
 
 namespace DebugMeshViewer {
 	namespace Vulkan {
+		using namespace Renderer::Native;
 
-		struct PipelineKey {
-			union {
-				struct {
-				uint32_t bWireframe:1;
-				uint32_t bGlsl:1;
-				} options;
-
-				uint32_t key{};
-			};
-		};
-
-		struct PipelineCreateInfo {
-			std::string vertShaderFilename;
-			std::string fragShaderFilename;
-			
-			PipelineKey key;
-		};
-
-		std::unordered_map<size_t, Renderer::Pipeline> gPipelines;
+		PipelineMap gPipelines;
 		Renderer::FrameBufferBase gFrameBuffer;
 
 		VkSampler gFrameBufferSampler;
@@ -41,188 +25,19 @@ namespace DebugMeshViewer {
 
 		UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
 
+		constexpr int maxDrawCommands = 64;
+
 		using PreviewerVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t>;
-		using PreviewerDrawCommandArray = std::unordered_map<Renderer::SimpleTexture*, PreviewerVertexBuffer>;
+		using PreviewerDrawCommandArray = std::array<std::pair<Renderer::SimpleTexture*, PreviewerVertexBuffer>, maxDrawCommands>;
 		PreviewerDrawCommandArray gPreviewerDrawCommands;
 
-		void CreateRenderPass()
-		{
-			VkAttachmentDescription colorAttachment{};
-			colorAttachment.format = GetSwapchainImageFormat();
-			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-
-			VkAttachmentReference colorAttachmentRef{};
-			colorAttachmentRef.attachment = 0;
-			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-			VkAttachmentDescription depthAttachment{};
-			depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
-			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-
-			VkAttachmentReference depthAttachmentRef{};
-			depthAttachmentRef.attachment = 1;
-			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-			VkSubpassDescription subpass{};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = 1;
-			subpass.pColorAttachments = &colorAttachmentRef;
-			subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-			VkSubpassDependency dependency{};
-			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-			dependency.dstSubpass = 0;
-			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.srcAccessMask = 0;
-			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-			std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-
-			VkRenderPassCreateInfo renderPassCreateInfo{};
-			renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			renderPassCreateInfo.attachmentCount = attachments.size();
-			renderPassCreateInfo.pAttachments = attachments.data();
-			renderPassCreateInfo.subpassCount = 1;
-			renderPassCreateInfo.pSubpasses = &subpass;
-			renderPassCreateInfo.dependencyCount = 1;
-			renderPassCreateInfo.pDependencies = &dependency;
-
-			if (vkCreateRenderPass(GetDevice(), &renderPassCreateInfo, GetAllocator(), &gRenderPass) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create render pass!");
-			}
-
-			SetObjectName(reinterpret_cast<uint64_t>(gRenderPass), VK_OBJECT_TYPE_RENDER_PASS, "Mesh Viewer Pass");
-		}
+		Renderer::SimpleTexture* pBoundTexture = nullptr;
+		int drawCounter = 0;		
 
 		void CreateFramebuffer()
 		{
 			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, true);
-		}
-
-		void CreatePipeline(const PipelineCreateInfo& createInfo)
-		{
-			Renderer::Pipeline& pipeline = gPipelines[createInfo.key.key];
-			auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
-			auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-			pipeline.AddBindings(Renderer::EBindingStage::Vertex, vertShader.reflectData);
-			pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
-			pipeline.CreateDescriptorSetLayouts();
-			pipeline.CreateLayout();
-
-			pipeline.CreateDescriptorPool();
-			pipeline.CreateDescriptorSets();
-
-			VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
-
-			VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-			vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-			auto& bindingDescription = vertShader.reflectData.bindingDescription;
-			const auto& attributeDescriptions = vertShader.reflectData.GetAttributes();
-
-			bindingDescription.stride = sizeof(Renderer::GSVertexUnprocessed);
-
-			vertexInputInfo.vertexBindingDescriptionCount = 1;
-			vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-			vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-			vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
-			VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-			inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-			inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-			VkPipelineViewportStateCreateInfo viewportState{};
-			viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-			viewportState.viewportCount = 1;
-			viewportState.scissorCount = 1;
-
-			VkPipelineRasterizationStateCreateInfo rasterizer{};
-			rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-			rasterizer.depthClampEnable = VK_FALSE;
-			rasterizer.rasterizerDiscardEnable = VK_FALSE;
-			rasterizer.polygonMode = createInfo.key.options.bWireframe ? VK_POLYGON_MODE_LINE :  VK_POLYGON_MODE_FILL;
-			rasterizer.lineWidth = 1.0f;
-			rasterizer.cullMode = VK_CULL_MODE_NONE; //VK_CULL_MODE_BACK_BIT;
-			rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
-			rasterizer.depthBiasEnable = VK_FALSE;
-
-			VkPipelineMultisampleStateCreateInfo multisampling{};
-			multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-			multisampling.sampleShadingEnable = VK_FALSE;
-			multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-			VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-			colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-			colorBlendAttachment.blendEnable = VK_FALSE;
-			colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-			colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-			colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-			colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-			colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-			colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-			VkPipelineColorBlendStateCreateInfo colorBlending{};
-			colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-			colorBlending.logicOpEnable = VK_FALSE;
-			colorBlending.logicOp = VK_LOGIC_OP_COPY;
-			colorBlending.attachmentCount = 1;
-			colorBlending.pAttachments = &colorBlendAttachment;
-			colorBlending.blendConstants[0] = 0.0f;
-			colorBlending.blendConstants[1] = 0.0f;
-			colorBlending.blendConstants[2] = 0.0f;
-			colorBlending.blendConstants[3] = 0.0f;
-
-			std::vector<VkDynamicState> dynamicStates = {
-				VK_DYNAMIC_STATE_VIEWPORT,
-				VK_DYNAMIC_STATE_SCISSOR
-			};
-			VkPipelineDynamicStateCreateInfo dynamicState{};
-			dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-			dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-			dynamicState.pDynamicStates = dynamicStates.data();
-
-			VkPipelineDepthStencilStateCreateInfo depthState{};
-			depthState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-			depthState.depthTestEnable = VK_TRUE;
-			depthState.depthWriteEnable = VK_TRUE;
-			depthState.depthCompareOp = VK_COMPARE_OP_LESS;
-
-			VkGraphicsPipelineCreateInfo pipelineInfo{};
-			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-			pipelineInfo.stageCount = 2;
-			pipelineInfo.pStages = shaderStages;
-			pipelineInfo.pVertexInputState = &vertexInputInfo;
-			pipelineInfo.pInputAssemblyState = &inputAssembly;
-			pipelineInfo.pViewportState = &viewportState;
-			pipelineInfo.pRasterizationState = &rasterizer;
-			pipelineInfo.pMultisampleState = &multisampling;
-			pipelineInfo.pColorBlendState = &colorBlending;
-			pipelineInfo.pDepthStencilState = &depthState;
-			pipelineInfo.pDynamicState = &dynamicState;
-			pipelineInfo.layout = pipeline.layout;
-			pipelineInfo.renderPass = gRenderPass;
-			pipelineInfo.subpass = 0;
-			pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-
-			if (vkCreateGraphicsPipelines(GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, GetAllocator(), &pipeline.pipeline) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create graphics pipeline!");
-			}
-		}
+		}		
 
 		void CreatePipelineGlsl()
 		{
@@ -230,10 +45,10 @@ namespace DebugMeshViewer {
 			key.options.bGlsl = true;
 			key.options.bWireframe = false;
 			PipelineCreateInfo createInfo { "shaders/meshviewer.vert.spv" , "shaders/meshviewer.frag.spv", key };
-			CreatePipeline(createInfo);
+			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer GLSL");
 
 			createInfo.key.options.bWireframe = true;
-			CreatePipeline(createInfo);
+			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer GLSL Wireframe");
 		}
 
 		void CreatePipelineHlsl()
@@ -245,10 +60,10 @@ namespace DebugMeshViewer {
 			key.options.bGlsl = false;
 			key.options.bWireframe = false;
 			PipelineCreateInfo createInfo{ "shaders/meshviewer_hlsl.vert.spv" , "shaders/meshviewer_hlsl.frag.spv", key };
-			CreatePipeline(createInfo);
+			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer HLSL");
 
 			createInfo.key.options.bWireframe = true;
-			CreatePipeline(createInfo);
+			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer HLSL Wireframe");
 		}
 
 		void CreateFramebufferSampler() 
@@ -295,6 +110,10 @@ namespace DebugMeshViewer {
 			for (auto& drawCommand : gPreviewerDrawCommands) {
 				Renderer::SimpleTexture* pTexture = drawCommand.first;
 
+				if (!pTexture) {
+					break;
+				}
+
 				PS2::GSSimpleTexture* pTextureData = pTexture->pRenderer;
 				VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
 
@@ -309,11 +128,8 @@ namespace DebugMeshViewer {
 				writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 				writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
-				std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings);
+				pTextureData->UpdateDescriptorSets(pipeline, writeList);
 
-				if (descriptorWrites.size() > 0) {
-					vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-				}
 			}
 		}
 	} // Vulkan
@@ -324,26 +140,38 @@ namespace DebugMeshViewer {
 
 	PreviewerVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture)
 	{
-		bool bContained = Vulkan::gPreviewerDrawCommands.find(pTexture) != Vulkan::gPreviewerDrawCommands.end();
+		if (Vulkan::pBoundTexture != pTexture) {
+			if (Vulkan::pBoundTexture != nullptr) {
+				Vulkan::drawCounter++;
+			}
 
-		auto& vertexBuffer = Vulkan::gPreviewerDrawCommands[pTexture];
+			assert(Vulkan::drawCounter < Vulkan::maxDrawCommands);
 
-		if (!bContained) {
-			vertexBuffer.Init(0x6000, 0x6000);
+			Vulkan::pBoundTexture = pTexture;
+
+			Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
 		}
 
-		return vertexBuffer.GetDrawBufferData();
+		return Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].second.GetDrawBufferData();
 	}
 
 	int GetPreviewerDrawCommandCount()
 	{
-		return static_cast<int>(Vulkan::gPreviewerDrawCommands.size());
+		int count = 0;
+
+		for (auto& drawCommand : Vulkan::gPreviewerDrawCommands) {
+			if (drawCommand.first != nullptr) {
+				count++;
+			}
+		}
+
+		return count;
 	}
 } // DebugMeshViewer
 
 void DebugMeshViewer::Vulkan::Setup()
 {
-	CreateRenderPass();
+	CreateRenderPass(gRenderPass, "Mesh Previewer");
 	CreateFramebuffer();
 	CreateFramebufferSampler();
 	Renderer::CreateCommandBuffers(gCommandBuffers);
@@ -352,11 +180,19 @@ void DebugMeshViewer::Vulkan::Setup()
 
 	gVertexConstantBuffer.Init();
 
+	for (auto& drawBuffer : gPreviewerDrawCommands) {
+		drawBuffer.second.Init(0x6000, 0x6000);
+	}
+
 	OnFrameBufferCreated(ImGui_ImplVulkan_AddTexture(gFrameBufferSampler, gFrameBuffer.colorImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL));
 }
 
 void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
 {
+	if (!pBoundTexture) {
+		return;
+	}
+
 	const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
 	VkCommandBufferBeginInfo beginInfo{};
@@ -401,6 +237,11 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 
 	for (auto& drawCommand : gPreviewerDrawCommands) {
 		Renderer::SimpleTexture* pTexture = drawCommand.first;
+
+		if (!pTexture) {
+			break;
+		}
+
 		PreviewerVertexBuffer& vertexBuffer = drawCommand.second;
 
 		auto& bufferData = vertexBuffer.GetDrawBufferData();
@@ -429,7 +270,11 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	vkQueueWaitIdle(GetGraphicsQueue());
 
 	for (auto& drawCommand : gPreviewerDrawCommands) {
+		drawCommand.first = nullptr;
 		drawCommand.second.Reset();
 		drawCommand.second.GetDrawBufferData().ResetAfterDraw();
 	}
+
+	pBoundTexture = nullptr;
+	drawCounter = 0;
 }

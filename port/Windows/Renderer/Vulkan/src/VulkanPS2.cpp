@@ -18,6 +18,7 @@
 #include "TextureCache.h"
 #include "log.h"
 #include "pcsx2/Selectors.h"
+#include "NativeRenderer.h"
 
 namespace PS2
 {
@@ -1763,6 +1764,13 @@ void Renderer::BindTexture(SimpleTexture* pNewTexture)
 {
 	assert(pNewTexture);
 	gBoundTexture = pNewTexture;
+	Native::BindTexture(pNewTexture);
+}
+
+void Renderer::AddMesh(SimpleMesh* pNewMesh)
+{
+	assert(pNewMesh);
+	Native::AddMesh(pNewMesh);
 }
 
 void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen) {
@@ -1770,6 +1778,8 @@ void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj,
 	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().View, pView, sizeof(glm::mat4));
 	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().Proj, pProj, sizeof(glm::mat4));
 	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pScreen, sizeof(glm::mat4));
+
+	Native::UpdateMatrices(pWorld, pView, pProj, pScreen);
 }
 
 Renderer::TextureData& Renderer::GetTextureData() {
@@ -1990,12 +2000,12 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 		}
 
 		{
-			float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
-			float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
-			float ox = state.XY.X;
-			float oy = state.XY.Y;
-			float ox2 = -1.0f / GetRTSize().x;
-			float oy2 = -1.0f / GetRTSize().y;
+			const float sx = 2.0f * GetRTScale().x / (GetRTSize().x << 4);
+			const float sy = 2.0f * GetRTScale().y / (GetRTSize().y << 4);
+			const float ox = state.XY.X;
+			const float oy = state.XY.Y;
+			const float ox2 = -1.0f / GetRTSize().x;
+			const float oy2 = -1.0f / GetRTSize().y;
 
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);

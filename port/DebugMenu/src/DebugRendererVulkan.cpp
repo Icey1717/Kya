@@ -18,6 +18,7 @@
 #include <GLFW/glfw3.h>
 
 #include "DebugMeshViewerVulkan.h"
+#include "NativeRenderer.h"
 
 bool bOther = false;
 
@@ -242,4 +243,9 @@ ImTextureID DebugMenu::AddFrameBuffer(const PS2::FrameBuffer& frameBuffer)
 	}
 
 	return gDebugFrameBuffers[frameBuffer.FBP].texID;
+}
+
+ImTextureID DebugMenu::AddNativeFrameBuffer()
+{
+	return ImGui_ImplVulkan_AddTexture(Renderer::Native::GetSampler(), Renderer::Native::GetColorImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }

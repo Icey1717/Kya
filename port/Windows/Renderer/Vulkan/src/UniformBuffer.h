@@ -195,6 +195,17 @@ namespace PS2 {
 			buffers[GetCurrentFrame()].Reset();
 		}
 
+		void MergeData(const DrawBufferData<VertexType, IndexType>& newDrawBufferData) {
+			assert(drawBufferData.GetIndexTail() + newDrawBufferData.GetIndexTail() <= drawBufferData.index.maxcount);
+			assert(drawBufferData.GetVertexTail() + newDrawBufferData.GetVertexTail() <= drawBufferData.vertex.maxcount);
+
+			memcpy(drawBufferData.index.buff + drawBufferData.GetIndexTail(), newDrawBufferData.index.buff, newDrawBufferData.GetIndexTail() * sizeof(IndexType));
+			memcpy(drawBufferData.vertex.buff + drawBufferData.GetVertexTail(), newDrawBufferData.vertex.buff, newDrawBufferData.GetVertexTail() * sizeof(VertexType));
+
+			drawBufferData.index.tail += newDrawBufferData.GetIndexTail();
+			drawBufferData.vertex.tail += newDrawBufferData.GetVertexTail();
+		}
+
 	private:
 		std::vector<VertexBuffer<VertexType, IndexType>> buffers;
 		DrawBufferData<VertexType, IndexType> drawBufferData;

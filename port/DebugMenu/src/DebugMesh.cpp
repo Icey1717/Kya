@@ -15,6 +15,7 @@ namespace Debug
 	{
 		static const Renderer::Kya::G3D* gSelectedMesh = nullptr;
 		static ed_g3d_hierarchy* gSelectedHierarchy = nullptr;
+		static ed3DLod* gSelectedLod = nullptr;
 		static int gSelectedStripIndex = 0;
 
 		static void ShowList(bool* bOpen)
@@ -42,114 +43,120 @@ namespace Debug
 
 		static void ShowLodDetails(ed_g3d_manager* pManager, ed3DLod* pLod)
 		{
-			DebugHelpers::TextValidValue("pObj: %p", LOAD_SECTION(pLod->pObj));
-			ImGui::Text("renderType: %u", pLod->renderType);
-			ImGui::Text("sizeBias: %f", pLod->sizeBias);
-
 			ImGui::Spacing();
 			ImGui::Spacing();
 
-			ed_Chunck* pMBNK = pManager->MBNA + 1;
-			ed_hash_code* pMaterialBank = reinterpret_cast<ed_hash_code*>(pMBNK + 1);
+			if (ImGui::CollapsingHeader("LOD Details", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-			ed_hash_code* pHash = LOAD_SECTION_CAST(ed_hash_code*, pLod->pObj);
-			ImGui::Text("Hash: %s", pHash->hash.ToString().c_str());
-
-			ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pHash->pData);
-
-			if (pOBJ) {
-				DebugHelpers::ListChunckDetails(pOBJ);
-
-				ed_g3d_object* pObject = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
-
-				ImGui::Text("stripCount: %d", pObject->stripCount);
-				ImGui::Text("boundingSphere: %s", pObject->boundingSphere.ToString().c_str());
-				DebugHelpers::TextValidValue("p3DStrip: %p", LOAD_SECTION(pObject->p3DStrip));
-
-				// clamp our strip count
-				gSelectedStripIndex = std::clamp(gSelectedStripIndex, 0, pObject->stripCount - 1);
+				DebugHelpers::TextValidValue("pObj: %p", LOAD_SECTION(pLod->pObj));
+				ImGui::Text("renderType: %u", pLod->renderType);
+				ImGui::Text("sizeBias: %f", pLod->sizeBias);
 
 				ImGui::Spacing();
 				ImGui::Spacing();
 
-				if (pObject->p3DStrip) {
-					if (ImGui::CollapsingHeader("Strip", ImGuiTreeNodeFlags_DefaultOpen)) {
-						ImGui::Text("Strip %d", gSelectedStripIndex);
+				ed_Chunck* pMBNK = pManager->MBNA + 1;
+				ed_hash_code* pMaterialBank = reinterpret_cast<ed_hash_code*>(pMBNK + 1);
 
-						ed_3d_strip* pStrip = LOAD_SECTION_CAST(ed_3d_strip*, pObject->p3DStrip);
+				ed_hash_code* pHash = LOAD_SECTION_CAST(ed_hash_code*, pLod->pObj);
+				ImGui::Text("Hash: %s", pHash->hash.ToString().c_str());
 
-						{
-							ed_3d_strip* pCurrentStrip = pStrip;
-							int stripIndex = 0;
+				ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pHash->pData);
 
-							while (stripIndex < pObject->stripCount) {
-								DebugMeshViewer::AddPreviewerStrip(pCurrentStrip, pMaterialBank);
+				if (pOBJ) {
+					DebugHelpers::ListChunckDetails(pOBJ);
 
-								if (stripIndex == gSelectedStripIndex) {
-									pStrip = pCurrentStrip;
+					ed_g3d_object* pObject = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
+
+					ImGui::Text("stripCount: %d", pObject->stripCount);
+					ImGui::Text("boundingSphere: %s", pObject->boundingSphere.ToString().c_str());
+					DebugHelpers::TextValidValue("p3DStrip: %p", LOAD_SECTION(pObject->p3DStrip));
+
+					// clamp our strip count
+					gSelectedStripIndex = std::clamp(gSelectedStripIndex, 0, pObject->stripCount - 1);
+
+					ImGui::Spacing();
+					ImGui::Spacing();
+
+					if (pObject->p3DStrip) {
+						if (ImGui::CollapsingHeader("Strip", ImGuiTreeNodeFlags_DefaultOpen)) {
+							ImGui::Text("Strip %d", gSelectedStripIndex);
+
+							ed_3d_strip* pStrip = LOAD_SECTION_CAST(ed_3d_strip*, pObject->p3DStrip);
+
+							{
+								ed_3d_strip* pCurrentStrip = pStrip;
+								int stripIndex = 0;
+
+								while (stripIndex < pObject->stripCount) {
+									DebugMeshViewer::AddPreviewerStrip(pCurrentStrip, pMaterialBank);
+
+									if (stripIndex == gSelectedStripIndex) {
+										pStrip = pCurrentStrip;
+									}
+
+									pCurrentStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCurrentStrip->pNext);
+
+									stripIndex++;
+								}
+							}
+
+							ImGui::Text("flags: 0x%x", pStrip->flags);
+							ImGui::Text("materialIndex: %d", pStrip->materialIndex);
+							ImGui::Text("cachedIncPacket: %d", pStrip->cachedIncPacket);
+							ImGui::Text("vifListOffset: 0x%x", pStrip->vifListOffset);
+
+							ImGui::Spacing();
+							ImGui::Spacing();
+
+							DebugHelpers::TextValidValue("pNext: %p", LOAD_SECTION(pStrip->pNext));
+
+							ImGui::Spacing();
+							ImGui::Spacing();
+
+							ImGui::Text("boundingSphere: %s", pStrip->boundingSphere.ToString().c_str());
+
+							ImGui::Spacing();
+							ImGui::Spacing();
+
+							DebugHelpers::TextValidValue("pSTBuf: %p", LOAD_SECTION(pStrip->pSTBuf));
+							DebugHelpers::TextValidValue("pColorBuf: %p", LOAD_SECTION(pStrip->pColorBuf));
+							DebugHelpers::TextValidValue("pVertexBuf: %p", LOAD_SECTION(pStrip->pVertexBuf));
+							DebugHelpers::TextValidValue("field_0x2c: %p", LOAD_SECTION(pStrip->field_0x2c));
+
+							ImGui::Spacing();
+							ImGui::Spacing();
+
+							ImGui::Text("shadowCastFlags: %d", pStrip->shadowCastFlags);
+							ImGui::Text("shadowReceiveFlags: %d", pStrip->shadowReceiveFlags);
+
+							ImGui::Spacing();
+							ImGui::Spacing();
+
+							DebugHelpers::TextValidValue("pDMA_Matrix: %p", pStrip->pDMA_Matrix.pDMA_Matrix);
+
+							ImGui::Spacing();
+							ImGui::Spacing();
+
+							ImGui::Text("field_0x38: %d", pStrip->field_0x38);
+							ImGui::Text("primListIndex: %d", pStrip->primListIndex);
+							ImGui::Text("meshCount: %d", pStrip->meshCount);
+
+							ImGui::Spacing();
+							ImGui::Spacing();
+
+							DebugHelpers::TextValidValue("pBoundSpherePkt: %p", LOAD_SECTION(pStrip->pBoundSpherePkt));
+
+							{
+								if (ImGui::Button("<<")) {
+									gSelectedStripIndex--;
 								}
 
-								pCurrentStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCurrentStrip->pNext);
+								ImGui::SameLine();
 
-								stripIndex++;
-							}
-						}
-
-						ImGui::Text("flags: 0x%x", pStrip->flags);
-						ImGui::Text("materialIndex: %d", pStrip->materialIndex);
-						ImGui::Text("field_0x6: %d", pStrip->field_0x6);
-						ImGui::Text("vifListOffset: 0x%x", pStrip->vifListOffset);
-
-						ImGui::Spacing();
-						ImGui::Spacing();
-
-						DebugHelpers::TextValidValue("pNext: %p", LOAD_SECTION(pStrip->pNext));
-
-						ImGui::Spacing();
-						ImGui::Spacing();
-
-						ImGui::Text("boundingSphere: %s", pStrip->boundingSphere.ToString().c_str());
-
-						ImGui::Spacing();
-						ImGui::Spacing();
-
-						DebugHelpers::TextValidValue("pSTBuf: %p", LOAD_SECTION(pStrip->pSTBuf));
-						DebugHelpers::TextValidValue("pColorBuf: %p", LOAD_SECTION(pStrip->pColorBuf));
-						DebugHelpers::TextValidValue("pVertexBuf: %p", LOAD_SECTION(pStrip->pVertexBuf));
-						DebugHelpers::TextValidValue("field_0x2c: %p", LOAD_SECTION(pStrip->field_0x2c));
-
-						ImGui::Spacing();
-						ImGui::Spacing();
-
-						ImGui::Text("shadowCastFlags: %d", pStrip->shadowCastFlags);
-						ImGui::Text("shadowReceiveFlags: %d", pStrip->shadowReceiveFlags);
-
-						ImGui::Spacing();
-						ImGui::Spacing();
-
-						DebugHelpers::TextValidValue("pDMA_Matrix: %p", pStrip->pDMA_Matrix.pDMA_Matrix);
-
-						ImGui::Spacing();
-						ImGui::Spacing();
-
-						ImGui::Text("field_0x38: %d", pStrip->field_0x38);
-						ImGui::Text("primListIndex: %d", pStrip->primListIndex);
-						ImGui::Text("meshCount: %d", pStrip->meshCount);
-
-						ImGui::Spacing();
-						ImGui::Spacing();
-
-						DebugHelpers::TextValidValue("pBoundSpherePkt: %p", LOAD_SECTION(pStrip->pBoundSpherePkt));
-
-						{
-							if (ImGui::Button("<<")) {
-								gSelectedStripIndex--;
-							}
-
-							ImGui::SameLine();
-
-							if (ImGui::Button(">>")) {
-								gSelectedStripIndex++;
+								if (ImGui::Button(">>")) {
+									gSelectedStripIndex++;
+								}
 							}
 						}
 					}
@@ -211,10 +218,13 @@ namespace Debug
 						char buff[256];
 						sprintf_s(buff, "LOD %d", i);
 
-						if (ImGui::CollapsingHeader(buff)) {
-							ed3DLod* pLod = gSelectedHierarchy->aLods + i;
-							ShowLodDetails(pManager, pLod);
+						if (!gSelectedLod || ImGui::Selectable(buff)) {
+							gSelectedLod = gSelectedHierarchy->aLods + i;
 						}
+					}
+
+					if (gSelectedLod) {
+						ShowLodDetails(pManager, gSelectedLod);
 					}
 
 					DebugMeshViewer::ShowPreviewer();
@@ -252,6 +262,7 @@ namespace Debug
 				sprintf_s(buff, 256, "%d - %s", curIndex, pHashCode->hash.ToString().c_str());
 
 				if (gSelectedHierarchy == nullptr || ImGui::Selectable(buff)) {
+					gSelectedLod = nullptr;
 					gSelectedHierarchy = ed3DG3DHierarchyGetFromIndex(pManager, curIndex);
 				}
 

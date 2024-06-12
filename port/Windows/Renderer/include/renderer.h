@@ -7,6 +7,8 @@
 
 #include "../../../include/profiling.h"
 
+#define int12_to_float(x)	(float)((float)x * 0.000244140625f)
+
 // Forward decs for RenderDelegate
 typedef struct VkFramebuffer_T* VkFramebuffer;
 typedef struct VkCommandBuffer_T* VkCommandBuffer;
@@ -65,6 +67,10 @@ namespace PS2 {
 			return index.tail;
 		}
 
+		size_t GetVertexTail() const {
+			return vertex.tail;
+		}
+
 		virtual void ResetAfterDraw() {
 			index.tail = 0;
 			vertex.head = 0;
@@ -112,7 +118,10 @@ namespace Renderer
 		uint32_t RGBA[4];
 
 		struct {
-			float XYZ[3];
+			union {
+				float fXYZ[3];
+				int32_t iXYZ[3];
+			};
 			uint32_t Skip;
 		} XYZSkip;
 	};
@@ -156,6 +165,17 @@ namespace Renderer
 		SimpleTexture(const CombinedImageData& imageData);
 
 		PS2::GSSimpleTexture* pRenderer;
+	};
+
+	using NativeVertexBufferData = PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>;
+
+	struct SimpleMesh
+	{
+		// Implementations in renderer implementations.
+		NativeVertexBufferData& GetVertexBufferData();
+
+	private:
+		// Could cache our vertex data in the simple mesh, then just copy instead of processing vertices one by one.
 	};
 
 	using InUseTextureList = std::vector<SimpleTexture*>;
@@ -264,7 +284,7 @@ namespace Renderer
 				drawBuffer.vertex.head = head + 1;
 				// fall through
 			case GS_TRIANGLEFAN:
-				if (tail >= drawBuffer.vertex.maxcount) assert(false); // in case too many vertices were skipped
+				assert(tail < drawBuffer.vertex.maxcount); // in case too many vertices were skipped
 				break;
 			default:
 				__assume(0);
@@ -273,7 +293,8 @@ namespace Renderer
 			return;
 		}
 
-		if (tail >= drawBuffer.vertex.maxcount) assert(false);
+		assert(tail < drawBuffer.vertex.maxcount);
+		assert(drawBuffer.index.tail < drawBuffer.index.maxcount);		
 
 		uint16_t* buff = &drawBuffer.index.buff[drawBuffer.index.tail];
 
@@ -362,6 +383,9 @@ namespace Renderer
 
 	//void SetTextureData(TextureData inTextureData);
 	void BindTexture(SimpleTexture* pNewTexture);
+
+	void AddMesh(SimpleMesh* pNewMesh);
+
 	void SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen);
 	TextureData& GetTextureData();
 

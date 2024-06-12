@@ -1066,22 +1066,6 @@ PS2::GSTexDescriptor::GSTexDescriptor()
 	pixelConstBuffer.Init();
 }
 
-void PS2::GSTexDescriptor::UpdateSet(int index) const
-{
-	const VkDescriptorBufferInfo vertexDescBufferInfo = vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
-	const VkDescriptorBufferInfo pixelDescBufferInfo = pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
-
-	Renderer::DescriptorWriteList writeList;
-	writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-	writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &pixelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-
-	std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(GetSet(GetCurrentFrame()), layoutBindingMap);
-
-	if (descriptorWrites.size() > 0) {
-		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-	}
-}
-
 uint8_t gBitmapWriteScratch[0x100000];
 uint8_t gBitmapReadScratch[0x100000];
 
@@ -1168,6 +1152,8 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pi
 	// Create descriptor pool based on the descriptor set count from the shader
 	Renderer::CreateDescriptorPool(pipeline.descriptorSetLayoutBindings, descriptorSets.descriptorPool);
 
+	assert(pipeline.descriptorSetLayouts.size() == 1);
+
 	std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, pipeline.descriptorSetLayouts[0]);
 
 	VkDescriptorSetAllocateInfo allocInfo{};
@@ -1194,16 +1180,14 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pi
 		Renderer::DescriptorWriteList writeList;
 		const VkDescriptorBufferInfo vertexDescBufferInfo = descriptorSets.vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+
 		const VkDescriptorBufferInfo fragmentDescBufferInfo = descriptorSets.pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
 		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
 
-		std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings);
-
-		if (descriptorWrites.size() > 0) {
-			vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-		}
+		UpdateDescriptorSets(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings, writeList);
 	}
 
 	return descriptorSets;
@@ -1221,4 +1205,18 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pi
 	}
 
 	return gsDescriptor;
+}
+
+void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList)
+{
+	UpdateDescriptorSets(GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings, writeList);
+}
+
+void PS2::GSSimpleTexture::UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList)
+{
+	std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(descriptorSet, layoutBindingMap);
+
+	if (descriptorWrites.size() > 0) {
+		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	}
 }

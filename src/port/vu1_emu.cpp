@@ -18,6 +18,7 @@
 #ifdef ENABLE_ISPC
 #include "vtx.h"
 #endif
+#include "MathOps.h"
 
 #define VU_VTX_TRACE_LOG(format, ...) if (VU1Emu::bTracingVtx) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
 
@@ -36,6 +37,7 @@ namespace VU1Emu {
 	bool bRunSingleThreaded = true;
 	bool bRunSimplifiedCode = true;
 	bool bTraceVtx = false;
+	bool bForceAnimMatrixIdentity = false;
 
 	bool bTracingVtx = false;
 
@@ -1302,19 +1304,6 @@ namespace VU1Emu {
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog RGBA 0x{:x} r: {} g: {} b: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi);
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog STQ  0x{:x} S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
 
-#if 0
-				{
-					edF32VECTOR4 a = objToScreen.rowX * pXYZ->x;
-					VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ  0x{:x} a x: {} y: {} z: {} w: {}", vtxReg, a.x, a.y, a.z, a.w);
-
-					a = objToScreen.rowY * pXYZ->y;
-					VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ  0x{:x} b x: {} y: {} z: {} w: {}", vtxReg, a.x, a.y, a.z, a.w);
-
-					a = objToScreen.rowZ * pXYZ->z;
-					VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ  0x{:x} c x: {} y: {} z: {} w: {}", vtxReg, a.x, a.y, a.z, a.w);
-				}
-#endif
-
 				edF32VECTOR4 screenVtx = *pXYZ * objToScreen;
 
 				VU_VTX_TRACE_LOG("GouraudMapping_No_Fog XYZ to screen 0x{:x} x: {} y: {} z: {} w: {}", vtxReg, screenVtx.x, screenVtx.y, screenVtx.z, screenVtx.w);
@@ -1631,7 +1620,7 @@ namespace VU1Emu {
 				edF32VECTOR4* pNormal = VIF_AS_F(normalReg++, 0);
 
 				const int animMatrixReg = pXYZ->wi & animMatrixMask;
-				const edF32MATRIX4 animMatrix = VIF_LOAD_M4(animMatrixReg, 0);
+				const edF32MATRIX4 animMatrix = bForceAnimMatrixIdentity ? gF32Matrix4Unit : VIF_LOAD_M4(animMatrixReg, 0);
 
 
 				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ  0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
@@ -2577,6 +2566,8 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 		UnpackToAddr(addr, op.dst, op.tag.count * 0x10);
 	}
 
+	const auto* pDebugStart = pVifPkt;
+
 	gDelayedFlagWrites.clear();
 
 	while (pVifPkt->cmdA != 0x60000000) {
@@ -2619,6 +2610,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 			}
 			else {
 				// Shouldn't end up here?
+				FLUSH_LOG();
 				IMPLEMENTATION_GUARD();
 			}
 		}
@@ -2891,6 +2883,11 @@ bool& VU1Emu::GetRunSimplifiedCode()
 bool& VU1Emu::GetTraceVtx()
 {
 	return bTraceVtx;
+}
+
+bool& VU1Emu::GetForceAnimMatrixIdentity()
+{
+	return bForceAnimMatrixIdentity;
 }
 
 char* VU1Emu::GetVertexDataStart()

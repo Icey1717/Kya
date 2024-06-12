@@ -10,7 +10,6 @@
 #include "DebugRenderer.h"
 #include "DebugHelpers.h"
 
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "DebugMaterialPreviewer.h"
@@ -47,7 +46,7 @@ namespace DebugMeshViewer {
 
 		short* pAnimIndexes = (short*)((char*)pCurrentStrip + pCurrentStrip->vifListOffset + -0x30);
 
-		uint incPacketSize = ed3DFlushStripGetIncPacket(pCurrentStrip, 0, 0);
+		uint incPacketSize = ed3DFlushStripGetIncPacket(pCurrentStrip, false, false);
 		uint partialMeshSectionCount = (uint)(ushort)pCurrentStrip->meshCount % 3;
 		ushort fullMeshSectionCount = (ushort)pCurrentStrip->meshCount - partialMeshSectionCount;
 		uint mode = 1;
@@ -71,7 +70,7 @@ namespace DebugMeshViewer {
 		static glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 		static glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-		const float cameraSpeed = 2.5f * deltaTime; // adjust accordingly
+		const float cameraSpeed = 30.f * deltaTime; // adjust accordingly
 		if (ImGui::IsKeyPressed(ImGuiKey_Comma))
 			cameraPos += cameraSpeed * cameraFront;
 		if (ImGui::IsKeyPressed(ImGuiKey_O))
@@ -169,6 +168,12 @@ namespace DebugMeshViewer {
 				memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
 				memcpy(&vtx.XYZSkip, vtxStart + 0x20, sizeof(vtx.XYZSkip));
 
+				if (drawMode == 1) {
+					vtx.XYZSkip.fXYZ[0] = int12_to_float(vtx.XYZSkip.iXYZ[0]);
+					vtx.XYZSkip.fXYZ[1] = int12_to_float(vtx.XYZSkip.iXYZ[1]);
+					vtx.XYZSkip.fXYZ[2] = int12_to_float(vtx.XYZSkip.iXYZ[2]);
+				}
+
 				const uint vtxAnimMatrix = ((vtx.XYZSkip.Skip & 0x7ff) - 0x3dc) / 4;
 
 				if (gHighlightStripIndex == stripIndex || vtxAnimMatrix == gHighlightAnimMatrixIndex) {
@@ -197,7 +202,7 @@ namespace DebugMeshViewer {
 			bool bCompletedPartial;
 
 			while (bCompletedPartial = partialMeshSectionCount != 0, partialMeshSectionCount = partialMeshSectionCount - 1, bCompletedPartial) {
-				VU1Emu::ProcessVifList((edpkt_data*)pVifList, true);
+				VU1Emu::ProcessVifList((edpkt_data*)pVifList, false);
 				AddVertices();
 				pVifList = pVifList + incPacketSize * 0x10;
 			}
@@ -263,8 +268,8 @@ namespace DebugMeshViewer {
 
 		if (pMaterial) {
 			// Check layers and textures to make sure they are size 1
-			assert(pMaterial->layers.size() == 1);
-			assert(pMaterial->layers.begin()->textures.size() == 1);
+			assert(pMaterial->layers.size() > 0);
+			assert(pMaterial->layers.begin()->textures.size() > 0);
 			return &AddPreviewerDrawCommand(pMaterial->layers.begin()->textures.begin()->pSimpleTexture);
 		}
 
