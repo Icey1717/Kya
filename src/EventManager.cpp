@@ -15,6 +15,7 @@ CEventManagerInternal CEventManager::callbackFunctions = {};
 EventQueue EventQueue_00448fbc;
 
 #define EVENT_LOG(level, format, ...) MY_LOG_CATEGORY("event", level, format, ##__VA_ARGS__)
+#define EVENT_LOG_SLOW(level, format, ...)
 
 void edEventSetCallbackFunctions(EventCallbackGetActor* param_1, EventGetActorPositionFunc* param_2, void* param_3, EventSendAllMsgs* param_4)
 {
@@ -134,7 +135,7 @@ int _edEventComputePrimAgainstVertex(uint prim, edF32MATRIX4* pMatrix, edF32VECT
 	float fVar1;
 	edF32VECTOR4 local_10;
 
-	EVENT_LOG(LogLevel::Verbose, "_edEventComputePrimAgainstVertex prim: {} matrix: {} vertex: {}", prim, pMatrix->ToString(), pVertex->ToString());
+	EVENT_LOG_SLOW(LogLevel::Verbose, "_edEventComputePrimAgainstVertex prim: {} matrix: {} vertex: {}", prim, pMatrix->ToString(), pVertex->ToString());
 
 	edF32Matrix4MulF32Vector4Hard(&local_10, pMatrix, pVertex);
 
@@ -212,12 +213,12 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	edF32VECTOR4 eStack32;
 	edF32VECTOR3 local_10;
 
-	EVENT_LOG(LogLevel::Verbose, "edEventComputeZoneAgainstVertex zone sphere: {} location: {} mode: {} zone matrix: {}", pZone->boundSphere.ToString(), pLocation->ToString(), mode, pZone->pMatrix ? true : false);
+	EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex zone sphere: {} location: {} mode: {} zone matrix: {}", pZone->boundSphere.ToString(), pLocation->ToString(), mode, pZone->pMatrix ? true : false);
 
 	if (pZone->pMatrix != 0x0) {
 		edF32Matrix4MulF32Vector4Hard(&eStack32, LOAD_SECTION_CAST(edF32MATRIX4*, pZone->pMatrix), pLocation);
 		pLocation = &eStack32;
-		EVENT_LOG(LogLevel::Verbose, "edEventComputeZoneAgainstVertex updated location: {}", pLocation->ToString());
+		EVENT_LOG_SLOW(LogLevel::Verbose, "edEventComputeZoneAgainstVertex updated location: {}", pLocation->ToString());
 	}
 
 	if ((pZone->boundSphere).w != 0.0f) {

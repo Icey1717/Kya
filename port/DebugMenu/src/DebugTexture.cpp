@@ -385,12 +385,12 @@ namespace Debug
 
 				static bool bLinearSampler = false;
 
-				if (ImGui::Checkbox("Linear", &bLinearSampler) || pRenderer != texture->layers.begin()->textures.begin()->pSimpleTexture->pRenderer) {
+				if (ImGui::Checkbox("Linear", &bLinearSampler) || pRenderer != texture->layers.begin()->textures.begin()->pSimpleTexture->GetRenderer()) {
 					if (pRenderer != nullptr) {
 						ImGui_ImplVulkan_RemoveTexture(textureId);
 					}
 
-					pRenderer = texture->layers.begin()->textures.begin()->pSimpleTexture->pRenderer;
+					pRenderer = texture->layers.begin()->textures.begin()->pSimpleTexture->GetRenderer();
 
 					PS2::PSSamplerSelector sel;
 

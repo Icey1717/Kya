@@ -114,7 +114,7 @@ namespace DebugMeshViewer {
 					break;
 				}
 
-				PS2::GSSimpleTexture* pTextureData = pTexture->pRenderer;
+				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 				VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
 
 				VkDescriptorImageInfo imageInfo{};
@@ -249,7 +249,7 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 		if (bufferData.index.tail > 0) {
 			vertexBuffer.BindData(cmd);
 
-			PS2::GSSimpleTexture* pTextureData = pTexture->pRenderer;
+			PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(bufferData.index.tail), 1, 0, 0, 0);

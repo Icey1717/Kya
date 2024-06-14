@@ -258,7 +258,8 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture bitmap mips: {}", combinedImageData.bitmaps.size());
 
 	// Try create a simple texture
-	texture.pSimpleTexture = new SimpleTexture(combinedImageData);
+	texture.pSimpleTexture = new SimpleTexture(this->pParent->pParent->GetName());
+	texture.pSimpleTexture->CreateRenderer(combinedImageData);
 }
 
 void Renderer::Kya::G2D::Bitmap::SetBitmap(ed_g2d_bitmap* pBitmap)

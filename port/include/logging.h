@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef PLATFORM_WIN
-#define ENABLE_MY_LOG
+//#define ENABLE_MY_LOG
 #else
 #define uintptr_t int
 //#define ENABLE_MY_LOG

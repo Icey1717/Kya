@@ -304,6 +304,7 @@ namespace Debug {
 	static Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
 	static Debug::Setting<bool> gDisableClusterRendering = { "Disable Cluster Rendering", false };
 	static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
+	static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
 
 	static void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
@@ -338,18 +339,38 @@ namespace Debug {
 			VU1Emu::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 		}
 
+		if (gEnableEmulatedRendering.DrawImguiControl()) {
+			VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
+		}
+
 		// End the ImGui window
 		ImGui::End();
 	}
 
-	static void ShowNativeFrameBuffer(bool* bOpen) {
-		ImGui::Begin("NativeFrameBuffer", bOpen);
+	static ImVec2 SetupGameFramebuffer() {
+		const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+		const ImVec2 windowSize(640.0f * gDisplyScale, 480.0f * gDisplyScale);
+		ImGui::SetNextWindowSize(windowSize);
+		ImVec2 windowPos = ImVec2((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
+		ImGui::SetNextWindowPos(windowPos);
+		return windowSize;
+	}
 
-		const ImVec2 image_size(640.0f * 2.5f, 480.0f * 2.0f);
+	static void ShowNativeFrameBuffer(bool* bOpen) {
 
 		// Use ImGui::Image to display the image
 		static ImTextureID gFrameBuffer = DebugMenu::AddNativeFrameBuffer();
-		ImGui::Image(gFrameBuffer, image_size);
+
+		if (gEnableEmulatedRendering) {
+			ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+			const ImVec2 image_size(400.0f * 4.0f, 300.0f * 4.0f);
+			ImGui::Image(gFrameBuffer, image_size);
+		}
+		else {
+			auto windowSize = SetupGameFramebuffer();
+			ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+			ImGui::Image(gFrameBuffer, windowSize);
+		}
 
 		ImGui::End();
 	}
@@ -401,23 +422,18 @@ namespace Debug {
 	static bool swapValue = false;
 
 	static void ShowGame() {
-		if (!PS2::FrameBuffer::Exists(swapValue ? 0x100 : 0x80)) {
+		if (!PS2::FrameBuffer::Exists(swapValue ? 0x100 : 0x80) || !gEnableEmulatedRendering) {
 			return;
 		}
+
 		auto& frameBuffer = PS2::FrameBuffer::Get(swapValue ? 0x100 : 0x80);
 		swapValue = !swapValue;
 
-		// Get the display size
-		const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-		const ImVec2 windowSize(640.0f * gDisplyScale, 480.0f * gDisplyScale);
-		ImGui::SetNextWindowSize(windowSize);
-		ImVec2 windowPos = ImVec2((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
-		ImGui::SetNextWindowPos(windowPos);
+		SetupGameFramebuffer();
 		ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
 
-		const ImVec2 image_size(640.0f * 2.5f * gDisplyScale, 480.0f * 2.0f * gDisplyScale);
-		// Use ImGui::Image to display the image
 		const ImTextureID gFrameBuffer = DebugMenu::AddFrameBuffer(frameBuffer);
+		const ImVec2 image_size(640.0f * 2.5f * gDisplyScale, 480.0f * 2.0f * gDisplyScale);
 		ImGui::Image(gFrameBuffer, image_size);
 
 		ImGui::End();
@@ -722,7 +738,7 @@ namespace Debug {
 		{"Demo", ImGui::ShowDemoWindow },
 		{"Log", ShowLogWindow },
 		{"Mesh List", ShowMeshList },
-		{"Native FrameBuffer", ShowNativeFrameBuffer },
+		{"Native FrameBuffer", ShowNativeFrameBuffer, true },
 		{"Framebuffers", ShowFramebuffers },
 		{"Cutscene", ShowCutsceneMenu, true },
 		{"Rendering", ShowRenderingMenu },
@@ -788,6 +804,7 @@ void DebugMenu::Init()
 
 	ed3D::DebugOptions::GetDisableClusterRendering() = Debug::gDisableClusterRendering;
 	VU1Emu::GetForceAnimMatrixIdentity() = Debug::gForceAnimMatrixIdentity;
+	VU1Emu::GetEnableEmulatedRendering() = Debug::gEnableEmulatedRendering;
 }
 
 static Input::InputFunctions gInputFunctions;

@@ -1076,7 +1076,7 @@ uint8_t gPaletteIndexesScratch[0x100000];
 
 using namespace PS2_Internal;
 
-Renderer::SimpleTexture::SimpleTexture(const CombinedImageData& imageData)
+void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 {
 	const ImageData& bitmap = imageData.bitmaps.front();
 	const ImageData& palette = imageData.palette;

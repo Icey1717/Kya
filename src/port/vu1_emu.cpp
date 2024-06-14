@@ -38,6 +38,7 @@ namespace VU1Emu {
 	bool bRunSimplifiedCode = true;
 	bool bTraceVtx = false;
 	bool bForceAnimMatrixIdentity = false;
+	bool bEnableEmulatedRendering = true;
 
 	bool bTracingVtx = false;
 
@@ -2322,6 +2323,10 @@ namespace VU1Emu {
 
 			VU_VTX_TRACE_LOG("RunCode 0x{:x}", addr);
 
+			if (!bEnableEmulatedRendering) {
+				return;
+			}
+
 			bool bTestConv16 = true;
 
 			if (addr == 0x3 /*_$DrawingStart_XYZ32 (0x0018)*/) {
@@ -2888,6 +2893,11 @@ bool& VU1Emu::GetTraceVtx()
 bool& VU1Emu::GetForceAnimMatrixIdentity()
 {
 	return bForceAnimMatrixIdentity;
+}
+
+bool& VU1Emu::GetEnableEmulatedRendering()
+{
+	return bEnableEmulatedRendering;
 }
 
 char* VU1Emu::GetVertexDataStart()

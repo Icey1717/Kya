@@ -135,7 +135,7 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip)
 	strip.pStrip = pStrip;
 	strip.pParent = this;
 
-	strip.pSimpleMesh = new SimpleMesh;
+	strip.pSimpleMesh = new SimpleMesh(this->pParent->pParent->pParent->GetName());
 }
 
 void Renderer::Kya::G3D::Lod::ProcessObject(ed_g3d_object* pObject)

@@ -14,8 +14,8 @@ namespace Renderer
 {
 	namespace Native
 	{
-		constexpr int gWidth = 0x400;
-		constexpr int gHeight = 0x300;
+		constexpr int gWidth = 0x200;
+		constexpr int gHeight = 0x200;
 
 		constexpr int gMaxAnimMatrices = 0x60;
 		constexpr int gMaxStripIndex = 0x20;
@@ -56,6 +56,9 @@ namespace Renderer
 		struct Draw {
 			SimpleTexture* pTexture;
 
+			// Usused but tracked for debug.
+			SimpleMesh* pMesh;
+
 			struct Instance {
 				glm::mat4 modelMatrix;
 				int indexStart;
@@ -70,6 +73,7 @@ namespace Renderer
 		std::vector<Draw::Instance> gInstances;
 
 		glm::mat4 gCachedModelMatrix;
+		SimpleMesh* gCachedMesh;
 
 		void FillIndexData()
 		{
@@ -148,7 +152,7 @@ namespace Renderer
 					break;
 				}
 			
-				PS2::GSSimpleTexture* pTextureData = pTexture->pRenderer;
+				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 				VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
 			
 				VkDescriptorImageInfo imageInfo{};
@@ -401,10 +405,6 @@ void Renderer::Native::Setup()
 
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
 {
-	if (gDraws.empty()) {
-		return;
-	}
-
 	const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
 	VkCommandBufferBeginInfo beginInfo{};
@@ -447,7 +447,9 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 	UpdateDescriptors();
 
-	gNativeVertexBuffer.BindData(cmd);
+	if (!gDraws.empty()) {
+		gNativeVertexBuffer.BindData(cmd);
+	}
 
 	int modelIndex = 0;
 
@@ -460,7 +462,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 			break;
 		}
 
-		PS2::GSSimpleTexture* pTextureData = pTexture->pRenderer;
+		PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
 		for (auto& instance : drawCommand.instances) {
 			if (instance.indexCount == 0) {
@@ -493,54 +495,67 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 	gNativeVertexBuffer.Reset();
 	gDraws.clear();
+
+	gInstances.clear();
+	//assert(gInstances.empty());
 }
 
 void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 {
-	if (gNativeVertexBufferDataDraw.GetIndexTail() == 0) {
-		return;
+	if (gNativeVertexBufferDataDraw.GetIndexTail() > 0) {
+		// Binding a new texture but matrix didn't change.
+		if (gInstances.empty()) {
+			auto& newInstance = gInstances.emplace_back();
+			newInstance.modelMatrix = gCachedModelMatrix;
+		}
+
+		FillIndexData();
+
+		Draw& draw = gDraws.emplace_back();
+		draw.pTexture = pTexture;
+		draw.instances = std::move(gInstances);
+		draw.pMesh = gCachedMesh;
 	}
-
-	// Binding a new texture but matrix didn't change.
-	if (gInstances.empty()) {
-		auto& newInstance = gInstances.emplace_back();
-		newInstance.modelMatrix = gCachedModelMatrix;
+	else {
+		// Binding a texture but we didn't draw anything.
 	}
-
-	FillIndexData();
-
-	Draw& draw = gDraws.emplace_back();
-	draw.pTexture = pTexture;
-	draw.instances = std::move(gInstances);
+	
 	gInstances.clear();
 }
 
 void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 {
-	
+	gCachedMesh = pMesh;
 }
 
 void Renderer::Native::UpdateMatrices(float* pWorld, float* pView, float* pProj, float* pScreen)
 {
 	// copy into model.
-	gVertexConstantBuffer.GetBufferData().proj = glm::make_mat4(pProj);
-	gVertexConstantBuffer.GetBufferData().view = glm::make_mat4(pView);
-
-	// Finalize our last draw.
-	if (gInstances.size() > 0) {
-		auto& instance = gInstances.back();
-		if (gNativeVertexBufferDataDraw.GetIndexTail() == 0) {
-			instance.modelMatrix = glm::make_mat4(pWorld);
-			return;
-		}
-
-		FillIndexData();
+	if (pProj) {
+		gVertexConstantBuffer.GetBufferData().proj = glm::make_mat4(pProj);
 	}
 
-	gCachedModelMatrix = glm::make_mat4(pWorld);
+	if (pView) {
+		gVertexConstantBuffer.GetBufferData().view = glm::make_mat4(pView);
+	}
 
-	auto& newInstance = gInstances.emplace_back();
-	newInstance.modelMatrix = gCachedModelMatrix;
+	if (pWorld) {
+		// Finalize our last draw.
+		if (gInstances.size() > 0) {
+			auto& instance = gInstances.back();
+			if (gNativeVertexBufferDataDraw.GetIndexTail() == 0) {
+				instance.modelMatrix = glm::make_mat4(pWorld);
+				return;
+			}
+
+			FillIndexData();
+		}
+
+		gCachedModelMatrix = glm::make_mat4(pWorld);
+
+		auto& newInstance = gInstances.emplace_back();
+		newInstance.modelMatrix = gCachedModelMatrix;
+	}
 }
 
 const VkSampler& Renderer::Native::GetSampler()

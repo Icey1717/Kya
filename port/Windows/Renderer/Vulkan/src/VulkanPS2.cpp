@@ -1774,10 +1774,22 @@ void Renderer::AddMesh(SimpleMesh* pNewMesh)
 }
 
 void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen) {
-	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().World, pWorld, sizeof(glm::mat4));
-	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().View, pView, sizeof(glm::mat4));
-	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().Proj, pProj, sizeof(glm::mat4));
-	memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pScreen, sizeof(glm::mat4));
+
+	if (pWorld) {
+		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().World, pWorld, sizeof(glm::mat4));
+	}
+
+	if (pView) {
+		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().View, pView, sizeof(glm::mat4));
+	}
+
+	if (pProj) {
+		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().Proj, pProj, sizeof(glm::mat4));
+	}
+
+	if (pScreen) {
+		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pScreen, sizeof(glm::mat4));
+	}
 
 	Native::UpdateMatrices(pWorld, pView, pProj, pScreen);
 }
@@ -1871,7 +1883,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 	LogTex("Lookup", state.TEX);
 	gInUseTextures.push_back(pBoundTexture);
 
-	PS2::GSSimpleTexture* pTextureData = pBoundTexture->pRenderer;
+	PS2::GSSimpleTexture* pTextureData = pBoundTexture->GetRenderer();
 
 	// Blend
 	int blend_alpha_min = 0, blend_alpha_max = 255;

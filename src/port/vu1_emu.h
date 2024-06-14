@@ -14,6 +14,7 @@ namespace VU1Emu {
 	bool& GetRunSimplifiedCode();
 	bool& GetTraceVtx();
 	bool& GetForceAnimMatrixIdentity();
+	bool& GetEnableEmulatedRendering();
 
 	char* GetVertexDataStart();
 

@@ -1629,6 +1629,8 @@ ed_3D_Scene* gRenderScene = NULL;
 
 float fSecInc = 5.0f;
 
+edF32MATRIX4 gNativeProjectionMatrix = { 0 };
+
 void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float width, float height, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV,
 	float nearClip, edF32MATRIX4* pCameraToScreen, edF32MATRIX4* pCameraToCulling, edF32MATRIX4* pCameraToClipping, edF32MATRIX4* pCameraToFog,
 	float farClip, float fovUp, float fovDown)
@@ -1642,6 +1644,23 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	edF32MATRIX4 screenMatrix;
 	edF32MATRIX4 projectionMatrix;
 
+	float fov = 60.0f * (3.1415f / 180.0f); // Convert to radians
+	float aspect = 4.0f / 3.0f;
+	float near = nearClip * -1.0f;
+	float far = farClip;
+
+	// Calculate components
+	float f = 1.0f / tan(fov / 2.0f);
+	float rangeInv = 1.0f / (near - far);
+
+	// Define the perspective projection matrix
+	gNativeProjectionMatrix = {
+		f / aspect, 0, 0, 0,
+		0, f, 0, 0,
+		0, 0, (near + far) * rangeInv, -1,
+		0, 0, near * far * rangeInv * 2, 0
+	};
+
 	char buff[512] = { 0 };
 	sprintf(buff, "screenWidth: %f, screenHeight: %f, width: %f, height: %f, horizontalHalfFOV: %f, halfFOV: %f, verticalHalfFOV: %f, nearClip: %f, farClip: %f, fovUp: %f, fovDown: %f\n",
 		screenWidth, screenHeight, width, height, horizontalHalfFOV, halfFOV, verticalHalfFOV, nearClip, farClip, fovUp, fovDown);
@@ -1653,8 +1672,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	startY = -height;
 	startX = -width;
 
-	ed3DComputeProjectionToScreenMatrix
-	(startX, width, startY, height, halfFOV - screenWidth * 0.5f, halfFOV + screenWidth * 0.5f,
+	ed3DComputeProjectionToScreenMatrix(startX, width, startY, height, halfFOV - screenWidth * 0.5f, halfFOV + screenWidth * 0.5f,
 		verticalHalfFOV + screenHeight * 0.5f, verticalHalfFOV - screenHeight * 0.5f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToScreen, &projectionMatrix, &screenMatrix);
@@ -1675,12 +1693,16 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	ed3DComputeProjectionToScreenMatrix(startX * fSecInc, width * fSecInc, startY * fSecInc, height * fSecInc, -1.0f, 1.0f, -1.0f, 1.0f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToClipping, &projectionMatrix, &screenMatrix);
+
 	fVar1 = pCameraToClipping->dd + pCameraToClipping->cd * nearClip;
 	pCameraToClipping->cc = fVar4 * ((pCameraToClipping->dd + pCameraToClipping->cd * farClip) * 1.0f - fVar1 * -1.0f);
 	pCameraToClipping->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
+
 	gClipMulVector.z = 2.0f / (fovDown - fovUp);
+
 	gClipXY.y = (fSecInc * 256.0f + 2048.0f) - 1.0f;
 	gClipXY.x = (2048.0f - fSecInc * 256.0f) + 1.0f;
+
 	gClipMulVector.x = 2.0f / (gClipXY.y - gClipXY.x);
 	gClipMulVector.y = 2.0f / (gClipXY.x - gClipXY.y);
 	gClipAddVector.x = (gClipXY.x + gClipXY.y) / (gClipXY.x - gClipXY.y);
@@ -1688,10 +1710,13 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	gClipMulVector.w = pCameraToScreen->dc + pCameraToScreen->cc * nearClip;
 	gClipAddVector.z = (fovUp + fovDown) / (fovUp - fovDown);
 	gClipAddVector.w = pCameraToScreen->dc + pCameraToScreen->cc * farClip;
+
 	gClipXY.z = gClipXY.y;
 	gClipXY.w = gClipXY.x;
+
 	edF32Matrix4SetIdentityHard(&screenMatrix);
 	edF32Matrix4MulF32Matrix4Hard(pCameraToFog, &projectionMatrix, &screenMatrix);
+
 	fVar3 = (gRenderSceneConfig_SPR->field_0xe0).z;
 	fVar2 = 255.0f - (gRenderSceneConfig_SPR->field_0xe0).x;
 	fVar1 = ((255.0f - (gRenderSceneConfig_SPR->field_0xe0).y) - fVar2) / ((gRenderSceneConfig_SPR->field_0xe0).w - fVar3);
@@ -2566,9 +2591,8 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	edF32MATRIX4* pObjToScreen = SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_SCREEN_MATRIX, edF32MATRIX4*);
 	*pObjToScreen = cameraToScreen * *pObjToCamera;
 
-
 #ifdef PLATFORM_WIN
-	Renderer::SetWorldViewProjScreen(pObjToWorld->raw, WorldToCamera_Matrix->raw, CameraToClipping_Matrix->raw, pObjToScreen->raw);
+	Renderer::SetWorldViewProjScreen(pObjToWorld->raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw, pObjToScreen->raw);
 #endif
 
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DPKTCopyMatrixPacket Obj To Screen: {}", pObjToScreen->ToString());
@@ -4184,6 +4208,10 @@ void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 
 	pObjToWorld = pDmaMatrix->pObjToWorld;
 
+#ifdef PLATFORM_WIN
+	Renderer::SetWorldViewProjScreen(pObjToWorld->raw, nullptr, nullptr, nullptr);
+#endif // PLATFORM_WIN
+
 	if (((1 < pMaterial->nbLayers) || (pObjToWorld == &gF32Matrix4Unit)) && (curLayerIndex = 0, gFushListCounter != 0xe))	{
 		nbLayers = pMaterial->nbLayers;
 
@@ -4234,6 +4262,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 				sceVu0InverseMatrix(pObjToWorldPktBuffer, pObjToWorldPktBuffer);
 				edF32Matrix4GetTransposeHard(pObjToWorldPktBuffer, pObjToWorldPktBuffer);
 
+				// Set obj to world.
 				pVifPkt = pVifPkt + 7;
 				break;
 			}

@@ -1,6 +1,7 @@
 #pragma once
-#include <stdint.h>
-#include <assert.h>
+#include <cstdint>
+#include <cassert>
+#include <string>
 #include "delegate.h"
 #include "GIFReg.h"
 #include "GSState.h"
@@ -160,17 +161,32 @@ namespace Renderer
 		GIFReg::GSTex tex;
 	};
 
-	struct SimpleTexture
+	struct RendererObject {
+		RendererObject(std::string inName) : name(inName) {}
+		const std::string& GetName() const { return name; }
+
+	private:
+		std::string name;
+	};
+
+	struct SimpleTexture : public RendererObject
 	{
-		SimpleTexture(const CombinedImageData& imageData);
+		SimpleTexture(std::string inName) : RendererObject(inName) {}
+
+		void CreateRenderer(const CombinedImageData& inImageData);
+		PS2::GSSimpleTexture* GetRenderer() const { return pRenderer; };
+
+	private:
 
 		PS2::GSSimpleTexture* pRenderer;
 	};
 
 	using NativeVertexBufferData = PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>;
 
-	struct SimpleMesh
+	struct SimpleMesh : public RendererObject
 	{
+		SimpleMesh(std::string inName) : RendererObject(inName) {}
+
 		// Implementations in renderer implementations.
 		NativeVertexBufferData& GetVertexBufferData();
 
