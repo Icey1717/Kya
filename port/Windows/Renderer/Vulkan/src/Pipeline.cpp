@@ -415,7 +415,9 @@ void Renderer::CreateDescriptorPool(const LayoutBindingMap& descriptorSetLayoutB
 std::optional<VkWriteDescriptorSet> Renderer::DescriptorWriteList::AddWrite(Renderer::EBindingStage stage, VkDescriptorType type, const VkDescriptorSet& dstSet, int dstBinding) const
 {
 	for (auto& write : writes) {
-		if (write.stage == stage && write.descriptorType == type) {
+		if (write.stage == stage && write.dstBinding == dstBinding) {
+			assert(write.descriptorType == type);
+
 			VkWriteDescriptorSet writeDescriptorSet = {};
 			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSet.dstSet = dstSet;

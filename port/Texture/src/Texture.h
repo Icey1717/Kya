@@ -58,7 +58,7 @@ namespace Renderer
 						SimpleTexture* pSimpleTexture = nullptr;
 					};
 
-					void ProcessTexture(ed_g2d_texture* pTexture);
+					void ProcessTexture(ed_g2d_texture* pTexture, const int materialIndex, const int layerIndex);
 
 					ed_g2d_layer* pLayer = nullptr;
 					Material* pParent = nullptr;
@@ -66,7 +66,7 @@ namespace Renderer
 					std::vector<Texture> textures;
 				};
 
-				void ProcessLayer(ed_g2d_layer* pLayer);
+				void ProcessLayer(ed_g2d_layer* pLayer, const int materialIndex);
 
 				SimpleTexture* FindRenderTextureFromBitmap(ed_g2d_bitmap* pBitmap) const;
 
@@ -91,7 +91,7 @@ namespace Renderer
 			inline const std::vector<Material>& GetMaterials() const { return materials; }
 
 		private:
-			void ProcessMaterial(ed_g2d_material* pMaterial);
+			void ProcessMaterial(ed_g2d_material* pMaterial, const int materialIndex);
 
 			std::string name;
 			ed_g2d_manager* pManager = nullptr;

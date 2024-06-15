@@ -32,7 +32,7 @@ namespace Renderer
 							SimpleMesh* pSimpleMesh = nullptr;
 						};
 
-						void ProcessStrip(ed_3d_strip* pStrip);
+						void ProcessStrip(ed_3d_strip* pStrip, const int heirarchyIndex, const int lodIndex, const int stripIndex);
 						void CacheStrips();
 
 						ed_g3d_object* pObject = nullptr;
@@ -40,14 +40,14 @@ namespace Renderer
 						std::vector<Strip> strips;
 					};
 
-					void ProcessObject(ed_g3d_object* pObject);
+					void ProcessObject(ed_g3d_object* pObject, const int heirarchyIndex, const int lodIndex);
 
 					ed3DLod* pLod = nullptr;
 					Hierarchy* pParent = nullptr;
 					Object object;
 				};
 
-				void ProcessLod(ed3DLod* pLod);
+				void ProcessLod(ed3DLod* pLod, const int heirarchyIndex, const int lodIndex);
 
 				ed_g3d_hierarchy* pHierarchy = nullptr;
 				G3D* pParent = nullptr;
@@ -66,7 +66,7 @@ namespace Renderer
 			inline const std::vector<Hierarchy>& GetHierarchies() const { return hierarchies; }
 
 		private:
-			void ProcessHierarchy(ed_g3d_hierarchy* pHierarchy);
+			void ProcessHierarchy(ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex);
 
 			std::string name;
 			ed_g3d_manager* pManager = nullptr;

@@ -9,6 +9,10 @@
 #include "UniformBuffer.h"
 #include "TextureCache.h"
 #include "glm/gtc/type_ptr.inl"
+#include "logging.h"
+#include "log.h"
+
+#define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 
 namespace Renderer
 {
@@ -32,7 +36,9 @@ namespace Renderer
 			glm::mat4 proj;
 		};
 
-		constexpr int gMaxModelMatrices = 0x100;
+		constexpr int gMaxModelMatrices = 1024;
+
+		int gMaxAnimationMatrices = 0;
 
 		PipelineMap gPipelines;
 		Renderer::FrameBufferBase gFrameBuffer;
@@ -48,40 +54,47 @@ namespace Renderer
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t>;
 		NativeVertexBuffer gNativeVertexBuffer;
 
+		DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
+
 		// As each draw comes in this buffer is filled.
 		NativeVertexBufferData gNativeVertexBufferDataDraw;
 
-
+		std::vector<glm::mat4> gAnimationMatrices;
 
 		struct Draw {
-			SimpleTexture* pTexture;
+			SimpleTexture* pTexture = nullptr;
 
-			// Usused but tracked for debug.
-			SimpleMesh* pMesh;
+			GIFReg::GSPrim prim;
 
 			struct Instance {
+				SimpleMesh* pMesh = nullptr;
 				glm::mat4 modelMatrix;
-				int indexStart;
-				int indexCount;
-				int vertexStart;
+				int indexStart = 0;
+				int indexCount = 0;
+				int vertexStart = 0;
+				int animationMatrixStart = 0;
 			};
 
 			std::vector<Instance> instances;
 		};
 
+		std::optional<Draw> gCurrentDraw;
 		std::vector<Draw> gDraws;
-		std::vector<Draw::Instance> gInstances;
 
 		glm::mat4 gCachedModelMatrix;
-		SimpleMesh* gCachedMesh;
 
 		void FillIndexData()
 		{
-			assert(gInstances.size() > 0);
-			Draw::Instance& instance = gInstances.back();
+			assert(gCurrentDraw->instances.size() > 0);
+			NATIVE_LOG(LogLevel::Info, "FillIndexData Filling instance: {}", gCurrentDraw->instances.size() - 1);
+
+			Draw::Instance& instance = gCurrentDraw->instances.back();
 			instance.indexCount = gNativeVertexBufferDataDraw.GetIndexTail();
 			instance.indexStart = gNativeVertexBuffer.GetDrawBufferData().GetIndexTail();
 			instance.vertexStart = gNativeVertexBuffer.GetDrawBufferData().GetVertexTail();
+
+			NATIVE_LOG(LogLevel::Info, "FillIndexData Filled instance: {} indexCount: {} indexStart: {} vertexStart: {}", 
+				gCurrentDraw->instances.size() - 1, instance.indexCount, instance.indexStart, instance.vertexStart);
 
 			// Copy into the real buffer.
 			gNativeVertexBuffer.MergeData(gNativeVertexBufferDataDraw);
@@ -151,9 +164,16 @@ namespace Renderer
 				if (!pTexture) {
 					break;
 				}
+
+				NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 			
 				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
-				VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
+
+				// Work out the sampler
+				auto& textureRegisters = pTexture->GetTextureRegisters();
+				PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
+
+				VkSampler& sampler = PS2::GetSampler(selector);
 			
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -162,24 +182,44 @@ namespace Renderer
 			
 				const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
 				const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(GetCurrentFrame());
+				const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(GetCurrentFrame(), 27 * sizeof(glm::mat4));
+
+				NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 			
 				Renderer::DescriptorWriteList writeList;
-				writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-				writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-				writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+				writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+				writeList.EmplaceWrite({ 2, Renderer::EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+				writeList.EmplaceWrite({ 3, Renderer::EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+				writeList.EmplaceWrite({ 1, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
 				pTextureData->UpdateDescriptorSets(pipeline, writeList);
 
+				// Check all the instances have the same prim (debug)
+				for (int i = 1; i < drawCommand.instances.size(); i++) {
+					assert(drawCommand.instances[i].pMesh->GetPrim().CMD == drawCommand.instances[0].pMesh->GetPrim().CMD);
+				}
+
 				for (auto& instance : drawCommand.instances) {
+					assert(modelIndex < gMaxModelMatrices);
+
+					Renderer::SimpleMesh* pMesh = instance.pMesh;
+					NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: {} ({}, {}, {})", pMesh->GetName(), pMesh->GetHierarchyIndex(), pMesh->GetLodIndex(), pMesh->GetStripIndex());
+
 					gModelBuffer.SetInstanceData(modelIndex, instance.modelMatrix);
 					modelIndex++;
 				}
 			}
 
 			gModelBuffer.Update(GetCurrentFrame());
+
+			for (int i = 0; i < gAnimationMatrices.size() ; i++) {
+				gAnimationBuffer.SetInstanceData(i, gAnimationMatrices[i]); //glm::mat4(1.0f));
+			}
+
+			gAnimationBuffer.Update(GetCurrentFrame());
 		}
 
-		void CheckBufferSizes()
+		VkDeviceSize CheckBufferSizes()
 		{
 			VkPhysicalDeviceProperties properties{};
 			vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
@@ -187,6 +227,31 @@ namespace Renderer
 
 			assert(maxUboSize >= sizeof(VertexConstantBuffer));
 			assert(maxUboSize >= (sizeof(glm::mat4) * gMaxModelMatrices));
+
+			return maxUboSize;
+		}
+
+		bool CanMergeMesh()
+		{
+			if (!gCurrentDraw) {
+				return false;
+			}
+
+			if (gCurrentDraw->instances.empty()) {
+				return false;
+			}
+
+			auto& instance = gCurrentDraw->instances.back();
+
+			if (instance.animationMatrixStart != gAnimationMatrices.size()) {
+				return false;
+			}
+
+			if (instance.modelMatrix != gCachedModelMatrix) {
+				return false;
+			}
+
+			return true;
 		}
 
 	} // Native
@@ -266,12 +331,8 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, cons
 	auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
 	auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	// Mark binding 2 in the vert shader as dynamic.
-	for (auto& binding : vertShader.reflectData.setLayouts[0].bindings) {
-		if (binding.binding == 2) {
-			binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		}
-	}
+	vertShader.reflectData.MarkUniformBufferDynamic(0, 2);
+	vertShader.reflectData.MarkUniformBufferDynamic(0, 3);
 
 	pipeline.AddBindings(Renderer::EBindingStage::Vertex, vertShader.reflectData);
 	pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
@@ -389,12 +450,14 @@ void Renderer::Native::Setup()
 	Renderer::CreateCommandBuffers(gCommandBuffers);
 	CreatePipeline();
 
-	CheckBufferSizes();
+	const VkDeviceSize maxUboSize = CheckBufferSizes();
+	gMaxAnimationMatrices = static_cast<int>(maxUboSize / sizeof(glm::mat4));
 
 	gVertexConstantBuffer.Init();
 	gNativeVertexBuffer.Init(0x100000, 0x100000);
 
 	gModelBuffer.Init(gMaxModelMatrices);
+	gAnimationBuffer.Init(gMaxAnimationMatrices);
 
 	gNativeVertexBufferDataDraw.Init(0x10000, 0x10000);
 
@@ -469,8 +532,14 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 				continue;
 			}
 
-			const uint32_t dynamicOffset = modelIndex * gModelBuffer.GetDynamicAlignment();
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 1, &dynamicOffset);
+			//const int animStart = drawCommand.animationMatrixCount == 0 ? 0 : drawCommand.animationMatrixStart;
+
+			std::array< uint32_t, 2 > dynamicOffsets = { 
+				modelIndex * gModelBuffer.GetDynamicAlignment(),
+				instance.animationMatrixStart * gAnimationBuffer.GetDynamicAlignment()
+			};
+
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), dynamicOffsets.size(), dynamicOffsets.data());
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
 
@@ -496,40 +565,60 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	gNativeVertexBuffer.Reset();
 	gDraws.clear();
 
-	gInstances.clear();
-	//assert(gInstances.empty());
+	gAnimationMatrices.clear();
 }
 
 void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 {
-	if (gNativeVertexBufferDataDraw.GetIndexTail() > 0) {
-		// Binding a new texture but matrix didn't change.
-		if (gInstances.empty()) {
-			auto& newInstance = gInstances.emplace_back();
-			newInstance.modelMatrix = gCachedModelMatrix;
+	NATIVE_LOG(LogLevel::Info, "BindTexture: {} material: {} layer: {} indices: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex(), gNativeVertexBufferDataDraw.GetIndexTail());
+
+	if (gCurrentDraw) {
+		gCurrentDraw->pTexture = pTexture;
+
+		for (auto& instance : gCurrentDraw->instances) {
+			NATIVE_LOG(LogLevel::Info, "BindTexture: instance anim start: {}", instance.animationMatrixStart);
 		}
 
-		FillIndexData();
+		gDraws.push_back(*gCurrentDraw);
 
-		Draw& draw = gDraws.emplace_back();
-		draw.pTexture = pTexture;
-		draw.instances = std::move(gInstances);
-		draw.pMesh = gCachedMesh;
+		gCurrentDraw.reset();
 	}
-	else {
-		// Binding a texture but we didn't draw anything.
-	}
-	
-	gInstances.clear();
+
+	NATIVE_LOG(LogLevel::Info, "BindTexture Done\n-------------------------------------------------------\n");
 }
 
 void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 {
-	gCachedMesh = pMesh;
+	FLUSH_LOG();
+
+	if (!gCurrentDraw) {
+		NATIVE_LOG(LogLevel::Info, "AddMesh Creating new draw!");
+		gCurrentDraw = Draw{};
+	}
+
+	gCurrentDraw->prim = pMesh->GetPrim();
+
+	NATIVE_LOG(LogLevel::Info, "AddMesh: {} ({}, {}, {}) prim: 0x{:x}", pMesh->GetName(), pMesh->GetHierarchyIndex(), pMesh->GetLodIndex(), pMesh->GetStripIndex(), pMesh->GetPrim().CMD);
+
+	if (!CanMergeMesh()) {
+		auto& instance = gCurrentDraw->instances.emplace_back();
+		instance.animationMatrixStart = gAnimationMatrices.size();
+		instance.modelMatrix = gCachedModelMatrix;
+		instance.pMesh = pMesh;
+
+		NATIVE_LOG(LogLevel::Info, "AddMesh: instance anim start: {}", instance.animationMatrixStart);
+	}
+	else {
+		NATIVE_LOG(LogLevel::Info, "AddMesh: merging");
+	}
+
+	FillIndexData();
 }
 
-void Renderer::Native::UpdateMatrices(float* pWorld, float* pView, float* pProj, float* pScreen)
+void Renderer::Native::PushGlobalMatrices(float* pModel, float* pView, float* pProj)
 {
+	NATIVE_LOG(LogLevel::Info, "PushGlobalMatrices");
+
 	// copy into model.
 	if (pProj) {
 		gVertexConstantBuffer.GetBufferData().proj = glm::make_mat4(pProj);
@@ -539,23 +628,27 @@ void Renderer::Native::UpdateMatrices(float* pWorld, float* pView, float* pProj,
 		gVertexConstantBuffer.GetBufferData().view = glm::make_mat4(pView);
 	}
 
-	if (pWorld) {
-		// Finalize our last draw.
-		if (gInstances.size() > 0) {
-			auto& instance = gInstances.back();
-			if (gNativeVertexBufferDataDraw.GetIndexTail() == 0) {
-				instance.modelMatrix = glm::make_mat4(pWorld);
-				return;
-			}
+	PushModelMatrix(pModel);
+}
 
-			FillIndexData();
-		}
+void Renderer::Native::PushModelMatrix(float* pModel)
+{
+	NATIVE_LOG(LogLevel::Info, "PushModelMatrix");
 
-		gCachedModelMatrix = glm::make_mat4(pWorld);
-
-		auto& newInstance = gInstances.emplace_back();
-		newInstance.modelMatrix = gCachedModelMatrix;
+	if (!gCurrentDraw) {
+		NATIVE_LOG(LogLevel::Info, "PushModelMatrix Creating new draw!");
+		gCurrentDraw = Draw{};
 	}
+
+	if (pModel) {
+		gCachedModelMatrix = glm::make_mat4(pModel);
+	}
+}
+
+void Renderer::Native::PushAnimMatrix(float* pAnim)
+{
+	NATIVE_LOG(LogLevel::Info, "PushAnimMatrix");
+	gAnimationMatrices.push_back(glm::make_mat4(pAnim));
 }
 
 const VkSampler& Renderer::Native::GetSampler()

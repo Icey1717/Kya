@@ -521,7 +521,12 @@ namespace PS2
 		TFX_NONE = 4,
 	};
 
-	PSSamplerSelector EmulateTextureSampler(int width, int height, const GSState& state)
+	PSSamplerSelector EmulateTextureSampler(int width, int height)
+	{
+		return EmulateTextureSampler(width, height, PS2_Internal::state.CLAMP, PS2_Internal::state.TEX, PS2_Internal::state.PRIM);
+	}
+
+	PSSamplerSelector EmulateTextureSampler(int width, int height, const GIFReg::GSClamp& CLAMP, const GIFReg::GSTex& TEX, const GIFReg::GSPrim& PRIM)
 	{
 		auto& vs_cb = PS2_Internal::gVertexConstBuffer.GetBufferData();
 		auto& ps_cb = PS2_Internal::gPixelConstBuffer.GetBufferData();
@@ -531,8 +536,8 @@ namespace PS2
 		//const GSLocalMemory::psm_t& psm = GSLocalMemory::m_psm[tex->m_TEX0.PSM];
 		//const GSLocalMemory::psm_t& cpsm = psm.pal > 0 ? GSLocalMemory::m_psm[state.TEX.CPSM] : psm;
 
-		const uint8_t wms = state.CLAMP.WMS;
-		const uint8_t wmt = state.CLAMP.WMT;
+		const uint8_t wms = CLAMP.WMS;
+		const uint8_t wmt = CLAMP.WMT;
 		bool complex_wms_wmt = !!((wms | wmt) & 2);
 
 		bool bilinear = false; // m_vt.IsLinear();
@@ -545,8 +550,8 @@ namespace PS2
 		//int w = 0; //tex->m_texture->GetWidth();
 		//int h = 0; //tex->m_texture->GetHeight();
 
-		int tw = (int)(1 << state.TEX.TW);
-		int th = (int)(1 << state.TEX.TH);
+		int tw = (int)(1 << TEX.TW);
+		int th = (int)(1 << TEX.TH);
 
 		GSVector4 WH(tw, th, width, height);
 
@@ -660,10 +665,10 @@ namespace PS2
 		//}
 		//else
 		{
-			m_conf.ps.tfx = state.TEX.TFX;
+			m_conf.ps.tfx = TEX.TFX;
 		}
 
-		m_conf.ps.tcc = state.TEX.TCC;
+		m_conf.ps.tcc = TEX.TCC;
 
 		m_conf.ps.ltf = bilinear && shader_emulated_sampler;
 
@@ -673,7 +678,7 @@ namespace PS2
 		vs_cb.Texture_Scale_Offset.x = TextureScale.x;
 		vs_cb.Texture_Scale_Offset.y = TextureScale.y;
 
-		if (state.PRIM.FST)
+		if (PRIM.FST)
 		{
 			//Maybe better?
 			//vs_cb.TextureScale = GSVector4(1.0f / 16) * GSVector4(tex->m_texture->GetScale()).xyxy() / WH.zwzw();
@@ -1773,25 +1778,17 @@ void Renderer::AddMesh(SimpleMesh* pNewMesh)
 	Native::AddMesh(pNewMesh);
 }
 
-void Renderer::SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen) {
+void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj) {
 
-	if (pWorld) {
-		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().World, pWorld, sizeof(glm::mat4));
-	}
+	Native::PushGlobalMatrices(pModel, pView, pProj);
+}
 
-	if (pView) {
-		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().View, pView, sizeof(glm::mat4));
-	}
+void Renderer::PushModelMatrix(float* pModel) {
+	Native::PushModelMatrix(pModel);
+}
 
-	if (pProj) {
-		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().Proj, pProj, sizeof(glm::mat4));
-	}
-
-	if (pScreen) {
-		memcpy(&PS2_Internal::gVertexConstBuffer.GetBufferData().ObjToScreen, pScreen, sizeof(glm::mat4));
-	}
-
-	Native::UpdateMatrices(pWorld, pView, pProj, pScreen);
+void Renderer::PushAnimMatrix(float* pAnim) {
+	Native::PushAnimMatrix(pAnim);
 }
 
 Renderer::TextureData& Renderer::GetTextureData() {
@@ -1918,7 +1915,7 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 	PS2::PSSamplerSelector samplerSelector;
 
 	if (state.bTexSet) {
-		samplerSelector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, state);
+		samplerSelector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height);
 	}
 	else {
 		PS2::m_conf.ps.tfx = 4;

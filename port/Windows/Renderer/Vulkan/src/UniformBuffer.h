@@ -11,12 +11,6 @@ namespace PS2 {
 		GSVector4 VertexOffset;
 		GSVector4 Texture_Scale_Offset;
 
-		glm::mat4 World;
-		glm::mat4 View;
-		glm::mat4 Proj;
-
-		glm::mat4 ObjToScreen;
-
 		VSConstantBuffer()
 		{
 			VertexScale = GSVector4::zero();

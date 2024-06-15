@@ -125,7 +125,7 @@ void Renderer::Kya::G3D::Hierarchy::Lod::Object::CacheStrips()
 	}
 }
 
-void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip)
+void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int heirarchyIndex, const int lodIndex, const int stripIndex)
 {
 	assert(pStrip);
 
@@ -135,10 +135,26 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip)
 	strip.pStrip = pStrip;
 	strip.pParent = this;
 
-	strip.pSimpleMesh = new SimpleMesh(this->pParent->pParent->pParent->GetName());
+	char* pVifList = reinterpret_cast<char*>(pStrip) + pStrip->vifListOffset;
+	edpkt_data* pPkt = reinterpret_cast<edpkt_data*>(pVifList);
+
+	char* a = LOAD_SECTION_CAST(char*, pPkt[0].asU32[1]);
+	char* b = LOAD_SECTION_CAST(char*, pPkt[1].asU32[1]);
+
+	Gif_Tag gifTag;
+	gifTag.setTag((u8*)b, true);
+
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Object::ProcessStrip Processing strip gifTag: NLOOP 0x{:x} NREG 0x{:x} PRIM 0x{:x}", (uint)gifTag.tag.NLOOP, (uint)gifTag.tag.NREG, (uint)gifTag.tag.PRIM);
+	const uint primReg = gifTag.tag.PRIM;
+	const GIFReg::GSPrim prim = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
+
+	// strip everything before the last forward slash 
+	const std::string meshName = this->pParent->pParent->pParent->GetName().substr(this->pParent->pParent->pParent->GetName().find_last_of('\\') + 1);
+
+	strip.pSimpleMesh = new SimpleMesh(meshName, heirarchyIndex, lodIndex, stripIndex, prim);
 }
 
-void Renderer::Kya::G3D::Lod::ProcessObject(ed_g3d_object* pObject)
+void Renderer::Kya::G3D::Lod::ProcessObject(ed_g3d_object* pObject, const int heirarchyIndex, const int lodIndex)
 {
 	object.pObject = pObject;
 	object.pParent = this;
@@ -150,7 +166,7 @@ void Renderer::Kya::G3D::Lod::ProcessObject(ed_g3d_object* pObject)
 		while (stripIndex < pObject->stripCount) {
 			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::Lod::ProcessObject Processing strip: {}", stripIndex);
 
-			object.ProcessStrip(pStrip);
+			object.ProcessStrip(pStrip, heirarchyIndex, lodIndex, stripIndex);
 			pStrip = LOAD_SECTION_CAST(ed_3d_strip*, pStrip->pNext);
 			stripIndex++;
 		}
@@ -159,7 +175,7 @@ void Renderer::Kya::G3D::Lod::ProcessObject(ed_g3d_object* pObject)
 	}
 }
 
-void Renderer::Kya::G3D::Hierarchy::ProcessLod(ed3DLod* pLod)
+void Renderer::Kya::G3D::Hierarchy::ProcessLod(ed3DLod* pLod, const int heirarchyIndex, const int lodIndex)
 {
 	assert(pLod);
 
@@ -176,7 +192,7 @@ void Renderer::Kya::G3D::Hierarchy::ProcessLod(ed3DLod* pLod)
 		MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::ProcessLod Object chunk header: {}", pOBJ->GetHeaderString());
 
 		ed_g3d_object* pObject = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
-		lod.ProcessObject(pObject);
+		lod.ProcessObject(pObject, heirarchyIndex, lodIndex);
 	}
 }
 
@@ -199,14 +215,14 @@ Renderer::Kya::G3D::G3D(ed_g3d_manager* pManager, std::string name)
 		ed_g3d_hierarchy* pHierarchy = ed3DG3DHierarchyGetFromIndex(pManager, curIndex);
 
 		if (pHierarchy) {
-			ProcessHierarchy(pHierarchy);
+			ProcessHierarchy(pHierarchy, curIndex);
 		}
 
 		pHashCode++;
 	}
 }
 
-void Renderer::Kya::G3D::ProcessHierarchy(ed_g3d_hierarchy* pHierarchy)
+void Renderer::Kya::G3D::ProcessHierarchy(ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex)
 {
 	assert(pHierarchy);
 
@@ -221,7 +237,7 @@ void Renderer::Kya::G3D::ProcessHierarchy(ed_g3d_hierarchy* pHierarchy)
 
 		ed3DLod* pLod = pHierarchy->aLods + i;
 
-		hierarchy.ProcessLod(pLod);
+		hierarchy.ProcessLod(pLod, heirarchyIndex, heirarchyIndex);
 	}
 }
 

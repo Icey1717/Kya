@@ -1083,17 +1083,17 @@ void Renderer::SimpleTexture::CreateRenderer(const CombinedImageData& imageData)
 
 	const VkDeviceSize bufferSize = bitmap.canvasWidth * bitmap.canvasHeight * 4;
 
-	if (bitmap.trxReg.RRW == (1 << imageData.tex.TW) && bitmap.trxReg.RRH == (1 << imageData.tex.TH)) {
+	if (bitmap.trxReg.RRW == (1 << imageData.registers.tex.TW) && bitmap.trxReg.RRH == (1 << imageData.registers.tex.TH)) {
 		gPaletteIndexesScratch[0] = 0;
 	}
 
 	if (palette.pImage && palette.canvasWidth) {
 		palette.Log("Uploading texture PAL - ");
-		TextureUpload::UploadPalette(reinterpret_cast<uint8_t*>(palette.pImage), palette.bitBltBuf.CMD, palette.trxPos.CMD, palette.trxReg.CMD, imageData.tex.CMD);
+		TextureUpload::UploadPalette(reinterpret_cast<uint8_t*>(palette.pImage), palette.bitBltBuf.CMD, palette.trxPos.CMD, palette.trxReg.CMD, imageData.registers.tex.CMD);
 	}
 
 	bitmap.Log("Uploading texture TEX - ");
-	auto* pOut = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.tex.CMD);
+	auto* pOut = TextureUpload::UploadTexture(reinterpret_cast<uint8_t*>(bitmap.pImage), bitmap.bitBltBuf.CMD, bitmap.trxPos.CMD, bitmap.trxReg.CMD, imageData.registers.tex.CMD);
 
 	uint8_t* pResult = gBitmapReadScratch;
 
@@ -1145,7 +1145,7 @@ void PS2::GSSimpleTexture::UploadData(int bufferSize, uint8_t* readBuffer)
 	vkDestroyBuffer(GetDevice(), stagingBuffer, GetAllocator());
 }
 
-PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pipeline& pipeline)
+PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList)
 {
 	auto& descriptorSets = descriptorMap[&pipeline];
 
@@ -1172,28 +1172,34 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::AddDescriptorSets(const Renderer::Pi
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		SetObjectName(reinterpret_cast<uint64_t>(descriptorSets.descriptorSets[i]), VK_OBJECT_TYPE_DESCRIPTOR_SET, "GSTexImage descriptor set %d", i);
 
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = imageView;
-		imageInfo.sampler = GetSampler(samplerSelector);
+		if (pWriteList) {
+			UpdateDescriptorSets(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings, *pWriteList);
+		}
+		else {
+			Renderer::DescriptorWriteList writeList;
 
-		Renderer::DescriptorWriteList writeList;
-		const VkDescriptorBufferInfo vertexDescBufferInfo = descriptorSets.vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+			VkDescriptorImageInfo imageInfo{};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = imageView;
+			imageInfo.sampler = GetSampler(samplerSelector);
 
-		const VkDescriptorBufferInfo fragmentDescBufferInfo = descriptorSets.pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+			const VkDescriptorBufferInfo vertexDescBufferInfo = descriptorSets.vertexConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+			writeList.EmplaceWrite({ 5, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
-		writeList.EmplaceWrite({ Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
+			const VkDescriptorBufferInfo fragmentDescBufferInfo = descriptorSets.pixelConstBuffer.GetDescBufferInfo(GetCurrentFrame());
+			writeList.EmplaceWrite({ 6, Renderer::EBindingStage::Fragment, &fragmentDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 
-		UpdateDescriptorSets(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings, writeList);
+			writeList.EmplaceWrite({ 3, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
+			writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE });
+			writeList.EmplaceWrite({ 1, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_SAMPLER });
+			UpdateDescriptorSets(descriptorSets.descriptorSets[i], pipeline.descriptorSetLayoutBindings, writeList);
+		}
 	}
 
 	return descriptorSets;
 }
 
-PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pipeline& pipeline)
+PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList)
 {
 	auto& gsDescriptor = descriptorMap[&pipeline];
 
@@ -1201,7 +1207,7 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pi
 
 	if (gsDescriptor.descriptorPool == VK_NULL_HANDLE) {
 		LOG_TEXCACHE("PS2::GSTexImage::GetDescriptorSets Creating sets this: 0x{:x}, pipeline: 0x{:x}", (uintptr_t)this, (uintptr_t)&pipeline);
-		return AddDescriptorSets(pipeline);
+		return AddDescriptorSets(pipeline, pWriteList);
 	}
 
 	return gsDescriptor;
@@ -1209,7 +1215,7 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pi
 
 void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList)
 {
-	UpdateDescriptorSets(GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings, writeList);
+	UpdateDescriptorSets(GetDescriptorSets(pipeline, &writeList).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings, writeList);
 }
 
 void PS2::GSSimpleTexture::UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList)

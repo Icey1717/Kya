@@ -2592,7 +2592,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	*pObjToScreen = cameraToScreen * *pObjToCamera;
 
 #ifdef PLATFORM_WIN
-	Renderer::SetWorldViewProjScreen(pObjToWorld->raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw, pObjToScreen->raw);
+	Renderer::PushGlobalMatrices(pObjToWorld->raw, WorldToCamera_Matrix->raw, gNativeProjectionMatrix.raw);
 #endif
 
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DPKTCopyMatrixPacket Obj To Screen: {}", pObjToScreen->ToString());
@@ -2940,6 +2940,10 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			ppuVar15->asU32[2] = SCE_VIF1_SET_NOP(0);
 			ppuVar15->asU32[3] = SCE_VIF1_SET_UNPACK(animMatrixDestAddr, 0x04, UNPACK_V4_32, 0);
 			edF32Matrix4CopyHard(((edF32MATRIX4*)(ppuVar15 + 1)), (pAnimMatrices + *pAnimIndexes));
+
+#ifdef PLATFORM_WIN
+			Renderer::PushAnimMatrix((pAnimMatrices + *pAnimIndexes)->raw);
+#endif
 
 			ppuVar15 = ppuVar15 + 5;
 			animMatrixDestAddr = animMatrixDestAddr + 4;
@@ -4209,7 +4213,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 	pObjToWorld = pDmaMatrix->pObjToWorld;
 
 #ifdef PLATFORM_WIN
-	Renderer::SetWorldViewProjScreen(pObjToWorld->raw, nullptr, nullptr, nullptr);
+	Renderer::PushModelMatrix(pObjToWorld->raw);
 #endif // PLATFORM_WIN
 
 	if (((1 < pMaterial->nbLayers) || (pObjToWorld == &gF32Matrix4Unit)) && (curLayerIndex = 0, gFushListCounter != 0xe))	{

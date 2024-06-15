@@ -16,10 +16,6 @@
 #define VS_FST 1
 #endif
 
-#ifndef VS_HDW
-#define VS_HDW 0
-#endif
-
 #ifndef GS_IIP
 #define GS_IIP 0
 #define GS_PRIM 3
@@ -178,11 +174,6 @@ cbuffer cb0
 	float4 VertexScale;
 	float4 VertexOffset;
 	float4 Texture_Scale_Offset;
-
-    float4x4 world;
-    float4x4 view;
-    float4x4 proj;
-    float4x4 objToScreen;
 };
 
 cbuffer cb1
@@ -904,73 +895,11 @@ VS_OUTPUT ProcessInput(VS_INPUT input)
 	return output;
 }
 
-#if VS_HDW == 0
 VS_OUTPUT vs_main(VS_INPUT input)
 {
     VS_OUTPUT result = ProcessInput(input);
     return result;
 }
-#else
-#define int12_to_float(x)	(float)((float)x * 0.000244140625f)
-#define float_to_int4(x)	(int)((float)x * (1.0f / 0.0625f))
-
-VS_OUTPUT vs_main(VS_INPUT_UNPROCESSED input)
-{
-    VS_INPUT processedInput;
-    
-    // Copy across data already in the correct format.
-    processedInput.q = input.q.x;
-    processedInput.c = input.c;
-
-    // Convert the ST from int12.
-	processedInput.st.x = int12_to_float(input.st.x);
-	processedInput.st.y = int12_to_float(input.st.y);
-
-    processedInput.uv = uint2(0, 0);
-    processedInput.f = float4(0.0f, 0.0f, 0.0f, 0.0f);
-#if 1
-    // Get XYZ and STQ in screen space.
-    float4x4 transposed = transpose(objToScreen);
-    float4 screenVtx = transposed[3] + (transposed[2] * input.p.z) + (transposed[1] * input.p.y) + (transposed[0] * input.p.x);
-    float invW = abs(1.0f / screenVtx.w);
-    
-    screenVtx.xyz *= invW;
-    processedInput.st.xy *= invW;
-    processedInput.q *= invW;
-
-    // Convert screen space vertices to the correct format.
-    int2 pos;
-    pos.x = float_to_int4(screenVtx.x);
-    pos.y = float_to_int4(screenVtx.y);
-
-    processedInput.p.x = float_to_int4(screenVtx.x);
-    processedInput.p.y = float_to_int4(screenVtx.y);
-    processedInput.z = (int)screenVtx.z;
-
-    VS_OUTPUT output = ProcessInput(processedInput);
-    return output;
-#else
-    // Apply transformations.
-    float4 worldPosition = mul(world, float4(input.p, 1.0));
-    float4 viewPosition = mul(view, worldPosition);
-    float4 clipPosition = mul(proj, viewPosition);
-
-    float invW = abs(1.0f / clipPosition.w);
-
-    processedInput.st.xy *= invW;
-    processedInput.q *= invW;
-
-    VS_OUTPUT output = ProcessInput(processedInput);
-
-    output.p = float4(clipPosition.xyz * invW, 1.0f);
-
-    output.c = processedInput.c;
-    output.p.y = -output.p.y;
-    output.p.z *= VertexScale.z;
-    return output;
-#endif
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // Geometry Shader

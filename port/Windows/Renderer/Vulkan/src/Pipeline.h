@@ -85,6 +85,7 @@ namespace Renderer {
 
 	struct DescriptorWrite
 	{
+		int dstBinding = 0;
 		Renderer::EBindingStage stage = Renderer::EBindingStage::None;
 		const VkDescriptorBufferInfo* pBufferInfo = nullptr;
 		const VkDescriptorImageInfo* pImageInfo = nullptr;

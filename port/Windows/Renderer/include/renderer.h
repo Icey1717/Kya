@@ -153,12 +153,17 @@ namespace Renderer
 		void Log(const char* prefix) const;
 	};
 
+	struct TextureRegisters {
+		GIFReg::GSClamp clamp;
+		GIFReg::GSTex tex;
+	};
+
 	struct CombinedImageData
 	{
 		// One bitmap per mip level.
 		std::vector<ImageData> bitmaps;
 		ImageData palette;
-		GIFReg::GSTex tex;
+		TextureRegisters registers;
 	};
 
 	struct RendererObject {
@@ -171,27 +176,57 @@ namespace Renderer
 
 	struct SimpleTexture : public RendererObject
 	{
-		SimpleTexture(std::string inName) : RendererObject(inName) {}
+		SimpleTexture(const std::string inName, const int inMaterialIndex, const int inLayerIndex, const TextureRegisters& inTextureRegisters)
+			: RendererObject(inName) 
+			, materialIndex(inMaterialIndex)
+			, layerIndex(inLayerIndex)
+			, registers(inTextureRegisters)
+		{}
 
 		void CreateRenderer(const CombinedImageData& inImageData);
 		PS2::GSSimpleTexture* GetRenderer() const { return pRenderer; };
 
+		int GetLayerIndex() const { return layerIndex; }
+		int GetMaterialIndex() const { return materialIndex; }
+
+		const TextureRegisters& GetTextureRegisters() const { return registers; }
 	private:
 
 		PS2::GSSimpleTexture* pRenderer;
+
+		int layerIndex = 0;
+		int materialIndex = 0;
+
+		TextureRegisters registers;
 	};
 
 	using NativeVertexBufferData = PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>;
 
 	struct SimpleMesh : public RendererObject
 	{
-		SimpleMesh(std::string inName) : RendererObject(inName) {}
+		SimpleMesh(std::string inName, const int inHierarchyIndex, const int inLodIndex, const int inStripIndex, const GIFReg::GSPrim& inPrim)
+			: RendererObject(inName)
+			, hierarchyIndex(inHierarchyIndex)
+			, lodIndex(inLodIndex)
+			, stripIndex(inStripIndex)
+			, prim(inPrim)
+		{}
 
 		// Implementations in renderer implementations.
 		NativeVertexBufferData& GetVertexBufferData();
 
+		int GetHierarchyIndex() const { return hierarchyIndex; }
+		int GetLodIndex() const { return lodIndex; }
+		int GetStripIndex() const { return stripIndex; }
+		const GIFReg::GSPrim& GetPrim() const { return prim; }
+
 	private:
 		// Could cache our vertex data in the simple mesh, then just copy instead of processing vertices one by one.
+		int hierarchyIndex = 0;
+		int lodIndex = 0;
+		int stripIndex = 0;
+
+		GIFReg::GSPrim prim;
 	};
 
 	using InUseTextureList = std::vector<SimpleTexture*>;
@@ -402,7 +437,10 @@ namespace Renderer
 
 	void AddMesh(SimpleMesh* pNewMesh);
 
-	void SetWorldViewProjScreen(float* pWorld, float* pView, float* pProj, float* pScreen);
+	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
+	void PushModelMatrix(float* pModel);
+	void PushAnimMatrix(float* pAnim);
+
 	TextureData& GetTextureData();
 
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;

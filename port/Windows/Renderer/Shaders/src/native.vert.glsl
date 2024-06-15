@@ -13,6 +13,10 @@ layout(set = 0, binding = 2) uniform ModelBuffer {
 	mat4 modelMatrix;
 } model;
 
+layout(set = 0, binding = 3) uniform AnimBuffer {
+	mat4 animMatrix[27];
+} anim;
+
 layout(location = 0) in ivec2 inST;
 layout(location = 1) in vec2 inQ;
 layout(location = 2) in ivec4 inColor;
@@ -25,7 +29,23 @@ layout(location = 1) out vec4 fragTexCoord;
 void main() {
 	// _$XYZW_16_Conv_EndBones_Rigid
 
+	uint baseFlags = inFlags & 0xFFFF;
+
+	uint stripIndex = inFlags >> 16;
+
+	uint animFlags = baseFlags & 0x7ff;
+	uint flags = baseFlags & 0xc000;
+
 	vec4 fixedPos = vec4(inPosition, 1.0);
+
+	if (animFlags > 0) {
+		uint animIndex = animFlags - 0x3dc;
+		animIndex = animIndex / 4;
+
+		mat4 currentAnimMatrix = anim.animMatrix[animIndex];
+		fixedPos = currentAnimMatrix * fixedPos;
+	}
+
 	vec4 pos = ubo.proj * ubo.view * model.modelMatrix * fixedPos;
 
 	pos.y = -pos.y;

@@ -63,19 +63,26 @@ namespace GIFReg
 		};
 	};
 
-	struct GSPrim
+	union GSPrim
 	{
-		uint32_t PRIM : 3;
-		uint32_t IIP : 1;
-		uint32_t TME : 1;
-		uint32_t FGE : 1;
-		uint32_t ABE : 1;
-		uint32_t AA1 : 1;
-		uint32_t FST : 1;
-		uint32_t CTXT : 1;
-		uint32_t FIX : 1;
-		uint32_t _PAD1 : 21;
-		uint32_t _PAD2 : 32;
+		struct {
+			uint32_t PRIM : 3;
+			uint32_t IIP : 1;
+			uint32_t TME : 1;
+			uint32_t FGE : 1;
+			uint32_t ABE : 1;
+			uint32_t AA1 : 1;
+			uint32_t FST : 1;
+			uint32_t CTXT : 1;
+			uint32_t FIX : 1;
+			uint32_t _PAD1 : 21;
+			uint32_t _PAD2 : 32;
+		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
 	};
 
 	union GSTex
@@ -149,6 +156,11 @@ namespace GIFReg
 			uint64_t _PAD4 : 24;
 			uint64_t MINV : 10;
 			uint64_t _PAD5 : 30;
+		};
+
+		struct
+		{
+			uint64_t CMD;
 		};
 	};
 

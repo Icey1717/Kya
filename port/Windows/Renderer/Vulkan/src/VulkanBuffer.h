@@ -49,11 +49,11 @@ struct DynamicUniformBuffer {
 		vkUnmapMemory(GetDevice(), buffersMemory[index]);
 	}
 
-	inline VkDescriptorBufferInfo GetDescBufferInfo(const int index) const {
+	inline VkDescriptorBufferInfo GetDescBufferInfo(const int index, const int range = 0) const {
 		VkDescriptorBufferInfo descBufferInfo{};
 		descBufferInfo.buffer = buffers[index];
 		descBufferInfo.offset = 0;
-		descBufferInfo.range = dynamicAlignment;
+		descBufferInfo.range = range == 0 ? dynamicAlignment : range;
 		return descBufferInfo;
 	}
 

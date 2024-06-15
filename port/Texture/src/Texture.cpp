@@ -18,10 +18,22 @@ namespace Renderer
 			edpkt_data* pPkt = commandList.pList;
 
 			for (int i = 0; i < commandList.size; i++) {
-				if (pPkt->asU32[2] == SCE_GS_TEX0_1) {
+				switch (pPkt->asU32[2]) {
+				case SCE_GS_TEX0_1:
+				{
 					assert(!bSet);
-					imageData.tex.CMD = pPkt->cmdA;
+					imageData.registers.tex.CMD = pPkt->cmdA;
 					bSet = true;
+
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: 0x{:x}", pPkt->cmdA);
+				}
+				break;
+				case SCE_GS_CLAMP_1:
+				{
+					imageData.registers.clamp.CMD = pPkt->cmdA;
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_CLAMP_1: 0x{:x}", pPkt->cmdA);
+				}
+				break;
 				}
 
 				pPkt++;
@@ -113,7 +125,6 @@ namespace Renderer
 			}
 
 			G2D::CommandList commandList = pPalette ? palette.GetUploadCommandsDefault() : bitmap.GetUploadCommandsDefault();
-
 			ProcessUploadCommandList(combinedImageData, commandList);
 
 			return combinedImageData;
@@ -142,12 +153,12 @@ Renderer::Kya::G2D::G2D(ed_g2d_manager* pManager, std::string name)
 		ed_g2d_material* pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i);
 
 		if (pMaterial) {
-			ProcessMaterial(pMaterial);
+			ProcessMaterial(pMaterial, i);
 		}
 	}
 }
 
-void Renderer::Kya::G2D::ProcessMaterial(ed_g2d_material* pMaterial)
+void Renderer::Kya::G2D::ProcessMaterial(ed_g2d_material* pMaterial, const int materialIndex)
 {
 	assert(pMaterial);
 
@@ -169,12 +180,14 @@ void Renderer::Kya::G2D::ProcessMaterial(ed_g2d_material* pMaterial)
 		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessMaterial Layer chunk header: {}", pLAY->GetHeaderString());
 
 		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
-		material.ProcessLayer(pLayer);
+		material.ProcessLayer(pLayer, materialIndex);
 	}
 }
 
-void Renderer::Kya::G2D::Material::ProcessLayer(ed_g2d_layer* pLayer)
+void Renderer::Kya::G2D::Material::ProcessLayer(ed_g2d_layer* pLayer, const int materialIndex)
 {
+	const int layerIndex = layers.size();
+
 	Layer& layer = layers.emplace_back();
 	layer.pLayer = pLayer;
 	layer.pParent = this;
@@ -187,7 +200,7 @@ void Renderer::Kya::G2D::Material::ProcessLayer(ed_g2d_layer* pLayer)
 		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Material::ProcessLayer Texture chunk header: {}", pTEX->GetHeaderString());
 
 		ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
-		layer.ProcessTexture(pTexture);
+		layer.ProcessTexture(pTexture, materialIndex, layerIndex);
 	}
 }
 
@@ -223,7 +236,7 @@ bool Renderer::Kya::G2D::Material::GetInUse() const
 	return false;
 }
 
-void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
+void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture, const int materialIndex, const int layerIndex)
 {
 	G2D::Texture& texture = textures.emplace_back();
 	texture.pTexture = pTexture;
@@ -257,8 +270,10 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture)
 
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture bitmap mips: {}", combinedImageData.bitmaps.size());
 
-	// Try create a simple texture
-	texture.pSimpleTexture = new SimpleTexture(this->pParent->pParent->GetName());
+	// strip everything before the last forward slash 
+	const std::string textureName = pParent->pParent->name.substr(pParent->pParent->name.find_last_of('\\') + 1);
+
+	texture.pSimpleTexture = new SimpleTexture(textureName, materialIndex, layerIndex, combinedImageData.registers);
 	texture.pSimpleTexture->CreateRenderer(combinedImageData);
 }
 
