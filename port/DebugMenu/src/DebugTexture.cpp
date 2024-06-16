@@ -24,10 +24,18 @@ namespace Debug
 		{
 			ImGui::Begin("Texture List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
+			static char nameFilterBuff[256] = { '\0' };
+			ImGui::InputText("Filter", nameFilterBuff, 256);
+
+			std::string nameFilter = nameFilterBuff;
+
 			auto& textureLibrary = Renderer::Kya::GetTextureLibrary();
 
 			static bool bOnlyInUse = false;
 			ImGui::Checkbox("Only in use", &bOnlyInUse);
+
+			// Create a scrollable list of textures.
+			ImGui::BeginChild("List", ImVec2(600, 600), true);
 
 			textureLibrary.ForEach([&](const Renderer::Kya::G2D& texture) {
 				bool bFound = true;
@@ -40,7 +48,9 @@ namespace Debug
 					}
 				}
 
-				if (bFound) {
+				const bool bPassFilter = nameFilter.empty() || texture.GetName().find(nameFilter) != std::string::npos;
+
+				if (bFound && bPassFilter) {
 					if (ImGui::Selectable(texture.GetName().c_str())) {
 						gSelectedTexture = &texture;
 						gSelectedMaterial = nullptr;
@@ -55,6 +65,8 @@ namespace Debug
 					}
 				}
 			});
+
+			ImGui::EndChild();
 
 			ImGui::End();
 		}
@@ -111,10 +123,10 @@ namespace Debug
 				break;
 				case SCE_GS_TEST_1:
 				{
+					const GIFReg::GSTest test = *reinterpret_cast<GIFReg::GSTest*>(&pkt.cmdA);
 					ImGui::Text("TEST_1");
-					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEST: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
-					//const GIFReg::GSTest test = *reinterpret_cast<GIFReg::GSTest*>(&pkt.cmdA);
-					//Renderer::SetTest(test);
+					ImGui::Text("ATE: %d ATST: %d AFAIL: %d DATE: %d DATM: %d ZTE: %d ZTST: %d",
+						test.ATE, test.ATST, test.AFAIL, test.DATE, test.DATM, test.ZTE, test.ZTST);
 				}
 				break;
 				case SCE_GS_TEX1_1:

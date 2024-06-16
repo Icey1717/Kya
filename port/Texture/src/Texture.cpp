@@ -34,6 +34,13 @@ namespace Renderer
 					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_CLAMP_1: 0x{:x}", pPkt->cmdA);
 				}
 				break;
+				case SCE_GS_TEST_1:
+				{
+					imageData.registers.test.CMD = pPkt->cmdA;
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEST_1: 0x{:x}", pPkt->cmdA);
+
+				}
+				break;
 				}
 
 				pPkt++;

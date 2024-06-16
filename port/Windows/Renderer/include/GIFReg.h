@@ -230,6 +230,11 @@ namespace GIFReg
 			uint32_t _PAD2 : 32;
 		};
 
+		struct
+		{
+			uint64_t CMD;
+		};
+
 		bool operator==(const GSTest& other) const {
 			return ATE == other.ATE
 				&& ATST == other.ATST

@@ -1644,29 +1644,28 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	edF32MATRIX4 screenMatrix;
 	edF32MATRIX4 projectionMatrix;
 
-	float fov = 60.0f * (3.1415f / 180.0f); // Convert to radians
-	float aspect = 4.0f / 3.0f;
-	float near = nearClip * -1.0f;
-	float far = farClip;
+	const float fov = 60.0f * (3.1415f / 180.0f); // Convert to radians
+	const float aspect = 4.0f / 3.0f;
+	const float near = nearClip * -1.0f;
+	const float far = farClip;
 
 	// Calculate components
-	float f = 1.0f / tan(fov / 2.0f);
-	float rangeInv = 1.0f / (near - far);
+	const float f = 1.0f / tanf(fov / 2.0f);
+	const float rangeInv = 1.0f / (near - far);
 
 	// Define the perspective projection matrix
 	gNativeProjectionMatrix = {
-		f / aspect, 0, 0, 0,
-		0, f, 0, 0,
-		0, 0, (near + far) * rangeInv, -1,
-		0, 0, near * far * rangeInv * 2, 0
+		f / aspect,	0.0f,	0.0f,							0.0f,
+		0.0f,		f,		0.0f,							0.0f,
+		0.0f,		0.0f,	(near + far) * rangeInv,		-1.0f,
+		0.0f,		0.0f,	near * far * rangeInv * 2.0f,	0.0f
 	};
 
-	char buff[512] = { 0 };
-	sprintf(buff, "screenWidth: %f, screenHeight: %f, width: %f, height: %f, horizontalHalfFOV: %f, halfFOV: %f, verticalHalfFOV: %f, nearClip: %f, farClip: %f, fovUp: %f, fovDown: %f\n",
+	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, width: {}, height: {}, horizontalHalfFOV: {}, halfFOV: {}, verticalHalfFOV: {}, nearClip: {}, farClip: {}, fovUp: {}, fovDown: {}\n", 
 		screenWidth, screenHeight, width, height, horizontalHalfFOV, halfFOV, verticalHalfFOV, nearClip, farClip, fovUp, fovDown);
 
-	// Print all the float values in one statement
-	ED3D_LOG(LogLevel::Verbose, "{}", buff);
+	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices rangeInv: {} , f: {} res: {}\n", rangeInv, f, (near + far) * rangeInv);
+
 
 	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, horizontalHalfFOV, 0.0f, &projectionMatrix);
 	startY = -height;

@@ -13,9 +13,23 @@ namespace Renderer
 {
 	namespace Kya
 	{
-		MeshLibrary gMeshLibrary;
+		static MeshLibrary gMeshLibrary;
 
-		std::unordered_map<const ed_3d_strip*, Renderer::Kya::G3D::Strip*> gStripMap;
+		static std::unordered_map<const ed_3d_strip*, Renderer::Kya::G3D::Strip*> gStripMap;
+
+		static GIFReg::GSPrim ExtractPrimFromVifList(ed_3d_strip* pStrip)
+		{
+			// Pull the prim reg out from the gif packet, not a big fan of this.
+			char* pVifList = reinterpret_cast<char*>(pStrip) + pStrip->vifListOffset;
+			edpkt_data* pPkt = reinterpret_cast<edpkt_data*>(pVifList);
+			u8* pGifPkt = LOAD_SECTION_CAST(u8*, pPkt[1].asU32[1]);
+			Gif_Tag gifTag;
+			gifTag.setTag(pGifPkt, true);
+
+			MESH_LOG(LogLevel::Info, "ExtractPrimFromVifList Processing strip gifTag: NLOOP 0x{:x} NREG 0x{:x} PRIM 0x{:x}", (uint)gifTag.tag.NLOOP, (uint)gifTag.tag.NREG, (uint)gifTag.tag.PRIM);
+			const uint primReg = gifTag.tag.PRIM;
+			return *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
+		}
 	}
 }
 
@@ -135,18 +149,7 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int hei
 	strip.pStrip = pStrip;
 	strip.pParent = this;
 
-	char* pVifList = reinterpret_cast<char*>(pStrip) + pStrip->vifListOffset;
-	edpkt_data* pPkt = reinterpret_cast<edpkt_data*>(pVifList);
-
-	char* a = LOAD_SECTION_CAST(char*, pPkt[0].asU32[1]);
-	char* b = LOAD_SECTION_CAST(char*, pPkt[1].asU32[1]);
-
-	Gif_Tag gifTag;
-	gifTag.setTag((u8*)b, true);
-
-	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Object::ProcessStrip Processing strip gifTag: NLOOP 0x{:x} NREG 0x{:x} PRIM 0x{:x}", (uint)gifTag.tag.NLOOP, (uint)gifTag.tag.NREG, (uint)gifTag.tag.PRIM);
-	const uint primReg = gifTag.tag.PRIM;
-	const GIFReg::GSPrim prim = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
+	const GIFReg::GSPrim prim = ExtractPrimFromVifList(pStrip);
 
 	// strip everything before the last forward slash 
 	const std::string meshName = this->pParent->pParent->pParent->GetName().substr(this->pParent->pParent->pParent->GetName().find_last_of('\\') + 1);
