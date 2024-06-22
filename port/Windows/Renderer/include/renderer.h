@@ -157,6 +157,8 @@ namespace Renderer
 		GIFReg::GSClamp clamp;
 		GIFReg::GSTex tex;
 		GIFReg::GSTest test;
+		GIFReg::GSColClamp colClamp;
+		GIFReg::GSAlpha alpha;
 	};
 
 	struct CombinedImageData
@@ -177,27 +179,34 @@ namespace Renderer
 
 	struct SimpleTexture : public RendererObject
 	{
-		SimpleTexture(const std::string inName, const int inMaterialIndex, const int inLayerIndex, const TextureRegisters& inTextureRegisters)
+		struct Details {
+			int layerIndex = 0;
+			int materialIndex = 0;
+
+			int layerCount = 0;
+			int materialCount = 0;
+		};
+
+		SimpleTexture(const std::string inName, const Details& inDetails, const TextureRegisters& inTextureRegisters)
 			: RendererObject(inName) 
-			, materialIndex(inMaterialIndex)
-			, layerIndex(inLayerIndex)
+			, details(inDetails)
 			, registers(inTextureRegisters)
 		{}
 
 		void CreateRenderer(const CombinedImageData& inImageData);
 		PS2::GSSimpleTexture* GetRenderer() const { return pRenderer; };
 
-		int GetLayerIndex() const { return layerIndex; }
-		int GetMaterialIndex() const { return materialIndex; }
+		int GetLayerIndex() const { return details.layerIndex; }
+		int GetMaterialIndex() const { return details.materialIndex; }
+
+		int GetLayerCount() const { return details.layerCount; }
+		int GetMaterialCount() const { return details.materialCount; }
 
 		const TextureRegisters& GetTextureRegisters() const { return registers; }
 	private:
 
 		PS2::GSSimpleTexture* pRenderer;
-
-		int layerIndex = 0;
-		int materialIndex = 0;
-
+		Details details;
 		TextureRegisters registers;
 	};
 

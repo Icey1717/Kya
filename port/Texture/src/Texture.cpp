@@ -25,20 +25,96 @@ namespace Renderer
 					imageData.registers.tex.CMD = pPkt->cmdA;
 					bSet = true;
 
-					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: 0x{:x}", pPkt->cmdA);
+					const GIFReg::GSTex tex = *reinterpret_cast<GIFReg::GSTex*>(&pPkt->cmdA);
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: CBP: 0x{:x} CLD: {} CPSM: {} CSA: {} CSM: {}",
+						tex.CBP, tex.CLD, tex.CPSM, tex.CSA, tex.CSM);
+
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEX0_1: PSM: {} TBP0: 0x{:x} TBW: {} TCC: {} TFX: {} TW: {} TH: {}",
+						tex.PSM, tex.TBP0, tex.TBW, tex.TCC, tex.TFX, tex.TW, tex.TH);
 				}
 				break;
 				case SCE_GS_CLAMP_1:
 				{
 					imageData.registers.clamp.CMD = pPkt->cmdA;
-					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_CLAMP_1: 0x{:x}", pPkt->cmdA);
+
+					const GIFReg::GSClamp clamp = *reinterpret_cast<GIFReg::GSClamp*>(&pPkt->cmdA);
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_CLAMP_1: WMS: {} WMT: {} MINU: {} MAXU: {} MAXV: {} MINV: {}",
+						clamp.WMS, clamp.WMT, clamp.MINU, clamp.MAXU, clamp.MAXV, clamp.MINV);
 				}
 				break;
 				case SCE_GS_TEST_1:
 				{
 					imageData.registers.test.CMD = pPkt->cmdA;
-					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEST_1: 0x{:x}", pPkt->cmdA);
 
+					const GIFReg::GSTest test = *reinterpret_cast<GIFReg::GSTest*>(&pPkt->cmdA);
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEST_1: ATE: {} ATST: {} AFAIL: {} DATE: {} DATM: {} ZTE: {} ZTST: {}",
+						test.ATE, test.ATST, test.AFAIL, test.DATE, test.DATM, test.ZTE, test.ZTST);
+
+				}
+				break;
+				case SCE_GS_ALPHA_1:
+				{
+					imageData.registers.alpha.CMD = pPkt->cmdA;
+
+					const GIFReg::GSAlpha alpha = *reinterpret_cast<GIFReg::GSAlpha*>(&pPkt->cmdA);
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_ALPHA_1: A: {} B: {} C: {} D: {} FIX: {}",
+						alpha.A, alpha.B, alpha.C, alpha.D, alpha.FIX);
+
+					switch (alpha.A) {
+					case 0:
+						TEXTURE_LOG(LogLevel::Info, "A: Cs");
+						break;
+					case 1:
+						TEXTURE_LOG(LogLevel::Info, "A: Cd");
+						break;
+					case 2:
+						TEXTURE_LOG(LogLevel::Info, "A: 0");
+						break;
+					}
+
+					switch (alpha.B) {
+					case 0:
+						TEXTURE_LOG(LogLevel::Info, "B: Cs");
+						break;
+					case 1:
+						TEXTURE_LOG(LogLevel::Info, "B: Cd");
+						break;
+					case 2:
+						TEXTURE_LOG(LogLevel::Info, "B: 0");
+						break;
+					}
+
+					switch (alpha.C) {
+					case 0:
+						TEXTURE_LOG(LogLevel::Info, "C: As");
+						break;
+					case 1:
+						TEXTURE_LOG(LogLevel::Info, "C: Ad");
+						break;
+					case 2:
+						TEXTURE_LOG(LogLevel::Info, "C: FIX");
+						break;
+					}
+
+					switch (alpha.D) {
+					case 0:
+						TEXTURE_LOG(LogLevel::Info, "D: Cs");
+						break;
+					case 1:
+						TEXTURE_LOG(LogLevel::Info, "D: Cd");
+						break;
+					case 2:
+						TEXTURE_LOG(LogLevel::Info, "D: 0");
+						break;
+					}
+				}
+				break;
+				case SCE_GS_COLCLAMP:
+				{
+					imageData.registers.colClamp.CMD = pPkt->cmdA;
+
+					const GIFReg::GSColClamp colClamp = *reinterpret_cast<GIFReg::GSColClamp*>(&pPkt->cmdA);
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_COLCLAMP: CLAMP: {}", colClamp.CLAMP);
 				}
 				break;
 				}
@@ -180,6 +256,8 @@ void Renderer::Kya::G2D::ProcessMaterial(ed_g2d_material* pMaterial, const int m
 
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessMaterial Render command size: {} (0x{:x})", material.renderCommands.size, material.renderCommands.size);
 
+	material.layers.reserve(pMaterial->nbLayers);
+
 	for (int i = 0; i < pMaterial->nbLayers; ++i) {
 		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessMaterial Processing layer: {}", i);
 
@@ -280,7 +358,7 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture, const i
 	// strip everything before the last forward slash 
 	const std::string textureName = pParent->pParent->name.substr(pParent->pParent->name.find_last_of('\\') + 1);
 
-	texture.pSimpleTexture = new SimpleTexture(textureName, materialIndex, layerIndex, combinedImageData.registers);
+	texture.pSimpleTexture = new SimpleTexture(textureName, { layerIndex, materialIndex, pParent->layers.capacity(), pParent->pParent->materials.capacity() }, combinedImageData.registers);
 	texture.pSimpleTexture->CreateRenderer(combinedImageData);
 }
 

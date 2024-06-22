@@ -15,14 +15,23 @@ namespace Renderer
 	{
 		struct PipelineKey {
 			union {
+				// 32 bit key
 				struct {
 					uint32_t bWireframe : 1;
 					uint32_t bGlsl : 1;
+
+					uint32_t alphaA : 2;
+					uint32_t alphaB : 2;
+					uint32_t alphaC : 2;
+					uint32_t alphaD : 2;
+					uint32_t alphaFix : 4;
 				} options;
 
 				uint32_t key{};
 			};
 		};
+
+		static_assert(sizeof(uint32_t) == sizeof(PipelineKey), "PipelineKey size mismatch");
 
 		struct PipelineCreateInfo {
 			std::string vertShaderFilename;

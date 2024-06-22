@@ -87,114 +87,117 @@ namespace Debug
 			ImGui::Spacing();
 
 			aPkt++;
+	
+			float textColorRed = 1.0f;
 
 			for (int i = 0; i < gifTag.nLoop; i++) {
 				edpkt_data pkt = *aPkt;
 
+				const ImVec4 textColor = ImVec4(textColorRed, 1.0f, 1.0f, 1.0f);
+
 				switch (pkt.asU32[2]) {
 				case SCE_GS_TEX0_1:
 				{
-					GIFReg::GSTex tex = *reinterpret_cast<GIFReg::GSTex*>(&pkt.cmdA);
-					ImGui::Text("TEX0_1");
-					ImGui::Text("CBP: 0x%x CLD: %d CPSM: %d CSA: %d CSM: %d",
+					const GIFReg::GSTex tex = *reinterpret_cast<GIFReg::GSTex*>(&pkt.cmdA);
+					ImGui::TextColored(textColor, "TEX0_1");
+					ImGui::TextColored(textColor, "CBP: 0x%x CLD: %d CPSM: %d CSA: %d CSM: %d",
 						tex.CBP, tex.CLD, tex.CPSM, tex.CSA, tex.CSM);
-					ImGui::Text("PSM: %d TBP0: 0x%x TBW: %d TCC: %d TFX: %d TW: %d (%d) TH: %d (%d)",
+					ImGui::TextColored(textColor, "PSM: %d TBP0: 0x%x TBW: %d TCC: %d TFX: %d TW: %d (%d) TH: %d (%d)",
 						tex.PSM, tex.TBP0, tex.TBW, tex.TCC, tex.TFX, tex.TW, 1 << tex.TW, tex.TH, 1 << tex.TH);
-
-					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX0: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
-					//SendTextureCommandsFromPacked(pkt.cmdA);
 				}
 				break;
 				case SCE_GS_ALPHA_1:
 				{
-					ImGui::Text("ALPHA_1");
-					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands ALPHA: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
-					//GIFReg::GSAlpha alpha = *reinterpret_cast<GIFReg::GSAlpha*>(&pkt.cmdA);
-					//Renderer::SetAlpha(alpha.A, alpha.B, alpha.C, alpha.D, alpha.FIX);
+					const GIFReg::GSAlpha alpha = *reinterpret_cast<GIFReg::GSAlpha*>(&pkt.cmdA);
+					ImGui::TextColored(textColor, "ALPHA_1");
+					ImGui::TextColored(textColor, "A: %d B: %d C: %d D: %d FIX: %d",
+						alpha.A, alpha.B, alpha.C, alpha.D, alpha.FIX);
 				}
 				break;
 				case SCE_GS_COLCLAMP:
 				{
-					ImGui::Text("COLCLAMP");
-					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands COLCLAMP: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
-					//GIFReg::GSColClamp colClamp = *reinterpret_cast<GIFReg::GSColClamp*>(&pkt.cmdA);
-					//Renderer::SetColClamp(colClamp);
+					const GIFReg::GSColClamp colClamp = *reinterpret_cast<GIFReg::GSColClamp*>(&pkt.cmdA);
+					ImGui::TextColored(textColor, "COLCLAMP");
+					ImGui::TextColored(textColor, "CLAMP: %d",
+						colClamp.CLAMP);
 				}
 				break;
 				case SCE_GS_TEST_1:
 				{
 					const GIFReg::GSTest test = *reinterpret_cast<GIFReg::GSTest*>(&pkt.cmdA);
-					ImGui::Text("TEST_1");
-					ImGui::Text("ATE: %d ATST: %d AFAIL: %d DATE: %d DATM: %d ZTE: %d ZTST: %d",
+					ImGui::TextColored(textColor, "TEST_1");
+					ImGui::TextColored(textColor, "ATE: %d ATST: %d AFAIL: %d DATE: %d DATM: %d ZTE: %d ZTST: %d",
 						test.ATE, test.ATST, test.AFAIL, test.DATE, test.DATM, test.ZTE, test.ZTST);
 				}
 				break;
 				case SCE_GS_TEX1_1:
 				{
-					ImGui::Text("TEX1_1");
+					ImGui::TextColored(textColor, "TEX1_1");
 					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands TEX1: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 
 				}
 				break;
 				case SCE_GS_MIPTBP1_1:
 				{
-					ImGui::Text("MIPTBP1_1");
+					ImGui::TextColored(textColor, "MIPTBP1_1");
 					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP1: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 
 				}
 				break;
 				case SCE_GS_MIPTBP2_1:
 				{
-					ImGui::Text("MIPTBP2_1");
+					ImGui::TextColored(textColor, "MIPTBP2_1");
 					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands MIPTBP2: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
 
 				}
 				break;
 				case SCE_GS_CLAMP_1:
 				{
-					ImGui::Text("CLAMP_1");
-					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands CLAMP: {:x} ({:x})", pkt.cmdA, pkt.cmdB);
-					//const GIFReg::GSClamp clamp = *reinterpret_cast<GIFReg::GSClamp*>(&pkt.cmdA);
-					//Renderer::SetClamp(clamp);
+					const GIFReg::GSClamp clamp = *reinterpret_cast<GIFReg::GSClamp*>(&pkt.cmdA);
+					ImGui::TextColored(textColor, "CLAMP_1");
+					ImGui::TextColored(textColor, "WMS: %d WMT: %d MINU: %d MAXU: %d MAXV: %d MINV: %d",
+						clamp.WMS, clamp.WMT, clamp.MINU, clamp.MAXU, clamp.MAXV, clamp.MINV);
 				}
 				break;
 				case SCE_GS_BITBLTBUF:
 				{
 					GIFReg::GSBitBltBuf bitbltbuf = *reinterpret_cast<GIFReg::GSBitBltBuf*>(&pkt.cmdA);
-					ImGui::Text("SCE_GS_BITBLTBUF");
-					ImGui::Text("DBP: 0x%x DBW: %d DPSM: %d SBP: 0x%x SBW: %d SPSM: %d",
+					ImGui::TextColored(textColor, "SCE_GS_BITBLTBUF");
+					ImGui::TextColored(textColor, "DBP: 0x%x DBW: %d DPSM: %d SBP: 0x%x SBW: %d SPSM: %d",
 						bitbltbuf.DBP, bitbltbuf.DBW, bitbltbuf.DPSM, bitbltbuf.SBP, bitbltbuf.SBW, bitbltbuf.SPSM);
 				}
 				break;
 				case SCE_GS_TRXPOS:
 				{
-					ImGui::Text("SCE_GS_TRXPOS X: %d Y: %d", pkt.asU32[0], pkt.asU32[1]);
+					ImGui::TextColored(textColor, "SCE_GS_TRXPOS X: %d Y: %d", pkt.asU32[0], pkt.asU32[1]);
 				}
 				break;
 				case SCE_GS_TRXREG:
 				{
-					ImGui::Text("SCE_GS_TRXREG W: %d H: %d", pkt.asU32[0], pkt.asU32[1]);
+					ImGui::TextColored(textColor, "SCE_GS_TRXREG W: %d H: %d", pkt.asU32[0], pkt.asU32[1]);
 				}
 				break;
 				case SCE_GS_TRXDIR:
 				{
-					ImGui::Text("SCE_GS_TRXDIR W: %d H: %d", pkt.asU32[0], pkt.asU32[1]);
+					ImGui::TextColored(textColor, "SCE_GS_TRXDIR W: %d H: %d", pkt.asU32[0], pkt.asU32[1]);
 				}
 				break;
 				case SCE_GS_TEXFLUSH:
 				{
-					ImGui::Text("SCE_GS_TEXFLUSH");
+					ImGui::TextColored(textColor, "SCE_GS_TEXFLUSH");
 				}
 				break;
 				default:
 				{
-					ImGui::Text("UNKNOWN");
+					ImGui::TextColored(textColor, "UNKNOWN");
 					//ED3D_LOG(LogLevel::Verbose, "ed3DFlushMaterial - ProcessTextureCommands UNKNOWN ({:x}): {:x} ({:x})", pkt.asU32[2], pkt.cmdA, pkt.cmdB);
 				}
 				break;
 				}
 
 				aPkt++;
+
+				textColorRed = (textColorRed == 1.0f) ? 0.0f : 1.0f;
 			}
 
 			return gifTag.nLoop;

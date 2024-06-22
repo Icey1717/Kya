@@ -172,6 +172,11 @@ namespace GIFReg
 			uint32_t _PAD1 : 31;
 			uint32_t _PAD2 : 32;
 		};
+
+		struct
+		{
+			uint64_t CMD;
+		};
 	};
 
 	union GSAlpha
@@ -185,6 +190,11 @@ namespace GIFReg
 			uint32_t _PAD1 : 24;
 			uint8_t FIX;
 			uint8_t _PAD2[3];
+		};
+
+		struct
+		{
+			uint64_t CMD;
 		};
 
 		__forceinline bool IsBlack() const { return ((C == 2 && FIX == 0) || (A == 2 && A == B)) && D == 2; }

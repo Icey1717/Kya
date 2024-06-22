@@ -40,7 +40,14 @@ const std::vector<const char*> validationLayers = {
 };
 
 const std::vector<const char*> deviceExtensions = {
-	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+	VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME,
+	VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME,
+	VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME,
+};
+
+const std::vector<const char*> instanceExtensions = {
+	VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, 
 };
 
 namespace Renderer {
@@ -488,7 +495,11 @@ private:
 		}
 
 		{
+			VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extendedDynamicState3{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT };
+
 			VkPhysicalDeviceVulkan13Features deviceFeatures13 { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
+			deviceFeatures13.pNext = &extendedDynamicState3;
+
 			VkPhysicalDeviceFeatures2 deviceFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 			deviceFeatures.pNext = &deviceFeatures13;
 
@@ -499,15 +510,23 @@ private:
 			assert(deviceFeatures.features.geometryShader);
 			assert(deviceFeatures.features.fillModeNonSolid);
 			assert(deviceFeatures13.synchronization2);
+
+			assert(extendedDynamicState3.extendedDynamicState3ColorBlendEnable);
+			assert(extendedDynamicState3.extendedDynamicState3ColorBlendEquation);
 		}
+
+		VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extendedDynamicState3{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT };
+		extendedDynamicState3.extendedDynamicState3ColorBlendEnable = VK_TRUE;
+		extendedDynamicState3.extendedDynamicState3ColorBlendEquation = VK_TRUE;
+
+		VkPhysicalDeviceVulkan13Features deviceFeatures13{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
+		deviceFeatures13.synchronization2 = VK_TRUE;
+		deviceFeatures13.pNext = &extendedDynamicState3;
 
 		VkPhysicalDeviceFeatures2 deviceFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2 };
 		deviceFeatures.features.samplerAnisotropy = VK_TRUE;
 		deviceFeatures.features.geometryShader = VK_TRUE;
 		deviceFeatures.features.fillModeNonSolid = VK_TRUE;
-
-		VkPhysicalDeviceVulkan13Features deviceFeatures13{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
-		deviceFeatures13.synchronization2 = VK_TRUE;
 
 		deviceFeatures.pNext = &deviceFeatures13;
 
@@ -1340,6 +1359,10 @@ public:
 
 		if (checkShaderDebugExtensionSupport()) {
 			extensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+		}
+
+		for (auto& ext : instanceExtensions) {
+			extensions.push_back(ext);
 		}
 
 		return extensions;
