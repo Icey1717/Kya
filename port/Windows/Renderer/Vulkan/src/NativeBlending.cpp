@@ -5,22 +5,27 @@
 #include "VulkanRenderer.h"
 #include "renderer.h"
 
-#define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
-
 namespace Renderer
 {
 	namespace Native
 	{
+
 		enum HWBlendFlags
 		{
-			// A couple of flag to determine the blending behavior
-			BLEND_A_MAX = 0x100, // Impossible blending uses coeff bigger than 1
-			BLEND_C_CLR = 0x200, // Clear color blending (use directly the destination color as blending factor)
-			BLEND_NO_BAR = 0x400, // Doesn't require sampling of the RT as a texture
-			BLEND_ACCU = 0x800, // Allow to use a mix of SW and HW blending to keep the best of the 2 worlds
+			// Flags to determine blending behavior
+			BLEND_CD = 0x1,   // Output is Cd, hw blend can handle it
+			BLEND_HW_CLR1 = 0x2,   // Clear color blending (use directly the destination color as blending factor)
+			BLEND_HW_CLR2 = 0x4,   // Clear color blending (use directly the destination color as blending factor)
+			BLEND_HW_CLR3 = 0x8,   // Multiply Cs by (255/128) to compensate for wrong Ad/255 value, should be Ad/128
+			BLEND_MIX1 = 0x10,  // Mix of hw and sw, do Cs*F or Cs*As in shader
+			BLEND_MIX2 = 0x20,  // Mix of hw and sw, do Cs*(As + 1) or Cs*(F + 1) in shader
+			BLEND_MIX3 = 0x40,  // Mix of hw and sw, do Cs*(1 - As) or Cs*(1 - F) in shader
+			BLEND_ACCU = 0x80,  // Allow to use a mix of SW and HW blending to keep the best of the 2 worlds
+			BLEND_NO_REC = 0x100, // Doesn't require sampling of the RT as a texture
+			BLEND_A_MAX = 0x200, // Impossible blending uses coeff bigger than 1
 		};
 
-		enum BlendFactor : u8
+		enum BlendFactor : uint8_t
 		{
 			// HW blend factors
 			SRC_COLOR, INV_SRC_COLOR, DST_COLOR, INV_DST_COLOR,
@@ -29,7 +34,7 @@ namespace Renderer
 			CONST_COLOR, INV_CONST_COLOR, CONST_ONE, CONST_ZERO,
 		};
 
-		enum BlendOp : u8
+		enum BlendOp : uint8_t
 		{
 			// HW blend operations
 			OP_ADD, OP_SUBTRACT, OP_REV_SUBTRACT
@@ -123,7 +128,7 @@ namespace Renderer
 			{ BLEND_NO_REC             , OP_ADD          , CONST_ZERO      , CONST_ZERO}      , // 2222: (0  -  0)*F  +  0 ==> 0
 		} };
 
-		const std::array<u8, 16> m_replaceDualSrcBlendMap =
+		const std::array<uint8_t, 16> m_replaceDualSrcBlendMap =
 		{ {
 			SRC_COLOR,        // SRC_COLOR
 			INV_SRC_COLOR,    // INV_SRC_COLOR
@@ -143,7 +148,7 @@ namespace Renderer
 			CONST_ZERO        // CONST_ZERO
 		} };
 
-		static HWBlend GetBlend(u32 index, bool replace_dual_src)
+		static HWBlend GetBlend(uint32_t index, bool replace_dual_src)
 		{
 			HWBlend ret = m_blendMap[index];
 			if (replace_dual_src)
@@ -157,7 +162,7 @@ namespace Renderer
 } // Renderer
 
 
-void Renderer::Native::SetBlendingDynamicState(SimpleTexture* pTexture, SimpleMesh* pMesh, const VkCommandBuffer& cmd)
+void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd)
 {
 	static auto pvkCmdSetColorBlendEnableEXT = (PFN_vkCmdSetColorBlendEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorBlendEnableEXT");
 	assert(pvkCmdSetColorBlendEnableEXT);

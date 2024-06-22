@@ -1,6 +1,7 @@
 #include "NativeRenderer.h"
 
 #include "NativeBlending.h"
+#include "NativeDebug.h"
 
 #include <array>
 #include <stdexcept>
@@ -582,9 +583,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	int textureIndex = 0;
 	int modelIndex = 0;
 
-	std::string lastTextureName;
-	int lastMaterialIndex = -1;
-	int lastLayerIndex = -1;
+	Debug::Reset();
 
 	for (auto& drawCommand : gDraws) {
 		auto& drawBufferData = gNativeVertexBuffer.GetDrawBufferData();
@@ -599,50 +598,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 			continue;
 		}
 
-		if (lastTextureName != pTexture->GetName())
-		{
-			if (!lastTextureName.empty())
-			{
-				Renderer::Debug::EndLabel(cmd);
-
-				if (lastMaterialIndex != -1) {
-					Renderer::Debug::EndLabel(cmd);
-					lastMaterialIndex = -1;
-				}
-
-				if (lastLayerIndex != -1) {
-					Renderer::Debug::EndLabel(cmd);
-					lastLayerIndex = -1;
-				}
-			}
-
-			Renderer::Debug::BeginLabel(cmd, "Native %s", pTexture->GetName().c_str());
-
-			lastTextureName = pTexture->GetName();
-		}
-
-		if (lastMaterialIndex != pTexture->GetMaterialIndex() && pTexture->GetMaterialCount() > 1) {
-			if (lastMaterialIndex != -1) {
-				Renderer::Debug::EndLabel(cmd);
-
-				if (lastLayerIndex != -1) {
-					Renderer::Debug::EndLabel(cmd);
-					lastLayerIndex = -1;
-				}
-			}
-
-			Renderer::Debug::BeginLabel(cmd, "Material %d", pTexture->GetMaterialIndex());
-			lastMaterialIndex = pTexture->GetMaterialIndex();
-		}
-
-		if (lastLayerIndex != pTexture->GetLayerIndex() && pTexture->GetLayerCount() > 1) {
-			if (lastLayerIndex != -1) {
-				Renderer::Debug::EndLabel(cmd);
-			}
-
-			Renderer::Debug::BeginLabel(cmd, "Layer %d", pTexture->GetLayerIndex());
-			lastLayerIndex = pTexture->GetLayerIndex();
-		}
+		Debug::UpdateLabel(pTexture, cmd);
 
 		PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 

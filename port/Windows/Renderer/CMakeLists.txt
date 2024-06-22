@@ -42,6 +42,8 @@ set (SOURCES
 	"Vulkan/src/NativeRenderer.cpp"
 	"Vulkan/src/NativeBlending.h"
 	"Vulkan/src/NativeBlending.cpp"
+	"Vulkan/src/NativeDebug.h"
+	"Vulkan/src/NativeDebug.cpp"
 	"Vulkan/src/TextureCache.h"
 	"Vulkan/src/TextureCache.cpp"
 	"Vulkan/src/UniformBuffer.h"

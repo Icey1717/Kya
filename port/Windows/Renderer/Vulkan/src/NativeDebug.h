@@ -12,6 +12,10 @@ namespace Renderer
 
 	namespace Native
 	{
-		void SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd);
+		namespace Debug 
+		{
+			void Reset();
+			void UpdateLabel(const SimpleTexture* pTexture, const VkCommandBuffer& cmd);
+		};
 	}
 }
