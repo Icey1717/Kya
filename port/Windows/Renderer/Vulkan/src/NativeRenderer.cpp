@@ -16,6 +16,7 @@
 #include "log.h"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
+#define NATIVE_LOG_VERBOSE(level, format, ...)
 
 namespace Renderer
 {
@@ -84,8 +85,6 @@ namespace Renderer
 			glm::mat4 projMatrix;
 			glm::mat4 viewMatrix;
 
-			GIFReg::GSPrim prim;
-
 			struct Instance {
 				SimpleMesh* pMesh = nullptr;
 				glm::mat4 modelMatrix;
@@ -108,14 +107,14 @@ namespace Renderer
 		void FillIndexData()
 		{
 			assert(gCurrentDraw->instances.size() > 0);
-			NATIVE_LOG(LogLevel::Info, "FillIndexData Filling instance: {}", gCurrentDraw->instances.size() - 1);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "FillIndexData Filling instance: {}", gCurrentDraw->instances.size() - 1);
 
 			Draw::Instance& instance = gCurrentDraw->instances.back();
 			instance.indexCount = gNativeVertexBufferDataDraw.GetIndexTail();
 			instance.indexStart = gNativeVertexBuffer.GetDrawBufferData().GetIndexTail();
 			instance.vertexStart = gNativeVertexBuffer.GetDrawBufferData().GetVertexTail();
 
-			NATIVE_LOG(LogLevel::Info, "FillIndexData Filled instance: {} indexCount: {} indexStart: {} vertexStart: {}", 
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "FillIndexData Filled instance: {} indexCount: {} indexStart: {} vertexStart: {}",
 				gCurrentDraw->instances.size() - 1, instance.indexCount, instance.indexStart, instance.vertexStart);
 
 			// Copy into the real buffer.
@@ -126,17 +125,29 @@ namespace Renderer
 		void MergeIndexData()
 		{
 			assert(gCurrentDraw->instances.size() > 0);
-			NATIVE_LOG(LogLevel::Info, "MergeIndexData Merging instance: {}", gCurrentDraw->instances.size() - 1);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "MergeIndexData Merging instance: {}", gCurrentDraw->instances.size() - 1);
 
 			Draw::Instance& instance = gCurrentDraw->instances.back();
 			instance.indexCount += gNativeVertexBufferDataDraw.GetIndexTail();
 
-			NATIVE_LOG(LogLevel::Info, "MergeIndexData Merging instance: {} indexCount: {} indexStart: {} vertexStart: {}",
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "MergeIndexData Merging instance: {} indexCount: {} indexStart: {} vertexStart: {}",
 				gCurrentDraw->instances.size() - 1, instance.indexCount, instance.indexStart, instance.vertexStart);
 
 			// Copy into the real buffer.
 			gNativeVertexBuffer.MergeData(gNativeVertexBufferDataDraw);
 			gNativeVertexBufferDataDraw.ResetAfterDraw();
+		}
+
+		static bool NearlyEqual(const glm::mat4& mat1, const glm::mat4& mat2, float epsilon = 1e-5f) {
+			for (int i = 0; i < 4; ++i) {
+				glm::vec4 v1 = mat1[i];
+				glm::vec4 v2 = mat2[i];
+				if (!glm::all(glm::lessThan(glm::abs(v1 - v2), glm::vec4(epsilon)))) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		void CreateFramebuffer()
@@ -215,8 +226,8 @@ namespace Renderer
 					break;
 				}
 
-				assert(viewMatrix == drawCommand.viewMatrix);
-				assert(projMatrix == drawCommand.projMatrix);
+				//assert(NearlyEqual(viewMatrix, drawCommand.viewMatrix));
+				//assert(NearlyEqual(projMatrix, drawCommand.projMatrix));
 
 				NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 			
@@ -251,16 +262,11 @@ namespace Renderer
 
 				pTextureData->UpdateDescriptorSets(pipeline, writeList);
 
-				// Check all the instances have the same prim (debug)
-				for (int i = 1; i < drawCommand.instances.size(); i++) {
-					assert(drawCommand.instances[i].pMesh->GetPrim().CMD == drawCommand.instances[0].pMesh->GetPrim().CMD);
-				}
-
 				for (auto& instance : drawCommand.instances) {
 					assert(modelIndex < gMaxModelMatrices);
 
 					Renderer::SimpleMesh* pMesh = instance.pMesh;
-					NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: {} ({}, {}, {})", pMesh->GetName(), pMesh->GetHierarchyIndex(), pMesh->GetLodIndex(), pMesh->GetStripIndex());
+					NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
 
 					gModelBuffer.SetInstanceData(modelIndex, instance.modelMatrix);
 					modelIndex++;
@@ -576,7 +582,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 	UpdateDescriptors();
 
-	if (!gDraws.empty()) {
+	if (!gDraws.empty() && gNativeVertexBuffer.GetDrawBufferData().GetIndexTail() > 0) {
 		gNativeVertexBuffer.BindData(cmd);
 	}
 
@@ -586,8 +592,6 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	Debug::Reset();
 
 	for (auto& drawCommand : gDraws) {
-		auto& drawBufferData = gNativeVertexBuffer.GetDrawBufferData();
-
 		Renderer::SimpleTexture* pTexture = drawCommand.pTexture;
 
 		if (!pTexture) {
@@ -602,11 +606,16 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 		PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
-		SetBlendingDynamicState(pTexture, drawCommand.instances.back().pMesh, cmd);
+		std::optional<uint> primState;
 
 		for (auto& instance : drawCommand.instances) {
 			if (instance.indexCount == 0) {
 				continue;
+			}
+
+			if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD) {
+				primState = instance.pMesh->GetPrim().CMD;
+				SetBlendingDynamicState(pTexture, instance.pMesh, cmd);
 			}
 
 			std::array< uint32_t, 3 > dynamicOffsets = { 
@@ -670,16 +679,12 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 {
-	FLUSH_LOG();
-
 	if (!gCurrentDraw) {
 		NATIVE_LOG(LogLevel::Info, "AddMesh Creating new draw!");
 		gCurrentDraw = Draw{};
 	}
 
-	gCurrentDraw->prim = pMesh->GetPrim();
-
-	NATIVE_LOG(LogLevel::Info, "AddMesh: {} ({}, {}, {}) prim: 0x{:x}", pMesh->GetName(), pMesh->GetHierarchyIndex(), pMesh->GetLodIndex(), pMesh->GetStripIndex(), pMesh->GetPrim().CMD);
+	NATIVE_LOG(LogLevel::Info, "AddMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
 
 	//if (!CanMergeMesh()) {
 	if (true) {

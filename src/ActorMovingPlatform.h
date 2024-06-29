@@ -59,13 +59,9 @@ public:
 	S_TRAJ_POS currentFillAmount_0x38;
 };
 
-struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_BASE {
+struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH {
 	void Reset();
 	bool SwitchOn(CActor* pActor);
-
-	int messageId;
-	uint messageFlags;
-	char field_0x18[0x8];
 };
 
 static_assert(sizeof(S_STREAM_NTF_TARGET_ONOFF) == 0x1c);

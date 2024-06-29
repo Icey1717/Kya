@@ -57,13 +57,234 @@ void CVision::Create(CActor* pActor, ByteCode* pByteCode)
 	return;
 }
 
+CPathFollowReader::CPathFollowReader()
+{
+	this->field_0x4 = 0;
+	this->field_0xc = 1;
+}
+
 void CPathFollowReader::Create(ByteCode* pByteCode)
 {
 	int iVar1;
 
 	iVar1 = pByteCode->GetS32();
-	this->field_0x0 = iVar1;
+	this->index = iVar1;
 	return;
+}
+
+void CPathFollowReader::Init()
+{
+	CPathFollow* pCVar1;
+
+	if (this->index == -1) {
+		pCVar1 = (CPathFollow*)0x0;
+	}
+	else {
+		pCVar1 = (CScene::ptable.g_PathManager_004516a0)->aPathFollow + this->index;
+	}
+
+	this->pPathFollow = pCVar1;
+
+	return;
+}
+
+void CPathFollowReader::Reset()
+{
+	this->field_0x4 = 0;
+	this->field_0xc = 1;
+	return;
+}
+
+void CPathFollowReader::NextWayPoint()
+{
+	bool bVar1;
+	CPathFollow* pFollow;
+	uint uVar3;
+	bool bVar4;
+	int iVar5;
+	ulong uVar6;
+	int iVar7;
+	ulong* puVar8;
+
+	pFollow = this->pPathFollow;
+
+	iVar5 = this->field_0xc;
+	iVar7 = this->field_0x4;
+
+	uVar3 = pFollow->type;
+	if (uVar3 != 0) {
+		bVar4 = false;
+		goto LAB_001c2930;
+	}
+
+	bVar4 = true;
+	if (pFollow->mode == 1) {
+		bVar1 = iVar7 == 0;
+		iVar7 = iVar5;
+		if (bVar1) {
+		joined_r0x001c2918:
+			if (iVar7 == 0) goto LAB_001c2930;
+		}
+	}
+	else {
+		if (pFollow->mode == 0) {
+			if (iVar5 == 0) goto joined_r0x001c2918;
+			if (iVar7 + 1 == pFollow->splinePointCount) goto LAB_001c2930;
+		}
+	}
+	bVar4 = false;
+LAB_001c2930:
+	if (!bVar4) {
+		iVar7 = pFollow->splinePointCount;
+		if (iVar7 == 1) {
+			this->field_0x4 = 0;
+		}
+		else {
+			if ((uVar3 == 2) || (uVar3 == 1)) {
+				if (iVar5 == 0) {
+					if (((pFollow->mode == 0) && (this->field_0x4 == pFollow->field_0x14)) &&
+						(pFollow->field_0x14 < this->field_0x8)) {
+						this->field_0x4 = iVar7;
+					}
+				}
+				else {
+					if ((pFollow->mode == 0) && (this->field_0x4 + 1 == iVar7)) {
+						this->field_0x4 = pFollow->field_0x14 + -1;
+					}
+				}
+			}
+
+			uVar3 = this->pPathFollow->mode;
+
+			if (uVar3 == 2) {
+				IMPLEMENTATION_GUARD(
+				puVar8 = &CScene::_pinstance->field_0x38;
+				do {
+					uVar6 = *puVar8 * 0x343fd + 0x269ec3;
+					*puVar8 = uVar6;
+					iVar7 = this->pPathFollow->splinePointCount + -1;
+					iVar5 = (int)((uint)(uVar6 >> 0x10) & 0x7fff) % iVar7;
+					if (iVar7 == 0) {
+						trap(7);
+					}
+				} while (iVar5 == this->field_0x4);
+				this->field_0x4 = iVar5;)
+			}
+			else {
+				if (uVar3 == 1) {
+					if (this->field_0xc == 0) {
+						iVar5 = this->field_0x4 + -1;
+						this->field_0x4 = iVar5;
+						if (iVar5 < 0) {
+							this->field_0x4 = this->field_0x4 + 2;
+							this->field_0xc = 1;
+						}
+					}
+					else {
+						iVar5 = this->pPathFollow->splinePointCount;
+						iVar7 = this->field_0x4 + 1;
+						this->field_0x4 = iVar7;
+						if (iVar5 <= iVar7) {
+							this->field_0x4 = this->field_0x4 + -2;
+							this->field_0xc = 0;
+						}
+					}
+				}
+				else {
+					if (uVar3 == 0) {
+						if (this->field_0xc == 0) {
+							this->field_0x4 = this->field_0x4 + -1;
+						}
+						else {
+							this->field_0x4 = this->field_0x4 + 1;
+						}
+					}
+				}
+			}
+
+			iVar5 = GetPrevPlace(this->field_0x4, this->field_0xc);
+			this->field_0x8 = iVar5;
+		}
+	}
+	return;
+}
+
+int CPathFollowReader::GetPrevPlace(int param_2, int param_3)
+{
+	CPathFollow* pCVar1;
+	uint uVar2;
+	int iVar3;
+	int iVar4;
+	float fVar5;
+
+	if (param_3 == 0) {
+		iVar4 = 1;
+	}
+	else {
+		iVar4 = -1;
+	}
+
+	pCVar1 = this->pPathFollow;
+	uVar2 = pCVar1->mode;
+
+	if (((uVar2 == 0) && (pCVar1->type == 0)) &&
+		(((param_3 == 0 && (pCVar1->splinePointCount + -1 <= param_2)) || ((param_3 != 0 && (param_2 < 1)))))) {
+		iVar4 = -1;
+	}
+	else {
+		if (((param_2 == pCVar1->field_0x14) && ((param_3 != 0 && (this->field_0x4 < this->field_0x8)))) ||
+			((param_2 == pCVar1->splinePointCount + -1 && (param_3 == 0)))) {
+			if (uVar2 == 1) {
+				if ((param_3 != 0) && (pCVar1->type != 1)) {
+					return -1;
+				}
+				iVar4 = -iVar4;
+			}
+
+			if ((uVar2 == 0) && (pCVar1->type == 1)) {
+				IMPLEMENTATION_GUARD();
+				iVar3 = pCVar1->field_0x14;
+				fVar5 = fmodf((float)((param_2 + pCVar1->splinePointCount + -1) - iVar3),
+					(float)(((pCVar1->splinePointCount + -1) - iVar3) * 2));
+				param_2 = ((int)fVar5 - iVar4) + iVar3;
+			}
+		}
+
+		iVar4 = param_2 + iVar4;
+	}
+	return iVar4;
+}
+
+edF32VECTOR4* CPathFollowReader::GetWayPoint(int index)
+{
+	edF32VECTOR4* pWaypoint;
+
+	pWaypoint = this->pPathFollow->aSplinePoints;
+
+	if (pWaypoint == (edF32VECTOR4*)0x0) {
+		pWaypoint = &gF32Vertex4Zero;
+	}
+	else {
+		pWaypoint = pWaypoint + index;
+	}
+
+	return pWaypoint;
+}
+
+edF32VECTOR4* CPathFollowReader::GetWayPoint()
+{
+	edF32VECTOR4* pWaypoint;
+
+	pWaypoint = this->pPathFollow->aSplinePoints;
+
+	if (pWaypoint == (edF32VECTOR4*)0x0) {
+		pWaypoint = &gF32Vertex4Zero;
+	}
+	else {
+		pWaypoint = pWaypoint + this->field_0x4;
+	}
+
+	return pWaypoint;
 }
 
 CActor::CActor()
@@ -2148,6 +2369,56 @@ void CAddOnGenerator_SubObj::Create(ByteCode* pByteCode)
 	return;
 }
 
+float CActor::SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence* pActorConeInfluence)
+{
+	edF32VECTOR4* peVar1;
+	Timer* pTVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	peVar1 = GetBottomPosition();
+	edF32Vector4AddHard(&eStack16, peVar1, &pActorConeInfluence->field_0x20);
+	peVar1 = pActor->GetTopPosition();
+	edF32Vector4SubHard(&local_20, peVar1, &eStack16);
+
+	if ((local_20.y < -0.01f) || (pActorConeInfluence->field_0x8 < local_20.y)) {
+		fVar5 = pActorConeInfluence->field_0x8 + 0.001f;
+	}
+	else {
+		fVar3 = edFIntervalLERP(local_20.y, 0.0f, pActorConeInfluence->field_0x8, pActorConeInfluence->field_0x0, pActorConeInfluence->field_0x4);
+		fVar5 = local_20.y;
+		if (fVar3 * fVar3 < local_20.z * local_20.z + local_20.x * local_20.x) {
+			fVar5 = pActorConeInfluence->field_0x8 + 0.001f;
+		}
+		else {
+			CActorAutonomous* pActorAutonomous = (CActorAutonomous*)pActor;
+			if ((pActorConeInfluence->field_0x14 == 2) ||
+				((pActorConeInfluence->field_0x14 == 1 &&
+					(pActorAutonomous->dynamic.linearAcceleration * pActorAutonomous->dynamic.velocityDirectionEuler.y < 1.0)))) {
+				local_20.y = 0.0f;
+
+				fVar3 = edF32Vector4DotProductHard(&pActorAutonomous->dynamic.horizontalVelocityDirectionEuler, &local_20);
+				if (fVar3 < 0.0f) {
+					fVar4 = edFIntervalLERP(fVar5, 0.0f, pActorConeInfluence->field_0x8, pActorConeInfluence->field_0xc, pActorConeInfluence->field_0x10);
+					pTVar2 = GetTimer();
+					fVar3 = pTVar2->cutsceneDeltaTime;
+					pTVar2 = GetTimer();
+					edF32Vector4ScaleHard(-(((fVar4 * 0.01f) / fVar3) / pTVar2->cutsceneDeltaTime), &local_20, &local_20);
+					peVar1 = pActorAutonomous->dynamicExt.aVelocity;
+					edF32Vector4AddHard(peVar1, peVar1, &local_20);
+					fVar3 = edF32Vector4GetDistHard(pActorAutonomous->dynamicExt.aVelocity);
+					pActorAutonomous->dynamicExt.aVelocityMagnitudes[0] = fVar3;
+				}
+			}
+		}
+	}
+
+	return fVar5;
+}
+
 void CActor::PreReset()
 {
 	float fVar1;
@@ -2213,18 +2484,32 @@ void CActor::PreReset()
 	return;
 }
 
-edF32VECTOR4* CActor::GetTopPosition()
+edF32VECTOR4* CActor::GetBottomPosition()
 {
-	edF32VECTOR4* peVar1;
+	edF32VECTOR4* pBottomPosition;
 
 	if (this->pCollisionData == (CCollision*)0x0) {
-		peVar1 = &this->currentLocation;
+		pBottomPosition = &this->currentLocation;
 	}
 	else {
-		peVar1 = &this->pCollisionData->lowestVertex;
+		pBottomPosition = &this->pCollisionData->highestVertex;
 	}
 
-	return peVar1;
+	return pBottomPosition;
+}
+
+edF32VECTOR4* CActor::GetTopPosition()
+{
+	edF32VECTOR4* pTopPosition;
+
+	if (this->pCollisionData == (CCollision*)0x0) {
+		pTopPosition = &this->currentLocation;
+	}
+	else {
+		pTopPosition = &this->pCollisionData->lowestVertex;
+	}
+
+	return pTopPosition;
 }
 
 void ed3DUnLockLOD(ed_3d_hierarchy* pHier)
@@ -2920,6 +3205,34 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 	}
 
 	return (int)lVar6;
+}
+
+void CActor::SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation)
+{
+	KyaUpdateObjA* pKVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4 local_10;
+
+	pKVar1 = this->subObjA;
+	(pKVar1->boundingSphere).xyz = pLocation->xyz;
+	(this->subObjA->boundingSphere).w = radius;
+
+	pKVar1 = this->subObjA;
+	local_10.xyz = (pKVar1->boundingSphere).xyz;
+	local_10.w = 1.0f;
+	edF32Matrix4MulF32Vector4Hard(&local_10, &this->pMeshTransform->base.transformA, &local_10);
+	(this->sphereCentre).xyz = local_10.xyz;
+
+	IMPLEMENTATION_GUARD_LOG();
+	// Check maths.
+	fVar3 = (this->scale).y;
+	fVar2 = (this->scale).x;
+	fVar2 = (float)((int)fVar2 * (uint)(fVar3 < fVar2) | (int)fVar3 * (uint)(fVar3 >= fVar2));
+	fVar3 = (this->scale).z;
+	(this->sphereCentre).w =
+		(pKVar1->boundingSphere).w * (float)((int)fVar3 * (uint)(fVar2 < fVar3) | (int)fVar2 * (uint)(fVar2 >= fVar3));
+	return;
 }
 
 bool CActor::ColWithAToboggan()

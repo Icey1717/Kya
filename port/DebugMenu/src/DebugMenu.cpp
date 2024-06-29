@@ -638,48 +638,6 @@ namespace Debug {
 		}
 
 		ImGui::End();
-
-		if (pSelectedNode) {
-			DebugMeshViewer::ShowNodeMenu(pSelectedNode);
-		}
-
-		if (pMeshInfo) {
-			DebugMeshViewer::ShowClusterMenu(pMeshInfo);
-		}
-	}
-
-	static edNODE* pNewNode = nullptr;
-	static ed_g3d_manager* pSelectedMesh = nullptr;
-
-	static void ShowMeshList(bool* bOpen) {
-		ImGui::Begin("Mesh List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		static edLIST* pList = ed3DHierarchyListInit();
-
-		for (int i = 0; i < meshList.size(); i++) {
-			char buttonText[256];
-			std::sprintf(buttonText, "Mesh %s", meshList[i].name.c_str());
-
-			if (ImGui::Selectable(buttonText)) {
-				pNewNode = nullptr;
-				pSelectedMesh = meshList[i].pMesh;
-
-				if (!pSelectedMesh->CSTA) {
-					pNewNode = ed3DHierarchyAddToList(pList, gHierarchyManagerBuffer, gHierarchyManagerFirstFreeNode, meshList[i].pMesh, NULL);
-				}
-			}
-		}
-
-		ImGui::End();
-
-		if (pSelectedMesh) {
-			if (pNewNode) {
-				DebugMeshViewer::ShowNodeMenu(pNewNode);
-			}
-			else if (pSelectedMesh->CSTA) {
-				DebugMeshViewer::ShowClusterMenu(pSelectedMesh);
-			}
-		}
 	}
 
 	static void ShowMemoryMenu(bool* bOpen) {
@@ -737,7 +695,6 @@ namespace Debug {
 	{
 		{"Demo", ImGui::ShowDemoWindow },
 		{"Log", ShowLogWindow },
-		{"Mesh List", ShowMeshList },
 		{"Native FrameBuffer", ShowNativeFrameBuffer, true },
 		{"Framebuffers", ShowFramebuffers },
 		{"Cutscene", ShowCutsceneMenu, true },

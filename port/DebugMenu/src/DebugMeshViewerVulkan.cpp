@@ -3,6 +3,7 @@
 #include "UniformBuffer.h"
 #include "Pipeline.h"
 #include "NativeRenderer.h"
+#include "NativeBlending.h"
 #include "Types.h"
 #include "FrameBuffer.h"
 #include "backends/imgui_impl_vulkan.h"
@@ -25,13 +26,14 @@ namespace DebugMeshViewer {
 
 		UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
 
-		constexpr int maxDrawCommands = 64;
+		constexpr int maxDrawCommands = 128;
 
 		using PreviewerVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t>;
 		using PreviewerDrawCommandArray = std::array<std::pair<Renderer::SimpleTexture*, PreviewerVertexBuffer>, maxDrawCommands>;
 		PreviewerDrawCommandArray gPreviewerDrawCommands;
 
 		Renderer::SimpleTexture* pBoundTexture = nullptr;
+		Renderer::SimpleMesh* pBoundMesh = nullptr;
 		int drawCounter = 0;		
 
 		void CreateFramebuffer()
@@ -138,7 +140,7 @@ namespace DebugMeshViewer {
 		return Vulkan::gVertexConstantBuffer.GetBufferData();
 	}
 
-	PreviewerVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture)
+	PreviewerVertexBufferData& AddPreviewerDrawCommand(Renderer::SimpleTexture* pTexture, Renderer::SimpleMesh* pMesh)
 	{
 		if (Vulkan::pBoundTexture != pTexture) {
 			if (Vulkan::pBoundTexture != nullptr) {
@@ -148,6 +150,7 @@ namespace DebugMeshViewer {
 			assert(Vulkan::drawCounter < Vulkan::maxDrawCommands);
 
 			Vulkan::pBoundTexture = pTexture;
+			Vulkan::pBoundMesh = pMesh;
 
 			Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
 		}
@@ -181,7 +184,7 @@ void DebugMeshViewer::Vulkan::Setup()
 	gVertexConstantBuffer.Init();
 
 	for (auto& drawBuffer : gPreviewerDrawCommands) {
-		drawBuffer.second.Init(0x6000, 0x6000);
+		drawBuffer.second.Init(0x12000, 0x12000);
 	}
 
 	OnFrameBufferCreated(ImGui_ImplVulkan_AddTexture(gFrameBufferSampler, gFrameBuffer.colorImageView, VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL));
@@ -241,6 +244,8 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 		if (!pTexture) {
 			break;
 		}
+
+		Renderer::Native::SetBlendingDynamicState(pTexture, Vulkan::pBoundMesh, cmd);
 
 		PreviewerVertexBuffer& vertexBuffer = drawCommand.second;
 

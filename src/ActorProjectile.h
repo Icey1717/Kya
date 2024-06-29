@@ -44,6 +44,8 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
+	void AppearToDie();
+
 	CBehaviourProjectileStand behaviourProjectileStand;
 };
 

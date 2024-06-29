@@ -170,7 +170,7 @@ void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, co
 	static auto pvkCmdSetColorBlendEquationEXT = (PFN_vkCmdSetColorBlendEquationEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorBlendEquationEXT");
 	assert(pvkCmdSetColorBlendEquationEXT);
 
-	const bool bEnableAlpha = pMesh->GetPrim().ABE;
+	const bool bEnableAlpha = pMesh ? pMesh->GetPrim().ABE : true;
 
 	VkBool32 bEnableAlphaVk = bEnableAlpha ? VK_TRUE : VK_FALSE;
 	pvkCmdSetColorBlendEnableEXT(cmd, 0, 1, &bEnableAlphaVk);

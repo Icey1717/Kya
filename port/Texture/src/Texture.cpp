@@ -395,6 +395,8 @@ const Renderer::Kya::G2D::Material* Renderer::Kya::TextureLibrary::FindMaterial(
 			}
 		}
 	}
+
+	return nullptr;
 }
 
 void Renderer::Kya::TextureLibrary::BindFromDmaMaterial(const ed_dma_material* pMaterial) const

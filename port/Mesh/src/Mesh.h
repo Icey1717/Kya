@@ -9,6 +9,7 @@ struct ed_g3d_hierarchy;
 struct ed3DLod;
 struct ed_g3d_object;
 struct ed_3d_strip;
+struct ed_g3d_cluster;
 
 namespace Renderer
 {
@@ -20,18 +21,18 @@ namespace Renderer
 		{
 		public:
 
+			struct Strip
+			{
+				void KickVertices() const;
+
+				ed_3d_strip* pStrip = nullptr;
+				void* pParent = nullptr;
+				SimpleMesh* pSimpleMesh = nullptr;
+			};
+
 			struct Hierarchy {
 				struct Lod {
 					struct Object {
-						struct Strip
-						{
-							void KickVertices() const;
-
-							ed_3d_strip* pStrip = nullptr;
-							Object* pParent = nullptr;
-							SimpleMesh* pSimpleMesh = nullptr;
-						};
-
 						void ProcessStrip(ed_3d_strip* pStrip, const int heirarchyIndex, const int lodIndex, const int stripIndex);
 						void CacheStrips();
 
@@ -54,9 +55,20 @@ namespace Renderer
 				std::vector<Lod> lods;
 			};
 
+			struct Cluster {
+				void ProcessStrip(ed_3d_strip* pStrip, const int stripIndex);
+				void CacheStrips();
+
+				void ProcessHierarchy(ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex);
+
+				ed_g3d_cluster* pData = nullptr;
+				G3D* pParent = nullptr;
+				std::vector<Strip> strips;
+				std::vector<Hierarchy> hierarchies;
+			};
+
 			using Lod = G3D::Hierarchy::Lod;
 			using Object = G3D::Hierarchy::Lod::Object;
-			using Strip = G3D::Hierarchy::Lod::Object::Strip;
 
 			G3D(ed_g3d_manager* pManager, std::string name);
 
@@ -67,11 +79,16 @@ namespace Renderer
 
 		private:
 			void ProcessHierarchy(ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex);
+			void ProcessHALL();
+
+			void ProcessCluster(ed_g3d_cluster* pCDQUData);
+			void ProcessCSTA();
 
 			std::string name;
 			ed_g3d_manager* pManager = nullptr;
 
 			std::vector<Hierarchy> hierarchies;
+			Cluster cluster;
 		};
 
 		class MeshLibrary

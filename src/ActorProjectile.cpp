@@ -35,3 +35,8 @@ CBehaviour* CActorProjectile::BuildBehaviour(int behaviourType)
 	}
 	return pBehaviour;
 }
+
+void CActorProjectile::AppearToDie()
+{
+	IMPLEMENTATION_GUARD_LOG();
+}

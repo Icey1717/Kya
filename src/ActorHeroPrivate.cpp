@@ -1265,7 +1265,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 			if (((!bVar9) && (bVar9 = CActorHero::TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
 				(this->field_0x1558 <= 0.0)) {
-				this->field_0xf20 = pSender;
+				this->pTrappedByActor = pSender;
 				(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0x119, 0xffffffff);
 				return 1;
 			})
@@ -1285,8 +1285,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			goto LAB_00344ed0;
 		}
 		if (msg == 0x3f) {
-			IMPLEMENTATION_GUARD(
-				pCVar11 = GetLifeInterface();
+			pCVar11 = GetLifeInterface();
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
@@ -1300,20 +1299,22 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				bVar9 = (uVar10 & 1) != 0;
 			}
 
-			if (((!bVar9) && (bVar9 = CActorHero::TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
-				(this->field_0x1558 <= 0.0)) {
+			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
 				if (this->actorState == 0x117) {
-					if (this->field_0xf20 != pSender) {
+					if (this->pTrappedByActor != pSender) {
 						return 0;
 					}
-					(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0x118, 0xffffffff);
+
+					SetBehaviour(7, 0x118, 0xffffffff);
 				}
 				else {
-					this->field_0xf20 = pSender;
-					(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0x117, 0xffffffff);
+					this->pTrappedByActor = pSender;
+					SetBehaviour(7, 0x117, 0xffffffff);
 				}
+
 				return 1;
-			})
+			}
+
 			return 0;
 		}
 		if (msg == 0x3c) {
@@ -2973,7 +2974,7 @@ void CActorHeroPrivate::ClearLocalData()
 	//*(undefined4*)&this->field_0xf14 = 0;
 	this->field_0xf18 = 0;
 	this->pSoccerActor = 0;
-	//this->field_0xf20 = (undefined*)0x0;
+	this->pTrappedByActor = (CActor*)0x0;
 	this->field_0xf24 = (char*)0x0;
 	//*(undefined4*)&this->field_0xf28 = 0;
 	//this->field_0xf50 = (undefined*)0x0;

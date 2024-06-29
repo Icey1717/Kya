@@ -30,10 +30,29 @@ namespace Renderer
 			const uint primReg = gifTag.tag.PRIM;
 			return *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 		}
+
+		static void EmplaceHierarchy(std::vector<G3D::Hierarchy>& hierarchies, ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex, G3D* pParent)
+		{
+			assert(pHierarchy);
+
+			G3D::Hierarchy& hierarchy = hierarchies.emplace_back();
+			hierarchy.pHierarchy = pHierarchy;
+			hierarchy.pParent = pParent; // Probably should have the cluster as its parent.
+
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessHierarchy Processing hierarchy: {}", pHierarchy->hash.ToString());
+
+			for (int i = 0; i < pHierarchy->lodCount; i++) {
+				MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessHierarchy Processing lod: {}", i);
+
+				ed3DLod* pLod = pHierarchy->aLods + i;
+
+				hierarchy.ProcessLod(pLod, heirarchyIndex, heirarchyIndex);
+			}
+		}
 	}
 }
 
-void Renderer::Kya::G3D::Hierarchy::Lod::Object::Strip::KickVertices() const
+void Renderer::Kya::G3D::Strip::KickVertices() const
 {
 	MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Object::::Strip::KickVertices vifListOffset: 0x{:x}", pStrip->vifListOffset);
 
@@ -132,11 +151,36 @@ void Renderer::Kya::G3D::Hierarchy::Lod::Object::Strip::KickVertices() const
 	}
 }
 
-void Renderer::Kya::G3D::Hierarchy::Lod::Object::CacheStrips()
+void Renderer::Kya::G3D::Cluster::ProcessStrip(ed_3d_strip* pStrip, const int stripIndex)
+{
+	assert(pStrip);
+
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Cluster::ProcessStrip Processing strip flags: 0x{:x}", pStrip->flags);
+
+	Strip& strip = strips.emplace_back();
+	strip.pStrip = pStrip;
+	strip.pParent = this;
+
+	const GIFReg::GSPrim prim = ExtractPrimFromVifList(pStrip);
+
+	// strip everything before the last forward slash
+	std::string meshName = this->pParent->GetName().substr(this->pParent->GetName().find_last_of('\\') + 1);
+	meshName += "_";
+	meshName += std::to_string(stripIndex);
+
+	strip.pSimpleMesh = new SimpleMesh(meshName, prim);
+}
+
+void Renderer::Kya::G3D::Cluster::CacheStrips()
 {
 	for (auto& strip : strips) {
 		gStripMap[strip.pStrip] = &strip;
 	}
+}
+
+void Renderer::Kya::G3D::Cluster::ProcessHierarchy(ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex)
+{
+	EmplaceHierarchy(hierarchies, pHierarchy, heirarchyIndex, pParent);
 }
 
 void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int heirarchyIndex, const int lodIndex, const int stripIndex)
@@ -151,10 +195,23 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int hei
 
 	const GIFReg::GSPrim prim = ExtractPrimFromVifList(pStrip);
 
-	// strip everything before the last forward slash 
-	const std::string meshName = this->pParent->pParent->pParent->GetName().substr(this->pParent->pParent->pParent->GetName().find_last_of('\\') + 1);
+	// strip everything before the last forward slash
+	std::string meshName = this->pParent->pParent->pParent->GetName().substr(this->pParent->pParent->pParent->GetName().find_last_of('\\') + 1);
+	meshName += "_";
+	meshName += std::to_string(heirarchyIndex);
+	meshName += "_";
+	meshName += std::to_string(lodIndex);
+	meshName += "_";
+	meshName += std::to_string(stripIndex);
 
-	strip.pSimpleMesh = new SimpleMesh(meshName, heirarchyIndex, lodIndex, stripIndex, prim);
+	strip.pSimpleMesh = new SimpleMesh(meshName, prim);
+}
+
+void Renderer::Kya::G3D::Hierarchy::Lod::Object::CacheStrips()
+{
+	for (auto& strip : strips) {
+		gStripMap[strip.pStrip] = &strip;
+	}
 }
 
 void Renderer::Kya::G3D::Lod::ProcessObject(ed_g3d_object* pObject, const int heirarchyIndex, const int lodIndex)
@@ -205,6 +262,24 @@ Renderer::Kya::G3D::G3D(ed_g3d_manager* pManager, std::string name)
 {
 	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::G3D Beginning processing of mesh: {}", name.c_str());
 
+	if (pManager->HALL) {
+		ProcessHALL();
+	}
+
+	if (pManager->CSTA) {
+		ProcessCSTA();
+	}
+}
+
+void Renderer::Kya::G3D::ProcessHierarchy(ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex)
+{
+	EmplaceHierarchy(hierarchies, pHierarchy, heirarchyIndex, this);
+}
+
+void Renderer::Kya::G3D::ProcessHALL()
+{
+	assert(pManager->HALL);
+
 	ed_Chunck* pHASH = pManager->HALL + 1;
 	ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pHASH + 1);
 	const int chunkNb = edChunckGetNb(pHASH, reinterpret_cast<char*>(pManager->HALL) + pManager->HALL->size);
@@ -225,22 +300,115 @@ Renderer::Kya::G3D::G3D(ed_g3d_manager* pManager, std::string name)
 	}
 }
 
-void Renderer::Kya::G3D::ProcessHierarchy(ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex)
+void Renderer::Kya::G3D::ProcessCluster(ed_g3d_cluster* pCluster)
 {
-	assert(pHierarchy);
+	assert(pCluster);
 
-	Hierarchy& hierarchy = hierarchies.emplace_back();
-	hierarchy.pHierarchy = pHierarchy;
-	hierarchy.pParent = this;
+	cluster.pData = pCluster;
+	cluster.pParent = this;
 
-	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessHierarchy Processing hierarchy: {}", pHierarchy->hash.ToString());
+	const uint stripCountArrayEntryIndex = 4;
 
-	for (int i = 0; i < pHierarchy->lodCount; i++) {
-		MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessHierarchy Processing lod: {}", i);
+	const uint stripCount = pCluster->aClusterStripCounts[stripCountArrayEntryIndex];
 
-		ed3DLod* pLod = pHierarchy->aLods + i;
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCluster Processing CDQU chunk stripCount: {}", stripCount);
 
-		hierarchy.ProcessLod(pLod, heirarchyIndex, heirarchyIndex);
+	bool bProcessedStrip = false;
+
+	if ((stripCount != 0) && (bProcessedStrip = true, stripCount != 0)) {
+		ed_Chunck* pMBNK = LOAD_SECTION_CAST(ed_Chunck*, pCluster->pMBNK);
+		ed_3d_strip* p3DStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCluster->p3DStrip);
+
+		uint stripIndex = 0;
+
+		while (stripIndex < stripCount) {
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::Lod::ProcessObject Processing strip: {}", stripIndex);
+
+			cluster.ProcessStrip(p3DStrip, stripIndex);
+			p3DStrip = LOAD_SECTION_CAST(ed_3d_strip*, p3DStrip->pNext);
+			stripIndex++;
+		}
+
+		cluster.CacheStrips();
+
+		bProcessedStrip = true;
+	}
+
+	uint spriteCount = pCluster->clusterDetails.spriteCount;
+
+	if (spriteCount != 0) {
+
+	}
+
+	uint clusterHierCount = pCluster->clusterDetails.clusterHierCount;
+
+	if (clusterHierCount != 0) {
+		ed_Chunck* pHASH = reinterpret_cast<ed_Chunck*>(pCluster + 1);
+		ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pHASH + 1);
+
+		for (int i = 0; i < clusterHierCount; i++) {
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCluster Processing cluster hierarchy: {}", pHashCode->hash.ToString());
+
+			ed_Chunck* pHIER = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+			assert(pHIER->hash == HASH_CODE_HIER);
+
+			ed_g3d_hierarchy* pHierarchy = reinterpret_cast<ed_g3d_hierarchy*>(pHIER + 1);
+
+			if (pHierarchy) {
+				cluster.ProcessHierarchy(pHierarchy, i);
+			}
+
+			pHashCode++;
+		}
+	}
+
+	//assert(bProcessedStrip);
+}
+
+void Renderer::Kya::G3D::ProcessCSTA()
+{
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCSTA CSTA chunk header: {}", pManager->CSTA->GetHeaderString());
+
+	ed_Chunck* pClusterTypeChunk = pManager->CSTA + 1;
+
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCSTA Cluster chunk header: {}", pClusterTypeChunk->GetHeaderString());
+
+	if (pClusterTypeChunk->hash == HASH_CODE_CDOA) {
+		assert(false);
+		MeshData_CSTA* pCSTA = reinterpret_cast<MeshData_CSTA*>(pClusterTypeChunk + 1);
+		//location.xyz = pCSTA->field_0x20;
+		//octree.field_0x0.w = 0.0f;
+		//octree.worldLocation.xyz = pCSTA->worldLocation.xyz;
+		//octree.worldLocation.w = 1.0f;
+		//location.w = 0.0f;
+		//octree.field_0x0.xyz = location.xyz;
+		//edF32Vector4SquareHard(&location, &location);
+		//octree.boundingSphereTestResult = 2;
+		//octree.field_0x30 = 0.0f;
+		//location.x = location.x + location.y + location.z;
+		//octree.field_0x2c = sqrtf(location.x) * 0.5f;
+		//octree.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
+		//octree.pCDQU_End = reinterpret_cast<char*>(octree.pCDQU) + octree.pCDQU->size;
+
+
+	}
+	else {
+		if (pClusterTypeChunk->hash == HASH_CODE_CDQA) {
+			MeshData_CSTA* pCSTA = reinterpret_cast<MeshData_CSTA*>(pClusterTypeChunk + 1);
+
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCSTA Processing CDQA chunk");
+
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCSTA field_0x20: {}", pCSTA->field_0x20.ToString());
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCSTA worldLocation: {}", pCSTA->worldLocation.ToString());
+
+			ed_Chunck* pCDQU = edChunckGetFirst(pCSTA + 1, reinterpret_cast<char*>(pClusterTypeChunk) + pClusterTypeChunk->size);
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::ProcessCSTA CDQA chunk header: {}", pCDQU->GetHeaderString());
+
+			if (pCDQU) {
+				ed_g3d_cluster* pCDQUData = reinterpret_cast<ed_g3d_cluster*>(pCDQU + 1);
+				ProcessCluster(pCDQUData);
+			}
+		}
 	}
 }
 
@@ -283,7 +451,7 @@ const Renderer::Kya::G3D::Strip* Renderer::Kya::MeshLibrary::FindStrip(const ed_
 void Renderer::Kya::MeshLibrary::AddFromStrip(const ed_3d_strip* pStrip) const
 {
 	const G3D::Strip* pRendererStrip = FindStrip(pStrip);
-	//assert(pRendererStrip);
+	assert(pRendererStrip);
 
 	if (pRendererStrip && pRendererStrip->pSimpleMesh) {
 		pRendererStrip->KickVertices();

@@ -214,20 +214,14 @@ namespace Renderer
 
 	struct SimpleMesh : public RendererObject
 	{
-		SimpleMesh(std::string inName, const int inHierarchyIndex, const int inLodIndex, const int inStripIndex, const GIFReg::GSPrim& inPrim)
+		SimpleMesh(std::string inName, const GIFReg::GSPrim& inPrim)
 			: RendererObject(inName)
-			, hierarchyIndex(inHierarchyIndex)
-			, lodIndex(inLodIndex)
-			, stripIndex(inStripIndex)
 			, prim(inPrim)
 		{}
 
 		// Implementations in renderer implementations.
 		NativeVertexBufferData& GetVertexBufferData();
 
-		int GetHierarchyIndex() const { return hierarchyIndex; }
-		int GetLodIndex() const { return lodIndex; }
-		int GetStripIndex() const { return stripIndex; }
 		const GIFReg::GSPrim& GetPrim() const { return prim; }
 
 	private:

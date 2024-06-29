@@ -34,6 +34,24 @@ class CPlayerInput;
 enum ACTOR_MESSAGE {};
 typedef void* MSG_PARAM;
 
+class CActorConeInfluence {
+public:
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	int field_0x14;
+	undefined field_0x18;
+	undefined field_0x19;
+	undefined field_0x1a;
+	undefined field_0x1b;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+	edF32VECTOR4 field_0x20;
+};
 
 struct SPEED_DYN {
 	void Init(float param_1, float param_2);
@@ -54,11 +72,29 @@ public:
 	void Create(CActor* pActor, ByteCode* pByteCode);
 };
 
+class CPathFollow;
+
 class CPathFollowReader {
 public:
+	CPathFollowReader();
 	void Create(ByteCode* pByteCode);
+	void Init();
+	void Reset();
 
-	int field_0x0;
+	void NextWayPoint();
+	int GetPrevPlace(int param_2, int param_3);
+
+	edF32VECTOR4* GetWayPoint(int index);
+	edF32VECTOR4* GetWayPoint();
+
+	union {
+		int index;
+		CPathFollow* pPathFollow;
+	};
+
+	int field_0x4;
+	int field_0x8;
+	int field_0xc;
 };
 
 struct CBehaviour 
@@ -346,6 +382,7 @@ public:
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual CPlayerInput* GetInputManager(int, int);
 
+	void SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation);
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
 	void ChangeVisibleState(int bVisible);
 
@@ -361,6 +398,7 @@ public:
 
 	void PreReset();
 
+	edF32VECTOR4* GetBottomPosition();
 	edF32VECTOR4* GetTopPosition();
 
 	void RestoreInitData();
@@ -378,6 +416,8 @@ public:
 	bool SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial);
 
 	void SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1);
+
+	float SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence* pActorConeInfluence);
 
 	void FUN_00115ea0(uint param_2);
 

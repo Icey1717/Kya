@@ -249,6 +249,7 @@ ed_Chunck* edChunckGetNext(ed_Chunck* pCurChunck, char* pBuffEnd)
 	ed_Chunck* pNextChunck;
 
 	if ((pBuffEnd == (char*)0x0) || (pNextChunck = (ed_Chunck*)0x0, ((char*)pCurChunck + pCurChunck->size) < pBuffEnd)) {
+		assert(pCurChunck->size > 0);
 		pNextChunck = (ed_Chunck*)((char*)pCurChunck + pCurChunck->size);
 	}
 	return pNextChunck;
@@ -2236,9 +2237,9 @@ void ed3DSceneSortClusters(ed_3D_Scene* pScene)
 		// Calculate the distance to to the camera.
 		for (; pPrevNode != pCurNode; pPrevNode = (edLIST*)pPrevNode->pPrev) {
 			pCluster = (edCluster*)pPrevNode->pData;
-			pCSTA = (MeshData_CSTA*)pCluster->pMeshInfo->CSTA;
+			pCSTA = reinterpret_cast<MeshData_CSTA*>(pCluster->pMeshInfo->CSTA + 2);
 
-			if (pCSTA != (MeshData_CSTA*)0x0) {
+			if (pCluster->pMeshInfo->CSTA != (ed_Chunck*)0x0) {
 				edF32Vector4SubHard(&local_10, &pScene->pCamera->position, &pCSTA->worldLocation);
 
 				ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneSortClusters camera: {} CSTA: {} result: {}", pScene->pCamera->position.ToString(), pCSTA->worldLocation.ToString(), local_10.ToString());
@@ -6702,7 +6703,7 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	uint uVar14;
 	ulong uVar15;
 	long lVar16;
-	ed_hash_code* puVar17;
+	ed_hash_code* pHashCode;
 	ushort* pStripCounts;
 	uint uVar19;
 	uint stripCountArrayEntryIndex;
@@ -6733,12 +6734,10 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 	int local_1dc;
 	undefined2 local_1d8[2];
 	float local_1d4[117];
-	MeshData_CDQU* pCDQU;
+	ed_g3d_cluster* pCluster;
 
-	pCDQU = (MeshData_CDQU*)p3DOctree->pCDQU;
-	pStripCounts = pCDQU->aClusterStripCounts;
-
-	MeshData_PSX2* pPSX2 = reinterpret_cast<MeshData_PSX2*>(pCDQU + 1);
+	pCluster = reinterpret_cast<ed_g3d_cluster*>(p3DOctree->pCDQU + 1);
+	pStripCounts = pCluster->aClusterStripCounts;
 
 	if (p3DOctree->field_0x30 == 1.0f) {
 		stripCountArrayEntryIndex = 4;
@@ -6749,12 +6748,12 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Strip Count: {} index: {}", pStripCounts[stripCountArrayEntryIndex], stripCountArrayEntryIndex);
 
-	uint stripCount = (uint)pStripCounts[stripCountArrayEntryIndex];
+	uint stripCount = pStripCounts[stripCountArrayEntryIndex];
 	bProcessedStrip = false;
 
 	if ((stripCount != 0) && (bProcessedStrip = true, stripCount != 0)) {
-		pMBNK = LOAD_SECTION_CAST(ed_Chunck*, pPSX2->pMBNK);
-		p3DStrip = LOAD_SECTION_CAST(ed_3d_strip*, pPSX2->p3DStrip);
+		pMBNK = LOAD_SECTION_CAST(ed_Chunck*, pCluster->pMBNK);
+		p3DStrip = LOAD_SECTION_CAST(ed_3d_strip*, pCluster->p3DStrip);
 
 		gRender_info_SPR->boundingSphereTestResult = (uint)p3DOctree->boundingSphereTestResult;
 		gRender_info_SPR->pMeshTransformMatrix = WorldToCamera_Matrix;
@@ -6768,14 +6767,14 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 		bProcessedStrip = true;
 	}
 
-	uint spriteCount = pCDQU->clusterDetails.spriteCount;
+	uint spriteCount = pCluster->clusterDetails.spriteCount;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Sprite Count: {}", spriteCount);
 
 	if (spriteCount != 0) {
 		IMPLEMENTATION_GUARD_LOG(
-		iVar10 = *(int*)pCDQU->p3DSprite;
-		pMBNK = LOAD_SECTION_CAST(ed_Chunck*, pCDQU->pMBNK);
+		iVar10 = *(int*)pCluster->p3DSprite;
+		pMBNK = LOAD_SECTION_CAST(ed_Chunck*, pCluster->pMBNK);
 		uVar2 = p3DOctree->boundingSphereTestResult;
 		for (; 0 < (int)spriteCount; spriteCount = spriteCount - 1) {
 			ed_hash_code* pMaterialBank = reinterpret_cast<ed_hash_code*>(pMBNK + 1);
@@ -6786,22 +6785,25 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 		bProcessedStrip = true;
 	}
 
-	uint clusterHierCount = pCDQU->clusterDetails.clusterHierCount;
+	uint clusterHierCount = pCluster->clusterDetails.clusterHierCount;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Cluster Hier Count: {}", clusterHierCount);
 
 	if (clusterHierCount != 0) {
-		puVar17 = (ed_hash_code*)((char*)pCDQU + 0x60);
+		ed_Chunck* pHASH = reinterpret_cast<ed_Chunck*>(pCluster + 1);
+		pHashCode = reinterpret_cast<ed_hash_code*>(pHASH + 1);
 
 		while (bVar1 = clusterHierCount != 0, clusterHierCount = clusterHierCount - 1, bVar1) {
-			ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Cluster Hier: {}", puVar17->hash.ToString());
-			ed3DRenderClusterHierarchy((ed_g3d_hierarchy*)(((char*)LOAD_SECTION(puVar17->pData)) + 0x10));
-			puVar17 = puVar17 + 1;
+			ED3D_LOG(LogLevel::Verbose, "ed3DRenderCluster Cluster Hier: {}", pHashCode->hash.ToString());
+			ed_Chunck* pHIER = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+			assert(pHIER->hash == HASH_CODE_HIER);
+			ed3DRenderClusterHierarchy(reinterpret_cast<ed_g3d_hierarchy*>(pHIER + 1));
+			pHashCode = pHashCode + 1;
 		}
 	}
 
 	if (!bProcessedStrip) {
-		uVar2 = pCDQU->clusterDetails.clusterHierCount;
+		uVar2 = pCluster->clusterDetails.clusterHierCount;
 		uVar9 = 0;
 		uVar15 = 0;
 		iVar10 = 0;
@@ -6811,7 +6813,9 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 			iVar10 = (uint)uVar2 * 0x10 + 0x10;
 		}
 
-		piVar8 = edChunckGetFirst(reinterpret_cast<char*>(pStripCounts) + iVar10 + 0x40, p3DOctree->pCDQU_End);
+		ed_Chunck* pHASH = reinterpret_cast<ed_Chunck*>(pCluster + 1);
+
+		piVar8 = edChunckGetFirst(reinterpret_cast<char*>(pHASH) + iVar10, p3DOctree->pCDQU_End);
 		while (true) {
 			uVar14 = (uint)uVar15;
 
@@ -6928,54 +6932,56 @@ void ed3DRenderCluster(ed_3d_octree* p3DOctree)
 bool ed3DSceneRenderCluster(ed_g3d_manager* pMeshInfo)
 {
 	bool bVar1;
-	edF32VECTOR4 local_a0;
-	edF32VECTOR4 local_90;
-	ed_3d_octree octreeA;
-	ed_3d_octree octreeB;
-	MeshData_CSTA* pCSTA;
+	edF32VECTOR4 location;
+	ed_3d_octree octree;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DSceneRenderCluster");
 
-	pCSTA = (MeshData_CSTA*)pMeshInfo->CSTA;
-	if (pCSTA->chunk.hash == 0x414f4443) {
-		local_90.xyz = pCSTA->field_0x20;
-		octreeB.field_0x0.w = 0.0f;
-		octreeB.worldLocation.xyz = pCSTA->worldLocation.xyz;
-		octreeB.worldLocation.w = 1.0f;
-		local_90.w = 0.0f;
-		octreeB.field_0x0.xyz = local_90.xyz;
-		edF32Vector4SquareHard(&local_90, &local_90);
-		octreeB.boundingSphereTestResult = 2;
-		octreeB.field_0x30 = 0.0f;
-		local_90.x = local_90.x + local_90.y + local_90.z;
-		octreeB.field_0x2c = sqrtf(local_90.x) * 0.5f;
-		octreeB.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
-		octreeB.pCDQU_End = reinterpret_cast<char*>(octreeA.pCDQU) + octreeA.pCDQU->size;
-		ed3DRenderCluster(&octreeB);
+	ed_Chunck* pClusterTypeChunk = pMeshInfo->CSTA + 1;
+
+	if (pClusterTypeChunk->hash == HASH_CODE_CDOA) {
+		MeshData_CSTA* pCSTA = reinterpret_cast<MeshData_CSTA*>(pClusterTypeChunk + 1);
+		location.xyz = pCSTA->field_0x20;
+		octree.field_0x0.w = 0.0f;
+		octree.worldLocation.xyz = pCSTA->worldLocation.xyz;
+		octree.worldLocation.w = 1.0f;
+		location.w = 0.0f;
+		octree.field_0x0.xyz = location.xyz;
+		edF32Vector4SquareHard(&location, &location);
+		octree.boundingSphereTestResult = 2;
+		octree.field_0x30 = 0.0f;
+		location.x = location.x + location.y + location.z;
+		octree.field_0x2c = sqrtf(location.x) * 0.5f;
+		octree.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
+		octree.pCDQU_End = reinterpret_cast<char*>(octree.pCDQU) + octree.pCDQU->size;
+		ed3DRenderCluster(&octree);
 		bVar1 = true;
 	}
 	else {
-		if (pCSTA->chunk.hash == 0x41514443) {
-			local_a0.xyz = pCSTA->field_0x20;
-			octreeA.field_0x0.w = 0.0f;
-			octreeA.worldLocation.xyz = pCSTA->worldLocation.xyz;
-			octreeA.worldLocation.w = 1.0f;
-			local_a0.w = 0.0f;
-			octreeA.field_0x0.xyz = local_a0.xyz;
-			edF32Vector4SquareHard(&local_a0, &local_a0);
-			octreeA.field_0x30 = 1.0f;
-			octreeA.boundingSphereTestResult = 2;
-			local_a0.x = local_a0.x + local_a0.y + local_a0.z;
-			octreeA.field_0x2c = sqrtf(local_a0.x) * 0.5;
-			octreeA.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
-			octreeA.pCDQU_End = reinterpret_cast<char*>(octreeA.pCDQU) + octreeA.pCDQU->size;
-			ed3DRenderCluster(&octreeA);
+		if (pClusterTypeChunk->hash == HASH_CODE_CDQA) {
+			MeshData_CSTA* pCSTA = reinterpret_cast<MeshData_CSTA*>(pClusterTypeChunk + 1);
+
+			location.xyz = pCSTA->field_0x20;
+			octree.field_0x0.w = 0.0f;
+			octree.worldLocation.xyz = pCSTA->worldLocation.xyz;
+			octree.worldLocation.w = 1.0f;
+			location.w = 0.0f;
+			octree.field_0x0.xyz = location.xyz;
+			edF32Vector4SquareHard(&location, &location);
+			octree.field_0x30 = 1.0f;
+			octree.boundingSphereTestResult = 2;
+			location.x = location.x + location.y + location.z;
+			octree.field_0x2c = sqrtf(location.x) * 0.5;
+			octree.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
+			octree.pCDQU_End = reinterpret_cast<char*>(octree.pCDQU) + octree.pCDQU->size;
+			ed3DRenderCluster(&octree);
 			bVar1 = true;
 		}
 		else {
 			bVar1 = false;
 		}
 	}
+
 	return bVar1;
 }
 
@@ -10683,7 +10689,7 @@ struct astruct_14 {
 int INT_0044935c = 0;
 bool BOOL_00449370 = false;
 
-void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo, int param_5, bool bHasFlag)
+void ed3DPrepareCluster(ed_g3d_cluster* pCluster, bool param_2, ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo, int param_5, bool bHasFlag)
 {
 	ushort uVar1;
 	ed_Chunck* piVar2;
@@ -10700,27 +10706,27 @@ void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* 
 
 	ED3D_LOG(LogLevel::Info, "ed3DPrepareClusterTree");
 
-	bHasInternalFlag = (pCDQU->flags_0x1c & 1) == 0;
+	bHasInternalFlag = (pCluster->flags_0x1c & 1) == 0;
 
 	ED3D_LOG(LogLevel::Info, "ed3DPrepareClusterTree Internal flag: {}", bHasInternalFlag);
 
 	if (bHasFlag == false) {
 		if (bHasInternalFlag) {
 			uVar8 = 0;
-			pCDQU->flags_0x1c = pCDQU->flags_0x1c | 1;
+			pCluster->flags_0x1c = pCluster->flags_0x1c | 1;
 
 			uVar7 = 0;
 			do {
 				uVar6 = uVar7 + 1 & 0xffff;
-				uVar8 = uVar8 + pCDQU->aClusterStripCounts[uVar7 - 8];
+				uVar8 = uVar8 + pCluster->aClusterStripCounts[uVar7 - 8];
 				uVar7 = uVar6;
 			} while (uVar6 < 0xd);
 
 			INT_0044935c = 0x60;
 			local_30.field_0xc = '\0';
-			local_30.clusterDetails = pCDQU->clusterDetails;
-			piVar4 = (ed_Chunck*)pCDQU->clusterDetails.field_0x30;
-			piVar2 = (ed_Chunck*)pCDQU->field_0x34;
+			local_30.clusterDetails = pCluster->clusterDetails;
+			piVar4 = (ed_Chunck*)pCluster->field_0x30;
+			piVar2 = (ed_Chunck*)pCluster->field_0x34;
 			local_30.field_0x4 = (int*)pTextureInfo;
 			local_30.field_0x8 = (int*)param_5;
 			for (uVar7 = 0; uVar7 < uVar8; uVar7 = uVar7 + 1 & 0xffff) {
@@ -10732,7 +10738,7 @@ void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* 
 						(edpkt_data*)
 						ed3DStripPreparePacket(puVar5, (ulong*)g_pStrippBufLastPos, (int)(piVar4 + 4), 4), uVar7 == 0
 						)) {
-					pCDQU->field_0x38 = puVar5;
+					pCluster->field_0x38 = puVar5;
 				}
 				piVar2 = edChunckGetNext(piVar2, (int*)0x0);)
 			}
@@ -10741,14 +10747,14 @@ void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* 
 	else {
 		if (BOOL_00449370 == true) {
 			IMPLEMENTATION_GUARD(
-				piVar4 = (int*)pCDQU->field_0x30;
-			puVar5 = (uint*)pCDQU->field_0x38;
+				piVar4 = (int*)pCluster->field_0x30;
+			puVar5 = (uint*)pCluster->field_0x38;
 			uVar7 = 0;
 			if ((piVar4 != (int*)0x0) && (puVar5 != (uint*)0x0)) {
 				uVar8 = 0;
 				do {
 					uVar6 = uVar8 + 1 & 0xffff;
-					uVar7 = uVar7 + pCDQU->field_0x10[uVar8 - 8];
+					uVar7 = uVar7 + pCluster->field_0x10[uVar8 - 8];
 					uVar8 = uVar6;
 				} while (uVar6 < 0xd);
 				INT_0044935c = 0x60;
@@ -10758,17 +10764,17 @@ void ed3DPrepareClusterTree(MeshData_CDQU* pCDQU, bool param_2, ed_g3d_manager* 
 					}
 					puVar5 = (uint*)puVar5[3];
 				}
-				chunkSize = *(int*)&pCDQU[-1].field_0x44;
+				chunkSize = *(int*)&pCluster[-1].field_0x44;
 				goto LAB_002a40c4;
 			})
 		}
 	}
 
-	ed_Chunck* pChunk = reinterpret_cast<ed_Chunck*>(reinterpret_cast<char*>(pCDQU) - sizeof(ed_Chunck));
+	ed_Chunck* pChunk = reinterpret_cast<ed_Chunck*>(reinterpret_cast<char*>(pCluster) - sizeof(ed_Chunck));
 
 	chunkSize = pChunk->size;
 LAB_002a40c4:
-	uVar1 = pCDQU->field_0x1a;
+	uVar1 = pCluster->field_0x1a;
 	offset = (uint)uVar1 << 3;
 
 	if ((uVar1 & 1) != 0) {
@@ -10777,25 +10783,24 @@ LAB_002a40c4:
 
 	ED3D_LOG(LogLevel::Info, "ed3DPrepareClusterTree Header chunk: {} size: 0x{:x} flags: 0x{:x} offset: 0x{:x}", pChunk->GetHeaderString(), chunkSize, uVar1, offset);
 
-	for (piVar4 = edChunckGetFirst((char*)pCDQU + offset + sizeof(MeshData_CDQU), (char*)pCDQU + chunkSize + -sizeof(ed_Chunck));
-		piVar4 != (ed_Chunck*)0x0; piVar4 = edChunckGetNext(piVar4, (char*)pCDQU + chunkSize + -sizeof(ed_Chunck))) {
-		// Tidy
-		offset = piVar4->hash;
-		if (offset == 0x41525053) {
+	ed_Chunck* pPostClusterChunk;
+	for (pPostClusterChunk = edChunckGetFirst(reinterpret_cast<char*>(pCluster) + offset + sizeof(ed_g3d_cluster), reinterpret_cast<char*>(pCluster) + chunkSize + -sizeof(ed_Chunck));
+		pPostClusterChunk != (ed_Chunck*)0x0; pPostClusterChunk = edChunckGetNext(pPostClusterChunk, reinterpret_cast<char*>(pCluster) + chunkSize + -sizeof(ed_Chunck))) {
+		if (pPostClusterChunk->hash == HASH_CODE_SPRA) {
 			IMPLEMENTATION_GUARD();
 			if (bHasInternalFlag) {
 				aStack96.field_0xc = '\0';
-				aStack96.clusterDetails = pCDQU->clusterDetails;
+				aStack96.clusterDetails = pCluster->clusterDetails;
 				aStack96.field_0x4 = (int*)pTextureInfo;
 				aStack96.field_0x8 = (int*)param_5;
-				IMPLEMENTATION_GUARD(puVar5 = ed3DPrepareAllSprite((int)piVar4, &aStack96, (int)(pCDQU->field_0x30 + 4), 4));
-				pCDQU->field_0x3c = (int)STORE_SECTION(puVar5);
-				pCDQU->field_0x1e = aStack96.field_0x24;
+				IMPLEMENTATION_GUARD(puVar5 = ed3DPrepareAllSprite((int)pPostClusterChunk, &aStack96, (int)(pCluster->field_0x30 + 4), 4));
+				pCluster->field_0x3c = (int)STORE_SECTION(puVar5);
+				pCluster->field_0x1e = aStack96.field_0x24;
 			}
 		}
 		else {
-			if ((offset == 0x55514443) || (offset == 0x434f4443)) {
-				ed3DPrepareClusterTree((MeshData_CDQU*)(piVar4 + 4), param_2, pMeshInfo, pTextureInfo, param_5, bHasFlag);
+			if ((pPostClusterChunk->hash == HASH_CODE_CDQU) || (pPostClusterChunk->hash == HASH_CODE_CDOC)) {
+				ed3DPrepareCluster((ed_g3d_cluster*)(pPostClusterChunk + 4), param_2, pMeshInfo, pTextureInfo, param_5, bHasFlag);
 			}
 		}
 	}
@@ -10804,11 +10809,6 @@ LAB_002a40c4:
 
 	return;
 }
-
-#define HASH_CODE_CDQA 0x41514443
-#define HASH_CODE_CDQU 0x55514443
-#define HASH_CODE_CDOA 0x414f4443
-#define HASH_CODE_CDOC 0x434f4443
 
 void ed3DPrepareClusterALL(bool bUnused, ed_g3d_manager* meshInfoObj, ed_g2d_manager* textureInfo, int param_4)
 {
@@ -10853,7 +10853,7 @@ void ed3DPrepareClusterALL(bool bUnused, ed_g3d_manager* meshInfoObj, ed_g2d_man
 				/* If read value is CDQU */
 				if (pSubChunk->hash == HASH_CODE_CDQU) {
 					ED3D_LOG(LogLevel::Info, "ed3DPrepareClusterALL Found CDQU chunck hash: {} size: 0x{:x}", pSubChunk->GetHeaderString(), pSubChunk->size);
-					ed3DPrepareClusterTree((MeshData_CDQU*)(pSubChunk + 1), true, meshInfoObj, textureInfo, param_4, bHasFlag);
+					ed3DPrepareCluster((ed_g3d_cluster*)(pSubChunk + 1), true, meshInfoObj, textureInfo, param_4, bHasFlag);
 				}
 			}
 		}
@@ -10872,7 +10872,7 @@ void ed3DPrepareClusterALL(bool bUnused, ed_g3d_manager* meshInfoObj, ed_g2d_man
 					/* If read value is CDOC */
 					if (pSubChunk->hash == HASH_CODE_CDOC) {
 						ED3D_LOG(LogLevel::Info, "ed3DPrepareClusterALL Found CDOC chunck hash: {} size: 0x{:x}", pSubChunk->GetHeaderString(), pSubChunk->size);
-						ed3DPrepareClusterTree((MeshData_CDQU*)(pSubChunk + 1), true, meshInfoObj, textureInfo, param_4, bHasFlag);
+						ed3DPrepareCluster((ed_g3d_cluster*)(pSubChunk + 1), true, meshInfoObj, textureInfo, param_4, bHasFlag);
 					}
 				}
 			}
@@ -10952,8 +10952,6 @@ int ed3DPrepareHierarchy(ed_g3d_hierarchy* pHierarchy, ed_g2d_manager* pTextureI
 
 	return iVar4;
 }
-
-#define HASH_CODE_HIER 0x52454948
 
 void ed3DPrepareHierarchyALL(ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo)
 {

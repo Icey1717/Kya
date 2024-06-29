@@ -13,6 +13,14 @@
 #define HASH_CODE_HASH 0x48534148
 #define HASH_CODE_MBNK 0x4b4e424d
 
+#define HASH_CODE_CDQA 0x41514443
+#define HASH_CODE_CDQU 0x55514443
+#define HASH_CODE_CDOA 0x414f4443
+#define HASH_CODE_CDOC 0x434f4443
+
+#define HASH_CODE_HIER 0x52454948
+
+
 #define MATRIX_PACKET_START_SPR				0x70000800 // 0x06
 #define CAM_NORMAL_X_SPR					0x70000800 // 0x06
 #define CAM_NORMAL_Y_SPR					0x70000810 // 0x07
@@ -215,30 +223,20 @@ struct ClusterDetails {
 	undefined field_0x2c;
 	undefined field_0x2d;
 	ushort spriteCount;
-
-	int field_0x30; // int*
 };
 
-static_assert(sizeof(ClusterDetails) == 0x14);
+static_assert(sizeof(ClusterDetails) == 0x10);
 
-struct MeshData_CDQU {
-	undefined4 field0x0;
-	undefined4 field0x4;
-	undefined4 field0x8;
-	undefined4 field0xc;
+struct ed_g3d_cluster {
 	ushort aClusterStripCounts[5];
 	ushort field_0x1a;
 	ushort flags_0x1c;
 	undefined2 field_0x1e;
 	ClusterDetails clusterDetails;
+	int field_0x30; // int*
 	int field_0x34; // int*
 	int field_0x38; // uint*
 	int field_0x3c; // uint*
-};
-
-static_assert(sizeof(MeshData_CDQU) == 0x40);
-
-struct MeshData_PSX2 {
 	int pMBNK; // char*
 	undefined field_0x44;
 	undefined field_0x45;
@@ -248,47 +246,9 @@ struct MeshData_PSX2 {
 	int p3DSprite; // ed_3d_sprite*
 };
 
-//PACK(
-//	struct MeshData_CDQU {
-//	undefined4 field0x0;
-//	undefined4 field0x4;
-//	undefined4 field0x8;
-//	undefined4 field0xc;
-//	ushort aClusterStripCounts[5];
-//	ushort field_0x1a;
-//	ushort flags_0x1c;
-//	undefined2 field_0x1e;
-//	ClusterDetails clusterDetails;
-//	int field_0x34; // int*
-//	int field_0x38; // uint*
-//	int field_0x3c; // uint*
-//	int pMBNK; // char*
-//
-//	// Extended?
-// int pMBNK; // char*
-//	undefined field_0x44;
-//	undefined field_0x45;
-//	undefined field_0x46;
-//	undefined field_0x47;
-//	int p3DStrip; // ed_3d_strip*
-//	int p3DSprite; // ed_3d_sprite*
-//});
+static_assert(sizeof(ed_g3d_cluster) == 0x40);
 
 PACK(struct MeshData_CSTA {
-	char CSTA_Header[4];
-	undefined field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	ed_Chunck chunk;
 	edF32VECTOR3 field_0x20;
 	undefined field_0x2c;
 	undefined field_0x2d;

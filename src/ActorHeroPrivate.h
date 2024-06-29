@@ -182,6 +182,8 @@ public:
 
 	SPEED_DYN field_0xcb4;
 
+	CActor* pTrappedByActor;
+
 	CActorWindState field_0x1190;
 
 	CFxHandle* field_0x10fc;
