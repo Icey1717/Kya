@@ -183,6 +183,7 @@ public:
 	SPEED_DYN field_0xcb4;
 
 	CActor* pTrappedByActor;
+	uint trapLinkedBone;
 
 	CActorWindState field_0x1190;
 

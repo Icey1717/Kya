@@ -43,7 +43,7 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 			(this->anmSkeleton).pTag = (edANM_SKELETON*)0x0;
 
 				for (pAVar1 = this->pMatrixData_0x10; pAVar1 != (AnimMatrixData*)0x0; pAVar1 = pAVar1->pPrev) {
-					pAVar1->field_0x4c = 0;
+					pAVar1->boneNodeIndex = 0;
 				}
 
 				iVar4 = 0;
@@ -66,10 +66,12 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 				if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
 					iVar4 = this->anmSkeleton.NodeIndexFromID(pAVar2->key_0x48);
 				}
+
 				if (iVar4 == -1) {
 					iVar4 = 0;
 				}
-				pAVar2->field_0x4c = (short)iVar4;
+
+				pAVar2->boneNodeIndex = iVar4;
 			}
 			iVar4 = 0;
 			pCVar6 = this;
@@ -803,7 +805,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 	short* transShortBuffer;
 	short* transShortBufferB;
 	short* rowBTransformA;
-	ushort* rowBTransformB;
+	short* rowBTransformB;
 	int iVar8;
 	float* pfVar9;
 	uint uVar10;
@@ -1186,13 +1188,12 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					local_30.z = (float)(int)rowBTransformA[2] * 6.103888e-05f;
 				}
 				else {
-					IMPLEMENTATION_GUARD();
-					rowBTransformB = (ushort*)(iVar8 * 6 + (char*)pfVar2);
+					rowBTransformB = (short*)(iVar8 * 6 + (char*)pfVar2);
 					fVar11 = pfVar2[0];
 					fVar13 = pfVar2[1] / 65535.0f;
-					local_30.x = fVar11 + fVar13 * (float)(uint)rowBTransformB[4];
-					local_30.y = fVar11 + fVar13 * (float)(uint)rowBTransformB[5];
-					local_30.z = fVar11 + fVar13 * (float)(uint)rowBTransformB[6];
+					local_30.x = fVar11 + fVar13 * (float)(int)rowBTransformB[4];
+					local_30.y = fVar11 + fVar13 * (float)(int)rowBTransformB[5];
+					local_30.z = fVar11 + fVar13 * (float)(int)rowBTransformB[6];
 				}
 			}
 
@@ -2609,4 +2610,95 @@ AnimMatrixData* CAnimation::FindReggedBone(int bone)
 	return pAVar1;
 }
 
+void CAnimation::RegisterBone(uint key)
+{
+	ushort boneCount;
+	edANM_SKELETON* pSkeleton;
+	float fVar3;
+	int iVar4;
+	float* pfVar5;
+	AnimMatrixData* pBoneData;
+	AnimMatrixData* pAVar7;
+	edF32MATRIX4* peVar8;
+	edF32VECTOR4 local_10;
 
+	for (pBoneData = this->pMatrixData_0x10; (pBoneData != (AnimMatrixData*)0x0 && (key != pBoneData->key_0x48)); pBoneData = pBoneData->pPrev) {
+	}
+
+	if (pBoneData == (AnimMatrixData*)0x0) {
+		iVar4 = 0xc0;
+		pBoneData = (CScene::ptable.g_AnimManager_00451668)->aAnimMatrixData;
+		do {
+			if (pBoneData->usedByCount == 0) goto LAB_0017fb98;
+			iVar4 = iVar4 + -1;
+			pBoneData = pBoneData + 1;
+		} while (iVar4 != 0);
+
+		pBoneData = (AnimMatrixData*)0x0;
+
+	LAB_0017fb98:
+		if (pBoneData != (AnimMatrixData*)0x0) {
+			pBoneData->key_0x48 = key;
+			int boneNodeIndex = -1;
+			if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
+				boneNodeIndex = this->anmSkeleton.NodeIndexFromID(key);
+			}
+
+			if (boneNodeIndex == -1) {
+				boneNodeIndex = 0;
+			}
+
+			pBoneData->boneNodeIndex = boneNodeIndex;
+			pBoneData->usedByCount = 1;
+			boneNodeIndex = -1;
+
+			if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
+				boneNodeIndex = this->anmSkeleton.NodeIndexFromID(pBoneData->key_0x48);
+			}
+
+			if (boneNodeIndex == -1) {
+				boneNodeIndex = 0;
+			}
+
+			pSkeleton = (this->anmSkeleton).pTag;
+
+			if ((pSkeleton->flags & 2) == 0) {
+				boneCount = pSkeleton->boneCount;
+
+
+
+				edF32MATRIX4* pDst = reinterpret_cast<edF32MATRIX4*>(reinterpret_cast<char*>(pSkeleton) + ((boneCount * 0xc + 0x13) & 0xfffffff0) + ((boneCount * 2 + boneCount) * 4 + boneNodeIndex * 0x10) * 4);
+
+				edF32Matrix4CopyHard(&pBoneData->matrix, pDst);
+				edF32Matrix4InverseSoft(&pBoneData->matrix);
+			}
+			else {
+				boneCount = pSkeleton->boneCount;
+				
+				edF32MATRIX4* pDst = reinterpret_cast<edF32MATRIX4*>(reinterpret_cast<char*>(pSkeleton) + ((boneCount * 0xc + 0x13) & 0xfffffff0) + ((boneCount * 2 + boneCount) * 4 + boneNodeIndex * 0x10) * 4);
+
+				local_10 = pDst->rowX;
+
+				edF32Vector4GetNegHard(&local_10, &local_10);
+
+				pBoneData->matrix = gF32Matrix4Unit;
+
+				pBoneData->matrix.rowT.xyz = local_10.xyz;
+				pBoneData->matrix.rowT.w = 1.0f;
+			}
+
+			pBoneData->pNext = (AnimMatrixData*)0x0;
+			pBoneData->pPrev = this->pMatrixData_0x10;
+
+			this->pMatrixData_0x10 = pBoneData;
+
+			if (pBoneData->pPrev != (AnimMatrixData*)0x0) {
+				pBoneData->pPrev->pNext = pBoneData;
+			}
+		}
+	}
+	else {
+		pBoneData->usedByCount = pBoneData->usedByCount + 1;
+	}
+	return;
+}

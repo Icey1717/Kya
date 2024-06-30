@@ -1474,9 +1474,9 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							if (msg == 0x31) {
 								pCVar2 = this->pCollisionData;
 								if ((pCVar2 != (CCollision*)0x0) && (pMsgParam != (void*)0x0)) {
-									IMPLEMENTATION_GUARD(
-									pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xfff7efff;)
+									pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xfff7efff;
 								}
+
 								this->flags = this->flags & 0xffffff7f;
 								this->flags = this->flags | 0x20;
 								EvaluateDisplayState();
@@ -2366,6 +2366,84 @@ void CAddOnGenerator_SubObj::Create(ByteCode* pByteCode)
 		this->field_0x10 = 3.0f;
 		this->field_0x14 = 2.5f;
 	}
+	return;
+}
+
+void CActor::SV_LookTo(CActorParamsOut* pActorParamsOut, CActorParamsIn* pActorParamsIn)
+{
+	edF32VECTOR4* peVar1;
+	byte bVar2;
+	bool bVar3;
+	Timer* pTVar4;
+	float fVar5;
+	float puVar6;
+	float puVar7;
+	float fVar8;
+	edF32VECTOR4 eStack112;
+	edF32MATRIX4 eStack96;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	if ((pActorParamsIn->flags & 2) == 0) {
+		peVar1 = pActorParamsIn->field_0x8;
+		this->rotationQuat = *peVar1;
+	}
+	else {
+		if ((pActorParamsIn->flags & 8) == 0) {
+			peVar1 = pActorParamsIn->field_0x8;
+			local_10.z = peVar1->z;
+			local_10.w = peVar1->w;
+			local_10.x = peVar1->x;
+			local_10.y = 0.0f;
+
+			fVar5 = edF32Vector4GetDistHard(&local_10);
+			if (0.0f < fVar5) {
+				bVar3 = SV_UpdateOrientation2D(pActorParamsIn->field_0x4, &local_10, 0);
+				pActorParamsOut->flags = pActorParamsOut->flags | (int)bVar3;
+			}
+		}
+		else {
+			fVar5 = edF32Vector4GetDistHard((edF32VECTOR4*)pActorParamsOut);
+			if (0.0f < fVar5) {
+				peVar1 = pActorParamsIn->field_0x8;
+				fVar5 = pActorParamsIn->field_0x4;
+				local_20 = this->rotationQuat;
+
+				puVar6 = edF32Vector4DotProductHard(&local_20, peVar1);
+				if (1.0f < puVar6) {
+					puVar7 = 1.0f;
+				}
+				else {
+					puVar7 = -1.0f;
+					if (-1.0f <= puVar6) {
+						puVar7 = puVar6;
+					}
+				}
+
+				fVar8 = acosf(puVar7);
+
+				pTVar4 = GetTimer();
+				fVar5 = fVar5 * pTVar4->cutsceneDeltaTime;
+				if ((fVar5 <= 0.0f) || (fVar8 <= fVar5)) {
+					bVar2 = 1;
+					local_20 = *peVar1;
+				}
+				else {
+					edF32Vector4CrossProductHard(&eStack112, &local_20, peVar1);
+					edF32Matrix4BuildFromVectorAndAngle(fVar5, &eStack96, &eStack112);
+					edF32Matrix4MulF32Vector4Hard(&local_20, &eStack96, &local_20);
+					edF32Vector4NormalizeHard(&local_20, &local_20);
+					bVar2 = 0;
+				}
+
+				this->rotationQuat = local_20;
+
+				GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+				pActorParamsOut->flags = pActorParamsOut->flags | (uint)bVar2;
+			}
+		}
+	}
+
 	return;
 }
 
@@ -3397,73 +3475,6 @@ bool CActor::PlayWaitingAnimation(float param_1, float param_2, int specialAnimT
 	return false;
 }
 
-void edF32Matrix4BuildFromVectorUnitAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR4* v0)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-
-	fVar7 = v0->x * v0->x;
-	fVar3 = v0->x * v0->z;
-	fVar1 = v0->y * v0->z;
-	fVar4 = v0->y * v0->y;
-	fVar5 = v0->z * v0->z;
-	fVar10 = v0->x;
-	fVar11 = v0->y;
-	fVar8 = v0->z;
-	fVar2 = v0->x * v0->y;
-	fVar6 = 1.0f - cosf(t0);
-	fVar9 = sinf(t0);
-	m0->aa = 1.0f - fVar6 * (fVar4 + fVar5);
-	fVar10 = fVar9 * fVar10;
-	fVar11 = fVar9 * fVar11;
-	fVar9 = fVar9 * fVar8;
-	m0->ab = fVar9 + fVar6 * fVar2;
-	m0->ac = -fVar11 + fVar6 * fVar3;
-	m0->ad = 0.0f;
-	m0->ba = -fVar9 + fVar6 * fVar2;
-	m0->bb = 1.0f - fVar6 * (fVar7 + fVar5);
-	m0->bc = fVar10 + fVar6 * fVar1;
-	m0->bd = 0.0f;
-	m0->ca = fVar11 + fVar6 * fVar3;
-	m0->cb = -fVar10 + fVar6 * fVar1;
-	m0->cc = 1.0f - fVar6 * (fVar7 + fVar4);
-	m0->cd = 0.0f;
-	m0->da = 0.0f;
-	m0->db = 0.0f;
-	m0->dc = 0.0f;
-	m0->dd = 1.0f;
-	return;
-}
-
-void edF32Matrix4BuildFromVectorAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR4* v0)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	edF32VECTOR4 localVector;
-
-	fVar1 = v0->x;
-	fVar2 = v0->y;
-	fVar3 = v0->z;
-	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f);
-	localVector.x = fVar1 * fVar4;
-	localVector.y = fVar2 * fVar4;
-	localVector.z = fVar3 * fVar4;
-	localVector.w = 0.0f;
-	edF32Matrix4BuildFromVectorUnitAndAngle(t0, m0, &localVector);
-	return;
-}
-
 bool CActor::SV_UpdateOrientation(float param_1, edF32VECTOR4* pOrientation)
 {
 	bool bSuccess;
@@ -3763,6 +3774,26 @@ bool CActor::SV_UpdateValue(float target, float speed, float* pValue)
 		bVar1 = *pValue == target;
 	}
 	return bVar1;
+}
+
+void CActor::LinkToActor(CActor* pLinkedActor, uint key, int param_4)
+{
+	CActorManager* pActorManager;
+	_linked_actor* pData;
+
+	pActorManager = CScene::ptable.g_ActorManager_004516a4;
+	CScene::ptable.g_ActorManager_004516a4->FindLinkedActor(this);
+	pData = pActorManager->AddLinkedActor();
+
+	if (pData != (_linked_actor*)0x0) {
+		pData->pActor = this;
+		pData->pLinkedActor = pLinkedActor;
+		pData->key = key;
+		pData->field_0xc = param_4;
+		pLinkedActor->pAnimationController->RegisterBone(key);
+	}
+
+	return;
 }
 
 void CActor::UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4)

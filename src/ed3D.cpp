@@ -2535,8 +2535,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	edF32Vector4ScaleHard(pDmaMatrix->normalScale, SCRATCHPAD_ADDRESS_TYPE(CAM_NORMAL_Y_SPR, edF32VECTOR4*), &gCamNormal_Y);
 	*g_pCurFlareObj2WorldMtx = pObjToWorld;
 
-	if (((pDmaMatrix->pHierarchy == (ed_3d_hierarchy*)0x0) ||
-		(pHierarchySetup = pDmaMatrix->pHierarchy->pHierarchySetup, pHierarchySetup == (ed_3d_hierarchy_setup*)0x0))
+	if (((pDmaMatrix->pHierarchy == (ed_3d_hierarchy*)0x0) || (pHierarchySetup = pDmaMatrix->pHierarchy->pHierarchySetup, pHierarchySetup == (ed_3d_hierarchy_setup*)0x0))
 		|| (pLightConfig = pHierarchySetup->pLightData, pLightConfig == (ed_3D_Light_Config*)0x0)) {
 		// Default lighting.
 		SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_PTR_SPR, edF32MATRIX4*, gLightDirections_Matrix_Scratch);
@@ -2559,6 +2558,10 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 			SCRATCHPAD_WRITE_ADDRESS_TYPE(LIGHT_AMBIENT_MATRIX_PTR_SPR, edF32VECTOR4*, gLightAmbiant_Scratch);
 		}
 	}
+
+#ifdef PLATFORM_WIN
+	Renderer::PushLightData(gLightColor_Matrix_Scratch->raw, gLightColor_Matrix_Scratch->raw, gLightAmbiant_Scratch->raw);
+#endif
 
 	edF32VECTOR4* vectorA = SCRATCHPAD_ADDRESS_TYPE(0x70000990, edF32VECTOR4*);
 

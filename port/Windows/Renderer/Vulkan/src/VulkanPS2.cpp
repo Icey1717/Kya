@@ -1778,9 +1778,14 @@ void Renderer::AddMesh(SimpleMesh* pNewMesh)
 	Native::AddMesh(pNewMesh);
 }
 
-void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj) {
-
+void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj) 
+{
 	Native::PushGlobalMatrices(pModel, pView, pProj);
+}
+
+void Renderer::PushLightData(float* pDirection, float* pColor, float* pAmbient) 
+{
+	Native::PushLightData(pDirection, pColor, pAmbient);
 }
 
 void Renderer::PushModelMatrix(float* pModel) {

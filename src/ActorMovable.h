@@ -82,6 +82,15 @@ struct S_TILT_DATA {
 	void Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStreamDef);
 };
 
+struct CActorMovParamsOut : public CActorParamsOut {
+};
+
+struct CActorMovParamsIn : public CActorParamsIn {
+	float field_0xc;
+	float field_0x14;
+	float field_0x18;
+};
+
 class CActorMovable : public CActor {
 public:
 
@@ -94,6 +103,7 @@ public:
 	void SV_MOV_DecreaseSpeedIntensity(float param_1);
 	bool SV_MOV_UpdatePush(float param_1, S_PUSH_DATA* pPushData, S_PUSH_STREAM_DEF* pPushStreamRef);
 	bool SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_TILT_STREAM_DEF* pTiltStreamRef);
+	void SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActorMovParamsIn* pActorMovParamsIn, edF32VECTOR4* param_4);
 
 	void ComputeRealMoving(edF32VECTOR4* delta);
 	float GetSubjectiveCumulatedWeight();

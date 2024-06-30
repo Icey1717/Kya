@@ -51,6 +51,8 @@
 #define STATE_HERO_GLIDE_2 0xf1
 #define STATE_HERO_GLIDE_3 0xf2
 
+#define STATE_HERO_CAUGHT_TRAP_1 0x117
+
 struct CPlayerInput;
 class CActorBoomy;
 

@@ -38,6 +38,10 @@ namespace Renderer
 
 			glm::mat4 view;
 			glm::mat4 proj;
+
+			glm::mat4 lightDirection;
+			glm::mat4 lightColor;
+			glm::vec4 lightAmbient;
 		};
 
 		constexpr int gMaxModelMatrices = 1024;
@@ -85,6 +89,10 @@ namespace Renderer
 			glm::mat4 projMatrix;
 			glm::mat4 viewMatrix;
 
+			glm::mat4 lightDirectionMatrix;
+			glm::mat4 lightColorMatrix;
+			glm::vec4 lightAmbientMatrix;
+
 			struct Instance {
 				SimpleMesh* pMesh = nullptr;
 				glm::mat4 modelMatrix;
@@ -103,6 +111,10 @@ namespace Renderer
 		glm::mat4 gCachedModelMatrix;
 		glm::mat4 gCachedViewMatrix;
 		glm::mat4 gCachedProjMatrix;
+
+		glm::mat4 gCachedLightDirection;
+		glm::mat4 gCachedLightColor;
+		glm::vec4 gCachedLightAmbient;
 
 		void FillIndexData()
 		{
@@ -716,6 +728,31 @@ void Renderer::Native::PushGlobalMatrices(float* pModel, float* pView, float* pP
 	}
 
 	PushModelMatrix(pModel);
+}
+
+void Renderer::Native::PushLightData(float* pDirection, float* pColor, float* pAmbient)
+{
+	NATIVE_LOG(LogLevel::Info, "PushLightData");
+
+	if (pDirection) {
+		gCachedLightDirection = glm::make_mat4(pDirection);	
+	}
+
+	if (pColor) {
+		gCachedLightColor = glm::make_mat4(pColor);
+	}
+
+	if (pAmbient) {
+		gCachedLightAmbient = glm::vec4(pAmbient[0], pAmbient[1], pAmbient[2], pAmbient[3]);
+	}
+
+	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pDirection[0], pDirection[1], pDirection[2]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pDirection[4], pDirection[5], pDirection[6]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pDirection[8], pDirection[9], pDirection[10]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pColor[0], pColor[1], pColor[2], pColor[3]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pColor[4], pColor[5], pColor[6], pColor[7]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pColor[8], pColor[9], pColor[10], pColor[11]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: ambient: {} {} {}", pAmbient[0], pAmbient[1], pAmbient[2]);
 }
 
 void Renderer::Native::PushModelMatrix(float* pModel)

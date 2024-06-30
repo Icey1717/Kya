@@ -248,6 +248,18 @@ class CPathFollowReaderAbsolute;
 struct S_PATHREADER_POS_INFO;
 struct edAnmMacroBlendN;
 
+struct CActorParamsOut {
+	edF32VECTOR4 vectorField;
+	float floatField;
+	uint flags;
+};
+
+struct CActorParamsIn {
+	uint flags;
+	float field_0x4;
+	edF32VECTOR4* field_0x8;
+};
+
 class CActor : public CObject {
 public:
 	// #Debug
@@ -405,6 +417,8 @@ public:
 	void UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision);
 	void UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision);
 
+	void LinkToActor(CActor* pLinkedActor, uint key, int param_4);
+
 	void PlayAnim(int inAnimType);
 	int GetIdMacroAnim(int inAnimType);
 
@@ -418,6 +432,8 @@ public:
 	void SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1);
 
 	float SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence* pActorConeInfluence);
+
+	void SV_LookTo(CActorParamsOut* pActorParamsOut, CActorParamsIn* pActorParamsIn);
 
 	void FUN_00115ea0(uint param_2);
 

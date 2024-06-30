@@ -7,6 +7,14 @@
 #include <math.h>
 #include "MathOps.h"
 
+#define MAX_LINKED_ACTORS 0x80
+
+CActorManager::CActorManager()
+{
+	this->aLinkedActorData = new _linked_actor[MAX_LINKED_ACTORS];
+	Level_ClearInternalData();
+}
+
 void CActorManager::Level_Init()
 {
 	int iVar1;
@@ -376,6 +384,41 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+void CActorManager::Level_ClearInternalData()
+{
+	_linked_actor* p_Var1;
+
+	this->aActors = (CActor**)0x0;
+	this->nbActors = 0;
+	this->aActiveActors = (CActor**)0x0;
+	this->nbActiveActors = 0;
+	this->aSectorActors = (CActor**)0x0;
+	this->nbSectorActors = 0;
+	this->aSectorBoundingBoxes = (ed_Bound_Box*)0x0;
+	this->aAnimation = (CAnimation*)0x0;
+	this->initializedAnimationCount = 0;
+	this->animationCount = 0;
+	this->aAnimLayers = (edAnmLayer*)0x0;
+	this->initalizedAnimLayerCount = 0;
+	this->animLayerCount = 0;
+	this->aShadows = (CShadow*)0x0;
+	this->initializedShadowCount = 0;
+	this->shadowCount = 0;
+
+	p_Var1 = this->aLinkedActorData;
+
+	for (int i = 0; i < MAX_LINKED_ACTORS; i++) {
+		p_Var1->key = 0xffffffff;
+		p_Var1->pLinkedActor = (CActor*)0x0;
+		p_Var1->pActor = (CActor*)0x0;
+		p_Var1->pNextLink = (_linked_actor*)0x0;
+		p_Var1++;
+	}
+
+	this->pActorArray_0x8 = (_linked_actor*)0x0;
+	return;
+}
+
 void CActorManager::PrecomputeSectorsBoundindBoxes()
 {
 	int iVar1;
@@ -565,21 +608,22 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 
 void CActorManager::UpdateLinkedActors()
 {
-	int iVar1;
+	CActor* pCVar1;
 	edF32MATRIX4* m1;
-	CActor* pCVar2;
+	_linked_actor* p_Var2;
 	float fVar3;
 	edF32VECTOR3 local_50;
 	edF32MATRIX4 local_40;
-	//CActorFighterVTable* pActor;
+	CActor* pActor;
 
-	for (pCVar2 = this->pActorArray_0x8; pCVar2 != (CActor*)0x0; pCVar2 = *(CActor**)&pCVar2->distanceToCamera) {
-		IMPLEMENTATION_GUARD(
-		pActor = pCVar2->pVTable;
-		iVar1 = (pCVar2->data).objectId;
-		if (((((ActorBaseData*)&pActor->actorBase)->flags & 4) != 0) && ((*(uint*)(iVar1 + 8) & 4) != 0)) {
-			m1 = CAnimation::GetCurBoneMatrix(*(CAnimation**)(iVar1 + 0x28), (pCVar2->data).flags);
-			edF32Matrix4MulF32Matrix4Hard(&local_40, m1, *(edF32MATRIX4**)(iVar1 + 0x94));
+	for (p_Var2 = this->pActorArray_0x8; p_Var2 != (_linked_actor*)0x0; p_Var2 = p_Var2->pNextLink) {
+		pActor = p_Var2->pActor;
+		pCVar1 = p_Var2->pLinkedActor;
+
+		if (((pActor->flags & 4) != 0) && ((pCVar1->flags & 4) != 0)) {
+			IMPLEMENTATION_GUARD(
+			m1 = CAnimation::GetCurBoneMatrix(pCVar1->pAnimationController, p_Var2->key);
+			edF32Matrix4MulF32Matrix4Hard(&local_40, m1, (edF32MATRIX4*)pCVar1->pMeshTransform);
 			fVar3 = 1.0 / (SQRT(local_40.aa * local_40.aa + local_40.ab * local_40.ab + local_40.ac * local_40.ac) + 0.0);
 			local_40.aa = local_40.aa * fVar3;
 			local_40.ab = local_40.ab * fVar3;
@@ -595,17 +639,18 @@ void CActorManager::UpdateLinkedActors()
 			local_40.cb = local_40.cb * fVar3;
 			local_40.cc = local_40.cc * fVar3;
 			local_40.cd = 0.0;
-			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).x = local_40.ca;
-			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).y = local_40.cb;
-			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).z = local_40.cc;
-			(((ActorBaseData*)&pActor->actorBase)->rotationQuat).w = 0.0;
+			(pActor->rotationQuat).x = local_40.ca;
+			(pActor->rotationQuat).y = local_40.cb;
+			(pActor->rotationQuat).z = local_40.cc;
+			(pActor->rotationQuat).w = 0.0;
 			edF32Matrix4ToEulerSoft(&local_40, &local_50, s_XYZ_00427e10);
-			(((ActorBaseData*)&pActor->actorBase)->rotationEuler).x = local_50.x;
-			(((ActorBaseData*)&pActor->actorBase)->rotationEuler).y = local_50.y;
-			(((ActorBaseData*)&pActor->actorBase)->rotationEuler).z = local_50.z;
-			CActor::UpdatePosition((CActor*)pActor, &local_40, (pCVar2->data).actorFieldS);
-		})
+			(pActor->rotationEuler).x = local_50.x;
+			(pActor->rotationEuler).y = local_50.y;
+			(pActor->rotationEuler).z = local_50.z;
+			CActor::UpdatePosition(pActor, &local_40, p_Var2->field_0xc);)
+		}
 	}
+
 	return;
 }
 
@@ -701,6 +746,55 @@ void CActorManager::GetActorsByClassID(int classId, CActorsTable* pOutList)
 
 	pOutList->entryCount = curIndex;
 	return;
+}
+
+_linked_actor* CActorManager::FindLinkedActor(CActor* pActor)
+{
+	_linked_actor* pData;
+
+	pData = this->pActorArray_0x8;
+
+	while (true) {
+		if (pData == (_linked_actor*)0x0) {
+			return (_linked_actor*)0x0;
+		}
+
+		if (pActor == pData->pActor) break;
+
+		pData = pData->pNextLink;
+	}
+
+	return pData;
+}
+
+_linked_actor* CActorManager::AddLinkedActor()
+{
+	_linked_actor* p_Var1;
+	int iVar2;
+
+	p_Var1 = this->aLinkedActorData;
+	iVar2 = MAX_LINKED_ACTORS;
+
+	do {
+		if (p_Var1->pActor == (CActor*)0x0) {
+			p_Var1->pPrevLink = (_linked_actor*)0x0;
+			p_Var1->pNextLink = this->pActorArray_0x8;
+			this->pActorArray_0x8 = p_Var1;
+
+			if (p_Var1->pNextLink == (_linked_actor*)0x0) {
+				return p_Var1;
+			}
+
+			p_Var1->pNextLink->pPrevLink = p_Var1;
+
+			return p_Var1;
+		}
+
+		iVar2 = iVar2 + -1;
+		p_Var1 = p_Var1 + 1;
+	} while (iVar2 != 0);
+
+	return (_linked_actor*)0x0;
 }
 
 CCluster::CCluster()

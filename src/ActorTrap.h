@@ -3,7 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
-#include "ActorMovable.h"
+#include "ActorAutonomous.h"
 #include "ActorMovingPlatform.h"
 
 class CActorTrap;
@@ -40,6 +40,8 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	int DetectActor();
+
+	void StateTrapCatch_2_2(int param_2, int param_3);
 
 	uint flags;
 	int field_0xc;
@@ -87,7 +89,7 @@ public:
 	void CreateForTrap(ByteCode* pByteCode);
 };
 
-class CActorTrap : public CActorMovable 
+class CActorTrap : public CActorAutonomous
 {
 public:
 	static AnimResult gStateCfg_TRP[14];

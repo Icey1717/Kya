@@ -73,13 +73,25 @@ public:
 	edF32VECTOR4 worldBox;
 };
 
-struct CActorManager : public CObjectManager {
+struct _linked_actor {
+	CActor* pActor;
+	CActor* pLinkedActor;
+	uint key;
+	int field_0xc;
+	_linked_actor* pPrevLink;
+	_linked_actor* pNextLink;
+};
 
+class CActorManager : public CObjectManager {
+public:
+	CActorManager();
 	virtual void Level_Init();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 	virtual void Level_Manage();
 	virtual void Level_Draw();
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+
+	void Level_ClearInternalData();
 
 	void PrecomputeSectorsBoundindBoxes();
 	void UpdateLinkedActors();
@@ -88,8 +100,11 @@ struct CActorManager : public CObjectManager {
 	CActor* GetActorByHashcode(int hashCode);
 	void GetActorsByClassID(int classId, CActorsTable* pOutList);
 
-	struct ActorManagerAnimLinkData* field_0x4;
-	CActor* pActorArray_0x8;
+	_linked_actor* FindLinkedActor(CActor* pActor);
+	_linked_actor* AddLinkedActor();
+
+	_linked_actor* aLinkedActorData;
+	_linked_actor* pActorArray_0x8;
 	int field_0xc;
 	float field_0x14;
 	undefined field_0x18;

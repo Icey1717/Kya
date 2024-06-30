@@ -279,9 +279,47 @@ namespace VU1Emu {
 			_$UnpackData_XYZ32_Loop(vi14, VIF_AS_F(vi03, 0));
 		}
 
+		void _$UnpackData_XYZ32_Normal_Simple()
+		{
+			const int vtxCount = vi14;
+			int vtxReg = vi15 + 1;
+			int normalReg = vtxReg + 216;
+
+			for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
+				// Vtx data
+				edF32VECTOR4* pSTQ = VIF_AS_F(vtxReg, 0);
+				edF32VECTOR4* pRGBA = VIF_AS_F(vtxReg, 1);
+
+				// STQ
+				pSTQ->x = int12_to_float(pSTQ->xi);
+				pSTQ->y = int12_to_float(pSTQ->yi);
+
+				// RGBA
+				pRGBA->x = pRGBA->xi;
+				pRGBA->y = pRGBA->yi;
+				pRGBA->z = pRGBA->zi;
+				pRGBA->w = pRGBA->wi;
+
+				// Normal data
+				edF32VECTOR4* pNormal = VIF_AS_F(normalReg++, 0);
+
+				// Normal
+				pNormal->x = int15_to_float(pNormal->xi);
+				pNormal->y = int15_to_float(pNormal->yi);
+				pNormal->z = int15_to_float(pNormal->zi);
+
+				vtxReg += 3;
+			}
+		}
+
 		void _$UnpackData_XYZ32_Normal()
 		{
 			ZONE_SCOPED;
+
+			if (bRunSimplifiedCode) {
+				_$UnpackData_XYZ32_Normal_Simple();
+				return;
+			}
 
 			vi02 = vi14;
 			vi03 = vi15 + 1;
@@ -1986,6 +2024,10 @@ namespace VU1Emu {
 					vtxReg += 3;
 				}
 			}
+			else {
+				_$Lightning_Ambiant();
+				_$Lightning_Repack();
+			}
 		}
 
 		void _$ParallelLightning_addcolor()
@@ -2000,8 +2042,7 @@ namespace VU1Emu {
 			vi04 = 16;
 			vi04 = vi04 & vi01;
 
-			if (vi04 != 0x0) {
-				
+			if (vi04 != 0x0) {				
 				// Light directions matrix
 				vf06 = VIF_LOAD_F(vi00, 0x18);
 				vf07 = VIF_LOAD_F(vi00, 0x19);

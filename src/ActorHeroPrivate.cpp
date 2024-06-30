@@ -2976,7 +2976,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->pSoccerActor = 0;
 	this->pTrappedByActor = (CActor*)0x0;
 	this->field_0xf24 = (char*)0x0;
-	//*(undefined4*)&this->field_0xf28 = 0;
+	this->trapLinkedBone = 0;
 	//this->field_0xf50 = (undefined*)0x0;
 	//*(undefined4*)&this->field_0xf58 = 0;
 	this->field_0x1490.x = 0.0f;
@@ -3373,6 +3373,14 @@ LAB_00341590:
 	case STATE_HERO_TOBOGGAN_JUMP_1:
 		this->field_0x10f8 = 0.0f;
 		break;
+	case STATE_HERO_CAUGHT_TRAP_1:
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+		break;
 	default:
 		assert(false);
 		break;
@@ -3429,6 +3437,20 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_U_TURN:
 		StateHeroUTurnTerm();
+		break;
+	case STATE_HERO_CAUGHT_TRAP_1:
+		IMPLEMENTATION_GUARD(
+			if ((newState != New_Name_(116)) && ((this->base).pTrappedByActor != (CActor*)0x0)) {
+				if ((this->base).field_0xf28 != 0) {
+					CActor::UnlinkFromActor((CActor*)this);
+					CAnimation::UnRegisterBone
+					(((this->base).pTrappedByActor)->pAnimationController, (this->base).field_0xf28);
+					(this->base).field_0xf28 = 0;
+				}
+				local_140[0] = 0xb;
+				local_c = local_140;
+				CActor::DoMessage((CActor*)this, (this->base).pTrappedByActor, 2, (uint)local_c);
+				(this->base).pTrappedByActor = (CActor*)0x0;);
 		break;
 	default:
 		assert(false);
@@ -3532,6 +3554,31 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_GLIDE_3:
 		StateHeroGlide(1, -1);
 		break;
+	case STATE_HERO_CAUGHT_TRAP_1:
+	{
+		const int local_4 = 0;
+		const uint newTrapBone = DoMessage(this->pTrappedByActor, (ACTOR_MESSAGE)0x4d, 0);
+		const uint existingTrapBone = this->trapLinkedBone;
+
+		if (existingTrapBone != newTrapBone) {
+			if (existingTrapBone != 0) {
+				IMPLEMENTATION_GUARD(
+				UnlinkFromActor();
+				this->pTrappedByActor->pAnimationController->UnRegisterBone(this->trapLinkedBone);)
+			}
+
+			if (newTrapBone != 0) {
+				this->pTrappedByActor->pAnimationController->RegisterBone(newTrapBone);
+				LinkToActor(this->pTrappedByActor, newTrapBone, 1);
+			}
+
+			this->trapLinkedBone = newTrapBone;
+		}
+
+		ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+		break;
+	}
+	break;
 	default:
 		assert(false);
 		break;

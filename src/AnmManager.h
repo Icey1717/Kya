@@ -38,7 +38,7 @@ struct AnimMatrixData {
 	AnimMatrixData* pNext;
 	AnimMatrixData* pPrev;
 	uint key_0x48;
-	short field_0x4c;
+	short boneNodeIndex;
 	short usedByCount;
 };
 

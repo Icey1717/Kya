@@ -636,6 +636,141 @@ bool CActorMovable::SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_T
 	return bVar2;
 }
 
+void CActorMovable::SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActorMovParamsIn* pActorMovParamsIn, edF32VECTOR4* param_4)
+{
+	uint uVar1;
+	edF32VECTOR4* peVar2;
+	Timer* pTVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	uVar1 = pActorMovParamsIn->flags;
+	if ((uVar1 & 0x10) == 0) {
+		if ((uVar1 & 0x800) == 0) {
+			edF32Vector4SubHard(&pActorMovParamsOut->vectorField, param_4, &this->currentLocation);
+		}
+		else {
+			edF32Vector4SubHard(&pActorMovParamsOut->vectorField, &this->currentLocation, param_4);
+		}
+
+		if ((pActorMovParamsIn->flags & 4) == 0) {
+			pActorMovParamsOut->vectorField.y = 0.0f;
+		}
+
+		fVar4 = edF32Vector4SafeNormalize0Hard(&pActorMovParamsOut->vectorField, &pActorMovParamsOut->vectorField);
+		pActorMovParamsOut->floatField = fVar4;
+
+		if (((pActorMovParamsIn->flags & 1) == 0) && (pActorMovParamsOut->floatField != 0.0f)) {
+			if (pActorMovParamsIn->field_0x8 == (edF32VECTOR4*)0x0) {
+				pActorMovParamsIn->field_0x8 = &pActorMovParamsOut->vectorField;
+			}
+
+			SV_LookTo(pActorMovParamsOut, pActorMovParamsIn);
+		}
+
+		uVar1 = pActorMovParamsIn->flags;
+
+		if (((uVar1 & 0x200) == 0) &&
+			(((uVar1 & 0x1000) == 0 || (pActorMovParamsIn->field_0x18 <= pActorMovParamsOut->floatField)))) {
+			if ((uVar1 & 0x400) == 0) {
+				(this->dynamic).rotationQuat = pActorMovParamsOut->vectorField;
+				(this->dynamic).speed = pActorMovParamsIn->field_0xc;
+			}
+			else {
+				(this->dynamic).rotationQuat = pActorMovParamsOut->vectorField;
+
+				fVar6 = pActorMovParamsIn->field_0xc;
+				fVar4 = pActorMovParamsIn->field_0x14;
+				pTVar3 = GetTimer();
+				fVar5 = (this->dynamic).speed;
+				fVar4 = fVar4 * pTVar3->cutsceneDeltaTime;
+				if (fVar5 < fVar6) {
+					fVar5 = fVar5 + fVar4;
+					(this->dynamic).speed = fVar5;
+					if (fVar6 < fVar5) {
+						(this->dynamic).speed = fVar6;
+					}
+				}
+				else {
+					fVar5 = fVar5 - fVar4;
+					(this->dynamic).speed = fVar5;
+					if (fVar5 < fVar6) {
+						(this->dynamic).speed = fVar6;
+					}
+				}
+			}
+		}
+	}
+	else {
+		if ((uVar1 & 0x800) == 0) {
+			edF32Vector4SubHard(&pActorMovParamsOut->vectorField, param_4, &this->currentLocation);
+		}
+		else {
+			edF32Vector4SubHard(&pActorMovParamsOut->vectorField, &this->currentLocation, param_4);
+		}
+
+		if ((pActorMovParamsIn->flags & 4) == 0) {
+			pActorMovParamsOut->vectorField.y = 0.0;
+		}
+
+		fVar4 = edF32Vector4SafeNormalize0Hard(&pActorMovParamsOut->vectorField, &pActorMovParamsOut->vectorField);
+		pActorMovParamsOut->floatField = fVar4;
+
+		if (fVar4 != 0.0f) {
+			pActorMovParamsIn->field_0x8 = &pActorMovParamsOut->vectorField;
+			SV_LookTo(pActorMovParamsOut, pActorMovParamsIn);
+
+			uVar1 = pActorMovParamsIn->flags;
+			if ((uVar1 & 4) == 0) {
+				(this->dynamic).rotationQuat = this->rotationQuat;
+			}
+			else {
+				if ((uVar1 & 8) == 0) {
+					peVar2 = pActorMovParamsIn->field_0x8;
+					(this->dynamic).rotationQuat = *peVar2;
+				}
+				else {
+					(this->dynamic).rotationQuat = this->rotationQuat;
+				}
+			}
+		}
+
+		uVar1 = pActorMovParamsIn->flags;
+		if (((uVar1 & 0x200) == 0) && (((uVar1 & 0x1000) == 0 || (pActorMovParamsIn->field_0x18 <= pActorMovParamsOut->floatField)))) {
+			if ((uVar1 & 0x400) == 0) {
+				(this->dynamic).speed = pActorMovParamsIn->field_0xc;
+			}
+			else {
+				fVar6 = pActorMovParamsIn->field_0xc;
+				fVar4 = pActorMovParamsIn->field_0x14;
+				pTVar3 = GetTimer();
+				fVar5 = (this->dynamic).speed;
+				fVar4 = fVar4 * pTVar3->cutsceneDeltaTime;
+
+				if (fVar5 < fVar6) {
+					fVar5 = fVar5 + fVar4;
+					(this->dynamic).speed = fVar5;
+
+					if (fVar6 < fVar5) {
+						(this->dynamic).speed = fVar6;
+					}
+				}
+				else {
+					fVar5 = fVar5 - fVar4;
+					(this->dynamic).speed = fVar5;
+
+					if (fVar5 < fVar6) {
+						(this->dynamic).speed = fVar6;
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
 void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta)
 {
 	Timer* pTVar1;

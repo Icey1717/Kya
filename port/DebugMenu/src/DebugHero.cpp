@@ -109,6 +109,9 @@ namespace Debug {
 			case STATE_HERO_GLIDE_3:
 				return "StateHeroGlide3";
 				break;
+			case STATE_HERO_CAUGHT_TRAP_1:
+				return "StateHeroCaughtTrap1";
+				break;
 			case 0x3:
 				return "Cinematic";
 				break;

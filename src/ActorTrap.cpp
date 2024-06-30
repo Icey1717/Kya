@@ -4,6 +4,7 @@
 #include "MathOps.h"
 #include "ActorHero.h"
 #include "ActorManager.h"
+#include "TimeController.h"
 
 CActorTrap::CActorTrap()
 {
@@ -131,6 +132,129 @@ void CBehaviourTrapStand_ActorTrap::Begin(CActor* pOwner, int newState, int newA
 	return;
 }
 
+void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int param_3)
+{
+	CActorTrap* pCVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	CActor* pCVar4;
+	CActorHero* pCVar5;
+	bool bVar6;
+	edF32VECTOR4* peVar7;
+	Timer* pTVar8;
+	CBehaviour* pCVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 local_70;
+	float local_60;
+	float local_5c;
+	float local_58;
+	float local_54;
+	CActorMovParamsIn local_50;
+	CActorMovParamsOut CStack48;
+	int local_8;
+	int* local_4;
+
+	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+		CStack48.flags = 0;
+		local_50.field_0x8 = (edF32VECTOR4*)0x0;
+		local_50.field_0x4 = 6.283185;
+		local_50.field_0x14 = this->field_0x34;
+		local_50.field_0xc = this->field_0x30;
+		local_50.flags = 0x407;
+		pCVar1 = this->pOwner;
+		peVar7 = this->pathFollowReader.GetWayPoint();
+		pCVar1->SV_MOV_MoveTo(&CStack48, &local_50, peVar7);
+		this->pOwner->ManageDyn(4.0f, 0x403, (CActorsTable*)0x0);
+		pTVar8 = GetTimer();
+		fVar11 = 0.5f;
+		fVar10 = this->pOwner->dynamic.linearAcceleration * pTVar8->cutsceneDeltaTime;
+		if (0.5f <= fVar10) {
+			fVar11 = fVar10;
+		}
+		if (CStack48.floatField <= fVar11) {
+			IMPLEMENTATION_GUARD(
+			bVar6 = CPathFollowReader::AtGoal
+			(&this->pathFollowReader, (long)(this->pathFollowReader).field_0x4,
+				(long)(this->pathFollowReader).field_0xc);
+			if (bVar6 == false) {
+				CPathFollowReader::NextWayPoint(&this->pathFollowReader);
+			}
+			else {
+				(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0xb, -1);
+			})
+		}
+	}
+
+	pCVar5 = CActorHero::_gThis;
+	pCVar2 = this->pOwner->pAnimationController;
+	peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
+	bVar6 = false;
+
+	if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
+		if (peVar3->animPlayState == 0) {
+			bVar6 = false;
+		}
+		else {
+			bVar6 = (peVar3->field_0xcc & 2) != 0;
+		}
+	}
+
+	if (bVar6) {
+		IMPLEMENTATION_GUARD(
+		pCVar9 = CActor::GetBehaviour(this->field_0x64, 2);
+		if (((pCVar9 == (CBehaviour*)0x0) || (pCVar5 == (CActorHero*)this->field_0x64)) || ((this->flags & 1) == 0)) {
+			pCVar1 = this->pOwner;
+			local_70.x = (pCVar1->base).base.currentLocation.x;
+			local_70.z = (pCVar1->base).base.currentLocation.z;
+			local_70.w = (pCVar1->base).base.currentLocation.w;
+			local_70.y = (pCVar1->base).base.currentLocation.y + 1.58;
+			CActor::UpdatePosition((CActor*)this->pOwner, &local_70, true);
+			(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, param_3, -1);
+		}
+		else {
+			if ((ConditionedOperationArray*)(pCVar9 + 3) != (ConditionedOperationArray*)0x0) {
+				ConditionedOperationArray::Perform((ConditionedOperationArray*)(pCVar9 + 3));
+				pCVar4 = this->field_0x64;
+				pCVar4->flags = pCVar4->flags & 0xffffff7f;
+				pCVar4->flags = pCVar4->flags | 0x20;
+				CActor::EvaluateDisplayState(pCVar4);
+				pCVar4 = this->field_0x64;
+				pCVar4->flags = pCVar4->flags & 0xfffffffd;
+				pCVar4->flags = pCVar4->flags | 1;
+			}
+			if (this->field_0x28 != 0xffffffff) {
+				local_8 = 0;
+				local_4 = (int*)0x0;
+				CParticlesManager::GetDynamicFx
+				(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->field_0x28, 0xffffffffffffffff);
+				if (((local_4 == (int*)0x0) || (local_8 == 0)) || (bVar6 = true, local_8 != local_4[6])) {
+					bVar6 = false;
+				}
+				if (bVar6) {
+					pCVar1 = this->pOwner;
+					local_60 = (pCVar1->base).base.currentLocation.x;
+					local_58 = (pCVar1->base).base.currentLocation.z;
+					local_54 = (pCVar1->base).base.currentLocation.w;
+					local_5c = (pCVar1->base).base.currentLocation.y + 1.58;
+					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
+						local_4[0xc] = (int)local_60;
+						local_4[0xd] = (int)local_5c;
+						local_4[0xe] = (int)local_58;
+						local_4[0xf] = (int)local_54;
+					}
+					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
+						(**(code**)(*local_4 + 0x10))(0, 0);
+					}
+				}
+			}
+			(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, param_2, -1);
+		})
+	}
+
+	return;
+}
+
 void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 {
 	CActorTrap* pTrap;
@@ -232,8 +356,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		}
 		break;
 	case 8:
-		IMPLEMENTATION_GUARD(
-		StateTrapCatch_2_2(this, 0x12, (int**)&DAT_00000009);)
+		StateTrapCatch_2_2(0x12, 0x9);
 		break;
 	case 9:
 		IMPLEMENTATION_GUARD(
@@ -733,8 +856,180 @@ void CBehaviourTrapStand::TermState(int state, int)
 
 int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
-	return 0;
+	CActorTrap* pCVar1;
+	int iVar2;
+	uint uVar3;
+	AnimResult* pAVar4;
+
+	if (msg == 0x12) {
+		IMPLEMENTATION_GUARD(
+		pCVar1 = this->pOwner;
+		iVar2 = (pCVar1->base).base.actorState;
+		uVar3 = 0;
+		if (iVar2 != -1) {
+			pAVar4 = pCVar1->GetStateCfg(iVar2);
+			uVar3 = pAVar4->flags_0x4;
+		}
+		if (((uVar3 & 0x10000) == 0) || (uVar3 = 0xc, this->field_0x64 != pSender)) {
+			uVar3 = 0;
+		})
+	}
+	else {
+		if (msg == 0x14) {
+			IMPLEMENTATION_GUARD(
+			pCVar1 = this->pOwner;
+			iVar2 = (pCVar1->base).base.actorState;
+			uVar3 = 0;
+			if (iVar2 != -1) {
+				pAVar4 = pCVar1->GetStateCfg(iVar2);
+				uVar3 = pAVar4->flags_0x4;
+			}
+			if ((uVar3 & 0x10000) != 0) {
+				if ((this->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
+					pCVar1 = this->pOwner;
+					if ((pCVar1->base).base.actorState != 0xc) {
+						(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0xc, -1);
+					}
+				}
+				else {
+					pCVar1 = this->pOwner;
+					iVar2 = (pCVar1->base).base.actorState;
+					if (iVar2 == -1) {
+						uVar3 = 0;
+					}
+					else {
+						pAVar4 = pCVar1->GetStateCfg(iVar2);
+						uVar3 = pAVar4->flags_0x4 & 0x200;
+					}
+					if (uVar3 == 0) {
+						pCVar1 = this->pOwner;
+						if ((pCVar1->base).base.actorState != 0xc) {
+							(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0xc, -1);
+						}
+					}
+					else {
+						pCVar1 = this->pOwner;
+						if ((pCVar1->base).base.actorState != 0xd) {
+							(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0xd, -1);
+						}
+					}
+				}
+				this->field_0x54 = this->field_0x54 + 1;
+				return 1;
+			})
+		}
+		else {
+			if (msg != 2) {
+				if (msg != 0x4d) {
+					return 0;
+				}
+	
+				pCVar1 = this->pOwner;
+				iVar2 = pCVar1->actorState;
+				if (iVar2 == -1) {
+					uVar3 = 0;
+				}
+				else {
+					pAVar4 = pCVar1->GetStateCfg(iVar2);
+					uVar3 = pAVar4->flags_0x4 & 0x400;
+				}
+
+				if (uVar3 != 0) {
+					return this->field_0x14;
+				}
+
+				pCVar1 = this->pOwner;
+				iVar2 = pCVar1->actorState;
+				if (iVar2 == -1) {
+					uVar3 = 0;
+				}
+				else {
+					pAVar4 = pCVar1->GetStateCfg(iVar2);
+					uVar3 = pAVar4->flags_0x4 & 0x800;
+				}
+				if (uVar3 != 0) {
+					return this->field_0x18;
+				}
+
+				pCVar1 = this->pOwner;
+				iVar2 = pCVar1->actorState;
+				if (iVar2 == -1) {
+					uVar3 = 0;
+				}
+				else {
+					pAVar4 = pCVar1->GetStateCfg(iVar2);
+					uVar3 = pAVar4->flags_0x4 & 0x1000;
+				}
+
+				if (uVar3 != 0) {
+					return this->field_0x1c;
+				}
+
+				return 0;
+			}
+
+			/* WARNING: Load size is inaccurate */
+			iVar2 = *reinterpret_cast<int*>(&pMsgParam);
+			if (iVar2 == 0xb) {
+				IMPLEMENTATION_GUARD(
+				if (this->field_0x54 != this->field_0x50) {
+					this->field_0x69 = pSender != this->field_0x64;
+					(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
+					*(undefined4*)((int)pMsgParam + 0x74) = 1;
+					return 1;
+				}
+				*(undefined4*)((int)pMsgParam + 0x74) = 0;)
+			}
+			else {
+				if (iVar2 == 10) {
+					IMPLEMENTATION_GUARD(
+					if (*(float*)((int)pMsgParam + 0xc) != 0.0) {
+						pCVar1 = this->pOwner;
+						iVar2 = (pCVar1->base).base.actorState;
+						if (iVar2 == -1) {
+							uVar3 = 0;
+						}
+						else {
+							pAVar4 = pCVar1->GetStateCfg(iVar2);
+							uVar3 = pAVar4->flags_0x4 & 0x100;
+						}
+						if (uVar3 == 0) {
+							this->field_0x69 = pSender != this->field_0x64;
+							pCVar1 = this->pOwner;
+							if ((pCVar1->base).base.actorState == 6) {
+								(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0x12, -1);
+							}
+							else {
+								(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0x10, -1);
+							}
+						}
+						return 1;
+					})
+				}
+				else {
+					if ((iVar2 == 9) || (iVar2 == 4)) {
+						IMPLEMENTATION_GUARD(
+						pCVar1 = this->pOwner;
+						iVar2 = (pCVar1->base).base.actorState;
+						if (iVar2 == -1) {
+							uVar3 = 0;
+						}
+						else {
+							pAVar4 = pCVar1->GetStateCfg(iVar2);
+							uVar3 = pAVar4->flags_0x4 & 0x100;
+						}
+						if (uVar3 == 0) {
+							this->field_0x69 = pSender != this->field_0x64;
+							(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
+						})
+						return 1;
+					}
+				}
+			}
+		}
+		uVar3 = 0;
+	}
+	return uVar3;
 }
 
 bool gTrpDetectCallback(CActor* pActor, void* pParams)

@@ -1214,6 +1214,73 @@ void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4*
 	return;
 }
 
+void edF32Matrix4BuildFromVectorUnitAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR4* v0)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+
+	fVar7 = v0->x * v0->x;
+	fVar3 = v0->x * v0->z;
+	fVar1 = v0->y * v0->z;
+	fVar4 = v0->y * v0->y;
+	fVar5 = v0->z * v0->z;
+	fVar10 = v0->x;
+	fVar11 = v0->y;
+	fVar8 = v0->z;
+	fVar2 = v0->x * v0->y;
+	fVar6 = 1.0f - cosf(t0);
+	fVar9 = sinf(t0);
+	m0->aa = 1.0f - fVar6 * (fVar4 + fVar5);
+	fVar10 = fVar9 * fVar10;
+	fVar11 = fVar9 * fVar11;
+	fVar9 = fVar9 * fVar8;
+	m0->ab = fVar9 + fVar6 * fVar2;
+	m0->ac = -fVar11 + fVar6 * fVar3;
+	m0->ad = 0.0f;
+	m0->ba = -fVar9 + fVar6 * fVar2;
+	m0->bb = 1.0f - fVar6 * (fVar7 + fVar5);
+	m0->bc = fVar10 + fVar6 * fVar1;
+	m0->bd = 0.0f;
+	m0->ca = fVar11 + fVar6 * fVar3;
+	m0->cb = -fVar10 + fVar6 * fVar1;
+	m0->cc = 1.0f - fVar6 * (fVar7 + fVar4);
+	m0->cd = 0.0f;
+	m0->da = 0.0f;
+	m0->db = 0.0f;
+	m0->dc = 0.0f;
+	m0->dd = 1.0f;
+	return;
+}
+
+void edF32Matrix4BuildFromVectorAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR4* v0)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	edF32VECTOR4 localVector;
+
+	fVar1 = v0->x;
+	fVar2 = v0->y;
+	fVar3 = v0->z;
+	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f);
+	localVector.x = fVar1 * fVar4;
+	localVector.y = fVar2 * fVar4;
+	localVector.z = fVar3 * fVar4;
+	localVector.w = 0.0f;
+	edF32Matrix4BuildFromVectorUnitAndAngle(t0, m0, &localVector);
+	return;
+}
+
 void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1)
 {
 	float fVar1;
@@ -1253,6 +1320,117 @@ void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECT
 	v0->y = fVar1 * fVar13 + fVar4 * fVar14 + fVar7 * fVar15 + fVar10 * fVar16;
 	v0->z = fVar2 * fVar13 + fVar5 * fVar14 + fVar8 * fVar15 + fVar11 * fVar16;
 	v0->w = fVar3 * fVar13 + fVar6 * fVar14 + fVar9 * fVar15 + fVar12 * fVar16;
+	return;
+}
+
+void edF32Matrix4GetInverseSoft(edF32MATRIX4* m0, edF32MATRIX4* m1)
+{
+	undefined8 uVar1;
+	int iVar2;
+	edF32MATRIX4* peVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float fVar15;
+	float fVar16;
+	float fVar17;
+	float fVar18;
+	float fVar19;
+	edF32MATRIX4 local_40;
+
+	fVar18 = m1->aa;
+	peVar3 = &local_40;
+	fVar8 = m1->bb;
+	fVar6 = m1->ab;
+	fVar19 = m1->ba;
+	fVar7 = m1->cc;
+	fVar11 = m1->dd;
+	fVar16 = m1->cd;
+	fVar4 = m1->dc;
+	fVar17 = m1->bc;
+	fVar5 = m1->ac;
+	fVar14 = m1->cb;
+	fVar15 = m1->db;
+	fVar9 = m1->ca;
+	fVar10 = m1->da;
+	fVar12 = m1->bd;
+	fVar13 = m1->ad;
+
+	fVar4 = (fVar5 * fVar12 - fVar13 * fVar17) * (fVar9 * fVar15 - fVar14 * fVar10) +
+		(((fVar6 * fVar17 - fVar5 * fVar8) * (fVar9 * fVar11 - fVar16 * fVar10) +
+			(fVar18 * fVar12 - fVar13 * fVar19) * (fVar14 * fVar4 - fVar7 * fVar15) +
+			((fVar18 * fVar8 - fVar6 * fVar19) * (fVar7 * fVar11 - fVar16 * fVar4) -
+				(fVar18 * fVar17 - fVar5 * fVar19) * (fVar14 * fVar11 - fVar16 * fVar15))) -
+			(fVar6 * fVar12 - fVar13 * fVar8) * (fVar9 * fVar4 - fVar7 * fVar10));
+	if (1.0E-10f <= fabs(fVar4)) {
+		iVar2 = 4;
+		fVar4 = 1.0f / fVar4;
+
+		*peVar3 = *m1;
+
+		m0->aa = fVar4 * (local_40.bd * (local_40.cb * local_40.dc - local_40.cc * local_40.db) +
+			local_40.bb * (local_40.cc * local_40.dd - local_40.cd * local_40.dc) +
+			local_40.bc * (local_40.cd * local_40.db - local_40.cb * local_40.dd));
+		m0->ab = fVar4 * (local_40.cd * (local_40.ab * local_40.dc - local_40.ac * local_40.db) +
+			local_40.cb * (local_40.ac * local_40.dd - local_40.ad * local_40.dc) +
+			local_40.cc * (local_40.ad * local_40.db - local_40.ab * local_40.dd));
+		m0->ac = fVar4 * (local_40.dd * (local_40.ab * local_40.bc - local_40.ac * local_40.bb) +
+			local_40.db * (local_40.ac * local_40.bd - local_40.ad * local_40.bc) +
+			local_40.dc * (local_40.ad * local_40.bb - local_40.ab * local_40.bd));
+		m0->ad = fVar4 * (local_40.ad * (local_40.bc * local_40.cb - local_40.bb * local_40.cc) +
+			local_40.ab * (local_40.bd * local_40.cc - local_40.bc * local_40.cd) +
+			local_40.ac * (local_40.bb * local_40.cd - local_40.bd * local_40.cb));
+		m0->ba = fVar4 * (local_40.ba * (local_40.cd * local_40.dc - local_40.cc * local_40.dd) +
+			local_40.bc * (local_40.ca * local_40.dd - local_40.cd * local_40.da) +
+			local_40.bd * (local_40.cc * local_40.da - local_40.ca * local_40.dc));
+		m0->bb = fVar4 * (local_40.ca * (local_40.ad * local_40.dc - local_40.ac * local_40.dd) +
+			local_40.cc * (local_40.aa * local_40.dd - local_40.ad * local_40.da) +
+			local_40.cd * (local_40.ac * local_40.da - local_40.aa * local_40.dc));
+		m0->bc = fVar4 * (local_40.da * (local_40.ad * local_40.bc - local_40.ac * local_40.bd) +
+			local_40.dc * (local_40.aa * local_40.bd - local_40.ad * local_40.ba) +
+			local_40.dd * (local_40.ac * local_40.ba - local_40.aa * local_40.bc));
+		m0->bd = fVar4 * (local_40.aa * (local_40.bc * local_40.cd - local_40.bd * local_40.cc) +
+			local_40.ac * (local_40.bd * local_40.ca - local_40.ba * local_40.cd) +
+			local_40.ad * (local_40.ba * local_40.cc - local_40.bc * local_40.ca));
+		m0->ca = fVar4 * (local_40.bb * (local_40.cd * local_40.da - local_40.ca * local_40.dd) +
+			local_40.bd * (local_40.ca * local_40.db - local_40.cb * local_40.da) +
+			local_40.ba * (local_40.cb * local_40.dd - local_40.cd * local_40.db));
+		m0->cb = fVar4 * (local_40.cb * (local_40.ad * local_40.da - local_40.aa * local_40.dd) +
+			local_40.cd * (local_40.aa * local_40.db - local_40.ab * local_40.da) +
+			local_40.ca * (local_40.ab * local_40.dd - local_40.ad * local_40.db));
+		m0->cc = fVar4 * (local_40.db * (local_40.ad * local_40.ba - local_40.aa * local_40.bd) +
+			local_40.dd * (local_40.aa * local_40.bb - local_40.ab * local_40.ba) +
+			local_40.da * (local_40.ab * local_40.bd - local_40.ad * local_40.bb));
+		m0->cd = fVar4 * (local_40.ab * (local_40.ba * local_40.cd - local_40.bd * local_40.ca) +
+			local_40.ad * (local_40.bb * local_40.ca - local_40.ba * local_40.cb) +
+			local_40.aa * (local_40.bd * local_40.cb - local_40.bb * local_40.cd));
+		m0->da = fVar4 * (local_40.bc * (local_40.cb * local_40.da - local_40.ca * local_40.db) +
+			local_40.ba * (local_40.cc * local_40.db - local_40.cb * local_40.dc) +
+			local_40.bb * (local_40.ca * local_40.dc - local_40.cc * local_40.da));
+		m0->db = fVar4 * (local_40.cc * (local_40.ab * local_40.da - local_40.aa * local_40.db) +
+			local_40.ca * (local_40.ac * local_40.db - local_40.ab * local_40.dc) +
+			local_40.cb * (local_40.aa * local_40.dc - local_40.ac * local_40.da));
+		m0->dc = fVar4 * (local_40.dc * (local_40.ab * local_40.ba - local_40.aa * local_40.bb) +
+			local_40.da * (local_40.ac * local_40.bb - local_40.ab * local_40.bc) +
+			local_40.db * (local_40.aa * local_40.bc - local_40.ac * local_40.ba));
+		m0->dd = fVar4 * (local_40.ac * (local_40.ba * local_40.cb - local_40.bb * local_40.ca) +
+			local_40.aa * (local_40.bb * local_40.cc - local_40.bc * local_40.cb) +
+			local_40.ab * (local_40.bc * local_40.ca - local_40.ba * local_40.cc));
+	}
+	return;
+}
+
+void edF32Matrix4InverseSoft(edF32MATRIX4* m0)
+{
+	edF32Matrix4GetInverseSoft(m0, m0);
 	return;
 }
 
