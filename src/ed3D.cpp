@@ -2774,7 +2774,7 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, bool param_2, bool bCachedS
 
 						const edpkt_data* pVifListEnd = reinterpret_cast<edpkt_data*>(pVifList) + (pStrip->meshCount - 1) * incPacket + -1;
 
-						if (pVifListEnd->asU32[0] != 0x60000000) {
+						if (pVifListEnd->asU32[0] != gVifEndCode) {
 							incPacket = 9;
 						}
 					}
@@ -2793,7 +2793,7 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, bool param_2, bool bCachedS
 
 						const edpkt_data* pVifListEnd = reinterpret_cast<edpkt_data*>(pVifList) + (pStrip->meshCount - 1) * incPacket + -1;
 
-						if (pVifListEnd->asU32[0] != 0x60000000) {
+						if (pVifListEnd->asU32[0] != gVifEndCode) {
 							incPacket = 9;
 						}
 					}
@@ -3109,26 +3109,26 @@ void ed3DFlushStrip(edNODE* pNode)
 	pVifRefPktCur = g_VifRefPktCur;
 	p3dStrip = (ed_3d_strip*)pNode->pData;
 
-#ifdef PLATFORM_WIN
-	Renderer::Kya::GetMeshLibrary().AddFromStrip(p3dStrip);
-#endif
-
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip 0x{:x} (From Node: 0x{:x})", (uintptr_t)p3dStrip, (uintptr_t)pNode);
 	ZONE_SCOPED;
 
 	pNextNode = pNode->pNext;
-	pVifList = ((char*)p3dStrip) + p3dStrip->vifListOffset;
+	pVifList = reinterpret_cast<char*>(p3dStrip) + p3dStrip->vifListOffset;
 	incPacketSize = ed3DFlushStripGetIncPacket(p3dStrip, false, true);
-	uint globalAlhaON = (uint)gGlobalAlhaON;
+
+	const uint globalAlhaON = (uint)gGlobalAlhaON;
 	if (globalAlhaON != 0x80) {
 		pNode->header.typeField.flags = pNode->header.typeField.flags | 0x20;
 		pBFCVect.alphaON = globalAlhaON;
+
 		pVifRefPktCur->cmdA = ED_VIF1_SET_TAG_CNT(1);
 		pVifRefPktCur->asU32[2] = SCE_VIF1_SET_NOP(0);
 		pVifRefPktCur->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
 		pVifRefPktCur[1].asVector = *(edF32VECTOR4*)&pBFCVect;
+
 		pVifRefPktCur = pVifRefPktCur + 2;
 	}
+
 	if (pNextNode == (edNODE*)0x0) {
 		ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip No next node");
 
@@ -3137,7 +3137,17 @@ void ed3DFlushStrip(edNODE* pNode)
 
 		ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip partial: {} full: {}", partialMeshSectionCount, fullMeshSectionCount);
 
+#ifdef PLATFORM_WIN
+		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
+		Renderer::Kya::GetMeshLibrary().AddFromStrip(p3dStrip);
+#endif
 		pPktBufferA = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
+
+#ifdef PLATFORM_WIN
+		if (Renderer::Native::GetUsePreprocessedVertices()) {
+			return;
+		}
+#endif
 
 #ifdef PLATFORM_WIN
 		// Init stuff update.
@@ -3176,6 +3186,7 @@ void ed3DFlushStrip(edNODE* pNode)
 				pVifList = pVifList + incPacketSize * 0x10;
 
 				pPktBufferB = pPktBufferB + 2;
+
 				if (ed3DVU1BufferCur == 2) {
 					ed3DVU1BufferCur = 0;
 				}
@@ -3370,7 +3381,19 @@ void ed3DFlushStrip(edNODE* pNode)
 		pRVar25 = 0;
 		uVar23 = 0;
 		short meshSectionCount = p3dStrip->meshCount;
+
+#ifdef PLATFORM_WIN
+		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
+		Renderer::Kya::GetMeshLibrary().AddFromStrip(p3dStrip);
+#endif
+
 		pPktBufferB = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
+
+#ifdef PLATFORM_WIN
+		if (Renderer::Native::GetUsePreprocessedVertices()) {
+			return;
+		}
+#endif
 
 #ifdef PLATFORM_WIN
 		VU1Emu::UpdateMemory(g_VifRefPktCur, pPktBufferB);
@@ -3468,10 +3491,13 @@ void ed3DFlushStrip(edNODE* pNode)
 
 					pPktBufferB = pPktBufferB + 2;
 				}
+
 				uVar23 = uVar23 + 1;
 				pVifList = pVifList + incPacketSize * 0x10;
 				pRVar25 = pRVar25 + 1;
+
 				pNextNode->header.byteFlags[0] = pNextNode->header.byteFlags[0] >> 2;
+
 				if (3 < uVar23) {
 					uVar23 = 0;
 					pNextNode = (edNODE*)((ulong)&pNextNode->header + 1);
@@ -3522,7 +3548,7 @@ void ed3DFlushStrip(edNODE* pNode)
 				}
 				else {
 					if ((uVar26 != uVar12) && (piVar21 = (int*)0x0, uVar26 == uVar7)) {
-						fVar11 = 1.0;
+						fVar11 = 1.0f;
 						local_30 = piVar14 + (uVar7 - 2) * fullMeshSectionCount * 4 + 4;
 						piVar21 = piVar14 + uVar12 * fullMeshSectionCount * 4 + 4;
 					}
@@ -10790,7 +10816,7 @@ LAB_002a40c4:
 	for (pPostClusterChunk = edChunckGetFirst(reinterpret_cast<char*>(pCluster) + offset + sizeof(ed_g3d_cluster), reinterpret_cast<char*>(pCluster) + chunkSize + -sizeof(ed_Chunck));
 		pPostClusterChunk != (ed_Chunck*)0x0; pPostClusterChunk = edChunckGetNext(pPostClusterChunk, reinterpret_cast<char*>(pCluster) + chunkSize + -sizeof(ed_Chunck))) {
 		if (pPostClusterChunk->hash == HASH_CODE_SPRA) {
-			IMPLEMENTATION_GUARD();
+			IMPLEMENTATION_GUARD_LOG(
 			if (bHasInternalFlag) {
 				aStack96.field_0xc = '\0';
 				aStack96.clusterDetails = pCluster->clusterDetails;
@@ -10799,7 +10825,7 @@ LAB_002a40c4:
 				IMPLEMENTATION_GUARD(puVar5 = ed3DPrepareAllSprite((int)pPostClusterChunk, &aStack96, (int)(pCluster->field_0x30 + 4), 4));
 				pCluster->field_0x3c = (int)STORE_SECTION(puVar5);
 				pCluster->field_0x1e = aStack96.field_0x24;
-			}
+			})
 		}
 		else {
 			if ((pPostClusterChunk->hash == HASH_CODE_CDQU) || (pPostClusterChunk->hash == HASH_CODE_CDOC)) {

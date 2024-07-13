@@ -28,6 +28,8 @@ namespace Renderer
 		constexpr int gMaxAnimMatrices = 0x60;
 		constexpr int gMaxStripIndex = 0x20;
 
+		static bool gUsePreprocessedVertices = false;
+
 		struct VertexConstantBuffer {
 
 			void Reset()
@@ -73,14 +75,12 @@ namespace Renderer
 
 		DynamicUniformBuffer<AlphaConstantBuffer> gAlphaBuffer;
 
-		using NativeVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessed, uint16_t>;
+		using NativeVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessedNormal, uint16_t>;
 		NativeVertexBuffer gNativeVertexBuffer;
-
-		DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
-
 		// As each draw comes in this buffer is filled.
 		NativeVertexBufferData gNativeVertexBufferDataDraw;
 
+		DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
 		std::vector<glm::mat4> gAnimationMatrices;
 
 		struct Draw {
@@ -119,10 +119,14 @@ namespace Renderer
 		void FillIndexData()
 		{
 			assert(gCurrentDraw->instances.size() > 0);
+
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "FillIndexData Filling instance: {}", gCurrentDraw->instances.size() - 1);
 
 			Draw::Instance& instance = gCurrentDraw->instances.back();
-			instance.indexCount = gNativeVertexBufferDataDraw.GetIndexTail();
+
+			auto& vertexBufferData = gUsePreprocessedVertices ? instance.pMesh->GetInternalVertexBufferData() : gNativeVertexBufferDataDraw;
+
+			instance.indexCount = vertexBufferData.GetIndexTail();
 			instance.indexStart = gNativeVertexBuffer.GetDrawBufferData().GetIndexTail();
 			instance.vertexStart = gNativeVertexBuffer.GetDrawBufferData().GetVertexTail();
 
@@ -130,8 +134,11 @@ namespace Renderer
 				gCurrentDraw->instances.size() - 1, instance.indexCount, instance.indexStart, instance.vertexStart);
 
 			// Copy into the real buffer.
-			gNativeVertexBuffer.MergeData(gNativeVertexBufferDataDraw);
-			gNativeVertexBufferDataDraw.ResetAfterDraw();
+			gNativeVertexBuffer.MergeData(vertexBufferData);
+
+			if (!gUsePreprocessedVertices) {
+				vertexBufferData.ResetAfterDraw();
+			}
 		}
 
 		void MergeIndexData()
@@ -227,6 +234,11 @@ namespace Renderer
 
 				gVertexConstantBuffer.GetBufferData().view = viewMatrix;
 				gVertexConstantBuffer.GetBufferData().proj = projMatrix;
+
+				gVertexConstantBuffer.GetBufferData().lightDirection = gDraws.back().lightDirectionMatrix;
+				gVertexConstantBuffer.GetBufferData().lightColor = gDraws.back().lightColorMatrix;
+				gVertexConstantBuffer.GetBufferData().lightAmbient = gDraws.back().lightAmbientMatrix;
+
 			}
 
 			gVertexConstantBuffer.Update(GetCurrentFrame());
@@ -333,6 +345,15 @@ namespace Renderer
 			return true;
 		}
 
+		void CreateDraw()
+		{
+			gCurrentDraw = Draw{};
+
+			gCurrentDraw->lightAmbientMatrix = gCachedLightAmbient;
+			gCurrentDraw->lightColorMatrix = gCachedLightColor;
+			gCurrentDraw->lightDirectionMatrix = gCachedLightDirection;
+		}
+
 	} // Native
 } // Renderer
 
@@ -340,7 +361,7 @@ namespace Renderer
 
 Renderer::NativeVertexBufferData& Renderer::SimpleMesh::GetVertexBufferData()
 {
-	return Native::gNativeVertexBufferDataDraw;
+	return Native::gUsePreprocessedVertices ? internalVertexBufferData : Native::gNativeVertexBufferDataDraw;
 }
 
 void Renderer::Native::CreateRenderPass(VkRenderPass& renderPass, const char* name)
@@ -693,13 +714,61 @@ void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 {
 	if (!gCurrentDraw) {
 		NATIVE_LOG(LogLevel::Info, "AddMesh Creating new draw!");
-		gCurrentDraw = Draw{};
+		CreateDraw();
 	}
 
 	NATIVE_LOG(LogLevel::Info, "AddMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
 
-	//if (!CanMergeMesh()) {
-	if (true) {
+	constexpr bool bSanityCheck = false;
+
+	if (bSanityCheck) {
+		FLUSH_LOG();
+
+		auto& internalBuffer = pMesh->GetInternalVertexBufferData();
+
+		assert(internalBuffer.GetIndexTail() == gNativeVertexBufferDataDraw.GetIndexTail());
+		assert(internalBuffer.GetVertexTail() == gNativeVertexBufferDataDraw.GetVertexTail());
+
+		for (int i = 0; i < internalBuffer.GetIndexTail(); i++) {
+			assert(internalBuffer.index.buff[i] == gNativeVertexBufferDataDraw.index.buff[i]);
+		}
+
+		for (int i = 0; i < internalBuffer.GetVertexTail(); i++) {
+			{
+				const auto& vtx = internalBuffer.vertex.buff[i];
+				NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Preprocess vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {}) ({}, {}, {})\n",
+					i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
+					vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
+			}
+
+			{
+				const auto& vtx = gNativeVertexBufferDataDraw.vertex.buff[i];
+				NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Live vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})({}, {}, {})\n",
+					i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
+					vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
+			}
+
+			assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[0] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[0]);
+			assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[1] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[1]);
+			assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[2] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[2]);
+
+			assert(internalBuffer.vertex.buff[i].normal.fNormal[0] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[0]);
+			assert(internalBuffer.vertex.buff[i].normal.fNormal[1] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[1]);
+			assert(internalBuffer.vertex.buff[i].normal.fNormal[2] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[2]);
+
+			assert(internalBuffer.vertex.buff[i].STQ.ST[0] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[0]);
+			assert(internalBuffer.vertex.buff[i].STQ.ST[1] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[1]);
+			assert(internalBuffer.vertex.buff[i].STQ.Q == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.Q);
+		}
+	}
+
+	constexpr bool bMergingEnabeld = false;
+
+	if (bMergingEnabeld && CanMergeMesh()) {
+		NATIVE_LOG(LogLevel::Info, "AddMesh: merging");
+		MergeIndexData();
+	}
+	else {
 		auto& instance = gCurrentDraw->instances.emplace_back();
 		instance.animationMatrixStart = gAnimationMatrices.size();
 		instance.modelMatrix = gCachedModelMatrix;
@@ -707,10 +776,6 @@ void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 
 		NATIVE_LOG(LogLevel::Info, "AddMesh: instance anim start: {}", instance.animationMatrixStart);
 		FillIndexData();
-	}
-	else {
-		NATIVE_LOG(LogLevel::Info, "AddMesh: merging");
-		MergeIndexData();
 	}
 }
 
@@ -761,7 +826,7 @@ void Renderer::Native::PushModelMatrix(float* pModel)
 
 	if (!gCurrentDraw) {
 		NATIVE_LOG(LogLevel::Info, "PushModelMatrix Creating new draw!");
-		gCurrentDraw = Draw{};
+		CreateDraw();
 	}
 
 	if (pModel) {
@@ -783,4 +848,9 @@ const VkSampler& Renderer::Native::GetSampler()
 const VkImageView& Renderer::Native::GetColorImageView()
 {
 	return gFrameBuffer.colorImageView;
+}
+
+bool& Renderer::Native::GetUsePreprocessedVertices()
+{
+	return gUsePreprocessedVertices;
 }

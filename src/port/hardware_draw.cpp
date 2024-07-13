@@ -21,15 +21,15 @@ void HardwareRenderer::ProcessVertices(char* vtxStart)
 		Renderer::GSVertexUnprocessed vtx;
 		memcpy(&vtx.STQ, vtxStart, sizeof(vtx.STQ));
 		memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
-		memcpy(&vtx.XYZSkip, vtxStart + 0x20, sizeof(vtx.XYZSkip));
+		memcpy(&vtx.XYZFlags, vtxStart + 0x20, sizeof(vtx.XYZFlags));
 
-		const uint vtxAnimMatrix = ((vtx.XYZSkip.Skip & 0x7ff) - 0x3dc) / 4;
+		const uint vtxAnimMatrix = ((vtx.XYZFlags.flags & 0x7ff) - 0x3dc) / 4;
 
-		const uint skip = vtx.XYZSkip.Skip & 0x8000;
+		const uint skip = vtx.XYZFlags.flags & 0x8000;
 
 		const uint shiftedStripIndex = /*stripIndex*/ 0 << 16;
 
-		vtx.XYZSkip.Skip |= shiftedStripIndex;
+		vtx.XYZFlags.flags |= shiftedStripIndex;
 
 		Renderer::KickVertex(vtx, primPacked, skip, Renderer::GetHardwareDrawBuffer());
 

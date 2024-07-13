@@ -8,6 +8,8 @@ struct sceCdCLOCK {
 	unsigned int second;
 };
 
+constexpr uint32_t gVifEndCode = 0x60000000;
+
 void sceScfGetLocalTimefromRTC(sceCdCLOCK* localTime);
 
 typedef unsigned short u_short;

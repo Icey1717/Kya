@@ -3814,14 +3814,13 @@ bool CCameraGame::Manage()
 			else {
 				pActorH = GetTarget();
 				if ((pActorH->typeID == ACTOR_HERO_PRIVATE) && (floatA = GetAngleGamma(), floatA != 0.0f)) {
-					IMPLEMENTATION_GUARD(
 					this_00 = (CActorHero*)GetTarget();
-					uVar4 = CActorHero::TestState_IsFlying(this_00, 0xffffffff);
+					uVar4 = this_00->TestState_IsFlying(0xffffffff);
 					if (uVar4 == 0) {
 						floatA = GetAngleGamma();
 						floatB = GetAngleGamma();
-						SetAngleGamma(floatB + -floatA * 0.1, (CCamera*)this);
-					})
+						SetAngleGamma(floatB + -floatA * 0.1f);
+					}
 				}
 			}
 

@@ -240,6 +240,10 @@ namespace Renderer {
 	}
 
 	template<>
+	void UpdateXyTail<GSVertexUnprocessedNormal, uint16_t>(const GSVertexUnprocessedNormal& vtx, PS2::DrawBufferData<GSVertexUnprocessedNormal, uint16_t>& drawBuffer, const size_t& xy_tail) {
+	}
+
+	template<>
 	void UpdateXyTail<GSVertex, uint16_t>(const GSVertex& vtx, PS2::DrawBufferData<GSVertex, uint16_t>& drawBuffer, const size_t& xy_tail) {
 		const uint32_t x = vtx.XY[0];
 		const uint32_t y = vtx.XY[1];
@@ -259,6 +263,12 @@ namespace Renderer {
 
 		GSVector4i xy = v1.xxxx().u16to32().sub32(m_ofxy);
 		GSVector4i::storel(&drawBuffer.vertex.xy[xy_tail & 3], xy.upl64(xy.sra32(4).zwzw()).ps32());
+	}
+
+	template<>
+	void TraceUpdateSkip<GSVertexUnprocessedNormal, uint16_t>(uint32_t& skip, PS2::DrawBufferData<GSVertexUnprocessedNormal, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
+	{
+
 	}
 
 	template<>

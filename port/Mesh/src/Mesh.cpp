@@ -1,4 +1,4 @@
-#include "Mesh.h"
+ #include "Mesh.h"
 #include "ed3D.h"
 #include "FileManager3D.h"
 #include "Log.h"
@@ -7,28 +7,44 @@
 #include "port/vu1_emu.h"
 
 #define MESH_LOG(level, format, ...) MY_LOG_CATEGORY("MeshLibrary", level, format, ##__VA_ARGS__)
-#define MESH_LOG_TRACE(level, format, ...) 
+//#define MESH_LOG_TRACE(level, format, ...) MY_LOG_CATEGORY("MeshLibrary", level, format, ##__VA_ARGS__)
+#define MESH_LOG_TRACE(level, format, ...)
 
 namespace Renderer
 {
 	namespace Kya
 	{
+		constexpr uint32_t gGifTagCopyCode = 0x6c018000;
+
 		static MeshLibrary gMeshLibrary;
 
-		static std::unordered_map<const ed_3d_strip*, Renderer::Kya::G3D::Strip*> gStripMap;
+		using StripCache = std::unordered_map<const ed_3d_strip*, Renderer::Kya::G3D::Strip*>;
+		static StripCache gStripCache;
 
-		static GIFReg::GSPrim ExtractPrimFromVifList(ed_3d_strip* pStrip)
+		static Gif_Tag ExtractGifTagFromVifList(ed_3d_strip* pStrip, int index = 0)
 		{
 			// Pull the prim reg out from the gif packet, not a big fan of this.
-			char* pVifList = reinterpret_cast<char*>(pStrip) + pStrip->vifListOffset;
+			char* const pVifList = reinterpret_cast<char*>(pStrip) + pStrip->vifListOffset;
 			edpkt_data* pPkt = reinterpret_cast<edpkt_data*>(pVifList);
-			u8* pGifPkt = LOAD_SECTION_CAST(u8*, pPkt[1].asU32[1]);
+
+			while (index > 0) {
+				if (pPkt->asU32[0] == gVifEndCode) {
+					index--;
+				}
+
+				pPkt++;
+			}
+
+			if (pPkt[1].asU32[3] != gGifTagCopyCode) {
+				pPkt = reinterpret_cast<edpkt_data*>(pVifList);
+			}
+
+			assert(pPkt[1].asU32[3] == gGifTagCopyCode);
+
+			u8* const pGifPkt = LOAD_SECTION_CAST(u8*, pPkt[1].asU32[1]);
 			Gif_Tag gifTag;
 			gifTag.setTag(pGifPkt, true);
-
-			MESH_LOG(LogLevel::Info, "ExtractPrimFromVifList Processing strip gifTag: NLOOP 0x{:x} NREG 0x{:x} PRIM 0x{:x}", (uint)gifTag.tag.NLOOP, (uint)gifTag.tag.NREG, (uint)gifTag.tag.PRIM);
-			const uint primReg = gifTag.tag.PRIM;
-			return *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
+			return gifTag;
 		}
 
 		static void EmplaceHierarchy(std::vector<G3D::Hierarchy>& hierarchies, ed_g3d_hierarchy* pHierarchy, const int heirarchyIndex, G3D* pParent)
@@ -46,69 +62,243 @@ namespace Renderer
 
 				ed3DLod* pLod = pHierarchy->aLods + i;
 
-				hierarchy.ProcessLod(pLod, heirarchyIndex, heirarchyIndex);
+				hierarchy.ProcessLod(pLod, heirarchyIndex, i);
 			}
+		}
+
+		enum class DrawMode {
+			v12,
+			v32
+		};
+
+		static DrawMode GetDrawMode(ed_3d_strip* pStrip)
+		{
+			if ((pStrip->flags & 0x400) != 0) {
+				return DrawMode::v12;
+			}
+
+			return DrawMode::v32;
 		}
 	}
 }
 
+constexpr const char* gDebugMeshName = "ATON_Scene01_Aton.g3d_0_0_14";
+
+void Renderer::Kya::G3D::Strip::PreProcessVertices()
+{
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Object::Strip::PreProcessVertices Processing strip name: {}", pSimpleMesh->GetName());
+
+	if (pSimpleMesh->GetName() == gDebugMeshName) {
+		MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Object::Strip::PreProcessVertices Processing strip name: {}", pSimpleMesh->GetName());
+	}
+
+	const Gif_Tag firstGifTag = ExtractGifTagFromVifList(pStrip);
+
+	const DrawMode drawMode = GetDrawMode(pStrip);
+
+	auto& internalVertexBuffer = pSimpleMesh->GetInternalVertexBufferData();
+
+	// Assume that the first gif tag has the largest vtx count.
+	const int maxVtxCount = firstGifTag.nLoop * pStrip->meshCount;
+
+	assert(maxVtxCount > 0);
+
+	internalVertexBuffer.Init(maxVtxCount * 2, maxVtxCount * 4);
+
+	union VertexColor {
+		uint32_t rgba;
+
+		struct {
+			uint8_t r;
+			uint8_t g;
+			uint8_t b;
+			uint8_t a;
+		};
+	};
+
+	static_assert(sizeof(VertexColor) == 4);
+
+	union TextureData {
+		uint32_t st;
+
+		struct {
+			int16_t s;
+			int16_t t;
+		};
+	};
+
+	static_assert(sizeof(TextureData) == 4);
+
+	VertexColor* pRgba = LOAD_SECTION_CAST(VertexColor*, pStrip->pColorBuf);
+	TextureData* pStq = LOAD_SECTION_CAST(TextureData*, pStrip->pSTBuf);
+	pStq += 4;
+
+	// This increases by 2 every loop because we start the next vtx at the end of the previous vtx.
+	int vtxOffset = 0;
+
+	int meshOffset = 0;
+
+	for (int j = 0; j < pStrip->meshCount; j++) {
+		MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::PreProcessVertices Starting section: {}", j);
+		Gif_Tag gifTag = ExtractGifTagFromVifList(pStrip, j);
+
+		for (int i = 0; i < gifTag.nLoop; i++) {
+			const int index = i + meshOffset;
+			const int adjustedIndex = index - vtxOffset;
+
+			Renderer::GSVertexUnprocessedNormal vtx;
+			vtx.RGBA[0] = pRgba[index].r;
+			vtx.RGBA[1] = pRgba[index].g;
+			vtx.RGBA[2] = pRgba[index].b;
+			vtx.RGBA[3] = pRgba[index].a;
+
+			vtx.STQ.ST[0] = pStq[index].s;
+			vtx.STQ.ST[1] = pStq[index].t;
+			vtx.STQ.Q = 1.0f;
+
+			if (pStrip->field_0x2c) {
+				struct Normal15 {
+					int16_t x;
+					int16_t y;
+					int16_t z;
+					int16_t pad;
+				};
+
+				Normal15* pNormal = LOAD_SECTION_CAST(Normal15*, pStrip->field_0x2c);
+
+				vtx.normal.fNormal[0] = int15_to_float(pNormal[adjustedIndex].x);
+				vtx.normal.fNormal[1] = int15_to_float(pNormal[adjustedIndex].y);
+				vtx.normal.fNormal[2] = int15_to_float(pNormal[adjustedIndex].z);
+				vtx.normal.fNormal[3] = int15_to_float(pNormal[adjustedIndex].pad);
+
+				MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::PreProcessVertices Processing vertex: {}, normal: ({}, {}, {})", i, vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
+			}
+			else {
+				memset(&vtx.normal, 0, sizeof(vtx.normal));
+			}
+
+			// Covert xyz 16
+			if (drawMode == DrawMode::v12) {
+				struct Vertex12 {
+					int16_t x;
+					int16_t y;
+					int16_t z;
+					int16_t flags;
+				};
+
+				Vertex12* pVertex = LOAD_SECTION_CAST(Vertex12*, pStrip->pVertexBuf);
+
+				vtx.XYZFlags.fXYZ[0] = int12_to_float(pVertex[adjustedIndex].x);
+				vtx.XYZFlags.fXYZ[1] = int12_to_float(pVertex[adjustedIndex].y);
+				vtx.XYZFlags.fXYZ[2] = int12_to_float(pVertex[adjustedIndex].z);
+				vtx.XYZFlags.flags = pVertex[adjustedIndex].flags;
+			}
+			else {
+				GSVertexUnprocessedNormal::Vertex* pVertex = LOAD_SECTION_CAST(GSVertexUnprocessedNormal::Vertex*, pStrip->pVertexBuf);
+				vtx.XYZFlags = pVertex[index - vtxOffset];
+			}
+
+			const uint primReg = firstGifTag.tag.PRIM;
+			const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
+
+			const uint skip = vtx.XYZFlags.flags & 0x8000;
+
+			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::PreProcessVertices Processing vertex: {}, drawMode: {}, primPacked: 0x{:x}, nloop: 0x{:x}, skip: 0x{:x}", i, (int)drawMode, primReg, gifTag.nLoop, skip);
+
+			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::PreProcessVertices Processing vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})\n",
+				i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags);
+
+			Renderer::KickVertex(vtx, primPacked, skip, internalVertexBuffer);
+
+			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::PreProcessVertices Kick complete vtx tail: 0x{:x} index tail: 0x{:x}",
+				internalVertexBuffer.GetVertexTail(), internalVertexBuffer.GetIndexTail());
+		}
+
+		meshOffset += gifTag.nLoop;
+		vtxOffset += 2;
+	}
+
+	assert(internalVertexBuffer.GetIndexTail() > 0);
+}
+
 void Renderer::Kya::G3D::Strip::KickVertices() const
 {
-	MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Object::::Strip::KickVertices vifListOffset: 0x{:x}", pStrip->vifListOffset);
+	MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Object::::Strip::KickVertices {} vifListOffset: 0x{:x}", pSimpleMesh->GetName(), pStrip->vifListOffset);
+
+	if (pSimpleMesh->GetName() == gDebugMeshName) {
+		MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Object::Strip::KickVertices Processing strip name: {}", pSimpleMesh->GetName());
+	}
 
 	char* pVifList = reinterpret_cast<char*>(pStrip) + pStrip->vifListOffset;
 	const uint incPacketSize = ed3DFlushStripGetIncPacket(pStrip, false, false);
 
-	auto AddVertices = [this]() {
-		char* vtxStart = VU1Emu::GetVertexDataStart();
+	const DrawMode drawMode = GetDrawMode(pStrip);
 
-		int* pFlag = reinterpret_cast<int*>(vtxStart - 0x10);
+	char* pStqData = LOAD_SECTION_CAST(char*, pStrip->pSTBuf);
+
+	auto AddVertices = [this, drawMode]() {
+		char* pVtx = VU1Emu::GetVertexDataStart();
+
+		bool bProcessNormal = false;
+
+		if (const int addr = VU1Emu::GetExecVuCodeAddr(); addr == 0xfc || addr == 0x19) {
+			bProcessNormal = true;
+		}
+
+		int* pFlag = reinterpret_cast<int*>(pVtx - 0x10);
 
 		Gif_Tag gifTag;
-		gifTag.setTag((u8*)vtxStart, true);
+		gifTag.setTag((u8*)pVtx, true);
 
-		vtxStart += 0x10;
+		pVtx += 0x10;
+
+		char* pNormal = pVtx + 0xd80;
 
 		for (int i = 0; i < gifTag.nLoop; i++) {
 			const int addr = VU1Emu::GetExecVuCodeAddr();
 
-			int drawMode = 0;
+			Renderer::GSVertexUnprocessedNormal vtx;
+			memcpy(&vtx.STQ, pVtx, sizeof(vtx.STQ));
+			memcpy(&vtx.RGBA, pVtx + 0x10, sizeof(vtx.RGBA));
+			memcpy(&vtx.XYZFlags, pVtx + 0x20, sizeof(vtx.XYZFlags));
 
-			if ((pStrip->flags & 0x400) != 0) {
-				drawMode = 1;
+			if (bProcessNormal) {
+				memcpy(&vtx.normal, pNormal, sizeof(vtx.normal));
+
+				vtx.normal.fNormal[0] = int15_to_float(vtx.normal.iNormal[0]);
+				vtx.normal.fNormal[1] = int15_to_float(vtx.normal.iNormal[1]);
+				vtx.normal.fNormal[2] = int15_to_float(vtx.normal.iNormal[2]);
+
+				MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::KickVertices Processing vertex: {}, normal: ({}, {}, {})", i, vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
 			}
-
-			Renderer::GSVertexUnprocessed vtx;
-			memcpy(&vtx.STQ, vtxStart, sizeof(vtx.STQ));
-			memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
-			memcpy(&vtx.XYZSkip, vtxStart + 0x20, sizeof(vtx.XYZSkip));
+			else {
+				memset(&vtx.normal, 0, sizeof(vtx.normal));
+			}
 
 			// Covert xyz 16
-			if (drawMode == 1) {
-				vtx.XYZSkip.fXYZ[0] = int12_to_float(vtx.XYZSkip.iXYZ[0]);
-				vtx.XYZSkip.fXYZ[1] = int12_to_float(vtx.XYZSkip.iXYZ[1]);
-				vtx.XYZSkip.fXYZ[2] = int12_to_float(vtx.XYZSkip.iXYZ[2]);
+			if (drawMode == DrawMode::v12) {
+				vtx.XYZFlags.fXYZ[0] = int12_to_float(vtx.XYZFlags.iXYZ[0]);
+				vtx.XYZFlags.fXYZ[1] = int12_to_float(vtx.XYZFlags.iXYZ[1]);
+				vtx.XYZFlags.fXYZ[2] = int12_to_float(vtx.XYZFlags.iXYZ[2]);
 			}
-
-			const uint vtxAnimMatrix = ((vtx.XYZSkip.Skip & 0x7ff) - 0x3dc) / 4;
 
 			const uint primReg = gifTag.tag.PRIM;
 			const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
-			const uint skip = vtx.XYZSkip.Skip & 0x8000;
+			const uint skip = vtx.XYZFlags.flags & 0x8000;
 
-			//const uint shiftedStripIndex = stripIndex << 16;
-			//vtx.XYZSkip.Skip |= shiftedStripIndex;
-			vtx.XYZSkip.Skip |= (drawMode << 16);
-
-			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Object::ProcessStrip Processing vertex: {}, drawMode: {}, primPacked: 0x{:x}, skip: 0x{:x}", i, drawMode, primReg, skip);
+			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Object::ProcessStrip Processing vertex: {}, drawMode: {}, primPacked: 0x{:x}, nloop: 0x{:x}, skip: 0x{:x}", i, (int)drawMode, primReg, gifTag.nLoop, skip);
 
 			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Object::ProcessStrip Processing vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})\n",
-				i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZSkip.fXYZ[0], vtx.XYZSkip.fXYZ[1], vtx.XYZSkip.fXYZ[2], vtx.XYZSkip.Skip);
+				i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags);
 
 			Renderer::KickVertex(vtx, primPacked, skip, pSimpleMesh->GetVertexBufferData());
 
-			vtxStart += 0x30;
+			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Object::ProcessStrip Kick complete vtx tail: 0x{:x} index tail: 0x{:x}",
+				pSimpleMesh->GetVertexBufferData().GetVertexTail(), pSimpleMesh->GetVertexBufferData().GetIndexTail());
+
+			pVtx += 0x30;
+			pNormal += 0x10;
 		};
 	};
 
@@ -161,7 +351,11 @@ void Renderer::Kya::G3D::Cluster::ProcessStrip(ed_3d_strip* pStrip, const int st
 	strip.pStrip = pStrip;
 	strip.pParent = this;
 
-	const GIFReg::GSPrim prim = ExtractPrimFromVifList(pStrip);
+	const Gif_Tag gifTag  = ExtractGifTagFromVifList(pStrip);
+
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Cluster::ProcessStrip Processing strip gifTag: NLOOP 0x{:x} NREG 0x{:x} PRIM 0x{:x}", (uint)gifTag.tag.NLOOP, (uint)gifTag.tag.NREG, (uint)gifTag.tag.PRIM);
+	const uint primReg = gifTag.tag.PRIM;
+	const GIFReg::GSPrim prim = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
 	// strip everything before the last forward slash
 	std::string meshName = this->pParent->GetName().substr(this->pParent->GetName().find_last_of('\\') + 1);
@@ -169,12 +363,14 @@ void Renderer::Kya::G3D::Cluster::ProcessStrip(ed_3d_strip* pStrip, const int st
 	meshName += std::to_string(stripIndex);
 
 	strip.pSimpleMesh = new SimpleMesh(meshName, prim);
+
+	strip.PreProcessVertices();
 }
 
 void Renderer::Kya::G3D::Cluster::CacheStrips()
 {
 	for (auto& strip : strips) {
-		gStripMap[strip.pStrip] = &strip;
+		gStripCache[strip.pStrip] = &strip;
 	}
 }
 
@@ -193,7 +389,11 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int hei
 	strip.pStrip = pStrip;
 	strip.pParent = this;
 
-	const GIFReg::GSPrim prim = ExtractPrimFromVifList(pStrip);
+	Gif_Tag gifTag = ExtractGifTagFromVifList(pStrip);
+
+	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Object::ProcessStrip Processing strip gifTag: NLOOP 0x{:x} NREG 0x{:x} PRIM 0x{:x}", (uint)gifTag.tag.NLOOP, (uint)gifTag.tag.NREG, (uint)gifTag.tag.PRIM);
+	const uint primReg = gifTag.tag.PRIM;
+	const GIFReg::GSPrim prim = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
 	// strip everything before the last forward slash
 	std::string meshName = this->pParent->pParent->pParent->GetName().substr(this->pParent->pParent->pParent->GetName().find_last_of('\\') + 1);
@@ -205,12 +405,14 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int hei
 	meshName += std::to_string(stripIndex);
 
 	strip.pSimpleMesh = new SimpleMesh(meshName, prim);
+
+	strip.PreProcessVertices();
 }
 
 void Renderer::Kya::G3D::Hierarchy::Lod::Object::CacheStrips()
 {
 	for (auto& strip : strips) {
-		gStripMap[strip.pStrip] = &strip;
+		gStripCache[strip.pStrip] = &strip;
 	}
 }
 
@@ -376,19 +578,6 @@ void Renderer::Kya::G3D::ProcessCSTA()
 	if (pClusterTypeChunk->hash == HASH_CODE_CDOA) {
 		assert(false);
 		MeshData_CSTA* pCSTA = reinterpret_cast<MeshData_CSTA*>(pClusterTypeChunk + 1);
-		//location.xyz = pCSTA->field_0x20;
-		//octree.field_0x0.w = 0.0f;
-		//octree.worldLocation.xyz = pCSTA->worldLocation.xyz;
-		//octree.worldLocation.w = 1.0f;
-		//location.w = 0.0f;
-		//octree.field_0x0.xyz = location.xyz;
-		//edF32Vector4SquareHard(&location, &location);
-		//octree.boundingSphereTestResult = 2;
-		//octree.field_0x30 = 0.0f;
-		//location.x = location.x + location.y + location.z;
-		//octree.field_0x2c = sqrtf(location.x) * 0.5f;
-		//octree.pCDQU = edChunckGetFirst(pCSTA + 1, (char*)0x0);
-		//octree.pCDQU_End = reinterpret_cast<char*>(octree.pCDQU) + octree.pCDQU->size;
 
 
 	}
@@ -419,8 +608,12 @@ void Renderer::Kya::MeshLibrary::Init()
 
 const Renderer::Kya::G3D::Strip* Renderer::Kya::MeshLibrary::FindStrip(const ed_3d_strip* pStrip) const
 {
-	return gStripMap[pStrip];
+	constexpr bool bUseStripCache = true;
 
+	if (bUseStripCache) {
+		return gStripCache[pStrip];
+	}
+	
 	int hierarchyIndex = 0;
 	int lodIndex = 0;
 	int stripIndex = 0;
@@ -454,7 +647,10 @@ void Renderer::Kya::MeshLibrary::AddFromStrip(const ed_3d_strip* pStrip) const
 	assert(pRendererStrip);
 
 	if (pRendererStrip && pRendererStrip->pSimpleMesh) {
-		pRendererStrip->KickVertices();
+		if (!Renderer::Native::GetUsePreprocessedVertices()) {
+			pRendererStrip->KickVertices();
+		}
+	
 		Renderer::AddMesh(pRendererStrip->pSimpleMesh);
 	}
 }

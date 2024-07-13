@@ -9,6 +9,7 @@
 #include "../../../include/profiling.h"
 
 #define int12_to_float(x)	(float)((float)x * 0.000244140625f)
+#define int15_to_float(x)	(float)((float)x * 0.000030517578125)
 
 // Forward decs for RenderDelegate
 typedef struct VkFramebuffer_T* VkFramebuffer;
@@ -116,15 +117,24 @@ namespace Renderer
 			float Q;
 			float _pad;
 		} STQ;
+
 		uint32_t RGBA[4];
 
-		struct {
+		struct Vertex {
 			union {
 				float fXYZ[3];
 				int32_t iXYZ[3];
 			};
-			uint32_t Skip;
-		} XYZSkip;
+			uint32_t flags;
+		} XYZFlags;
+	};
+
+	struct alignas(32) GSVertexUnprocessedNormal : public GSVertexUnprocessed
+	{
+		union Normal {
+			float fNormal[4];
+			int32_t iNormal[4];
+		} normal;
 	};
 
 	struct alignas(32) GSVertex
@@ -210,7 +220,7 @@ namespace Renderer
 		TextureRegisters registers;
 	};
 
-	using NativeVertexBufferData = PS2::DrawBufferData<Renderer::GSVertexUnprocessed, uint16_t>;
+	using NativeVertexBufferData = PS2::DrawBufferData<Renderer::GSVertexUnprocessedNormal, uint16_t>;
 
 	struct SimpleMesh : public RendererObject
 	{
@@ -221,6 +231,7 @@ namespace Renderer
 
 		// Implementations in renderer implementations.
 		NativeVertexBufferData& GetVertexBufferData();
+		NativeVertexBufferData& GetInternalVertexBufferData() { return internalVertexBufferData; }
 
 		const GIFReg::GSPrim& GetPrim() const { return prim; }
 
@@ -231,7 +242,14 @@ namespace Renderer
 		int stripIndex = 0;
 
 		GIFReg::GSPrim prim;
+
+		NativeVertexBufferData internalVertexBufferData;
+
 	};
+
+	namespace Native {
+		bool& GetUsePreprocessedVertices();
+	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;
 	const InUseTextureList& GetInUseTextures();

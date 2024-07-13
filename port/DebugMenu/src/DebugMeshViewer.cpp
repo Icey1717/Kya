@@ -167,15 +167,15 @@ namespace DebugMeshViewer {
 				Renderer::GSVertexUnprocessed vtx;
 				memcpy(&vtx.STQ, vtxStart, sizeof(vtx.STQ));
 				memcpy(&vtx.RGBA, vtxStart + 0x10, sizeof(vtx.RGBA));
-				memcpy(&vtx.XYZSkip, vtxStart + 0x20, sizeof(vtx.XYZSkip));
+				memcpy(&vtx.XYZFlags, vtxStart + 0x20, sizeof(vtx.XYZFlags));
 
 				if (drawMode == 1) {
-					vtx.XYZSkip.fXYZ[0] = int12_to_float(vtx.XYZSkip.iXYZ[0]);
-					vtx.XYZSkip.fXYZ[1] = int12_to_float(vtx.XYZSkip.iXYZ[1]);
-					vtx.XYZSkip.fXYZ[2] = int12_to_float(vtx.XYZSkip.iXYZ[2]);
+					vtx.XYZFlags.fXYZ[0] = int12_to_float(vtx.XYZFlags.iXYZ[0]);
+					vtx.XYZFlags.fXYZ[1] = int12_to_float(vtx.XYZFlags.iXYZ[1]);
+					vtx.XYZFlags.fXYZ[2] = int12_to_float(vtx.XYZFlags.iXYZ[2]);
 				}
 
-				const uint vtxAnimMatrix = ((vtx.XYZSkip.Skip & 0x7ff) - 0x3dc) / 4;
+				const uint vtxAnimMatrix = ((vtx.XYZFlags.flags & 0x7ff) - 0x3dc) / 4;
 
 				if (gHighlightStripIndex == stripIndex || vtxAnimMatrix == gHighlightAnimMatrixIndex) {
 					vtx.RGBA[0] = 0xff;
@@ -187,11 +187,11 @@ namespace DebugMeshViewer {
 				const uint primReg = gifTag.tag.PRIM;
 				const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
-				const uint skip = vtx.XYZSkip.Skip & 0x8000;
+				const uint skip = vtx.XYZFlags.flags & 0x8000;
 
 				const uint shiftedStripIndex = stripIndex << 16;
 				//vtx.XYZSkip.Skip |= shiftedStripIndex;
-				vtx.XYZSkip.Skip |= (drawMode << 16);
+				vtx.XYZFlags.flags |= (drawMode << 16);
 
 				Renderer::KickVertex(vtx, primPacked, skip, vertexBufferData);
 

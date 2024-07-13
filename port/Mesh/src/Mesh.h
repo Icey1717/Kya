@@ -23,6 +23,7 @@ namespace Renderer
 
 			struct Strip
 			{
+				void PreProcessVertices();
 				void KickVertices() const;
 
 				ed_3d_strip* pStrip = nullptr;

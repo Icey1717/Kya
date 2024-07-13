@@ -1661,7 +1661,6 @@ namespace VU1Emu {
 				const int animMatrixReg = pXYZ->wi & animMatrixMask;
 				const edF32MATRIX4 animMatrix = bForceAnimMatrixIdentity ? gF32Matrix4Unit : VIF_LOAD_M4(animMatrixReg, 0);
 
-
 				VU_VTX_TRACE_LOG("Bones_Rigid original XYZ  0x{:x} x: {} y: {} z: {} w: 0x{:x}", vtxReg, pXYZ->x, pXYZ->y, pXYZ->z, pXYZ->wi);
 				VU_VTX_TRACE_LOG("Bones_Rigid original RGBA 0x{:x} r: {} g: {} b: {}", vtxReg, pRGBA->xi, pRGBA->yi, pRGBA->zi);
 				VU_VTX_TRACE_LOG("Bones_Rigid original STQ  0x{0:x} S: {1} (0x{1:x}) T: {2} (0x{2:x}) Q: {3:.2f}", vtxReg, pSTQ->xi, pSTQ->yi, pSTQ->z);
@@ -2616,7 +2615,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 
 	gDelayedFlagWrites.clear();
 
-	while (pVifPkt->cmdA != 0x60000000) {
+	while (pVifPkt->cmdA != gVifEndCode) {
 		RunTag* pRunTag = (RunTag*)(&(pVifPkt->asU32[3]));
 
 		if (pVifPkt->asU32[3] == VIF_NOP) {
@@ -2721,6 +2720,9 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 
 			const uint offset = (((pTag->addr + gItop) << 4) & 0x3ff0);
 
+			// Make sure our offset is within memory.
+			assert(offset < FAKE_VU1_MEM_SIZE);
+
 			char* pWriteStart = pFakeMem + offset;
 
 			const int dataSize = 0x10;
@@ -2735,6 +2737,8 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
+					assert(pStart < pFakeMem + FAKE_VU1_MEM_SIZE);
+
 					memcpy(pStart, pUnpack + (i * 0x10), 0x10);
 				}
 			}
@@ -2746,9 +2750,12 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 				short* pUnpack = (short*)LOAD_SECTION(pVifPkt->asU32[1]);
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
+					assert(pStart < pFakeMem + FAKE_VU1_MEM_SIZE);
 
 					edF32VECTOR4* pV = (edF32VECTOR4*)pStart;
 					*pV = strow;
+
+					// strow seems to always be 0.0, 0.0, 1.0, 0.0
 
 					int* pI = (int*)pStart;
 					short* pU = pUnpack + (i * 2);
@@ -2765,6 +2772,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
+					assert(pStart < pFakeMem + FAKE_VU1_MEM_SIZE);
 
 					edF32VECTOR4* pV = (edF32VECTOR4*)pStart;
 					*pV = strow;
@@ -2786,6 +2794,7 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 
 				for (int i = 0; i < pTag->count; i += 1) {
 					void* const pStart = pWriteStart + (i * dataSize * stcl);
+					assert(pStart < pFakeMem + FAKE_VU1_MEM_SIZE);
 
 					byte* pB = pUnpack + (i * 4);
 					int* pI = (int*)pStart;

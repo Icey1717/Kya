@@ -12,6 +12,9 @@ namespace Renderer
 	{
 		TextureLibrary gTextureLibrary;
 
+		using TextureCache = std::unordered_map<const ed_g2d_material* , const Renderer::Kya::G2D::Material*>;
+		static TextureCache gTextureCache;
+
 		void ProcessRenderCommandList(CombinedImageData& imageData, const G2D::CommandList& commandList)
 		{
 			bool bSet = false;
@@ -249,6 +252,8 @@ void Renderer::Kya::G2D::ProcessMaterial(ed_g2d_material* pMaterial, const int m
 	material.pMaterial = pMaterial;
 	material.pParent = this;
 
+	gTextureCache[pMaterial] = &material;
+
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessMaterial Nb layers: {} flags: 0x{:x}", pMaterial->nbLayers, pMaterial->flags);
 
 	material.renderCommands.pList = LOAD_SECTION_CAST(edpkt_data*, pMaterial->pCommandBufferTexture);
@@ -388,6 +393,12 @@ void Renderer::Kya::TextureLibrary::Init()
 
 const Renderer::Kya::G2D::Material* Renderer::Kya::TextureLibrary::FindMaterial(const ed_g2d_material* pMaterial) const
 {
+	constexpr bool bUseTextureCache = true;
+
+	if (bUseTextureCache) {
+		return gTextureCache[pMaterial];
+	}
+
 	for (auto& texture : gTextures) {
 		for (auto& material : texture.GetMaterials()) {
 			if (material.pMaterial == pMaterial) {
