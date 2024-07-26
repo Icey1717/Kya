@@ -53,7 +53,7 @@ namespace PS2_Internal {
 		pipeline.AddBindings(Renderer::EBindingStage::Geometry, geomShader.reflectData);
 		pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
 		pipeline.CreateDescriptorSetLayouts();
-		pipeline.CreateLayout();
+		pipeline.CreateLayout(vertShader.reflectData.pushConstants);
 
 		// Common state
 		gpb.SetPipelineLayout(pipeline.layout);
@@ -83,9 +83,9 @@ namespace PS2_Internal {
 		gpb.AddDynamicState(VK_DYNAMIC_STATE_LINE_WIDTH);
 
 		// Shaders
-		gpb.SetVertexShader(vertShader.shaderModule, vertShader.reflectData.entryPointname.c_str());
-		gpb.SetGeometryShader(geomShader.shaderModule, geomShader.reflectData.entryPointname.c_str());
-		gpb.SetFragmentShader(fragShader.shaderModule, fragShader.reflectData.entryPointname.c_str());
+		gpb.SetVertexShader(vertShader.shaderModule, vertShader.reflectData.GetEntryPointName().c_str());
+		gpb.SetGeometryShader(geomShader.shaderModule, geomShader.reflectData.GetEntryPointName().c_str());
+		gpb.SetFragmentShader(fragShader.shaderModule, fragShader.reflectData.GetEntryPointName().c_str());
 		
 		// IA
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -334,12 +334,15 @@ void Renderer::Pipeline::CreateDescriptorSetLayouts()
 	}
 }
 
-void Renderer::Pipeline::CreateLayout()
+void Renderer::Pipeline::CreateLayout(const PushConstantList& pushConstants)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
 	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+
+	pipelineLayoutInfo.pPushConstantRanges = pushConstants.data();
+	pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstants.size());
 
 	if (vkCreatePipelineLayout(GetDevice(), &pipelineLayoutInfo, GetAllocator(), &layout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");

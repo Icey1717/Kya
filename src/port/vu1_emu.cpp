@@ -20,6 +20,7 @@
 #endif
 #include "MathOps.h"
 
+#define VU_VTX_LOG(format, ...) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
 #define VU_VTX_TRACE_LOG(format, ...) if (VU1Emu::bTracingVtx) { MY_LOG_CATEGORY("vtx_trace", LogLevel::Verbose, format, ##__VA_ARGS__); }
 
 #define GET_VIF_CMD(cmd) (((unsigned int)cmd >> (3 << 3)) & 0xff)
@@ -1980,10 +1981,14 @@ namespace VU1Emu {
 				int normalReg = vtxReg + 0xd8;
 
 				const edF32MATRIX3 lightDirections = VIF_LOAD_M3(vi00, 0x18);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor light directions \n{}\n{}\n{}\n", lightDirections.rowX.ToString(), lightDirections.rowY.ToString(), lightDirections.rowZ.ToString());
+
 				const edF32MATRIX4 lightColors = VIF_LOAD_M4(vi00, 0x1b);
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor light colors \n{}", lightColors.ToString());
 
 				edF32VECTOR4 lightAmbient = VIF_LOAD_F(vi00, 0x20);
 				const edF32VECTOR4 lightAmbientAdjusted = { lightAmbient.x, lightAmbient.y, lightAmbient.z, 0.0f };
+				VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor light ambient: {}", lightAmbient.ToString());
 
 				for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
 					edF32VECTOR4 normal = VIF_LOAD_F(normalReg++, 0);
@@ -2001,16 +2006,24 @@ namespace VU1Emu {
 
 					normal = (lightAmbientAdjusted + vf00) + (lightColors.rowT * normal.w) + (lightColors.rowZ * normal.z) + (lightColors.rowY * normal.y) + (lightColors.rowX * normal.x);
 
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal 0x{:x} vf12 x: {} y: {} z: {} w: {}", vtxReg, normal.x, normal.y, normal.z, normal.w);
+
 					normal.x = std::min<float>(normal.x, 255);
 					normal.y = std::min<float>(normal.y, 255);
 					normal.z = std::min<float>(normal.z, 255);
 					normal.w = std::min<float>(normal.w, 255);
 
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor transformed Normal 0x{:x} vf12 x: {} y: {} z: {} w: {}", vtxReg, normal.x, normal.y, normal.z, normal.w);
+
 					edF32VECTOR4 rgba = VIF_LOAD_F(vtxReg, 1);
 
 					rgba = rgba * lightAmbient.w;
 
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor RGBA 0x{:x} vf10 r: {} g: {} b: {} a: {}", vtxReg, rgba.x, rgba.y, rgba.z, rgba.w);
+
 					rgba = rgba * normal;
+
+					VU_VTX_TRACE_LOG("_$ParallelLightning_addcolor RGBA 0x{:x} vf10 r: {} g: {} b: {} a: {}", vtxReg, rgba.x, rgba.y, rgba.z, rgba.w);
 
 					// RGBA 0 result
 					rgba.xi = rgba.x;
@@ -2660,8 +2673,9 @@ void VU1Emu::ProcessVifList(edpkt_data* pVifPkt, bool bRunCode /*= true*/)
 			}
 		}
 		else if (pRunTag->cmd == VIF_MSCAL) {
+			gExecVuCodeAddr = pRunTag->addr;
+
 			if (!bRunCode) {
-				gExecVuCodeAddr = pRunTag->addr;
 				pVifPkt++;
 				continue;
 			}

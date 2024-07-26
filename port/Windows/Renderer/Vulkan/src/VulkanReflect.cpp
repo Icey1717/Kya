@@ -390,7 +390,23 @@ static uint32_t FormatSize(VkFormat format) {
 	return result;
 }
 
-ReflectData reflectDescriptorSetLayout(const std::vector<char>& shaderCode) {
+static void GetPushConstantRanges(SpvReflectShaderModule& module, std::vector<VkPushConstantRange>& pushConstantRanges) {
+	uint32_t pushConstantBlockCount = 0;
+	spvReflectEnumeratePushConstantBlocks(&module, &pushConstantBlockCount, NULL);
+
+	std::vector<SpvReflectBlockVariable*> pushConstantBlocks(pushConstantBlockCount);
+	spvReflectEnumeratePushConstantBlocks(&module, &pushConstantBlockCount, pushConstantBlocks.data());
+
+	for (const auto& block : pushConstantBlocks) {
+		VkPushConstantRange pushConstantRange = {};
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // Set appropriate shader stage
+		pushConstantRange.offset = block->offset;
+		pushConstantRange.size = block->size;
+		pushConstantRanges.push_back(pushConstantRange);
+	}
+}
+
+ReflectData CreateReflectionData(const std::vector<char>& shaderCode) {
 	// Create a ShaderModule instance
 	SpvReflectShaderModule module = {};
 	SpvReflectResult result =
@@ -407,8 +423,7 @@ ReflectData reflectDescriptorSetLayout(const std::vector<char>& shaderCode) {
 
 	ReflectData reflectData;
 	auto& set_layouts = reflectData.GetLayouts();
-	set_layouts = std::vector<DescriptorSetLayoutData>(sets.size(),
-		DescriptorSetLayoutData{});
+	set_layouts = std::vector<DescriptorSetLayoutData>(sets.size(), DescriptorSetLayoutData{});
 
 	// Demonstrates how to generate all necessary data structures to create a
 	// VkDescriptorSetLayout for each descriptor set in this shader.
@@ -509,6 +524,8 @@ ReflectData reflectDescriptorSetLayout(const std::vector<char>& shaderCode) {
 #endif
 
 	reflectData.entryPointname = module.entry_point_name;
+
+	GetPushConstantRanges(module, reflectData.pushConstants);
 
 	// Log the descriptor set contents to stdout
 	const char* t = "  ";

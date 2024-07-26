@@ -82,7 +82,7 @@ namespace Renderer
 	}
 }
 
-constexpr const char* gDebugMeshName = "ATON_Scene01_Aton.g3d_0_0_14";
+constexpr const char* gDebugMeshName = "SECT1.g3d_17_0_0";
 
 void Renderer::Kya::G3D::Strip::PreProcessVertices()
 {

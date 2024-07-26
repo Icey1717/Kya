@@ -276,7 +276,7 @@ void PS2::FrameBuffer::CreateFinalPassPipeline()
 
 	finalPipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
 	finalPipeline.CreateDescriptorSetLayouts();
-	finalPipeline.CreateLayout();
+	finalPipeline.CreateLayout(vertShader.reflectData.pushConstants);
 
 	std::vector<VkPipelineShaderStageCreateInfo> stages = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
 

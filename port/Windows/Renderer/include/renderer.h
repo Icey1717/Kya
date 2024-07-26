@@ -249,6 +249,26 @@ namespace Renderer
 
 	namespace Native {
 		bool& GetUsePreprocessedVertices();
+
+		struct MatrixPacket
+		{
+			float camNormalX[4]; // 0x0
+			float camNormalY[4]; // 0x1
+			float objToCullingMatrix[16]; // 0x2
+			float objToClippingMatrix[16]; // 0x6
+			float objToScreenMatrix[16]; // 0xa
+			float objectToCameraMatrix[16]; // 0xe
+
+			float objLightDirectionsMatrix[12]; // 0x12
+			float lightColorMatrix[20]; // 0x15
+			float adjustedLightAmbient[4]; // 0x19
+			float animStNormalExtruder[4]; // 0x1a
+			//float objToWorldInverseNormal[4]; // 0x1b
+		};
+
+		static_assert(sizeof(MatrixPacket) == 0x1c0, "Invalid Native::MatrixPacket size");
+
+		void PushMatrixPacket(const MatrixPacket* const pPkt);
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;

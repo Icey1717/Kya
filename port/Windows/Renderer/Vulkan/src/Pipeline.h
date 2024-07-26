@@ -75,9 +75,11 @@ namespace Renderer {
 
 		PS2::PipelineKey key;
 
+		using PushConstantList = std::vector<VkPushConstantRange>;
+
 		void AddBindings(const EBindingStage bindingStage, const ReflectData& reflectData);
 		void CreateDescriptorSetLayouts();
-		void CreateLayout();
+		void CreateLayout(const PushConstantList& pushConstants);
 
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();

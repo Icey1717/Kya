@@ -1605,9 +1605,11 @@ edF32MATRIX4* gLightColor_Matrix = NULL;
 void ed3DSceneLightSetGlobals(ed_3D_Light_Config* pConfig)
 {
 	gLightAmbiant = pConfig->pLightAmbient;
+
 	if (gLightAmbiant != (edF32VECTOR4*)0x0) {
 		gLightAmbiant->w = 0.0078125;
 	}
+
 	gLightDirections_Matrix = pConfig->pLightDirections;
 	gLightColor_Matrix = pConfig->pLightColorMatrix;
 	return;
@@ -1842,7 +1844,7 @@ void ed3DFrustumCompute(SceneConfig* pSceneConfig, edFCamera* pCamera, edSurface
 	return;
 }
 
-int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
+int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 {
 	uint uVar1;
 	edF32VECTOR4* v0;
@@ -1854,8 +1856,8 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DInitRenderEnvironement: {}", mode);
 
-	fVar5 = pStaticMeshMaster->pCamera->halfFOV;
-	memcpy(gRenderCamera, pStaticMeshMaster->pCamera, sizeof(edFCamera));
+	fVar5 = pScene->pCamera->halfFOV;
+	memcpy(gRenderCamera, pScene->pCamera, sizeof(edFCamera));
 
 	edF32Matrix4CopyHard(WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
 	if (mode != 0) {
@@ -1897,12 +1899,12 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 	if (mode != 0) {
 		gCurLOD_RenderFOVCoef = gRenderFovCoef;
 	}
-	memcpy(&gRenderSurface, pStaticMeshMaster->pViewport->pColorBuffer, sizeof(edSurface));
-	gRenderSceneConfig = &pStaticMeshMaster->sceneConfig;
-	(pStaticMeshMaster->sceneConfig).clipValue_0x18 = (pStaticMeshMaster->sceneConfig).clipValue_0x4;
+	memcpy(&gRenderSurface, pScene->pViewport->pColorBuffer, sizeof(edSurface));
+	gRenderSceneConfig = &pScene->sceneConfig;
+	(pScene->sceneConfig).clipValue_0x18 = (pScene->sceneConfig).clipValue_0x4;
 	memcpy(gRenderSceneConfig_SPR, gRenderSceneConfig, sizeof(SceneConfig));
-	gRenderScene = pStaticMeshMaster;
-	ed3DSceneLightSetGlobals(&(pStaticMeshMaster->sceneConfig).pLightConfig);
+	gRenderScene = pScene;
+	ed3DSceneLightSetGlobals(&(pScene->sceneConfig).pLightConfig);
 	uVar1 = gRenderSceneConfig_SPR->field_0x14;
 	if ((int)uVar1 < 0) {
 		fVar2 = (float)(uVar1 >> 1 | uVar1 & 1);
@@ -1921,8 +1923,8 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 	}
 	farClip = gRenderSceneConfig_SPR->farClip;
 	ed3DViewportComputeViewMatrices
-	((float)(int)pStaticMeshMaster->pViewport->screenWidth,
-		(float)(int)pStaticMeshMaster->pViewport->screenHeight, gRenderCamera->horizontalHalfFOV,
+	((float)(int)pScene->pViewport->screenWidth,
+		(float)(int)pScene->pViewport->screenHeight, gRenderCamera->horizontalHalfFOV,
 		gRenderCamera->halfFOV, gRenderCamera->verticalHalfFOV, 2048.0f, 2048.0f,
 		gRenderSceneConfig_SPR->nearClip, CameraToScreen_Matrix, CameraToCulling_Matrix, CameraToClipping_Matrix,
 		&CameraToFog_Matrix, gRenderSceneConfig_SPR->farClip, fVar2, fVar3);
@@ -1931,7 +1933,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 
 	edF32Matrix4MulF32Matrix4Hard(&WorldToScreen_Matrix, WorldToCamera_Matrix, CameraToScreen_Matrix);
 
-	if ((pStaticMeshMaster->flags & 2) != 0) {
+	if ((pScene->flags & 2) != 0) {
 		memcpy(&gShadow_CameraToScreen_Matrix, CameraToScreen_Matrix, sizeof(edF32MATRIX4));
 		memcpy(&gShadow_CameraToCulling_Matrix, CameraToCulling_Matrix, sizeof(edF32MATRIX4));
 		memcpy(&gShadow_CameraToClipping_Matrix, CameraToClipping_Matrix, sizeof(edF32MATRIX4));
@@ -1944,8 +1946,8 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 		memcpy(&gShadow_gCamNormal_X, &gCamNormal_X, sizeof(edF32VECTOR4));
 		memcpy(&gShadow_gCamNormal_Y, &gCamNormal_Y, sizeof(edF32VECTOR4));
 	}
-	if (pStaticMeshMaster->bShadowScene == 1) {
-		uVar1 = GetGreaterPower2Val((int)pStaticMeshMaster->pViewport->screenWidth);
+	if (pScene->bShadowScene == 1) {
+		uVar1 = GetGreaterPower2Val((int)pScene->pViewport->screenWidth);
 		if ((int)uVar1 < 0) {
 			fVar2 = (float)(uVar1 >> 1 | uVar1 & 1);
 			fVar2 = fVar2 + fVar2;
@@ -1953,7 +1955,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 		else {
 			fVar2 = (float)uVar1;
 		}
-		uVar1 = GetGreaterPower2Val((int)pStaticMeshMaster->pViewport->screenHeight);
+		uVar1 = GetGreaterPower2Val((int)pScene->pViewport->screenHeight);
 		if ((int)uVar1 < 0) {
 			fVar3 = (float)(uVar1 >> 1 | uVar1 & 1);
 			fVar3 = fVar3 + fVar3;
@@ -1973,15 +1975,15 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pStaticMeshMaster, long mode)
 			return 0;
 		}
 		memcpy(&WorldToCamera_Matrix_CastShadow, WorldToCamera_Matrix, sizeof(edF32MATRIX4));
-		gShadowRenderScene = pStaticMeshMaster;
+		gShadowRenderScene = pScene;
 	}
 	else {
 		*gShadowRenderMask = 0;
 		gDefault_Material_Current = &gDefault_Material_Gouraud;
 		gDefault_Material_Cluster_Current = &gDefault_Material_Gouraud_Cluster;
 	}
-	if (pStaticMeshMaster->pViewport->screenHeight != 0x200) {
-		pStaticMeshMaster->pCamera->halfFOV = fVar5;
+	if (pScene->pViewport->screenHeight != 0x200) {
+		pScene->pCamera->halfFOV = fVar5;
 	}
 	return 1;
 }
@@ -2559,10 +2561,6 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 		}
 	}
 
-#ifdef PLATFORM_WIN
-	Renderer::PushLightData(gLightColor_Matrix_Scratch->raw, gLightColor_Matrix_Scratch->raw, gLightAmbiant_Scratch->raw);
-#endif
-
 	edF32VECTOR4* vectorA = SCRATCHPAD_ADDRESS_TYPE(0x70000990, edF32VECTOR4*);
 
 	vectorA->x = (gRenderCamera->calculatedRotation).x;
@@ -2610,12 +2608,20 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	edF32Matrix4GetTransposeHard(SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*));
 	edF32Matrix4CopyHard(SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*), *pLightColors);
 
-	edF32VECTOR4* vectorB = SCRATCHPAD_ADDRESS_TYPE(ADJUSTED_LIGHT_AMBIENT_MATRIX_SPR, edF32VECTOR4*);
+
+	edF32VECTOR4* vectorB = SCRATCHPAD_ADDRESS_TYPE(ADJUSTED_LIGHT_AMBIENT_SPR, edF32VECTOR4*);
 	edF32VECTOR4* vectorD = SCRATCHPAD_ADDRESS_TYPE(ANIM_ST_NORMAL_EXTRUDER_SPR, edF32VECTOR4*);
 	edF32VECTOR4* vectorC = *SCRATCHPAD_ADDRESS_TYPE(LIGHT_AMBIENT_MATRIX_PTR_SPR, edF32VECTOR4**);
 
 	vectorB->xyz = vectorC->xyz;
 	vectorB->w = 0.0078125f;
+
+#ifdef PLATFORM_WIN
+	//edF32MATRIX4* const pSrcLightDirections = SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*);
+	//edF32MATRIX4* const pSrcLightColors = SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*);
+	//edF32VECTOR4* const pSrcLightAmbient = SCRATCHPAD_ADDRESS_TYPE(ADJUSTED_LIGHT_AMBIENT_SPR, edF32VECTOR4*);
+	//Renderer::PushLightData(pSrcLightDirections->raw, pSrcLightColors->raw, pSrcLightAmbient->raw);
+#endif
 
 	if (((pDmaMatrix->pHierarchy == (ed_3d_hierarchy*)0x0) ||
 		(pHierarchySetup = pDmaMatrix->pHierarchy->pHierarchySetup, pHierarchySetup == (ed_3d_hierarchy_setup*)0x0))
@@ -2724,6 +2730,11 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 			gPKTMatrixCur = gPKTMatrixCur + 4;
 		}
 	}
+
+#ifdef PLATFORM_WIN
+	// Process the matrix packet.
+	Renderer::Native::PushMatrixPacket(reinterpret_cast<Renderer::Native::MatrixPacket*>(pHierarchy->pMatrixPkt));
+#endif
 
 	*g_pCurFlareMtx = (edF32MATRIX4*)((uint)((ulong)((long)(int)pDmaMatrix->pHierarchy->pMatrixPkt << 0x24) >> 0x24) + 0xa0);
 

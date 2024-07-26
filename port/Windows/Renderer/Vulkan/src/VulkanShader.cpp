@@ -72,13 +72,13 @@ Shader::ReflectedModule::ReflectedModule(const std::string& filename, const VkSh
 {
 	auto shaderCode = Shader_Internal::ReadFile(filename, bFromArchive);
 	shaderModule = Shader_Internal::CreateModule(shaderCode);
-	reflectData = reflectDescriptorSetLayout(shaderCode);
+	reflectData = CreateReflectionData(shaderCode);
 
 	shaderStageCreateInfo = {};
 	shaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shaderStageCreateInfo.stage = stage;
 	shaderStageCreateInfo.module = shaderModule;
-	shaderStageCreateInfo.pName = reflectData.entryPointname.c_str();
+	shaderStageCreateInfo.pName = reflectData.GetEntryPointName().c_str();
 }
 
 Shader::ReflectedModule::~ReflectedModule()

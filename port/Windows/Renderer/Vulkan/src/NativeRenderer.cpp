@@ -30,6 +30,12 @@ namespace Renderer
 
 		static bool gUsePreprocessedVertices = false;
 
+		struct LightingData {
+			glm::mat4 lightDirection;
+			glm::mat4 lightColor;
+			glm::vec4 lightAmbient;
+		};
+
 		struct VertexConstantBuffer {
 
 			void Reset()
@@ -40,10 +46,6 @@ namespace Renderer
 
 			glm::mat4 view;
 			glm::mat4 proj;
-
-			glm::mat4 lightDirection;
-			glm::mat4 lightColor;
-			glm::vec4 lightAmbient;
 		};
 
 		constexpr int gMaxModelMatrices = 1024;
@@ -89,9 +91,7 @@ namespace Renderer
 			glm::mat4 projMatrix;
 			glm::mat4 viewMatrix;
 
-			glm::mat4 lightDirectionMatrix;
-			glm::mat4 lightColorMatrix;
-			glm::vec4 lightAmbientMatrix;
+			LightingData lightingData;
 
 			struct Instance {
 				SimpleMesh* pMesh = nullptr;
@@ -112,9 +112,7 @@ namespace Renderer
 		glm::mat4 gCachedViewMatrix;
 		glm::mat4 gCachedProjMatrix;
 
-		glm::mat4 gCachedLightDirection;
-		glm::mat4 gCachedLightColor;
-		glm::vec4 gCachedLightAmbient;
+		LightingData gCachedLightingData;
 
 		void FillIndexData()
 		{
@@ -234,11 +232,6 @@ namespace Renderer
 
 				gVertexConstantBuffer.GetBufferData().view = viewMatrix;
 				gVertexConstantBuffer.GetBufferData().proj = projMatrix;
-
-				gVertexConstantBuffer.GetBufferData().lightDirection = gDraws.back().lightDirectionMatrix;
-				gVertexConstantBuffer.GetBufferData().lightColor = gDraws.back().lightColorMatrix;
-				gVertexConstantBuffer.GetBufferData().lightAmbient = gDraws.back().lightAmbientMatrix;
-
 			}
 
 			gVertexConstantBuffer.Update(GetCurrentFrame());
@@ -348,10 +341,6 @@ namespace Renderer
 		void CreateDraw()
 		{
 			gCurrentDraw = Draw{};
-
-			gCurrentDraw->lightAmbientMatrix = gCachedLightAmbient;
-			gCurrentDraw->lightColorMatrix = gCachedLightColor;
-			gCurrentDraw->lightDirectionMatrix = gCachedLightDirection;
 		}
 
 	} // Native
@@ -438,7 +427,8 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, cons
 	pipeline.AddBindings(Renderer::EBindingStage::Vertex, vertShader.reflectData);
 	pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
 	pipeline.CreateDescriptorSetLayouts();
-	pipeline.CreateLayout();
+
+	pipeline.CreateLayout(vertShader.reflectData.pushConstants);
 
 	pipeline.CreateDescriptorPool();
 	pipeline.CreateDescriptorSets();
@@ -637,6 +627,8 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 		Debug::UpdateLabel(pTexture, cmd);
 
+		vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightingData), &drawCommand.lightingData);
+
 		PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
 		std::optional<uint> primState;
@@ -646,12 +638,16 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 				continue;
 			}
 
+			if (instance.pMesh->GetName() == "KIM_Scene01_L.O.D..g3d_0_1_0") {
+				modelIndex = modelIndex;
+			}
+
 			if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD) {
 				primState = instance.pMesh->GetPrim().CMD;
 				SetBlendingDynamicState(pTexture, instance.pMesh, cmd);
 			}
 
-			std::array< uint32_t, 3 > dynamicOffsets = { 
+			std::array< uint32_t, 3 > dynamicOffsets = {
 				modelIndex * gModelBuffer.GetDynamicAlignment(),
 				instance.animationMatrixStart * gAnimationBuffer.GetDynamicAlignment(),
 				textureIndex * gAlphaBuffer.GetDynamicAlignment()
@@ -697,6 +693,7 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 		gCurrentDraw->projMatrix = gCachedProjMatrix;
 		gCurrentDraw->viewMatrix = gCachedViewMatrix;
+		gCurrentDraw->lightingData = gCachedLightingData;
 
 		for (auto& instance : gCurrentDraw->instances) {
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance anim start: {}", instance.animationMatrixStart);
@@ -800,15 +797,15 @@ void Renderer::Native::PushLightData(float* pDirection, float* pColor, float* pA
 	NATIVE_LOG(LogLevel::Info, "PushLightData");
 
 	if (pDirection) {
-		gCachedLightDirection = glm::make_mat4(pDirection);	
+		gCachedLightingData.lightDirection = glm::make_mat4(pDirection);	
 	}
 
 	if (pColor) {
-		gCachedLightColor = glm::make_mat4(pColor);
+		gCachedLightingData.lightColor = glm::make_mat4(pColor);
 	}
 
 	if (pAmbient) {
-		gCachedLightAmbient = glm::vec4(pAmbient[0], pAmbient[1], pAmbient[2], pAmbient[3]);
+		gCachedLightingData.lightAmbient = glm::vec4(pAmbient[0], pAmbient[1], pAmbient[2], pAmbient[3]);
 	}
 
 	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pDirection[0], pDirection[1], pDirection[2]);
@@ -817,7 +814,7 @@ void Renderer::Native::PushLightData(float* pDirection, float* pColor, float* pA
 	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pColor[0], pColor[1], pColor[2], pColor[3]);
 	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pColor[4], pColor[5], pColor[6], pColor[7]);
 	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pColor[8], pColor[9], pColor[10], pColor[11]);
-	NATIVE_LOG(LogLevel::Info, "PushLightData: ambient: {} {} {}", pAmbient[0], pAmbient[1], pAmbient[2]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: ambient: {} {} {} {}", pAmbient[0], pAmbient[1], pAmbient[2], pAmbient[3]);
 }
 
 void Renderer::Native::PushModelMatrix(float* pModel)
@@ -838,6 +835,26 @@ void Renderer::Native::PushAnimMatrix(float* pAnim)
 {
 	NATIVE_LOG(LogLevel::Info, "PushAnimMatrix");
 	gAnimationMatrices.push_back(glm::make_mat4(pAnim));
+}
+
+void Renderer::Native::PushMatrixPacket(const MatrixPacket* const pPkt)
+{
+	NATIVE_LOG(LogLevel::Info, "PushMatrixPacket");
+
+	assert(pPkt);
+
+	gCachedLightingData.lightDirection = glm::make_mat4(pPkt->objLightDirectionsMatrix);
+	gCachedLightingData.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
+	gCachedLightingData.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
+
+	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[0], pPkt->objLightDirectionsMatrix[1], pPkt->objLightDirectionsMatrix[2]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[4], pPkt->objLightDirectionsMatrix[5], pPkt->objLightDirectionsMatrix[6]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[8], pPkt->objLightDirectionsMatrix[9], pPkt->objLightDirectionsMatrix[10]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[0], pPkt->lightColorMatrix[1], pPkt->lightColorMatrix[2], pPkt->lightColorMatrix[3]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[4], pPkt->lightColorMatrix[5], pPkt->lightColorMatrix[6], pPkt->lightColorMatrix[7]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[8], pPkt->lightColorMatrix[9], pPkt->lightColorMatrix[10], pPkt->lightColorMatrix[11]);
+	NATIVE_LOG(LogLevel::Info, "PushLightData: ambient: {} {} {} {}", pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
+
 }
 
 const VkSampler& Renderer::Native::GetSampler()
