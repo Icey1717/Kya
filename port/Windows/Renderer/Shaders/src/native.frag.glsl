@@ -30,7 +30,7 @@ void main()
 	vec4 textureColor = texture(textureSampler, fragTexCoord.xy);
 
 	// Combine texture color with fragment color
-	outColor = fragColor * textureColor;
+	outColor = fragColor * textureColor / (128.0 / 255.0);
 
 	if (test.enable) {
 		if (test.atst == ATST_GEQUAL) {

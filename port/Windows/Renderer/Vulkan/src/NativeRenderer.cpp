@@ -246,7 +246,7 @@ namespace Renderer
 				//assert(NearlyEqual(viewMatrix, drawCommand.viewMatrix));
 				//assert(NearlyEqual(projMatrix, drawCommand.projMatrix));
 
-				NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 			
 				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
@@ -267,7 +267,7 @@ namespace Renderer
 
 				const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(GetCurrentFrame());
 
-				NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
+				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 			
 				Renderer::DescriptorWriteList writeList;
 				writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
@@ -283,7 +283,7 @@ namespace Renderer
 					assert(modelIndex < gMaxModelMatrices);
 
 					Renderer::SimpleMesh* pMesh = instance.pMesh;
-					NATIVE_LOG(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
+					NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
 
 					gModelBuffer.SetInstanceData(modelIndex, instance.modelMatrix);
 					modelIndex++;
