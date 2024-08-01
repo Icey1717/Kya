@@ -52,6 +52,7 @@
 #define STATE_HERO_GLIDE_3 0xf2
 
 #define STATE_HERO_CAUGHT_TRAP_1 0x117
+#define STATE_HERO_CAUGHT_TRAP_2 0x118
 
 struct CPlayerInput;
 class CActorBoomy;
@@ -86,6 +87,15 @@ public:
 	int field_0x1610;
 	int field_0x18dc;
 	int field_0xee0;
+
+	// Bones
+	uint field_0x157c;
+	uint animKey_0x1584;
+	uint animKey_0x1588;
+	uint animKey_0x158c;
+	uint animKey_0x1590;
+	uint animKey_0x1594;
+	uint field_0x1594;
 
 	float time_0x1538;
 	float time_0x153c;

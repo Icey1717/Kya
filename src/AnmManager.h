@@ -37,7 +37,7 @@ struct AnimMatrixData {
 	edF32MATRIX4 matrix;
 	AnimMatrixData* pNext;
 	AnimMatrixData* pPrev;
-	uint key_0x48;
+	uint boneId;
 	short boneNodeIndex;
 	short usedByCount;
 };

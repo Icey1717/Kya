@@ -312,6 +312,49 @@ int CActorMovable::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	return uVar1;
 }
 
+void CActorMovable::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)
+{
+	uint uVar1;
+	Timer* pTimer;
+	float fVar3;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 originalLocation;
+	edF32VECTOR4 translation;
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+	pTimer = GetTimer();
+	originalLocation = this->currentLocation;
+
+	(this->dynamic).flags = 0;
+	uVar1 = (this->dynamic).field_0x4c;
+	edF32Vector4ScaleHard((this->dynamic).speed, &translation, &this->dynamic.rotationQuat);
+
+	fVar3 = pTimer->cutsceneDeltaTime;
+	translation = translation * fVar3;
+
+	if ((pCol == (CCollision*)0x0) || (((flags | uVar1) & 0x400) != 0)) {
+		edF32Vector4AddHard(&translation, &translation, &this->currentLocation);
+		UpdatePosition(&translation, true);
+	}
+	else {
+		pCol->CheckCollisions_TranslateActor(this, &translation, pActorsTable, (CActor*)0x0, 1);
+	}
+
+	pTimer = GetTimer();
+	edF32Vector4SubHard(&eStack48, &this->currentLocation, &originalLocation);
+
+	fVar3 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).velocityDirectionEuler, &eStack48);
+	(this->dynamic).linearAcceleration = fVar3;
+	(this->dynamic).linearAcceleration = fVar3 / pTimer->cutsceneDeltaTime;
+	eStack48.y = 0.0f;
+
+	fVar3 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).horizontalVelocityDirectionEuler, &eStack48);
+	(this->dynamic).linearJerk = fVar3;
+	(this->dynamic).linearJerk = fVar3 / pTimer->cutsceneDeltaTime;
+	return;
+}
+
 void CActorMovable::SV_MOV_UpdateSpeedIntensity(float param_1, float param_2)
 
 {

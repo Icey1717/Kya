@@ -128,6 +128,7 @@ public:
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
+	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 	virtual CActorWindState* GetWindState() { return (CActorWindState*)0x0; }
 

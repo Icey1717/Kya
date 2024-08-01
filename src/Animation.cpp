@@ -64,7 +64,7 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 			for (pAVar2 = this->pMatrixData_0x10; pAVar2 != (AnimMatrixData*)0x0; pAVar2 = pAVar2->pPrev) {
 				iVar4 = -1;
 				if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
-					iVar4 = this->anmSkeleton.NodeIndexFromID(pAVar2->key_0x48);
+					iVar4 = this->anmSkeleton.NodeIndexFromID(pAVar2->boneId);
 				}
 
 				if (iVar4 == -1) {
@@ -1227,7 +1227,6 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 		}
 
 		if ((pDataStream->field_0x2 & 6) == 0) {
-			IMPLEMENTATION_GUARD();
 			pDataStream = (edANM_RTS_Key*)(pfVar2 + (uint)pDataStream->flags * 3);
 		}
 		else {
@@ -1592,13 +1591,11 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 
 			if ((pSkeleton->flags & 2) == 0) {
 				uVar1 = pSkeleton->boneCount;
-				iVar5 = (ulong)pSkeleton + ((uint)uVar1 * 0xc + 0x13 & 0xfffffff0) + ((uint)uVar1 * 2 + (uint)uVar1) * 0x10 +
-					(uint)uVar1 * 0x40;
+				iVar5 = (ulong)pSkeleton + ((uint)uVar1 * 0xc + 0x13 & 0xfffffff0) + ((uint)uVar1 * 2 + (uint)uVar1) * 0x10 + (uint)uVar1 * 0x40;
 			}
 			else {
 				uVar1 = pSkeleton->boneCount;
-				iVar5 = (ulong)pSkeleton + ((uint)uVar1 * 0xc + 0x13 & 0xfffffff0) + ((uint)uVar1 * 2 + (uint)uVar1) * 0x10 +
-					(uint)uVar1 * 0x10;
+				iVar5 = (ulong)pSkeleton + ((uint)uVar1 * 0xc + 0x13 & 0xfffffff0) + ((uint)uVar1 * 2 + (uint)uVar1) * 0x10 + (uint)uVar1 * 0x10;
 			}
 
 			uVar25 = iVar5 - (ulong)pSkeleton;
@@ -1654,8 +1651,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 
 			local_4 = edAnmSkeleton(pSkeleton);
 			for (m0 = this->pMatrixData_0x10; m0 != (AnimMatrixData*)0x0; m0 = m0->pPrev) {
-				IMPLEMENTATION_GUARD(
-				local_4.UnskinNMatrices((edF32MATRIX4*)m0, pFrameMatrixData, (int)m0->field_0x4c, 1);)
+				local_4.UnskinNMatrices(&m0->matrix, pFrameMatrixData, m0->boneNodeIndex, 1);
 			}
 
 			iVar5 = 0;
@@ -2604,7 +2600,7 @@ AnimMatrixData* CAnimation::FindReggedBone(int bone)
 {
 	AnimMatrixData* pAVar1;
 
-	for (pAVar1 = this->pMatrixData_0x10; (pAVar1 != (AnimMatrixData*)0x0 && (bone != pAVar1->key_0x48));
+	for (pAVar1 = this->pMatrixData_0x10; (pAVar1 != (AnimMatrixData*)0x0 && (bone != pAVar1->boneId));
 		pAVar1 = pAVar1->pPrev) {
 	}
 	return pAVar1;
@@ -2622,7 +2618,7 @@ void CAnimation::RegisterBone(uint key)
 	edF32MATRIX4* peVar8;
 	edF32VECTOR4 local_10;
 
-	for (pBoneData = this->pMatrixData_0x10; (pBoneData != (AnimMatrixData*)0x0 && (key != pBoneData->key_0x48)); pBoneData = pBoneData->pPrev) {
+	for (pBoneData = this->pMatrixData_0x10; (pBoneData != (AnimMatrixData*)0x0 && (key != pBoneData->boneId)); pBoneData = pBoneData->pPrev) {
 	}
 
 	if (pBoneData == (AnimMatrixData*)0x0) {
@@ -2638,7 +2634,7 @@ void CAnimation::RegisterBone(uint key)
 
 	LAB_0017fb98:
 		if (pBoneData != (AnimMatrixData*)0x0) {
-			pBoneData->key_0x48 = key;
+			pBoneData->boneId = key;
 			int boneNodeIndex = -1;
 			if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
 				boneNodeIndex = this->anmSkeleton.NodeIndexFromID(key);
@@ -2653,7 +2649,7 @@ void CAnimation::RegisterBone(uint key)
 			boneNodeIndex = -1;
 
 			if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
-				boneNodeIndex = this->anmSkeleton.NodeIndexFromID(pBoneData->key_0x48);
+				boneNodeIndex = this->anmSkeleton.NodeIndexFromID(pBoneData->boneId);
 			}
 
 			if (boneNodeIndex == -1) {
@@ -2701,4 +2697,18 @@ void CAnimation::RegisterBone(uint key)
 		pBoneData->usedByCount = pBoneData->usedByCount + 1;
 	}
 	return;
+}
+
+edF32MATRIX4* CAnimation::GetCurBoneMatrix(uint boneId)
+{
+	AnimMatrixData* pAnimMatrixData;
+
+	for (pAnimMatrixData = this->pMatrixData_0x10; (pAnimMatrixData != (AnimMatrixData*)0x0 && (boneId != pAnimMatrixData->boneId)); pAnimMatrixData = pAnimMatrixData->pPrev) {
+	}
+
+	if (pAnimMatrixData == (AnimMatrixData*)0x0) {
+		return &gF32Matrix4Unit;
+	}
+
+	return &pAnimMatrixData->matrix;
 }

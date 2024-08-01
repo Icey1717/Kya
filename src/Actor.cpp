@@ -209,6 +209,37 @@ LAB_001c2930:
 	return;
 }
 
+bool CPathFollowReader::AtGoal(int param_2, int param_3)
+{
+	CPathFollow* pCVar1;
+
+	pCVar1 = this->pPathFollow;
+
+	if (pCVar1->type == 0) {
+		if (pCVar1->mode == 1) {
+			if ((param_2 == 0) && (param_3 == 0)) {
+				return true;
+			}
+		}
+		else {
+			if (pCVar1->mode == 0) {
+				if (param_3 == 0) {
+					if (param_2 == 0) {
+						return true;
+					}
+				}
+				else {
+					if (param_2 + 1 == pCVar1->splinePointCount) {
+						return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 int CPathFollowReader::GetPrevPlace(int param_2, int param_3)
 {
 	CPathFollow* pCVar1;
@@ -3656,19 +3687,9 @@ void CActor::SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPo
 void CActor::SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition)
 {
 	edF32MATRIX4* peVar1;
-	float z;
-	float w;
-	float y;
-	IMPLEMENTATION_GUARD(
-	peVar1 = CAnimation::GetCurBoneMatrix((this->actorBase).pAnimationController, boneIndex);
-	y = peVar1->db;
-	z = peVar1->dc;
-	w = peVar1->dd;
-	pOutPosition->x = peVar1->da;
-	pOutPosition->y = y;
-	pOutPosition->z = z;
-	pOutPosition->w = w;
-	edF32Matrix4MulF32Vector4Hard(pOutPosition, (edF32MATRIX4*)(this->actorBase).pMeshTransform, pOutPosition);)
+	peVar1 = this->pAnimationController->GetCurBoneMatrix(boneIndex);
+	*pOutPosition = peVar1->rowT;
+	edF32Matrix4MulF32Vector4Hard(pOutPosition, &this->pMeshTransform->base.transformA, pOutPosition);
 	return;
 }
 

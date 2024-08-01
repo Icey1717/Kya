@@ -575,7 +575,7 @@ struct TargetCalc {
 	edF32VECTOR4 field_0x10;
 	edF32VECTOR4 field_0x20;
 	edF32VECTOR4 field_0x30;
-	CActor* field_0x40;
+	CActor* pActor;
 	uint field_0x44;
 	int field_0x48;
 	float field_0x4c;
@@ -611,7 +611,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	else {
 		pCVar3 = (CActor*)0x0;
 	}
-	v1->field_0x40 = pCVar3;
+	v1->pActor = pCVar3;
 	v1->field_0x48 = this->field_0x1d0;
 	v1->field_0x44 = 1;
 	if (((this->cameraConfig).flags_0x70 & 0x2000000) != 0) {
@@ -634,7 +634,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		local_v0_lo_400 = GetTarget();
 		(v1->field_0x30).y = (v1->field_0x30).y + (local_v0_lo_400->pCollisionData->pObbPrim->field_0xb0).y;
 	}
-	pCVar3 = v1->field_0x40;
+	pCVar3 = v1->pActor;
 	if (pCVar3 == (CActor*)0x0) {
 		v1->field_0x20 = v1->field_0x30;
 
@@ -648,15 +648,14 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	}
 	else {
 		int boneId = pCVar3->DoMessage(pCVar3, (ACTOR_MESSAGE)0x4d, (MSG_PARAM)5);
-		AnimMatrixData* pBone = v1->field_0x40->pAnimationController->FindReggedBone(boneId);
+		AnimMatrixData* pBone = v1->pActor->pAnimationController->FindReggedBone(boneId);
 		if (pBone == (AnimMatrixData*)0x0) {
-			pCVar3 = v1->field_0x40;
+			pCVar3 = v1->pActor;
 			v1->field_0x20 = pCVar3->currentLocation;
 			(v1->field_0x20).y = (v1->field_0x20).y + 1.39f;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			CActor::SV_GetBoneWorldPosition((Actor*)v1->field_0x40, boneId, &v1->field_0x20);)
+			v1->pActor->SV_GetBoneWorldPosition(boneId, &v1->field_0x20);
 		}
 	}
 
@@ -682,8 +681,8 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 
 			v1->field_0x44 = (uint)((uVar6 & 0x100) != 0);
 		}
-		if (v1->field_0x40 != (CActor*)0x0) {
-			CActorHero* pHero = reinterpret_cast<CActorHero*>(v1->field_0x40);
+		if (v1->pActor != (CActor*)0x0) {
+			CActorHero* pHero = reinterpret_cast<CActorHero*>(v1->pActor);
 			uVar6 = pHero->TestState_IsGrippedOrClimbing(0xffffffff);
 			v1->field_0x44 = v1->field_0x44 | (uint)(uVar6 != 0);
 		}

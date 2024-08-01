@@ -212,19 +212,19 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	//this->field_0xff0 = 0;
 	uVar2 = pByteCode->GetU32();
 	assert(uVar2 == 0xDCF9FCDC);
-	//this->field_0x157c = uVar2;
+	this->field_0x157c = uVar2;
 	uVar2 = pByteCode->GetU32();
-	//this->animKey_0x1584 = uVar2;
+	this->animKey_0x1584 = uVar2;
 	uVar2 = pByteCode->GetU32();
-	//this->animKey_0x1588 = uVar2;
+	this->animKey_0x1588 = uVar2;
 	uVar2 = pByteCode->GetU32();
-	//this->animKey_0x158c = uVar2;
+	this->animKey_0x158c = uVar2;
 	uVar2 = pByteCode->GetU32();
-	//this->animKey_0x1590 = uVar2;
+	this->animKey_0x1590 = uVar2;
 	uVar2 = pByteCode->GetU32();
-	//this->animKey_0x1594 = uVar2;
+	this->animKey_0x1594 = uVar2;
 	uVar2 = pByteCode->GetU32();
-	//this->field_0x1594 = uVar2;
+	this->field_0x1594 = uVar2;
 	uVar2 = pByteCode->GetU32();
 	//this->field_0x1598 = uVar2;
 	uVar2 = pByteCode->GetU32();
@@ -371,13 +371,14 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	}
 
 	iVar11 = pByteCode->GetS32();
-	//*(int*)&this->field_0x12e0 = iVar11;
-	//iVar11 = *(int*)&this->field_0x12e0;
-	//if (iVar11 != -1) {
-	//	CActor::SV_InstallMaterialId(iVar11);
-	//	CFxTail::Create(1.0, (CFxTail*)&this->fxTrailA.field_0x4, 0x10, 4, *(int*)&this->field_0x12e0);
-	//	CFxTail::Create(1.0, (CFxTail*)&this->fxTrailB.field_0x4, 0x10, 4, *(int*)&this->field_0x12e0);
-	//}
+	this->field_0x12e0 = iVar11;
+	iVar11 = this->field_0x12e0;
+	if (iVar11 != -1) {
+		IMPLEMENTATION_GUARD_LOG(
+		CActor::SV_InstallMaterialId(iVar11);
+		CFxTail::Create(1.0f, (CFxTail*)&this->fxTrailA.field_0x4, 0x10, 4, this->field_0x12e0);
+		CFxTail::Create(1.0f, (CFxTail*)&this->fxTrailB.field_0x4, 0x10, 4, this->field_0x12e0);)
+	}
 	iVar11 = pByteCode->GetS32();
 	//*(int*)&this->field_0x13c8 = iVar11;
 	fVar13 = pByteCode->GetF32();
@@ -501,11 +502,9 @@ void CActorHeroPrivate::Init()
 	//this->field_0xe98 = this->field_0xe68;
 	//this->levelDataField1C_0xea0 = this->levelDataField1C_0xe70;
 	this->field_0xea0 = this->lastCheckPointSector;
-	//CAnimation::RegisterBone
-	//(this->pAnimationController, this->field_0x157c);
-	//CAnimation::RegisterBone(this->pAnimationController, 0x45544554);
-	//CAnimation::RegisterBone
-	//(this->pAnimationController, this->animKey_0x1588);
+	this->pAnimationController->RegisterBone(this->field_0x157c);
+	this->pAnimationController->RegisterBone(0x45544554);
+	this->pAnimationController->RegisterBone(this->animKey_0x1588);
 	//pSVar13 = *(S_STREAM_REF<ed_zone_3d> **) & this->field_0x14a4;
 	//for (peVar8 = pSVar13->pZone; peVar8 != (ed_zone_3d*)0x0; peVar8 = (ed_zone_3d*)((int)&peVar8[-1].field_0x20 + 3)) {
 	//	pSVar13 = pSVar13 + 1;
@@ -639,20 +638,19 @@ void CActorHeroPrivate::Init()
 	//FUN_003cb7b0();
 	//LevelScheduleManager::FUN_002db410(LevelScheduleManager::gThis, &this->field_0xadc);
 	//ActorLoadBoomyStorm((Actor*)this);
-	//if (*(int*)&this->field_0x12e0 != -1) {
-	//	CAnimation::RegisterBone
-	//	(this->pAnimationController, this->animKey_0x158c);
-	//	CAnimation::RegisterBone
-	//	(this->pAnimationController, this->animKey_0x1590);
-	//	FUN_001d4a80(0.3333333, (int)&this->fxTrailA.field_0x4,
-	//		this->objectId);
-	//	CAnimation::RegisterBone
-	//	(this->pAnimationController, this->animKey_0x1594);
-	//	CAnimation::RegisterBone
-	//	(this->pAnimationController, this->field_0x1594);
-	//	FUN_001d4a80(0.3333333, (int)&this->fxTrailB.field_0x4,
-	//		this->objectId);
-	//}
+	if (this->field_0x12e0 != -1) {
+		this->pAnimationController->RegisterBone(this->animKey_0x158c);
+		this->pAnimationController->RegisterBone(this->animKey_0x1590);
+
+		IMPLEMENTATION_GUARD_LOG(
+		CFxTail::Init(0.3333333f, (int)&this->fxTrailA.field_0x4, this->objectId);)
+
+		this->pAnimationController->RegisterBone(this->animKey_0x1594);
+		this->pAnimationController->RegisterBone(this->field_0x1594);
+
+		IMPLEMENTATION_GUARD_LOG(
+		CFxTail::Init(0.3333333f, (int)&this->fxTrailB.field_0x4, this->objectId);)
+	}
 	this->field_0xee0 = 0;
 	local_4 = CLevelScheduler::ScenVar_Get(9);
 	DoMessage(this, (ACTOR_MESSAGE)0x62, (MSG_PARAM)local_4);
@@ -3373,6 +3371,7 @@ LAB_00341590:
 	case STATE_HERO_TOBOGGAN_JUMP_1:
 		this->field_0x10f8 = 0.0f;
 		break;
+	case STATE_HERO_CAUGHT_TRAP_2:
 	case STATE_HERO_CAUGHT_TRAP_1:
 		this->dynamic.speed = 0.0f;
 		this->dynamicExt.normalizedTranslation.x = 0.0f;
@@ -3438,19 +3437,37 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_U_TURN:
 		StateHeroUTurnTerm();
 		break;
-	case STATE_HERO_CAUGHT_TRAP_1:
-		IMPLEMENTATION_GUARD(
-			if ((newState != New_Name_(116)) && ((this->base).pTrappedByActor != (CActor*)0x0)) {
-				if ((this->base).field_0xf28 != 0) {
-					CActor::UnlinkFromActor((CActor*)this);
-					CAnimation::UnRegisterBone
-					(((this->base).pTrappedByActor)->pAnimationController, (this->base).field_0xf28);
-					(this->base).field_0xf28 = 0;
+	case STATE_HERO_CAUGHT_TRAP_2:
+	{
+		if (this->pTrappedByActor != (CActor*)0x0) {
+			IMPLEMENTATION_GUARD(
+				if (this->trapLinkedBone != 0) {
+					UnlinkFromActor();
+					(this->pTrappedByActor)->pAnimationController->UnRegisterBone(this->trapLinkedBone);
+					this->trapLinkedBone = 0;
 				}
-				local_140[0] = 0xb;
-				local_c = local_140;
-				CActor::DoMessage((CActor*)this, (this->base).pTrappedByActor, 2, (uint)local_c);
-				(this->base).pTrappedByActor = (CActor*)0x0;);
+			local_140[0] = 0xb;
+			local_c = local_140;
+			DoMessage(this->pTrappedByActor, (ACTOR_MESSAGE)2, (uint)local_c);
+			this->pTrappedByActor = (CActor*)0x0;)
+		}
+	}
+	break;
+	case STATE_HERO_CAUGHT_TRAP_1:
+	{
+		if ((newState != STATE_HERO_CAUGHT_TRAP_2) && (this->pTrappedByActor != (CActor*)0x0)) {
+			IMPLEMENTATION_GUARD(
+				if (this->trapLinkedBone != 0) {
+					UnlinkFromActor();
+					(this->pTrappedByActor)->pAnimationController->UnRegisterBone(this->trapLinkedBone);
+					this->trapLinkedBone = 0;
+				}
+			local_140[0] = 0xb;
+			local_c = local_140;
+			DoMessage(this->pTrappedByActor, (ACTOR_MESSAGE)2, (uint)local_c);
+			this->pTrappedByActor = (CActor*)0x0;)
+		}
+	}
 		break;
 	default:
 		assert(false);
@@ -3554,6 +3571,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_GLIDE_3:
 		StateHeroGlide(1, -1);
 		break;
+	case STATE_HERO_CAUGHT_TRAP_2:
 	case STATE_HERO_CAUGHT_TRAP_1:
 	{
 		const int local_4 = 0;
@@ -7927,10 +7945,8 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 			(pCVar2->data).flags = (pCVar2->data).flags & 0xffffff7f;
 			(pCVar2->data).flags = (pCVar2->data).flags | 0x20;
 			CActor::EvaluateDisplayState(pCVar2);
-			CAnimation::UnRegisterBone(this->data.pAnimationController, this->field_0x1598)
-				;
-			CAnimation::UnRegisterBone(this->data.pAnimationController, this->field_0x157c)
-				;
+			CAnimation::UnRegisterBone(this->data.pAnimationController, this->field_0x1598);
+			CAnimation::UnRegisterBone(this->data.pAnimationController, this->field_0x157c);
 			*(undefined4*)&this->field_0x1b64 = 0;
 			this->field_0x1b68 = 0;
 			this->field_0x1b6c = 0;
@@ -7985,8 +8001,7 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 			(pCVar2->data).flags = (pCVar2->data).flags | 0x80;
 			(pCVar2->data).flags = (pCVar2->data).flags & 0xffffffdf;
 			CActor::EvaluateDisplayState(pCVar2);
-			CAnimation::AddDisabledBone
-			(this->data.pAnimationController, this->field_0x157c);
+			CAnimation::AddDisabledBone(this->data.pAnimationController, this->field_0x157c);
 		})
 	}
 	else {
@@ -8028,10 +8043,8 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 					*(undefined*)&this->pActorBoomy[4].transformationMatrix.bb = 0;
 					(*(code*)(this->pActorBoomy->objBase).pVTable[1].Reset)
 						(this->pActorBoomy, 5, 0xffffffffffffffff);
-					CAnimation::RegisterBone
-					(this->data.pAnimationController, this->field_0x1598);
-					CAnimation::RegisterBone
-					(this->data.pAnimationController, this->field_0x157c);
+					CAnimation::RegisterBone(this->data.pAnimationController, this->field_0x1598);
+					CAnimation::RegisterBone(this->data.pAnimationController, this->field_0x157c);
 					FUN_004073b0((int*)&this->field_0x18b4, (long)(int)this->pActorBoomy, 0x656ad6d2);
 					if ((puVar4[0x11] != 0) && (puVar4[0x12] != 0)) {
 						*(undefined4*)(puVar4[0x12] + 0x20) = 0;

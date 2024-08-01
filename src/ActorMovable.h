@@ -99,6 +99,8 @@ public:
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
+	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
+
 	void SV_MOV_UpdateSpeedIntensity(float param_1, float param_2);
 	void SV_MOV_DecreaseSpeedIntensity(float param_1);
 	bool SV_MOV_UpdatePush(float param_1, S_PUSH_DATA* pPushData, S_PUSH_STREAM_DEF* pPushStreamRef);

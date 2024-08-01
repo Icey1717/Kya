@@ -82,6 +82,7 @@ public:
 	void Reset();
 
 	void NextWayPoint();
+	bool AtGoal(int param_2, int param_3);
 	int GetPrevPlace(int param_2, int param_3);
 
 	edF32VECTOR4* GetWayPoint(int index);

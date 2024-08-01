@@ -13,7 +13,7 @@ void CActorFighter::Init()
 	float fVar3;
 
 	IMPLEMENTATION_GUARD_LOG(
-	S_STREAM_REF<CActor>::Init((S_STREAM_REF<CActor> *) & this->field_0x910);)
+	S_STREAM_REF<CActor>::Init(this->pWeaponActor);)
 	CActorAutonomous::Init();
 	this->flags = this->flags | 0x100000;
 
@@ -49,6 +49,7 @@ void CActorFighter::Init()
 	else {
 		CAnimation::GetAnimLength(pCVar1, iVar2, 1);
 	}
+
 	this->field_0x6c0 = this->field_0x6c0 + fVar3;)
 	return;
 }
@@ -378,7 +379,7 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	_CreateGrabsDB(this, pByteCode);
 	_CreateCombosDB(this, pByteCode);
 	iVar5 = ByteCode::GetS32(pByteCode);
-	this->field_0x910 = iVar5;)
+	this->pWeaponActor = iVar5;)
 	return;
 }
 

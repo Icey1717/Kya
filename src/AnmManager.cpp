@@ -149,7 +149,7 @@ void CAnimationManager::Level_ClearAll()
 	m0 = this->aAnimMatrixData;
 	do {
 		m0->usedByCount = 0;
-		m0->key_0x48 = 0xffffffff;
+		m0->boneId = 0xffffffff;
 		edF32Matrix4SetIdentityHard(&m0->matrix);
 		iVar1 = iVar1 + -1;
 		m0 = m0 + 1;
@@ -544,7 +544,7 @@ void CAnimationManager::Level_Create(ByteCode* pMemoryStream)
 	iVar1 = 0xc0;
 	do {
 		m0->usedByCount = 0;
-		m0->key_0x48 = 0xffffffff;
+		m0->boneId = 0xffffffff;
 		edF32Matrix4SetIdentityHard(&m0->matrix);
 		iVar1 = iVar1 + -1;
 		m0 = m0 + 1;

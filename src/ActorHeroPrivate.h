@@ -202,6 +202,8 @@ public:
 
 	float field_0x1558;
 
+	int field_0x12e0;
+
 	undefined4 field_0x1a50;
 	int field_0x1094;
 

@@ -6,6 +6,10 @@
 #include "ActorManager.h"
 #include "TimeController.h"
 
+#define TRAP_STATE_CATCH_2_2 0x8
+#define TRAP_STATE_CATCH_STAND_1_2 0x9
+#define TRAP_STATE_CATCH_STAND_2_2 0xa
+
 CActorTrap::CActorTrap()
 {
 	this->dynamic.weightB = 0.0f;
@@ -132,16 +136,135 @@ void CBehaviourTrapStand_ActorTrap::Begin(CActor* pOwner, int newState, int newA
 	return;
 }
 
-void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int param_3)
+void CBehaviourTrapStand::StateTrapCatchStand_1_2(int param_2, int nextState)
 {
-	CActorTrap* pCVar1;
+	CActorTrap* pTrap;
+	CAnimation* pAnim;
+	edAnmLayer* pLayer;
+	bool bVar4;
+	edF32VECTOR4* peVar5;
+	Timer* pTimer;
+	float fVar7;
+	float fVar8;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+		movParamsOut.flags = 0;
+		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
+		movParamsIn.field_0x4 = 6.283185f;
+		movParamsIn.field_0x14 = this->field_0x34;
+		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.flags = 0x407;
+
+		pTrap = this->pOwner;
+		peVar5 = this->pathFollowReader.GetWayPoint();
+		pTrap->SV_MOV_MoveTo(&movParamsOut, &movParamsIn, peVar5);
+
+		this->pOwner->ManageDyn(4.0f, 0x403, (CActorsTable*)0x0);
+
+		pTimer = GetTimer();
+		fVar8 = 0.5f;
+
+		fVar7 = this->pOwner->dynamic.linearAcceleration * pTimer->cutsceneDeltaTime;
+		if (0.5f <= fVar7) {
+			fVar8 = fVar7;
+		}
+
+		if (movParamsOut.floatField <= fVar8) {
+			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
+
+			if (bVar4 == false) {
+				this->pathFollowReader.NextWayPoint();
+			}
+			else {
+				this->pOwner->SetState(nextState, -1);
+			}
+		}
+	}
+
+	pTrap = this->pOwner;
+	pAnim = pTrap->pAnimationController;
+	pLayer = (pAnim->anmBinMetaAnimator).aAnimData;
+	bVar4 = false;
+
+	if ((pLayer->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
+		if (pLayer->animPlayState == 0) {
+			bVar4 = false;
+		}
+		else {
+			bVar4 = (pLayer->field_0xcc & 2) != 0;
+		}
+	}
+
+	if (bVar4) {
+		if ((this->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
+			pTrap->SetState(nextState, -1);
+		}
+		else {
+			pTrap->SetState(param_2, -1);
+		}
+	}
+
+	return;
+}
+
+void CBehaviourTrapStand::StateTrapCatchStand_2_2(int nextState)
+{
+	bool bVar1;
+	edF32VECTOR4* peVar2;
+	Timer* pTimer;
+	float fVar3;
+	float fVar4;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	CActorTrap* pTrap;
+
+	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+		movParamsOut.flags = 0;
+		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
+		movParamsIn.field_0x4 = 6.283185f;
+		movParamsIn.field_0x14 = this->field_0x34;
+		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.flags = 0x407;
+
+		pTrap = this->pOwner;
+		peVar2 = this->pathFollowReader.GetWayPoint();
+		pTrap->SV_MOV_MoveTo(&movParamsOut, &movParamsIn, peVar2);
+		this->pOwner->ManageDyn(4.0f, 0x403, (CActorsTable*)0x0);
+		pTimer = GetTimer();
+		fVar4 = 0.5f;
+		fVar3 = this->pOwner->dynamic.linearAcceleration * pTimer->cutsceneDeltaTime;
+
+		if (0.5f <= fVar3) {
+			fVar4 = fVar3;
+		}
+
+		if (movParamsOut.floatField <= fVar4) {
+			bVar1 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
+
+			if (bVar1 == false) {
+				this->pathFollowReader.NextWayPoint();
+			}
+			else {
+				this->pOwner->SetState(nextState, -1);
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
+{
+	CActorTrap* pOwningActor;
 	CAnimation* pCVar2;
 	edAnmLayer* peVar3;
 	CActor* pCVar4;
 	CActorHero* pCVar5;
 	bool bVar6;
-	edF32VECTOR4* peVar7;
-	Timer* pTVar8;
+	edF32VECTOR4* pWayPoint;
+	Timer* pTimer;
 	CBehaviour* pCVar9;
 	float fVar10;
 	float fVar11;
@@ -150,29 +273,32 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int param_3)
 	float local_5c;
 	float local_58;
 	float local_54;
-	CActorMovParamsIn local_50;
-	CActorMovParamsOut CStack48;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
 	int local_8;
 	int* local_4;
 
 	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
-		CStack48.flags = 0;
-		local_50.field_0x8 = (edF32VECTOR4*)0x0;
-		local_50.field_0x4 = 6.283185;
-		local_50.field_0x14 = this->field_0x34;
-		local_50.field_0xc = this->field_0x30;
-		local_50.flags = 0x407;
-		pCVar1 = this->pOwner;
-		peVar7 = this->pathFollowReader.GetWayPoint();
-		pCVar1->SV_MOV_MoveTo(&CStack48, &local_50, peVar7);
+		movParamsOut.flags = 0;
+		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
+		movParamsIn.field_0x4 = 6.283185f;
+		movParamsIn.field_0x14 = this->field_0x34;
+		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.flags = 0x407;
+
+		pOwningActor = this->pOwner;
+		pWayPoint = this->pathFollowReader.GetWayPoint();
+		pOwningActor->SV_MOV_MoveTo(&movParamsOut, &movParamsIn, pWayPoint);
+
 		this->pOwner->ManageDyn(4.0f, 0x403, (CActorsTable*)0x0);
-		pTVar8 = GetTimer();
+
+		pTimer = GetTimer();
 		fVar11 = 0.5f;
-		fVar10 = this->pOwner->dynamic.linearAcceleration * pTVar8->cutsceneDeltaTime;
+		fVar10 = this->pOwner->dynamic.linearAcceleration * pTimer->cutsceneDeltaTime;
 		if (0.5f <= fVar10) {
 			fVar11 = fVar10;
 		}
-		if (CStack48.floatField <= fVar11) {
+		if (movParamsOut.floatField <= fVar11) {
 			IMPLEMENTATION_GUARD(
 			bVar6 = CPathFollowReader::AtGoal
 			(&this->pathFollowReader, (long)(this->pathFollowReader).field_0x4,
@@ -201,18 +327,19 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int param_3)
 	}
 
 	if (bVar6) {
-		IMPLEMENTATION_GUARD(
-		pCVar9 = CActor::GetBehaviour(this->field_0x64, 2);
+		pCVar9 = this->field_0x64->GetBehaviour(2);
 		if (((pCVar9 == (CBehaviour*)0x0) || (pCVar5 == (CActorHero*)this->field_0x64)) || ((this->flags & 1) == 0)) {
-			pCVar1 = this->pOwner;
-			local_70.x = (pCVar1->base).base.currentLocation.x;
-			local_70.z = (pCVar1->base).base.currentLocation.z;
-			local_70.w = (pCVar1->base).base.currentLocation.w;
-			local_70.y = (pCVar1->base).base.currentLocation.y + 1.58;
-			CActor::UpdatePosition((CActor*)this->pOwner, &local_70, true);
-			(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, param_3, -1);
+			pOwningActor = this->pOwner;
+			local_70.x = pOwningActor->currentLocation.x;
+			local_70.z = pOwningActor->currentLocation.z;
+			local_70.w = pOwningActor->currentLocation.w;
+			local_70.y = pOwningActor->currentLocation.y + 1.58f;
+
+			this->pOwner->UpdatePosition(&local_70, true);
+			this->pOwner->SetState(nextState, -1);
 		}
 		else {
+			IMPLEMENTATION_GUARD(
 			if ((ConditionedOperationArray*)(pCVar9 + 3) != (ConditionedOperationArray*)0x0) {
 				ConditionedOperationArray::Perform((ConditionedOperationArray*)(pCVar9 + 3));
 				pCVar4 = this->field_0x64;
@@ -232,11 +359,11 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int param_3)
 					bVar6 = false;
 				}
 				if (bVar6) {
-					pCVar1 = this->pOwner;
-					local_60 = (pCVar1->base).base.currentLocation.x;
-					local_58 = (pCVar1->base).base.currentLocation.z;
-					local_54 = (pCVar1->base).base.currentLocation.w;
-					local_5c = (pCVar1->base).base.currentLocation.y + 1.58;
+					pOwningActor = this->pOwner;
+					local_60 = pOwningActor->currentLocation.x;
+					local_58 = pOwningActor->currentLocation.z;
+					local_54 = pOwningActor->currentLocation.w;
+					local_5c = pOwningActor->currentLocation.y + 1.58;
 					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
 						local_4[0xc] = (int)local_60;
 						local_4[0xd] = (int)local_5c;
@@ -248,8 +375,8 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int param_3)
 					}
 				}
 			}
-			(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, param_2, -1);
-		})
+			(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, param_2, -1);)
+		}
 	}
 
 	return;
@@ -352,19 +479,17 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 			pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;
 			local_4 = 1;
 			this->pOwner->DoMessage(this->field_0x64, (ACTOR_MESSAGE)0x31, (MSG_PARAM)1);
-			this->pOwner->SetState(8, -1);
+			this->pOwner->SetState(TRAP_STATE_CATCH_2_2, -1);
 		}
 		break;
-	case 8:
-		StateTrapCatch_2_2(0x12, 0x9);
+	case TRAP_STATE_CATCH_2_2:
+		StateTrapCatch_2_2(0x12, TRAP_STATE_CATCH_STAND_1_2);
 		break;
-	case 9:
-		IMPLEMENTATION_GUARD(
-		StateTrapCatchStand_1_2(this, 10, 0xb);)
+	case TRAP_STATE_CATCH_STAND_1_2:
+		StateTrapCatchStand_1_2(TRAP_STATE_CATCH_STAND_2_2, 0xb);
 		break;
-	case 10:
-		IMPLEMENTATION_GUARD(
-		StateTrapCatchStand_2_2(this, 0xb);)
+	case TRAP_STATE_CATCH_STAND_2_2:
+		StateTrapCatchStand_2_2(0xb);
 		break;
 	case 0xc:
 		uVar11 = this->field_0x50;
@@ -389,18 +514,18 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 				fVar16 = (float)uVar11;
 			}
 			if ((fVar17 * this->field_0x4c) / fVar16 < fVar15) {
-				pTrap->SetState(10, -1);
+				pTrap->SetState(TRAP_STATE_CATCH_STAND_2_2, -1);
 			}
 			else {
 				if (this->field_0x4c < fVar15) {
-					pTrap->SetState(10, -1);
+					pTrap->SetState(TRAP_STATE_CATCH_STAND_2_2, -1);
 				}
 			}
 		}
 		break;
 	case 0xd:
 		IMPLEMENTATION_GUARD(
-		StateTrapCatchStruggle(this, 0xc, 0xe, 10);)
+		StateTrapCatchStruggle(this, 0xc, 0xe, TRAP_STATE_CATCH_STAND_2_2);)
 		break;
 	case 0xe:
 		if (0.1f < pTrap->timeInAir) {

@@ -21,6 +21,7 @@ struct edAnmSkeleton {
 	static edAnmSkeleton TheNullOne;
 
 	int NodeIndexFromID(uint key);
+	void UnskinNMatrices(edF32MATRIX4* m0, edF32MATRIX4* m1, int index, int count);
 };
 
 #endif //_ANM_SKELETON_H

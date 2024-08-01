@@ -158,6 +158,7 @@ public:
 	void Reset(CActor* pActor);
 	AnimMatrixData* FindReggedBone(int bone);
 	void RegisterBone(uint key);
+	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
 
 	struct FrameMatrixData_8 {
 		uint field_0x0;

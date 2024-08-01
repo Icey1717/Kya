@@ -608,46 +608,41 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 
 void CActorManager::UpdateLinkedActors()
 {
-	CActor* pCVar1;
+	CActor* pLinkedActor;
 	edF32MATRIX4* m1;
-	_linked_actor* p_Var2;
+	_linked_actor* pLink;
 	float fVar3;
 	edF32VECTOR3 local_50;
-	edF32MATRIX4 local_40;
+	edF32MATRIX4 newTransform;
 	CActor* pActor;
 
-	for (p_Var2 = this->pActorArray_0x8; p_Var2 != (_linked_actor*)0x0; p_Var2 = p_Var2->pNextLink) {
-		pActor = p_Var2->pActor;
-		pCVar1 = p_Var2->pLinkedActor;
+	for (pLink = this->pActorArray_0x8; pLink != (_linked_actor*)0x0; pLink = pLink->pNextLink) {
+		pActor = pLink->pActor;
+		pLinkedActor = pLink->pLinkedActor;
 
-		if (((pActor->flags & 4) != 0) && ((pCVar1->flags & 4) != 0)) {
-			IMPLEMENTATION_GUARD(
-			m1 = CAnimation::GetCurBoneMatrix(pCVar1->pAnimationController, p_Var2->key);
-			edF32Matrix4MulF32Matrix4Hard(&local_40, m1, (edF32MATRIX4*)pCVar1->pMeshTransform);
-			fVar3 = 1.0 / (SQRT(local_40.aa * local_40.aa + local_40.ab * local_40.ab + local_40.ac * local_40.ac) + 0.0);
-			local_40.aa = local_40.aa * fVar3;
-			local_40.ab = local_40.ab * fVar3;
-			local_40.ac = local_40.ac * fVar3;
-			local_40.ad = 0.0;
-			fVar3 = 1.0 / (SQRT(local_40.ba * local_40.ba + local_40.bb * local_40.bb + local_40.bc * local_40.bc) + 0.0);
-			local_40.ba = local_40.ba * fVar3;
-			local_40.bb = local_40.bb * fVar3;
-			local_40.bc = local_40.bc * fVar3;
-			local_40.bd = 0.0;
-			fVar3 = 1.0 / (SQRT(local_40.ca * local_40.ca + local_40.cb * local_40.cb + local_40.cc * local_40.cc) + 0.0);
-			local_40.ca = local_40.ca * fVar3;
-			local_40.cb = local_40.cb * fVar3;
-			local_40.cc = local_40.cc * fVar3;
-			local_40.cd = 0.0;
-			(pActor->rotationQuat).x = local_40.ca;
-			(pActor->rotationQuat).y = local_40.cb;
-			(pActor->rotationQuat).z = local_40.cc;
-			(pActor->rotationQuat).w = 0.0;
-			edF32Matrix4ToEulerSoft(&local_40, &local_50, s_XYZ_00427e10);
-			(pActor->rotationEuler).x = local_50.x;
-			(pActor->rotationEuler).y = local_50.y;
-			(pActor->rotationEuler).z = local_50.z;
-			CActor::UpdatePosition(pActor, &local_40, p_Var2->field_0xc);)
+		if (((pActor->flags & 4) != 0) && ((pLinkedActor->flags & 4) != 0)) {
+			m1 = pLinkedActor->pAnimationController->GetCurBoneMatrix(pLink->key);
+			edF32Matrix4MulF32Matrix4Hard(&newTransform, m1, &pLinkedActor->pMeshTransform->base.transformA);
+
+			fVar3 = 1.0f / (sqrtf(newTransform.aa * newTransform.aa + newTransform.ab * newTransform.ab + newTransform.ac * newTransform.ac) + 0.0f);
+			newTransform.rowX = newTransform.rowX * fVar3;
+			newTransform.rowX.w = 0.0f;
+
+			fVar3 = 1.0f / (sqrtf(newTransform.ba * newTransform.ba + newTransform.bb * newTransform.bb + newTransform.bc * newTransform.bc) + 0.0f);
+			newTransform.rowY = newTransform.rowY * fVar3;
+			newTransform.rowY.w = 0.0f;
+
+			fVar3 = 1.0f / (sqrtf(newTransform.ca * newTransform.ca + newTransform.cb * newTransform.cb + newTransform.cc * newTransform.cc) + 0.0f);
+			newTransform.rowZ.xyz = newTransform.rowZ.xyz * fVar3;
+			newTransform.rowZ.w = 0.0f;
+
+			(pActor->rotationQuat).xyz = newTransform.rowZ.xyz;
+			(pActor->rotationQuat).w = 0.0f;
+
+			edF32Matrix4ToEulerSoft(&newTransform, &local_50, "XYZ");
+			(pActor->rotationEuler).xyz = local_50;
+
+			pActor->UpdatePosition(&newTransform, pLink->field_0xc);
 		}
 	}
 
