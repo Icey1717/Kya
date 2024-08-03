@@ -622,6 +622,7 @@ void CActorManager::UpdateLinkedActors()
 
 		if (((pActor->flags & 4) != 0) && ((pLinkedActor->flags & 4) != 0)) {
 			m1 = pLinkedActor->pAnimationController->GetCurBoneMatrix(pLink->key);
+
 			edF32Matrix4MulF32Matrix4Hard(&newTransform, m1, &pLinkedActor->pMeshTransform->base.transformA);
 
 			fVar3 = 1.0f / (sqrtf(newTransform.aa * newTransform.aa + newTransform.ab * newTransform.ab + newTransform.ac * newTransform.ac) + 0.0f);

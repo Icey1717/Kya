@@ -206,13 +206,16 @@ void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4
 			this->pAnimKeyTableEntry = pHdr;
 			this->currentAnimDataFlags = this->pAnimKeyTableEntry->count_0x0;
 		}
+
 		if ((flags & 0x40000000) != 0) {
 			this->currentAnimDataFlags = flags & 0xbfffffff;
 		}
+
 		this->flags = 0;
 		this->field_0x8 = 0;
-		this->keyStartTime_0x14 = 0.0;
-		this->keyDuration_0x18 = 0.0;
+		this->keyStartTime_0x14 = 0.0f;
+		this->keyDuration_0x18 = 0.0f;
+
 		if (this->pAnimKeyTableEntry->field_0x4.asKey == 0) {
 			this->field_0x8 = 0;
 			peVar1 = this->pKeyDataArray[this->pAnimKeyTableEntry->keyIndex_0x8.asKey];
@@ -228,18 +231,23 @@ void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4
 		else {
 			UpdateAnimParams();
 		}
+
 		if (this->keyStartTime_0x14 < 0.0f) {
 			this->keyStartTime_0x14 = 0.0f;
 		}
+
 		if (this->keyDuration_0x18 < 0.0f) {
 			this->keyDuration_0x18 = 0.0f;
 		}
+
 		if (param_4 == false) {
 			this->time_0x10 = param_1;
+
 			fVar2 = 0.0f;
 			if (0.0f < this->keyStartTime_0x14) {
 				fVar2 = param_1 / this->keyStartTime_0x14;
 			}
+
 			this->time_0xc = fVar2;
 		}
 		else {
@@ -254,11 +262,13 @@ void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4
 		else {
 			fVar2 = pHdr->field_0x4.asTime;
 		}
+
 		this->keyStartTime_0x14 = fVar2;
 		this->keyDuration_0x18 = pHdr->field_0x4.asTime - pHdr->keyIndex_0x8.asTime;
 		this->currentAnimDataFlags = flags & 0xbfffffff | 2;
 		this->field_0x8 = 0;
 		this->flags = 0;
+
 		if (param_4 == false) {
 			this->time_0x10 = param_1;
 			fVar2 = 0.0f;
@@ -271,8 +281,10 @@ void edAnmMacroAnimator::Initialize(float param_1, edANM_HDR* pHdr, bool param_4
 			this->time_0xc = param_1;
 			this->time_0x10 = param_1 * this->keyStartTime_0x14;
 		}
+
 		this->pAnimKeyTableEntry = pHdr;
 	}
+
 	return;
 }
 

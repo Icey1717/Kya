@@ -3934,7 +3934,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 										edAnmLayer* peVar5 = (pAnimController->anmBinMetaAnimator).aAnimData;
 										if ((peVar5->currentAnimDesc).animType == pAnimController->currentAnimType_0x30) {
 											bSuccess = false;
-											if (peVar5->animPlayState != 0) {
+											if (peVar5->animPlayState != STATE_ANIM_NONE) {
 												bSuccess = (peVar5->field_0xcc & 2) != 0;
 											}
 										}
@@ -4300,7 +4300,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 		peVar6 = (pCVar2->anmBinMetaAnimator).aAnimData;
 		if ((peVar6->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
 			bVar7 = false;
-			if (peVar6->animPlayState != 0) {
+			if (peVar6->animPlayState != STATE_ANIM_NONE) {
 				bVar7 = (peVar6->field_0xcc & 2) != 0;
 			}
 		}
@@ -4593,7 +4593,7 @@ LAB_00328d38:
 		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
 		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
 			bVar4 = false;
-			if (peVar3->animPlayState != 0) {
+			if (peVar3->animPlayState != STATE_ANIM_NONE) {
 				bVar4 = (peVar3->field_0xcc & 2) != 0;
 			}
 		}
@@ -4781,7 +4781,7 @@ void CActorHeroPrivate::StateHeroRun()
 		peVar5 = (pCVar4->anmBinMetaAnimator).aAnimData;
 		if ((peVar5->currentAnimDesc).animType == pCVar4->currentAnimType_0x30) {
 			bVar6 = false;
-			if (peVar5->animPlayState != 0) {
+			if (peVar5->animPlayState != STATE_ANIM_NONE) {
 				bVar6 = (peVar5->field_0xcc & 2) != 0;
 			}
 		}
@@ -5169,7 +5169,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 									peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
 									if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
 										bVar5 = false;
-										if (peVar4->animPlayState != 0) {
+										if (peVar4->animPlayState != STATE_ANIM_NONE) {
 											bVar5 = (peVar4->field_0xcc & 2) != 0;
 										}
 									}
@@ -5794,7 +5794,7 @@ void CActorHeroPrivate::StateHeroRoll()
 
 		if ((peVar5->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
 			bVar6 = false;
-			if (peVar5->animPlayState != 0) {
+			if (peVar5->animPlayState != STATE_ANIM_NONE) {
 				bVar6 = (peVar5->field_0xcc & 2) != 0;
 			}
 		}
@@ -6767,7 +6767,7 @@ LAB_00139008:
 					if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
 						bVar5 = false;
 
-						if (peVar4->animPlayState != 0) {
+						if (peVar4->animPlayState != STATE_ANIM_NONE) {
 							bVar5 = (peVar4->field_0xcc & 2) != 0;
 						}
 					}
@@ -6914,7 +6914,7 @@ void CActorHeroPrivate::StateHeroGripUp(float param_1, float param_2, int nextSt
 
 		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
 			bVar3 = false;
-			if (peVar2->animPlayState != 0) {
+			if (peVar2->animPlayState != STATE_ANIM_NONE) {
 				bVar3 = (peVar2->field_0xcc & 2) != 0;
 			}
 		}
@@ -7800,7 +7800,7 @@ LAB_0014a028:
 						peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
 						if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
 							bVar5 = false;
-							if (peVar4->animPlayState != 0) {
+							if (peVar4->animPlayState != STATE_ANIM_NONE) {
 								bVar5 = (peVar4->field_0xcc & 2) != 0;
 							}
 						}

@@ -14,6 +14,8 @@
 struct edAnmAnim;
 
 struct edAnmStage {
+	edAnmStage();
+
 	int animMode;
 	undefined4 field_0x4;
 	float field_0x8;
@@ -88,7 +90,7 @@ struct AnimDesc {
 	edANM_HDR* pHdrB;
 	int origAnimType;
 	edAnmMacroAnimator state;
-	float field_0x4c;
+	float morphDuration;
 	int animMode;
 };
 

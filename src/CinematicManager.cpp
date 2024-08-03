@@ -3633,8 +3633,8 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 				peVar5->SetRawAnim(pSrcAnimation, cVar2 != '\0', (uint)(pSrcAnimation + 2));
 				peVar5->field_0xbc = 1.0;
 				peVar5->MorphingStartDT();
-				(peVar5->currentAnimDesc).field_0x4c = 1.0f;
-				(peVar5->nextAnimDesc).field_0x4c = fVar9;
+				(peVar5->currentAnimDesc).morphDuration = 1.0f;
+				(peVar5->nextAnimDesc).morphDuration = fVar9;
 				edAnmStage::ComputeAnimParams(fVar10, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_20, 0,(uint)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 				(peVar5->currentAnimDesc).state.time_0x10 = local_20[0];
 				(peVar5->currentAnimDesc).state.time_0xc = local_20[1];

@@ -10,6 +10,22 @@
 
 edAnmStage TheAnimStage;
 
+edAnmStage::edAnmStage()
+{
+	this->animMode = -5;
+	this->field_0x4 = 0;
+	this->field_0x8 = -1.0f;
+	this->pFrameMatrixData = (edF32MATRIX4*)0x0;
+	this->pConstantMatrixData = (edF32MATRIX3*)0x0;
+	this->pAnimMatrix = (AnimMatrix*)0x0;
+	this->pRelativeTransformMatrixBuffer = (edANM_WRTS*)0x0;
+	this->anmSkeleton = (edANM_SKELETON*)0x0;
+	this->pKeyData = (edANM_HDR*)0x0;
+	this->field_0x24 = 0;
+	this->bLoop = 1;
+	this->field_0x4c = false;
+}
+
 CAnimation::CAnimation()
 {
 	(this->anmBinMetaAnimator).layerCount = 0;
@@ -824,11 +840,13 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 	if (time < 0.0f) {
 		time = 0.0f;
 	}
+
 	pKeyData = ppKeyData->pAnm;
-	/* Data stream starts at the end of the base key. */
 	pDataStream = (edANM_RTS_Key*)(pKeyData + 1);
-	/* Key type A. */
+
 	if ((pKeyData->flags & 1) != 0) {
+		ANIMATION_LOG(LogLevel::Verbose, "edAnmTransformCtrl::GetValue contains row X data");
+
 		dataCount = (uint)pDataStream->flags;
 		if ((pDataStream->field_0x2 & 1) == 0) {
 			pfVar2 = &pDataStream->field_0x4 + dataCount;
@@ -1051,6 +1069,8 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 	}
 
 	if ((ppKeyData->pAnm->flags & 2) != 0) {
+		ANIMATION_LOG(LogLevel::Verbose, "edAnmTransformCtrl::GetValue contains row Y data");
+
 		dataCount = (uint)pDataStream->flags;
 		if ((pDataStream->field_0x2 & 1) == 0) {
 			pfVar2 = &pDataStream->field_0x4 + dataCount;
@@ -1249,6 +1269,8 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 	}
 	
 	if ((ppKeyData->pAnm->flags & 4) != 0) {
+		ANIMATION_LOG(LogLevel::Verbose, "edAnmTransformCtrl::GetValue contains row Z data");
+
 		dataCount = (uint)pDataStream->flags;
 		if ((pDataStream->field_0x2 & 1) == 0) {
 			pfVar2 = &pDataStream->field_0x4 + dataCount;
@@ -1421,39 +1443,53 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					local_40.z = fVar11 + fVar13 * (float)(uint)rowCTransformD[6];
 				}
 			}
+
 			fVar11 = 1.0f - fVar12;
+
 			pAnimMatrix->ca = local_40.x * fVar12 + local_30.x * fVar11;
 			pAnimMatrix->cb = local_40.y * fVar12 + local_30.y * fVar11;
 			pAnimMatrix->cc = local_40.z * fVar12 + local_30.z * fVar11;
 			pAnimMatrix->cd = fVar12 * 1.0f + fVar11 * 1.0f;
 		}
 	}
+
 	return;
 }
 
 void edAnmStage::AnimToWRTS()
 {
 	int uVar1;
-	int iVar2;
+	int nodeIndex;
 	edF32MATRIX3* puVar3;
 	edF32MATRIX4* pMatrixBuffer;
 	edANM_RTS_Key_Hdr* pKeyData;
 	edF32MATRIX3 animMatrix;
 	edANM_RTS pCurrentKeyData;
 
+	ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS total keys: 0x{:x}", this->pKeyData->count_0x0);
+
 	uVar1 = this->pKeyData->count_0x0;
-	for (pKeyData = (edANM_RTS_Key_Hdr*)(this->pKeyData + 1);
-		(uVar1 = uVar1 - 1, -1 < uVar1 && ((uint)this->field_0x24 <= (uint)pKeyData->keyCount));
+
+	for (pKeyData = (edANM_RTS_Key_Hdr*)(this->pKeyData + 1); (uVar1 = uVar1 - 1, -1 < uVar1 && ((uint)this->field_0x24 <= (uint)pKeyData->keyCount));
 		pKeyData = (edANM_RTS_Key_Hdr*)((char*)pKeyData + pKeyData->keyOffset)) {
-		if (((pKeyData->flags & 7) != 0) &&
-			(iVar2 = this->anmSkeleton.edAnmSkeleton::NodeIndexFromID(pKeyData->nodeId), iVar2 != -1)) {
-			puVar3 = this->pConstantMatrixData + iVar2;
+		if (((pKeyData->flags & 7) != 0) && (nodeIndex = this->anmSkeleton.edAnmSkeleton::NodeIndexFromID(pKeyData->nodeId), nodeIndex != -1)) {
+
+			//if (nodeIndex != 1) {
+			//	continue;
+			//}
+
+			ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS processing: 0x{:x} node index: {}", uVar1, nodeIndex);
+
+			puVar3 = this->pConstantMatrixData + nodeIndex;
 
 			animMatrix = *puVar3;
 
 			pCurrentKeyData = edANM_RTS(pKeyData);
 			edAnmTransformCtrl::GetValue(this->field_0x3c, &pCurrentKeyData, &animMatrix);
-			pMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices + iVar2;
+
+			ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS result: {} {} {}", animMatrix.rowX.ToString(), animMatrix.rowY.ToString(), animMatrix.rowZ.ToString());
+
+			pMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices + nodeIndex;
 			*pMatrixBuffer = animMatrix;
 			pMatrixBuffer->da = 1.0f;
 		}
@@ -1759,7 +1795,7 @@ void CAnimation::PlayAnim(CActor* pActor, int animType, int origAnimType)
 	int iVar3;
 	uint uVar5;
 
-	ANIMATION_LOG(LogLevel::Verbose, "CAnimation::PlayAnim {} type: {} originalType: {}", pActor->name, animType, origAnimType);
+	ANIMATION_LOG(LogLevel::Verbose, "CAnimation::PlayAnim {} type: 0x{:x} originalType: 0x{:x}", pActor->name, animType, origAnimType);
 
 	if (((((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) && (animType != this->currentAnimType_0x30)) &&
 		(this->currentAnimType_0x30 != -1)) {
@@ -1900,24 +1936,25 @@ struct edAnmStateParser
 {
 	edAnmStateParser() {}
 
-	edAnmStateParser(int* inField) : field_0x0(inField) {}
+	edAnmStateParser(int* pInData) : pData(pInData) {}
 
-	int* field_0x0;
+	int* pData;
 	edAnmStateDesc* BuildDesc(edAnmStateDesc* pAnimation, int animType, int origAnimType);
 };
 
 edAnmStateDesc* edAnmStateParser::BuildDesc(edAnmStateDesc* pAnimation, int animType, int origAnimType)
-
 {
-	int* piVar1;
+	int* pCurData;
 
 	pAnimation->animType = animType;
 	pAnimation->flags = 0;
 	pAnimation->field_0x0 = 0;
-	pAnimation->maxKey_0x10 = (*this->field_0x0 >> 2) + -1;
-	pAnimation->pHdrB = (edANM_HDR*)((char*)this->field_0x0 + *this->field_0x0);
-	piVar1 = this->field_0x0;
-	pAnimation->pHdrA = (edANM_HDR*)((char*)piVar1 + piVar1[(*piVar1 >> 2) + -1]);
+	pAnimation->maxKey_0x10 = (*this->pData >> 2) + -1;
+	pAnimation->pHdrB = (edANM_HDR*)(reinterpret_cast<char*>(this->pData) + *this->pData);
+
+	pCurData = this->pData;
+	pAnimation->pHdrA = (edANM_HDR*)(reinterpret_cast<char*>(pCurData) + pCurData[(*pCurData >> 2) + -1]);
+
 	pAnimation->origAnimType = origAnimType;
 	return pAnimation;
 }
@@ -1926,11 +1963,12 @@ void edAnmBinMetaAnimator::SetAnim(int animType, int origAnimType)
 {
 	edAnmLayer* pLayer;
 	edAnmStateDesc NewAnimation;
-	edAnmStateParser local_4;
+	edAnmStateParser anmStateParser;
 
-	local_4 = edAnmStateParser((int*)((char*)this->pAnimKeyEntryData + this->pAnimKeyEntryData[animType] + 4));
+	anmStateParser = edAnmStateParser(reinterpret_cast<int*>(reinterpret_cast<char*>(this->pAnimKeyEntryData) + this->pAnimKeyEntryData[animType] + 4));
+	anmStateParser.BuildDesc(&NewAnimation, animType, origAnimType);
+
 	pLayer = this->aAnimData;
-	local_4.BuildDesc(&NewAnimation, animType, origAnimType);
 	pLayer->SetAnim(&NewAnimation);
 	return;
 }
@@ -2007,8 +2045,8 @@ void edAnmLayer::Reset()
 	this->field_0x0 = 0;
 	this->animPlayState = STATE_ANIM_NONE;
 	this->pFunction_0xc0 = 0x0;
-	(this->nextAnimDesc).animType = -1;
-	(this->currentAnimDesc).animType = -1;
+	this->nextAnimDesc.animType = -1;
+	this->currentAnimDesc.animType = -1;
 	this->field_0xd4 = 0.0f;
 	this->playRate = 1.0f;
 	return;
@@ -2053,61 +2091,62 @@ bool edAnmLayer::MorphingDT(float playTime)
 
 	ANIMATION_LOG(LogLevel::Verbose, "edAnmLayer::MorphingDT playTime: {}", playTime);
 
-	if (((this->nextAnimDesc).animMode == -6) && (TheAnimStage.pAnimMatrix == (AnimMatrix*)0x0)) {
-		fVar6 = (this->nextAnimDesc).state.time_0x10;
-		(this->currentAnimDesc).state.playingDuration = 0.0f;
-		this->field_0xc = (this->currentAnimDesc).animMode;
-		(this->currentAnimDesc).animType = (this->nextAnimDesc).animType;
-		(this->currentAnimDesc).pHdrA = (this->nextAnimDesc).pHdrA;
-		(this->currentAnimDesc).flags = (this->nextAnimDesc).flags;
-		(this->currentAnimDesc).maxKey_0xc = (this->nextAnimDesc).maxKey_0xc;
-		(this->currentAnimDesc).pHdrB = (this->nextAnimDesc).pHdrB;
-		(this->currentAnimDesc).origAnimType = (this->nextAnimDesc).origAnimType;
-		(this->currentAnimDesc).state.pFunction = this->pFunction_0xc0;
-		(this->currentAnimDesc).state.pActor = this->pActor;
-		(this->currentAnimDesc).state.animationType = (this->nextAnimDesc).origAnimType;
-		(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-		(this->currentAnimDesc).state.Initialize(fVar6, (this->nextAnimDesc).pHdrA, false, (this->nextAnimDesc).flags);
-		(this->nextAnimDesc).animType = -1;
+	if ((this->nextAnimDesc.animMode == -6) && (TheAnimStage.pAnimMatrix == (AnimMatrix*)0x0)) {
+		fVar6 = this->nextAnimDesc.state.time_0x10;
+		this->currentAnimDesc.state.playingDuration = 0.0f;
+		this->field_0xc = this->currentAnimDesc.animMode;
+		this->currentAnimDesc.animType = this->nextAnimDesc.animType;
+		this->currentAnimDesc.pHdrA = this->nextAnimDesc.pHdrA;
+		this->currentAnimDesc.flags = this->nextAnimDesc.flags;
+		this->currentAnimDesc.maxKey_0xc = this->nextAnimDesc.maxKey_0xc;
+		this->currentAnimDesc.pHdrB = this->nextAnimDesc.pHdrB;
+		this->currentAnimDesc.origAnimType = this->nextAnimDesc.origAnimType;
+		this->currentAnimDesc.state.pFunction = this->pFunction_0xc0;
+		this->currentAnimDesc.state.pActor = this->pActor;
+		this->currentAnimDesc.state.animationType = this->nextAnimDesc.origAnimType;
+		this->currentAnimDesc.state.pKeyDataArray = this->pAnimManagerKeyData;
+		this->currentAnimDesc.state.Initialize(fVar6, this->nextAnimDesc.pHdrA, false, this->nextAnimDesc.flags);
+		this->nextAnimDesc.animType = -1;
 		this->animPlayState = STATE_ANIM_PLAYING;
 		return false;
 	}
 
-	if (((this->currentAnimDesc).state.currentAnimDataFlags & 2) == 0) {
-		(this->currentAnimDesc).state.UpdateAnimParams();
+	if ((this->currentAnimDesc.state.currentAnimDataFlags & 2) == 0) {
+		this->currentAnimDesc.state.UpdateAnimParams();
 	}
 
-	if (((this->nextAnimDesc).state.currentAnimDataFlags & 2) == 0) {
-		(this->nextAnimDesc).state.UpdateAnimParams();
+	if ((this->nextAnimDesc.state.currentAnimDataFlags & 2) == 0) {
+		this->nextAnimDesc.state.UpdateAnimParams();
 	}
 
 	if (this->field_0xbc == -1.0f) {
-		(this->currentAnimDesc).field_0x4c = (this->nextAnimDesc).state.keyDuration_0x18;
+		this->currentAnimDesc.morphDuration = this->nextAnimDesc.state.keyDuration_0x18;
 	}
 	else {
-		(this->currentAnimDesc).field_0x4c = this->field_0xbc;
+		this->currentAnimDesc.morphDuration = this->field_0xbc;
 	}
 
-	fVar6 = (this->nextAnimDesc).field_0x4c + playTime;
-	(this->nextAnimDesc).field_0x4c = fVar6;
+	fVar6 = this->nextAnimDesc.morphDuration + playTime;
+	this->nextAnimDesc.morphDuration = fVar6;
+
 	peVar2 = TheAnimStage.pRelativeTransformMatrixBuffer;
 
-	if ((this->currentAnimDesc).field_0x4c <= fVar6) {
-		fVar6 = (this->nextAnimDesc).state.time_0x10;
-		(this->currentAnimDesc).state.playingDuration = 0.0f;
-		this->field_0xc = (this->currentAnimDesc).animMode;
-		(this->currentAnimDesc).animType = (this->nextAnimDesc).animType;
-		(this->currentAnimDesc).pHdrA = (this->nextAnimDesc).pHdrA;
-		(this->currentAnimDesc).flags = (this->nextAnimDesc).flags;
-		(this->currentAnimDesc).maxKey_0xc = (this->nextAnimDesc).maxKey_0xc;
-		(this->currentAnimDesc).pHdrB = (this->nextAnimDesc).pHdrB;
-		(this->currentAnimDesc).origAnimType = (this->nextAnimDesc).origAnimType;
-		(this->currentAnimDesc).state.pFunction = this->pFunction_0xc0;
-		(this->currentAnimDesc).state.pActor = this->pActor;
-		(this->currentAnimDesc).state.animationType = (this->nextAnimDesc).origAnimType;
-		(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-		(this->currentAnimDesc).state.Initialize(fVar6, (this->nextAnimDesc).pHdrA, false, (this->nextAnimDesc).flags);
-		(this->nextAnimDesc).animType = -1;
+	if (this->currentAnimDesc.morphDuration <= fVar6) {
+		fVar6 = this->nextAnimDesc.state.time_0x10;
+		this->currentAnimDesc.state.playingDuration = 0.0f;
+		this->field_0xc = this->currentAnimDesc.animMode;
+		this->currentAnimDesc.animType = this->nextAnimDesc.animType;
+		this->currentAnimDesc.pHdrA = this->nextAnimDesc.pHdrA;
+		this->currentAnimDesc.flags = this->nextAnimDesc.flags;
+		this->currentAnimDesc.maxKey_0xc = this->nextAnimDesc.maxKey_0xc;
+		this->currentAnimDesc.pHdrB = this->nextAnimDesc.pHdrB;
+		this->currentAnimDesc.origAnimType = this->nextAnimDesc.origAnimType;
+		this->currentAnimDesc.state.pFunction = this->pFunction_0xc0;
+		this->currentAnimDesc.state.pActor = this->pActor;
+		this->currentAnimDesc.state.animationType = this->nextAnimDesc.origAnimType;
+		this->currentAnimDesc.state.pKeyDataArray = this->pAnimManagerKeyData;
+		this->currentAnimDesc.state.Initialize(fVar6, this->nextAnimDesc.pHdrA, false, this->nextAnimDesc.flags);
+		this->nextAnimDesc.animType = -1;
 		this->animPlayState = STATE_ANIM_PLAYING;
 		return false;
 	}
@@ -2122,9 +2161,9 @@ bool edAnmLayer::MorphingDT(float playTime)
 
 	fVar6 = this->field_0xbc;
 	if (fVar6 == -1.0f) {
-		fVar6 = (this->nextAnimDesc).state.keyDuration_0x18;
+		fVar6 = this->nextAnimDesc.state.keyDuration_0x18;
 		if (0.0f < fVar6) {
-			fVar6 = (this->nextAnimDesc).field_0x4c / fVar6;
+			fVar6 = this->nextAnimDesc.morphDuration / fVar6;
 		}
 		else {
 			fVar6 = 0.0f;
@@ -2132,12 +2171,13 @@ bool edAnmLayer::MorphingDT(float playTime)
 	}
 	else {
 		if (0.0f < fVar6) {
-			fVar6 = (this->nextAnimDesc).field_0x4c / fVar6;
+			fVar6 = this->nextAnimDesc.morphDuration / fVar6;
 		}
 		else {
 			fVar6 = 0.0f;
 		}
 	}
+
 	if (this->field_0x0 != 0) {
 		unaff_s3_lo = TheAnimManager.AllocWRTSBuffer();
 		TheAnimStage.SetDestinationWRTS(unaff_s3_lo, -1);
@@ -2149,9 +2189,9 @@ bool edAnmLayer::MorphingDT(float playTime)
 	pMatrixBuffer_00 = TheAnimManager.AllocWRTSBuffer();
 	TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
 
-	switch ((this->nextAnimDesc).animMode) {
+	switch (this->nextAnimDesc.animMode) {
 	default:
-		IMPLEMENTATION_GUARD((this->currentAnimDesc).state.AnimateIT(0.0f));
+		IMPLEMENTATION_GUARD(this->currentAnimDesc.state.AnimateIT(0.0f));
 		break;
 	case -6:
 		IMPLEMENTATION_GUARD(
@@ -2163,13 +2203,13 @@ bool edAnmLayer::MorphingDT(float playTime)
 			TheAnimStage.PreviousPostureToWRTS(1.0f);
 			if (0.0f < fVar6) {
 				fVar4 = 0.0f;
-				fVar5 = (this->nextAnimDesc).field_0x4c - playTime;
+				fVar5 = this->nextAnimDesc.morphDuration - playTime;
 				if (fVar5 < 0.0f) {
 					fVar5 = 0.0f;
 				}
 				fVar3 = this->field_0xbc;
 				if (fVar3 == -1.0f) {
-					fVar3 = (this->nextAnimDesc).state.keyDuration_0x18;
+					fVar3 = this->nextAnimDesc.state.keyDuration_0x18;
 					if (0.0f < fVar3) {
 						fVar4 = fVar5 / fVar3;
 					}
@@ -2187,41 +2227,45 @@ bool edAnmLayer::MorphingDT(float playTime)
 		}
 	case -4:
 	case -2:
-		(this->currentAnimDesc).state.AnimateDT(0.0f);
+		this->currentAnimDesc.state.AnimateDT(0.0f);
 		break;
 	case -3:
-		fVar5 = (this->currentAnimDesc).state.keyStartTime_0x14;
-		fVar4 = (this->nextAnimDesc).state.keyStartTime_0x14 * fVar6 + fVar5 * (1.0f - fVar6);
+		fVar5 = this->currentAnimDesc.state.keyStartTime_0x14;
+		fVar4 = this->nextAnimDesc.state.keyStartTime_0x14 * fVar6 + fVar5 * (1.0f - fVar6);
 		if (fVar4 <= 0.0f) {
 			fVar4 = 0.0f;
 		}
 		else {
 			fVar4 = playTime / fVar4;
 		}
-		(this->currentAnimDesc).state.AnimateDT(fVar4 * fVar5);
+		this->currentAnimDesc.state.AnimateDT(fVar4 * fVar5);
 		break;
 	case -1:
-		(this->currentAnimDesc).state.AnimateDT(playTime);
+		this->currentAnimDesc.state.AnimateDT(playTime);
 	}
 
 	TheAnimStage.SetDestinationWRTS(pMatrixBuffer_00, -1);
+
 	iVar1 = this->field_0xb8;
 	if (iVar1 == -1) {
-		(this->nextAnimDesc).state.AnimateDT(playTime);
+		this->nextAnimDesc.state.AnimateDT(playTime);
 	}
 	else {
 		if ((iVar1 == -3) || (iVar1 == -10)) {
 			IMPLEMENTATION_GUARD(
-			edAnmMacroAnimator::AnimateIR((this->currentAnimDesc).state.time_0xc);)
+			edAnmMacroAnimator::AnimateIR(this->currentAnimDesc.state.time_0xc);)
 		}
 		else {
-			(this->nextAnimDesc).state.AnimateDT(0.0f);
+			this->nextAnimDesc.state.AnimateDT(0.0f);
 		}
 	}
+
 	TheAnimStage.SetDestinationWRTS(peVar2, 0);
 	TheAnimStage.BlendToDestWRTS(fVar6, pMatrixBuffer->matrices, pMatrixBuffer_00->matrices);
+
 	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);
 	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer_00);
+
 	if (this->field_0x0 != 0) {
 		IMPLEMENTATION_GUARD(
 		TheAnimStage.SetDestinationWRTS(unaff_s4_lo, 0);
@@ -2241,6 +2285,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 		}
 		TheAnimManager.FreeWRTSBuffer(unaff_s3_lo);)
 	}
+
 	return true;
 }
 
@@ -2256,11 +2301,11 @@ bool edAnmLayer::PlayingDT(float playTime)
 
 	ANIMATION_LOG(LogLevel::Verbose, "edAnmLayer::PlayingDT playTime: {}", playTime);
 
-	(this->currentAnimDesc).state.playingDuration = (this->currentAnimDesc).state.playingDuration + playTime;
+	this->currentAnimDesc.state.playingDuration = this->currentAnimDesc.state.playingDuration + playTime;
 
-	if (((this->nextAnimDesc).animType == -1) || (iVar1 = (this->nextAnimDesc).animMode, iVar1 == -4)) {
-		if (((this->currentAnimDesc).state.currentAnimDataFlags & 2) == 0) {
-			(this->currentAnimDesc).state.UpdateAnimParams();
+	if ((this->nextAnimDesc.animType == -1) || (iVar1 = this->nextAnimDesc.animMode, iVar1 == -4)) {
+		if ((this->currentAnimDesc.state.currentAnimDataFlags & 2) == 0) {
+			this->currentAnimDesc.state.UpdateAnimParams();
 		}
 
 		pWRTS = TheAnimStage.pRelativeTransformMatrixBuffer;
@@ -2278,29 +2323,32 @@ bool edAnmLayer::PlayingDT(float playTime)
 			TheAnimStage.field_0x24 = (int)(fVar4 - 2.147484e+09f) | 0x80000000;
 		}
 
-		(this->currentAnimDesc).state.AnimateDT(playTime);
+		this->currentAnimDesc.state.AnimateDT(playTime);
 
-		stateFlags = (this->currentAnimDesc).state.flags;
+		stateFlags = this->currentAnimDesc.state.flags;
 		if (stateFlags != 0) {
-			if ((((stateFlags & 0x80000000) != 0) &&
-				(this->field_0xcc = this->field_0xcc | 2, (this->nextAnimDesc).animType != -1)) &&
-				((this->nextAnimDesc).animMode == -4)) {
-				(this->currentAnimDesc).state.Initialize((this->currentAnimDesc).state.keyStartTime_0x14, (this->currentAnimDesc).pHdrA, false, (this->currentAnimDesc).flags);
+			if ((((stateFlags & 0x80000000) != 0) && (this->field_0xcc = this->field_0xcc | 2, this->nextAnimDesc.animType != -1)) && (this->nextAnimDesc.animMode == -4)) {
+				this->currentAnimDesc.state.Initialize(this->currentAnimDesc.state.keyStartTime_0x14, this->currentAnimDesc.pHdrA, false, this->currentAnimDesc.flags);
+
 				fVar4 = 0.0f;
 				if (-1 < this->field_0xb8) {
 					fVar4 = (float)this->field_0xb8 / 1000.0f;
 				}
-				(this->nextAnimDesc).state.Initialize(fVar4, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
+
+				this->nextAnimDesc.state.Initialize(fVar4, this->nextAnimDesc.pHdrA, true, this->nextAnimDesc.flags);
 				this->animPlayState = STATE_ANIM_MORPHING;
-				(this->nextAnimDesc).field_0x4c = 0.0f;
+				this->nextAnimDesc.morphDuration = 0.0f;
 			}
-			if (((this->currentAnimDesc).state.flags & 0x40000000) != 0) {
+
+			if ((this->currentAnimDesc.state.flags & 0x40000000) != 0) {
 				this->field_0xcc = this->field_0xcc | 4;
 			}
-			if (((this->currentAnimDesc).state.flags & 0x20000000) != 0) {
+
+			if ((this->currentAnimDesc.state.flags & 0x20000000) != 0) {
 				this->field_0xcc = this->field_0xcc | 8;
 			}
 		}
+
 		if (this->field_0x0 != 0) {
 			IMPLEMENTATION_GUARD(
 			TheAnimStage.SetDestinationWRTS(unaff_s1_lo, 0);
@@ -2327,11 +2375,11 @@ bool edAnmLayer::PlayingDT(float playTime)
 	else {
 		if (iVar1 < 0) {
 			if (iVar1 == -4) {
-				(this->currentAnimDesc).state.Initialize((this->currentAnimDesc).state.keyStartTime_0x14,(this->currentAnimDesc).pHdrA, false, (this->currentAnimDesc).flags);
+				this->currentAnimDesc.state.Initialize(this->currentAnimDesc.state.keyStartTime_0x14,this->currentAnimDesc.pHdrA, false, this->currentAnimDesc.flags);
 			}
 		}
 		else {
-			(this->currentAnimDesc).state.Initialize((float)iVar1 / 1000.0f, (this->currentAnimDesc).pHdrA, true, (this->currentAnimDesc).flags);
+			this->currentAnimDesc.state.Initialize((float)iVar1 / 1000.0f, this->currentAnimDesc.pHdrA, true, this->currentAnimDesc.flags);
 		}
 
 		fVar4 = 0.0f;
@@ -2339,10 +2387,11 @@ bool edAnmLayer::PlayingDT(float playTime)
 			fVar4 = (float)this->field_0xb8 / 1000.0f;
 		}
 
-		(this->nextAnimDesc).state.Initialize(fVar4, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
+		this->nextAnimDesc.state.Initialize(fVar4, this->nextAnimDesc.pHdrA, true, this->nextAnimDesc.flags);
+
 		bComplete = false;
 		this->animPlayState = STATE_ANIM_MORPHING;
-		(this->nextAnimDesc).field_0x4c = 0.0f;
+		this->nextAnimDesc.morphDuration = 0.0f;
 	}
 
 	return bComplete;
@@ -2350,60 +2399,65 @@ bool edAnmLayer::PlayingDT(float playTime)
 
 void edAnmLayer::SetRawAnim(edANM_HDR* pHdr, uint flags, uint type)
 {
-	int iVar1;
-	edAnmStateDesc local_40;
-	edANM_HDR local_20;
-	float local_14;
-	undefined4 local_10;
+	int curAnimPlayState;
+	edAnmStateDesc anmStateDesc;
 
-	local_20.keyIndex_0x8.asKey = -1;
-	local_10 = 0;
-	local_20.count_0x0 = -2;
-	local_14 = -1.0f;
-	local_20.field_0x4.asKey = -2;
+	char headerBuff[(sizeof(edANM_HDR) + (sizeof(float) * 2))];
+	edANM_HDR* hdr = reinterpret_cast<edANM_HDR*>(headerBuff);
+
+	hdr->keyIndex_0x8.asKey = -1;
+	hdr->pData[1] = 0.0f;
+	hdr->count_0x0 = -2;
+	hdr->pData[0] = -1.0f;
+	hdr->field_0x4.asKey = -2;
+
+	assert(reinterpret_cast<char*>(&hdr->pData[1]) < headerBuff + sizeof(headerBuff));
+
 	if (type == 0xfffffffe) {
 		type = (uint)pHdr | 0x80000000;
 	}
-	local_40.flags = flags | 0x80000000;
-	local_40.pHdrB = &local_20;
-	local_40.field_0x0 = -1;
-	local_40.origAnimType = -1;
-	local_40.maxKey_0x10 = 1;
-	iVar1 = this->animPlayState;
-	local_40.animType = type;
-	local_40.pHdrA = pHdr;
-	if (iVar1 == STATE_ANIM_PLAYING) {
-		if (type == (this->currentAnimDesc).animType) {
-			if ((this->nextAnimDesc).animType != -1) {
-				(this->nextAnimDesc).animType = -1;
+
+	anmStateDesc.flags = flags | 0x80000000;
+	anmStateDesc.pHdrB = hdr;
+	anmStateDesc.field_0x0 = -1;
+	anmStateDesc.origAnimType = -1;
+	anmStateDesc.maxKey_0x10 = 1;
+	anmStateDesc.animType = type;
+	anmStateDesc.pHdrA = pHdr;
+
+	curAnimPlayState = this->animPlayState;
+
+	if (curAnimPlayState == STATE_ANIM_PLAYING) {
+		if (type == this->currentAnimDesc.animType) {
+			if (this->nextAnimDesc.animType != -1) {
+				this->nextAnimDesc.animType = -1;
 			}
 		}
 		else {
-			MorphingInitDT(&local_40);
+			MorphingInitDT(&anmStateDesc);
 		}
 	}
 	else {
-		if (iVar1 == STATE_ANIM_NONE) {
-			(this->currentAnimDesc).state.playingDuration = 0.0f;
+		if (curAnimPlayState == STATE_ANIM_NONE) {
+			this->currentAnimDesc.state.playingDuration = 0.0f;
 			this->field_0xc = 0xffffffff;
-			(this->currentAnimDesc).animType = type;
-			(this->currentAnimDesc).pHdrA = pHdr;
-			(this->currentAnimDesc).flags = local_40.flags;
-			(this->currentAnimDesc).maxKey_0xc = 1;
-			(this->currentAnimDesc).pHdrB = local_40.pHdrB;
-			(this->currentAnimDesc).origAnimType = -1;
-			(this->currentAnimDesc).state.pFunction = this->pFunction_0xc0;
-			(this->currentAnimDesc).state.pActor = this->pActor;
-			(this->currentAnimDesc).state.animationType = -1;
-			(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-			(this->currentAnimDesc).state.Initialize(0.0f, pHdr, 0, local_40.flags);
-			(this->nextAnimDesc).animType = -1;
+			this->currentAnimDesc.animType = type;
+			this->currentAnimDesc.pHdrA = pHdr;
+			this->currentAnimDesc.flags = anmStateDesc.flags;
+			this->currentAnimDesc.maxKey_0xc = 1;
+			this->currentAnimDesc.pHdrB = anmStateDesc.pHdrB;
+			this->currentAnimDesc.origAnimType = -1;
+			this->currentAnimDesc.state.pFunction = this->pFunction_0xc0;
+			this->currentAnimDesc.state.pActor = this->pActor;
+			this->currentAnimDesc.state.animationType = -1;
+			this->currentAnimDesc.state.pKeyDataArray = this->pAnimManagerKeyData;
+			this->currentAnimDesc.state.Initialize(0.0f, pHdr, 0, anmStateDesc.flags);
+			this->nextAnimDesc.animType = -1;
 			this->animPlayState = STATE_ANIM_PLAYING;
 		}
 		else {
-			if (iVar1 == STATE_ANIM_MORPHING) {
-				IMPLEMENTATION_GUARD(
-				MorphingInitDT(this, &local_40);)
+			if (curAnimPlayState == STATE_ANIM_MORPHING) {
+				MorphingInitDT(&anmStateDesc);
 			}
 		}
 	}
@@ -2412,40 +2466,41 @@ void edAnmLayer::SetRawAnim(edANM_HDR* pHdr, uint flags, uint type)
 
 bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 {
-	bool bVar1;
+	bool bShouldInitialize;
 	edANM_HDR* peVar2;
 	int iVar3;
 	edAnmStage* peVar4;
 	float fVar5;
 	int AVar1;
 
-	bVar1 = false;
+	bShouldInitialize = false;
 	if (this->animPlayState == STATE_ANIM_MORPHING) {
-		if (pNewAnimation->animType == (this->nextAnimDesc).animType) {
+		if (pNewAnimation->animType == this->nextAnimDesc.animType) {
 			return true;
 		}
-		fVar5 = (this->nextAnimDesc).state.time_0x10;
-		(this->currentAnimDesc).state.playingDuration = 0.0f;
-		this->field_0xc = (this->currentAnimDesc).animMode;
-		(this->currentAnimDesc).animType = (this->nextAnimDesc).animType;
-		(this->currentAnimDesc).pHdrA = (this->nextAnimDesc).pHdrA;
-		(this->currentAnimDesc).flags = (this->nextAnimDesc).flags;
-		(this->currentAnimDesc).maxKey_0xc = (this->nextAnimDesc).maxKey_0xc;
-		(this->currentAnimDesc).pHdrB = (this->nextAnimDesc).pHdrB;
-		(this->currentAnimDesc).origAnimType = (this->nextAnimDesc).origAnimType;
-		(this->currentAnimDesc).state.pFunction = this->pFunction_0xc0;
-		(this->currentAnimDesc).state.pActor = this->pActor;
-		(this->currentAnimDesc).state.animationType = (this->nextAnimDesc).origAnimType;
-		(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-		(this->currentAnimDesc).state.Initialize(fVar5, (this->nextAnimDesc).pHdrA, false, (this->nextAnimDesc).flags);
-		(this->nextAnimDesc).animType = -1;
-		bVar1 = true;
+		fVar5 = this->nextAnimDesc.state.time_0x10;
+		this->currentAnimDesc.state.playingDuration = 0.0f;
+		this->field_0xc = this->currentAnimDesc.animMode;
+		this->currentAnimDesc.animType = this->nextAnimDesc.animType;
+		this->currentAnimDesc.pHdrA = this->nextAnimDesc.pHdrA;
+		this->currentAnimDesc.flags = this->nextAnimDesc.flags;
+		this->currentAnimDesc.maxKey_0xc = this->nextAnimDesc.maxKey_0xc;
+		this->currentAnimDesc.pHdrB = this->nextAnimDesc.pHdrB;
+		this->currentAnimDesc.origAnimType = this->nextAnimDesc.origAnimType;
+		this->currentAnimDesc.state.pFunction = this->pFunction_0xc0;
+		this->currentAnimDesc.state.pActor = this->pActor;
+		this->currentAnimDesc.state.animationType = this->nextAnimDesc.origAnimType;
+		this->currentAnimDesc.state.pKeyDataArray = this->pAnimManagerKeyData;
+		this->currentAnimDesc.state.Initialize(fVar5, this->nextAnimDesc.pHdrA, false, this->nextAnimDesc.flags);
+		this->nextAnimDesc.animType = -1;
+		bShouldInitialize = true;
 		this->animPlayState = STATE_ANIM_PLAYING;
 	}
 
-	iVar3 = (this->currentAnimDesc).maxKey_0xc;
+	iVar3 = this->currentAnimDesc.maxKey_0xc;
+
 	peVar4 = &TheAnimStage;
-	if ((iVar3 != 0) && (peVar2 = (this->currentAnimDesc).pHdrB, iVar3 != 0)) {
+	if ((iVar3 != 0) && (peVar2 = this->currentAnimDesc.pHdrB, iVar3 != 0)) {
 		do {
 			AVar1 = peVar2->count_0x0;
 			if (AVar1 == pNewAnimation->animType) {
@@ -2459,37 +2514,35 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 			peVar2 = (edANM_HDR*)&peVar2[1].keyIndex_0x8;
 		} while (iVar3 != 0);
 	}
-	(this->nextAnimDesc).animMode = peVar4->animMode;
+
+	this->nextAnimDesc.animMode = peVar4->animMode;
 	this->field_0xb8 = peVar4->field_0x4;
 	this->field_0xbc = peVar4->field_0x8;
-	(this->currentAnimDesc).animMode = pNewAnimation->field_0x0;
-	/* This is the animation field */
-	(this->nextAnimDesc).animType = pNewAnimation->animType;
-	(this->nextAnimDesc).pHdrA = pNewAnimation->pHdrA;
-	(this->nextAnimDesc).flags = pNewAnimation->flags;
-	(this->nextAnimDesc).maxKey_0xc = pNewAnimation->maxKey_0x10;
-	(this->nextAnimDesc).pHdrB = pNewAnimation->pHdrB;
-	(this->nextAnimDesc).origAnimType = pNewAnimation->origAnimType;
-	(this->nextAnimDesc).state.pFunction = this->pFunction_0xc0;
-	(this->nextAnimDesc).state.pActor = this->pActor;
-	(this->nextAnimDesc).state.animationType = pNewAnimation->origAnimType;
-	(this->nextAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-	(this->nextAnimDesc).state.playingDuration = 0.0f;
+	this->currentAnimDesc.animMode = pNewAnimation->field_0x0;
 
-	if (bVar1) {
-		(this->nextAnimDesc).animMode = -6;
-		iVar3 = (this->nextAnimDesc).animMode;
+	// Fill out next anim description
+	this->nextAnimDesc.animType = pNewAnimation->animType;
+	this->nextAnimDesc.pHdrA = pNewAnimation->pHdrA;
+	this->nextAnimDesc.flags = pNewAnimation->flags;
+	this->nextAnimDesc.maxKey_0xc = pNewAnimation->maxKey_0x10;
+	this->nextAnimDesc.pHdrB = pNewAnimation->pHdrB;
+	this->nextAnimDesc.origAnimType = pNewAnimation->origAnimType;
+	this->nextAnimDesc.state.pFunction = this->pFunction_0xc0;
+	this->nextAnimDesc.state.pActor = this->pActor;
+	this->nextAnimDesc.state.animationType = pNewAnimation->origAnimType;
+	this->nextAnimDesc.state.pKeyDataArray = this->pAnimManagerKeyData;
+	this->nextAnimDesc.state.playingDuration = 0.0f;
+
+	if (bShouldInitialize) {
+		this->nextAnimDesc.animMode = -6;
+		iVar3 = this->nextAnimDesc.animMode;
 		if (iVar3 < 0) {
 			if (iVar3 == -4) {
-				(this->currentAnimDesc).state.Initialize
-				((this->currentAnimDesc).state.keyStartTime_0x14,
-					(this->currentAnimDesc).pHdrA, false, (this->currentAnimDesc).flags);
+				this->currentAnimDesc.state.Initialize(this->currentAnimDesc.state.keyStartTime_0x14, this->currentAnimDesc.pHdrA, false, this->currentAnimDesc.flags);
 			}
 		}
 		else {
-			(this->currentAnimDesc).state.Initialize
-			((float)iVar3 / 1000.0f, (this->currentAnimDesc).pHdrA, true,
-				(this->currentAnimDesc).flags);
+			this->currentAnimDesc.state.Initialize((float)iVar3 / 1000.0f, this->currentAnimDesc.pHdrA, true, this->currentAnimDesc.flags);
 		}
 
 		fVar5 = 0.0f;
@@ -2497,9 +2550,9 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 			fVar5 = (float)this->field_0xb8 / 1000.0f;
 		}
 
-		(this->currentAnimDesc).state.Initialize(fVar5, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
+		this->currentAnimDesc.state.Initialize(fVar5, this->nextAnimDesc.pHdrA, true, this->nextAnimDesc.flags);
 		this->animPlayState = STATE_ANIM_MORPHING;
-		(this->nextAnimDesc).field_0x4c = 0.0f;
+		this->nextAnimDesc.morphDuration = 0.0f;
 	}
 
 	return true;
@@ -2510,18 +2563,18 @@ bool edAnmLayer::MorphingStartDT()
 	int iVar1;
 	float fVar2;
 
-	iVar1 = (this->nextAnimDesc).animMode;
+	iVar1 = this->nextAnimDesc.animMode;
 	if (iVar1 < 0) {
 		if (iVar1 == -4) {
-			(this->currentAnimDesc).state.Initialize
-			((this->currentAnimDesc).state.keyStartTime_0x14,
-				(this->currentAnimDesc).pHdrA, false, (this->currentAnimDesc).flags);
+			this->currentAnimDesc.state.Initialize
+			(this->currentAnimDesc.state.keyStartTime_0x14,
+				this->currentAnimDesc.pHdrA, false, this->currentAnimDesc.flags);
 		}
 	}
 	else {
-		(this->currentAnimDesc).state.Initialize
-		((float)iVar1 / 1000.0f, (this->currentAnimDesc).pHdrA, true,
-			(this->currentAnimDesc).flags);
+		this->currentAnimDesc.state.Initialize
+		((float)iVar1 / 1000.0f, this->currentAnimDesc.pHdrA, true,
+			this->currentAnimDesc.flags);
 	}
 
 	fVar2 = 0.0f;
@@ -2529,21 +2582,20 @@ bool edAnmLayer::MorphingStartDT()
 		fVar2 = (float)this->field_0xb8 / 1000.0f;
 	}
 
-	(this->nextAnimDesc).state.Initialize(fVar2, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
+	this->nextAnimDesc.state.Initialize(fVar2, this->nextAnimDesc.pHdrA, true, this->nextAnimDesc.flags);
 	this->animPlayState = STATE_ANIM_MORPHING;
-	(this->nextAnimDesc).field_0x4c = 0.0f;
+	this->nextAnimDesc.morphDuration = 0.0f;
 	return true;
 }
 
 void edAnmLayer::SetAnim(edAnmStateDesc* pDesc)
 {
-	int iVar1;
+	int curAnimPlayState = this->animPlayState;
 
-	iVar1 = this->animPlayState;
-	if (iVar1 == 1) {
-		if (pDesc->animType == (this->currentAnimDesc).animType) {
-			if ((this->nextAnimDesc).animType != -1) {
-				(this->nextAnimDesc).animType = -1;
+	if (curAnimPlayState == STATE_ANIM_PLAYING) {
+		if (pDesc->animType == this->currentAnimDesc.animType) {
+			if (this->nextAnimDesc.animType != -1) {
+				this->nextAnimDesc.animType = -1;
 			}
 		}
 		else {
@@ -2552,26 +2604,26 @@ void edAnmLayer::SetAnim(edAnmStateDesc* pDesc)
 		}
 	}
 	else {
-		if (iVar1 == 0) {
+		if (curAnimPlayState == STATE_ANIM_NONE) {
 			/* Not already playing an anim, play straight away. */
-			(this->currentAnimDesc).state.playingDuration = 0.0f;
+			this->currentAnimDesc.state.playingDuration = 0.0f;
 			this->field_0xc = pDesc->field_0x0;
-			(this->currentAnimDesc).animType = pDesc->animType;
-			(this->currentAnimDesc).pHdrA = pDesc->pHdrA;
-			(this->currentAnimDesc).flags = pDesc->flags;
-			(this->currentAnimDesc).maxKey_0xc = pDesc->maxKey_0x10;
-			(this->currentAnimDesc).pHdrB = pDesc->pHdrB;
-			(this->currentAnimDesc).origAnimType = pDesc->origAnimType;
-			(this->currentAnimDesc).state.pFunction = this->pFunction_0xc0;
-			(this->currentAnimDesc).state.pActor = this->pActor;
-			(this->currentAnimDesc).state.animationType = pDesc->origAnimType;
-			(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-			(this->currentAnimDesc).state.Initialize(0, pDesc->pHdrA, false, pDesc->flags);
-			(this->nextAnimDesc).animType = -1;
+			this->currentAnimDesc.animType = pDesc->animType;
+			this->currentAnimDesc.pHdrA = pDesc->pHdrA;
+			this->currentAnimDesc.flags = pDesc->flags;
+			this->currentAnimDesc.maxKey_0xc = pDesc->maxKey_0x10;
+			this->currentAnimDesc.pHdrB = pDesc->pHdrB;
+			this->currentAnimDesc.origAnimType = pDesc->origAnimType;
+			this->currentAnimDesc.state.pFunction = this->pFunction_0xc0;
+			this->currentAnimDesc.state.pActor = this->pActor;
+			this->currentAnimDesc.state.animationType = pDesc->origAnimType;
+			this->currentAnimDesc.state.pKeyDataArray = this->pAnimManagerKeyData;
+			this->currentAnimDesc.state.Initialize(0, pDesc->pHdrA, false, pDesc->flags);
+			this->nextAnimDesc.animType = -1;
 			this->animPlayState = STATE_ANIM_PLAYING;
 		}
 		else {
-			if (iVar1 == 2) {
+			if (curAnimPlayState == STATE_ANIM_MORPHING) {
 				/* Queue up anim to play next. */
 				MorphingInitDT(pDesc);
 			}

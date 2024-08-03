@@ -1286,7 +1286,7 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 			peVar3 = (pAnimation->anmBinMetaAnimator).aAnimData;
 			cVar1 = pTag->srcAnim.field_0x8;
 			fVar4 = pTag->srcAnim.field_0x4;
-			peVar3->animPlayState = 0;
+			peVar3->animPlayState = STATE_ANIM_NONE;
 			peVar3->SetRawAnim(pSrcHdr, (uint)(cVar1 != '\0'), 0xfffffffe);
 			edAnmStage::ComputeAnimParams(fVar4, (peVar3->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, false, (uint)(((peVar3->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 			(peVar3->currentAnimDesc).state.time_0x10 = local_10[0];
@@ -1299,14 +1299,14 @@ void CActor::CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* con
 			cVar2 = pTag->srcAnim.field_0x8;
 			fVar4 = pTag->srcAnim.field_0x4;
 			fVar6 = pTag->dstAnim.field_0x4;
-			peVar3->animPlayState = 0;
+			peVar3->animPlayState = STATE_ANIM_NONE;
 			IMPLEMENTATION_GUARD(
 			peVar3->SetRawAnim(pDstHdr, (uint)(cVar1 != '\0'), (int)&pDstHdr->flags + 1);
 			peVar3->SetRawAnim(pSrcHdr, (uint)(cVar2 != '\0'), (int)&pSrcHdr->flags + 2);)
 			peVar3->field_0xbc = 1.0f;
 			peVar3->MorphingStartDT();
-			(peVar3->currentAnimDesc).field_0x4c = 1.0f;
-			(peVar3->nextAnimDesc).field_0x4c = fVar5;
+			(peVar3->currentAnimDesc).morphDuration = 1.0f;
+			(peVar3->nextAnimDesc).morphDuration = fVar5;
 			edAnmStage::ComputeAnimParams(fVar6, (peVar3->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_20, false, (uint)(((peVar3->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 			(peVar3->currentAnimDesc).state.time_0x10 = local_20[0];
 			(peVar3->currentAnimDesc).state.time_0xc = local_20[1];
