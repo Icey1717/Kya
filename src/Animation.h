@@ -7,6 +7,10 @@
 
 #define ANIMATION_LOG(level, format, ...) MY_LOG_CATEGORY("Animation", level, format, ##__VA_ARGS__)
 
+#define STATE_ANIM_NONE		0
+#define STATE_ANIM_PLAYING	1
+#define STATE_ANIM_MORPHING	2
+
 struct edAnmAnim;
 
 struct edAnmStage {
@@ -156,7 +160,7 @@ public:
 	void Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlayingAnimation);
 	void PlayAnim(CActor* pActor, int animType, int origAnimType);
 	void Reset(CActor* pActor);
-	AnimMatrixData* FindReggedBone(int bone);
+	BoneData* FindReggedBone(int bone);
 	void RegisterBone(uint key);
 	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
 
@@ -167,7 +171,7 @@ public:
 
 	edAnmBinMetaAnimator anmBinMetaAnimator;
 	edAnmSkeleton anmSkeleton;
-	AnimMatrixData* pMatrixData_0x10;
+	BoneData* pBoneData;
 	float aTrackData[4];
 	edF32MATRIX3* pAnimMatrix;
 	undefined4 field_0x28;

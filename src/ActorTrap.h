@@ -68,7 +68,7 @@ public:
 	undefined field_0x5b;
 	undefined4 field_0x5c;
 	float field_0x60;
-	CActor* field_0x64;
+	CActor* pCaughtActor;
 	bool field_0x68;
 	bool field_0x69;
 	undefined field_0x6a;
@@ -94,7 +94,7 @@ public:
 class CActorTrap : public CActorMovable
 {
 public:
-	static AnimResult gStateCfg_TRP[14];
+	static StateConfig gStateCfg_TRP[14];
 
 	CActorTrap();
 
@@ -104,7 +104,7 @@ public:
 	virtual void Reset();
 
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
-	virtual AnimResult* GetStateCfg(int state);
+	virtual StateConfig* GetStateCfg(int state);
 
 	CBehaviourTrapStand_ActorTrap trapStandActorTrap;
 

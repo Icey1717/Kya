@@ -28,6 +28,8 @@ namespace Renderer
 		constexpr int gMaxAnimMatrices = 0x60;
 		constexpr int gMaxStripIndex = 0x20;
 
+		static bool bForceAnimMatrixIdentity = false;
+
 		static bool gUsePreprocessedVertices = false;
 
 		struct LightingData {
@@ -297,7 +299,11 @@ namespace Renderer
 			gAlphaBuffer.Update(GetCurrentFrame());
 
 			for (int i = 0; i < gAnimationMatrices.size() ; i++) {
-				gAnimationBuffer.SetInstanceData(i, gAnimationMatrices[i]); //glm::mat4(1.0f));
+				if (bForceAnimMatrixIdentity) {
+					gAnimationMatrices[i] = glm::mat4(1.0f);
+				}
+
+				gAnimationBuffer.SetInstanceData(i, gAnimationMatrices[i]);
 			}
 
 			gAnimationBuffer.Update(GetCurrentFrame());
@@ -870,4 +876,9 @@ const VkImageView& Renderer::Native::GetColorImageView()
 bool& Renderer::Native::GetUsePreprocessedVertices()
 {
 	return gUsePreprocessedVertices;
+}
+
+bool& Renderer::GetForceAnimMatrixIdentity()
+{
+	return Native::bForceAnimMatrixIdentity;
 }

@@ -24,12 +24,12 @@ CAnimation::CAnimation()
 bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 {
 	edNODE* pMeshNode;
-	AnimMatrixData* pAVar2;
+	BoneData* pAVar2;
 	ed_Chunck* pSkeletonChunck;
 	int iVar4;
 	int iVar5;
 	CAnimation* pCVar6;
-	AnimMatrixData* pAVar1;
+	BoneData* pAVar1;
 
 	pMeshNode = pActor->pMeshNode;
 	pSkeletonChunck = (ed_Chunck*)0x0;
@@ -42,7 +42,7 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 		if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
 			(this->anmSkeleton).pTag = (edANM_SKELETON*)0x0;
 
-				for (pAVar1 = this->pMatrixData_0x10; pAVar1 != (AnimMatrixData*)0x0; pAVar1 = pAVar1->pPrev) {
+				for (pAVar1 = this->pBoneData; pAVar1 != (BoneData*)0x0; pAVar1 = pAVar1->pPrev) {
 					pAVar1->boneNodeIndex = 0;
 				}
 
@@ -61,7 +61,7 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 	else {
 		if (pSkeletonChunck + 1 != (ed_Chunck*)(this->anmSkeleton).pTag) {
 			(this->anmSkeleton).pTag = (edANM_SKELETON*)(pSkeletonChunck + 1);
-			for (pAVar2 = this->pMatrixData_0x10; pAVar2 != (AnimMatrixData*)0x0; pAVar2 = pAVar2->pPrev) {
+			for (pAVar2 = this->pBoneData; pAVar2 != (BoneData*)0x0; pAVar2 = pAVar2->pPrev) {
 				iVar4 = -1;
 				if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
 					iVar4 = this->anmSkeleton.NodeIndexFromID(pAVar2->boneId);
@@ -106,7 +106,7 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 	int layerIndex;
 	uint uVar8;
 
-	this->pMatrixData_0x10 = (AnimMatrixData*)0x0;
+	this->pBoneData = (BoneData*)0x0;
 	//peVar5 = &this->pShortData_0xc;
 	//iVar7 = 3;
 	//do {
@@ -134,7 +134,8 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 			this->anmBinMetaAnimator.SetLayerMacroAnimUserParams(layerIndex, pActor);
 		} while (layerIndex != 0);
 	}
-	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+
+	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 		layerIndex = 0;
 		for (uVar8 = this->count_0x2c; uVar8 != 0; uVar8 = uVar8 >> 1) {
 			if ((uVar8 & 1) != 0) {
@@ -165,7 +166,7 @@ void CAnimation::StopEventTrack(int state)
 	int index;
 	uint uVar2;
 
-	if ((((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) && (state == 0)) {
+	if ((((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) && (state == 0)) {
 		index = 0;
 		for (uVar2 = this->count_0x2c; uVar2 != 0; uVar2 = uVar2 >> 1) {
 			if ((uVar2 & 1) != 0) {
@@ -1513,7 +1514,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 {
 	ushort uVar1;
 	ed_3d_hierarchy_node* p3DHierNode;
-	AnimMatrixData* m0;
+	BoneData* pBoneData;
 	undefined8 uVar3;
 	bool bVar4;
 	ulong iVar5;
@@ -1620,12 +1621,14 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 
 			if (bPlayingAnimation == 0) {
 				this->anmBinMetaAnimator.AnimateDT(deltaTime);
+
 				uint isLooking = pActor->IsLookingAt();
 				if (isLooking != 0) {
 					IMPLEMENTATION_GUARD(
 					pActor->UpdateLookingAt();
 					)
 				}
+
 				pActor->UpdateAnimEffects();
 			}
 			else {
@@ -1650,8 +1653,8 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			(p3DHierNode->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
 
 			local_4 = edAnmSkeleton(pSkeleton);
-			for (m0 = this->pMatrixData_0x10; m0 != (AnimMatrixData*)0x0; m0 = m0->pPrev) {
-				local_4.UnskinNMatrices(&m0->matrix, pFrameMatrixData, m0->boneNodeIndex, 1);
+			for (pBoneData = this->pBoneData; pBoneData != (BoneData*)0x0; pBoneData = pBoneData->pPrev) {
+				local_4.UnskinNMatrices(&pBoneData->matrix, pFrameMatrixData, pBoneData->boneNodeIndex, 1);
 			}
 
 			iVar5 = 0;
@@ -1668,7 +1671,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 		}
 
 		fVar28 = 0.0f;
-		if (((deltaTime != 0.0f) && (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1)) &&
+		if (((deltaTime != 0.0f) && (((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING)) &&
 			((pActor->flags & 0x10000000) == 0)) {
 			iVar5 = 0;
 
@@ -1758,7 +1761,7 @@ void CAnimation::PlayAnim(CActor* pActor, int animType, int origAnimType)
 
 	ANIMATION_LOG(LogLevel::Verbose, "CAnimation::PlayAnim {} type: {} originalType: {}", pActor->name, animType, origAnimType);
 
-	if (((((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) && (animType != this->currentAnimType_0x30)) &&
+	if (((((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) && (animType != this->currentAnimType_0x30)) &&
 		(this->currentAnimType_0x30 != -1)) {
 		iVar3 = 0;
 		for (uVar5 = this->count_0x2c; uVar5 != 0; uVar5 = uVar5 >> 1) {
@@ -1939,21 +1942,22 @@ int edAnmBinMetaAnimator::GetAnimType_00242330(int animIndex)
 
 float edAnmMetaAnimator::GetLayerAnimTime(int animIndex, int param_3)
 {
-	edAnmLayer* peVar1;
+	edAnmLayer* pLayer;
 	float fVar2;
 
-	peVar1 = this->aAnimData + animIndex;
-	if (peVar1->animPlayState == 0) {
+	pLayer = this->aAnimData + animIndex;
+	if (pLayer->animPlayState == STATE_ANIM_NONE) {
 		fVar2 = 0.0f;
 	}
 	else {
 		if (param_3 == 0) {
-			fVar2 = (peVar1->currentAnimDesc).state.time_0x10;
+			fVar2 = (pLayer->currentAnimDesc).state.time_0x10;
 		}
 		else {
-			fVar2 = (peVar1->currentAnimDesc).state.time_0xc;
+			fVar2 = (pLayer->currentAnimDesc).state.time_0xc;
 		}
 	}
+
 	return fVar2;
 }
 
@@ -1966,7 +1970,7 @@ int edAnmBinMetaAnimator::GetAnimEventTrackID(int index)
 
 	pLayer = this->aAnimData + index;
 	trackId = -1;
-	if (pLayer->animPlayState != 0) {
+	if (pLayer->animPlayState != STATE_ANIM_NONE) {
 		animType = (pLayer->currentAnimDesc).animType;
 		trackId = -1;
 		if ((animType & 0x80000000) == 0) {
@@ -2001,7 +2005,7 @@ void edAnmMetaAnimator::AnimateDT(float deltaTime)
 void edAnmLayer::Reset()
 {
 	this->field_0x0 = 0;
-	this->animPlayState = 0;
+	this->animPlayState = STATE_ANIM_NONE;
 	this->pFunction_0xc0 = 0x0;
 	(this->nextAnimDesc).animType = -1;
 	(this->currentAnimDesc).animType = -1;
@@ -2021,11 +2025,11 @@ void edAnmLayer::AnimateDT(float deltaTime)
 	do {
 		ANIMATION_LOG(LogLevel::Verbose, "edAnmMetaAnimator::AnimateDT state: {} play rate: {}", this->animPlayState, this->playRate);
 		bComplete = true;
-		if (this->animPlayState == 2) {
+		if (this->animPlayState == STATE_ANIM_MORPHING) {
 			bComplete = MorphingDT(playTime);
 		}
 		else {
-			if (this->animPlayState == 1) {
+			if (this->animPlayState == STATE_ANIM_PLAYING) {
 				bComplete = PlayingDT(playTime);
 			}
 		}
@@ -2051,7 +2055,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 
 	if (((this->nextAnimDesc).animMode == -6) && (TheAnimStage.pAnimMatrix == (AnimMatrix*)0x0)) {
 		fVar6 = (this->nextAnimDesc).state.time_0x10;
-		(this->currentAnimDesc).state.field_0x30 = 0.0f;
+		(this->currentAnimDesc).state.playingDuration = 0.0f;
 		this->field_0xc = (this->currentAnimDesc).animMode;
 		(this->currentAnimDesc).animType = (this->nextAnimDesc).animType;
 		(this->currentAnimDesc).pHdrA = (this->nextAnimDesc).pHdrA;
@@ -2063,10 +2067,9 @@ bool edAnmLayer::MorphingDT(float playTime)
 		(this->currentAnimDesc).state.pActor = this->pActor;
 		(this->currentAnimDesc).state.animationType = (this->nextAnimDesc).origAnimType;
 		(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-		(this->currentAnimDesc).state.Initialize
-		(fVar6, (this->nextAnimDesc).pHdrA, false, (this->nextAnimDesc).flags);
+		(this->currentAnimDesc).state.Initialize(fVar6, (this->nextAnimDesc).pHdrA, false, (this->nextAnimDesc).flags);
 		(this->nextAnimDesc).animType = -1;
-		this->animPlayState = 1;
+		this->animPlayState = STATE_ANIM_PLAYING;
 		return false;
 	}
 
@@ -2091,7 +2094,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 
 	if ((this->currentAnimDesc).field_0x4c <= fVar6) {
 		fVar6 = (this->nextAnimDesc).state.time_0x10;
-		(this->currentAnimDesc).state.field_0x30 = 0.0f;
+		(this->currentAnimDesc).state.playingDuration = 0.0f;
 		this->field_0xc = (this->currentAnimDesc).animMode;
 		(this->currentAnimDesc).animType = (this->nextAnimDesc).animType;
 		(this->currentAnimDesc).pHdrA = (this->nextAnimDesc).pHdrA;
@@ -2105,7 +2108,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 		(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
 		(this->currentAnimDesc).state.Initialize(fVar6, (this->nextAnimDesc).pHdrA, false, (this->nextAnimDesc).flags);
 		(this->nextAnimDesc).animType = -1;
-		this->animPlayState = 1;
+		this->animPlayState = STATE_ANIM_PLAYING;
 		return false;
 	}
 
@@ -2244,8 +2247,8 @@ bool edAnmLayer::MorphingDT(float playTime)
 bool edAnmLayer::PlayingDT(float playTime)
 {
 	int iVar1;
-	uint uVar2;
-	edANM_WRTS* peVar3;
+	uint stateFlags;
+	edANM_WRTS* pWRTS;
 	bool bComplete;
 	edANM_WRTS* pMatrixBuffer;
 	edANM_WRTS* unaff_s1_lo;
@@ -2253,18 +2256,20 @@ bool edAnmLayer::PlayingDT(float playTime)
 
 	ANIMATION_LOG(LogLevel::Verbose, "edAnmLayer::PlayingDT playTime: {}", playTime);
 
-	(this->currentAnimDesc).state.field_0x30 = (this->currentAnimDesc).state.field_0x30 + playTime;
+	(this->currentAnimDesc).state.playingDuration = (this->currentAnimDesc).state.playingDuration + playTime;
+
 	if (((this->nextAnimDesc).animType == -1) || (iVar1 = (this->nextAnimDesc).animMode, iVar1 == -4)) {
 		if (((this->currentAnimDesc).state.currentAnimDataFlags & 2) == 0) {
 			(this->currentAnimDesc).state.UpdateAnimParams();
 		}
 
-		peVar3 = TheAnimStage.pRelativeTransformMatrixBuffer;
+		pWRTS = TheAnimStage.pRelativeTransformMatrixBuffer;
 		if (this->field_0x0 != 0) {
 			pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
 			TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
-			unaff_s1_lo = peVar3;
+			unaff_s1_lo = pWRTS;
 		}
+
 		fVar4 = this->field_0xd4 * 65535.0f;
 		if (fVar4 < 2.147484e+09f) {
 			TheAnimStage.field_0x24 = (int)fVar4;
@@ -2272,10 +2277,12 @@ bool edAnmLayer::PlayingDT(float playTime)
 		else {
 			TheAnimStage.field_0x24 = (int)(fVar4 - 2.147484e+09f) | 0x80000000;
 		}
+
 		(this->currentAnimDesc).state.AnimateDT(playTime);
-		uVar2 = (this->currentAnimDesc).state.flags;
-		if (uVar2 != 0) {
-			if ((((uVar2 & 0x80000000) != 0) &&
+
+		stateFlags = (this->currentAnimDesc).state.flags;
+		if (stateFlags != 0) {
+			if ((((stateFlags & 0x80000000) != 0) &&
 				(this->field_0xcc = this->field_0xcc | 2, (this->nextAnimDesc).animType != -1)) &&
 				((this->nextAnimDesc).animMode == -4)) {
 				(this->currentAnimDesc).state.Initialize((this->currentAnimDesc).state.keyStartTime_0x14, (this->currentAnimDesc).pHdrA, false, (this->currentAnimDesc).flags);
@@ -2284,7 +2291,7 @@ bool edAnmLayer::PlayingDT(float playTime)
 					fVar4 = (float)this->field_0xb8 / 1000.0f;
 				}
 				(this->nextAnimDesc).state.Initialize(fVar4, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
-				this->animPlayState = 2;
+				this->animPlayState = STATE_ANIM_MORPHING;
 				(this->nextAnimDesc).field_0x4c = 0.0f;
 			}
 			if (((this->currentAnimDesc).state.flags & 0x40000000) != 0) {
@@ -2311,8 +2318,10 @@ bool edAnmLayer::PlayingDT(float playTime)
 					}
 				}
 			}
+
 			TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);)
 		}
+
 		bComplete = true;
 	}
 	else {
@@ -2324,15 +2333,18 @@ bool edAnmLayer::PlayingDT(float playTime)
 		else {
 			(this->currentAnimDesc).state.Initialize((float)iVar1 / 1000.0f, (this->currentAnimDesc).pHdrA, true, (this->currentAnimDesc).flags);
 		}
-		fVar4 = 0.0;
+
+		fVar4 = 0.0f;
 		if (-1 < this->field_0xb8) {
 			fVar4 = (float)this->field_0xb8 / 1000.0f;
 		}
+
 		(this->nextAnimDesc).state.Initialize(fVar4, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
 		bComplete = false;
-		this->animPlayState = 2;
-		(this->nextAnimDesc).field_0x4c = 0.0;
+		this->animPlayState = STATE_ANIM_MORPHING;
+		(this->nextAnimDesc).field_0x4c = 0.0f;
 	}
+
 	return bComplete;
 }
 
@@ -2360,7 +2372,7 @@ void edAnmLayer::SetRawAnim(edANM_HDR* pHdr, uint flags, uint type)
 	iVar1 = this->animPlayState;
 	local_40.animType = type;
 	local_40.pHdrA = pHdr;
-	if (iVar1 == 1) {
+	if (iVar1 == STATE_ANIM_PLAYING) {
 		if (type == (this->currentAnimDesc).animType) {
 			if ((this->nextAnimDesc).animType != -1) {
 				(this->nextAnimDesc).animType = -1;
@@ -2371,8 +2383,8 @@ void edAnmLayer::SetRawAnim(edANM_HDR* pHdr, uint flags, uint type)
 		}
 	}
 	else {
-		if (iVar1 == 0) {
-			(this->currentAnimDesc).state.field_0x30 = 0.0;
+		if (iVar1 == STATE_ANIM_NONE) {
+			(this->currentAnimDesc).state.playingDuration = 0.0f;
 			this->field_0xc = 0xffffffff;
 			(this->currentAnimDesc).animType = type;
 			(this->currentAnimDesc).pHdrA = pHdr;
@@ -2386,10 +2398,10 @@ void edAnmLayer::SetRawAnim(edANM_HDR* pHdr, uint flags, uint type)
 			(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
 			(this->currentAnimDesc).state.Initialize(0.0f, pHdr, 0, local_40.flags);
 			(this->nextAnimDesc).animType = -1;
-			this->animPlayState = 1;
+			this->animPlayState = STATE_ANIM_PLAYING;
 		}
 		else {
-			if (iVar1 == 2) {
+			if (iVar1 == STATE_ANIM_MORPHING) {
 				IMPLEMENTATION_GUARD(
 				MorphingInitDT(this, &local_40);)
 			}
@@ -2408,12 +2420,12 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 	int AVar1;
 
 	bVar1 = false;
-	if (this->animPlayState == 2) {
+	if (this->animPlayState == STATE_ANIM_MORPHING) {
 		if (pNewAnimation->animType == (this->nextAnimDesc).animType) {
 			return true;
 		}
 		fVar5 = (this->nextAnimDesc).state.time_0x10;
-		(this->currentAnimDesc).state.field_0x30 = 0.0;
+		(this->currentAnimDesc).state.playingDuration = 0.0f;
 		this->field_0xc = (this->currentAnimDesc).animMode;
 		(this->currentAnimDesc).animType = (this->nextAnimDesc).animType;
 		(this->currentAnimDesc).pHdrA = (this->nextAnimDesc).pHdrA;
@@ -2428,8 +2440,9 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 		(this->currentAnimDesc).state.Initialize(fVar5, (this->nextAnimDesc).pHdrA, false, (this->nextAnimDesc).flags);
 		(this->nextAnimDesc).animType = -1;
 		bVar1 = true;
-		this->animPlayState = 1;
+		this->animPlayState = STATE_ANIM_PLAYING;
 	}
+
 	iVar3 = (this->currentAnimDesc).maxKey_0xc;
 	peVar4 = &TheAnimStage;
 	if ((iVar3 != 0) && (peVar2 = (this->currentAnimDesc).pHdrB, iVar3 != 0)) {
@@ -2461,7 +2474,8 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 	(this->nextAnimDesc).state.pActor = this->pActor;
 	(this->nextAnimDesc).state.animationType = pNewAnimation->origAnimType;
 	(this->nextAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
-	(this->nextAnimDesc).state.field_0x30 = 0.0f;
+	(this->nextAnimDesc).state.playingDuration = 0.0f;
+
 	if (bVar1) {
 		(this->nextAnimDesc).animMode = -6;
 		iVar3 = (this->nextAnimDesc).animMode;
@@ -2477,15 +2491,17 @@ bool edAnmLayer::MorphingInitDT(edAnmStateDesc* pNewAnimation)
 			((float)iVar3 / 1000.0f, (this->currentAnimDesc).pHdrA, true,
 				(this->currentAnimDesc).flags);
 		}
+
 		fVar5 = 0.0f;
 		if (-1 < this->field_0xb8) {
 			fVar5 = (float)this->field_0xb8 / 1000.0f;
 		}
-		(this->currentAnimDesc).state.Initialize
-		(fVar5, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
-		this->animPlayState = 2;
+
+		(this->currentAnimDesc).state.Initialize(fVar5, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
+		this->animPlayState = STATE_ANIM_MORPHING;
 		(this->nextAnimDesc).field_0x4c = 0.0f;
 	}
+
 	return true;
 }
 
@@ -2507,12 +2523,14 @@ bool edAnmLayer::MorphingStartDT()
 		((float)iVar1 / 1000.0f, (this->currentAnimDesc).pHdrA, true,
 			(this->currentAnimDesc).flags);
 	}
+
 	fVar2 = 0.0f;
 	if (-1 < this->field_0xb8) {
 		fVar2 = (float)this->field_0xb8 / 1000.0f;
 	}
+
 	(this->nextAnimDesc).state.Initialize(fVar2, (this->nextAnimDesc).pHdrA, true, (this->nextAnimDesc).flags);
-	this->animPlayState = 2;
+	this->animPlayState = STATE_ANIM_MORPHING;
 	(this->nextAnimDesc).field_0x4c = 0.0f;
 	return true;
 }
@@ -2536,7 +2554,7 @@ void edAnmLayer::SetAnim(edAnmStateDesc* pDesc)
 	else {
 		if (iVar1 == 0) {
 			/* Not already playing an anim, play straight away. */
-			(this->currentAnimDesc).state.field_0x30 = 0.0;
+			(this->currentAnimDesc).state.playingDuration = 0.0f;
 			this->field_0xc = pDesc->field_0x0;
 			(this->currentAnimDesc).animType = pDesc->animType;
 			(this->currentAnimDesc).pHdrA = pDesc->pHdrA;
@@ -2550,7 +2568,7 @@ void edAnmLayer::SetAnim(edAnmStateDesc* pDesc)
 			(this->currentAnimDesc).state.pKeyDataArray = this->pAnimManagerKeyData;
 			(this->currentAnimDesc).state.Initialize(0, pDesc->pHdrA, false, pDesc->flags);
 			(this->nextAnimDesc).animType = -1;
-			this->animPlayState = 1;
+			this->animPlayState = STATE_ANIM_PLAYING;
 		}
 		else {
 			if (iVar1 == 2) {
@@ -2569,7 +2587,7 @@ void CAnimation::Reset(CActor* pActor)
 	int iVar3;
 	uint uVar5;
 
-	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == STATE_ANIM_PLAYING) {
 		iVar3 = 0;
 		for (uVar5 = this->count_0x2c; uVar5 != 0; uVar5 = uVar5 >> 1) {
 			if ((uVar5 & 1) != 0) {
@@ -2596,11 +2614,11 @@ void CAnimation::Reset(CActor* pActor)
 	return;
 }
 
-AnimMatrixData* CAnimation::FindReggedBone(int bone)
+BoneData* CAnimation::FindReggedBone(int bone)
 {
-	AnimMatrixData* pAVar1;
+	BoneData* pAVar1;
 
-	for (pAVar1 = this->pMatrixData_0x10; (pAVar1 != (AnimMatrixData*)0x0 && (bone != pAVar1->boneId));
+	for (pAVar1 = this->pBoneData; (pAVar1 != (BoneData*)0x0 && (bone != pAVar1->boneId));
 		pAVar1 = pAVar1->pPrev) {
 	}
 	return pAVar1;
@@ -2613,15 +2631,15 @@ void CAnimation::RegisterBone(uint key)
 	float fVar3;
 	int iVar4;
 	float* pfVar5;
-	AnimMatrixData* pBoneData;
-	AnimMatrixData* pAVar7;
+	BoneData* pBoneData;
+	BoneData* pAVar7;
 	edF32MATRIX4* peVar8;
 	edF32VECTOR4 local_10;
 
-	for (pBoneData = this->pMatrixData_0x10; (pBoneData != (AnimMatrixData*)0x0 && (key != pBoneData->boneId)); pBoneData = pBoneData->pPrev) {
+	for (pBoneData = this->pBoneData; (pBoneData != (BoneData*)0x0 && (key != pBoneData->boneId)); pBoneData = pBoneData->pPrev) {
 	}
 
-	if (pBoneData == (AnimMatrixData*)0x0) {
+	if (pBoneData == (BoneData*)0x0) {
 		iVar4 = 0xc0;
 		pBoneData = (CScene::ptable.g_AnimManager_00451668)->aAnimMatrixData;
 		do {
@@ -2630,10 +2648,10 @@ void CAnimation::RegisterBone(uint key)
 			pBoneData = pBoneData + 1;
 		} while (iVar4 != 0);
 
-		pBoneData = (AnimMatrixData*)0x0;
+		pBoneData = (BoneData*)0x0;
 
 	LAB_0017fb98:
-		if (pBoneData != (AnimMatrixData*)0x0) {
+		if (pBoneData != (BoneData*)0x0) {
 			pBoneData->boneId = key;
 			int boneNodeIndex = -1;
 			if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
@@ -2683,12 +2701,12 @@ void CAnimation::RegisterBone(uint key)
 				pBoneData->matrix.rowT.w = 1.0f;
 			}
 
-			pBoneData->pNext = (AnimMatrixData*)0x0;
-			pBoneData->pPrev = this->pMatrixData_0x10;
+			pBoneData->pNext = (BoneData*)0x0;
+			pBoneData->pPrev = this->pBoneData;
 
-			this->pMatrixData_0x10 = pBoneData;
+			this->pBoneData = pBoneData;
 
-			if (pBoneData->pPrev != (AnimMatrixData*)0x0) {
+			if (pBoneData->pPrev != (BoneData*)0x0) {
 				pBoneData->pPrev->pNext = pBoneData;
 			}
 		}
@@ -2701,12 +2719,12 @@ void CAnimation::RegisterBone(uint key)
 
 edF32MATRIX4* CAnimation::GetCurBoneMatrix(uint boneId)
 {
-	AnimMatrixData* pAnimMatrixData;
+	BoneData* pAnimMatrixData;
 
-	for (pAnimMatrixData = this->pMatrixData_0x10; (pAnimMatrixData != (AnimMatrixData*)0x0 && (boneId != pAnimMatrixData->boneId)); pAnimMatrixData = pAnimMatrixData->pPrev) {
+	for (pAnimMatrixData = this->pBoneData; (pAnimMatrixData != (BoneData*)0x0 && (boneId != pAnimMatrixData->boneId)); pAnimMatrixData = pAnimMatrixData->pPrev) {
 	}
 
-	if (pAnimMatrixData == (AnimMatrixData*)0x0) {
+	if (pAnimMatrixData == (BoneData*)0x0) {
 		return &gF32Matrix4Unit;
 	}
 

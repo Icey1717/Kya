@@ -229,14 +229,14 @@ struct S_BRIDGE_CAMERA_STREAM {
 class CActorMovingPlatform : public CActorMovable
 {
 public:
-	static AnimResult gStateCfg_MPF[13];
+	static StateConfig gStateCfg_MPF[13];
 
 	CActorMovingPlatform();
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
-	virtual AnimResult* GetStateCfg(int state);
+	virtual StateConfig* GetStateCfg(int state);
 	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
 
 	bool Slab_MoveAndDetectCarriedObject(CBehaviourPlatformSlab* pBehaviour, int param_3);

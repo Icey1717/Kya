@@ -131,7 +131,7 @@ public:
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
-	virtual AnimResult* GetStateCfg(int state);
+	virtual StateConfig* GetStateCfg(int state);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
 	void Initialize();
@@ -145,7 +145,7 @@ public:
 	CBhvBasic behaviourBasic;
 	CBhvWindAware behaviourWindAware;
 
-	static AnimResult gStateCfg_BRG[3];
+	static StateConfig gStateCfg_BRG[3];
 
 	CWayPoint* field_0x160;
 	CWayPoint* field_0x164;

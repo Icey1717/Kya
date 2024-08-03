@@ -641,16 +641,16 @@ void CActorBridge::Init()
 	this->field_0x354 = -1;
 }
 
-AnimResult CActorBridge::gStateCfg_BRG[3] =
+StateConfig CActorBridge::gStateCfg_BRG[3] =
 {
-	AnimResult(0, 0),
-	AnimResult(0, 0),
-	AnimResult(0, 0),
+	StateConfig(0, 0),
+	StateConfig(0, 0),
+	StateConfig(0, 0),
 };
 
-AnimResult* CActorBridge::GetStateCfg(int state)
+StateConfig* CActorBridge::GetStateCfg(int state)
 {
-	AnimResult* pAVar1;
+	StateConfig* pAVar1;
 
 	if (state < 5) {
 		pAVar1 = CActor::GetStateCfg(state);
@@ -907,7 +907,7 @@ void CActorBridge::BehaviourManage(byte param_2, CWindForce* pWindForce)
 	CCollision* pMovingPlatformCollision;
 	bool bVar2;
 	Timer* pTVar3;
-	AnimResult* pAVar4;
+	StateConfig* pAVar4;
 	int iVar5;
 	uint uVar6;
 	float* pfVar7;

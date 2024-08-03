@@ -57,9 +57,9 @@
 struct CPlayerInput;
 class CActorBoomy;
 
-struct AnimResultHero : public AnimResult {
+struct AnimResultHero : public StateConfig {
 	AnimResultHero(int inA, uint inB, uint inC)
-		: AnimResult(inA, inB)
+		: StateConfig(inA, inB)
 		, heroFlags(inC)
 	{}
 
@@ -120,7 +120,7 @@ public:
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];
 
-	virtual AnimResult* GetStateCfg(int state);
+	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
 
 	uint GetStateHeroFlags(int state);

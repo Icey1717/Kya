@@ -48,7 +48,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
-	virtual AnimResult* GetStateCfg(int state);
+	virtual StateConfig* GetStateCfg(int state);
 
 	void BehaviourWind_Manage();
 

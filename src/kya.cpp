@@ -2067,7 +2067,7 @@ void GameLoop(void)
 	bool bVar4;
 	Timer* timeController;
 	CLifeInterface* piVar5;
-	AnimResult* pAVar6;
+	StateConfig* pAVar6;
 	uint uVar7;
 	ulong uVar8;
 	float fVar9;

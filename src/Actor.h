@@ -31,7 +31,7 @@ struct edCEventMessage;
 
 class CPlayerInput;
 
-enum ACTOR_MESSAGE {};
+enum ACTOR_MESSAGE {MESSAGE_TRAP_CAUGHT = 0x31};
 typedef void* MSG_PARAM;
 
 class CActorConeInfluence {
@@ -201,7 +201,7 @@ enum EActorState {
 };
 
 struct CClusterNode;
-struct AnimMatrixData;
+struct BoneData;
 
 class CCollision;
 
@@ -209,10 +209,10 @@ class CCollision;
 
 struct CShadow;
 struct ByteCode;
-struct AnimResult {
-	AnimResult() {}
+struct StateConfig {
+	StateConfig() {}
 
-	AnimResult(int inA, uint inB) : animId(inA), flags_0x4(inB) {}
+	StateConfig(int inA, uint inB) : animId(inA), flags_0x4(inB) {}
 
 	int animId;
 	uint flags_0x4;
@@ -338,7 +338,7 @@ public:
 
 	CActor* pTiedActor;
 
-	static AnimResult gStateCfg_ACT[5];
+	static StateConfig gStateCfg_ACT[5];
 	static uint _gBehaviourFlags_ACT[2];
 
 	float lodBiases[4];
@@ -374,7 +374,7 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
-	virtual AnimResult* GetStateCfg(int state);
+	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
 	virtual void SetState(int newState, int animType);
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);

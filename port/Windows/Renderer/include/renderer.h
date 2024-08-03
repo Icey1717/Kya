@@ -283,6 +283,8 @@ namespace Renderer
 		PaletteMap palettes;
 	};
 
+	bool& GetForceAnimMatrixIdentity();
+
 	void Setup();
 	void RenderImage(char* imageData, int width, int height);
 	void WaitUntilReady();

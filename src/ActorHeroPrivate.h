@@ -19,6 +19,8 @@ class CBehaviourHeroDefault : public CBehaviourHero
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
 
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
 

@@ -6,6 +6,8 @@
 #include "ActorManager.h"
 #include "TimeController.h"
 
+#define TRAP_STATE_IDLE 0x6
+#define TRAP_STATE_CATCH_1_1 0x7
 #define TRAP_STATE_CATCH_2_2 0x8
 #define TRAP_STATE_CATCH_STAND_1_2 0x9
 #define TRAP_STATE_CATCH_STAND_2_2 0xa
@@ -55,27 +57,27 @@ CBehaviour* CActorTrap::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
-AnimResult CActorTrap::gStateCfg_TRP[14] =
+StateConfig CActorTrap::gStateCfg_TRP[14] =
 {
-	AnimResult(0x6, 0x20000),
-	AnimResult(0x7, 0x20000),
-	AnimResult(0x8, 0x6),
-	AnimResult(0x8, 0xA06),
-	AnimResult(0x9, 0x12A06),
-	AnimResult(0xA, 0x12A06),
-	AnimResult(0xA, 0x12806),
-	AnimResult(0xB, 0x12806),
-	AnimResult(0xB, 0x12A06),
-	AnimResult(0xC, 0x1100),
-	AnimResult(0xC, 0x1100),
-	AnimResult(0xC, 0x1100),
-	AnimResult(0xC, 0x100),
-	AnimResult(0x7, 0x100),
+	StateConfig(0x6, 0x20000),
+	StateConfig(0x7, 0x20000),
+	StateConfig(0x8, 0x6),
+	StateConfig(0x8, 0xA06),
+	StateConfig(0x9, 0x12A06),
+	StateConfig(0xA, 0x12A06),
+	StateConfig(0xA, 0x12806),
+	StateConfig(0xB, 0x12806),
+	StateConfig(0xB, 0x12A06),
+	StateConfig(0xC, 0x1100),
+	StateConfig(0xC, 0x1100),
+	StateConfig(0xC, 0x1100),
+	StateConfig(0xC, 0x100),
+	StateConfig(0x7, 0x100),
 };
 
-AnimResult* CActorTrap::GetStateCfg(int state)
+StateConfig* CActorTrap::GetStateCfg(int state)
 {
-	AnimResult* pStateCfg;
+	StateConfig* pStateCfg;
 
 	if (state < 5) {
 		pStateCfg = CActorMovable::GetStateCfg(state);
@@ -126,7 +128,7 @@ void CBehaviourTrapStand_ActorTrap::Begin(CActor* pOwner, int newState, int newA
 
 	if (newState == -1) {
 		pTrap = this->pOwner;
-		pTrap->SetState(6, -1);
+		pTrap->SetState(TRAP_STATE_IDLE, -1);
 	}
 	else {
 		pTrap = this->pOwner;
@@ -189,7 +191,7 @@ void CBehaviourTrapStand::StateTrapCatchStand_1_2(int param_2, int nextState)
 	bVar4 = false;
 
 	if ((pLayer->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
-		if (pLayer->animPlayState == 0) {
+		if (pLayer->animPlayState == STATE_ANIM_NONE) {
 			bVar4 = false;
 		}
 		else {
@@ -205,6 +207,9 @@ void CBehaviourTrapStand::StateTrapCatchStand_1_2(int param_2, int nextState)
 			pTrap->SetState(param_2, -1);
 		}
 	}
+
+	ACTOR_LOG(LogLevel::Verbose, "CBehaviourTrapStand::StateTrapCatchStand_1_2 New position: {} {} {}",
+		this->pOwner->currentLocation.x, this->pOwner->currentLocation.y, this->pOwner->currentLocation.z);
 
 	return;
 }
@@ -252,6 +257,9 @@ void CBehaviourTrapStand::StateTrapCatchStand_2_2(int nextState)
 		}
 	}
 
+	ACTOR_LOG(LogLevel::Verbose, "CBehaviourTrapStand::StateTrapCatchStand_2_2 New position: {} {} {}",
+		this->pOwner->currentLocation.x, this->pOwner->currentLocation.y, this->pOwner->currentLocation.z);
+
 	return;
 }
 
@@ -295,20 +303,19 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 		pTimer = GetTimer();
 		fVar11 = 0.5f;
 		fVar10 = this->pOwner->dynamic.linearAcceleration * pTimer->cutsceneDeltaTime;
+
 		if (0.5f <= fVar10) {
 			fVar11 = fVar10;
 		}
+
 		if (movParamsOut.floatField <= fVar11) {
-			IMPLEMENTATION_GUARD(
-			bVar6 = CPathFollowReader::AtGoal
-			(&this->pathFollowReader, (long)(this->pathFollowReader).field_0x4,
-				(long)(this->pathFollowReader).field_0xc);
+			bVar6 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
 			if (bVar6 == false) {
-				CPathFollowReader::NextWayPoint(&this->pathFollowReader);
+				this->pathFollowReader.NextWayPoint();
 			}
 			else {
-				(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0xb, -1);
-			})
+				this->pOwner->SetState(0xb, -1);
+			}
 		}
 	}
 
@@ -318,7 +325,7 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 	bVar6 = false;
 
 	if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-		if (peVar3->animPlayState == 0) {
+		if (peVar3->animPlayState == STATE_ANIM_NONE) {
 			bVar6 = false;
 		}
 		else {
@@ -327,8 +334,8 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 	}
 
 	if (bVar6) {
-		pCVar9 = this->field_0x64->GetBehaviour(2);
-		if (((pCVar9 == (CBehaviour*)0x0) || (pCVar5 == (CActorHero*)this->field_0x64)) || ((this->flags & 1) == 0)) {
+		pCVar9 = this->pCaughtActor->GetBehaviour(2);
+		if (((pCVar9 == (CBehaviour*)0x0) || (pCVar5 == (CActorHero*)this->pCaughtActor)) || ((this->flags & 1) == 0)) {
 			pOwningActor = this->pOwner;
 			local_70.x = pOwningActor->currentLocation.x;
 			local_70.z = pOwningActor->currentLocation.z;
@@ -342,11 +349,11 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 			IMPLEMENTATION_GUARD(
 			if ((ConditionedOperationArray*)(pCVar9 + 3) != (ConditionedOperationArray*)0x0) {
 				ConditionedOperationArray::Perform((ConditionedOperationArray*)(pCVar9 + 3));
-				pCVar4 = this->field_0x64;
+				pCVar4 = this->pCaughtActor;
 				pCVar4->flags = pCVar4->flags & 0xffffff7f;
 				pCVar4->flags = pCVar4->flags | 0x20;
 				CActor::EvaluateDisplayState(pCVar4);
-				pCVar4 = this->field_0x64;
+				pCVar4 = this->pCaughtActor;
 				pCVar4->flags = pCVar4->flags & 0xfffffffd;
 				pCVar4->flags = pCVar4->flags | 1;
 			}
@@ -363,7 +370,7 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 					local_60 = pOwningActor->currentLocation.x;
 					local_58 = pOwningActor->currentLocation.z;
 					local_54 = pOwningActor->currentLocation.w;
-					local_5c = pOwningActor->currentLocation.y + 1.58;
+					local_5c = pOwningActor->currentLocation.y + 1.58f;
 					if (((local_4 != (int*)0x0) && (local_8 != 0)) && (local_8 == local_4[6])) {
 						local_4[0xc] = (int)local_60;
 						local_4[0xd] = (int)local_5c;
@@ -379,6 +386,9 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 		}
 	}
 
+	ACTOR_LOG(LogLevel::Verbose, "CBehaviourTrapStand::StateTrapCatch_2_2 New position: {} {} {}",
+		this->pOwner->currentLocation.x, this->pOwner->currentLocation.y, this->pOwner->currentLocation.z);
+
 	return;
 }
 
@@ -392,8 +402,8 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 	CinNamedObject30* pCVar6;
 	int* piVar7;
 	bool bVar8;
-	AnimResult* pAVar9;
-	long lVar10;
+	StateConfig* pAVar9;
+	int actorDetectState;
 	uint uVar11;
 	int iVar12;
 	int iVar13;
@@ -448,7 +458,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		bVar8 = false;
 
 		if ((peVar5->currentAnimDesc).animType == pCVar4->currentAnimType_0x30) {
-			if (peVar5->animPlayState == 0) {
+			if (peVar5->animPlayState == STATE_ANIM_NONE) {
 				bVar8 = false;
 			}
 			else {
@@ -457,28 +467,29 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		}
 
 		if (bVar8) {
-			pTrap->SetState(6, -1);
+			pTrap->SetState(TRAP_STATE_IDLE, -1);
 		}
 		break;
-	case 6:
-		lVar10 = DetectActor();
-		if (lVar10 != 0) {
-			if (lVar10 == 2) {
+	case TRAP_STATE_IDLE:
+		actorDetectState = DetectActor();
+
+		if (actorDetectState != 0) {
+			if (actorDetectState == 2) {
 				this->pOwner->SetState(0x12, -1);
 			}
 			else {
-				if (lVar10 == 1) {
-					this->pOwner->SetState(7, -1);
+				if (actorDetectState == 1) {
+					this->pOwner->SetState(TRAP_STATE_CATCH_1_1, -1);
 				}
 			}
 		}
 		break;
-	case 7:
+	case TRAP_STATE_CATCH_1_1:
 		if (0.18f < pTrap->timeInAir) {
 			pCVar2 = pTrap->pCollisionData;
 			pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;
 			local_4 = 1;
-			this->pOwner->DoMessage(this->field_0x64, (ACTOR_MESSAGE)0x31, (MSG_PARAM)1);
+			this->pOwner->DoMessage(this->pCaughtActor, MESSAGE_TRAP_CAUGHT, (MSG_PARAM)1);
 			this->pOwner->SetState(TRAP_STATE_CATCH_2_2, -1);
 		}
 		break;
@@ -538,7 +549,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		bVar8 = false;
 
 		if ((peVar5->currentAnimDesc).animType == pCVar4->currentAnimType_0x30) {
-			if (peVar5->animPlayState == 0) {
+			if (peVar5->animPlayState == STATE_ANIM_NONE) {
 				bVar8 = false;
 			}
 			else {
@@ -642,6 +653,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 			}
 		}
 	}
+
 	return;
 }
 
@@ -723,7 +735,7 @@ void CBehaviourTrapStand::Init(CActor* pOwner)
 		pTrapStreamEntry = pTrapStreamEntry + 1;
 	}
 
-	this->field_0x64 = (CActor*)0x0;
+	this->pCaughtActor = (CActor*)0x0;
 }
 
 void CBehaviourTrapStand::SectorChange(int oldSectorId, int newSectorId)
@@ -750,7 +762,7 @@ void CBehaviourTrapStand::Begin(CActor* pOwner, int newState, int newAnimationTy
 	int entryCount;
 
 	this->field_0x60 = this->pOwner->subObjA->boundingSphere.w;
-	this->field_0x64 = (CActor*)0x0;
+	this->pCaughtActor = (CActor*)0x0;
 
 	if (this->field_0x48 == (S_TRAP_STREAM_REF*)0x0) {
 		entryCount = 0;
@@ -813,7 +825,7 @@ void CBehaviourTrapStand::InitState(int newState)
 	undefined4 local_4;
 
 	switch (newState) {
-	case 6:
+	case TRAP_STATE_IDLE:
 		pColissionData = this->pOwner->pCollisionData;
 		pColissionData->flags_0x0 = pColissionData->flags_0x0 & 0xfff7efff;
 		pTrap = this->pOwner;
@@ -821,7 +833,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		pTrap->EvaluateDisplayState();
 		this->pOwner->dynamic.speed = 0.0f;
 		break;
-	case 7:
+	case TRAP_STATE_CATCH_1_1:
 		pTrap = this->pOwner;
 		local_30.xyz = pTrap->rotationQuat.xyz;
 		local_30.y = 0.0f;
@@ -831,9 +843,9 @@ void CBehaviourTrapStand::InitState(int newState)
 		GetAnglesFromVector(&this->pOwner->rotationEuler, &this->pOwner->rotationQuat);
 		break;
 	case 9:
-		if (this->field_0x64->typeID == 6) {
+		if (this->pCaughtActor->typeID == 6) {
 			local_4 = 0;
-			this->pOwner->DoMessage(this->field_0x64, (ACTOR_MESSAGE)0x3f, (MSG_PARAM)0);
+			this->pOwner->DoMessage(this->pCaughtActor, (ACTOR_MESSAGE)0x3f, (MSG_PARAM)0);
 		}
 		break;
 	case 0xb:
@@ -862,7 +874,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		pColissionData->flags_0x0 = pColissionData->flags_0x0 & 0xfff7efff;
 		pTrap = this->pOwner;
 		iVar1 = pTrap->prevActorState;
-		if ((iVar1 != 7) && (iVar1 != 8)) {
+		if ((iVar1 != TRAP_STATE_CATCH_1_1) && (iVar1 != 8)) {
 			local_40.x = pTrap->currentLocation.x;
 			local_40.z = pTrap->currentLocation.z;
 			local_40.w = pTrap->currentLocation.w;
@@ -878,18 +890,18 @@ void CBehaviourTrapStand::InitState(int newState)
 		break;
 	case 0xf:
 		local_8 = 1;
-		this->pOwner->DoMessage(this->field_0x64, (ACTOR_MESSAGE)0x32, (MSG_PARAM)1);
+		this->pOwner->DoMessage(this->pCaughtActor, (ACTOR_MESSAGE)0x32, (MSG_PARAM)1);
 		pColissionData = this->pOwner->pCollisionData;
 		pColissionData->flags_0x0 = pColissionData->flags_0x0 & 0xfff7efff;
 		if (this->field_0x69 != false) {
 			local_c = 0;
-			this->pOwner->DoMessage(this->field_0x64, (ACTOR_MESSAGE)0x40, (MSG_PARAM)0);
+			this->pOwner->DoMessage(this->pCaughtActor, (ACTOR_MESSAGE)0x40, (MSG_PARAM)0);
 		}
 		break;
 	case 0x10:
 		pTrap = this->pOwner;
 		iVar1 = pTrap->prevActorState;
-		if ((iVar1 != 7) && (iVar1 != 8)) {
+		if ((iVar1 != TRAP_STATE_CATCH_1_1) && (iVar1 != 8)) {
 			local_60.x = pTrap->currentLocation.x;
 			local_60.z = pTrap->currentLocation.z;
 			local_60.w = pTrap->currentLocation.w;
@@ -908,10 +920,10 @@ void CBehaviourTrapStand::InitState(int newState)
 		pColissionData = this->pOwner->pCollisionData;
 		pColissionData->flags_0x0 = pColissionData->flags_0x0 & 0xfff7efff;
 		local_10 = 1;
-		this->pOwner->DoMessage(this->field_0x64, (ACTOR_MESSAGE)0x32, (MSG_PARAM)1);
+		this->pOwner->DoMessage(this->pCaughtActor, (ACTOR_MESSAGE)0x32, (MSG_PARAM)1);
 		if (this->field_0x69 != false) {
 			local_14 = 0;
-			this->pOwner->DoMessage(this->field_0x64, (ACTOR_MESSAGE)0x40, (MSG_PARAM)0);
+			this->pOwner->DoMessage(this->pCaughtActor, (ACTOR_MESSAGE)0x40, (MSG_PARAM)0);
 		}
 		break;
 	case 0x12:
@@ -919,7 +931,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		pTrap->flags = pTrap->flags & 0xffffff7f;
 		pTrap->flags = pTrap->flags | 0x20;
 		pTrap->EvaluateDisplayState();
-		if ((this->field_0x24 != 0xffffffff) && (this->pOwner->prevActorState == 6)) {
+		if ((this->field_0x24 != 0xffffffff) && (this->pOwner->prevActorState == TRAP_STATE_IDLE)) {
 			IMPLEMENTATION_GUARD_LOG(
 			CParticlesManager::GetDynamicFx(CScene::ptable.g_EffectsManager_004516b8, (undefined4*)(this + 1), this->field_0x24, 0xffffffffffffffff);)
 
@@ -957,7 +969,7 @@ void CBehaviourTrapStand::TermState(int state, int)
 		pTrap->EvaluateDisplayState();
 	}
 	else {
-		if (((state != 0xd) && (state != 7)) && (state == 8)) {
+		if (((state != 0xd) && (state != TRAP_STATE_CATCH_1_1)) && (state == 8)) {
 			iVar4 = 0;
 			if (this->field_0x48 != (S_TRAP_STREAM_REF*)0x0) {
 				iVar4 = this->field_0x48->entryCount;
@@ -984,7 +996,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	CActorTrap* pCVar1;
 	int iVar2;
 	uint uVar3;
-	AnimResult* pAVar4;
+	StateConfig* pAVar4;
 
 	if (msg == 0x12) {
 		IMPLEMENTATION_GUARD(
@@ -995,7 +1007,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			pAVar4 = pCVar1->GetStateCfg(iVar2);
 			uVar3 = pAVar4->flags_0x4;
 		}
-		if (((uVar3 & 0x10000) == 0) || (uVar3 = 0xc, this->field_0x64 != pSender)) {
+		if (((uVar3 & 0x10000) == 0) || (uVar3 = 0xc, this->pCaughtActor != pSender)) {
 			uVar3 = 0;
 		})
 	}
@@ -1098,7 +1110,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			if (iVar2 == 0xb) {
 				IMPLEMENTATION_GUARD(
 				if (this->field_0x54 != this->field_0x50) {
-					this->field_0x69 = pSender != this->field_0x64;
+					this->field_0x69 = pSender != this->pCaughtActor;
 					(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
 					*(undefined4*)((int)pMsgParam + 0x74) = 1;
 					return 1;
@@ -1119,9 +1131,9 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 							uVar3 = pAVar4->flags_0x4 & 0x100;
 						}
 						if (uVar3 == 0) {
-							this->field_0x69 = pSender != this->field_0x64;
+							this->field_0x69 = pSender != this->pCaughtActor;
 							pCVar1 = this->pOwner;
-							if ((pCVar1->base).base.actorState == 6) {
+							if ((pCVar1->base).base.actorState == TRAP_STATE_IDLE) {
 								(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0x12, -1);
 							}
 							else {
@@ -1144,7 +1156,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 							uVar3 = pAVar4->flags_0x4 & 0x100;
 						}
 						if (uVar3 == 0) {
-							this->field_0x69 = pSender != this->field_0x64;
+							this->field_0x69 = pSender != this->pCaughtActor;
 							(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
 						})
 						return 1;
@@ -1162,7 +1174,7 @@ bool gTrpDetectCallback(CActor* pActor, void* pParams)
 	bool bVar1;
 	bool bVar2;
 	uint uVar3;
-	AnimResult* pAVar4;
+	StateConfig* pAVar4;
 	edF32VECTOR4* v2;
 	float fVar5;
 	CActorConeInfluence actorConeInfluence;
@@ -1269,7 +1281,7 @@ int CBehaviourTrapStand::DetectActor()
 		else {
 			iVar6 = 0;
 			fVar7 = 1e-20f;
-			while (this->field_0x64 == (CActor*)0x0) {
+			while (this->pCaughtActor == (CActor*)0x0) {
 				if (this->pActorStream == (S_ACTOR_STREAM_REF*)0x0) {
 					iVar5 = 0;
 				}
@@ -1316,6 +1328,7 @@ int CBehaviourTrapStand::DetectActor()
 
 	if (pReceiver != (CActorHero*)0x0) {
 		iVar6 = 2;
+
 		if (((this->flags & 1) == 0) || (pReceiver != CActorHero::_gThis)) {
 			local_4 = 0;
 			iVar6 = this->pOwner->DoMessage(pReceiver, (ACTOR_MESSAGE)0x3f, 0);
@@ -1326,7 +1339,7 @@ int CBehaviourTrapStand::DetectActor()
 		}
 
 		if (iVar6 == 1) {
-			this->field_0x64 = (CActor*)pReceiver;
+			this->pCaughtActor = (CActor*)pReceiver;
 			return 1;
 		}
 	}

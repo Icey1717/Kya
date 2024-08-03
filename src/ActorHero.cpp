@@ -1019,7 +1019,7 @@ uint CActorHero::_gStateCfg_ELE[HERO_BHVR_COUNT] = {
 	0, 0, 0, 0
 };
 
-AnimResult* CActorHero::GetStateCfg(int state)
+StateConfig* CActorHero::GetStateCfg(int state)
 {
 	AnimResultHero* pHeroStateCfg;
 
@@ -1030,7 +1030,7 @@ AnimResult* CActorHero::GetStateCfg(int state)
 		assert(state - 0x72 < HERO_STATE_COUNT);
 		pHeroStateCfg = _gStateCfg_HRO + state - 0x72;
 	}
-	return (AnimResult*)pHeroStateCfg;
+	return (StateConfig*)pHeroStateCfg;
 }
 
 uint CActorHero::GetBehaviourFlags(int state)

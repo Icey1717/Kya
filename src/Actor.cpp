@@ -660,7 +660,7 @@ bool CActor::Can_0x9c()
 {
 	bool bVar1;
 	uint uVar2;
-	AnimResult* pAVar3;
+	StateConfig* pAVar3;
 
 	if (this->actorState == -1) {
 		uVar2 = 0;
@@ -1065,24 +1065,27 @@ void CActor::ChangeDisplayState(int state)
 
 void CActor::SetState(int newState, int animType)
 {
-	EActorState EVar1;
+	EActorState curActorState;
 	CAnimation* pAnimationController;
 	CAudioManager* pGVar2;
-	CBehaviour* pCVar3;
-	AnimResult* pDesiredAnim;
+	CBehaviour* pBehaviour;
+	StateConfig* pNewStateCfg;
 	uint uVar4;
 	uint uVar5;
 
 	ACTOR_LOG(LogLevel::Info, "CActor::SetState {} state: 0x{:x} anim: 0x{:x} (cur bhvr: 0x{:x})", this->name, newState, animType, this->curBehaviourId);
 
-	pCVar3 = GetBehaviour(this->curBehaviourId);
+	pBehaviour = GetBehaviour(this->curBehaviourId);
+
 	if ((animType == -1) && (newState != AS_None)) {
-		pDesiredAnim = GetStateCfg(newState);
-		animType = pDesiredAnim->animId;
+		pNewStateCfg = GetStateCfg(newState);
+		animType = pNewStateCfg->animId;
 	}
+
 	pGVar2 = CScene::ptable.g_GlobalSoundPtr_00451698;
-	EVar1 = this->actorState;
-	if (EVar1 == newState) {
+
+	curActorState = this->actorState;
+	if (curActorState == newState) {
 		/* State is the same as our current state */
 		if (this->currentAnimType != animType) {
 			PlayAnim(animType);
@@ -1090,20 +1093,22 @@ void CActor::SetState(int newState, int animType)
 	}
 	else {
 		/* New state */
-		if (EVar1 == AS_None) {
+		if (curActorState == AS_None) {
 			uVar4 = 0;
 		}
 		else {
-			pDesiredAnim = GetStateCfg(EVar1);
-			uVar4 = pDesiredAnim->flags_0x4;
+			pNewStateCfg = GetStateCfg(curActorState);
+			uVar4 = pNewStateCfg->flags_0x4;
 		}
+
 		if (newState == AS_None) {
 			uVar5 = 0;
 		}
 		else {
-			pDesiredAnim = GetStateCfg(newState);
-			uVar5 = pDesiredAnim->flags_0x4;
+			pNewStateCfg = GetStateCfg(newState);
+			uVar5 = pNewStateCfg->flags_0x4;
 		}
+
 		if (((uVar4 & 0x80) == 0) || ((uVar5 & 0x80) != 0)) {
 			if (((uVar4 & 0x80) == 0) && ((uVar5 & 0x80) != 0)) {
 				IMPLEMENTATION_GUARD_LOG(
@@ -1114,29 +1119,35 @@ void CActor::SetState(int newState, int animType)
 			IMPLEMENTATION_GUARD(
 			StateTransitionSoundFunc_00184470((int)pGVar2);)
 		}
-		if ((pCVar3 != (CBehaviour*)0x0) && (EVar1 = this->actorState, EVar1 != AS_None)) {
+
+		if ((pBehaviour != (CBehaviour*)0x0) && (curActorState = this->actorState, curActorState != AS_None)) {
 			/* End old state? */
-			pCVar3->TermState(EVar1, newState);
+			pBehaviour->TermState(curActorState, newState);
 		}
+
 		this->prevActorState = this->actorState;
 		this->actorState = (EActorState)newState;
-		if ((this->numIdleLoops != 0) &&
-			(pAnimationController = this->pAnimationController, pAnimationController != (CAnimation*)0x0)) {
-				pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+
+		if ((this->numIdleLoops != 0) && (pAnimationController = this->pAnimationController, pAnimationController != (CAnimation*)0x0)) {
+			pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 		}
+
 		if (this->actorState == AS_None) {
 			PlayAnim(animType);
 		}
 		else {
 			PlayAnim(animType);
-			if (pCVar3 != (CBehaviour*)0x0) {
-				pCVar3->InitState(this->actorState);
+
+			if (pBehaviour != (CBehaviour*)0x0) {
+				pBehaviour->InitState(this->actorState);
 			}
 		}
+
 		this->timeInAir = 0.0f;
 		this->idleTimer = 0.0f;
 		this->numIdleLoops = 0;
 	}
+
 	return;
 }
 
@@ -1156,12 +1167,15 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 			if (newState != -1) {
 				this->SetState(newState, animationType);
 			}
+
 			bVar2 = false;
 		}
 		else {
 			pComponent = (CBehaviour*)0x0;
+
 			if ((behaviourId == -1) || (pComponent = this->GetBehaviour(behaviourId), pComponent != (CBehaviour*)0x0)) {
 				pSVar3 = this->GetBehaviour(this->curBehaviourId);
+
 				if (pSVar3 != (CBehaviour*)0x0) {
 					if (pComponent == (CBehaviour*)0x0) {
 						this->SetState(-1, -1);
@@ -1198,6 +1212,7 @@ bool CActor::SetBehaviour(int behaviourId, int newState, int animationType)
 	else {
 		bVar2 = false;
 	}
+
 	return bVar2;
 }
 
@@ -1502,7 +1517,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 							bVar4 = true;
 						}
 						else {
-							if (msg == 0x31) {
+							if (msg == MESSAGE_TRAP_CAUGHT) {
 								pCVar2 = this->pCollisionData;
 								if ((pCVar2 != (CCollision*)0x0) && (pMsgParam != (void*)0x0)) {
 									pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xfff7efff;
@@ -2243,13 +2258,13 @@ void CActor::SetupLodInfo()
 	return;
 }
 
-AnimResult CActor::gStateCfg_ACT[5] =
+StateConfig CActor::gStateCfg_ACT[5] =
 {
-	AnimResult(0, 4),
-	AnimResult(1, 0),
-	AnimResult(0, 0),
-	AnimResult(0, 0),
-	AnimResult(5, 0)
+	StateConfig(0, 4),
+	StateConfig(1, 0),
+	StateConfig(0, 0),
+	StateConfig(0, 0),
+	StateConfig(5, 0)
 };
 
 uint CActor::_gBehaviourFlags_ACT[2] =
@@ -2257,7 +2272,7 @@ uint CActor::_gBehaviourFlags_ACT[2] =
 	0, 0
 };
 
-AnimResult* CActor::GetStateCfg(int state)
+StateConfig* CActor::GetStateCfg(int state)
 {
 	assert(state < 4);
 	return gStateCfg_ACT + state;
@@ -3452,7 +3467,7 @@ bool CActor::PlayWaitingAnimation(float param_1, float param_2, int specialAnimT
 {
 	edAnmLayer* peVar1;
 	bool bVar2;
-	AnimResult* pAVar3;
+	StateConfig* pAVar3;
 	CAnimation* pAnimation;
 
 	pAnimation = this->pAnimationController;
@@ -3469,7 +3484,7 @@ bool CActor::PlayWaitingAnimation(float param_1, float param_2, int specialAnimT
 			peVar1 = (pAnimation->anmBinMetaAnimator).aAnimData;
 			bVar2 = false;
 			if ((peVar1->currentAnimDesc).animType == ((edAnmMetaAnimator*)&pAnimation->currentAnimType_0x30)->layerCount) {
-				if (peVar1->animPlayState == 0) {
+				if (peVar1->animPlayState == STATE_ANIM_NONE) {
 					bVar2 = false;
 				}
 				else {

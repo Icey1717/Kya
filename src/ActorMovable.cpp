@@ -184,6 +184,7 @@ void CActorMovable::SetState(int newState, int animType)
 	if (newState != this->actorState) {
 		this->dynamic.weightA = 1.0f;
 	}
+
 	CActor::SetState(newState, animType);
 	return;
 }

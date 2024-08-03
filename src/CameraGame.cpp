@@ -648,8 +648,8 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	}
 	else {
 		int boneId = pCVar3->DoMessage(pCVar3, (ACTOR_MESSAGE)0x4d, (MSG_PARAM)5);
-		AnimMatrixData* pBone = v1->pActor->pAnimationController->FindReggedBone(boneId);
-		if (pBone == (AnimMatrixData*)0x0) {
+		BoneData* pBone = v1->pActor->pAnimationController->FindReggedBone(boneId);
+		if (pBone == (BoneData*)0x0) {
 			pCVar3 = v1->pActor;
 			v1->field_0x20 = pCVar3->currentLocation;
 			(v1->field_0x20).y = (v1->field_0x20).y + 1.39f;
@@ -675,7 +675,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		else {
 			uVar6 = 0;
 			if (pCVar2->actorState != -1) {
-				AnimResult* pAnimResult = pCVar2->GetStateCfg(pCVar2->actorState);
+				StateConfig* pAnimResult = pCVar2->GetStateCfg(pCVar2->actorState);
 				uVar6 = pAnimResult->flags_0x4;
 			}
 

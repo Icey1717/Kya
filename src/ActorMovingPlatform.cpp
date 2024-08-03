@@ -776,26 +776,26 @@ void CActorMovingPlatform::ForceCarriedStuff()
 	return;
 }
 
-AnimResult CActorMovingPlatform::gStateCfg_MPF[13] =
+StateConfig CActorMovingPlatform::gStateCfg_MPF[13] =
 {
-	AnimResult(6, 0x104),
-	AnimResult(0, 0x004),
-	AnimResult(0, 0x104),
-	AnimResult(0, 0x004),
-	AnimResult(0, 0x004),
-	AnimResult(6, 0x004),
-	AnimResult(0, 0x004),
-	AnimResult(6, 0x004),
-	AnimResult(0, 0x004),
-	AnimResult(0, 0x004),
-	AnimResult(6, 0x004),
-	AnimResult(0, 0x004),
-	AnimResult(7, 0x021),
+	StateConfig(6, 0x104),
+	StateConfig(0, 0x004),
+	StateConfig(0, 0x104),
+	StateConfig(0, 0x004),
+	StateConfig(0, 0x004),
+	StateConfig(6, 0x004),
+	StateConfig(0, 0x004),
+	StateConfig(6, 0x004),
+	StateConfig(0, 0x004),
+	StateConfig(0, 0x004),
+	StateConfig(6, 0x004),
+	StateConfig(0, 0x004),
+	StateConfig(7, 0x021),
 };
 
-AnimResult* CActorMovingPlatform::GetStateCfg(int state)
+StateConfig* CActorMovingPlatform::GetStateCfg(int state)
 {
-	AnimResult* pAVar1;
+	StateConfig* pAVar1;
 
 	if (state < 5) {
 		pAVar1 = CActorMovable::GetStateCfg(state);
@@ -813,7 +813,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 	int iVar3;
 	uint uVar4;
 	CCamera* pCameraView;
-	AnimResult* pAVar5;
+	StateConfig* pAVar5;
 	int* piVar6;
 	int iVar7;
 	uint uVar8;

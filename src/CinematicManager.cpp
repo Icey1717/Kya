@@ -3615,7 +3615,7 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 				peVar5 = pAnimationController->anmBinMetaAnimator.aAnimData;
 				cVar1 = pTag->srcAnim.field_0x8;
 				fVar8 = pTag->srcAnim.field_0x4;
-				peVar5->animPlayState = 0;
+				peVar5->animPlayState = STATE_ANIM_NONE;
 				peVar5->SetRawAnim(pSrcAnimation, cVar1 != '\0', 0xfffffffe);
 				edAnmStage::ComputeAnimParams(fVar8, (peVar5->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, 0, (uint)(((peVar5->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
 				(peVar5->currentAnimDesc).state.time_0x10 = local_10[0];
@@ -3628,7 +3628,7 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 				cVar2 = pTag->srcAnim.field_0x8;
 				fVar8 = pTag->srcAnim.field_0x4;
 				fVar10 = pTag->dstAnim.field_0x4;
-				peVar5->animPlayState = 0;
+				peVar5->animPlayState = STATE_ANIM_NONE;
 				peVar5->SetRawAnim(pDstAnimation, cVar1 != '\0', (uint)(pDstAnimation + 1));
 				peVar5->SetRawAnim(pSrcAnimation, cVar2 != '\0', (uint)(pSrcAnimation + 2));
 				peVar5->field_0xbc = 1.0;

@@ -353,19 +353,19 @@ CBehaviour* CActorWind::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
-AnimResult _gStateCfg_WND[6] =
+StateConfig _gStateCfg_WND[6] =
 {
-	AnimResult(0x0, 0x200),
-	AnimResult(0x0, 0x200),
-	AnimResult(0x0, 0x100),
-	AnimResult(0x0, 0x100),
-	AnimResult(0x0, 0x100),
-	AnimResult(0x0, 0x1),
+	StateConfig(0x0, 0x200),
+	StateConfig(0x0, 0x200),
+	StateConfig(0x0, 0x100),
+	StateConfig(0x0, 0x100),
+	StateConfig(0x0, 0x100),
+	StateConfig(0x0, 0x1),
 };
 
-AnimResult* CActorWind::GetStateCfg(int state)
+StateConfig* CActorWind::GetStateCfg(int state)
 {
-	AnimResult* pAVar1;
+	StateConfig* pAVar1;
 
 	if (state < 5) {
 		pAVar1 = CActor::GetStateCfg(state);
@@ -385,7 +385,7 @@ void CActorWind::BehaviourWind_Manage()
 	uint uVar5;
 	edF32VECTOR4* peVar6;
 	uint uVar7;
-	AnimResult* pAVar8;
+	StateConfig* pAVar8;
 	CActor* pCVar9;
 	CFxWind* pCVar10;
 	float fVar11;

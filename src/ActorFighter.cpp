@@ -416,7 +416,7 @@ bool CActorFighter::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	bool bVar1;
-	AnimResult* pAVar2;
+	StateConfig* pAVar2;
 	CBehaviour* pCVar3;
 	CLifeInterface* pCVar4;
 	int iVar5;
@@ -523,6 +523,20 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 	}
 	return iVar5;
+}
+
+int CActorFighter::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam)
+{
+	int result;
+
+	if ((msg == 2) || (msg == 3)) {
+		IMPLEMENTATION_GUARD(
+		this->field_0x634 = pSender;)
+	}
+
+	result = CActor::ReceiveMessage(pSender, msg, pMsgParam);
+
+	return result;
 }
 
 bool CActorFighter::IsFightRelated(int param_2)

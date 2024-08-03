@@ -715,9 +715,8 @@ CBehaviour* CActorHeroPrivate::BuildBehaviour(int behaviourType)
 
 void CActorHeroPrivate::SetState(int newState, int animType)
 {
-	uint uVar1;
 	int iVar2;
-	AnimResult* piVar3;
+	StateConfig* pStateCfg;
 	Timer* pTVar4;
 	undefined8 uVar5;
 	ulong uVar6;
@@ -729,8 +728,10 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 	   For begin jump the type or mode is 0x79
 	   Initial anim is -1 */
 	currentState = this->actorState;
-	uVar1 = TestState_IsInHit(0xffffffff);
-	if (uVar1 != 0) {
+
+	const uint inHitState = TestState_IsInHit(0xffffffff);
+
+	if (inHitState != 0) {
 		CLifeInterface* pLifeInterface = GetLifeInterface();
 		fVar8 = pLifeInterface->GetValue();
 		if ((fVar8 <= 0.0f) || (0.0f < this->field_0x2e4)) {
@@ -740,8 +741,7 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 		}
 	}
 
-	if ((currentState != newState) &&
-		(uVar6 = GetBehaviourFlags(this->curBehaviourId), (uVar6 & 0x200) != 0)) {
+	if ((currentState != newState) && (uVar6 = GetBehaviourFlags(this->curBehaviourId), (uVar6 & 0x200) != 0)) {
 		GetStateHeroFlags(newState);
 		//::EmptyFunction();
 	}
@@ -753,12 +753,11 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 		animType = ActorStateFunc_00327470((Actor*)this, newState, animType);)
 	}
 
-	uVar1 = GetStateHeroFlags(newState);
-	uVar1 = TestState_IsOnAToboggan(uVar1);
-	if (((uVar1 != 0) && (iVar2 = CLevelScheduler::ScenVar_Get(0x10), 0 < iVar2)) &&
-		(newState != 0xef)) {
-		piVar3 = GetStateCfg(newState);
-		animType = piVar3->animId + 0xa;
+	const uint stateHeroFlags = GetStateHeroFlags(newState);
+	const uint onToboggan = TestState_IsOnAToboggan(stateHeroFlags);
+	if (((onToboggan != 0) && (iVar2 = CLevelScheduler::ScenVar_Get(0x10), 0 < iVar2)) && (newState != 0xef)) {
+		pStateCfg = GetStateCfg(newState);
+		animType = pStateCfg->animId + 0xa;
 	}
 
 	CActorMovable::SetState(newState, animType);
@@ -775,8 +774,7 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 		}
 	}
 
-	uVar1 = GetStateHeroFlags(this->actorState);
-	this->heroFlags = uVar1;
+	this->heroFlags = GetStateHeroFlags(this->actorState);
 	return;
 }
 
@@ -887,7 +885,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	bool bVar9;
 	uint uVar10;
 	CLifeInterface* pCVar11;
-	AnimResult* pAVar12;
+	StateConfig* pAVar12;
 	int iVar13;
 	int iVar14;
 	Timer* pTVar15;
@@ -1298,16 +1296,16 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
-				if (this->actorState == 0x117) {
+				if (this->actorState == STATE_HERO_CAUGHT_TRAP_1) {
 					if (this->pTrappedByActor != pSender) {
 						return 0;
 					}
 
-					SetBehaviour(7, 0x118, 0xffffffff);
+					SetBehaviour(7, STATE_HERO_CAUGHT_TRAP_2, 0xffffffff);
 				}
 				else {
 					this->pTrappedByActor = pSender;
-					SetBehaviour(7, 0x117, 0xffffffff);
+					SetBehaviour(7, STATE_HERO_CAUGHT_TRAP_1, 0xffffffff);
 				}
 
 				return 1;
@@ -2153,7 +2151,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 	uint levelId;
 	bool bVar1;
 	CLifeInterface* pCVar2;
-	AnimResult* pAVar3;
+	StateConfig* pAVar3;
 	uint uVar4;
 	undefined4 uVar5;
 	uint uVar6;
@@ -2710,7 +2708,7 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 	CPlayerInput* pCVar1;
 	edF32VECTOR4* peVar2;
 	bool bVar3;
-	AnimResult* pAVar4;
+	StateConfig* pAVar4;
 	uint uVar5;
 	Timer* pTVar6;
 	undefined4 uVar7;
@@ -3044,19 +3042,19 @@ void CActorHeroPrivate::ClearLocalData()
 	this->animKey_0x157c = this->currentLocation.y + 20.0f;
 	this->field_0x11f0 = this->currentLocation.y;
 	//_ResetHeroFight(this);
-	//iVar8 = (int)this->pCollisionData;
-	//if (iVar8 != 0) {
-	//	*(uint*)iVar8 = *(uint*)iVar8 | 0x10000;
-	//	iVar8 = (int)this->pCollisionData;
-	//	*(uint*)iVar8 = *(uint*)iVar8 | 0x81003;
-	//	iVar8 = (int)this->pCollisionData;
-	//	*(uint*)iVar8 = *(uint*)iVar8 | 0x4000;
-	//	iVar8 = *(int*)&this->field_0xf54;
-	//	if (iVar8 != 0) {
-	//		puVar2 = *(uint**)(iVar8 + 0x2c);
-	//		*puVar2 = *puVar2 & 0xffffdfff;
-	//	}
-	//}
+	CCollision* pCollision = this->pCollisionData;
+	if (pCollision != (CCollision*)0x0) {
+		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x10000;
+		pCollision = this->pCollisionData;
+		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x81003;
+		pCollision = this->pCollisionData;
+		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x4000;
+		CActor* pCVar1 = this->field_0xf54;
+		if (pCVar1 != (CActor*)0x0) {
+			pCollision = pCVar1->pCollisionData;
+			pCollision->flags_0x0 = pCollision->flags_0x0 & 0xffffdfff;
+		}
+	}
 
 	this->field_0xf54 = 0;
 
@@ -3146,7 +3144,7 @@ void CActorHeroPrivate::BehaviourHero_InitState(int newState)
 	CCamera* pCamera;
 	CCameraManager* pCVar5;
 	uint uVar6;
-	AnimResult* pAVar7;
+	StateConfig* pAVar7;
 	undefined4 uVar8;
 	long lVar9;
 	long lVar10;
@@ -3635,7 +3633,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 	int iVar4;
 	uint uVar5;
 	edF32VECTOR4* peVar6;
-	AnimResult* pAVar7;
+	StateConfig* pAVar7;
 	Timer* pTVar8;
 	int iVar9;
 	bool bSuccess;
@@ -3680,7 +3678,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 				edAnmLayer* peVar3 = (pAnimController->anmBinMetaAnimator).aAnimData;
 				if ((peVar3->currentAnimDesc).animType == pAnimController->currentAnimType_0x30) {
 					bSuccess = false;
-					if (peVar3->animPlayState != 0) {
+					if (peVar3->animPlayState != STATE_ANIM_NONE) {
 						bSuccess = (peVar3->field_0xcc & 2) != 0;
 					}
 				}
@@ -3700,7 +3698,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 				edAnmLayer* peVar3 = (pAnimController->anmBinMetaAnimator).aAnimData;
 				if ((peVar3->currentAnimDesc).animType == pAnimController->currentAnimType_0x30) {
 					bSuccess = false;
-					if (peVar3->animPlayState != 0) {
+					if (peVar3->animPlayState != STATE_ANIM_NONE) {
 						bSuccess = (peVar3->field_0xcc & 2) != 0;
 					}
 				}
@@ -3708,7 +3706,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 					bSuccess = false;
 				}
 				if (bSuccess) {
-					AnimResult* pAnimResult = GetStateCfg(this->actorState);
+					StateConfig* pAnimResult = GetStateCfg(this->actorState);
 					PlayAnim(pAnimResult->animId);
 				}
 				bCheckEffort = 0;
@@ -4111,7 +4109,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 	int* piVar5;
 	edAnmLayer* peVar6;
 	bool bVar7;
-	AnimResult* pAVar8;
+	StateConfig* pAVar8;
 	uint uVar9;
 	int iVar10;
 	Timer* pTVar11;
@@ -4689,7 +4687,7 @@ void CActorHeroPrivate::StateHeroRun()
 	CAnimation* pCVar4;
 	edAnmLayer* peVar5;
 	bool bVar6;
-	AnimResult* pAVar7;
+	StateConfig* pAVar7;
 	uint uVar8;
 	Timer* pTVar9;
 	edF32VECTOR4* peVar10;
@@ -5228,7 +5226,7 @@ void CActorHeroPrivate::StateHeroSlideInit(int param_2)
 {
 	CCollision* pCVar1;
 	int iVar2;
-	AnimResult* pAVar3;
+	StateConfig* pAVar3;
 	uint uVar4;
 	edF32VECTOR4* peVar5;
 	float fVar6;
@@ -6400,7 +6398,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 					AVar6 = (peVar4->currentAnimDesc).animType;
 					bVar7 = false;
 					if (AVar6 == AVar5) {
-						if (peVar4->animPlayState == 0) {
+						if (peVar4->animPlayState == STATE_ANIM_NONE) {
 							bVar7 = false;
 						}
 						else {
@@ -6443,7 +6441,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 								else {
 									bVar7 = false;
 									if (AVar6 == AVar5) {
-										if (peVar4->animPlayState == 0) {
+										if (peVar4->animPlayState == STATE_ANIM_NONE) {
 											bVar7 = false;
 										}
 										else {
@@ -6945,7 +6943,7 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 {
 	CCollision* pCVar1;
 	CActor* pReceiver;
-	AnimResult* pAVar2;
+	StateConfig* pAVar2;
 	Timer* pTVar3;
 	int iVar4;
 	uint uVar5;
@@ -7094,13 +7092,13 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 	Timer* pTVar9;
 	uint uVar10;
 	int iVar11;
-	AnimResult* pAVar12;
+	StateConfig* pAVar12;
 	CCamera* pCVar13;
 	ECameraType EVar14;
 	CActorWindState* uVar15;
 	CActorWindState* iVar16;
 	CActorWindState* pCVar17;
-	AnimResult* pAVar18;
+	StateConfig* pAVar18;
 	CPlayerInput* pCVar19;
 	int iVar20;
 	CActorWindState* piVar21;
@@ -9172,7 +9170,7 @@ void CActorHeroPrivate::SetInvincible(float t0, int param_3)
 void CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)
 {
 	Timer* pTVar4;
-	AnimResult* pAVar5;
+	StateConfig* pAVar5;
 	uint uVar6;
 	int iVar7;
 	float fVar8;
@@ -9690,6 +9688,281 @@ void CBehaviourHeroDefault::End(int newBehaviourId)
 	this->pHero->ResetBoomyDefaultSettings();
 	this->pHero = (CActorHeroPrivate*)0x0;
 	return;
+}
+
+int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorHeroPrivate* pHeroRef;
+	CCollision* pCollisionRef;
+	bool bVar3;
+	CLifeInterface* pLifeInterface;
+	CPlayerInput* pPlayerInput;
+	uint uVar6;
+	int iVar7;
+	Timer* pTimer;
+	StateConfig* pStateCfg;
+	float* pfVar10;
+	edF32VECTOR4* v0;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+
+	pHeroRef = this->pHero;
+
+	pLifeInterface = pHeroRef->GetLifeInterface();
+
+	fVar11 = pLifeInterface->GetValue();
+	bVar3 = fVar11 - pHeroRef->field_0x2e4 <= 0.0f;
+
+	if (!bVar3) {
+		iVar7 = pHeroRef->actorState;
+		if (iVar7 == -1) {
+			uVar6 = 0;
+		}
+		else {
+			pStateCfg = pHeroRef->GetStateCfg(iVar7);
+			uVar6 = pStateCfg->flags_0x4 & 1;
+		}
+		bVar3 = uVar6 != 0;
+	}
+
+	if (((bVar3) || (0.0f < this->pHero->field_0x1558) ||
+		(bVar3 = this->pHero->TestState_IsInCheatMode()), bVar3 != false)) {
+		iVar7 = 0;
+	}
+	else {
+		if (msg == 0x6a) {
+			uVar6 = this->pHero->TestState_IsCrouched(0xffffffff);
+
+			if (uVar6 == 0) {
+				pHeroRef = this->pHero;
+				iVar7 = pHeroRef->actorState;
+
+				if (iVar7 == -1) {
+					uVar6 = 0;
+				}
+				else {
+					pStateCfg = pHeroRef->GetStateCfg(iVar7);
+					uVar6 = pStateCfg->flags_0x4 & 0x100;
+				}
+
+				if (uVar6 != 0) {
+					pHeroRef = this->pHero;
+					iVar7 = pHeroRef->actorState;
+
+					if (iVar7 == 0x11a) {
+						pHeroRef->SetState(0x11b, 0xffffffff);
+					}
+					else {
+						if (iVar7 == 0x76) {
+							pHeroRef->SetState(0x8a, 0xffffffff);
+						}
+						else {
+							pHeroRef->SetState(0x84, 0xffffffff);
+						}
+					}
+				}
+			}
+			iVar7 = 1;
+		}
+		else {
+			if (msg == 0x4b) {
+				IMPLEMENTATION_GUARD(
+				uVar6 = this->pHero->TestState_IsOnAToboggan(0xffffffff);
+
+				if ((uVar6 == 0) || (iVar7 = CLevelScheduler::ScenVar_Get(0x10), iVar7 < 2)) {
+					iVar7 = 0;
+				}
+				else {
+					pTimer = GetTimer();
+					edF32Vector4ScaleHard
+					(*(float*)((int)pMsgParam + 0x10) / pTimer->cutsceneDeltaTime, &eStack96, (edF32VECTOR4*)pMsgParam);
+					pHeroRef = this->pHero;
+					pTimer = GetTimer();
+					edF32Vector4ScaleHard(0.02 / pTimer->cutsceneDeltaTime, &eStack112, &eStack96);
+					v0 = pHeroRef->dynamicExt.aVelocity;
+					edF32Vector4AddHard(v0, v0, &eStack112);
+					fVar11 = edF32Vector4GetDistHard(pHeroRef->dynamicExt.aVelocity);
+					pHeroRef->dynamicExt.aVelocityMagnitudes[0] = fVar11;
+					pHeroRef = this->pHero;
+					fVar11 = *(float*)((int)pMsgParam + 0x10) + pHeroRef->field_0xa80;
+					if (pHeroRef->field_0x10cc < fVar11) {
+						pHeroRef->field_0x10cc = fVar11;
+						pHeroRef = this->pHero;
+						fVar11 = pHeroRef->field_0x10cc;
+						pfVar10 = &pHeroRef->field_0x10cc;
+						if (65.0 < fVar11) {
+							*pfVar10 = 65.0;
+						}
+						else {
+							fVar12 = pHeroRef->field_0x10c0;
+							if (fVar11 < fVar12) {
+								*pfVar10 = fVar12;
+							}
+						}
+					}
+					iVar7 = 1;
+					(this->pHero->base).field_0x10d4 = *(float*)((int)pMsgParam + 0x14);
+				})
+			}
+			else {
+				if (msg == 0x33) {
+					IMPLEMENTATION_GUARD(
+					edF32Matrix4FromEulerSoft(&eStack64, *(edF32VECTOR3**)((int)pMsgParam + 8), "XYZ");
+					pHeroRef = this->pHero;
+					pHeroRef->rotationQuat.x = eStack64.ca;
+					pHeroRef->rotationQuat.y = eStack64.cb;
+					pHeroRef->rotationQuat.z = eStack64.cc;
+					pHeroRef->rotationQuat.w = eStack64.cd;
+
+					/* WARNING: Load size is inaccurate */
+					if (((*pMsgParam != 0) && (pfVar10 = *(float**)((int)pMsgParam + 4), pfVar10 != (float*)0x0)) &&
+						(0.0 < *(float*)((int)pMsgParam + 0xc))) {
+						local_50.x = *pfVar10;
+						local_50.y = pfVar10[1];
+						local_50.z = pfVar10[2];
+						local_50.w = 1.0;
+						/* WARNING: Load size is inaccurate */
+						edF32Vector4SubHard(&local_50, &local_50, *pMsgParam);
+						FUN_002003d0(*(undefined4*)((int)pMsgParam + 0xc), &(this->pHero->base).field_0xf70, 0x40eb90, &local_50, 1);
+						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
+							((CActor*)this->pHero, 0x116, 0xffffffff);
+						return 1;
+					})
+				}
+				else {
+					if (msg == 0x2a) {
+						IMPLEMENTATION_GUARD(
+						if ((int)pMsgParam == 1) {
+							(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
+								((CActor*)this->pHero, 0x73, 0xffffffff);
+						})
+						return 1;
+					}
+					if (msg == 0x29) {
+						IMPLEMENTATION_GUARD(
+						if ((int)pMsgParam == 1) {
+							(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
+								((CActor*)this->pHero, 0xdf, 0xffffffff);
+						})
+						return 1;
+					}
+
+					if (msg == 0x5d) {
+						IMPLEMENTATION_GUARD(
+						pHeroRef = this->pHero;
+						pHeroRef->flags = pHeroRef->flags & 0xfffffffd;
+						pHeroRef->flags = pHeroRef->flags | 1;
+						pHeroRef = this->pHero;
+						pHeroRef->flags = pHeroRef->flags & 0xffffff7f;
+						pHeroRef->flags = pHeroRef->flags | 0x20;
+						CActor::EvaluateDisplayState((CActor*)pHeroRef);
+						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
+							((CActor*)this->pHero, 0x72, 0xffffffff);
+						pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
+						pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 & 0xfff7efff;
+						pHeroRef = this->pHero;
+						if (pHeroRef != (CActorHeroPrivate*)CActorHero::_gThis) {
+							pPlayerInput = (*(pHeroRef->pVTable)->GetInputManager)
+								((CActor*)pHeroRef, 0, 0);
+							pPlayerInput->playerId = 0;
+						}
+						return 1;)
+					}
+
+					if (msg == 0x5c) {
+						IMPLEMENTATION_GUARD(
+						pHeroRef = this->pHero;
+						pHeroRef->flags = pHeroRef->flags | 2;
+						pHeroRef->flags = pHeroRef->flags & 0xfffffffe;
+						pHeroRef = this->pHero;
+						pHeroRef->flags = pHeroRef->flags | 0x80;
+						pHeroRef->flags = pHeroRef->flags & 0xffffffdf;
+						CActor::EvaluateDisplayState((CActor*)pHeroRef);
+						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
+							((CActor*)this->pHero, 0x73, 0xffffffff);
+						pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
+						pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 | 0x81000;
+						pHeroRef = this->pHero;
+						if (pHeroRef != (CActorHeroPrivate*)CActorHero::_gThis) {
+							pPlayerInput = (*(pHeroRef->pVTable)->GetInputManager)
+								((CActor*)pHeroRef, 0, 0);
+							pPlayerInput->playerId = 1;
+						}
+						return 1;)
+					}
+
+					if (msg == 0x32) {
+						IMPLEMENTATION_GUARD(
+						if (pMsgParam != (void*)0x0) {
+							pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
+							pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 | 0x81000;
+						}
+						pHeroRef = this->pHero;
+						pHeroRef->flags = pHeroRef->flags | 0x80;
+						pHeroRef->flags = pHeroRef->flags & 0xffffffdf;
+						CActor::EvaluateDisplayState((CActor*)pHeroRef);
+						return 1;)
+					}
+
+					if (msg == MESSAGE_TRAP_CAUGHT) {
+						if (pMsgParam != (void*)0x0) {
+							pCollisionRef = this->pHero->pCollisionData;
+							pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 & 0xfff7efff;
+						}
+
+						pHeroRef = this->pHero;
+						pHeroRef->flags = pHeroRef->flags & 0xffffff7f;
+						pHeroRef->flags = pHeroRef->flags | 0x20;
+						pHeroRef->EvaluateDisplayState();
+
+						return 1;
+					}
+
+					if (msg == 0x24) {
+						IMPLEMENTATION_GUARD(
+						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
+							((CActor*)this->pHero, 0x73, 0xffffffff);
+						return 1;)
+					}
+
+					if (msg == 0x23) {
+						IMPLEMENTATION_GUARD(
+						/* WARNING: Load size is inaccurate */
+						if (*pMsgParam != 0) {
+							pHeroRef = this->pHero;
+							pHeroRef->flags =
+								pHeroRef->flags & 0xffffff7f;
+							pHeroRef->flags =
+								pHeroRef->flags | 0x20;
+							CActor::EvaluateDisplayState((CActor*)pHeroRef);
+						}
+						*(undefined4*)&(this->pHero->base).field_0x1614 = *(undefined4*)((int)pMsgParam + 4);
+						*(CActor**)&(this->pHero->base).field_0xf14 = pSender;
+						if (*(int*)((int)pMsgParam + 8) == 0) {
+							pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
+							pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 & 0xfffffffd;
+						}
+						else {
+							pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
+							pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 | 2;
+						}
+						(this->pHero->base).field_0x1610 = *(int*)((int)pMsgParam + 0xc);
+						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
+							((CActor*)this->pHero, 0x72, 0xffffffff);
+						return 1;)
+					}
+				}
+
+				iVar7 = 0;
+			}
+		}
+	}
+
+	return iVar7;
 }
 
 void CBehaviourHeroDefault::InitState(int newState)

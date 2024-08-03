@@ -33,10 +33,10 @@ struct edAnmAnim {
 	static edANM_HDR* LoadFromMem(char* pFileData, int size);
 };
 
-struct AnimMatrixData {
+struct BoneData {
 	edF32MATRIX4 matrix;
-	AnimMatrixData* pNext;
-	AnimMatrixData* pPrev;
+	BoneData* pNext;
+	BoneData* pPrev;
 	uint boneId;
 	short boneNodeIndex;
 	short usedByCount;
@@ -55,7 +55,7 @@ struct edAnmMacroAnimator {
 	AnimationCallback pFunction;
 	CActor* pActor;
 	int animationType;
-	float field_0x30;
+	float playingDuration;
 
 	void Initialize(float param_1, edANM_HDR* pHdr, bool param_4, uint param_5);
 	void AnimateDT(float time);
@@ -106,7 +106,7 @@ public:
 
 	void Level_Create(ByteCode* pMemoryStream);
 
-	AnimMatrixData* aAnimMatrixData;
+	BoneData* aAnimMatrixData;
 	edF32MATRIX4* pBufferB_0x8;
 	char* pAnimKeyEntryData;
 	int levelAnimCount;

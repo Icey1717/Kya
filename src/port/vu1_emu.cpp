@@ -14,6 +14,8 @@
 
 #include "hardware_draw.h"
 
+#include "renderer.h"
+
 // ISPC
 #ifdef ENABLE_ISPC
 #include "vtx.h"
@@ -2952,11 +2954,6 @@ bool& VU1Emu::GetRunSimplifiedCode()
 bool& VU1Emu::GetTraceVtx()
 {
 	return bTraceVtx;
-}
-
-bool& VU1Emu::GetForceAnimMatrixIdentity()
-{
-	return bForceAnimMatrixIdentity;
 }
 
 bool& VU1Emu::GetEnableEmulatedRendering()

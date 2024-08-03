@@ -108,14 +108,14 @@ edAnmManager TheAnimManager = {};
 
 void CAnimationManager::Game_Init()
 {
-	AnimMatrixData* pAVar1;
+	BoneData* pAVar1;
 	edF32MATRIX4* puVar2;
 
 	this->pAnimKeyEntryData = (char*)0x0;
 	this->levelAnimCount = 0;
 	this->loadedAnimKeyDataCount = 0;
 	this->pAnimKeyTable = (edANM_HDR**)0x0;
-	pAVar1 = new AnimMatrixData[NUM_ANIM_MATRIX_DATA];
+	pAVar1 = new BoneData[NUM_ANIM_MATRIX_DATA];
 	this->aAnimMatrixData = pAVar1;
 	puVar2 = new edF32MATRIX4[1360];
 	this->pBufferB_0x8 = puVar2;
@@ -128,7 +128,7 @@ void CAnimationManager::Game_Term()
 	if (this->pBufferB_0x8 != (edF32MATRIX4*)0x0) {
 		delete this->pBufferB_0x8;
 	}
-	if (this->aAnimMatrixData != (AnimMatrixData*)0x0) {
+	if (this->aAnimMatrixData != (BoneData*)0x0) {
 		delete this->aAnimMatrixData;
 	}
 	return;
@@ -142,7 +142,7 @@ bool CAnimationManager::LevelLoading_Manage()
 
 void CAnimationManager::Level_ClearAll()
 {
-	AnimMatrixData* m0;
+	BoneData* m0;
 	int iVar1;
 
 	iVar1 = NUM_ANIM_MATRIX_DATA;
@@ -524,7 +524,7 @@ void CAnimationManager::Level_Create(ByteCode* pMemoryStream)
 	int iVar1;
 	edANM_HDR** ppeVar2;
 	int iVar3;
-	AnimMatrixData* m0;
+	BoneData* m0;
 
 	iVar1 = pMemoryStream->GetS32();
 	this->levelAnimCount = iVar1;

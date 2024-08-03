@@ -336,7 +336,7 @@ namespace Debug {
 		}
 
 		if (gForceAnimMatrixIdentity.DrawImguiControl()) {
-			VU1Emu::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
+			Renderer::GetForceAnimMatrixIdentity() = gForceAnimMatrixIdentity;
 		}
 
 		if (gEnableEmulatedRendering.DrawImguiControl()) {
@@ -764,7 +764,7 @@ void DebugMenu::Init()
 	ed3DGetMeshLoadedDelegate() += Debug::OnMeshLoaded;
 
 	ed3D::DebugOptions::GetDisableClusterRendering() = Debug::gDisableClusterRendering;
-	VU1Emu::GetForceAnimMatrixIdentity() = Debug::gForceAnimMatrixIdentity;
+	Renderer::GetForceAnimMatrixIdentity() = Debug::gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = Debug::gEnableEmulatedRendering;
 	Renderer::Native::GetUsePreprocessedVertices() = Debug::gUsePreprocessedVertices;
 }
