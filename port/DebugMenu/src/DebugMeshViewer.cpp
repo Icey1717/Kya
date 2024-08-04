@@ -72,19 +72,19 @@ namespace DebugMeshViewer {
 		static glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 		const float cameraSpeed = 30.f * deltaTime; // adjust accordingly
-		if (ImGui::IsKeyPressed(ImGuiKey_Comma))
+		if (ImGui::IsKeyPressed(ImGuiKey_Comma)) {
 			cameraPos += cameraSpeed * cameraFront;
-		if (ImGui::IsKeyPressed(ImGuiKey_O))
+		}
+		if (ImGui::IsKeyPressed(ImGuiKey_O)) {
 			cameraPos -= cameraSpeed * cameraFront;
-		//if (ImGui::IsKeyPressed(ImGuiKey_A))
-		//	cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-		//if (ImGui::IsKeyPressed(ImGuiKey_E))
-		//	cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		}
 
-		if (ImGui::IsKeyPressed(ImGuiKey_A))
+		if (ImGui::IsKeyPressed(ImGuiKey_A)) {
 			cameraPos -= cameraSpeed * cameraUp;
-		if (ImGui::IsKeyPressed(ImGuiKey_E))
+		}
+		if (ImGui::IsKeyPressed(ImGuiKey_E)) {
 			cameraPos += cameraSpeed * cameraUp;
+		}
 
 		auto view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		auto proj = glm::perspective(glm::radians(45.0f), (float)gWidth / (float)gHeight, 0.1f, 100.0f);
@@ -143,26 +143,6 @@ namespace DebugMeshViewer {
 				if ((stripFlags & 0x400) != 0) {
 					drawMode = 1;
 				}
-
-				//if (addr == 0x3 /*_$DrawingStart_XYZ32 (0x0018)*/) {
-				//	//VU_VTX_TRACE_LOG("_$DrawingStart_XYZ32");
-				//	drawMode = 1;
-				//}
-				//else if (addr == 0xfc /*_$DrawingBones_Rigid (0x07e0)*/) {
-				//	//VU_VTX_TRACE_LOG("_$DrawingBones_Rigid");
-				//	drawMode = 2;
-				//}
-				//else if (addr == 0x156 /*_$DrawingBones_Rigid_noNormal (0x0ab0)*/) {
-				//	//VU_VTX_TRACE_LOG("_$DrawingBones_Rigid_noNormal");
-				//	drawMode = 3;
-				//}
-				//else if (addr == 0x19) {
-				//	//_$DrawingStart_XYZ32_Normal();
-				//	drawMode = 4;
-				//}
-				//else {
-				//	IMPLEMENTATION_GUARD();
-				//}
 
 				Renderer::GSVertexUnprocessed vtx;
 				memcpy(&vtx.STQ, vtxStart, sizeof(vtx.STQ));
@@ -281,6 +261,30 @@ namespace DebugMeshViewer {
 			ImGui::Checkbox("Rotate", &gRotate);
 			ImGui::SameLine();
 			ImGui::Checkbox("Wireframe", &GetWireframe());
+
+			ImGui::SameLine();
+			if (ImGui::BeginCombo("Isolate Strip", gIsolateStripIndex == -1 ? "None" : std::to_string(gIsolateStripIndex).c_str())) {
+				for (int i = -1; i < gMaxStripIndex; i++) {
+					if (ImGui::Selectable(std::to_string(i).c_str())) {
+						gIsolateStripIndex = i;
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			ImGui::SameLine();
+			ImGui::Text("Isolate Anim:");
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("IsolateAnimLeft", ImGuiDir_Left)) {
+				gHighlightAnimMatrixIndex--;
+			}
+			ImGui::SameLine();
+			ImGui::Text(std::to_string(gHighlightAnimMatrixIndex).c_str());
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("IsolateAnimRight", ImGuiDir_Right)) {
+				gHighlightAnimMatrixIndex++;
+			}
+			
 
 			ImGui::SameLine();
 			ImGui::Checkbox("Gizmo", &gUseGizmo);

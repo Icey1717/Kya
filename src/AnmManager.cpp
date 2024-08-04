@@ -356,7 +356,7 @@ void edAnmMacroAnimator::Animate()
 			}
 			this->flags = this->flags | 0x80000000;
 			this->flags = this->flags | 0x40000000;
-			this->time_0x10 = TheAnimStage.field_0x3c;
+			this->time_0x10 = TheAnimStage.animTime;
 			this->time_0xc = 1.0f;
 		}
 		else {
@@ -437,7 +437,7 @@ void edAnmMacroAnimator::Animate()
 						}
 						TheAnimStage.SetTime(this->time_0x10);
 						TheAnimStage.AnimToWRTS();
-						this->time_0x10 = TheAnimStage.field_0x3c;
+						this->time_0x10 = TheAnimStage.animTime;
 						this->time_0xc = TheAnimStage.field_0x40;
 						if (TheAnimStage.field_0x4c != false) {
 							this->flags = this->flags | 0x80000000;
@@ -460,7 +460,7 @@ void edAnmMacroAnimator::Animate()
 
 		TheAnimStage.SetTime(this->time_0x10);
 		TheAnimStage.AnimToWRTS();
-		this->time_0x10 = TheAnimStage.field_0x3c;
+		this->time_0x10 = TheAnimStage.animTime;
 		this->time_0xc = TheAnimStage.field_0x40;
 		if (TheAnimStage.field_0x4c != false) {
 			this->flags = this->flags | 0x80000000;

@@ -200,11 +200,12 @@ void CAnimation::StopEventTrack(int state)
 
 void edAnmStage::SetActor(edANM_SKELETON* pSkeleton)
 {
-	edANM_SKELETON* peVar1;
+	edANM_SKELETON* pTag;
 
 	(this->anmSkeleton).pTag = pSkeleton;
-	peVar1 = (this->anmSkeleton).pTag;
-	this->pConstantMatrixData = (edF32MATRIX3*)((ulong)&peVar1->boneCount + ((uint)peVar1->boneCount * 0xc + 0x13 & 0xfffffff0));
+	pTag = (this->anmSkeleton).pTag;
+	const uint offset = pTag->boneCount * 0xc + 0x13 & 0xfffffff0;
+	this->pConstantMatrixData = reinterpret_cast<edF32MATRIX3*>(reinterpret_cast<char*>(pTag) + offset);
 	return;
 }
 
@@ -732,13 +733,13 @@ void edAnmStage::SetTimeAsRatio(float ratio)
 
 	bVar1 = ComputeAnimParams(ratio * this->field_0x2c, this->field_0x2c, this->field_0x38, aOutParams, false, this->bLoop);
 	this->field_0x4c = bVar1;
-	this->field_0x3c = aOutParams[0];
+	this->animTime = aOutParams[0];
 	this->field_0x40 = aOutParams[1];
 	this->field_0x44 = aOutParams[2];
 	this->field_0x48 = aOutParams[3];
 
 	bVar1 = this->bLoop != 0;
-	if ((bVar1) && (bVar1 = true, this->field_0x3c < this->field_0x2c - this->field_0x34)) {
+	if ((bVar1) && (bVar1 = true, this->animTime < this->field_0x2c - this->field_0x34)) {
 		bVar1 = false;
 	}
 
@@ -755,12 +756,12 @@ void edAnmStage::SetTime(float time)
 
 	bVar1 = ComputeAnimParams(time, this->field_0x2c, this->field_0x38, aOutParams, false, this->bLoop);
 	this->field_0x4c = bVar1;
-	this->field_0x3c = aOutParams[0];
+	this->animTime = aOutParams[0];
 	this->field_0x40 = aOutParams[1];
 	this->field_0x44 = aOutParams[2];
 	this->field_0x48 = aOutParams[3];
 	bVar1 = this->bLoop != 0;
-	if ((bVar1) && (bVar1 = true, this->field_0x3c < this->field_0x2c - this->field_0x34)) {
+	if ((bVar1) && (bVar1 = true, this->animTime < this->field_0x2c - this->field_0x34)) {
 		bVar1 = false;
 	}
 	this->field_0x4d = bVar1;
@@ -1209,12 +1210,17 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					local_30.z = (float)(int)rowBTransformA[2] * 6.103888e-05f;
 				}
 				else {
-					rowBTransformB = (short*)(iVar8 * 6 + (char*)pfVar2);
+					ushort* pTransform = (ushort*)(iVar8 * 6 + (char*)pfVar2);
 					fVar11 = pfVar2[0];
 					fVar13 = pfVar2[1] / 65535.0f;
-					local_30.x = fVar11 + fVar13 * (float)(int)rowBTransformB[4];
-					local_30.y = fVar11 + fVar13 * (float)(int)rowBTransformB[5];
-					local_30.z = fVar11 + fVar13 * (float)(int)rowBTransformB[6];
+
+					const float a = pTransform[4];
+					const float b = pTransform[5];
+					const float c = pTransform[6];
+
+					local_30.x = fVar11 + fVar13 * a;
+					local_30.y = fVar11 + fVar13 * b;
+					local_30.z = fVar11 + fVar13 * c;
 				}
 			}
 
@@ -1473,11 +1479,6 @@ void edAnmStage::AnimToWRTS()
 	for (pKeyData = (edANM_RTS_Key_Hdr*)(this->pKeyData + 1); (uVar1 = uVar1 - 1, -1 < uVar1 && ((uint)this->field_0x24 <= (uint)pKeyData->keyCount));
 		pKeyData = (edANM_RTS_Key_Hdr*)((char*)pKeyData + pKeyData->keyOffset)) {
 		if (((pKeyData->flags & 7) != 0) && (nodeIndex = this->anmSkeleton.edAnmSkeleton::NodeIndexFromID(pKeyData->nodeId), nodeIndex != -1)) {
-
-			//if (nodeIndex != 1) {
-			//	continue;
-			//}
-
 			ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS processing: 0x{:x} node index: {}", uVar1, nodeIndex);
 
 			puVar3 = this->pConstantMatrixData + nodeIndex;
@@ -1485,9 +1486,9 @@ void edAnmStage::AnimToWRTS()
 			animMatrix = *puVar3;
 
 			pCurrentKeyData = edANM_RTS(pKeyData);
-			edAnmTransformCtrl::GetValue(this->field_0x3c, &pCurrentKeyData, &animMatrix);
+			edAnmTransformCtrl::GetValue(this->animTime, &pCurrentKeyData, &animMatrix);
 
-			ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS result: {} {} {}", animMatrix.rowX.ToString(), animMatrix.rowY.ToString(), animMatrix.rowZ.ToString());
+			ANIMATION_LOG(LogLevel::Verbose, "edAnmStage::AnimToWRTS node index: {} result: {} {} {}", nodeIndex, animMatrix.rowX.ToString(), animMatrix.rowY.ToString(), animMatrix.rowZ.ToString());
 
 			pMatrixBuffer = this->pRelativeTransformMatrixBuffer->matrices + nodeIndex;
 			*pMatrixBuffer = animMatrix;
@@ -1518,7 +1519,7 @@ void edAnmStage::AnimBlendToWRTS(float param_1)
 				local_8 = edANM_RTS(local_4);
 				local_40 = this->pConstantMatrixData[iVar1];
 
-				edAnmTransformCtrl::GetValue(this->field_0x3c, &local_8, &local_40);
+				edAnmTransformCtrl::GetValue(this->animTime, &local_8, &local_40);
 
 				outRotation = this->pRelativeTransformMatrixBuffer->matrices + iVar1;
 

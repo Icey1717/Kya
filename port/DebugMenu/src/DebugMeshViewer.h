@@ -42,9 +42,6 @@ namespace DebugMeshViewer {
 	bool& GetUseGlslPipeline();
 	bool& GetWireframe();
 
-	void ShowNodeMenu(edNODE* pNode);
-	void ShowClusterMenu(ed_g3d_manager* pManager);
-
 	void OnFrameBufferCreated(const ImTextureID& image);
 
 	void AddPreviewerStrip(ed_3d_strip* pStrip, ed_hash_code* pMBNK);

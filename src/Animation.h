@@ -31,7 +31,7 @@ struct edAnmStage {
 	float field_0x30;
 	float field_0x34;
 	float field_0x38;
-	float field_0x3c;
+	float animTime;
 	float field_0x40;
 	undefined field_0x44;
 	undefined field_0x45;
