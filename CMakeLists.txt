@@ -305,6 +305,8 @@ set (actor_src
 	"${src_root}/ActorBoomy.h"
 	"${src_root}/ActorHeroPrivate.cpp"
 	"${src_root}/ActorHeroPrivate.h"
+	"${src_root}/ActorHero_Inventory.cpp"
+	"${src_root}/ActorHero_Inventory.h"
 	"${src_root}/ActorMicken.cpp"
 	"${src_root}/ActorMicken.h"
 	"${src_root}/ActorWolfen.cpp"

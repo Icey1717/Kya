@@ -4,6 +4,18 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorHero.h"
+#include "ActorHero_Inventory.h"
+
+enum EBoomyThrowState
+{
+	BTS_None,
+	BTS_Unknown_1,
+	BTS_Melee,
+	BTS_StandardThrow,
+	BTS_TargettedThrow,
+	BTS_ControlledThrow,
+	BTS_Unknown_6
+};
 
 class CCamera;
 class CActorBoomy;
@@ -64,6 +76,19 @@ public:
 	virtual void StoreCollisionSphere();
 	virtual CLifeInterface* GetLifeInterface();
 	virtual void LifeDecrease(float amount);
+
+	bool AccomplishAction(int bUpdateActiveActionId);
+
+	void GetPossibleAction();
+	void GetPossibleMagicalTargets(CActorsTable* pTable);
+
+	bool AbleTo_AttackByBoomyBlow();
+	bool AbleTo_AttackByBoomyLaunch();
+	bool AbleTo_AttackByBoomySnipe();
+	bool AbleTo_AttackByBoomyControl();
+
+	EBoomyThrowState ManageEnterAttack();
+	bool ManageActions();
 
 	void ResetStdDefaultSettings();
 	void ResetSlideDefaultSettings();
@@ -151,9 +176,17 @@ public:
 	void SetBoomyHairOn();
 
 	void SetGripState();
+
+	int DetectClimbCeiling(edF32VECTOR4* v0, CActor** pOutActor);
+	bool DetectClimbWall(int param_2, CActor** pOutActor, float* param_4);
+	int DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTOR4* pPosition);
 	int DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4, float* param_5, float* param_6, edF32VECTOR4* param_7);
 
+	bool EvolutionBoomyCanControl();
+	bool EvolutionBoomyCanSnipe();
+	bool EvolutionBoomyCanLaunch();
 	int EvolutionBounceCanJump();
+	bool EvolutionCanClimb();
 	bool EvolutionTobogganCanJump();
 	bool EvolutionTobogganUnknown();
 
@@ -178,7 +211,12 @@ public:
 	void ConvertSpeedSumForceExtToSpeedPlayer();
 	bool GetNormalInFrontOf(float rayLength, edF32VECTOR4* pRayDirection, edF32VECTOR4* param_4, uint flags, edF32VECTOR4* pHitLocation, CActor** pActor);
 
+	int GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWayPoint* pWayPoint);
+
 	void SetInvincible(float t0, int param_3);
+	bool CheckHitAndDeath();
+
+	bool GetSomethingInFrontOf_001473e0();
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -187,7 +225,15 @@ public:
 	CActor* pTrappedByActor;
 	uint trapLinkedBone;
 
+	CActor* field_0xf10;
+	CActor* field_0xf50;
+
 	CActorWindState field_0x1190;
+
+	float field_0x1000;
+
+	CInventoryInterface inventory;
+	CMagicInterface magicInterface;
 
 	CFxHandle* field_0x10fc;
 	int* field_0x1100;
@@ -197,6 +243,11 @@ public:
 
 	float field_0x15c4;
 	float field_0x15c8;
+
+	int field_0x1b78;
+	int field_0x1b6c;
+
+	void* field_0x1bb0;
 
 	CBehaviour behaviour_0x1c50;
 	CBehaviour behaviour_0x1e10;
@@ -214,6 +265,7 @@ public:
 	CActor* field_0xf54;
 	CActor* field_0xf58;
 
+	int field_0x1a48;
 	int field_0x1a4c;
 
 	float field_0x1048;
@@ -323,7 +375,22 @@ public:
 	float field_0x1154;
 	float field_0x1158;
 
-	int field_0x1a10;
+	int boomyThrowState;
+
+	int field_0x1a00;
+
+	struct HeroActionParams
+	{
+		int actionId;
+		int activeActionId;
+		CActor* pActor;
+		undefined4 field_0xc;
+		edF32VECTOR4 field_0x10;
+		edF32VECTOR4 field_0x20;
+	} heroActionParams;
+
+	int field_0x1a40;
+	int field_0x1a44;
 
 	float field_0x118c;
 

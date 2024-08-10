@@ -43,10 +43,7 @@ struct CActorWindState {
 	// Potentially just for CActorHero
 	float field_0x38;
 	float field_0x3c;
-	float field_0x40;
-	float field_0x44;
-	float field_0x48;
-	float field_0x4c;
+	edF32VECTOR4 field_0x40;
 
 	void AddWind(_wind_param_in* pParams);
 	void SubWind(_wind_param_in* pParams);
@@ -89,12 +86,6 @@ public:
 	float scaledTotalTime;
 };
 
-class CInterface {
-public:
-	virtual float GetValue() = 0;
-	virtual void SetValue(float value) = 0;
-};
-
 class CLifeInterface : public CInterface
 {
 public:
@@ -106,12 +97,15 @@ public:
 	undefined4 field_0x10;
 
 	// CInterface
+	virtual bool Manage();
+	virtual void Draw() {}
+	virtual void Reset() {}
 	virtual float GetValue();
 	virtual void SetValue(float value);
 
 	float GetValueMax();
-
 	void SetValueMax(float max);
+
 	void SetPriority(int newPriority);
 };
 

@@ -53,6 +53,19 @@ public:
 	edF32VECTOR4 field_0x20;
 };
 
+class CInterface {
+public:
+	virtual bool Activate(int bActive) { return true; }
+	virtual bool CanActivate() { return true; }
+	virtual bool IsActive() { return true; }
+	virtual bool Manage() { return true; }
+
+	virtual void Draw() = 0;
+	virtual void Reset() = 0;
+	virtual float GetValue() = 0;
+	virtual void SetValue(float value) = 0;
+};
+
 struct SPEED_DYN {
 	void Init(float param_1, float param_2);
 	float UpdateLerp(float target);

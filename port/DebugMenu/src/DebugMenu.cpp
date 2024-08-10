@@ -785,7 +785,11 @@ Input::InputFunctions& DebugMenu::GetInputFunctions()
 
 std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_START,				ImGuiKey_Enter },
-	{ ROUTE_X,					ImGuiKey_A },
+	{ ROUTE_CROSS,				ImGuiKey_A },
+	{ ROUTE_SQUARE,				ImGuiKey_O },
+	{ ROUTE_TRIANGLE,			ImGuiKey_Comma },
+	{ ROUTE_SELECT,				ImGuiKey_Backspace },
+	{ ROUTE_CIRCLE,				ImGuiKey_E },
 	{ ROUTE_UP,					ImGuiKey_UpArrow },
 	{ ROUTE_DOWN,				ImGuiKey_DownArrow },
 	{ ROUTE_L_ANALOG_UP,		ImGuiKey_G },

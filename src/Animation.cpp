@@ -1009,7 +1009,7 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 					local_50.w = -local_50.w;
 				}
 				transShortBufferB = (short*)((char*)pfVar2 + iVar3 * 6);
-				local_60.x = (float)(int)*transShortBufferB * 3.051851e-05f;
+				local_60.x = (float)(int)transShortBufferB[0] * 3.051851e-05f;
 				local_60.y = (float)(int)transShortBufferB[1] * 3.051851e-05f;
 				local_60.z = (float)((int)((uint)transShortBufferB[2] & 0xfffffffe)) * 3.051851e-05f;
 				local_60.w = sqrtf(1.0 - (local_60.z * local_60.z + local_60.x * local_60.x + local_60.y * local_60.y));
@@ -1094,13 +1094,14 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 				pAnimMatrix->bc = pfVar2[2];
 			}
 			else {
-				short* pTrack = (short*)pfVar2;
 				if ((pDataStream->field_0x2 & 6) == 2) {
+					short* pTrack = (short*)pfVar2;
 					pAnimMatrix->ba = (float)(int)pTrack[0] * 6.103888e-05f;
 					pAnimMatrix->bb = (float)(int)pTrack[1] * 6.103888e-05f;
 					pAnimMatrix->bc = (float)(int)pTrack[2] * 6.103888e-05f;
 				}
 				else {
+					ushort* pTrack = (ushort*)pfVar2;
 					fVar12 = pfVar2[0];
 					fVar11 = pfVar2[1] / 65535.0f;
 					pAnimMatrix->ba = fVar12 + fVar11 * (float)(uint)pTrack[0];
@@ -1299,13 +1300,14 @@ void edAnmTransformCtrl::GetValue(float time, edANM_RTS* ppKeyData, edF32MATRIX3
 				pAnimMatrix->cc = pfVar2[2];
 			}
 			else {
-				short* pTrack = (short*)pfVar2;
 				if ((pDataStream->field_0x2 & 6) == 2) {
+					short* pTrack = (short*)pfVar2;
 					pAnimMatrix->ca = (float)(int)pTrack[0] * 6.103888e-05f;
 					pAnimMatrix->cb = (float)(int)pTrack[1] * 6.103888e-05f;
 					pAnimMatrix->cc = (float)(int)pTrack[2] * 6.103888e-05f;
 				}
 				else {
+					ushort* pTrack = (ushort*)pfVar2;
 					fVar12 = *pfVar2;
 					fVar11 = pfVar2[1] / 65535.0;
 					pAnimMatrix->ca = fVar12 + fVar11 * (float)(uint)pTrack[0];

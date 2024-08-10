@@ -125,10 +125,10 @@ void CActorWindState::Reset()
 	this->field_0x2c = (CWayPoint*)0x0;
 	this->field_0x30 = 0.0f;
 	this->field_0x34 = 0.0f;
-	this->field_0x40 = 0.0f;
-	this->field_0x44 = 0.0f;
-	this->field_0x48 = 0.0f;
-	this->field_0x4c = 0.0f;
+	this->field_0x40.x = 0.0f;
+	this->field_0x40.y = 0.0f;
+	this->field_0x40.z = 0.0f;
+	this->field_0x40.w = 0.0f;
 	this->field_0x38 = 0.0f;
 	return;
 }
@@ -818,21 +818,8 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	CActorWindState* pCVar7 = GetWindState();
 	if (pCVar7 != (CActorWindState*)0x0) {
-		float fVar14 = (this->dynamicExt).aVelocity[2].x;
-		pCVar7 = GetWindState();
-		pCVar7->field_0x40 = fVar14;
-		fVar14 = (this->dynamicExt).aVelocity[2].y;
-		pCVar7 = GetWindState();
-		pCVar7->field_0x44 = fVar14;
-		fVar14 = (this->dynamicExt).aVelocity[2].z;
-		pCVar7 = GetWindState();
-		pCVar7->field_0x48 = fVar14;
-		fVar14 = (this->dynamicExt).aVelocity[2].w;
-		pCVar7 = GetWindState();
-		pCVar7->field_0x4c = fVar14;
-		fVar14 = (this->dynamicExt).aVelocityMagnitudes[2];
-		pCVar7 = GetWindState();
-		pCVar7->field_0x38 = fVar14;
+		GetWindState()->field_0x40 = (this->dynamicExt).aVelocity[2];
+		GetWindState()->field_0x38 = (this->dynamicExt).aVelocityMagnitudes[2];
 	}
 
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
@@ -1151,6 +1138,12 @@ CLifeInterface::CLifeInterface()
 	this->valueMax = 1.0f;
 	this->field_0x10 = 0;
 	return;
+}
+
+bool CLifeInterface::Manage()
+{
+	IMPLEMENTATION_GUARD();
+	return true;
 }
 
 float CLifeInterface::GetValue()

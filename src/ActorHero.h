@@ -6,6 +6,8 @@
 #include "ActorFighter.h"
 
 #define SCENE_VAR_BOUNCE_JUMP 0x7
+#define SCENE_VAR_CLIMB 0x8
+#define SCENE_VAR_BOOMY 0x9
 #define SCENE_VAR_MAX_HEALTH 0x14
 
 #define STATE_HERO_STAND 0x73
@@ -66,10 +68,42 @@ struct AnimResultHero : public StateConfig {
 	uint heroFlags;
 };
 
-#define HERO_STATE_COUNT 200
+#define HERO_STATE_COUNT 194
 #define HERO_BHVR_COUNT 14
 
 #define ACTOR_HERO_LOG(level, format, ...) MY_LOG_CATEGORY("ActorHero", level, format, ##__VA_ARGS__)
+
+class CMagicInterface : public CInterface
+{
+public:
+	// CInterface
+	virtual bool Activate(int bActive);
+	virtual bool CanActivate();
+	virtual bool IsActive();
+	virtual bool Manage();
+	virtual void Draw();
+	virtual void Reset() {}
+	virtual void SetValue(float value);
+	virtual float GetValue();
+
+	float GetValueMax();
+	void SetValueMax(float max);
+
+	void SetHasMagicInteractionAround(int bHasMagicAround);
+
+	int bActive;
+	int bHasMagicAround;
+	float field_0xc;
+	float field_0x10;
+	float value;
+	float valueMax;
+	float transit;
+};
+
+struct HeroActionStateCfg
+{
+	uint field_0x0;
+};
 
 class CActorHero : public CActorFighter
 {
@@ -113,27 +147,38 @@ public:
 
 	// Hero goes at least up to 0x1548 given CCameraStack::GetCurHeroState
 	float field_0x1548;
+	float field_0x1550;
+	float field_0x1554;
 	float field_0xa80;
 	float field_0xa84;
 	float field_0xa88;
 
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];
+	static HeroActionStateCfg _gActionCfg_HRO[16];
 
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
 
 	uint GetStateHeroFlags(int state);
 
+	HeroActionStateCfg* GetActionCfg(int index);
+
 	uint TestState_IsInHit(uint inFlags);
 	uint TestState_IsOnAToboggan(uint inFlags);
 	uint TestState_IsGrippedOrClimbing(uint inFlags);
 	bool TestState_IsInCheatMode();
 	uint TestState_IsInTheWind(uint inFlags);
+	uint TestState_AllowAction(uint inFlags);
+	uint TestState_IsSliding(uint inFlags);
 	uint TestState_IsFlying(uint inFlags);
 	uint TestState_IsCrouched(uint inFlags);
+	uint TestState_AllowMagic(uint inFlags);
 	uint TestState_IsOnCeiling(uint inFlags);
 	uint TestState_IsGripped(uint inFlags);
+	uint TestState_AllowAttack(uint inFlags);
+	uint TestState_00132b90(uint inFlags);
+	uint TestState_AllowInternalView(uint inFlags);
 
 	bool FUN_0014cb60(edF32VECTOR4* v0);
 };

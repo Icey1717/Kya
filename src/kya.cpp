@@ -2126,13 +2126,11 @@ void GameLoop(void)
 					}
 				}
 			}
-			if ((((GameFlags & 0x8000) == 0) &&
-				((gPlayerInput.pressedBitfield & 0x80000) != 0)) &&
-				(gPlayerInput.aButtons[18].clickValue == 0.0)) {
+			if ((((GameFlags & 0x8000) == 0) && ((gPlayerInput.pressedBitfield & 0x80000) != 0)) && (gPlayerInput.aButtons[18].clickValue == 0.0f)) {
 				if ((GameFlags & 8) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
-						IMPLEMENTATION_GUARD();
-						//GameLoopFunc_0037a670();
+						IMPLEMENTATION_GUARD(
+						HelpEnter();)
 					}
 				}
 				else {

@@ -1,4 +1,5 @@
 #include "ActorHero.h"
+#include "TimeController.h"
 
 CActorHero* CActorHero::_gThis = (CActorHero*)0x0;
 
@@ -980,36 +981,6 @@ AnimResultHero(
 	0x1A0,
 	0x10,
 	0x4003
-),
-AnimResultHero(
-	0x0,
-	0x0,
-	0x0
-),
-AnimResultHero(
-	0x11,
-	0x11,
-	0x11
-),
-AnimResultHero(
-	0x0,
-	0x0,
-	0x1
-),
-AnimResultHero(
-	0x0,
-	0x1,
-	0x11
-),
-AnimResultHero(
-	0x11,
-	0x0,
-	0x0
-),
-AnimResultHero(
-	0x0,
-	0x11,
-	0x11
 )
 };
 
@@ -1061,6 +1032,30 @@ uint CActorHero::GetStateHeroFlags(int state)
 		}
 	}
 	return uVar1;
+}
+
+HeroActionStateCfg CActorHero::_gActionCfg_HRO[16] = {
+	{ 0x0 },
+	{ 0x11 },
+	{ 0x11 },
+	{ 0x11 },
+	{ 0x0 },
+	{ 0x0 },
+	{ 0x1 },
+	{ 0x0 },
+	{ 0x1 },
+	{ 0x11 },
+	{ 0x11 },
+	{ 0x0 },
+	{ 0x0 },
+	{ 0x0 },
+	{ 0x11 },
+	{ 0x11 },
+};
+
+HeroActionStateCfg* CActorHero::GetActionCfg(int index)
+{
+	return _gActionCfg_HRO + index;
 }
 
 uint CActorHero::TestState_IsInHit(uint inFlags)
@@ -1139,6 +1134,34 @@ uint CActorHero::TestState_IsInTheWind(uint inFlags)
 	return inFlags & 0x800;
 }
 
+uint CActorHero::TestState_AllowAction(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+	return inFlags & 1;
+}
+
+uint CActorHero::TestState_IsSliding(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+	return inFlags & 100;
+}
+
 uint CActorHero::TestState_IsFlying(uint inFlags)
 {
 	int iVar1;
@@ -1168,6 +1191,21 @@ uint CActorHero::TestState_IsCrouched(uint inFlags)
 	return inFlags & 0x20;
 }
 
+uint CActorHero::TestState_AllowMagic(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 4;
+}
+
 uint CActorHero::TestState_IsOnCeiling(uint inFlags)
 {
 	int iVar1;
@@ -1194,7 +1232,76 @@ uint CActorHero::TestState_IsGripped(uint inFlags)
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
+
 	return inFlags & 0x40;
+}
+
+uint CActorHero::TestState_AllowAttack(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x2;
+}
+
+uint CActorHero::TestState_00132b90(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x10000;
+}
+
+uint CActorHero::TestState_AllowInternalView(uint inFlags)
+{
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	uint uVar4;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	iVar1 = this->actorState;
+	uVar4 = 0;
+	if (iVar1 == -1) {
+		uVar3 = 0;
+	}
+	else {
+		pSVar2 = GetStateCfg(iVar1);
+		uVar4 = pSVar2->flags_0x4;
+		uVar3 = uVar4 & 0x100;
+	}
+
+	uVar3 = (uint)(uVar3 != 0);
+	if (uVar3 != 0) {
+		uVar3 = (uVar4 & 1) != 0 ^ 1;
+	}
+
+	if (uVar3 != 0) {
+		uVar3 = (uint)((inFlags & 0x400000) != 0);
+	}
+
+	return uVar3;
 }
 
 bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)
@@ -1235,4 +1342,94 @@ bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)
 	}
 
 	return ret;
+}
+
+bool CMagicInterface::Activate(int bActive)
+{
+	bool bSuccess;
+
+	bSuccess = false;
+
+	if (bActive == 0) {
+		this->bActive = 0;
+		bSuccess = true;
+	}
+	else {
+		if (0.0f < this->value) {
+			bSuccess = true;
+			this->bActive = 1;
+		}
+	}
+
+	return bSuccess;
+}
+
+bool CMagicInterface::CanActivate()
+{
+	bool bSuccess;
+
+	bSuccess = 0.0f < this->value;
+	if (bSuccess) {
+		bSuccess = this->bActive == 0;
+	}
+
+	return bSuccess;
+}
+
+bool CMagicInterface::IsActive()
+{
+	return this->bActive;
+}
+
+bool CMagicInterface::Manage()
+{
+	bool bSuccess;
+
+	bSuccess = CScene::_pinstance->CheckFunc_001b9300();
+	return bSuccess == false;
+}
+
+void CMagicInterface::Draw()
+{
+	Timer* pTimer;
+	float fVar1;
+
+	if (this->bActive != 0) {
+		pTimer = Timer::GetTimer();
+		fVar1 = this->value - pTimer->cutsceneDeltaTime;
+		this->value = fVar1;
+		if (fVar1 <= 0.0) {
+			this->value = 0.0;
+			this->bActive = 0;
+		}
+	}
+	return;
+}
+
+void CMagicInterface::SetValue(float value)
+{
+	this->value = value;
+	return;
+}
+
+float CMagicInterface::GetValue()
+{
+	return this->value;
+}
+
+float CMagicInterface::GetValueMax()
+{
+	return this->valueMax;
+}
+
+void CMagicInterface::SetValueMax(float max)
+{
+	this->valueMax = valueMax;
+	return;
+}
+
+void CMagicInterface::SetHasMagicInteractionAround(int bHasMagicAround)
+{
+	this->bHasMagicAround = bHasMagicAround;
+	return;
 }

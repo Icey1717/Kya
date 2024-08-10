@@ -42,7 +42,7 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 	switch (eventID) {
 	case 0x90000000:
 		uVar6 = KeyboardController::numButtons;
-		break;
+	break;
 	case 0x90000001:
 		uVar6 = 0;
 		pController->flags = 0x108;
@@ -76,7 +76,7 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 			pPVar5 = pPVar5 + 1;
 		} while (uVar6 < KeyboardController::numButtons);
 		uVar6 = 0;
-		break;
+	break;
 	case 0x90000002:
 		if (edDevRoot.field_0x3c != 0) {
 			pPVar1->field_0x8 = 0;
@@ -84,7 +84,7 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 
 		// Ready to connect state?
 		pPVar1->state = 1;
-			break;
+	break;
 	case 0x90000003:
 		iVar3 = pPVar1->state;
 		if ((iVar3 == 0) && (pPVar1->prevState != 0)) {
@@ -110,14 +110,14 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 				}
 			}
 		}
-			break;
+	break;
 	case 0x90000004:
 		IMPLEMENTATION_GUARD(
 			*(undefined*)&pPVar1->field_0x24 = *(undefined*)param_3;
 		*(undefined*)&pPVar1->field_0x25 = *(undefined*)(param_3 + 1);
 		)
 			pController->field_0x2c = 1;
-		break;
+	break;
 	case 0x90000005:
 		IMPLEMENTATION_GUARD(
 			local_1 = 3;
@@ -126,18 +126,17 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 		FUN_0035af78(pPVar1->socketNumber, 1, (undefined8*)&local_1, 2, (undefined8*)&local_4);
 		)
 			pController->field_0x2c = 0;
-		break;
+	break;
 	case 0x90000006:
 	{
 		pController->pPadD[ROUTE_START].bReleased = gInputFunctions.keyReleased(ROUTE_START);
+		pController->pPadD[ROUTE_SELECT].bPressed = gInputFunctions.keyPressed(ROUTE_SELECT);
 
-		//if (pController->pPadD[ROUTE_START].bReleased) {
-		//	pressIndex++;
-		//}
-		//
-		//pController->pPadD[pressIndex].bPressed = true;
+		pController->pPadD[ROUTE_CROSS].bPressed = gInputFunctions.keyPressed(ROUTE_CROSS);
+		pController->pPadD[ROUTE_SQUARE].bPressed = gInputFunctions.keyPressed(ROUTE_SQUARE);
+		pController->pPadD[ROUTE_CIRCLE].bPressed = gInputFunctions.keyPressed(ROUTE_CIRCLE);
+		pController->pPadD[ROUTE_TRIANGLE].bPressed = gInputFunctions.keyPressed(ROUTE_TRIANGLE);
 
-		pController->pPadD[ROUTE_X].bPressed = gInputFunctions.keyPressed(ROUTE_X);
 		pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_DOWN);
 		pController->pPadD[ROUTE_UP].bPressed = gInputFunctions.keyPressed(ROUTE_UP);
 
@@ -155,15 +154,8 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 
 		pController->pPadD[ROUTE_L_ANALOG_LEFT].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_LEFT);
 		pController->pPadD[ROUTE_L_ANALOG_RIGHT].analogValue = gInputFunctions.keyAnalog(ROUTE_L_ANALOG_RIGHT);
-
-		//pController->pPadD[pressIndex].bPressed = true;
-		//pressIndex++;
-		//pController->pPadD[pressIndex].bPressed = true;
-		//if (pressIndex > numButtons) {
-		//	pressIndex = 0;
-		//}
 	}
-			break;
+	break;
 	case 0x90000007:
 		IMPLEMENTATION_GUARD(
 			uVar6 = 0x10ff;
