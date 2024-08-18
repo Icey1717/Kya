@@ -6,15 +6,19 @@
 #include "ActorManager.h"
 #include "TimeController.h"
 
-#define TRAP_STATE_IDLE 0x6
-#define TRAP_STATE_CATCH_1_1 0x7
-#define TRAP_STATE_CATCH_2_2 0x8
-#define TRAP_STATE_CATCH_STAND_1_2 0x9
-#define TRAP_STATE_CATCH_STAND_2_2 0xa
+#define TRAP_STATE_IDLE				0x6
+#define TRAP_STATE_CATCH_1_1		0x7
+#define TRAP_STATE_CATCH_2_2		0x8
+#define TRAP_STATE_CATCH_STAND_1_2	0x9
+#define TRAP_STATE_CATCH_STAND_2_2	0xa
+#define TRAP_STATE_CATCH_STRUGGLE	0xd
+
+#define TRAP_BEHAVIOUR_STAND	2
+#define TRAP_BEHAVIOUR_INACTIVE	3
 
 CActorTrap::CActorTrap()
 {
-	this->dynamic.weightB = 0.0f;
+	
 }
 
 void CActorTrap::Create(ByteCode* pByteCode)
@@ -42,11 +46,11 @@ CBehaviour* CActorTrap::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
 
-	if (behaviourType == 3) {
+	if (behaviourType == TRAP_BEHAVIOUR_INACTIVE) {
 		pBehaviour = new CBehaviourInactive;
 	}
 	else {
-		if (behaviourType == 2) {
+		if (behaviourType == TRAP_BEHAVIOUR_STAND) {
 			pBehaviour = &this->trapStandActorTrap;
 		}
 		else {
@@ -99,17 +103,9 @@ CBehaviourTrapStand_ActorTrap::CBehaviourTrapStand_ActorTrap()
 
 void CBehaviourTrapStand_ActorTrap::Create(ByteCode* pByteCode)
 {
-	uint uVar1;
-	int iVar2;
-
-	uVar1 = pByteCode->GetU32();
-	this->flags = uVar1;
-
-	iVar2 = pByteCode->GetS32();
-	this->field_0xc = iVar2;
-
-	uVar1 = pByteCode->GetU32();
-	this->field_0x28 = uVar1;
+	this->flags = pByteCode->GetU32();
+	this->defaultBehaviourId = pByteCode->GetS32();
+	this->catchEffectId = pByteCode->GetU32();
 
 	return;
 }
@@ -357,11 +353,11 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 				pCVar4->flags = pCVar4->flags & 0xfffffffd;
 				pCVar4->flags = pCVar4->flags | 1;
 			}
-			if (this->field_0x28 != 0xffffffff) {
+			if (this->catchEffectId != 0xffffffff) {
 				local_8 = 0;
 				local_4 = (int*)0x0;
 				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->field_0x28, 0xffffffffffffffff);
+				(CScene::ptable.g_EffectsManager_004516b8, &local_8, this->catchEffectId, 0xffffffffffffffff);
 				if (((local_4 == (int*)0x0) || (local_8 == 0)) || (bVar6 = true, local_8 != local_4[6])) {
 					bVar6 = false;
 				}
@@ -389,6 +385,89 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 	ACTOR_LOG(LogLevel::Verbose, "CBehaviourTrapStand::StateTrapCatch_2_2 New position: {} {} {}",
 		this->pOwner->currentLocation.x, this->pOwner->currentLocation.y, this->pOwner->currentLocation.z);
 
+	return;
+}
+
+void CBehaviourTrapStand::StateTrapCatchStruggle(int param_2, int param_3, int param_4)
+{
+	CActorTrap* pTrap;
+	uint uVar2;
+	uint uVar3;
+	bool bVar4;
+	edF32VECTOR4* pWayPoint;
+	Timer* pTimer;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
+		movParamsOut.flags = 0;
+		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
+		movParamsIn.field_0x4 = 6.283185f;
+		movParamsIn.field_0x14 = this->field_0x34;
+		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.flags = 0x406;
+
+		pTrap = this->pOwner;
+		pWayPoint = this->pathFollowReader.GetWayPoint();
+		pTrap->SV_MOV_MoveTo(&movParamsOut, &movParamsIn, pWayPoint);
+		this->pOwner->ManageDyn(4.0f, 0x403, (CActorsTable*)0x0);
+
+		pTimer = GetTimer();
+		fVar9 = 0.5f;
+		fVar7 = this->pOwner->dynamic.linearAcceleration * pTimer->cutsceneDeltaTime;
+		if (0.5f <= fVar7) {
+			fVar9 = fVar7;
+		}
+
+		if (movParamsOut.floatField <= fVar9) {
+			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
+			if (bVar4 == false) {
+				this->pathFollowReader.NextWayPoint();
+			}
+			else {
+				this->pOwner->SetState(param_2, -1);
+			}
+		}
+	}
+
+	uVar2 = this->field_0x50;
+	uVar3 = this->escapeAttempts;
+
+	if (uVar3 == uVar2) {
+		this->pOwner->SetState(param_3, -1);
+	}
+	else {
+		pTrap = this->pOwner;
+		fVar9 = pTrap->timeInAir;
+
+		if ((int)uVar3 < 0) {
+			fVar7 = (float)(uVar3 >> 1 | uVar3 & 1);
+			fVar7 = fVar7 + fVar7;
+		}
+		else {
+			fVar7 = (float)uVar3;
+		}
+
+		if ((int)uVar2 < 0) {
+			fVar8 = (float)(uVar2 >> 1 | uVar2 & 1);
+			fVar8 = fVar8 + fVar8;
+		}
+		else {
+			fVar8 = (float)uVar2;
+		}
+
+		if ((fVar7 * this->field_0x4c) / fVar8 < fVar9) {
+			pTrap->SetState(param_4, -1);
+		}
+		else {
+			if (this->field_0x4c < fVar9) {
+				pTrap->SetState(param_4, -1);
+			}
+		}
+	}
 	return;
 }
 
@@ -504,7 +583,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 		break;
 	case 0xc:
 		uVar11 = this->field_0x50;
-		uVar3 = this->field_0x54;
+		uVar3 = this->escapeAttempts;
 		if (uVar3 == uVar11) {
 			pTrap->SetState(0xe, -1);
 		}
@@ -534,9 +613,8 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 			}
 		}
 		break;
-	case 0xd:
-		IMPLEMENTATION_GUARD(
-		StateTrapCatchStruggle(this, 0xc, 0xe, TRAP_STATE_CATCH_STAND_2_2);)
+	case TRAP_STATE_CATCH_STRUGGLE:
+		StateTrapCatchStruggle(0xc, 0xe, TRAP_STATE_CATCH_STAND_2_2);
 		break;
 	case 0xe:
 		if (0.1f < pTrap->timeInAir) {
@@ -580,20 +658,20 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 			bVar8 = true;
 		}
 		if ((!bVar8) && (1.0 < pTrap->timeInAir)) {
-			if (this->field_0xc == pTrap->curBehaviourId) {
+			if (this->defaultBehaviourId == pTrap->curBehaviourId) {
 				pTrap->UpdatePosition(&pTrap->baseLocation, true);
 				pTrap = this->pOwner;
 				pCVar6 = pTrap->pCinData;
 				pTrap->rotationEuler.xyz = pCVar6->rotationEuler;
 				SetVectorFromAngles(&this->pOwner->rotationQuat, &this->pOwner->rotationEuler.xyz);
 				pTrap = this->pOwner;
-				if (pTrap->curBehaviourId == 2) {
+				if (pTrap->curBehaviourId == TRAP_BEHAVIOUR_STAND) {
 					pTrap->SetBehaviour(-1, -1, -1);
-					pTrap->SetBehaviour(2, 5, -1);
+					pTrap->SetBehaviour(TRAP_BEHAVIOUR_STAND, 5, -1);
 				}
 			}
 			else {
-				pTrap->SetBehaviour(this->field_0xc, -1, -1);
+				pTrap->SetBehaviour(this->defaultBehaviourId, -1, -1);
 			}
 		}
 	}
@@ -744,8 +822,8 @@ void CBehaviourTrapStand::SectorChange(int oldSectorId, int newSectorId)
 
 	if ((this->flags & 1) != 0) {
 		pCVar1 = this->pOwner;
-		if (this->field_0xc != pCVar1->curBehaviourId) {
-			pCVar1->SetBehaviour(this->field_0xc, -1, -1);
+		if (this->defaultBehaviourId != pCVar1->curBehaviourId) {
+			pCVar1->SetBehaviour(this->defaultBehaviourId, -1, -1);
 		}
 	}
 	return;
@@ -857,7 +935,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		break;
 	case 0xc:
 		if (this->pOwner->actorState != 0xd) {
-			this->field_0x54 = 0;
+			this->escapeAttempts = 0;
 		}
 
 		if ((this->actorRef.Get() != (CActor*)0x0) && (this->field_0x68 == false)) {
@@ -867,7 +945,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		}
 		break;
 	case 0xd:
-		this->field_0x54 = 0;
+		this->escapeAttempts = 0;
 		break;
 	case 0xe:
 		pColissionData = this->pOwner->pCollisionData;
@@ -993,67 +1071,72 @@ void CBehaviourTrapStand::TermState(int state, int)
 
 int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	CActorTrap* pCVar1;
-	int iVar2;
-	uint uVar3;
-	StateConfig* pAVar4;
+	CActorTrap* pTrap;
+	int curConfig;
+	uint result;
+	StateConfig* pStateConfig;
 
-	if (msg == 0x12) {
-		IMPLEMENTATION_GUARD(
-		pCVar1 = this->pOwner;
-		iVar2 = (pCVar1->base).base.actorState;
-		uVar3 = 0;
-		if (iVar2 != -1) {
-			pAVar4 = pCVar1->GetStateCfg(iVar2);
-			uVar3 = pAVar4->flags_0x4;
+	if (msg == MESSAGE_GET_ACTION) {
+		pTrap = this->pOwner;
+		curConfig = pTrap->actorState;
+		uint configFlags = 0;
+
+		if (curConfig != -1) {
+			pStateConfig = pTrap->GetStateCfg(curConfig);
+			configFlags = pStateConfig->flags_0x4;
 		}
-		if (((uVar3 & 0x10000) == 0) || (uVar3 = 0xc, this->pCaughtActor != pSender)) {
-			uVar3 = 0;
-		})
+
+		if (((configFlags & 0x10000) == 0) || (result = HERO_ACTION_ID_ESCAPE_TRAP, this->pCaughtActor != pSender)) {
+			result = 0;
+		}
 	}
 	else {
-		if (msg == 0x14) {
-			IMPLEMENTATION_GUARD(
-			pCVar1 = this->pOwner;
-			iVar2 = (pCVar1->base).base.actorState;
-			uVar3 = 0;
-			if (iVar2 != -1) {
-				pAVar4 = pCVar1->GetStateCfg(iVar2);
-				uVar3 = pAVar4->flags_0x4;
+		if (msg == MESSAGE_TRAP_STRUGGLE) {
+			pTrap = this->pOwner;
+			curConfig = pTrap->actorState;
+			uint configFlags = 0;
+
+			if (curConfig != -1) {
+				pStateConfig = pTrap->GetStateCfg(curConfig);
+				configFlags = pStateConfig->flags_0x4;
 			}
-			if ((uVar3 & 0x10000) != 0) {
+
+			if ((configFlags & 0x10000) != 0) {
 				if ((this->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
-					pCVar1 = this->pOwner;
-					if ((pCVar1->base).base.actorState != 0xc) {
-						(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0xc, -1);
+					pTrap = this->pOwner;
+					if (pTrap->actorState != 0xc) {
+						pTrap->SetState(0xc, -1);
 					}
 				}
 				else {
-					pCVar1 = this->pOwner;
-					iVar2 = (pCVar1->base).base.actorState;
-					if (iVar2 == -1) {
-						uVar3 = 0;
+					pTrap = this->pOwner;
+					curConfig = pTrap->actorState;
+
+					if (curConfig == -1) {
+						configFlags = 0;
 					}
 					else {
-						pAVar4 = pCVar1->GetStateCfg(iVar2);
-						uVar3 = pAVar4->flags_0x4 & 0x200;
+						pStateConfig = pTrap->GetStateCfg(curConfig);
+						configFlags = pStateConfig->flags_0x4 & 0x200;
 					}
-					if (uVar3 == 0) {
-						pCVar1 = this->pOwner;
-						if ((pCVar1->base).base.actorState != 0xc) {
-							(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0xc, -1);
+
+					if (configFlags == 0) {
+						pTrap = this->pOwner;
+						if (pTrap->actorState != 0xc) {
+							pTrap->SetState(0xc, -1);
 						}
 					}
 					else {
-						pCVar1 = this->pOwner;
-						if ((pCVar1->base).base.actorState != 0xd) {
-							(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0xd, -1);
+						pTrap = this->pOwner;
+						if (pTrap->actorState != TRAP_STATE_CATCH_STRUGGLE) {
+							pTrap->SetState(TRAP_STATE_CATCH_STRUGGLE, -1);
 						}
 					}
 				}
-				this->field_0x54 = this->field_0x54 + 1;
+
+				this->escapeAttempts = this->escapeAttempts + 1;
 				return 1;
-			})
+			}
 		}
 		else {
 			if (msg != 2) {
@@ -1061,44 +1144,44 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 					return 0;
 				}
 	
-				pCVar1 = this->pOwner;
-				iVar2 = pCVar1->actorState;
-				if (iVar2 == -1) {
-					uVar3 = 0;
+				pTrap = this->pOwner;
+				curConfig = pTrap->actorState;
+				if (curConfig == -1) {
+					result = 0;
 				}
 				else {
-					pAVar4 = pCVar1->GetStateCfg(iVar2);
-					uVar3 = pAVar4->flags_0x4 & 0x400;
+					pStateConfig = pTrap->GetStateCfg(curConfig);
+					result = pStateConfig->flags_0x4 & 0x400;
 				}
 
-				if (uVar3 != 0) {
+				if (result != 0) {
 					return this->field_0x14;
 				}
 
-				pCVar1 = this->pOwner;
-				iVar2 = pCVar1->actorState;
-				if (iVar2 == -1) {
-					uVar3 = 0;
+				pTrap = this->pOwner;
+				curConfig = pTrap->actorState;
+				if (curConfig == -1) {
+					result = 0;
 				}
 				else {
-					pAVar4 = pCVar1->GetStateCfg(iVar2);
-					uVar3 = pAVar4->flags_0x4 & 0x800;
+					pStateConfig = pTrap->GetStateCfg(curConfig);
+					result = pStateConfig->flags_0x4 & 0x800;
 				}
-				if (uVar3 != 0) {
+				if (result != 0) {
 					return this->field_0x18;
 				}
 
-				pCVar1 = this->pOwner;
-				iVar2 = pCVar1->actorState;
-				if (iVar2 == -1) {
-					uVar3 = 0;
+				pTrap = this->pOwner;
+				curConfig = pTrap->actorState;
+				if (curConfig == -1) {
+					result = 0;
 				}
 				else {
-					pAVar4 = pCVar1->GetStateCfg(iVar2);
-					uVar3 = pAVar4->flags_0x4 & 0x1000;
+					pStateConfig = pTrap->GetStateCfg(curConfig);
+					result = pStateConfig->flags_0x4 & 0x1000;
 				}
 
-				if (uVar3 != 0) {
+				if (result != 0) {
 					return this->field_0x1c;
 				}
 
@@ -1106,10 +1189,10 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			}
 
 			/* WARNING: Load size is inaccurate */
-			iVar2 = *reinterpret_cast<int*>(&pMsgParam);
-			if (iVar2 == 0xb) {
+			curConfig = *reinterpret_cast<int*>(&pMsgParam);
+			if (curConfig == 0xb) {
 				IMPLEMENTATION_GUARD(
-				if (this->field_0x54 != this->field_0x50) {
+				if (this->escapeAttempts != this->field_0x50) {
 					this->field_0x69 = pSender != this->pCaughtActor;
 					(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
 					*(undefined4*)((int)pMsgParam + 0x74) = 1;
@@ -1118,44 +1201,44 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				*(undefined4*)((int)pMsgParam + 0x74) = 0;)
 			}
 			else {
-				if (iVar2 == 10) {
+				if (curConfig == 10) {
 					IMPLEMENTATION_GUARD(
 					if (*(float*)((int)pMsgParam + 0xc) != 0.0) {
-						pCVar1 = this->pOwner;
-						iVar2 = (pCVar1->base).base.actorState;
-						if (iVar2 == -1) {
-							uVar3 = 0;
+						pTrap = this->pOwner;
+						curConfig = (pTrap->base).base.actorState;
+						if (curConfig == -1) {
+							result = 0;
 						}
 						else {
-							pAVar4 = pCVar1->GetStateCfg(iVar2);
-							uVar3 = pAVar4->flags_0x4 & 0x100;
+							pStateConfig = pTrap->GetStateCfg(curConfig);
+							result = pStateConfig->flags_0x4 & 0x100;
 						}
-						if (uVar3 == 0) {
+						if (result == 0) {
 							this->field_0x69 = pSender != this->pCaughtActor;
-							pCVar1 = this->pOwner;
-							if ((pCVar1->base).base.actorState == TRAP_STATE_IDLE) {
-								(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0x12, -1);
+							pTrap = this->pOwner;
+							if ((pTrap->base).base.actorState == TRAP_STATE_IDLE) {
+								(*((pTrap->base).base.pVTable)->SetState)((CActor*)pTrap, 0x12, -1);
 							}
 							else {
-								(*((pCVar1->base).base.pVTable)->SetState)((CActor*)pCVar1, 0x10, -1);
+								(*((pTrap->base).base.pVTable)->SetState)((CActor*)pTrap, 0x10, -1);
 							}
 						}
 						return 1;
 					})
 				}
 				else {
-					if ((iVar2 == 9) || (iVar2 == 4)) {
+					if ((curConfig == 9) || (curConfig == 4)) {
 						IMPLEMENTATION_GUARD(
-						pCVar1 = this->pOwner;
-						iVar2 = (pCVar1->base).base.actorState;
-						if (iVar2 == -1) {
-							uVar3 = 0;
+						pTrap = this->pOwner;
+						curConfig = (pTrap->base).base.actorState;
+						if (curConfig == -1) {
+							result = 0;
 						}
 						else {
-							pAVar4 = pCVar1->GetStateCfg(iVar2);
-							uVar3 = pAVar4->flags_0x4 & 0x100;
+							pStateConfig = pTrap->GetStateCfg(curConfig);
+							result = pStateConfig->flags_0x4 & 0x100;
 						}
-						if (uVar3 == 0) {
+						if (result == 0) {
 							this->field_0x69 = pSender != this->pCaughtActor;
 							(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
 						})
@@ -1164,9 +1247,9 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				}
 			}
 		}
-		uVar3 = 0;
+		result = 0;
 	}
-	return uVar3;
+	return result;
 }
 
 bool gTrpDetectCallback(CActor* pActor, void* pParams)

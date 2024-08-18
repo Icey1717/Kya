@@ -132,10 +132,22 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 		pController->pPadD[ROUTE_START].bReleased = gInputFunctions.keyReleased(ROUTE_START);
 		pController->pPadD[ROUTE_SELECT].bPressed = gInputFunctions.keyPressed(ROUTE_SELECT);
 
+		pController->pPadD[ROUTE_L1].bPressed = gInputFunctions.keyPressed(ROUTE_L1);
+
 		pController->pPadD[ROUTE_CROSS].bPressed = gInputFunctions.keyPressed(ROUTE_CROSS);
 		pController->pPadD[ROUTE_SQUARE].bPressed = gInputFunctions.keyPressed(ROUTE_SQUARE);
 		pController->pPadD[ROUTE_CIRCLE].bPressed = gInputFunctions.keyPressed(ROUTE_CIRCLE);
 		pController->pPadD[ROUTE_TRIANGLE].bPressed = gInputFunctions.keyPressed(ROUTE_TRIANGLE);
+
+		pController->pPadD[ROUTE_CROSS].clickValue = gInputFunctions.keyAnalog(ROUTE_CROSS);
+		pController->pPadD[ROUTE_SQUARE].clickValue = gInputFunctions.keyAnalog(ROUTE_SQUARE);
+		pController->pPadD[ROUTE_CIRCLE].clickValue = gInputFunctions.keyAnalog(ROUTE_CIRCLE);
+		pController->pPadD[ROUTE_TRIANGLE].clickValue = gInputFunctions.keyAnalog(ROUTE_TRIANGLE);
+
+		pController->pPadD[ROUTE_CROSS].bReleased = gInputFunctions.keyReleased(ROUTE_CROSS);
+		pController->pPadD[ROUTE_SQUARE].bReleased = gInputFunctions.keyReleased(ROUTE_SQUARE);
+		pController->pPadD[ROUTE_CIRCLE].bReleased = gInputFunctions.keyReleased(ROUTE_CIRCLE);
+		pController->pPadD[ROUTE_TRIANGLE].bReleased = gInputFunctions.keyReleased(ROUTE_TRIANGLE);
 
 		pController->pPadD[ROUTE_DOWN].bPressed = gInputFunctions.keyPressed(ROUTE_DOWN);
 		pController->pPadD[ROUTE_UP].bPressed = gInputFunctions.keyPressed(ROUTE_UP);

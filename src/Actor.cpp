@@ -2274,7 +2274,7 @@ uint CActor::_gBehaviourFlags_ACT[2] =
 
 StateConfig* CActor::GetStateCfg(int state)
 {
-	assert(state < 4);
+	assert(state < 5);
 	return gStateCfg_ACT + state;
 }
 
@@ -2519,9 +2519,8 @@ float CActor::SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence*
 		}
 		else {
 			CActorAutonomous* pActorAutonomous = (CActorAutonomous*)pActor;
-			if ((pActorConeInfluence->field_0x14 == 2) ||
-				((pActorConeInfluence->field_0x14 == 1 &&
-					(pActorAutonomous->dynamic.linearAcceleration * pActorAutonomous->dynamic.velocityDirectionEuler.y < 1.0)))) {
+			if ((pActorConeInfluence->field_0x14 == 2) || ((pActorConeInfluence->field_0x14 == 1 &&
+					(pActorAutonomous->dynamic.linearAcceleration * pActorAutonomous->dynamic.velocityDirectionEuler.y < 1.0f)))) {
 				local_20.y = 0.0f;
 
 				fVar3 = edF32Vector4DotProductHard(&pActorAutonomous->dynamic.horizontalVelocityDirectionEuler, &local_20);
@@ -2531,10 +2530,10 @@ float CActor::SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence*
 					fVar3 = pTVar2->cutsceneDeltaTime;
 					pTVar2 = GetTimer();
 					edF32Vector4ScaleHard(-(((fVar4 * 0.01f) / fVar3) / pTVar2->cutsceneDeltaTime), &local_20, &local_20);
-					peVar1 = pActorAutonomous->dynamicExt.aVelocity;
+					peVar1 = pActorAutonomous->dynamicExt.aImpulseVelocities;
 					edF32Vector4AddHard(peVar1, peVar1, &local_20);
-					fVar3 = edF32Vector4GetDistHard(pActorAutonomous->dynamicExt.aVelocity);
-					pActorAutonomous->dynamicExt.aVelocityMagnitudes[0] = fVar3;
+					fVar3 = edF32Vector4GetDistHard(pActorAutonomous->dynamicExt.aImpulseVelocities);
+					pActorAutonomous->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar3;
 				}
 			}
 		}
@@ -2616,7 +2615,7 @@ edF32VECTOR4* CActor::GetBottomPosition()
 		pBottomPosition = &this->currentLocation;
 	}
 	else {
-		pBottomPosition = &this->pCollisionData->highestVertex;
+		pBottomPosition = &this->pCollisionData->lowestVertex;
 	}
 
 	return pBottomPosition;
@@ -2630,7 +2629,7 @@ edF32VECTOR4* CActor::GetTopPosition()
 		pTopPosition = &this->currentLocation;
 	}
 	else {
-		pTopPosition = &this->pCollisionData->lowestVertex;
+		pTopPosition = &this->pCollisionData->highestVertex;
 	}
 
 	return pTopPosition;
@@ -2879,13 +2878,8 @@ void CActor::Reset()
 		this->vector_0x12c = gF32Vector3Zero;
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		fVar2 = this[1].data.rotationQuat.y;
-		fVar3 = (float)this[1].data.typeID;
-		pAnimation = this[1].data.pAnimationController;
-		this->vector_0x12c.x = (float)this[1].data.actorManagerIndex * fVar2;
-		this->vector_0x12c.y = fVar3 * fVar2;
-		this->vector_0x12c.z = (float)pAnimation * fVar2;)
+		CActorMovable* pMovable = static_cast<CActorMovable*>(this);
+		pMovable->vector_0x12c = pMovable->dynamic.velocityDirectionEuler.xyz * pMovable->dynamic.linearAcceleration;
 	}
 
 	IMPLEMENTATION_GUARD_AUDIO(
@@ -3646,6 +3640,32 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 	return bSuccess;
 }
 
+float CActor::SV_GetCosAngle2D(edF32VECTOR4* pToLocation)
+{
+	float fVar1;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4SubHard(&eStack16, pToLocation, &this->currentLocation);
+	eStack16.y = 0.0f;
+	edF32Vector4NormalizeHard(&eStack16, &eStack16);
+
+	if ((this->rotationQuat).y == 0.0f) {
+		fVar1 = edF32Vector4DotProductHard(&this->rotationQuat, &eStack16);
+	}
+	else {
+		local_20.x = (this->rotationQuat).x;
+		local_20.y = 0.0f;
+		local_20.z = (this->rotationQuat).z;
+		local_20.w = 0.0f;
+		edF32Vector4NormalizeHard(&local_20, &local_20);
+
+		fVar1 = edF32Vector4DotProductHard(&this->rotationQuat, &local_20);
+	}
+
+	return fVar1;
+}
+
 bool CActor::SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
 {
 	bool ret;
@@ -3829,6 +3849,25 @@ void CActor::LinkToActor(CActor* pLinkedActor, uint key, int param_4)
 		pLinkedActor->pAnimationController->RegisterBone(key);
 	}
 
+	return;
+}
+
+void CActor::UnlinkFromActor()
+{
+	CActorManager* pActorManager;
+	_linked_actor* pActor;
+
+	pActorManager = CScene::ptable.g_ActorManager_004516a4;
+	pActor = CScene::ptable.g_ActorManager_004516a4->FindLinkedActor(this);
+
+	if (pActor != (_linked_actor*)0x0) {
+		if ((this->flags & 0x1000) == 0) {
+			(this->rotationEuler).z = 0.0f;
+		}
+
+		pActor->pLinkedActor->pAnimationController->UnRegisterBone(pActor->key);
+		pActorManager->RemoveLinkedActor(pActor);
+	}
 	return;
 }
 

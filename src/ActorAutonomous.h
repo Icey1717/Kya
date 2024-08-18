@@ -5,6 +5,7 @@
 #include "Actor.h"
 #include "ActorMovable.h"
 #include "CollisionManager.h"
+#include "ScenaricCondition.h"
 
 class CWayPoint;
 
@@ -50,16 +51,30 @@ struct CActorWindState {
 	void Reset();
 };
 
+class CActorAutonomous;
+
 class CBehaviourAutonomous : public CBehaviour
 {
 public:
+	virtual void Init(CActor* pOwner);
 
+	uint boneId;
+	CActorAutonomous* pOwner;
+	CActor* field_0x10;
 };
 
 class CBehaviourCatchByTrap : public CBehaviourAutonomous
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState) {}
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
+	ConditionedOperationArray condOpArray;
 };
 
 class CDynamicExt
@@ -75,9 +90,9 @@ public:
 	float field_0x4;
 	float field_0x8;
 	float field_0xc;
-	float aVelocityMagnitudes[3];
+	float aImpulseVelocityMagnitudes[3];
 	float field_0x1c;
-	edF32VECTOR4 aVelocity[3];
+	edF32VECTOR4 aImpulseVelocities[3];
 	edF32VECTOR4 normalizedTranslation;
 
 	edF32VECTOR3 field_0x60;
@@ -112,15 +127,15 @@ public:
 class CActorAutonomous : public CActorMovable
 {
 public:
-	CActorAutonomous() {
-		IMPLEMENTATION_GUARD_LOG();
-	}
+	CActorAutonomous();
 
+	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual StateConfig* GetStateCfg(int state);
 
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
@@ -131,10 +146,16 @@ public:
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	virtual void UpdateCollisionSphere();
 	virtual void RestoreCollisionSphere(float param_2);
+	
+	static StateConfig gStateCfg_AUT[1];
 
 	void ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
 	void ComputeFrictionForce(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
 	void ComputeSlidingForce(edF32VECTOR4* param_2, int param_3);
+
+	void StateAutSoccer(float param_1, int param_3, int param_4, CActorMovable* param_5);
+
+	void SV_AUT_WarnActors(float radius, float param_2, uint msgParam);
 
 	virtual void LifeRestore();
 	virtual CLifeInterface* GetLifeInterface();

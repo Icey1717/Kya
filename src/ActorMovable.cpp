@@ -165,6 +165,16 @@ void S_PUSH_DATA::Init()
 	(this->oscValue).field_0x4 = 0.0f;
 }
 
+CActorMovable::CActorMovable()
+{
+	this->dynamic.weightB = 0.0f;
+}
+
+bool CActorMovable::IsKindOfObject(ulong kind)
+{
+	return (kind & 3) != 0;
+}
+
 void CActorMovable::Create(ByteCode* pByteCode)
 {
 	float fVar1;
@@ -351,8 +361,8 @@ void CActorMovable::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTa
 	eStack48.y = 0.0f;
 
 	fVar3 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).horizontalVelocityDirectionEuler, &eStack48);
-	(this->dynamic).linearJerk = fVar3;
-	(this->dynamic).linearJerk = fVar3 / pTimer->cutsceneDeltaTime;
+	(this->dynamic).horizontalLinearAcceleration = fVar3;
+	(this->dynamic).horizontalLinearAcceleration = fVar3 / pTimer->cutsceneDeltaTime;
 	return;
 }
 
@@ -815,6 +825,31 @@ void CActorMovable::SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActor
 	return;
 }
 
+void CActorMovable::SV_MOV_MoveCloserTo(float speed, edF32VECTOR4* param_3)
+{
+	Timer* pTVar1;
+	float fVar2;
+	edF32VECTOR4 local_10;
+
+	edF32Vector4SubHard(&local_10, param_3, &this->currentLocation);
+	local_10.y = 0.0f;
+
+	fVar2 = edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
+	pTVar1 = GetTimer();
+
+	if (fVar2 < speed * pTVar1->cutsceneDeltaTime) {
+		pTVar1 = GetTimer();
+		speed = fVar2 / pTVar1->cutsceneDeltaTime;
+	}
+
+	if (fVar2 != 0.0f) {
+		(this->dynamic).rotationQuat = local_10;
+	}
+
+	(this->dynamic).speed = speed;
+	return;
+}
+
 void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta)
 {
 	Timer* pTVar1;
@@ -830,8 +865,8 @@ void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta)
 	eStack16.y = 0.0f;
 
 	fVar2 = edF32Vector4SafeNormalize1Hard(&(this->dynamic).horizontalVelocityDirectionEuler, &eStack16);
-	(this->dynamic).linearJerk = fVar2;
-	(this->dynamic).linearJerk = (this->dynamic).linearJerk / pTVar1->cutsceneDeltaTime;
+	(this->dynamic).horizontalLinearAcceleration = fVar2;
+	(this->dynamic).horizontalLinearAcceleration = (this->dynamic).horizontalLinearAcceleration / pTVar1->cutsceneDeltaTime;
 	return;
 }
 
@@ -890,7 +925,7 @@ void CDynamic::Reset(CActor* pActor)
 
 	this->speed = 0.0f;
 	this->linearAcceleration = 0;
-	this->linearJerk = 0;
+	this->horizontalLinearAcceleration = 0;
 	this->weightA = 1.0f;
 	if (pActor == (CActor*)0x0) {
 		(this->rotationQuat).x = 1.0f;

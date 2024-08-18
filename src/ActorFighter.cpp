@@ -552,6 +552,292 @@ bool CActorFighter::IsFightRelated(int param_2)
 	return bVar1;
 }
 
+void CActorFighter::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+{
+	edANM_HDR* peVar1;
+	int* piVar2;
+	int iVar3;
+	int iVar4;
+	float* pfVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	undefined* puVar10;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 local_c0;
+	edF32MATRIX4 eStack176;
+	edF32VECTOR4 eStack112;
+	undefined auStack96[32];
+	edF32VECTOR4 aeStack64[3];
+	edANM_HDR* local_c;
+	edANM_HDR* local_8;
+
+	if (newAnim == 0x42) {
+		IMPLEMENTATION_GUARD(
+		peVar1 = pAnimator->pAnimKeyTableEntry;
+		if (0.0 <= this->field_0xa5c) {
+			(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = 0x3f800000;
+			(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = 0;
+		}
+		else {
+			(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = 0;
+			(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = 0x3f800000;
+		})
+	}
+	else {
+		if ((newAnim == 0x4e) || (newAnim == 0x39)) {
+			IMPLEMENTATION_GUARD(
+			peVar1 = pAnimator->pAnimKeyTableEntry;
+			if (peVar1->keyIndex_0x8 == 7) {
+				iVar4 = 1;
+				if (0.0 <= this->field_0xa5c) {
+					iVar3 = 4;
+				}
+				else {
+					iVar4 = 4;
+					iVar3 = 1;
+				}
+				(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8 + iVar4] = (int)this->field_0x4e0;
+				(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8 + iVar4] = (int)this->field_0x4e4;
+				(&peVar1[1].keyIndex_0x8)[peVar1->keyIndex_0x8 + iVar4] = (int)this->field_0x4e8;
+				piVar2 = &peVar1[1].count_0x0 + peVar1->keyIndex_0x8 + iVar3;
+				piVar2[2] = 0;
+				piVar2[1] = 0;
+				*piVar2 = 0;
+				(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = (int)this->field_0x4ec;
+			})
+		}
+		else {
+			if ((newAnim == 0x4d) || (newAnim == 0x38)) {
+				IMPLEMENTATION_GUARD(
+				peVar1 = pAnimator->pAnimKeyTableEntry;
+				if (peVar1->keyIndex_0x8 == 4) {
+					peVar1[2].field_0x4 = (int)this->field_0x4e4;
+					(&peVar1[2].count_0x0)[peVar1->keyIndex_0x8] = (int)this->field_0x4e8;
+					fVar6 = this->field_0x4e0;
+					if (0.0 <= fVar6) {
+						(&peVar1[1].keyIndex_0x8)[peVar1->keyIndex_0x8] = (int)fVar6;
+						(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = 0;
+					}
+					else {
+						(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = (int)-fVar6;
+						(&peVar1[1].keyIndex_0x8)[peVar1->keyIndex_0x8] = 0;
+					}
+				})
+			}
+			else {
+				if (((newAnim == 0x27) || (newAnim == 0x18)) || (newAnim == 0x16)) {
+					IMPLEMENTATION_GUARD(
+					peVar1 = pAnimator->pAnimKeyTableEntry;
+					if (peVar1->keyIndex_0x8 == 2) {
+						peVar1[2].count_0x0 = *(int*)&this->field_0x4fc;
+						(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = (int)(1.0 - *(float*)&this->field_0x4fc);
+					})
+				}
+				else {
+					if ((newAnim == 0x74) || (newAnim == 0x73)) {
+						IMPLEMENTATION_GUARD(
+						local_c = pAnimator->pAnimKeyTableEntry;
+						if (local_c->keyIndex_0x8 == 5) {
+							if (((this->characterBase).base.base.flags & 0x1000) == 0) {
+								GetAnglesFromVector(&(this->characterBase).base.base.rotationEuler,
+									&(this->characterBase).base.base.rotationQuat);
+							}
+							edF32Matrix4FromEulerSoft
+							(&eStack176, (edF32VECTOR3*)&(this->characterBase).base.base.rotationEuler,
+								(char*)&PTR_DAT_004347c0);
+							edF32Matrix4GetTransposeHard(&eStack176, &eStack176);
+							edF32Matrix4MulF32Vector4Hard
+							(&local_c0, &eStack176, &(this->characterBase).base.dynamic.velocityDirectionEuler);
+							if (1.0 < local_c0.x) {
+								puVar10 = (undefined*)0x3f800000;
+							}
+							else {
+								puVar10 = &DAT_bf800000;
+								if (-1.0 <= local_c0.x) {
+									puVar10 = (undefined*)local_c0.x;
+								}
+							}
+							fVar6 = acosf((float)puVar10);
+							fVar6 = (fVar6 - 1.570796) / -1.570796;
+							if (0.0 <= local_c0.y) {
+								puVar10 = (undefined*)0x3f800000;
+							}
+							else {
+								puVar10 = &DAT_bf800000;
+							}
+							fVar8 = (float)puVar10 * (1.0 - ABS(fVar6));
+							fVar7 = edFIntervalUnitDstLERP
+							((this->characterBase).base.dynamic.linearAcceleration, (float)&DAT_3f4ccccd, 4.0);
+							(&local_c[2].field_0x4)[local_c->keyIndex_0x8] = (int)(1.0 - fVar7);
+							if (0.0 <= fVar6) {
+								(&local_c[1].field_0x4)[local_c->keyIndex_0x8] = (int)(fVar7 * fVar6);
+								(&local_c[1].count_0x0)[local_c->keyIndex_0x8] = 0;
+							}
+							else {
+								(&local_c[1].count_0x0)[local_c->keyIndex_0x8] = (int)(-fVar7 * fVar6);
+								(&local_c[1].field_0x4)[local_c->keyIndex_0x8] = 0;
+							}
+							if (0.0 <= fVar8) {
+								(&local_c[1].keyIndex_0x8)[local_c->keyIndex_0x8] = (int)(fVar7 * fVar8);
+								(&local_c[2].count_0x0)[local_c->keyIndex_0x8] = 0;
+							}
+							else {
+								(&local_c[2].count_0x0)[local_c->keyIndex_0x8] = (int)(-fVar7 * fVar8);
+								(&local_c[1].keyIndex_0x8)[local_c->keyIndex_0x8] = 0;
+							}
+						})
+					}
+					else {
+						if (newAnim == 0x70) {
+							IMPLEMENTATION_GUARD(
+							local_8 = pAnimator->pAnimKeyTableEntry;
+							if (((this->characterBase).base.base.flags & 0x1000) == 0) {
+								GetAnglesFromVector(&(this->characterBase).base.base.rotationEuler,
+									&(this->characterBase).base.base.rotationQuat);
+							}
+							edF32Matrix4FromEulerSoft
+							((edF32MATRIX4*)auStack96, (edF32VECTOR3*)&(this->characterBase).base.base.rotationEuler,
+								(char*)&PTR_DAT_004347c0);
+							fVar6 = edF32Vector4SafeNormalize0Hard(&eStack112, (edF32VECTOR4*)&this->field_0x750);
+							fVar7 = edF32Vector4DotProductHard(&eStack112, (edF32VECTOR4*)auStack96);
+							fVar8 = edF32Vector4DotProductHard(&eStack112, (edF32VECTOR4*)(auStack96 + 0x10));
+							fVar9 = edF32Vector4DotProductHard(&eStack112, aeStack64);
+							if (((fVar7 != 0.0) || (fVar8 != 0.0)) || (fVar9 != 0.0)) {
+								pfVar5 = (float*)(&local_8[1].count_0x0 + local_8->keyIndex_0x8);
+								if (0.0 <= fVar7) {
+									fVar12 = 0.5;
+									fVar11 = fVar7 * ((fVar6 / 7.0) / 2.0);
+									if (fVar11 <= 0.5) {
+										fVar12 = fVar11;
+									}
+									*pfVar5 = (fVar12 + 0.5) * 1000.0 * fVar7;
+									pfVar5[1] = (1.0 - (fVar12 + 0.5)) * 1000.0 * fVar7;
+								}
+								else {
+									fVar12 = 0.5;
+									fVar11 = -fVar7 * ((fVar6 / 7.0) / 2.0);
+									if (fVar11 <= 0.5) {
+										fVar12 = fVar11;
+									}
+									*pfVar5 = (1.0 - (fVar12 + 0.5)) * 1000.0 * -fVar7;
+									pfVar5[1] = (fVar12 + 0.5) * 1000.0 * -fVar7;
+								}
+								piVar2 = &local_8[1].count_0x0 + local_8->keyIndex_0x8;
+								if (0.0 <= fVar8) {
+									fVar7 = 0.5;
+									fVar12 = fVar8 * ((fVar6 / 7.0) / 2.0);
+									if (fVar12 <= 0.5) {
+										fVar7 = fVar12;
+									}
+									piVar2[3] = (int)((fVar7 + 0.5) * 1000.0 * fVar8);
+									piVar2[2] = (int)((1.0 - (fVar7 + 0.5)) * 1000.0 * fVar8);
+								}
+								else {
+									fVar7 = 0.5;
+									fVar12 = -fVar8 * ((fVar6 / 7.0) / 2.0);
+									if (fVar12 <= 0.5) {
+										fVar7 = fVar12;
+									}
+									piVar2[3] = (int)((1.0 - (fVar7 + 0.5)) * 1000.0 * -fVar8);
+									piVar2[2] = (int)((fVar7 + 0.5) * 1000.0 * -fVar8);
+								}
+								piVar2 = &local_8[1].count_0x0 + local_8->keyIndex_0x8;
+								if (0.0 <= fVar9) {
+									fVar7 = 0.5;
+									fVar6 = fVar9 * ((fVar6 / 7.0) / 2.0);
+									if (fVar6 <= 0.5) {
+										fVar7 = fVar6;
+									}
+									piVar2[5] = (int)((fVar7 + 0.5) * 1000.0 * fVar9);
+									piVar2[4] = (int)((1.0 - (fVar7 + 0.5)) * 1000.0 * fVar9);
+								}
+								else {
+									fVar7 = 0.5;
+									fVar6 = -fVar9 * ((fVar6 / 7.0) / 2.0);
+									if (fVar6 <= 0.5) {
+										fVar7 = fVar6;
+									}
+									piVar2[5] = (int)((1.0 - (fVar7 + 0.5)) * 1000.0 * -fVar9);
+									piVar2[4] = (int)((fVar7 + 0.5) * 1000.0 * -fVar9);
+								}
+							})
+						}
+						else {
+							if (newAnim == 0x15) {
+								IMPLEMENTATION_GUARD(
+								peVar1 = pAnimator->pAnimKeyTableEntry;
+								if ((this->field_0x368 & 4) == 0) {
+									fVar6 = this->field_0x4e0;
+									if (0.0 <= fVar6) {
+										(&peVar1[2].field_0x4)[peVar1->keyIndex_0x8] = (int)fVar6;
+										(&peVar1[2].keyIndex_0x8)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = 0;
+									}
+									else {
+										(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = (int)-fVar6;
+										(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[2].field_0x4)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[2].keyIndex_0x8)[peVar1->keyIndex_0x8] = 0;
+									}
+									fVar6 = this->field_0x4e8;
+									if (0.0 <= fVar6) {
+										(&peVar1[2].count_0x0)[peVar1->keyIndex_0x8] = (int)fVar6;
+										(&peVar1[1].keyIndex_0x8)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[3].count_0x0)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[3].field_0x4)[peVar1->keyIndex_0x8] = 0;
+									}
+									else {
+										(&peVar1[3].count_0x0)[peVar1->keyIndex_0x8] = (int)-fVar6;
+										(&peVar1[3].field_0x4)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[1].keyIndex_0x8)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[2].count_0x0)[peVar1->keyIndex_0x8] = 0;
+									}
+								}
+								else {
+									fVar6 = this->field_0x4e0;
+									if (0.0 <= fVar6) {
+										(&peVar1[2].keyIndex_0x8)[peVar1->keyIndex_0x8] = (int)fVar6;
+										(&peVar1[2].field_0x4)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = 0;
+									}
+									else {
+										(&peVar1[1].count_0x0)[peVar1->keyIndex_0x8] = (int)-fVar6;
+										(&peVar1[1].field_0x4)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[2].field_0x4)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[2].keyIndex_0x8)[peVar1->keyIndex_0x8] = 0;
+									}
+									fVar6 = this->field_0x4e8;
+									if (0.0 <= fVar6) {
+										(&peVar1[1].keyIndex_0x8)[peVar1->keyIndex_0x8] = (int)fVar6;
+										(&peVar1[2].count_0x0)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[3].count_0x0)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[3].field_0x4)[peVar1->keyIndex_0x8] = 0;
+									}
+									else {
+										(&peVar1[3].field_0x4)[peVar1->keyIndex_0x8] = (int)-fVar6;
+										(&peVar1[3].count_0x0)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[1].keyIndex_0x8)[peVar1->keyIndex_0x8] = 0;
+										(&peVar1[2].count_0x0)[peVar1->keyIndex_0x8] = 0;
+									}
+								})
+							}
+							else {
+								CActor::AnimEvaluate(param_2, pAnimator, newAnim);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
 void CActorFighter::ClearLocalData()
 {
 	float fVar1;

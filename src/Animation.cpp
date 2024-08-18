@@ -1818,14 +1818,10 @@ void CAnimation::PlayAnim(CActor* pActor, int animType, int origAnimType)
 	this->anmBinMetaAnimator.SetAnim(animType, origAnimType);
 	this->currentAnimType_0x30 = animType;
 
-	peVar3 = (char*)&this->anmSkeleton;
-	iVar3 = 3;
-	do {
-		*(undefined4*)(peVar3 + 0x14) = 0;
-		peVar3 = peVar3 + -4;
-		bVar1 = iVar3 != 0;
-		iVar3 = iVar3 + -1;
-	} while (bVar1);
+	for (int i = 0; i < 4; i++) {
+		this->aTrackData[i] = 0.0f;
+	}
+
 	return;
 }
 
@@ -2041,6 +2037,42 @@ void edAnmMetaAnimator::AnimateDT(float deltaTime)
 		} while (index < this->layerCount);
 	}
 	return;
+}
+
+uint flags;
+uint currentAnimDataFlags;
+undefined4 field_0x8;
+float time_0xc;
+float time_0x10;
+float keyStartTime_0x14;
+
+float edAnmMetaAnimator::GetAnimStateDescLength(edAnmStateDesc* pOutDesc, int lengthMode)
+{
+	edAnmLayer* peVar1;
+	uint flags;
+	edAnmMacroAnimator eStack48;
+
+	eStack48.animationType = pOutDesc->animType;
+	peVar1 = this->aAnimData + pOutDesc->field_0x0;
+	eStack48.pActor = peVar1->pActor;
+	eStack48.pFunction = peVar1->pFunction_0xc0;
+	eStack48.pKeyDataArray = peVar1->pAnimManagerKeyData;
+	flags = pOutDesc->pHdrA->count_0x0;
+
+	if (lengthMode != 0) {
+		if (lengthMode == 1) {
+			flags = flags | 1;
+		}
+		else {
+			if (lengthMode == 2) {
+				flags = flags & 0xfffffffe;
+			}
+		}
+		flags = flags | 0x40000000;
+	}
+
+	eStack48.Initialize(0.0f, pOutDesc->pHdrA, false, flags);
+	return eStack48.keyStartTime_0x14;
 }
 
 void edAnmLayer::Reset()
@@ -2679,7 +2711,7 @@ BoneData* CAnimation::FindReggedBone(int bone)
 	return pAVar1;
 }
 
-void CAnimation::RegisterBone(uint key)
+void CAnimation::RegisterBone(uint boneId)
 {
 	ushort boneCount;
 	edANM_SKELETON* pSkeleton;
@@ -2691,7 +2723,7 @@ void CAnimation::RegisterBone(uint key)
 	edF32MATRIX4* peVar8;
 	edF32VECTOR4 local_10;
 
-	for (pBoneData = this->pBoneData; (pBoneData != (BoneData*)0x0 && (key != pBoneData->boneId)); pBoneData = pBoneData->pPrev) {
+	for (pBoneData = this->pBoneData; (pBoneData != (BoneData*)0x0 && (boneId != pBoneData->boneId)); pBoneData = pBoneData->pPrev) {
 	}
 
 	if (pBoneData == (BoneData*)0x0) {
@@ -2707,10 +2739,10 @@ void CAnimation::RegisterBone(uint key)
 
 	LAB_0017fb98:
 		if (pBoneData != (BoneData*)0x0) {
-			pBoneData->boneId = key;
+			pBoneData->boneId = boneId;
 			int boneNodeIndex = -1;
 			if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
-				boneNodeIndex = this->anmSkeleton.NodeIndexFromID(key);
+				boneNodeIndex = this->anmSkeleton.NodeIndexFromID(boneId);
 			}
 
 			if (boneNodeIndex == -1) {
@@ -2770,6 +2802,44 @@ void CAnimation::RegisterBone(uint key)
 		pBoneData->usedByCount = pBoneData->usedByCount + 1;
 	}
 	return;
+}
+
+void CAnimation::UnRegisterBone(uint boneId)
+{
+	BoneData* pBoneData;
+
+	for (pBoneData = this->pBoneData; (pBoneData != (BoneData*)0x0 && (boneId != pBoneData->boneId));
+		pBoneData = pBoneData->pPrev) {
+	}
+	if ((pBoneData != (BoneData*)0x0) && (pBoneData->usedByCount = pBoneData->usedByCount + -1, pBoneData->usedByCount == 0)) {
+		if (pBoneData->pNext == (BoneData*)0x0) {
+			this->pBoneData = pBoneData->pPrev;
+		}
+		else {
+			pBoneData->pNext->pPrev = pBoneData->pPrev;
+		}
+
+		if (pBoneData->pPrev != (BoneData*)0x0) {
+			pBoneData->pPrev->pNext = pBoneData->pNext;
+		}
+
+		pBoneData->usedByCount = 0;
+	}
+	return;
+}
+
+float CAnimation::GetAnimLength(int param_2, int lengthMode)
+{
+	int* piVar1;
+	float fVar2;
+	edAnmStateDesc eStack32;
+	edAnmStateParser local_4;
+
+	piVar1 = (this->anmBinMetaAnimator).pAnimKeyEntryData;
+	local_4 = (int*)(reinterpret_cast<char*>(piVar1) + piVar1[param_2] + 4);
+	local_4.BuildDesc(&eStack32, -1, -1);
+	fVar2 = this->anmBinMetaAnimator.GetAnimStateDescLength(&eStack32, lengthMode);
+	return fVar2;
 }
 
 edF32MATRIX4* CAnimation::GetCurBoneMatrix(uint boneId)

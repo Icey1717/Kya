@@ -17,6 +17,12 @@ enum EBoomyThrowState
 	BTS_Unknown_6
 };
 
+struct BounceParams
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
+};
+
 class CCamera;
 class CActorBoomy;
 
@@ -117,8 +123,14 @@ public:
 
 	void StateHeroTobogganJump(int param_2, int param_3, int param_4, int nextState);
 
+	void StateHeroTrampolineJump_1_2Init();
+	void StateHeroTrampolineJump_1_2Term();
+	void StateHeroTrampolineJump_1_2(float param_1);
+
 	inline void StateHeroRunTerm() {}
 	void StateHeroRun();
+
+	void StateHeroJoke();
 
 	void StateHeroSlideSlipInit();
 	void StateHeroSlideSlip(int nextState, bool boolA, bool boolB);
@@ -134,6 +146,12 @@ public:
 	void StateHeroRollInit();
 	void StateHeroRoll();
 	void StateHeroRollTerm() {}
+
+	void StateHeroKickInit();
+	void StateHeroKickInitSimple();
+	void StateHeroKick(int param_2, int param_3);
+	void StateHeroKickTerm();
+	void StateHeroKickTermSimple();
 
 	void StateHeroJump_1_3(int nextState);
 
@@ -167,6 +185,7 @@ public:
 	void RestoreVerticalOrientation();
 
 	bool DetectGripablePrecipice();
+	void UngripAllObjects();
 
 	int SlideOnGround(float param_1, float param_2, float param_3, float param_4, uint flags);
 	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
@@ -216,6 +235,10 @@ public:
 	void SetInvincible(float t0, int param_3);
 	bool CheckHitAndDeath();
 
+	void ComputeSoccerMoving(float param_1, float param_2, CActorMovable* pSoccerActor);
+	void SoccerOff();
+	void PlaySoccer();
+
 	bool GetSomethingInFrontOf_001473e0();
 
 	CBehaviourHeroDefault behaviourHeroDefault;
@@ -225,12 +248,16 @@ public:
 	CActor* pTrappedByActor;
 	uint trapLinkedBone;
 
-	CActor* field_0xf10;
+	CActorMovable* pKickedActor;
 	CActor* field_0xf50;
 
 	CActorWindState field_0x1190;
 
 	float field_0x1000;
+
+	int field_0x1010;
+
+	float field_0x102c;
 
 	CInventoryInterface inventory;
 	CMagicInterface magicInterface;
@@ -249,6 +276,8 @@ public:
 
 	void* field_0x1bb0;
 
+	int field_0x187c;
+
 	CBehaviour behaviour_0x1c50;
 	CBehaviour behaviour_0x1e10;
 	CBehaviour behaviour_0x1fd0;
@@ -260,10 +289,14 @@ public:
 	undefined4 field_0x1a50;
 	int field_0x1094;
 
+	float jokeWarnRadius;
+
 	edF32VECTOR4 field_0xf00;
 
 	CActor* field_0xf54;
 	CActor* field_0xf58;
+
+	int field_0xd30;
 
 	int field_0x1a48;
 	int field_0x1a4c;
@@ -275,7 +308,7 @@ public:
 	edF32VECTOR4 field_0x1460;
 	edF32VECTOR4 field_0x1490;
 
-	CActor* pCheckpointManagerSubObjA_0x14a4;
+	CActor* pGrippedActor;
 
 	float field_0x14b0;
 	float field_0x14b4;
@@ -339,7 +372,8 @@ public:
 	float field_0x1184;
 	float landSpeed;
 	float field_0x1430;
-	float field_0x1574;
+	float field_0x1570;
+	int field_0x1574;
 
 	float animKey_0x157c;
 	float field_0x11f0;
@@ -350,8 +384,8 @@ public:
 	float field_0x1174;
 	float field_0x1180;
 
-	CActor* field_0xf18;
-	CActor* pSoccerActor;
+	CActor* pBounceOnActor;
+	CActorMovable* pSoccerActor;
 
 	undefined4 field_0xcbc;
 
@@ -376,8 +410,11 @@ public:
 	float field_0x1158;
 
 	int boomyThrowState;
+	int activeBoomyThrowState;
 
 	int field_0x1a00;
+
+	uint bounceBoneId;
 
 	struct HeroActionParams
 	{
@@ -418,7 +455,7 @@ public:
 	undefined4 field_0x1560;
 
 	undefined4 jmp_field_0x1144;
-	edF32VECTOR4 jmp_field_0x1120;
+	edF32VECTOR4 jmpDirection;
 };
 
 #endif //ACTOR_HERO_PRIVATE_H

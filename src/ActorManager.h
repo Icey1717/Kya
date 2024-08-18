@@ -102,6 +102,7 @@ public:
 
 	_linked_actor* FindLinkedActor(CActor* pActor);
 	_linked_actor* AddLinkedActor();
+	void RemoveLinkedActor(_linked_actor* pLinkedActor);
 
 	_linked_actor* aLinkedActorData;
 	_linked_actor* pActorArray_0x8;

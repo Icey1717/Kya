@@ -21,7 +21,7 @@ public:
 
 	uint flags;
 
-	float linearJerk;
+	float horizontalLinearAcceleration;
 	float linearAcceleration;
 	float speed;
 	undefined4 field_0x4c;
@@ -93,7 +93,9 @@ struct CActorMovParamsIn : public CActorParamsIn {
 
 class CActorMovable : public CActor {
 public:
+	CActorMovable();
 
+	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
 	virtual void SetState(int newState, int animType);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
@@ -106,6 +108,7 @@ public:
 	bool SV_MOV_UpdatePush(float param_1, S_PUSH_DATA* pPushData, S_PUSH_STREAM_DEF* pPushStreamRef);
 	bool SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_TILT_STREAM_DEF* pTiltStreamRef);
 	void SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActorMovParamsIn* pActorMovParamsIn, edF32VECTOR4* param_4);
+	void SV_MOV_MoveCloserTo(float param_1, edF32VECTOR4* param_3);
 
 	void ComputeRealMoving(edF32VECTOR4* delta);
 	float GetSubjectiveCumulatedWeight();

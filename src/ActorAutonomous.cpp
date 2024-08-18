@@ -7,6 +7,7 @@
 #include "TimeController.h"
 #include "MathOps.h"
 #include "CollisionManager.h"
+#include "ActorManager.h"
 
 int INT_00448e08 = 0;
 
@@ -144,21 +145,21 @@ void CDynamicExt::ClearLocalData()
 {
 	Timer* pTVar1;
 
-	(this->aVelocity[0]).x = 0.0f;
-	(this->aVelocity[0]).y = 0.0f;
-	(this->aVelocity[0]).z = 0.0f;
-	(this->aVelocity[0]).w = 0.0f;
-	this->aVelocityMagnitudes[0] = 0.0f;
-	(this->aVelocity[1]).x = 0.0f;
-	(this->aVelocity[1]).y = 0.0f;
-	(this->aVelocity[1]).z = 0.0f;
-	(this->aVelocity[1]).w = 0.0f;
-	this->aVelocityMagnitudes[1] = 0.0f;
-	(this->aVelocity[2]).x = 0.0f;
-	(this->aVelocity[2]).y = 0.0f;
-	(this->aVelocity[2]).z = 0.0f;
-	(this->aVelocity[2]).w = 0.0f;
-	this->aVelocityMagnitudes[2] = 0.0f;
+	(this->aImpulseVelocities[0]).x = 0.0f;
+	(this->aImpulseVelocities[0]).y = 0.0f;
+	(this->aImpulseVelocities[0]).z = 0.0f;
+	(this->aImpulseVelocities[0]).w = 0.0f;
+	this->aImpulseVelocityMagnitudes[0] = 0.0f;
+	(this->aImpulseVelocities[1]).x = 0.0f;
+	(this->aImpulseVelocities[1]).y = 0.0f;
+	(this->aImpulseVelocities[1]).z = 0.0f;
+	(this->aImpulseVelocities[1]).w = 0.0f;
+	this->aImpulseVelocityMagnitudes[1] = 0.0f;
+	(this->aImpulseVelocities[2]).x = 0.0f;
+	(this->aImpulseVelocities[2]).y = 0.0f;
+	(this->aImpulseVelocities[2]).z = 0.0f;
+	(this->aImpulseVelocities[2]).w = 0.0f;
+	this->aImpulseVelocityMagnitudes[2] = 0.0f;
 	(this->normalizedTranslation).x = 0.0f;
 	(this->normalizedTranslation).y = 0.0f;
 	(this->normalizedTranslation).z = 0.0f;
@@ -175,6 +176,19 @@ void CDynamicExt::ClearLocalData()
 }
 
 edF32VECTOR4 CDynamicExt::gForceGravity = { 0.0f, -30.0f, 0.0f, 0.0f };
+
+CActorAutonomous::CActorAutonomous()
+{
+	this->dynamicExt.gravityScale = 1.0f;
+	this->dynamicExt.field_0x4 = 0.0f;
+	this->dynamicExt.field_0x8 = 0.0f;
+	this->lifeInterface = CLifeInterface();
+}
+
+bool CActorAutonomous::IsKindOfObject(ulong kind)
+{
+	return (kind & 7) != 0;
+}
 
 void CActorAutonomous::Create(ByteCode* pByteCode)
 {
@@ -300,16 +314,17 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	long lVar6;
 
 	if (msg == 0x3f) {
-		IMPLEMENTATION_GUARD(
-		bVar1 = (*(this->pVTable)->SetBehaviour)((CActor*)this, 2, -1, -1);
+		bVar1 = SetBehaviour(2, -1, -1);
 		if (bVar1 == false) {
 			iVar5 = 0;
 		}
 		else {
-			pCVar4 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-			pCVar4[4].pVTable = (CBehaviourVtable*)pSender;
+			pCVar4 = GetBehaviour(this->curBehaviourId);
+
+			CBehaviourCatchByTrap* pCatchByTrap = reinterpret_cast<CBehaviourCatchByTrap*>(pCVar4);
+			pCatchByTrap->field_0x10 = pSender;
 			iVar5 = 1;
-		})
+		}
 	}
 	else {
 		if (msg == 0x18) {
@@ -333,6 +348,25 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 		}
 	}
 	return iVar5;
+}
+
+StateConfig CActorAutonomous::gStateCfg_AUT[1] = {
+	StateConfig(0x8, 0x410),
+};
+
+StateConfig* CActorAutonomous::GetStateCfg(int state)
+{
+	StateConfig* pStateConfig;
+
+	if (state < 5) {
+		pStateConfig = CActorMovable::GetStateCfg(state);
+	}
+	else {
+		assert(state == 5);
+		pStateConfig = gStateCfg_AUT + state + -5;
+	}
+
+	return pStateConfig;
 }
 
 void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
@@ -458,13 +492,13 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	// Gravity
 	if ((((uVar10 & 0x20) != 0) && ((pCollision->flags_0x4 & 2) == 0)) || ((uVar10 & 0x8000000) != 0)) {
 		edF32Vector4ScaleHard(this->dynamicExt.gravityScale, &eStack128, &CDynamicExt::gForceGravity);
-		peVar9 = this->dynamicExt.aVelocity;
+		peVar9 = this->dynamicExt.aImpulseVelocities;
 		edF32Vector4AddHard(peVar9, peVar9, &eStack128);
-		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aVelocity[0]);
-		this->dynamicExt.aVelocityMagnitudes[0] = fVar15;
+		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[0]);
+		this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar15;
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Gravity: {}", this->dynamicExt.aVelocity[0].ToString());
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Gravity: {}", this->dynamicExt.aImpulseVelocities[0].ToString());
 
 	if (((uVar10 & 0x100) != 0) && ((pCollision->flags_0x4 & 2) == 0)) {
 		if ((uVar10 & 0x100000) == 0) {
@@ -484,35 +518,35 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		}
 
 		edF32Vector4ScaleHard(fVar15, &eStack144, &this->dynamicExt.normalizedTranslation);
-		peVar9 = &this->dynamicExt.aVelocity[1];
+		peVar9 = &this->dynamicExt.aImpulseVelocities[1];
 
 		AUTONOMOUS_LOG(LogLevel::Verbose, "eStack144 {} vel[1]: {} normalizedT: {}",
-			eStack144.ToString(), this->dynamicExt.aVelocity[1].ToString(), this->dynamicExt.normalizedTranslation.ToString());
+			eStack144.ToString(), this->dynamicExt.aImpulseVelocities[1].ToString(), this->dynamicExt.normalizedTranslation.ToString());
 
 		edF32Vector4AddHard(peVar9, peVar9, &eStack144);
 
-		AUTONOMOUS_LOG(LogLevel::Verbose, "vel[1] result: {}", this->dynamicExt.aVelocity[1].ToString());
+		AUTONOMOUS_LOG(LogLevel::Verbose, "vel[1] result: {}", this->dynamicExt.aImpulseVelocities[1].ToString());
 
-		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aVelocity[1]);
-		this->dynamicExt.aVelocityMagnitudes[1] = fVar15;
+		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[1]);
+		this->dynamicExt.aImpulseVelocityMagnitudes[1] = fVar15;
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Unknown: {}", this->dynamicExt.aVelocity[1].ToString());
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Unknown: {}", this->dynamicExt.aImpulseVelocities[1].ToString());
 
 	if (this->pTiedActor == (CActor*)0x0) {
 		pTVar6 = GetTimer();
 		edF32Vector4ScaleHard(0.02f / pTVar6->cutsceneDeltaTime, aeStack544, &this->dynamic.field_0x10);
-		peVar9 = this->dynamicExt.aVelocity;
+		peVar9 = this->dynamicExt.aImpulseVelocities;
 		edF32Vector4AddHard(peVar9, peVar9, aeStack544);
-		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aVelocity[0]);
-		this->dynamicExt.aVelocityMagnitudes[0] = fVar15;
+		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[0]);
+		this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar15;
 		this->dynamic.field_0x10.x = 0.0f;
 		this->dynamic.field_0x10.y = 0.0f;
 		this->dynamic.field_0x10.z = 0.0f;
 		this->dynamic.field_0x10.w = 0.0f;
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Tied Actor: {}", this->dynamicExt.aVelocity[0].ToString());
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Tied Actor: {}", this->dynamicExt.aImpulseVelocities[0].ToString());
 
 	local_a0.x = 0.0f;
 	local_a0.y = 0.0f;
@@ -520,8 +554,8 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	local_a0.w = 0.0f;
 
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
-		AUTONOMOUS_LOG(LogLevel::Verbose, "Vel {}: {}", iVar8, this->dynamicExt.aVelocity[iVar8].ToString());
-		edF32Vector4AddHard(&local_a0, &local_a0, &this->dynamicExt.aVelocity[iVar8]);
+		AUTONOMOUS_LOG(LogLevel::Verbose, "Vel {}: {}", iVar8, this->dynamicExt.aImpulseVelocities[iVar8].ToString());
+		edF32Vector4AddHard(&local_a0, &local_a0, &this->dynamicExt.aImpulseVelocities[iVar8]);
 	}
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Summed Velocities: {} 3: {} scale: {}", local_a0.ToString(), this->dynamicExt.normalizedTranslation.ToString(), this->dynamicExt.field_0x6c);
@@ -818,16 +852,16 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	CActorWindState* pCVar7 = GetWindState();
 	if (pCVar7 != (CActorWindState*)0x0) {
-		GetWindState()->field_0x40 = (this->dynamicExt).aVelocity[2];
-		GetWindState()->field_0x38 = (this->dynamicExt).aVelocityMagnitudes[2];
+		GetWindState()->field_0x40 = (this->dynamicExt).aImpulseVelocities[2];
+		GetWindState()->field_0x38 = (this->dynamicExt).aImpulseVelocityMagnitudes[2];
 	}
 
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
-		this->dynamicExt.aVelocity[iVar8].x = 0.0f;
-		this->dynamicExt.aVelocity[iVar8].y = 0.0f;
-		this->dynamicExt.aVelocity[iVar8].z = 0.0f;
-		this->dynamicExt.aVelocity[iVar8].w = 0.0f;
-		this->dynamicExt.aVelocityMagnitudes[iVar8] = 0.0f;
+		this->dynamicExt.aImpulseVelocities[iVar8].x = 0.0f;
+		this->dynamicExt.aImpulseVelocities[iVar8].y = 0.0f;
+		this->dynamicExt.aImpulseVelocities[iVar8].z = 0.0f;
+		this->dynamicExt.aImpulseVelocities[iVar8].w = 0.0f;
+		this->dynamicExt.aImpulseVelocityMagnitudes[iVar8] = 0.0f;
 	}
 
 	this->dynamic.field_0x4c = 0;
@@ -1089,6 +1123,89 @@ void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int para
 	return;
 }
 
+bool Wolfen_CriterionWarn(CActor* pActor, void* pParams)
+{
+	bool bVar1;
+
+	bVar1 = pActor != (CActor*)pParams;
+	if (bVar1) {
+		bVar1 = pActor->IsKindOfObject(0x10);
+		bVar1 = bVar1 != false;
+	}
+
+	return bVar1;
+}
+
+void CActorAutonomous::StateAutSoccer(float param_1, int param_3, int param_4, CActorMovable* param_5)
+
+{
+	if (param_3 == 0) {
+		ManageDyn(4.0f, 0x40001, (CActorsTable*)0x0);
+	}
+	else {
+		if (this->dynamic.speed == 0.0) {
+			PlayAnim(0xa);
+			this->timeInAir = 0.0f;
+		}
+		else {
+			if ((param_5->dynamic).horizontalLinearAcceleration < param_1) {
+				PlayAnim(0xa);
+				this->timeInAir = 0.0f;
+			}
+			else {
+				PlayAnim(param_4);
+			}
+		}
+
+		ManageDyn(4.0f, 0x1006023b, (CActorsTable*)0x0);
+	}
+
+	return;
+}
+
+void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, uint msgParam)
+{
+	CActor* pReceiver;
+	float fVar1;
+	float fVar2;
+	int iVar3;
+	float fVar4;
+	CFixedTable<CActor*, 64> local_130;
+	edF32VECTOR4 local_20;
+	uint local_8;
+	uint local_4;
+
+	if ((radius != 0.0) && (radius != param_2)) {
+		local_130.entryCount = 0;
+		local_20.xyz = this->currentLocation.xyz;
+		local_20.w = radius;
+
+		(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_130, &local_20, Wolfen_CriterionWarn, this);
+		iVar3 = 0;
+		if (param_2 == 0.0) {
+			for (; iVar3 < local_130.entryCount; iVar3 = iVar3 + 1) {
+				local_4 = msgParam;
+				DoMessage(local_130.aEntries[iVar3], (ACTOR_MESSAGE)0x3a, (MSG_PARAM)msgParam);
+			}
+		}
+		else {
+			for (iVar3 = 0; iVar3 < local_130.entryCount; iVar3 = iVar3 + 1) {
+				pReceiver = local_130.aEntries[iVar3];
+				fVar4 = (pReceiver->currentLocation).x - this->currentLocation.x;
+				fVar1 = (pReceiver->currentLocation).y - this->currentLocation.y;
+				fVar2 = (pReceiver->currentLocation).z - this->currentLocation.z;
+				fVar4 = sqrtf(fVar4 * fVar4 + fVar1 * fVar1 + fVar2 * fVar2);
+
+				if ((param_2 <= fVar4) && (fVar4 <= radius)) {
+					local_8 = msgParam;
+					DoMessage(pReceiver, (ACTOR_MESSAGE)0x3a, (MSG_PARAM)msgParam);
+				}
+			}
+		}
+	}
+	return;
+}
+
 void CActorAutonomous::LifeRestore()
 {
 	ACTOR_LOG(LogLevel::Info, "CActorAutonomous::LifeRestore Restoring life to max {}", GetLifeInterfaceOther()->GetValueMax());
@@ -1172,4 +1289,119 @@ void CLifeInterface::SetPriority(int newPriority)
 {
 	this->priority = newPriority;
 	return;
+}
+
+void CBehaviourAutonomous::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorAutonomous*>(pOwner);
+	return;
+}
+
+void CBehaviourCatchByTrap::Create(ByteCode* pByteCode)
+{
+	this->condOpArray.Create(pByteCode);
+	return;
+}
+
+void CBehaviourCatchByTrap::Manage()
+{
+	uint key;
+	CActorAutonomous* pAutonomous;
+
+	pAutonomous = this->pOwner;
+	if (pAutonomous->actorState == 5) {
+		key = pAutonomous->DoMessage(this->field_0x10, (ACTOR_MESSAGE)0x4d, (MSG_PARAM)9);
+
+		if (key != this->boneId) {
+			if (this->boneId != 0) {
+				pAutonomous->UnlinkFromActor();
+				this->field_0x10->pAnimationController->UnRegisterBone(this->boneId);
+			}
+
+			if (key != 0) {
+				this->field_0x10->pAnimationController->RegisterBone(key);
+				pAutonomous->LinkToActor(this->field_0x10, key, 1);
+			}
+
+			this->boneId = key;
+		}
+	}
+
+	return;
+}
+
+void CBehaviourCatchByTrap::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->pOwner = static_cast<CActorAutonomous*>(pOwner);
+	this->boneId = 0;
+
+	if (newState == -1) {
+		this->pOwner->SetState(5, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+void CBehaviourCatchByTrap::End(int newBehaviourId)
+{
+	undefined4 local_90[3];
+	undefined4 local_84;
+	undefined4 local_6c;
+	undefined4 local_60;
+	undefined4* local_4;
+
+	local_90[0] = 10;
+	local_60 = 0;
+	local_84 = 0x42c80000;
+	local_6c = 0x3f000000;
+	local_4 = local_90;
+	IMPLEMENTATION_GUARD(
+	CActor::DoMessage((CActor*)this->pOwner, this->field_0x10, 2, (uint)local_4);)
+	return;
+}
+
+void CBehaviourCatchByTrap::TermState(int oldState, int newState)
+{
+	if ((oldState == 5) && (this->boneId != 0)) {
+		this->pOwner->UnlinkFromActor();
+		this->field_0x10->pAnimationController->UnRegisterBone(this->boneId);
+		this->boneId = 0;
+	}
+
+	return;
+}
+
+int CBehaviourCatchByTrap::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorAutonomous* pCVar1;
+	int bProcessed;
+
+	if (msg == 0x53) {
+		this->pOwner->UpdatePosition((edF32VECTOR4*)pMsgParam, true);
+		bProcessed = 1;
+
+		this->pOwner->dynamic.speed = 0.0f;
+
+		pCVar1 = this->pOwner;
+		(pCVar1->dynamicExt).normalizedTranslation.x = 0.0f;
+		(pCVar1->dynamicExt).normalizedTranslation.y = 0.0f;
+		(pCVar1->dynamicExt).normalizedTranslation.z = 0.0f;
+		(pCVar1->dynamicExt).normalizedTranslation.w = 0.0f;
+		(pCVar1->dynamicExt).field_0x6c = 0.0f;
+	}
+	else {
+		if (msg == 0x40) {
+			pCVar1 = this->pOwner;
+			pCVar1->SetBehaviour(pCVar1->prevBehaviourId, -1, -1);
+			bProcessed = 1;
+		}
+		else {
+			bProcessed = 0;
+		}
+	}
+
+	return bProcessed;
 }

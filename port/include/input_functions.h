@@ -1,9 +1,10 @@
 #pragma once
 
-#define ROUTE_TRIANGLE 0x3
-#define ROUTE_CIRCLE 0x4
-#define ROUTE_SQUARE 0x5
+#define ROUTE_L1 0x2
+#define ROUTE_TRIANGLE 0x4
+#define ROUTE_CIRCLE 0x5
 #define ROUTE_CROSS 0x6
+#define ROUTE_SQUARE 0x7
 #define ROUTE_SELECT 0x8
 #define ROUTE_START 0xb
 

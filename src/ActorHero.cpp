@@ -1065,14 +1065,34 @@ uint CActorHero::TestState_IsInHit(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		currentState = this->actorState;
 		inFlags = 0;
-		if ((currentState != AS_None) && (inFlags = 0, 0x71 < (int)currentState)) {
 
+		if ((currentState != AS_None) && (inFlags = 0, 0x71 < (int)currentState)) {
 			assert(currentState - 0x72 < HERO_STATE_COUNT);
 
 			inFlags = _gStateCfg_HRO[currentState - 0x72].heroFlags;
 		}
 	}
+
 	return inFlags & 0x80000;
+}
+
+uint CActorHero::TestState_CanTrampo(uint inFlags)
+{
+	int iVar1;
+	StateConfig* pSVar2;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		if (iVar1 == -1) {
+			inFlags = 0;
+		}
+		else {
+			pSVar2 = this->GetStateCfg(iVar1);
+			inFlags = pSVar2->flags_0x4;
+		}
+	}
+
+	return inFlags & 0x4000000;
 }
 
 uint CActorHero::TestState_IsOnAToboggan(uint inFlags)
@@ -1082,13 +1102,14 @@ uint CActorHero::TestState_IsOnAToboggan(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		currentState = this->actorState;
 		inFlags = 0;
-		if ((currentState != AS_None) && (inFlags = 0, 0x71 < (int)currentState)) {
 
+		if ((currentState != AS_None) && (inFlags = 0, 0x71 < (int)currentState)) {
 			assert(currentState - 0x72 < HERO_STATE_COUNT);
 
 			inFlags = _gStateCfg_HRO[currentState - 0x72].heroFlags;
 		}
 	}
+
 	return inFlags & 0x8000;
 }
 
@@ -1099,10 +1120,12 @@ uint CActorHero::TestState_IsGrippedOrClimbing(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
+
 	return inFlags & 0xc0;
 }
 
@@ -1113,6 +1136,7 @@ bool CActorHero::TestState_IsInCheatMode()
 
 	iVar1 = this->actorState;
 	ret = true;
+
 	if ((iVar1 != 0xa8) && (iVar1 != 0x129)) {
 		ret = false;
 	}
@@ -1127,11 +1151,29 @@ uint CActorHero::TestState_IsInTheWind(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
+
 	return inFlags & 0x800;
+}
+
+uint CActorHero::TestState_BounceWalls(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x400;
 }
 
 uint CActorHero::TestState_AllowAction(uint inFlags)
@@ -1141,10 +1183,12 @@ uint CActorHero::TestState_AllowAction(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
+
 	return inFlags & 1;
 }
 
@@ -1155,11 +1199,13 @@ uint CActorHero::TestState_IsSliding(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
 	}
-	return inFlags & 100;
+
+	return inFlags & 0x100;
 }
 
 uint CActorHero::TestState_IsFlying(uint inFlags)
@@ -1169,6 +1215,7 @@ uint CActorHero::TestState_IsFlying(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
@@ -1183,6 +1230,7 @@ uint CActorHero::TestState_IsCrouched(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
@@ -1198,6 +1246,7 @@ uint CActorHero::TestState_AllowMagic(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
@@ -1213,6 +1262,7 @@ uint CActorHero::TestState_IsOnCeiling(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
@@ -1228,6 +1278,7 @@ uint CActorHero::TestState_IsGripped(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
@@ -1243,6 +1294,7 @@ uint CActorHero::TestState_AllowAttack(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}
@@ -1251,7 +1303,7 @@ uint CActorHero::TestState_AllowAttack(uint inFlags)
 	return inFlags & 0x2;
 }
 
-uint CActorHero::TestState_00132b90(uint inFlags)
+uint CActorHero::TestState_001328a0(uint inFlags)
 {
 	int iVar1;
 
@@ -1263,7 +1315,97 @@ uint CActorHero::TestState_00132b90(uint inFlags)
 		}
 	}
 
+	return inFlags & 0x1000000;
+}
+
+uint CActorHero::TestState_00132b90(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
 	return inFlags & 0x10000;
+}
+
+uint CActorHero::TestState_CheckFight(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x10;
+}
+
+uint CActorHero::TestState_AllowFight(uint inFlags)
+{
+	int iVar1;
+
+	bool bVar2;
+	uint uVar3;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	bVar2 = (inFlags & 8) != 0;
+	uVar3 = (uint)bVar2;
+
+	if (bVar2) {
+		uVar3 = (this->flags & 0x800000) != 0 ^ 1;
+	}
+
+	return uVar3;
+}
+
+uint CActorHero::TestState_CanPlaySoccer(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x40000;
+}
+
+uint CActorHero::TestState_WindWall(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x1000;
 }
 
 uint CActorHero::TestState_AllowInternalView(uint inFlags)
@@ -1276,6 +1418,7 @@ uint CActorHero::TestState_AllowInternalView(uint inFlags)
 	if (inFlags == 0xffffffff) {
 		iVar1 = this->actorState;
 		inFlags = 0;
+
 		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
 			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
 		}

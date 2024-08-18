@@ -22,7 +22,7 @@
 
 byte g_NetIsSetup_004893d0 = 0;
 
-int g_isNTSC;
+int g_isNTSC = 1;
 
 edSysHandlersNodeTable g_SysHandlersNodeTable_00489170;
 

@@ -37,8 +37,8 @@
 #include <iostream>
 #include "InputManager.h"
 #include "DebugSetting.h"
-#include "../../../src/Rendering/DisplayList.h"
-#include "../../../src/SectorManager.h"
+#include "Rendering/DisplayList.h"
+#include "SectorManager.h"
 #include "DebugHero.h"
 #include "../../Windows/Renderer/Vulkan/src/VulkanRenderer.h"
 #include "DebugMesh.h"
@@ -785,11 +785,12 @@ Input::InputFunctions& DebugMenu::GetInputFunctions()
 
 std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_START,				ImGuiKey_Enter },
-	{ ROUTE_CROSS,				ImGuiKey_A },
-	{ ROUTE_SQUARE,				ImGuiKey_O },
-	{ ROUTE_TRIANGLE,			ImGuiKey_Comma },
+	{ ROUTE_TRIANGLE,			ImGuiKey_Comma },	// 0x4
+	{ ROUTE_CIRCLE,				ImGuiKey_E },		// 0x5
+	{ ROUTE_CROSS,				ImGuiKey_A },		// 0x6
+	{ ROUTE_SQUARE,				ImGuiKey_O },		// 0x7
+	{ ROUTE_L1,					ImGuiKey_C },
 	{ ROUTE_SELECT,				ImGuiKey_Backspace },
-	{ ROUTE_CIRCLE,				ImGuiKey_E },
 	{ ROUTE_UP,					ImGuiKey_UpArrow },
 	{ ROUTE_DOWN,				ImGuiKey_DownArrow },
 	{ ROUTE_L_ANALOG_UP,		ImGuiKey_G },
@@ -800,6 +801,11 @@ std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 
 bool DebugMenu::GetKeyPressed(uint32_t routeId)
 {
+	// Check if we are typing in a text box
+	if (ImGui::GetIO().WantCaptureKeyboard) {
+		return false;
+	}
+
 	assert(gKeyMap.find(routeId) != gKeyMap.end());
 
 	return ImGui::IsKeyPressed(gKeyMap[routeId]);
@@ -807,6 +813,11 @@ bool DebugMenu::GetKeyPressed(uint32_t routeId)
 
 bool DebugMenu::GetKeyReleased(uint32_t routeId)
 {
+	// Check if we are typing in a text box
+	if (ImGui::GetIO().WantCaptureKeyboard) {
+		return false;
+	}
+
 	assert(gKeyMap.find(routeId) != gKeyMap.end());
 
 	return ImGui::IsKeyReleased(gKeyMap[routeId]);
@@ -814,6 +825,11 @@ bool DebugMenu::GetKeyReleased(uint32_t routeId)
 
 float DebugMenu::GetKeyAnalog(uint32_t routeId)
 {
+	// Check if we are typing in a text box
+	if (ImGui::GetIO().WantCaptureKeyboard) {
+		return false;
+	}
+
 	assert(gKeyMap.find(routeId) != gKeyMap.end());
 
 	return ImGui::IsKeyDown(gKeyMap[routeId]) ? 1.0f : 0.0f;

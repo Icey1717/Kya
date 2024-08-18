@@ -139,6 +139,8 @@ struct edAnmMetaAnimator {
 	void SetLayerResourceArray(int index, edANM_HDR** pAnimManagerKeyData);
 	float GetLayerAnimTime(int animIndex, int param_3);
 	void AnimateDT(float deltaTime);
+
+	float GetAnimStateDescLength(edAnmStateDesc* pOutDesc, int lengthMode);
 };
 
 struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
@@ -163,7 +165,11 @@ public:
 	void PlayAnim(CActor* pActor, int animType, int origAnimType);
 	void Reset(CActor* pActor);
 	BoneData* FindReggedBone(int bone);
-	void RegisterBone(uint key);
+	void RegisterBone(uint boneId);
+	void UnRegisterBone(uint boneId);
+
+	float GetAnimLength(int param_2, int lengthMode);
+
 	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
 
 	struct FrameMatrixData_8 {

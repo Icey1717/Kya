@@ -68,7 +68,6 @@ PlatformHeader<S_TILT_DATA>* gTiltDataAllocator;
 CActorMovingPlatform::CActorMovingPlatform()
 {
 	CActor();
-	this->dynamic.weightB = 0.0f;
 	this->field_0x1ec = (CinNamedObject30*)0x0;
 	this->field_0x1f0 = (CActor*)0x0;
 	this->field_0x1f4 = (CinNamedObject30*)0x0;

@@ -27,6 +27,7 @@ public:
 
 	virtual bool IsFightRelated(int param_2);
 
+	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();
 
 	edF32VECTOR4 field_0x400;

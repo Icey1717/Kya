@@ -25,6 +25,10 @@
 
 #define STATE_HERO_ROLL 0x8a
 
+#define STATE_HERO_KICK_A 0xa5
+#define STATE_HERO_KICK_B 0xa6
+#define STATE_HERO_KICK_C 0xa7
+
 #define STATE_HERO_GRIP_B 0xbc
 #define STATE_HERO_GRIP_C 0xbd
 #define STATE_HERO_GRIP_HANG_IDLE 0xbf
@@ -33,6 +37,8 @@
 #define STATE_HERO_JUMP_2_3_GRIP 0xc7
 
 #define STATE_HERO_GRIP_GRAB 0xca
+
+#define STATE_HERO_JOKE 0xe0
 
 #define STATE_HERO_SLIDE_SLIP_A 0xe1
 #define STATE_HERO_SLIDE_SLIP_B 0xe2
@@ -52,6 +58,10 @@
 #define STATE_HERO_GLIDE_1 0xf0
 #define STATE_HERO_GLIDE_2 0xf1
 #define STATE_HERO_GLIDE_3 0xf2
+
+#define STATE_HERO_TRAMPOLINE_JUMP_1_2_A 0x10b
+#define STATE_HERO_TRAMPOLINE_JUMP_2_3 0x10c
+#define STATE_HERO_TRAMPOLINE_JUMP_1_2_B 0x10d
 
 #define STATE_HERO_CAUGHT_TRAP_1 0x117
 #define STATE_HERO_CAUGHT_TRAP_2 0x118
@@ -130,9 +140,11 @@ public:
 	uint animKey_0x1590;
 	uint animKey_0x1594;
 	uint field_0x1594;
+	uint field_0x1598;
 
 	float time_0x1538;
 	float time_0x153c;
+	float field_0x1540;
 
 	int bFacingControlDirection;
 	int field_0xff4;
@@ -146,6 +158,7 @@ public:
 	CActorBoomy* pActorBoomy;
 
 	// Hero goes at least up to 0x1548 given CCameraStack::GetCurHeroState
+	float field_0x1544;
 	float field_0x1548;
 	float field_0x1550;
 	float field_0x1554;
@@ -165,10 +178,12 @@ public:
 	HeroActionStateCfg* GetActionCfg(int index);
 
 	uint TestState_IsInHit(uint inFlags);
+	uint TestState_CanTrampo(uint inFlags);
 	uint TestState_IsOnAToboggan(uint inFlags);
 	uint TestState_IsGrippedOrClimbing(uint inFlags);
 	bool TestState_IsInCheatMode();
 	uint TestState_IsInTheWind(uint inFlags);
+	uint TestState_BounceWalls(uint inFlags);
 	uint TestState_AllowAction(uint inFlags);
 	uint TestState_IsSliding(uint inFlags);
 	uint TestState_IsFlying(uint inFlags);
@@ -177,7 +192,12 @@ public:
 	uint TestState_IsOnCeiling(uint inFlags);
 	uint TestState_IsGripped(uint inFlags);
 	uint TestState_AllowAttack(uint inFlags);
+	uint TestState_001328a0(uint inFlags);
 	uint TestState_00132b90(uint inFlags);
+	uint TestState_CheckFight(uint inFlags);
+	uint TestState_AllowFight(uint inFlags);
+	uint TestState_CanPlaySoccer(uint inFlags);
+	uint TestState_WindWall(uint inFlags);
 	uint TestState_AllowInternalView(uint inFlags);
 
 	bool FUN_0014cb60(edF32VECTOR4* v0);

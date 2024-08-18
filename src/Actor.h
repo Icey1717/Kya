@@ -10,16 +10,15 @@
 
 #include <assert.h>
 
-
 #define CHAR_TO_UINT64(str) \
-     (static_cast<unsigned long long>(str[0]) | \
-     (static_cast<unsigned long long>(str[1]) << 8) | \
-     (static_cast<unsigned long long>(str[2]) << 16) | \
-     (static_cast<unsigned long long>(str[3]) << 24) | \
-     (static_cast<unsigned long long>(str[4]) << 32) | \
-     (static_cast<unsigned long long>(str[5]) << 40) | \
-     (static_cast<unsigned long long>(str[6]) << 48) | \
-     (static_cast<unsigned long long>(str[7]) << 56))
+	(static_cast<unsigned long long>(str[0]) | \
+	(static_cast<unsigned long long>(str[1]) << 8) | \
+	(static_cast<unsigned long long>(str[2]) << 16) | \
+	(static_cast<unsigned long long>(str[3]) << 24) | \
+	(static_cast<unsigned long long>(str[4]) << 32) | \
+	(static_cast<unsigned long long>(str[5]) << 40) | \
+	(static_cast<unsigned long long>(str[6]) << 48) | \
+	(static_cast<unsigned long long>(str[7]) << 56))
 
 #define ACTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Actor", level, format, ##__VA_ARGS__)
 
@@ -31,8 +30,40 @@ struct edCEventMessage;
 
 class CPlayerInput;
 
-enum ACTOR_MESSAGE {MESSAGE_TRAP_CAUGHT = 0x31};
+struct MessageSoccerParams
+{
+	int field_0x0;
+};
+
+struct MessageSoccerParamsDetailed : public MessageSoccerParams
+{
+	float speed;
+	float rotation;
+};
+
+struct MessageKickedParams
+{
+	int field_0x0;
+	float field_0xc;
+	edF32VECTOR4 impulseDirection;
+	float field_0x30;
+	float field_0x44;
+};
+
+enum ACTOR_MESSAGE {
+	MESSAGE_KICKED = 0x2,
+	MESSAGE_GET_ACTION = 0x12,
+	MESSAGE_TRAP_STRUGGLE = 0x14,
+	MESSAGE_ENTER_TRAMPO = 0x1d,
+	MESSAGE_BOUNCE = 0x1e,
+	MESSAGE_TRAP_CAUGHT = 0x31,
+	MESSAGE_SOCCER_START = 0x35,
+};
+
 typedef void* MSG_PARAM;
+
+#define HERO_ACTION_ID_JOKE 0x3
+#define HERO_ACTION_ID_ESCAPE_TRAP 0xc
 
 class CActorConeInfluence {
 public:
@@ -121,7 +152,7 @@ struct CBehaviour
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) {}
 	virtual void End(int newBehaviourId) {}
 	virtual void InitState(int newState) {}
-	virtual void TermState(int, int) {}
+	virtual void TermState(int oldState, int newState) {}
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
@@ -432,6 +463,7 @@ public:
 	void UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision);
 
 	void LinkToActor(CActor* pLinkedActor, uint key, int param_4);
+	void UnlinkFromActor();
 
 	void PlayAnim(int inAnimType);
 	int GetIdMacroAnim(int inAnimType);
@@ -465,6 +497,7 @@ public:
 
 	bool UpdateNormal(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 
+	float SV_GetCosAngle2D(edF32VECTOR4* pToLocation);
 	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	void SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition);
 	void SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition);

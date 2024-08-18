@@ -793,6 +793,23 @@ _linked_actor* CActorManager::AddLinkedActor()
 	return (_linked_actor*)0x0;
 }
 
+void CActorManager::RemoveLinkedActor(_linked_actor* pLinkedActor)
+{
+	if (pLinkedActor->pPrevLink == (_linked_actor*)0x0) {
+		this->pActorArray_0x8 = pLinkedActor->pNextLink;
+	}
+	else {
+		pLinkedActor->pPrevLink->pNextLink = pLinkedActor->pNextLink;
+	}
+
+	if (pLinkedActor->pNextLink != (_linked_actor*)0x0) {
+		pLinkedActor->pNextLink->pPrevLink = pLinkedActor->pPrevLink;
+	}
+
+	pLinkedActor->pActor = (CActor*)0x0;
+	return;
+}
+
 CCluster::CCluster()
 {
 	this->ppNodes = (CClusterNode**)0x0;

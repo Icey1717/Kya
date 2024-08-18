@@ -44,16 +44,17 @@ public:
 	void StateTrapCatchStand_1_2(int param_2, int nextState);
 	void StateTrapCatchStand_2_2(int nextState);
 	void StateTrapCatch_2_2(int param_2, int nextState);
+	void StateTrapCatchStruggle(int param_2, int param_3, int param_4);
 
 	uint flags;
-	int field_0xc;
+	int defaultBehaviourId;
 	S_ACTOR_STREAM_REF* pActorStream;
 	uint field_0x14;
 	uint field_0x18;
 	uint field_0x1c;
 	int field_0x20;
 	int field_0x24;
-	uint field_0x28;
+	uint catchEffectId;
 	S_STREAM_REF<CActor> actorRef;
 	float field_0x30;
 	float field_0x34;
@@ -61,7 +62,7 @@ public:
 	S_TRAP_STREAM_REF* field_0x48;
 	float field_0x4c;
 	uint field_0x50;
-	undefined4 field_0x54;
+	undefined4 escapeAttempts;
 	undefined field_0x58;
 	undefined field_0x59;
 	undefined field_0x5a;

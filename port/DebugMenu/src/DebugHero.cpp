@@ -31,6 +31,9 @@ namespace Debug {
 			case STATE_HERO_RUN:
 				return "StateHeroRun";
 				break;
+			case STATE_HERO_JOKE:
+				return "StateHeroJoke";
+				break;
 			case STATE_HERO_SLIDE_SLIP_A:
 				return "StateHeroSlideSlipA";
 				break;
@@ -66,6 +69,15 @@ namespace Debug {
 				break;
 			case STATE_HERO_ROLL:
 				return "StateHeroRoll";
+				break;
+			case STATE_HERO_KICK_A:
+				return "StateHeroKickA";
+				break;
+			case STATE_HERO_KICK_B:
+				return "StateHeroKickB";
+				break;
+			case STATE_HERO_KICK_C:
+				return "StateHeroKickC";
 				break;
 			case STATE_HERO_GRIP_B:
 				return "StateHeroGripB";
@@ -108,6 +120,15 @@ namespace Debug {
 				break;
 			case STATE_HERO_GLIDE_3:
 				return "StateHeroGlide3";
+				break;
+			case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
+				return "StateHeroTrampolineJump_1_2_A";
+				break;
+			case STATE_HERO_TRAMPOLINE_JUMP_2_3:
+				return "StateHeroTrampolineJump_2_3";
+				break;
+			case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
+				return "StateHeroTrampolineJump_1_2_B";
 				break;
 			case STATE_HERO_CAUGHT_TRAP_1:
 				return "StateHeroCaughtTrap1";
@@ -262,7 +283,7 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			ImGui::Text("Flags: %x", pActorHero->flags);
 
 			ImGui::InputFloat("Speed", &pActorHero->dynamic.speed);
-			ImGui::InputFloat("Linear Jerk", &pActorHero->dynamic.linearJerk);
+			ImGui::InputFloat("Linear Jerk", &pActorHero->dynamic.horizontalLinearAcceleration);
 			ImGui::InputFloat("Linear Acceleration", &pActorHero->dynamic.linearAcceleration);
 			ImGui::InputFloat("Weight B", &pActorHero->dynamic.weightB);
 			ImGui::InputFloat("Weight A", &pActorHero->dynamic.weightA);
