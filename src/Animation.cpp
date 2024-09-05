@@ -2023,6 +2023,46 @@ int edAnmBinMetaAnimator::GetAnimEventTrackID(int index)
 	return trackId;
 }
 
+void edAnmBinMetaAnimator::SetLayerAnimTime(float time, int index, byte param_4)
+{
+	int iVar1;
+	edAnmLayer* peVar2;
+	float local_20[4];
+	float local_10[4];
+
+	if (index == -1) {
+		peVar2 = this->aAnimData;
+
+		iVar1 = 0;
+		if (0 < this->layerCount) {
+			do {
+				if (peVar2->animPlayState == 1) {
+					edAnmStage::ComputeAnimParams(time, (peVar2->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_10, param_4 != 0,
+						(uint)(((peVar2->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+
+					(peVar2->currentAnimDesc).state.time_0x10 = local_10[0];
+					(peVar2->currentAnimDesc).state.time_0xc = local_10[1];
+				}
+
+				iVar1 = iVar1 + 1;
+				peVar2 = peVar2 + 1;
+			} while (iVar1 < this->layerCount);
+		}
+	}
+	else {
+		peVar2 = this->aAnimData + index;
+		if (peVar2->animPlayState == 1) {
+			edAnmStage::ComputeAnimParams(time, (peVar2->currentAnimDesc).state.keyStartTime_0x14, 0.0f, local_20, param_4 != 0,
+				(uint)(((peVar2->currentAnimDesc).state.currentAnimDataFlags & 1) != 0));
+
+			(peVar2->currentAnimDesc).state.time_0x10 = local_20[0];
+			(peVar2->currentAnimDesc).state.time_0xc = local_20[1];
+		}
+	}
+
+	return;
+}
+
 void edAnmMetaAnimator::AnimateDT(float deltaTime)
 {
 	int index;

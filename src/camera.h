@@ -21,7 +21,8 @@ enum ECameraType {
 	CT_MouseAround = 1,
 	CT_MouseQuake = 0,
 	CT_ShadowSun = 12,
-	CT_SilverBoomy = 10
+	CT_SilverBoomy = 10,
+	CT_Camera_6 = 6,
 };
 
 

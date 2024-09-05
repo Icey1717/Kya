@@ -1223,6 +1223,22 @@ uint CActorHero::TestState_IsFlying(uint inFlags)
 	return inFlags & 0x100000;
 }
 
+uint CActorHero::TestState_NoMoreHit(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x20000;
+}
+
 uint CActorHero::TestState_IsCrouched(uint inFlags)
 {
 	int iVar1;

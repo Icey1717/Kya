@@ -152,6 +152,7 @@ struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
 	void SetAnim(int animType, int origAnimType);
 	int GetAnimType_00242330(int animIndex);
 	int GetAnimEventTrackID(int index);
+	void SetLayerAnimTime(float time, int index, byte param_4);
 };
 
 class CAnimation {

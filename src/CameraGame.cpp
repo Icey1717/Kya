@@ -1913,47 +1913,52 @@ void CCameraGame::_UpdateAngleAlphaData()
 			if (((this->cameraConfig).flags_0x70 & 0x2000) != 0) {
 				this->field_0x1b0 = this->field_0x1b0 | 0x18;
 			}
+
 			pitch = edF32GetAnglesDelta(this->targetPitch, this->cameraConfig.baseTargetPitch);
-			if (1.570796 < pitch) {
-				pitch = 3.141593 - pitch;
+
+			if (1.570796f < pitch) {
+				pitch = 3.141593f - pitch;
 			}
-			if (pitch < -1.570796) {
-				pitch = -3.141593 - pitch;
+			if (pitch < -1.570796f) {
+				pitch = -3.141593f - pitch;
 			}
-			IMPLEMENTATION_GUARD(
+
 			if (((CCamera::_gpcam_man->flags & 0x4000000) != 0) &&
-				(pCVar6 = (CCameraGame*)FUN_003feab0((int)&CCamera::_gpcam_man->activeCamManager, 0), this == pCVar6)) {
+				(pCVar6 = (CCameraGame*)CCamera::_gpcam_man->activeCamManager.FUN_003feab0(0), this == pCVar6)) {
 				calculatedPitch = this->cameraConfig.baseTargetPitch;
 				this->pitchDyn.field_0x0 = calculatedPitch;
 				this->targetPitch = calculatedPitch;
 			}
-			puVar12 = (undefined*)
-				((edFCosinus[(int)(ABS((pitch - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
-					edFCosinus[(int)(ABS(pitch * 1303.797) + 0.5) & 0x1fff]) / 2.414);
-			if (1.0 < ABS((float)puVar12)) {
-				if (0.0 <= (float)puVar12) {
-					puVar12 = (undefined*)0x3f800000;
+
+			puVar12 = sinf(pitch) / cosf(pitch) / 2.414f; //((edFCosinus[(int)(ABS((pitch - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
+					//edFCosinus[(int)(ABS(pitch * 1303.797) + 0.5) & 0x1fff]) / 2.414);
+
+			if (1.0f < fabs(puVar12)) {
+				if (0.0f <= puVar12) {
+					puVar12 = 1.0f;
 				}
 				else {
-					puVar12 = &DAT_bf800000;
+					puVar12 = -1.0f;
 				}
 			}
-			pitch = edF32Between_2Pi(this->targetPitch +
-				(float)puVar12 * (this->cameraConfig).field_0x7c * CCamera::_gpcam_man->time_0x4);
+
+			pitch = edF32Between_2Pi(this->targetPitch + puVar12 * (this->cameraConfig).field_0x7c * CCamera::_gpcam_man->time_0x4);
 			this->pitchDyn.field_0x0 = pitch;
 			this->targetPitch = pitch;
 			calculatedPitch = this->cameraConfig.field_0x2c;
+
 			if (pitch < calculatedPitch) {
 				this->pitchDyn.field_0x0 = calculatedPitch;
 				this->targetPitch = calculatedPitch;
 			}
 			else {
 				calculatedPitch = this->cameraConfig.field_0x30;
+
 				if (calculatedPitch < pitch) {
 					this->pitchDyn.field_0x0 = calculatedPitch;
 					this->targetPitch = calculatedPitch;
 				}
-			})
+			}
 		}
 		else {
 			/* Camera mode is not (5) */
@@ -2217,6 +2222,71 @@ void CCameraGame::_UpdateAngleAlphaData()
 	return;
 }
 
+void CCameraGame::_Behind_UpdateAngleBetaData()
+{
+	CCameraGame* pCVar1;
+	CActor* pCVar2;
+	CActorHeroPrivate* this_00;
+	float fVar3;
+	float fVar4;
+	float puVar5;
+
+	if (((this->cameraConfig).flags_0x70 & 0x2000) != 0) {
+		this->field_0x1b0 = this->field_0x1b0 | 6;
+	}
+
+	fVar4 = this->angleBeta_0x1e8;
+	fVar3 = GetAngleYFromVector(&this->transformationMatrix.rowZ);
+	fVar3 = edF32GetAnglesDelta(fVar3, fVar4);
+	if (1.570796f < fVar3) {
+		fVar3 = 3.141593f - fVar3;
+	}
+	if (fVar3 < -1.570796f) {
+		fVar3 = -3.141593f - fVar3;
+	}
+
+	if (((CCamera::_gpcam_man->flags & 0x4000000) != 0) &&
+		(pCVar1 = (CCameraGame*)CCamera::_gpcam_man->activeCamManager.FUN_003feab0(0), this == pCVar1))
+	{
+		pCVar2 = this->GetTarget();
+		if (pCVar2->typeID == 6) {
+			this_00 = reinterpret_cast<CActorHeroPrivate*>(this->GetTarget());
+			fVar4 = this_00->GetTargetBeta();
+			this->field_0x204 = fVar4;
+		}
+		else {
+			this->field_0x204 = this->angleBeta_0x1e8;
+		}
+	}
+	puVar5 = sinf(fVar3) / cosf(fVar3) / 2.414f;
+
+	if (1.0f < fabs(puVar5)) {
+		if (0.0f <= puVar5) {
+			puVar5 = 1.0f;
+		}
+		else {
+			puVar5 = -1.0f;
+		}
+	}
+
+	fVar3 = edF32Between_2Pi(this->field_0x204 + puVar5 * (this->cameraConfig).field_0x7c * CCamera::_gpcam_man->time_0x4);
+	this->field_0x204 = fVar3;
+
+	if (((this->cameraConfig).flags & 0x100) != 0) {
+		fVar3 = edF32GetAnglesDelta((this->cameraConfig).field_0x38.w, this->field_0x204);
+		fVar4 = edF32GetAnglesDelta((this->cameraConfig).field_0x48.x, this->field_0x204);
+		if (fVar3 < 0.0f) {
+			this->field_0x204 = (this->cameraConfig).field_0x38.w;
+		}
+
+		if (0.0f < fVar4) {
+			this->field_0x204 = (this->cameraConfig).field_0x48.x;
+		}
+	}
+
+	return;
+}
+
 void CCameraGame::_UpdateAngleBetaData()
 {
 	ECameraType EVar1;
@@ -2230,8 +2300,7 @@ void CCameraGame::_UpdateAngleBetaData()
 	EVar1 = GetMode();
 	if ((EVar1 != CT_KyaJamgut) && (EVar1 != 4)) {
 		if (EVar1 == CT_KyaWindWall) {
-			IMPLEMENTATION_GUARD(
-			_Behind_UpdateAngleBetaData(this);)
+			_Behind_UpdateAngleBetaData();
 		}
 		else {
 			if ((((EVar1 == 9) || (EVar1 == 8)) || (EVar1 == 6)) || (EVar1 == CT_Main)) {

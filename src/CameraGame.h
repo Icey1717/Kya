@@ -35,6 +35,8 @@ struct CCameraGame : public CCameraExt {
 	void _UpdateCameraData(edF32VECTOR4* translation);
 	void _Toboggan_UpdateCameraData();
 
+	void _Behind_UpdateAngleBetaData();
+
 	void _UpdateAngleAlphaData();
 	void _UpdateAngleBetaData();
 

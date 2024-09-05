@@ -60,6 +60,15 @@ class CFxHandle
 
 };
 
+struct _msg_hit_param
+{
+	int field_0x0;
+	float damage;
+	undefined4 field_0x8;
+	edF32VECTOR4 field_0x20;
+	float field_0x30;
+};
+
 class CActorHeroPrivate : public CActorHero 
 {
 public:
@@ -83,6 +92,7 @@ public:
 	virtual CLifeInterface* GetLifeInterface();
 	virtual void LifeDecrease(float amount);
 
+	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
 	bool AccomplishAction(int bUpdateActiveActionId);
 
 	void GetPossibleAction();
@@ -96,6 +106,8 @@ public:
 	EBoomyThrowState ManageEnterAttack();
 	bool ManageActions();
 
+	float GetTargetBeta();
+
 	void ResetStdDefaultSettings();
 	void ResetSlideDefaultSettings();
 	void ResetBoomyDefaultSettings();
@@ -105,6 +117,7 @@ public:
 	int StateEvaluate();
 	int ChooseStateFall(int param_2);
 	int ChooseStateLanding(float speed);
+	int ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams, edF32VECTOR4* param_4, int param_5);
 
 	bool CanEnterToboggan();
 
@@ -147,6 +160,8 @@ public:
 	void StateHeroRoll();
 	void StateHeroRollTerm() {}
 
+	void StateHeroHit();
+
 	void StateHeroKickInit();
 	void StateHeroKickInitSimple();
 	void StateHeroKick(int param_2, int param_3);
@@ -170,9 +185,11 @@ public:
 	void StateHeroFall(float param_1, int param_3);
 
 	void StateHeroFlyInit();
+	void StateHeroFlyTerm();
 
 	void StateHeroGlideInit();
 	void StateHeroGlide(int param_2, int nextState);
+	void StateHeroGlideTerm() {}
 
 	void SetJumpCfgFromGround(float param_1);
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
@@ -219,6 +236,7 @@ public:
 	void ConvertSpeedPlayerToSpeedSumForceExt();
 	void BeginToboggan();
 	void SlideOnToboggan(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, edF32VECTOR4* param_7, uint dynFlags);
+	void EndToboggan();
 	bool TobogganBounceOnWall(edF32VECTOR4* param_2, edF32VECTOR4* param_3, CActor* pActor);
 
 	void Landing();
@@ -392,6 +410,8 @@ public:
 	CLifeInterface field_0xee4;
 
 	CCamera* pMainCamera;
+	CCamera* pCameraViewBase_0x15b0;
+	CCamera* pWindWallCamera_0x15b4;
 	CCamera* pCameraKyaJamgut;
 
 	CCamera* pJamgutCamera_0x15b8;
@@ -430,6 +450,8 @@ public:
 	int field_0x1a44;
 
 	float field_0x118c;
+
+	int field_0x1450;
 
 	float field_0x10f4;
 	float field_0x10f8;

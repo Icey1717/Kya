@@ -1742,6 +1742,7 @@ bool edProjectVectorOnPlane(float projectionFactor, edF32VECTOR4* pResult, edF32
 		bVar1 = false;
 		*pResult = *pInput;
 	}
+
 	return bVar1;
 }
 

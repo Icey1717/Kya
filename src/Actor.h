@@ -497,6 +497,8 @@ public:
 
 	bool UpdateNormal(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 
+	void RestartCurAnim();
+
 	float SV_GetCosAngle2D(edF32VECTOR4* pToLocation);
 	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	void SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition);
@@ -510,8 +512,11 @@ public:
 	void SV_UpdateMatrix_Rel(edF32MATRIX4* m0, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* v0);
 	void SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0);
 	bool SV_AmICarrying(CActor* pOther);
+	void SV_SetOrientationToPosition2D(edF32VECTOR4* pPosition);
 	int SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* param_9);
 	static void SV_Blend3AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN* param_3, uint param_4, uint param_5, uint param_6);
+	static void SV_Blend4AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN* param_3, uint param_4, uint param_5, uint param_6, uint param_7);
+
 
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();

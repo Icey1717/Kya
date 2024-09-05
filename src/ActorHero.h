@@ -25,6 +25,10 @@
 
 #define STATE_HERO_ROLL 0x8a
 
+#define STATE_HERO_HURT_A 0x8e
+
+#define STATE_HERO_TOBOGGAN_JUMP_HURT 0x95
+
 #define STATE_HERO_KICK_A 0xa5
 #define STATE_HERO_KICK_B 0xa6
 #define STATE_HERO_KICK_C 0xa7
@@ -187,6 +191,7 @@ public:
 	uint TestState_AllowAction(uint inFlags);
 	uint TestState_IsSliding(uint inFlags);
 	uint TestState_IsFlying(uint inFlags);
+	uint TestState_NoMoreHit(uint inFlags);
 	uint TestState_IsCrouched(uint inFlags);
 	uint TestState_AllowMagic(uint inFlags);
 	uint TestState_IsOnCeiling(uint inFlags);

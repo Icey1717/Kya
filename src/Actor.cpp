@@ -1393,7 +1393,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		}
 		lVar5 = (*(code*)this->pVTable->GetInputManager)(this, 1, 0);
 		if (lVar5 != 0) {
-			FloatFunc_001b66f0(1.0, 0.0, local_18, 0.0, (float*)((int)lVar5 + 0x1c), 0);
+			CPlayerInput::FUN_001b66f0(1.0, 0.0, local_18, 0.0, (float*)((int)lVar5 + 0x1c), 0);
 		}
 		bVar4 = true;)
 	}
@@ -1458,7 +1458,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			lVar5 = (*(code*)this->pVTable->GetInputManager)(this, 1, 0);
 			if (lVar5 != 0) {
-				FloatFunc_001b66f0(local_c, 0.0, local_8, 0.0, (float*)((int)lVar5 + 0x40), 0);
+				CPlayerInput::FUN_001b66f0(local_c, 0.0, local_8, 0.0, (float*)((int)lVar5 + 0x40), 0);
 			}
 			bVar4 = true;)
 		}
@@ -1469,11 +1469,11 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				if (lVar5 != 0) {
 					/* WARNING: Load size is inaccurate */
 					if (*pMsgParam == 0) {
-						FloatFunc_001b66f0(*(float*)((int)pMsgParam + 4), 0.0, *(float*)((int)pMsgParam + 8), 0.0,
+						CPlayerInput::FUN_001b66f0(*(float*)((int)pMsgParam + 4), 0.0, *(float*)((int)pMsgParam + 8), 0.0,
 							(float*)((int)lVar5 + 0x1c), 0);
 					}
 					else {
-						FloatFunc_001b66f0(*(float*)((int)pMsgParam + 4), 0.0, *(float*)((int)pMsgParam + 8), 0.0,
+						CPlayerInput::FUN_001b66f0(*(float*)((int)pMsgParam + 4), 0.0, *(float*)((int)pMsgParam + 8), 0.0,
 							(float*)((int)lVar5 + 0x40), 0);
 					}
 				}
@@ -2345,6 +2345,15 @@ void CAddOnGenerator::Create(CActor* pActor, ByteCode* pByteCode)
 	//*piVar4 = *piVar4 + this->field_0x4;
 	//pvVar5 = (void*)(iVar6 * 0x10 + (int)_gAddOn_sectors);
 	//*(int*)((int)pvVar5 + 0xc) = *(int*)((int)pvVar5 + 0xc) + this->currentOrbs_0x8;
+	return;
+}
+
+void CActor::RestartCurAnim()
+{
+	if ((this->pAnimationController != (CAnimation*)0x0) && (this->currentAnimType != -1)) {
+		this->pAnimationController->anmBinMetaAnimator.SetLayerAnimTime(0.0f, 0, 1);
+	}
+
 	return;
 }
 
@@ -3783,19 +3792,23 @@ void CActor::SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0)
 	return;
 }
 
-void CActor::SV_UpdatePercent(float param_1, float param_2, float* pValue)
+
+void CActor::SV_UpdatePercent(float target, float speed, float* pValue)
 {
-	Timer* pTVar1;
+	Timer* pTimer;
 	float fVar2;
 	float fVar3;
 
-	pTVar1 = GetTimer();
-	fVar2 = powf(param_2, pTVar1->cutsceneDeltaTime * 50.0);
-	fVar3 = 1.0;
-	if ((fVar2 <= 1.0) && (fVar3 = fVar2, fVar2 < 0.0)) {
-		fVar3 = 0.0;
+	pTimer = GetTimer();
+	fVar2 = powf(speed, pTimer->cutsceneDeltaTime * 50.0f);
+
+	fVar3 = 1.0f;
+
+	if ((fVar2 <= 1.0f) && (fVar3 = fVar2, fVar2 < 0.0f)) {
+		fVar3 = 0.0f;
 	}
-	*pValue = param_1 * (1.0 - fVar3) + *pValue * fVar3;
+
+	*pValue = target * (1.0f - fVar3) + *pValue * fVar3;
 	return;
 }
 
@@ -4144,14 +4157,35 @@ void CActor::SV_Blend3AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN
 	float* piVar1;
 	float fVar1;
 
-	fVar1 = (1.0 - r2) - r1;
+	fVar1 = (1.0f - r2) - r1;
 	piVar1 = param_3->pHdr->pData + param_3->pHdr->keyIndex_0x8.asKey;
 	piVar1[param_4] = fVar1;
-	if (fVar1 < 0.0) {
-		piVar1[param_4] = 0.0;
+	if (fVar1 < 0.0f) {
+		piVar1[param_4] = 0.0f;
 	}
 	piVar1[param_5] = r1;
 	piVar1[param_6] = r2;
+}
+
+void CActor::SV_Blend4AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN* param_3, uint param_4, uint param_5, uint param_6, uint param_7)
+{
+	float* piVar1;
+
+	piVar1 = param_3->pHdr->pData + param_3->pHdr->keyIndex_0x8.asKey;
+	piVar1[param_4] = ((1.0f - r1) * (1.0f - r2));
+	piVar1[param_5] = (r1 * (1.0f - r2));
+	piVar1[param_6] = ((1.0f - r1) * r2);
+	piVar1[param_7] = (r1 * r2);
+}
+
+void CActor::SV_SetOrientationToPosition2D(edF32VECTOR4* pPosition)
+{
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4SubHard(&eStack16, pPosition, &this->currentLocation);
+	eStack16.y = 0.0f;
+	edF32Vector4NormalizeHard(&this->rotationQuat, &eStack16);
+	return;
 }
 
 void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float param_3)

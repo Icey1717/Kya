@@ -70,6 +70,12 @@ namespace Debug {
 			case STATE_HERO_ROLL:
 				return "StateHeroRoll";
 				break;
+			case STATE_HERO_TOBOGGAN_JUMP_HURT:
+				return "StateHeroTobogganJumpHurt";
+				break;
+			case STATE_HERO_HURT_A:
+				return "StateHeroHurtA";
+				break;
 			case STATE_HERO_KICK_A:
 				return "StateHeroKickA";
 				break;
@@ -309,6 +315,11 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			if (ImGui::CollapsingHeader("Flags", ImGuiTreeNodeFlags_DefaultOpen)) {
 				ImGui::Text("On Plane: %d", pActorHero->pCollisionData->flags_0x4 & 1);
 			}
+		}
+
+		if (ImGui::CollapsingHeader("Sliding", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Text("field_0x10f0: %f", pActorHero->field_0x10f0);
+			ImGui::Text("field_0x10f4: %f", pActorHero->field_0x10f4);
 		}
 
 		ImGui::Spacing();

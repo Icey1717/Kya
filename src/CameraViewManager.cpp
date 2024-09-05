@@ -337,6 +337,26 @@ bool ActiveCamManager::FUN_003feb30()
 	return bVar7;
 }
 
+CCamera* ActiveCamManager::FUN_003feab0(int index)
+{
+	CCamera* pCVar1;
+	int iVar2;
+
+	iVar2 = this->activeIndex - index;
+
+	pCVar1 = (CCamera*)0x0;
+	if (-2 < iVar2) {
+		if (iVar2 == -1) {
+			pCVar1 = (this->state).pCamera;
+		}
+		else {
+			pCVar1 = aEntries[iVar2].pCamera;
+		}
+	}
+
+	return pCVar1;
+}
+
 ActiveCamManagerEntry* ActiveCamManager::GetState()
 {
 	ActiveCamManagerEntry* pAVar1;

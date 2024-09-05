@@ -210,12 +210,10 @@ bool CCameraStack::Pop(CCamera* pCamera)
 		if (0 < iVar3) {
 			if (iVar3 < iVar1) {
 				pCVar2 = this->aCameras + iVar3;
-				IMPLEMENTATION_GUARD();
 				do {
 					iVar3 = iVar3 + 1;
-					pCVar2->field_0x0 = (&pCVar2->field_0x0)[2];
-					(&pCVar2->field_0x0)[1] = (&pCVar2->field_0x0)[3];
-					pCVar2 = (CameraStackEntry*)(&pCVar2->field_0x0 + 2);
+					*pCVar2 = *(pCVar2 + 1);
+					pCVar2 = pCVar2 + 1;
 				} while (iVar3 < this->stackSize);
 			}
 			this->stackSize = this->stackSize + -1;

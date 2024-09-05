@@ -5860,6 +5860,7 @@ struct ActiveCamManager {
 	void SetActiveCam(CCamera* pCamera);
 	void ClearActiveCam();
 	bool FUN_003feb30();
+	CCamera* FUN_003feab0(int index);
 	ActiveCamManagerEntry* GetState();
 	ActiveCamManager();
 
