@@ -2020,6 +2020,11 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 	return;
 }
 
+void CActor::Term()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CActor::SetupModel(int count, MeshTextureHash* aHashes)
 {
 	CinNamedObject30* pCVar1;
@@ -2199,6 +2204,16 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 		}
 	}
 	return;
+}
+
+void CActor::SaveContext(uint*, int)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActor::LoadContext(uint*, int)
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CBehaviour::GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites)

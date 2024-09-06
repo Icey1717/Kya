@@ -95,8 +95,6 @@ public:
 	CActor* field_0x2c;
 };
 
-class CActorAlternateModel {};
-
 class CBehaviourPlatformDestroyed : public CBehaviourPlatform
 {
 public:

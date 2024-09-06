@@ -31,6 +31,7 @@ using u64 = uint64_t;
 //#include "common/StringUtil.h"
 
 #include <array>
+#include <string>
 #include <cstdarg>
 #include <string_view>
 

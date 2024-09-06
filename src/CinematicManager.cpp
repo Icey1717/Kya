@@ -1001,6 +1001,7 @@ void CCinematic::Init()
 	}
 	this->count_0x224 = 0;
 	this->count_0x22c = 0;
+
 	iVar6 = 0;
 	if (0 < this->count_0x2e8) {
 		iVar5 = 0;
@@ -1017,10 +1018,12 @@ void CCinematic::Init()
 			iVar5 = iVar5 + 0x1c;
 		} while (iVar6 < this->count_0x2e8);
 	}
+
 	if ((this->flags_0x4 & 0x2000000) != 0) {
 		this->count_0x2d8 = this->count_0x2d8 + 1;
 		this->Load(1);
 	}
+
 	return;
 }
 

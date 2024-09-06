@@ -305,116 +305,23 @@ struct CActorParamsIn {
 	edF32VECTOR4* field_0x8;
 };
 
+class CActorAlternateModel {};
+
 class CActor : public CObject {
 public:
-	// #Debug
-	char name[64];
-
-	uint flags;
-	byte state_0x10;
-	byte field_0x11;
-	void* aComponents;
-
-	int dlistPatchId;
-	uint actorFieldS;
-
-	int actorManagerIndex;
-
-	edNODE* pMeshNode;
-	ed_3d_hierarchy_node* p3DHierNode;
-	ed_3d_hierarchy_node* pMeshTransform;
-
-	edF32VECTOR4 rotationEuler;
-	edF32VECTOR4 rotationQuat;
-	edF32VECTOR4 scale;
-
-	ed_g3d_hierarchy* pHier;
-
-	CinNamedObject30 namedObjSectionStart;
-	CinNamedObject30* pCinData;
-
-	KyaUpdateObjA otherSectionStart;
-	KyaUpdateObjA* subObjA;
-
-	ed_3d_hierarchy_setup hierarchySetup;
-
-	edF32VECTOR4 baseLocation;
-	edF32VECTOR4 sphereCentre;
-	edF32VECTOR4 currentLocation;
-	edF32VECTOR3 previousLocation;
-
-	undefined* field_0x110;
-	edF32VECTOR3 vector_0x120;
-	edF32VECTOR3 vector_0x12c;
-
-	ACTOR_CLASS typeID;
-	int prevBehaviourId;
-	int curBehaviourId;
-
-	int prevAnimType;
-	int currentAnimType;
-
-	float distanceToCamera;
-	float distanceToGround;
-
-	undefined4 field_0x58;
-
-	uint lightingFlags;
-	float lightingFloat_0xe0;
-	float field_0xf0;
-	ushort field_0xf4;
-
-	float timeInAir;
-	float idleTimer;
-	int numIdleLoops;
-
-	EActorState actorState;
-	EActorState prevActorState;
-
-	CClusterNode* pClusterNode;
-	CAnimation* pAnimationController;
-	CCollision* pCollisionData;
-	CShadow* pShadow;
-
-	void* pMBNK;
-
-	CBehaviourStand standBehaviour;
-
-	CActor* pTiedActor;
-
-	static StateConfig gStateCfg_ACT[5];
-	static uint _gBehaviourFlags_ACT[2];
-
-	float lodBiases[4];
-
 	CActor();
-
-	void PreInit();
-	void SetScaleVector(float x, float y, float z);
-	bool SV_IsWorldBoundingSphereIntersectingSphere(edF32VECTOR4* param_2);
-	bool SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox);
-	void EvaluateManageState();
-	void EvaluateDisplayState();
-
-	void SetScale(float x, float y, float z);
-	void SnapOrientation(float x, float y, float z);
-
-	void LoadBehaviours(ByteCode* pByteCode);
-
-	void SetupModel(int count, MeshTextureHash* aHashes);
-
-	void SV_SetModel(int meshIndex, int textureIndex, int count, MeshTextureHash* aHashes);
-	void SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo);
-
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
+	virtual void Term();
 	virtual void Manage();
 	virtual void Draw();
 	virtual void ComputeLighting();
 	virtual void Reset();
 	virtual void SectorChange(int oldSectorId, int newSectorId);
+	virtual void SaveContext(uint*, int);
+	virtual void LoadContext(uint*, int);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
@@ -438,6 +345,23 @@ public:
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual CPlayerInput* GetInputManager(int, int);
+
+	void PreInit();
+	void SetScaleVector(float x, float y, float z);
+	bool SV_IsWorldBoundingSphereIntersectingSphere(edF32VECTOR4* param_2);
+	bool SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox);
+	void EvaluateManageState();
+	void EvaluateDisplayState();
+
+	void SetScale(float x, float y, float z);
+	void SnapOrientation(float x, float y, float z);
+
+	void LoadBehaviours(ByteCode* pByteCode);
+
+	void SetupModel(int count, MeshTextureHash* aHashes);
+
+	void SV_SetModel(int meshIndex, int textureIndex, int count, MeshTextureHash* aHashes);
+	void SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo);
 
 	void SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation);
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
@@ -520,6 +444,86 @@ public:
 
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();
+
+	// #Debug
+	char name[64];
+
+	uint flags;
+	byte state_0x10;
+	byte field_0x11;
+	void* aComponents;
+
+	int dlistPatchId;
+	uint actorFieldS;
+
+	int actorManagerIndex;
+
+	edNODE* pMeshNode;
+	ed_3d_hierarchy_node* p3DHierNode;
+	ed_3d_hierarchy_node* pMeshTransform;
+
+	edF32VECTOR4 rotationEuler;
+	edF32VECTOR4 rotationQuat;
+	edF32VECTOR4 scale;
+
+	ed_g3d_hierarchy* pHier;
+
+	CinNamedObject30 namedObjSectionStart;
+	CinNamedObject30* pCinData;
+
+	KyaUpdateObjA otherSectionStart;
+	KyaUpdateObjA* subObjA;
+
+	ed_3d_hierarchy_setup hierarchySetup;
+
+	edF32VECTOR4 baseLocation;
+	edF32VECTOR4 sphereCentre;
+	edF32VECTOR4 currentLocation;
+	edF32VECTOR3 previousLocation;
+
+	undefined* field_0x110;
+	edF32VECTOR3 vector_0x120;
+	edF32VECTOR3 vector_0x12c;
+
+	ACTOR_CLASS typeID;
+	int prevBehaviourId;
+	int curBehaviourId;
+
+	int prevAnimType;
+	int currentAnimType;
+
+	float distanceToCamera;
+	float distanceToGround;
+
+	undefined4 field_0x58;
+
+	uint lightingFlags;
+	float lightingFloat_0xe0;
+	float field_0xf0;
+	ushort field_0xf4;
+
+	float timeInAir;
+	float idleTimer;
+	int numIdleLoops;
+
+	EActorState actorState;
+	EActorState prevActorState;
+
+	CClusterNode* pClusterNode;
+	CAnimation* pAnimationController;
+	CCollision* pCollisionData;
+	CShadow* pShadow;
+
+	void* pMBNK;
+
+	CBehaviourStand standBehaviour;
+
+	CActor* pTiedActor;
+
+	static StateConfig gStateCfg_ACT[5];
+	static uint _gBehaviourFlags_ACT[2];
+
+	float lodBiases[4];
 };
 
 class CAddOnGenerator_SubObj 
