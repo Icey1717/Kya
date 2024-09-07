@@ -44,7 +44,6 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 	ed_Chunck* pSkeletonChunck;
 	int iVar4;
 	int iVar5;
-	CAnimation* pCVar6;
 	BoneData* pAVar1;
 
 	pMeshNode = pActor->pMeshNode;
@@ -58,20 +57,17 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 		if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
 			(this->anmSkeleton).pTag = (edANM_SKELETON*)0x0;
 
-				for (pAVar1 = this->pBoneData; pAVar1 != (BoneData*)0x0; pAVar1 = pAVar1->pPrev) {
-					pAVar1->boneNodeIndex = 0;
-				}
+			for (pAVar1 = this->pBoneData; pAVar1 != (BoneData*)0x0; pAVar1 = pAVar1->pPrev) {
+				pAVar1->boneNodeIndex = 0;
+			}
 
-				iVar4 = 0;
-				pCVar6 = this;
-				if (0 < this->count_0x54) {
-					IMPLEMENTATION_GUARD(
-						do {
-							pCVar6->field_0x38 = 0;
-							iVar4 = iVar4 + 1;
-							pCVar6 = (CAnimation*)&(pCVar6->anmBinMetaAnimator).pAnimKeyEntryData;
-						} while (iVar4 < this->count_0x54);)
-				}
+			iVar4 = 0;
+			if (0 < this->nDisabledBones) {
+				do {
+					this->aDisabledBoneData[iVar4].nodeId = 0;
+					iVar4 = iVar4 + 1;
+				} while (iVar4 < this->nDisabledBones);
+			}
 		}
 	}
 	else {
@@ -89,25 +85,26 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 
 				pAVar2->boneNodeIndex = iVar4;
 			}
+
 			iVar4 = 0;
-			pCVar6 = this;
-			if (0 < this->count_0x54) {
-				IMPLEMENTATION_GUARD(
-					do {
-						iVar5 = -1;
-						if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
-							iVar5 = edAnmSkeleton::NodeIndexFromID(&this->anmSkeleton, pCVar6->field_0x34);
-						}
-						if (iVar5 == -1) {
-							iVar5 = 0;
-						}
-						pCVar6->field_0x38 = iVar5;
-						iVar4 = iVar4 + 1;
-						pCVar6 = (CAnimation*)&(pCVar6->anmBinMetaAnimator).pAnimKeyEntryData;
-					} while (iVar4 < this->count_0x54);)
+			if (0 < this->nDisabledBones) {
+				do {
+					iVar5 = -1;
+					if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
+						iVar5 = this->anmSkeleton.NodeIndexFromID(this->aDisabledBoneData[iVar4].boneId);
+					}
+
+					if (iVar5 == -1) {
+						iVar5 = 0;
+					}
+
+					this->aDisabledBoneData[iVar4].nodeId = iVar5;
+					iVar4 = iVar4 + 1;
+				} while (iVar4 < this->nDisabledBones);
 			}
 		}
 	}
+
 	return (this->anmSkeleton).pTag != (edANM_SKELETON*)0x0;
 }
 
@@ -131,7 +128,7 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 	//	bVar1 = iVar7 != 0;
 	//	iVar7 = iVar7 + -1;
 	//} while (bVar1);
-	this->count_0x54 = 0;
+	this->nDisabledBones = 0;
 	this->count_0x2c = 0;
 	this->currentAnimType_0x30 = -1;
 	UpdateCurSkeleton(pActor);
@@ -1697,15 +1694,15 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			}
 
 			iVar5 = 0;
-			if (0 < this->count_0x54) {
+			if (0 < this->nDisabledBones) {
 				do {
-					peVar26 = pFrameMatrixData + this->field_0x34[iVar5].field_0x4;
+					peVar26 = pFrameMatrixData + this->aDisabledBoneData[iVar5].nodeId;
 					edF32Matrix4SetIdentityHard(peVar26);
 					peVar26->cc = 0.0f;
 					iVar5 = iVar5 + 1;
 					peVar26->bb = 0.0f;
 					peVar26->aa = 0.0f;
-				} while (iVar5 < this->count_0x54);
+				} while (iVar5 < this->nDisabledBones);
 			}
 		}
 
@@ -2865,6 +2862,64 @@ void CAnimation::UnRegisterBone(uint boneId)
 
 		pBoneData->usedByCount = 0;
 	}
+	return;
+}
+
+void CAnimation::AddDisabledBone(uint boneId)
+{
+	int freeIndex;
+	int nodeId;
+	int curIndex;
+
+	freeIndex = this->nDisabledBones;
+	curIndex = 0;
+	if (0 < freeIndex) {
+		do {
+			if (boneId == this->aDisabledBoneData[curIndex].boneId) {
+				return;
+			}
+
+			curIndex = curIndex + 1;
+		} while (curIndex < freeIndex);
+	}
+
+	this->aDisabledBoneData[freeIndex].boneId = boneId;
+
+	nodeId = -1;
+	if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
+		nodeId = this->anmSkeleton.NodeIndexFromID(boneId);
+	}
+
+	if (nodeId == -1) {
+		nodeId = 0;
+	}
+
+	this->aDisabledBoneData[freeIndex].nodeId = nodeId;
+
+	this->nDisabledBones = this->nDisabledBones + 1;
+	return;
+}
+
+void CAnimation::RemoveDisabledBone(uint boneId)
+{
+	int indexToRemove;
+	int curIndex;
+
+	indexToRemove = this->nDisabledBones;
+	curIndex = 0;
+	if (0 < indexToRemove) {
+		do {
+			if (boneId == this->aDisabledBoneData[curIndex].boneId) {
+				this->aDisabledBoneData[curIndex].boneId = this->aDisabledBoneData[indexToRemove + -1].boneId;
+				this->aDisabledBoneData[curIndex].nodeId = this->aDisabledBoneData[indexToRemove + -1].nodeId;
+				this->nDisabledBones = this->nDisabledBones + -1;
+				return;
+			}
+
+			curIndex = curIndex + 1;
+		} while (curIndex < indexToRemove);
+	}
+
 	return;
 }
 

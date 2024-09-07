@@ -106,6 +106,8 @@ public:
 	EBoomyThrowState ManageEnterAttack();
 	bool ManageActions();
 
+	void UpdateMedallion();
+
 	float GetTargetBeta();
 
 	void ResetStdDefaultSettings();

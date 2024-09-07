@@ -1,6 +1,11 @@
 #include "ActorAton.h"
 #include "MemoryStream.h"
 
+CActorAton::CActorAton()
+{
+	
+}
+
 void CActorAton::Create(ByteCode* pByteCode)
 {
 	uint uVar1;
@@ -8,30 +13,26 @@ void CActorAton::Create(ByteCode* pByteCode)
 	float fVar3;
 
 	CActorAutonomous::Create(pByteCode);
-	uVar1 = pByteCode->GetU32();
-	//this->field_0x354 = uVar1;
-	uVar1 = pByteCode->GetU32();
-	//this->field_0x358 = uVar1;
-	uVar1 = pByteCode->GetU32();
-	//this->field_0x35c = uVar1;
-	uVar1 = pByteCode->GetU32();
-	//this->field_0x360 = uVar1;
-	iVar2 = pByteCode->GetS32();
-	//this->field_0x63c = iVar2;
-	iVar2 = pByteCode->GetS32();
-	//this->field_0x644 = iVar2;
-	iVar2 = pByteCode->GetS32();
-	//this->field_0x648 = iVar2;
-	//(*(code*)this->field_0x640->field_0x10)(&this->field_0x640);
-	iVar2 = pByteCode->GetS32();
-	//this->field_0x39c = iVar2;
-	//if (this->field_0x39c != -1) {
-	//	CActor::SV_InstallMaterialId(this->field_0x39c);
-	//	CFxTail::Create(1.0, &this->fxTailA, 0x10, 4, this->field_0x39c);
-	//	CFxTail::Create(1.0, &this->fxTailB, 0x10, 4, this->field_0x39c);
-	//}
-	fVar3 = pByteCode->GetF32();
-	//this->field_0x350 = fVar3;
+
+	// This could be inlined static mesh component create.
+	this->field_0x354 = pByteCode->GetU32();
+	this->field_0x358 = pByteCode->GetU32();
+	this->field_0x35c = pByteCode->GetU32();
+	this->field_0x360 = pByteCode->GetU32();
+	this->field_0x63c = pByteCode->GetS32();
+	this->field_0x644 = pByteCode->GetS32();
+	this->field_0x648 = pByteCode->GetS32();
+
+	staticMeshComponent.Reset();
+
+	this->trailMaterialId = pByteCode->GetS32();
+	if (this->trailMaterialId != -1) {
+		SV_InstallMaterialId(this->trailMaterialId);
+		this->fxTailA.Create(1.0f, 0x10, 4, this->trailMaterialId);
+		this->fxTailB.Create(1.0f, 0x10, 4, this->trailMaterialId);
+	}
+
+	this->field_0x350 = pByteCode->GetF32();
 	this->pathPlaneArray.Create(pByteCode);
 	behaviourAddOn.Create(pByteCode);
 	return;
@@ -48,6 +49,13 @@ CBehaviour* CActorAton::BuildBehaviour(int behaviourType)
 		pBehaviour = CActorAutonomous::BuildBehaviour(behaviourType);
 	}
 	return pBehaviour;
+}
+
+CPathPlaneArray::CPathPlaneArray()
+{
+	this->field_0x0 = 0;
+	this->field_0x8 = 0;
+	this->field_0x4 = 0;
 }
 
 void CPathPlaneArray::Create(ByteCode* pByteCode)
@@ -77,6 +85,14 @@ void CPathPlaneArray::Create(ByteCode* pByteCode)
 		} while (uVar2 < (uint)this->field_0x0);
 	}
 	return;
+}
+
+CBehaviourAddOnAton::CBehaviourAddOnAton()
+{
+	this->field_0x10 = 0;
+	this->field_0x14 = (int*)0x0;
+	this->field_0x1c = 0;
+	this->field_0x20 = (int*)0x0;
 }
 
 void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
@@ -172,4 +188,27 @@ void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
 	//this->field_0x24 = fVar10;
 	//this->field_0x24 = 10.0;
 	return;
+}
+
+void CFxTail::Create(float param_1, int count, int param_4, int materialId)
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+CStaticMeshComponent::CStaticMeshComponent()
+{
+	//this->field_0x634 = 0;
+	//this->field_0x638 = 0;
+	//this->staticMeshComponent = &StaticMeshComponent::VTable_0043a7a0;
+	//this->field_0x690 = 0;
+	//this->field_0x694 = 0;
+	//this->field_0x648 = -1;
+	//this->field_0x644 = -1;
+	//this->staticMeshComponent = &StaticMeshComponent::VTable_0043a6f0;
+	//this->staticMeshComponent = &StaticMeshComponent::VTable_0043a6d0;
+}
+
+void CStaticMeshComponent::Reset()
+{
+	IMPLEMENTATION_GUARD_LOG();
 }

@@ -1689,11 +1689,24 @@ void CActor::SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1)
 	edF32MATRIX4 m0;
 
 	edF32Matrix4FromEulerSoft(&m0, v1, "XYZ");
-	v0->x = 0.0;
+	v0->x = 0.0f;
 	fVar1 = GetAngleYFromVector(&m0.rowZ);
 	v0->y = fVar1;
-	v0->z = 0.0;
+	v0->z = 0.0f;
 	return;
+}
+
+int CActor::SV_InstallMaterialId(int materialId)
+{
+	int index;
+
+	if (materialId == -1) {
+		index = 0;
+	}
+	else {
+		index = CScene::ptable.g_C3DFileManager_00451664->InstanciateG2D(materialId);
+	}
+	return index;
 }
 
 void CActor::SetupDefaultPosition()
@@ -4300,4 +4313,10 @@ float CScalarDyn::GetInstantSpeed()
 bool CScalarDyn::OnLastValidSample()
 {
 	return (this->flags & 2) != 0;
+}
+
+CBehaviourAddOnBase::CBehaviourAddOnBase()
+{
+	this->field_0x4 = 0;
+	this->field_0x8 = 0;
 }

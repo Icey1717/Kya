@@ -145,6 +145,9 @@ public:
 	uint animKey_0x1594;
 	uint field_0x1594;
 	uint field_0x1598;
+	uint field_0x159c;
+
+	uint medallionBone;
 
 	float time_0x1538;
 	float time_0x153c;

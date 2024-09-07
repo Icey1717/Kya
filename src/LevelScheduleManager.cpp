@@ -740,6 +740,87 @@ int CLevelScheduler::SaveGame_GetMaxBufferSize()
 	return 0x10000;
 }
 
+ulong gMedallionHashCodes[9] = 
+{
+	CHAR_TO_UINT64("FIGHT_08"),
+	CHAR_TO_UINT64("MED_01\0\0"),
+	CHAR_TO_UINT64("MED_02\0\0"),
+	CHAR_TO_UINT64("MED_03\0\0"),
+	CHAR_TO_UINT64("MED_04\0\0"),
+	CHAR_TO_UINT64("MED_05\0\0"),
+	CHAR_TO_UINT64("MED_06\0\0"),
+	CHAR_TO_UINT64("MED_07\0\0"),
+	CHAR_TO_UINT64("MED_08\0\0"),
+};
+
+uint CLevelScheduler::GetMedallionLevel()
+{
+	uint medallionLevel;
+
+	medallionLevel = (uint)(_gScenVarInfo[28].currentValue == 2);
+
+	if (_gScenVarInfo[34].currentValue == 2) {
+		medallionLevel = medallionLevel + 1;
+	}
+
+	if (_gScenVarInfo[41].currentValue == 2) {
+		medallionLevel = medallionLevel + 1;
+	}
+
+	if (_gScenVarInfo[47].currentValue == 2) {
+		medallionLevel = medallionLevel + 1;
+	}
+
+	if (_gScenVarInfo[52].currentValue == 2) {
+		medallionLevel = medallionLevel + 1;
+	}
+
+	if (_gScenVarInfo[56].currentValue == 2) {
+		medallionLevel = medallionLevel + 1;
+	}
+
+	if (_gScenVarInfo[63].currentValue == 2) {
+		medallionLevel = medallionLevel + 1;
+	}
+
+	return medallionLevel;
+}
+
+int CLevelScheduler::GetBoomyLevel() 
+{
+	return _gScenVarInfo[9].currentValue;
+}
+
+ulong gFightHashCodes[8] = 
+{
+	0x0,
+	CHAR_TO_UINT64("FIGHT_01"),
+	CHAR_TO_UINT64("FIGHT_02"),
+	CHAR_TO_UINT64("FIGHT_03"),
+	CHAR_TO_UINT64("FIGHT_04"),
+	CHAR_TO_UINT64("FIGHT_05"),
+	CHAR_TO_UINT64("FIGHT_06"),
+	CHAR_TO_UINT64("FIGHT_07"),
+};
+
+int CLevelScheduler::GetFightLevel() 
+{
+	int fightLevel;
+	uint uVar1;
+
+	fightLevel = 0;
+	uVar1 = _gScenVarInfo[10].currentValue;
+
+	if (_gScenVarInfo[10].currentValue != 0) {
+		do {
+			uVar1 = uVar1 >> 1;
+			fightLevel = fightLevel + 1;
+		} while (uVar1 != 0);
+	}
+
+	return fightLevel;
+}
+
 int INT_ARRAY_0048ed60[16] = { 0 };
 int INT_ARRAY_0048eda0[16] = { 0 };
 

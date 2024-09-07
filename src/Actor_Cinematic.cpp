@@ -8,6 +8,7 @@
 #include "TimeController.h"
 #include "ActorFactory.h"
 #include "ActorHero.h"
+#include "LevelScheduleManager.h"
 
 
 CActorCinematic::CActorCinematic()
@@ -51,44 +52,6 @@ ed_Chunck* edChunckGetSpecial(ed_Chunck* pChunk, char* param_2)
 		peVar1 = (ed_Chunck*)0x0;
 	}
 	return peVar1;
-}
-
-ulong gFightHashCodes[8] = {
-	0x0,
-	CHAR_TO_UINT64("FIGHT_01"),
-	CHAR_TO_UINT64("FIGHT_02"),
-	CHAR_TO_UINT64("FIGHT_03"),
-	CHAR_TO_UINT64("FIGHT_04"),
-	CHAR_TO_UINT64("FIGHT_05"),
-	CHAR_TO_UINT64("FIGHT_06"),
-	CHAR_TO_UINT64("FIGHT_07"),
-};
-
-ulong gMedallionHashCodes[9] = {
-	CHAR_TO_UINT64("FIGHT_08"),
-	CHAR_TO_UINT64("MED_01\0\0"),
-	CHAR_TO_UINT64("MED_02\0\0"),
-	CHAR_TO_UINT64("MED_03\0\0"),
-	CHAR_TO_UINT64("MED_04\0\0"),
-	CHAR_TO_UINT64("MED_05\0\0"),
-	CHAR_TO_UINT64("MED_06\0\0"),
-	CHAR_TO_UINT64("MED_07\0\0"),
-	CHAR_TO_UINT64("MED_08\0\0"),
-};
-
-int GetBoomyLevel() {
-	IMPLEMENTATION_GUARD_LOG();
-	return 0;
-}
-
-int GetMedallionLevel() {
-	IMPLEMENTATION_GUARD_LOG();
-	return 0;
-}
-
-int GetFightLevel() {
-	IMPLEMENTATION_GUARD_LOG();
-	return 0;
 }
 
 void CActorCinematic::PatchMaterialForCutscene(ed_g3d_manager* pG3D, ed_g2d_manager* pG2D)
@@ -142,15 +105,17 @@ void CActorCinematic::PatchMaterialForCutscene(ed_g3d_manager* pG3D, ed_g2d_mana
 		} while (iVar7 < 3);
 
 		if (foundEquipmentHashes == 3) {
-			iVar7 = GetBoomyLevel();
+			iVar7 = CLevelScheduler::GetBoomyLevel();
 			if (0 < iVar7) {
 				this->SV_PatchMaterial(gBoomyHashCodes[1], gBoomyHashCodes[iVar7], pG2D);
 			}
-			uVar9 = GetMedallionLevel();
+
+			uVar9 = CLevelScheduler::GetMedallionLevel();
 			if (0 < (int)uVar9) {
 				this->SV_PatchMaterial(gMedallionHashCodes[1], gMedallionHashCodes[uVar9], pG2D);
 			}
-			iVar7 = GetFightLevel();
+
+			iVar7 = CLevelScheduler::GetFightLevel();
 			if (0 < iVar7) {
 				this->SV_PatchMaterial(gFightHashCodes[1], gFightHashCodes[iVar7], pG2D);
 			}

@@ -614,6 +614,10 @@ public:
 
 	static int SaveGame_GetMaxBufferSize();
 
+	static uint GetMedallionLevel();
+	static int GetBoomyLevel();
+	static int GetFightLevel();
+
 	static int ScenVar_Get(SCENARIC_VARIABLE scenVarId);
 	static void ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue);
 
@@ -2020,5 +2024,8 @@ public:
 
 bool edSoundAreAllSoundDataLoaded();
 bool edMusicAreAllMusicDataLoaded();
+
+extern ulong gMedallionHashCodes[9];
+extern ulong gFightHashCodes[8];
 
 #endif //_LEVELSCHEDULEMANAGER_H

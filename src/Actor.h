@@ -195,9 +195,7 @@ struct BehaviourList {
 
 class CObject {
 public:
-	CObject() {
-		objectId - -1;
-	}
+	CObject() : objectId(-1) { }
 
 	int objectId;
 
@@ -401,6 +399,8 @@ public:
 
 	void SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1);
 
+	int SV_InstallMaterialId(int materialId);
+
 	float SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence* pActorConeInfluence);
 
 	void SV_LookTo(CActorParamsOut* pActorParamsOut, CActorParamsIn* pActorParamsIn);
@@ -548,7 +548,11 @@ public:
 
 class CBehaviourAddOnBase {
 public:
+	CBehaviourAddOnBase();
 	virtual void Create(ByteCode* pByteCode) = 0;
+
+	undefined4 field_0x4;
+	undefined4 field_0x8;
 };
 
 struct ActorAndWaypoint {

@@ -204,27 +204,18 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	//this->field_0x1874 = this->field_0x444;
 	//*(undefined4*)&this->field_0x1878 = *(undefined4*)&this->field_0x448;
 	//this->field_0xff0 = 0;
-	uVar2 = pByteCode->GetU32();
-	assert(uVar2 == 0xDCF9FCDC);
-	this->field_0x157c = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->animKey_0x1584 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->animKey_0x1588 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->animKey_0x158c = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->animKey_0x1590 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->animKey_0x1594 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->field_0x1594 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->field_0x1598 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	//*(uint*)&this->field_0x159c = uVar2;
-	/*pCVar3 = (CCamera*)*/pByteCode->GetU32();
-	//this->pKyaWindWallCamera_0x15ac = pCVar3;
+	this->field_0x157c = pByteCode->GetU32();
+	assert(this->field_0x157c == 0xDCF9FCDC);
+	this->animKey_0x1584 = pByteCode->GetU32();
+	this->animKey_0x1588 = pByteCode->GetU32();
+	this->animKey_0x158c = pByteCode->GetU32();
+	this->animKey_0x1590 = pByteCode->GetU32();
+	this->animKey_0x1594 = pByteCode->GetU32();
+	this->field_0x1594 = pByteCode->GetU32();
+	this->field_0x1598 = pByteCode->GetU32();
+	this->field_0x159c = pByteCode->GetU32();
+	this->medallionBone = pByteCode->GetU32();
+
 	int* pSeekpiVar5 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pSeekpiVar5 + 1);
 	if (*pSeekpiVar5 != 0) {
@@ -1934,6 +1925,24 @@ bool CActorHeroPrivate::ManageActions()
 	return false;
 }
 
+void CActorHeroPrivate::UpdateMedallion()
+{
+	int iVar1;
+	uint uVar2;
+
+	iVar1 = CLevelScheduler::ScenVar_Get(0xf);
+	if (iVar1 == 0) {
+		this->pAnimationController->AddDisabledBone(this->medallionBone);
+	}
+	else {
+		this->pAnimationController->RemoveDisabledBone(this->medallionBone);
+	}
+
+	uVar2 = CLevelScheduler::GetMedallionLevel();
+	CActor::SV_PatchMaterial(gMedallionHashCodes[1], gMedallionHashCodes[uVar2 + 1], (ed_g2d_manager*)0x0);
+	return;
+}
+
 float CActorHeroPrivate::GetTargetBeta()
 {
 	uint uVar1;
@@ -3533,6 +3542,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						pTVar15 = Timer::GetTimer();
 						return pTVar15->scaledTotalTime < this->field_0x155c ^ 1;)
 					}
+
 					if (msg == 0x79) {
 						pCVar11 = GetLifeInterface();
 						fVar25 = pCVar11->GetValue();
@@ -3546,11 +3556,12 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							}
 							bVar9 = (uVar10 & 1) != 0;
 						}
+
 						if ((bVar9) || (0.0f < this->field_0x1558)) {
 							return 0;
 						}
-						IMPLEMENTATION_GUARD_LOG(
-						UpdateMedallion())
+						
+						UpdateMedallion();
 					}
 					else {
 						if (msg == 0x6b) {

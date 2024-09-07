@@ -169,13 +169,16 @@ public:
 	void RegisterBone(uint boneId);
 	void UnRegisterBone(uint boneId);
 
+	void AddDisabledBone(uint boneId);
+	void RemoveDisabledBone(uint boneId);
+
 	float GetAnimLength(int param_2, int lengthMode);
 
 	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
 
-	struct FrameMatrixData_8 {
-		uint field_0x0;
-		int field_0x4;
+	struct DisabledBoneEntry {
+		uint boneId;
+		int nodeId;
 	};
 
 	edAnmBinMetaAnimator anmBinMetaAnimator;
@@ -186,8 +189,8 @@ public:
 	undefined4 field_0x28;
 	uint count_0x2c;
 	int currentAnimType_0x30;
-	FrameMatrixData_8 field_0x34[4];
-	int count_0x54;
+	DisabledBoneEntry aDisabledBoneData[4];
+	int nDisabledBones;
 };
 
 extern edAnmStage TheAnimStage;
