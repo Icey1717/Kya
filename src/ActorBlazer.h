@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "PathFollow.h"
 
 class CActorBlazer : public CActor {
 public:

@@ -11,7 +11,7 @@
 
 struct edColRAY_OBB_IN {
 	edF32VECTOR4* pLocation;
-	edF32VECTOR4* pDirection;
+	edF32VECTOR4* pLeadVector;
 	float lengthA;
 };
 

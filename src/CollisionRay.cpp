@@ -18,7 +18,7 @@ CCollisionRay::CCollisionRay(float f0, float f1, float f2, edF32VECTOR4* pLocati
 	edF32Matrix4MulF32Vector4Hard(pDirection, &localMatrix, &gF32Vector4UnitZ);
 
 	this->pLocation = pLocation;
-	this->pDirection = pDirection;
+	this->pLeadVector = pDirection;
 	this->lengthA = f2;
 	this->lengthB.x = f2;
 	return;
@@ -29,7 +29,7 @@ CCollisionRay::CCollisionRay(float f0, edF32VECTOR4* pLocation, edF32VECTOR4* pD
 	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::CCollisionRay f0: {} pLocation: {} pDirection: {}", f0, pLocation->ToString(), pDirection->ToString());
 
 	this->pLocation = pLocation;
-	this->pDirection = pDirection;
+	this->pLeadVector = pDirection;
 	this->lengthA = f0;
 	this->lengthB.x = f0;
 }
@@ -116,7 +116,7 @@ float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint f
 	actorIntersectingBoxTable.entryCount = 0;
 
 	pLoc = this->pLocation;
-	pDir = this->pDirection;
+	pDir = this->pLeadVector;
 
 	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors location: {} direction: {} length: {}", pLoc->ToString(), pDir->ToString(), z);
 
@@ -273,7 +273,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 
 		*pOutProps = pPrim->flags_0x80;
 
-		peVar1 = this->pDirection;
+		peVar1 = this->pLeadVector;
 		peVar2 = this->pLocation;
 
 		local_10 = *peVar1 * distance + *peVar2;
@@ -308,7 +308,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 			edF32QUAD4* pQuad = reinterpret_cast<edF32QUAD4*>(pColObj);
 			*pOutProps = pQuad->flags;
 
-			peVar1 = this->pDirection;
+			peVar1 = this->pLeadVector;
 			peVar2 = this->pLocation;
 			local_10 = *peVar1 * distance + *peVar2;
 
@@ -391,4 +391,9 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 		pOutResult->type_0x8 = finalType;
 	}
 	return fVar6;
+}
+
+void CCollisionRay::ChangeLeadVector(edF32VECTOR4* pNewLeadVector)
+{
+	this->pLeadVector = pNewLeadVector;
 }

@@ -1261,6 +1261,17 @@ void edF32Matrix4BuildFromVectorUnitAndAngle(float t0, edF32MATRIX4* m0, edF32VE
 	return;
 }
 
+void BuildMatrixFromNormalAndSpeed(edF32MATRIX4* m0, edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	m0->rowY = *v0;
+	m0->rowZ = *v1;
+	edF32Vector4CrossProductHard(&m0->rowX, &m0->rowY, &m0->rowZ);
+	edF32Vector4NormalizeHard(&m0->rowX, &m0->rowX);
+	edF32Vector4CrossProductHard(&m0->rowZ, &m0->rowX, &m0->rowY);
+	edF32Vector4NormalizeHard(&m0->rowZ, &m0->rowZ);
+	return;
+}
+
 void edF32Matrix4BuildFromVectorAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR4* v0)
 {
 	float fVar1;

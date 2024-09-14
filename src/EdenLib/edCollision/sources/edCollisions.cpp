@@ -5000,7 +5000,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	local_18[0] = INT_ARRAY_00448910[0];
 	local_18[1] = INT_ARRAY_00448910[1];
 	fVar12 = pRay->lengthA;
-	pDirection = pRay->pDirection;
+	pDirection = pRay->pLeadVector;
 	pLocation = pRay->pLocation;
 	endLocation.xyz = (pDirection->xyz * fVar12) + pLocation->xyz;
 	endLocation.w = 1.0f;
@@ -5044,7 +5044,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 						COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim PRIM count {}", peVar4->count_0x52);
 
 						for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
-							pDirection = pRay->pDirection;
+							pDirection = pRay->pLeadVector;
 							pLocation = pRay->pLocation;
 
 							fVar22 = pLocation->x;
@@ -5146,7 +5146,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 						if (bVar1 == 0xa) {
 							edColPRIM_BOX* pBox = LOAD_SECTION_CAST(edColPRIM_BOX*, peVar4->field_0x54[0]);
 							for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
-								pDirection = pRay->pDirection;
+								pDirection = pRay->pLeadVector;
 								pLocation = pRay->pLocation;
 
 								fVar22 = pDirection->x;
@@ -5232,7 +5232,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 							if (bVar1 == 0xe) {
 								edColPRIM_OBJECT* pPrim = LOAD_SECTION_CAST(edColPRIM_OBJECT*, peVar4->field_0x54[0]);
 								for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
-									pDirection = pRay->pDirection;
+									pDirection = pRay->pLeadVector;
 									pLocation = pRay->pLocation;
 									float fVar31 = pLocation->x;
 									float fVar32 = pLocation->y;
@@ -5313,7 +5313,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 								if (bVar1 == 0xb) {
 									edColPRIM_SPHERE* pSphere = LOAD_SECTION_CAST(edColPRIM_SPHERE*, peVar4->field_0x54[0]);
 									for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
-										pDirection = pRay->pDirection;
+										pDirection = pRay->pLeadVector;
 										pLocation = pRay->pLocation;
 
 										float fVar29 = pLocation->x;
@@ -5413,7 +5413,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 												triangle.flags = pQuad->flags;
 												local_10.pTriangle = &triangle;
 												local_10.pRayOrigin = pRay->pLocation;
-												local_10.pRayDirection = pRay->pDirection;
+												local_10.pRayDirection = pRay->pLeadVector;
 
 												edColIntersectRayTriangle4(&outDistance, &local_10);
 
@@ -5442,7 +5442,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 												local_378 = (float)(*(int*)(pRay->field_0xc + 0x28) +
 													(uint) * (ushort*)&(peVar9->bbox).transform.ab * 0x10);
 												local_10.pRayOrigin = pRay->pLocation;
-												local_10.pRayDirection = pRay->pDirection;
+												local_10.pRayDirection = pRay->pLeadVector;
 												edColIntersectRayTriangle4((float*)&outDistance, &local_10);
 												if ((((outDistance != -8888.0) && (outDistance != -9999.0)) && (0.0 <= outDistance)) &&
 													((outDistance < distance ||
@@ -5459,7 +5459,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 												edF32TRIANGLE4* pTriangle = LOAD_SECTION_CAST(edF32TRIANGLE4*, peVar4->field_0x54[0]);
 												for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 													local_10.pRayOrigin = pRay->pLocation;
-													local_10.pRayDirection = pRay->pDirection;
+													local_10.pRayDirection = pRay->pLeadVector;
 													local_10.pTriangle = pTriangle;
 
 													edColIntersectRayTriangle4(&outDistance, &local_10);

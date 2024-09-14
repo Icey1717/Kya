@@ -657,7 +657,7 @@ void CActorMicken::StateMickenStand(CBehaviourMickenEat* pBehaviour)
 		this->timeInAir = 0.0f;
 	}
 
-	if (((this->flags_0x3e8 & 0x10) == 0) && (bVar5 = pBehaviour->pathFollowReader.AtGoal((pBehaviour->pathFollowReader).field_0x4, (pBehaviour->pathFollowReader).field_0xc), bVar5 == false)) {
+	if (((this->flags_0x3e8 & 0x10) == 0) && (bVar5 = pBehaviour->pathFollowReader.AtGoal((pBehaviour->pathFollowReader).splinePointIndex, (pBehaviour->pathFollowReader).field_0xc), bVar5 == false)) {
 		this->SetState(0x12, -1);
 		return;
 	}
@@ -1111,7 +1111,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 				}
 				else {
 					bVar5 = CPathFollowReader::AtGoal
-					(&pBehaviour->pathFollowReader, (pBehaviour->pathFollowReader).field_0x4,
+					(&pBehaviour->pathFollowReader, (pBehaviour->pathFollowReader).splinePointIndex,
 						(pBehaviour->pathFollowReader).field_0xc);
 					if (bVar5 == false) {
 						CPathFollowReader::NextWayPoint(&pBehaviour->pathFollowReader);
@@ -1137,7 +1137,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		CPathFollowReader::GetDelay(&pBehaviour->pathFollowReader);
 		if (fVar10 < fVar11) {
 			bVar5 = CPathFollowReader::AtGoal
-			(&pBehaviour->pathFollowReader, (pBehaviour->pathFollowReader).field_0x4,
+			(&pBehaviour->pathFollowReader, (pBehaviour->pathFollowReader).splinePointIndex,
 				(pBehaviour->pathFollowReader).field_0xc);
 			if (bVar5 == false) {
 				CPathFollowReader::NextWayPoint(&pBehaviour->pathFollowReader);

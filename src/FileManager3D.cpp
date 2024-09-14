@@ -78,6 +78,34 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
+edDList_material* C3DFileManager::GetMaterialFromId(int materialId, int internalId)
+{
+	edDList_material* pMaterial;
+	int curIndex;
+	ParticleInfo* pPVar3;
+
+	pPVar3 = this->pParticleInfoArray_0x50;
+	for (curIndex = 0; (pPVar3->ID != materialId && (curIndex < 0x80)); curIndex = curIndex + 1) {
+		pPVar3 = pPVar3 + 1;
+	}
+
+	if (pPVar3->materialInfoArray_0x8 == (edDList_material*)0x0) {
+		pPVar3 = (ParticleInfo*)0x0;
+	}
+
+	pMaterial = (edDList_material*)0x0;
+	if (pPVar3 != (ParticleInfo*)0x0) {
+		if ((internalId < 0) || (pPVar3->materialCount_0x4 <= internalId)) {
+			pMaterial = (edDList_material*)0x0;
+		}
+		else {
+			pMaterial = pPVar3->materialInfoArray_0x8 + internalId;
+		}
+	}
+
+	return pMaterial;
+}
+
 int C3DFileManager::InstanciateG2D(int index)
 {
 	ParticleInfo* pPVar1;

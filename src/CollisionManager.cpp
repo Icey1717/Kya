@@ -1035,7 +1035,7 @@ bool CCollision::IsVertexAboveAndAgainstObbTree(edF32VECTOR4* v0, edObbTREE_DYN*
 	local_30.lengthB.w = v0->w;
 	local_30.pLocation = &local_30.lengthB;
 	local_30.lengthB.x = v0->x;
-	local_30.pDirection = &ray_dir;
+	local_30.pLeadVector = &ray_dir;
 	local_30.lengthB.y = v0->y + 0.1f;
 	local_30.lengthA = 0.25f;
 	fVar2 = edObbIntersectObbTreeRayPrim(&peStack8, &uStack4, pObbTree, &local_30);

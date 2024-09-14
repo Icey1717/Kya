@@ -3,6 +3,16 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "PathFollow.h"
+#include "Path.h"
+
+struct SV_MOV_FLEE_ON_PATH_PARAM
+{
+	float delay;
+	int field_0x4;
+	float acceleration;
+	float speed;
+};
 
 class CDynamic
 {
@@ -91,6 +101,18 @@ struct CActorMovParamsIn : public CActorParamsIn {
 	float field_0x18;
 };
 
+struct SV_MOV_PATH_PARAM
+{
+	float acceleration;
+	float speed;
+	int field_0x8;
+
+	int field_0xc;
+	int field_0x10;
+	float field_0x14;
+	float rotationSpeed;
+};
+
 class CActorMovable : public CActor {
 public:
 	CActorMovable();
@@ -105,6 +127,10 @@ public:
 
 	void SV_MOV_UpdateSpeedIntensity(float param_1, float param_2);
 	void SV_MOV_DecreaseSpeedIntensity(float param_1);
+	float SV_MOV_ComputeDistIdealPos(CPathFollowReader* pPathFollowReader, float param_3, float defaultDelay);
+	void SV_MOV_ComputeSpeedAccelerationToFleeActor(float param_1, CActorMovable* pFleeActor, CPathPlane* pInPathPlane, SV_MOV_FLEE_ON_PATH_PARAM* pParams);
+	float FUN_00115380(edF32VECTOR4* param_2, CPathFollowReader* pPathFollowReader, int param_4, long param_5, edF32VECTOR4* pOutPosition, float* param_7);
+	float SV_MOV_ManageMovOnPath(CPathFollowReader* pPathFollowReader, SV_MOV_PATH_PARAM* pMovPathParams);
 	bool SV_MOV_UpdatePush(float param_1, S_PUSH_DATA* pPushData, S_PUSH_STREAM_DEF* pPushStreamRef);
 	bool SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_TILT_STREAM_DEF* pTiltStreamRef);
 	void SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActorMovParamsIn* pActorMovParamsIn, edF32VECTOR4* param_4);

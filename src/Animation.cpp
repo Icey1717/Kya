@@ -62,11 +62,11 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 			}
 
 			iVar4 = 0;
-			if (0 < this->nDisabledBones) {
+			if (0 < this->nbDisabledBones) {
 				do {
 					this->aDisabledBoneData[iVar4].nodeId = 0;
 					iVar4 = iVar4 + 1;
-				} while (iVar4 < this->nDisabledBones);
+				} while (iVar4 < this->nbDisabledBones);
 			}
 		}
 	}
@@ -87,7 +87,7 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 			}
 
 			iVar4 = 0;
-			if (0 < this->nDisabledBones) {
+			if (0 < this->nbDisabledBones) {
 				do {
 					iVar5 = -1;
 					if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
@@ -100,7 +100,7 @@ bool CAnimation::UpdateCurSkeleton(CActor* pActor)
 
 					this->aDisabledBoneData[iVar4].nodeId = iVar5;
 					iVar4 = iVar4 + 1;
-				} while (iVar4 < this->nDisabledBones);
+				} while (iVar4 < this->nbDisabledBones);
 			}
 		}
 	}
@@ -128,7 +128,7 @@ void CAnimation::Create(CActor* pActor, uint count, edAnmLayer* aAnimLayers, int
 	//	bVar1 = iVar7 != 0;
 	//	iVar7 = iVar7 + -1;
 	//} while (bVar1);
-	this->nDisabledBones = 0;
+	this->nbDisabledBones = 0;
 	this->count_0x2c = 0;
 	this->currentAnimType_0x30 = -1;
 	UpdateCurSkeleton(pActor);
@@ -1694,7 +1694,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			}
 
 			iVar5 = 0;
-			if (0 < this->nDisabledBones) {
+			if (0 < this->nbDisabledBones) {
 				do {
 					peVar26 = pFrameMatrixData + this->aDisabledBoneData[iVar5].nodeId;
 					edF32Matrix4SetIdentityHard(peVar26);
@@ -1702,7 +1702,7 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 					iVar5 = iVar5 + 1;
 					peVar26->bb = 0.0f;
 					peVar26->aa = 0.0f;
-				} while (iVar5 < this->nDisabledBones);
+				} while (iVar5 < this->nbDisabledBones);
 			}
 		}
 
@@ -2871,7 +2871,7 @@ void CAnimation::AddDisabledBone(uint boneId)
 	int nodeId;
 	int curIndex;
 
-	freeIndex = this->nDisabledBones;
+	freeIndex = this->nbDisabledBones;
 	curIndex = 0;
 	if (0 < freeIndex) {
 		do {
@@ -2896,7 +2896,7 @@ void CAnimation::AddDisabledBone(uint boneId)
 
 	this->aDisabledBoneData[freeIndex].nodeId = nodeId;
 
-	this->nDisabledBones = this->nDisabledBones + 1;
+	this->nbDisabledBones = this->nbDisabledBones + 1;
 	return;
 }
 
@@ -2905,14 +2905,14 @@ void CAnimation::RemoveDisabledBone(uint boneId)
 	int indexToRemove;
 	int curIndex;
 
-	indexToRemove = this->nDisabledBones;
+	indexToRemove = this->nbDisabledBones;
 	curIndex = 0;
 	if (0 < indexToRemove) {
 		do {
 			if (boneId == this->aDisabledBoneData[curIndex].boneId) {
 				this->aDisabledBoneData[curIndex].boneId = this->aDisabledBoneData[indexToRemove + -1].boneId;
 				this->aDisabledBoneData[curIndex].nodeId = this->aDisabledBoneData[indexToRemove + -1].nodeId;
-				this->nDisabledBones = this->nDisabledBones + -1;
+				this->nbDisabledBones = this->nbDisabledBones + -1;
 				return;
 			}
 

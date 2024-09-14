@@ -170,7 +170,7 @@ void CBehaviourTrapStand::StateTrapCatchStand_1_2(int param_2, int nextState)
 		}
 
 		if (movParamsOut.floatField <= fVar8) {
-			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
+			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 
 			if (bVar4 == false) {
 				this->pathFollowReader.NextWayPoint();
@@ -242,7 +242,7 @@ void CBehaviourTrapStand::StateTrapCatchStand_2_2(int nextState)
 		}
 
 		if (movParamsOut.floatField <= fVar4) {
-			bVar1 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
+			bVar1 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 
 			if (bVar1 == false) {
 				this->pathFollowReader.NextWayPoint();
@@ -305,7 +305,7 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 		}
 
 		if (movParamsOut.floatField <= fVar11) {
-			bVar6 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
+			bVar6 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 			if (bVar6 == false) {
 				this->pathFollowReader.NextWayPoint();
 			}
@@ -423,7 +423,7 @@ void CBehaviourTrapStand::StateTrapCatchStruggle(int param_2, int param_3, int p
 		}
 
 		if (movParamsOut.floatField <= fVar9) {
-			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).field_0x4, (this->pathFollowReader).field_0xc);
+			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 			if (bVar4 == false) {
 				this->pathFollowReader.NextWayPoint();
 			}

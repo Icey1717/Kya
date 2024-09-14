@@ -7,6 +7,8 @@
 #include "TimeController.h"
 #include "CollisionManager.h"
 #include "ActorCheckpointManager.h"
+#include "CollisionRay.h"
+#include "ActorAutonomous.h"
 
 int INT_00448e04 = 0;
 
@@ -405,6 +407,584 @@ void CActorMovable::SV_MOV_DecreaseSpeedIntensity(float param_1)
 		(this->dynamic).speed = 0.0f;
 	}
 	return;
+}
+
+float CActorMovable::SV_MOV_ComputeDistIdealPos(CPathFollowReader* pPathFollowReader, float param_3, float defaultDelay)
+{
+	float delay;
+
+	delay = pPathFollowReader->GetDelay();
+	if (delay != 0.0f) {
+		defaultDelay = pPathFollowReader->GetDelay();
+	}
+
+	return defaultDelay;
+}
+
+void CActorMovable::SV_MOV_ComputeSpeedAccelerationToFleeActor(float param_1, CActorMovable* pFleeActor, CPathPlane* pInPathPlane, SV_MOV_FLEE_ON_PATH_PARAM* pParams)
+{
+	CPathFollow* pCVar1;
+	bool bVar2;
+	edF32VECTOR4* peVar3;
+	float* pfVar4;
+	int iVar5;
+	edF32VECTOR4* peVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+	edF32VECTOR4 auStack128;
+	edF32VECTOR4 auStack112;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 eStack64;
+	CPathPlaneOutData local_28;
+	CPathPlaneOutData local_18;
+	float local_8;
+	float local_4;
+
+	fVar7 = pParams->delay;
+	fVar9 = fVar7 / (param_1 * 2.0f);
+	fVar13 = fVar7 - fVar9;
+	fVar9 = fVar7 + fVar9;
+	fVar12 = fVar13 - fVar7 / param_1;
+	fVar10 = fVar9 + fVar7 / param_1;
+	fVar7 = pFleeActor->currentLocation.x - this->currentLocation.x;
+	fVar8 = pFleeActor->currentLocation.y - this->currentLocation.y;
+	fVar11 = pFleeActor->currentLocation.z - this->currentLocation.z;
+
+	fVar11 = sqrtf(fVar7 * fVar7 + fVar8 * fVar8 + fVar11 * fVar11);
+	edF32Vector4SubHard(&eStack64, &this->currentLocation, &pFleeActor->currentLocation);
+	peVar3 = pInPathPlane->pathFollowReader.GetWayPoint();
+	edF32Vector4SubHard(&eStack80, peVar3, &this->currentLocation);
+	fVar8 = edF32Vector4GetDistHard(&eStack80);
+	fVar7 = 0.0f;
+
+	if (0.0f < fVar8) {
+		edF32Vector4NormalizeHard(&eStack64, &eStack64);
+		edF32Vector4NormalizeHard(&eStack80, &eStack80);
+		fVar7 = edF32Vector4DotProductHard(&eStack64, &eStack80);
+		fVar7 = fVar11 * fVar7;
+	}
+
+	fVar8 = fVar10;
+	if (fVar11 < fVar10) {
+		fVar8 = fVar11;
+	}
+
+	fVar11 = fVar10;
+	if (fVar7 < fVar10) {
+		fVar11 = fVar7;
+	}
+
+	fVar8 = (fVar8 + fVar11) / 2.0f;
+	fVar7 = edF32Vector4DotProductHard(&eStack64, &(pFleeActor->dynamic).velocityDirectionEuler);
+	if ((0.0f < fVar7) && (pParams->field_0x4 == 0)) {
+		IMPLEMENTATION_GUARD(
+		(**(code**)(((pInPathPlane->pathFollowReader).pPathFollow)->field_0x0 + 0xc))();
+		(**(code**)(((pInPathPlane->pathFollowReader).pPathFollow)->field_0x0 + 0x10))();
+		fVar7 = edF32Vector4DotProductHard(&eStack64, &eStack80);
+		if (fVar7 <= 0.0) {
+			pfVar4 = (float*)(**(code**)(((pInPathPlane->pathFollowReader).pPathFollow)->field_0x0 + 0xc))();
+			fVar7 = *pfVar4 - this->currentLocation.x;
+			fVar8 = pfVar4[1] - this->currentLocation.y;
+			fVar11 = pfVar4[2] - this->currentLocation.z;
+			if ((1.0 < SQRT(fVar7 * fVar7 + fVar8 * fVar8 + fVar11 * fVar11)) &&
+				(pfVar4 = (float*)(**(code**)(((pInPathPlane->pathFollowReader).pPathFollow)->field_0x0 + 0x10))(),
+					fVar7 = *pfVar4 - this->currentLocation.x, fVar8 = pfVar4[1] - this->currentLocation.y,
+					fVar11 = pfVar4[2] - this->currentLocation.z,
+					1.0 < SQRT(fVar7 * fVar7 + fVar8 * fVar8 + fVar11 * fVar11))) {
+				(pInPathPlane->pathFollowReader).field_0xc = (pInPathPlane->pathFollowReader).field_0xc ^ 1;
+				pPathFollowReader->NextWayPoint((CPathFollowReader*)pInPathPlane);
+			}
+			pParams->acceleration = 0.0;
+			pParams->speed = 50.0;
+			return;
+		})
+	}
+
+	pInPathPlane->InitTargetPos(&this->currentLocation, &local_18);
+	pInPathPlane->ExternComputeTargetPosWithPlane(&this->currentLocation, &local_18);
+	FUN_00115380(&this->currentLocation, &pInPathPlane->pathFollowReader, local_18.field_0x0, 0, &auStack128, &local_8);
+	pInPathPlane->InitTargetPos(&this->currentLocation, &local_28);
+	pInPathPlane->ExternComputeTargetPosWithPlane(&this->currentLocation, &local_28);
+	FUN_00115380(&pFleeActor->currentLocation, &pInPathPlane->pathFollowReader, local_28.field_0x0, 0, &auStack112, &local_4);
+
+	bVar2 = false;
+	if ((local_18.field_0x0 < local_28.field_0x0) || ((local_18.field_0x0 == local_28.field_0x0 && (local_8 <= local_4))))
+	{
+		bVar2 = true;
+	}
+
+	if (local_28.field_0x0 == -1) {
+		peVar3 = ((pInPathPlane->pathFollowReader).pPathFollow)->aSplinePoints;
+		if (peVar3 == (edF32VECTOR4*)0x0) {
+			peVar3 = &gF32Vertex4Zero;
+		}
+		else {
+			peVar3 = peVar3 + 1;
+		}
+
+		peVar6 = ((pInPathPlane->pathFollowReader).pPathFollow)->aSplinePoints;
+		if (peVar6 == (edF32VECTOR4*)0x0) {
+			peVar6 = &gF32Vertex4Zero;
+		}
+
+		edF32Vector4SubHard(&eStack96, peVar3, peVar6);
+	}
+	else {
+		pCVar1 = (pInPathPlane->pathFollowReader).pPathFollow;
+		iVar5 = pCVar1->splinePointCount + -1;
+		if (local_28.field_0x0 < iVar5) {
+			if (pCVar1->aSplinePoints == (edF32VECTOR4*)0x0) {
+				peVar3 = &gF32Vertex4Zero;
+			}
+			else {
+				peVar3 = pCVar1->aSplinePoints + local_28.field_0x0 + 1;
+			}
+
+			peVar6 = ((pInPathPlane->pathFollowReader).pPathFollow)->aSplinePoints;
+			if (peVar6 == (edF32VECTOR4*)0x0) {
+				peVar6 = &gF32Vertex4Zero;
+			}
+			else {
+				peVar6 = peVar6 + local_28.field_0x0;
+			}
+
+			edF32Vector4SubHard(&eStack96, peVar3, peVar6);
+		}
+		else {
+			if (local_28.field_0x0 == iVar5) {
+				if (pCVar1->aSplinePoints == (edF32VECTOR4*)0x0) {
+					peVar3 = &gF32Vertex4Zero;
+				}
+				else {
+					peVar3 = pCVar1->aSplinePoints + local_28.field_0x0;
+				}
+
+				peVar6 = ((pInPathPlane->pathFollowReader).pPathFollow)->aSplinePoints;
+				if (peVar6 == (edF32VECTOR4*)0x0) {
+					peVar6 = &gF32Vertex4Zero;
+				}
+				else {
+					peVar6 = peVar6 + local_28.field_0x0 + -1;
+				}
+
+				edF32Vector4SubHard(&eStack96, peVar3, peVar6);
+			}
+		}
+	}
+
+	edF32Vector4NormalizeHard(&eStack96, &eStack96);
+	fVar11 = (pFleeActor->dynamic).linearAcceleration;
+	fVar7 = edF32Vector4DotProductHard(&(pFleeActor->dynamic).velocityDirectionEuler, &eStack96);
+	iVar5 = 0;
+	if (bVar2) {
+		iVar5 = -2;
+	}
+	else {
+		if (((fVar8 < fVar13) && (0.0f < fVar8)) && (iVar5 = -2, fVar12 + 0.1f <= fVar8)) {
+			iVar5 = -1;
+		}
+		if ((fVar9 < fVar8) && (iVar5 = 2, fVar8 <= fVar10 - 0.1f)) {
+			iVar5 = 1;
+		}
+	}
+
+	if (iVar5 == 0) {
+		pParams->speed = 0.0f;
+		pParams->acceleration = (this->dynamic).linearAcceleration;
+	}
+	else {
+		if (iVar5 == 2) {
+			pParams->acceleration = 0.0f;
+			pParams->speed = 15.0f;
+		}
+		else {
+			if (iVar5 == 1) {
+				pParams->speed = (((this->dynamic).linearAcceleration - (pFleeActor->dynamic).linearAcceleration) *
+						((this->dynamic).linearAcceleration - (pFleeActor->dynamic).linearAcceleration) * 0.4f) / (fVar10 - fVar8);
+				pParams->acceleration = fVar7 * fVar11 - 6.0f / fabs(fVar10 - fVar8);
+				if (pParams->speed < 3.0f) {
+					pParams->speed = 3.0f;
+				}
+			}
+			else {
+				if (iVar5 == -1) {
+					fVar8 = fVar8 - fVar12;
+					fVar9 = (this->dynamic).linearAcceleration - (pFleeActor->dynamic).linearAcceleration;
+					pParams->speed = (fVar9 * fVar9 * 0.6f) / fVar8;
+					pParams->acceleration = fVar7 * fVar11 + 6.0f / fVar8;
+					if (pParams->speed < 3.0f) {
+						pParams->speed = 3.0f;
+					}
+				}
+				else {
+					if (iVar5 == -2) {
+						pParams->speed = 50.0f;
+						pParams->acceleration = (pFleeActor->dynamic).linearAcceleration + 15.0f;
+					}
+				}
+			}
+		}
+	}
+
+	if (pParams->acceleration < 0.0f) {
+		pParams->acceleration = 0.0f;
+	}
+
+	return;
+}
+
+float CActorMovable::FUN_00115380(edF32VECTOR4* param_2, CPathFollowReader* pPathFollowReader, int param_4, long param_5, edF32VECTOR4* pOutPosition, float* param_7)
+{
+	edF32VECTOR4* peVar1;
+	edF32VECTOR4* v2;
+	int index;
+	float fVar2;
+	float t;
+	float fVar3;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	int local_4;
+
+	if (param_4 == -1) {
+		param_4 = 0;
+	}
+
+	local_4 = pPathFollowReader->GetNextPlace(param_4, 1);
+	index = param_4;
+	if (local_4 == -1) {
+		index = param_4 + -1;
+		local_4 = param_4;
+	}
+
+	peVar1 = pPathFollowReader->GetWayPoint(local_4);
+	v2 = pPathFollowReader->GetWayPoint(index);
+	edF32Vector4SubHard(&local_20, peVar1, v2);
+	local_20.y = 0.0f;
+
+	if (param_5 == 0) {
+		fVar2 = edF32Vector4GetDistHard(&local_20);
+	}
+	else {
+		fVar2 = edF32Vector4SafeNormalize1Hard((edF32VECTOR4*)param_5, &local_20);
+	}
+
+	local_40.x = -local_20.z;
+	local_40.y = local_20.y;
+	local_40.z = local_20.x;
+	edF32Vector4NormalizeHard(&local_40, &local_40);
+	peVar1 = pPathFollowReader->GetWayPoint(index);
+	edF32Vector4SubHard(&eStack48, param_2, peVar1);
+	eStack48.y = 0.0f;
+	t = edF32Vector4DotProductHard(&eStack48, &local_40);
+	if ((pOutPosition != (edF32VECTOR4*)0x0) || (param_7 != (float*)0x0)) {
+		edF32Vector4ScaleHard(t, &local_40, &local_40);
+		edF32Vector4SubHard(&eStack48, &eStack48, &local_40);
+
+		fVar3 = edF32Vector4DotProductHard(&eStack48, &local_20);
+		if (fVar3 < 0.0f) {
+			if (pOutPosition != (edF32VECTOR4*)0x0) {
+				*pOutPosition = *pPathFollowReader->GetWayPoint(index);
+			}
+
+			if (param_7 != (float*)0x0) {
+				*param_7 = 0.0f;
+			}
+		}
+		else {
+			if (param_7 != (float*)0x0) {
+				fVar3 = edF32Vector4GetDistHard(&eStack48);
+				*param_7 = fVar3 / fVar2;
+			}
+
+			if (pOutPosition != (edF32VECTOR4*)0x0) {
+				if (1.0f < *param_7) {
+					*pOutPosition = *pPathFollowReader->GetWayPoint(local_4);
+				}
+				else {
+					peVar1 = pPathFollowReader->GetWayPoint(index);
+					edF32Vector4AddHard(pOutPosition, &eStack48, peVar1);
+				}
+			}
+		}
+	}
+
+	return t;
+}
+
+float CActorMovable::SV_MOV_ManageMovOnPath(CPathFollowReader* pPathFollowReader, SV_MOV_PATH_PARAM* pMovPathParams)
+{
+	int iVar1;
+	ed_3d_hierarchy_node* peVar2;
+	edF32VECTOR4* pWayPoint;
+	edF32VECTOR4* v1;
+	Timer* pTVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float puVar8;
+	float puVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float unaff_f22;
+	edF32VECTOR4 local_160;
+	edF32VECTOR4 local_150;
+	float local_140;
+	float local_13c;
+	float local_138;
+	float fStack308;
+	float local_130;
+	float local_12c;
+	float local_128;
+	float fStack292;
+	edF32VECTOR4 local_120;
+	edF32MATRIX4 eStack272;
+	edF32VECTOR4 eStack208;
+	edF32VECTOR4 eStack192;
+	edF32VECTOR4 local_b0;
+	CCollisionRay CStack160;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 local_40;
+	float local_30;
+	float local_2c;
+	float local_28;
+	edF32VECTOR3 local_20;
+	_ray_info_out _Stack16;
+
+	fVar11 = (this->dynamic).linearAcceleration;
+	if (fVar11 == 0.0f) {
+		fVar11 = 0.5f;
+	}
+
+	pWayPoint = pPathFollowReader->GetWayPoint();
+	edF32Vector4SubHard(&local_40, pWayPoint, &this->currentLocation);
+
+	fVar5 = edF32Vector4GetDistHard(&local_40);
+	if (0.001f < fVar5) {
+		if (pMovPathParams->field_0x10 == 1) {
+			fVar5 = edF32Vector4NormalizeHard(&local_40, &local_40);
+			if (pPathFollowReader->splinePointIndex != 0) {
+				pWayPoint = pPathFollowReader->GetWayPoint(pPathFollowReader->field_0x8);
+				v1 = pPathFollowReader->GetWayPoint();
+				edF32Vector4SubHard(&local_50, v1, pWayPoint);
+				fVar6 = edF32Vector4GetDistHard(&local_50);
+				pWayPoint = pPathFollowReader->GetWayPoint();
+				fVar12 = pWayPoint->x - this->currentLocation.x;
+				fVar10 = pWayPoint->z - this->currentLocation.z;
+				edF32Vector4NormalizeHard(&local_50, &local_50);
+
+				fVar7 = edF32Vector4DotProductHard(&local_50, &this->dynamic.rotationQuat);
+				if ((sqrtf(fVar12 * fVar12 + 0.0f + fVar10 * fVar10) <= fVar6 / 2.0f) || (fVar7 <= 0.96f)) {
+					pWayPoint = pPathFollowReader->GetWayPoint();
+					edF32Vector4SubHard(&local_40, pWayPoint, &this->currentLocation);
+					unaff_f22 = 3.141593f;
+				}
+				else {
+					local_40 = local_50;
+					puVar8 = edF32Vector4DotProductHard(&local_40, &this->dynamic.rotationQuat);
+					if (1.0f < puVar8) {
+						puVar9 = 1.0f;
+					}
+					else {
+						puVar9 = -1.0f;
+						if (-1.0 <= puVar8) {
+							puVar9 = puVar8;
+						}
+					}
+
+					fVar10 = acosf(puVar9);
+					fVar12 = 0.5f;
+					if (fVar5 / fVar11 != 0.0f) {
+						fVar12 = fVar5 / fVar11;
+					}
+					if (0.7853982f < fVar10) {
+						fVar12 = fVar12 / 4.0f;
+					}
+					else {
+						if (0.5235988f < fVar10) {
+							fVar12 = fVar12 / 3.0f;
+						}
+						else {
+							fVar12 = fVar12 / 2.0f;
+						}
+					}
+
+					unaff_f22 = fVar10 / fVar12;
+					if (unaff_f22 < 0.1f) {
+						unaff_f22 = 0.1f;
+					}
+				}
+			}
+
+			edF32Vector4NormalizeHard(&local_40, &local_40);
+			CActor::SV_Vector4SLERP(unaff_f22, &this->dynamic.rotationQuat, &local_40);
+			pMovPathParams->field_0x14 = local_40.x * (this->dynamic).rotationQuat.z - (this->dynamic).rotationQuat.x * local_40.z;
+		}
+		else {
+			if (pMovPathParams->field_0x10 == 0.0f) {
+				edF32Vector4NormalizeHard(&local_40, &local_40);
+				(this->dynamic).rotationQuat = local_40;
+			}
+		}
+	}
+	if ((this->dynamic).speed < pMovPathParams->acceleration) {
+		fVar5 = pMovPathParams->speed;
+		pTVar4 = GetTimer();
+		fVar5 = (this->dynamic).speed + fVar5 * pTVar4->cutsceneDeltaTime;
+		(this->dynamic).speed = fVar5;
+		if (pMovPathParams->acceleration < fVar5) {
+			(this->dynamic).speed = pMovPathParams->acceleration;
+		}
+	}
+	else {
+		fVar5 = pMovPathParams->speed;
+		pTVar4 = GetTimer();
+		fVar5 = (this->dynamic).speed - fVar5 * pTVar4->cutsceneDeltaTime;
+		(this->dynamic).speed = fVar5;
+		if (fVar5 < pMovPathParams->acceleration) {
+			(this->dynamic).speed = pMovPathParams->acceleration;
+		}
+	}
+
+	local_60 = this->currentLocation;
+	iVar1 = pMovPathParams->field_0xc;
+	if (((iVar1 != 2) && (iVar1 != 1)) && (iVar1 == 0)) {
+		peVar2 = this->pMeshTransform;
+		local_80.w = (peVar2->base).transformA.bd;
+		local_80.x = 0.0f - (peVar2->base).transformA.ba;
+		local_80.y = 0.0f - (peVar2->base).transformA.bb;
+		local_80.z = 0.0f - (peVar2->base).transformA.bc;
+		edF32Vector4NormalizeHard(&local_80, &local_80);
+		CStack160 = CCollisionRay(2.0f, &this->currentLocation, &local_80);
+		fVar5 = CStack160.IntersectScenery(&local_70, &_Stack16);
+		if (fVar5 == 1e+30f) {
+			peVar2 = this->pMeshTransform;
+			local_b0 = (peVar2->base).transformA.rowY;
+			edF32Vector4NormalizeHard(&local_b0, &local_b0);
+			CStack160.ChangeLeadVector(&local_b0);
+			fVar5 = CStack160.IntersectScenery(&local_70, &_Stack16);
+			if (fVar5 == 1e+30f) {
+				local_70.x = 0.0f - CDynamicExt::gForceGravity.x;
+				local_70.y = 0.0f - CDynamicExt::gForceGravity.y;
+				local_70.z = 0.0f - CDynamicExt::gForceGravity.z;
+				local_70.w = CDynamicExt::gForceGravity.w;
+				edF32Vector4NormalizeHard(&local_70, &local_70);
+			}
+			else {
+				edF32Vector4ScaleHard(fVar5 + 0.03f, &eStack192, &local_70);
+				edF32Vector4AddHard(&local_60, &this->currentLocation, &eStack192);
+				UpdatePosition(&local_60, true);
+			}
+		}
+		else {
+			edF32Vector4ScaleHard(-(fVar5 - 0.03f), &eStack208, &local_70);
+			edF32Vector4AddHard(&local_60, &this->currentLocation, &eStack208);
+			UpdatePosition(&local_60, true);
+		}
+
+		if (0.6f < (this->dynamic).speed) {
+			peVar2 = this->pMeshTransform;
+			local_120 = (peVar2->base).transformA.rowY;
+			fVar5 = edF32Vector4DotProductHard(&local_120, &local_70);
+			if (fVar5 < 0.5f) {
+				fVar12 = 2.0f;
+			}
+			else {
+				fVar12 = 1.0f;
+			}
+
+			fVar5 = edFIntervalUnitSrcLERP(fVar5, 4.0f, 1.5f);
+			fVar10 = edFIntervalLERP((this->dynamic).linearAcceleration, 5.0f, 25.0f, 1.0f, 1.5f);
+			CActor::SV_Vector4SLERP(fVar12 * fVar5 * fVar10, &local_120, &local_70);
+			BuildMatrixFromNormalAndSpeed(&eStack272, &local_120, &this->dynamic.rotationQuat);
+			edF32Matrix4ToEulerSoft(&eStack272, &local_20, "XYZ");
+			this->rotationEuler.xyz = local_20;
+			SetVectorFromAngles(&this->rotationQuat, (edF32VECTOR3*)&this->rotationEuler);
+		}
+	}
+
+	iVar1 = pMovPathParams->field_0x8;
+	if (iVar1 != 0) {
+		if (iVar1 == 3) {
+			if (0.0f < (this->dynamic).horizontalLinearAcceleration) {
+				local_160.x = (this->dynamic).velocityDirectionEuler.x;
+				local_160.y = 0.0f;
+				local_160.z = (this->dynamic).velocityDirectionEuler.z;
+				local_160.w = 0.0f;
+				edF32Vector4NormalizeHard(&local_160, &local_160);
+				SV_UpdateOrientation(pMovPathParams->rotationSpeed, &local_160);
+				pMovPathParams->field_0x14 = local_160.x * this->rotationQuat.z - this->rotationQuat.x * local_160.z;
+			}
+		}
+		else {
+			if (iVar1 == 2) {
+				if (0.0f < (this->dynamic).speed) {
+					local_150.xyz = (this->dynamic).rotationQuat.xyz;
+					local_150.w = 0.0f;
+					edF32Vector4NormalizeHard(&local_150, &local_150);
+					SV_UpdateOrientation(pMovPathParams->rotationSpeed, &local_150);
+				}
+			}
+			else {
+				if ((iVar1 == 1) && (fVar5 = edF32Vector4GetDistHard(&this->dynamic.rotationQuat), fVar5 != 0.0f)) {
+					pWayPoint = pPathFollowReader->GetWayPointAngles();
+					local_128 = pWayPoint->z;
+					fStack292 = pWayPoint->w;
+					local_130 = pWayPoint->x;
+					local_12c = pWayPoint->y;
+					local_140 = this->rotationEuler.x;
+					local_13c = this->rotationEuler.y;
+					local_138 = this->rotationEuler.z;
+					fStack308 = this->rotationEuler.w;
+					local_130 = fmodf(local_130, 3.141593f);
+					local_12c = fmodf(local_12c, 3.141593f);
+					local_128 = fmodf(local_128, 3.141593f);
+					local_28 = 1.0f;
+					if (1.0f <= fVar11 / fVar5) {
+						local_28 = fVar11 / fVar5;
+					}
+					local_30 = (local_130 - local_140) / local_28;
+					local_2c = (local_12c - local_13c) / local_28;
+					local_28 = (local_128 - local_138) / local_28;
+					this->rotationEuler.x = local_140 + local_30;
+					this->rotationEuler.y = local_13c + local_2c;
+					this->rotationEuler.z = local_138 + local_28;
+				}
+			}
+		}
+	}
+
+	iVar1 = pMovPathParams->field_0xc;
+	if (iVar1 == 2) {
+		pWayPoint = pPathFollowReader->GetWayPoint();
+		fVar11 = pWayPoint->x - this->currentLocation.x;
+		fVar5 = pWayPoint->y - this->currentLocation.y;
+		fVar12 = pWayPoint->z - this->currentLocation.z;
+		fVar11 = sqrtf(fVar11 * fVar11 + fVar5 * fVar5 + fVar12 * fVar12);
+	}
+	else {
+		if ((iVar1 == 1) || (iVar1 == 0)) {
+			pWayPoint = pPathFollowReader->GetWayPoint();
+			fVar11 = pWayPoint->x - this->currentLocation.x;
+			fVar5 = pWayPoint->z - this->currentLocation.z;
+			fVar11 = sqrtf(fVar11 * fVar11 + 0.0f + fVar5 * fVar5);
+		}
+		else {
+			fVar11 = 0.0f;
+		}
+	}
+
+	return fVar11;
 }
 
 bool CActorMovable::SV_MOV_UpdatePush(float param_1, S_PUSH_DATA* pPushData, S_PUSH_STREAM_DEF* pPushStreamRef)

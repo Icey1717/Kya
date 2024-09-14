@@ -2461,7 +2461,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 			break;
 		case 3:
 			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
-				float* pFloatData = this->pActor3C_0x0->field_0x2c;
+				float* pFloatData = this->pActor3C_0x0->aDelays;
 
 				if (pFloatData == (float*)0x0) {
 					fVar10 = 0.0f;
@@ -2496,7 +2496,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 				local_10.y = peVar3->y - peVar4->y;
 				local_10.z = peVar3->z - peVar4->z;
 				local_10.w = peVar3->w - peVar4->w;
-				iVar5 = this->pActor3C_0x0->field_0x2c;
+				iVar5 = this->pActor3C_0x0->aDelays;
 				if (iVar5 == 0) {
 					fVar10 = 0.0;
 				}
@@ -2505,7 +2505,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 				}
 				fVar9 = 0.0;
 				if (0.0 < fVar10) {
-					iVar5 = this->pActor3C_0x0->field_0x2c;
+					iVar5 = this->pActor3C_0x0->aDelays;
 					if (iVar5 != 0) {
 						fVar9 = *(float*)(iVar5 + iVar7 * 4);
 					}
@@ -2544,7 +2544,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 
 		if (this->field_0x1c == 0) {
 			for (iVar7 = 0; iVar5 = iVar8, iVar7 < iVar8; iVar7 = iVar7 + 1) {
-				float* pFloatData = this->pActor3C_0x0->field_0x2c;
+				float* pFloatData = this->pActor3C_0x0->aDelays;
 
 				if (pFloatData == (float*)0x0) {
 					fVar11 = 0.0f;
@@ -2557,7 +2557,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 			}
 
 			for (; iVar5 < count; iVar5 = iVar5 + 1) {
-				float* pFloatData = this->pActor3C_0x0->field_0x2c;
+				float* pFloatData = this->pActor3C_0x0->aDelays;
 
 				if (pFloatData == (float*)0x0) {
 					fVar11 = 0.0f;
@@ -2577,7 +2577,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 				this->field_0x10[count - 1] = 0.0;
 				fVar9 = fVar9 - fVar12;
 				if (this->field_0x1c == 0) {
-					float* pFloatData = this->pActor3C_0x0->field_0x2c;
+					float* pFloatData = this->pActor3C_0x0->aDelays;
 
 					if (pFloatData != (float*)0x0) {
 						fVar11 = pFloatData[count - 1];
@@ -2592,7 +2592,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 
 			if (this->field_0x1c == 0) {
 	
-				float* pFloatData = this->pActor3C_0x0->field_0x2c;
+				float* pFloatData = this->pActor3C_0x0->aDelays;
 
 				if (pFloatData == (float*)0x0) {
 					fVar11 = 0.0f;
@@ -2601,7 +2601,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 					fVar11 = pFloatData[iVar8];
 				}
 
-				pFloatData = this->pActor3C_0x0->field_0x2c;
+				pFloatData = this->pActor3C_0x0->aDelays;
 
 				if (pFloatData == (float*)0x0) {
 					fVar12 = 0.0f;
@@ -2647,7 +2647,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 		iVar7 = count;
 		if (this->field_0x1c == 0) {		
 			for (; iVar6 = iVar8, iVar5 < iVar8; iVar5 = iVar5 + 1) {
-				float* pFloatData = this->pActor3C_0x0->field_0x2c;
+				float* pFloatData = this->pActor3C_0x0->aDelays;
 
 				if (pFloatData == (float*)0x0) {
 					fVar9 = 0.0f;
@@ -2660,7 +2660,7 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 			}
 
 			for (; iVar6 < count; iVar6 = iVar6 + 1) {
-				float* pFloatData = this->pActor3C_0x0->field_0x2c;
+				float* pFloatData = this->pActor3C_0x0->aDelays;
 
 				if (pFloatData == (float*)0x0) {
 					fVar9 = 0.0f;

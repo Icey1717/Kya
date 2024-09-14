@@ -30,6 +30,8 @@ public:
 	void ComputeIntersectionNormalAndProps(float distance, void* pColObj, int colType, edF32VECTOR4* pOutNormal, uint* pOutProps);
 	float IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* pOutResult);
 
+	void ChangeLeadVector(edF32VECTOR4* pNewLeadVector);
+
 
 	undefined4 field_0xc;
 

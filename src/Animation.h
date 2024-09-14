@@ -190,7 +190,7 @@ public:
 	uint count_0x2c;
 	int currentAnimType_0x30;
 	DisabledBoneEntry aDisabledBoneData[4];
-	int nDisabledBones;
+	int nbDisabledBones;
 };
 
 extern edAnmStage TheAnimStage;

@@ -59,7 +59,7 @@ struct C3DFileManager : public CObjectManager {
 
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
 
-
+	edDList_material* GetMaterialFromId(int materialId, int internalId);
 
 	int InstanciateG2D(int index);
 	struct TextureInfo* GetCommonSectorG2D();

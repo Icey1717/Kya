@@ -116,34 +116,9 @@ public:
 	void Create(CActor* pActor, ByteCode* pByteCode);
 };
 
-class CPathFollow;
-
-class CPathFollowReader {
-public:
-	CPathFollowReader();
-	void Create(ByteCode* pByteCode);
-	void Init();
-	void Reset();
-
-	void NextWayPoint();
-	bool AtGoal(int param_2, int param_3);
-	int GetPrevPlace(int param_2, int param_3);
-
-	edF32VECTOR4* GetWayPoint(int index);
-	edF32VECTOR4* GetWayPoint();
-
-	union {
-		int index;
-		CPathFollow* pPathFollow;
-	};
-
-	int field_0x4;
-	int field_0x8;
-	int field_0xc;
-};
-
-struct CBehaviour 
+class CBehaviour 
 {
+public:
 	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Init(CActor* pOwner) {}
 	virtual void Manage() {}
@@ -158,8 +133,9 @@ struct CBehaviour
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
 };
 
-struct CBehaviourStand : public CBehaviour
+class CBehaviourStand : public CBehaviour
 {
+public:
 	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Init(CActor* pOwner);
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
@@ -551,7 +527,7 @@ public:
 	CBehaviourAddOnBase();
 	virtual void Create(ByteCode* pByteCode) = 0;
 
-	undefined4 field_0x4;
+	CActor* pOwner;
 	undefined4 field_0x8;
 };
 

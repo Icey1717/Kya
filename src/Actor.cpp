@@ -59,7 +59,7 @@ void CVision::Create(CActor* pActor, ByteCode* pByteCode)
 
 CPathFollowReader::CPathFollowReader()
 {
-	this->field_0x4 = 0;
+	this->splinePointIndex = 0;
 	this->field_0xc = 1;
 }
 
@@ -90,7 +90,7 @@ void CPathFollowReader::Init()
 
 void CPathFollowReader::Reset()
 {
-	this->field_0x4 = 0;
+	this->splinePointIndex = 0;
 	this->field_0xc = 1;
 	return;
 }
@@ -109,7 +109,7 @@ void CPathFollowReader::NextWayPoint()
 	pFollow = this->pPathFollow;
 
 	iVar5 = this->field_0xc;
-	iVar7 = this->field_0x4;
+	iVar7 = this->splinePointIndex;
 
 	uVar3 = pFollow->type;
 	if (uVar3 != 0) {
@@ -137,19 +137,19 @@ LAB_001c2930:
 	if (!bVar4) {
 		iVar7 = pFollow->splinePointCount;
 		if (iVar7 == 1) {
-			this->field_0x4 = 0;
+			this->splinePointIndex = 0;
 		}
 		else {
 			if ((uVar3 == 2) || (uVar3 == 1)) {
 				if (iVar5 == 0) {
-					if (((pFollow->mode == 0) && (this->field_0x4 == pFollow->field_0x14)) &&
+					if (((pFollow->mode == 0) && (this->splinePointIndex == pFollow->field_0x14)) &&
 						(pFollow->field_0x14 < this->field_0x8)) {
-						this->field_0x4 = iVar7;
+						this->splinePointIndex = iVar7;
 					}
 				}
 				else {
-					if ((pFollow->mode == 0) && (this->field_0x4 + 1 == iVar7)) {
-						this->field_0x4 = pFollow->field_0x14 + -1;
+					if ((pFollow->mode == 0) && (this->splinePointIndex + 1 == iVar7)) {
+						this->splinePointIndex = pFollow->field_0x14 + -1;
 					}
 				}
 			}
@@ -167,25 +167,25 @@ LAB_001c2930:
 					if (iVar7 == 0) {
 						trap(7);
 					}
-				} while (iVar5 == this->field_0x4);
-				this->field_0x4 = iVar5;)
+				} while (iVar5 == this->splinePointIndex);
+				this->splinePointIndex = iVar5;)
 			}
 			else {
 				if (uVar3 == 1) {
 					if (this->field_0xc == 0) {
-						iVar5 = this->field_0x4 + -1;
-						this->field_0x4 = iVar5;
+						iVar5 = this->splinePointIndex + -1;
+						this->splinePointIndex = iVar5;
 						if (iVar5 < 0) {
-							this->field_0x4 = this->field_0x4 + 2;
+							this->splinePointIndex = this->splinePointIndex + 2;
 							this->field_0xc = 1;
 						}
 					}
 					else {
 						iVar5 = this->pPathFollow->splinePointCount;
-						iVar7 = this->field_0x4 + 1;
-						this->field_0x4 = iVar7;
+						iVar7 = this->splinePointIndex + 1;
+						this->splinePointIndex = iVar7;
 						if (iVar5 <= iVar7) {
-							this->field_0x4 = this->field_0x4 + -2;
+							this->splinePointIndex = this->splinePointIndex + -2;
 							this->field_0xc = 0;
 						}
 					}
@@ -193,16 +193,16 @@ LAB_001c2930:
 				else {
 					if (uVar3 == 0) {
 						if (this->field_0xc == 0) {
-							this->field_0x4 = this->field_0x4 + -1;
+							this->splinePointIndex = this->splinePointIndex + -1;
 						}
 						else {
-							this->field_0x4 = this->field_0x4 + 1;
+							this->splinePointIndex = this->splinePointIndex + 1;
 						}
 					}
 				}
 			}
 
-			iVar5 = GetPrevPlace(this->field_0x4, this->field_0xc);
+			iVar5 = GetPrevPlace(this->splinePointIndex, this->field_0xc);
 			this->field_0x8 = iVar5;
 		}
 	}
@@ -263,7 +263,7 @@ int CPathFollowReader::GetPrevPlace(int param_2, int param_3)
 		iVar4 = -1;
 	}
 	else {
-		if (((param_2 == pCVar1->field_0x14) && ((param_3 != 0 && (this->field_0x4 < this->field_0x8)))) ||
+		if (((param_2 == pCVar1->field_0x14) && ((param_3 != 0 && (this->splinePointIndex < this->field_0x8)))) ||
 			((param_2 == pCVar1->splinePointCount + -1 && (param_3 == 0)))) {
 			if (uVar2 == 1) {
 				if ((param_3 != 0) && (pCVar1->type != 1)) {
@@ -284,6 +284,22 @@ int CPathFollowReader::GetPrevPlace(int param_2, int param_3)
 		iVar4 = param_2 + iVar4;
 	}
 	return iVar4;
+}
+
+float CPathFollowReader::GetDelay()
+{
+	float delay;
+	float* aDelays;
+
+	aDelays = this->pPathFollow->aDelays;
+	if (aDelays == (float*)0x0) {
+		delay = 0.0f;
+	}
+	else {
+		delay = aDelays[this->splinePointIndex];
+	}
+
+	return delay;
 }
 
 edF32VECTOR4* CPathFollowReader::GetWayPoint(int index)
@@ -312,10 +328,26 @@ edF32VECTOR4* CPathFollowReader::GetWayPoint()
 		pWaypoint = &gF32Vertex4Zero;
 	}
 	else {
-		pWaypoint = pWaypoint + this->field_0x4;
+		pWaypoint = pWaypoint + this->splinePointIndex;
 	}
 
 	return pWaypoint;
+}
+
+edF32VECTOR4* CPathFollowReader::GetWayPointAngles()
+{
+	edF32VECTOR4* pWayPointAngles;
+
+	pWayPointAngles = this->pPathFollow->aSplineRotationsEuler;
+
+	if (pWayPointAngles == (edF32VECTOR4*)0x0) {
+		pWayPointAngles = &gF32Vector4Zero;
+	}
+	else {
+		pWayPointAngles = pWayPointAngles + this->splinePointIndex;
+	}
+
+	return pWayPointAngles;
 }
 
 CActor::CActor()
@@ -4317,6 +4349,6 @@ bool CScalarDyn::OnLastValidSample()
 
 CBehaviourAddOnBase::CBehaviourAddOnBase()
 {
-	this->field_0x4 = 0;
+	this->pOwner = (CActor*)0x0;
 	this->field_0x8 = 0;
 }
