@@ -4347,6 +4347,174 @@ bool CScalarDyn::OnLastValidSample()
 	return (this->flags & 2) != 0;
 }
 
+void CVectorDyn::Integrate(float param_1, float param_2)
+{
+	float fVar1;
+	float fVar2;
+
+	if ((param_2 != 0.0f) && (param_1 != 0.0f)) {
+		if (this->field_0x0 == 0) {
+			fVar1 = this->field_0x8 + param_1;
+
+			if (this->field_0x4 != 0) {
+				if ((this->field_0xc <= fVar1) || (fabs(fVar1 - this->field_0xc) < 1e-06f)) {
+					fVar1 = this->field_0xc;
+					this->field_0x0 = 2;
+				}
+				else {
+					this->field_0x0 = 0;
+				}
+			}
+
+			fVar2 = fVar1 * fVar1 - this->field_0x8 * this->field_0x8;
+			(this->field_0x50).x = ((this->field_0x20).x * fVar2) / 2.0f;
+			(this->field_0x50).x = (this->field_0x50).x + (this->field_0x10).x * (fVar1 - this->field_0x8);
+			(this->field_0x50).y = ((this->field_0x20).y * fVar2) / 2.0f;
+			(this->field_0x50).y = (this->field_0x50).y + (this->field_0x10).y * (fVar1 - this->field_0x8);
+			(this->field_0x50).z = ((this->field_0x20).z * fVar2) / 2.0f;
+			(this->field_0x50).z = (this->field_0x50).z + (this->field_0x10).z * (fVar1 - this->field_0x8);
+			(this->field_0x50).w = 0.0f;
+		}
+		else {
+			this->field_0x0 = 1;
+		}
+
+		edF32Vector4AddHard(&this->field_0x30, &this->field_0x30, &this->field_0x50);
+		this->field_0x8 = this->field_0x8 + param_1;
+		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x60, &this->field_0x50);
+		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x70, &this->field_0x60);
+	}
+
+	return;
+}
+
+void CVectorDyn::Integrate(float param_1)
+{
+	Integrate(param_1, param_1);
+}
+
+void CVectorDyn::Reset()
+{
+	this->field_0x0 = 1;
+	this->field_0xc = 0.0f;
+	this->field_0x8 = 0.0f;
+
+	(this->field_0x10).x = 0.0f;
+	(this->field_0x10).y = 0.0f;
+	(this->field_0x10).z = 0.0f;
+	(this->field_0x10).w = 0.0f;
+
+	(this->field_0x20).x = 0.0f;
+	(this->field_0x20).y = 0.0f;
+	(this->field_0x20).z = 0.0f;
+	(this->field_0x20).w = 0.0f;
+
+	(this->field_0x50).x = 0.0f;
+	(this->field_0x50).y = 0.0f;
+	(this->field_0x50).z = 0.0f;
+	(this->field_0x50).w = 0.0f;
+
+	(this->field_0x60).x = 0.0f;
+	(this->field_0x60).y = 0.0f;
+	(this->field_0x60).z = 0.0f;
+	(this->field_0x60).w = 0.0f;
+
+	(this->field_0x70).x = 0.0f;
+	(this->field_0x70).y = 0.0f;
+	(this->field_0x70).z = 0.0f;
+	(this->field_0x70).w = 0.0f;
+
+	(this->field_0x30).x = 0.0f;
+	(this->field_0x30).y = 0.0f;
+	(this->field_0x30).z = 0.0f;
+	(this->field_0x30).w = 0.0f;
+	return;
+}
+
+bool CVectorDyn::IsFinished()
+{
+	return (this->field_0x0 & 1) != 0;
+}
+
+void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, byte param_5)
+{
+	float fVar1;
+	float angle;
+	float fVar2;
+	float puVar3;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+
+	fVar1 = edF32Vector4SafeNormalize0Hard(&local_60, param_3);
+
+	if (1.0f < local_60.y) {
+		puVar3 = 1.0f;
+	}
+	else {
+		puVar3 = -1.0f;
+		if (-1.0f <= local_60.y) {
+			puVar3 = local_60.y;
+		}
+	}
+
+	angle = acosf(puVar3);
+
+	local_50.y = 0.0f;
+	local_50.w = 0.0f;
+	local_50.z = -local_60.x;
+	local_50.x = local_60.z;
+
+	edF32Vector4SafeNormalize0Hard(&local_50, &local_50);
+	MatrixRotationFromVectorAndAngle(angle, &eStack64, &local_50);
+	edF32Matrix4MulF32Vector4Hard(&local_70, &eStack64, param_4);
+
+	if (local_70.y < 0.0f) {
+		param_1 = param_1 - local_70.y;
+	}
+
+	fVar2 = -sqrtf(param_1 * fVar1 * 2.0f);
+	(this->field_0x10).y = fVar2;
+	this->field_0x40 = -fVar2 / fVar1;
+	this->field_0xc = this->field_0x40 + sqrtf(((local_70.y + param_1) * 2.0f) / fVar1);
+	(this->field_0x10).x = local_70.x / this->field_0xc;
+	(this->field_0x10).z = local_70.z / this->field_0xc;
+	(this->field_0x10).w = 0.0f;
+	(this->field_0x20).x = param_3->x;
+	(this->field_0x20).y = param_3->y;
+	(this->field_0x20).z = param_3->z;
+	(this->field_0x20).w = param_3->w;
+
+	MatrixRotationFromVectorAndAngle(-angle, &eStack64, &local_50);
+	edF32Matrix4MulF32Vector4Hard(&this->field_0x10, &eStack64, &this->field_0x10);
+
+	this->field_0x4 = param_5;
+	this->field_0x0 = 0;
+	this->field_0x8 = 0.0f;
+
+	(this->field_0x50).x = 0.0f;
+	(this->field_0x50).y = 0.0f;
+	(this->field_0x50).z = 0.0f;
+	(this->field_0x50).w = 0.0f;
+
+	(this->field_0x60).x = 0.0f;
+	(this->field_0x60).y = 0.0f;
+	(this->field_0x60).z = 0.0f;
+	(this->field_0x60).w = 0.0f;
+
+	(this->field_0x70).x = 0.0f;
+	(this->field_0x70).y = 0.0f;
+	(this->field_0x70).z = 0.0f;
+	(this->field_0x70).w = 0.0f;
+
+	(this->field_0x30).x = 0.0f;
+	(this->field_0x30).y = 0.0f;
+	(this->field_0x30).z = 0.0f;
+	(this->field_0x30).w = 0.0f;
+	return;
+}
+
 CBehaviourAddOnBase::CBehaviourAddOnBase()
 {
 	this->pOwner = (CActor*)0x0;

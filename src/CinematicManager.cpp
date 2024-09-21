@@ -894,6 +894,12 @@ void S_STREAM_REF<CActor>::Init()
 }
 
 template<>
+void S_STREAM_REF<CSound>::Init()
+{
+	IMPLEMENTATION_GUARD_AUDIO();
+}
+
+template<>
 void S_STREAM_REF<ed_zone_3d>::Init()
 {
 	ed_zone_3d* pZone;

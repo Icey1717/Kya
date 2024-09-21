@@ -263,6 +263,42 @@ public:
 	float field_0x24;
 };
 
+class CVectorDyn {
+public:
+	void Integrate(float param_1, float param_2);
+	void Integrate(float param_1);
+	void Reset();
+	bool IsFinished();
+	void BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, byte param_5);
+
+	undefined4 field_0x0;
+	byte field_0x4;
+	undefined field_0x5;
+	undefined field_0x6;
+	undefined field_0x7;
+	float field_0x8;
+	float field_0xc;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 field_0x30;
+	float field_0x40;
+	undefined field_0x44;
+	undefined field_0x45;
+	undefined field_0x46;
+	undefined field_0x47;
+	undefined field_0x48;
+	undefined field_0x49;
+	undefined field_0x4a;
+	undefined field_0x4b;
+	undefined field_0x4c;
+	undefined field_0x4d;
+	undefined field_0x4e;
+	undefined field_0x4f;
+	edF32VECTOR4 field_0x50;
+	edF32VECTOR4 field_0x60;
+	edF32VECTOR4 field_0x70;
+};
+
 class CPathFollowReaderAbsolute;
 struct S_PATHREADER_POS_INFO;
 struct edAnmMacroBlendN;
@@ -293,6 +329,7 @@ public:
 	virtual void Draw();
 	virtual void ComputeLighting();
 	virtual void Reset();
+	virtual void CheckpointReset() {}
 	virtual void SectorChange(int oldSectorId, int newSectorId);
 	virtual void SaveContext(uint*, int);
 	virtual void LoadContext(uint*, int);

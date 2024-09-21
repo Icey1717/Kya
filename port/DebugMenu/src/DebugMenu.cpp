@@ -27,6 +27,7 @@
 #include "port/vu1_emu.h"
 #include "DebugMeshViewer.h"
 #include "DebugTexture.h"
+#include "DebugActor.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
 #include "ActorHeroPrivate.h"
@@ -42,6 +43,7 @@
 #include "DebugHero.h"
 #include "../../Windows/Renderer/Vulkan/src/VulkanRenderer.h"
 #include "DebugMesh.h"
+#include "DebugFrameBuffer.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -300,7 +302,6 @@ namespace Debug {
 		ImGui::End();
 	}
 
-	static Debug::Setting<float> gDisplyScale = { "Display Scale", 1.0f };
 	static Debug::Setting<bool> gDisableClusterRendering = { "Disable Cluster Rendering", false };
 	static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
 	static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
@@ -325,8 +326,6 @@ namespace Debug {
 			Renderer::ResetRenderer();
 		}
 
-		gDisplyScale.DrawImguiControl();
-
 		ImGui::Checkbox("Use GLSL Pipeline", &DebugMeshViewer::GetUseGlslPipeline());
 
 		ImGui::Checkbox("Force Highest LOD", &ed3D::DebugOptions::GetForceHighestLod());
@@ -348,98 +347,6 @@ namespace Debug {
 		}
 
 		// End the ImGui window
-		ImGui::End();
-	}
-
-	static ImVec2 SetupGameFramebuffer() {
-		const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-		const ImVec2 windowSize(640.0f * gDisplyScale, 480.0f * gDisplyScale);
-		ImGui::SetNextWindowSize(windowSize);
-		ImVec2 windowPos = ImVec2((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
-		ImGui::SetNextWindowPos(windowPos);
-		return windowSize;
-	}
-
-	static void ShowNativeFrameBuffer(bool* bOpen) {
-
-		// Use ImGui::Image to display the image
-		static ImTextureID gFrameBuffer = DebugMenu::AddNativeFrameBuffer();
-
-		if (gEnableEmulatedRendering) {
-			ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-			const ImVec2 image_size(400.0f * 4.0f, 300.0f * 4.0f);
-			ImGui::Image(gFrameBuffer, image_size);
-		}
-		else {
-			auto windowSize = SetupGameFramebuffer();
-			ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-			ImGui::Image(gFrameBuffer, windowSize);
-		}
-
-		ImGui::End();
-	}
-
-	int gRenderFramebufferIndex = 0;
-
-	static void ShowFramebuffers(bool* bOpen) {
-		auto& frameBuffers = PS2::FrameBuffer::GetAll();
-
-		// Get the display size
-		const ImVec2 displaySize = ImGui::GetIO().DisplaySize;
-		const ImVec2 windowSize(640.0f, 480.0f);
-		ImGui::SetNextWindowSize(windowSize);
-		ImVec2 windowPos = ImVec2((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
-		ImGui::Begin("FrameBuffer", bOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
-
-		if (ImGui::BeginMenuBar()) {
-			if (ImGui::BeginMenu("Select Framebuffer")) {
-				int i = 0;
-				for (auto& frameBuffer : frameBuffers) {
-					char buffer[0x100] = {};
-					sprintf_s(buffer, sizeof(buffer), "%d | FBP: %X", i, frameBuffer.first);
-					if (ImGui::MenuItem(buffer)) {
-						gRenderFramebufferIndex = i;
-					}
-
-					i++;
-				}
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenuBar();
-		}
-
-		int i = 0;
-		for (auto& frameBuffer : frameBuffers) {
-			if (i == gRenderFramebufferIndex) {
-				const ImVec2 image_size(640.0f * 2.5f, 480.0f * 2.0f);
-				// Use ImGui::Image to display the image
-				const ImTextureID gFrameBuffer = DebugMenu::AddFrameBuffer(frameBuffer.second);
-				ImGui::Image(gFrameBuffer, image_size);
-			}
-
-			i++;
-		}
-
-		ImGui::End();
-	}
-
-	static bool swapValue = false;
-
-	static void ShowGame() {
-		if (!PS2::FrameBuffer::Exists(swapValue ? 0x100 : 0x80) || !gEnableEmulatedRendering) {
-			return;
-		}
-
-		auto& frameBuffer = PS2::FrameBuffer::Get(swapValue ? 0x100 : 0x80);
-		swapValue = !swapValue;
-
-		SetupGameFramebuffer();
-		ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
-
-		const ImTextureID gFrameBuffer = DebugMenu::AddFrameBuffer(frameBuffer);
-		const ImVec2 image_size(640.0f * 2.5f * gDisplyScale, 480.0f * 2.0f * gDisplyScale);
-		ImGui::Image(gFrameBuffer, image_size);
-
 		ImGui::End();
 	}
 
@@ -699,8 +606,8 @@ namespace Debug {
 	{
 		{"Demo", ImGui::ShowDemoWindow },
 		{"Log", ShowLogWindow },
-		{"Native FrameBuffer", ShowNativeFrameBuffer, true },
-		{"Framebuffers", ShowFramebuffers },
+		{"Native FrameBuffer", Debug::FrameBuffer::ShowNativeFrameBuffer, true },
+		{"Framebuffers", Debug::FrameBuffer::ShowFramebuffers },
 		{"Cutscene", ShowCutsceneMenu, true },
 		{"Rendering", ShowRenderingMenu },
 		{"Scene", ShowSceneMenu },
@@ -709,6 +616,7 @@ namespace Debug {
 		{"Memory", ShowMemoryMenu, true },
 		{"Texture", Debug::Texture::ShowMenu, true },
 		{"Mesh", Debug::Mesh::ShowMenu, true },
+		{"Actor", Debug::Actor::ShowMenu, true },
 
 	};
 
@@ -738,7 +646,7 @@ namespace Debug {
 
 		Texture::Update();
 
-		ShowGame();
+		Debug::FrameBuffer::ShowGame();
 		DrawMenu();
 		DebugCamera::ShowCamera();
 		ShowFrameCounter();
@@ -833,6 +741,11 @@ float DebugMenu::GetKeyAnalog(uint32_t routeId)
 	assert(gKeyMap.find(routeId) != gKeyMap.end());
 
 	return ImGui::IsKeyDown(gKeyMap[routeId]) ? 1.0f : 0.0f;
+}
+
+bool DebugMenu::GetEnableEmulatedRendering()
+{
+	return Debug::gEnableEmulatedRendering;
 }
 
 bool DebugMenu::GetMousePressed(uint32_t routeId)

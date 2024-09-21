@@ -7599,8 +7599,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 								}
 							}
 							else {
-								IMPLEMENTATION_GUARD(
-								SetJumpCfgFromGround(this->runSpeed);)
+								SetJumpCfgFromGround(this->runSpeed);
 								SetState(STATE_HERO_JUMP_1_1_RUN, 0xffffffff);
 							}
 						}

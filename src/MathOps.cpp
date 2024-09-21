@@ -717,6 +717,56 @@ void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationO
 	return;
 }
 
+void MatrixRotationFromVectorAndAngle(float angle, edF32MATRIX4* v0, edF32VECTOR4* v1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float fVar13;
+
+	fVar11 = v1->y;
+	fVar8 = v1->y;
+	fVar9 = v1->z;
+	fVar6 = v1->z;
+	fVar2 = v1->x;
+	fVar12 = cosf(angle);
+	fVar13 = sinf(angle);
+	fVar10 = 1.0f - fVar12;
+	fVar4 = fVar10 * v1->x * v1->y;
+	fVar5 = fVar10 * v1->y * v1->z;
+	fVar1 = v1->z * fVar13;
+	fVar7 = fVar10 * v1->x * v1->z;
+
+	fVar3 = v1->y * fVar13;
+	v0->aa = fVar12 + v1->x * v1->x * fVar10;
+	fVar2 = fVar2 * fVar13;
+	v0->ab = fVar4 - fVar1;
+	v0->ac = fVar7 + fVar3;
+	v0->ad = 0.0f;
+
+	v0->ba = fVar4 + fVar1;
+	v0->bb = fVar12 + fVar11 * fVar8 * fVar10;
+	v0->bc = fVar5 - fVar2;
+	v0->bd = 0.0f;
+
+	v0->ca = fVar7 - fVar3;
+	v0->cb = fVar5 + fVar2;
+	v0->cc = fVar12 + fVar9 * fVar6 * fVar10;
+	v0->cd = 0.0f;
+
+	v0->rowT = gF32Vertex4Zero;
+	return;
+}
+
 edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* order)
 {
 	edF32VECTOR4* puVar2;

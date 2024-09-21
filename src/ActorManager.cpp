@@ -213,23 +213,23 @@ void CActorManager::Level_Manage()
 
 			actorFlags = pActor->flags;
 
-			ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage sector actor: {} distance: {} flags: 0x{:x}", pActor->name, pActor->distanceToCamera, actorFlags);
+			ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage sector actor: {} distance: {} flags: 0x{:x}", pActor->name, pActor->distanceToCamera, actorFlags);
 
 			if ((actorFlags & 8) == 0) {
 				bShouldBeActive = pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance;
-				ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage distance check sector actor: {} {} <= {} result: {}", 
+				ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage distance check sector actor: {} {} <= {} result: {}",
 					pActor->name, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
 			}
 			else {
 				if ((actorFlags & 0x10) == 0) {
 					bShouldBeActive = pActor->state_0x10;
-					ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage state check sector actor: {} state: {} result: {}", 
+					ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage state check sector actor: {} state: {} result: {}",
 						pActor->name, pActor->state_0x10, bShouldBeActive);
 				}
 				else {
 					bShouldBeActive = false;
 
-					ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage state and distance check sector actor: {} state: {} distance: {} <= {} result: {}", 
+					ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage state and distance check sector actor: {} state: {} distance: {} <= {} result: {}",
 						pActor->name, pActor->state_0x10, pActor->distanceToCamera, (pActor->subObjA)->visibilityDistance, bShouldBeActive);
 
 					if ((pActor->state_0x10 != 0) && (pActor->distanceToCamera <= (pActor->subObjA)->visibilityDistance))
@@ -239,7 +239,7 @@ void CActorManager::Level_Manage()
 				}
 			}
 
-			ACTOR_LOG(LogLevel::Verbose, "CActorManager::Level_Manage sector actor: {} shouldBeActive: {}", pActor->name, bShouldBeActive);
+			ACTOR_LOG(LogLevel::VeryVerbose, "CActorManager::Level_Manage sector actor: {} shouldBeActive: {}", pActor->name, bShouldBeActive);
 
 			actorFlags = pActor->flags;
 			if (((bShouldBeActive | actorFlags & 2) == 0) || ((actorFlags & 0x2000001) != 0)) {

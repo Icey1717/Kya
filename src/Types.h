@@ -696,6 +696,8 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 
 #include "port/pointer_conv.h"
 
+class CSound {};
+
 template<typename T>
 struct S_STREAM_REF {
 	void Init();

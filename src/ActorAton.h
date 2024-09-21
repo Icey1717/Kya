@@ -90,6 +90,19 @@ public:
 	void BehaviourAtonEscape_InitState(int newState);
 	void BehaviourAtonEscape_Manage();
 
+	void StateAtonPathStandCallNear();
+	void StateAtonPathStandCallFar();
+	void StateAtonPathStandCallBack();
+	void StateAtonPathBeforeWaitJump();
+
+	void StateAtonPathJump_1_4();
+	void StateAtonPathJump_2_4();
+	void StateAtonPathJump_3_4();
+	void StateAtonPathJump_4_4();
+
+	void ChooseJumpState();
+	void ChooseWaitJumpCallState();
+
 	static StateConfig _gStateCfg_ATO[46];
 
 	CPathPlaneArray pathPlaneArray;
@@ -120,6 +133,10 @@ public:
 	undefined4 field_0x3e0;
 	float field_0x3e4;
 	int field_0x3e8;
+
+	CVectorDyn vectorDyn;
+
+	float field_0x470;
 
 	byte field_0x474;
 	byte field_0x475;

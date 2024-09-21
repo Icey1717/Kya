@@ -16,6 +16,7 @@ struct AnimKeySomething {
 	float field_0x14;
 	float field_0x18;
 	float field_0x1c;
+	float field_0x20;
 };
 
 typedef void (*AnimationCallback)(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3);
