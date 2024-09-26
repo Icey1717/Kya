@@ -318,6 +318,24 @@ ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
 	return &pCommonLevelMesh->meshInfo;
 }
 
+ParticleInfo* C3DFileManager::GetG2DInfo(int index)
+{
+	ParticleInfo* pParticleInfo;
+	int iVar1;
+
+	pParticleInfo = this->pParticleInfoArray_0x50;
+
+	for (iVar1 = 0; (pParticleInfo->ID != index && (iVar1 < 0x80)); iVar1 = iVar1 + 1) {
+		pParticleInfo = pParticleInfo + 1;
+	}
+
+	if (pParticleInfo->materialInfoArray_0x8 == (edDList_material*)0x0) {
+		pParticleInfo = (ParticleInfo*)0x0;
+	}
+
+	return pParticleInfo;
+}
+
 ed_g2d_manager* C3DFileManager::GetActorsCommonMaterial(int index)
 {
 	return &this->aCommonLevelTextures[index].manager;

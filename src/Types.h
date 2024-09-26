@@ -706,6 +706,8 @@ struct S_STREAM_REF {
 		return (T*)LOAD_SECTION(this->pObj);
 	}
 
+	void Reset() {}
+
 	union {
 		int pObj;
 		int index;

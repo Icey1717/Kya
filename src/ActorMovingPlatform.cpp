@@ -10,7 +10,10 @@
 #include "TimeController.h"
 
 #include <math.h>
+#include "FileManager3D.h"
 
+#define MOVING_PLATFORM_BEHAVIOUR_DESTROYED		0x6
+#define MOVING_PLATFORM_BEHAVIOUR_STAND			0x7
 
 template<typename PlatformBehaviourType>
 struct PlatformHeader
@@ -62,7 +65,7 @@ PlatformHeader<CBehaviourPlatformSlab>* gPlatform_00448e18;
 PlatformHeader<CBehaviourPlatformDestroyed>* gPlatform_00448e1c;
 PlatformHeader<CBehaviourPlatformStand>* gPlatform_00448e20;
 PlatformHeader<CBehaviourSelectorNew>* gPlatform_00448e24;
-PlatformHeader<CBehaviourSelectorSlave>* gPlatform_00448e28;
+PlatformHeader<CBehaviourSelectorMaster>* gPlatform_00448e28;
 PlatformHeader<S_TILT_DATA>* gTiltDataAllocator;
 
 CActorMovingPlatform::CActorMovingPlatform()
@@ -440,27 +443,27 @@ CBehaviour* CActorMovingPlatform::BuildBehaviour(int behaviourType)
 		break;
 		case 0x4:
 		{
-			pBehaviour = new CBehaviourTeleportRandom;
+			pBehaviour = new CBehaviourWeighingMachineSlave;
 		}
 		break;
 		case 0x5:
 		{
-			pBehaviour = new CBehaviourWeighingMachineSlave;
+			pBehaviour = new CBehaviourWeighingMachineMaster;
 		}
 		break;
-		case 0x6:
+		case MOVING_PLATFORM_BEHAVIOUR_DESTROYED:
 		{
 			pBehaviour = PlatformHeader<CBehaviourPlatformDestroyed>::Get(&gPlatform_00448e1c);
 		}
 		break;
-		case 0x7:
+		case MOVING_PLATFORM_BEHAVIOUR_STAND:
 		{
 			pBehaviour = PlatformHeader<CBehaviourPlatformStand>::Get(&gPlatform_00448e20);
 		}
 		break;
 		case 0x8:
 		{
-			pBehaviour = PlatformHeader<CBehaviourSelectorSlave>::Get(&gPlatform_00448e28);
+			pBehaviour = PlatformHeader<CBehaviourSelectorMaster>::Get(&gPlatform_00448e28);
 		}
 		break;
 		case 0x9:
@@ -2257,6 +2260,121 @@ void CBehaviourPlatformStand::Manage()
 	return;
 }
 
+void CBehaviourPlatformStand::ManageFrozen()
+{
+	if ((GameFlags & 0x20) == 0) {
+		this->Manage();
+	}
+
+	return;
+}
+
+void CBehaviourPlatformStand::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	if (newState == -1) {
+		this->pOwner->SetState(0, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	if ((this->pOwner->flags & 4) != 0) {
+		field_0x54(1);
+	}
+}
+
+void CBehaviourPlatformStand::End(int newBehaviourId)
+{
+	field_0x54(0);
+}
+
+void CBehaviourPlatformStand::field_0x54(int param_2)
+{
+	CActor* pCVar1;
+	CActorMovingPlatform* pCVar2;
+	CinNamedObject30* pCVar3;
+	bool bVar4;
+
+	if (param_2 == 0) {
+		pCVar1 = this->pTiedActor;
+		if (((pCVar1 == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
+			(bVar4 = true, this->pCinData != pCVar1->pCinData)) {
+			bVar4 = false;
+		}
+
+		if (bVar4) {
+			if (((pCVar1 != (CActor*)0x0) && (pCVar3 = this->pCinData, pCVar3 != (CinNamedObject30*)0x0)) &&
+				(pCVar3 == pCVar1->pCinData)) {
+				IMPLEMENTATION_GUARD(
+				(*pCVar1->pVTable->IsKindOfObject)(pCVar1, (int)pCVar3);)
+			}
+
+			this->pTiedActor = (CActor*)0x0;
+			this->pCinData = (CinNamedObject30*)0x0;
+		}
+
+		this->pCinData = (CinNamedObject30*)0x0;
+		this->pTiedActor = (CActor*)0x0;
+		if (this->field_0x8 != 0) {
+			IMPLEMENTATION_GUARD_AUDIO(
+			CActorSound::FUN_0032c600(this->pOwner->pActorSound, 0);)
+		}
+	}
+	else {
+		if ((CSound*)this->field_0x8 != (CSound*)0x0) {
+			IMPLEMENTATION_GUARD_AUDIO(
+			CActorSound::SoundStart
+			(this->pOwner->pActorSound, (CActor*)this->pOwner, 0, (CSound*)this->field_0x8, 1, 0,
+				(SOUND_SPATIALIZATION_PARAM*)0x0);)
+		}
+
+		if (this->field_0xc != 0xffffffff) {
+			if (((this->pTiedActor == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
+				(this->pCinData != this->pTiedActor->pCinData)) {
+				bVar4 = false;
+			}
+			else {
+				bVar4 = true;
+			}
+
+			if (!bVar4) {
+				IMPLEMENTATION_GUARD(
+				CParticlesManager::GetDynamicFx
+				(CScene::ptable.g_EffectsManager_004516b8, &this->pCinData, this->field_0xc, 0xffffffffffffffff);)
+			}
+		}
+
+		pCVar1 = this->pTiedActor;
+		if (((pCVar1 == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
+			(bVar4 = true, this->pCinData != pCVar1->pCinData)) {
+			bVar4 = false;
+		}
+
+		if (bVar4) {
+			pCVar2 = this->pOwner;
+			if (((pCVar1 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
+				(this->pCinData == pCVar1->pCinData)) {
+				pCVar1->currentLocation = pCVar2->currentLocation;
+			}
+
+			pCVar2 = this->pOwner;
+			pCVar1 = this->pTiedActor;
+			if (((pCVar1 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
+				(this->pCinData == pCVar1->pCinData)) {
+				pCVar1->rotationEuler = pCVar2->rotationEuler;
+			}
+
+			pCVar1 = this->pTiedActor;
+			if (((pCVar1 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
+				(this->pCinData == pCVar1->pCinData)) {
+				pCVar1->InitDlistPatchable();
+			}
+		}
+	}
+
+	return;
+}
+
 CBehaviourPlatformTrajectory::CBehaviourPlatformTrajectory()
 	: pathFollowReaderAbs()
 {
@@ -2819,24 +2937,325 @@ void CBehaviourPlatformDestroyed::Create(ByteCode* pByteCode)
 	return;
 }
 
-void CBehaviourWeighingMachineSlave::Create(ByteCode* pByteCode)
+void CBehaviourWeighingMachine::Create(ByteCode* pByteCode)
 {
-	CPathManager* pCVar1;
-	int iVar2;
+	CPathManager* pPathManager;
 	CPathFollow* pPathFollow;
 
-	pCVar1 = CScene::ptable.g_PathManager_004516a0;
+	pPathManager = CScene::ptable.g_PathManager_004516a0;
 
-	iVar2 = pByteCode->GetS32();
-	if (iVar2 == -1) {
+	const int pathIndex = pByteCode->GetS32();
+	if (pathIndex == -1) {
 		pPathFollow = (CPathFollow*)0x0;
 	}
 	else {
-		pPathFollow = pCVar1->aPathFollow + iVar2;
+		pPathFollow = pPathManager->aPathFollow + pathIndex;
 	}
 
-	iVar2 = pByteCode->GetS32();
-	this->pathFollowReaderAbs.Create(2.0f, 0.0f, pPathFollow, 0, 0, iVar2, 0);
+	this->pathFollowReaderAbs.Create(2.0f, 0.0f, pPathFollow, 0, 0, pByteCode->GetS32(), 0);
+
+	return;
+}
+
+
+void CBehaviourWeighingMachine::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorMovingPlatform*>(pOwner);
+	return;
+}
+
+void CBehaviourWeighingMachine::ManageFrozen()
+{
+	CActorMovingPlatform* pPlatform;
+
+	if ((GameFlags & 0x20) == 0) {
+		pPlatform = this->pOwner;
+		(this->trajPos).field_0x0 = (this->trajPos).field_0x0 + 1.0f;
+
+		pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, &this->trajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+		(this->trajPos).field_0x0 = (this->trajPos).field_0x0 - 1.0f;
+
+		this->pOwner->GenericManage(1, 0, (int)(this->trajPos).field_0x4, (int)(this->trajPos).field_0x6);
+	}
+	return;
+}
+
+void CBehaviourWeighingMachine::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	if (newState == -1) {
+		if ((this->pathFollowReaderAbs).pActor3C_0x0 == (CPathFollow*)0x0) {
+			this->pOwner->SetState(6, -1);
+		}
+		else {
+			this->pOwner->SetState(0x10, -1);
+		}
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	(this->trajPos).field_0x0 = 0.0f;
+	(this->trajPos).field_0x4 = 0;
+	(this->trajPos).field_0x6 = 0;
+	(this->trajPos).field_0x8 = -1;
+}
+
+void CBehaviourWeighingMachine::End(int newBehaviourId)
+{
+	CCollision* pCol;
+
+	pCol = this->pOwner->pCollisionData;
+
+	if (pCol != (CCollision*)0x0) {
+		pCol->flags_0x0 = pCol->flags_0x0 & 0xffdfffff;
+	}
+
+	return;
+}
+
+void CBehaviourWeighingMachineMaster::Create(ByteCode* pByteCode)
+{
+	CPathManager* pPathManager;
+	CPathFollow* pPathFollow;
+
+	pPathManager = CScene::ptable.g_PathManager_004516a0;
+
+	const int pathIndex = pByteCode->GetS32();
+	if (pathIndex == -1) {
+		pPathFollow = (CPathFollow*)0x0;
+	}
+	else {
+		pPathFollow = pPathManager->aPathFollow + pathIndex;
+	}
+
+	this->pathFollowReaderAbs.Create(2.0f, 0.0f, pPathFollow, 0, 0, pByteCode->GetS32(), 0);
+
+	(this->streamActorRef).index = pByteCode->GetS32();
+
+	this->field_0x40 = pByteCode->GetF32();
+	this->field_0x44 = pByteCode->GetF32();
+
+	//piVar1 = (int*)pByteCode->currentSeekPos;
+	//pByteCode->currentSeekPos = (char*)(piVar1 + 1);
+	//if (*piVar1 != 0) {
+	//	pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * 0x28;
+	//}
+	//this->field_0x34 = piVar1;
+
+	S_STREAM_EVENT_CAMERA* pSVar2 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(pSVar2 + 1);
+	this->pStreamEventCamera = pSVar2;
+	return;
+}
+
+void CBehaviourWeighingMachineMaster::Init(CActor* pOwner)
+{
+	int* piVar1;
+	int iVar2;
+	int iVar3;
+
+	this->pOwner = static_cast<CActorMovingPlatform*>(pOwner);
+
+	//piVar1 = this->field_0x34;
+	//iVar3 = 0;
+	//if (0 < *piVar1) {
+	//	iVar2 = 0;
+	//	do {
+	//		S_STREAM_NTF_TARGET_ANALOG::Init((S_STREAM_NTF_TARGET_ANALOG*)((int)piVar1 + iVar2 + 4));
+	//		piVar1 = this->field_0x34;
+	//		iVar3 = iVar3 + 1;
+	//		iVar2 = iVar2 + 0x28;
+	//	} while (iVar3 < *piVar1);
+	//}
+
+	this->pStreamEventCamera->Init();
+	this->streamActorRef.Init();
+	return;
+
+}
+
+void CBehaviourWeighingMachineMaster::Manage()
+{
+	uint uVar1;
+	S_TRAJ_POS* pTrajPos;
+	CActorMovingPlatform* pPlatform;
+	int state;
+
+	this->pStreamEventCamera->Manage(this->pOwner);
+	pPlatform = this->pOwner;
+	state = pPlatform->actorState;
+
+	uVar1 = 0;
+	if (state == 6) {
+		pTrajPos = &this->trajPos;
+
+		this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+
+		pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+		pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+	}
+	else {
+		if (state == 0x10) {
+			IMPLEMENTATION_GUARD(
+			uVar1 = pPlatform->StateWeighingMaster(this);)
+		}
+	}
+
+	pPlatform->GenericManage(1, uVar1, this->trajPos.field_0x4, this->trajPos.field_0x6);
+	return;
+}
+
+void CBehaviourWeighingMachineMaster::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	int* piVar1;
+	int iVar2;
+	S_TRAJ_POS* pTrajPos;
+	int iVar3;
+	CActorMovingPlatform* pPlatform;
+
+	if (newState == -1) {
+		if (this->pathFollowReaderAbs.pActor3C_0x0 == (CPathFollow*)0x0) {
+			pPlatform = this->pOwner;
+			pPlatform->SetState(6, -1);
+		}
+		else {
+			pPlatform = this->pOwner;
+			pPlatform->SetState(0x10, -1);
+		}
+	}
+	else {
+		pPlatform = this->pOwner;
+		pPlatform->SetState(newState, newAnimationType);
+	}
+
+	this->trajPos.field_0x0 = 0.0f;
+	this->trajPos.field_0x4 = 0;
+	this->trajPos.field_0x6 = 0;
+	this->trajPos.field_0x8 = -1;
+
+	//piVar1 = this->field_0x34;
+	//iVar3 = 0;
+	//if (0 < *piVar1) {
+	//	iVar2 = 0;
+	//	do {
+	//		S_STREAM_NTF_TARGET_ANALOG::Reset((S_STREAM_NTF_TARGET_ANALOG*)((int)piVar1 + iVar2 + 4));
+	//		piVar1 = this->field_0x34;
+	//		iVar3 = iVar3 + 1;
+	//		iVar2 = iVar2 + 0x28;
+	//	} while (iVar3 < *piVar1);
+	//}
+
+	this->pStreamEventCamera->Reset(pOwner);
+	pTrajPos = &this->trajPos;
+	pPlatform = this->pOwner;
+	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+
+	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+
+	this->trajPos.field_0x8 = this->trajPos.field_0x4;
+	return;
+}
+
+void CBehaviourWeighingMachineSlave::Create(ByteCode* pByteCode)
+{
+	CPathManager* pPathManager;
+	CPathFollow* pPathFollow;
+
+	pPathManager = CScene::ptable.g_PathManager_004516a0;
+
+	const int pathIndex = pByteCode->GetS32();
+	if (pathIndex == -1) {
+		pPathFollow = (CPathFollow*)0x0;
+	}
+	else {
+		pPathFollow = pPathManager->aPathFollow + pathIndex;
+	}
+
+	this->pathFollowReaderAbs.Create(2.0f, 0.0f, pPathFollow, 0, 0, pByteCode->GetS32(), 0);
+
+	return;
+}
+
+void CBehaviourWeighingMachineSlave::Manage()
+{
+	int actorState;
+	uint uVar2;
+	S_TRAJ_POS* pTrajPos;
+	CActorMovingPlatform* pPlatform;
+
+	pPlatform = this->pOwner;
+	actorState = pPlatform->actorState;
+	uVar2 = 0;
+
+	if (actorState == 6) {
+		pTrajPos = &this->trajPos;
+		this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+		pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+		pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+	}
+	else {
+		if (actorState == 0x10) {
+			uVar2 = (uint)(this->field_0x34 != this->trajPos.field_0x0);
+			this->trajPos.field_0x0 = this->field_0x34;
+			pTrajPos = &this->trajPos;
+			this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+			pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, uVar2, 1, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+			pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+		}
+	}
+
+	pPlatform->GenericManage(1, uVar2, this->trajPos.field_0x4, this->trajPos.field_0x6);
+	return; 
+}
+
+void CBehaviourWeighingMachineSlave::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	S_TRAJ_POS* pTrajPos;
+	CActorMovingPlatform* pPlatform;
+
+	if (newState == -1) {
+		if (this->pathFollowReaderAbs.pActor3C_0x0 == (CPathFollow*)0x0) {
+			pPlatform = this->pOwner;
+			pPlatform->SetState(6, -1);
+		}
+		else {
+			pPlatform = this->pOwner;
+			pPlatform->SetState(0x10, -1);
+		}
+	}
+	else {
+		pPlatform = this->pOwner;
+		pPlatform->SetState(newState, newAnimationType);
+	}
+
+	this->trajPos.field_0x0 = 0.0f;
+	this->trajPos.field_0x4 = 0;
+	this->trajPos.field_0x6 = 0;
+	this->trajPos.field_0x8 = -1;
+
+	pTrajPos = &this->trajPos;
+	pPlatform = this->pOwner;
+	this->trajPos.field_0x0 = this->trajPos.field_0x0 + 1.0f;
+
+	pPlatform->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 1, 0, pTrajPos, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+	pTrajPos->field_0x0 = pTrajPos->field_0x0 - 1.0f;
+
+	this->trajPos.field_0x8 = this->trajPos.field_0x4;
+	return;
+}
+
+int CBehaviourWeighingMachineSlave::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	if (msg == 0x11) {
+		this->field_0x34 = *reinterpret_cast<float*>(pMsgParam);
+	}
+
+	return msg == 0x11;
 }
 
 void S_STREAM_NTF_TARGET_ONOFF::Reset()
@@ -2876,4 +3295,258 @@ bool S_STREAM_NTF_TARGET_ONOFF::SwitchOn(CActor* pActor)
 	}
 
 	return uVar3;
+}
+
+void CBehaviourSelector::Create(ByteCode* pByteCode)
+{
+	int iVar1;
+	ParticleInfo* pPVar2;
+	CSound* pCVar3;
+	float fVar4;
+
+	this->field_0x18 = pByteCode->GetS32();
+
+	iVar1 = pByteCode->GetS32();
+	CActor::SV_InstallMaterialId(iVar1);
+	pPVar2 = CScene::ptable.g_C3DFileManager_00451664->GetG2DInfo(iVar1);
+	this->pParticleInfo = pPVar2;
+
+	this->field_0x8 = pByteCode->GetF32();
+	this->field_0xc = pByteCode->GetF32();
+	this->field_0x10 = pByteCode->GetF32();
+
+	(this->streamRefSound).index = pByteCode->GetS32();
+	return;
+}
+
+void CBehaviourSelector::InitState(int state)
+{
+	CSound* pSound;
+	CActorMovingPlatform* pActor;
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	if ((state == 0xd) && (pSound = (this->streamRefSound).pSound, pSound != (CSound*)0x0)) {
+		pActor = this->pOwner;
+		CActorSound::SoundStart
+		(pActor->pActorSound, (CActor*)pActor, (uint)((pActor->movingPlatformFlags & 1) != 0), pSound, 1, 0,
+			(SOUND_SPATIALIZATION_PARAM*)0x0);
+	})
+	return;
+}
+
+void CBehaviourSelectorMaster::Create(ByteCode* pByteCode)
+{
+	int iVar1;
+	ParticleInfo* pPVar2;
+	CSound* pCVar3;
+	float fVar4;
+
+	this->field_0x18 = pByteCode->GetS32();
+
+	iVar1 = pByteCode->GetS32();
+	CActor::SV_InstallMaterialId(iVar1);
+	pPVar2 = CScene::ptable.g_C3DFileManager_00451664->GetG2DInfo(iVar1);
+	this->pParticleInfo = pPVar2;
+
+	this->field_0x8 = pByteCode->GetF32();
+	this->field_0xc = pByteCode->GetF32();
+	this->field_0x10 = pByteCode->GetF32();
+
+	(this->streamRefSound).index = pByteCode->GetS32();
+
+	int* piVar1 = (int*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
+	if (*piVar1 != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * sizeof(S_ACTOR_STREAM_REF);
+	}
+	this->pActorStreamRef = (S_ACTOR_STREAM_REF*)piVar1;
+
+	piVar1 = (int*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
+	if (*piVar1 != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * 0x10;
+	}
+	this->field_0x30 = (undefined*)piVar1;
+
+	S_STREAM_EVENT_CAMERA* pcVar2 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);
+	this->pStreamEventCamera = pcVar2;
+	return;
+}
+
+void CBehaviourSelectorMaster::Init(CActor* pOwner)
+{
+	int* piVar1;
+	int iVar2;
+	S_ACTOR_STREAM_REF* pSVar3;
+	int iVar4;
+	int iVar5;
+
+	this->pOwner = static_cast<CActorMovingPlatform*>(pOwner);
+
+	this->streamRefSound.Init();
+
+	this->pOwner->SV_InstanciateMaterialBank();
+
+	pSVar3 = this->pActorStreamRef;
+
+	S_STREAM_REF<CActor>* pCur = pSVar3->aEntries;
+
+	for (iVar5 = pSVar3->entryCount; iVar5 != 0; iVar5 = iVar5 + -1) {
+		pCur->Init();
+		pCur = pCur + 1;
+	}
+
+	//piVar1 = (int*)this->field_0x30;
+	//iVar5 = 0;
+	//if (0 < *piVar1) {
+	//	iVar4 = 0;
+	//	do {
+	//		S_STREAM_NTF_TARGET_BASE::Init((S_STREAM_NTF_TARGET_BASE*)((int)piVar1 + iVar4 + 4));
+	//		piVar1 = (int*)this->field_0x30;
+	//		iVar5 = iVar5 + 1;
+	//		iVar4 = iVar4 + 0x10;
+	//	} while (iVar5 < *piVar1);
+	//}
+
+	this->pStreamEventCamera->Init();
+
+	iVar4 = 0;
+	while (true) {
+		pSVar3 = this->pActorStreamRef;
+		iVar2 = 0;
+		if (pSVar3 != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar2 = pSVar3->entryCount;
+		}
+
+		if (iVar2 <= iVar4) break;
+
+		CActor* pActor = pSVar3->aEntries[iVar4].Get();
+		if (pActor != 0) {
+			pActor->actorFieldS = pActor->actorFieldS & 0xffffffef;
+		}
+
+		iVar4 = iVar4 + 1;
+	}
+	return;
+}
+
+void CBehaviourSelectorMaster::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActorMovingPlatform* pCVar1;
+	ed_g2d_manager* pTexture;
+	int* piVar2;
+	int iVar3;
+	int iVar4;
+	edF32VECTOR4 eStack16;
+
+	if ((this->field_0x18 != -1) && (pTexture = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(this->pOwner->pCinData->textureIndex),
+			pTexture != (ed_g2d_manager*)0x0)) {
+		ed3DHierarchyBankMatLinkG2D(this->pOwner->p3DHierNode, pTexture);
+	}
+
+	this->field_0x28 = 1;
+	this->field_0x20 = 0.0f;
+
+	//piVar2 = (int*)this->field_0x30;
+	//iVar4 = 0;
+	//if (0 < *piVar2) {
+	//	iVar3 = 0;
+	//	do {
+	//		S_STREAM_NTF_TARGET_SWITCH_EX::Reset((S_STREAM_NTF_TARGET_SWITCH_EX*)((int)piVar2 + iVar3 + 4));
+	//		piVar2 = (int*)this->field_0x30;
+	//		iVar4 = iVar4 + 1;
+	//		iVar3 = iVar3 + 0x10;
+	//	} while (iVar4 < *piVar2);
+	//}
+
+	this->pStreamEventCamera->Reset(pOwner);
+
+	for (iVar4 = this->pActorStreamRef->entryCount; iVar4 != 0; iVar4 = iVar4 + -1) {
+		this->pActorStreamRef->aEntries[iVar4].Reset();
+	}
+
+	this->field_0x38 = -1;
+
+	if (newState == -1) {
+		pCVar1 = this->pOwner;
+		pCVar1->SetState(0xd, -1);
+	}
+	else {
+		pCVar1 = this->pOwner;
+		pCVar1->SetState(newState, newAnimationType);
+	}
+
+	this->field_0x24 = this->field_0x10;
+	pCVar1 = this->pOwner;
+	edF32Vector4ScaleHard(-this->field_0x24, &eStack16, &g_xVector);
+	edF32Vector4AddHard(&eStack16, &eStack16, &pCVar1->baseLocation);
+	pCVar1->Platform_UpdatePosition(&eStack16, 1, (CActorsTable*)0x0);
+	return;
+}
+
+void CBehaviourSelectorNew::Create(ByteCode* pByteCode)
+{
+	int iVar1;
+	ParticleInfo* pPVar2;
+	CSound* pCVar3;
+	float fVar4;
+
+	this->field_0x18 = pByteCode->GetS32();
+
+	iVar1 = pByteCode->GetS32();
+	CActor::SV_InstallMaterialId(iVar1);
+	pPVar2 = CScene::ptable.g_C3DFileManager_00451664->GetG2DInfo(iVar1);
+	this->pParticleInfo = pPVar2;
+
+	this->field_0x8 = pByteCode->GetF32();
+	this->field_0xc = pByteCode->GetF32();
+	this->field_0x10 = pByteCode->GetF32();
+
+	(this->streamRefSound).index = pByteCode->GetS32();
+	return;
+}
+
+void CBehaviourSelectorNew::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorMovingPlatform*>(pOwner);
+
+	this->streamRefSound.Init();
+
+	this->pOwner->SV_InstanciateMaterialBank();
+
+	return;
+}
+
+void CBehaviourSelectorNew::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	ed_g2d_manager* pTexture;
+	edF32VECTOR4 eStack16;
+	CActorMovingPlatform* pPlatform;
+
+	if ((this->field_0x18 != -1) && (pTexture = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(this->pOwner->pCinData->textureIndex),
+		pTexture != (ed_g2d_manager*)0x0)) {
+		ed3DHierarchyBankMatLinkG2D(this->pOwner->p3DHierNode, pTexture);
+	}
+
+	this->field_0x28 = 1;
+	this->field_0x20 = 0.0f;
+
+	if (newState == -1) {
+		pPlatform = this->pOwner;
+		pPlatform->SetState(0xb, -1);
+	}
+	else {
+		pPlatform = this->pOwner;
+		pPlatform->SetState(newState, newAnimationType);
+	}
+
+	this->field_0x24 = 0.0f;
+	pPlatform = this->pOwner;
+
+	edF32Vector4ScaleHard(-this->field_0x24, &eStack16, &g_xVector);
+	edF32Vector4AddHard(&eStack16, &eStack16, &pPlatform->baseLocation);
+	pPlatform->Platform_UpdatePosition(&eStack16, 1, (CActorsTable*)0x0);
+
+	return;
 }

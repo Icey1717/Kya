@@ -373,6 +373,7 @@ public:
 
 	void SV_SetModel(int meshIndex, int textureIndex, int count, MeshTextureHash* aHashes);
 	void SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo);
+	void SV_InstanciateMaterialBank();
 
 	void SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation);
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
@@ -412,7 +413,7 @@ public:
 
 	void SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1);
 
-	int SV_InstallMaterialId(int materialId);
+	static int SV_InstallMaterialId(int materialId);
 
 	float SV_AttractActorInAConeAboveMe(CActor* pActor, CActorConeInfluence* pActorConeInfluence);
 
@@ -480,6 +481,9 @@ public:
 	edF32VECTOR4 scale;
 
 	ed_g3d_hierarchy* pHier;
+
+	// pMaterial bank from SV_InstanciateMaterialBank
+	void* field_0x98;
 
 	CinNamedObject30 namedObjSectionStart;
 	CinNamedObject30* pCinData;

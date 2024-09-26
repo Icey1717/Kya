@@ -73,6 +73,8 @@ struct C3DFileManager : public CObjectManager {
 
 	ed_g3d_manager* GetG3DManager(int meshIndex, int textureIndex);
 
+	ParticleInfo* GetG2DInfo(int index);
+
 	ed_g2d_manager* GetActorsCommonMaterial(int index);
 	ed_g2d_manager* GetActorsCommonMeshMaterial(int index);
 

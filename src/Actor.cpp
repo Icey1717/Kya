@@ -1741,6 +1741,18 @@ int CActor::SV_InstallMaterialId(int materialId)
 	return index;
 }
 
+void CActor::SV_InstanciateMaterialBank()
+{
+	int size;
+	void* pvVar1;
+
+	size = ed3DHierarchyBankMatGetSize(&this->p3DHierNode->base);
+	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), size);
+	pvVar1 = ed3DHierarchyBankMatInstanciate(&this->p3DHierNode->base, pvVar1);
+	this->field_0x98 = pvVar1;
+	return;
+}
+
 void CActor::SetupDefaultPosition()
 {
 	edF32VECTOR3* v0;

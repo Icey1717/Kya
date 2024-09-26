@@ -13191,7 +13191,7 @@ int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier)
 
 	pHashCode = ed3DHierarchyGetMaterialBank(pHier);
 	iVar1 = ed3DG2DGetG2DNbMaterials(pHashCode);
-	return iVar1 * 0x10 + 0x10;
+	return iVar1 * sizeof(ed_hash_code) + sizeof(ed_Chunck);
 }
 
 void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData)
@@ -13206,6 +13206,32 @@ void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData)
 	memcpy(pData, __src, iVar1 * sizeof(ed_hash_code) + sizeof(ed_Chunck));
 	pHier->pTextureInfo = (char*)pData;
 	return pData;
+}
+
+void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy_node* pHier, ed_g2d_manager* pTexture)
+{
+	ed_hash_code* peVar2;
+	uint uVar3;
+	ed_Chunck* puVar4;
+
+	puVar4 = reinterpret_cast<ed_Chunck*>((pHier->base).pTextureInfo);
+
+	if (puVar4->hash == HASH_CODE_MBNK) {
+		uVar3 = puVar4->size - 0x10U >> 4;
+		while (true) {
+			ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(puVar4 + 1);
+
+			if (uVar3 == 0) break;
+
+			peVar2 = edHashcodeGet(puVar4->hash, pTexture->pMATA_HASH);
+			uVar3 = uVar3 - 1;
+			if (peVar2 != (ed_hash_code*)0x0) {
+				pHashCode->pData = STORE_SECTION(peVar2);
+			}
+		}
+	}
+
+	return;
 }
 
 ed_hash_code* ed3DG2DGetMaterial(ed_g2d_manager* pTextureInfo, ulong hash)
@@ -13228,6 +13254,7 @@ ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong ha
 	else {
 		peVar1 = (ed_g3d_hierarchy*)((char*)LOAD_SECTION(pcVar1->pData) + 0x10);
 	}
+
 	return peVar1;
 }
 

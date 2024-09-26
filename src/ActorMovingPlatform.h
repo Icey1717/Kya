@@ -22,7 +22,10 @@ struct S_STREAM_MPF_NO_FRICTION_ZONE {
 
 class CBehaviourPlatform : public CBehaviour
 {
+public:
 	virtual void Create(ByteCode* pByteCode) {}
+	virtual void field_0x54(int) {}
+	CActorMovingPlatform* pOwner;
 };
 
 class CBehaviourPlatformStand : public CBehaviourPlatform
@@ -32,8 +35,11 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
+	virtual void ManageFrozen();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void field_0x54(int param_2);
 
-	CActorMovingPlatform* pOwner;
 	int field_0x8;
 	int field_0xc;
 	CinNamedObject30* pCinData;
@@ -48,7 +54,6 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void Manage();
 	
-	CActorMovingPlatform* pOwner;
 	CPathFollowReaderAbsolute pathFollowReaderAbs;
 
 	float field_0x28;
@@ -72,6 +77,7 @@ struct S_MOVING_PLATFORM_TARGET_STREAM {
 };
 
 class CSound;
+struct ParticleInfo;
 
 class CBehaviourPlatformSlab : public CBehaviourPlatform
 {
@@ -81,7 +87,6 @@ public:
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
-	CActorMovingPlatform* pOwner;
 	S_MOVING_PLATFORM_TARGET_STREAM* pTargetStream;
 	S_STREAM_EVENT_CAMERA* streamEventCamera;
 
@@ -112,45 +117,90 @@ public:
 class CBehaviourWeighingMachine : public CBehaviourPlatform
 {
 public:
-	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void ManageFrozen();
+
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+
+	CPathFollowReaderAbsolute pathFollowReaderAbs;
+	S_TRAJ_POS trajPos;
+};
+
+class CBehaviourWeighingMachineMaster : public CBehaviourWeighingMachine
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+
+	S_STREAM_REF<CActor> streamActorRef;
+
+	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+
+	float field_0x40;
+	float field_0x44;
 };
 
 class CBehaviourWeighingMachineSlave : public CBehaviourWeighingMachine
 {
 public:
 	virtual void Create(ByteCode* pByteCode);
-	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	CPathFollowReaderAbsolute pathFollowReaderAbs;
+	float field_0x34;
 };
 
-class CBehaviourTeleportRandom : public CBehaviourWeighingMachine
+class CBehaviourSelector : public CBehaviourPlatform
 {
 public:
-	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner) { IMPLEMENTATION_GUARD(); }
+	virtual void ManageFrozen() { IMPLEMENTATION_GUARD(); }
+	virtual void Draw() { IMPLEMENTATION_GUARD(); }
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) { IMPLEMENTATION_GUARD(); }
+	virtual void InitState(int state);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); return 0; }
+
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+
+	int field_0x18;
+
+	float field_0x20;
+	float field_0x24;
+	int field_0x28;
+
+	ParticleInfo* pParticleInfo;
+	S_STREAM_REF<CSound> streamRefSound;
 };
 
-class CBehaviourSelector : public CBehaviour
+class CBehaviourSelectorMaster : public CBehaviourSelector
 {
 public:
-	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
-};
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
-class CBehaviourSelectorSlave : public CBehaviourSelector
-{
-public:
-	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	S_ACTOR_STREAM_REF* pActorStreamRef;
+	undefined* field_0x30;
+	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+	int field_0x38;
 };
 
 class CBehaviourSelectorNew : public CBehaviourSelector
 {
 public:
-	//virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	//virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 };
 
 PACK(

@@ -1895,19 +1895,20 @@ void CCinematic::Manage()
 	CActorHero* pCVar3;
 	float fVar4;
 
-	if (this->zoneRefA.pObj != 0x0) {
+	ed_zone_3d* pZone = this->zoneRefA.Get();
+
+	if (pZone != (ed_zone_3d*)0x0) {
 		pCVar3 = (CActorHero*)this->actorHeroRef.Get();
 		if (this->actorHeroRef.Get() == (CActorHero*)0x0) {
 			pCVar3 = CActorHero::_gThis;
 		}
-		IMPLEMENTATION_GUARD_LOG(
+	
 		if ((pCVar3 == (CActorHero*)0x0) ||
 			(iVar2 = edEventComputeZoneAgainstVertex
-			((Scene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8,
-				(EventChunk_24*)this->intFieldC, &(pCVar3->character).characterBase.actorBase.currentLocation
-				, 0), iVar2 == 2)) {
+			((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pCVar3->currentLocation , 0), iVar2 == 2)) {
 			this->flags_0x8 = this->flags_0x8 & 0xfffffdff;
 			bVar1 = this->state != CS_Stopped;
+
 			if ((bVar1) && (((this->flags_0x4 & 8) != 0 && (bVar1)))) {
 				this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
 				this->flags_0x8 = this->flags_0x8 | 0x100;
@@ -1918,7 +1919,7 @@ void CCinematic::Manage()
 				IMPLEMENTATION_GUARD(
 				UsedInCutsceneManagerUpdateB(this, (Actor*)0x0, 0);)
 			}
-		})
+		}
 	}
 	bVar1 = this->pSwitchListA != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
 	if (bVar1) {
@@ -2023,7 +2024,7 @@ void CCinematic::ManageState_Playing()
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD_LOG(
+			IMPLEMENTATION_GUARD_AUDIO(
 			bVar2 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
 			cinematicSoundObject = &(this->cinematicLoadObject).BWCinSourceAudio_Obj;
 			if ((bVar2) && (bVar2 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0)) {
@@ -2967,7 +2968,7 @@ void CCinematic::UninstallResources()
 			else {
 				if (resourceType == edResCollection::COT_LipTrack) {
 					IMPLEMENTATION_GUARD_LOG(
-					CLipTrackManager::Remove(CScene::ptable.g_LipTrackManager_00451694, (int)pMeshInfo);)
+					CScene::ptable.g_LipTrackManager_00451694->Remove(pMeshInfo);)
 				}
 				else {
 					if (resourceType == edResCollection::COT_MeshModel) {
@@ -3030,6 +3031,7 @@ void CCinematic::FUN_001c7390(bool param_2)
 	if ((this->state == CS_Stopped) && ((this->flags_0x8 & 0x80) != 0)) {
 		Start();
 	}
+
 	if ((param_2 != false) && (this->state == CS_Stopped)) {
 		bVar2 = (this->flags_0x4 & 1) != 0;
 		if (bVar2) {
@@ -3049,37 +3051,32 @@ void CCinematic::FUN_001c7390(bool param_2)
 				if (this->count_0x2d8 < 1) {
 					peVar1 = (this->zoneRefB).Get();
 					bVar2 = false;
-					IMPLEMENTATION_GUARD_LOG(
+		
 					if ((peVar1 != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
-						(iVar3 = edEventComputeZoneAgainstVertex
-						((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1,
-							(edF32VECTOR4*)
-							&(CActorHero::_gThis->character).characterBase.base.base.data.pCollisionData, 0),
-							iVar3 != 2)) {
+						(iVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1, &CActorHero::_gThis->currentLocation, 0), iVar3 != 2)) {
 						bVar2 = true;
-					})
+					}
 				}
+
 				if (bVar2) {
 					Load(1);
 				}
 			}
+
 			if (this->cineBankLoadStage_0x2b4 == 4) {
 				bVar2 = true;
 				if ((this->flags_0x4 & 0x4000000) == 0) {
-					IMPLEMENTATION_GUARD(
-					peVar1 = (this->field_0x98).pZone;
+					peVar1 = (this->zoneRefC).Get();
 					bVar2 = false;
 					if ((peVar1 != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
 						(iVar3 = edEventComputeZoneAgainstVertex
-						((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1,
-							(edF32VECTOR4*)
-							&(CActorHero::_gThis->character).characterBase.base.base.data.pCollisionData, 0),
-							iVar3 != 2)) {
+						((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1, &CActorHero::_gThis->currentLocation, 0), iVar3 != 2)) {
 						bVar2 = true;
-					})
+					}
 				}
+
 				if ((bVar2) && (this->intFieldD != -1)) {
-					IMPLEMENTATION_GUARD(
+					IMPLEMENTATION_GUARD_AUDIO(
 					iVar3 = CMessageFile::get_default_language();
 					lVar4 = (long)(&this->intFieldE)[iVar3];
 					if (lVar4 == -1) {
@@ -3116,14 +3113,10 @@ void CCinematic::Level_ClearAll()
 		pZone = (this->zoneRefB).Get();
 		bVar1 = false;
 
-		IMPLEMENTATION_GUARD_LOG(
 		if ((pZone != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
-			(iVar2 = edEventComputeZoneAgainstVertex
-			((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone,
-				(edF32VECTOR4*)&(CActorHero::_gThis->character).characterBase.base.base.data.pCollisionData,
-				0), iVar2 != 2)) {
+			(iVar2 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0), iVar2 != 2)) {
 			bVar1 = true;
-		});
+		};
 
 		if ((bVar1) || (0 < this->count_0x2d8)) {
 			bVar1 = (this->flags_0x4 & 1) != 0;
@@ -3749,7 +3742,7 @@ CCineActorConfig::CCineActorConfig()
 
 void S_STREAM_EVENT_CAMERA::Init()
 {
-	struct EventChunk_24* pEVar1;
+	ed_zone_3d* pEVar1;
 	CActor* pCVar2;
 
 	this->field_0x8 = this->field_0x8 * this->field_0x8;
@@ -3762,11 +3755,9 @@ void S_STREAM_EVENT_CAMERA::Init()
 		pCVar2 = (CScene::ptable.g_ActorManager_004516a4)->aActors[(int)this->pActor];
 	}
 	this->pActor = STORE_SECTION(pCVar2);
-	pEVar1 = (EventChunk_24*)0x0;
+	pEVar1 = (ed_zone_3d*)0x0;
 	if (this->pEventChunk24_0x18 != -1) {
-		IMPLEMENTATION_GUARD(
-		pEVar1 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8,
-			(int)this->pEventChunk24_0x18);)
+		pEVar1 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->pEventChunk24_0x18);
 	}
 	this->pEventChunk24_0x18 = STORE_SECTION(pEVar1);
 	return;

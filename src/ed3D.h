@@ -707,6 +707,7 @@ int ed3DG2DGetG2DNbMaterials(ed_Chunck* pChunck);
 int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode);
 int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier);
 void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData);
+void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy_node* pHier, ed_g2d_manager* pTexture);
 ed_hash_code* ed3DG2DGetMaterial(ed_g2d_manager* pTextureInfo, ulong hash);
 ed_g3d_hierarchy* ed3DG3DHierarchyGetFromHashcode(ed_g3d_manager* pG3d, ulong hash);
 void ed3DG3DHierarchySetStripShadowReceiveFlag(ed_g3d_hierarchy* pHier, ushort flag);
