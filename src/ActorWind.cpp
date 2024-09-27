@@ -20,40 +20,31 @@ void CActorWind::Create(ByteCode* pByteCode)
 	float fVar9;
 
 	CActor::Create(pByteCode);
-	uVar6 = pByteCode->GetU32();
-	this->field_0x160 = uVar6;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x164 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x168 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x16c = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x174 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x180 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x184 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x188 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x18c = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x178 = fVar9;
-	fVar9 = pByteCode->GetF32();
-	this->field_0x17c = fVar9;
+	this->field_0x160 = pByteCode->GetU32();
+	this->field_0x164 = pByteCode->GetF32();
+	this->field_0x168 = pByteCode->GetF32();
+	this->field_0x16c = pByteCode->GetF32();
+	this->field_0x174 = pByteCode->GetF32();
+	this->field_0x180 = pByteCode->GetF32();
+	this->field_0x184 = pByteCode->GetF32();
+	this->field_0x188 = pByteCode->GetF32();
+	this->field_0x18c = pByteCode->GetF32();
+	this->field_0x178 = pByteCode->GetF32();
+	this->field_0x17c = pByteCode->GetF32();
 
-	uVar6 = pByteCode->GetU32();
-	this->field_0x190 = uVar6;
-	if (this->field_0x168 <= 0.0) {
+	this->field_0x190 = pByteCode->GetU32();
+
+	if (this->field_0x168 <= 0.0f) {
 		this->field_0x160 = this->field_0x160 | 1;
-		this->field_0x168 = 0.001;
+		this->field_0x168 = 0.001f;
 	}
+
 	bVar4 = true;
 	if ((((this->field_0x160 & 0x20) == 0) && (bVar4 = false, (this->field_0x160 & 0x40) == 0)) &&
 		(bVar4 = true, 0.17398384f <= fabs(this->rotationQuat.y))) {
 		bVar4 = false;
 	}
+
 	if (bVar4) {
 		this->field_0x160 = this->field_0x160 | 1;
 	}
@@ -63,21 +54,19 @@ void CActorWind::Create(ByteCode* pByteCode)
 
 	pGVar5 = CScene::ptable.g_GlobalSoundPtr_00451698;
 	uVar6 = pByteCode->GetU32();
-	iVar7 = pByteCode->GetS32();
-	this->field_0x1b8.index = iVar7;
+	this->field_0x1b8.index = pByteCode->GetS32();
 	piVar2 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 	if (*piVar2 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
 	}
 	this->field_0x1bc = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
-	iVar7 = pByteCode->GetS32();
-	//this->field_0x1c0 = iVar7;
-	//CActor::SV_InstallMaterialId(this->field_0x1c0);
-	iVar7 = pByteCode->GetS32();
-	this->field_0x1c4.index = iVar7;
-	uVar8 = pByteCode->GetU32();
-	//this->field_0x1c8 = uVar8;
+
+	this->materialId = pByteCode->GetS32();
+	CActor::SV_InstallMaterialId(this->materialId);
+
+	this->field_0x1c4.index = pByteCode->GetS32();
+	this->field_0x1c8 = pByteCode->GetU32();
 	//if (*(byte*)&this->field_0x1c8 < 0x80) {
 	//	*(byte*)&this->field_0x1c8 = *(byte*)&this->field_0x1c8 << 1;
 	//}
@@ -98,8 +87,8 @@ void CActorWind::Create(ByteCode* pByteCode)
 	//else {
 	//	*(undefined*)((int)&this->field_0x1c8 + 2) = 0xff;
 	//}
-	iVar7 = pByteCode->GetS32();
-	this->field_0x1cc.index = iVar7;
+
+	this->field_0x1cc.index = pByteCode->GetS32();
 	this->sectorObj.Create(pByteCode);
 
 	if (2.2f <= CScene::_pinstance->field_0x1c) {
@@ -156,6 +145,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 	this->field_0x1ac = fVar9;
 	fVar9 = pByteCode->GetF32();
 	this->field_0x1b0 = fVar9;
+
 	if (100.0f < this->field_0x16c) {
 		this->field_0x16c = 100.0f;
 	}
@@ -164,11 +154,13 @@ void CActorWind::Create(ByteCode* pByteCode)
 			this->field_0x16c = 0.0f;
 		}
 	}
+
 	this->field_0x1fc = this->field_0x16c + fabs(this->field_0x194);
 	this->field_0x200 = this->field_0x16c - fabs(this->field_0x198);
 	if (this->field_0x200 < 0.0f) {
 		this->field_0x200 = 0.0f;
 	}
+
 	//iVar7 = FUN_00184590((int)pGVar5, (long)(int)uVar6);
 	//this->field_0x1b4 = iVar7;
 	this->aFxWind = (CFxWind*)0x0;
@@ -339,6 +331,29 @@ void CActorWind::Init()
 	return;
 }
 
+void CActorWind::Term()
+{
+	CActor::Term();
+	this->sectorObj.Term(this->objectId);
+}
+
+void CActorWind::SectorChange(int oldSectorId, int newSectorId)
+{
+	CFxWind* pFxWind;
+	int iVar1;
+
+	iVar1 = 0;
+	pFxWind = this->aFxWind;
+	if (0 < this->nbFxWind) {
+		do {
+			pFxWind->SectorChange(oldSectorId, newSectorId);
+			iVar1 = iVar1 + 1;
+			pFxWind = pFxWind + 1;
+		} while (iVar1 < this->nbFxWind);
+	}
+	return;
+}
+
 CBehaviour* CActorWind::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
@@ -374,6 +389,220 @@ StateConfig* CActorWind::GetStateCfg(int state)
 		pAVar1 = _gStateCfg_WND + state + -5;
 	}
 	return pAVar1;
+}
+
+void CActorWind::ChangeManageState(int state)
+{
+	int iVar1;
+	int iVar2;
+	_wind_param_in local_40;
+	_wind_param_in* local_4;
+
+	CActor::ChangeManageState(state);
+
+	if (state == 0) {
+		iVar2 = 0;
+		while (true) {
+			if (this->field_0x1bc == (S_ACTOR_STREAM_REF*)0x0) {
+				iVar1 = 0;
+			}
+			else {
+				iVar1 = this->field_0x1bc->entryCount;
+			}
+
+			if (iVar1 <= iVar2) break;
+
+			if (this->field_0x1ec[iVar2] != 0x0) {
+				local_40.field_0x0 = this->field_0x16c;
+				local_40.field_0x4 = this->field_0x170;
+				local_40.field_0x8 = 1;
+
+				if ((((this->field_0x160 & 0x20) == 0) && (local_40.field_0x8 = 0, (this->field_0x160 & 0x40) == 0)) &&
+					(local_40.field_0x8 = 1, 0.17398384f <= fabs(this->rotationQuat.y))) {
+					local_40.field_0x8 = 0;
+				}
+
+				local_40.field_0x10 = this->field_0x1fc;
+				local_40.field_0x14 = this->field_0x200;
+				local_40.field_0x18 = this->field_0x19c;
+				local_40.field_0x1c = this->field_0x1a0;
+				local_40.field_0x20 = this->field_0x1a4;
+				local_40.field_0x24 = (uint)((this->field_0x160 & 0x400) != 0);
+				local_40.field_0x28 = this->field_0x1a8.Get();
+				if (local_40.field_0x28 == (CWayPoint*)0x0) {
+					local_40.field_0x28 = (CWayPoint*)0x0;
+				}
+				local_4 = &local_40;
+				local_40.field_0x2c = this->field_0x1ac;
+				local_40.field_0x30 = this->field_0x1b0;
+				DoMessage(this->field_0x1bc->aEntries[iVar2].Get(), (ACTOR_MESSAGE)0x18, (MSG_PARAM)local_4);
+				this->field_0x1ec[iVar2] = 0x0;
+			}
+
+			iVar2 = iVar2 + 1;
+		}
+	}
+
+	return;
+}
+
+void CActorWind::ChangeVisibleState(int state)
+{
+	int iVar1;
+	int iVar2;
+
+	CActor::ChangeVisibleState(state);
+
+	IMPLEMENTATION_GUARD_WIND_FX(
+	iVar2 = 0;
+	if (0 < (int)this->nbFxWind) {
+		iVar1 = 0;
+		do {
+			CFxWind::ChangeVisibleState(&this->aFxWind->field_0x0 + iVar1, (long)state);
+			iVar2 = iVar2 + 1;
+			iVar1 = iVar1 + 0x3c0;
+		} while (iVar2 < (int)this->nbFxWind);
+	})
+
+	return;
+}
+
+int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+	int iVar4;
+	uint uVar5;
+
+	if (msg == 0xe) {
+		uVar5 = this->flags & 0x2000001;
+		if (uVar5 == 0) {
+			IMPLEMENTATION_GUARD(
+			this->flags = this->flags & 0xfffffffd;
+			this->flags = this->flags | 1;
+			this->flags = this->flags & 0xffffff7f;
+			this->flags = this->flags | 0x20;
+			CActor::EvaluateDisplayState((CActor*)this);
+			CSectorHierarchy::SetHiddenOn(&this->sectorObj);)
+		}
+		else {
+			this->flags = this->flags & 0xfffffffc;
+			this->flags = this->flags & 0xffffff5f;
+			IMPLEMENTATION_GUARD(
+			CActor::EvaluateDisplayState((CActor*)this);
+			ResetTiming(this);
+			CSectorHierarchy::SetHiddenOff(&this->sectorObj);)
+		}
+
+		iVar1 = 0;
+		if (0 < (int)this->nbFxWind) {
+			iVar4 = 0;
+			IMPLEMENTATION_GUARD(
+			do {
+				iVar2 = &this->aFxWind->field_0x0 + iVar4;
+				if (uVar5 == 0) {
+					*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) & 0xfffffffe;
+				}
+				else {
+					*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) | 1;
+				}
+				iVar1 = iVar1 + 1;
+				iVar4 = iVar4 + 0x3c0;
+			} while (iVar1 < (int)this->nbFxWind);)
+		}
+
+		iVar1 = 1;
+	}
+	else {
+		if (msg == 0xf) {
+			this->flags = this->flags & 0xfffffffc;
+			this->flags = this->flags & 0xffffff5f;
+			EvaluateDisplayState();
+			ResetTiming();
+			this->sectorObj.SetHiddenOff();
+
+			IMPLEMENTATION_GUARD_WIND_FX(
+			iVar1 = 0;
+			if (0 < (int)this->nbFxWind) {
+				iVar4 = 0;
+				do {
+					iVar1 = iVar1 + 1;
+					iVar2 = &this->aFxWind->field_0x0 + iVar4;
+					*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) | 1;
+					iVar4 = iVar4 + 0x3c0;
+				} while (iVar1 < (int)this->nbFxWind);
+			})
+
+			iVar1 = 1;
+		}
+		else {
+			if ((msg == 0x10) || (msg == 0x5d)) {
+				this->flags = this->flags & 0xfffffffd;
+				this->flags = this->flags | 1;
+				this->flags = this->flags & 0xffffff7f;
+				this->flags = this->flags | 0x20;
+				EvaluateDisplayState();
+				this->sectorObj.SetHiddenOn();
+
+				IMPLEMENTATION_GUARD_WIND_FX(
+				iVar1 = 0;
+				if (0 < (int)this->nbFxWind) {
+					iVar4 = 0;
+					do {
+						iVar1 = iVar1 + 1;
+						iVar2 = &this->aFxWind->field_0x0 + iVar4;
+						*(uint*)(iVar2 + 0x54) = *(uint*)(iVar2 + 0x54) & 0xfffffffe;
+						iVar4 = iVar4 + 0x3c0;
+					} while (iVar1 < (int)this->nbFxWind);
+				})
+
+				iVar1 = 1;
+			}
+			else {
+				if (msg == 0xd) {
+					IMPLEMENTATION_GUARD(
+					iVar1 = *(int*)((int)pMsgParam + 4);
+					if (iVar1 == 0) {
+						this->flags = this->flags & 0xfffffffd;
+						this->flags = this->flags | 1;
+						this->flags = this->flags & 0xffffff7f;
+						this->flags = this->flags | 0x20;
+						CActor::EvaluateDisplayState((CActor*)this);
+						CSectorHierarchy::SetHiddenOn(&this->sectorObj);
+					}
+					else {
+						this->flags = this->flags & 0xfffffffc;
+						this->flags = this->flags & 0xffffff5f;
+						CActor::EvaluateDisplayState((CActor*)this);
+						ResetTiming(this);
+						CSectorHierarchy::SetHiddenOff(&this->sectorObj);
+					}
+					iVar4 = 0;
+					if (0 < (int)this->nbFxWind) {
+						iVar2 = 0;
+						do {
+							iVar3 = &this->aFxWind->field_0x0 + iVar2;
+							if (iVar1 == 0) {
+								*(uint*)(iVar3 + 0x54) = *(uint*)(iVar3 + 0x54) & 0xfffffffe;
+							}
+							else {
+								*(uint*)(iVar3 + 0x54) = *(uint*)(iVar3 + 0x54) | 1;
+							}
+							iVar4 = iVar4 + 1;
+							iVar2 = iVar2 + 0x3c0;
+						} while (iVar4 < (int)this->nbFxWind);
+					}
+					iVar1 = 1;)
+				}
+				else {
+					iVar1 = CActor::InterpretMessage(pSender, msg, pMsgParam);
+				}
+			}
+		}
+	}
+
+	return iVar1;
 }
 
 void CActorWind::BehaviourWind_Manage()

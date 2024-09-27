@@ -1201,6 +1201,18 @@ void CSectorHierarchy::Init(int param_2)
 	return;
 }
 
+void CSectorHierarchy::Term(int index)
+{
+	if (this->field_0x0 != 0) {
+		this->pNode = (edNODE*)0x0;
+		this->pHier = (S_HIERANM_HIER*)0x0;
+		IMPLEMENTATION_GUARD(
+		CScene::ptable.g_SectorManager_00451670->UnregisterDynamicHierarchy(this, index);)
+	}
+
+	return;
+}
+
 void CSectorHierarchy::SetHiddenOn()
 {
 	S_HIERANM_HIER* pSVar1;
@@ -1216,6 +1228,26 @@ void CSectorHierarchy::SetHiddenOn()
 		else {
 			IMPLEMENTATION_GUARD(
 			pSVar1->flags_0x20 = pSVar1->flags_0x20 | 0x40000000;)
+		}
+	}
+	return;
+}
+
+void CSectorHierarchy::SetHiddenOff()
+{
+	S_HIERANM_HIER* pSVar1;
+
+	if ((this->flags & 0x40000000) != 0) {
+		this->flags = this->flags & 0xbfffffff;
+		pSVar1 = this->pHier;
+		if (pSVar1 == (S_HIERANM_HIER*)0x0) {
+			if (this->pNode != (edNODE*)0x0) {
+				ed3DHierarchyNodeClrFlag(this->pNode, 0x40);
+			}
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			pSVar1->flags_0x20 = pSVar1->flags_0x20 & 0xbfffffff;)
 		}
 	}
 	return;

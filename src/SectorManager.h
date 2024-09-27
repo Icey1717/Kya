@@ -28,7 +28,9 @@ public:
 
 	void Create(ByteCode* pByteCode);
 	void Init(int param_2);
+	void Term(int index);
 	void SetHiddenOn();
+	void SetHiddenOff();
 };
 
 struct SectorManagerSubObj {

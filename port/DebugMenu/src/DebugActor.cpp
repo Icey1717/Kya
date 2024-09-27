@@ -23,6 +23,7 @@ namespace Renderer
 namespace Debug {
 	namespace Actor {
 		static Setting<bool> gShowActorNamesOverlay("Show Actor Names Overlay", true);
+		static Setting<bool> gOnlyActiveActors("Show Only Active", true);
 	}
 
 	// Get the string version of the actor type
@@ -75,11 +76,12 @@ namespace Debug {
 		}
 	}
 
-	static std::array<std::pair<Setting<bool>, std::function<std::string(CActor*)>>, 4> gOverlaySettings = {
+	static std::array<std::pair<Setting<bool>, std::function<std::string(CActor*)>>, 5> gOverlaySettings = {
 		std::make_pair(Setting("Name", true), [](CActor* pActor) { return pActor->name; }),
 		std::make_pair(Setting("Type", true), [](CActor* pActor) { return GetActorTypeString(pActor->typeID); }),
 		std::make_pair(Setting("Location", true), [](CActor* pActor) { return pActor->currentLocation.ToString(); }),
 		std::make_pair(Setting("Behaviour", true), [](CActor* pActor) { return std::to_string(pActor->curBehaviourId); }),
+		std::make_pair(Setting("State", true), [](CActor* pActor) { return std::to_string(pActor->actorState); }),
 	};
 
 	static void ForEachActiveActor(std::function<void(CActor*)> pFunc) {
@@ -87,6 +89,14 @@ namespace Debug {
 
 		for (int i = 0; i < pActorManager->nbActiveActors; i++) {
 			pFunc(pActorManager->aActiveActors[i]);
+		}
+	}
+
+	static void ForEachActor(std::function<void(CActor*)> pFunc) {
+		auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
+
+		for (int i = 0; i < pActorManager->nbActors; i++) {
+			pFunc(pActorManager->aActors[i]);
 		}
 	}
 
@@ -154,6 +164,7 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 	}
 
 	gShowActorNamesOverlay.DrawImguiControl();
+	gOnlyActiveActors.DrawImguiControl();
 
 	if (gShowActorNamesOverlay) {
 		if (ImGui::CollapsingHeader("Overlay Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -173,7 +184,12 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 		ImGui::SetWindowPos(FrameBuffer::GetGameWindowPosition(), ImGuiCond_Always);
 		ImGui::SetWindowSize(FrameBuffer::GetGameWindowSize(), ImGuiCond_Always);
 
-		ForEachActiveActor(ShowActorOverlay);
+		if (gOnlyActiveActors) {
+			ForEachActiveActor(ShowActorOverlay);
+		}
+		else {
+			ForEachActor(ShowActorOverlay);
+		}
 
 		ImGui::End();
 	}

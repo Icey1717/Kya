@@ -190,5 +190,24 @@ void CActorBonus::ChangeManageState(int state)
 
 void CActorBonus::ChangeVisibleState(int state)
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	CBehaviourBonusBase* pCVar2;
+
+	CActor::ChangeVisibleState(state);
+
+	if ((this->flags & 0x800000) == 0) {
+		iVar1 = this->curBehaviourId;
+		if ((((iVar1 == 6) || (iVar1 == 5)) || (iVar1 == 4)) || ((iVar1 == 3 || (iVar1 == 2)))) {
+			pCVar2 = static_cast<CBehaviourBonusBase*>(GetBehaviour(this->curBehaviourId));
+			pCVar2->ChangeVisibleState(state);
+		}
+	}
+	else {
+		pCVar2 = static_cast<CBehaviourBonusBase*>(GetBehaviour(this->curBehaviourId));
+		if (pCVar2 != (CBehaviour*)0x0) {
+			pCVar2->ChangeVisibleState(state);
+		}
+	}
+
+	return;
 }

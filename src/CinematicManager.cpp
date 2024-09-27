@@ -715,74 +715,55 @@ void CCinematic::Create(ByteCode* pByteCode)
 	float fVar13;
 
 	this->flags_0x8 = 0;
-	uVar5 = pByteCode->GetU32();
-	this->prtBuffer = uVar5;
-	pcVar6 = pByteCode->GetString();
-	this->pBankName_0x48 = pcVar6;
-	pcVar6 = pByteCode->GetString();
-	this->pBankName_0x50 = pcVar6;
-	pcVar6 = pByteCode->GetString();
-	this->fileName = pcVar6;
+
+	this->prtBuffer = pByteCode->GetU32();
+
+	this->pBankName_0x48 = pByteCode->GetString();
+	this->pBankName_0x50 = pByteCode->GetString();
+	this->fileName = pByteCode->GetString();
 
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Bank A {}", this->pBankName_0x48);
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Bank B {}", this->pBankName_0x50);
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create File {}", this->fileName);
 
-	uVar5 = pByteCode->GetS32();
-	this->actorCinematicCount = uVar5;
+	this->actorCinematicCount = pByteCode->GetS32();
 
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Create Actor Cinematic Count {}", this->actorCinematicCount);
 
-	iVar7 = pByteCode->GetS32();
-	this->nonCinematicOnlyActorCount = iVar7;
-	uVar5 = pByteCode->GetS32();
-	this->count_0x20 = uVar5;
-	uVar5 = pByteCode->GetS32();
-	this->field_0x24 = uVar5;
-	iVar7 = pByteCode->GetS32();
-	this->field_0x28 = iVar7;
-	iVar7 = pByteCode->GetS32();
-	this->field_0x2c = iVar7;
-	uVar5 = pByteCode->GetU32();
-	this->field_0x4c = uVar5;
-	uVar5 = pByteCode->GetU32();
-	this->field_0x54 = uVar5;
-	iVar7 = pByteCode->GetS32();
-	this->baseB = iVar7;
-	uVar5 = pByteCode->GetU32();
-	*(uint*)&this->field_0x10 = uVar5;
-	uVar5 = pByteCode->GetU32();
-	this->flags_0x4 = uVar5;
-	fVar13 = pByteCode->GetF32();
-	this->field_0x30 = fVar13;
+	this->nonCinematicOnlyActorCount = pByteCode->GetS32();
+	this->count_0x20 = pByteCode->GetS32();
+	this->field_0x24 = pByteCode->GetS32();
+	this->field_0x28 = pByteCode->GetS32();
+	this->field_0x2c = pByteCode->GetS32();
+
+	this->field_0x4c = pByteCode->GetU32();
+	this->field_0x54 = pByteCode->GetU32();
+
+	this->baseB = pByteCode->GetS32();
+
+	*(uint*)&this->field_0x10 = pByteCode->GetU32();
+	this->flags_0x4 = pByteCode->GetU32();
+
+	this->field_0x30 = pByteCode->GetF32();
 
 	pfVar1 = (S_STREAM_FOG_DEF*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(pfVar1 + 1);
 	this->streamFogDef = *pfVar1;
 
-	iVar7 = pByteCode->GetS32();
-	this->zoneRefA.index = iVar7;
-	iVar7 = pByteCode->GetS32();
-	this->actorHeroRef.index = iVar7;
-	iVar7 = pByteCode->GetS32();
-	this->zoneRefB.index = iVar7;
-	iVar7 = pByteCode->GetS32();
-	this->zoneRefC.index = iVar7;
-	iVar7 = pByteCode->GetS32();
-	this->actorRefB.index = iVar7;
-	fVar13 = pByteCode->GetF32();
-	this->field_0x58 = fVar13;
-	iVar7 = pByteCode->GetS32();
-	this->field_0x5c = (SWITCH_MODE)iVar7;
-	fVar13 = pByteCode->GetF32();
-	this->field_0x60 = fVar13;
-	iVar7 = pByteCode->GetS32();
-	this->field_0x64 = (SWITCH_MODE)iVar7;
-	fVar13 = pByteCode->GetF32();
-	this->field_0x68 = fVar13;
+	this->zoneRefA.index = pByteCode->GetS32();
+	this->actorHeroRef.index = pByteCode->GetS32();
+	this->zoneRefB.index = pByteCode->GetS32();
+	this->zoneRefC.index = pByteCode->GetS32();
+	this->actorRefB.index = pByteCode->GetS32();
 
-	uVar5 = pByteCode->GetS32();
-	this->cineActorConfigCount = uVar5;
+	this->field_0x58 = pByteCode->GetF32();
+
+	this->field_0x5c = (SWITCH_MODE)pByteCode->GetS32();
+	this->field_0x60 = pByteCode->GetF32();
+	this->field_0x64 = (SWITCH_MODE)pByteCode->GetS32();
+	this->field_0x68 = pByteCode->GetF32();
+
+	this->cineActorConfigCount = pByteCode->GetS32();
 	uVar5 = this->cineActorConfigCount;
 	if (uVar5 != 0) {
 		this->aCineActorConfig = new CCineActorConfig[uVar5];
@@ -1904,8 +1885,7 @@ void CCinematic::Manage()
 		}
 	
 		if ((pCVar3 == (CActorHero*)0x0) ||
-			(iVar2 = edEventComputeZoneAgainstVertex
-			((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pCVar3->currentLocation , 0), iVar2 == 2)) {
+			(iVar2 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pCVar3->currentLocation , 0), iVar2 == 2)) {
 			this->flags_0x8 = this->flags_0x8 & 0xfffffdff;
 			bVar1 = this->state != CS_Stopped;
 
@@ -3069,8 +3049,7 @@ void CCinematic::FUN_001c7390(bool param_2)
 					peVar1 = (this->zoneRefC).Get();
 					bVar2 = false;
 					if ((peVar1 != (ed_zone_3d*)0x0 && CActorHero::_gThis != (CActorHero*)0x0) &&
-						(iVar3 = edEventComputeZoneAgainstVertex
-						((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1, &CActorHero::_gThis->currentLocation, 0), iVar3 != 2)) {
+						(iVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, peVar1, &CActorHero::_gThis->currentLocation, 0), iVar3 != 2)) {
 						bVar2 = true;
 					}
 				}
@@ -3106,9 +3085,11 @@ void CCinematic::Level_ClearAll()
 			this->flags_0x8 = this->flags_0x8 & 0xfffffff7;
 		}
 	}
+
 	if ((this->state != CS_Stopped) && ((this->flags_0x8 & 0x100) != 0)) {
 		Stop();
 	}
+
 	if (((this->cineBankLoadStage_0x2b4 == 4) && (this->state == CS_Stopped)) && ((this->flags_0x8 & 0x80) == 0)) {
 		pZone = (this->zoneRefB).Get();
 		bVar1 = false;
@@ -3123,13 +3104,16 @@ void CCinematic::Level_ClearAll()
 			if (bVar1) {
 				bVar1 = (this->flags_0x8 & 0x400) != 0;
 			}
+
 			if (!bVar1) {
 				bVar1 = (this->flags_0x8 & 0x28) != 0;
 			}
+
 			bVar1 = (bool)(bVar1 ^ 1);
 			if (!bVar1) {
 				bVar1 = (this->flags_0x8 & 0x800) != 0;
 			}
+
 			if (bVar1) {
 				return;
 			}
@@ -3141,6 +3125,7 @@ void CCinematic::Level_ClearAll()
 			this->flags_0x8 = this->flags_0x8 | 0x2000;
 		}
 	}
+
 	return;
 }
 
@@ -3804,8 +3789,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 				this->field_0x4 = this->field_0x4 & 0xdfffffff;
 				if ((puVar1 != (undefined*)0x0) &&
 					((pEVar2 != (EventChunk_24*)0x0 &&
-						(uVar8 = edEventComputeZoneAgainstVertex
-						((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, pEVar2,
+						(uVar8 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, pEVar2,
 							(edF32VECTOR4*)(puVar1 + 0x30), 0), (uVar8 & 1) != 0)))) {
 					this->field_0x4 = this->field_0x4 | 0x20000000;
 				}
@@ -3866,8 +3850,7 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 		this->field_0x1c = pTVar2->scaledTotalTime;
 		this->field_0x4 = this->field_0x4 & 0xdfffffff;
 		if (((this->pActor != (undefined*)0x0) && (this->pEventChunk24_0x18 != (EventChunk_24*)0x0)) &&
-			(uVar3 = edEventComputeZoneAgainstVertex
-			((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, this->pEventChunk24_0x18,
+			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, this->pEventChunk24_0x18,
 				(edF32VECTOR4*)(this->pActor + 0x30), 0), (uVar3 & 1) != 0)) {
 			this->field_0x4 = this->field_0x4 | 0x20000000;
 		})

@@ -19,7 +19,8 @@ struct NotifyWindParam
 
 class CFxWind : public CObject
 {
-
+public:
+	void SectorChange(int oldSectorId, int newSectorId) { IMPLEMENTATION_GUARD_WIND_FX(); }
 };
 
 class CBehaviourWind : public CBehaviour 
@@ -35,20 +36,26 @@ class CBehaviourWind : public CBehaviour
 	CActorWind* pOwner;
 };
 
-struct S_TARGET_STREAM_REF
-{
-	int entryCount;
-	S_STREAM_NTF_TARGET_SWITCH aEntries[];
-};
-
 class CActorWind : public CActor 
 {
 public:
 	// CActor
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
+	virtual void Term();
+	virtual void Draw() { IMPLEMENTATION_GUARD(); }
+	virtual void ComputeLighting() {}
+	virtual void Reset() { IMPLEMENTATION_GUARD(); }
+	virtual void SectorChange(int oldSectorId, int newSectorId);
+	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
+	virtual void ChangeManageState(int state);
+	virtual void ChangeVisibleState(int state);
+	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5) { IMPLEMENTATION_GUARD(); }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
 
 	void BehaviourWind_Manage();
 
@@ -62,6 +69,8 @@ public:
 
 	CSectorHierarchy sectorObj;
 	CBehaviourWind behaviourWind;
+
+	int materialId;
 
 	uint nbFxWind;
 	CFxWind* aFxWind;
@@ -91,6 +100,7 @@ public:
 	S_STREAM_REF<ed_zone_3d> field_0x1b8;
 	S_ACTOR_STREAM_REF* field_0x1bc;
 	S_STREAM_REF<ed_zone_3d> field_0x1c4;
+	uint field_0x1c8;
 
 	S_STREAM_REF<CWayPoint> field_0x1cc;
 

@@ -725,6 +725,7 @@ void ed3DScenePopCluster(ed_3D_Scene* pScene, ed_g3d_manager* pMeshInfo);
 void ed3DUnInstallG3D(ed_g3d_manager* pMeshInfo);
 void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo);
 
+void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag);
 
 #ifdef PLATFORM_WIN

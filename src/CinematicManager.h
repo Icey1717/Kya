@@ -311,6 +311,12 @@ struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
 	undefined4 field_0x18;
 };
 
+struct S_TARGET_STREAM_REF
+{
+	int entryCount;
+	S_STREAM_NTF_TARGET_SWITCH aEntries[];
+};
+
 PACK(
 struct S_STREAM_NTF_TARGET_SWITCH_LIST {
 	int count;

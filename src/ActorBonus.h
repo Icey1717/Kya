@@ -6,7 +6,8 @@
 
 class CBehaviourBonusBase : public CBehaviour
 {
-
+public:
+	virtual void ChangeVisibleState(int state) {}
 };
 
 class CBehaviourBonusFlock : public CBehaviourBonusBase

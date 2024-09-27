@@ -336,6 +336,7 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
+	virtual void ChangeVisibleState(int bVisible);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
 	virtual void SetState(int newState, int animType);
@@ -356,6 +357,7 @@ public:
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual CPlayerInput* GetInputManager(int, int);
+	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
 
 	void PreInit();
 	void SetScaleVector(float x, float y, float z);
@@ -377,7 +379,6 @@ public:
 
 	void SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation);
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
-	void ChangeVisibleState(int bVisible);
 
 	void UpdateVisibility();
 	void FUN_00101110(CActor* pOtherActor);
@@ -422,8 +423,6 @@ public:
 	void FUN_00115ea0(uint param_2);
 
 	void ComputeAltitude();
-
-	void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
 
 	int ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
