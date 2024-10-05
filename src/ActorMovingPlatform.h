@@ -24,7 +24,7 @@ class CBehaviourPlatform : public CBehaviour
 {
 public:
 	virtual void Create(ByteCode* pByteCode) {}
-	virtual void field_0x54(int) {}
+	virtual void ChangeManageState(int state) {}
 	CActorMovingPlatform* pOwner;
 };
 
@@ -38,7 +38,7 @@ public:
 	virtual void ManageFrozen();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
-	virtual void field_0x54(int param_2);
+	virtual void ChangeManageState(int state);
 
 	int field_0x8;
 	int field_0xc;
@@ -225,10 +225,7 @@ struct CActorMovingPlatform_SubObj {
 	undefined field_0x19;
 	undefined field_0x1a;
 	undefined field_0x1b;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
+	uint field_0x1c;
 	uint field_0x20;
 	uint flags_0x24;
 	int field_0x28;
@@ -283,16 +280,27 @@ public:
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
+	virtual void Reset();
 	virtual void CheckpointReset();
+	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual void TermBehaviour(int behaviourId, undefined8) { IMPLEMENTATION_GUARD(); }
 	virtual StateConfig* GetStateCfg(int state);
+	virtual void ChangeManageState(int state);
+	virtual bool IsLockable();
+	virtual void CinematicMode_Manage();
+	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	bool Slab_MoveAndDetectCarriedObject(CBehaviourPlatformSlab* pBehaviour, int param_3);
 	void ManageNoFrictionZones(int param_2);
 
 	bool StateTrajectory(float currentFillAmount, CBehaviourPlatformTrajectory* pBehaviour, bool param_4);
 
+	void Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int param_3, CActorsTable* pActorTable);
 	void Platform_UpdatePosition(edF32VECTOR4* pPosition, int param_3, CActorsTable* pActorsTable);
 	void Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAbsolute* pPathFollowerAbs, int param_3, int param_4, S_TRAJ_POS* pTrajPos, CActorsTable* pActorsTable, edF32VECTOR4* param_7);
 

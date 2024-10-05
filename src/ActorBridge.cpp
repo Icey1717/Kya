@@ -641,6 +641,22 @@ void CActorBridge::Init()
 	this->field_0x354 = -1;
 }
 
+void CActorBridge::Term()
+{
+	if (this->pBridgeMem != (void*)0x0) {
+		delete(this->pBridgeMem);
+		this->pBridgeMem = NULL;
+	}
+	if (this->aHeights != (float*)0x0) {
+		delete(this->aHeights);
+		this->aHeights = (float*)0x0;
+	}
+
+	CActor::Term();
+
+	return;
+}
+
 StateConfig CActorBridge::gStateCfg_BRG[3] =
 {
 	StateConfig(0, 0),
@@ -1063,9 +1079,8 @@ LAB_001e1120:
 					local_1a0.entryCount = 0;
 
 					if (this->typeID == 0xd) {
-						IMPLEMENTATION_GUARD(
 						pMovingPlatform->Platform_UpdateMatrix(&auStack64, 1, &local_1a0);
-						pMovingPlatform->GenericManage(1, 1, -1, -1);)
+						pMovingPlatform->GenericManage(1, 1, -1, -1);
 					}
 					else {
 						pMovingPlatformCollision = this->pCollisionData;

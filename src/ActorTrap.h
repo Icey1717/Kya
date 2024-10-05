@@ -103,6 +103,7 @@ public:
 	virtual void Init();
 	virtual void Draw();
 	virtual void Reset();
+	virtual void CheckpointReset();
 
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);

@@ -42,6 +42,11 @@ void CActorTrap::Reset()
 	CActorMovable::Reset();
 }
 
+void CActorTrap::CheckpointReset()
+{
+	CActorMovable::CheckpointReset();
+}
+
 CBehaviour* CActorTrap::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;

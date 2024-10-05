@@ -131,8 +131,12 @@ public:
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
-	virtual StateConfig* GetStateCfg(int state);
+	virtual void Term();
+	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual StateConfig* GetStateCfg(int state);
+
 
 	void Initialize();
 	void ApplyStepsCollisionScale(int param_2);

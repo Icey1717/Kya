@@ -337,14 +337,17 @@ public:
 	virtual void SaveContext(uint*, int);
 	virtual void LoadContext(uint*, int);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual void TermBehaviour(int behaviourId, undefined8) { IMPLEMENTATION_GUARD(); }
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
 	virtual void ChangeVisibleState(int bVisible);
+	virtual bool IsLockable();
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
 	virtual void SetState(int newState, int animType);
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
 	virtual void CinematicMode_Enter(bool bSetState);
+	virtual void CinematicMode_Manage() { return; }
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
 	virtual uint IsLookingAt();

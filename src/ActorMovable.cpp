@@ -127,6 +127,16 @@ void S_TILT_DATA::Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStream
 	return;
 }
 
+void S_TILT_DATA::Reset()
+{
+	this->oscQuat.field_0x0 = gF32Vertex4Zero;
+	this->oscQuat.field_0x10 = gF32Vertex4Zero;
+
+	(this->oscValue).field_0x0 = 0.0f;
+	(this->oscValue).field_0x4 = 0.0f;
+	return;
+}
+
 bool S_OSCILLATING_VALUE::Update(float param_1, float deltaTime, S_OSCILLATION_CONFIG* pConfig)
 {
 	bool bVar1;
@@ -165,11 +175,23 @@ void S_PUSH_DATA::Init()
 {
 	(this->oscValue).field_0x0 = 0.0f;
 	(this->oscValue).field_0x4 = 0.0f;
+
+	return;
+}
+
+void S_PUSH_DATA::Reset()
+{
+	(this->oscValue).field_0x0 = 0.0f;
+	(this->oscValue).field_0x4 = 0.0f;
+
+	return;
 }
 
 CActorMovable::CActorMovable()
 {
 	this->dynamic.weightB = 0.0f;
+
+	return;
 }
 
 bool CActorMovable::IsKindOfObject(ulong kind)
@@ -191,6 +213,15 @@ void CActorMovable::Create(ByteCode* pByteCode)
 }
 
 
+void CActorMovable::Reset()
+{
+	CActor::Reset();
+	this->dynamic.Reset(this);
+	(this->field_0x1c0).x = 1e+30f;
+
+	return;
+}
+
 void CActorMovable::CheckpointReset()
 {
 	CActor::CheckpointReset();
@@ -209,6 +240,17 @@ void CActorMovable::SetState(int newState, int animType)
 	}
 
 	CActor::SetState(newState, animType);
+	return;
+}
+
+void CActorMovable::ChangeManageState(int state)
+{
+	CActor::ChangeManageState(state);
+
+	if (state != 0) {
+		this->dynamic.ClearLocalData();
+	}
+
 	return;
 }
 
@@ -1527,6 +1569,23 @@ void CDynamic::Reset(CActor* pActor)
 	else {
 		this->rotationQuat = pActor->rotationQuat;
 	}
+	return;
+}
+
+void CDynamic::ClearLocalData()
+{
+	this->field_0x4c = 0;
+	this->flags = 0;
+
+	this->velocityDirectionEuler = gF32Vector4UnitZ;
+	this->horizontalVelocityDirectionEuler = gF32Vector4UnitZ;
+	this->field_0x10 = gF32Vector4Zero;
+
+	this->speed = 0.0f;
+	this->linearAcceleration = 0.0f;
+	this->horizontalLinearAcceleration = 0.0f;
+	this->weightA = 1.0f;
+
 	return;
 }
 

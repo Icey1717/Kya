@@ -1760,6 +1760,39 @@ void CActor::SV_InstanciateMaterialBank()
 	return;
 }
 
+bool CActor::IsLockable()
+{
+	bool bVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	bool bLockable;
+
+	if (this->actorState == -1) {
+		uVar3 = 0;
+	}
+	else {
+		pSVar2 = GetStateCfg(this->actorState);
+		uVar3 = pSVar2->flags_0x4;
+	}
+
+	bVar1 = this->pCollisionData != (CCollision*)0x0;
+	bLockable = false;
+
+	if (bVar1) {
+		bVar1 = (uVar3 & 1) == 0;
+	}
+
+	if (bVar1) {
+		bVar1 = (uVar3 & 4) != 0;
+	}
+
+	if ((bVar1) && ((CActorFactory::gClassProperties[this->typeID].field_0x4 & 0x20) != 0)) {
+		bLockable = true;
+	}
+
+	return bLockable;
+}
+
 void CActor::SetupDefaultPosition()
 {
 	edF32VECTOR3* v0;

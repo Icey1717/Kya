@@ -61,6 +61,8 @@ void CActorSwitch::Init()
 
 void CActorSwitch::Reset()
 {
+	CActor::Reset();
+
 	for (int i = 0; i < this->pTargetStreamRef->entryCount; i++) {
 		this->pTargetStreamRef->aEntries[i].Reset();
 	}

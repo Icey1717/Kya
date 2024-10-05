@@ -124,6 +124,12 @@ public:
 	void SetPriority(int newPriority);
 };
 
+class CPathFinderClient 
+{
+public:
+	void CleanPathDynamic() { IMPLEMENTATION_GUARD_LOG(); }
+};
+
 class CActorAutonomous : public CActorMovable
 {
 public:
@@ -137,6 +143,8 @@ public:
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual StateConfig* GetStateCfg(int state);
+	virtual void ChangeManageState(int state);
+	virtual bool IsLockable();
 
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
@@ -162,6 +170,8 @@ public:
 	virtual CLifeInterface* GetLifeInterface();
 	virtual CLifeInterface* GetLifeInterfaceOther();
 	virtual void LifeDecrease(float amount);
+
+	virtual CPathFinderClient* GetPathfinderClient() { return (CPathFinderClient*)0x0; }
 
 	float field_0x2e4;
 

@@ -2131,6 +2131,911 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 	return;
 }
 
+int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActor* pCVar1;
+	S_BRIDGE_ACTOR_STREAM* pSVar2;
+	CSound* pCVar3;
+	int iVar4;
+	uint uVar5;
+	int iVar6;
+	int iVar7;
+	int iVar8;
+	uint uVar9;
+	undefined4 uVar10;
+
+	if (msg == 3) {
+		IMPLEMENTATION_GUARD(
+		(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+		iVar6 = 0;
+		if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+			iVar6 = this->pCameraStream->entryCount;
+		}
+		iVar7 = 0;
+		if (0 < iVar6) {
+			iVar8 = 0;
+			do {
+				iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+				if (*(int*)(iVar4 + 4) == 7) {
+					S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+					S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+					S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+					pCVar3 = *(CSound**)(iVar4 + 0x48);
+					if (pCVar3 != (CSound*)0x0) {
+						uVar5 = *(uint*)&this->pActorSound->field_0x4;
+						uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+						if ((this->movingPlatformFlags & 2) != 0) {
+							uVar9 = uVar9 + 1;
+						}
+						for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+							iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+							if (iVar4 == 0) {
+								CActorSound::SoundStart
+								(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+								break;
+							}
+						}
+					}
+				}
+				iVar7 = iVar7 + 1;
+				iVar8 = iVar8 + 0x48;
+			} while (iVar7 < iVar6);
+		})
+		uVar5 = 1;
+	}
+	else {
+		if (msg == 2) {
+			IMPLEMENTATION_GUARD(
+			/* WARNING: Load size is inaccurate */
+			switch (*pMsgParam) {
+			case 4:
+				iVar6 = *(int*)((int)pMsgParam + 4);
+				if (iVar6 == 4) {
+					uVar10 = 0;
+					if ((this->pProperties->flags_0x24 & 0x1000) != 0) {
+						(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+						iVar6 = 0;
+						if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+							iVar6 = this->pCameraStream->entryCount;
+						}
+						iVar7 = 0;
+						if (0 < iVar6) {
+							iVar8 = 0;
+							do {
+								iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+								if (*(int*)(iVar4 + 4) == 7) {
+									S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+									S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+									S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+									pCVar3 = *(CSound**)(iVar4 + 0x48);
+									if (pCVar3 != (CSound*)0x0) {
+										uVar5 = *(uint*)&this->pActorSound->field_0x4;
+										uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+										if ((this->movingPlatformFlags & 2) != 0) {
+											uVar9 = uVar9 + 1;
+										}
+										for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+											iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+											if (iVar4 == 0) {
+												CActorSound::SoundStart
+												(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+												break;
+											}
+										}
+									}
+								}
+								iVar7 = iVar7 + 1;
+								iVar8 = iVar8 + 0x48;
+							} while (iVar7 < iVar6);
+						}
+						uVar10 = 1;
+					}
+					iVar6 = 0;
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar6 = this->pCameraStream->entryCount;
+					}
+					iVar7 = 0;
+					if (0 < iVar6) {
+						iVar8 = 0;
+						do {
+							iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+							if (*(int*)(iVar4 + 4) == 0xd) {
+								S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+								pCVar3 = *(CSound**)(iVar4 + 0x48);
+								if (pCVar3 != (CSound*)0x0) {
+									uVar5 = *(uint*)&this->pActorSound->field_0x4;
+									uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar9 = uVar9 + 1;
+									}
+									for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+										iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+										if (iVar4 == 0) {
+											CActorSound::SoundStart
+											(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+											break;
+										}
+									}
+								}
+							}
+							iVar7 = iVar7 + 1;
+							iVar8 = iVar8 + 0x48;
+						} while (iVar7 < iVar6);
+					}
+					*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+				}
+				else {
+					if ((iVar6 == 3) || (iVar6 == 1)) {
+						uVar10 = 0;
+						if ((this->pProperties->flags_0x24 & 0x1000) != 0) {
+							(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+							iVar6 = 0;
+							if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+								iVar6 = this->pCameraStream->entryCount;
+							}
+							iVar7 = 0;
+							if (0 < iVar6) {
+								iVar8 = 0;
+								do {
+									iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+									if (*(int*)(iVar4 + 4) == 7) {
+										S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+										S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+										S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+										pCVar3 = *(CSound**)(iVar4 + 0x48);
+										if (pCVar3 != (CSound*)0x0) {
+											uVar5 = *(uint*)&this->pActorSound->field_0x4;
+											uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+											if ((this->movingPlatformFlags & 2) != 0) {
+												uVar9 = uVar9 + 1;
+											}
+											for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+												iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+												if (iVar4 == 0) {
+													CActorSound::SoundStart
+													(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0
+													);
+													break;
+												}
+											}
+										}
+									}
+									iVar7 = iVar7 + 1;
+									iVar8 = iVar8 + 0x48;
+								} while (iVar7 < iVar6);
+							}
+							uVar10 = 1;
+						}
+						iVar6 = 0;
+						if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+							iVar6 = this->pCameraStream->entryCount;
+						}
+						iVar7 = 0;
+						if (0 < iVar6) {
+							iVar8 = 0;
+							do {
+								iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+								if (*(int*)(iVar4 + 4) == 0xc) {
+									S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+									S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+									S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+									pCVar3 = *(CSound**)(iVar4 + 0x48);
+									if (pCVar3 != (CSound*)0x0) {
+										uVar5 = *(uint*)&this->pActorSound->field_0x4;
+										uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+										if ((this->movingPlatformFlags & 2) != 0) {
+											uVar9 = uVar9 + 1;
+										}
+										for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+											iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+											if (iVar4 == 0) {
+												CActorSound::SoundStart
+												(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+												break;
+											}
+										}
+									}
+								}
+								iVar7 = iVar7 + 1;
+								iVar8 = iVar8 + 0x48;
+							} while (iVar7 < iVar6);
+						}
+						*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+					}
+					else {
+						if (iVar6 == 2) {
+							uVar10 = 0;
+							if ((this->pProperties->flags_0x24 & 0x1000) != 0) {
+								(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+								iVar6 = 0;
+								if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+									iVar6 = this->pCameraStream->entryCount;
+								}
+								iVar7 = 0;
+								if (0 < iVar6) {
+									iVar8 = 0;
+									do {
+										iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+										if (*(int*)(iVar4 + 4) == 7) {
+											S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+											S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this)
+												;
+											S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+											pCVar3 = *(CSound**)(iVar4 + 0x48);
+											if (pCVar3 != (CSound*)0x0) {
+												uVar5 = *(uint*)&this->pActorSound->field_0x4;
+												uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+												if ((this->movingPlatformFlags & 2) != 0) {
+													uVar9 = uVar9 + 1;
+												}
+												for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+													iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+													if (iVar4 == 0) {
+														CActorSound::SoundStart
+														(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0,
+															(SOUND_SPATIALIZATION_PARAM*)0x0);
+														break;
+													}
+												}
+											}
+										}
+										iVar7 = iVar7 + 1;
+										iVar8 = iVar8 + 0x48;
+									} while (iVar7 < iVar6);
+								}
+								uVar10 = 1;
+							}
+							iVar6 = 0;
+							if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+								iVar6 = this->pCameraStream->entryCount;
+							}
+							iVar7 = 0;
+							if (0 < iVar6) {
+								iVar8 = 0;
+								do {
+									iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+									if (*(int*)(iVar4 + 4) == 0xb) {
+										S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+										S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+										S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+										pCVar3 = *(CSound**)(iVar4 + 0x48);
+										if (pCVar3 != (CSound*)0x0) {
+											uVar5 = *(uint*)&this->pActorSound->field_0x4;
+											uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+											if ((this->movingPlatformFlags & 2) != 0) {
+												uVar9 = uVar9 + 1;
+											}
+											for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+												iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+												if (iVar4 == 0) {
+													CActorSound::SoundStart
+													(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0
+													);
+													break;
+												}
+											}
+										}
+									}
+									iVar7 = iVar7 + 1;
+									iVar8 = iVar8 + 0x48;
+								} while (iVar7 < iVar6);
+							}
+							*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+						}
+					}
+				}
+				break;
+			case 5:
+				uVar10 = 0;
+				if ((this->pProperties->flags_0x24 & 0x400) != 0) {
+					(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+					iVar6 = 0;
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar6 = this->pCameraStream->entryCount;
+					}
+					iVar7 = 0;
+					if (0 < iVar6) {
+						iVar8 = 0;
+						do {
+							iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+							if (*(int*)(iVar4 + 4) == 7) {
+								S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+								pCVar3 = *(CSound**)(iVar4 + 0x48);
+								if (pCVar3 != (CSound*)0x0) {
+									uVar5 = *(uint*)&this->pActorSound->field_0x4;
+									uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar9 = uVar9 + 1;
+									}
+									for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+										iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+										if (iVar4 == 0) {
+											CActorSound::SoundStart
+											(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+											break;
+										}
+									}
+								}
+							}
+							iVar7 = iVar7 + 1;
+							iVar8 = iVar8 + 0x48;
+						} while (iVar7 < iVar6);
+					}
+					uVar10 = 1;
+				}
+				iVar6 = 0;
+				if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+					iVar6 = this->pCameraStream->entryCount;
+				}
+				iVar7 = 0;
+				if (0 < iVar6) {
+					iVar8 = 0;
+					do {
+						iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+						if (*(int*)(iVar4 + 4) == 0xe) {
+							S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+							pCVar3 = *(CSound**)(iVar4 + 0x48);
+							if (pCVar3 != (CSound*)0x0) {
+								uVar5 = *(uint*)&this->pActorSound->field_0x4;
+								uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+								if ((this->movingPlatformFlags & 2) != 0) {
+									uVar9 = uVar9 + 1;
+								}
+								for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+									iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+									if (iVar4 == 0) {
+										CActorSound::SoundStart
+										(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+										break;
+									}
+								}
+							}
+						}
+						iVar7 = iVar7 + 1;
+						iVar8 = iVar8 + 0x48;
+					} while (iVar7 < iVar6);
+				}
+				*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+				break;
+			default:
+				*(undefined4*)((int)pMsgParam + 0x74) = 0;
+				break;
+			case 8:
+				uVar10 = 0;
+				if ((this->pProperties->flags_0x24 & 0x20000) != 0) {
+					(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+					iVar6 = 0;
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar6 = this->pCameraStream->entryCount;
+					}
+					iVar7 = 0;
+					if (0 < iVar6) {
+						iVar8 = 0;
+						do {
+							iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+							if (*(int*)(iVar4 + 4) == 7) {
+								S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+								pCVar3 = *(CSound**)(iVar4 + 0x48);
+								if (pCVar3 != (CSound*)0x0) {
+									uVar5 = *(uint*)&this->pActorSound->field_0x4;
+									uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar9 = uVar9 + 1;
+									}
+									for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+										iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+										if (iVar4 == 0) {
+											CActorSound::SoundStart
+											(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+											break;
+										}
+									}
+								}
+							}
+							iVar7 = iVar7 + 1;
+							iVar8 = iVar8 + 0x48;
+						} while (iVar7 < iVar6);
+					}
+					uVar10 = 1;
+				}
+				iVar6 = 0;
+				if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+					iVar6 = this->pCameraStream->entryCount;
+				}
+				iVar7 = 0;
+				if (0 < iVar6) {
+					iVar8 = 0;
+					do {
+						iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+						if (*(int*)(iVar4 + 4) == 0x13) {
+							S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+							pCVar3 = *(CSound**)(iVar4 + 0x48);
+							if (pCVar3 != (CSound*)0x0) {
+								uVar5 = *(uint*)&this->pActorSound->field_0x4;
+								uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+								if ((this->movingPlatformFlags & 2) != 0) {
+									uVar9 = uVar9 + 1;
+								}
+								for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+									iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+									if (iVar4 == 0) {
+										CActorSound::SoundStart
+										(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+										break;
+									}
+								}
+							}
+						}
+						iVar7 = iVar7 + 1;
+						iVar8 = iVar8 + 0x48;
+					} while (iVar7 < iVar6);
+				}
+				*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+				break;
+			case 9:
+				if (pSender->typeID == 0x20) {
+					uVar10 = 0;
+					if ((this->pProperties->flags_0x24 & 0x10000) != 0) {
+						(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+						iVar6 = 0;
+						if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+							iVar6 = this->pCameraStream->entryCount;
+						}
+						iVar7 = 0;
+						if (0 < iVar6) {
+							iVar8 = 0;
+							do {
+								iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+								if (*(int*)(iVar4 + 4) == 7) {
+									S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+									S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+									S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+									pCVar3 = *(CSound**)(iVar4 + 0x48);
+									if (pCVar3 != (CSound*)0x0) {
+										uVar5 = *(uint*)&this->pActorSound->field_0x4;
+										uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+										if ((this->movingPlatformFlags & 2) != 0) {
+											uVar9 = uVar9 + 1;
+										}
+										for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+											iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+											if (iVar4 == 0) {
+												CActorSound::SoundStart
+												(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+												break;
+											}
+										}
+									}
+								}
+								iVar7 = iVar7 + 1;
+								iVar8 = iVar8 + 0x48;
+							} while (iVar7 < iVar6);
+						}
+						uVar10 = 1;
+					}
+					iVar6 = 0;
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar6 = this->pCameraStream->entryCount;
+					}
+					iVar7 = 0;
+					if (0 < iVar6) {
+						iVar8 = 0;
+						do {
+							iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+							if (*(int*)(iVar4 + 4) == 0x12) {
+								S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+								pCVar3 = *(CSound**)(iVar4 + 0x48);
+								if (pCVar3 != (CSound*)0x0) {
+									uVar5 = *(uint*)&this->pActorSound->field_0x4;
+									uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar9 = uVar9 + 1;
+									}
+									for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+										iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+										if (iVar4 == 0) {
+											CActorSound::SoundStart
+											(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+											break;
+										}
+									}
+								}
+							}
+							iVar7 = iVar7 + 1;
+							iVar8 = iVar8 + 0x48;
+						} while (iVar7 < iVar6);
+					}
+					*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+				}
+				break;
+			case 10:
+				uVar10 = 0;
+				if ((this->pProperties->flags_0x24 & 0x800) != 0) {
+					(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+					iVar6 = 0;
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar6 = this->pCameraStream->entryCount;
+					}
+					iVar7 = 0;
+					if (0 < iVar6) {
+						iVar8 = 0;
+						do {
+							iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+							if (*(int*)(iVar4 + 4) == 7) {
+								S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+								pCVar3 = *(CSound**)(iVar4 + 0x48);
+								if (pCVar3 != (CSound*)0x0) {
+									uVar5 = *(uint*)&this->pActorSound->field_0x4;
+									uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar9 = uVar9 + 1;
+									}
+									for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+										iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+										if (iVar4 == 0) {
+											CActorSound::SoundStart
+											(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+											break;
+										}
+									}
+								}
+							}
+							iVar7 = iVar7 + 1;
+							iVar8 = iVar8 + 0x48;
+						} while (iVar7 < iVar6);
+					}
+					uVar10 = 1;
+				}
+				iVar6 = 0;
+				if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+					iVar6 = this->pCameraStream->entryCount;
+				}
+				iVar7 = 0;
+				if (0 < iVar6) {
+					iVar8 = 0;
+					do {
+						iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+						if (*(int*)(iVar4 + 4) == 0xf) {
+							S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+							pCVar3 = *(CSound**)(iVar4 + 0x48);
+							if (pCVar3 != (CSound*)0x0) {
+								uVar5 = *(uint*)&this->pActorSound->field_0x4;
+								uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+								if ((this->movingPlatformFlags & 2) != 0) {
+									uVar9 = uVar9 + 1;
+								}
+								for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+									iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+									if (iVar4 == 0) {
+										CActorSound::SoundStart
+										(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+										break;
+									}
+								}
+							}
+						}
+						iVar7 = iVar7 + 1;
+						iVar8 = iVar8 + 0x48;
+					} while (iVar7 < iVar6);
+				}
+				*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+				break;
+			case 0xb:
+				uVar10 = 0;
+				if ((this->pProperties->flags_0x24 & 0x8000) != 0) {
+					(*(this->pVTable)->SetBehaviour)((CActor*)this, 6, -1, -1);
+					iVar6 = 0;
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar6 = this->pCameraStream->entryCount;
+					}
+					iVar7 = 0;
+					if (0 < iVar6) {
+						iVar8 = 0;
+						do {
+							iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+							if (*(int*)(iVar4 + 4) == 7) {
+								S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+								S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+								pCVar3 = *(CSound**)(iVar4 + 0x48);
+								if (pCVar3 != (CSound*)0x0) {
+									uVar5 = *(uint*)&this->pActorSound->field_0x4;
+									uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar9 = uVar9 + 1;
+									}
+									for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+										iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+										if (iVar4 == 0) {
+											CActorSound::SoundStart
+											(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+											break;
+										}
+									}
+								}
+							}
+							iVar7 = iVar7 + 1;
+							iVar8 = iVar8 + 0x48;
+						} while (iVar7 < iVar6);
+					}
+					uVar10 = 1;
+				}
+				iVar6 = 0;
+				if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+					iVar6 = this->pCameraStream->entryCount;
+				}
+				iVar7 = 0;
+				if (0 < iVar6) {
+					iVar8 = 0;
+					do {
+						iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
+						if (*(int*)(iVar4 + 4) == 0x11) {
+							S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), (CActor*)this);
+							S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), (CActor*)this);
+							pCVar3 = *(CSound**)(iVar4 + 0x48);
+							if (pCVar3 != (CSound*)0x0) {
+								uVar5 = *(uint*)&this->pActorSound->field_0x4;
+								uVar9 = (uint)((this->movingPlatformFlags & 1) != 0);
+								if ((this->movingPlatformFlags & 2) != 0) {
+									uVar9 = uVar9 + 1;
+								}
+								for (; uVar9 < uVar5; uVar9 = uVar9 + 1) {
+									iVar4 = CActorSound::IsInstanceAlive(this->pActorSound, uVar9);
+									if (iVar4 == 0) {
+										CActorSound::SoundStart
+										(this->pActorSound, (CActor*)this, uVar9, pCVar3, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+										break;
+									}
+								}
+							}
+						}
+						iVar7 = iVar7 + 1;
+						iVar8 = iVar8 + 0x48;
+					} while (iVar7 < iVar6);
+				}
+				*(undefined4*)((int)pMsgParam + 0x74) = uVar10;
+			})
+		}
+		else {
+			if (msg == 1) {
+				return (uint)((this->movingPlatformFlags & 8) != 0);
+			}
+			if (msg == 0x3d) {
+				IMPLEMENTATION_GUARD(
+				iVar7 = 0;
+				iVar6 = 0;
+				while (true) {
+					pSVar2 = this->pActorStream;
+					iVar8 = 0;
+					if (pSVar2 != (S_BRIDGE_ACTOR_STREAM*)0x0) {
+						iVar8 = pSVar2->entryCount;
+					}
+					if (iVar8 <= iVar7) break;
+					iVar8 = (int)&pSVar2->entryCount + iVar6;
+					pCVar1 = *(CActor**)(iVar8 + 4);
+					if (pSender == pCVar1) {
+						(*pCVar1->pVTable->TieToActor)(pCVar1, (CActor*)this, *(int*)(iVar8 + 8), 1, &this->field_0x200);
+					}
+					iVar6 = iVar6 + 8;
+					iVar7 = iVar7 + 1;
+				})
+			}
+		}
+
+		uVar5 = CActorMovable::InterpretMessage(pSender, msg, pMsgParam);
+	}
+
+	return uVar5;
+}
+
+int CActorMovingPlatform::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+{
+	int iVar1;
+
+	if ((*param_5 == 1) && (param_3 == 2)) {
+		if (param_5[1] == 0) {
+			IMPLEMENTATION_GUARD(
+			Die(this, 1);)
+		}
+		iVar1 = 1;
+	}
+	else {
+		iVar1 = CActor::InterpretEvent(pEventMessage, (uint)param_3, param_4, param_5);
+	}
+
+	return iVar1;
+}
+
+bool CActorMovingPlatform::IsLockable()
+{
+	bool bIsLockable;
+
+	bIsLockable = (this->movingPlatformFlags & 4) != 0;
+
+	if (bIsLockable) {
+		bIsLockable = CActor::IsLockable();
+		bIsLockable = bIsLockable != false;
+	}
+
+	return bIsLockable;
+}
+
+void CActorMovingPlatform::CinematicMode_Manage()
+{
+	GenericManage(1, 0, -1, -1);
+	return;
+}
+
+void CActorMovingPlatform::CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition)
+{
+	Platform_UpdateMatrix(pPosition, 1, (CActorsTable*)0x0);
+	return;
+}
+
+void CActorMovingPlatform::ChangeManageState(int state)
+{
+	uint uVar1;
+	CActor* pCVar2;
+	CinNamedObject30* pCVar3;
+	bool bVar4;
+	CBehaviourPlatform* pCVar5;
+
+	CActorMovable::ChangeManageState(state);
+
+	if (state == 0) {
+		pCVar2 = this->field_0x1f0;
+		if (((pCVar2 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
+			(bVar4 = true, this->field_0x1ec != pCVar2->pCinData)) {
+			bVar4 = false;
+		}
+
+		if (bVar4) {
+			if (((pCVar2 != (CActor*)0x0) && (pCVar3 = this->field_0x1ec, pCVar3 != (CinNamedObject30*)0x0)) &&
+				(pCVar3 == pCVar2->pCinData)) {
+				IMPLEMENTATION_GUARD(
+				(*pCVar2->pVTable->IsKindOfObject)(pCVar2, (int)pCVar3);)
+			}
+			this->field_0x1f0 = (CActor*)0x0;
+			this->field_0x1ec = (CinNamedObject30*)0x0;
+		}
+
+		this->field_0x1ec = (CinNamedObject30*)0x0;
+		this->field_0x1f0 = (CActor*)0x0;
+
+		pCVar2 = this->field_0x1f8;
+		if (((pCVar2 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
+			(bVar4 = true, this->field_0x1f4 != pCVar2->pCinData)) {
+			bVar4 = false;
+		}
+
+		if (bVar4) {
+			if (((pCVar2 != (CActor*)0x0) && (pCVar3 = this->field_0x1f4, pCVar3 != (CinNamedObject30*)0x0)) &&
+				(pCVar3 == pCVar2->pCinData)) {
+				IMPLEMENTATION_GUARD(
+				(*pCVar2->pVTable->IsKindOfObject)(pCVar2, (int)pCVar3);)
+			}
+			this->field_0x1f8 = (CActor*)0x0;
+			this->field_0x1f4 = (CinNamedObject30*)0x0;
+		}
+
+		this->field_0x1f4 = (CinNamedObject30*)0x0;
+		this->field_0x1f8 = (CActor*)0x0;
+	}
+	else {
+		if ((this->movingPlatformFlags & 0x10) != 0) {
+			uVar1 = this->pProperties->field_0x1c;
+			if (uVar1 != 0xffffffff) {
+				if (((this->field_0x1f0 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
+					(this->field_0x1ec != this->field_0x1f0->pCinData)) {
+					bVar4 = false;
+				}
+				else {
+					bVar4 = true;
+				}
+				if (!bVar4) {
+					IMPLEMENTATION_GUARD_FX(
+					CParticlesManager::GetDynamicFx
+					(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1ec, uVar1, 0xffffffffffffffff);)
+				}
+			}
+
+			pCVar2 = this->field_0x1f0;
+			if (((pCVar2 == (CActor*)0x0) || (this->field_0x1ec == (CinNamedObject30*)0x0)) ||
+				(bVar4 = true, this->field_0x1ec != pCVar2->pCinData)) {
+				bVar4 = false;
+			}
+			if (bVar4) {
+				if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
+					(this->field_0x1ec == pCVar2->pCinData)) {
+					pCVar2->currentLocation = this->currentLocation;
+				}
+
+				pCVar2 = this->field_0x1f0;
+				if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
+					(this->field_0x1ec == pCVar2->pCinData)) {
+					pCVar2->rotationEuler = this->rotationEuler;
+				}
+
+				pCVar2 = this->field_0x1f0;
+				if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
+					(this->field_0x1ec == pCVar2->pCinData)) {
+					IMPLEMENTATION_GUARD(
+					(*(code*)pCVar2->pVTable->InitDlistPatchable)(0, 0);)
+				}
+			}
+		}
+	}
+
+	switch (this->curBehaviourId) {
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7: 
+	case 8:
+	case 9:
+	case 10:
+		pCVar5 = reinterpret_cast<CBehaviourPlatform*>(GetBehaviour(this->curBehaviourId));
+		if (pCVar5 != (CBehaviour*)0x0) {
+			pCVar5->ChangeManageState(state);
+		}
+	}
+
+	return;
+}
+
+void CActorMovingPlatform::Reset()
+{
+	S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry;
+	int iVar1;
+	CCollision* pCol;
+
+	this->movingPlatformFlags = this->movingPlatformFlags & 0xffffff0f;
+	if (this->pTiltData != (S_TILT_DATA*)0x0) {
+		this->pTiltData->Reset();
+		this->pTiltData->pushData.Reset();
+	}
+
+	pEntry = this->pCameraStream->aEntries;
+	for (iVar1 = this->pCameraStream->entryCount; iVar1 != 0; iVar1 = iVar1 + -1) {
+		pEntry->streamTarget.Reset();
+		pEntry->streamCameraEvent.Reset(this);
+		pEntry = pEntry + 1;
+	}
+
+	ForceCarriedStuff();
+	CActorMovable::Reset();
+
+	pCol = this->pCollisionData;
+	if (pCol != (CCollision*)0x0) {
+		pCol->flags_0x0 = pCol->flags_0x0 & 0xffdfffff;
+	}
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	this->field_0x1e4 = 0;
+	this->field_0x1e8 = (CSound*)0x0;)
+
+	return;
+}
+
 void CActorMovingPlatform::CheckpointReset()
 {
 	CActorMovable::CheckpointReset();
@@ -2385,6 +3290,115 @@ LAB_00153528:
 	return;
 }
 
+void CActorMovingPlatform::Platform_UpdateMatrix(edF32MATRIX4* pMatrix, int param_3, CActorsTable* pActorTable)
+{
+	float fVar1;
+	CActor* pCVar2;
+	bool bVar3;
+	bool cVar4;
+	int iVar5;
+	edF32MATRIX4* peVar6;
+	edF32MATRIX4 local_50;
+	edF32VECTOR4 local_10;
+
+	ManageNoFrictionZones(1);
+
+	local_10 = gF32Vector4Zero;
+
+	if (this->pTiltData == (S_TILT_DATA*)0x0) {
+		cVar4 = false;
+	}
+	else {
+		cVar4 = SV_MOV_UpdatePush(this->pProperties->field_0x2c, &this->pTiltData->pushData, &this->pProperties->pushStreamDef);
+	}
+
+	if (cVar4 != false) {
+		param_3 = 1;
+		local_10.y = -(this->pTiltData->pushData).oscValue.field_0x0;
+	}
+
+	if (this->pTiltData == (S_TILT_DATA*)0x0) {
+		cVar4 = false;
+	}
+	else {
+		cVar4 = SV_MOV_UpdateTilt(this->pProperties->field_0x2c, this->pTiltData, &this->pProperties->tiltStreamDef);
+	}
+
+	if (cVar4 == false) {
+		if ((param_3 != 0) || (this->pTiedActor != (CActor*)0x0)) {
+			local_50 = *pMatrix;
+			SV_UpdateMatrix_Rel(&local_50, 1, 1, pActorTable, &local_10);
+		}
+	}
+	else {
+		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.field_0x0, &local_50);
+		edF32Matrix4MulF32Matrix4Hard(&local_50, &local_50, pMatrix);
+		SV_UpdateMatrix_Rel(&local_50, 1, 1, pActorTable, &local_10);
+	}
+
+	if (this->pZoneStream == (S_BRIDGE_ZONE_STREAM*)0x0) {
+		iVar5 = 0;
+	}
+	else {
+		iVar5 = this->pZoneStream->entryCount;
+	}
+
+	if (iVar5 == 0) {
+		if (this->pActorStream == (S_BRIDGE_ACTOR_STREAM*)0x0) {
+			iVar5 = 0;
+		}
+		else {
+			iVar5 = this->pActorStream->entryCount;
+		}
+
+		if ((iVar5 == 0) && (this->noFrictionZoneCount == 0)) goto LAB_0015adf0;
+	}
+
+	SV_ComputeDiffMatrixFromInit(&this->field_0x200);
+	edF32Matrix4GetInverseOrthoHard(&this->field_0x200, &this->field_0x200);
+
+LAB_0015adf0:
+	if ((this->pTiedActor != (CActor*)0x0) || (param_3 != 0)) {
+		pCVar2 = this->field_0x1f0;
+		if ((pCVar2 == (CActor*)0x0) ||
+			((this->field_0x1ec == (CinNamedObject30*)0x0 || (bVar3 = true, this->field_0x1ec != pCVar2->pCinData)))) {
+			bVar3 = false;
+		}
+		if (bVar3) {
+			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
+				(this->field_0x1ec == pCVar2->pCinData)) {
+				pCVar2->currentLocation = this->currentLocation;
+			}
+			pCVar2 = this->field_0x1f0;
+			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
+				(this->field_0x1ec == pCVar2->pCinData)) {
+				pCVar2->rotationEuler = this->rotationEuler;
+			}
+		}
+
+		pCVar2 = this->field_0x1f8;
+		if (((pCVar2 == (CActor*)0x0) || (this->field_0x1f4 == (CinNamedObject30*)0x0)) ||
+			(bVar3 = true, this->field_0x1f4 != pCVar2->pCinData)) {
+			bVar3 = false;
+		}
+
+		if (bVar3) {
+			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
+				(this->field_0x1f4 == pCVar2->pCinData)) {
+				pCVar2->currentLocation = this->currentLocation;
+			}
+			pCVar2 = this->field_0x1f8;
+			if (((pCVar2 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
+				(this->field_0x1f4 == pCVar2->pCinData)) {
+				pCVar2->rotationEuler = this->rotationEuler;
+			}
+		}
+	}
+
+	ManageNoFrictionZones(0);
+	return;
+}
+
 CBehaviourPlatformStand::CBehaviourPlatformStand()
 {
 	this->pCinData = (CinNamedObject30*)0x0;
@@ -2474,23 +3488,23 @@ void CBehaviourPlatformStand::Begin(CActor* pOwner, int newState, int newAnimati
 	}
 
 	if ((this->pOwner->flags & 4) != 0) {
-		field_0x54(1);
+		ChangeManageState(1);
 	}
 }
 
 void CBehaviourPlatformStand::End(int newBehaviourId)
 {
-	field_0x54(0);
+	ChangeManageState(0);
 }
 
-void CBehaviourPlatformStand::field_0x54(int param_2)
+void CBehaviourPlatformStand::ChangeManageState(int state)
 {
 	CActor* pCVar1;
 	CActorMovingPlatform* pCVar2;
 	CinNamedObject30* pCVar3;
 	bool bVar4;
 
-	if (param_2 == 0) {
+	if (state == 0) {
 		pCVar1 = this->pTiedActor;
 		if (((pCVar1 == (CActor*)0x0) || (this->pCinData == (CinNamedObject30*)0x0)) ||
 			(bVar4 = true, this->pCinData != pCVar1->pCinData)) {

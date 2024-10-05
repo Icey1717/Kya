@@ -20,6 +20,7 @@ public:
 	CDynamic();
 
 	void Reset(CActor* pActor);
+	void ClearLocalData();
 
 	static float gMaxSpeed_Horiz;
 	static float gMaxSpeed_Vert;
@@ -72,6 +73,7 @@ struct S_PUSH_DATA {
 	S_OSCILLATING_VALUE oscValue;
 
 	void Init();
+	void Reset();
 };
 
 struct S_OSCILLATING_QUAT {
@@ -90,6 +92,7 @@ struct S_TILT_DATA {
 	S_PUSH_DATA pushData;
 
 	void Init(float param_1, CActor* pActor, S_TILT_STREAM_DEF* pStreamDef);
+	void Reset();
 };
 
 struct CActorMovParamsOut : public CActorParamsOut {
@@ -119,8 +122,10 @@ public:
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
+	virtual void Reset();
 	virtual void CheckpointReset();
 	virtual void SetState(int newState, int animType);
+	virtual void ChangeManageState(int state);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 

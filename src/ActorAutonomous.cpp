@@ -380,6 +380,37 @@ StateConfig* CActorAutonomous::GetStateCfg(int state)
 	return pStateConfig;
 }
 
+void CActorAutonomous::ChangeManageState(int state)
+{
+	int iVar1;
+	CPathFinderClient* lVar2;
+
+	CActorMovable::ChangeManageState(state);
+
+	if ((state == 0) && (lVar2 = GetPathfinderClient(), lVar2 != 0)) {
+		GetPathfinderClient()->CleanPathDynamic();
+	}
+
+	return;
+}
+
+bool CActorAutonomous::IsLockable()
+{
+	bool bVar1;
+	bool bLockable;
+
+	bLockable = false;
+	bVar1 = CActor::IsLockable();
+
+	if (bVar1 != false) {
+		if (0.0f < GetLifeInterface()->GetValue()) {
+			bLockable = true;
+		}
+	}
+
+	return bLockable;
+}
+
 void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 {
 	CCollision* pCVar1;

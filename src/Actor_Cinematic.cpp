@@ -271,6 +271,22 @@ void CActorCinematic::CinematicMode_Enter(bool bSetState)
 	return;
 }
 
+void CActorCinematic::CinematicMode_Leave(int behaviourId)
+{
+	edNODE* pNode;
+	ed_3D_Scene* pScene;
+
+	CActor::CinematicMode_Leave(behaviourId);
+
+	pNode = this->pMeshNode;
+	if (pNode != (edNODE*)0x0) {
+		pScene = GetStaticMeshMasterA_001031b0();
+		ed3DHierarchyNodeSetRenderOn(pScene, pNode);
+	}
+
+	return;
+}
+
 void CBehaviourCinematic::Create(ByteCode* pByteCode)
 {
 	int iVar1;
