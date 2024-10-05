@@ -7,19 +7,8 @@
 PACK(
 class CWayPoint {
 public:
-	edF32VECTOR3 field_0x0;
-	undefined field_0xc;
-	undefined field_0xd;
-	undefined field_0xe;
-	undefined field_0xf;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
+	edF32VECTOR3 location;
+	edF32VECTOR3 rotation;
 	float field_0x18;
 	float field_0x1c;
 	float field_0x20;

@@ -296,8 +296,9 @@ PACK(
 
 	int cutsceneId;
 	uint flags;
+});
 
-}); 
+static_assert(sizeof(S_STREAM_NTF_TARGET_BASE) == 0xc);
 
 struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
 {
@@ -311,6 +312,14 @@ struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
 	undefined4 field_0x18;
 };
 
+struct S_STREAM_NTF_TARGET_SWITCH_EX : public S_STREAM_NTF_TARGET_BASE
+{
+	bool Switch(CActor* pActor, uint messageFlags);
+	int messageId;
+};
+
+static_assert(sizeof(S_STREAM_NTF_TARGET_SWITCH) == 0x1c);
+
 struct S_TARGET_STREAM_REF
 {
 	int entryCount;
@@ -321,6 +330,12 @@ PACK(
 struct S_STREAM_NTF_TARGET_SWITCH_LIST {
 	int count;
 	S_STREAM_NTF_TARGET_SWITCH aSwitches[];
+});
+
+PACK(
+struct S_STREAM_NTF_TARGET_SWITCH_EX_LIST {
+	int entryCount;
+	S_STREAM_NTF_TARGET_SWITCH_EX aEntries[];
 });
 
 struct CCinematic {
@@ -342,6 +357,8 @@ struct CCinematic {
 	int* InstallResource(edResCollection::RES_TYPE objectType, bool type2, const char* fileName, ed_g2d_manager* textureObj, int* bufferLengthOut);
 	CActorCinematic* NewCinematicActor(const edCinGameInterface::ACTORV_CREATIONtag* pTag, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
 	CCineActorConfig* GetActorConfig(CActor* pActor);
+
+	void UsedInCutsceneManagerUpdateB(CActor* pActor, int param_3);
 
 	void Draw();
 
@@ -527,7 +544,6 @@ public:
 	virtual void Level_Manage();
 	virtual void Level_ManagePaused();
 	virtual void Level_Draw() {};
-
 	virtual void Level_PreReset();
 	virtual void Level_Reset() {};
 
@@ -562,6 +578,7 @@ public:
 
 	void NotifyCinematic(int cinematicIndex, CActor* pActor, int messageId, uint flags);
 
+	bool IsCutsceneActive();
 	int GetNumCutscenes_001c50b0();
 	CCinematic* GetCinematic(int index);
 

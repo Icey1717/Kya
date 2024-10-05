@@ -129,7 +129,43 @@ void CActorBasicBox::Term()
 
 void CActorBasicBox::Reset()
 {
-	IMPLEMENTATION_GUARD();
+	CCollision* pCVar1;
+	edF32VECTOR4* peVar2;
+	S_TARGET_STREAM_REF* pSVar3;
+	int iVar4;
+	int iVar5;
+	VibrationParam local_20;
+
+	CActor::Reset();
+
+	this->field_0x168 = (float)(int)this->field_0x16c;
+	local_20.field_0x0 = this->field_0x17c;
+	local_20.field_0x4 = this->field_0x170;
+	local_20.field_0x8 = this->field_0x174;
+	local_20.field_0xc = (this->field_0x178 * 3.141593f) / 180.0f;
+
+	peVar2 = GetBottomPosition();
+	local_20.field_0x10 = peVar2->y - this->currentLocation.y;
+	local_20.field_0x14 = 0.005f;
+	local_20.pActor = (CActor*)this;
+	this->vibrationDyn.Init(&local_20);
+
+	this->field_0x2e0 = 0;
+
+	for (int i = 0; i < this->targetStreamRef->entryCount; i++) {
+		this->targetStreamRef->aEntries[i].Reset();
+	}
+
+	this->streamEventCamera->Reset(this);
+
+	pCVar1 = this->pCollisionData;
+	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
+	pCVar1 = this->pCollisionData;
+	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 2;
+	pCVar1 = this->pCollisionData;
+	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x80000;
+
+	return;
 }
 
 void CActorBasicBox::SaveContext(uint*, int)
@@ -346,10 +382,12 @@ void CBehaviourBasicBoxStand::TermState(int oldState, int newState)
 	CActorBasicBox* pBasicBox;
 
 	pBasicBox = this->pOwner;
-	IMPLEMENTATION_GUARD(
-	if ((oldState == 7) && ((float)pBasicBox->field_0x194 != -NAN)) {
-		CActor::SV_RestoreOrgModel((CActor*)pBasicBox, &pBasicBox->actorAlternateModel);
-	})
+
+	if ((oldState == 7) && (pBasicBox->field_0x194 != -1)) {
+		IMPLEMENTATION_GUARD(
+		CActor::SV_RestoreOrgModel((CActor*)pBasicBox, &pBasicBox->actorAlternateModel);)
+	}
+
 	return;
 }
 

@@ -17,6 +17,7 @@
 #include "CameraCinematic.h"
 #include "CameraMouseQuake.h"
 #include "CameraGame.h"
+#include "CameraFixePerso.h"
 
 CCameraManager* CCameraManager::_gThis = NULL;
 CCameraManager* CCamera::_gpcam_man = NULL;
@@ -1355,12 +1356,7 @@ CCamera* CCameraManager::AddCamera(ECameraType type, ByteCode* pMemoryStream, ch
 		newObjectPtr = new CCamera();
 		break;
 	case CT_Death:
-		IMPLEMENTATION_GUARD(
-		pDeathCameraView = (DeathCameraViewLocationObject*)operator.new(0x120);
-		newObjectPtr = (long)(int)pDeathCameraView;
-		if (newObjectPtr != 0) {
-			newObjectPtr = DeathViewConstructor(pDeathCameraView);
-		})
+		newObjectPtr = new CCameraFixePerso();
 	}
 	pCVar9 = newObjectPtr;
 	if (newObjectPtr != (CCamera*)0x0) {
@@ -2075,6 +2071,21 @@ void CCameraManager::SetEarthQuake(CAM_QUAKE* pCamQuake)
 		this->field_0x4b0 = 0;
 	}
 	return;
+}
+
+bool CCameraManager::AlertCamera(int param_2, int param_3)
+{
+	CCamera* pCamera;
+	bool bResult;
+
+	pCamera = this->pActiveCamera;
+	bResult = false;
+
+	if (pCamera != (CCamera*)0x0) {
+		bResult = pCamera->AlertCamera(param_2, param_3, (CCamera*)0x0);
+	}
+
+	return bResult;
 }
 
 template<>

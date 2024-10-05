@@ -46,6 +46,64 @@ void edVideoSetBackgroundColor(byte param_1, byte param_2, byte param_3)
 	return;
 }
 
+void edVideoSetFadeColor(byte r, byte g, byte b)
+{
+	g_ActiveVidParams_0048cd90.fadeColorR = r;
+	g_ActiveVidParams_0048cd90.fadeColorG = g;
+	g_ActiveVidParams_0048cd90.fadeColorB = b;
+	return;
+}
+
+void edVideoSetFade(float time)
+{
+	float fVar1;
+
+	if (time < 0.0) {
+		fVar1 = 0.0;
+	}
+	else {
+		fVar1 = 1.0;
+		if (time <= 1.0) {
+			fVar1 = time;
+		}
+	}
+	g_ActiveVidParams_0048cd90.bFadeActive = (uint)(fVar1 != 0.0);
+	g_ActiveVidParams_0048cd90.field_0x68 = 0;
+	g_ActiveVidParams_0048cd90.fadeTimeA = (int)(fVar1 * 128.0);
+	g_ActiveVidParams_0048cd90.field_0x70 = 0;
+	g_ActiveVidParams_0048cd90.fadeTimeB = (int)(fVar1 * 128.0);
+	return;
+}
+
+void edVideoSetFadeIn(uint param_1)
+{
+	if (0x80 < param_1) {
+		param_1 = 0x80;
+	}
+	g_ActiveVidParams_0048cd90.field_0x68 = 1;
+	g_ActiveVidParams_0048cd90.field_0x70 = -(0x80 / (int)param_1);
+	g_ActiveVidParams_0048cd90.fadeTimeB = 0;
+	g_ActiveVidParams_0048cd90.bFadeActive = 0;
+	return;
+}
+
+void edVideoSetFadeOut(uint param_1, uint param_2)
+{
+	if (0x80 < param_1) {
+		param_1 = 0x80;
+	}
+	g_ActiveVidParams_0048cd90.field_0x68 = 1;
+	g_ActiveVidParams_0048cd90.field_0x70 = 0x80 / (int)param_1;
+	g_ActiveVidParams_0048cd90.fadeTimeB = 0x80;
+	g_ActiveVidParams_0048cd90.bFadeActive = param_2;
+	return;
+}
+
+byte edVideoIsFadeActive(void)
+{
+	return g_ActiveVidParams_0048cd90.field_0x68;
+}
+
 void edVideoSetOffset(short inDX, short inDY)
 {
 	g_ActiveVidParams_0048cd90.params18.DX =

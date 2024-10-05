@@ -88,7 +88,13 @@ void CActorBonus::Draw()
 
 void CActorBonus::CheckpointReset()
 {
-	IMPLEMENTATION_GUARD();
+	CBehaviour* pCVar1;
+
+	pCVar1 = GetBehaviour(this->curBehaviourId);
+	if (pCVar1 != (CBehaviour*)0x0) {
+		static_cast<CBehaviourBonusBase*>(GetBehaviour(this->curBehaviourId))->ChangeVisibleState(0);
+	}
+	return;
 }
 
 void CActorBonus::SaveContext(uint*, int)

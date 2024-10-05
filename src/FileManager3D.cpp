@@ -248,7 +248,7 @@ void C3DFileManager::SetupBackground(edNODE* pNode)
 
 	ed_3d_hierarchy* pHier = (ed_3d_hierarchy*)pNode->pData;
 
-	if ((pNode->pData != (void*)0x0) && (uVar3 = pHier->subMeshParentCount_0xac, uVar3 != 0)) {
+	if ((pNode->pData != (void*)0x0) && (uVar3 = pHier->linkedHierCount, uVar3 != 0)) {
 		pPrevNode = pNode->pPrev;
 		for (; uVar3 != 0; uVar3 = uVar3 - 1) {
 
@@ -260,10 +260,13 @@ void C3DFileManager::SetupBackground(edNODE* pNode)
 
 				pStrip->pDMA_Matrix.flagsA = 0x200;
 			}
+
 			pPrevNode = pPrevNode->pPrev;
 		}
 	}
+
 	ed3DHierarchyNodeSetSetup(pNode, &this->backgroundHierarchySetup);
+
 	return;
 }
 
@@ -280,7 +283,7 @@ void C3DFileManager::ManageBackground(edNODE* pNode, uint flags)
 
 	pCVar3 = CScene::ptable.g_CameraManager_0045167c;
 	if (((pNode != (edNODE*)0x0) && ((flags & 1) != 0)) && (peVar1 = (ed_3d_hierarchy*)pNode->pData, peVar1 != (ed_3d_hierarchy*)0x0)) {
-		uVar5 = (uint)(ushort)peVar1->subMeshParentCount_0xac;
+		uVar5 = (uint)(ushort)peVar1->linkedHierCount;
 		if (uVar5 == 0) {
 			(peVar1->transformA).rowT = ((CScene::ptable.g_CameraManager_0045167c)->transformationMatrix).rowT;
 		}

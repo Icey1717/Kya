@@ -28,6 +28,8 @@ struct ed_3d_hierarchy_node;
 struct S_BOUNDING_BOX;
 struct edCEventMessage;
 
+class CWayPoint;
+
 class CPlayerInput;
 
 struct MessageSoccerParams
@@ -329,7 +331,8 @@ public:
 	virtual void Draw();
 	virtual void ComputeLighting();
 	virtual void Reset();
-	virtual void CheckpointReset() {}
+	virtual void PreCheckpointReset() {}
+	virtual void CheckpointReset();
 	virtual void SectorChange(int oldSectorId, int newSectorId);
 	virtual void SaveContext(uint*, int);
 	virtual void LoadContext(uint*, int);
@@ -384,6 +387,8 @@ public:
 	void FUN_00101110(CActor* pOtherActor);
 
 	CBehaviour* GetBehaviour(int behaviourId);
+
+	void ResetActorSound();
 
 	void SetupClippingInfo();
 	void SetupLodInfo();
@@ -572,8 +577,8 @@ public:
 };
 
 struct ActorAndWaypoint {
-	CActor* pActor;
-	struct CWayPoint* pWaypoint;
+	S_STREAM_REF<CActor> pActor;
+	S_STREAM_REF<CWayPoint> pWaypoint;
 };
 
 struct S_ACTOR_STREAM_REF {

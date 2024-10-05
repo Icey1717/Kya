@@ -586,6 +586,15 @@ void CCollision::InvalidatePrims()
 	return;
 }
 
+void CCollision::Reset()
+{
+	ClearInternalData();
+
+	this->flags_0x4 = this->flags_0x4 & 0xe8;
+
+	return;
+}
+
 edObbTREE_DYN* CCollision::GetFirstObbPrimRecurse(edObbTREE_DYN* pObbTree)
 {
 	byte bVar1;

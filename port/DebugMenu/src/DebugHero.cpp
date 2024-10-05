@@ -10,6 +10,7 @@
 #include "InputManager.h"
 #include "SectorManager.h"
 #include "DebugSetting.h"
+#include "../../../src/ActorManager.h"
 
 namespace Debug {
 	namespace Hero {
@@ -76,6 +77,9 @@ namespace Debug {
 			case STATE_HERO_HURT_A:
 				return "StateHeroHurtA";
 				break;
+			case STATE_HERO_FALL_DEATH:
+				return "StateHeroFallDeath";
+				break;
 			case STATE_HERO_KICK_A:
 				return "StateHeroKickA";
 				break;
@@ -127,6 +131,21 @@ namespace Debug {
 			case STATE_HERO_GLIDE_3:
 				return "StateHeroGlide3";
 				break;
+			case STATE_HERO_WIND_SLIDE:
+				return "StateHeroWindSlide";
+				break;
+			case STATE_HERO_WIND_SLIDE_MOVE_A:
+				return "StateHeroWindSlideMoveA";
+				break;
+			case STATE_HERO_WIND_SLIDE_MOVE_B:
+				return "StateHeroWindSlideMoveB";
+				break;
+			case STATE_HERO_WIND_SLIDE_MOVE_C:
+				return "StateHeroWindSlideMoveC";
+				break;
+			case STATE_HERO_WIND_SLIDE_MOVE_D:
+				return "StateHeroWindSlideMoveD";
+				break;
 			case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 				return "StateHeroTrampolineJump_1_2_A";
 				break;
@@ -153,13 +172,20 @@ namespace Debug {
 
 		Debug::Setting<std::string> gLastCheckpoint("Last Chekpoint", "");
 
+		constexpr int nbCheckpointMaxActors = 0x300;
+
 		void ShowCheckpointMenu()
 		{
 			if (ImGui::CollapsingHeader("Checkpoints", ImGuiTreeNodeFlags_DefaultOpen)) {
 				CActorHeroPrivate* pActorHero = reinterpret_cast<CActorHeroPrivate*>(CActorHeroPrivate::_gThis);
 
 				struct Checkpoint {
-					edF32VECTOR4 location;
+					struct Actor {
+						bool bActive;
+						char name[nbCheckpointMaxActors];
+						edF32VECTOR4 location;
+					} actors[0x300]{};
+
 					int sectorId;
 				};
 
@@ -205,7 +231,16 @@ namespace Debug {
 						std::string path = "checkpoints/" + options[selectedOption];
 						Checkpoint checkpoint;
 						DebugHelpers::LoadTypeFromFile(path.c_str(), checkpoint);
-						pActorHero->currentLocation = checkpoint.location;
+						
+						auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
+
+						for (int i = 0; i < pActorManager->nbActors; i++) {
+							auto* pActor = pActorManager->aActors[i];
+							if (checkpoint.actors[i].bActive) {
+								assert(strcmp(pActor->name, checkpoint.actors[i].name) == 0);
+								pActor->currentLocation = checkpoint.actors[i].location;
+							}
+						}
 
 						if (CScene::ptable.g_SectorManager_00451670->baseSector.currentSectorID != checkpoint.sectorId) {
 							CScene::ptable.g_SectorManager_00451670->SwitchToSector(checkpoint.sectorId, true);
@@ -216,7 +251,17 @@ namespace Debug {
 				static Checkpoint sNewCheckpoint;
 
 				if (ImGui::Button("Save Checkpoint")) {
-					sNewCheckpoint.location = pActorHero->currentLocation;
+					auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
+
+					assert(pActorManager->nbActors <= nbCheckpointMaxActors);
+
+					for (int i = 0; i < pActorManager->nbActors; i++) {
+						auto* pActor = pActorManager->aActors[i];
+						sNewCheckpoint.actors[i].bActive = true;
+						strcpy(sNewCheckpoint.actors[i].name, pActor->name);
+						sNewCheckpoint.actors[i].location = pActor->currentLocation;
+					}
+
 					sNewCheckpoint.sectorId = CScene::ptable.g_SectorManager_00451670->baseSector.currentSectorID;
 					ImGui::OpenPopup("Save Checkpoint");
 				}

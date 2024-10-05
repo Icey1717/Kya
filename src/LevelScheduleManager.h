@@ -589,6 +589,13 @@ struct LevelInfo {
 
 class CActor;
 
+struct GameInfo 
+{
+	float health;
+	int nbMagic;
+	int nbMoney;
+};
+
 class CLevelScheduler : public CObjectManager {
 public:
 	CLevelScheduler();
@@ -614,6 +621,8 @@ public:
 
 	static int SaveGame_GetMaxBufferSize();
 
+	void UpdateGameInfo(float health, int magic, int money);
+
 	static uint GetMedallionLevel();
 	static int GetBoomyLevel();
 	static int GetFightLevel();
@@ -625,9 +634,12 @@ public:
 
 	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6);
 
+	void SetLevelTimerFunc_002df450(float param_1, int mode);
 public:
 
 	static CLevelScheduler* gThis;
+
+	static GameInfo _gGameNfo;
 
 	struct ManagerFunctionData* pManagerFunctionData;
 	int nextLevelId;

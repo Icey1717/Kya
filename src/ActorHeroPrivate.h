@@ -77,6 +77,8 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Manage();
+	virtual void PreCheckpointReset();
+	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void SetState(int newState, int animType);
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
@@ -91,6 +93,8 @@ public:
 	virtual void StoreCollisionSphere();
 	virtual CLifeInterface* GetLifeInterface();
 	virtual void LifeDecrease(float amount);
+
+	virtual void ProcessDeath();
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
 	bool AccomplishAction(int bUpdateActiveActionId);
@@ -115,6 +119,7 @@ public:
 	void ResetBoomyDefaultSettings();
 	void ResetGripClimbDefaultSettings();
 	void ResetWindDefaultSettings();
+	void ResetJamGutSettings();
 
 	int StateEvaluate();
 	int ChooseStateFall(int param_2);
@@ -137,6 +142,11 @@ public:
 	void StateHeroToboggan(int param_2);
 
 	void StateHeroTobogganJump(int param_2, int param_3, int param_4, int nextState);
+
+	void StateHeroWindSlideInit();
+	void StateHeroWindSlide(int nextState);
+
+	void StateHeroWindWallMove(float param_1, float param_2, int param_4, int param_5);
 
 	void StateHeroTrampolineJump_1_2Init();
 	void StateHeroTrampolineJump_1_2Term();
@@ -204,14 +214,19 @@ public:
 	void RestoreVerticalOrientation();
 
 	bool DetectGripablePrecipice();
+	void DetectStickableWalls(edF32VECTOR4* v0, int* param_3, int* param_4, edF32VECTOR4* v1);
+
 	void UngripAllObjects();
 
 	int SlideOnGround(float param_1, float param_2, float param_3, float param_4, uint flags);
 	void MoveInAir(float param_1, float param_2, float param_3, float param_4, float param_5);
+	void MoveRelativeToWallPlaneInTheWind(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5);
 	void MoveInFreeFall(float param_1, float param_2, float param_3, float param_4, float param_5, int param_7);
 
 	void SetBoomyHairOff();
 	void SetBoomyHairOn();
+
+	void GetPadRelativeToPlane(edF32VECTOR4* param_2, float* param_3, float* param_4);
 
 	void SetGripState();
 
@@ -281,9 +296,12 @@ public:
 
 	CInventoryInterface inventory;
 	CMagicInterface magicInterface;
+	CMoneyInterface moneyInterface;
 
 	CFxHandle* field_0x10fc;
 	int* field_0x1100;
+
+	int bUnknownBool;
 
 	float field_0x13cc;
 	float field_0x13d0;
@@ -301,8 +319,6 @@ public:
 	CBehaviour behaviour_0x1c50;
 	CBehaviour behaviour_0x1e10;
 	CBehaviour behaviour_0x1fd0;
-
-	float field_0x1558;
 
 	int field_0x12e0;
 
@@ -323,6 +339,7 @@ public:
 
 	float field_0x1048;
 
+	edF32VECTOR4 field_0x13f0;
 	edF32VECTOR4 field_0x1400;
 	edF32VECTOR4 bounceLocation;
 	edF32VECTOR4 field_0x1460;
@@ -349,7 +366,6 @@ public:
 	float field_0x1b9c;
 
 	int field_0x1020;
-	int field_0x1420;
 	int field_0x1424;
 	int field_0x1428;
 
@@ -416,6 +432,8 @@ public:
 	CCamera* pWindWallCamera_0x15b4;
 	CCamera* pCameraKyaJamgut;
 
+	CCamera* pDeathCamera;
+
 	CCamera* pJamgutCamera_0x15b8;
 	CCamera* pIntViewCamera_0x15bc;
 
@@ -468,6 +486,10 @@ public:
 	float field_0x11e0;
 	float field_0x11e4;
 	float field_0x11e8;
+
+	float field_0x13d4;
+	float field_0x13d8;
+	float field_0x13dc;
 
 	float field_0x1410;
 	float field_0x1414;

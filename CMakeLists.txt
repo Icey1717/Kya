@@ -119,6 +119,8 @@ set(main_src
 	"${src_root}/CameraCinematic.h"
 	"${src_root}/CameraMouseQuake.cpp"
 	"${src_root}/CameraMouseQuake.h"
+	"${src_root}/CameraFixePerso.cpp"
+	"${src_root}/CameraFixePerso.h"
 	"${src_root}/camera.cpp"
 	"${src_root}/camera.h"
 	"${src_root}/CameraViewManager.cpp"

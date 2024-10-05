@@ -525,9 +525,8 @@ void CEventManager::Level_Manage()
 void CEventManager::Level_Reset()
 {
 	if (this->activeChunkId != -1) {
-		IMPLEMENTATION_GUARD(
 		edEventInitChunk(this->activeChunkId);
-		edEventClearMessageQueue();)
+		edEventClearMessageQueue();
 	}
 	return;
 }
@@ -798,6 +797,12 @@ void _edEventInitChunk(ed_event_chunk* pEventChunk)
 			ppeVar3 = ppeVar3 + 1;
 		} while (uVar4 < pEventChunk->nbEvents);
 	}
+	return;
+}
+
+void edEventInitChunk(int eventChunkID)
+{
+	_edEventInitChunk(pedEventChunks[eventChunkID]);
 	return;
 }
 

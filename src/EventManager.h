@@ -126,5 +126,6 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 int edEventComputeZoneAgainstVertex(int index, ed_zone_3d* pZone, edF32VECTOR4* param_3, long mode);
 int edEventGetChunkZoneNbInclusivePrimitives(int param_1, ed_zone_3d* param_2);
 edF32MATRIX4* edEventGetChunkZonePrimitive(uint param_1, ed_zone_3d* param_2, uint param_3, e_ed_event_prim3d_type* param_4);
+void edEventInitChunk(int eventChunkID);
 
 #endif // EVENT_MANAGER_H

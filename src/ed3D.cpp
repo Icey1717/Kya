@@ -1144,7 +1144,7 @@ void UpdateRenderMeshTransform_002954b0(ed_3d_hierarchy_node* param_1, bool mode
 	ed_3d_hierarchy_node* pMVar1;
 	ulong uVar2;
 
-	if ((mode != false) && ((param_1->base).subMeshParentCount_0xac != 0)) {
+	if ((mode != false) && ((param_1->base).linkedHierCount != 0)) {
 		return;
 	}
 
@@ -11238,7 +11238,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	(pNewHierarchyNode->base).pHierarchySetup = (ed_3d_hierarchy_setup*)LOAD_SECTION(pSourceHierarchy->pHierarchySetup);
 	(pNewHierarchyNode->base).pMatrixPkt = (edpkt_data*)LOAD_SECTION(pSourceHierarchy->pMatrixPkt);
 	(pNewHierarchyNode->base).pAnimMatrix = (edF32MATRIX4*)LOAD_SECTION(pSourceHierarchy->pAnimMatrix);
-	(pNewHierarchyNode->base).subMeshParentCount_0xac = pSourceHierarchy->subMeshParentCount_0xac;
+	(pNewHierarchyNode->base).linkedHierCount = pSourceHierarchy->subMeshParentCount_0xac;
 	(pNewHierarchyNode->base).desiredLod = pSourceHierarchy->desiredLod;
 	(pNewHierarchyNode->base).GlobalAlhaON = pSourceHierarchy->GlobalAlhaON;
 
@@ -11272,7 +11272,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	(pNewHierarchyNode->base).field_0x94 = (undefined*)p3DB;
 	pMVar8 = pHierNode + newNodeIndex;
 
-	if ((pNewHierarchyNode->base).subMeshParentCount_0xac == 0) {
+	if ((pNewHierarchyNode->base).linkedHierCount == 0) {
 		(pNewHierarchyNode->base).flags_0x9e = (pNewHierarchyNode->base).flags_0x9e | 8;
 	}
 
@@ -11582,11 +11582,11 @@ edNODE* ed3DHierarchyRefreshSonNumbers(edNODE* pInNode, short* outMeshCount)
 			uVar1 = uVar1 + local_2;
 			pDVar4 = (ed_3d_hierarchy_node*)pOutNode->pData;
 		}
-		(pDVar1->base).subMeshParentCount_0xac = uVar1;
+		(pDVar1->base).linkedHierCount = uVar1;
 		*outMeshCount = uVar1 + 1;
 	}
 	else {
-		(pDVar1->base).subMeshParentCount_0xac = 0;
+		(pDVar1->base).linkedHierCount = 0;
 		*outMeshCount = 1;
 	}
 	return pOutNode;
@@ -12086,56 +12086,56 @@ void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag)
 
 	ED3D_LOG(LogLevel::Info, "ed3DHierarchyNodeClrFlag clearing flag {:x} for {}", flag, peVar2->hash.ToString());
 
-	uVar1 = peVar2->subMeshParentCount_0xac;
+	uVar1 = peVar2->linkedHierCount;
 	peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 	ed3DSetSceneRender(peVar2, 1);
 	peVar8 = pNode->pPrev;
 	for (local_20 = (uint)uVar1; local_20 != 0; local_20 = local_20 - 1) {
 		ed3DSetSceneRender((ed_3d_hierarchy*)peVar8->pData, 1);
 		peVar2 = (ed_3d_hierarchy*)peVar8->pData;
-		uVar1 = peVar2->subMeshParentCount_0xac;
+		uVar1 = peVar2->linkedHierCount;
 		peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 		ed3DSetSceneRender(peVar2, 1);
 		peVar7 = peVar8->pPrev;
 		for (local_30 = (uint)uVar1; local_30 != 0; local_30 = local_30 - 1) {
 			ed3DSetSceneRender((ed_3d_hierarchy*)peVar7->pData, 1);
 			peVar2 = (ed_3d_hierarchy*)peVar7->pData;
-			uVar1 = peVar2->subMeshParentCount_0xac;
+			uVar1 = peVar2->linkedHierCount;
 			peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 			ed3DSetSceneRender(peVar2, 1);
 			peVar6 = peVar7->pPrev;
 			for (local_40 = (uint)uVar1; local_40 != 0; local_40 = local_40 - 1) {
 				ed3DSetSceneRender((ed_3d_hierarchy*)peVar6->pData, 1);
 				peVar2 = (ed_3d_hierarchy*)peVar6->pData;
-				uVar1 = peVar2->subMeshParentCount_0xac;
+				uVar1 = peVar2->linkedHierCount;
 				peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 				ed3DSetSceneRender(peVar2, 1);
 				peVar5 = peVar6->pPrev;
 				for (local_50 = (uint)uVar1; local_50 != 0; local_50 = local_50 - 1) {
 					ed3DSetSceneRender((ed_3d_hierarchy*)peVar5->pData, 1);
 					peVar2 = (ed_3d_hierarchy*)peVar5->pData;
-					uVar1 = peVar2->subMeshParentCount_0xac;
+					uVar1 = peVar2->linkedHierCount;
 					peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 					ed3DSetSceneRender(peVar2, 1);
 					peVar4 = peVar5->pPrev;
 					for (local_60 = (uint)uVar1; local_60 != 0; local_60 = local_60 - 1) {
 						ed3DSetSceneRender((ed_3d_hierarchy*)peVar4->pData, 1);
 						peVar2 = (ed_3d_hierarchy*)peVar4->pData;
-						uVar1 = peVar2->subMeshParentCount_0xac;
+						uVar1 = peVar2->linkedHierCount;
 						peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 						ed3DSetSceneRender(peVar2, 1);
 						peVar9 = peVar4->pPrev;
 						for (local_70 = (uint)uVar1; local_70 != 0; local_70 = local_70 - 1) {
 							ed3DSetSceneRender((ed_3d_hierarchy*)peVar9->pData, 1);
 							peVar2 = (ed_3d_hierarchy*)peVar9->pData;
-							uVar1 = peVar2->subMeshParentCount_0xac;
+							uVar1 = peVar2->linkedHierCount;
 							peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 							ed3DSetSceneRender(peVar2, 1);
 							peVar10 = peVar9->pPrev;
 							for (local_80 = (uint)uVar1; local_80 != 0; local_80 = local_80 - 1) {
 								ed3DSetSceneRender((ed_3d_hierarchy*)peVar10->pData, 1);
 								peVar2 = (ed_3d_hierarchy*)peVar10->pData;
-								uVar1 = peVar2->subMeshParentCount_0xac;
+								uVar1 = peVar2->linkedHierCount;
 								peVar2->flags_0x9e = peVar2->flags_0x9e & uVar3;
 								ed3DSetSceneRender(peVar2, 1);
 								pNode_00 = peVar10->pPrev;
@@ -12186,56 +12186,56 @@ void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag)
 
 	ED3D_LOG(LogLevel::Info, "ed3DHierarchyNodeSetFlag setting flag {:x} for {}", flag, peVar2->hash.ToString());
 
-	uVar1 = peVar2->subMeshParentCount_0xac;
+	uVar1 = peVar2->linkedHierCount;
 	peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 	ed3DSetSceneRender(peVar2, 1);
 	peVar7 = pNode->pPrev;
 	for (local_10 = (uint)uVar1; local_10 != 0; local_10 = local_10 - 1) {
 		ed3DSetSceneRender((ed_3d_hierarchy*)peVar7->pData, 1);
 		peVar2 = (ed_3d_hierarchy*)peVar7->pData;
-		uVar1 = peVar2->subMeshParentCount_0xac;
+		uVar1 = peVar2->linkedHierCount;
 		peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 		ed3DSetSceneRender(peVar2, 1);
 		peVar6 = peVar7->pPrev;
 		for (local_20 = (uint)uVar1; local_20 != 0; local_20 = local_20 - 1) {
 			ed3DSetSceneRender((ed_3d_hierarchy*)peVar6->pData, 1);
 			peVar2 = (ed_3d_hierarchy*)peVar6->pData;
-			uVar1 = peVar2->subMeshParentCount_0xac;
+			uVar1 = peVar2->linkedHierCount;
 			peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 			ed3DSetSceneRender(peVar2, 1);
 			peVar5 = peVar6->pPrev;
 			for (local_30 = (uint)uVar1; local_30 != 0; local_30 = local_30 - 1) {
 				ed3DSetSceneRender((ed_3d_hierarchy*)peVar5->pData, 1);
 				peVar2 = (ed_3d_hierarchy*)peVar5->pData;
-				uVar1 = peVar2->subMeshParentCount_0xac;
+				uVar1 = peVar2->linkedHierCount;
 				peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 				ed3DSetSceneRender(peVar2, 1);
 				peVar4 = peVar5->pPrev;
 				for (local_40 = (uint)uVar1; local_40 != 0; local_40 = local_40 - 1) {
 					ed3DSetSceneRender((ed_3d_hierarchy*)peVar4->pData, 1);
 					peVar2 = (ed_3d_hierarchy*)peVar4->pData;
-					uVar1 = peVar2->subMeshParentCount_0xac;
+					uVar1 = peVar2->linkedHierCount;
 					peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 					ed3DSetSceneRender(peVar2, 1);
 					peVar3 = peVar4->pPrev;
 					for (local_50 = (uint)uVar1; local_50 != 0; local_50 = local_50 - 1) {
 						ed3DSetSceneRender((ed_3d_hierarchy*)peVar3->pData, 1);
 						peVar2 = (ed_3d_hierarchy*)peVar3->pData;
-						uVar1 = peVar2->subMeshParentCount_0xac;
+						uVar1 = peVar2->linkedHierCount;
 						peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 						ed3DSetSceneRender(peVar2, 1);
 						peVar8 = peVar3->pPrev;
 						for (local_60 = (uint)uVar1; local_60 != 0; local_60 = local_60 - 1) {
 							ed3DSetSceneRender((ed_3d_hierarchy*)peVar8->pData, 1);
 							peVar2 = (ed_3d_hierarchy*)peVar8->pData;
-							uVar1 = peVar2->subMeshParentCount_0xac;
+							uVar1 = peVar2->linkedHierCount;
 							peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 							ed3DSetSceneRender(peVar2, 1);
 							peVar9 = peVar8->pPrev;
 							for (local_70 = (uint)uVar1; local_70 != 0; local_70 = local_70 - 1) {
 								ed3DSetSceneRender((ed_3d_hierarchy*)peVar9->pData, 1);
 								peVar2 = (ed_3d_hierarchy*)peVar9->pData;
-								uVar1 = peVar2->subMeshParentCount_0xac;
+								uVar1 = peVar2->linkedHierCount;
 								peVar2->flags_0x9e = peVar2->flags_0x9e | flag;
 								ed3DSetSceneRender(peVar2, 1);
 								pNode_00 = peVar9->pPrev;
@@ -12258,6 +12258,28 @@ void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag)
 		}
 		peVar7 = peVar7->pPrev;
 	}
+	return;
+}
+
+void ed3DHierarchyNodeSetAlpha(edNODE* pNode, byte alpha)
+{
+	int subHierCount;
+
+	if (0x7f < alpha) {
+		alpha = 0xff;
+	}
+
+	ed_3d_hierarchy* pHier = reinterpret_cast<ed_3d_hierarchy*>(pNode->pData);
+
+	if (pHier->GlobalAlhaON != alpha) {
+		subHierCount = pHier->linkedHierCount + 1;
+		do {
+			subHierCount = subHierCount + -1;
+			pHier->GlobalAlhaON = alpha;
+			pNode = pNode->pPrev;
+		} while (subHierCount != 0);
+	}
+
 	return;
 }
 
@@ -12794,35 +12816,35 @@ void ed3DSetMeshTransformFlag_002abd80(edNODE* pNode, ushort flag)
 	pMVar1 = (ed_3d_hierarchy*)pNode->pData;
 	pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 	peVar7 = pNode->pPrev;
-	for (uVar10 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; uVar10 != 0; uVar10 = uVar10 - 1) {
+	for (uVar10 = (uint)(ushort)pMVar1->linkedHierCount; uVar10 != 0; uVar10 = uVar10 - 1) {
 		pMVar1 = (ed_3d_hierarchy*)peVar7->pData;
 		pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 		peVar6 = peVar7->pPrev;
-		for (local_20 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_20 != 0; local_20 = local_20 - 1) {
+		for (local_20 = (uint)(ushort)pMVar1->linkedHierCount; local_20 != 0; local_20 = local_20 - 1) {
 			pMVar1 = (ed_3d_hierarchy*)peVar6->pData;
 			pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 			peVar5 = peVar6->pPrev;
-			for (local_30 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_30 != 0; local_30 = local_30 - 1) {
+			for (local_30 = (uint)(ushort)pMVar1->linkedHierCount; local_30 != 0; local_30 = local_30 - 1) {
 				pMVar1 = (ed_3d_hierarchy*)peVar5->pData;
 				pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 				peVar4 = peVar5->pPrev;
-				for (local_40 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_40 != 0; local_40 = local_40 - 1) {
+				for (local_40 = (uint)(ushort)pMVar1->linkedHierCount; local_40 != 0; local_40 = local_40 - 1) {
 					pMVar1 = (ed_3d_hierarchy*)peVar4->pData;
 					pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 					peVar3 = peVar4->pPrev;
-					for (local_50 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_50 != 0; local_50 = local_50 - 1) {
+					for (local_50 = (uint)(ushort)pMVar1->linkedHierCount; local_50 != 0; local_50 = local_50 - 1) {
 						pMVar1 = (ed_3d_hierarchy*)peVar3->pData;
 						pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 						peVar8 = peVar3->pPrev;
-						for (local_60 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_60 != 0; local_60 = local_60 - 1) {
+						for (local_60 = (uint)(ushort)pMVar1->linkedHierCount; local_60 != 0; local_60 = local_60 - 1) {
 							pMVar1 = (ed_3d_hierarchy*)peVar8->pData;
 							pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 							peVar9 = peVar8->pPrev;
-							for (local_70 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_70 != 0; local_70 = local_70 - 1) {
+							for (local_70 = (uint)(ushort)pMVar1->linkedHierCount; local_70 != 0; local_70 = local_70 - 1) {
 								pMVar1 = (ed_3d_hierarchy*)peVar9->pData;
 								pMVar1->bRenderShadow = pMVar1->bRenderShadow & uVar2;
 								local_90 = peVar9->pPrev;
-								for (local_80 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_80 != 0; local_80 = local_80 - 1) {
+								for (local_80 = (uint)(ushort)pMVar1->linkedHierCount; local_80 != 0; local_80 = local_80 - 1) {
 									ed3DSetMeshTransformFlag_002abd80(local_90, flag);
 									local_90 = local_90->pPrev;
 								}
@@ -12866,35 +12888,35 @@ void ed3DSetMeshTransformFlag_002abff0(edNODE* pNode, ushort flag)
 	pMVar1 = (ed_3d_hierarchy*)pNode->pData;
 	pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 	peVar6 = pNode->pPrev;
-	for (uVar9 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; uVar9 != 0; uVar9 = uVar9 - 1) {
+	for (uVar9 = (uint)(ushort)pMVar1->linkedHierCount; uVar9 != 0; uVar9 = uVar9 - 1) {
 		pMVar1 = (ed_3d_hierarchy*)peVar6->pData;
 		pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 		peVar5 = peVar6->pPrev;
-		for (local_10 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_10 != 0; local_10 = local_10 - 1) {
+		for (local_10 = (uint)(ushort)pMVar1->linkedHierCount; local_10 != 0; local_10 = local_10 - 1) {
 			pMVar1 = (ed_3d_hierarchy*)peVar5->pData;
 			pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 			peVar4 = peVar5->pPrev;
-			for (local_20 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_20 != 0; local_20 = local_20 - 1) {
+			for (local_20 = (uint)(ushort)pMVar1->linkedHierCount; local_20 != 0; local_20 = local_20 - 1) {
 				pMVar1 = (ed_3d_hierarchy*)peVar4->pData;
 				pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 				peVar3 = peVar4->pPrev;
-				for (local_30 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_30 != 0; local_30 = local_30 - 1) {
+				for (local_30 = (uint)(ushort)pMVar1->linkedHierCount; local_30 != 0; local_30 = local_30 - 1) {
 					pMVar1 = (ed_3d_hierarchy*)peVar3->pData;
 					pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 					peVar2 = peVar3->pPrev;
-					for (local_40 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_40 != 0; local_40 = local_40 - 1) {
+					for (local_40 = (uint)(ushort)pMVar1->linkedHierCount; local_40 != 0; local_40 = local_40 - 1) {
 						pMVar1 = (ed_3d_hierarchy*)peVar2->pData;
 						pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 						peVar7 = peVar2->pPrev;
-						for (local_50 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_50 != 0; local_50 = local_50 - 1) {
+						for (local_50 = (uint)(ushort)pMVar1->linkedHierCount; local_50 != 0; local_50 = local_50 - 1) {
 							pMVar1 = (ed_3d_hierarchy*)peVar7->pData;
 							pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 							peVar8 = peVar7->pPrev;
-							for (local_60 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_60 != 0; local_60 = local_60 - 1) {
+							for (local_60 = (uint)(ushort)pMVar1->linkedHierCount; local_60 != 0; local_60 = local_60 - 1) {
 								pMVar1 = (ed_3d_hierarchy*)peVar8->pData;
 								pMVar1->bRenderShadow = pMVar1->bRenderShadow | flag;
 								local_80 = peVar8->pPrev;
-								for (local_70 = (uint)(ushort)pMVar1->subMeshParentCount_0xac; local_70 != 0; local_70 = local_70 - 1) {
+								for (local_70 = (uint)(ushort)pMVar1->linkedHierCount; local_70 != 0; local_70 = local_70 - 1) {
 									ed3DSetMeshTransformFlag_002abff0(local_80, flag);
 									local_80 = local_80->pPrev;
 								}
@@ -12976,7 +12998,7 @@ void ed3DHierarchyResetNode_002ac8b0(edNODE* pNodeA, edNODE* pNodeC)
 	peVar1 = (ed_3d_hierarchy*)pNodeA->pData;
 	peVar1->pLinkTransformData = (ed_3d_hierarchy*)0x0;
 	pNodeB = pNodeA;
-	for (iVar2 = 0; iVar2 < (int)(uint)(ushort)peVar1->subMeshParentCount_0xac; iVar2 = iVar2 + 1) {
+	for (iVar2 = 0; iVar2 < (int)(uint)(ushort)peVar1->linkedHierCount; iVar2 = iVar2 + 1) {
 		pNodeB = pNodeB->pPrev;
 	}
 	ed3DHierarchyJoinNodes_002ab840(pNodeA, pNodeB, pNodeC);
@@ -12998,13 +13020,13 @@ void ed3DHierarchyNodeUpdateScene(edLIST* pListA, edLIST* pListB, edNODE* pNode)
 	}
 	peVar1 = (ed_3d_hierarchy*)pNode->pData;
 	peVar2 = pListB->pPrev;
-	uVar3 = (uint)(ushort)peVar1->subMeshParentCount_0xac;
+	uVar3 = (uint)(ushort)peVar1->linkedHierCount;
 	pNodeB = pNode;
 	for (iVar4 = 0; iVar4 < (int)uVar3; iVar4 = iVar4 + 1) {
 		pNodeB = pNodeB->pPrev;
 	}
 	pListA->nodeCount = pListA->nodeCount - uVar3;
-	pListB->nodeCount = pListB->nodeCount + (uint)(ushort)peVar1->subMeshParentCount_0xac;
+	pListB->nodeCount = pListB->nodeCount + (uint)(ushort)peVar1->linkedHierCount;
 	ed3DHierarchyJoinNodes_002ab840(pNode, pNodeB, peVar2);
 	return;
 }
@@ -13103,7 +13125,7 @@ void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup)
 {
 	int iVar1;
 
-	for (iVar1 = (ushort)((ed_3d_hierarchy*)pNode->pData)->subMeshParentCount_0xac + 1; iVar1 != 0; iVar1 = iVar1 + -1) {
+	for (iVar1 = (ushort)((ed_3d_hierarchy*)pNode->pData)->linkedHierCount + 1; iVar1 != 0; iVar1 = iVar1 + -1) {
 		ed3DHierarchySetSetup((ed_3d_hierarchy*)pNode->pData, pSetup);
 		pNode = pNode->pPrev;
 	}
@@ -13333,7 +13355,7 @@ void ed3DHierarchyRemoveFromList(edLIST* pList, edNODE* pNode)
 	ed_3d_hierarchy* pHier = (ed_3d_hierarchy*)pNode->pData;
 
 	pSubMeshParent = pNode->pPrev;
-	uVar1 = pHier->subMeshParentCount_0xac;
+	uVar1 = pHier->linkedHierCount;
 	ed3DHierarchyRemoveNode(pList, pNode);
 	for (uVar3 = 0; uVar3 < uVar1; uVar3 = uVar3 + 1) {
 		peVar2 = pSubMeshParent->pPrev;
@@ -13488,5 +13510,3 @@ void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo)
 	pTextureInfo->textureFileLengthB = 0;
 	return;
 }
-
-

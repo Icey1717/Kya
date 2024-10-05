@@ -161,10 +161,10 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner) { IMPLEMENTATION_GUARD(); }
 	virtual void ManageFrozen() { IMPLEMENTATION_GUARD(); }
-	virtual void Draw() { IMPLEMENTATION_GUARD(); }
+	virtual void Draw();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) { IMPLEMENTATION_GUARD(); }
 	virtual void InitState(int state);
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); return 0; }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	float field_0x8;
 	float field_0xc;
@@ -185,11 +185,11 @@ class CBehaviourSelectorMaster : public CBehaviourSelector
 public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
 	S_ACTOR_STREAM_REF* pActorStreamRef;
-	undefined* field_0x30;
+	S_STREAM_NTF_TARGET_SWITCH_EX_LIST* field_0x30;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
 	int field_0x38;
 };
@@ -199,7 +199,7 @@ class CBehaviourSelectorNew : public CBehaviourSelector
 public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 };
 
@@ -283,6 +283,7 @@ public:
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
+	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
@@ -301,6 +302,7 @@ public:
 	float BehaviourTrajectory_ComputeTime(CBehaviourPlatformTrajectory* pBehaviour);
 
 	void BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehaviour);
+	void BehaviourSelectorMaster_Manage(CBehaviourSelectorMaster* pBehaviour);
 
 	void GenericManage(int param_2, int param_3, int param_4, int param_5);
 

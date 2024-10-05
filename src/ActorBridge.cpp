@@ -715,10 +715,10 @@ void CActorBridge::Initialize()
 	//e_ed_event_prim3d_type eStack4;
 	CActor* pCurActor;
 
-	local_20.xyz = this->field_0x160->field_0x0;
+	local_20.xyz = this->field_0x160->location;
 	local_20.w = 1.0f;
 
-	local_30.xyz = this->field_0x164->field_0x0;
+	local_30.xyz = this->field_0x164->location;
 	local_30.w = 1.0f;
 
 	edF32Vector4SubHard(&this->field_0x2f0.rowZ, &local_30, &local_20);

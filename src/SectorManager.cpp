@@ -1252,3 +1252,16 @@ void CSectorHierarchy::SetHiddenOff()
 	}
 	return;
 }
+
+void CSectorHierarchy::SetAlpha(byte alpha)
+{
+	if (alpha != this->alpha) {
+		this->alpha = alpha;
+
+		if (this->pNode != (edNODE*)0x0) {
+			ed3DHierarchyNodeSetAlpha(this->pNode, this->alpha);
+		}
+	}
+
+	return;
+}

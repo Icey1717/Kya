@@ -5932,6 +5932,8 @@ public:
 
 	void SetEarthQuake(CAM_QUAKE* pCamQuake);
 
+	bool AlertCamera(int param_2, int param_3);
+
 	static CCameraManager* _gThis;
 	static edFCamera _gFrontEndCamera;
 

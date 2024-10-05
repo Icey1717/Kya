@@ -342,7 +342,7 @@ struct ed_3d_hierarchy {
 	struct ed_3d_hierarchy_setup* pHierarchySetup;
 	edpkt_data* pMatrixPkt;
 	union edF32MATRIX4* pAnimMatrix;
-	short subMeshParentCount_0xac;
+	short linkedHierCount;
 	byte desiredLod;
 	char GlobalAlhaON;
 };
@@ -727,6 +727,7 @@ void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo);
 
 void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag);
+void ed3DHierarchyNodeSetAlpha(edNODE* pNode, byte alpha);
 
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);

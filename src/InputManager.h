@@ -78,6 +78,8 @@ public:
 
 	void FUN_001b6e20(float param_1, float param_2);
 
+	static void Reset();
+
 	int bActive;
 	int disconnectedController;
 	int bDisconnected;

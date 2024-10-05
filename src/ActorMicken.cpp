@@ -126,7 +126,7 @@ void CActorMicken::Init()
 
 void CActorMicken::Reset()
 {
-	int iVar1;
+	CActorMicken* pCVar1;
 	CBehaviour* pBehaviourEat;
 	float fVar3;
 	float fVar4;
@@ -146,30 +146,34 @@ void CActorMicken::Reset()
 	this->field_0x400 = 0x11;
 	this->field_0x410 = 0;
 
-	pBehaviourEat = GetBehaviour(MICKEN_BEHAVIOUR_EAT);
+	pBehaviourEat = GetBehaviour(4);
+
 	if (pBehaviourEat != (CBehaviour*)0x0) {
-		IMPLEMENTATION_GUARD(
-		if ((this->followPathReader).pPathFollow == (CPathFollow*)0x0) {
-			*(uint*)(*(int*)&this->field_0x418 + 1000) = *(uint*)(*(int*)&this->field_0x418 + 1000) | 0x10;
+		if ((this->behaviourMickenEat).pathFollowReader.pPathFollow == (CPathFollow*)0x0) {
+			pCVar1 = (this->behaviourMickenEat).pOwner;
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 | 0x10;
 		}
 		else {
-			CPathFollowReader::Reset(&this->followPathReader);
-			*(uint*)(*(int*)&this->field_0x418 + 1000) = *(uint*)(*(int*)&this->field_0x418 + 1000) & 0xffffffef;
+			(this->behaviourMickenEat).pathFollowReader.Reset();
+			pCVar1 = (this->behaviourMickenEat).pOwner;
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 & 0xffffffef;
 		}
-		iVar1 = *(int*)&this->field_0x418;
-		if ((*(uint*)&this->field_0x424 & 4) == 0) {
-			*(uint*)(iVar1 + 1000) = *(uint*)(iVar1 + 1000) & 0xfffffffb;
-		}
-		else {
-			*(uint*)(iVar1 + 1000) = *(uint*)(iVar1 + 1000) | 4;
-		}
-		iVar1 = *(int*)&this->field_0x418;
-		if ((*(uint*)&this->field_0x424 & 8) == 0) {
-			*(uint*)(iVar1 + 1000) = *(uint*)(iVar1 + 1000) & 0xfffffff7;
+
+		pCVar1 = (this->behaviourMickenEat).pOwner;
+		if (((this->behaviourMickenEat).field_0x10 & 4) == 0) {
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 & 0xfffffffb;
 		}
 		else {
-			*(uint*)(iVar1 + 1000) = *(uint*)(iVar1 + 1000) | 8;
-		})
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 | 4;
+		}
+
+		pCVar1 = (this->behaviourMickenEat).pOwner;
+		if (((this->behaviourMickenEat).field_0x10 & 8) == 0) {
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 & 0xfffffff7;
+		}
+		else {
+			pCVar1->flags_0x3e8 = pCVar1->flags_0x3e8 | 8;
+		}
 	}
 
 	return;
@@ -373,7 +377,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					}
 					else {
 						bVar4 = true;
-						if (edFCosinus[1820] <= ABS(*(float*)((int)pMsgParam + 4))) {
+						if (0.17398384f <= ABS(*(float*)((int)pMsgParam + 4))) {
 							bVar4 = false;
 						}
 					}

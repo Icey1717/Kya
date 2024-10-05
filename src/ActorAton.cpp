@@ -124,7 +124,36 @@ void CActorAton::Reset()
 
 void CActorAton::CheckpointReset()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	CPathPlane* pCVar2;
+	edF32VECTOR4* peVar3;
+	float fVar4;
+
+	ClearLocalData();
+
+	fVar4 = this->field_0x1c0.x;
+	if (fVar4 == 1e+30) {
+		iVar1 = this->pathPlaneArray.GetNbPathPlane();
+		if (iVar1 != 0) {
+			this->waypointLocation = *this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
+		}
+	}
+	else {
+		this->waypointLocation = this->field_0x1c0;
+	}
+
+	this->bWaypointSet = 1;
+
+	this->field_0x344 = this->field_0x344 & 0xfe;
+
+	RestoreCollisionSphere(0);
+
+	CActor::CheckpointReset();
+
+	SetBehaviour(-1, -1, -1);
+	SetBehaviour(this->subObjA->defaultBehaviourId, -1, -1);
+
+	return;
 }
 
 void CActorAton::SaveContext(uint*, int)
@@ -913,9 +942,8 @@ void CActorAton::AnalysePathType()
 			}
 
 			if (sqrtf(fVar11 * fVar11 + 0.0f + fVar2 * fVar2) < fVar10) {
-				IMPLEMENTATION_GUARD(
 				this->pathPlaneArray.NextWayPoint();
-				FUN_00387660();)
+				ChooseJumpState();
 			}
 			else {
 				SetState(ATON_ESCAPE_STATE_JUMP, -1);

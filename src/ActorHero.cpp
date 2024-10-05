@@ -1,5 +1,7 @@
 #include "ActorHero.h"
 #include "TimeController.h"
+#include "WayPoint.h"
+#include "LevelScheduleManager.h"
 
 CActorHero* CActorHero::_gThis = (CActorHero*)0x0;
 
@@ -1034,6 +1036,175 @@ uint CActorHero::GetStateHeroFlags(int state)
 	return uVar1;
 }
 
+int CActorHero::GetLastCheckpointSector()
+{
+	return this->lastCheckPointSector;
+}
+
+bool CActorHero::CanActivateCheckpoint(uint flags)
+{
+	int iVar1;
+	bool bVar2;
+	CLifeInterface* pCVar3;
+	uint uVar4;
+	StateConfig* pSVar5;
+	float fVar6;
+
+	pCVar3 = GetLifeInterface();
+	fVar6 = pCVar3->GetValue();
+
+	bVar2 = fVar6 - this->field_0x2e4 <= 0.0f;
+	if (!bVar2) {
+		iVar1 = this->actorState;
+		if (iVar1 == -1) {
+			uVar4 = 0;
+		}
+		else {
+			pSVar5 = GetStateCfg(iVar1);
+			uVar4 = pSVar5->flags_0x4 & 1;
+		}
+		bVar2 = uVar4 != 0;
+	}
+
+	if (!bVar2) {
+		bVar2 = this->field_0x1420 != 0;
+		if ((!bVar2) && (bVar2 = true, this->field_0x1558 <= 0.0f)) {
+			bVar2 = false;
+		}
+		if (!bVar2) {
+			if ((flags & 0x40000000) == 0) {
+				iVar1 = this->actorState;
+				bVar2 = true;
+				if ((iVar1 != 0xa8) && (iVar1 != 0x129)) {
+					bVar2 = false;
+				}
+				if (bVar2) {
+					return true;
+				}
+			}
+
+			if ((flags & 1) != 0) {
+				iVar1 = this->actorState;
+				if (iVar1 == -1) {
+					uVar4 = 0;
+				}
+				else {
+					pSVar5 = GetStateCfg(iVar1);
+					uVar4 = pSVar5->flags_0x4 & 0x100;
+				}
+				if (uVar4 != 0) {
+					return uVar4 != 0;
+				}
+				iVar1 = this->actorState;
+				if (iVar1 == -1) {
+					uVar4 = 0;
+				}
+				else {
+					if (iVar1 < 0x72) {
+						uVar4 = 0;
+					}
+					else {
+						uVar4 = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+					}
+				}
+
+				return (uVar4 & 0x100000) != 0;
+			}
+
+			if ((flags & 2) != 0) {
+				return false;
+			}
+
+			if ((flags & 0x40000000) != 0) {
+				bVar2 = this->curBehaviourId == 8;
+				if (!bVar2) {
+					return bVar2;
+				}
+
+				iVar1 = this->actorState;
+				if (iVar1 == -1) {
+					uVar4 = 0;
+				}
+				else {
+					pSVar5 = GetStateCfg(iVar1);
+					uVar4 = pSVar5->flags_0x4 & 0x100;
+				}
+
+				return uVar4 != 0;
+			}
+
+			iVar1 = this->actorState;
+			if (iVar1 == -1) {
+				return false;
+			}
+
+			return GetStateCfg(iVar1)->flags_0x4 & 0x100;
+		}
+	}
+
+	return false;
+}
+
+void CActorHero::ActivateCheckpoint(_evt_checkpoint_param* pEventCheckpointParam)
+{
+	CWayPoint* pCVar1;
+	//CBehaviourVtable* pCVar2;
+	CBehaviour* pCVar3;
+	int iVar4;
+	int iVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+
+	this->field_0xe50.xyz = pEventCheckpointParam->pWayPointA->location;
+	(this->field_0xe50).w = 1.0f;
+
+	this->field_0xe60 = pEventCheckpointParam->pWayPointA->rotation;
+
+	this->levelDataField1C_0xe6c = 0;
+	iVar6 = pEventCheckpointParam->sectorId;
+	if ((iVar6 != -1) && (0 < iVar6)) {
+		this->lastCheckPointSector = iVar6;
+	}
+
+	if (((pEventCheckpointParam->flags & 8U) != 0) && (this == _gThis)) {
+		this->field_0xe80.xyz = pEventCheckpointParam->pWayPointA->location;
+		(this->field_0xe80).w = 1.0f;
+
+		this->field_0xe90 = pEventCheckpointParam->pWayPointA->rotation;
+
+		this->levelDataField1C_0xe9c = 0;
+		iVar6 = pEventCheckpointParam->sectorId;
+		if ((iVar6 != -1) && (0 < iVar6)) {
+			this->field_0xea0 = iVar6;
+		}
+	}
+
+	if (((pEventCheckpointParam->flags & 0x40000000U) != 0) && (this->curBehaviourId == 8)) {
+		IMPLEMENTATION_GUARD(
+		pCVar3 = CActor::GetBehaviour((CActor*)this, (this->character).characterBase.base.base.curBehaviourId);
+		pCVar2 = pCVar3[0x23].pVTable;
+		if (pCVar2 != (CBehaviourVtable*)0x0) {
+			(**(code**)(pCVar2->_vt + 0xfc))(pCVar2, pEventCheckpointParam->pWayPointB, pEventCheckpointParam->flags & 8);
+		})
+	}
+
+	iVar6 = 0;
+	do {
+		iVar5 = 0;
+		do {
+			if (1 < this->field_0xd34[iVar6][iVar5]) {
+				this->field_0xd34[iVar6][iVar5] = 1;
+			}
+			iVar5 = iVar5 + 1;
+		} while (iVar5 < 0x10);
+
+		iVar6 = iVar6 + 1;
+	} while (iVar6 < 0x10);
+
+	return;
+}
+
 HeroActionStateCfg CActorHero::_gActionCfg_HRO[16] = {
 	{ 0x0 },
 	{ 0x11 },
@@ -1591,4 +1762,17 @@ void CMagicInterface::SetHasMagicInteractionAround(int bHasMagicAround)
 {
 	this->bHasMagicAround = bHasMagicAround;
 	return;
+}
+
+bool CMoneyInterface::Manage()
+{
+	bool bVar1;
+
+	bVar1 = CScene::_pinstance->CheckFunc_001b9300();
+	return bVar1 == false;
+}
+
+float CMoneyInterface::GetValue()
+{
+	return (float)CLevelScheduler::_gGameNfo.nbMoney;
 }

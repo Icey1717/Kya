@@ -61,6 +61,8 @@ struct CCamera : public CObject {
 	void EnterManagedCluster();
 	void LeaveManagedCluster();
 
+	void FUN_00199b80();
+
 	static CCameraManager* _gpcam_man;
 
 	int field_0x8;

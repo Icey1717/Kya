@@ -186,10 +186,21 @@ void CActorMovable::Create(ByteCode* pByteCode)
 	this->dynamic.Reset(this);
 	fVar1 = pByteCode->GetF32();
 	(this->dynamic).weightB = fVar1;
-	this->field_0x1c0 = 1e+30f;
+	this->field_0x1c0.x = 1e+30f;
 	return;
 }
 
+
+void CActorMovable::CheckpointReset()
+{
+	CActor::CheckpointReset();
+
+	if ((this->field_0x1c0).x != 1e+30f) {
+		CActor::UpdatePosition(&this->field_0x1c0, true);
+	}
+
+	return;
+}
 
 void CActorMovable::SetState(int newState, int animType)
 {

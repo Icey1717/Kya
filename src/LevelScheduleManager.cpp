@@ -32,6 +32,7 @@
 #include "port/pointer_conv.h"
 #include "EventTrack.h"
 #include "ActorHero.h"
+#include "TimeController.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -144,6 +145,8 @@ ScenarioVariable _gScenVarInfo[98] = {
 };
 
 CLevelScheduler* CLevelScheduler::gThis = NULL;
+
+GameInfo CLevelScheduler::_gGameNfo{};
 
 const char* g_CD_LevelPath_00433bf8 = "CDEURO/Level/";
 const char* g_szRouter_00433c08 = "Router";
@@ -738,6 +741,14 @@ void CLevelScheduler::Levels_LoadInfoBank()
 int CLevelScheduler::SaveGame_GetMaxBufferSize()
 {
 	return 0x10000;
+}
+
+void CLevelScheduler::UpdateGameInfo(float health, int magic, int money)
+{
+	_gGameNfo.health = health;
+	_gGameNfo.nbMagic = magic;
+	_gGameNfo.nbMoney = money;
+	return;
 }
 
 ulong gMedallionHashCodes[9] = 
@@ -1908,6 +1919,26 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 					this->level_0x5b54 = param_6;
 				}
 			})
+		}
+	}
+	return;
+}
+
+void CLevelScheduler::SetLevelTimerFunc_002df450(float param_1, int mode)
+{
+	Timer* pTVar1;
+
+	if (((this->field_0x88 == 0.0f) || (mode != 0)) || (pTVar1 = Timer::GetTimer(), 180.0f < (param_1 + pTVar1->scaledTotalTime) - this->field_0x88)) {
+		if (param_1 == 0.0f) {
+			param_1 = 0.001f;
+		}
+
+		if (this->field_0x84 < param_1) {
+			this->field_0x84 = param_1;
+		}
+
+		if (mode != 0) {
+			this->field_0x88 = 0.0f;
 		}
 	}
 	return;

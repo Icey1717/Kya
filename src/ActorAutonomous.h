@@ -132,6 +132,7 @@ public:
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
+	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);

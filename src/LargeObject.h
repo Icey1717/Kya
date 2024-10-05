@@ -122,7 +122,7 @@ public:
 	undefined field_0x37;
 	ulong field_0x38;
 	int curState;
-	undefined4 field_0x44;
+	float timeInState;
 	undefined4 field_0x48;
 	FogClipEntry aFogClipStack[2];
 	undefined field_0x5c;
@@ -297,9 +297,14 @@ public:
 	bool LevelLoading_Manage(void);
 	void LevelLoading_Begin(void);
 
+	void Level_CheckpointReset(void);
+	void Level_Reset(void);
+
 	void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	void HandleCurState();
+
+	void InitiateCheckpointReset(int param_2);
 
 	static void CreateScene(void);
 	static void* GetManager(MANAGER_TYPE type);

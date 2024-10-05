@@ -40,12 +40,16 @@
 #include "EventManager.h"
 #include "EventTrack.h"
 #include "CameraGame.h"
+#include "kya.h"
+
+#define SCENE_STATE_RESET 0x5
 
 CScene* CScene::_pinstance = NULL;
 
 ManagerContainer CScene::ptable = { 0 };
 
 ed_3D_Scene* CScene::_scene_handleA = NULL;
+
 ed_3D_Scene* CScene::_scene_handleB = NULL;
 
 ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10] = { 0 };
@@ -460,10 +464,10 @@ void CScene::Level_Init()
 	int loopCounter;
 
 	if (this->curState != 0) {
-		this->field_0x44 = 0.0;
+		this->timeInState = 0.0;
 		this->curState = 0;
 	}
-	this->field_0x44 = 0.0;
+	this->timeInState = 0.0;
 	if ((this->pFogClipStream->flags & 1) == 0) {
 		this->fogClipSettingStackSize = this->fogClipSettingStackSize + 1;
 		this->field_0xd8 = this->clipValue_0xe8;
@@ -527,88 +531,208 @@ void CScene::Level_Init()
 	return;
 }
 
+static void Fade(float param_1, int param_2, int param_3)
+{
+	ulong uVar1;
+	float fVar2;
+	uint uVar3;
+
+	if (gVideoConfig.isNTSC == 1) {
+		fVar2 = param_1 * 50.0f;
+		if (fVar2 < 2.147484e+09f) {
+			uVar3 = (uint)fVar2;
+		}
+		else {
+			uVar3 = (int)(fVar2 - 2.147484e+09f) | 0x80000000;
+		}
+	}
+	else {
+		fVar2 = param_1 * 60.0f;
+		if (fVar2 < 2.147484e+09f) {
+			uVar3 = (uint)fVar2;
+		}
+		else {
+			uVar3 = (int)(fVar2 - 2.147484e+09f) | 0x80000000;
+		}
+	}
+
+	if (uVar3 == 0) {
+		uVar3 = 1;
+	}
+
+	edVideoSetFadeColor(0, 0, 0);
+	if (param_2 == 1) {
+		edVideoSetFadeColor(0, 0, 0);
+		edVideoSetFade(1.0);
+		edVideoSetFadeIn(uVar3);
+	}
+	else {
+		edVideoSetFadeColor(0, 0, 0);
+		edVideoSetFade(0.0);
+		edVideoSetFadeOut(uVar3, 1);
+	}
+	if (param_3 != 0) {
+		uVar1 = edVideoIsFadeActive();
+		while (uVar1 != 0) {
+			edVideoFlip();
+			uVar1 = edVideoIsFadeActive();
+		}
+	}
+	return;
+}
+
 void CScene::HandleCurState()
 {
 	Timer* pTVar1;
 	ulong uVar2;
 
 	HandleFogAndClippingSettings();
+
 	pTVar1 = GetTimer();
-	this->field_0x44 = this->field_0x44 + pTVar1->lastFrameTime;
+	this->timeInState = this->timeInState + pTVar1->lastFrameTime;
+
 	switch (this->curState) {
 	case 1:
-		IMPLEMENTATION_GUARD();
-		//FUN_001a0180(1.0, 2, 0);
-		//if (param_1->field_0x40 != 2) {
-		//	param_1->field_0x44 = 0.0;
-		//	param_1->field_0x40 = 2;
-		//}
+		Fade(1.0f, 2, 0);
+
+		if (this->curState != 2) {
+			this->timeInState = 0.0f;
+			this->curState = 2;
+		}
 		break;
 	case 2:
-		IMPLEMENTATION_GUARD();
-		//uVar2 = GetbRam0048cdf8();
-		//if (uVar2 == 0) {
-		//	g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7f;
-		//	LargeObject::OnSaveLoaded_001b8d40(param_1);
-		//	FUN_001a0180(1.0, 1, 0);
-		//	if (param_1->field_0x40 != 0) {
-		//		param_1->field_0x44 = 0.0;
-		//		param_1->field_0x40 = 0;
-		//	}
-		//}
+		uVar2 = edVideoIsFadeActive();
+		if (uVar2 == 0) {
+			GameFlags = GameFlags & 0xfffffe7f;
+
+			Level_CheckpointReset();
+
+			Fade(1.0f, 1, 0);
+
+			if (this->curState != 0) {
+				this->timeInState = 0.0f;
+				this->curState = 0;
+			}
+		}
 		break;
 	case 3:
-		IMPLEMENTATION_GUARD();
-		//g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7f;
-		//LargeObject::OnSaveLoaded_001b8d40(param_1);
-		//FUN_001a0180(1.0, 1, 0);
-		//if (param_1->field_0x40 != 0) {
-		//	param_1->field_0x44 = 0.0;
-		//	param_1->field_0x40 = 0;
-		//}
+		GameFlags = GameFlags & 0xfffffe7f;
+
+		Level_CheckpointReset();
+
+		Fade(1.0f, 1, 0);
+
+		if (this->curState != 0) {
+			this->timeInState = 0.0f;
+			this->curState = 0;
+		}
 		break;
 	case 4:
-		IMPLEMENTATION_GUARD();
-		//FUN_001a0180(1.0, 2, 0);
-		//if (param_1->field_0x40 != 5) {
-		//	param_1->field_0x44 = 0.0;
-		//	param_1->field_0x40 = 5;
-		//}
+		Fade(1.0f, 2, 0);
+
+		if (this->curState != SCENE_STATE_RESET) {
+			this->timeInState = 0.0f;
+			this->curState = SCENE_STATE_RESET;
+		}
 		break;
-	case 5:
-		IMPLEMENTATION_GUARD();
-		//uVar2 = GetbRam0048cdf8();
-		//if (uVar2 == 0) {
-		//	g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 & 0xfffffe7f;
-		//	FUN_001b8e30((int)param_1);
-		//	FUN_001a0180(1.0, 1, 0);
-		//	if (param_1->field_0x40 != 0) {
-		//		param_1->field_0x44 = 0.0;
-		//		param_1->field_0x40 = 0;
-		//	}
-		//}
+	case SCENE_STATE_RESET:
+		uVar2 = edVideoIsFadeActive();
+		if (uVar2 == 0) {
+			GameFlags = GameFlags & 0xfffffe7f;
+
+			Level_Reset();
+
+			Fade(1.0f, 1, 0);
+
+			if (this->curState != 0) {
+				this->timeInState = 0.0f;
+				this->curState = 0;
+			}
+		}
 		break;
 	case 6:
-		IMPLEMENTATION_GUARD();
-		//FUN_001a0180(1.0, 2, 0);
-		//if (param_1->field_0x40 != 7) {
-		//	param_1->field_0x44 = 0.0;
-		//	param_1->field_0x40 = 7;
-		//}
+		Fade(1.0f, 2, 0);
+
+		if (this->curState != 7) {
+			this->timeInState = 0.0f;
+			this->curState = 7;
+		}
 		break;
 	case 7:
-		IMPLEMENTATION_GUARD();
-		//uVar2 = GetbRam0048cdf8();
-		//if (uVar2 == 0) {
-		//	FUN_001a0180(1.0, 1, 0);
-		//	g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 | 2;
-		//	if (param_1->field_0x40 != 0) {
-		//		param_1->field_0x44 = 0.0;
-		//		param_1->field_0x40 = 0;
-		//	}
-		//}
+		uVar2 = edVideoIsFadeActive();
+		if (uVar2 == 0) {
+			Fade(1.0f, 1, 0);
+
+			GameFlags = GameFlags | 2;
+
+			if (this->curState != 0) {
+				this->timeInState = 0.0f;
+				this->curState = 0;
+			}
+		}
 	}
 	return;
+}
+
+void CScene::Level_CheckpointReset(void)
+{
+	S_STREAM_FOG_DEF* pSVar1;
+	CObjectManager** pMVar2;
+	int iVar3;
+
+	iVar3 = 0;
+	pMVar2 = CScene::ptable.aManagers;
+	do {
+		if (*pMVar2 != (CObjectManager*)0x0) {
+			(*pMVar2)->Level_PreCheckpointReset();
+		}
+		iVar3 = iVar3 + 1;
+		pMVar2 = pMVar2 + 1;
+	} while (iVar3 < 0x18);
+
+	iVar3 = 0;
+	pMVar2 = CScene::ptable.aManagers;
+	do {
+		if (*pMVar2 != (CObjectManager*)0x0) {
+			(*pMVar2)->Level_CheckpointReset();
+		}
+		iVar3 = iVar3 + 1;
+		pMVar2 = pMVar2 + 1;
+	} while (iVar3 < 0x18);
+
+	if (this->fogClipSettingStackSize != -1) {
+		pSVar1 = this->aFogClipStack[this->fogClipSettingStackSize].pStreamDef;
+		this->clipValue_0xe8 = pSVar1->clipValue_0x0;
+		this->field_0xec = pSVar1->field_0x4;
+		this->fogRGBA = pSVar1->fogRGBA;
+		this->fogFlags = pSVar1->flags;
+		this->field_0xd0 = this->field_0xd4;
+	}
+
+	return;
+}
+
+void CScene::InitiateCheckpointReset(int param_2)
+{
+	if (this->curState == 0) {
+		if (param_2 == 0) {
+			this->timeInState = 0.0f;
+			this->curState = 3;
+		}
+		else {
+			this->timeInState = 0.0f;
+			this->curState = 1;
+		}
+
+		GameFlags = GameFlags | 0x80;
+	}
+
+	return;
+}
+
+void CScene::Level_Reset()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CScene::Level_Manage()

@@ -9,6 +9,14 @@ struct CFrontendMagicGauge {
 	void Magic_SetDisplay(unsigned char bNewVisible);
 };
 
+class CWidget {};
+
+class CFrontendLifeGauge : public CWidget
+{
+public:
+	void UpdatePercent(float) { IMPLEMENTATION_GUARD_LOG(); }
+};
+
 struct FrontendManager : public CObjectManager {
 	FrontendManager();
 	virtual void Game_Init();
@@ -33,7 +41,7 @@ struct FrontendManager : public CObjectManager {
 	undefined field_0x55;
 	undefined field_0x56;
 	undefined field_0x57;
-	char* pHealthBar;
+	CFrontendLifeGauge* pHealthBar;
 	struct CFrontendMagicGauge* pMagicOrbs;
 	struct HNootiesWolfun* pNooties;
 	struct HNootiesWolfun* pFreedWolfun;

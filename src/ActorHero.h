@@ -29,6 +29,8 @@
 
 #define STATE_HERO_TOBOGGAN_JUMP_HURT 0x95
 
+#define STATE_HERO_FALL_DEATH 0xa1
+
 #define STATE_HERO_KICK_A 0xa5
 #define STATE_HERO_KICK_B 0xa6
 #define STATE_HERO_KICK_C 0xa7
@@ -62,6 +64,12 @@
 #define STATE_HERO_GLIDE_1 0xf0
 #define STATE_HERO_GLIDE_2 0xf1
 #define STATE_HERO_GLIDE_3 0xf2
+
+#define STATE_HERO_WIND_SLIDE 0xf6
+#define STATE_HERO_WIND_SLIDE_MOVE_A 0xf7
+#define STATE_HERO_WIND_SLIDE_MOVE_B 0xf8
+#define STATE_HERO_WIND_SLIDE_MOVE_C 0xfb
+#define STATE_HERO_WIND_SLIDE_MOVE_D 0xfc
 
 #define STATE_HERO_TRAMPOLINE_JUMP_1_2_A 0x10b
 #define STATE_HERO_TRAMPOLINE_JUMP_2_3 0x10c
@@ -114,9 +122,28 @@ public:
 	float transit;
 };
 
+class CMoneyInterface : public CInterface
+{
+public:
+	// CInterface
+	virtual bool Manage();
+	virtual void Draw() {}
+	virtual void Reset() {}
+	virtual void SetValue(float value) {}
+	virtual float GetValue();
+};
+
 struct HeroActionStateCfg
 {
 	uint field_0x0;
+};
+
+struct _evt_checkpoint_param
+{
+	CWayPoint* pWayPointA;
+	int sectorId;
+	CWayPoint* pWayPointB;
+	int flags;
 };
 
 class CActorHero : public CActorFighter
@@ -126,15 +153,18 @@ public:
 
 	uint heroFlags;
 
-	int lastCheckPointSector;
-	int field_0xea0;
-
 	int bCanUseCheats;
 	int field_0xaa4;
 
 	int field_0x1610;
 	int field_0x18dc;
-	int field_0xee0;
+
+	int field_0xcc0;
+	int bIsSettingUp;
+
+	edF32VECTOR4 field_0xeb0;
+	edF32VECTOR4 field_0xec0;
+	int field_0xed0;
 
 	// Bones
 	uint field_0x157c;
@@ -164,7 +194,19 @@ public:
 
 	CActorBoomy* pActorBoomy;
 
-	// Hero goes at least up to 0x1548 given CCameraStack::GetCurHeroState
+	edF32VECTOR4 field_0xe50;
+	edF32VECTOR3 field_0xe60;
+	int levelDataField1C_0xe6c;
+	int lastCheckPointSector;
+
+	byte field_0xd34[16][16];
+
+	edF32VECTOR4 field_0xe80;
+	edF32VECTOR3 field_0xe90;
+	int levelDataField1C_0xe9c;
+	int field_0xea0;
+
+	// Hero goes at least up to 0x1558 given CanActivateCheckpoint
 	float field_0x1544;
 	float field_0x1548;
 	float field_0x1550;
@@ -173,12 +215,22 @@ public:
 	float field_0xa84;
 	float field_0xa88;
 
+	int field_0x1420;
+
+	int field_0x1018;
+
+	float field_0x1558;
+
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];
 	static HeroActionStateCfg _gActionCfg_HRO[16];
 
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
+
+	int GetLastCheckpointSector();
+	bool CanActivateCheckpoint(uint flags);
+	void ActivateCheckpoint(_evt_checkpoint_param* pEventCheckpointParam);
 
 	uint GetStateHeroFlags(int state);
 

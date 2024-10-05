@@ -2131,6 +2131,15 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 	return;
 }
 
+void CActorMovingPlatform::CheckpointReset()
+{
+	CActorMovable::CheckpointReset();
+
+	ForceCarriedStuff();
+
+	return;
+}
+
 void CActorMovingPlatform::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix)
 {
 	CActor* pCVar1;
@@ -2187,6 +2196,192 @@ void CActorMovingPlatform::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4*
 	else {
 		CActor::FillThisFrameExpectedDifferentialMatrix(pMatrix);
 	}
+	return;
+}
+
+void CActorMovingPlatform::BehaviourSelectorMaster_Manage(CBehaviourSelectorMaster* pBehaviour)
+{
+	int iVar1;
+	Timer* pTVar2;
+	S_ACTOR_STREAM_REF* pSVar3;
+	S_STREAM_NTF_TARGET_SWITCH_EX_LIST* pSVar4;
+	int iVar4;
+	int iVar5;
+	uint uVar6;
+	uint uVar7;
+	int iVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 eStack64;
+	uint local_28;
+	int local_24;
+	undefined4 local_1c;
+	undefined4 local_18;
+	undefined4 local_14;
+	undefined4 local_10;
+	uint local_c;
+	uint local_8;
+	uint* local_4;
+
+	local_4 = &local_28;
+	iVar8 = -2;
+	uVar7 = 0;
+	local_28 = 0;
+	local_24 = pBehaviour->field_0x38;
+	pSVar4 = pBehaviour->field_0x30;
+	iVar5 = 0;
+	if (0 < pSVar3->entryCount) {
+		iVar4 = 0;
+		do {
+			iVar1 = DoMessage(LOAD_SECTION_CAST(CActor*, pSVar4->aEntries[iVar5].pRef), (ACTOR_MESSAGE)0x2e, (MSG_PARAM)local_4);
+			if (iVar1 != 0) {
+				local_24 = local_24 + -1;
+				uVar7 = uVar7 | local_28;
+			}
+			pSVar4 = pBehaviour->field_0x30;
+			iVar5 = iVar5 + 1;
+			iVar4 = iVar4 + 0x10;
+		} while (iVar5 < pSVar4->entryCount);
+	}
+	local_8 = (uint)((uVar7 & 1) == 0);
+	iVar5 = DoMessage(this, (ACTOR_MESSAGE)0x2b, (MSG_PARAM)local_8);
+
+	if (iVar5 != 0) {
+		iVar8 = -1;
+	}
+
+	iVar5 = 0;
+	uVar6 = 2;
+	iVar4 = 0;
+	while (true) {
+		pSVar3 = pBehaviour->pActorStreamRef;
+		iVar1 = 0;
+		if (pSVar3 != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar1 = pSVar3->entryCount;
+		}
+
+		if (iVar1 <= iVar5) break;
+
+		local_c = (uint)((uVar7 & uVar6) == 0);
+		iVar1 = DoMessage(pSVar3->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x2b, (MSG_PARAM)local_c);
+
+		if (iVar1 != 0) {
+			iVar8 = iVar5;
+		}
+
+		iVar4 = iVar4 + 4;
+		iVar5 = iVar5 + 1;
+		uVar6 = uVar6 << 1;
+	}
+
+	if (uVar7 == 0xffffffff) {
+		iVar8 = -2;
+	}
+	else {
+		if (iVar8 == -2) {
+			iVar8 = local_24;
+		}
+		if (iVar8 == -2) {
+			iVar8 = -1;
+		}
+	}
+
+	if (-3 < iVar8) {
+		iVar5 = 0;
+		if (pSVar3 != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar5 = pSVar3->entryCount;
+		}
+		if (iVar8 < iVar5) goto LAB_00153528;
+	}
+	iVar8 = -1;
+LAB_00153528:
+	iVar5 = pBehaviour->field_0x38;
+	if (iVar8 != iVar5) {
+		if (iVar5 != -2) {
+			if (iVar5 == -1) {
+				local_10 = 0;
+				DoMessage(this, (ACTOR_MESSAGE)0x10, 0);
+			}
+			else {
+				local_14 = 0;
+				DoMessage(pSVar3->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x10, 0);
+			}
+		}
+
+		pBehaviour->field_0x38 = iVar8;
+		iVar8 = pBehaviour->field_0x38;
+		if (iVar8 != -2) {
+			if (iVar8 == -1) {
+				local_18 = 0;
+				DoMessage(this, (ACTOR_MESSAGE)0xf, 0);
+			}
+			else {
+				local_1c = 0;
+				DoMessage(pBehaviour->pActorStreamRef->aEntries[iVar8].Get(), (ACTOR_MESSAGE)0xf, 0);
+			}
+
+			iVar8 = pBehaviour->field_0x38;
+			pSVar4 = pBehaviour->field_0x30;
+
+			for (iVar5 = 0; iVar5 < pSVar4->entryCount; iVar5++) {
+				pSVar4->aEntries[iVar5].Switch(this, iVar8 + 1);
+			}
+
+			pBehaviour->pStreamEventCamera->SwitchOn(this);
+		}
+	}
+
+	iVar8 = this->actorState;
+	if (iVar8 == 0xd) {
+		pTVar2 = GetTimer();
+		fVar11 = pBehaviour->field_0x24;
+		fVar9 = pBehaviour->field_0x10;
+		fVar10 = fVar11 + pBehaviour->field_0xc * pTVar2->cutsceneDeltaTime;
+		if (fVar10 <= fVar9) {
+			fVar9 = fVar10;
+		}
+
+		if (fVar9 == fVar11) {
+			edF32Vector4ScaleHard(-fVar11, &eStack112, &g_xVector);
+			edF32Vector4AddHard(&eStack112, &eStack112, &this->baseLocation);
+			Platform_UpdatePosition(&eStack112, 0, (CActorsTable*)0x0);
+		}
+		else {
+			pBehaviour->field_0x24 = fVar9;
+			edF32Vector4ScaleHard(-fVar9, &eStack96, &g_xVector);
+			edF32Vector4AddHard(&eStack96, &eStack96, &this->baseLocation);
+			Platform_UpdatePosition(&eStack96, 1, (CActorsTable*)0x0);
+		}
+	}
+	else {
+		if (iVar8 == 0xb) {
+			pTVar2 = GetTimer();
+			fVar10 = pBehaviour->field_0x24;
+			fVar9 = fVar10 - pBehaviour->field_0xc * pTVar2->cutsceneDeltaTime;
+			if (fVar9 < 0.0f) {
+				fVar9 = 0.0f;
+			}
+
+			if (fVar9 == fVar10) {
+				edF32Vector4ScaleHard(-fVar10, &eStack80, &g_xVector);
+				edF32Vector4AddHard(&eStack80, &eStack80, &this->baseLocation);
+				Platform_UpdatePosition(&eStack80, 0, (CActorsTable*)0x0);
+			}
+			else {
+				pBehaviour->field_0x24 = fVar9;
+				edF32Vector4ScaleHard(-fVar9, &eStack64, &g_xVector);
+				edF32Vector4AddHard(&eStack64, &eStack64, &this->baseLocation);
+				Platform_UpdatePosition(&eStack64, 1, (CActorsTable*)0x0);
+			}
+		}
+	}
+
+	GenericManage(1, 0, -1, -1);
+
 	return;
 }
 
@@ -3319,6 +3514,11 @@ void CBehaviourSelector::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CBehaviourSelector::Draw()
+{
+	IMPLEMENTATION_GUARD_FX();
+}
+
 void CBehaviourSelector::InitState(int state)
 {
 	CSound* pSound;
@@ -3332,6 +3532,63 @@ void CBehaviourSelector::InitState(int state)
 			(SOUND_SPATIALIZATION_PARAM*)0x0);
 	})
 	return;
+}
+
+int CBehaviourSelector::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	S_TIED_ACTOR_ENTRY* pSVar1;
+	bool bVar2;
+	ed_g2d_manager* pTexture;
+	ulong uVar3;
+	float fVar4;
+	CCollision* pCol;
+
+	uVar3 = 0;
+	if (msg == 0x10) {
+		this->pOwner->SetState(0xb, -1);
+		uVar3 = 1;
+	}
+	else {
+		if (msg == 0xf) {
+			this->pOwner->SetState(0xd, -1);
+			uVar3 = 1;
+		}
+		else {
+			if (msg == 0x2b) {
+				if (this->field_0x28 != (int)pMsgParam) {
+					if (this->field_0x18 != -1) {
+						if (pMsgParam == 0) {
+							pTexture = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(this->field_0x18);
+						}
+						else {
+							pTexture = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(this->pOwner->pCinData->textureIndex);
+						}
+
+						if (pTexture != (ed_g2d_manager*)0x0) {
+							ed3DHierarchyBankMatLinkG2D(this->pOwner->p3DHierNode, pTexture);
+						}
+					}
+
+					this->field_0x28 = (int)pMsgParam;
+				}
+
+				pCol = this->pOwner->pCollisionData;
+				if (((pCol != (CCollision*)0x0) && (pSVar1 = pCol->pTiedActorEntry, pSVar1 != (S_TIED_ACTOR_ENTRY*)0x0)) &&
+					(pSVar1->pActor->pCollisionData != (CCollision*)0x0)) {
+					fVar4 = pCol->GetCarriedWeight();
+
+					uVar3 = (ulong)(this->field_0x8 <= fVar4);
+					if (uVar3 != 0) {
+						bVar2 = CCollision::IsVertexAboveAndAgainstObbTree
+						(&pSVar1->pActor->pCollisionData->highestVertex, pCol->pObbTree);
+						uVar3 = (ulong)(bVar2 != false);
+					}
+				}
+			}
+		}
+	}
+
+	return uVar3;
 }
 
 void CBehaviourSelectorMaster::Create(ByteCode* pByteCode)
@@ -3364,9 +3621,9 @@ void CBehaviourSelectorMaster::Create(ByteCode* pByteCode)
 	piVar1 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
 	if (*piVar1 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * 0x10;
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * sizeof(S_STREAM_NTF_TARGET_SWITCH_EX_LIST);
 	}
-	this->field_0x30 = (undefined*)piVar1;
+	this->field_0x30 = (S_STREAM_NTF_TARGET_SWITCH_EX_LIST*)piVar1;
 
 	S_STREAM_EVENT_CAMERA* pcVar2 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);
@@ -3376,7 +3633,6 @@ void CBehaviourSelectorMaster::Create(ByteCode* pByteCode)
 
 void CBehaviourSelectorMaster::Init(CActor* pOwner)
 {
-	int* piVar1;
 	int iVar2;
 	S_ACTOR_STREAM_REF* pSVar3;
 	int iVar4;
@@ -3397,17 +3653,9 @@ void CBehaviourSelectorMaster::Init(CActor* pOwner)
 		pCur = pCur + 1;
 	}
 
-	//piVar1 = (int*)this->field_0x30;
-	//iVar5 = 0;
-	//if (0 < *piVar1) {
-	//	iVar4 = 0;
-	//	do {
-	//		S_STREAM_NTF_TARGET_BASE::Init((S_STREAM_NTF_TARGET_BASE*)((int)piVar1 + iVar4 + 4));
-	//		piVar1 = (int*)this->field_0x30;
-	//		iVar5 = iVar5 + 1;
-	//		iVar4 = iVar4 + 0x10;
-	//	} while (iVar5 < *piVar1);
-	//}
+	for (iVar5 = 0; iVar5 < this->field_0x30->entryCount; iVar5 = iVar5 + 1) {
+		this->field_0x30->aEntries[iVar5].Init();
+	}
 
 	this->pStreamEventCamera->Init();
 
@@ -3429,6 +3677,12 @@ void CBehaviourSelectorMaster::Init(CActor* pOwner)
 		iVar4 = iVar4 + 1;
 	}
 	return;
+}
+
+void CBehaviourSelectorMaster::Manage()
+{
+	this->pStreamEventCamera->Manage(this->pOwner);
+	this->pOwner->BehaviourSelectorMaster_Manage(this);
 }
 
 void CBehaviourSelectorMaster::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -3514,6 +3768,71 @@ void CBehaviourSelectorNew::Init(CActor* pOwner)
 	this->streamRefSound.Init();
 
 	this->pOwner->SV_InstanciateMaterialBank();
+
+	return;
+}
+
+void CBehaviourSelectorNew::Manage()
+{
+	int actorState;
+	Timer* pTVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+	CActorMovingPlatform* pPlatform;
+
+	pPlatform = this->pOwner;
+
+	actorState = pPlatform->actorState;
+	if (actorState == 0xd) {
+		pTVar2 = GetTimer();
+		fVar5 = this->field_0x24;
+		fVar3 = this->field_0x10;
+
+		fVar4 = fVar5 + this->field_0xc * pTVar2->cutsceneDeltaTime;
+		if (fVar4 <= fVar3) {
+			fVar3 = fVar4;
+		}
+
+		if (fVar3 == fVar5) {
+			edF32Vector4ScaleHard(-fVar5, &eStack64, &g_xVector);
+			edF32Vector4AddHard(&eStack64, &eStack64, &pPlatform->baseLocation);
+			pPlatform->Platform_UpdatePosition(&eStack64, 0, (CActorsTable*)0x0);
+		}
+		else {
+			this->field_0x24 = fVar3;
+			edF32Vector4ScaleHard(-fVar3, &eStack48, &g_xVector);
+			edF32Vector4AddHard(&eStack48, &eStack48, &pPlatform->baseLocation);
+			pPlatform->Platform_UpdatePosition(&eStack48, 1, (CActorsTable*)0x0);
+		}
+	}
+	else {
+		if (actorState == 0xb) {
+			pTVar2 = GetTimer();
+			fVar4 = this->field_0x24;
+			fVar3 = fVar4 - this->field_0xc * pTVar2->cutsceneDeltaTime;
+			if (fVar3 < 0.0f) {
+				fVar3 = 0.0f;
+			}
+			if (fVar3 == fVar4) {
+				edF32Vector4ScaleHard(-fVar4, &eStack32, &g_xVector);
+				edF32Vector4AddHard(&eStack32, &eStack32, &pPlatform->baseLocation);
+				pPlatform->Platform_UpdatePosition(&eStack32, 0, (CActorsTable*)0x0);
+			}
+			else {
+				this->field_0x24 = fVar3;
+				edF32Vector4ScaleHard(-fVar3, &eStack16, &g_xVector);
+				edF32Vector4AddHard(&eStack16, &eStack16, &pPlatform->baseLocation);
+				pPlatform->Platform_UpdatePosition(&eStack16, 1, (CActorsTable*)0x0);
+			}
+		}
+	}
+
+	pPlatform->GenericManage(1, 0, -1, -1);
 
 	return;
 }

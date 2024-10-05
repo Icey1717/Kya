@@ -827,6 +827,52 @@ void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
 	return;
 }
 
+void CPlayerInput::Reset()
+{
+	gPlayerInput.field_0x1c.field_0x0 = 0.0f;
+	gPlayerInput.field_0x1c.field_0x4 = 0.0f;
+	gPlayerInput.field_0x1c.field_0x8 = 0.0f;
+	gPlayerInput.field_0x1c.field_0xc = 0.0f;
+	gPlayerInput.field_0x1c.field_0x10 = 0.0f;
+	gPlayerInput.field_0x1c.field_0x14 = 0.0f;
+	gPlayerInput.field_0x1c.field_0x18 = 4;
+	gPlayerInput.field_0x1c.field_0x20 = 0;
+	gPlayerInput.field_0x40.field_0x0 = 0.0f;
+	gPlayerInput.field_0x40.field_0x4 = 0.0f;
+	gPlayerInput.field_0x40.field_0x8 = 0.0f;
+	gPlayerInput.field_0x40.field_0xc = 0.0f;
+	gPlayerInput.field_0x40.field_0x10 = 0.0f;
+	gPlayerInput.field_0x40.field_0x14 = 0.0f;
+	gPlayerInput.field_0x40.field_0x18 = 4;
+	gPlayerInput.field_0x40.field_0x20 = 0;
+
+	if (gPlayerInput.bActive != 0) {
+		gPlayerInput.FUN_001b6e20(0.0f, 0.0f);
+	}
+
+	if (gPlayerInput_2.bActive != 0) {
+		gPlayerInput_2.field_0x1c.field_0x0 = 0.0f;
+		gPlayerInput_2.field_0x1c.field_0x4 = 0.0f;
+		gPlayerInput_2.field_0x1c.field_0x8 = 0.0f;
+		gPlayerInput_2.field_0x1c.field_0xc = 0.0f;
+		gPlayerInput_2.field_0x1c.field_0x10 = 0.0f;
+		gPlayerInput_2.field_0x1c.field_0x14 = 0.0f;
+		gPlayerInput_2.field_0x1c.field_0x18 = 4;
+		gPlayerInput_2.field_0x1c.field_0x20 = 0;
+		gPlayerInput_2.field_0x40.field_0x0 = 0.0f;
+		gPlayerInput_2.field_0x40.field_0x4 = 0.0f;
+		gPlayerInput_2.field_0x40.field_0x8 = 0.0f;
+		gPlayerInput_2.field_0x40.field_0xc = 0.0f;
+		gPlayerInput_2.field_0x40.field_0x10 = 0.0f;
+		gPlayerInput_2.field_0x40.field_0x14 = 0.0f;
+		gPlayerInput_2.field_0x40.field_0x18 = 4;
+		gPlayerInput_2.field_0x40.field_0x20 = 0;
+		gPlayerInput_2.FUN_001b6e20(0.0f, 0.0f);
+	}
+
+	return;
+}
+
 void CPlayerInput::ReadConfig(CIniFile* pIniFile)
 {
 	int iVar1;

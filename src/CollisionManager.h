@@ -74,6 +74,8 @@ public:
 	void SetupInternalData(CActor* pActor);
 	void InvalidatePrims();
 
+	void Reset();
+
 	static edObbTREE_DYN* GetFirstObbPrimRecurse(edObbTREE_DYN* pObbTree);
 	static void PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, int param_3, int param_4);
 	static void SetObbTreePositionRecurse(edObbTREE_DYN* pObbTree, edF32MATRIX4* pMatrix);

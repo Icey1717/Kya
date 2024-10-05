@@ -21,6 +21,7 @@ class CFxWind : public CObject
 {
 public:
 	void SectorChange(int oldSectorId, int newSectorId) { IMPLEMENTATION_GUARD_WIND_FX(); }
+	void Draw() { IMPLEMENTATION_GUARD_WIND_FX(); }
 };
 
 class CBehaviourWind : public CBehaviour 
@@ -43,9 +44,9 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Term();
-	virtual void Draw() { IMPLEMENTATION_GUARD(); }
+	virtual void Draw();
 	virtual void ComputeLighting() {}
-	virtual void Reset() { IMPLEMENTATION_GUARD(); }
+	virtual void Reset();
 	virtual void SectorChange(int oldSectorId, int newSectorId);
 	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
@@ -76,7 +77,7 @@ public:
 	CFxWind* aFxWind;
 
 	uint field_0x160;
-	float field_0x164;
+	float maxWind;
 	float field_0x168;
 	float field_0x16c;
 	float field_0x170;
@@ -116,7 +117,7 @@ public:
 	undefined4 field_0x1f0;
 	float field_0x1fc;
 
-	float field_0x1f4;
+	float curWindAlpha;
 	float field_0x1f8;
 
 	float field_0x200;

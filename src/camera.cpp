@@ -509,6 +509,27 @@ void CCamera::LeaveManagedCluster()
 	return;
 }
 
+void CCamera::FUN_00199b80()
+{
+	CActor* pTarg;
+	edF32MATRIX4 diffMatrix;
+
+	pTarg = this->pOtherTarget;
+	if (pTarg != (CActor*)0x0) {
+		if (pTarg == (CActor*)0x0) {
+			diffMatrix = gF32Matrix4Unit;
+		}
+		else {
+			pTarg->FillThisFrameExpectedDifferentialMatrix(&diffMatrix);
+		}
+
+		edF32Matrix4MulF32Matrix4Hard(&this->transformationMatrix, &this->transformationMatrix, &diffMatrix);
+		edF32Matrix4MulF32Vector4Hard(&this->lookAt, &diffMatrix, &this->lookAt);
+	}
+
+	return;
+}
+
 void CCameraExt::Init()
 {
 	CEventManager* pEVar1;

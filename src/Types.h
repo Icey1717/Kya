@@ -647,7 +647,7 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 	return ret;
 }
 
-
+#define IMPLEMENTATION_GUARD_FX(x)
 #define IMPLEMENTATION_GUARD_AUDIO(x)
 #define IMPLEMENTATION_GUARD_LOG(x) MY_LOG_CATEGORY("ImplementationGuard", LogLevel::Verbose, "IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 

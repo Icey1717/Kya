@@ -90,6 +90,8 @@ public:
 	virtual void Level_Manage();
 	virtual void Level_Draw();
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+	virtual void Level_PreCheckpointReset();
+	virtual void Level_CheckpointReset();
 
 	void Level_ClearInternalData();
 

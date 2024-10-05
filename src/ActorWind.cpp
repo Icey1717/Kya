@@ -7,6 +7,13 @@
 #include "ActorAutonomous.h"
 #include "WayPoint.h"
 
+#define WIND_STATE_INTERPOLATE 0x5
+#define WIND_STATE_OFF 0x6
+#define WIND_STATE_TURN_ON 0x7
+#define WIND_STATE_ON 0x8
+#define WIND_STATE_TURN_OFF 0x9
+#define WIND_STATE_RECHARGE 0xa
+
 void CActorWind::Create(ByteCode* pByteCode)
 {
 	byte bVar1;
@@ -21,7 +28,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 	this->field_0x160 = pByteCode->GetU32();
-	this->field_0x164 = pByteCode->GetF32();
+	this->maxWind = pByteCode->GetF32();
 	this->field_0x168 = pByteCode->GetF32();
 	this->field_0x16c = pByteCode->GetF32();
 	this->field_0x174 = pByteCode->GetF32();
@@ -337,6 +344,54 @@ void CActorWind::Term()
 	this->sectorObj.Term(this->objectId);
 }
 
+void CActorWind::Draw()
+{
+	CEventManager* pEventManager;
+	int iVar1;
+	CFxWind* pCVar2;
+	float fVar3;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+
+	pCVar2 = this->aFxWind;
+	if (pCVar2 == (CFxWind*)0x0) {
+		if (this->field_0x21c != (ed_zone_3d*)0x0) {
+			IMPLEMENTATION_GUARD(
+			fVar3 = edFIntervalLERP(this->curWindAlpha, 0.0f, this->maxWind, 10.0f, 50.0f);
+			edEventDrawZone(pEventManager, this->field_0x21c,
+				(uint) * (byte*)((int)&this->field_0x1c8 + 2) |
+				(uint) * (byte*)((int)&this->field_0x1c8 + 1) << 8 |
+				(int)fVar3 << 0x18 | (uint) * (byte*)&this->field_0x1c8 << 0x10, 0x1fff0000);)
+		}
+	}
+	else {
+		iVar1 = 0;
+		if (0 < this->nbFxWind) {
+			do {
+				pCVar2->Draw();
+				iVar1 = iVar1 + 1;
+				pCVar2 = pCVar2 + 1;
+			} while (iVar1 < this->nbFxWind);
+		}
+	}
+
+	fVar3 = edFIntervalLERP(this->curWindAlpha, 0.0f, this->maxWind, 0.0f, 128.0f);
+	this->sectorObj.SetAlpha(fVar3);
+
+	if (this->curWindAlpha == 0.0f) {
+		this->sectorObj.SetHiddenOn();
+	}
+	else {
+		this->sectorObj.SetHiddenOff();
+	}
+	return;
+}
+
+void CActorWind::Reset()
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
 void CActorWind::SectorChange(int oldSectorId, int newSectorId)
 {
 	CFxWind* pFxWind;
@@ -636,28 +691,28 @@ void CActorWind::BehaviourWind_Manage()
 		SetState(iVar4, -1);
 
 		switch (this->actorState) {
-		case 5:
-			SV_UpdateValue(0.0f, this->field_0x20c, &this->field_0x1f4);
+		case WIND_STATE_INTERPOLATE:
+			SV_UpdateValue(0.0f, this->field_0x20c, &this->curWindAlpha);
 			break;
-		case 6:
-			this->field_0x1f4 = 0.0f;
+		case WIND_STATE_OFF:
+			this->curWindAlpha = 0.0f;
 			break;
-		case 7:
-			SV_UpdateValue(this->field_0x164, this->field_0x210, &this->field_0x1f4);
+		case WIND_STATE_TURN_ON:
+			SV_UpdateValue(this->maxWind, this->field_0x210, &this->curWindAlpha);
 			break;
-		case 8:
-			this->field_0x1f4 = this->field_0x164;
+		case WIND_STATE_ON:
+			this->curWindAlpha = this->maxWind;
 			break;
-		case 9:
-			SV_UpdateValue(0.0f, this->field_0x208, &this->field_0x1f4);
+		case WIND_STATE_TURN_OFF:
+			SV_UpdateValue(0.0f, this->field_0x208, &this->curWindAlpha);
 			break;
-		case 10:
-			this->field_0x1f4 = 0.0f;
+		case WIND_STATE_RECHARGE:
+			this->curWindAlpha = 0.0f;
 		}
 
 		pCVar2 = CScene::ptable.g_EventManager_006f5080;
 		if ((this->field_0x1b8).Get() != (ed_zone_3d*)0x0) {
-			fVar11 = edFIntervalLERP(this->field_0x1f4, 0.0f, this->field_0x164, 0.1f, this->field_0x168);
+			fVar11 = edFIntervalLERP(this->curWindAlpha, 0.0f, this->maxWind, 0.1f, this->field_0x168);
 			iVar4 = 0;
 			while (true) {
 				int entryCount;
@@ -762,7 +817,7 @@ void CActorWind::BehaviourWind_Manage()
 							uVar5 = pAVar8->flags_0x4;
 						}
 
-						if (((uVar5 & 0x100) != 0) && (this->field_0x1f4 != 0.0f)) {
+						if (((uVar5 & 0x100) != 0) && (this->curWindAlpha != 0.0f)) {
 							NotifyActorInWindArea(fVar11, pCVar9);
 						}
 					}
@@ -772,12 +827,12 @@ void CActorWind::BehaviourWind_Manage()
 			}
 		}
 
-		this->field_0x1f8 = this->field_0x1f4;
+		this->field_0x1f8 = this->curWindAlpha;
 
 		IMPLEMENTATION_GUARD_WIND_FX(
 		pCVar10 = this->aFxWind;
 		for (iVar4 = 0; iVar4 < (int)this->nbFxWind; iVar4 = iVar4 + 1) {
-			pCVar10->Manage((uint)(0.0 < this->field_0x1f4));
+			pCVar10->Manage((uint)(0.0 < this->curWindAlpha));
 			pCVar10 = pCVar10 + 1;
 		})
 
@@ -882,30 +937,30 @@ float CActorWind::ComputeCurTime()
 
 int CActorWind::ComputeStateFromTime(float* pTime)
 {
-	int iVar1;
+	int newState = WIND_STATE_INTERPOLATE;
 
-	iVar1 = 5;
 	if (this->field_0x180 <= *pTime) {
 		*pTime = *pTime - this->field_0x180;
-		iVar1 = 6;
+		newState = WIND_STATE_OFF;
 		if (this->field_0x184 <= *pTime) {
 			*pTime = *pTime - this->field_0x184;
-			iVar1 = 7;
+			newState = WIND_STATE_TURN_ON;
 			if (this->field_0x188 <= *pTime) {
 				*pTime = *pTime - this->field_0x188;
-				iVar1 = 8;
+				newState = WIND_STATE_ON;
 				if (this->field_0x18c <= *pTime) {
 					*pTime = *pTime - this->field_0x18c;
-					iVar1 = 9;
+					newState = WIND_STATE_TURN_OFF;
 					if (this->field_0x178 <= *pTime) {
-						iVar1 = 10;
+						newState = WIND_STATE_RECHARGE;
 						*pTime = *pTime - this->field_0x178;
 					}
 				}
 			}
 		}
 	}
-	return iVar1;
+
+	return newState;
 }
 
 void CActorWind::ComputeSpeedsInterpoltation()
@@ -917,11 +972,11 @@ void CActorWind::ComputeSpeedsInterpoltation()
 	}
 
 	if (this->field_0x188 != 0.0f) {
-		this->field_0x210 = fabs(this->field_0x164) / this->field_0x188;
+		this->field_0x210 = fabs(this->maxWind) / this->field_0x188;
 	}
 
 	if (this->field_0x178 != 0.0f) {
-		this->field_0x208 = fabs(-this->field_0x164) / this->field_0x178;
+		this->field_0x208 = fabs(-this->maxWind) / this->field_0x178;
 	}
 
 	fVar1 = this->field_0x17c + this->field_0x178 + this->field_0x18c + this->field_0x188 + this->field_0x180 + this->field_0x184;
@@ -956,33 +1011,33 @@ void CActorWind::ResetTiming()
 		this->time_0x214 = pTVar1->scaledTotalTime;
 	}
 
-	this->field_0x1f4 = 0.0f;
+	this->curWindAlpha = 0.0f;
 	this->field_0x218 = 0;
 
 	local_4 = ComputeCurTime();
 	if (local_4 != -1.0f) {
 		iVar2 = ComputeStateFromTime(&local_4);
 		switch (iVar2) {
-		case 5:
+		case WIND_STATE_INTERPOLATE:
 			fVar3 = edFIntervalLERP(local_4, 0.0f, this->field_0x180, 0.0f, 0.0f);
-			this->field_0x1f4 = fVar3;
+			this->curWindAlpha = fVar3;
 			break;
-		case 6:
-			this->field_0x1f4 = 0.0f;
+		case WIND_STATE_OFF:
+			this->curWindAlpha = 0.0f;
 			break;
-		case 7:
-			fVar3 = edFIntervalLERP(local_4, 0.0f, this->field_0x188, 0.0f, this->field_0x164);
-			this->field_0x1f4 = fVar3;
+		case WIND_STATE_TURN_ON:
+			fVar3 = edFIntervalLERP(local_4, 0.0f, this->field_0x188, 0.0f, this->maxWind);
+			this->curWindAlpha = fVar3;
 			break;
-		case 8:
-			this->field_0x1f4 = this->field_0x164;
+		case WIND_STATE_ON:
+			this->curWindAlpha = this->maxWind;
 			break;
-		case 9:
-			fVar3 = edFIntervalLERP(local_4, 0.0f, this->field_0x178, this->field_0x164, 0.0f);
-			this->field_0x1f4 = fVar3;
+		case WIND_STATE_TURN_OFF:
+			fVar3 = edFIntervalLERP(local_4, 0.0f, this->field_0x178, this->maxWind, 0.0f);
+			this->curWindAlpha = fVar3;
 			break;
-		case 10:
-			this->field_0x1f4 = 0.0f;
+		case WIND_STATE_RECHARGE:
+			this->curWindAlpha = 0.0f;
 		}
 	}
 
@@ -1015,7 +1070,7 @@ void CActorWind::NotifyActorInWindArea(float param_1, CActor* pNotifyActor)
 			fVar2 = 0.0f;
 		}
 
-		fVar3 = this->field_0x1f4;
+		fVar3 = this->curWindAlpha;
 		if (-CDynamicExt::gForceGravity.y < fVar3) {
 			local_40.field_0x10 = fVar3 + ((-CDynamicExt::gForceGravity.y - fVar3) / param_1) * fVar2;
 		}
@@ -1024,13 +1079,13 @@ void CActorWind::NotifyActorInWindArea(float param_1, CActor* pNotifyActor)
 		}
 	}
 	else {
-		local_40.field_0x10 = this->field_0x1f4;
+		local_40.field_0x10 = this->curWindAlpha;
 	}
 
 	if (local_40.field_0x10 != 0.0f) {
 		pfVar1 = this->field_0x1cc.Get();
 		if ((pfVar1 != (CWayPoint*)0x0) && (pNotifyActor->typeID != 6)) {
-			local_50.xyz = pfVar1->field_0x0;
+			local_50.xyz = pfVar1->location;
 			local_50.w = 1.0f;
 			edF32Vector4SubHard(&local_50, &local_50, &pNotifyActor->currentLocation);
 			local_50.y = 0.0f;
@@ -1075,7 +1130,7 @@ void CBehaviourWind::Begin(CActor* pOwner, int newState, int newAnimationType)
 	this->pOwner = static_cast<CActorWind*>(pOwner);
 
 	if (newState == -1) {
-		this->pOwner->SetState(5, -1);
+		this->pOwner->SetState(WIND_STATE_INTERPOLATE, -1);
 	}
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
@@ -1090,7 +1145,7 @@ void CBehaviourWind::InitState(int newState)
 
 	pActorWind = this->pOwner;
 
-	if (newState == 10) {
+	if (newState == WIND_STATE_RECHARGE) {
 		if (2.2f <= CScene::_pinstance->field_0x1c) {
 			entryIndex = 0;
 			if (0 < pActorWind->field_0x1e0->entryCount) {
@@ -1104,7 +1159,7 @@ void CBehaviourWind::InitState(int newState)
 		}
 	}
 	else {
-		if (newState == 8) {
+		if (newState == WIND_STATE_ON) {
 			if (2.2f <= CScene::_pinstance->field_0x1c) {
 				entryIndex = 0;
 				if (0 < pActorWind->field_0x1d8->entryCount) {
@@ -1118,7 +1173,7 @@ void CBehaviourWind::InitState(int newState)
 			}
 		}
 		else {
-			if ((newState == 6) && (2.2f <= CScene::_pinstance->field_0x1c)) {
+			if ((newState == WIND_STATE_OFF) && (2.2f <= CScene::_pinstance->field_0x1c)) {
 				entryIndex = 0;
 				if (0 < pActorWind->field_0x1d0->entryCount) {
 					do {

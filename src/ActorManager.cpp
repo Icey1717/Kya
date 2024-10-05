@@ -384,6 +384,56 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
+void CActorManager::Level_PreCheckpointReset()
+{
+	int iVar1;
+	int iVar2;
+	CActor* pActor;
+
+	iVar2 = 0;
+	if (0 < this->nbActors) {
+		iVar1 = 0;
+		do {
+			pActor = this->aActors[iVar2];
+			if ((pActor->actorFieldS & 2) == 0) {
+				pActor->PreCheckpointReset();
+			}
+			else {
+				pActor->PreReset();
+			}
+
+			iVar2 = iVar2 + 1;
+			iVar1 = iVar1 + 4;
+		} while (iVar2 < this->nbActors);
+	}
+	return;
+}
+
+void CActorManager::Level_CheckpointReset()
+{
+	int iVar1;
+	int iVar2;
+	CActor* pActor;
+
+	iVar2 = 0;
+	if (0 < this->nbActors) {
+		iVar1 = 0;
+		do {
+			pActor = this->aActors[iVar2];
+			if ((pActor->actorFieldS & 2) == 0) {
+				pActor->CheckpointReset();
+			}
+			else {
+				pActor->Reset();
+			}
+
+			iVar2 = iVar2 + 1;
+			iVar1 = iVar1 + 4;
+		} while (iVar2 < this->nbActors);
+	}
+	return;
+}
+
 void CActorManager::Level_ClearInternalData()
 {
 	_linked_actor* p_Var1;

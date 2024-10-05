@@ -16,6 +16,7 @@ class CFxDigits
 {
 public:
 	void Init(int param_2) {}
+	void Draw(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, int param_7) {}
 
 	ParticleInfo* field_0x0;
 };
@@ -63,8 +64,8 @@ public:
 	CBehaviourSwitchMagic();
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
-	virtual void Draw() { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
+	virtual void Draw();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId) { IMPLEMENTATION_GUARD(); }
 	virtual void InitState(int newState);
@@ -73,7 +74,7 @@ public:
 
 	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
-	virtual void ChangeManageState(int state) { IMPLEMENTATION_GUARD(); }
+	virtual void ChangeManageState(int state);
 
 
 	float field_0x8;
@@ -81,39 +82,21 @@ public:
 	float field_0x10;
 	float field_0x14;
 	int field_0x18;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-	undefined field_0x20;
-	undefined field_0x21;
-	undefined field_0x22;
-	undefined field_0x23;
+	CinNamedObject30* field_0x1c;
+	CActor* field_0x20;
 	int field_0x24;
 	int field_0x28;
 	edNODE* pHierarchy;
 	int field_0x30;
-	undefined field_0x34;
-	undefined field_0x35;
-	undefined field_0x36;
-	undefined field_0x37;
-	undefined field_0x38;
-	undefined field_0x39;
-	undefined field_0x3a;
-	undefined field_0x3b;
+	CinNamedObject30* field_0x34;
+	CActor* field_0x38;
 	int field_0x3c;
 	int field_0x40;
 	undefined4 field_0x44;
 	CFxDigits fxDigits;
 	int field_0x4c;
-	undefined field_0x50;
-	undefined field_0x51;
-	undefined field_0x52;
-	undefined field_0x53;
-	undefined field_0x54;
-	undefined field_0x55;
-	undefined field_0x56;
-	undefined field_0x57;
+	CinNamedObject30* field_0x50;
+	CActor* field_0x54;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
 };
 
@@ -189,6 +172,8 @@ public:
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	void BehaviourSwitchMagic_Manage(CBehaviourSwitchMagic* pBehaviour);
 
 	S_TARGET_STREAM_REF* pTargetStreamRef;
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;

@@ -984,12 +984,13 @@ void CActor::ChangeManageState(int state)
 	ed_3d_hierarchy_node* pHierNode;
 	CAnimation* pAnimation;
 	CClusterNode* pClusterNode;
-	//AnimResult* pAVar4;
+	StateConfig* pAVar4;
 	uint uVar5;
 	//CActorSound* pActorSound;
 
 	if (state == 0) {
 		this->flags = this->flags & 0xfffffffb;
+
 		pClusterNode = this->pClusterNode;
 		if (pClusterNode != (CClusterNode*)0x0) {
 			(CScene::ptable.g_ActorManager_004516a4)->cluster.DeleteNode(pClusterNode);
@@ -1025,28 +1026,32 @@ void CActor::ChangeManageState(int state)
 	}
 	else {
 		this->flags = this->flags | 4;
+
 		if ((this->pClusterNode == (CClusterNode*)0x0) && (this->typeID != 1)) {
 			pClusterNode = (CScene::ptable.g_ActorManager_004516a4)->cluster.NewNode(this);
 			this->pClusterNode = pClusterNode;
 		}
+
 		actorState = this->actorState;
 		if (actorState == AS_None) {
 			uVar5 = 0;
 		}
 		else {
-			IMPLEMENTATION_GUARD_LOG(
-			pAVar4 = (*this->pVTable->GetStateCfg)(this, actorState);
-			uVar5 = pAVar4->flags_0x4 & 0x80;)
+			pAVar4 = GetStateCfg(actorState);
+			uVar5 = pAVar4->flags_0x4 & 0x80;
 		}
+
 		if (uVar5 != 0) {
 			IMPLEMENTATION_GUARD_LOG(
 			StateTransitionSoundFunc_001844a0((int)CScene::ptable.g_GlobalSoundPtr_00451698);)
 		}
 	}
+
 	pAnimation = this->pAnimationController;
 	if (pAnimation != (CAnimation*)0x0) {
 		pAnimation->StopEventTrack(state);
 	}
+
 	return;
 }
 
@@ -1072,6 +1077,7 @@ void CActor::ChangeDisplayState(int state)
 		}
 		this->flags = this->flags | 0x100;
 	}
+
 	ret = this->flags;
 	BfloatB = (this->subObjA)->floatFieldB;
 	if (((ret & 0x100) == 0) || (BfloatB < this->distanceToCamera)) {
@@ -1092,6 +1098,7 @@ void CActor::ChangeDisplayState(int state)
 			}
 		}
 	}
+
 	return;
 }
 
@@ -2077,6 +2084,33 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 	return;
 }
 
+void CActor::CheckpointReset()
+{
+	bool bIsMoveable;
+	//CActorSound* pCVar2;
+	float fVar3;
+	float fVar4;
+	CAnimation* pCVar5;
+
+	this->vector_0x120 = this->currentLocation.xyz;
+
+	bIsMoveable = IsKindOfObject(2);
+
+	if (bIsMoveable == false) {
+		this->vector_0x12c = gF32Vector3Zero;
+	}
+	else {
+		this->vector_0x12c = static_cast<CActorMovable*>(this)->dynamic.velocityDirectionEuler.xyz;
+	}
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	for (pCVar2 = this->aActorSounds; pCVar2 != (CActorSound*)0x0; pCVar2 = (CActorSound*)pCVar2[1].field_0x0) {
+		pCVar2->Reset();
+	})
+
+	return;
+}
+
 void CActor::Term()
 {
 	IMPLEMENTATION_GUARD();
@@ -2635,56 +2669,66 @@ void CActor::PreReset()
 	if ((this->flags & 4) != 0) {
 		ChangeManageState(0);
 	}
+
 	if ((this->flags & 0x100) != 0) {
 		ChangeDisplayState(0);
 	}
+
 	SetBehaviour(-1, -1, -1);
+
 	if (this->pTiedActor != (CActor*)0x0) {
-		IMPLEMENTATION_GUARD(
-		TieToActor(0, 0, 1, 0);)
+		TieToActor(0, 0, 1, 0);
 	}
+
 	pCollision = this->pCollisionData;
 	if (pCollision != (CCollision*)0x0) {
-		IMPLEMENTATION_GUARD(
-		pCollision->Reset();)
+		pCollision->Reset();
 	}
+
 	pAnimation = this->pAnimationController;
 	if (pAnimation != (CAnimation*)0x0) {
-		IMPLEMENTATION_GUARD(
-		pAnimation->Reset(this);)
+		pAnimation->Reset(this);
 	}
+
 	if (((this->actorFieldS & 4) != 0) &&
 		(pCollision = this->pCollisionData, pCollision != (CCollision*)0x0)) {
-		IMPLEMENTATION_GUARD(
-		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x20000;)
+		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x20000;
 	}
+
 	pCinData = this->pCinData;
 	this->scale.xyz = pCinData->scale;
 	this->scale.w = 1.0f;
+
 	if (((this->scale.x == 1.0f) && (this->scale.y == 1.0f)) && (this->scale.z == 1.0f)) {
 		this->flags = this->flags & 0xfbffffff;
 	}
 	else {
 		this->flags = this->flags | 0x4000000;
 	}
+
 	pCinData = this->pCinData;
 	this->rotationEuler.xyz = pCinData->rotationEuler;
 	this->field_0x58 = 0;
 
 	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
 	UpdatePosition(&this->baseLocation, true);
+
 	this->flags = this->flags | 0x80000;
 	this->distanceToGround = -1.0f;
 	this->flags = this->flags & 0xffdfffff;
 	this->field_0xf4 = 0xffff;
 	this->flags = this->flags & 0xfffffffc;
 	this->flags = this->flags & 0xffffff5f;
+
 	EvaluateDisplayState();
+
 	this->flags = this->flags & 0xfffff7ff;
 	this->flags = this->flags & 0xffbfffff;
+
 	if ((((this->actorFieldS & 1) != 0) && (this != (CActor*)0x0)) && ((this->flags & 0x2000000) == 0)) {
 		ReceiveMessage(this, (ACTOR_MESSAGE)0x5d, 0);
 	}
+
 	return;
 }
 
@@ -3147,6 +3191,11 @@ void CActor::ComputeAltitude()
 
 	this->flags = this->flags & 0xffdfffff;
 	return;
+}
+
+void CActor::ResetActorSound()
+{
+	IMPLEMENTATION_GUARD_AUDIO();
 }
 
 void CActor::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix)

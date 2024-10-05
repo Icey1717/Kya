@@ -280,6 +280,17 @@ void CActorAutonomous::Init()
 	return;
 }
 
+void CActorAutonomous::CheckpointReset()
+{
+	CActorMovable::CheckpointReset();
+
+	this->field_0x344 = this->field_0x344 & 0xfe;
+
+	RestoreCollisionSphere(0);
+	
+	return;
+}
+
 CBehaviour* CActorAutonomous::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pNewBehaviour;

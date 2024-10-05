@@ -31,6 +31,7 @@ public:
 	void Term(int index);
 	void SetHiddenOn();
 	void SetHiddenOff();
+	void SetAlpha(byte alpha);
 };
 
 struct SectorManagerSubObj {

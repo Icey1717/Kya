@@ -3,7 +3,7 @@
 
 void CActorAmortos::Create(ByteCode* pByteCode)
 {
-	ActorAndWaypoint* pAVar1;
+	S_ACTOR_STREAM_REF* pAVar1;
 	int* piVar2;
 	char* pcVar3;
 	int iVar4;
@@ -11,10 +11,10 @@ void CActorAmortos::Create(ByteCode* pByteCode)
 	float fVar6;
 
 	CActor::Create(pByteCode);
-	pAVar1 = (ActorAndWaypoint*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)&pAVar1->pWaypoint;
-	if (pAVar1->pActor != (CActor*)0x0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + (int)pAVar1->pActor * 4;
+	pAVar1 = (S_ACTOR_STREAM_REF*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+	if (pAVar1->entryCount != 0x0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pAVar1->entryCount * 4;
 	}
 	//this->pCheckpoint_0x184 = pAVar1;
 	piVar2 = (int*)pByteCode->currentSeekPos;

@@ -119,6 +119,7 @@ public:
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
+	virtual void CheckpointReset();
 	virtual void SetState(int newState, int animType);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
@@ -141,9 +142,8 @@ public:
 	float GetCumulatedWeight();
 
 	CDynamic dynamic;
-	float field_0x1c0;
-
 	edF32VECTOR3 vector_0x120c;
+	edF32VECTOR4 field_0x1c0;
 };
 
 #endif //ACTOR_MOVABLE_H

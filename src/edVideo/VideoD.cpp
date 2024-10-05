@@ -136,30 +136,30 @@ void _ManageFade(void)
 		//_DrawFade();
 	}
 	if (g_ActiveVidParams_0048cd90.field_0x68 != 0) {
-		g_ActiveVidParams_0048cd90.field_0x6c =
-			g_ActiveVidParams_0048cd90.field_0x6c + g_ActiveVidParams_0048cd90.field_0x70;
-		if (0x80 < g_ActiveVidParams_0048cd90.field_0x6c) {
+		g_ActiveVidParams_0048cd90.fadeTimeA =
+			g_ActiveVidParams_0048cd90.fadeTimeA + g_ActiveVidParams_0048cd90.field_0x70;
+		if (0x80 < g_ActiveVidParams_0048cd90.fadeTimeA) {
 			g_ActiveVidParams_0048cd90.field_0x70 = -1;
 		}
-		if (g_ActiveVidParams_0048cd90.field_0x6c == 0) {
+		if (g_ActiveVidParams_0048cd90.fadeTimeA == 0) {
 			g_ActiveVidParams_0048cd90.field_0x70 = 1;
 		}
 		if (((0 < g_ActiveVidParams_0048cd90.field_0x70) &&
-			(g_ActiveVidParams_0048cd90.field_0x74 < g_ActiveVidParams_0048cd90.field_0x6c)) ||
+			(g_ActiveVidParams_0048cd90.fadeTimeB < g_ActiveVidParams_0048cd90.fadeTimeA)) ||
 			((g_ActiveVidParams_0048cd90.field_0x70 < 0 &&
-				(g_ActiveVidParams_0048cd90.field_0x6c < g_ActiveVidParams_0048cd90.field_0x74)))) {
+				(g_ActiveVidParams_0048cd90.fadeTimeA < g_ActiveVidParams_0048cd90.fadeTimeB)))) {
 			g_ActiveVidParams_0048cd90.field_0x68 = 0;
-			g_ActiveVidParams_0048cd90.field_0x6c = g_ActiveVidParams_0048cd90.field_0x74;
+			g_ActiveVidParams_0048cd90.fadeTimeA = g_ActiveVidParams_0048cd90.fadeTimeB;
 		}
 	}
-	if (g_ActiveVidParams_0048cd90.field_0x68 != 0 || g_ActiveVidParams_0048cd90.field_0x80 == 1) {
-		g_ActiveVidParams_0048cd90.field_0x7c = g_ActiveVidParams_0048cd90.field_0x6c;
-		g_ActiveVidParams_0048cd90.field_0x79 = g_ActiveVidParams_0048cd90.field_0x69;
-		g_ActiveVidParams_0048cd90.field_0x7a = g_ActiveVidParams_0048cd90.field_0x6a;
-		g_ActiveVidParams_0048cd90.field_0x7b = g_ActiveVidParams_0048cd90.field_0x6b;
+	if (g_ActiveVidParams_0048cd90.field_0x68 != 0 || g_ActiveVidParams_0048cd90.bFadeActive == 1) {
+		g_ActiveVidParams_0048cd90.field_0x7c = g_ActiveVidParams_0048cd90.fadeTimeA;
+		g_ActiveVidParams_0048cd90.field_0x79 = g_ActiveVidParams_0048cd90.fadeColorR;
+		g_ActiveVidParams_0048cd90.field_0x7a = g_ActiveVidParams_0048cd90.fadeColorG;
+		g_ActiveVidParams_0048cd90.field_0x7b = g_ActiveVidParams_0048cd90.fadeColorB;
 	}
 	g_ActiveVidParams_0048cd90.field_0x78 =
-		g_ActiveVidParams_0048cd90.field_0x68 != 0 || g_ActiveVidParams_0048cd90.field_0x80 == 1;
+		g_ActiveVidParams_0048cd90.field_0x68 != 0 || g_ActiveVidParams_0048cd90.bFadeActive == 1;
 	return;
 }
 

@@ -86,10 +86,10 @@ void _FadeInit(void)
 
 	iVar2 = (0x800 - ((int)(uint)g_ActiveVidParams_0048cd90.params26.screenWidth >> 1)) * 0x10;
 	iVar1 = (0x800 - ((int)(uint)g_ActiveVidParams_0048cd90.params26.screenHeight >> 1)) * 0x10;
-	g_ActiveVidParams_0048cd90.field_0x69 = 0;
-	g_ActiveVidParams_0048cd90.field_0x6a = 0;
-	g_ActiveVidParams_0048cd90.field_0x6b = 0;
-	g_ActiveVidParams_0048cd90.field_0x80 = 0;
+	g_ActiveVidParams_0048cd90.fadeColorR = 0;
+	g_ActiveVidParams_0048cd90.fadeColorG = 0;
+	g_ActiveVidParams_0048cd90.fadeColorB = 0;
+	g_ActiveVidParams_0048cd90.bFadeActive = 0;
 
 	// GIF TAG
 	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[0] = SCE_GIF_SET_TAG(
@@ -143,7 +143,7 @@ void _FadeInit(void)
 
 	// RGBAQ
 	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[12] =
-		(ulong)(int7)((uint7)g_ActiveVidParams_0048cd90.field_0x6c << 0x18) | 0x3f80000000000000;
+		(ulong)(int7)((uint7)g_ActiveVidParams_0048cd90.fadeTimeA << 0x18) | 0x3f80000000000000;
 	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[13] = SCE_GS_RGBAQ;
 
 	// XYZF2
