@@ -1932,12 +1932,8 @@ void CActor::UpdatePosition(edF32VECTOR4* v0, bool bUpdateCollision)
 		local_a0.w = 1.0f;
 		edF32Matrix4MulF32Vector4Hard(&local_a0, &pHier->base.transformA, &local_a0);
 		this->sphereCentre.xyz = local_a0.xyz;
-		fVar6 = this->scale.y;
-		fVar5 = this->scale.x;
-		fVar5 = (float)((int)fVar5 * (uint)(fVar6 < fVar5) | (int)fVar6 * (uint)(fVar6 >= fVar5));
-		fVar6 = this->scale.z;
-		this->sphereCentre.w =
-			(pKVar1->boundingSphere).w * (float)((int)fVar6 * (uint)(fVar5 < fVar6) | (int)fVar5 * (uint)(fVar5 >= fVar6));
+		this->sphereCentre.w = (pKVar1->boundingSphere).w * std::max(this->scale.z, std::max(this->scale.y, this->scale.x));
+
 		if (bUpdateCollision != false) {
 			pCVar2 = this->pCollisionData;
 			if (pCVar2 != (CCollision*)0x0) {
@@ -1995,11 +1991,7 @@ void CActor::UpdatePosition(edF32MATRIX4* pPosition, int bUpdateCollision)
 		local_20.w = 1.0f;
 		edF32Matrix4MulF32Vector4Hard(&local_20, &pHier->base.transformA, &local_20);
 		this->sphereCentre.xyz = local_20.xyz;
-		fVar6 = this->scale.y;
-		fVar5 = this->scale.x;
-		fVar5 = (float)((int)fVar5 * (uint)(fVar6 < fVar5) | (int)fVar6 * (uint)(fVar6 >= fVar5));
-		fVar6 = this->scale.z;
-		this->sphereCentre.w = (pKVar1->boundingSphere).w * (float)((int)fVar6 * (uint)(fVar5 < fVar6) | (int)fVar5 * (uint)(fVar5 >= fVar6));
+		this->sphereCentre.w = (pKVar1->boundingSphere).w * std::max(this->scale.z, std::max(this->scale.y, this->scale.x));
 	}
 
 	if ((bUpdateCollision != 0) && (pCollisionData = this->pCollisionData, pCollisionData != (CCollision*)0x0))
@@ -2882,12 +2874,7 @@ void CActor::ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0)
 	edF32Matrix4MulF32Vector4Hard(&local_10, m0, &local_10);
 
 	v0->xyz = local_10.xyz;
-
-	fVar3 = this->scale.y;
-	fVar2 = this->scale.x;
-	fVar2 = (float)((int)fVar2 * (uint)(fVar3 < fVar2) | (int)fVar3 * (uint)(fVar3 >= fVar2));
-	fVar3 = this->scale.z;
-	v0->w = (pKVar1->boundingSphere).w * (float)((int)fVar3 * (uint)(fVar2 < fVar3) | (int)fVar2 * (uint)(fVar2 >= fVar3));
+	v0->w = (pKVar1->boundingSphere).w * std::max(this->scale.z, std::max(this->scale.y, this->scale.x));
 	return;
 }
 
@@ -3504,15 +3491,7 @@ void CActor::SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation)
 	local_10.w = 1.0f;
 	edF32Matrix4MulF32Vector4Hard(&local_10, &this->pMeshTransform->base.transformA, &local_10);
 	(this->sphereCentre).xyz = local_10.xyz;
-
-	IMPLEMENTATION_GUARD_LOG();
-	// Check maths.
-	fVar3 = (this->scale).y;
-	fVar2 = (this->scale).x;
-	fVar2 = (float)((int)fVar2 * (uint)(fVar3 < fVar2) | (int)fVar3 * (uint)(fVar3 >= fVar2));
-	fVar3 = (this->scale).z;
-	(this->sphereCentre).w =
-		(pKVar1->boundingSphere).w * (float)((int)fVar3 * (uint)(fVar2 < fVar3) | (int)fVar2 * (uint)(fVar2 >= fVar3));
+	(this->sphereCentre).w = (pKVar1->boundingSphere).w * std::max(this->scale.z, std::max(this->scale.y, this->scale.x));
 	return;
 }
 

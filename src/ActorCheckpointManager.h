@@ -33,9 +33,6 @@ struct S_CHECKPOINT {
 
 class CActorCheckpointManager : public CActor {
 public:
-	CActorCheckpointManager(){
-		IMPLEMENTATION_GUARD_LOG()
-	}
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();

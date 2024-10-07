@@ -93,7 +93,7 @@ void CPathFollow::Create(ByteCode* pByteCode)
 
 	this->mode = pByteCode->GetU32();
 	this->type = pByteCode->GetU32();
-	this->field_0xc = pByteCode->GetU32();
+	this->pathType = pByteCode->GetU32();
 
 	return;
 }

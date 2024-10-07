@@ -12,10 +12,16 @@
 #define ATON_ESCAPE_STATE_PATH_STAND_CALL_BACK		0xc
 #define ATON_ESCAPE_STATE_JUMP						0x12
 #define ATON_ESCAPE_STATE_PATH_BEFORE_WAIT_JUMP		0x15
+#define ATON_ESCAPE_STATE_IDLE_WAIT					0x18
+#define ATON_ESCAPE_STATE_CALL						0x1b
 #define ATON_ESCAPE_STATE_PATH_JUMP_1_4				0x1c
 #define ATON_ESCAPE_STATE_PATH_JUMP_2_4				0x1d
 #define ATON_ESCAPE_STATE_PATH_JUMP_3_4				0x1e
 #define ATON_ESCAPE_STATE_PATH_JUMP_4_4				0x1f
+#define ATON_ESCAPE_STATE_CROUCH_IDLE				0x21
+#define ATON_ESCAPE_STATE_CROUCH_CALL				0x22
+#define ATON_ESCAPE_STATE_CROUCH_ROLL				0x24
+#define ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN			0x2f
 
 CActorAton::CActorAton()
 {
@@ -404,57 +410,59 @@ void CActorAton::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint 
 	edAnmMacroBlendN local_4;
 
 	if (newAnim == 0x1c) {
-		IMPLEMENTATION_GUARD(
 		local_c = ((edAnmMacroBlendN*)&pAnimator->pAnimKeyTableEntry)->pHdr;
 		fVar6 = this->dynamic.speed;
-		fVar7 = edF32Vector4DotProductHard
-		((edF32VECTOR4*)&((this->pMeshTransform)->base).transformA.ba,
-			&CDynamicExt::gForceGravity);
-		puVar11 = ABS(fVar7);
-		if (1.0 < puVar11) {
+		fVar7 = edF32Vector4DotProductHard(&this->pMeshTransform->base.transformA.rowY, & CDynamicExt::gForceGravity);
+		puVar11 = fabs(fVar7);
+		if (1.0f < puVar11) {
 			puVar10 = 1.0;
 		}
 		else {
-			puVar10 = (float)&DAT_bf800000;
-			if (-1.0 <= puVar11) {
+			puVar10 = 1.0f;
+			if (-1.0f <= puVar11) {
 				puVar10 = puVar11;
 			}
 		}
 		fVar5 = acosf(puVar10);
 		fVar7 = 1.0;
-		fVar6 = (((fVar5 * 57.29578) / 90.0 + fVar6 / 20.0) * 2.0) / 3.0;
-		if (fVar6 <= 1.0) {
+		fVar6 = (((fVar5 * 57.29578f) / 90.0f + fVar6 / 20.0f) * 2.0f) / 3.0f;
+
+		if (fVar6 <= 1.0f) {
 			fVar7 = fVar6;
 		}
+
 		fVar6 = this->field_0x47c;
-		if (fVar6 < this->field_0x478 * 10.0) {
-			this->field_0x47c = fVar6 + 0.04;
-			fVar5 = this->field_0x478 * 10.0;
-			if (fVar5 < fVar6 + 0.04) {
+		if (fVar6 < this->field_0x478 * 10.0f) {
+			this->field_0x47c = fVar6 + 0.04f;
+			fVar5 = this->field_0x478 * 10.0f;
+			if (fVar5 < fVar6 + 0.04f) {
 				this->field_0x47c = fVar5;
 			}
 		}
 		else {
-			this->field_0x47c = fVar6 - 0.04;
-			fVar5 = this->field_0x478 * 10.0;
-			if (fVar6 - 0.04 < fVar5) {
+			this->field_0x47c = fVar6 - 0.04f;
+			fVar5 = this->field_0x478 * 10.0f;
+
+			if (fVar6 - 0.04f < fVar5) {
 				this->field_0x47c = fVar5;
 			}
 		}
-		if (1.0 < this->field_0x47c) {
-			this->field_0x47c = 1.0;
+
+		if (1.0f < this->field_0x47c) {
+			this->field_0x47c = 1.0f;
 		}
 		else {
-			if (this->field_0x47c < -1.0) {
-				this->field_0x47c = (float)&DAT_bf800000;
+			if (this->field_0x47c < -1.0f) {
+				this->field_0x47c = 1.0f;
 			}
 		}
-		if (0.0 < this->field_0x47c) {
+
+		if (0.0f < this->field_0x47c) {
 			CActor::SV_Blend4AnimationsWith2Ratios(this->field_0x47c, fVar7, &local_c, 0, 2, 3, 4);
 		}
 		else {
-			CActor::SV_Blend4AnimationsWith2Ratios(ABS(this->field_0x47c), fVar7, &local_c, 0, 1, 3, 4);
-		})
+			CActor::SV_Blend4AnimationsWith2Ratios(fabs(this->field_0x47c), fVar7, &local_c, 0, 1, 3, 4);
+		}
 	}
 	else {
 		if (newAnim == 0x1b) {
@@ -721,7 +729,7 @@ int CActorAton::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		if (this->curBehaviourId != 1) {
 			pPathPlane = this->pathPlaneArray.GetCurPathPlane();
 
-			if (((pPathPlane->pathFollowReader).pPathFollow)->field_0xc == 0xd) {
+			if (((pPathPlane->pathFollowReader).pPathFollow)->pathType == 0xd) {
 				this->pathPlaneArray.NextWayPoint();
 				AnalysePathType();
 			}
@@ -824,7 +832,7 @@ bool CActorAton::ComputeSpeedAndAccelerationAndAnalyseForRun()
 		}
 
 		pCurPathPlane = this->pathPlaneArray.GetCurPathPlane();
-		if (((pCurPathPlane->pathFollowReader).pPathFollow)->field_0xc == 1) {
+		if (((pCurPathPlane->pathFollowReader).pPathFollow)->pathType == 1) {
 			fVar9 = (this->fleeOnPathParams).acceleration;
 			if (fVar9 < 4.0f) {
 				(this->fleeOnPathParams).acceleration = 4.0f;
@@ -837,13 +845,13 @@ bool CActorAton::ComputeSpeedAndAccelerationAndAnalyseForRun()
 		}
 
 		pCurPathPlane = this->pathPlaneArray.GetCurPathPlane();
-		if ((((((pCurPathPlane->pathFollowReader).pPathFollow)->field_0xc == 0) || (pCurPathPlane = this->pathPlaneArray.GetCurPathPlane(),
-				((pCurPathPlane->pathFollowReader).pPathFollow)->field_0xc == 0xd)) && (fVar9 = (this->fleeOnPathParams).acceleration, fVar9 < 2.0f)) && (fVar9 < 1.0f)) {
+		if ((((((pCurPathPlane->pathFollowReader).pPathFollow)->pathType == 0) || (pCurPathPlane = this->pathPlaneArray.GetCurPathPlane(),
+				((pCurPathPlane->pathFollowReader).pPathFollow)->pathType == 0xd)) && (fVar9 = (this->fleeOnPathParams).acceleration, fVar9 < 2.0f)) && (fVar9 < 1.0f)) {
 			bVar2 = true;
 		}
 
 		pCurPathPlane = this->pathPlaneArray.GetCurPathPlane();
-		if (((pCurPathPlane->pathFollowReader).pPathFollow)->field_0xc == 0xd) {
+		if (((pCurPathPlane->pathFollowReader).pPathFollow)->pathType == 0xd) {
 			pCurPathPlane = this->pathPlaneArray.GetCurPathPlane();
 			bVar3 = pCurPathPlane->pathFollowReader.AtGoal((pCurPathPlane->pathFollowReader).splinePointIndex, (pCurPathPlane->pathFollowReader).field_0xc);
 			if (bVar3 != false) {
@@ -909,7 +917,7 @@ void CActorAton::AnalysePathType()
 
 	pCurPathPlane = this->pathPlaneArray.GetCurPathPlane();
 
-	switch (((pCurPathPlane->pathFollowReader).pPathFollow)->field_0xc) {
+	switch (((pCurPathPlane->pathFollowReader).pPathFollow)->pathType) {
 	case 0:
 	case 1:
 	case 0xd:
@@ -954,11 +962,11 @@ void CActorAton::AnalysePathType()
 		SetState(0x20, -1);
 		break;
 	case 5:
-		SetState(0x21, -1);
+		SetState(ATON_ESCAPE_STATE_CROUCH_IDLE, -1);
 		break;
 	case 7:
 		this->dynamic.speed = 0.0;
-		SetState(0x2f, -1);
+		SetState(ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN, -1);
 		break;
 	case 8:
 		SetState(0x27, -1);
@@ -1128,13 +1136,13 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 							this->field_0x478 = 0.0f;
 						}
 						else {
-							if (newState == 0x2f) {
+							if (newState == ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN) {
 								this->field_0x478 = 0.0f;
 								this->field_0x47c = 0.0f;
 								this->field_0x3c0 = this->rotationQuat;
 								this->flags = this->flags | 0x1000;
 
-								IMPLEMENTATION_GUARD(
+								IMPLEMENTATION_GUARD_FX(
 								CFxHandle::SV_FX_Start((CFxHandle*)&this->field_0x634);
 								piVar3 = (int*)this->field_0x638;
 								if (((piVar3 != (int*)0x0) && (this->field_0x634 != 0)) && (this->field_0x634 == piVar3[6])) {
@@ -1160,7 +1168,7 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 									uVar9 = (int)local_30.y * (uint)bVar4;
 									fVar12 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint()->y;
 									edF32Vector4SubHard(&eStack64, &local_30, &this->currentLocation);
-									vectorDyn.BuildFromAccelDistAmplitude(fVar12 - (float)(uVar9 | (int)fVar11 * (uint)!bVar4), &CDynamicExt::gForceGravity, &eStack64, 1);
+									vectorDyn.BuildFromAccelDistAmplitude(fVar12 - std::max(fVar11, local_30.y), &CDynamicExt::gForceGravity, &eStack64, 1);
 									pCVar1 = this->pAnimationController;
 
 									iVar7 = GetIdMacroAnim(0x15);
@@ -1245,14 +1253,14 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 											this->dynamicExt.field_0x6c = 0.0f;
 										}
 										else {
-											if ((((((newState == 0x10) || (newState == 0xe)) || (newState == 0x1b)) ||
+											if ((((((newState == 0x10) || (newState == 0xe)) || (newState == ATON_ESCAPE_STATE_CALL)) ||
 												((newState == 0x1a || (newState == 0x19)))) ||
 												((newState == ATON_ESCAPE_STATE_PATH_STAND_CALL_BACK || ((newState == ATON_ESCAPE_STATE_PATH_STAND_CALL_FAR ||
-													(newState == ATON_ESCAPE_STATE_PATH_STAND_CALL_NEAR)))))) || (newState == 0x22)) {
+													(newState == ATON_ESCAPE_STATE_PATH_STAND_CALL_NEAR)))))) || (newState == ATON_ESCAPE_STATE_CROUCH_CALL)) {
 												this->field_0x480 = 0;
 											}
 											else {
-												if (newState == 0x24) {
+												if (newState == ATON_ESCAPE_STATE_CROUCH_ROLL) {
 													if (this->pCollisionData != (CCollision*)0x0) {
 														local_10.x = 0.0f;
 														local_10.z = 0.0f;
@@ -1266,7 +1274,7 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 													}
 												}
 												else {
-													if (newState == 0x21) {
+													if (newState == ATON_ESCAPE_STATE_CROUCH_IDLE) {
 														this->dynamic.speed = 0.0f;
 														this->dynamicExt.normalizedTranslation.x = 0.0f;
 														this->dynamicExt.normalizedTranslation.y = 0.0f;
@@ -1698,24 +1706,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		}
 		break;
 	case 8:
-		if (iVar13 == -1) {
-			uVar12 = 0;
-		}
-		else {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
-
-		if ((uVar12 & 0x2000) == 0) {
-			edF32Vector4SubHard(&eStack800, &pCVar8->currentLocation, &this->currentLocation);
-		}
-		else {
-			edF32Vector4SubHard(&eStack800, &this->currentLocation, &pCVar8->currentLocation);
-		}
-
-		eStack800.y = 0.0f;
-		edF32Vector4NormalizeHard(&eStack800, &eStack800);
-		SV_UpdateOrientation2D(6.283185f, &eStack800, 0);
+		UpdateOrientationToWatchKim();
 		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		bVar10 = ComputeSpeedAndAccelerationAndAnalyseForRun();
 		if (bVar10 == false) {
@@ -1750,26 +1741,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		uStack812 = 0;
 		this->field_0x3b0 = sqrtf(fStack816 * fStack816 + 0.0f + fStack808 * fStack808);
 
-		pCVar9 = CActorHero::_gThis;
-		iVar13 = this->actorState;
-		if (iVar13 == -1) {
-			uVar12 = 0;
-		}
-		else {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
-
-		if ((uVar12 & 0x2000) == 0) {
-			edF32Vector4SubHard(&eStack832, &pCVar9->currentLocation, &this->currentLocation);
-		}
-		else {
-			edF32Vector4SubHard(&eStack832, &this->currentLocation, &pCVar9->currentLocation);
-		}
-
-		eStack832.y = 0.0f;
-		edF32Vector4NormalizeHard(&eStack832, &eStack832);
-		CActor::SV_UpdateOrientation2D(6.283185f, &eStack832, 0);
+		UpdateOrientationToWatchKim();
 		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
 		if (bVar10 == false) {
@@ -1815,26 +1787,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 
 		pCVar8 = CActorHero::_gThis;
 		if (this->field_0x3d0 < this->timeInAir) {
-			peVar15 = &this->currentLocation;
-			pCVar18 = this->pathPlaneArray.GetCurPathPlane();
-			pCVar18->InitTargetPos(peVar15, &CStack64);
-			pCVar18 = this->pathPlaneArray.GetCurPathPlane();
-			pCVar18->ExternComputeTargetPosWithPlane(peVar15, &CStack64);
-			peVar15 = &this->currentLocation;
-			pCVar18 = this->pathPlaneArray.GetCurPathPlane();
-			FUN_00115380(peVar15, &pCVar18->pathFollowReader, CStack64.field_0x0, 0, &eStack864, &fStack8);
-			pCVar18 = this->pathPlaneArray.GetCurPathPlane();
-			pCVar18->InitTargetPos(peVar15, &CStack80);
-			pCVar18 = this->pathPlaneArray.GetCurPathPlane();
-			pCVar18->ExternComputeTargetPosWithPlane(peVar15, &CStack80);
-			pCVar18 = this->pathPlaneArray.GetCurPathPlane();
-			FUN_00115380(&pCVar8->currentLocation, &pCVar18->pathFollowReader, CStack80.field_0x0, 0, &eStack848, &fStack4);
-
-			bVar10 = false;
-			if ((CStack64.field_0x0 < CStack80.field_0x0) ||
-				((CStack64.field_0x0 == CStack80.field_0x0 && (fStack8 < fStack4)))) {
-				bVar10 = true;
-			}
+			bVar10 = AnalyseForRun();
 
 			if (!bVar10) {
 				edF32Vector4SubHard(&eStack880, &this->currentLocation, &CActorHero::_gThis->currentLocation);
@@ -2011,24 +1964,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		StateAtonPathBeforeWaitJump();
 		break;
 	case 0x17:
-		if (iVar13 == -1) {
-			uVar12 = 0;
-		}
-		else {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
-
-		if ((uVar12 & 0x2000) == 0) {
-			edF32Vector4SubHard(&eStack896, &pCVar8->currentLocation, &this->currentLocation);
-		}
-		else {
-			edF32Vector4SubHard(&eStack896, &this->currentLocation, &pCVar8->currentLocation);
-		}
-
-		eStack896.y = 0.0f;
-		edF32Vector4NormalizeHard(&eStack896, &eStack896);
-		SV_UpdateOrientation2D(6.283185f, &eStack896, 0);
+		UpdateOrientationToWatchKim();
 
 		ManageDyn(4.0f, 0x2003b, (CActorsTable*)0x0);
 
@@ -2045,29 +1981,11 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		}
 
 		if (bVar10) {
-			SetState(0x18, -1);
+			SetState(ATON_ESCAPE_STATE_IDLE_WAIT, -1);
 		}
 		break;
-	case 0x18:
-		if (iVar13 == -1) {
-			uVar12 = 0;
-		}
-		else {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
-
-		if ((uVar12 & 0x2000) == 0) {
-			edF32Vector4SubHard(&eStack912, &pCVar8->currentLocation, &this->currentLocation);
-		}
-		else {
-			edF32Vector4SubHard(&eStack912, &this->currentLocation, &pCVar8->currentLocation);
-		}
-
-		eStack912.y = 0.0f;
-
-		edF32Vector4NormalizeHard(&eStack912, &eStack912);
-		SV_UpdateOrientation2D(6.283185f, &eStack912, 0);
+	case ATON_ESCAPE_STATE_IDLE_WAIT:
+		UpdateOrientationToWatchKim();
 
 		ManageDyn(4.0, 0x2003b, (CActorsTable*)0x0);
 
@@ -2080,7 +1998,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		fVar24 = fStack1212 * fStack1212;
 		fVar27 = fStack1208 * fStack1208;
 		pCVar8 = CActorHero::_gThis;
-		uVar12 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc;
+		uVar12 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType;
 		if (uVar12 == 3) {
 			fVar5 = pCVar9->currentLocation.x - this->currentLocation.x;
 			fVar6 = pCVar9->currentLocation.y - this->currentLocation.y;
@@ -2104,23 +2022,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 			fVar7 = pCVar9->currentLocation.z - this->currentLocation.z;
 
 			if (this->field_0x470 <= sqrtf(fVar5 * fVar5 + fVar6 * fVar6 + fVar7 * fVar7)) {
-
-				this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar15, &CStack192);
-				this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar15, &CStack192);
-
-				peVar15 = &this->currentLocation;
-				FUN_00115380(peVar15, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, CStack192.field_0x0, 0, &eStack1248, &fStack40);
-
-				this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar15, &CStack208);
-				this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar15, &CStack208);
-
-				FUN_00115380(&pCVar8->currentLocation, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, CStack208.field_0x0, 0, &eStack1232, &fStack36);
-
-				bVar10 = false;
-				if ((CStack192.field_0x0 < CStack208.field_0x0) ||
-					((CStack192.field_0x0 == CStack208.field_0x0 && (fStack40 < fStack36)))) {
-					bVar10 = true;
-				}
+				bVar10 = AnalyseForRun();
 
 				if (!bVar10) goto LAB_00384940;
 			}
@@ -2129,11 +2031,78 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		}
 	LAB_00384948:
 		if (bVar10) {
-			SetState(0x1c, -1);
+			SetState(ATON_ESCAPE_STATE_PATH_JUMP_1_4, -1);
 		}
 		else {
 			if ((2.5f < this->timeInAir) && (this->field_0x470 * 1.5f < sqrtf(fVar23 + fVar24 + fVar27))) {
-				SetState(0x1b, -1);
+				SetState(ATON_ESCAPE_STATE_CALL, -1);
+			}
+		}
+		break;
+	case ATON_ESCAPE_STATE_CALL:
+		UpdateOrientationToWatchKim();
+		SV_UpdateOrientation2D(6.283185f, &eStack928, 0);
+		ManageDyn(4.0f, 0x2003b, (CActorsTable*)0x0);
+		pCVar9 = CActorHero::_gThis;
+
+		fStack1264 = pCVar8->currentLocation.x - this->currentLocation.x;
+		fStack1260 = pCVar8->currentLocation.y - this->currentLocation.y;
+		fStack1256 = pCVar8->currentLocation.z - this->currentLocation.z;
+		fStack1252 = pCVar8->currentLocation.w - this->currentLocation.w;
+		fVar23 = fStack1264 * fStack1264;
+		fVar24 = fStack1260 * fStack1260;
+		fVar27 = fStack1256 * fStack1256;
+		pCVar18 = this->pathPlaneArray.GetCurPathPlane();
+		pCVar8 = CActorHero::_gThis;
+
+		uVar12 = ((pCVar18->pathFollowReader).pPathFollow)->pathType;
+		if (uVar12 == 3) {
+			fVar5 = pCVar9->currentLocation.x - this->currentLocation.x;
+			fVar6 = pCVar9->currentLocation.y - this->currentLocation.y;
+			fVar7 = pCVar9->currentLocation.z - this->currentLocation.z;
+			if ((sqrtf(fVar5 * fVar5 + fVar6 * fVar6 + fVar7 * fVar7) < this->field_0x470) ||
+				(this->currentLocation.y < CActorHero::_gThis->currentLocation.y)) {
+				iVar13 = (this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).field_0x8;
+				peVar15 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint(iVar13);
+				if ((fabs(peVar15->y - this->currentLocation.y) < 0.5f) && (bVar10 = true, 0.001f < this->field_0x3e4)) goto LAB_00384d78;
+			}
+
+		LAB_00384d70:
+			bVar10 = false;
+		}
+		else {
+			if (uVar12 != 2) goto LAB_00384d70;
+			peVar15 = &this->currentLocation;
+			fVar5 = pCVar9->currentLocation.x - peVar15->x;
+			fVar6 = pCVar9->currentLocation.y - this->currentLocation.y;
+			fVar7 = pCVar9->currentLocation.z - this->currentLocation.z;
+			if (this->field_0x470 <= sqrtf(fVar5 * fVar5 + fVar6 * fVar6 + fVar7 * fVar7)) {
+				bVar10 = AnalyseForRun();
+				if (!bVar10) goto LAB_00384d70;
+			}
+			bVar10 = true;
+		}
+	LAB_00384d78:
+		if (bVar10) {
+			SetState(ATON_ESCAPE_STATE_PATH_JUMP_1_4, -1);
+		}
+		else {
+			pCVar3 = this->pAnimationController;
+			peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
+			if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
+				bVar10 = false;
+				if (peVar4->animPlayState != 0) {
+					bVar10 = (peVar4->field_0xcc & 2) != 0;
+				}
+			}
+			else {
+				bVar10 = false;
+			}
+			if (bVar10) {
+				this->field_0x480 = this->field_0x480 + 1;
+			}
+			if ((this->field_0x480 == 2) || (sqrtf(fVar23 + fVar24 + fVar27) < 2.0)) {
+				SetState(ATON_ESCAPE_STATE_IDLE_WAIT, -1);
 			}
 		}
 		break;
@@ -2149,28 +2118,113 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	case ATON_ESCAPE_STATE_PATH_JUMP_4_4:
 		StateAtonPathJump_4_4();
 		break;
+	case ATON_ESCAPE_STATE_CROUCH_IDLE:
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+		peVar15 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
+		fStack944 = peVar15->x - this->currentLocation.x;
+		fStack936 = peVar15->z - this->currentLocation.z;
+		fStack932 = peVar15->w - this->currentLocation.w;
+		uStack940 = 0;
+		this->field_0x3b0 = sqrtf(fStack944 * fStack944 + 0.0f + fStack936 * fStack936);
+		fVar23 = CActorHero::_gThis->currentLocation.x - this->currentLocation.x;
+		fVar24 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
+		fVar27 = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
+		fVar27 = sqrtf(fVar23 * fVar23 + fVar24 * fVar24 + fVar27 * fVar27);
+		edF32Vector4SubHard(&eStack960, &this->currentLocation, &CActorHero::_gThis->currentLocation);
+
+		peVar15 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
+		edF32Vector4SubHard(&eStack976, peVar15, &this->currentLocation);
+		fVar24 = edF32Vector4GetDistHard(&eStack976);
+		fVar23 = 0.0f;
+		if (0.0f < fVar24) {
+			edF32Vector4NormalizeHard(&eStack960, &eStack960);
+			edF32Vector4NormalizeHard(&eStack976, &eStack976);
+			fVar23 = edF32Vector4DotProductHard(&eStack960, &eStack976);
+			fVar23 = fVar27 * fVar23;
+		}
+
+		pCVar8 = CActorHero::_gThis;
+		if (3.0f <= (fVar27 + fVar23) / 2.0f) {
+			bVar10 = AnalyseForRun();
+
+			if (!bVar10) {
+				if (2.0f < this->timeInAir) {
+					SetState(ATON_ESCAPE_STATE_CROUCH_CALL, -1);
+				}
+				break;
+			}
+		}
+
+		SetState(ATON_ESCAPE_STATE_CROUCH_ROLL, -1);
+		break;
+	case ATON_ESCAPE_STATE_CROUCH_CALL:
+		UpdateOrientationToWatchKim();
+
+		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+		peVar15 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
+		fStack1040 = peVar15->x - this->currentLocation.x;
+		fStack1032 = peVar15->z - this->currentLocation.z;
+		fStack932 = peVar15->w - this->currentLocation.w;
+		uStack1036 = 0;
+		this->field_0x3b0 = sqrtf(fStack1040 * fStack1040 + 0.0f + fStack1032 * fStack1032);
+		fVar23 = CActorHero::_gThis->currentLocation.x - this->currentLocation.x;
+		fVar24 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
+		fVar27 = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
+		fVar27 = sqrtf(fVar23 * fVar23 + fVar24 * fVar24 + fVar27 * fVar27);
+		edF32Vector4SubHard(&eStack1056, &this->currentLocation, &CActorHero::_gThis->currentLocation);
+
+		peVar15 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
+		edF32Vector4SubHard(&eStack1072, peVar15, &this->currentLocation);
+		fVar24 = edF32Vector4GetDistHard(&eStack1072);
+		fVar23 = 0.0f;
+		if (0.0f < fVar24) {
+			edF32Vector4NormalizeHard(&eStack1056, &eStack1056);
+			edF32Vector4NormalizeHard(&eStack1072, &eStack1072);
+			fVar23 = edF32Vector4DotProductHard(&eStack1056, &eStack1072);
+			fVar23 = fVar27 * fVar23;
+		}
+
+		pCVar8 = CActorHero::_gThis;
+		if (3.0f <= (fVar27 + fVar23) / 2.0f) {
+			bVar10 = AnalyseForRun();
+
+			if (!bVar10) {
+				pCVar3 = this->pAnimationController;
+				peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
+				if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
+					bVar10 = false;
+					if (peVar4->animPlayState != 0) {
+						bVar10 = (peVar4->field_0xcc & 2) != 0;
+					}
+				}
+				else {
+					bVar10 = false;
+				}
+
+				if (bVar10) {
+					this->field_0x480 = this->field_0x480 + 1;
+				}
+
+				if (this->field_0x480 == 2) {
+					SetState(ATON_ESCAPE_STATE_CROUCH_IDLE, -1);
+				}
+				break;
+			}
+		}
+
+		SetState(ATON_ESCAPE_STATE_CROUCH_ROLL, -1);
+		break;
+	case ATON_ESCAPE_STATE_CROUCH_ROLL:
+		StateAtonPathRoll();
+		break;
+	case ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN:
+		StateAtonPathToboggan();
+		break;
 	case 0x32:
-		if (iVar13 == -1) {
-			uVar12 = 0;
-		}
-		else {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
+		UpdateOrientationToWatchKim();
 
-		if ((uVar12 & 0x2000) == 0) {
-			edF32Vector4SubHard(&eStack1120, &pCVar8->currentLocation, &this->currentLocation);
-		}
-		else {
-			edF32Vector4SubHard(&eStack1120, &this->currentLocation, &pCVar8->currentLocation);
-		}
-
-		eStack1120.y = 0.0f;
-
-		edF32Vector4NormalizeHard(&eStack1120, &eStack1120);
-
-		SV_UpdateOrientation2D(6.283185f, &eStack1120, 0);
 		ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+		break;
 	default:
 		IMPLEMENTATION_GUARD();
 	}
@@ -2201,7 +2255,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 			else {
 				iVar13 = this->pathPlaneArray.AtGoal();
 				if (iVar13 == 0) {
-					if (((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc != 0xd) {
+					if (((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType != 0xd) {
 						this->pathPlaneArray.NextWayPoint();
 						AnalysePathType();
 					}
@@ -2221,7 +2275,6 @@ void CActorAton::BehaviourAtonEscape_Manage()
 
 void CActorAton::StateAtonPathStandCallNear()
 {
-	int iVar1;
 	CAnimation* pAnim;
 	edAnmLayer* peVar3;
 	float fVar4;
@@ -2251,26 +2304,7 @@ void CActorAton::StateAtonPathStandCallNear()
 
 	pActorHero = CActorHero::_gThis;
 
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar12 = 0;
-	}
-	else {
-		pSVar11 = GetStateCfg(iVar1);
-		uVar12 = pSVar11->flags_0x4;
-	}
-
-	if ((uVar12 & 0x2000) == 0) {
-		edF32Vector4SubHard(&eStack32, &pActorHero->currentLocation, &this->currentLocation);
-	}
-	else {
-		edF32Vector4SubHard(&eStack32, &this->currentLocation, &pActorHero->currentLocation);
-	}
-
-	eStack32.y = 0.0f;
-
-	edF32Vector4NormalizeHard(&eStack32, &eStack32);
-	SV_UpdateOrientation2D(6.283185f, &eStack32, 0);
+	UpdateOrientationToWatchKim();
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
@@ -2314,7 +2348,6 @@ void CActorAton::StateAtonPathStandCallNear()
 
 void CActorAton::StateAtonPathStandCallFar()
 {
-	int iVar1;
 	CAnimation* pAnim;
 	edAnmLayer* peVar3;
 	float fVar4;
@@ -2344,26 +2377,7 @@ void CActorAton::StateAtonPathStandCallFar()
 
 	pActorHero = CActorHero::_gThis;
 
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar12 = 0;
-	}
-	else {
-		pSVar11 = GetStateCfg(iVar1);
-		uVar12 = pSVar11->flags_0x4;
-	}
-
-	if ((uVar12 & 0x2000) == 0) {
-		edF32Vector4SubHard(&eStack32, &pActorHero->currentLocation, &this->currentLocation);
-	}
-	else {
-		edF32Vector4SubHard(&eStack32, &this->currentLocation, &pActorHero->currentLocation);
-	}
-
-	eStack32.y = 0.0f;
-
-	edF32Vector4NormalizeHard(&eStack32, &eStack32);
-	SV_UpdateOrientation2D(6.283185f, &eStack32, 0);
+	UpdateOrientationToWatchKim();
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
@@ -2407,7 +2421,6 @@ void CActorAton::StateAtonPathStandCallFar()
 
 void CActorAton::StateAtonPathStandCallBack()
 {
-	int iVar1;
 	CAnimation* pAnim;
 	edAnmLayer* peVar3;
 	float fVar4;
@@ -2437,26 +2450,7 @@ void CActorAton::StateAtonPathStandCallBack()
 
 	pActorHero = CActorHero::_gThis;
 
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar12 = 0;
-	}
-	else {
-		pSVar11 = GetStateCfg(iVar1);
-		uVar12 = pSVar11->flags_0x4;
-	}
-
-	if ((uVar12 & 0x2000) == 0) {
-		edF32Vector4SubHard(&eStack32, &pActorHero->currentLocation, &this->currentLocation);
-	}
-	else {
-		edF32Vector4SubHard(&eStack32, &this->currentLocation, &pActorHero->currentLocation);
-	}
-
-	eStack32.y = 0.0f;
-
-	edF32Vector4NormalizeHard(&eStack32, &eStack32);
-	SV_UpdateOrientation2D(6.283185f, &eStack32, 0);
+	UpdateOrientationToWatchKim();
 
 	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 
@@ -2546,7 +2540,7 @@ void CActorAton::StateAtonPathBeforeWaitJump()
 	fVar6 = fStack72 * fStack72;
 	
 	pCVar10 = CActorHero::_gThis;
-	uVar1 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc;
+	uVar1 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType;
 	if (uVar1 == 3) {
 		fVar3 = pCVar9->currentLocation.x - this->currentLocation.x;
 		fVar5 = pCVar9->currentLocation.y - this->currentLocation.y;
@@ -2566,22 +2560,7 @@ void CActorAton::StateAtonPathBeforeWaitJump()
 			fVar5 = pCVar9->currentLocation.y - this->currentLocation.y;
 			fVar7 = pCVar9->currentLocation.z - this->currentLocation.z;
 			if (this->field_0x470 <= sqrtf(fVar3 * fVar3 + fVar5 * fVar5 + fVar7 * fVar7)) {
-				
-				this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar14, &local_18);				
-				this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar14, &local_18);
-				
-				FUN_00115380(peVar14, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, local_18.field_0x0, 0, &eStack112, &local_8);
-				
-				this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar14, &local_28);				
-				this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar14, &local_28);
-				
-				FUN_00115380(&pCVar10->currentLocation, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, local_28.field_0x0, 0, &eStack96, &local_4);
-
-				bVar8 = false;
-				if ((local_18.field_0x0 < local_28.field_0x0) ||
-					((local_18.field_0x0 == local_28.field_0x0 && (local_8 < local_4)))) {
-					bVar8 = true;
-				}
+				bVar8 = AnalyseForRun();
 
 				if (!bVar8) goto LAB_003820e8;
 			}
@@ -2702,11 +2681,11 @@ void CActorAton::StateAtonPathJump_2_4()
 	this->dynamic.rotationQuat = local_20;
 	this->dynamic.speed = fVar4;
 
-	if (((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc == 2) {
+	if (((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType == 2) {
 		ManageDyn(4.0f, 9, (CActorsTable*)0x0);
 	}
 
-	if (((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc == 3) {
+	if (((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType == 3) {
 		ManageDyn(4.0f, 0x409, (CActorsTable*)0x0);
 	}
 
@@ -2737,7 +2716,7 @@ void CActorAton::StateAtonPathJump_3_4()
 		this->dynamic.speed = fVar7;
 	}
 
-	uVar1 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc;
+	uVar1 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType;
 	if (uVar1 == 3) {
 		bVar3 = this->vectorDyn.IsFinished();
 		if (bVar3 == false) {
@@ -2822,6 +2801,209 @@ void CActorAton::StateAtonPathJump_4_4()
 	return;
 }
 
+void CActorAton::StateAtonPathToboggan()
+{
+	ushort uVar1;
+	CActorHero* pFleeActor;
+	bool bVar2;
+	Timer* pTVar4;
+	int iVar5;
+	long lVar6;
+	edNODE* pNode;
+	byte alpha;
+	float fVar7;
+	float fVar8;
+	edF32MATRIX4 local_60;
+	SV_MOV_PATH_PARAM movPathParams;
+
+	(this->fleeOnPathParams).field_0x4 = 1;
+	pFleeActor = CActorHero::_gThis;
+	fVar8 = this->pathDefaultDelay;
+	fVar8 = SV_MOV_ComputeDistIdealPos(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, (this->fleeOnPathParams).delay, fVar8);
+
+	(this->fleeOnPathParams).delay = fVar8;
+
+	SV_MOV_ComputeSpeedAccelerationToFleeActor(3.0f, (CActorMovable*)pFleeActor, this->pathPlaneArray.GetCurPathPlane(), &this->fleeOnPathParams);
+
+	if (((this->fleeOnPathParams).acceleration < 6.0f) &&
+		((this->fleeOnPathParams).acceleration = 6.0f, (this->fleeOnPathParams).speed < 5.0f)) {
+		(this->fleeOnPathParams).speed = 5.0f;
+	}
+
+	movPathParams.field_0x10 = 1;
+	movPathParams.field_0x8 = 0;
+	movPathParams.field_0xc = 0;
+	movPathParams.acceleration = (this->fleeOnPathParams).acceleration;
+	movPathParams.speed = (this->fleeOnPathParams).speed;
+	movPathParams.rotationSpeed = 3.141593f;
+	fVar8 = SV_MOV_ManageMovOnPath(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, &movPathParams);
+	this->field_0x3b0 = fVar8;
+	if (fabs(movPathParams.field_0x14) < 0.02f) {
+		movPathParams.field_0x14 = 0.0f;
+	}
+	this->field_0x478 = movPathParams.field_0x14;
+
+	ManageDyn(4.0f, 0x400, (CActorsTable*)0x0);
+
+	fVar8 = edFIntervalLERP(((this->pMeshTransform)->base).transformA.bb, 0.93972176f, 0.0f, 1.0f, 1.3f);
+	fVar7 = edFIntervalLERP(this->dynamic.linearAcceleration, 0.0f, 25.0f, 0.8f, 1.2f);
+
+	IMPLEMENTATION_GUARD_LOG(
+	if (((int*)this->field_0x638 != (int*)0x0) && (this->field_0x634 != 0)) {
+		(**(code**)(*(int*)this->field_0x638 + 0x40))(fVar8 * fVar7);
+	}
+
+	lVar6 = (*(code*)this->staticMeshComponent->field_0x14)();
+	if (lVar6 != 0) {
+		local_60.aa = edFIntervalLERP((this->base).base.dynamic.linearAcceleration, 19.0, 25.0, 0.5, 1.0);
+		edF32Matrix4CopyHard(&local_60, &gF32Matrix4Unit);
+		local_60.bb = local_60.aa;
+		local_60.cc = local_60.aa;
+		edF32Matrix4MulF32Matrix4Hard(&local_60, &local_60, (edF32MATRIX4*)this->pMeshTransform);
+		if ((edF32MATRIX4*)this->field_0x694 != (edF32MATRIX4*)0x0) {
+			edF32Matrix4CopyHard((edF32MATRIX4*)this->field_0x694, &local_60);
+		}
+		fVar8 = edFIntervalLERP((this->base).base.dynamic.linearAcceleration, 0.0, 25.0, 0.0, 64.0);
+		CActor::SV_UpdateValue(fVar8, 500.0, (CActor*)this, (float*)&this->field_0x700);
+		fVar8 = (float)this->field_0x700;
+		if (this->field_0x690 != (edNODE*)0x0) {
+			if (fVar8 < 2.147484e+09) {
+				alpha = (byte)(int)fVar8;
+				pNode = this->field_0x690;
+			}
+			else {
+				alpha = (byte)(int)(fVar8 - 2.147484e+09);
+				pNode = this->field_0x690;
+			}
+			ed3DHierarchyNodeSetAlpha(pNode, alpha);
+		}
+		uVar1 = this->field_0xf4;
+		(this->field_0x6f0).x = (float)((uVar1 & 0xf) << 4);
+		(this->field_0x6f0).y = (float)(((int)(uint)uVar1 >> 4 & 0xfU) << 4);
+		(this->field_0x6f0).z = (float)(((int)(uint)uVar1 >> 8 & 0xfU) << 4);
+		(this->field_0x6f0).w = 0.0;
+	})
+
+	pTVar4 = GetTimer();
+	fVar8 = 0.5f;
+	fVar7 = this->dynamic.linearAcceleration * pTVar4->cutsceneDeltaTime;
+	if (0.5f <= fVar7) {
+		fVar8 = fVar7;
+	}
+
+	if (this->field_0x3b0 < fVar8 + 0.5f) {
+		bVar2 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.AtGoal(this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.splinePointIndex, this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.field_0xc);
+		if (bVar2 == false) {
+			this->pathPlaneArray.NextWayPoint();
+		}
+		else {
+			iVar5 = this->pathPlaneArray.AtGoal();
+			if (iVar5 == 0) {
+				this->pathPlaneArray.NextWayPoint();
+				AnalysePathType();
+			}
+			else {
+				SetState(0x32, -1);
+				this->field_0x474 = 1;
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorAton::StateAtonPathRoll()
+{
+	CAnimation* pCVar1;
+	edAnmLayer* peVar2;
+	bool bVar3;
+	CActorHero* pCVar4;
+	edF32VECTOR4* peVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	edF32VECTOR4 eStack208;
+	edF32VECTOR4 eStack192;
+	edF32VECTOR4 eStack176;
+	edF32VECTOR4 eStack160;
+	edF32VECTOR4 eStack144;
+	edF32VECTOR4 eStack128;
+	SV_MOV_PATH_PARAM local_70;
+	CPathPlaneOutData local_50;
+	CPathPlaneOutData local_40;
+	CPathPlaneOutData local_30;
+	CPathPlaneOutData local_20;
+	float local_10;
+	float local_c;
+	float local_8;
+	float local_4;
+
+	fVar7 = CActorHero::_gThis->currentLocation.x - this->currentLocation.x;
+	fVar8 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
+	fVar9 = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
+	fVar9 = sqrtf(fVar7 * fVar7 + fVar8 * fVar8 + fVar9 * fVar9);
+
+	edF32Vector4SubHard(&eStack128, &this->currentLocation, &CActorHero::_gThis->currentLocation);
+	peVar6 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
+	edF32Vector4SubHard(&eStack144, peVar6, &this->currentLocation);
+
+	fVar8 = edF32Vector4GetDistHard(&eStack144);
+	fVar7 = 0.0f;
+	if (0.0f < fVar8) {
+		edF32Vector4NormalizeHard(&eStack128, &eStack128);
+		edF32Vector4NormalizeHard(&eStack144, &eStack144);
+		fVar7 = edF32Vector4DotProductHard(&eStack128, &eStack144);
+		fVar7 = fVar9 * fVar7;
+	}
+
+	bVar3 = AnalyseForRun();
+	if (bVar3) {
+		(this->fleeOnPathParams).acceleration = 10.0f;
+		(this->fleeOnPathParams).speed = 50.0f;
+	}
+	else {
+		(this->fleeOnPathParams).acceleration = 7.0f;
+		(this->fleeOnPathParams).speed = 30.0f;
+	}
+	local_70.field_0x8 = 3;
+	local_70.field_0x10 = 0;
+	local_70.field_0xc = 1;
+	local_70.acceleration = (this->fleeOnPathParams).acceleration;
+	local_70.speed = (this->fleeOnPathParams).speed;
+	local_70.rotationSpeed = 3.141593f;
+	fVar8 = SV_MOV_ManageMovOnPath(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, &local_70);
+	this->field_0x3b0 = fVar8;
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	pCVar4 = CActorHero::_gThis;
+	if (4.0f < (fVar9 + fVar7) / 2.0f) {
+		pCVar1 = this->pAnimationController;
+		peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
+		if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
+			bVar3 = false;
+
+			if (peVar2->animPlayState != 0) {
+				bVar3 = (peVar2->field_0xcc & 2) != 0;
+			}
+		}
+		else {
+			bVar3 = false;
+		}
+
+		if (bVar3) {
+			bVar3 = AnalyseForRun();
+
+			if (!bVar3) {
+				this->dynamic.speed = 0.0f;
+				SetState(ATON_ESCAPE_STATE_CROUCH_IDLE, -1);
+			}
+		}
+	}
+
+	return;
+}
+
 void CActorAton::ChooseJumpState()
 {
 	float* pfVar1;
@@ -2867,14 +3049,14 @@ void CActorAton::ChooseJumpState()
 
 	
 	pCVar6 = CActorHero::_gThis;
-	uVar2 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc;
+	uVar2 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType;
 	if (uVar2 != 3) {
 		if (uVar2 != 2) {
 			return;
 		}
 		
 		pCVar7 = CActorHero::_gThis;
-		uVar2 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc;
+		uVar2 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType;
 		if (uVar2 == 3) {
 			fVar11 = pCVar6->currentLocation.x - this->currentLocation.x;
 			fVar3 = pCVar6->currentLocation.y - this->currentLocation.y;
@@ -2895,23 +3077,7 @@ void CActorAton::ChooseJumpState()
 				fVar3 = pCVar6->currentLocation.y - this->currentLocation.y;
 				fVar4 = pCVar6->currentLocation.z - this->currentLocation.z;
 				if (this->field_0x470 <= sqrtf(fVar11 * fVar11 + fVar3 * fVar3 + fVar4 * fVar4)) {
-					this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar10, &local_20);					
-					this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar10, &local_20);
-
-					peVar10 = &this->currentLocation;
-					
-					FUN_00115380(peVar10, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, local_20.field_0x0, 0, &eStack144, &local_8);
-					
-					this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar10, &local_30);					
-					this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar10, &local_30);
-					
-					FUN_00115380(&pCVar7->currentLocation, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, local_30.field_0x0, 0, &eStack128, &local_4);
-
-					bVar5 = false;
-					if ((local_20.field_0x0 < local_30.field_0x0) ||
-						((local_20.field_0x0 == local_30.field_0x0 && (local_8 < local_4)))) {
-						bVar5 = true;
-					}
+					bVar5 = AnalyseForRun();
 
 					if (!bVar5) goto LAB_00387990;
 				}
@@ -2951,7 +3117,7 @@ void CActorAton::ChooseJumpState()
 	}
 	
 	pCVar7 = CActorHero::_gThis;
-	uVar2 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->field_0xc;
+	uVar2 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType;
 	if (uVar2 == 3) {
 		fVar11 = pCVar6->currentLocation.x - this->currentLocation.x;
 		fVar3 = pCVar6->currentLocation.y - this->currentLocation.y;
@@ -2970,24 +3136,8 @@ void CActorAton::ChooseJumpState()
 			fVar11 = pCVar6->currentLocation.x - peVar10->x;
 			fVar3 = pCVar6->currentLocation.y - this->currentLocation.y;
 			fVar4 = pCVar6->currentLocation.z - this->currentLocation.z;
-			if (this->field_0x470 <= sqrtf(fVar11 * fVar11 + fVar3 * fVar3 + fVar4 * fVar4)) {
-				
-				this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar10, &local_40);				
-				this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar10, &local_40);
-				peVar10 = &this->currentLocation;
-				
-				FUN_00115380(peVar10, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, local_40.field_0x0, 0, &eStack176, &local_10);
-
-				this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(peVar10, &local_50);				
-				this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(peVar10, &local_50);
-				
-				FUN_00115380(&pCVar7->currentLocation, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, local_50.field_0x0, 0, &eStack160, &local_c);
-
-				bVar5 = false;
-				if ((local_40.field_0x0 < local_50.field_0x0) ||
-					((local_40.field_0x0 == local_50.field_0x0 && (local_10 < local_c)))) {
-					bVar5 = true;
-				}
+			if (this->field_0x470 <= sqrtf(fVar11 * fVar11 + fVar3 * fVar3 + fVar4 * fVar4)) {				
+				bVar5 = AnalyseForRun();
 
 				if (!bVar5) goto LAB_00387d48;
 			}
@@ -3063,6 +3213,61 @@ void CActorAton::ChooseWaitJumpCallState()
 	}
 
 	return;
+}
+
+void CActorAton::UpdateOrientationToWatchKim()
+{
+	edF32VECTOR4 newRotation;
+	uint flags;
+
+
+	if (this->actorState == -1) {
+		flags = 0;
+	}
+	else {
+		flags = GetStateCfg(this->actorState)->flags_0x4;
+	}
+
+	if ((flags & 0x2000) == 0) {
+		edF32Vector4SubHard(&newRotation, &CActorHero::_gThis->currentLocation, &this->currentLocation);
+	}
+	else {
+		edF32Vector4SubHard(&newRotation, &this->currentLocation, &CActorHero::_gThis->currentLocation);
+	}
+
+	newRotation.y = 0.0f;
+
+	edF32Vector4NormalizeHard(&newRotation, &newRotation);
+
+	SV_UpdateOrientation2D(6.283185f, &newRotation, 0);
+}
+
+bool CActorAton::AnalyseForRun()
+{
+	CPathPlaneOutData CStack192;
+	CPathPlaneOutData CStack208;
+	edF32VECTOR4 eStack1248;
+	edF32VECTOR4 eStack1232;
+	float fStack40;
+	float fStack36;
+
+	this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(&this->currentLocation, &CStack192);
+	this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(&this->currentLocation, &CStack192);
+
+	FUN_00115380(&this->currentLocation, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, CStack192.field_0x0, 0, &eStack1248, &fStack40);
+
+	this->pathPlaneArray.GetCurPathPlane()->InitTargetPos(&this->currentLocation, &CStack208);
+	this->pathPlaneArray.GetCurPathPlane()->ExternComputeTargetPosWithPlane(&this->currentLocation, &CStack208);
+
+	FUN_00115380(&CActorHero::_gThis->currentLocation, &this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, CStack208.field_0x0, 0, &eStack1232, &fStack36);
+
+	bool bVar10 = false;
+	if ((CStack192.field_0x0 < CStack208.field_0x0) ||
+		((CStack192.field_0x0 == CStack208.field_0x0 && (fStack40 < fStack36)))) {
+		bVar10 = true;
+	}
+
+	return bVar10;
 }
 
 CBehaviourAddOnAton::CBehaviourAddOnAton()
@@ -3218,7 +3423,7 @@ int CBehaviourAton::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 	if (msg == 0xe) {
 		pPathPlane = this->pOwner->pathPlaneArray.GetCurPathPlane();
-		if (((pPathPlane->pathFollowReader).pPathFollow)->field_0xc == 5) {
+		if (((pPathPlane->pathFollowReader).pPathFollow)->pathType == 5) {
 			this->pOwner->SetState(0x23, -1);
 		}
 	}
@@ -3325,10 +3530,10 @@ void CBehaviourAtonEscape::TermState(int oldState, int newState)
 		pActorAton->pAnimationController->UnRegisterBone(pActorAton->field_0x360);
 	}
 
-	if (oldState == 0x2f) {
+	if (oldState == ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN) {
 		pActorAton->flags = pActorAton->flags & 0xffffefff;
 
-		IMPLEMENTATION_GUARD(
+		IMPLEMENTATION_GUARD_FX(
 		piVar3 = (int*)pActorAton->field_0x638;
 		if (((piVar3 != (int*)0x0) && (pActorAton->field_0x634 != 0)) && (pActorAton->field_0x634 == piVar3[6])) {
 			(**(code**)(*piVar3 + 0xc))();
@@ -3365,7 +3570,7 @@ int CBehaviourAtonEscape::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 
 	if (msg == 0xe) {
 		pPathPlane = this->pOwner->pathPlaneArray.GetCurPathPlane();
-		if (((pPathPlane->pathFollowReader).pPathFollow)->field_0xc == 5) {
+		if (((pPathPlane->pathFollowReader).pPathFollow)->pathType == 5) {
 			this->pOwner->SetState(0x23, -1);
 		}
 	}

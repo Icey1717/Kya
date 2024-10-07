@@ -100,8 +100,18 @@ public:
 	void StateAtonPathJump_3_4();
 	void StateAtonPathJump_4_4();
 
+	void StateAtonPathToboggan();
+
+	void StateAtonPathRoll();
+
 	void ChooseJumpState();
 	void ChooseWaitJumpCallState();
+
+	// very likely inlined
+	void UpdateOrientationToWatchKim();
+	
+	// very likely inlined
+	bool AnalyseForRun();
 
 	static StateConfig _gStateCfg_ATO[46];
 

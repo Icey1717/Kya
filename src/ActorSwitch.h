@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "ActorMovable.h"
 
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
@@ -38,7 +39,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
@@ -50,8 +51,7 @@ public:
 	CActor* pActor;
 
 	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 field_0x20;
-	edF32VECTOR4 field_0x30;
+	S_OSCILLATING_QUAT field_0x20;
 
 	S_STREAM_REF<CSound> field_0x40;
 	S_STREAM_REF<CSound> field_0x44;

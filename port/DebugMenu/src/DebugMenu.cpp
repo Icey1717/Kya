@@ -41,9 +41,10 @@
 #include "Rendering/DisplayList.h"
 #include "SectorManager.h"
 #include "DebugHero.h"
-#include "../../Windows/Renderer/Vulkan/src/VulkanRenderer.h"
+#include "VulkanRenderer.h"
 #include "DebugMesh.h"
 #include "DebugFrameBuffer.h"
+#include "DebugCheckpoint.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -617,6 +618,7 @@ namespace Debug {
 		{"Texture", Debug::Texture::ShowMenu, true },
 		{"Mesh", Debug::Mesh::ShowMenu, true },
 		{"Actor", Debug::Actor::ShowMenu, true },
+		{"Checkpoint", Debug::Checkpoint::ShowMenu, true },
 
 	};
 

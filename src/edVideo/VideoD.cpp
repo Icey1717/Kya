@@ -132,7 +132,7 @@ void edVideoPutDrawEnv(void)
 void _ManageFade(void)
 {
 	if (g_ActiveVidParams_0048cd90.field_0x78 != 0) {
-		IMPLEMENTATION_GUARD();
+		IMPLEMENTATION_GUARD_FX();
 		//_DrawFade();
 	}
 	if (g_ActiveVidParams_0048cd90.field_0x68 != 0) {

@@ -10,7 +10,7 @@
 #include "InputManager.h"
 #include "SectorManager.h"
 #include "DebugSetting.h"
-#include "../../../src/ActorManager.h"
+#include "ActorManager.h"
 
 namespace Debug {
 	namespace Hero {
@@ -239,6 +239,12 @@ namespace Debug {
 							if (checkpoint.actors[i].bActive) {
 								assert(strcmp(pActor->name, checkpoint.actors[i].name) == 0);
 								pActor->currentLocation = checkpoint.actors[i].location;
+
+								if (pActor->typeID == ATON) {
+									CActorMovable* pMovable = dynamic_cast<CActorMovable*>(pActor);
+									pMovable->field_0x1c0 = pActor->currentLocation;;
+									pActor->CheckpointReset();
+								}
 							}
 						}
 

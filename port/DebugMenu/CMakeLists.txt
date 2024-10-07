@@ -26,6 +26,8 @@ set(SOURCES
 	"src/DebugActor.cpp"
 	"src/DebugFrameBuffer.h"
 	"src/DebugFrameBuffer.cpp"
+	"src/DebugCheckpoint.h"
+	"src/DebugCheckpoint.cpp"
 	"src/DebugTexture.h"
 	"src/DebugTexture.cpp"
 	"src/DebugMesh.h"

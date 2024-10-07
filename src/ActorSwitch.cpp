@@ -5,6 +5,7 @@
 #include "MathOps.h"
 #include "FileManager3D.h"
 #include "CameraViewManager.h"
+#include "TimeController.h"
 
 StateConfig CActorSwitch::_gStateCfg_SWT[5] = {
 	StateConfig(0x0, 0x4),
@@ -707,6 +708,75 @@ void CBehaviourSwitchLever::Init(CActor* pOwner)
 	return;
 }
 
+void CBehaviourSwitchLever::Manage()
+{
+	int iVar1;
+	undefined8 uVar2;
+	bool bVar3;
+	Timer* pTVar4;
+	edF32MATRIX4 eStack240;
+	edF32MATRIX4 eStack176;
+	edF32VECTOR4 eStack112;
+	edF32MATRIX4 eStack96;
+	edF32VECTOR4 local_20;
+	S_OSCILLATION_CONFIG local_10;
+	S_OSCILLATION_CONFIG local_8;
+	CActorSwitch* pSwitch;
+
+	pSwitch = this->pOwner;
+	pSwitch->pStreamEventCamera->Manage(pSwitch);
+
+	iVar1 = pSwitch->actorState;
+	if (iVar1 == 9) {
+		edF32Matrix4FromEulerSoft(&eStack96, &(pSwitch->pCinData)->rotationEuler, "XYZ");
+		edQuatFromMatrix4(&eStack112, &eStack96);
+		local_10.field_0x0 = 10.0f;
+		local_10.field_0x4 = 60.0f;
+		pTVar4 = Timer::GetTimer();
+		this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_10, &eStack112);
+		pTVar4 = Timer::GetTimer();
+		bVar3 = this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_10, &eStack112);
+		edQuatToMatrix4Hard(&this->field_0x20.field_0x0, &eStack240);
+		eStack240.rowT = pSwitch->baseLocation;
+		pSwitch->SV_UpdateMatrix_Rel(&eStack240, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+		if (bVar3 != false) {
+			pSwitch->SetState(5, -1);
+		}
+	}
+	else {
+		if (iVar1 == 7) {
+			local_8.field_0x0 = 10.0f;
+			local_8.field_0x4 = 60.0f;
+			pTVar4 = Timer::GetTimer();
+			this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_8, &this->field_0x10);
+			pTVar4 = Timer::GetTimer();
+			this->field_0x20.Update(pTVar4->cutsceneDeltaTime * 5.0f, &local_8, &this->field_0x10);
+			edQuatToMatrix4Hard(&this->field_0x20.field_0x0, &eStack176);
+			eStack176.rowT = pSwitch->baseLocation;
+			pSwitch->SV_UpdateMatrix_Rel(&eStack176, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+
+			if (0.1666667f <= pSwitch->timeInAir) {
+				pSwitch->SetState(9, -1);
+			}
+		}
+		else {
+			if (iVar1 == 6) {
+				IMPLEMENTATION_GUARD(
+				pSwitch->StateSwitchLeverOff2On(this);)
+			}
+			else {
+				if ((iVar1 == 5) && (pSwitch->pTiedActor != (CActor*)0x0)) {
+					local_20 = pSwitch->baseLocation;
+					pSwitch->SV_UpdatePosition_Rel(&local_20, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
 void CBehaviourSwitchLever::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	edF32MATRIX4 rotation;
@@ -719,10 +789,10 @@ void CBehaviourSwitchLever::Begin(CActor* pOwner, int newState, int newAnimation
 	}
 
 	edF32Matrix4FromEulerSoft(&rotation, &this->pOwner->rotationEuler.xyz, "XYZ");
-	edQuatFromMatrix4(&this->field_0x20, &rotation);
+	edQuatFromMatrix4(&this->field_0x20.field_0x0, &rotation);
 
-	this->field_0x20 = gF32Vertex4Zero;
-	this->field_0x30 = gF32Vertex4Zero;
+	this->field_0x20.field_0x0 = gF32Vertex4Zero;
+	this->field_0x20.field_0x10 = gF32Vertex4Zero;
 	this->field_0x10 = gF32Vertex4Zero;
 
 	this->pActor = (CActor*)0x0;

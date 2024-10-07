@@ -81,7 +81,11 @@ namespace Debug {
 		std::make_pair(Setting("Type", true), [](CActor* pActor) { return GetActorTypeString(pActor->typeID); }),
 		std::make_pair(Setting("Location", true), [](CActor* pActor) { return pActor->currentLocation.ToString(); }),
 		std::make_pair(Setting("Behaviour", true), [](CActor* pActor) { return std::to_string(pActor->curBehaviourId); }),
-		std::make_pair(Setting("State", true), [](CActor* pActor) { return std::to_string(pActor->actorState); }),
+		std::make_pair(Setting("State", true), [](CActor* pActor) {
+			std::stringstream sstream;
+			sstream << std::hex << pActor->actorState;
+			return sstream.str(); 
+			}),
 	};
 
 	static void ForEachActiveActor(std::function<void(CActor*)> pFunc) {

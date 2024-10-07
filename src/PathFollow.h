@@ -17,7 +17,7 @@ public:
 	char* field_0x0;
 	uint mode;
 	uint type;
-	uint field_0xc;
+	uint pathType;
 	int splinePointCount;
 	int field_0x14;
 	uint field_0x18;
