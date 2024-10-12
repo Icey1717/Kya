@@ -312,13 +312,29 @@ struct S_STREAM_NTF_TARGET_SWITCH : public S_STREAM_NTF_TARGET_BASE
 	undefined4 field_0x18;
 };
 
+static_assert(sizeof(S_STREAM_NTF_TARGET_SWITCH) == 0x1c);
+
+
 struct S_STREAM_NTF_TARGET_SWITCH_EX : public S_STREAM_NTF_TARGET_BASE
 {
 	bool Switch(CActor* pActor, uint messageFlags);
 	int messageId;
 };
 
-static_assert(sizeof(S_STREAM_NTF_TARGET_SWITCH) == 0x1c);
+
+struct S_STREAM_NTF_TARGET_ANALOG : public S_STREAM_NTF_TARGET_BASE
+{
+	int NotifyAnalog(float param_1, float param_2, CActor* param_4, S_STREAM_EVENT_CAMERA* param_5);
+	uint field_0xc;
+	uint field_0x10;
+	uint field_0x14;
+	uint field_0x18;
+	int field_0x1c;
+	float field_0x20;
+	float field_0x24;
+};
+
+static_assert(sizeof(S_STREAM_NTF_TARGET_ANALOG) == 0x28);
 
 struct S_TARGET_STREAM_REF
 {
@@ -336,6 +352,12 @@ PACK(
 struct S_STREAM_NTF_TARGET_SWITCH_EX_LIST {
 	int entryCount;
 	S_STREAM_NTF_TARGET_SWITCH_EX aEntries[];
+});
+
+PACK(
+	struct S_STREAM_NTF_TARGET_ANALOG_LIST {
+	int entryCount;
+	S_STREAM_NTF_TARGET_ANALOG aEntries[];
 });
 
 struct CCinematic {

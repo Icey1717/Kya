@@ -466,8 +466,10 @@ public:
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();
 
+#ifdef DEBUG_FEATURES
 	// #Debug
 	char name[64];
+#endif
 
 	uint flags;
 	byte state_0x10;

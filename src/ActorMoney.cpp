@@ -18,7 +18,7 @@ void CActorMoney::Create(ByteCode* pByteCode)
 	uVar2 = pByteCode->GetS32();
 	//this->field_0x1d4 = uVar2;
 	//CActor::SV_InstallMaterialId(this->field_0x1d4);
-	//piVar3 = CActor::CreateActorSound((CActor*)this, 1);
+	//piVar3 = CActor::CreateActorSound(this, 1);
 	//*(int**)&this->field_0x280 = piVar3;
 	//pKVar1 = (this->base).data.subObjA;
 	//fVar4 = (pKVar1->boundingSphere).y;

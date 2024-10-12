@@ -90,6 +90,8 @@ public:
 	void BehaviourAtonEscape_InitState(int newState);
 	void BehaviourAtonEscape_Manage();
 
+	void StateAtonPathWaitJumpCallFar();
+
 	void StateAtonPathStandCallNear();
 	void StateAtonPathStandCallFar();
 	void StateAtonPathStandCallBack();
@@ -99,6 +101,8 @@ public:
 	void StateAtonPathJump_2_4();
 	void StateAtonPathJump_3_4();
 	void StateAtonPathJump_4_4();
+
+	void StateAtonPathVerticalWind();
 
 	void StateAtonPathToboggan();
 
@@ -154,6 +158,7 @@ public:
 	float field_0x478;
 	float field_0x47c;
 	undefined4 field_0x480;
+	float field_0x484;
 
 	int trailMaterialId;
 

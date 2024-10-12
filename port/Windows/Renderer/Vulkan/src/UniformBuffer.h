@@ -190,14 +190,26 @@ namespace PS2 {
 		}
 
 		void MergeData(const DrawBufferData<VertexType, IndexType>& newDrawBufferData) {
-			assert(drawBufferData.GetIndexTail() + newDrawBufferData.GetIndexTail() <= drawBufferData.index.maxcount);
-			assert(drawBufferData.GetVertexTail() + newDrawBufferData.GetVertexTail() <= drawBufferData.vertex.maxcount);
+			const auto drawBufferTail = drawBufferData.GetIndexTail();
+			const auto newDrawBufferTail = newDrawBufferData.GetIndexTail();
 
-			memcpy(drawBufferData.index.buff + drawBufferData.GetIndexTail(), newDrawBufferData.index.buff, newDrawBufferData.GetIndexTail() * sizeof(IndexType));
-			memcpy(drawBufferData.vertex.buff + drawBufferData.GetVertexTail(), newDrawBufferData.vertex.buff, newDrawBufferData.GetVertexTail() * sizeof(VertexType));
+			const auto vertexTail = drawBufferData.GetVertexTail();
+			const auto newVertexTail = newDrawBufferData.GetVertexTail();
 
-			drawBufferData.index.tail += newDrawBufferData.GetIndexTail();
-			drawBufferData.vertex.tail += newDrawBufferData.GetVertexTail();
+			assert(drawBufferTail + newDrawBufferTail <= drawBufferData.index.maxcount);
+			assert(vertexTail + newVertexTail <= drawBufferData.vertex.maxcount);
+
+			IndexType* __restrict pIndexDst = drawBufferData.index.buff + drawBufferTail;
+			const IndexType* __restrict pIndexSrc = newDrawBufferData.index.buff;
+
+			VertexType* __restrict pVertexDst = drawBufferData.vertex.buff + vertexTail;
+			const VertexType* __restrict pVertexSrc = newDrawBufferData.vertex.buff;
+
+			memcpy(pIndexDst, pIndexSrc, newDrawBufferTail * sizeof(IndexType));
+			memcpy(pVertexDst, pVertexSrc, newVertexTail * sizeof(VertexType));
+
+			drawBufferData.index.tail += newDrawBufferTail;
+			drawBufferData.vertex.tail += newVertexTail;
 		}
 
 	private:

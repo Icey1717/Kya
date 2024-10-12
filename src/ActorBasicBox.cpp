@@ -147,7 +147,7 @@ void CActorBasicBox::Reset()
 	peVar2 = GetBottomPosition();
 	local_20.field_0x10 = peVar2->y - this->currentLocation.y;
 	local_20.field_0x14 = 0.005f;
-	local_20.pActor = (CActor*)this;
+	local_20.pActor = this;
 	this->vibrationDyn.Init(&local_20);
 
 	this->field_0x2e0 = 0;

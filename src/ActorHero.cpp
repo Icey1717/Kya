@@ -1182,7 +1182,7 @@ void CActorHero::ActivateCheckpoint(_evt_checkpoint_param* pEventCheckpointParam
 
 	if (((pEventCheckpointParam->flags & 0x40000000U) != 0) && (this->curBehaviourId == 8)) {
 		IMPLEMENTATION_GUARD(
-		pCVar3 = CActor::GetBehaviour((CActor*)this, (this->character).characterBase.base.base.curBehaviourId);
+		pCVar3 = CActor::GetBehaviour(this, (this->character).characterBase.base.base.curBehaviourId);
 		pCVar2 = pCVar3[0x23].pVTable;
 		if (pCVar2 != (CBehaviourVtable*)0x0) {
 			(**(code**)(pCVar2->_vt + 0xfc))(pCVar2, pEventCheckpointParam->pWayPointB, pEventCheckpointParam->flags & 8);

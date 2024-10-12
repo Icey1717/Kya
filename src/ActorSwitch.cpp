@@ -41,7 +41,7 @@ void CActorSwitch::Create(ByteCode* pByteCode)
 	}
 	else {
 		IMPLEMENTATION_GUARD_AUDIO(
-		piVar4 = CActor::CreateActorSound((CActor*)this, 1);
+		piVar4 = CActor::CreateActorSound(this, 1);
 		this->pActorSound = piVar4;)
 	}
 

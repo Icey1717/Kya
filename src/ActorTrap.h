@@ -6,6 +6,16 @@
 #include "ActorMovable.h"
 #include "ActorMovingPlatform.h"
 
+#define TRAP_STATE_IDLE				0x6
+#define TRAP_STATE_CATCH_1_1		0x7
+#define TRAP_STATE_CATCH_2_2		0x8
+#define TRAP_STATE_CATCH_STAND_1_2	0x9
+#define TRAP_STATE_CATCH_STAND_2_2	0xa
+#define TRAP_STATE_CATCH_STRUGGLE	0xd
+
+#define TRAP_BEHAVIOUR_STAND	2
+#define TRAP_BEHAVIOUR_INACTIVE	3
+
 class CActorTrap;
 
 struct S_TRAP_STREAM_ENTRY {

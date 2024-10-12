@@ -20,6 +20,7 @@ public:
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
+	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
 
 	// CActorAutonomous
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
@@ -29,6 +30,9 @@ public:
 
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();
+
+	CActor* field_0x350;
+	CActor* field_0x354;
 
 	edF32VECTOR4 field_0x400;
 	edF32VECTOR4 field_0x410;

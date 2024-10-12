@@ -47,7 +47,7 @@ void CActorDCA::Create(ByteCode* pByteCode)
 	//	pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xffffffc4;
 	//	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x800480;
 	//}
-	//piVar5 = CActor::CreateActorSound((CActor*)this, 4);
+	//piVar5 = CActor::CreateActorSound(this, 4);
 	//this->field_0x4fc = piVar5;
 	//fVar2 = gF32Vertex4Zero.z;
 	//fVar6 = gF32Vertex4Zero.y;

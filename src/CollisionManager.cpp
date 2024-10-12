@@ -153,7 +153,7 @@ void CCollisionManager::Level_PostCreate()
 	uint count;
 	int* pBase;
 	CCollision* pCVar1;
-	edColConfig* puVar2;
+	edColConfig* pDbConfig;
 	int iVar2;
 	ActorClassProperties* pAVar3;
 	int iVar4;
@@ -192,22 +192,23 @@ void CCollisionManager::Level_PostCreate()
 		iVar4 = 1;
 	}
 
-	puVar2 = edColGetConfig();
-	puVar2->bCreateProfileObj = 0;
-	puVar2->field_0x1 = 1;
-	puVar2->databaseCount = 1;
-	puVar2->field_0x3 = 1;
-	puVar2->field_0x4 = 0;
-	puVar2->field_0x8[0] = (short)iVar4;
-	puVar2->field_0x8[2] = 0x80;
-	puVar2->field_0x8[4] = (short)iVar4;
-	puVar2->field_0x8[6] = 8;
-	puVar2->field_0x18 = 8;
-	puVar2->nbPrimEntries = 2;
-	puVar2->field_0x1c = 6;
-	puVar2->heapID_B = TO_HEAP(H_MAIN);
-	puVar2->heapID_A = TO_HEAP(H_MAIN);
-	puVar2->bSetMemFlags = 1;
+	pDbConfig = edColGetConfig();
+	pDbConfig->bCreateProfileObj = 0;
+	pDbConfig->field_0x1 = 1;
+	pDbConfig->databaseCount = 1;
+	pDbConfig->field_0x3 = 1;
+	pDbConfig->field_0x4 = 0;
+	pDbConfig->aDbTypeData[0].colObj.nbMax = iVar4;
+	pDbConfig->aDbTypeData[0].dbObj.nbMax = 0x80;
+	pDbConfig->aDbTypeData[0].primObj.nbMax = iVar4;
+	pDbConfig->aDbTypeData[0].field_0xc.nbMax = 8;
+	pDbConfig->field_0x18 = 8;
+	pDbConfig->nbPrimEntries = 2;
+	pDbConfig->field_0x1c = 6;
+	pDbConfig->heapID_B = TO_HEAP(H_MAIN);
+	pDbConfig->heapID_A = TO_HEAP(H_MAIN);
+	pDbConfig->bSetMemFlags = 1;
+
 	edColInit();
 	edColSetDataBase(0);
 	return;
@@ -1520,11 +1521,11 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 	bool bVar4;
 	undefined* puVar5;
 	uint* puVar6;
-	edColDbObj_80* peVar7;
+	edColDbObj_80* pColDbObjEnd;
 	CActor* pReceiver;
 	uint materialIndex;
 	uint uVar10;
-	uint quadFlags;
+	uint primFlags;
 	int iVar12;
 	edColDbObj_80* pColDbObj;
 	int iVar14;
@@ -1610,13 +1611,24 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 		bVar4 = 0.001f <= fabs(pTranslation->z);
 	}
 
-	pColDbObj = (gColData.pActiveDatabase)->field_0x10;
-	peVar7 = pColDbObj + (gColData.pActiveDatabase)->field_0x4;
+	pColDbObj = (gColData.pActiveDatabase)->aDbEntries;
+	pColDbObjEnd = pColDbObj + (gColData.pActiveDatabase)->curDbEntryCount;
 
-	for (; pColDbObj < peVar7; pColDbObj = pColDbObj + 1) {
-		quadFlags = pColDbObj->quadFlags;
+	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts processing {} entries", (gColData.pActiveDatabase)->curDbEntryCount);
 
-		if (pColDbObj->field_0x78 < 0.0f) {
+	for (; pColDbObj < pColDbObjEnd; pColDbObj = pColDbObj + 1) {
+
+		if (pColDbObj->pColObj && pColDbObj->pColObj->pActor) {
+			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts pColDbObj {}", LOAD_SECTION_CAST(CActor*, pColDbObj->pColObj->pActor)->name);
+		}
+
+		if (pColDbObj->pOtherColObj && pColDbObj->pOtherColObj->pActor) {
+			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::ResolveContacts pOtherColObj {}", LOAD_SECTION_CAST(CActor*, pColDbObj->pOtherColObj->pActor)->name);
+		}
+
+		primFlags = pColDbObj->flags;
+
+		if (pColDbObj->depth < 0.0f) {
 			pReceiver = (CActor*)0x0;
 
 			if (pColDbObj->pOtherColObj == (edColOBJECT*)0x0) {
@@ -1630,7 +1642,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 					materialIndex = pCVar2->flags_0x0;
 
 					if ((materialIndex & 0x2000) != 0) {
-						pColDbObj->field_0x78 = 0.0;
+						pColDbObj->depth = 0.0;
 					}
 
 					if ((materialIndex & 0x8000) != 0) {
@@ -1639,51 +1651,53 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 						pActor->DoMessage(pReceiver, (ACTOR_MESSAGE)0x1c, 0);
 					}
 
-					pCVar2->field_0x90 = pColDbObj->field_0x30;
+					pCVar2->field_0x90 = pColDbObj->location;
 				}
 
 				iVar14 = 1;
 			}
 
-			COLLISION_LOG(LogLevel::Verbose, "Quad flags: 0x{:x} - {} Obb prim flags: 0x{:x} - {}", quadFlags, (quadFlags & 0x200) != 0, this->pObbPrim->flags_0x80, (this->pObbPrim->flags_0x80 & 0x200) != 0);
+			COLLISION_LOG(LogLevel::Verbose, "CCollision::ResolveContacts flags: 0x{:x} - {} Obb prim flags: 0x{:x} - {}", primFlags, (primFlags & 0x200) != 0, this->pObbPrim->flags_0x80, (this->pObbPrim->flags_0x80 & 0x200) != 0);
 
-			if ((((quadFlags & 0x200) != 0) && (this->pObbPrim != (edColPRIM_OBJECT*)0x0)) &&
-				((this->pObbPrim->flags_0x80 & 0x200) != 0)) {
+			if ((((primFlags & 0x200) != 0) && (this->pObbPrim != (edColPRIM_OBJECT*)0x0)) && ((this->pObbPrim->flags_0x80 & 0x200) != 0)) {
 				if (bVar4) {
 					if ((((this->flags_0x0 & 0x400000) == 0) || (pReceiver == (CActor*)0x0)) || (pActor->pTiedActor != pReceiver->pTiedActor)) {
-						sVar1 = pColDbObj->field_0x62;
-						if (((sVar1 == 0xe) || (sVar1 == 0xb)) || ((sVar1 == 0xd || (sVar1 == 10)))) {
-							edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColDbObj->pQuad);
+						sVar1 = pColDbObj->bType;
 
-							edF32VECTOR4* pQuad = reinterpret_cast<edF32VECTOR4*>((char*)pColDbObj->field_0x64 + 0x30);
+						if (((sVar1 == COL_TYPE_PRIM_OBJ) || (sVar1 == 0xb)) || ((sVar1 == 0xd || (sVar1 == 10)))) {
+							edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColDbObj->pPrimitiveB);
+
+							edColPRIM_OBJECT* pOtherPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColDbObj->pPrimitiveA);
+
+							edF32VECTOR4* pQuad = &pOtherPrim->vertices.rowT;
 
 							edF32Matrix4MulF32Vector4Hard(&local_170, &pPrim->worldTransform, pQuad);
 							edColGetNormalInWorldFromLocal(&local_170, &pPrim->worldTransform, &local_170);
 							local_180.xyz = local_170.xyz;
 							local_180.y = 0.0f;
 							edF32Vector4SafeNormalize1Hard(&local_180, &local_180);
-							fVar18 = -pColDbObj->field_0x78 * 0.9f;
+							fVar18 = -pColDbObj->depth * 0.9f;
 							local_180 = local_180 * fVar18;
 
 							local_e0 = local_e0 + local_180;
 
 							COLLISION_LOG(LogLevel::Verbose, "CCollision::ResolveContacts A local_e0: {} local_180: {}", local_e0.ToString(), local_180.ToString());
 
-							pColDbObj->field_0x78 = 0.0f;
+							pColDbObj->depth = 0.0f;
 						}
 					}
 					else {
-						pColDbObj->field_0x78 = 0.0f;
+						pColDbObj->depth = 0.0f;
 					}
 				}
 				else {
-					pColDbObj->field_0x78 = 0.0f;
+					pColDbObj->depth = 0.0f;
 				}
 			}
 
-			materialIndex = quadFlags & 0xf;
+			materialIndex = primFlags & 0xf;
 
-			if (pColDbObj->field_0x78 < 0.0f) {
+			if (pColDbObj->depth < 0.0f) {
 				if (materialIndex == 0) {
 					materialIndex = CScene::_pinstance->defaultMaterialIndex;
 				}
@@ -1696,20 +1710,20 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 				}
 				else {
 					uVar17 = 1;
-					if (((this->flags_0x0 & 0x10) != 0) && (fabs((pColDbObj->location).y) < CCollisionManager::_material_table[materialIndex].field_0x8)) {
-						fVar18 = (pColDbObj->location).x * (pColDbObj->field_0x40).x + (pColDbObj->location).y * (pColDbObj->field_0x40).y + (pColDbObj->location).z * (pColDbObj->field_0x40).z;
-						local_f0 = pColDbObj->field_0x40 - (pColDbObj->location * fVar18);
+					if (((this->flags_0x0 & 0x10) != 0) && (fabs((pColDbObj->field_0x50).y) < CCollisionManager::_material_table[materialIndex].field_0x8)) {
+						fVar18 = (pColDbObj->field_0x50).x * (pColDbObj->field_0x40).x + (pColDbObj->field_0x50).y * (pColDbObj->field_0x40).y + (pColDbObj->field_0x50).z * (pColDbObj->field_0x40).z;
+						local_f0 = pColDbObj->field_0x40 - (pColDbObj->field_0x50 * fVar18);
 
 						edF32Vector4NormalizeHard(&local_f0, &local_f0);
 
 						if (CCollisionManager::_material_table[materialIndex].field_0x8 <= local_f0.y) {
-							pColDbObj->location = local_f0;
+							pColDbObj->field_0x50 = local_f0;
 						}
 					}
 				}
 
-				if ((pColDbObj->location).y < CCollisionManager::_material_table[materialIndex].field_0x8) {
-					if (0.0f <= (pColDbObj->location).x * (pColDbObj->field_0x40).x + (pColDbObj->location).y * (pColDbObj->field_0x40).y + (pColDbObj->location).z * (pColDbObj->field_0x40).z) {
+				if ((pColDbObj->field_0x50).y < CCollisionManager::_material_table[materialIndex].field_0x8) {
+					if (0.0f <= (pColDbObj->field_0x50).x * (pColDbObj->field_0x40).x + (pColDbObj->field_0x50).y * (pColDbObj->field_0x40).y + (pColDbObj->field_0x50).z * (pColDbObj->field_0x40).z) {
 						uVar10 = 2;
 						if (-CCollisionManager::_material_table[materialIndex].field_0x8 < (pColDbObj->field_0x40).y) {
 							uVar10 = 0;
@@ -1722,8 +1736,8 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 				}
 				else {
 					uVar10 = 1;
-					if ((pColDbObj->field_0x40).x * (pColDbObj->location).x + (pColDbObj->field_0x40).y * (pColDbObj->location).y + (pColDbObj->field_0x40).z * (pColDbObj->location).z < 0.99f) {
-						fVar18 = (pColDbObj->field_0x30).y - (this->highestVertex).y;
+					if ((pColDbObj->field_0x40).x * (pColDbObj->field_0x50).x + (pColDbObj->field_0x40).y * (pColDbObj->field_0x50).y + (pColDbObj->field_0x40).z * (pColDbObj->field_0x50).z < 0.99f) {
+						fVar18 = (pColDbObj->location).y - (this->highestVertex).y;
 						if ((((this->flags_0x0 & 0x10) != 0) && (fVar18 <= 0.205f)) || (fVar18 <= 0.05f)) {
 							uVar10 = 1;
 						}
@@ -1744,9 +1758,9 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 						pCollisionContact->nbCollisionsA = pCollisionContact->nbCollisionsA + 1;
 					}
 
-					pCollisionContact->field_0x10 = pCollisionContact->field_0x10 + pColDbObj->field_0x30;
-					pCollisionContact->location = pCollisionContact->location + pColDbObj->location;
-					pCollisionContact->materialFlags = quadFlags;
+					pCollisionContact->field_0x10 = pCollisionContact->field_0x10 + pColDbObj->location;
+					pCollisionContact->location = pCollisionContact->location + pColDbObj->field_0x50;
+					pCollisionContact->materialFlags = primFlags;
 				}
 
 				if (uVar17 < 3) {
@@ -1754,7 +1768,7 @@ uint CCollision::ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int
 
 					pEntry->field_0x10 = pEntry->field_0x10 + 1;
 
-					const float multiplier = -pColDbObj->field_0x78;
+					const float multiplier = -pColDbObj->depth;
 
 					pEntry->field_0x0 = pEntry->field_0x0 + (pColDbObj->field_0x40 * multiplier);
 				}
@@ -1893,8 +1907,8 @@ void CCollision::PreprocessActorContacts(float param_1, CActor* pActor, CActorsT
 
 	bVar3 = false;
 	colFlags = this->flags_0x0;
-	pColDb = (gColData.pActiveDatabase)->field_0x10;
-	pColDbEnd = pColDb + (gColData.pActiveDatabase)->field_0x4;
+	pColDb = (gColData.pActiveDatabase)->aDbEntries;
+	pColDbEnd = pColDb + (gColData.pActiveDatabase)->curDbEntryCount;
 
 	for (; pColDb < pColDbEnd; pColDb = pColDb + 1) {
 		pNewEntry = LOAD_SECTION_CAST(CActor*, pColDb->pOtherColObj->pActor);
@@ -1904,27 +1918,27 @@ void CCollision::PreprocessActorContacts(float param_1, CActor* pActor, CActorsT
 		pCollidingWithData = pNewEntry->pCollisionData;
 
 		COLLISION_LOG(LogLevel::Verbose, "CCollision::PreprocessActorContacts flags: 0x{:x} - 0x{:x}", colFlags, pCollidingWithData->flags_0x0);
-		COLLISION_LOG(LogLevel::Verbose, "CCollision::PreprocessActorContacts field_0x30: {} field_0x40: {}", pColDb->field_0x30.ToString(), pColDb->field_0x40.ToString());
+		COLLISION_LOG(LogLevel::Verbose, "CCollision::PreprocessActorContacts field_0x30: {} field_0x40: {}", pColDb->location.ToString(), pColDb->field_0x40.ToString());
 
 
-		if (((pTable != (CActorsTable*)0x0) && (pColDb->field_0x78 <= -param_1)) &&
+		if (((pTable != (CActorsTable*)0x0) && (pColDb->depth <= -param_1)) &&
 			(bVar4 = pTable->IsInList(pNewEntry), bVar4 == false)) {
 			pTable->Add(pNewEntry);
 		}
 
 		if ((pCollidingWithData->pObbPrim != (edColPRIM_OBJECT*)0x0) && ((pCollidingWithData->pObbPrim->flags_0x80 & 0x200) != 0)) {
-			if (((colFlags & 0x200) != 0) && ((pColDb->field_0x78 < 0.0f && (0.5f < (pColDb->field_0x40).y)))) {
+			if (((colFlags & 0x200) != 0) && ((pColDb->depth < 0.0f && (0.5f < (pColDb->field_0x40).y)))) {
 				local_4 = 0;
 				pActor->DoMessage(pNewEntry, (ACTOR_MESSAGE)0x6a, 0);
 			}
 
 			if ((colFlags & 0x100) != 0) {
-				if (pColDb->field_0x78 <= -0.3f) {
+				if (pColDb->depth <= -0.3f) {
 					pCollidingWithData->field_0x18 = pCollidingWithData->field_0x18 + 2;
 					pCollidingWithData->field_0x1c = pActor;
 				}
 
-				pColDb->field_0x78 = 0.0f;
+				pColDb->depth = 0.0f;
 			}
 		}
 
@@ -1935,7 +1949,7 @@ void CCollision::PreprocessActorContacts(float param_1, CActor* pActor, CActorsT
 				bVar3 = true;
 			}
 
-			if (fabs(eStack32.y - (pColDb->field_0x30).y) <= 0.2f) {
+			if (fabs(eStack32.y - (pColDb->location).y) <= 0.2f) {
 				*pOutActor = pNewEntry;
 			}
 		}
@@ -1946,15 +1960,15 @@ void CCollision::PreprocessActorContacts(float param_1, CActor* pActor, CActorsT
 uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32MATRIX4* param_4, edF32VECTOR4* pTranslation, CActorsTable* param_6, CActor** param_7, int param_8)
 {
 	int iVar1;
-	uint uVar2;
+	uint bCollisionDetected;
 	uint uVar3;
 	ulong uVar4;
 
 	gColData.field_0x14 = gColData.field_0x10;
-	(gColData.pActiveDatabase)->field_0x4 = 0;
+	(gColData.pActiveDatabase)->curDbEntryCount = 0;
 
-	uVar2 = 0;
-	if (((this->flags_0x0 & 0x502) != 0) && (uVar2 = CheckCollisionsWithActors(pActor, m0), uVar2 != 0)) {
+	bCollisionDetected = 0;
+	if (((this->flags_0x0 & 0x502) != 0) && (bCollisionDetected = CheckCollisionsWithActors(pActor, m0), bCollisionDetected != 0)) {
 		if ((param_6 != (CActorsTable*)0x0) || (((this->flags_0x0 & 0x100) != 0 || ((this->flags_0x0 & 0x400) == 0)))) {
 			if ((this->flags_0x0 & 0x400) == 0) {
 				PreprocessActorContacts(0.0f, pActor, param_6, param_7);
@@ -1965,9 +1979,10 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 		}
 
 		if (((this->flags_0x0 & 0x400) != 0) || ((this->flags_0x0 & 2) == 0)) {
-			uVar2 = 0;
+			// Reset actor collision data
+			bCollisionDetected = 0;
 			gColData.field_0x14 = gColData.field_0x10;
-			(gColData.pActiveDatabase)->field_0x4 = 0;
+			(gColData.pActiveDatabase)->curDbEntryCount = 0;
 		}
 	}
 
@@ -1980,18 +1995,18 @@ uint CCollision::CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32
 		}
 	
 		uVar3 = CheckCollisionsWithScenery(uVar4);
-		uVar2 = uVar2 | uVar3;
+		bCollisionDetected = bCollisionDetected | uVar3;
 	}
 
-	if (uVar2 == 0) {
-		uVar2 = 0;
+	if (bCollisionDetected == 0) {
+		bCollisionDetected = 0;
 		this->flags_0x4 = this->flags_0x4 & 0xf8;
 	}
 	else {
-		uVar2 = ResolveContacts(pActor, pTranslation, param_8);
+		bCollisionDetected = ResolveContacts(pActor, pTranslation, param_8);
 	}
 
-	return uVar2;
+	return bCollisionDetected;
 }
 
 void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATRIX4* pMatrix, CActorsTable* pActorsTable, CActor* param_5,	int param_6)
@@ -2016,7 +2031,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	edF32MATRIX4 local_150;
 	CActorsTable local_110;
 	undefined4 local_8;
-	CActor* local_4;
+	CActor* pCollideWithActor;
 
 	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix {}", pActor->name);
 
@@ -2052,7 +2067,8 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 
 	local_150 = gF32Matrix4Unit;
 
-	local_4 = (CActor*)0x0;
+	pCollideWithActor = (CActor*)0x0;
+
 	if ((this->flags_0x0 & 4) == 0) {
 		uVar9 = 0;
 		if ((this->pObbPrim == (edColPRIM_OBJECT*)0x0) || ((this->flags_0x0 & 0x10000) == 0)) {
@@ -2106,7 +2122,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix pMatrix: {}", pMatrix->ToString());
 			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix local_150: {}", local_150.ToString());
 
-			uVar5 = CheckCollisions_OBBTree(pActor, pMatrix, &local_150, &currentTranslation, pActorsTable, &local_4, param_6);
+			uVar5 = CheckCollisions_OBBTree(pActor, pMatrix, &local_150, &currentTranslation, pActorsTable, &pCollideWithActor, param_6);
 			uVar9 = uVar9 | uVar5;
 
 			COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Out translation: {} - flag: {}", currentTranslation.ToString(), uVar9);
@@ -2116,7 +2132,8 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 
 		pMatrix->rowT = resultPosition;
 
-		COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Final position: {}", pMatrix->rowT.ToString());
+		COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Final position: {} result: {} name: {}", pMatrix->rowT.ToString(), uVar9, 
+			pCollideWithActor ? pCollideWithActor->name : "None");
 
 		if (uVar9 != 0) {
 			if (bVar2) {
@@ -2138,6 +2155,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 					SetObbTreePositionNoRotationRecurse(this->pObbTree, pMatrix);
 				}
 			}
+
 			if (0 < this->pDynCol->vertexCount) {
 				TransformG3DObbTreeVertices(this->pDynCol, matrixType, pMatrix);
 			}
@@ -2170,9 +2188,11 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 			TransformG3DObbTreeVertices(this->pDynCol, matrixType, pMatrix);
 		}
 	}
+
 	if ((uVar3 != 0) && ((pActorsTable->entryCount != 0 || (this->pTiedActorEntry != (S_TIED_ACTOR_ENTRY*)0x0)))) {
 		TranslateList(pActor, pActorsTable, pMatrix, param_5);
 	}
+
 	this->transformMatrix = *pMatrix;
 	
 	peVar7 = this->pCarryActorEntry;
@@ -2187,16 +2207,20 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 	else {
 		ComputeG3DObbTreeLowestAndHighestVertices(&this->highestVertex, &this->lowestVertex, matrixType, this->pDynCol);
 	}
+
 	if (param_5 == (CActor*)0x0) {
-		pActor->TieToActor(local_4, 0, 0, (edF32MATRIX4*)0x0);
+		pActor->TieToActor(pCollideWithActor, 0, 0, (edF32MATRIX4*)0x0);
 	}
+
 	if (0 < this->field_0x18) {
 		if (3 < this->field_0x18) {
 			local_8 = 1;
 			this->field_0x1c->DoMessage(pActor, (ACTOR_MESSAGE)3, (MSG_PARAM)1);
 		}
+
 		this->field_0x18 = this->field_0x18 + -1;
 	}
+
 	return;
 }
 

@@ -95,6 +95,7 @@ public:
 	virtual void LifeDecrease(float amount);
 
 	virtual void ProcessDeath();
+	virtual void EnableFightCamera(int bEnable);
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
 	bool AccomplishAction(int bUpdateActiveActionId);
@@ -168,9 +169,18 @@ public:
 	void StateHeroUTurn();
 	void StateHeroUTurnTerm();
 
+	void StateHeroStandToCrouch(int param_2);
+
+	void StateHeroCrouchInit();
+	void StateHeroCrouch(int nextState);
+
+	void StateHeroCrouchWalk();
+
 	void StateHeroRollInit();
 	void StateHeroRoll();
 	void StateHeroRollTerm() {}
+
+	void StateHeroRoll2Crouch();
 
 	void StateHeroHit();
 
@@ -418,12 +428,14 @@ public:
 	float field_0x1164;
 
 	float field_0x1174;
+	float field_0x1178;
+	float field_0x117c;
 	float field_0x1180;
 
 	CActor* pBounceOnActor;
 	CActorMovable* pSoccerActor;
 
-	undefined4 field_0xcbc;
+	CActor* field_0xcbc;
 
 	CLifeInterface field_0xee4;
 
@@ -431,6 +443,7 @@ public:
 	CCamera* pCameraViewBase_0x15b0;
 	CCamera* pWindWallCamera_0x15b4;
 	CCamera* pCameraKyaJamgut;
+	CCamera* pFightCamera;
 
 	CCamera* pDeathCamera;
 

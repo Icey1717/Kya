@@ -87,6 +87,8 @@ namespace Renderer
 		DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
 		std::vector<glm::mat4> gAnimationMatrices;
 
+		std::vector<glm::mat4> gModelMatrices;
+
 		struct Draw {
 			SimpleTexture* pTexture = nullptr;
 

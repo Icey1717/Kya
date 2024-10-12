@@ -555,8 +555,8 @@ void CActorHeroPrivate::Init()
 	pCVar5 = pCameraManager->GetDefGameCamera(CT_KyaJamgut);
 	this->pCameraKyaJamgut = pCVar5;
 
-	//pCVar5 = CCameraManager::GetDefGameCamera(pCameraManager, 4);
-	//this->pFightCamera = pCVar5;
+	pCVar5 = pCameraManager->GetDefGameCamera(CT_Fight);
+	this->pFightCamera = pCVar5;
 
 	BStack32 = ByteCode();
 
@@ -573,7 +573,7 @@ void CActorHeroPrivate::Init()
 
 	///* IntView */
 	//*(undefined4*)(this->field_0xab4 + 8) = 0xffffff9c;
-	//pCVar5 = AddCamera(pCameraManager, CT_IntView, &BStack32, s_IntView_004350c0);
+	//pCVar5 = pCameraManager->AddCamera(CT_IntView, &BStack32, "IntView");
 	//*(CCamera**)&this->field_0x15bc = pCVar5;
 	//piVar2 = *(int**)&this->field_0x15bc;
 	//(**(code**)(*piVar2 + 0x30))(piVar2, CActorHero::_gThis);
@@ -599,7 +599,7 @@ void CActorHeroPrivate::Init()
 	//pAnimationController = this->pAnimationController;
 	//ppeVar3 = ((pAnimationController->anmBinMetaAnimator).base.aAnimData)->pAnimManagerKeyData;
 	//peVar11 = (edAnmAnim*)0x0;
-	//iVar12 = CActor::GetIdMacroAnim((CActor*)this, 0x18d);
+	//iVar12 = CActor::GetIdMacroAnim(this, 0x18d);
 	//iVar12 = CAnimation::OnLoadFunc_0017f830(pAnimationController, (long)iVar12);
 	//if (iVar12 != -1) {
 	//	peVar11 = (edAnmAnim*)ppeVar3[iVar12];
@@ -917,7 +917,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 		local_4 = 0;
 		pCVar5 = pTable;
 		while (iVar2 = pTable->entryCount, iVar3 < iVar2) {
-			iVar2 = CActor::DoMessage((CActor*)this, pCVar5->aEntries[0], 0x2f, local_4);
+			iVar2 = CActor::DoMessage(this, pCVar5->aEntries[0], 0x2f, local_4);
 			if (iVar2 == 4) {
 				pTable->Pop(iVar3);
 			}
@@ -1497,7 +1497,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 					local_30.z = this->currentLocation.z;
 					local_30.w = 1.0f;
 					CStack80 = CCollisionRay(1.4, &local_30, &g_xVector);
-					fVar9 = CStack80.Intersect(3, (CActor*)this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+					fVar9 = CStack80.Intersect(3, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 					if (fVar9 != 1e+30f) goto LAB_0013ee80;
 				}
 
@@ -1551,7 +1551,7 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 	switch (this->heroActionParams.activeActionId) {
 	case 1:
 		IMPLEMENTATION_GUARD(
-		CActor::DoMessage((CActor*)this, this->heroActionParams.pActor, 0x14, 0);
+		CActor::DoMessage(this, this->heroActionParams.pActor, 0x14, 0);
 		*(CActor**)&this->field_0xf14 = this->heroActionParams.pActor;
 		SetBehaviour(7, 0x106, 0xffffffff);)
 		break;
@@ -1576,7 +1576,7 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 		break;
 	case 6:
 		IMPLEMENTATION_GUARD(
-		CActor::DoMessage((CActor*)this, this->heroActionParams.pActor, 0x13, 0);
+		CActor::DoMessage(this, this->heroActionParams.pActor, 0x13, 0);
 		SetBehaviour(7, 0x103, 0xffffffff);)
 		break;
 	case 7:
@@ -1616,7 +1616,7 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 		this->field_0xf40.y = fVar5;
 		this->field_0xf40.z = fVar3;
 		this->field_0xf40.w = fVar4;
-		CActor::DoMessage((CActor*)this, this->heroActionParams.pActor, 0x14, 0);
+		CActor::DoMessage(this, this->heroActionParams.pActor, 0x14, 0);
 		SetBehaviour(7, 0x105, 0xffffffff);)
 		break;
 	case 9:
@@ -1633,8 +1633,8 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 		break;
 	case 0xf:
 		IMPLEMENTATION_GUARD(
-		CActor::DoMessage((CActor*)this, this->heroActionParams.pActor, 0x14, 0);
-		CActor::PlayAnim((CActor*)this, 0x1a3);
+		CActor::DoMessage(this, this->heroActionParams.pActor, 0x14, 0);
+		CActor::PlayAnim(this, 0x1a3);
 		this->effort = 0.0;
 		this->field_0xf24 = (char*)this->heroActionParams.pActor;
 		(*(code*)(this->pVTable)->SetLookingAtBones)(this, 0x45544554, 0x554f43);
@@ -1775,7 +1775,7 @@ bool CActorHeroPrivate::ManageActions()
 				}
 				this->field_0x1a40 = 0;
 				this->field_0x1a44 = 0;
-				SetState(0x73, 0xffffffff);)
+				SetState(STATE_HERO_STAND, 0xffffffff);)
 			}
 		}
 
@@ -2247,7 +2247,7 @@ void CActorHeroPrivate::Manage()
 		}
 		if (bVar4) {
 			CActor::SV_UpdateValue
-			(0.0, *(float*)&this->field_0x1008, (CActor*)this, this->field_0x1000 = -1.0f);
+			(0.0, *(float*)&this->field_0x1008, this, this->field_0x1000 = -1.0f);
 			pCVar1 = this->pAnimationController;
 			fVar14 = this->field_0x1000;
 			iVar8 = CAnimation::PhysicalLayerFromLayerId(pCVar1, 8);
@@ -2263,7 +2263,7 @@ void CActorHeroPrivate::Manage()
 		}
 		else {
 			CActor::SV_UpdateValue
-			(1.0, *(float*)&this->field_0x1004, (CActor*)this, this->field_0x1000 = -1.0f);
+			(1.0, *(float*)&this->field_0x1004, this, this->field_0x1000 = -1.0f);
 			pCVar1 = this->pAnimationController;
 			fVar14 = this->field_0x1000;
 			iVar8 = CAnimation::PhysicalLayerFromLayerId(pCVar1, 8);
@@ -2365,7 +2365,7 @@ void CActorHeroPrivate::Manage()
 						}
 						iVar8 = GetPossibleWind(fVar14, this, peVar13, peVar12);
 						if (iVar8 != -1) {
-							(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0x99, -1);
+							(*(this->pVTable)->SetBehaviour)(this, 7, 0x99, -1);
 						})
 					}
 				}
@@ -2591,17 +2591,17 @@ void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 		KyaVectorFunc(&(CScene::ptable.g_ActorManager_004516a4)->cluster, &local_30, &LAB_0033d920, &local_18);
 		pOtherActor = local_10;
 		local_4 = 0;
-		uVar2 = CActor::DoMessage((CActor*)this, local_10, 0x4d, (ActorCompareStruct*)0x0);
+		uVar2 = CActor::DoMessage(this, local_10, 0x4d, (ActorCompareStruct*)0x0);
 		*(int*)&this->field_0x15a0 = (int)uVar2;
 		local_8 = 0;
-		CActor::DoMessage((CActor*)this, pOtherActor, 0x14, (ActorCompareStruct*)0x0);)
+		CActor::DoMessage(this, pOtherActor, 0x14, (ActorCompareStruct*)0x0);)
 	}
 	CActor::CinematicMode_Leave(behaviourId);
 	if (behaviourId == 8) {
 		IMPLEMENTATION_GUARD(
 		pCVar1 = GetBehaviour((int)this->aComponents);
 		(*(code*)pCVar1->pVTable[1].Init)(pCVar1, pOtherActor, *(undefined4*)&this->field_0x15a0, 7, 0x11d);
-		(*((this->pVTable)->actorBase).SetState)((CActor*)this, 0x11e, -1);)
+		(*((this->pVTable)->actorBase).SetState)(this, 0x11e, -1);)
 	}
 	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x19b1 = 1;
@@ -2716,9 +2716,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		fVar28 = (float)(**(code**)(*(int*)&this->field_0xad8 + 0x24))(&this->field_0xad8);
 		CLevelScheduler::FUN_002db590(fVar25, pLVar7, (int)fVar26, (int)fVar28);
 		puVar3 = (CScene::ptable.g_FrontendManager_00451680)->pHealthBar;
-		uVar21 = (*(this->pVTable)->GetLifeInterfaceOther)((CActor*)this);
+		uVar21 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
 		fVar25 = (float)(**(code**)(*(int*)uVar21 + 0x24))(uVar21);
-		pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)((CActor*)this);
+		pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
 		fVar26 = CLifeInterface::GetValueMax(pCVar11);
 		FUN_001daa60(fVar25 / fVar26, (int)puVar3);)
 		return 1;
@@ -2730,7 +2730,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 	if (msg == 0x84) {
 		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
@@ -2760,7 +2760,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 	if (msg == 0x8d) {
 		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)();
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
@@ -2801,7 +2801,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 	if (msg == 0x7e) {
 		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
@@ -2827,7 +2827,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 	if (msg == 0x7d) {
 		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
@@ -2870,7 +2870,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	}
 	if (msg == 0x5e) {
 		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
@@ -2901,7 +2901,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = edF32Vector4NormalizeHard(&eStack160, &eStack160);
 			CCollisionRay::CCollisionRay(fVar25, &CStack208, &local_b0, &eStack160);
 			fVar25 = CCollisionRay::Intersect
-			(&CStack208, 3, (CActor*)this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			(&CStack208, 3, this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			if (fVar25 != 1e+30f) {
 				fVar25 = fVar25 - 0.2;
 				if (fVar25 < 0.0) {
@@ -2922,7 +2922,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			this->field_0x1a4c = 0;
 			this->field_0x1a50 = 0;
 			pFVar8 = CScene::ptable.g_FrontendManager_00451680;
-			pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
 			(*(code*)pFVar8->pManagerFunctionData[1].field_0x0)(pFVar8, 0, pCVar11);
 			FUN_001d9df0((int)(CScene::ptable.g_FrontendManager_00451680)->pHealthBar, 0);
 			FUN_001b9400((int)CScene::_pinstance, 1);)
@@ -2975,9 +2975,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			pFVar8 = CScene::ptable.g_FrontendManager_00451680;
 			FUN_001d9df0((int)(CScene::ptable.g_FrontendManager_00451680)->pHealthBar, 1);
 			puVar3 = pFVar8->pHealthBar;
-			uVar21 = (*(this->pVTable)->GetLifeInterfaceOther)((CActor*)this);
+			uVar21 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
 			fVar25 = (float)(**(code**)(*(int*)uVar21 + 0x24))(uVar21);
-			pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterfaceOther)(this);
 			fVar26 = CLifeInterface::GetValueMax(pCVar11);
 			FUN_001daa60(fVar25 / fVar26, (int)puVar3);
 			FUN_001daff0((long)(int)pFVar8->pHealthBar);
@@ -2986,7 +2986,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x50) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3006,7 +3006,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x4f) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3029,7 +3029,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x61) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3044,7 +3044,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
 				(this->field_0x1558 <= 0.0)) {
 				this->pTrappedByActor = pSender;
-				(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0x119, 0xffffffff);
+				(*(this->pVTable)->SetBehaviour)(this, 7, 0x119, 0xffffffff);
 				return 1;
 			})
 			return 0;
@@ -3110,7 +3110,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						this->flags | 0x80;
 					this->flags =
 						this->flags & 0xffffffdf;
-					CActor::EvaluateDisplayState((CActor*)this);
+					CActor::EvaluateDisplayState(this);
 					this->flags =
 						this->flags | 0x800;
 				}
@@ -3170,10 +3170,10 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					this->field_0xf24 = (char*)0x0;
 					pAVar19 = (AnimationType*)
 						(*(this->pVTable)->GetStateCfg)
-						((CActor*)this, this->actorState);
-					CActor::PlayAnim((CActor*)this, *pAVar19);
+						(this, this->actorState);
+					CActor::PlayAnim(this, *pAVar19);
 					piVar17 = (int*)(*(this->pVTable)->GetStateCfg)
-						((CActor*)this, this->actorState);
+						(this, this->actorState);
 					this->prevAnimType = *piVar17;)
 				}
 				return 1;
@@ -3221,7 +3221,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x26) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3264,7 +3264,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x25) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3302,7 +3302,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 0x2c) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3316,16 +3316,16 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 			if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 				(*(this->pVTable)->SetBehaviour)
-					((CActor*)this, 0xffffffff, 0xffffffff, 0xffffffff);
+					(this, 0xffffffff, 0xffffffff, 0xffffffff);
 				(*(this->pVTable)->SetBehaviour)
-					((CActor*)this, (this->subObjA)->defaultBehaviourId, -1, -1);
+					(this, (this->subObjA)->defaultBehaviourId, -1, -1);
 				this->rotationQuat.x = *(float*)((int)pMsgParam + 0x10);
 				this->rotationQuat.y = (float)*(undefined4*)((int)pMsgParam + 0x14);
 				this->rotationQuat.z = (float)*(undefined4*)((int)pMsgParam + 0x18);
 				this->rotationQuat.w = (float)*(undefined4*)((int)pMsgParam + 0x1c);
 				GetAnglesFromVector(&this->rotationEuler,
 					&this->rotationQuat);
-				CActor::UpdatePosition((CActor*)this, (edF32VECTOR4*)pMsgParam, true);
+				CActor::UpdatePosition(this, (edF32VECTOR4*)pMsgParam, true);
 				return 1;
 			})
 			return 0;
@@ -3496,7 +3496,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 		if (msg == 10) {
 			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
@@ -3542,7 +3542,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			else {
 				if (msg == 0x8b) {
 					IMPLEMENTATION_GUARD(
-					pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+					pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 					if (!bVar9) {
@@ -3558,11 +3558,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						(this->field_0x1558 <= 0.0)) {
 						if (this->curBehaviourId == 8) {
 							pCVar16 = CActor::GetBehaviour
-							((CActor*)this, this->curBehaviourId);
+							(this, this->curBehaviourId);
 							pCVar16[0x16].pVTable = (CBehaviourVtable*)0x1;
 						}
 						else {
-							(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0xa1, 0);
+							(*(this->pVTable)->SetBehaviour)(this, 7, 0xa1, 0);
 						}
 						return 1;
 					})
@@ -3570,7 +3570,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				}
 				if (msg == 3) {
 					IMPLEMENTATION_GUARD(
-					pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+					pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 					if (!bVar9) {
@@ -3589,10 +3589,10 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							*(CActor**)&this->field_0x1028 = pSender;
 							iVar13 = ChooseStateDead(this, 0, (int)pMsgParam, 0);
 							if (iVar13 == -1) {
-								(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0x97, -1);
+								(*(this->pVTable)->SetBehaviour)(this, 7, 0x97, -1);
 							}
 							else {
-								(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, iVar13, -1);
+								(*(this->pVTable)->SetBehaviour)(this, 7, iVar13, -1);
 							}
 							return 1;
 						}
@@ -3602,7 +3602,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				}
 				if (msg == 2) {
 					IMPLEMENTATION_GUARD(
-					pCVar11 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
+					pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 					if (!bVar9) {
@@ -3633,7 +3633,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					/* WARNING: Load size is inaccurate */
 					iVar13 = *pMsgParam;
 					if (((iVar13 != 10) && (iVar13 != 7)) && (iVar13 != 8)) {
-						uVar10 = ActorFunc_0013ea40((CActor*)this, pSender, (int*)pMsgParam, 0);
+						uVar10 = ActorFunc_0013ea40(this, pSender, (int*)pMsgParam, 0);
 						return uVar10;
 					}
 					uVar10 = TestState_IsInTheWind((Actor*)this, 0xffffffff);
@@ -3646,7 +3646,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						edF32Vector4AddHard(peVar24, peVar24, &eStack224);
 						fVar25 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 						this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar25;
-						uVar10 = ActorFunc_0013ea40((CActor*)this, pSender, (int*)pMsgParam, 0);
+						uVar10 = ActorFunc_0013ea40(this, pSender, (int*)pMsgParam, 0);
 						return uVar10;
 					})
 				}
@@ -3743,7 +3743,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 								if (msg == 6) {
 									IMPLEMENTATION_GUARD(
 									pCVar11 = (*(this->pVTable)->GetLifeInterface)
-										((CActor*)this);
+										(this);
 									fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 									bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 									if (!bVar9) {
@@ -3751,7 +3751,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 										uVar10 = 0;
 										if (iVar13 != -1) {
 											pAVar12 = (*(this->pVTable)->GetStateCfg)
-												((CActor*)this, iVar13);
+												(this, iVar13);
 											uVar10 = pAVar12->flags_0x4;
 										}
 										bVar9 = (uVar10 & 1) != 0;
@@ -3759,7 +3759,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 									if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 										if (this->actorState == 0xdb) {
 											(*(this->pVTable)->SetBehaviour)
-												((CActor*)this, 7, 0x73, 0xffffffff);
+												(this, 7, STATE_HERO_STAND, 0xffffffff);
 										}
 										return 1;
 									})
@@ -3768,7 +3768,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 								if (msg == 5) {
 									IMPLEMENTATION_GUARD(
 									pCVar11 = (*(this->pVTable)->GetLifeInterface)
-										((CActor*)this);
+										(this);
 									fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 									bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 									if (!bVar9) {
@@ -3776,7 +3776,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 										uVar10 = 0;
 										if (iVar13 != -1) {
 											pAVar12 = (*(this->pVTable)->GetStateCfg)
-												((CActor*)this, iVar13);
+												(this, iVar13);
 											uVar10 = pAVar12->flags_0x4;
 										}
 										bVar9 = (uVar10 & 1) != 0;
@@ -3796,7 +3796,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 										if (fVar25 != 0.0) {
 											*(undefined4*)&this->field_0x1b64 = 1;
 											(*(this->pVTable)->SetState)
-												((CActor*)this, 0xd5, 0xffffffff);
+												(this, 0xd5, 0xffffffff);
 											return 1;
 										}
 									}
@@ -3813,7 +3813,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 											peVar23 = (pAnimationController->anmBinMetaAnimator).base.aAnimData + iVar13;
 											peVar23->field_0x0 = 3;
 											peVar23->field_0x4 = fVar25;
-											iVar14 = CActor::GetIdMacroAnim((CActor*)this, New_Name_(137));
+											iVar14 = CActor::GetIdMacroAnim(this, New_Name_(137));
 											edAnmBinMetaAnimator::SetAnimOnLayer(pAnimationController, iVar14, iVar13, 0xffffffff);
 										}
 										if (this->actorState - 0x73U < 3) {
@@ -4096,7 +4096,7 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 			IMPLEMENTATION_GUARD(
 			if (param_3 == 2) {
 				CLevelScheduler::Level_Teleport
-				(CLevelScheduler::gThis, (CActor*)this, levelId, param_5[2], param_5[3], 0xffffffff);
+				(CLevelScheduler::gThis, this, levelId, param_5[2], param_5[3], 0xffffffff);
 			}
 			iVar9 = 1;)
 			break;
@@ -4164,9 +4164,8 @@ void CActorHeroPrivate::ResetStdDefaultSettings()
 	
 	this->field_0x1174 = 5.0f;
 
-	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x1178 = 1.9f;
-	this->field_0x117c = 1.4f;)
+	this->field_0x117c = 1.4f;
 	this->field_0x1180 = 0.4f;
 	this->field_0x1184 = 0.1f;
 	this->landSpeed = 0.0f;
@@ -4547,7 +4546,7 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 	}
 
 	if ((uVar5 & 0x100) != 0) {
-		return 0x73;
+		return STATE_HERO_STAND;
 	}
 
 	this->landSpeed = speed;
@@ -5040,7 +5039,7 @@ void CActorHeroPrivate::ClearLocalData()
 	//this->field_0x197c.pLightDirections = (edF32MATRIX4*)&this->field_0x18ec.y;
 	//this->field_0x197c.pLightColorMatrix = (edF32MATRIX4*)&this->field_0x18fc.ab;
 	//this->field_0x1988 = (float)&this->field_0x193c.ab;
-	//CActor::SetAlpha((CActor*)this, 0x80);
+	//CActor::SetAlpha(this, 0x80);
 	this->animKey_0x157c = this->currentLocation.y + 20.0f;
 	this->field_0x11f0 = this->currentLocation.y;
 	//_ResetHeroFight(this);
@@ -5335,6 +5334,9 @@ LAB_00341590:
 	case STATE_HERO_WIND_SLIDE_MOVE_B:
 	case STATE_HERO_WIND_SLIDE_MOVE_C:
 	case STATE_HERO_WIND_SLIDE_MOVE_D:
+	case STATE_HERO_STAND_TO_CROUCH_A:
+	case STATE_HERO_ROLL_2_CROUCH:
+	case STATE_HERO_JUMP_TO_CROUCH:
 		break;
 	case STATE_HERO_STAND:
 		StateHeroStandInit(1);
@@ -5348,6 +5350,14 @@ LAB_00341590:
 	case STATE_HERO_TRAMPOLINE_JUMP_2_3:
 		StateHeroJump_2_3Init();
 			break;
+	case STATE_HERO_CROUCH_A:
+	case STATE_HERO_CROUCH_B:
+	case STATE_HERO_CROUCH_C:
+		StateHeroCrouchInit();
+		break;
+	case STATE_HERO_CROUCH_WALK_A:
+		EnableFightCamera(0);
+		break;
 	case STATE_HERO_ROLL:
 		StateHeroRollInit();
 		break;
@@ -5387,6 +5397,18 @@ LAB_00341590:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
 		StateHeroTrampolineJump_1_2Init();
 			break;
+	case STATE_HERO_LOOK_INTERNAL: // Also 0x11b
+		IMPLEMENTATION_GUARD(
+			if (1 < this->prevActorState - 0x11aU) {
+				pCVar5 = (CCameraManager*)CScene::GetManager(MO_Camera);
+				CCameraManager::PushCamera(pCVar5, *(CCamera**)&this->field_0x15bc, 1);
+				this->field_0x1a54 = 1;
+				this->field_0x1b68 = 0;
+				uVar8 = CLevelScheduler::ScenVar_Get(0xe);
+				(**(code**)(*(int*)&this->field_0xc84 + 8))(&this->field_0xc84, uVar8);
+			}
+		);
+		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	case STATE_HERO_CAUGHT_TRAP_1:
 		this->dynamic.speed = 0.0f;
@@ -5459,6 +5481,13 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
+	case STATE_HERO_STAND_TO_CROUCH_A:
+	case STATE_HERO_STAND_TO_CROUCH_B:
+	case STATE_HERO_CROUCH_A:
+	case STATE_HERO_CROUCH_B:
+	case STATE_HERO_CROUCH_C:
+	case STATE_HERO_ROLL_2_CROUCH:
+	case STATE_HERO_JUMP_TO_CROUCH:
 		// Nothing
 		break;
 	case STATE_HERO_RUN:
@@ -5466,6 +5495,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_STAND:
 		StateHeroStandTerm();
+		break;
+	case STATE_HERO_CROUCH_WALK_A:
+		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 		break;
 	case STATE_HERO_ROLL:
 		StateHeroRunTerm();
@@ -5794,8 +5826,32 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_FALL_B:
 		StateHeroFall(this->airRotationRate, 0);
 		break;
+	case STATE_HERO_STAND_TO_CROUCH_A:
+		StateHeroStandToCrouch(0);
+		break;
+	case STATE_HERO_STAND_TO_CROUCH_B:
+		StateHeroStandToCrouch(1);
+		break;
+	case STATE_HERO_CROUCH_A:
+		StateHeroCrouch(STATE_HERO_NONE);
+		break;
+	case STATE_HERO_CROUCH_WALK_A:
+		StateHeroCrouchWalk();
+		break;
+	case STATE_HERO_CROUCH_B:
+		StateHeroCrouch(STATE_HERO_ROLL);
+		break;
+	case STATE_HERO_JUMP_TO_CROUCH:
+		StateHeroJump_3_3(0);
+		break;
 	case STATE_HERO_ROLL:
 		StateHeroRoll();
+		break;
+	case STATE_HERO_CROUCH_C:
+		StateHeroCrouch(STATE_HERO_ROLL);
+		break;
+	case STATE_HERO_ROLL_2_CROUCH:
+		StateHeroRoll2Crouch();
 		break;
 	case STATE_HERO_HURT_A:
 		StateHeroHit();
@@ -6060,7 +6116,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 	if (pcVar1 != (char*)0x0) {
 		IMPLEMENTATION_GUARD(
 		param_2 = 0;
-		CActor::SV_UpdateOrientationToPosition2D(this->field_0x1040 * 0.5, (CActor*)this, pcVar1 + 0x30);
+		CActor::SV_UpdateOrientationToPosition2D(this->field_0x1040 * 0.5, this, pcVar1 + 0x30);
 		this->bFacingControlDirection = 1;
 		lVar10 = (*(code*)(this->pVTable)->IsLookingAt)(this);
 		if ((lVar10 != 0) && (gPlayerInput.aButtons[4].clickValue != 0.0)) {
@@ -7894,7 +7950,7 @@ void CActorHeroPrivate::StateHeroRun()
 					fVar12 = ((this->pCollisionData)->pObbPrim->field_0x90).z;
 					edF32Vector4AddHard(&eStack96, &this->currentLocation, &eStack48);
 					CCollisionRay CStack128 = CCollisionRay(fVar12 + 0.5f, &eStack96, &this->rotationQuat);
-					fVar12 = CStack128.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40001000, &eStack32, &local_10);
+					fVar12 = CStack128.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40001000, &eStack32, &local_10);
 					if ((fVar12 != 1e+30f) && (fVar13 = this->field_0x1430,	fVar12 = edF32Vector4DotProductHard(&this->rotationQuat, &eStack32) , fVar12 + 1.0f <= cosf(fVar13))) {
 						SetState(0x96, 0xffffffff);
 						return;
@@ -8059,7 +8115,7 @@ void CActorHeroPrivate::StateHeroJoke()
 	}
 
 	if (bVar4) {
-		SetState(0x73, 0xffffffff);
+		SetState(STATE_HERO_STAND, 0xffffffff);
 	}
 
 	return;
@@ -8780,6 +8836,510 @@ void CActorHeroPrivate::StateHeroUTurnTerm()
 	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 }
 
+void CActorHeroPrivate::StateHeroStandToCrouch(int param_2)
+{
+	CAnimation* pCVar1;
+	CCollision* pCVar2;
+	CPlayerInput* pCVar3;
+	edAnmLayer* peVar4;
+	bool bVar5;
+	int uVar6;
+	float fVar6;
+	CCollisionRay CStack48;
+	edF32VECTOR4 local_10;
+
+	pCVar1 = this->pAnimationController;
+	pCVar2 = this->pCollisionData;
+
+	SV_MOV_UpdateSpeedIntensity(0.0f, this->field_0x1058 * 2.0f);
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if (param_2 == 0) {
+		pCVar3 = this->pPlayerInput;
+		if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar6 = 0.0f;
+		}
+		else {
+			fVar6 = pCVar3->aButtons[5].clickValue;
+		}
+		if (fVar6 == 0.0) {
+			local_10.x = this->currentLocation.x;
+			local_10.y = this->currentLocation.y + 0.2f;
+			local_10.z = this->currentLocation.z;
+			local_10.w = 1.0f;
+			CCollisionRay CStack48 = CCollisionRay(1.4f, &local_10, &g_xVector);
+			fVar6 = CStack48.Intersect(3, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			if (fVar6 == 1e+30f) {
+				SetState(STATE_HERO_STAND, 0xffffffff);
+				return;
+			}
+		}
+	}
+
+	if ((pCVar2->flags_0x4 & 2) == 0) {
+		if (this->field_0x1184 < this->timeInAir) {
+			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+				uVar6 = 0x7e;
+				if (this->field_0x142c != 0) {
+					if (this->distanceToGround < 10.3) {
+						uVar6 = 0x7e;
+						this->field_0x1020 = 1;
+					}
+					else {
+						uVar6 = 0xf0;
+						this->dynamic.flags = this->dynamic.flags & 0xfffffffb;
+					}
+				}
+			}
+			else {
+				uVar6 = 0x7a;
+				this->field_0x1020 = 1;
+			}
+
+			SetState(uVar6, 0xffffffff);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	pCVar3 = this->pPlayerInput;
+	if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar6 = 0.0f;
+	}
+	else {
+		fVar6 = pCVar3->aAnalogSticks[0].magnitude;
+	}
+
+	if (0.3f < fVar6) {
+		SetState(0x85, 0xffffffff);
+	}
+	else {
+		peVar4 = (pCVar1->anmBinMetaAnimator).aAnimData;
+		bVar5 = false;
+		if ((peVar4->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
+			if (peVar4->animPlayState == 0) {
+				bVar5 = false;
+			}
+			else {
+				bVar5 = (peVar4->field_0xcc & 2) != 0;
+			}
+		}
+
+		if (bVar5) {
+			SetState(0x85, 0xffffffff);
+		}
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroCrouchInit()
+{
+	this->bFacingControlDirection = 1;
+	return;
+}
+
+void CActorHeroPrivate::StateHeroCrouch(int nextState)
+{
+	CCollision* pCVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	CPlayerInput* pCVar4;
+	bool bVar5;
+	uint uVar6;
+	edF32VECTOR4* peVar7;
+	StateConfig* pAVar8;
+	int uVar9;
+	float fVar10;
+	CCollisionRay CStack48;
+	edF32VECTOR4 local_10;
+
+	pCVar1 = this->pCollisionData;
+
+	if (nextState == AS_None) {
+		this->effort = 0.0f;
+	}
+
+	this->dynamic.rotationQuat = this->rotationQuat;
+
+	SV_MOV_UpdateSpeedIntensity(0.0f, this->field_0x1058 * 2.0f);
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	bVar5 = DetectGripablePrecipice();
+	if (bVar5 == false) {
+		if (nextState != AS_None) {
+			pCVar2 = this->pAnimationController;
+			peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
+			bVar5 = false;
+			if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
+				if (peVar3->animPlayState == 0) {
+					bVar5 = false;
+				}
+				else {
+					bVar5 = (peVar3->field_0xcc & 2) != 0;
+				}
+			}
+
+			if (bVar5) {
+				this->SetState(nextState, 0xffffffff);
+				return;
+			}
+		}
+
+		pCVar4 = this->pPlayerInput;
+		if ((pCVar4 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar10 = 0.0f;
+		}
+		else {
+			fVar10 = pCVar4->aButtons[5].clickValue;
+		}
+
+		if (fVar10 == 0.0f) {
+			local_10.x = this->currentLocation.x;
+			local_10.y = this->currentLocation.y + 0.2f;
+			local_10.z = this->currentLocation.z;
+			local_10.w = 1.0;
+			CCollisionRay CStack48 = CCollisionRay(1.4f, &local_10, &g_xVector);
+			fVar10 = CStack48.Intersect(3, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			if (fVar10 == 1e+30) {
+				this->SetState(0x73, 0xffffffff);
+				return;
+			}
+		}
+
+		if ((pCVar1->flags_0x4 & 2) == 0) {
+			if (this->field_0x1184 < this->timeInAir) {
+				if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+					uVar9 = 0x7e;
+					if (this->field_0x142c != 0) {
+						if (this->distanceToGround < 10.3f) {
+							uVar9 = 0x7e;
+							this->field_0x1020 = 1;
+						}
+						else {
+							uVar9 = 0xf0;
+							this->dynamic.flags =
+								this->dynamic.flags & 0xfffffffb;
+						}
+					}
+				}
+				else {
+					uVar9 = 0x7a;
+					this->field_0x1020 = 1;
+				}
+
+				this->SetState(uVar9, 0xffffffff);
+				return;
+			}
+		}
+		else {
+			this->timeInAir = 0.0;
+		}
+
+		pCVar4 = this->pPlayerInput;
+		if ((pCVar4 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			uVar6 = 0;
+		}
+		else {
+			uVar6 = pCVar4->pressedBitfield & 0x10;
+		}
+
+		if ((uVar6 == 0) || (this->field_0x1a4c != 0)) {
+			bVar5 = CanEnterToboggan();
+
+			if (bVar5 == false) {
+				if ((this->dynamic.flags & 2) == 0) {
+					if (nextState == AS_None) {
+						pCVar4 = this->pPlayerInput;
+						if ((pCVar4 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+							fVar10 = 0.0f;
+						}
+						else {
+							fVar10 = pCVar4->aAnalogSticks[0].magnitude;
+						}
+
+						if ((0.3f < fVar10) || (this->bFacingControlDirection == 0)) {
+							if ((pCVar4 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+								fVar10 = 0.0f;
+							}
+							else {
+								fVar10 = pCVar4->aAnalogSticks[0].magnitude;
+							}
+
+							if (0.3f < fVar10) {
+								this->bFacingControlDirection = 0;
+
+								pCVar4 = this->pPlayerInput;
+								if ((pCVar4 == (CPlayerInput*)0x0) || (peVar7 = &pCVar4->lAnalogStick, this->field_0x18dc != 0))
+								{
+									peVar7 = &gF32Vector4Zero;
+								}
+								this->field_0x1030.x = peVar7->x;
+
+								pCVar4 = this->pPlayerInput;
+								if ((pCVar4 == (CPlayerInput*)0x0) || (peVar7 = &pCVar4->lAnalogStick, this->field_0x18dc != 0))
+								{
+									peVar7 = &gF32Vector4Zero;
+								}
+								this->field_0x1030.y = peVar7->y;
+
+								pCVar4 = this->pPlayerInput;
+								if ((pCVar4 == (CPlayerInput*)0x0) || (peVar7 = &pCVar4->lAnalogStick, this->field_0x18dc != 0))
+								{
+									peVar7 = &gF32Vector4Zero;
+								}
+								this->field_0x1030.z = peVar7->z;
+
+								pCVar4 = this->pPlayerInput;
+								if ((pCVar4 == (CPlayerInput*)0x0) || (peVar7 = &pCVar4->lAnalogStick, this->field_0x18dc != 0))
+								{
+									peVar7 = &gF32Vector4Zero;
+								}
+								this->field_0x1030.w = peVar7->w;
+							}
+
+							bVar5 = SV_UpdateOrientation2D(18.84f, &this->field_0x1030, 0);
+							this->bFacingControlDirection = (int)bVar5;
+							PlayAnim(0xc2);
+						}
+						else {
+							pAVar8 = GetStateCfg(this->actorState);
+							PlayAnim(pAVar8->animId);
+						}
+
+						if (this->field_0x1a4c == 0) {
+							pCVar4 = this->pPlayerInput;
+							if ((pCVar4 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+								fVar10 = 0.0f;
+							}
+							else {
+								fVar10 = pCVar4->aAnalogSticks[0].magnitude;
+							}
+
+							if ((0.3f < fVar10) && (this->bFacingControlDirection != 0)) {
+								this->SetState(0x86, 0xffffffff);
+							}
+						}
+					}
+				}
+				else {
+					this->SetState(0xe4, 0xffffffff);
+				}
+			}
+			else {
+				this->SetState(0xe8, 0xffffffff);
+			}
+		}
+		else {
+			this->SetState(0x88, 0xffffffff);
+		}
+	}
+	else {
+		this->SetState(200, 0xffffffff);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroCrouchWalk()
+{
+	CPlayerInput* pCVar1;
+	CCollision* pCVar2;
+	bool bVar3;
+	uint uVar4;
+	Timer* pTVar5;
+	edF32VECTOR4* v0;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	CCollisionRay CStack64;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	pCVar1 = this->pPlayerInput;
+	pCVar2 = this->pCollisionData;
+	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar6 = 0.0f;
+	}
+	else {
+		fVar6 = pCVar1->aAnalogSticks[0].magnitude;
+	}
+
+	if (fVar6 < 0.9f) {
+		fVar6 = 0.84f;
+	}
+	else {
+		fVar6 = this->field_0x117c;
+	}
+
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(fVar6, 0);
+
+	IncreaseEffort(0.5f);
+
+	this->dynamic.speed = this->field_0x1178 * fVar6;
+
+	fVar9 = this->field_0x105c;
+	fVar8 = this->field_0x1074;
+	fVar11 = this->field_0x1040;
+	fVar10 = this->field_0x1180;
+	fVar12 = this->field_0x1058;
+	fVar6 = this->field_0x1178 * fVar6;
+	ComputeSlidingForce(&eStack16, 0);
+	edF32Vector4ScaleHard(this->field_0x107c, &eStack16, &eStack16);
+	v0 = this->dynamicExt.aImpulseVelocities;
+	edF32Vector4AddHard(v0, v0, &eStack16);
+	fVar7 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
+	this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar7;
+
+	pCVar1 = this->pPlayerInput;
+	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar7 = 0.0f;
+	}
+	else {
+		fVar7 = pCVar1->aAnalogSticks[0].magnitude;
+	}
+
+	if ((0.3f <= fVar7) || (0.1f <= this->dynamic.speed)) {
+		BuildHorizontalSpeedVector(fVar6, fVar12, fVar10, fVar11, fVar8);
+	}
+	else {
+		SV_MOV_UpdateSpeedIntensity(0.0f, fVar9);
+	}
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	bVar3 = DetectGripablePrecipice();
+	if (bVar3 != false) {
+		this->SetState(200, 0xffffffff);
+		return;
+	}
+
+	pCVar1 = this->pPlayerInput;
+	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		fVar6 = 0.0f;
+	}
+	else {
+		fVar6 = pCVar1->aButtons[5].clickValue;
+	}
+
+	if (fVar6 == 0.0f) {
+		local_20.x = this->currentLocation.x;
+		local_20.y = this->currentLocation.y + 0.2f;
+		local_20.z = this->currentLocation.z;
+		local_20.w = 1.0f;
+		CCollisionRay CStack64 = CCollisionRay(1.4f, &local_20, &g_xVector);
+		fVar6 = CStack64.Intersect(3, (CActor*)this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+		if (fVar6 == 1e+30f) {
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar6 = 0.0f;
+			}
+			else {
+				fVar6 = pCVar1->aAnalogSticks[0].magnitude;
+			}
+
+			if (fVar6 <= 0.3f) {
+				this->SetState(0x73, 0xffffffff);
+				return;
+			}
+
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar6 = 0.0f;
+			}
+			else {
+				fVar6 = pCVar1->aAnalogSticks[0].magnitude;
+			}
+
+			if (0.9f <= fVar6) {
+				this->SetState(0x76, 0xffffffff);
+				return;
+			}
+
+			this->SetState(0x77, 0xffffffff);
+			return;
+		}
+	}
+
+	if ((pCVar2->flags_0x4 & 2) == 0) {
+		if (this->field_0x1184 < this->timeInAir) {
+			this->SetState(0x87, 0xffffffff);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	pCVar1 = this->pPlayerInput;
+	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		uVar4 = 0;
+	}
+	else {
+		uVar4 = pCVar1->pressedBitfield & 0x10;
+	}
+
+	if ((uVar4 != 0) && ((bVar3 = (pCVar2->flags_0x4 & 1) == 0, bVar3 ||  ((!bVar3 && 
+		(fVar7 = this->field_0x1430, fVar6 = edF32Vector4DotProductHard(&this->rotationQuat, &pCVar2->aCollisionContact->location), cosf(fVar7) < fVar6 + 1.0f)))))) {
+		this->SetState(0x88, 0xffffffff);
+		return;
+	}
+
+	bVar3 = CanEnterToboggan();
+	if (bVar3 != false) {
+		this->SetState(0xe8, 0xffffffff);
+		return;
+	}
+
+	uVar4 = this->dynamic.flags;
+
+	if (((uVar4 & 2) == 0) || (this->dynamicExt.field_0x6c <= 0.2f)) {
+	LAB_001428d0:
+		pCVar1 = this->pPlayerInput;
+		if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar6 = 0.0f;
+		}
+		else {
+			fVar6 = pCVar1->aAnalogSticks[0].magnitude;
+		}
+
+		if (fVar6 < 0.3f) {
+			pTVar5 = GetTimer();
+			if (0.1f < pTVar5->scaledTotalTime - this->time_0x1538) {
+				this->SetState(0x85, 0xffffffff);
+			}
+		}
+		else {
+			pTVar5 = GetTimer();
+			this->time_0x1538 = pTVar5->scaledTotalTime;
+		}
+	}
+	else {
+		if ((uVar4 & 1) == 0) {
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar6 = 0.0f;
+			}
+			else {
+				fVar6 = pCVar1->aAnalogSticks[0].magnitude;
+			}
+
+			if (0.3f <= fVar6) goto LAB_001428d0;
+		}
+
+		this->SetState(0xe4, 0xffffffff);
+	}
+
+	return;
+}
+
 void CActorHeroPrivate::StateHeroRollInit()
 {
 	this->field_0xf00 = this->currentLocation;
@@ -8887,7 +9447,7 @@ void CActorHeroPrivate::StateHeroRoll()
 				local_20.z = this->currentLocation.z;
 				local_20.w = 1.0f;
 				CCollisionRay CStack64 = CCollisionRay(1.4f, &local_20, &g_xVector);
-				fVar8 = CStack64.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+				fVar8 = CStack64.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 
 				if (fVar8 == 1e+30f) {
 					pCVar3 = this->pPlayerInput;
@@ -9020,6 +9580,140 @@ void CActorHeroPrivate::StateHeroRoll()
 
 		SetState(STATE_HERO_SLIDE_A, 0xffffffff);
 	}
+	return;
+}
+
+void CActorHeroPrivate::StateHeroRoll2Crouch()
+{
+	CAnimation* pCVar1;
+	CCollision* pCVar2;
+	CPlayerInput* pCVar3;
+	edAnmLayer* peVar4;
+	bool bVar5;
+	uint uVar6;
+	int nextState;
+	float fVar8;
+	CCollisionRay CStack48;
+	edF32VECTOR4 local_10;
+
+	pCVar1 = this->pAnimationController;
+	pCVar2 = this->pCollisionData;
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if ((pCVar2->flags_0x4 & 2) == 0) {
+		if (this->field_0x1184 < this->timeInAir) {
+			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+				nextState = 0x7e;
+				if (this->field_0x142c != 0) {
+					if (this->distanceToGround < 10.3) {
+						nextState = 0x7e;
+						this->field_0x1020 = 1;
+					}
+					else {
+						nextState = 0xf0;
+						this->dynamic.flags = this->dynamic.flags & 0xfffffffb;
+					}
+				}
+			}
+			else {
+				nextState = 0x7a;
+				this->field_0x1020 = 1;
+			}
+			SetState(nextState, 0xffffffff);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	pCVar3 = this->pPlayerInput;
+	if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		uVar6 = 0;
+	}
+	else {
+		uVar6 = pCVar3->pressedBitfield & 0x10;
+	}
+
+	if (uVar6 == 0) {
+		if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar8 = 0.0f;
+		}
+		else {
+			fVar8 = pCVar3->aButtons[5].clickValue;
+		}
+
+		if (fVar8 == 0.0f) {
+			local_10.x = this->currentLocation.x;
+			local_10.y = this->currentLocation.y + 0.2;
+			local_10.z = this->currentLocation.z;
+			local_10.w = 1.0;
+			CCollisionRay CStack48 = CCollisionRay(1.4f, &local_10, &g_xVector);
+			fVar8 = CStack48.Intersect(3, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+
+			if (fVar8 == 1e+30f) {
+				pCVar3 = this->pPlayerInput;
+				if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+					fVar8 = 0.0f;
+				}
+				else {
+					fVar8 = pCVar3->aAnalogSticks[0].magnitude;
+				}
+
+				if (fVar8 <= 0.3f) {
+					SetState(0x73, 0xffffffff);
+					return;
+				}
+
+				if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+					fVar8 = 0.0f;
+				}
+				else {
+					fVar8 = pCVar3->aAnalogSticks[0].magnitude;
+				}
+
+				if (0.9f <= fVar8) {
+					SetState(0x76, 0xffffffff);
+					return;
+				}
+
+				SetState(0x77, 0xffffffff);
+				return;
+			}
+		}
+
+		peVar4 = (pCVar1->anmBinMetaAnimator).aAnimData;
+		bVar5 = false;
+		if ((peVar4->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
+			if (peVar4->animPlayState == 0) {
+				bVar5 = false;
+			}
+			else {
+				bVar5 = (peVar4->field_0xcc & 2) != 0;
+			}
+		}
+
+		if (!bVar5) {
+			pCVar3 = this->pPlayerInput;
+			if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar8 = 0.0f;
+			}
+			else {
+				fVar8 = pCVar3->aAnalogSticks[0].magnitude;
+			}
+			if (fVar8 <= 0.3f) {
+				return;
+			}
+		}
+
+		SetState(0x85, 0xffffffff);
+	}
+	else {
+		SetState(0x88, 0xffffffff);
+	}
+
 	return;
 }
 
@@ -9391,11 +10085,11 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 						}
 					}
 					else {
-						SetState(0x73, 0xffffffff);
+						SetState(STATE_HERO_STAND, 0xffffffff);
 					}
 				}
 				else {
-					SetState(0x73, 0xffffffff);
+					SetState(STATE_HERO_STAND, 0xffffffff);
 				}
 			}
 		}
@@ -9715,7 +10409,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 							pCVar3 = *(CActor**)&this->pBounceOnActor;
 							if (pCVar3 != (CActor*)0x0) {
 								local_8 = 1;
-								CActor::DoMessage((CActor*)this, pCVar3, 0x1f, 1);
+								CActor::DoMessage(this, pCVar3, 0x1f, 1);
 								*(undefined4*)&this->pBounceOnActor = 0;
 							}
 							SetState(0xcb, 0xffffffff);
@@ -10941,7 +11635,7 @@ LAB_0014a028:
 		SV_UpdateValue
 		(edFCosinus
 			[(int)(ABS((this->timeInAir * 2.5 - 1.570796) * 1303.797) + 0.5)
-			& 0x1fff] * 0.1 + 1.0, (float)&DAT_3f4ccccd, (CActor*)this, &this->field_0x13cc);
+			& 0x1fff] * 0.1 + 1.0, (float)&DAT_3f4ccccd, this, &this->field_0x13cc);
 		SV_FX_Sound_SetVolume(this->field_0x13cc, (CFxHandle*)&this->field_0x13c0);
 		)
 
@@ -11547,7 +12241,7 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 			pCVar1 = this->pActorBoomy;
 			pCVar1->field_0x8 = pCVar1->field_0x8 & 0xfffffffd;
 			pCVar1->field_0x8 = pCVar1->field_0x8 | 1;
-			pCVar2 = (CActor*)this->pActorBoomy;
+			pCVar2 = this->pActorBoomy;
 			(pCVar2->data).flags = (pCVar2->data).flags & 0xffffff7f;
 			(pCVar2->data).flags = (pCVar2->data).flags | 0x20;
 			CActor::EvaluateDisplayState(pCVar2);
@@ -11603,7 +12297,7 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 		IMPLEMENTATION_GUARD(
 		if (this->boomyState_0x1b70 != 0xd) {
 			this->field_0x1b74 = 0;
-			pCVar2 = (CActor*)this->pActorBoomy;
+			pCVar2 = this->pActorBoomy;
 			(pCVar2->data).flags = (pCVar2->data).flags | 0x80;
 			(pCVar2->data).flags = (pCVar2->data).flags & 0xffffffdf;
 			CActor::EvaluateDisplayState(pCVar2);
@@ -11642,7 +12336,7 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 					pCVar1 = this->pActorBoomy;
 					pCVar1->field_0x8 = pCVar1->field_0x8 | 2;
 					pCVar1->field_0x8 = pCVar1->field_0x8 & 0xfffffffe;
-					pCVar2 = (CActor*)this->pActorBoomy;
+					pCVar2 = this->pActorBoomy;
 					(pCVar2->data).flags = (pCVar2->data).flags & 0xffffff7f;
 					(pCVar2->data).flags = (pCVar2->data).flags | 0x20;
 					CActor::EvaluateDisplayState(pCVar2);
@@ -12180,7 +12874,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 
 	CStack96 = CCollisionRay(0.35f, &local_20, &local_40);
 
-	fVar5 = CStack96.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40000010, &local_30, &local_10);
+	fVar5 = CStack96.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000010, &local_30, &local_10);
 
 	ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::DetectGripEdge fVar5: {}", fVar5);
 
@@ -12193,7 +12887,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 		local_20.z = param_4->z * fVar5 + param_3->z;
 		local_20.w = param_4->w * fVar5 + param_3->w;
 
-		fVar5 = CStack96.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40000010, &local_30, &local_10);
+		fVar5 = CStack96.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000010, &local_30, &local_10);
 		ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::DetectGripEdge fVar5: {}", fVar5);
 	}
 
@@ -12214,7 +12908,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 		}
 
 		CStack176 = CCollisionRay(((this->pCollisionData)->pObbPrim->field_0x90).z + 0.5f, &local_90, &local_70);
-		fVar6 = CStack176.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40000010, &local_80, (_ray_info_out*)0x0);
+		fVar6 = CStack176.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000010, &local_80, (_ray_info_out*)0x0);
 
 		ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::DetectGripEdge fVar6: {}", fVar6);
 
@@ -12222,7 +12916,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 			(cosf(this->field_0x14b0) <= fabs(local_80.y))) ||
 			(0.0f < local_80.x * local_70.x + local_80.y * local_70.y + local_80.z * local_70.z)) {
 			local_90.y = fVar5 - 0.1f;
-			fVar6 = CStack176.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40000010, &local_80, (_ray_info_out*)0x0);
+			fVar6 = CStack176.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000010, &local_80, (_ray_info_out*)0x0);
 		}
 
 		if (((fVar6 != 1e+30f) && (0.01 < fVar6)) &&
@@ -12235,7 +12929,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 			local_20.z = param_4->z * fVar7 + param_3->z;
 			local_20.w = param_4->w * fVar7 + param_3->w;
 
-			fVar7 = CStack96.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			fVar7 = CStack96.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::DetectGripEdge fVar7: {}", fVar7);
 
 
@@ -12322,10 +13016,10 @@ int CActorHeroPrivate::DetectClimbCeiling(edF32VECTOR4* v0, CActor** pOutActor)
 		local_20.y = v0->y + 1.16f;
 		CCollisionRay::CCollisionRay((float)&DAT_3f4ccccd, &CStack80, &local_20, &g_xVector);
 		if (this->field_0x1454 == false) {
-			fVar4 = CCollisionRay::IntersectActors(&CStack80, (CActor*)this, (CActor*)0x0, 0x40000100, &local_30, &local_10);
+			fVar4 = CCollisionRay::IntersectActors(&CStack80, this, (CActor*)0x0, 0x40000100, &local_30, &local_10);
 		}
 		else {
-			fVar4 = CCollisionRay::Intersect(&CStack80, 3, (CActor*)this, (CActor*)0x0, 0x40000100, &local_30, &local_10);
+			fVar4 = CCollisionRay::Intersect(&CStack80, 3, this, (CActor*)0x0, 0x40000100, &local_30, &local_10);
 		}
 		if ((((fVar4 != 1e+30) && (local_30.y <= -edFCosinus[1138])) &&
 			((local_10.pActor_0x0 == (CActor*)0x0 || (((uint)local_10.pVector_0x4 & 0x800) != 0)))) &&
@@ -12339,13 +13033,13 @@ int CActorHeroPrivate::DetectClimbCeiling(edF32VECTOR4* v0, CActor** pOutActor)
 						pTieActor = this->pTiedActor;
 						if (pCVar1 == pTieActor) {
 							(*(this->pVTable)->TieToActor)
-								((CActor*)this, (CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
+								(this, (CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
 							if (((pTieActor->pCollisionData->flags_0x0 & 0x80) != 0) &&
 								(bVar2 = CCollision::IsVertexAboveAndAgainstObbTree
 								(&(this->pCollisionData)->highestVertex,
 									pTieActor->pCollisionData->pObbTree), bVar2 != false)) {
 								(*(this->pVTable)->TieToActor)
-									((CActor*)this, pTieActor, 0, 0, (edF32MATRIX4*)0x0);
+									(this, pTieActor, 0, 0, (edF32MATRIX4*)0x0);
 							}
 						}
 						this->pGrippedActor = (CActor*)0x0;
@@ -12354,7 +13048,7 @@ int CActorHeroPrivate::DetectClimbCeiling(edF32VECTOR4* v0, CActor** pOutActor)
 					pCVar1 = this->pGrippedActor;
 					if (pCVar1 != (CActor*)0x0) {
 						(*(this->pVTable)->TieToActor)
-							((CActor*)this, pCVar1, 0, 1, (edF32MATRIX4*)0x0);
+							(this, pCVar1, 0, 1, (edF32MATRIX4*)0x0);
 					}
 				}
 			}
@@ -12465,7 +13159,7 @@ LAB_0013d298:
 	}
 	if (bDetectClimbWall != false) {
 		if (param_2 == 0) {
-			CActor::UpdateNormal(8.0, (CActor*)this, &this->field_0x1470, &eStack64);
+			CActor::UpdateNormal(8.0, this, &this->field_0x1470, &eStack64);
 		}
 		if (pOutActor == (CActor**)0x0) {
 			pCVar2 = this->pGrippedActor;
@@ -12474,13 +13168,13 @@ LAB_0013d298:
 					pTieActor = this->pTiedActor;
 					if (pCVar2 == pTieActor) {
 						(*(this->pVTable)->TieToActor)
-							((CActor*)this, (CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
+							(this, (CActor*)0x0, 0, 1, (edF32MATRIX4*)0x0);
 						if (((pTieActor->pCollisionData->flags_0x0 & 0x80) != 0) &&
 							(bVar3 = CCollision::IsVertexAboveAndAgainstObbTree
 							(&(this->pCollisionData)->highestVertex,
 								pTieActor->pCollisionData->pObbTree), bVar3 != false)) {
 							(*(this->pVTable)->TieToActor)
-								((CActor*)this, pTieActor, 0, 0, (edF32MATRIX4*)0x0);
+								(this, pTieActor, 0, 0, (edF32MATRIX4*)0x0);
 						}
 					}
 					this->pGrippedActor = (CActor*)0x0;
@@ -12489,7 +13183,7 @@ LAB_0013d298:
 				pCVar2 = this->pGrippedActor;
 				if (pCVar2 != (CActor*)0x0) {
 					(*(this->pVTable)->TieToActor)
-						((CActor*)this, pCVar2, 0, 1, (edF32MATRIX4*)0x0);
+						(this, pCVar2, 0, 1, (edF32MATRIX4*)0x0);
 				}
 			}
 		}
@@ -12537,7 +13231,7 @@ int CActorHeroPrivate::DetectClimbCeilingFromGrip(CActor** pOutActor, edF32VECTO
 			(((this->pCollisionData)->pObbPrim->field_0x90).z + 0.1,
 				&CStack64, &local_20, &this->rotationQuat);
 			fVar1 = CCollisionRay::Intersect
-			(&CStack64, 3, (CActor*)this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			(&CStack64, 3, this, (CActor*)0x0, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 			if (fVar1 != 1e+30) {
 				bClimbCeilingFromGrip = 0;
 			}
@@ -13404,7 +14098,7 @@ bool CActorHeroPrivate::GetSomethingInFrontOf_001473e0()
 	local_20.w = 1.0f;
 
 	CCollisionRay CStack64 = CCollisionRay(1.4f, &local_20, &g_xVector);
-	float fVar8 = CStack64.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, (CActor*)this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+	float fVar8 = CStack64.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 	return fVar8 == 1e+30;
 }
 
@@ -13859,7 +14553,7 @@ void CActorHeroPrivate::ProcessDeath()
 			pCVar2 = CScene::ptable.g_SectorManager_00451670;
 			pCVar1 = CLevelScheduler::gThis;
 
-			pReceiver = (CActor*)this->field_0xcbc;
+			pReceiver = this->field_0xcbc;
 			if (pReceiver == (CActor*)0x0) {
 				fVar7 = GetLifeInterface()->GetValue();
 				if (0.0f < fVar7 - this->field_0x2e4) {
@@ -13934,6 +14628,18 @@ void CActorHeroPrivate::ProcessDeath()
 	}
 	else {
 		this->bUnknownBool = 0;
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::EnableFightCamera(int bEnable)
+{
+	CCameraManager* pCameraManager;
+
+	if ((this == (CActorHeroPrivate*)CActorHero::_gThis) && (bEnable != 0)) {
+		pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+		pCameraManager->PushCamera(this->pFightCamera, 0);
 	}
 
 	return;
@@ -14416,7 +15122,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						edF32Vector4SubHard(&local_50, &local_50, *pMsgParam);
 						FUN_002003d0(*(undefined4*)((int)pMsgParam + 0xc), &(this->pHero->base).field_0xf70, 0x40eb90, &local_50, 1);
 						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							((CActor*)this->pHero, 0x116, 0xffffffff);
+							(this->pHero, 0x116, 0xffffffff);
 						return 1;
 					})
 				}
@@ -14425,7 +15131,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						IMPLEMENTATION_GUARD(
 						if ((int)pMsgParam == 1) {
 							(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-								((CActor*)this->pHero, 0x73, 0xffffffff);
+								(this->pHero, STATE_HERO_STAND, 0xffffffff);
 						})
 						return 1;
 					}
@@ -14433,7 +15139,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						IMPLEMENTATION_GUARD(
 						if ((int)pMsgParam == 1) {
 							(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-								((CActor*)this->pHero, 0xdf, 0xffffffff);
+								(this->pHero, 0xdf, 0xffffffff);
 						})
 						return 1;
 					}
@@ -14448,7 +15154,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						pHeroRef->flags = pHeroRef->flags | 0x20;
 						CActor::EvaluateDisplayState((CActor*)pHeroRef);
 						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							((CActor*)this->pHero, 0x72, 0xffffffff);
+							(this->pHero, 0x72, 0xffffffff);
 						pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
 						pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 & 0xfff7efff;
 						pHeroRef = this->pHero;
@@ -14470,7 +15176,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						pHeroRef->flags = pHeroRef->flags & 0xffffffdf;
 						CActor::EvaluateDisplayState((CActor*)pHeroRef);
 						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							((CActor*)this->pHero, 0x73, 0xffffffff);
+							(this->pHero, STATE_HERO_STAND, 0xffffffff);
 						pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
 						pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 | 0x81000;
 						pHeroRef = this->pHero;
@@ -14511,7 +15217,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 					if (msg == 0x24) {
 						IMPLEMENTATION_GUARD(
 						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							((CActor*)this->pHero, 0x73, 0xffffffff);
+							(this->pHero, STATE_HERO_STAND, 0xffffffff);
 						return 1;)
 					}
 
@@ -14538,7 +15244,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						}
 						(this->pHero->base).field_0x1610 = *(int*)((int)pMsgParam + 0xc);
 						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							((CActor*)this->pHero, 0x72, 0xffffffff);
+							(this->pHero, 0x72, 0xffffffff);
 						return 1;)
 					}
 				}

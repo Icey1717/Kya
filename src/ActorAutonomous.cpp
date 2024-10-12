@@ -800,7 +800,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 			AUTONOMOUS_LOG(LogLevel::Verbose, "Translation before CheckCollisions location: {}", this->currentLocation.ToString());
 
-			pCollision->CheckCollisions_TranslateActor(this, &translation, pActorsTable, 0, 1);
+			pCollision->CheckCollisions_TranslateActor(this, &translation, pActorsTable, (CActor*)0x0, 1);
 
 			AUTONOMOUS_LOG(LogLevel::Verbose, "Translation after CheckCollisions translation: {} location: {}", translation.ToString(), this->currentLocation.ToString());
 
@@ -1401,7 +1401,7 @@ void CBehaviourCatchByTrap::End(int newBehaviourId)
 	local_6c = 0x3f000000;
 	local_4 = local_90;
 	IMPLEMENTATION_GUARD(
-	CActor::DoMessage((CActor*)this->pOwner, this->field_0x10, 2, (uint)local_4);)
+	CActor::DoMessage(this->pOwner, this->field_0x10, 2, (uint)local_4);)
 	return;
 }
 

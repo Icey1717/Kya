@@ -15,6 +15,7 @@ enum ECameraType {
 	CT_Frontend = 24,
 	CT_IntView = 11,
 	CT_Main = 3,
+	CT_Fight = 4,
 	CT_KyaJamgut = 7,
 	CT_KyaWindWall = 5,
 	CT_MainCamera = 21,

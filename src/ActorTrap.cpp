@@ -6,16 +6,6 @@
 #include "ActorManager.h"
 #include "TimeController.h"
 
-#define TRAP_STATE_IDLE				0x6
-#define TRAP_STATE_CATCH_1_1		0x7
-#define TRAP_STATE_CATCH_2_2		0x8
-#define TRAP_STATE_CATCH_STAND_1_2	0x9
-#define TRAP_STATE_CATCH_STAND_2_2	0xa
-#define TRAP_STATE_CATCH_STRUGGLE	0xd
-
-#define TRAP_BEHAVIOUR_STAND	2
-#define TRAP_BEHAVIOUR_INACTIVE	3
-
 CActorTrap::CActorTrap()
 {
 	
@@ -383,7 +373,7 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 					}
 				}
 			}
-			(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, param_2, -1);)
+			(*((this->pOwner->base).base.pVTable)->SetState)(this->pOwner, param_2, -1);)
 		}
 	}
 
@@ -1199,7 +1189,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				IMPLEMENTATION_GUARD(
 				if (this->escapeAttempts != this->field_0x50) {
 					this->field_0x69 = pSender != this->pCaughtActor;
-					(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
+					(*((this->pOwner->base).base.pVTable)->SetState)(this->pOwner, 0x10, -1);
 					*(undefined4*)((int)pMsgParam + 0x74) = 1;
 					return 1;
 				}
@@ -1245,7 +1235,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 						}
 						if (result == 0) {
 							this->field_0x69 = pSender != this->pCaughtActor;
-							(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 0x10, -1);
+							(*((this->pOwner->base).base.pVTable)->SetState)(this->pOwner, 0x10, -1);
 						})
 						return 1;
 					}

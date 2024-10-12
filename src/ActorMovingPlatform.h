@@ -6,6 +6,15 @@
 #include "CinematicManager.h"
 #include "PathManager.h"
 
+#define MOVING_PLATFORM_BEHAVIOUR_TRAJECTORY				0x2
+#define MOVING_PLATFORM_BEHAVIOUR_SLAB						0x3
+#define MOVING_PLATFORM_BEHAVIOUR_WEIGHING_MACHINE_SLAVE	0x4
+#define MOVING_PLATFORM_BEHAVIOUR_WEIGHING_MACHINE_MASTER	0x5
+#define MOVING_PLATFORM_BEHAVIOUR_DESTROYED					0x6
+#define MOVING_PLATFORM_BEHAVIOUR_STAND						0x7
+#define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER			0x8
+#define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW				0x9
+
 class CActorMovingPlatform;
 
 struct S_TRAJ_POS {
@@ -139,6 +148,8 @@ public:
 	S_STREAM_REF<CActor> streamActorRef;
 
 	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+
+	S_STREAM_NTF_TARGET_ANALOG_LIST* field_0x34;
 
 	float field_0x40;
 	float field_0x44;
@@ -315,6 +326,7 @@ public:
 	void GenericManage(int param_2, int param_3, int param_4, int param_5);
 
 	void StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehaviour);
+	bool StateWeighingMaster(CBehaviourWeighingMachineMaster* pBehaviour);
 
 	int noFrictionZoneCount;
 	S_STREAM_MPF_NO_FRICTION_ZONE* aNoFrictionZones;

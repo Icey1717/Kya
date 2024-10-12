@@ -293,7 +293,7 @@ bool CActorMovable::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 		uVar1 = pCol->flags_0x0;
 		pCol->flags_0x0 = pCol->flags_0x0 | 0x400000;
 		pCol->flags_0x0 = pCol->flags_0x0 & 0xfffeffff;
-		pCol->CheckCollisions_MoveActor((CActor*)this, &eStack48, (CActorsTable*)0x0, pActor, 0);
+		pCol->CheckCollisions_MoveActor(this, &eStack48, (CActorsTable*)0x0, pActor, 0);
 		pCol->flags_0x0 = pCol->flags_0x0 & 0xffbfffff;
 
 		if ((uVar1 & 0x10000) != 0) {
@@ -1481,6 +1481,21 @@ void CActorMovable::SV_MOV_MoveCloserTo(float speed, edF32VECTOR4* param_3)
 
 	(this->dynamic).speed = speed;
 	return;
+}
+
+float CActorMovable::SV_MOV_GetAccelerationFromDistAndSpeed(float param_1, float param_2, float param_3)
+{
+	float fVar1;
+
+	fVar1 = (param_3 * 2.0f) / (param_1 + param_2);
+	if (0.0f < fVar1) {
+		fVar1 = fabs(param_2 - param_1) / fVar1;
+	}
+	else {
+		fVar1 = 500.0f;
+	}
+
+	return fVar1;
 }
 
 void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta)

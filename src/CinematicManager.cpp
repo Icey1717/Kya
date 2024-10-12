@@ -3104,6 +3104,116 @@ bool S_STREAM_NTF_TARGET_SWITCH_EX::Switch(CActor* pActor, uint messageFlags)
 	return uVar3;
 }
 
+int S_STREAM_NTF_TARGET_ANALOG::NotifyAnalog(float param_1, float param_2, CActor* param_4, S_STREAM_EVENT_CAMERA* param_5)
+{
+	int iVar1;
+	bool bVar2;
+	int iVar3;
+	CActor* pCVar4;
+	CActor* pCVar5;
+	float local_18;
+	uint local_14;
+	uint local_c;
+	uint local_8;
+	float* local_4;
+
+	iVar3 = 0;
+
+	iVar1 = this->field_0x1c;
+	if (iVar1 == 2) {
+		pCVar5 = (CActor*)0x0;
+		if ((this->field_0x20 <= param_1) && (param_1 <= this->field_0x24)) {
+			pCVar5 = (CActor*)1;
+		}
+
+		pCVar4 = (CActor*)(uint)(this->field_0x20 <= param_2);
+		if (pCVar4 != (CActor*)0x0) {
+			pCVar4 = (CActor*)(uint)(param_2 <= this->field_0x24);
+		}
+	}
+	else {
+		pCVar5 = (CActor*)1;
+
+		if (iVar1 == 1) {
+			if ((this->field_0x20 <= param_1) && (pCVar5 = (CActor*)1, param_1 <= this->field_0x24)) {
+				pCVar5 = (CActor*)0x0;
+			}
+
+			pCVar4 = (CActor*)(uint)(param_2 < this->field_0x20);
+			if (pCVar4 == (CActor*)0x0) {
+				pCVar4 = (CActor*)(uint)(this->field_0x24 < param_2);
+			}
+		}
+		else {
+			pCVar4 = (CActor*)param_5;
+			pCVar5 = param_4;
+			if (iVar1 == 0) {
+				local_14 = this->field_0x10;
+				if (param_4 == (CActor*)0x0) {
+					param_4 = LOAD_SECTION_CAST(CActor*, this->pRef);
+				}
+
+				local_18 = param_2;
+				if (param_4 != (CActor*)0x0) {
+					local_4 = &local_18;
+					iVar3 = param_4->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)0x11, (MSG_PARAM)local_4);
+				}
+
+				pCVar4 = (CActor*)1;
+				pCVar5 = (CActor*)1;
+			}
+		}
+	}
+
+	if (pCVar5 != pCVar4) {
+		if (pCVar4 == (CActor*)0x0) {
+			iVar3 = 0;
+			bVar2 = true;
+			if (((this->flags & 1) != 0) && ((this->flags & 0x40000000) != 0)) {
+				bVar2 = false;
+			}
+			if (bVar2) {
+				this->flags = this->flags | 0x40000000;
+				if (this->field_0x14 != 0) {
+					g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, param_4, this->field_0x14, this->field_0x18);
+					if (param_4 == (CActor*)0x0) {
+						param_4 = LOAD_SECTION_CAST(CActor*, this->pRef);
+					}
+
+					if (param_4 != (CActor*)0x0) {
+						local_c = this->field_0x18;
+						iVar3 = param_4->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, (MSG_PARAM)local_c);
+					}
+				}
+			}
+		}
+		else {
+			param_5->SwitchOn(param_4);
+			iVar3 = 0;
+			bVar2 = true;
+			if (((this->flags & 1) != 0) && ((this->flags & 0x40000000) != 0)) {
+				bVar2 = false;
+			}
+
+			if (bVar2) {
+				this->flags = this->flags | 0x40000000;
+				if (this->field_0xc != 0) {
+					g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, param_4, this->field_0xc, this->field_0x10);
+					if (param_4 == (CActor*)0x0) {
+						param_4 = LOAD_SECTION_CAST(CActor*, this->pRef);
+					}
+					if (param_4 != (CActor*)0x0) {
+						local_8 = this->field_0x10;
+						iVar3 = param_4->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0xc, (MSG_PARAM)local_8);
+					}
+				}
+			}
+		}
+	}
+
+	return iVar3;
+}
+
 void CCinematic::FUN_001c7390(bool param_2)
 {
 	ed_zone_3d* peVar1;

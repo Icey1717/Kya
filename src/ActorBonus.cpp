@@ -29,7 +29,7 @@ void CActorBonus::Create(ByteCode* pByteCode)
 	iVar2 = pByteCode->GetS32();
 	//this->field_0x1d4 = iVar2;
 	//CActor::SV_InstallMaterialId(this->field_0x1d4);
-	//piVar3 = CActor::CreateActorSound((CActor*)this, 1);
+	//piVar3 = CActor::CreateActorSound(this, 1);
 	//*(int**)&this->field_0x1d8 = piVar3;
 	//pKVar1 = this->data.subObjA;
 	//fVar4 = (pKVar1->boundingSphere).y;

@@ -68,8 +68,32 @@ namespace Debug {
 			case STATE_HERO_FALL_B:
 				return "StateHeroFallB";
 				break;
+			case STATE_HERO_STAND_TO_CROUCH_A:
+				return "StateHeroStandToCrouchA";
+				break;
+			case STATE_HERO_STAND_TO_CROUCH_B:
+				return "StateHeroStandToCrouchB";
+				break;
+			case STATE_HERO_CROUCH_A:
+				return "StateHeroCrouchA";
+				break;
+			case STATE_HERO_CROUCH_WALK_A:
+				return "StateHeroCrouchWalkA";
+				break;
+			case STATE_HERO_CROUCH_B:
+				return "StateHeroCrouchB";
+				break;
+			case STATE_HERO_JUMP_TO_CROUCH:
+				return "StateHeroJumpToCrouch";
+				break;
 			case STATE_HERO_ROLL:
 				return "StateHeroRoll";
+				break;
+			case STATE_HERO_CROUCH_C:
+				return "StateHeroCrouchC";
+				break;
+			case STATE_HERO_ROLL_2_CROUCH:
+				return "StateHeroRoll2Crouch";
 				break;
 			case STATE_HERO_TOBOGGAN_JUMP_HURT:
 				return "StateHeroTobogganJumpHurt";

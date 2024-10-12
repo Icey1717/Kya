@@ -530,7 +530,7 @@ if (SKIP_MOVIES OR PLATFORM_PS2)
 	#target_compile_definitions(Kya PUBLIC SKIP_MOVIES)
 endif()
 
-target_compile_definitions(Kya PUBLIC SKIP_MOVIES)
+target_compile_definitions(Kya PUBLIC SKIP_MOVIES DEBUG_FEATURES)
 
 if (LOAD_FOREVER)
 	target_compile_definitions(Kya PUBLIC LOAD_FOREVER)

@@ -42,7 +42,7 @@ void CActorAraignos::Create(ByteCode* pByteCode)
 	//	this->field_0x244 = (int*)0x0;
 	//}
 	//else {
-	//	piVar5 = CActor::CreateActorSound((CActor*)this, 2);
+	//	piVar5 = CActor::CreateActorSound(this, 2);
 	//	this->field_0x244 = piVar5;
 	//}
 	addOnGenerator.Create(this, pByteCode);

@@ -27,7 +27,7 @@
 #include "port/vu1_emu.h"
 #include "DebugMeshViewer.h"
 #include "DebugTexture.h"
-#include "DebugActor.h"
+#include "Actor/DebugActor.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
 #include "ActorHeroPrivate.h"
@@ -695,11 +695,14 @@ Input::InputFunctions& DebugMenu::GetInputFunctions()
 
 std::unordered_map<uint32_t, ImGuiKey> gKeyMap = {
 	{ ROUTE_START,				ImGuiKey_Enter },
+	{ ROUTE_L2,					ImGuiKey_Q },		// 0x0
+	{ ROUTE_R2,					ImGuiKey_W },		// 0x1
+	{ ROUTE_L1,					ImGuiKey_C },		// 0x2
+	{ ROUTE_R1,					ImGuiKey_R },		// 0x3
 	{ ROUTE_TRIANGLE,			ImGuiKey_Comma },	// 0x4
 	{ ROUTE_CIRCLE,				ImGuiKey_E },		// 0x5
 	{ ROUTE_CROSS,				ImGuiKey_A },		// 0x6
 	{ ROUTE_SQUARE,				ImGuiKey_O },		// 0x7
-	{ ROUTE_L1,					ImGuiKey_C },
 	{ ROUTE_SELECT,				ImGuiKey_Backspace },
 	{ ROUTE_UP,					ImGuiKey_UpArrow },
 	{ ROUTE_DOWN,				ImGuiKey_DownArrow },

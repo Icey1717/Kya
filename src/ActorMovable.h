@@ -141,6 +141,7 @@ public:
 	bool SV_MOV_UpdateTilt(float param_1, S_TILT_DATA* pTiltData, S_TILT_STREAM_DEF* pTiltStreamRef);
 	void SV_MOV_MoveTo(CActorMovParamsOut* pActorMovParamsOut, CActorMovParamsIn* pActorMovParamsIn, edF32VECTOR4* param_4);
 	void SV_MOV_MoveCloserTo(float param_1, edF32VECTOR4* param_3);
+	float SV_MOV_GetAccelerationFromDistAndSpeed(float param_1, float param_2, float param_3);
 
 	void ComputeRealMoving(edF32VECTOR4* delta);
 	float GetSubjectiveCumulatedWeight();

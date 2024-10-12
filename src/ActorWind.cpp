@@ -538,14 +538,14 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			this->flags = this->flags | 1;
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
-			CActor::EvaluateDisplayState((CActor*)this);
+			CActor::EvaluateDisplayState(this);
 			CSectorHierarchy::SetHiddenOn(&this->sectorObj);)
 		}
 		else {
 			this->flags = this->flags & 0xfffffffc;
 			this->flags = this->flags & 0xffffff5f;
 			IMPLEMENTATION_GUARD(
-			CActor::EvaluateDisplayState((CActor*)this);
+			CActor::EvaluateDisplayState(this);
 			ResetTiming(this);
 			CSectorHierarchy::SetHiddenOff(&this->sectorObj);)
 		}
@@ -623,13 +623,13 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						this->flags = this->flags | 1;
 						this->flags = this->flags & 0xffffff7f;
 						this->flags = this->flags | 0x20;
-						CActor::EvaluateDisplayState((CActor*)this);
+						CActor::EvaluateDisplayState(this);
 						CSectorHierarchy::SetHiddenOn(&this->sectorObj);
 					}
 					else {
 						this->flags = this->flags & 0xfffffffc;
 						this->flags = this->flags & 0xffffff5f;
-						CActor::EvaluateDisplayState((CActor*)this);
+						CActor::EvaluateDisplayState(this);
 						ResetTiming(this);
 						CSectorHierarchy::SetHiddenOff(&this->sectorObj);
 					}

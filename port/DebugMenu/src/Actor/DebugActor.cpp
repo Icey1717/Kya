@@ -4,12 +4,16 @@
 
 #include <glm/glm.hpp> 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "DebugSetting.h"
 #include "ActorManager.h"
 #include "Actor.h"
 #include "LargeObject.h"
 #include "DebugFrameBuffer.h"
+#include "DebugActorBehaviour.h"
+#include "ActorHero.h"
 
 namespace Renderer
 {
@@ -24,6 +28,12 @@ namespace Debug {
 	namespace Actor {
 		static Setting<bool> gShowActorNamesOverlay("Show Actor Names Overlay", true);
 		static Setting<bool> gOnlyActiveActors("Show Only Active", true);
+		static Setting<float> gActorInfoDistance("Actor Info Distance", 500.0f);
+	}
+
+	// Helper functions for ImVec2 operations
+	static ImVec2 operator+(const ImVec2& a, const ImVec2& b) {
+		return ImVec2(a.x + b.x, a.y + b.y);
 	}
 
 	// Get the string version of the actor type
@@ -76,15 +86,22 @@ namespace Debug {
 		}
 	}
 
-	static std::array<std::pair<Setting<bool>, std::function<std::string(CActor*)>>, 5> gOverlaySettings = {
+	static std::array<std::pair<Setting<bool>, std::function<std::string(CActor*)>>, 6> gOverlaySettings = {
 		std::make_pair(Setting("Name", true), [](CActor* pActor) { return pActor->name; }),
 		std::make_pair(Setting("Type", true), [](CActor* pActor) { return GetActorTypeString(pActor->typeID); }),
 		std::make_pair(Setting("Location", true), [](CActor* pActor) { return pActor->currentLocation.ToString(); }),
-		std::make_pair(Setting("Behaviour", true), [](CActor* pActor) { return std::to_string(pActor->curBehaviourId); }),
+		std::make_pair(Setting("Behaviour", true), [](CActor* pActor) { return Actor::Behaviour::GetActorBehaviourName(pActor); }),
 		std::make_pair(Setting("State", true), [](CActor* pActor) {
 			std::stringstream sstream;
-			sstream << std::hex << pActor->actorState;
+			sstream << "0x" << std::hex << pActor->actorState;
 			return sstream.str(); 
+			}),
+		std::make_pair(Setting("Collision flags", true), [](CActor* pActor) {
+			std::stringstream sstream;
+			sstream << "0x" << std::hex << (pActor->pCollisionData ? pActor->pCollisionData->flags_0x0 : 0);
+			sstream << " - 0x";
+			sstream << std::hex << (pActor->pCollisionData ? pActor->pCollisionData->flags_0x4 : 0);
+			return sstream.str();
 			}),
 	};
 
@@ -136,7 +153,13 @@ namespace Debug {
 	}
 
 	static void ShowActorOverlay(CActor* pActor) {
+		const glm::vec3 heroLocation = glm::vec3(CActorHero::_gThis->currentLocation.x, CActorHero::_gThis->currentLocation.y, CActorHero::_gThis->currentLocation.z);
+
 		const glm::vec3 worldPos = glm::vec3(pActor->currentLocation.x, pActor->currentLocation.y, pActor->currentLocation.z);
+
+		if (glm::distance(heroLocation, worldPos) > Actor::gActorInfoDistance) {
+			return;
+		}
 
 		ImVec2 screenPos;
 		if (WorldToScreen(worldPos, Renderer::Native::gCachedProjMatrix * Renderer::Native::gCachedViewMatrix, screenPos)) {
@@ -177,6 +200,8 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 			}
 		}
 	}
+
+	gActorInfoDistance.DrawImguiControl();
 
 	ImGui::End();
 

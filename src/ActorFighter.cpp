@@ -22,7 +22,7 @@ void CActorFighter::Init()
 	FUN_00302b20(this);
 	fVar3 = (float)_InitGrabsDB(this);
 	pCVar1 = this->pAnimationController;
-	iVar2 = CActor::GetIdMacroAnim((CActor*)this, New_Name_(41));
+	iVar2 = CActor::GetIdMacroAnim(this, New_Name_(41));
 	if (iVar2 < 0) {
 		fVar3 = 0.0;
 		this->field_0x6c0 = 0.0;
@@ -32,7 +32,7 @@ void CActorFighter::Init()
 		this->field_0x6c0 = fVar3;
 	}
 	pCVar1 = this->pAnimationController;
-	iVar2 = CActor::GetIdMacroAnim((CActor*)this, New_Name_(42));
+	iVar2 = CActor::GetIdMacroAnim(this, New_Name_(42));
 	if (iVar2 < 0) {
 		fVar3 = 0.0;
 	}
@@ -42,7 +42,7 @@ void CActorFighter::Init()
 	fVar3 = this->field_0x6c0 + fVar3;
 	this->field_0x6c0 = fVar3;
 	pCVar1 = this->pAnimationController;
-	iVar2 = CActor::GetIdMacroAnim((CActor*)this, New_Name_(43));
+	iVar2 = CActor::GetIdMacroAnim(this, New_Name_(43));
 	if (iVar2 < 0) {
 		fVar3 = 0.0;
 	}
@@ -267,7 +267,7 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	this->field_0x7d4 = fVar7;
 	fVar7 = ByteCode::GetF32(pByteCode);
 	this->field_0x7cc = fVar7;
-	peVar1 = ((this->characterBase).base.base.pCollisionData)->pObbPrim;
+	peVar1 = (this->pCollisionData)->pObbPrim;
 	fVar9 = (peVar1->field_0xb0).y;
 	fVar7 = (peVar1->field_0xb0).z;
 	fVar8 = (peVar1->field_0xb0).w;
@@ -290,7 +290,7 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	this->field_0x424 = fVar7 * 2.0;
 	fVar7 = ByteCode::GetF32(pByteCode);
 	this->field_0x42c = fVar7 * 2.0;
-	this->field_0x3f8 = (((this->characterBase).base.base.subObjA)->boundingSphere).w;
+	this->field_0x3f8 = ((this->subObjA)->boundingSphere).w;
 	fVar7 = ByteCode::GetF32(pByteCode);
 	this->field_0x810 = fVar7;
 	fVar7 = ByteCode::GetF32(pByteCode);
@@ -427,31 +427,31 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 
 	if (msg == 0x12) {
 		IMPLEMENTATION_GUARD(
-		iVar5 = (this->characterBase).base.base.actorState;
+		iVar5 = this->actorState;
 		uVar6 = 0;
 		if (iVar5 != -1) {
-			pAVar2 = (*((this->characterBase).base.base.pVTable)->GetStateCfg)((CActor*)this, iVar5);
+			pAVar2 = (*(this->pVTable)->GetStateCfg)(this, iVar5);
 			uVar6 = pAVar2->flags_0x4;
 		}
 		if ((uVar6 & 0x2000000) == 0) {
-			pCVar4 = (*((this->characterBase).base.base.pVTable)->GetLifeInterface)((CActor*)this);
+			pCVar4 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar7 = (float)(*(code*)pCVar4->pVtable->GetValue)();
 			if (((0.0 < fVar7) &&
-				(fVar7 = (pSender->currentLocation).x - (this->characterBase).base.base.currentLocation.x,
-					fVar8 = (pSender->currentLocation).z - (this->characterBase).base.base.currentLocation.z,
+				(fVar7 = (pSender->currentLocation).x - this->currentLocation.x,
+					fVar8 = (pSender->currentLocation).z - this->currentLocation.z,
 					fVar7 * fVar7 + fVar8 * fVar8 <= 1.0)) &&
-				(ABS((pSender->currentLocation).y - (this->characterBase).base.base.currentLocation.y) <= 0.5)) {
-				fVar9 = (this->characterBase).base.base.rotationQuat.y;
-				fVar7 = (this->characterBase).base.base.rotationQuat.z;
-				fVar8 = (this->characterBase).base.base.rotationQuat.w;
-				*(float*)((int)pMsgParam + 0x10) = (this->characterBase).base.base.rotationQuat.x;
+				(ABS((pSender->currentLocation).y - this->currentLocation.y) <= 0.5)) {
+				fVar9 = this->rotationQuat.y;
+				fVar7 = this->rotationQuat.z;
+				fVar8 = this->rotationQuat.w;
+				*(float*)((int)pMsgParam + 0x10) = this->rotationQuat.x;
 				*(float*)((int)pMsgParam + 0x14) = fVar9;
 				*(float*)((int)pMsgParam + 0x18) = fVar7;
 				*(float*)((int)pMsgParam + 0x1c) = fVar8;
-				fVar9 = (this->characterBase).base.base.currentLocation.y;
-				fVar7 = (this->characterBase).base.base.currentLocation.z;
-				fVar8 = (this->characterBase).base.base.currentLocation.w;
-				*(float*)pMsgParam = (this->characterBase).base.base.currentLocation.x;
+				fVar9 = this->currentLocation.y;
+				fVar7 = this->currentLocation.z;
+				fVar8 = this->currentLocation.w;
+				*(float*)pMsgParam = this->currentLocation.x;
 				*(float*)((int)pMsgParam + 4) = fVar9;
 				*(float*)((int)pMsgParam + 8) = fVar7;
 				*(float*)((int)pMsgParam + 0xc) = fVar8;
@@ -463,11 +463,11 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	else {
 		if (msg == 0x27) {
 			IMPLEMENTATION_GUARD(
-			bVar1 = (*((this->characterBase).base.base.pVTable)->IsFightRelated)
-				((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+			bVar1 = (*(this->pVTable)->IsFightRelated)
+				(this, this->curBehaviourId);
 			if (bVar1 == false) {
-				(*(code*)((this->characterBase).base.base.pVTable)->SetFightBehaviour)(this);
-				pCVar3 = CActor::GetBehaviour((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+				(*(code*)(this->pVTable)->SetFightBehaviour)(this);
+				pCVar3 = CActor::GetBehaviour(this, this->curBehaviourId);
 				iVar5 = (*pCVar3->pVTable->InterpretMessage)(pCVar3, pSender, 0x27, (int)pMsgParam);
 			}
 			else {
@@ -477,17 +477,17 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		else {
 			if ((msg == 0x66) || (msg == 0x65)) {
 				IMPLEMENTATION_GUARD(
-				iVar5 = (this->characterBase).base.base.actorState;
+				iVar5 = this->actorState;
 				uVar6 = 0;
 				if (iVar5 != -1) {
-					pAVar2 = (*((this->characterBase).base.base.pVTable)->GetStateCfg)((CActor*)this, iVar5);
+					pAVar2 = (*(this->pVTable)->GetStateCfg)(this, iVar5);
 					uVar6 = pAVar2->flags_0x4;
 				}
 				if (((uVar6 & 0x2000000) == 0) &&
-					(bVar1 = (*((this->characterBase).base.base.pVTable)->IsFightRelated)
-						((CActor*)this, (this->characterBase).base.base.curBehaviourId), bVar1 == false)) {
-					(*(code*)((this->characterBase).base.base.pVTable)->SetFightBehaviour)(this);
-					pCVar3 = CActor::GetBehaviour((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+					(bVar1 = (*(this->pVTable)->IsFightRelated)
+						(this, this->curBehaviourId), bVar1 == false)) {
+					(*(code*)(this->pVTable)->SetFightBehaviour)(this);
+					pCVar3 = CActor::GetBehaviour(this, this->curBehaviourId);
 					iVar5 = (*pCVar3->pVTable->InterpretMessage)(pCVar3, pSender, msg, (int)pMsgParam);
 				}
 				else {
@@ -497,22 +497,22 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			else {
 				if (msg == 2) {
 					IMPLEMENTATION_GUARD(
-					iVar5 = (this->characterBase).base.base.actorState;
+					iVar5 = this->actorState;
 					uVar6 = 0;
 					if (iVar5 != -1) {
-						pAVar2 = (*((this->characterBase).base.base.pVTable)->GetStateCfg)((CActor*)this, iVar5);
+						pAVar2 = (*(this->pVTable)->GetStateCfg)(this, iVar5);
 						uVar6 = pAVar2->flags_0x4;
 					}
 					if (((uVar6 & 0x2000000) != 0) ||
-						(bVar1 = (*((this->characterBase).base.base.pVTable)->IsFightRelated)
-							((CActor*)this, (this->characterBase).base.base.curBehaviourId), bVar1 != false)) {
+						(bVar1 = (*(this->pVTable)->IsFightRelated)
+							(this, this->curBehaviourId), bVar1 != false)) {
 						return 0;
 					}
 					/* WARNING: Load size is inaccurate */
 					iVar5 = *pMsgParam;
 					if (((iVar5 == 7) || (iVar5 == 8)) || (iVar5 == 10)) {
-						(*(code*)((this->characterBase).base.base.pVTable)->SetFightBehaviour)(this);
-						pCVar3 = CActor::GetBehaviour((CActor*)this, (this->characterBase).base.base.curBehaviourId);
+						(*(code*)(this->pVTable)->SetFightBehaviour)(this);
+						pCVar3 = CActor::GetBehaviour(this, this->curBehaviourId);
 						iVar5 = (*pCVar3->pVTable->InterpretMessage)(pCVar3, pSender, 2, (int)pMsgParam);
 						return iVar5;
 					})
@@ -537,6 +537,42 @@ int CActorFighter::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM 
 	result = CActor::ReceiveMessage(pSender, msg, pMsgParam);
 
 	return result;
+}
+
+void CActorFighter::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5)
+{
+	int iVar1;
+	CActor* pCVar2;
+	StateConfig* pSVar3;
+	uint uVar4;
+
+	if (this->curBehaviourId == 3) {
+		iVar1 = this->actorState;
+		if (iVar1 == -1) {
+			uVar4 = 0;
+		}
+		else {
+			pSVar3 = GetStateCfg(iVar1);
+			uVar4 = pSVar3->flags_0x4;
+		}
+
+		if ((uVar4 & 0xff800) == 0x8000) {
+			pCVar2 = this->field_0x354;
+			if (pCVar2 != (CActor*)0x0) {
+				pCVar2->TieToActor(pTieActor, carryMethod, param_4, param_5);
+			}
+		}
+		else {
+			if (((uVar4 & 0xff800) == 0x800) &&
+				((iVar1 = this->actorState, iVar1 - 0x14U < 2 || (iVar1 == 0x16)))) {
+				field_0x350->TieToActor(pTieActor, carryMethod, param_4, param_5);
+			}
+		}
+	}
+
+	CActor::TieToActor(pTieActor, carryMethod, param_4, param_5);
+
+	return;
 }
 
 bool CActorFighter::IsFightRelated(int param_2)
@@ -641,12 +677,12 @@ void CActorFighter::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, ui
 						IMPLEMENTATION_GUARD(
 						local_c = pAnimator->pAnimKeyTableEntry;
 						if (local_c->keyIndex_0x8 == 5) {
-							if (((this->characterBase).base.base.flags & 0x1000) == 0) {
-								GetAnglesFromVector(&(this->characterBase).base.base.rotationEuler,
-									&(this->characterBase).base.base.rotationQuat);
+							if ((this->flags & 0x1000) == 0) {
+								GetAnglesFromVector(&this->rotationEuler,
+									&this->rotationQuat);
 							}
 							edF32Matrix4FromEulerSoft
-							(&eStack176, (edF32VECTOR3*)&(this->characterBase).base.base.rotationEuler,
+							(&eStack176, (edF32VECTOR3*)&this->rotationEuler,
 								(char*)&PTR_DAT_004347c0);
 							edF32Matrix4GetTransposeHard(&eStack176, &eStack176);
 							edF32Matrix4MulF32Vector4Hard
@@ -694,12 +730,12 @@ void CActorFighter::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, ui
 						if (newAnim == 0x70) {
 							IMPLEMENTATION_GUARD(
 							local_8 = pAnimator->pAnimKeyTableEntry;
-							if (((this->characterBase).base.base.flags & 0x1000) == 0) {
-								GetAnglesFromVector(&(this->characterBase).base.base.rotationEuler,
-									&(this->characterBase).base.base.rotationQuat);
+							if ((this->flags & 0x1000) == 0) {
+								GetAnglesFromVector(&this->rotationEuler,
+									&this->rotationQuat);
 							}
 							edF32Matrix4FromEulerSoft
-							((edF32MATRIX4*)auStack96, (edF32VECTOR3*)&(this->characterBase).base.base.rotationEuler,
+							((edF32MATRIX4*)auStack96, (edF32VECTOR3*)&this->rotationEuler,
 								(char*)&PTR_DAT_004347c0);
 							fVar6 = edF32Vector4SafeNormalize0Hard(&eStack112, (edF32VECTOR4*)&this->field_0x750);
 							fVar7 = edF32Vector4DotProductHard(&eStack112, (edF32VECTOR4*)auStack96);
@@ -846,7 +882,7 @@ void CActorFighter::ClearLocalData()
 
 	IMPLEMENTATION_GUARD_LOG(
 
-		this->field_0x368 = (this->field_0x368 | 2);
+	this->field_0x368 = (this->field_0x368 | 2);
 	this->field_0x368 = (this->field_0x368 | 4);
 	this->field_0x368 = (this->field_0x368 & 0xfffffffe);
 	this->field_0x368 = (this->field_0x368 & 0xffffffdf);
@@ -859,9 +895,12 @@ void CActorFighter::ClearLocalData()
 	this->field_0x368 = (this->field_0x368 & 0xffffdfff);
 	this->field_0x368 = (this->field_0x368 & 0xffffbfff);
 	this->field_0x368 = (this->field_0x368 & 0xffff7fff);
-	this->field_0x368 = (this->field_0x368 & 0xfffeffff);
-	this->field_0x350 = 0;
-	this->field_0x354 = 0;
+	this->field_0x368 = (this->field_0x368 & 0xfffeffff);)
+
+	this->field_0x350 = (CActor*)0x0;
+	this->field_0x354 = (CActor*)0x0;
+
+	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x36c = 1;
 	this->field_0x370 = 0;
 	this->field_0x374 = 0;

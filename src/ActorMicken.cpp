@@ -436,7 +436,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			edF32Vector4AddHard(peVar10, peVar10, &eStack96);
 			fVar11 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 			this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar11;
-			(*(this->pVTable)->SetBehaviour)((CActor*)this, this->field_0x3d4, 0x17, -1);
+			(*(this->pVTable)->SetBehaviour)(this, this->field_0x3d4, 0x17, -1);
 			return 1;
 		}
 
@@ -457,7 +457,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				this->rotationQuat.z = local_10.z;
 				this->rotationQuat.w = local_10.w;
 			}
-			(*(this->pVTable)->SetBehaviour)((CActor*)this, this->field_0x3d4, 0x17, -1);)
+			(*(this->pVTable)->SetBehaviour)(this, this->field_0x3d4, 0x17, -1);)
 			return 1;
 		})
 	}
@@ -1013,7 +1013,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		if (bVar5) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
-			CActor::EvaluateDisplayState((CActor*)this);
+			CActor::EvaluateDisplayState(this);
 			this->dynamicExt.normalizedTranslation.x = 0.0;
 			this->dynamicExt.normalizedTranslation.y = 0.0;
 			this->dynamicExt.normalizedTranslation.z = 0.0;
@@ -1041,7 +1041,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		if (bVar5) {
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
-			CActor::EvaluateDisplayState((CActor*)this);
+			CActor::EvaluateDisplayState(this);
 			this->dynamicExt.normalizedTranslation.x = 0.0;
 			this->dynamicExt.normalizedTranslation.y = 0.0;
 			this->dynamicExt.normalizedTranslation.z = 0.0;
@@ -1058,7 +1058,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 				this->SetState(3, -1);
 				this->flags = this->flags & 0xffffff7f;
 				this->flags = this->flags | 0x20;
-				CActor::EvaluateDisplayState((CActor*)this);
+				CActor::EvaluateDisplayState(this);
 				this->flags = this->flags & 0xfffffffd;
 				this->flags = this->flags | 1;
 			}
@@ -1066,7 +1066,7 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 				this->SetState(0xf, -1);
 				this->flags = this->flags & 0xfffffffc;
 				this->flags = this->flags & 0xffffff5f;
-				CActor::EvaluateDisplayState((CActor*)this);
+				CActor::EvaluateDisplayState(this);
 				this->field_0x410 = 0;
 			}
 		})
@@ -1441,7 +1441,7 @@ void CActorMicken::BehaviourMicken_Manage(int state, CBehaviourMicken* pBehaviou
 		mickenCallbackParams.pOutActor = (CActor*)0x0;
 		local_50.xyz = this->currentLocation.xyz;
 		local_50.w = 2.4f;
-		mickenCallbackParams.pInActor = (CActor*)this;
+		mickenCallbackParams.pInActor = this;
 		(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_50, gMickenCallback, &mickenCallbackParams);
 		if (mickenCallbackParams.pOutActor != (CActor*)0x0) {
 			SetBehaviour(MICKEN_BEHAVIOUR_EAT, 0xd, -1);

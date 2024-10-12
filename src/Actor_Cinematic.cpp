@@ -16,7 +16,7 @@ CActorCinematic::CActorCinematic()
 {
 	//CSound* pSound;
 	//
-	//CActor::CActor((CActor*)this);
+	//CActor::CActor(this);
 	//this->pVTable = &_vt;
 	//pSound = &(this->behaviourCinematic).cinActor.soundStruct;
 	//(this->behaviourCinematic).pVtable = &CBehaviour::_vt;
@@ -226,7 +226,7 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 	this->SetupDefaultPosition();
 	this->SetupClippingInfo();
 	this->SetupLodInfo();
-	//CActor::SetupShadow((CActor*)this, (GroundObject*)0x0);
+	//CActor::SetupShadow(this, (GroundObject*)0x0);
 	this->SetupLighting();
 
 	this->flags = this->flags | 0x100000;
@@ -309,7 +309,7 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 	float fVar3;
 
 	this->pOwner = (CActorCinematic*)pOwner;
-	(this->cinActor).pParent = (CActor*)this->pOwner;
+	(this->cinActor).pParent = this->pOwner;
 	physLayer = this->pOwner->GetIdMacroAnim(0x3);
 	if (physLayer != -1) {
 		pActor = this->pOwner;
@@ -471,7 +471,7 @@ void CBehaviourCinematic::End(int newBehaviourId)
 
 	if ((this->cinActor).pAltModelManager != (ed_g3d_manager*)0x0) {
 		IMPLEMENTATION_GUARD(
-		FUN_001159f0((CActor*)this->pOwner, &(this->cinActor).alternateModel);)
+		FUN_001159f0(this->pOwner, &(this->cinActor).alternateModel);)
 	}
 
 	pNode = this->pOwner->pMeshNode;
@@ -780,7 +780,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 	case 0xd:
 		IMPLEMENTATION_GUARD(
 			CActor::DoMessage
-		((CActor*)this->pOwner, (CActor*)this->pOwner, (long)param_3, (ActorCompareStruct*)0x0);
+		(this->pOwner, this->pOwner, (long)param_3, (ActorCompareStruct*)0x0);
 		bVar3 = true;)
 		break;
 	case 0xe:

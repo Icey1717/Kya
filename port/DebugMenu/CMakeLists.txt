@@ -22,8 +22,6 @@ set(SOURCES
 	"src/DebugHelpers.h"
 	"src/DebugMaterial.h"
 	"src/DebugMaterial.cpp"
-	"src/DebugActor.h"
-	"src/DebugActor.cpp"
 	"src/DebugFrameBuffer.h"
 	"src/DebugFrameBuffer.cpp"
 	"src/DebugCheckpoint.h"
@@ -35,6 +33,10 @@ set(SOURCES
 	"src/DebugRendererVulkan.cpp"
 	"src/DebugSetting.cpp"
 	"src/DebugSetting.h"
+	"src/Actor/DebugActor.h"
+	"src/Actor/DebugActor.cpp"
+	"src/Actor/DebugActorBehaviour.h"
+	"src/Actor/DebugActorBehaviour.cpp"
 	"include/DebugRenderer.h"
 	"include/DebugMenu.h"
 	"include/Callstack.h"
@@ -51,3 +53,4 @@ add_subdirectory("ext/json")
 target_link_libraries(${TargetName} PRIVATE Renderer Texture Log Kya Dbghelp.lib imgui Gizmo magic_enum nlohmann_json::nlohmann_json)
 
 target_include_directories(${TargetName} PUBLIC "include")
+target_include_directories(${TargetName} PRIVATE "src")

@@ -7,6 +7,8 @@
 #define COLLISION_LOG(level, format, ...) MY_LOG_CATEGORY("Collision", level, format, ##__VA_ARGS__)
 
 #define COL_TYPE_TREE 0x1
+#define COL_TYPE_TRIANGLE 0x4
+#define COL_TYPE_QUAD 0x8
 #define COL_TYPE_PRIM_OBJ 0xe
 
 struct edColRAY_OBB_IN {
@@ -355,20 +357,20 @@ struct edColDbObj_80 {
 	undefined field_0x2d;
 	undefined field_0x2e;
 	undefined field_0x2f;
-	edF32VECTOR4 field_0x30;
-	edF32VECTOR4 field_0x40;
 	edF32VECTOR4 location;
-	short field_0x60;
-	undefined2 field_0x62;
-	void* field_0x64;
-	edF32QUAD4* pQuad;
+	edF32VECTOR4 field_0x40;
+	edF32VECTOR4 field_0x50;
+	short aType;
+	short bType;
+	void* pPrimitiveA;
+	void* pPrimitiveB;
 	edColINFO* field_0x6c;
 	byte field_0x70;
 	byte field_0x71;
 	byte field_0x72;
 	char field_0x73;
-	uint quadFlags;
-	float field_0x78;
+	uint flags;
+	float depth;
 	undefined field_0x7c;
 	undefined field_0x7d;
 	undefined field_0x7e;
@@ -397,10 +399,10 @@ struct edColPrimEntry
 
 struct edColDatabase {
 	int curObjId;
-	int field_0x4;
+	int curDbEntryCount;
 	int curPrimId;
 	undefined4 field_0xc;
-	edColDbObj_80* field_0x10;
+	edColDbObj_80* aDbEntries;
 	edColOBJECT* aColObj;
 	edColPrimEntry* aPrim;
 	undefined* field_0x1c;
@@ -466,14 +468,29 @@ struct CollisionTD {
 	undefined4 field_0x44;
 };
 
-struct edColConfig {
+struct edColConfigDbTypeData
+{
+	short nbMax;
+	short field_0x2;
+};
+
+struct edColConfigDbData
+{
+	edColConfigDbTypeData colObj;
+	edColConfigDbTypeData dbObj;
+	edColConfigDbTypeData primObj;
+	edColConfigDbTypeData field_0xc;
+};
+
+struct edColConfig 
+{
 	byte bCreateProfileObj;
 	byte field_0x1;
 	byte databaseCount;
 	byte field_0x3;
 	byte field_0x4;
 	char pad_0x5[3];
-	short field_0x8[8];
+	edColConfigDbData aDbTypeData[1];
 	short field_0x18;
 	short nbPrimEntries;
 	short field_0x1c;
@@ -486,7 +503,7 @@ struct edColConfig {
 
 struct edColINFO_OUT
 {
-	edF32VECTOR4 location;
+	edF32VECTOR4 field_0x0;
 	uint result;
 	edF32VECTOR4 normal;
 	edF32VECTOR4 intersectionPoint;
