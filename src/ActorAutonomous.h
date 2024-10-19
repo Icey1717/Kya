@@ -6,6 +6,7 @@
 #include "ActorMovable.h"
 #include "CollisionManager.h"
 #include "ScenaricCondition.h"
+#include "PathFinderClient.h"
 
 class CWayPoint;
 
@@ -124,12 +125,6 @@ public:
 	void SetPriority(int newPriority);
 };
 
-class CPathFinderClient 
-{
-public:
-	void CleanPathDynamic() { IMPLEMENTATION_GUARD_LOG(); }
-};
-
 class CActorAutonomous : public CActorMovable
 {
 public:
@@ -148,13 +143,21 @@ public:
 
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
-	virtual CActorWindState* GetWindState() { return (CActorWindState*)0x0; }
+
+	void SetLookingAtOn(float param_1);
+	void SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation);
+	void SetLookingAt(float x, float y, float z);
+	void SetLookingAtBounds(float param_1, float param_2, float param_3, float param_4);
+	void SetLookingAtBones(uint leftBoneId, uint rightBoneId);
 
 	void _ManageDynamicFence(CActorsTable* pActorsTable);
 	virtual void StoreCollisionSphere();
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	virtual void UpdateCollisionSphere();
 	virtual void RestoreCollisionSphere(float param_2);
+
+	virtual CActorWindState* GetWindState();
+	virtual float GetRunSpeed();
 	
 	static StateConfig gStateCfg_AUT[1];
 
@@ -165,6 +168,11 @@ public:
 	void StateAutSoccer(float param_1, int param_3, int param_4, CActorMovable* param_5);
 
 	void SV_AUT_WarnActors(float radius, float param_2, uint msgParam);
+	void SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
+	void SV_AUT_MoveTo(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
+	void SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
+	void SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
+	void SV_AUT_PathfindingEnd();
 
 	virtual void LifeRestore();
 	virtual CLifeInterface* GetLifeInterface();
@@ -191,6 +199,10 @@ public:
 	float field_0x2c8;
 	undefined4 bCollisionSphereDirty;
 
+	float field_0x2e8;
+	float vector_0x2f0;
+
+	int field_0x340;
 	byte field_0x344;
 
 	int field_0x348;

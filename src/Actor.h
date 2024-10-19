@@ -338,20 +338,24 @@ public:
 	virtual void LoadContext(uint*, int);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void TermBehaviour(int behaviourId, undefined8) { IMPLEMENTATION_GUARD(); }
+	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
 	virtual void ChangeVisibleState(int bVisible);
 	virtual bool IsLockable();
-	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
 	virtual void SetState(int newState, int animType);
+	virtual uint IsLookingAt();
+	virtual void SetLookingAtOn();
+	virtual void SetLookingAtOff();
+	virtual void UpdateLookingAt();
+	virtual void UpdateAnimEffects();
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
 	virtual void CinematicMode_Enter(bool bSetState);
+	virtual void CinematicMode_Leave(int behaviourId);
 	virtual void CinematicMode_Manage() { return; }
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
-	virtual uint IsLookingAt();
-	virtual void UpdateAnimEffects();
 	virtual void UpdatePostAnimEffects();
 	virtual bool Can_0x9c();
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
@@ -360,7 +364,6 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
-	virtual void CinematicMode_Leave(int behaviourId);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual CPlayerInput* GetInputManager(int, int);
 	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
@@ -382,6 +385,7 @@ public:
 	void SV_SetModel(int meshIndex, int textureIndex, int count, MeshTextureHash* aHashes);
 	void SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* aHashes, ed_g2d_manager* pTextureInfo);
 	void SV_InstanciateMaterialBank();
+	bool SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrientation);
 
 	void SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation);
 	void ComputeWorldBoundingSphere(edF32VECTOR4* v0, edF32MATRIX4* m0);
@@ -465,6 +469,8 @@ public:
 
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();
+
+	float FUN_00117db0();
 
 #ifdef DEBUG_FEATURES
 	// #Debug
@@ -572,9 +578,9 @@ public:
 	CAddOnGenerator_SubObj subObj;
 };
 
-class CBehaviourAddOnBase {
+class CAddOn {
 public:
-	CBehaviourAddOnBase();
+	CAddOn();
 	virtual void Create(ByteCode* pByteCode) = 0;
 
 	CActor* pOwner;

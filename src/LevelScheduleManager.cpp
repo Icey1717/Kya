@@ -1425,7 +1425,12 @@ bool BnkInstallAnimMacro(char* pFileData, int length)
 
 bool BnkInstallAstar(char* pFileData, int length)
 {
-	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallAstar\n");
+	ByteCode byteCode;
+	byteCode.Init(pFileData);
+	byteCode.GetChunk();
+	CScene::ptable.g_PathManager_004516a0->pBasicPathFinder->Create(&byteCode);
+	byteCode.Term();
+
 	return false;
 }
 

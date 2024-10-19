@@ -2,52 +2,28 @@
 #define PATH_H
 
 #include "Types.h"
-#include "PathFollow.h"
 
-struct PlaneData
+class CPath {
+};
+
+class CPathNode
 {
-	edF32VECTOR4 field_0x0;
-	float field_0x10;
-};
-
-struct CPathPlaneOutData
-{
-	int field_0x0;
-	float field_0x4;
-	float field_0x8;
-	PlaneData* aPlaneData;
-};
-
-class CPathPlane {
 public:
-	CPathFollowReader pathFollowReader;
-	CPathPlaneOutData outData;
+	CPathNode();
 
-	void computePlanesFromKeys(PlaneData* aPlaneData, int nbPoints);
-	void InitTargetPos(edF32VECTOR4* pTargetPos, CPathPlaneOutData* pOutData);
-	void ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPathPlaneOutData* pOutData);
-};
-
-class CPathPlaneArray {
-public:
-	CPathPlaneArray();
-
-	void Create(ByteCode* pByteCode);
-
-	void Init();
-	void Reset();
-
-	int GetNbPathPlane();
-	CPathPlane* GetCurPathPlane();
-
-	void NextWayPoint();
-	int AtGoal();
-
-	void InitPosition(edF32VECTOR4* pPosition);
-
-	int nbPathPlanes;
-	int curIndex;
-	CPathPlane* aPathPlanes;
+	undefined4 field_0x0;
+	short field_0x4;
+	undefined field_0x6;
+	undefined field_0x7;
+	undefined4 field_0x8;
+	undefined4 field_0xc;
+	undefined4 field_0x10;
+	undefined4 field_0x14;
+	CPathNode* pNext;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
 };
 
 #endif // !PATH_H

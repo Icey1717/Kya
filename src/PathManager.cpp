@@ -7,12 +7,19 @@ CPathManager::CPathManager()
 {
 	this->aPathFollow = (CPathFollow*)0x0;
 	this->pathFollowCount = 0;
-	this->field_0xc = (int*)0x0;
+	this->pBasicPathFinder = (CBasicPathFinder*)0x0;
 	return;
 }
 
 
-void CPathManager::Level_AddAll(ByteCode* pMemoryStream)
+void CPathManager::Level_Init()
+{
+	if (this->pBasicPathFinder != (CBasicPathFinder*)0x0) {
+		this->pBasicPathFinder->Init();
+	}
+}
+
+void CPathManager::Level_AddAll(ByteCode* pByteCode)
 {
 	uint count;
 	int iVar1;
@@ -21,8 +28,8 @@ void CPathManager::Level_AddAll(ByteCode* pMemoryStream)
 	undefined8 uVar4;
 	int iVar5;
 
-	pMemoryStream->GetChunk();
-	iVar1 = pMemoryStream->GetS32();
+	pByteCode->GetChunk();
+	iVar1 = pByteCode->GetS32();
 	this->pathFollowCount = iVar1;
 	count = this->pathFollowCount;
 	if (count != 0) {
@@ -30,16 +37,30 @@ void CPathManager::Level_AddAll(ByteCode* pMemoryStream)
 		this->aPathFollow = pAVar3;
 
 		for (int i = 0; i < this->pathFollowCount; i++) {
-			this->aPathFollow[i].Create(pMemoryStream);
+			this->aPathFollow[i].Create(pByteCode);
 		}
 	}
-	//piVar2 = (int*)operator.new(0x434);
-	//if ((long)(int)piVar2 != 0) {
-	//	uVar4 = FUN_001bf5f0((long)(int)piVar2);
-	//	piVar2 = (int*)uVar4;
-	//}
-	//this->field_0xc = piVar2;
+
+	this->pBasicPathFinder = new CBasicPathFinder();
+
 	return;
 }
 
+void CPathManager::Level_ClearAll()
+{
+	CBasicPathFinder* pCVar1;
 
+	if (this->aPathFollow != (CPathFollow*)0x0) {
+		delete[] this->aPathFollow;
+	}
+
+	if ((this->pBasicPathFinder != (CBasicPathFinder*)0x0) && (this->pBasicPathFinder != (CBasicPathFinder*)0x0)) {
+		delete this->pBasicPathFinder;
+	}
+
+	this->aPathFollow = (CPathFollow*)0x0;
+	this->pathFollowCount = 0;
+	this->pBasicPathFinder = (CBasicPathFinder*)0x0;
+
+	return;
+}

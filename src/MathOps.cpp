@@ -1967,3 +1967,10 @@ float edF32Vector4GetLengthSoft(edF32VECTOR4* v0)
 {
 	return sqrtf(v0->w * v0->w + v0->z * v0->z + v0->y * v0->y + v0->x * v0->x);
 }
+
+void edF32Vector2Sub(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2)
+{
+	v0->x = v1->x - v2->x;
+	v0->y = v1->y - v2->y;
+	return;
+}

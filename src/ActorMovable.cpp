@@ -1498,6 +1498,20 @@ float CActorMovable::SV_MOV_GetAccelerationFromDistAndSpeed(float param_1, float
 	return fVar1;
 }
 
+float CActorMovable::FUN_00120250(float param_1)
+{
+	Timer* pTVar1;
+	float fVar2;
+
+	pTVar1 = GetTimer();
+	fVar2 = (this->dynamic).linearAcceleration * pTVar1->cutsceneDeltaTime;
+	if (param_1 <= fVar2) {
+		param_1 = fVar2;
+	}
+
+	return param_1;
+}
+
 void CActorMovable::ComputeRealMoving(edF32VECTOR4* delta)
 {
 	Timer* pTVar1;

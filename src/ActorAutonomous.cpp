@@ -411,6 +411,31 @@ bool CActorAutonomous::IsLockable()
 	return bLockable;
 }
 
+void CActorAutonomous::SetLookingAtOn(float param_1)
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+void CActorAutonomous::SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation)
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+void CActorAutonomous::SetLookingAt(float x, float y, float z)
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+void CActorAutonomous::SetLookingAtBounds(float param_1, float param_2, float param_3, float param_4)
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+void CActorAutonomous::SetLookingAtBones(uint leftBoneId, uint rightBoneId)
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
 void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 {
 	CCollision* pCVar1;
@@ -1074,6 +1099,16 @@ void CActorAutonomous::RestoreCollisionSphere(float param_2)
 	return;
 }
 
+CActorWindState* CActorAutonomous::GetWindState()
+{
+	return (CActorWindState*)0x0;
+}
+
+float CActorAutonomous::GetRunSpeed()
+{
+	return 4.0f;
+}
+
 void CActorAutonomous::ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4)
 {
 	Timer* pTVar1;
@@ -1245,6 +1280,260 @@ void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, uint msgPa
 			}
 		}
 	}
+	return;
+}
+
+void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation)
+{
+	int* piVar1;
+	int iVar2;
+	CPathFinderClient* pCVar3;
+	edF32VECTOR4* peVar5;
+	float fVar6;
+	edF32VECTOR4 local_10;
+
+	peVar5 = pLocation;
+	if (((GetPathfinderClient() == 0) || (GetPathfinderClient()->id != -1)) || ((pParamsOut->flags & 0x20) != 0)) {
+		if (GetPathfinderClient() != 0) {
+			GetPathfinderClient()->CleanPathDynamic();
+		}
+	}
+	else {
+		if (GetPathfinderClient()->pPathDynamic == (CPathDynamic*)0x0) {
+			IMPLEMENTATION_GUARD(
+			GetPathfinderClient()->FindPathDynamic(this, pLocation);)
+		}
+
+		if (GetPathfinderClient()->pPathDynamic == (CPathDynamic*)0x0) {
+			pParamsIn->flags = 2;
+			peVar5 = (edF32VECTOR4*)0x0;
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			int lVar4 = GetPathfinderClient()->CheckAndUpdatePathDynamic(this, pLocation);
+			if (lVar4 == 0) {
+				GetPathfinderClient()->ComputeSubTargetPathDynamic(this, &GetPathfinderClient()->field_0x20);
+				peVar5 = &GetPathfinderClient()->field_0x20;
+			}
+			else {
+				if (lVar4 == 1) {
+					GetPathfinderClient()->CleanPathDynamic();
+				}
+				else {
+					if (lVar4 == 3) {
+						pParamsIn->flags = 2;
+					}
+
+					GetPathfinderClient()->CleanPathDynamic();
+					peVar5 = (edF32VECTOR4*)0x0;
+				}
+			})
+		}
+	}
+
+	if (peVar5 != (edF32VECTOR4*)0x0) {
+		SV_AUT_MoveTo_DynFence(pParamsIn, pParamsOut, peVar5);
+		local_10 = *pLocation - *peVar5;
+		fVar6 = edF32Vector4GetDistHard(&local_10);
+		pParamsIn->floatField = fVar6 + pParamsIn->floatField;
+	}
+	return;
+}
+
+void CActorAutonomous::SV_AUT_MoveTo(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation)
+{
+	SV_AUT_MoveTo_Pathfinding(pParamsIn, pParamsOut, pLocation);
+}
+
+void CActorAutonomous::SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation)
+{
+	float fVar1;
+	float fVar2;
+	bool bVar3;
+	int* piVar4;
+	CPathFinderClient* this_00;
+	int iVar5;
+	edF32VECTOR4* peVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	peVar6 = pLocation;
+
+	if ((pParamsOut->flags & 0x100) == 0) {
+		this->field_0x344 = this->field_0x344 & 0xfe;
+	}
+	else {
+		if (((this->field_0x344 & 1) == 0) || (-1 < (long)((ulong)this->field_0x344 << 0x3e))) {
+			this->field_0x344 = this->field_0x344 & 0xfe | 1;
+			this->field_0x340 = 0;
+		}
+		else {
+			if (this->field_0x348 == 0) {
+				this->field_0x340 = 0;
+			}
+			else {
+				// Where is vector_0x2f0 set?
+				IMPLEMENTATION_GUARD();
+				if (this->field_0x340 == 0) {
+					if (0.0f < this->rotationQuat.x * this->vector_0x2f0 - this->field_0x2e8 * this->rotationQuat.z) {
+						this->field_0x340 = 1;
+					}
+					else {
+						this->field_0x340 = 2;
+					}
+				}
+				if (this->field_0x340 == 2) {
+					local_10.x = -this->vector_0x2f0 + this->field_0x2e8 * 0.25;
+					local_10.z = this->field_0x2e8 + this->vector_0x2f0 * 0.25;
+				}
+				else {
+					if (this->field_0x340 == 1) {
+						local_10.x = this->vector_0x2f0 + this->field_0x2e8 * 0.25;
+						local_10.z = -this->field_0x2e8 + this->vector_0x2f0 * 0.25;
+					}
+				}
+
+				local_10.y = 0.0f;
+				local_10.w = 0.0f;
+
+				edF32Vector4AddHard(&local_10, &local_10, &this->currentLocation);
+				if ((GetPathfinderClient()->id != -1) && ((pParamsOut->flags & 0x20) == 0)) {
+					bVar3 = GetPathfinderClient()->IsValidPosition(&local_10);
+					if (bVar3 == false) {
+						iVar5 = 1;
+						if (this->field_0x340 == 1) {
+							iVar5 = 2;
+						}
+						this->field_0x340 = iVar5;
+					}
+				}
+
+				fVar7 = this->field_0x34c->FUN_00117db0();
+				fVar8 = FUN_00117db0();
+				fVar9 = pLocation->x - (this->field_0x34c->currentLocation).x;
+				fVar1 = pLocation->z - (this->field_0x34c->currentLocation).z;
+				fVar10 = pLocation->x - this->currentLocation.x;
+				fVar2 = pLocation->z - this->currentLocation.z;
+				if (sqrtf(fVar9 * fVar9 + 0.0f + fVar1 * fVar1) - fVar7 < sqrtf(fVar10 * fVar10 + 0.0f + fVar2 * fVar2) - fVar8) {
+					peVar6 = &local_10;
+				}
+			}
+		}
+	}
+
+	SV_AUT_MoveTo_FixDyn(pParamsIn, pParamsOut, peVar6);
+
+	if (pLocation != peVar6) {
+		edF32Vector4SubHard(&eStack32, pLocation, peVar6);
+		fVar10 = pParamsIn->floatField;
+		fVar9 = edF32Vector4GetDistHard(&eStack32);
+		pParamsIn->floatField = fVar10 + fVar9;
+	}
+
+	return;
+}
+
+void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation)
+{
+	uint uVar1;
+	bool bVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 eStack112;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	CActorMovParamsOut* local_10;
+	undefined4 local_c;
+	uint local_4;
+
+	if ((pParamsOut->flags & 0xc0) != 0) {
+		edF32Vector4SubHard(&local_20, pLocation, &this->currentLocation);
+		local_20.y = 0.0;
+		fVar3 = edF32Vector4SafeNormalize0Hard(&local_20, &local_20);
+		fVar5 = pParamsOut->field_0xc / pParamsOut->field_0x4;
+		if ((fVar3 < fVar5 * 2.0f + 0.001f) && (0.001f < fVar3)) {
+			local_30.z = this->rotationQuat.z;
+			local_30.w = this->rotationQuat.w;
+			local_30.x = this->rotationQuat.x;
+			local_30.y = 0.0f;
+			edF32Vector4SafeNormalize0Hard(&local_30, &local_30);
+
+			if (0.0f < local_20.x * local_30.z - local_30.x * local_20.z) {
+				local_40.x = this->rotationQuat.z;
+				local_40.z = -this->rotationQuat.x;
+			}
+			else {
+				local_40.x = -this->rotationQuat.z;
+				local_40.z = this->rotationQuat.x;
+			}
+
+			local_40.w = 0.0f;
+			local_40.y = 0.0f;
+			edF32Vector4NormalizeHard(&local_40, &local_40);
+			edF32Vector4ScaleHard(fVar5, &eStack80, &local_40);
+			edF32Vector4AddHard(&eStack80, &this->currentLocation, &eStack80);
+			edF32Vector4SubHard(&eStack96, pLocation, &eStack80);
+			eStack96.y = 0.0f;
+			fVar4 = edF32Vector4GetDistHard(&eStack96);
+			if (fVar4 < fVar5) {
+				fVar5 = edF32Vector4DotProductHard(&local_40, &local_20);
+				if (fVar5 < 0.0f) {
+					fVar5 = 0.0f;
+				}
+				fVar4 = 1.0f;
+				if (fVar5 <= 1.0f) {
+					fVar4 = fVar5;
+				}
+				uVar1 = pParamsOut->flags;
+				fVar4 = (fVar3 * 0.5) / fVar4;
+				if ((uVar1 & 0x40) == 0) {
+					if ((uVar1 & 0x80) != 0) {
+						fVar3 = fVar4 * pParamsOut->field_0x4 + 0.001f;
+						pParamsOut->field_0xc = fVar3;
+						pParamsOut->field_0x14 = 3.402823e+38f;
+						pParamsOut->flags = pParamsOut->flags | 0x400;
+						this->dynamic.speed = fVar3;
+					}
+				}
+				else {
+					pParamsOut->field_0x4 = pParamsOut->field_0xc / fVar4 + 0.001;
+					pParamsOut->flags = pParamsOut->flags | 2;
+				}
+			}
+		}
+	}
+
+	if ((this->curBehaviourId == 3) && (bVar2 = IsKindOfObject(8), bVar2 != false)) {
+		IMPLEMENTATION_GUARD(
+		local_4 = 0x1c;
+		edF32Vector4SubHard(&eStack112, pLocation, &this->currentLocation);
+		fVar3 = edF32Vector4SafeNormalize0Hard((edF32VECTOR4*)pParamsIn, &eStack112);
+		(pParamsIn->base).floatField = fVar3;
+		local_c = 0;
+		local_10 = pParamsIn;
+		CActorFighter::Execute((CActorFighter*)this, &local_4, (long)(int)&local_10);)
+	}
+	else {
+		SV_MOV_MoveTo(pParamsIn, pParamsOut, pLocation);
+	}
+
+	return;
+}
+
+void CActorAutonomous::SV_AUT_PathfindingEnd()
+{
+	if (this->GetPathfinderClient() != (CPathFinderClient*)0x0) {
+		this->GetPathfinderClient()->CleanPathDynamic();
+	}
+
 	return;
 }
 

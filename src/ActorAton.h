@@ -28,7 +28,7 @@ public:
 	virtual void Reset();
 };
 
-class CBehaviourAddOnAton : public CBehaviourAddOnBase {
+class CBehaviourAddOnAton : public CAddOn {
 public:
 	CBehaviourAddOnAton();
 	virtual void Create(ByteCode* pByteCode);

@@ -1362,6 +1362,21 @@ uint CActor::IsLookingAt()
 	return this->flags & 0x2000;
 }
 
+void CActor::SetLookingAtOn()
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+void CActor::SetLookingAtOff()
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+void CActor::UpdateLookingAt()
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
 void CActor::UpdateAnimEffects()
 {
 	CBehaviour* pCVar1;
@@ -1733,6 +1748,24 @@ void CActor::SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1)
 	v0->y = fVar1;
 	v0->z = 0.0f;
 	return;
+}
+
+bool CActor::SV_UpdateOrientationToPosition2D(float speed, edF32VECTOR4* pOrientation)
+{
+	bool uVar1;
+	float fVar1;
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4SubHard(&eStack16, pOrientation, &this->currentLocation);
+
+	fVar1 = edF32Vector4SafeNormalize0Hard(&eStack16, &eStack16);
+	uVar1 = true;
+
+	if (0.0f < fVar1) {
+		uVar1 = SV_UpdateOrientation2D(speed, &eStack16, 0);
+	}
+
+	return uVar1;
 }
 
 int CActor::SV_InstallMaterialId(int materialId)
@@ -2389,6 +2422,24 @@ void CActor::SetupLodInfo()
 	return;
 }
 
+float CActor::FUN_00117db0()
+{
+	edColPRIM_OBJECT* peVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar3 = 0.5f;
+	if ((this->pCollisionData != (CCollision*)0x0) && (peVar1 = this->pCollisionData->pObbPrim, fVar3 = 0.5f, peVar1 != (edColPRIM_OBJECT*)0x0)) {
+		fVar2 = (peVar1->field_0x90).z;
+		fVar3 = (peVar1->field_0x90).x;
+		if (fVar3 <= fVar2) {
+			fVar3 = fVar2;
+		}
+	}
+
+	return fVar3;
+}
+
 StateConfig CActor::gStateCfg_ACT[5] =
 {
 	StateConfig(0, 4),
@@ -2994,7 +3045,7 @@ bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager*
 void CActor::ComputeLighting()
 {
 	ACTOR_LOG(LogLevel::VeryVerbose, "CActor::ComputeLighting {} flags: {:x}", this->name, this->lightingFlags);
-	CScene::ptable.g_LightManager_004516b0->ComputeLighting(this, this->lightingFlags, (ed_3D_Light_Config*)0x0, this->lightingFloat_0xe0);
+	CScene::ptable.g_LightManager_004516b0->ComputeLighting(this->lightingFloat_0xe0, this, this->lightingFlags, (ed_3D_Light_Config*)0x0);
 	return;
 }
 
@@ -4588,7 +4639,7 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_
 	return;
 }
 
-CBehaviourAddOnBase::CBehaviourAddOnBase()
+CAddOn::CAddOn()
 {
 	this->pOwner = (CActor*)0x0;
 	this->field_0x8 = 0;

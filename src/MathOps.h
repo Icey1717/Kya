@@ -107,4 +107,6 @@ void edF32Vector4GetNegHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 float edF32Vector4GetLengthSoft(edF32VECTOR4* v0);
 
+void edF32Vector2Sub(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2);
+
 #endif // _MATH_OPS_H

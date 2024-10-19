@@ -3,14 +3,13 @@
 
 #include "Types.h"
 #include "MemoryStream.h"
-
-class CPath {
-	virtual void Create(ByteCode* pByteCode) = 0;
-};
+#include "Path.h"
 
 class CPathFollow : public CPath {
 public:
 	CPathFollow();
+
+	virtual void Create(ByteCode* pByteCode);
 
 	static edF32VECTOR4 gPathDefQuat;
 
@@ -29,8 +28,6 @@ public:
 	char* field_0x30;
 	char* field_0x34;
 	char* field_0x38;
-
-	virtual void Create(ByteCode* pByteCode);
 };
 
 struct S_PATHREADER_POS_INFO {
@@ -87,6 +84,52 @@ public:
 	int splinePointIndex;
 	int field_0x8;
 	int field_0xc;
+};
+
+struct PlaneData
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
+};
+
+struct CPathPlaneOutData
+{
+	int field_0x0;
+	float field_0x4;
+	float field_0x8;
+	PlaneData* aPlaneData;
+};
+
+class CPathPlane {
+public:
+	CPathFollowReader pathFollowReader;
+	CPathPlaneOutData outData;
+
+	void computePlanesFromKeys(PlaneData* aPlaneData, int nbPoints);
+	void InitTargetPos(edF32VECTOR4* pTargetPos, CPathPlaneOutData* pOutData);
+	void ExternComputeTargetPosWithPlane(edF32VECTOR4* pTargetPos, CPathPlaneOutData* pOutData);
+};
+
+class CPathPlaneArray {
+public:
+	CPathPlaneArray();
+
+	void Create(ByteCode* pByteCode);
+
+	void Init();
+	void Reset();
+
+	int GetNbPathPlane();
+	CPathPlane* GetCurPathPlane();
+
+	void NextWayPoint();
+	int AtGoal();
+
+	void InitPosition(edF32VECTOR4* pPosition);
+
+	int nbPathPlanes;
+	int curIndex;
+	CPathPlane* aPathPlanes;
 };
 
 #endif // !PATH_FOLLOW_H

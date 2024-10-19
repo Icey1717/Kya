@@ -174,6 +174,9 @@ public:
 
 	float GetAnimLength(int param_2, int lengthMode);
 
+	bool IsLayerActive(uint layer);
+	int PhysicalLayerFromLayerId(uint layer);
+
 	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
 
 	struct DisabledBoneEntry {

@@ -177,7 +177,7 @@ void CLightManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
-void CLightManager::ComputeLighting(CActor* pActor, uint flags, ed_3D_Light_Config* pConfig, float param_1)
+void CLightManager::ComputeLighting(float param_1, CActor* pActor, uint flags, ed_3D_Light_Config* pConfig)
 {
 	edColPRIM_OBJECT* iVar1;
 	float fVar2;
@@ -196,7 +196,7 @@ void CLightManager::ComputeLighting(CActor* pActor, uint flags, ed_3D_Light_Conf
 
 	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting {} flags: {:x} location: {}", pActor->name, flags, location.ToString());
 
-	ComputeLighting((ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf4, param_1);
+	ComputeLighting(param_1, (ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf4);
 
 	if (pActor->typeID == ACTOR_HERO_PRIVATE) {
 		fVar2 = CLightConfig::ComputeShadow((((pActor->p3DHierNode)->base).pHierarchySetup)->pLightData, &this->vector_0xf0);
@@ -205,7 +205,7 @@ void CLightManager::ComputeLighting(CActor* pActor, uint flags, ed_3D_Light_Conf
 	return;
 }
 
-void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocation, uint flags, ed_3D_Light_Config* pConfig, uint param_7, float param_1)
+void CLightManager::ComputeLighting(float param_1, ed_3d_hierarchy* pHier, edF32VECTOR4* pLocation, uint flags, ed_3D_Light_Config* pConfig, uint param_7)
 {
 	edF32VECTOR4* peVar1;
 	edF32VECTOR4* peVar2;
@@ -217,7 +217,7 @@ void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocat
 	ed_3D_Light_Config* pConfig_00;
 	ed_3D_Light_Config* pConfig_01;
 	CLightConfig* pFullLightConfig;
-	CLightConfig* unaff_s4_lo;
+	ed_3D_Light_Config* unaff_s4_lo;
 	float fVar9;
 	float fVar10;
 	float fVar11;
@@ -228,9 +228,7 @@ void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocat
 	edF32VECTOR4 local_a0;
 	edF32MATRIX4 local_90;
 	edF32MATRIX4 local_50;
-	edF32VECTOR4* local_10;
-	edF32MATRIX4* local_c;
-	edF32MATRIX4* local_8;
+	ed_3D_Light_Config local_10;
 
 	if (((((GameFlags & 0x20) == 0) && ((flags & 8) == 0)) &&
 		(pHier->pHierarchySetup->pLightData = &this->lightConfig, flags != 0)) && (this->activeLightCount != 0)) {
@@ -257,39 +255,18 @@ void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocat
 		pConfig_00 = pConfig;
 
 		if ((flags & 1) != 0) {
-			IMPLEMENTATION_GUARD(
-			peVar7 = &gF32Matrix4Unit;
-			peVar6 = &local_90;
-			iVar4 = 8;
-			local_a0.x = gF32Vector4Zero.x;
-			local_a0.y = gF32Vector4Zero.y;
-			local_a0.z = gF32Vector4Zero.z;
-			local_a0.w = gF32Vector4Zero.w;
-			do {
-				iVar4 = iVar4 + -1;
-				fVar9 = peVar7->ab;
-				peVar6->aa = peVar7->aa;
-				peVar7 = (edF32MATRIX4*)&peVar7->ac;
-				peVar6->ab = fVar9;
-				peVar6 = (edF32MATRIX4*)&peVar6->ac;
-			} while (0 < iVar4);
-			peVar6 = &local_50;
-			peVar7 = &gF32Matrix4Unit;
-			iVar4 = 8;
-			do {
-				iVar4 = iVar4 + -1;
-				fVar9 = peVar7->ab;
-				peVar6->aa = peVar7->aa;
-				peVar7 = (edF32MATRIX4*)&peVar7->ac;
-				peVar6->ab = fVar9;
-				peVar6 = (edF32MATRIX4*)&peVar6->ac;
-			} while (0 < iVar4);
-			local_10 = &local_a0;
-			pConfig_00 = (CLightConfig*)&local_10;
-			local_c = &local_90;
-			local_8 = &local_50;
-			unaff_s4_lo = (CLightConfig*)pConfig;)
+			local_a0 = gF32Vector4Zero;
+
+			local_90 = gF32Matrix4Unit;
+			local_50 = gF32Matrix4Unit;
+		
+			local_10.pLightAmbient = &local_a0;
+			pConfig_00 = &local_10;
+			local_10.pLightDirections = &local_90;
+			local_10.pLightColorMatrix = &local_50;
+			unaff_s4_lo = pConfig;
 		}
+
 		if ((flags & 2) == 0) {
 			*pConfig_00->pLightAmbient = *(this->lightConfig).pLightAmbient;
 			*pConfig_00->pLightColorMatrix = *(this->lightConfig).pLightColorMatrix;
@@ -352,17 +329,15 @@ void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocat
 
 		pConfig_01 = pConfig_00;
 		if ((flags & 1) != 0) {
-			IMPLEMENTATION_GUARD(
 			peVar2 = unaff_s4_lo->pLightAmbient;
 			peVar1 = pConfig_00->pLightAmbient;
-			fVar9 = (peVar1->x * fVar10 + peVar1->y * fVar11 + peVar1->z * fVar9) -
-				(peVar2->x * fVar10 + peVar2->y * fVar11 + peVar2->z * fVar9);
-			if (fVar9 < 0.0) {
+			fVar9 = (peVar1->x * fVar10 + peVar1->y * fVar11 + peVar1->z * fVar9) - (peVar2->x * fVar10 + peVar2->y * fVar11 + peVar2->z * fVar9);
+			if (fVar9 < 0.0f) {
 				fVar9 = -fVar9;
 			}
-			if (0.1 < fVar9) {
-				edF32Vector4LERPHard
-				(0.1 / fVar9, unaff_s4_lo->pLightAmbient, unaff_s4_lo->pLightAmbient, pConfig_00->pLightAmbient);
+
+			if (0.1f < fVar9) {
+				edF32Vector4LERPHard(0.1f / fVar9, unaff_s4_lo->pLightAmbient, unaff_s4_lo->pLightAmbient, pConfig_00->pLightAmbient);
 			}
 			else {
 				peVar2 = pConfig_00->pLightAmbient;
@@ -375,13 +350,16 @@ void CLightManager::ComputeLighting(ed_3d_hierarchy* pHier, edF32VECTOR4* pLocat
 				peVar1->z = fVar9;
 				peVar1->w = fVar10;
 			}
+
 			for (iVar4 = 0; pConfig_01 = unaff_s4_lo, iVar4 < 4; iVar4 = iVar4 + 1) {
-				peVar2 = (edF32VECTOR4*)(&unaff_s4_lo->pLightDirections->aa + iVar4 * 4);
-				edF32Vector4LERPHard(0.5, peVar2, peVar2, (edF32VECTOR4*)(&pConfig_00->pLightDirections->aa + iVar4 * 4));
-				peVar2 = (edF32VECTOR4*)(&unaff_s4_lo->pLightColor->aa + iVar4 * 4);
-				edF32Vector4LERPHard(0.5, peVar2, peVar2, (edF32VECTOR4*)(&pConfig_00->pLightColor->aa + iVar4 * 4));
-			})
+				peVar2 = unaff_s4_lo->pLightDirections->vector + iVar4;
+				edF32Vector4LERPHard(0.5f, peVar2, peVar2, pConfig_00->pLightDirections->vector + iVar4);
+
+				peVar2 = unaff_s4_lo->pLightColorMatrix->vector + iVar4;
+				edF32Vector4LERPHard(0.5f, peVar2, peVar2, pConfig_00->pLightColorMatrix->vector + iVar4);
+			}
 		}
+
 		CLightConfig::Validate(pConfig_01, true);
 		pHier->pHierarchySetup->pLightData = pConfig_01;
 		fVar11 = gF32Vector4Zero.w;

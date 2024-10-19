@@ -68,7 +68,7 @@ uint ByteCode::GetU32()
 	uint uVar1;
 
 	uVar1 = *(uint*)this->currentSeekPos;
-	this->currentSeekPos = this->currentSeekPos + 4;
+	this->currentSeekPos = this->currentSeekPos + sizeof(uint);
 	return uVar1;
 }
 
@@ -77,7 +77,7 @@ int ByteCode::GetS32()
 	int iVar1;
 
 	iVar1 = *(int*)this->currentSeekPos;
-	this->currentSeekPos = this->currentSeekPos + 4;
+	this->currentSeekPos = this->currentSeekPos + sizeof(int);
 	return iVar1;
 }
 
@@ -86,7 +86,7 @@ ushort ByteCode::GetU16()
 	ushort uVar1;
 
 	uVar1 = *(ushort*)this->currentSeekPos;
-	this->currentSeekPos = (char*)((int)this->currentSeekPos + 2);
+	this->currentSeekPos = this->currentSeekPos + sizeof(ushort);
 	return uVar1;
 }
 

@@ -2937,6 +2937,29 @@ float CAnimation::GetAnimLength(int param_2, int lengthMode)
 	return fVar2;
 }
 
+bool CAnimation::IsLayerActive(uint layer)
+{
+	return layer == (this->count_0x2c & layer);
+}
+
+int CAnimation::PhysicalLayerFromLayerId(uint layer)
+{
+	int iVar1;
+	uint uVar2;
+
+	iVar1 = 0;
+	if ((layer == (this->count_0x2c & layer)) && (uVar2 = 1, layer != 1)) {
+		do {
+			if ((this->count_0x2c & uVar2) != 0) {
+				iVar1 = iVar1 + 1;
+			}
+			uVar2 = uVar2 << 1;
+		} while (uVar2 != layer);
+	}
+
+	return iVar1;
+}
+
 edF32MATRIX4* CAnimation::GetCurBoneMatrix(uint boneId)
 {
 	BoneData* pAnimMatrixData;
