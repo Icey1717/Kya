@@ -111,8 +111,8 @@ ed_3D_Scene* ed3DShadowCreateScene(ed_3D_Scene* pTemplate, edFCamera* pCamera)
 	pCVar6->clipValue_0x18 = (pTemplate->sceneConfig).pShadowConfig.field_0x4;
 	pCVar6->farClip = (pTemplate->sceneConfig).pShadowConfig.field_0xc;
 	pCVar6->nearClip = (pTemplate->sceneConfig).pShadowConfig.field_0x8;
-	pCVar6->field_0x14 = (pTemplate->sceneConfig).field_0x12c;
-	pCVar6->field_0x10 = (pTemplate->sceneConfig).field_0x128;
+	pCVar6->projectionScaleFactorB = (pTemplate->sceneConfig).field_0x12c;
+	pCVar6->projectionScaleFactorA = (pTemplate->sceneConfig).field_0x128;
 	(pCVar6->pShadowConfig).pCamera_0x10 = pViewport;
 	(pCVar6->pShadowConfig).pViewport = pCVar5;
 	(pCVar6->pShadowConfig).renderMask = (pTemplate->sceneConfig).pShadowConfig.renderMask;
@@ -130,7 +130,7 @@ ed_3D_Scene* ed3DSceneCastShadow(ed_3D_Scene* p3DScene, edFCamera* pCamera)
 {
 	ed_3D_Scene* pDisplayList;
 
-	p3DScene->flags = p3DScene->flags | 2;
+	p3DScene->flags = p3DScene->flags | SCENE_FLAG_CAST_SHADOW;
 	pDisplayList = ed3DShadowCreateScene(p3DScene, pCamera);
 	edListAddNode(&p3DScene->meshClusterShadowList, (DisplayListInternal*)pDisplayList);
 	return pDisplayList;
@@ -282,10 +282,10 @@ CScene::CScene()
 	CScene::_scene_handleA->ed3DSceneSetFogProperty(1);
 	CScene::_scene_handleA->SetFlag_002a5440(1);
 	pCVar15 = ed3DSceneGetConfig(CScene::_scene_handleA);
-	pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
+	pCVar15->projectionScaleFactorB = (uint)pCVar15->projectionScaleFactorB >> 3;
 	(pCVar15->pShadowConfig).texWidth = 0x200;
 	(pCVar15->pShadowConfig).texHeight = 0x100;
-	pCVar15->field_0x12c = pCVar15->field_0x14 * 800;
+	pCVar15->field_0x12c = pCVar15->projectionScaleFactorB * 800;
 	pCVar15->field_0x128 = 1;
 	(pCVar15->pShadowConfig).field_0x0 = 0;
 	(pCVar15->pShadowConfig).field_0x4 = 90.0;
@@ -301,7 +301,7 @@ CScene::CScene()
 	_scene_handleB->ed3DSceneSetFlag(0);
 	_scene_handleB->ed3DSceneSetFogProperty(0);
 	pCVar15 = ed3DSceneGetConfig(_scene_handleB);
-	pCVar15->field_0x14 = (uint)pCVar15->field_0x14 >> 3;
+	pCVar15->projectionScaleFactorB = (uint)pCVar15->projectionScaleFactorB >> 3;
 	ed3DSceneGetConfig(CScene::_scene_handleA);
 	iVar19 = 0;
 	pCVar21 = gSceneCameras;
@@ -742,8 +742,8 @@ void CScene::Level_Manage()
 
 	if (this->field_0x48 == 0) {
 		if ((GameFlags & 0x200) != 0) {
-			CScene::_scene_handleA->RemoveFlag_002a53e0(4);
-			_scene_handleB->RemoveFlag_002a53e0(4);
+			CScene::_scene_handleA->ed3DSceneRemoveFlag(4);
+			_scene_handleB->ed3DSceneRemoveFlag(4);
 			GameFlags = GameFlags & 0xfffffdff;
 		}
 	}
@@ -942,17 +942,18 @@ void CScene::LoadFunc_001b87b0()
 	ppSVar2 = g_CameraPanStaticMasterArray_00451630;
 	do {
 		if (uVar3 < this->count_0x120) {
-			(*ppSVar2)->RemoveFlag_002a53e0(4);
+			(*ppSVar2)->ed3DSceneRemoveFlag(4);
 		}
 		else {
 			(*ppSVar2)->ed3DSceneSetFlag(4);
 		}
+
 		Func_002b6db0(*ppSVar2, unaff_s2_lo, unaff_s1_lo);
 		pCVar1 = ed3DSceneGetConfig(*ppSVar2);
 		(pCVar1->pShadowConfig).renderMask = (short)(1 << (uVar3 & 0x1f));
 		uVar3 = uVar3 + 1;
 		ppSVar2 = ppSVar2 + 1;
-		pCVar1->field_0x12c = pCVar1->field_0x14 * 800;
+		pCVar1->field_0x12c = pCVar1->projectionScaleFactorB * 800;
 		pCVar1->field_0x128 = 1;
 		(pCVar1->pShadowConfig).field_0x0 = 0;
 		(pCVar1->pShadowConfig).field_0x4 = 90.0;

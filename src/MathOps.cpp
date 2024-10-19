@@ -252,54 +252,6 @@ void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 #endif
 }
 
-void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1)
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-
-	fVar3 = m1->ac;
-	fVar4 = m1->ba;
-	fVar5 = m1->bb;
-	fVar6 = m1->bc;
-	fVar7 = m1->ca;
-	fVar8 = m1->cb;
-	fVar9 = m1->cc;
-	fVar10 = m1->da;
-	fVar11 = m1->db;
-	fVar12 = m1->dc;
-	fVar13 = m1->dd;
-	fVar2 = m1->ab;
-	fVar1 = m1->aa;
-	m0->aa = fVar1;
-	m0->ab = fVar4;
-	m0->ac = fVar7;
-	m0->ad = 0.0f;
-	m0->ba = fVar2;
-	m0->bb = fVar5;
-	m0->bc = fVar8;
-	m0->bd = 0.0f;
-	m0->ca = fVar3;
-	m0->cb = fVar6;
-	m0->cc = fVar9;
-	m0->cd = 0.0f;
-	m0->da = 0.0f - (fVar1 * fVar10 + fVar2 * fVar11 + fVar3 * fVar12);
-	m0->db = 0.0f - (fVar4 * fVar10 + fVar5 * fVar11 + fVar6 * fVar12);
-	m0->dc = 0.0f - (fVar7 * fVar10 + fVar8 * fVar11 + fVar9 * fVar12);
-	m0->dd = fVar13;
-	return;
-}
-
 void edF32Vector4SubHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
 {
 	float fVar1;

@@ -39,6 +39,10 @@
 #define LIGHT_COLOR_MATRIX_PTR_SPR			0x70000a50 // 0x2b
 #define LIGHT_AMBIENT_MATRIX_PTR_SPR		0x70000a60 // 0x2c
 
+#define SCENE_FLAG_IN_USE		0x1
+#define SCENE_FLAG_CAST_SHADOW	0x2
+#define SCENE_FLAG_FOG_PROPERTY	0x40
+
 #ifdef PLATFORM_PS2
 #define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)addr
 #define SCRATCHPAD_ADDRESS_TYPE(addr, type) (type)addr
@@ -150,8 +154,8 @@ struct SceneConfig {
 	float clipValue_0x4;
 	float nearClip;
 	float farClip;
-	uint field_0x10;
-	uint field_0x14;
+	uint projectionScaleFactorA;
+	uint projectionScaleFactorB;
 	float clipValue_0x18;
 	undefined field_0x1c;
 	undefined field_0x1d;
@@ -258,7 +262,7 @@ PACK(struct MeshData_CSTA {
 };)
 
 struct ed_3D_Scene {
-	void RemoveFlag_002a53e0(uint flag);
+	void ed3DSceneRemoveFlag(uint flag);
 	void ed3DSceneSetFlag(uint flag);
 	void ed3DSceneSetFogProperty(bool bValue);
 	void SetFlag_002a5440(bool bValue);
@@ -542,7 +546,7 @@ ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, e
 ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pManager, int index);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int index);
 ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int param_2);
-ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode);
+ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bInitHierList);
 edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
 edNODE* ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMeshCount);

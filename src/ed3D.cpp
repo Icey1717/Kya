@@ -1304,7 +1304,7 @@ void ed3DComputeSonHierarchy(void)
 
 	for (uVar3 = 0; uVar3 < (uint)ged3DConfig.sceneCount; uVar3 = uVar3 + 1) {
 		peVar6 = gScene3D + uVar3;
-		if (((peVar6->flags & 1) != 0) && ((peVar6->flags & 4) == 0)) {
+		if (((peVar6->flags & SCENE_FLAG_IN_USE) != 0) && ((peVar6->flags & 4) == 0)) {
 			peVar1 = peVar6->pHierListA;
 			for (pCVar6 = peVar1->pPrev; (edLIST*)pCVar6 != peVar1; pCVar6 = pCVar6->pPrev) {
 				UpdateRenderMeshTransform_002954b0((ed_3d_hierarchy_node*)pCVar6->pData, true);
@@ -1498,7 +1498,7 @@ void ed3DSceneConfigSetDefault(SceneConfig* pSceneConfig)
 	pSceneConfig->clipValue_0x18 = 250.0f;
 	pSceneConfig->nearClip = g_DefaultNearClip_0044851c;
 	pSceneConfig->farClip = -5000.0f;
-	pSceneConfig->field_0x10 = 1;
+	pSceneConfig->projectionScaleFactorA = 1;
 	(pSceneConfig->field_0xe0).x = 0.0f;
 	(pSceneConfig->field_0xe0).y = 255.0f;
 	(pSceneConfig->field_0xe0).z = g_DefaultNearClip_0044851c;
@@ -1511,58 +1511,58 @@ void ed3DSceneConfigSetDefault(SceneConfig* pSceneConfig)
 	return;
 }
 
-ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mode)
+ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bInitHierList)
 {
-	ushort uVar1;
-	edSurface* pVVar2;
-	ed_3D_Scene* pSVar3;
-	edLIST* pCVar4;
+	ushort zBufferPixelStoreMode;
+	edSurface* pZBufferSurface;
+	ed_3D_Scene* pScene;
 	ed_3D_Scene* pFreeScene;
 	uint sceneIndex;
 
 	sceneIndex = 0;
 	/* Find inactive camera master. */
-	while ((sceneIndex < (uint)ged3DConfig.sceneCount &&
-		((gScene3D[sceneIndex].flags & 1) != 0))) {
+	while ((sceneIndex < ged3DConfig.sceneCount && ((gScene3D[sceneIndex].flags & SCENE_FLAG_IN_USE) != 0))) {
 		sceneIndex = sceneIndex + 1;
 	}
-	pSVar3 = (ed_3D_Scene*)0xffffffff;
-	if (sceneIndex < (uint)ged3DConfig.sceneCount) {
-		pSVar3 = gScene3D + sceneIndex;
-		pSVar3->flags = pSVar3->flags | 1;
+
+	pScene = (ed_3D_Scene*)0xffffffff;
+	if (sceneIndex < ged3DConfig.sceneCount) {
+		pScene = gScene3D + sceneIndex;
+		pScene->flags = pScene->flags | SCENE_FLAG_IN_USE;
 		gScene3D[sceneIndex].bShadowScene = 0;
 		gScene3D[sceneIndex].pCamera = pCamera;
 		gScene3D[sceneIndex].pViewport = pViewport;
 		if (gDebugViewport == (ed_viewport*)0x0) {
 			gDebugViewport = pViewport;
 		}
+
 		ed3DSceneConfigSetDefault(&gScene3D[sceneIndex].sceneConfig);
+
 		pFreeScene = gScene3D + sceneIndex;
-		pVVar2 = pFreeScene->pViewport->pZBuffer;
-		if (pVVar2 == (edSurface*)0x0) {
-			IMPLEMENTATION_GUARD((pSVar5->sceneConfig).field_0x14 = &DAT_00ffffef);
+		pZBufferSurface = pFreeScene->pViewport->pZBuffer;
+		if (pZBufferSurface == (edSurface*)0x0) {
+			pFreeScene->sceneConfig.projectionScaleFactorB = 0x00ffffef;
 		}
 		else {
-			uVar1 = pVVar2->pSurfaceDesc->pixelStoreMode;
-			if (uVar1 == 2) {
-				(pFreeScene->sceneConfig).field_0x14 = 0xfffe;
+			zBufferPixelStoreMode = pZBufferSurface->pSurfaceDesc->pixelStoreMode;
+			if (zBufferPixelStoreMode == SCE_GS_PSMCT16) {
+				pFreeScene->sceneConfig.projectionScaleFactorB = 0x0000fffe;
 			}
 			else {
-				if (uVar1 == 1) {
-					IMPLEMENTATION_GUARD((pSVar5->sceneConfig).field_0x14 = &DAT_00ffffef);
+				if (zBufferPixelStoreMode == SCE_GS_PSMCT24) {
+					pFreeScene->sceneConfig.projectionScaleFactorB = 0x00ffffef;
 				}
 				else {
-					if (uVar1 == 0) {
-						(pFreeScene->sceneConfig).field_0x14 = 0x00ffffef;
+					if (zBufferPixelStoreMode == SCE_GS_PSMCT32) {
+						pFreeScene->sceneConfig.projectionScaleFactorB = 0x00ffffef;
 					}
 				}
 			}
 		}
-		if (mode != 0) {
-			pCVar4 = ed3DHierarchyListInit();
-			gScene3D[sceneIndex].pHierListA = pCVar4;
-			pCVar4 = ed3DHierarchyListInit();
-			gScene3D[sceneIndex].pHierListB = pCVar4;
+
+		if (bInitHierList != 0) {
+			gScene3D[sceneIndex].pHierListA = ed3DHierarchyListInit();
+			gScene3D[sceneIndex].pHierListB = ed3DHierarchyListInit();
 
 #ifdef EDITOR_BUILD
 			char name[128];
@@ -1573,7 +1573,8 @@ ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, long mo
 #endif
 		}
 	}
-	return pSVar3;
+
+	return pScene;
 }
 
 
@@ -1634,19 +1635,8 @@ float fSecInc = 5.0f;
 
 edF32MATRIX4 gNativeProjectionMatrix = { 0 };
 
-void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float width, float height, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV,
-	float nearClip, edF32MATRIX4* pCameraToScreen, edF32MATRIX4* pCameraToCulling, edF32MATRIX4* pCameraToClipping, edF32MATRIX4* pCameraToFog,
-	float farClip, float fovUp, float fovDown)
+static void ComputeNativeProjectionMatrix(const float nearClip, const float farClip)
 {
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float startX;
-	float fVar4;
-	float startY;
-	edF32MATRIX4 screenMatrix;
-	edF32MATRIX4 projectionMatrix;
-
 	const float fov = 60.0f * (3.1415f / 180.0f); // Convert to radians
 	const float aspect = 4.0f / 3.0f;
 	const float near = nearClip * -1.0f;
@@ -1664,11 +1654,27 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 		0.0f,		0.0f,	near * far * rangeInv * 2.0f,	0.0f
 	};
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, width: {}, height: {}, horizontalHalfFOV: {}, halfFOV: {}, verticalHalfFOV: {}, nearClip: {}, farClip: {}, fovUp: {}, fovDown: {}\n", 
-		screenWidth, screenHeight, width, height, horizontalHalfFOV, halfFOV, verticalHalfFOV, nearClip, farClip, fovUp, fovDown);
-
 	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices rangeInv: {} , f: {} res: {}\n", rangeInv, f, (near + far) * rangeInv);
 
+}
+
+void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float width, float height, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV,
+	float nearClip, edF32MATRIX4* pCameraToScreen, edF32MATRIX4* pCameraToCulling, edF32MATRIX4* pCameraToClipping, edF32MATRIX4* pCameraToFog,
+	float farClip, float projectionScaleFactorA, float projectionScaleFactorB)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float startX;
+	float fVar4;
+	float startY;
+	edF32MATRIX4 screenMatrix;
+	edF32MATRIX4 projectionMatrix;
+
+	ComputeNativeProjectionMatrix(nearClip, farClip);
+
+	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, width: {}, height: {}, horizontalHalfFOV: {}, halfFOV: {}, verticalHalfFOV: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n", 
+		screenWidth, screenHeight, width, height, horizontalHalfFOV, halfFOV, verticalHalfFOV, nearClip, farClip, projectionScaleFactorA, projectionScaleFactorB);
 
 	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, horizontalHalfFOV, 0.0f, &projectionMatrix);
 	startY = -height;
@@ -1680,8 +1686,8 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	edF32Matrix4MulF32Matrix4Hard(pCameraToScreen, &projectionMatrix, &screenMatrix);
 	fVar4 = 1.0f / (farClip - nearClip);
 	fVar1 = pCameraToScreen->dd + pCameraToScreen->cd * nearClip;
-	pCameraToScreen->cc = fVar4 * (fovDown * (pCameraToScreen->dd + pCameraToScreen->cd * farClip) - fovUp * fVar1);
-	pCameraToScreen->dc = fVar4 * (fVar1 * farClip * fovUp - fVar1 * nearClip * fovDown);
+	pCameraToScreen->cc = fVar4 * (projectionScaleFactorB * (pCameraToScreen->dd + pCameraToScreen->cd * farClip) - projectionScaleFactorA * fVar1);
+	pCameraToScreen->dc = fVar4 * (fVar1 * farClip * projectionScaleFactorA - fVar1 * nearClip * projectionScaleFactorB);
 
 	ed3DComputeProjectionToScreenMatrix(startX * 1.0f, width * 1.0f, startY * 1.0f, height * 1.0f, -1.0f, 1.0, -1.0f, 1.0f, &screenMatrix);
 
@@ -1700,7 +1706,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	pCameraToClipping->cc = fVar4 * ((pCameraToClipping->dd + pCameraToClipping->cd * farClip) * 1.0f - fVar1 * -1.0f);
 	pCameraToClipping->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
 
-	gClipMulVector.z = 2.0f / (fovDown - fovUp);
+	gClipMulVector.z = 2.0f / (projectionScaleFactorB - projectionScaleFactorA);
 
 	gClipXY.y = (fSecInc * 256.0f + 2048.0f) - 1.0f;
 	gClipXY.x = (2048.0f - fSecInc * 256.0f) + 1.0f;
@@ -1710,7 +1716,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	gClipAddVector.x = (gClipXY.x + gClipXY.y) / (gClipXY.x - gClipXY.y);
 	gClipAddVector.y = (gClipXY.x + gClipXY.y) / (gClipXY.y - gClipXY.x);
 	gClipMulVector.w = pCameraToScreen->dc + pCameraToScreen->cc * nearClip;
-	gClipAddVector.z = (fovUp + fovDown) / (fovUp - fovDown);
+	gClipAddVector.z = (projectionScaleFactorA + projectionScaleFactorB) / (projectionScaleFactorA - projectionScaleFactorB);
 	gClipAddVector.w = pCameraToScreen->dc + pCameraToScreen->cc * farClip;
 
 	gClipXY.z = gClipXY.y;
@@ -1848,21 +1854,22 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 {
 	uint uVar1;
 	edF32VECTOR4* v0;
-	float fVar2;
-	float fVar3;
+	float projectionScaleFactorB;
+	float projectionScaleFactorA;
 	float farClip;
-	float fVar5;
+	float originalHalfFOV;
 	edF32MATRIX4 local_40;
 
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DInitRenderEnvironement: {}", mode);
 
-	fVar5 = pScene->pCamera->halfFOV;
+	originalHalfFOV = pScene->pCamera->halfFOV;
 	memcpy(gRenderCamera, pScene->pCamera, sizeof(edFCamera));
 
 	edF32Matrix4CopyHard(WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
 	if (mode != 0) {
 		edF32Matrix4CopyHard(&gCurLOD_WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
 	}
+
 	(gRenderCamera->calculatedRotation).y = 0.0f;
 	(gRenderCamera->calculatedRotation).x = WorldToCamera_Matrix->cc;
 	(gRenderCamera->calculatedRotation).z = -WorldToCamera_Matrix->ac;
@@ -1875,65 +1882,65 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 	else {
 		edF32Vector4NormalizeHard(v0, v0);
 	}
-	sceVu0InverseMatrix(&local_40, WorldToCamera_Matrix);
+
+	edF32Matrix4GetInverseOrthoHard(&local_40, WorldToCamera_Matrix);
 	gCamNormal_X = local_40.rowX;
 
-	//MY_LOG("Vec A");
-	//PRINT_VECTOR(&Vector_0048c310);
 	edF32Vector4NormalizeHard(&gCamNormal_X, &gCamNormal_X);
 	gCamNormal_Y = local_40.rowY;
 
-	//MY_LOG("Vec B");
-	//PRINT_VECTOR(&Vector_0048c320);
 	edF32Vector4NormalizeHard(&gCamNormal_Y, &gCamNormal_Y);
 	gCamNormal_Z = local_40.rowZ;
 
-	//MY_LOG("Vec C");
-	//PRINT_VECTOR(&Vector_0048c330);
 	edF32Vector4NormalizeHard(&gCamNormal_Z, &gCamNormal_Z);
 	gCamPos = gRenderCamera->position;
 
-	fVar2 = gRenderCamera->halfFOV / gRenderCamera->verticalHalfFOV;
-	gRenderInvFovCoef = 1.0f / fVar2;
-	gRenderFovCoef = fVar2 * fVar2;
+	projectionScaleFactorB = gRenderCamera->halfFOV / gRenderCamera->verticalHalfFOV;
+	gRenderInvFovCoef = 1.0f / projectionScaleFactorB;
+	gRenderFovCoef = projectionScaleFactorB * projectionScaleFactorB;
 	if (mode != 0) {
 		gCurLOD_RenderFOVCoef = gRenderFovCoef;
 	}
+
 	memcpy(&gRenderSurface, pScene->pViewport->pColorBuffer, sizeof(edSurface));
 	gRenderSceneConfig = &pScene->sceneConfig;
 	(pScene->sceneConfig).clipValue_0x18 = (pScene->sceneConfig).clipValue_0x4;
 	memcpy(gRenderSceneConfig_SPR, gRenderSceneConfig, sizeof(SceneConfig));
 	gRenderScene = pScene;
+
 	ed3DSceneLightSetGlobals(&(pScene->sceneConfig).pLightConfig);
-	uVar1 = gRenderSceneConfig_SPR->field_0x14;
+
+	uVar1 = gRenderSceneConfig_SPR->projectionScaleFactorB;
 	if ((int)uVar1 < 0) {
-		fVar2 = (float)(uVar1 >> 1 | uVar1 & 1);
-		fVar2 = fVar2 + fVar2;
+		projectionScaleFactorB = (float)(uVar1 >> 1 | uVar1 & 1);
+		projectionScaleFactorB = projectionScaleFactorB + projectionScaleFactorB;
 	}
 	else {
-		fVar2 = (float)uVar1;
+		projectionScaleFactorB = (float)uVar1;
 	}
-	uVar1 = gRenderSceneConfig_SPR->field_0x10;
+
+	uVar1 = gRenderSceneConfig_SPR->projectionScaleFactorA;
 	if ((int)uVar1 < 0) {
-		fVar3 = (float)(uVar1 >> 1 | uVar1 & 1);
-		fVar3 = fVar3 + fVar3;
+		projectionScaleFactorA = (float)(uVar1 >> 1 | uVar1 & 1);
+		projectionScaleFactorA = projectionScaleFactorA + projectionScaleFactorA;
 	}
 	else {
-		fVar3 = (float)uVar1;
+		projectionScaleFactorA = (float)uVar1;
 	}
+
 	farClip = gRenderSceneConfig_SPR->farClip;
 	ed3DViewportComputeViewMatrices
 	((float)(int)pScene->pViewport->screenWidth,
 		(float)(int)pScene->pViewport->screenHeight, gRenderCamera->horizontalHalfFOV,
 		gRenderCamera->halfFOV, gRenderCamera->verticalHalfFOV, 2048.0f, 2048.0f,
 		gRenderSceneConfig_SPR->nearClip, CameraToScreen_Matrix, CameraToCulling_Matrix, CameraToClipping_Matrix,
-		&CameraToFog_Matrix, gRenderSceneConfig_SPR->farClip, fVar2, fVar3);
+		&CameraToFog_Matrix, gRenderSceneConfig_SPR->farClip, projectionScaleFactorB, projectionScaleFactorA);
 
 	ed3DFrustumCompute(gRenderSceneConfig_SPR, gRenderCamera, &gRenderSurface);
 
 	edF32Matrix4MulF32Matrix4Hard(&WorldToScreen_Matrix, WorldToCamera_Matrix, CameraToScreen_Matrix);
 
-	if ((pScene->flags & 2) != 0) {
+	if ((pScene->flags & SCENE_FLAG_CAST_SHADOW) != 0) {
 		memcpy(&gShadow_CameraToScreen_Matrix, CameraToScreen_Matrix, sizeof(edF32MATRIX4));
 		memcpy(&gShadow_CameraToCulling_Matrix, CameraToCulling_Matrix, sizeof(edF32MATRIX4));
 		memcpy(&gShadow_CameraToClipping_Matrix, CameraToClipping_Matrix, sizeof(edF32MATRIX4));
@@ -1949,31 +1956,36 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 	if (pScene->bShadowScene == 1) {
 		uVar1 = GetGreaterPower2Val((int)pScene->pViewport->screenWidth);
 		if ((int)uVar1 < 0) {
-			fVar2 = (float)(uVar1 >> 1 | uVar1 & 1);
-			fVar2 = fVar2 + fVar2;
+			projectionScaleFactorB = (float)(uVar1 >> 1 | uVar1 & 1);
+			projectionScaleFactorB = projectionScaleFactorB + projectionScaleFactorB;
 		}
 		else {
-			fVar2 = (float)uVar1;
+			projectionScaleFactorB = (float)uVar1;
 		}
+
 		uVar1 = GetGreaterPower2Val((int)pScene->pViewport->screenHeight);
 		if ((int)uVar1 < 0) {
-			fVar3 = (float)(uVar1 >> 1 | uVar1 & 1);
-			fVar3 = fVar3 + fVar3;
+			projectionScaleFactorA = (float)(uVar1 >> 1 | uVar1 & 1);
+			projectionScaleFactorA = projectionScaleFactorA + projectionScaleFactorA;
 		}
 		else {
-			fVar3 = (float)uVar1;
+			projectionScaleFactorA = (float)uVar1;
 		}
+
 		gDefault_Material_Current = &gMaterial_Render_Zbuffer_Only;
 		gDefault_Material_Cluster_Current = &gMaterial_Render_Zbuffer_Only_Cluster;
-		gCamPos.x = 2048.0f - fVar2 / 2.0f;
-		gCamPos.y = 2048.0f - fVar3 / 2.0f;
-		gCamPos.z = 1.0f / fVar2;
-		gCamPos.w = 1.0f / fVar3;
+		gCamPos.x = 2048.0f - projectionScaleFactorB / 2.0f;
+		gCamPos.y = 2048.0f - projectionScaleFactorA / 2.0f;
+		gCamPos.z = 1.0f / projectionScaleFactorB;
+		gCamPos.w = 1.0f / projectionScaleFactorA;
+
 		ed3DShadowSetRenderViewport((gRenderSceneConfig_SPR->pShadowConfig).pViewport);
+
 		*gShadowRenderMask = (uint)(ushort)(gRenderSceneConfig_SPR->pShadowConfig).renderMask;
 		if (*gShadowRenderMask == 0) {
 			return 0;
 		}
+
 		memcpy(&WorldToCamera_Matrix_CastShadow, WorldToCamera_Matrix, sizeof(edF32MATRIX4));
 		gShadowRenderScene = pScene;
 	}
@@ -1982,9 +1994,11 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 		gDefault_Material_Current = &gDefault_Material_Gouraud;
 		gDefault_Material_Cluster_Current = &gDefault_Material_Gouraud_Cluster;
 	}
+
 	if (pScene->pViewport->screenHeight != 0x200) {
-		pScene->pCamera->halfFOV = fVar5;
+		pScene->pCamera->halfFOV = originalHalfFOV;
 	}
+
 	return 1;
 }
 
@@ -2602,7 +2616,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	edF32MATRIX4** pLightColors = SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_PTR_SPR, edF32MATRIX4**);
 
 	edF32Matrix4OrthonormalizeHard(SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*), pObjToWorld);
-	sceVu0InverseMatrix(SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*));
+	edF32Matrix4GetInverseOrthoHard(SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*));
 	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*), *pLightDirections,
 		SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*));
 	edF32Matrix4GetTransposeHard(SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*));
@@ -4303,7 +4317,7 @@ void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 				pObjToWorldPktBuffer->rowY.w = 0.0f;
 				pObjToWorldPktBuffer->rowZ.w = 0.0f;
 
-				sceVu0InverseMatrix(pObjToWorldPktBuffer, pObjToWorldPktBuffer);
+				edF32Matrix4GetInverseOrthoHard(pObjToWorldPktBuffer, pObjToWorldPktBuffer);
 				edF32Matrix4GetTransposeHard(pObjToWorldPktBuffer, pObjToWorldPktBuffer);
 
 				// Set obj to world.
@@ -9408,7 +9422,7 @@ void ed3DSceneRender(int, int, char*)
 						})
 				}
 				if (pRVar5 != g_VifRefPktCur) {
-					if ((pInStaticMeshMaster->flags & 0x40) != 0) {
+					if ((pInStaticMeshMaster->flags & SCENE_FLAG_FOG_PROPERTY) != 0) {
 						bVar3 = true;
 						ed3DFlushFogFX();
 					}
@@ -12537,7 +12551,7 @@ void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0)
 	edF32MATRIX4 eStack128;
 	edF32MATRIX4 eStack64;
 
-	uVar2 = (pScene->sceneConfig).field_0x10;
+	uVar2 = (pScene->sceneConfig).projectionScaleFactorA;
 	if ((int)uVar2 < 0) {
 		fVar6 = (float)(uVar2 >> 1 | uVar2 & 1);
 		fVar6 = fVar6 + fVar6;
@@ -12545,7 +12559,7 @@ void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0)
 	else {
 		fVar6 = (float)uVar2;
 	}
-	uVar2 = (pScene->sceneConfig).field_0x14;
+	uVar2 = (pScene->sceneConfig).projectionScaleFactorB;
 	if ((int)uVar2 < 0) {
 		fVar5 = (float)(uVar2 >> 1 | uVar2 & 1);
 		fVar5 = fVar5 + fVar5;

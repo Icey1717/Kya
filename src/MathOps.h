@@ -30,7 +30,6 @@ void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECT
 float edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
-void sceVu0InverseMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1);
 
 void edF32Vector4SubHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);

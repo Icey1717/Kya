@@ -509,7 +509,7 @@ namespace Debug {
 			if (ImGui::CollapsingHeader("Hierarchy")) {
 				edNODE* pCurNode;
 				edLIST* pList = pSelectedScene->pHierListA;
-				if (((pSelectedScene->flags & 1) != 0) && ((pSelectedScene->flags & 4) == 0)) {
+				if (((pSelectedScene->flags & SCENE_FLAG_IN_USE) != 0) && ((pSelectedScene->flags & 4) == 0)) {
 					for (pCurNode = pList->pPrev; (edLIST*)pCurNode != pList; pCurNode = pCurNode->pPrev) {
 
 						ed_3d_hierarchy* pHierarchy = (ed_3d_hierarchy*)pCurNode->pData;
