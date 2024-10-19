@@ -546,6 +546,7 @@ float edColSqrDistancePointTriangle(edF32VECTOR4* v0, edF32TRIANGLE4* t0)
 			}
 		}
 	}
+
 	return fabs(fVar13);
 }
 
@@ -4335,6 +4336,7 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 							}
 							else {
 								if ((((uVar5 == 0x40d) || (uVar5 == 0x40e)) || (uVar5 == 0x40a)) || (uVar5 == 0x40b)) {
+									COLLISION_LOG(LogLevel::VeryVerbose, "edObbTreeIntersectObbTree edColArrayObjectTriangles4PenatratingPrims 0x{:x}", uVar5);
 									local_f50.pOtherColObj = pColInfoObbTree->pOtherColObj;
 									local_f50.bData = (puVar12->b).pData;
 									local_f50.bCount = (puVar12->b).count;

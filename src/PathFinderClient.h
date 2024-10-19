@@ -9,6 +9,8 @@ class CActorMovable;
 class CPathFinderClient
 {
 public:
+	CPathFinderClient();
+
 	void Init();
 	void ChangePathfindingId(CActorMovable* pActor, int newId, edF32VECTOR4* pLocation);
 	void CleanPathDynamic();

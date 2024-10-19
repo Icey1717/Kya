@@ -2,6 +2,14 @@
 #include "PathManager.h"
 #include "PathFinder.h"
 
+CPathFinderClient::CPathFinderClient()
+{
+	this->id = -1;
+	this->pPathDynamic = (CPathDynamic*)0x0;
+
+	return;
+}
+
 void CPathFinderClient::Init()
 {
 	this->id = -1;

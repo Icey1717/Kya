@@ -372,9 +372,9 @@ edColG3D_OBB_TREE_DYN* CCollisionManager::InstanciateDynCol(int index)
 	
 		pTriangle = (edF32TRIANGLE4*)LOAD_SECTION((pDynColEntry->dynCollision).aTriangles);
 		for (iVar8 = (pDynColEntry->dynCollision).nbTriangles; iVar8 != 0; iVar8 = iVar8 + -1) {
-			pTriangle->p1 = STORE_SECTION((char*)pDynColEntry + pTriangle->p1 * 0x10);
-			pTriangle->p2 = STORE_SECTION((char*)pDynColEntry + pTriangle->p2 * 0x10);
-			pTriangle->p3 = STORE_SECTION((char*)pDynColEntry + pTriangle->p3 * 0x10);
+			pTriangle->p1 = STORE_SECTION(LOAD_SECTION_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p1);
+			pTriangle->p2 = STORE_SECTION(LOAD_SECTION_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p2);
+			pTriangle->p3 = STORE_SECTION(LOAD_SECTION_CAST(char*, pDynColEntry->dynCollision.aVertices) + pTriangle->p3);
 			pTriangle = pTriangle + 1;
 		}
 
