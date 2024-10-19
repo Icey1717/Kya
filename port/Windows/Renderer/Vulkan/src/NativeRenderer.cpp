@@ -517,7 +517,7 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, cons
 	depthState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	depthState.depthTestEnable = VK_TRUE;
 	depthState.depthWriteEnable = VK_TRUE;
-	depthState.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthState.depthCompareOp = VK_COMPARE_OP_GREATER;
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -590,7 +590,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 	std::array<VkClearValue, 2> clearColors;
 	clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
-	clearColors[1] = { {1.0f, 0.0f } };
+	clearColors[1] = { {0.0f, 0.0f } };
 	renderPassInfo.clearValueCount = clearColors.size();
 	renderPassInfo.pClearValues = clearColors.data();
 

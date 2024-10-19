@@ -91,7 +91,8 @@ void main() {
 
 	vec4 pos = ubo.proj * ubo.view * model.modelMatrix * fixedPos;
 
-	pos.y = -pos.y;
+	// Do this in the projection matrix
+	//pos.y = -pos.y;
 	gl_Position = pos;
 
 	vec2 outST = vec2(int12_to_float(inST.x), int12_to_float(inST.y));

@@ -1635,27 +1635,44 @@ float fSecInc = 5.0f;
 
 edF32MATRIX4 gNativeProjectionMatrix = { 0 };
 
-static void ComputeNativeProjectionMatrix(const float nearClip, const float farClip)
+static edF32MATRIX4 CalculateOpenGlPerspectiveMatrix(const float fovy, const float aspect, const float n, const float f)
+{
+	const float e = 1.0f / std::tan(fovy * 0.5f);
+	return { e / aspect, 0.0f,  0.0f,                    0.0f,
+			0.0f,       e,     0.0f,                    0.0f,
+			0.0f,       0.0f, (f + n) / (n - f),       -1.0f,
+			0.0f,       0.0f, (2.0f * f * n) / (n - f), 0.0f };
+}
+
+static edF32MATRIX4 CalculateVulkanPerspectiveMatrix(const float fovy, const float aspect, const float n, const float f)
+{
+	constexpr edF32MATRIX4 vulkan_clip{ 1.0f,  0.0f, 0.0f, 0.0f,
+								0.0f, -1.0f, 0.0f, 0.0f,
+								0.0f,  0.0f, 0.5f, 0.0f,
+								0.0f,  0.0f, 0.5f, 1.0f };
+	return vulkan_clip * CalculateOpenGlPerspectiveMatrix(fovy, aspect, n, f);
+}
+
+static edF32MATRIX4 ReverseZ(const edF32MATRIX4& perspectiveProjection)
+{
+	constexpr edF32MATRIX4 reverseZ{ 1.0f, 0.0f,  0.0f, 0.0f,
+							  0.0f, 1.0f,  0.0f, 0.0f,
+							  0.0f, 0.0f, -1.0f, 0.0f,
+							  0.0f, 0.0f,  1.0f, 1.0f };
+	return reverseZ * perspectiveProjection;
+}
+
+static void ComputeReverseProjectionMatrix(const float nearClip, const float farClip, const float fov, const float aspect)
+{
+	gNativeProjectionMatrix = ReverseZ(CalculateVulkanPerspectiveMatrix(fov, aspect, -nearClip, -farClip));
+}
+
+static void ComputeReverseProjectionMatrix(const float nearClip, const float farClip)
 {
 	const float fov = 60.0f * (3.1415f / 180.0f); // Convert to radians
 	const float aspect = 4.0f / 3.0f;
-	const float near = nearClip * -1.0f;
-	const float far = farClip;
 
-	// Calculate components
-	const float f = 1.0f / tanf(fov / 2.0f);
-	const float rangeInv = 1.0f / (near - far);
-
-	// Define the perspective projection matrix
-	gNativeProjectionMatrix = {
-		f / aspect,	0.0f,	0.0f,							0.0f,
-		0.0f,		f,		0.0f,							0.0f,
-		0.0f,		0.0f,	(near + far) * rangeInv,		-1.0f,
-		0.0f,		0.0f,	near * far * rangeInv * 2.0f,	0.0f
-	};
-
-	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices rangeInv: {} , f: {} res: {}\n", rangeInv, f, (near + far) * rangeInv);
-
+	ComputeReverseProjectionMatrix(nearClip, farClip, fov, aspect);
 }
 
 void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float width, float height, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV,
@@ -1671,7 +1688,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	edF32MATRIX4 screenMatrix;
 	edF32MATRIX4 projectionMatrix;
 
-	ComputeNativeProjectionMatrix(nearClip, farClip);
+	ComputeReverseProjectionMatrix(nearClip, farClip);
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, width: {}, height: {}, horizontalHalfFOV: {}, halfFOV: {}, verticalHalfFOV: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n", 
 		screenWidth, screenHeight, width, height, horizontalHalfFOV, halfFOV, verticalHalfFOV, nearClip, farClip, projectionScaleFactorA, projectionScaleFactorB);
@@ -1930,8 +1947,8 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 
 	farClip = gRenderSceneConfig_SPR->farClip;
 	ed3DViewportComputeViewMatrices
-	((float)(int)pScene->pViewport->screenWidth,
-		(float)(int)pScene->pViewport->screenHeight, gRenderCamera->horizontalHalfFOV,
+	((float)pScene->pViewport->screenWidth,
+		(float)pScene->pViewport->screenHeight, gRenderCamera->horizontalHalfFOV,
 		gRenderCamera->halfFOV, gRenderCamera->verticalHalfFOV, 2048.0f, 2048.0f,
 		gRenderSceneConfig_SPR->nearClip, CameraToScreen_Matrix, CameraToCulling_Matrix, CameraToClipping_Matrix,
 		&CameraToFog_Matrix, gRenderSceneConfig_SPR->farClip, projectionScaleFactorB, projectionScaleFactorA);
