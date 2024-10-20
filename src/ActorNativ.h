@@ -74,10 +74,13 @@ class CBehaviourNativSpeak : public CBehaviourNativ
 public:
 	CBehaviourNativSpeak();
 
+	void Reset();
+
 	int nbTrajectoryParams;
 	CTakePutTrajectoryParam* aTrajectoryParams;
 
 	int field_0x24;
+	float field_0x28;
 };
 
 class CBehaviourNativLive : public CBehaviourNativ

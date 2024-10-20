@@ -2845,6 +2845,10 @@ void CActorAton::StateAtonPathJump_2_4()
 	this->dynamic.rotationQuat = local_20;
 	this->dynamic.speed = fVar4;
 
+	assert(std::isnan((this->dynamic).rotationQuat.x) == false);
+	assert(std::isnan((this->dynamic).rotationQuat.y) == false);
+	assert(std::isnan((this->dynamic).rotationQuat.z) == false);
+
 	if (((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType == 2) {
 		ManageDyn(4.0f, 9, (CActorsTable*)0x0);
 	}
@@ -2878,6 +2882,10 @@ void CActorAton::StateAtonPathJump_3_4()
 		fVar7 = edF32Vector4NormalizeHard(&local_10, &(this->vectorDyn).field_0x60);
 		this->dynamic.rotationQuat = local_10;
 		this->dynamic.speed = fVar7;
+
+		assert(std::isnan((this->dynamic).rotationQuat.x) == false);
+		assert(std::isnan((this->dynamic).rotationQuat.y) == false);
+		assert(std::isnan((this->dynamic).rotationQuat.z) == false);
 	}
 
 	uVar1 = ((this->pathPlaneArray.GetCurPathPlane()->pathFollowReader).pPathFollow)->pathType;
@@ -3731,6 +3739,10 @@ void CBehaviourAtonEscape::Begin(CActor* pOwner, int newState, int newAnimationT
 			pActorAton = this->pOwner;
 			pActorAton->dynamic.rotationQuat = local_10;
 			this->pOwner->AnalysePathType();
+
+			assert(std::isnan((pActorAton->dynamic).rotationQuat.x) == false);
+			assert(std::isnan((pActorAton->dynamic).rotationQuat.y) == false);
+			assert(std::isnan((pActorAton->dynamic).rotationQuat.z) == false);
 		}
 	}
 	else {

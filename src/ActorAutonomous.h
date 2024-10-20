@@ -132,6 +132,7 @@ public:
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
+	virtual void Reset();
 	virtual void Init();
 	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
@@ -143,6 +144,8 @@ public:
 
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
+
+	virtual CVision* GetPerception() { return (CVision*)0x0; }
 
 	void SetLookingAtOn(float param_1);
 	void SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation);

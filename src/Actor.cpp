@@ -4509,6 +4509,14 @@ void CVectorDyn::Integrate(float param_1, float param_2)
 		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x70, &this->field_0x60);
 	}
 
+	assert(std::isnan(this->field_0x50.x) == false);
+	assert(std::isnan(this->field_0x50.y) == false);
+	assert(std::isnan(this->field_0x50.z) == false);
+
+	assert(std::isnan(this->field_0x60.x) == false);
+	assert(std::isnan(this->field_0x60.y) == false);
+	assert(std::isnan(this->field_0x60.z) == false);
+
 	return;
 }
 
@@ -4560,7 +4568,7 @@ bool CVectorDyn::IsFinished()
 	return (this->field_0x0 & 1) != 0;
 }
 
-void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, byte param_5)
+void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravity, edF32VECTOR4* param_4, byte param_5)
 {
 	float fVar1;
 	float angle;
@@ -4571,7 +4579,7 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
 
-	fVar1 = edF32Vector4SafeNormalize0Hard(&local_60, param_3);
+	fVar1 = edF32Vector4SafeNormalize0Hard(&local_60, pGravity);
 
 	if (1.0f < local_60.y) {
 		puVar3 = 1.0f;
@@ -4601,14 +4609,19 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_
 	fVar2 = -sqrtf(param_1 * fVar1 * 2.0f);
 	(this->field_0x10).y = fVar2;
 	this->field_0x40 = -fVar2 / fVar1;
+	float oaeuoaeuoeau = ((local_70.y + param_1) * 2.0f) / fVar1;
+	float aoeuoaeu = sqrtf(oaeuoaeuoeau);
 	this->field_0xc = this->field_0x40 + sqrtf(((local_70.y + param_1) * 2.0f) / fVar1);
+
+	assert(std::isnan(this->field_0xc) == false);
+
 	(this->field_0x10).x = local_70.x / this->field_0xc;
 	(this->field_0x10).z = local_70.z / this->field_0xc;
 	(this->field_0x10).w = 0.0f;
-	(this->field_0x20).x = param_3->x;
-	(this->field_0x20).y = param_3->y;
-	(this->field_0x20).z = param_3->z;
-	(this->field_0x20).w = param_3->w;
+	(this->field_0x20).x = pGravity->x;
+	(this->field_0x20).y = pGravity->y;
+	(this->field_0x20).z = pGravity->z;
+	(this->field_0x20).w = pGravity->w;
 
 	MatrixRotationFromVectorAndAngle(-angle, &eStack64, &local_50);
 	edF32Matrix4MulF32Vector4Hard(&this->field_0x10, &eStack64, &this->field_0x10);

@@ -539,6 +539,53 @@ int CPathFollowReader::GetNextPlace(int param_2, int param_3)
 	return iVar4;
 }
 
+void CPathFollowReader::SetToClosestSplinePoint(edF32VECTOR4* pLocation)
+{
+	int iVar1;
+	int iVar2;
+	CPathFollow* pCVar3;
+	edF32VECTOR4* v2;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack16;
+
+	pCVar3 = this->pPathFollow;
+	iVar2 = -1;
+
+	// Find the closest spline point to the current location
+	if ((pCVar3 != (CPathFollow*)0x0) && (iVar5 = 0, 0 < pCVar3->splinePointCount)) {
+		fVar7 = 3.402823e+38f;
+		do {
+			if (pCVar3->aSplinePoints == (edF32VECTOR4*)0x0) {
+				v2 = &gF32Vertex4Zero;
+			}
+			else {
+				v2 = pCVar3->aSplinePoints + iVar5;
+			}
+
+			edF32Vector4SubHard(&eStack16, pLocation, v2);
+			fVar6 = edF32Vector4GetDistHard(&eStack16);
+			iVar1 = iVar5;
+			if (fVar7 <= fVar6) {
+				fVar6 = fVar7;
+				iVar1 = iVar2;
+			}
+
+			iVar2 = iVar1;
+			pCVar3 = this->pPathFollow;
+			iVar5 = iVar5 + 1;
+			fVar7 = fVar6;
+		} while (iVar5 < pCVar3->splinePointCount);
+	}
+
+	this->splinePointIndex = iVar2;
+	iVar2 = GetPrevPlace(this->splinePointIndex, this->field_0xc);
+	this->field_0x8 = iVar2;
+
+	return;
+}
+
 void CPathPlaneArray::Init()
 {
 	PlaneData* pPVar1;

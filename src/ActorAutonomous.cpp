@@ -241,6 +241,36 @@ void CActorAutonomous::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CActorAutonomous::Reset()
+{
+	CActorMovable::Reset();
+
+	this->dynamicExt.ClearLocalData();
+
+	if (GetWindState() != (CActorWindState*)0x0) {
+		GetWindState()->Reset();
+	}
+
+	memset(&this->collisionContact, 0, sizeof(s_collision_contact));
+
+	this->field_0x344 = this->field_0x344 & 0xfe;
+
+	if (this->pCollisionData != (CCollision*)0x0) {
+		RestoreCollisionSphere(0.0f);
+	}
+
+	LifeRestore();
+
+	this->field_0x2e4 = 0.0f;
+
+	if (GetPerception() != (CVision*)0x0) {
+		IMPLEMENTATION_GUARD(
+		GetPerception()->Reset();)
+	}
+
+	return;
+}
+
 void CActorAutonomous::Init()
 {
 	//CVision* pCVar1;
@@ -660,6 +690,10 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	edF32Vector4ScaleHard(this->dynamic.speed, &velocity, &this->dynamic.rotationQuat);
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Calculated velocity: {} speed: {} rotation: {}", velocity.ToString(), this->dynamic.speed, this->dynamic.rotationQuat.ToString());
+
+	assert(std::isnan(velocity.x) == false);
+	assert(std::isnan(velocity.y) == false);
+	assert(std::isnan(velocity.z) == false);
 
 	edF32Vector4AddHard(&translation, &translation, &velocity);
 
@@ -1689,8 +1723,7 @@ void CBehaviourCatchByTrap::End(int newBehaviourId)
 	local_84 = 0x42c80000;
 	local_6c = 0x3f000000;
 	local_4 = local_90;
-	IMPLEMENTATION_GUARD(
-	CActor::DoMessage(this->pOwner, this->field_0x10, 2, (uint)local_4);)
+	this->pOwner->DoMessage(this->field_0x10, (ACTOR_MESSAGE)2, local_4);
 	return;
 }
 

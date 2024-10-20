@@ -7,7 +7,7 @@
 
 static const std::string gLogPath = "logs/";
 //constexpr spdlog::level::level_enum gLogLevel = spdlog::level::trace;
-constexpr spdlog::level::level_enum gLogLevel = spdlog::level::trace;
+constexpr spdlog::level::level_enum gLogLevel = spdlog::level::debug;
 
 //LogPtr Log::asyncLog = spdlog::stdout_color_mt("console");
 //LogPtr Log::asyncLog = spdlog::basic_logger_mt<spdlog::async_factory>("async_file_logger", "logs/async_log.txt", true);

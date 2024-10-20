@@ -75,6 +75,7 @@ public:
 	edF32VECTOR4* GetWayPointAngles();
 
 	int GetNextPlace(int param_2, int param_3);
+	void SetToClosestSplinePoint(edF32VECTOR4* pLocation);
 
 	union {
 		int index;

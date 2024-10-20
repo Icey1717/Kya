@@ -795,4 +795,9 @@ struct sceCdlFILE {
 };
 #endif
 
+// Redifining sqrtf to handle negatives
+#ifdef PLATFORM_WIN
+#define sqrtf(x) (std::sqrtf(std::fabs(x)))
+#endif
+
 #endif //_TYPES_H

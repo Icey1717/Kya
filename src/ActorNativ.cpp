@@ -277,7 +277,38 @@ void CActorNativ::ComputeLighting()
 
 void CActorNativ::Reset()
 {
-	IMPLEMENTATION_GUARD();
+	CBehaviourNativTakeAndPut* pTakeAndPut;
+	CBehaviourNativSpeak* pSpeak;
+	CBehaviour* pCVar1;
+	int curTrajectoryParamIndex;
+	CTakePutTrajectoryParam* pTrajectoryParam;
+
+	CActorAutonomous::Reset();
+
+	ClearLocalData();
+
+	pTakeAndPut = (CBehaviourNativTakeAndPut*)GetBehaviour(6);
+	if ((pTakeAndPut != (CBehaviourNativTakeAndPut*)0x0) && (curTrajectoryParamIndex = 0, 0 < pTakeAndPut->nbTrajectoryParams)) {
+		do {
+			pTrajectoryParam = pTakeAndPut->aTrajectoryParams + curTrajectoryParamIndex;
+			pTrajectoryParam->pathFollowReader.Reset();
+			pTrajectoryParam->field_0x1c = pTrajectoryParam->field_0x14;
+			curTrajectoryParamIndex = curTrajectoryParamIndex + 1;
+		} while (curTrajectoryParamIndex < pTakeAndPut->nbTrajectoryParams);
+	}
+
+	pSpeak = (CBehaviourNativSpeak*)GetBehaviour(3);
+	if (pSpeak != (CBehaviourNativSpeak*)0x0) {
+		pSpeak->Reset();
+	}
+
+	pCVar1 = GetBehaviour(7);
+	if (pCVar1 != (CBehaviour*)0x0) {
+		IMPLEMENTATION_GUARD(
+		pCVar1->Reset(); //FUN_003f3430
+		)
+	}
+	return;
 }
 
 CBehaviour* CActorNativ::BuildBehaviour(int behaviourType)
@@ -1797,8 +1828,7 @@ void CBehaviourNativTakeAndPut::Begin(CActor* pOwner, int newState, int newAnima
 						pCVar4 = &pCVar3->pathFollowReader;
 					}
 
-					IMPLEMENTATION_GUARD(
-					CPathFollowReader::FUN_001c2fb0(pCVar4, &pCVar1->currentLocation);)
+					pCVar4->SetToClosestSplinePoint(&pCVar1->currentLocation);
 				}
 
 				this->pOwner->SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
@@ -2115,6 +2145,14 @@ CBehaviourNativSpeak::CBehaviourNativSpeak()
 	: nbTrajectoryParams(0), aTrajectoryParams(0)
 {
 
+}
+
+void CBehaviourNativSpeak::Reset()
+{
+	this->field_0x24 = -1;
+	this->field_0x28 = -1.0f;
+
+	return;
 }
 
 void CEmotionInfo::DoAnimation(float, float, CActor*)

@@ -1037,6 +1037,10 @@ float CActorMovable::SV_MOV_ManageMovOnPath(CPathFollowReader* pPathFollowReader
 		}
 	}
 
+	assert(std::isnan((this->dynamic).rotationQuat.x) == false);
+	assert(std::isnan((this->dynamic).rotationQuat.y) == false);
+	assert(std::isnan((this->dynamic).rotationQuat.z) == false);
+
 	return fVar11;
 }
 
