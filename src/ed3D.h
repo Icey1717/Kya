@@ -733,6 +733,8 @@ void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetAlpha(edNODE* pNode, byte alpha);
 
+ed_3D_Scene* ed3DGetScene(int index);
+
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
 #endif

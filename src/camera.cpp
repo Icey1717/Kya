@@ -3,6 +3,8 @@
 #include "MathOps.h"
 #include "MemoryStream.h"
 #include "CameraViewManager.h"
+#include "EventManager.h"
+#include "ActorManager.h"
 
 PACK(
 	struct S_STREAM_SIMPLE_ACT_COND {
@@ -29,9 +31,9 @@ bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 	if (iVar1 != -1) {
 		pAVar6 = (CActor*)0x0;
 		if (iVar1 != -1) {
-			IMPLEMENTATION_GUARD(
-				pAVar6 = (*(CScene::ptable.g_ActorManager_004516a4)->aActors)[iVar1];)
+			pAVar6 = ((CScene::ptable.g_ActorManager_004516a4)->aActors)[iVar1];
 		}
+
 		switch (this->field_0x8) {
 		case 0:
 			IMPLEMENTATION_GUARD(
@@ -77,12 +79,10 @@ bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 			})
 				break;
 		case 4:
-			IMPLEMENTATION_GUARD(
-				bVar4 = ((pAVar6->data).flags & 0x2000001) == 0;)
+				bVar4 = (pAVar6->flags & 0x2000001) == 0;
 				break;
 		case 5:
-			IMPLEMENTATION_GUARD(
-				bVar4 = (bool)((byte)(pAVar6->data).flags & 1);)
+				bVar4 = pAVar6->flags & 1;
 				break;
 		default:
 			bVar4 = true;
@@ -200,23 +200,25 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 		this->field_0x9c = 0.8f;
 	}
 	else {
-		this->field_0x80 = pMemoryStream->GetS32();
-		int* pStream = (int*)pMemoryStream->currentSeekPos;
+		this->field_0x80.index = pMemoryStream->GetS32();
 
+		S_ACTOR_STREAM_REF* pStream = (S_ACTOR_STREAM_REF*)pMemoryStream->currentSeekPos;
 		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + sizeof(int);
 
-		if (*pStream != 0) {
-			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + (*pStream * 4);
+		if (pStream->entryCount != 0) {
+			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + (pStream->entryCount * 4);
 		}
 
-		this->field_0x84 = (ActorAndWaypoint*)pStream;
+		this->field_0x84 = pStream;
 
-		piVar2 = (int*)pMemoryStream->currentSeekPos;
-		pMemoryStream->currentSeekPos = (char*)(piVar2 + 1);
-		if (*piVar2 != 0) {
-			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar2 * 4;
+		pStream = (S_ACTOR_STREAM_REF*)pMemoryStream->currentSeekPos;
+		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + sizeof(int);
+
+		if (pStream->entryCount != 0) {
+			pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + (pStream->entryCount * 4);
 		}
-		this->field_0x88 = piVar2;
+
+		this->field_0x88 = pStream;
 
 		fVar6 = pMemoryStream->GetF32();
 		this->field_0x8c = fVar6;
@@ -228,7 +230,7 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 		this->field_0x94 = (SWITCH_MODE)iVar3;
 		fVar6 = pMemoryStream->GetF32();
 		this->field_0x9c = fVar6;
-		if (this->field_0x80 == -1) {
+		if (this->field_0x80.index == -1) {
 			this->flags_0xc = this->flags_0xc & 0xfffffffd;
 		}
 	}
@@ -273,8 +275,8 @@ bool CCamera::IsKindOfObject(ulong kind)
 void CCamera::Init()
 {
 	CEventManager* pEVar1;
-	//EventChunk_24* pEVar2;
-	//CheckpointManagerSubObjB* pCVar3;
+	ed_zone_3d* pEVar2;
+	S_ACTOR_STREAM_REF* pCVar3;
 	//Actor* pAVar4;
 	edF32VECTOR3 local_10;
 
@@ -284,26 +286,27 @@ void CCamera::Init()
 	SetAngleBeta(local_10.y);
 	SetAngleGamma(local_10.z);
 	if ((this->flags_0xc & 2) != 0) {
-		IMPLEMENTATION_GUARD(
-			this->field_0x7c = 0;
-		pEVar2 = (EventChunk_24*)0x0;
-		if (this->field_0x80 != (EventChunk_24*)0xffffffff) {
-			pEVar2 = edEventGetChunkZone(pEVar1->activeEventChunkID_0x8, (int)this->field_0x80);
+		this->field_0x7c = 0;
+
+		pEVar2 = (ed_zone_3d*)0x0;
+		if (this->field_0x80.index != -1) {
+			pEVar2 = edEventGetChunkZone(pEVar1->activeChunkId, this->field_0x80.index);
+		}
+		this->field_0x80.pObj = STORE_SECTION(pEVar2);
+
+		pCVar3 = this->field_0x84;
+
+		for (int i = 0; i < pCVar3->entryCount; i++)
+		{
+			pCVar3->aEntries[i].Init();
 		}
 
-		this->field_0x80 = pEVar2;
-		pCVar3 = this->field_0x84;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
+		pCVar3 = this->field_0x88;
+
+		for (int i = 0; i < pCVar3->entryCount; i++)
 		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
+			pCVar3->aEntries[i].Init();
 		}
-		pCVar3 = (CheckpointManagerSubObjB*)this->field_0x88;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
-		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
-		})
 	}
 	return;
 }
@@ -337,10 +340,9 @@ bool CCamera::Manage()
 
 bool CCamera::AlertCamera(int param_2, int param_3, CCamera* param_4)
 {
-	int* piVar1;
+	S_ACTOR_STREAM_REF* piVar1;
 	int iVar2;
 	uint* puVar3;
-	int iVar4;
 	int iVar5;
 	float fVar6;
 
@@ -348,43 +350,38 @@ bool CCamera::AlertCamera(int param_2, int param_3, CCamera* param_4)
 		fVar6 = this->field_0x8c;
 		if ((this->flags_0xc & 2) != 0) {
 			iVar5 = 0;
-			iVar4 = 0;
-			IMPLEMENTATION_GUARD(
 				while (true) {
-					piVar1 = (int*)this->field_0x88;
+					piVar1 = this->field_0x88;
 					iVar2 = 0;
-					if (piVar1 != (int*)0x0) {
-						iVar2 = *piVar1;
+					if (piVar1 != (S_ACTOR_STREAM_REF*)0x0) {
+						iVar2 = piVar1->entryCount;
 					}
+
 					if (iVar2 <= iVar5) break;
-					CActor::DoMessage
-					((Actor*)this->field_0x84->field_0x4, *(Actor**)((int)piVar1 + iVar4 + 4), 0x2a,
-						(ActorCompareStruct*)(uint)(0.0 < fVar6));
-					iVar4 = iVar4 + 4;
+
+					this->field_0x84->aEntries[iVar5].Get()->DoMessage(this->field_0x84->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar6));
 					iVar5 = iVar5 + 1;
-				})
+				}
 		}
 	}
 	else {
 		if (param_2 == 2) {
 			fVar6 = this->field_0x8c;
 			if ((this->flags_0xc & 2) != 0) {
-				IMPLEMENTATION_GUARD(
-					iVar5 = 0;
-				iVar4 = 0;
+				iVar5 = 0;
+
 				while (true) {
-					piVar1 = (int*)this->field_0x88;
+					piVar1 = this->field_0x88;
 					iVar2 = 0;
-					if (piVar1 != (int*)0x0) {
-						iVar2 = *piVar1;
+					if (piVar1 != (S_ACTOR_STREAM_REF*)0x0) {
+						iVar2 = piVar1->entryCount;
 					}
+
 					if (iVar2 <= iVar5) break;
-					CActor::DoMessage
-					((Actor*)this->field_0x84->field_0x4, *(Actor**)((int)piVar1 + iVar4 + 4), 0x29,
-						(ActorCompareStruct*)(uint)(0.0 < fVar6));
-					iVar4 = iVar4 + 4;
+
+					this->field_0x84->aEntries[iVar5].Get()->DoMessage(this->field_0x84->aEntries[iVar5].Get(), (ACTOR_MESSAGE)0x29, (MSG_PARAM)(0.0f < fVar6));
 					iVar5 = iVar5 + 1;
-				})
+				}
 			}
 		}
 		else {
@@ -530,11 +527,120 @@ void CCamera::FUN_00199b80()
 	return;
 }
 
+void CCamera::ManageEvents()
+{
+	CActor* pCVar1;
+	S_ACTOR_STREAM_REF* pSVar2;
+	int* piVar3;
+	CEventManager* pCVar4;
+	bool bVar5;
+	uint uVar6;
+	int iVar7;
+	ulong uVar8;
+	ulong uVar9;
+	S_STREAM_SIMPLE_ACT_COND* pCond;
+	int iVar10;
+	int iVar11;
+	float fVar12;
+
+	pCVar4 = CScene::ptable.g_EventManager_006f5080;
+	iVar10 = 0;
+	uVar9 = 0;
+
+	while (true) {
+		pSVar2 = this->field_0x84;
+		iVar11 = 0;
+		if (pSVar2 != (S_ACTOR_STREAM_REF*)0x0) {
+			iVar11 = pSVar2->entryCount;
+		}
+
+		if (iVar11 <= iVar10) break;
+
+		pCVar1 = pSVar2->aEntries[iVar10].Get();
+		iVar10 = iVar10 + 1;
+		if (pCVar1 != (CActor*)0x0) {
+			uVar6 = edEventComputeZoneAgainstVertex(pCVar4->activeChunkId, this->field_0x80.Get(), &pCVar1->currentLocation, 0);
+			uVar9 = uVar9 | (uVar6 & 1) != 0;
+		}
+	}
+
+	piVar3 = (this->specCondition).pData;
+	iVar10 = 0;
+	if (piVar3 != (int*)0x0) {
+		iVar10 = *piVar3;
+	}
+
+	if (iVar10 != 0) {
+		uVar8 = 1;
+		if (piVar3 != (int*)0x0) {
+			uVar8 = 1;
+			pCond = (S_STREAM_SIMPLE_ACT_COND*)(piVar3 + 1);
+			for (iVar10 = *piVar3; 0 < iVar10; iVar10 = iVar10 + -1) {
+				bVar5 = pCond->IsVerified(uVar8);
+				uVar8 = bVar5;
+				pCond = pCond + 1;
+			}
+		}
+		uVar9 = uVar9 & uVar8;
+	}
+
+	uVar8 = uVar9 | (long)(this->field_0x7c << 1);
+
+	if (uVar8 == 1) {
+		fVar12 = this->field_0x8c;
+		if ((this->flags_0xc & 2) != 0) {
+			iVar11 = 0;
+
+			while (true) {
+				pSVar2 = this->field_0x88;
+				iVar7 = 0;
+				if (pSVar2 != (S_ACTOR_STREAM_REF*)0x0) {
+					iVar7 = pSVar2->entryCount;
+				}
+
+				if (iVar7 <= iVar11) break;
+
+				this->field_0x84->aEntries[iVar11].Get()->DoMessage(this->field_0x84->aEntries[iVar11].Get(), (ACTOR_MESSAGE)0x29, (MSG_PARAM)(0.0f < fVar12));
+				iVar11 = iVar11 + 1;
+			}
+		}
+
+		_gpcam_man->PushCamera(this, 0);
+	}
+	else {
+		if (uVar8 == 2) {
+			fVar12 = this->field_0x8c;
+			if ((this->flags_0xc & 2) != 0) {
+				iVar11 = 0;
+
+				while (true) {
+					pSVar2 = this->field_0x88;
+					iVar7 = 0;
+					if (pSVar2 != (S_ACTOR_STREAM_REF*)0x0) {
+						iVar7 = pSVar2->entryCount;
+					}
+
+					if (iVar7 <= iVar11) break;
+
+					this->field_0x84->aEntries[iVar11].Get()->DoMessage(this->field_0x84->aEntries[iVar11].Get(), (ACTOR_MESSAGE)0x2a, (MSG_PARAM)(0.0f < fVar12));
+					iVar11 = iVar11 + 1;
+				}
+			}
+
+			_gpcam_man->PopCamera(this);
+		}
+	}
+
+	this->field_0x7c = (int)uVar9;
+
+	return;
+}
+
 void CCameraExt::Init()
 {
 	CEventManager* pEVar1;
-	//EventChunk_24* pEVar2;
-	//CheckpointManagerSubObjB* pCVar3;
+	ed_zone_3d* pEVar2;
+	S_ACTOR_STREAM_REF* pCVar3;
 	//Actor* pAVar4;
 	edF32VECTOR3 local_10;
 
@@ -547,26 +653,29 @@ void CCameraExt::Init()
 	SetAngleGamma(local_10.z);
 
 	if ((this->flags_0xc & 2) != 0) {
-		IMPLEMENTATION_GUARD(
-			this->field_0x7c = 0;
-		pEVar2 = (EventChunk_24*)0x0;
-		if (this->field_0x80 != (EventChunk_24*)0xffffffff) {
-			pEVar2 = edEventGetChunkZone(pEVar1->activeEventChunkID_0x8, (int)this->field_0x80);
+		this->field_0x7c = 0;
+
+		pEVar2 = (ed_zone_3d*)0x0;
+		if (this->field_0x80.index != -1) {
+			pEVar2 = edEventGetChunkZone(pEVar1->activeChunkId, this->field_0x80.index);
 		}
-		this->field_0x80 = pEVar2;
+		this->field_0x80.pObj = STORE_SECTION(pEVar2);
+
 		pCVar3 = this->field_0x84;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
+		
+		for (int i = 0; i < pCVar3->entryCount; i++)
 		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
+			pCVar3->aEntries[i].Init();
 		}
-		pCVar3 = (CheckpointManagerSubObjB*)this->field_0x88;
-		for (pAVar4 = pCVar3->pActor_0x0; pAVar4 != (Actor*)0x0; pAVar4 = (Actor*)((int)&pAVar4[-1].data.field_0x158 + 3))
+
+		pCVar3 = this->field_0x88;
+
+		for (int i = 0; i < pCVar3->entryCount; i++)
 		{
-			pCVar3 = (CheckpointManagerSubObjB*)&pCVar3->field_0x4;
-			LinkCheckpointActor_00119a00(pCVar3);
-		})
+			pCVar3->aEntries[i].Init();
+		}
 	}
+
 	return;
 }
 

@@ -190,6 +190,7 @@ namespace Debug {
 				break;
 			default:
 				assert(false);
+				return "UKNOWN ERROR";
 				break;
 			}
 		}

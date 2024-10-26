@@ -165,6 +165,24 @@ struct CCameraShadow : public CCameraExt {
 	virtual ECameraType GetMode();
 	virtual bool Manage();
 
+
+	byte field_0xd0;
+	undefined field_0xd1;
+	undefined field_0xd2;
+	undefined field_0xd3;
+	undefined field_0xd4;
+	undefined field_0xd5;
+	undefined field_0xd6;
+	undefined field_0xd7;
+	undefined field_0xd8;
+	undefined field_0xd9;
+	undefined field_0xda;
+	undefined field_0xdb;
+	undefined field_0xdc;
+	undefined field_0xdd;
+	undefined field_0xde;
+	undefined field_0xdf;
+
 	undefined field_0xe0;
 	undefined field_0xe1;
 	undefined field_0xe2;
@@ -5902,6 +5920,7 @@ public:
 	virtual void LevelLoading_Begin();
 	virtual bool LevelLoading_Manage();
 	virtual void Level_Init();
+	virtual void Level_AddAll(ByteCode* pByteCode);
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	void KeepSameParam(CCamera* pNewCamera, uint flag);
@@ -5927,6 +5946,9 @@ public:
 	void SetMainCamera(CCamera* pCamera);
 
 	float FUN_00197970(edF32VECTOR4* param_2);
+
+	void Func_00194a10(CActorsTable* pTable);
+	void Func_00194e00();
 
 	CCamera* GetScenaricCamera(int index);
 

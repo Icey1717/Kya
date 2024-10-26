@@ -1,6 +1,8 @@
 #include "CameraFixePerso.h"
 #include "MathOps.h"
 #include "CameraViewManager.h"
+#include "ActorManager.h"
+#include "MemoryStream.h"
 
 CCameraFixePerso::CCameraFixePerso()
 {
@@ -8,6 +10,44 @@ CCameraFixePerso::CCameraFixePerso()
 	this->flags_0xc = this->flags_0xc | 0xb7c;
 	this->switchMode = SWITCH_MODE_B;
 	this->field_0x98 = 0.0f;
+}
+
+CCameraFixePerso::CCameraFixePerso(ByteCode* pByteCode)
+	: CCameraExt(pByteCode)
+{
+	CActorManager* pCVar1;
+	int iVar2;
+	uint uVar3;
+	CActor* pCVar4;
+	uint* puVar5;
+
+	pCVar1 = CScene::ptable.g_ActorManager_004516a4;
+	iVar2 = pByteCode->GetS32();
+	pCVar4 = (CActor*)0x0;
+	if (iVar2 != -1) {
+		pCVar4 = pCVar1->aActors[iVar2];
+	}
+
+	SetTarget(pCVar4);
+
+	uVar3 = pByteCode->GetU32();
+	puVar5 = &this->flags_0xc;
+	if ((uVar3 & 1) == 0) {
+		*puVar5 = *puVar5 & 0xfffffbff;
+	}
+	else {
+		*puVar5 = *puVar5 | 0x400;
+	}
+
+	puVar5 = &this->flags_0xc;
+	if ((uVar3 & 2) == 0) {
+		*puVar5 = *puVar5 & 0xfffff7ff;
+	}
+	else {
+		*puVar5 = *puVar5 | 0x800;
+	}
+
+	return;
 }
 
 ECameraType CCameraFixePerso::GetMode()

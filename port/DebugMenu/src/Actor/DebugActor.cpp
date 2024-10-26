@@ -14,6 +14,7 @@
 #include "DebugFrameBuffer.h"
 #include "DebugActorBehaviour.h"
 #include "ActorHero.h"
+#include "../../../../src/MathOps.h"
 
 namespace Renderer
 {
@@ -125,10 +126,12 @@ namespace Debug {
 		// Step 1: Multiply the world position by the view-projection matrix to get clip space coordinates
 		glm::vec4 clipSpacePos = viewProjMatrix * glm::vec4(worldPos, 1.0f);
 
-		// Check if the object is behind the camera (z-component in clip space is negative)
-		if (clipSpacePos.z < 0.0f) {
+		// Because of revers ze, we need to check if the actor is behind the near clip plane
+		if (clipSpacePos.z > -g_DefaultNearClip_0044851c) {
 			return false; // The actor is behind the camera, don't draw it
 		}
+
+		Log::GetInstance().AddLog(LogLevel::Info, "Clip", "clipSpacePos.z {}", clipSpacePos.z);
 
 		// Step 2: Perform perspective divide (clip space -> normalized device coordinates)
 		if (clipSpacePos.w != 0.0f) {
@@ -136,6 +139,8 @@ namespace Debug {
 			clipSpacePos.y /= clipSpacePos.w;
 			clipSpacePos.z /= clipSpacePos.w;
 		}
+
+		clipSpacePos.y = -clipSpacePos.y; // Flip the y-axis
 
 		// Step 3: Map normalized device coordinates to screen space (from [-1,1] to [0, displaySize])
 		screenPos.x = ((clipSpacePos.x + 1.0f) * 0.5f) * FrameBuffer::GetGameWindowSize().x;
@@ -160,6 +165,8 @@ namespace Debug {
 		if (glm::distance(heroLocation, worldPos) > Actor::gActorInfoDistance) {
 			return;
 		}
+
+		Log::GetInstance().AddLog(LogLevel::Info, "Clip", "clipSpacePos.z {}", pActor->name);
 
 		ImVec2 screenPos;
 		if (WorldToScreen(worldPos, Renderer::Native::gCachedProjMatrix * Renderer::Native::gCachedViewMatrix, screenPos)) {

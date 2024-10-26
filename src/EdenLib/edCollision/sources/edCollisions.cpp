@@ -5123,8 +5123,8 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 							COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit result {}", colOut.result);
 
 							if (colOut.result != 0) {
-								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit intersectionPoint {}", colOut.intersectionPoint.ToString());
-								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit vertices {}", pPrim->vertices.ToString());
+								COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit intersectionPoint {}", colOut.intersectionPoint.ToString());
+								COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim edColIntersectRayUnitBoxUnit vertices {}", pPrim->vertices.ToString());
 
 								local_600.x = (pPrim->vertices).aa * colOut.intersectionPoint.x +
 									(pPrim->vertices).ba * colOut.intersectionPoint.y +
@@ -5150,9 +5150,9 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 
 								local_610 = local_600 - *pLocation;
 
-								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim local_600: {}", local_600.ToString());
-								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim pLocation {}", pLocation->ToString());
-								COLLISION_LOG(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim local_610 {}", local_610.ToString());
+								COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim local_600: {}", local_600.ToString());
+								COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim pLocation {}", pLocation->ToString());
+								COLLISION_LOG_VERBOSE(LogLevel::Verbose, "edObbIntersectObbTreeRayPrim local_610 {}", local_610.ToString());
 
 								outDistance = edF32Vector4GetDistHard(&local_610);
 

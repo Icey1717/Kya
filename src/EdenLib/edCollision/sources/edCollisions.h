@@ -5,6 +5,7 @@
 #include "edMem.h"
 
 #define COLLISION_LOG(level, format, ...) MY_LOG_CATEGORY("Collision", level, format, ##__VA_ARGS__)
+#define COLLISION_LOG_VERBOSE(level, format, ...) 
 
 #define COL_TYPE_TREE 0x1
 #define COL_TYPE_TRIANGLE 0x4

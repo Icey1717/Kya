@@ -2681,7 +2681,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	int pAVar19;
 	undefined4 uVar21;
 	int uVar20;
-	long lVar22;
+	CPlayerInput* lVar22;
 	edAnmLayer* peVar23;
 	edF32VECTOR4* peVar24;
 	float fVar25;
@@ -3262,11 +3262,10 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			})
 			return 0;
 		}
+
 		if (msg == 0x25) {
-			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+			fVar25 = GetLifeInterface()->GetValue();
+			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
 				iVar13 = this->actorState;
 				uVar10 = 0;
@@ -3274,13 +3273,15 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					pAVar12 = GetStateCfg(iVar13);
 					uVar10 = pAVar12->flags_0x4;
 				}
+
 				bVar9 = (uVar10 & 1) != 0;
 			}
-			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
-				(this->field_0x1558 <= 0.0)) {
-				lVar22 = (*(code*)(this->pVTable)->GetInputManager)(this, 1, 0);
-				if (lVar22 != 0) {
-					InputManagerFloatFunc_001b6e20(0.0, 0.0, (CPlayerInput*)lVar22);
+
+			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) &&
+				(this->field_0x1558 <= 0.0f)) {
+				lVar22 = GetInputManager(1, 0);
+				if (lVar22 != (CPlayerInput*)0x0) {
+					lVar22->FUN_001b6e20(0.0f, 0.0f);
 				}
 
 				this->heroActionParams.actionId = 0;
@@ -3297,9 +3298,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				this->field_0x1610 = 1;
 				this->field_0x18dc = 1;
 				return 1;
-			})
+			}
+
 			return 0;
 		}
+
 		if (msg == 0x2c) {
 			IMPLEMENTATION_GUARD(
 			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
@@ -15128,19 +15131,17 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 				}
 				else {
 					if (msg == 0x2a) {
-						IMPLEMENTATION_GUARD(
 						if ((int)pMsgParam == 1) {
-							(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-								(this->pHero, STATE_HERO_STAND, 0xffffffff);
-						})
+							this->pHero->SetState(STATE_HERO_STAND, 0xffffffff);
+						}
 						return 1;
 					}
-					if (msg == 0x29) {
-						IMPLEMENTATION_GUARD(
+
+					if (msg == 0x29) {		
 						if ((int)pMsgParam == 1) {
-							(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-								(this->pHero, 0xdf, 0xffffffff);
-						})
+							this->pHero->SetState(0xdf, 0xffffffff);
+						}
+
 						return 1;
 					}
 

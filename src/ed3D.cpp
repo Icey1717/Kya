@@ -13541,3 +13541,8 @@ void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo)
 	pTextureInfo->textureFileLengthB = 0;
 	return;
 }
+
+ed_3D_Scene* ed3DGetScene(int index)
+{
+	return g_CameraPanStaticMasterArray_00451630[index];
+}

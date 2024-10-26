@@ -24,6 +24,8 @@ enum ECameraType {
 	CT_ShadowSun = 12,
 	CT_SilverBoomy = 10,
 	CT_Camera_6 = 6,
+	CT_RailSimple = 0x11,
+	CT_Rail = 0x12,
 };
 
 
@@ -63,6 +65,7 @@ struct CCamera : public CObject {
 	void LeaveManagedCluster();
 
 	void FUN_00199b80();
+	void ManageEvents();
 
 	static CCameraManager* _gpcam_man;
 
@@ -74,11 +77,11 @@ struct CCamera : public CObject {
 	CActor* pOtherTarget;
 	float fov;
 	SpecificCondition specCondition;
-	undefined4 field_0x7c;
+	int field_0x7c;
 
-	int field_0x80;
-	ActorAndWaypoint* field_0x84;
-	int* field_0x88;
+	S_STREAM_REF<ed_zone_3d> field_0x80;
+	S_ACTOR_STREAM_REF* field_0x84;
+	S_ACTOR_STREAM_REF* field_0x88;
 
 	float field_0x8c;
 	SWITCH_MODE switchMode;
@@ -141,16 +144,6 @@ struct CCameraExt : public CCamera {
 	undefined field_0xcd;
 	undefined field_0xce;
 	undefined field_0xcf;
-	float field_0xd0;
-	int mousePortId;
-	undefined field_0xd8;
-	undefined field_0xd9;
-	undefined field_0xda;
-	undefined field_0xdb;
-	undefined field_0xdc;
-	undefined field_0xdd;
-	undefined field_0xde;
-	undefined field_0xdf;
 };
 
 struct S_CAMERA_STREAM_REF {

@@ -4,9 +4,12 @@
 #include "Types.h"
 #include "camera.h"
 
+struct ByteCode;
+
 class CCameraFixePerso : public CCameraExt {
 public:
 	CCameraFixePerso();
+	CCameraFixePerso(ByteCode* pByteCode);
 
 	virtual ECameraType GetMode();
 	virtual void Init();

@@ -79,21 +79,21 @@ union Hash_8
 
 	// Debug
 	inline std::string ToString() const {
-		// convert hash into chars
-		char buff[64];
+		char buff[24];
 
-		char hashBuff[9];
-		memcpy(hashBuff, &name, 8);
-		hashBuff[8] = 0;
+		// Null-terminate directly in `name`
+		char tempName[9];
+		memcpy(tempName, name, 8);
+		tempName[8] = '\0';
 
-		// replace newlines with spaces
+		// Replace newlines with spaces if any exist in `name`
 		for (int i = 0; i < 8; i++) {
-			if (hashBuff[i] == '\n') {
-				hashBuff[i] = ' ';
+			if (tempName[i] == '\n') {
+				tempName[i] = ' ';
 			}
 		}
 
-		sprintf(buff, "%s(0x%llx)", hashBuff, number);
+		snprintf(buff, sizeof(buff), "%s(0x%llx)", tempName, number);
 		return std::string(buff);
 	}
 };
@@ -376,20 +376,9 @@ union
 
 #ifdef PLATFORM_WIN
 	inline std::string ToString() const {
-#ifdef USE_STRING_STREAMS
-		const int printWidth = 10;
-
-		std::stringstream ss;
-		// Set the precision for floating-point values
-		ss << std::fixed << std::setprecision(4);
-		ss << "(" << x << ", " << std::setw(printWidth) << y
-			<< ", " << std::setw(printWidth) << z << ", " << std::setw(printWidth) << w << ")";
-		return ss.str();
-#else
-		char buff[256];
-		sprintf_s(buff, 256, "(%.4f, %.4f, %.4f, %.4f)", x, y, z, w);
-		return buff;
-#endif
+		char cachedString[128];
+		sprintf_s(cachedString, 128, "(%.2f, %.2f, %.2f, %.2f)", x, y, z, w);
+		return cachedString;
 	}
 #endif
 };
@@ -751,6 +740,57 @@ public:
 		// Swap the values of elements at positions 'a' and 'b'
 		(this->aEntries + a + -1)[1] = (this->aEntries + b + -1)[1];
 		(this->aEntries + b + -1)[1] = tmp;
+	}
+
+	inline void MergeWithTable(CFixedTable<T, Size>* pTable) {
+		bool bVar1;
+		int iVar4;
+		int iVar5;
+
+		iVar5 = 0;
+		if (0 < pTable->entryCount) {
+			do {
+				iVar4 = 0;
+				if (0 < this->entryCount) {
+					do {
+						bVar1 = true;
+						if (pTable->aEntries[iVar4] == this->aEntries[iVar4]) goto LAB_001985c0;
+
+						iVar4 = iVar4 + 1;
+					} while (iVar4 < this->entryCount);
+				}
+
+				bVar1 = false;
+			LAB_001985c0:
+				if ((!bVar1) && (this->entryCount < Size)) {
+					this->aEntries[this->entryCount] = pTable->aEntries[iVar5];
+					this->entryCount = this->entryCount + 1;
+				}
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < pTable->entryCount);
+		}
+
+		return;
+	}
+
+	inline T Pop(int param_2) {
+		T pCVar1;
+		T* ppCVar2;
+		int iVar3;
+
+		ppCVar2 = this->aEntries + param_2 + -1;
+		iVar3 = this->entryCount + -1;
+		pCVar1 = ppCVar2[1];
+		if (param_2 < iVar3) {
+			do {
+				param_2 = param_2 + 1;
+				ppCVar2[1] = ppCVar2[2];
+				ppCVar2 = ppCVar2 + 1;
+			} while (param_2 < iVar3);
+		}
+
+		this->entryCount = this->entryCount + -1;
+		return pCVar1;
 	}
 };
 

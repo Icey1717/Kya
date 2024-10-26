@@ -56,6 +56,7 @@ set (SOURCES
 	"include/GIFReg.h"
 	"include/delegate.h"
 	"include/GSState.h"
+	"include/ScopedTimer.h"
 )
 
 add_library(Renderer ${SOURCES})

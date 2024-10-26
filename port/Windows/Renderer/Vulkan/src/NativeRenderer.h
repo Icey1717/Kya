@@ -57,5 +57,7 @@ namespace Renderer
 
 		const VkSampler& GetSampler();
 		const VkImageView& GetColorImageView();
+
+		double GetRenderTime();
 	}
 }

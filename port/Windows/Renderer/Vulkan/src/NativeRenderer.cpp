@@ -14,6 +14,7 @@
 #include "glm/gtc/type_ptr.inl"
 #include "logging.h"
 #include "log.h"
+#include "ScopedTimer.h"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)
@@ -22,6 +23,8 @@ namespace Renderer
 {
 	namespace Native
 	{
+		double gRenderTime = 0.0;
+
 		constexpr int gWidth = 0x200;
 		constexpr int gHeight = 0x200;
 
@@ -104,6 +107,8 @@ namespace Renderer
 				int indexCount = 0;
 				int vertexStart = 0;
 				int animationMatrixStart = 0;
+
+				int modelMatrixIndex = 0;
 			};
 
 			std::vector<Instance> instances;
@@ -118,14 +123,13 @@ namespace Renderer
 
 		LightingData gCachedLightingData;
 
-		void FillIndexData()
+		double GetRenderTime()
 		{
-			assert(gCurrentDraw->instances.size() > 0);
+			return gRenderTime;
+		}
 
-			NATIVE_LOG_VERBOSE(LogLevel::Info, "FillIndexData Filling instance: {}", gCurrentDraw->instances.size() - 1);
-
-			Draw::Instance& instance = gCurrentDraw->instances.back();
-
+		void FillIndexData(Draw::Instance& instance)
+		{
 			auto& vertexBufferData = gUsePreprocessedVertices ? instance.pMesh->GetInternalVertexBufferData() : gNativeVertexBufferDataDraw;
 
 			instance.indexCount = vertexBufferData.GetIndexTail();
@@ -140,6 +144,15 @@ namespace Renderer
 
 			if (!gUsePreprocessedVertices) {
 				vertexBufferData.ResetAfterDraw();
+			}
+		}
+
+		void ProcessDraws()
+		{
+			for (auto& draw : gDraws) {
+				for (auto& instance : draw.instances) {
+					FillIndexData(instance);
+				}
 			}
 		}
 
@@ -227,6 +240,8 @@ namespace Renderer
 			int modelIndex = 0;
 			int textureIndex = 0;
 
+			glm::mat4 lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
+
 			glm::mat4 viewMatrix;
 			glm::mat4 projMatrix;
 
@@ -289,8 +304,14 @@ namespace Renderer
 					Renderer::SimpleMesh* pMesh = instance.pMesh;
 					NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
 
-					gModelBuffer.SetInstanceData(modelIndex, instance.modelMatrix);
-					modelIndex++;
+					if (lastModelMatrix != instance.modelMatrix) 
+					{
+						gModelBuffer.SetInstanceData(modelIndex, instance.modelMatrix);
+						lastModelMatrix = instance.modelMatrix;
+						modelIndex++;
+					}
+
+					instance.modelMatrixIndex = modelIndex - 1;
 				}
 
 				gAlphaBuffer.SetInstanceData(textureIndex, { pTexture->GetTextureRegisters() });
@@ -571,6 +592,8 @@ void Renderer::Native::Setup()
 
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
 {
+	ScopedTimer timer(gRenderTime);
+
 	const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
 	VkCommandBufferBeginInfo beginInfo{};
@@ -611,6 +634,8 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	auto& pipeline = GetPipeline();
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
+	ProcessDraws();
+
 	UpdateDescriptors();
 
 	if (!gDraws.empty() && gNativeVertexBuffer.GetDrawBufferData().GetIndexTail() > 0) {
@@ -646,17 +671,13 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 				continue;
 			}
 
-			if (instance.pMesh->GetName() == "KIM_Scene01_L.O.D..g3d_0_1_0") {
-				modelIndex = modelIndex;
-			}
-
 			if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD) {
 				primState = instance.pMesh->GetPrim().CMD;
 				SetBlendingDynamicState(pTexture, instance.pMesh, cmd);
 			}
 
 			std::array< uint32_t, 3 > dynamicOffsets = {
-				modelIndex * gModelBuffer.GetDynamicAlignment(),
+				instance.modelMatrixIndex * gModelBuffer.GetDynamicAlignment(),
 				instance.animationMatrixStart * gAnimationBuffer.GetDynamicAlignment(),
 				textureIndex * gAlphaBuffer.GetDynamicAlignment()
 			};
@@ -664,8 +685,6 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), dynamicOffsets.size(), dynamicOffsets.data());
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(instance.indexCount), 1, instance.indexStart, instance.vertexStart, 0);
-
-			modelIndex++;
 		}
 
 		textureIndex++;
@@ -780,7 +799,7 @@ void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 		instance.pMesh = pMesh;
 
 		NATIVE_LOG(LogLevel::Info, "AddMesh: instance anim start: {}", instance.animationMatrixStart);
-		FillIndexData();
+		//AddInstanceData();
 	}
 }
 

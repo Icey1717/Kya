@@ -18,7 +18,7 @@ public:
 	virtual void Level_Install() {};
 	virtual void Level_Init() {};
 	virtual void Level_Term() {};
-	virtual void Level_AddAll(struct ByteCode* pMemoryStream) {};
+	virtual void Level_AddAll(struct ByteCode* pByteCode) {};
 	virtual void Level_ClearAll() {}
 	virtual void Level_Manage() {};
 	virtual void Level_ManagePaused() {};
@@ -322,11 +322,15 @@ void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK);
 
 ed_3D_Scene* GetStaticMeshMasterA_001031b0(void);
 
+void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height);
+
 extern ed_3D_Scene* gShadowScene;
 
 extern byte gbDoMipmap;
 extern uint gMipmapK;
 extern uint gMipmapL;
+
+extern ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10];
 
 #define GAME_STATE_PAUSED 0x20
 

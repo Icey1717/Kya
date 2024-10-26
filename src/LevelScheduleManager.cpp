@@ -33,6 +33,7 @@
 #include "EventTrack.h"
 #include "ActorHero.h"
 #include "TimeController.h"
+#include "CameraViewManager.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -1227,10 +1228,9 @@ bool BnkInstallCameras(char* pFileData, int length)
 	MStack16.Init(pFileData);
 	MStack16.GetChunk();
 
-	LEVEL_SCHEDULER_LOG(LogLevel::Info, "MISSING HANDLER OnViewLoaded_0019a9e0\n");
-	//(*(code*)g_CameraViewManager_00448e98->pManagerFunctionData->deserializeFunc)();
-	//::EmptyFunction();
-	//ByteCodeDestructor(&MStack16, -1);
+	CCameraManager::_gThis->Level_AddAll(&MStack16);
+
+	MStack16.Term();
 	return false;
 }
 

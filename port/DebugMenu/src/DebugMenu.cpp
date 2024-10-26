@@ -45,6 +45,7 @@
 #include "DebugMesh.h"
 #include "DebugFrameBuffer.h"
 #include "DebugCheckpoint.h"
+#include "NativeRenderer.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -121,7 +122,7 @@ namespace Debug {
 	static void ShowFrameCounter() {
 		double fps = 1.0 / deltaTime;
 
-		const ImVec2 windowSize(100.0f, 25.0f);
+		const ImVec2 windowSize(100.0f, 50.0f);
 
 		// Get the screen size
 		const ImVec2 screenSize = ImGui::GetIO().DisplaySize;
@@ -131,6 +132,7 @@ namespace Debug {
 		ImGui::SetNextWindowPos(ImVec2(screenSize.x - windowSize.x - 10.0f, 10.0f), ImGuiCond_Always);
 		ImGui::Begin("Framerate Counter", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 		ImGui::Text("FPS: %.1f", fps);
+		ImGui::Text("%.3f ms", deltaTime * 1000.0);
 		ImGui::End();
 	}
 
@@ -311,6 +313,9 @@ namespace Debug {
 	static void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		const double renderTime = Renderer::Native::GetRenderTime();
+		ImGui::Text("Render Time: %.3f ms", renderTime);
 
 		if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Checkbox("Use Hardware Draw", &VU1Emu::GetHardwareDrawEnabled());
