@@ -5,6 +5,8 @@
 
 #include <array>
 #include <stdexcept>
+#include <queue>
+#include <windows.h>
 
 #include "VulkanRenderer.h"
 #include "renderer.h"
@@ -24,6 +26,7 @@ namespace Renderer
 	namespace Native
 	{
 		double gRenderTime = 0.0;
+		double gRenderWaitTime = 0.0;
 
 		constexpr int gWidth = 0x200;
 		constexpr int gHeight = 0x200;
@@ -115,7 +118,6 @@ namespace Renderer
 		};
 
 		std::optional<Draw> gCurrentDraw;
-		std::vector<Draw> gDraws;
 
 		glm::mat4 gCachedModelMatrix;
 		glm::mat4 gCachedViewMatrix;
@@ -126,6 +128,11 @@ namespace Renderer
 		double GetRenderTime()
 		{
 			return gRenderTime;
+		}
+
+		double GetRenderWaitTime()
+		{
+			return gRenderWaitTime;
 		}
 
 		void FillIndexData(Draw::Instance& instance)
@@ -149,11 +156,11 @@ namespace Renderer
 
 		void ProcessDraws()
 		{
-			for (auto& draw : gDraws) {
-				for (auto& instance : draw.instances) {
-					FillIndexData(instance);
-				}
-			}
+			//for (auto& draw : gDraws) {
+			//	for (auto& instance : draw.instances) {
+			//		FillIndexData(instance);
+			//	}
+			//}
 		}
 
 		void MergeIndexData()
@@ -233,40 +240,19 @@ namespace Renderer
 			return gPipelines[pipelineKey.key];
 		}
 
-		void UpdateDescriptors()
+		class DrawDescritorSetUpdate
 		{
-			auto& pipeline = GetPipeline();
-			
-			int modelIndex = 0;
-			int textureIndex = 0;
+		public:
+			void UpdateDescriptors(Draw& draw, Renderer::Pipeline& pipeline)
+			{
+				Renderer::SimpleTexture* pTexture = draw.pTexture;
 
-			glm::mat4 lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
-
-			glm::mat4 viewMatrix;
-			glm::mat4 projMatrix;
-
-			if (!gDraws.empty()) {
-				viewMatrix = gDraws.back().viewMatrix;
-				projMatrix = gDraws.back().projMatrix;
-
-				gVertexConstantBuffer.GetBufferData().view = viewMatrix;
-				gVertexConstantBuffer.GetBufferData().proj = projMatrix;
-			}
-
-			gVertexConstantBuffer.Update(GetCurrentFrame());
-			
-			for (auto& drawCommand : gDraws) {
-				Renderer::SimpleTexture* pTexture = drawCommand.pTexture;
-			
 				if (!pTexture) {
-					break;
+					return;
 				}
 
-				//assert(NearlyEqual(viewMatrix, drawCommand.viewMatrix));
-				//assert(NearlyEqual(projMatrix, drawCommand.projMatrix));
-
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
-			
+
 				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
 				// Work out the sampler
@@ -274,12 +260,12 @@ namespace Renderer
 				PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
 
 				VkSampler& sampler = PS2::GetSampler(selector);
-			
+
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 				imageInfo.imageView = pTextureData->imageView;
 				imageInfo.sampler = sampler;
-			
+
 				const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
 				const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(GetCurrentFrame());
 				const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(GetCurrentFrame(), 27 * sizeof(glm::mat4));
@@ -287,7 +273,7 @@ namespace Renderer
 				const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(GetCurrentFrame());
 
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
-			
+
 				Renderer::DescriptorWriteList writeList;
 				writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 				writeList.EmplaceWrite({ 2, Renderer::EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
@@ -298,13 +284,13 @@ namespace Renderer
 
 				pTextureData->UpdateDescriptorSets(pipeline, writeList);
 
-				for (auto& instance : drawCommand.instances) {
+				for (auto& instance : draw.instances) {
 					assert(modelIndex < gMaxModelMatrices);
 
 					Renderer::SimpleMesh* pMesh = instance.pMesh;
 					NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
 
-					if (lastModelMatrix != instance.modelMatrix) 
+					if (lastModelMatrix != instance.modelMatrix)
 					{
 						gModelBuffer.SetInstanceData(modelIndex, instance.modelMatrix);
 						lastModelMatrix = instance.modelMatrix;
@@ -318,6 +304,29 @@ namespace Renderer
 				textureIndex++;
 			}
 
+			void Reset()
+			{
+				modelIndex = 0;
+				textureIndex = 0;
+				lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
+			}
+
+		private:
+			int modelIndex = 0;
+			int textureIndex = 0;
+			glm::mat4 lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
+		};
+
+		void UpdateConstantBuffers(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
+		{
+			gVertexConstantBuffer.GetBufferData().view = viewMatrix;
+			gVertexConstantBuffer.GetBufferData().proj = projMatrix;
+
+			gVertexConstantBuffer.Update(GetCurrentFrame());
+		}
+
+		void UpdateDescriptors()
+		{
 			gModelBuffer.Update(GetCurrentFrame());
 			gAlphaBuffer.Update(GetCurrentFrame());
 
@@ -371,6 +380,89 @@ namespace Renderer
 		{
 			gCurrentDraw = Draw{};
 		}
+
+		class RenderThread
+		{
+		public:
+			RenderThread()
+			{
+				thread = std::thread(&RenderThread::Run, this);
+
+				// Set thread name
+
+				SetThreadDescription(thread.native_handle(), L"RenderThread");
+			}
+
+			~RenderThread()
+			{
+				stopFlag = true;
+				cv.notify_all();
+				thread.join();
+			}
+
+			void Run()
+			{
+				while (!stopFlag)
+				{
+					std::unique_lock<std::mutex> lock(drawLock);
+					cv.wait(lock, [this] { return !drawQueue.empty() || stopFlag; });
+
+					if (!drawQueue.empty())
+					{
+						auto draw = std::move(drawQueue.front());
+						drawQueue.pop();
+						lock.unlock();
+
+						for (auto& instance : draw.instances)
+						{
+							FillIndexData(instance);
+						}
+
+						drawDescriptorSetUpdate.UpdateDescriptors(draw, GetPipeline());
+						draws.emplace_back(std::move(draw));
+					}
+				}
+			}
+
+			void AddDraw(const Draw& draw)
+			{
+				{
+					std::lock_guard<std::mutex> lock(drawLock);
+					drawQueue.push(draw);
+				}
+				cv.notify_one();
+			}
+
+			bool IsEmpty()
+			{
+				std::lock_guard<std::mutex> lock(drawLock);
+				return drawQueue.empty();
+			}
+
+			std::vector<Draw>& GetDraws()
+			{
+				return draws;
+			}
+
+			void Reset()
+			{
+				draws.clear();
+				drawDescriptorSetUpdate.Reset();
+			}
+
+		private:
+			std::thread thread;
+			std::mutex drawLock;
+			std::queue<Draw> drawQueue;
+			std::vector<Draw> draws;
+
+			DrawDescritorSetUpdate drawDescriptorSetUpdate;
+
+			std::condition_variable cv;
+			std::atomic<bool> stopFlag = false;
+		};
+
+		std::unique_ptr<RenderThread> gRenderThread;
 
 	} // Native
 } // Renderer
@@ -588,6 +680,8 @@ void Renderer::Native::Setup()
 	Renderer::GetRenderDelegate() += Renderer::Native::Render;
 
 	gVertexConstantBuffer.GetBufferData().Reset();
+
+	gRenderThread = std::make_unique<RenderThread>();
 }
 
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
@@ -634,11 +728,27 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	auto& pipeline = GetPipeline();
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-	ProcessDraws();
+	{
+		ScopedTimer waitForRenderThread(gRenderWaitTime);
+		while (!gRenderThread->IsEmpty()) {
+			// Spin
+		}
+	}
 
+	std::vector<Draw>& draws = gRenderThread->GetDraws();
+
+	glm::mat4 viewMatrix;
+	glm::mat4 projMatrix;
+
+	if (!draws.empty()) {
+		viewMatrix = draws.back().viewMatrix;
+		projMatrix = draws.back().projMatrix;
+	}
+
+	UpdateConstantBuffers(viewMatrix, projMatrix);
 	UpdateDescriptors();
 
-	if (!gDraws.empty() && gNativeVertexBuffer.GetDrawBufferData().GetIndexTail() > 0) {
+	if (!draws.empty() && gNativeVertexBuffer.GetDrawBufferData().GetIndexTail() > 0) {
 		gNativeVertexBuffer.BindData(cmd);
 	}
 
@@ -647,7 +757,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 	Debug::Reset();
 
-	for (auto& drawCommand : gDraws) {
+	for (auto& drawCommand : draws) {
 		Renderer::SimpleTexture* pTexture = drawCommand.pTexture;
 
 		if (!pTexture) {
@@ -706,7 +816,8 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	vkQueueWaitIdle(GetGraphicsQueue());
 
 	gNativeVertexBuffer.Reset();
-	gDraws.clear();
+	
+	gRenderThread->Reset();
 
 	gAnimationMatrices.clear();
 }
@@ -726,7 +837,7 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance anim start: {}", instance.animationMatrixStart);
 		}
 
-		gDraws.push_back(*gCurrentDraw);
+		gRenderThread->AddDraw(*gCurrentDraw);
 
 		gCurrentDraw.reset();
 	}
@@ -799,7 +910,6 @@ void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 		instance.pMesh = pMesh;
 
 		NATIVE_LOG(LogLevel::Info, "AddMesh: instance anim start: {}", instance.animationMatrixStart);
-		//AddInstanceData();
 	}
 }
 

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <chrono>
-#include <iostream>
-#include <string>
 
 class ScopedTimer {
 public:

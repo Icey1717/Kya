@@ -59,5 +59,6 @@ namespace Renderer
 		const VkImageView& GetColorImageView();
 
 		double GetRenderTime();
+		double GetRenderWaitTime();
 	}
 }

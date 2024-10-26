@@ -314,8 +314,8 @@ namespace Debug {
 		// Create a new ImGui window
 		ImGui::Begin("Rendering", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
-		const double renderTime = Renderer::Native::GetRenderTime();
-		ImGui::Text("Render Time: %.3f ms", renderTime);
+		ImGui::Text("Render Time: %.1f ms", Renderer::Native::GetRenderTime());
+		ImGui::Text("Render Wait Time: %.1f ms", Renderer::Native::GetRenderWaitTime());
 
 		if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Checkbox("Use Hardware Draw", &VU1Emu::GetHardwareDrawEnabled());
