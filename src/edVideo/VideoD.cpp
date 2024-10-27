@@ -244,16 +244,16 @@ void edVideoWaitVsync(byte param_1)
 	// Calculate frame time
 	static auto frameStart = std::chrono::steady_clock::now();
 
-	// Update game logic and render the frame
-
-	// Calculate elapsed frame time
-	auto frameEnd = std::chrono::steady_clock::now();
-	auto elapsedSeconds = std::chrono::duration<double>(frameEnd - frameStart).count();
-
-	// Sleep to maintain the desired frame rate
-	if (elapsedSeconds < targetFrameTime)
+	while (true)
 	{
-		std::this_thread::sleep_for(std::chrono::duration<double>(targetFrameTime - elapsedSeconds));
+		auto frameEnd = std::chrono::steady_clock::now();
+		auto frameTime = std::chrono::duration_cast<std::chrono::duration<double>>(frameEnd - frameStart).count();
+
+		if (frameTime >= targetFrameTime)
+		{
+			frameStart = frameEnd;
+			break;
+		}
 	}
 
 	frameStart = std::chrono::steady_clock::now();
@@ -289,6 +289,10 @@ void edVideoFlip(void)
 	edDmaSyncPath();
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 9, (void*)0x0);
+
+#ifdef PLATFORM_WIN
+	Renderer::Native::SignalEndCommands();
+#endif
 
 	edVideoWaitVsync(1);
 

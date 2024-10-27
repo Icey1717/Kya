@@ -252,7 +252,7 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 		auto& bufferData = vertexBuffer.GetDrawBufferData();
 
 		if (bufferData.index.tail > 0) {
-			vertexBuffer.BindData(cmd);
+			vertexBuffer.MapAndBindData(cmd);
 
 			PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);

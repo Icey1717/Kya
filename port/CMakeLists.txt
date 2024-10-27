@@ -17,6 +17,8 @@ option(TRACY_ENABLE "" ON)
 option(TRACY_ON_DEMAND "" OFF)
 add_subdirectory("ext/tracy") 
 
+add_subdirectory("ext/readerwriterqueue")
+
 add_subdirectory("pcsx2/VU")
 
 add_subdirectory("Windows/Renderer")

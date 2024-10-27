@@ -22,6 +22,9 @@ namespace Renderer {
 	using CommandBufferVector = std::vector<VkCommandBuffer>;
 
 	void CreateCommandBuffers(CommandBufferVector& commandBuffers);
+	void CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVector& commandBuffers);
+
+	VkCommandPool CreateCommandPool();
 }
 
 VkDevice GetDevice();

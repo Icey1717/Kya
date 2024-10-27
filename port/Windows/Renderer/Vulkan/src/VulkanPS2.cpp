@@ -231,6 +231,7 @@ namespace Renderer {
 
 	void KickVertex(uint16_t x, uint16_t y, uint32_t z)
 	{
+		return;
 		auto vtx = PS2_Internal::MakeVertex(x, y, z);
 		KickVertex<GSVertex, uint16_t>(vtx, PS2::GetGSState().PRIM, Skip, GetDefaultDrawBuffer());
 	}
@@ -1828,6 +1829,8 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 {
 	const int tail = drawBuffer.GetIndexTail();
 
+	return;
+
 	// HACK
 	//if (tail != 2610 && tail != 132) {
 	//	drawBuffer.ResetAfterDraw();
@@ -2044,10 +2047,10 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 		vkCmdBindPipeline(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 		if (bHardware) {
-			PS2::Hardware::gVertexBuffers.BindData(GetCurrentCommandBuffer());
+			PS2::Hardware::gVertexBuffers.MapAndBindData(GetCurrentCommandBuffer());
 		}
 		else {
-			PS2_Internal::gVertexBuffers.BindData(GetCurrentCommandBuffer());
+			PS2_Internal::gVertexBuffers.MapAndBindData(GetCurrentCommandBuffer());
 		}
 
 		{

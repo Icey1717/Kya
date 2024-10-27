@@ -55,11 +55,16 @@ namespace Renderer {
 }
 
 void Renderer::CreateCommandBuffers(CommandBufferVector& commandBuffers) {
+	CreateCommandBuffers(GetCommandPool(), commandBuffers);
+}
+
+void Renderer::CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVector& commandBuffers)
+{
 	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = GetCommandPool();
+	allocInfo.commandPool = pool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
@@ -1023,8 +1028,8 @@ public:
 		return;
 	}
 
-	void present() {
-
+	void present() 
+	{
 		if (GetHardwareState().bActivePass) {
 			vkCmdEndRenderPass(GetCurrentCommandBuffer());
 		}
@@ -1626,14 +1631,14 @@ void Renderer::Debug::EndLabel(const VkCommandBuffer& cmdBuffer)
 void Renderer::Debug::BeginLabel(const char* szLabel)
 {
 #ifdef _DEBUG
-	BeginLabel(GetCurrentCommandBuffer(), szLabel);
+	//BeginLabel(GetCurrentCommandBuffer(), szLabel);
 #endif
 }
 
 void Renderer::Debug::EndLabel()
 {
 #ifdef _DEBUG
-	EndLabel(GetCurrentCommandBuffer());
+	//EndLabel(GetCurrentCommandBuffer());
 #endif
 }
 
@@ -1660,4 +1665,22 @@ VkAllocationCallbacks* GetAllocator()
 uint32_t GetAllocationCount(VkSystemAllocationScope scope)
 {
 	return Renderer::gAllocations[scope].size();
+}
+
+VkCommandPool Renderer::CreateCommandPool()
+{
+	VkCommandPool commandPool = VK_NULL_HANDLE;
+
+	QueueFamilyIndices queueFamilyIndices = app.findQueueFamilies(GetPhysicalDevice());
+
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+	if (vkCreateCommandPool(GetDevice(), &poolInfo, GetAllocator(), &commandPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create graphics command pool!");
+	}
+
+	return commandPool;
 }

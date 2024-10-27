@@ -94,6 +94,10 @@ namespace PS2 {
 		}
 
 		VkDeviceSize MapVertices(const VertexType* buff, int vertexCount) {
+			if (vertexCount < 1) {
+				return 0;
+			}
+
 			assert(vertexHead + vertexCount <= vertexMax);
 			VkDeviceSize bufferSize = sizeof(VertexType) * vertexCount;
 			const VkDeviceSize bufferOffset = vertexHead * sizeof(VertexType);
@@ -107,6 +111,10 @@ namespace PS2 {
 		}
 
 		VkDeviceSize MapIndices(const IndexType* buff, int indexCount) {
+			if (indexCount < 1) {
+				return 0;
+			}
+
 			assert(indexHead + indexCount <= indexMax);
 			VkDeviceSize bufferSize = sizeof(IndexType) * indexCount;
 			const VkDeviceSize bufferOffset = indexHead * sizeof(IndexType);
@@ -168,21 +176,34 @@ namespace PS2 {
 			return GetBuffer().MapIndices(drawBufferData.index.buff, drawBufferData.index.tail);
 		}
 
-		void BindVertexData(const VkCommandBuffer& cmd) {
+		void MapAndBindVertexData(const VkCommandBuffer& cmd) {
 			const VkDeviceSize vertexOffset = MapVertexData();
 			VkBuffer vertexBuffers[] = { GetVertexBuffer() };
 			VkDeviceSize offsets[] = { vertexOffset };
 			vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
 		}
 
-		void BindIndexData(const VkCommandBuffer& cmd) {
+		void MapAndBindIndexData(const VkCommandBuffer& cmd) {
 			const VkDeviceSize indexOffset = MapIndexData();
 			vkCmdBindIndexBuffer(cmd, GetIndexBuffer(), indexOffset, VK_INDEX_TYPE_UINT16);
 		}
 
-		void BindData(const VkCommandBuffer& cmd) {
-			BindVertexData(cmd);
-			BindIndexData(cmd);
+		void MapAndBindData(const VkCommandBuffer& cmd) {
+			MapAndBindVertexData(cmd);
+			MapAndBindIndexData(cmd);
+		}
+
+		void MapData() {
+			MapVertexData();
+			MapIndexData();
+		}
+
+		void BindBuffers(const VkCommandBuffer& cmd) {
+			VkBuffer vertexBuffers[] = { GetVertexBuffer() };
+			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
+
+			vkCmdBindIndexBuffer(cmd, GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 		}
 
 		void Reset() {

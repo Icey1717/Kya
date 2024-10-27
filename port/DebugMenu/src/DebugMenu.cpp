@@ -316,6 +316,7 @@ namespace Debug {
 
 		ImGui::Text("Render Time: %.1f ms", Renderer::Native::GetRenderTime());
 		ImGui::Text("Render Wait Time: %.1f ms", Renderer::Native::GetRenderWaitTime());
+		ImGui::Text("Render Thread Time: %.1f ms", Renderer::Native::GetRenderThreadTime());
 
 		if (ImGui::CollapsingHeader("VU1 Emulation", ImGuiTreeNodeFlags_DefaultOpen)) {
 			ImGui::Checkbox("Use Hardware Draw", &VU1Emu::GetHardwareDrawEnabled());

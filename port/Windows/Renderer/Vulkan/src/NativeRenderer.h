@@ -60,5 +60,6 @@ namespace Renderer
 
 		double GetRenderTime();
 		double GetRenderWaitTime();
+		double GetRenderThreadTime();
 	}
 }

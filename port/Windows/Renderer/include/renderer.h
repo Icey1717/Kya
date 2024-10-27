@@ -269,6 +269,8 @@ namespace Renderer
 		static_assert(sizeof(MatrixPacket) == 0x1c0, "Invalid Native::MatrixPacket size");
 
 		void PushMatrixPacket(const MatrixPacket* const pPkt);
+
+		void SignalEndCommands();
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;

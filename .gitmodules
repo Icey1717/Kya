@@ -34,3 +34,6 @@
 [submodule "port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/ext/xxHash"]
 	path = port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload/ext/xxHash
 	url = https://github.com/Cyan4973/xxHash.git
+[submodule "port/ext/readerwriterqueue"]
+	path = port/ext/readerwriterqueue
+	url = https://github.com/cameron314/readerwriterqueue.git
