@@ -14,15 +14,23 @@ struct ed_event {
 };
 
 struct _ed_event_collider_test {
-	edF32VECTOR4 field_0x0;
-	byte field_0x10[4];
-	int field_0x14;
+	edF32VECTOR4 worldLocation;
+	byte messageFlags[4];
+	uint flags;
 	int pActorRef; // ed_event_actor_ref*
 	int field_0x1c; // ed_event*
-	int field_0x20[4]; // ?
+	int aSendInfo[4]; // EventSendInfo*
 };
 
 static_assert(sizeof(_ed_event_collider_test) == 0x30);
+
+struct EventSendInfo
+{
+	int field_0x0;
+	int nbActorIndexes;
+};
+
+static_assert(sizeof(EventSendInfo) == 0x8);
 
 struct edCEventMessage {
 	uint colliderId;
@@ -48,7 +56,7 @@ struct _edCluster {
 
 struct ed_event_actor_ref {
 	int pActor; // CActor*
-	uint pLocation; // edf32VECTOR4*
+	int pLocation; // edf32VECTOR4*
 };
 
 static_assert(sizeof(ed_event_actor_ref) == 0x8);
@@ -66,9 +74,11 @@ struct ed_event_chunk {
 	byte* field_0x8;
 	edF32MATRIX4* aMatrices;
 	uint field_0x10;
-	int* field_0x14; // 
-	int count_0x18;
-	int* field_0x1c;
+	int* field_0x14; //
+
+	// Indexes into the global actor list
+	int nbSendInfo;
+	int* aSendInfo; // EventSendInfo**
 
 	int nbActorRefs;
 	ed_event_actor_ref* aActorRefs;
@@ -120,7 +130,7 @@ typedef uint e_ed_event_prim3d_type;
 
 void edEventInit(void);
 uint edEventAddChunk(void* pFileData, uint mode);
-uint edEventGetChunkNbEvents(int eventIndex);
+uint edEventGetChunkNbEvents(int chunkIndex);
 ed_zone_3d* edEventGetChunkZone(uint chunkId, uint zoneId);
 int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZone, edF32VECTOR4* pLocation, uint mode);
 int edEventComputeZoneAgainstVertex(int index, ed_zone_3d* pZone, edF32VECTOR4* param_3, long mode);

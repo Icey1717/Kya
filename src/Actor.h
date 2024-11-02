@@ -436,7 +436,7 @@ public:
 
 	void ComputeAltitude();
 
-	int ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
+	int ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* pEventData);
 
 	bool ColWithAToboggan();
 	bool ColWithLava();

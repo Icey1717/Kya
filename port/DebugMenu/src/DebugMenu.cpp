@@ -45,6 +45,7 @@
 #include "DebugMesh.h"
 #include "DebugFrameBuffer.h"
 #include "DebugCheckpoint.h"
+#include "DebugEvent.h"
 #include "NativeRenderer.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -620,11 +621,12 @@ namespace Debug {
 		{"Scene", ShowSceneMenu },
 		{"Hero", Debug::Hero::ShowMenu, true },
 		{"Sector", ShowSectorMenu, true },
-		{"Memory", ShowMemoryMenu, true },
-		{"Texture", Debug::Texture::ShowMenu, true },
-		{"Mesh", Debug::Mesh::ShowMenu, true },
-		{"Actor", Debug::Actor::ShowMenu, true },
-		{"Checkpoint", Debug::Checkpoint::ShowMenu, true },
+		{"Memory", ShowMemoryMenu, false },
+		{"Texture", Debug::Texture::ShowMenu, false },
+		{"Mesh", Debug::Mesh::ShowMenu, false },
+		{"Actor", Debug::Actor::ShowMenu, false },
+		{"Checkpoint", Debug::Checkpoint::ShowMenu, false },
+		{"Event", Debug::Event::ShowMenu, true },
 
 	};
 

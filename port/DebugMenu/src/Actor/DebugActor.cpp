@@ -2,10 +2,7 @@
 
 #include <imgui.h>
 
-#include <glm/glm.hpp> 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "DebugProjection.h"
 
 #include "DebugSetting.h"
 #include "ActorManager.h"
@@ -14,16 +11,7 @@
 #include "DebugFrameBuffer.h"
 #include "DebugActorBehaviour.h"
 #include "ActorHero.h"
-#include "../../../../src/MathOps.h"
-
-namespace Renderer
-{
-	namespace Native
-	{
-		extern glm::mat4 gCachedViewMatrix;
-		extern glm::mat4 gCachedProjMatrix;
-	}
-}
+#include "MathOps.h"
 
 namespace Debug {
 	namespace Actor {
@@ -122,54 +110,21 @@ namespace Debug {
 		}
 	}
 
-	static bool WorldToScreen(const glm::vec3& worldPos, const glm::mat4& viewProjMatrix, ImVec2& screenPos) {
-		// Step 1: Multiply the world position by the view-projection matrix to get clip space coordinates
-		glm::vec4 clipSpacePos = viewProjMatrix * glm::vec4(worldPos, 1.0f);
-
-		// Because of revers ze, we need to check if the actor is behind the near clip plane
-		if (clipSpacePos.z > -g_DefaultNearClip_0044851c) {
-			return false; // The actor is behind the camera, don't draw it
-		}
-
-		Log::GetInstance().AddLog(LogLevel::Info, "Clip", "clipSpacePos.z {}", clipSpacePos.z);
-
-		// Step 2: Perform perspective divide (clip space -> normalized device coordinates)
-		if (clipSpacePos.w != 0.0f) {
-			clipSpacePos.x /= clipSpacePos.w;
-			clipSpacePos.y /= clipSpacePos.w;
-			clipSpacePos.z /= clipSpacePos.w;
-		}
-
-		clipSpacePos.y = -clipSpacePos.y; // Flip the y-axis
-
-		// Step 3: Map normalized device coordinates to screen space (from [-1,1] to [0, displaySize])
-		screenPos.x = ((clipSpacePos.x + 1.0f) * 0.5f) * FrameBuffer::GetGameWindowSize().x;
-		screenPos.y = ((1.0f - clipSpacePos.y) * 0.5f) * FrameBuffer::GetGameWindowSize().y;
-
-		if (screenPos.x < 0.0f || screenPos.x > FrameBuffer::GetGameWindowSize().x) {
-			return false;
-		}
-
-		if (screenPos.y < 0.0f || screenPos.y > FrameBuffer::GetGameWindowSize().y) {
-			return false;
-		}
-
-		return true;
-	}
-
 	static void ShowActorOverlay(CActor* pActor) {
-		const glm::vec3 heroLocation = glm::vec3(CActorHero::_gThis->currentLocation.x, CActorHero::_gThis->currentLocation.y, CActorHero::_gThis->currentLocation.z);
+		const edF32VECTOR4 heroLocation = CActorHero::_gThis->currentLocation;
+		const edF32VECTOR4 worldPos = pActor->currentLocation;
 
-		const glm::vec3 worldPos = glm::vec3(pActor->currentLocation.x, pActor->currentLocation.y, pActor->currentLocation.z);
+		// Calculate the distance between the hero and the actor the long way
+		float distance = sqrtf((worldPos.x - heroLocation.x) * (worldPos.x - heroLocation.x) +
+			(worldPos.y - heroLocation.y) * (worldPos.y - heroLocation.y) +
+			(worldPos.z - heroLocation.z) * (worldPos.z - heroLocation.z));
 
-		if (glm::distance(heroLocation, worldPos) > Actor::gActorInfoDistance) {
+		if (fabs(distance) > Actor::gActorInfoDistance) {
 			return;
 		}
 
-		Log::GetInstance().AddLog(LogLevel::Info, "Clip", "clipSpacePos.z {}", pActor->name);
-
 		ImVec2 screenPos;
-		if (WorldToScreen(worldPos, Renderer::Native::gCachedProjMatrix * Renderer::Native::gCachedViewMatrix, screenPos)) {
+		if (Projection::WorldToScreen(worldPos, screenPos)) {
 			std::string buff;
 
 			for (auto& [setting, func] : gOverlaySettings) {

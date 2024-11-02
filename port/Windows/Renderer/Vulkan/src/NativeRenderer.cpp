@@ -148,8 +148,8 @@ namespace Renderer
 			instance.indexStart = gNativeVertexBuffer.GetDrawBufferData().GetIndexTail();
 			instance.vertexStart = gNativeVertexBuffer.GetDrawBufferData().GetVertexTail();
 
-			NATIVE_LOG_VERBOSE(LogLevel::Info, "FillIndexData Filled instance: {} indexCount: {} indexStart: {} vertexStart: {}",
-				gCurrentDraw->instances.size() - 1, instance.indexCount, instance.indexStart, instance.vertexStart);
+			NATIVE_LOG_VERBOSE(LogLevel::Info, "FillIndexData Filled indexCount: {} indexStart: {} vertexStart: {}",
+				instance.indexCount, instance.indexStart, instance.vertexStart);
 
 			// Copy into the real buffer.
 			gNativeVertexBuffer.MergeData(vertexBufferData);
@@ -157,15 +157,6 @@ namespace Renderer
 			if (!gUsePreprocessedVertices) {
 				vertexBufferData.ResetAfterDraw();
 			}
-		}
-
-		void ProcessDraws()
-		{
-			//for (auto& draw : gDraws) {
-			//	for (auto& instance : draw.instances) {
-			//		FillIndexData(instance);
-			//	}
-			//}
 		}
 
 		void MergeIndexData()
@@ -361,6 +352,8 @@ namespace Renderer
 					return;
 				}
 
+				NATIVE_LOG_VERBOSE(LogLevel::Verbose, "RecordDrawCommand {}", pTexture->GetName());
+
 				const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
 				Debug::UpdateLabel(pTexture, cmd);
@@ -444,6 +437,73 @@ namespace Renderer
 			gCurrentDraw = Draw{};
 		}
 
+		void RecordBeginCommandBuffer()
+		{
+			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+
+			VkCommandBufferBeginInfo beginInfo{};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+			vkBeginCommandBuffer(cmd, &beginInfo);
+
+			Renderer::Debug::BeginLabel(cmd, "Native Render");
+
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = gRenderPass;
+			renderPassInfo.framebuffer = gFrameBuffer.framebuffer;
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = { gWidth, gHeight };
+
+			std::array<VkClearValue, 2> clearColors;
+			clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
+			clearColors[1] = { {0.0f, 0.0f } };
+			renderPassInfo.clearValueCount = clearColors.size();
+			renderPassInfo.pClearValues = clearColors.data();
+
+			vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			VkViewport viewport{};
+			viewport.x = 0.0f;
+			viewport.y = 0.0f;
+			viewport.width = (float)gWidth;
+			viewport.height = (float)gHeight;
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
+			vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+			const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
+			vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+			auto& pipeline = GetPipeline();
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+
+			gNativeVertexBuffer.BindBuffers(cmd);
+		}
+
+		void RecordEndCommandBuffer()
+		{
+			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+
+			UpdateConstantBuffers(gFinalViewMatrix, gFinalProjMatrix);
+			UpdateDescriptors();
+
+			gNativeVertexBuffer.MapData();
+
+			int textureIndex = 0;
+			int modelIndex = 0;
+
+			Debug::Reset();
+
+			gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
+
+			vkCmdEndRenderPass(cmd);
+
+			Renderer::Debug::EndLabel(cmd);
+			vkEndCommandBuffer(cmd);
+		}
+
 		class RenderThread
 		{
 		public:
@@ -452,78 +512,71 @@ namespace Renderer
 				thread = std::thread(&RenderThread::Run, this);
 
 				// Set thread name
-
 				SetThreadDescription(thread.native_handle(), L"RenderThread");
 			}
 
 			~RenderThread()
 			{
 				bShouldStop = true;
+				cv.notify_all();  // Ensure the thread wakes up to exit
 				thread.join();
 			}
 
 			void Run()
 			{
 				while (!bShouldStop) {
-					const bool bQueueEmpty = drawQueue.peek() == nullptr;
-					const bool bLastCommand = !bWaitingForCommands && bQueueEmpty;
+					std::unique_lock<std::mutex> lock(mutex);
+					cv.wait(lock, [this] { return !bWaitingForCommands || bShouldStop; });
 
-					if (!bQueueEmpty) {
-						Draw draw;
+					if (bShouldStop) break;
 
-						drawQueue.try_dequeue(draw);
+					timer.Start();
 
+					RecordBeginCommandBuffer();
+
+					for (auto& draw : draws) {
 						for (auto& instance : draw.instances) {
 							FillIndexData(instance);
 						}
 
 						drawDescriptorSetUpdate.UpdateDescriptors(draw, GetPipeline());
+					}
 
+					for (auto& draw : draws) {
 						drawCommandRecorder.RecordDrawCommand(draw, GetPipeline());
-
-						draws.emplace_back(std::move(draw));
 					}
 
-					if (bLastCommand) {
-						bComplete = true;
-						timer.End();
-					}
+					RecordEndCommandBuffer();
+
+					draws.clear();
+					timer.End();
+					bRecordedCommands = true;
+					bWaitingForCommands = true;
 				}
 			}
 
 			void AddDraw(const Draw& draw)
 			{
-				if (!bRecordingCommandBuffer) {
-					BeginCommandBuffer();
-				}
-
-				drawQueue.enqueue(draw);
+				std::lock_guard<std::mutex> lock(mutex);
+				draws.emplace_back(draw);
 			}
 
 			bool IsComplete()
 			{
-				return bComplete;
+				return bWaitingForCommands;
 			}
 
-			std::vector<Draw>& GetDraws()
+			bool GetHasRecordedCommands()
 			{
-				return draws;
+				return bRecordedCommands;
 			}
 
 			void Reset()
 			{
-				draws.clear();
 				drawDescriptorSetUpdate.Reset();
 				drawCommandRecorder.Reset();
 
-				// If we never started recording the command buffer, we need to start it now.
-				if (!bRecordingCommandBuffer) {
-					BeginCommandBuffer();
-				}
-
-				bRecordingCommandBuffer = false;
-				bWaitingForCommands = true;
-				bComplete = true;
+				bRecordedCommands = false;
 			}
 
 			double GetRenderThreadTime()
@@ -533,73 +586,27 @@ namespace Renderer
 
 			void SignalEndCommands()
 			{
-				bWaitingForCommands = false;
+				{
+					std::lock_guard<std::mutex> lock(mutex);
+					bWaitingForCommands = false;
+				}
+				cv.notify_one();
+
+				NATIVE_LOG(LogLevel::Info, "SignalEndCommands");
 			}
 
 		private:
-			void BeginCommandBuffer()
-			{
-				timer.Start();
-
-				bComplete = false;
-
-				const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
-
-				VkCommandBufferBeginInfo beginInfo{};
-				beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-				beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-				vkBeginCommandBuffer(cmd, &beginInfo);
-
-				Renderer::Debug::BeginLabel(cmd, "Native Render");
-
-				VkRenderPassBeginInfo renderPassInfo{};
-				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				renderPassInfo.renderPass = gRenderPass;
-				renderPassInfo.framebuffer = gFrameBuffer.framebuffer;
-				renderPassInfo.renderArea.offset = { 0, 0 };
-				renderPassInfo.renderArea.extent = { gWidth, gHeight };
-
-				std::array<VkClearValue, 2> clearColors;
-				clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
-				clearColors[1] = { {0.0f, 0.0f } };
-				renderPassInfo.clearValueCount = clearColors.size();
-				renderPassInfo.pClearValues = clearColors.data();
-
-				vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-				VkViewport viewport{};
-				viewport.x = 0.0f;
-				viewport.y = 0.0f;
-				viewport.width = (float)gWidth;
-				viewport.height = (float)gHeight;
-				viewport.minDepth = 0.0f;
-				viewport.maxDepth = 1.0f;
-				vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-				const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
-				vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-				auto& pipeline = GetPipeline();
-				vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
-
-				gNativeVertexBuffer.BindBuffers(cmd);
-
-				bRecordingCommandBuffer = true;
-			}
 
 			std::thread thread;
-			moodycamel::ReaderWriterQueue<Draw, 512> drawQueue;
 			std::vector<Draw> draws;
-
 			DrawDescritorSetUpdate drawDescriptorSetUpdate;
 			DrawCommandRecorder drawCommandRecorder;
-
 			std::atomic<bool> bShouldStop = false;
-			std::atomic<bool> bComplete = true;
 			std::atomic<bool> bWaitingForCommands = true;
+			std::atomic<bool> bRecordedCommands = false;
 
-			bool bRecordingCommandBuffer = false;
+			std::mutex mutex;
+			std::condition_variable cv;
 
 			struct Timer
 			{
@@ -860,6 +867,11 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 			// Spin
 		}
 
+		if (!gRenderThread->GetHasRecordedCommands()) {
+			RecordBeginCommandBuffer();
+			RecordEndCommandBuffer();
+		}
+
 		gRenderThread->Reset();
 	}
 
@@ -867,34 +879,18 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 	const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
-	UpdateConstantBuffers(gFinalViewMatrix, gFinalProjMatrix);
-	UpdateDescriptors();
-
-	gNativeVertexBuffer.MapData();
-
-	int textureIndex = 0;
-	int modelIndex = 0;
-
-	Debug::Reset();
-
-	gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
-
-	vkCmdEndRenderPass(cmd);
-
-	Renderer::Debug::EndLabel(cmd);
-	vkEndCommandBuffer(cmd);
-
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &cmd;
 
 	vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(GetGraphicsQueue());
 
 	gNativeVertexBuffer.Reset();
 
 	gAnimationMatrices.clear();
+
+	NATIVE_LOG(LogLevel::Info, "Renderer::Native::Render Complete!");
 }
 
 void Renderer::Native::BindTexture(SimpleTexture* pTexture)

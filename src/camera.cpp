@@ -274,13 +274,11 @@ bool CCamera::IsKindOfObject(ulong kind)
 
 void CCamera::Init()
 {
-	CEventManager* pEVar1;
-	ed_zone_3d* pEVar2;
+	ed_zone_3d* pZone;
 	S_ACTOR_STREAM_REF* pCVar3;
 	//Actor* pAVar4;
 	edF32VECTOR3 local_10;
 
-	pEVar1 = CScene::ptable.g_EventManager_006f5080;
 	edF32Matrix4ToEulerSoft(&this->transformationMatrix, &local_10, "ZXY");
 	SetAngleAlpha(local_10.x);
 	SetAngleBeta(local_10.y);
@@ -288,11 +286,11 @@ void CCamera::Init()
 	if ((this->flags_0xc & 2) != 0) {
 		this->field_0x7c = 0;
 
-		pEVar2 = (ed_zone_3d*)0x0;
+		pZone = (ed_zone_3d*)0x0;
 		if (this->field_0x80.index != -1) {
-			pEVar2 = edEventGetChunkZone(pEVar1->activeChunkId, this->field_0x80.index);
+			pZone = edEventGetChunkZone(CScene::ptable.g_EventManager_006f5080->activeChunkId, this->field_0x80.index);
 		}
-		this->field_0x80.pObj = STORE_SECTION(pEVar2);
+		this->field_0x80.pObj = STORE_SECTION(pZone);
 
 		pCVar3 = this->field_0x84;
 
@@ -638,13 +636,10 @@ void CCamera::ManageEvents()
 
 void CCameraExt::Init()
 {
-	CEventManager* pEVar1;
-	ed_zone_3d* pEVar2;
+	ed_zone_3d* pZone;
 	S_ACTOR_STREAM_REF* pCVar3;
 	//Actor* pAVar4;
 	edF32VECTOR3 local_10;
-
-	pEVar1 = CScene::ptable.g_EventManager_006f5080;
 
 	edF32Matrix4ToEulerSoft(&this->transformationMatrix, &local_10, "ZXY");
 
@@ -655,11 +650,11 @@ void CCameraExt::Init()
 	if ((this->flags_0xc & 2) != 0) {
 		this->field_0x7c = 0;
 
-		pEVar2 = (ed_zone_3d*)0x0;
+		pZone = (ed_zone_3d*)0x0;
 		if (this->field_0x80.index != -1) {
-			pEVar2 = edEventGetChunkZone(pEVar1->activeChunkId, this->field_0x80.index);
+			pZone = edEventGetChunkZone(CScene::ptable.g_EventManager_006f5080->activeChunkId, this->field_0x80.index);
 		}
-		this->field_0x80.pObj = STORE_SECTION(pEVar2);
+		this->field_0x80.pObj = STORE_SECTION(pZone);
 
 		pCVar3 = this->field_0x84;
 		

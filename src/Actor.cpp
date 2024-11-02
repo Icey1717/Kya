@@ -3360,13 +3360,12 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 	return;
 }
 
-int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* pEventData)
 {
 	bool bVar1;
-	int iVar2;
+	int eventType;
 	CBehaviour* pCVar3;
 	CWayPoint* pCVar4;
-	int* piVar5;
 	long lVar6;
 	edF32VECTOR4 local_c0;
 	edF32VECTOR4 local_b0;
@@ -3377,20 +3376,17 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 	float local_70;
 	undefined4* local_14;
 	int local_10;
-	int local_c;
 	int local_8;
 	int local_4;
 
 	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveEvent {} {}", this->name, param_4);
 
-	piVar5 = (int*)param_5;
-	iVar2 = *piVar5;
-	local_c = piVar5[1];
+	eventType = pEventData[0];
 
-	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveEvent {} type: {} param: {}", this->name, iVar2, local_c);
+	ACTOR_LOG(LogLevel::Info, "CActor::ReceiveEvent {} type: {} param: {}", this->name, eventType, pEventData[1]);
 
-	if (iVar2 == 0x16) {
-		switch (local_c) {
+	if (eventType == 0x16) {
+		switch (pEventData[1]) {
 		case 0:
 			local_a0[0] = 0;
 			local_98 = 0;
@@ -3399,7 +3395,7 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 		case 2:
 		case 5:
 			IMPLEMENTATION_GUARD(
-			if (local_c == 1) {
+			if (pEventData[1] == 1) {
 				local_a0[0] = 1;
 			}
 			else {
@@ -3409,8 +3405,8 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 				local_a0[0] = 2;
 			}
 			local_98 = 1;
-			iVar2 = piVar5[3];
-			if (iVar2 == -1) {
+			eventType = piVar5[3];
+			if (eventType == -1) {
 				local_80.x = (this->rotationQuat).x;
 				local_80.y = (this->rotationQuat).y;
 				local_80.z = (this->rotationQuat).z;
@@ -3419,8 +3415,8 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 			else {
 				pCVar4 = (CWayPoint*)0x0;
 				local_b0.x = fRam00000000;
-				if (iVar2 != -1) {
-					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + iVar2;
+				if (eventType != -1) {
+					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + eventType;
 					local_b0.x = (pCVar4->field_0x0).x;
 				}
 				local_b0.y = (pCVar4->field_0x0).y;
@@ -3439,15 +3435,15 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 			IMPLEMENTATION_GUARD(
 			local_a0[0] = 10;
 			local_98 = 1;
-			iVar2 = piVar5[3];
-			if (iVar2 == -1) {
+			eventType = piVar5[3];
+			if (eventType == -1) {
 				edF32Vector4ScaleHard(-1.0f, &local_80, &this->rotationQuat);
 			}
 			else {
 				pCVar4 = (CWayPoint*)0x0;
 				local_c0.x = fRam00000000;
-				if (iVar2 != -1) {
-					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + iVar2;
+				if (eventType != -1) {
+					pCVar4 = (CScene::ptable.g_CWayPointManager_0045169c)->aWaypoints + eventType;
 					local_c0.x = (pCVar4->field_0x0).x;
 				}
 				local_c0.y = (pCVar4->field_0x0).y;
@@ -3469,44 +3465,47 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 			local_a0[0] = 6;
 		}
 		local_14 = local_a0;
-		local_94 = piVar5[2];
+		local_94 = pEventData[2];
 		if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-			iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)2, (MSG_PARAM)local_14);
-			return iVar2;
+			eventType = ReceiveMessage(this, (ACTOR_MESSAGE)2, (MSG_PARAM)local_14);
+			return eventType;
 		}
 		return 0;
 	}
-	if (iVar2 == 0x15) {
-		if (local_c != 0x7f) {
-			local_10 = piVar5[2];
+
+	if (eventType == 0x15) {
+		if (pEventData[1] != 0x7f) {
+			local_10 = pEventData[2];
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)local_c, (MSG_PARAM)local_10);
-				return iVar2;
+				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)pEventData[1], (MSG_PARAM)local_10);
+				return eventType;
 			}
 			return 0;
 		}
 	}
 	else {
-		if (iVar2 == 0x14) {
+		if (eventType == 0x14) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)0xe, (MSG_PARAM)local_c);
-				return iVar2;
+				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0xe, (MSG_PARAM)pEventData[1]);
+				return eventType;
 			}
 			return 0;
 		}
-		if (iVar2 == 0x13) {
+
+		if (eventType == 0x13) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-				local_8 = local_c;
-				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)0x10, (MSG_PARAM)local_c);
-				return iVar2;
+				local_8 = pEventData[1];
+				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0x10, (MSG_PARAM)pEventData[1]);
+				return eventType;
 			}
 			return 0;
 		}
-		if (iVar2 == 0x12) {
+
+		if (eventType == 0x12) {
 			if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
-				local_4 = local_c;
-				iVar2 = ReceiveMessage(this, (ACTOR_MESSAGE)0xf, (MSG_PARAM)local_c);
-				return iVar2;
+				local_4 = pEventData[1];
+				eventType = ReceiveMessage(this, (ACTOR_MESSAGE)0xf, (MSG_PARAM)pEventData[1]);
+				return eventType;
 			}
 			return 0;
 		}
@@ -3516,11 +3515,11 @@ int CActor::ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int
 	pCVar3 = GetBehaviour(this->curBehaviourId);
 
 	if (pCVar3 != (CBehaviour*)0x0) {
-		lVar6 = pCVar3->InterpretEvent(pEventMessage, param_3, param_4, param_5);
+		lVar6 = pCVar3->InterpretEvent(pEventMessage, param_3, param_4, pEventData);
 	}
 
 	if (lVar6 == 0) {
-		lVar6 = this->InterpretEvent(pEventMessage, param_3, param_4, param_5);
+		lVar6 = this->InterpretEvent(pEventMessage, param_3, param_4, pEventData);
 	}
 
 	return (int)lVar6;
