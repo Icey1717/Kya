@@ -1407,9 +1407,11 @@ int CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgPar
 	else {
 		bHandled = pBehaviour->InterpretMessage(pSender, msg, pMsgParam);
 	}
+
 	if (bHandled == 0) {
 		bHandled = InterpretMessage(pSender, msg, pMsgParam);
 	}
+
 	return bHandled;
 }
 
@@ -3902,12 +3904,12 @@ bool CActor::SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4*
 	return ret;
 }
 
-void CActor::SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition)
+void CActor::SV_GetBoneDefaultWorldPosition(uint boneId, edF32VECTOR4* pOutPosition)
 {
 	edF32MATRIX4 eStack16;
-	IMPLEMENTATION_GUARD(
-	CAnimation::GetDefaultBoneMatrix(this->pAnimationController, param_2, (long)(int)&eStack16);
-	edF32Matrix4MulF32Vector4Hard(pOutPosition, (edF32MATRIX4*)this->pMeshTransform, (edF32VECTOR4*)&eStack16.da);)
+	this->pAnimationController->GetDefaultBoneMatrix(boneId, &eStack16);
+	edF32Matrix4MulF32Vector4Hard(pOutPosition, &this->pMeshTransform->base.transformA, &eStack16.rowT);
+
 	return;
 }
 
@@ -4655,4 +4657,47 @@ CAddOn::CAddOn()
 {
 	this->pOwner = (CActor*)0x0;
 	this->field_0x8 = 0;
+}
+
+bool CActorsTable::IsInList(CActor* pActor)
+{
+	CActor** piVar1;
+	int iVar2;
+
+	piVar1 = this->aEntries;
+	iVar2 = 0;
+	if (0 < this->entryCount) {
+		do {
+			if (pActor == (*piVar1)) {
+				return true;
+			}
+
+			iVar2 = iVar2 + 1;
+			piVar1 = piVar1 + 1;
+		} while (iVar2 < this->entryCount);
+	}
+
+	return false;
+}
+
+// temlate specialization for is in list but with int
+bool CActorsTable::IsInList(int typeId)
+{
+	CActor** piVar1;
+	int iVar2;
+
+	piVar1 = this->aEntries;
+	iVar2 = 0;
+	if (0 < this->entryCount) {
+		do {
+			if (typeId == (*piVar1)->typeID) {
+				return true;
+			}
+
+			iVar2 = iVar2 + 1;
+			piVar1 = piVar1 + 1;
+		} while (iVar2 < this->entryCount);
+	}
+
+	return false;
 }

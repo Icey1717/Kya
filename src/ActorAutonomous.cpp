@@ -1281,7 +1281,7 @@ void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, uint msgPa
 	float fVar2;
 	int iVar3;
 	float fVar4;
-	CFixedTable<CActor*, 64> local_130;
+	CActorsTable local_130;
 	edF32VECTOR4 local_20;
 	uint local_8;
 	uint local_4;

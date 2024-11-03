@@ -4,7 +4,6 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorHero.h"
-#include "ActorHero_Inventory.h"
 
 enum EBoomyThrowState
 {
@@ -15,12 +14,6 @@ enum EBoomyThrowState
 	BTS_TargettedThrow,
 	BTS_ControlledThrow,
 	BTS_Unknown_6
-};
-
-struct BounceParams
-{
-	edF32VECTOR4 field_0x0;
-	float field_0x10;
 };
 
 class CCamera;
@@ -152,6 +145,8 @@ public:
 	void StateHeroTrampolineJump_1_2Init();
 	void StateHeroTrampolineJump_1_2Term();
 	void StateHeroTrampolineJump_1_2(float param_1);
+
+	void StateHeroTrampolineStomachToFall(float param_1);
 
 	inline void StateHeroRunTerm() {}
 	void StateHeroRun();
@@ -303,10 +298,6 @@ public:
 	int field_0x1010;
 
 	float field_0x102c;
-
-	CInventoryInterface inventory;
-	CMagicInterface magicInterface;
-	CMoneyInterface moneyInterface;
 
 	CFxHandle* field_0x10fc;
 	int* field_0x1100;

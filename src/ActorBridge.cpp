@@ -497,9 +497,9 @@ CActorBridge::CActorBridge()
 		pfVar5[1] = fVar1;
 		pfVar5 = pfVar5 + 2;
 	} while (0 < iVar4);
-	(this->openBoxConstraint).field_0xc = (float)&DAT_bf000000;
-	(this->openBoxConstraint).field_0x10 = (float)&DAT_bf000000;
-	(this->openBoxConstraint).field_0x14 = (float)&DAT_bf000000;
+	(this->openBoxConstraint).field_0xc = -0.5f;
+	(this->openBoxConstraint).field_0x10 = -0.5f;
+	(this->openBoxConstraint).field_0x14 = -0.5f;
 	(this->openBoxConstraint).field_0x18 = 0.0;
 	(this->openBoxConstraint).field_0x1c = 0.5;
 	(this->openBoxConstraint).field_0x20 = 0.5;
@@ -808,9 +808,9 @@ void CActorBridge::Initialize()
 		peVar10->ab = fVar18;
 		peVar10 = (edF32MATRIX4*)&peVar10->ac;
 	} while (0 < iVar7);
-	(this->field_0x180).x = (float)&DAT_bf000000;
-	(this->field_0x180).y = (float)&DAT_bf000000;
-	(this->field_0x180).z = (float)&DAT_bf000000;
+	(this->field_0x180).x = -0.5f;
+	(this->field_0x180).y = -0.5f;
+	(this->field_0x180).z = -0.5f;
 	(this->field_0x180).w = 0.0;
 	(this->field_0x190).x = 0.5;
 	(this->field_0x190).y = 0.5;

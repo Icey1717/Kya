@@ -6,6 +6,7 @@
 #include "FileManager3D.h"
 #include "CameraViewManager.h"
 #include "TimeController.h"
+#include "ActorHero.h"
 
 StateConfig CActorSwitch::_gStateCfg_SWT[5] = {
 	StateConfig(0x0, 0x4),
@@ -451,6 +452,36 @@ void CBehaviourSwitchMagic::InitState(int newState)
 	}
 
 	return;
+}
+
+int CBehaviourSwitchMagic::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorSwitch* pSwitch;
+	float magicalForce;
+
+	if (msg == 0x30) {
+		if ((this->field_0xc < this->field_0x8) && (magicalForce = CActorHero::_gThis->GetMagicalForce(), 0.0f < magicalForce)) {
+			pSwitch = this->pOwner;
+			pSwitch->SetState(6, -1);
+			return 1;
+		}
+	}
+	else {
+		if (msg == 0x2f) {
+			if (this->field_0x8 <= this->field_0xc) {
+				return 0;
+			}
+
+			magicalForce = CActorHero::_gThis->GetMagicalForce();
+			if (magicalForce < this->field_0x8 - this->field_0xc) {
+				return 4;
+			}
+
+			return 2;
+		}
+	}
+
+	return 0;
 }
 
 void CBehaviourSwitchMagic::ChangeManageState(int state)

@@ -1388,7 +1388,7 @@ uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0)
 	edColINFO_OBBTREE_OBBTREE colInfoObbTreeObbTree;
 	edF32VECTOR4 worldBoundingSphere;
 	edF32MATRIX4 worldBoundingSphereMatrix;
-	CFixedTable<CActor*, 64> actorIntersectTable;
+	CActorsTable actorIntersectTable;
 	ClusterCallbackParams clusterCallbackParams;
 	CActorHero* pActorHero;
 

@@ -794,6 +794,13 @@ public:
 	}
 };
 
+class CActor;
+class CActorsTable : public CFixedTable<CActor*, 64>
+{
+public:
+	bool IsInList(CActor* pActor);
+	bool IsInList(int value);
+};
 
 PACK(
 	struct ed_zone_3d {
@@ -802,9 +809,6 @@ PACK(
 	uint flags;
 	int pMatrix; // edF32MATRIX4*
 };)
-
-class CActor;
-typedef CFixedTable<CActor*, 64> CActorsTable;
 
 // This shows up when the VIF0 does an MR32.w to zero out the w element of the vector register.
 // Define it here and check wherever it shows up in the code to make sure an appropriate MR32.w inst is ther.

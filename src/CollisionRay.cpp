@@ -111,7 +111,7 @@ float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint f
 	ClusterCallbackParams_0x10 callbackParams;
 	S_BOUNDING_BOX boundingBox;
 	edF32VECTOR4 local_120;
-	CFixedTable<CActor*, 64> actorIntersectingBoxTable;
+	CActorsTable actorIntersectingBoxTable;
 
 	actorIntersectingBoxTable.entryCount = 0;
 

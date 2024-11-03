@@ -5,6 +5,7 @@
 #include "LargeObject.h"
 
 struct ed_event_chunk;
+class CActor;
 
 struct ed_event {
 	uint flags;

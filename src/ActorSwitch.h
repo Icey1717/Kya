@@ -70,7 +70,7 @@ public:
 	virtual void End(int newBehaviourId) { IMPLEMENTATION_GUARD(); }
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }

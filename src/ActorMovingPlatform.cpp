@@ -1348,7 +1348,6 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 	short sVar7;
 	int iVar8;
 	int iVar9;
-	int iVar10;
 	uint uVar11;
 	int iVar12;
 	int local_80;
@@ -1455,14 +1454,14 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 
 		iVar12 = 0;
 		if (0 < iVar8) {
-			iVar10 = 0;
-			IMPLEMENTATION_GUARD(
 			do {
-				iVar9 = (int)&this->pCameraStream->entryCount + iVar10;
-				if ((*(int*)(iVar9 + 4) == 4) && ((long)sVar7 == (long)*(int*)(iVar9 + 8))) {
-					S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar9 + 0xc), this);
-					S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar9 + 0xc), this);
-					S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar9 + 0x28), this);
+				S_BRIDGE_CAMERA_STREAM_ENTRY* pStreamEntry = this->pCameraStream->aEntries + iVar12;
+				if ((pStreamEntry->field_0x4 == 4) && (sVar7 == pStreamEntry->streamTarget.pRef)) {
+					pStreamEntry->streamTarget.Switch(this);
+					pStreamEntry->streamTarget.PostSwitch(this);
+					pStreamEntry->streamCameraEvent.SwitchOn(this);
+		
+					IMPLEMENTATION_GUARD_AUDIO(
 					piVar1 = *(int**)(iVar9 + 0x48);
 					if (piVar1 != (int*)0x0) {
 						uVar2 = *(uint*)&this->pActorSound->field_0x4;
@@ -1477,11 +1476,11 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 								break;
 							}
 						}
-					}
+					})
 				}
+
 				iVar12 = iVar12 + 1;
-				iVar10 = iVar10 + 0x48;
-			} while (iVar12 < iVar8);)
+			} while (iVar12 < iVar8);
 		}
 	}
 
@@ -1773,6 +1772,115 @@ bool CActorMovingPlatform::StateTrajectory(float currentFillAmount, CBehaviourPl
 	}
 
 	return bVar4;
+}
+
+void CActorMovingPlatform::BehaviourTrajectory_Switch(CBehaviourPlatformTrajectory* pBehaviour, int msg)
+{
+	CSound* pSound;
+	StateConfig* pSVar1;
+	Timer* pTVar2;
+	S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry;
+	uint uVar4;
+	uint uVar6;
+	int iVar7;
+	int iVar8;
+
+	if (msg == 0xe) {
+		iVar8 = this->actorState;
+		if (iVar8 == -1) {
+			uVar4 = 0;
+		}
+		else {
+			pSVar1 = GetStateCfg(iVar8);
+			uVar4 = pSVar1->flags_0x4 & 0x100;
+		}
+
+		if (uVar4 == 0) {
+			BehaviourTrajectory_Switch(pBehaviour, 0xf);
+		}
+		else {
+			BehaviourTrajectory_Switch(pBehaviour, 0x10);
+		}
+	}
+	else {
+		if (msg == 0x10) {
+			if ((this->pProperties->flags_0x24 & 0x200) == 0) {
+				iVar8 = this->actorState;
+				if (iVar8 == -1) {
+					uVar4 = 0;
+				}
+				else {
+					pSVar1 = GetStateCfg(iVar8);
+					uVar4 = pSVar1->flags_0x4 & 0x100;
+				}
+
+				if ((uVar4 != 0) && ((this->pProperties->flags_0x24 & 8) != 0)) {
+					SetState(6, -1);
+					iVar8 = 0;
+
+					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
+						iVar8 = this->pCameraStream->entryCount;
+					}
+
+					iVar7 = 0;
+					if (0 < iVar8) {
+						do {
+							pEntry = this->pCameraStream->aEntries + iVar7;
+							if (pEntry->field_0x4 == 0) {
+								pEntry->streamTarget.Switch(this);
+								pEntry->streamTarget.PostSwitch(this);
+								pEntry->streamCameraEvent.SwitchOn(this);
+
+								IMPLEMENTATION_GUARD_AUDIO(
+								pSound = *(CSound**)(pEntry + 0x48);
+								if (pSound != (CSound*)0x0) {
+									uVar4 = *(uint*)&this->pActorSound->field_0x4;
+									uVar6 = (uint)((this->movingPlatformFlags & 1) != 0);
+									if ((this->movingPlatformFlags & 2) != 0) {
+										uVar6 = uVar6 + 1;
+									}
+									for (; uVar6 < uVar4; uVar6 = uVar6 + 1) {
+										pEntry = CActorSound::IsInstanceAlive(this->pActorSound, uVar6);
+										if (pEntry == 0) {
+											CActorSound::SoundStart
+											(this->pActorSound, (CActor*)this, uVar6, pSound, 1, 0, (SOUND_SPATIALIZATION_PARAM*)0x0);
+											break;
+										}
+									}
+								})
+							}
+
+							iVar7 = iVar7 + 1;
+						} while (iVar7 < iVar8);
+					}
+				}
+			}
+			else {
+				/* Transition to the drain state. */
+				SetState(8, -1);
+			}
+		}
+		else {
+			if (msg == 0xf) {
+				iVar8 = this->actorState;
+				if (iVar8 == -1) {
+					uVar4 = 0;
+				}
+				else {
+					pSVar1 = GetStateCfg(iVar8);
+					uVar4 = pSVar1->flags_0x4 & 0x100;
+				}
+				if (uVar4 == 0) {
+					/* Transition this to the fill state. */
+					SetState(5, -1);
+					pTVar2 = GetTimer();
+					pBehaviour->goalAmount_0x30 = (pBehaviour->field_0x28 + pTVar2->scaledTotalTime) - (pBehaviour->currentFillAmount_0x38).field_0x0;
+				}
+			}
+		}
+	}
+
+	return;
 }
 
 void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajectory* pBehaviour)
@@ -2842,19 +2950,19 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 	return uVar5;
 }
 
-int CActorMovingPlatform::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)
+int CActorMovingPlatform::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* pEventData)
 {
 	int iVar1;
 
-	if ((*param_5 == 1) && (param_3 == 2)) {
-		if (param_5[1] == 0) {
+	if ((pEventData[0] == 1) && (param_3 == 2)) {
+		if (pEventData[1] == 0) {
 			IMPLEMENTATION_GUARD(
 			Die(this, 1);)
 		}
 		iVar1 = 1;
 	}
 	else {
-		iVar1 = CActor::InterpretEvent(pEventMessage, (uint)param_3, param_4, param_5);
+		iVar1 = CActor::InterpretEvent(pEventMessage, (uint)param_3, param_4, pEventData);
 	}
 
 	return iVar1;
@@ -3711,9 +3819,165 @@ void CBehaviourPlatformTrajectory::Begin(CActor* pOwner, int newState, int newAn
 	this->currentFillAmount_0x38.field_0x8 = this->currentFillAmount_0x38.field_0x4;
 }
 
+void CBehaviourPlatformTrajectory::End(int newBehaviourId)
+{
+	CCollision* pCol;
+
+	pCol = this->pOwner->pCollisionData;
+	if (pCol != (CCollision*)0x0) {
+		pCol->flags_0x0 = pCol->flags_0x0 & 0xffdfffff;
+	}
+
+	return;
+}
+
+int CBehaviourPlatformTrajectory::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CPathFollow* pCVar1;
+	int iVar2;
+	Timer* pTVar3;
+	float fVar4;
+	float local_18;
+	int local_14;
+	int local_10;
+	float local_c;
+	int local_8;
+	int local_4;
+
+	if (msg == 0x68) {
+		IMPLEMENTATION_GUARD(
+		pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+		if (pCVar1 != (CPathFollow*)0x0) {
+			CPathFollowReaderAbsolute::ComputeSegment
+			((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, &local_10, &local_14, &local_18);
+			if (local_18 < 0.5) {
+				local_10 = local_14;
+			}
+			local_10 = local_10 + -1;
+			if (local_10 < pCVar1->field_0x14) {
+				if ((pCVar1->type == 0) || (pCVar1->mode == 1)) {
+					if (local_10 < 0) {
+						local_10 = 0;
+					}
+				}
+				else {
+					local_10 = pCVar1->splinePointCount + -1;
+				}
+			}
+			pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+			if (((local_10 < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= local_10)) {
+				local_10 = 0;
+			}
+			CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
+			((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, local_10, &this->field_0x34,
+				(float*)&this->currentFillAmount_0x38);
+			(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 10, -1);
+			pTVar3 = GetTimer();
+			fVar4 = (this->currentFillAmount_0x38).field_0x0;
+			if (fVar4 <= this->field_0x34) {
+				this->goalAmount_0x30 = (this->field_0x28 + pTVar3->scaledTotalTime) - fVar4;
+			}
+			else {
+				this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
+			}
+		}
+		iVar2 = 1;)
+	}
+	else {
+		if (msg == 0x67) {
+			IMPLEMENTATION_GUARD(
+			pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+			if (pCVar1 != (CPathFollow*)0x0) {
+				CPathFollowReaderAbsolute::ComputeSegment
+				((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, &local_4, &local_8, &local_c);
+				if (local_c < 0.5) {
+					local_4 = local_8;
+				}
+				local_4 = local_4 + 1;
+				if (pCVar1->splinePointCount <= local_4) {
+					if ((pCVar1->type == 0) || (pCVar1->mode == 1)) {
+						local_4 = pCVar1->splinePointCount + -1;
+					}
+					else {
+						local_4 = pCVar1->field_0x14;
+					}
+				}
+				pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+				if (((local_4 < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= local_4)) {
+					local_4 = 0;
+				}
+				CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
+				((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, local_4, &this->field_0x34,
+					(float*)&this->currentFillAmount_0x38);
+				(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 10, -1);
+				pTVar3 = GetTimer();
+				fVar4 = (this->currentFillAmount_0x38).field_0x0;
+				if (fVar4 <= this->field_0x34) {
+					this->goalAmount_0x30 = (this->field_0x28 + pTVar3->scaledTotalTime) - fVar4;
+				}
+				else {
+					this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
+				}
+			}
+			iVar2 = 1;)
+		}
+		else {
+			if (msg == 0x3b) {
+				IMPLEMENTATION_GUARD(
+				pCVar1 = (this->pathFollowReaderAbs).pActor3C_0x0;
+				if ((((int)pMsgParam < 0) || (pCVar1 == (CPathFollow*)0x0)) || (pCVar1->splinePointCount <= (int)pMsgParam)) {
+					pMsgParam = (void*)0x0;
+				}
+				CPathFollowReaderAbsolute::GetClosestTimeToReachWaypoint
+				((this->currentFillAmount_0x38).field_0x0, &this->pathFollowReaderAbs, (int)pMsgParam, &this->field_0x34,
+					(float*)&this->currentFillAmount_0x38);
+				(*((this->pOwner->base).base.pVTable)->SetState)((CActor*)this->pOwner, 10, -1);
+				pTVar3 = GetTimer();
+				fVar4 = (this->currentFillAmount_0x38).field_0x0;
+				if (fVar4 <= this->field_0x34) {
+					this->goalAmount_0x30 = (this->field_0x28 + pTVar3->scaledTotalTime) - fVar4;
+				}
+				else {
+					this->goalAmount_0x30 = fVar4 + this->field_0x28 + pTVar3->scaledTotalTime;
+				}
+				iVar2 = 1;)
+			}
+			else {
+				if (msg == 0xd) {
+					IMPLEMENTATION_GUARD(
+					if (*(int*)((int)pMsgParam + 4) != 0) {
+						this->pOwner->BehaviourTrajectory_Switch(this, 0xf);
+					}
+					iVar2 = 1;)
+				}
+				else {
+					if (((msg == 0xe) || (msg == 0x10)) || (msg == 0xf)) {
+						this->pOwner->BehaviourTrajectory_Switch(this, msg);
+						iVar2 = 1;
+					}
+					else {
+						iVar2 = 0;
+					}
+				}
+			}
+		}
+	}
+	return iVar2;
+}
+
 void CBehaviourPlatformTrajectory::Manage()
 {
 	this->pOwner->BehaviourTrajectory_Manage(this);
+}
+
+void CBehaviourPlatformTrajectory::ManageFrozen()
+{
+	if ((GameFlags & 0x20) == 0) {
+		this->pOwner->Platform_UpdateMatrixOnTrajectory(&this->pathFollowReaderAbs, 0, 0, &this->currentFillAmount_0x38, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+		this->pOwner->GenericManage(1, 0, (this->currentFillAmount_0x38).field_0x4, (this->currentFillAmount_0x38).field_0x6);
+	}
+
+	return;
 }
 
 float dot_quat(edF32VECTOR4* a, edF32VECTOR4* b)

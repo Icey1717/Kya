@@ -2803,8 +2803,6 @@ void CAnimation::RegisterBone(uint boneId)
 			if ((pSkeleton->flags & 2) == 0) {
 				boneCount = pSkeleton->boneCount;
 
-
-
 				edF32MATRIX4* pDst = reinterpret_cast<edF32MATRIX4*>(reinterpret_cast<char*>(pSkeleton) + ((boneCount * 0xc + 0x13) & 0xfffffff0) + ((boneCount * 2 + boneCount) * 4 + boneNodeIndex * 0x10) * 4);
 
 				edF32Matrix4CopyHard(&pBoneData->matrix, pDst);
@@ -2813,9 +2811,9 @@ void CAnimation::RegisterBone(uint boneId)
 			else {
 				boneCount = pSkeleton->boneCount;
 				
-				edF32MATRIX4* pDst = reinterpret_cast<edF32MATRIX4*>(reinterpret_cast<char*>(pSkeleton) + ((boneCount * 0xc + 0x13) & 0xfffffff0) + ((boneCount * 2 + boneCount) * 4 + boneNodeIndex * 0x10) * 4);
+				edF32VECTOR4* pDst = reinterpret_cast<edF32VECTOR4*>(reinterpret_cast<char*>(pSkeleton) + ((boneCount * 0xc + 0x13) & 0xfffffff0) + ((boneCount * 2 + boneCount) * 4 + boneNodeIndex * 0x4) * 4);
 
-				local_10 = pDst->rowX;
+				local_10 = *pDst;
 
 				edF32Vector4GetNegHard(&local_10, &local_10);
 
@@ -2972,4 +2970,50 @@ edF32MATRIX4* CAnimation::GetCurBoneMatrix(uint boneId)
 	}
 
 	return &pAnimMatrixData->matrix;
+}
+
+void CAnimation::GetDefaultBoneMatrix(uint boneId, edF32MATRIX4* pDefaultMatrix)
+{
+	ushort boneCount;
+	edANM_SKELETON* pSkeleton;
+	float fVar3;
+	int nodeId;
+	float* pfVar5;
+	edF32MATRIX4* peVar6;
+	edF32MATRIX4* peVar7;
+	edF32VECTOR4 local_10;
+
+	nodeId = -1;
+	if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
+		nodeId = this->anmSkeleton.NodeIndexFromID(boneId);
+	}
+
+	if (nodeId == -1) {
+		nodeId = 0;
+	}
+
+	pSkeleton = (this->anmSkeleton).pTag;
+	if ((pSkeleton->flags & 2) == 0) {
+		boneCount = pSkeleton->boneCount;
+
+		edF32MATRIX4* pDst = reinterpret_cast<edF32MATRIX4*>(reinterpret_cast<char*>(pSkeleton) + ((boneCount * 0xc + 0x13) & 0xfffffff0) + ((boneCount * 2 + boneCount) * 4 + nodeId * 0x10) * 4);
+
+		edF32Matrix4CopyHard(pDefaultMatrix, pDst);
+		edF32Matrix4InverseSoft(pDefaultMatrix);
+	}
+	else {
+		boneCount = pSkeleton->boneCount;
+		
+		edF32VECTOR4* pDst = reinterpret_cast<edF32VECTOR4*>(reinterpret_cast<char*>(pSkeleton) + ((boneCount * 0xc + 0x13) & 0xfffffff0) + ((boneCount * 2 + boneCount) * 4 + nodeId * 0x4) * 4);
+
+		local_10 = *pDst;
+
+		edF32Vector4GetNegHard(&local_10, &local_10);
+
+		*pDefaultMatrix = gF32Matrix4Unit;
+		pDefaultMatrix->rowT.xyz = local_10.xyz;
+		pDefaultMatrix->rowT.w = 1.0f;
+	}
+
+	return;
 }

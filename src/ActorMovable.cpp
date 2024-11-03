@@ -1502,6 +1502,24 @@ float CActorMovable::SV_MOV_GetAccelerationFromDistAndSpeed(float param_1, float
 	return fVar1;
 }
 
+void CActorMovable::SV_MOV_AddSpeedVector(edF32VECTOR4* pSpeedVector)
+{
+	float fVar1;
+	edF32VECTOR4 local_10;
+
+	edF32Vector4ScaleHard((this->dynamic).speed, &local_10, &this->dynamic.rotationQuat);
+	edF32Vector4AddHard(&local_10, &local_10, pSpeedVector);
+
+	fVar1 = edF32Vector4SafeNormalize0Hard(&local_10, &local_10);
+	(this->dynamic).speed = fVar1;
+
+	if (0.001f < fVar1) {
+		(this->dynamic).rotationQuat = local_10;
+	}
+
+	return;
+}
+
 float CActorMovable::FUN_00120250(float param_1)
 {
 	Timer* pTVar1;

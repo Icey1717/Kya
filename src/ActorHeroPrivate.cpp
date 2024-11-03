@@ -895,7 +895,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 	int iVar2;
 	int iVar3;
 	CActor** ppCVar4;
-	CActorsTable* pCVar5;
+	CActor** pCVar5;
 	int iVar6;
 	float fVar7;
 	float fVar8;
@@ -913,35 +913,33 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 	iVar3 = 0;
 	iVar2 = pTable->entryCount;
 	if (0 < iVar2) {
-		IMPLEMENTATION_GUARD(
 		local_4 = 0;
-		pCVar5 = pTable;
+		pCVar5 = pTable->aEntries;
 		while (iVar2 = pTable->entryCount, iVar3 < iVar2) {
-			iVar2 = CActor::DoMessage(this, pCVar5->aEntries[0], 0x2f, local_4);
+			iVar2 = DoMessage(*pCVar5, (ACTOR_MESSAGE)0x2f, (MSG_PARAM)local_4);
 			if (iVar2 == 4) {
 				pTable->Pop(iVar3);
 			}
 			else {
-				pCVar5 = (CActorsTable*)pCVar5->aEntries;
+				pCVar5 = pCVar5 + 1;
 				iVar3 = iVar3 + 1;
 			}
-		})
+		}
 	}
 
 	if (iVar2 != 0) {
-		IMPLEMENTATION_GUARD(
-		iVar2 = CActorsTable::IsInList((int*)pTable, 9);
+		iVar2 = pTable->IsInList(WOLFEN);
 		if (iVar2 == 0) {
-			iVar2 = CActorsTable::IsInList((int*)pTable, 0x11);
+			iVar2 = pTable->IsInList(SWITCH);
 			if (iVar2 == 0) {
-				iVar2 = CActorsTable::IsInList((int*)pTable, 0x14);
+				iVar2 = pTable->IsInList(AMBER);
 				if (iVar2 != 0) {
 					iVar2 = 0;
-					pCVar5 = pTable;
+					pCVar5 = pTable->aEntries;
 					if (0 < pTable->entryCount) {
 						do {
-							if (pCVar5->aEntries[0]->typeID == 0x14) {
-								pCVar5 = (CActorsTable*)pCVar5->aEntries;
+							if ((*pCVar5)->typeID == AMBER) {
+								pCVar5 = pCVar5 + 1;
 								iVar2 = iVar2 + 1;
 							}
 							else {
@@ -949,16 +947,17 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 							}
 						} while (iVar2 < pTable->entryCount);
 					}
+
 					this->field_0x1a40 = 1;
 				}
 			}
 			else {
 				iVar2 = 0;
-				pCVar5 = pTable;
+				pCVar5 = pTable->aEntries;
 				if (0 < pTable->entryCount) {
 					do {
-						if (pCVar5->aEntries[0]->typeID == 0x11) {
-							pCVar5 = (CActorsTable*)pCVar5->aEntries;
+						if ((*pCVar5)->typeID == SWITCH) {
+							pCVar5 = pCVar5 + 1;
 							iVar2 = iVar2 + 1;
 						}
 						else {
@@ -966,69 +965,77 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 						}
 					} while (iVar2 < pTable->entryCount);
 				}
+
 				this->field_0x1a40 = 2;
 			}
 		}
 		else {
 			iVar2 = pTable->entryCount;
 			iVar3 = 0;
-			pCVar5 = pTable;
+			pCVar5 = pTable->aEntries;
 			if (0 < iVar2) {
 				do {
-					bVar1 = (*pCVar5->aEntries[0]->pVTable->IsKindOfObject)(pCVar5->aEntries[0], 0x10);
+					bVar1 = (*pCVar5)->IsKindOfObject(0x10);
 					if (bVar1 == false) {
 						pTable->Pop(iVar3);
 					}
 					else {
-						pCVar5 = (CActorsTable*)pCVar5->aEntries;
+						pCVar5 = pCVar5 + 1;
 						iVar3 = iVar3 + 1;
 					}
+
 					iVar2 = pTable->entryCount;
 				} while (iVar3 < iVar2);
 			}
+
 			iVar3 = 0;
-			pCVar5 = pTable;
+			pCVar5 = pTable->aEntries;
 			if (0 < iVar2 + -1) {
 				do {
 					iVar6 = iVar3 + 1;
 					if (iVar6 < iVar2) {
 						ppCVar4 = pTable->aEntries + iVar3;
 						do {
+							IMPLEMENTATION_GUARD(
 							if ((float)ppCVar4[1][8].pClusterNode - (float)ppCVar4[1][8].pMeshNode <
 								(float)pCVar5->aEntries[0][8].pClusterNode - (float)pCVar5->aEntries[0][8].pMeshNode) {
 								pTable->Swap(iVar3, iVar6);
-							}
+							})
 							iVar2 = pTable->entryCount;
 							iVar6 = iVar6 + 1;
 							ppCVar4 = ppCVar4 + 1;
 						} while (iVar6 < iVar2);
 					}
+
 					iVar3 = iVar3 + 1;
-					pCVar5 = (CActorsTable*)pCVar5->aEntries;
+					pCVar5 = pCVar5 + 1;
 				} while (iVar3 < iVar2 + -1);
 			}
+
 			iVar2 = 0;
-			fVar7 = (float)CActorHero::GetMagicalForce((CActorHero*)this);
+			fVar7 = GetMagicalForce();
 			if (0 < pTable->entryCount) {
 				do {
-					fVar8 = (float)pTable->aEntries[iVar2][8].pClusterNode - (float)pTable->aEntries[iVar2][8].pMeshNode;
+					IMPLEMENTATION_GUARD(
+					fVar8 = (float)pTable->aEntries[iVar2][8].pClusterNode - (float)pTable->aEntries[iVar2][8].pMeshNode;)
 					if (fVar8 <= fVar7) {
 						fVar7 = fVar7 - fVar8;
 						iVar2 = iVar2 + 1;
 					}
 					else {
-						if (fVar7 == 0.0) {
+						if (fVar7 == 0.0f) {
 							pTable->Pop(iVar2);
 						}
 						else {
-							fVar7 = 0.0;
+							fVar7 = 0.0f;
 							iVar2 = iVar2 + 1;
 						}
 					}
 				} while (iVar2 < pTable->entryCount);
 			}
+
 			this->field_0x1a40 = 3;
-		})
+		}
 	}
 
 	return;
@@ -3334,7 +3341,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			return 0;
 		}
 
-		if (msg == MESSAGE_BOUNCE) {
+		if (msg == MESSAGE_IMPULSE) {
 			ACTOR_HERO_LOG(LogLevel::Info, "CActorHeroPrivate::InterpretMessage BOUNCE");
 
 			BounceParams* pBounceParams = reinterpret_cast<BounceParams*>(pMsgParam);
@@ -5351,6 +5358,7 @@ LAB_00341590:
 	case STATE_HERO_JUMP_2_3_STAND:
 	case STATE_HERO_JUMP_2_3_RUN:
 	case STATE_HERO_TRAMPOLINE_JUMP_2_3:
+	case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
 		StateHeroJump_2_3Init();
 			break;
 	case STATE_HERO_CROUCH_A:
@@ -5515,6 +5523,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_JUMP_2_3_RUN:
 	case STATE_HERO_JUMP_2_3_GRIP:
 	case STATE_HERO_TRAMPOLINE_JUMP_2_3:
+	case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
 		StateHeroJump_2_3Term();
 		break;
 	case STATE_HERO_SLIDE_A:
@@ -5960,6 +5969,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
 		StateHeroTrampolineJump_1_2(2.0f);
+		break;
+	case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
+		StateHeroTrampolineStomachToFall(12.5f);
 		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	case STATE_HERO_CAUGHT_TRAP_1:
@@ -7706,6 +7718,30 @@ void CActorHeroPrivate::StateHeroTrampolineJump_1_2(float param_1)
 		SetState(STATE_HERO_JUMP_2_3_RUN, 0xffffffff);
 	}
 
+	return;
+}
+
+void CActorHeroPrivate::StateHeroTrampolineStomachToFall(float param_1)
+{
+	float fVar1;
+
+	StateHeroJump_2_3(1, 1, 0);
+
+	this->field_0x11f8 = 0.0f;
+	this->field_0x11f4 = fabs((this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y) / param_1) - 1.0f;
+	fVar1 = this->field_0x11f4;
+	if (0.0f < fVar1) {
+		this->field_0x11f4 = 0.0f;
+	}
+	else {
+		if (fVar1 < -1.0f) {
+			this->field_0x11f4 = -1.0f;
+		}
+	}
+
+	if (this->dynamic.velocityDirectionEuler.y < 0.0f) {
+		SetState(STATE_HERO_FALL_A, 0xffffffff);
+	}
 	return;
 }
 
@@ -14836,18 +14872,18 @@ void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator
 									}
 								}
 								if (puVar8 < 0.0f) {
-									IMPLEMENTATION_GUARD(
 									fVar6 = this->field_0x11f8;
 									if (fVar6 < 0.0) {
 										CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, -puVar8, &local_4, 1, 0, 3);
-										puVar4[5] = 0;
+										pValue->field_0x14 = 0.0f;
 									}
 									else {
 										CActor::SV_Blend3AnimationsWith2Ratios(fVar6, -puVar8, &local_4, 1, 2, 3);
-										*puVar5 = 0.0f;
+										pValue->field_0xc = 0.0f;
 									}
-									puVar4[7] = 0;
-									puVar4[8] = 0;)
+
+									pValue->field_0x1c = 0.0f;
+									pValue->field_0x20 = 0.0f;
 								}
 								else {
 									fVar6 = this->field_0x11fc;

@@ -179,6 +179,9 @@ namespace Debug {
 			case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
 				return "StateHeroTrampolineJump_1_2_B";
 				break;
+			case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
+				return "StateHeroTrampolineJump_1_2_C";
+				break;
 			case STATE_HERO_CAUGHT_TRAP_1:
 				return "StateHeroCaughtTrap1";
 				break;

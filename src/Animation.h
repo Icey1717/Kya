@@ -178,6 +178,7 @@ public:
 	int PhysicalLayerFromLayerId(uint layer);
 
 	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
+	void GetDefaultBoneMatrix(uint boneId, edF32MATRIX4* pDefaultMatrix);
 
 	struct DisabledBoneEntry {
 		uint boneId;

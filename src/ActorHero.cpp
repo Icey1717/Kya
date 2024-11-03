@@ -1674,6 +1674,11 @@ bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)
 	return ret;
 }
 
+float CActorHero::GetMagicalForce()
+{
+	return this->magicInterface.GetValue();
+}
+
 bool CMagicInterface::Activate(int bActive)
 {
 	bool bSuccess;

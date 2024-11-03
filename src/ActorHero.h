@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorFighter.h"
+#include "ActorHero_Inventory.h"
+
 
 #define SCENE_VAR_BOUNCE_JUMP 0x7
 #define SCENE_VAR_CLIMB 0x8
@@ -86,6 +88,8 @@
 #define STATE_HERO_TRAMPOLINE_JUMP_2_3 0x10c
 #define STATE_HERO_TRAMPOLINE_JUMP_1_2_B 0x10d
 
+#define STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL 0x10e
+
 #define STATE_HERO_LOOK_INTERNAL 0x11a
 
 #define STATE_HERO_CAUGHT_TRAP_1 0x117
@@ -144,6 +148,12 @@ public:
 	virtual void Reset() {}
 	virtual void SetValue(float value) {}
 	virtual float GetValue();
+};
+
+struct BounceParams
+{
+	edF32VECTOR4 field_0x0;
+	float field_0x10;
 };
 
 struct HeroActionStateCfg
@@ -234,6 +244,10 @@ public:
 
 	float field_0x1558;
 
+	CInventoryInterface inventory;
+	CMagicInterface magicInterface;
+	CMoneyInterface moneyInterface;
+
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];
 	static HeroActionStateCfg _gActionCfg_HRO[16];
@@ -274,6 +288,8 @@ public:
 	uint TestState_AllowInternalView(uint inFlags);
 
 	bool FUN_0014cb60(edF32VECTOR4* v0);
+
+	float GetMagicalForce();
 };
 
 extern ulong gBoomyHashCodes[4];

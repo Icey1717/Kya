@@ -16,16 +16,19 @@ namespace Debug {
 		static Setting<bool> gShowAllZones("Show All Zones", false);
 		static Setting<bool> gShowSelectedEvent("Show Selected Event", true);
 		static Setting<bool> gShowActiveEvents("Show Active Events", true);
+
+		static Setting<int> gSelectedEvent("Selected Event", 0);
 	}
 }
 
 extern ed_event_chunk** pedEventChunks;
 extern uint edEventNbChunks;
 
+void EventCallbackSendMessage(edCEventMessage* pEventMessage);
+
 void Debug::Event::ShowMenu(bool* bOpen)
 {
 	static int selectedChunk = 0;
-	static int selectedEvent = 0;
 
 	ImGui::Begin("Event", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -102,11 +105,11 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 			ImGui::Spacing();
 
-			if (ImGui::BeginCombo("Select Event", std::to_string(selectedEvent).c_str())) {
+			if (ImGui::BeginCombo("Select Event", std::to_string(gSelectedEvent).c_str())) {
 				for (int i = 0; i < pChunk->nbEvents; i++) {
-					bool isSelected = selectedEvent == i;
+					bool isSelected = gSelectedEvent == i;
 					if (ImGui::Selectable(std::to_string(i).c_str(), isSelected)) {
-						selectedEvent = i;
+						gSelectedEvent = i;
 					}
 
 					if (isSelected) {
@@ -117,8 +120,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 				ImGui::EndCombo();
 			}
 
-			if (selectedEvent < pChunk->nbEvents && ImGui::CollapsingHeader("Event Details")) {
-				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pChunk->aEvents[selectedEvent]);
+			if (gSelectedEvent < pChunk->nbEvents && ImGui::CollapsingHeader("Event Details")) {
+				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pChunk->aEvents[gSelectedEvent]);
 
 				ImGui::Text("flags: 0x%x", pEvent->flags);
 
@@ -208,6 +211,15 @@ void Debug::Event::ShowMenu(bool* bOpen)
 									pIndex++;
 								}
 							}
+
+							if (ImGui::Button("Activate")) {
+								edCEventMessage msg;
+								msg.colliderId = j;
+								msg.pEventChunk = pChunk;
+								msg.pEventCollider = pCollider;
+
+								EventCallbackSendMessage(&msg);
+							}
 						}
 					}
 
@@ -255,8 +267,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 		}
 
 		if (gShowSelectedEvent) {
-			if (selectedEvent < pEventChunk->nbEvents) {
-				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pEventChunk->aEvents[selectedEvent]);
+			if (gSelectedEvent < pEventChunk->nbEvents) {
+				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pEventChunk->aEvents[gSelectedEvent]);
 
 				auto* pZone = LOAD_SECTION_CAST(ed_zone_3d*, pEvent->pZone);
 
@@ -313,8 +325,8 @@ void Debug::Event::ShowMenu(bool* bOpen)
 
 						bool bTriggerSelf = false;
 
-						for (int j = 0; j < 4; j++) {
-							auto* pSendInfo = LOAD_SECTION_CAST(EventSendInfo*, pCollider->aSendInfo[j]);
+						for (int k = 0; k < 4; k++) {
+							auto* pSendInfo = LOAD_SECTION_CAST(EventSendInfo*, pCollider->aSendInfo[k]);
 
 							if (pSendInfo) {
 								if (pSendInfo->nbActorIndexes == 0) {
@@ -323,7 +335,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 								else {
 									int* pIndex = reinterpret_cast<int*>(pSendInfo + 1);
 
-									for (int k = 0; k < pSendInfo->nbActorIndexes; k++) {
+									for (int l = 0; l < pSendInfo->nbActorIndexes; l++) {
 										if (*pIndex == -1) {
 											bTriggerSelf = true;
 										}
@@ -333,7 +345,7 @@ void Debug::Event::ShowMenu(bool* bOpen)
 											ImVec2 screenPos;
 											if (Debug::Projection::WorldToScreen(pActor->currentLocation, screenPos)) {
 												ImGui::SetCursorPos(screenPos);
-												ImGui::Text("\nActor Index: %d (%s)", k, pActor->name);
+												ImGui::Text("\nActor Index: %d (%s)", l, pActor->name);
 											}
 										}
 

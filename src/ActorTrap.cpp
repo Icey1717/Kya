@@ -1329,7 +1329,7 @@ int CBehaviourTrapStand::DetectActor()
 	float fVar7;
 	float fVar8;
 	edF32VECTOR4 sphere;
-	CFixedTable<CActor*, 64> intersectActorTable;
+	CActorsTable intersectActorTable;
 	undefined4 local_4;
 
 	pCVar2 = CActorHero::_gThis;

@@ -60,9 +60,12 @@ class CBehaviourPlatformTrajectory : public CBehaviourPlatform
 public:
 	CBehaviourPlatformTrajectory();
 	virtual void Create(ByteCode* pByteCode);
-	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void Manage();
-	
+	virtual void ManageFrozen();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
 	CPathFollowReaderAbsolute pathFollowReaderAbs;
 
 	float field_0x28;
@@ -304,7 +307,7 @@ public:
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
-	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* pEventData);
 
 	bool Slab_MoveAndDetectCarriedObject(CBehaviourPlatformSlab* pBehaviour, int param_3);
 	void ManageNoFrictionZones(int param_2);
@@ -317,6 +320,7 @@ public:
 
 	void ForceCarriedStuff();
 
+	void BehaviourTrajectory_Switch(CBehaviourPlatformTrajectory* pBehaviour, int msg);
 	void BehaviourTrajectory_Manage(CBehaviourPlatformTrajectory* pBehaviour);
 	float BehaviourTrajectory_ComputeTime(CBehaviourPlatformTrajectory* pBehaviour);
 

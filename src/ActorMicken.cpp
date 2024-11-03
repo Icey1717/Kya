@@ -1301,7 +1301,7 @@ void CActorMicken::BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBeh
 		local_30.field_0x0.x = 0.0f;
 		local_30.field_0x0.z = 0.0f;
 		local_30.field_0x0.w = 0.0f;
-		DoMessage(this->field_0x3d8, MESSAGE_BOUNCE, &local_30);
+		DoMessage(this->field_0x3d8, MESSAGE_IMPULSE, &local_30);
 		pBehaviour->field_0xc = 1;
 	}
 

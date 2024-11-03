@@ -695,7 +695,7 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 		do {
 			CActor* pActor = CEventManager::callbackFunctions.pGetActorPointer(pActorRef->pActor);
 			pActorRef->pActor = STORE_SECTION(pActor);
-			pActorRef->pLocation = STORE_SECTION(CEventManager::callbackFunctions.pGetActorPositionVector(pActor));			
+			pActorRef->pLocation = STORE_SECTION(CEventManager::callbackFunctions.pGetActorPositionVector(pActor));
 			uVar9 = uVar9 + 1;
 			pActorRef = pActorRef + 1;
 		} while (uVar9 < pEventChunk->nbActorRefs);

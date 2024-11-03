@@ -57,7 +57,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_GET_ACTION = 0x12,
 	MESSAGE_TRAP_STRUGGLE = 0x14,
 	MESSAGE_ENTER_TRAMPO = 0x1d,
-	MESSAGE_BOUNCE = 0x1e,
+	MESSAGE_IMPULSE = 0x1e,
 	MESSAGE_TRAP_CAUGHT = 0x31,
 	MESSAGE_SOCCER_START = 0x35,
 };
@@ -225,8 +225,6 @@ struct BoneData;
 
 class CCollision;
 
-//typedef CFixedTable<CActor*, 64> CActorsTable;
-
 struct CShadow;
 struct ByteCode;
 struct StateConfig {
@@ -356,6 +354,8 @@ public:
 	virtual void CinematicMode_Manage() { return; }
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
+	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+	virtual CVision* GetPerception() { IMPLEMENTATION_GUARD(); }
 	virtual void UpdatePostAnimEffects();
 	virtual bool Can_0x9c();
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
@@ -366,7 +366,6 @@ public:
 	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual CPlayerInput* GetInputManager(int, int);
-	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
 
 	void PreInit();
 	void SetScaleVector(float x, float y, float z);
@@ -450,7 +449,7 @@ public:
 
 	float SV_GetCosAngle2D(edF32VECTOR4* pToLocation);
 	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
-	void SV_GetBoneDefaultWorldPosition(uint boneIndex, edF32VECTOR4* pOutPosition);
+	void SV_GetBoneDefaultWorldPosition(uint boneId, edF32VECTOR4* pOutPosition);
 	void SV_GetBoneWorldPosition(int boneIndex, edF32VECTOR4* pOutPosition);
 	void SV_UpdatePosition_Rel(edF32VECTOR4* pPosition, int param_3, int param_4, CActorsTable* pActorsTable, edF32VECTOR4* param_6);
 	void SV_ComputeDiffMatrixFromInit(edF32MATRIX4* m0);
@@ -574,6 +573,7 @@ public:
 class CAddOnGenerator {
 public:
 	void Create(CActor* pActor, ByteCode* pByteCode);
+	void Init(int) { IMPLEMENTATION_GUARD_LOG(); }
 
 	CAddOnGenerator_SubObj subObj;
 };
