@@ -2077,9 +2077,11 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 		else {
 			stepCount = GetPrimNumDeltaSubdivisions(this->pObbPrim, this->primType, &baseTranslation);
 		}
+
 		if (0x14 < stepCount) {
 			stepCount = 0x14;
 		}
+
 		float stepMultiplier = 1.0f / (float)stepCount;
 		subdividedTranslation = baseTranslation * stepMultiplier;
 
@@ -2087,6 +2089,8 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 
 		COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix Base translation: {} Original position: {} Step count: {}", 
 			baseTranslation.ToString(), resultPosition.ToString(), stepCount);
+
+		assert(stepCount > 0);
 
 		for (; stepCount != 0; stepCount = stepCount + -1) {
 			currentTranslation = subdividedTranslation;

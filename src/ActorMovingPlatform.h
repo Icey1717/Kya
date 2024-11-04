@@ -350,6 +350,10 @@ public:
 	S_BRIDGE_ACTOR_STREAM* pActorStream;
 	S_BRIDGE_ZONE_STREAM* pZoneStream;
 	S_BRIDGE_CAMERA_STREAM* pCameraStream;
+
+	CActorSound* pActorSound;
+	undefined4 field_0x1e4;
+	CSound* field_0x1e8;
 };
 
 #endif //ACTOR_MOVING_PLATFORM_H

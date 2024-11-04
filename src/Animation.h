@@ -48,6 +48,8 @@ struct edAnmStage {
 
 	void SetActor(edANM_SKELETON* pSkeleton);
 	void SetDestinationWRTS(edANM_WRTS* pMatrixBuffer, int count);
+	void SetSingleToDestWRTS(edF32MATRIX4* pMatrix);
+
 	void BlendToDestWRTS(float alpha, edF32MATRIX4* m0, edF32MATRIX4* m1);
 	void ToonWRTSToGlobalMatrices(uchar mode);
 	static bool ComputeAnimParams(float param_1, float param_2, float param_3, float* param_4, bool param_5, int loopType);
@@ -115,7 +117,7 @@ struct edAnmLayer {
 	bool MorphingStartDT();
 
 	void SetAnim(edAnmStateDesc* pDesc);
-	int field_0x0;
+	int blendOp;
 	float field_0x4;
 	int animPlayState;
 	undefined4 field_0xc;
@@ -153,6 +155,8 @@ struct edAnmBinMetaAnimator : public edAnmMetaAnimator {
 	int GetAnimType_00242330(int animIndex);
 	int GetAnimEventTrackID(int index);
 	void SetLayerAnimTime(float time, int index, byte param_4);
+	void SetLayerBlendingOp(int layerIndex, int op);
+	void SetAnimOnLayer(int mode, int layerIndex, int param_4);
 };
 
 class CAnimation {

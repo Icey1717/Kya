@@ -244,6 +244,35 @@ void edAnmStage::SetDestinationWRTS(edANM_WRTS* pMatrixBuffer, int count)
 	return;
 }
 
+void edAnmStage::SetSingleToDestWRTS(edF32MATRIX4* pMatrix)
+{
+	ushort boneCount;
+	undefined8 uVar2;
+	undefined8 uVar3;
+	edF32MATRIX4* peVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32MATRIX4* peVar12;
+
+	peVar12 = this->pRelativeTransformMatrixBuffer->matrices;
+	boneCount = ((this->anmSkeleton).pTag)->boneCount;
+	peVar4 = this->pRelativeTransformMatrixBuffer->matrices;
+
+	for (; peVar12 < (peVar4 + boneCount); peVar12 = peVar12 + 1) {
+		if (pMatrix->da != -1.0f) {
+			*pMatrix = *peVar12;
+		}
+		pMatrix = pMatrix + 1;
+	}
+
+	return;
+}
+
 void edAnmStage::BlendToDestWRTS(float alpha, edF32MATRIX4* pSrc, edF32MATRIX4* pDst)
 {
 	undefined8 uVar1;
@@ -2060,6 +2089,52 @@ void edAnmBinMetaAnimator::SetLayerAnimTime(float time, int index, byte param_4)
 	return;
 }
 
+void edAnmBinMetaAnimator::SetLayerBlendingOp(int layerIndex, int op)
+{
+	int iVar1;
+	edAnmLayer* pLayer;
+
+	if (layerIndex == -1) {
+		pLayer = this->aAnimData;
+
+		iVar1 = 0;
+		if (0 < this->layerCount) {
+			do {
+				pLayer->blendOp = op;
+				iVar1 = iVar1 + 1;
+				pLayer = pLayer + 1;
+			} while (iVar1 < this->layerCount);
+		}
+	}
+	else {
+		this->aAnimData[layerIndex].blendOp = op;
+	}
+
+	return;
+}
+
+void edAnmBinMetaAnimator::SetAnimOnLayer(int mode, int layerIndex, int param_4)
+{
+	edAnmLayer* pLayer;
+	edAnmStateDesc anmStateDesc;
+	edAnmStateParser anmStateParser;
+
+	pLayer = this->aAnimData + layerIndex;
+	if (mode == -1) {
+		pLayer->animPlayState = 0;
+		(pLayer->nextAnimDesc).animType = -1;
+		(pLayer->currentAnimDesc).animType = -1;
+	}
+	else {
+		int* piVar1 = this->pAnimKeyEntryData;
+		anmStateParser = (int*)(reinterpret_cast<char*>(piVar1) + piVar1[mode] + 4);
+		anmStateParser.BuildDesc(&anmStateDesc, mode, param_4);
+		pLayer->SetAnim(&anmStateDesc);
+	}
+
+	return;
+}
+
 void edAnmMetaAnimator::AnimateDT(float deltaTime)
 {
 	int index;
@@ -2114,7 +2189,7 @@ float edAnmMetaAnimator::GetAnimStateDescLength(edAnmStateDesc* pOutDesc, int le
 
 void edAnmLayer::Reset()
 {
-	this->field_0x0 = 0;
+	this->blendOp = 0;
 	this->animPlayState = STATE_ANIM_NONE;
 	this->pFunction_0xc0 = 0x0;
 	this->nextAnimDesc.animType = -1;
@@ -2250,7 +2325,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 		}
 	}
 
-	if (this->field_0x0 != 0) {
+	if (this->blendOp != 0) {
 		unaff_s3_lo = TheAnimManager.AllocWRTSBuffer();
 		TheAnimStage.SetDestinationWRTS(unaff_s3_lo, -1);
 		unaff_s4_lo = peVar2;
@@ -2338,7 +2413,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);
 	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer_00);
 
-	if (this->field_0x0 != 0) {
+	if (this->blendOp != 0) {
 		IMPLEMENTATION_GUARD(
 		TheAnimStage.SetDestinationWRTS(unaff_s4_lo, 0);
 		iVar1 = this->field_0x0;
@@ -2381,7 +2456,7 @@ bool edAnmLayer::PlayingDT(float playTime)
 		}
 
 		pWRTS = TheAnimStage.pRelativeTransformMatrixBuffer;
-		if (this->field_0x0 != 0) {
+		if (this->blendOp != 0) {
 			pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
 			TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
 			unaff_s1_lo = pWRTS;
@@ -2421,25 +2496,26 @@ bool edAnmLayer::PlayingDT(float playTime)
 			}
 		}
 
-		if (this->field_0x0 != 0) {
-			IMPLEMENTATION_GUARD(
+		if (this->blendOp != 0) {
 			TheAnimStage.SetDestinationWRTS(unaff_s1_lo, 0);
-			iVar1 = this->field_0x0;
+			iVar1 = this->blendOp;
 			if (iVar1 == 1) {
-				TheAnimStage.SetSingleToDestWRTS((edF32MATRIX4*)pMatrixBuffer);
+				TheAnimStage.SetSingleToDestWRTS(pMatrixBuffer->matrices);
 			}
 			else {
 				if (iVar1 == 2) {
-					TheAnimStage.BlendWithDestWRTS(0.5, (edF32MATRIX4*)pMatrixBuffer);
+					IMPLEMENTATION_GUARD(
+					TheAnimStage.BlendWithDestWRTS(0.5, (edF32MATRIX4*)pMatrixBuffer);)
 				}
 				else {
 					if (iVar1 == 3) {
-						TheAnimStage.BlendWithDestWRTS(this->field_0x4, (edF32MATRIX4*)pMatrixBuffer);
+						IMPLEMENTATION_GUARD(
+						TheAnimStage.BlendWithDestWRTS(this->field_0x4, (edF32MATRIX4*)pMatrixBuffer);)
 					}
 				}
 			}
 
-			TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);)
+			TheAnimManager.FreeWRTSBuffer(pMatrixBuffer);
 		}
 
 		bComplete = true;

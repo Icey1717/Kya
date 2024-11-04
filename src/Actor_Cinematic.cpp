@@ -578,8 +578,7 @@ void CBehaviourCinematic::Manage()
 	}
 
 	if ((pConfig != (CCineActorConfig*)0x0) && ((pConfig->flags & 2) != 0)) {
-		IMPLEMENTATION_GUARD(
-		this->pOwner->CinematicMode_Manage();)
+		this->pOwner->CinematicMode_Manage();
 	}
 
 	pCVar2 = this->pOwner;

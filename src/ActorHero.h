@@ -224,6 +224,8 @@ public:
 
 	byte field_0xd34[16][16];
 
+	S_ZONE_STREAM_REF* field_0xe48;
+
 	edF32VECTOR4 field_0xe80;
 	edF32VECTOR3 field_0xe90;
 	int levelDataField1C_0xe9c;

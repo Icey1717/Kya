@@ -2097,6 +2097,7 @@ void CCinematic::Stop()
 
 	this->flags_0x8 = this->flags_0x8 | 0x1400;
 	this->flags_0x8 = this->flags_0x8 & 0xfffffe7f;
+
 	if (this->state != CS_Stopped) {
 		if (this->pActor != (CActor*)0x0) {
 			IMPLEMENTATION_GUARD(
@@ -2105,16 +2106,20 @@ void CCinematic::Stop()
 			local_10 = this;
 			(*(code*)this->pActor->pVTable->ReceiveMessage)();)
 		}
+
 		pCVar2 = g_CinematicManager_0048efc;
 		g_CinematicManager_0048efc->pCurCinematic = this;
 		this->flags_0x8 = this->flags_0x8 | 4;
 		currentPlayTime = ((this->cinFileData).pCinTag)->totalPlayTime;
+
 		if ((this->totalCutsceneDelta < currentPlayTime) && ((this->flags_0x4 & 0x80) != 0)) {
 			this->TimeSlice(currentPlayTime);
 		}
+
 		if ((this->flags_0x8 & 2) != 0) {
 			CCameraManager::_gThis->PopCamera(pCVar2->pCameraLocationObj);
 		}
+
 		this->state = CS_Stopped;
 		pTVar3 = GetTimer();
 		this->time_0x88 = pTVar3->scaledTotalTime;
@@ -2122,6 +2127,7 @@ void CCinematic::Stop()
 			this->cinFileData.Shutdown();
 			this->flags_0x8 = this->flags_0x8 & 0xffffffef;
 		}
+
 		if (this->pMeshInfo != (ed_g3d_manager*)0x0) {
 			if (this->pMeshTransform != (edNODE*)0x0) {
 				ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pMeshTransform);
@@ -2129,17 +2135,21 @@ void CCinematic::Stop()
 			}
 			ed3DScenePopCluster(CScene::_scene_handleA, this->pMeshInfo);
 		}
+
 		if ((this->flags_0x4 & 0x280000) != 0) {
 			IMPLEMENTATION_GUARD_AUDIO(
 			FUN_00182da0(0x3f800000, (int)CScene::ptable.g_AudioManager_00451698);)
 		}
+
 		if ((this->flags_0x4 & 0x20000200) != 0) {
 			GameFlags = GameFlags & 0xffffff7f;
 		}
+
 		if ((this->flags_0x4 & 0x400) != 0) {
 			GameFlags = GameFlags & 0xfffffeff;
 			CScene::ptable.g_FrontendManager_00451680->SetActive(true);
 		}
+
 		pActor = CActorHero::_gThis;
 		if (CActorHero::_gThis != (CActorHero*)0x0) {
 			if ((this->flags_0x4 & 0x10000) != 0) {
@@ -2147,25 +2157,25 @@ void CCinematic::Stop()
 				(CActorHero::_gThis->character).characterBase.base.base.data.objectId =
 					(CActorHero::_gThis->character).characterBase.base.base.data.objectId & 0xffbfffff;)
 			}
+
 			if ((this->flags_0x4 & 0x10) != 0) {
 				local_8 = 0;
 				pActor->DoMessage(pActor, (ACTOR_MESSAGE)0x83, (MSG_PARAM)0x0);
 			}
 		}
+
 		if (this->prtBuffer == 1) {
 			IMPLEMENTATION_GUARD(
 			CScene::PopFogAndClippingSettings(CScene::_pinstance, &this->streamFogDef);)
 		}
+
 		this->cinFileData.Destroy(this->cinematicLoadObject);
-		if ((this->aActorCinematic != (CActorCinematic*)0x0) && (iVar4 = this->loadedActorCinematicCount + -1, -1 < iVar4))
-		{
-			IMPLEMENTATION_GUARD(
-			iVar6 = iVar4 * 0x5e0;
+
+		if ((this->aActorCinematic != (CActorCinematic*)0x0) && (iVar4 = this->loadedActorCinematicCount + -1, -1 < iVar4)) {
 			do {
-				(**(code**)(*(int*)((int)&this->aActorCinematic->pVTable + iVar6) + 0x20))();
+				this->aActorCinematic[iVar4].Term();
 				iVar4 = iVar4 + -1;
-				iVar6 = iVar6 + -0x5e0;
-			} while (-1 < iVar4);)
+			} while (-1 < iVar4);
 		}
 
 		iVar4 = 0;
@@ -2193,7 +2203,9 @@ void CCinematic::Stop()
 				iVar6 = iVar6 + 0x1c;
 			} while (iVar4 < this->count_0x2e8);)
 		}
+
 		UninstallResources();
+
 		pCVar2->pCurCinematic = (CCinematic*)0x0;
 		if ((this->flags_0x8 & 0x800) == 0) {
 			this->condArray_0x244.Perform();
@@ -2202,6 +2214,7 @@ void CCinematic::Stop()
 			if ((pSwitchList != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) && (this->pStreamEventCameraB != (S_STREAM_EVENT_CAMERA*)0x0)) {
 				bVar1 = true;
 			}
+
 			if (bVar1) {
 				iVar4 = 0;
 				if (0 < pSwitchList->count) {
@@ -2210,6 +2223,7 @@ void CCinematic::Stop()
 						iVar4 = iVar4 + 1;
 					} while (iVar4 < pSwitchList->count);
 				}
+
 				this->pStreamEventCameraB->SwitchOn((CActor*)0x0);
 				pSwitchList = this->pSwitchListB;
 				iVar4 = 0;
@@ -2220,6 +2234,7 @@ void CCinematic::Stop()
 					} while (iVar4 < pSwitchList->count);
 				}
 			}
+
 			if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
 				IMPLEMENTATION_GUARD(
 				CLevelScheduler::HoldsGetActorFunc_002dc200
@@ -2230,8 +2245,10 @@ void CCinematic::Stop()
 				CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->field_0x6c, this->field_0x70, this->field_0x74, -1);
 			}
 		}
+
 		this->flags_0x8 = this->flags_0x8 & 0xfffff7ff;
 	}
+
 	return;
 }
 

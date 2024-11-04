@@ -1441,6 +1441,30 @@ void edF32Matrix4GetInverseSoft(edF32MATRIX4* m0, edF32MATRIX4* m1)
 	return;
 }
 
+void edF32Matrix4InverseOrthoSoft(edF32MATRIX4* m0)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar1 = m0->ba;
+	m0->ba = m0->ab;
+	m0->ab = fVar1;
+	fVar1 = m0->ca;
+	m0->ca = m0->ac;
+	m0->ac = fVar1;
+	fVar1 = m0->cb;
+	m0->cb = m0->bc;
+	m0->bc = fVar1;
+	fVar2 = m0->da;
+	fVar3 = m0->db;
+	fVar1 = m0->dc;
+	m0->da = -(fVar1 * m0->ca + fVar2 * m0->aa + fVar3 * m0->ba);
+	m0->db = -(fVar1 * m0->cb + fVar2 * m0->ab + fVar3 * m0->bb);
+	m0->dc = -(fVar1 * m0->cc + fVar2 * m0->ac + fVar3 * m0->bc);
+	return;
+}
+
 void edF32Matrix4InverseSoft(edF32MATRIX4* m0)
 {
 	edF32Matrix4GetInverseSoft(m0, m0);
@@ -1780,6 +1804,63 @@ bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32
 		*pResult = *pInput;
 	}
 	return bVar1;
+}
+
+void FUN_00193060(edF32MATRIX4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* pLookAt)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar1 = pLookAt->y;
+	fVar2 = pLookAt->z;
+	fVar3 = pLookAt->w;
+	fVar4 = param_2->y;
+	fVar5 = param_2->z;
+	fVar6 = param_2->w;
+	param_1->ca = pLookAt->x - param_2->x;
+	param_1->cb = fVar1 - fVar4;
+	param_1->cc = fVar2 - fVar5;
+	param_1->cd = fVar3 - fVar6;
+	fVar1 = param_1->ca;
+	fVar2 = param_1->cb;
+	fVar3 = param_1->cc;
+	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f);
+	param_1->ca = fVar1 * fVar4;
+	param_1->cb = fVar2 * fVar4;
+	param_1->cc = fVar3 * fVar4;
+	param_1->cd = 0.0f;
+	fVar1 = g_xVector.z * param_1->ca;
+	fVar2 = g_xVector.x * param_1->cb;
+	fVar3 = param_1->cc * g_xVector.x;
+	fVar4 = param_1->ca * g_xVector.y;
+	param_1->aa = g_xVector.y * param_1->cc - param_1->cb * g_xVector.z;
+	param_1->ab = fVar1 - fVar3;
+	param_1->ac = fVar2 - fVar4;
+	param_1->ad = 0.0f;
+	fVar1 = param_1->aa;
+	fVar2 = param_1->ab;
+	fVar3 = param_1->ac;
+	fVar4 = 1.0f / (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) + 0.0f);
+	param_1->aa = fVar1 * fVar4;
+	param_1->ab = fVar2 * fVar4;
+	param_1->ac = fVar3 * fVar4;
+	param_1->ad = 0.0f;
+	param_1->ba = param_1->cb * param_1->ac - param_1->ab * param_1->cc;
+	param_1->bb = param_1->cc * param_1->aa - param_1->ac * param_1->ca;
+	param_1->bc = param_1->ca * param_1->ab - param_1->aa * param_1->cb;
+	param_1->bd = 0.0f;
+	fVar3 = param_2->y;
+	fVar1 = param_2->z;
+	fVar2 = param_2->w;
+	param_1->da = param_2->x;
+	param_1->db = fVar3;
+	param_1->dc = fVar1;
+	param_1->dd = fVar2;
+	return;
 }
 
 float edFIntervalUnitDstLERP(float param_1, float param_2, float param_3)

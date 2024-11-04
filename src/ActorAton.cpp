@@ -19,6 +19,7 @@
 #define ATON_ESCAPE_STATE_PATH_JUMP_2_4				0x1d
 #define ATON_ESCAPE_STATE_PATH_JUMP_3_4				0x1e
 #define ATON_ESCAPE_STATE_PATH_JUMP_4_4				0x1f
+#define ATON_ESCAPE_STATE_PATH_FALL					0x20
 #define ATON_ESCAPE_STATE_CROUCH_IDLE				0x21
 #define ATON_ESCAPE_STATE_CROUCH_CALL				0x22
 #define ATON_ESCAPE_STATE_CROUCH_ROLL				0x24
@@ -2178,6 +2179,9 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	case ATON_ESCAPE_STATE_PATH_JUMP_4_4:
 		StateAtonPathJump_4_4();
 		break;
+	case ATON_ESCAPE_STATE_PATH_FALL:
+		StateAtonPathFall();
+		break;
 	case ATON_ESCAPE_STATE_CROUCH_IDLE:
 		ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
 		peVar15 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
@@ -2969,6 +2973,48 @@ void CActorAton::StateAtonPathJump_4_4()
 			}
 		}
 	}
+
+	return;
+}
+
+void CActorAton::StateAtonPathFall()
+{
+	CActorHero* pFleeActor;
+	CPathPlane* pCVar1;
+	float fVar2;
+	SV_MOV_PATH_PARAM movPathParams;
+
+	(this->fleeOnPathParams).field_0x4 = 1;
+	pFleeActor = CActorHero::_gThis;
+	fVar2 = this->pathDefaultDelay;
+	fVar2 = SV_MOV_ComputeDistIdealPos(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, (this->fleeOnPathParams).delay, fVar2);
+	(this->fleeOnPathParams).delay = fVar2;
+	SV_MOV_ComputeSpeedAccelerationToFleeActor(3.0f, pFleeActor, this->pathPlaneArray.GetCurPathPlane(), &this->fleeOnPathParams);
+	movPathParams.field_0x10 = 0;
+	movPathParams.field_0x8 = 3;
+	movPathParams.field_0xc = 1;
+	movPathParams.acceleration = (this->fleeOnPathParams).acceleration;
+	movPathParams.speed = (this->fleeOnPathParams).speed;
+	movPathParams.rotationSpeed = 3.141593f;
+
+	if (movPathParams.acceleration < 10.0f) {
+		movPathParams.acceleration = 10.0f;
+	}
+
+	if (30.0f < movPathParams.acceleration) {
+		movPathParams.acceleration = 30.0f;
+	}
+
+	fVar2 = SV_MOV_ManageMovOnPath(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, &movPathParams);
+	this->field_0x3b0 = fVar2;
+
+	if (fabs(movPathParams.field_0x14) < 0.02f) {
+		movPathParams.field_0x14 = 0.0f;
+	}
+
+	this->field_0x478 = movPathParams.field_0x14;
+
+	ManageDyn(4.0f, 0x40400, (CActorsTable*)0x0);
 
 	return;
 }

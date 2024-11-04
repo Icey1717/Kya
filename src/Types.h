@@ -792,6 +792,20 @@ public:
 		this->entryCount = this->entryCount + -1;
 		return pCVar1;
 	}
+
+	inline T PopCurrent() {
+		int iVar1;
+		T pCVar2;
+
+		pCVar2 = (T)0x0;
+		if (this->entryCount != 0) {
+			iVar1 = this->entryCount;
+			this->entryCount = iVar1 + -1;
+			pCVar2 = this->aEntries[iVar1 + -1];
+		}
+
+		return pCVar2;
+	}
 };
 
 class CActor;

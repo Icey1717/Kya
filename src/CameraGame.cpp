@@ -2193,10 +2193,6 @@ void CCameraGame::_UpdateAngleAlphaData()
 					calculatedPitch = edF32GetAnglesDelta(fVar11, calculatedPitch);
 
 					pitch = edF32Between_Pi(this->targetPitch + pitch * (sinf(calculatedPitch) / cosf(calculatedPitch) / 2.414f) * CCamera::_gpcam_man->time_0x4);
-						//((edFCosinus
-						//	[(int)(ABS((calculatedPitch - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
-						//	edFCosinus[(int)(ABS(calculatedPitch * 1303.797) + 0.5) & 0x1fff]) / 2.414) *
-						//CCamera::_gpcam_man->time_0x4);
 					this->pitchDyn.field_0x0 = pitch;
 					this->targetPitch = pitch;
 				}

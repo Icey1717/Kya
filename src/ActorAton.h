@@ -102,6 +102,8 @@ public:
 	void StateAtonPathJump_3_4();
 	void StateAtonPathJump_4_4();
 
+	void StateAtonPathFall();
+
 	void StateAtonPathVerticalWind();
 
 	void StateAtonPathToboggan();

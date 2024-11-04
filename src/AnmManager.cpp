@@ -24,7 +24,26 @@ void gAnimation_Callback_Layer0(edAnmMacroAnimator* pAnmMacroAnimator, CActor* p
 	return;
 }
 
-void gAnimation_Callback_Layer1(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
+void gAnimation_Callback_Layer1(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint newAnim)
+{
+	uint uVar1;
+	uint uVar2;
+	int iVar3;
+
+	iVar3 = 1;
+	uVar1 = 1;
+	do {
+		uVar2 = uVar1;
+		if ((pActor->pAnimationController->count_0x2c & uVar2) != 0) {
+			iVar3 = iVar3 + -1;
+		}
+		uVar1 = uVar2 << 1;
+	} while (iVar3 != 0);
+
+	pActor->AnimEvaluate(uVar2 & 0x7fffffff, pAnmMacroAnimator, newAnim);
+	return;
+}
+
 void gAnimation_Callback_Layer2(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
 void gAnimation_Callback_Layer3(edAnmMacroAnimator* pAnmMacroAnimator, CActor* pActor, uint param_3) { IMPLEMENTATION_GUARD() };
 
@@ -365,19 +384,22 @@ void edAnmMacroAnimator::Animate()
 				if (iVar5 != 0) {
 					iVar6 = iVar5 + -1;
 					if (-1 < iVar6) {
-						IMPLEMENTATION_GUARD(
-						piVar3 = (int*)((int)peVar2 + iVar6 * 4 + 0xc);
-						pfVar4 = (float*)((int)peVar2 + iVar6 * 4 + iVar5 * 4 + 0xc);
+						int* pAfterHeader = reinterpret_cast<int*>(peVar2 + 1);
+
+
+						piVar3 = pAfterHeader + iVar6;
+						pfVar4 = reinterpret_cast<float*>(pAfterHeader + iVar5 + iVar6);
 						do {
-							edAnmStage::SetAnim(&TheAnimStage, (edANM_HDR*)this->pKeyDataArray[*piVar3]);
-							edAnmStage::SetTimeAsRatio(*pfVar4, &TheAnimStage);
-							edAnmStage::AnimBlendToWRTS(1.0, &TheAnimStage);
+							TheAnimStage.SetAnim(this->pKeyDataArray[*piVar3]);
+							TheAnimStage.SetTimeAsRatio(*pfVar4);
+							TheAnimStage.AnimBlendToWRTS(1.0f);
 							iVar6 = iVar6 + -1;
 							piVar3 = piVar3 + -1;
 							pfVar4 = pfVar4 + -1;
-						} while (-1 < iVar6);)
+						} while (-1 < iVar6);
 					}
 				}
+
 				this->flags = this->flags | 0x80000000;
 				this->flags = this->flags | 0x40000000;
 				this->time_0xc = 1.0f;

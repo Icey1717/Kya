@@ -1354,14 +1354,8 @@ CCamera* CCameraManager::AddCamera(ECameraType type, ByteCode* pByteCode, char* 
 	case CT_Cinematic:
 		newObjectPtr = new CCameraCinematic();
 		break;
-	case 0x17:
-		IMPLEMENTATION_GUARD(
-		pFVar8 = (FrontendCameraView*)operator.new(0xc0);
-		newObjectPtr = (long)(int)pFVar8;
-		if (newObjectPtr != 0) {
-			FrontendCameraViewConstructor(pFVar8);
-			(pFVar8->viewBase).pVTable = (CameraFunctionData*)&DAT_00440940;
-		})
+	case CT_DCA:
+		newObjectPtr = new CCameraDCA();
 		break;
 	case CT_Frontend:
 		newObjectPtr = new CCamera();

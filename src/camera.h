@@ -26,6 +26,7 @@ enum ECameraType {
 	CT_Camera_6 = 6,
 	CT_RailSimple = 0x11,
 	CT_Rail = 0x12,
+	CT_DCA = 0x17,
 };
 
 
@@ -35,7 +36,9 @@ struct SpecificCondition {
 	bool IsVerified();
 };
 
-struct CCamera : public CObject {
+class CCamera : public CObject 
+{
+public:
 	CCamera();
 	CCamera(struct ByteCode* pMemoryStream);
 
@@ -95,7 +98,18 @@ struct CCamera : public CObject {
 	struct CCamera* pNextCameraView_0xa4;
 };
 
-struct CCameraExt : public CCamera {
+class CCameraDCA : public CCamera
+{
+public:
+	virtual ECameraType GetMode();
+	virtual void Init();
+	virtual bool Manage();
+
+	edF32VECTOR4 field_0xb0;
+};
+
+class CCameraExt : public CCamera {
+public:
 	CCameraExt(struct ByteCode* pMemoryStream);
 	CCameraExt();
 

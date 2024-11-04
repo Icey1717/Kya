@@ -73,6 +73,7 @@ void BuildMatrixFromNormalAndSpeed(edF32MATRIX4* m0, edF32VECTOR4* v0, edF32VECT
 void edF32Matrix4BuildFromVectorAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR4* v0);
 
 void edF32Matrix4InverseSoft(edF32MATRIX4* m0);
+void edF32Matrix4InverseOrthoSoft(edF32MATRIX4* m0);
 bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_2);
 
 void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
@@ -88,6 +89,7 @@ float edF32Vector4DotProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 float edFIntervalUnitSrcLERP(float start, float end, float alpha);
 bool edProjectVectorOnPlane(float projectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int optionFlag);
 bool edReflectVectorOnPlane(float reflectionFactor, edF32VECTOR4* pResult, edF32VECTOR4* pInput, edF32VECTOR4* pPlaneNormal, int mode);
+void FUN_00193060(edF32MATRIX4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* pLookAt);
 
 float edFIntervalDotSrcLERP(float param_1, float param_2, float param_3);
 float edFIntervalLERP(float param_1, float param_2, float param_3, float param_4, float param_5);

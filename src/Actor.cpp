@@ -480,12 +480,15 @@ void CActor::PreInit()
 			pComponent->Init(this);
 			pComponent->GetDlistPatchableNbVertexAndSprites(&outIntA, &outIntB);
 		}
+
 		if (uVar5 < outIntA) {
 			uVar5 = outIntA;
 		}
+
 		if (uVar4 < outIntB) {
 			uVar4 = outIntB;
 		}
+
 		pEntry = pEntry + 1;
 	}
 
@@ -2442,6 +2445,12 @@ float CActor::FUN_00117db0()
 	return fVar3;
 }
 
+CActorSound* CActor::CreateActorSound(int soundType)
+{
+	IMPLEMENTATION_GUARD_AUDIO();
+	return NULL;
+}
+
 StateConfig CActor::gStateCfg_ACT[5] =
 {
 	StateConfig(0, 4),
@@ -3834,6 +3843,19 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 	return bSuccess;
 }
 
+void CActor::SV_GetActorColCenter(edF32VECTOR4* pColCenter)
+{
+	if (this->pCollisionData == (CCollision*)0x0) {
+		*pColCenter = this->currentLocation;
+	}
+	else {
+		edF32Vector4AddHard(pColCenter, &this->currentLocation, &this->pCollisionData->pObbPrim->field_0xb0);
+		pColCenter->w = 1.0f;
+	}
+
+	return;
+}
+
 float CActor::SV_GetCosAngle2D(edF32VECTOR4* pToLocation)
 {
 	float fVar1;
@@ -4700,4 +4722,78 @@ bool CActorsTable::IsInList(int typeId)
 	}
 
 	return false;
+}
+
+void CBehaviourInactive::Create(ByteCode* pByteCode)
+{
+	this->activateMsgId = pByteCode->GetS32();
+	this->flags = pByteCode->GetU32();
+	this->activeBehaviourId = pByteCode->GetS32();
+
+	return;
+}
+
+void CBehaviourInactive::Init(CActor* pOwner)
+{
+	this->pOwner = pOwner;
+
+	return;
+}
+
+void CBehaviourInactive::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActor* pCVar1;
+	CinNamedObject30* pCVar2;
+	float fVar3;
+	float fVar4;
+	CCollision* pCol;
+
+	if ((this->flags & 1) != 0) {
+		pCol = this->pOwner->pCollisionData;
+		if (pCol != (CCollision*)0x0) {
+			pCol->Reset();
+		}
+
+		this->pOwner->UpdatePosition(&this->pOwner->baseLocation, true);
+	}
+
+	if ((this->flags & 2) != 0) {
+		pCVar1 = this->pOwner;
+		pCVar2 = pCVar1->pCinData;
+		pCVar1->rotationEuler.xyz = pCVar2->rotationEuler;
+	}
+
+	pCVar1 = this->pOwner;
+	pCVar1->flags = pCVar1->flags & 0xfffffffd;
+	pCVar1->flags = pCVar1->flags | 1;
+	pCVar1 = this->pOwner;
+	pCVar1->flags = pCVar1->flags & 0xffffff7f;
+	pCVar1->flags = pCVar1->flags | 0x20;
+	pCVar1->EvaluateDisplayState();
+
+	return;
+}
+
+void CBehaviourInactive::End(int newBehaviourId)
+{
+	CActor* pOwn;
+
+	this->pOwner->flags = this->pOwner->flags & 0xfffffffc;
+	pOwn = this->pOwner;
+	pOwn->flags = pOwn->flags & 0xffffff5f;
+	pOwn->EvaluateDisplayState();
+
+	return;
+}
+
+int CBehaviourInactive::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	bool bVar1;
+
+	bVar1 = msg == this->activateMsgId;
+	if (bVar1) {
+		this->pOwner->SetBehaviour(this->activeBehaviourId, -1, -1);
+	}
+
+	return bVar1;
 }

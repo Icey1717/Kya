@@ -813,3 +813,37 @@ bool CCameraExt::IsKindOfObject(ulong kind)
 {
 	return (kind & 0x60) != 0;
 }
+
+ECameraType CCameraDCA::GetMode()
+{
+	return CT_DCA;
+}
+
+void CCameraDCA::Init()
+{
+	CCamera::Init();
+
+	this->flags_0xc = this->flags_0xc | 0x20004;
+	this->switchMode = SWITCH_MODE_F;
+	this->field_0x98 = 0.8f;
+	this->field_0x94 = SWITCH_MODE_F;
+	this->field_0x9c = 0.8f;
+	this->field_0x8 = -100;
+
+	this->field_0xb0 = gF32Vertex4Zero;
+
+	return;
+}
+
+bool CCameraDCA::Manage()
+{
+	bool bVar1;
+
+	bVar1 = CCamera::Manage();
+	if (bVar1 == false) {
+		FUN_00193060(&this->transformationMatrix, &this->field_0xb0, &this->lookAt);
+		FUN_00199b80();
+	}
+
+	return bVar1 == false;
+}

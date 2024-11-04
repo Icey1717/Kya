@@ -16,6 +16,7 @@
 #include "ActorManager.h"
 #include "edVideo/VideoA.h"
 #include "FrontendManager.h"
+#include "EventManager.h"
 
 CActorHeroPrivate::CActorHeroPrivate()
 {
@@ -349,12 +350,13 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 		}
 	}
 	if (2.24f <= CScene::_pinstance->field_0x1c) {
-		pSeekpiVar5 = (int*)pByteCode->currentSeekPos;
-		pByteCode->currentSeekPos = (char*)(pSeekpiVar5 + 1);
-		if (*pSeekpiVar5 != 0) {
-			pByteCode->currentSeekPos = pByteCode->currentSeekPos + *pSeekpiVar5 * 4;
+		S_ZONE_STREAM_REF* pZoneStreamRef = (S_ZONE_STREAM_REF*)pByteCode->currentSeekPos;
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+		if (pZoneStreamRef->entryCount != 0) {
+			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pZoneStreamRef->entryCount * sizeof(S_STREAM_REF<ed_zone_3d>);
 		}
-		//this->field_0xe48 = piVar5;
+
+		this->field_0xe48 = pZoneStreamRef;
 	}
 
 	iVar11 = pByteCode->GetS32();
@@ -521,14 +523,13 @@ void CActorHeroPrivate::Init()
 	//		pSVar13 = pSVar13 + 7;
 	//	} while (iVar12 < (int)this->pCheckpointManagerSubObjA_0xe38);
 	//}
-	//if (2.24 <= CScene::_pinstance->field_0x1c) {
-	//	pSVar13 = *(S_STREAM_REF<ed_zone_3d> **) & this->field_0xe48;
-	//	for (peVar8 = pSVar13->pZone; peVar8 != (ed_zone_3d*)0x0; peVar8 = (ed_zone_3d*)((int)&peVar8[-1].field_0x20 + 3))
-	//	{
-	//		pSVar13 = pSVar13 + 1;
-	//		S_STREAM_REF<ed_zone_3d>::Init(pSVar13);
-	//	}
-	//}
+
+	if (2.24f <= CScene::_pinstance->field_0x1c) {
+		for (int i = 0; i < this->field_0xe48->entryCount; i++) {
+			this->field_0xe48->aEntries[i].Init();
+		}
+	}
+
 	//pSVar13 = *(S_STREAM_REF<ed_zone_3d> **) & this->field_0xe40;
 	//iVar12 = 0;
 	//if (0 < (int)this->field_0xe3c) {
@@ -3202,8 +3203,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				bVar9 = (uVar10 & 1) != 0;
 			}
 
-			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) &&
-				(this->field_0x1558 <= 0.0f)) {
+			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
 				CPlayerInput* pInput = GetInputManager(1, 0);
 				if (pInput != (CPlayerInput*)0x0) {
 					pInput->FUN_001b6e20(0.0f, 0.0f);
@@ -3226,11 +3226,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 			return 0;
 		}
+
 		if (msg == 0x26) {
-			IMPLEMENTATION_GUARD(
-			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+			pCVar11 = GetLifeInterface();
+			fVar25 = pCVar11->GetValue();
+			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
 				iVar13 = this->actorState;
 				uVar10 = 0;
@@ -3238,14 +3238,16 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					pAVar12 = GetStateCfg(iVar13);
 					uVar10 = pAVar12->flags_0x4;
 				}
+
 				bVar9 = (uVar10 & 1) != 0;
 			}
-			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
-				(this->field_0x1558 <= 0.0)) {
+
+			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
 				this->field_0x18dc = 1;
 				if (this == (CActorHeroPrivate*)CActorHero::_gThis) {
 					pCVar18 = GetPlayerInput(0);
 					this->field_0x1610 = 0;
+
 					if (pCVar18 == (CPlayerInput*)0x0) {
 						this->field_0x18dc = 1;
 					}
@@ -3257,6 +3259,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				else {
 					pCVar18 = GetPlayerInput(1);
 					this->field_0x1610 = 0;
+
 					if (pCVar18 == (CPlayerInput*)0x0) {
 						this->field_0x18dc = 1;
 					}
@@ -3265,8 +3268,10 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						this->field_0x18dc = 0;
 					}
 				}
+
 				return 1;
-			})
+			}
+
 			return 0;
 		}
 
@@ -11598,25 +11603,24 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 				this->animKey_0x157c = this->currentLocation.y + 20.0f;
 
 				pCVar7 = CScene::ptable.g_EventManager_006f5080;
-				iVar16 = 0;
+				int curZoneIndex = 0;
 				if (2.24f <= CScene::_pinstance->field_0x1c) {
 					while (true) {
-						IMPLEMENTATION_GUARD(
-						piVar21 = *(int**)&this->field_0xe48;
-						if (piVar21 == (int*)0x0) {
+						S_ZONE_STREAM_REF* pZoneStreamRef = this->field_0xe48;
+						if (pZoneStreamRef == (S_ZONE_STREAM_REF*)0x0) {
 							iVar11 = 0;
 						}
 						else {
-							iVar11 = *piVar21;
+							iVar11 = pZoneStreamRef->entryCount;
 						}
-						if (iVar11 <= iVar16) goto LAB_00149ea0;
-						pZone = *(ed_zone_3d**)(*(int*)&this->field_0xe48 + iVar16 * 4 + 4);
-						if ((pZone != (ed_zone_3d*)0x0) &&
-							(uVar10 = edEventComputeZoneAgainstVertex
-							(pCVar7->activeChunkId, pZone,
-								&this->currentLocation, 0),
-								(uVar10 & 1) != 0)) break;
-						iVar16 = iVar16 + 1;)
+
+						if (iVar11 <= curZoneIndex) goto LAB_00149ea0;
+
+						pZone = pZoneStreamRef->aEntries[curZoneIndex].Get();
+
+						if ((pZone != (ed_zone_3d*)0x0) && (uVar10 = edEventComputeZoneAgainstVertex(pCVar7->activeChunkId, pZone, &this->currentLocation, 0), (uVar10 & 1) != 0)) break;
+
+						curZoneIndex = curZoneIndex + 1;
 					}
 
 					bVar8 = true;

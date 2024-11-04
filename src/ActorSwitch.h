@@ -7,7 +7,6 @@
 
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
-class CActorSound;
 
 class CActorSwitch;
 

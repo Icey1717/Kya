@@ -123,6 +123,7 @@ class CBehaviour
 public:
 	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Init(CActor* pOwner) {}
+	virtual void Term() {}
 	virtual void Manage() {}
 	virtual void SectorChange(int oldSectorId, int newSectorId) {}
 	virtual void Draw() {}
@@ -133,6 +134,22 @@ public:
 	virtual void GetDlistPatchableNbVertexAndSprites(int* nbVertex, int* nbSprites);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
+};
+
+class CBehaviourInactive : public CBehaviour
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage() {}
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	int activateMsgId;
+	uint flags;
+	int activeBehaviourId;
+	CActor* pOwner;
 };
 
 class CBehaviourStand : public CBehaviour
@@ -315,7 +332,93 @@ struct CActorParamsIn {
 	edF32VECTOR4* field_0x8;
 };
 
+struct HitMessageParams {
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	float field_0xc;
+	undefined field_0x10;
+	undefined field_0x11;
+	undefined field_0x12;
+	undefined field_0x13;
+	undefined field_0x14;
+	undefined field_0x15;
+	undefined field_0x16;
+	undefined field_0x17;
+	undefined field_0x18;
+	undefined field_0x19;
+	undefined field_0x1a;
+	undefined field_0x1b;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+	edF32VECTOR4 field_0x20;
+	float field_0x30;
+	undefined field_0x34;
+	undefined field_0x35;
+	undefined field_0x36;
+	undefined field_0x37;
+	undefined field_0x38;
+	undefined field_0x39;
+	undefined field_0x3a;
+	undefined field_0x3b;
+	undefined field_0x3c;
+	undefined field_0x3d;
+	undefined field_0x3e;
+	undefined field_0x3f;
+	edF32VECTOR4 field_0x40;
+	undefined field_0x50;
+	undefined field_0x51;
+	undefined field_0x52;
+	undefined field_0x53;
+	undefined field_0x54;
+	undefined field_0x55;
+	undefined field_0x56;
+	undefined field_0x57;
+	undefined field_0x58;
+	undefined field_0x59;
+	undefined field_0x5a;
+	undefined field_0x5b;
+	undefined field_0x5c;
+	undefined field_0x5d;
+	undefined field_0x5e;
+	undefined field_0x5f;
+	undefined field_0x60;
+	undefined field_0x61;
+	undefined field_0x62;
+	undefined field_0x63;
+	undefined field_0x64;
+	undefined field_0x65;
+	undefined field_0x66;
+	undefined field_0x67;
+	undefined field_0x68;
+	undefined field_0x69;
+	undefined field_0x6a;
+	undefined field_0x6b;
+	undefined field_0x6c;
+	undefined field_0x6d;
+	undefined field_0x6e;
+	undefined field_0x6f;
+	undefined field_0x70;
+	undefined field_0x71;
+	undefined field_0x72;
+	undefined field_0x73;
+	int field_0x74;
+	undefined field_0x78;
+	undefined field_0x79;
+	undefined field_0x7a;
+	undefined field_0x7b;
+	undefined field_0x7c;
+	undefined field_0x7d;
+	undefined field_0x7e;
+	undefined field_0x7f;
+	edF32VECTOR4 field_0x80;
+};
+
 class CActorAlternateModel {};
+
+class CActorSound;
 
 class CActor : public CObject {
 public:
@@ -447,6 +550,7 @@ public:
 
 	void RestartCurAnim();
 
+	void SV_GetActorColCenter(edF32VECTOR4* pColCenter);
 	float SV_GetCosAngle2D(edF32VECTOR4* pToLocation);
 	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	void SV_GetBoneDefaultWorldPosition(uint boneId, edF32VECTOR4* pOutPosition);
@@ -470,6 +574,8 @@ public:
 	CActor* GetCollidingActor();
 
 	float FUN_00117db0();
+
+	CActorSound* CreateActorSound(int soundType);
 
 #ifdef DEBUG_FEATURES
 	// #Debug
@@ -595,6 +701,11 @@ struct ActorAndWaypoint {
 struct S_ACTOR_STREAM_REF {
 	int entryCount;
 	S_STREAM_REF<CActor> aEntries[];
+};
+
+struct S_ZONE_STREAM_REF {
+	int entryCount;
+	S_STREAM_REF<ed_zone_3d> aEntries[];
 };
 
 #endif // _ACTOR_H
