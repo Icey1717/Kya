@@ -351,15 +351,15 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 	uint finalType;
 	edObbTREE_DYN** ppeVar3;
 	int iVar4;
-	float fVar5;
-	float fVar6;
+	float intersectDistance;
+	float smallestIntersectDistance;
 	edF32VECTOR4 eStack32;
 	void* local_c;
 	uint outType;
 	uint local_4;
 
 	pCVar2 = CScene::ptable.g_CollisionManager_00451690;
-	fVar6 = 1e+30f;
+	smallestIntersectDistance = 1e+30f;
 	iVar4 = 0;
 	finalType = 0;
 	local_4 = 0;
@@ -368,10 +368,10 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 	ppeVar3 = pCVar2->aStaticCollisionRefs;
 	if (0 < iVar1) {
 		do {
-			fVar5 = edObbIntersectObbTreeRayPrim(&local_c, &outType, *ppeVar3, this);
-			if ((0.0f <= fVar5) && (fVar5 < fVar6)) {
-				this->lengthA = fVar5;
-				fVar6 = fVar5;
+			intersectDistance = edObbIntersectObbTreeRayPrim(&local_c, &outType, *ppeVar3, this);
+			if ((0.0f <= intersectDistance) && (intersectDistance < smallestIntersectDistance)) {
+				this->lengthA = intersectDistance;
+				smallestIntersectDistance = intersectDistance;
 				finalType = outType;
 				unaff_s0_lo = local_c;
 			}
@@ -381,12 +381,12 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 		} while (iVar4 < iVar1);
 	}
 
-	if (fVar6 != 1e+30f) {
+	if (smallestIntersectDistance != 1e+30f) {
 		if (pOutVector == (edF32VECTOR4*)0x0) {
 			pOutVector = &eStack32;
 		}
 
-		ComputeIntersectionNormalAndProps(fVar6, unaff_s0_lo, finalType, pOutVector, &local_4);
+		ComputeIntersectionNormalAndProps(smallestIntersectDistance, unaff_s0_lo, finalType, pOutVector, &local_4);
 	}
 
 	if (pOutResult != (_ray_info_out*)0x0) {
@@ -395,7 +395,7 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 		pOutResult->type_0x8 = finalType;
 	}
 
-	return fVar6;
+	return smallestIntersectDistance;
 }
 
 void CCollisionRay::ChangeLeadVector(edF32VECTOR4* pNewLeadVector)

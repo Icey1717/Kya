@@ -14,6 +14,11 @@ int PointerConv::AddTextureSectionValue(void* value)
 {
 	TextureSections.push_back(value);
 
+	if ((TextureSections.size() - 1) == 0x39ef4) {
+		// break the debugger
+		__debugbreak();
+	}
+
 	return TextureSections.size() - 1;
 }
 

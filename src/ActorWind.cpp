@@ -389,7 +389,71 @@ void CActorWind::Draw()
 
 void CActorWind::Reset()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	int iVar1;
+	Timer* pTVar2;
+	S_TARGET_STREAM_REF* pSVar3;
+	int iVar4;
+	CFxWind* pWindFx;
+	int iVar5;
+
+	CActor::Reset();
+
+	this->field_0x1f0 = 0;
+	iVar5 = 0;
+	while (true) {
+		if (this->field_0x1bc == (S_ACTOR_STREAM_REF*)0x0) {
+			iVar1 = 0;
+		}
+		else {
+			iVar1 = this->field_0x1bc->entryCount;
+		}
+
+		if (iVar1 <= iVar5) break;
+
+		this->field_0x1ec[iVar5] = 0;
+
+		iVar5 = iVar5 + 1;
+	}
+
+	ComputeSpeedsInterpoltation();
+
+	this->field_0x1f8 = -1.0f;
+	pTVar2 = GetTimer();
+	this->time_0x214 = pTVar2->scaledTotalTime;
+	ResetTiming();
+
+	pWindFx = this->aFxWind;
+	iVar4 = 0;
+	if (0 < this->nbFxWind) {
+		do {
+			pWindFx->Reset();
+			iVar4 = iVar4 + 1;
+			pWindFx = pWindFx + 1;
+		} while (iVar4 < this->nbFxWind);
+	}
+
+	if (2.2f <= CScene::_pinstance->field_0x1c) {
+
+		for (int i = 0; i < this->field_0x1d0->entryCount; i++) {
+			this->field_0x1d0->aEntries[i].Reset();
+		}
+
+		this->field_0x1d4->Reset(this);
+
+		for (int i = 0; i < this->field_0x1d8->entryCount; i++) {
+			this->field_0x1d8->aEntries[i].Reset();
+		}
+
+		this->field_0x1dc->Reset(this);
+
+		for (int i = 0; i < this->field_0x1e0->entryCount; i++) {
+			this->field_0x1e0->aEntries[i].Reset();
+		}
+		
+		this->field_0x1e4->Reset(this);
+	}
+
+	return;
 }
 
 void CActorWind::SectorChange(int oldSectorId, int newSectorId)

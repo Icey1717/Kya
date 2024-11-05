@@ -625,7 +625,7 @@ namespace Debug {
 		{"Texture", Debug::Texture::ShowMenu, false },
 		{"Mesh", Debug::Mesh::ShowMenu, false },
 		{"Actor", Debug::Actor::ShowMenu, false },
-		{"Checkpoint", Debug::Checkpoint::ShowMenu, false },
+		{"Checkpoint", Debug::Checkpoint::ShowMenu, true },
 		{"Event", Debug::Event::ShowMenu, true },
 
 	};

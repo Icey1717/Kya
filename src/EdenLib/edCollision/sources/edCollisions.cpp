@@ -6,17 +6,44 @@
 #include "MathOps.h"
 #include "port/pointer_conv.h"
 
-#define DODGY_INCLUDE_LOGGING
-
-#ifdef DODGY_INCLUDE_LOGGING
-// REMOVE ME
-#include "Actor.h"
-#endif
-
 GlobalCollisionData gColData;
 CollisionTD gColTD;
 
 edColConfig gColConfig;
+
+#ifdef PLATFORM_WIN
+struct edF32TRIANGLE4_Stack
+{
+	union {
+		struct {
+			edF32VECTOR4* p1;
+			edF32VECTOR4* p2;
+			edF32VECTOR4* p3;
+		};
+
+		edF32VECTOR4* points[3];
+	};
+
+	uint flags;
+
+	edF32TRIANGLE4_Stack() {
+		p1 = nullptr;
+		p2 = nullptr;
+		p3 = nullptr;
+		flags = 0;
+	}
+
+	// Conversion constructor from edF32TRIANGLE4*
+	edF32TRIANGLE4_Stack(edF32TRIANGLE4* other) {
+		p1 = LOAD_SECTION_CAST(edF32VECTOR4*, other->p1);
+		p2 = LOAD_SECTION_CAST(edF32VECTOR4*, other->p2);
+		p3 = LOAD_SECTION_CAST(edF32VECTOR4*, other->p3);
+		flags = other->flags;
+	}
+};
+#else
+typedef edF32TRIANGLE4 edF32TRIANGLE4_Stack;
+#endif
 
 void edColComputeMatrices(edColPRIM_OBJECT* pPrimObj)
 {
@@ -376,7 +403,7 @@ static int _gColSizeOfPrims[21] = {
 	0x0 
 };
 
-float edColSqrDistancePointTriangle(edF32VECTOR4* v0, edF32TRIANGLE4* t0)
+float edColSqrDistancePointTriangle(edF32VECTOR4* v0, edF32TRIANGLE4_Stack* t0)
 {
 	edF32VECTOR4* peVar1;
 	edF32VECTOR4* peVar2;
@@ -394,9 +421,9 @@ float edColSqrDistancePointTriangle(edF32VECTOR4* v0, edF32TRIANGLE4* t0)
 	float fVar14;
 	float fVar15;
 
-	peVar1 = (edF32VECTOR4*)LOAD_SECTION(t0->p1);
-	peVar2 = (edF32VECTOR4*)LOAD_SECTION(t0->p2);
-	peVar3 = (edF32VECTOR4*)LOAD_SECTION(t0->p3);
+	peVar1 = t0->p1;
+	peVar2 = t0->p2;
+	peVar3 = t0->p3;
 
 	fVar13 = peVar1->x;
 	fVar14 = peVar1->y;
@@ -573,7 +600,7 @@ struct edF32TRIANGLE4_INFOS {
 	float originDistance;
 };
 
-void edColTriangle4GetInfo(edF32TRIANGLE4_INFOS* pInfo, edF32TRIANGLE4* pTriangle)
+void edColTriangle4GetInfo(edF32TRIANGLE4_INFOS* pInfo, edF32TRIANGLE4_Stack* pTriangle)
 {
 	edF32VECTOR4* vertex1;
 	edF32VECTOR4* vertex2;
@@ -584,13 +611,13 @@ void edColTriangle4GetInfo(edF32TRIANGLE4_INFOS* pInfo, edF32TRIANGLE4* pTriangl
 	float edge2_y;
 	float edge2_z;
 
-	vertex1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
-	vertex2 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2);
+	vertex1 = pTriangle->p1;
+	vertex2 = pTriangle->p2;
 	edge1_x = vertex2->x - vertex1->x;
 	edge1_z = vertex2->y - vertex1->y;
 	edge2_y = vertex2->z - vertex1->z;
 
-	vertex2 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3);
+	vertex2 = pTriangle->p3;
 	edge1_y = vertex2->x - vertex1->x;
 	edge2_x = vertex2->y - vertex1->y;
 	edge2_z = vertex2->z - vertex1->z;
@@ -611,14 +638,14 @@ void edColTriangle4GetInfo(edF32TRIANGLE4_INFOS* pInfo, edF32TRIANGLE4* pTriangl
 struct edColRAY_TRIANGLE4_IN {
 	edF32VECTOR4* pRayOrigin;
 	edF32VECTOR4* pRayDirection;
-	edF32TRIANGLE4* pTriangle;
+	edF32TRIANGLE4_Stack* pTriangle;
 };
 
 const float FLOAT_0044854c = 0.001f;
 
 bool edColIntersectRayTriangle4(float* pOutDistance, edColRAY_TRIANGLE4_IN* pRayTriangleIn)
 {
-	edF32TRIANGLE4* pTriangle;
+	edF32TRIANGLE4_Stack* pTriangle;
 	edF32VECTOR4* pDirection;
 	edF32VECTOR4* pOrigin;
 	edF32VECTOR4* pP1;
@@ -649,9 +676,9 @@ bool edColIntersectRayTriangle4(float* pOutDistance, edColRAY_TRIANGLE4_IN* pRay
 	pDirection = pRayTriangleIn->pRayDirection;
 	pOrigin = pRayTriangleIn->pRayOrigin;
 
-	pP1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
-	pP2 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2);
-	pP3 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3);
+	pP1 = pTriangle->p1;
+	pP2 = pTriangle->p2;
+	pP3 = pTriangle->p3;
 
 	p1 = pP1->xyz;
 	rayDirection = pDirection->xyz;
@@ -1010,7 +1037,7 @@ void edColGetWorldVelocity(edF32VECTOR4* pOutVelocity, edF32VECTOR4* param_2, ed
 	return;
 }
 
-bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN* pPrimIn, edF32TRIANGLE4* pTriangle)
+bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN* pPrimIn, edF32TRIANGLE4_Stack* pTriangle)
 {
 	edColPRIM_OBJECT* m0;
 	edF32VECTOR4* peVar1;
@@ -1079,8 +1106,8 @@ bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN*
 		if (iVar8 == 0) {
 			bVar5 = true;
 			while (bVar5) {
-				local_18.pRayOrigin = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->points[_gtri_edge[iVar9][0]]);
-				peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->points[_gtri_edge[iVar9][1]]);
+				local_18.pRayOrigin = pTriangle->points[_gtri_edge[iVar9][0]];
+				peVar1 = pTriangle->points[_gtri_edge[iVar9][1]];
 				local_a0 = *peVar1 - *local_18.pRayOrigin;
 				local_18.pRayDirection = &local_a0;
 				iVar6 = edColIntersectRaySphereUnit(&eStack256, &local_18);
@@ -1090,7 +1117,7 @@ bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN*
 					fVar3 = eStack256.intersectionPoint.z;
 					fVar4 = eStack256.intersectionPoint.w;
 					if (-1 < iVar6) {
-						peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->points[_gtri_edge[iVar9][iVar6]]);
+						peVar1 = pTriangle->points[_gtri_edge[iVar9][iVar6]];
 						fVar10 = peVar1->x;
 						fVar2 = peVar1->y;
 						fVar3 = peVar1->z;
@@ -1158,10 +1185,11 @@ bool edColIntersectSphereUnitTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_IN*
 	else {
 		bVar5 = false;
 	}
+
 	return bVar5;
 }
 
-void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, edColINFO_OUT* pColInfoOut, uint inType, void* pInPrim, edColINFO* pColInfo, edF32QUAD4* pQuad, edF32TRIANGLE4* pTriangle)
+void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, edColINFO_OUT* pColInfoOut, uint inType, void* pInPrim, edColINFO* pColInfo, edF32QUAD4* pQuad, edF32TRIANGLE4_Stack* pTriangle)
 {
 	edF32VECTOR4* peVar1;
 	int iVar2;
@@ -1233,8 +1261,8 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 
 			local_60 = local_90.normal;
 
-			peVar4 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
-			peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3);
+			peVar4 = pTriangle->p1;
+			peVar1 = pTriangle->p3;
 
 			local_70.xyz = peVar1->xyz - peVar4->xyz;
 			local_70.w = 0.0f;
@@ -1261,6 +1289,7 @@ void edColComputeContactQuad4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, e
 			}
 		}
 	}
+
 	return;
 }
 
@@ -1273,9 +1302,9 @@ void edColIntersectSphereQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_QUAD
 	edF32MATRIX4* m0;
 	int iVar5;
 	edF32TRIANGLE4_INFOS local_80;
-	edF32TRIANGLE4 local_60;
+	edF32TRIANGLE4_Stack local_60;
 	uint local_54;
-	edF32TRIANGLE4 local_50;
+	edF32TRIANGLE4_Stack local_50;
 	uint local_44;
 	edF32VECTOR4 eStack64;
 	edF32VECTOR4 eStack48;
@@ -1285,29 +1314,31 @@ void edColIntersectSphereQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_QUAD
 	uVar4 = 0;
 	peVar1 = pPrimSphereQuadIn->pQuad;
 	m0 = &(pPrimSphereQuadIn->pPrim)->worldTransform;
-	edF32Matrix4MulF32Vector4Hard(&eStack64, m0, (edF32VECTOR4*)LOAD_SECTION(peVar1->p1));
-	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, (edF32VECTOR4*)LOAD_SECTION(peVar1->p2));
-	edF32Matrix4MulF32Vector4Hard(&eStack32, m0, (edF32VECTOR4*)LOAD_SECTION(peVar1->p3));
-	edF32Matrix4MulF32Vector4Hard(&eStack16, m0, (edF32VECTOR4*)LOAD_SECTION(peVar1->p4));
+	edF32Matrix4MulF32Vector4Hard(&eStack64, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1));
+	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p2));
+	edF32Matrix4MulF32Vector4Hard(&eStack32, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p3));
+	edF32Matrix4MulF32Vector4Hard(&eStack16, m0, LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p4));
 	local_44 = peVar1->flags;
 	
-	local_60.p1 = STORE_SECTION(&eStack64);
+	local_60.p1 = &eStack64;
 	iVar5 = 0;
 	local_54 = peVar1->flags;
-	local_50.p1 = peVar1->p1;
+	local_50.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1);
+
 	do {
 		if (iVar5 == 0) {
-			local_50.p2 = peVar1->p2;
-			local_50.p3 = peVar1->p3;
-			local_60.p2 = STORE_SECTION(&eStack48);
-			local_60.p3 = STORE_SECTION(&eStack32);
+			local_50.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p2);
+			local_50.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p3);
+			local_60.p2 = &eStack48;
+			local_60.p3 = &eStack32;
 		}
 		else {
-			local_50.p2 = peVar1->p3;
-			local_60.p3 = STORE_SECTION(&eStack16);
-			local_50.p3 = peVar1->p4;
-			local_60.p2 = STORE_SECTION(&eStack32);
+			local_50.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p3);
+			local_60.p3 = &eStack16;
+			local_50.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p4);
+			local_60.p2 = &eStack32;
 		}
+
 		bVar3 = edColIntersectSphereUnitTriangle4(pColInfoOut, pPrimSphereQuadIn, &local_60);
 		if (bVar3 != false) {
 			edColTriangle4GetInfo(&local_80, &local_50);
@@ -1320,6 +1351,7 @@ void edColIntersectSphereQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_QUAD
 	} while (iVar5 < 2);
 
 	pColInfoOut->result = uVar4;
+
 	return;
 }
 
@@ -1367,7 +1399,7 @@ struct edColPRIM_BOX_TRI4_IN {
 	edF32VECTOR4* field_0x10;
 	edF32VECTOR4* field_0x14;
 	edF32VECTOR4* field_0x18;
-	edF32TRIANGLE4* pTriangle;
+	edF32TRIANGLE4_Stack* pTriangle;
 };
 
 struct edColPRIM_SPHERE_TRI4_IN {
@@ -1378,11 +1410,11 @@ struct edColPRIM_SPHERE_TRI4_IN {
 	edF32VECTOR4* aCentre;
 	edF32VECTOR4* aPropertyA;
 	edF32VECTOR4* aPropertyB;
-	edF32TRIANGLE4* pTriangle;
+	edF32TRIANGLE4_Stack* pTriangle;
 };
 
 void edColComputeContactTriangle4(edColOBJECT* pColObj, edColOBJECT* pOtherColObj, edColINFO_OUT* pColInfoOut, uint inType, void* pInPrim,
-	edColINFO* pColInfo, edF32TRIANGLE4* pTriangle, int param_8)
+	edColINFO* pColInfo, edF32TRIANGLE4_Stack* pTriangle, int param_8)
 {
 	edF32VECTOR4* peVar1;
 	edF32VECTOR4* peVar2;
@@ -1397,12 +1429,6 @@ void edColComputeContactTriangle4(edColOBJECT* pColObj, edColOBJECT* pOtherColOb
 	edF32VECTOR4 local_70;
 	edF32VECTOR4 local_60;
 	edF32MATRIX4 local_40;
-
-#ifdef DODGY_INCLUDE_LOGGING
-	if (pOtherColObj && pOtherColObj->pActor) {
-		COLLISION_LOG(LogLevel::VeryVerbose, "edColComputeContactTriangle4 pOtherColObj {}", LOAD_SECTION_CAST(CActor*, pOtherColObj->pActor)->name);
-	}
-#endif
 
 	if ((gColData.pActiveDatabase)->curDbEntryCount < gColConfig.aDbTypeData[gColData.activeDatabaseId].dbObj.nbMax) {
 		pColDbEntry = (gColData.pActiveDatabase)->aDbEntries + (gColData.pActiveDatabase)->curDbEntryCount;
@@ -1464,8 +1490,8 @@ void edColComputeContactTriangle4(edColOBJECT* pColObj, edColOBJECT* pOtherColOb
 
 			local_60 = local_90.normal;
 
-			peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
-			peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3);
+			peVar1 = pTriangle->p1;
+			peVar2 = pTriangle->p3;
 			local_70.x = peVar2->x - peVar1->x;
 			local_70.y = peVar2->y - peVar1->y;
 			local_70.z = peVar2->z - peVar1->z;
@@ -1479,7 +1505,7 @@ void edColComputeContactTriangle4(edColOBJECT* pColObj, edColOBJECT* pOtherColOb
 			local_40.ad = in_vf0x;
 			local_40.rowY = local_60;
 			local_40.rowZ = local_70;
-			local_40.rowT = *LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
+			local_40.rowT = *pTriangle->p1;
 
 			if ((pColInfo != (edColINFO*)0x0) && ((pTriangle->flags & 0x80000000) == 0)) {
 				pColInfo->field_0x44 = 0x0;
@@ -1492,28 +1518,29 @@ void edColComputeContactTriangle4(edColOBJECT* pColObj, edColOBJECT* pOtherColOb
 			}
 		}
 	}
+
 	return;
 }
 
 void edColIntersectSphereTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_SPHERE_TRI4_IN* pPrimSphereTriIn, int param_3)
 {
-	edF32TRIANGLE4* pTriangle;
+	edF32TRIANGLE4_Stack* pTriangle;
 	bool bVar1;
 	edF32MATRIX4* m0;
 	edF32TRIANGLE4_INFOS local_60;
-	edF32TRIANGLE4 local_40;
+	edF32TRIANGLE4_Stack local_40;
 	edF32VECTOR4 eStack48;
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 eStack16;
 
 	pTriangle = pPrimSphereTriIn->pTriangle;
 	m0 = &pPrimSphereTriIn->pData->worldTransform;
-	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1));
-	local_40.p2 = STORE_SECTION(&eStack32);
-	edF32Matrix4MulF32Vector4Hard(LOAD_SECTION_CAST(edF32VECTOR4*, local_40.p2), m0, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2));
-	local_40.p3 = STORE_SECTION(&eStack16);
-	edF32Matrix4MulF32Vector4Hard(LOAD_SECTION_CAST(edF32VECTOR4*, local_40.p3), m0, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3));
-	local_40.p1 = STORE_SECTION(&eStack48);
+	edF32Matrix4MulF32Vector4Hard(&eStack48, m0, pTriangle->p1);
+	local_40.p2 = &eStack32;
+	edF32Matrix4MulF32Vector4Hard(local_40.p2, m0, pTriangle->p2);
+	local_40.p3 = &eStack16;
+	edF32Matrix4MulF32Vector4Hard(local_40.p3, m0, pTriangle->p3);
+	local_40.p1 = &eStack48;
 	local_40.flags = pTriangle->flags;
 
 	bVar1 = edColIntersectSphereUnitTriangle4(pColInfoOut, (edColPRIM_IN*)pPrimSphereTriIn, &local_40);
@@ -1530,7 +1557,7 @@ struct edColSEGMENT_TRIANGLE4_IN {
 	edF32VECTOR4* field_0x0;
 	edF32VECTOR4* field_0x4;
 	edF32VECTOR4* field_0x8;
-	edF32TRIANGLE4* field_0xc;
+	edF32TRIANGLE4_Stack* field_0xc;
 };
 
 struct edColARRAY_TRI4_PRIM {
@@ -1544,7 +1571,7 @@ struct edColARRAY_TRI4_PRIM {
 	void* aData;
 };
 
-int triBoxOverlap(edF32TRIANGLE4* pTriangle)
+int triBoxOverlap(edF32TRIANGLE4_Stack * pTriangle)
 {
 	edF32VECTOR4* peVar1;
 	edF32VECTOR4* peVar2;
@@ -1568,9 +1595,9 @@ int triBoxOverlap(edF32TRIANGLE4* pTriangle)
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1);
-	peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2);
-	peVar3 = LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3);
+	peVar1 = pTriangle->p1;
+	peVar2 = pTriangle->p2;
+	peVar3 = pTriangle->p3;
 
 	fVar8 = peVar2->x - peVar1->x;
 	fVar9 = peVar2->y - peVar1->y;
@@ -1866,7 +1893,7 @@ int _gcube_tri[12][3] = {
 
 void edColIntersectSegmentTriangle4(edColINFO_OUT* pColInfoOut, edColSEGMENT_TRIANGLE4_IN* pSegmentTriangleIn)
 {
-	edF32TRIANGLE4* peVar1;
+	edF32TRIANGLE4_Stack* peVar1;
 	edF32VECTOR4* peVar2;
 	edF32VECTOR4* peVar3;
 	float fVar4;
@@ -1897,13 +1924,13 @@ void edColIntersectSegmentTriangle4(edColINFO_OUT* pColInfoOut, edColSEGMENT_TRI
 	pColInfoOut->field_0x4c = 0;
 	pColInfoOut->result = 0;
 	peVar1 = pSegmentTriangleIn->field_0xc;
-	peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1);
-	peVar3 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p2);
+	peVar2 = peVar1->p1;
+	peVar3 = peVar1->p2;
 	fVar15 = peVar3->x - peVar2->x;
 	fVar5 = peVar3->y - peVar2->y;
 	fVar9 = peVar3->z - peVar2->z;
-	peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1);
-	peVar3 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p3);
+	peVar2 = peVar1->p1;
+	peVar3 = peVar1->p3;
 	fVar16 = peVar3->x - peVar2->x;
 	fVar6 = peVar3->y - peVar2->y;
 	fVar10 = peVar3->z - peVar2->z;
@@ -1924,7 +1951,7 @@ void edColIntersectSegmentTriangle4(edColINFO_OUT* pColInfoOut, edColSEGMENT_TRI
 	fVar14 = fVar15 * fVar20 + fVar5 * fVar21 + fVar9 * fVar22;
 
 	if (FLOAT_0044854c < fVar14) {
-		peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1);
+		peVar2 = peVar1->p1;
 		peVar3 = pSegmentTriangleIn->field_0x0;
 		fVar4 = peVar3->x - peVar2->x;
 		fVar8 = peVar3->y - peVar2->y;
@@ -1957,7 +1984,7 @@ void edColIntersectSegmentTriangle4(edColINFO_OUT* pColInfoOut, edColSEGMENT_TRI
 			return;
 		}
 
-		peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1);
+		peVar2 = peVar1->p1;
 		peVar3 = pSegmentTriangleIn->field_0x0;
 		fVar4 = peVar3->x - peVar2->x;
 		fVar8 = peVar3->y - peVar2->y;
@@ -1991,7 +2018,7 @@ void edColIntersectSegmentTriangle4(edColINFO_OUT* pColInfoOut, edColSEGMENT_TRI
 	if (fVar14 != -8888.0f) {
 		edF32Vector4NormalizeHard(&pColInfoOut->normal, &pColInfoOut->normal);
 
-		peVar2 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar1->p1);
+		peVar2 = peVar1->p1;
 		peVar3 = pSegmentTriangleIn->field_0x0;
 		pColInfoOut->penetrationDepth =
 			(peVar3->x - peVar2->x) * (pColInfoOut->normal).x + (peVar3->y - peVar2->y) * (pColInfoOut->normal).y +
@@ -2023,6 +2050,7 @@ void edColIntersectSegmentTriangle4(edColINFO_OUT* pColInfoOut, edColSEGMENT_TRI
 		if ((0.0f <= fVar14) && (fVar14 <= 1.0f)) {
 			uVar13 = 1;
 		}
+
 		pColInfoOut->field_0x4c = 1;
 		pColInfoOut->result = uVar13;
 	}
@@ -2033,7 +2061,7 @@ void edColIntersectSegmentTriangle4(edColINFO_OUT* pColInfoOut, edColSEGMENT_TRI
 void edColIntersectBoxTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_TRI4_IN* pParams, int param_3)
 {
 	edColPRIM_OBJECT* m0;
-	edF32TRIANGLE4* pTriangle;
+	edF32TRIANGLE4_Stack* pTriangle;
 	int iVar1;
 	int iVar2;
 	int iVar3;
@@ -2042,7 +2070,7 @@ void edColIntersectBoxTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_TRI4_I
 	edF32TRIANGLE4_INFOS local_1d0;
 	edF32VECTOR4 local_1b0;
 	edF32TRIANGLE4_INFOS eStack416;
-	edF32TRIANGLE4 local_180;
+	edF32TRIANGLE4_Stack local_180;
 	edColINFO_OUT eStack368;
 	edColSEGMENT_TRIANGLE4_IN local_110;
 	edColINFO_OUT eStack256;
@@ -2050,23 +2078,23 @@ void edColIntersectBoxTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_TRI4_I
 	edF32VECTOR4 local_90;
 	edF32VECTOR4 local_80;
 	edF32TRIANGLE4_INFOS local_70;
-	edF32TRIANGLE4 local_50;
+	edF32TRIANGLE4_Stack local_50;
 	edF32VECTOR4 aeStack64[3];
 	edF32VECTOR4 local_10;
 
-	local_50.p2 = STORE_SECTION(aeStack64 + 1);
-	local_50.p3 = STORE_SECTION(aeStack64 + 2);
+	local_50.p2 = aeStack64 + 1;
+	local_50.p3 = aeStack64 + 2;
 	pColInfoOut->result = 0;
 	local_1b0.w = 0.0f;
 	m0 = pParams->pData;
-	local_50.p1 = STORE_SECTION(aeStack64);
+	local_50.p1 = aeStack64;
 	pTriangle = pParams->pTriangle;
 	m0_00 = &m0->worldTransform;
 	local_50.flags = pTriangle->flags;
 
-	edF32Matrix4MulF32Vector4Hard(aeStack64 + 0, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p1));
-	edF32Matrix4MulF32Vector4Hard(aeStack64 + 1, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p2));
-	edF32Matrix4MulF32Vector4Hard(aeStack64 + 2, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pTriangle->p3));
+	edF32Matrix4MulF32Vector4Hard(aeStack64 + 0, m0_00, pTriangle->p1);
+	edF32Matrix4MulF32Vector4Hard(aeStack64 + 1, m0_00, pTriangle->p2);
+	edF32Matrix4MulF32Vector4Hard(aeStack64 + 2, m0_00, pTriangle->p3);
 
 	iVar1 = triBoxOverlap(&local_50);
 	if (iVar1 != 0) {
@@ -2122,9 +2150,9 @@ void edColIntersectBoxTriangle4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_TRI4_I
 		if (iVar1 == 0) {
 			for (iVar2 = 0; iVar2 < 3; iVar2 = iVar2 + 1) {
 				for (iVar3 = 0; iVar3 < 0xc; iVar3 = iVar3 + 1) {
-					local_180.p1 = STORE_SECTION(_gcube_corners + _gcube_tri[iVar3][0]);
-					local_180.p2 = STORE_SECTION(_gcube_corners + _gcube_tri[iVar3][1]);
-					local_180.p3 = STORE_SECTION(_gcube_corners + _gcube_tri[iVar3][2]);
+					local_180.p1 = _gcube_corners + _gcube_tri[iVar3][0];
+					local_180.p2 = _gcube_corners + _gcube_tri[iVar3][1];
+					local_180.p3 = _gcube_corners + _gcube_tri[iVar3][2];
 					edColTriangle4GetInfo(&eStack416, &local_180);
 					local_110.field_0xc = &local_180;
 					local_110.field_0x0 = aeStack64 + _gtri_edge[iVar2][0];
@@ -2232,7 +2260,12 @@ uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParam
 			local_20.pData = pUVar8;
 
 			for (peVar7 = peVar3; peVar7 < peVar3 + iVar2; peVar7 = peVar7 + 1) {
+#ifdef PLATFORM_WIN
+				edF32TRIANGLE4_Stack stackTriangle = (edF32TRIANGLE4*)peVar7;
+				local_20.pTriangle = &stackTriangle;
+#else
 				local_20.pTriangle = (edF32TRIANGLE4*)peVar7;
+#endif
 
 				edColIntersectBoxTriangle4(&eStack160, &local_20, 0);
 
@@ -2253,7 +2286,12 @@ uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParam
 				local_40.pData = pUVar8;
 
 				for (peVar7 = peVar3; peVar7 < peVar3 + iVar2; peVar7 = peVar7 + 1) {
+#ifdef PLATFORM_WIN
+					edF32TRIANGLE4_Stack stackTriangle = (edF32TRIANGLE4*)peVar7;
+					local_40.pTriangle = &stackTriangle;
+#else
 					local_40.pTriangle = (edF32TRIANGLE4*)peVar7;
+#endif
 
 					edColIntersectSphereTriangle4(&eStack160, &local_40, 0);
 
@@ -2284,14 +2322,14 @@ void edColIntersectBoxQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_QUAD4_IN* 
 	edF32TRIANGLE4_INFOS local_1f0;
 	edF32VECTOR4 local_1d0;
 	edF32TRIANGLE4_INFOS eStack448;
-	edF32TRIANGLE4 local_1a0;
+	edF32TRIANGLE4_Stack local_1a0;
 	edColINFO_OUT eStack400;
 	edColSEGMENT_TRIANGLE4_IN local_130;
 	edColINFO_OUT eStack288;
 	edColSEGMENT_TRIANGLE4_IN local_c0;
 	edF32TRIANGLE4_INFOS local_b0;
-	edF32TRIANGLE4 local_90;
-	edF32TRIANGLE4 local_80;
+	edF32TRIANGLE4_Stack local_90;
+	edF32TRIANGLE4_Stack local_80;
 	edF32VECTOR4 local_70;
 	edF32VECTOR4 local_60;
 	edF32VECTOR4 eStack80;
@@ -2311,27 +2349,27 @@ void edColIntersectBoxQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_QUAD4_IN* 
 	edF32Matrix4MulF32Vector4Hard(&eStack64, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2));
 	edF32Matrix4MulF32Vector4Hard(&eStack48, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3));
 	edF32Matrix4MulF32Vector4Hard(&local_20, m0_00, LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4));
-	local_90.p1 = STORE_SECTION(&eStack80);
-	local_80.p1 = pQuad->p1;
-	local_10[0] = LOAD_SECTION_CAST(edF32VECTOR4*, local_90.p1);
+	local_90.p1 = &eStack80;
+	local_80.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1);
+	local_10[0] = local_90.p1;
 
 	for (iVar4 = 0; iVar4 < 2; iVar4 = iVar4 + 1) {
-		local_90.p2 = STORE_SECTION(&eStack48);
+		local_90.p2 = &eStack48;
 
 		if (iVar4 == 0) {
-			local_90.p2 = STORE_SECTION(&eStack64);
-			local_90.p3 = STORE_SECTION(&eStack48);
-			local_80.p2 = pQuad->p2;
-			local_80.p3 = pQuad->p3;
+			local_90.p2 = &eStack64;
+			local_90.p3 = &eStack48;
+			local_80.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2);
+			local_80.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
 		}
 		else {
-			local_90.p3 = STORE_SECTION(&local_20);
-			local_80.p2 = pQuad->p3;
-			local_80.p3 = pQuad->p4;
+			local_90.p3 = &local_20;
+			local_80.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
+			local_80.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4);
 		}
 
-		local_10[1] = LOAD_SECTION_CAST(edF32VECTOR4*, local_90.p2);
-		local_10[2] = LOAD_SECTION_CAST(edF32VECTOR4*, local_90.p3);
+		local_10[1] = local_90.p2;
+		local_10[2] = local_90.p3;
 
 		iVar2 = triBoxOverlap(&local_90);
 		if (iVar2 != 0) {
@@ -2388,9 +2426,9 @@ void edColIntersectBoxQuad4(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_QUAD4_IN* 
 			if (iVar3 == 0) {
 				for (iVar4 = 0; iVar4 < 3; iVar4 = iVar4 + 1) {
 					for (iVar2 = 0; iVar2 < 0xc; iVar2 = iVar2 + 1) {
-						local_1a0.p1 = STORE_SECTION(_gcube_corners + _gcube_tri[iVar2][0]);
-						local_1a0.p2 = STORE_SECTION(_gcube_corners + _gcube_tri[iVar2][1]);
-						local_1a0.p3 = STORE_SECTION(_gcube_corners + _gcube_tri[iVar2][2]);
+						local_1a0.p1 = _gcube_corners + _gcube_tri[iVar2][0];
+						local_1a0.p2 = _gcube_corners + _gcube_tri[iVar2][1];
+						local_1a0.p3 = _gcube_corners + _gcube_tri[iVar2][2];
 						edColTriangle4GetInfo(&eStack448, &local_1a0);
 						local_130.field_0xc = &local_1a0;
 						local_130.field_0x0 = local_10[_gtri_edge[iVar4][0]];
@@ -2624,9 +2662,9 @@ int edColIntersectSphereUnitTriangle4Box(edColINFO_OUT* pColInfoOut, edColPRIM_S
 		if (iVar3 == 0) {
 			bVar2 = true;
 			while (bVar2) {
-				raySphereUnitIn.pRayOrigin = LOAD_SECTION_CAST(edF32VECTOR4*, pParams->pTriangle->points[_gtri_edge[result][0]]);
+				raySphereUnitIn.pRayOrigin = pParams->pTriangle->points[_gtri_edge[result][0]];
 
-				peVar1 = LOAD_SECTION_CAST(edF32VECTOR4*, pParams->pTriangle->points[_gtri_edge[result][1]]);
+				peVar1 = pParams->pTriangle->points[_gtri_edge[result][1]];
 
 				rayDirection = *peVar1 - *raySphereUnitIn.pRayOrigin;
 				raySphereUnitIn.pRayDirection = &rayDirection;
@@ -2833,7 +2871,7 @@ void edColIntersectBoxSphereA(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_I
 	edF32VECTOR4 colWorldVelocityA;
 	edF32VECTOR4 colWorldVelocityB;
 	edColPRIM_SPHERE_TRI4_IN primTriIn;
-	edF32TRIANGLE4 currentTriangle;
+	edF32TRIANGLE4_Stack currentTriangle;
 	edF32VECTOR4 accumulatedNormals = {};
 	edF32VECTOR4 accumulatedIntersectionPoints = {};
 	edF32VECTOR4 transformedTriangleNormals[8];
@@ -2857,9 +2895,9 @@ void edColIntersectBoxSphereA(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_I
 		currentTriangle.flags = pParams->pPrimObj->flags_0x80;
 		primTriIn.pTriangle = &currentTriangle;
 
-		currentTriangle.p1 = STORE_SECTION(transformedTriangleNormals + _gcube_tri[iVar7][0]);
-		currentTriangle.p2 = STORE_SECTION(transformedTriangleNormals + _gcube_tri[iVar7][1]);
-		currentTriangle.p3 = STORE_SECTION(transformedTriangleNormals + _gcube_tri[iVar7][2]);
+		currentTriangle.p1 = transformedTriangleNormals + _gcube_tri[iVar7][0];
+		currentTriangle.p2 = transformedTriangleNormals + _gcube_tri[iVar7][1];
+		currentTriangle.p3 = transformedTriangleNormals + _gcube_tri[iVar7][2];
 
 		primTriIn.aCentre = pParams->aCentre;
 		primTriIn.aPropertyA = pParams->aPropertyA;
@@ -2941,7 +2979,7 @@ void edColIntersectBoxSphere(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_SPHERE_IN
 	edF32VECTOR4 colWorldVelocityA;
 	edF32VECTOR4 colWorldVelocityB;
 	edColPRIM_SPHERE_TRI4_IN primTriIn;
-	edF32TRIANGLE4 currentTriangle;
+	edF32TRIANGLE4_Stack currentTriangle;
 	edF32VECTOR4 accumulatedNormals = {};
 	edF32VECTOR4 accumulatedIntersectionPoints = {};
 	edF32VECTOR4 transformedTriangleNormals[8];
@@ -2971,9 +3009,9 @@ LAB_0024e11c:
 		currentTriangle.flags = pParams->pPrimObj->flags_0x80;
 		primTriIn.pTriangle = &currentTriangle;
 
-		currentTriangle.p1 = STORE_SECTION(transformedTriangleNormals + _gcube_tri[iVar7][0]);
-		currentTriangle.p2 = STORE_SECTION(transformedTriangleNormals + _gcube_tri[iVar7][1]);
-		currentTriangle.p3 = STORE_SECTION(transformedTriangleNormals + _gcube_tri[iVar7][2]);
+		currentTriangle.p1 = transformedTriangleNormals + _gcube_tri[iVar7][0];
+		currentTriangle.p2 = transformedTriangleNormals + _gcube_tri[iVar7][1];
+		currentTriangle.p3 = transformedTriangleNormals + _gcube_tri[iVar7][2];
 
 		primTriIn.aCentre = pParams->aCentre;
 		primTriIn.aPropertyA = pParams->aPropertyA;
@@ -3331,7 +3369,7 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 	edF32VECTOR4 eStack768;
 	edF32TRIANGLE4_INFOS local_2f0;
 	edF32VECTOR4 local_2d0;
-	edF32TRIANGLE4 local_2c0;
+	edF32TRIANGLE4_Stack local_2c0;
 	edF32VECTOR4 local_2b0;
 	edF32VECTOR4 local_2a0;
 	edF32VECTOR4 local_290;
@@ -3485,17 +3523,17 @@ void edColIntersectBoxBox(edColINFO_OUT* pColInfoOut, edColPRIM_BOX_BOX_IN* pPri
 		local_10.pTriangle = &local_2c0;
 
 		for (iVar6 = 0; iVar6 < 0xc; iVar6 = iVar6 + 1) {
-			local_2c0.p1 = STORE_SECTION(_gcube_tri_normal + _gcube_tri[iVar6][0]);
-			local_2c0.p2 = STORE_SECTION(_gcube_tri_normal + _gcube_tri[iVar6][1]);
-			local_2c0.p3 = STORE_SECTION(_gcube_tri_normal + _gcube_tri[iVar6][2]);
+			local_2c0.p1 = _gcube_tri_normal + _gcube_tri[iVar6][0];
+			local_2c0.p2 = _gcube_tri_normal + _gcube_tri[iVar6][1];
+			local_2c0.p3 = _gcube_tri_normal + _gcube_tri[iVar6][2];
 			bVar2 = edColIntersectRayTriangle4(&local_4, &local_10);
 
 			if (((bVar2 != false) && (0.0f < local_4)) && (local_4 < 1.0f)) {
-				local_2c0.p2 = STORE_SECTION(&eStack784);
-				local_2c0.p1 = STORE_SECTION(&eStack800);
-				local_2c0.p3 = STORE_SECTION(&eStack768);
+				local_2c0.p2 = &eStack784;
+				local_2c0.p1 = &eStack800;
+				local_2c0.p3 = &eStack768;
 
-				edF32Matrix4MulF32Vector4Hard(LOAD_SECTION_CAST(edF32VECTOR4* ,local_2c0.p1), &bPrim->vertices, _gcube_tri_normal + _gcube_tri[iVar6][0]);
+				edF32Matrix4MulF32Vector4Hard(local_2c0.p1, &bPrim->vertices, _gcube_tri_normal + _gcube_tri[iVar6][0]);
 				edF32Matrix4MulF32Vector4Hard(&eStack784, &bPrim->vertices, _gcube_tri_normal + _gcube_tri[iVar6][1]);
 				edF32Matrix4MulF32Vector4Hard(&eStack768, &bPrim->vertices, _gcube_tri_normal + _gcube_tri[iVar6][2]);
 				edColTriangle4GetInfo(&local_2f0, &local_2c0);
@@ -3847,7 +3885,12 @@ uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams)
 			local_a0.pData = pPrim;
 
 			for (peVar8 = peVar2; peVar8 < peVar2 + iVar3; peVar8 = peVar8 + 1) {
-				local_a0.pTriangle = peVar8;
+#ifdef PLATFORM_WIN
+				edF32TRIANGLE4_Stack stackTriangle = peVar8;
+				local_80.pTriangle = &stackTriangle;
+#else
+				local_80.pTriangle = peVar8;
+#endif
 				edColIntersectBoxTriangle4(&eStack96, &local_a0, 1);
 				eStack96.normal.x = 0.0f - eStack96.normal.x;
 				eStack96.normal.y = 0.0f - eStack96.normal.y;
@@ -3873,7 +3916,12 @@ uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams)
 				local_80.pData = pPrim;
 
 				for (peVar8 = peVar2; peVar8 < peVar2 + iVar3; peVar8 = peVar8 + 1) {
+#ifdef PLATFORM_WIN
+					edF32TRIANGLE4_Stack stackTriangle = peVar8;
+					local_80.pTriangle = &stackTriangle;
+#else
 					local_80.pTriangle = peVar8;
+#endif
 					edColIntersectSphereTriangle4(&eStack96, &local_80, 1);
 					eStack96.normal.x = 0.0f - eStack96.normal.x;
 					eStack96.normal.y = 0.0f - eStack96.normal.y;
@@ -4812,12 +4860,16 @@ edColOBJECT* edColEnd(edDynOBJECT* pDynObj)
 
 uint CheckRayObbTreeIntersection(edObbTREE_DYN* pObbTree, edF32VECTOR4* pStart, edF32VECTOR4* pEnd)
 {
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
+	float projectedTranslationX;
+	float projectedTranslationY;
+	float projectedTranslationZ;
+	float startProjX;
+	float startProjY;
+	float startProjZ;
+	float endProjX;
+	float endProjY;
+	float endProjZ;
+
 	edF32VECTOR3 rowX;
 	edF32VECTOR3 rowY;
 	edF32VECTOR3 rowZ;
@@ -4836,26 +4888,33 @@ uint CheckRayObbTreeIntersection(edObbTREE_DYN* pObbTree, edF32VECTOR4* pStart, 
 	start = *pStart;
 	end = *pEnd;
 
-	fVar1 = 0.0f - (rowX.x * rowT.x + rowX.y * rowT.y + rowX.z * rowT.z);
-	fVar2 = 0.0f - (rowY.x * rowT.x + rowY.y * rowT.y + rowY.z * rowT.z);
-	fVar4 = 0.0f - (rowZ.x * rowT.x + rowZ.y * rowT.y + rowZ.z * fVar4);
-	fVar5 = rowX.x * start.x + rowX.y * start.y + rowX.z * start.z + fVar1 * start.w;
-	fVar6 = rowY.x * start.x + rowY.y * start.y + rowY.z * start.z + fVar2 * start.w;
-	fVar3 = rowZ.x * start.x + rowZ.y * start.y + rowZ.z * start.z + fVar4 * start.w;
-	fVar1 = rowX.x * end.x + rowX.y * end.y + rowX.z * end.z + fVar1 * end.w;
-	fVar2 = rowY.x * end.x + rowY.y * end.y + rowY.z * end.z + fVar2 * end.w;
-	fVar4 = rowZ.x * end.x + rowZ.y * end.y + rowZ.z * end.z + fVar4 * end.w;
+	// Compute projected translations along each axis
+	projectedTranslationX = 0.0f - (rowX.x * rowT.x + rowX.y * rowT.y + rowX.z * rowT.z);
+	projectedTranslationY = 0.0f - (rowY.x * rowT.x + rowY.y * rowT.y + rowY.z * rowT.z);
+	projectedTranslationZ = 0.0f - (rowZ.x * rowT.x + rowZ.y * rowT.y + rowZ.z * rowT.z);
 
+	// Project the start point onto each axis
+	startProjX = rowX.x * start.x + rowX.y * start.y + rowX.z * start.z + projectedTranslationX * start.w;
+	startProjY = rowY.x * start.x + rowY.y * start.y + rowY.z * start.z + projectedTranslationY * start.w;
+	startProjZ = rowZ.x * start.x + rowZ.y * start.y + rowZ.z * start.z + projectedTranslationZ * start.w;
+
+	// Project the end point onto each axis
+	endProjX = rowX.x * end.x + rowX.y * end.y + rowX.z * end.z + projectedTranslationX * end.w;
+	endProjY = rowY.x * end.x + rowY.y * end.y + rowY.z * end.z + projectedTranslationY * end.w;
+	endProjZ = rowZ.x * end.x + rowZ.y * end.y + rowZ.z * end.z + projectedTranslationZ * end.w;
+
+	// Get the box dimensions
 	width = (pObbTree->bbox).width;
 	height = (pObbTree->bbox).height;
 	depth = (pObbTree->bbox).depth;
 
-	return (uint)(width < fVar5) + (((uint)(fVar5 < -width) << 0x17) >> 0x16) +
-		(((uint)(height < fVar6) << 0x17) >> 0x15) + (((uint)(fVar6 < -height) << 0x17) >> 0x14) +
-		(((uint)(depth < fVar3) << 0x17) >> 0x13) + (((uint)(fVar3 < -depth) << 0x17) >> 0x12) &
-		(uint)(width < fVar1) + (((uint)(fVar1 < -width) << 0x17) >> 0x16) + (((uint)(height < fVar2) << 0x17) >> 0x15)
-		+ (((uint)(fVar2 < -height) << 0x17) >> 0x14) + (((uint)(depth < fVar4) << 0x17) >> 0x13) +
-		(((uint)(fVar4 < -depth) << 0x17) >> 0x12);
+	// Perform boundary checks for intersection
+	return (uint)(width < startProjX) + (((uint)(startProjX < -width) << 0x17) >> 0x16) +
+		(((uint)(height < startProjY) << 0x17) >> 0x15) + (((uint)(startProjY < -height) << 0x17) >> 0x14) +
+		(((uint)(depth < startProjZ) << 0x17) >> 0x13) + (((uint)(startProjZ < -depth) << 0x17) >> 0x12) &
+		(uint)(width < endProjX) + (((uint)(endProjX < -width) << 0x17) >> 0x16) + (((uint)(height < endProjY) << 0x17) >> 0x15)
+		+ (((uint)(endProjY < -height) << 0x17) >> 0x14) + (((uint)(depth < endProjZ) << 0x17) >> 0x13) +
+		(((uint)(endProjZ < -depth) << 0x17) >> 0x12);
 }
 
 int INT_ARRAY_00448910[2] = { 1, 0 };
@@ -5157,43 +5216,18 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 								pDirection = pRay->pLeadVector;
 								pLocation = pRay->pLocation;
 
-								fVar22 = pDirection->x;
-								fVar24 = pDirection->y;
-								fVar26 = pDirection->z;
-								float fVar28 = pDirection->w;
-								float fVar30 = pLocation->x;
-								float fVar32 = pLocation->y;
-								float fVar34 = pLocation->z;
-								float fVar36 = pLocation->w;
-
-								fVar13 = (pBox->worldTransform).aa;
-								fVar14 = (pBox->worldTransform).ab;
-								fVar15 = (pBox->worldTransform).ac;
-								fVar16 = (pBox->worldTransform).ad;
-								fVar17 = (pBox->worldTransform).ba;
-								fVar18 = (pBox->worldTransform).bb;
-								fVar19 = (pBox->worldTransform).bc;
-								fVar20 = (pBox->worldTransform).bd;
-								fVar21 = (pBox->worldTransform).ca;
-								fVar23 = (pBox->worldTransform).cb;
-								fVar25 = (pBox->worldTransform).cc;
-								fVar27 = (pBox->worldTransform).cd;
-								float fVar29 = (pBox->worldTransform).da;
-								float fVar31 = (pBox->worldTransform).db;
-								float fVar33 = (pBox->worldTransform).dc;
-								float fVar35 = (pBox->worldTransform).dd;
-
 								edF32VECTOR4 local_5e0;
 								edF32VECTOR4 local_5f0;
 
-								local_5e0.x = fVar13 * fVar22 + fVar17 * fVar24 + fVar21 * fVar26 + fVar29 * fVar28;
-								local_5e0.y = fVar14 * fVar22 + fVar18 * fVar24 + fVar23 * fVar26 + fVar31 * fVar28;
-								local_5e0.z = fVar15 * fVar22 + fVar19 * fVar24 + fVar25 * fVar26 + fVar33 * fVar28;
-								local_5e0.w = fVar16 * fVar22 + fVar20 * fVar24 + fVar27 * fVar26 + fVar35 * fVar28;
-								local_5f0.x = fVar13 * fVar30 + fVar17 * fVar32 + fVar21 * fVar34 + fVar29 * fVar36;
-								local_5f0.y = fVar14 * fVar30 + fVar18 * fVar32 + fVar23 * fVar34 + fVar31 * fVar36;
-								local_5f0.z = fVar15 * fVar30 + fVar19 * fVar32 + fVar25 * fVar34 + fVar33 * fVar36;
-								local_5f0.w = fVar16 * fVar30 + fVar20 * fVar32 + fVar27 * fVar34 + fVar35 * fVar36;
+								local_5e0.x = (pBox->worldTransform).aa * pDirection->x + (pBox->worldTransform).ba * pDirection->y + (pBox->worldTransform).ca * pDirection->z + (pBox->worldTransform).da * pDirection->w;
+								local_5e0.y = (pBox->worldTransform).ab * pDirection->x + (pBox->worldTransform).bb * pDirection->y + (pBox->worldTransform).cb * pDirection->z + (pBox->worldTransform).db * pDirection->w;
+								local_5e0.z = (pBox->worldTransform).ac * pDirection->x + (pBox->worldTransform).bc * pDirection->y + (pBox->worldTransform).cc * pDirection->z + (pBox->worldTransform).dc * pDirection->w;
+								local_5e0.w = (pBox->worldTransform).ad * pDirection->x + (pBox->worldTransform).bd * pDirection->y + (pBox->worldTransform).cd * pDirection->z + (pBox->worldTransform).dd * pDirection->w;
+
+								local_5f0.x = (pBox->worldTransform).aa * pLocation->x + (pBox->worldTransform).ba * pLocation->y + (pBox->worldTransform).ca * pLocation->z + (pBox->worldTransform).da * pLocation->w;
+								local_5f0.y = (pBox->worldTransform).ab * pLocation->x + (pBox->worldTransform).bb * pLocation->y + (pBox->worldTransform).cb * pLocation->z + (pBox->worldTransform).db * pLocation->w;
+								local_5f0.z = (pBox->worldTransform).ac * pLocation->x + (pBox->worldTransform).bc * pLocation->y + (pBox->worldTransform).cc * pLocation->z + (pBox->worldTransform).dc * pLocation->w;
+								local_5f0.w = (pBox->worldTransform).ad * pLocation->x + (pBox->worldTransform).bd * pLocation->y + (pBox->worldTransform).cd * pLocation->z + (pBox->worldTransform).dd * pLocation->w;
 
 								edColPRIM_RAY_UNIT_BOX_UNIT_IN local_38;
 								local_38.field_0x4 = &local_5f0;
@@ -5404,18 +5438,18 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 
 										for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 
-											edF32TRIANGLE4 triangle;
+											edF32TRIANGLE4_Stack triangle;
 
 											for (iVar10 = 0; iVar10 < 2; iVar10 = iVar10 + 1) {
 												if (iVar10 == 0) {
-													triangle.p1 = pQuad->p1;
-													triangle.p2 = pQuad->p2;
-													triangle.p3 = pQuad->p3;
+													triangle.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1);
+													triangle.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p2);
+													triangle.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
 												}
 												else {
-													triangle.p1 = pQuad->p1;
-													triangle.p2 = pQuad->p3;
-													triangle.p3 = pQuad->p4;
+													triangle.p1 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p1);
+													triangle.p2 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p3);
+													triangle.p3 = LOAD_SECTION_CAST(edF32VECTOR4*, pQuad->p4);
 												}
 
 												triangle.flags = pQuad->flags;
@@ -5468,7 +5502,13 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 												for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 													local_10.pRayOrigin = pRay->pLocation;
 													local_10.pRayDirection = pRay->pLeadVector;
+
+#ifdef PLATFORM_WIN
+													edF32TRIANGLE4_Stack stackTriangle = pTriangle;
+													local_10.pTriangle = &stackTriangle;
+#else
 													local_10.pTriangle = pTriangle;
+#endif
 
 													edColIntersectRayTriangle4(&outDistance, &local_10);
 

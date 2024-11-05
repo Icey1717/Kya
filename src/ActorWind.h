@@ -22,6 +22,7 @@ class CFxWind : public CObject
 public:
 	void SectorChange(int oldSectorId, int newSectorId) { IMPLEMENTATION_GUARD_WIND_FX(); }
 	void Draw() { IMPLEMENTATION_GUARD_WIND_FX(); }
+	void Reset() { IMPLEMENTATION_GUARD_WIND_FX(); }
 };
 
 class CBehaviourWind : public CBehaviour 
