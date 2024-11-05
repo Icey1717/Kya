@@ -312,6 +312,8 @@ struct edF32TRIANGLE4
 	uint flags;
 });
 
+static_assert(sizeof(edF32TRIANGLE4) == 0x10);
+
 PACK(
 struct StaticCollisionEntry {
 	undefined field_0x0;

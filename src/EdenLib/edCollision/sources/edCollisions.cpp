@@ -220,7 +220,8 @@ edColG3D_OBB_TREE* edColLoadStatic(char** pOutData, char* pFileBuffer, uint* par
 		for (iVar6 = (pStaticColEntry->obbTree).field_0x20; iVar6 != 0; iVar6 = iVar6 + -1) {
 			bVar1 = pObbTree->type;
 			if (bVar1 == COL_TYPE_BOX) {
-				pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aBoxes) + pObbTree->field_0x54[0] * sizeof(edColPRIM_BOX)));
+				edColPRIM_BOX* pBox = LOAD_SECTION_CAST(edColPRIM_BOX*, pStaticColEntry->obbTree.aBoxes) + pObbTree->field_0x54[0];
+				pObbTree->field_0x54[0] = STORE_SECTION(pBox);
 			}
 			else {
 				if (bVar1 == COL_TYPE_SPHERE) {
@@ -236,13 +237,13 @@ edColG3D_OBB_TREE* edColLoadStatic(char** pOutData, char* pFileBuffer, uint* par
 						}
 						else {
 							if (bVar1 == COL_TYPE_TRIANGLE) {
-								pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aTriangles) + pObbTree->field_0x54[0] * 0x10));
+								pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aTriangles) + pObbTree->field_0x54[0] * sizeof(edF32TRIANGLE4)));
 							}
 							else {
 								iVar8 = 0;
 								if (bVar1 == COL_TYPE_TREE) {
 									bVar1 = pObbTree->count_0x52;
-									for (; iVar8 < (int)(uint)bVar1; iVar8 = iVar8 + 1) {
+									for (; iVar8 < bVar1; iVar8 = iVar8 + 1) {
 										edObbTREE* pNext = (edObbTREE*)((char*)pObbTreeBase + (pObbTree->field_0x54[iVar8] * sizeof(edObbTREE)));
 										pObbTree->field_0x54[iVar8] = STORE_SECTION(pNext);
 									}
@@ -5219,15 +5220,15 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 								edF32VECTOR4 local_5e0;
 								edF32VECTOR4 local_5f0;
 
-								local_5e0.x = (pBox->worldTransform).aa * pDirection->x + (pBox->worldTransform).ba * pDirection->y + (pBox->worldTransform).ca * pDirection->z + (pBox->worldTransform).da * pDirection->w;
-								local_5e0.y = (pBox->worldTransform).ab * pDirection->x + (pBox->worldTransform).bb * pDirection->y + (pBox->worldTransform).cb * pDirection->z + (pBox->worldTransform).db * pDirection->w;
-								local_5e0.z = (pBox->worldTransform).ac * pDirection->x + (pBox->worldTransform).bc * pDirection->y + (pBox->worldTransform).cc * pDirection->z + (pBox->worldTransform).dc * pDirection->w;
-								local_5e0.w = (pBox->worldTransform).ad * pDirection->x + (pBox->worldTransform).bd * pDirection->y + (pBox->worldTransform).cd * pDirection->z + (pBox->worldTransform).dd * pDirection->w;
+								local_5e0.x = (pBox->worldTransform).aa * pLocation->x + (pBox->worldTransform).ba * pLocation->y + (pBox->worldTransform).ca * pLocation->z + (pBox->worldTransform).da * pLocation->w;
+								local_5e0.y = (pBox->worldTransform).ab * pLocation->x + (pBox->worldTransform).bb * pLocation->y + (pBox->worldTransform).cb * pLocation->z + (pBox->worldTransform).db * pLocation->w;
+								local_5e0.z = (pBox->worldTransform).ac * pLocation->x + (pBox->worldTransform).bc * pLocation->y + (pBox->worldTransform).cc * pLocation->z + (pBox->worldTransform).dc * pLocation->w;
+								local_5e0.w = (pBox->worldTransform).ad * pLocation->x + (pBox->worldTransform).bd * pLocation->y + (pBox->worldTransform).cd * pLocation->z + (pBox->worldTransform).dd * pLocation->w;
 
-								local_5f0.x = (pBox->worldTransform).aa * pLocation->x + (pBox->worldTransform).ba * pLocation->y + (pBox->worldTransform).ca * pLocation->z + (pBox->worldTransform).da * pLocation->w;
-								local_5f0.y = (pBox->worldTransform).ab * pLocation->x + (pBox->worldTransform).bb * pLocation->y + (pBox->worldTransform).cb * pLocation->z + (pBox->worldTransform).db * pLocation->w;
-								local_5f0.z = (pBox->worldTransform).ac * pLocation->x + (pBox->worldTransform).bc * pLocation->y + (pBox->worldTransform).cc * pLocation->z + (pBox->worldTransform).dc * pLocation->w;
-								local_5f0.w = (pBox->worldTransform).ad * pLocation->x + (pBox->worldTransform).bd * pLocation->y + (pBox->worldTransform).cd * pLocation->z + (pBox->worldTransform).dd * pLocation->w;
+								local_5f0.x = (pBox->worldTransform).aa * pDirection->x + (pBox->worldTransform).ba * pDirection->y + (pBox->worldTransform).ca * pDirection->z + (pBox->worldTransform).da * pDirection->w;
+								local_5f0.y = (pBox->worldTransform).ab * pDirection->x + (pBox->worldTransform).bb * pDirection->y + (pBox->worldTransform).cb * pDirection->z + (pBox->worldTransform).db * pDirection->w;
+								local_5f0.z = (pBox->worldTransform).ac * pDirection->x + (pBox->worldTransform).bc * pDirection->y + (pBox->worldTransform).cc * pDirection->z + (pBox->worldTransform).dc * pDirection->w;
+								local_5f0.w = (pBox->worldTransform).ad * pDirection->x + (pBox->worldTransform).bd * pDirection->y + (pBox->worldTransform).cd * pDirection->z + (pBox->worldTransform).dd * pDirection->w;
 
 								edColPRIM_RAY_UNIT_BOX_UNIT_IN local_38;
 								local_38.field_0x4 = &local_5f0;
