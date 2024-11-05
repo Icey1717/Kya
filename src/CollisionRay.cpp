@@ -375,21 +375,26 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 				finalType = outType;
 				unaff_s0_lo = local_c;
 			}
+
 			iVar4 = iVar4 + 1;
 			ppeVar3 = ppeVar3 + 1;
 		} while (iVar4 < iVar1);
 	}
+
 	if (fVar6 != 1e+30f) {
 		if (pOutVector == (edF32VECTOR4*)0x0) {
 			pOutVector = &eStack32;
 		}
+
 		ComputeIntersectionNormalAndProps(fVar6, unaff_s0_lo, finalType, pOutVector, &local_4);
 	}
+
 	if (pOutResult != (_ray_info_out*)0x0) {
 		pOutResult->pActor_0x0 = (CActor*)0x0;
 		pOutResult->pVector_0x4 = local_4;
 		pOutResult->type_0x8 = finalType;
 	}
+
 	return fVar6;
 }
 

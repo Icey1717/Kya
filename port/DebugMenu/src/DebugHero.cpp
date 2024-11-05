@@ -155,6 +155,9 @@ namespace Debug {
 			case STATE_HERO_GLIDE_3:
 				return "StateHeroGlide3";
 				break;
+			case STATE_HERO_WIND_FLY:
+				return "StateHeroWindFly";
+				break;
 			case STATE_HERO_WIND_SLIDE:
 				return "StateHeroWindSlide";
 				break;
@@ -163,6 +166,12 @@ namespace Debug {
 				break;
 			case STATE_HERO_WIND_SLIDE_MOVE_B:
 				return "StateHeroWindSlideMoveB";
+				break;
+			case STATE_HERO_WIND_SLIDE_MOVE_E:
+				return "StateHeroWindSlideMoveE";
+				break;
+			case STATE_HERO_WIND_SLIDE_MOVE_F:
+				return "StateHeroWindSlideMoveF";
 				break;
 			case STATE_HERO_WIND_SLIDE_MOVE_C:
 				return "StateHeroWindSlideMoveC";

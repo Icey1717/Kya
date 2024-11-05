@@ -266,7 +266,7 @@ struct CCineActorConfig {
 
 PACK(
 struct S_STREAM_EVENT_CAMERA {
-	int field_0x0;
+	int cameraIndex;
 	int field_0x4;
 	float field_0x8;
 	float field_0xc;

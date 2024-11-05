@@ -110,7 +110,28 @@ void CActorDCA::Term()
 
 void CActorDCA::Reset()
 {
-	IMPLEMENTATION_GUARD();
+	CActor::Reset();
+	(this->field_0x164).x = 0.0f;
+	(this->field_0x164).y = 0.0f;
+	(this->field_0x164).z = 0.0f;
+
+	(this->field_0x170).x = 0.0f;
+	(this->field_0x170).y = 0.0f;
+	(this->field_0x170).z = 0.0f;
+
+	this->field_0x1a0 = (CActor*)0x0;
+	this->field_0x460 = 0;
+	this->field_0x45c = 0.0;
+	
+	this->field_0x180 = gF32Vertex4Zero;
+	this->field_0x190 = gF32Vertex4Zero;
+	this->field_0x170 = gF32Vertex4Zero.xyz;
+
+	this->field_0x459 = 0;
+	this->fireShot.Reset();
+	(this->fireShot).field_0x290 = 1;
+
+	return;
 }
 
 void CActorDCA::CheckpointReset()

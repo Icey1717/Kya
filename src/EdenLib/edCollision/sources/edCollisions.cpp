@@ -4810,70 +4810,52 @@ edColOBJECT* edColEnd(edDynOBJECT* pDynObj)
 	return gColTD.pCurColObj + -1;
 }
 
-uint CheckRayObbTreeIntersection (edObbTREE_DYN* pObbTree, edF32VECTOR4* param_2, edF32VECTOR4* param_3)
+uint CheckRayObbTreeIntersection(edObbTREE_DYN* pObbTree, edF32VECTOR4* pStart, edF32VECTOR4* pEnd)
 {
 	float fVar1;
 	float fVar2;
+	float fVar3;
 	float fVar4;
 	float fVar5;
 	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-	float fVar14;
-	float fVar15;
-	float fVar16;
-	float fVar17;
-	float fVar18;
-	float fVar19;
-	float fVar20;
-	float fVar21;
-	float fVar22;
-	float fVar23;
+	edF32VECTOR3 rowX;
+	edF32VECTOR3 rowY;
+	edF32VECTOR3 rowZ;
+	float height;
+	float width;
+	float depth;
+	edF32VECTOR3 rowT;
+	edF32VECTOR4 start;
+	edF32VECTOR4 end;
 
-	fVar4 = (pObbTree->bbox).transform.ac;
-	fVar5 = (pObbTree->bbox).transform.ba;
-	fVar6 = (pObbTree->bbox).transform.bb;
-	fVar7 = (pObbTree->bbox).transform.bc;
-	fVar8 = (pObbTree->bbox).transform.ca;
-	fVar9 = (pObbTree->bbox).transform.cb;
-	fVar10 = (pObbTree->bbox).transform.cc;
-	fVar13 = (pObbTree->bbox).transform.da;
-	fVar14 = (pObbTree->bbox).transform.db;
-	fVar15 = (pObbTree->bbox).transform.dc;
-	fVar16 = param_2->x;
-	fVar17 = param_2->y;
-	fVar18 = param_2->z;
-	fVar19 = param_2->w;
-	fVar20 = param_3->x;
-	fVar21 = param_3->y;
-	fVar22 = param_3->z;
-	fVar23 = param_3->w;
-	fVar12 = (pObbTree->bbox).transform.ab;
-	fVar11 = (pObbTree->bbox).transform.aa;
-	fVar1 = 0.0f - (fVar11 * fVar13 + fVar12 * fVar14 + fVar4 * fVar15);
-	fVar2 = 0.0f - (fVar5 * fVar13 + fVar6 * fVar14 + fVar7 * fVar15);
-	fVar15 = 0.0f - (fVar8 * fVar13 + fVar9 * fVar14 + fVar10 * fVar15);
-	fVar13 = fVar11 * fVar16 + fVar12 * fVar17 + fVar4 * fVar18 + fVar1 * fVar19;
-	fVar14 = fVar5 * fVar16 + fVar6 * fVar17 + fVar7 * fVar18 + fVar2 * fVar19;
-	fVar16 = fVar8 * fVar16 + fVar9 * fVar17 + fVar10 * fVar18 + fVar15 * fVar19;
-	fVar1 = fVar11 * fVar20 + fVar12 * fVar21 + fVar4 * fVar22 + fVar1 * fVar23;
-	fVar2 = fVar5 * fVar20 + fVar6 * fVar21 + fVar7 * fVar22 + fVar2 * fVar23;
-	fVar15 = fVar8 * fVar20 + fVar9 * fVar21 + fVar10 * fVar22 + fVar15 * fVar23;
-	fVar12 = (pObbTree->bbox).width;
-	fVar11 = (pObbTree->bbox).height;
-	fVar4 = (pObbTree->bbox).depth;
+	rowX = (pObbTree->bbox).transform.rowX.xyz;
+	rowY = (pObbTree->bbox).transform.rowY.xyz;
+	rowZ = (pObbTree->bbox).transform.rowZ.xyz;
+	rowT = (pObbTree->bbox).transform.rowT.xyz;
 
-	return (uint)(fVar12 < fVar13) + (((uint)(fVar13 < -fVar12) << 0x17) >> 0x16) +
-		(((uint)(fVar11 < fVar14) << 0x17) >> 0x15) + (((uint)(fVar14 < -fVar11) << 0x17) >> 0x14) +
-		(((uint)(fVar4 < fVar16) << 0x17) >> 0x13) + (((uint)(fVar16 < -fVar4) << 0x17) >> 0x12) &
-		(uint)(fVar12 < fVar1) + (((uint)(fVar1 < -fVar12) << 0x17) >> 0x16) +
-		(((uint)(fVar11 < fVar2) << 0x17) >> 0x15) + (((uint)(fVar2 < -fVar11) << 0x17) >> 0x14) +
-		(((uint)(fVar4 < fVar15) << 0x17) >> 0x13) + (((uint)(fVar15 < -fVar4) << 0x17) >> 0x12);
+	start = *pStart;
+	end = *pEnd;
+
+	fVar1 = 0.0f - (rowX.x * rowT.x + rowX.y * rowT.y + rowX.z * rowT.z);
+	fVar2 = 0.0f - (rowY.x * rowT.x + rowY.y * rowT.y + rowY.z * rowT.z);
+	fVar4 = 0.0f - (rowZ.x * rowT.x + rowZ.y * rowT.y + rowZ.z * fVar4);
+	fVar5 = rowX.x * start.x + rowX.y * start.y + rowX.z * start.z + fVar1 * start.w;
+	fVar6 = rowY.x * start.x + rowY.y * start.y + rowY.z * start.z + fVar2 * start.w;
+	fVar3 = rowZ.x * start.x + rowZ.y * start.y + rowZ.z * start.z + fVar4 * start.w;
+	fVar1 = rowX.x * end.x + rowX.y * end.y + rowX.z * end.z + fVar1 * end.w;
+	fVar2 = rowY.x * end.x + rowY.y * end.y + rowY.z * end.z + fVar2 * end.w;
+	fVar4 = rowZ.x * end.x + rowZ.y * end.y + rowZ.z * end.z + fVar4 * end.w;
+
+	width = (pObbTree->bbox).width;
+	height = (pObbTree->bbox).height;
+	depth = (pObbTree->bbox).depth;
+
+	return (uint)(width < fVar5) + (((uint)(fVar5 < -width) << 0x17) >> 0x16) +
+		(((uint)(height < fVar6) << 0x17) >> 0x15) + (((uint)(fVar6 < -height) << 0x17) >> 0x14) +
+		(((uint)(depth < fVar3) << 0x17) >> 0x13) + (((uint)(fVar3 < -depth) << 0x17) >> 0x12) &
+		(uint)(width < fVar1) + (((uint)(fVar1 < -width) << 0x17) >> 0x16) + (((uint)(height < fVar2) << 0x17) >> 0x15)
+		+ (((uint)(fVar2 < -height) << 0x17) >> 0x14) + (((uint)(depth < fVar4) << 0x17) >> 0x13) +
+		(((uint)(fVar4 < -depth) << 0x17) >> 0x12);
 }
 
 int INT_ARRAY_00448910[2] = { 1, 0 };

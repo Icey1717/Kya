@@ -1988,6 +1988,11 @@ bool CCameraManager::PopCamera(CCamera* pCameraView)
 	return bSuccess;
 }
 
+bool CCameraManager::PopCamera(int cameraIndex)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CCameraManager::SetMainCamera(CCamera* pCamera)
 {
 	bool bVar1;

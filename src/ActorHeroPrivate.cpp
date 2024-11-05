@@ -3227,7 +3227,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			return 0;
 		}
 
-		if (msg == 0x26) {
+		if (msg == MESSAGE_ENABLE_INPUT) {
 			pCVar11 = GetLifeInterface();
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3275,7 +3275,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			return 0;
 		}
 
-		if (msg == 0x25) {
+		if (msg == MESSAGE_DISABLE_INPUT) {
 			fVar25 = GetLifeInterface()->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
@@ -4325,9 +4325,9 @@ void CActorHeroPrivate::ResetWindDefaultSettings()
 	this->field_0x11e4 = 12.0f;
 	this->field_0x11e8 = 20.0f;
 	this->field_0x13d4 = 6.0f;
-	this->field_0x13dc = 1.25f;
-	//*(undefined4*)&this->field_0x13e0 = 0x3fa00000;
-	//*(undefined4*)&this->field_0x13e4 = 0x40600000;
+	this->windWallHorizontalSpeed = 1.25f;
+	this->windWallVerticalSpeed = 1.25f;
+	this->field_0x13e4 = 3.5f;
 	this->field_0x1410 = 1.0f;
 	this->field_0x1414 = 2.0f;
 	this->field_0x1418 = 5.0f;
@@ -5347,11 +5347,14 @@ LAB_00341590:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
 	case STATE_HERO_WIND_SLIDE_MOVE_A:
 	case STATE_HERO_WIND_SLIDE_MOVE_B:
+	case STATE_HERO_WIND_SLIDE_MOVE_E:
+	case STATE_HERO_WIND_SLIDE_MOVE_F:
 	case STATE_HERO_WIND_SLIDE_MOVE_C:
 	case STATE_HERO_WIND_SLIDE_MOVE_D:
 	case STATE_HERO_STAND_TO_CROUCH_A:
 	case STATE_HERO_ROLL_2_CROUCH:
 	case STATE_HERO_JUMP_TO_CROUCH:
+	case STATE_HERO_WIND_FLY:
 		break;
 	case STATE_HERO_STAND:
 		StateHeroStandInit(1);
@@ -5490,8 +5493,11 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_GLIDE_2:
 	case STATE_HERO_GLIDE_3:
 	case STATE_HERO_WIND_SLIDE:
+	case STATE_HERO_WIND_FLY:
 	case STATE_HERO_WIND_SLIDE_MOVE_A:
 	case STATE_HERO_WIND_SLIDE_MOVE_B:
+	case STATE_HERO_WIND_SLIDE_MOVE_E:
+	case STATE_HERO_WIND_SLIDE_MOVE_F:
 	case STATE_HERO_WIND_SLIDE_MOVE_C:
 	case STATE_HERO_WIND_SLIDE_MOVE_D:
 	case STATE_HERO_KICK_C:
@@ -5951,20 +5957,29 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_GLIDE_3:
 		StateHeroGlide(1, -1);
 		break;
+	case STATE_HERO_WIND_FLY:
+		StateHeroWindFly(0);
+		break;
 	case STATE_HERO_WIND_SLIDE:
 		StateHeroWindSlide(-1);
 		break;
 	case STATE_HERO_WIND_SLIDE_MOVE_A:
-		StateHeroWindWallMove(0.0f, 0, 0, 0x100);
+		StateHeroWindWallMove(0.0f, 0.0f, 0, 0x100);
 		break;
 	case STATE_HERO_WIND_SLIDE_MOVE_B:
-		StateHeroWindWallMove(0.0f, 0, 0, 0xff);
+		StateHeroWindWallMove(0.0f, 0.0f, 0, 0xff);
+		break;
+	case STATE_HERO_WIND_SLIDE_MOVE_E:
+		StateHeroWindWallMove(0.0f, this->windWallVerticalSpeed, 0, 0x100);
+		break;
+	case STATE_HERO_WIND_SLIDE_MOVE_F:
+		StateHeroWindWallMove(0.0f, -this->windWallVerticalSpeed, 0, 0x100);
 		break;
 	case STATE_HERO_WIND_SLIDE_MOVE_C:
-		StateHeroWindWallMove(-this->field_0x13dc, 0, 0, 0x100);
+		StateHeroWindWallMove(-this->windWallHorizontalSpeed, 0.0f, 0, 0x100);
 		break;
 	case STATE_HERO_WIND_SLIDE_MOVE_D:
-		StateHeroWindWallMove(this->field_0x13dc, 0, 0, 0x100);
+		StateHeroWindWallMove(this->windWallHorizontalSpeed, 0.0f, 0, 0x100);
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 		StateHeroTrampolineJump_1_2(2.0f);
@@ -6073,7 +6088,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 				bVar2 = this->pSoccerActor != (CActor*)0x0;
 			}
 			IMPLEMENTATION_GUARD(
-			if ((((!bVar2) && (this->character.field_0x350 != 0)) && (this->field_0x187c == 0)) &&
+			if ((((!bVar2) && (this->field_0x350 != 0)) && (this->field_0x187c == 0)) &&
 				((uVar9 = TestState_00132830(0xffffffff), uVar9 == 0 ||
 					(this->dynamic.velocityDirectionEuler.y <= 0.0)))) {
 				(*(code*)(this->pVTable)->SetFightBehaviour)(this);
@@ -7153,6 +7168,237 @@ LAB_00328d38:
 	return;
 }
 
+void CActorHeroPrivate::StateHeroWindFly(int param_2)
+{
+	CCollision* pCVar1;
+	CPlayerInput* pCVar2;
+	bool bVar3;
+	Timer* pTVar4;
+	undefined4 uVar5;
+	int iVar6;
+	int* piVar7;
+	int iVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 local_120;
+	edF32VECTOR4 eStack272;
+	edF32VECTOR4 local_100;
+	edF32VECTOR4 eStack240;
+	edF32MATRIX4 eStack224;
+	edF32MATRIX4 eStack160;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	int local_8;
+	int local_4;
+
+	pCVar1 = this->pCollisionData;
+
+	IncreaseEffort(0.5f);
+
+	local_20 = this->dynamicExt.aImpulseVelocities[2];
+
+	fVar11 = this->dynamicExt.aImpulseVelocityMagnitudes[2];
+	if (param_2 == 0) {
+		UpdateOrientationFromWind(&local_20, &local_30);
+		ManageDyn(4.0f, 0x121, (CActorsTable*)0x0);
+	}
+	else {
+		local_60 = g_xVector;
+
+		local_40.x = (CCameraManager::_gThis->transformationMatrix).ca;
+		local_40.z = (CCameraManager::_gThis->transformationMatrix).cc;
+		local_40.w = (CCameraManager::_gThis->transformationMatrix).cd;
+		local_40.y = 0.0f;
+
+		edF32Vector4SafeNormalize0Hard(&local_40, &local_40);
+		edF32Vector4CrossProductHard(&local_50, &this->rotationQuat, &local_60);
+		fVar11 = edF32Vector4DotProductHard(&local_40, &this->rotationQuat);
+
+		if (fVar11 < 0.0f) {
+			pCVar2 = this->pPlayerInput;
+			if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar11 = 0.0;
+			}
+			else {
+				fVar11 = pCVar2->aAnalogSticks[0].x;
+			}
+			edF32Vector4ScaleHard(-fVar11, &local_50, &local_50);
+		}
+		else {
+			pCVar2 = this->pPlayerInput;
+			if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar11 = 0.0f;
+			}
+			else {
+				fVar11 = pCVar2->aAnalogSticks[0].x;
+			}
+
+			edF32Vector4ScaleHard(fVar11, &local_50, &local_50);
+		}
+
+		pCVar2 = this->pPlayerInput;
+		if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+			fVar11 = 0.0f;
+		}
+		else {
+			fVar11 = pCVar2->aAnalogSticks[0].y;
+		}
+
+		edF32Vector4ScaleHard(fVar11, &local_60, &local_60);
+		edF32Vector4AddHard(&local_50, &local_50, &local_60);
+		fVar11 = edF32Vector4SafeNormalize0Hard(&local_50, &local_50);
+
+		this->dynamic.rotationQuat = local_50;
+
+		this->dynamic.speed = fVar11 * this->field_0x13e4;
+
+		local_30.y = 0.0f;
+		local_30.x = local_20.x;
+		local_30.z = local_20.z;
+		local_30.w = local_20.w;
+		fVar11 = edF32Vector4SafeNormalize0Hard(&local_30, &local_30);
+		if (2.0f < fVar11) {
+			pCVar2 = this->pPlayerInput;
+			if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar9 = 0.0f;
+			}
+			else {
+				fVar9 = pCVar2->aAnalogSticks[0].y;
+			}
+
+			fVar9 = edFIntervalDotSrcLERP(fVar9, 0.3490658f, -0.3490658f);
+			pCVar2 = this->pPlayerInput;
+			if ((pCVar2 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar10 = 0.0f;
+			}
+			else {
+				fVar10 = pCVar2->aAnalogSticks[0].x;
+			}
+
+			fVar10 = edFIntervalDotSrcLERP(fVar10, -0.3490658f, 0.3490658f);
+			edF32Matrix4RotateZHard(fVar9, &eStack160, &gF32Matrix4Unit);
+			edF32Matrix4RotateYHard(fVar10, &eStack224, &eStack160);
+			edF32Matrix4MulF32Vector4Hard(&eStack240, &eStack224, &local_30);
+			edF32Vector4NormalizeHard(&eStack240, &eStack240);
+			SV_UpdateOrientation(this->airRotationRate * 0.5f, &eStack240);
+		}
+
+		bVar3 = this->scalarDynJump.IsFinished();
+		if (bVar3 == false) {
+			pTVar4 = GetTimer();
+			this->scalarDynJump.Integrate(pTVar4->cutsceneDeltaTime);
+			edF32Vector4ScaleHard(-this->scalarDynJump.field_0x20, &local_100, &this->rotationQuat);
+			this->dynamicExt.field_0x60.x = local_100.x;
+			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x4000;
+			this->dynamicExt.field_0x60.z = local_100.z;
+			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x10000;
+
+			ManageDyn(4.0f, 0x101, (CActorsTable*)0x0);
+
+			bVar3 = this->scalarDynJump.IsFinished();
+			if (bVar3 != false) {
+				SetState(0x101, 0xffffffff);
+				return;
+			}
+		}
+		else {
+			ManageDyn(4.0f, 0x101, (CActorsTable*)0x0);
+
+			edF32Vector4SubHard(&eStack272, &this->currentLocation, &this->field_0xf00);
+			fVar9 = edF32Vector4DotProductHard(&eStack272, &local_30);
+			if (0.1f < fVar9) {
+				SetState(STATE_HERO_WIND_FLY, 0xffffffff);
+				return;
+			}
+		}
+	}
+
+	if (GetWindState() == (CActorWindState*)0x0) {
+		bVar3 = false;
+	}
+	else {
+		iVar6 = GetWindState()->field_0x0;
+		if (iVar6 != GetWindState()->field_0x4) {
+			bVar3 = true;
+		}
+		else {
+			if (GetWindState()->field_0x4 == 0) {
+				bVar3 = false;
+			}
+			else {
+				bVar3 = true;
+				if (0.17398384f <= fabs(local_20.y)) {
+					bVar3 = false;
+				}
+			}
+		}
+	}
+
+	if (bVar3) {
+		bVar3 = false;
+		if (GetWindState() == (CActorWindState*)0x0) {
+			iVar6 = GetWindState()->field_0x0;
+			bVar3 = true;
+			if (iVar6 != GetWindState()->field_0x4) {
+				bVar3 = false;
+				if ((GetWindState()->field_0x4 != 0) && (bVar3 = true, 0.17398384f <= fabs(local_20.y))) {
+					bVar3 = false;
+				}
+			}
+		}
+
+		if ((!bVar3) || (bVar3 = true, fVar11 <= 2.0f)) {
+			bVar3 = false;
+		}
+
+		if (bVar3) {
+			if (((pCVar1->flags_0x4 & 1) != 0) &&
+				((bVar3 = this->scalarDynJump.IsFinished(), bVar3 != false || (param_2 == 0)))) {
+				DetectStickableWalls(&local_30, &local_4, &local_8, &local_120);
+
+				if ((local_4 != 0) && (local_8 != 0)) {
+					edF32Vector4ScaleHard(-1.0f, &this->field_0x13f0, &local_120);
+					this->rotationQuat = this->field_0x13f0;
+					this->field_0x13f0 = local_120;
+
+					uVar5 = 0xf7;
+					if (this->field_0xa84 <= 0.1f) {
+						uVar5 = 0xf8;
+					}
+
+					SetState(uVar5, 0xffffffff);
+					return;
+				}
+
+				if ((local_4 != 0) || (local_8 != 0)) {
+					SetState(STATE_HERO_WIND_FLY, 0xffffffff);
+				}
+			}
+
+			if ((pCVar1->flags_0x4 & 2) != 0) {
+				SetState(STATE_HERO_WIND_SLIDE, 0xffffffff);
+			}
+		}
+		else {
+			SetState(ChooseStateFall(0), 0xffffffff);
+		}
+	}
+	else {
+		if (fVar11 <= 0.001f) {
+			SetState(ChooseStateFall(0), 0xffffffff);
+		}
+		else {
+			SetState(0xf2, 0xffffffff);
+		}
+	}
+
+	return;
+}
+
 void CActorHeroPrivate::StateHeroWindSlideInit()
 {
 	this->field_0x13d8 = 0.0f;
@@ -7161,7 +7407,7 @@ void CActorHeroPrivate::StateHeroWindSlideInit()
 
 void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 {
-	CCollision* pCVar1;
+	CCollision* pCollision;
 	CPlayerInput* pCVar2;
 	CAnimation* pCVar3;
 	edAnmLayer* peVar4;
@@ -7193,7 +7439,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 	float local_8;
 	float local_4;
 
-	pCVar1 = this->pCollisionData;
+	pCollision = this->pCollisionData;
 
 	IncreaseEffort(0.5f);
 
@@ -7252,7 +7498,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 		this->dynamic.rotationQuat = local_70;
 	}
 
-	if ((pCVar1->flags_0x4 & 2) != 0) {
+	if ((pCollision->flags_0x4 & 2) != 0) {
 		if (GetWindState() == (CActorWindState*)0x0) {
 			fVar15 = 0.0f;
 		}
@@ -7277,6 +7523,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 	}
 
 	ManageDyn(4.0, 0x33, (CActorsTable*)0x0);
+
 	iVar7 = this->actorState;
 	uVar13 = 0;
 	if (iVar7 != -1) {
@@ -7305,7 +7552,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 			}
 		}
 
-		if ((pCVar1->flags_0x4 & 2) == 0) {
+		if ((pCollision->flags_0x4 & 2) == 0) {
 			if (this->field_0x1184 < this->timeInAir) {
 				SetState(0xf5, 0xffffffff);
 				return;
@@ -7381,7 +7628,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 				}
 			}
 
-			if (((pCVar1->flags_0x4 & 1) != 0) && (DetectStickableWalls(&local_40, &local_14, &local_18, &local_90), local_14 != 0)) {
+			if (((pCollision->flags_0x4 & 1) != 0) && (DetectStickableWalls(&local_40, &local_14, &local_18, &local_90), local_14 != 0)) {
 				if (local_18 == 0) {
 					this->dynamicExt.normalizedTranslation.x = 0.0f;
 					this->dynamicExt.normalizedTranslation.y = 0.0f;
@@ -7395,9 +7642,9 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 
 					this->field_0x13f0 = local_90;
 
-					uVar6 = 0xf7;
+					uVar6 = STATE_HERO_WIND_SLIDE_MOVE_A;
 					if (this->field_0xa84 <= 0.1f) {
-						uVar6 = 0xf8;
+						uVar6 = STATE_HERO_WIND_SLIDE_MOVE_B;
 					}
 
 					SetState(uVar6, 0xffffffff);
@@ -7429,7 +7676,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 	return;
 }
 
-void CActorHeroPrivate::StateHeroWindWallMove(float param_1, float param_2, int param_4, int nextState)
+void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verticalSpeed, int param_4, int nextState)
 {
 	CAnimation* pCVar1;
 	CCollision* pCVar2;
@@ -7468,8 +7715,8 @@ void CActorHeroPrivate::StateHeroWindWallMove(float param_1, float param_2, int 
 
 	local_20.z = 1.0f;
 	local_20.w = 0.0f;
-	local_20.x = param_1;
-	local_20.y = param_2;
+	local_20.x = horizontalSpeed;
+	local_20.y = verticalSpeed;
 
 	MoveRelativeToWallPlaneInTheWind(fVar13, &this->field_0x13f0, &local_20, &eStack96);
 

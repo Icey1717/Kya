@@ -3009,7 +3009,7 @@ void CCinematic::UninstallResources()
 
 			resourceType = *(int*)pCVar7;
 			if (resourceType == edResCollection::COT_Particle) {
-				IMPLEMENTATION_GUARD(
+				IMPLEMENTATION_GUARD_LOG(
 				iVar6 = this->particleSectionStart + ((int)&pMeshInfo[-1].ANMA + 3) * 0x218;
 				iVar5 = 0;
 				int otherResourceType = iVar6;
@@ -4041,16 +4041,19 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 					}
 				}
 			}
+
 			if ((bVar6) && ((this->field_0x4 & 0x40000000U) != 0)) {
 				if ((CCamera*)this->field_0x0 != (CCamera*)0xffffffff) {
 					CCameraManager::PopCamera(CCameraManager::_gThis, (CCamera*)this->field_0x0);
 					this->field_0x4 = this->field_0x4 & 0xbfffffff;
 				}
+
 				if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 					if (pActor == (CActor*)0x0) {
 						pActor = (CActor*)CActorHero::_gThis;
 					}
-					CActor::DoMessage(pActor, (CActor*)CActorHero::_gThis, 0x26, (ActorCompareStruct*)0x0);
+
+					CActor::DoMessage(pActor, CActorHero::_gThis, MESSAGE_ENABLE_INPUT, (ActorCompareStruct*)0x0);
 				}
 			}
 		})
@@ -4066,44 +4069,46 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 
 	uVar3 = this->field_0x4;
 	if (((((uVar3 & 2) == 0) || ((uVar3 & 0x80000000) == 0)) && ((uVar3 & 0x40000000) == 0)) &&
-		((this->field_0x0 != -1 &&
-			(iVar1 = CCameraManager::_gThis->PushCamera(this->field_0x0, 0), iVar1 != 0)))) {
-		IMPLEMENTATION_GUARD(
+		((this->cameraIndex != -1 && (iVar1 = CCameraManager::_gThis->PushCamera(this->cameraIndex, 0), iVar1 != 0)))) {
 		this->field_0x4 = this->field_0x4 | 0xc0000000;
+
 		if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 			if (pActor == (CActor*)0x0) {
 				pActor = (CActor*)CActorHero::_gThis;
 			}
-			CActor::DoMessage(pActor, (CActor*)CActorHero::_gThis, 0x25, (ActorCompareStruct*)0x0);
+			pActor->DoMessage(CActorHero::_gThis, MESSAGE_DISABLE_INPUT, 0);
 		}
+
 		pTVar2 = GetTimer();
 		this->field_0x1c = pTVar2->scaledTotalTime;
 		this->field_0x4 = this->field_0x4 & 0xdfffffff;
-		if (((this->pActor != (undefined*)0x0) && (this->pEventChunk24_0x18 != (EventChunk_24*)0x0)) &&
-			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, this->pEventChunk24_0x18,
-				(edF32VECTOR4*)(this->pActor + 0x30), 0), (uVar3 & 1) != 0)) {
+		if (((this->pActor != 0x0) && (this->pEventChunk24_0x18 != 0x0)) &&
+			(uVar3 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, LOAD_SECTION_CAST(ed_zone_3d*, this->pEventChunk24_0x18),
+				&LOAD_SECTION_CAST(CActor*, this->pActor)->currentLocation, 0), (uVar3 & 1) != 0)) {
 			this->field_0x4 = this->field_0x4 | 0x20000000;
-		})
+		}
 	}
+
 	return;
 }
 
 void S_STREAM_EVENT_CAMERA::Reset(CActor* pActor)
 {
 	if ((this->field_0x4 & 0x40000000U) != 0) {
-		IMPLEMENTATION_GUARD();
-		if ((CCamera*)this->field_0x0 != (CCamera*)0xffffffff) {
-			CCameraManager::_gThis->PopCamera((CCamera*)this->field_0x0);
+		if (this->cameraIndex != -1) {
+			CCameraManager::_gThis->PopCamera(this->cameraIndex);
 			this->field_0x4 = this->field_0x4 & 0xbfffffff;
 		}
+
 		if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 			if (pActor == (CActor*)0x0) {
 				pActor = (CActor*)CActorHero::_gThis;
 			}
-			IMPLEMENTATION_GUARD(
-				CActor::DoMessage(pActor, CActorHero::_gThis, 0x26, 0);)
+
+			pActor->DoMessage(CActorHero::_gThis, MESSAGE_ENABLE_INPUT, 0);
 		}
 	}
+
 	this->field_0x4 = (uint)((ulong)((ulong)this->field_0x4 << 0x23) >> 0x23);
 	this->field_0x1c = 0;
 	return;

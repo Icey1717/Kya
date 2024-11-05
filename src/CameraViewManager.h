@@ -5942,6 +5942,7 @@ public:
 	bool PushCamera(CCamera* pCamera, int param_3);
 	void ApplyActiveCamera();
 	bool PopCamera(CCamera* pCameraView);
+	bool PopCamera(int cameraIndex);
 
 	void SetMainCamera(CCamera* pCamera);
 

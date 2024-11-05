@@ -2176,7 +2176,42 @@ void CActor::CheckpointReset()
 
 void CActor::Term()
 {
-	IMPLEMENTATION_GUARD();
+	CActorSound* pCVar1;
+	int componentCount;
+	int* piVar3;
+
+	SetBehaviour(-1, -1, -1);
+
+	BehaviourList<1>* pComponentList = (BehaviourList<1>*)this->aComponents;
+	BehaviourEntry* pEntry = pComponentList->aComponents;
+
+	for (componentCount = pComponentList->count; componentCount != 0; componentCount = componentCount + -1) {
+		CBehaviour* pBehaviour = pEntry->GetBehaviour();
+		pBehaviour->Term();
+	}
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	for (pCVar1 = this->aActorSounds; pCVar1 != (CActorSound*)0x0; pCVar1 = (CActorSound*)pCVar1[1].field_0x0) {
+		CActorSound::Term((int)pCVar1);
+	}
+
+	pCVar1 = this->aActorSounds;
+	while (pCVar1 != (CActorSound*)0x0) {
+		CSimpleLinkedList<CActorSound>::RemoveHead((int*)&this->aActorSounds);
+		pCVar1 = this->aActorSounds;
+	})
+
+	if (this->pClusterNode != (CClusterNode*)0x0) {
+		(CScene::ptable.g_ActorManager_004516a4)->cluster.DeleteNode(this->pClusterNode);
+		this->pClusterNode = (CClusterNode*)0x0;
+	}
+
+	if (this->pMeshNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pMeshNode);
+		this->pMeshNode = (edNODE*)0x0;
+	}
+
+	return;
 }
 
 void CActor::SetupModel(int count, MeshTextureHash* aHashes)

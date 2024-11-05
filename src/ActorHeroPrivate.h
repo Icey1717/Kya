@@ -137,10 +137,12 @@ public:
 
 	void StateHeroTobogganJump(int param_2, int param_3, int param_4, int nextState);
 
+	void StateHeroWindFly(int param_2);
+
 	void StateHeroWindSlideInit();
 	void StateHeroWindSlide(int nextState);
 
-	void StateHeroWindWallMove(float param_1, float param_2, int param_4, int param_5);
+	void StateHeroWindWallMove(float horizontalSpeed, float verticalSpeed, int param_4, int param_5);
 
 	void StateHeroTrampolineJump_1_2Init();
 	void StateHeroTrampolineJump_1_2Term();
@@ -493,7 +495,10 @@ public:
 
 	float field_0x13d4;
 	float field_0x13d8;
-	float field_0x13dc;
+	float windWallHorizontalSpeed;
+	float windWallVerticalSpeed;
+
+	float field_0x13e4;
 
 	float field_0x1410;
 	float field_0x1414;

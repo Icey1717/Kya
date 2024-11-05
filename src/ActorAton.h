@@ -106,6 +106,8 @@ public:
 
 	void StateAtonPathVerticalWind();
 
+	void StateAtonPathHorizontalWind();
+
 	void StateAtonPathToboggan();
 
 	void StateAtonPathRoll();

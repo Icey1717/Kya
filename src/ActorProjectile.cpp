@@ -263,7 +263,10 @@ void CActorProjectile::Reset()
 
 void CActorProjectile::CheckpointReset()
 {
-	IMPLEMENTATION_GUARD();
+	ClearLocalData();
+	Reset();
+
+	return;
 }
 
 CBehaviour* CActorProjectile::BuildBehaviour(int behaviourType)

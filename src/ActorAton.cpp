@@ -24,6 +24,7 @@
 #define ATON_ESCAPE_STATE_CROUCH_CALL				0x22
 #define ATON_ESCAPE_STATE_CROUCH_ROLL				0x24
 #define ATON_ESCAPE_STATE_PATH_VERTICAL_WIND		0x28
+#define ATON_ESCAPE_STATE_PATH_HORIZONTAL_WIND		0x2a
 #define ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN			0x2f
 
 CActorAton::CActorAton()
@@ -2284,6 +2285,9 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	case ATON_ESCAPE_STATE_PATH_VERTICAL_WIND:
 		StateAtonPathVerticalWind();
 		break;
+	case ATON_ESCAPE_STATE_PATH_HORIZONTAL_WIND:
+		StateAtonPathHorizontalWind();
+		break;
 	case ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN:
 		StateAtonPathToboggan();
 		break;
@@ -3079,6 +3083,80 @@ void CActorAton::StateAtonPathVerticalWind()
 
 		if (bVar2 == false) {
 			this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.NextWayPoint();
+		}
+		else {
+			iVar6 = this->pathPlaneArray.AtGoal();
+			if (iVar6 == 0) {
+				this->pathPlaneArray.NextWayPoint();
+				AnalysePathType();
+			}
+			else {
+				SetState(0x32, -1);
+				this->field_0x474 = 1;
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorAton::StateAtonPathHorizontalWind()
+{
+	float fVar1;
+	bool bVar2;
+	CPathPlane* pCVar3;
+	edF32VECTOR4* peVar4;
+	Timer* pTVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	SV_MOV_PATH_PARAM local_20;
+
+	peVar4 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetWayPoint();
+	fVar10 = peVar4->x - this->currentLocation.x;
+	fVar7 = peVar4->y - this->currentLocation.y;
+	fVar1 = peVar4->z - this->currentLocation.z;
+
+	fVar11 = this->dynamic.linearAcceleration;
+	fVar8 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetDelay();
+	if (fVar8 == 0.0f) {
+		fVar8 = 10.0f;
+	}
+	else {
+		fVar8 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetDelay();
+	}
+
+	fVar9 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.GetDelay();
+	(this->fleeOnPathParams).acceleration = fVar9;
+
+	fVar10 = SV_MOV_GetAccelerationFromDistAndSpeed(fVar11, fVar8, sqrtf(fVar10 * fVar10 + fVar7 * fVar7 + fVar1 * fVar1));
+	(this->fleeOnPathParams).speed = fVar10;
+	local_20.field_0x8 = 3;
+	local_20.field_0x10 = 0;
+	local_20.field_0xc = 1;
+	local_20.acceleration = (this->fleeOnPathParams).acceleration;
+	local_20.speed = (this->fleeOnPathParams).speed;
+	local_20.rotationSpeed = 3.141593f;
+	fVar10 = SV_MOV_ManageMovOnPath(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, &local_20);
+	this->field_0x3b0 = fVar10;
+
+	ManageDyn(4.0f, 0x40400, (CActorsTable*)0x0);
+
+	pTVar5 = GetTimer();
+	fVar10 = 0.5f;
+	fVar7 = this->dynamic.linearAcceleration * pTVar5->cutsceneDeltaTime;
+	if (0.5f <= fVar7) {
+		fVar10 = fVar7;
+	}
+
+	if (this->field_0x3b0 < fVar10) {
+		bVar2 = this->pathPlaneArray.GetCurPathPlane()->pathFollowReader.AtGoal((pCVar3->pathFollowReader).splinePointIndex, (pCVar3->pathFollowReader).field_0xc);
+
+		if (bVar2 == false) {
+			this->pathPlaneArray.NextWayPoint();
 		}
 		else {
 			iVar6 = this->pathPlaneArray.AtGoal();
