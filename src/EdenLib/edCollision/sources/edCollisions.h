@@ -10,6 +10,8 @@
 #define COL_TYPE_TREE 0x1
 #define COL_TYPE_TRIANGLE 0x4
 #define COL_TYPE_QUAD 0x8
+#define COL_TYPE_BOX 0xa
+#define COL_TYPE_SPHERE 0xb
 #define COL_TYPE_PRIM_OBJ 0xe
 
 struct edColRAY_OBB_IN {
@@ -285,8 +287,8 @@ struct edColG3D_OBB_TREE {
 	int aTriangles; // edF32TRIANGLE4*
 	int field_0x30; // void*
 	int aQuads; // edF32QUAD4*
-	int field_0x38; // char*
-	int field_0x3c; // char*
+	int aBoxes; // edColPRIM_BOX*
+	int aSpheres; // edColPRIM_SPHERE*
 	undefined field_0x40;
 	undefined field_0x41;
 	undefined field_0x42;

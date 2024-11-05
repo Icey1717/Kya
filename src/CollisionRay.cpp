@@ -268,7 +268,7 @@ void CCollisionRay::ComputeIntersectionNormalAndProps(float distance, void* pCol
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	if ((((colType == 0xe) || (colType == 0xd)) || (colType == 10)) || (colType == 0xb)) {
+	if ((((colType == 0xe) || (colType == 0xd)) || (colType == COL_TYPE_BOX)) || (colType == COL_TYPE_SPHERE)) {
 		edColPRIM_OBJECT* pPrim = reinterpret_cast<edColPRIM_OBJECT*>(pColObj);
 
 		*pOutProps = pPrim->flags_0x80;

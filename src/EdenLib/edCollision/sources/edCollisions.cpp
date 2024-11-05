@@ -175,16 +175,16 @@ edColG3D_OBB_TREE* edColLoadStatic(char** pOutData, char* pFileBuffer, uint* par
 		}
 
 		{
-			const int offset = (pStaticColEntry->obbTree).field_0x3c;
+			const int offset = (pStaticColEntry->obbTree).aSpheres;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).field_0x3c = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).aSpheres = STORE_SECTION(pFileBuffer + offset);
 			}
 		}
 
 		{
-			const int offset = (pStaticColEntry->obbTree).field_0x38;
+			const int offset = (pStaticColEntry->obbTree).aBoxes;
 			if (offset != 0) {
-				(pStaticColEntry->obbTree).field_0x38 = STORE_SECTION(pFileBuffer + offset);
+				(pStaticColEntry->obbTree).aBoxes = STORE_SECTION(pFileBuffer + offset);
 			}
 		}
 
@@ -219,15 +219,15 @@ edColG3D_OBB_TREE* edColLoadStatic(char** pOutData, char* pFileBuffer, uint* par
 		pObbTree = pObbTreeBase;
 		for (iVar6 = (pStaticColEntry->obbTree).field_0x20; iVar6 != 0; iVar6 = iVar6 + -1) {
 			bVar1 = pObbTree->type;
-			if (bVar1 == 0xa) {
-				pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).field_0x38) + pObbTree->field_0x54[0] * sizeof(edColPRIM_BOX)));
+			if (bVar1 == COL_TYPE_BOX) {
+				pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aBoxes) + pObbTree->field_0x54[0] * sizeof(edColPRIM_BOX)));
 			}
 			else {
-				if (bVar1 == 0xb) {
-					pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).field_0x3c) + pObbTree->field_0x54[0] * sizeof(edColPRIM_SPHERE)));
+				if (bVar1 == COL_TYPE_SPHERE) {
+					pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aSpheres) + pObbTree->field_0x54[0] * sizeof(edColPRIM_SPHERE)));
 				}
 				else {
-					if (bVar1 == 8) {
+					if (bVar1 == COL_TYPE_QUAD) {
 						pObbTree->field_0x54[0] = STORE_SECTION(((char*)LOAD_SECTION((pStaticColEntry->obbTree).aQuads) + pObbTree->field_0x54[0] * sizeof(edF32QUAD4)));
 					}
 					else {
@@ -2248,7 +2248,7 @@ uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParam
 	iVar4 = pParams->aType;
 	peVar5 = pParams->pColObj;
 	pUVar9 = (edColPRIM_OBJECT*)((char*)pUVar8 + pParams->aCount * iVar1);
-	if ((iVar4 == 0xa) || (iVar4 == 0xd)) {
+	if ((iVar4 == COL_TYPE_BOX) || (iVar4 == 0xd)) {
 		local_20.pOtherColObj = pParams->pOtherColObj;
 		local_20.aType = pParams->aType;
 		local_20.pColObj = peVar5;
@@ -2275,7 +2275,7 @@ uint edColArrayObjectPrimPenatratingArrayTriangles4(edColARRAY_PRIM_TRI4* pParam
 		}
 	}
 	else {
-		if ((iVar4 == 0xb) || (iVar4 == 0xe)) {
+		if ((iVar4 == COL_TYPE_SPHERE) || (iVar4 == 0xe)) {
 			local_40.pOtherColObj = pParams->pOtherColObj;
 			local_40.aType = pParams->aType;
 			local_40.pColObj = peVar5;
@@ -3869,7 +3869,7 @@ uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams)
 	iVar3 = pParams->bCount2;
 	iVar4 = pParams->bType;
 
-	if ((iVar4 == 0xa) || (iVar4 == 0xd)) {
+	if ((iVar4 == COL_TYPE_BOX) || (iVar4 == 0xd)) {
 		uVar5 = pParams->bCount;
 		peVar7 = reinterpret_cast<char*>(pParams->bData);
 		pPrimStart = peVar7;
@@ -3900,7 +3900,7 @@ uint edColArrayObjectTriangles4PenatratingPrims(edColARRAY_TRI4_PRIM* pParams)
 		}
 	}
 	else {
-		if ((iVar4 == 0xb) || (iVar4 == 0xe)) {
+		if ((iVar4 == COL_TYPE_SPHERE) || (iVar4 == 0xe)) {
 			uVar5 = pParams->bCount;
 			peVar7 = reinterpret_cast<char*>(pParams->bData);
 			pPrimStart = peVar7;
@@ -5210,7 +5210,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 						}
 					}
 					else {
-						if (bVar1 == 0xa) {
+						if (bVar1 == COL_TYPE_BOX) {
 							edColPRIM_BOX* pBox = LOAD_SECTION_CAST(edColPRIM_BOX*, peVar4->field_0x54[0]);
 							for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 								pDirection = pRay->pLeadVector;
@@ -5343,7 +5343,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 										outDistance = edF32Vector4GetDistHard(&local_4d0);
 										if ((outDistance < distance) || ((distance < 0.0f && (outDistance <= pRay->lengthA)))) {
 											*pOutHit = pPrim;
-											*pOutType = 0xb;
+											*pOutType = COL_TYPE_SPHERE;
 											distance = outDistance;
 										}
 									}
@@ -5352,7 +5352,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 								}
 							}
 							else {
-								if (bVar1 == 0xb) {
+								if (bVar1 == COL_TYPE_SPHERE) {
 									edColPRIM_SPHERE* pSphere = LOAD_SECTION_CAST(edColPRIM_SPHERE*, peVar4->field_0x54[0]);
 									for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
 										pDirection = pRay->pLeadVector;
@@ -5424,7 +5424,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 
 											if ((outDistance < distance) || ((distance < 0.0f && (outDistance <= pRay->lengthA)))) {
 												*pOutHit = (edObbTREE_DYN*)pSphere;
-												*pOutType = 0xb;
+												*pOutType = COL_TYPE_SPHERE;
 												distance = outDistance;
 											}
 										}
@@ -5433,7 +5433,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 									}
 								}
 								else {
-									if (bVar1 == 8) {
+									if (bVar1 == COL_TYPE_QUAD) {
 										edF32QUAD4* pQuad = LOAD_SECTION_CAST(edF32QUAD4*, peVar4->field_0x54[0]);
 
 										for (iVar7 = 0; iVar7 < peVar4->count_0x52; iVar7 = iVar7 + 1) {
@@ -5462,7 +5462,7 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 												if ((((outDistance != -8888.0f) && (outDistance != -9999.0f)) && (0.0f <= outDistance)) &&
 													((outDistance < distance || ((distance < 0.0f && (outDistance <= pRay->lengthA)))))) {
 													*pOutHit = pQuad;
-													*pOutType = 8;
+													*pOutType = COL_TYPE_QUAD;
 													distance = outDistance;
 												}
 											}
