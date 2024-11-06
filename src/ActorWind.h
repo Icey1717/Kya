@@ -95,12 +95,12 @@ public:
 	float field_0x19c;
 	float field_0x1a0;
 	float field_0x1a4;
-	S_STREAM_REF<CWayPoint> field_0x1a8;
+	S_STREAM_REF<CWayPoint> pWayPointRef;
 	float field_0x1ac;
 	float field_0x1b0;
 
-	S_STREAM_REF<ed_zone_3d> field_0x1b8;
-	S_ACTOR_STREAM_REF* field_0x1bc;
+	S_STREAM_REF<ed_zone_3d> activationZone;
+	S_ACTOR_STREAM_REF* pActorStreamRef;
 	S_STREAM_REF<ed_zone_3d> field_0x1c4;
 	uint field_0x1c8;
 
@@ -114,7 +114,7 @@ public:
 	S_STREAM_EVENT_CAMERA* field_0x1e4;
 
 	edF32MATRIX4* field_0x1e8;
-	int* field_0x1ec;
+	int* aAppliedToActorFlags;
 	undefined4 field_0x1f0;
 	float field_0x1fc;
 

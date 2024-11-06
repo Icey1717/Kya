@@ -47,8 +47,8 @@ void CActorWindState::AddWind(_wind_param_in* pParams)
 		this->field_0x28 = this->field_0x28 + 1;
 	}
 
-	if (pParams->field_0x28 != (CWayPoint*)0x0) {
-		this->field_0x2c = pParams->field_0x28;
+	if (pParams->pWayPoint != (CWayPoint*)0x0) {
+		this->pWayPoint = pParams->pWayPoint;
 		this->field_0x30 = pParams->field_0x2c;
 		this->field_0x34 = pParams->field_0x30;
 	}
@@ -101,7 +101,7 @@ void CActorWindState::SubWind(_wind_param_in* pParams)
 			this->field_0x28 = this->field_0x28 + -1;
 		}
 
-		this->field_0x2c = (CWayPoint*)0x0;
+		this->pWayPoint = (CWayPoint*)0x0;
 		this->field_0x30 = 0.0f;
 		this->field_0x34 = 0.0f;
 		this->field_0x0 = this->field_0x0 + -1;
@@ -123,7 +123,7 @@ void CActorWindState::Reset()
 	this->field_0x20 = 1.0f;
 	this->field_0x24 = 1.0f;
 	this->field_0x28 = 0;
-	this->field_0x2c = (CWayPoint*)0x0;
+	this->pWayPoint = (CWayPoint*)0x0;
 	this->field_0x30 = 0.0f;
 	this->field_0x34 = 0.0f;
 	this->field_0x40.x = 0.0f;
@@ -368,19 +368,19 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 		}
 	}
 	else {
-		if (msg == 0x18) {
-			CActorWindState* pWindState = GetWindState();
-			if (pWindState != (CActorWindState*)0x0) {
+		if (msg == MESSAGE_LEAVE_WIND) {
+			if (GetWindState() != (CActorWindState*)0x0) {
 				GetWindState()->SubWind((_wind_param_in*)pMsgParam);
 			}
+
 			iVar5 = 1;
 		}
 		else {
-			if (msg == 0x17) {
-				CActorWindState* pWindState = GetWindState();
-				if (pWindState != (CActorWindState*)0x0) {
+			if (msg == MESSAGE_ENTER_WIND) {
+				if (GetWindState() != (CActorWindState*)0x0) {
 					GetWindState()->AddWind((_wind_param_in*)pMsgParam);
 				}
+
 				iVar5 = 1;
 			}
 			else {
@@ -388,6 +388,7 @@ int CActorAutonomous::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 			}
 		}
 	}
+
 	return iVar5;
 }
 

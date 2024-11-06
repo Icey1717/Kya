@@ -137,8 +137,6 @@ public:
 
 	void StateHeroTobogganJump(int param_2, int param_3, int param_4, int nextState);
 
-	void StateHeroWindFly(int param_2);
-
 	void StateHeroWindSlideInit();
 	void StateHeroWindSlide(int nextState);
 
@@ -204,6 +202,9 @@ public:
 	void StateHeroFall(float param_1, int param_3);
 
 	void StateHeroFlyInit();
+
+	void StateHeroWindFly(int param_2);
+	void StateHeroFlyJumpInit();
 	void StateHeroFlyTerm();
 
 	void StateHeroGlideInit();

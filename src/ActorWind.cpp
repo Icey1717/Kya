@@ -61,13 +61,13 @@ void CActorWind::Create(ByteCode* pByteCode)
 
 	pGVar5 = CScene::ptable.g_GlobalSoundPtr_00451698;
 	uVar6 = pByteCode->GetU32();
-	this->field_0x1b8.index = pByteCode->GetS32();
+	this->activationZone.index = pByteCode->GetS32();
 	piVar2 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 	if (*piVar2 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 4;
 	}
-	this->field_0x1bc = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
+	this->pActorStreamRef = reinterpret_cast<S_ACTOR_STREAM_REF*>(piVar2);
 
 	this->materialId = pByteCode->GetS32();
 	CActor::SV_InstallMaterialId(this->materialId);
@@ -146,7 +146,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 	this->field_0x1a4 = fVar9;
 
 	iVar7 = pByteCode->GetS32();
-	this->field_0x1a8.index = iVar7;
+	this->pWayPointRef.index = iVar7;
 
 	fVar9 = pByteCode->GetF32();
 	this->field_0x1ac = fVar9;
@@ -197,17 +197,17 @@ void CActorWind::Init()
 
 	pCVar2 = CScene::ptable.g_EventManager_006f5080;
 	CActor::Init();
-	pSVar10 = this->field_0x1bc->aEntries;
-	for (iVar11 = this->field_0x1bc->entryCount; iVar11 != 0; iVar11 = iVar11 + -1) {
+	pSVar10 = this->pActorStreamRef->aEntries;
+	for (iVar11 = this->pActorStreamRef->entryCount; iVar11 != 0; iVar11 = iVar11 + -1) {
 		pSVar10->Init();
 		pSVar10 = pSVar10 + 1;
 	}
 
-	this->field_0x1b8.Init();
+	this->activationZone.Init();
 	this->field_0x1c4.Init();
 
 	if (this->field_0x1e8 != (edF32MATRIX4*)0x0) {
-		peVar1 = (this->field_0x1b8).Get();
+		peVar1 = (this->activationZone).Get();
 		if (peVar1 != (ed_zone_3d*)0x0) {
 			peVar1->pMatrix = STORE_SECTION(this->field_0x1e8);
 		}
@@ -255,7 +255,7 @@ void CActorWind::Init()
 	edF32Matrix4FromEulerSoft(&eStack64, &this->rotationEuler.xyz, "XYZ");
 	eStack64.rowT = this->baseLocation;
 	edF32Matrix4GetInverseOrthoHard(&eStack128, &eStack64);
-	pSVar12 = this->field_0x1bc;
+	pSVar12 = this->pActorStreamRef;
 	iVar11 = 0;
 	if (pSVar12 != (S_ACTOR_STREAM_REF*)0x0) {
 		iVar11 = pSVar12->entryCount;
@@ -266,12 +266,12 @@ void CActorWind::Init()
 			iVar11 = pSVar12->entryCount;
 		}
 
-		this->field_0x1ec = new int[iVar11];
+		this->aAppliedToActorFlags = new int[iVar11];
 	}
 
 	this->field_0x21c = (this->field_0x1c4).Get();
 	if (this->field_0x21c == (ed_zone_3d*)0x0) {
-		this->field_0x21c = (this->field_0x1b8).Get();
+		this->field_0x21c = (this->activationZone).Get();
 	}
 
 	if ((this->field_0x160 & 0x80) != 0) {
@@ -312,21 +312,23 @@ void CActorWind::Init()
 		}
 	}
 
-	this->field_0x1a8.Init();
+	this->pWayPointRef.Init();
 	this->field_0x1cc.Init();
 
 	this->field_0x1f0 = 0;
+
 	iVar9 = 0;
 	while (true) {
-		if (this->field_0x1bc == (S_ACTOR_STREAM_REF*)0x0) {
+		if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
 			iVar6 = 0;
 		}
 		else {
-			iVar6 = this->field_0x1bc->entryCount;
+			iVar6 = this->pActorStreamRef->entryCount;
 		}
 
 		if (iVar6 <= iVar9) break;
-		this->field_0x1ec[iVar9] = 0x0;
+
+		this->aAppliedToActorFlags[iVar9] = 0x0;
 		iVar9 = iVar9 + 1;
 	}
 
@@ -334,7 +336,9 @@ void CActorWind::Init()
 	this->field_0x1f8 = -1.0f;
 	pTVar7 = GetTimer();
 	this->time_0x214 = pTVar7->scaledTotalTime;
+
 	ResetTiming();
+
 	return;
 }
 
@@ -401,16 +405,16 @@ void CActorWind::Reset()
 	this->field_0x1f0 = 0;
 	iVar5 = 0;
 	while (true) {
-		if (this->field_0x1bc == (S_ACTOR_STREAM_REF*)0x0) {
+		if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
 			iVar1 = 0;
 		}
 		else {
-			iVar1 = this->field_0x1bc->entryCount;
+			iVar1 = this->pActorStreamRef->entryCount;
 		}
 
 		if (iVar1 <= iVar5) break;
 
-		this->field_0x1ec[iVar5] = 0;
+		this->aAppliedToActorFlags[iVar5] = 0;
 
 		iVar5 = iVar5 + 1;
 	}
@@ -512,53 +516,54 @@ StateConfig* CActorWind::GetStateCfg(int state)
 
 void CActorWind::ChangeManageState(int state)
 {
-	int iVar1;
-	int iVar2;
-	_wind_param_in local_40;
-	_wind_param_in* local_4;
+	int maxEntryIndex;
+	int curActorIndex;
+	_wind_param_in windParamsMsg;
+	_wind_param_in* pWindParamsMsg;
 
 	CActor::ChangeManageState(state);
 
 	if (state == 0) {
-		iVar2 = 0;
+		curActorIndex = 0;
 		while (true) {
-			if (this->field_0x1bc == (S_ACTOR_STREAM_REF*)0x0) {
-				iVar1 = 0;
+			if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
+				maxEntryIndex = 0;
 			}
 			else {
-				iVar1 = this->field_0x1bc->entryCount;
+				maxEntryIndex = this->pActorStreamRef->entryCount;
 			}
 
-			if (iVar1 <= iVar2) break;
+			if (maxEntryIndex <= curActorIndex) break;
 
-			if (this->field_0x1ec[iVar2] != 0x0) {
-				local_40.field_0x0 = this->field_0x16c;
-				local_40.field_0x4 = this->field_0x170;
-				local_40.field_0x8 = 1;
+			if (this->aAppliedToActorFlags[curActorIndex] != 0x0) {
+				windParamsMsg.field_0x0 = this->field_0x16c;
+				windParamsMsg.field_0x4 = this->field_0x170;
+				windParamsMsg.field_0x8 = 1;
 
-				if ((((this->field_0x160 & 0x20) == 0) && (local_40.field_0x8 = 0, (this->field_0x160 & 0x40) == 0)) &&
-					(local_40.field_0x8 = 1, 0.17398384f <= fabs(this->rotationQuat.y))) {
-					local_40.field_0x8 = 0;
+				if ((((this->field_0x160 & 0x20) == 0) && (windParamsMsg.field_0x8 = 0, (this->field_0x160 & 0x40) == 0)) &&
+					(windParamsMsg.field_0x8 = 1, 0.17398384f <= fabs(this->rotationQuat.y))) {
+					windParamsMsg.field_0x8 = 0;
 				}
 
-				local_40.field_0x10 = this->field_0x1fc;
-				local_40.field_0x14 = this->field_0x200;
-				local_40.field_0x18 = this->field_0x19c;
-				local_40.field_0x1c = this->field_0x1a0;
-				local_40.field_0x20 = this->field_0x1a4;
-				local_40.field_0x24 = (uint)((this->field_0x160 & 0x400) != 0);
-				local_40.field_0x28 = this->field_0x1a8.Get();
-				if (local_40.field_0x28 == (CWayPoint*)0x0) {
-					local_40.field_0x28 = (CWayPoint*)0x0;
+				windParamsMsg.field_0x10 = this->field_0x1fc;
+				windParamsMsg.field_0x14 = this->field_0x200;
+				windParamsMsg.field_0x18 = this->field_0x19c;
+				windParamsMsg.field_0x1c = this->field_0x1a0;
+				windParamsMsg.field_0x20 = this->field_0x1a4;
+				windParamsMsg.field_0x24 = (uint)((this->field_0x160 & 0x400) != 0);
+				windParamsMsg.pWayPoint = this->pWayPointRef.Get();
+				if (windParamsMsg.pWayPoint == (CWayPoint*)0x0) {
+					windParamsMsg.pWayPoint = (CWayPoint*)0x0;
 				}
-				local_4 = &local_40;
-				local_40.field_0x2c = this->field_0x1ac;
-				local_40.field_0x30 = this->field_0x1b0;
-				DoMessage(this->field_0x1bc->aEntries[iVar2].Get(), (ACTOR_MESSAGE)0x18, (MSG_PARAM)local_4);
-				this->field_0x1ec[iVar2] = 0x0;
+
+				pWindParamsMsg = &windParamsMsg;
+				windParamsMsg.field_0x2c = this->field_0x1ac;
+				windParamsMsg.field_0x30 = this->field_0x1b0;
+				DoMessage(this->pActorStreamRef->aEntries[curActorIndex].Get(), MESSAGE_LEAVE_WIND, pWindParamsMsg);
+				this->aAppliedToActorFlags[curActorIndex] = 0x0;
 			}
 
-			iVar2 = iVar2 + 1;
+			curActorIndex = curActorIndex + 1;
 		}
 	}
 
@@ -727,32 +732,25 @@ int CActorWind::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 void CActorWind::BehaviourWind_Manage()
 {
 	int iVar1;
-	CEventManager* pCVar2;
+	CEventManager* pEventManager;
 	bool bVar3;
 	int iVar4;
 	uint uVar5;
-	edF32VECTOR4* peVar6;
-	uint uVar7;
 	StateConfig* pAVar8;
-	CActor* pCVar9;
+	CActor* pActor;
 	CFxWind* pCVar10;
 	float fVar11;
-	_wind_param_in local_a0;
-	_wind_param_in local_60;
 	edF32VECTOR4 local_20;
-	_wind_param_in* local_c;
-	_wind_param_in* local_8;
-	float local_4;
+	float curTime;
 
 	if (this->pTiedActor != (CActor*)0x0) {
 		local_20 = this->baseLocation;
 		SV_UpdatePosition_Rel(&local_20, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 	}
 
-	local_4 = ComputeCurTime();
-	if (local_4 != -1.0f) {
-		iVar4 = ComputeStateFromTime(&local_4);
-		SetState(iVar4, -1);
+	curTime = ComputeCurTime();
+	if (curTime != -1.0f) {
+		SetState(ComputeStateFromTime(&curTime), -1);
 
 		switch (this->actorState) {
 		case WIND_STATE_INTERPOLATE:
@@ -774,105 +772,109 @@ void CActorWind::BehaviourWind_Manage()
 			this->curWindAlpha = 0.0f;
 		}
 
-		pCVar2 = CScene::ptable.g_EventManager_006f5080;
-		if ((this->field_0x1b8).Get() != (ed_zone_3d*)0x0) {
+		pEventManager = CScene::ptable.g_EventManager_006f5080;
+		if ((this->activationZone).Get() != (ed_zone_3d*)0x0) {
 			fVar11 = edFIntervalLERP(this->curWindAlpha, 0.0f, this->maxWind, 0.1f, this->field_0x168);
-			iVar4 = 0;
+			int curActorIndex = 0;
 			while (true) {
 				int entryCount;
-				if (this->field_0x1bc == (S_ACTOR_STREAM_REF*)0x0) {
+				if (this->pActorStreamRef == (S_ACTOR_STREAM_REF*)0x0) {
 					entryCount = 0x0;
 				}
 				else {
-					entryCount = this->field_0x1bc->entryCount;
+					entryCount = this->pActorStreamRef->entryCount;
 				}
 
-				if (entryCount <= iVar4) break;
+				if (entryCount <= curActorIndex) break;
 
-				pCVar9 = this->field_0x1bc->aEntries[iVar4].Get();
-				if (((pCVar9 != (CActor*)0x0) && ((pCVar9->flags & 4) != 0)) &&
-					((CActorFactory::gClassProperties[pCVar9->typeID].flags & 4) != 0)) {
-					uVar5 = edEventComputeZoneAgainstVertex(pCVar2->activeChunkId, (this->field_0x1b8).Get(), &pCVar9->currentLocation, 0);
-					bVar3 = pCVar9->IsKindOfObject(2);
+				pActor = this->pActorStreamRef->aEntries[curActorIndex].Get();
+
+				if (((pActor != (CActor*)0x0) && ((pActor->flags & 4) != 0)) && ((CActorFactory::gClassProperties[pActor->typeID].flags & 4) != 0)) {
+					uint zoneResult = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, (this->activationZone).Get(), &pActor->currentLocation, 0);
+
+					bVar3 = pActor->IsKindOfObject(2);
 					if (bVar3 != false) {
-						peVar6 = pCVar9->GetTopPosition();
-						uVar7 = edEventComputeZoneAgainstVertex(pCVar2->activeChunkId, (this->field_0x1b8).Get(), peVar6, 0);
-						uVar5 = uVar5 | uVar7;
+						uint topZoneResult = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, (this->activationZone).Get(), pActor->GetBottomPosition(), 0);
+						zoneResult = zoneResult | topZoneResult;
 					}
 
-					if ((uVar5 & 1) == 0) {
-						if (((uVar5 & 2) != 0) && (field_0x1ec[iVar4] != 0)) {
-							local_a0.field_0x0 = this->field_0x16c;
-							local_a0.field_0x4 = this->field_0x170;
+					if ((zoneResult & 1) == 0) {
+						if (((zoneResult & 2) != 0) && (aAppliedToActorFlags[curActorIndex] != 0)) {
+							_wind_param_in windParamMsg;
+							windParamMsg.field_0x0 = this->field_0x16c;
+							windParamMsg.field_0x4 = this->field_0x170;
 
-							local_a0.field_0x8 = 1;
-							if (((this->field_0x160 & 0x20) == 0) &&
-								((local_a0.field_0x8 = 0, (this->field_0x160 & 0x40) == 0 &&
-									(local_a0.field_0x8 = 1, 0.17398384f <= fabs(this->rotationQuat.y))))) {
-								local_a0.field_0x8 = 0;
+							windParamMsg.field_0x8 = 1;
+
+							if (((this->field_0x160 & 0x20) == 0) && ((windParamMsg.field_0x8 = 0, (this->field_0x160 & 0x40) == 0 &&
+									(windParamMsg.field_0x8 = 1, 0.17398384f <= fabs(this->rotationQuat.y))))) {
+								windParamMsg.field_0x8 = 0;
 							}
 
-							local_a0.field_0xc = 0;
+							windParamMsg.field_0xc = 0;
 							if ((this->field_0x19c < -1.0f) && (this->field_0x1a0 < -1.0f)) {
-								local_a0.field_0xc = 1;
+								windParamMsg.field_0xc = 1;
 							}
 
-							local_a0.field_0x10 = this->field_0x1fc;
-							local_a0.field_0x14 = this->field_0x200;
-							local_a0.field_0x18 = this->field_0x19c;
-							local_a0.field_0x1c = this->field_0x1a0;
-							local_a0.field_0x20 = this->field_0x1a4;
-							local_a0.field_0x24 = (uint)((this->field_0x160 & 0x400) != 0);
-							local_a0.field_0x28 = this->field_0x1a8.Get();
-							if (local_a0.field_0x28 == (CWayPoint*)0x0) {
-								local_a0.field_0x28 = (CWayPoint*)0x0;
+							windParamMsg.field_0x10 = this->field_0x1fc;
+							windParamMsg.field_0x14 = this->field_0x200;
+							windParamMsg.field_0x18 = this->field_0x19c;
+							windParamMsg.field_0x1c = this->field_0x1a0;
+							windParamMsg.field_0x20 = this->field_0x1a4;
+							windParamMsg.field_0x24 = (uint)((this->field_0x160 & 0x400) != 0);
+
+							windParamMsg.pWayPoint = this->pWayPointRef.Get();
+							if (windParamMsg.pWayPoint == (CWayPoint*)0x0) {
+								windParamMsg.pWayPoint = (CWayPoint*)0x0;
 							}
 
-							local_c = &local_a0;
-							local_a0.field_0x2c = this->field_0x1ac;
-							local_a0.field_0x30 = this->field_0x1b0;
+							_wind_param_in* local_c = &windParamMsg;
+							windParamMsg.field_0x2c = this->field_0x1ac;
+							windParamMsg.field_0x30 = this->field_0x1b0;
 
-							DoMessage(pCVar9, (ACTOR_MESSAGE)0x18, (MSG_PARAM)local_c);
-							field_0x1ec[iVar4] = 0;
+							DoMessage(pActor, MESSAGE_LEAVE_WIND, local_c);
+							aAppliedToActorFlags[curActorIndex] = 0;
 						}
 					}
 					else {
-						if (field_0x1ec[iVar4] == 0) {
-							local_60.field_0x0 = this->field_0x16c;
-							local_60.field_0x4 = this->field_0x170;
+						if (aAppliedToActorFlags[curActorIndex] == 0) {
+							_wind_param_in windParamMsg;
+							windParamMsg.field_0x0 = this->field_0x16c;
+							windParamMsg.field_0x4 = this->field_0x170;
 
-							local_60.field_0x8 = 1;
-							if ((((this->field_0x160 & 0x20) == 0) && (local_60.field_0x8 = 0, (this->field_0x160 & 0x40) == 0)) &&
-								(local_60.field_0x8 = 1, 0.17398384f <= fabs(this->rotationQuat.y))) {
-								local_60.field_0x8 = 0;
+							windParamMsg.field_0x8 = 1;
+							if ((((this->field_0x160 & 0x20) == 0) && (windParamMsg.field_0x8 = 0, (this->field_0x160 & 0x40) == 0)) &&
+								(windParamMsg.field_0x8 = 1, 0.17398384f <= fabs(this->rotationQuat.y))) {
+								windParamMsg.field_0x8 = 0;
 							}
 
-							local_60.field_0xc = 0;
+							windParamMsg.field_0xc = 0;
 							if ((this->field_0x19c < -1.0f) && (this->field_0x1a0 < -1.0f)) {
-								local_60.field_0xc = 1;
+								windParamMsg.field_0xc = 1;
 							}
 
-							local_60.field_0x10 = this->field_0x1fc;
-							local_60.field_0x14 = this->field_0x200;
-							local_60.field_0x18 = this->field_0x19c;
-							local_60.field_0x1c = this->field_0x1a0;
-							local_60.field_0x20 = this->field_0x1a4;
-							local_60.field_0x24 = (uint)((this->field_0x160 & 0x400) != 0);
-							local_60.field_0x28 = this->field_0x1a8.Get();
-							if (local_60.field_0x28 == (CWayPoint*)0x0) {
-								local_60.field_0x28 = (CWayPoint*)0x0;
+							windParamMsg.field_0x10 = this->field_0x1fc;
+							windParamMsg.field_0x14 = this->field_0x200;
+							windParamMsg.field_0x18 = this->field_0x19c;
+							windParamMsg.field_0x1c = this->field_0x1a0;
+							windParamMsg.field_0x20 = this->field_0x1a4;
+							windParamMsg.field_0x24 = (uint)((this->field_0x160 & 0x400) != 0);
+							windParamMsg.pWayPoint = this->pWayPointRef.Get();
+
+							if (windParamMsg.pWayPoint == (CWayPoint*)0x0) {
+								windParamMsg.pWayPoint = (CWayPoint*)0x0;
 							}
 
-							local_8 = &local_60;
-							local_60.field_0x2c = this->field_0x1ac;
-							local_60.field_0x30 = this->field_0x1b0;
+							_wind_param_in* local_8 = &windParamMsg;
+							windParamMsg.field_0x2c = this->field_0x1ac;
+							windParamMsg.field_0x30 = this->field_0x1b0;
 
-							DoMessage(pCVar9, (ACTOR_MESSAGE)0x17, (MSG_PARAM)local_8);
-							field_0x1ec[iVar4] = 1;
+							DoMessage(pActor, MESSAGE_ENTER_WIND, local_8);
+							aAppliedToActorFlags[curActorIndex] = 1;
 						}
 					}
 
-					if (field_0x1ec[iVar4] != 0) {
+					if (aAppliedToActorFlags[curActorIndex] != 0) {
 						iVar1 = this->actorState;
 						uVar5 = 0;
 
@@ -882,12 +884,12 @@ void CActorWind::BehaviourWind_Manage()
 						}
 
 						if (((uVar5 & 0x100) != 0) && (this->curWindAlpha != 0.0f)) {
-							NotifyActorInWindArea(fVar11, pCVar9);
+							NotifyActorInWindArea(fVar11, pActor);
 						}
 					}
 				}
 
-				iVar4 = iVar4 + 1;
+				curActorIndex = curActorIndex + 1;
 			}
 		}
 

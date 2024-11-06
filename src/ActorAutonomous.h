@@ -21,7 +21,7 @@ struct _wind_param_in {
 	float field_0x1c;
 	float field_0x20;
 	uint field_0x24;
-	CWayPoint* field_0x28;
+	CWayPoint* pWayPoint;
 	float field_0x2c;
 	float field_0x30;
 };
@@ -38,7 +38,7 @@ struct CActorWindState {
 	float field_0x20;
 	float field_0x24;
 	int field_0x28;
-	CWayPoint* field_0x2c;
+	CWayPoint* pWayPoint;
 	float field_0x30;
 	float field_0x34;
 

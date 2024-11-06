@@ -161,23 +161,35 @@ namespace Debug {
 			case STATE_HERO_WIND_SLIDE:
 				return "StateHeroWindSlide";
 				break;
-			case STATE_HERO_WIND_SLIDE_MOVE_A:
+			case STATE_HERO_WIND_WALL_MOVE_A:
 				return "StateHeroWindSlideMoveA";
 				break;
-			case STATE_HERO_WIND_SLIDE_MOVE_B:
+			case STATE_HERO_WIND_WALL_MOVE_B:
 				return "StateHeroWindSlideMoveB";
 				break;
-			case STATE_HERO_WIND_SLIDE_MOVE_E:
+			case STATE_HERO_WIND_WALL_MOVE_E:
 				return "StateHeroWindSlideMoveE";
 				break;
-			case STATE_HERO_WIND_SLIDE_MOVE_F:
+			case STATE_HERO_WIND_WALL_MOVE_F:
 				return "StateHeroWindSlideMoveF";
 				break;
-			case STATE_HERO_WIND_SLIDE_MOVE_C:
+			case STATE_HERO_WIND_WALL_MOVE_C:
 				return "StateHeroWindSlideMoveC";
 				break;
-			case STATE_HERO_WIND_SLIDE_MOVE_D:
+			case STATE_HERO_WIND_WALL_MOVE_D:
 				return "StateHeroWindSlideMoveD";
+				break;
+			case STATE_HERO_GRIP_UP_A:
+				return "StateHeroGripUpA";
+				break;
+			case STATE_HERO_GRIP_UP_B:
+				return "StateHeroGripUpB";
+				break;
+			case STATE_HERO_WIND_WALL_MOVE_JUMP:
+				return "StateHeroWindWallMoveJump";
+				break;
+			case STATE_HERO_WIND_FLY_B:
+				return "StateHeroWindFlyB";
 				break;
 			case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 				return "StateHeroTrampolineJump_1_2_A";

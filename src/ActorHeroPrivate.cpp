@@ -1983,8 +1983,7 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 			bVar1 = false;
 		}
 		else {
-			iVar6 = GetWindState()->field_0x0;
-			if (iVar6 == GetWindState()->field_0x4) {
+			if (GetWindState()->field_0x0 == GetWindState()->field_0x4) {
 				bVar1 = true;
 			}
 			else {
@@ -2004,8 +2003,7 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 				bVar1 = false;
 			}
 			else {
-				iVar6 = GetWindState()->field_0x0;
-				if (iVar6 == GetWindState()->field_0x4) {
+				if (GetWindState()->field_0x0 == GetWindState()->field_0x4) {
 					bVar1 = true;
 				}
 				else {
@@ -2035,21 +2033,21 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 				}
 
 				if ((uVar2 & 0x100) == 0) {
-					iVar8 = 0xf5;
+					iVar8 = STATE_HERO_WIND_FLY;
 				}
 				else {
 					bVar1 = ColWithAToboggan();
 					iVar8 = 0xef;
 
 					if (bVar1 == false) {
-						iVar8 = 0xf6;
+						iVar8 = STATE_HERO_WIND_SLIDE;
 					}
 				}
 			}
 		}
 		else {
-			if ((0.001f < param_1) && (iVar8 = 0xf3, pWayPoint == (CWayPoint*)0x0)) {
-				iVar8 = 0xf1;
+			if ((0.001f < param_1) && (iVar8 = STATE_HERO_WIND_CANON, pWayPoint == (CWayPoint*)0x0)) {
+				iVar8 = STATE_HERO_GLIDE_2;
 			}
 		}
 
@@ -2425,7 +2423,7 @@ void CActorHeroPrivate::Manage()
 							pWindState = GetWindState();
 							peVar12 = (CWayPoint*)0x0;
 							if (pWindState != (CActorWindState*)0x0) {
-								peVar12 = GetWindState()->field_0x2c;
+								peVar12 = GetWindState()->pWayPoint;
 							}
 
 							iVar8 = GetPossibleWind(fVar14, peVar13, peVar12);
@@ -5345,12 +5343,15 @@ LAB_00341590:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
-	case STATE_HERO_WIND_SLIDE_MOVE_A:
-	case STATE_HERO_WIND_SLIDE_MOVE_B:
-	case STATE_HERO_WIND_SLIDE_MOVE_E:
-	case STATE_HERO_WIND_SLIDE_MOVE_F:
-	case STATE_HERO_WIND_SLIDE_MOVE_C:
-	case STATE_HERO_WIND_SLIDE_MOVE_D:
+	case STATE_HERO_WIND_WALL_MOVE_A:
+	case STATE_HERO_WIND_WALL_MOVE_B:
+	case STATE_HERO_WIND_WALL_MOVE_E:
+	case STATE_HERO_WIND_WALL_MOVE_F:
+	case STATE_HERO_WIND_WALL_MOVE_C:
+	case STATE_HERO_WIND_WALL_MOVE_D:
+	case STATE_HERO_GRIP_UP_A:
+	case STATE_HERO_GRIP_UP_B:
+	case STATE_HERO_WIND_WALL_MOVE_JUMP:
 	case STATE_HERO_STAND_TO_CROUCH_A:
 	case STATE_HERO_ROLL_2_CROUCH:
 	case STATE_HERO_JUMP_TO_CROUCH:
@@ -5411,6 +5412,9 @@ LAB_00341590:
 		break;
 	case STATE_HERO_WIND_SLIDE:
 		StateHeroWindSlideInit();
+		break;
+	case STATE_HERO_WIND_FLY_B:
+		StateHeroFlyJumpInit();
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
@@ -5494,12 +5498,16 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_GLIDE_3:
 	case STATE_HERO_WIND_SLIDE:
 	case STATE_HERO_WIND_FLY:
-	case STATE_HERO_WIND_SLIDE_MOVE_A:
-	case STATE_HERO_WIND_SLIDE_MOVE_B:
-	case STATE_HERO_WIND_SLIDE_MOVE_E:
-	case STATE_HERO_WIND_SLIDE_MOVE_F:
-	case STATE_HERO_WIND_SLIDE_MOVE_C:
-	case STATE_HERO_WIND_SLIDE_MOVE_D:
+	case STATE_HERO_WIND_WALL_MOVE_A:
+	case STATE_HERO_WIND_WALL_MOVE_B:
+	case STATE_HERO_WIND_WALL_MOVE_E:
+	case STATE_HERO_WIND_WALL_MOVE_F:
+	case STATE_HERO_WIND_WALL_MOVE_C:
+	case STATE_HERO_WIND_WALL_MOVE_D:
+	case STATE_HERO_GRIP_UP_A:
+	case STATE_HERO_GRIP_UP_B:
+	case STATE_HERO_WIND_WALL_MOVE_JUMP:
+	case STATE_HERO_WIND_FLY_B:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
@@ -5803,12 +5811,13 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 			pSVar3 = GetStateCfg(iVar5);
 			uVar9 = pSVar3->flags_0x4 & 1;
 		}
+
 		if (uVar9 == 0) {
 			fVar11 = this->dynamicExt.aImpulseVelocityMagnitudes[2];
 			pWayPoint = (CWayPoint*)0x0;
 
 			if (GetWindState() != (CActorWindState*)0x0) {
-				pWayPoint = GetWindState()->field_0x2c;
+				pWayPoint = GetWindState()->pWayPoint;
 			}
 
 			iVar5 = GetPossibleWind(fVar11, this->dynamicExt.aImpulseVelocities + 2, pWayPoint);
@@ -5963,23 +5972,35 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_WIND_SLIDE:
 		StateHeroWindSlide(-1);
 		break;
-	case STATE_HERO_WIND_SLIDE_MOVE_A:
-		StateHeroWindWallMove(0.0f, 0.0f, 0, 0x100);
+	case STATE_HERO_WIND_WALL_MOVE_A:
+		StateHeroWindWallMove(0.0f, 0.0f, 0, STATE_HERO_WIND_FLY_B);
 		break;
-	case STATE_HERO_WIND_SLIDE_MOVE_B:
-		StateHeroWindWallMove(0.0f, 0.0f, 0, 0xff);
+	case STATE_HERO_WIND_WALL_MOVE_B:
+		StateHeroWindWallMove(0.0f, 0.0f, 0, STATE_HERO_WIND_WALL_MOVE_JUMP);
 		break;
-	case STATE_HERO_WIND_SLIDE_MOVE_E:
-		StateHeroWindWallMove(0.0f, this->windWallVerticalSpeed, 0, 0x100);
+	case STATE_HERO_WIND_WALL_MOVE_E:
+		StateHeroWindWallMove(0.0f, this->windWallVerticalSpeed, 0, STATE_HERO_WIND_FLY_B);
 		break;
-	case STATE_HERO_WIND_SLIDE_MOVE_F:
-		StateHeroWindWallMove(0.0f, -this->windWallVerticalSpeed, 0, 0x100);
+	case STATE_HERO_WIND_WALL_MOVE_F:
+		StateHeroWindWallMove(0.0f, -this->windWallVerticalSpeed, 0, STATE_HERO_WIND_FLY_B);
 		break;
-	case STATE_HERO_WIND_SLIDE_MOVE_C:
-		StateHeroWindWallMove(-this->windWallHorizontalSpeed, 0.0f, 0, 0x100);
+	case STATE_HERO_WIND_WALL_MOVE_C:
+		StateHeroWindWallMove(-this->windWallHorizontalSpeed, 0.0f, 0, STATE_HERO_WIND_FLY_B);
 		break;
-	case STATE_HERO_WIND_SLIDE_MOVE_D:
-		StateHeroWindWallMove(this->windWallHorizontalSpeed, 0.0f, 0, 0x100);
+	case STATE_HERO_WIND_WALL_MOVE_D:
+		StateHeroWindWallMove(this->windWallHorizontalSpeed, 0.0f, 0, STATE_HERO_WIND_FLY_B);
+		break;
+	case STATE_HERO_GRIP_UP_A:
+		StateHeroGripUp(this->field_0x151c, -1.0f, STATE_HERO_GRIP_UP_B, 0);
+		break;
+	case STATE_HERO_GRIP_UP_B:
+		StateHeroGripUp(this->field_0x151c, 0.1f, STATE_HERO_WIND_FLY, 0);
+		break;
+	case STATE_HERO_WIND_WALL_MOVE_JUMP:
+		StateHeroWindWallMove(0.0, 0.0f, 1, -1);
+		break;
+	case STATE_HERO_WIND_FLY_B:
+		StateHeroWindFly(1);
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 		StateHeroTrampolineJump_1_2(2.0f);
@@ -7399,6 +7420,25 @@ void CActorHeroPrivate::StateHeroWindFly(int param_2)
 	return;
 }
 
+void CActorHeroPrivate::StateHeroFlyJumpInit()
+{
+	float fVar2;
+
+	this->field_0xf00 = this->currentLocation;
+
+	if (GetWindState() == (CActorWindState*)0x0) {
+		fVar2 = 0.0f;
+	}
+	else {
+		fVar2 = GetWindState()->field_0x38;
+	}
+
+	fVar2 = edFIntervalLERP(fVar2, 40.0f, 160.0f, 4.0f, 1.0f);
+	this->scalarDynJump.BuildFromSpeedDist(18.0f, 0.0f, fVar2);
+
+	return;
+}
+
 void CActorHeroPrivate::StateHeroWindSlideInit()
 {
 	this->field_0x13d8 = 0.0f;
@@ -7642,9 +7682,9 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 
 					this->field_0x13f0 = local_90;
 
-					uVar6 = STATE_HERO_WIND_SLIDE_MOVE_A;
+					uVar6 = STATE_HERO_WIND_WALL_MOVE_A;
 					if (this->field_0xa84 <= 0.1f) {
-						uVar6 = STATE_HERO_WIND_SLIDE_MOVE_B;
+						uVar6 = STATE_HERO_WIND_WALL_MOVE_B;
 					}
 
 					SetState(uVar6, 0xffffffff);
@@ -7676,7 +7716,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 	return;
 }
 
-void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verticalSpeed, int param_4, int nextState)
+void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verticalSpeed, int bIsJump, int nextState)
 {
 	CAnimation* pCVar1;
 	CCollision* pCVar2;
@@ -7839,7 +7879,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 								bVar5 = false;
 							}
 
-							if ((bVar5) || (param_4 == 0)) {
+							if ((bVar5) || (bIsJump == 0)) {
 								GetPadRelativeToPlane(&this->field_0x13f0, &local_c, &local_10);
 								if (0.3f < local_c) {
 									SetState(0xfc, 0xffffffff);
@@ -12224,7 +12264,7 @@ LAB_0014a028:
 				}
 				else {
 					iVar16 = GetWindState();
-					pWaypoint = iVar16->field_0x2c;
+					pWaypoint = iVar16->pWayPoint;
 				}
 
 				if (pWaypoint == (CWayPoint*)0x0) {
