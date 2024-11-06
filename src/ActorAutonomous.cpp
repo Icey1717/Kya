@@ -1235,6 +1235,34 @@ void CActorAutonomous::ComputeSlidingForce(edF32VECTOR4* pSlidingForce, int para
 	return;
 }
 
+void CActorAutonomous::ClearAllSumForceExt()
+{
+	if (GetWindState() != (CActorWindState*)0x0) {
+		GetWindState()->field_0x40 = (this->dynamicExt).aImpulseVelocities[2];
+		GetWindState()->field_0x38 = (this->dynamicExt).aImpulseVelocityMagnitudes[2];
+	}
+
+	(this->dynamicExt).aImpulseVelocities[0].x = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[0].y = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[0].z = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[0].w = 0.0f;
+	(this->dynamicExt).aImpulseVelocityMagnitudes[0] = 0.0f;
+
+	(this->dynamicExt).aImpulseVelocities[1].x = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[1].y = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[1].z = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[1].w = 0.0f;
+	(this->dynamicExt).aImpulseVelocityMagnitudes[1] = 0.0f;
+
+	(this->dynamicExt).aImpulseVelocities[2].x = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[2].y = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[2].z = 0.0f;
+	(this->dynamicExt).aImpulseVelocities[2].w = 0.0f;
+	(this->dynamicExt).aImpulseVelocityMagnitudes[2] = 0.0f;
+
+	return;
+}
+
 bool Wolfen_CriterionWarn(CActor* pActor, void* pParams)
 {
 	bool bVar1;

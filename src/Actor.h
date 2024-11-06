@@ -56,6 +56,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_KICKED = 0x2,
 	MESSAGE_GET_ACTION = 0x12,
 	MESSAGE_TRAP_STRUGGLE = 0x14,
+	MESSAGE_IN_WIND_AREA = 0x16,
 	MESSAGE_ENTER_WIND = 0x17,
 	MESSAGE_LEAVE_WIND = 0x18,
 	MESSAGE_ENTER_TRAMPO = 0x1d,
@@ -264,7 +265,8 @@ struct MeshTextureHash {
 
 class CScalarDyn {
 public:
-	void BuildFromSpeedDist(float param_1, float param_2, float param_3);
+	void BuildFromSpeedDist(float param_1, float param_2, float distance);
+	void BuildFromSpeedDistTime(float param_1, float param_2, float distance, float time);
 	void Reset();
 	bool IsFinished();
 	void Integrate(float param_1);
@@ -274,7 +276,7 @@ public:
 
 	uint flags;
 	float field_0x4;
-	float field_0x8;
+	float duration;
 	float field_0xc;
 	float field_0x10;
 	float field_0x14;
@@ -569,7 +571,7 @@ public:
 	void SV_InheritMatrixFromTiedToActor(edF32MATRIX4* m0);
 	bool SV_AmICarrying(CActor* pOther);
 	void SV_SetOrientationToPosition2D(edF32VECTOR4* pPosition);
-	int SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* param_9);
+	int SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* pPathReaderPosInfo);
 	static void SV_Blend3AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN* param_3, uint param_4, uint param_5, uint param_6);
 	static void SV_Blend4AnimationsWith2Ratios(float r1, float r2, edAnmMacroBlendN* param_3, uint param_4, uint param_5, uint param_6, uint param_7);
 

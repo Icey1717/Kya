@@ -1116,9 +1116,9 @@ void CActorWind::NotifyActorInWindArea(float param_1, CActor* pNotifyActor)
 	float fVar2;
 	float fVar3;
 	edF32VECTOR4 local_50;
-	NotifyWindParam local_40;
+	NotifyWindParam notifyWindParam;
 	edF32VECTOR4 local_20;
-	NotifyWindParam* local_4;
+	NotifyWindParam* pNotifyWindParam;
 
 	local_20 = this->rotationQuat;
 
@@ -1138,33 +1138,34 @@ void CActorWind::NotifyActorInWindArea(float param_1, CActor* pNotifyActor)
 
 		fVar3 = this->curWindAlpha;
 		if (-CDynamicExt::gForceGravity.y < fVar3) {
-			local_40.field_0x10 = fVar3 + ((-CDynamicExt::gForceGravity.y - fVar3) / param_1) * fVar2;
+			notifyWindParam.field_0x10 = fVar3 + ((-CDynamicExt::gForceGravity.y - fVar3) / param_1) * fVar2;
 		}
 		else {
-			local_40.field_0x10 = edFIntervalLERP(fVar2, 0.0f, param_1, fVar3, 0.0f);
+			notifyWindParam.field_0x10 = edFIntervalLERP(fVar2, 0.0f, param_1, fVar3, 0.0f);
 		}
 	}
 	else {
-		local_40.field_0x10 = this->curWindAlpha;
+		notifyWindParam.field_0x10 = this->curWindAlpha;
 	}
 
-	if (local_40.field_0x10 != 0.0f) {
+	if (notifyWindParam.field_0x10 != 0.0f) {
 		pfVar1 = this->field_0x1cc.Get();
 		if ((pfVar1 != (CWayPoint*)0x0) && (pNotifyActor->typeID != 6)) {
 			local_50.xyz = pfVar1->location;
 			local_50.w = 1.0f;
 			edF32Vector4SubHard(&local_50, &local_50, &pNotifyActor->currentLocation);
 			local_50.y = 0.0f;
-			edF32Vector4ScaleHard(local_40.field_0x10 * 0.01f, &local_50, &local_50);
-			edF32Vector4ScaleHard(local_40.field_0x10, &local_20, &local_20);
+			edF32Vector4ScaleHard(notifyWindParam.field_0x10 * 0.01f, &local_50, &local_50);
+			edF32Vector4ScaleHard(notifyWindParam.field_0x10, &local_20, &local_20);
 			edF32Vector4AddHard(&local_20, &local_20, &local_50);
 			edF32Vector4NormalizeHard(&local_20, &local_20);
 		}
 
-		local_4 = &local_40;
-		local_40.field_0x0 = local_20;
-		DoMessage(pNotifyActor, (ACTOR_MESSAGE)0x16, (MSG_PARAM)local_4);
+		pNotifyWindParam = &notifyWindParam;
+		notifyWindParam.field_0x0 = local_20;
+		DoMessage(pNotifyActor, MESSAGE_IN_WIND_AREA, pNotifyWindParam);
 	}
+
 	return;
 }
 

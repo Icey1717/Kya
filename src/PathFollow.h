@@ -43,8 +43,8 @@ public:
 	void Create(float param_1, float param_2, CPathFollow* pPathFollow, int type, int mode, int timing, int param_8);
 
 	int ComputeSegment(float param_1, int* param_3, int* param_4, float* param_5);
-	int ComputePosition(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* param_5);
-	int ComputeMatrix(float param_1, edF32MATRIX4* pMatrix, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* param_5);
+	int ComputePosition(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* pPathReaderPosInfo);
+	int ComputeMatrix(float param_1, edF32MATRIX4* pMatrix, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* pPathReaderPosInfo);
 
 	CPathFollow* pActor3C_0x0;
 	float barFullAmount_0x4;

@@ -167,6 +167,7 @@ public:
 	void ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
 	void ComputeFrictionForce(float param_1, edF32VECTOR4* pFrictionForce, int param_4);
 	void ComputeSlidingForce(edF32VECTOR4* param_2, int param_3);
+	void ClearAllSumForceExt();
 
 	void StateAutSoccer(float param_1, int param_3, int param_4, CActorMovable* param_5);
 

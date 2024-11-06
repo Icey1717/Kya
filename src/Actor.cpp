@@ -4294,7 +4294,7 @@ bool CActor::SV_AmICarrying(CActor* pOther)
 	return this == pCVar1;
 }
 
-int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* param_9)
+int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* pPathReaderPosInfo)
 {
 	CCollision* pCVar1;
 	int iVar2;
@@ -4318,31 +4318,31 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 			SV_UpdateMatrix_Rel(&auStack96, 1, param_5, pActorsTable, param_8);
 		}
 
-		if (param_9 != (S_PATHREADER_POS_INFO*)0x0) {
-			param_9->field_0x0 = 0;
-			param_9->field_0x4 = 0;
-			param_9->field_0x8 = 0.0;
+		if (pPathReaderPosInfo != (S_PATHREADER_POS_INFO*)0x0) {
+			pPathReaderPosInfo->field_0x0 = 0;
+			pPathReaderPosInfo->field_0x4 = 0;
+			pPathReaderPosInfo->field_0x8 = 0.0f;
 		}
 	}
 	else {
-		if (param_9 != (S_PATHREADER_POS_INFO*)0x0) {
-			param_9 = &SStack16;
+		if (pPathReaderPosInfo == (S_PATHREADER_POS_INFO*)0x0) {
+			pPathReaderPosInfo = &SStack16;
 		}
 
 		if (param_4 == 0) {
 			if (pMatrix == (edF32MATRIX4*)0x0) {
-				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &local_20, (edF32VECTOR4*)0x0, param_9);
+				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &local_20, (edF32VECTOR4*)0x0, pPathReaderPosInfo);
 				SV_UpdatePosition_Rel(&local_20, 1, param_5, pActorsTable, param_8);
 			}
 			else {
 				edF32Matrix4FromEulerSoft(&auStack96, &this->pCinData->rotationEuler, "XYZ");
-				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &auStack96.rowT, (edF32VECTOR4*)0x0, param_9);
+				iVar4 = pPathFollowReaderAbs->ComputePosition(param_1, &auStack96.rowT, (edF32VECTOR4*)0x0, pPathReaderPosInfo);
 				edF32Matrix4MulF32Matrix4Hard(&auStack96, pMatrix, &auStack96);
 				SV_UpdateMatrix_Rel(&auStack96, 1, param_5, pActorsTable, param_8);
 			}
 		}
 		else {
-			iVar4 = pPathFollowReaderAbs->ComputeMatrix(param_1, &auStack96, 0, param_9);
+			iVar4 = pPathFollowReaderAbs->ComputeMatrix(param_1, &auStack96, 0, pPathReaderPosInfo);
 
 			if (pMatrix != (edF32MATRIX4*)0x0) {
 				edF32Matrix4MulF32Matrix4Hard(&auStack96, pMatrix, &auStack96);
@@ -4430,13 +4430,13 @@ void CActor::SV_SetOrientationToPosition2D(edF32VECTOR4* pPosition)
 	return;
 }
 
-void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float param_3)
+void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float distance)
 {
-	if (param_3 == 0.0f) {
+	if (distance == 0.0f) {
 		this->field_0xc = param_1;
 		this->field_0x14 = 0.0f;
 		this->field_0x10 = 0.0f;
-		this->field_0x8 = 0.0f;
+		this->duration = 0.0f;
 		this->field_0x4 = 0.0f;
 		this->field_0x18 = 0.0f;
 		this->flags = 1;
@@ -4447,15 +4447,37 @@ void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float param_3)
 	else {
 		this->field_0xc = param_1;
 		this->field_0x10 = 0.0f;
-		this->field_0x14 = (param_2 * param_2 - param_1 * param_1) / (param_3 * 2.0f);
+		this->field_0x14 = (param_2 * param_2 - param_1 * param_1) / (distance * 2.0f);
 		this->field_0x20 = param_1;
 		this->field_0x24 = this->field_0x14;
 		this->flags = 0;
 		this->field_0x4 = 0.0f;
 		this->field_0x18 = 0.0f;
 		this->field_0x1c = 0.0f;
-		this->field_0x8 = (param_2 - param_1) / this->field_0x14;
+		this->duration = (param_2 - param_1) / this->field_0x14;
 	}
+
+	return;
+}
+
+void CScalarDyn::BuildFromSpeedDistTime(float param_1, float param_2, float distance, float time)
+{
+	float fVar1;
+	float fVar2;
+
+	fVar2 = 1.0f / time;
+	fVar1 = (fVar2 / time) * 6.0f * ((param_1 + param_2) - distance * 2.0f * fVar2);
+	this->field_0xc = param_1;
+	this->field_0x10 = fVar1;
+	this->field_0x14 = (distance * 2.0f * (fVar2 / time) - param_1 * 2.0f * fVar2) - (time / 3.0f) * fVar1;
+	this->field_0x20 = param_1;
+	this->field_0x24 = this->field_0x14;
+	this->flags = 0;
+	this->field_0x4 = 0.0f;
+	this->field_0x18 = 0.0f;
+	this->field_0x1c = 0.0f;
+	this->duration = time;
+
 	return;
 }
 
@@ -4468,7 +4490,7 @@ void CScalarDyn::Reset()
 	this->field_0x14 = 0.0f;
 	this->field_0x10 = 0.0f;
 	this->field_0xc = 0.0f;
-	this->field_0x8 = 0.0f;
+	this->duration = 0.0f;
 	this->field_0x4 = 0.0f;
 	this->flags = 1;
 	return;
@@ -4487,8 +4509,8 @@ void CScalarDyn::Integrate(float param_1, float param_2)
 	if ((param_2 != 0.0f) && (param_1 != 0.0f)) {
 		if (this->flags == 0) {
 			fVar1 = this->field_0x4 + param_1;
-			if ((this->field_0x8 <= fVar1) || (fabs(fVar1 - this->field_0x8) < 1e-06f)) {
-				fVar1 = this->field_0x8;
+			if ((this->duration <= fVar1) || (fabs(fVar1 - this->duration) < 1e-06f)) {
+				fVar1 = this->duration;
 				this->flags = 2;
 			}
 			else {

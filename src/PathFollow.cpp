@@ -326,7 +326,7 @@ int CPathFollowReaderAbsolute::ComputeSegment(float param_1, int* param_3, int* 
 	return iVar6;
 }
 
-int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* param_5)
+int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* pPathReaderPosInfo)
 {
 	int iVar1;
 	edF32VECTOR4* peVar2;
@@ -390,10 +390,10 @@ int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* para
 			IMPLEMENTATION_GUARD(
 				ComputeTangent(local_4, param_4, local_8, local_c);)
 		}
-		if (param_5 != (S_PATHREADER_POS_INFO*)0x0) {
-			param_5->field_0x0 = local_8;
-			param_5->field_0x4 = local_c;
-			param_5->field_0x8 = local_4;
+		if (pPathReaderPosInfo != (S_PATHREADER_POS_INFO*)0x0) {
+			pPathReaderPosInfo->field_0x0 = local_8;
+			pPathReaderPosInfo->field_0x4 = local_c;
+			pPathReaderPosInfo->field_0x8 = local_4;
 		}
 	}
 	return iVar1;

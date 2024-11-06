@@ -211,6 +211,9 @@ public:
 	void StateHeroGlide(int param_2, int nextState);
 	void StateHeroGlideTerm() {}
 
+	void StateHeroWindCanonInit();
+	void StateHeroWindCanonTerm();
+
 	void SetJumpCfgFromGround(float param_1);
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);
 	void SetBoomyFunc(int param_2);
@@ -259,6 +262,8 @@ public:
 	void ChangeCollisionSphereForGlide(float param_1, float param_2);
 
 	void ConvertSpeedPlayerToSpeedSumForceExt();
+	void ConvertSpeedPlayerToSpeedSumForceExt2D();
+
 	void BeginToboggan();
 	void SlideOnToboggan(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, edF32VECTOR4* param_7, uint dynFlags);
 	void EndToboggan();

@@ -6,6 +6,7 @@
 #include "CameraViewManager.h"
 #include "InputManager.h"
 #include "ActorBoomy.h"
+#include "WayPoint.h"
 
 #include <string.h>
 #include <math.h>
@@ -3427,7 +3428,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 			return 1;
 		}
-		if (msg == 0x16) {
+		if (msg == MESSAGE_IN_WIND_AREA) {
 			pCVar11 = GetLifeInterface();
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3453,8 +3454,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					fVar25 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities + 2);
 					this->dynamicExt.aImpulseVelocityMagnitudes[2] = fVar25;
 
-					CActorWindState* pWindState = GetWindState();
-					if (pWindState == (CActorWindState*)0x0) {
+					if (GetWindState() == (CActorWindState*)0x0) {
 						fVar25 = 0.0f;
 					}
 					else {
@@ -3462,8 +3462,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					}
 					if (fVar25 < 0.001f) {
 						fVar25 = pParam->field_0x10;
-						pWindState = GetWindState();
-						if (pWindState == (CActorWindState*)0x0) {
+						if (GetWindState() == (CActorWindState*)0x0) {
 							bVar9 = false;
 						}
 						else {
@@ -5339,6 +5338,7 @@ LAB_00341590:
 	case STATE_HERO_GLIDE_1:
 	case STATE_HERO_GLIDE_2:
 	case STATE_HERO_GLIDE_3:
+	case STATE_HERO_WIND_CANON_B:
 	case STATE_HERO_JOKE:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
@@ -5409,6 +5409,9 @@ LAB_00341590:
 		break;
 	case STATE_HERO_TOBOGGAN_JUMP_1:
 		this->field_0x10f8 = 0.0f;
+		break;
+	case STATE_HERO_WIND_CANON:
+		StateHeroWindCanonInit();
 		break;
 	case STATE_HERO_WIND_SLIDE:
 		StateHeroWindSlideInit();
@@ -5496,6 +5499,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_GLIDE_1:
 	case STATE_HERO_GLIDE_2:
 	case STATE_HERO_GLIDE_3:
+	case STATE_HERO_WIND_CANON:
 	case STATE_HERO_WIND_SLIDE:
 	case STATE_HERO_WIND_FLY:
 	case STATE_HERO_WIND_WALL_MOVE_A:
@@ -5553,6 +5557,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_U_TURN:
 		StateHeroUTurnTerm();
+		break;
+	case STATE_HERO_WIND_CANON_B:
+		StateHeroWindCanonTerm();
 		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	{
@@ -5965,6 +5972,12 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_GLIDE_3:
 		StateHeroGlide(1, -1);
+		break;
+	case STATE_HERO_WIND_CANON:
+		StateHeroGlide(-1, STATE_HERO_WIND_CANON_B);
+		break;
+	case STATE_HERO_WIND_CANON_B:
+		StateHeroGlide(-1, -1);
 		break;
 	case STATE_HERO_WIND_FLY:
 		StateHeroWindFly(0);
@@ -11783,8 +11796,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 		this->dynamicExt.normalizedTranslation.z = 0.0f;
 		this->dynamicExt.normalizedTranslation.w = 0.0f;
 		this->dynamicExt.field_0x6c = 0.0f;
-		IMPLEMENTATION_GUARD(
-		ClearAllSumForceExt());
+		ClearAllSumForceExt();
 	}
 	else {
 		bVar8 = UpdateOrientationFromWind(&local_20, (edF32VECTOR4*)0x0);
@@ -12020,7 +12032,7 @@ LAB_0014a028:
 	}
 
 	if (this->field_0x1428 == 0) {
-		fVar27 = edFIntervalUnitDstLERP(this->field_0x37c.field_0x4, this->field_0x37c.field_0x8, 0.0f);
+		fVar27 = edFIntervalUnitDstLERP(this->field_0x37c.field_0x4, this->field_0x37c.duration, 0.0f);
 		this->field_0x11fc = fVar27;
 
 		pTVar9 = GetTimer();
@@ -12477,6 +12489,101 @@ LAB_0014a028:
 			(*(code*)(this->pVTable)->field_0x16c)(this);)
 		}
 	}
+	return;
+}
+
+void CActorHeroPrivate::StateHeroWindCanonInit()
+{
+	CActorWindState* pCVar1;
+	int iVar2;
+	CWayPoint* pCVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	this->field_0x37c.Reset();
+	this->scalarDynJump.Reset();
+
+	if (GetWindState() == (CActorWindState*)0x0) {
+		pCVar3 = (CWayPoint*)0x0;
+	}
+	else {
+		pCVar3 = GetWindState()->pWayPoint;
+	}
+
+	local_10.xyz = pCVar3->location;
+	local_10.w = 1.0f;
+	edF32Vector4SubHard(&local_10, &local_10, &this->currentLocation);
+	edF32Vector4NormalizeHard(&eStack32, &local_10);
+	
+	if (GetWindState() == (CActorWindState*)0x0) {
+		fVar7 = 0.0f;
+	}
+	else {
+		fVar7 = GetWindState()->field_0x30;
+	}
+
+	edF32Vector4ScaleHard(fVar7, &eStack32, &eStack32);
+
+	fVar7 = local_10.y;
+	fVar8 = fabs(eStack32.y);
+	local_10.y = 0.0f;
+
+	fVar4 = edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
+	this->rotationQuat = local_10;
+	this->field_0x1400 = local_10;
+
+	eStack32.y = 0.0f;
+	fVar5 = edF32Vector4GetDistHard(&eStack32);
+	fVar9 = sqrtf(fVar5 * fVar5 + fVar8 * fVar8);
+
+	if (GetWindState() == (CActorWindState*)0x0) {
+		fVar6 = 0.0f;
+	}
+	else {
+		fVar6 = GetWindState()->field_0x30;
+	}
+
+	if (0.1 < fabs(fVar9 - fVar6)) {
+		edDebugPrintf("Big error : check the values...\n");
+	}
+	if (GetWindState() == (CActorWindState*)0x0) {
+		fVar9 = 0.0f;
+	}
+	else {
+		fVar9 = GetWindState()->field_0x34;
+	}
+
+	this->field_0x37c.BuildFromSpeedDist(fVar5, fVar9, fVar4);
+
+	fVar4 = 1.0f;
+	if (0.0f < fVar7) {
+		fVar4 = fVar7;
+	}
+
+	this->scalarDynJump.BuildFromSpeedDistTime(fVar8, 0.0f, fVar4, this->field_0x37c.duration);
+	this->dynamicExt.normalizedTranslation.x = 0.0f;
+	this->dynamicExt.normalizedTranslation.y = 0.0f;
+	this->dynamicExt.normalizedTranslation.z = 0.0f;
+	this->dynamicExt.normalizedTranslation.w = 0.0f;
+	this->dynamicExt.field_0x6c = 0.0f;
+	this->field_0x1428 = 0;
+	this->field_0x11fc = 1.0f;
+	return;
+}
+
+void CActorHeroPrivate::StateHeroWindCanonTerm()
+{
+	RestoreVerticalOrientation();
+	ConvertSpeedPlayerToSpeedSumForceExt2D();
+	this->field_0x1428 = 1;
+	this->field_0x11fc = 0.0f;
+
 	return;
 }
 
@@ -13808,7 +13915,6 @@ void CActorHeroPrivate::ChangeCollisionSphereForGlide(float param_1, float param
 void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt()
 
 {
-	float fVar1;
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 eStack16;
 
@@ -13816,14 +13922,33 @@ void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt()
 	edF32Vector4ScaleHard(this->dynamicExt.field_0x6c, &eStack32, &this->dynamicExt.normalizedTranslation);
 	edF32Vector4AddHard(&eStack32, &eStack32, &eStack16);
 
-	fVar1 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &eStack32);
-	this->dynamicExt.field_0x6c = fVar1;
+	this->dynamicExt.field_0x6c = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &eStack32);
 
 	this->dynamic.speed = 0.0f;
 
 	if (this->dynamicExt.field_0x6c != 0.0f) {
 		this->dynamic.rotationQuat = this->dynamicExt.normalizedTranslation;
 	}
+
+	return;
+}
+
+void CActorHeroPrivate::ConvertSpeedPlayerToSpeedSumForceExt2D()
+{
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4ScaleHard(this->dynamic.speed, &eStack16, &this->dynamic.rotationQuat);
+	edF32Vector4ScaleHard(this->dynamicExt.field_0x6c, &eStack32, &this->dynamicExt.normalizedTranslation);
+	edF32Vector4AddHard(&eStack32, &eStack32, &eStack16);
+
+	eStack32.y = 0.0f;
+
+	this->dynamicExt.field_0x6c = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &eStack32);
+
+	this->dynamic.speed = 0.0f;
+
+	this->dynamic.rotationQuat = this->dynamicExt.normalizedTranslation;
 
 	return;
 }
@@ -15164,7 +15289,7 @@ void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator
 								}
 								if (puVar8 < 0.0f) {
 									fVar6 = this->field_0x11f8;
-									if (fVar6 < 0.0) {
+									if (fVar6 < 0.0f) {
 										CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, -puVar8, &local_4, 1, 0, 3);
 										pValue->field_0x14 = 0.0f;
 									}
@@ -15178,14 +15303,12 @@ void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator
 								}
 								else {
 									fVar6 = this->field_0x11fc;
-									if (0.0 < fVar6) {
-										IMPLEMENTATION_GUARD(
-										puVar4[8] = (uint)fVar6;
-										(&local_4->flags + local_4->keyIndex_0x8)[4] =
-											(uint)(1.0 - (float)(&local_4->flags + local_4->keyIndex_0x8)[8]);
-										puVar4[7] = 0;
-										puVar4[5] = 0;
-										*puVar5 = 0.0f;)
+									if (0.0f < fVar6) {
+										pValue->field_0x20 = fVar6;
+										pValue->field_0x10 = (1.0f - pValue->field_0x20);
+										pValue->field_0x1c = 0.0f;
+										pValue->field_0x14 = 0.0f;
+										pValue->field_0xc = 0.0f;
 									}
 									else {
 										fVar6 = this->field_0x11f8;

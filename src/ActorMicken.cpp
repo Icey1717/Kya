@@ -342,7 +342,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		return 0;
 	}
 
-	if (msg == 0x16) {
+	if (msg == MESSAGE_IN_WIND_AREA) {
 		IMPLEMENTATION_GUARD(
 		edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x10), &eStack64, (edF32VECTOR4*)pMsgParam);
 		peVar10 = this->dynamicExt.aImpulseVelocities + 2;

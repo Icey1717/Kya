@@ -1353,7 +1353,7 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 	edF32MATRIX4 eStack112;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 local_20;
-	S_PATHREADER_POS_INFO local_10;
+	S_PATHREADER_POS_INFO pathReaderPosInfo;
 
 	iVar8 = 1;
 
@@ -1387,46 +1387,47 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 	else {
 		cVar5 = CActorMovable::SV_MOV_UpdateTilt(this->pProperties->field_0x2c, this->pTiltData, &this->pProperties->tiltStreamDef);
 	}
+
 	if (cVar5 == false) {
 		if ((local_80 == 0) && (this->pTiedActor == (CActor*)0x0)) {
 			param_4 = 0;
 		}
 		else {
-			iVar8 = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, (edF32MATRIX4*)0x0, &local_30, &local_10);
+			iVar8 = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, (edF32MATRIX4*)0x0, &local_30, &pathReaderPosInfo);
 		}
 	}
 	else {
 		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.field_0x0, &eStack112);
 		IMPLEMENTATION_GUARD(
 		iVar8 = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, 
-			pActorsTable, &eStack112, &local_30, &local_10);)
+			pActorsTable, &eStack112, &local_30, &pathReaderPosInfo);)
 	}
 
 	sVar6 = -1;
 	sVar7 = sVar6;
 
 	if (param_4 != 0) {
-		sVar7 = local_10.field_0x4;
+		sVar7 = pathReaderPosInfo.field_0x4;
 
-		if (0.0f < local_10.field_0x8) {
-			sVar7 = local_10.field_0x0;
+		if (0.0f < pathReaderPosInfo.field_0x8) {
+			sVar7 = pathReaderPosInfo.field_0x0;
 
 			if (iVar8 == 2) {
-				if ((local_10.field_0x8 <= 0.999f) && (sVar7 = local_10.field_0x4, 0.001f <= local_10.field_0x8)) {
+				if ((pathReaderPosInfo.field_0x8 <= 0.999f) && (sVar7 = pathReaderPosInfo.field_0x4, 0.001f <= pathReaderPosInfo.field_0x8)) {
 					sVar7 = sVar6;
 				}
 			}
 			else {
 				if ((pPathFollowerAbs->pActor3C_0x0 == (CPathFollow*)0x0) || (pPathFollowerAbs->pActor3C_0x0->splinePointCount != 2)) {
-					sVar7 = local_10.field_0x4;
+					sVar7 = pathReaderPosInfo.field_0x4;
 
-					if ((pTrajPos->field_0x6 != local_10.field_0x4) &&
-						(sVar7 = sVar6, pTrajPos->field_0x4 == local_10.field_0x0)) {
-						sVar7 = local_10.field_0x0;
+					if ((pTrajPos->field_0x6 != pathReaderPosInfo.field_0x4) &&
+						(sVar7 = sVar6, pTrajPos->field_0x4 == pathReaderPosInfo.field_0x0)) {
+						sVar7 = pathReaderPosInfo.field_0x0;
 					}
 				}
 				else {
-					if ((local_10.field_0x8 <= 0.9f) && (sVar7 = local_10.field_0x4, 0.1f <= local_10.field_0x8)) {
+					if ((pathReaderPosInfo.field_0x8 <= 0.9f) && (sVar7 = pathReaderPosInfo.field_0x4, 0.1f <= pathReaderPosInfo.field_0x8)) {
 						sVar7 = sVar6;
 					}
 				}
@@ -1440,8 +1441,8 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 		}
 	}
 
-	pTrajPos->field_0x4 = local_10.field_0x4;
-	pTrajPos->field_0x6 = local_10.field_0x0;
+	pTrajPos->field_0x4 = pathReaderPosInfo.field_0x4;
+	pTrajPos->field_0x6 = pathReaderPosInfo.field_0x0;
 	pTrajPos->field_0x8 = sVar7;
 
 	if (param_4 != 0) {
@@ -1455,7 +1456,7 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 		if (0 < iVar8) {
 			do {
 				S_BRIDGE_CAMERA_STREAM_ENTRY* pStreamEntry = this->pCameraStream->aEntries + iVar12;
-				if ((pStreamEntry->field_0x4 == 4) && (sVar7 == pStreamEntry->streamTarget.pRef)) {
+				if ((pStreamEntry->field_0x0 == 4) && (sVar7 == pStreamEntry->field_0x4)) {
 					pStreamEntry->streamTarget.Switch(this);
 					pStreamEntry->streamTarget.PostSwitch(this);
 					pStreamEntry->streamCameraEvent.SwitchOn(this);
