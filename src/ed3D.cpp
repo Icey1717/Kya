@@ -1633,12 +1633,13 @@ ed_3D_Scene* gRenderScene = NULL;
 
 float fSecInc = 5.0f;
 
+#ifdef PLATFORM_WIN
 edF32MATRIX4 gNativeProjectionMatrix = { 0 };
 
 static edF32MATRIX4 CalculateOpenGlPerspectiveMatrix(const float fovy, const float aspect, const float n, const float f)
 {
 	const float e = 1.0f / std::tan(fovy * 0.5f);
-	return { e / aspect, 0.0f,  0.0f,                    0.0f,
+	return { e / aspect, 0.0f,  0.0f,                   0.0f,
 			0.0f,       e,     0.0f,                    0.0f,
 			0.0f,       0.0f, (f + n) / (n - f),       -1.0f,
 			0.0f,       0.0f, (2.0f * f * n) / (n - f), 0.0f };
@@ -1646,11 +1647,11 @@ static edF32MATRIX4 CalculateOpenGlPerspectiveMatrix(const float fovy, const flo
 
 static edF32MATRIX4 CalculateVulkanPerspectiveMatrix(const float fovy, const float aspect, const float n, const float f)
 {
-	constexpr edF32MATRIX4 vulkan_clip{ 1.0f,  0.0f, 0.0f, 0.0f,
-								0.0f, -1.0f, 0.0f, 0.0f,
-								0.0f,  0.0f, 0.5f, 0.0f,
-								0.0f,  0.0f, 0.5f, 1.0f };
-	return vulkan_clip * CalculateOpenGlPerspectiveMatrix(fovy, aspect, n, f);
+	constexpr edF32MATRIX4 vulkanClip{	1.0f,  0.0f, 0.0f, 0.0f,
+										0.0f, -1.0f, 0.0f, 0.0f,
+										0.0f,  0.0f, 0.5f, 0.0f,
+										0.0f,  0.0f, 0.5f, 1.0f };
+	return vulkanClip * CalculateOpenGlPerspectiveMatrix(fovy, aspect, n, f);
 }
 
 static edF32MATRIX4 ReverseZ(const edF32MATRIX4& perspectiveProjection)
@@ -1667,38 +1668,42 @@ static void ComputeReverseProjectionMatrix(const float nearClip, const float far
 	gNativeProjectionMatrix = ReverseZ(CalculateVulkanPerspectiveMatrix(fov, aspect, -nearClip, -farClip));
 }
 
-static void ComputeReverseProjectionMatrix(const float nearClip, const float farClip)
+static void ComputeReverseProjectionMatrix(const float fov, const float nearClip, const float farClip)
 {
-	const float fov = 60.0f * (3.1415f / 180.0f); // Convert to radians
+	//const float fov = 48.0f * (3.1415f / 180.0f); // Convert to radians
 	const float aspect = 4.0f / 3.0f;
 
 	ComputeReverseProjectionMatrix(nearClip, farClip, fov, aspect);
 }
+#endif
 
-void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float width, float height, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV,
+void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV, float targetWidth, float targetHeight,
 	float nearClip, edF32MATRIX4* pCameraToScreen, edF32MATRIX4* pCameraToCulling, edF32MATRIX4* pCameraToClipping, edF32MATRIX4* pCameraToFog,
 	float farClip, float projectionScaleFactorA, float projectionScaleFactorB)
 {
 	float fVar1;
 	float fVar2;
 	float fVar3;
-	float startX;
+	float negHorizontalHalfFOV;
 	float fVar4;
-	float startY;
+	float negHalfFOV;
 	edF32MATRIX4 screenMatrix;
 	edF32MATRIX4 projectionMatrix;
 
-	ComputeReverseProjectionMatrix(nearClip, farClip);
+#ifdef PLATFORM_WIN
+	const float fov = (halfFOV / verticalHalfFOV) * 1.333333f;
+	ComputeReverseProjectionMatrix(fov, nearClip, farClip);
+#endif
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, width: {}, height: {}, horizontalHalfFOV: {}, halfFOV: {}, verticalHalfFOV: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n", 
-		screenWidth, screenHeight, width, height, horizontalHalfFOV, halfFOV, verticalHalfFOV, nearClip, farClip, projectionScaleFactorA, projectionScaleFactorB);
+	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, horizontalHalfFOV: {}, halfFOV: {}, horizontalHalfFOV: {}, targetWidth: {}, targetHeight: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n", 
+		screenWidth, screenHeight, horizontalHalfFOV, halfFOV, verticalHalfFOV, targetWidth, targetHeight, nearClip, farClip, projectionScaleFactorA, projectionScaleFactorB);
 
-	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, horizontalHalfFOV, 0.0f, &projectionMatrix);
-	startY = -height;
-	startX = -width;
+	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, verticalHalfFOV, 0.0f, &projectionMatrix);
+	negHalfFOV = -halfFOV;
+	negHorizontalHalfFOV = -horizontalHalfFOV;
 
-	ed3DComputeProjectionToScreenMatrix(startX, width, startY, height, halfFOV - screenWidth * 0.5f, halfFOV + screenWidth * 0.5f,
-		verticalHalfFOV + screenHeight * 0.5f, verticalHalfFOV - screenHeight * 0.5f, &screenMatrix);
+	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV, horizontalHalfFOV, negHalfFOV, halfFOV, targetWidth - screenWidth * 0.5f, targetWidth + screenWidth * 0.5f,
+		targetHeight + screenHeight * 0.5f, targetHeight - screenHeight * 0.5f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToScreen, &projectionMatrix, &screenMatrix);
 	fVar4 = 1.0f / (farClip - nearClip);
@@ -1706,7 +1711,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	pCameraToScreen->cc = fVar4 * (projectionScaleFactorB * (pCameraToScreen->dd + pCameraToScreen->cd * farClip) - projectionScaleFactorA * fVar1);
 	pCameraToScreen->dc = fVar4 * (fVar1 * farClip * projectionScaleFactorA - fVar1 * nearClip * projectionScaleFactorB);
 
-	ed3DComputeProjectionToScreenMatrix(startX * 1.0f, width * 1.0f, startY * 1.0f, height * 1.0f, -1.0f, 1.0, -1.0f, 1.0f, &screenMatrix);
+	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * 1.0f, horizontalHalfFOV * 1.0f, negHalfFOV * 1.0f, halfFOV * 1.0f, -1.0f, 1.0, -1.0f, 1.0f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToCulling, &projectionMatrix, &screenMatrix);
 	fVar2 = nearClip * 1.0f;
@@ -1715,7 +1720,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	pCameraToCulling->cc = fVar4 * ((pCameraToCulling->dd + pCameraToCulling->cd * farClip) * 1.0f - fVar1 * -1.0f);
 	pCameraToCulling->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
 
-	ed3DComputeProjectionToScreenMatrix(startX * fSecInc, width * fSecInc, startY * fSecInc, height * fSecInc, -1.0f, 1.0f, -1.0f, 1.0f, &screenMatrix);
+	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * fSecInc, horizontalHalfFOV * fSecInc, negHalfFOV * fSecInc, halfFOV * fSecInc, -1.0f, 1.0f, -1.0f, 1.0f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToClipping, &projectionMatrix, &screenMatrix);
 

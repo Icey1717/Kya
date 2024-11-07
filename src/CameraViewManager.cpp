@@ -1040,6 +1040,7 @@ void CCameraManager::BuildDisplayMatrix()
 			fVar1 = fVar1 + this->pMouseQuakeCamera_0x4e8->fov;
 		}
 	}
+
 	edFCameraSetSizeRatioFov(0.03f, this->aspectRatio, fVar1 / 1.333333f, &_gDisplayCamera);
 	ComputeFrustrumPlanes(fVar1, &this->displayTransformMatrix);
 	return;
@@ -1230,6 +1231,7 @@ void CCameraManager::Level_ClearInternalData()
 	_gDisplayCamera.rotationZ = 0.0f;
 	edFCameraSetSizeRatioFov(0.0001875f, 1.333333f, 0.25f, &_gDisplayCamera);
 	CameraSet3DPos(&_gDisplayCamera);
+
 	_gFrontEndCamera.position.x = 0.0f;
 	_gFrontEndCamera.position.y = 0.0f;
 	_gFrontEndCamera.position.z = 0.0f;
@@ -1241,6 +1243,7 @@ void CCameraManager::Level_ClearInternalData()
 	_gFrontEndCamera.rotationZ = 0.0f;
 	edFCameraSetSizeRatioFov(0.0001875f, 1.333333f, 0.25f, &_gFrontEndCamera);
 	CameraSet3DPos(&_gFrontEndCamera);
+
 	iVar2 = 0;
 	m0 = gSceneCameras;
 	do {
