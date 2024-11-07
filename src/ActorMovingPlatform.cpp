@@ -1398,9 +1398,7 @@ void CActorMovingPlatform::Platform_UpdateMatrixOnTrajectory(CPathFollowReaderAb
 	}
 	else {
 		edQuatToMatrix4Hard(&this->pTiltData->oscQuat.field_0x0, &eStack112);
-		IMPLEMENTATION_GUARD(
-		iVar8 = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, 
-			pActorsTable, &eStack112, &local_30, &pathReaderPosInfo);)
+		iVar8 = SV_UpdateMatrixOnTrajectory_Rel(pTrajPos->field_0x0, pPathFollowerAbs, this->pProperties->flags_0x24 & 2, 1, pActorsTable, &eStack112, &local_30, &pathReaderPosInfo);
 	}
 
 	sVar6 = -1;

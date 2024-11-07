@@ -112,6 +112,8 @@ public:
 
 	void StateAtonPathRoll();
 
+	void StateAtonPathStandWindTrack();
+
 	void ChooseJumpState();
 	void ChooseWaitJumpCallState();
 

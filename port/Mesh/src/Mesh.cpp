@@ -99,11 +99,16 @@ void Renderer::Kya::G3D::Strip::PreProcessVertices()
 	auto& internalVertexBuffer = pSimpleMesh->GetInternalVertexBufferData();
 
 	// Assume that the first gif tag has the largest vtx count.
-	const int maxVtxCount = firstGifTag.nLoop * pStrip->meshCount;
+	int totalVtxCount = 0;
 
-	assert(maxVtxCount > 0);
+	for (int j = 0; j < pStrip->meshCount; j++) {
+		Gif_Tag gifTag = ExtractGifTagFromVifList(pStrip, j);
+		totalVtxCount += gifTag.nLoop;
+	}
 
-	internalVertexBuffer.Init(maxVtxCount * 2, maxVtxCount * 4);
+	assert(totalVtxCount > 0);
+
+	internalVertexBuffer.Init(totalVtxCount * 2, totalVtxCount * 4);
 
 	union VertexColor {
 		uint32_t rgba;

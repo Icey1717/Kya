@@ -742,7 +742,9 @@ CActor* CFireShot::_ComputeNewShotNoRelease(float velocity, edF32VECTOR4* pLocat
 
 void CActorDCA::CBhvDefault::Manage()
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->BehaviourDefault_Manage(this);
+
+	return;
 }
 
 void CActorDCA::CBhvDefault::Begin(CActor* pOwner, int newState, int newAnimationType)

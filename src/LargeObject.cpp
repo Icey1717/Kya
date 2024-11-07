@@ -1058,27 +1058,26 @@ void CScene::HandleFogAndClippingSettings()
 
 void CScene::PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream)
 {
-	S_STREAM_FOG_DEF* pSVar1;
-	float* pfVar2;
-	FogClipEntry* pFVar3;
-	FogClipEntry* pFVar4;
+	S_STREAM_FOG_DEF* pStreamFogDef;
+	FogClipEntry* pEndEntries;
+	FogClipEntry* pCurEntry;
 	float fVar5;
 
 	if ((pFogStream->flags & 1) == 0) {
-		pfVar2 = &this->aFogClipStack[this->fogClipSettingStackSize + -10].field_0x4;
-		pFVar3 = (FogClipEntry*)(pfVar2 + 0x13);
+		pEndEntries = this->aFogClipStack + this->fogClipSettingStackSize;
 
-		for (pFVar4 = this->aFogClipStack; (pFVar4 <= pFVar3 && (pFVar4->pStreamDef != pFogStream)); pFVar4 = pFVar4 + 1) {
+		for (pCurEntry = this->aFogClipStack; (pCurEntry <= pEndEntries && (pCurEntry->pStreamDef != pFogStream)); pCurEntry = pCurEntry + 1) {
 		}
 
-		if (pFVar4 <= pFVar3) {
-			if (pFVar4 == pFVar3) {
-				pSVar1 = pFVar3->pStreamDef;
-				this->field_0xd8 = pSVar1->clipValue_0x0;
-				this->field_0xdc = pSVar1->field_0x4;
-				this->prevFogRGBA = pSVar1->fogRGBA;
-				this->prevFogFlags = pSVar1->flags;
-				fVar5 = pfVar2[0x14];
+		if (pCurEntry <= pEndEntries) {
+			if (pCurEntry == pEndEntries) {
+				pStreamFogDef = pEndEntries->pStreamDef;
+
+				this->field_0xd8 = pStreamFogDef->clipValue_0x0;
+				this->field_0xdc = pStreamFogDef->field_0x4;
+				this->prevFogRGBA = pStreamFogDef->fogRGBA;
+				this->prevFogFlags = pStreamFogDef->flags;
+				fVar5 = pEndEntries->field_0x4;
 				this->field_0xd4 = fVar5;
 				fVar5 = fVar5 - this->field_0xd0;
 				this->field_0xd0 = fVar5;
@@ -1088,15 +1087,16 @@ void CScene::PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream)
 				}
 			}
 			else {
-				for (; pFVar4 < pFVar3; pFVar4 = pFVar4 + 1) {
-					pFVar4->pStreamDef = pFVar4[1].pStreamDef;
-					pFVar4->field_0x4 = pFVar4[1].field_0x4;
+				for (; pCurEntry < pEndEntries; pCurEntry = pCurEntry + 1) {
+					pCurEntry->pStreamDef = pCurEntry[1].pStreamDef;
+					pCurEntry->field_0x4 = pCurEntry[1].field_0x4;
 				}
 			}
 
 			this->fogClipSettingStackSize = this->fogClipSettingStackSize + -1;
 		}
 	}
+
 	return;
 }
 

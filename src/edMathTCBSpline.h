@@ -11,10 +11,16 @@ public:
 	float bias;
 	float continuity;
 
-	edF32VECTOR4 position;
-	edF32VECTOR4 field_0x20;
-	edF32VECTOR4 field_0x30;
-	edF32VECTOR4 field_0x40;
+	union {
+		struct {
+			edF32VECTOR4 position;
+			edF32VECTOR4 field_0x20;
+			edF32VECTOR4 field_0x30;
+			edF32VECTOR4 field_0x40;
+		};
+
+		edF32MATRIX4 matrix;
+	};
 };
 
 class CedMathTCBSpline
@@ -26,6 +32,11 @@ public:
 
 	void PreComputeSpline(int param_2);
 	void ComputeKey(uint param_2, uint param_3, uint param_4, uint param_5);
+
+	void GetPosition(float time, edF32VECTOR4* pOutPosition);
+	uint GetKeyFromTime(float time, float* param_3);
+	void GetFirstDerivative(float time, edF32VECTOR4* pDerivative);
+	float GetRoughLength();
 
 	uint field_0x0;
 	float field_0x4;

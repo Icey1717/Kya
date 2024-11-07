@@ -189,3 +189,177 @@ void CedMathTCBSpline::ComputeKey(uint param_2, uint param_3, uint param_4, uint
 
 	return;
 }
+
+float _FLOAT_0040ea80 = 1.0f;
+
+void CedMathTCBSpline::GetPosition(float time, edF32VECTOR4* pOutPosition)
+{
+	uint uVar1;
+	edF32VECTOR4 local_20;
+	float local_4;
+
+	uVar1 = GetKeyFromTime(time, &local_4);
+	local_20.y = local_4 / (this->aPoints[uVar1 + 1].time - this->aPoints[uVar1].time);
+	local_20.x = _FLOAT_0040ea80;
+	local_20.z = local_20.y * local_20.y;
+	local_20.w = local_20.y * local_20.z;
+	local_4 = local_20.y;
+
+	edF32Matrix4MulF32Vector4Hard(pOutPosition, &this->aPoints[uVar1].matrix, &local_20);
+	pOutPosition->w = 1.0f;
+
+	if (this->field_0x10 != (undefined*)0x0) {
+		IMPLEMENTATION_GUARD(
+		(*(code*)this->field_0x10)(local_4, this, uVar1, uVar1 + 1);)
+	}
+	
+	return;
+}
+
+uint CedMathTCBSpline::GetKeyFromTime(float time, float* param_3)
+{
+	CedMathTCBSplinePoint* pCVar1;
+	uint uVar2;
+	CedMathTCBSplinePoint* pCVar3;
+	uint uVar4;
+	float fVar5;
+
+	pCVar1 = this->aPoints;
+	uVar4 = this->nbPoints - 1;
+
+	if (time <= pCVar1->time) {
+		*param_3 = 0.0f;
+		uVar2 = 0;
+	}
+	else {
+		fVar5 = pCVar1[uVar4].time;
+		if (fVar5 <= time) {
+			uVar2 = this->nbPoints - 2;
+			*param_3 = fVar5 - pCVar1[uVar2 - 1].time;
+		}
+		else {
+			uVar2 = 0;
+			pCVar3 = pCVar1;
+
+			if (uVar4 != 0) {
+				do {
+					if (time < pCVar3[1].time) {
+						*param_3 = time - pCVar1[uVar2].time;
+						return uVar2;
+					}
+
+					uVar2 = uVar2 + 1;
+					pCVar3 = pCVar3 + 1;
+				} while (uVar2 < uVar4);
+			}
+
+			uVar2 = 0xffffffff;
+		}
+	}
+
+	return uVar2;
+}
+
+edF32VECTOR4 edF32VECTOR4_0040ea90 = { 0.0f, 1.0f, 0.0f, 0.0f };
+
+void CedMathTCBSpline::GetFirstDerivative(float time, edF32VECTOR4* pDerivative)
+{
+	uint uVar1;
+	edF32VECTOR4 local_20;
+	float local_4;
+
+	uVar1 = GetKeyFromTime(time, &local_4);
+	local_4 = local_4 / (this->aPoints[uVar1 + 1].time - this->aPoints[uVar1].time);
+	local_20.x = edF32VECTOR4_0040ea90.x;
+	local_20.y = edF32VECTOR4_0040ea90.y;
+	local_20.z = local_4 * 2.0f;
+	local_20.w = local_4 * 3.0f * local_4;
+	edF32Matrix4MulF32Vector4Hard(pDerivative, &this->aPoints[uVar1].matrix, &local_20);
+	edF32Vector4NormalizeHard(pDerivative, pDerivative);
+	return;
+}
+
+float CedMathTCBSpline::GetRoughLength()
+{
+	uint uVar1;
+	uint uVar2;
+	uint uVar3;
+	float fVar5;
+	float alpha;
+	float fVar6;
+	float time;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 eStack32;
+	float local_8;
+	float local_4;
+
+	if (this->field_0x4 < 0.0f) {
+		this->field_0x4 = 0.0f;
+
+		uVar3 = 0;
+		if (this->nbPoints != 1) {
+			do {
+				fVar6 = 0.0;
+				time = this->aPoints[uVar3].time;
+				alpha = this->aPoints[uVar3 + 1].time;
+
+				uVar1 = GetKeyFromTime(time, &local_4);
+				local_50.y = local_4 / (this->aPoints[uVar1 + 1].time - this->aPoints[uVar1].time);
+				local_50.x = _FLOAT_0040ea80;
+				local_50.z = local_50.y * local_50.y;
+				local_50.w = local_50.y * local_50.y * local_50.y;
+				local_4 = local_50.y;
+
+				edF32Matrix4MulF32Vector4Hard(&local_30, &this->aPoints[uVar1].matrix, &local_50);
+
+				local_30.w = 1.0f;
+				if (this->field_0x10 != (undefined*)0x0) {
+					IMPLEMENTATION_GUARD(
+						(*(code*)this->field_0x10)(local_4, this);)
+				}
+
+				uVar1 = 1;
+				do {
+					if ((int)uVar1 < 0) {
+						fVar5 = (float)(uVar1 >> 1 | uVar1 & 1);
+						fVar5 = fVar5 + fVar5;
+					}
+					else {
+						fVar5 = (float)uVar1;
+					}
+
+					fVar5 = edFIntervalUnitSrcLERP(fVar5 / 20.0f, time, alpha);
+					uVar2 = GetKeyFromTime(fVar5, &local_8);
+					local_60.y = local_8 / (this->aPoints[uVar2 + 1].time - this->aPoints[uVar2].time);
+					local_60.x = (float)_FLOAT_0040ea80;
+					local_60.z = local_60.y * local_60.y;
+					local_60.w = local_60.y * local_60.y * local_60.y;
+					local_8 = local_60.y;
+					edF32Matrix4MulF32Vector4Hard(&local_40, &this->aPoints[uVar2].matrix, &local_60);
+					local_40.w = 1.0f;
+
+					if (this->field_0x10 != (undefined*)0x0) {
+						IMPLEMENTATION_GUARD(
+							(*(code*)this->field_0x10)(local_8);)
+					}
+
+					edF32Vector4SubHard(&eStack32, &local_40, &local_30);
+					fVar5 = edF32Vector4GetDistHard(&eStack32);
+					uVar1 = uVar1 + 1;
+					local_30.w = local_40.w;
+					fVar6 = fVar6 + fVar5;
+					local_30.x = local_40.x;
+					local_30.y = local_40.y;
+				} while (uVar1 < 0x14);
+
+				uVar3 = uVar3 + 1;
+				this->field_0x4 = this->field_0x4 + fVar6;
+			} while (uVar3 < this->nbPoints - 1);
+		}
+	}
+
+	return this->field_0x4;
+}

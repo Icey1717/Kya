@@ -49,6 +49,8 @@ public:
 	virtual bool Manage();
 	virtual bool AlertCamera(int alertType, int param_3, CCamera* param_4);
 
+	void OnAlertCamera();
+
 	SPEED_DYN speedDyn;
 
 	edF32VECTOR4 field_0xe0;

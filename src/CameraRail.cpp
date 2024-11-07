@@ -207,39 +207,39 @@ bool CCameraRail::Manage()
 			IMPLEMENTATION_GUARD(
 			_UpdateTargetPosWithPlane((long)(int)this);
 			fVar5 = this->field_0xe8 / (this->field_0xe8 - this->field_0xec);
-			if (((this->base).base.camera.flags_0xc & 0x400) != 0) {
+			if ((this->camera.flags_0xc & 0x400) != 0) {
 				edF32Vector4LERPHard
-				(fVar5, &(this->base).base.camera.lookAt,
+				(fVar5, &this->camera.lookAt,
 					(edF32VECTOR4*)((int)this->field_0xf4 + *(int*)&this->field_0xe4 * 0x30),
 					(edF32VECTOR4*)((int)this->field_0xf4 + (*(int*)&this->field_0xe4 + 1) * 0x30));
-				(this->base).base.camera.lookAt.w = 1.0;
+				this->camera.lookAt.w = 1.0;
 			}
 			pvVar3 = (void*)(*(int*)&this->field_0xe4 * 0x30 + (int)this->field_0xf4);
 			fVar4 = *(float*)((int)pvVar3 + 0x20);
 			CedMathTCBSpline::GetPosition
-			(fVar5 * (*(float*)((int)pvVar3 + 0x50) - fVar4) + fVar4, (this->base).pSpline, &local_10);
-			(this->base).base.camera.transformationMatrix.da = local_10.x;
-			(this->base).base.camera.transformationMatrix.db = local_10.y;
-			(this->base).base.camera.transformationMatrix.dc = local_10.z;
-			(this->base).base.camera.transformationMatrix.dd = local_10.w;
-			if (((this->base).base.camera.flags_0xc & 0x400) == 0) {
-				(this->base).base.camera.lookAt.x = *(float*)&this->field_0x100;
-				(this->base).base.camera.lookAt.y = *(float*)&this->field_0x104;
-				(this->base).base.camera.lookAt.z = *(float*)&this->field_0x108;
-				(this->base).base.camera.lookAt.w = *(float*)&this->field_0x10c;
+			(fVar5 * (*(float*)((int)pvVar3 + 0x50) - fVar4) + fVar4, this->pSpline, &local_10);
+			this->camera.transformationMatrix.da = local_10.x;
+			this->camera.transformationMatrix.db = local_10.y;
+			this->camera.transformationMatrix.dc = local_10.z;
+			this->camera.transformationMatrix.dd = local_10.w;
+			if ((this->camera.flags_0xc & 0x400) == 0) {
+				this->camera.lookAt.x = *(float*)&this->field_0x100;
+				this->camera.lookAt.y = *(float*)&this->field_0x104;
+				this->camera.lookAt.z = *(float*)&this->field_0x108;
+				this->camera.lookAt.w = *(float*)&this->field_0x10c;
 			}
-			edF32Vector4SubHard(&local_10, &(this->base).base.camera.lookAt,
-				(edF32VECTOR4*)&(this->base).base.camera.transformationMatrix.da);
+			edF32Vector4SubHard(&local_10, &this->camera.lookAt,
+				(edF32VECTOR4*)&this->camera.transformationMatrix.da);
 			fVar5 = edF32Vector4NormalizeHard(&local_10, &local_10);
-			(*(code*)((this->base).base.camera.objBase.pVTable)->SetDistance)(fVar5, (long)(int)this);
-			(this->base).base.camera.transformationMatrix.ca = local_10.x;
-			(this->base).base.camera.transformationMatrix.cb = local_10.y;
-			(this->base).base.camera.transformationMatrix.cc = local_10.z;
-			(this->base).base.camera.transformationMatrix.cd = local_10.w;
+			(*(code*)(this->camera.objBase.pVTable)->SetDistance)(fVar5, (long)(int)this);
+			this->camera.transformationMatrix.ca = local_10.x;
+			this->camera.transformationMatrix.cb = local_10.y;
+			this->camera.transformationMatrix.cc = local_10.z;
+			this->camera.transformationMatrix.cd = local_10.w;
 			fVar5 = CCamera::GetAngleAlpha((CCamera*)this);
-			(*((this->base).base.camera.objBase.pVTable)->SetAngleAlpha)(fVar5, (CCamera*)this);
+			(*(this->camera.objBase.pVTable)->SetAngleAlpha)(fVar5, (CCamera*)this);
 			fVar5 = CCamera::GetAngleBeta((CCamera*)this);
-			(*((this->base).base.camera.objBase.pVTable)->SetAngleBeta)(fVar5, (CCamera*)this);
+			(*(this->camera.objBase.pVTable)->SetAngleBeta)(fVar5, (CCamera*)this);
 			bVar1 = true;)
 		}
 		else {
@@ -310,8 +310,7 @@ bool CCameraRailSimple::Manage()
 	else {
 		bVar1 = CCamera::Manage();
 		if (bVar1 == false) {
-			IMPLEMENTATION_GUARD(
-			pCVar2 = (CActorMovable*)GetTarget();
+			pCVar2 = reinterpret_cast<CActorMovable*>(GetTarget());
 			ComputeTargetPosition(&this->lookAt);
 			ComputeTargetOffset(&local_20);
 
@@ -372,7 +371,7 @@ bool CCameraRailSimple::Manage()
 			SetAngleAlpha(GetAngleAlpha());
 			SetAngleBeta(GetAngleBeta());
 
-			bVar1 = true;)
+			bVar1 = true;
 		}
 		else {
 			bVar1 = false;
@@ -389,10 +388,105 @@ bool CCameraRailSimple::AlertCamera(int alertType, int param_3, CCamera* param_4
 	if (alertType == 2) {
 		CCamera::_gpcam_man->KeepSameParam(this, 0x77);
 
-		IMPLEMENTATION_GUARD(
-		FUN_0018d5d0((long)(int)this);)
+		OnAlertCamera();
 	}
 
 	bVar1 = CCamera::AlertCamera(alertType, param_3, param_4);
 	return bVar1;
+}
+
+void CCameraRailSimple::OnAlertCamera()
+{
+	int iVar1;
+	CActor* pCVar2;
+	edF32VECTOR4* peVar3;
+	CPathFollow* pCVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float puVar10;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	iVar1 = this->pathFollowIndex;
+	if (iVar1 == -1) {
+		pCVar4 = (CPathFollow*)0x0;
+	}
+	else {
+		pCVar4 = (CScene::ptable.g_PathManager_004516a0)->aPathFollow + iVar1;
+	}
+
+	peVar3 = pCVar4->aSplinePoints;
+	puVar10 = 1.0f;
+	fVar9 = 0.0f;
+	if (peVar3 == (edF32VECTOR4*)0x0) {
+		peVar3 = &gF32Vertex4Zero;
+	}
+
+	edF32Vector4SubHard(&eStack16, &this->lookAt, peVar3);
+
+	fVar5 = edF32Vector4GetDistHard(&eStack16);
+	if (pCVar4->aSplinePoints == (edF32VECTOR4*)0x0) {
+		peVar3 = &gF32Vertex4Zero;
+	}
+	else {
+		peVar3 = pCVar4->aSplinePoints + pCVar4->splinePointCount + -1;
+	}
+
+	edF32Vector4SubHard(&eStack16, &this->lookAt, peVar3);
+	fVar6 = edF32Vector4GetDistHard(&eStack16);
+	if (fVar6 < fVar5) {
+		puVar10 = -1.0f;
+		fVar9 = 1.0f;
+	}
+
+	fVar5 = fVar9;
+	fVar6 = 99999.0f;
+	do {
+		this->pSpline->GetPosition(fVar5, &eStack32);
+
+		edF32Vector4SubHard(&eStack32, &this->lookAt, &eStack32);
+		fVar7 = edF32Vector4GetDistHard(&eStack32);
+		fVar5 = fVar5 + puVar10 * 0.05f;
+
+		if (((fVar7 <= (this->field_0xe0).y) || (fVar5 < 0.0f)) || (fVar8 = fVar7 - fVar6, 1.0f < fVar5)) break;
+
+		fVar6 = fVar7;
+	} while (fVar8 < 0.0f);
+
+	this->field_0xf8 = fVar5 - puVar10 * 0.05f;
+
+	this->pSpline->GetPosition(this->field_0xf8, &eStack16);
+	edF32Vector4SubHard(&eStack16, &this->lookAt, &eStack16);
+
+	pCVar2 = GetTarget();
+	fVar6 = edF32Vector4DotProductHard(&eStack16, &pCVar2->rotationQuat);
+	fVar5 = 0.0f;
+	if (fVar6 < 0.0f) {
+		if (fVar9 < 0.5f) {
+			fVar5 = 1.0f;
+		}
+
+		fVar6 = -puVar10 * 0.05f;
+		fVar9 = 99999.0f;
+		while (true) {
+			this->pSpline->GetPosition(fVar5, &eStack48);
+			edF32Vector4SubHard(&eStack48, &this->lookAt, &eStack48);
+			fVar7 = edF32Vector4GetDistHard(&eStack48);
+			fVar5 = fVar5 + fVar6;
+
+			if ((fVar7 <= (this->field_0xe0).y) || (fVar5 < 0.0f)) break;
+			fVar8 = fVar7 - fVar9;
+
+			if ((1.0f < fVar5) || (fVar9 = fVar7, 0.0f <= fVar8)) break;
+		}
+		this->field_0xf8 = fVar5 - fVar6;
+	}
+
+	this->speedDyn.Init(0.0f, 30.0f);
+
+	return;
 }

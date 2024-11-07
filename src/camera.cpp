@@ -19,10 +19,10 @@ PACK(
 bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 {
 	int iVar1;
-	//ActorState AVar2;
+	int AVar2;
 	bool bVar3;
 	bool bVar4;
-	//AnimResult* pAVar4;
+	StateConfig* pAVar4;
 	uint uVar5;
 	CActor* pAVar6;
 
@@ -47,17 +47,17 @@ bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 			})
 				break;
 		case 1:
-			IMPLEMENTATION_GUARD(
-				AVar2 = (pAVar6->data).actorState;
+			AVar2 = pAVar6->actorState;
 			if (AVar2 == AS_None) {
 				uVar5 = 0;
 			}
 			else {
-				pAVar4 = (*pAVar6->pVTable->getAnimForState)(pAVar6, AVar2);
+				pAVar4 = pAVar6->GetStateCfg(AVar2);
 				uVar5 = pAVar4->flags_0x4 & 1;
 			}
-			bVar4 = uVar5 == 0;)
-				break;
+
+			bVar4 = uVar5 == 0;
+			break;
 		case 2:
 			IMPLEMENTATION_GUARD(
 				bVar3 = (*pAVar6->pVTable->checkFuncA)(pAVar6, 2);

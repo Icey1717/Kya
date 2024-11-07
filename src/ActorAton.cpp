@@ -23,6 +23,7 @@
 #define ATON_ESCAPE_STATE_CROUCH_IDLE				0x21
 #define ATON_ESCAPE_STATE_CROUCH_CALL				0x22
 #define ATON_ESCAPE_STATE_CROUCH_ROLL				0x24
+#define ATON_ESCAPE_STATE_STAND_WIND_TRACK			0x25
 #define ATON_ESCAPE_STATE_PATH_VERTICAL_WIND		0x28
 #define ATON_ESCAPE_STATE_PATH_HORIZONTAL_WIND		0x2a
 #define ATON_ESCAPE_STATE_PATH_TO_TOBOGGAN			0x2f
@@ -2282,6 +2283,72 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	case ATON_ESCAPE_STATE_CROUCH_ROLL:
 		StateAtonPathRoll();
 		break;
+	case ATON_ESCAPE_STATE_STAND_WIND_TRACK:
+		StateAtonPathStandWindTrack();
+		break;
+	case 0x26:
+	{
+		(this->fleeOnPathParams).field_0x4 = 1;
+		(this->fleeOnPathParams).delay = SV_MOV_ComputeDistIdealPos(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, (this->fleeOnPathParams).delay, this->pathDefaultDelay);
+		SV_MOV_ComputeSpeedAccelerationToFleeActor(3.0f, CActorHero::_gThis, this->pathPlaneArray.GetCurPathPlane(), &this->fleeOnPathParams);
+
+		SStack624.field_0x8 = 3;
+		SStack624.field_0xc = 2;
+		SStack624.field_0x10 = 1;
+		SStack624.acceleration = (this->fleeOnPathParams).acceleration;
+		SStack624.speed = (this->fleeOnPathParams).speed;
+		SStack624.rotationSpeed = 3.141593f;
+
+		this->field_0x3b0 = SV_MOV_ManageMovOnPath(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, &SStack624);
+
+		ManageDyn(4.0f, 0x409, (CActorsTable*)0x0);
+
+		if (0.1f < this->dynamic.speed) {
+			SetState(0x27, -1);
+		}
+		else {
+			peVar4 = (this->pAnimationController->anmBinMetaAnimator).aAnimData;
+			if ((peVar4->currentAnimDesc).animType == pCVar3->currentAnimType_0x30) {
+				bVar10 = false;
+				if (peVar4->animPlayState != 0) {
+					bVar10 = (peVar4->field_0xcc & 2) != 0;
+				}
+			}
+			else {
+				bVar10 = false;
+			}
+
+			if (bVar10) {
+				SetState(ATON_ESCAPE_STATE_STAND_WIND_TRACK, -1);
+			}
+		}
+	}
+	break;
+	case 0x27:
+	{
+		(this->fleeOnPathParams).field_0x4 = 1;
+		(this->fleeOnPathParams).delay = SV_MOV_ComputeDistIdealPos(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, (this->fleeOnPathParams).delay, this->pathDefaultDelay);
+		SV_MOV_ComputeSpeedAccelerationToFleeActor(3.0f, CActorHero::_gThis, this->pathPlaneArray.GetCurPathPlane(), &this->fleeOnPathParams);
+		if (10.0f < (this->fleeOnPathParams).acceleration) {
+			(this->fleeOnPathParams).acceleration = 10.0f;
+		}
+
+		SStack624.field_0x8 = 3;
+		SStack624.field_0xc = 2;
+		SStack624.field_0x10 = 1;
+		SStack624.acceleration = (this->fleeOnPathParams).acceleration;
+		SStack624.speed = (this->fleeOnPathParams).speed;
+		SStack624.rotationSpeed = 3.141593f;
+
+		this->field_0x3b0 = SV_MOV_ManageMovOnPath(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, &SStack624);
+
+		ManageDyn(4.0f, 0x409, (CActorsTable*)0x0);
+
+		if (this->dynamic.speed < 0.1f) {
+			SetState(ATON_ESCAPE_STATE_STAND_WIND_TRACK, -1);
+		}
+	}
+	break;
 	case ATON_ESCAPE_STATE_PATH_VERTICAL_WIND:
 		StateAtonPathVerticalWind();
 		break;
@@ -3228,7 +3295,7 @@ void CActorAton::StateAtonPathToboggan()
 
 	lVar6 = (*(code*)this->staticMeshComponent->field_0x14)();
 	if (lVar6 != 0) {
-		local_60.aa = edFIntervalLERP((this->base).base.dynamic.linearAcceleration, 19.0, 25.0, 0.5, 1.0);
+		local_60.aa = edFIntervalLERP(this->dynamic.linearAcceleration, 19.0, 25.0, 0.5, 1.0);
 		edF32Matrix4CopyHard(&local_60, &gF32Matrix4Unit);
 		local_60.bb = local_60.aa;
 		local_60.cc = local_60.aa;
@@ -3236,7 +3303,7 @@ void CActorAton::StateAtonPathToboggan()
 		if ((edF32MATRIX4*)this->field_0x694 != (edF32MATRIX4*)0x0) {
 			edF32Matrix4CopyHard((edF32MATRIX4*)this->field_0x694, &local_60);
 		}
-		fVar8 = edFIntervalLERP((this->base).base.dynamic.linearAcceleration, 0.0, 25.0, 0.0, 64.0);
+		fVar8 = edFIntervalLERP(this->dynamic.linearAcceleration, 0.0, 25.0, 0.0, 64.0);
 		CActor::SV_UpdateValue(fVar8, 500.0, this, (float*)&this->field_0x700);
 		fVar8 = (float)this->field_0x700;
 		if (this->field_0x690 != (edNODE*)0x0) {
@@ -3371,6 +3438,44 @@ void CActorAton::StateAtonPathRoll()
 				this->dynamic.speed = 0.0f;
 				SetState(ATON_ESCAPE_STATE_CROUCH_IDLE, -1);
 			}
+		}
+	}
+
+	return;
+}
+
+void CActorAton::StateAtonPathStandWindTrack()
+{
+	CActorHero* pFleeActor;
+	SV_MOV_PATH_PARAM movPathParam;
+
+	(this->fleeOnPathParams).field_0x4 = 1;
+	pFleeActor = CActorHero::_gThis;
+	(this->fleeOnPathParams).delay = SV_MOV_ComputeDistIdealPos(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, (this->fleeOnPathParams).delay, this->pathDefaultDelay);
+	SV_MOV_ComputeSpeedAccelerationToFleeActor(3.0f, pFleeActor, this->pathPlaneArray.GetCurPathPlane(), &this->fleeOnPathParams);
+	movPathParam.field_0x8 = 3;
+	movPathParam.field_0xc = 2;
+	movPathParam.field_0x10 = 1;
+	movPathParam.acceleration = (this->fleeOnPathParams).acceleration;
+	movPathParam.speed = (this->fleeOnPathParams).speed;
+	movPathParam.rotationSpeed = 3.141593f;
+
+	this->field_0x3b0 = CActorMovable::SV_MOV_ManageMovOnPath(&this->pathPlaneArray.GetCurPathPlane()->pathFollowReader, &movPathParam);
+
+	if (fabs(movPathParam.field_0x14) < 0.02f) {
+		movPathParam.field_0x14 = 0.0f;
+	}
+
+	this->field_0x478 = movPathParam.field_0x14;
+
+	ManageDyn(4.0f, 9, (CActorsTable*)0x0);
+
+	if (0.1f < this->dynamic.speed) {
+		SetState(0x27, -1);
+	}
+	else {
+		if (2.0f < this->timeInAir) {
+			SetState(0x26, -1);
 		}
 	}
 
