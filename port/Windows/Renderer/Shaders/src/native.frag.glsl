@@ -80,5 +80,5 @@ void main()
 		}
 	}
 
-	outColor.a = 1.0;
+	//outColor.a = outColor.a * 2.0f;
 }

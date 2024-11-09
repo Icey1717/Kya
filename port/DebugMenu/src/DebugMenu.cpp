@@ -46,7 +46,7 @@
 #include "DebugFrameBuffer.h"
 #include "DebugCheckpoint.h"
 #include "DebugEvent.h"
-#include "NativeRenderer.h"
+#include "Native/NativeRenderer.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 

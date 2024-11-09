@@ -18,7 +18,7 @@
 #include "TextureCache.h"
 #include "log.h"
 #include "pcsx2/Selectors.h"
-#include "NativeRenderer.h"
+#include "Native/NativeRenderer.h"
 
 namespace PS2
 {

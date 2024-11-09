@@ -18,7 +18,7 @@
 #include <GLFW/glfw3.h>
 
 #include "DebugMeshViewerVulkan.h"
-#include "NativeRenderer.h"
+#include "Native/NativeRenderer.h"
 
 bool bOther = false;
 

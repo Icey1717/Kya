@@ -50,8 +50,8 @@ namespace Renderer
 					imageData.registers.test.CMD = pPkt->cmdA;
 
 					const GIFReg::GSTest test = *reinterpret_cast<GIFReg::GSTest*>(&pPkt->cmdA);
-					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEST_1: ATE: {} ATST: {} AFAIL: {} DATE: {} DATM: {} ZTE: {} ZTST: {}",
-						test.ATE, test.ATST, test.AFAIL, test.DATE, test.DATM, test.ZTE, test.ZTST);
+					TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::ProcessRenderCommandList SCE_GS_TEST_1: ATE: {} ATST: {} AREF: {} AFAIL: {} DATE: {} DATM: {} ZTE: {} ZTST: {}",
+						test.ATE, test.ATST, test.AREF, test.AFAIL, test.DATE, test.DATM, test.ZTE, test.ZTST);
 
 				}
 				break;
@@ -222,7 +222,7 @@ Renderer::Kya::G2D::G2D(ed_g2d_manager* pManager, std::string name)
 	: pManager(pManager)
 	, name(name)
 {
-	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::G2D Beginning processing of texture: {}", name.c_str());
+	TEXTURE_LOG(LogLevel::Info, "\n\nRenderer::Kya::G2D::G2D Beginning processing of texture: {}", name.c_str());
 
 	const int nbMaterials = ed3DG2DGetG2DNbMaterials(pManager->pMATA_HASH);
 	materials.reserve(nbMaterials);

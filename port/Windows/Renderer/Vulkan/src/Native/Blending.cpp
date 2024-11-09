@@ -1,4 +1,4 @@
-#include "NativeBlending.h"
+#include "Blending.h"
 
 #include <array>
 

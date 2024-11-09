@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Pipeline.h"
+#include "FrameBuffer.h"
 #include "VulkanIncludes.h"
 
 namespace Renderer
@@ -13,18 +14,15 @@ namespace Renderer
 
 	namespace Native
 	{
+		constexpr int gWidth = 0x200;
+		constexpr int gHeight = 0x200;
+
 		struct PipelineKey {
 			union {
 				// 32 bit key
 				struct {
 					uint32_t bWireframe : 1;
 					uint32_t bGlsl : 1;
-
-					uint32_t alphaA : 2;
-					uint32_t alphaB : 2;
-					uint32_t alphaC : 2;
-					uint32_t alphaD : 2;
-					uint32_t alphaFix : 4;
 				} options;
 
 				uint32_t key{};
@@ -44,6 +42,8 @@ namespace Renderer
 
 		void CreateRenderPass(VkRenderPass& renderPass, const char* name);
 		void CreatePipeline(const PipelineCreateInfo& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name);
+
+		FrameBufferBase& GetFrameBuffer();
 
 		void Setup();
 		void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent);

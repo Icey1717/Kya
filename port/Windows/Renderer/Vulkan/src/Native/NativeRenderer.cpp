@@ -1,6 +1,6 @@
 #include "NativeRenderer.h"
 
-#include "NativeBlending.h"
+#include "Blending.h"
 #include "NativeDebug.h"
 
 #include <array>
@@ -11,13 +11,13 @@
 
 #include "VulkanRenderer.h"
 #include "renderer.h"
-#include "FrameBuffer.h"
 #include "UniformBuffer.h"
 #include "TextureCache.h"
 #include "glm/gtc/type_ptr.inl"
 #include "logging.h"
 #include "log.h"
 #include "ScopedTimer.h"
+#include "PostProcessing.h"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)
@@ -28,9 +28,6 @@ namespace Renderer
 	{
 		double gRenderTime = 0.0;
 		double gRenderWaitTime = 0.0;
-
-		constexpr int gWidth = 0x200;
-		constexpr int gHeight = 0x200;
 
 		constexpr int gMaxAnimMatrices = 0x60;
 		constexpr int gMaxStripIndex = 0x20;
@@ -65,13 +62,13 @@ namespace Renderer
 		int gMaxAnimationMatrices = 0;
 
 		PipelineMap gPipelines;
-		Renderer::FrameBufferBase gFrameBuffer;
+		FrameBufferBase gFrameBuffer;
 
 		VkSampler gFrameBufferSampler;
 
 		VkRenderPass gRenderPass;
 		VkCommandPool gCommandPool;
-		Renderer::CommandBufferVector gCommandBuffers;
+		CommandBufferVector gCommandBuffers;
 
 		UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
 		DynamicUniformBuffer<glm::mat4> gModelBuffer;
@@ -81,7 +78,7 @@ namespace Renderer
 			alignas(4) int atst;
 			alignas(4) int aref;
 
-			AlphaConstantBuffer(const Renderer::TextureRegisters& textureRegisters)
+			AlphaConstantBuffer(const TextureRegisters& textureRegisters)
 				: enable(textureRegisters.test.ATE)
 				, atst(textureRegisters.test.ATST)
 				, aref(textureRegisters.test.AREF)
@@ -90,7 +87,7 @@ namespace Renderer
 
 		DynamicUniformBuffer<AlphaConstantBuffer> gAlphaBuffer;
 
-		using NativeVertexBuffer = PS2::FrameVertexBuffers<Renderer::GSVertexUnprocessedNormal, uint16_t>;
+		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
 		NativeVertexBuffer gNativeVertexBuffer;
 		// As each draw comes in this buffer is filled.
 		NativeVertexBufferData gNativeVertexBufferDataDraw;
@@ -227,7 +224,7 @@ namespace Renderer
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
 		}
 
-		Renderer::Pipeline& GetPipeline() {
+		Pipeline& GetPipeline() {
 			PipelineKey pipelineKey;
 			pipelineKey.options.bWireframe = false;
 			pipelineKey.options.bGlsl = true;
@@ -239,9 +236,9 @@ namespace Renderer
 		class DrawDescritorSetUpdate
 		{
 		public:
-			void UpdateDescriptors(Draw& draw, Renderer::Pipeline& pipeline)
+			void UpdateDescriptors(Draw& draw, Pipeline& pipeline)
 			{
-				Renderer::SimpleTexture* pTexture = draw.pTexture;
+				SimpleTexture* pTexture = draw.pTexture;
 
 				if (!pTexture) {
 					return;
@@ -270,20 +267,20 @@ namespace Renderer
 
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 
-				Renderer::DescriptorWriteList writeList;
-				writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-				writeList.EmplaceWrite({ 2, Renderer::EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-				writeList.EmplaceWrite({ 3, Renderer::EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+				DescriptorWriteList writeList;
+				writeList.EmplaceWrite({ 0, EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+				writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+				writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 
-				writeList.EmplaceWrite({ 4, Renderer::EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-				writeList.EmplaceWrite({ 1, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+				writeList.EmplaceWrite({ 4, EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+				writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
 				pTextureData->UpdateDescriptorSets(pipeline, writeList);
 
 				for (auto& instance : draw.instances) {
 					assert(modelIndex < gMaxModelMatrices);
 
-					Renderer::SimpleMesh* pMesh = instance.pMesh;
+					SimpleMesh* pMesh = instance.pMesh;
 					NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
 
 					if (lastModelMatrix != instance.modelMatrix)
@@ -342,7 +339,7 @@ namespace Renderer
 		public:
 			void RecordDrawCommand(Draw& drawCommand, Pipeline& pipeline)
 			{
-				Renderer::SimpleTexture* pTexture = drawCommand.pTexture;
+				SimpleTexture* pTexture = drawCommand.pTexture;
 
 				if (!pTexture) {
 					return;
@@ -499,9 +496,6 @@ namespace Renderer
 			gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
 
 			vkCmdEndRenderPass(cmd);
-
-			Renderer::Debug::EndLabel(cmd);
-			vkEndCommandBuffer(cmd);
 		}
 
 		class RenderThread
@@ -633,6 +627,46 @@ namespace Renderer
 			return gRenderThread->GetRenderThreadTime();
 		}
 
+		void SanityCheck(SimpleMesh* pMesh)
+		{
+			auto& internalBuffer = pMesh->GetInternalVertexBufferData();
+
+			assert(internalBuffer.GetIndexTail() == gNativeVertexBufferDataDraw.GetIndexTail());
+			assert(internalBuffer.GetVertexTail() == gNativeVertexBufferDataDraw.GetVertexTail());
+
+			for (int i = 0; i < internalBuffer.GetIndexTail(); i++) {
+				assert(internalBuffer.index.buff[i] == gNativeVertexBufferDataDraw.index.buff[i]);
+			}
+
+			for (int i = 0; i < internalBuffer.GetVertexTail(); i++) {
+				{
+					const auto& vtx = internalBuffer.vertex.buff[i];
+					NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Preprocess vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {}) ({}, {}, {})\n",
+						i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
+						vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
+				}
+
+				{
+					const auto& vtx = gNativeVertexBufferDataDraw.vertex.buff[i];
+					NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Live vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})({}, {}, {})\n",
+						i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
+						vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
+				}
+
+				assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[0] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[0]);
+				assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[1] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[1]);
+				assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[2] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[2]);
+
+				assert(internalBuffer.vertex.buff[i].normal.fNormal[0] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[0]);
+				assert(internalBuffer.vertex.buff[i].normal.fNormal[1] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[1]);
+				assert(internalBuffer.vertex.buff[i].normal.fNormal[2] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[2]);
+
+				assert(internalBuffer.vertex.buff[i].STQ.ST[0] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[0]);
+				assert(internalBuffer.vertex.buff[i].STQ.ST[1] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[1]);
+				assert(internalBuffer.vertex.buff[i].STQ.Q == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.Q);
+			}
+		}
+
 	} // Native
 } // Renderer
 
@@ -719,8 +753,8 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, cons
 	vertShader.reflectData.MarkUniformBufferDynamic(0, 3);
 	fragShader.reflectData.MarkUniformBufferDynamic(0, 4);
 
-	pipeline.AddBindings(Renderer::EBindingStage::Vertex, vertShader.reflectData);
-	pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
+	pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
+	pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
 	pipeline.CreateDescriptorSetLayouts();
 
 	pipeline.CreateLayout(vertShader.reflectData.pushConstants);
@@ -736,7 +770,7 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, cons
 	auto& bindingDescription = vertShader.reflectData.bindingDescription;
 	const auto& attributeDescriptions = vertShader.reflectData.GetAttributes();
 
-	bindingDescription.stride = sizeof(Renderer::GSVertexUnprocessed);
+	bindingDescription.stride = sizeof(GSVertexUnprocessed);
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -830,6 +864,11 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, cons
 	SetObjectName(reinterpret_cast<uint64_t>(pipeline.pipeline), VK_OBJECT_TYPE_PIPELINE, name);
 }
 
+Renderer::FrameBufferBase& Renderer::Native::GetFrameBuffer()
+{
+	return gFrameBuffer;
+}
+
 void Renderer::Native::Setup()
 {
 	CreateRenderPass(gRenderPass, "Mesh Previewer");
@@ -852,11 +891,13 @@ void Renderer::Native::Setup()
 
 	gAlphaBuffer.Init(gMaxModelMatrices);
 
-	Renderer::GetRenderDelegate() += Renderer::Native::Render;
+	GetRenderDelegate() += Render;
 
 	gVertexConstantBuffer.GetBufferData().Reset();
 
 	gRenderThread = std::make_unique<RenderThread>();
+
+	PostProcessing::Setup();
 }
 
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
@@ -878,6 +919,11 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	ScopedTimer timer(gRenderTime);
 
 	const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+
+	PostProcessing::AddPostProcessEffect(cmd, PostProcessing::Effect::AlphaFix);
+
+	Renderer::Debug::EndLabel(cmd);
+	vkEndCommandBuffer(cmd);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -933,42 +979,7 @@ void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 	if (bSanityCheck) {
 		FLUSH_LOG();
 
-		auto& internalBuffer = pMesh->GetInternalVertexBufferData();
-
-		assert(internalBuffer.GetIndexTail() == gNativeVertexBufferDataDraw.GetIndexTail());
-		assert(internalBuffer.GetVertexTail() == gNativeVertexBufferDataDraw.GetVertexTail());
-
-		for (int i = 0; i < internalBuffer.GetIndexTail(); i++) {
-			assert(internalBuffer.index.buff[i] == gNativeVertexBufferDataDraw.index.buff[i]);
-		}
-
-		for (int i = 0; i < internalBuffer.GetVertexTail(); i++) {
-			{
-				const auto& vtx = internalBuffer.vertex.buff[i];
-				NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Preprocess vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {}) ({}, {}, {})\n",
-					i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
-					vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
-			}
-
-			{
-				const auto& vtx = gNativeVertexBufferDataDraw.vertex.buff[i];
-				NATIVE_LOG(LogLevel::Info, "Renderer::Native::AddMesh Live vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})({}, {}, {})\n",
-					i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags,
-					vtx.normal.fNormal[0], vtx.normal.fNormal[1], vtx.normal.fNormal[2]);
-			}
-
-			assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[0] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[0]);
-			assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[1] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[1]);
-			assert(internalBuffer.vertex.buff[i].XYZFlags.fXYZ[2] == gNativeVertexBufferDataDraw.vertex.buff[i].XYZFlags.fXYZ[2]);
-
-			assert(internalBuffer.vertex.buff[i].normal.fNormal[0] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[0]);
-			assert(internalBuffer.vertex.buff[i].normal.fNormal[1] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[1]);
-			assert(internalBuffer.vertex.buff[i].normal.fNormal[2] == gNativeVertexBufferDataDraw.vertex.buff[i].normal.fNormal[2]);
-
-			assert(internalBuffer.vertex.buff[i].STQ.ST[0] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[0]);
-			assert(internalBuffer.vertex.buff[i].STQ.ST[1] == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.ST[1]);
-			assert(internalBuffer.vertex.buff[i].STQ.Q == gNativeVertexBufferDataDraw.vertex.buff[i].STQ.Q);
-		}
+		SanityCheck(pMesh);
 	}
 
 	constexpr bool bMergingEnabeld = false;
@@ -1075,7 +1086,7 @@ const VkSampler& Renderer::Native::GetSampler()
 
 const VkImageView& Renderer::Native::GetColorImageView()
 {
-	return gFrameBuffer.colorImageView;
+	return PostProcessing::GetColorImageView();
 }
 
 bool& Renderer::Native::GetUsePreprocessedVertices()

@@ -569,25 +569,26 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					pSVar5 = GetStateCfg(iVar8);
 					uVar4 = pSVar5->flags_0x4;
 				}
+
+				HitMessageParams* pHitMsgParam = (HitMessageParams*)pMsgParam;
+
 				if ((uVar4 & 0x800) != 0) {
-					IMPLEMENTATION_GUARD(
-					/* WARNING: Load size is inaccurate */
-					if (*pMsgParam == 3) {
+					if (pHitMsgParam->field_0x0 == 3) {
 						if (((this->field_0x350->flags & 0x10) != 0) && (this->actorState == 0x10)) {
 							local_10.x = this->currentLocation.x;
 							local_10.z = this->currentLocation.z;
 							local_10.w = this->currentLocation.w;
-							local_10.y = *(float*)((int)pMsgParam + 0x44);
-							CActor::UpdatePosition((CActor*)this, &local_10, true);
-							edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x30), &eStack32, (edF32VECTOR4*)((int)pMsgParam + 0x20))
-								;
-							Project(this, &eStack32, false, (CActor*)0x0);
+							local_10.y = pHitMsgParam->field_0x40.y;
+							UpdatePosition(&local_10, true);
+							edF32Vector4ScaleHard(pHitMsgParam->field_0x30, &eStack32, &pHitMsgParam->field_0x20);
+							IMPLEMENTATION_GUARD(
+							Project(&eStack32, false, (CActor*)0x0);)
 						}
 
 						return 1;
 					}
 
-					if (*pMsgParam == 4) {
+					if (pHitMsgParam->field_0x0 == 4) {
 						iVar8 = this->actorState;
 						uVar4 = 0;
 						if (iVar8 != -1) {
@@ -601,19 +602,22 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 					if ((this->field_0x350->flags & 2) != 0) {
 						/* WARNING: Load size is inaccurate */
-						uVar10 = 0x3f800000;
-						if ((*pMsgParam != 4) && (uVar10 = unaff_f20, pSender->typeID != 0x1c)) {
-							uVar10 = *(undefined4*)((int)pMsgParam + 0xc);
+						uVar10 = 1.0f;
+						if ((pHitMsgParam->field_0x0 != 4) && (uVar10 = 1.0f/*unaff_f20*/, pSender->typeID != PROJECTILE)) {
+							uVar10 = pHitMsgParam->field_0xc;
 						}
-						(*(code*)(this->pVTable)->LifeDecrease)(uVar10, this);
-					})
+
+						LifeDecrease(uVar10);
+					}
 
 					pCVar6 = GetLifeInterface();
 					fVar9 = pCVar6->GetValue();
-					bVar1 = fVar9 <= 0.0;
-					if (((this->field_0x350->flags & 0x80) != 0) && (pSender->typeID == 0x1c)) {
+
+					bVar1 = fVar9 <= 0.0f;
+					if (((this->field_0x350->flags & 0x80) != 0) && (pSender->typeID == PROJECTILE)) {
 						bVar1 = true;
 					}
+
 					if (bVar1) {
 						SetState(0xd, -1);
 						return 1;

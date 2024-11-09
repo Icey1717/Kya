@@ -27,7 +27,7 @@
 #include "FrameBuffer.h"
 #include "log.h"
 #include "VulkanHardwarePS2.h"
-#include "NativeRenderer.h"
+#include "Native/NativeRenderer.h"
 
 //constexpr uint32_t WIDTH = 640;
 //constexpr uint32_t HEIGHT = 480;
