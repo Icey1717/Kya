@@ -532,6 +532,7 @@ private:
 		deviceFeatures.features.samplerAnisotropy = VK_TRUE;
 		deviceFeatures.features.geometryShader = VK_TRUE;
 		deviceFeatures.features.fillModeNonSolid = VK_TRUE;
+		deviceFeatures.features.dualSrcBlend = VK_TRUE;
 
 		deviceFeatures.pNext = &deviceFeatures13;
 

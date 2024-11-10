@@ -234,7 +234,7 @@ Renderer::Kya::G2D::G2D(ed_g2d_manager* pManager, std::string name)
 	for (int i = 0; i < nbMaterials; ++i) {
 		const ed_hash_code* pHashCode = pHashCodes + i;
 
-		TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::G2D Processing material {}/{} hash: {}", i, nbMaterials, pHashCode->hash.ToString());
+		TEXTURE_LOG(LogLevel::Info, "\nRenderer::Kya::G2D::G2D Processing material {}/{} hash: {}", i, nbMaterials, pHashCode->hash.ToString());
 
 		ed_g2d_material* pMaterial = ed3DG2DGetG2DMaterialFromIndex(pManager, i);
 
@@ -365,6 +365,8 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture, const i
 
 	texture.pSimpleTexture = new SimpleTexture(textureName, { layerIndex, materialIndex, pParent->layers.capacity(), pParent->pParent->materials.capacity() }, combinedImageData.registers);
 	texture.pSimpleTexture->CreateRenderer(combinedImageData);
+
+	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture Texture created: {} {}/{} {}/{}", textureName, layerIndex, pParent->layers.capacity(), materialIndex, pParent->pParent->materials.capacity());
 }
 
 void Renderer::Kya::G2D::Bitmap::SetBitmap(ed_g2d_bitmap* pBitmap)

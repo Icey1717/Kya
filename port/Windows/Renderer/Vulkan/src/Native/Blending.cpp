@@ -148,15 +148,9 @@ namespace Renderer
 			CONST_ZERO        // CONST_ZERO
 		} };
 
-		static HWBlend GetBlend(uint32_t index, bool replace_dual_src)
+		static HWBlend GetBlend(uint32_t index)
 		{
-			HWBlend ret = m_blendMap[index];
-			if (replace_dual_src)
-			{
-				ret.src = m_replaceDualSrcBlendMap[ret.src];
-				ret.dst = m_replaceDualSrcBlendMap[ret.dst];
-			}
-			return ret;
+			return m_blendMap[index];
 		}
 	} // Native
 } // Renderer
@@ -179,7 +173,7 @@ void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, co
 		const auto alpha = pTexture->GetTextureRegisters().alpha;
 
 		uint8_t blend_index = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);
-		const HWBlend blend = GetBlend(blend_index, true);
+		const HWBlend blend = GetBlend(blend_index);
 
 		static constexpr std::array<VkBlendFactor, 16> vk_blend_factors = { {
 			VK_BLEND_FACTOR_SRC_COLOR, VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR, VK_BLEND_FACTOR_DST_COLOR, VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,

@@ -3,7 +3,8 @@
 layout(location = 0) in vec4 fragColor;
 layout(location = 1) in vec4 fragTexCoord;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0, index = 0) out vec4 outColor;
+layout(location = 0, index = 1) out vec4 outAlphaBlend;
 
 // Texture sampler
 layout(binding = 1) uniform sampler2D textureSampler;
@@ -24,6 +25,59 @@ layout(binding = 4) uniform Test
 #define ATST_GREATER 6
 #define ATST_NOTEQUAL 7
 
+bool atst(vec4 outColor)
+{
+	if (test.enable) {
+		if (test.atst == ATST_GEQUAL) {
+			int a = int(outColor.a * 255);
+
+			if (a < test.aref) {
+				return false;
+			}
+		}
+		else if (test.atst == ATST_GREATER) {
+			int a = int(outColor.a * 255);
+
+			if (a <= test.aref) {
+				return false;
+			}
+		}
+		else if (test.atst == ATST_EQUAL) {
+			int a = int(outColor.a * 255);
+
+			if (a != test.aref) {
+				return false;
+			}
+		}
+		else if (test.atst == ATST_NOTEQUAL) {
+			int a = int(outColor.a * 255);
+
+			if (a == test.aref) {
+				return false;
+			}
+		}
+		else if (test.atst == ATST_LESS) {
+			int a = int(outColor.a * 255);
+
+			if (a >= test.aref) {
+				return false;
+			}
+		}
+		else if (test.atst == ATST_LEQUAL) {
+			int a = int(outColor.a * 255);
+
+			if (a > test.aref) {
+				return false;
+			}
+		}
+		else if (test.atst == ATST_NEVER) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void main() 
 {
 	// Sample texture color using fragTexCoord
@@ -32,53 +86,13 @@ void main()
 	// Combine texture color with fragment color
 	outColor = fragColor * textureColor / (128.0 / 255.0);
 
-	if (test.enable) {
-		if (test.atst == ATST_GEQUAL) {
-			int a = int(outColor.a * 255);
+	bool atst_pass = atst(outColor);
 
-			if (a < test.aref) {
-				discard;
-			}
-		}
-		else if (test.atst == ATST_GREATER) {
-			int a = int(outColor.a * 255);
-
-			if (a <= test.aref) {
-				discard;
-			}
-		}
-		else if (test.atst == ATST_EQUAL) {
-			int a = int(outColor.a * 255);
-
-			if (a != test.aref) {
-				discard;
-			}
-		}
-		else if (test.atst == ATST_NOTEQUAL) {
-			int a = int(outColor.a * 255);
-
-			if (a == test.aref) {
-				discard;
-			}
-		}
-		else if (test.atst == ATST_LESS) {
-			int a = int(outColor.a * 255);
-
-			if (a >= test.aref) {
-				discard;
-			}
-		}
-		else if (test.atst == ATST_LEQUAL) {
-			int a = int(outColor.a * 255);
-
-			if (a > test.aref) {
-				discard;
-			}
-		}
-		else if (test.atst == ATST_NEVER) {
-			discard;
-		}
+	if (!atst_pass) {
+		discard;
 	}
 
-	//outColor.a = outColor.a * 2.0f;
+	// For dual source blending
+	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));
+	outAlphaBlend = alpha_blend;
 }
