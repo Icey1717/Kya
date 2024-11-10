@@ -177,17 +177,18 @@ void CLightManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
-void CLightManager::ComputeLighting(float param_1, CActor* pActor, uint flags, ed_3D_Light_Config* pConfig)
+void CLightManager::ComputeLighting(float multiplier, CActor* pActor, uint flags, ed_3D_Light_Config* pConfig)
 {
-	edColPRIM_OBJECT* iVar1;
+	edColPRIM_OBJECT* pObbPrim;
 	float fVar2;
 	edF32VECTOR4 location;
 	CCollision* pCollision;
 
 	location = pActor->currentLocation;
+
 	pCollision = pActor->pCollisionData;
-	if ((pCollision != (CCollision*)0x0) && (iVar1 = pCollision->pObbPrim, iVar1 != 0)) {
-		location.y = location.y + iVar1->field_0xb0.y;
+	if ((pCollision != (CCollision*)0x0) && (pObbPrim = pCollision->pObbPrim, pObbPrim != 0)) {
+		location.y = location.y + pObbPrim->field_0xb0.y;
 	}
 
 	if (((flags & 4) != 0) && (((pActor->flags & 0x1000000) == 0 || (4.0f <= pActor->distanceToGround)))) {
@@ -196,7 +197,7 @@ void CLightManager::ComputeLighting(float param_1, CActor* pActor, uint flags, e
 
 	LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting {} flags: {:x} location: {}", pActor->name, flags, location.ToString());
 
-	ComputeLighting(param_1, (ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf4);
+	ComputeLighting(multiplier, (ed_3d_hierarchy*)pActor->p3DHierNode, &location, flags, pConfig, (uint)pActor->field_0xf4);
 
 	if (pActor->typeID == ACTOR_HERO_PRIVATE) {
 		fVar2 = CLightConfig::ComputeShadow((((pActor->p3DHierNode)->base).pHierarchySetup)->pLightData, &this->vector_0xf0);
@@ -205,30 +206,17 @@ void CLightManager::ComputeLighting(float param_1, CActor* pActor, uint flags, e
 	return;
 }
 
-void CLightManager::ComputeLighting(float param_1, ed_3d_hierarchy* pHier, edF32VECTOR4* pLocation, uint flags, ed_3D_Light_Config* pConfig, uint param_7)
+void CLightManager::ComputeLighting(float multiplier, ed_3d_hierarchy* pHier, edF32VECTOR4* pLocation, uint flags, ed_3D_Light_Config* pConfig, uint param_7)
 {
-	edF32VECTOR4* peVar1;
-	edF32VECTOR4* peVar2;
-	int iVar3;
-	int iVar4;
-	float(*pafVar5)[4];
 	edF32MATRIX4* peVar6;
 	edF32MATRIX4* peVar7;
-	ed_3D_Light_Config* pConfig_00;
-	ed_3D_Light_Config* pConfig_01;
-	CLightConfig* pFullLightConfig;
-	ed_3D_Light_Config* unaff_s4_lo;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-	float fVar14;
-	float fVar15;
-	edF32VECTOR4 local_a0;
-	edF32MATRIX4 local_90;
-	edF32MATRIX4 local_50;
-	ed_3D_Light_Config local_10;
+	ed_3D_Light_Config* pMixLightingA;
+	ed_3D_Light_Config* pFinalConfig;
+	ed_3D_Light_Config* pMixLightingB;
+	edF32VECTOR4 defaultAmbient;
+	edF32MATRIX4 defaultDirections;
+	edF32MATRIX4 defaultColors;
+	ed_3D_Light_Config lightConfig;
 
 	if (((((GameFlags & 0x20) == 0) && ((flags & 8) == 0)) &&
 		(pHier->pHierarchySetup->pLightData = &this->lightConfig, flags != 0)) && (this->activeLightCount != 0)) {
@@ -237,7 +225,7 @@ void CLightManager::ComputeLighting(float param_1, ed_3d_hierarchy* pHier, edF32
 			flags = flags & 0xfffffffe;
 	
 			this->nextFreeLightConfig = configIndex + 1;
-			pFullLightConfig = this->aLightConfigs + configIndex;
+			CLightConfig* pFullLightConfig = this->aLightConfigs + configIndex;
 
 			pFullLightConfig->lightAmbient = gF32Vector4Zero;
 			pFullLightConfig->lightDirections = gF32Matrix4Unit;
@@ -252,150 +240,110 @@ void CLightManager::ComputeLighting(float param_1, ed_3d_hierarchy* pHier, edF32
 			pConfig = &pFullLightConfig->config;
 		}
 
-		pConfig_00 = pConfig;
+		pMixLightingA = pConfig;
 
 		if ((flags & 1) != 0) {
-			local_a0 = gF32Vector4Zero;
-
-			local_90 = gF32Matrix4Unit;
-			local_50 = gF32Matrix4Unit;
+			defaultAmbient = gF32Vector4Zero;
+			defaultDirections = gF32Matrix4Unit;
+			defaultColors = gF32Matrix4Unit;
 		
-			local_10.pLightAmbient = &local_a0;
-			pConfig_00 = &local_10;
-			local_10.pLightDirections = &local_90;
-			local_10.pLightColorMatrix = &local_50;
-			unaff_s4_lo = pConfig;
+			lightConfig.pLightAmbient = &defaultAmbient;
+			lightConfig.pLightDirections = &defaultDirections;
+			lightConfig.pLightColorMatrix = &defaultColors;
+
+			pMixLightingA = &lightConfig;
+			pMixLightingB = pConfig;
+
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting A = default, B = config");
 		}
 
 		if ((flags & 2) == 0) {
-			*pConfig_00->pLightAmbient = *(this->lightConfig).pLightAmbient;
-			*pConfig_00->pLightColorMatrix = *(this->lightConfig).pLightColorMatrix;
-			*pConfig_00->pLightDirections = *(this->lightConfig).pLightDirections;
+			*pMixLightingA->pLightAmbient = *(this->lightConfig).pLightAmbient;
+			*pMixLightingA->pLightColorMatrix = *(this->lightConfig).pLightColorMatrix;
+			*pMixLightingA->pLightDirections = *(this->lightConfig).pLightDirections;
+
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting using LightManager config (A)");
 		}
 		else {
-			ComputeLighting(pLocation, pConfig_00);
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting computing config (A)");
+			ComputeLighting(pLocation, pMixLightingA);
 		}
 
 		static edF32VECTOR4 edF32VECTOR4_0040f130 = { 8.3007815E-4f, 0.0027945312f, 2.8164062E-4f, 0.0f };
 		static edF32VECTOR4 edF32VECTOR4_0040f140 = { 0.01328125f, 0.0447125f, 0.00450625f, 0.0f };
 
-		fVar9 = edF32VECTOR4_0040f130.z;
-		fVar10 = edF32VECTOR4_0040f130.x;
-		fVar11 = edF32VECTOR4_0040f130.y;
-
 		if ((flags & 4) != 0) {
-			fVar12 = sqrtf((float)(param_7 >> 8 & 0xf) * edF32VECTOR4_0040f140.z +
+			const float flagModifier = sqrtf(
+				(float)(param_7 >> 8 & 0xf) * edF32VECTOR4_0040f140.z +
 				(float)(param_7 & 0xf) * edF32VECTOR4_0040f140.x +
 				(float)(param_7 >> 4 & 0xf) * edF32VECTOR4_0040f140.y);
 
-			peVar6 = pConfig_00->pLightColorMatrix;
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting applying flagModifier (A): {}", flagModifier);
 
-			peVar6->rowX = peVar6->rowX * fVar12;
-			peVar6->rowY = peVar6->rowY * fVar12;
-			peVar6->rowZ = peVar6->rowZ * fVar12;
-			peVar6->rowT = peVar6->rowT * fVar12;
+			peVar6 = pMixLightingA->pLightColorMatrix;
 
-			*pConfig_00->pLightAmbient = (*pConfig_00->pLightAmbient) * fVar12;
+			peVar6->rowX = peVar6->rowX * flagModifier;
+			peVar6->rowY = peVar6->rowY * flagModifier;
+			peVar6->rowZ = peVar6->rowZ * flagModifier;
+			peVar6->rowT = peVar6->rowT * flagModifier;
+
+			*pMixLightingA->pLightAmbient = (*pMixLightingA->pLightAmbient) * flagModifier;
 		}
 
-		if (param_1 != 1.0f) {
-			IMPLEMENTATION_GUARD(
-			peVar2 = pConfig_00->pLightAmbient;
-			peVar2->x = peVar2->x * param_1;
-			peVar2->y = peVar2->y * param_1;
-			peVar2->z = peVar2->z * param_1;
-			peVar2->w = peVar2->w * param_1;
-			peVar6 = pConfig_00->pLightColor;
-			peVar6->aa = peVar6->aa * param_1;
-			peVar6->ab = peVar6->ab * param_1;
-			peVar6->ac = peVar6->ac * param_1;
-			peVar6->ad = peVar6->ad * param_1;
-			peVar6 = pConfig_00->pLightColor;
-			peVar6->ba = peVar6->ba * param_1;
-			peVar6->bb = peVar6->bb * param_1;
-			peVar6->bc = peVar6->bc * param_1;
-			peVar6->bd = peVar6->bd * param_1;
-			peVar6 = pConfig_00->pLightColor;
-			peVar6->ca = peVar6->ca * param_1;
-			peVar6->cb = peVar6->cb * param_1;
-			peVar6->cc = peVar6->cc * param_1;
-			peVar6->cd = peVar6->cd * param_1;
-			peVar6 = pConfig_00->pLightColor;
-			peVar6->da = peVar6->da * param_1;
-			peVar6->db = peVar6->db * param_1;
-			peVar6->dc = peVar6->dc * param_1;
-			peVar6->dd = peVar6->dd * param_1;)
+		if (multiplier != 1.0f) {
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting applying multiplier (A): {}", multiplier);
+
+			*pMixLightingA->pLightAmbient = (*pMixLightingA->pLightAmbient) * multiplier;
+			*pMixLightingA->pLightColorMatrix = (*pMixLightingA->pLightColorMatrix) * multiplier;
 		}
 
-		pConfig_01 = pConfig_00;
+		pFinalConfig = pMixLightingA;
+
 		if ((flags & 1) != 0) {
-			peVar2 = unaff_s4_lo->pLightAmbient;
-			peVar1 = pConfig_00->pLightAmbient;
-			fVar9 = (peVar1->x * fVar10 + peVar1->y * fVar11 + peVar1->z * fVar9) - (peVar2->x * fVar10 + peVar2->y * fVar11 + peVar2->z * fVar9);
-			if (fVar9 < 0.0f) {
-				fVar9 = -fVar9;
+			edF32VECTOR4* pAmbientB = pMixLightingB->pLightAmbient;
+			edF32VECTOR4* pAmbientA = pMixLightingA->pLightAmbient;
+
+			float alpha = (pAmbientA->x * edF32VECTOR4_0040f130.x + pAmbientA->y * edF32VECTOR4_0040f130.y + pAmbientA->z * edF32VECTOR4_0040f130.z)
+				- (pAmbientB->x * edF32VECTOR4_0040f130.x + pAmbientB->y * edF32VECTOR4_0040f130.y + pAmbientB->z * edF32VECTOR4_0040f130.z);
+
+			if (alpha < 0.0f) {
+				alpha = -alpha;
 			}
 
-			if (0.1f < fVar9) {
-				edF32Vector4LERPHard(0.1f / fVar9, unaff_s4_lo->pLightAmbient, unaff_s4_lo->pLightAmbient, pConfig_00->pLightAmbient);
+			LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting mixing A and B alpha: {}", alpha);
+
+			if (0.1f < alpha) {
+				edF32Vector4LERPHard(0.1f / alpha, pMixLightingB->pLightAmbient, pMixLightingB->pLightAmbient, pMixLightingA->pLightAmbient);
 			}
 			else {
-				peVar2 = pConfig_00->pLightAmbient;
-				peVar1 = unaff_s4_lo->pLightAmbient;
-				fVar11 = peVar2->y;
-				fVar9 = peVar2->z;
-				fVar10 = peVar2->w;
-				peVar1->x = peVar2->x;
-				peVar1->y = fVar11;
-				peVar1->z = fVar9;
-				peVar1->w = fVar10;
+				*pMixLightingB->pLightAmbient = *pMixLightingA->pLightAmbient;
 			}
 
-			for (iVar4 = 0; pConfig_01 = unaff_s4_lo, iVar4 < 4; iVar4 = iVar4 + 1) {
-				peVar2 = unaff_s4_lo->pLightDirections->vector + iVar4;
-				edF32Vector4LERPHard(0.5f, peVar2, peVar2, pConfig_00->pLightDirections->vector + iVar4);
+			for (int iVar4 = 0; pFinalConfig = pMixLightingB, iVar4 < 4; iVar4 = iVar4 + 1) {
+				edF32VECTOR4* pDirectionB = pMixLightingB->pLightDirections->vector + iVar4;
+				edF32Vector4LERPHard(0.5f, pDirectionB, pDirectionB, pMixLightingA->pLightDirections->vector + iVar4);
 
-				peVar2 = unaff_s4_lo->pLightColorMatrix->vector + iVar4;
-				edF32Vector4LERPHard(0.5f, peVar2, peVar2, pConfig_00->pLightColorMatrix->vector + iVar4);
+				edF32VECTOR4* pColorB = pMixLightingB->pLightColorMatrix->vector + iVar4;
+				edF32Vector4LERPHard(0.5f, pColorB, pColorB, pMixLightingA->pLightColorMatrix->vector + iVar4);
 			}
 		}
 
-		CLightConfig::Validate(pConfig_01, true);
-		pHier->pHierarchySetup->pLightData = pConfig_01;
-		fVar11 = gF32Vector4Zero.w;
-		fVar10 = gF32Vector4Zero.z;
-		fVar9 = gF32Vector4Zero.y;
+		CLightConfig::Validate(pFinalConfig, true);
+
+		// log out final config
+		LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting final config ambient: {}", pFinalConfig->pLightAmbient->ToString());
+		LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting final config color:   {}", pFinalConfig->pLightColorMatrix->ToString());
+		LIGHT_MANAGER_LOG(LogLevel::VeryVerbose, "CLightManager::ComputeLighting final config dir:    {}", pFinalConfig->pLightDirections->ToString());
+
+		pHier->pHierarchySetup->pLightData = pFinalConfig;
+
 		if ((flags & 0x10) != 0) {
-			IMPLEMENTATION_GUARD(
-			peVar2 = pConfig_01->pLightAmbient;
-			pafVar5 = gF32Matrix4Zero;
-			iVar4 = 8;
-			peVar2->x = gF32Vector4Zero.x;
-			peVar2->y = fVar9;
-			peVar2->z = fVar10;
-			peVar2->w = fVar11;
-			peVar6 = pConfig_01->pLightColor;
-			do {
-				iVar4 = iVar4 + -1;
-				fVar9 = (*pafVar5)[1];
-				peVar6->aa = (*pafVar5)[0];
-				pafVar5 = (float(*)[4])(*pafVar5 + 2);
-				peVar6->ab = fVar9;
-				peVar6 = (edF32MATRIX4*)&peVar6->ac;
-			} while (0 < iVar4);
-			peVar6 = pConfig_01->pLightDirections;
-			pafVar5 = gF32Matrix4Zero;
-			iVar4 = 8;
-			do {
-				iVar4 = iVar4 + -1;
-				fVar9 = (*pafVar5)[1];
-				peVar6->aa = (*pafVar5)[0];
-				pafVar5 = (float(*)[4])(*pafVar5 + 2);
-				peVar6->ab = fVar9;
-				peVar6 = (edF32MATRIX4*)&peVar6->ac;
-			} while (0 < iVar4);)
+			*pFinalConfig->pLightAmbient = gF32Vector4Zero;
+			*pFinalConfig->pLightColorMatrix = gF32Matrix4Zero;
+			*pFinalConfig->pLightDirections = gF32Matrix4Zero;
 		}
 	}
+
 	return;
 }
 
@@ -2031,8 +1979,10 @@ void CLightConfig::Validate(ed_3D_Light_Config* pConfig, bool bDoColor)
 				peVar2->z = 255.9f;
 			}
 		}
+
 		peVar2->w = 0.0f;
 	}
+
 	return;
 }
 

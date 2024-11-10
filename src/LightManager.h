@@ -93,8 +93,8 @@ public:
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 	// End Manager
 
-	void ComputeLighting(float param_1, CActor* pActor, uint flags, ed_3D_Light_Config* pConfig);
-	void ComputeLighting(float param_1, ed_3d_hierarchy* pHier, edF32VECTOR4* pLocation, uint flags, ed_3D_Light_Config* pConfig, uint param_7);
+	void ComputeLighting(float multiplier, CActor* pActor, uint flags, ed_3D_Light_Config* pConfig);
+	void ComputeLighting(float multiplier, ed_3d_hierarchy* pHier, edF32VECTOR4* pLocation, uint flags, ed_3D_Light_Config* pConfig, uint param_7);
 	void ComputeLighting(edF32VECTOR4* pLocation, ed_3D_Light_Config* pConfig);
 
 	void AddLight(ByteCode* pByteCode, CLight** ppOutLight);

@@ -484,7 +484,6 @@ namespace Renderer
 	void AddMesh(SimpleMesh* pNewMesh);
 
 	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
-	void PushLightData(float* pDirection, float* pColor, float* pAmbient);
 	void PushModelMatrix(float* pModel);
 	void PushAnimMatrix(float* pAnim);
 

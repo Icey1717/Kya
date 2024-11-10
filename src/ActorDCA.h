@@ -38,7 +38,7 @@ public:
 	uint GetProjectileIndex(edF32VECTOR4* pLocation, bool param_3);
 	CActor* _ComputeNewShotNoRelease(float velocity, edF32VECTOR4* pLocation, edF32VECTOR4* pDirection, S_SHOT_DATA** pShotData, CActor* pFiringActor, bool param_7);
 
-	S_SHOT_DATA aShots[2];
+	S_SHOT_DATA aShots[20];
 
 	S_ACTOR_STREAM_REF* pActorStreamRef;
 	int field_0x290;

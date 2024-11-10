@@ -115,6 +115,8 @@ public:
 	virtual void Reset();
 	virtual void CheckpointReset();
 
+	virtual void ComputeLighting();
+
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 

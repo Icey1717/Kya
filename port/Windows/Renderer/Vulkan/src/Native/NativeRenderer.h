@@ -51,7 +51,6 @@ namespace Renderer
 		void BindTexture(SimpleTexture* pTexture);
 		void AddMesh(SimpleMesh* pMesh);
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
-		void PushLightData(float* pDirection, float* pColor, float* pAmbient);
 		void PushModelMatrix(float* pModel);
 		void PushAnimMatrix(float* pAnim);
 

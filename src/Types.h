@@ -571,6 +571,16 @@ union alignas(16)
 #pragma pack(pop)
 #endif
 
+inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const float& rhs)
+{
+	edF32MATRIX4 ret;
+	ret.rowX = lhs.rowX * rhs;
+	ret.rowY = lhs.rowY * rhs;
+	ret.rowZ = lhs.rowZ * rhs;
+	ret.rowT = lhs.rowT * rhs;
+	return ret;
+}
+
 #define EDITOR_BUILD PLATFORM_WIN
 
 #include "Logging.h"

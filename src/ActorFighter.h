@@ -40,6 +40,8 @@ public:
 	CScalarDyn field_0x37c;
 	CScalarDyn field_0x3a4;
 	CScalarDyn scalarDynJump;
+
+	CActor* field_0x634;
 };
 
 class CBehaviourFighter : public CBehaviour

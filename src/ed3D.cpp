@@ -2637,11 +2637,15 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	edF32MATRIX4** pLightDirections = SCRATCHPAD_ADDRESS_TYPE(LIGHT_DIRECTIONS_MATRIX_PTR_SPR, edF32MATRIX4**);
 	edF32MATRIX4** pLightColors = SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_PTR_SPR, edF32MATRIX4**);
 
+	// Calculate OBJ_TO_WORLD_INVERSE_NORMAL_SPR
 	edF32Matrix4OrthonormalizeHard(SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*), pObjToWorld);
 	edF32Matrix4GetInverseOrthoHard(SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*));
-	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*), *pLightDirections,
-		SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*));
+
+	// Calculate Light directions
+	edF32Matrix4MulF32Matrix4Hard(SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*), *pLightDirections, SCRATCHPAD_ADDRESS_TYPE(OBJ_TO_WORLD_INVERSE_NORMAL_SPR, edF32MATRIX4*));
 	edF32Matrix4GetTransposeHard(SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*), SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*));
+
+	// Copy light colors
 	edF32Matrix4CopyHard(SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*), *pLightColors);
 
 
@@ -2651,13 +2655,6 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 
 	vectorB->xyz = vectorC->xyz;
 	vectorB->w = 0.0078125f;
-
-#ifdef PLATFORM_WIN
-	//edF32MATRIX4* const pSrcLightDirections = SCRATCHPAD_ADDRESS_TYPE(OBJ_LIGHT_DIRECTIONS_MATRIX_SPR, edF32MATRIX4*);
-	//edF32MATRIX4* const pSrcLightColors = SCRATCHPAD_ADDRESS_TYPE(LIGHT_COLOR_MATRIX_SPR, edF32MATRIX4*);
-	//edF32VECTOR4* const pSrcLightAmbient = SCRATCHPAD_ADDRESS_TYPE(ADJUSTED_LIGHT_AMBIENT_SPR, edF32VECTOR4*);
-	//Renderer::PushLightData(pSrcLightDirections->raw, pSrcLightColors->raw, pSrcLightAmbient->raw);
-#endif
 
 	if (((pDmaMatrix->pHierarchy == (ed_3d_hierarchy*)0x0) ||
 		(pHierarchySetup = pDmaMatrix->pHierarchy->pHierarchySetup, pHierarchySetup == (ed_3d_hierarchy_setup*)0x0))

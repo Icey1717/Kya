@@ -37,6 +37,12 @@ void CActorTrap::CheckpointReset()
 	CActorMovable::CheckpointReset();
 }
 
+// To be deleted
+void CActorTrap::ComputeLighting()
+{
+	CActor::ComputeLighting();
+}
+
 CBehaviour* CActorTrap::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;

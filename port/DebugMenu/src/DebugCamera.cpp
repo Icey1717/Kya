@@ -236,7 +236,7 @@ void DebugCamera::ShowCamera()
 	ImGui::Text("Position");
 	EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
 	ImGui::Text("LookAt");
-	//EditEdF32Vector4(pCameraManager->lookAt);
+	EditEdF32Vector4(pActiveCamera->lookAt);
 
 	if (pActiveCamera->GetMode() == CT_Main) {
 		if (ImGui::Button("Disable Collision")) {

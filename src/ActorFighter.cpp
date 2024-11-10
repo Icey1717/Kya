@@ -530,8 +530,7 @@ int CActorFighter::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM 
 	int result;
 
 	if ((msg == 2) || (msg == 3)) {
-		IMPLEMENTATION_GUARD(
-		this->field_0x634 = pSender;)
+		this->field_0x634 = pSender;
 	}
 
 	result = CActor::ReceiveMessage(pSender, msg, pMsgParam);
@@ -936,8 +935,10 @@ void CActorFighter::ClearLocalData()
 	this->field_0x4ec = fVar3;
 	this->field_0x44c = 0;
 	this->field_0x450 = 0;
-	this->field_0x474 = 0;
-	this->field_0x634 = 0;
+	this->field_0x474 = 0;)
+	this->field_0x634 = (CActor*)0x0;
+
+	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x738 = 1;
 	fVar3 = g_xVector.w;
 	fVar2 = g_xVector.z;
