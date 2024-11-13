@@ -2288,8 +2288,8 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 	}
 	else {
 		if (msg == 2) {
-			HitMessageParams* pHitMessageParams = reinterpret_cast<HitMessageParams*>(pMsgParam);
-			switch (pHitMessageParams->field_0x0) {
+			_msg_hit_param* pHitMessageParams = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+			switch (pHitMessageParams->projectileType) {
 			case 4:
 				IMPLEMENTATION_GUARD(
 				iVar6 = *(int*)((int)pMsgParam + 4);

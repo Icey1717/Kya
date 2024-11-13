@@ -338,11 +338,11 @@ struct CActorParamsIn {
 	edF32VECTOR4* field_0x8;
 };
 
-struct HitMessageParams {
-	int field_0x0;
+struct _msg_hit_param {
+	int projectileType;
 	int field_0x4;
 	int field_0x8;
-	float field_0xc;
+	float damage;
 	undefined field_0x10;
 	undefined field_0x11;
 	undefined field_0x12;

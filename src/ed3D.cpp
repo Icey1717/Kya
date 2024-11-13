@@ -6495,6 +6495,8 @@ LAB_00297870:
 		pDVar14 = (edNODE_MANAGER*)(pExistingDMA_Material->list).pData;
 	}
 	else {
+		ED3D_LOG(LogLevel::Verbose, "ed3DLinkClusterStripToViewport pMaterial: {:x} | pBitmap: {:x}", (uintptr_t)pStripMaterial, (uintptr_t)pBitmap);
+
 		if (gRender_info_SPR->boundingSphereTestResult == 1) {
 			gBoundSphereCenter->xyz = (pStrip->boundingSphere).xyz;
 			gBoundSphereCenter->w = 1.0f;
@@ -6518,6 +6520,9 @@ LAB_00297870:
 		pExistingDMA_Material->pBitmap = pBitmap;
 		ed3DLinkStripManageLinkToDMALink(gPrim_List[3] + gCurRenderList, pExistingDMA_Material, 1);
 		pDVar14 = (edNODE_MANAGER*)(pExistingDMA_Material->list).pData;
+
+		ED3D_LOG(LogLevel::Verbose, "ed3DLinkClusterStripToViewport Linked Cluster Strip: ({}, {}). New node count: {}", pStrip->primListIndex, gCurRenderList,
+			gPrim_List[pStrip->primListIndex][gCurRenderList].nodeCount);
 	}
 
 	pNode = pDVar14->pNodeHead + pDVar14->linkCount;
@@ -7450,7 +7455,7 @@ void ed3DLinkStripManageLinkToDMA(ed_3d_strip* pStrip, uint flagsA, uint flagsB,
 	edNODE_MANAGER* pMeshTransformParentHeader;
 	edNODE_MANAGER* pFinalNodeManager;
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DLinkStripManageLinkToDMA 0x{:x}", (uintptr_t)pStrip);
+	ED3D_LOG(LogLevel::Verbose, "ed3DLinkStripManageLinkToDMA 0x{:x} pMaterial: 0x{:x}", (uintptr_t)pStrip, (uintptr_t)pLinkMaterial);
 
 	pCurrentMaterial = DmaMaterialBufferCurrent;
 	if ((((flagsB & 0x200) != 0) && ((flagsA & 0x80000000) != 0)) ||
@@ -8383,10 +8388,16 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 	ed_hash_code* pObjHash;
 	ed3DLod* pLod;
 	edF32MATRIX4* pMVar3;
-	float fVar4;
 	edF32MATRIX4 MStack64;
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy {}", pHierarchy->hash.ToString());
+
+	std::string aoeuoaeu = "‡ž¤²™NFL";
+	std::string oeuthoeu = pHierarchy->hash.name;
+	if (aoeuoaeu == oeuthoeu)
+	{
+		ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy {}", pHierarchy->hash.ToString());
+	}
 
 	if (((pHierarchy->flags_0x9e & 0x41) == 0) && (pHierarchy->lodCount != 0)) {
 		pLod = ed3DChooseGoodLOD(pHierarchy);
@@ -8394,13 +8405,14 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 			if ((pHierarchy->flags_0x9e & 0x80) == 0) {
 				pHierarchy->desiredLod = 0xff;
 			}
+
 			edF32Matrix4MulF32Matrix4Hard(&MStack64, &pHierarchy->transformB, WorldToCamera_Matrix);
 			pMVar3 = &pHierarchy->transformB;
 			gRender_info_SPR->pMeshTransformMatrix = &MStack64;
 			gRender_info_SPR->pMeshTransformData = pHierarchy;
 			gRender_info_SPR->pHierarchySetup = pHierarchy->pHierarchySetup;
 			gRender_info_SPR->pSharedMeshTransform = pMVar3;
-			gRender_info_SPR->flags = (uint)pHierarchy->flags_0x9e;
+			gRender_info_SPR->flags = pHierarchy->flags_0x9e;
 
 			ED3D_LOG(LogLevel::Verbose, "ed3DRenderSonHierarchy flags: 0x{:x}", gRender_info_SPR->flags);
 
@@ -8410,8 +8422,7 @@ void ed3DRenderSonHierarchy(ed_3d_hierarchy* pHierarchy)
 
 			//assert((((uint)pMeshTransformData->flags_0x9e & 0x10) == 0) || pMeshTransformData->pHierarchySetup != NULL);
 
-			fVar4 = ed3DMatrixGetBigerScale(pMVar3);
-			gRender_info_SPR->biggerScale = fVar4;
+			gRender_info_SPR->biggerScale = ed3DMatrixGetBigerScale(pMVar3);
 			gRender_info_SPR->pPkt = 0;
 			gRender_info_SPR->boundingSphereTestResult = 1;
 			pHierarchy->pMatrixPkt = (edpkt_data*)0x0;
@@ -11279,7 +11290,7 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 
 	int lodIndex = 0;
 	do {
-		ED3D_LOG(LogLevel::Info, "ed3DHierarchyAddNode Processing LOD %d", lodIndex);
+		ED3D_LOG(LogLevel::Info, "ed3DHierarchyAddNode Processing LOD {}", lodIndex);
 
 		if (lodIndex < pSourceHierarchy->lodCount) {
 			pSourceLod = pSourceHierarchy->aLods + lodIndex;

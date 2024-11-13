@@ -1414,13 +1414,13 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 			fVar7 = uVar2->GetValue();
 			if (fVar7 == 0.0f) {
 				IMPLEMENTATION_GUARD(
-				iVar6 = ChooseStateDead(pHitParam->field_0x0, 4, 0);)
+				iVar6 = ChooseStateDead(pHitParam->projectileType, 4, 0);)
 			}
 
 			if (iVar6 < 0) {
 				pTVar3 = Timer::GetTimer();
 				if (pTVar3->scaledTotalTime < this->field_0x155c) {
-					if (((pHitBy != (CActor*)0) && (pHitParam->field_0x0 != 9)) && (pHitParam->field_0x0 != 2)) {
+					if (((pHitBy != (CActor*)0) && (pHitParam->projectileType != 9)) && (pHitParam->projectileType != 2)) {
 						return true;
 					}
 
@@ -1464,7 +1464,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 					}
 				}
 
-				if ((pHitParam->field_0x8 == 0) && ((pHitParam->field_0x0 == 0 || (pHitParam->field_0x0 == 6)))) {
+				if ((pHitParam->field_0x8 == 0) && ((pHitParam->projectileType == 0 || (pHitParam->projectileType == 6)))) {
 				LAB_0013ee80:
 					uVar2 = GetLifeInterface();
 					fVar7 = uVar2->GetValue();
@@ -1483,14 +1483,14 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 						}
 						else {
 							IMPLEMENTATION_GUARD(
-							uVar2 = ChooseStateDead(this, pHitParam->field_0x0, 4, 1);
+							uVar2 = ChooseStateDead(this, pHitParam->projectileType, 4, 1);
 							SetBehaviour(7, uVar2, 0xffffffff);)
 						}
 
 						return true;
 					}
 
-					if (pHitParam->field_0x0 == 6) {
+					if (pHitParam->projectileType == 6) {
 						this->field_0x1000 = 0.0f;
 						IMPLEMENTATION_GUARD(
 						FUN_0033dc90(this->field_0x1000, (int)this, 8, 0x1a1);)
@@ -1519,7 +1519,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 					}
 				}
 
-				if (pHitParam->field_0x0 == 9) {
+				if (pHitParam->projectileType == 9) {
 					if (this->actorState == 0x8f) {
 						uVar2 = GetLifeInterface();
 						fVar7 = uVar2->GetValue();
@@ -3613,10 +3613,8 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					return 0;
 				}
 				if (msg == 2) {
-					IMPLEMENTATION_GUARD(
-					pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+					fVar25 = GetLifeInterface()->GetValue();
+					bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 					if (!bVar9) {
 						iVar13 = this->actorState;
 						uVar10 = 0;
@@ -3624,43 +3622,49 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							pAVar12 = GetStateCfg(iVar13);
 							uVar10 = pAVar12->flags_0x4;
 						}
+
 						bVar9 = (uVar10 & 1) != 0;
 					}
-					if (((bVar9) || (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 != false)) ||
-						(0.0 < this->field_0x1558)) {
+
+					if (((bVar9) || (bVar9 = TestState_IsInCheatMode(), bVar9 != false)) || (0.0f < this->field_0x1558)) {
 						return 0;
 					}
+
 					if ((this->flags & 0x800000) != 0) {
 						return 0;
 					}
+
+					_msg_hit_param* pHitMsgParams = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
 					iVar13 = this->actorState;
 					bVar9 = false;
 					if ((0xdb < iVar13) && (iVar13 < 0xdf)) {
 						bVar9 = true;
 					}
-					/* WARNING: Load size is inaccurate */
-					if ((bVar9) && (*pMsgParam != 10)) {
+
+					if ((bVar9) && (pHitMsgParams->projectileType != 10)) {
 						return 0;
 					}
-					/* WARNING: Load size is inaccurate */
-					iVar13 = *pMsgParam;
+
+					iVar13 = pHitMsgParams->projectileType;
 					if (((iVar13 != 10) && (iVar13 != 7)) && (iVar13 != 8)) {
-						uVar10 = ActorFunc_0013ea40(this, pSender, (int*)pMsgParam, 0);
+						uVar10 = AccomplishHit(pSender, pHitMsgParams, 0);
 						return uVar10;
 					}
-					uVar10 = TestState_IsInTheWind((Actor*)this, 0xffffffff);
-					/* WARNING: Load size is inaccurate */
-					if ((uVar10 != 0) && (*pMsgParam == 10)) {
-						edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x30), &eStack112, (edF32VECTOR4*)((int)pMsgParam + 0x20));
+
+					uVar10 = TestState_IsInTheWind(0xffffffff);
+
+					if ((uVar10 != 0) && (pHitMsgParams->projectileType == 10)) {
+						edF32Vector4ScaleHard(pHitMsgParams->field_0x30, &eStack112, &pHitMsgParams->field_0x20);
 						pTVar15 = GetTimer();
-						edF32Vector4ScaleHard(0.02 / pTVar15->cutsceneDeltaTime, &eStack224, &eStack112);
+						edF32Vector4ScaleHard(0.02f / pTVar15->cutsceneDeltaTime, &eStack224, &eStack112);
 						peVar24 = this->dynamicExt.aImpulseVelocities;
 						edF32Vector4AddHard(peVar24, peVar24, &eStack224);
 						fVar25 = edF32Vector4GetDistHard(this->dynamicExt.aImpulseVelocities);
 						this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar25;
-						uVar10 = ActorFunc_0013ea40(this, pSender, (int*)pMsgParam, 0);
+						uVar10 = AccomplishHit(pSender, pHitMsgParams, 0);
 						return uVar10;
-					})
+					}
 				}
 				else {
 					if (msg == 1) {
@@ -4701,7 +4705,7 @@ int CActorHeroPrivate::ChooseStateHit(CActor* pHitBy, _msg_hit_param* pHitParams
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 eStack16;
 
-	iVar1 = pHitParams->field_0x0;
+	iVar1 = pHitParams->projectileType;
 	if (iVar1 == 5) {
 		iVar5 = 0x90;
 	}
@@ -14538,7 +14542,7 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 	local_90.damage = 2.0f;
 LAB_0013e9f0:
 	local_90.field_0x8 = 1;
-	local_90.field_0x0 = 0;
+	local_90.projectileType = 0;
 
 	AccomplishHit((CActor*)0x0, &local_90, &local_10);
 	return true;

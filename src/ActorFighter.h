@@ -5,6 +5,7 @@
 #include "Actor.h"
 #include "ActorAutonomous.h"
 
+#define IMPLEMENTATION_GUARD_FIGHT(x)
 
 class CActorFighter : public CActorAutonomous
 {
@@ -26,7 +27,9 @@ public:
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	virtual void UpdateCollisionSphere();
 
-	virtual bool IsFightRelated(int param_2);
+	// CActorFighter
+	virtual void SetFightBehaviour();
+	virtual bool IsFightRelated(int behaviourId);
 
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();

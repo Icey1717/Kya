@@ -105,6 +105,8 @@
 #define STATE_HERO_CAUGHT_TRAP_1 0x117
 #define STATE_HERO_CAUGHT_TRAP_2 0x118
 
+#define HERO_BEHAVIOUR_DEFAULT 0x7
+
 struct CPlayerInput;
 class CActorBoomy;
 

@@ -19,6 +19,9 @@
 #include "ScopedTimer.h"
 #include "PostProcessing.h"
 
+#define DEBUG_TEXTURE_NAME "BACKGROUND.g2d"
+#define DEBUG_TEXTURE_MATERIAL_INDEX 5
+
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)
 
@@ -246,9 +249,9 @@ namespace Renderer
 
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 
-				//if (pTexture->GetName() == "SECT1.g2d" && pTexture->GetMaterialIndex() == 82) {
-				//	pTexture->GetName();
-				//}
+				if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
+					pTexture->GetName();
+				}
 
 				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
@@ -940,6 +943,10 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 {
 	NATIVE_LOG(LogLevel::Info, "BindTexture: {} material: {} layer: {} indices: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex(), gNativeVertexBufferDataDraw.GetIndexTail());
+
+	if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
+		pTexture->GetName();
+	}
 
 	if (gCurrentDraw) {
 		gCurrentDraw->pTexture = pTexture;

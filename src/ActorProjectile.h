@@ -159,7 +159,7 @@ struct ProjectileSubObj
 	float explosionRange;
 	float animDuration;
 	uint flags;
-	float field_0x10;
+	float damage;
 	float hitRadius;
 	undefined field_0x18;
 	undefined field_0x19;

@@ -496,26 +496,27 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			else {
 				if (msg == 2) {
-					IMPLEMENTATION_GUARD(
 					iVar5 = this->actorState;
 					uVar6 = 0;
 					if (iVar5 != -1) {
-						pAVar2 = (*(this->pVTable)->GetStateCfg)(this, iVar5);
+						pAVar2 = GetStateCfg(iVar5);
 						uVar6 = pAVar2->flags_0x4;
 					}
+
 					if (((uVar6 & 0x2000000) != 0) ||
-						(bVar1 = (*(this->pVTable)->IsFightRelated)
-							(this, this->curBehaviourId), bVar1 != false)) {
+						(bVar1 = IsFightRelated(this->curBehaviourId), bVar1 != false)) {
 						return 0;
 					}
-					/* WARNING: Load size is inaccurate */
-					iVar5 = *pMsgParam;
+
+					_msg_hit_param* pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+					iVar5 = pMsgHitParam->projectileType;
+
 					if (((iVar5 == 7) || (iVar5 == 8)) || (iVar5 == 10)) {
-						(*(code*)(this->pVTable)->SetFightBehaviour)(this);
-						pCVar3 = CActor::GetBehaviour(this, this->curBehaviourId);
-						iVar5 = (*pCVar3->pVTable->InterpretMessage)(pCVar3, pSender, 2, (int)pMsgParam);
+						SetFightBehaviour();
+						pCVar3 = GetBehaviour(this->curBehaviourId);
+						iVar5 = pCVar3->InterpretMessage(pSender, 2, pMsgParam);
 						return iVar5;
-					})
+					}
 				}
 
 				iVar5 = CActorAutonomous::InterpretMessage(pSender, msg, pMsgParam);
@@ -574,17 +575,18 @@ void CActorFighter::TieToActor(CActor* pTieActor, int carryMethod, int param_4, 
 	return;
 }
 
-bool CActorFighter::IsFightRelated(int param_2)
+bool CActorFighter::IsFightRelated(int behaviourId)
 {
-	bool bVar1;
+	bool bFightRelated;
 
-	if ((param_2 - 3U < 3) || (param_2 == 6)) {
-		bVar1 = true;
+	if ((behaviourId - 3U < 3) || (behaviourId == 6)) {
+		bFightRelated = true;
 	}
 	else {
-		bVar1 = false;
+		bFightRelated = false;
 	}
-	return bVar1;
+
+	return bFightRelated;
 }
 
 void CActorFighter::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
@@ -1045,6 +1047,12 @@ void CActorFighter::UpdateCollisionSphere()
 	(this->field_0x400).w = 1.0f;
 
 	return;
+}
+
+void CActorFighter::SetFightBehaviour()
+{
+	IMPLEMENTATION_GUARD_FIGHT(
+	SetBehaviour(3, -1, -1);)
 }
 
 void CBehaviourFighter::Init(CActor* pOwner)

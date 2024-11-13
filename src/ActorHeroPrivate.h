@@ -53,15 +53,6 @@ class CFxHandle
 
 };
 
-struct _msg_hit_param
-{
-	int field_0x0;
-	float damage;
-	undefined4 field_0x8;
-	edF32VECTOR4 field_0x20;
-	float field_0x30;
-};
-
 class CActorHeroPrivate : public CActorHero 
 {
 public:

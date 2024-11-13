@@ -514,11 +514,11 @@ void CSector::InstallCallback()
 	char* pMeshData;
 	uint inFileIndex;
 	uint unaff_s5_lo;
-	char* pFileData;
+	char* pBackgroundFileBuffer;
 	char* pAnimHierarchy;
 	float fVar14;
 	uint local_40;
-	uint local_30;
+	uint backgroundFileSize;
 	edBANK_ENTRY_INFO bankEntry;
 	int iStack8;
 	short sStack2;
@@ -528,7 +528,7 @@ void CSector::InstallCallback()
 #endif
 
 	pAnimHierarchy = (char*)0x0;
-	pFileData = (char*)0x0;
+	pBackgroundFileBuffer = (char*)0x0;
 	this->pObbTree = (edObbTREE_DYN*)0x0;
 	local_40 = 0;
 	pcVar6 = (char*)0x0;
@@ -561,8 +561,8 @@ void CSector::InstallCallback()
 						szBackgroundFileName = pBackgroundFileName;
 #endif
 						SECTOR_LOG(LogLevel::Info, "Sector::Init Background Mesh: {}\n", pBackgroundFileName);
-						local_30 = bankEntry.size;
-						pFileData = bankEntry.fileBufferStart;
+						backgroundFileSize = bankEntry.size;
+						pBackgroundFileBuffer = bankEntry.fileBufferStart;
 					}
 					else {
 						if (uVar9 == 0x70001) {
@@ -605,19 +605,23 @@ void CSector::InstallCallback()
 
 	ed3DScenePushCluster(pStaticMeshMaster, &this->sectorMesh);
 
-	if (pFileData == (char*)0x0) {
+	if (pBackgroundFileBuffer == (char*)0x0) {
 		this->pBackgroundNode = (edNODE*)0x0;
 	}
 	else {
 		NAME_NEXT_OBJECT("%s", szBackgroundFileName.c_str());
 		p3DFileManager->HideCommonBackground();
-		ed3DInstallG3D(pFileData, local_30, 0, &iStack8, &this->backgroundTexture, 0xc, &this->backgroundMesh);
-		pMVar4 = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->backgroundMesh, (char*)0x0);
-		this->pBackgroundNode = pMVar4;
+
+		ed3DInstallG3D(pBackgroundFileBuffer, backgroundFileSize, 0, &iStack8, &this->backgroundTexture, 0xc, &this->backgroundMesh);
+
+		this->pBackgroundNode = ed3DHierarchyAddToScene(pStaticMeshMaster, &this->backgroundMesh, (char*)0x0);
 		if (this->pBackgroundNode != (edNODE*)0x0) {
 			p3DFileManager->SetupBackground(this->pBackgroundNode);
 		}
+
+		SECTOR_LOG(LogLevel::Info, "Sector::Init Background complete");
 	}
+
 	this->desiredSectorID = this->sectorIndex;
 	this->sectorIndex = -1;
 	this->pANHR.Install((MeshData_ANHR*)pAnimHierarchy, local_40, &this->sectorMesh, pStaticMeshMaster);
@@ -632,6 +636,7 @@ void CSector::InstallCallback()
 	if (pHashCode != (ed_hash_code*)0x0) {
 		pChunck = (ed_Chunck*)LOAD_SECTION(pHashCode->pData);
 	}
+
 	if (pChunck == (ed_Chunck*)0x0) {
 		pNewNode = (edNODE*)0x0;
 	}
@@ -642,6 +647,7 @@ void CSector::InstallCallback()
 		ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 	}
 	this->pMeshTransformParent_0x130 = pNewNode;
+
 	pSectorHierarchy = pSectorManager->subObjArray[this->desiredSectorID].aSectorHierarchies;
 	do {
 		if (pSectorHierarchy == (CSectorHierarchy*)0x0) {

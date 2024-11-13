@@ -358,7 +358,9 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 	CActorHeroPrivate* pActorHero = reinterpret_cast<CActorHeroPrivate*>(CActorHeroPrivate::_gThis);
 
 	if (pActorHero) {
-		ImGui::Text("State: %s", GetStateName(pActorHero->actorState));
+		if (pActorHero->curBehaviourId == HERO_BEHAVIOUR_DEFAULT) {
+			ImGui::Text("State: %s", GetStateName(pActorHero->actorState));
+		}
 
 		if (ImGui::Button("Reset State")) {
 			pActorHero->SetState(STATE_HERO_STAND, -1);

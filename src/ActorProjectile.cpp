@@ -570,10 +570,10 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					uVar4 = pSVar5->flags_0x4;
 				}
 
-				HitMessageParams* pHitMsgParam = (HitMessageParams*)pMsgParam;
+				_msg_hit_param* pHitMsgParam = (_msg_hit_param*)pMsgParam;
 
 				if ((uVar4 & 0x800) != 0) {
-					if (pHitMsgParam->field_0x0 == 3) {
+					if (pHitMsgParam->projectileType == 3) {
 						if (((this->field_0x350->flags & 0x10) != 0) && (this->actorState == 0x10)) {
 							local_10.x = this->currentLocation.x;
 							local_10.z = this->currentLocation.z;
@@ -588,7 +588,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 						return 1;
 					}
 
-					if (pHitMsgParam->field_0x0 == 4) {
+					if (pHitMsgParam->projectileType == 4) {
 						iVar8 = this->actorState;
 						uVar4 = 0;
 						if (iVar8 != -1) {
@@ -603,8 +603,8 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					if ((this->field_0x350->flags & 2) != 0) {
 						/* WARNING: Load size is inaccurate */
 						uVar10 = 1.0f;
-						if ((pHitMsgParam->field_0x0 != 4) && (uVar10 = 1.0f/*unaff_f20*/, pSender->typeID != PROJECTILE)) {
-							uVar10 = pHitMsgParam->field_0xc;
+						if ((pHitMsgParam->projectileType != 4) && (uVar10 = 1.0f/*unaff_f20*/, pSender->typeID != PROJECTILE)) {
+							uVar10 = pHitMsgParam->damage;
 						}
 
 						LifeDecrease(uVar10);
@@ -1592,9 +1592,9 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 	float local_ac;
 	float fStack168;
 	float fStack164;
-	HitMessageParams auStack160;
+	_msg_hit_param auStack160;
 	_ray_info_out local_10;
-	HitMessageParams* local_4;
+	_msg_hit_param* local_4;
 
 	if (pHitActor != this) {
 		pCVar1 = pHitActor->pCollisionData;
@@ -1633,24 +1633,24 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 			else {
 				if (explode == 2) {
 					hitMsgId = 2;
-					auStack160.field_0x0 = 5;
+					auStack160.projectileType = 5;
 				}
 				else {
 					if (explode == 1) {
 						auStack160.field_0x8 = 1;
-						auStack160.field_0x0 = 0;
+						auStack160.projectileType = 0;
 						hitMsgId = 2;
 					}
 					else {
 						if (explode == 0) {
-							auStack160.field_0x0 = 10;
+							auStack160.projectileType = 10;
 							hitMsgId = 2;
 						}
 					}
 				}
 			}
 
-			auStack160.field_0xc = this->field_0x350->field_0x10;
+			auStack160.damage = this->field_0x350->damage;
 			auStack160.field_0x30 = edFIntervalUnitSrcLERP(fVar5 / pSphere->w, this->field_0x350->field_0x20, this->field_0x350->field_0x24);
 			local_b0 = (pHitActor->currentLocation).x;
 			local_ac = (pHitActor->currentLocation).y;
