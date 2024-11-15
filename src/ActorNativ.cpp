@@ -590,7 +590,7 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			else {
 				if (msg != 0x4e) {
-					if (msg != 0x4d) {
+					if (msg != MESSAGE_GET_BONE_ID) {
 						uVar7 = CActorAutonomous::InterpretMessage(pSender, msg, pMsgParam);
 						return uVar7;
 					}

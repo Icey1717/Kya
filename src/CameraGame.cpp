@@ -647,7 +647,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		}
 	}
 	else {
-		int boneId = pCVar3->DoMessage(pCVar3, (ACTOR_MESSAGE)0x4d, (MSG_PARAM)5);
+		uint boneId = pCVar3->DoMessage(pCVar3, MESSAGE_GET_BONE_ID, (MSG_PARAM)5);
 		BoneData* pBone = v1->pActor->pAnimationController->FindReggedBone(boneId);
 		if (pBone == (BoneData*)0x0) {
 			pCVar3 = v1->pActor;

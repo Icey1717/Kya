@@ -32,6 +32,15 @@ class CWayPoint;
 
 class CPlayerInput;
 
+class CFxHandle
+{
+public:
+	CFxHandle();
+
+	undefined4 field_0x0;
+	undefined* field_0x4;
+};
+
 struct MessageSoccerParams
 {
 	int field_0x0;
@@ -65,6 +74,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_ENABLE_INPUT = 0x26,
 	MESSAGE_TRAP_CAUGHT = 0x31,
 	MESSAGE_SOCCER_START = 0x35,
+	MESSAGE_GET_BONE_ID = 0x4d,
 };
 
 typedef void* MSG_PARAM;

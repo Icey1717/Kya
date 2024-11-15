@@ -48,11 +48,6 @@ class CBehaviourHeroRideJamGut : public CBehaviourRideJamGut
 
 };
 
-class CFxHandle
-{
-
-};
-
 class CActorHeroPrivate : public CActorHero 
 {
 public:
@@ -204,6 +199,11 @@ public:
 
 	void StateHeroWindCanonInit();
 	void StateHeroWindCanonTerm();
+
+	void StateHeroBasic(float param_1, float param_2, int nextState);
+
+	void StateHeroFallBounce_2_2Init();
+	void StateHeroFallBounce_2_2Term();
 
 	void SetJumpCfgFromGround(float param_1);
 	void SetJumpCfg(float param_1, float horizonalSpeed, float param_3, float param_4, float param_5, int unused_7, edF32VECTOR4* param_8);

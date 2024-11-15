@@ -68,6 +68,12 @@ namespace Debug {
 			case STATE_HERO_FALL_B:
 				return "StateHeroFallB";
 				break;
+			case STATE_HERO_FALL_BOUNCE_1_2:
+				return "StateHeroFallBounce1_2";
+				break;
+			case STATE_HERO_FALL_BOUNCE_2_2:
+				return "StateHeroFallBounce2_2";
+				break;
 			case STATE_HERO_STAND_TO_CROUCH_A:
 				return "StateHeroStandToCrouchA";
 				break;

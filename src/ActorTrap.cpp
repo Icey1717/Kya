@@ -1141,7 +1141,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 		}
 		else {
 			if (msg != 2) {
-				if (msg != 0x4d) {
+				if (msg != MESSAGE_GET_BONE_ID) {
 					return 0;
 				}
 	

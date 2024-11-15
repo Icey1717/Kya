@@ -1704,7 +1704,7 @@ void CBehaviourCatchByTrap::Manage()
 
 	pAutonomous = this->pOwner;
 	if (pAutonomous->actorState == 5) {
-		key = pAutonomous->DoMessage(this->field_0x10, (ACTOR_MESSAGE)0x4d, (MSG_PARAM)9);
+		key = pAutonomous->DoMessage(this->field_0x10, MESSAGE_GET_BONE_ID, (MSG_PARAM)9);
 
 		if (key != this->boneId) {
 			if (this->boneId != 0) {

@@ -1136,7 +1136,7 @@ void UpdateRenderMeshTransform_002954b0(ed_3d_hierarchy_node* param_1, bool mode
 {
 	ed_3d_hierarchy_node* v1;
 	ed_3d_hierarchy_node* v1_00;
-	edF32MATRIX4* v1_01;
+	ed_3d_hierarchy_node* v1_01;
 	edF32MATRIX4* v1_02;
 	edF32MATRIX4* v1_03;
 	edF32MATRIX4* v1_04;
@@ -1168,15 +1168,15 @@ void UpdateRenderMeshTransform_002954b0(ed_3d_hierarchy_node* param_1, bool mode
 			}
 		}
 		else {
-			if (*(char*)((int)(v1_00->base).hash.number + 8) != '\0') {
-				IMPLEMENTATION_GUARD(
-					v1_01 = *(edF32MATRIX4*)((int)(v1_00->base).hash.number + 0x10);
-				if (v1_01 == (edF32MATRIX4*)0x0) {
-					if ((*(ushort*)((int)(v1_00->base).hash.number + 0x1e) & 1) == 0) {
-						edF32Matrix4CopyHard(&(v1_00->base).transformB, v1_00);
+			if (v1_00->base.bSceneRender != 0) {
+				v1_01 = (ed_3d_hierarchy_node*)(v1_00->base).pLinkTransformData;
+				if (v1_01 == (ed_3d_hierarchy_node*)0x0) {
+					if (((v1_01->base).flags_0x9e & 1) == 0) {
+						edF32Matrix4CopyHard(&(v1_00->base).transformB, &v1_00->base.transformA);
 					}
 				}
 				else {
+					IMPLEMENTATION_GUARD(
 					if (*(char*)(v1_01[2] + 2) != '\0') {
 						v1_02 = (edF32MATRIX4*)v1_01[2][1][0];
 						if (v1_02 == (edF32MATRIX4*)0x0) {
@@ -1267,9 +1267,10 @@ void UpdateRenderMeshTransform_002954b0(ed_3d_hierarchy_node* param_1, bool mode
 						edF32Matrix4MulF32Matrix4Hard(&(v1_00->base).transformB, v1_00, v1_01[1]);
 						*(undefined*)((int)(v1_00->base).field_0x80 + 8) = 0;
 						goto LAB_00295748;
-					}
+					})
 				}
-				*(undefined*)((int)(v1_00->base).field_0x80 + 8) = 0;)
+
+				(v1_00->base).bSceneRender = 0;
 			}
 		LAB_00295748:
 			if (((v1->base).flags_0x9e & 1) == 0) {
@@ -11328,6 +11329,47 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	return pNewNode;
 }
 
+edNODE* RecursiveAddToHierarchy(
+	edLIST* pList,
+	ed_3d_hierarchy_node* pHierNode,
+	edNODE* pNode,
+	ed_g3d_manager* pMeshInfo,
+	ed_Chunck* targetChunk,
+	ed_hash_code* pHashCode,
+	uint totalElements,
+	edNODE* parentNode = nullptr
+) {
+	edNODE* newNode = nullptr;
+
+	// Loop through all elements in pHashCode
+	for (uint i = 0; i < totalElements; ++i) {
+		ed_Chunck* pChunk = LOAD_SECTION_CAST(ed_Chunck*, pHashCode[i].pData);
+
+		ed_g3d_hierarchy* pNewHier = (ed_g3d_hierarchy*)(pChunk + 1);
+
+		ed_Chunck* pNewHierNode = LOAD_SECTION_CAST(ed_Chunck*, pNewHier->pLinkTransformData);
+
+		// Check if the current data matches the target chunk
+		if (pNewHierNode == targetChunk) {
+			// Add node and recursively add its children
+			newNode = ed3DHierarchyAddNode(
+				pList, pHierNode, pNode,
+				pNewHier,
+				reinterpret_cast<ed_3d_hierarchy*>(parentNode->pData)
+			);
+
+			// Recurse to add children of this new node
+			RecursiveAddToHierarchy(
+				pList, pHierNode, pNode, pMeshInfo,
+				reinterpret_cast<ed_Chunck*>(pChunk), pHashCode, totalElements, newNode
+			);
+		}
+	}
+
+	// Return the last added node in this recursive level, if any
+	return newNode;
+}
+
 void ed3DHierarchyAddToListRecursive(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pNode, edNODE* pMeshTransformParent, ed_hash_code* pHashCode, ed_Chunck* peVar7)
 {
 	edNODE* peVar9;
@@ -11357,7 +11399,7 @@ edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, e
 	uint uVar6;
 	ed_Chunck* peVar7;
 	int subMeshCount;
-	edNODE* pMeshTransformParent;
+	edNODE* pRootNode;
 	edNODE* peVar9;
 	edNODE* peVar10;
 	edNODE* peVar11;
@@ -11417,20 +11459,23 @@ edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, e
 			peVar7 = ed3DG3DHierarchyGetChunk(pMeshInfo, szString);)
 	}
 
-	pMeshTransformParent = (edNODE*)0x0;
+	pRootNode = (edNODE*)0x0;
 
 	if (peVar7 != (ed_Chunck*)0x0) {
-		pMeshTransformParent = ed3DHierarchyAddNode(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(peVar7 + 1), (ed_3d_hierarchy*)0x0);
-		local_8 = (edNODE*)0x0;
-		peVar17 = pHashCode;
-		for (uVar16 = 0; uVar16 < uVar6; uVar16 = uVar16 + 1) {
-			ed3DHierarchyAddToListRecursive(pList, pHierNode, pNode, pMeshTransformParent, peVar17, peVar7);
-			peVar17 = peVar17 + 1;
-		}
-		ed3DHierarchyRefreshSonNumbers(pMeshTransformParent, &sStack2);
+		pRootNode = ed3DHierarchyAddNode(pList, pHierNode, pNode, (ed_g3d_hierarchy*)(peVar7 + 1), (ed_3d_hierarchy*)0x0);
+
+		RecursiveAddToHierarchy(pList, pHierNode, pNode, pMeshInfo, peVar7, pHashCode, uVar6, pRootNode);
+
+		//local_8 = (edNODE*)0x0;
+		//peVar17 = pHashCode;
+		//for (uVar16 = 0; uVar16 < uVar6; uVar16 = uVar16 + 1) {
+		//	ed3DHierarchyAddToListRecursive(pList, pHierNode, pNode, pRootNode, peVar17, peVar7);
+		//	peVar17 = peVar17 + 1;
+		//}
+		ed3DHierarchyRefreshSonNumbers(pRootNode, &sStack2);
 	}
 
-	return pMeshTransformParent;
+	return pRootNode;
 }
 
 void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edNODE* pParentNode, ed_Chunck* pChunck, edNODE* pNewNode,

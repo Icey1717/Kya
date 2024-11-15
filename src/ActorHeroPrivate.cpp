@@ -2598,7 +2598,7 @@ void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 		KyaVectorFunc(&(CScene::ptable.g_ActorManager_004516a4)->cluster, &local_30, &LAB_0033d920, &local_18);
 		pOtherActor = local_10;
 		local_4 = 0;
-		uVar2 = CActor::DoMessage(this, local_10, 0x4d, (ActorCompareStruct*)0x0);
+		uVar2 = CActor::DoMessage(this, local_10, MESSAGE_GET_BONE_ID, (ActorCompareStruct*)0x0);
 		*(int*)&this->field_0x15a0 = (int)uVar2;
 		local_8 = 0;
 		CActor::DoMessage(this, pOtherActor, 0x14, (ActorCompareStruct*)0x0);)
@@ -2853,7 +2853,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		})
 		return 0;
 	}
-	if (msg == 0x4d) {
+	if (msg == MESSAGE_GET_BONE_ID) {
 		uint boneType = reinterpret_cast<uint>(pMsgParam);
 		switch (boneType) {
 		case 0x5:
@@ -2861,20 +2861,17 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		default:
 			return 1;
 		case 0x7:
-			IMPLEMENTATION_GUARD(
-			return this->animKey_0x1588;)
+			return this->animKey_0x1588;
 		case 0xa:
 		case 0xb:
-			IMPLEMENTATION_GUARD(
-			return this->field_0x157c;)
+			return this->field_0x157c;
 		case 0xc:
-			IMPLEMENTATION_GUARD(
-			return this->animKey_0x1584;)
+			return this->animKey_0x1584;
 		case 0xd:
-			IMPLEMENTATION_GUARD(
-			return this->animKey_0x158c;)
+			return this->animKey_0x158c;
 		}
 	}
+
 	if (msg == 0x5e) {
 		IMPLEMENTATION_GUARD(
 		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
@@ -2889,9 +2886,11 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			}
 			bVar9 = (uVar10 & 1) != 0;
 		}
+
 		if ((bVar9) || (0.0 < this->field_0x1558)) {
 			return 0;
 		}
+
 		/* WARNING: Load size is inaccurate */
 		if (*pMsgParam == 2) {
 			edF32Vector4AddHard((edF32VECTOR4*)((int)pMsgParam + 0x10),
@@ -5330,6 +5329,7 @@ LAB_00341590:
 	case STATE_HERO_JUMP_3_3_RUN:
 	case STATE_HERO_FALL_A:
 	case STATE_HERO_FALL_B:
+	case STATE_HERO_FALL_BOUNCE_1_2:
 	case STATE_HERO_FALL_DEATH:
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
@@ -5374,6 +5374,9 @@ LAB_00341590:
 	case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
 		StateHeroJump_2_3Init();
 			break;
+	case STATE_HERO_FALL_BOUNCE_2_2:
+		StateHeroFallBounce_2_2Init();
+		break;
 	case STATE_HERO_CROUCH_A:
 	case STATE_HERO_CROUCH_B:
 	case STATE_HERO_CROUCH_C:
@@ -5489,6 +5492,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_JUMP_3_3_RUN:
 	case STATE_HERO_FALL_A:
 	case STATE_HERO_FALL_B:
+	case STATE_HERO_FALL_BOUNCE_1_2:
 	case STATE_HERO_FALL_DEATH:
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
@@ -5552,6 +5556,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_TRAMPOLINE_JUMP_2_3:
 	case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
 		StateHeroJump_2_3Term();
+		break;
+	case STATE_HERO_FALL_BOUNCE_2_2:
+		StateHeroFallBounce_2_2Term();
 		break;
 	case STATE_HERO_SLIDE_A:
 		StateHeroSlideTerm(0);
@@ -5869,6 +5876,12 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_FALL_B:
 		StateHeroFall(this->airRotationRate, 0);
 		break;
+	case STATE_HERO_FALL_BOUNCE_1_2:
+		StateHeroBasic(-1.0f, -1.0f, STATE_HERO_FALL_BOUNCE_2_2);
+		break;
+	case STATE_HERO_FALL_BOUNCE_2_2:
+		StateHeroBasic(-1.0f, -1.0f, STATE_HERO_STAND);
+		break;
 	case STATE_HERO_STAND_TO_CROUCH_A:
 		StateHeroStandToCrouch(0);
 		break;
@@ -6035,7 +6048,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_CAUGHT_TRAP_1:
 	{
 		const int local_4 = 0;
-		const uint newTrapBone = DoMessage(this->pTrappedByActor, (ACTOR_MESSAGE)0x4d, 0);
+		const uint newTrapBone = DoMessage(this->pTrappedByActor, MESSAGE_GET_BONE_ID, 0);
 		const uint existingTrapBone = this->trapLinkedBone;
 
 		if (existingTrapBone != newTrapBone) {
@@ -12587,6 +12600,81 @@ void CActorHeroPrivate::StateHeroWindCanonTerm()
 	ConvertSpeedPlayerToSpeedSumForceExt2D();
 	this->field_0x1428 = 1;
 	this->field_0x11fc = 0.0f;
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroBasic(float param_1, float param_2, int nextState)
+{
+	CCollision* pCol;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+	int iVar5;
+	Timer* pTVar6;
+
+	pCol = this->pCollisionData;
+	if (param_1 < 0.0f) {
+		this->dynamic.speed = 0.0f;
+	}
+	else {
+		SV_MOV_UpdateSpeedIntensity(0.0f, param_1);
+	}
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if ((pCol->flags_0x4 & 2) == 0) {
+		if (this->field_0x1184 < this->timeInAir) {
+			SetState(ChooseStateFall(0), 0xffffffff);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	if (param_2 < 0.0f) {
+		pCVar2 = this->pAnimationController;
+		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
+		bVar4 = false;
+
+		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
+			if (peVar3->animPlayState == 0) {
+				bVar4 = false;
+			}
+			else {
+				bVar4 = (peVar3->field_0xcc & 2) != 0;
+			}
+		}
+
+		if (bVar4) goto LAB_003489d0;
+	}
+
+	if (param_2 <= 0.0f) {
+		return;
+	}
+
+	pTVar6 = GetTimer();
+	if (pTVar6->scaledTotalTime - this->time_0x1538 <= param_2) {
+		return;
+	}
+
+LAB_003489d0:
+	SetState(nextState, 0xffffffff);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroFallBounce_2_2Init()
+{
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(this->field_0x118c, 0);
+
+	return;
+}
+
+void CActorHeroPrivate::StateHeroFallBounce_2_2Term()
+{
+	this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 
 	return;
 }
