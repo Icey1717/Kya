@@ -22,10 +22,6 @@ class CBehaviourWoofVerticalJump : public CBehaviourWoof
 class CActorWoof : public CActorAutonomous
 {
 public:
-	CActorWoof() {
-		IMPLEMENTATION_GUARD_LOG()
-	}
-
 	virtual void Create(ByteCode* pByteCode);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 

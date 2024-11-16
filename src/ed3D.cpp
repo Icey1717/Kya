@@ -4623,7 +4623,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 		pTEX = (ed_Chunck*)LOAD_SECTION(gCurLayer->pTex);
 		if (pTEX != (ed_Chunck*)0xfffffff0) {
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
-			peVar5 = (edF32VECTOR4*)LOAD_SECTION(pTexture->field_0x14);
+			peVar5 = LOAD_SECTION_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
 			if (((uVar9 & 0x400) == 0) && (gStepTime != 0)) {
 				peVar5->z = peVar5->z + peVar5->x;
 				peVar5->w = peVar5->w + peVar5->y;
@@ -4644,6 +4644,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 					peVar5->w = fVar10 + 1.0f;
 				}
 			}
+
 			pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 			pPkt->cmdB = 0;
 			pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
@@ -5559,6 +5560,14 @@ ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_hash_code* pMBNK, int index)
 	return pMaterial;
 }
 
+
+ed_g2d_texture* ed3DG2DGetTextureFromMaterial(ed_g2d_material* pMaterial, int index)
+{
+	ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMaterial->aLayers[index]);
+	ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+	ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
+	return reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
+}
 
 EVectorMode_A ed3DTestBoundingSphere(edF32VECTOR4* pInSphere)
 {

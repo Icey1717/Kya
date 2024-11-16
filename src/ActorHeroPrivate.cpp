@@ -32,7 +32,7 @@ CActorHeroPrivate::CActorHeroPrivate()
 	//	piVar1 = piVar1 + 3;
 	//} while (piVar1 != (int*)&(this->character).field_0x568);
 	//CPathFinderClient::CPathFinderClient((long)(int)&(this->character).field_0x570);
-	//*(undefined4*)&(this->character).field_0x638 = 0;
+	//*(undefined4*)&(this->character).actorsExcludeTable.field_0x0 = 0;
 	//CSlaveGroundSampler::CSlaveGroundSampler((long)&this->field_0x9e0);
 	//this->pVTable = &CActorHero::_vt;
 	//CMagicInterface::CMagicInterface((long)&this->field_0xab8);
@@ -199,17 +199,12 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 
 	CActorFighter::Create(pByteCode);
 
-	//pByteCode->currentSeekPos += 0xdd78;
-
-	// FOR LEVEL 1
-	pByteCode->currentSeekPos += 0x2288;
-
 	//this->field_0x1870 = 0;
 	//this->field_0x1874 = this->field_0x444;
 	//*(undefined4*)&this->field_0x1878 = *(undefined4*)&this->field_0x448;
 	//this->field_0xff0 = 0;
 	this->field_0x157c = pByteCode->GetU32();
-	assert(this->field_0x157c == 0xDCF9FCDC);
+	//assert(this->field_0x157c == 0xDCF9FCDC);
 	this->animKey_0x1584 = pByteCode->GetU32();
 	this->animKey_0x1588 = pByteCode->GetU32();
 	this->animKey_0x158c = pByteCode->GetU32();
@@ -2466,8 +2461,7 @@ void CActorHeroPrivate::Manage()
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			(*(code*)(this->pVTable)->field_0x16c)(this);)
+			ProcessDeath();
 		}
 	}
 	return;
@@ -2539,11 +2533,10 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 		//::EmptyFunction();
 	}
 
-	bFightRelated = this->IsFightRelated(this->curBehaviourId);
+	bFightRelated = IsFightRelated(this->curBehaviourId);
 
 	if ((bFightRelated != false) && (newState != AS_None)) {
-		IMPLEMENTATION_GUARD(
-		animType = ActorStateFunc_00327470((Actor*)this, newState, animType);)
+		animType = ChooseFightAnim(newState, animType);
 	}
 
 	const uint stateHeroFlags = GetStateHeroFlags(newState);
@@ -4651,29 +4644,36 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 
 		bVar3 = CanEnterToboggan();
 		if (bVar3 == false) {
-			IMPLEMENTATION_GUARD(
-			peVar8 = (edF32VECTOR4*)&DAT_00000010;
-			peVar10 = &local_10;
-			peVar2 = peVar10;
-			while (peVar2 != (edF32VECTOR4*)0x0) {
-				*(undefined*)&peVar10->x = 0;
-				peVar10 = (edF32VECTOR4*)((int)&peVar10->x + 1);
-				peVar8 = (edF32VECTOR4*)((int)&peVar8[-1].w + 3);
-				peVar2 = peVar8;
-			}
-			local_10.x = this->rotationEuler.x + 1.570796;
+			//peVar8 = (edF32VECTOR4*)&DAT_00000010;
+			//peVar10 = &local_10;
+			//peVar2 = peVar10;
+			//while (peVar2 != (edF32VECTOR4*)0x0) {
+			//	*(undefined*)&peVar10->x = 0;
+			//	peVar10 = (edF32VECTOR4*)((int)&peVar10->x + 1);
+			//	peVar8 = (edF32VECTOR4*)((int)&peVar8[-1].w + 3);
+			//	peVar2 = peVar8;
+			//}
+
+			local_10 = gF32Vector4Zero;
+			local_20 = gF32Vector4Zero;
+
+			local_10.x = this->rotationEuler.x + 1.570796f;
 			local_10.y = this->rotationEuler.y;
 			local_10.z = this->rotationEuler.z;
-			local_20.x = (float)_DAT_0040e6e0;
-			local_20.y = (float)((ulong)_DAT_0040e6e0 >> 0x20);
-			local_20.z = _DAT_0040e6e8;
-			local_20.w = _DAT_0040e6ec;
-			edF32Vector4AddHard(&local_20, &local_20, (edF32VECTOR4*)&this->dynamic);
+
+			const static edF32VECTOR4 edF32VECTOR4_0040e6e0 = { 0.0f, -2.0f, 0.0f, 0.0f };
+
+			local_20 = edF32VECTOR4_0040e6e0;
+
+			edF32Vector4AddHard(&local_20, &local_20, &this->dynamic.rotationQuat);
+
 			edF32Vector4NormalizeHard(&local_20, &local_20);
-			ActorFunc_0030a780(speed, (Actor*)this, &local_10, &local_20, 0);
+
+			_StateFighterHitFall(speed, &local_10, &local_20, 0);
+
 			pTVar6 = GetTimer();
 			landingState = -1;
-			this->field_0x1558 = pTVar6->scaledTotalTime + 1.5f;)
+			this->field_0x1558 = pTVar6->scaledTotalTime + 1.5f;
 		}
 		else {
 			pTVar6 = GetTimer();
@@ -5057,7 +5057,7 @@ void CActorHeroPrivate::ClearLocalData()
 	//CActor::SetAlpha(this, 0x80);
 	this->animKey_0x157c = this->currentLocation.y + 20.0f;
 	this->field_0x11f0 = this->currentLocation.y;
-	//_ResetHeroFight(this);
+	_ResetHeroFight();
 	CCollision* pCollision = this->pCollisionData;
 	if (pCollision != (CCollision*)0x0) {
 		pCollision->flags_0x0 = pCollision->flags_0x0 | 0x10000;
@@ -5330,6 +5330,7 @@ LAB_00341590:
 	case STATE_HERO_FALL_A:
 	case STATE_HERO_FALL_B:
 	case STATE_HERO_FALL_BOUNCE_1_2:
+	case STATE_HERO_COL_WALL:
 	case STATE_HERO_FALL_DEATH:
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
@@ -5493,6 +5494,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_FALL_A:
 	case STATE_HERO_FALL_B:
 	case STATE_HERO_FALL_BOUNCE_1_2:
+	case STATE_HERO_COL_WALL:
 	case STATE_HERO_FALL_DEATH:
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
@@ -5915,6 +5917,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
 		StateHeroTobogganJump(0, 0, 0, STATE_HERO_TOBOGGAN);
 		break;
+	case STATE_HERO_COL_WALL:
+		StateHeroColWall();
+		break;
 	case STATE_HERO_FALL_DEATH:
 		StateHeroFall(0.0f, 1);
 		break;
@@ -6122,12 +6127,13 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	if ((uVar9 != 0) && ((this->flags & 0x800000) == 0)) {
 		uVar9 = TestState_CheckFight(0xffffffff);
 		if (uVar9 != 0) {
-			IMPLEMENTATION_GUARD(
 			if (this->field_0x187c != 0) {
 				SetFightBehaviour();
-				_AccomplishFightAction(&this->heroActionParams);
+				IMPLEMENTATION_GUARD(
+				_AccomplishFightAction(&this->heroActionParams);)
 			}
-			(*(code*)(this->pVTable)->field_0x17c)(this);)
+			
+			AcquireAdversary();
 		}
 
 		uVar9 = TestState_AllowFight(0xffffffff);
@@ -6138,12 +6144,11 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 			if (!bVar2) {
 				bVar2 = this->pSoccerActor != (CActor*)0x0;
 			}
-			IMPLEMENTATION_GUARD(
-			if ((((!bVar2) && (this->field_0x350 != 0)) && (this->field_0x187c == 0)) &&
-				((uVar9 = TestState_00132830(0xffffffff), uVar9 == 0 ||
-					(this->dynamic.velocityDirectionEuler.y <= 0.0)))) {
-				(*(code*)(this->pVTable)->SetFightBehaviour)(this);
-			})
+		
+			if ((((!bVar2) && (this->field_0x350 != 0)) && (this->field_0x187c == 0)) && ((uVar9 = TestState_00132830(0xffffffff), uVar9 == 0 ||
+					(this->dynamic.velocityDirectionEuler.y <= 0.0f)))) {
+				SetFightBehaviour();
+			}
 		}
 	}
 
@@ -11670,6 +11675,69 @@ void CActorHeroPrivate::StateHeroFall(float rotationRate, int param_3)
 	return;
 }
 
+void CActorHeroPrivate::StateHeroColWall()
+{
+	CAnimation* pCVar1;
+	CCollision* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+	undefined4 uVar5;
+
+	pCVar1 = this->pAnimationController;
+	pCVar2 = this->pCollisionData;
+
+	SV_MOV_UpdateSpeedIntensity(0.0f, this->field_0x1058 * 2.0f);
+
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if ((pCVar2->flags_0x4 & 2) == 0) {
+		if (this->field_0x1184 < this->timeInAir) {
+			if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+				uVar5 = STATE_HERO_FALL_A;
+
+				if (this->field_0x142c != 0) {
+					if (this->distanceToGround < 10.3f) {
+						uVar5 = STATE_HERO_FALL_A;
+						this->field_0x1020 = 1;
+					}
+					else {
+						uVar5 = STATE_HERO_GLIDE_1;
+						this->dynamic.flags = this->dynamic.flags & 0xfffffffb;
+					}
+				}
+			}
+			else {
+				uVar5 = STATE_HERO_JUMP_3_3_STAND;
+				this->field_0x1020 = 1;
+			}
+
+			SetState(uVar5, 0xffffffff);
+			return;
+		}
+	}
+	else {
+		this->timeInAir = 0.0f;
+	}
+
+	peVar3 = (pCVar1->anmBinMetaAnimator).aAnimData;
+	bVar4 = false;
+
+	if ((peVar3->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
+		if (peVar3->animPlayState == 0) {
+			bVar4 = false;
+		}
+		else {
+			bVar4 = (peVar3->field_0xcc & 2) != 0;
+		}
+	}
+
+	if (bVar4) {
+		SetState(STATE_HERO_STAND, 0xffffffff);
+	}
+
+	return;
+}
+
 void CActorHeroPrivate::StateHeroFlyInit()
 {
 	int* piVar1;
@@ -13932,6 +14000,7 @@ bool CActorHeroPrivate::CanBounceAgainstWall()
 	else {
 		bVar2 = false;
 	}
+
 	return bVar2;
 }
 
@@ -14645,8 +14714,88 @@ bool CActorHeroPrivate::GetSomethingInFrontOf_001473e0()
 	local_20.w = 1.0f;
 
 	CCollisionRay CStack64 = CCollisionRay(1.4f, &local_20, &g_xVector);
-	float fVar8 = CStack64.Intersect(RAY_FLAG_SCENERY | RAY_FLAG_ACTOR, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+	float fVar8 = CStack64.Intersect(RAY_FLAG_ACTOR_SCENERY, this, (CActor*)0x0, 0x40000040, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
 	return fVar8 == 1e+30;
+}
+
+int CActorHeroPrivate::ChooseFightAnim(int newState, int initialAnim)
+{
+	CActor* pCVar1;
+	bool bVar2;
+	StateConfig* piVar3;
+	int indexValue;
+	CActor* pCVar5;
+
+	pCVar5 = this->field_0x350;
+	if ((pCVar5 == (CActor*)0x0) &&
+		(pCVar1 = this->field_0x354, pCVar5 = (CActor*)0x0, pCVar1 != (CActor*)0x0)) {
+		pCVar5 = pCVar1;
+	}
+	if (pCVar5 != (CActor*)0x0) {
+		if (initialAnim == -1) {
+			piVar3 = GetStateCfg(newState);
+			initialAnim = piVar3->animId;
+		}
+
+		bVar2 = pCVar5->IsKindOfObject(0x10);
+		if (bVar2 == false) {
+			indexValue = 0;
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			indexValue = pCVar5[8].baseLocation.y;
+			if (3 < indexValue) {
+				indexValue = indexValue - 1;
+			})
+		}
+
+		if ((initialAnim == 0x182) || (initialAnim == 0x181)) {
+			initialAnim = initialAnim + indexValue * 2;
+		}
+		else {
+			if ((((((initialAnim == 0x176) || (initialAnim == 0x175)) || (initialAnim == 0x174)) ||
+				((initialAnim == 0x173 || (initialAnim == 0x172)))) ||
+				((initialAnim == 0x16c || ((initialAnim == 0x16b || (initialAnim == 0x16a)))))) ||
+				((initialAnim == 0x169 || (initialAnim == 0x168)))) {
+				if (indexValue != 0) {
+					initialAnim = initialAnim + 5;
+				}
+			}
+			else {
+				if (initialAnim == 0x30) {
+					if (indexValue == 0) {
+						initialAnim = 0x11e;
+					}
+					else {
+						initialAnim = 0x120;
+					}
+				}
+				else {
+					if (initialAnim == 0x2f) {
+						if (indexValue == 0) {
+							initialAnim = 0x11d;
+						}
+						else {
+							initialAnim = 0x11f;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return initialAnim;
+}
+
+void CActorHeroPrivate::_ResetHeroFight()
+{
+	this->field_0x187c = 0;
+	this->fightLock.pActor = (CActor*)0x0;
+
+	//(**(code**)(*(int*)&this->field_0xcf0 + 0x10))(&this->field_0xcd0);
+	//(**(code**)(*(int*)&this->field_0x1600 + 0x10))(&this->field_0x15dc.field_0x4);
+
+	return;
 }
 
 void CActorHeroPrivate::ComputeSoccerMoving(float param_1, float param_2, CActorMovable* pSoccerActor)
@@ -15190,6 +15339,59 @@ void CActorHeroPrivate::EnableFightCamera(int bEnable)
 	}
 
 	return;
+}
+
+void CActorHeroPrivate::AcquireAdversary()
+{
+	SetAdversary(this->fightLock.pActor);
+
+	return;
+}
+
+void CActorHeroPrivate::Func_0x194(float param_1)
+{
+	if (this->field_0x7cc < param_1) {
+		LifeDecrease(10.0f);
+	}
+
+	return;
+}
+
+int CActorHeroPrivate::Func_0x198()
+{
+	return FUN_00309b20(this->pPlayerInput, this->field_0x18dc != 0 ^ 1);
+}
+
+void CActorHeroPrivate::_Proj_GetPossibleExit()
+{
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+
+	iVar1 = this->actorState;
+	if (iVar1 == -1) {
+		uVar3 = 0;
+	}
+	else {
+		pSVar2 = GetStateCfg(iVar1);
+		uVar3 = pSVar2->flags_0x4;
+	}
+
+	if (((uVar3 & 0x100000) != 0) && (2.0f < this->timeInAir)) {
+		SetState(0x61, 0xffffffff);
+	}
+
+	return;
+}
+
+int CActorHeroPrivate::FUN_00309b20(CPlayerInput* pPlayerInput, int param_3)
+{
+	if (this->field_0x470 == (FighterSubObj_40*)0x0) {
+		return 0;
+	}
+
+	IMPLEMENTATION_GUARD_LOG();
+	return 0;
 }
 
 void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)

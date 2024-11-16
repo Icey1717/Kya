@@ -161,10 +161,7 @@ struct ProjectileSubObj
 	uint flags;
 	float damage;
 	float hitRadius;
-	undefined field_0x18;
-	undefined field_0x19;
-	undefined field_0x1a;
-	undefined field_0x1b;
+	float warnRadius;
 	float field_0x1c;
 	float field_0x20;
 	float field_0x24;

@@ -110,6 +110,9 @@ namespace Debug {
 			case STATE_HERO_FALL_DEATH:
 				return "StateHeroFallDeath";
 				break;
+			case STATE_HERO_COL_WALL:
+				return "StateHeroColWall";
+				break;
 			case STATE_HERO_KICK_A:
 				return "StateHeroKickA";
 				break;

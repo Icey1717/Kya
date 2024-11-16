@@ -340,7 +340,7 @@ namespace Debug
 						ImGui::Text("Texture Details");
 						ImGui::Text("Hash Code: %s", pTexture->hashCode.hash.ToString().c_str());
 						ImGui::Text("bHasPalette: %d", pTexture->bHasPalette);
-						ImGui::Text("Field 0x14: %f", pTexture->field_0x14);
+						ImGui::Text("Field 0x14: %f", pTexture->pAnimSpeedNormalExtruder);
 
 						ImGui::Spacing();
 						ImGui::Spacing();

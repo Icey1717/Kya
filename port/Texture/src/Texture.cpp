@@ -333,7 +333,7 @@ void Renderer::Kya::G2D::Layer::ProcessTexture(ed_g2d_texture* pTexture, const i
 	texture.pParent = this;
 
 	TEXTURE_LOG(LogLevel::Info, "Renderer::Kya::G2D::Layer::ProcessTexture Texture hash: {} field 0x14: {} bHasPalette: {}",
-		pTexture->hashCode.hash.ToString(), pTexture->field_0x14, pTexture->bHasPalette);
+		pTexture->hashCode.hash.ToString(), pTexture->pAnimSpeedNormalExtruder, pTexture->bHasPalette);
 
 	ed_hash_code* pBitmapHashCode = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
 	if (pBitmapHashCode != (ed_hash_code*)0x0) {

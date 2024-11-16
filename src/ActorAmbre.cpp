@@ -253,8 +253,8 @@ StateConfig* CActorAmbre::GetStateCfg(int state)
 		pStateConfig = CActor::GetStateCfg(state);
 	}
 	else {
-		assert((state - 6) < 6);
-		pStateConfig = _gStateCfg_AMB + state + -6;
+		assert((state - 5) < 6);
+		pStateConfig = _gStateCfg_AMB + state + -5;
 	}
 
 	return pStateConfig;

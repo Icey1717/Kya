@@ -25,7 +25,7 @@ public:
 	edF32VECTOR4* aSplineRotationsQuat;
 	char* field_0x28;
 	float* aDelays;
-	char* field_0x30;
+	uint* field_0x30;
 	char* field_0x34;
 	char* field_0x38;
 };

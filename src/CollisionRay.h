@@ -6,6 +6,7 @@
 
 #define RAY_FLAG_SCENERY 1
 #define RAY_FLAG_ACTOR 2
+#define RAY_FLAG_ACTOR_SCENERY 3
 
 class CActor;
 

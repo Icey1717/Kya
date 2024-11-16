@@ -1506,6 +1506,21 @@ uint CActorHero::TestState_001328a0(uint inFlags)
 	return inFlags & 0x1000000;
 }
 
+uint CActorHero::TestState_00132830(uint inFlags)
+{
+	int iVar1;
+
+	if (inFlags == 0xffffffff) {
+		iVar1 = this->actorState;
+		inFlags = 0;
+		if ((iVar1 != -1) && (inFlags = 0, 0x71 < iVar1)) {
+			inFlags = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return inFlags & 0x2000000;
+}
+
 uint CActorHero::TestState_00132b90(uint inFlags)
 {
 	int iVar1;

@@ -14,8 +14,6 @@
 #define NATIVE_STATE_TAKE_PUT_WALK 0x15
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
 
-struct s_fighter_combo {};
-
 template<typename T>
 class CRndChooser
 {

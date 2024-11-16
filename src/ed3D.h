@@ -512,7 +512,7 @@ PACK(
 	struct ed_g2d_texture {
 	ed_hash_code hashCode;
 	int bHasPalette;
-	int field_0x14; // edF32VECTOR4*
+	int pAnimSpeedNormalExtruder; // edF32VECTOR4*
 	float field_0x18;
 	undefined field_0x1c;
 	undefined field_0x1d;
@@ -545,6 +545,7 @@ void Init3D(void);
 ed_g2d_manager* ed3DInstallG2D(char* pFileBuffer, int fileLength, int* outInt, ed_g2d_manager* pManager, int param_5);
 ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pManager, int index);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int index);
+ed_g2d_texture* ed3DG2DGetTextureFromMaterial(ed_g2d_material* pMaterial, int index);
 ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int param_2);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bInitHierList);
 edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);

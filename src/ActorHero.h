@@ -44,6 +44,7 @@
 #define STATE_HERO_HURT_A 0x8e
 
 #define STATE_HERO_TOBOGGAN_JUMP_HURT 0x95
+#define STATE_HERO_COL_WALL 0x96
 
 #define STATE_HERO_FALL_DEATH 0xa1
 
@@ -297,6 +298,7 @@ public:
 	uint TestState_IsGripped(uint inFlags);
 	uint TestState_AllowAttack(uint inFlags);
 	uint TestState_001328a0(uint inFlags);
+	uint TestState_00132830(uint inFlags);
 	uint TestState_00132b90(uint inFlags);
 	uint TestState_CheckFight(uint inFlags);
 	uint TestState_AllowFight(uint inFlags);

@@ -2114,7 +2114,7 @@ void CActor::LoadBehaviours(ByteCode* pByteCode)
 
 				ACTOR_LOG(LogLevel::Info, "CActor::LoadBehaviours {} {} id: {} length: {}", this->name, componentCount - 1, pEntry->id, componentStrmLen);
 
-				CBehaviour* pNewBehaviour = this->BuildBehaviour(pEntry->id);
+				CBehaviour* pNewBehaviour = BuildBehaviour(pEntry->id);
 				pEntry->SetBehaviour(pNewBehaviour);
 
 				pcVar2 = pByteCode->GetPosition();
@@ -2348,7 +2348,7 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 		}
 		if (((count != 0) && (pHier = this->p3DHierNode, pHier != (ed_3d_hierarchy_node*)0x0)) &&
 			(pTextureInfo_00 != (ed_g2d_manager*)0x0)) {
-			pHashCode = ed3DHierarchyGetMaterialBank((ed_3d_hierarchy*)pHier);
+			pHashCode = ed3DHierarchyGetMaterialBank(&pHier->base);
 			iVar3 = ed3DG2DGetG2DNbMaterials(pHashCode);
 			iVar11 = 0;
 			if (0 < count) {
@@ -4297,7 +4297,7 @@ bool CActor::SV_AmICarrying(CActor* pOther)
 int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbsolute* pPathFollowReaderAbs, int param_4, int param_5, CActorsTable* pActorsTable, edF32MATRIX4* pMatrix, edF32VECTOR4* param_8, S_PATHREADER_POS_INFO* pPathReaderPosInfo)
 {
 	CCollision* pCVar1;
-	int iVar2;
+	uint* iVar2;
 	uint uVar3;
 	int iVar4;
 	uint uVar5;
@@ -4355,13 +4355,12 @@ int CActor::SV_UpdateMatrixOnTrajectory_Rel(float param_1, CPathFollowReaderAbso
 
 		if (pCVar1 != (CCollision*)0x0) {
 	
-			iVar2 = (int)pPathFollowReaderAbs->pActor3C_0x0->field_0x30;
-			if (iVar2 == 0) {
+			iVar2 = pPathFollowReaderAbs->pActor3C_0x0->field_0x30;
+			if (iVar2 == (uint*)0x0) {
 				uVar5 = 0;
 			}
 			else {
-				IMPLEMENTATION_GUARD(
-				uVar5 = *(uint*)(iVar2 + pSVar6->field_0x4 * 4);)
+				uVar5 = iVar2[pPathReaderPosInfo->field_0x4];
 			}
 
 			uVar3 = pPathFollowReaderAbs->pActor3C_0x0->field_0x18;

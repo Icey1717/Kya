@@ -798,17 +798,19 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 		}
 		else {
 			if (newState == 0xc) {
-				IMPLEMENTATION_GUARD(
 				if ((this->field_0x350->flags & 0x8000) != 0) {
+					IMPLEMENTATION_GUARD(
 					piVar1 = (int*)this->field_0x358;
 					if (((piVar1 == (int*)0x0) || (this->field_0x354 == 0)) || (bVar3 = true, this->field_0x354 != piVar1[6])) {
 						bVar3 = false;
 					}
 					if (((bVar3) && (piVar1 != (int*)0x0)) && ((this->field_0x354 != 0 && (this->field_0x354 == piVar1[6])))) {
 						(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);
-					}
+					})
 				}
+
 				if ((this->field_0x350->flags & 0x200000) != 0) {
+					IMPLEMENTATION_GUARD(
 					if (((this->field_0x360 == 0) || (this->field_0x35c == 0)) ||
 						(this->field_0x35c != *(int*)(this->field_0x360 + 0x18))) {
 						bVar3 = false;
@@ -840,11 +842,12 @@ void CActorProjectile::BehaviourProjectile_InitState(int newState)
 								(**(code**)(*piVar1 + 0x10))(0, 0);
 							}
 						}
-					}
+					})
 				}
-				if (0.0 < this->field_0x350->timeToExplode) {
-					CActorAutonomous::SV_AUT_WarnActors(*(float*)&this->field_0x350->field_0x18, 0.0, (CActorAutonomous*)this, 0);
-				})
+
+				if (0.0f < this->field_0x350->timeToExplode) {
+					SV_AUT_WarnActors(this->field_0x350->warnRadius, 0.0f, 0);
+				}
 			}
 			else {
 				if (newState == 6) {

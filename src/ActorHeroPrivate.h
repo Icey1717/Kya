@@ -19,6 +19,12 @@ enum EBoomyThrowState
 class CCamera;
 class CActorBoomy;
 
+class CFightLock
+{
+public:
+	CActor* pActor;
+};
+
 class CBehaviourHero : public CBehaviourFighter
 {
 
@@ -75,6 +81,12 @@ public:
 
 	virtual void ProcessDeath();
 	virtual void EnableFightCamera(int bEnable);
+	virtual void AcquireAdversary();
+	virtual void Func_0x194(float param_1);
+	virtual int Func_0x198();
+	virtual void _Proj_GetPossibleExit();
+
+	int FUN_00309b20(CPlayerInput* pPlayerInput, int param_3);
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
 	bool AccomplishAction(int bUpdateActiveActionId);
@@ -187,6 +199,8 @@ public:
 
 	void StateHeroFall(float param_1, int param_3);
 
+	void StateHeroColWall();
+
 	void StateHeroFlyInit();
 
 	void StateHeroWindFly(int param_2);
@@ -280,12 +294,17 @@ public:
 
 	bool GetSomethingInFrontOf_001473e0();
 
+	int ChooseFightAnim(int newState, int initialAnim);
+	void _ResetHeroFight();
+
 	CBehaviourHeroDefault behaviourHeroDefault;
 
 	SPEED_DYN field_0xcb4;
 
 	CActor* pTrappedByActor;
 	uint trapLinkedBone;
+
+	CFightLock fightLock;
 
 	CActorMovable* pKickedActor;
 	CActor* field_0xf50;

@@ -63,7 +63,7 @@ void CPathFollow::Create(ByteCode* pByteCode)
 	else {
 		pcVar1 = pByteCode->currentSeekPos;
 		pByteCode->currentSeekPos = pcVar1 + this->splinePointCount * 4;
-		this->field_0x30 = pcVar1;
+		this->field_0x30 = reinterpret_cast<uint*>(pcVar1);
 		this->field_0x18 = 0;
 
 		iVar3 = 0;
