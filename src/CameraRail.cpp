@@ -1,4 +1,7 @@
 #include "CameraRail.h"
+
+#include <algorithm>
+
 #include "PathFollow.h"
 #include "PathManager.h"
 #include "MathOps.h"
@@ -292,93 +295,82 @@ ECameraType CCameraRailSimple::GetMode()
 
 bool CCameraRailSimple::Manage()
 {
-	bool bVar1;
-	CActor* pCVar3;
-	CActorMovable* pCVar2;
+	bool bHandled;
+	CActorMovable* pMovable;
 	Timer* pTVar4;
 	edF32VECTOR4* v0;
 	float fVar5;
 	float fVar6;
 	float fVar7;
-	edF32VECTOR4 local_20;
-	edF32VECTOR4 eStack16;
 
-	pCVar3 = GetTarget();
-	if (pCVar3 == (CActor*)0x0) {
-		bVar1 = false;
+	if (GetTarget() == (CActor*)0x0) {
+		bHandled = false;
 	}
 	else {
-		bVar1 = CCamera::Manage();
-		if (bVar1 == false) {
-			pCVar2 = reinterpret_cast<CActorMovable*>(GetTarget());
+		bHandled = CCamera::Manage();
+		if (bHandled == false) {
+			pMovable = reinterpret_cast<CActorMovable*>(GetTarget());
 			ComputeTargetPosition(&this->lookAt);
-			ComputeTargetOffset(&local_20);
+
+			edF32VECTOR4 targetOffset;
+			ComputeTargetOffset(&targetOffset);
+
+			CAMERA_LOG(LogLevel::Verbose, "CameraRailSimple::Manage targetOffset {}", targetOffset.ToString());
 
 			if ((this->flags_0xc & 0x400) != 0) {
-				pCVar3 = GetTarget();
-				this->lookAt.y = this->lookAt.y - pCVar3->distanceToGround;
+				this->lookAt.y = this->lookAt.y - GetTarget()->distanceToGround;
 			}
 
-			v0 = &this->lookAt;
-			edF32Vector4AddHard(v0, v0, &local_20);
-			edF32Vector4SubHard(&local_20, &this->lookAt, &this->transformationMatrix.rowT);
-			fVar5 = edF32Vector4NormalizeHard(&local_20, &local_20);
-			SetDistance(fVar5);
-			this->transformationMatrix.rowZ = local_20;
+			edF32Vector4AddHard(&this->lookAt, &this->lookAt, &targetOffset);
 
-			this->pSpline->GetFirstDerivative(this->field_0xf8, &eStack16);
+			edF32VECTOR4 newDelta;
+			edF32Vector4SubHard(&newDelta, &this->lookAt, &this->transformationMatrix.rowT);
+			SetDistance(edF32Vector4NormalizeHard(&newDelta, &newDelta));
+			this->transformationMatrix.rowZ = newDelta;
 
-			this->speedDyn.UpdateLerp((pCVar2->dynamic).linearAcceleration);
+			edF32VECTOR4 splineDerivative;
+			this->pSpline->GetFirstDerivative(this->splineAlpha, &splineDerivative);
 
-			fVar6 = edF32Vector4DotProductHard(&this->transformationMatrix.rowZ, &eStack16);
-			fVar7 = (this->speedDyn).field_0x0;
-			fVar5 = this->pSpline->GetRoughLength();
-			fVar6 = fVar6 * (fVar7 / fVar5);
-			fVar5 = GetDistance();
-			if (fVar5 < (this->field_0xe0).x) {
-				fVar5 = GetDistance();
-				fVar6 = fVar6 * (this->field_0xe0).z * ((this->field_0xe0).x - fVar5);
+			this->speedDyn.UpdateLerp((pMovable->dynamic).linearAcceleration);
+
+			fVar6 = edF32Vector4DotProductHard(&this->transformationMatrix.rowZ, &splineDerivative);
+			fVar6 = fVar6 * ((this->speedDyn).currentAlpha / this->pSpline->GetRoughLength());
+
+			if (GetDistance() < (this->field_0xe0).x) {
+				fVar6 = fVar6 * (this->field_0xe0).z * ((this->field_0xe0).x - GetDistance());
 			}
 			else {
-				fVar5 = GetDistance();
-				if ((this->field_0xe0).y < fVar5) {
-					fVar5 = GetDistance();
-					fVar6 = fVar6 * (this->field_0xe0).w * ((this->field_0xe0).y - fVar5);
+				if ((this->field_0xe0).y < GetDistance()) {
+					fVar6 = fVar6 * (this->field_0xe0).w * ((this->field_0xe0).y - GetDistance());
 				}
 			}
 
-			pTVar4 = GetTimer();
-			fVar5 = this->field_0xf8 - fVar6 * pTVar4->cutsceneDeltaTime;
-			this->field_0xf8 = fVar5;
-			if (1.0f < fVar5) {
-				this->field_0xf8 = 1.0f;
-			}
-			else {
-				if (fVar5 < 0.0f) {
-					this->field_0xf8 = 0.0f;
-				}
-			}
+			this->splineAlpha = this->splineAlpha - fVar6 * GetTimer()->cutsceneDeltaTime;
+			this->splineAlpha = std::clamp(this->splineAlpha, 0.0f, 1.0f);
 
-			this->pSpline->GetPosition(this->field_0xf8, &local_20);
+			CAMERA_LOG(LogLevel::Verbose, "CameraRailSimple::Manage splineAlpha {}", this->splineAlpha);
 
-			this->transformationMatrix.rowT = local_20;
+			edF32VECTOR4 splinePointPosition;
+			this->pSpline->GetPosition(this->splineAlpha, &splinePointPosition);
+			this->transformationMatrix.rowT = splinePointPosition;
 
-			edF32Vector4SubHard(&local_20, &this->lookAt, &this->transformationMatrix.rowT);
-			fVar5 = edF32Vector4NormalizeHard(&local_20, &local_20);
-			SetDistance(fVar5);
-			this->transformationMatrix.rowZ = local_20;
+			CAMERA_LOG(LogLevel::Verbose, "CameraRailSimple::Manage splinePointPosition {}", splinePointPosition.ToString());
 
-			SetAngleAlpha(GetAngleAlpha());
-			SetAngleBeta(GetAngleBeta());
+			edF32Vector4SubHard(&newDelta, &this->lookAt, &this->transformationMatrix.rowT);
+			SetDistance(edF32Vector4NormalizeHard(&newDelta, &newDelta));
+			this->transformationMatrix.rowZ = newDelta;
 
-			bVar1 = true;
+			SetAngleAlpha(CCamera::GetAngleAlpha());
+			SetAngleBeta(CCamera::GetAngleBeta());
+
+			bHandled = true;
 		}
 		else {
-			bVar1 = false;
+			bHandled = false;
 		}
 	}
 
-	return bVar1;
+	return bHandled;
 }
 
 bool CCameraRailSimple::AlertCamera(int alertType, int param_3, CCamera* param_4)
@@ -457,9 +449,9 @@ void CCameraRailSimple::OnAlertCamera()
 		fVar6 = fVar7;
 	} while (fVar8 < 0.0f);
 
-	this->field_0xf8 = fVar5 - puVar10 * 0.05f;
+	this->splineAlpha = fVar5 - puVar10 * 0.05f;
 
-	this->pSpline->GetPosition(this->field_0xf8, &eStack16);
+	this->pSpline->GetPosition(this->splineAlpha, &eStack16);
 	edF32Vector4SubHard(&eStack16, &this->lookAt, &eStack16);
 
 	pCVar2 = GetTarget();
@@ -483,7 +475,7 @@ void CCameraRailSimple::OnAlertCamera()
 
 			if ((1.0f < fVar5) || (fVar9 = fVar7, 0.0f <= fVar8)) break;
 		}
-		this->field_0xf8 = fVar5 - fVar6;
+		this->splineAlpha = fVar5 - fVar6;
 	}
 
 	this->speedDyn.Init(0.0f, 30.0f);

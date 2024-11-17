@@ -439,6 +439,12 @@ void Debug::Hero::ShowMenu(bool* bOpen)
 			ImGui::Text("field_0x10f4: %f", pActorHero->field_0x10f4);
 		}
 
+		if (ImGui::CollapsingHeader("Wind", ImGuiTreeNodeFlags_DefaultOpen)) {
+			ImGui::Text("windBoostStrength %f", pActorHero->windBoostStrength);
+			ImGui::Text("field_0x11f8 %f", pActorHero->windRotationStrength);
+			ImGui::Text("field_0x11fc %f", pActorHero->field_0x11fc);
+		}
+
 		ImGui::Spacing();
 		ImGui::Spacing();
 

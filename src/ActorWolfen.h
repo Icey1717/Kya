@@ -35,6 +35,11 @@ class CBehaviourWatchDog : public CBehaviourWolfen
 public:
 };
 
+class CBehaviourSleep : public CBehaviourWatchDog
+{
+public:
+};
+
 class CBehaviourEscape : public CBehaviourWolfen
 {
 public:

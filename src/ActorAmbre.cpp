@@ -50,6 +50,11 @@ void StaticMeshComponent::SetVisible(ed_3D_Scene* pScene)
 	return;
 }
 
+bool StaticMeshComponent::HasMesh()
+{
+	return this->pMeshTransformParent != (edNODE*)0x0;
+}
+
 void StaticMeshComponent::Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager, ed_3d_hierarchy_setup* pHierarchySetup, char* szString)
 {
 	if (pScene == (ed_3D_Scene*)0x0) {

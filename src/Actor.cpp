@@ -1620,7 +1620,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 												this->flags = this->flags | 0x400000;
 											}
 											else {
-												if (msg == 0x49) {
+												if (msg == MESSAGE_REQUEST_CAMERA_TARGET) {
 													bVar4 = true;
 													edF32VECTOR4* pResolvedMsg = (edF32VECTOR4*)pMsgParam;
 													*pResolvedMsg = this->currentLocation;
@@ -2942,6 +2942,11 @@ void CActor::SkipToNextActor(ByteCode* pByteCode)
 	ACTOR_LOG(LogLevel::Info, "CActor::Create SKIPPED");
 	CActor::Create(pByteCode);
 
+	SkipToNextActorNoBase(pByteCode);
+}
+
+void CActor::SkipToNextActorNoBase(ByteCode* pByteCode)
+{
 	ACTOR_LOG(LogLevel::Info, "CActor::Create NAME: {}", this->name);
 
 	char* pCurrent = pByteCode->currentSeekPos;

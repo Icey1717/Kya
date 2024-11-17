@@ -46,6 +46,7 @@ class StaticMeshComponentAdvanced : public StaticMeshComponent
 {
 public:
 	virtual void Reset();
+	virtual bool HasMesh();
 
 	void Create(ByteCode* pByteCode);
 	void ResetInternal(int textureIndex, int meshIndex);
@@ -400,6 +401,9 @@ public:
 
 	FighterSubObj_40* field_0x470;
 
+	edF32VECTOR4 field_0x4a0;
+	edF32VECTOR4 field_0x4b0;
+
 	float field_0x50c;
 	float field_0x510;
 	float field_0x514;
@@ -472,6 +476,7 @@ public:
 	float field_0x828;
 	float field_0x82c;
 
+	int field_0x8e0;
 	int field_0x8e4;
 
 	edF32VECTOR4 field_0x8f0;

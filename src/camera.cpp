@@ -788,24 +788,18 @@ void CCameraExt::ComputeTargetOffset(edF32VECTOR4* v0)
 	return;
 }
 
-void CCameraExt::ComputeTargetPosition(edF32VECTOR4* param_2)
+void CCameraExt::ComputeTargetPosition(edF32VECTOR4* pTargetPosition)
 {
-	bool bVar1;
-	CActor* this_00;
-	CActor* pReceiver;
-	CActor* pOutActor;
-	edF32VECTOR4 local_20;
+	edF32VECTOR4 requestedCameraTarget;
+	bool bReceivedCameraTarget = GetTarget()->DoMessage(GetTarget(), MESSAGE_REQUEST_CAMERA_TARGET, &requestedCameraTarget);
 
-	this_00 = GetTarget();
-	pReceiver = GetTarget();
-	bVar1 = this_00->DoMessage(pReceiver, (ACTOR_MESSAGE)0x49, (MSG_PARAM)&local_20);
-	if (bVar1 == false) {
-		pOutActor = GetTarget();
-		*param_2 = pOutActor->currentLocation;
+	if (bReceivedCameraTarget == false) {
+		*pTargetPosition = GetTarget()->currentLocation;
 	}
 	else {
-		*param_2 = local_20;
+		*pTargetPosition = requestedCameraTarget;
 	}
+
 	return;
 }
 

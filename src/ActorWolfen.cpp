@@ -3,7 +3,8 @@
 
 void CActorWolfen::Create(ByteCode* pByteCode)
 {
-	SkipToNextActor(pByteCode);
+	CActorFighter::Create(pByteCode);
+	SkipToNextActorNoBase(pByteCode);
 }
 
 CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
@@ -16,6 +17,9 @@ CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
 		break;
 	case 0xa:
 		pBehaviour = new CBehaviourGuardArea;
+		break;
+	case 0xc:
+		pBehaviour = new CBehaviourSleep;
 		break;
 	case 0xd:
 		pBehaviour = new CBehaviourEscape;

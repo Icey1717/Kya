@@ -14,7 +14,7 @@ CedMathTCBSpline::CedMathTCBSpline(uint pointCount, int bDistributeWeights)
 
 	this->field_0x0 = 0;
 	this->nbPoints = pointCount;
-	this->field_0x4 = -1.0f;
+	this->caluclatedRoughLength = -1.0f;
 	this->field_0x10 = (undefined*)0x0;
 	
 	this->aPoints = new CedMathTCBSplinePoint[this->nbPoints];
@@ -190,7 +190,10 @@ void CedMathTCBSpline::ComputeKey(uint param_2, uint param_3, uint param_4, uint
 	return;
 }
 
-float _FLOAT_0040ea80 = 1.0f;
+static edF32VECTOR4 gSplineDefault =
+{
+	1.0f, 0.0f, 0.0f, 0.0f
+};
 
 void CedMathTCBSpline::GetPosition(float time, edF32VECTOR4* pOutPosition)
 {
@@ -199,8 +202,9 @@ void CedMathTCBSpline::GetPosition(float time, edF32VECTOR4* pOutPosition)
 	float local_4;
 
 	uVar1 = GetKeyFromTime(time, &local_4);
+
+	local_20 = gSplineDefault;
 	local_20.y = local_4 / (this->aPoints[uVar1 + 1].time - this->aPoints[uVar1].time);
-	local_20.x = _FLOAT_0040ea80;
 	local_20.z = local_20.y * local_20.y;
 	local_20.w = local_20.y * local_20.z;
 	local_4 = local_20.y;
@@ -283,10 +287,10 @@ float CedMathTCBSpline::GetRoughLength()
 {
 	uint uVar1;
 	uint uVar2;
-	uint uVar3;
+	uint curPointIndex;
 	float fVar5;
 	float alpha;
-	float fVar6;
+	float pointLength;
 	float time;
 	edF32VECTOR4 local_60;
 	edF32VECTOR4 local_50;
@@ -296,19 +300,19 @@ float CedMathTCBSpline::GetRoughLength()
 	float local_8;
 	float local_4;
 
-	if (this->field_0x4 < 0.0f) {
-		this->field_0x4 = 0.0f;
+	if (this->caluclatedRoughLength < 0.0f) {
+		this->caluclatedRoughLength = 0.0f;
 
-		uVar3 = 0;
+		curPointIndex = 0;
 		if (this->nbPoints != 1) {
 			do {
-				fVar6 = 0.0;
-				time = this->aPoints[uVar3].time;
-				alpha = this->aPoints[uVar3 + 1].time;
+				pointLength = 0.0f;
+				time = this->aPoints[curPointIndex].time;
+				alpha = this->aPoints[curPointIndex + 1].time;
 
 				uVar1 = GetKeyFromTime(time, &local_4);
+				local_50 = gSplineDefault;
 				local_50.y = local_4 / (this->aPoints[uVar1 + 1].time - this->aPoints[uVar1].time);
-				local_50.x = _FLOAT_0040ea80;
 				local_50.z = local_50.y * local_50.y;
 				local_50.w = local_50.y * local_50.y * local_50.y;
 				local_4 = local_50.y;
@@ -333,8 +337,8 @@ float CedMathTCBSpline::GetRoughLength()
 
 					fVar5 = edFIntervalUnitSrcLERP(fVar5 / 20.0f, time, alpha);
 					uVar2 = GetKeyFromTime(fVar5, &local_8);
+					local_60 = gSplineDefault;
 					local_60.y = local_8 / (this->aPoints[uVar2 + 1].time - this->aPoints[uVar2].time);
-					local_60.x = (float)_FLOAT_0040ea80;
 					local_60.z = local_60.y * local_60.y;
 					local_60.w = local_60.y * local_60.y * local_60.y;
 					local_8 = local_60.y;
@@ -347,19 +351,16 @@ float CedMathTCBSpline::GetRoughLength()
 					}
 
 					edF32Vector4SubHard(&eStack32, &local_40, &local_30);
-					fVar5 = edF32Vector4GetDistHard(&eStack32);
 					uVar1 = uVar1 + 1;
-					local_30.w = local_40.w;
-					fVar6 = fVar6 + fVar5;
-					local_30.x = local_40.x;
-					local_30.y = local_40.y;
+					pointLength = pointLength + edF32Vector4GetDistHard(&eStack32);
+					local_30 = local_40;
 				} while (uVar1 < 0x14);
 
-				uVar3 = uVar3 + 1;
-				this->field_0x4 = this->field_0x4 + fVar6;
-			} while (uVar3 < this->nbPoints - 1);
+				curPointIndex = curPointIndex + 1;
+				this->caluclatedRoughLength = this->caluclatedRoughLength + pointLength;
+			} while (curPointIndex < this->nbPoints - 1);
 		}
 	}
 
-	return this->field_0x4;
+	return this->caluclatedRoughLength;
 }

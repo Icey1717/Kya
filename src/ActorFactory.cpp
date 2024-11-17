@@ -41,6 +41,14 @@
 #include "ActorBlazer.h"
 #include "ActorEventGenerator.h"
 #include "ActorWoof.h"
+#include "ActorElectrolla.h"
+#include "ActorExplosiveDistributor.h"
+#include "ActorHedgehog.h"
+#include "ActorNoseMonster.h"
+#include "ActorWoodMonster.h"
+#include "ActorHelperSign.h"
+#include "ActorEgg.h"
+#include "ActorAmortosCmd.h"
 
 class CActorBunch : public CActor {
 	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
@@ -54,6 +62,9 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 {
 	if (classId < 0x57) {
 		switch (classId) {
+		case ACTOR:
+			*outSize = sizeof(CActor);
+			return new CActor[count];
 		case BOOMY:
 			*outSize = sizeof(CActorBoomy);
 			return new CActorBoomy[count];
@@ -73,6 +84,10 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 		case NATIV:
 			*outSize = sizeof(CActorNativ);
 			return new CActorNativ[count];
+			break;
+		case ELECTROLLA:
+			*outSize = sizeof(CActorElectrolla);
+			return new CActorElectrolla[count];
 			break;
 		case MOVING_PLATFORM:
 			*outSize = sizeof(CActorMovingPlatform);
@@ -130,6 +145,10 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 			*outSize = sizeof(CActorProjectile);
 			return new CActorProjectile[count];
 			break;
+		case EXPLOSIVE_DISTRIBUTOR:
+			*outSize = sizeof(CActorExplosiveDistributor);
+			return new CActorExplosiveDistributor[count];
+			break;
 		case CHECKPOINT_MANAGER:
 			*outSize = sizeof(CActorCheckpointManager);
 			return new CActorCheckpointManager[count];
@@ -142,9 +161,21 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 			*outSize = sizeof(CActorAraignos);
 			return new CActorAraignos[count];
 			break;
+		case HEDGEHOG:
+			*outSize = sizeof(CActorHedgehog);
+			return new CActorHedgehog[count];
+			break;
 		case TELEPORTER:
 			*outSize = sizeof(CActorTeleporter);
 			return new CActorTeleporter[count];
+			break;
+		case NOSE_MONSTER:
+			*outSize = sizeof(CActorNoseMonster);
+			return new CActorNoseMonster[count];
+			break;
+		case WOOD_MONSTER:
+			*outSize = sizeof(CActorWoodMonster);
+			return new CActorWoodMonster[count];
 			break;
 		case AMORTOS:
 			*outSize = sizeof(CActorAmortos);
@@ -157,6 +188,14 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 		case FX:
 			*outSize = sizeof(CActorFx);
 			return new CActorFx[count];
+			break;
+		case EGG:
+			*outSize = sizeof(CActorEgg);
+			return new CActorEgg[count];
+			break;
+		case AMORTOS_CMD:
+			*outSize = sizeof(CActorAmortosCmd);
+			return new CActorAmortosCmd[count];
 			break;
 		case MONEY:
 			*outSize = sizeof(CActorMoney);
@@ -213,6 +252,10 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 		case WOOF:
 			*outSize = sizeof(CActorWoof);
 			return new CActorWoof[count];
+			break;
+		case HELPER_SIGN:
+			*outSize = sizeof(CActorHelperSign);
+			return new CActorHelperSign[count];
 			break;
 		case BUNCH:
 			*outSize = sizeof(CActorBunch);

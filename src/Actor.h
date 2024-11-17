@@ -74,6 +74,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_ENABLE_INPUT = 0x26,
 	MESSAGE_TRAP_CAUGHT = 0x31,
 	MESSAGE_SOCCER_START = 0x35,
+	MESSAGE_REQUEST_CAMERA_TARGET = 0x49,
 	MESSAGE_GET_BONE_ID = 0x4d,
 };
 
@@ -118,7 +119,7 @@ struct SPEED_DYN {
 	void Init(float param_1, float param_2);
 	float UpdateLerp(float target);
 
-	float field_0x0;
+	float currentAlpha;
 	float field_0x4;
 };
 
@@ -539,6 +540,7 @@ public:
 
 	// #HACK
 	void SkipToNextActor(ByteCode* pByteCode);
+	void SkipToNextActorNoBase(ByteCode* pByteCode);
 
 	bool SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial);
 

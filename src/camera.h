@@ -132,7 +132,7 @@ public:
 	virtual edF32VECTOR3* GetAngles();
 	// CCamera
 
-	void ComputeTargetPosition(edF32VECTOR4* param_2);
+	void ComputeTargetPosition(edF32VECTOR4* pTargetPosition);
 	void ComputeTargetOffset(edF32VECTOR4* v0);
 
 	undefined field_0xa8;

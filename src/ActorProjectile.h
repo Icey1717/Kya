@@ -153,6 +153,11 @@ public:
 	int field_0x18;
 };
 
+class CBehaviourProjectileNew : public CBehaviourProjectile
+{
+public:
+};
+
 struct ProjectileSubObj
 {
 	float timeToExplode;

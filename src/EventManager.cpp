@@ -717,17 +717,15 @@ void _edEventInstallGameData(ed_event_chunk* pEventChunk, int param_2)
 						pCollider->worldLocation = *LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation);
 					}
 					else {
-						IMPLEMENTATION_GUARD(
 						if (peVar2->field_0x0[0] == 0x0) {
-							iVar8 = *(int*)(peVar2->field_0x0[2] + 4);
+							IMPLEMENTATION_GUARD(
+							iVar8 = *(int*)(peVar2->field_0x0[2] + 4);)
 						}
 						else {
-							iVar8 = *(int*)(peVar2->field_0x0[0] + 4);
+							iVar8 = *(int*)(LOAD_SECTION_CAST(char*, peVar2->field_0x0[0]) + 4);
 						}
 
-						edF32Matrix4MulF32Vector4Hard
-						((edF32VECTOR4*)(peVar10 + 1), (edF32MATRIX4*)(pEventChunk->aMatrices + iVar8 * 0x40),
-							*(edF32VECTOR4**)(*(int*)&peVar10[2].field_0x8 + 4));)
+						edF32Matrix4MulF32Vector4Hard(&pCollider->worldLocation, pEventChunk->aMatrices + iVar8, LOAD_SECTION_CAST(edF32VECTOR4*, LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef)->pLocation));
 					}
 
 					uVar12 = uVar12 + 1;

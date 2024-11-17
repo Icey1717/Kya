@@ -409,6 +409,23 @@ set (actor_src
 	"${src_root}/ActorEventGenerator.h"
 	"${src_root}/ActorWoof.cpp"
 	"${src_root}/ActorWoof.h"
+
+	"${src_root}/ActorExplosiveDistributor.cpp"
+	"${src_root}/ActorExplosiveDistributor.h"
+	"${src_root}/ActorElectrolla.cpp"
+	"${src_root}/ActorElectrolla.h"
+	"${src_root}/ActorHedgehog.cpp"
+	"${src_root}/ActorHedgehog.h"
+	"${src_root}/ActorNoseMonster.cpp"
+	"${src_root}/ActorNoseMonster.h"
+	"${src_root}/ActorWoodMonster.cpp"
+	"${src_root}/ActorWoodMonster.h"
+	"${src_root}/ActorHelperSign.cpp"
+	"${src_root}/ActorHelperSign.h"
+	"${src_root}/ActorEgg.cpp"
+	"${src_root}/ActorEgg.h"
+	"${src_root}/ActorAmortosCmd.cpp"
+	"${src_root}/ActorAmortosCmd.h"
 )
 
 list(APPEND main_src ${actor_src})

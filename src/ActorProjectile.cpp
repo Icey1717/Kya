@@ -289,6 +289,9 @@ CBehaviour* CActorProjectile::BuildBehaviour(int behaviourType)
 	case PROJECTILE_BEHAVIOUR_INACTIVE:
 		pBehaviour = new CBehaviourProjectileExcuse;
 		break;
+	case 0xd:
+		pBehaviour = new CBehaviourProjectileNew;
+		break;
 	default:
 		assert(behaviourType < 3);
 		pBehaviour = CActorAutonomous::BuildBehaviour(behaviourType);

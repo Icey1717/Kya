@@ -500,8 +500,8 @@ public:
 
 	float field_0x1108;
 
-	float field_0x11f4;
-	float field_0x11f8;
+	float windBoostStrength;
+	float windRotationStrength;
 	float field_0x11fc;
 
 	float field_0x11ec;

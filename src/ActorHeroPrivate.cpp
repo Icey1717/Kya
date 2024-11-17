@@ -10,6 +10,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <algorithm>
 #include "CameraGame.h"
 #include "CollisionRay.h"
 #include "ActorWind.h"
@@ -3413,8 +3414,8 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				SetBehaviour(7, 0x10b, 0xffffffff);
 			}
 			else {
-				this->field_0x11f8 = 0.0f;
-				this->field_0x11f4 = 0.0f;
+				this->windRotationStrength = 0.0f;
+				this->windBoostStrength = 0.0f;
 				SetBehaviour(7, 0x10d, 0xffffffff);
 			}
 
@@ -3914,8 +3915,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 									}
 								}
 								else {
-									if ((msg == 0x49) &&
-										(uVar10 = TestState_IsOnAToboggan(0xffffffff), uVar10 != 0)) {
+									if ((msg == MESSAGE_REQUEST_CAMERA_TARGET) && (uVar10 = TestState_IsOnAToboggan(0xffffffff), uVar10 != 0)) {
 										edF32VECTOR4* pOutMsgData = reinterpret_cast<edF32VECTOR4*>(pMsgParam);
 										peVar1 = this->pMeshTransform;
 
@@ -4306,8 +4306,8 @@ void CActorHeroPrivate::ResetGripClimbDefaultSettings()
 
 void CActorHeroPrivate::ResetWindDefaultSettings()
 {
-	this->field_0x11f4 = 0.0f;
-	this->field_0x11f8 = 0.0f;
+	this->windBoostStrength = 0.0f;
+	this->windRotationStrength = 0.0f;
 	this->field_0x11fc = 0.0f;
 	//*(undefined4*)&this->field_0x1200 = 0;
 	//*(undefined4*)&this->field_0x1208 = 0;
@@ -8054,15 +8054,15 @@ void CActorHeroPrivate::StateHeroTrampolineStomachToFall(float param_1)
 
 	StateHeroJump_2_3(1, 1, 0);
 
-	this->field_0x11f8 = 0.0f;
-	this->field_0x11f4 = fabs((this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y) / param_1) - 1.0f;
-	fVar1 = this->field_0x11f4;
+	this->windRotationStrength = 0.0f;
+	this->windBoostStrength = fabs((this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y) / param_1) - 1.0f;
+	fVar1 = this->windBoostStrength;
 	if (0.0f < fVar1) {
-		this->field_0x11f4 = 0.0f;
+		this->windBoostStrength = 0.0f;
 	}
 	else {
 		if (fVar1 < -1.0f) {
-			this->field_0x11f4 = -1.0f;
+			this->windBoostStrength = -1.0f;
 		}
 	}
 
@@ -11745,8 +11745,8 @@ void CActorHeroPrivate::StateHeroFlyInit()
 	Timer* pTVar3;
 
 	this->field_0x11ec = 0.0f;
-	this->field_0x11f4 = 0.0f;
-	this->field_0x11f8 = 0.0f;
+	this->windBoostStrength = 0.0f;
+	this->windRotationStrength = 0.0f;
 	ConvertSpeedSumForceExtToSpeedPlayer2D();
 	pTVar3 = GetTimer();
 	this->field_0x1548 = pTVar3->scaledTotalTime;
@@ -11922,7 +11922,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 			}
 			else {
 				this->field_0x11ec = 0.0f;
-				this->field_0x11f4 = 0.0f;
+				this->windBoostStrength = 0.0f;
 			}
 		}
 		else {
@@ -11961,9 +11961,9 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 			fVar28 = (float)(int)fVar28;
 		}
 
-		this->field_0x11f4 = this->field_0x11f4 * fVar27 + (1.0f - fVar27) * fVar28;
+		this->windBoostStrength = this->windBoostStrength * fVar27 + (1.0f - fVar27) * fVar28;
 
-		ChangeCollisionSphereForGlide(0.1f, this->field_0x11f4);
+		ChangeCollisionSphereForGlide(0.1f, this->windBoostStrength);
 
 		if ((1.0f < this->field_0xa88) || (bVar6)) {
 			pTVar9 = GetTimer();
@@ -12113,7 +12113,7 @@ LAB_0014a028:
 	if (EVar14 == 8) {
 		pCVar13 = pCameraManager->pActiveCamera;
 		this->field_0xcb4.UpdateLerp(this->rotationEuler.z);
-		pCVar13->SetAngleGamma(this->field_0xcb4.field_0x0);
+		pCVar13->SetAngleGamma(this->field_0xcb4.currentAlpha);
 	}
 
 	if (this->field_0x1428 == 0) {
@@ -12183,7 +12183,7 @@ LAB_0014a028:
 		local_10 = this->rotationEuler.z;
 		SV_UpdateValue(fVar27, 1.0472f, &local_10);
 		this->rotationEuler.z = local_10;
-		this->field_0x11f8 = local_10 / 0.5235988;
+		this->windRotationStrength = local_10 / 0.5235988;
 		if (bVar6) {
 			uVar15 = GetWindState();
 			if (uVar15 == (CActorWindState*)0x0) {
@@ -12479,7 +12479,7 @@ LAB_0014a028:
 				edF32Vector4ScaleHard(0.25f, &eStack416, &eStack416);
 				fVar27 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &eStack416);
 				this->dynamicExt.field_0x6c = fVar27;
-				this->field_0x11f4 = -1.0f;
+				this->windBoostStrength = -1.0f;
 				pCVar19 = GetInputManager(1, 0);
 				if (pCVar19 != (CPlayerInput*)0x0) {
 					CPlayerInput::FUN_001b66f0(0.6f, 0.0f, 0.2f, 0.0f, &pCVar19->field_0x40, 0);
@@ -15566,29 +15566,20 @@ void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator
 						else {
 							if (newAnim == 0x102) {
 								local_4 = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
-								puVar7 = this->field_0x11f4;
-								//puVar4 = &local_4->flags + local_4->keyIndex_0x8;
+
 								char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 								AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
-								puVar5 = &pValue->field_0xc;
 
-								if (1.0f < puVar7) {
-									puVar8 = 1.0f;
-								}
-								else {
-									puVar8 = -1.0f;
-									if (-1.0 <= puVar7) {
-										puVar8 = puVar7;
-									}
-								}
-								if (puVar8 < 0.0f) {
-									fVar6 = this->field_0x11f8;
+								const float windBoostStrength = std::clamp(this->windBoostStrength, -1.0f, 1.0f);
+
+								if (windBoostStrength < 0.0f) {
+									fVar6 = this->windRotationStrength;
 									if (fVar6 < 0.0f) {
-										CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, -puVar8, &local_4, 1, 0, 3);
+										CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, -windBoostStrength, &local_4, 1, 0, 3);
 										pValue->field_0x14 = 0.0f;
 									}
 									else {
-										CActor::SV_Blend3AnimationsWith2Ratios(fVar6, -puVar8, &local_4, 1, 2, 3);
+										CActor::SV_Blend3AnimationsWith2Ratios(fVar6, -windBoostStrength, &local_4, 1, 2, 3);
 										pValue->field_0xc = 0.0f;
 									}
 
@@ -15605,20 +15596,20 @@ void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator
 										pValue->field_0xc = 0.0f;
 									}
 									else {
-										fVar6 = this->field_0x11f8;
-										if (fVar6 < 0.0) {
-											CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, puVar8, &local_4, 1, 0, 4);
+										fVar6 = this->windRotationStrength;
+										if (fVar6 < 0.0f) {
+											CActor::SV_Blend3AnimationsWith2Ratios(-fVar6, windBoostStrength, &local_4, 1, 0, 4);
 											pValue->field_0x14 = 0.0f;
 										}
 										else {
-											CActor::SV_Blend3AnimationsWith2Ratios(fVar6, puVar8, &local_4, 1, 2, 4);
-											*puVar5 = 0.0f;
+											CActor::SV_Blend3AnimationsWith2Ratios(fVar6, windBoostStrength, &local_4, 1, 2, 4);
+											pValue->field_0xc = 0.0f;
 										}
 
-										pValue->field_0x1c = 0.0f;
+										pValue->field_0x20 = 0.0f;
 									}
 
-									pValue->field_0x14 = 0.0f;
+									pValue->field_0x18 = 0.0f;
 								}
 							}
 							else {

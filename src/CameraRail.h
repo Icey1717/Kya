@@ -55,7 +55,7 @@ public:
 
 	edF32VECTOR4 field_0xe0;
 
-	float field_0xf8;
+	float splineAlpha;
 };
 
 #endif // !CAMERA_RAIL_H

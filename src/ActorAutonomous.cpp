@@ -559,7 +559,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	edF32VECTOR4 local_70;
 	edF32VECTOR4 movementSurfaceNormal;
 	edF32VECTOR4 local_50;
-	edF32VECTOR4 currentLocation;
+	edF32VECTOR4 oldCurrentLocation;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 velocity;
 	edF32VECTOR4 translation;
@@ -572,7 +572,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	bVar3 = false;
 	uVar2 = this->dynamic.flags;
 
-	currentLocation = this->currentLocation;
+	oldCurrentLocation = this->currentLocation;
 
 	this->dynamic.flags = 0;
 	uVar10 = flags | this->dynamic.field_0x4c;
@@ -1010,7 +1010,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		this->dynamic.flags = this->dynamic.flags | 4;
 	}
 
-	ComputeRealMoving(&currentLocation);
+	ComputeRealMoving(&oldCurrentLocation);
 
 	fVar15 = 0.05f;
 	if (0.05f < this->dynamic.linearAcceleration) {

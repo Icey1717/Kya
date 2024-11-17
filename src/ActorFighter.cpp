@@ -505,7 +505,9 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	_CreateBlowsDB(pByteCode);
 	_CreateGrabsDB(pByteCode);
 	_CreateCombosDB(pByteCode);
+
 	this->pWeaponActor.index = pByteCode->GetS32();
+
 	return;
 }
 
@@ -517,24 +519,24 @@ bool CActorFighter::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 	//iVar2 = &this->field_0x880;
 	CActorAutonomous::CarriedByActor(pActor, m0);
 
-	IMPLEMENTATION_GUARD_LOG(
 	uVar1 = 0;
 	if (this->field_0x8e0 != 0) {
+		IMPLEMENTATION_GUARD(
 		do {
 			edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)(iVar2 + 0x20), m0, (edF32VECTOR4*)(iVar2 + 0x20));
 			uVar1 = uVar1 + 1;
 			iVar2 = iVar2 + 0x30;
-		} while (uVar1 < (uint)this->field_0x8e0);
+		} while (uVar1 < (uint)this->field_0x8e0);)
 	}
 
 	if ((this->fightFlags & 0x1000) != 0) {
-		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&this->field_0x4a0, m0, (edF32VECTOR4*)&this->field_0x4a0);
-		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&this->field_0x4b0, m0, (edF32VECTOR4*)&this->field_0x4b0);
+		edF32Matrix4MulF32Vector4Hard(&this->field_0x4a0, m0, &this->field_0x4a0);
+		edF32Matrix4MulF32Vector4Hard(&this->field_0x4b0, m0, &this->field_0x4b0);
 	}
 
 	if (this->actorState - 0x52U < 2) {
-		edF32Matrix4MulF32Vector4Hard((edF32VECTOR4*)&this->field_0x690, m0, (edF32VECTOR4*)&this->field_0x690);
-	})
+		edF32Matrix4MulF32Vector4Hard(&this->field_0x690, m0, &this->field_0x690);
+	}
 
 	return true;
 }
@@ -1138,8 +1140,9 @@ void CActorFighter::ClearLocalData()
 	this->field_0x864 = 0;
 	this->field_0x868 = 0xffffffff;
 	this->field_0x86c = 0;
-	this->field_0x630 = 0;
+	this->field_0x630 = 0;)
 	this->field_0x8e0 = 0;
+	IMPLEMENTATION_GUARD_LOG(
 	this[1].characterBase.base.base.field_0x13c = 0;
 	this[1].characterBase.base.base.aActorSounds = (CActorSound*)0x0;
 	*(undefined4*)&this[1].characterBase.base.base.field_0x144 = 0;
@@ -3435,7 +3438,6 @@ void StaticMeshComponentAdvanced::Reset()
 
 {
 	edF32VECTOR4* peVar1;
-	long lVar2;
 
 	if ((this->field_0x64 == 1) && (peVar1 = GetTextureAnimSpeedNormalExtruder(), peVar1 != (edF32VECTOR4*)0x0)) {
 		peVar1->x = this->field_0x74;
@@ -3448,19 +3450,36 @@ void StaticMeshComponentAdvanced::Reset()
 	this->field_0x68 = 0;
 
 	if (this->field_0x60 == 0) {
-		IMPLEMENTATION_GUARD(
-		lVar2 = (*(code*)(this->pVTable)->field_0x14)(this);
-		if (lVar2 != 0) {
-			StaticMeshComponent::Unload_00114e80((StaticMeshComponent*)this, (ed_3D_Scene*)0x0);
+		if (HasMesh() != false) {
+			IMPLEMENTATION_GUARD(
+			StaticMeshComponent::Unload_00114e80((StaticMeshComponent*)this, (ed_3D_Scene*)0x0);)
 		}
+
 		this->pMeshTransformParent = (edNODE*)0x0;
-		this->pMeshTransformData = (ed_3d_hierarchy_node*)0x0;)
+		this->pMeshTransformData = (ed_3d_hierarchy_node*)0x0;
 	}
 	else {
 		SetVisible((ed_3D_Scene*)0x0);
 	}
 
 	return;
+}
+
+bool StaticMeshComponentAdvanced::HasMesh()
+{
+	bool bVar1;
+
+	if (this->field_0x60 == 1) {
+		bVar1 = false;
+		if (this->pMeshTransformData != (ed_3d_hierarchy_node*)0x0) {
+			bVar1 = this->field_0x61 == 0;
+		}
+	}
+	else {
+		bVar1 = this->pMeshTransformParent != (edNODE*)0x0;
+	}
+
+	return bVar1;
 }
 
 edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()

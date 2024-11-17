@@ -290,7 +290,7 @@ void CCameraGame::Reset()
 	this->gameLookAt = this->lookAt;
 
 	fVar7 = this->cameraConfig.baseTargetPitch;
-	this->pitchDyn.field_0x0 = fVar7;
+	this->pitchDyn.currentAlpha = fVar7;
 	this->targetPitch = fVar7;
 
 	this->field_0x204 = this->cameraConfig.field_0x38.z;
@@ -1043,7 +1043,7 @@ void CCameraGame::_ResetDataForCut(int param_2)
 	}
 	this->field_0x208 = fVar5;
 	fVar5 = GetAngleXFromVector(&local_80);
-	this->pitchDyn.field_0x0 = fVar5;
+	this->pitchDyn.currentAlpha = fVar5;
 	this->targetPitch = fVar5;
 	fVar5 = GetAngleYFromVector(&local_80);
 	this->field_0x204 = fVar5;
@@ -1298,7 +1298,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 				_ResetDataForCut(0);
 				if (((param_4 != 0) && (fVar12 = param_4->GetAngleAlpha(), fVar12 < 0.1963495f)) &&
 					((*puVar9 & 0x2000000) != 0)) {
-					this->pitchDyn.field_0x0 = 0.1963495f;
+					this->pitchDyn.currentAlpha = 0.1963495f;
 					this->targetPitch = 0.1963495f;
 				}
 			}
@@ -1926,7 +1926,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 			if (((CCamera::_gpcam_man->flags & 0x4000000) != 0) &&
 				(pCVar6 = (CCameraGame*)CCamera::_gpcam_man->activeCamManager.FUN_003feab0(0), this == pCVar6)) {
 				calculatedPitch = this->cameraConfig.baseTargetPitch;
-				this->pitchDyn.field_0x0 = calculatedPitch;
+				this->pitchDyn.currentAlpha = calculatedPitch;
 				this->targetPitch = calculatedPitch;
 			}
 
@@ -1943,19 +1943,19 @@ void CCameraGame::_UpdateAngleAlphaData()
 			}
 
 			pitch = edF32Between_2Pi(this->targetPitch + puVar12 * (this->cameraConfig).field_0x7c * CCamera::_gpcam_man->time_0x4);
-			this->pitchDyn.field_0x0 = pitch;
+			this->pitchDyn.currentAlpha = pitch;
 			this->targetPitch = pitch;
 			calculatedPitch = this->cameraConfig.field_0x2c;
 
 			if (pitch < calculatedPitch) {
-				this->pitchDyn.field_0x0 = calculatedPitch;
+				this->pitchDyn.currentAlpha = calculatedPitch;
 				this->targetPitch = calculatedPitch;
 			}
 			else {
 				calculatedPitch = this->cameraConfig.field_0x30;
 
 				if (calculatedPitch < pitch) {
-					this->pitchDyn.field_0x0 = calculatedPitch;
+					this->pitchDyn.currentAlpha = calculatedPitch;
 					this->targetPitch = calculatedPitch;
 				}
 			}
@@ -1964,7 +1964,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 			/* Camera mode is not (5) */
 			if ((this->field_0x1bc == 4) || (this->field_0x1bc == 3)) {
 				pitch = this->targetPitch + (this->cameraConfig.baseTargetPitch - this->targetPitch) * 0.1f;
-				this->pitchDyn.field_0x0 = pitch;
+				this->pitchDyn.currentAlpha = pitch;
 				this->targetPitch = pitch;
 			}
 			else {
@@ -2026,9 +2026,9 @@ void CCameraGame::_UpdateAngleAlphaData()
 						if ((uVar1 & 0x1000) == 0) {
 							if ((uVar1 & 8) == 0) {
 								pitch = (this->cameraConfig).targetPitch;
-								this->pitchDyn.field_0x0 = pitch;
+								this->pitchDyn.currentAlpha = pitch;
 								this->targetPitch = pitch;
-								this->pitchDyn.field_0x0 = pitch;
+								this->pitchDyn.currentAlpha = pitch;
 							}
 							else {
 								/* Auto camera goes in here */
@@ -2037,7 +2037,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 									if ((this->field_0x1b0 & 0x180) == 0) {
 										if ((~(this->cameraConfig).flags_0x70 & 3) == 3) {											
 											pitch = this->pitchDyn.UpdateLerp((this->cameraConfig).targetPitch);
-											this->pitchDyn.field_0x0 = pitch;
+											this->pitchDyn.currentAlpha = pitch;
 											this->targetPitch = pitch;
 
 											CAMERA_LOG(LogLevel::Verbose, "CameraGame::_UpdateAngleAlphaData new pitch: {} target: {}", pitch, (this->cameraConfig).targetPitch);
@@ -2066,9 +2066,9 @@ void CCameraGame::_UpdateAngleAlphaData()
 										}
 
 										pitch = this->targetPitch + (this->cameraConfig).field_0x8c * CCamera::_gpcam_man->time_0x4;
-										this->pitchDyn.field_0x0 = pitch;
+										this->pitchDyn.currentAlpha = pitch;
 										this->targetPitch = pitch;
-										this->pitchDyn.field_0x0 = pitch;
+										this->pitchDyn.currentAlpha = pitch;
 										(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 | 1;
 									}
 								}
@@ -2089,7 +2089,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 								}
 							}
 							pitch = this->pitchDyn.UpdateLerp((this->cameraConfig).targetPitch);
-							this->pitchDyn.field_0x0 = pitch;
+							this->pitchDyn.currentAlpha = pitch;
 							this->targetPitch = pitch;)
 						}
 					}
@@ -2176,7 +2176,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 							}
 						}
 
-						this->pitchDyn.field_0x0 = calculatedPitch;
+						this->pitchDyn.currentAlpha = calculatedPitch;
 						this->targetPitch = calculatedPitch;
 					}
 				}
@@ -2193,7 +2193,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 					calculatedPitch = edF32GetAnglesDelta(fVar11, calculatedPitch);
 
 					pitch = edF32Between_Pi(this->targetPitch + pitch * (sinf(calculatedPitch) / cosf(calculatedPitch) / 2.414f) * CCamera::_gpcam_man->time_0x4);
-					this->pitchDyn.field_0x0 = pitch;
+					this->pitchDyn.currentAlpha = pitch;
 					this->targetPitch = pitch;
 				}
 
@@ -2201,14 +2201,14 @@ void CCameraGame::_UpdateAngleAlphaData()
 				pitch = this->cameraConfig.field_0x2c;
 
 				if (this->targetPitch < pitch) {
-					this->pitchDyn.field_0x0 = pitch;
+					this->pitchDyn.currentAlpha = pitch;
 					this->targetPitch = pitch;
 				}
 				else {
 					pitch = this->cameraConfig.field_0x30;
 
 					if (pitch < this->targetPitch) {
-						this->pitchDyn.field_0x0 = pitch;
+						this->pitchDyn.currentAlpha = pitch;
 						this->targetPitch = pitch;
 					}
 				}
@@ -2949,7 +2949,7 @@ void CCameraGame::_After_Manage_Alpha()
 			fVar5 = (this->cameraConfig).field_0x8c;
 			if (0.001f < fabs(fVar5)) {
 				fVar5 = edF32Between_Pi(this->targetPitch + fVar5 * CCamera::_gpcam_man->time_0x4);
-				(this->pitchDyn).field_0x0 = fVar5;
+				(this->pitchDyn).currentAlpha = fVar5;
 				this->targetPitch = fVar5;
 			}
 		}
@@ -3153,7 +3153,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 
 	if (this->field_0x4a4 == 0) {
 		fVar4 = GetAngleXFromVector(aeStack96);
-		(this->pitchDyn).field_0x0 = fVar4;
+		(this->pitchDyn).currentAlpha = fVar4;
 		this->targetPitch = fVar4;
 		fVar4 = GetAngleYFromVector(aeStack96);
 		this->field_0x204 = fVar4;
@@ -3575,7 +3575,7 @@ bool CCameraGame::Manage()
 
 					this->field_0x208 = floatA;
 					floatA = GetAngleXFromVector(&eStack112);
-					this->pitchDyn.field_0x0 = floatA;
+					this->pitchDyn.currentAlpha = floatA;
 					this->targetPitch = floatA;
 					floatA = GetAngleYFromVector(&eStack112);
 					this->field_0x204 = floatA;
@@ -3915,7 +3915,7 @@ bool CCameraGame::Manage()
 
 void SPEED_DYN::Init(float param_1, float param_2)
 {
-	this->field_0x0 = param_1;
+	this->currentAlpha = param_1;
 	this->field_0x4 = param_2;
 }
 
@@ -3926,7 +3926,7 @@ float SPEED_DYN::UpdateLerp(float target)
 	float delta;
 
 	adjustedDelta = this->field_0x4;
-	delta = target - this->field_0x0;
+	delta = target - this->currentAlpha;
 	pTimeController = GetTimer();
 	adjustedDelta = adjustedDelta * pTimeController->cutsceneDeltaTime;
 
@@ -3939,11 +3939,11 @@ float SPEED_DYN::UpdateLerp(float target)
 		if (delta < 0.0f) {
 			adjustedDelta = -adjustedDelta;
 		}
-		this->field_0x0 = this->field_0x0 + adjustedDelta;
+		this->currentAlpha = this->currentAlpha + adjustedDelta;
 	}
 	else {
-		this->field_0x0 = target;
+		this->currentAlpha = target;
 	}
 
-	return this->field_0x0;
+	return this->currentAlpha;
 }

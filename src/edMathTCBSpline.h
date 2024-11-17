@@ -39,7 +39,7 @@ public:
 	float GetRoughLength();
 
 	uint field_0x0;
-	float field_0x4;
+	float caluclatedRoughLength;
 	uint nbPoints;
 	CedMathTCBSplinePoint* aPoints;
 	undefined* field_0x10;

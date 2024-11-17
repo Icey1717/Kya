@@ -129,7 +129,6 @@ public:
 class CBehaviourSwitchNew : public CBehaviourSwitch
 {
 public:
-	CBehaviourSwitchNew() { IMPLEMENTATION_GUARD(); }
 };
 
 class CBehaviourSwitchMultiCondition : public CBehaviourSwitch
