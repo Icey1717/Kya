@@ -99,8 +99,8 @@ struct CActorMovParamsOut : public CActorParamsOut {
 };
 
 struct CActorMovParamsIn : public CActorParamsIn {
-	float field_0xc;
-	float field_0x14;
+	float speed;
+	float acceleration;
 	float field_0x18;
 };
 

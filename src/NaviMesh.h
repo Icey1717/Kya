@@ -33,10 +33,10 @@ class CAstarSubGraph
 public:
 	void Create(ByteCode* pByteCode);
 
-	uint field_0x0;
-	uint field_0x4;
+	uint nbCells;
+	uint cellStart;
 
-	edF32MATRIX4 field_0x10;
+	edF32MATRIX4 boundingBox;
 };
 
 class CNaviMesh
@@ -65,8 +65,8 @@ public:
 
 	uint SearchCellId(edF32VECTOR4* pPosition);
 
-	ushort* field_0x78;
-	ushort* field_0x7c;
+	ushort* pDataStreamA;
+	ushort* pDataStreamB;
 };
 
 #endif // NAVI_MESH_H

@@ -49,6 +49,7 @@ struct edAnmStage {
 	void SetActor(edANM_SKELETON* pSkeleton);
 	void SetDestinationWRTS(edANM_WRTS* pMatrixBuffer, int count);
 	void SetSingleToDestWRTS(edF32MATRIX4* pMatrix);
+	void BlendWithDestWRTS(float alpha, edF32MATRIX4* pMatrix);
 
 	void BlendToDestWRTS(float alpha, edF32MATRIX4* m0, edF32MATRIX4* m1);
 	void ToonWRTSToGlobalMatrices(uchar mode);

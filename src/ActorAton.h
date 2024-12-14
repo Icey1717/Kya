@@ -95,6 +95,7 @@ public:
 	void StateAtonPathStandCallNear();
 	void StateAtonPathStandCallFar();
 	void StateAtonPathStandCallBack();
+	void StateAtonPathVertWindToJump_1_2();
 	void StateAtonPathBeforeWaitJump();
 
 	void StateAtonPathJump_1_4();

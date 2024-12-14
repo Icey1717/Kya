@@ -131,8 +131,7 @@ void CActorFighter::Init()
 	int iVar2;
 	float fVar3;
 
-	IMPLEMENTATION_GUARD_LOG(
-	S_STREAM_REF<CActor>::Init(this->pWeaponActor);)
+	this->pWeaponActor.Init();
 	CActorAutonomous::Init();
 	this->flags = this->flags | 0x100000;
 
@@ -170,6 +169,53 @@ void CActorFighter::Init()
 	}
 
 	this->field_0x6c0 = this->field_0x6c0 + fVar3;)
+	return;
+}
+
+void CActorFighter::Term()
+{
+	undefined** ppuVar1;
+	uint uVar2;
+
+	CActorAutonomous::Term();
+
+	IMPLEMENTATION_GUARD(
+	uVar2 = 0;
+	ppuVar1 = &PTR_ParticleVTable_0048f900;
+	do {
+		if (((uint)ppuVar1[0xb] & 1) != 0) {
+			FUN_004013c0((int)ppuVar1);
+		}
+		uVar2 = uVar2 + 1;
+		ppuVar1 = ppuVar1 + 0x12;
+	} while (uVar2 < 4);
+	_DeleteCombosDB((int)this);
+	_DeleteGrabsDB((int)this);
+	_DeleteBlowsDB((int)this);
+	if (this->field_0x470 != (FighterSubObj_40*)0x0) {
+		Free(this->field_0x470);
+		this->field_0x470 = (FighterSubObj_40*)0x0;
+	})
+
+	return;
+}
+
+void CActorFighter::Reset()
+{
+	ClearLocalData();
+
+	CActorAutonomous::Reset();
+
+	this->flags = this->flags | 0x100000;
+	if ((this->flags & 0x1000) != 0) {
+		Compute2DOrientationFromAngles();
+		this->flags = this->flags & 0xffffefff;
+	}
+
+	if (this->field_0x470 != (FighterSubObj_40*)0x0) {
+		*this->field_0x470 = FighterSubObj_40();
+	}
+
 	return;
 }
 
@@ -693,7 +739,7 @@ void CActorFighter::TieToActor(CActor* pTieActor, int carryMethod, int param_4, 
 		else {
 			if (((uVar4 & 0xff800) == 0x800) &&
 				((iVar1 = this->actorState, iVar1 - 0x14U < 2 || (iVar1 == 0x16)))) {
-				field_0x350->TieToActor(pTieActor, carryMethod, param_4, param_5);
+				pAdversary->TieToActor(pTieActor, carryMethod, param_4, param_5);
 			}
 		}
 	}
@@ -1066,7 +1112,7 @@ void CActorFighter::ClearLocalData()
 	this->fightFlags = (this->fightFlags & 0xffff7fff);
 	this->fightFlags = (this->fightFlags & 0xfffeffff);
 
-	this->field_0x350 = (CActor*)0x0;
+	this->pAdversary = (CActorFighter*)0x0;
 	this->field_0x354 = (CActor*)0x0;
 
 	this->field_0x36c = 1;
@@ -1078,9 +1124,9 @@ void CActorFighter::ClearLocalData()
 	this->field_0x3a4.Reset();
 	this->scalarDynJump.Reset();
 
+	this->field_0x3f4 = 1.0f;
+	this->field_0x478 = 0.0f;
 	IMPLEMENTATION_GUARD_LOG(
-	this->field_0x3f4 = 1.0;
-	this->field_0x478 = 0;
 	fVar3 = gF32Vertex4Zero.w;
 	fVar2 = gF32Vertex4Zero.z;
 	fVar1 = gF32Vertex4Zero.y;
@@ -1138,8 +1184,11 @@ void CActorFighter::ClearLocalData()
 	this->field_0x834 = 0;
 	this->field_0x860 = 0;
 	this->field_0x864 = 0;
-	this->field_0x868 = 0xffffffff;
-	this->field_0x86c = 0;
+	this->field_0x868 = 0xffffffff;)
+
+	this->pFighterCombo = (s_fighter_combo*)0x0;
+
+	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x630 = 0;)
 	this->field_0x8e0 = 0;
 	IMPLEMENTATION_GUARD_LOG(
@@ -1165,31 +1214,31 @@ void CActorFighter::ClearLocalData()
 	return;
 }
 
-void CActorFighter::SetAdversary(CActor* pAdversary)
+void CActorFighter::SetAdversary(CActorFighter* pNewAdversary)
 {
 	CActor* pCVar1;
 	edF32VECTOR4* v1;
 	float fVar2;
 	edF32VECTOR4 eStack16;
 
-	if (pAdversary == (CActor*)0x0) {
-		if (this->field_0x350 != (CActor*)0x0) {
-			this->field_0x350->pAnimationController->UnRegisterBone(0x45544554);
+	if (pNewAdversary == (CActor*)0x0) {
+		if (this->pAdversary != (CActorFighter*)0x0) {
+			this->pAdversary->pAnimationController->UnRegisterBone(0x45544554);
 		}
 
-		this->field_0x350 = (CActor*)0x0;
+		this->pAdversary = (CActorFighter*)0x0;
 		this->field_0x370 = 0;
 		this->field_0x378 = 0;
 	}
 	else {
-		pCVar1 = this->field_0x350;
-		if (pAdversary != pCVar1) {
+		pCVar1 = this->pAdversary;
+		if (pNewAdversary != pCVar1) {
 			if (pCVar1 != (CActor*)0x0) {
-				this->field_0x350->pAnimationController->UnRegisterBone(0x45544554);
+				this->pAdversary->pAnimationController->UnRegisterBone(0x45544554);
 			}
 
-			this->field_0x350 = pAdversary;
-			this->field_0x350->pAnimationController->RegisterBone(0x45544554);
+			this->pAdversary = pNewAdversary;
+			this->pAdversary->pAnimationController->RegisterBone(0x45544554);
 
 			IMPLEMENTATION_GUARD(
 			v1 = (edF32VECTOR4*)(*(code*)(this->pVTable)->field_0x188)();
@@ -2776,6 +2825,11 @@ int CActorFighter::_SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* param_2,
 int CActorFighter::_SV_ANM_GetTwoSidedAnim(int param_2, int param_3)
 {
 	return param_2 + (param_3 + 1 >> 1);
+}
+
+CActorWeapon* CActorFighter::GetWeapon()
+{
+	return reinterpret_cast<CActorWeapon*>(this->pWeaponActor.Get());
 }
 
 void CBehaviourFighter::Init(CActor* pOwner)

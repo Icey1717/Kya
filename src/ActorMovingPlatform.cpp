@@ -2079,7 +2079,7 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 {
 	bool bVar1;
 	Timer* pTVar2;
-	S_MOVING_PLATFORM_TARGET_STREAM* pSVar3;
+	S_TARGET_ON_OFF_STREAM_REF* pSVar3;
 	int iVar4;
 	int iVar5;
 	int iVar6;
@@ -2185,7 +2185,7 @@ void CActorMovingPlatform::StateSwitchSlabOff2On(CBehaviourPlatformSlab* pBehavi
 	bool bVar1;
 	bool bVar2;
 	Timer* pTVar3;
-	S_MOVING_PLATFORM_TARGET_STREAM* pSVar4;
+	S_TARGET_ON_OFF_STREAM_REF* pSVar4;
 	int iVar5;
 	int iVar6;
 	float fVar7;
@@ -4387,9 +4387,9 @@ void CBehaviourPlatformSlab::Create(ByteCode* pByteCode)
 	piVar1 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
 	if (*piVar1 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * sizeof(S_MOVING_PLATFORM_TARGET_STREAM);
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * sizeof(S_TARGET_ON_OFF_STREAM_REF);
 	}
-	this->pTargetStream = reinterpret_cast<S_MOVING_PLATFORM_TARGET_STREAM*>(piVar1);
+	this->pTargetStream = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(piVar1);
 
 	pcVar2 = pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = pcVar2 + sizeof(S_STREAM_EVENT_CAMERA);
@@ -4410,7 +4410,7 @@ void CBehaviourPlatformSlab::Create(ByteCode* pByteCode)
 
 void CBehaviourPlatformSlab::Init(CActor* pOwner)
 {
-	S_MOVING_PLATFORM_TARGET_STREAM* pSVar1;
+	S_TARGET_ON_OFF_STREAM_REF* pSVar1;
 	int iVar3;
 
 	this->pOwner = (CActorMovingPlatform*)pOwner;
@@ -4442,7 +4442,7 @@ void CBehaviourPlatformSlab::Manage()
 
 void CBehaviourPlatformSlab::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	S_MOVING_PLATFORM_TARGET_STREAM* pSVar1;
+	S_TARGET_ON_OFF_STREAM_REF* pSVar1;
 	int iVar3;
 
 	pSVar1 = this->pTargetStream;
@@ -4803,45 +4803,6 @@ int CBehaviourWeighingMachineSlave::InterpretMessage(CActor* pSender, int msg, v
 	}
 
 	return msg == 0x11;
-}
-
-void S_STREAM_NTF_TARGET_ONOFF::Reset()
-{
-	this->flags = this->flags & 1;
-	return;
-}
-
-bool S_STREAM_NTF_TARGET_ONOFF::SwitchOn(CActor* pActor)
-{
-	uint uVar1;
-	bool bVar2;
-	bool uVar3;
-
-	uVar1 = this->flags;
-	uVar3 = false;
-	bVar2 = true;
-
-	if (((uVar1 & 1) != 0) && ((uVar1 & 0x40000000) != 0)) {
-		bVar2 = false;
-	}
-
-	if (bVar2) {
-		this->flags = this->flags | 0x40000000;
-
-		if (this->messageId != 0) {
-			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->messageId, this->messageFlags);
-
-			if (pActor == (CActor*)0x0) {
-				pActor = (CActor*)LOAD_SECTION(this->pRef);
-			}
-
-			if (pActor != (CActor*)0x0) {
-				uVar3 = pActor->DoMessage(pActor, (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
-			}
-		}
-	}
-
-	return uVar3;
 }
 
 void CBehaviourSelector::Create(ByteCode* pByteCode)

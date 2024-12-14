@@ -110,4 +110,9 @@ float edF32Vector4GetLengthSoft(edF32VECTOR4* v0);
 
 void edF32Vector2Sub(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2);
 
+float edF32Vector4DotProductHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1);
+void edF32Vector4SubHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
+
+float edF32ACosHard(float param_1);
+
 #endif // _MATH_OPS_H

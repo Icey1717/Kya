@@ -21,7 +21,13 @@
 #include "CollisionRay.h"
 #include "ActorAutonomous.h"
 
-void CVision::Create(CActor* pActor, ByteCode* pByteCode)
+CVision::CVision()
+	: pOwner((CActor*)0x0)
+{
+
+}
+
+void CVision::Create(CActor* pOwner, ByteCode* pByteCode)
 {
 	uint uVar1;
 	float fVar2;
@@ -53,9 +59,61 @@ void CVision::Create(CActor* pActor, ByteCode* pByteCode)
 	//pPerception->field_0x50 = 0;
 	//pPerception->field_0x58 = 0.0;
 	//pPerception->flags_0x0 = uVar1;
-	//pPerception->pActor = pActor;
+	this->pOwner = pOwner;
 	return;
 }
+
+
+void CVision::Reset()
+{
+	//this->pActor_0x48 = (CActor*)0x0;
+	//this->field_0x4c = 0;
+	//this->field_0x54 = 0;
+	//this->field_0x50 = 0;
+	//this->field_0x58 = 0.0;
+	return;
+}
+
+CActor* CVision::ScanForTarget(CActor* pTarget, int mode)
+{
+	uint uVar1;
+	long lVar2;
+	long lVar3;
+	edF32VECTOR4 eStack16;
+
+	if (pTarget == (CActor*)0x0) {
+		pTarget = (CActor*)0x0;
+	}
+	else {
+		lVar2 = pTarget->GetNumVisualDetectionPoints();
+		if (((this->flags & 8) == 0) || (lVar3 = pTarget->IsLockable(), lVar3 != 0)) {
+			if (((this->flags & 0x10) == 0) || (CActorFactory::gClassProperties[pTarget->typeID].field_0x8 != 0)) {
+				if (lVar2 == 1) {
+					pTarget->GetVisualDetectionPoint(&eStack16, 0);
+					IMPLEMENTATION_GUARD(
+					uVar1 = _PointIsDetected(this, &eStack16, pTarget);)
+				}
+				else {
+					IMPLEMENTATION_GUARD(
+					uVar1 = _ScanForTargetMultiPoint(this, pTarget, mode);)
+				}
+				if (uVar1 == 0) {
+					pTarget = (CActor*)0x0;
+				}
+			}
+			else {
+				pTarget = (CActor*)0x0;
+			}
+		}
+		else {
+			pTarget = (CActor*)0x0;
+		}
+	}
+
+	return pTarget;
+}
+
+
 
 CPathFollowReader::CPathFollowReader()
 {
@@ -1742,6 +1800,95 @@ void CActor::SetupClippingInfo()
 	this->hierarchySetup.pBoundingSphere = &this->subObjA->boundingSphere;
 }
 
+struct GetVisualDetectionPointParams
+{
+	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+};
+
+void CActor::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index)
+{
+	edColPRIM_OBJECT* peVar1;
+	GetVisualDetectionPointParams local_40;
+	float fVar3;
+
+	if (IsLockable() == 0) {
+		if ((this->pCollisionData == (CCollision*)0x0) ||
+			(peVar1 = this->pCollisionData->pObbPrim, peVar1 == (edColPRIM_OBJECT*)0x0)) {
+			fVar3 = 0.0f;
+		}
+		else {
+			fVar3 = (peVar1->field_0xb0).y;
+		}
+
+		pOutPoint->x = (this->currentLocation).x;
+		pOutPoint->y = fVar3 + (this->currentLocation).y;
+		pOutPoint->z = (this->currentLocation).z;
+		pOutPoint->w = 1.0f;
+	}
+	else {
+		local_40.field_0x0.x = 0.0f;
+		local_40.field_0x20.x = 0.0f;
+		local_40.field_0x20.y = 0.0f;
+		local_40.field_0x20.z = 0.0f;
+		local_40.field_0x20.w = 0.0f;
+		local_40.field_0x10.x = (this->currentLocation).x;
+		local_40.field_0x10.y = (this->currentLocation).y;
+		local_40.field_0x10.z = (this->currentLocation).z;
+		local_40.field_0x10.w = (this->currentLocation).w;
+		if ((this != (CActor*)0x0) && ((this->flags & 0x2000000) == 0)) {
+			ReceiveMessage(this, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_40);
+		}
+
+		*pOutPoint = this->currentLocation + local_40.field_0x20;
+	}
+
+	return;
+}
+
+int CActor::GetNumVisualDetectionPoints()
+{
+	return 1;
+}
+
+void CActor::SV_GetActorHitPos(CActor* pOtherActor, edF32VECTOR4* v0)
+{
+	int iVar1;
+	ActorCompareStruct local_40;
+
+	local_40.intFieldA = 1;
+
+	local_40.vectorFieldB.x = 0.0f;
+	local_40.vectorFieldB.y = 1.2f;
+	local_40.vectorFieldB.z = 0.0f;
+	local_40.vectorFieldB.w = 0.0f;
+
+	local_40.vectorFieldA.x = v0->x;
+	local_40.vectorFieldA.y = v0->y;
+	local_40.vectorFieldA.z = v0->z;
+	local_40.vectorFieldA.w = v0->w;
+
+	iVar1 = DoMessage(pOtherActor, (ACTOR_MESSAGE)7, &local_40);
+	if (iVar1 != 0) {
+		edF32Vector4AddHard(v0, &pOtherActor->currentLocation, &local_40.vectorFieldB);
+	}
+
+	return;
+}
+
+float CActor::SV_GetDirectionalAlignmentToTarget(edF32VECTOR4* v0)
+{
+	float result;
+	edF32VECTOR4 directionVector;
+
+	edF32Vector4SubHard(&directionVector, v0, &this->currentLocation);
+	edF32Vector4NormalizeHard(&directionVector, &directionVector);
+	result = edF32Vector4DotProductHard(&this->rotationQuat, &directionVector);
+
+	return result;
+}
+
 void CActor::SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1)
 {
 	float fVar1;
@@ -2486,6 +2633,34 @@ CActorSound* CActor::CreateActorSound(int soundType)
 	return NULL;
 }
 
+void CActor::Compute2DOrientationFromAngles()
+{
+	edF32VECTOR3 newRotationEuler;
+
+	SV_BuildAngleWithOnlyY(&newRotationEuler, &this->rotationEuler.xyz);
+	(this->rotationEuler).xyz = newRotationEuler;
+	SetVectorFromAngles(&this->rotationQuat, &this->rotationEuler.xyz);
+
+	return;
+}
+
+CActor* CActor::GetLinkFather()
+{
+	_linked_actor* pLinkedActorEntry;
+	CActor* pLinkFather;
+
+	pLinkedActorEntry = CScene::ptable.g_ActorManager_004516a4->FindLinkedActor(this);
+
+	if (pLinkedActorEntry == (_linked_actor*)0x0) {
+		pLinkFather = (CActor*)0x0;
+	}
+	else {
+		pLinkFather = pLinkedActorEntry->pLinkedActor;
+	}
+
+	return pLinkFather;
+}
+
 StateConfig CActor::gStateCfg_ACT[5] =
 {
 	StateConfig(0, 4),
@@ -2668,12 +2843,11 @@ void CActor::SV_LookTo(CActorParamsOut* pActorParamsOut, CActorParamsIn* pActorP
 	edF32VECTOR4 local_10;
 
 	if ((pActorParamsIn->flags & 2) == 0) {
-		peVar1 = pActorParamsIn->field_0x8;
-		this->rotationQuat = *peVar1;
+		this->rotationQuat = *pActorParamsIn->pRotation;
 	}
 	else {
 		if ((pActorParamsIn->flags & 8) == 0) {
-			peVar1 = pActorParamsIn->field_0x8;
+			peVar1 = pActorParamsIn->pRotation;
 			local_10.z = peVar1->z;
 			local_10.w = peVar1->w;
 			local_10.x = peVar1->x;
@@ -2681,15 +2855,15 @@ void CActor::SV_LookTo(CActorParamsOut* pActorParamsOut, CActorParamsIn* pActorP
 
 			fVar5 = edF32Vector4GetDistHard(&local_10);
 			if (0.0f < fVar5) {
-				bVar3 = SV_UpdateOrientation2D(pActorParamsIn->field_0x4, &local_10, 0);
+				bVar3 = SV_UpdateOrientation2D(pActorParamsIn->rotSpeed, &local_10, 0);
 				pActorParamsOut->flags = pActorParamsOut->flags | (int)bVar3;
 			}
 		}
 		else {
 			fVar5 = edF32Vector4GetDistHard((edF32VECTOR4*)pActorParamsOut);
 			if (0.0f < fVar5) {
-				peVar1 = pActorParamsIn->field_0x8;
-				fVar5 = pActorParamsIn->field_0x4;
+				peVar1 = pActorParamsIn->pRotation;
+				fVar5 = pActorParamsIn->rotSpeed;
 				local_20 = this->rotationQuat;
 
 				puVar6 = edF32Vector4DotProductHard(&local_20, peVar1);
@@ -3320,6 +3494,17 @@ void CActor::ResetActorSound()
 	IMPLEMENTATION_GUARD_AUDIO();
 }
 
+bool CActor::IsMakingNoise()
+{
+	uint uVar2 = 0;
+
+	if (this->actorState != -1) {
+		uVar2 = GetStateCfg(this->actorState)->flags_0x4;
+	}
+
+	return uVar2 & 2;
+}
+
 void CActor::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix)
 {
 	edF32MATRIX4* peVar3;
@@ -3881,6 +4066,23 @@ bool CActor::SV_UpdateOrientation2D(float speed, edF32VECTOR4* pNewOrientation, 
 
 	}
 	return bSuccess;
+}
+
+void CActor::SV_GetGroundPosition(edF32VECTOR4* v0)
+{
+	CCollision* pCol;
+
+	pCol = this->pCollisionData;
+	if (pCol == (CCollision*)0x0) {
+		*v0 = this->currentLocation;
+	}
+	else {
+		*v0 = pCol->highestVertex;
+	}
+
+	v0->y = v0->y - this->distanceToGround;
+
+	return;
 }
 
 void CActor::SV_GetActorColCenter(edF32VECTOR4* pColCenter)

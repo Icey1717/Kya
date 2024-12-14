@@ -22,7 +22,7 @@ class CActorBoomy;
 class CFightLock
 {
 public:
-	CActor* pActor;
+	CActorFighter* pActor;
 };
 
 class CBehaviourHero : public CBehaviourFighter
@@ -69,6 +69,8 @@ public:
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
+	virtual bool IsMakingNoise();
+	virtual void GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 

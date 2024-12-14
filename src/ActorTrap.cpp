@@ -150,10 +150,10 @@ void CBehaviourTrapStand::StateTrapCatchStand_1_2(int param_2, int nextState)
 
 	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
 		movParamsOut.flags = 0;
-		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
-		movParamsIn.field_0x4 = 6.283185f;
-		movParamsIn.field_0x14 = this->field_0x34;
-		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+		movParamsIn.rotSpeed = 6.283185f;
+		movParamsIn.acceleration = this->acceleration;
+		movParamsIn.speed = this->speed;
 		movParamsIn.flags = 0x407;
 
 		pTrap = this->pOwner;
@@ -170,7 +170,7 @@ void CBehaviourTrapStand::StateTrapCatchStand_1_2(int param_2, int nextState)
 			fVar8 = fVar7;
 		}
 
-		if (movParamsOut.floatField <= fVar8) {
+		if (movParamsOut.moveVelocity <= fVar8) {
 			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 
 			if (bVar4 == false) {
@@ -224,10 +224,10 @@ void CBehaviourTrapStand::StateTrapCatchStand_2_2(int nextState)
 
 	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
 		movParamsOut.flags = 0;
-		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
-		movParamsIn.field_0x4 = 6.283185f;
-		movParamsIn.field_0x14 = this->field_0x34;
-		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+		movParamsIn.rotSpeed = 6.283185f;
+		movParamsIn.acceleration = this->acceleration;
+		movParamsIn.speed = this->speed;
 		movParamsIn.flags = 0x407;
 
 		pTrap = this->pOwner;
@@ -242,7 +242,7 @@ void CBehaviourTrapStand::StateTrapCatchStand_2_2(int nextState)
 			fVar4 = fVar3;
 		}
 
-		if (movParamsOut.floatField <= fVar4) {
+		if (movParamsOut.moveVelocity <= fVar4) {
 			bVar1 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 
 			if (bVar1 == false) {
@@ -285,10 +285,10 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 
 	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
 		movParamsOut.flags = 0;
-		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
-		movParamsIn.field_0x4 = 6.283185f;
-		movParamsIn.field_0x14 = this->field_0x34;
-		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+		movParamsIn.rotSpeed = 6.283185f;
+		movParamsIn.acceleration = this->acceleration;
+		movParamsIn.speed = this->speed;
 		movParamsIn.flags = 0x407;
 
 		pOwningActor = this->pOwner;
@@ -305,7 +305,7 @@ void CBehaviourTrapStand::StateTrapCatch_2_2(int param_2, int nextState)
 			fVar11 = fVar10;
 		}
 
-		if (movParamsOut.floatField <= fVar11) {
+		if (movParamsOut.moveVelocity <= fVar11) {
 			bVar6 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 			if (bVar6 == false) {
 				this->pathFollowReader.NextWayPoint();
@@ -405,10 +405,10 @@ void CBehaviourTrapStand::StateTrapCatchStruggle(int param_2, int param_3, int p
 
 	if ((this->pathFollowReader).pPathFollow != (CPathFollow*)0x0) {
 		movParamsOut.flags = 0;
-		movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
-		movParamsIn.field_0x4 = 6.283185f;
-		movParamsIn.field_0x14 = this->field_0x34;
-		movParamsIn.field_0xc = this->field_0x30;
+		movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+		movParamsIn.rotSpeed = 6.283185f;
+		movParamsIn.acceleration = this->acceleration;
+		movParamsIn.speed = this->speed;
 		movParamsIn.flags = 0x406;
 
 		pTrap = this->pOwner;
@@ -423,7 +423,7 @@ void CBehaviourTrapStand::StateTrapCatchStruggle(int param_2, int param_3, int p
 			fVar9 = fVar7;
 		}
 
-		if (movParamsOut.floatField <= fVar9) {
+		if (movParamsOut.moveVelocity <= fVar9) {
 			bVar4 = this->pathFollowReader.AtGoal((this->pathFollowReader).splinePointIndex, (this->pathFollowReader).field_0xc);
 			if (bVar4 == false) {
 				this->pathFollowReader.NextWayPoint();
@@ -749,35 +749,26 @@ void CBehaviourTrapStand_ActorTrap::CreateForTrap(ByteCode* pByteCode)
 	}
 	this->pActorStream = pStream;
 
-	uVar2 = pByteCode->GetU32();
-	this->field_0x14 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->field_0x18 = uVar2;
-	uVar2 = pByteCode->GetU32();
-	this->field_0x1c = uVar2;
-	iVar3 = pByteCode->GetS32();
-	this->field_0x20 = iVar3;
+	this->field_0x14 = pByteCode->GetU32();
+	this->field_0x18 = pByteCode->GetU32();
+	this->field_0x1c = pByteCode->GetU32();
+	this->field_0x20 = pByteCode->GetS32();
 
 	if (CScene::_pinstance->field_0x1c < 2.24f) {
 		this->field_0x24 = -1;
 	}
 	else {
 		iVar3 = pByteCode->GetS32();
-		this->field_0x24 = iVar3;
+		this->field_0x24 = pByteCode->GetS32();
 	}
 
-	iVar3 = pByteCode->GetS32();
-	this->actorRef.index = iVar3;
+	this->actorRef.index = pByteCode->GetS32();
 
-	fVar4 = pByteCode->GetF32();
-	this->field_0x30 = fVar4;
-	fVar4 = pByteCode->GetF32();
-	this->field_0x34 = fVar4;
+	this->speed = pByteCode->GetF32();
+	this->acceleration = pByteCode->GetF32();
 	this->pathFollowReader.Create(pByteCode);
-	fVar4 = pByteCode->GetF32();
-	this->field_0x4c = fVar4;
-	uVar2 = pByteCode->GetU32();
-	this->field_0x50 = uVar2;
+	this->field_0x4c = pByteCode->GetF32();
+	this->field_0x50 = pByteCode->GetU32();
 
 	S_TRAP_STREAM_REF* pTrapStream = reinterpret_cast<S_TRAP_STREAM_REF*>(pByteCode->currentSeekPos);
 	pByteCode->currentSeekPos = reinterpret_cast<char*>(pTrapStream + 1);

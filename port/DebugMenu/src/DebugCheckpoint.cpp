@@ -61,9 +61,51 @@ void Debug::Checkpoint::ShowMenu(bool* bOpen)
 			ImGui::Text("Checkpoint count: %d", pActiveCheckpointManager->checkpointCount);
 			ImGui::Text("Checkpoint flags: 0x%x", pActiveCheckpointManager->flags);
 
+			static int sectorIdFilter = -1;
+
+			if (ImGui::CollapsingHeader("Filters")) {
+				// Combo box for sector ID
+				// Gather all sector IDs
+				std::vector<int> sectorIds;
+				sectorIds.reserve(10);
+
+				for (int i = 0; i < pActiveCheckpointManager->checkpointCount; i++) {
+					auto* pCheckpoint = pActiveCheckpointManager->aCheckpoints + i;
+					if (std::find(sectorIds.begin(), sectorIds.end(), pCheckpoint->sectorId) == sectorIds.end()) {
+						sectorIds.push_back(pCheckpoint->sectorId);
+					}
+				}
+
+				std::sort(sectorIds.begin(), sectorIds.end());
+
+				ImGui::Text("Sector ID filter");
+				ImGui::SameLine();
+				if (ImGui::BeginCombo("##Sector ID", std::to_string(sectorIdFilter).c_str())) {
+					for (int i = 0; i < sectorIds.size(); i++) {
+						bool isSelected = sectorIdFilter == sectorIds[i];
+						if (ImGui::Selectable(std::to_string(sectorIds[i]).c_str(), isSelected)) {
+							sectorIdFilter = sectorIds[i];
+						}
+
+						if (isSelected) {
+							ImGui::SetItemDefaultFocus();
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+			}
+
 			// Combo box
 			if (ImGui::BeginCombo("##Checkpoint index", std::to_string(gCheckpointIndex).c_str())) {
 				for (int i = 0; i < pActiveCheckpointManager->checkpointCount; i++) {
+					if (sectorIdFilter != -1) {
+						auto* pCheckpoint = pActiveCheckpointManager->aCheckpoints + i;
+						if (pCheckpoint->sectorId != sectorIdFilter) {
+							continue;
+						}
+					}
+
 					char buff[256];
 					std::sprintf(buff, "Checkpoint %d", i);
 					bool isSelected = gCheckpointIndex == i;

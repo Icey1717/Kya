@@ -54,6 +54,8 @@ struct CPlayerInputSubObj {
 	float field_0x20;
 };
 
+#define PAD_BITMASK_X 0x10
+
 class CPlayerInput {
 
 public:

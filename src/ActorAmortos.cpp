@@ -284,7 +284,7 @@ void CActorAmortos::ChangeManageState(int state)
 	return;
 }
 
-CVision* CActorAmortos::GetPerception()
+CVision* CActorAmortos::GetVision()
 {
 	IMPLEMENTATION_GUARD();
 }

@@ -76,18 +76,6 @@ public:
 	S_TRAJ_POS currentFillAmount_0x38;
 };
 
-struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH {
-	void Reset();
-	bool SwitchOn(CActor* pActor);
-};
-
-static_assert(sizeof(S_STREAM_NTF_TARGET_ONOFF) == 0x1c);
-
-struct S_MOVING_PLATFORM_TARGET_STREAM {
-	int entryCount;
-	S_STREAM_NTF_TARGET_ONOFF aEntries[];
-};
-
 class CSound;
 struct ParticleInfo;
 
@@ -99,7 +87,7 @@ public:
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
-	S_MOVING_PLATFORM_TARGET_STREAM* pTargetStream;
+	S_TARGET_ON_OFF_STREAM_REF* pTargetStream;
 	S_STREAM_EVENT_CAMERA* streamEventCamera;
 
 	float field_0x10;

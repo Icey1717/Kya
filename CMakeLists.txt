@@ -111,6 +111,8 @@ set(main_src
 	"${src_root}/ActorManager.h"
 	"${src_root}/AnmManager.cpp"
 	"${src_root}/AnmManager.h"
+	"${src_root}/SwitchBehaviour.cpp"
+	"${src_root}/SwitchBehaviour.h"
 	"${src_root}/edMathTCBSpline.cpp"
 	"${src_root}/edMathTCBSpline.h"
 	"${src_root}/CinematicManager.cpp"

@@ -66,8 +66,8 @@ public:
 	int field_0x24;
 	uint catchEffectId;
 	S_STREAM_REF<CActor> actorRef;
-	float field_0x30;
-	float field_0x34;
+	float speed;
+	float acceleration;
 	CPathFollowReader pathFollowReader;
 	S_TRAP_STREAM_REF* field_0x48;
 	float field_0x4c;

@@ -705,6 +705,83 @@ void CBehaviourSwitchTarget::Init(CActor* pOwner)
 	return;
 }
 
+void CBehaviourSwitchTarget::Manage()
+{
+	CActorSwitch* pSwitch;
+	bool bVar1;
+	Timer* pTVar3;
+	undefined* fVar5;
+	undefined* puVar2;
+	float fVar6;
+	edF32VECTOR4 sStack48;
+	edF32VECTOR4 sStack32;
+	edF32VECTOR4 local_10;
+	int AVar1;
+	undefined8 uVar2;
+
+	pSwitch = this->pOwner;
+	pSwitch->pStreamEventCamera->Manage(pSwitch);
+	AVar1 = pSwitch->actorState;
+	if (AVar1 == 9) {
+		IMPLEMENTATION_GUARD(
+		pTVar3 = Timer::GetTimer();
+		bVar1 = S_OSCILLATING_VALUE::Update
+		(0.0, pTVar3->cutsceneDeltaTime, (S_OSCILLATING_VALUE*)&this->field_0x14,
+			(S_OSCILLATION_CONFIG*)&this->field_0xc);
+		SetVectorFromAngles(&sStack48, &(pSwitch->pCinData)->rotationEuler);
+		edF32Vector4ScaleHard(this->field_0x14, &sStack48, &sStack48);
+		edF32Vector4AddHard(&sStack48, &pSwitch->baseLocation, &sStack48);
+		CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &sStack48, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+		if (bVar1 != false) {
+			(*(pSwitch->pVTable)->SetState)((CActor*)pSwitch, 5, -1);
+		})
+	}
+	else {
+		if (AVar1 == 8) {
+			IMPLEMENTATION_GUARD(
+			fVar6 = this->field_0x8;
+			pTVar3 = Timer::GetTimer();
+			S_OSCILLATING_VALUE::Update
+			(fVar6, pTVar3->cutsceneDeltaTime, (S_OSCILLATING_VALUE*)&this->field_0x14,
+				(S_OSCILLATION_CONFIG*)&this->field_0xc);
+			SetVectorFromAngles(&sStack32, &(pSwitch->pCinData)->rotationEuler);
+			edF32Vector4ScaleHard(this->field_0x14, &sStack32, &sStack32);
+			edF32Vector4AddHard(&sStack32, &pSwitch->baseLocation, &sStack32);
+			CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &sStack32, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+			if (ABS(this->field_0x8) <= ABS(this->field_0x14)) {
+				if (0.0 <= this->field_0x8) {
+					puVar2 = (undefined*)0x3f800000;
+				}
+				else {
+					puVar2 = &DAT_bf800000;
+				}
+				if (0.0 <= this->field_0x14) {
+					fVar5 = (undefined*)0x3f800000;
+				}
+				else {
+					fVar5 = &DAT_bf800000;
+				}
+				if ((float)fVar5 == (float)puVar2) {
+					(*(pSwitch->pVTable)->SetState)((CActor*)pSwitch, 9, -1);
+				}
+			})
+		}
+		else {
+			if ((AVar1 == 5) && (pSwitch->pTiedActor != (CActor*)0x0)) {
+				IMPLEMENTATION_GUARD(
+				uVar2 = *(undefined8*)&pSwitch->baseLocation;
+				local_10.z = pSwitch->baseLocation.z;
+				local_10.w = pSwitch->baseLocation.w;
+				local_10.x = (float)uVar2;
+				local_10.y = (float)((ulong)uVar2 >> 0x20);
+				CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);)
+			}
+		}
+	}
+
+	return;
+}
+
 void CBehaviourSwitchTarget::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	this->field_0x14 = 0.0f;

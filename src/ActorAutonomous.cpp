@@ -263,9 +263,8 @@ void CActorAutonomous::Reset()
 
 	this->field_0x2e4 = 0.0f;
 
-	if (GetPerception() != (CVision*)0x0) {
-		IMPLEMENTATION_GUARD(
-		GetPerception()->Reset();)
+	if (GetVision() != (CVision*)0x0) {
+		GetVision()->Reset();
 	}
 
 	return;
@@ -307,6 +306,14 @@ void CActorAutonomous::Init()
 	memset(&this->collisionContact, 0, sizeof(s_collision_contact));
 	this->field_0x344 = this->field_0x344 & 0xfe;
 	CActor::Init();
+	return;
+}
+
+void CActorAutonomous::Term()
+{
+	SV_AUT_PathfindingEnd();
+	CActor::Term();
+
 	return;
 }
 
@@ -586,6 +593,8 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		local_50.y = 0.0f;
 		edF32Vector4SafeNormalize1Hard(&local_50, &local_50);
 	}
+
+	AUTONOMOUS_LOG(LogLevel::Verbose, "CActorAutonomous::ManageDyn other flags: 0x{:x}", uVar10);
 
 	// Gravity
 	if ((((uVar10 & 0x20) != 0) && ((pCollision->flags_0x4 & 2) == 0)) || ((uVar10 & 0x8000000) != 0)) {
@@ -1139,9 +1148,34 @@ CActorWindState* CActorAutonomous::GetWindState()
 	return (CActorWindState*)0x0;
 }
 
+float CActorAutonomous::GetWalkSpeed()
+{
+	return 2.0f;
+}
+
+float CActorAutonomous::GetWalkRotSpeed()
+{
+	return 8.0f;
+}
+
+float CActorAutonomous::GetWalkAcceleration()
+{
+	return 4.0f;
+}
+
 float CActorAutonomous::GetRunSpeed()
 {
 	return 4.0f;
+}
+
+float CActorAutonomous::GetRunRotSpeed()
+{
+	return 4.712389f;
+}
+
+float CActorAutonomous::GetRunAcceleration()
+{
+	return 8.0f;
 }
 
 void CActorAutonomous::ComputeFrictionForceWithSpeedMax(float param_1, edF32VECTOR4* pFrictionForce, int param_4)
@@ -1303,7 +1337,7 @@ void CActorAutonomous::StateAutSoccer(float param_1, int param_3, int param_4, C
 	return;
 }
 
-void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, uint msgParam)
+void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, CActor* pActor)
 {
 	CActor* pReceiver;
 	float fVar1;
@@ -1312,8 +1346,8 @@ void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, uint msgPa
 	float fVar4;
 	CActorsTable local_130;
 	edF32VECTOR4 local_20;
-	uint local_8;
-	uint local_4;
+	CActor* local_8;
+	CActor* local_4;
 
 	if ((radius != 0.0) && (radius != param_2)) {
 		local_130.entryCount = 0;
@@ -1324,8 +1358,8 @@ void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, uint msgPa
 		iVar3 = 0;
 		if (param_2 == 0.0) {
 			for (; iVar3 < local_130.entryCount; iVar3 = iVar3 + 1) {
-				local_4 = msgParam;
-				DoMessage(local_130.aEntries[iVar3], (ACTOR_MESSAGE)0x3a, (MSG_PARAM)msgParam);
+				local_4 = pActor;
+				DoMessage(local_130.aEntries[iVar3], (ACTOR_MESSAGE)0x3a, (MSG_PARAM)pActor);
 			}
 		}
 		else {
@@ -1337,8 +1371,8 @@ void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, uint msgPa
 				fVar4 = sqrtf(fVar4 * fVar4 + fVar1 * fVar1 + fVar2 * fVar2);
 
 				if ((param_2 <= fVar4) && (fVar4 <= radius)) {
-					local_8 = msgParam;
-					DoMessage(pReceiver, (ACTOR_MESSAGE)0x3a, (MSG_PARAM)msgParam);
+					local_8 = pActor;
+					DoMessage(pReceiver, (ACTOR_MESSAGE)0x3a, (MSG_PARAM)pActor);
 				}
 			}
 		}
@@ -1398,7 +1432,7 @@ void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, 
 		SV_AUT_MoveTo_DynFence(pParamsIn, pParamsOut, peVar5);
 		local_10 = *pLocation - *peVar5;
 		fVar6 = edF32Vector4GetDistHard(&local_10);
-		pParamsIn->floatField = fVar6 + pParamsIn->floatField;
+		pParamsIn->moveVelocity = fVar6 + pParamsIn->moveVelocity;
 	}
 	return;
 }
@@ -1492,9 +1526,9 @@ void CActorAutonomous::SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CAc
 
 	if (pLocation != peVar6) {
 		edF32Vector4SubHard(&eStack32, pLocation, peVar6);
-		fVar10 = pParamsIn->floatField;
+		fVar10 = pParamsIn->moveVelocity;
 		fVar9 = edF32Vector4GetDistHard(&eStack32);
-		pParamsIn->floatField = fVar10 + fVar9;
+		pParamsIn->moveVelocity = fVar10 + fVar9;
 	}
 
 	return;
@@ -1521,7 +1555,7 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 		edF32Vector4SubHard(&local_20, pLocation, &this->currentLocation);
 		local_20.y = 0.0;
 		fVar3 = edF32Vector4SafeNormalize0Hard(&local_20, &local_20);
-		fVar5 = pParamsOut->field_0xc / pParamsOut->field_0x4;
+		fVar5 = pParamsOut->speed / pParamsOut->rotSpeed;
 		if ((fVar3 < fVar5 * 2.0f + 0.001f) && (0.001f < fVar3)) {
 			local_30.z = this->rotationQuat.z;
 			local_30.w = this->rotationQuat.w;
@@ -1559,15 +1593,15 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 				fVar4 = (fVar3 * 0.5) / fVar4;
 				if ((uVar1 & 0x40) == 0) {
 					if ((uVar1 & 0x80) != 0) {
-						fVar3 = fVar4 * pParamsOut->field_0x4 + 0.001f;
-						pParamsOut->field_0xc = fVar3;
-						pParamsOut->field_0x14 = 3.402823e+38f;
+						fVar3 = fVar4 * pParamsOut->rotSpeed + 0.001f;
+						pParamsOut->speed = fVar3;
+						pParamsOut->acceleration = 3.402823e+38f;
 						pParamsOut->flags = pParamsOut->flags | 0x400;
 						this->dynamic.speed = fVar3;
 					}
 				}
 				else {
-					pParamsOut->field_0x4 = pParamsOut->field_0xc / fVar4 + 0.001;
+					pParamsOut->rotSpeed = pParamsOut->speed / fVar4 + 0.001;
 					pParamsOut->flags = pParamsOut->flags | 2;
 				}
 			}

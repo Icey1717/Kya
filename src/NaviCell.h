@@ -9,10 +9,11 @@ class CBasicNaviCell
 public:
 	void Create(ByteCode* pByteCode);
 
-	uint field_0x4;
-	ushort* field_0x8;
-	uint field_0xc;
-	ushort* field_0x10;
+	uint nbSubDataA;
+	ushort* pDataA;
+
+	uint nbSubDataB;
+	ushort* pDataB;
 
 	edF32VECTOR2 field_0x14;
 

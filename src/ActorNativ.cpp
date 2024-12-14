@@ -19,8 +19,8 @@ void CActorNativ::Create(ByteCode* pByteCode)
 	this->field_0x350 = pByteCode->GetU32();
 	this->field_0x354 = pByteCode->GetU32();
 	this->field_0x358 = pByteCode->GetU32();
-	this->field_0x35c = pByteCode->GetF32();
-	this->field_0x360 = pByteCode->GetF32();
+	this->moveSpeedNoHeldObject = pByteCode->GetF32();
+	this->moveSpeedHeldObject = pByteCode->GetF32();
 	this->field_0x370 = pByteCode->GetU32();
 	this->field_0x368 = pByteCode->GetS32();
 	this->field_0x364 = pByteCode->GetS32();
@@ -1157,12 +1157,12 @@ void CActorNativ::StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour)
 	CActorMovParamsOut movParamsOut;
 
 	movParamsOut.flags = 0;
-	movParamsIn.field_0x8 = (edF32VECTOR4*)0x0;
-	movParamsIn.field_0x4 = 5.0f;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.rotSpeed = 5.0f;
 
 	if (this->bHasObject == 0) {
 	LAB_00160ed0:
-		movParamsIn.field_0xc = this->field_0x35c;
+		movParamsIn.speed = this->moveSpeedNoHeldObject;
 	}
 	else {
 		uVar8 = this->field_0x370;
@@ -1173,11 +1173,11 @@ void CActorNativ::StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour)
 			bVar3 = false;
 		}
 		if (!bVar3) goto LAB_00160ed0;
-		movParamsIn.field_0xc = this->field_0x360;
+		movParamsIn.speed = this->moveSpeedHeldObject;
 	}
 
 	movParamsIn.flags = 0x406;
-	movParamsIn.field_0x14 = 5.0f;
+	movParamsIn.acceleration = 5.0f;
 
 	iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
 	bVar3 = false;

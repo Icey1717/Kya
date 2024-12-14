@@ -63,6 +63,7 @@ struct MessageKickedParams
 
 enum ACTOR_MESSAGE {
 	MESSAGE_KICKED = 0x2,
+	MESSAGE_GET_VISUAL_DETECTION_POINT = 0x7,
 	MESSAGE_GET_ACTION = 0x12,
 	MESSAGE_TRAP_STRUGGLE = 0x14,
 	MESSAGE_IN_WIND_AREA = 0x16,
@@ -131,7 +132,18 @@ struct ActorMessage_7 {
 
 class CVision {
 public:
-	void Create(CActor* pActor, ByteCode* pByteCode);
+	CVision();
+	void Create(CActor* pOwner, ByteCode* pByteCode);
+	void Reset();
+
+	CActor* ScanForTarget(CActor* pTarget, int mode);
+
+	uint flags;
+
+	CActor* pOwner;
+
+	edF32VECTOR4 location;
+	edF32VECTOR4 rotationQuat;
 };
 
 class CBehaviour 
@@ -338,15 +350,15 @@ struct S_PATHREADER_POS_INFO;
 struct edAnmMacroBlendN;
 
 struct CActorParamsOut {
-	edF32VECTOR4 vectorField;
-	float floatField;
+	edF32VECTOR4 moveDirection;
+	float moveVelocity;
 	uint flags;
 };
 
 struct CActorParamsIn {
 	uint flags;
-	float field_0x4;
-	edF32VECTOR4* field_0x8;
+	float rotSpeed;
+	edF32VECTOR4* pRotation;
 };
 
 struct _msg_hit_param {
@@ -437,6 +449,13 @@ class CActorAlternateModel {};
 
 class CActorSound;
 
+struct ActorCompareStruct
+{
+	int intFieldA;
+	edF32VECTOR4 vectorFieldA;
+	edF32VECTOR4 vectorFieldB;
+};
+
 class CActor : public CObject {
 public:
 	CActor();
@@ -457,28 +476,31 @@ public:
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void TermBehaviour(int behaviourId, undefined8) { IMPLEMENTATION_GUARD(); }
 	virtual StateConfig* GetStateCfg(int state);
-	virtual void ChangeManageState(int state);
-	virtual void ChangeDisplayState(int state);
-	virtual void ChangeVisibleState(int bVisible);
-	virtual bool IsLockable();
 	virtual uint GetBehaviourFlags(int state);
-	virtual void SetState(int newState, int animType);
 	virtual uint IsLookingAt();
 	virtual void SetLookingAtOn();
 	virtual void SetLookingAtOff();
 	virtual void UpdateLookingAt();
+	virtual void SetState(int newState, int animType);
+	virtual void ChangeManageState(int state);
+	virtual void ChangeDisplayState(int state);
+	virtual void ChangeVisibleState(int bVisible);
+	virtual bool IsLockable();
 	virtual void UpdateAnimEffects();
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
+	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual void CinematicMode_Manage() { return; }
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
+	virtual bool IsMakingNoise();
 	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
-	virtual CVision* GetPerception() { IMPLEMENTATION_GUARD(); }
+	virtual CVision* GetVision() { IMPLEMENTATION_GUARD(); }
+	virtual int GetNumVisualDetectionPoints();
+	virtual void GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index);
 	virtual void UpdatePostAnimEffects();
 	virtual bool Can_0x9c();
-	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
 	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
@@ -544,6 +566,8 @@ public:
 
 	bool SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager* pMaterial);
 
+	void SV_GetActorHitPos(CActor* pOtherActor, edF32VECTOR4* v0);
+	float SV_GetDirectionalAlignmentToTarget(edF32VECTOR4* v0);
 	void SV_BuildAngleWithOnlyY(edF32VECTOR3* v0, edF32VECTOR3* v1);
 
 	static int SV_InstallMaterialId(int materialId);
@@ -555,6 +579,7 @@ public:
 	void FUN_00115ea0(uint param_2);
 
 	void ComputeAltitude();
+	void Compute2DOrientationFromAngles();
 
 	int ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* pEventData);
 
@@ -568,6 +593,7 @@ public:
 
 	void RestartCurAnim();
 
+	void SV_GetGroundPosition(edF32VECTOR4* v0);
 	void SV_GetActorColCenter(edF32VECTOR4* pColCenter);
 	float SV_GetCosAngle2D(edF32VECTOR4* pToLocation);
 	bool SV_Vector4SLERP(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
@@ -594,6 +620,8 @@ public:
 	float FUN_00117db0();
 
 	CActorSound* CreateActorSound(int soundType);
+
+	CActor* GetLinkFather();
 
 #ifdef DEBUG_FEATURES
 	// #Debug

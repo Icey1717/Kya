@@ -2657,6 +2657,68 @@ bool CActorHeroPrivate::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 	return true;
 }
 
+bool CActorHeroPrivate::IsMakingNoise()
+{
+	int iVar1;
+	uint uVar2;
+	StateConfig* pSVar3;
+	uint uVar4;
+
+	iVar1 = this->actorState;
+	uVar2 = 0;
+
+	if ((iVar1 == 0x7d) || (iVar1 == 0x7a)) {
+		uVar4 = (this->pCollisionData)->aCollisionContact[1].materialFlags & 0xf;
+		if (uVar4 == 0) {
+			uVar4 = CScene::_pinstance->defaultMaterialIndex;
+		}
+		if (uVar4 == 8) {
+			uVar2 = 1;
+		}
+	}
+	else {
+		if (iVar1 == -1) {
+			uVar2 = 0;
+		}
+		else {
+			uVar2 = CActor::IsMakingNoise();
+		}
+	}
+
+	return uVar2;
+}
+
+void CActorHeroPrivate::GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index)
+{
+	edColPRIM_OBJECT* peVar1;
+	float puVar2;
+	edF32VECTOR4 local_10;
+
+	peVar1 = this->pCollisionData->pObbPrim;
+
+	local_10.x = (peVar1->field_0xb0).x;
+	local_10.z = (peVar1->field_0xb0).z;
+	local_10.w = (peVar1->field_0xb0).w;
+
+	if (index == 0) {
+		puVar2 = 1.0f;
+	}
+	else {
+		puVar2 = -1.0f;
+	}
+
+	local_10.y = (peVar1->field_0xb0).y + (peVar1->field_0x90).y * 0.8f * puVar2;
+
+	edF32Vector4AddHard(&local_10, &local_10, &this->currentLocation);
+
+	pOutPoint->x = local_10.x;
+	pOutPoint->y = local_10.y;
+	pOutPoint->z = local_10.z;
+	pOutPoint->w = 1.0f;
+
+	return;
+}
+
 int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	ed_3d_hierarchy_node* peVar1;
@@ -5347,6 +5409,8 @@ LAB_00341590:
 	case STATE_HERO_JOKE:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
+	case STATE_HERO_WIND_WALL_HURT:
+	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
 	case STATE_HERO_WIND_WALL_MOVE_A:
 	case STATE_HERO_WIND_WALL_MOVE_B:
@@ -5426,6 +5490,9 @@ LAB_00341590:
 		break;
 	case STATE_HERO_WIND_FLY_B:
 		StateHeroFlyJumpInit();
+		break;
+	case STATE_HERO_WIND_FLY_C:
+		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(0.75f, 0);
 		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
@@ -5524,6 +5591,8 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_WIND_FLY_B:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
+	case STATE_HERO_WIND_WALL_HURT:
+	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
 	case STATE_HERO_STAND_TO_CROUCH_A:
 	case STATE_HERO_STAND_TO_CROUCH_B:
@@ -5573,6 +5642,9 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	case STATE_HERO_WIND_CANON_B:
 		StateHeroWindCanonTerm();
+		break;
+	case STATE_HERO_WIND_FLY_C:
+		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
 		break;
 	case STATE_HERO_CAUGHT_TRAP_2:
 	{
@@ -5914,6 +5986,12 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_HURT_A:
 		StateHeroHit();
 		break;
+	case STATE_HERO_WIND_WALL_HURT:
+		StateHeroWindWallMove(0.0f, 0.0f, 1, 1);
+		break;
+	case STATE_HERO_WIND_SLIDE_HURT:
+		StateHeroWindSlide(STATE_HERO_WIND_SLIDE);
+		break;
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
 		StateHeroTobogganJump(0, 0, 0, STATE_HERO_TOBOGGAN);
 		break;
@@ -6037,6 +6115,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_WIND_FLY_B:
 		StateHeroWindFly(1);
 		break;
+	case STATE_HERO_WIND_FLY_C:
+		StateHeroWindFly(1);
+		break;
 	case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 		StateHeroTrampolineJump_1_2(2.0f);
 		break;
@@ -6145,7 +6226,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 				bVar2 = this->pSoccerActor != (CActor*)0x0;
 			}
 		
-			if ((((!bVar2) && (this->field_0x350 != 0)) && (this->field_0x187c == 0)) && ((uVar9 = TestState_00132830(0xffffffff), uVar9 == 0 ||
+			if ((((!bVar2) && (this->pAdversary != 0)) && (this->field_0x187c == 0)) && ((uVar9 = TestState_00132830(0xffffffff), uVar9 == 0 ||
 					(this->dynamic.velocityDirectionEuler.y <= 0.0f)))) {
 				SetFightBehaviour();
 			}
@@ -6323,7 +6404,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 			}
 			else {
 				/* Check with the input manager if the jump key is pressed */
-				uVar5 = pInput->pressedBitfield & 0x10;
+				uVar5 = pInput->pressedBitfield & PAD_BITMASK_X;
 			}
 			if (uVar5 == 0) {
 				uVar11 = CanEnterToboggan();
@@ -6901,7 +6982,7 @@ LAB_00329a38:
 			uVar9 = 0;
 		}
 		else {
-			uVar9 = pCVar3->pressedBitfield & 0x10;
+			uVar9 = pCVar3->pressedBitfield & PAD_BITMASK_X;
 		}
 
 		if ((uVar9 != 0) && (0.50022143f < local_60.y)) {
@@ -7396,7 +7477,7 @@ void CActorHeroPrivate::StateHeroWindFly(int param_2)
 
 	if (bVar3) {
 		bVar3 = false;
-		if (GetWindState() == (CActorWindState*)0x0) {
+		if (GetWindState() != (CActorWindState*)0x0) {
 			iVar6 = GetWindState()->field_0x0;
 			bVar3 = true;
 			if (iVar6 != GetWindState()->field_0x4) {
@@ -7642,7 +7723,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 			uVar13 = 0;
 		}
 		else {
-			uVar13 = pCVar2->pressedBitfield & 0x10;
+			uVar13 = pCVar2->pressedBitfield & PAD_BITMASK_X;
 		}
 
 		if (uVar13 == 0) {
@@ -7754,8 +7835,8 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verticalSpeed, int bIsJump, int nextState)
 {
 	CAnimation* pCVar1;
-	CCollision* pCVar2;
-	CPlayerInput* pCVar3;
+	CCollision* pCol;
+	CPlayerInput* pInput;
 	edAnmLayer* peVar4;
 	bool bVar5;
 	StateConfig* pSVar6;
@@ -7774,7 +7855,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 	int local_4;
 
 	pCVar1 = this->pAnimationController;
-	pCVar2 = this->pCollisionData;
+	pCol = this->pCollisionData;
 
 	IncreaseEffort(1.0f);
 
@@ -7853,31 +7934,34 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 			}
 
 			if (bVar5) {
-				if ((pCVar2->flags_0x4 & 1) == 0) {
-					SetState(0xf5, 0xffffffff);
+				if ((pCol->flags_0x4 & 1) == 0) {
+					SetState(STATE_HERO_WIND_FLY, 0xffffffff);
 				}
 				else {
 					if ((local_4 == 0) || (local_8 != 0)) {
 						if (local_4 == 0) {
-							SetState(0xf5, 0xffffffff);
+							SetState(STATE_HERO_WIND_FLY, 0xffffffff);
 						}
 						else {
 							if (nextState != -1) {
-								pCVar3 = this->pPlayerInput;
-								if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-									uVar11 = 0;
+								pInput = this->pPlayerInput;
+
+								uint bPressedJump;
+
+								if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+									bPressedJump = 0;
 								}
 								else {
-									uVar11 = pCVar3->pressedBitfield & 0x10;
+									bPressedJump = pInput->pressedBitfield & PAD_BITMASK_X;
 								}
 
-								if (uVar11 != 0) {
-									if ((pCVar2->flags_0x4 & 2) != 0) {
+								if (bPressedJump != 0) {
+									if ((pCol->flags_0x4 & 2) != 0) {
 										local_70.x = this->currentLocation.x;
 										local_70.z = this->currentLocation.z;
 										local_70.y = this->currentLocation.y + 0.1f;
 										local_70.w = this->currentLocation.w;
-										UpdatePosition( &local_70, true);
+										UpdatePosition(&local_70, true);
 									}
 
 									SetState(nextState, 0xffffffff);
@@ -7898,7 +7982,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 								}
 
 								if (bVar5) {
-									SetState(0x100, 0xffffffff);
+									SetState(STATE_HERO_WIND_FLY_B, 0xffffffff);
 									return;
 								}
 							}
@@ -7917,23 +8001,23 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 							if ((bVar5) || (bIsJump == 0)) {
 								GetPadRelativeToPlane(&this->field_0x13f0, &local_c, &local_10);
 								if (0.3f < local_c) {
-									SetState(0xfc, 0xffffffff);
+									SetState(STATE_HERO_WIND_WALL_MOVE_D, 0xffffffff);
 								}
 								else {
 									if (local_c < -0.3f) {
-										SetState(0xfb, 0xffffffff);
+										SetState(STATE_HERO_WIND_WALL_MOVE_C, 0xffffffff);
 									}
 									else {
 										if (0.3f < local_10) {
-											SetState(0xf9, 0xffffffff);
+											SetState(STATE_HERO_WIND_WALL_MOVE_E, 0xffffffff);
 										}
 										else {
 											if (local_10 < -0.3f) {
-												SetState(0xfa, 0xffffffff);
+												SetState(STATE_HERO_WIND_WALL_MOVE_F, 0xffffffff);
 											}
 											else {
 												this->effort = 0.0f;
-												SetState(0xf8, 0xffffffff);
+												SetState(STATE_HERO_WIND_WALL_MOVE_B, 0xffffffff);
 											}
 										}
 									}
@@ -7948,7 +8032,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 						this->bounceLocation.z = this->field_0x13f0.z;
 						this->bounceLocation.w = 0.0f;
 						edF32Vector4SafeNormalize0Hard(peVar12, peVar12);
-						SetState(0xfd, 0xffffffff);
+						SetState(STATE_HERO_GRIP_UP_A, 0xffffffff);
 					}
 				}
 			}
@@ -7985,7 +8069,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 				SetState(ChooseStateFall(0), 0xffffffff);
 			}
 			else {
-				SetState(0xf2, 0xffffffff);
+				SetState(STATE_HERO_GLIDE_3, 0xffffffff);
 			}
 		}
 	}
@@ -8259,7 +8343,7 @@ void CActorHeroPrivate::StateHeroRun()
 		uVar8 = 0;
 	}
 	else {
-		uVar8 = pInput->pressedBitfield & 0x10;
+		uVar8 = pInput->pressedBitfield & PAD_BITMASK_X;
 	}
 
 	if (uVar8 != 0) {
@@ -8422,7 +8506,7 @@ void CActorHeroPrivate::StateHeroJoke()
 			uVar5 = 0;
 		}
 		else {
-			uVar5 = pCVar1->pressedBitfield & 0x10;
+			uVar5 = pCVar1->pressedBitfield & PAD_BITMASK_X;
 		}
 
 		if (uVar5 != 0) {
@@ -8645,7 +8729,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 								uVar9 = 0;
 							}
 							else {
-								uVar9 = pCVar2->pressedBitfield & 0x10;
+								uVar9 = pCVar2->pressedBitfield & PAD_BITMASK_X;
 							}
 							if (uVar9 == 0) {
 								pCVar2 = this->pPlayerInput;
@@ -8969,7 +9053,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 				uVar8 = 0;
 			}
 			else {
-				uVar8 = pCVar2->pressedBitfield & 0x10;
+				uVar8 = pCVar2->pressedBitfield & PAD_BITMASK_X;
 			}
 			if ((uVar8 == 0) || (param_2 == 0)) {
 				if ((this->dynamic.horizontalLinearAcceleration < 0.5f) &&
@@ -9410,7 +9494,7 @@ void CActorHeroPrivate::StateHeroCrouch(int nextState)
 			uVar6 = 0;
 		}
 		else {
-			uVar6 = pCVar4->pressedBitfield & 0x10;
+			uVar6 = pCVar4->pressedBitfield & PAD_BITMASK_X;
 		}
 
 		if ((uVar6 == 0) || (this->field_0x1a4c != 0)) {
@@ -9649,7 +9733,7 @@ void CActorHeroPrivate::StateHeroCrouchWalk()
 		uVar4 = 0;
 	}
 	else {
-		uVar4 = pCVar1->pressedBitfield & 0x10;
+		uVar4 = pCVar1->pressedBitfield & PAD_BITMASK_X;
 	}
 
 	if ((uVar4 != 0) && ((bVar3 = (pCVar2->flags_0x4 & 1) == 0, bVar3 ||  ((!bVar3 && 
@@ -10000,7 +10084,7 @@ void CActorHeroPrivate::StateHeroRoll2Crouch()
 		uVar6 = 0;
 	}
 	else {
-		uVar6 = pCVar3->pressedBitfield & 0x10;
+		uVar6 = pCVar3->pressedBitfield & PAD_BITMASK_X;
 	}
 
 	if (uVar6 == 0) {
@@ -10407,7 +10491,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 			uVar6 = 0;
 		}
 		else {
-			uVar6 = pCVar1->pressedBitfield & 0x10;
+			uVar6 = pCVar1->pressedBitfield & PAD_BITMASK_X;
 		}
 
 		if (uVar6 == 0) {
@@ -10671,7 +10755,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 		jumpPressed = 0;
 	}
 	else {
-		jumpPressed = pCVar2->pressedBitfield & 0x10;
+		jumpPressed = pCVar2->pressedBitfield & PAD_BITMASK_X;
 	}
 
 	if (jumpPressed != 0) {
@@ -10960,7 +11044,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 		uVar8 = 0;
 	}
 	else {
-		uVar8 = pCVar3->pressedBitfield & 0x10;
+		uVar8 = pCVar3->pressedBitfield & PAD_BITMASK_X;
 	}
 
 	if (uVar8 != 0) {
@@ -11426,7 +11510,7 @@ LAB_00139008:
 									uVar9 = 0;
 								}
 								else {
-									uVar9 = pCVar2->pressedBitfield & 0x10;
+									uVar9 = pCVar2->pressedBitfield & PAD_BITMASK_X;
 								}
 
 								if (uVar9 == 0) {
@@ -14726,7 +14810,7 @@ int CActorHeroPrivate::ChooseFightAnim(int newState, int initialAnim)
 	int indexValue;
 	CActor* pCVar5;
 
-	pCVar5 = this->field_0x350;
+	pCVar5 = this->pAdversary;
 	if ((pCVar5 == (CActor*)0x0) &&
 		(pCVar1 = this->field_0x354, pCVar5 = (CActor*)0x0, pCVar1 != (CActor*)0x0)) {
 		pCVar5 = pCVar1;
@@ -14790,7 +14874,7 @@ int CActorHeroPrivate::ChooseFightAnim(int newState, int initialAnim)
 void CActorHeroPrivate::_ResetHeroFight()
 {
 	this->field_0x187c = 0;
-	this->fightLock.pActor = (CActor*)0x0;
+	this->fightLock.pActor = (CActorFighter*)0x0;
 
 	//(**(code**)(*(int*)&this->field_0xcf0 + 0x10))(&this->field_0xcd0);
 	//(**(code**)(*(int*)&this->field_0x1600 + 0x10))(&this->field_0x15dc.field_0x4);

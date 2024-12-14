@@ -594,6 +594,36 @@ void CCinematic::InitInternalData()
 	return;
 }
 
+int S_STREAM_NTF_TARGET_ONOFF::SwitchOff(CActor* pActor)
+{
+	uint uVar1;
+	bool bVar2;
+	int iVar3;
+
+	uVar1 = this->flags;
+	iVar3 = 0;
+	bVar2 = true;
+
+	if (((uVar1 & 1) != 0) && ((uVar1 & 0x40000000) != 0)) {
+		bVar2 = false;
+	}
+
+	if (bVar2) {
+		this->flags = this->flags | 0x40000000;
+		if (this->field_0x14 != 0) {
+			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->field_0x14, *(uint*)&this->field_0x18);
+			if (pActor == (CActor*)0x0) {
+				pActor = LOAD_SECTION_CAST(CActor*, this->pRef);
+			}
+			if (pActor != (CActor*)0x0) {
+				iVar3 = pActor->DoMessage(LOAD_SECTION_CAST(CActor*, this->pRef), (ACTOR_MESSAGE)this->field_0x14, &this->field_0x18);
+			}
+		}
+	}
+
+	return iVar3;
+}
+
 void CCinematic::SetupInternalData()
 {
 	uint uVar1;
@@ -1774,6 +1804,58 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 	return (int*)outMeshInfo;
 }
 
+void S_TARGET_STREAM_REF_CONTAINER::Init()
+{
+	int iVar4 = 0;
+	if (0 < this->pTargetStreamRef->entryCount) {
+		do {
+			this->pTargetStreamRef->aEntries[iVar4].Init();
+			iVar4 = iVar4 + 1;
+		} while (iVar4 < this->pTargetStreamRef->entryCount);
+	}
+
+	return;
+}
+
+void S_STREAM_NTF_TARGET_ONOFF::Reset()
+{
+	this->flags = this->flags & 1;
+	return;
+}
+
+bool S_STREAM_NTF_TARGET_ONOFF::SwitchOn(CActor* pActor)
+{
+	uint uVar1;
+	bool bVar2;
+	bool uVar3;
+
+	uVar1 = this->flags;
+	uVar3 = false;
+	bVar2 = true;
+
+	if (((uVar1 & 1) != 0) && ((uVar1 & 0x40000000) != 0)) {
+		bVar2 = false;
+	}
+
+	if (bVar2) {
+		this->flags = this->flags | 0x40000000;
+
+		if (this->messageId != 0) {
+			g_CinematicManager_0048efc->NotifyCinematic(this->cutsceneId, pActor, this->messageId, this->messageFlags);
+
+			if (pActor == (CActor*)0x0) {
+				pActor = (CActor*)LOAD_SECTION(this->pRef);
+			}
+
+			if (pActor != (CActor*)0x0) {
+				uVar3 = pActor->DoMessage(pActor, (ACTOR_MESSAGE)this->messageId, (MSG_PARAM)this->messageFlags);
+			}
+		}
+	}
+
+	return uVar3;
+}
+
 CActorCinematic* CCinematic::NewCinematicActor(const edCinGameInterface::ACTORV_CREATIONtag* pTag, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D)
 {
 	int iVar1;
@@ -1832,6 +1914,18 @@ CCineActorConfig* CCinematic::GetActorConfig(CActor* pActor)
 		}
 	}
 	return (CCineActorConfig*)0x0;
+}
+
+void S_TARGET_STREAM_REF_CONTAINER::Create(ByteCode* pByteCode)
+{
+	this->pTargetStreamRef = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+
+	if (this->pTargetStreamRef->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + this->pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_ONOFF);
+	}
+
+	return;
 }
 
 bool S_STREAM_NTF_TARGET_SWITCH::PostSwitch(CActor* pActor)
@@ -3086,6 +3180,13 @@ bool S_STREAM_NTF_TARGET_SWITCH::Switch(CActor* pActor)
 	}
 
 	return uVar3;
+}
+
+void S_STREAM_EVENT_CAMERA_CONTAINER::Create(ByteCode* pByteCode)
+{
+	this->pCameraStreamRef = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(this->pCameraStreamRef + 1);
+	return;
 }
 
 bool S_STREAM_NTF_TARGET_SWITCH_EX::Switch(CActor* pActor, uint messageFlags)

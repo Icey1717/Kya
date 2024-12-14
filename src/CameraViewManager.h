@@ -149,6 +149,10 @@ struct CCamConfig : public CAMERA_CONFIG {
 class CCamFigData {
 public:
 	void Create(ByteCode* pByteCode);
+	void IsValid(undefined4 param_2);
+
+	edF32VECTOR4 field_0x290;
+	undefined4 field_0x2a0;
 };
 
 void CameraSet3DPos(edFCamera* pCamera);

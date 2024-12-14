@@ -1,7 +1,18 @@
 #include "ActorCommander.h"
 #include "MemoryStream.h"
+#include "ActorManager.h"
+#include "ActorWolfen.h"
+#include "ActorHero.h"
+#include "EventManager.h"
+#include "MathOps.h"
+#include "TimeController.h"
 
 
+
+CActorCommander::CActorCommander()
+{
+	this->field_0x1e8 = 0;
+}
 
 void CActorCommander::Create(ByteCode* pByteCode)
 {
@@ -20,38 +31,35 @@ void CActorCommander::Create(ByteCode* pByteCode)
 	int iVar13;
 
 	CActor::Create(pByteCode);
-	uVar3 = pByteCode->GetU32();
-	this->eventIndex_0x178 = uVar3;
-	uVar3 = pByteCode->GetU32();
-	this->eventID_0x17c = uVar3;
-	fVar4 = (float)pByteCode->GetU32();
-	//(this->field_0x180).x = fVar4;
-	fVar4 = (float)pByteCode->GetS32();
-	//(this->field_0x180).y = fVar4;
-	pCVar5 = (CActor*)pByteCode->GetS32();
-	//(this->checkpointData_0x190).pActor_0x0 = pCVar5;
+	this->detectAreaZoneId = pByteCode->GetU32();
+	this->guardAreaZoneId = pByteCode->GetU32();
+	this->field_0x180 = pByteCode->GetU32();
+	this->newPathFindingId = pByteCode->GetS32();
+	this->actorRef.index = pByteCode->GetS32();
 	this->squad.Create(pByteCode);
-	iVar6 = pByteCode->GetS32();
-	this->count_0x2ec = iVar6;
-	uVar3 = this->count_0x2ec;
-	if ((int)uVar3 < 1) {
+
+	this->nbTeams = pByteCode->GetS32();
+	uVar3 = this->nbTeams;
+	if (uVar3 < 1) {
 		this->aTeamElt = (CTeamElt*)0x0;
 	}
 	else {
 		this->aTeamElt = new CTeamElt[uVar3];
 	}
+
 	iVar6 = 0;
-	if (0 < this->count_0x2ec) {
+	if (0 < this->nbTeams) {
 		do {
 			iVar9 = pByteCode->GetS32();
 			this->aTeamElt[iVar6].enemyIndex = iVar9;
 			iVar6 = iVar6 + 1;
-		} while (iVar6 < this->count_0x2ec);
+		} while (iVar6 < this->nbTeams);
 	}
-	//(this->field_0x180).w = 0.0;
-	//(this->field_0x180).z = -NAN;
-	iVar6 = pByteCode->GetS32();
-	this->count_0x16c = iVar6;
+
+	this->flags_0x18c = 0;
+	this->curPathFindingId = -1;
+
+	this->count_0x16c = pByteCode->GetS32();
 	if (this->count_0x16c == 0) {
 		this->aComponent_0x170 = (ACommanderComponent_10*)0x0;
 	}
@@ -77,15 +85,51 @@ void CActorCommander::Create(ByteCode* pByteCode)
 			} while (iVar6 < this->count_0x16c);
 		}
 	}
+
 	this->camFigData.Create(pByteCode);
-	//fVar2 = edF32VECTOR4_0040e720.w;
-	//fVar4 = edF32VECTOR4_0040e720.z;
-	//uVar1 = (ulong)edF32VECTOR4_0040e720._0_8_ >> 0x20;
-	//(this->camFigData).field_0x290.x = (float)edF32VECTOR4_0040e720._0_8_;
-	//(this->camFigData).field_0x290.y = (float)uVar1;
-	//(this->camFigData).field_0x290.z = fVar4;
-	//(this->camFigData).field_0x290.w = fVar2;
-	//CCamFigData::IsValid(&this->camFigData, 0);
+
+	static edF32VECTOR4 edF32VECTOR4_0040e720 = { 0.0f, 1.6f, 0.0f, 0.0f };
+
+	this->camFigData.field_0x290 = edF32VECTOR4_0040e720;
+	this->camFigData.IsValid(0);
+	return;
+}
+
+void CActorCommander::Init()
+{
+	CActorManager* pCVar1;
+	bool bVar2;
+	CActorFighter* pCVar3;
+	CTeamElt* pCurTeam;
+	int iVar5;
+	CActorWolfen* pWolfen;
+
+	CActor::Init();
+
+	pCVar1 = CScene::ptable.g_ActorManager_004516a4;
+	iVar5 = 0;
+	if (0 < this->nbTeams) {
+		do {
+			pCurTeam = this->aTeamElt + iVar5;
+			pCVar3 = (CActorFighter*)0x0;
+			if (pCurTeam->enemyIndex != -1) {
+				pCVar3 = static_cast<CActorFighter*>(pCVar1->aActors[pCurTeam->enemyIndex]);
+			}
+			pCurTeam->pEnemyActor = pCVar3;
+
+			pWolfen = static_cast<CActorWolfen*>(pCurTeam->pEnemyActor);
+			if (pWolfen->IsKindOfObject(0x10) != false) {
+				pWolfen->pCommander = this;
+			}
+
+			iVar5 = iVar5 + 1;
+		} while (iVar5 < this->nbTeams);
+	}
+
+	this->actorRef.Init();
+
+	ClearLocalData();
+
 	return;
 }
 
@@ -117,15 +161,17 @@ void CActorCommander::Manage()
 	}
 
 	IMPLEMENTATION_GUARD_LOG(
-	(*(code*)(this->pVTable)->field_0xfc)(this);
-	ACommander::UpdateFunc_00171170(this);
-	ACommander::UpdateFunc_00170e20(this);
-	ACommander::UpdateFunc_00170cc0(this);
-	ACommander::UpdateFunc_00170b70(this);
-	ACommander::UpdateFunc_00170a20(this);
+	(*(code*)(this->pVTable)->field_0xfc)(this);)
+	CheckExorcism();
+	CheckArea_IntruderDetectArea();
+	CheckArea_IntruderGuardArea();
+	CheckArea_SoldiersDetectArea();
+	CheckArea_SoldiersGuardArea();
+
+	IMPLEMENTATION_GUARD_LOG(
 	(this->checkpointData_0x190).pWaypoint = (CWayPoint*)0x0;
 	iVar1 = 0;
-	if (0 < this->count_0x2ec) {
+	if (0 < this->nbTeams) {
 		iVar4 = 0;
 		do {
 			piVar1 = *(CTeamElt**)((int)&this->aTeamElt->pEnemyActor + iVar4);
@@ -138,7 +184,7 @@ void CActorCommander::Manage()
 			}
 			iVar1 = iVar1 + 1;
 			iVar4 = iVar4 + 0x18;
-		} while (iVar1 < this->count_0x2ec);
+		} while (iVar1 < this->nbTeams);
 	})
 
 	this->bInCombat_0x1b0 = 0;
@@ -147,6 +193,442 @@ void CActorCommander::Manage()
 	_UpdateCamera();
 	this->field_0x2f4 = 0;)
 	return;
+}
+
+
+void CActorCommander::Reset()
+{
+	CActor::Reset();
+	ClearLocalData();
+
+	return;
+}
+
+CBehaviour* CActorCommander::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pBehaviour;
+
+	if (behaviourType == 3) {
+		pBehaviour = new CBehaviourCommanderBeatUp;
+	}
+	else {
+		if (behaviourType == 2) {
+			pBehaviour = &this->behaviourCommanderDefault;
+		}
+		else {
+			if (behaviourType == 0) {
+				pBehaviour = new CBehaviourCommanderDefault;
+			}
+			else {
+				pBehaviour = CActor::BuildBehaviour(behaviourType);
+			}
+		}
+	}
+
+	return pBehaviour;
+}
+
+void CActorCommander::ChangeManageState(int state)
+{
+	if ((state == 0) && ((this->camFigData).field_0x2a0 != 0)) {
+		this->camFigData.IsValid(0);
+	}
+
+	CActor::ChangeManageState(state);
+
+	return;
+}
+
+void CActorCommander::ClearLocalData()
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	CTeamElt* puVar4;
+	int iVar4;
+	int iVar5;
+	InitPathfindingClientMsgParams local_20;
+
+	this->flags_0x18c = 0;
+
+	if (this->curPathFindingId != this->newPathFindingId) {
+		this->curPathFindingId = this->newPathFindingId;
+		local_20.msgId = 10;
+		local_20.newId = this->curPathFindingId;
+		iVar5 = 0;
+		if (0 < this->nbTeams) {
+			do {
+				local_20.pActor = this->aTeamElt[iVar5].pEnemyActor;
+				DoMessage(this->aTeamElt[iVar5].pEnemyActor, (ACTOR_MESSAGE)0x1a, &local_20);
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < this->nbTeams);
+		}
+	}
+
+	//this->squad.Clear();
+
+	this->field_0x1e0 = 0;
+	//this->field_0x1e4 = 0;
+	//this->field_0x1e8 = 0;
+	//this->field_0x194 = 0;
+	this->targetPosition = gF32Vertex4Zero;
+	this->targetLocation = gF32Vertex4Zero;
+
+	this->bInCombat_0x1b0 = 1;
+	this->count_0x1d0 = 0;
+	//iVar5 = 0;
+	//if (0 < this->nbTeams) {
+	//	iVar4 = 0;
+	//	do {
+	//		iVar5 = iVar5 + 1;
+	//		puVar4 = (CTeamElt*)((int)&this->aTeamElt->field_0x0 + iVar4);
+	//		puVar4->field_0x0 = 2;
+	//		puVar4->field_0x4 = 2;
+	//		puVar4->field_0x14 = -1;
+	//		iVar4 = iVar4 + 0x18;
+	//	} while (iVar5 < this->nbTeams);
+	//}
+
+	//(this->camFigData).pCommanderRef_0x230 = this;
+	//CCamFigData::Reset(&this->camFigData);
+	//this->field_0x9f0 = 0;
+	//this->field_0x9f4 = 0;
+	//this->field_0x164 = 0;
+	//this->field_0x160 = 0;
+	//this->field_0x168 = 0;
+	//this->field_0x174 = 0;
+	//this->field_0x2f4 = 0;
+	//this->field_0x6d0 = 1;
+	return;
+}
+
+void CActorCommander::AddTracked()
+{
+	this->count_0x1d0 = this->count_0x1d0 + -1;
+
+	if ((this->count_0x1d0 == 0) && ((this->flags & 2) != 0)) {
+		this->flags = this->flags & 0xfffffffc;
+	}
+
+	return;
+}
+
+void CActorCommander::RemoveTracked()
+{
+	this->count_0x1d0 = this->count_0x1d0 + 1;
+
+	if ((this->flags & 2) == 0) {
+		this->flags = this->flags | 2;
+		this->flags = this->flags & 0xfffffffe;
+	}
+
+	return;
+}
+
+CActorFighter* CActorCommander::GetIntruder()
+{
+	CActor* pIntruder;
+
+	pIntruder = this->actorRef.Get();
+	if (pIntruder == (CActor*)0x0) {
+		pIntruder = CActorHero::_gThis;
+	}
+
+	return static_cast<CActorFighter*>(pIntruder);
+}
+
+int CActorCommander::CheckDetectArea(edF32VECTOR4* v0)
+{
+	CEventManager* pEventManager;
+	ed_zone_3d* pZone;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	pZone = (ed_zone_3d*)0x0;
+	if (this->detectAreaZoneId != 0xffffffff) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->detectAreaZoneId);
+	}
+
+	return edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, v0, 0);
+}
+
+int CActorCommander::CheckGuardArea(edF32VECTOR4* v0)
+{
+	CEventManager* pEventManager;
+	ed_zone_3d* pZone;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	pZone = (ed_zone_3d*)0x0;
+	if (this->guardAreaZoneId != 0xffffffff) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->guardAreaZoneId);
+	}
+
+	return edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, v0, 0);
+}
+
+void CActorCommander::CheckExorcism()
+{
+	CMagicInterface* pMagicInterface;
+	float fVar2;
+	float fVar3;
+	undefined4 local_20;
+	float local_1c;
+	undefined4* local_4;
+	CActorWolfen* pWolfen;
+
+	if (0 < (this->exorcismActorsTable).entryCount) {
+		if (this->field_0x1e0 == 0) {
+			this->field_0x1e0 = 1;
+			IMPLEMENTATION_GUARD(
+				pMagicInterface = &CActorHero::_gThis->magicInterface;
+			fVar2 = pMagicInterface->GetValue();
+			fVar3 = pMagicInterface->GetTransit();
+			this->field_0x1dc = fVar2 + fVar3;);
+		}
+
+		if (0.5f <= Timer::GetTimer()->scaledTotalTime - this->field_0x1e4) {
+			pWolfen = static_cast<CActorWolfen*>((this->exorcismActorsTable).aEntries[0]);
+
+			IMPLEMENTATION_GUARD(
+			local_20 = 0xe;
+			local_1c = this->field_0x1dc;
+			fVar2 = pWolfen->field_0xb84 - pWolfen->field_0xb88;
+			if (local_1c < fVar2) {
+				this->field_0x1dc = 0.0f;
+			}
+			else {
+				this->field_0x1dc = this->field_0x1dc - (pWolfen->field_0xb84 - pWolfen->field_0xb88);
+				local_1c = fVar2;
+			}
+			local_4 = &local_20;
+			CActor::DoMessage((CActor*)this, (CActor*)pWolfen, 0x1a, (uint)local_4);
+			this->exorcismActorsTable.Pop(0);
+			this->field_0x1e4 = Timer::GetTimer()->scaledTotalTime;)
+		}
+
+		if ((this->exorcismActorsTable).entryCount == 0) {
+			this->field_0x1e0 = 0;
+		}
+	}
+
+	return;
+}
+
+void CActorCommander::CheckArea_IntruderDetectArea()
+{
+	bool bDetected;
+	ed_zone_3d* pZone;
+	int zoneComputeResult;
+	uint uVar4;
+	InitPathfindingClientMsgParams initPathfindingClientMsgParams;
+
+	zoneComputeResult = 2;
+	bDetected = false;
+	initPathfindingClientMsgParams.pActor = static_cast<CActorFighter*>(this->actorRef.Get());
+	initPathfindingClientMsgParams.msgId = 0;
+
+	if (initPathfindingClientMsgParams.pActor == (CActorFighter*)0x0) {
+		initPathfindingClientMsgParams.pActor = CActorHero::_gThis;
+	}
+
+	if (initPathfindingClientMsgParams.pActor != (CActorFighter*)0x0) {
+		pZone = (ed_zone_3d*)0x0;
+
+		if (this->detectAreaZoneId != 0xffffffff) {
+			pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->detectAreaZoneId);
+		}
+
+		zoneComputeResult = edEventComputeZoneAgainstVertex(CScene::ptable.g_EventManager_006f5080->activeChunkId, pZone, &initPathfindingClientMsgParams.pActor->currentLocation, 0);
+	}
+
+	uVar4 = this->flags_0x18c & 2;
+	if ((uVar4 == 0) || (zoneComputeResult != 2)) {
+		if ((uVar4 == 0) && (zoneComputeResult == 1)) {
+			initPathfindingClientMsgParams.msgId = 1;
+			bDetected = true;
+			this->flags_0x18c = this->flags_0x18c | 2;
+		}
+	}
+	else {
+		bDetected = true;
+		this->flags_0x18c = this->flags_0x18c & 0xfffffffd;
+		initPathfindingClientMsgParams.msgId = 2;
+	}
+
+	if (bDetected) {
+		zoneComputeResult = 0;
+
+		if (0 < this->nbTeams) {
+			do {
+				DoMessage(this->aTeamElt[zoneComputeResult].pEnemyActor, (ACTOR_MESSAGE)0x1a, &initPathfindingClientMsgParams);
+				zoneComputeResult = zoneComputeResult + 1;
+			} while (zoneComputeResult < this->nbTeams);
+		}
+	}
+
+	return;
+}
+
+void CActorCommander::CheckArea_IntruderGuardArea()
+{
+	bool bDetected;
+	ed_zone_3d* pZone;
+	int zoneComputeResult;
+	uint uVar4;
+	InitPathfindingClientMsgParams initPathfindingClientMsgParams;
+
+	zoneComputeResult = 2;
+	bDetected = false;
+	initPathfindingClientMsgParams.pActor = static_cast<CActorFighter*>(this->actorRef.Get());
+	initPathfindingClientMsgParams.msgId = 0;
+
+	if (initPathfindingClientMsgParams.pActor == (CActorFighter*)0x0) {
+		initPathfindingClientMsgParams.pActor = CActorHero::_gThis;
+	}
+
+	if (initPathfindingClientMsgParams.pActor != (CActorFighter*)0x0) {
+		pZone = (ed_zone_3d*)0x0;
+
+		if (this->guardAreaZoneId != 0xffffffff) {
+			pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->guardAreaZoneId);
+		}
+
+		zoneComputeResult = edEventComputeZoneAgainstVertex(CScene::ptable.g_EventManager_006f5080->activeChunkId, pZone, &initPathfindingClientMsgParams.pActor->currentLocation, 0);
+	}
+
+	uVar4 = this->flags_0x18c & 4;
+	if ((uVar4 == 0) || (zoneComputeResult != 2)) {
+		if ((uVar4 == 0) && (zoneComputeResult == 1)) {
+			initPathfindingClientMsgParams.msgId = 3;
+			bDetected = true;
+			this->flags_0x18c = this->flags_0x18c | 4;
+		}
+	}
+	else {
+		bDetected = true;
+		this->flags_0x18c = this->flags_0x18c & 0xfffffffb;
+		initPathfindingClientMsgParams.msgId = 4;
+	}
+
+	if (bDetected) {
+		zoneComputeResult = 0;
+
+		if (0 < this->nbTeams) {
+			do {
+				DoMessage(this->aTeamElt[zoneComputeResult].pEnemyActor, (ACTOR_MESSAGE)0x1a, &initPathfindingClientMsgParams);
+				zoneComputeResult = zoneComputeResult + 1;
+			} while (zoneComputeResult < this->nbTeams);
+		}
+	}
+
+	return;
+}
+
+void CActorCommander::CheckArea_SoldiersDetectArea()
+{
+	CActorFighter* pReceiver;
+	ed_zone_3d* pZone;
+	int zoneComupteResult;
+	CTeamElt* pTeamElt;
+	int curTeamEltIndex;
+	InitPathfindingClientMsgParams local_20;
+
+	pZone = (ed_zone_3d*)0x0;
+	if (this->detectAreaZoneId != 0xffffffff) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->detectAreaZoneId);
+	}
+
+	curTeamEltIndex = 0;
+	if (0 < this->nbTeams) {
+		do {
+			pTeamElt = this->aTeamElt + curTeamEltIndex;
+
+			pReceiver = pTeamElt->pEnemyActor;
+
+			zoneComupteResult = edEventComputeZoneAgainstVertex(CScene::ptable.g_EventManager_006f5080->activeChunkId, pZone, &pReceiver->currentLocation, 0);
+			if (zoneComupteResult != pTeamElt->field_0x4) {
+				if ((zoneComupteResult == 1) && (pTeamElt->field_0x4 == 2)) {
+					local_20.msgId = 8;
+				}
+				else {
+					if ((zoneComupteResult == 2) && (pTeamElt->field_0x4 == 1)) {
+						local_20.msgId = 9;
+					}
+				}
+
+				local_20.pActor = static_cast<CActorFighter*>(pReceiver);
+				DoMessage(pReceiver, (ACTOR_MESSAGE)0x1a, &local_20);
+				pTeamElt->field_0x4 = zoneComupteResult;
+			}
+
+			curTeamEltIndex = curTeamEltIndex + 1;
+		} while (curTeamEltIndex < this->nbTeams);
+	}
+
+	return;
+}
+
+void CActorCommander::CheckArea_SoldiersGuardArea()
+{
+	CActorFighter* pReceiver;
+	ed_zone_3d* pZone;
+	int zoneComupteResult;
+	CTeamElt* pTeamElt;
+	int curTeamEltIndex;
+	InitPathfindingClientMsgParams local_20;
+
+	pZone = (ed_zone_3d*)0x0;
+	if (this->guardAreaZoneId != 0xffffffff) {
+		pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->guardAreaZoneId);
+	}
+
+	curTeamEltIndex = 0;
+	if (0 < this->nbTeams) {
+		do {
+			pTeamElt = this->aTeamElt + curTeamEltIndex;
+
+			pReceiver = pTeamElt->pEnemyActor;
+
+			zoneComupteResult = edEventComputeZoneAgainstVertex(CScene::ptable.g_EventManager_006f5080->activeChunkId, pZone, &pReceiver->currentLocation, 0);
+			if (zoneComupteResult != pTeamElt->field_0x0) {
+				if ((zoneComupteResult == 1) && (pTeamElt->field_0x0 == 2)) {
+					local_20.msgId = 6;
+				}
+				else {
+					if ((zoneComupteResult == 2) && (pTeamElt->field_0x0 == 1)) {
+						local_20.msgId = 7;
+					}
+				}
+
+				local_20.pActor = static_cast<CActorFighter*>(pReceiver);
+				DoMessage(pReceiver, (ACTOR_MESSAGE)0x1a, &local_20);
+				pTeamElt->field_0x0 = zoneComupteResult;
+			}
+
+			curTeamEltIndex = curTeamEltIndex + 1;
+		} while (curTeamEltIndex < this->nbTeams);
+	}
+
+	return;
+}
+
+bool CActorCommander::CheckZone_00170f90(edF32VECTOR4* v0)
+{
+	uint zoneId;
+	ed_zone_3d* pZone;
+	int result;
+
+	zoneId = this->field_0x180;
+	result = 2;
+
+	if (zoneId != 0xffffffff) {
+		pZone = (ed_zone_3d*)0x0;
+		if (zoneId != 0xffffffff) {
+			pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, zoneId);
+		}
+		result = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, v0, 0);
+	}
+
+	return result;
 }
 
 void CSquad::Create(ByteCode* pByteCode)
@@ -177,5 +659,14 @@ void CSquad::Create(ByteCode* pByteCode)
 	//this->field_0xbc = 0;
 	//this->field_0xb8 = 0;
 	//memset(this->field_0xc0, 0, 0xa0);
+	return;
+}
+
+CTeamElt::CTeamElt()
+{
+	this->field_0x0 = 2;
+	this->field_0x4 = 2;
+	this->field_0x14 = -1;
+
 	return;
 }

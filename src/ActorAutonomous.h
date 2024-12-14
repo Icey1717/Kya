@@ -110,7 +110,7 @@ public:
 	int priority;
 	float currentValue;
 	float valueMax;
-	undefined4 field_0x10;
+	int field_0x10;
 
 	// CInterface
 	virtual bool Manage();
@@ -134,6 +134,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Reset();
 	virtual void Init();
+	virtual void Term();
 	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
@@ -145,7 +146,7 @@ public:
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 
-	virtual CVision* GetPerception() { return (CVision*)0x0; }
+	virtual CVision* GetVision() { return (CVision*)0x0; }
 
 	void SetLookingAtOn(float param_1);
 	void SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation);
@@ -160,7 +161,13 @@ public:
 	virtual void RestoreCollisionSphere(float param_2);
 
 	virtual CActorWindState* GetWindState();
+
+	virtual float GetWalkSpeed();
+	virtual float GetWalkRotSpeed();
+	virtual float GetWalkAcceleration();
 	virtual float GetRunSpeed();
+	virtual float GetRunRotSpeed();
+	virtual float GetRunAcceleration();
 	
 	static StateConfig gStateCfg_AUT[1];
 
@@ -171,7 +178,7 @@ public:
 
 	void StateAutSoccer(float param_1, int param_3, int param_4, CActorMovable* param_5);
 
-	void SV_AUT_WarnActors(float radius, float param_2, uint msgParam);
+	void SV_AUT_WarnActors(float radius, float param_2, CActor* pActor);
 	void SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
 	void SV_AUT_MoveTo(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
 	void SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
@@ -184,6 +191,7 @@ public:
 	virtual void LifeDecrease(float amount);
 
 	virtual CPathFinderClient* GetPathfinderClient() { return (CPathFinderClient*)0x0; }
+	virtual CPathFinderClient* GetPathfinderClientAlt() { return (CPathFinderClient*)0x0; }
 
 	float field_0x2e4;
 

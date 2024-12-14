@@ -2007,3 +2007,88 @@ void edF32Vector2Sub(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2)
 	v0->y = v1->y - v2->y;
 	return;
 }
+
+float edF32Vector4DotProductHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	return v0->x * v1->x + v0->y * v1->y + v0->z * v1->z;
+}
+
+void edF32Vector4SubHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
+{
+	v0->x = v1->x - v2->x;
+	v0->y = v1->y - v2->y;
+	v0->z = v1->z - v2->z;
+	v0->w = v1->w - v2->w;
+
+	return;
+}
+
+float edF32ASinSoft(float param_1)
+{
+	bool bVar1;
+	int iVar2;
+	float fVar3;
+
+	iVar2 = -1;
+	if (0.0f < param_1) {
+		iVar2 = 1;
+	}
+	else {
+		param_1 = -param_1;
+	}
+
+	static float FLOAT_004485d0 = 1.0E-4f;
+	static float FLOAT_004485e4 = 0.16666752f;
+	static float FLOAT_004485e0 = 0.074953005f;
+	static float FLOAT_004485dc = 0.045470025f;
+	static float FLOAT_004485d8 = 0.024181312f;
+	static float FLOAT_004485d4 = 0.0421632f;
+
+	if (FLOAT_004485d0 <= param_1) {
+		bVar1 = 0.5f < param_1;
+		if (bVar1) {
+			fVar3 = (1.0f - param_1) * 0.5f;
+			param_1 = sqrtf(fVar3);
+		}
+		else {
+			fVar3 = param_1 * param_1;
+		}
+		param_1 = param_1 + param_1 * fVar3 * (FLOAT_004485e4 + fVar3 * (FLOAT_004485e0 + fVar3 * (FLOAT_004485dc + (FLOAT_004485d8 + FLOAT_004485d4 * fVar3) * fVar3)));
+
+		if (bVar1) {
+			param_1 = M_PI_2f - (param_1 + param_1);
+		}
+	}
+	if (iVar2 < 0) {
+		param_1 = -param_1;
+	}
+
+	return param_1;
+}
+
+float edF32ACosSoft(float param_1)
+{
+	float fVar1;
+
+	if (param_1 < -0.5f) {
+		fVar1 = edF32ASinSoft(sqrtf((param_1 + 1.0f) * 0.5f));
+		fVar1 = M_PI - fVar1 * 2.0f;
+	}
+	else {
+		if (0.5f < param_1) {
+			fVar1 = edF32ASinSoft(sqrtf((1.0f - param_1) * 0.5f));
+			fVar1 = fVar1 * 2.0f;
+		}
+		else {
+			fVar1 = edF32ASinSoft(param_1);
+			fVar1 = M_PI_2f - fVar1;
+		}
+	}
+
+	return fVar1;
+}
+
+float edF32ACosHard(float param_1)
+{
+	return edF32ACosSoft(param_1);
+}

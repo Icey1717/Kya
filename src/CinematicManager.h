@@ -281,6 +281,16 @@ struct S_STREAM_EVENT_CAMERA {
 	void Reset(CActor* pActor);
 });
 
+struct S_STREAM_EVENT_CAMERA_CONTAINER
+{
+	S_STREAM_EVENT_CAMERA* pCameraStreamRef;
+
+	void Create(ByteCode* pByteCode);
+
+	// overload arrow operator
+	S_STREAM_EVENT_CAMERA* operator->() const { return pCameraStreamRef; }
+};
+
 static_assert(sizeof(S_STREAM_EVENT_CAMERA) == 0x20);
 
 PACK(
@@ -340,6 +350,30 @@ struct S_TARGET_STREAM_REF
 {
 	int entryCount;
 	S_STREAM_NTF_TARGET_SWITCH aEntries[];
+};
+
+struct S_STREAM_NTF_TARGET_ONOFF : public S_STREAM_NTF_TARGET_SWITCH {
+	void Reset();
+	bool SwitchOn(CActor* pActor);
+	int SwitchOff(CActor* pActor);
+};
+
+static_assert(sizeof(S_STREAM_NTF_TARGET_ONOFF) == 0x1c);
+
+struct S_TARGET_ON_OFF_STREAM_REF {
+	int entryCount;
+	S_STREAM_NTF_TARGET_ONOFF aEntries[];
+};
+
+struct S_TARGET_STREAM_REF_CONTAINER
+{
+	S_TARGET_ON_OFF_STREAM_REF* pTargetStreamRef;
+
+	void Create(ByteCode* pByteCode);
+	void Init();
+
+	// overload arrow operator
+	S_TARGET_ON_OFF_STREAM_REF* operator->() const { return pTargetStreamRef; }
 };
 
 PACK(

@@ -101,6 +101,12 @@ namespace Debug {
 			case STATE_HERO_ROLL_2_CROUCH:
 				return "StateHeroRoll2Crouch";
 				break;
+			case STATE_HERO_WIND_WALL_HURT:
+				return "StateHeroWindWallHurt";
+				break;
+			case STATE_HERO_WIND_SLIDE_HURT:
+				return "StateHeroWindSlideHurt";
+				break;
 			case STATE_HERO_TOBOGGAN_JUMP_HURT:
 				return "StateHeroTobogganJumpHurt";
 				break;
@@ -205,6 +211,9 @@ namespace Debug {
 				break;
 			case STATE_HERO_WIND_FLY_B:
 				return "StateHeroWindFlyB";
+				break;
+			case STATE_HERO_WIND_FLY_C:
+				return "StateHeroWindFlyC";
 				break;
 			case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
 				return "StateHeroTrampolineJump_1_2_A";

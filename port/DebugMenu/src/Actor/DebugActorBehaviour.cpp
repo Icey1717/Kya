@@ -2,6 +2,7 @@
 #include "Actor.h"
 #include "ActorTrap.h"
 #include "ActorMovingPlatform.h"
+#include "ActorWolfen.h"
 
 namespace Aton
 {
@@ -71,6 +72,60 @@ namespace MovingPlatform
 	}
 }
 
+#define WOLFEN_BEHAVIOUR_WATCH_DOG 0x8
+#define WOLFEN_BEHAVIOUR_GUARD_AREA 0xa
+#define WOLFEN_BEHAVIOUR_SLEEP 0xc
+#define WOLFEN_BEHAVIOUR_ESCAPE 0xd
+#define WOLFEN_BEHAVIOUR_EXORCISM 0xe
+#define WOLFEN_BEHAVIOUR_TRACK 0xf
+#define WOLFEN_BEHAVIOUR_TRACK_WEAPON 0x11
+#define WOLFEN_BEHAVIOUR_TRACK_WEAPON_STAND 0x12
+#define WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE 0x13
+#define WOLFEN_BEHAVIOUR_SNIPE 0x15
+#define WOLFEN_BEHAVIOUR_LOST 0x16
+#define WOLFEN_BEHAVIOUR_WOLFEN_UNKNOWN 0x17
+#define WOLFEN_BEHAVIOUR_DCA 0x18
+#define WOLFEN_BEHAVIOUR_AVOID 0x19
+
+namespace Wolfen
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case WOLFEN_BEHAVIOUR_WATCH_DOG:
+			return "Watch Dog";
+		case WOLFEN_BEHAVIOUR_GUARD_AREA:
+			return "Guard Area";
+		case WOLFEN_BEHAVIOUR_SLEEP:
+			return "Sleep";
+		case WOLFEN_BEHAVIOUR_ESCAPE:
+			return "Escape";
+		case WOLFEN_BEHAVIOUR_EXORCISM:
+			return "Exorcism";
+		case WOLFEN_BEHAVIOUR_TRACK:
+			return "Track";
+		case WOLFEN_BEHAVIOUR_TRACK_WEAPON:
+			return "Track Weapon";
+		case WOLFEN_BEHAVIOUR_TRACK_WEAPON_STAND:
+			return "Track Weapon Stand";
+		case WOLFEN_BEHAVIOUR_TRACK_WEAPON_SNIPE:
+			return "Track Weapon Snipe";
+		case WOLFEN_BEHAVIOUR_SNIPE:
+			return "Snipe";
+		case WOLFEN_BEHAVIOUR_LOST:
+			return "Lost";
+		case WOLFEN_BEHAVIOUR_WOLFEN_UNKNOWN:
+			return "Wolfen Unknown";
+		case WOLFEN_BEHAVIOUR_DCA:
+			return "DCA";
+		case WOLFEN_BEHAVIOUR_AVOID:
+			return "Avoid";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -91,6 +146,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Trap::GetBehaviourName(behaviourId);
 	case MOVING_PLATFORM:
 		return MovingPlatform::GetBehaviourName(behaviourId);
+	case WOLFEN:
+		return Wolfen::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}

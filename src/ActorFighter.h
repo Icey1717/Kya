@@ -299,6 +299,8 @@ struct s_fighter_combo
 	uint field_0x20;
 };
 
+class CActorWeapon;
+
 class CFighterExcludedTable
 {
 public:
@@ -318,6 +320,8 @@ public:
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Init();
+	virtual void Term();
+	virtual void Reset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
@@ -344,7 +348,7 @@ public:
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();
 
-	void SetAdversary(CActor* pAdversary);
+	void SetAdversary(CActorFighter* pNewAdversary);
 
 	void _InterpretCollisions(int param_2);
 	void _InterpretSlides();
@@ -373,7 +377,9 @@ public:
 	int _SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	int _SV_ANM_GetTwoSidedAnim(int param_2, int param_3);
 
-	CActor* field_0x350;
+	CActorWeapon* GetWeapon();
+
+	CActorFighter* pAdversary;
 	CActor* field_0x354;
 
 	int field_0x36c;
@@ -389,6 +395,7 @@ public:
 	CScalarDyn field_0x3a4;
 	CScalarDyn scalarDynJump;
 
+	float field_0x3f4;
 	float field_0x3f8;
 
 	edF32VECTOR4 field_0x400;
@@ -400,6 +407,8 @@ public:
 	float field_0x42c;
 
 	FighterSubObj_40* field_0x470;
+
+	float field_0x478;
 
 	edF32VECTOR4 field_0x4a0;
 	edF32VECTOR4 field_0x4b0;
@@ -475,6 +484,8 @@ public:
 	float field_0x824;
 	float field_0x828;
 	float field_0x82c;
+
+	s_fighter_combo* pFighterCombo;
 
 	int field_0x8e0;
 	int field_0x8e4;

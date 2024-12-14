@@ -158,8 +158,8 @@ public:
 	uint field_0x350;
 	uint field_0x354;
 	uint field_0x358;
-	float field_0x35c;
-	float field_0x360;
+	float moveSpeedNoHeldObject;
+	float moveSpeedHeldObject;
 	uint field_0x370;
 	int field_0x368;
 	int field_0x364;

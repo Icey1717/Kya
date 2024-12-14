@@ -435,7 +435,57 @@ void CActorProjectile::ChangeManageState(int state)
 
 bool CActorProjectile::IsLockable()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	uint uVar5;
+	StateConfig* pSVar6;
+
+	if ((this->field_0x350->flags & 0x100) != 0) {
+		iVar1 = this->actorState;
+		uVar5 = 0;
+
+		if (iVar1 != -1) {
+			pSVar6 = GetStateCfg(iVar1);
+			uVar5 = pSVar6->flags_0x4;
+		}
+
+		if ((uVar5 & 0x8000) != 0) {
+			iVar1 = this->actorState;
+			uVar5 = 0;
+
+			if (iVar1 != -1) {
+				pSVar6 = GetStateCfg(iVar1);
+				uVar5 = pSVar6->flags_0x4;
+			}
+
+			if ((uVar5 & 0x100) == 0) {
+				iVar1 = this->actorState;
+				uVar5 = 0;
+
+				if (iVar1 != -1) {
+					pSVar6 = GetStateCfg(iVar1);
+					uVar5 = pSVar6->flags_0x4;
+				}
+
+				if ((uVar5 & 0x1000) == 0) {
+					return (bool)0;
+				}
+
+				if ((this->field_0x350->flags & 0x20000) != 0) {
+					return (bool)0;
+				}
+			}
+
+			fVar2 = edF32Vector4DotProductHard_I(&CActorHero::_gThis->currentLocation, &this->currentLocation);
+			if ((11.56f < fVar2) || ((this->field_0x350->flags & 0x2000) != 0)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void CActorProjectile::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)

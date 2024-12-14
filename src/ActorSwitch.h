@@ -42,7 +42,7 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); return 0; }
 
 	virtual void SaveContext(uint*, int) {}
 	virtual void LoadContext(uint*, int) {}
@@ -111,9 +111,9 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); return 0; }
 
 	virtual void SaveContext(uint*, int) {}
 	virtual void LoadContext(uint*, int) {}

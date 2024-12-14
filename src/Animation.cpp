@@ -273,6 +273,70 @@ void edAnmStage::SetSingleToDestWRTS(edF32MATRIX4* pMatrix)
 	return;
 }
 
+void edAnmStage::BlendWithDestWRTS(float alpha, edF32MATRIX4* pMatrix)
+{
+	ushort uVar1;
+	float fVar2;
+	edF32MATRIX3* peVar4;
+	edF32MATRIX4* pCurMatrix;
+	edF32MATRIX4* pRelativeMatrixDataEnd;
+	edF32MATRIX3* pSource;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+
+	pCurMatrix = this->pRelativeTransformMatrixBuffer->matrices;
+	peVar4 = this->pConstantMatrixData;
+	pRelativeMatrixDataEnd = this->pRelativeTransformMatrixBuffer->matrices + ((this->anmSkeleton).pTag)->boneCount;
+	for (; pCurMatrix < pRelativeMatrixDataEnd; pCurMatrix = pCurMatrix + 1) {
+		if (pMatrix->da != -1.0f) {
+			pSource = reinterpret_cast<edF32MATRIX3*>(pCurMatrix);
+
+			if (pCurMatrix->da == -1.0f) {
+				pSource = peVar4;
+			}
+
+			edQuatShortestSLERPHard(alpha, &pCurMatrix->rowX, &pSource->rowX, &pMatrix->rowX);
+
+			fVar5 = pSource->bb;
+			fVar6 = pSource->bc;
+			fVar7 = pSource->bd;
+			fVar8 = pMatrix->bb;
+			fVar9 = pMatrix->bc;
+			fVar10 = pMatrix->bd;
+			fVar2 = 1.0f - alpha;
+
+			pCurMatrix->ba = pMatrix->ba * alpha + pSource->ba * fVar2;
+			pCurMatrix->bb = fVar8 * alpha + fVar5 * fVar2;
+			pCurMatrix->bc = fVar9 * alpha + fVar6 * fVar2;
+			pCurMatrix->bd = fVar10 * alpha + fVar7 * fVar2;
+
+			fVar5 = pSource->cb;
+			fVar6 = pSource->cc;
+			fVar7 = pSource->cd;
+			fVar8 = pMatrix->cb;
+			fVar9 = pMatrix->cc;
+			fVar10 = pMatrix->cd;
+			fVar2 = 1.0f - alpha;
+
+			pCurMatrix->ca = pMatrix->ca * alpha + pSource->ca * fVar2;
+			pCurMatrix->cb = fVar8 * alpha + fVar5 * fVar2;
+			pCurMatrix->cc = fVar9 * alpha + fVar6 * fVar2;
+			pCurMatrix->cd = fVar10 * alpha + fVar7 * fVar2;
+
+			pCurMatrix->da = 1.0f;
+		}
+
+		pMatrix = pMatrix + 1;
+		peVar4 = peVar4 + 1;
+	}
+
+	return;
+}
+
 void edAnmStage::BlendToDestWRTS(float alpha, edF32MATRIX4* pSrc, edF32MATRIX4* pDst)
 {
 	undefined8 uVar1;
@@ -2509,8 +2573,7 @@ bool edAnmLayer::PlayingDT(float playTime)
 				}
 				else {
 					if (iVar1 == 3) {
-						IMPLEMENTATION_GUARD(
-						TheAnimStage.BlendWithDestWRTS(this->field_0x4, (edF32MATRIX4*)pMatrixBuffer);)
+						TheAnimStage.BlendWithDestWRTS(this->field_0x4, pMatrixBuffer->matrices);
 					}
 				}
 			}

@@ -1539,6 +1539,12 @@ void CCamFigData::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CCamFigData::IsValid(undefined4 param_2)
+{
+	this->field_0x2a0 = param_2;
+	return;
+}
+
 void CCamConfig::ResetWithConfig()
 {
 	this->field_0x74 = this->field_0xc;
