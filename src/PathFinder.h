@@ -16,6 +16,7 @@ class CAstarMemBank
 public:
 	CAstarMemBank();
 	void DeletePathDynamic(CPathDynamic* pPathDynamic);
+	CPathDynamic* NewPathDynamic(edF32VECTOR4* pStart, edF32VECTOR4* pDestination);
 
 	int nbPathDynamicUsed;
 	CPathDynamic* aDynamicPaths;
@@ -39,6 +40,8 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 
 	CBasicNaviMesh* GetArea(edF32VECTOR4* pLocation);
+
+	CPathDynamic* NewPathDynamic(edF32VECTOR4* pStart, edF32VECTOR4* pDestination);
 
 	CAstarMemBank astarMemBank;
 

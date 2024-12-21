@@ -8,6 +8,7 @@
 #include "MathOps.h"
 #include "CollisionManager.h"
 #include "ActorManager.h"
+#include "Vision.h"
 
 int INT_00448e08 = 0;
 
@@ -500,7 +501,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 		this->field_0x34c = (CActor*)0x0;
 		peVar2 = pCVar1->pObbPrim;
 		fVar7 = (peVar2->field_0xb0).y;
-		fVar6 = (peVar2->field_0x90).y * 0.5;
+		fVar6 = (peVar2->field_0x90).y * 0.5f;
 		fVar8 = fVar7 - fVar6;
 		if (0 < pActorsTable->entryCount) {
 			do {
@@ -524,6 +525,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 		
 			} while (iVar5 < pActorsTable->entryCount);
 		}
+
 		if (0 < this->field_0x348) {
 			IMPLEMENTATION_GUARD(
 			edF32Vector4SafeNormalize0Hard(&local_30, &local_10);
@@ -1509,8 +1511,8 @@ void CActorAutonomous::SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CAc
 					}
 				}
 
-				fVar7 = this->field_0x34c->FUN_00117db0();
-				fVar8 = FUN_00117db0();
+				fVar7 = this->field_0x34c->GetPosition_00117db0();
+				fVar8 = GetPosition_00117db0();
 				fVar9 = pLocation->x - (this->field_0x34c->currentLocation).x;
 				fVar1 = pLocation->z - (this->field_0x34c->currentLocation).z;
 				fVar10 = pLocation->x - this->currentLocation.x;
@@ -1632,6 +1634,20 @@ void CActorAutonomous::SV_AUT_PathfindingEnd()
 	}
 
 	return;
+}
+
+bool CActorAutonomous::SV_AUT_CanMoveTo(edF32VECTOR4* v0)
+{
+	bool bCanMoveTo;
+
+	if (GetPathfinderClientAlt()->id == -1) {
+		bCanMoveTo = true;
+	}
+	else {
+		bCanMoveTo = GetPathfinderClientAlt()->HasPathTo(this, v0);
+	}
+
+	return bCanMoveTo;
 }
 
 void CActorAutonomous::LifeRestore()

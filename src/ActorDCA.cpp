@@ -866,8 +866,8 @@ int CActorDCA::CBhvDefault::InterpretMessage(CActor* pSender, int msg, void* pMs
 				result = 1;
 			}
 			else {
-				if (msg == 0x12) {
-					if ((this->pOwner == (CActorDCA*)pSender->pTiedActor) && (this->pOwner->field_0x1a0 == (CActor*)0x0)) {
+				if (msg == MESSAGE_GET_ACTION) {
+					if ((this->pOwner == pSender->pTiedActor) && (this->pOwner->field_0x1a0 == (CActor*)0x0)) {
 						result = 1;
 					}
 					else {

@@ -117,6 +117,8 @@ set(main_src
 	"${src_root}/edMathTCBSpline.h"
 	"${src_root}/CinematicManager.cpp"
 	"${src_root}/CinematicManager.h"
+	"${src_root}/Vision.cpp"
+	"${src_root}/Vision.h"
 	"${src_root}/CameraGame.cpp"
 	"${src_root}/CameraGame.h"
 	"${src_root}/CameraCinematic.cpp"
@@ -428,6 +430,12 @@ set (actor_src
 	"${src_root}/ActorEgg.h"
 	"${src_root}/ActorAmortosCmd.cpp"
 	"${src_root}/ActorAmortosCmd.h"
+	"${src_root}/ActorPunchingBall.cpp"
+	"${src_root}/ActorPunchingBall.h"
+	"${src_root}/ActorNativShop.cpp"
+	"${src_root}/ActorNativShop.h"
+	"${src_root}/ActorAddOnPurchase.cpp"
+	"${src_root}/ActorAddOnPurchase.h"
 )
 
 list(APPEND main_src ${actor_src})

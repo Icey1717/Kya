@@ -9,6 +9,7 @@ class CPathDynamic : CPath
 public:
 	CPathDynamic();
 
+	virtual void Init(edF32VECTOR4* pStart, edF32VECTOR4* pDestination);
 	virtual void SetStatus(int newStatus);
 	virtual void Clear();
 
@@ -18,8 +19,8 @@ public:
 
 	CPathNode* pPathNode;
 
-	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 destinationPosition;
+	edF32VECTOR4 startPosition;
 
 	byte field_0x30;
 

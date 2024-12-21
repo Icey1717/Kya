@@ -609,6 +609,15 @@ float edF32ATan2Soft(float a, float b)
 	return fVar3;
 }
 
+void SetVectorFromAngleY(float t0, edF32VECTOR4* v0)
+{
+	v0->x = sinf(t0);
+	v0->y = 0.0f;
+	v0->z = cosf(t0);
+	v0->w = 0.0f;
+	return;
+}
+
 void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler)
 {
 	float fVar1;

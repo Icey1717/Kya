@@ -195,7 +195,6 @@ bool CCameraRail::Manage()
 {
 	bool bVar1;
 	CActor* pCVar2;
-	void* pvVar3;
 	float fVar4;
 	float fVar5;
 	edF32VECTOR4 local_10;
@@ -207,43 +206,30 @@ bool CCameraRail::Manage()
 	else {
 		bVar1 = CCamera::Manage();
 		if (bVar1 == false) {
-			IMPLEMENTATION_GUARD(
-			_UpdateTargetPosWithPlane((long)(int)this);
+			_UpdateTargetPosWithPlane();
+
 			fVar5 = this->field_0xe8 / (this->field_0xe8 - this->field_0xec);
-			if ((this->camera.flags_0xc & 0x400) != 0) {
-				edF32Vector4LERPHard
-				(fVar5, &this->camera.lookAt,
-					(edF32VECTOR4*)((int)this->field_0xf4 + *(int*)&this->field_0xe4 * 0x30),
-					(edF32VECTOR4*)((int)this->field_0xf4 + (*(int*)&this->field_0xe4 + 1) * 0x30));
-				this->camera.lookAt.w = 1.0;
+
+			if ((this->flags_0xc & 0x400) != 0) {
+				edF32Vector4LERPHard(fVar5, &this->lookAt, &this->field_0xf4[this->field_0xe4].field_0x0, &this->field_0xf4[this->field_0xe4 + 1].field_0x0);
+				this->lookAt.w = 1.0f;
 			}
-			pvVar3 = (void*)(*(int*)&this->field_0xe4 * 0x30 + (int)this->field_0xf4);
-			fVar4 = *(float*)((int)pvVar3 + 0x20);
-			CedMathTCBSpline::GetPosition
-			(fVar5 * (*(float*)((int)pvVar3 + 0x50) - fVar4) + fVar4, this->pSpline, &local_10);
-			this->camera.transformationMatrix.da = local_10.x;
-			this->camera.transformationMatrix.db = local_10.y;
-			this->camera.transformationMatrix.dc = local_10.z;
-			this->camera.transformationMatrix.dd = local_10.w;
-			if ((this->camera.flags_0xc & 0x400) == 0) {
-				this->camera.lookAt.x = *(float*)&this->field_0x100;
-				this->camera.lookAt.y = *(float*)&this->field_0x104;
-				this->camera.lookAt.z = *(float*)&this->field_0x108;
-				this->camera.lookAt.w = *(float*)&this->field_0x10c;
+
+			fVar4 = this->field_0xf4[this->field_0xe4].field_0x20;
+			this->pSpline->GetPosition(fVar5 * (fVar4 = this->field_0xf4[this->field_0xe4 + 1].field_0x20 - fVar4) + fVar4, &local_10);
+			this->transformationMatrix.rowT = local_10;
+
+			if ((this->flags_0xc & 0x400) == 0) {
+				this->lookAt = this->field_0x100;
 			}
-			edF32Vector4SubHard(&local_10, &this->camera.lookAt,
-				(edF32VECTOR4*)&this->camera.transformationMatrix.da);
-			fVar5 = edF32Vector4NormalizeHard(&local_10, &local_10);
-			(*(code*)(this->camera.objBase.pVTable)->SetDistance)(fVar5, (long)(int)this);
-			this->camera.transformationMatrix.ca = local_10.x;
-			this->camera.transformationMatrix.cb = local_10.y;
-			this->camera.transformationMatrix.cc = local_10.z;
-			this->camera.transformationMatrix.cd = local_10.w;
-			fVar5 = CCamera::GetAngleAlpha((CCamera*)this);
-			(*(this->camera.objBase.pVTable)->SetAngleAlpha)(fVar5, (CCamera*)this);
-			fVar5 = CCamera::GetAngleBeta((CCamera*)this);
-			(*(this->camera.objBase.pVTable)->SetAngleBeta)(fVar5, (CCamera*)this);
-			bVar1 = true;)
+
+			edF32Vector4SubHard(&local_10, &this->lookAt, &this->transformationMatrix.rowT);
+			SetDistance(edF32Vector4NormalizeHard(&local_10, &local_10));
+			this->transformationMatrix.rowZ = local_10;
+
+			SetAngleAlpha(CCamera::GetAngleAlpha());
+			SetAngleBeta(CCamera::GetAngleBeta());
+			bVar1 = true;
 		}
 		else {
 			bVar1 = false;
@@ -259,11 +245,103 @@ bool CCameraRail::AlertCamera(int alertType, int param_3, CCamera* param_4)
 
 	bVar1 = CCamera::AlertCamera(alertType, param_3, param_4);
 	if (alertType == 2) {
-		IMPLEMENTATION_GUARD(
-		Alert();)
+		Alert();
 	}
 
 	return bVar1;
+}
+
+void CCameraRail::Alert()
+{
+	CActor* pCVar1;
+	uint uVar3;
+	uint unaff_s2_lo;
+	uint uVar4;
+	float fVar5;
+	float fVar6;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	uVar3 = 0;
+	if ((this->pSpline)->nbPoints != 1) {
+		fVar6 = 3.402823e+38f;
+		uVar4 = unaff_s2_lo;
+		do {
+			pCVar1 = GetTarget();
+			edF32Vector4SubHard(&eStack16, &pCVar1->currentLocation, &this->field_0xf4[uVar3].field_0x0);
+			fVar5 = edF32Vector4GetDistHard(&eStack16);
+			unaff_s2_lo = uVar3;
+			if (fVar6 <= fVar5) {
+				fVar5 = fVar6;
+				unaff_s2_lo = uVar4;
+			}
+			uVar3 = uVar3 + 1;
+			fVar6 = fVar5;
+			uVar4 = unaff_s2_lo;
+		} while (uVar3 < (this->pSpline)->nbPoints - 1);
+	}
+
+	this->field_0xe4 = unaff_s2_lo;
+
+	ComputeTargetPosition(&this->field_0x100);
+	ComputeTargetOffset(&eStack32);
+	edF32Vector4AddHard(&this->field_0x100, &this->field_0x100, &eStack32);
+
+	_UpdateTargetPosWithPlane();
+
+	return;
+}
+
+void CCameraRail::_UpdateTargetPosWithPlane()
+{
+	bool bVar1;
+	int iVar2;
+	uint uVar3;
+	float fVar4;
+	edF32VECTOR4 eStack16;
+
+	uVar3 = this->field_0xe4;
+	iVar2 = 0;
+	ComputeTargetPosition(&this->field_0x100);
+	ComputeTargetOffset(&eStack16);
+	edF32Vector4AddHard(&this->field_0x100, &this->field_0x100, &eStack16);
+
+	do {
+		fVar4 = edDistPointToPlane(&this->field_0xf4[uVar3].field_0x0, &this->field_0xf4[uVar3].field_0x10, &this->field_0x100);
+		this->field_0xe8 = -fVar4;
+		fVar4 = edDistPointToPlane(&this->field_0xf4[uVar3 + 1].field_0x0, &this->field_0xf4[uVar3 + 1].field_0x10, &this->field_0x100);
+		this->field_0xec = -fVar4;
+		bVar1 = false;
+
+		if (0.0f < this->field_0xe8) {
+			if ((int)uVar3 < 1) {
+				this->field_0xe8 = -1e-20;
+			}
+			else {
+				uVar3 = uVar3 - 1;
+				bVar1 = true;
+			}
+		}
+
+		if (this->field_0xec < 0.0f) {
+			if ((int)(uVar3 + 2) < this->field_0xf0) {
+				uVar3 = uVar3 + 1;
+				bVar1 = true;
+			}
+			else {
+				this->field_0xec = 1e-20f;
+			}
+		}
+
+		iVar2 = iVar2 + 1;
+		if (this->field_0xf0 < iVar2) {
+			bVar1 = false;
+		}
+	} while (bVar1);
+
+	this->field_0xe4 = uVar3;
+
+	return;
 }
 
 CCameraRailSimple::CCameraRailSimple(ByteCode* pByteCode)

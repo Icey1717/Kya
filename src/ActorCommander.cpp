@@ -270,9 +270,9 @@ void CActorCommander::ClearLocalData()
 	this->field_0x1e0 = 0;
 	//this->field_0x1e4 = 0;
 	//this->field_0x1e8 = 0;
-	//this->field_0x194 = 0;
+	this->field_0x194 = 0;
 	this->targetPosition = gF32Vertex4Zero;
-	this->targetLocation = gF32Vertex4Zero;
+	this->targetGroundPosition = gF32Vertex4Zero;
 
 	this->bInCombat_0x1b0 = 1;
 	this->count_0x1d0 = 0;
@@ -300,6 +300,39 @@ void CActorCommander::ClearLocalData()
 	//this->field_0x2f4 = 0;
 	//this->field_0x6d0 = 1;
 	return;
+}
+
+bool CActorCommander::BeginFightIntruder(CActor* pInstigator, CActor* pIntruder)
+{
+	bool bSuccess;
+	CTeamElt* pCVar2;
+	CTeamElt* pCVar3;
+	int iVar4;
+
+	bSuccess = false;
+
+	if (pIntruder->IsKindOfObject(8) != false) {
+		iVar4 = 0;
+		pCVar3 = (CTeamElt*)0x0;
+		if (0 < this->nbTeams) {
+			pCVar2 = this->aTeamElt;
+			do {
+				pCVar3 = pCVar2;
+
+				if (pCVar3->pEnemyActor == pInstigator) break;
+
+				iVar4 = iVar4 + 1;
+				pCVar2 = pCVar3 + 1;
+				pCVar3 = (CTeamElt*)0x0;
+			} while (iVar4 < this->nbTeams);
+		}
+
+		IMPLEMENTATION_GUARD(
+		bSuccess = CSquad::AddFighter(&this->squad, pCVar3);
+		CActorFighter::SetStandAnim((CActorFighter*)pInstigator, 0xe2);)
+	}
+
+	return bSuccess;
 }
 
 void CActorCommander::AddTracked()

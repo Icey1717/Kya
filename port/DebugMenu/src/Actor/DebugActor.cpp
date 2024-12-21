@@ -71,6 +71,9 @@ namespace Debug {
 		case SHOCKER_CMD: return "Shocker Cmd";
 		case RUNE: return "Rune";
 		case BONUS_FOUNTAIN: return "Bonus Fountain";
+		case PUNCHING_BALL: return "Punching Ball";
+		case NATIV_SHOP: return "Nativ Shop";
+		case ADD_ON_PURCHASE: return "Add On Purchase";
 		default: return "Unknown";
 		}
 	}

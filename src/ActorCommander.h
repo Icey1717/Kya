@@ -57,6 +57,8 @@ public:
 
 	void ClearLocalData();
 
+	bool BeginFightIntruder(CActor* pInstigator, CActor* pIntruder);
+
 	void AddTracked();
 	void RemoveTracked();
 
@@ -90,6 +92,8 @@ public:
 	int curPathFindingId;
 	uint flags_0x18c;
 
+	int field_0x194;
+
 	float field_0x1dc;
 	int field_0x1e0;
 	float field_0x1e4;
@@ -101,7 +105,7 @@ public:
 
 	int bInCombat_0x1b0;
 
-	edF32VECTOR4 targetLocation;
+	edF32VECTOR4 targetGroundPosition;
 
 	int count_0x1d0;
 

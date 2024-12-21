@@ -668,10 +668,8 @@ void gHeroActionCallback(CActor* pActor, void* pParams)
 	CActorHeroPrivate::HeroActionParams* pHVar2;
 	int newActionId;
 	float fVar4;
-	edF32VECTOR4 local_40;
-	edF32VECTOR4 local_30;
 	edF32VECTOR4 eStack32;
-	edF32VECTOR4* local_4;
+	GetActionMsgParams local_40;
 	CActor* pParamsActor;
 
 	HeroActionCallbackData* pParamsData = reinterpret_cast<HeroActionCallbackData*>(pParams);
@@ -696,15 +694,14 @@ void gHeroActionCallback(CActor* pActor, void* pParams)
 			}
 
 			if (fVar4 <= pParamsData->field_0x8) {
-				local_4 = &local_40;
-				newActionId = pParamsActor->DoMessage(pActor, MESSAGE_GET_ACTION, (MSG_PARAM)local_4);
+				newActionId = pParamsActor->DoMessage(pActor, MESSAGE_GET_ACTION, &local_40);
 
 				if (newActionId != 0) {
 					pParamsData->pActionParams->actionId = newActionId;
 					pParamsData->pActionParams->pActor = pActor;
 					pParamsData->field_0x8 = fVar4;
-					pParamsData->pActionParams->field_0x10 = local_40;
-					pParamsData->pActionParams->field_0x20 = local_30;
+					pParamsData->pActionParams->field_0x10 = local_40.field_0x0;
+					pParamsData->pActionParams->field_0x20 = local_40.field_0x10;
 				}
 			}
 		}
@@ -2592,10 +2589,10 @@ void CActorHeroPrivate::CinematicMode_Leave(int behaviourId)
 		KyaVectorFunc(&(CScene::ptable.g_ActorManager_004516a4)->cluster, &local_30, &LAB_0033d920, &local_18);
 		pOtherActor = local_10;
 		local_4 = 0;
-		uVar2 = CActor::DoMessage(this, local_10, MESSAGE_GET_BONE_ID, (ActorCompareStruct*)0x0);
+		uVar2 = CActor::DoMessage(this, local_10, MESSAGE_GET_BONE_ID, (GetPositionMsgParams*)0x0);
 		*(int*)&this->field_0x15a0 = (int)uVar2;
 		local_8 = 0;
-		CActor::DoMessage(this, pOtherActor, 0x14, (ActorCompareStruct*)0x0);)
+		CActor::DoMessage(this, pOtherActor, 0x14, (GetPositionMsgParams*)0x0);)
 	}
 	CActor::CinematicMode_Leave(behaviourId);
 	if (behaviourId == 8) {
@@ -3896,7 +3893,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 								}
 								if (msg == 7) {
 									/* WARNING: Load size is inaccurate */
-									ActorMessage_7* pBoneMessage = reinterpret_cast<ActorMessage_7*>(pMsgParam);
+									GetPositionMsgParams* pBoneMessage = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
 									iVar13 = pBoneMessage->field_0x0;
 									if (iVar13 == 5) {
 										peVar1 = this->pMeshTransform;
@@ -3930,7 +3927,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 											fVar25 = fVar25 * 0.9f;
 										}
 
-										edF32Vector4ScaleHard(fVar25, &pBoneMessage->field_0x20, &local_60);
+										edF32Vector4ScaleHard(fVar25, &pBoneMessage->vectorFieldB, &local_60);
 										return 1;
 									}
 

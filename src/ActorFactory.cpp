@@ -49,6 +49,9 @@
 #include "ActorHelperSign.h"
 #include "ActorEgg.h"
 #include "ActorAmortosCmd.h"
+#include "ActorPunchingBall.h"
+#include "ActorNativShop.h"
+#include "ActorAddOnPurchase.h"
 
 class CActorBunch : public CActor {
 	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
@@ -264,6 +267,18 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 		case BRAZUL:
 			*outSize = sizeof(CActorBrazul);
 			return new CActorBrazul[count];
+			break;
+		case PUNCHING_BALL:
+			*outSize = sizeof(CActorPunchingBall);
+			return new CActorPunchingBall[count];
+			break;
+		case NATIV_SHOP:
+			*outSize = sizeof(CActorNativShop);
+			return new CActorNativShop[count];
+			break;
+		case ADD_ON_PURCHASE:
+			*outSize = sizeof(CActorAddOnPurchase);
+			return new CActorAddOnPurchase[count];
 			break;
 		default:
 			classId;

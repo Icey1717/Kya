@@ -20,100 +20,7 @@
 #include "PathManager.h"
 #include "CollisionRay.h"
 #include "ActorAutonomous.h"
-
-CVision::CVision()
-	: pOwner((CActor*)0x0)
-{
-
-}
-
-void CVision::Create(CActor* pOwner, ByteCode* pByteCode)
-{
-	uint uVar1;
-	float fVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-
-	fVar2 = pByteCode->GetF32();
-	fVar3 = pByteCode->GetF32();
-	fVar4 = pByteCode->GetF32();
-	fVar5 = pByteCode->GetF32();
-	uVar1 = pByteCode->GetU32();
-	//pPerception->visionRange_0x34 = fVar2;
-	//pPerception->field_0x38 = fVar4 * 0.5;
-	//pPerception->field_0x3c = fVar5 * 0.5;
-	//fVar2 = fVar3 * 0.5 * 0.01745329;
-	//pPerception->flags_0x0 = 0;
-	//pPerception->field_0x30 = fVar2;
-	//pPerception->field_0x44 = g_FloatSineCurve_00472260[(int)(ABS(fVar2 * 1303.797) + 0.5) & 0x1fff];
-	//pPerception->field_0x3c = pPerception->field_0x3c;
-	//fVar2 = 1.570796 - pPerception->field_0x30;
-	//pPerception->field_0x40 =
-	//	pPerception->field_0x3c *
-	//	(g_FloatSineCurve_00472260[(int)(ABS((fVar2 - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
-	//		g_FloatSineCurve_00472260[(int)(ABS(fVar2 * 1303.797) + 0.5) & 0x1fff]);
-	//pPerception->pActor_0x48 = (CActor*)0x0;
-	//pPerception->field_0x4c = 0;
-	//pPerception->field_0x54 = 0;
-	//pPerception->field_0x50 = 0;
-	//pPerception->field_0x58 = 0.0;
-	//pPerception->flags_0x0 = uVar1;
-	this->pOwner = pOwner;
-	return;
-}
-
-
-void CVision::Reset()
-{
-	//this->pActor_0x48 = (CActor*)0x0;
-	//this->field_0x4c = 0;
-	//this->field_0x54 = 0;
-	//this->field_0x50 = 0;
-	//this->field_0x58 = 0.0;
-	return;
-}
-
-CActor* CVision::ScanForTarget(CActor* pTarget, int mode)
-{
-	uint uVar1;
-	long lVar2;
-	long lVar3;
-	edF32VECTOR4 eStack16;
-
-	if (pTarget == (CActor*)0x0) {
-		pTarget = (CActor*)0x0;
-	}
-	else {
-		lVar2 = pTarget->GetNumVisualDetectionPoints();
-		if (((this->flags & 8) == 0) || (lVar3 = pTarget->IsLockable(), lVar3 != 0)) {
-			if (((this->flags & 0x10) == 0) || (CActorFactory::gClassProperties[pTarget->typeID].field_0x8 != 0)) {
-				if (lVar2 == 1) {
-					pTarget->GetVisualDetectionPoint(&eStack16, 0);
-					IMPLEMENTATION_GUARD(
-					uVar1 = _PointIsDetected(this, &eStack16, pTarget);)
-				}
-				else {
-					IMPLEMENTATION_GUARD(
-					uVar1 = _ScanForTargetMultiPoint(this, pTarget, mode);)
-				}
-				if (uVar1 == 0) {
-					pTarget = (CActor*)0x0;
-				}
-			}
-			else {
-				pTarget = (CActor*)0x0;
-			}
-		}
-		else {
-			pTarget = (CActor*)0x0;
-		}
-	}
-
-	return pTarget;
-}
-
-
+#include "Vision.h"
 
 CPathFollowReader::CPathFollowReader()
 {
@@ -806,7 +713,6 @@ void CActor::Create(ByteCode* pByteCode)
 	float fVar12;
 	float fVar13;
 	MeshTextureHash local_110[16];
-	ScenaricCondition local_4;
 
 	char* name = pByteCode->GetString();
 
@@ -909,7 +815,7 @@ void CActor::Create(ByteCode* pByteCode)
 	if ((this->actorFieldS & 0x80) != 0) {
 		FUN_00115ea0(0);
 	}
-	local_4.field_0x0 = 0;
+	ScenaricCondition local_4;
 	local_4.Create(pByteCode);
 	uVar6 = local_4.IsVerified();
 	if (uVar6 == 0) {
@@ -1323,14 +1229,18 @@ void CActor::CinematicMode_Enter(bool bSetState)
 	CCineActorConfig* pActorConfig;
 
 	DoMessage(this, (ACTOR_MESSAGE)0x3e, 0x0);
+
 	if (bSetState == false) {
 		this->SetBehaviour(1, -1, -1);
 	}
 	else {
 		this->SetBehaviour(1, 1, -1);
 	}
+
 	this->flags = this->flags | 0x800000;
+
 	FUN_00101110((CActor*)0x0);
+
 	if ((this->flags & 0x2000060) != 0) {
 		this->flags = this->flags | 0x8000000;
 		this->flags = this->flags & 0xffffff5f;
@@ -1345,10 +1255,11 @@ void CActor::CinematicMode_Enter(bool bSetState)
 		else {
 			this->CinematicMode_InterpreteCinMessage(0.0f, 1.0f, 3, 0);
 		}
+
 		if (((pActorConfig->flags & 0x80) != 0) && (pCVar1 = this->pCollisionData, pCVar1 != (CCollision*)0x0)) {
-			IMPLEMENTATION_GUARD(
-			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfff7efff;)
+			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfff7efff;
 		}
+
 		if (((pActorConfig->flags & 0x100) != 0) && (this->pTiedActor != (CActor*)0x0)) {
 			IMPLEMENTATION_GUARD(
 			(*(code*)this->pVTable->field_0xd0)(this, 0, 0, 1, 0);)
@@ -1685,38 +1596,32 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 												}
 												else {
 													if (msg == 7) {
-														ActorMessage_7* pResolvedMsg = (ActorMessage_7*)pMsgParam;
+														GetPositionMsgParams* pResolvedMsg = static_cast<GetPositionMsgParams*>(pMsgParam);
 														iVar1 = pResolvedMsg->field_0x0;
 														if (iVar1 == 5) {
 															if (((this->pMeshTransform != (ed_3d_hierarchy_node*)0x0) &&
 																(pCVar2 = this->pCollisionData, pCVar2 != (CCollision*)0x0)) &&
 																(pCVar2->pObbPrim != 0)) {
-																(pResolvedMsg->field_0x20).x = 0.0f;
-																(pResolvedMsg->field_0x20).y = (this->pCollisionData->pObbPrim->field_0xb0).y;
-																(pResolvedMsg->field_0x20).z = 0.0f;
-																(pResolvedMsg->field_0x20).w = 0.0f;
-																edF32Matrix4MulF32Vector4Hard (&pResolvedMsg->field_0x20, &this->pMeshTransform->base.transformA, &pResolvedMsg->field_0x20);
+																(pResolvedMsg->vectorFieldB).x = 0.0f;
+																(pResolvedMsg->vectorFieldB).y = (this->pCollisionData->pObbPrim->field_0xb0).y;
+																(pResolvedMsg->vectorFieldB).z = 0.0f;
+																(pResolvedMsg->vectorFieldB).w = 0.0f;
+																edF32Matrix4MulF32Vector4Hard (&pResolvedMsg->vectorFieldB, &this->pMeshTransform->base.transformA, &pResolvedMsg->vectorFieldB);
 																return true;
 															}
 														}
 														else {
 															if ((iVar1 == 1) || (iVar1 == 0)) {
-																IMPLEMENTATION_GUARD(
-																*(float*)((int)pMsgParam + 0x20) = gF32Vector4Zero.x;
-																*(float*)((int)pMsgParam + 0x24) = fVar6;
-																*(float*)((int)pMsgParam + 0x28) = fVar7;
-																*(float*)((int)pMsgParam + 0x2c) = fVar8;
+																pResolvedMsg->vectorFieldB = gF32Vector4Zero;
+
+																edColPRIM_OBJECT* pObj;
 																pCVar2 = this->pCollisionData;
-																if ((pCVar2 != (CCollision*)0x0) && (iVar1 = pCVar2->pObbPrim, iVar1 != 0)) {
-																	edF32Matrix4MulF32Vector4Hard
-																	((edF32VECTOR4*)((int)pMsgParam + 0x20),
-																		(edF32MATRIX4*)this->pMeshTransform, (edF32VECTOR4*)(iVar1 + 0xb0))
-																		;
-																	edF32Vector4SubHard((edF32VECTOR4*)((int)pMsgParam + 0x20),
-																		(edF32VECTOR4*)((int)pMsgParam + 0x20),
-																		&this->currentLocation);
+																if ((pCVar2 != (CCollision*)0x0) && (pObj = pCVar2->pObbPrim, pObj != 0)) {
+																	edF32Matrix4MulF32Vector4Hard(&pResolvedMsg->vectorFieldB, &this->pMeshTransform->base.transformA, &pObj->field_0xb0);
+																	edF32Vector4SubHard(&pResolvedMsg->vectorFieldB, &pResolvedMsg->vectorFieldB, &this->currentLocation);
 																	return true;
-																})
+																}
+
 																return true;
 															}
 														}
@@ -1855,9 +1760,9 @@ int CActor::GetNumVisualDetectionPoints()
 void CActor::SV_GetActorHitPos(CActor* pOtherActor, edF32VECTOR4* v0)
 {
 	int iVar1;
-	ActorCompareStruct local_40;
+	GetPositionMsgParams local_40;
 
-	local_40.intFieldA = 1;
+	local_40.field_0x0 = 1;
 
 	local_40.vectorFieldB.x = 0.0f;
 	local_40.vectorFieldB.y = 1.2f;
@@ -2488,11 +2393,12 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 			uVar6 = ed3DHierarchyBankMatInstanciate((ed_3d_hierarchy*)this->p3DHierNode, pvVar4);
 			this->pMBNK = uVar6;
 		}
+
 		if (pTextureInfo != (ed_g2d_manager*)0x0) {
-			IMPLEMENTATION_GUARD(
 			ed3DHierarchyBankMatLinkG2D(this->p3DHierNode, pTextureInfo);
-			ed3DHierarchyBankMatLinkG2D(this->p3DHierNode, pTextureInfo_00);)
+			ed3DHierarchyBankMatLinkG2D(this->p3DHierNode, pTextureInfo_00);
 		}
+
 		if (((count != 0) && (pHier = this->p3DHierNode, pHier != (ed_3d_hierarchy_node*)0x0)) &&
 			(pTextureInfo_00 != (ed_g2d_manager*)0x0)) {
 			pHashCode = ed3DHierarchyGetMaterialBank(&pHier->base);
@@ -2609,7 +2515,7 @@ void CActor::SetupLodInfo()
 	return;
 }
 
-float CActor::FUN_00117db0()
+float CActor::GetPosition_00117db0()
 {
 	edColPRIM_OBJECT* peVar1;
 	float fVar2;

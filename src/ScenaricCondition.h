@@ -15,14 +15,18 @@ struct S_STREAM_SIMPLE_COND {
 static_assert(sizeof(S_STREAM_SIMPLE_COND) == 0x10);
 
 struct ScenaricCondition {
-	char* field_0x0;
-	void Create(char* param_2);
+	ScenaricCondition() : pData((int*)0x0) {}
+
+	int* pData;
+
+	void Create(int* param_2);
 	void Create(struct ByteCode* pByteCode);
 	ulong IsVerified();
 	static ulong IsVerified(S_STREAM_SIMPLE_COND* pCond, int param_2);
 	int GetNumSimpleConds();
 	int GetDataSize();
-	uint* GetEndPtr();
+	int* GetBeginPtr();
+	int* GetEndPtr();
 };
 
 struct CND_OP_HEADER {
@@ -54,6 +58,8 @@ struct S_STREAM_SIMPLE_OPERATION {
 static_assert(sizeof(S_STREAM_SIMPLE_OPERATION) == 0xc);
 
 struct ConditionedOperationArray {
+	ConditionedOperationArray() : pHeader((CND_OP_HEADER*)0x0) {}
+
 	CND_OP_HEADER* pHeader;
 	void Create(struct ByteCode* pByteCode);
 	void Perform();

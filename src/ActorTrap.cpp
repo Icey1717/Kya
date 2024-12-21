@@ -758,7 +758,6 @@ void CBehaviourTrapStand_ActorTrap::CreateForTrap(ByteCode* pByteCode)
 		this->field_0x24 = -1;
 	}
 	else {
-		iVar3 = pByteCode->GetS32();
 		this->field_0x24 = pByteCode->GetS32();
 	}
 

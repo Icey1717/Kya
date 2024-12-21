@@ -779,7 +779,7 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 	case 0xd:
 		IMPLEMENTATION_GUARD(
 			CActor::DoMessage
-		(this->pOwner, this->pOwner, (long)param_3, (ActorCompareStruct*)0x0);
+		(this->pOwner, this->pOwner, (long)param_3, (GetPositionMsgParams*)0x0);
 		bVar3 = true;)
 		break;
 	case 0xe:

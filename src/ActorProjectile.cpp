@@ -690,7 +690,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					}
 				}
 				else {
-					if (msg == 0x12) {
+					if (msg == MESSAGE_GET_ACTION) {
 						iVar8 = this->actorState;
 						uVar4 = 0;
 						if (iVar8 != -1) {
@@ -766,7 +766,7 @@ void CActorProjectile::ClearLocalData()
 
 	this->field_0x3f4 = 0;
 	this->pFiringActor = (CActor*)0x0;
-	this->field_0x40c = 0;
+	this->field_0x40c = (CActor*)0x0;
 	this->field_0x3fc = (CActor*)0x0;
 	this->field_0x400 = 0;
 	this->field_0x404 = 0.0f;
@@ -1745,6 +1745,29 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 }
 
 
+
+float CActorProjectile::GetTimeToExplode()
+{
+	int iVar1;
+	uint uVar3;
+	float fVar4;
+
+	fVar4 = 3.402823e+38f;
+
+	iVar1 = this->actorState;
+	if (iVar1 == -1) {
+		uVar3 = 0;
+	}
+	else {
+		uVar3 = GetStateCfg(iVar1)->flags_0x4;
+	}
+
+	if (((uVar3 & 0x800) != 0) && (fVar4 = this->timeToExplode, fVar4 < 0.0f)) {
+		fVar4 = 1e-20f;
+	}
+
+	return fVar4;
+}
 
 void CBehaviourProjectile::Create(ByteCode* pByteCode)
 {

@@ -359,3 +359,25 @@ ed_g2d_manager* C3DFileManager::LoadDefaultTexture_001a65d0()
 	}
 	return &pTVar1->manager;
 }
+
+ed_g3d_manager* C3DFileManager::GetInfoForCommonLevelMesh(char* pFileData)
+{
+	int curMeshIndex;
+	Mesh* pMesh;
+
+	curMeshIndex = this->meshCount;
+	pMesh = this->aCommonLevelMeshes;
+
+	while (true) {
+		if (curMeshIndex == 0) {
+			return (ed_g3d_manager*)0x0;
+		}
+
+		if (pFileData == pMesh->pFileData) break;
+
+		curMeshIndex = curMeshIndex + -1;
+		pMesh = pMesh + 1;
+	}
+
+	return &pMesh->meshInfo;
+}

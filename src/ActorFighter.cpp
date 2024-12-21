@@ -599,40 +599,27 @@ int CActorFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	float fVar8;
 	float fVar9;
 
-	if (msg == 0x12) {
-		IMPLEMENTATION_GUARD(
+	if (msg == MESSAGE_GET_ACTION) {
+		GetActionMsgParams* pResolvedMsg = reinterpret_cast<GetActionMsgParams*>(pMsgParam);
+
 		iVar5 = this->actorState;
 		uVar6 = 0;
 		if (iVar5 != -1) {
-			pAVar2 = (*(this->pVTable)->GetStateCfg)(this, iVar5);
-			uVar6 = pAVar2->flags_0x4;
+			uVar6 = GetStateCfg(iVar5)->flags_0x4;
 		}
+
 		if ((uVar6 & 0x2000000) == 0) {
-			pCVar4 = (*(this->pVTable)->GetLifeInterface)(this);
-			fVar7 = (float)(*(code*)pCVar4->pVtable->GetValue)();
-			if (((0.0 < fVar7) &&
-				(fVar7 = (pSender->currentLocation).x - this->currentLocation.x,
-					fVar8 = (pSender->currentLocation).z - this->currentLocation.z,
-					fVar7 * fVar7 + fVar8 * fVar8 <= 1.0)) &&
-				(ABS((pSender->currentLocation).y - this->currentLocation.y) <= 0.5)) {
-				fVar9 = this->rotationQuat.y;
-				fVar7 = this->rotationQuat.z;
-				fVar8 = this->rotationQuat.w;
-				*(float*)((int)pMsgParam + 0x10) = this->rotationQuat.x;
-				*(float*)((int)pMsgParam + 0x14) = fVar9;
-				*(float*)((int)pMsgParam + 0x18) = fVar7;
-				*(float*)((int)pMsgParam + 0x1c) = fVar8;
-				fVar9 = this->currentLocation.y;
-				fVar7 = this->currentLocation.z;
-				fVar8 = this->currentLocation.w;
-				*(float*)pMsgParam = this->currentLocation.x;
-				*(float*)((int)pMsgParam + 4) = fVar9;
-				*(float*)((int)pMsgParam + 8) = fVar7;
-				*(float*)((int)pMsgParam + 0xc) = fVar8;
+			fVar7 = GetLifeInterface()->GetValue();
+			if (((0.0f < fVar7) && (fVar7 = (pSender->currentLocation).x - this->currentLocation.x,
+					fVar8 = (pSender->currentLocation).z - this->currentLocation.z, fVar7 * fVar7 + fVar8 * fVar8 <= 1.0f)) &&
+					(fabs((pSender->currentLocation).y - this->currentLocation.y) <= 0.5f)) {
+				pResolvedMsg->field_0x10 = this->rotationQuat;
+				pResolvedMsg->field_0x0 = this->currentLocation;
 				return 10;
 			}
 		}
-		iVar5 = 0;)
+
+		iVar5 = 0;
 	}
 	else {
 		if (msg == 0x27) {

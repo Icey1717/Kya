@@ -35,9 +35,17 @@ public:
 	virtual bool Manage();
 	virtual bool AlertCamera(int alertType, int param_3, CCamera* param_4);
 
+	void Alert();
+	void _UpdateTargetPosWithPlane();
+
 	int field_0xe0;
+	uint field_0xe4;
+	float field_0xe8;
+	float field_0xec;
 	int field_0xf0;
 	CameraRailSubObj* field_0xf4;
+
+	edF32VECTOR4 field_0x100;
 };
 
 class CCameraRailSimple : public CCameraRailVirtual

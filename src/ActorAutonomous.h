@@ -184,6 +184,7 @@ public:
 	void SV_AUT_MoveTo_DynFence(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
 	void SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
 	void SV_AUT_PathfindingEnd();
+	bool SV_AUT_CanMoveTo(edF32VECTOR4* v0);
 
 	virtual void LifeRestore();
 	virtual CLifeInterface* GetLifeInterface();

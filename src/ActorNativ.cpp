@@ -180,10 +180,10 @@ void CActorNativ::Init()
 
 	CActorAutonomous::Init();
 
-	pCVar3 = CActor::GetBehaviour(8);
+	pCVar3 = CActor::GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 	if (pCVar3 != (CBehaviour*)0x0) {
-		IMPLEMENTATION_GUARD(
-		pCVar3 = CActor::GetBehaviour(8);
+		IMPLEMENTATION_GUARD_LOG(
+		pCVar3 = CActor::GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 		FUN_003f2900((int)pCVar3);)
 	}
 
@@ -242,10 +242,10 @@ void CActorNativ::Manage()
 		peVar4->pMatrix = STORE_SECTION(&this->field_0x580);
 	}
 
-	pCVar5 = GetBehaviour(8);
+	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 	if (pCVar5 != (CBehaviour*)0x0) {
 		IMPLEMENTATION_GUARD(
-		pCVar5 = CActor::GetBehaviour((CActor*)this, 8);
+		pCVar5 = CActor::GetBehaviour((CActor*)this, NATIVE_BEHAVIOUR_SELLER);
 		FUN_003f2150((long)(int)pCVar5);)
 	}
 
@@ -327,6 +327,9 @@ CBehaviour* CActorNativ::BuildBehaviour(int behaviourType)
 		break;
 	case NATIVE_BEHAVIOUR_TAKE_AND_PUT:
 		pBehaviour = &behaviourTakeAndPut;
+		break;
+	case NATIVE_BEHAVIOUR_SELLER:
+		pBehaviour = new CBehaviourNativSeller;
 		break;
 	default:
 		assert(behaviourType < 3);
@@ -2107,7 +2110,7 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 			})
 			return 0;
 		}
-		if (msg == 0x12) {
+		if (msg == MESSAGE_GET_ACTION) {
 	
 			(this->pOwner)->field_0x508 = 1.0f;
 
@@ -2134,6 +2137,7 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 			if (this->pOwner->actorState == 0xc) {
 				return 0xf;
 			}
+
 			return 0;
 		}
 	}

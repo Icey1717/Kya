@@ -32,6 +32,8 @@ class CWayPoint;
 
 class CPlayerInput;
 
+class CVision;
+
 class CFxHandle
 {
 public:
@@ -50,6 +52,12 @@ struct MessageSoccerParamsDetailed : public MessageSoccerParams
 {
 	float speed;
 	float rotation;
+};
+
+struct GetActionMsgParams
+{
+	edF32VECTOR4 field_0x0;
+	edF32VECTOR4 field_0x10;
 };
 
 struct MessageKickedParams
@@ -122,28 +130,6 @@ struct SPEED_DYN {
 
 	float currentAlpha;
 	float field_0x4;
-};
-
-struct ActorMessage_7 {
-	int field_0x0;
-
-	edF32VECTOR4 field_0x20;
-};
-
-class CVision {
-public:
-	CVision();
-	void Create(CActor* pOwner, ByteCode* pByteCode);
-	void Reset();
-
-	CActor* ScanForTarget(CActor* pTarget, int mode);
-
-	uint flags;
-
-	CActor* pOwner;
-
-	edF32VECTOR4 location;
-	edF32VECTOR4 rotationQuat;
 };
 
 class CBehaviour 
@@ -449,9 +435,9 @@ class CActorAlternateModel {};
 
 class CActorSound;
 
-struct ActorCompareStruct
+struct GetPositionMsgParams
 {
-	int intFieldA;
+	int field_0x0;
 	edF32VECTOR4 vectorFieldA;
 	edF32VECTOR4 vectorFieldB;
 };
@@ -617,7 +603,7 @@ public:
 	void UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4);
 	CActor* GetCollidingActor();
 
-	float FUN_00117db0();
+	float GetPosition_00117db0();
 
 	CActorSound* CreateActorSound(int soundType);
 

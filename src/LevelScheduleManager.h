@@ -107,7 +107,20 @@ struct SaveBigAlloc {
 	undefined field_0x58[65448];
 };
 
-struct LevelInfo {
+struct S_COMPANION_INFO
+{
+	uint conditionIdentifier;
+	ScenaricCondition cond;
+};
+
+struct S_LVLNFO_SECTOR_V7_V9
+{
+	uint sectorIndex;
+	uint field_0x4;
+	int nbConditions;
+};
+
+struct S_LEVEL_INFO {
 	undefined8 field_0x0;
 	int bankSizeLevel;
 	int bankSizeSect;
@@ -131,8 +144,8 @@ struct LevelInfo {
 	undefined field_0x45;
 	undefined field_0x46;
 	undefined field_0x47;
-	undefined4 field_0x48;
-	undefined4 field_0x4c;
+	S_COMPANION_INFO* aCompanionInfo;
+	char* pSimpleConditionData;
 	undefined4 field_0x50;
 	undefined field_0x54;
 	undefined field_0x55;
@@ -614,9 +627,9 @@ public:
 	void Level_LoadObjectives(ByteCode* pMemoryStream);
 
 	void MoreLoadLoopObjectSetup(bool param_2);
-	void LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo);
-	uint* LevelsInfo_ReadSectors_V7_V9(uint* param_2, int count, LevelInfo* pLevelInfo);
-	void LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, LevelInfo* pLevelInfo);
+	void LevelsInfo_ReadHeader_V7_V9(char* fileData, S_LEVEL_INFO* pLevelInfo);
+	int* LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* pFileBuffer, int count, S_LEVEL_INFO* pLevelInfo);
+	void LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, S_LEVEL_INFO* pLevelInfo);
 	void Levels_LoadInfoBank();
 
 	static int SaveGame_GetMaxBufferSize();
@@ -708,7 +721,7 @@ public:
 	undefined field_0x8d;
 	undefined field_0x8e;
 	undefined field_0x8f;
-	LevelInfo aLevelInfo[16];
+	S_LEVEL_INFO aLevelInfo[16];
 	int field_0x4210;
 	undefined4 field_0x4214;
 	int objCount_0x4218;

@@ -48,6 +48,7 @@ void ed3DComputeLocalToProjectionMatrix(float x, float y, float yMin, float yMax
 uint GetGreaterPower2Val(uint value);
 
 float edF32ATan2Soft(float a, float b);
+void SetVectorFromAngleY(float t0, edF32VECTOR4* v0);
 void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler);
 void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder);
 void MatrixRotationFromVectorAndAngle(float angle, edF32MATRIX4* v0, edF32VECTOR4* v1);

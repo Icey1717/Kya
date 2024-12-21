@@ -11,6 +11,8 @@
 #include <eekernel.h>
 #endif
 
+#define ED_MEM_LOG(level, format, ...) MY_LOG_CATEGORY("edMem", level, format, ##__VA_ARGS__)
+
 struct HeapFuncTable
 {
 	char* (*alloc)(S_MAIN_MEMORY_HEADER*, int, int, int);
@@ -173,6 +175,14 @@ void* edMemAlloc(EHeap heapID, size_t size)
 		pHeap = edmemGetMainHeader((void*)heapID);
 		pNewAlloc = edMemAllocAlignBoundary(heapID, size, pHeap->align, pHeap->offset);
 	}
+
+	assert(pNewAlloc);
+
+	if (!pNewAlloc)
+	{
+		FLUSH_LOG();
+	}
+
 	return pNewAlloc;
 }
 
@@ -205,7 +215,7 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 	void* pNewAllocation;
 	int freeMemory;
 
-	MY_LOG("edMemAlloc id: {}, size: {}, align: {}, offset: {}\n", (int)heap, size, align, offset);
+	ED_MEM_LOG(LogLevel::Info, "edMemAlloc id: {}, size: {}, align: {}, offset: {}\n", (int)heap, size, align, offset);
 
 	if (heap == TO_HEAP(H_INVALID)) {
 		/* edMemAlloc */
@@ -217,6 +227,7 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 			edDebugPrintf(g_szMemkitWarning);
 			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
 		}
+
 		pHeap = edmemGetMainHeader((void*)heap);
 		pNewAllocation = (*MemoryHandlers[(char)pHeap->funcTableID].alloc)(pHeap, (int)size, align, offset);
 		if (pNewAllocation == (void*)0x0) {
@@ -272,18 +283,21 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 	char* pcVar9;
 	S_MAIN_MEMORY_HEADER* pHeap;
 	char* pReturn;
-	short uVar11;
+	short destBlock;
 	ushort uVar10;
-	ushort uVar13;
+	ushort headerFlags;
 	char* local_10;
-	short uVar12;
+	short nextFreeBlock;
 	S_MAIN_MEMORY_HEADER* heapArray;
 	S_MAIN_MEMORY_HEADER* pNewHeap;
+
+	ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc size: 0x{:x}, align: 0x{:x}, offset: 0x{:x}", size, align, offset);
 
 	heapArray = MemoryMasterBlock.pHeapMainHeaders;
 	if (((pMainMemHeader->flags & 2) == 0) || ((pMainMemHeader->flags & 4) == 0)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 3, pMainMemHeader->pStartAddr);
 	}
+
 	if ((pMainMemHeader->flags & 0x80) == 0) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, pMainMemHeader->pStartAddr);
 		pReturn = (char*)0x0;
@@ -291,11 +305,15 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 	else {
 		if ((size & 0xfU) != 0) {
 			size = size + (0x10U - size & 0xf);
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Adjusted size to 0x{:x}", size);
 		}
+
+		ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Adjusted Header info pMainMemHeader->align: 0x{:x}, pMainMemHeader->offset: 0x{:x}", 
+			pMainMemHeader->align, pMainMemHeader->offset);
+
 		if ((pMainMemHeader->align == 0) || (align % pMainMemHeader->align == 0)) {
 			if ((pMainMemHeader->offset == 0) || (offset <= (int)pMainMemHeader->offset)) {
-				bVar3 = edmemTestAllocOk(size, align, offset);
-				if (bVar3 == false) {
+				if (edmemTestAllocOk(size, align, offset) == false) {
 					pReturn = (char*)0x0;
 				}
 				else {
@@ -303,27 +321,30 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 						pReturn = (char*)0x0;
 					}
 					else {
-						uVar12 = pMainMemHeader->nextFreeBlock;
-						uVar13 = pMainMemHeader->flags;
+						nextFreeBlock = pMainMemHeader->nextFreeBlock;
+						headerFlags = pMainMemHeader->flags;
+
+						ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc nextFreeBlock: 0x{:x}, flags: 0x{:x}", nextFreeBlock, headerFlags);
+
 						pcVar8 = 0x7fffffff;
-						pHeap = heapArray + uVar12;
-						uVar11 = -1;
+						pHeap = heapArray + nextFreeBlock;
+						destBlock = -1;
 						pNewHeap = pHeap;
-						if ((uVar13 & 0x100) == 0) {
-							while (uVar12 != -1) {
-								pNewHeap = heapArray + uVar12;
+						if ((headerFlags & 0x100) == 0) {
+							while (nextFreeBlock != -1) {
+								pNewHeap = heapArray + nextFreeBlock;
 								pcVar7 = (char*)pNewHeap->freeBytes;
 								uint freeBytes = pNewHeap->freeBytes;
 								// ???? This comparison fails on release?
-								bool a = true; //freeBytes < pcVar8
+								bool a = freeBytes < pcVar8;
 								bool b = size <= freeBytes;
 
-								MY_LOG("{} {}", a, b);
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc {} {}", a, b);
 
 								if (a && b) {
 									pcVar4 = pNewHeap->pStartAddr;
 									pcVar9 = pcVar4;
-									if ((uVar13 & 0x10) != 0) {
+									if ((headerFlags & 0x10) != 0) {
 										pcVar9 = pcVar4 + 0x10;
 									}
 									if ((align != 0) && ((ulong)pcVar9 % align != 0)) {
@@ -342,44 +363,51 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 								LAB_0028e378:
 									if (((ulong)pcVar6 + -((ulong)pcVar4)) <= freeBytes) {
 										pHeap = pNewHeap;
-										uVar11 = uVar12;
+										destBlock = nextFreeBlock;
 										pcVar8 = freeBytes;
 										pReturn = pcVar9;
 									}
 								}
-								uVar12 = pNewHeap->nextBlock;
+								nextFreeBlock = pNewHeap->nextBlock;
 							}
 						}
 						else {
 							while (uVar10 = pNewHeap->nextBlock, uVar10 != 0xffff) {
-								uVar12 = uVar10;
+								nextFreeBlock = uVar10;
 								pNewHeap = heapArray + (short)uVar10;
 							}
-							while ((pNewHeap != pMainMemHeader && (uVar11 == -1))) {
+
+							while ((pNewHeap != pMainMemHeader && (destBlock == -1))) {
 								if (size < pNewHeap->freeBytes) {
 									pcVar7 = pNewHeap->pStartAddr + (pNewHeap->freeBytes - size);
 									if ((align != 0) && ((ulong)pcVar7 % align != 0)) {
 										pcVar7 = pcVar7 + -((ulong)pcVar7 % align);
 									}
+
 									if ((((offset != 0) && ((ulong)pcVar7 / offset != (ulong)(pcVar7 + size) / offset)) &&
 										(pcVar7 = pcVar7 + -((ulong)pcVar7 % offset), align != 0)) && ((ulong)pcVar7 % align != 0)) {
 										pcVar7 = pcVar7 + -((ulong)pcVar7 % align);
 									}
+
 									pcVar4 = pcVar7;
-									if ((uVar13 & 0x10) != 0) {
+									if ((headerFlags & 0x10) != 0) {
 										pcVar4 = pcVar7 + -0x10;
 									}
+
 									if (pNewHeap->pStartAddr <= pcVar4) {
 										pHeap = pNewHeap;
-										uVar11 = uVar12;
+										destBlock = nextFreeBlock;
 										pReturn = pcVar7;
 									}
 								}
-								uVar12 = pNewHeap->field_0x2;
-								pNewHeap = heapArray + uVar12;
+								nextFreeBlock = pNewHeap->field_0x2;
+								pNewHeap = heapArray + nextFreeBlock;
 							}
 						}
-						if (uVar11 == -1) {
+
+						ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc destBlock: 0x{:x}", destBlock);
+
+						if (destBlock == -1) {
 							edDebugPrintf(sz_CannotAllocate_004325c0, size);
 							CallHandlerFunction(&edSysHandlerMemory_004890c0, 0, pMainMemHeader->pStartAddr);
 							pReturn = (char*)0x0;
@@ -388,20 +416,20 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 							pcVar7 = pHeap->pStartAddr;
 							sVar1 = pHeap->field_0x2;
 							iVar2 = pHeap->freeBytes;
-							uVar13 = pHeap->nextBlock;
+							headerFlags = pHeap->nextBlock;
 							ulong testValue = (ulong)pcVar7 + (iVar2 - (ulong)(pReturn + size));
-							MY_LOG("edmemWorkAlloc test 0x{:x} {} 0x{:x} {:x} {}", (uintptr_t)pcVar7, iVar2, (uintptr_t)pReturn, size, testValue);
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc test 0x{:x} {} 0x{:x} {:x} {}", (uintptr_t)pcVar7, iVar2, (uintptr_t)pReturn, size, testValue);
 							if (testValue == 0) {
 								if (sVar1 == -1) {
-									MY_LOG("edmemWorkAlloc nextFreeBlock {}", uVar13);
-									pMainMemHeader->nextFreeBlock = uVar13;
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc nextFreeBlock {}", headerFlags);
+									pMainMemHeader->nextFreeBlock = headerFlags;
 								}
 								else {
-									heapArray[sVar1].nextBlock = uVar13;
+									heapArray[sVar1].nextBlock = headerFlags;
 								}
-								uVar10 = uVar11;
-								if (uVar13 != -1) {
-									heapArray[uVar13].field_0x2 = sVar1;
+								uVar10 = destBlock;
+								if (headerFlags != -1) {
+									heapArray[headerFlags].field_0x2 = sVar1;
 								}
 							}
 							else {
@@ -419,7 +447,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 								}
 								pHeap = pNewHeap;
 								uVar10 = (ushort)((uint)((ulong)pNewHeap - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-								uVar13 = uVar11;
+								headerFlags = destBlock;
 							}
 							pHeap->flags = pMainMemHeader->flags & 0x10 | 0x86;
 							pHeap->funcTableID = pMainMemHeader->funcTableID;
@@ -454,17 +482,17 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 								pNewHeap->freeBytes = (ulong)(local_10 + -(ulong)pcVar7);
 								sVar5 = (short)((uint)((ulong)pNewHeap - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
 								if (sVar1 == -1) {
-									MY_LOG("Marking B {}", sVar5);
+									ED_MEM_LOG(LogLevel::Info, "Marking B {}", sVar5);
 									pMainMemHeader->nextFreeBlock = sVar5;
 								}
 								else {
 									heapArray[sVar1].nextBlock = sVar5;
 								}
-								if (uVar13 != -1) {
-									heapArray[uVar13].field_0x2 = sVar5;
+								if (headerFlags != -1) {
+									heapArray[headerFlags].field_0x2 = sVar5;
 								}
 								pNewHeap->field_0x2 = sVar1;
-								pNewHeap->nextBlock = uVar13;
+								pNewHeap->nextBlock = headerFlags;
 								if ((pMainMemHeader->flags & 0x10) != 0) {
 									edmemFillBlock((uint*)pNewHeap->pStartAddr, pNewHeap->freeBytes, 0);
 								}
@@ -487,6 +515,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 			pReturn = (char*)0x0;
 		}
 	}
+
 	return pReturn;
 }
 
@@ -659,25 +688,33 @@ char* edmemWorkShrink(S_MAIN_MEMORY_HEADER* pHeap, int newSize)
 
 bool edmemTestAllocOk(int size, int align, int offset)
 {
-	bool bVar1;
-	int iVar2;
+	bool bSuccess;
+	int adjustedOffset;
+
+	ED_MEM_LOG(LogLevel::Info, "edmemTestAllocOk size: 0x{:x}, align: 0x{:x}, offset: 0x{:x}", size, align, offset);
 
 	if (offset == 0) {
-		bVar1 = true;
+		ED_MEM_LOG(LogLevel::Info, "edmemTestAllocOk offset is 0, no need to check");
+		bSuccess = true;
 	}
 	else {
-		iVar2 = offset;
+		adjustedOffset = offset;
+
 		if (align != 0) {
-			iVar2 = offset + (align - offset % align);
+			adjustedOffset = offset + (align - offset % align);
+			ED_MEM_LOG(LogLevel::Info, "edmemTestAllocOk Adjusted offset to 0x{:x}", adjustedOffset);
 		}
-		bVar1 = true;
-		if (offset << 1 < iVar2 + size) {
+
+		bSuccess = true;
+		if (offset << 1 < adjustedOffset + size) {
 			/* Allocation impossible : size + align > boundary\n */
 			edDebugPrintf(g_szAllocationImpossible_004325f0);
-			bVar1 = false;
+			ED_MEM_LOG(LogLevel::Error, "edmemTestAllocOk Allocation impossible : size + align > boundary");
+			bSuccess = false;
 		}
 	}
-	return bVar1;
+
+	return bSuccess;
 }
 
 void edmemFillBlock(uint* data, int numWords, int isFree)

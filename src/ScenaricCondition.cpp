@@ -3,9 +3,9 @@
 #include "LevelScheduleManager.h"
 #include <assert.h>
 
-void ScenaricCondition::Create(char* param_2)
+void ScenaricCondition::Create(int* param_2)
 {
-	this->field_0x0 = param_2;
+	this->pData = param_2;
 	return;
 }
 
@@ -18,10 +18,12 @@ void ScenaricCondition::Create(ByteCode* pByteCode)
 	if (*piVar1 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * 0x10;
 	}
-	this->field_0x0 = (char*)piVar1;
-	if (*(int*)this->field_0x0 != 0) {
-		*(int*)((ulong)this->field_0x0 + 4) = 0;
+	this->pData = piVar1;
+
+	if (*this->pData != 0) {
+		this->pData[1] = 0;
 	}
+
 	return;
 }
 
@@ -82,8 +84,8 @@ ulong ScenaricCondition::IsVerified()
 	int iVar2;
 
 	uVar1 = 1;
-	pCond = (S_STREAM_SIMPLE_COND*)((ulong)this->field_0x0 + 4);
-	for (iVar2 = *(int*)this->field_0x0; 0 < iVar2; iVar2 = iVar2 + -1) {
+	pCond = reinterpret_cast<S_STREAM_SIMPLE_COND*>(this->pData + 1);
+	for (iVar2 = *this->pData; 0 < iVar2; iVar2 = iVar2 + -1) {
 		uVar1 = IsVerified(pCond, uVar1);
 		pCond = pCond + 1;
 	}
@@ -94,23 +96,29 @@ int ScenaricCondition::GetNumSimpleConds()
 {
 	int iVar1;
 
-	if ((int*)this->field_0x0 == (int*)0x0) {
+	if (this->pData == (int*)0x0) {
 		iVar1 = 0;
 	}
 	else {
-		iVar1 = *(int*)this->field_0x0;
+		iVar1 = *this->pData;
 	}
+
 	return iVar1;
 }
 
 int ScenaricCondition::GetDataSize()
 {
-	return *(int*)this->field_0x0 * 0x10 + 4;
+	return *this->pData * 0x10 + 4;
 }
 
-uint* ScenaricCondition::GetEndPtr()
+int* ScenaricCondition::GetBeginPtr()
 {
-	return (uint*)((int*)((ulong)this->field_0x0 + *(int*)this->field_0x0 * 4 * 4) + 1);
+	return this->pData;
+}
+
+int* ScenaricCondition::GetEndPtr()
+{
+	return this->pData + *this->pData * 4 + 1;
 }
 
 void ConditionedOperationArray::Create(ByteCode* pByteCode)

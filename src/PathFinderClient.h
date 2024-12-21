@@ -5,6 +5,7 @@
 #include "PathDynamic.h"
 
 class CActorMovable;
+class CActorMovable;
 
 class CPathFinderClient
 {
@@ -16,6 +17,8 @@ public:
 	void CleanPathDynamic();
 
 	bool IsValidPosition(edF32VECTOR4* pPosition);
+
+	bool HasPathTo(CActorMovable* pActor, edF32VECTOR4* v0);
 
 	int id;
 	CPathDynamic* pPathDynamic;

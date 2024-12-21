@@ -760,17 +760,17 @@ void CCameraExt::ComputeTargetOffset(edF32VECTOR4* v0)
 	CActor* this_00;
 	CActor* pOutActor;
 	edF32VECTOR4 local_50;
-	ActorMessage_7 auStack64;
+	GetPositionMsgParams auStack64;
 
 	cVar2 = false;
 	if ((this->flags_0xc & 1) != 0) {
 		auStack64.field_0x0 = 5;
-		auStack64.field_0x20 = gF32Vector4Zero;
+		auStack64.vectorFieldB = gF32Vector4Zero;
 		pReceiver = GetTarget();
 		this_00 = GetTarget();
 		cVar2 = this_00->DoMessage(pReceiver, (ACTOR_MESSAGE)7, (MSG_PARAM)&auStack64);
 		if (cVar2 != false) {
-			*v0 = auStack64.field_0x20;
+			*v0 = auStack64.vectorFieldB;
 		}
 	}
 

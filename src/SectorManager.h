@@ -15,6 +15,7 @@ namespace ed3D
 
 struct ByteCode;
 struct S_HIERANM_HIER;
+struct S_COMPANION_INFO;
 
 class CSectorHierarchy {
 public:
@@ -43,9 +44,9 @@ struct SectorManagerSubObj {
 
 struct SectorManagerSubObjOther {
 	uint flags;
-	undefined* pFileData;
-	int aSectorHierarchies;
-	uint* field_0xc;
+	int field_0x4;
+	int nbSectorConditions;
+	S_COMPANION_INFO* aCompanionInfo;
 };
 
 struct StaticEdFileBase {

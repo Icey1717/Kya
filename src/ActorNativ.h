@@ -10,6 +10,7 @@
 #define NATIVE_BEHAVIOUR_EXORCISM 0x4
 #define NATIVE_BEHAVIOUR_LIVE 0x5
 #define NATIVE_BEHAVIOUR_TAKE_AND_PUT 0x6
+#define NATIVE_BEHAVIOUR_SELLER 0x8
 
 #define NATIVE_STATE_TAKE_PUT_WALK 0x15
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
@@ -31,6 +32,11 @@ public:
 };
 
 class CBehaviourNativExorcisme : public CBehaviourNativ
+{
+
+};
+
+class CBehaviourNativSeller : public CBehaviourNativ
 {
 
 };

@@ -284,6 +284,8 @@ public:
 
 	void LoadFunc_001b87b0(void);
 
+	void FUN_001b9350(bool param_2);
+
 	void HandleFogAndClippingSettings();
 
 	void PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream);

@@ -177,7 +177,7 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 	undefined* puVar1;
 	int iVar2;
 	uint uVar3;
-	LevelInfo* pcVar3;
+	S_LEVEL_INFO* pcVar3;
 	CChunk* pCVar2;
 
 	if (aLevelInfo[levelID].levelName[0] == '\0') {
@@ -255,7 +255,7 @@ struct LoadLoopObject_418_18 {
 	SectorManagerSubObj aSubObj[6];
 };
 
-void SetupLevelInfo_002d97c0(LevelInfo* pLevelInfo, bool param_2)
+void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 {
 	LoadLoopObject_418_18* pLVar1;
 	int iVar2;
@@ -270,8 +270,8 @@ void SetupLevelInfo_002d97c0(LevelInfo* pLevelInfo, bool param_2)
 		pLevelInfo->field_0x18 = 0;
 		pLevelInfo->field_0x20 = 0;
 		pLevelInfo->levelName[0] = '\0';
-		pLevelInfo->field_0x48 = 0;
-		pLevelInfo->field_0x4c = 0;
+		pLevelInfo->aCompanionInfo = (S_COMPANION_INFO*)0x0;
+		pLevelInfo->pSimpleConditionData = 0;
 	}
 	pLevelInfo->field_0x50 = 0;
 	//puVar3 = &pLevelInfo->field_0x58;
@@ -319,7 +319,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	LoadLoopObject_50* pLVar7;
 	undefined4* puVar8;
 	int iVar9;
-	LevelInfo* pLevelInfo;
+	S_LEVEL_INFO* pLevelInfo;
 
 	iVar9 = 0;
 	pLevelInfo = this->aLevelInfo;
@@ -428,7 +428,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 edCBankCallback _gLevelsTableBankCallback = { -1, -1, 0x0, 0, 0, 0, 0, 0 };
 char* g_szLevelInfoBnkPath_00433c60 = "Info/levels.bnk";
 
-void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLevelInfo)
+void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, S_LEVEL_INFO* pLevelInfo)
 {
 	ulong uVar1;
 	int iVar2;
@@ -446,31 +446,31 @@ void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLe
 	pLevelInfo->field_0x30 = *(int*)(fileData + 0x30);
 	pLevelInfo->sectorStartIndex = *(int*)(fileData + 0x20);
 	do {
-		pLVar3->pFileData = (undefined*)0x0;
+		pLVar3->field_0x4 = 0;
 		pLVar3->flags = 0;
 		iVar2 = iVar2 + 6;
-		pLVar3->aSectorHierarchies = 0x0;
-		pLVar3->field_0xc = 0;
-		pLVar3[1].pFileData = (undefined*)0x0;
+		pLVar3->nbSectorConditions = 0x0;
+		pLVar3->aCompanionInfo = 0;
+		pLVar3[1].field_0x4 = 0;
 		pLVar3[1].flags = 0;
-		pLVar3[1].aSectorHierarchies = 0x0;
-		pLVar3[1].field_0xc = 0;
-		pLVar3[2].pFileData = (undefined*)0x0;
+		pLVar3[1].nbSectorConditions = 0x0;
+		pLVar3[1].aCompanionInfo = 0;
+		pLVar3[2].field_0x4 = 0;
 		pLVar3[2].flags = 0;
-		pLVar3[2].aSectorHierarchies = 0x0;
-		pLVar3[2].field_0xc = 0;
-		pLVar3[3].pFileData = (undefined*)0x0;
+		pLVar3[2].nbSectorConditions = 0x0;
+		pLVar3[2].aCompanionInfo = 0;
+		pLVar3[3].field_0x4 = 0;
 		pLVar3[3].flags = 0;
-		pLVar3[3].aSectorHierarchies = 0x0;
-		pLVar3[3].field_0xc = 0;
-		pLVar3[4].pFileData = (undefined*)0x0;
+		pLVar3[3].nbSectorConditions = 0x0;
+		pLVar3[3].aCompanionInfo = 0;
+		pLVar3[4].field_0x4 = 0;
 		pLVar3[4].flags = 0;
-		pLVar3[4].aSectorHierarchies = 0x0;
-		pLVar3[4].field_0xc = 0;
-		pLVar3[5].pFileData = (undefined*)0x0;
+		pLVar3[4].nbSectorConditions = 0x0;
+		pLVar3[4].aCompanionInfo = 0;
+		pLVar3[5].field_0x4 = 0;
 		pLVar3[5].flags = 0;
-		pLVar3[5].aSectorHierarchies = 0x0;
-		pLVar3[5].field_0xc = 0;
+		pLVar3[5].nbSectorConditions = 0x0;
+		pLVar3[5].aCompanionInfo = 0;
 		pLVar3 = pLVar3 + 6;
 	} while (iVar2 < 0x1e);
 	iVar2 = 8;
@@ -491,126 +491,144 @@ void CLevelScheduler::LevelsInfo_ReadHeader_V7_V9(char* fileData, LevelInfo* pLe
 	return;
 }
 
-uint* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(uint* pFileBuffer, int count, LevelInfo* pLevelInfo)
+int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNfoSector, int nbSectors, S_LEVEL_INFO* pLevelInfo)
 {
-	uint uVar1;
-	uint uVar2;
-	LevelInfo* pLVar3;
-	int iVar4;
-	uint* puVar5;
-	int* piVar6;
-	void* pvVar7;
-	void* __src;
-	SectorManagerSubObjOther* pcVar8;
-	int iVar9;
-	int iVar10;
-	uint* puVar11;
-	uint uVar12;
-	int iVar13;
-	uint* local_10;
-	int* local_8;
-	ScenaricCondition local_4;
+	int curConditionIdentifier;
+	S_LEVEL_INFO* pLVar3;
+	SectorManagerSubObjOther* pCurSectorSubObj;
+	int curConditionIndex;
+	int curSectorIndex;
+	S_COMPANION_INFO* pCurCompanionInfo;
+	uint nbTotalSimpleConditions;
+	int simpleConditionsDataSize;
+	int* pCurConditionData;
 
-	iVar13 = 0;
-	uVar12 = 0;
-	puVar5 = pFileBuffer;
-	iVar10 = count;
-	if (count != 0) {
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "CSectorManager::LevelsInfo_ReadSectors_V7_V9 nbSectors: 0x{:x}", nbSectors);
+
+	simpleConditionsDataSize = 0;
+	nbTotalSimpleConditions = 0;
+
+	S_LVLNFO_SECTOR_V7_V9* pLvlNfoSector = aLvlNfoSector;
+
+	curSectorIndex = nbSectors;
+	if (nbSectors != 0) {
 		do {
-			uVar1 = *puVar5;
-			if (pLevelInfo->sectorCount_0x14 < (int)uVar1) {
-				pLevelInfo->sectorCount_0x14 = uVar1;
+			if (pLevelInfo->sectorCount_0x14 < pLvlNfoSector->sectorIndex) {
+				pLevelInfo->sectorCount_0x14 = pLvlNfoSector->sectorIndex;
 			}
-			pcVar8 = &pLevelInfo->aSectorSubObj[uVar1];
-			puVar11 = puVar5 + 3;
-			pcVar8->pFileData = (undefined*)puVar5[1];
-			uVar1 = puVar5[2];
-			iVar9 = 0;
-			puVar5 = puVar11;
-			if (0 < (int)uVar1) {
+
+			LEVEL_SCHEDULER_LOG(LogLevel::Info, "CSectorManager::LevelsInfo_ReadSectors_V7_V9 sectorIndex: 0x{:x}, field_0x4: 0x{:x}, nbConditions: 0x{:x}",
+				pLvlNfoSector->sectorIndex, pLvlNfoSector->field_0x4, pLvlNfoSector->nbConditions);
+
+			pCurSectorSubObj = pLevelInfo->aSectorSubObj + pLvlNfoSector->sectorIndex;
+			pCurSectorSubObj->field_0x4 = pLvlNfoSector->field_0x4;
+
+			curConditionIndex = 0;
+			pCurConditionData = reinterpret_cast<int*>(pLvlNfoSector + 1);
+			if (0 < pLvlNfoSector->nbConditions) {
 				do {
-					uVar2 = *puVar5;
-					memset(&local_4, 0, sizeof(ScenaricCondition));
-					local_4.Create((char*)(puVar5 + 1));
-					if ((0 < (int)uVar2) && ((int)uVar2 < 0x1e)) {
-						pcVar8->flags = pcVar8->flags | 1 << (uVar2 & 0x1f);
-						iVar4 = local_4.GetNumSimpleConds();
-						if (iVar4 != 0) {
-							uVar12 = uVar12 + 1;
-							pcVar8->aSectorHierarchies = pcVar8->aSectorHierarchies + 1;
-							iVar4 = local_4.GetDataSize();
-							iVar13 = iVar13 + iVar4;
+					curConditionIdentifier = *pCurConditionData;
+
+					ScenaricCondition cond;
+					cond.Create(pCurConditionData + 1);
+
+					if ((0 < curConditionIdentifier) && (curConditionIdentifier < 0x1e)) {
+						pCurSectorSubObj->flags = pCurSectorSubObj->flags | 1 << (curConditionIdentifier & 0x1f);
+
+						LEVEL_SCHEDULER_LOG(LogLevel::Info, "CSectorManager::LevelsInfo_ReadSectors_V7_V9 numSimpleConds: 0x{:x}", cond.GetNumSimpleConds());
+
+						if (cond.GetNumSimpleConds() != 0) {
+							nbTotalSimpleConditions = nbTotalSimpleConditions + 1;
+							pCurSectorSubObj->nbSectorConditions = pCurSectorSubObj->nbSectorConditions + 1;
+							simpleConditionsDataSize = simpleConditionsDataSize + cond.GetDataSize();
+
+							LEVEL_SCHEDULER_LOG(LogLevel::Info, "CSectorManager::LevelsInfo_ReadSectors_V7_V9 condDataSize: 0x{:x}, simpleConditionsDataSize: 0x{:x}", cond.GetDataSize(), simpleConditionsDataSize);
 						}
 					}
-					puVar5 = local_4.GetEndPtr();
-					iVar9 = iVar9 + 1;
-				} while (iVar9 < (int)uVar1);
+
+					pCurConditionData = cond.GetEndPtr();
+					curConditionIndex = curConditionIndex + 1;
+				} while (curConditionIndex < pLvlNfoSector->nbConditions);
 			}
-			iVar10 = iVar10 + -1;
-		} while (iVar10 != 0);
+
+			pLvlNfoSector = reinterpret_cast<S_LVLNFO_SECTOR_V7_V9*>(pCurConditionData);
+
+			curSectorIndex = curSectorIndex + -1;
+		} while (curSectorIndex != 0);
 	}
-	if (uVar12 != 0) {
-		//IMPLEMENTATION_GUARD(
-		//piVar6 = (int*)AllocateFunc_001002a0((long)(int)(uVar12 * 8 + 0x10));
-		//piVar6 = RunActorInitFunctions_00217580(piVar6, (ActorConstructorA*)&LAB_002e1a80, Destructor_002dd1c0, 8, uVar12);
-		//pLevelInfo->field_0x48 = piVar6;
-		//pvVar7 = edMemAlloc(H_MAIN, iVar13);
-		//pLevelInfo->field_0x4c = pvVar7;
-		//pvVar7 = (void*)pLevelInfo->field_0x4c;
-		//puVar11 = (uint*)pLevelInfo->field_0x48;
-		//local_10 = pFileBuffer;
-		//if (count != 0) {
-		//	do {
-		//		if (*(int*)(pLevelInfo->levelName + *local_10 * 0x10 + -0x24 + 0x240) != 0) {
-		//			*(uint**)(pLevelInfo->levelName + *local_10 * 0x10 + -0x24 + 0x244) = puVar11;
-		//		}
-		//		iVar10 = 0;
-		//		uVar12 = local_10[2];
-		//		local_10 = local_10 + 3;
-		//		if (0 < (int)uVar12) {
-		//			do {
-		//				uVar1 = *local_10;
-		//				local_8 = (int*)0x0;
-		//				SetDereferenceParam1ToParam2(&local_8, local_10 + 1);
-		//				if ((0 < (int)uVar1) && ((int)uVar1 < 0x1e)) {
-		//					iVar13 = FUN_001173d0((int*)&local_8);
-		//					if (iVar13 != 0) {
-		//						iVar13 = FUN_001173f0(&local_8);
-		//						__src = (void*)GetDereferenceParam1(&local_8);
-		//						memcpy(pvVar7, __src, iVar13);
-		//						*puVar11 = uVar1;
-		//						SetDereferenceParam1ToParam2(puVar11 + 1, pvVar7);
-		//						pvVar7 = (void*)((int)pvVar7 + iVar13);
-		//						puVar11 = puVar11 + 2;
-		//					}
-		//				}
-		//				local_10 = (uint*)SeekForward_00117410(&local_8);
-		//				iVar10 = iVar10 + 1;
-		//			} while (iVar10 < (int)uVar12);
-		//		}
-		//		count = count + -1;
-		//	} while (count != 0);
-		//})
-	}
-	if ((pLevelInfo->sectorStartIndex == -1) ||
-		(pLevelInfo->aSectorSubObj[pLevelInfo->sectorStartIndex].pFileData == (undefined*)0x0)) {
-		iVar10 = 1;
-		pLVar3 = pLevelInfo;
-		while ((iVar10 <= pLevelInfo->sectorCount_0x14 &&
-			(pLVar3->aSectorSubObj[iVar10].pFileData == (undefined*)0x0))) {
-			iVar10 = iVar10 + 1;
+
+	// Reset back to the first info object.
+	pLvlNfoSector = aLvlNfoSector;
+
+	if (nbTotalSimpleConditions != 0) {
+		LEVEL_SCHEDULER_LOG(LogLevel::Info, "CSectorManager::LevelsInfo_ReadSectors_V7_V9 nbTotalSimpleConditions: 0x{:x}, simpleConditionsDataSize: 0x{:x}", nbTotalSimpleConditions, simpleConditionsDataSize);
+
+		pLevelInfo->aCompanionInfo = new S_COMPANION_INFO[nbTotalSimpleConditions];
+		pLevelInfo->pSimpleConditionData = reinterpret_cast<char*>(edMemAlloc(TO_HEAP(H_MAIN), simpleConditionsDataSize));
+		char* pCondDataSeekPos = pLevelInfo->pSimpleConditionData;
+		pCurCompanionInfo = pLevelInfo->aCompanionInfo;
+
+		if (nbSectors != 0) {
+			do {
+				if (pLevelInfo->aSectorSubObj[pLvlNfoSector->sectorIndex].nbSectorConditions != 0) {
+					pLevelInfo->aSectorSubObj[pLvlNfoSector->sectorIndex].aCompanionInfo = pCurCompanionInfo;
+				}
+
+				curSectorIndex = 0;
+				nbTotalSimpleConditions = pLvlNfoSector->nbConditions;
+				pCurConditionData = reinterpret_cast<int*>(pLvlNfoSector + 1);
+				if (0 < nbTotalSimpleConditions) {
+					do {
+						curConditionIdentifier = *pCurConditionData;
+						ScenaricCondition cond;
+						cond.Create(pCurConditionData + 1);
+
+						if ((0 < curConditionIdentifier) && (curConditionIdentifier < 0x1e)) {
+							if (cond.GetNumSimpleConds() != 0) {
+								simpleConditionsDataSize = cond.GetDataSize();
+								memcpy(pCondDataSeekPos, cond.GetBeginPtr(), simpleConditionsDataSize);
+								pCurCompanionInfo->conditionIdentifier = curConditionIdentifier;
+								pCurCompanionInfo->cond.Create(reinterpret_cast<int*>(pCondDataSeekPos));
+
+								pCondDataSeekPos = pCondDataSeekPos + simpleConditionsDataSize;
+								pCurCompanionInfo = pCurCompanionInfo + 1;
+							}
+						}
+
+						pCurConditionData = cond.GetEndPtr();
+						curSectorIndex = curSectorIndex + 1;
+					} while (curSectorIndex < nbTotalSimpleConditions);
+				}
+
+				pLvlNfoSector = reinterpret_cast<S_LVLNFO_SECTOR_V7_V9*>(pCurConditionData);
+
+				nbSectors = nbSectors + -1;
+			} while (nbSectors != 0);
 		}
-		if (pLevelInfo->sectorCount_0x14 < iVar10) {
+	}
+
+	if ((pLevelInfo->sectorStartIndex == -1) ||
+		(pLevelInfo->aSectorSubObj[pLevelInfo->sectorStartIndex].field_0x4 == 0)) {
+		curSectorIndex = 1;
+		pLVar3 = pLevelInfo;
+		while ((curSectorIndex <= pLevelInfo->sectorCount_0x14 &&
+			(pLVar3->aSectorSubObj[curSectorIndex].field_0x4 == 0))) {
+			curSectorIndex = curSectorIndex + 1;
+		}
+		if (pLevelInfo->sectorCount_0x14 < curSectorIndex) {
 			pLevelInfo->sectorStartIndex = -1;
 		}
 		else {
-			pLevelInfo->sectorStartIndex = iVar10;
+			pLevelInfo->sectorStartIndex = curSectorIndex;
 		}
 	}
-	return puVar5;
+
+	FLUSH_LOG();
+
+	return pCurConditionData;
 }
 
-void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, LevelInfo* pLevelInfo)
+void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, S_LEVEL_INFO* pLevelInfo)
 {
 	int iVar1;
 	undefined8* puVar2;
@@ -665,8 +683,8 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	bool bVar4;
 	edCBankBufferEntry* infoLevelsFileBuffer;
 	int inFileIndex;
-	uint* puVar5;
-	LevelInfo* pLevelInfo;
+	int* puVar5;
+	S_LEVEL_INFO* pLevelInfo;
 	int iVar6;
 	int iVar7;
 	int iVar8;
@@ -702,7 +720,7 @@ void CLevelScheduler::Levels_LoadInfoBank()
 							pLevelInfo = &aLevelInfo[iVar2];
 							LevelsInfo_ReadHeader_V7_V9((char*)fileData, pLevelInfo);
 							LevelsInfo_ReadTeleporters_V7_V9((char*)(puVar3 + 0xf), puVar3[0xc], pLevelInfo);
-							puVar5 = LevelsInfo_ReadSectors_V7_V9(puVar3 + 0xf + puVar3[0xc] * 7, puVar3[10], pLevelInfo);
+							puVar5 = LevelsInfo_ReadSectors_V7_V9(reinterpret_cast<S_LVLNFO_SECTOR_V7_V9*>(puVar3 + 0xf + puVar3[0xc] * 7), puVar3[10], pLevelInfo);
 							//LevelsInfo_ReadLanguageFileNames_V7_V9(this, puVar5, puVar3[0xe], *fileData);
 							//iVar9 = puVar3[0xd];
 							//puVar5 = puVar5 + puVar3[0xe] * 7;
@@ -850,7 +868,7 @@ void CLevelScheduler::Game_Init()
 	int* piVar9;
 	int* piVar10;
 	int iVar11;
-	LevelInfo* pLVar12;
+	S_LEVEL_INFO* pLVar12;
 	char local_80[128];
 
 	lVar2 = (SaveBigAlloc*)edMemAlloc(TO_HEAP(H_MAIN), 0x10000);
@@ -887,23 +905,23 @@ void CLevelScheduler::Game_Init()
 	level_0x5b50 = 0x10;
 	level_0x5b54 = -1;
 	do {
-		pLVar12->field_0x48 = 0;
-		pLVar12->field_0x4c = 0;
+		pLVar12->aCompanionInfo = 0;
+		pLVar12->pSimpleConditionData = 0;
 		iVar11 = iVar11 + 8;
-		pLVar12[1].field_0x48 = 0;
-		pLVar12[1].field_0x4c = 0;
-		pLVar12[2].field_0x48 = 0;
-		pLVar12[2].field_0x4c = 0;
-		pLVar12[3].field_0x48 = 0;
-		pLVar12[3].field_0x4c = 0;
-		pLVar12[4].field_0x48 = 0;
-		pLVar12[4].field_0x4c = 0;
-		pLVar12[5].field_0x48 = 0;
-		pLVar12[5].field_0x4c = 0;
-		pLVar12[6].field_0x48 = 0;
-		pLVar12[6].field_0x4c = 0;
-		pLVar12[7].field_0x48 = 0;
-		pLVar12[7].field_0x4c = 0;
+		pLVar12[1].aCompanionInfo = 0;
+		pLVar12[1].pSimpleConditionData = 0;
+		pLVar12[2].aCompanionInfo = 0;
+		pLVar12[2].pSimpleConditionData = 0;
+		pLVar12[3].aCompanionInfo = 0;
+		pLVar12[3].pSimpleConditionData = 0;
+		pLVar12[4].aCompanionInfo = 0;
+		pLVar12[4].pSimpleConditionData = 0;
+		pLVar12[5].aCompanionInfo = 0;
+		pLVar12[5].pSimpleConditionData = 0;
+		pLVar12[6].aCompanionInfo = 0;
+		pLVar12[6].pSimpleConditionData = 0;
+		pLVar12[7].aCompanionInfo = 0;
+		pLVar12[7].pSimpleConditionData = 0;
 		pLVar12 = pLVar12 + 8;
 	} while (iVar11 < 0x10);
 	iVar11 = 0xf;
@@ -954,13 +972,14 @@ void CLevelScheduler::Game_Init()
 	pLVar12 = aLevelInfo;
 	iVar11 = 0;
 	do {
-		if ((undefined*)pLVar12->field_0x48 != (undefined*)0x0) {
+		if (pLVar12->aCompanionInfo != (S_COMPANION_INFO*)0x0) {
+			IMPLEMENTATION_GUARD();
 			//FreeArray_00217340((undefined*)pLVar12->field_0x48, Destructor_002dd1c0);
-			pLVar12->field_0x48 = 0;
+			pLVar12->aCompanionInfo = 0;
 		}
-		if ((void*)pLVar12->field_0x4c != (void*)0x0) {
-			edMemFree((void*)pLVar12->field_0x4c);
-			pLVar12->field_0x4c = 0;
+		if ((void*)pLVar12->pSimpleConditionData != (void*)0x0) {
+			edMemFree((void*)pLVar12->pSimpleConditionData);
+			pLVar12->pSimpleConditionData = 0;
 		}
 		iVar11 = iVar11 + 1;
 		pLVar12 = pLVar12 + 1;
@@ -1079,7 +1098,7 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		Level_FillRunInfo(0x1, -1, -1);
+		Level_FillRunInfo(0x4, -1, -1);
 	}
 	return;
 }
@@ -1889,13 +1908,12 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 
 	if ((levelId == 0x10) || (levelId != this->currentLevelID)) {
 		if ((levelId != 0x10) && (bVar3 = CScene::_pinstance->CheckFunc_001b9300(), bVar3 == false)) {
-			IMPLEMENTATION_GUARD(
 			if ((levelId == 0) && (DAT_004253fc != 0)) {
 				levelId = 6;
 			}
 			Level_FillRunInfo(levelId, elevatorId, param_6);
 			this->level_0x5b3c = cutsceneId;
-			CScene::FUN_001b9350(CScene::_pinstance, false);)
+			CScene::_pinstance->FUN_001b9350(false);
 		}
 	}
 	else {
@@ -1926,6 +1944,7 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 			})
 		}
 	}
+
 	return;
 }
 

@@ -66,6 +66,22 @@ void CAstarMemBank::DeletePathDynamic(CPathDynamic* pPathDynamic)
 	return;
 }
 
+CPathDynamic* CAstarMemBank::NewPathDynamic(edF32VECTOR4* pStart, edF32VECTOR4* pDestination)
+{
+	CPathDynamic* pDynamicPath = this->pCurDynamicPath;
+
+	if (pDynamicPath != (CPathDynamic*)0x0) {
+		this->pCurDynamicPath = pDynamicPath->pNext;
+
+		pDynamicPath->Clear();
+		pDynamicPath->Init(pStart, pDestination);
+
+		this->nbPathDynamicUsed = this->nbPathDynamicUsed + 1;
+	}
+
+	return pDynamicPath;
+}
+
 CBasicPathFinder::CBasicPathFinder()
 {
 	//this->field_0x408 = 0;
@@ -165,4 +181,9 @@ CBasicNaviMesh* CBasicPathFinder::GetArea(edF32VECTOR4* pLocation)
 	}
 
 	return pArea;
+}
+
+CPathDynamic* CBasicPathFinder::NewPathDynamic(edF32VECTOR4* pStart, edF32VECTOR4* pDestination)
+{
+	return this->astarMemBank.NewPathDynamic(pStart, pDestination);
 }

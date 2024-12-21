@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "ActorAutonomous.h"
+#include "Vision.h"
 
 class CBehaviourWoof : public CBehaviour
 {

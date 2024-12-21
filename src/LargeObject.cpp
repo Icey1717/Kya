@@ -1124,6 +1124,32 @@ void CScene::PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStrea
 	return;
 }
 
+void CScene::FUN_001b9350(bool param_2)
+{
+	int iVar1;
+
+	iVar1 = this->curState;
+
+	if (1 < iVar1 - 6U) {
+		if (param_2 == false) {
+			if (iVar1 != 7) {
+				this->timeInState = 0.0f;
+				this->curState = 7;
+			}
+		}
+		else {
+			if (iVar1 != 6) {
+				this->timeInState = 0.0f;
+				this->curState = 6;
+			}
+		}
+
+		GameFlags = GameFlags | 0x180;
+	}
+
+	return;
+}
+
 void CScene::Level_SectorChange(int oldSectorId, int newSectorId)
 {
 	CObjectManager* pLVar1;

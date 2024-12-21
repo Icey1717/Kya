@@ -6,6 +6,8 @@
 #include "ActorFighter.h"
 #include "CinematicManager.h"
 #include "SwitchBehaviour.h"
+#include "TimeController.h"
+#include "Vision.h"
 
 #define WOLFEN_BEHAVIOUR_WATCH_DOG 0x8
 #define WOLFEN_BEHAVIOUR_GUARD_AREA 0xa
@@ -24,8 +26,12 @@
 
 #define WOLFEN_STATE_WATCH_DOG_GUARD 0x72
 #define WOLFEN_STATE_TRACK_WEAPON_CHASE 0x73
+#define WOLFEN_STATE_TRACK_DEFEND 0x76
 #define WOLFEN_STATE_COME_BACK 0x77
 #define WOLFEN_STATE_SURPRISE 0x9a
+#define WOLFEN_STATE_LOCATE 0x9c
+
+#define WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION 0xab
 
 struct S_STREAM_EVENT_CAMERA;
 
@@ -33,6 +39,10 @@ struct EnemyComponent80
 {
 	void* pEnemy_0x60;
 };
+
+class CActorWolfen;
+class CActorCommander;
+class CActorProjectile;
 
 class CActorWolfenKnowledge
 { };
@@ -59,21 +69,70 @@ public:
 
 	void FUN_003c3a30()
 	{
-		this->field_0x4 = 0;
+		this->field_0x4 = 0.0f;
 
 		return;
 	}
 
+	bool FUN_003c38c0(CActorWolfen* pWolfen)
+	{
+		Timer* pTVar1;
+		bool bVar2;
+
+		bVar2 = true;
+		if (((pWolfen->pCommander->flags_0x18c & 8) == 0) &&
+			(pTVar1 = Timer::GetTimer(), this->field_0x4 < pTVar1->scaledTotalTime)) {
+			bVar2 = false;
+		}
+
+		return bVar2;
+	}
+
+	int GetState_003c37c0(CActorWolfen* pActor)
+	{
+		bool bVar1;
+		CActorWeapon* pCVar2;
+		Timer* pTVar3;
+		long lVar4;
+		int iVar5;
+
+		bVar1 = true;
+		iVar5 = WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION;
+		//pCVar2 = CActorFighter::GetWeapon((CActorFighter*)pActor);
+		//if (pCVar2 != (CActorWeapon*)0x0) {
+		//	pCVar2 = CActorFighter::GetWeapon((CActorFighter*)pActor);
+		//	lVar4 = FUN_002d58a0(pCVar2);
+		//	if (lVar4 != 0) {
+		//		pCVar2 = CActorFighter::GetWeapon((CActorFighter*)pActor);
+		//		lVar4 = FUN_002d5830((int)pCVar2);
+		//		if (lVar4 == 0) {
+		//			bVar1 = false;
+		//		}
+		//	}
+		//}
+
+		if (!bVar1) {
+			iVar5 = 0x97;
+			pActor->field_0xcf8 = WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION;
+		}
+
+		if (((pActor->pCommander->flags_0x18c & 8) == 0) && (1 < (int)pActor->combatMode_0xb7c)) {
+			pTVar3 = Timer::GetTimer();
+			if (this->field_0x4 < pTVar3->scaledTotalTime) {
+				this->field_0x4 = pTVar3->scaledTotalTime + this->field_0x0;
+			}
+		}
+
+		return iVar5;
+	}
+
 	float field_0x0;
-	undefined4 field_0x4;
+	float field_0x4;
 
 	EEnemyCombatMode combatMode;
 
 	int field_0x34;
 };
-
-class CActorWolfen;
-class CActorCommander;
 
 class CBehaviourWolfen : public CBehaviour
 {
@@ -92,6 +151,7 @@ public:
 	virtual int GetStateWolfenComeBack();
 	virtual int GetStateWolfenTrack();
 	virtual int GetStateWolfenGuard();
+	virtual int GetStateWolfenWeapon();
 
 	void CheckDetection();
 	void CheckDetection_Intruder();
@@ -104,7 +164,10 @@ public:
 	int TestState_001f0a70();
 	int TestState_001f0a90();
 
-	int GetAnimation_001f0930();
+	int GetState_001f0930();
+
+	int GetState_001f0b30();
+	int GetState_001f08a0();
 
 	uint flags_0x4;
 	CActorWolfen* pOwner;
@@ -213,13 +276,16 @@ public:
 	virtual void Term() { IMPLEMENTATION_GUARD(); }
 	virtual void Manage() { IMPLEMENTATION_GUARD(); }
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
-	virtual void End(int newBehaviourId) { IMPLEMENTATION_GUARD(); }
-	virtual void InitState(int newState) { IMPLEMENTATION_GUARD(); }
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
 
 	virtual CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* GetNotificationTargetArray();
 
+	virtual int GetStateWolfenWeapon();
 	virtual int Func_0x70() { IMPLEMENTATION_GUARD(); }
+	virtual int Func_0x74();
+	virtual int Func_0x78();
 	virtual void Func_0x80(int* param_2, int* param_3, CActor* pTarget);
 
 	int FUN_002faf40();
@@ -246,7 +312,7 @@ public:
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
-	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
+	virtual void TermState(int oldState, int newState);
 
 	virtual int Func_0x70();
 	virtual void Func_0x80(int* param_2, int* param_3, CActor* pTarget);
@@ -326,6 +392,7 @@ public:
 	static WolfenConfig _gStateCfg_WLF[68];
 	static WolfenCollisionSphere _pDefCollisions[3];
 	static int _waitStandAnimArray[8];
+	static int _waitDefendAnimArray[4];
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
@@ -364,6 +431,7 @@ public:
 	virtual CPathFinderClient* GetPathfinderClient();
 	virtual CPathFinderClient* GetPathfinderClientAlt();
 
+	void SetCombatMode(EEnemyCombatMode newCombatMode);
 	uint GetStateWolfenFlags(int state);
 
 	void AnimEvaluate_0xa2(uint layerId);
@@ -375,21 +443,31 @@ public:
 	void BehaviourWatchDog_Manage(CBehaviourWatchDog* pBehaviour);
 	void BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour);
 
+	void WaitingAnimation_Defend();
+	void WaitingAnimation_Guard();
+
 	void StateWolfenComeBack(CBehaviourWolfen* pBehaviour);
+	void StateWolfen_00179db0(CBehaviourWolfen* pBehaviour);
 	void StateWolfenSurprise(CBehaviourWolfen* pBehaviour);
+	void StateWolfenLocate(CBehaviourWolfen* pBehaviour);
 	void StateWatchDogGuard(CBehaviourWatchDog* pBehaviour);
 	void StateTrackWeaponChase(CBehaviourTrackWeapon* pBehaviour);
+	void StateTrackWeaponDefend(CBehaviourTrackWeapon* pBehaviour);
+	void StateTrackWeaponCheckPosition(CBehaviourTrackWeapon* pBehaviour);
 
 	int GetPostMoveState(CActorsTable* pTable);
 
 	void ClearLocalData();
 
-	void SV_WLF_UpdateOrientation2D(float param_1, edF32VECTOR4* v0, int rotationType);
+	void SV_WLF_MoveTo(CActorMovParamsOut* pMovParamsOut, CActorMovParamsIn* pMovParamsIn, edF32VECTOR4* pPosition);
+	bool SV_WLF_CanMoveTo(edF32VECTOR4* pPosition);
+	bool SV_WLF_UpdateOrientation2D(float param_1, edF32VECTOR4* v0, int rotationType);
 	bool SV_WLF_IsIntruderMakingNoise(CActor* pActor);
 	bool SV_WLF_IsIntruderInVitalSphere(CActor* pActor);
 	bool SV_WLF_IsIntruderInVision(CActor* pActor);
 
 	bool FUN_001738e0(CActor* pActor);
+	bool FUN_0035f1e0(CActorsTable* pTable, edF32VECTOR4* pPosition);
 	int FUN_0030a6a0();
 	int GetState_00174190();
 
@@ -397,6 +475,10 @@ public:
 	void UpdateInRange_001744a0(bool bFlag);
 
 	bool IsAlive(CActor* pActor);
+
+	bool CanSwitchToFight_Area(CActor* pTarget);
+
+	void InternState_WolfenLocate();
 
 	CBehaviourLost behaviourLost;
 	CBehaviourTrack behaviourTrack;
@@ -423,19 +505,20 @@ public:
 	float rotRunSpeed;
 	float field_0xc6c;
 
-	edF32VECTOR4 field_0xc70;
+	edF32VECTOR4 pathOriginPosition;
 
 	float field_0xcf0;
 	float field_0xcf4;
 	int field_0xcf8;
 
-	undefined* field_0xd04;
+	CActor* field_0xd04;
+	float field_0xd08;
 
 	float field_0xd24;
 	float field_0xd28;
 	uint field_0xd30;
 
-	undefined4 field_0xd10;
+	CActorProjectile* pTrackedProjectile;
 	undefined4 field_0xd14;
 	float field_0xd1c;
 	float field_0xd20;

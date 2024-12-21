@@ -124,7 +124,7 @@ void CSectorManager::LevelLoading_Begin()
 	ulong uVar4;
 	uint uVar5;
 	uint uVar6;
-	uint* puVar7;
+	S_COMPANION_INFO* pCompanionInfo;
 	uint uVar8;
 	int* piVar9;
 	int iVar10;
@@ -132,7 +132,7 @@ void CSectorManager::LevelLoading_Begin()
 	uint uVar12;
 	int iVar13;
 	SectorManagerSubObj* pcVar14;
-	LevelInfo* local_1a0;
+	S_LEVEL_INFO* local_1a0;
 	int local_190[32];
 	CFixedTable<int, 32> table;
 	uint auStack144[31];
@@ -144,7 +144,7 @@ void CSectorManager::LevelLoading_Begin()
 
 	/* LoadSect
 		*/
-	LevelInfo* pcVar5 = &CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->nextLevelID];
+	S_LEVEL_INFO* pcVar5 = &CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->nextLevelID];
 	local_1a0 = pcVar5;
 	/* /sect */
 	edStrCatMulti(this->szSectorFileRoot, CLevelScheduler::gThis->levelPath, pcVar5->levelName, "/", "SECT", 0);
@@ -161,19 +161,21 @@ void CSectorManager::LevelLoading_Begin()
 	iVar13 = 1;
 	if (0 < this->count_0x368) {
 		pcVar14 = this->subObjArray + 1;
-		pLVar1 = &local_1a0->aSectorSubObj[1];
+		pLVar1 = local_1a0->aSectorSubObj + 1;
 
 		do {
 			uVar8 = pLVar1->flags;
-			puVar7 = pLVar1->field_0xc;
+			pCompanionInfo = pLVar1->aCompanionInfo;
 
-			for (iVar10 = pLVar1->aSectorHierarchies; iVar10 != 0; iVar10 = iVar10 + -1) {
-				IMPLEMENTATION_GUARD(
-				uVar4 = FUN_00117440((int**)(puVar7 + 1));
+			for (iVar10 = pLVar1->nbSectorConditions; iVar10 != 0; iVar10 = iVar10 + -1) {
+				ScenaricCondition* pCond = &pCompanionInfo->cond;
+
+				uVar4 = pCond->IsVerified();
 				if (uVar4 == 0) {
-					uVar8 = uVar8 & ~(1 << (*puVar7 & 0x1f));
+					uVar8 = uVar8 & ~(1 << (pCompanionInfo->conditionIdentifier & 0x1f));
 				}
-				puVar7 = puVar7 + 2;)
+
+				pCompanionInfo = pCompanionInfo + 1;
 			}
 
 			pcVar14->flags = uVar8;
@@ -183,18 +185,19 @@ void CSectorManager::LevelLoading_Begin()
 				iVar10 = 0;
 				uVar6 = 1;
 				if (0 < this->count_0x368) {
-					puVar7 = auStack144;
+					uint* pCur = auStack144;
 					do {
-						puVar7 = puVar7 + 1;
+						pCur = pCur + 1;
 						uVar5 = 1 << (uVar6 & 0x1f);
 						if ((uVar5 & uVar8) != 0) {
 							uVar12 = uVar12 | uVar5;
 							iVar10 = iVar10 + 1;
-							*puVar7 = *puVar7 | uVar8;
+							*pCur = *pCur | uVar8;
 						}
 						uVar6 = uVar6 + 1;
 					} while ((int)uVar6 <= this->count_0x368);
 				}
+
 				if (this->sectDataCount < iVar10) {
 					this->sectDataCount = iVar10;
 				}
@@ -236,8 +239,9 @@ void CSectorManager::LevelLoading_Begin()
 		piVar2 = local_190;
 
 		for (int i = 0; i < 0x1e; i++) {
-			piVar2[i] = (int)local_1a0->aSectorSubObj[i].pFileData;
+			piVar2[i] = local_1a0->aSectorSubObj[i].field_0x4;
 		}
+
 		iVar13 = 0;
 		if (0 < table.entryCount + -1) {
 			piVar2 = table.aEntries;

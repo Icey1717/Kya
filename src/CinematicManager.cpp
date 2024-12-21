@@ -716,9 +716,6 @@ CCinematic::CCinematic()
 	//this->BWCinSourceSubtitle_Obj = (BWCinSourceSubtitle*)&BWCinSourceSubtitle_VTable_0043dd00;
 	//this->BWCinSourceSubtitle_Obj = (BWCinSourceSubtitle*)&BWCinSourceSubtitle_VTable_0043def0;
 	//(this->cinFileData).headerPtr = (CinematicFileDataHeader*)0x0;
-	this->textData = CMessageFile();
-	(this->condArray_0x244).pHeader = (CND_OP_HEADER*)0x0;
-	(this->cond_0x248).field_0x0 = (char*)0x0;
 	InitInternalData();
 	return;
 }
@@ -1783,9 +1780,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 					}
 					else {
 						if (objectType == edResCollection::COT_MeshModel) {
-							IMPLEMENTATION_GUARD(
-							outMeshInfo = 3DFileManager::GetMeshInfoAtAddress_001a6dd0
-							(CScene::ptable.g_C3DFileManager_00451664, (int)outFileData.fileBufferStart);)
+							outMeshInfo = CScene::ptable.g_C3DFileManager_00451664->GetInfoForCommonLevelMesh(outFileData.fileBufferStart);
 						}
 						else {
 							outMeshInfo = (ed_g3d_manager*)outFileData.fileBufferStart;
@@ -3499,9 +3494,9 @@ bool CBWitchCin::CreateActor(edCinActorInterface** ppActorInterface, edCinGameIn
 	if ((pTag->meshName != 0) && ((char*)pTag->textureName != (char*)0x0)) {
 		textureObj = (ed_g2d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshTexture, pTag->bHasTexture, pTag->textureName, (ed_g2d_manager*)0x0, &resourceSize);
 		if (textureObj == (ed_g2d_manager*)0x0) {
-			IMPLEMENTATION_GUARD();
-			//textureObj = Scene::ptable.g_C3DFileManager_00451664.LoadDefaultTexture_001a65d0(Scene::ptable.g_C3DFileManager_00451664);
+			textureObj = CScene::ptable.g_C3DFileManager_00451664->LoadDefaultTexture_001a65d0();
 		}
+
 		meshInfoObj = (ed_g3d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshModel, pTag->bHasMesh, pTag->meshName, textureObj, &resourceSize);
 	}
 	/* Sound files can go in here */
@@ -4154,7 +4149,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 						pActor = (CActor*)CActorHero::_gThis;
 					}
 
-					CActor::DoMessage(pActor, CActorHero::_gThis, MESSAGE_ENABLE_INPUT, (ActorCompareStruct*)0x0);
+					CActor::DoMessage(pActor, CActorHero::_gThis, MESSAGE_ENABLE_INPUT, (GetPositionMsgParams*)0x0);
 				}
 			}
 		})

@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "Actor.h"
 #include "PathFollow.h"
+#include "Vision.h"
 
 class CActorBlazer : public CActor {
 public:
