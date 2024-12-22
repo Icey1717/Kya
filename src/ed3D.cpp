@@ -3078,39 +3078,38 @@ int ed3DG3DNbMaxBaseRGBA(ed_3d_strip* pStrip)
 	return pRGBA[2];
 }
 
-
-struct ed_g3d_Anim_def {
-	uint field_0x0;
-	uint field_0x4;
-	uint field_0x8;
-	uint field_0xc;
-	float field_0x10;
-	uint field_0x14;
-	uint field_0x18;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
-	uint field_0x20;
-	float field_0x24;
-	undefined field_0x28;
-	undefined field_0x29;
-	undefined field_0x2a;
-	undefined field_0x2b;
-	undefined field_0x2c;
-	undefined field_0x2d;
-	undefined field_0x2e;
-	undefined field_0x2f;
-	uint field_0x30;
-	float field_0x34;
-};
-
-static_assert(sizeof(ed_g3d_Anim_def) == 0x38, "ed_g3d_Anim_def size is incorrect");
-
 ed_g3d_Anim_def* ed3DG3DAnimGet(ed_3d_strip* pStrip)
 {
 	int* pData = LOAD_SECTION_CAST(int*, pStrip->pColorBuf);
 	return LOAD_SECTION_CAST(ed_g3d_Anim_def*, pData[1]);
+}
+
+struct ed_g2d_Anim_def
+{
+	int p3dAnimDef; // ed_g3d_Anim_def*
+	uint field_0x4;
+	uint field_0x8;
+	uint field_0xc;
+	uint field_0x10;
+	ushort field_0x14;
+	ushort field_0x16;
+	undefined field_0x18;
+	undefined field_0x19;
+	undefined field_0x1a;
+	undefined field_0x1b;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+};
+
+static_assert(sizeof(ed_g2d_Anim_def) == 0x20);
+
+ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pTexture)
+{
+	ed_Chunck* pAnimChunck = LOAD_SECTION_CAST(ed_Chunck*, pTexture->pAnimChunck);
+	ed_g2d_Anim_def* p2dAnimDef =  reinterpret_cast<ed_g2d_Anim_def*>(pAnimChunck + 1);
+	return LOAD_SECTION_CAST(ed_g3d_Anim_def*, p2dAnimDef->p3dAnimDef);
 }
 
 void ed3DFlushStrip(edNODE* pNode)
@@ -4506,6 +4505,12 @@ void ed3DFlushMaterialNode(ed_dma_material* pMaterial)
 	return;
 }
 
+ed_g2d_bitmap* ed3DG2DGetBitmapFromTexture(ed_g2d_texture* pTexture)
+{
+	ed_hash_code* pBitmapHash = LOAD_SECTION_CAST(ed_hash_code*, pTexture->hashCode.pData);
+	ed_Chunck* pT2D = LOAD_SECTION_CAST(ed_Chunck*, pBitmapHash->pData);
+	return reinterpret_cast<ed_g2d_bitmap*>(pT2D + 1);
+}
 
 
 edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
@@ -4517,7 +4522,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 	edF32VECTOR4* peVar5;
 	int iVar6;
 	uint uVar7;
-	int iVar8;
+	ed_g3d_Anim_def* p3dAnimDef;
 	uint uVar9;
 	float fVar10;
 	float fVar11;
@@ -4526,36 +4531,47 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 	uVar9 = gCurLayer->flags_0x4;
 	if ((uVar9 & 0x10) == 0) {
 		if ((uVar9 & 2) != 0) {
-			IMPLEMENTATION_GUARD(
-				pTEX = gCurLayer->pTex;
-			ed3DG2DGetBitmapFromTexture((int)&pTEX->body);
-			iVar6 = *(int*)&(pTEX->body).field_0x1c;
-			iVar8 = ed3DG2DAnimTexGet(&pTEX->body);
-			fVar10 = *(float*)(iVar8 + 0x10);
+			pTEX = LOAD_SECTION_CAST(ed_Chunck*, gCurLayer->pTex);
+
+			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
+
+			ed3DG2DGetBitmapFromTexture(pTexture);
+
+			ed_Chunck* p2dAnimChunk = LOAD_SECTION_CAST(ed_Chunck*, pTexture->pAnimChunck);
+
+			ed_g2d_Anim_def* p2dAnimDef = reinterpret_cast<ed_g2d_Anim_def*>(p2dAnimChunk + 1);
+
+			edF32VECTOR4* pAnimSpeedNormalExtruder = LOAD_SECTION_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
+
+			p3dAnimDef = ed3DG2DAnimTexGet(pTexture);
+			fVar10 = p3dAnimDef->field_0x10;
+
 			if (fVar10 < 2.147484e+09f) {
 				uVar9 = (uint)fVar10;
-				uVar3 = *(ushort*)(iVar6 + 0x24);
+				uVar3 = p2dAnimDef->field_0x14;
 			}
 			else {
 				uVar9 = (int)(fVar10 - 2.147484e+09f) | 0x80000000;
-				uVar3 = *(ushort*)(iVar6 + 0x24);
+				uVar3 = p2dAnimDef->field_0x14;
 			}
+
 			if (uVar3 <= uVar9) {
 				uVar9 = uVar3 - 1;
 			}
-			uVar1 = 0x100 / *(int*)(iVar6 + 0x14);
-			if (*(int*)(iVar6 + 0x14) == 0) {
+			uVar1 = 0x100 / p2dAnimDef->field_0x4;
+			if (p2dAnimDef->field_0x4 == 0) {
 				trap(7);
 			}
 			if (uVar9 < uVar1) {
-				((pTEX->body).field_0x14)->w = 0.0;
+				pAnimSpeedNormalExtruder->w = 0.0f;
 			}
 			else {
 				uVar2 = (int)uVar9 / (int)uVar1;
 				if (uVar1 == 0) {
 					trap(7);
 				}
-				uVar7 = *(uint*)(iVar6 + 0x18);
+
+				uVar7 = p2dAnimDef->field_0x8;
 				if ((int)uVar7 < 0) {
 					fVar10 = (float)(uVar7 >> 1 | uVar7 & 1);
 					fVar10 = fVar10 + fVar10;
@@ -4563,7 +4579,8 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 				else {
 					fVar10 = (float)uVar7;
 				}
-				uVar7 = *(uint*)(iVar6 + 0x20);
+
+				uVar7 = p2dAnimDef->field_0x10;
 				if ((int)uVar7 < 0) {
 					fVar11 = (float)(uVar7 >> 1 | uVar7 & 1);
 					fVar11 = fVar11 + fVar11;
@@ -4571,6 +4588,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 				else {
 					fVar11 = (float)uVar7;
 				}
+
 				if ((int)uVar2 < 0) {
 					fVar12 = (float)(uVar2 >> 1 | uVar2 & 1);
 					fVar12 = fVar12 + fVar12;
@@ -4578,10 +4596,12 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 				else {
 					fVar12 = (float)uVar2;
 				}
+
 				uVar9 = uVar9 - uVar2 * uVar1;
-				((pTEX->body).field_0x14)->w = fVar12 * (fVar10 / fVar11);
+				pAnimSpeedNormalExtruder->w = fVar12 * (fVar10 / fVar11);
 			}
-			uVar1 = *(uint*)(iVar6 + 0x14);
+
+			uVar1 = p2dAnimDef->field_0x4;
 			if ((int)uVar1 < 0) {
 				fVar10 = (float)(uVar1 >> 1 | uVar1 & 1);
 				fVar10 = fVar10 + fVar10;
@@ -4589,7 +4609,8 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 			else {
 				fVar10 = (float)uVar1;
 			}
-			uVar1 = *(uint*)(iVar6 + 0x1c);
+
+			uVar1 = p2dAnimDef->field_0xc;
 			if ((int)uVar1 < 0) {
 				fVar11 = (float)(uVar1 >> 1 | uVar1 & 1);
 				fVar11 = fVar11 + fVar11;
@@ -4597,6 +4618,7 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 			else {
 				fVar11 = (float)uVar1;
 			}
+
 			if ((int)uVar9 < 0) {
 				fVar12 = (float)(uVar9 >> 1 | uVar9 & 1);
 				fVar12 = fVar12 + fVar12;
@@ -4604,19 +4626,19 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 			else {
 				fVar12 = (float)uVar9;
 			}
-			((pTEX->body).field_0x14)->z = fVar12 * (fVar10 / fVar11);
+
+			pAnimSpeedNormalExtruder->z = fVar12 * (fVar10 / fVar11);
 			pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 			pPkt->cmdB = 0;
-			*(undefined4*)&pPkt->cmdB = 0;
-			*(undefined4*)((int)&pPkt->cmdB + 4) = 0x6c010021;
-			gVU1_AnimST_NormalExtruder_Scratch->x = ((pTEX->body).field_0x14)->z;
-			gVU1_AnimST_NormalExtruder_Scratch->y = ((pTEX->body).field_0x14)->w;
-			*(float*)&pPkt[1].cmdA = gVU1_AnimST_NormalExtruder_Scratch->x;
-			*(float*)((int)&pPkt[1].cmdA + 4) = gVU1_AnimST_NormalExtruder_Scratch->y;
-			*(float*)&pPkt[1].cmdB = gVU1_AnimST_NormalExtruder_Scratch->z;
-			*(float*)((int)&pPkt[1].cmdB + 4) = gVU1_AnimST_NormalExtruder_Scratch->w;
+			pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0021, 0x01, UNPACK_V4_32, 0); // 0x6c010021;
+			gVU1_AnimST_NormalExtruder_Scratch->x = pAnimSpeedNormalExtruder->z;
+			gVU1_AnimST_NormalExtruder_Scratch->y = pAnimSpeedNormalExtruder->w;
+
+			pPkt[1].asVector = *gVU1_AnimST_NormalExtruder_Scratch;
+
 			pPkt = pPkt + 2;
-			gCurLayer->flags = gCurLayer->flags | 0x400;)
+			gCurLayer->flags_0x4 = gCurLayer->flags_0x4 | 0x400;
 		}
 	}
 	else {
@@ -6353,10 +6375,8 @@ LAB_00297680:
 					pStrip->flags = pStrip->flags & 0xfffffdff;
 				}
 				else {
-					IMPLEMENTATION_GUARD(
-						peVar11 = (ed_g3d_Anim_def*)ed3DG2DAnimTexGet(pTexture);
-					ed3DManageAnim(peVar11);
-					pStrip->flags = pStrip->flags | 0x200;)
+					ed3DManageAnim(ed3DG2DAnimTexGet(pTexture));
+					pStrip->flags = pStrip->flags | 0x200;
 				}
 			}
 			else {
@@ -7951,10 +7971,8 @@ LAB_00297eec:
 					pStrip->flags = pStrip->flags & 0xfffffdff;
 				}
 				else {
-					IMPLEMENTATION_GUARD(
-					peVar9 = ed3DG2DAnimTexGet(pTexture);
-					ed3DManageAnim(peVar9);
-					pStrip->flags = pStrip->flags | 0x200;)
+					ed3DManageAnim(ed3DG2DAnimTexGet(pTexture));
+					pStrip->flags = pStrip->flags | 0x200;
 				}
 			}
 			else {

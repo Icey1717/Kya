@@ -1098,7 +1098,8 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		Level_FillRunInfo(0x4, -1, -1);
+		//Level_FillRunInfo(0x1, -1, -1);
+		Level_FillRunInfo(0x4, 9, -1);
 	}
 	return;
 }
@@ -1911,7 +1912,9 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 			if ((levelId == 0) && (DAT_004253fc != 0)) {
 				levelId = 6;
 			}
+
 			Level_FillRunInfo(levelId, elevatorId, param_6);
+
 			this->level_0x5b3c = cutsceneId;
 			CScene::_pinstance->FUN_001b9350(false);
 		}

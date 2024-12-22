@@ -221,7 +221,7 @@ struct KyaUpdateObjA {
 	float field_0x1c;
 	float field_0x20;
 	int field_0x24;
-	int hashCode;
+	uint hashCode;
 	float lodBiases[2];
 	undefined field_0x34;
 	undefined field_0x35;

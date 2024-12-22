@@ -80,7 +80,7 @@ public:
 	virtual bool ReleaseResource(byte, bool, void*);
 
 	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
-	virtual bool GetActor(edCinActorInterface** ppActorInterface, int hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
+	virtual bool GetActor(edCinActorInterface** ppActorInterface, uint hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag);
 	virtual bool ReleaseActor(edCinActorInterface*);
 
 	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag);
@@ -434,7 +434,7 @@ struct CCinematic {
 
 	void Flush(bool param_2);
 
-	CActor* GetActorByHashcode(int hashCode);
+	CActor* GetActorByHashcode(uint hashCode);
 
 	int prtBuffer;
 	uint flags_0x4;
@@ -445,8 +445,13 @@ struct CCinematic {
 	byte field_0x12;
 	byte field_0x13;
 	char* fileName;
-	uint actorCinematicCount;
-	int nonCinematicOnlyActorCount;
+
+	// Number of cinematic actors spawned for the cutscene.
+	int nbTotalCinematicActors;
+
+	// Number of actors included both cinematic actors spawned for the level and actors existing in the level.
+	int nbTotalLevelActors;
+
 	uint count_0x20;
 	uint field_0x24;
 	int field_0x28;
@@ -528,10 +533,15 @@ struct CCinematic {
 	CMessageFile textData;
 	struct ed_g3d_manager* pMeshInfo;
 	struct edNODE* pMeshTransform;
+
+	// List of actors both spawned and existing for use in the cutscene.
 	CActorCinematic** ppActorCinematics;
-	int loadedActorCinematicListCount;
+	int nbActorRefs;
+
+	// List of cinematic actors spawned solely for the cutscene.
 	CActorCinematic* aActorCinematic;
-	int loadedActorCinematicCount;
+	int nbCinematicActors;
+
 	int count_0x224;
 	//struct CineSunHolder* pCineSunHolderArray;
 	int count_0x22c;

@@ -572,8 +572,8 @@ union alignas(16)
 		ss << "\n" << rowX.ToString() << "\n" << rowY.ToString() << "\n" << rowZ.ToString() << "\n" << rowT.ToString();
 		return ss.str();
 #else
-	char buff[256];
-	sprintf_s(buff, 256, "%s\n%s\n%s\n%s", rowX.ToString().c_str(), rowY.ToString().c_str(), rowZ.ToString().c_str(), rowT.ToString().c_str());
+	char buff[512];
+	sprintf_s(buff, 512, "%s\n%s\n%s\n%s", rowX.ToString().c_str(), rowY.ToString().c_str(), rowZ.ToString().c_str(), rowT.ToString().c_str());
 	return buff;
 #endif
 	}

@@ -768,13 +768,8 @@ void CBehaviourSwitchTarget::Manage()
 		}
 		else {
 			if ((AVar1 == 5) && (pSwitch->pTiedActor != (CActor*)0x0)) {
-				IMPLEMENTATION_GUARD(
-				uVar2 = *(undefined8*)&pSwitch->baseLocation;
-				local_10.z = pSwitch->baseLocation.z;
-				local_10.w = pSwitch->baseLocation.w;
-				local_10.x = (float)uVar2;
-				local_10.y = (float)((ulong)uVar2 >> 0x20);
-				CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);)
+				local_10 = pSwitch->baseLocation;
+				pSwitch->SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 			}
 		}
 	}

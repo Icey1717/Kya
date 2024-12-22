@@ -2073,8 +2073,8 @@ void CCameraManager::Func_00194a10(CActorsTable* pTable)
 			}
 			if (((pCVar9 != (CCinematic*)0x0) && (pCVar9->state != CS_Stopped)) &&
 				(iVar11 = 0, (pCVar9->flags_0x4 & 0x400000) != 0)) {
-				for (; iVar11 < pCVar9->loadedActorCinematicCount; iVar11 = iVar11 + 1) {
-					if (iVar11 < pCVar9->loadedActorCinematicCount) {
+				for (; iVar11 < pCVar9->nbCinematicActors; iVar11 = iVar11 + 1) {
+					if (iVar11 < pCVar9->nbCinematicActors) {
 						pNewEntry = pCVar9->aActorCinematic + iVar11;
 					}
 					else {

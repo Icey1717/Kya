@@ -678,7 +678,7 @@ bool edSceneActorVirtual::Create(edCinGameInterface& cinGameInterface, edResColl
 
 	/* Loads the name of the player into this buffer.
 	   Example: ARAIGNOSBLACK_TOONPLAYER_L0 */
-	strcpy((char*)&creationTag, cineCreatureObject->name);
+	strcpy(creationTag.name, cineCreatureObject->name);
 
 	CUTSCENE_LOG(LogLevel::Info, "\nedSceneActorVirtual::Create name: {}", cineCreatureObject->name);
 

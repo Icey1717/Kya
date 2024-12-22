@@ -244,7 +244,7 @@ void CActorNativ::Manage()
 
 	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 	if (pCVar5 != (CBehaviour*)0x0) {
-		IMPLEMENTATION_GUARD(
+		IMPLEMENTATION_GUARD_LOG(
 		pCVar5 = CActor::GetBehaviour((CActor*)this, NATIVE_BEHAVIOUR_SELLER);
 		FUN_003f2150((long)(int)pCVar5);)
 	}

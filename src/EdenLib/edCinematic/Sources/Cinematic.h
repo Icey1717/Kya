@@ -103,7 +103,7 @@ struct edCinGameInterface
 	virtual bool ReleaseResource(byte, bool, void*) = 0;
 
 	virtual bool CreateActor(edCinActorInterface** ppActorInterface, edCinGameInterface::ACTORV_CREATIONtag* const pTag) = 0;
-	virtual bool GetActor(edCinActorInterface** ppActorInterface, int hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag) = 0;
+	virtual bool GetActor(edCinActorInterface** ppActorInterface, uint hashCode, edCinGameInterface::ACTORV_CREATIONtag* const pTag) = 0;
 	virtual bool ReleaseActor(edCinActorInterface*) = 0;
 
 	virtual bool CreateScenery(edCinSceneryInterface** ppActorInterface, const edCinGameInterface::SCENERY_CREATIONtag* pTag) = 0;

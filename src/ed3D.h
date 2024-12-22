@@ -252,6 +252,34 @@ struct ed_g3d_cluster {
 
 static_assert(sizeof(ed_g3d_cluster) == 0x40);
 
+struct ed_g3d_Anim_def {
+	uint field_0x0;
+	uint field_0x4;
+	uint field_0x8;
+	uint field_0xc;
+	float field_0x10;
+	uint field_0x14;
+	uint field_0x18;
+	undefined field_0x1c;
+	undefined field_0x1d;
+	undefined field_0x1e;
+	undefined field_0x1f;
+	uint field_0x20;
+	float field_0x24;
+	undefined field_0x28;
+	undefined field_0x29;
+	undefined field_0x2a;
+	undefined field_0x2b;
+	undefined field_0x2c;
+	undefined field_0x2d;
+	undefined field_0x2e;
+	undefined field_0x2f;
+	uint field_0x30;
+	float field_0x34;
+};
+
+static_assert(sizeof(ed_g3d_Anim_def) == 0x38, "ed_g3d_Anim_def size is incorrect");
+
 PACK(struct MeshData_CSTA {
 	edF32VECTOR3 field_0x20;
 	undefined field_0x2c;
@@ -512,12 +540,9 @@ PACK(
 	struct ed_g2d_texture {
 	ed_hash_code hashCode;
 	int bHasPalette;
-	int pAnimSpeedNormalExtruder; // edF32VECTOR4*
+	int pAnimSpeedNormalExtruder; //edF32VECTOR4*
 	float field_0x18;
-	undefined field_0x1c;
-	undefined field_0x1d;
-	undefined field_0x1e;
-	undefined field_0x1f;
+	int pAnimChunck; //ed_Chunck*
 });
 
 struct ed_dma_material {
@@ -547,6 +572,7 @@ ed_hash_code* ed3DG2DGetMaterialFromIndex(ed_g2d_manager* pManager, int index);
 ed_g2d_material* ed3DG2DGetG2DMaterialFromIndex(ed_g2d_manager* pManager, int index);
 ed_g2d_texture* ed3DG2DGetTextureFromMaterial(ed_g2d_material* pMaterial, int index);
 ed_g2d_bitmap* ed3DG2DGetBitmapFromMaterial(ed_g2d_material* pMaterial, int param_2);
+ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pManager);
 ed_3D_Scene* ed3DSceneCreate(edFCamera* pCamera, ed_viewport* pViewport, int bInitHierList);
 edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char* szString);
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);

@@ -47,7 +47,7 @@ struct CActorCinematic : public CActor {
 
 	ed_3d_hierarchy_node field_0x580;
 
-	char name[32];
+	char cinematicName[32];
 };
 
 #endif // _ACTOR_CINEMATIC_H

@@ -164,11 +164,11 @@ void CActorCinematic::Create(const edCinGameInterface::ACTORV_CREATIONtag* pGame
 
 	for (value = 0; (value < 0x1f && (pGameInterface->name[value] != '\0')); value = value + 1) {
 		/* Copy the name into the cine object */
-		this->name[value] = pGameInterface->name[value];
+		this->cinematicName[value] = pGameInterface->name[value];
 	}
 
 	/* Add a null term on */
-	this->name[value] = '\0';
+	this->cinematicName[value] = '\0';
 
 	if (pG3D != (ed_g3d_manager*)0x0) {
 		ed_g3d_hierarchy* pHier = ed3DG3DHierarchyGetFromIndex(pG3D, 0);
