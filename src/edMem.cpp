@@ -7,11 +7,17 @@
 
 #include <assert.h>
 
+#include <unordered_set>
+
 #ifdef PLATFORM_PS2
 #include <eekernel.h>
 #endif
 
 #define ED_MEM_LOG(level, format, ...) MY_LOG_CATEGORY("edMem", level, format, ##__VA_ARGS__)
+
+#define MEM_FLAG_LINKED_DEPENDENT_BLOCKS 0x8
+#define MEM_FLAG_REQUIRES_HEADER 0x10
+#define MEM_FLAG_REVERSE_TRAVERSAL 0x100
 
 struct HeapFuncTable
 {
@@ -43,11 +49,11 @@ uint g_MemWorkSizeB = 0x1B4A880;
 // Contiguous
 
 struct MasterMemoryBlk {
-	struct S_MAIN_MEMORY_HEADER* pHeapMainHeaders;
-	short headerCount;
-	short freeHeaders;
-	short maxHeaders;
-	short heapID;
+	struct S_MAIN_MEMORY_HEADER* aBlocks;
+	short nbTotalBlocks;
+	short nbFreeBlocks;
+	short nbUsedBlocks;
+	short nextFreeBlock;
 	byte stackLevel;
 	byte field_0xd;
 	byte field_0xe;
@@ -70,6 +76,28 @@ struct MasterMemoryBlk {
 };
 
 MasterMemoryBlk MemoryMasterBlock;
+
+static void PrintBlockInfo(const char* pIdentifier, S_MAIN_MEMORY_HEADER* pBlock)
+{
+	ED_MEM_LOG(LogLevel::Info, "PrintBlockInfo ----------------------------------------------------");
+
+	ulong thisBlock = ((ulong)pBlock - (ulong)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER);
+	ED_MEM_LOG(LogLevel::Info, "PrintBlockInfo Identifier: {} | 0x{:x}", pIdentifier, thisBlock);
+
+	ED_MEM_LOG(LogLevel::Info, "PrintBlockInfo Block: 0x{:x} FreeBytes: 0x{:x} Align: 0x{:x} Offset: 0x{:x} Flags: 0x{:x} StackLevel: 0x{:x} BlockIndex: 0x{:x} FreeListHead: 0x{:x}",
+		(uintptr_t)pBlock, pBlock->freeBytes, pBlock->align, pBlock->offset, pBlock->flags, pBlock->maxStackLevel, pBlock->blockIndex, pBlock->freeListHead);
+
+	ED_MEM_LOG(LogLevel::Info, "PrintBlockInfo NextFreeBlock: 0x{:x} PrevFreeBlock: 0x{:x} FreeListHeadAllocatedTo: 0x{:x} ParentBlockIndex: 0x{:x}",
+		pBlock->nextFreeBlock, pBlock->prevFreeBlock, pBlock->freeListHeadAllocatedTo, pBlock->parentBlockIndex);
+
+	ED_MEM_LOG(LogLevel::Info, "PrintBlockInfo ----------------------------------------------------");
+
+	return;
+}
+
+void sanityCheckFreeList(S_MAIN_MEMORY_HEADER* freeListHead) {
+	
+}
 
 // End Contiguous
 
@@ -122,21 +150,22 @@ int edMemGetMemoryAvailable(EHeap heapID)
 	if (heapID == TO_HEAP(H_INVALID)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemGetMemoryAvailable);
 	}
+
 	pHeap = edmemGetMainHeader((void*)heapID);
-	if ((pHeap->flags & 8) == 0) {
+	if ((pHeap->flags & MEM_FLAG_LINKED_DEPENDENT_BLOCKS) == 0) {
 		if ((pHeap->flags & 0x200) == 0) {
 			freeBytes = pHeap->freeBytes;
 		}
 		else {
 			freeBytes = (int)(pHeap->pStartAddr +
-				(pHeap->freeBytes - *(int*)MemoryMasterBlock.pHeapMainHeaders[pHeap->nextFreeBlock].pStartAddr));
+				(pHeap->freeBytes - *(int*)MemoryMasterBlock.aBlocks[pHeap->freeListHead].pStartAddr));
 		}
 	}
 	else {
 		freeBytes = 0;
-		for (nextBlockID = pHeap->nextFreeBlock; nextBlockID != -1;
-			nextBlockID = MemoryMasterBlock.pHeapMainHeaders[nextBlockID].nextBlock) {
-			iVar2 = MemoryMasterBlock.pHeapMainHeaders[nextBlockID].freeBytes;
+		for (nextBlockID = pHeap->freeListHead; nextBlockID != -1;
+			nextBlockID = MemoryMasterBlock.aBlocks[nextBlockID].nextFreeBlock) {
+			iVar2 = MemoryMasterBlock.aBlocks[nextBlockID].freeBytes;
 			if (freeBytes < iVar2) {
 				freeBytes = iVar2;
 			}
@@ -167,6 +196,8 @@ void* edMemAlloc(EHeap heapID, size_t size)
 	S_MAIN_MEMORY_HEADER* pHeap;
 	void* pNewAlloc;
 
+	ED_MEM_LOG(LogLevel::Info, "\nedMemAllocAlign Heap: {}, size: 0x{:x}", (int)heapID, size);
+
 	if (heapID == 0) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, "edMemAlloc");
 		pNewAlloc = (void*)0x0;
@@ -178,11 +209,6 @@ void* edMemAlloc(EHeap heapID, size_t size)
 
 	assert(pNewAlloc);
 
-	if (!pNewAlloc)
-	{
-		FLUSH_LOG();
-	}
-
 	return pNewAlloc;
 }
 
@@ -191,6 +217,8 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 	EFileLoadMode fileLoadMode;
 	S_MAIN_MEMORY_HEADER* pHeap;
 	void* pNewAllocation;
+
+	ED_MEM_LOG(LogLevel::Info, "\nedMemAllocAlign Heap: 0x{:x}, size: 0x{:x}, align: 0x{:x}", (uintptr_t)heapID, size, align);
 
 	if (heapID == TO_HEAP(H_INVALID)) {
 		/* edMemAllocAlign */
@@ -202,6 +230,7 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 			edDebugPrintf(g_szMemkitWarning);
 			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
 		}
+
 		pHeap = edmemGetMainHeader((void*)heapID);
 		pNewAllocation = edMemAllocAlignBoundary(heapID, size, align, pHeap->offset);
 	}
@@ -215,7 +244,11 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 	void* pNewAllocation;
 	int freeMemory;
 
-	ED_MEM_LOG(LogLevel::Info, "edMemAlloc id: {}, size: {}, align: {}, offset: {}\n", (int)heap, size, align, offset);
+	ED_MEM_LOG(LogLevel::Info, "\nedMemAllocAlignBoundary Heap: 0x{:x}, size: 0x{:x}, align: 0x{:x}, offset: 0x{:x}", (uintptr_t)heap, size, align, offset);
+
+	if (((uintptr_t)heap) > H_VIDEO) {
+		ED_MEM_LOG(LogLevel::Info, "Allocating to existing specific block");
+	}
 
 	if (heap == TO_HEAP(H_INVALID)) {
 		/* edMemAlloc */
@@ -231,6 +264,7 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 		pHeap = edmemGetMainHeader((void*)heap);
 		pNewAllocation = (*MemoryHandlers[(char)pHeap->funcTableID].alloc)(pHeap, (int)size, align, offset);
 		if (pNewAllocation == (void*)0x0) {
+			FLUSH_LOG();
 			freeMemory = edMemGetAvailable(heap);
 			edDebugPrintf(g_szCannotAllocate, size, freeMemory);
 		}
@@ -241,6 +275,8 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 void edMemFree(void* pAlloc)
 {
 	S_MAIN_MEMORY_HEADER* peVar1;
+
+	ED_MEM_LOG(LogLevel::Info, "\nedMemFree pAlloc: 0x{:x}", (uintptr_t)pAlloc);
 
 	if (pAlloc == (void*)0x0) {
 		/* edMemFree */
@@ -273,27 +309,27 @@ void* edMemShrink(void* pAlloc, int size)
 char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, int offset)
 {
 	short sVar1;
-	int iVar2;
 	bool bVar3;
-	uint pcVar8;
+	uint lastBlockFreeBytes;
 	char* pcVar4;
 	short sVar5;
 	char* pcVar6;
-	char* pcVar7;
 	char* pcVar9;
-	S_MAIN_MEMORY_HEADER* pHeap;
+	S_MAIN_MEMORY_HEADER* pNextFreeBlock;
 	char* pReturn;
 	short destBlock;
 	ushort uVar10;
 	ushort headerFlags;
-	char* local_10;
-	short nextFreeBlock;
-	S_MAIN_MEMORY_HEADER* heapArray;
-	S_MAIN_MEMORY_HEADER* pNewHeap;
+	char* pAdjustedReturn;
+	short currentBlockIndex;
+	S_MAIN_MEMORY_HEADER* pBlocks;
+	S_MAIN_MEMORY_HEADER* pCurrentBlock;
 
 	ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc size: 0x{:x}, align: 0x{:x}, offset: 0x{:x}", size, align, offset);
 
-	heapArray = MemoryMasterBlock.pHeapMainHeaders;
+	PrintBlockInfo("Main", pMainMemHeader);
+		
+	pBlocks = MemoryMasterBlock.aBlocks;
 	if (((pMainMemHeader->flags & 2) == 0) || ((pMainMemHeader->flags & 4) == 0)) {
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 3, pMainMemHeader->pStartAddr);
 	}
@@ -304,6 +340,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 	}
 	else {
 		if ((size & 0xfU) != 0) {
+			// Adjust upwards to the next 16 byte boundary
 			size = size + (0x10U - size & 0xf);
 			ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Adjusted size to 0x{:x}", size);
 		}
@@ -312,100 +349,153 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 			pMainMemHeader->align, pMainMemHeader->offset);
 
 		if ((pMainMemHeader->align == 0) || (align % pMainMemHeader->align == 0)) {
-			if ((pMainMemHeader->offset == 0) || (offset <= (int)pMainMemHeader->offset)) {
+			if ((pMainMemHeader->offset == 0) || (offset <= pMainMemHeader->offset)) {
 				if (edmemTestAllocOk(size, align, offset) == false) {
 					pReturn = (char*)0x0;
 				}
 				else {
-					if (((pMainMemHeader->flags & 8) == 0) && (bVar3 = edmemMakeMaster(pMainMemHeader), bVar3 == false)) {
+					if (((pMainMemHeader->flags & MEM_FLAG_LINKED_DEPENDENT_BLOCKS) == 0) && (bVar3 = edmemMakeMaster(pMainMemHeader), bVar3 == false)) {
 						pReturn = (char*)0x0;
 					}
 					else {
-						nextFreeBlock = pMainMemHeader->nextFreeBlock;
+						currentBlockIndex = pMainMemHeader->freeListHead;
 						headerFlags = pMainMemHeader->flags;
 
-						ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc nextFreeBlock: 0x{:x}, flags: 0x{:x}", nextFreeBlock, headerFlags);
+						ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc freeListHead: 0x{:x}, flags: 0x{:x}", pMainMemHeader->freeListHead, headerFlags);
 
-						pcVar8 = 0x7fffffff;
-						pHeap = heapArray + nextFreeBlock;
+						lastBlockFreeBytes = 0x7fffffff;
+						pNextFreeBlock = pBlocks + currentBlockIndex;
 						destBlock = -1;
-						pNewHeap = pHeap;
-						if ((headerFlags & 0x100) == 0) {
-							while (nextFreeBlock != -1) {
-								pNewHeap = heapArray + nextFreeBlock;
-								pcVar7 = (char*)pNewHeap->freeBytes;
-								uint freeBytes = pNewHeap->freeBytes;
-								// ???? This comparison fails on release?
-								bool a = freeBytes < pcVar8;
-								bool b = size <= freeBytes;
+						pCurrentBlock = pNextFreeBlock;
 
-								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc {} {}", a, b);
+						if ((headerFlags & MEM_FLAG_REVERSE_TRAVERSAL) == 0) {
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Forward traversal");
 
-								if (a && b) {
-									pcVar4 = pNewHeap->pStartAddr;
-									pcVar9 = pcVar4;
-									if ((headerFlags & 0x10) != 0) {
-										pcVar9 = pcVar4 + 0x10;
+							int sanityCheckBlockIndex = pMainMemHeader->freeListHead;
+
+							while (sanityCheckBlockIndex != -1) {
+								pCurrentBlock = pBlocks + sanityCheckBlockIndex;
+
+								S_MAIN_MEMORY_HEADER* pNext = pBlocks + pCurrentBlock->nextFreeBlock;
+
+								if (pCurrentBlock->nextFreeBlock != -1) {
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc block: 0x{:x} <- 0x{:x}", pNext->prevFreeBlock, sanityCheckBlockIndex);
+								}
+
+								//FLUSH_LOG();
+
+								assert((pCurrentBlock->nextFreeBlock == -1) || pNext->prevFreeBlock == sanityCheckBlockIndex);
+
+								sanityCheckBlockIndex = pCurrentBlock->nextFreeBlock;
+							}
+
+							while (currentBlockIndex != -1) {
+								pCurrentBlock = pBlocks + currentBlockIndex;
+
+								PrintBlockInfo("Forward", pCurrentBlock);
+
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc block: 0x{:x} free bytes: 0x{:x} (required: 0x{:x})", currentBlockIndex, pCurrentBlock->freeBytes, size);
+	
+								bool newBlockFreeBytesLess = pCurrentBlock->freeBytes < lastBlockFreeBytes;
+								bool freeBytesGreaterThanSize = size <= pCurrentBlock->freeBytes;
+
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc newBlockFreeBytesLess {} freeBytesGreaterThanSize {}", newBlockFreeBytesLess, freeBytesGreaterThanSize);
+
+								if (newBlockFreeBytesLess && freeBytesGreaterThanSize) {
+									char* pBlockStart = pCurrentBlock->pStartAddr;
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc pBlockStart 0x{:x}", (uintptr_t)pBlockStart);
+
+									if ((headerFlags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+										pBlockStart = pCurrentBlock->pStartAddr + 0x10;
+										ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Adjusted + 0x10 pBlockStart 0x{:x}", (uintptr_t)pBlockStart);
 									}
-									if ((align != 0) && ((ulong)pcVar9 % align != 0)) {
-										pcVar9 = pcVar9 + (align - (ulong)pcVar9 % align);
+
+									if ((align != 0) && ((ulong)pBlockStart % align != 0)) {
+										pBlockStart = pBlockStart + (align - (ulong)pBlockStart % align);
+										ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Adjusted align pBlockStart 0x{:x}", (uintptr_t)pBlockStart);
 									}
-									pcVar6 = pcVar9 + size;
+
+									char* pBlockAllocEnd = pBlockStart + size;
+
 									if (offset != 0) {
-										if (((ulong)pcVar9 / offset != (ulong)pcVar6 / offset) &&
-											(pcVar9 = pcVar9 + (offset - (ulong)pcVar9 % offset), align != 0)) {
-											pcVar6 = pcVar9 + size;
-											if ((ulong)pcVar9 % align == 0) goto LAB_0028e378;
-											pcVar9 = pcVar9 + (align - (ulong)pcVar9 % align);
+										IMPLEMENTATION_GUARD(); // Could use some checking?
+										if (((ulong)pBlockStart / offset != (ulong)pBlockAllocEnd / offset) &&
+											(pBlockStart = pBlockStart + (offset - (ulong)pBlockStart % offset), align != 0)) {
+											pBlockAllocEnd = pBlockStart + size;
+
+											if ((ulong)pBlockStart % align == 0) goto LAB_0028e378;
+
+											pBlockStart = pBlockStart + (align - (ulong)pBlockStart % align);
 										}
-										pcVar6 = pcVar9 + size;
+
+										pBlockAllocEnd = pBlockStart + size;
 									}
+
 								LAB_0028e378:
-									if (((ulong)pcVar6 + -((ulong)pcVar4)) <= freeBytes) {
-										pHeap = pNewHeap;
-										destBlock = nextFreeBlock;
-										pcVar8 = freeBytes;
-										pReturn = pcVar9;
+									const ulong blockAllocSizeTotal = (ulong)pBlockAllocEnd + -((ulong)pCurrentBlock->pStartAddr);
+
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc blockAllocSizeTotal 0x{:x} of 0x{:x} free", blockAllocSizeTotal, pCurrentBlock->freeBytes);
+
+									if (blockAllocSizeTotal <= pCurrentBlock->freeBytes) {
+										pNextFreeBlock = pCurrentBlock;
+										destBlock = currentBlockIndex;
+										lastBlockFreeBytes = pCurrentBlock->freeBytes;
+										pReturn = pBlockStart;
 									}
 								}
-								nextFreeBlock = pNewHeap->nextBlock;
+
+								currentBlockIndex = pCurrentBlock->nextFreeBlock;
 							}
 						}
 						else {
-							while (uVar10 = pNewHeap->nextBlock, uVar10 != 0xffff) {
-								nextFreeBlock = uVar10;
-								pNewHeap = heapArray + (short)uVar10;
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Reverse traversal");
+
+							PrintBlockInfo("Reverse Start", pCurrentBlock);
+
+							short lastBlock;
+							while (lastBlock = pCurrentBlock->nextFreeBlock, lastBlock != -1) {
+								currentBlockIndex = lastBlock;
+								pCurrentBlock = pBlocks + lastBlock;
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc currentBlockIndex: 0x{:x}", currentBlockIndex);
+								PrintBlockInfo("Reverse", pCurrentBlock);
 							}
 
-							while ((pNewHeap != pMainMemHeader && (destBlock == -1))) {
-								if (size < pNewHeap->freeBytes) {
-									pcVar7 = pNewHeap->pStartAddr + (pNewHeap->freeBytes - size);
-									if ((align != 0) && ((ulong)pcVar7 % align != 0)) {
-										pcVar7 = pcVar7 + -((ulong)pcVar7 % align);
+							PrintBlockInfo("Reverse Last", pCurrentBlock);
+
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc last block: 0x{:x}", currentBlockIndex);
+
+							while ((pCurrentBlock != pMainMemHeader && (destBlock == -1))) {
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc block: 0x{:x} free bytes: 0x{:x} (required: 0x{:x})", currentBlockIndex, pCurrentBlock->freeBytes, size);
+
+								if (size < pCurrentBlock->freeBytes) {
+									char* pAllocDest = pCurrentBlock->pStartAddr + (pCurrentBlock->freeBytes - size);
+									if ((align != 0) && ((ulong)pAllocDest % align != 0)) {
+										pAllocDest = pAllocDest + -((ulong)pAllocDest % align);
 									}
 
-									if ((((offset != 0) && ((ulong)pcVar7 / offset != (ulong)(pcVar7 + size) / offset)) &&
-										(pcVar7 = pcVar7 + -((ulong)pcVar7 % offset), align != 0)) && ((ulong)pcVar7 % align != 0)) {
-										pcVar7 = pcVar7 + -((ulong)pcVar7 % align);
+									if ((((offset != 0) && ((ulong)pAllocDest / offset != (ulong)(pAllocDest + size) / offset)) &&
+										(pAllocDest = pAllocDest + -((ulong)pAllocDest % offset), align != 0)) && ((ulong)pAllocDest % align != 0)) {
+										pAllocDest = pAllocDest + -((ulong)pAllocDest % align);
 									}
 
-									pcVar4 = pcVar7;
-									if ((headerFlags & 0x10) != 0) {
-										pcVar4 = pcVar7 + -0x10;
+									pcVar4 = pAllocDest;
+									if ((headerFlags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+										pcVar4 = pAllocDest + -0x10;
 									}
 
-									if (pNewHeap->pStartAddr <= pcVar4) {
-										pHeap = pNewHeap;
-										destBlock = nextFreeBlock;
-										pReturn = pcVar7;
+									if (pCurrentBlock->pStartAddr <= pcVar4) {
+										pNextFreeBlock = pCurrentBlock;
+										destBlock = currentBlockIndex;
+										pReturn = pAllocDest;
 									}
 								}
-								nextFreeBlock = pNewHeap->field_0x2;
-								pNewHeap = heapArray + nextFreeBlock;
+
+								currentBlockIndex = pCurrentBlock->prevFreeBlock;
+								pCurrentBlock = pBlocks + currentBlockIndex;
 							}
 						}
 
-						ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc destBlock: 0x{:x}", destBlock);
+						ED_MEM_LOG(LogLevel::Info, "\nedmemWorkAlloc destBlock: 0x{:x}", destBlock);
 
 						if (destBlock == -1) {
 							edDebugPrintf(sz_CannotAllocate_004325c0, size);
@@ -413,95 +503,129 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 							pReturn = (char*)0x0;
 						}
 						else {
-							pcVar7 = pHeap->pStartAddr;
-							sVar1 = pHeap->field_0x2;
-							iVar2 = pHeap->freeBytes;
-							headerFlags = pHeap->nextBlock;
-							ulong testValue = (ulong)pcVar7 + (iVar2 - (ulong)(pReturn + size));
-							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc test 0x{:x} {} 0x{:x} {:x} {}", (uintptr_t)pcVar7, iVar2, (uintptr_t)pReturn, size, testValue);
-							if (testValue == 0) {
-								if (sVar1 == -1) {
-									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc nextFreeBlock {}", headerFlags);
-									pMainMemHeader->nextFreeBlock = headerFlags;
+							PrintBlockInfo("Destination", pNextFreeBlock);
+
+							char* pBlockStart = pNextFreeBlock->pStartAddr;
+							short prevBlock = pNextFreeBlock->prevFreeBlock;
+							int freeBytes = pNextFreeBlock->freeBytes;
+							short nextBlock = pNextFreeBlock->nextFreeBlock;
+
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc pBlockStart 0x{:x} freeBytes 0x{:x} prevBlock 0x{:x} nextBlock 0x{:x}", (uintptr_t)pBlockStart, freeBytes, prevBlock, nextBlock);
+
+							ulong remainingBlockSpace = (ulong)pBlockStart + (freeBytes - (ulong)(pReturn + size));
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc freeBytes: 0x{:x} size: {:x} remainingBlockSpace 0x{:x}", freeBytes, size, remainingBlockSpace);
+							if (remainingBlockSpace == 0) {
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Completely filled block");
+
+								if (prevBlock == -1) {
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Completely filled free list head");
+
+									pMainMemHeader->freeListHead = nextBlock;
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Updating free list head to 0x{:x}", nextBlock);
 								}
 								else {
-									heapArray[sVar1].nextBlock = headerFlags;
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Updating linked list to point towards next free block, not this one");
+
+									pBlocks[prevBlock].nextFreeBlock = nextBlock;
 								}
+
 								uVar10 = destBlock;
-								if (headerFlags != -1) {
-									heapArray[headerFlags].field_0x2 = sVar1;
+								if (nextBlock != -1) {
+									pBlocks[nextBlock].prevFreeBlock = prevBlock;
 								}
 							}
 							else {
-								pNewHeap = edmemGetFreeMemoryHeader(pHeap, 0);
-								if (pNewHeap == (S_MAIN_MEMORY_HEADER*)0x0) {
+								pCurrentBlock = edmemGetFreeMemoryHeader(pNextFreeBlock, 0);
+								if (pCurrentBlock == (S_MAIN_MEMORY_HEADER*)0x0) {
 									return (char*)0x0;
 								}
-								pHeap->freeBytes = (int)(pcVar7 + (iVar2 - (ulong)(pReturn + size)));
-								pHeap->pStartAddr = pReturn + size;
-								if ((pMainMemHeader->flags & 0x10) != 0) {
-									edmemFillBlock((uint*)pHeap->pStartAddr, pHeap->freeBytes, 0);
+
+								pNextFreeBlock->freeBytes = (int)(pBlockStart + (freeBytes - (ulong)(pReturn + size)));
+								pNextFreeBlock->pStartAddr = pReturn + size;
+								if ((pMainMemHeader->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+									edmemFillBlock((uint*)pNextFreeBlock->pStartAddr, pNextFreeBlock->freeBytes, 0);
 								}
+
 								if ((MemoryMasterBlock.flags & 0x20) != 0) {
-									edmemSetReadOnly(pHeap);
+									edmemSetReadOnly(pNextFreeBlock);
 								}
-								pHeap = pNewHeap;
-								uVar10 = (ushort)((uint)((ulong)pNewHeap - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-								headerFlags = destBlock;
+
+								pNextFreeBlock = pCurrentBlock;
+								uVar10 = (ushort)((uint)((ulong)pCurrentBlock - (ulong)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
+								nextBlock = destBlock;
 							}
-							pHeap->flags = pMainMemHeader->flags & 0x10 | 0x86;
-							pHeap->funcTableID = pMainMemHeader->funcTableID;
-							pHeap->maxStackLevel = MemoryMasterBlock.stackLevel;
-							pHeap->pStartAddr = pReturn;
-							pHeap->freeBytes = size;
-							pHeap->align = align;
-							pHeap->offset = offset;
-							pHeap->field_0x1c = -1;
-							pHeap->field_0x2 = -1;
-							pHeap->nextBlock = -1;
-							local_10 = pReturn;
-							if ((pMainMemHeader->flags & 0x10) != 0) {
+
+							pNextFreeBlock->flags = pMainMemHeader->flags & MEM_FLAG_REQUIRES_HEADER | 0x86;
+							pNextFreeBlock->funcTableID = pMainMemHeader->funcTableID;
+							pNextFreeBlock->maxStackLevel = MemoryMasterBlock.stackLevel;
+							pNextFreeBlock->pStartAddr = pReturn;
+							pNextFreeBlock->freeBytes = size;
+							pNextFreeBlock->align = align;
+							pNextFreeBlock->offset = offset;
+							pNextFreeBlock->blockIndex = -1;
+							pNextFreeBlock->prevFreeBlock = -1;
+							pNextFreeBlock->nextFreeBlock = -1;
+
+							pAdjustedReturn = pReturn;
+							if ((pMainMemHeader->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Marking block EDEN");
 								*(undefined4*)(pReturn + -0x10) = g_EdenName_004325d8;
 								*(undefined4*)(pReturn + -4) = g_EdenName_004325d8;
 								*(ushort*)(pReturn + -0xc) = uVar10;
 								*(undefined2*)(pReturn + -10) = 0;
 								*(undefined4*)(pReturn + -8) = 0;
-								edmemFillBlock((uint*)pHeap->pStartAddr, pHeap->freeBytes, 1);
-								local_10 = pReturn + -0x10;
+								edmemFillBlock((uint*)pNextFreeBlock->pStartAddr, pNextFreeBlock->freeBytes, 1);
+								pAdjustedReturn = pReturn + -0x10;
 							}
-							if (((ulong)(short)pMainMemHeader->flags & 0x8000U) != 0) {
+
+							if ((pMainMemHeader->flags & 0x8000U) != 0) {
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc adjusting pReturn");
 								pReturn = (char*)((uint)pReturn & 0xdfffffff);
 							}
-							if (local_10 + -(ulong)pcVar7 != (char*)0x0) {
-								pNewHeap = edmemGetFreeMemoryHeader(pHeap, 0);
-								if (pNewHeap == (S_MAIN_MEMORY_HEADER*)0x0) {
+
+							const ulong allocatedSize = (ulong)pAdjustedReturn + -(ulong)pBlockStart;
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc AllocatedSize: 0x{:x}", allocatedSize);
+
+							if (allocatedSize != 0x0) {
+								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Has remaining space! Creating new block with remaining space!");
+
+								pCurrentBlock = edmemGetFreeMemoryHeader(pNextFreeBlock, 0);
+								if (pCurrentBlock == (S_MAIN_MEMORY_HEADER*)0x0) {
 									return (char*)0x0;
 								}
-								pNewHeap->flags = 2;
-								pNewHeap->pStartAddr = pcVar7;
-								pNewHeap->freeBytes = (ulong)(local_10 + -(ulong)pcVar7);
-								sVar5 = (short)((uint)((ulong)pNewHeap - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-								if (sVar1 == -1) {
-									ED_MEM_LOG(LogLevel::Info, "Marking B {}", sVar5);
-									pMainMemHeader->nextFreeBlock = sVar5;
+
+								pCurrentBlock->flags = 2;
+								pCurrentBlock->pStartAddr = pBlockStart;
+								pCurrentBlock->freeBytes = (ulong)(pAdjustedReturn + -(ulong)pBlockStart);
+								short blockIndex = (short)((uint)((ulong)pCurrentBlock - (ulong)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
+								if (prevBlock == -1) {
+									pMainMemHeader->freeListHead = blockIndex;
+									ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Updating free list head to 0x{:x}", blockIndex);
 								}
 								else {
-									heapArray[sVar1].nextBlock = sVar5;
+									pBlocks[prevBlock].nextFreeBlock = blockIndex;
 								}
-								if (headerFlags != -1) {
-									heapArray[headerFlags].field_0x2 = sVar5;
+
+								if (nextBlock != -1) {
+									pBlocks[nextBlock].prevFreeBlock = blockIndex;
 								}
-								pNewHeap->field_0x2 = sVar1;
-								pNewHeap->nextBlock = headerFlags;
-								if ((pMainMemHeader->flags & 0x10) != 0) {
-									edmemFillBlock((uint*)pNewHeap->pStartAddr, pNewHeap->freeBytes, 0);
+
+								pCurrentBlock->prevFreeBlock = prevBlock;
+								pCurrentBlock->nextFreeBlock = nextBlock;
+
+								if ((pMainMemHeader->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+									edmemFillBlock((uint*)pCurrentBlock->pStartAddr, pCurrentBlock->freeBytes, 0);
 								}
+
 								if ((MemoryMasterBlock.flags & 0x20) != 0) {
-									edmemSetReadOnly(pNewHeap);
+									edmemSetReadOnly(pCurrentBlock);
 								}
+
+								PrintBlockInfo("Remaining", pCurrentBlock);
 							}
-							if ((pMainMemHeader->flags & 0x10) == 0) {
-								pReturn = (char*)(int)(short)((uint)((ulong)pHeap - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
+
+							if ((pMainMemHeader->flags & MEM_FLAG_REQUIRES_HEADER) == 0) {
+								pReturn = (char*)(int)(short)((uint)((ulong)pNextFreeBlock - (ulong)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
 							}
 						}
 					}
@@ -516,6 +640,8 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 		}
 	}
 
+	sanityCheckFreeList(MemoryMasterBlock.aBlocks + pMainMemHeader->freeListHead);
+
 	return pReturn;
 }
 
@@ -526,156 +652,206 @@ void* edmemWorkAllocForce(S_MAIN_MEMORY_HEADER* param_1, void* addr)
 	return NULL;
 }
 
-void edmemWorkFree(S_MAIN_MEMORY_HEADER* pHeap)
+void edmemWorkFree(S_MAIN_MEMORY_HEADER* pBlockToFree)
 {
-	bool bVar1;
-	short sVar2;
-	S_MAIN_MEMORY_HEADER* peVar3;
+	bool bHasFlag_0x4;
+	short freeListHeadAllocatedTo;
+	S_MAIN_MEMORY_HEADER* pBlocks;
 	ushort uVar4;
-	S_MAIN_MEMORY_HEADER* peVar5;
+	S_MAIN_MEMORY_HEADER* pParentBlock;
 	S_MAIN_MEMORY_HEADER* peVar6;
-	char* pcVar7;
-	short unaff_s0_lo;
-	short unaff_s1_lo;
-	short sVar8;
-	long lVar9;
-	char cVar10;
+	char* pBlockStartAddr;
+	short nextFreeBlock;
+	short prevFreeBlock;
+	short freeBlockIndex;
+	bool bHasProcessedParentBlock;
 
-	peVar3 = MemoryMasterBlock.pHeapMainHeaders;
-	if ((pHeap->flags & 4) != 0) {
-		pcVar7 = pHeap->pStartAddr;
-		if ((pHeap->flags & 0x10) != 0) {
-			*(undefined4*)(pcVar7 + -0x10) = g_FreeName_004325e0;
-			*(undefined4*)(pcVar7 + -4) = g_FreeName_004325e0;
+	ED_MEM_LOG(LogLevel::Info, "edmemWorkFree pHeap: 0x{:x}", (uintptr_t)pBlockToFree);
+	PrintBlockInfo("BeginFree", pBlockToFree);
+
+	pBlocks = MemoryMasterBlock.aBlocks;
+
+	if ((pBlockToFree->flags & 4) != 0) {
+		pBlockStartAddr = pBlockToFree->pStartAddr;
+		if ((pBlockToFree->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+			*(undefined4*)(pBlockStartAddr + -0x10) = g_FreeName_004325e0;
+			*(undefined4*)(pBlockStartAddr + -4) = g_FreeName_004325e0;
 		}
-		if ((pHeap->flags & 8) != 0) {
-			sVar8 = pHeap->field_0x1c;
-			while (sVar8 != -1) {
-				peVar5 = peVar3 + sVar8;
-				if ((peVar5->flags & 4) == 0) {
-					edmemFreeMemoryHeader(peVar5);
+
+		if ((pBlockToFree->flags & MEM_FLAG_LINKED_DEPENDENT_BLOCKS) != 0) {
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkFree Freeing linked blocks");
+
+			short blockIndex = pBlockToFree->blockIndex;
+			while (blockIndex != -1) {
+				S_MAIN_MEMORY_HEADER* pCurrentBlock = pBlocks + blockIndex;
+
+				PrintBlockInfo("Freeing", pCurrentBlock);
+
+				if ((pCurrentBlock->flags & 4) == 0) {
+					edmemFreeMemoryHeader(pCurrentBlock);
 				}
 				else {
-					edmemWorkFree(peVar5);
+					edmemWorkFree(pCurrentBlock);
 				}
-				sVar8 = pHeap->field_0x1c;
+
+				blockIndex = pBlockToFree->blockIndex;
 			}
 		}
-		lVar9 = (long)pHeap->field_0x1c;
-		if (lVar9 != -1) {
-			while (lVar9 != -1) {
-				sVar8 = peVar3[lVar9].heapID;
-				edmemFreeMemoryHeader(peVar3 + lVar9);
-				lVar9 = (long)sVar8;
+
+		short blockIndex = pBlockToFree->blockIndex;
+		if (blockIndex != -1) {
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkFree Freeing local blocks");
+
+			while (blockIndex != -1) {
+				short freeListHeadAllocatedTo = pBlocks[blockIndex].freeListHeadAllocatedTo;
+
+				PrintBlockInfo("Freeing", pBlocks + blockIndex);
+				edmemFreeMemoryHeader(pBlocks + blockIndex);
+				blockIndex = freeListHeadAllocatedTo;
 			}
 		}
-		if ((pHeap->flags & 0x200) != 0) {
-			edmemWorkFree(peVar3 + pHeap->nextFreeBlock);
+
+		if ((pBlockToFree->flags & 0x200) != 0) {
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkFree Freeing child blocks");
+			PrintBlockInfo("Freeing", pBlocks + pBlockToFree->freeListHead);
+			edmemWorkFree(pBlocks + pBlockToFree->freeListHead);
 		}
-		if ((pHeap->flags & 0x10) != 0) {
-			edmemFillBlock((uint*)(pHeap->pStartAddr + -0x10), pHeap->freeBytes + 0x10, 0);
+
+		if ((pBlockToFree->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+			edmemFillBlock((uint*)(pBlockToFree->pStartAddr + -0x10), pBlockToFree->freeBytes + 0x10, 0);
 		}
-		pHeap->flags = 2;
-		peVar5 = peVar3 + pHeap->field_0xa;
-		sVar8 = (short)((uint)((ulong)pHeap - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-		bVar1 = (peVar5->flags & 4) != 0;
-		if (bVar1) {
-			sVar2 = pHeap->heapID;
+
+		pBlockToFree->flags = 2;
+		pParentBlock = pBlocks + pBlockToFree->parentBlockIndex;
+		freeBlockIndex = (short)((uint)((ulong)pBlockToFree - (ulong)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
+
+		ED_MEM_LOG(LogLevel::Info, "edmemWorkFree Freeing block 0x{:x}", freeBlockIndex);
+
+		bHasFlag_0x4 = (pParentBlock->flags & 4) != 0;
+		if (bHasFlag_0x4) {
+			freeListHeadAllocatedTo = pBlockToFree->freeListHeadAllocatedTo;
 		}
 		else {
-			pHeap->freeBytes = (int)(pHeap->pStartAddr + (pHeap->freeBytes - (ulong)peVar5->pStartAddr));
-			pHeap->pStartAddr = peVar5->pStartAddr;
-			unaff_s1_lo = peVar5->field_0x2;
-			unaff_s0_lo = peVar5->nextBlock;
-			edmemFreeMemoryHeader(peVar5);
-			sVar2 = pHeap->heapID;
+			pBlockToFree->freeBytes = (int)(pBlockToFree->pStartAddr + (pBlockToFree->freeBytes - (ulong)pParentBlock->pStartAddr));
+
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkFree New freeBytes 0x{:x}", pBlockToFree->freeBytes);
+
+			pBlockToFree->pStartAddr = pParentBlock->pStartAddr;
+			prevFreeBlock = pParentBlock->prevFreeBlock;
+			nextFreeBlock = pParentBlock->nextFreeBlock;
+			edmemFreeMemoryHeader(pParentBlock);
+			freeListHeadAllocatedTo = pBlockToFree->freeListHeadAllocatedTo;
 		}
-		cVar10 = !bVar1;
-		if (sVar2 != -1) {
-			peVar5 = peVar3 + sVar2;
-			if ((peVar5->flags & 4) == 0) {
-				pHeap->freeBytes = (int)(peVar5->pStartAddr + (peVar5->freeBytes - (ulong)pHeap->pStartAddr));
-				if (!(bool)cVar10) {
-					unaff_s1_lo = peVar5->field_0x2;
+
+		bHasProcessedParentBlock = !bHasFlag_0x4;
+		if (freeListHeadAllocatedTo != -1) {
+			pParentBlock = pBlocks + freeListHeadAllocatedTo;
+
+			PrintBlockInfo("Parent from Local", pParentBlock);
+
+			if ((pParentBlock->flags & 4) == 0) {
+				pBlockToFree->freeBytes = (int)(pParentBlock->pStartAddr + (pParentBlock->freeBytes - (ulong)pBlockToFree->pStartAddr));
+				ED_MEM_LOG(LogLevel::Info, "edmemWorkFree New freeBytes 0x{:x}", pBlockToFree->freeBytes);
+
+				if (!bHasProcessedParentBlock) {
+					prevFreeBlock = pParentBlock->prevFreeBlock;
 				}
-				unaff_s0_lo = peVar5->nextBlock;
-				cVar10 = cVar10 + '\x01';
-				edmemFreeMemoryHeader(peVar5);
+
+				nextFreeBlock = pParentBlock->nextFreeBlock;
+				bHasProcessedParentBlock = true;
+
+				edmemFreeMemoryHeader(pParentBlock);
 			}
 			else {
-				if (!(bool)cVar10) {
-					uVar4 = peVar5->flags;
-					while (((uVar4 & 4) != 0 && (peVar5->heapID != -1))) {
-						peVar5 = peVar3 + peVar5->heapID;
-						uVar4 = peVar5->flags;
+				if (!bHasProcessedParentBlock) {
+					uVar4 = pParentBlock->flags;
+					while (((uVar4 & 4) != 0 && (pParentBlock->freeListHeadAllocatedTo != -1))) {
+						pParentBlock = pBlocks + pParentBlock->freeListHeadAllocatedTo;
+						uVar4 = pParentBlock->flags;
 					}
+
 					if ((uVar4 & 4) == 0) {
-						unaff_s1_lo = peVar5->field_0x2;
-						cVar10 = '\x01';
-						unaff_s0_lo = (ushort)((uint)((ulong)peVar5 - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
+						prevFreeBlock = pParentBlock->prevFreeBlock;
+						bHasProcessedParentBlock = true;
+						nextFreeBlock = (ushort)((uint)((ulong)pParentBlock - (ulong)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
 					}
 				}
 			}
 		}
-		if (cVar10 == '\0') {
-			sVar2 = pHeap->field_0xa;
-			peVar5 = pHeap;
+
+		if (bHasProcessedParentBlock == false) {
+			short parentBlockIndex = pBlockToFree->parentBlockIndex;
+			pParentBlock = pBlockToFree;
 			while (true) {
-				peVar6 = peVar3 + sVar2;
+				peVar6 = pBlocks + parentBlockIndex;
 				uVar4 = peVar6->flags & 4;
-				if ((uVar4 == 0) || (peVar3 + peVar6->field_0x1c == peVar5)) break;
-				sVar2 = peVar6->field_0xa;
-				peVar5 = peVar6;
+
+				if ((uVar4 == 0) || (pBlocks + peVar6->blockIndex == pParentBlock)) break;
+
+				parentBlockIndex = peVar6->parentBlockIndex;
+				pParentBlock = peVar6;
 			}
-			unaff_s1_lo = 0xffff;
-			unaff_s0_lo = unaff_s1_lo;
+
+			prevFreeBlock = -1;
+			nextFreeBlock = prevFreeBlock;
+
 			if (uVar4 == 0) {
-				unaff_s1_lo = (ushort)((uint)((ulong)peVar6 - (ulong)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-				unaff_s0_lo = peVar6->nextBlock;
+				prevFreeBlock = (ushort)((uint)((ulong)peVar6 - (ulong)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
+				nextFreeBlock = peVar6->nextFreeBlock;
 			}
 		}
-		if (unaff_s1_lo == -1) {
-			peVar5 = edmemGetMasterMemoryHeader(pHeap);
-			MY_LOG("Marking C {}", sVar8);
-			peVar5->nextFreeBlock = sVar8;
+
+		if (prevFreeBlock == -1) {
+			S_MAIN_MEMORY_HEADER* pMainMemHeader = edmemGetMasterMemoryHeader(pBlockToFree);
+			pMainMemHeader->freeListHead = freeBlockIndex;
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkFree Updating free list head to 0x{:x}", freeBlockIndex);
 		}
 		else {
-			peVar3[unaff_s1_lo].nextBlock = sVar8;
+			pBlocks[prevFreeBlock].nextFreeBlock = freeBlockIndex;
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkFree Updating prevFreeBlock (0x{:x}) -> nextFreeBlock to 0x{:x}", prevFreeBlock, freeBlockIndex);
 		}
-		if (unaff_s1_lo != -1) {
-			peVar3[unaff_s1_lo].field_0x2 = sVar8;
+
+		if (nextFreeBlock != -1) {
+			pBlocks[nextFreeBlock].prevFreeBlock = freeBlockIndex;
+			ED_MEM_LOG(LogLevel::Info, "edmemWorkFree Updating prevFreeBlock (0x{:x}) -> prevFreeBlock to 0x{:x}", prevFreeBlock, freeBlockIndex);
 		}
-		pHeap->field_0x2 = unaff_s1_lo;
-		pHeap->nextBlock = unaff_s0_lo;
-		peVar5 = peVar3 + pHeap->field_0xa;
-		if (peVar3 + peVar5->field_0x1c == pHeap) {
-			if (pHeap->heapID == -1) {
-				edmemFreeMemoryHeader(pHeap);
-				if ((peVar5->flags & 0x10) != 0) {
-					edmemFillBlock((uint*)peVar5->pStartAddr, peVar5->freeBytes, 1);
+
+		pBlockToFree->prevFreeBlock = prevFreeBlock;
+		pBlockToFree->nextFreeBlock = nextFreeBlock;
+		pParentBlock = pBlocks + pBlockToFree->parentBlockIndex;
+
+		if (pBlocks + pParentBlock->blockIndex == pBlockToFree) {
+			if (pBlockToFree->freeListHeadAllocatedTo == -1) {
+				edmemFreeMemoryHeader(pBlockToFree);
+				if ((pParentBlock->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
+					edmemFillBlock((uint*)pParentBlock->pStartAddr, pParentBlock->freeBytes, 1);
 				}
 			}
 			else {
-				pHeap->flags = 2;
-				pHeap->freeBytes = (int)(pHeap->pStartAddr + (pHeap->freeBytes - (ulong)peVar5->pStartAddr));
-				pHeap->pStartAddr = peVar5->pStartAddr;
+				pBlockToFree->flags = 2;
+				pBlockToFree->freeBytes = (int)(pBlockToFree->pStartAddr + (pBlockToFree->freeBytes - (ulong)pParentBlock->pStartAddr));
+				pBlockToFree->pStartAddr = pParentBlock->pStartAddr;
 				if ((MemoryMasterBlock.flags & 0x20) != 0) {
-					edmemSetReadOnly(pHeap);
+					edmemSetReadOnly(pBlockToFree);
 				}
 			}
 		}
 		else {
-			pHeap->flags = 2;
-			pcVar7 = pHeap->pStartAddr + -(ulong)(peVar5->pStartAddr + peVar5->freeBytes);
-			if (pcVar7 != (char*)0x0) {
-				pHeap->freeBytes = (int)(pcVar7 + pHeap->freeBytes);
-				pHeap->pStartAddr = pHeap->pStartAddr + -(ulong)pcVar7;
+			pBlockToFree->flags = 2;
+			pBlockStartAddr = pBlockToFree->pStartAddr + -(ulong)(pParentBlock->pStartAddr + pParentBlock->freeBytes);
+			if (pBlockStartAddr != (char*)0x0) {
+				pBlockToFree->freeBytes = (int)(pBlockStartAddr + pBlockToFree->freeBytes);
+				pBlockToFree->pStartAddr = pBlockToFree->pStartAddr + -(ulong)pBlockStartAddr;
 			}
+
 			if ((MemoryMasterBlock.flags & 0x20) != 0) {
-				edmemSetReadOnly(pHeap);
+				edmemSetReadOnly(pBlockToFree);
 			}
 		}
 	}
+
+	PrintBlockInfo("EndFree", pBlockToFree);
+
 	return;
 }
 
@@ -717,36 +893,41 @@ bool edmemTestAllocOk(int size, int align, int offset)
 	return bSuccess;
 }
 
-void edmemFillBlock(uint* data, int numWords, int isFree)
+void edmemFillBlock(uint* pData, int numWords, int isFree)
 {
-	int iVar1;
-	uint uVar2;
+	int nbWordsToWrite;
+	uint fillValue;
 
-	if ((isFree == 0) || ((MemoryMasterBlock.flags & 0x10) != 0)) {
-		if ((isFree == 0) && ((MemoryMasterBlock.flags & 8) == 0)) {
-			*data = g_FreeName_00432628;
+	ED_MEM_LOG(LogLevel::Info, "edmemFillBlock numWords: 0x{:x}, isFree: {}", numWords, isFree);
+
+	if ((isFree == 0) || ((MemoryMasterBlock.flags & MEM_FLAG_REQUIRES_HEADER) != 0)) {
+		if ((isFree == 0) && ((MemoryMasterBlock.flags & MEM_FLAG_LINKED_DEPENDENT_BLOCKS) == 0)) {
+			*pData = g_FreeName_00432628;
 		}
 		else {
-			uVar2 = g_FreeName_00432628;
+			fillValue = g_FreeName_00432628;
 			if (isFree != 0) {
-				uVar2 = g_UsedName_00432630;
+				fillValue = g_UsedName_00432630;
 			}
-			iVar1 = numWords >> 2;
+
+			nbWordsToWrite = numWords >> 2;
 			if (numWords < 0) {
-				iVar1 = numWords + 3 >> 2;
+				nbWordsToWrite = numWords + 3 >> 2;
 			}
-			for (; iVar1 != 0; iVar1 = iVar1 + -1) {
-				*data = uVar2;
-				data = data + 1;
+
+			for (; nbWordsToWrite != 0; nbWordsToWrite = nbWordsToWrite + -1) {
+				*pData = fillValue;
+				pData = pData + 1;
 			}
 		}
 	}
+
 	return;
 }
 
 void edmemSetReadOnly(S_MAIN_MEMORY_HEADER* pHeap)
 {
-	if ((pHeap->flags & 0x10) != 0) {
+	if ((pHeap->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
 		pHeap->flags = pHeap->flags | 0x20;
 	}
 	return;
@@ -762,13 +943,13 @@ int edMemGetAvailable(EHeap heapID)
 	iVar4 = 0;
 	peVar2 = edmemGetMainHeader((void*)heapID);
 	uVar3 = peVar2->flags & 4;
-	if (((uVar3 == 0) || (uVar3 == 0)) || (peVar2->field_0x1c == -1)) {
+	if (((uVar3 == 0) || (uVar3 == 0)) || (peVar2->blockIndex == -1)) {
 		iVar4 = peVar2->freeBytes;
 	}
 	else {
-		for (sVar1 = peVar2->nextFreeBlock; sVar1 != -1;
-			sVar1 = MemoryMasterBlock.pHeapMainHeaders[sVar1].nextBlock) {
-			iVar4 = iVar4 + MemoryMasterBlock.pHeapMainHeaders[sVar1].freeBytes;
+		for (sVar1 = peVar2->freeListHead; sVar1 != -1;
+			sVar1 = MemoryMasterBlock.aBlocks[sVar1].nextFreeBlock) {
+			iVar4 = iVar4 + MemoryMasterBlock.aBlocks[sVar1].freeBytes;
 		}
 	}
 	return iVar4;
@@ -781,57 +962,71 @@ void DebugDump(EHeap heapID, long mode)
 
 S_MAIN_MEMORY_HEADER* edmemGetFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap, int param_2)
 {
-	short sVar1;
-	S_MAIN_MEMORY_HEADER* peVar2;
-	S_MAIN_MEMORY_HEADER* peVar3;
+	short nextFreeBlock;
+	S_MAIN_MEMORY_HEADER* pNewBlock;
+	S_MAIN_MEMORY_HEADER* pBlocks;
 
-	sVar1 = MemoryMasterBlock.heapID;
-	peVar3 = MemoryMasterBlock.pHeapMainHeaders;
-	if (MemoryMasterBlock.freeHeaders == 0) {
+	nextFreeBlock = MemoryMasterBlock.nextFreeBlock;
+	pBlocks = MemoryMasterBlock.aBlocks;
+
+	if (MemoryMasterBlock.nbFreeBlocks == 0) {
+		ED_MEM_LOG(LogLevel::Error, "edmemGetFreeMemoryHeader No free blocks available");
 		CallHandlerFunction(&edSysHandlerMemory_004890c0, 2, (char*)0x0);
-		peVar2 = (S_MAIN_MEMORY_HEADER*)0x0;
+		pNewBlock = (S_MAIN_MEMORY_HEADER*)0x0;
 	}
 	else {
-		MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
-		peVar2 = MemoryMasterBlock.pHeapMainHeaders + MemoryMasterBlock.heapID;
-		MemoryMasterBlock.heapID = peVar2->heapID;
-		if ((long)MemoryMasterBlock.maxHeaders < (long)((int)MemoryMasterBlock.headerCount - (int)MemoryMasterBlock.freeHeaders)) {
-			MemoryMasterBlock.maxHeaders = (short)((int)MemoryMasterBlock.headerCount - (int)MemoryMasterBlock.freeHeaders);
-		}
-		peVar2->flags = 2;
-		peVar2->field_0x2 = 0xffff;
-		peVar2->nextBlock = 0xffff;
+		MemoryMasterBlock.nbFreeBlocks = MemoryMasterBlock.nbFreeBlocks + -1;
 
-		MY_LOG("edmemGetFreeMemoryHeader nextFreeBlock {}", -1);
-		peVar2->nextFreeBlock = -1;
+		ED_MEM_LOG(LogLevel::Info, "edmemGetFreeMemoryHeader nextFreeBlock 0x{:x} (nbFreeBlocks: 0x{:x})", nextFreeBlock, MemoryMasterBlock.nbFreeBlocks);
+
+		pNewBlock = MemoryMasterBlock.aBlocks + MemoryMasterBlock.nextFreeBlock;
+		MemoryMasterBlock.nextFreeBlock = pNewBlock->freeListHeadAllocatedTo;
+
+		if (MemoryMasterBlock.nbUsedBlocks < (MemoryMasterBlock.nbTotalBlocks - MemoryMasterBlock.nbFreeBlocks)) {
+			MemoryMasterBlock.nbUsedBlocks = (MemoryMasterBlock.nbTotalBlocks - MemoryMasterBlock.nbFreeBlocks);
+		}
+
+		ED_MEM_LOG(LogLevel::Info, "edmemGetFreeMemoryHeader nbUsedBlocks 0x{:x}", MemoryMasterBlock.nbUsedBlocks);
+
+		pNewBlock->flags = 2;
+		pNewBlock->prevFreeBlock = -1;
+		pNewBlock->nextFreeBlock = -1;
+		pNewBlock->freeListHead = -1;
+
 		if (param_2 == 0) {
 			if (pHeap == (S_MAIN_MEMORY_HEADER*)0x0) {
-				peVar2->heapID = 0xffff;
-				peVar2->field_0xa = 0xffff;
+				pNewBlock->freeListHeadAllocatedTo = -1;
+				pNewBlock->parentBlockIndex = -1;
 			}
 			else {
-				peVar2->heapID = (short)((uint)((char*)pHeap - (char*)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-				peVar2->field_0xa = pHeap->field_0xa;
-				peVar3 = peVar3 + (short)pHeap->field_0xa;
-				if (peVar2->heapID == peVar3->heapID) {
-					peVar3->heapID = sVar1;
+				pNewBlock->freeListHeadAllocatedTo = (short)((uint)((char*)pHeap - (char*)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
+				pNewBlock->parentBlockIndex = pHeap->parentBlockIndex;
+
+				S_MAIN_MEMORY_HEADER* pMasterHeader = pBlocks + pHeap->parentBlockIndex;
+				if (pNewBlock->freeListHeadAllocatedTo == pMasterHeader->freeListHeadAllocatedTo) {
+					pMasterHeader->freeListHeadAllocatedTo = nextFreeBlock;
 				}
 				else {
-					peVar3->field_0x1c = sVar1;
+					pMasterHeader->blockIndex = nextFreeBlock;
 				}
-				pHeap->field_0xa = sVar1;
+
+				pHeap->parentBlockIndex = nextFreeBlock;
 			}
 		}
 		else {
-			peVar2->heapID = 0xffff;
-			peVar2->field_0xa = (short)((uint)((char*)pHeap - (char*)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-			pHeap->field_0x1c = sVar1;
+			pNewBlock->freeListHeadAllocatedTo = -1;
+			pNewBlock->parentBlockIndex = (short)((uint)((char*)pHeap - (char*)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
 
-			MY_LOG("edmemGetFreeMemoryHeader nextFreeBlock {}", sVar1);
-			pHeap->nextFreeBlock = sVar1;
+			pHeap->blockIndex = nextFreeBlock;
+			pHeap->freeListHead = nextFreeBlock;
+
+			ED_MEM_LOG(LogLevel::Info, "edmemGetFreeMemoryHeader Updating free list head to 0x{:x}", nextFreeBlock);
 		}
 	}
-	return peVar2;
+
+	PrintBlockInfo("New", pNewBlock);
+
+	return pNewBlock;
 }
 
 S_MAIN_MEMORY_HEADER* edmemGetMainHeader(void* heapID)
@@ -839,10 +1034,12 @@ S_MAIN_MEMORY_HEADER* edmemGetMainHeader(void* heapID)
 	short sVar1;
 
 	sVar1 = (short)heapID;
-	if ((ulong)MemoryMasterBlock.headerCount <= (ulong)heapID) {
+	if ((ulong)MemoryMasterBlock.nbTotalBlocks <= (ulong)heapID) {
 		sVar1 = *(short*)((ulong)heapID + -0xc);
+		ED_MEM_LOG(LogLevel::Info, "edmemGetMainHeader block index: 0x{:x}", sVar1);
 	}
-	return MemoryMasterBlock.pHeapMainHeaders + sVar1;
+
+	return MemoryMasterBlock.aBlocks + sVar1;
 }
 
 S_MAIN_MEMORY_HEADER* edmemGetMasterMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
@@ -850,9 +1047,9 @@ S_MAIN_MEMORY_HEADER* edmemGetMasterMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
 	short sVar1;
 	S_MAIN_MEMORY_HEADER* peVar2;
 
-	sVar1 = pHeap->field_0xa;
-	while (peVar2 = MemoryMasterBlock.pHeapMainHeaders + sVar1, MemoryMasterBlock.pHeapMainHeaders + peVar2->heapID == pHeap) {
-		sVar1 = peVar2->field_0xa;
+	sVar1 = pHeap->parentBlockIndex;
+	while (peVar2 = MemoryMasterBlock.aBlocks + sVar1, MemoryMasterBlock.aBlocks + peVar2->freeListHeadAllocatedTo == pHeap) {
+		sVar1 = peVar2->parentBlockIndex;
 		pHeap = peVar2;
 	}
 	return peVar2;
@@ -861,37 +1058,45 @@ S_MAIN_MEMORY_HEADER* edmemGetMasterMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
 void edmemFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap)
 {
 	short sVar1;
-	S_MAIN_MEMORY_HEADER* peVar2;
-	short sVar3;
+	S_MAIN_MEMORY_HEADER* pBlocks;
+	short blockIndex;
 	S_MAIN_MEMORY_HEADER* peVar4;
 
-	peVar2 = MemoryMasterBlock.pHeapMainHeaders;
-	sVar3 = (short)((uint)((int)pHeap - (int)MemoryMasterBlock.pHeapMainHeaders) / sizeof(S_MAIN_MEMORY_HEADER));
-	if (pHeap->field_0xa != -1) {
-		sVar1 = pHeap->heapID;
-		peVar4 = MemoryMasterBlock.pHeapMainHeaders + pHeap->field_0xa;
-		if (peVar4->field_0x1c == sVar3) {
-			peVar4->field_0x1c = sVar1;
-			if (pHeap->heapID == -1) {
+	ED_MEM_LOG(LogLevel::Info, "edmemFreeMemoryHeader pHeap: 0x{:x}", (uintptr_t)pHeap);
+
+	pBlocks = MemoryMasterBlock.aBlocks;
+
+	blockIndex = (short)((uint)((int)pHeap - (int)MemoryMasterBlock.aBlocks) / sizeof(S_MAIN_MEMORY_HEADER));
+
+	ED_MEM_LOG(LogLevel::Info, "edmemFreeMemoryHeader blockIndex: 0x{:x}", blockIndex);
+
+	if (pHeap->parentBlockIndex != -1) {
+		sVar1 = pHeap->freeListHeadAllocatedTo;
+		peVar4 = MemoryMasterBlock.aBlocks + pHeap->parentBlockIndex;
+		if (peVar4->blockIndex == blockIndex) {
+			peVar4->blockIndex = sVar1;
+			if (pHeap->freeListHeadAllocatedTo == -1) {
 				peVar4->flags = peVar4->flags & 0xfff7;
 			}
 		}
 		else {
-			peVar4->heapID = sVar1;
+			peVar4->freeListHeadAllocatedTo = sVar1;
 		}
-		if (pHeap->heapID == -1) {
-			pHeap->field_0xa = 0;
+		if (pHeap->freeListHeadAllocatedTo == -1) {
+			pHeap->parentBlockIndex = 0;
 		}
 		else {
-			peVar2[sVar1].field_0xa = pHeap->field_0xa;
+			pBlocks[sVar1].parentBlockIndex = pHeap->parentBlockIndex;
 		}
 	}
+
 	pHeap->flags = 0;
-	pHeap->heapID = MemoryMasterBlock.heapID;
-	pHeap->field_0x2 = -1;
-	pHeap->nextBlock = -1;
-	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + 1;
-	MemoryMasterBlock.heapID = sVar3;
+	pHeap->freeListHeadAllocatedTo = MemoryMasterBlock.nextFreeBlock;
+	pHeap->prevFreeBlock = -1;
+	pHeap->nextFreeBlock = -1;
+	MemoryMasterBlock.nbFreeBlocks = MemoryMasterBlock.nbFreeBlocks + 1;
+	MemoryMasterBlock.nextFreeBlock = blockIndex;
+
 	return;
 }
 
@@ -903,16 +1108,19 @@ bool edmemMakeMaster(S_MAIN_MEMORY_HEADER* pHeap)
 	if ((pHeap->flags & 0x200) == 0) {
 		if ((pHeap->flags & 0x800) == 0) {
 			pFreeHeader = edmemGetFreeMemoryHeader(pHeap, 1);
+
 			if (pFreeHeader == (S_MAIN_MEMORY_HEADER*)0x0) {
 				bSuccess = false;
 			}
 			else {
-				pHeap->flags = pHeap->flags | 8;
+				pHeap->flags = pHeap->flags | MEM_FLAG_LINKED_DEPENDENT_BLOCKS;
 				pFreeHeader->pStartAddr = pHeap->pStartAddr;
 				pFreeHeader->freeBytes = pHeap->freeBytes;
-				if ((pHeap->flags & 0x10) != 0) {
+
+				if ((pHeap->flags & MEM_FLAG_REQUIRES_HEADER) != 0) {
 					edmemFillBlock((uint*)pFreeHeader->pStartAddr, pFreeHeader->freeBytes, 0);
 				}
+
 				bSuccess = true;
 			}
 		}
@@ -923,6 +1131,7 @@ bool edmemMakeMaster(S_MAIN_MEMORY_HEADER* pHeap)
 	else {
 		bSuccess = false;
 	}
+
 	return bSuccess;
 }
 
@@ -969,112 +1178,109 @@ void edMemClearFlags(EHeap heapID, ushort flags)
 
 void memMemoryHeadersBlockInit(void)
 {
-	short sVar1;
-	S_MAIN_MEMORY_HEADER* peVar2;
+	short blockIndex;
+	S_MAIN_MEMORY_HEADER* pCurBlock;
 
-	peVar2 = MemoryMasterBlock.pHeapMainHeaders;
-	memset((char*)MemoryMasterBlock.pHeapMainHeaders, 0, MemoryMasterBlock.headerCount * sizeof(S_MAIN_MEMORY_HEADER));
-	for (sVar1 = 0; sVar1 < MemoryMasterBlock.headerCount; sVar1 = sVar1 + 1) {
-		peVar2->heapID = sVar1 + 1;
-		peVar2 = peVar2 + 1;
+	pCurBlock = MemoryMasterBlock.aBlocks;
+	memset(MemoryMasterBlock.aBlocks, 0, MemoryMasterBlock.nbTotalBlocks * sizeof(S_MAIN_MEMORY_HEADER));
+
+	// Set block index for all blocks.
+	for (blockIndex = 0; blockIndex < MemoryMasterBlock.nbTotalBlocks; blockIndex = blockIndex + 1) {
+		pCurBlock->freeListHeadAllocatedTo = blockIndex + 1;
+		pCurBlock = pCurBlock + 1;
 	}
-
-#ifdef PLATFORM_WIN
-	// Poison the end of the heap so we can see it in memory
-	//memset(&MemoryMasterBlock.pHeapMainHeaders[0xfff], 0x5, sizeof(S_MAIN_MEMORY_HEADER));
-#endif
 
 	return;
 }
 
 void memMastersInit(void)
 {
-	S_MAIN_MEMORY_HEADER* pHeader;
+	// Use the first 4 blocks as the first block for each heap.
 
-	pHeader = MemoryMasterBlock.pHeapMainHeaders;
+	S_MAIN_MEMORY_HEADER* pBlocks = MemoryMasterBlock.aBlocks;
 
-	pHeader->flags = 2;
-	pHeader->funcTableID = 0xff;
-	pHeader->maxStackLevel = 0xff;
-	pHeader->pStartAddr = (char*)0xffffffff;
-	pHeader->freeBytes = -1;
-	pHeader->field_0xa = 0xffff;
-	pHeader->heapID = 0xffff;
-	pHeader->align = -1;
-	pHeader->offset = 0xffffffff;
-	pHeader->field_0x1c = -1;
-	pHeader->nextFreeBlock = -1;
-	pHeader->field_0x2 = 0xffff;
-	pHeader->nextBlock = 0xffff;
-	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
-	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+	pBlocks[0].flags = 2;
+	pBlocks[0].funcTableID = 0xff;
+	pBlocks[0].maxStackLevel = 0xff;
+	pBlocks[0].pStartAddr = (char*)0xffffffff;
+	pBlocks[0].freeBytes = -1;
+	pBlocks[0].parentBlockIndex = -1;
+	pBlocks[0].freeListHeadAllocatedTo = -1;
+	pBlocks[0].align = -1;
+	pBlocks[0].offset = -1;
+	pBlocks[0].blockIndex = -1;
+	pBlocks[0].freeListHead = -1;
+	pBlocks[0].prevFreeBlock = -1;
+	pBlocks[0].nextFreeBlock = -1;
+	MemoryMasterBlock.nbFreeBlocks = MemoryMasterBlock.nbFreeBlocks + -1;
+	MemoryMasterBlock.nbUsedBlocks = MemoryMasterBlock.nbUsedBlocks + 1;
 
-	pHeader[1].flags = 0x96;
-	pHeader[1].funcTableID = 0;
-	pHeader[1].maxStackLevel = 0;
-	pHeader[1].pStartAddr = (char*)(MemoryMasterBlock.pHeapMainHeaders + MemoryMasterBlock.headerCount);
-	int initialAlloc = (int)((char*)pHeader[1].pStartAddr - (char*)MemoryMasterBlock.pHeapMainHeaders);
-	pHeader[1].freeBytes = g_MemWorkSizeB - initialAlloc;
-	pHeader[1].field_0xa = 0xffff;
-	pHeader[1].heapID = 2;
-	pHeader[1].align = g_SystemHeap_0042df0.align;
-	pHeader[1].offset = g_SystemHeap_0042df0.offset;
-	pHeader[1].field_0x1c = -1;
-	pHeader[1].nextFreeBlock = -1;
-	pHeader[1].field_0x2 = 0xffff;
-	pHeader[1].nextBlock = 0xffff;
-	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
-	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+	pBlocks[1].flags = 0x96;
+	pBlocks[1].funcTableID = 0;
+	pBlocks[1].maxStackLevel = 0;
+	pBlocks[1].pStartAddr = (char*)(MemoryMasterBlock.aBlocks + MemoryMasterBlock.nbTotalBlocks);
+	int initialAlloc = (int)((char*)pBlocks[1].pStartAddr - (char*)MemoryMasterBlock.aBlocks);
+	pBlocks[1].freeBytes = g_MemWorkSizeB - initialAlloc;
+	pBlocks[1].parentBlockIndex = -1;
+	pBlocks[1].freeListHeadAllocatedTo = 2;
+	pBlocks[1].align = g_SystemHeap_0042df0.align;
+	pBlocks[1].offset = g_SystemHeap_0042df0.offset;
+	pBlocks[1].blockIndex = -1;
+	pBlocks[1].freeListHead = -1;
+	pBlocks[1].prevFreeBlock = -1;
+	pBlocks[1].nextFreeBlock = -1;
+	MemoryMasterBlock.nbFreeBlocks = MemoryMasterBlock.nbFreeBlocks + -1;
+	MemoryMasterBlock.nbUsedBlocks = MemoryMasterBlock.nbUsedBlocks + 1;
 
-	pHeader[2].flags = 0x96;
-	pHeader[2].funcTableID = 0;
-	pHeader[2].maxStackLevel = 0;
-	pHeader[2].pStartAddr = g_Heap3_00424e00.startAddress;
-	pHeader[2].freeBytes = g_Heap3_00424e00.size;
-	pHeader[2].field_0xa = 1;
-	pHeader[2].heapID = 3;
-	pHeader[2].align = g_Heap3_00424e00.align;
-	pHeader[2].offset = g_Heap3_00424e00.offset;
-	pHeader[2].field_0x1c = -1;
-	pHeader[2].nextFreeBlock = -1;
-	pHeader[2].field_0x2 = 0xffff;
-	pHeader[2].nextBlock = 0xffff;
-	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
-	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+	pBlocks[2].flags = 0x96;
+	pBlocks[2].funcTableID = 0;
+	pBlocks[2].maxStackLevel = 0;
+	pBlocks[2].pStartAddr = g_Heap3_00424e00.startAddress;
+	pBlocks[2].freeBytes = g_Heap3_00424e00.size;
+	pBlocks[2].parentBlockIndex = 1;
+	pBlocks[2].freeListHeadAllocatedTo = 3;
+	pBlocks[2].align = g_Heap3_00424e00.align;
+	pBlocks[2].offset = g_Heap3_00424e00.offset;
+	pBlocks[2].blockIndex = -1;
+	pBlocks[2].freeListHead = -1;
+	pBlocks[2].prevFreeBlock = -1;
+	pBlocks[2].nextFreeBlock = -1;
+	MemoryMasterBlock.nbFreeBlocks = MemoryMasterBlock.nbFreeBlocks + -1;
+	MemoryMasterBlock.nbUsedBlocks = MemoryMasterBlock.nbUsedBlocks + 1;
 
-	pHeader[3].flags = 0x96;
-	pHeader[3].funcTableID = 0;
-	pHeader[3].maxStackLevel = 0;
-	pHeader[3].pStartAddr = g_ScratchpadHeap_00424e10.startAddress;
-	pHeader[3].freeBytes = g_ScratchpadHeap_00424e10.size;
-	pHeader[3].field_0xa = 2;
-	pHeader[3].heapID = 4;
-	pHeader[3].align = g_ScratchpadHeap_00424e10.align;
-	pHeader[3].offset = g_ScratchpadHeap_00424e10.offset;
-	pHeader[3].field_0x1c = -1;
-	pHeader[3].nextFreeBlock = -1;
-	pHeader[3].field_0x2 = 0xffff;
-	pHeader[3].nextBlock = 0xffff;
-	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
-	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
+	pBlocks[3].flags = 0x96;
+	pBlocks[3].funcTableID = 0;
+	pBlocks[3].maxStackLevel = 0;
+	pBlocks[3].pStartAddr = g_ScratchpadHeap_00424e10.startAddress;
+	pBlocks[3].freeBytes = g_ScratchpadHeap_00424e10.size;
+	pBlocks[3].parentBlockIndex = 2;
+	pBlocks[3].freeListHeadAllocatedTo = 4;
+	pBlocks[3].align = g_ScratchpadHeap_00424e10.align;
+	pBlocks[3].offset = g_ScratchpadHeap_00424e10.offset;
+	pBlocks[3].blockIndex = -1;
+	pBlocks[3].freeListHead = -1;
+	pBlocks[3].prevFreeBlock = -1;
+	pBlocks[3].nextFreeBlock = -1;
+	MemoryMasterBlock.nbFreeBlocks = MemoryMasterBlock.nbFreeBlocks + -1;
+	MemoryMasterBlock.nbUsedBlocks = MemoryMasterBlock.nbUsedBlocks + 1;
 
-	pHeader[4].flags = 0x86;
-	pHeader[4].funcTableID = 1;
-	pHeader[4].maxStackLevel = 0;
-	pHeader[4].pStartAddr = g_Heap4_00424e20.startAddress;
-	pHeader[4].freeBytes = g_Heap4_00424e20.size;
-	pHeader[4].field_0xa = 3;
-	pHeader[4].heapID = 0xffff;
-	pHeader[4].align = g_Heap4_00424e20.align;
-	pHeader[4].offset = g_Heap4_00424e20.offset;
-	pHeader[4].field_0x1c = -1;
-	pHeader[4].nextFreeBlock = -1;
-	pHeader[4].field_0x2 = 0xffff;
-	pHeader[4].nextBlock = 0xffff;
-	MemoryMasterBlock.maxHeaders = MemoryMasterBlock.maxHeaders + 1;
-	MemoryMasterBlock.freeHeaders = MemoryMasterBlock.freeHeaders + -1;
+	pBlocks[4].flags = 0x86;
+	pBlocks[4].funcTableID = 1;
+	pBlocks[4].maxStackLevel = 0;
+	pBlocks[4].pStartAddr = g_Heap4_00424e20.startAddress;
+	pBlocks[4].freeBytes = g_Heap4_00424e20.size;
+	pBlocks[4].parentBlockIndex = 3;
+	pBlocks[4].freeListHeadAllocatedTo = -1;
+	pBlocks[4].align = g_Heap4_00424e20.align;
+	pBlocks[4].offset = g_Heap4_00424e20.offset;
+	pBlocks[4].blockIndex = -1;
+	pBlocks[4].freeListHead = -1;
+	pBlocks[4].prevFreeBlock = -1;
+	pBlocks[4].nextFreeBlock = -1;
+	MemoryMasterBlock.nbUsedBlocks = MemoryMasterBlock.nbUsedBlocks + 1;
+	MemoryMasterBlock.nbFreeBlocks = MemoryMasterBlock.nbFreeBlocks + -1;
 
-	MemoryMasterBlock.heapID = MemoryMasterBlock.maxHeaders;
+	MemoryMasterBlock.nextFreeBlock = MemoryMasterBlock.nbUsedBlocks;
 	return;
 }
 
@@ -1105,15 +1311,15 @@ S_MAIN_MEMORY_HEADER* edmemGetMainHeader()
 	return g_HeapPtr_0040f370;
 }
 
-void edMemInit(short headerCount)
+void edMemInit(short nbTotalBlocks)
 {
-	MemoryMasterBlock.maxHeaders = 0;
-	MemoryMasterBlock.heapID = 0;
+	MemoryMasterBlock.nbUsedBlocks = 0;
+	MemoryMasterBlock.nextFreeBlock = 0;
 	MemoryMasterBlock.stackLevel = 0;
 	MemoryMasterBlock.field_0xd = 0;
-	MemoryMasterBlock.pHeapMainHeaders = (S_MAIN_MEMORY_HEADER*)g_SystemHeap_0042df0.startAddress;
-	MemoryMasterBlock.headerCount = headerCount;
-	MemoryMasterBlock.freeHeaders = headerCount;
+	MemoryMasterBlock.aBlocks = reinterpret_cast<S_MAIN_MEMORY_HEADER*>(g_SystemHeap_0042df0.startAddress);
+	MemoryMasterBlock.nbTotalBlocks = nbTotalBlocks;
+	MemoryMasterBlock.nbFreeBlocks = nbTotalBlocks;
 
 	edMemStackLevelPush();
 	memMemoryHeadersBlockInit();
@@ -1125,17 +1331,17 @@ void edMemInit(short headerCount)
 
 int edMemGetNbAlloc(void)
 {
-	return (int)MemoryMasterBlock.headerCount - (int)MemoryMasterBlock.freeHeaders;
+	return (int)MemoryMasterBlock.nbTotalBlocks - (int)MemoryMasterBlock.nbFreeBlocks;
 }
 
 int edMemGetNbAllocLeft(void)
 {
-	return (int)MemoryMasterBlock.freeHeaders;
+	return (int)MemoryMasterBlock.nbFreeBlocks;
 }
 
 int edMemGetNbMaxAlloc(void)
 {
-	return (int)MemoryMasterBlock.maxHeaders;
+	return (int)MemoryMasterBlock.nbUsedBlocks;
 }
 
 void edMemStackLevelPush(void)
@@ -1153,8 +1359,8 @@ bool edMemTerm(void)
 
 	bSuccess = true;
 	MemoryMasterBlock.stackLevel = MemoryMasterBlock.stackLevel - 1;
-	pHeader = MemoryMasterBlock.pHeapMainHeaders;
-	for (heapID = 0; heapID < MemoryMasterBlock.headerCount; heapID = heapID + 1) {
+	pHeader = MemoryMasterBlock.aBlocks;
+	for (heapID = 0; heapID < MemoryMasterBlock.nbTotalBlocks; heapID = heapID + 1) {
 		flags = pHeader->flags;
 		if ((((flags & 2) != 0) && ((flags & 4) != 0)) && (MemoryMasterBlock.stackLevel < pHeader->maxStackLevel)) {
 			bSuccess = false;

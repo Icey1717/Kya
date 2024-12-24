@@ -23,6 +23,8 @@ set(SOURCES
 	"src/DebugMaterial.h"
 	"src/DebugEvent.cpp"
 	"src/DebugProjection.h"
+	"src/DebugCinematic.cpp"
+	"src/DebugCinematic.h"
 	"src/DebugProjection.cpp"
 	"src/DebugEvent.h"
 	"src/DebugMaterial.cpp"

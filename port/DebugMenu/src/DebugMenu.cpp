@@ -19,7 +19,6 @@
 #include "port/pointer_conv.h"
 #include "DebugMaterialPreviewer.h"
 #include "Callstack.h"
-#include "Log.h"
 #include "CameraViewManager.h"
 #include "DebugCamera.h"
 #include "TextureCache.h"
@@ -46,6 +45,7 @@
 #include "DebugFrameBuffer.h"
 #include "DebugCheckpoint.h"
 #include "DebugEvent.h"
+#include "DebugCinematic.h"
 #include "Native/NativeRenderer.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
@@ -151,12 +151,6 @@ namespace Debug {
 		return i;
 	}
 
-	static bool GetCutsceneName(void* pData, int index, const char** ppOut) {
-		auto* options = static_cast<std::vector<std::string>*>(pData);
-		*ppOut = ((*options)[index]).c_str();
-		return true;
-	}
-
 	static void ShowSectorMenu(bool* bOpen) {
 		// Create a new ImGui window
 		ImGui::Begin("Sector", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
@@ -172,133 +166,6 @@ namespace Debug {
 			// Create a button for each sector
 			if (ImGui::Button(buttonText)) {
 				CScene::ptable.g_SectorManager_00451670->SwitchToSector(i, true);
-			}
-		}
-
-		// End the ImGui window
-		ImGui::End();
-	}
-
-	static Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
-	static Debug::Setting<float> gCustomCutsceneTime = { "Custom Cutscene Time", 0.0f };
-
-	static void ShowCutsceneMenu(bool* bOpen) {
-		// Create a new ImGui window
-		ImGui::Begin("Video Player Controls", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-		if (ImGui::CollapsingHeader("Persistent Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
-			gSkipCutscenes.DrawImguiControl();
-		}
-
-		auto* pCinematicManager = g_CinematicManager_0048efc;
-
-		static int selectedCutsceneId = 0;
-		static bool bSelectedFirstPlaying = false;
-
-		if (pCinematicManager->activeCinematicCount > 0) {
-			if (selectedCutsceneId > pCinematicManager->activeCinematicCount) {
-				selectedCutsceneId = 0;
-			}
-
-			std::vector<std::string> options;
-
-			for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
-				options.emplace_back(std::to_string(i));
-			}
-
-			// Create the dropdown box
-			if (ImGui::Combo("Select an Option", &selectedCutsceneId, GetCutsceneName, &options, pCinematicManager->activeCinematicCount, -1))
-			{
-				// Handle the selected option change here
-				// The selected option index will be stored in 'selectedOption'
-				// You can perform actions based on the selected option.
-			}
-
-			if (!bSelectedFirstPlaying) {
-				for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
-					if (pCinematicManager->ppCinematicObjB_B[i]->state == CS_Playing) {
-						selectedCutsceneId = i;
-						bSelectedFirstPlaying = true;
-					}
-				}
-			}
-
-			auto* pCutscene = pCinematicManager->ppCinematicObjB_B[selectedCutsceneId];
-
-			if (pCutscene->cineBankLoadStage_0x2b4 == 4 && pCutscene->cinFileData.pCinTag) {
-				// Play/Pause button
-				if (pCutscene->state != CS_Stopped)
-				{
-					if (ImGui::Button("Pause"))
-					{
-						pCutscene->state = CS_Stopped;
-					}
-				}
-				else
-				{
-					if (ImGui::Button("Play"))
-					{
-						pCutscene->state = CS_Playing;
-					}
-				}
-
-				auto& currentTime = pCutscene->totalCutsceneDelta;
-				auto& totalTime = ((pCutscene->cinFileData).pCinTag)->totalPlayTime;
-
-				// Jump to beginning button
-				if (ImGui::Button("Jump to Beginning"))
-				{
-					currentTime = 0.0f;
-					// Seek to the beginning of the video here
-				}
-
-				// Jump to end button
-				if (ImGui::Button("Jump to End") || gSkipCutscenes)
-				{
-					currentTime = totalTime;
-					// Seek to the end of the video here
-				}
-
-				// Current time and total time labels
-				ImGui::Text("Time: %.2f / %.2f", currentTime, totalTime);
-
-				// Seek bar for video playback
-				ImGui::SliderFloat("##seekbar", &currentTime, 0.0f, totalTime);
-
-				static bool bCutsceneStepEnabled = false;
-				ImGui::Checkbox("Custom Time Control", &bCutsceneStepEnabled);
-
-				if (bCutsceneStepEnabled) {
-					gCustomCutsceneTime.DrawImguiControl();
-					static float cutsceneStepTime = 0.0f;
-					pCutscene->totalCutsceneDelta = gCustomCutsceneTime + cutsceneStepTime;
-
-					pCutscene->totalCutsceneDelta = std::clamp(pCutscene->totalCutsceneDelta, 0.0f, totalTime - 1.0f);
-
-					if (ImGui::Button("Set to current")) {
-						gCustomCutsceneTime = gCustomCutsceneTime + cutsceneStepTime;
-						cutsceneStepTime = 0.0f;
-					}
-
-					if (ImGui::Button("<<")) {
-						auto pTimer = Timer::GetTimer();
-						cutsceneStepTime -= pTimer->cutsceneDeltaTime;
-					}
-					ImGui::SameLine();
-					if (ImGui::Button(">>")) {
-						auto pTimer = Timer::GetTimer();
-						cutsceneStepTime += pTimer->cutsceneDeltaTime;
-					}
-
-				}
-			}
-			else {
-				// Jump to end button
-				if (ImGui::Button("Start"))
-				{
-					pCutscene->Start();
-					// Seek to the end of the video here
-				}
 			}
 		}
 
@@ -616,7 +483,7 @@ namespace Debug {
 		{"Log", ShowLogWindow },
 		{"Native FrameBuffer", Debug::FrameBuffer::ShowNativeFrameBuffer, true },
 		{"Framebuffers", Debug::FrameBuffer::ShowFramebuffers },
-		{"Cutscene", ShowCutsceneMenu, true },
+		{"Cutscene", Debug::Cinematic::ShowMenu, true },
 		{"Rendering", ShowRenderingMenu },
 		{"Scene", ShowSceneMenu },
 		{"Hero", Debug::Hero::ShowMenu, true },

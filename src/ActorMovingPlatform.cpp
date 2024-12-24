@@ -1922,15 +1922,15 @@ void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajecto
 			}
 			iVar8 = 0;
 			if (0 < iVar9) {
-				iVar6 = 0;
-				IMPLEMENTATION_GUARD(
 				do {
-					iVar4 = (int)&this->pCameraStream->entryCount + iVar6;
-					if (*(int*)(iVar4 + 4) == 3) {
-						S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), this);
-						S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), this);
-						S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), this);
-						piVar1 = *(int**)(iVar4 + 0x48);
+					S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = this->pCameraStream->aEntries + iVar8;
+					if (pEntry->field_0x4 == 3) {
+						pEntry->streamTarget.Switch(this);
+						pEntry->streamTarget.PostSwitch(this);
+						pEntry->streamCameraEvent.SwitchOn(this);
+						
+						IMPLEMENTATION_GUARD_AUDIO(
+						piVar1 = *(int**)(pEntry + 0x48);
 						if (piVar1 != (int*)0x0) {
 							uVar2 = *(uint*)&this->pActorSound->field_0x4;
 							uVar7 = (uint)((this->movingPlatformFlags & 1) != 0);
@@ -1944,20 +1944,19 @@ void CActorMovingPlatform::BehaviourTrajectory_Manage(CBehaviourPlatformTrajecto
 									break;
 								}
 							}
-						}
+						})
 					}
+
 					iVar8 = iVar8 + 1;
-					iVar6 = iVar6 + 0x48;
-				} while (iVar8 < iVar9);)
+				} while (iVar8 < iVar9);
 			}
 
 			pBehaviour->goalAmount_0x30 = (pBehaviour->currentFillAmount_0x38).field_0x0 + pBehaviour->field_0x28 + pTVar5->scaledTotalTime;
 		}
 		break;
 	case 9:
-		IMPLEMENTATION_GUARD(
-		bVar3 = StateTrajectory(currentFillAmount, this, pBehaviour, true);
-		local_4 = (int)bVar3;)
+		bVar3 = StateTrajectory(currentFillAmount, pBehaviour, true);
+		local_4 = (int)bVar3;
 		break;
 	case 10:
 		IMPLEMENTATION_GUARD(

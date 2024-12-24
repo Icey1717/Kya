@@ -656,6 +656,24 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 	return;
 }
 
+bool CActorManager::HasAnyLinkedActors()
+{
+	_linked_actor* pLinkedActorEntry;
+
+	pLinkedActorEntry = this->pActorArray_0x8;
+	while (true) {
+		if (pLinkedActorEntry == (_linked_actor*)0x0) {
+			return false;
+		}
+
+		if ((pLinkedActorEntry->pLinkedActor->flags & 0x800000) != 0) break;
+
+		pLinkedActorEntry = pLinkedActorEntry->pNextLink;
+	}
+
+	return true;
+}
+
 void CActorManager::UpdateLinkedActors()
 {
 	CActor* pLinkedActor;

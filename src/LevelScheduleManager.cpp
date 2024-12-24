@@ -623,8 +623,6 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 		}
 	}
 
-	FLUSH_LOG();
-
 	return pCurConditionData;
 }
 

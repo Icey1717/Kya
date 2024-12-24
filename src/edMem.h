@@ -17,19 +17,19 @@ typedef void* EHeap;
 
 struct S_MAIN_MEMORY_HEADER
 {
-	short nextBlock; // -1 if not yet reached, or set to the next block if allocation runs past this block.
-	short field_0x2;
+	short nextFreeBlock; // -1 if not yet reached, or set to the next block if allocation runs past this block.
+	short prevFreeBlock;
 	int freeBytes;
-	short heapID;
-	short field_0xa;
+	short freeListHeadAllocatedTo;
+	short parentBlockIndex;
 	ushort flags;
 	byte funcTableID;
 	byte maxStackLevel;
 	char* pStartAddr;
 	int align;
 	int offset;
-	short field_0x1c;
-	short nextFreeBlock;
+	short blockIndex;
+	short freeListHead;
 #ifdef PLATFORM_WIN
 	char padding[12];
 #endif

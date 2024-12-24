@@ -96,6 +96,7 @@ public:
 	void Level_ClearInternalData();
 
 	void PrecomputeSectorsBoundindBoxes();
+	bool HasAnyLinkedActors();
 	void UpdateLinkedActors();
 	void Level_LoadClassesInfo(struct ByteCode* pMemoryStream);
 

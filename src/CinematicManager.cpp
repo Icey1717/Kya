@@ -798,15 +798,13 @@ void CCinematic::Create(ByteCode* pByteCode)
 		if (0 < this->cineActorConfigCount) {
 			do {
 				pCineActorConfig = &this->aCineActorConfig[iVar7];
-				iVar8 = pByteCode->GetS32();
-				pCineActorConfig->pActor.index = iVar8;
-				uVar5 = pByteCode->GetU32();
-				pCineActorConfig->flags = uVar5;
-				fVar13 = pByteCode->GetF32();
-				pCineActorConfig->field_0x8 = fVar13;
-				fVar13 = pByteCode->GetF32();
-				pCineActorConfig->field_0xc = fVar13;
+				pCineActorConfig->pActor.index = pByteCode->GetS32();
+				pCineActorConfig->flags = pByteCode->GetU32();
+				pCineActorConfig->field_0x8 = pByteCode->GetF32();
+				pCineActorConfig->field_0xc = pByteCode->GetF32();
+
 				iVar7 = iVar7 + 1;
+
 				pCineActorConfig->field_0xc = pCineActorConfig->field_0xc * 0.01745329f;
 				pCineActorConfig->postCinematicLocation = gF32Vertex4Zero;
 				pCineActorConfig->postCinematicRotationEuler = gF32Vertex4Zero;
@@ -819,35 +817,32 @@ void CCinematic::Create(ByteCode* pByteCode)
 	if (uVar11 == 0) {
 		this->flags_0x8 = this->flags_0x8 | 8;
 	}
+
 	if (2.16f <= CScene::_pinstance->field_0x1c) {
-		uVar5 = pByteCode->GetU32();
-		this->intFieldD = uVar5;
+		this->intFieldD = pByteCode->GetU32();
 	}
 	else {
 		this->intFieldD = -1;
 	}
+
 	uVar5 = pByteCode->GetU32();
-	memset(&this->intFieldE, 0xff, 0x14);
+	memset(this->intFieldE, 0xff, 0x14);
+
 	for (; uVar5 != 0; uVar5 = uVar5 - 1) {
-		uVar9 = pByteCode->GetU32();
-		uVar10 = pByteCode->GetU32();
-		(&this->intFieldE)[uVar9] = uVar10;
+		this->intFieldE[pByteCode->GetU32()] = pByteCode->GetU32();
 	}
+
 	if (this->intFieldD == -1) {
-		this->intFieldD = this->intFieldE;
+		this->intFieldD = this->intFieldE[0];
 	}
-	iVar7 = pByteCode->GetS32();
-	this->field_0x6c = iVar7;
-	iVar7 = pByteCode->GetS32();
-	this->field_0x70 = iVar7;
-	iVar7 = pByteCode->GetS32();
-	this->field_0x74 = iVar7;
-	uVar5 = pByteCode->GetU32();
-	this->field_0x78 = uVar5;
-	uVar5 = pByteCode->GetU32();
-	this->field_0x7c = uVar5;
-	fVar13 = pByteCode->GetF32();
-	this->field_0x80 = fVar13;
+
+	this->field_0x6c = pByteCode->GetS32();
+	this->field_0x70 = pByteCode->GetS32();
+	this->field_0x74 = pByteCode->GetS32();
+	this->field_0x78 = pByteCode->GetU32();
+	this->field_0x7c = pByteCode->GetU32();
+	this->field_0x80 = pByteCode->GetF32();
+
 	piVar2 = (int*)pByteCode->currentSeekPos;
 	pByteCode->currentSeekPos = (char*)(piVar2 + 1);
 	if (*piVar2 != 0) {
@@ -881,7 +876,9 @@ void CCinematic::Create(ByteCode* pByteCode)
 	if (this->field_0x4c == 0) {
 		this->flags_0x8 = this->flags_0x8 | 8;
 	}
+
 	SetupInternalData();
+
 	return;
 }
 
@@ -1351,7 +1348,7 @@ void CCinematic::Start()
 
 edCBankCallback _gCinTableBankCallback[1] = {-1, -1, 0x0, 0, 0, 0, 0, 0};
 
-void CCinematic::Load(long mode)
+void CCinematic::Load(int mode)
 {
 	int iVar1;
 	bool bVar2;
@@ -1359,24 +1356,29 @@ void CCinematic::Load(long mode)
 	uint size;
 	edCBankInstall eStack32;
 
-	bVar2 = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
-	if (bVar2) {
-		bVar2 = this->cineBankLoadStage_0x2b4 != 4;
+	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Current stage: {} mode: {}", this->cineBankLoadStage_0x2b4, mode);
+
+	bool bBankLoaded = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+	if (bBankLoaded) {
+		bBankLoaded = this->cineBankLoadStage_0x2b4 != CINEMATIC_LOAD_STATE_COMPLETE;
 	}
-	if (bVar2) {
+
+	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Bank loaded: {}", bBankLoaded);
+
+	if (bBankLoaded) {
 		if (mode == 0) {
-			iVar1 = this->cineBankLoadStage_0x2b4;
-			while (iVar1 != 4) {
-				iVar1 = this->cineBankLoadStage_0x2b4;
-				if (iVar1 != 4) {
-					if (iVar1 == 3) {
-						bVar2 = (this->cineBank).pBankFileAccessObject->is_loaded();
-						if (bVar2 != false) {
-							this->cineBankLoadStage_0x2b4 = 4;
+			while (this->cineBankLoadStage_0x2b4 != CINEMATIC_LOAD_STATE_COMPLETE) {
+				CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Bank not loaded, loading... (state: {})", this->cineBankLoadStage_0x2b4);
+
+				if (this->cineBankLoadStage_0x2b4 != CINEMATIC_LOAD_STATE_COMPLETE) {
+					if (this->cineBankLoadStage_0x2b4 == 3) {
+						if ((this->cineBank).pBankFileAccessObject->is_loaded() != false) {
+							CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Complete!");
+							this->cineBankLoadStage_0x2b4 = CINEMATIC_LOAD_STATE_COMPLETE;
 						}
 					}
 					else {
-						if (((iVar1 == 2) && (bVar2 = edSoundAreAllSoundDataLoaded(), bVar2 != false)) &&
+						if (((this->cineBankLoadStage_0x2b4 == 2) && (bVar2 = edSoundAreAllSoundDataLoaded(), bVar2 != false)) &&
 							(bVar2 = edMusicAreAllMusicDataLoaded(), bVar2 != false)) {
 							(this->cineBank).pBankFileAccessObject->close();
 							(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
@@ -1384,51 +1386,62 @@ void CCinematic::Load(long mode)
 						}
 					}
 				}
+
 				edFileNoWaitStackFlush();
-				iVar1 = this->cineBankLoadStage_0x2b4;
 			}
 		}
 	}
 	else {
 		size = this->field_0x4c;
-		if ((uint)this->field_0x4c <= (uint)this->field_0x54) {
+		if (this->field_0x4c <= this->field_0x54) {
 			size = this->field_0x54;
 		}
+
 		bVar2 = (this->flags_0x4 & 1) != 0;
 		if (bVar2) {
 			bVar2 = (this->flags_0x8 & 0x400) != 0;
 		}
+
 		if (!bVar2) {
 			bVar2 = (this->flags_0x8 & 0x28) != 0;
 		}
+
 		bVar2 = (bool)(bVar2 ^ 1);
 		if (!bVar2) {
 			bVar2 = (this->flags_0x8 & 0x800) != 0;
 		}
+
 		if (((bVar2) && (bVar2 = CheckFunc_00401fd0(&StaticEdFileBase_004497f0), bVar2 != false)) &&
 			(uVar3 = edMemGetMemoryAvailable(TO_HEAP(H_MAIN)), size + 0x2800 < uVar3)) {
 			if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 				edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 			}
+
 			memset(&eStack32, 0, sizeof(edCBankInstall));
 			this->cineBank.initialize(size, 1, &eStack32);
 			this->cineBank.bank_buffer_setcb(_gCinTableBankCallback);
+
+			CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Loading bank...");
+
 			if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 				edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 			}
+
 			if (this->field_0x54 == 0) {
 				this->LoadCineBnk(mode);
 			}
 			else {
-				bVar2 = LoadInternal(mode);
-				if ((bVar2 != false) && (mode == 0)) {
+				if ((LoadInternal(mode) != false) && (mode == 0)) {
 					(this->cineBank).pBankFileAccessObject->close();
 					(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
 					this->LoadCineBnk(0);
+
+					CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Closing bank...");
 				}
 			}
 		}
 	}
+
 	return;
 }
 
@@ -2048,9 +2061,8 @@ void CCinematic::Manage()
 			}
 		}
 		if ((this != (CCinematic*)0xffffff4c) && (this->field_0x2c8 != -1.0f)) {
-			IMPLEMENTATION_GUARD(
-			fVar4 = UsedInCutsceneManagerUpdateH
-			((this->pActor->actorBase).data.adjustedMagnitude, this->field_0x2c8, this->field_0x2cc,
+			IMPLEMENTATION_GUARD_AUDIO(
+			fVar4 = edFIntervalLERP((this->pActor->actorBase).data.adjustedMagnitude, this->field_0x2c8, this->field_0x2cc,
 				this->field_0x2d4, this->field_0x2d0);
 			soundInfo = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA;
 			if (soundInfo != 0) {
@@ -2421,10 +2433,10 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 		pCinematicActor->Manage();
 	}
 
-	//i = CActorManager::Func_001068c0(CScene::ptable.g_ActorManager_004516a4);
-	//if (i != 0) {
-	//	CActorManager::Func_00106720(pActorManager);
-	//}
+	if (CScene::ptable.g_ActorManager_004516a4->HasAnyLinkedActors()) {
+		CScene::ptable.g_ActorManager_004516a4->UpdateLinkedActors();
+	}
+
 	//pCVar6 = CScene::ptable.g_LightManager_004516b0;
 	//pBVar7 = this->pCineSunHolderArray;
 	//for (i = 0; i < this->count_0x224; i = i + 1) {
@@ -2579,6 +2591,7 @@ void CCinematic::IncrementCutsceneDelta()
 	else {
 		deltaTime = 0.0f;
 	}
+
 	/* This is true for cutscenes */
 	//pBVar2 = &(this->cinematicLoadObject).BWCinSourceAudio_Obj;
 	if ((this->flags_0x8 & 1) == 0) {
@@ -2591,10 +2604,11 @@ void CCinematic::IncrementCutsceneDelta()
 	}
 	else {
 		iVar1 = CMessageFile::get_default_language();
-		iVar1 = (&this->intFieldE)[iVar1];
+		iVar1 = this->intFieldE[iVar1];
 		if (iVar1 == -1) {
 			iVar1 = this->intFieldD;
 		}
+		IMPLEMENTATION_GUARD_AUDIO();
 		fVar3 = -1.0f; // (float)(*(code*)pBVar2->vt->field_0x1c)(pBVar2, iVar1);
 		if (fVar3 == -1.0f) {
 			this->totalCutsceneDelta = this->totalCutsceneDelta + deltaTime;
@@ -2603,6 +2617,7 @@ void CCinematic::IncrementCutsceneDelta()
 			this->totalCutsceneDelta = fVar3;
 		}
 	}
+
 	if (this->totalCutsceneDelta < 0.0f) {
 
 		this->totalCutsceneDelta = 0.0f;

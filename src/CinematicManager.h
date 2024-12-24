@@ -18,6 +18,8 @@ struct ed_g3d_manager;
 struct CActorCinematic;
 struct CActor;
 
+#define CINEMATIC_LOAD_STATE_COMPLETE 4
+
 class CBWCinActor : public edCinActorInterface {
 public:
 	virtual bool Initialize();
@@ -406,7 +408,7 @@ struct CCinematic {
 
 	void Start();
 	void Stop();
-	void Load(long mode);
+	void Load(int mode);
 	bool LoadInternal(long mode);
 	void Install();
 	bool LoadCineBnk(bool mode);
@@ -462,9 +464,9 @@ struct CCinematic {
 	S_STREAM_REF<CActor> actorRefB;
 
 	char* pBankName_0x48;
-	int field_0x4c;
+	uint field_0x4c;
 	char* pBankName_0x50;
-	undefined4 field_0x54;
+	uint field_0x54;
 	float field_0x58;
 	SWITCH_MODE field_0x5c;
 	float field_0x60;
@@ -557,24 +559,8 @@ struct CCinematic {
 	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchListB;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraB;
 	int* field_0x25c;
-	int intFieldE;
-	undefined field_0x264;
-	undefined field_0x265;
-	undefined field_0x266;
-	undefined field_0x267;
-	undefined field_0x268;
-	undefined field_0x269;
-	undefined field_0x26a;
-	undefined field_0x26b;
-	undefined field_0x26c;
-	undefined field_0x26d;
-	undefined field_0x26e;
-	undefined field_0x26f;
-	undefined field_0x270;
-	undefined field_0x271;
-	undefined field_0x272;
-	undefined field_0x273;
-	int intFieldD;
+	uint intFieldE[5];
+	uint intFieldD;
 	edCBankBuffer cineBank;
 	int cineBankLoadStage_0x2b4;
 	int soundCount_0x2b8;

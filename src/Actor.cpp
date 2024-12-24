@@ -1509,15 +1509,16 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			else {
 				if (msg == 0x5c) {
-					IMPLEMENTATION_GUARD(
 					this->flags = this->flags & 0xffffff5f;
 					EvaluateDisplayState();
 					this->flags = this->flags & 0xfffffffc;
+
 					pCVar2 = this->pCollisionData;
 					if (pCVar2 != (CCollision*)0x0) {
 						pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x81000;
 					}
-					bVar4 = true;)
+
+					bVar4 = true;
 				}
 				else {
 					if (msg == 0x5d) {
@@ -2983,13 +2984,14 @@ void CActor::CinematicMode_Leave(int behaviourId)
 	pCVar4 = pCinematic->GetActorConfig(this);
 	if (((pCVar4 != (CCineActorConfig*)0x0) && ((pCVar4->flags & 0x80) != 0)) &&
 		(pCVar1 = this->pCollisionData, pCVar1 != (CCollision*)0x0)) {
-		IMPLEMENTATION_GUARD(
-		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x81000;)
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x81000;
 	}
+
 	peVar2 = this->p3DHierNode;
 	if (peVar2 != (ed_3d_hierarchy_node*)0x0) {
 		ed3DUnLockLOD((ed_3d_hierarchy*)peVar2);
 	}
+
 	uVar3 = this->flags;
 	if ((uVar3 & 0x8000000) != 0) {
 		this->flags = uVar3 & 0xf7ffffff;
@@ -2997,10 +2999,12 @@ void CActor::CinematicMode_Leave(int behaviourId)
 		this->flags = this->flags | 0x20;
 		EvaluateDisplayState();
 	}
+
 	this->flags = this->flags & 0xff7fffff;
 	this->flags = this->flags & 0xffffffbf;
 	EvaluateDisplayState();
 	SetBehaviour(behaviourId, -1, -1);
+
 	return;
 }
 
