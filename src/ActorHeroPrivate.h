@@ -18,30 +18,85 @@ enum EBoomyThrowState
 
 class CCamera;
 class CActorBoomy;
+class CActorHeroPrivate;
+class CFightLock_SE;
 
-class CFightLock
+struct AdversaryEntry
+{
+	CActorFighter* pActorFighter;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	int field_0x1c;
+};
+
+// typedef for function that takes in a CFightLock_SE and an int and returns an int
+typedef uint(*InferenceRuleFunc)(CFightLock_SE*, uint);
+
+struct InferenceRuleEntry
+{
+	InferenceRuleFunc pFunc;
+	uint result;
+};
+
+class CFightLock_SE
 {
 public:
-	CActorFighter* pActor;
+	void BuildKnowledgeBase(edF32VECTOR4* pDirection);
+	CActorFighter* ApplyInferenceRules();
+
+	void _Heuristic_Aim(edF32VECTOR4* pDirection);
+	void _Heuristic_Danger();
+
+	static uint _Rule_Flee(CFightLock_SE* pLock, uint prevValue);
+	static uint _Rule_Attack(CFightLock_SE* pLock, uint prevValue);
+	static uint _Rule_DangerCritical(CFightLock_SE* pLock, uint prevValue);
+	static uint _Rule_DangerMin(CFightLock_SE* pLock, uint prevValue);
+	static uint _Rule_KeepFocus(CFightLock_SE* pLock, uint prevValue);
+	static uint _Rule_DangerMax(CFightLock_SE* pLock, uint prevValue);
+	static uint _Rule_DistMin(CFightLock_SE* pLock, uint prevValue);
+
+	CActorFighter* pOwner;
+
+	byte bUseOcclusion;
+
+	uint nbPotentialAdversaries;
+
+	AdversaryEntry aAdversaries[0x10];
+
+	uint field_0x214;
+	uint field_0x218;
+
+	CActorFighter* pAdversary;
+	int adversaryIndex;
+
+	InferenceRuleEntry aInferenceRules[7];
 };
 
 class CBehaviourHero : public CBehaviourFighter
 {
+public:
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
 
+	virtual void SetInitialState();
+
+	CActorHeroPrivate* pHero;
 };
 
 class CBehaviourHeroDefault : public CBehaviourHero
 {
+public:
+	virtual void Create(ByteCode* pByteCode) {}
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
-
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
-
 	virtual void InitState(int newState);
 	virtual void TermState(int oldState, int newState);
-
-	class CActorHeroPrivate* pHero;
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
 class CBehaviourRideJamGut : public CBehaviour
@@ -59,6 +114,7 @@ class CActorHeroPrivate : public CActorHero
 public:
 	CActorHeroPrivate();
 
+	// CActor
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Manage();
@@ -74,18 +130,22 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
-	// Autonomous
+	// CActorAutonomous
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 	virtual CActorWindState* GetWindState();
 	virtual void StoreCollisionSphere();
 	virtual CLifeInterface* GetLifeInterface();
 	virtual void LifeDecrease(float amount);
 
+	// CActorFighter
+	virtual void SetInitialState();
 	virtual void ProcessDeath();
 	virtual void EnableFightCamera(int bEnable);
 	virtual void AcquireAdversary();
+	virtual edF32VECTOR4* GetAdversaryPos();
+	virtual int Func_0x18c();
 	virtual void Func_0x194(float param_1);
-	virtual int Func_0x198();
+	virtual int UpdateFightCommand();
 	virtual void _Proj_GetPossibleExit();
 
 	int FUN_00309b20(CPlayerInput* pPlayerInput, int param_3);
@@ -297,7 +357,14 @@ public:
 	bool GetSomethingInFrontOf_001473e0();
 
 	int ChooseFightAnim(int newState, int initialAnim);
+
+	void _InitHeroFight();
 	void _ResetHeroFight();
+
+	void UpdateNextAdversary();
+
+	void FUN_00325c40(float t0, int param_3);
+	void FUN_00325d00();
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -306,10 +373,12 @@ public:
 	CActor* pTrappedByActor;
 	uint trapLinkedBone;
 
-	CFightLock fightLock;
+	CFightLock_SE fightLock;
 
 	CActorMovable* pKickedActor;
 	CActor* field_0xf50;
+
+	CActorFighter* field_0x1618;
 
 	CActorWindState field_0x1190;
 
@@ -322,7 +391,12 @@ public:
 	CFxHandle* field_0x10fc;
 	int* field_0x1100;
 
+	CActor* field_0x1bbc;
+	edF32VECTOR4 field_0x1bc0;
+
 	int bUnknownBool;
+
+	undefined4 field_0x1ba4;
 
 	float field_0x13cc;
 	float field_0x13d0;
@@ -526,6 +600,10 @@ public:
 	float field_0x154c;
 	float field_0x155c;
 	undefined4 field_0x1560;
+
+	float field_0x1564;
+	int field_0x1568;
+	uint field_0x156c;
 
 	undefined4 jmp_field_0x1144;
 	edF32VECTOR4 jmpDirection;

@@ -282,6 +282,7 @@ public:
 	void Integrate(float param_1, float param_2);
 	float GetInstantSpeed();
 	bool OnLastValidSample();
+	void Stop();
 
 	uint flags;
 	float field_0x4;
@@ -501,6 +502,8 @@ public:
 	bool SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox);
 	void EvaluateManageState();
 	void EvaluateDisplayState();
+
+	uint GetStateFlags(int state);
 
 	void SetScale(float x, float y, float z);
 	void SnapOrientation(float x, float y, float z);

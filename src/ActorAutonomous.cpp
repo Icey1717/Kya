@@ -455,6 +455,11 @@ void CActorAutonomous::SetLookingAtOn(float param_1)
 	IMPLEMENTATION_GUARD_LOG();
 }
 
+void CActorAutonomous::SetLookingAtOn()
+{
+	this->SetLookingAtOn(0.0f);
+}
+
 void CActorAutonomous::SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation)
 {
 	IMPLEMENTATION_GUARD_LOG();

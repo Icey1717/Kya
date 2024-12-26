@@ -659,18 +659,12 @@ void CActor::FUN_00115ea0(uint param_2)
 bool CActor::Can_0x9c()
 {
 	bool bVar1;
-	uint uVar2;
+	uint stateFlags;
 	StateConfig* pAVar3;
 
-	if (this->actorState == -1) {
-		uVar2 = 0;
-	}
-	else {
-		pAVar3 = GetStateCfg(this->actorState);
-		uVar2 = pAVar3->flags_0x4;
-	}
+	stateFlags = GetStateFlags(this->actorState);
 
-	bVar1 = (uVar2 & 1) == 0;
+	bVar1 = (stateFlags & 1) == 0;
 
 	if (bVar1) {
 		bVar1 = (this->flags & 4) != 0;
@@ -682,13 +676,13 @@ bool CActor::Can_0x9c()
 
 	if (bVar1) {
 		if (this->actorState == -1) {
-			uVar2 = 0;
+			stateFlags = 0;
 		}
 		else {
 			pAVar3 = GetStateCfg(this->actorState);
-			uVar2 = pAVar3->flags_0x4 & 0x40;
+			stateFlags = pAVar3->flags_0x4 & 0x40;
 		}
-		bVar1 = uVar2 != 0;
+		bVar1 = stateFlags != 0;
 	}
 
 	return bVar1;
@@ -1336,17 +1330,21 @@ uint CActor::IsLookingAt()
 
 void CActor::SetLookingAtOn()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	this->flags = this->flags | 0x2000;
+
+	return;
 }
 
 void CActor::SetLookingAtOff()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	this->flags = this->flags & 0xffffdfff;
+
+	return;
 }
 
 void CActor::UpdateLookingAt()
 {
-	IMPLEMENTATION_GUARD_LOG();
+	return;
 }
 
 void CActor::UpdateAnimEffects()
@@ -1855,26 +1853,20 @@ bool CActor::IsLockable()
 {
 	bool bVar1;
 	StateConfig* pSVar2;
-	uint uVar3;
+	uint stateFlags;
 	bool bLockable;
 
-	if (this->actorState == -1) {
-		uVar3 = 0;
-	}
-	else {
-		pSVar2 = GetStateCfg(this->actorState);
-		uVar3 = pSVar2->flags_0x4;
-	}
+	stateFlags = GetStateFlags(this->actorState);
 
 	bVar1 = this->pCollisionData != (CCollision*)0x0;
 	bLockable = false;
 
 	if (bVar1) {
-		bVar1 = (uVar3 & 1) == 0;
+		bVar1 = (stateFlags & 1) == 0;
 	}
 
 	if (bVar1) {
-		bVar1 = (uVar3 & 4) != 0;
+		bVar1 = (stateFlags & 4) != 0;
 	}
 
 	if ((bVar1) && ((CActorFactory::gClassProperties[this->typeID].field_0x4 & 0x20) != 0)) {
@@ -3406,13 +3398,7 @@ void CActor::ResetActorSound()
 
 bool CActor::IsMakingNoise()
 {
-	uint uVar2 = 0;
-
-	if (this->actorState != -1) {
-		uVar2 = GetStateCfg(this->actorState)->flags_0x4;
-	}
-
-	return uVar2 & 2;
+	return GetStateFlags(this->actorState) & 2;
 }
 
 void CActor::FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix)
@@ -4243,6 +4229,16 @@ void CActor::UnlinkFromActor()
 	return;
 }
 
+uint CActor::GetStateFlags(int state)
+{
+	if (state == -1) {
+		return 0;
+	}
+	else {
+		return this->GetStateCfg(state)->flags_0x4;
+	}
+}
+
 void CActor::UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4)
 {
 	CCollision* pCVar1;
@@ -4845,6 +4841,18 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 	(this->field_0x30).y = 0.0f;
 	(this->field_0x30).z = 0.0f;
 	(this->field_0x30).w = 0.0f;
+	return;
+}
+
+void CScalarDyn::Stop()
+{
+	this->field_0xc = 0.0f;
+	this->field_0x10 = 0.0f;
+	this->field_0x14 = 0.0f;
+	this->field_0x24 = 0.0f;
+	this->field_0x20 = 0.0f;
+	this->field_0x1c = 0.0f;
+	this->flags = 1;
 	return;
 }
 

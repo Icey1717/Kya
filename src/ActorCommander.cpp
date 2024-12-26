@@ -664,6 +664,27 @@ bool CActorCommander::CheckZone_00170f90(edF32VECTOR4* v0)
 	return result;
 }
 
+CTeamElt* CActorCommander::GetTeamElt(CActor* pActor)
+{
+	CTeamElt* pTeamElt;
+	int iVar1;
+
+	iVar1 = 0;
+	if (0 < this->nbTeams) {
+		pTeamElt = this->aTeamElt;
+		do {
+			if (pTeamElt->pEnemyActor == (CActorFighter*)pActor) {
+				return pTeamElt;
+			}
+
+			iVar1 = iVar1 + 1;
+			pTeamElt = pTeamElt + 1;
+		} while (iVar1 < this->nbTeams);
+	}
+
+	return (CTeamElt*)0x0;
+}
+
 void CSquad::Create(ByteCode* pByteCode)
 {
 	uint uVar1;

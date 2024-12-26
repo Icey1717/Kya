@@ -455,7 +455,7 @@ public:
 	void StateTrackWeaponDefend(CBehaviourTrackWeapon* pBehaviour);
 	void StateTrackWeaponCheckPosition(CBehaviourTrackWeapon* pBehaviour);
 
-	int GetPostMoveState(CActorsTable* pTable);
+	int SV_WLF_CheckBoxOnWay(CActorsTable* pTable);
 
 	void ClearLocalData();
 

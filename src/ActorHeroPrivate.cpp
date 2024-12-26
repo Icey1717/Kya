@@ -19,6 +19,8 @@
 #include "edVideo/VideoA.h"
 #include "FrontendManager.h"
 #include "EventManager.h"
+#include "ActorCommander.h"
+#include "ActorWolfen.h"
 
 CActorHeroPrivate::CActorHeroPrivate()
 {
@@ -617,7 +619,9 @@ void CActorHeroPrivate::Init()
 	//CAnimation::SetField_0017f7f0(pAnimationController, (AnimData_30*)this->field_0xff0, (ulong)uVar1);
 	//FUN_003cb7b0();
 	//LevelScheduleManager::FUN_002db410(LevelScheduleManager::gThis, &this->field_0xadc);
-	//ActorLoadBoomyStorm((Actor*)this);
+
+	_InitHeroFight();
+
 	if (this->field_0x12e0 != -1) {
 		this->pAnimationController->RegisterBone(this->animKey_0x158c);
 		this->pAnimationController->RegisterBone(this->animKey_0x1590);
@@ -1309,26 +1313,19 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 				edF32Vector4NormalizeHard(&eStack96, &eStack96);
 				fVar14 = edF32Vector4DotProductHard((edF32VECTOR4*)&(this->vector_0x1be0).y, &eStack96);
 				if (FLOAT_00434cc8 <= fVar14) {
-					(this->field_0x1bbc).x = *(float*)&this->field_0x1a64;
-					fVar14 = (this->field_0x1bbc).x;
-					fVar13 = *(float*)((int)fVar14 + 0x34);
-					fVar10 = *(float*)((int)fVar14 + 0x38);
-					uVar11 = *(undefined4*)((int)fVar14 + 0x3c);
-					(this->field_0x1bbc).y = *(float*)((int)fVar14 + 0x30);
-					(this->field_0x1bbc).z = fVar13;
-					(this->field_0x1bbc).w = fVar10;
-					*(undefined4*)&this->field_0x1bcc = uVar11;
+					this->field_0x1bbc = this->field_0x1a64;
+					this->field_0x1bc0 = this->field_0x1bbc->currentLocation;
 				}
 				else {
-					(this->field_0x1bbc).x = 0.0;
-					edF32Vector4AddHard((edF32VECTOR4*)&(this->field_0x1bbc).y,
+					this->field_0x1bbc = (CActor*)0x0;
+					edF32Vector4AddHard(&this->field_0x1bc0,
 						&(this->character).characterBase.base.base.currentLocation,
 						&(this->character).characterBase.base.base.rotationQuat);
 				}
 			}
 			else {
-				(this->field_0x1bbc).x = 0.0;
-				edF32Vector4AddHard((edF32VECTOR4*)&(this->field_0x1bbc).y,
+				this->field_0x1bbc = (CActor*)0x0;
+				edF32Vector4AddHard(&this->field_0x1bc0,
 					&(this->character).characterBase.base.base.currentLocation,
 					&(this->character).characterBase.base.base.rotationQuat);
 			}
@@ -2210,9 +2207,8 @@ void CActorHeroPrivate::Manage()
 		}
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	UpdateNextAdversary(this);
-	FUN_00325d00(this);)
+	UpdateNextAdversary();
+	FUN_00325d00();
 
 	CActorFighter::Manage();
 
@@ -4318,9 +4314,10 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 	else {
 		CAnimation::RemoveDisabledBone
 		(this->data.pAnimationController, this->animKey_0x1584);
-	}
+	})
 	/* BOOMY_1 */
 	this->field_0x1ba4 = 0;
+	IMPLEMENTATION_GUARD_LOG(
 	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_1_00429998);
 	*(uint**)&this->field_0x1bb0 = puVar1;
 	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_2_004299a0);
@@ -4965,14 +4962,16 @@ void CActorHeroPrivate::ClearLocalData()
 	this->effort = 0.0f;
 	this->animIdleSequenceIndex = 0xe6;
 	//*(undefined4*)&this->field_0x100c = 0;
-	//*(undefined4*)&this->field_0x1a54 = 0;
+	this->field_0x1a54 = 0;
 	this->field_0x1610 = 0;
 	//*(undefined4*)&this->field_0x1614 = 0;
 	pTVar5 = Timer::GetTimer();
 	this->field_0x155c = pTVar5->scaledTotalTime;
 	this->field_0x1560 = 0;
-	//*(undefined4*)&this->field_0x1568 = 0;
-	//ActorTimeFunc_00325c40(20.0, (Actor*)this, 0);
+	this->field_0x1568 = 0;
+
+	FUN_00325c40(20.0f, 0);
+
 	this->field_0x1168 = 1;
 
 	
@@ -14868,13 +14867,585 @@ int CActorHeroPrivate::ChooseFightAnim(int newState, int initialAnim)
 	return initialAnim;
 }
 
+uint CFightLock_SE::_Rule_Flee(CFightLock_SE* pLock, uint prevValue)
+{
+	int iVar1;
+	uint uVar2;
+	uint result;
+	AdversaryEntry* pCVar3;
+	uint uVar4;
+	AdversaryEntry* pAVar5;
+
+	result = 0;
+
+	if (prevValue == 0) {
+		pAVar5 = pLock->aAdversaries;
+		uVar4 = 0;
+		pCVar3 = pLock->aAdversaries;
+		uVar2 = 0;
+
+		if (pLock->nbPotentialAdversaries != 0) {
+			do {
+				result = uVar2;
+				if (pAVar5->field_0x4 == -1.0f) {
+					iVar1 = pCVar3->field_0x1c;
+
+					if (iVar1 != 1) {
+						if (iVar1 == 2) {
+							pLock->field_0x214 = pLock->field_0x214 - 1;
+						}
+
+						pLock->field_0x218 = pLock->field_0x218 + 1;
+						pCVar3->field_0x1c = 1;
+					}
+
+					result = 1;
+				}
+
+				uVar4 = uVar4 + 1;
+				pAVar5 = pAVar5 + 1;
+				pCVar3 = pCVar3 + 1;
+				uVar2 = result;
+			} while (uVar4 < pLock->nbPotentialAdversaries);
+		}
+	}
+
+	return result;
+}
+
+uint CFightLock_SE::_Rule_Attack(CFightLock_SE* pLock, uint prevValue)
+{
+	uint uVar1;
+	uint result;
+	AdversaryEntry* pCVar2;
+	uint uVar3;
+	AdversaryEntry* pAVar4;
+
+	result = 0;
+
+	if (prevValue == 0) {
+		pAVar4 = pLock->aAdversaries;
+		uVar3 = 0;
+		pCVar2 = pLock->aAdversaries;
+		uVar1 = 0;
+
+		if (pLock->nbPotentialAdversaries != 0) {
+			do {
+				result = uVar1;
+
+				if (pAVar4->field_0x4 == 1.0f) {
+					if (pCVar2->field_0x1c == 0) {
+						pLock->field_0x214 = pLock->field_0x214 + 1;
+						pCVar2->field_0x1c = 2;
+					}
+
+					result = 2;
+				}
+
+				uVar3 = uVar3 + 1;
+				pAVar4 = pAVar4 + 1;
+				pCVar2 = pCVar2 + 1;
+				uVar1 = result;
+			} while (uVar3 < pLock->nbPotentialAdversaries);
+		}
+	}
+
+	return result;
+}
+
+uint CFightLock_SE::_Rule_DangerCritical(CFightLock_SE* pLock, uint prevValue)
+{
+	int iVar1;
+	bool bVar2;
+	uint result;
+	uint uVar4;
+	AdversaryEntry* pAVar5;
+	AdversaryEntry* pAVar6;
+	uint uVar7;
+	AdversaryEntry* pCVar8;
+
+	uVar4 = 0;
+	result = 0;
+
+	if (prevValue == 0) {
+		pAVar5 = pLock->aAdversaries;
+		uVar7 = 0;
+		bVar2 = false;
+		pAVar6 = pAVar5;
+
+		while ((uVar7 < pLock->nbPotentialAdversaries && (!bVar2))) {
+			if ((pAVar6->field_0x1c != 1) && (2.0 <= pAVar6->field_0x14)) {
+				bVar2 = true;
+			}
+
+			pAVar6 = pAVar6 + 1;
+			uVar7 = uVar7 + 1;
+		}
+
+		if ((bVar2) && (uVar7 = 0, pCVar8 = pLock->aAdversaries, pLock->nbPotentialAdversaries != 0)) {
+			do {
+				if (pAVar5->field_0x14 < 2.0f) {
+					iVar1 = pCVar8->field_0x1c;
+
+					if (iVar1 != 1) {
+						if (iVar1 == 2) {
+							pLock->field_0x214 = pLock->field_0x214 - 1;
+						}
+						pLock->field_0x218 = pLock->field_0x218 + 1;
+						pCVar8->field_0x1c = 1;
+					}
+
+					result = uVar4 | 1;
+				}
+				else {
+					if (pCVar8->field_0x1c == 0) {
+						pLock->field_0x214 = pLock->field_0x214 + 1;
+						pCVar8->field_0x1c = 2;
+					}
+
+					result = uVar4 | 2;
+				}
+
+				uVar7 = uVar7 + 1;
+				pAVar5 = pAVar5 + 1;
+				pCVar8 = pCVar8 + 1;
+				uVar4 = result;
+			} while (uVar7 < pLock->nbPotentialAdversaries);
+		}
+	}
+	return result;
+}
+
+uint CFightLock_SE::_Rule_DangerMin(CFightLock_SE* pLock, uint prevValue)
+{
+	uint uVar1;
+	uint result;
+	AdversaryEntry* pCVar2;
+	uint uVar3;
+	AdversaryEntry* pAVar4;
+
+	result = 0;
+	if ((prevValue == 0) && (pLock->field_0x214 == 0)) {
+		pAVar4 = pLock->aAdversaries;
+		uVar3 = 0;
+		pCVar2 = pLock->aAdversaries;
+		uVar1 = 0;
+
+		if (pLock->nbPotentialAdversaries != 0) {
+			do {
+				result = uVar1;
+
+				if (0.0f < pAVar4->field_0x14) {
+					if (pCVar2->field_0x1c == 0) {
+						pLock->field_0x214 = pLock->field_0x214 + 1;
+						pCVar2->field_0x1c = 2;
+					}
+
+					result = 2;
+				}
+
+				uVar3 = uVar3 + 1;
+				pAVar4 = pAVar4 + 1;
+				pCVar2 = pCVar2 + 1;
+				uVar1 = result;
+			} while (uVar3 < pLock->nbPotentialAdversaries);
+		}
+	}
+
+	return result;
+}
+
+uint CFightLock_SE::_Rule_KeepFocus(CFightLock_SE* pLock, uint prevValue)
+{
+	uint uVar1;
+	int iVar2;
+	uint uVar3;
+	uint result;
+	AdversaryEntry* pCVar5;
+	uint uVar6;
+
+	uVar1 = pLock->adversaryIndex;
+	result = 0;
+
+	if ((pLock->pAdversary != (CActorFighter*)0x0) && ((pLock->aAdversaries[uVar1].field_0x1c & 1U) == 0)) {
+		if (prevValue == 1) {
+			if ((1 < pLock->field_0x214) && (uVar6 = 0, pCVar5 = pLock->aAdversaries, uVar3 = 0, pLock->nbPotentialAdversaries != 0)) {
+				do {
+					result = uVar3;
+
+					if (uVar6 != uVar1) {
+						iVar2 = pCVar5->field_0x1c;
+
+						if (iVar2 != 1) {
+							if (iVar2 == 2) {
+								pLock->field_0x214 = pLock->field_0x214 - 1;
+							}
+
+							pLock->field_0x218 = pLock->field_0x218 + 1;
+							pCVar5->field_0x1c = 1;
+						}
+
+						result = 1;
+					}
+
+					uVar6 = uVar6 + 1;
+					pCVar5 = pCVar5 + 1;
+					uVar3 = result;
+				} while (uVar6 < pLock->nbPotentialAdversaries);
+			}
+		}
+		else {
+			if ((prevValue == 0) && (pLock->field_0x214 == 0)) {
+				if (pLock->aAdversaries[uVar1].field_0x1c == 0) {
+					pLock->field_0x214 = 1;
+					pLock->aAdversaries[uVar1].field_0x1c = 2;
+				}
+
+				result = 2;
+			}
+		}
+	}
+
+	return result;
+}
+
+uint CFightLock_SE::_Rule_DangerMax(CFightLock_SE* pLock, uint prevValue)
+{
+	int iVar1;
+	uint result;
+	AdversaryEntry* pAVar3;
+	AdversaryEntry* pCVar4;
+	uint uVar5;
+	AdversaryEntry* pAVar6;
+	uint uVar7;
+	float fVar8;
+	float fVar9;
+	uint uVar2;
+
+	pAVar3 = pLock->aAdversaries;
+	uVar2 = 0;
+	result = 0;
+
+	if (prevValue == 1) {
+		if (1 < pLock->field_0x214) {
+			uVar5 = pLock->nbPotentialAdversaries;
+			fVar9 = -3.402823e+38f;
+			uVar7 = 0;
+			fVar8 = fVar9;
+			pAVar6 = pAVar3;
+
+			if (uVar5 != 0) {
+				do {
+					fVar9 = fVar8;
+					if ((pAVar6->field_0x1c == 2) && (fVar9 = pAVar6->field_0x14, fVar9 <= fVar8)) {
+						fVar9 = fVar8;
+					}
+					uVar7 = uVar7 + 1;
+					fVar8 = fVar9;
+					pAVar6 = pAVar6 + 1;
+				} while (uVar7 < uVar5);
+			}
+
+			uVar7 = 0;
+			pCVar4 = pLock->aAdversaries;
+			if (uVar5 != 0) {
+				do {
+					result = uVar2;
+					if ((pAVar3->field_0x1c == 2) && (pAVar3->field_0x14 < fVar9)) {
+						iVar1 = pCVar4->field_0x1c;
+						if (iVar1 != 1) {
+							if (iVar1 == 2) {
+								pLock->field_0x214 = pLock->field_0x214 - 1;
+							}
+							pLock->field_0x218 = pLock->field_0x218 + 1;
+							pCVar4->field_0x1c = 1;
+						}
+
+						result = 1;
+					}
+
+					uVar7 = uVar7 + 1;
+					pAVar3 = pAVar3 + 1;
+					pCVar4 = pCVar4 + 1;
+					uVar2 = result;
+				} while (uVar7 < pLock->nbPotentialAdversaries);
+			}
+		}
+	}
+	else {
+		if (((prevValue == 0) && (pLock->aInferenceRules[2].result != 2)) &&
+			(uVar5 = 0, pCVar4 = pLock->aAdversaries, pLock->nbPotentialAdversaries != 0)) {
+			do {
+				result = uVar2;
+
+				if (1.0f <= pAVar3->field_0x14) {
+					if (pCVar4->field_0x1c == 0) {
+						pLock->field_0x214 = pLock->field_0x214 + 1;
+						pCVar4->field_0x1c = 2;
+					}
+
+					result = 2;
+				}
+
+				uVar5 = uVar5 + 1;
+				pAVar3 = pAVar3 + 1;
+				pCVar4 = pCVar4 + 1;
+				uVar2 = result;
+			} while (uVar5 < pLock->nbPotentialAdversaries);
+		}
+	}
+
+	return result;
+}
+
+uint CFightLock_SE::_Rule_DistMin(CFightLock_SE* pLock, uint prevValue)
+{
+	uint uVar2;
+	AdversaryEntry* pAVar3;
+	AdversaryEntry* pAVar5;
+	uint uVar6;
+	float fVar7;
+	float fVar8;
+
+	if ((prevValue == 1) && (1 < pLock->field_0x214)) {
+		uVar2 = 0;
+		pAVar3 = pLock->aAdversaries;
+
+		for (pAVar5 = pAVar3; (uVar2 < pLock->nbPotentialAdversaries && (pAVar5->field_0x1c != 2)); pAVar5 = pAVar5 + 1) {
+			uVar2 = uVar2 + 1;
+		}
+
+		if (uVar2 < pLock->nbPotentialAdversaries) {
+			pAVar5 = pAVar3 + uVar2;
+			AdversaryEntry* pfVar1 = pLock->aAdversaries + uVar2;
+			uVar6 = uVar2;
+
+			do {
+				if (pAVar5->field_0x1c == 2) {
+					fVar8 = pAVar5->pActorFighter->field_0x370;
+					fVar7 = (pAVar3[uVar6].pActorFighter)->field_0x370;
+					if (fVar8 != fVar7) {
+						AdversaryEntry* pfVar4 = pLock->aAdversaries + uVar6;
+
+						if (fVar8 < fVar7) {
+							uVar6 = uVar2;
+							if (pfVar4->field_0x1c != 1) {
+								if (pfVar4->field_0x1c == 2) {
+									pLock->field_0x214 = pLock->field_0x214 - 1;
+								}
+
+								pLock->field_0x218 = pLock->field_0x218 + 1;
+								pfVar4->field_0x1c = 1;
+							}
+						}
+						else {
+							if (pfVar1->field_0x1c != 1) {
+								if (pfVar1->field_0x1c == 2) {
+									pLock->field_0x214 = pLock->field_0x214 - 1;
+								}
+
+								pLock->field_0x218 = pLock->field_0x218 + 1;
+								pfVar1->field_0x1c = 1;
+							}
+						}
+					}
+				}
+
+				uVar2 = uVar2 + 1;
+				pAVar5 = pAVar5 + 1;
+				pfVar1 = pfVar1 + 1;
+			} while (uVar2 < pLock->nbPotentialAdversaries);
+		}
+	}
+
+	return 0;
+}
+
+void CActorHeroPrivate::_InitHeroFight()
+{
+	void* pvVar1;
+	undefined* puVar2;
+	uint* puVar3;
+	int iVar4;
+	undefined4* __src;
+	uint uVar5;
+	float fVar6;
+	float fVar7;
+	undefined4 local_30;
+	undefined4 uStack44;
+	undefined4 uStack40;
+	undefined4 uStack36;
+	undefined4 local_20;
+	undefined4 uStack28;
+	undefined4 uStack24;
+	undefined4 uStack20;
+	undefined4 local_10;
+	undefined4 uStack12;
+	undefined4 uStack8;
+	undefined4 uStack4;
+
+	//local_30 = (undefined4)_DAT_004257e0;
+	//uStack44 = (undefined4)((ulong)_DAT_004257e0 >> 0x20);
+	//uStack40 = DAT_004257e8;
+	//uStack36 = DAT_004257ec;
+	//local_20 = DAT_004257f0;
+	//uStack28 = DAT_004257f4;
+	//uStack24 = DAT_004257f8;
+	//uStack20 = DAT_004257fc;
+	//local_10 = DAT_00425800;
+	//uStack12 = DAT_00425804;
+	//uStack8 = DAT_00425808;
+	//uStack4 = DAT_0042580c;
+	//if (gVideoConfig.isNTSC == 1) {
+	//	fVar7 = 0.02;
+	//	iVar4 = *(int*)&this->field_0xcd0;
+	//}
+	//else {
+	//	fVar7 = 0.01666667;
+	//	iVar4 = *(int*)&this->field_0xcd0;
+	//}
+	//if (iVar4 == 0) {
+	//	fVar6 = 0.5 / fVar7;
+	//	if (fVar6 < 2.147484e+09) {
+	//		*(int*)&this->field_0xcd4 = (int)fVar6;
+	//	}
+	//	else {
+	//		*(uint*)&this->field_0xcd4 = (int)(fVar6 - 2.147484e+09) | 0x80000000;
+	//	}
+	//	pvVar1 = edMemAlloc(H_MAIN, *(int*)&this->field_0xcd4 << 2);
+	//	*(void**)&this->field_0xcd0 = pvVar1;
+	//	(**(code**)(*(int*)&this->field_0xcf0 + 0x10))();
+	//}
+	//if (this->field_0xd00 == (undefined*)0x0) {
+	//	this->field_0xd04 = 2;
+	//	puVar2 = (undefined*)edMemAlloc(H_MAIN, this->field_0xd04 * 0x18);
+	//	this->field_0xd00 = puVar2;
+	//	(**(code**)(*(int*)&this->field_0xcf0 + 0x10))();
+	//}
+	//(**(code**)(*(int*)&this->field_0x1600 + 8))(0x3daaaaab, fVar7);
+	//uVar5 = 0;
+	//__src = &local_30;
+	//iVar4 = 0;
+	//do {
+	//	memcpy(this->field_0xd00 + iVar4, __src, 0x18);
+	//	uVar5 = uVar5 + 1;
+	//	__src = __src + 6;
+	//	iVar4 = iVar4 + 0x18;
+	//} while (uVar5 < 2);
+	this->fightLock.pOwner = this;
+	this->fightLock.bUseOcclusion = 1;
+	this->fightLock.nbPotentialAdversaries = 0;
+	this->fightLock.pAdversary = (CActorFighter*)0x0;
+	this->fightLock.adversaryIndex = 0;
+	this->fightLock.aInferenceRules[0].pFunc = CFightLock_SE::_Rule_Flee;
+	this->fightLock.aInferenceRules[2].pFunc = CFightLock_SE::_Rule_Attack;
+	this->fightLock.aInferenceRules[1].pFunc = CFightLock_SE::_Rule_DangerCritical;
+	this->fightLock.aInferenceRules[5].pFunc = CFightLock_SE::_Rule_DangerMin;
+	this->fightLock.aInferenceRules[4].pFunc = CFightLock_SE::_Rule_KeepFocus;
+	this->fightLock.aInferenceRules[3].pFunc = CFightLock_SE::_Rule_DangerMax;
+	this->fightLock.aInferenceRules[6].pFunc = CFightLock_SE::_Rule_DistMin;
+	this->fightLock.bUseOcclusion = 1;
+	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_STORM_LOAD_00434830);
+	//if (puVar3 != (uint*)0x0) {
+	//	puVar3[0x34] = (uint)FUN_003273a0;
+	//}
+	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_STORM_LOAD_LOOP_00434850);
+	//if (puVar3 != (uint*)0x0) {
+	//	puVar3[0x34] = (uint)FUN_00327370;
+	//}
+	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_STORM_00434868);
+	//if (puVar3 != (uint*)0x0) {
+	//	puVar3[0x34] = (uint)FUN_00327320;
+	//}
+	//puVar3 = CActorFighter::FindBlowByName((CActorHero*)this, s_SALTO_KICK_BACK_AIR_00434880);
+	//if (puVar3 != (uint*)0x0) {
+	//	puVar3[3] = 0x3e000000;
+	//	puVar3[10] = 0x3e800000;
+	//}
+	//this->field_0x187c = 0;
+	//this->field_0x1618 = (CActorFighter*)0x0;
+	//(**(code**)(*(int*)&this->field_0xcf0 + 0x10))(&this->field_0xcd0);
+	//(**(code**)(*(int*)&this->field_0x1600 + 0x10))(&this->field_0x15dc.field_0x4);
+	return;
+}
+
 void CActorHeroPrivate::_ResetHeroFight()
 {
 	this->field_0x187c = 0;
-	this->fightLock.pActor = (CActorFighter*)0x0;
+	this->field_0x1618 = (CActorFighter*)0x0;
 
 	//(**(code**)(*(int*)&this->field_0xcf0 + 0x10))(&this->field_0xcd0);
 	//(**(code**)(*(int*)&this->field_0x1600 + 0x10))(&this->field_0x15dc.field_0x4);
+
+	return;
+}
+
+void CActorHeroPrivate::UpdateNextAdversary()
+{
+	CActorFighter* pCVar1;
+	edF32VECTOR4* peVar2;
+	edF32VECTOR4 local_10;
+	CPlayerInput* pInput;
+
+	pInput = this->pPlayerInput;
+	if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+		local_10 = gF32Vector4Zero;
+	}
+	else {
+		pInput->ComputeForce3D(&local_10);
+	}
+
+	if (edF32Vector4DotProductHard(&local_10, &local_10) < 0.1225f) {
+		peVar2 = &gF32Vector4Zero;
+	}
+	else {
+		local_10.y = 0.0f;
+		peVar2 = &local_10;
+	}
+
+	this->fightLock.BuildKnowledgeBase(peVar2);
+	this->field_0x1618 = this->fightLock.ApplyInferenceRules();
+
+	return;
+}
+
+void CActorHeroPrivate::FUN_00325c40(float t0, int param_3)
+{
+	if (param_3 == 0) {
+		if (this->field_0x1568 != 0) {
+			this->field_0x440 = this->field_0x440 - 0.2f;
+		}
+
+		this->field_0x1564 = Timer::GetTimer()->scaledTotalTime;
+		this->field_0x1568 = 0;
+		this->field_0x156c = 0;
+	}
+	else {
+		if (this->field_0x1568 == 0) {
+			this->field_0x440 = this->field_0x440 + 0.2f;
+		}
+
+		this->field_0x1564 = t0 + Timer::GetTimer()->scaledTotalTime;
+		this->field_0x1568 = 1;
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::FUN_00325d00()
+{
+	if (this->field_0x1564 <= Timer::GetTimer()->scaledTotalTime) {
+		if (this->field_0x1568 != 0) {
+			this->field_0x440 = this->field_0x440 - 0.2f;
+		}
+
+		this->field_0x1564 = Timer::GetTimer()->scaledTotalTime;
+		this->field_0x1568 = 0;
+		this->field_0x156c = 0;
+	}
+	else {
+		this->field_0x156c = this->field_0x156c + 1 & 7;
+	}
 
 	return;
 }
@@ -15305,6 +15876,32 @@ void CActorHeroPrivate::LifeDecrease(float amount)
 	return;
 }
 
+void CActorHeroPrivate::SetInitialState()
+{
+	bool bVar2;
+
+	bVar2 = false;
+	if ((0xdb < this->actorState) && (this->actorState < 0xdf)) {
+		bVar2 = true;
+	}
+
+	if (bVar2) {
+		SetState(0x73, 0xffffffff);
+		this->field_0x1ba4 = 0;
+	}
+
+	else {
+		if (this->scalarDynJump.IsFinished() == false) {
+			SetState(0xb, -1);
+		}
+		else {
+			CActorFighter::SetInitialState();
+		}
+	}
+
+	return;
+}
+
 void CActorHeroPrivate::ProcessDeath()
 {
 	CActor* pReceiver;
@@ -15424,9 +16021,38 @@ void CActorHeroPrivate::EnableFightCamera(int bEnable)
 
 void CActorHeroPrivate::AcquireAdversary()
 {
-	SetAdversary(this->fightLock.pActor);
+	SetAdversary(this->field_0x1618);
 
 	return;
+}
+
+edF32VECTOR4* CActorHeroPrivate::GetAdversaryPos()
+{
+	bool bVar3;
+	edF32VECTOR4* pPosition;
+
+	bVar3 = false;
+	if ((0xdb < this->actorState) && (this->actorState < 0xdf)) {
+		bVar3 = true;
+	}
+
+	if (bVar3) {
+		if (this->field_0x1bbc != (CActor*)0x0) {
+			this->field_0x1bc0 = this->field_0x1bbc->currentLocation;
+		}
+
+		pPosition = &this->field_0x1bc0;
+	}
+	else {
+		pPosition = CActorFighter::GetAdversaryPos();
+	}
+
+	return pPosition;
+}
+
+int CActorHeroPrivate::Func_0x18c()
+{
+	return 1;
 }
 
 void CActorHeroPrivate::Func_0x194(float param_1)
@@ -15438,7 +16064,7 @@ void CActorHeroPrivate::Func_0x194(float param_1)
 	return;
 }
 
-int CActorHeroPrivate::Func_0x198()
+int CActorHeroPrivate::UpdateFightCommand()
 {
 	return FUN_00309b20(this->pPlayerInput, this->field_0x18dc != 0 ^ 1);
 }
@@ -16083,5 +16709,500 @@ void CBehaviourHeroDefault::InitState(int newState)
 void CBehaviourHeroDefault::TermState(int oldState, int newState)
 {
 	this->pHero->BehaviourHero_TermState(oldState, newState);
+	return;
+}
+
+bool Criterion_FightLock_NoOcclusion(CActor* pActor, void* pParams)
+{
+	float fVar1;
+	float fVar2;
+	bool bVar3;
+	StateConfig* pSVar4;
+	uint uVar5;
+	float fVar6;
+
+	CActorFighter* pActorParam = reinterpret_cast<CActorFighter*>(pParams);
+
+	fVar6 = fabs(pActorParam->currentLocation.y - (pActor->currentLocation).y);
+
+	if (pActor != pActorParam) {
+		uVar5 = 0;
+		if (pActor->actorState != -1) {
+			pSVar4 = pActor->GetStateCfg(pActor->actorState);
+			uVar5 = pSVar4->flags_0x4;
+		}
+
+		if (((((((uVar5 & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) &&
+			((pActor->flags & 0x800000) == 0)) && ((pActor != pActorParam->field_0x354 &&
+				(fVar1 = (pActor->currentLocation).x - pActorParam->currentLocation.x,
+					fVar2 = (pActor->currentLocation).z - pActorParam->currentLocation.z,
+					fVar1 * fVar1 + fVar2 * fVar2 <= 49.0f)))) && ((pActor->curBehaviourId != 4 || (fVar6 <= 4.0f)))) &&
+			((pActor->curBehaviourId == 4 || (fVar6 <= 2.0f)))) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool Criterion_FightLock(CActor* pActor, void* pParams)
+
+{
+	float fVar1;
+	float fVar2;
+	bool bVar3;
+	StateConfig* pSVar4;
+	uint uVar5;
+	float fVar6;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 local_10;
+
+	CActorFighter* pActorParam = reinterpret_cast<CActorFighter*>(pParams);
+
+	fVar6 = fabs(pActorParam->currentLocation.y - (pActor->currentLocation).y);
+
+	if (pActor != pActorParam) {
+		uVar5 = 0;
+
+		if (pActor->actorState != -1) {
+			pSVar4 = pActor->GetStateCfg(pActor->actorState);
+			uVar5 = pSVar4->flags_0x4;
+		}
+
+		if (((((((uVar5 & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) && ((pActor->flags & 0x800000) == 0)) &&
+			((pActor != pActorParam->field_0x354 && (fVar1 = (pActor->currentLocation).x - pActorParam->currentLocation.x,
+					fVar2 = (pActor->currentLocation).z - pActorParam->currentLocation.z,
+					fVar1 * fVar1 + fVar2 * fVar2 <= 49.0f)))) && ((pActor->curBehaviourId != 4 || (fVar6 <= 4.0f)))) &&
+			((pActor->curBehaviourId == 4 || (fVar6 <= 2.0f)))) {
+			local_10.x = pActorParam->currentLocation.x;
+			local_10.z = pActorParam->currentLocation.z;
+			local_10.w = pActorParam->currentLocation.w;
+			local_10.y = pActorParam->currentLocation.y + pActorParam->pCollisionData->pObbPrim->field_0xb0.y * 1.75f;
+
+			edF32Vector4SubHard(&eStack32, &pActor->currentLocation, &pActorParam->currentLocation);
+			fVar6 = edF32Vector4NormalizeHard(&eStack32, &eStack32);
+
+			CCollisionRay CStack64 = CCollisionRay(fVar6, &local_10, &eStack32);
+			fVar6 = CStack64.Intersect(3, pActorParam, pActor, 0x40000002, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			if (fVar6 != 1e+30f) {
+				return false;
+			}
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
+{
+	CActorFighter* pOwningFighter;
+	bool bUseAimHeuristic;
+	AdversaryEntry* puVar3;
+	AdversaryEntry* pAdversaryEntryA;
+	int iVar5;
+	uint uVar6;
+	AdversaryEntry* pAdversaryEntryB;
+	int iVar8;
+	uint entryIndex;
+	uint uVar10;
+	edF32VECTOR4 local_120;
+	CActorsTable local_110;
+
+	local_110.entryCount = 0;
+	pOwningFighter = this->pOwner;
+	local_120.xyz = pOwningFighter->currentLocation.xyz;
+	local_120.w = 7.0f;
+	uVar10 = 0;
+	if (this->bUseOcclusion == 0) {
+		(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_110, &local_120, Criterion_FightLock_NoOcclusion, this->pOwner);
+	}
+	else {
+		(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_110, &local_120, Criterion_FightLock, this->pOwner);
+	}
+
+	entryIndex = 0;
+	pAdversaryEntryA = this->aAdversaries;
+	pAdversaryEntryB = this->aAdversaries;
+	if (this->nbPotentialAdversaries != 0) {
+		do {
+			iVar8 = 0;
+			iVar5 = local_110.entryCount;
+			if (0 < local_110.entryCount) {
+				do {
+					if (local_110.aEntries[iVar8] == pAdversaryEntryB->pActorFighter) {
+						memcpy(pAdversaryEntryA, pAdversaryEntryB, sizeof(AdversaryEntry));
+						local_110.Pop(iVar8);
+
+						pAdversaryEntryA = pAdversaryEntryA + 1;
+						uVar10 = uVar10 + 1;
+						iVar5 = local_110.entryCount;
+						iVar8 = local_110.entryCount;
+					}
+					else {
+						iVar8 = iVar8 + 1;
+					}
+				} while (iVar8 < iVar5);
+			}
+
+			entryIndex = entryIndex + 1;
+			pAdversaryEntryB = pAdversaryEntryB + 1;
+		} while (entryIndex < this->nbPotentialAdversaries);
+	}
+
+	this->nbPotentialAdversaries = uVar10;
+
+	uVar10 = 0;
+	while ((uVar10 < local_110.entryCount && (this->nbPotentialAdversaries < 0x10))) {
+		this->aAdversaries[this->nbPotentialAdversaries].pActorFighter = reinterpret_cast<CActorFighter*>(local_110.aEntries[uVar10]);
+
+		entryIndex = this->nbPotentialAdversaries;
+		if (entryIndex == 0xffffffff) {
+			uVar6 = 0;
+			pAdversaryEntryA = this->aAdversaries;
+			if (entryIndex != 0) {
+				do {
+					pAdversaryEntryA->field_0x10 = 0.0f;
+					pAdversaryEntryA->field_0xc = 0.0f;
+					pAdversaryEntryA->field_0x8 = 0.0f;
+					pAdversaryEntryA->field_0x4 = 0.0f;
+
+					uVar6 = uVar6 + 1;
+					pAdversaryEntryA = pAdversaryEntryA + 1;
+				} while (uVar6 < this->nbPotentialAdversaries);
+			}
+		}
+		else {
+			puVar3 = this->aAdversaries + entryIndex;
+			puVar3->field_0x10 = 0.0f;
+			puVar3->field_0xc = 0.0f;
+			puVar3->field_0x8 = 0.0f;
+			puVar3->field_0x4 = 0.0f;
+		}
+
+		entryIndex = this->nbPotentialAdversaries;
+		if (entryIndex == 0xffffffff) {
+			uVar6 = 0;
+			pAdversaryEntryA = this->aAdversaries;
+			if (entryIndex != 0) {
+				do {
+					pAdversaryEntryA->field_0x14 = 0.0f;
+					pAdversaryEntryA->field_0x18 = 0.0f;
+
+					uVar6 = uVar6 + 1;
+					pAdversaryEntryA = pAdversaryEntryA + 1;
+				} while (uVar6 < this->nbPotentialAdversaries);
+			}
+		}
+		else {
+			puVar3 = this->aAdversaries + entryIndex;
+			puVar3->field_0x14 = 0.0f;
+			puVar3->field_0x18 = 0.0f;
+		}
+
+		uVar10 = uVar10 + 1;
+		this->nbPotentialAdversaries = this->nbPotentialAdversaries + 1;
+	}
+
+	uVar10 = 0;
+	pAdversaryEntryA = this->aAdversaries;
+	if (this->nbPotentialAdversaries != 0) {
+		do {
+			pAdversaryEntryA->field_0x1c = 0;
+			uVar10 = uVar10 + 1;
+			pAdversaryEntryA = pAdversaryEntryA + 1;
+		} while (uVar10 < this->nbPotentialAdversaries);
+	}
+
+	this->field_0x218 = 0;
+	this->field_0x214 = 0;
+
+	int actorState = this->pOwner->actorState;
+	if ((((actorState == 0xf) || (actorState - 0x10U < 4)) || (actorState - 0x1cU < 2)) || ((actorState == 7 || (actorState == 8)))) {
+		bUseAimHeuristic = false;
+	}
+	else {
+		bUseAimHeuristic = true;
+	}
+
+	if (bUseAimHeuristic) {
+		_Heuristic_Aim(pDirection);
+	}
+	else {
+		uVar10 = 0;
+		pAdversaryEntryA = this->aAdversaries;
+		if (this->nbPotentialAdversaries != 0) {
+			do {
+				pAdversaryEntryA->field_0x10 = 0.0f;
+				pAdversaryEntryA->field_0xc = 0.0f;
+				pAdversaryEntryA->field_0x8 = 0.0f;
+				pAdversaryEntryA->field_0x4 = 0.0f;
+
+				uVar10 = uVar10 + 1;
+				pAdversaryEntryA = pAdversaryEntryA + 1;
+			} while (uVar10 < this->nbPotentialAdversaries);
+		}
+	}
+
+	_Heuristic_Danger();
+
+	return;
+}
+
+CActorFighter* CFightLock_SE::ApplyInferenceRules()
+{
+	bool bVar1;
+	undefined4 uVar2;
+	AdversaryEntry* pCVar3;
+	uint uVar4;
+	InferenceRuleEntry* pIVar5;
+
+	uVar4 = 0;
+	bVar1 = false;
+	while ((uVar4 < 2 && (!bVar1))) {
+		this->aInferenceRules[0].result = 0;
+		this->aInferenceRules[1].result = 0;
+		pIVar5 = this->aInferenceRules;
+		this->aInferenceRules[2].result = 0;
+		this->aInferenceRules[3].result = 0;
+		this->aInferenceRules[4].result = 0;
+		this->aInferenceRules[5].result = 0;
+		this->aInferenceRules[6].result = 0;
+		while ((pIVar5 <= this->aInferenceRules + 6 && (!bVar1))) {
+			uVar2 = pIVar5->pFunc(this, uVar4);
+			pIVar5->result = uVar2;
+			pIVar5 = pIVar5 + 1;
+			if ((this->nbPotentialAdversaries == this->field_0x214 + this->field_0x218) && (this->field_0x214 == 1)) {
+				bVar1 = true;
+			}
+		}
+
+		uVar4 = uVar4 + 1;
+	}
+
+	if (this->field_0x214 == 0) {
+		this->pAdversary = (CActorFighter*)0x0;
+		this->adversaryIndex = -1;
+	}
+	else {
+		uVar4 = 0;
+		for (pCVar3 = this->aAdversaries; (uVar4 < this->nbPotentialAdversaries && (pCVar3->field_0x1c != 2)); pCVar3 = pCVar3 + 1) {
+			uVar4 = uVar4 + 1;
+		}
+
+		this->pAdversary = this->aAdversaries[uVar4].pActorFighter;
+		this->adversaryIndex = uVar4;
+	}
+
+	return this->pAdversary;
+}
+
+static float FLOAT_00448b30 = 7.0f;
+static float FLOAT_00448b34 = 2.5f;
+static float FLOAT_00448b38 = 3.0f;
+static float FLOAT_00448b3c = 0.15f;
+static float FLOAT_00448b40 = 0.15f;
+static float FLOAT_00448b44 = 1.0f;
+static float FLOAT_00448b48 = 0.3f;
+
+void CFightLock_SE::_Heuristic_Aim(edF32VECTOR4* pDirection)
+{
+	CActorFighter* pCVar1;
+	bool bVar2;
+	Timer* pTVar3;
+	ulong uVar4;
+	edF32VECTOR4* v0;
+	AdversaryEntry* pAdversary;
+	uint uVar6;
+	float fVar7;
+	float fVar8;
+	float puVar9;
+	edF32VECTOR4 local_b0;
+	edF32VECTOR4 local_a0;
+	edF32MATRIX4 eStack144;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 eStack16;
+
+	if (pDirection == (edF32VECTOR4*)0x0) {
+		if ((0.86f < edF32Vector4DotProductHard(&this->pOwner->dynamic.rotationQuat, &this->pOwner->dynamic.horizontalVelocityDirectionEuler)) || 
+			(edF32Vector4DotProductHard(&this->pOwner->dynamic.rotationQuat, &this->pOwner->dynamic.rotationQuat) == 0.0f)) {
+			local_a0 = this->pOwner->dynamic.velocityDirectionEuler;
+			fVar7 = this->pOwner->dynamic.linearAcceleration;
+		}
+		else {
+			local_a0 = this->pOwner->dynamic.rotationQuat;
+			fVar7 = this->pOwner->dynamic.speed;
+		}
+	}
+	else {
+		fVar7 = edF32Vector4SafeNormalize0Hard(&local_a0, pDirection);
+	}
+
+	if (fVar7 != 0.0f) {
+		edF32Vector4ScaleHard(-1.0f, &eStack16, &this->pOwner->currentLocation);
+		edF32Matrix4TranslateHard(&eStack80, &gF32Matrix4Unit, &eStack16);
+		edF32Matrix4RotateYHard(-GetAngleYFromVector(&local_a0), &eStack144, &gF32Matrix4Unit);
+		edF32Matrix4MulF32Matrix4Hard(&eStack144, &eStack80, &eStack144);
+	}
+
+	uVar6 = 0;
+	pAdversary = this->aAdversaries;
+	if (this->nbPotentialAdversaries != 0) {
+		do {
+			puVar9 = 0.0f;
+			if (fVar7 != 0.0f) {
+				edF32Matrix4MulF32Vector4Hard(&local_b0, &eStack144, &pAdversary->pActorFighter->currentLocation);
+				if (local_b0.z < puVar9) {
+					bVar2 = this->pOwner->FUN_0031b790(this->pOwner->actorState);
+					if ((bVar2 == false) && (this->pOwner->FUN_0031b4d0(this->pOwner->actorState) == 0)) {
+						puVar9 = -1.0f;
+					}
+				}
+				else {
+					if ((local_b0.z < FLOAT_00448b30) &&
+						(fVar8 = edFIntervalUnitSrcLERP(local_b0.z / FLOAT_00448b30, FLOAT_00448b34, FLOAT_00448b38), -fVar8 <= local_b0.x && local_b0.x <= fVar8)) {
+						puVar9 = 1.0f;
+					}
+				}
+			}
+
+			if (puVar9 == pAdversary->field_0xc) {
+				if (puVar9 == 0.0f) {
+					fVar8 = FLOAT_00448b40;
+					if (pAdversary->field_0x8 < 0.0f) {
+						fVar8 = FLOAT_00448b48;
+					}
+				}
+				else {
+					fVar8 = FLOAT_00448b3c;
+					if (puVar9 != 1.0f) {
+						fVar8 = FLOAT_00448b44;
+					}
+				}
+
+				pAdversary->field_0x4 = edFIntervalUnitSrcLERP((GetTimer()->scaledTotalTime - pAdversary->field_0x10) / fVar8, pAdversary->field_0x8, pAdversary->field_0xc);
+			}
+			else {
+				pAdversary->field_0x10 = GetTimer()->scaledTotalTime;
+				pAdversary->field_0x8 = pAdversary->field_0x4;
+				pAdversary->field_0xc = puVar9;
+			}
+
+			uVar6 = uVar6 + 1;
+			pAdversary = pAdversary + 1;
+		} while (uVar6 < this->nbPotentialAdversaries);
+	}
+
+	return;
+}
+
+void CFightLock_SE::_Heuristic_Danger()
+{
+	CActorFighter* pActor;
+	float fVar1;
+	float fVar2;
+	bool bVar3;
+	CTeamElt* pCVar4;
+	StateConfig* pSVar5;
+	uint uVar6;
+	long lVar7;
+	undefined4* puVar8;
+	uint uVar9;
+	float dangerRating;
+
+	uVar9 = 0;
+	do {
+		if (this->nbPotentialAdversaries <= uVar9) {
+			return;
+		}
+
+		pActor = this->aAdversaries[uVar9].pActorFighter;
+		dangerRating = 0.0f;
+
+		if (pActor->Func_0x18c() == 1) {
+			if (pActor->curBehaviourId == 3) {
+				bVar3 = pActor->IsKindOfObject(0x10);
+				dangerRating = 0.5f;
+
+				CActorWolfen* pWolfen = reinterpret_cast<CActorWolfen*>(pActor);
+
+				if ((bVar3 != false) &&
+					(pCVar4 = pWolfen->pCommander->GetTeamElt(pActor), dangerRating = 0.5f, pCVar4->field_0x14 == 0)) {
+					IMPLEMENTATION_GUARD(
+					dangerRating = 0.75f;
+					lVar7 = (*(code*)((pActor->characterBase).base.base.pVTable)->IsInHitState)();
+					if ((lVar7 == 0) &&
+						((1.0 <= *(float*)&(&pActor->staticMeshComponentAdvanced)[2].field_0x60 &&
+							(((uint)(&pActor->characterBase)[1].base.base.pCinData & 1) == 0)))) {
+						puVar8 = &this->field_0x10[uVar9 - 1].field_0x10;
+						if ((float)puVar8[9] < 0.75f) {
+							puVar8[10] = puVar8[10] & 0xfffffffe;
+						}
+						if (uVar9 == this->adversaryIndex) {
+							puVar8 = &this->field_0x10[uVar9 - 1].field_0x10;
+							puVar8[10] = puVar8[10] | 1;
+						}
+						if ((this->field_0x10[uVar9].field_0x18 & 1) == 0) {
+							dangerRating = 2.0f;
+						}
+						else {
+							fVar1 = ((edF32VECTOR4*)&pActor->characterBase)->x -
+								this->pOwner->currentLocation.x;
+							fVar2 = ((edF32VECTOR4*)&pActor->characterBase)->z -
+								this->pOwner->currentLocation.z;
+							if (fVar1 * fVar1 + fVar2 * fVar2 < DAT_00448b4c * DAT_00448b4c) {
+								dangerRating = 2.0f;
+							}
+							else {
+								dangerRating = 1.0f;
+							}
+						}
+					})
+				}
+			}
+			else {
+				if (pActor->curBehaviourId == 4) {
+					uVar6 = 0;
+					if (pActor->actorState != -1) {
+						pSVar5 = pActor->GetStateCfg(pActor->actorState);
+						uVar6 = pSVar5->flags_0x4;
+					}
+
+					if ((uVar6 & 0x100) == 0) {
+						dangerRating = 0.5f;
+						goto LAB_00325008;
+					}
+				}
+
+				if (pActor->typeID == PUNCHING_BALL) {
+					dangerRating = 0.5f;
+				}
+			}
+		}
+	LAB_00325008:
+		this->aAdversaries[uVar9].field_0x14 = dangerRating;
+		uVar9 = uVar9 + 1;
+	} while (true);
+}
+
+void CBehaviourHero::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->pHero = reinterpret_cast<CActorHeroPrivate*>(pOwner);
+
+	return;
+}
+
+void CBehaviourHero::End(int newBehaviourId)
+{
+	this->pHero = (CActorHeroPrivate*)0x0;
+
+	return;
+}
+
+void CBehaviourHero::SetInitialState()
+{
+	this->pHero->SetInitialState();
+
 	return;
 }

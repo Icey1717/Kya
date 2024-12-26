@@ -18,18 +18,6 @@
 
 class CActorTrap;
 
-struct S_TRAP_STREAM_ENTRY {
-	S_STREAM_NTF_TARGET_ONOFF onoff;
-	S_STREAM_EVENT_CAMERA eventCamera;
-};
-
-static_assert(sizeof(S_TRAP_STREAM_ENTRY) == 0x3c, "Invalid S_TRAP_STREAM_REF size");
-
-struct S_TRAP_STREAM_REF {
-	uint entryCount;
-	S_TRAP_STREAM_ENTRY aEntries[];
-};
-
 class CBehaviourTrap : public CBehaviour 
 {
 public:

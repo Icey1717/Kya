@@ -336,19 +336,29 @@ public:
 	virtual void UpdateCollisionSphere();
 
 	// CActorFighter
+	virtual void SetInitialState();
 	virtual void SetFightBehaviour();
 	virtual int GetFightBehaviour();
 	virtual bool IsFightRelated(int behaviourId);
 	virtual void ProcessDeath() {}
 	virtual bool IsAlive();
+	virtual void EnableFightCamera() {}
+	virtual void AcquireAdversary();
+	virtual edF32VECTOR4* GetAdversaryPos();
+	virtual int Func_0x18c();
 	virtual void Func_0x194(float param_1);
-	virtual int Func_0x198();
+	virtual int UpdateFightCommand();
+	virtual void _Hold_GetPossibleExit();
 	virtual void _Proj_GetPossibleExit();
 
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();
 
 	void SetAdversary(CActorFighter* pNewAdversary);
+
+	void _ManageFighterDyn(uint param_2, uint inFlags, CActorsTable* pTable);
+
+	void _ComputeLogicalPos(edF32VECTOR4* pPosition);
 
 	void _InterpretCollisions(int param_2);
 	void _InterpretSlides();
@@ -379,13 +389,20 @@ public:
 
 	CActorWeapon* GetWeapon();
 
+	void SetFighterCombo(s_fighter_combo* pCombo);
+
+	bool FUN_0031b790(int state);
+	uint FUN_0031b4d0(int state);
+
 	CActorFighter* pAdversary;
 	CActor* field_0x354;
+	edF32VECTOR4 logicalPosition;
 
+	float field_0x360;
 	int field_0x36c;
-	undefined4 field_0x370;
+	float field_0x370;
 	undefined4 field_0x374;
-	undefined4 field_0x378;
+	float field_0x378;
 
 	uint fightFlags;
 
@@ -406,6 +423,16 @@ public:
 	float field_0x428;
 	float field_0x42c;
 
+	float field_0x440;
+
+	uint field_0x444;
+
+	union
+	{
+		uint all;
+		byte flags[4];
+	} field_0x448;
+
 	FighterSubObj_40* field_0x470;
 
 	float field_0x478;
@@ -413,6 +440,15 @@ public:
 	edF32VECTOR4 field_0x4a0;
 	edF32VECTOR4 field_0x4b0;
 
+	undefined4 field_0x44c;
+
+	undefined4 field_0x474;
+	float field_0x47c;
+	int field_0x480;
+
+	float field_0x4f0;
+
+	float field_0x504;
 	float field_0x50c;
 	float field_0x510;
 	float field_0x514;
@@ -484,6 +520,10 @@ public:
 	float field_0x824;
 	float field_0x828;
 	float field_0x82c;
+
+	undefined4 field_0x860;
+	undefined4 field_0x864;
+	undefined4 field_0x868;
 
 	s_fighter_combo* pFighterCombo;
 

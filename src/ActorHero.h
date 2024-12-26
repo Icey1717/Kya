@@ -265,6 +265,8 @@ public:
 
 	float field_0x1558;
 
+	int field_0x1a54;
+
 	CInventoryInterface inventory;
 	CMagicInterface magicInterface;
 	CMoneyInterface moneyInterface;
@@ -273,8 +275,12 @@ public:
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];
 	static HeroActionStateCfg _gActionCfg_HRO[16];
 
+	// CActor
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
+
+	// CActorFighter
+	virtual edF32VECTOR4* GetAdversaryPos();
 
 	int GetLastCheckpointSector();
 	bool CanActivateCheckpoint(uint flags);

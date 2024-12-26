@@ -2352,7 +2352,7 @@ LAB_0017ae10:
 	actorsTable.entryCount = 0;
 	ManageDyn(4.0f, 0x1002023b, &actorsTable);
 
-	nextState = GetPostMoveState(&actorsTable);
+	nextState = SV_WLF_CheckBoxOnWay(&actorsTable);
 	if (nextState == -1) {
 		nextState = pBehaviour->TestState_001f0a90();
 		if (nextState == -1) {
@@ -2797,7 +2797,7 @@ void CActorWolfen::StateTrackWeaponChase(CBehaviourTrackWeapon* pBehaviour)
 	ManageDyn(4.0f, 0x1002023b, &actorsTable);
 
 	if (iVar4 == -1) {
-		iVar4 = GetPostMoveState(&actorsTable);
+		iVar4 = SV_WLF_CheckBoxOnWay(&actorsTable);
 	}
 
 	if (iVar4 == -1) {
@@ -2986,7 +2986,7 @@ void CActorWolfen::StateTrackWeaponCheckPosition(CBehaviourTrackWeapon* pBehavio
 	return;
 }
 
-int CActorWolfen::GetPostMoveState(CActorsTable* pTable)
+int CActorWolfen::SV_WLF_CheckBoxOnWay(CActorsTable* pTable)
 {
 	bool bVar1;
 	int iVar2;

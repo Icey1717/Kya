@@ -150,7 +150,9 @@ class CCamFigData {
 public:
 	void Create(ByteCode* pByteCode);
 	void IsValid(undefined4 param_2);
+	void Reset() {}
 
+	CActor* pCommanderRef_0x230;
 	edF32VECTOR4 field_0x290;
 	undefined4 field_0x2a0;
 };

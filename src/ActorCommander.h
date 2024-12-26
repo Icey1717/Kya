@@ -76,6 +76,8 @@ public:
 
 	bool CheckZone_00170f90(edF32VECTOR4* v0);
 
+	CTeamElt* GetTeamElt(CActor* pActor);
+
 	uint detectAreaZoneId;
 	uint guardAreaZoneId;
 

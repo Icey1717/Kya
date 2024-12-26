@@ -2331,7 +2331,7 @@ void CCinematic::Stop()
 				iVar4 = 0;
 				if (0 < pSwitchList->count) {
 					do {
-						pSwitchList->aSwitches[iVar4].Switch((CActor*)0x0);
+						pSwitchList->aSwitches[iVar4].PostSwitch((CActor*)0x0);
 						iVar4 = iVar4 + 1;
 					} while (iVar4 < pSwitchList->count);
 				}

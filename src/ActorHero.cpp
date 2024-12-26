@@ -1020,6 +1020,11 @@ uint CActorHero::GetBehaviourFlags(int state)
 	return bhvrFlags;
 }
 
+edF32VECTOR4* CActorHero::GetAdversaryPos()
+{
+	return (edF32VECTOR4*)0x0;
+}
+
 uint CActorHero::GetStateHeroFlags(int state)
 {
 	uint uVar1;

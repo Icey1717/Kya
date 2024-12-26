@@ -142,6 +142,7 @@ public:
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
 	virtual bool IsLockable();
+	virtual void SetLookingAtOn();
 
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);

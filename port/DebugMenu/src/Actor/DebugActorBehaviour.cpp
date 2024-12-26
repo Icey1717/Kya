@@ -3,6 +3,8 @@
 #include "ActorTrap.h"
 #include "ActorMovingPlatform.h"
 #include "ActorWolfen.h"
+#include "../../../../src/ActorHero.h"
+#include "../../../../src/ActorPunchingBall.h"
 
 namespace Aton
 {
@@ -17,13 +19,51 @@ namespace Aton
 	}
 }
 
-namespace Hero
+namespace Fighter
 {
 	static const char* GetBehaviourName(int curBehaviourId)
 	{
 		switch (curBehaviourId) {
-		case 0x7:
+		case FIGHTER_BEHAVIOUR_DEFAULT:
+			return "Fighter - Default";
+		case FIGHTER_BEHAVIOUR_PROJECTED:
+			return "Fighter - Projected";
+		case FIGHTER_BEHAVIOUR_RIDDEN:
+			return "Fighter - Ridden";
+		case FIGHTER_BEHAVIOUR_SLAVE:
+			return "Fighter - Slave";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
+#define INHERITS_FROM_FIGHTER if (curBehaviourId >= FIGHTER_BEHAVIOUR_DEFAULT && curBehaviourId <= FIGHTER_BEHAVIOUR_SLAVE) return Fighter::GetBehaviourName(curBehaviourId)
+
+namespace Hero
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		INHERITS_FROM_FIGHTER;
+
+		switch (curBehaviourId) {
+		case HERO_BEHAVIOUR_DEFAULT:
 			return "Default";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
+namespace PunchingBall
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		INHERITS_FROM_FIGHTER;
+
+		switch (curBehaviourId) {
+		case PUNCHING_BALL_BEHAVIOUR_STAND:
+			return "Stand";
 		default:
 			return "Unknown";
 		}
@@ -91,6 +131,8 @@ namespace Wolfen
 {
 	static const char* GetBehaviourName(int curBehaviourId)
 	{
+		INHERITS_FROM_FIGHTER;
+
 		switch (curBehaviourId) {
 		case WOLFEN_BEHAVIOUR_WATCH_DOG:
 			return "Watch Dog";
