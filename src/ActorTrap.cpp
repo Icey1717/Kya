@@ -1068,31 +1068,13 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	StateConfig* pStateConfig;
 
 	if (msg == MESSAGE_GET_ACTION) {
-		pTrap = this->pOwner;
-		curConfig = pTrap->actorState;
-		uint configFlags = 0;
-
-		if (curConfig != -1) {
-			pStateConfig = pTrap->GetStateCfg(curConfig);
-			configFlags = pStateConfig->flags_0x4;
-		}
-
-		if (((configFlags & 0x10000) == 0) || (result = HERO_ACTION_ID_ESCAPE_TRAP, this->pCaughtActor != pSender)) {
+		if (((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x10000) == 0) || (result = HERO_ACTION_ID_ESCAPE_TRAP, this->pCaughtActor != pSender)) {
 			result = 0;
 		}
 	}
 	else {
 		if (msg == MESSAGE_TRAP_STRUGGLE) {
-			pTrap = this->pOwner;
-			curConfig = pTrap->actorState;
-			uint configFlags = 0;
-
-			if (curConfig != -1) {
-				pStateConfig = pTrap->GetStateCfg(curConfig);
-				configFlags = pStateConfig->flags_0x4;
-			}
-
-			if ((configFlags & 0x10000) != 0) {
+			if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x10000) != 0) {
 				if ((this->pathFollowReader).pPathFollow == (CPathFollow*)0x0) {
 					pTrap = this->pOwner;
 					if (pTrap->actorState != 0xc) {
@@ -1100,18 +1082,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 					}
 				}
 				else {
-					pTrap = this->pOwner;
-					curConfig = pTrap->actorState;
-
-					if (curConfig == -1) {
-						configFlags = 0;
-					}
-					else {
-						pStateConfig = pTrap->GetStateCfg(curConfig);
-						configFlags = pStateConfig->flags_0x4 & 0x200;
-					}
-
-					if (configFlags == 0) {
+					if (this->pOwner->GetStateFlags(this->pOwner->actorState) == 0) {
 						pTrap = this->pOwner;
 						if (pTrap->actorState != 0xc) {
 							pTrap->SetState(0xc, -1);
@@ -1134,45 +1105,16 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				if (msg != MESSAGE_GET_BONE_ID) {
 					return 0;
 				}
-	
-				pTrap = this->pOwner;
-				curConfig = pTrap->actorState;
-				if (curConfig == -1) {
-					result = 0;
-				}
-				else {
-					pStateConfig = pTrap->GetStateCfg(curConfig);
-					result = pStateConfig->flags_0x4 & 0x400;
-				}
 
-				if (result != 0) {
+				if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x400) != 0) {
 					return this->field_0x14;
 				}
 
-				pTrap = this->pOwner;
-				curConfig = pTrap->actorState;
-				if (curConfig == -1) {
-					result = 0;
-				}
-				else {
-					pStateConfig = pTrap->GetStateCfg(curConfig);
-					result = pStateConfig->flags_0x4 & 0x800;
-				}
-				if (result != 0) {
+				if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x800) != 0) {
 					return this->field_0x18;
 				}
 
-				pTrap = this->pOwner;
-				curConfig = pTrap->actorState;
-				if (curConfig == -1) {
-					result = 0;
-				}
-				else {
-					pStateConfig = pTrap->GetStateCfg(curConfig);
-					result = pStateConfig->flags_0x4 & 0x1000;
-				}
-
-				if (result != 0) {
+				if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x1000) != 0) {
 					return this->field_0x1c;
 				}
 
@@ -1195,16 +1137,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				if (curConfig == 10) {
 					IMPLEMENTATION_GUARD(
 					if (*(float*)((int)pMsgParam + 0xc) != 0.0) {
-						pTrap = this->pOwner;
-						curConfig = (pTrap->base).base.actorState;
-						if (curConfig == -1) {
-							result = 0;
-						}
-						else {
-							pStateConfig = pTrap->GetStateCfg(curConfig);
-							result = pStateConfig->flags_0x4 & 0x100;
-						}
-						if (result == 0) {
+						if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x100) != 0) {
 							this->field_0x69 = pSender != this->pCaughtActor;
 							pTrap = this->pOwner;
 							if ((pTrap->base).base.actorState == TRAP_STATE_IDLE) {
@@ -1220,16 +1153,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				else {
 					if ((curConfig == 9) || (curConfig == 4)) {
 						IMPLEMENTATION_GUARD(
-						pTrap = this->pOwner;
-						curConfig = (pTrap->base).base.actorState;
-						if (curConfig == -1) {
-							result = 0;
-						}
-						else {
-							pStateConfig = pTrap->GetStateCfg(curConfig);
-							result = pStateConfig->flags_0x4 & 0x100;
-						}
-						if (result == 0) {
+						if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0x100) != 0) {
 							this->field_0x69 = pSender != this->pCaughtActor;
 							(*((this->pOwner->base).base.pVTable)->SetState)(this->pOwner, 0x10, -1);
 						})
@@ -1240,6 +1164,7 @@ int CBehaviourTrapStand::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 		}
 		result = 0;
 	}
+
 	return result;
 }
 

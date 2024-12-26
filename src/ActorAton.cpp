@@ -1051,56 +1051,23 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	if (newState == -1) {
-		uVar9 = 0;
-	}
-	else {
-		pSVar5 = GetStateCfg(newState);
-		uVar9 = pSVar5->flags_0x4;
-	}
-
-	if ((uVar9 & 0x1000) != 0) {
+	if ((GetStateFlags(newState) & 0x1000) != 0) {
 		this->pAnimationController->RegisterBone(this->field_0x354);
 		this->pAnimationController->RegisterBone(this->field_0x358);
 		this->pAnimationController->RegisterBone(this->field_0x35c);
 		this->pAnimationController->RegisterBone(this->field_0x360);
 	}
 
-	uVar9 = 0;
-	if (newState != -1) {
-		pSVar5 = GetStateCfg(newState);
-		uVar9 = pSVar5->flags_0x4;
-	}
-	if ((uVar9 & 0x8000) == 0) {
-		iVar7 = this->prevActorState;
-		uVar9 = 0;
-		if (iVar7 != -1) {
-			pSVar5 = GetStateCfg(iVar7);
-			uVar9 = pSVar5->flags_0x4;
-		}
-
-		if ((uVar9 & 0x8000) != 0) {
+	if ((GetStateFlags(newState) & 0x8000) == 0) {
+		if ((GetStateFlags(newState) & 0x8000) != 0) {
 			this->field_0x3d4 = 0.0f;
 			this->field_0x3d8 = 0.0f;
 			this->field_0x3dc = 0.0f;
 		}
 	}
 
-	uVar9 = 0;
-	if (newState != -1) {
-		pSVar5 = GetStateCfg(newState);
-		uVar9 = pSVar5->flags_0x4;
-	}
-
-	if ((uVar9 & 0x8000) != 0) {
-		iVar7 = this->prevActorState;
-		uVar9 = 0;
-		if (iVar7 != -1) {
-			pSVar5 = GetStateCfg(iVar7);
-			uVar9 = pSVar5->flags_0x4;
-		}
-
-		if ((uVar9 & 0x2000) != 0) {
+	if ((GetStateFlags(newState) & 0x8000) != 0) {
+		if ((GetStateFlags(newState) & 0x2000) != 0) {
 			this->field_0x3d4 = 1.0f;
 			this->field_0x3d8 = 0.0f;
 			this->field_0x3dc = 0.0f;
@@ -1445,16 +1412,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	uVar12 = this->field_0x358;
 	uVar1 = this->field_0x354;
 	if (this->trailMaterialId != -1) {
-		iVar13 = this->actorState;
-		if (iVar13 == -1) {
-			uVar11 = 0;
-		}
-		else {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar11 = pSVar16->flags_0x4;
-		}
-
-		if ((uVar11 & 0x1000) == 0) {
+		if ((GetStateFlags(this->actorState) & 0x1000) == 0) {
 			IMPLEMENTATION_GUARD_LOG(
 			this->fxTailA.Manage(&gF32Vertex4Zero, &gF32Vertex4Zero, 1);)
 		}
@@ -1506,16 +1464,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 	uVar12 = this->field_0x360;
 	uVar1 = this->field_0x35c;
 	if (this->trailMaterialId != -1) {
-		iVar13 = this->actorState;
-		if (iVar13 == -1) {
-			uVar11 = 0;
-		}
-		else {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar11 = pSVar16->flags_0x4;
-		}
-
-		if ((uVar11 & 0x1000) == 0) {
+		if ((GetStateFlags(this->actorState) & 0x1000) == 0) {
 			IMPLEMENTATION_GUARD_LOG(
 			CFxTail::Manage(&this->fxTailB, (undefined4*)&gF32Vertex4Zero, (undefined4*)&gF32Vertex4Zero, 1);)
 		}
@@ -1565,14 +1514,8 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		}
 	}
 
-	if (this->pCollisionData != (CCollision*)0x0) {
-		iVar13 = this->actorState;
-		uVar12 = 0;
-		if (iVar13 != -1) {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
-		if ((uVar12 & 0x4000) == 0) {
+	if (this->pCollisionData != (CCollision*)0x0) {	
+		if ((GetStateFlags(this->actorState) & 0x4000) == 0) {
 			pCVar2 = this->pCollisionData;
 			if (((pCVar2->flags_0x0 & 0x1000) == 0) && ((pCVar2->flags_0x0 & 2) == 0)) {
 				pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x1000;
@@ -1590,22 +1533,8 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		}
 	}
 
-	iVar13 = this->actorState;
-	uVar12 = 0;
-	if (iVar13 != -1) {
-		pSVar16 = GetStateCfg(iVar13);
-		uVar12 = pSVar16->flags_0x4;
-	}
-
-	if ((uVar12 & 0x10000) != 0) {
-		iVar13 = this->prevActorState;
-		uVar12 = 0;
-		if (iVar13 != -1) {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
-
-		if (((uVar12 & 0x10000) == 0) && (this->pCollisionData != (CCollision*)0x0)) {
+	if ((GetStateFlags(this->actorState) & 0x10000) != 0) {
+		if (((GetStateFlags(this->actorState) & 0x10000) == 0) && (this->pCollisionData != (CCollision*)0x0)) {
 			local_140.x = 0.0f;
 			local_140.z = 0.0f;
 			local_140.y = 0.34f;
@@ -1618,22 +1547,8 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		}
 	}
 
-	iVar13 = this->actorState;
-	uVar12 = 0;
-	if (iVar13 != -1) {
-		pSVar16 = GetStateCfg(iVar13);
-		uVar12 = pSVar16->flags_0x4;
-	}
-
-	if ((uVar12 & 0x10000) == 0) {
-		iVar13 = this->prevActorState;
-		uVar12 = 0;
-		if (iVar13 != -1) {
-			pSVar16 = GetStateCfg(iVar13);
-			uVar12 = pSVar16->flags_0x4;
-		}
-
-		if (((uVar12 & 0x10000) != 0) && (this->pCollisionData != (CCollision*)0x0)) {
+	if ((GetStateFlags(this->actorState) & 0x10000) == 0) {
+		if (((GetStateFlags(this->actorState) & 0x10000) != 0) && (this->pCollisionData != (CCollision*)0x0)) {
 			this->RestoreCollisionSphere(0.0f);
 		}
 	}
@@ -2368,15 +2283,7 @@ void CActorAton::BehaviourAtonEscape_Manage()
 		IMPLEMENTATION_GUARD();
 	}
 
-  	iVar13 = this->actorState;
-	uVar12 = 0;
-
-	if (iVar13 != -1) {
-		pSVar16 = GetStateCfg(iVar13);
-		uVar12 = pSVar16->flags_0x4;
-	}
-
-	if ((uVar12 & 0x800) != 0) {
+	if ((GetStateFlags(this->actorState) & 0x800) != 0) {
 		pTVar17 = GetTimer();
 		fVar23 = 0.5f;
 		fVar24 = this->dynamic.linearAcceleration * pTVar17->cutsceneDeltaTime;
@@ -3738,13 +3645,7 @@ void CActorAton::UpdateOrientationToWatchKim()
 	edF32VECTOR4 newRotation;
 	uint flags;
 
-
-	if (this->actorState == -1) {
-		flags = 0;
-	}
-	else {
-		flags = GetStateCfg(this->actorState)->flags_0x4;
-	}
+	flags = GetStateFlags(this->actorState);
 
 	if ((flags & 0x2000) == 0) {
 		edF32Vector4SubHard(&newRotation, &CActorHero::_gThis->currentLocation, &this->currentLocation);
@@ -4037,15 +3938,8 @@ void CBehaviourAtonEscape::TermState(int oldState, int newState)
 	uint uVar6;
 
 	pActorAton = this->pOwner;
-	if (oldState == -1) {
-		uVar6 = 0;
-	}
-	else {
-		pSVar4 = pActorAton->GetStateCfg(oldState);
-		uVar6 = pSVar4->flags_0x4;
-	}
 
-	if ((uVar6 & 0x1000) != 0) {
+	if ((pActorAton->GetStateFlags(pActorAton->actorState) & 0x1000) != 0) {
 		pActorAton->pAnimationController->UnRegisterBone(pActorAton->field_0x354);
 		pActorAton->pAnimationController->UnRegisterBone(pActorAton->field_0x358);
 		pActorAton->pAnimationController->UnRegisterBone(pActorAton->field_0x35c);

@@ -468,7 +468,6 @@ public:
 
 	bool FUN_001738e0(CActor* pActor);
 	bool FUN_0035f1e0(CActorsTable* pTable, edF32VECTOR4* pPosition);
-	int FUN_0030a6a0();
 	int GetState_00174190();
 
 	void EnterCombatState(CActor* pSender);

@@ -36,19 +36,280 @@ namespace Fighter
 			return "Unknown";
 		}
 	}
+
+	static const char* GetDefaultStateName(int state)
+	{
+		switch (state) {
+		case FIGHTER_DEFAULT_STATE_IDLE:
+			return "Idle";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int curBehaviourId, int state)
+	{
+		switch (curBehaviourId) {
+		case FIGHTER_BEHAVIOUR_DEFAULT:
+			return GetDefaultStateName(state);
+		default:
+			return "Unknown";
+		}
+	}
 }
 
-#define INHERITS_FROM_FIGHTER if (curBehaviourId >= FIGHTER_BEHAVIOUR_DEFAULT && curBehaviourId <= FIGHTER_BEHAVIOUR_SLAVE) return Fighter::GetBehaviourName(curBehaviourId)
+#define INHERITS_FROM_FIGHTER_BEHAVIOUR(curBehaviourId) if (curBehaviourId >= FIGHTER_BEHAVIOUR_DEFAULT && curBehaviourId <= FIGHTER_BEHAVIOUR_SLAVE) return Fighter::GetBehaviourName(curBehaviourId)
+#define INHERITS_FROM_FIGHTER_STATE(curBehaviourId, state) if (curBehaviourId >= FIGHTER_BEHAVIOUR_DEFAULT && curBehaviourId <= FIGHTER_BEHAVIOUR_SLAVE) return Fighter::GetStateName(curBehaviourId, state)
 
 namespace Hero
 {
 	static const char* GetBehaviourName(int curBehaviourId)
 	{
-		INHERITS_FROM_FIGHTER;
+		INHERITS_FROM_FIGHTER_BEHAVIOUR(curBehaviourId);
 
 		switch (curBehaviourId) {
 		case HERO_BEHAVIOUR_DEFAULT:
 			return "Default";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetDefaultStateName(int state) {
+		switch (state) {
+		case STATE_HERO_STAND:
+			return "StateHeroStand";
+			break;
+		case STATE_HERO_JUMP_1_1_STAND:
+			return "StateHeroJump_1_1_Stand";
+			break;
+		case STATE_HERO_JUMP_2_3_STAND:
+			return "StateHeroJump_2_3_Stand";
+			break;
+		case STATE_HERO_JUMP_3_3_STAND:
+			return "StateHeroJump_3_3_Stand";
+			break;
+		case STATE_HERO_RUN:
+			return "StateHeroRun";
+			break;
+		case STATE_HERO_JOKE:
+			return "StateHeroJoke";
+			break;
+		case STATE_HERO_SLIDE_SLIP_A:
+			return "StateHeroSlideSlipA";
+			break;
+		case STATE_HERO_SLIDE_SLIP_B:
+			return "StateHeroSlideSlipB";
+			break;
+		case STATE_HERO_SLIDE_SLIP_C:
+			return "StateHeroSlideSlipC";
+			break;
+		case STATE_HERO_SLIDE_A:
+			return "StateHeroSlideA";
+			break;
+		case STATE_HERO_SLIDE_B:
+			return "StateHeroSlideB";
+			break;
+		case STATE_HERO_U_TURN:
+			return "StateHeroUTurn";
+			break;
+		case STATE_HERO_JUMP_1_1_RUN:
+			return "StateHeroJump_1_1_Run";
+			break;
+		case STATE_HERO_JUMP_2_3_RUN:
+			return "StateHeroJump_2_3_Run";
+			break;
+		case STATE_HERO_JUMP_3_3_RUN:
+			return "StateHeroJump_3_3_Run";
+			break;
+		case STATE_HERO_FALL_A:
+			return "StateHeroFallA";
+			break;
+		case STATE_HERO_FALL_B:
+			return "StateHeroFallB";
+			break;
+		case STATE_HERO_FALL_BOUNCE_1_2:
+			return "StateHeroFallBounce1_2";
+			break;
+		case STATE_HERO_FALL_BOUNCE_2_2:
+			return "StateHeroFallBounce2_2";
+			break;
+		case STATE_HERO_STAND_TO_CROUCH_A:
+			return "StateHeroStandToCrouchA";
+			break;
+		case STATE_HERO_STAND_TO_CROUCH_B:
+			return "StateHeroStandToCrouchB";
+			break;
+		case STATE_HERO_CROUCH_A:
+			return "StateHeroCrouchA";
+			break;
+		case STATE_HERO_CROUCH_WALK_A:
+			return "StateHeroCrouchWalkA";
+			break;
+		case STATE_HERO_CROUCH_B:
+			return "StateHeroCrouchB";
+			break;
+		case STATE_HERO_JUMP_TO_CROUCH:
+			return "StateHeroJumpToCrouch";
+			break;
+		case STATE_HERO_ROLL:
+			return "StateHeroRoll";
+			break;
+		case STATE_HERO_CROUCH_C:
+			return "StateHeroCrouchC";
+			break;
+		case STATE_HERO_ROLL_2_CROUCH:
+			return "StateHeroRoll2Crouch";
+			break;
+		case STATE_HERO_WIND_WALL_HURT:
+			return "StateHeroWindWallHurt";
+			break;
+		case STATE_HERO_WIND_SLIDE_HURT:
+			return "StateHeroWindSlideHurt";
+			break;
+		case STATE_HERO_TOBOGGAN_JUMP_HURT:
+			return "StateHeroTobogganJumpHurt";
+			break;
+		case STATE_HERO_HURT_A:
+			return "StateHeroHurtA";
+			break;
+		case STATE_HERO_FALL_DEATH:
+			return "StateHeroFallDeath";
+			break;
+		case STATE_HERO_COL_WALL:
+			return "StateHeroColWall";
+			break;
+		case STATE_HERO_KICK_A:
+			return "StateHeroKickA";
+			break;
+		case STATE_HERO_KICK_B:
+			return "StateHeroKickB";
+			break;
+		case STATE_HERO_KICK_C:
+			return "StateHeroKickC";
+			break;
+		case STATE_HERO_GRIP_B:
+			return "StateHeroGripB";
+			break;
+		case STATE_HERO_GRIP_C:
+			return "StateHeroGripC";
+			break;
+		case STATE_HERO_GRIP_HANG_IDLE:
+			return "StateHeroGripHangIdle";
+			break;
+		case STATE_HERO_GRIP_UP:
+			return "StateHeroGripUp";
+			break;
+		case STATE_HERO_JUMP_2_3_GRIP:
+			return "StateHeroJump_2_3_Grip";
+			break;
+		case STATE_HERO_GRIP_GRAB:
+			return "StateHeroGripGrab";
+			break;
+		case STATE_HERO_TOBOGGAN_3:
+			return "StateHeroToboggan3";
+			break;
+		case STATE_HERO_TOBOGGAN_JUMP_1:
+			return "StateHeroTobogganJump1";
+			break;
+		case STATE_HERO_TOBOGGAN_JUMP_2:
+			return "StateHeroTobogganJump2";
+			break;
+		case STATE_HERO_TOBOGGAN_2:
+			return "StateHeroToboggan2";
+			break;
+		case STATE_HERO_TOBOGGAN:
+			return "StateHeroToboggan";
+			break;
+		case STATE_HERO_GLIDE_1:
+			return "StateHeroGlide1";
+			break;
+		case STATE_HERO_GLIDE_2:
+			return "StateHeroGlide2";
+			break;
+		case STATE_HERO_GLIDE_3:
+			return "StateHeroGlide3";
+			break;
+		case STATE_HERO_WIND_CANON:
+			return "StateHeroWindCanon";
+			break;
+		case STATE_HERO_WIND_CANON_B:
+			return "StateHeroWindCanonB";
+			break;
+		case STATE_HERO_WIND_FLY:
+			return "StateHeroWindFly";
+			break;
+		case STATE_HERO_WIND_SLIDE:
+			return "StateHeroWindSlide";
+			break;
+		case STATE_HERO_WIND_WALL_MOVE_A:
+			return "StateHeroWindSlideMoveA";
+			break;
+		case STATE_HERO_WIND_WALL_MOVE_B:
+			return "StateHeroWindSlideMoveB";
+			break;
+		case STATE_HERO_WIND_WALL_MOVE_E:
+			return "StateHeroWindSlideMoveE";
+			break;
+		case STATE_HERO_WIND_WALL_MOVE_F:
+			return "StateHeroWindSlideMoveF";
+			break;
+		case STATE_HERO_WIND_WALL_MOVE_C:
+			return "StateHeroWindSlideMoveC";
+			break;
+		case STATE_HERO_WIND_WALL_MOVE_D:
+			return "StateHeroWindSlideMoveD";
+			break;
+		case STATE_HERO_GRIP_UP_A:
+			return "StateHeroGripUpA";
+			break;
+		case STATE_HERO_GRIP_UP_B:
+			return "StateHeroGripUpB";
+			break;
+		case STATE_HERO_WIND_WALL_MOVE_JUMP:
+			return "StateHeroWindWallMoveJump";
+			break;
+		case STATE_HERO_WIND_FLY_B:
+			return "StateHeroWindFlyB";
+			break;
+		case STATE_HERO_WIND_FLY_C:
+			return "StateHeroWindFlyC";
+			break;
+		case STATE_HERO_TRAMPOLINE_JUMP_1_2_A:
+			return "StateHeroTrampolineJump_1_2_A";
+			break;
+		case STATE_HERO_TRAMPOLINE_JUMP_2_3:
+			return "StateHeroTrampolineJump_2_3";
+			break;
+		case STATE_HERO_TRAMPOLINE_JUMP_1_2_B:
+			return "StateHeroTrampolineJump_1_2_B";
+			break;
+		case STATE_HERO_TRAMPOLINE_STOMACH_TO_FALL:
+			return "StateHeroTrampolineJump_1_2_C";
+			break;
+		case STATE_HERO_CAUGHT_TRAP_1:
+			return "StateHeroCaughtTrap1";
+			break;
+		case STATE_HERO_CAUGHT_TRAP_2:
+			return "StateHeroCaughtTrap2";
+			break;
+		case 0x3:
+			return "Cinematic";
+			break;
+		default:
+			assert(false);
+			return "UKNOWN ERROR";
+			break;
+		}
+	}
+
+	static const char* GetStateName(int curBehaviourId, int state)
+	{
+		INHERITS_FROM_FIGHTER_STATE(curBehaviourId, state);
+
+		switch (curBehaviourId) {
+		case HERO_BEHAVIOUR_DEFAULT:
+			return GetDefaultStateName(state);
 		default:
 			return "Unknown";
 		}
@@ -59,7 +320,7 @@ namespace PunchingBall
 {
 	static const char* GetBehaviourName(int curBehaviourId)
 	{
-		INHERITS_FROM_FIGHTER;
+		INHERITS_FROM_FIGHTER_BEHAVIOUR(curBehaviourId);
 
 		switch (curBehaviourId) {
 		case PUNCHING_BALL_BEHAVIOUR_STAND:
@@ -131,7 +392,7 @@ namespace Wolfen
 {
 	static const char* GetBehaviourName(int curBehaviourId)
 	{
-		INHERITS_FROM_FIGHTER;
+		INHERITS_FROM_FIGHTER_BEHAVIOUR(curBehaviourId);
 
 		switch (curBehaviourId) {
 		case WOLFEN_BEHAVIOUR_WATCH_DOG:
@@ -190,7 +451,21 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return MovingPlatform::GetBehaviourName(behaviourId);
 	case WOLFEN:
 		return Wolfen::GetBehaviourName(behaviourId);
+	case PUNCHING_BALL:
+		return PunchingBall::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
+	}
+}
+
+std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
+{
+	switch (pActor->typeID) {
+	case ACTOR_HERO_PRIVATE:
+		return Hero::GetStateName(pActor->curBehaviourId, pActor->actorState);
+	default:
+		std::stringstream sstream;
+		sstream << "0x" << std::hex << pActor->actorState;
+		return sstream.str();
 	}
 }

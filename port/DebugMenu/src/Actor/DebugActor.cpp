@@ -83,11 +83,7 @@ namespace Debug {
 		std::make_pair(Setting("Type", true), [](CActor* pActor) { return GetActorTypeString(pActor->typeID); }),
 		std::make_pair(Setting("Location", true), [](CActor* pActor) { return pActor->currentLocation.ToString(); }),
 		std::make_pair(Setting("Behaviour", true), [](CActor* pActor) { return Actor::Behaviour::GetActorBehaviourName(pActor); }),
-		std::make_pair(Setting("State", true), [](CActor* pActor) {
-			std::stringstream sstream;
-			sstream << "0x" << std::hex << pActor->actorState;
-			return sstream.str(); 
-			}),
+		std::make_pair(Setting("State", true), [](CActor* pActor) { return Actor::State::GetActorStateName(pActor); }),
 		std::make_pair(Setting("Collision flags", true), [](CActor* pActor) {
 			std::stringstream sstream;
 			sstream << "0x" << std::hex << (pActor->pCollisionData ? pActor->pCollisionData->flags_0x0 : 0);

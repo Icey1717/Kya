@@ -13,6 +13,8 @@
 #define FIGHTER_BEHAVIOUR_RIDDEN	0x5
 #define FIGHTER_BEHAVIOUR_SLAVE		0x6
 
+#define FIGHTER_DEFAULT_STATE_IDLE 0x6
+
 struct s_fighter_anatomy_zones
 {
 	edF32VECTOR4 field_0x0;
@@ -348,6 +350,9 @@ public:
 	virtual int Func_0x18c();
 	virtual void Func_0x194(float param_1);
 	virtual int UpdateFightCommand();
+	virtual bool Func_0x1a8();
+	virtual void _Std_GetPossibleExit();
+	virtual void _Ride_GetPossibleExit();
 	virtual void _Hold_GetPossibleExit();
 	virtual void _Proj_GetPossibleExit();
 
@@ -393,9 +398,10 @@ public:
 
 	bool FUN_0031b790(int state);
 	uint FUN_0031b4d0(int state);
+	int FUN_0030a6a0();
 
 	CActorFighter* pAdversary;
-	CActor* field_0x354;
+	CActorFighter* field_0x354;
 	edF32VECTOR4 logicalPosition;
 
 	float field_0x360;

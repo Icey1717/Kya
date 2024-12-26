@@ -803,15 +803,7 @@ void CActorNativ::ManageOrientationAndLookingAt()
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar5 = 0;
-	}
-	else {
-		pSVar3 = GetStateCfg(iVar1);
-		uVar5 = pSVar3->flags_0x4;
-	}
-	if (((uVar5 & 0x40000) != 0) && (this->field_0x550 != 0)) {
+	if (((GetStateFlags(this->actorState) & 0x40000) != 0) && (this->field_0x550 != 0)) {
 		fVar7 = 0.0f;
 		edF32Vector4SubHard(&local_30, &this->field_0x540, &this->currentLocation);
 		edF32Vector4NormalizeHard(&local_30, &local_30);
@@ -880,26 +872,20 @@ void CActorNativ::ManageOrientationAndLookingAt()
 	}
 
 LAB_00162620:
-	iVar1 = this->actorState;
-	uVar5 = 0;
-	if (iVar1 != -1) {
-		pSVar3 = GetStateCfg(iVar1);
-		uVar5 = pSVar3->flags_0x4;
-	}
-
-	if (((uVar5 & 0x20000) != 0) && (this->field_0x550 != 0)) {
+	if (((GetStateFlags(this->actorState) & 0x20000) != 0) && (this->field_0x550 != 0)) {
 		if ((this->field_0x370 - 5 < 2) || (this->field_0x370 == 7)) {
 			bVar2 = true;
 		}
 		else {
 			bVar2 = false;
 		}
+
 		if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
 			bVar2 = false;
 		}
+
 		if (!bVar2) {
-			lVar4 = IsLookingAt();
-			if (lVar4 == 0) {
+			if (IsLookingAt() == 0) {
 				SetLookingAtOn(0.2f);
 			}
 

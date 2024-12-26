@@ -227,22 +227,14 @@ void CActorPunchingBall::SetState(int newState, int animType)
 
 void CActorPunchingBall::ChangeManageState(int state)
 {
-	uint stateFlags;
-
 	if (state == 0) {
-		if (this->actorState == -1) {
-			stateFlags = 0;
-		}
-		else {
-			stateFlags = GetStateCfg(this->actorState)->flags_0x4;
-		}
-
-		if ((stateFlags & 0x10000) != 0) {
+		if ((GetStateFlags(this->actorState) & 0x10000) != 0) {
 			return;
 		}
 	}
 
 	CActorAutonomous::ChangeManageState(state);
+
 	return;
 }
 
@@ -312,15 +304,7 @@ int CActorPunchingBall::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 
 	if (msg != 3) {
 		if (msg == 0x5d) {
-			iVar3 = this->actorState;
-			uVar4 = 0;
-
-			if (iVar3 != -1) {
-				pSVar2 = GetStateCfg(iVar3);
-				uVar4 = pSVar2->flags_0x4;
-			}
-
-			if ((uVar4 & 0x10000) != 0) {
+			if ((GetStateFlags(this->actorState) & 0x10000) != 0) {
 				return 0;
 			}
 
@@ -329,14 +313,7 @@ int CActorPunchingBall::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 		}
 
 		if (msg == 0x5c) {
-			iVar3 = this->actorState;
-			uVar4 = 0;
-			if (iVar3 != -1) {
-				pSVar2 = GetStateCfg(iVar3);
-				uVar4 = pSVar2->flags_0x4;
-			}
-
-			if ((uVar4 & 0x10000) != 0) {
+			if ((GetStateFlags(this->actorState) & 0x10000) != 0) {
 				return 0;
 			}
 

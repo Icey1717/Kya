@@ -1070,8 +1070,8 @@ void CActor::SetState(int newState, int animType)
 	CAudioManager* pGVar2;
 	CBehaviour* pBehaviour;
 	StateConfig* pNewStateCfg;
-	uint uVar4;
-	uint uVar5;
+	uint curStateFlags;
+	uint newStateFlags;
 
 	ACTOR_LOG(LogLevel::Info, "CActor::SetState {} state: 0x{:x} anim: 0x{:x} (cur bhvr: 0x{:x})", this->name, newState, animType, this->curBehaviourId);
 
@@ -1093,24 +1093,11 @@ void CActor::SetState(int newState, int animType)
 	}
 	else {
 		/* New state */
-		if (curActorState == AS_None) {
-			uVar4 = 0;
-		}
-		else {
-			pNewStateCfg = GetStateCfg(curActorState);
-			uVar4 = pNewStateCfg->flags_0x4;
-		}
+		curStateFlags = GetStateFlags(curActorState);
+		newStateFlags = GetStateFlags(newState);
 
-		if (newState == AS_None) {
-			uVar5 = 0;
-		}
-		else {
-			pNewStateCfg = GetStateCfg(newState);
-			uVar5 = pNewStateCfg->flags_0x4;
-		}
-
-		if (((uVar4 & 0x80) == 0) || ((uVar5 & 0x80) != 0)) {
-			if (((uVar4 & 0x80) == 0) && ((uVar5 & 0x80) != 0)) {
+		if (((curStateFlags & 0x80) == 0) || ((newStateFlags & 0x80) != 0)) {
+			if (((curStateFlags & 0x80) == 0) && ((newStateFlags & 0x80) != 0)) {
 				IMPLEMENTATION_GUARD_LOG(
 				StateTransitionSoundFunc_001844a0((int)pGVar2);)
 			}

@@ -7,3 +7,8 @@ namespace Debug::Actor::Behaviour
 {
 	std::string GetActorBehaviourName(CActor* pActor);
 }
+
+namespace Debug::Actor::State
+{
+	std::string GetActorStateName(CActor* pActor);
+}

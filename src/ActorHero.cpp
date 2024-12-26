@@ -1259,14 +1259,7 @@ uint CActorHero::TestState_CanTrampo(uint inFlags)
 	StateConfig* pSVar2;
 
 	if (inFlags == 0xffffffff) {
-		iVar1 = this->actorState;
-		if (iVar1 == -1) {
-			inFlags = 0;
-		}
-		else {
-			pSVar2 = this->GetStateCfg(iVar1);
-			inFlags = pSVar2->flags_0x4;
-		}
+		inFlags = GetStateFlags(this->actorState);
 	}
 
 	return inFlags & 0x4000000;

@@ -875,15 +875,7 @@ void CActorWind::BehaviourWind_Manage()
 					}
 
 					if (aAppliedToActorFlags[curActorIndex] != 0) {
-						iVar1 = this->actorState;
-						uVar5 = 0;
-
-						if (iVar1 != -1) {
-							pAVar8 = GetStateCfg(iVar1);
-							uVar5 = pAVar8->flags_0x4;
-						}
-
-						if (((uVar5 & 0x100) != 0) && (this->curWindAlpha != 0.0f)) {
+						if (((GetStateFlags(this->actorState) & 0x100) != 0) && (this->curWindAlpha != 0.0f)) {
 							NotifyActorInWindArea(fVar11, pActor);
 						}
 					}

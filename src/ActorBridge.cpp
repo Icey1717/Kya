@@ -1000,15 +1000,7 @@ LAB_001e1120:
 	for (iVar5 = 0; iVar5 < (this->verletBridge).altStepCount; iVar5 = iVar5 + 1) {
 		pMovingPlatform = (CActorMovingPlatform*)this->pActorStream->aEntries[iVar5].Get();
 		if (pMovingPlatform != (CActorMovingPlatform*)0x0) {
-			iVar17 = this->actorState;
-			uVar6 = 0;
-
-			if (iVar17 != -1) {
-				pAVar4 = pMovingPlatform->GetStateCfg(iVar17);
-				uVar6 = pAVar4->flags_0x4;
-			}
-
-			if ((uVar6 & 1) == 0) {
+			if ((GetStateFlags(this->actorState) & 1) == 0) {
 				this->flags = this->flags | 0x1000;
 				if ((this->verletBridge).field_0x68 == false) {
 					IMPLEMENTATION_GUARD(

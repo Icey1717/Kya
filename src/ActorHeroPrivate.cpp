@@ -1135,14 +1135,7 @@ bool CActorHeroPrivate::AbleTo_AttackByBoomySnipe()
 LAB_00136b08:
 	if (((bVar3) && (bVar3 = EvolutionBoomyCanSnipe(), bVar3 != false)) && (iVar2 = this->actorState, iVar2 - 0x11aU < 2)) {
 		IMPLEMENTATION_GUARD(
-		if (iVar2 == -1) {
-			uVar4 = 0;
-		}
-		else {
-			pSVar5 = GetStateCfg(iVar2);
-			uVar4 = pSVar5->flags_0x4;
-		}
-		if ((((uVar4 & 0x100) != 0) &&
+		if ((((GetStateFlags(this->actorState) & 0x100) != 0) &&
 			(uVar4 = TestState_IsOnAToboggan(0xffffffff), uVar4 == 0)) &&
 			((iVar2 = this->boomyState_0x1b70, iVar2 == 0 || ((iVar2 == 2 || (iVar2 == 3)))))) {
 			return true;
@@ -1177,21 +1170,15 @@ LAB_00136998:
 	if ((((bVar4) && (bVar4 = EvolutionBoomyCanControl(), bVar4 != false)) && ((uVar7 = TestState_AllowInternalView(0xffffffff), uVar7 != 0 &&
 			((uVar5 = TestState_AllowMagic(0xffffffff), uVar5 != 0 && (uVar5 = TestState_00132b90(0xffffffff), uVar5 == 0)))))) &&
 		(iVar2 = this->actorState, 1 < iVar2 - 0x11aU)) {
-		IMPLEMENTATION_GUARD(
-		if (iVar2 == -1) {
-			uVar5 = 0;
-		}
-		else {
-			pSVar6 = GetStateCfg(iVar2);
-			uVar5 = pSVar6->flags_0x4;
-		}
-		if ((((uVar5 & 0x100) != 0) && (this->field_0x1574 == 0)) && (this->boomyState_0x1b70 == 0)) {
+		if ((((GetStateFlags(this->actorState) & 0x100) != 0) && (this->field_0x1574 == 0)) && (this->boomyState_0x1b70 == 0)) {
 			pCVar3 = this->pTiedActor;
+
 			if ((pCVar3 != (CActor*)0x0) && ((pCVar3->actorFieldS & 0x200) == 0)) {
 				return false;
 			}
+
 			return true;
-		})
+		}
 	}
 
 	return false;
@@ -1682,16 +1669,8 @@ bool CActorHeroPrivate::ManageActions()
 
 	pLifeInterface = GetLifeInterfaceOther();
 	pLifeInterface->field_0x10 = 0;
-	iVar5 = this->actorState;
-	if (iVar5 == -1) {
-		uVar7 = 0;
-	}
-	else {
-		pStateCfg = GetStateCfg(iVar5);
-		uVar7 = pStateCfg->flags_0x4;
-	}
 
-	if (((uVar7 & 1) == 0) && (lVar9 = this->inventory.IsActive(), lVar9 == 0)) {
+	if (((GetStateFlags(this->actorState) & 1) == 0) && (lVar9 = this->inventory.IsActive(), lVar9 == 0)) {
 		iVar5 = CLevelScheduler::ScenVar_Get(0x11);
 		iVar6 = CLevelScheduler::ScenVar_Get(0x12);
 		valueMax = (float)(iVar5 * iVar6);
@@ -2015,15 +1994,7 @@ int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWa
 			}
 
 			if (bVar1) {
-				iVar8 = this->actorState;
-				uVar2 = 0;
-
-				if (iVar8 != -1) {
-					pSVar7 = GetStateCfg(iVar8);
-					uVar2 = pSVar7->flags_0x4;
-				}
-
-				if ((uVar2 & 0x100) == 0) {
+				if ((GetStateFlags(this->actorState) & 0x100) == 0) {
 					iVar8 = STATE_HERO_WIND_FLY;
 				}
 				else {
@@ -2790,14 +2761,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
-			iVar13 = this->actorState;
-			uVar10 = 0;
-			if (iVar13 != -1) {
-				pAVar12 = GetStateCfg(iVar13);
-				uVar10 = pAVar12->flags_0x4;
-			}
-			bVar9 = (uVar10 & 1) != 0;
+			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
+
 		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 			ActorTimeFunc_00325c40((float)(int)pMsgParam, (Actor*)this, 1);
 			return 1;
@@ -2820,14 +2786,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)();
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
-			iVar13 = this->actorState;
-			uVar10 = 0;
-			if (iVar13 != -1) {
-				pAVar12 = GetStateCfg(iVar13);
-				uVar10 = pAVar12->flags_0x4;
-			}
-			bVar9 = (uVar10 & 1) != 0;
+			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
+
 		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 			if (*(int*)&this->field_0xd28 == 0) {
 				if (CLevelScheduler::gThis->currentLevelID == 0xd) {
@@ -2861,14 +2822,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
-			iVar13 = this->actorState;
-			uVar10 = 0;
-			if (iVar13 != -1) {
-				pAVar12 = GetStateCfg(iVar13);
-				uVar10 = pAVar12->flags_0x4;
-			}
-			bVar9 = (uVar10 & 1) != 0;
+			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
+
 		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 			iVar13 = *(int*)&this->field_0xd28;
 			if (iVar13 != 0) {
@@ -2887,14 +2843,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
-			iVar13 = this->actorState;
-			uVar10 = 0;
-			if (iVar13 != -1) {
-				pAVar12 = GetStateCfg(iVar13);
-				uVar10 = pAVar12->flags_0x4;
-			}
-			bVar9 = (uVar10 & 1) != 0;
+			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
+
 		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 			GameFlags = GameFlags | 0x400;
 			CLevelScheduler::SetLevelTimerFunc_002df450(1.0, CLevelScheduler::gThis, 0);
@@ -2927,13 +2878,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 		if (!bVar9) {
-			iVar13 = this->actorState;
-			uVar10 = 0;
-			if (iVar13 != -1) {
-				pAVar12 = GetStateCfg(iVar13);
-				uVar10 = pAVar12->flags_0x4;
-			}
-			bVar9 = (uVar10 & 1) != 0;
+			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
 
 		if ((bVar9) || (0.0 < this->field_0x1558)) {
@@ -3045,14 +2990,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
+
 			if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 				this->field_0x1554 = 0.0;
 				return 1;
@@ -3065,14 +3005,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
+
 			if ((!bVar9) && (this->field_0x1558 <= 0.0f)) {
 				if (this->field_0x1554 == 0.0f) {
 					this->field_0x1554 = 1.401298e-45f;
@@ -3088,14 +3023,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
+
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
 				(this->field_0x1558 <= 0.0)) {
 				this->pTrappedByActor = pSender;
@@ -3123,14 +3053,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
@@ -3178,14 +3101,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) &&
@@ -3240,14 +3156,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
@@ -3279,14 +3188,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) && (this->field_0x1558 <= 0.0f)) {
@@ -3326,14 +3228,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = GetLifeInterface()->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
 			if (((!bVar9) && (bVar9 = TestState_IsInCheatMode(), bVar9 == false)) &&
@@ -3368,14 +3263,10 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-				bVar9 = (uVar10 & 1) != 0;
+
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
+
 			if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 				(*(this->pVTable)->SetBehaviour)
 					(this, 0xffffffff, 0xffffffff, 0xffffffff);
@@ -3429,15 +3320,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
 			if ((bVar9) || (0.0f < this->field_0x1558)) {
@@ -3481,14 +3364,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			fVar25 = pCVar11->GetValue();
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
 
 			if ((((!bVar9) || (uVar10 = TestState_IsInTheWind(0xffffffff), uVar10 != 0)) && (this->field_0x1558 <= 0.0f)) && ((this->flags & 0x800000) == 0)) {
@@ -3554,20 +3430,16 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			*(undefined4*)pMsgParam = 0x40accccd;)
 			return 1;
 		}
+
 		if (msg == 10) {
 			IMPLEMENTATION_GUARD(
 			pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
 			fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 			bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 			if (!bVar9) {
-				iVar13 = this->actorState;
-				uVar10 = 0;
-				if (iVar13 != -1) {
-					pAVar12 = GetStateCfg(iVar13);
-					uVar10 = pAVar12->flags_0x4;
-				}
-				bVar9 = (uVar10 & 1) != 0;
+				bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 			}
+
 			if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 				pTVar15 = Timer::GetTimer();
 				this->field_0x155c = (float)(int)pMsgParam + pTVar15->scaledTotalTime;
@@ -3575,6 +3447,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			})
 			return 0;
 		}
+
 		if (msg == 0x85) {
 			IMPLEMENTATION_GUARD(
 			iVar14 = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_HEALTH);
@@ -3606,14 +3479,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 					if (!bVar9) {
-						iVar13 = this->actorState;
-						uVar10 = 0;
-						if (iVar13 != -1) {
-							pAVar12 = GetStateCfg(iVar13);
-							uVar10 = pAVar12->flags_0x4;
-						}
-						bVar9 = (uVar10 & 1) != 0;
+						bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 					}
+
 					if (((!bVar9) && (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
 						(this->field_0x1558 <= 0.0)) {
 						if (this->curBehaviourId == 8) {
@@ -3634,14 +3502,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 					if (!bVar9) {
-						iVar13 = this->actorState;
-						uVar10 = 0;
-						if (iVar13 != -1) {
-							pAVar12 = GetStateCfg(iVar13);
-							uVar10 = pAVar12->flags_0x4;
-						}
-						bVar9 = (uVar10 & 1) != 0;
+						bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 					}
+
 					if (((!bVar9) && (bVar9 = TestState_IsInCheatMode((CActorHero*)this), bVar9 == false)) &&
 						(this->field_0x1558 <= 0.0)) {
 						if ((this->flags & 0x800000) == 0) {
@@ -3664,14 +3527,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					fVar25 = GetLifeInterface()->GetValue();
 					bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 					if (!bVar9) {
-						iVar13 = this->actorState;
-						uVar10 = 0;
-						if (iVar13 != -1) {
-							pAVar12 = GetStateCfg(iVar13);
-							uVar10 = pAVar12->flags_0x4;
-						}
-
-						bVar9 = (uVar10 & 1) != 0;
+						bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 					}
 
 					if (((bVar9) || (bVar9 = TestState_IsInCheatMode(), bVar9 != false)) || (0.0f < this->field_0x1558)) {
@@ -3726,13 +3582,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						fVar25 = pCVar11->GetValue();
 						bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 						if (!bVar9) {
-							iVar13 = this->actorState;
-							uVar10 = 0;
-							if (iVar13 != -1) {
-								pAVar12 = GetStateCfg(iVar13);
-								uVar10 = pAVar12->flags_0x4;
-							}
-							bVar9 = (uVar10 & 1) != 0;
+							bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 						}
 
 						if ((bVar9) || (0.0f < this->field_0x1558)) {
@@ -3747,13 +3597,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							fVar25 = pCVar11->GetValue();
 							bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 							if (!bVar9) {
-								iVar13 = this->actorState;
-								uVar10 = 0;
-								if (iVar13 != -1) {
-									pAVar12 = GetStateCfg(iVar13);
-									uVar10 = pAVar12->flags_0x4;
-								}
-								bVar9 = (uVar10 & 1) != 0;
+								bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 							}
 							if ((bVar9) || (0.0f < this->field_0x1558)) {
 								return 0;
@@ -3767,13 +3611,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 								fVar25 = pCVar11->GetValue();
 								bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 								if (!bVar9) {
-									iVar13 = this->actorState;
-									uVar10 = 0;
-									if (iVar13 != -1) {
-										pAVar12 = GetStateCfg(iVar13);
-										uVar10 = pAVar12->flags_0x4;
-									}
-									bVar9 = (uVar10 & 1) != 0;
+									bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 								}
 
 								if ((bVar9) || (0.0f < this->field_0x1558)) {
@@ -3811,14 +3649,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 									fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 									bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 									if (!bVar9) {
-										iVar13 = this->actorState;
-										uVar10 = 0;
-										if (iVar13 != -1) {
-											pAVar12 = (*(this->pVTable)->GetStateCfg)
-												(this, iVar13);
-											uVar10 = pAVar12->flags_0x4;
-										}
-										bVar9 = (uVar10 & 1) != 0;
+										bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 									}
 									if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
 										if (this->actorState == 0xdb) {
@@ -3836,14 +3667,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 									fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
 									bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
 									if (!bVar9) {
-										iVar13 = this->actorState;
-										uVar10 = 0;
-										if (iVar13 != -1) {
-											pAVar12 = (*(this->pVTable)->GetStateCfg)
-												(this, iVar13);
-											uVar10 = pAVar12->flags_0x4;
-										}
-										bVar9 = (uVar10 & 1) != 0;
+										bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 									}
 									if ((bVar9) || (0.0 < this->field_0x1558)) {
 										return 0;
@@ -4601,15 +4425,7 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 
 	fVar12 = 0.0f;
 
-	if (landingState == -1) {
-		uVar5 = 0;
-	}
-	else {
-		pAVar4 = GetStateCfg(landingState);
-		uVar5 = pAVar4->flags_0x4;
-	}
-
-	if ((uVar5 & 0x100) != 0) {
+	if ((GetStateFlags(this->actorState) & 0x100) != 0) {
 		return STATE_HERO_STAND;
 	}
 
@@ -4700,16 +4516,6 @@ int CActorHeroPrivate::ChooseStateLanding(float speed)
 
 		bVar3 = CanEnterToboggan();
 		if (bVar3 == false) {
-			//peVar8 = (edF32VECTOR4*)&DAT_00000010;
-			//peVar10 = &local_10;
-			//peVar2 = peVar10;
-			//while (peVar2 != (edF32VECTOR4*)0x0) {
-			//	*(undefined*)&peVar10->x = 0;
-			//	peVar10 = (edF32VECTOR4*)((int)&peVar10->x + 1);
-			//	peVar8 = (edF32VECTOR4*)((int)&peVar8[-1].w + 3);
-			//	peVar2 = peVar8;
-			//}
-
 			local_10 = gF32Vector4Zero;
 			local_20 = gF32Vector4Zero;
 
@@ -5843,15 +5649,7 @@ LAB_00340ec0:
 		}
 
 		if (this->actorState == 0xa1) {
-			if (newState == AS_None) {
-				uVar8 = 0;
-			}
-			else {
-				pSVar9 = GetStateCfg(newState);
-				uVar8 = pSVar9->flags_0x4;
-			}
-
-			if ((uVar8 & 1) == 0) {
+			if ((GetStateFlags(newState) & 1) == 0) {
 				pCameraManager->PopCamera(this->pDeathCamera);
 			}
 		}
@@ -6798,15 +6596,7 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 	this->rotationEuler.xyz = local_10;
 	this->rotationQuat = auStack80.rowZ;
 
-	iVar10 = this->actorState;
-	uVar9 = 0;
-
-	if (iVar10 != -1) {
-		pAVar8 = GetStateCfg(iVar10);
-		uVar9 = pAVar8->flags_0x4;
-	}
-
-	if (((uVar9 & 1) == 0) && (this->pPlayerInput != (CPlayerInput*)0x0)) {
+	if (((GetStateFlags(this->actorState) & 1) == 0) && (this->pPlayerInput != (CPlayerInput*)0x0)) {
 		pCVar3 = this->pPlayerInput;
 		if ((pCVar3 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 			local_80 = gF32Vector4Zero;
@@ -6892,16 +6682,11 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 
 	AdjustLocalMatrixFromNormal(fVar13, &this->normalValue);
 
-	iVar10 = this->actorState;
-	uVar9 = 0;
-	if (iVar10 != -1) {
-		pAVar8 = GetStateCfg(iVar10);
-		uVar9 = pAVar8->flags_0x4;
-	}
-	if ((uVar9 & 1) != 0) {
+	if ((GetStateFlags(this->actorState) & 1) != 0) {
 		if (this->timeInAir <= 2.0f) {
 			return;
 		}
+
 		IMPLEMENTATION_GUARD(
 		(*(code*)(this->pVTable)->field_0x16c)(this);)
 		return;
@@ -7676,14 +7461,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 
 	ManageDyn(4.0, 0x33, (CActorsTable*)0x0);
 
-	iVar7 = this->actorState;
-	uVar13 = 0;
-	if (iVar7 != -1) {
-		pSVar8 = GetStateCfg(iVar7);
-		uVar13 = pSVar8->flags_0x4;
-	}
-
-	if ((uVar13 & 1) == 0) {
+	if ((GetStateFlags(this->actorState) & 1) == 0) {
 		if (nextState != -1) {
 			pCVar3 = this->pAnimationController;
 			peVar4 = (pCVar3->anmBinMetaAnimator).aAnimData;
@@ -7884,20 +7662,12 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 
 	ManageDyn(4.0f, 0, (CActorsTable*)0x0);
 
-	int iVar8 = this->actorState;
-	uVar11 = 0;
-	if (iVar8 != -1) {
-		pSVar6 = GetStateCfg(iVar8);
-		uVar11 = pSVar6->flags_0x4;
-	}
-
-	if ((uVar11 & 1) == 0) {
+	if ((GetStateFlags(this->actorState) & 1) == 0) {
 		if (GetWindState() == (CActorWindState*)0x0) {
 			bVar5 = false;
 		}
 		else {
-			iVar8 = GetWindState()->field_0x0;
-			if (iVar8 == GetWindState()->field_0x4) {
+			if (GetWindState()->field_0x0 == GetWindState()->field_0x4) {
 				bVar5 = true;
 			}
 			else {
@@ -7915,9 +7685,8 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 		if (bVar5) {
 			bVar5 = false;
 			if (GetWindState() != (CActorWindState*)0x0) {
-				iVar8 = GetWindState()->field_0x0;
 				bVar5 = true;
-				if (iVar8 != GetWindState()->field_0x4) {
+				if (GetWindState()->field_0x0 != GetWindState()->field_0x4) {
 					bVar5 = false;
 					if ((GetWindState()->field_0x4 != 0) && (bVar5 = true, 0.17398384f <= fabs(local_50.y))) {
 						bVar5 = false;
@@ -8037,8 +7806,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 				if (bVar5 == false) {
 					uVar11 = CanGrip(0, &this->rotationQuat);
 					if (uVar11 == 0) {
-						iVar8 = EvolutionBounceCanJump();
-						if (iVar8 == 0) {
+						if (EvolutionBounceCanJump() == 0) {
 							SetState(ChooseStateFall(0), 0xffffffff);
 						}
 						else {
@@ -12111,13 +11879,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 					fVar27 = pLifeInterface->GetValue();
 					bVar8 = fVar27 - this->field_0x2e4 <= 0.0f;
 					if (!bVar8) {
-						int iVar162 = this->actorState;
-						uVar10 = 0;
-						if (iVar162 != -1) {
-							pAVar18 = GetStateCfg(iVar162);
-							uVar10 = pAVar18->flags_0x4;
-						}
-						bVar8 = (uVar10 & 1) != 0;
+						bVar8 = (GetStateFlags(this->actorState) & 1) != 0;
 					}
 
 					if (!bVar8) {
@@ -12497,22 +12259,9 @@ LAB_0014a028:
 		}
 	}
 
-	iVar20 = this->actorState;
-	uVar22 = 0;
-	if (iVar20 != -1) {
-		pAVar18 = GetStateCfg(iVar20);
-		uVar22 = pAVar18->flags_0x4;
-	}
-
-	if ((uVar22 & 1) == 0) {
+	if ((GetStateFlags(this->actorState) & 1) == 0) {
 		if (bVar5) {
-			iVar20 = this->actorState;
-			uVar22 = 0;
-			if (iVar20 != -1) {
-				pAVar18 = GetStateCfg(iVar20);
-				uVar22 = pAVar18->flags_0x4;
-			}
-			if ((uVar22 & 1) == 0) {
+			if ((GetStateFlags(this->actorState) & 1) == 0) {
 				SetState(0xa1, 0xffffffff);
 				return;
 			}
@@ -16071,20 +15820,7 @@ int CActorHeroPrivate::UpdateFightCommand()
 
 void CActorHeroPrivate::_Proj_GetPossibleExit()
 {
-	int iVar1;
-	StateConfig* pSVar2;
-	uint uVar3;
-
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar3 = 0;
-	}
-	else {
-		pSVar2 = GetStateCfg(iVar1);
-		uVar3 = pSVar2->flags_0x4;
-	}
-
-	if (((uVar3 & 0x100000) != 0) && (2.0f < this->timeInAir)) {
+	if (((GetStateFlags(this->actorState) & 0x100000) != 0) && (2.0f < this->timeInAir)) {
 		SetState(0x61, 0xffffffff);
 	}
 
@@ -16726,13 +16462,7 @@ bool Criterion_FightLock_NoOcclusion(CActor* pActor, void* pParams)
 	fVar6 = fabs(pActorParam->currentLocation.y - (pActor->currentLocation).y);
 
 	if (pActor != pActorParam) {
-		uVar5 = 0;
-		if (pActor->actorState != -1) {
-			pSVar4 = pActor->GetStateCfg(pActor->actorState);
-			uVar5 = pSVar4->flags_0x4;
-		}
-
-		if (((((((uVar5 & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) &&
+		if (((((((pActor->GetStateFlags(pActor->actorState) & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) &&
 			((pActor->flags & 0x800000) == 0)) && ((pActor != pActorParam->field_0x354 &&
 				(fVar1 = (pActor->currentLocation).x - pActorParam->currentLocation.x,
 					fVar2 = (pActor->currentLocation).z - pActorParam->currentLocation.z,
@@ -16762,14 +16492,7 @@ bool Criterion_FightLock(CActor* pActor, void* pParams)
 	fVar6 = fabs(pActorParam->currentLocation.y - (pActor->currentLocation).y);
 
 	if (pActor != pActorParam) {
-		uVar5 = 0;
-
-		if (pActor->actorState != -1) {
-			pSVar4 = pActor->GetStateCfg(pActor->actorState);
-			uVar5 = pSVar4->flags_0x4;
-		}
-
-		if (((((((uVar5 & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) && ((pActor->flags & 0x800000) == 0)) &&
+		if (((((((pActor->GetStateFlags(pActor->actorState) & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) && ((pActor->flags & 0x800000) == 0)) &&
 			((pActor != pActorParam->field_0x354 && (fVar1 = (pActor->currentLocation).x - pActorParam->currentLocation.x,
 					fVar2 = (pActor->currentLocation).z - pActorParam->currentLocation.z,
 					fVar1 * fVar1 + fVar2 * fVar2 <= 49.0f)))) && ((pActor->curBehaviourId != 4 || (fVar6 <= 4.0f)))) &&
@@ -17163,13 +16886,7 @@ void CFightLock_SE::_Heuristic_Danger()
 			}
 			else {
 				if (pActor->curBehaviourId == 4) {
-					uVar6 = 0;
-					if (pActor->actorState != -1) {
-						pSVar5 = pActor->GetStateCfg(pActor->actorState);
-						uVar6 = pSVar5->flags_0x4;
-					}
-
-					if ((uVar6 & 0x100) == 0) {
+					if ((pActor->GetStateFlags(pActor->actorState) & 0x100) == 0) {
 						dangerRating = 0.5f;
 						goto LAB_00325008;
 					}

@@ -101,16 +101,7 @@ bool CCameraFixePerso::Manage()
 			pCVar2 = GetTarget();
 			bVar1 = pCVar2->IsKindOfObject(4);
 			if (bVar1 != false) {
-				pCVar2 = GetTarget();
-				if (pCVar2->actorState == -1) {
-					uVar4 = 0;
-				}
-				else {
-					pSVar3 = pCVar2->GetStateCfg(pCVar2->actorState);
-					uVar4 = pSVar3->flags_0x4;
-				}
-
-				uVar4 = uVar4 & 0x100;
+				uVar4 = GetTarget()->GetStateFlags(GetTarget()->actorState) & 0x100;
 			}
 
 			if ((uVar4 != 0) ||

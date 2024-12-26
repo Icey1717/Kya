@@ -673,14 +673,9 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 			v1->field_0x44 = (uint)(pCVar2->distanceToGround < 0.1f);
 		}
 		else {
-			uVar6 = 0;
-			if (pCVar2->actorState != -1) {
-				StateConfig* pAnimResult = pCVar2->GetStateCfg(pCVar2->actorState);
-				uVar6 = pAnimResult->flags_0x4;
-			}
-
-			v1->field_0x44 = (uint)((uVar6 & 0x100) != 0);
+			v1->field_0x44 = (uint)((pCVar2->GetStateFlags(pCVar2->actorState) & 0x100) != 0);
 		}
+
 		if (v1->pActor != (CActor*)0x0) {
 			CActorHero* pHero = reinterpret_cast<CActorHero*>(v1->pActor);
 			uVar6 = pHero->TestState_IsGrippedOrClimbing(0xffffffff);

@@ -443,38 +443,14 @@ bool CActorProjectile::IsLockable()
 	StateConfig* pSVar6;
 
 	if ((this->field_0x350->flags & 0x100) != 0) {
-		iVar1 = this->actorState;
-		uVar5 = 0;
-
-		if (iVar1 != -1) {
-			pSVar6 = GetStateCfg(iVar1);
-			uVar5 = pSVar6->flags_0x4;
-		}
-
-		if ((uVar5 & 0x8000) != 0) {
-			iVar1 = this->actorState;
-			uVar5 = 0;
-
-			if (iVar1 != -1) {
-				pSVar6 = GetStateCfg(iVar1);
-				uVar5 = pSVar6->flags_0x4;
-			}
-
-			if ((uVar5 & 0x100) == 0) {
-				iVar1 = this->actorState;
-				uVar5 = 0;
-
-				if (iVar1 != -1) {
-					pSVar6 = GetStateCfg(iVar1);
-					uVar5 = pSVar6->flags_0x4;
-				}
-
-				if ((uVar5 & 0x1000) == 0) {
-					return (bool)0;
+		if ((GetStateFlags(this->actorState) & 0x8000) != 0) {
+			if ((GetStateFlags(this->actorState) & 0x100) == 0) {
+				if ((GetStateFlags(this->actorState) & 0x1000) == 0) {
+					return false;
 				}
 
 				if ((this->field_0x350->flags & 0x20000) != 0) {
-					return (bool)0;
+					return false;
 				}
 			}
 
@@ -534,24 +510,8 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	edF32VECTOR4 local_10;
 
 	if (msg == 0x35) {
-		iVar8 = this->actorState;
-		uVar4 = 0;
-
-		if (iVar8 != -1) {
-			pSVar5 = GetStateCfg(iVar8);
-			uVar4 = pSVar5->flags_0x4;
-		}
-
-		if ((uVar4 & 0x800) != 0) {
-			iVar8 = this->actorState;
-			uVar4 = 0;
-
-			if (iVar8 != -1) {
-				pSVar5 = GetStateCfg(iVar8);
-				uVar4 = pSVar5->flags_0x4;
-			}
-
-			if (((uVar4 & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
+		if ((GetStateFlags(this->actorState) & 0x800) != 0) {
+			if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
 				IMPLEMENTATION_GUARD(
 				/* WARNING: Load size is inaccurate */
 				if (*pMsgParam == 0) {
@@ -583,16 +543,9 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 			}
 		}
 
-		iVar8 = this->actorState;
-		uVar4 = 0;
-		if (iVar8 != -1) {
-			pSVar5 = GetStateCfg(iVar8);
-			uVar4 = pSVar5->flags_0x4;
-		}
-
 		/* WARNING: Load size is inaccurate */
 		IMPLEMENTATION_GUARD(
-		if (((((uVar4 & 0x800) != 0) && ((this->field_0x350->flags & 0x10) != 0)) &&
+		if (((((GetStateFlags(this->actorState) & 0x800) != 0) && ((this->field_0x350->flags & 0x10) != 0)) &&
 			(this->actorState == 0x10)) && (*pMsgParam == 0)) {
 			pTVar7 = GetTimer();
 			this->field_0x404 = this->field_0x404 + pTVar7->cutsceneDeltaTime;
@@ -603,29 +556,16 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 	if (msg != 0x22) {
 		if (msg == 3) {
-			iVar8 = this->actorState;
-			uVar4 = 0;
-			if (iVar8 != -1) {
-				pSVar5 = GetStateCfg(iVar8);
-				uVar4 = pSVar5->flags_0x4;
-			}
-			if ((uVar4 & 0x800) != 0) {
+			if ((GetStateFlags(this->actorState) & 0x800) != 0) {
 				SetState(0xd, -1);
 				return 1;
 			}
 		}
 		else {
 			if (msg == 2) {
-				iVar8 = this->actorState;
-				uVar4 = 0;
-				if (iVar8 != -1) {
-					pSVar5 = GetStateCfg(iVar8);
-					uVar4 = pSVar5->flags_0x4;
-				}
-
 				_msg_hit_param* pHitMsgParam = (_msg_hit_param*)pMsgParam;
 
-				if ((uVar4 & 0x800) != 0) {
+				if ((GetStateFlags(this->actorState) & 0x800) != 0) {
 					if (pHitMsgParam->projectileType == 3) {
 						if (((this->field_0x350->flags & 0x10) != 0) && (this->actorState == 0x10)) {
 							local_10.x = this->currentLocation.x;
@@ -642,13 +582,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 					}
 
 					if (pHitMsgParam->projectileType == 4) {
-						iVar8 = this->actorState;
-						uVar4 = 0;
-						if (iVar8 != -1) {
-							pSVar5 = GetStateCfg(iVar8);
-							uVar4 = pSVar5->flags_0x4;
-						}
-						if (((uVar4 & 0x1000) != 0) && ((this->field_0x350->flags & 0x20000) != 0)) {
+						if (((GetStateFlags(this->actorState) & 0x1000) != 0) && ((this->field_0x350->flags & 0x20000) != 0)) {
 							return 0;
 						}
 					}
@@ -679,37 +613,17 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 			}
 			else {
 				if (msg == 1) {
-					iVar8 = this->actorState;
-					uVar4 = 0;
-					if (iVar8 != -1) {
-						pSVar5 = GetStateCfg(iVar8);
-						uVar4 = pSVar5->flags_0x4;
-					}
-					if ((uVar4 & 0x800) != 0) {
+					if ((GetStateFlags(this->actorState) & 0x800) != 0) {
 						return 1;
 					}
 				}
 				else {
 					if (msg == MESSAGE_GET_ACTION) {
-						iVar8 = this->actorState;
-						uVar4 = 0;
-						if (iVar8 != -1) {
-							pSVar5 = GetStateCfg(iVar8);
-							uVar4 = pSVar5->flags_0x4;
-						}
-
-						if (((uVar4 & 0x2000) == 0) || ((this->field_0x350->flags & 0x10) == 0)) {
+						if (((GetStateFlags(this->actorState) & 0x2000) == 0) || ((this->field_0x350->flags & 0x10) == 0)) {
 							return 0;
 						}
 
-						iVar8 = this->actorState;
-						uVar4 = 0;
-						if (iVar8 != -1) {
-							pSVar5 = GetStateCfg(iVar8);
-							uVar4 = pSVar5->flags_0x4;
-						}
-
-						if ((uVar4 & 0x4000) == 0) {
+						if ((GetStateFlags(this->actorState) & 0x4000) == 0) {
 							fVar9 = pSender->SV_GetCosAngle2D(&this->currentLocation);
 							if (fVar9 <= 0.64265704f) {
 								return 0;
@@ -734,14 +648,7 @@ int CActorProjectile::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	}
 
 	if (pSender->pAnimationController != (CAnimation*)0x0) {
-		iVar8 = this->actorState;
-		uVar4 = 0;
-		if (iVar8 != -1) {
-			pSVar5 = GetStateCfg(iVar8);
-			uVar4 = pSVar5->flags_0x4;
-		}
-
-		if (((uVar4 & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
+		if (((GetStateFlags(this->actorState) & 0x2000) != 0) && ((this->field_0x350->flags & 0x10) != 0)) {
 			this->field_0x3fc = pSender;
 			SetState(0x10, -1);
 			return 1;
@@ -1753,16 +1660,7 @@ float CActorProjectile::GetTimeToExplode()
 	float fVar4;
 
 	fVar4 = 3.402823e+38f;
-
-	iVar1 = this->actorState;
-	if (iVar1 == -1) {
-		uVar3 = 0;
-	}
-	else {
-		uVar3 = GetStateCfg(iVar1)->flags_0x4;
-	}
-
-	if (((uVar3 & 0x800) != 0) && (fVar4 = this->timeToExplode, fVar4 < 0.0f)) {
+	if (((GetStateFlags(this->actorState) & 0x800) != 0) && (fVar4 = this->timeToExplode, fVar4 < 0.0f)) {
 		fVar4 = 1e-20f;
 	}
 

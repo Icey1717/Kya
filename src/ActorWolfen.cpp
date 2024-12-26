@@ -3368,35 +3368,6 @@ bool CActorWolfen::FUN_0035f1e0(CActorsTable* pTable, edF32VECTOR4* pPosition)
 	return true;
 }
 
-int CActorWolfen::FUN_0030a6a0()
-{
-	Timer* pTVar1;
-	int iVar2;
-	float fVar3;
-	float fVar4;
-	float fVar5;
-
-	iVar2 = -1;
-	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
-		pTVar1 = GetTimer();
-		fVar3 = this->field_0x478 + pTVar1->cutsceneDeltaTime;
-		this->field_0x478 = fVar3;
-		if (0.15f < fVar3) {
-			iVar2 = 4;
-			this->field_0x6a0 = this->dynamic.velocityDirectionEuler;
-			this->field_0x6b0 = this->dynamic.linearAcceleration;
-			this->field_0x684 = 1;
-			this->field_0x7a0 = g_xVector;
-			this->field_0x7b4 = 0.0f;
-		}
-	}
-	else {
-		this->field_0x478 = 0.0f;
-	}
-
-	return iVar2;
-}
-
 int CActorWolfen::GetState_00174190()
 {
 	int newState;
