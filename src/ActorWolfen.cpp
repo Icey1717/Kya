@@ -1337,6 +1337,18 @@ CPathFinderClient* CActorWolfen::GetPathfinderClientAlt()
 	return &pathFinderClient;
 }
 
+bool CActorWolfen::Func_0x19c()
+{
+	bool uVar1;
+
+	uVar1 = false;
+	if (this->pInputAnalyser != (CInputAnalyser*)0x0) {
+		uVar1 = CActorFighter::Func_0x19c();
+	}
+
+	return uVar1;
+}
+
 void CActorWolfen::SetCombatMode(EEnemyCombatMode newCombatMode)
 {
 	if (this->combatMode_0xb7c != newCombatMode) {

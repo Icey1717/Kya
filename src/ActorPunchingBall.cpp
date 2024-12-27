@@ -204,7 +204,16 @@ StateConfig* CActorPunchingBall::GetStateCfg(int state)
 
 uint CActorPunchingBall::GetBehaviourFlags(int state)
 {
-	IMPLEMENTATION_GUARD();
+	uint behaviourFlags;
+
+	if (state < 7) {
+		behaviourFlags = CActorFighter::GetBehaviourFlags(state);
+	}
+	else {
+		behaviourFlags = 0;
+	}
+
+	return behaviourFlags;
 }
 
 void CActorPunchingBall::UpdatePostAnimEffects()

@@ -762,6 +762,9 @@ void ed3DHierarchyNodeSetAlpha(edNODE* pNode, byte alpha);
 
 ed_3D_Scene* ed3DGetScene(int index);
 
+void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier);
+void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod);
+
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
 #endif

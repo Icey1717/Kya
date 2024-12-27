@@ -13631,3 +13631,17 @@ ed_3D_Scene* ed3DGetScene(int index)
 {
 	return g_CameraPanStaticMasterArray_00451630[index];
 }
+
+void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier)
+{
+	pHier->base.flags_0x9e = pHier->base.flags_0x9e & 0xff7f;
+	pHier->base.desiredLod = 0xff;
+	return;
+}
+
+void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod)
+{
+	(pNode->base).flags_0x9e = (pNode->base).flags_0x9e | 0x80;
+	(pNode->base).desiredLod = desiredLod;
+	return;
+}

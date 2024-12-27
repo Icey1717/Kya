@@ -27,9 +27,46 @@ struct s_fighter_multiways_anim
 	uint field_0x4;
 };
 
-struct FighterSubObj_40
+struct s_input_pattern
 {
-	FighterSubObj_40();
+	union 
+	{
+		struct
+		{
+			byte field_0x0byte;
+			byte field_0x1byte;
+			byte field_0x2byte;
+			byte field_0x3byte;
+		};
+
+		struct
+		{
+			ushort field_0x0ushort;
+			ushort field_0x2ushort;
+		};
+
+		uint field_0x0uint;
+	};
+
+	uint field_0x4;
+};
+
+struct s_fighter_combo
+{
+	undefined4 field_0x0;
+	short field_0x4;
+	short field_0x6;
+	float field_0x8;
+	float field_0xc;
+	s_input_pattern field_0x10;
+	undefined4 field_0x18;
+	void* field_0x1c;
+	uint field_0x20;
+};
+
+struct CInputAnalyser
+{
+	CInputAnalyser();
 
 	undefined4 field_0x0;
 	undefined4 field_0x4;
@@ -39,9 +76,9 @@ struct FighterSubObj_40
 	edF32VECTOR4 field_0x10;
 	undefined4 field_0x20;
 
-	uint field_0x30;
-	undefined4 field_0x34;
-	undefined4 field_0x38;
+	uint flags;
+	s_fighter_combo* field_0x34;
+	s_fighter_combo* field_0x38;
 };
 
 class StaticMeshComponentAdvanced : public StaticMeshComponent
@@ -284,29 +321,14 @@ struct s_fighter_grab_react
 	uint field_0x8;
 };
 
-struct s_fighter_combo
-{
-	undefined4 field_0x0;
-	short field_0x4;
-	short field_0x6;
-	float field_0x8;
-	float field_0xc;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	byte field_0x13;
-	uint field_0x14;
-	undefined4 field_0x18;
-	void* field_0x1c;
-	uint field_0x20;
-};
-
 class CActorWeapon;
 
 class CFighterExcludedTable
 {
 public:
 	CFighterExcludedTable();
+
+	void EmptyByTime(float time);
 
 	undefined4 field_0x0;
 };
@@ -323,6 +345,7 @@ public:
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Init();
 	virtual void Term();
+	virtual void Manage();
 	virtual void Reset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
@@ -349,7 +372,10 @@ public:
 	virtual edF32VECTOR4* GetAdversaryPos();
 	virtual int Func_0x18c();
 	virtual void Func_0x194(float param_1);
-	virtual int UpdateFightCommand();
+	virtual void UpdateFightCommand();
+	virtual bool Func_0x19c();
+	virtual bool Func_0x1a0();
+	virtual bool Func_0x1a4();
 	virtual bool Func_0x1a8();
 	virtual void _Std_GetPossibleExit();
 	virtual void _Ride_GetPossibleExit();
@@ -400,6 +426,8 @@ public:
 	uint FUN_0031b4d0(int state);
 	int FUN_0030a6a0();
 
+	void UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int param_3);
+
 	CActorFighter* pAdversary;
 	CActorFighter* field_0x354;
 	edF32VECTOR4 logicalPosition;
@@ -439,7 +467,7 @@ public:
 		byte flags[4];
 	} field_0x448;
 
-	FighterSubObj_40* field_0x470;
+	CInputAnalyser* pInputAnalyser;
 
 	float field_0x478;
 
@@ -447,6 +475,7 @@ public:
 	edF32VECTOR4 field_0x4b0;
 
 	undefined4 field_0x44c;
+	undefined4 field_0x450;
 
 	undefined4 field_0x474;
 	float field_0x47c;

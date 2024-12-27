@@ -145,10 +145,9 @@ public:
 	virtual edF32VECTOR4* GetAdversaryPos();
 	virtual int Func_0x18c();
 	virtual void Func_0x194(float param_1);
-	virtual int UpdateFightCommand();
+	virtual void UpdateFightCommand();
+	virtual bool Func_0x1a4();
 	virtual void _Proj_GetPossibleExit();
-
-	int FUN_00309b20(CPlayerInput* pPlayerInput, int param_3);
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
 	bool AccomplishAction(int bUpdateActiveActionId);

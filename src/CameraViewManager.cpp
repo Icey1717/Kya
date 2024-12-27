@@ -904,28 +904,6 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 	return fVar4 * fVar2;
 }
 
-void edF32Matrix4TransposeHard(edF32MATRIX4* m0)
-{
-	edF32MATRIX4 m1 = *m0;
-	m0->aa = m1.aa;
-	m0->ab = m1.ba;
-	m0->ac = m1.ca;
-	m0->ad = m1.da;
-	m0->ba = m1.ab;
-	m0->bb = m1.bb;
-	m0->bc = m1.cb;
-	m0->bd = m1.db;
-	m0->ca = m1.ac;
-	m0->cb = m1.bc;
-	m0->cc = m1.cc;
-	m0->cd = m1.dc;
-	m0->da = m1.ad;
-	m0->db = m1.bd;
-	m0->dc = m1.cd;
-	m0->dd = m1.dd;
-	return;
-}
-
 void CCameraManager::ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0)
 {
 	float* pfVar1;

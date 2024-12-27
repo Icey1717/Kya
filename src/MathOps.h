@@ -68,6 +68,8 @@ void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0);
 
 void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0);
 
+void edF32Matrix4TransposeHard(edF32MATRIX4* m0);
+
 void edF32Matrix4MulF32Vector4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0, edF32VECTOR4* v1);
 
 void BuildMatrixFromNormalAndSpeed(edF32MATRIX4* m0, edF32VECTOR4* v0, edF32VECTOR4* v1);

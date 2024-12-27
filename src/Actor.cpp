@@ -2942,13 +2942,6 @@ edF32VECTOR4* CActor::GetTopPosition()
 	return pTopPosition;
 }
 
-void ed3DUnLockLOD(ed_3d_hierarchy* pHier)
-{
-	pHier->flags_0x9e = pHier->flags_0x9e & 0xff7f;
-	pHier->desiredLod = 0xff;
-	return;
-}
-
 void CActor::CinematicMode_Leave(int behaviourId)
 {
 	CCollision* pCVar1;
@@ -2968,7 +2961,7 @@ void CActor::CinematicMode_Leave(int behaviourId)
 
 	peVar2 = this->p3DHierNode;
 	if (peVar2 != (ed_3d_hierarchy_node*)0x0) {
-		ed3DUnLockLOD((ed_3d_hierarchy*)peVar2);
+		ed3DUnLockLOD(peVar2);
 	}
 
 	uVar3 = this->flags;

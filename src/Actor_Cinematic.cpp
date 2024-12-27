@@ -544,13 +544,6 @@ void CBehaviourCinematic::End(int newBehaviourId)
 	return;
 }
 
-void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod)
-{
-	(pNode->base).flags_0x9e = (pNode->base).flags_0x9e | 0x80;
-	(pNode->base).desiredLod = desiredLod;
-	return;
-}
-
 void CBehaviourCinematic::Manage()
 {
 	ed_3d_hierarchy_node* peVar1;

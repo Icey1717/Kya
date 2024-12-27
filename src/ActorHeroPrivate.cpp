@@ -15813,9 +15813,15 @@ void CActorHeroPrivate::Func_0x194(float param_1)
 	return;
 }
 
-int CActorHeroPrivate::UpdateFightCommand()
+void CActorHeroPrivate::UpdateFightCommand()
 {
-	return FUN_00309b20(this->pPlayerInput, this->field_0x18dc != 0 ^ 1);
+	UpdateFightCommandInternal(this->pPlayerInput, this->field_0x18dc != 0 ^ 1);
+	return;
+}
+
+bool CActorHeroPrivate::Func_0x1a4()
+{
+	return this->heroActionParams.actionId == 0;
 }
 
 void CActorHeroPrivate::_Proj_GetPossibleExit()
@@ -15825,16 +15831,6 @@ void CActorHeroPrivate::_Proj_GetPossibleExit()
 	}
 
 	return;
-}
-
-int CActorHeroPrivate::FUN_00309b20(CPlayerInput* pPlayerInput, int param_3)
-{
-	if (this->field_0x470 == (FighterSubObj_40*)0x0) {
-		return 0;
-	}
-
-	IMPLEMENTATION_GUARD_LOG();
-	return 0;
 }
 
 void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)

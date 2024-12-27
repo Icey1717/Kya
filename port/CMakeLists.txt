@@ -22,7 +22,7 @@ add_subdirectory("ext/readerwriterqueue")
 add_subdirectory("pcsx2/VU")
 
 add_subdirectory("Windows/Renderer")
-add_subdirectory("Texture")
+add_subdirectory("KyaTexture")
 add_subdirectory("Mesh")
 
 set(SOURCES 

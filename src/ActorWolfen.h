@@ -431,6 +431,9 @@ public:
 	virtual CPathFinderClient* GetPathfinderClient();
 	virtual CPathFinderClient* GetPathfinderClientAlt();
 
+	// CActorFighter
+	virtual bool Func_0x19c();
+
 	void SetCombatMode(EEnemyCombatMode newCombatMode);
 	uint GetStateWolfenFlags(int state);
 
