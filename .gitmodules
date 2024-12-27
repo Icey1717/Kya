@@ -34,6 +34,6 @@
 [submodule "port/KyaTexture"]
 	path = port/KyaTexture
 	url = https://github.com/Icey1717/KyaTexture
-[submodule "port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload"]
+[submodule "KyaTextureUpload"]
 	path = port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload
 	url = https://github.com/Icey1717/TextureUpload.git
