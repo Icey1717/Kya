@@ -748,7 +748,7 @@ void CBehaviourSwitchTarget::Manage()
 			edF32Vector4ScaleHard(this->field_0x14, &sStack32, &sStack32);
 			edF32Vector4AddHard(&sStack32, &pSwitch->baseLocation, &sStack32);
 			CActor::SV_UpdatePosition_Rel((CActor*)pSwitch, &sStack32, 1, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
-			if (ABS(this->field_0x8) <= ABS(this->field_0x14)) {
+			if (fabs(this->field_0x8) <= fabs(this->field_0x14)) {
 				if (0.0 <= this->field_0x8) {
 					puVar2 = (undefined*)0x3f800000;
 				}

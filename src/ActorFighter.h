@@ -14,6 +14,7 @@
 #define FIGHTER_BEHAVIOUR_SLAVE		0x6
 
 #define FIGHTER_DEFAULT_STATE_IDLE 0x6
+#define FIGHTER_DEFAULT_STATE_RUN 0x9
 
 struct s_fighter_anatomy_zones
 {
@@ -67,14 +68,14 @@ struct s_fighter_combo
 struct CInputAnalyser
 {
 	CInputAnalyser();
+	void _CumulateDirections(CPlayerInput* pInput, edF32VECTOR4* pDir);
+	int Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 
-	undefined4 field_0x0;
-	undefined4 field_0x4;
-	undefined4 field_0x8;
-	undefined4 field_0xc;
+	s_input_pattern field_0x0;
+	s_input_pattern field_0x8;
 
 	edF32VECTOR4 field_0x10;
-	undefined4 field_0x20;
+	uint lastStickDirFlags;
 
 	uint flags;
 	s_fighter_combo* field_0x34;
@@ -333,6 +334,29 @@ public:
 	undefined4 field_0x0;
 };
 
+
+struct s_fighter_action
+{
+	union
+	{
+		struct
+		{
+			byte field_0x0;
+			byte field_0x1;
+			byte field_0x2;
+			byte field_0x3;
+		};
+
+		uint all;
+	};
+};
+
+struct s_fighter_action_param
+{
+	edF32VECTOR4* field_0x0;
+	uint field_0x4;
+};
+
 class CActorFighter : public CActorAutonomous
 {
 public:
@@ -377,13 +401,18 @@ public:
 	virtual bool Func_0x1a0();
 	virtual bool Func_0x1a4();
 	virtual bool Func_0x1a8();
+	virtual bool Func_0x1ac();
+	virtual void _Execute_Std(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	virtual void _Std_GetPossibleExit();
+	virtual void _StateFighterRun(CActorsTable* pTable);
 	virtual void _Ride_GetPossibleExit();
 	virtual void _Hold_GetPossibleExit();
 	virtual void _Proj_GetPossibleExit();
 
 	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();
+
+	void RunInternal(float param_1, edF32VECTOR4* pRotation);
 
 	void SetAdversary(CActorFighter* pNewAdversary);
 
@@ -425,6 +454,11 @@ public:
 	bool FUN_0031b790(int state);
 	uint FUN_0031b4d0(int state);
 	int FUN_0030a6a0();
+	bool FUN_003175e0(s_fighter_action* pFighterAction, float* param_3);
+	bool FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
+
+	bool _ValidateCommand(s_fighter_action* pActionA, s_fighter_action* pActionB);
+	void _SetRelativeSpeedOnGround(float speed, edF32VECTOR4* pDirection);
 
 	void UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int param_3);
 
@@ -458,7 +492,6 @@ public:
 	float field_0x42c;
 
 	float field_0x440;
-
 	uint field_0x444;
 
 	union
@@ -467,6 +500,10 @@ public:
 		byte flags[4];
 	} field_0x448;
 
+	s_fighter_action_param field_0x454;
+	float field_0x45c;
+	edF32VECTOR4 field_0x460;
+
 	CInputAnalyser* pInputAnalyser;
 
 	float field_0x478;
@@ -474,14 +511,32 @@ public:
 	edF32VECTOR4 field_0x4a0;
 	edF32VECTOR4 field_0x4b0;
 
-	undefined4 field_0x44c;
-	undefined4 field_0x450;
+	union 
+	{
+		struct {
+			byte field_0x44c;
+			byte field_0x44d;
+			byte field_0x44e;
+			byte field_0x44f;
+		};
+
+		uint field_0x44cuint;
+	};
+
+	s_fighter_action field_0x450;
 
 	undefined4 field_0x474;
 	float field_0x47c;
 	int field_0x480;
 
+	float field_0x4cc;
+
+	edF32VECTOR4 field_0x4d0;
+	edF32VECTOR4 field_0x4e0;
+
 	float field_0x4f0;
+	float field_0x4f4;
+	float field_0x4f8;
 
 	float field_0x504;
 	float field_0x50c;
@@ -521,6 +576,7 @@ public:
 	edF32VECTOR4 field_0x6a0;
 	float field_0x6b0;
 	int field_0x6b8;
+	float field_0x6bc;
 
 	s_fighter_multiways_anim field_0x730;
 
@@ -597,9 +653,11 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SetInitialState();
-	virtual int Execute();
+	virtual bool Execute(s_fighter_action* param_2, s_fighter_action_param* param_3);
 	virtual void _ManageHit();
 	virtual void _ManageExit();
+
+	bool Conditional_Execute(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
 
 	CActorFighter* pOwner;
 	int behaviourId;
@@ -626,7 +684,7 @@ class CBehaviourFighterProjected : public CBehaviourFighter
 	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
-	virtual int Execute();
+	virtual bool Execute(s_fighter_action* param_2, s_fighter_action_param* param_3);
 	virtual void _ManageHit();
 
 	void _ComputeDynamics();

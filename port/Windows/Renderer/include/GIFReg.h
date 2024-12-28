@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include "delegate.h"
 
 namespace GIFReg
 {

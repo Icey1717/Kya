@@ -19,8 +19,10 @@ struct AnimKeySomething {
 			float field_0x18;
 			float field_0x1c;
 			float field_0x20;
+			float field_0x24;
+			float field_0x28;
 		};
-		float field_0xc_array[6];
+		float field_0xc_array[8];
 	};
 };
 

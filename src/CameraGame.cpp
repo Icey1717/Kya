@@ -54,8 +54,8 @@ bool CameraVectorBase::FUN_002bf570(CCameraGame* pCamera)
 	if (1 < this->cameraNum) {
 		edF32Vector4SubHard(&eStack48, this->aCameraLocations + 1, this->aCameraLocations);
 		edF32Vector4SubHard(&eStack64, this->aCameraLocations + 2, this->aCameraLocations + 1);
-		GetAnglesFromVector(&local_10, &eStack48);
-		GetAnglesFromVector(&local_20, &eStack64);
+		GetAnglesFromVector(&local_10.xyz, &eStack48);
+		GetAnglesFromVector(&local_20.xyz, &eStack64);
 		fVar4 = edF32GetAnglesDelta(local_10.x, local_20.x);
 		fVar5 = edF32GetAnglesDelta(local_10.y, local_20.y);
 		in_f0 = fVar5;
@@ -187,8 +187,8 @@ void CameraVectorBase::FUN_002bfc60()
 		edF32Vector4SubHard(&eStack48, this->aCameraLocations + 1, this->aCameraLocations + 0);
 		edF32Vector4AddHard(&eStack64, this->aCameraLocations + 2, &this->field_0x410);
 		edF32Vector4SubHard(&eStack64, &eStack64, this->aCameraLocations + 1);
-		GetAnglesFromVector(&local_10, &eStack48);
-		GetAnglesFromVector(&local_20, &eStack64);
+		GetAnglesFromVector(&local_10.xyz, &eStack48);
+		GetAnglesFromVector(&local_20.xyz, &eStack64);
 		fVar1 = edF32GetAnglesDelta(local_10.x, local_20.x);
 		this->field_0x428 = fVar1;
 		fVar1 = edF32GetAnglesDelta(local_10.y, local_20.y);
@@ -1925,8 +1925,8 @@ void CCameraGame::_UpdateAngleAlphaData()
 				this->targetPitch = calculatedPitch;
 			}
 
-			puVar12 = sinf(pitch) / cosf(pitch) / 2.414f; //((edFCosinus[(int)(ABS((pitch - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
-					//edFCosinus[(int)(ABS(pitch * 1303.797) + 0.5) & 0x1fff]) / 2.414);
+			puVar12 = sinf(pitch) / cosf(pitch) / 2.414f; //((edFCosinus[(int)(fabs((pitch - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
+					//edFCosinus[(int)(fabs(pitch * 1303.797) + 0.5) & 0x1fff]) / 2.414);
 
 			if (1.0f < fabs(puVar12)) {
 				if (0.0f <= puVar12) {
@@ -2103,7 +2103,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 						calculatedPitch =
 							edF32Between_Pi(pitch + calculatedPitch * (sinf(fVar11) / cosf(fVar11) / 2.414f) * CCamera::_gpcam_man->time_0x4);
 								//((edFCosinus[(int)(fabs((fVar11 - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
-								//	edFCosinus[(int)(ABS(fVar11 * 1303.797) + 0.5) & 0x1fff]) / 2.414) *
+								//	edFCosinus[(int)(fabs(fVar11 * 1303.797) + 0.5) & 0x1fff]) / 2.414) *
 								//CCamera::_gpcam_man->time_0x4);
 						local_20 = g_xVector;
 						local_30.x = this->transformationMatrix.da;
@@ -2348,8 +2348,8 @@ void CCameraGame::_UpdateAngleBetaData()
 						}
 
 						puVar4 = sinf(fVar3) / cosf(fVar3) / 2.414f;
-							//((edFCosinus[(int)(ABS((fVar3 - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
-							//	edFCosinus[(int)(ABS(fVar3 * 1303.797) + 0.5) & 0x1fff]) / 2.414);
+							//((edFCosinus[(int)(fabs((fVar3 - 1.570796) * 1303.797) + 0.5) & 0x1fff] /
+							//	edFCosinus[(int)(fabs(fVar3 * 1303.797) + 0.5) & 0x1fff]) / 2.414);
 						if (1.0f < fabs(puVar4)) {
 							if (0.0f <= puVar4) {
 								puVar4 = 1.0f;

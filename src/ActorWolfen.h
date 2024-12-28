@@ -433,6 +433,7 @@ public:
 
 	// CActorFighter
 	virtual bool Func_0x19c();
+	virtual bool Func_0x1ac();
 
 	void SetCombatMode(EEnemyCombatMode newCombatMode);
 	uint GetStateWolfenFlags(int state);

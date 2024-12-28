@@ -296,7 +296,7 @@ void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTO
 	return;
 }
 
-void GetAnglesFromVector(edF32VECTOR4* pitchAngles, edF32VECTOR4* velocity)
+void GetAnglesFromVector(edF32VECTOR3* pitchAngles, edF32VECTOR4* velocity)
 {
 	float fVar1;
 
@@ -632,9 +632,9 @@ void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler)
 	}
 	else {
 		fVar1 = rotEuler->y;
-		rotQuat->x = sinf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS((fVar1 - 1.570796) * 1303.797) + 0.5) & 0x1fff];
+		rotQuat->x = sinf(fVar1); //g_FloatSineCurve_00472260[(int)(fabs((fVar1 - 1.570796) * 1303.797) + 0.5) & 0x1fff];
 		rotQuat->y = 0.0f;
-		rotQuat->z = cosf(fVar1); //g_FloatSineCurve_00472260[(int)(ABS(fVar1 * 1303.797) + 0.5) & 0x1fff];
+		rotQuat->z = cosf(fVar1); //g_FloatSineCurve_00472260[(int)(fabs(fVar1 * 1303.797) + 0.5) & 0x1fff];
 		rotQuat->w = 0.0f;
 	}
 	return;
@@ -890,12 +890,12 @@ void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrd
 	cVar2 = rotationOrder[2];
 	iVar5 = cVar2 + -0x58;
 	pfVar6 = &rotatedMatrix[-0x16].aa + *rotationOrder * 4;
-	fVar7 = sinf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(ABS(*rotationAngles * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar11 = cosf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(ABS((*rotationAngles - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar12 = sinf(rotationAngles[1]); //g_FloatSineCurve_00472260[(int)(ABS(rotationAngles[1] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar10 = cosf(rotationAngles[1]); //g_FloatSineCurve_00472260 [(int)(ABS((rotationAngles[1] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar8 = sinf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(ABS(rotationAngles[2] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
-	fVar9 = cosf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(ABS((rotationAngles[2] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar7 = sinf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(fabs(*rotationAngles * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar11 = cosf(rotationAngles[0]); //g_FloatSineCurve_00472260[(int)(fabs((*rotationAngles - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar12 = sinf(rotationAngles[1]); //g_FloatSineCurve_00472260[(int)(fabs(rotationAngles[1] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar10 = cosf(rotationAngles[1]); //g_FloatSineCurve_00472260 [(int)(fabs((rotationAngles[1] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar8 = sinf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(fabs(rotationAngles[2] * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
+	fVar9 = cosf(rotationAngles[2]); //g_FloatSineCurve_00472260[(int)(fabs((rotationAngles[2] - M_PI_2f) * g_ScalingFactor_00448518) + 0.5) & 0x1fff];
 	pfVar6[iVar3] = fVar12 * fVar8;
 	pfVar6[iVar4] = fVar12 * fVar9;
 	pfVar6[iVar5] = -fVar10;

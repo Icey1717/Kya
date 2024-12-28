@@ -1349,6 +1349,11 @@ bool CActorWolfen::Func_0x19c()
 	return uVar1;
 }
 
+bool CActorWolfen::Func_0x1ac()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CActorWolfen::SetCombatMode(EEnemyCombatMode newCombatMode)
 {
 	if (this->combatMode_0xb7c != newCombatMode) {
@@ -3949,7 +3954,7 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 			local_9c = pCVar1->currentLocation.y + pCVar1->field_0xcf0;
 			CActor::SV_GetActorColCenter(pSender, &local_b0);
 			if (((local_a0 - local_b0.x) * (local_a0 - local_b0.x) + (local_98 - local_b0.z) * (local_98 - local_b0.z) <
-				*(float*)&pCVar1->field_0xc84) && (ABS(local_9c - local_b0.y) < *(float*)&pCVar1->field_0xc88)) {
+				*(float*)&pCVar1->field_0xc84) && (fabs(local_9c - local_b0.y) < *(float*)&pCVar1->field_0xc88)) {
 				bVar2 = true;
 			}
 		}
@@ -4071,7 +4076,7 @@ edF32VECTOR4* CBehaviourWolfen::GetComeBackAngles()
 		pActor->SV_ComputeDiffMatrixFromInit(&eStack64);
 		SetVectorFromAngles(&eStack80, &this->rotationEuler.xyz);
 		edF32Matrix4MulF32Vector4Hard(&eStack80, &eStack64, &eStack80);
-		GetAnglesFromVector(&this->comeBackAngles, &eStack80);
+		GetAnglesFromVector(&this->comeBackAngles.xyz, &eStack80);
 		(this->comeBackAngles).w = 0.0f;
 	}
 

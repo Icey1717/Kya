@@ -141,7 +141,7 @@ bool CCameraFixePerso::Manage()
 		edF32Vector4SubHard(&eStack16, &this->lookAt, &this->transformationMatrix.rowT);
 		fVar5 = edF32Vector4NormalizeHard(&eStack16, &eStack16);
 		SetDistance(fVar5);
-		GetAnglesFromVector(&local_20, &eStack16);
+		GetAnglesFromVector(&local_20.xyz, &eStack16);
 		SetAngleAlpha(local_20.x);
 		SetAngleBeta(local_20.y);
 

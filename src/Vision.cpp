@@ -31,10 +31,10 @@ void CVision::Create(CActor* pOwner, ByteCode* pByteCode)
 	fVar2 = fVar3 * 0.5f * 0.01745329f;
 	this->flags = 0;
 	this->field_0x30 = fVar2;
-	this->field_0x44 = cosf(fVar2); // edFCosinus[(int)(ABS(fVar2 * 1303.797) + 0.5) & 0x1fff];
+	this->field_0x44 = cosf(fVar2); // edFCosinus[(int)(fabs(fVar2 * 1303.797) + 0.5) & 0x1fff];
 	this->field_0x3c = this->field_0x3c;
 	fVar2 = 1.570796f - this->field_0x30;
-	this->field_0x40 = this->field_0x3c * sinf(fVar2) / cosf(fVar2); // (edFCosinus[(int)(ABS((fVar2 - 1.570796) * 1303.797) + 0.5) & 0x1fff] / edFCosinus[(int)(ABS(fVar2 * 1303.797) + 0.5) & 0x1fff]);
+	this->field_0x40 = this->field_0x3c * sinf(fVar2) / cosf(fVar2); // (edFCosinus[(int)(fabs((fVar2 - 1.570796) * 1303.797) + 0.5) & 0x1fff] / edFCosinus[(int)(fabs(fVar2 * 1303.797) + 0.5) & 0x1fff]);
 	this->pActor_0x48 = (CActor*)0x0;
 	//this->field_0x4c = 0;
 	//this->field_0x54 = 0;

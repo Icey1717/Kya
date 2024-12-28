@@ -838,7 +838,7 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 			IMPLEMENTATION_GUARD(
 			local_10.x = (this->field_0x480).field_0x0.x *
 				edFCosinus
-				[(int)(ABS((this->field_0x4b0 * (this->field_0x480).field_0x10.x - 1.570796) * 1303.797) + 0.5) &
+				[(int)(fabs((this->field_0x4b0 * (this->field_0x480).field_0x10.x - 1.570796) * 1303.797) + 0.5) &
 				0x1fff];)
 		}
 
@@ -853,7 +853,7 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 			IMPLEMENTATION_GUARD(
 			local_10.y = (this->field_0x480).field_0x0.y *
 				edFCosinus
-				[(int)(ABS((this->field_0x4b0 * (this->field_0x480).field_0x10.y - 1.570796) * 1303.797) + 0.5) &
+				[(int)(fabs((this->field_0x4b0 * (this->field_0x480).field_0x10.y - 1.570796) * 1303.797) + 0.5) &
 				0x1fff];)
 		}
 
@@ -868,7 +868,7 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 			IMPLEMENTATION_GUARD(
 			local_10.z = (this->field_0x480).field_0x0.z *
 				edFCosinus
-				[(int)(ABS((this->field_0x4b0 * (this->field_0x480).field_0x10.z - 1.570796) * 1303.797) + 0.5) &
+				[(int)(fabs((this->field_0x4b0 * (this->field_0x480).field_0x10.z - 1.570796) * 1303.797) + 0.5) &
 				0x1fff];)
 		}
 
@@ -1691,7 +1691,7 @@ void CameraSet3DPos(edFCamera* pCamera)
 	rowDiffVector.z = (pCamera->position).z - (pCamera->lookAt).z;
 	rowDiffVector.w = (pCamera->position).w - (pCamera->lookAt).w;
 	edF32Vector4NormalizeHard(&rowDiffVector, &rowDiffVector);
-	GetAnglesFromVector(&rotationVector, &rowDiffVector);
+	GetAnglesFromVector(&rotationVector.xyz, &rowDiffVector);
 	if (pCamera->rotationZ != 0.0) {
 		edF32Matrix4RotateZHard(pCamera->rotationZ, &transformedMatrix, &transformedMatrix);
 	}

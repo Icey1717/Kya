@@ -909,7 +909,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		edF32Vector4NormalizeHard(&local_30, &local_30);
 		pTrap = this->pOwner;
 		pTrap->rotationQuat = local_30;
-		GetAnglesFromVector(&this->pOwner->rotationEuler, &this->pOwner->rotationQuat);
+		GetAnglesFromVector(&this->pOwner->rotationEuler.xyz, &this->pOwner->rotationQuat);
 		break;
 	case 9:
 		if (this->pCaughtActor->typeID == 6) {

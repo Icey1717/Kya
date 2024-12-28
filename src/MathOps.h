@@ -34,7 +34,7 @@ void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1);
 void edF32Vector4SubHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 void edF32Vector4CrossProductHard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 
-void GetAnglesFromVector(edF32VECTOR4* pitchAngles, edF32VECTOR4* v0);
+void GetAnglesFromVector(edF32VECTOR3* pitchAngles, edF32VECTOR4* v0);
 
 void edF32Matrix4RotateXHard(float angle, edF32MATRIX4* m0, edF32MATRIX4* m1);
 void edF32Matrix4RotateYHard(float angle, edF32MATRIX4* outputMatrix, edF32MATRIX4* inputMatrix);

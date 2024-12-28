@@ -377,7 +377,7 @@ int CActorMicken::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					}
 					else {
 						bVar4 = true;
-						if (0.17398384f <= ABS(*(float*)((int)pMsgParam + 4))) {
+						if (0.17398384f <= fabs(*(float*)((int)pMsgParam + 4))) {
 							bVar4 = false;
 						}
 					}

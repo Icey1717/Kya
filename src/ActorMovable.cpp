@@ -272,7 +272,7 @@ bool CActorMovable::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 		local_40.y = 0.0f;
 		edF32Vector4SafeNormalize1Hard(&local_40, &local_40);
 		this->rotationQuat = local_40;
-		GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+		GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
 	}
 	else {
 		edF32Matrix4FromEulerSoft(&eStack128, &this->rotationEuler.xyz, "XYZ");

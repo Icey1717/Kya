@@ -2781,7 +2781,7 @@ void CActor::SV_LookTo(CActorParamsOut* pActorParamsOut, CActorParamsIn* pActorP
 
 				this->rotationQuat = local_20;
 
-				GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+				GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
 				pActorParamsOut->flags = pActorParamsOut->flags | (uint)bVar2;
 			}
 		}
@@ -3748,7 +3748,7 @@ bool CActor::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 	local_10.y = 0.0f;
 	edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
 	this->rotationQuat = local_10;
-	GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+	GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
 	edF32Matrix4MulF32Vector4Hard(&eStack32, m0, &this->currentLocation);
 	UpdatePosition(&eStack32, true);
 
@@ -3863,7 +3863,7 @@ bool CActor::SV_UpdateOrientation(float param_1, edF32VECTOR4* pOrientation)
 	}
 
 	this->rotationQuat = localRotation;
-	GetAnglesFromVector(&this->rotationEuler, &this->rotationQuat);
+	GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
 
 	return bSuccess;
 }
@@ -4821,6 +4821,23 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 	(this->field_0x30).y = 0.0f;
 	(this->field_0x30).z = 0.0f;
 	(this->field_0x30).w = 0.0f;
+
+	return;
+}
+
+void CScalarDyn::BuildFromSpeedTime(float param_1, float param_2, float param_3)
+{
+	this->field_0xc = param_1;
+	this->field_0x10 = 0.0f;
+	this->field_0x14 = (param_2 - param_1) / param_3;
+	this->field_0x20 = param_1;
+	this->field_0x24 = this->field_0x14;
+	this->flags = 0;
+	this->field_0x4 = 0.0f;
+	this->field_0x18 = 0.0f;
+	this->field_0x1c = 0.0f;
+	this->duration = param_3;
+
 	return;
 }
 
@@ -4833,6 +4850,7 @@ void CScalarDyn::Stop()
 	this->field_0x20 = 0.0f;
 	this->field_0x1c = 0.0f;
 	this->flags = 1;
+
 	return;
 }
 
@@ -4840,6 +4858,8 @@ CAddOn::CAddOn()
 {
 	this->pOwner = (CActor*)0x0;
 	this->field_0x8 = 0;
+
+	return;
 }
 
 bool CActorsTable::IsInList(CActor* pActor)
