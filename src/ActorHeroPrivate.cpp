@@ -5211,6 +5211,7 @@ LAB_00341590:
 	case STATE_HERO_WIND_WALL_MOVE_JUMP:
 	case STATE_HERO_STAND_TO_CROUCH_A:
 	case STATE_HERO_ROLL_2_CROUCH:
+	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
 	case STATE_HERO_WIND_FLY:
 		break;
@@ -5389,6 +5390,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_CROUCH_B:
 	case STATE_HERO_CROUCH_C:
 	case STATE_HERO_ROLL_2_CROUCH:
+	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
 		// Nothing
 		break;
@@ -5763,6 +5765,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		break;
 	case STATE_HERO_ROLL_2_CROUCH:
 		StateHeroRoll2Crouch();
+		break;
+	case STATE_HERO_ROLL_FALL:
+		StateHeroFall(this->airRotationRate, 1);
 		break;
 	case STATE_HERO_HURT_A:
 		StateHeroHit();

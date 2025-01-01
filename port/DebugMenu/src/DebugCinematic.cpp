@@ -4,7 +4,8 @@
 
 #include "CinematicManager.h"
 #include "DebugSetting.h"
-#include "../../../src/TimeController.h"
+#include "TimeController.h"
+#include "Actor.h"
 
 namespace Debug::Cinematic
 {
@@ -19,6 +20,26 @@ namespace Debug::Cinematic
 
 	static void ShowDetails(CCinematic* pCinematic)
 	{
+		if (pCinematic->zoneRefA.index >= 0 && pCinematic->zoneRefA.Get() && ImGui::CollapsingHeader("Zone A")) {
+			ed_zone_3d* pZone = pCinematic->zoneRefA.Get();
+			ImGui::Text("Bounding Sphere: %s", pZone->boundSphere.ToString().c_str());
+			ImGui::Text("Zone Flags: 0x%x", pZone->flags);
+		}
+
+		if (pCinematic->zoneRefB.index >= 0 && pCinematic->zoneRefB.Get() && ImGui::CollapsingHeader("Zone B")) {
+			ed_zone_3d* pZone = pCinematic->zoneRefB.Get();
+			ImGui::Text("Bounding Sphere: %s", pZone->boundSphere.ToString().c_str());
+			ImGui::Text("Zone Flags: 0x%x", pZone->flags);
+		}
+
+		if (pCinematic->zoneRefC.index >= 0 && pCinematic->zoneRefC.Get() && ImGui::CollapsingHeader("Zone C")) {
+			ed_zone_3d* pZone = pCinematic->zoneRefC.Get();
+			ImGui::Text("Bounding Sphere: %s", pZone->boundSphere.ToString().c_str());
+			ImGui::Text("Zone Flags: 0x%x", pZone->flags);
+		}
+
+		ImGui::Text("Trigger Actor: %s", pCinematic->triggerActorRef.index >= 0 ? pCinematic->triggerActorRef.Get()->name : "None");
+
 		if (pCinematic->cineBankLoadStage_0x2b4 == 4 && pCinematic->cinFileData.pCinTag && pCinematic->state != CS_Stopped) {
 			// Play/Pause button
 			if (pCinematic->state != CS_Stopped)
@@ -138,7 +159,7 @@ namespace Debug::Cinematic
 					}
 				}
 
-				ShowDetails(pCinematicManager->ppCinematicObjB_B[selectedCutsceneId]);
+				//ShowDetails(pCinematicManager->ppCinematicObjB_B[selectedCutsceneId]);
 			}
 		}
 
@@ -146,8 +167,8 @@ namespace Debug::Cinematic
 			if (pCinematicManager->activeCinematicCount > 0) {
 				for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
 					auto* pCinematic = pCinematicManager->ppCinematicObjB_B[i];
-					char buffer[256];
-					sprintf(buffer, "Cutscene %d", i);
+					char buffer[512];
+					sprintf(buffer, "%d - %s", i, pCinematic->fileName);
 					if (ImGui::CollapsingHeader(buffer) || pCinematic->state == CS_Playing) {
 						ShowDetails(pCinematic);
 					}

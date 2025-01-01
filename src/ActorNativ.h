@@ -33,7 +33,11 @@ public:
 
 class CBehaviourNativExorcisme : public CBehaviourNativ
 {
-
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
 class CBehaviourNativSeller : public CBehaviourNativ
@@ -143,6 +147,8 @@ public:
 
 	void ChooseBehaviour();
 	void ManageOrientationAndLookingAt();
+
+	void BehaviourExorcisme_Manage();
 
 	void BehaviourNativTakeAndPut_InitState(int newState);
 	void BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBehaviour);

@@ -301,6 +301,7 @@ void CCinematicManager::Level_Manage()
 	this->field_0x38 = 0;
 	this->field_0x40 = 0;
 	this->field_0x6c = 0;
+
 	iVar1 = 0;
 	if (0 < this->activeCinematicCount) {
 		do {
@@ -308,11 +309,13 @@ void CCinematicManager::Level_Manage()
 			iVar1 = iVar1 + 1;
 		} while (iVar1 < this->activeCinematicCount);
 	}
+
 	if ((this->pCinematic != (CCinematic*)0x0) && (this->pCinematic->state == CS_Stopped)) {
 		this->pCinematic = (CCinematic*)0x0;
 		this->field_0x20 = -1;
 		this->field_0x24 = -1;
 	}
+
 	return;
 }
 
@@ -508,7 +511,7 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 										}
 									}
 									else {
-										pCinematic->UsedInCutsceneManagerUpdateB(pActor, 0);
+										pCinematic->TryTriggerCutscene(pActor, 0);
 									}
 								}
 								else {
@@ -521,7 +524,7 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 									}
 									else {
 										if ((messageId == 0xf) && (pCinematic->state == CS_Stopped)) {
-											pCinematic->UsedInCutsceneManagerUpdateB(pActor, 0);
+											pCinematic->TryTriggerCutscene(pActor, 0);
 										}
 									}
 								}
@@ -778,7 +781,7 @@ void CCinematic::Create(ByteCode* pByteCode)
 	this->streamFogDef = *pfVar1;
 
 	this->zoneRefA.index = pByteCode->GetS32();
-	this->actorHeroRef.index = pByteCode->GetS32();
+	this->triggerActorRef.index = pByteCode->GetS32();
 	this->zoneRefB.index = pByteCode->GetS32();
 	this->zoneRefC.index = pByteCode->GetS32();
 	this->actorRefB.index = pByteCode->GetS32();
@@ -950,7 +953,7 @@ void CCinematic::Init()
 	int iVar6;
 
 	zoneRefA.Init();
-	actorHeroRef.Init();
+	triggerActorRef.Init();
 	zoneRefB.Init();
 	zoneRefC.Init();
 	actorRefB.Init();
@@ -1975,19 +1978,21 @@ void CCinematic::Manage()
 	uint soundInfo;
 	bool bVar1;
 	int iVar2;
-	CActorHero* pCVar3;
+	CActor* pTriggerActor;
 	float fVar4;
 
+	// Manage the zone based cutscene trigger
 	ed_zone_3d* pZone = this->zoneRefA.Get();
 
 	if (pZone != (ed_zone_3d*)0x0) {
-		pCVar3 = (CActorHero*)this->actorHeroRef.Get();
-		if (this->actorHeroRef.Get() == (CActorHero*)0x0) {
-			pCVar3 = CActorHero::_gThis;
+		pTriggerActor = this->triggerActorRef.Get();
+		if (this->triggerActorRef.Get() == (CActor*)0x0) {
+			pTriggerActor = CActorHero::_gThis;
 		}
+
+		int computeZoneResult;
 	
-		if ((pCVar3 == (CActorHero*)0x0) ||
-			(iVar2 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pCVar3->currentLocation , 0), iVar2 == 2)) {
+		if ((pTriggerActor == (CActorHero*)0x0) || (computeZoneResult = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pTriggerActor->currentLocation , 0), computeZoneResult == 2)) {
 			this->flags_0x8 = this->flags_0x8 & 0xfffffdff;
 			bVar1 = this->state != CS_Stopped;
 
@@ -1997,8 +2002,8 @@ void CCinematic::Manage()
 			}
 		}
 		else {
-			if ((((this->flags_0x8 & 0x200) == 0) && (this->state == CS_Stopped)) && ((this->flags_0x8 & 0x80) == 0)) {
-				UsedInCutsceneManagerUpdateB((CActor*)0x0, 0);
+			if ((((this->flags_0x8 & 0x200) == 0) && (this->state == CS_Stopped)) && ((this->flags_0x8 & CINEMATIC_FLAG_ACTIVE) == 0)) {
+				TryTriggerCutscene((CActor*)0x0, 0);
 			}
 		}
 	}
@@ -2268,8 +2273,7 @@ void CCinematic::Stop()
 		}
 
 		if (this->prtBuffer == 1) {
-			IMPLEMENTATION_GUARD(
-			CScene::PopFogAndClippingSettings(CScene::_pinstance, &this->streamFogDef);)
+			CScene::_pinstance->PopFogAndClippingSettings(&this->streamFogDef);
 		}
 
 		this->cinFileData.Destroy(this->cinematicLoadObject);
@@ -2796,7 +2800,7 @@ CActor* CCinematic::GetActorByHashcode(uint hashCode)
 	return pFoundActor;
 }
 
-void CCinematic::UsedInCutsceneManagerUpdateB(CActor* pActor, int param_3)
+void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
 {
 	bool bVar1;
 	S_STREAM_NTF_TARGET_SWITCH_LIST* pSVar2;
@@ -2818,14 +2822,14 @@ void CCinematic::UsedInCutsceneManagerUpdateB(CActor* pActor, int param_3)
 			bVar1 = (this->flags_0x8 & 0x28) != 0;
 		}
 
-		bVar1 = (bool)(bVar1 ^ 1);
-		if (!bVar1) {
-			bVar1 = (this->flags_0x8 & 0x800) != 0;
+		bool bShouldTrigger = (bool)(bVar1 ^ 1);
+		if (!bShouldTrigger) {
+			bShouldTrigger = (this->flags_0x8 & 0x800) != 0;
 		}
 
-		if (bVar1) {
+		if (bShouldTrigger) {
 			this->pActor = pActor;
-			this->flags_0x8 = this->flags_0x8 | 0x80;
+			this->flags_0x8 = this->flags_0x8 | CINEMATIC_FLAG_ACTIVE;
 
 			if (this->cineBankLoadStage_0x2b4 != 4) {
 				Load(1);
@@ -3085,9 +3089,8 @@ void CCinematic::PreReset()
 
 	if (((this->flags_0x4 & 0x800) != 0) &&
 		((this->baseB == -1 ||
-			(this->baseB ==
-				CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].sectorStartIndex)))) {
-		UsedInCutsceneManagerUpdateB((CActor*)0x0, 0);
+			(this->baseB == CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].sectorStartIndex)))) {
+		TryTriggerCutscene((CActor*)0x0, 0);
 	}
 
 	if ((this->flags_0x4 & 0x2000000) != 0) {
@@ -3357,7 +3360,7 @@ void CCinematic::FUN_001c7390(bool param_2)
 	int iVar3;
 	long lVar4;
 
-	if ((this->state == CS_Stopped) && ((this->flags_0x8 & 0x80) != 0)) {
+	if ((this->state == CS_Stopped) && ((this->flags_0x8 & CINEMATIC_FLAG_ACTIVE) != 0)) {
 		Start();
 	}
 
@@ -3439,7 +3442,7 @@ void CCinematic::Level_ClearAll()
 		Stop();
 	}
 
-	if (((this->cineBankLoadStage_0x2b4 == 4) && (this->state == CS_Stopped)) && ((this->flags_0x8 & 0x80) == 0)) {
+	if (((this->cineBankLoadStage_0x2b4 == 4) && (this->state == CS_Stopped)) && ((this->flags_0x8 & CINEMATIC_FLAG_ACTIVE) == 0)) {
 		pZone = (this->zoneRefB).Get();
 		bVar1 = false;
 

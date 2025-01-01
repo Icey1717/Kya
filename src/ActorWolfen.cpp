@@ -4872,20 +4872,17 @@ void CBehaviourWolfen::InitState(int newState)
 	float fVar8;
 
 	if (newState == 0x74) {
-		IMPLEMENTATION_GUARD(
-		pCVar4 = this->pOwner;
-		pCVar1 = (pCVar4->base).characterBase.base.base.pAnimationController;
-		pSVar3 = (*((pCVar4->base).characterBase.base.base.pVTable)->GetStateCfg)((CActor*)pCVar4, 0x74);
-		iVar6 = CActor::GetIdMacroAnim((CActor*)pCVar4, pSVar3->animId);
+		pSVar3 = this->pOwner->GetStateCfg(0x74);
+		iVar6 = this->pOwner->GetIdMacroAnim(pSVar3->animId);
 		if (iVar6 < 0) {
-			fVar8 = 0.0;
+			fVar8 = 0.0f;
 			pCVar4 = this->pOwner;
 		}
 		else {
-			fVar8 = CAnimation::GetAnimLength(pCVar1, iVar6, 0);
-			pCVar4 = this->pOwner;
+			fVar8 = this->pOwner->pAnimationController->GetAnimLength(iVar6, 0);
 		}
-		pCVar4->field_0xd18 = fVar8;)
+
+		this->pOwner->field_0xd18 = fVar8;
 	}
 	else {
 		if (newState != WOLFEN_STATE_LOCATE) {

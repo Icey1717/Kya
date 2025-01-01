@@ -22,7 +22,7 @@ public:
 
 	int id;
 	CPathDynamic* pPathDynamic;
-	undefined4 field_0x8;
+	int naviMeshIndex;
 
 	edF32VECTOR4 field_0x10;
 	edF32VECTOR4 field_0x20;

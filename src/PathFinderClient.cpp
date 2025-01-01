@@ -15,7 +15,7 @@ void CPathFinderClient::Init()
 {
 	this->id = -1;
 	this->pPathDynamic = (CPathDynamic*)0x0;
-	this->field_0x8 = 0;
+	this->naviMeshIndex = 0;
 	return;
 }
 
@@ -36,7 +36,7 @@ void CPathFinderClient::ChangePathfindingId(CActorMovable* pActor, int newId, ed
 		cVar1 = CScene::ptable.g_PathManager_004516a0->pBasicPathFinder->IsValidPosition(pLocation, this->id);
 
 		if (cVar1 != false) {
-			this->field_0x8 = 1;
+			this->naviMeshIndex = 1;
 
 			this->field_0x10 = *pLocation;
 		}
@@ -62,8 +62,7 @@ bool CPathFinderClient::IsValidPosition(edF32VECTOR4* pPosition)
 bool CPathFinderClient::HasPathTo(CActorMovable* pActor, edF32VECTOR4* v0)
 {
 	CBasicPathFinder* pBasicPathFinder;
-	CPathDynamic* pCVar2;
-	bool lVar3;
+	CPathDynamic* pPathDynamic;
 	edF32VECTOR4* pStart;
 	bool bHasPathTo;
 
@@ -71,9 +70,8 @@ bool CPathFinderClient::HasPathTo(CActorMovable* pActor, edF32VECTOR4* v0)
 	pStart = (edF32VECTOR4*)0x0;
 	pBasicPathFinder = (CScene::ptable.g_PathManager_004516a0)->pBasicPathFinder;
 
-	lVar3 = pBasicPathFinder->IsValidPosition(&pActor->currentLocation, this->id);
-	if (lVar3 == 0) {
-		if (this->field_0x8 != 0) {
+	if (pBasicPathFinder->IsValidPosition(&pActor->currentLocation, this->id) == 0) {
+		if (this->naviMeshIndex != 0) {
 			pStart = &this->field_0x10;
 		}
 	}
@@ -81,14 +79,13 @@ bool CPathFinderClient::HasPathTo(CActorMovable* pActor, edF32VECTOR4* v0)
 		pStart = &pActor->currentLocation;
 	}
 
-	if ((pStart != (edF32VECTOR4*)0x0) && (pCVar2 = pBasicPathFinder->NewPathDynamic(pStart, v0), pCVar2 != (CPathDynamic*)0x0)) {
-		IMPLEMENTATION_GUARD(
-		(*(code*)(pBasicPathFinder->pVTable->base).FindPath)(pBasicPathFinder, pCVar2, this->id);
-		lVar3 = (*(code*)pCVar2->pVTable->GetStatus)(pCVar2);
-		if ((lVar3 == 0) || (lVar3 = (*(code*)pCVar2->pVTable->GetStatus)(pCVar2), bHasPathTo = false, lVar3 == 1)) {
+	if ((pStart != (edF32VECTOR4*)0x0) && (pPathDynamic = pBasicPathFinder->NewPathDynamic(pStart, v0), pPathDynamic != (CPathDynamic*)0x0)) {
+		pBasicPathFinder->FindPath(pPathDynamic, this->id);
+		if ((pPathDynamic->GetStatus() == 0) || (bHasPathTo = false, pPathDynamic->GetStatus() == 1)) {
 			bHasPathTo = true;
 		}
-		(*(pBasicPathFinder->pVTable->base).DeletePathDynamic)(pBasicPathFinder, pCVar2);)
+
+		pBasicPathFinder->DeletePathDynamic(pPathDynamic);
 	}
 
 	return bHasPathTo;

@@ -10,6 +10,11 @@
 #include "Actor.h"
 #include "ActorManager.h"
 
+extern ed_event_chunk** pedEventChunks;
+extern uint edEventNbChunks;
+
+void EventCallbackSendMessage(edCEventMessage* pEventMessage);
+
 namespace Debug {
 	namespace Event {
 		static Setting<bool> gShowEventsOverlay("Show Events Overlay", true);
@@ -18,13 +23,133 @@ namespace Debug {
 		static Setting<bool> gShowActiveEvents("Show Active Events", true);
 
 		static Setting<int> gSelectedEvent("Selected Event", 0);
+
+		static bool bTrackingEvents = false;
+
+		struct EventKey
+		{
+			uint colliderId;
+			int eventIndex;
+			int colliderIndex;
+
+			bool operator==(const EventKey& other) const
+			{
+				return colliderId == other.colliderId && eventIndex == other.eventIndex && colliderIndex == other.colliderIndex;
+			}
+
+			// Hash
+			struct Hasher
+			{
+				std::size_t operator()(const EventKey& key) const
+				{
+					return std::hash<uint>()(key.colliderId) ^ std::hash<int>()(key.eventIndex) ^ std::hash<int>()(key.colliderIndex);
+				}
+			};
+		};
+
+		struct TriggerRecord
+		{
+			std::vector<CActor*> receivers;
+		};
+
+		struct EventRecord
+		{
+			std::vector<TriggerRecord> triggers;
+		};
+
+		static std::unordered_map<EventKey, EventRecord, EventKey::Hasher> gEventRecords;
+
+		static void EventCallbackSendMessageIntercept(edCEventMessage* pEventMessage)
+		{
+			bool bVar1;
+			EventSendInfo* pSendInfo;
+			int iVar3;
+			CActor* pActor;
+			int* pCurrentActorIndex;
+			int iVar6;
+			int nbActorIndexes;
+
+			EventKey eventKey;
+			eventKey.colliderId = pEventMessage->colliderId;
+
+			for (int i = 0; i < pEventMessage->pEventChunk->nbEvents; i++) {
+				auto* pEvent = LOAD_SECTION_CAST(ed_event*, pEventMessage->pEventChunk->aEvents[i]);
+
+				auto* pCollider = reinterpret_cast<_ed_event_collider_test*>(pEvent + 1);
+
+				for (int j = 0; j < pEvent->nbColliders; j++) {
+					if (pCollider == pEventMessage->pEventCollider) {
+						eventKey.eventIndex = i;
+						eventKey.colliderIndex = j;
+						break;
+					}
+
+					pCollider++;
+				}
+			}
+
+			EventRecord& record = gEventRecords[eventKey];
+			TriggerRecord newRecord = record.triggers.emplace_back();
+
+			pSendInfo = LOAD_SECTION_CAST(EventSendInfo*, pEventMessage->pEventCollider->aSendInfo[pEventMessage->colliderId]);
+
+			nbActorIndexes = pSendInfo->nbActorIndexes;
+			pCurrentActorIndex = reinterpret_cast<int*>(pSendInfo + 1);
+			iVar6 = (pSendInfo->field_0x0 + -1) - nbActorIndexes;
+
+			int* pReceiveData = pCurrentActorIndex + nbActorIndexes;
+
+			if (nbActorIndexes == 0) {
+				ed_event_actor_ref* pRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
+				CActor* pActorRef = LOAD_SECTION_CAST(CActor*, pRef->pActor);
+				newRecord.receivers.push_back(pActorRef);
+			}
+			else {
+				while (bVar1 = nbActorIndexes != 0, nbActorIndexes = nbActorIndexes + -1, bVar1) {
+					iVar3 = *pCurrentActorIndex;
+
+					if (iVar3 == -1) {
+						ed_event_actor_ref* pRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pEventMessage->pEventCollider->pActorRef);
+						CActor* pActorRef = LOAD_SECTION_CAST(CActor*, pRef->pActor);
+
+						pActor = pActorRef;
+					}
+					else {
+						if (iVar3 == -1) {
+							pActor = (CActor*)0x0;
+						}
+						else {
+							pActor = (CScene::ptable.g_ActorManager_004516a4)->aActors[iVar3];
+						}
+					}
+
+					newRecord.receivers.push_back(pActor);
+					pCurrentActorIndex = pCurrentActorIndex + 1;
+				}
+			}
+
+			EventCallbackSendMessage(pEventMessage);
+
+			return;
+		}
+
+		static void EventCallbackSendAllMessagesIntercept(edCEventMessage* pQueue, int count)
+		{
+			bool bProcessedAllEvents;
+			int curIndex = count + -1;
+			if (count != 0) {
+				do {
+					EventCallbackSendMessageIntercept(pQueue);
+					pQueue = pQueue + 1;
+					bProcessedAllEvents = curIndex != 0;
+					curIndex = curIndex + -1;
+				} while (bProcessedAllEvents);
+			}
+
+			return;
+		}
 	}
 }
-
-extern ed_event_chunk** pedEventChunks;
-extern uint edEventNbChunks;
-
-void EventCallbackSendMessage(edCEventMessage* pEventMessage);
 
 void Debug::Event::ShowMenu(bool* bOpen)
 {
@@ -42,6 +167,11 @@ void Debug::Event::ShowMenu(bool* bOpen)
 	ImGui::Text("Event count: 0x%x", pEventManager->nbEvents);
 
 	ImGui::Separator();
+
+	if (ImGui::Button("Track Events")) {
+		CEventManager::callbackFunctions.pSendAllMessages = EventCallbackSendAllMessagesIntercept;
+		bTrackingEvents = true;
+	}
 
 	if (ImGui::BeginCombo("Select Chunk", std::to_string(selectedChunk).c_str())) {
 		for (int i = 0; i < edEventNbChunks; i++) {
@@ -243,6 +373,46 @@ void Debug::Event::ShowMenu(bool* bOpen)
 	}
 
 	ImGui::End();
+
+	if (bTrackingEvents) {
+		ImGui::Begin("Event Tracking", &bTrackingEvents, ImGuiWindowFlags_AlwaysAutoResize);
+
+		// List the events that have been triggered
+		for (auto& record : gEventRecords) {
+			std::stringstream ss;
+			ss << "Event: 0x" << std::hex << record.first.colliderId << " 0x" << record.first.eventIndex << " 0x" << record.first.colliderIndex;
+
+			if (ImGui::CollapsingHeader(ss.str().c_str())) {
+				ImGui::Text("Triggered %d times", record.second.triggers.size());
+				
+				static int selectedTrigger = 0;
+
+				// Add selector for the trigger with a combo box
+				if (ImGui::BeginCombo("Select Trigger", std::to_string(selectedTrigger).c_str())) {
+					for (int i = 0; i < record.second.triggers.size(); i++) {
+						if (ImGui::Selectable(std::to_string(i).c_str())) {
+							selectedTrigger = i;
+						}
+					}
+
+					ImGui::EndCombo();
+				}
+
+				selectedTrigger = std::clamp<int>(selectedTrigger, 0, record.second.triggers.size() - 1);
+
+				if (selectedTrigger < record.second.triggers.size()) {
+					auto& trigger = record.second.triggers[selectedTrigger];
+					for (auto* pActor : trigger.receivers) {
+						ImGui::Text("Receiver: %s", pActor->name);
+					}
+				}
+			}
+
+			ImGui::Separator();
+		}
+
+		ImGui::End();
+	}
 
 	auto* pEventChunk = pedEventChunks[selectedChunk];
 

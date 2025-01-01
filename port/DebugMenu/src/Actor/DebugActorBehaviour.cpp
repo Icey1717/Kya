@@ -163,6 +163,9 @@ namespace Hero
 		case STATE_HERO_ROLL_2_CROUCH:
 			return "StateHeroRoll2Crouch";
 			break;
+		case STATE_HERO_ROLL_FALL:
+			return "StateHeroRollFall";
+			break;
 		case STATE_HERO_WIND_WALL_HURT:
 			return "StateHeroWindWallHurt";
 			break;

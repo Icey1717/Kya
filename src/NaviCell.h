@@ -4,10 +4,15 @@
 #include "Types.h"
 #include "MemoryStream.h"
 
+class CPathNode;
+
 class CBasicNaviCell
 {
 public:
+	CBasicNaviCell();
 	void Create(ByteCode* pByteCode);
+
+	CPathNode* pPathNode;
 
 	uint nbSubDataA;
 	ushort* pDataA;

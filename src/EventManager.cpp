@@ -100,19 +100,19 @@ void EventCallbackSendMessage(edCEventMessage* pEventMessage)
 	return;
 }
 
-void EventCallbackSendAllMessages(edCEventMessage* pQueue, int count) {
-	bool bVar1;
-	int iVar2;
-
-	iVar2 = count + -1;
+void EventCallbackSendAllMessages(edCEventMessage* pQueue, int count) 
+{
+	bool bProcessedAllEvents;
+	int curIndex = count + -1;
 	if (count != 0) {
 		do {
 			EventCallbackSendMessage(pQueue);
 			pQueue = pQueue + 1;
-			bVar1 = iVar2 != 0;
-			iVar2 = iVar2 + -1;
-		} while (bVar1);
+			bProcessedAllEvents = curIndex != 0;
+			curIndex = curIndex + -1;
+		} while (bProcessedAllEvents);
 	}
+
 	return;
 }
 

@@ -10,10 +10,15 @@ public:
 	CPathDynamic();
 
 	virtual void Init(edF32VECTOR4* pStart, edF32VECTOR4* pDestination);
+	virtual edF32VECTOR4* GetStart();
+	virtual int GetStatus();
 	virtual void SetStatus(int newStatus);
+	virtual edF32VECTOR4* GetGoalB();
+	virtual void Reset();
 	virtual void Clear();
 
 	int status;
+	int naviMeshIndex;
 
 	CPathDynamic* pNext;
 
@@ -24,7 +29,7 @@ public:
 
 	byte field_0x30;
 
-	undefined4 field_0x54;
+	CPathNode* field_0x54;
 };
 
 #endif // PATH_DYNAMIC_H

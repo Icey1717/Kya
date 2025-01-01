@@ -875,8 +875,7 @@ void CActor::Manage()
 			pBehaviour->Manage();
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			pBehaviour->ManageFrozen();)
+			pBehaviour->ManageFrozen();
 		}
 	}
 

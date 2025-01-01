@@ -20,6 +20,8 @@ struct CActor;
 
 #define CINEMATIC_LOAD_STATE_COMPLETE 4
 
+#define CINEMATIC_FLAG_ACTIVE 0x80
+
 class CBWCinActor : public edCinActorInterface {
 public:
 	virtual bool Initialize();
@@ -428,7 +430,7 @@ struct CCinematic {
 	CActorCinematic* NewCinematicActor(const edCinGameInterface::ACTORV_CREATIONtag* pTag, ed_g3d_manager* pG3D, ed_g2d_manager* pG2D);
 	CCineActorConfig* GetActorConfig(CActor* pActor);
 
-	void UsedInCutsceneManagerUpdateB(CActor* pActor, int param_3);
+	void TryTriggerCutscene(CActor* pActor, int param_3);
 
 	void Draw();
 
@@ -494,7 +496,7 @@ struct CCinematic {
 	float time_0x88;
 
 	S_STREAM_REF<ed_zone_3d> zoneRefA;
-	S_STREAM_REF<CActor> actorHeroRef;
+	S_STREAM_REF<CActor> triggerActorRef;
 	S_STREAM_REF<ed_zone_3d> zoneRefB;
 	S_STREAM_REF<ed_zone_3d> zoneRefC;
 	

@@ -538,6 +538,7 @@ public:
 
 	CActor* field_0xd04;
 	float field_0xd08;
+	float field_0xd18;
 
 	float field_0xd24;
 	float field_0xd28;

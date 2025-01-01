@@ -5,6 +5,7 @@
 #include "TimeController.h"
 #include "FileManager3D.h"
 #include "ActorNativCmd.h"
+#include "ActorHero.h"
 
 void CActorNativ::Create(ByteCode* pByteCode)
 {
@@ -895,6 +896,95 @@ LAB_00162620:
 	}
 
 	SetLookingAtOff();
+
+	return;
+}
+
+void CActorNativ::BehaviourExorcisme_Manage()
+{
+	int iVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+
+	iVar1 = this->actorState;
+	if ((iVar1 != 0x12) && (iVar1 != 0x11)) {
+		if (iVar1 == 0x10) {
+			ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+			if ((this->flags & 0x4000) == 0) {
+				this->field_0x53c = 1;
+				this->flags = this->flags & 0xfffffffd;
+				this->flags = this->flags | 1;
+				this->flags = this->flags & 0xffffff7f;
+				this->flags = this->flags | 0x20;
+				EvaluateDisplayState();
+				SetState(0, -1);
+			}
+		}
+		else {
+			if (iVar1 == 0xf) {
+				ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+				pCVar2 = this->pAnimationController;
+				peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
+				bVar4 = false;
+				if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
+					if (peVar3->animPlayState == 0) {
+						bVar4 = false;
+					}
+					else {
+						bVar4 = (peVar3->field_0xcc & 2) != 0;
+					}
+				}
+
+				if (bVar4) {
+					SetState(0x10, -1);
+				}
+			}
+			else {
+				if (iVar1 == 0xe) {
+					ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+					pCVar2 = this->pAnimationController;
+					peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
+					bVar4 = false;
+					if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
+						if (peVar3->animPlayState == 0) {
+							bVar4 = false;
+						}
+						else {
+							bVar4 = (peVar3->field_0xcc & 2) != 0;
+						}
+					}
+
+					if ((bVar4) && (((this->pCollisionData)->flags_0x4 & 2) != 0)) {
+						SetState(0xf, -1);
+					}
+				}
+			}
+		}
+	}
+
+	bVar4 = ColWithCactus();
+	if (bVar4 != false) {
+		this->field_0x53c = 1;
+		this->flags = this->flags & 0xfffffffd;
+		this->flags = this->flags | 1;
+		this->flags = this->flags & 0xffffff7f;
+		this->flags = this->flags | 0x20;
+		EvaluateDisplayState();
+		SetState(0, -1);
+	}
+
+	// Duplicated code is a mistake? 
+	bVar4 = ColWithCactus();
+	if (bVar4 != false) {
+		this->field_0x53c = 1;
+		this->flags = this->flags & 0xfffffffd;
+		this->flags = this->flags | 1;
+		this->flags = this->flags & 0xffffff7f;
+		this->flags = this->flags | 0x20;
+		EvaluateDisplayState();
+		SetState(0, -1);
+	}
 
 	return;
 }
@@ -2164,4 +2254,101 @@ bool CTakePutTrajectoryParam::IsWayPointValidPosition(CPathFinderClient* pPathFi
 		}
 	}
 	return false;
+}
+
+void CBehaviourNativExorcisme::Manage()
+{
+	this->pOwner->BehaviourExorcisme_Manage();
+}
+
+void CBehaviourNativExorcisme::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->pOwner = static_cast<CActorNativ*>(pOwner);
+
+	this->pOwner->field_0x53c = 1;
+	this->pOwner->flags = this->pOwner->flags & 0xfffffffd;
+	this->pOwner->flags = this->pOwner->flags | 1;
+	this->pOwner->flags = this->pOwner->flags & 0xffffff7f;
+	this->pOwner->flags = this->pOwner->flags | 0x20;
+	this->pOwner->EvaluateDisplayState();
+
+	if (newState == -1) {
+		this->pOwner->SetState(0, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+void CBehaviourNativExorcisme::InitState(int newState)
+{
+	ulong uVar2;
+	edF32VECTOR4 local_10;
+
+	if (newState == 0x10) {
+		uVar2 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+		CScene::_pinstance->field_0x38 = uVar2;
+		this->pOwner->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(((float)((uint)(uVar2 >> 0x10) & 0x7fff) * 0.4f) / 32767.0f + 0.8f, 0);
+	}
+	else {
+		if (newState == 0xe) {
+			edF32Vector4SubHard(&local_10, &CActorHero::_gThis->currentLocation, &this->pOwner->currentLocation);
+			local_10.y = 0.0f;
+			edF32Vector4NormalizeHard(&local_10, &local_10);
+			this->pOwner->rotationQuat = local_10;
+		}
+	}
+
+	return;
+}
+
+void CBehaviourNativExorcisme::TermState(int oldState, int newState)
+{
+	if (oldState == 0x10) {
+		this->pOwner->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+	}
+
+	return;
+}
+
+int CBehaviourNativExorcisme::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int iVar2;
+
+	if (msg == 0x19) {
+		IMPLEMENTATION_GUARD(
+		/* WARNING: Load size is inaccurate */
+		iVar2 = *pMsgParam;
+		if (iVar2 == 3) {
+			iVar2 = ((this->base).pOwner)->field_0x53c;
+		}
+		else {
+			if (iVar2 == 1) {
+				pCVar1 = (this->base).pOwner;
+				(*(this->pOwner->pVTable)->SetState)((CActor*)pCVar1, 0x12, -1);
+			}
+			else {
+				if (iVar2 == 0) {
+					((this->base).pOwner)->field_0x53c = 0;
+					pCVar1 = (this->base).pOwner;
+					this->pOwner->flags = this->pOwner->flags & 0xfffffffc;
+					pCVar1 = (this->base).pOwner;
+					this->pOwner->flags = this->pOwner->flags & 0xffffff5f;
+					CActor::EvaluateDisplayState((CActor*)pCVar1);
+					CActor::UpdatePosition((CActor*)(this->base).pOwner, (edF32VECTOR4*)((int)pMsgParam + 0x10), true);
+					pCVar1 = (this->base).pOwner;
+					(*(this->pOwner->pVTable)->SetState)((CActor*)pCVar1, 0xe, -1);
+				}
+			}
+
+			iVar2 = 1;
+		})
+	}
+	else {
+		iVar2 = 0;
+	}
+
+	return iVar2;
 }

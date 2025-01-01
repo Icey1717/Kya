@@ -139,6 +139,7 @@ public:
 	virtual void Init(CActor* pOwner) {}
 	virtual void Term() {}
 	virtual void Manage() {}
+	virtual void ManageFrozen() {}
 	virtual void SectorChange(int oldSectorId, int newSectorId) {}
 	virtual void Draw() {}
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) {}
