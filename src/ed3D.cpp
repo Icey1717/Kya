@@ -12399,6 +12399,30 @@ void ed3DHierarchyNodeSetAlpha(edNODE* pNode, byte alpha)
 	return;
 }
 
+void ed3DHierarchyNodeSetBFCulling(edNODE* pNode, byte bActive)
+{
+	ed_3d_hierarchy* peVar1;
+	int iVar2;
+
+	peVar1 = (ed_3d_hierarchy*)pNode->pData;
+	iVar2 = peVar1->linkedHierCount + 1;
+
+	do {
+		peVar1 = (ed_3d_hierarchy*)pNode->pData;
+		if (bActive == 0) {
+			peVar1->flags_0x9e = peVar1->flags_0x9e & 0xfffd;
+		}
+		else {
+			peVar1->flags_0x9e = peVar1->flags_0x9e | 2;
+		}
+
+		iVar2 = iVar2 + -1;
+		pNode = pNode->pPrev;
+	} while (iVar2 != 0);
+
+	return;
+}
+
 void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, int param_5)
 {
 	MeshData_ANHR* pMVar1;

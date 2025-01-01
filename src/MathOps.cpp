@@ -2002,6 +2002,20 @@ float edF32Between_0_2Pi(float param_1)
 	return fVar1;
 }
 
+float edF32Between_0_2Pi_Incr(float param_1)
+{
+	if (param_1 < 0.0f) {
+		do {
+			param_1 = param_1 + 6.283185f;
+		} while (param_1 < 0.0f);
+	}
+
+	for (; 6.283185f < param_1; param_1 = param_1 - 6.283185f) {
+	}
+
+	return param_1;
+}
+
 float edF32Between_Pi(float param_1)
 {
 	float fVar1;

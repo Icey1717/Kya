@@ -1070,7 +1070,7 @@ LAB_001e1120:
 				if (param_2 == 0) {
 					local_1a0.entryCount = 0;
 
-					if (this->typeID == 0xd) {
+					if (this->typeID == MOVING_PLATFORM) {
 						pMovingPlatform->Platform_UpdateMatrix(&auStack64, 1, &local_1a0);
 						pMovingPlatform->GenericManage(1, 1, -1, -1);
 					}

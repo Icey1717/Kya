@@ -476,7 +476,7 @@ public:
 	virtual bool IsLockable();
 	virtual void UpdateAnimEffects();
 	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
-	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
+	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual void CinematicMode_Manage() { return; }
@@ -545,6 +545,11 @@ public:
 	void LinkToActor(CActor* pLinkedActor, uint key, int param_4);
 	void UnlinkFromActor();
 
+	void SetAlpha(byte alpha);
+	void ToggleMeshAlpha();
+
+	void SetBFCulling(byte bActive);
+
 	void PlayAnim(int inAnimType);
 	int GetIdMacroAnim(int inAnimType);
 
@@ -569,6 +574,8 @@ public:
 	void FUN_00115ea0(uint param_2);
 
 	void ComputeAltitude();
+	void ComputeRotTransMatrix(edF32MATRIX4* pOutMatrix);
+	void ComputeLocalMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1);
 	void Compute2DOrientationFromAngles();
 
 	int ReceiveEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* pEventData);

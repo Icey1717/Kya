@@ -78,7 +78,21 @@ namespace Debug {
 		}
 	}
 
-	static std::array<std::pair<Setting<bool>, std::function<std::string(CActor*)>>, 6> gOverlaySettings = {
+	static std::string GetAnimationInfo(CActor* pActor) {
+		std::stringstream sstream;
+		if (pActor) {
+			CAnimation* pAnim = pActor->pAnimationController;
+
+			if (pAnim) {
+				sstream << "Anim: 0x" << std::hex << pAnim->currentAnimType_0x30;
+				sstream << " - " << pAnim->anmBinMetaAnimator.aAnimData[0].currentAnimDesc.animType;
+			}
+		}
+
+		return sstream.str();
+	}
+
+	static std::array<std::pair<Setting<bool>, std::function<std::string(CActor*)>>, 7> gOverlaySettings = {
 		std::make_pair(Setting("Name", true), [](CActor* pActor) { return pActor->name; }),
 		std::make_pair(Setting("Type", true), [](CActor* pActor) { return GetActorTypeString(pActor->typeID); }),
 		std::make_pair(Setting("Location", true), [](CActor* pActor) { return pActor->currentLocation.ToString(); }),
@@ -91,6 +105,7 @@ namespace Debug {
 			sstream << std::hex << (pActor->pCollisionData ? pActor->pCollisionData->flags_0x4 : 0);
 			return sstream.str();
 			}),
+		std::make_pair(Setting("Animation", false), GetAnimationInfo),
 	};
 
 	static void ForEachActiveActor(std::function<void(CActor*)> pFunc) {

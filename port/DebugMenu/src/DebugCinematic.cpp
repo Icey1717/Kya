@@ -47,7 +47,7 @@ namespace Debug::Cinematic
 			}
 
 			// Jump to end button
-			if (ImGui::Button("Jump to End"))
+			if (ImGui::Button("Jump to End") || ImGui::IsKeyPressed(ImGuiKey_F9))
 			{
 				currentTime = totalTime;
 				// Seek to the end of the video here

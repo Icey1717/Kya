@@ -67,7 +67,7 @@ public:
 	virtual void UpdatePostAnimEffects();
 	virtual void SetState(int newState, int animType);
 	virtual void ChangeManageState(int state);
-	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
+	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 

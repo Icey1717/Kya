@@ -605,7 +605,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	v1 = (TargetCalc*)gSP_Manager.GetFreeBuffer(0x60);
 	pCVar2 = (CActorHeroPrivate*)GetTarget();
 	local_v0_lo_80 = GetTarget();
-	if (local_v0_lo_80->typeID == 6) {
+	if (local_v0_lo_80->typeID == ACTOR_HERO_PRIVATE) {
 		pCVar3 = GetTarget();
 	}
 	else {
@@ -933,7 +933,7 @@ void CCameraGame::_Toboggan_UpdateCameraData()
 	edQuatShortestSLERPAccurate(this->field_0x480, &eStack80, &this->field_0x450, &eStack64);
 
 	pTarget = GetTarget();
-	if (pTarget->typeID == 6) {
+	if (pTarget->typeID == ACTOR_HERO_PRIVATE) {
 		CActorHeroPrivate* pHero = reinterpret_cast<CActorHeroPrivate*>(GetTarget());
 		fVar2 = pHero->field_0xa80;
 	}
@@ -2240,7 +2240,7 @@ void CCameraGame::_Behind_UpdateAngleBetaData()
 		(pCVar1 = (CCameraGame*)CCamera::_gpcam_man->activeCamManager.FUN_003feab0(0), this == pCVar1))
 	{
 		pCVar2 = this->GetTarget();
-		if (pCVar2->typeID == 6) {
+		if (pCVar2->typeID == ACTOR_HERO_PRIVATE) {
 			this_00 = reinterpret_cast<CActorHeroPrivate*>(this->GetTarget());
 			fVar4 = this_00->GetTargetBeta();
 			this->field_0x204 = fVar4;
@@ -2656,7 +2656,7 @@ void CCameraGame::_Manage_Leash()
 					fVar12 = 1.0f;
 					pCVar4 = GetTarget();
 					fVar10 = fVar12;
-					if (pCVar4->typeID == 6) {
+					if (pCVar4->typeID == ACTOR_HERO_PRIVATE) {
 						pHero = (CActorHero*)GetTarget();
 						if ((((this->cameraConfig).flags_0x70 & 0x2000000) != 0) ||
 							(bVar3 = pHero->TestState_IsInCheatMode(), fVar10 = 1.0f, bVar3 != false)) {
@@ -2666,7 +2666,7 @@ void CCameraGame::_Manage_Leash()
 					}
 					else {
 						pCVar4 = GetTarget();
-						if (pCVar4->typeID == 5) {
+						if (pCVar4->typeID == BOOMY) {
 							fVar13 = 18.0f;
 						}
 					}
@@ -2957,7 +2957,7 @@ void CCameraGame::_After_Manage_Alpha()
 					pHero = (CActorHero*)0x0;
 					pCVar3 = GetTarget();
 
-					if (pCVar3->typeID == 6) {
+					if (pCVar3->typeID == ACTOR_HERO_PRIVATE) {
 						pHero = (CActorHero*)GetTarget();
 					}
 

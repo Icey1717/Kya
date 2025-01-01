@@ -2127,7 +2127,7 @@ bool FUN_001946b0(CActor* pActor, void*)
 {
 	bool bVar1;
 
-	if (((((CActorFactory::gClassProperties[pActor->typeID].flags & 0x1000) == 0) || (pActor->typeID == 6)) ||
+	if (((((CActorFactory::gClassProperties[pActor->typeID].flags & 0x1000) == 0) || (pActor->typeID == ACTOR_HERO_PRIVATE)) ||
 		((pActor->flags & 0x4000) == 0)) || ((pActor->flags & 0x100) == 0)) {
 		bVar1 = false;
 	}

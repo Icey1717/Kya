@@ -122,7 +122,7 @@ public:
 	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void SetState(int newState, int animType);
-	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
+	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
 	virtual bool IsMakingNoise();

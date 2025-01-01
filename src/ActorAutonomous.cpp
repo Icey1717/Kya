@@ -532,10 +532,9 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 		}
 
 		if (0 < this->field_0x348) {
-			IMPLEMENTATION_GUARD(
 			edF32Vector4SafeNormalize0Hard(&local_30, &local_10);
 			this->field_0x2e8 = local_30.x;
-			this->vector_0x2f0 = local_30.z;)
+			this->vector_0x2f0 = local_30.z;
 		}
 	}
 	return;

@@ -28,6 +28,9 @@
 #define WOLFEN_STATE_TRACK_WEAPON_CHASE 0x73
 #define WOLFEN_STATE_TRACK_DEFEND 0x76
 #define WOLFEN_STATE_COME_BACK 0x77
+#define WOLFEN_STATE_RELOAD 0x91
+#define WOLFEN_STATE_AIM 0x94
+#define WOLFEN_STATE_FIRE 0x95
 #define WOLFEN_STATE_SURPRISE 0x9a
 #define WOLFEN_STATE_LOCATE 0x9c
 
@@ -91,25 +94,17 @@ public:
 	int GetState_003c37c0(CActorWolfen* pActor)
 	{
 		bool bVar1;
-		CActorWeapon* pCVar2;
-		Timer* pTVar3;
-		long lVar4;
 		int iVar5;
 
 		bVar1 = true;
 		iVar5 = WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION;
-		//pCVar2 = CActorFighter::GetWeapon((CActorFighter*)pActor);
-		//if (pCVar2 != (CActorWeapon*)0x0) {
-		//	pCVar2 = CActorFighter::GetWeapon((CActorFighter*)pActor);
-		//	lVar4 = FUN_002d58a0(pCVar2);
-		//	if (lVar4 != 0) {
-		//		pCVar2 = CActorFighter::GetWeapon((CActorFighter*)pActor);
-		//		lVar4 = FUN_002d5830((int)pCVar2);
-		//		if (lVar4 == 0) {
-		//			bVar1 = false;
-		//		}
-		//	}
-		//}
+		if (pActor->GetWeapon() != (CActorWeapon*)0x0) {
+			if (pActor->GetWeapon()->FUN_002d58a0() != 0) {
+				if (pActor->GetWeapon()->FUN_002d5830() == 0) {
+					bVar1 = false;
+				}
+			}
+		}
 
 		if (!bVar1) {
 			iVar5 = 0x97;
@@ -117,9 +112,8 @@ public:
 		}
 
 		if (((pActor->pCommander->flags_0x18c & 8) == 0) && (1 < (int)pActor->combatMode_0xb7c)) {
-			pTVar3 = Timer::GetTimer();
-			if (this->field_0x4 < pTVar3->scaledTotalTime) {
-				this->field_0x4 = pTVar3->scaledTotalTime + this->field_0x0;
+			if (this->field_0x4 < Timer::GetTimer()->scaledTotalTime) {
+				this->field_0x4 = Timer::GetTimer()->scaledTotalTime + this->field_0x0;
 			}
 		}
 
@@ -180,16 +174,16 @@ public:
 	CSwitchBehaviour switchBehaviour;
 
 	bool bool_0x68;
-
-	S_STREAM_EVENT_CAMERA* field_0x70;
-	S_STREAM_REF<CWayPoint> field_0x80;
-	int trackBehaviourId;
 };
 
 class CBehaviourLost : public CBehaviourWolfen
 {
 public:
-
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
 class CBehaviourExorcism : public CBehaviour
@@ -200,6 +194,9 @@ public:
 class CBehaviourTrackStand : public CBehaviourWolfen
 {
 public:
+	virtual CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* GetNotificationTargetArray();
+
+	CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF> notificationTargetArray;
 };
 
 class CBehaviourTrack : public CBehaviourTrackStand
@@ -223,6 +220,10 @@ public:
 
 	// CBehaviourWolfen
 	virtual int GetTrackBehaviour();
+
+	S_STREAM_EVENT_CAMERA* field_0x70;
+	S_STREAM_REF<CWayPoint> field_0x80;
+	int trackBehaviourId;
 
 	S_TARGET_STREAM_REF_CONTAINER pTargetStreamRef;
 	S_STREAM_EVENT_CAMERA_CONTAINER pCameraStreamEvent;
@@ -274,11 +275,11 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Term() { IMPLEMENTATION_GUARD(); }
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
 	virtual void InitState(int newState);
-	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
+	virtual void TermState(int oldState, int newState);
 
 	virtual CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* GetNotificationTargetArray();
 
@@ -301,7 +302,7 @@ public:
 
 	CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF> notificationTargetArray;
 
-	undefined4 field_0xe8;
+	int field_0xe8;
 	undefined4 field_0xec;
 };
 
@@ -365,8 +366,8 @@ struct WolfenCollisionSphere
 
 struct HearingDetectionProps
 {
-	float field_0x0;
-	float field_0x4;
+	float rangeSquared;
+	float maxHeightDifference;
 
 	void Create(ByteCode* pByteCode);
 };
@@ -412,11 +413,11 @@ public:
 	virtual void UpdatePostAnimEffects();
 	virtual void SetState(int newState, int animType);
 	virtual void ChangeManageState(int state);
-	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
+	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
-	virtual bool IsMakingNoise() { IMPLEMENTATION_GUARD(); }
+	virtual bool IsMakingNoise();
 	virtual CVision* GetVision();
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { IMPLEMENTATION_GUARD(); }
@@ -435,29 +436,44 @@ public:
 	virtual bool Func_0x19c();
 	virtual bool Func_0x1ac();
 
+	virtual void Func_0x204(CActorFighter* pOther);
+	virtual void Func_0x20c(float param_1);
+
 	void SetCombatMode(EEnemyCombatMode newCombatMode);
 	uint GetStateWolfenFlags(int state);
 
 	void AnimEvaluate_0xa2(uint layerId);
+	void AnimEvaluate_0017c930(uint layerId, edAnmMacroAnimator* pAnimator);
 
 	void Create_FightParam(ByteCode* pByteCode);
 
 	void ManageKnowledge();
 
+	void BehaviourStand_Manage(CBehaviourWolfen* pBehaviour);
 	void BehaviourWatchDog_Manage(CBehaviourWatchDog* pBehaviour);
 	void BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour);
+	void BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* pBehaviour);
 
 	void WaitingAnimation_Defend();
 	void WaitingAnimation_Guard();
 
+	void StateStandGuard();
+	void StateTrackWeaponStandDefend(CBehaviourTrackWeaponStand* pBehaviour);
+	void StateTrackWeaponStandFire(CBehaviourTrackWeaponStand* pBehaviour);
+	void StateTrackStandAim(CBehaviourTrackWeaponStand* pBehaviour);
+	void StateTrackWeaponReload(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateWolfenComeBack(CBehaviourWolfen* pBehaviour);
 	void StateWolfen_00179db0(CBehaviourWolfen* pBehaviour);
 	void StateWolfenSurprise(CBehaviourWolfen* pBehaviour);
 	void StateWolfenLocate(CBehaviourWolfen* pBehaviour);
 	void StateWatchDogGuard(CBehaviourWatchDog* pBehaviour);
+	void StateTrackWeaponAim(CBehaviourTrackWeapon* pBehaviour);
 	void StateTrackWeaponChase(CBehaviourTrackWeapon* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeapon* pBehaviour);
-	void StateTrackWeaponCheckPosition(CBehaviourTrackWeapon* pBehaviour);
+	void StateTrackCheckPosition(CBehaviourTrackWeapon* pBehaviour);
+
+	void StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBehaviour);
+	void StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour);
 
 	int SV_WLF_CheckBoxOnWay(CActorsTable* pTable);
 
@@ -483,9 +499,15 @@ public:
 
 	void InternState_WolfenLocate();
 
+	void TermFightAction();
+
+	void UpdateCombatMode(); // new
+
 	CBehaviourLost behaviourLost;
 	CBehaviourTrack behaviourTrack;
 	CBehaviourExorcism behaviourExorcism;
+
+	int field_0xb2c;
 
 	uint field_0xb74;
 	uint combatFlags_0xb78 = 0; // delete init

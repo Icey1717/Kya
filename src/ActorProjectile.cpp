@@ -464,7 +464,7 @@ bool CActorProjectile::IsLockable()
 	return false;
 }
 
-void CActorProjectile::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+void CActorProjectile::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	edANM_HDR* peVar1;
 	int* piVar2;
@@ -487,7 +487,7 @@ void CActorProjectile::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator,
 		}
 	}
 	else {
-		CActor::AnimEvaluate(param_2, pAnimator, newAnim);
+		CActor::AnimEvaluate(layerId, pAnimator, newAnim);
 	}
 
 	return;
@@ -1557,7 +1557,6 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 	float fStack164;
 	_msg_hit_param auStack160;
 	_ray_info_out local_10;
-	_msg_hit_param* local_4;
 
 	if (pHitActor != this) {
 		pCVar1 = pHitActor->pCollisionData;
@@ -1643,8 +1642,7 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 			fVar5 = acosf(puVar7);
 			auStack160.field_0x20.y = cosf(fVar5);
 			edF32Vector4NormalizeHard(&auStack160.field_0x20, &auStack160.field_0x20);
-			local_4 = &auStack160;
-			DoMessage(pHitActor, (ACTOR_MESSAGE)hitMsgId, local_4);
+			DoMessage(pHitActor, (ACTOR_MESSAGE)hitMsgId, &auStack160);
 		}
 	}
 

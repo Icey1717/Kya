@@ -874,9 +874,8 @@ bool gHeroMagicCallback(CActor* pActor, void* pParams)
 			fVar2 = (pActor->currentLocation).y - (pHero->currentLocation).y,
 			fVar3 = (pActor->currentLocation).z - (pHero->currentLocation).z,
 			fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3 <= 25.0f)) {
-		if (pActor->typeID == 0x14) {
-			pCVar4 = pHero->GetLifeInterfaceOther();
-			pCVar4->field_0x10 = 1;
+		if (pActor->typeID == AMBER) {
+			pHero->GetLifeInterfaceOther()->field_0x10 = 1;
 		}
 
 		iVar5 = pHero->DoMessage(pActor, (ACTOR_MESSAGE)0x2f, 0);
@@ -1743,7 +1742,7 @@ bool CActorHeroPrivate::ManageActions()
 				if (0 < local_220.entryCount) {
 					pActorTable = &local_220;
 					do {
-						if (pActorTable->aEntries[0]->typeID == 0x14) {
+						if (pActorTable->aEntries[0]->typeID == AMBER) {
 							local_4 = 0;
 							CActor::DoMessage(pActorTable->aEntries[0], 0x10, 0);
 						}
@@ -5197,6 +5196,7 @@ LAB_00341590:
 	case STATE_HERO_JOKE:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
+	case STATE_HERO_HURT_B:
 	case STATE_HERO_WIND_WALL_HURT:
 	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
@@ -5379,6 +5379,7 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_WIND_FLY_B:
 	case STATE_HERO_KICK_C:
 	case STATE_HERO_HURT_A:
+	case STATE_HERO_HURT_B:
 	case STATE_HERO_WIND_WALL_HURT:
 	case STATE_HERO_WIND_SLIDE_HURT:
 	case STATE_HERO_TOBOGGAN_JUMP_HURT:
@@ -5764,6 +5765,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		StateHeroRoll2Crouch();
 		break;
 	case STATE_HERO_HURT_A:
+		StateHeroHit();
+		break;
+	case STATE_HERO_HURT_B:
 		StateHeroHit();
 		break;
 	case STATE_HERO_WIND_WALL_HURT:
@@ -10335,12 +10339,13 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 					kickedParams.field_0x0 = 3;
 					kickedParams.field_0xc = 1.0f;
 
-					if ((this->pKickedActor)->typeID == 7) {
+					if ((this->pKickedActor)->typeID == MICKEN) {
 						fVar9 = 700.0f;
 					}
 					else {
 						fVar9 = 1000.0f;
 					}
+
 					kickedParams.field_0x30 = edFIntervalLERP(this->field_0x1544, 0.1f, this->field_0x1570, 300.0f, fVar9);
 
 					fVar9 = edFIntervalLERP(this->field_0xa84, 0.0f, this->runSpeed, 1.0f, 2.5f);
@@ -15819,7 +15824,7 @@ void CActorHeroPrivate::_Proj_GetPossibleExit()
 	return;
 }
 
-void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+void CActorHeroPrivate::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	int iVar1;
 	edANM_HDR* peVar2;
@@ -15836,7 +15841,7 @@ void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator
 	//edAnmMacroBlendN local_8;
 	edAnmMacroBlendN local_4;
 
-	ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::AnimEvaluate param_2: {} newAnim: 0x{:x}", param_2, newAnim);
+	ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::AnimEvaluate layerId: {} newAnim: 0x{:x}", layerId, newAnim);
 
 	if (((newAnim == 0x19f) || (newAnim == 0x19e)) || (newAnim == 0x191)) {
 		IMPLEMENTATION_GUARD(
@@ -16067,7 +16072,7 @@ void CActorHeroPrivate::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator
 										pValue->field_0x10 = 1.0f - pValue->field_0xc;
 									}
 									else {
-										CActorFighter::AnimEvaluate(param_2, pAnimator, newAnim);
+										CActorFighter::AnimEvaluate(layerId, pAnimator, newAnim);
 									}
 								}
 							}

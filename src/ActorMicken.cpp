@@ -821,7 +821,7 @@ void CActorMicken::StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3)
 				for (iVar5 = 0; iVar5 < local_110.entryCount; iVar5 = iVar5 + 1) {
 					pReceiver = local_110.aEntries[iVar5];
 
-					if ((pReceiver->typeID == 0x29) && (2.0f < this->currentLocation.y - (pReceiver->currentLocation).y)) {
+					if ((pReceiver->typeID == AMORTOS) && (2.0f < this->currentLocation.y - (pReceiver->currentLocation).y)) {
 						local_4 = 0;
 						DoMessage(pReceiver, (ACTOR_MESSAGE)0x42, 0);
 					}
@@ -1332,7 +1332,7 @@ void gMickenCallback(CActor* pActor, void* pParams)
 
 	MickenParams* pMickenParams = reinterpret_cast<MickenParams*>(pParams);
 
-	if (((pActor->typeID == 0x24) &&
+	if (((pActor->typeID == TELEPORTER) &&
 		(fVar1 = (pMickenParams->pInActor->currentLocation).x - (pActor->currentLocation).x,
 			fVar2 = (pMickenParams->pInActor->currentLocation).z - (pActor->currentLocation).z,
 			fVar1 * fVar1 + fVar2 * fVar2 < pMickenParams->distance)) &&

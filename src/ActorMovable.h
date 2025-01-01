@@ -120,6 +120,7 @@ class CActorMovable : public CActor {
 public:
 	CActorMovable();
 
+	// CActor
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Reset();

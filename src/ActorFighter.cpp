@@ -371,8 +371,8 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	INT_00449738 = INT_00449738 + 1;
 	ClearLocalData();
 
-	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x358 = 5.5;
+	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x35c = 2.5;)
 	this->field_0x360 = 5.0f;
 	IMPLEMENTATION_GUARD_LOG(
@@ -548,15 +548,15 @@ void CActorFighter::Create(ByteCode* pByteCode)
 
 	this->field_0x3f8 = ((this->subObjA)->boundingSphere).w;
 
-	this->field_0x810 = pByteCode->GetF32();
-	this->field_0x814 = pByteCode->GetF32();
-	this->field_0x818 = pByteCode->GetF32();
-	this->field_0x81c = 1.0f;
+	this->field_0x810[0].x = pByteCode->GetF32();
+	this->field_0x810[0].y = pByteCode->GetF32();
+	this->field_0x810[0].z = pByteCode->GetF32();
+	this->field_0x810[0].w = 1.0f;
 
-	this->field_0x820 = pByteCode->GetF32();
-	this->field_0x824 = pByteCode->GetF32();
-	this->field_0x828 = pByteCode->GetF32();
-	this->field_0x82c = 1.0f;
+	this->field_0x810[1].x = pByteCode->GetF32();
+	this->field_0x810[1].y = pByteCode->GetF32();
+	this->field_0x810[1].z = pByteCode->GetF32();
+	this->field_0x810[1].w = 1.0f;
 
 	uVar4 = pByteCode->GetU32();
 	if (uVar4 == 0) {
@@ -1022,7 +1022,7 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 					this->pFighterCombo = (s_fighter_combo*)0x0;
 					this->field_0x864 = 0;
 					this->field_0x860 = 0;
-					SetState(6, this->field_0x480);
+					SetState(6, this->standAnim);
 				}
 			}
 			else {
@@ -1196,6 +1196,227 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 	return;
 }
 
+void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
+{
+	CActor* pCVar1;
+	bool bVar2;
+	bool bVar3;
+	int iVar4;
+	CPlayerInput* pCVar5;
+	StateConfig* pSVar6;
+	uint uVar7;
+	byte bVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	s_fighter_action local_8;
+	uint local_4;
+
+	bVar8 = (GetStateFlags(this->actorState) & 0x2000000) != 0;
+	bVar2 = false;
+
+	if ((iVar4 - 0x3fU < 7) && ((1 << (iVar4 - 0x3fU & 0x1f) & 99U) != 0)) {
+		bVar2 = true;
+	}
+
+	if (bVar2) {
+		bVar8 = bVar8 | 2;
+	}
+
+	if (iVar4 - 0x17U < 5) {
+		bVar8 = bVar8 | 4;
+	}
+
+	bVar2 = false;
+	if ((iVar4 - 0x1cU < 4) && ((1 << (iVar4 - 0x1cU & 0x1f) & 0xbU) != 0)) {
+		bVar2 = true;
+	}
+
+	if (bVar2) {
+		bVar8 = bVar8 | 8;
+	}
+
+	if (bVar8 != 0) {
+		if ((this->flags & 0x1000) == 0) {
+			local_20 = this->rotationQuat;
+		}
+		else {
+			SetVectorFromAngleY(this->rotationEuler.y, &local_20);
+		}
+
+		if (fabs((this->field_0x6a0).y) == 1.0f) {
+			pCVar1 = this->field_0x634;
+			if ((pCVar1->flags & 0x1000) == 0) {
+				local_30 = pCVar1->rotationQuat;
+			}
+			else {
+				SetVectorFromAngleY((pCVar1->rotationEuler).y, &local_30);
+			}
+		}
+		else {
+			local_30.x = (this->field_0x6a0).x;
+			local_30.z = (this->field_0x6a0).z;
+			local_30.w = (this->field_0x6a0).w;
+			local_30.y = 0.0f;
+			edF32Vector4NormalizeHard(&local_30, &local_30);
+		}
+
+		fVar9 = edF32Vector4DotProductHard(&local_20, &local_30);
+		if (fVar9 < 0.5f) {
+			bVar8 = (GetStateFlags(this->actorState) & 0x2000000) != 0;
+			bVar2 = false;
+			if ((iVar4 - 0x3fU < 7) && ((1 << (iVar4 - 0x3fU & 0x1f) & 99U) != 0)) {
+				bVar2 = true;
+			}
+
+			if (bVar2) {
+				bVar8 = bVar8 | 2;
+			}
+
+			if (iVar4 - 0x17U < 5) {
+				bVar8 = bVar8 | 4;
+			}
+
+			bVar2 = false;
+			if ((iVar4 - 0x1cU < 4) && ((1 << (iVar4 - 0x1cU & 0x1f) & 0xbU) != 0)) {
+				bVar2 = true;
+			}
+
+			if (bVar2) {
+				bVar8 = bVar8 | 8;
+			}
+
+			if (bVar8 == 8) {
+				if ((this->hitFlags & 0x20U) == 0) {
+					this->field_0x474 = 0.0f;
+					DoMessage(this->field_0x634, (ACTOR_MESSAGE)100, &this->field_0x6c4);
+					iVar4 = GetIdMacroAnim(0x2c);
+
+					if (iVar4 < 0) {
+						fVar9 = 0.0f;
+					}
+					else {
+						fVar9 = this->pAnimationController->GetAnimLength(iVar4, 1);
+					}
+
+					edF32Vector4SubHard(&local_40, &this->currentLocation, &this->field_0x634->currentLocation);
+					local_40.y = 0.0f;
+					edF32Vector4NormalizeHard(&local_40, &local_40);
+					_BuildCommandFromAbsoluteVector(&local_40, &local_8, &eStack80);
+
+					this->field_0x44c = this->field_0x44c & 0xf0 | local_8.field_0x0 & 0xf;
+					this->field_0x36c = this->field_0x36c & 0xfffffffe;
+
+					static float FLOAT_00448b28 = 2.0f;
+					edF32Vector4ScaleHard(this->field_0x6b0 * FLOAT_00448b28 * 0.040625f, &local_40, &eStack80);
+					edF32Vector4ScaleHard(this->field_0x6b0, &local_60, &eStack80);
+					this->field_0x37c.BuildFromSpeedDistTime(fabs(local_60.z), 0.0f, fabs(local_40.z), fVar9);
+					this->field_0x3a4.BuildFromSpeedDistTime(fabs(local_60.x), 0.0f, fabs(local_40.x), fVar9);
+					this->scalarDynJump.Reset();
+					SetState(0x1f, -1);
+
+					return;
+				}
+			}
+			else {
+				if ((bVar8 == 4) && ((this->hitFlags & 0x10U) == 0)) {
+					if (this->distanceToGround <= 0.3f) {
+						SetState(0x18, -1);
+					}
+					else {
+						SetState(0x1b, -1);
+					}
+
+					if (bPlayImpact != true) {
+						return;
+					}
+
+					IMPLEMENTATION_GUARD_FX(
+					PlayImpactFx(this, (long)(int)&this->field_0x690, &this->field_0x6a0, (ulong)((this->hitFlags & 1U) != 0),
+						'\x01');)
+
+					return;
+				}
+			}
+		}
+	}
+
+	SetLookingAtOff();
+
+	if ((1.0f <= this->hitDamage) && (this->typeID == ACTOR_HERO_PRIVATE)) {
+		pCVar5 = GetInputManager(1, 0);
+		if (pCVar5 != (CPlayerInput*)0x0) {
+			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, 0.03f, 0.0f, &pCVar5->field_0x1c, 0);
+		}
+	}
+
+	LifeDecrease(this->hitDamage);
+	this->hitDamage = 0.0f;
+
+	if ((this->hitFlags & 1U) == 0) {
+		if ((GetStateFlags(this->actorState) & 0x100) != 0) {
+			iVar4 = this->actorState;
+			bVar3 = true;
+			uVar7 = iVar4 - 0x49;
+			bVar2 = false;
+
+			if ((uVar7 < 0x20) && ((1 << (uVar7 & 0x1f) & 0xf000003fU) != 0)) {
+				bVar2 = true;
+			}
+
+			if ((!bVar2) && (6 < iVar4 - 0x69U)) {
+				bVar3 = false;
+			}
+
+			if ((!bVar3) || (this->distanceToGround <= 0.4)) {
+				if ((this->hitFlags & 8U) != 0) {
+					iVar4 = this->actorState;
+					bVar2 = true;
+					if ((iVar4 != 0x52) && (iVar4 != 0x53)) {
+						bVar2 = false;
+					}
+
+					if (!bVar2) {
+						SetState(0x52, -1);
+						goto LAB_00319fb0;
+					}
+				}
+
+				SetState(0x4f, -1);
+				goto LAB_00319fb0;
+			}
+		}
+	}
+
+	if ((this->hitFlags & 1U) == 0) {
+		this->field_0x6b0 = 4.0f;
+		this->field_0x684 = 1;
+		this->field_0x7a0 = g_xVector;
+		this->field_0x7b4 = 0.0;
+		pCVar1 = this->field_0x634;
+		if (pCVar1 != (CActor*)0x0) {
+			this->field_0x6a0 = pCVar1->rotationQuat;
+			(this->field_0x6a0).y = 0.3f;
+			this->field_0x6b0 = 8.0f;
+		}
+	}
+
+	SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, -1, -1);
+
+LAB_00319fb0:
+	if (bPlayImpact == true) {
+		IMPLEMENTATION_GUARD_FX(
+		PlayImpactFx(this, (long)(int)&this->field_0x690, &this->field_0x6a0, (ulong)((this->hitFlags & 1U) != 0), '\0');)
+	}
+
+	return;
+}
+
 void CActorFighter::_Std_GetPossibleExit()
 {
 	CBehaviourFighter* pCVar2;
@@ -1234,9 +1455,14 @@ void CActorFighter::_StateFighterRun(CActorsTable* pTable)
 	}
 
 	if (this->field_0x37c.IsFinished() != false) {
-		SetState(6, this->field_0x480);
+		SetState(6, this->standAnim);
 	}
 	return;
+}
+
+void CActorFighter::_Ride_GetPossibleHit(bool bPlayImpact)
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CActorFighter::_Ride_GetPossibleExit()
@@ -1339,6 +1565,11 @@ void CActorFighter::_Ride_GetPossibleExit()
 	return;
 }
 
+void CActorFighter::_Hold_GetPossibleHit(bool bPlayImpact)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CActorFighter::_Hold_GetPossibleExit()
 {
 	int iVar1;
@@ -1415,7 +1646,7 @@ void CActorFighter::_Proj_GetPossibleExit()
 	return;
 }
 
-void CActorFighter::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+void CActorFighter::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	edANM_HDR* peVar1;
 	int* piVar2;
@@ -1702,7 +1933,7 @@ void CActorFighter::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, ui
 								}
 							}
 							else {
-								CActor::AnimEvaluate(param_2, pAnimator, newAnim);
+								CActor::AnimEvaluate(layerId, pAnimator, newAnim);
 							}
 						}
 					}
@@ -1764,12 +1995,12 @@ void CActorFighter::ClearLocalData()
 	this->field_0x690 = gF32Vertex4Zero;
 
 	this->field_0x6b0 = 0.0f;
-	IMPLEMENTATION_GUARD_LOG(
-	this->field_0x6b4 = 0;)
+	this->hitDamage = 0.0f;
 	this->field_0x684 = 0;
 	IMPLEMENTATION_GUARD_LOG(
-		this->field_0x7d8 = 0x3db851ec;
-	this->field_0x6c4 = 0x3dcccccd;
+	this->field_0x7d8 = 0x3db851ec;)
+	this->field_0x6c4 = 0.1f;
+	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x6c8 = 0x3f800000;
 	this->field_0x6cc = 0x3f800000;
 	this->field_0x7e4 = 0;
@@ -1818,7 +2049,7 @@ void CActorFighter::ClearLocalData()
 	this->field_0x504 = 7.0f;
 	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x500 = 0;)
-	this->field_0x480 = -1;
+	this->standAnim = -1;
 	return;
 }
 
@@ -2160,7 +2391,7 @@ void CActorFighter::_ComputeLogicalPos(edF32VECTOR4* pPosition)
 	else {
 		if (iVar1 == 4) {
 			iVar1 = this->actorState;
-			if (((iVar1 != 0x59) && (iVar1 != 0x62)) && (iVar1 != 99)) {
+			if (((iVar1 != FIGHTER_PROJECTED_HIT_WAKING_UP) && (iVar1 != 0x62)) && (iVar1 != 99)) {
 				edF32Vector4AddHard(&this->logicalPosition, &this->currentLocation, &this->fighterAnatomyZones.field_0x0);
 				(this->logicalPosition).xyz = (this->logicalPosition).xyz;
 				(this->logicalPosition).w = 1.0f;
@@ -2261,7 +2492,7 @@ void CActorFighter::SetInitialState()
 
 		if (((field_0x448.flags[0] >> 2) & 1) == 0) {
 			this->field_0x684 = 1;
-			this->field_0x6b8 = 4;
+			this->hitFlags = 4;
 			this->field_0x6b0 = 0.0f;
 			SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, -1, -1);
 		}
@@ -2280,7 +2511,7 @@ void CActorFighter::SetInitialState()
 		this->dynamicExt.normalizedTranslation.z = 0.0f;
 		this->dynamicExt.normalizedTranslation.w = 0.0f;
 		this->dynamicExt.field_0x6c = 0.0f;
-		SetState(6, this->field_0x480);
+		SetState(6, this->standAnim);
 	}
 
 	this->fightFlags = this->fightFlags & 0xffffbfff;
@@ -2477,9 +2708,9 @@ void CActorFighter::_InterpretCollisions(int param_2)
 		this->field_0x7b0 = 0.0f;
 		edF32Matrix4FromEulerSoft(&this->field_0x760, &this->rotationEuler.xyz, "XYZ");
 
-		if ((this->field_0x6b8 & 0x40U) != 0) {
+		if ((this->hitFlags & 0x40U) != 0) {
 			this->field_0x7b4 = 0.0;
-			this->field_0x6b8 = this->field_0x6b8 & 0xffffffbf;
+			this->hitFlags = this->hitFlags & 0xffffffbf;
 		}
 
 		inAnimType = _SV_ANM_GetMultiWaysAnim3D(&this->field_0x730, &local_10, &local_100);
@@ -2599,7 +2830,7 @@ void CActorFighter::_InterpretSlides()
 		if (0.15f < this->timeInAir) {
 			edF32Matrix4FromEulerSoft(&this->field_0x760, &this->rotationEuler.xyz, "XYZ");
 			edF32Matrix4MulF32Vector4Hard(&this->fighterAnatomyZones.field_0x0, &this->field_0x760, &(this->fighterAnatomyZones).field_0x10);
-			SetState(0x56, -1);
+			SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
 		}
 		else {
 			this->field_0x7e0 = 0x20;
@@ -2688,7 +2919,7 @@ void CActorFighter::_StateFighterHitFall(float param_1, edF32VECTOR4* pRotation,
 		this->rotationEuler.xyz = pRotation->xyz;
 	}
 
-	this->field_0x6b8 = 2;
+	this->hitFlags = 2;
 	this->field_0x684 = 1;
 
 	if (bProcessCollisions == 0) {
@@ -2704,6 +2935,65 @@ void CActorFighter::_StateFighterHitFall(float param_1, edF32VECTOR4* pRotation,
 	}
 
 	SetBehaviour(4, 100, -1);
+
+	return;
+}
+
+void CActorFighter::_StateFighterHitWakingUpInit()
+{
+	edF32VECTOR4* v0;
+	float puVar3;
+	float puVar4;
+	float fVar2;
+	edF32VECTOR4 eStack256;
+	edF32VECTOR4 eStack240;
+	edF32MATRIX4 eStack224;
+	edF32MATRIX4 eStack160;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR3 local_50;
+	edF32MATRIX4 eStack64;
+
+	edF32Matrix4FromEulerSoft(&this->field_0x760, &this->rotationEuler.xyz, "XYZ");
+	MatrixRotationFromVectorAndAngle(-(this->field_0x7dc * 1.570796f), &eStack64, &this->field_0x760.rowX);
+	edF32Matrix4MulF32Matrix4Hard(&this->field_0x760, &this->field_0x760, &eStack64);
+	edF32Matrix4ToEulerSoft(&this->field_0x760, &local_50, "XYZ");
+	this->rotationEuler.xyz = local_50;
+
+	SV_GetBoneWorldPosition(0x53538f8b, &eStack96);
+	ComputeRotTransMatrix(&eStack160);
+	ComputeLocalMatrix(&eStack224, &eStack160);
+	edF32Matrix4MulF32Vector4Hard(&eStack256, &eStack224, this->field_0x810 + ((int)this->field_0x7dc + 1 >> 1));
+	edF32Vector4SubHard(&eStack240, &eStack96, &eStack256);
+	v0 = &this->currentLocation;
+	edF32Vector4AddHard(v0, v0, &eStack240);
+	edF32Vector4CrossProductHard(&this->field_0x7a0, &(this->field_0x760).rowY, &g_xVector);
+	edF32Vector4SafeNormalize0Hard(&this->field_0x7a0, &this->field_0x7a0);
+
+	puVar3 = edF32Vector4DotProductHard(&(this->field_0x760).rowY, &g_xVector);
+	if (1.0f < puVar3) {
+		puVar4 = 1.0f;
+	}
+	else {
+		puVar4 = -1.0f;
+		if (-1.0f <= puVar3) {
+			puVar4 = puVar3;
+		}
+	}
+
+	fVar2 = acosf(puVar4);
+	this->field_0x7b4 = fVar2;
+	this->field_0x7b0 = 0.0f;
+
+	int macroAnim = GetIdMacroAnim(this->currentAnimType);
+
+	if (macroAnim < 0) {
+		fVar2 = 0.0f;
+	}
+	else {
+		fVar2 = this->pAnimationController->GetAnimLength(macroAnim, 1);
+	}
+
+	this->field_0x7b4 = this->field_0x7b4 / fVar2;
 
 	return;
 }
@@ -2826,7 +3116,7 @@ LAB_00306b50:
 		if (((((this->pCollisionData)->flags_0x4 & 7) == 0) && (this->field_0x8e4 == 0)) ||
 			(this->timeInAir <= 0.15f)) {
 			this->field_0x750 = this->field_0x740;
-			if ((((this->field_0x6b8 & 4U) == 0) && (15.0f < this->dynamicExt.field_0x6c)) &&
+			if ((((this->hitFlags & 4U) == 0) && (15.0f < this->dynamicExt.field_0x6c)) &&
 				(this->dynamicExt.normalizedTranslation.y < 0.0f)) {
 				SetState(0x55, -1);
 			}
@@ -2838,7 +3128,7 @@ LAB_00306b50:
 	else {
 		edProjectVectorOnPlane(0.0f, &this->field_0x740, &this->field_0x740, &eStack352, 0);
 		iVar3 = _SV_ANM_GetTwoSidedAnim(0x71, (int)this->field_0x7dc);
-		SetState(0x57, iVar3);
+		SetState(FIGHTER_PROJECTED_HIT_SLIDE, iVar3);
 	}
 
 	return;
@@ -3580,7 +3870,7 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 code_r0x0030b96c:
 	iVar6 = 0;
 	pCVar5 = param_7;
-	if (0 < param_7->field_0x0) {
+	if (0 < param_7->nbEntries) {
 		do {
 			IMPLEMENTATION_GUARD(
 			local_18 = pCVar5->field_0x4;
@@ -3592,7 +3882,7 @@ code_r0x0030b96c:
 			}
 			iVar6 = iVar6 + 1;
 			pCVar5 = (CFighterExcludedTable*)&pCVar5->field_0xc;)
-		} while (iVar6 < param_7->field_0x0);
+		} while (iVar6 < param_7->nbEntries);
 	}
 
 	bVar4 = false;
@@ -3634,11 +3924,11 @@ LAB_0030b9d0:
 			local_70 = param_9;
 			IMPLEMENTATION_GUARD(
 			CActor::DoMessage((CActor*)this, pReceiver, 2, (uint)local_4);
-			if ((param_7 != (CFighterExcludedTable*)0x0) && (param_7->field_0x0 < 6)) {
-				(&param_7->field_0x4)[param_7->field_0x0 * 3] = pReceiver;
-				(&param_7->field_0xc)[param_7->field_0x0 * 3] = 0x3f800000;
-				(&param_7->field_0x8)[param_7->field_0x0 * 3] = 0;
-				param_7->field_0x0 = param_7->field_0x0 + 1;
+			if ((param_7 != (CFighterExcludedTable*)0x0) && (param_7->nbEntries < 6)) {
+				(&param_7->field_0x4)[param_7->nbEntries * 3] = pReceiver;
+				(&param_7->field_0xc)[param_7->nbEntries * 3] = 0x3f800000;
+				(&param_7->field_0x8)[param_7->nbEntries * 3] = 0;
+				param_7->nbEntries = param_7->nbEntries + 1;
 			})
 		}
 	}
@@ -3823,6 +4113,15 @@ CActorWeapon* CActorFighter::GetWeapon()
 void CActorFighter::SetFighterCombo(s_fighter_combo* pCombo)
 {
 	this->pFighterCombo = pCombo;
+
+	return;
+}
+
+void CActorFighter::SetStandAnim(int newStandAnim)
+{
+	if ((this->standAnim != newStandAnim) && (this->standAnim = newStandAnim, this->actorState == FIGHTER_DEFAULT_STATE_IDLE)) {
+		SetState(FIGHTER_DEFAULT_STATE_IDLE, this->standAnim);
+	}
 
 	return;
 }
@@ -4135,6 +4434,97 @@ void CActorFighter::_SetRelativeSpeedOnGround(float speed, edF32VECTOR4* pDirect
 			this->field_0x44c = this->field_0x44c & 0xf0 | (this->field_0x44c & 0xf) + 1 & 0xf;
 			this->field_0x3a4.BuildFromSpeedTime(-pDirection->x, -pDirection->x, speed);
 		}
+	}
+
+	return;
+}
+
+void CActorFighter::_BuildCommandFromAbsoluteVector(edF32VECTOR4* param_2, s_fighter_action* pFighterAction, edF32VECTOR4* param_4)
+{
+	float fVar1;
+	edF32MATRIX4 auStack64;
+
+	if ((this->flags & 0x1000) == 0) {
+		fVar1 = GetAngleYFromVector(&this->rotationQuat);
+		edF32Matrix4RotateYHard(fVar1, &auStack64, &gF32Matrix4Unit);
+	}
+	else {
+		edF32Matrix4FromEulerSoft(&auStack64, &this->rotationEuler.xyz, "XYZ");
+	}
+
+	fVar1 = edF32Vector4DotProductHard(&auStack64.rowX, param_2);
+	param_4->x = fVar1;
+	param_4->y = 0.0f;
+	fVar1 = edF32Vector4DotProductHard(&auStack64.rowZ, param_2);
+	param_4->z = fVar1;
+	param_4->w = 0.0f;
+
+	pFighterAction->all = 0x0;
+
+	if (0.5f <= fabs(param_4->x)) {
+		if (0.0f < param_4->x) {
+			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 2 & 0xf;
+		}
+		else {
+			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 1 & 0xf;
+		}
+	}
+	if (0.5f <= fabs(param_4->z)) {
+		if (0.0f < param_4->z) {
+			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 3 & 0xf;
+		}
+		else {
+			pFighterAction->field_0x0 = pFighterAction->field_0x0 & 0xf0 | (pFighterAction->field_0x0 & 0xf) + 6 & 0xf;
+		}
+	}
+
+	return;
+}
+
+void CActorFighter::_UpdateDynForExplosion(_msg_hit_param* pHitParams)
+{
+	ed_3d_hierarchy_node* peVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 local_10;
+
+	this->field_0x690 = pHitParams->field_0x40;
+	this->hitDamage = pHitParams->damage;
+	edF32Vector4SafeNormalize0Hard(&this->field_0x6a0, &pHitParams->field_0x20);
+	this->hitFlags = 5;
+	this->field_0x684 = 1;
+	this->field_0x474 = 0.3f;
+	this->field_0x6b0 = pHitParams->field_0x30 / 60.0f;
+	fVar2 = ((this->field_0x6a0).y * -2.0f * this->field_0x6b0 * 0.8f) / (CDynamicExt::gForceGravity.y * this->dynamicExt.gravityScale);
+	if (0.0f < fVar2) {
+		fVar3 = 4.712389f / fVar2;
+		if (10.0f < fVar3) {
+			fVar3 = 1.570796f / fVar2;
+		}
+		if (10.0f < fVar3) {
+			fVar3 = 10.0f;
+		}
+	}
+	else {
+		fVar3 = 10.0f;
+	}
+
+	edF32Vector4SubHard(&local_10, &this->currentLocation, &this->field_0x634->currentLocation);
+	local_10.y = 0.0f;
+	fVar2 = edF32Vector4NormalizeHard(&local_10, &local_10);
+	if (fVar2 == 0.0f) {
+		peVar1 = this->pMeshTransform;
+		this->field_0x7a0 = (peVar1->base).transformA.rowX;
+		this->field_0x7b4 = fVar3;
+	}
+	else {
+		(this->field_0x7a0).x = local_10.z;
+		(this->field_0x7a0).y = 0.0f;
+		(this->field_0x7a0).z = -local_10.x;
+		(this->field_0x7a0).w = 0.0f;
+		this->field_0x7b4 = fVar3;
 	}
 
 	return;
@@ -4518,7 +4908,7 @@ void CBehaviourFighter::Manage()
 
 	uVar14 = 8;
 
-	iVar9 = this->pOwner->field_0x480;
+	iVar9 = this->pOwner->standAnim;
 	iVar13 = 0;
 	this->pOwner->UpdateFightCommand();
 
@@ -4765,7 +5155,7 @@ void CBehaviourFighter::InitState(int newState)
 	switch (newState) {
 	case FIGHTER_DEFAULT_STATE_IDLE:
 		pCVar1 = this->pOwner;
-		pCVar1->actorsExcludeTable.field_0x0 = 0;
+		pCVar1->actorsExcludeTable.nbEntries = 0;
 		pCVar1->fightFlags = pCVar1->fightFlags | 3;
 		pCVar1->field_0x44cuint = 0;
 		pCVar1->dynamic.speed = 0.0f;
@@ -4965,19 +5355,20 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 				}
 
 				if (msg == 2) {
-					IMPLEMENTATION_GUARD(
-					iVar2 = *pMsgParam;
+					_msg_hit_param* pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+					iVar2 = pMsgHitParam->projectileType;
 					if (iVar2 == 10) {
-						FUN_00306eb0((int)this->pOwner, (int)pMsgParam);
-						this->pOwner->field_0x6b8 = this->pOwner->field_0x6b8 | 0x30;
-						(*(code*)this->pVTable->_ManageHit)(this, 0);
+						this->pOwner->_UpdateDynForExplosion(pMsgHitParam);
+						this->pOwner->hitFlags = this->pOwner->hitFlags | 0x30;
+						_ManageHit(false);
 						return 1;
 					}
 					if (iVar2 == 8) {
 						if (((uVar5 & 0x2000000) == 0) ||
 							(((uVar5 & 0x80000) != 0 && ((CActorFighter*)pSender == this->pOwner->pAdversary)))) {
-							FUN_00307090(0x3f800000, (int)this->pOwner, (int)pMsgParam);
-							(*(code*)this->pVTable->_ManageHit)(this, (this->pOwner->field_0x6b8 & 0x80U) == 0);
+							IMPLEMENTATION_GUARD(
+							_UpdateDynForHit(1.0f, pMsgHitParam);)
+							_ManageHit((this->pOwner->hitFlags & 0x80U) == 0);
 							return 1;
 						}
 					}
@@ -4987,11 +5378,12 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						}
 						if (((uVar5 & 0x2000000) == 0) ||
 							(((uVar5 & 0x80000) != 0 && ((CActorFighter*)pSender == this->pOwner->pAdversary)))) {
-							FUN_00307090((int)&DAT_bf800000, (int)this->pOwner, (int)pMsgParam);
-							(*(code*)this->pVTable->_ManageHit)(this, (this->pOwner->field_0x6b8 & 0x80U) == 0);
+							IMPLEMENTATION_GUARD(
+							_UpdateDynForHit(-1.0f, pMsgHitParam);)
+							_ManageHit((this->pOwner->hitFlags & 0x80U) == 0);
 							return 1;
 						}
-					})
+					}
 				}
 			}
 		}
@@ -5052,16 +5444,28 @@ bool CBehaviourFighter::Execute(s_fighter_action* param_2, s_fighter_action_para
 	return bVar2;
 }
 
-void CBehaviourFighter::_ManageHit()
+void CBehaviourFighter::_ManageHit(bool bPlayImpact)
 {
-	IMPLEMENTATION_GUARD();
+	uint flags = this->pOwner->GetStateFlags(this->pOwner->actorState) & 0xff800;
+
+	if (flags == 0x4000) {
+		this->pOwner->_Ride_GetPossibleHit(bPlayImpact);
+	}
+	else {
+		if (flags == 0x8000) {
+			this->pOwner->_Hold_GetPossibleHit(bPlayImpact);
+		}
+		else {
+			if ((flags == 0x80000) || (flags == 0x800)) {
+				this->pOwner->_Std_GetPossibleHit(bPlayImpact);
+			}
+		}
+	}
 }
 
 void CBehaviourFighter::_ManageExit()
 {
-	uint flags;
-
-	flags = this->pOwner->GetStateFlags(this->pOwner->actorState) & 0xff800;
+	uint flags = this->pOwner->GetStateFlags(this->pOwner->actorState) & 0xff800;
 
 	if (flags == 0x1000) {
 		this->pOwner->_Proj_GetPossibleExit();
@@ -5081,6 +5485,7 @@ void CBehaviourFighter::_ManageExit()
 			}
 		}
 	}
+
 	return;
 }
 
@@ -5130,7 +5535,7 @@ void CBehaviourFighterProjected::Manage()
 	Timer* pTVar2;
 	CLifeInterface* pLifeInterface;
 	int iVar3;
-	CBehaviour* pCVar4;
+	CBehaviourFighter* pCVar4;
 	//CActorFighterVTable* pCVar5;
 	float fVar6;
 	float fVar7;
@@ -5151,14 +5556,61 @@ void CBehaviourFighterProjected::Manage()
 	case 0x54:
 		pFighter->ManageDyn(4.0f, 0xb, (CActorsTable*)0x0);
 		if (pFighter->field_0x7d8 <= pFighter->timeInAir) {
-			pFighter->SetState(0x56, -1);
+			pFighter->SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
 		}
 		break;
-	case 0x56:
+	case FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE:
 		pFighter->_StateFighterHitFlyToSlide();
 		break;
-	case 0x57:
+	case FIGHTER_PROJECTED_HIT_SLIDE:
 		pFighter->_StateFighterHitSlide();
+		break;
+	case 0x58:
+		pCVar4 = static_cast<CBehaviourFighter*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
+		pFighter->ManageDyn(4.0f, 0x233, (CActorsTable*)0x0);
+
+		bVar1 = pFighter->IsFightRelated(pCVar4->behaviourId);
+		if ((bVar1 == false) || ((pFighter->field_0x444 & 2) == 0)) {
+			iVar3 = pFighter->_SV_ANM_GetTwoSidedAnim(0x77, (int)pFighter->field_0x7dc);
+			fVar6 = 0.6f;
+		}
+		else {
+			iVar3 = pFighter->_SV_ANM_GetTwoSidedAnim(0x79, (int)pFighter->field_0x7dc);
+			fVar6 = 0.1f;
+		}
+
+		if (fVar6 < pFighter->timeInAir) {
+			pFighter->SetState(FIGHTER_PROJECTED_HIT_WAKING_UP, iVar3);
+		}
+		break;
+	case FIGHTER_PROJECTED_HIT_WAKING_UP:
+		pFighter->ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+		pTVar2 = GetTimer();
+		fVar7 = pFighter->field_0x7b0 + pFighter->field_0x7b4 * pTVar2->cutsceneDeltaTime;
+		pFighter->field_0x7b0 = fVar7;
+
+		MatrixRotationFromVectorAndAngle(-fVar7, &eStack64, &pFighter->field_0x7a0);
+		edF32Matrix4MulF32Matrix4Hard(&eStack64, &pFighter->field_0x760, &eStack64);
+		edF32Matrix4ToEulerSoft(&eStack64, &local_50, "XYZ");
+
+		pFighter->rotationEuler.xyz = local_50;
+
+		pAnimation = pFighter->pAnimationController;
+		pAnmLayer = (pAnimation->anmBinMetaAnimator).aAnimData;
+		bVar1 = false;
+		if ((pAnmLayer->currentAnimDesc).animType == pAnimation->currentAnimType_0x30) {
+			if (pAnmLayer->animPlayState == 0) {
+				bVar1 = false;
+			}
+			else {
+				bVar1 = (pAnmLayer->field_0xcc & 2) != 0;
+			}
+		}
+
+		if (bVar1) {
+			pCVar4 = static_cast<CBehaviourFighter*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
+			pFighter->SetBehaviour(pCVar4->behaviourId, -1, -1);
+		}
 		break;
 	default:
 		IMPLEMENTATION_GUARD();
@@ -5229,8 +5681,8 @@ void CBehaviourFighterProjected::Begin(CActor* pOwner, int newState, int newAnim
 
 	if (newState == -1) {
 		pFighter = this->pOwner;
-		if ((pFighter->field_0x6b8 & 2U) == 0) {
-			pFighter->SetState(0x56, -1);
+		if ((pFighter->hitFlags & 2U) == 0) {
+			pFighter->SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
 		}
 		else {
 			pFighter->SetState(0x55, -1);
@@ -5282,7 +5734,7 @@ void CBehaviourFighterProjected::InitState(int newState)
 	case 0x54:
 		this->pOwner->LifeDecrease(2.0f);
 		break;
-	case 0x56:
+	case FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE:
 		pFighter = this->pOwner;
 
 		pFighter->dynamicExt.field_0x6c = edF32Vector4SafeNormalize0Hard(&pFighter->field_0x740, &pFighter->field_0x740);
@@ -5297,7 +5749,7 @@ void CBehaviourFighterProjected::InitState(int newState)
 		pCVar2 = pFighter->pCollisionData;
 		pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xffffffcf;
 		break;
-	case 0x57:
+	case FIGHTER_PROJECTED_HIT_SLIDE:
 		pFighter = this->pOwner;
 		pCVar2 = pFighter->pCollisionData;
 		pCVar2->flags_0x0 = pCVar2->flags_0x0 | 0x10;
@@ -5325,6 +5777,19 @@ void CBehaviourFighterProjected::InitState(int newState)
 		((CActor*)pFighter, (undefined4*)&pCVar2->aCollisionContact[1].field_0x10,
 			(edF32VECTOR4*)(pCVar2->aCollisionContact + 1), pFighter->field_0x53c, (int*)0x0);)
 		break;
+	case 0x58:
+		pFighter = this->pOwner;
+		pFighter->dynamic.speed = 0.0f;
+		pFighter->ClearAllSumForceExt();
+		pFighter->dynamicExt.normalizedTranslation.x = 0.0f;
+		pFighter->dynamicExt.normalizedTranslation.y = 0.0f;
+		pFighter->dynamicExt.normalizedTranslation.z = 0.0f;
+		pFighter->dynamicExt.normalizedTranslation.w = 0.0f;
+		pFighter->dynamicExt.field_0x6c = 0.0f;
+		break;
+	case FIGHTER_PROJECTED_HIT_WAKING_UP:
+		this->pOwner->_StateFighterHitWakingUpInit();
+		break;
 	case 0x64:
 		this->pOwner->_InterpretCollisions(1);
 		break;
@@ -5351,9 +5816,9 @@ void CBehaviourFighterProjected::TermState(int oldState, int newState)
 	}
 	else {
 		if (oldState != 0x61) {
-			if ((oldState == 0x56) || (oldState == 0x55)) {
+			if ((oldState == FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE) || (oldState == 0x55)) {
 				pFighter = this->pOwner;
-				if ((newState == 0x57) || (newState == 0x54)) {
+				if ((newState == FIGHTER_PROJECTED_HIT_SLIDE) || (newState == 0x54)) {
 					pFighter->Func_0x194(pFighter->field_0x7c8 - pFighter->field_0x7d0);
 					fVar3 = (pFighter->fighterAnatomyZones).field_0x0.y + pFighter->currentLocation.y;
 					pFighter->field_0x7d0 = fVar3;
@@ -5427,14 +5892,14 @@ int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void*
 							(pCVar1->field_0x690).y = fVar8;
 							(pCVar1->field_0x690).z = fVar6;
 							(pCVar1->field_0x690).w = fVar7;
-							pCVar1->field_0x6b4 = *(undefined4*)((int)pMsgParam + 0xc);
+							pCVar1->hitDamage = *(undefined4*)((int)pMsgParam + 0xc);
 							edF32Vector4SafeNormalize0Hard(&pCVar1->field_0x6a0, (edF32VECTOR4*)((int)pMsgParam + 0x20));
 							pCVar2 = pCVar1->field_0x634;
 							iVar4 = FUN_0030c650(&pCVar1->actorsExcludeTable, (int)pCVar2);
 							if (iVar4 == 0) {
 								FUN_0030c5e0(0x3f800000, &pCVar1->actorsExcludeTable, (int)pCVar2);
 							}
-							pCVar1->field_0x6b8 = *(int*)((int)pMsgParam + 8);
+							pCVar1->hitFlags = *(int*)((int)pMsgParam + 8);
 							pCVar1->field_0x474 = *(undefined4*)((int)pMsgParam + 0x10);
 							pCVar1->field_0x6b0 = *(float*)((int)pMsgParam + 0x30);
 							pCVar1->field_0x684 = *(short*)((int)pMsgParam + 0x50);
@@ -5462,14 +5927,14 @@ int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void*
 								(pCVar1->field_0x690).y = fVar8;
 								(pCVar1->field_0x690).z = fVar6;
 								(pCVar1->field_0x690).w = fVar7;
-								pCVar1->field_0x6b4 = *(undefined4*)((int)pMsgParam + 0xc);
+								pCVar1->hitDamage = *(undefined4*)((int)pMsgParam + 0xc);
 								edF32Vector4SafeNormalize0Hard(&pCVar1->field_0x6a0, (edF32VECTOR4*)((int)pMsgParam + 0x20));
 								pCVar2 = pCVar1->field_0x634;
 								iVar4 = FUN_0030c650(&pCVar1->actorsExcludeTable, (int)pCVar2);
 								if (iVar4 == 0) {
 									FUN_0030c5e0((int)&DAT_bf800000, &pCVar1->actorsExcludeTable, (int)pCVar2);
 								}
-								pCVar1->field_0x6b8 = *(int*)((int)pMsgParam + 8);
+								pCVar1->hitFlags = *(int*)((int)pMsgParam + 8);
 								pCVar1->field_0x474 = *(undefined4*)((int)pMsgParam + 0x10);
 								pCVar1->field_0x6b0 = *(float*)((int)pMsgParam + 0x30);
 								pCVar1->field_0x684 = *(short*)((int)pMsgParam + 0x50);
@@ -5508,12 +5973,46 @@ int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void*
 
 bool CBehaviourFighterProjected::Execute(s_fighter_action* param_2, s_fighter_action_param* param_3)
 {
-	IMPLEMENTATION_GUARD();
+	return false;
 }
 
-void CBehaviourFighterProjected::_ManageHit()
+void CBehaviourFighterProjected::_ManageHit(bool bPlayImpact)
 {
-	IMPLEMENTATION_GUARD();
+	this->pOwner->LifeDecrease(this->pOwner->hitDamage);
+	this->pOwner->hitDamage = 0.0f;
+
+	if ((this->pOwner->hitFlags & 1U) == 0) {
+		(this->pOwner->field_0x6a0).y = 2.0f;
+		edF32Vector4NormalizeHard(&this->pOwner->field_0x6a0, &this->pOwner->field_0x6a0);
+		this->pOwner->field_0x6b0 = 5.0f;
+		this->pOwner->field_0x686 = 1;
+		this->pOwner->field_0x684 = 0xe;
+
+		_ComputeDynamics();
+
+		this->pOwner->SetState(-1, -1);
+		this->pOwner->SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
+	}
+	else {
+		_ComputeDynamics();
+
+		this->pOwner->SetState(-1, -1);
+
+		if (((this->pOwner->hitFlags & 2U) == 0) || ((this->pOwner->hitFlags & 4U) != 0)) {
+			this->pOwner->SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
+		}
+		else {
+			this->pOwner->SetState(0x55, -1);
+		}
+	}
+
+	if (bPlayImpact == true) {
+		IMPLEMENTATION_GUARD_FX(
+		pCVar1 = this->pOwner;
+		CActorFighter::PlayImpactFx
+		(pCVar1, (long)(int)&pCVar1->field_0x690, &pCVar1->field_0x6a0, (ulong)((pCVar1->hitFlags & 1U) != 0), '\0');)
+	}
+	return;
 }
 
 
@@ -5921,7 +6420,7 @@ edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
 
 CFighterExcludedTable::CFighterExcludedTable()
 {
-	this->field_0x0 = 0;
+	this->nbEntries = 0;
 }
 
 void CFighterExcludedTable::EmptyByTime(float time)
@@ -5932,7 +6431,7 @@ void CFighterExcludedTable::EmptyByTime(float time)
 
 	iVar2 = 0;
 	pCVar1 = this;
-	if (0 < this->field_0x0) {
+	if (0 < this->nbEntries) {
 		IMPLEMENTATION_GUARD(
 		do {
 			pCVar1->field_0x8 = (int)((float)pCVar1->field_0x8 + time);
@@ -5941,7 +6440,7 @@ void CFighterExcludedTable::EmptyByTime(float time)
 			}
 			iVar2 = iVar2 + 1;
 			pCVar1 = (CFighterExcludedTable*)&pCVar1->field_0xc;
-		} while (iVar2 < this->field_0x0);)
+		} while (iVar2 < this->nbEntries);)
 	}
 	return;
 }

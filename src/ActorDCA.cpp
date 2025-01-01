@@ -189,7 +189,7 @@ StateConfig* CActorDCA::GetStateCfg(int state)
 	return pStateConfig;
 }
 
-void CActorDCA::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+void CActorDCA::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	edANM_HDR* peVar1;
 	Timer* pTVar2;
@@ -197,7 +197,7 @@ void CActorDCA::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint n
 	float fVar4;
 	float fVar5;
 
-	if (param_2 == 8) {
+	if (layerId == 8) {
 		if (newAnim == 9) {
 			IMPLEMENTATION_GUARD(
 			fVar3 = 0.0;
@@ -220,7 +220,7 @@ void CActorDCA::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint n
 		}
 	}
 	else {
-		if ((param_2 == 2) || (param_2 == 1)) {
+		if ((layerId == 2) || (layerId == 1)) {
 			char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 			AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
 
@@ -399,7 +399,7 @@ void CActorDCA::BehaviourDefault_Manage(CBhvDefault* pBehaviour)
 				bVar5 = false;
 			}
 			else {
-				bVar5 = this->field_0x1a0->typeID == 6;
+				bVar5 = this->field_0x1a0->typeID == ACTOR_HERO_PRIVATE;
 			}
 
 			if (bVar5) {

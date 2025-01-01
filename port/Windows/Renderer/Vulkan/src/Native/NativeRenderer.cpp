@@ -1036,6 +1036,7 @@ void Renderer::Native::PushModelMatrix(float* pModel)
 void Renderer::Native::PushAnimMatrix(float* pAnim)
 {
 	NATIVE_LOG(LogLevel::Info, "PushAnimMatrix");
+	//assert(!std::isnan(pAnim[0]));
 	gAnimationMatrices.push_back(glm::make_mat4(pAnim));
 }
 

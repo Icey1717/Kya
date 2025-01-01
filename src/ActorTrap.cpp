@@ -912,7 +912,7 @@ void CBehaviourTrapStand::InitState(int newState)
 		GetAnglesFromVector(&this->pOwner->rotationEuler.xyz, &this->pOwner->rotationQuat);
 		break;
 	case 9:
-		if (this->pCaughtActor->typeID == 6) {
+		if (this->pCaughtActor->typeID == ACTOR_HERO_PRIVATE) {
 			local_4 = 0;
 			this->pOwner->DoMessage(this->pCaughtActor, (ACTOR_MESSAGE)0x3f, (MSG_PARAM)0);
 		}

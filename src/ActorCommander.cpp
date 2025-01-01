@@ -151,44 +151,40 @@ void CActorCommander::Manage()
 		local_20 = this->currentLocation;
 		SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
 
-		IMPLEMENTATION_GUARD_LOG(
-		iVar1 = CSquad::NbElt(&this->squad);
+		iVar1 = this->squad.NbElt();
 		if (iVar1 != 0) {
 			edF32Vector4SubHard(&eStack112, &this->currentLocation, &local_20);
 			edF32Matrix4TranslateHard(&eStack96, &gF32Matrix4Unit, &eStack112);
-			FUN_00352d90((int)&(this->squad).chessboard, &eStack96);
-		})
+			IMPLEMENTATION_GUARD_LOG(
+			FUN_00352d90((int)&(this->squad).chessboard, &eStack96);)
+		}
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	(*(code*)(this->pVTable)->field_0xfc)(this);)
+	_UpdateSquad();
 	CheckExorcism();
 	CheckArea_IntruderDetectArea();
 	CheckArea_IntruderGuardArea();
 	CheckArea_SoldiersDetectArea();
 	CheckArea_SoldiersGuardArea();
 
-	IMPLEMENTATION_GUARD_LOG(
-	(this->checkpointData_0x190).pWaypoint = (CWayPoint*)0x0;
+	this->field_0x194 = 0;
+
 	iVar1 = 0;
 	if (0 < this->nbTeams) {
-		iVar4 = 0;
 		do {
-			piVar1 = *(CTeamElt**)((int)&this->aTeamElt->pEnemyActor + iVar4);
-			uVar2 = (**(code**)(piVar1->field_0x0 + 0x138))(piVar1);
-			fVar5 = (float)(**(code**)(*(int*)uVar2 + 0x24))(uVar2);
-			if (((0.0 < fVar5) && (lVar3 = (**(code**)(piVar1->field_0x0 + 0xc))(piVar1, 0x10), lVar3 != 0)) &&
-				((*(uint*)&piVar1[0x7a].field_0x8 & 7) != 0)) {
-				(this->checkpointData_0x190).pWaypoint =
-					(CWayPoint*)((int)&(((this->checkpointData_0x190).pWaypoint)->field_0x0).x + 1);
+			CActorWolfen* pEntryWolfen = static_cast<CActorWolfen*>(this->aTeamElt[iVar1].pEnemyActor);
+			if (((0.0f < pEntryWolfen->GetLifeInterface()->GetValue()) && (pEntryWolfen->IsKindOfObject(0x10) != false)) &&
+				((pEntryWolfen->combatFlags_0xb78 & 7) != 0)) {
+				this->field_0x194 = this->field_0x194 + 1;
 			}
+
 			iVar1 = iVar1 + 1;
-			iVar4 = iVar4 + 0x18;
 		} while (iVar1 < this->nbTeams);
-	})
+	}
 
 	this->bInCombat_0x1b0 = 0;
 	CActor::Manage();
+
 	IMPLEMENTATION_GUARD_LOG(
 	_UpdateCamera();
 	this->field_0x2f4 = 0;)
@@ -265,7 +261,7 @@ void CActorCommander::ClearLocalData()
 		}
 	}
 
-	//this->squad.Clear();
+	this->squad.Clear();
 
 	this->field_0x1e0 = 0;
 	//this->field_0x1e4 = 0;
@@ -333,6 +329,31 @@ bool CActorCommander::BeginFightIntruder(CActor* pInstigator, CActor* pIntruder)
 	}
 
 	return bSuccess;
+}
+
+void CActorCommander::EndFightIntruder(CActorFighter* pIntruder)
+{
+	CTeamElt* pCVar1;
+	CTeamElt* pTeamElt;
+	int iVar2;
+
+	iVar2 = 0;
+	pTeamElt = (CTeamElt*)0x0;
+	if (0 < this->nbTeams) {
+		pCVar1 = this->aTeamElt;
+		do {
+			pTeamElt = pCVar1;
+			if (pTeamElt->pEnemyActor == pIntruder) break;
+			iVar2 = iVar2 + 1;
+			pCVar1 = pTeamElt + 1;
+			pTeamElt = (CTeamElt*)0x0;
+		} while (iVar2 < this->nbTeams);
+	}
+
+	this->squad.RemoveFighter(pTeamElt);
+	pIntruder->SetStandAnim(-1);
+
+	return;
 }
 
 void CActorCommander::AddTracked()
@@ -644,7 +665,7 @@ void CActorCommander::CheckArea_SoldiersGuardArea()
 	return;
 }
 
-bool CActorCommander::CheckZone_00170f90(edF32VECTOR4* v0)
+int CActorCommander::CheckZone_00170f90(edF32VECTOR4* v0)
 {
 	uint zoneId;
 	ed_zone_3d* pZone;
@@ -685,6 +706,44 @@ CTeamElt* CActorCommander::GetTeamElt(CActor* pActor)
 	return (CTeamElt*)0x0;
 }
 
+void CActorCommander::_UpdateSquad()
+{
+	CActorFighter* this_00;
+	bool bVar1;
+	int iVar2;
+	uint uVar3;
+	StateConfig* pSVar4;
+
+	this->squad.ClearSquadDeadAndNonFightingElt();
+	iVar2 = this->squad.NbElt();
+	if (iVar2 == 0) {
+		return;
+	}
+
+	IMPLEMENTATION_GUARD(
+	if ((GetStateFlags(this->actorState) & 0x100) == 0) {
+		this_00 = (this->squad).eltTable.aEntries[0]->pEnemyActor->pAdversary;
+		if ((this_00 != (CActorFighter*)0x0) &&
+			(bVar1 = this_00->FUN_0031b790(this_00->actorState), bVar1 != false)) {
+			bVar1 = false;
+			if ((this_00->pFighterCombo != (s_fighter_combo*)0x0) && ((this_00->pFighterCombo->field_0x4 & 0x100U) != 0)) {
+				bVar1 = true;
+			}
+
+			if (!bVar1) goto LAB_00172118;
+		}
+
+		this->squad.ManageSemaphore(0);
+	}
+LAB_00172118:
+	if ((GetStateFlags(this->actorState) & 0x200) == 0) {
+		this->squad.ManageSemaphore(1);
+	}
+
+	this->squad.SynchronizePawns();)
+	return;
+}
+
 void CSquad::Create(ByteCode* pByteCode)
 {
 	uint uVar1;
@@ -695,24 +754,163 @@ void CSquad::Create(ByteCode* pByteCode)
 	fVar3 = pByteCode->GetF32();
 	uVar1 = pByteCode->GetU32();
 	uVar2 = pByteCode->GetU32();
-	//if ((int)uVar1 < 0) {
-	//	fVar4 = (float)(uVar1 >> 1 | uVar1 & 1);
-	//	fVar4 = fVar4 + fVar4;
-	//}
-	//else {
-	//	fVar4 = (float)uVar1;
-	//}
+	if ((int)uVar1 < 0) {
+		fVar4 = (float)(uVar1 >> 1 | uVar1 & 1);
+		fVar4 = fVar4 + fVar4;
+	}
+	else {
+		fVar4 = (float)uVar1;
+	}
+
 	//CChessBoard::Init(fVar3, fVar3 * fVar4, &this->chessboard, uVar1, uVar2);
-	//(this->field_0x0).x = 0.0;
-	//(this->field_0x0).y = 0.6;
-	//(this->field_0x0).w = 0.0;
-	//(this->field_0x0).z = 0.0;
-	//memset(this->field_0x10, 0, 0xa0);
-	//this->field_0xb0 = 1;
-	//this->field_0xb4 = 0;
-	//this->field_0xbc = 0;
-	//this->field_0xb8 = 0;
-	//memset(this->field_0xc0, 0, 0xa0);
+
+	this->aSubObjs[0].field_0x0 = 0;
+	this->aSubObjs[0].field_0x4 = 0.6f;
+	this->aSubObjs[0].field_0xc = 0;
+	this->aSubObjs[0].field_0x8 = 0;
+	memset(this->aSubObjs[0].field_0x10, 0, sizeof(this->aSubObjs[0].field_0x10));
+
+	this->aSubObjs[1].field_0x0 = 1;
+	this->aSubObjs[1].field_0x4 = 0.0f;
+	this->aSubObjs[1].field_0xc = 0;
+	this->aSubObjs[1].field_0x8 = 0;
+	memset(this->aSubObjs[1].field_0x10, 0, sizeof(this->aSubObjs[1].field_0x10));
+
+	return;
+}
+
+void CSquad::Clear()
+{
+	int iVar1;
+	uint uVar2;
+	SquadSubObj_0x20* pCVar3;
+	uint uVar4;
+	uint uVar5;
+
+	iVar1 = (this->eltTable).entryCount;
+	while (iVar1 != 0) {
+		CActorWolfen* pWolfen = static_cast<CActorWolfen*>((this->eltTable).aEntries[iVar1 - 1]->pEnemyActor);
+		pWolfen->TermFightAction();
+		this->eltTable.PopCurrent();
+		iVar1 = (this->eltTable).entryCount;
+	}
+
+	SquadSubObj_0xb0* pSubObj_0xb0 = this->aSubObjs;
+
+	uVar5 = 0;
+	do {
+		uVar4 = 0;
+		pCVar3 = pSubObj_0xb0->field_0x10;
+
+		if (pSubObj_0xb0->field_0x8 != 0) {
+			do {
+				uVar2 = pCVar3->flags & 1;
+				if (((uVar2 != 0) && (uVar4 != 0xffffffff)) && (uVar2 != 0)) {
+					CActorWolfen* pWolfen = pCVar3->pWolfen;
+					if (pWolfen != (CActorWolfen*)0x0) {
+						IMPLEMENTATION_GUARD(
+						pWolfen->DisableFightAction();)
+					}
+
+					pWolfen = pCVar3->pWolfen;
+					if (pWolfen != (CActorWolfen*)0x0) {
+						pCVar3->field_0x4 = pWolfen;
+					}
+
+					if ((pCVar3->flags & 5) != 0) {
+						pSubObj_0xb0->field_0xc = pSubObj_0xb0->field_0xc + 1;
+					}
+
+					pCVar3->flags = 0;
+					pCVar3->field_0x10 = 0;
+					pCVar3->pWolfen = (CActorWolfen*)0x0;
+					pCVar3->field_0x8 = 0;
+				}
+
+				CActorWolfen* pWolfen = pCVar3->pWolfen;
+				if (pWolfen != (CActorWolfen*)0x0) {
+					pCVar3->field_0x4 = pWolfen;
+				}
+
+				if ((pCVar3->flags & 5) != 0) {
+					pSubObj_0xb0->field_0xc = pSubObj_0xb0->field_0xc + 1;
+				}
+
+				pCVar3->flags = 0;
+				pCVar3->field_0x10 = 0;
+				uVar4 = uVar4 + 1;
+				pCVar3->pWolfen = (CActorWolfen*)0x0;
+				pCVar3->field_0x8 = 0;
+				pCVar3 = pCVar3 + 1;
+			} while (uVar4 < pSubObj_0xb0->field_0x8);
+		}
+
+		uVar5 = uVar5 + 1;
+		pSubObj_0xb0 = pSubObj_0xb0 + 1;
+	} while (uVar5 < 2);
+
+	return;
+}
+
+int CSquad::NbElt()
+{
+	return this->eltTable.entryCount;
+}
+
+void CSquad::ClearSquadDeadAndNonFightingElt()
+{
+	CTeamElt* pEntry;
+	CActorWolfen* pWolfen;
+	CTeamElt** pEntries;
+	int curIndex;
+
+	curIndex = 0;
+	pEntries = this->eltTable.aEntries;
+	if (0 < (this->eltTable).entryCount) {
+		do {
+			pEntry = *pEntries;
+			if (pEntry != (CTeamElt*)0x0) {
+				pWolfen = static_cast<CActorWolfen*>(pEntry->pEnemyActor);
+			
+				if ((pWolfen->GetLifeInterface()->GetValue() <= 0.0f) || (pWolfen->IsFightRelated(pWolfen->curBehaviourId) == false) || ((pWolfen->flags & 4) == 0)) {
+					pWolfen->TermFightAction();
+					this->eltTable.Pop(curIndex);
+				}
+			}
+
+			curIndex = curIndex + 1;
+			pEntries = pEntries + 1;
+		} while (curIndex < (this->eltTable).entryCount);
+	}
+
+	return;
+}
+
+void CSquad::RemoveFighter(CTeamElt* pTeamElt)
+{
+	int iVar1;
+	CTeamElt** pCVar2;
+	int iVar3;
+
+	iVar1 = (this->eltTable).entryCount;
+	iVar3 = 0;
+	pCVar2 = this->eltTable.aEntries;
+	if (0 < iVar1) {
+		do {
+			if (*pCVar2 == pTeamElt) {
+				CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pTeamElt->pEnemyActor);
+				pWolfen->TermFightAction();
+				this->eltTable.Pop(iVar3);
+				IMPLEMENTATION_GUARD(
+				SynchronizePawns();)
+				return;
+			}
+
+			iVar3 = iVar3 + 1;
+			pCVar2 = pCVar2 + 1;
+		} while (iVar3 < iVar1);
+	}
+
 	return;
 }
 

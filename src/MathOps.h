@@ -105,6 +105,7 @@ float GetAngleYFromVector(edF32VECTOR4* v0);
 float edF32GetAnglesDelta(float t0, float t1);
 float edF32Between_2Pi(float param_1);
 float edF32Between_0_2Pi(float param_1);
+float edF32Between_0_2Pi_Incr(float param_1);
 float edF32Between_Pi(float param_1);
 
 void edF32Vector4GetNegHard(edF32VECTOR4* v0, edF32VECTOR4* v1);

@@ -3,6 +3,7 @@
 #include "MemoryStream.h"
 #include "edMem.h"
 #include "Actor.h"
+#include "EventManager.h"
 
 CSwitchBehaviour::CSwitchBehaviour()
 {
@@ -259,5 +260,77 @@ void CExecuteSwitchBehaviour::Init(CActor* pOwner)
 
 int CExecuteSwitchBehaviour::Execute(CActor* pOwner)
 {
-	return pOwner->objectId;
+	return this->behaviourId;
+}
+
+bool CheckZone(ed_zone_3d* pZone, uint flags, uint* pResult, edF32VECTOR4* pPosition)
+{
+	uint computeResult;
+	bool bInZone;
+
+	bInZone = false;
+
+	computeResult = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, pPosition, 0);
+	if (computeResult == *pResult) {
+		if (computeResult == 1) {
+			if ((flags & 4) != 0) {
+				bInZone = true;
+			}
+		}
+		else {
+			if ((flags & 8) != 0) {
+				bInZone = true;
+			}
+		}
+	}
+	else {
+		bInZone = false;
+		if (computeResult == 1) {
+			if ((flags & 1) != 0) {
+				bInZone = true;
+			}
+		}
+		else {
+			if ((flags & 2) != 0) {
+				bInZone = true;
+			}
+		}
+		*pResult = computeResult;
+	}
+
+	return bInZone;
+}
+
+void CondActorInArea::Create(ByteCode* pByteCode)
+{
+	this->pActor.index = pByteCode->GetS32();
+	this->pZone.index = pByteCode->GetS32();
+	this->flags = pByteCode->GetU32();
+
+	return;
+}
+
+void CondActorInArea::Init(CActor* pOwner)
+{
+	this->pActor.Init();
+	this->pZone.Init();
+
+	return;
+}
+
+void CondActorInArea::Begin(CActor* pOwner)
+{
+	this->field_0x4 = 0;
+	this->zoneResult = 2;
+
+	return;
+}
+
+void CondActorInArea::Manage(CActor* pOwner)
+{
+	if (CheckZone(this->pZone.Get(), this->flags, &this->zoneResult, &this->pActor.Get()->currentLocation) != false) {
+		this->field_0x4 = 1;
+	}
+
+	return;
 }

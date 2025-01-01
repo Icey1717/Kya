@@ -397,7 +397,7 @@ void CActorAton::SetState(int newState, int animType)
 	CActorMovable::SetState(newState, animType);
 }
 
-void CActorAton::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+void CActorAton::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	bool bVar1;
 	Timer* pTVar2;
@@ -709,7 +709,7 @@ void CActorAton::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint 
 				}
 			}
 			else {
-				CActor::AnimEvaluate(param_2, pAnimator, newAnim);
+				CActor::AnimEvaluate(layerId, pAnimator, newAnim);
 			}
 		}
 	}

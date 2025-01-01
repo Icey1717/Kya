@@ -6,6 +6,7 @@
 #include "CameraViewManager.h"
 
 class CActorFighter;
+class CActorWolfen;
 
 class CTeamElt
 {
@@ -20,10 +21,47 @@ public:
 
 class ACommanderComponent_10 {};
 
+class CChessboard
+{
+public:
+};
+
+struct SquadSubObj_0x20
+{
+	CActorWolfen* pWolfen;
+	CActorWolfen* field_0x4;
+	undefined4 field_0x8;
+	uint flags;
+	undefined4 field_0x10;
+};
+
+struct SquadSubObj_0xb0
+{
+	undefined4 field_0x0;
+	float field_0x4;
+	int field_0x8;
+	uint field_0xc;
+
+	SquadSubObj_0x20 field_0x10[5];
+};
+
 class CSquad 
 {
 public:
 	void Create(ByteCode* pByteCode);
+
+	void Clear();
+
+	int NbElt();
+
+	void ClearSquadDeadAndNonFightingElt();
+
+	void RemoveFighter(CTeamElt* pTeamElt);
+
+	CFixedTable<CTeamElt*, 5> eltTable;
+	CChessboard chessboard;
+
+	SquadSubObj_0xb0 aSubObjs[2];
 };
 
 class CBehaviourCommander : public CBehaviour
@@ -55,9 +93,12 @@ public:
 	virtual void ChangeManageState(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); }
 
+	virtual void _UpdateSquad();
+
 	void ClearLocalData();
 
 	bool BeginFightIntruder(CActor* pInstigator, CActor* pIntruder);
+	void EndFightIntruder(CActorFighter* pIntruder);
 
 	void AddTracked();
 	void RemoveTracked();
@@ -74,7 +115,7 @@ public:
 	void CheckArea_SoldiersDetectArea();
 	void CheckArea_SoldiersGuardArea();
 
-	bool CheckZone_00170f90(edF32VECTOR4* v0);
+	int CheckZone_00170f90(edF32VECTOR4* v0);
 
 	CTeamElt* GetTeamElt(CActor* pActor);
 

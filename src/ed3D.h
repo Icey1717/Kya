@@ -98,8 +98,34 @@ struct __attribute__((aligned(16))) ed_Chunck {
 
 static_assert(sizeof(ed_Chunck) == 0x10, "Invalid ed_Chunck size");
 
-struct GXD_FileHeader;
+struct GXD_FileHeader
+{
+	undefined4 field_0x0;
+	uint flags;
+	undefined4 field_0x8;
+	uint hash;
+};
 
+static_assert(sizeof(GXD_FileHeader) == 0x10);
+
+struct ed_g3d_manager {
+	GXD_FileHeader* fileBufferStart;
+	char* field_0x4;
+	int fileLengthA;
+	undefined4 field_0xc;
+	ed_Chunck* OBJA;
+	ed_Chunck* LIA;
+	ed_Chunck* CAMA;
+	ed_Chunck* SPRA;
+	ed_Chunck* HALL;
+	ed_Chunck* CSTA;
+	ed_Chunck* GEOM;
+	ed_Chunck* MBNA;
+	ed_Chunck* INFA;
+	int fileLengthB;
+	ed_Chunck* CDZA;
+	ed_Chunck* ANMA;
+};
 struct ed_g2d_manager {
 	GXD_FileHeader* pFileBuffer;
 	int textureFileLengthA;
@@ -759,6 +785,7 @@ void ed3DUnInstallG2D(ed_g2d_manager* pTextureInfo);
 void ed3DHierarchyNodeClrFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetFlag(edNODE* pNode, ushort flag);
 void ed3DHierarchyNodeSetAlpha(edNODE* pNode, byte alpha);
+void ed3DHierarchyNodeSetBFCulling(edNODE* pNode, byte bActive);
 
 ed_3D_Scene* ed3DGetScene(int index);
 

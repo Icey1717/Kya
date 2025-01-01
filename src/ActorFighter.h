@@ -16,6 +16,10 @@
 #define FIGHTER_DEFAULT_STATE_IDLE 0x6
 #define FIGHTER_DEFAULT_STATE_RUN 0x9
 
+#define FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE 0x56
+#define FIGHTER_PROJECTED_HIT_SLIDE 0x57
+#define FIGHTER_PROJECTED_HIT_WAKING_UP 0x59
+
 struct s_fighter_anatomy_zones
 {
 	edF32VECTOR4 field_0x0;
@@ -324,14 +328,21 @@ struct s_fighter_grab_react
 
 class CActorWeapon;
 
-class CFighterExcludedTable
+struct s_fighter_hit_exclusion
+{
+	CActor* pActor;
+	float field_0x4;
+	float field_0x8;
+};
+
+class CFighterExcludedTable : public CFixedTable<s_fighter_hit_exclusion, 6>
 {
 public:
 	CFighterExcludedTable();
 
 	void EmptyByTime(float time);
 
-	undefined4 field_0x0;
+	undefined4 nbEntries;
 };
 
 
@@ -403,13 +414,16 @@ public:
 	virtual bool Func_0x1a8();
 	virtual bool Func_0x1ac();
 	virtual void _Execute_Std(s_fighter_action* pAction, s_fighter_action_param* pParam);
+	virtual void _Std_GetPossibleHit(bool bPlayImpact);
 	virtual void _Std_GetPossibleExit();
 	virtual void _StateFighterRun(CActorsTable* pTable);
+	virtual void _Ride_GetPossibleHit(bool bPlayImpact);
 	virtual void _Ride_GetPossibleExit();
+	virtual void _Hold_GetPossibleHit(bool bPlayImpact);
 	virtual void _Hold_GetPossibleExit();
 	virtual void _Proj_GetPossibleExit();
 
-	virtual void AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim);
+	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();
 
 	void RunInternal(float param_1, edF32VECTOR4* pRotation);
@@ -423,6 +437,7 @@ public:
 	void _InterpretCollisions(int param_2);
 	void _InterpretSlides();
 
+	void _StateFighterHitWakingUpInit();
 	void _StateFighterHitFall(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, int bProcessCollisions);
 	void _StateFighterHitFlyToSlide();
 	void _StateFighterHitSlide();
@@ -451,6 +466,8 @@ public:
 
 	void SetFighterCombo(s_fighter_combo* pCombo);
 
+	void SetStandAnim(int newStandAnim);
+
 	bool FUN_0031b790(int state);
 	uint FUN_0031b4d0(int state);
 	int FUN_0030a6a0();
@@ -459,6 +476,8 @@ public:
 
 	bool _ValidateCommand(s_fighter_action* pActionA, s_fighter_action* pActionB);
 	void _SetRelativeSpeedOnGround(float speed, edF32VECTOR4* pDirection);
+	void _BuildCommandFromAbsoluteVector(edF32VECTOR4* param_2, s_fighter_action* pFighterAction, edF32VECTOR4* param_4);
+	void _UpdateDynForExplosion(_msg_hit_param* pHitParams);
 
 	void UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int param_3);
 
@@ -466,6 +485,7 @@ public:
 	CActorFighter* field_0x354;
 	edF32VECTOR4 logicalPosition;
 
+	float field_0x358;
 	float field_0x360;
 	int field_0x36c;
 	float field_0x370;
@@ -527,7 +547,7 @@ public:
 
 	undefined4 field_0x474;
 	float field_0x47c;
-	int field_0x480;
+	int standAnim;
 
 	float field_0x4cc;
 
@@ -575,8 +595,11 @@ public:
 
 	edF32VECTOR4 field_0x6a0;
 	float field_0x6b0;
-	int field_0x6b8;
+	float hitDamage;
+	int hitFlags;
 	float field_0x6bc;
+
+	float field_0x6c4;
 
 	s_fighter_multiways_anim field_0x730;
 
@@ -603,14 +626,7 @@ public:
 	uint field_0x7e0;
 
 	float field_0x800;
-	float field_0x810;
-	float field_0x814;
-	float field_0x818;
-	float field_0x81c;
-	float field_0x820;
-	float field_0x824;
-	float field_0x828;
-	float field_0x82c;
+	edF32VECTOR4 field_0x810[2];
 
 	undefined4 field_0x860;
 	undefined4 field_0x864;
@@ -654,7 +670,7 @@ public:
 
 	virtual void SetInitialState();
 	virtual bool Execute(s_fighter_action* param_2, s_fighter_action_param* param_3);
-	virtual void _ManageHit();
+	virtual void _ManageHit(bool bPlayImpact);
 	virtual void _ManageExit();
 
 	bool Conditional_Execute(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
@@ -685,7 +701,7 @@ class CBehaviourFighterProjected : public CBehaviourFighter
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual bool Execute(s_fighter_action* param_2, s_fighter_action_param* param_3);
-	virtual void _ManageHit();
+	virtual void _ManageHit(bool bPlayImpact);
 
 	void _ComputeDynamics();
 };

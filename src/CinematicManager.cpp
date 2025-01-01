@@ -829,7 +829,8 @@ void CCinematic::Create(ByteCode* pByteCode)
 	memset(this->intFieldE, 0xff, 0x14);
 
 	for (; uVar5 != 0; uVar5 = uVar5 - 1) {
-		this->intFieldE[pByteCode->GetU32()] = pByteCode->GetU32();
+		const uint index = pByteCode->GetU32();
+		this->intFieldE[index] = pByteCode->GetU32();
 	}
 
 	if (this->intFieldD == -1) {

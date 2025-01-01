@@ -5,6 +5,8 @@
 #include "ActorWolfen.h"
 #include "../../../../src/ActorHero.h"
 #include "../../../../src/ActorPunchingBall.h"
+#include "../../../../src/ActorWeapon.h"
+#include "../../../../src/ActorNativ.h"
 
 namespace Aton
 {
@@ -172,6 +174,9 @@ namespace Hero
 			break;
 		case STATE_HERO_HURT_A:
 			return "StateHeroHurtA";
+			break;
+		case STATE_HERO_HURT_B:
+			return "StateHeroHurtB";
 			break;
 		case STATE_HERO_FALL_DEATH:
 			return "StateHeroFallDeath";
@@ -429,6 +434,70 @@ namespace Wolfen
 	}
 }
 
+namespace Weapon
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case WEAPON_BEHAVIOUR_SNIPER:
+			return "Sniper";
+		case WEAPON_BEHAVIOUR_RPG:
+			return "RPG";
+		case WEAPON_BEHAVIOUR_PISTOL:
+			return "Pistol";
+		default:
+			return "Unknown";
+		}
+	};
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case WEAPON_STATE_IDLE:
+			return "Idle";
+		case WEAPON_STATE_FIRE:
+			return "Fire";
+		case WEAPON_STATE_RELOAD:
+			return "Reload";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
+namespace Nativ
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+			case NATIVE_BEHAVIOUR_SPEAK:
+				return "Speak";
+			case NATIVE_BEHAVIOUR_EXORCISM:
+				return "Exorcism";
+			case NATIVE_BEHAVIOUR_LIVE:
+				return "Live";
+			case NATIVE_BEHAVIOUR_TAKE_AND_PUT:
+				return "Take and Put";
+			case NATIVE_BEHAVIOUR_SELLER:
+				return "Seller";
+		default:
+			return "Unknown";
+		}
+	};
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case NATIVE_STATE_TAKE_PUT_WALK:
+			return "Take Put Walk";
+		case NATIVE_STATE_TAKE_PUT_TURN_TO:
+			return "Take Put Turn To";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -453,6 +522,10 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Wolfen::GetBehaviourName(behaviourId);
 	case PUNCHING_BALL:
 		return PunchingBall::GetBehaviourName(behaviourId);
+	case WEAPON:
+		return Weapon::GetBehaviourName(behaviourId);
+	case NATIV:
+		return Nativ::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -463,6 +536,10 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 	switch (pActor->typeID) {
 	case ACTOR_HERO_PRIVATE:
 		return Hero::GetStateName(pActor->curBehaviourId, pActor->actorState);
+	case WEAPON:
+		return Weapon::GetStateName(pActor->actorState);
+	case NATIV:
+		return Nativ::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

@@ -2093,10 +2093,12 @@ void CActor::PlayAnim(int inAnimType)
 		else {
 			/* Play new animation */
 			animType = -1;
+
 			if (inAnimType != -1) {
 				/* Remove for T-Pose */
 				animType = GetIdMacroAnim(inAnimType);
 			}
+
 			if (animType == -1) {
 				this->currentAnimType = -1;
 				pAnimationController->Reset(this);
@@ -2108,6 +2110,7 @@ void CActor::PlayAnim(int inAnimType)
 			}
 		}
 	}
+
 	return;
 }
 
@@ -2467,11 +2470,11 @@ void CActor::Draw()
 	return;
 }
 
-void CActor::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+void CActor::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	if (this->curBehaviourId == 1) {
 		IMPLEMENTATION_GUARD_LOG(
-		AnimEvaluateLipsync(param_2, pAnimator);)
+		AnimEvaluateLipsync(layerId, pAnimator);)
 	}
 	return;
 }
@@ -3371,6 +3374,40 @@ void CActor::ComputeAltitude()
 	return;
 }
 
+void CActor::ComputeRotTransMatrix(edF32MATRIX4* pOutMatrix)
+{
+	edF32MATRIX4 eStack64;
+
+	if ((this->flags & 0x1000) == 0) {
+		edF32Matrix4BuildFromVectorUnitSoft(pOutMatrix, &this->rotationQuat);
+
+		if (0.0001f <= fabs((this->rotationEuler).z)) {
+			edF32Matrix4RotateZHard((this->rotationEuler).z, &eStack64, &gF32Matrix4Unit);
+			edF32Matrix4MulF32Matrix4Hard(pOutMatrix, &eStack64, pOutMatrix);
+		}
+	}
+	else {
+		edF32Matrix4FromEulerSoft(pOutMatrix, &this->rotationEuler.xyz, "XYZ");
+	}
+
+	pOutMatrix->rowT = this->currentLocation;
+
+	return;
+}
+
+void CActor::ComputeLocalMatrix(edF32MATRIX4* m0, edF32MATRIX4* m1)
+{
+	*m0 = gF32Matrix4Unit;
+
+	m0->aa = (this->scale).x;
+	m0->bb = (this->scale).y;
+	m0->cc = (this->scale).z;
+
+	edF32Matrix4MulF32Matrix4Hard(m0, m0, m1);
+
+	return;
+}
+
 void CActor::ResetActorSound()
 {
 	IMPLEMENTATION_GUARD_AUDIO();
@@ -4205,6 +4242,31 @@ void CActor::UnlinkFromActor()
 
 		pActor->pLinkedActor->pAnimationController->UnRegisterBone(pActor->key);
 		pActorManager->RemoveLinkedActor(pActor);
+	}
+	return;
+}
+
+void CActor::SetAlpha(byte alpha)
+{
+	if (this->pMeshNode != (edNODE*)0x0) {
+		ed3DHierarchyNodeSetAlpha(this->pMeshNode, alpha);
+	}
+
+	return;
+}
+
+void CActor::ToggleMeshAlpha()
+{
+	if (this->pMeshNode != (edNODE*)0x0) {
+		ed3DHierarchyNodeSetAlpha(this->pMeshNode, 0x80);
+	}
+	return;
+}
+
+void CActor::SetBFCulling(byte bActive)
+{
+	if (this->pMeshNode != (edNODE*)0x0) {
+		ed3DHierarchyNodeSetBFCulling(this->pMeshNode, bActive);
 	}
 	return;
 }

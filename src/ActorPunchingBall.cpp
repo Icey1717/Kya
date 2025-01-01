@@ -247,7 +247,7 @@ void CActorPunchingBall::ChangeManageState(int state)
 	return;
 }
 
-void CActorPunchingBall::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimator, uint newAnim)
+void CActorPunchingBall::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim)
 {
 	edANM_HDR* peVar1;
 	uint uVar2;
@@ -288,7 +288,7 @@ void CActorPunchingBall::AnimEvaluate(uint param_2, edAnmMacroAnimator* pAnimato
 		}
 	}
 	else {
-		CActorFighter::AnimEvaluate(param_2, pAnimator, newAnim);
+		CActorFighter::AnimEvaluate(layerId, pAnimator, newAnim);
 	}
 
 	return;

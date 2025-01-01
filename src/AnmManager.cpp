@@ -30,7 +30,7 @@ void gAnimation_Callback_Layer1(edAnmMacroAnimator* pAnmMacroAnimator, CActor* p
 	uint uVar2;
 	int iVar3;
 
-	iVar3 = 1;
+	iVar3 = 2;
 	uVar1 = 1;
 	do {
 		uVar2 = uVar1;
@@ -508,6 +508,7 @@ void edAnmMacroAnimator::UpdateAnimParams()
 	if (((this->currentAnimDataFlags & 4) != 0) && (this->pFunction != 0x0)) {
 		this->pFunction(this, this->pActor, this->animationType);
 	}
+
 	if (((this->currentAnimDataFlags & 0x80000000) == 0) && (peVar1 = this->pAnimKeyTableEntry, peVar1->field_0x4.asKey == 1)) {
 		iVar2 = peVar1->keyIndex_0x8.asKey;
 		fVar8 = 0.0f;
