@@ -3,9 +3,11 @@
 
 #include "Types.h"
 
+struct CCamera;
+
 struct CameraStackEntry {
 	uint field_0x0;
-	struct CCamera* pCamera;
+	CCamera* pCamera;
 };
 
 struct CCameraStack {
@@ -23,7 +25,7 @@ struct CCameraStack {
 
 	CameraStackEntry aCameras[64];
 	float field_0x200;
-	struct CCamera* pActiveCamera;
+	CCamera* pActiveCamera;
 	int stackSize;
 	CCamera* field_0x20c;
 	undefined4 field_0x210;

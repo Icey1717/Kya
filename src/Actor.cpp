@@ -776,7 +776,7 @@ void CActor::Create(ByteCode* pByteCode)
 	}
 	SetupModel(iVar7, local_110);
 	SetupDefaultPosition();
-	this->hierarchySetup.clipping_0x0 = (char*)&(this->subObjA)->floatFieldB;
+	this->hierarchySetup.clipping_0x0 = &(this->subObjA)->floatFieldB;
 	this->hierarchySetup.pBoundingSphere = &(this->subObjA)->boundingSphere;
 
 	this->lodBiases[0] = (this->subObjA)->lodBiases[0];
@@ -1685,7 +1685,7 @@ CBehaviour* CActor::GetBehaviour(int behaviourId)
 
 void CActor::SetupClippingInfo()
 {
-	this->hierarchySetup.clipping_0x0 = 0x0;
+	this->hierarchySetup.clipping_0x0 = (float*)0x0;
 	this->hierarchySetup.pBoundingSphere = &this->subObjA->boundingSphere;
 }
 

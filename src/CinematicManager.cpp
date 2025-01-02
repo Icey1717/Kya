@@ -138,11 +138,12 @@ void CCinematicManager::LevelLoading_Begin()
 
 	pCameraManager = CCameraManager::_gThis;
 	pCinematicCamera = (CCameraCinematic*)CCameraManager::_gThis->GetDefGameCamera(CT_Cinematic);
-	this->pCameraLocationObj = pCinematicCamera;
+	this->pCinematicCamera = pCinematicCamera;
+
 	if (this->pCinematic != (CCinematic*)0x0) {
-		this->pCameraLocationObj->SetTransform(&this->matrix_0x70);
-		pCameraLocationObj->fov = this->field_0xb0;
-		pCamera = this->pCameraLocationObj;
+		this->pCinematicCamera->SetTransform(&this->matrix_0x70);
+		pCinematicCamera->fov = this->field_0xb0;
+		pCamera = this->pCinematicCamera;
 		pCamera->field_0x8c = 0.0f;
 		pCamera->switchMode = SWITCH_MODE_B;
 		pCamera->field_0x98 = 0.0f;
@@ -190,7 +191,7 @@ void CCinematicManager::LevelLoading_End()
 		CCinematic::Manage((long)(int)this->pCinematic, 1);
 		this->pCinematic = (CCinematic*)0x0;);
 	}
-	this->pCameraLocationObj = (CCameraCinematic*)0x0;
+	this->pCinematicCamera = (CCameraCinematic*)0x0;
 	return;
 }
 
@@ -223,7 +224,7 @@ void CCinematicManager::Level_Init()
 	int iVar5;
 
 	pCVar4 = (CCameraCinematic*)CCameraManager::_gThis->GetDefGameCamera(CT_Cinematic);
-	this->pCameraLocationObj = pCVar4;
+	this->pCinematicCamera = pCVar4;
 	this->field_0x34 = 0;
 	this->field_0x38 = 0;
 	this->field_0x40 = 0;
@@ -458,7 +459,6 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 		}
 		else {
 			if (messageId == 0x3b) {
-				IMPLEMENTATION_GUARD(
 				if ((int)flags < 0) {
 					fVar2 = (float)(flags >> 1 | flags & 1);
 					fVar2 = fVar2 + fVar2;
@@ -466,19 +466,22 @@ void CCinematicManager::NotifyCinematic(int cinematicIndex, CActor* pActor, int 
 				else {
 					fVar2 = (float)flags;
 				}
-				pCinematic->totalCutsceneDelta = fVar2 / 1000.0;
+
+				pCinematic->totalCutsceneDelta = fVar2 / 1000.0f;
 				if ((pCinematic->flags_0x8 & 1) != 0) {
 					fVar2 = pCinematic->totalCutsceneDelta;
 					bVar1 = (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
-					if ((bVar1) && (bVar1 = true, (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0)) {
+					if ((bVar1) && (bVar1 = true, (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0f)) {
 						bVar1 = false;
 					}
+
 					if (bVar1) {
+						IMPLEMENTATION_GUARD(
 						fVar3 = CutsceneTypeTwoA((pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA);
 						(pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 = fVar3 - fVar2;
-						CutsceneTypeTwoB(fVar2, (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA);
+						CutsceneTypeTwoB(fVar2, (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA);)
 					}
-				})
+				}
 			}
 			else {
 				if (messageId == 0x38) {
@@ -704,18 +707,10 @@ CCinematic::CCinematic()
 {
 	this->cineActorConfigCount = 0;
 	this->aCineActorConfig = (CCineActorConfig*)0x0;
-	//(this->cinematicLoadObject).BWitchCin_Obj = (BWitchCin*)&edCinGameInterface_VTable_0043dd70;
-	//(this->cinematicLoadObject).BWitchCin_Obj = (BWitchCin*)&BWitchCin_VTable_0043dea0;
-	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.vt = &BWCinSourceAudio_VTable_0043dd50;
-	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.vt = &BWCinSourceAudio_VTable_0043df70;
-	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA = 0;
-	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 = 0.0;
-	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.floatFieldA = 0.0;
-	//*(undefined*)&(this->cinematicLoadObject).field_0x3c = 0;
-	//*(undefined*)&(this->cinematicLoadObject).field_0x3d = 0;
-	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.pGlobalSoundFileData = (GlobalSound_FileData*)0x0;
-	//(this->cinematicLoadObject).BWCinSourceAudio_Obj.lastIntField =
-	//	&(this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x14;
+	
+	// CBWitchCin Constructor
+	// CBWCinSourceAudio Constructor
+
 	//(this->cinematicLoadObject).BWCinCam_Obj.vt = &BWCinCam_VTable_0043dd20;
 	//(this->cinematicLoadObject).BWCinCam_Obj.vt = &g_CinematicUpdateCameraFuncData_0043df90;
 	//this->BWCinSourceSubtitle_Obj = (BWCinSourceSubtitle*)&BWCinSourceSubtitle_VTable_0043dd00;
@@ -822,22 +817,22 @@ void CCinematic::Create(ByteCode* pByteCode)
 	}
 
 	if (2.16f <= CScene::_pinstance->field_0x1c) {
-		this->intFieldD = pByteCode->GetU32();
+		this->defaultAudioTrackId = pByteCode->GetU32();
 	}
 	else {
-		this->intFieldD = -1;
+		this->defaultAudioTrackId = -1;
 	}
 
 	uVar5 = pByteCode->GetU32();
-	memset(this->intFieldE, 0xff, 0x14);
+	memset(this->aAudioTrackIds, 0xff, 0x14);
 
 	for (; uVar5 != 0; uVar5 = uVar5 - 1) {
 		const uint index = pByteCode->GetU32();
-		this->intFieldE[index] = pByteCode->GetU32();
+		this->aAudioTrackIds[index] = pByteCode->GetU32();
 	}
 
-	if (this->intFieldD == -1) {
-		this->intFieldD = this->intFieldE[0];
+	if (this->defaultAudioTrackId == -1) {
+		this->defaultAudioTrackId = this->aAudioTrackIds[0];
 	}
 
 	this->field_0x6c = pByteCode->GetS32();
@@ -1113,15 +1108,13 @@ void CCinematic::Start()
 					edDebugPrintf("Cinematic compiler version: %d (should be %d)\n", cinematicCompilerVersion, 0xa0);
 				}
 
-				if (this->intFieldD != -1) {
-					iVar16 = CMessageFile::get_default_language();
-					lVar12 = (long)(&this->intFieldE)[iVar16];
+				if (this->defaultAudioTrackId != -1) {
+					lVar12 = this->aAudioTrackIds[CMessageFile::get_default_language()];
 					if (lVar12 == -1) {
-						lVar12 = (long)this->intFieldD;
+						lVar12 = this->defaultAudioTrackId;
 					}
 
-					IMPLEMENTATION_GUARD_AUDIO(
-					BWCinSourceAudio::Create(&(this->cinematicLoadObject).BWCinSourceAudio_Obj, lVar12);)
+					this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(lVar12);
 				}
 
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
@@ -1263,7 +1256,7 @@ void CCinematic::Start()
 				if ((this->flags_0x8 & 2) != 0) {
 					this->cinematicLoadObject.BWCinCam_Obj.Activate();
 					this->cinFileData.Timeslice(0.0f, &FStack224);
-					CCameraManager::_gThis->PushCamera((CCamera*)pCVar6->pCameraLocationObj, 1);
+					CCameraManager::_gThis->PushCamera(pCVar6->pCinematicCamera, 1);
 				}
 
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
@@ -1563,7 +1556,7 @@ void CCinematic::Install()
 		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	}
 	this->matrix_0x120 = gF32Matrix4Unit;
-	if (this->intFieldD != -1) {
+	if (this->defaultAudioTrackId != -1) {
 		this->flags_0x8 = this->flags_0x8 | 1;
 	}
 	this->cineBankLoadStage_0x2b4 = 4;
@@ -2090,7 +2083,7 @@ void CCinematic::ManageState_Playing()
 	int iVar5;
 	long lVar6;
 	int iVar7;
-	//BWCinSourceAudio* cinematicSoundObject;
+	CBWCinSourceAudio* cinematicSoundObject;
 	float fVar8;
 	float fVar9;
 	CCinematicManager* someGlobal;
@@ -2109,40 +2102,44 @@ void CCinematic::ManageState_Playing()
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD_AUDIO(
 			bVar2 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
+
 			cinematicSoundObject = &(this->cinematicLoadObject).BWCinSourceAudio_Obj;
 			if ((bVar2) && (bVar2 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0)) {
 				bVar2 = false;
 			}
+
 			if (bVar2) {
 				someGlobal->pCurCinematic = this;
-				(*(code*)cinematicSoundObject->vt->Stop)(cinematicSoundObject);
-				iVar4 = CMessageFile::get_default_language();
-				lVar6 = (long)(&this->intFieldE)[iVar4];
+				cinematicSoundObject->Stop();
+
+				lVar6 = this->aAudioTrackIds[CMessageFile::get_default_language()];
 				if (lVar6 == -1) {
-					lVar6 = (long)this->intFieldD;
+					lVar6 = this->defaultAudioTrackId;
 				}
-				BWCinSourceAudio::Create(cinematicSoundObject, lVar6);
-				(*(code*)cinematicSoundObject->vt->Play)(cinematicSoundObject);
+
+				this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(lVar6);
+
+				cinematicSoundObject->Play();
 				someGlobal->pCurCinematic = (CCinematic*)0x0;
 				this->totalCutsceneDelta = this->field_0x30;
 			}
 			else {
-				this->totalCutsceneDelta = this->field_0x30 + (this->totalCutsceneDelta - *(float*)&((this->cinFileData).pCinTag)->field_0x4);
+				this->totalCutsceneDelta = this->field_0x30 + (this->totalCutsceneDelta - this->cinFileData.pCinTag->totalPlayTime);
 				if ((this->flags_0x8 & 1) != 0) {
 					bVar2 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
 					fVar9 = this->totalCutsceneDelta;
-					if ((bVar2) && (bVar2 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0)) {
+					if ((bVar2) && (bVar2 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 == 0.0f)) {
 						bVar2 = false;
 					}
 					if (bVar2) {
+						IMPLEMENTATION_GUARD(
 						fVar8 = CutsceneTypeTwoA((this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA);
 						(this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 = fVar8 - fVar9;
-						CutsceneTypeTwoB(fVar9, (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA);
+						CutsceneTypeTwoB(fVar9, (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA);)
 					}
 				}
-			})
+			}
 		}
 	}
 	else {
@@ -2225,7 +2222,7 @@ void CCinematic::Stop()
 		}
 
 		if ((this->flags_0x8 & 2) != 0) {
-			CCameraManager::_gThis->PopCamera(pCVar2->pCameraLocationObj);
+			CCameraManager::_gThis->PopCamera(pCVar2->pCinematicCamera);
 		}
 
 		this->state = CS_Stopped;
@@ -2598,7 +2595,6 @@ void CCinematic::IncrementCutsceneDelta()
 	}
 
 	/* This is true for cutscenes */
-	//pBVar2 = &(this->cinematicLoadObject).BWCinSourceAudio_Obj;
 	if ((this->flags_0x8 & 1) == 0) {
 		/* Increment float by 0.2 in cutscene manager  */
 		deltaTime = this->totalCutsceneDelta + deltaTime;
@@ -2608,13 +2604,12 @@ void CCinematic::IncrementCutsceneDelta()
 		}
 	}
 	else {
-		iVar1 = CMessageFile::get_default_language();
-		iVar1 = this->intFieldE[iVar1];
+		iVar1 = this->aAudioTrackIds[CMessageFile::get_default_language()];
 		if (iVar1 == -1) {
-			iVar1 = this->intFieldD;
+			iVar1 = this->defaultAudioTrackId;
 		}
-		IMPLEMENTATION_GUARD_AUDIO();
-		fVar3 = -1.0f; // (float)(*(code*)pBVar2->vt->field_0x1c)(pBVar2, iVar1);
+
+		fVar3 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.Func_0x1c(iVar1);
 		if (fVar3 == -1.0f) {
 			this->totalCutsceneDelta = this->totalCutsceneDelta + deltaTime;
 		}
@@ -2957,11 +2952,9 @@ void CCinematic::Flush(bool param_2)
 	pCVar1 = g_CinematicManager_0048efc;
 	if ((lVar2 == 0) || (param_2 != false)) {
 		g_CinematicManager_0048efc->pCurCinematic = this;
-		if (this->intFieldD != -1) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			(*(code*)((this->cinematicLoadObject).BWCinSourceAudio_Obj.vt)->Stop)
-				(&(this->cinematicLoadObject).BWCinSourceAudio_Obj);
-			(this->cinematicLoadObject).BWCinSourceAudio_Obj.pGlobalSoundFileData = (GlobalSound_FileData*)0x0;)
+		if (this->defaultAudioTrackId != -1) {
+			this->cinematicLoadObject.BWCinSourceAudio_Obj.Stop();
+			this->cinematicLoadObject.BWCinSourceAudio_Obj.pGlobalSoundFileData = (GlobalSound_FileData*)0x0;
 		}
 
 		if ((void*)this->field_0x2c4 != (void*)0x0) {
@@ -3019,16 +3012,16 @@ void CCinematic::PreReset()
 
 	pCVar2 = g_CinematicManager_0048efc;
 
-	IMPLEMENTATION_GUARD_AUDIO(
 	bVar1 = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
-	if ((bVar1) && (bVar1 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 != 0.0)) {
+	if ((bVar1) && (bVar1 = true, (this->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 != 0.0f)) {
 		bVar1 = false;
 	}
+
 	if (bVar1) {
 		g_CinematicManager_0048efc->pCurCinematic = this;
-		(*(code*)((this->cinematicLoadObject).BWCinSourceAudio_Obj.vt)->Stop)();
+		this->cinematicLoadObject.BWCinSourceAudio_Obj.Stop();
 		pCVar2->pCurCinematic = (CCinematic*)0x0;
-	})
+	}
 
 	bVar1 = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
 	if (bVar1) {
@@ -3406,14 +3399,13 @@ void CCinematic::FUN_001c7390(bool param_2)
 					}
 				}
 
-				if ((bVar2) && (this->intFieldD != -1)) {
-					IMPLEMENTATION_GUARD_AUDIO(
-					iVar3 = CMessageFile::get_default_language();
-					lVar4 = (long)(&this->intFieldE)[iVar3];
+				if ((bVar2) && (this->defaultAudioTrackId != -1)) {
+					lVar4 = this->aAudioTrackIds[CMessageFile::get_default_language()];
 					if (lVar4 == -1) {
-						lVar4 = (long)this->intFieldD;
+						lVar4 = this->defaultAudioTrackId;
 					}
-					BWCinSourceAudio::Create(&(this->cinematicLoadObject).BWCinSourceAudio_Obj, lVar4);)
+
+					this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(lVar4);
 				}
 			}
 		}
@@ -3622,6 +3614,17 @@ bool CBWitchCin::ReleaseCamera(edCinCamInterface*)
 	return true;
 }
 
+bool CBWitchCin::GetSourceAudioInterface(edCinSourceAudioI** ppSourceAudioInterface)
+{
+	*ppSourceAudioInterface = &this->BWCinSourceAudio_Obj;
+	return true;
+}
+
+bool CBWitchCin::ReleaseSourceAudioInterface(edCinSourceAudioI*)
+{
+	return true;
+}
+
 char* CBWitchCin::GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut)
 {
 	int* fileBufferStart;
@@ -3648,7 +3651,7 @@ bool CBWCinCam::Activate()
 	float fVar6;
 
 	pCVar1 = g_CinematicManager_0048efc->pCurCinematic;
-	pCVar2 = g_CinematicManager_0048efc->pCameraLocationObj;
+	pCVar2 = g_CinematicManager_0048efc->pCinematicCamera;
 	if (((pCVar1->flags_0x4 & 0x800) == 0) && ((pCVar1->flags_0x8 & 0x800) == 0)) {
 		iVar3 = pCVar1->field_0x64;
 		fVar5 = pCVar1->field_0x68;
@@ -3686,7 +3689,7 @@ bool CBWCinCam::SetFov(float fov)
 		(CCameraManager::_gThis->aspectRatio == 1.777778f)) {
 		fov = fov * 0.75f;
 	}
-	g_CinematicManager_0048efc->pCameraLocationObj->fov = fov;
+	g_CinematicManager_0048efc->pCinematicCamera->fov = fov;
 	return true;
 }
 
@@ -3702,7 +3705,7 @@ bool CBWCinCam::SetPos(float x, float y, float z)
 	outLocation.y = y;
 	outLocation.z = z;
 	edF32Matrix4MulF32Vector4Hard(&outLocation, &g_CinematicManager_0048efc->pCurCinematic->matrix_0x120, &outLocation);
-	pCinCam = pCVar1->pCameraLocationObj;
+	pCinCam = pCVar1->pCinematicCamera;
 	pCinCam->transformationMatrix.rowT = outLocation;
 	return true;
 }
@@ -3724,7 +3727,7 @@ bool CBWCinCam::SetHeadingQuat(float x, float y, float z, float w)
 	edQuatToMatrix4Hard(&local_50, &eStack64);
 
 	edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, &pCVar1->matrix_0x120);
-	pCinCam = pCVar2->pCameraLocationObj;
+	pCinCam = pCVar2->pCinematicCamera;
 	eStack64.rowT = pCinCam->transformationMatrix.rowT;
 	pCinCam->SetTransform(&eStack64);
 	return true;
@@ -3769,7 +3772,7 @@ bool CBWCinCam::SetHeadingEuler(float x, float y, float z, bool param_5)
 		edF32Matrix4FromEulerOrdSoft(&auStack96, "YXZ", &local_10);
 		edF32Matrix4MulF32Matrix4Hard(&auStack96, &auStack96, &pCVar1->matrix_0x120);
 	}
-	pCVar2 = pCVar4->pCameraLocationObj;
+	pCVar2 = pCVar4->pCinematicCamera;
 	if (param_5 != false) {
 		edF32Vector4AddHard(&newLookAt, &pCVar2->transformationMatrix.rowT, &auStack96.rowZ);
 	}
@@ -4398,4 +4401,89 @@ CCinematic* CCinematicManager::GetCinematic(int index)
 		pCinematic = this->ppCinematicObjB_A[index];
 	}
 	return pCinematic;
+}
+
+CBWCinSourceAudio::CBWCinSourceAudio()
+{
+	this->intFieldA = 0;
+	this->field_0x8 = 0.0f;
+	this->floatFieldA = 0.0f;
+	this->field_0x38 = 0;
+	this->field_0x39 = 0;
+	this->pGlobalSoundFileData = (GlobalSound_FileData*)0x0;
+	this->lastIntField = &this->field_0x14;
+}
+
+bool CBWCinSourceAudio::Create(char* pFileName)
+{
+	CUTSCENE_LOG(LogLevel::Info, "CBWCinSourceAudio::Create {}", pFileName);
+	return true;
+}
+
+bool CBWCinSourceAudio::Play()
+{
+	bool bVar1;
+	Timer* pTVar2;
+	ulong uVar3;
+	float fVar4;
+
+	if (g_CinematicManager_0048efc->pCurCinematic->state == CS_Interpolate) {
+		bVar1 = false;
+	}
+	else {
+		this->field_0x38 = 0;
+		this->field_0x39 = 1;
+		if (this->intFieldA == 0) {
+			bVar1 = false;
+		}
+		else {
+			IMPLEMENTATION_GUARD_AUDIO(
+			uVar3 = FUN_00284650(this->intFieldA);
+			bVar1 = uVar3 != 0;)
+		}
+
+		if (((bVar1) && (this->intFieldA != 0)) && (this->field_0x8 == 0.0f)) {
+			IMPLEMENTATION_GUARD_AUDIO(
+			FUN_00283650(this->intFieldA);
+			edSoundFlush();
+			pTVar2 = Timer::GetTimer();
+			fVar4 = pTVar2->cutsceneDeltaTime;
+			pTVar2 = Timer::GetTimer();
+			this->field_0x8 = pTVar2->totalPlayTime - fVar4;)
+		}
+
+		bVar1 = true;
+	}
+
+	return bVar1;
+}
+
+bool CBWCinSourceAudio::Stop()
+{
+	if (this->intFieldA != 0) {
+		IMPLEMENTATION_GUARD_AUDIO(
+		edSoundInstanceStop(this->intFieldA);
+		this->intFieldA = 0;
+		edSoundStreamFree(this->lastIntField);
+		if (this->field_0x38 == 0) {
+			FUN_00401f10((int)&StaticEdFileBase_004497f0);
+		})
+	}
+
+	this->field_0x8 = 0.0f;
+	this->floatFieldA = 0.0f;
+	this->field_0x39 = 0;
+	this->field_0x38 = 0;
+
+	return true;
+}
+
+bool CBWCinSourceAudio::Destroy()
+{
+	return true;
+}
+
+void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
+{
+	IMPLEMENTATION_GUARD_AUDIO();
 }

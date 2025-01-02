@@ -82,7 +82,7 @@ bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& res
 {
 	char* pcVar1;
 	int* local_10;
-	int* local_c;
+	edCinSourceAudioI* local_c;
 	int sceFileLength;
 	edScene local_4;
 	int dataValue;
@@ -99,12 +99,11 @@ bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& res
 	}
 	else {
 		if (dataValue == 2) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			local_c = (int*)0x0;
-			(*(code*)loadObj->vt->GetSourceAudioInterface)(loadObj, &local_c);
-			pcVar1 = edResCollection::GetResFilename(resPtr, (*ppSource)->offset);
-			(**(code**)(*local_c + 8))(local_c, pcVar1);
-			(*ppSource)->pFileData = (char*)local_c;)
+			local_c = (edCinSourceAudioI*)0x0;
+			loadObj.GetSourceAudioInterface(&local_c);
+			pcVar1 = resPtr.GetResFilename(this->pInternal->offset);
+			local_c->Create(pcVar1);
+			this->pInternal->pTag = STORE_SECTION(local_c);
 		}
 		else {
 			if (dataValue == 3) {
@@ -130,13 +129,13 @@ bool edCinematicSource::Initialize()
 	peVar1 = this->pInternal;
 	iVar2 = peVar1->type;
 	if (iVar2 == 1) {
-		eStack4 = edScene((edSCENEtag*)LOAD_SECTION(peVar1->pTag));
+		eStack4 = edScene(LOAD_SECTION_CAST(edSCENEtag*, peVar1->pTag));
 		eStack4.Initialize();
 	}
 	else {
 		if (iVar2 == 2) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			(**(code**)(*(int*)peVar1->pFileData + 0xc))();)
+			edCinSourceAudioI* pAudioInterface = LOAD_SECTION_CAST(edCinSourceAudioI*, peVar1->pTag);
+			pAudioInterface->Play();
 		}
 		else {
 			if (iVar2 == 3) {
@@ -173,8 +172,8 @@ bool edCinematicSource::Shutdown()
 	}
 	else {
 		if (iVar2 == 2) {
-			IMPLEMENTATION_GUARD_LOG(
-			(**(code**)(*(int*)peVar1->pTag + 0x10))();)
+			edCinSourceAudioI* pAudioInterface = LOAD_SECTION_CAST(edCinSourceAudioI*, peVar1->pTag);
+			pAudioInterface->Stop();
 		}
 		else {
 			if (iVar2 == 3) {
@@ -202,10 +201,9 @@ bool edCinematicSource::Destroy(edCinGameInterface& pCinGameInterface)
 	}
 	else {
 		if (type == 2) {
-			IMPLEMENTATION_GUARD_LOG(
-			peVar3 = pSrcTag->pTag;
-			(**(code**)(*(int*)peVar3 + 0x18))(peVar3);
-			(*(code*)pCinGameInterface->vt->ReleaseSourceAudioInterface)(pCinGameInterface, peVar3);)
+			edCinSourceAudioI* pAudioInterface = LOAD_SECTION_CAST(edCinSourceAudioI*, pSrcTag->pTag);
+			pAudioInterface->Destroy();
+			pCinGameInterface.ReleaseSourceAudioInterface(pAudioInterface);
 			this->pInternal->pTag = 0x0;
 		}
 		else {

@@ -94,7 +94,17 @@ public:
 class CBehaviourNativLive : public CBehaviourNativ
 {
 public:
-	int field_0x8;
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
+
+	float field_0x8;
+	float field_0xc;
 };
 
 struct ActionEntry {
@@ -149,6 +159,9 @@ public:
 	void ManageOrientationAndLookingAt();
 
 	void BehaviourExorcisme_Manage();
+
+	void BehaviourNativLive_Manage();
+	void BehaviourNativLive_TermState(int oldState);
 
 	void BehaviourNativTakeAndPut_InitState(int newState);
 	void BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBehaviour);

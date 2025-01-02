@@ -368,7 +368,7 @@ struct ed_3D_Scene {
 };
 
 struct ed_3d_hierarchy_setup {
-	char* clipping_0x0;
+	float* clipping_0x0;
 	union edF32VECTOR4* pBoundingSphere;
 	struct ed_3D_Light_Config* pLightData;
 	float* pLodBiases;

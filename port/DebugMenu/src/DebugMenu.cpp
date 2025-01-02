@@ -525,7 +525,7 @@ namespace Debug {
 
 		Debug::FrameBuffer::ShowGame();
 		DrawMenu();
-		DebugCamera::ShowCamera();
+		Debug::Camera::ShowCamera();
 		ShowFrameCounter();
 	}
 }
@@ -648,7 +648,7 @@ bool DebugMenu::GetMouseReleased(uint32_t routeId)
 	return false;
 }
 
-namespace DebugCamera {
+namespace Debug::Camera {
 	extern float gMouseDeltaX;
 	extern float gMouseDeltaY;
 }
@@ -658,10 +658,10 @@ float DebugMenu::GetMouseAnalog(uint32_t routeId)
 	float delta = 0.0f;
 
 	if (routeId == MOUSE_INPUT_DX) {
-		delta = DebugCamera::gMouseDeltaX;
+		delta = Debug::Camera::gMouseDeltaX;
 	}
 	else if (routeId == MOUSE_INPUT_DY) {
-		delta = DebugCamera::gMouseDeltaY;
+		delta = Debug::Camera::gMouseDeltaY;
 	}
 	else if (routeId == MOUSE_INPUT_WHEEL) {
 		delta = ImGui::GetIO().MouseWheel;

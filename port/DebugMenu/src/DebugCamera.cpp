@@ -15,15 +15,18 @@
 #include "Debug.h"
 #include "TimeController.h"
 #include "CameraGame.h"
+#include "DebugSetting.h"
 
 GLFWwindow* GetGLFWWindow();
 
-namespace DebugCamera {
+namespace Debug::Camera {
 	static float cameraSpeed = 10.f;
 	static float cameraSensitivity = 0.001f;
 	static float horizontalAngle = 3.14f;
 	static float verticalAngle = 0.0f;
 	static bool bActive = false;
+
+	Debug::Setting<bool> gShowStackWindow = { "Show Camera Stack", false };
 
 	std::string GenerateMatrixConstructionCode(const edF32MATRIX4& matrix) {
 		std::ostringstream ss;
@@ -197,6 +200,55 @@ namespace DebugCamera {
 		UpdateCameraPosition(DebugMenu::GetDeltaTime());
 	}
 
+	static void ShowStackWindow()
+	{
+		bool bOpen = true;
+		ImGui::Begin("Camera Stack", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		auto& cameraStack = CCameraManager::_gThis->cameraStack;
+
+		ImGui::Text("Camera Stack Size: %d", cameraStack.stackSize);
+
+		for (int i = 0; i < cameraStack.stackSize; i++) {
+			if (cameraStack.pActiveCamera == cameraStack.aCameras[i].pCamera) {
+				ImGui::Text("Active Camera: %d", i);
+			}
+		}
+
+		for (int i = 0; i < cameraStack.stackSize; i++) {
+			std::string name = "Camera: " + std::to_string(i);
+
+			if (ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+				auto& entry = cameraStack.aCameras[i];
+
+				ImGui::Text("field_0x0: %u", entry.field_0x0);
+
+				ImGui::Separator();
+
+				CCamera* pCamera = entry.pCamera;
+
+				ImGui::Text("field_0x8: %d", pCamera->field_0x8);
+				ImGui::Text("flags_0xc: 0x%x", pCamera->flags_0xc);
+
+				ImGui::Text("transformationMatrix: %s", pCamera->transformationMatrix.ToString().c_str());
+
+				ImGui::Text("field_0x50: %s", pCamera->field_0x50.ToString().c_str());
+				ImGui::Text("lookAt: %s", pCamera->lookAt.ToString().c_str());
+				
+				DebugHelpers::TextValidValue("pOtherTarget: %p", pCamera->pOtherTarget);
+
+				ImGui::Text("fov: %f", pCamera->fov);
+
+
+			}
+		}
+
+		ImGui::End();
+
+		if (!bOpen) {
+			gShowStackWindow = false;
+		}
+	}
 }
 
 // ImGui widget to edit edF32VECTOR4
@@ -209,10 +261,12 @@ void EditEdF32Vector4(edF32VECTOR4& vector) {
 
 static bool bShouldEnableMouseLock = true;
 
-void DebugCamera::ShowCamera()
+void Debug::Camera::ShowCamera()
 {
 	// Get the display size
 	ImGui::Begin("Camera", nullptr);
+
+	gShowStackWindow.DrawImguiControl();
 
 	if (ImGui::Button("Toggle Camera Hack")) {
 		ToggleCameraHack();
@@ -233,10 +287,14 @@ void DebugCamera::ShowCamera()
 	}
 
 	auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
-	ImGui::Text("Position");
-	EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
-	ImGui::Text("LookAt");
-	EditEdF32Vector4(pActiveCamera->lookAt);
+
+
+	if (ImGui::CollapsingHeader("Active Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+		ImGui::Text("Position");
+		EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
+		ImGui::Text("LookAt");
+		EditEdF32Vector4(pActiveCamera->lookAt);
+	}
 
 	if (pActiveCamera->GetMode() == CT_Main) {
 		if (ImGui::Button("Disable Collision")) {
@@ -288,16 +346,7 @@ void DebugCamera::ShowCamera()
 		SetActive(bActive, MouseCallback);
 	}
 
-	if (ImGui::CollapsingHeader("Camera Stack", ImGuiTreeNodeFlags_DefaultOpen)) {
-		auto& cameraStack = CCameraManager::_gThis->cameraStack;
-		ImGui::Text("Camera Stack Size: %d", cameraStack.stackSize);
-
-		for (int i = 0; i < cameraStack.stackSize; i++) {
-			ImGui::Text("Camera: %u %d", cameraStack.aCameras[i].field_0x0, cameraStack.aCameras[i].pCamera->GetMode());
-		}
-	}
-
-	if (ImGui::CollapsingHeader("Camera List", ImGuiTreeNodeFlags_DefaultOpen)) {
+	if (ImGui::CollapsingHeader("Camera List")) {
 		// Show the total number of cameras
 		ImGui::Text("Total Cameras: %d (Active mode: %d)", CCameraManager::_gThis->loadedCameraCount_0x9f0, CCameraManager::_gThis->pActiveCamera->GetMode());
 
@@ -314,4 +363,8 @@ void DebugCamera::ShowCamera()
 	}
 
 	ImGui::End();
+
+	if (gShowStackWindow) {
+		ShowStackWindow();
+	}
 }

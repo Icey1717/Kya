@@ -544,19 +544,12 @@ void CActorHeroPrivate::Init()
 	//	*(undefined4*)((int)this->pShadow + 0x50) = 0x3ecccccd;
 	//}
 	pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
-	pCVar5 = pCameraManager->GetDefGameCamera(CT_Main);
-	this->pMainCamera = pCVar5;
+	this->pMainCamera = pCameraManager->GetDefGameCamera(CT_Main);
 
-	pCVar5 = pCameraManager->GetDefGameCamera(CT_KyaWindWall);
-	this->pCameraViewBase_0x15b0 = pCVar5;
-	pCVar5 = pCameraManager->GetDefGameCamera(CT_Camera_6);
-	this->pWindWallCamera_0x15b4 = pCVar5;
-
-	pCVar5 = pCameraManager->GetDefGameCamera(CT_KyaJamgut);
-	this->pCameraKyaJamgut = pCVar5;
-
-	pCVar5 = pCameraManager->GetDefGameCamera(CT_Fight);
-	this->pFightCamera = pCVar5;
+	this->pCameraViewBase_0x15b0 = pCameraManager->GetDefGameCamera(CT_KyaWindWall);
+	this->pWindWallCamera_0x15b4 = pCameraManager->GetDefGameCamera(CT_Camera_6);
+	this->pCameraKyaJamgut = pCameraManager->GetDefGameCamera(CT_KyaJamgut);
+	this->pFightCamera = pCameraManager->GetDefGameCamera(CT_Fight);
 
 	BStack32 = ByteCode();
 
@@ -579,6 +572,7 @@ void CActorHeroPrivate::Init()
 	//(**(code**)(*piVar2 + 0x30))(piVar2, CActorHero::_gThis);
 	//(**(code**)(**(int**)&this->field_0x15bc + 0x18))();
 	//*(undefined4*)&this->field_0x15c0 = 0;
+
 	pCameraManager->SetMainCamera(this->pMainCamera);
 	CCameraGame* pGameCamera = reinterpret_cast<CCameraGame*>(this->pMainCamera);
 	pGameCamera->cameraConfig.flags = pGameCamera->cameraConfig.flags | 0x20000;

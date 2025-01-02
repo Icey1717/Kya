@@ -77,6 +77,33 @@ public:
 	virtual bool Shutdown() { return true; }
 };
 
+struct GlobalSound_FileData;
+
+class CBWCinSourceAudio : public edCinSourceAudioI {
+public:
+	CBWCinSourceAudio();
+
+	virtual bool Create(char* pFileName);
+	virtual bool Play();
+	virtual bool Stop();
+	virtual bool GetTime() { IMPLEMENTATION_GUARD(); }
+	virtual bool Destroy();
+	virtual float Func_0x1c(int audioTrackId) { IMPLEMENTATION_GUARD_AUDIO(); return -1.0f; }
+
+	void SetAudioTrack(int audioTrackId);
+
+	int intFieldA;
+	float field_0x8;
+	float floatFieldA;
+	GlobalSound_FileData* pGlobalSoundFileData;
+	int field_0x14;
+	int* lastIntField;
+	byte field_0x38;
+	byte field_0x39;
+	undefined field_0x3a;
+	undefined field_0x3b;
+};
+
 class CBWitchCin : public edCinGameInterface {
 public:
 
@@ -93,6 +120,10 @@ public:
 	virtual bool GetCamera(edCinCamInterface** pCinCamInterface, const edCinCamInterface::CAMERA_CREATIONtag*);
 	virtual bool ReleaseCamera(edCinCamInterface*);
 
+	virtual bool GetSourceAudioInterface(edCinSourceAudioI** ppSourceAudioInterface);
+	virtual bool ReleaseSourceAudioInterface(edCinSourceAudioI*);
+
+	CBWCinSourceAudio BWCinSourceAudio_Obj;
 	CBWCinCam BWCinCam_Obj;
 };
 
@@ -573,8 +604,8 @@ struct CCinematic {
 	S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchListB;
 	S_STREAM_EVENT_CAMERA* pStreamEventCameraB;
 	int* field_0x25c;
-	uint intFieldE[5];
-	uint intFieldD;
+	uint aAudioTrackIds[5];
+	uint defaultAudioTrackId;
 	edCBankBuffer cineBank;
 	int cineBankLoadStage_0x2b4;
 	int soundCount_0x2b8;
@@ -650,7 +681,7 @@ public:
 
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;
-	struct CCameraCinematic* pCameraLocationObj;
+	struct CCameraCinematic* pCinematicCamera;
 	struct CCinematic** ppCinematicObjB_B;
 	int activeCinematicCount;
 	struct CCinematic* pCurCinematic;

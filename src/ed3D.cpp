@@ -7241,7 +7241,7 @@ uint ed3DTestBoundingSphereObject(edF32VECTOR4* pSphere)
 
 	uVar2 = 1;
 	fVar4 = pSphere->w * gRender_info_SPR->biggerScale;
-	if (((gRender_info_SPR->flags & 0x10) == 0) || (pfVar1 = (float*)gRender_info_SPR->pHierarchySetup->clipping_0x0, pfVar1 == (float*)0x0)) {
+	if (((gRender_info_SPR->flags & 0x10) == 0) || (pfVar1 = gRender_info_SPR->pHierarchySetup->clipping_0x0, pfVar1 == (float*)0x0)) {
 		fVar3 = (gRenderSceneConfig_SPR->frustumA).field_0x50.w;
 	}
 	else {
@@ -11271,7 +11271,6 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	pCameraPanHeader->linkCount = pCameraPanHeader->linkCount + 1;
 	pList->nodeCount = pList->nodeCount + 1;
 	pNewNode = pCameraPanHeader->pNodeHead;
-	//newNodeIndex = (uint)((ulong)pNewNode - (ulong)pNode) >> 4; // This should be / sizeof(edNODE);
 	newNodeIndex = (uint)((ulong)pNewNode - (ulong)pNode) / sizeof(edNODE);
 
 	assert(newNodeIndex < pCameraPanHeader->totalCount);
@@ -11592,7 +11591,7 @@ void ed3DHierarchyAddSonsToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, 
 											local_180 = pHashCode;
 											for (local_160 = 0; local_160 < count; local_160 = local_160 + 1) {
 												peVar5 = (ed_3d_hierarchy_setup*)local_180->pData;
-												if (peVar5[8].clipping_0x0 == pcVar4) {
+												if (peVar5[8].clipping_0x0 == (float*)pcVar4) {
 													peVar12 = ed3DHierarchyAddNode
 													(pList, pHierNode, pParentNode, (ed_g3d_hierarchy*)&peVar5->field_0x10,
 														(ed_3d_hierarchy*)peVar11->pData);
@@ -11944,6 +11943,16 @@ struct NodeChunk {
 	int chunk; // char*
 };
 
+static float FLOAT_004488d8 = 9.9999998E17f;
+static edF32VECTOR4 ed_Bound_Sphere_0040f090 = { 0.0f, 0.0f, 0.0f,  9.9999998E17f };
+static ed_3d_hierarchy_setup ed_3d_hierarchy_setup_0040f070 = {
+	&FLOAT_004488d8,
+	& ed_Bound_Sphere_0040f090,
+	NULL,
+	NULL,
+	NULL
+};
+
 void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* pMeshInfo, ed_3D_Scene* pStaticMeshMaster)
 {
 	uint otherEntryCount;
@@ -12045,7 +12054,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 				iVar5 = rand();
 				pANHR_Internal->field_0x2c = puVar15 + (fVar14 - puVar15) * ((float)iVar5 / 2.147484e+09f);
 				if ((pANHR_Internal->flags & 4) != 0) {
-					IMPLEMENTATION_GUARD(ed3DHierarchySetSetup((ed_3d_hierarchy_node*)LOAD_SECTION(pANHR_Internal->pHierNodeData), 0x40f070));
+					ed3DHierarchySetSetup(LOAD_SECTION_CAST(ed_3d_hierarchy*, pANHR_Internal->pHierNodeData), &ed_3d_hierarchy_setup_0040f070);
 				}
 
 				pHierAnimStream = (S_HIERANM_ANIM*)LOAD_SECTION(aFileData[(int)pANHR_Internal->pHierAnimStream]);

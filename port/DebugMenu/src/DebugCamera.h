@@ -1,5 +1,5 @@
 #pragma once
 
-namespace DebugCamera {
+namespace Debug::Camera {
 	void ShowCamera();
 }

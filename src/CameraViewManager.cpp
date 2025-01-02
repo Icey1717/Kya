@@ -1809,7 +1809,7 @@ bool CCameraShadow::Manage()
 bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 {
 	SWITCH_MODE switchMode;
-	CCamera* pCamera_00;
+	CCamera* pStackActiveCamera;
 	ECameraType EVar1;
 	bool bSuccess;
 	ulong uVar2;
@@ -1823,18 +1823,17 @@ bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 		bSuccess = this->cameraStack.Push(pCamera, param_3);
 		if (bSuccess != false) {
 			switchMode = (this->cameraStack).switchMode;
-			pCamera_00 = (this->cameraStack).pActiveCamera;
-			bSuccess = this->activeCamManager.SwitchActiveCam((this->cameraStack).field_0x218, pCamera_00, switchMode);
-			if ((bSuccess == false) && (pCamera_00 != (CCamera*)0x0)) {
-				EVar1 = pCamera_00->GetMode();
-				CCameraShadow* pShadowCam = (CCameraShadow*)pCamera_00;
-				if (EVar1 == CT_ShadowSun) {
-					this->pActiveCamera = pCamera_00;
+			pStackActiveCamera = (this->cameraStack).pActiveCamera;
+			bSuccess = this->activeCamManager.SwitchActiveCam((this->cameraStack).field_0x218, pStackActiveCamera, switchMode);
+			if ((bSuccess == false) && (pStackActiveCamera != (CCamera*)0x0)) {
+				CCameraShadow* pShadowCam = (CCameraShadow*)pStackActiveCamera;
+				if (pStackActiveCamera->GetMode() == CT_ShadowSun) {
+					this->pActiveCamera = pStackActiveCamera;
 					pShadowCam->sceneIndex = -1;
 					pShadowCam->sceneFlags = 0;
 				}
 				else {
-					this->pActiveCamera = pCamera_00;
+					this->pActiveCamera = pStackActiveCamera;
 				}
 			}
 
@@ -1848,8 +1847,10 @@ bool CCameraManager::PushCamera(CCamera* pCamera, int param_3)
 
 			(this->cameraStack).field_0x200 = pCamera->field_0x8c;
 		}
+
 		bSuccess = true;
 	}
+
 	return bSuccess;
 }
 

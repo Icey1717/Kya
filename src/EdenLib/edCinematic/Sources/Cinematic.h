@@ -4,13 +4,26 @@
 #include "Types.h"
 #include "CinResCollection.h"
 
-struct CutsceneHoldsDurations {
+struct CutsceneHoldsDurations
+{
 	float durationA;
 	float durationB;
 };
 
-struct edCinCamInterface {
-	struct CAMERA_CREATIONtag {
+struct edCinSourceAudioI
+{
+	virtual bool Create(char* pFileName) = 0;
+	virtual bool Play() = 0;
+	virtual bool Stop() = 0;
+	virtual bool GetTime() = 0;
+	virtual bool Destroy() = 0;
+	virtual float Func_0x1c(int audioTrackId) = 0;
+};
+
+struct edCinCamInterface
+{
+	struct CAMERA_CREATIONtag
+	{
 		int a;
 	};
 
@@ -111,6 +124,9 @@ struct edCinGameInterface
 
 	virtual bool GetCamera(edCinCamInterface** pCinCam, const edCinCamInterface::CAMERA_CREATIONtag*) = 0;
 	virtual bool ReleaseCamera(edCinCamInterface*) = 0;
+
+	virtual bool GetSourceAudioInterface(edCinSourceAudioI** ppSourceAudioInterface) = 0;
+	virtual bool ReleaseSourceAudioInterface(edCinSourceAudioI*) = 0;
 };
 
 PACK(

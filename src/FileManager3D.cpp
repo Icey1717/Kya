@@ -182,7 +182,7 @@ void C3DFileManager::Level_ClearInternalData()
 	} while (0 < iVar3);
 	pvVar1 = memset(&this->backgroundHierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
 	this->field_0x30 = 10000.0f;
-	this->backgroundHierarchySetup.clipping_0x0 = (char*)&this->field_0x30;
+	this->backgroundHierarchySetup.clipping_0x0 = &this->field_0x30;
 	(this->backgroundHierarchySetup).pBoundingSphere = (edF32VECTOR4*)0x0;
 	return;
 }
