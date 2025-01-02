@@ -4,6 +4,7 @@
 #include "edMem.h"
 #include "Actor.h"
 #include "EventManager.h"
+#include "ActorWolfen.h"
 
 CSwitchBehaviour::CSwitchBehaviour()
 {
@@ -332,5 +333,55 @@ void CondActorInArea::Manage(CActor* pOwner)
 		this->field_0x4 = 1;
 	}
 
+	return;
+}
+
+void CondSeeActorInArea::Create(ByteCode* pByteCode)
+{
+	this->pActor.index = pByteCode->GetS32();
+	this->pZone.index = pByteCode->GetS32();
+	this->flags = pByteCode->GetU32();
+}
+
+void CondSeeActorInArea::Init(CActor* pOwner)
+{
+	this->pActor.Init();
+	this->pZone.Init();
+
+	return;
+}
+
+void CondSeeActorInArea::Begin(CActor* pOwner)
+{
+	this->field_0x4 = 0;
+	this->zoneResult = 2;
+
+	return;
+}
+
+void CondSeeActorInArea::Manage(CActor* pOwner)
+{
+	CActor* pCVar1;
+	bool bVar2;
+	CVision* pVision;
+	CActor* pCVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+
+	CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pOwner);
+
+	pCVar1 = this->pActor.Get();
+	if ((pCVar1 == pWolfen->pTargetActor_0xc80) && (CheckZone(this->pZone.Get(), this->flags, &this->zoneResult, &this->pActor.Get()->currentLocation) != false)) {
+		pVision = pWolfen->GetVision();
+		pVision->location = pWolfen->currentLocation;
+		pVision->location.y = pWolfen->currentLocation.y + pWolfen->field_0xcf0;
+		pVision->rotationQuat = pWolfen->rotationQuat;
+		pCVar3 = pVision->ScanForTarget(this->pActor.Get(), 1);
+		if (pCVar3 != (CActor*)0x0) {
+			this->field_0x4 = 1;
+		}
+	}
 	return;
 }

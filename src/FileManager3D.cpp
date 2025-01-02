@@ -254,7 +254,7 @@ void C3DFileManager::SetupBackground(edNODE* pNode)
 
 			ed_3d_hierarchy* pPrevHier = (ed_3d_hierarchy*)pPrevNode->pData;
 			if (pPrevHier->hash.number == 0x4c464e99b2a49e87) {
-				piVar2 = ed3DHierarchyGetObject((ed_3d_hierarchy*)pPrevNode->pData);
+				piVar2 = ed3DHierarchyGetObject(pPrevHier);
 
 				ed_3d_strip* pStrip = (ed_3d_strip*)LOAD_SECTION(piVar2->p3DStrip);
 

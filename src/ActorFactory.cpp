@@ -52,6 +52,13 @@
 #include "ActorPunchingBall.h"
 #include "ActorNativShop.h"
 #include "ActorAddOnPurchase.h"
+#include "ActorCareBoy.h"
+#include "ActorShip.h"
+#include "ActorHunter.h"
+#include "ActorJamGut.h"
+#include "ActorAcceleratos.h"
+#include "ActorPattern.h"
+#include "ActorPatternCmd.h"
 
 class CActorBunch : public CActor {
 	virtual void Create(ByteCode* pByteCode) { SkipToNextActor(pByteCode); }
@@ -279,6 +286,34 @@ CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 		case ADD_ON_PURCHASE:
 			*outSize = sizeof(CActorAddOnPurchase);
 			return new CActorAddOnPurchase[count];
+			break;
+		case CARE_BOY:
+			*outSize = sizeof(CActorCareBoy);
+			return new CActorCareBoy[count];
+			break;
+		case SHIP:
+			*outSize = sizeof(CActorShip);
+			return new CActorShip[count];
+			break;
+		case HUNTER:
+			*outSize = sizeof(CActorHunter);
+			return new CActorHunter[count];
+			break;
+		case JAMGUT:
+			*outSize = sizeof(CActorJamgut);
+			return new CActorJamgut[count];
+			break;
+		case ACCELERATOS:
+			*outSize = sizeof(CActorAcceleratos);
+			return new CActorAcceleratos[count];
+			break;
+		case PATTERN_CON:
+			*outSize = sizeof(CActorPattern);
+			return new CActorPattern[count];
+			break;
+		case PATTERN_CMD:
+			*outSize = sizeof(CActorPatternCmd);
+			return new CActorPatternCmd[count];
 			break;
 		default:
 			classId;

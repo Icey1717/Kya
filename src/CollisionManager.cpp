@@ -658,20 +658,17 @@ void CCollision::PatchObbTreeFlagsRecurse(edObbTREE_DYN* pObbTree, int param_2, 
 		}
 	}
 	else {
-		if (obbType == 4) {
-			IMPLEMENTATION_GUARD(
+		if (obbType == COL_TYPE_TRIANGLE) {
 			iVar4 = 0;
 			if (pObbTree->count_0x52 != 0) {
-				iVar2 = 0;
+				edF32TRIANGLE4* pTri = LOAD_SECTION_CAST(edF32TRIANGLE4*, pObbTree->field_0x54[0]);
 				do {
+					pTri[iVar4].flags = pTri[iVar4].flags & param_3;
+					pTri[iVar4].flags = pTri[iVar4].flags | param_2;
+					pTri[iVar4].flags = pTri[iVar4].flags ^ param_4;
 					iVar4 = iVar4 + 1;
-					iVar3 = (int)&(pObbTree->field_0x54->vertices).aa + iVar2;
-					*(uint*)(iVar3 + 0xc) = *(uint*)(iVar3 + 0xc) & param_3;
-					*(uint*)(iVar3 + 0xc) = *(uint*)(iVar3 + 0xc) | param_2;
-					*(uint*)(iVar3 + 0xc) = *(uint*)(iVar3 + 0xc) ^ param_4;
-					iVar2 = iVar2 + 0x10;
 				} while (iVar4 < pObbTree->count_0x52);
-			})
+			}
 		}
 		else {
 			if (((obbType == COL_TYPE_PRIM_OBJ) || (obbType == 0xd)) && (iVar4 = 0, pObbTree->count_0x52 != 0)) {

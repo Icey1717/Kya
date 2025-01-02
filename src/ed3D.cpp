@@ -11256,7 +11256,6 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	float fVar4;
 	edF32MATRIX4* pMVar6;
 	ed3DLod* pSourceLod;
-	ed_3d_hierarchy_node* pMVar8;
 	ed3DLod* pDestLod;
 	edF32MATRIX4* pMVar10;
 	edF32MATRIX4* pMVar11;
@@ -11272,7 +11271,11 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	pCameraPanHeader->linkCount = pCameraPanHeader->linkCount + 1;
 	pList->nodeCount = pList->nodeCount + 1;
 	pNewNode = pCameraPanHeader->pNodeHead;
-	newNodeIndex = (uint)((ulong)pNewNode - (ulong)pNode) >> 4;
+	//newNodeIndex = (uint)((ulong)pNewNode - (ulong)pNode) >> 4; // This should be / sizeof(edNODE);
+	newNodeIndex = (uint)((ulong)pNewNode - (ulong)pNode) / sizeof(edNODE);
+
+	assert(newNodeIndex < pCameraPanHeader->totalCount);
+
 	pCameraPanHeader->pNodeHead = pNewNode->pPrev;
 	pNewHierarchyNode = pHierNode + newNodeIndex;
 	pNewNode->header.typeField.type = 0;
@@ -11337,16 +11340,16 @@ edNODE* ed3DHierarchyAddNode(edLIST* pList, ed_3d_hierarchy_node* pHierNode, edN
 	(pNewHierarchyNode->base).pShadowAnimMatrix = (edF32MATRIX4*)0x0;
 	(pNewHierarchyNode->base).pLinkTransformData = p3DB;
 	(pNewHierarchyNode->base).field_0x94 = (undefined*)p3DB;
-	pMVar8 = pHierNode + newNodeIndex;
+	pNewHierarchyNode = pHierNode + newNodeIndex;
 
 	if ((pNewHierarchyNode->base).linkedHierCount == 0) {
 		(pNewHierarchyNode->base).flags_0x9e = (pNewHierarchyNode->base).flags_0x9e | 8;
 	}
 
-	(pMVar8->base).flags_0x9e = (pMVar8->base).flags_0x9e & 0xfffc;
-	(pMVar8->base).flags_0x9e = (pMVar8->base).flags_0x9e | 0x800;
-	ed3DSetSceneRender(&pMVar8->base, 1);
-	pNewNode->pData = pMVar8;
+	(pNewHierarchyNode->base).flags_0x9e = (pNewHierarchyNode->base).flags_0x9e & 0xfffc;
+	(pNewHierarchyNode->base).flags_0x9e = (pNewHierarchyNode->base).flags_0x9e | 0x800;
+	ed3DSetSceneRender(&pNewHierarchyNode->base, 1);
+	pNewNode->pData = pNewHierarchyNode;
 
 	return pNewNode;
 }
@@ -11488,12 +11491,6 @@ edNODE* ed3DHierarchyAddToList(edLIST* pList, ed_3d_hierarchy_node* pHierNode, e
 
 		RecursiveAddToHierarchy(pList, pHierNode, pNode, pMeshInfo, peVar7, pHashCode, uVar6, pRootNode);
 
-		//local_8 = (edNODE*)0x0;
-		//peVar17 = pHashCode;
-		//for (uVar16 = 0; uVar16 < uVar6; uVar16 = uVar16 + 1) {
-		//	ed3DHierarchyAddToListRecursive(pList, pHierNode, pNode, pRootNode, peVar17, peVar7);
-		//	peVar17 = peVar17 + 1;
-		//}
 		ed3DHierarchyRefreshSonNumbers(pRootNode, &sStack2);
 	}
 

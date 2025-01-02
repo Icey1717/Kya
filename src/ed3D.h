@@ -463,7 +463,7 @@ PACK(struct ed_g3d_hierarchy {
 
 struct ed_3d_hierarchy_node {
 	ed_3d_hierarchy base;
-	ed3DLod aLods[];
+	ed3DLod aLods[4];
 };
 
 struct TextureInfo {

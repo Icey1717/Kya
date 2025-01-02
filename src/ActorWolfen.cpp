@@ -651,6 +651,9 @@ CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
 	case WOLFEN_BEHAVIOUR_AVOID:
 		pBehaviour = new CBehaviourAvoid;
 		break;
+	case WOLFEN_BEHAVIOUR_TRACK_STAND:
+		pBehaviour = new CBehaviourTrackStand;
+		break;
 	default:
 		assert(behaviourType < 7);
 		pBehaviour = CActorFighter::BuildBehaviour(behaviourType);

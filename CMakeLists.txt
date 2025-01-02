@@ -436,6 +436,20 @@ set (actor_src
 	"${src_root}/ActorNativShop.h"
 	"${src_root}/ActorAddOnPurchase.cpp"
 	"${src_root}/ActorAddOnPurchase.h"
+	"${src_root}/ActorJamgut.cpp"
+	"${src_root}/ActorJamgut.h"
+	"${src_root}/ActorShip.cpp"
+	"${src_root}/ActorShip.h"
+	"${src_root}/ActorCareBoy.cpp"
+	"${src_root}/ActorCareBoy.h"
+	"${src_root}/ActorHunter.cpp"
+	"${src_root}/ActorHunter.h"
+	"${src_root}/ActorAcceleratos.cpp"
+	"${src_root}/ActorAcceleratos.h"
+	"${src_root}/ActorPattern.cpp"
+	"${src_root}/ActorPattern.h"
+	"${src_root}/ActorPatternCmd.cpp"
+	"${src_root}/ActorPatternCmd.h"
 )
 
 list(APPEND main_src ${actor_src})

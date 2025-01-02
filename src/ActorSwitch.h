@@ -153,7 +153,22 @@ public:
 class CBehaviourSwitchSequence : public CBehaviourSwitch
 {
 public:
-	virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
+
+	uint field_0x8;
+	uint field_0xc;
+
+	int* field_0x10;
+	undefined4 field_0x14;
+	uint field_0x18;
 };
 
 class CActorSwitch : public CActor {

@@ -4156,7 +4156,6 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 			}
 			break;
 		case 5:
-			IMPLEMENTATION_GUARD(
 			for (iVar7 = 0; iVar7 < count; iVar7 = iVar7 + 1) {
 				if (this->pActor3C_0x0->aSplinePoints == (edF32VECTOR4*)0x0) {
 					peVar4 = &gF32Vertex4Zero;
@@ -4165,8 +4164,10 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 					if (count == 0) {
 						trap(7);
 					}
+
 					peVar4 = this->pActor3C_0x0->aSplinePoints + (iVar7 + 1) % count;
 				}
+
 				peVar3 = this->pActor3C_0x0->aSplinePoints;
 				if (peVar3 == (edF32VECTOR4*)0x0) {
 					peVar3 = &gF32Vertex4Zero;
@@ -4174,30 +4175,30 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 				else {
 					peVar3 = peVar3 + iVar7;
 				}
-				local_10.x = peVar3->x - peVar4->x;
-				local_10.y = peVar3->y - peVar4->y;
-				local_10.z = peVar3->z - peVar4->z;
-				local_10.w = peVar3->w - peVar4->w;
-				iVar5 = this->pActor3C_0x0->aDelays;
-				if (iVar5 == 0) {
+				local_10 = *peVar3 - *peVar4;
+
+				float* pDelays = this->pActor3C_0x0->aDelays;
+				if (pDelays == 0) {
 					fVar10 = 0.0;
 				}
 				else {
-					fVar10 = *(float*)(iVar5 + iVar7 * 4);
+					fVar10 = pDelays[iVar7];
 				}
-				fVar9 = 0.0;
-				if (0.0 < fVar10) {
-					iVar5 = this->pActor3C_0x0->aDelays;
-					if (iVar5 != 0) {
-						fVar9 = *(float*)(iVar5 + iVar7 * 4);
+
+				fVar9 = 0.0f;
+				if (0.0f < fVar10) {
+					pDelays = this->pActor3C_0x0->aDelays;
+					if (pDelays != 0) {
+						fVar9 = pDelays[iVar7];
 					}
+
 					fVar10 = edF32Vector4GetDistHard(&local_10);
 					this->field_0x10[iVar7] = fVar10 / fVar9;
 				}
 				else {
-					this->field_0x10[iVar7] = 0.0;
+					this->field_0x10[iVar7] = 0.0f;
 				}
-			})
+			}
 		}
 
 		

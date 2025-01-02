@@ -28,10 +28,15 @@ class CondMessage : public CCondition
 
 class CondSeeActorInArea : public CCondition
 {
-	virtual void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD(); }
-	virtual void Init(CActor* pOwner) { IMPLEMENTATION_GUARD(); }
-	virtual void Begin(CActor* pOwner) { IMPLEMENTATION_GUARD(); }
-	virtual void Manage(CActor* pOwner) { IMPLEMENTATION_GUARD(); }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Begin(CActor* pOwner);
+	virtual void Manage(CActor* pOwner);
+
+	S_STREAM_REF<CActor> pActor;
+	S_STREAM_REF<ed_zone_3d> pZone;
+	uint flags;
+	uint zoneResult;
 };
 
 class CondActorInArea : public CCondition

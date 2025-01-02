@@ -1129,3 +1129,92 @@ int CBehaviourSwitchMultiCondition::InterpretMessage(CActor* pSender, int msg, v
 
 	return 1;
 }
+
+void CBehaviourSwitchSequence::Create(ByteCode* pByteCode)
+{
+	int* piVar1;
+
+	this->field_0x8 = pByteCode->GetU32();
+	this->field_0xc = pByteCode->GetU32();;
+
+	piVar1 = (int*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
+	if (*piVar1 != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * 4;
+	}
+	this->field_0x10 = piVar1;
+
+	this->field_0x18 = this->field_0xc;
+	this->field_0x14 = 0;
+
+	return;
+}
+
+void CBehaviourSwitchSequence::Init(CActor* pOwner)
+{
+	this->pOwner = static_cast<CActorSwitch*>(pOwner);
+
+	return;
+}
+
+void CBehaviourSwitchSequence::Manage()
+{
+	CActorSwitch* pActor;
+	edF32VECTOR4 local_10;
+
+	pActor = this->pOwner;
+	pActor->pStreamEventCamera->Manage((CActor*)pActor);
+
+	if (pActor->pTiedActor != (CActor*)0x0) {
+		local_10 = pActor->baseLocation;
+		pActor->SV_UpdatePosition_Rel(&local_10, 0, 0, (CActorsTable*)0x0, (edF32VECTOR4*)0x0);
+	}
+
+	return;
+}
+
+void CBehaviourSwitchSequence::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	S_TARGET_STREAM_REF* pCVar2;
+	int iVar4;
+
+	this->field_0x18 = this->field_0xc;
+	this->field_0x14 = 0;
+	if (newState == -1) {
+		if (this->field_0x10 == (int*)0x0) {
+			iVar4 = 0;
+		}
+		else {
+			iVar4 = *this->field_0x10;
+		}
+
+		if (this->field_0x14 == iVar4) {
+			this->pOwner->SetState(8, -1);
+
+			pCVar2 = this->pOwner->pTargetStreamRef;
+			iVar4 = 0;
+			if (0 < pCVar2->entryCount) {
+				do {
+					pCVar2->aEntries[iVar4].Switch(this->pOwner);
+					iVar4 = iVar4 + 1;
+				} while (iVar4 < pCVar2->entryCount);
+			}
+
+			this->pOwner->pStreamEventCamera->SwitchOn(this->pOwner);
+		}
+		else {
+			this->pOwner->SetState(5, -1);
+		}
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+int CBehaviourSwitchSequence::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	IMPLEMENTATION_GUARD();
+	return 0;
+}
