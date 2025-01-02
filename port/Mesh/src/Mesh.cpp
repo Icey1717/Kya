@@ -445,20 +445,22 @@ void Renderer::Kya::G3D::Hierarchy::ProcessLod(ed3DLod* pLod, const int heirarch
 {
 	assert(pLod);
 
-	Lod& lod = lods.emplace_back();
-	lod.pLod = pLod;
-	lod.pParent = this;
+	if (pLod->pObj) {
+		Lod& lod = lods.emplace_back();
+		lod.pLod = pLod;
+		lod.pParent = this;
 
-	ed_hash_code* pHash = LOAD_SECTION_CAST(ed_hash_code*, pLod->pObj);
-	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::ProcessLod Processing lod: {}", pHash->hash.ToString());
+		ed_hash_code* pHash = LOAD_SECTION_CAST(ed_hash_code*, pLod->pObj);
+		MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::ProcessLod Processing lod: {}", pHash->hash.ToString());
 
-	ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pHash->pData);
+		ed_Chunck* pOBJ = LOAD_SECTION_CAST(ed_Chunck*, pHash->pData);
 
-	if (pOBJ) {
-		MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::ProcessLod Object chunk header: {}", pOBJ->GetHeaderString());
+		if (pOBJ) {
+			MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::ProcessLod Object chunk header: {}", pOBJ->GetHeaderString());
 
-		ed_g3d_object* pObject = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
-		lod.ProcessObject(pObject, heirarchyIndex, lodIndex);
+			ed_g3d_object* pObject = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
+			lod.ProcessObject(pObject, heirarchyIndex, lodIndex);
+		}
 	}
 }
 

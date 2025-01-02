@@ -272,6 +272,60 @@ int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZo
 	return 2;
 }
 
+int _edEventComputeZeroVolumeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZone, edF32VECTOR4* param_3, edF32VECTOR4* param_4, uint* param_5)
+{
+	uint* puVar1;
+	int uVar2;
+	float t;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	puVar1 = LOAD_SECTION_CAST(uint*, pZone->field_0x0[0]);
+	if (puVar1 == (uint*)0x0) {
+		puVar1 = LOAD_SECTION_CAST(uint*, pZone->field_0x0[2]);
+		local_10.x = param_4->x;
+	}
+	else {
+		local_10.x = param_4->x;
+	}
+
+	local_10.y = param_4->y;
+	local_10.z = param_4->z;
+	local_10.w = param_4->w;
+
+	edF32Matrix4MulF32Vector4Hard(&local_20, pEventChunk->aMatrices + puVar1[1], param_3);
+
+	uVar2 = 2;
+	if ((((-0.5f <= local_20.x) && (local_20.x <= 0.5f)) && (-0.5f <= local_20.z)) &&
+		((local_20.z <= 0.5f && (0.0f <= local_20.y)))) {
+		uVar2 = 1;
+	}
+
+	*param_4 = local_20;
+
+	if ((uVar2 & *param_5) == 0) {
+		if (((local_20.y < 0.0f) && (0.0f <= local_10.y)) || ((0.0f <= local_20.y && (local_10.y < 0.0f)))) {
+			edF32Vector4SubHard(&local_30, &local_20, &local_10);
+			t = 0.5f;
+			if (local_30.y != 0.0f) {
+				t = -local_10.y / local_30.y;
+			}
+
+			edF32Vector4ScaleHard(t, &local_30, &local_30);
+			edF32Vector4AddHard(&local_30, &local_30, &local_10);
+
+			if ((((-0.5f <= local_30.x) && (local_30.x <= 0.5f)) && (-0.5f <= local_30.z)) && (local_30.z <= 0.5f)) {
+				return uVar2;
+			}
+		}
+
+		*param_5 = uVar2;
+	}
+
+	return uVar2;
+}
+
 int edEventComputeZoneAgainstVertex(int index, ed_zone_3d* pZone, edF32VECTOR4* param_3, long mode)
 {
 	int iVar1;
@@ -370,11 +424,10 @@ void _edEventComputeEvent(ed_event_chunk* pEventChunk, ed_event* pEvent)
 					coliderFlags = pCollider->flags;
 				}
 				else {
-					IMPLEMENTATION_GUARD(
 					ed_event_actor_ref* pActorRef = LOAD_SECTION_CAST(ed_event_actor_ref*, pCollider->pActorRef);
-					result = _edEventComputeZeroVolumeZoneAgainstVertex(pEventchunk, pZone, (edF32VECTOR4*)pCollider->pActorRef->pLocation, (edF32VECTOR4*)pCollider,
+					result = _edEventComputeZeroVolumeZoneAgainstVertex(pEventChunk, pZone, LOAD_SECTION_CAST(edF32VECTOR4*, pActorRef->pLocation), &pCollider->worldLocation,
 						&pCollider->flags);
-					coliderFlags = pCollider->flags;)
+					coliderFlags = pCollider->flags;
 				}
 
 				if ((result & coliderFlags) == 0) {

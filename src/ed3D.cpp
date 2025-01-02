@@ -117,12 +117,7 @@ byte BYTE_00448a5c = 1;
 
 FxFogProp g3DFXFog = { };
 
-edF32MATRIX4 CHierarchyAnm::_gscale_mat = {
-	0.6954f, 0.0f, 0.0f, 0.0f,
-	0.0f, 0.6954f, 0.0f, 0.0f,
-	0.0f, 0.0f, 0.6954f, 0.0f,
-	0.0f, 0.0f, 0.0f, 1.0f
-};
+edF32MATRIX4 CHierarchyAnm::_gscale_mat;
 
 ed3DConfig::ed3DConfig()
 	: meshHeaderCountB(0x3E0)
@@ -11870,6 +11865,27 @@ struct MeshData_OBB
 	int field_0x12;
 };
 
+
+edNODE* ed3DHierarchyNodeGetByHashcodeFromList(edNODE* pNode, ulong hash)
+{
+	ed_3d_hierarchy* peVar1;
+	edNODE* peVar2;
+	uint uVar3;
+
+	if ((pNode != (edNODE*)0x0) && (peVar1 = reinterpret_cast<ed_3d_hierarchy*>(pNode->pData), peVar1 != (ed_3d_hierarchy*)0x0)) {
+		peVar2 = pNode->pPrev;
+		for (uVar3 = peVar1->linkedHierCount; uVar3 != 0; uVar3 = uVar3 - 1) {
+			if ((peVar2->pData != (ed_3d_hierarchy*)0x0) && (reinterpret_cast<ed_3d_hierarchy*>(peVar2->pData)->hash.number == hash)) {
+				return peVar2;
+			}
+
+			peVar2 = peVar2->pPrev;
+		}
+	}
+
+	return (edNODE*)0x0;
+}
+
 ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool bGetFromHierarc)
 {
 	byte desiredLod;
@@ -11969,7 +11985,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 	else {
 		this->pThis = pInANHR;
 		pcVar1 = this->pThis;
-		otherEntryCount = pcVar1->otherEntryCount;
+		otherEntryCount = pcVar1->nb3dHierarchies;
 		fileDatEntryCount = pcVar1->fileDataEntryCount;
 
 		// aFileData starts after the 'other' entries.
@@ -12007,6 +12023,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 				ed3DHierarchyAddSonsToList(pList, pHierNode, pParentNode, (ed_Chunck*)LOAD_SECTION(iVar5), pNewNode, (ed_hash_code*)(pcVar2 + 2), (fileDatEntryCount & 0xffff) - 1);
 				ed3DHierarchyRefreshSonNumbers(pNewNode, &sStack2);
 			}
+
 			pANHR_Internal->pHierNode = STORE_SECTION(pNewNode);
 			if (pNewNode == (edNODE*)0x0) {
 				pANHR_Internal->pHierNodeData = 0x0;
@@ -12015,6 +12032,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 			else {
 				pANHR_Internal->pHierNodeData = STORE_SECTION(pNewNode->pData);
 				pANHR_Internal->flags = pANHR_Internal->flags | 0xa0000000;
+
 				if ((pANHR_Internal->flags & 1) == 0) {
 					pANHR_Internal->field_0x28 = 0.0f;
 				}
@@ -12024,6 +12042,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 					iVar5 = rand();
 					pANHR_Internal->field_0x28 = fVar14 + (fVar16 - fVar14) * ((float)iVar5 / 2.147484e+09f);
 				}
+
 				puVar15 = pANHR_Internal->pObbFloat.number;
 				fVar14 = pANHR_Internal->field_0x34;
 				iVar5 = rand();
@@ -12031,14 +12050,15 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 				if ((pANHR_Internal->flags & 4) != 0) {
 					IMPLEMENTATION_GUARD(ed3DHierarchySetSetup((ed_3d_hierarchy_node*)LOAD_SECTION(pANHR_Internal->pHierNodeData), 0x40f070));
 				}
+
 				pHierAnimStream = (S_HIERANM_ANIM*)LOAD_SECTION(aFileData[(int)pANHR_Internal->pHierAnimStream]);
 
 				UpdateMatrix(pANHR_Internal->field_0x28, &((ed_3d_hierarchy_node*)LOAD_SECTION(pANHR_Internal->pHierNodeData))->base.transformA, pHierAnimStream, pANHR_Internal->flags & 1);
 
 				if (pHierAnimStream->field_0x8 == 0) {
-					local_18 = 1.0;
-					local_1c = 1.0;
-					local_20 = 1.0;
+					local_18 = 1.0f;
+					local_1c = 1.0f;
+					local_20 = 1.0f;
 				}
 				else {
 					int offsetA = pHierAnimStream->field_0x8 * 4 + pHierAnimStream->field_0x4 * 4 + pHierAnimStream->field_0x0 * 4 + -5;
@@ -12053,13 +12073,16 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 					local_1c = pfVar7[1];
 					local_18 = pfVar7[2];
 				}
+
 				if (abs(local_20) <= abs(local_1c)) {
 					local_20 = local_1c;
 				}
+
 				local_20 = abs(local_20);
 				if (local_20 <= abs(local_18)) {
 					local_20 = abs(local_18);
 				}
+
 				pANHR_Internal->field_0x1c = pANHR_Internal->field_0x1c * local_20 * 1.2f;
 				if (((pHierAnimStream->field_0x0 < 2) && (pHierAnimStream->field_0x4 < 2)) && (pHierAnimStream->field_0x8 < 2)) {
 					pANHR_Internal->pHierAnimStream = 0x0;
@@ -12067,6 +12090,7 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 				else {
 					pANHR_Internal->pHierAnimStream = STORE_SECTION(pHierAnimStream);
 				}
+
 				pSkeletonChunck = ed3DHierarchyNodeGetSkeletonChunck(pNewNode, 0);
 				if (pSkeletonChunck == (ed_Chunck*)0x0) {
 					pANHR_Internal->pObbFloat.pObb_Internal = 0x0;
@@ -12083,17 +12107,20 @@ void CHierarchyAnm::Install(MeshData_ANHR* pInANHR, int length, ed_g3d_manager* 
 						pNext->chunk = STORE_SECTION(LOAD_SECTION(aFileData[pNext->chunk]));
 						pNext = pNext + 1;
 					}
+
 					pNext = (NodeChunk*)(pANHR_Internal + 1);
 					for (uVar9 = 0; uVar9 < fileDatEntryCount; uVar9 = uVar9 + 1) {
 						pCurNodeChunk = pNext;
 						for (uVar12 = uVar9; (pCurNodeChunk->nodeIndex != uVar9 + 1 && (uVar12 < fileDatEntryCount)); uVar12 = uVar12 + 1) {
 							pCurNodeChunk = pCurNodeChunk + 1;
 						}
+
 						if (pCurNodeChunk != pNext) {
 							NodeChunk cachedChunk = *pCurNodeChunk;
 							*pCurNodeChunk = *pNext;
 							*pNext = cachedChunk;
 						}
+
 						pNext = pNext + 1;
 					}
 				}
@@ -12456,7 +12483,7 @@ void CHierarchyAnm::Manage(float param_1, float param_2, ed_3D_Scene* pScene, in
 			param_2 = pSVar7->clipValue_0x4;
 		}
 		pMVar1 = this->pThis;
-		uVar2 = pMVar1->otherEntryCount;
+		uVar2 = pMVar1->nb3dHierarchies;
 		for (uVar12 = 0; uVar12 < uVar2; uVar12 = uVar12 + 1) {
 			int* pNext = (int*)(pMVar1 + 1);
 			ANHR_Internal* peVar3 = (ANHR_Internal*)LOAD_SECTION(pNext[uVar12]);

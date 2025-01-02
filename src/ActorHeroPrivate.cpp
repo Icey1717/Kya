@@ -4172,8 +4172,8 @@ void CActorHeroPrivate::ResetGripClimbDefaultSettings()
 	//*(undefined4*)&this->field_0x14f0 = 0x41180000;
 	//*(undefined4*)&this->field_0x1514 = 0x40000000;
 	//*(undefined4*)&this->field_0x1510 = 0x40000000;
-	//*(undefined4*)&this->field_0x1518 = 0x3f800000;
-	this->field_0x151c = 4.0f;
+	this->gripHorizontalMoveSpeed = 1.0f;
+	this->gripUpMoveSpeed = 4.0f;
 	//*(undefined4*)&this->field_0x1520 = 0x41490fdb;
 	//*(undefined4*)&this->field_0x1524 = 0x40000000;
 	//*(undefined4*)&this->field_0x1528 = 0x41000000;
@@ -5184,6 +5184,8 @@ LAB_00341590:
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
 	case STATE_HERO_GRIP_HANG_IDLE:
+	case STATE_HERO_GRIP_LEFT:
+	case STATE_HERO_GRIP_RIGHT:
 	case STATE_HERO_GRIP_UP:
 	case STATE_HERO_GRIP_GRAB:
 	case STATE_HERO_TOBOGGAN_2:
@@ -5355,6 +5357,8 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_GRIP_B:
 	case STATE_HERO_GRIP_C:
 	case STATE_HERO_GRIP_HANG_IDLE:
+	case STATE_HERO_GRIP_LEFT:
+	case STATE_HERO_GRIP_RIGHT:
 	case STATE_HERO_GRIP_UP:
 	case STATE_HERO_GRIP_GRAB:
 	case STATE_HERO_TOBOGGAN_3:
@@ -5808,8 +5812,14 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_GRIP_HANG_IDLE:
 		StateHeroGrip(0.0f, -1, 0);
 		break;
+	case STATE_HERO_GRIP_LEFT:
+		StateHeroGrip(-this->gripHorizontalMoveSpeed, -1, 0);
+		break;
+	case STATE_HERO_GRIP_RIGHT:
+		StateHeroGrip(this->gripHorizontalMoveSpeed, -1, 0);
+		break;
 	case STATE_HERO_GRIP_UP:
-		StateHeroGripUp(this->field_0x151c, -1.0f, STATE_HERO_JUMP_2_3_GRIP, 1);
+		StateHeroGripUp(this->gripUpMoveSpeed, -1.0f, STATE_HERO_JUMP_2_3_GRIP, 1);
 		break;
 	case STATE_HERO_JUMP_2_3_GRIP:
 		StateHeroJump_2_3(0, 0, 0);
@@ -5893,10 +5903,10 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		StateHeroWindWallMove(this->windWallHorizontalSpeed, 0.0f, 0, STATE_HERO_WIND_FLY_B);
 		break;
 	case STATE_HERO_GRIP_UP_A:
-		StateHeroGripUp(this->field_0x151c, -1.0f, STATE_HERO_GRIP_UP_B, 0);
+		StateHeroGripUp(this->gripUpMoveSpeed, -1.0f, STATE_HERO_GRIP_UP_B, 0);
 		break;
 	case STATE_HERO_GRIP_UP_B:
-		StateHeroGripUp(this->field_0x151c, 0.1f, STATE_HERO_WIND_FLY, 0);
+		StateHeroGripUp(this->gripUpMoveSpeed, 0.1f, STATE_HERO_WIND_FLY, 0);
 		break;
 	case STATE_HERO_WIND_WALL_MOVE_JUMP:
 		StateHeroWindWallMove(0.0, 0.0f, 1, -1);

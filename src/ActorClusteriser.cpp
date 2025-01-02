@@ -32,11 +32,8 @@ void CBehaviourClusteriserZones::Create(ByteCode* pByteCode)
 		if (0 < this->nbZoneClusters) {
 			do {
 				puVar6 = this->aZoneClusters + iVar1;
-				uVar4 = pByteCode->GetU32();
-				puVar6->flags = uVar4;
-
-				iVar5 = pByteCode->GetS32();
-				puVar6->field_0x4.index = iVar5;
+				puVar6->flags = pByteCode->GetU32();
+				puVar6->field_0x4.index = pByteCode->GetS32();
 
 				piVar2 = (int*)pByteCode->currentSeekPos;
 				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
@@ -72,14 +69,14 @@ void CBehaviourClusteriserZones::Create(ByteCode* pByteCode)
 				puVar6->nbLights = 0;
 				puVar6->aLights = (CLight**)0x0;
 
-				piVar2 = (int*)pByteCode->currentSeekPos;
-				pByteCode->currentSeekPos = (char*)(piVar2 + 1);
-				if (*piVar2 != 0) {
-					pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar2 * 8;
+				S_HASH_STREAM_REF* pHashStream = reinterpret_cast<S_HASH_STREAM_REF*>(pByteCode->currentSeekPos);
+				pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(int);
+				if (pHashStream->entryCount != 0) {
+					pByteCode->currentSeekPos = pByteCode->currentSeekPos + pHashStream->entryCount * sizeof(ulong);
 				}
-				puVar6->field_0x34 = piVar2;
-				iVar5 = pByteCode->GetS32();
-				puVar6->field_0x8.index = iVar5;
+				puVar6->field_0x34 = pHashStream;
+
+				puVar6->field_0x8.index = pByteCode->GetS32();
 
 				iVar1 = iVar1 + 1;
 			} while (iVar1 < this->nbZoneClusters);
@@ -203,7 +200,7 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 				pLightStreamRef->aEntries[pCVar11 - 1].Init();
 			}
 
-			for (iVar12 = *pZoneCluster->field_0x34; iVar12 != 0; iVar12 = iVar12 + -1) {
+			for (iVar12 = pZoneCluster->field_0x34->entryCount; iVar12 != 0; iVar12 = iVar12 + -1) {
 			}
 
 
@@ -296,16 +293,15 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 										pActor->EvaluateManageState();
 									}
 
-									IMPLEMENTATION_GUARD_LOG(
-									(*(code*)pActor->pVTable->field_0xd4)(pActor, pZoneCluster->field_0x8);)
+									pActor->Func_0xd4(pZoneCluster->field_0x8.Get());
 								}
 
 								if ((pZoneCluster->flags & 0x20) != 0) {
 									pActor->flags = pActor->flags | 0x200;
 									pActor->EvaluateDisplayState();
-									IMPLEMENTATION_GUARD_LOG(
-									(*(code*)pActor->pVTable->field_0xd8)(pActor, pZoneCluster->field_0x8);)
+									pActor->Func_0xd8(pZoneCluster->field_0x8.Get());
 								}
+
 								iVar12 = iVar12 + 1;
 								ppCVar20 = ppCVar20 + 1;
 							} while (iVar12 < (int)pZoneCluster->nbActors);
@@ -332,20 +328,16 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 					pZoneCluster->nbCameras = iVar12;
 
 					if (pZoneCluster->nbCameras != 0) {
-						IMPLEMENTATION_GUARD(
-						iVar12 = NewPool_Pointer((long)(int)pZoneCluster->nbEvents);
-						pZoneCluster->field_0x24 = iVar12;
+						pZoneCluster->aCameras = reinterpret_cast<CCamera**>(NewPool_Pointer(pZoneCluster->nbCameras));;
 						iVar12 = 0;
-						if (0 < (int)pZoneCluster->nbEvents) {
-							iVar13 = 0;
+						if (0 < pZoneCluster->nbCameras) {
 							ppCVar15 = aCameras;
 							do {
+								pZoneCluster->aCameras[iVar12] = *ppCVar15;
 								iVar12 = iVar12 + 1;
-								*(CCamera**)(pZoneCluster->field_0x24 + iVar13) = *ppCVar15;
 								ppCVar15 = ppCVar15 + 1;
-								iVar13 = iVar13 + 4;
-							} while (iVar12 < (int)pZoneCluster->nbEvents);
-						})
+							} while (iVar12 < pZoneCluster->nbCameras);
+						}
 					}
 				}
 
@@ -366,22 +358,18 @@ void CBehaviourClusteriserZones::Init(CActor* pOwner)
 
 					pZoneCluster->nbLights = iVar12;
 					if (pZoneCluster->nbLights != 0) {
-						IMPLEMENTATION_GUARD(
-						iVar12 = NewPool_Pointer(pZoneCluster->nbLights);
-						pZoneCluster->field_0x30 = iVar12;
+						pZoneCluster->aLights = reinterpret_cast<CLight**>(NewPool_Pointer(pZoneCluster->nbLights));
 						iVar12 = 0;
 						if (0 < (int)pZoneCluster->nbLights) {
-							iVar13 = 0;
 							ppCVar17 = aLights;
 							do {
 								pCVar4 = *ppCVar17;
-								*(CLight**)(pZoneCluster->field_0x30 + iVar13) = pCVar4;
-								CLightManager::SetManagedByCluster(pLightManager, (int)pCVar4);
+								pZoneCluster->aLights[iVar12] = pCVar4;
+								pLightManager->SetManagedByCluster(pCVar4);
 								iVar12 = iVar12 + 1;
 								ppCVar17 = ppCVar17 + 1;
-								iVar13 = iVar13 + 4;
 							} while (iVar12 < (int)pZoneCluster->nbLights);
-						})
+						}
 					}
 				}
 			}
@@ -762,7 +750,6 @@ void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster,
 	ed_g3d_manager* peVar2;
 	int iVar3;
 	int iVar4;
-	int iVar5;
 	int iVar6;
 	int iVar7;
 	int iVar8;
@@ -773,52 +760,56 @@ void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster,
 	pSectorManager = CScene::ptable.g_SectorManager_00451670;
 	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
 
-	if (pZoneCluster->field_0x34 == (int*)0x0) {
+	if (pZoneCluster->field_0x34 == (S_HASH_STREAM_REF*)0x0) {
 		iVar8 = 0;
 	}
 	else {
-		iVar8 = *pZoneCluster->field_0x34;
+		iVar8 = pZoneCluster->field_0x34->entryCount;
 	}
 
 	iVar7 = 0;
 	if (0 < iVar8) {
-		iVar5 = 0;
 		pSectorMesh = &((CScene::ptable.g_SectorManager_00451670)->baseSector).sectorMesh;
+
 		do {
 			peVar1 = (ed_g3d_hierarchy*)0x0;
-			hash = *(ulong*)((int)pZoneCluster->field_0x34 + iVar5 + 4);
+
+			hash = pZoneCluster->field_0x34->aEntries[iVar7];
 			if (pFileManager->pMeshInfo != (ed_g3d_manager*)0x0) {
 				peVar1 = ed3DG3DHierarchyGetFromHashcode(pFileManager->pMeshInfo, hash);
 			}
+
 			if (peVar1 == (ed_g3d_hierarchy*)0x0) {
 				iVar6 = (pSectorManager->baseSector).loadStage_0x8;
 				peVar2 = pSectorMesh;
 				if ((iVar6 != 2) && ((iVar6 != 1 || ((pSectorManager->baseSector).sectorIndex != -1)))) {
 					peVar2 = (ed_g3d_manager*)0x0;
 				}
+
 				if (peVar2 != (ed_g3d_manager*)0x0) {
 					peVar1 = ed3DG3DHierarchyGetFromHashcode(peVar2, hash);
 				}
+
 				if (peVar1 == (ed_g3d_hierarchy*)0x0) {
-					iVar6 = pSectorManager->sectDataCount;
-					iVar4 = iVar6 * 0x144;
+					iVar6 = pSectorManager->nbSectors;
 					while ((iVar6 != 0 && (peVar1 == (ed_g3d_hierarchy*)0x0))) {
-						iVar3 = iVar4 + -0x144;
-						iVar4 = (int)&pSectorManager->sectorArray[-1].desiredSectorID + iVar4;
 						iVar6 = iVar6 + -1;
-						if ((*(int*)(iVar4 + 8) == 2) || ((*(int*)(iVar4 + 8) == 1 && (*(int*)(iVar4 + 4) == -1)))) {
-							peVar2 = (ed_g3d_manager*)(iVar4 + 0x48);
+						CSector* pSector = pSectorManager->aSectors + iVar6;
+
+						if ((pSector->loadStage_0x8 == 2) || ((pSector->loadStage_0x8 == 1 && (pSector->sectorIndex == -1)))) {
+							peVar2 = &pSector->sectorMesh;
 						}
 						else {
 							peVar2 = (ed_g3d_manager*)0x0;
 						}
-						iVar4 = iVar3;
+
 						if (peVar2 != (ed_g3d_manager*)0x0) {
 							peVar1 = ed3DG3DHierarchyGetFromHashcode(peVar2, hash);
 						}
 					}
 				}
 			}
+
 			if (peVar1 != (ed_g3d_hierarchy*)0x0) {
 				IMPLEMENTATION_GUARD(
 				if (param_3 == 0) {
@@ -828,10 +819,11 @@ void CBehaviourClusteriserZones::TriggerSceneries(_S_ZONE_CLUSTER* pZoneCluster,
 					FUN_0029f620(peVar1, 0x40);
 				})
 			}
+
 			iVar7 = iVar7 + 1;
-			iVar5 = iVar5 + 8;
 		} while (iVar7 < iVar8);
 	}
+
 	return;
 }
 

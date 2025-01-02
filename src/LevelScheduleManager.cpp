@@ -188,7 +188,7 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 	level_0x5b3c = -1;
 	nextElevatorID = elevatorID;
 	pcVar3 = &aLevelInfo[levelID];
-	level_0x5b40 = pcVar3->sectorStartIndex;
+	baseSectorIndex = pcVar3->sectorStartIndex;
 	currentElevatorID = -1;
 	level_0x5b50 = 0x10;
 	level_0x5b54 = -1;
@@ -199,7 +199,7 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 			IMPLEMENTATION_GUARD(
 			iVar2 = *(int*)(&pcVar3->field_0xf4 + iVar2 * 0x28);
 			if (iVar2 != -1) {
-				level_0x5b40 = iVar2;
+				baseSectorIndex = iVar2;
 			}
 			level_0x5b50 = currentLevelID;
 			level_0x5b54 = param_4;)
@@ -212,7 +212,7 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 			this->currentSaveIndex = this->currentSaveIndex + 1;
 			this->aSaveDataArray[this->currentSaveIndex] = pCVar2;
 		}
-		this->level_0x5b40 = pCVar2[1].field_0x4;
+		this->baseSectorIndex = pCVar2[1].field_0x4;
 		this->aSaveDataArray[this->currentSaveIndex] = (CChunk*)0x0;
 		this->currentSaveIndex = this->currentSaveIndex + -1;
 	}
@@ -1096,8 +1096,8 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		//Level_FillRunInfo(0x1, -1, -1);
-		Level_FillRunInfo(0x4, 9, -1);
+		Level_FillRunInfo(0x2, -1, -1);
+		//Level_FillRunInfo(0x4, 9, -1);
 	}
 	return;
 }

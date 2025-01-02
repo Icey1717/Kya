@@ -12,6 +12,12 @@ class CCamera;
 struct S_LIGHT_STREAM_REF;
 struct S_CAMERA_STREAM_REF;
 
+struct S_HASH_STREAM_REF
+{
+	int entryCount;
+	ulong aEntries[];
+};
+
 class CBehaviourClusteriserZones : public CBehaviour
 {
 public:
@@ -30,7 +36,7 @@ public:
 		S_LIGHT_STREAM_REF* pLightStreamRef;
 		int nbLights;
 		CLight** aLights;
-		int* field_0x34;
+		S_HASH_STREAM_REF* field_0x34;
 	};
 
 	// CBehaviour

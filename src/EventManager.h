@@ -133,6 +133,7 @@ void edEventInit(void);
 uint edEventAddChunk(void* pFileData, uint mode);
 uint edEventGetChunkNbEvents(int chunkIndex);
 ed_zone_3d* edEventGetChunkZone(uint chunkId, uint zoneId);
+int _edEventComputeZeroVolumeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZone, edF32VECTOR4* param_3, edF32VECTOR4* param_4, uint* param_5);
 int edEventComputeZoneAgainstVertex(ed_event_chunk* pEventChunk, ed_zone_3d* pZone, edF32VECTOR4* pLocation, uint mode);
 int edEventComputeZoneAgainstVertex(int index, ed_zone_3d* pZone, edF32VECTOR4* param_3, long mode);
 int edEventGetChunkZoneNbInclusivePrimitives(int param_1, ed_zone_3d* param_2);

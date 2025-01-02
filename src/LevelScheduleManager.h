@@ -2027,7 +2027,7 @@ public:
 	int currentLevelID;
 	int nextLevelID;
 	int level_0x5b3c;
-	int level_0x5b40; /* Created by retype action */
+	int baseSectorIndex; /* Created by retype action */
 	int nextElevatorID; /* Created by retype action */
 	int loadStage_0x5b48;
 	int currentElevatorID;

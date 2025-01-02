@@ -205,6 +205,12 @@ namespace Hero
 		case STATE_HERO_GRIP_HANG_IDLE:
 			return "StateHeroGripHangIdle";
 			break;
+		case STATE_HERO_GRIP_LEFT:
+			return "StateHeroGripLeft";
+			break;
+		case STATE_HERO_GRIP_RIGHT:
+			return "StateHeroGripRight";
+			break;
 		case STATE_HERO_GRIP_UP:
 			return "StateHeroGripUp";
 			break;

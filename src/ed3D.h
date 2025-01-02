@@ -411,7 +411,7 @@ PACK(struct MeshData_ANHR {
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
-	uint otherEntryCount;
+	uint nb3dHierarchies;
 	uint fileDataEntryCount;
 });
 
@@ -725,6 +725,7 @@ void ed3DHierarchyNodeSetRenderOn(ed_3D_Scene* pScene, edNODE* pNode);
 void ed3DHierarchyNodeSetRenderOff(ed_3D_Scene* pScene, edNODE* pNode);
 
 void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt);
+edNODE* ed3DHierarchyNodeGetByHashcodeFromList(edNODE* pNode, ulong hash);
 ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool bGetFromHierarc);
 void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup);
 ed_dma_matrix* ed3DListCreateDmaMatrixNode(ScratchPadRenderInfo* pRenderInfo, ed_3d_hierarchy* pHierarchy);

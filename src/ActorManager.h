@@ -11,7 +11,7 @@ class CShadow {};
 struct edAnmLayer;
 
 struct CClassInfo {
-	CActor* aActors;
+	void* aActors; // Due to the way allocating arrays of polymorphic objects works, can't iterate over these as CActor, must be the actual class they represent, so I made these void ptrs to help notice.
 	int totalCount;
 	int allocatedCount;
 	int size;

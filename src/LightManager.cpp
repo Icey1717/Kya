@@ -802,8 +802,11 @@ public:
 	}
 
 	virtual void Manage();
+	virtual void Activate();
 	virtual bool DoLighting(LightingContext* pContext);
 	virtual int GetBaseShape(BaseShape** ppBaseShape);
+	virtual edF32VECTOR4* GetPosition();
+	virtual edF32VECTOR4* GetColor();
 
 	BaseShapeC baseShape;
 	FullColorModel colorModel;
@@ -844,6 +847,13 @@ void CLightSun::Manage()
 	return;
 }
 
+void CLightSun::Activate()
+{
+	CScene::ptable.g_LightManager_004516b0->Activate(this, -2);
+
+	return;
+}
+
 bool CLightSun::DoLighting(LightingContext* pContext)
 {
 	edF32VECTOR4* peVar1;
@@ -873,6 +883,16 @@ int CLightSun::GetBaseShape(BaseShape** ppBaseShape)
 		*ppBaseShape = (BaseShape*)&(this->baseShape);
 	}
 	return 1;
+}
+
+edF32VECTOR4* CLightSun::GetPosition()
+{
+	return &this->baseShape.position;
+}
+
+edF32VECTOR4* CLightSun::GetColor()
+{
+	return &this->colorModel.color;
 }
 
 class CLightSpot : public CLight

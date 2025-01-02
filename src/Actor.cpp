@@ -1548,8 +1548,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 									Reset();
 									if (((pCVar3 != (CActor*)0x0) && (pCVar3 != (CActor*)0x0)) &&
 										((pCVar3->flags & 0x2000000) == 0)) {
-										IMPLEMENTATION_GUARD(
-										(*(code*)pCVar3->pVTable->ReceiveMessage)(pCVar3, this, 0x3d, 0);)
+										pCVar3->ReceiveMessage(this, (ACTOR_MESSAGE)0x3d, 0);
 									}
 									bVar4 = true;
 								}

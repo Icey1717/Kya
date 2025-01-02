@@ -443,7 +443,8 @@ public:
 
 	float field_0x14b0;
 	float field_0x14b4;
-	float field_0x151c;
+	float gripHorizontalMoveSpeed;
+	float gripUpMoveSpeed;
 
 	edF32VECTOR4 field_0x10a0;
 	edF32VECTOR4 field_0x1030;

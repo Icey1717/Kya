@@ -54,8 +54,8 @@ void CSectorManager::Level_ClearInternalData()
 	iVar1 = 0x1e;
 	this->field_0x384 = 0;
 	this->count_0x368 = 0;
-	this->sectDataCount = 0;
-	this->sectorArray = (CSector*)0x0;
+	this->nbSectors = 0;
+	this->aSectors = (CSector*)0x0;
 	this->field_0x37c = 0;
 	this->field_0x370 = 1;
 	do {
@@ -89,18 +89,18 @@ void CSectorManager::InstallEnterSector()
 {
 	CSectorHierarchy* pSectorHierarchy;
 	int iVar1;
+	edNODE* pNode;
 	CActorClusteriser* piVar2;
 	CActorsTable local_110;
-	int* local_4;
+	S_HIERANM_HIER* local_4;
 
 	this->field_0x384 = 300;
 	for (pSectorHierarchy = this->pSectorHierarchy; pSectorHierarchy != (CSectorHierarchy*)0x0;
 		pSectorHierarchy = pSectorHierarchy->pNext) {
-		IMPLEMENTATION_GUARD(
 		if ((pSectorHierarchy->field_0x19 == 0) &&
-			(iVar1 = Func_001fe870(this, pSectorHierarchy->field_0x0, &local_4), iVar1 != 0)) {
-			CSectorHierarchy::Sector_Enter(pSectorHierarchy, iVar1, local_4);
-		})
+			(pNode = RegisterDynamicHierarchy(pSectorHierarchy->hash, &local_4), pNode != 0)) {
+			pSectorHierarchy->Sector_Enter(pNode, local_4);
+		}
 	}
 
 	local_110.entryCount = 0;
@@ -153,7 +153,7 @@ void CSectorManager::LevelLoading_Begin()
 
 	uVar12 = 0;
 	memset(auStack144, 0, 0x78);
-	this->sectDataCount = 0;
+	this->nbSectors = 0;
 	this->count_0x368 = pcVar5->sectorCount_0x14;
 
 	SECTOR_LOG(LogLevel::Info, "CSectorManager::LevelLoading_Begin Count: {}", this->count_0x368);
@@ -198,8 +198,8 @@ void CSectorManager::LevelLoading_Begin()
 					} while ((int)uVar6 <= this->count_0x368);
 				}
 
-				if (this->sectDataCount < iVar10) {
-					this->sectDataCount = iVar10;
+				if (this->nbSectors < iVar10) {
+					this->nbSectors = iVar10;
 				}
 			}
 
@@ -209,20 +209,20 @@ void CSectorManager::LevelLoading_Begin()
 		} while (iVar13 <= this->count_0x368);
 	}
 
-	uVar8 = this->sectDataCount;
+	uVar8 = this->nbSectors;
 	if (uVar8 == 0) {
-		this->sectorArray = (CSector*)0x0;
+		this->aSectors = (CSector*)0x0;
 	}
 	else {
-		this->sectorArray = new CSector[uVar8];
+		this->aSectors = new CSector[uVar8];
 		iVar13 = 0;
-		if (0 < this->sectDataCount) {
+		if (0 < this->nbSectors) {
 			iVar10 = 0;
 			do {
-				this->sectorArray[iVar13].sectID = -1;
-				this->sectorArray[iVar13].currentSectorID = 0;
+				this->aSectors[iVar13].sectID = -1;
+				this->aSectors[iVar13].currentSectorID = 0;
 				iVar13 = iVar13 + 1;
-			} while (iVar13 < this->sectDataCount);
+			} while (iVar13 < this->nbSectors);
 		}
 
 		uVar8 = 1;
@@ -286,13 +286,13 @@ void CSectorManager::LevelLoading_Begin()
 				}
 			}
 
-			for (uVar8 = 0; ((1 << (uVar8 & 0x1f) & uVar12) != 0 && ((int)uVar8 < this->sectDataCount)); uVar8 = uVar8 + 1) {
+			for (uVar8 = 0; ((1 << (uVar8 & 0x1f) & uVar12) != 0 && ((int)uVar8 < this->nbSectors)); uVar8 = uVar8 + 1) {
 			}
 
-			if ((int)uVar8 < this->sectDataCount) {
+			if ((int)uVar8 < this->nbSectors) {
 				this->subObjArray[local_8].field_0xc = (char)uVar8;
-				if (this->sectorArray[uVar8].currentSectorID < local_190[local_8]) {
-					this->sectorArray[uVar8].currentSectorID = local_190[local_8];
+				if (this->aSectors[uVar8].currentSectorID < local_190[local_8]) {
+					this->aSectors[uVar8].currentSectorID = local_190[local_8];
 				}
 			}
 			else {
@@ -306,13 +306,13 @@ void CSectorManager::LevelLoading_Begin()
 			local_c = table.aEntries[0];
 			iVar13 = local_190[table.aEntries[0]];
 			iVar10 = 0;
-			if (0 < this->sectDataCount) {
+			if (0 < this->nbSectors) {
 				iVar11 = 0;
 				do {
-					this->sectorArray[iVar10].currentSectorID = iVar13;
+					this->aSectors[iVar10].currentSectorID = iVar13;
 					iVar10 = iVar10 + 1;
 					iVar11 = iVar11 + 0x144;
-				} while (iVar10 < this->sectDataCount);
+				} while (iVar10 < this->nbSectors);
 			}
 
 			iVar13 = 1;
@@ -336,7 +336,6 @@ bool CSectorManager::LevelLoading_Manage()
 {
 	uint uVar1;
 	int iVar2;
-	edCBankBufferEntry* peVar3;
 	int iVar4;
 	bool bVar5;
 	bool bVar6;
@@ -344,34 +343,37 @@ bool CSectorManager::LevelLoading_Manage()
 	CSector* pSectData;
 	int iVar8;
 	int iVar9;
-	int iVar10;
-	bool bVar11;
-	edCBankInstall BStack96;
-	edCBankInstall BStack64;
-	edCBankInstall BStack32;
+	int curSectorIndex;
+	bool bStillLoading;
 
-	bVar11 = true;
+	bStillLoading = true;
+
 	if (CLevelScheduler::gThis->loadStage_0x5b48 == 4) {
 		if ((this->baseSector).loadStage_0x8 == 1) {
-			peVar3 = (this->baseSector).bankObject.pBankFileAccessObject;
+			edCBankBufferEntry* pBaseSectorBankFileAccess = (this->baseSector).bankObject.pBankFileAccessObject;
 			bVar5 = false;
-			if ((peVar3 != (edCBankBufferEntry*)0x0) && (bVar6 = peVar3->is_loaded(), bVar6 != false)) {
+			if ((pBaseSectorBankFileAccess != (edCBankBufferEntry*)0x0) && (bVar6 = pBaseSectorBankFileAccess->is_loaded(), bVar6 != false)) {
 				bVar5 = true;
 			}
+
 			bVar6 = true;
+
 			if (bVar5) {
-				iVar10 = 0;
-				while ((iVar10 < this->sectDataCount && (bVar6))) {
-					pSectData = this->sectorArray + iVar10;
+				curSectorIndex = 0;
+
+				while ((curSectorIndex < this->nbSectors && (bVar6))) {
+					pSectData = this->aSectors + curSectorIndex;
 					iVar9 = pSectData->sectID;
 					if (iVar9 != -1) {
 						if (pSectData->loadStage_0x8 == 1) {
-							peVar3 = (pSectData->bankObject).pBankFileAccessObject;
+							edCBankBufferEntry* pCurSectorBankFileAccess = (pSectData->bankObject).pBankFileAccessObject;
 							bVar5 = false;
-							if ((peVar3 != (edCBankBufferEntry*)0x0) && (bVar7 = peVar3->is_loaded(), bVar7 != false))
+
+							if ((pCurSectorBankFileAccess != (edCBankBufferEntry*)0x0) && (bVar7 = pCurSectorBankFileAccess->is_loaded(), bVar7 != false))
 							{
 								bVar5 = true;
 							}
+
 							if (!bVar5) {
 								bVar6 = false;
 							}
@@ -379,60 +381,70 @@ bool CSectorManager::LevelLoading_Manage()
 						else {
 							iVar2 = this->field_0x36c;
 							iVar4 = pSectData->currentSectorID;
-							memset(&BStack96, 0, sizeof(edCBankInstall));
-							pSectData->bankObject.initialize(iVar4 + 0x1000, 1, &BStack96);
+							edCBankInstall sectorBankInstall;
+							memset(&sectorBankInstall, 0, sizeof(edCBankInstall));
+							pSectData->bankObject.initialize(iVar4 + 0x1000, 1, &sectorBankInstall);
+
 							if (iVar9 == -1) {
 								pSectData->loadStage_0x8 = 0;
 							}
 							else {
 								pSectData->Load(iVar9, (long)iVar2, false);
 							}
+
 							bVar6 = false;
 						}
 					}
-					iVar10 = iVar10 + 1;
+
+					curSectorIndex = curSectorIndex + 1;
 				}
+
 				if (bVar6) {
-					bVar11 = false;
+					bStillLoading = false;
 				}
 			}
 		}
 		else {
-			iVar10 = CLevelScheduler::gThis->level_0x5b40;
-			iVar8 = this->field_0x36c;
-			iVar9 = CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->nextLevelID].bankSizeSect;
-			memset(&BStack32, 0, sizeof(edCBankInstall));
-			(this->baseSector).bankObject.initialize(iVar9 + 0x1000, 1, &BStack32);
-			if (iVar10 == -1) {
+			// Load the base sector.
+			int baseSectorIndex = CLevelScheduler::gThis->baseSectorIndex;
+
+			const int baseBankSize = CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->nextLevelID].bankSizeSect;
+
+			edCBankInstall baseSectorBankInstall;
+			memset(&baseSectorBankInstall, 0, sizeof(edCBankInstall));
+			(this->baseSector).bankObject.initialize(baseBankSize + 0x1000, 1, &baseSectorBankInstall);
+
+			if (baseSectorIndex == -1) {
 				(this->baseSector).loadStage_0x8 = 0;
-				bVar11 = false;
+				bStillLoading = false;
 			}
 			else {
-				this->baseSector.Load(iVar10, (long)iVar8, false);
-				uVar1 = this->subObjArray[iVar10].flags;
+				this->baseSector.Load(baseSectorIndex, this->field_0x36c, false);
+				const uint baseSectorFlags = this->subObjArray[baseSectorIndex].flags;
 
-				if (this->field_0x37c != uVar1) {
-					SetupCompanionSectors(uVar1);
+				if (this->field_0x37c != baseSectorFlags) {
+					SetupCompanionSectors(baseSectorFlags);
 				}
 
-				iVar10 = 0;
-				if (0 < this->sectDataCount) {
+				curSectorIndex = 0;
+				if (0 < this->nbSectors) {
 					do {
-						CSector* pSector = &this->sectorArray[iVar10];
+						CSector* pSector = &this->aSectors[curSectorIndex];
 						if (pSector->sectID == -1) {
-							iVar2 = pSector->currentSectorID;
-							memset(&BStack64, 0, sizeof(edCBankInstall));
-							pSector->bankObject.initialize(iVar2 + 0x1000, 1, &BStack64);
+							edCBankInstall sectorBankInstall;
+							memset(&sectorBankInstall, 0, sizeof(edCBankInstall));
+							pSector->bankObject.initialize(pSector->currentSectorID + 0x1000, 1, &sectorBankInstall);
 							pSector->loadStage_0x8 = 0;
 						}
 
-						iVar10 = iVar10 + 1;
-					} while (iVar10 < this->sectDataCount);
+						curSectorIndex = curSectorIndex + 1;
+					} while (curSectorIndex < this->nbSectors);
 				}
 			}
 		}
 	}
-	return bVar11;
+
+	return bStillLoading;
 }
 
 StaticEdFileBase StaticEdFileBase_004497f0 = { 0 };
@@ -454,9 +466,9 @@ void CSectorManager::SetupCompanionSectors(uint flags)
 
 	iVar6 = 0;
 
-	if (0 < this->sectDataCount) {
+	if (0 < this->nbSectors) {
 		do {
-			pSector = this->sectorArray + iVar6;
+			pSector = this->aSectors + iVar6;
 			uVar1 = 1 << (pSector->sectID & 0x1fU);
 
 			if ((pSector->sectID != 0xffffffff) && ((uVar1 & flags) == 0)) {
@@ -465,7 +477,7 @@ void CSectorManager::SetupCompanionSectors(uint flags)
 			}
 
 			iVar6 = iVar6 + 1;
-		} while (iVar6 < this->sectDataCount);
+		} while (iVar6 < this->nbSectors);
 	}
 
 	uVar1 = 1;
@@ -477,13 +489,13 @@ void CSectorManager::SetupCompanionSectors(uint flags)
 				lVar7 = pcVar2->field_0xc;
 				if (this->field_0x370 == 0) {
 					lVar7 = 0;
-					for (iVar6 = 0; (lVar7 < this->sectDataCount && this->sectorArray[lVar7].sectID != -1); iVar6 = iVar6 + 0x144) {
+					for (iVar6 = 0; (lVar7 < this->nbSectors && this->aSectors[lVar7].sectID != -1); iVar6 = iVar6 + 0x144) {
 						lVar7 = (long)((int)lVar7 + 1);
 					}
 				}
 
-				if (lVar7 < this->sectDataCount) {
-					this->sectorArray[(int)lVar7].sectID = uVar1;
+				if (lVar7 < this->nbSectors) {
+					this->aSectors[(int)lVar7].sectID = uVar1;
 					this->field_0x37c = this->field_0x37c | uVar3;
 				}
 			}
@@ -493,6 +505,30 @@ void CSectorManager::SetupCompanionSectors(uint flags)
 	}
 
 	return;
+}
+
+CSector::CSector()
+{
+	(this->pANHR).pThis = (MeshData_ANHR*)0x0;
+
+	edF32Matrix4SetIdentityHard(&CHierarchyAnm::_gscale_mat);
+
+	this->desiredSectorID = -1;
+	this->sectorIndex = -1;
+
+	(this->bankObject).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+
+	this->pBackgroundNode = (edNODE*)0x0;
+	this->pObbTree = (edObbTREE_DYN*)0x0;
+
+	this->loadStage_0x8 = 0;
+	this->field_0x134 = 0.0f;
+
+	this->pMeshTransformParent_0x130 = (edNODE*)0x0;
+	memset(&this->sectorTexture, 0, sizeof(ed_g2d_manager));
+	memset(&this->sectorMesh, 0, sizeof(ed_g3d_manager));
+	memset(&this->backgroundTexture, 0, sizeof(ed_g2d_manager));
+	memset(&this->backgroundMesh, 0, sizeof(ed_g3d_manager));
 }
 
 void CSector::InstallCallback()
@@ -662,7 +698,7 @@ void CSector::InstallCallback()
 		}
 
 		IMPLEMENTATION_GUARD(
-		lVar13 = pSectorHierarchy->field_0x0;
+		lVar13 = pSectorHierarchy->hash;
 		if (lVar13 != 0) {
 			iVar8 = this->field_0x138;
 			if (iVar8 != 0) {
@@ -680,7 +716,7 @@ void CSector::InstallCallback()
 			piVar11 = (int*)0x0;
 		LAB_001fe180:
 			if (piVar11 == (int*)0x0) {
-				iVar8 = edNODE::Func_001fff60(this->pMeshTransformParent_0x130, lVar13);
+				iVar8 = ed3DHierarchyNodeGetByHashcodeFromList(this->pMeshTransformParent_0x130, lVar13);
 			}
 			else {
 				iVar8 = *piVar11;
@@ -788,10 +824,10 @@ void CSectorManager::Level_Install()
 		}
 	}
 	iVar5 = 0;
-	if (0 < this->sectDataCount) {
+	if (0 < this->nbSectors) {
 		iVar4 = 0;
 		do {
-			pvVar4 = &this->sectorArray[iVar5];
+			pvVar4 = &this->aSectors[iVar5];
 			if ((pvVar4->sectID != -1) && (pvVar4->loadStage_0x8 == 1)) {
 				peVar1 = (pvVar4->bankObject).pBankFileAccessObject;
 				bVar2 = false;
@@ -809,7 +845,7 @@ void CSectorManager::Level_Install()
 			}
 			iVar5 = iVar5 + 1;
 			iVar4 = iVar4 + sizeof(CSector);
-		} while (iVar5 < this->sectDataCount);
+		} while (iVar5 < this->nbSectors);
 	}
 	return;
 }
@@ -898,12 +934,12 @@ void CSectorManager::Level_Manage()
 	}
 
 	iVar2 = 0;
-	if (0 < this->sectDataCount) {
+	if (0 < this->nbSectors) {
 		do {
-			pSector = this->sectorArray + iVar2;
+			pSector = this->aSectors + iVar2;
 			pSector->Level_Manage(pSector->sectID, (long)this->field_0x36c);
 			iVar2 = iVar2 + 1;
-		} while (iVar2 < this->sectDataCount);
+		} while (iVar2 < this->nbSectors);
 	}
 	return;
 }
@@ -964,7 +1000,7 @@ void CSectorManager::Flush()
 	edNODE* peVar2;
 	int iVar3;
 	CActorsTable local_110;
-	int* piStack4;
+	S_HIERANM_HIER* piStack4;
 
 	local_110.entryCount = 0;
 	CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(CLUSTERISER, &local_110);
@@ -978,16 +1014,106 @@ void CSectorManager::Flush()
 	}
 
 	for (pCVar1 = this->pSectorHierarchy; pCVar1 != (CSectorHierarchy*)0x0; pCVar1 = pCVar1->pNext) {
-		IMPLEMENTATION_GUARD(
-		if ((pCVar1->field_0x19 != 0) &&
-			((peVar2 = (edNODE*)Func_001fe870(this, pCVar1->field_0x0, &piStack4), peVar2 == (edNODE*)0x0 ||
+		if ((pCVar1->field_0x19 != 0) && ((peVar2 = RegisterDynamicHierarchy(pCVar1->hash, &piStack4), peVar2 == (edNODE*)0x0 ||
 				(peVar2 != pCVar1->pNode)))) {
 			pCVar1->field_0x19 = 0;
 			pCVar1->pNode = (edNODE*)0x0;
 			pCVar1->pHier = (S_HIERANM_HIER*)0x0;
-		})
+		}
 	}
 	return;
+}
+
+edNODE* CSectorManager::RegisterDynamicHierarchy(ulong hash, S_HIERANM_HIER** pOutHier)
+{
+	MeshData_ANHR* pMVar1;
+	int iVar2;
+	edNODE* peVar3;
+	int* pMVar4;
+	int* piVar4;
+	uint uVar5;
+	S_HIERANM_HIER** ppSVar6;
+	int iVar7;
+	int iVar8;
+	S_HIERANM_HIER* pSVar9;
+
+	if (hash == 0) {
+		*pOutHier = (S_HIERANM_HIER*)0x0;
+		peVar3 = (edNODE*)0x0;
+	}
+	else {
+		pMVar1 = (this->baseSector).pANHR.pThis;
+
+		if (pMVar1 != (MeshData_ANHR*)0x0) {
+			pMVar4 = (int*)(pMVar1 + 1);
+			uVar5 = 0;
+			if (pMVar1->nb3dHierarchies != 0) {
+				do {
+					pSVar9 = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pMVar4);
+
+					if ((pSVar9->p3dHierarchy != 0x0) && (hash == LOAD_SECTION_CAST(ed_3d_hierarchy*, pSVar9->p3dHierarchy)->hash.number))
+						goto LAB_001fe910;
+
+					uVar5 = uVar5 + 1;
+					pMVar4 = pMVar4 + 1;
+				} while (uVar5 < pMVar1->nb3dHierarchies);
+			}
+		}
+		pSVar9 = (S_HIERANM_HIER*)0x0;
+
+	LAB_001fe910:
+		iVar8 = 0;
+		iVar7 = 0;
+		while ((iVar8 < this->nbSectors && (pSVar9 == (S_HIERANM_HIER*)0x0))) {
+			CSector* pSector = this->aSectors + iVar8;
+
+			if (pSector->desiredSectorID != -1) {
+				pMVar1 = (this->baseSector).pANHR.pThis;
+
+				if (pMVar1 != (MeshData_ANHR*)0x0) {
+					pMVar4 = (int*)(pMVar1 + 1);
+					uVar5 = 0;
+					if (pMVar1->nb3dHierarchies != 0) {
+						do {
+							pSVar9 = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pMVar4);
+
+							if ((pSVar9->p3dHierarchy != 0x0) && (hash == LOAD_SECTION_CAST(ed_3d_hierarchy*, pSVar9->p3dHierarchy)->hash.number))
+								goto LAB_001fe9a0;
+
+							uVar5 = uVar5 + 1;
+							ppSVar6 = ppSVar6 + 1;
+						} while (uVar5 < pMVar1->nb3dHierarchies);
+					}
+				}
+				pSVar9 = (S_HIERANM_HIER*)0x0;
+			}
+		LAB_001fe9a0:
+			iVar8 = iVar8 + 1;
+		}
+
+		if (pSVar9 == (S_HIERANM_HIER*)0x0) {
+			peVar3 = ed3DHierarchyNodeGetByHashcodeFromList(CScene::ptable.g_C3DFileManager_00451664->pLastMeshTransformParent, hash);
+			if (peVar3 == (edNODE*)0x0) {
+				peVar3 = ed3DHierarchyNodeGetByHashcodeFromList(this->baseSector.pMeshTransformParent_0x130, hash);
+			}
+
+			iVar8 = 0;
+			while ((iVar8 < this->nbSectors && (peVar3 == (edNODE*)0x0))) {
+				CSector* pSector = this->aSectors + iVar8;
+				if (pSector->desiredSectorID != -1) {
+					peVar3 = ed3DHierarchyNodeGetByHashcodeFromList(pSector->pMeshTransformParent_0x130, hash);
+				}
+				iVar8 = iVar8 + 1;
+			}
+		}
+		else {
+			peVar3 = LOAD_SECTION_CAST(edNODE*, pSVar9->pNode);
+		}
+
+		*pOutHier = pSVar9;
+	}
+
+	return peVar3;
 }
 
 void CSector::Level_Manage(int sectID, int param_3)
@@ -1066,7 +1192,7 @@ void CSector::Flush()
 
 	pMVar4 = (this->pANHR).pThis;
 	if (pMVar4 != (MeshData_ANHR*)0x0) {
-		uVar2 = pMVar4->otherEntryCount;
+		uVar2 = pMVar4->nb3dHierarchies;
 
 		int* pNext = (int*)(pMVar4 + 1);
 
@@ -1110,10 +1236,7 @@ void CSector::Flush()
 
 void CSectorHierarchy::Create(ByteCode* pByteCode)
 {
-	ulong uVar1;
-
-	uVar1 = pByteCode->GetU64();
-	this->field_0x0 = uVar1;
+	this->hash = pByteCode->GetU64();
 	this->pNext = (CSectorHierarchy*)0x0;
 	this->pNode = (edNODE*)0x0;
 	this->pHier = (S_HIERANM_HIER*)0x0;
@@ -1129,41 +1252,40 @@ void CSectorHierarchy::Init(int param_2)
 	char* pcVar2;
 	edNODE* peVar3;
 	ed_g3d_manager* peVar4;
-	long lVar5;
+	ulong lVar5;
 	uint uVar6;
 	int iVar7;
 	CSector* pCVar8;
-	MeshData_ANHR* pMVar9;
+	int* pMVar9;
 	S_HIERANM_HIER* pHier;
 	S_HIERANM_HIER* local_4;
-	CSectorManager* pSectormanager;
+	CSectorManager* pSectorManager;
 
-	pSectormanager = CScene::ptable.g_SectorManager_00451670;
-	if (this->field_0x0 != 0) {
+	pSectorManager = CScene::ptable.g_SectorManager_00451670;
+	if (this->hash != 0) {
 		if (param_2 == -1) {
 			this->pNext = (CScene::ptable.g_SectorManager_00451670)->pSectorHierarchy;
-			pSectormanager->pSectorHierarchy = this;
-			IMPLEMENTATION_GUARD(
-			peVar3 = (edNODE*)CSectorManager::Func_001fe870(pSectormanager, this->field_0x0, (int**)&local_4);
+			pSectorManager->pSectorHierarchy = this;
+			peVar3 = pSectorManager->RegisterDynamicHierarchy(this->hash, &local_4);
 			if (peVar3 != (edNODE*)0x0) {
-				Sector_Enter(this, peVar3, local_4);
-			})
+				Sector_Enter(peVar3, local_4);
+			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
 			pcVar2 = (CScene::ptable.g_SectorManager_00451670)->szSectorFileRoot;
 			this->pNext = *(CSectorHierarchy**)(pcVar2 + param_2 * 0x10 + -4 + 0x4c);
 			*(CSectorHierarchy**)(pcVar2 + param_2 * 0x10 + -4 + 0x4c) = this;
-			pCVar8 = &pSectormanager->baseSector;
-			if (param_2 != (pSectormanager->baseSector).desiredSectorID) {
+
+			pCVar8 = &pSectorManager->baseSector;
+			if (param_2 != (pSectorManager->baseSector).desiredSectorID) {
 				iVar7 = 0;
-				if (0 < pSectormanager->sectDataCount) {
-					pCVar8 = pSectormanager->sectorArray;
+				if (0 < pSectorManager->nbSectors) {
+					pCVar8 = pSectorManager->aSectors;
 					do {
 						if (param_2 == pCVar8->desiredSectorID) goto LAB_001fdad8;
 						iVar7 = iVar7 + 1;
 						pCVar8 = pCVar8 + 1;
-					} while (iVar7 < pSectormanager->sectDataCount);
+					} while (iVar7 < pSectorManager->nbSectors);
 				}
 				pCVar8 = (CSector*)0x0;
 			}
@@ -1175,37 +1297,40 @@ void CSectorHierarchy::Init(int param_2)
 				else {
 					peVar4 = (ed_g3d_manager*)0x0;
 				}
+
 				if (peVar4 != (ed_g3d_manager*)0x0) {
-					lVar5 = this->field_0x0;
+					lVar5 = this->hash;
 					if (lVar5 != 0) {
 						pMVar1 = (pCVar8->pANHR).pThis;
 						if (pMVar1 != (MeshData_ANHR*)0x0) {
-							pMVar9 = pMVar1 + 1;
+							pMVar9 = reinterpret_cast<int*>(pMVar1 + 1);
 							uVar6 = 0;
-							if (pMVar1->otherEntryCount != 0) {
+							if (pMVar1->nb3dHierarchies != 0) {
 								do {
-									pHier = *(S_HIERANM_HIER**)pMVar9->field_0x0;
-									if ((*(int*)&pHier->field_0x4 != 0) && (lVar5 == *(long*)(*(int*)&pHier->field_0x4 + 0x80)))
+									pHier = LOAD_SECTION_CAST(S_HIERANM_HIER*, *pMVar9);
+									if ((pHier->p3dHierarchy != 0x0) && (lVar5 == LOAD_SECTION_CAST(ed_3d_hierarchy*, pHier->p3dHierarchy)->hash.number))
 										goto LAB_001fdb90;
+									
 									uVar6 = uVar6 + 1;
-									pMVar9 = (MeshData_ANHR*)&pMVar9->field_0x4;
-								} while (uVar6 < pMVar1->otherEntryCount);
+									pMVar9 = pMVar9 + 1;
+								} while (uVar6 < pMVar1->nb3dHierarchies);
 							}
 						}
 						pHier = (S_HIERANM_HIER*)0x0;
 					LAB_001fdb90:
 						if (pHier == (S_HIERANM_HIER*)0x0) {
-							peVar3 = (edNODE*)Func_001fff60(pCVar8->pMeshTransformParent_0x130, lVar5);
+							peVar3 = ed3DHierarchyNodeGetByHashcodeFromList(pCVar8->pMeshTransformParent_0x130, lVar5);
 						}
 						else {
-							peVar3 = *(edNODE**)pHier;
+							peVar3 = LOAD_SECTION_CAST(edNODE*, pHier->pNode);
 						}
+
 						if (peVar3 != (edNODE*)0x0) {
-							Sector_Enter(this, peVar3, pHier);
+							Sector_Enter(peVar3, pHier);
 						}
 					}
 				}
-			})
+			}
 		}
 	}
 	return;
@@ -1213,7 +1338,7 @@ void CSectorHierarchy::Init(int param_2)
 
 void CSectorHierarchy::Term(int index)
 {
-	if (this->field_0x0 != 0) {
+	if (this->hash != 0) {
 		this->pNode = (edNODE*)0x0;
 		this->pHier = (S_HIERANM_HIER*)0x0;
 		IMPLEMENTATION_GUARD(
@@ -1272,6 +1397,42 @@ void CSectorHierarchy::SetAlpha(byte alpha)
 			ed3DHierarchyNodeSetAlpha(this->pNode, this->alpha);
 		}
 	}
+
+	return;
+}
+
+void CSectorHierarchy::Sector_Enter(edNODE* pNode, S_HIERANM_HIER* pHier)
+{
+	S_HIERANM_HIER* pSVar1;
+
+	this->pNode = pNode;
+	this->pHier = pHier;
+	pSVar1 = this->pHier;
+	if (pSVar1 == (S_HIERANM_HIER*)0x0) {
+		if ((this->pNode != (edNODE*)0x0) && ((this->flags & 0x40000000) != 0)) {
+			ed3DHierarchyNodeSetFlag(this->pNode, 0x40);
+		}
+	}
+	else {
+		if ((this->flags & 0x40000000) == 0) {
+			pSVar1->flags_0x20 = pSVar1->flags_0x20 & 0xbfffffff;
+		}
+		else {
+			pSVar1->flags_0x20 = pSVar1->flags_0x20 | 0x40000000;
+		}
+		if ((this->flags & 0x20000000) == 0) {
+			this->pHier->flags_0x20 = this->pHier->flags_0x20 & 0xdfffffff;
+		}
+		else {
+			this->pHier->flags_0x20 = this->pHier->flags_0x20 | 0x20000000;
+		}
+	}
+
+	if (this->pNode != (edNODE*)0x0) {
+		ed3DHierarchyNodeSetAlpha(this->pNode, this->alpha);
+	}
+
+	this->field_0x19 = 1;
 
 	return;
 }

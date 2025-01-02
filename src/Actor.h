@@ -485,6 +485,8 @@ public:
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
 	virtual bool IsMakingNoise();
 	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+	virtual void Func_0xd4(ed_zone_3d* pZone) {}
+	virtual void Func_0xd8(ed_zone_3d* pZone) {}
 	virtual CVision* GetVision() { IMPLEMENTATION_GUARD(); }
 	virtual int GetNumVisualDetectionPoints();
 	virtual void GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index);

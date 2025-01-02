@@ -6,6 +6,7 @@
 
 #include <math.h>
 #include "MathOps.h"
+#include "ActorClusteriser.h"
 
 #define MAX_LINKED_ACTORS 0x80
 
@@ -186,9 +187,9 @@ void CActorManager::Level_Manage()
 	float eleZ;
 	
 	// Clusterizers
-	iVar1 = this->aClassInfo[0x18].totalCount;
-	for (counter = 0; (int)counter < iVar1; counter = counter + 1) {
-		this->aClassInfo[0x18].aActors[counter].Manage();
+	CActorClusteriser* pCurrentClusteriser = reinterpret_cast<CActorClusteriser*>(this->aClassInfo[CLUSTERISER].aActors);
+	for (counter = 0; counter < this->aClassInfo[CLUSTERISER].totalCount; counter = counter + 1) {
+		pCurrentClusteriser[counter].Manage();
 	}
 
 	cameraLocation.xyz = CCameraManager::_gThis->transformationMatrix.rowT.xyz;
@@ -720,22 +721,18 @@ void CActorManager::UpdateLinkedActors()
 
 void CActorManager::Level_LoadClassesInfo(struct ByteCode* pMemoryStream)
 {
-	int actorCount;
-	int classId;
 	CClassInfo* pClassInfo;
-	int totalCount;
-	CActor* pAVar4;
 
-	actorCount = pMemoryStream->GetS32();
+	const int actorCount = pMemoryStream->GetS32();
 	if (0 < actorCount) {
 		for (int i = 0; i < actorCount; i++) {
-			classId = pMemoryStream->GetS32();
+			const ACTOR_CLASS classId = static_cast<ACTOR_CLASS>(pMemoryStream->GetS32());
 			pClassInfo = &this->aClassInfo[classId];
-			totalCount = pMemoryStream->GetS32();
-			pClassInfo->totalCount = totalCount;
+			pClassInfo->totalCount = pMemoryStream->GetS32();
 			pClassInfo->allocatedCount = 0;
+
 			if (pClassInfo->totalCount != 0) {
-				pClassInfo->aActors = CActorFactory::Factory((ACTOR_CLASS)classId, pClassInfo->totalCount, &pClassInfo->size);
+				pClassInfo->aActors = CActorFactory::Factory(classId, pClassInfo->totalCount, &pClassInfo->size);
 			}
 		}
 	}

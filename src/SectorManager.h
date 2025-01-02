@@ -14,12 +14,24 @@ namespace ed3D
 }
 
 struct ByteCode;
-struct S_HIERANM_HIER;
+
+struct S_HIERANM_HIER
+{
+	int pNode; // edNODE*
+	int p3dHierarchy; // ed_3d_hierarchy*
+	int field_0x8;
+	undefined4 field_0xc;
+	edF32VECTOR4 field_0x10;
+	uint flags_0x20;
+};
+
+static_assert(sizeof(S_HIERANM_HIER) == 0x24);
+
 struct S_COMPANION_INFO;
 
 class CSectorHierarchy {
 public:
-	ulong field_0x0;
+	ulong hash;
 	CSectorHierarchy* pNext;
 	edNODE* pNode;
 	S_HIERANM_HIER* pHier;
@@ -33,6 +45,8 @@ public:
 	void SetHiddenOn();
 	void SetHiddenOff();
 	void SetAlpha(byte alpha);
+
+	void Sector_Enter(edNODE* pNode, S_HIERANM_HIER* pHier);
 };
 
 struct SectorManagerSubObj {
@@ -60,9 +74,8 @@ bool CheckFunc_00401fd0(StaticEdFileBase* param_1);
 
 struct CSector {
 public:
-	CSector() {
-		bankObject.pBankFileAccessObject = 0;
-	}
+	CSector();
+
 	void InstallCallback();
 	void Load(int param_2, int param_3, bool bFileFlag);
 	void Level_Manage(int sectID, int param_3);
@@ -110,6 +123,8 @@ public:
 
 	void Flush();
 
+	edNODE* RegisterDynamicHierarchy(ulong hash, S_HIERANM_HIER** pOutHier);
+
 	char szSectorFileRoot[32];
 	undefined field_0x24;
 	undefined field_0x25;
@@ -148,8 +163,8 @@ public:
 	int count_0x368;
 	int field_0x36c;
 	undefined4 field_0x370;
-	int sectDataCount;
-	CSector* sectorArray;
+	int nbSectors;
+	CSector* aSectors;
 	undefined4 field_0x37c;
 	CSectorHierarchy* pSectorHierarchy;
 	undefined4 field_0x384;
