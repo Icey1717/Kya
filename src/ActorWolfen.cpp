@@ -448,6 +448,68 @@ void CActorWolfen::Init()
 	return;
 }
 
+void CActorWolfen::Term()
+{
+	uint uVar1;
+	EnemyComponent80* pAlloc;
+	CActorWeapon* pCVar2;
+	CActor* pCVar3;
+
+	//if (this->field_0xbe8 != (edF32VECTOR4*)0x0) {
+	//	delete(this->field_0xbe8);
+	//	this->field_0xbe8 = (edF32VECTOR4*)0x0;
+	//}
+	//if (PTR_DAT_004574a0 != (undefined*)0x0) {
+	//	FreeFunc_001fba40((int*)&PTR_DAT_004574a0);
+	//}
+	//uVar1 = this->field_0xb74;
+	//if (uVar1 == 3) {
+	//	if (this->pEnemyComponent80_0xd34 != (EnemyComponent80*)0x0) {
+	//		(*(code*)this->pEnemyComponent80_0xd34->pVTable->field_0x10)();
+	//		pAlloc = this->pEnemyComponent80_0xd34;
+	//		if (pAlloc != (EnemyComponent80*)0x0) {
+	//			pAlloc->pVTable = &EnemyComponent80::VTable_004460b0;
+	//			if (pAlloc != (EnemyComponent80*)0x0) {
+	//				pAlloc->pVTable = &EnemyComponent80VTable_00447ec0;
+	//			}
+	//			Free(pAlloc);
+	//		}
+	//		this->pEnemyComponent80_0xd34 = (EnemyComponent80*)0x0;
+	//	}
+	//}
+	//else {
+	//	if (((uVar1 == 1) || (uVar1 == 0)) && (this->pEnemyComponent80_0xd34 != (EnemyComponent80*)0x0)) {
+	//		this->pEnemyComponent80_0xd34 = (EnemyComponent80*)0x0;
+	//		INT_004497e8 = INT_004497e8 + -1;
+	//		if (INT_004497e8 < 1) {
+	//			(*(code*)(g_EnemyComponent80_0049c6d0.pVTable)->field_0x10)();
+	//		}
+	//	}
+	//}
+
+	if (((this->flags & 0x2000000) == 0) && (GetWeapon() != (CActorWeapon*)0x0)) {
+		pCVar3 = GetWeapon()->GetLinkFather();
+		if (pCVar3 == this) {
+			GetWeapon()->UnlinkWeapon();
+		}
+	}
+
+	CActorFighter::Term();
+
+	//if (*(void**)&this->field_0xb64 != (void*)0x0) {
+	//	Free(*(void**)&this->field_0xb64);
+	//	*(undefined4*)&this->field_0xb64 = 0;
+	//}
+
+	//if (this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) {
+	//	CActorWolfenKnowledge::Term(this->pWolfenKnowledge);
+	//	Free(this->pWolfenKnowledge);
+	//	this->pWolfenKnowledge = (CActorWolfenKnowledge*)0x0;
+	//}
+
+	return;
+}
+
 void CActorWolfen::Manage()
 {
 	bool bVar1;
@@ -5691,6 +5753,23 @@ void CBehaviourTrackWeaponStand::Init(CActor* pOwner)
 
 	if (this->pOwner->field_0xb90 <= this->field_0x90) {
 		this->pOwner->GetVision();
+	}
+
+	return;
+}
+
+void CBehaviourTrackWeaponStand::Term()
+{
+	TrackSubObj* pTVar1;
+
+	pTVar1 = this->aSubObjs;
+	if (pTVar1 != (TrackSubObj*)0x0) {
+		if (pTVar1 != (TrackSubObj*)0x0) {
+			IMPLEMENTATION_GUARD_LOG(); // Diff from expected code.
+			delete this->aSubObjs;
+		}
+
+		this->aSubObjs = (TrackSubObj*)0x0;
 	}
 
 	return;

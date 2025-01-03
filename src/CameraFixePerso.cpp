@@ -15,36 +15,31 @@ CCameraFixePerso::CCameraFixePerso()
 CCameraFixePerso::CCameraFixePerso(ByteCode* pByteCode)
 	: CCameraExt(pByteCode)
 {
-	CActorManager* pCVar1;
-	int iVar2;
-	uint uVar3;
-	CActor* pCVar4;
-	uint* puVar5;
+	int actorRefIndex;
+	uint createFlags;
+	CActor* pNewTarget;
 
-	pCVar1 = CScene::ptable.g_ActorManager_004516a4;
-	iVar2 = pByteCode->GetS32();
-	pCVar4 = (CActor*)0x0;
-	if (iVar2 != -1) {
-		pCVar4 = pCVar1->aActors[iVar2];
+	pNewTarget = (CActor*)0x0;
+	actorRefIndex = pByteCode->GetS32();
+	if (actorRefIndex != -1) {
+		pNewTarget = CScene::ptable.g_ActorManager_004516a4->aActors[actorRefIndex];
 	}
 
-	SetTarget(pCVar4);
+	SetTarget(pNewTarget);
 
-	uVar3 = pByteCode->GetU32();
-	puVar5 = &this->flags_0xc;
-	if ((uVar3 & 1) == 0) {
-		*puVar5 = *puVar5 & 0xfffffbff;
+	createFlags = pByteCode->GetU32();
+	if ((createFlags & 1) == 0) {
+		this->flags_0xc = this->flags_0xc & 0xfffffbff;
 	}
 	else {
-		*puVar5 = *puVar5 | 0x400;
+		this->flags_0xc = this->flags_0xc | 0x400;
 	}
 
-	puVar5 = &this->flags_0xc;
-	if ((uVar3 & 2) == 0) {
-		*puVar5 = *puVar5 & 0xfffff7ff;
+	if ((createFlags & 2) == 0) {
+		this->flags_0xc = this->flags_0xc & 0xfffff7ff;
 	}
 	else {
-		*puVar5 = *puVar5 | 0x800;
+		this->flags_0xc = this->flags_0xc | 0x800;
 	}
 
 	return;

@@ -10,11 +10,6 @@ struct S_CHECKPOINT;
 struct ByteCode;
 struct BaseShape;
 
-struct ZoneHolder {
-	int zone;
-	ed_zone_3d* aZones;
-};
-
 struct ed_3D_Light_Config {
 	edF32VECTOR4* pLightAmbient;
 	edF32MATRIX4* pLightDirections;
@@ -45,7 +40,9 @@ class CLight {
 public:
 	CLight();
 
+	virtual void Init();
 	virtual void Manage() { return; }
+	virtual void Term() { return; }
 	virtual void Activate();
 	virtual bool DoLighting(LightingContext* pContext) { return false; }
 	virtual int GetBaseShape(BaseShape** ppBaseShape) { return 0; }
@@ -58,8 +55,8 @@ public:
 	_rgba colour_0x4;
 	ushort field_0x8;
 	short referencedLightIndex;
-	ZoneHolder* pZoneHolder;
-	undefined* field_0x10;
+	S_ZONE_STREAM_REF* pZoneHolderA;
+	S_ZONE_STREAM_REF* pZoneHolderB;
 	undefined field_0x14;
 	undefined field_0x15;
 	undefined field_0x16;
@@ -79,17 +76,34 @@ struct S_LIGHT_STREAM_REF {
 	S_STREAM_REF<CLight> aEntries[];
 };
 
+struct LightZoneEntry
+{
+	ed_zone_3d* pZone;
+	float field_0x4;
+	int field_0x8;
+};
+
 class CLightManager : public CObjectManager {
 
 public:
 	CLightManager();
 
 	// Begin Manager
-	//virtual void Game_Init();
-	//virtual void Level_Init();
-	//virtual void Level_Term();
+	virtual bool LevelLoading_Manage();
+	
+	virtual void Level_Init();
+	virtual void Level_Term();
 	virtual void Level_AddAll(struct ByteCode* pByteCode);
+	virtual void Level_ClearAll();
+
 	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
+	virtual void Level_Draw();
+
+	virtual void Level_Reset();
+
+	virtual void Level_CheckpointReset();
+
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 	// End Manager
 
@@ -102,6 +116,7 @@ public:
 	CLight* CreateSimpleLight(ByteCode* pByteCode);
 	void Activate(CLight* pLight, int param_3);
 	void Reference(CLight* pLight, int param_3, bool param_4, bool param_5, int param_6);
+	int ReferenceZone(ed_zone_3d* pZone);
 
 	void BuildSectorList();
 	void BuildActiveList();
@@ -137,6 +152,7 @@ public:
 	edF32MATRIX4 lightDirections;
 	edF32MATRIX4 lightColorMatrix;
 
+	LightZoneEntry* field_0xe0;
 	int field_0xe4;
 	int field_0xe8;
 

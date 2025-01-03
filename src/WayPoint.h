@@ -19,9 +19,15 @@ static_assert(sizeof(CWayPoint) == 0x24, "CWaypoint size mismatch");
 struct CWayPointManager : public CObjectManager {
 	CWayPointManager();
 
+	// CObjectManager
 	virtual void Level_Init() {}
 	virtual void Level_Term() {}
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
+	virtual void Level_ClearAll();
+
+	virtual void Level_Manage() {}
+	virtual void Level_ManagePaused() {}
+	virtual void Level_Draw() {}
 
 	CWayPoint* aWaypoints;
 	int waypointCount;

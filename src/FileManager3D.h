@@ -26,7 +26,11 @@ struct ParticleInfo {
 struct C3DFileManager : public CObjectManager {
 	C3DFileManager();
 
+	virtual void Level_Term();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
+	virtual void Level_ClearAll();
+	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
 
 	edDList_material* GetMaterialFromId(int materialId, int internalId);
 

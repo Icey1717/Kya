@@ -183,7 +183,7 @@ void CActorFighter::Term()
 
 	CActorAutonomous::Term();
 
-	IMPLEMENTATION_GUARD(
+	IMPLEMENTATION_GUARD_LOG(
 	uVar2 = 0;
 	ppuVar1 = &PTR_ParticleVTable_0048f900;
 	do {
@@ -195,11 +195,12 @@ void CActorFighter::Term()
 	} while (uVar2 < 4);
 	_DeleteCombosDB((int)this);
 	_DeleteGrabsDB((int)this);
-	_DeleteBlowsDB((int)this);
+	_DeleteBlowsDB((int)this);)
+
 	if (this->pInputAnalyser != (CInputAnalyser*)0x0) {
-		Free(this->pInputAnalyser);
+		delete this->pInputAnalyser;
 		this->pInputAnalyser = (CInputAnalyser*)0x0;
-	})
+	}
 
 	return;
 }

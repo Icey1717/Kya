@@ -17,9 +17,28 @@ public:
 	void UpdatePercent(float) { IMPLEMENTATION_GUARD_LOG(); }
 };
 
-struct FrontendManager : public CObjectManager {
-	FrontendManager();
+struct CFrontendDisplay : public CObjectManager {
+	CFrontendDisplay();
 	virtual void Game_Init();
+	virtual void Game_Term() { IMPLEMENTATION_GUARD(); }
+
+	virtual void Level_Init() { IMPLEMENTATION_GUARD_UI(); }
+	virtual void Level_Term() { IMPLEMENTATION_GUARD_UI(); }
+
+	virtual void Level_ClearAll() { IMPLEMENTATION_GUARD_UI(); }
+	virtual void Level_Manage() { IMPLEMENTATION_GUARD_UI(); }
+	virtual void Level_ManagePaused() { IMPLEMENTATION_GUARD_UI(); }
+	virtual void Level_Draw() { IMPLEMENTATION_GUARD_UI(); }
+
+	virtual void Level_Reset() { IMPLEMENTATION_GUARD_UI(); }
+
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
+
+	virtual void Level_CheckpointReset() { IMPLEMENTATION_GUARD_UI(); }
+
+	virtual void Level_PauseChange() { IMPLEMENTATION_GUARD_UI(); }
+
+	virtual void Level_SaveContext() { IMPLEMENTATION_GUARD_UI(); }
 
 	void SetActive(bool bActive);
 

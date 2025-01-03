@@ -193,7 +193,13 @@ void CActorNativ::Init()
 
 void CActorNativ::Term()
 {
-	IMPLEMENTATION_GUARD();
+	CActorAutonomous::Term();
+
+	if (this->pHeldItemNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pHeldItemNode);
+	}
+
+	return;
 }
 
 void CActorNativ::Manage()

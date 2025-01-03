@@ -49,6 +49,7 @@ class CSquad
 {
 public:
 	void Create(ByteCode* pByteCode);
+	void Term();
 
 	void Clear();
 
@@ -85,7 +86,7 @@ public:
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
-	virtual void Term() { IMPLEMENTATION_GUARD(); }
+	virtual void Term();
 	virtual void Manage();
 	virtual void Reset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);

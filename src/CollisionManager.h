@@ -151,9 +151,17 @@ public:
 	static S_CARRY_ACTOR_ENTRY _carry_info_table[0x80];
 
 	CCollisionManager();
-	void Level_Create(ByteCode* pMemoryStream);
+
+	virtual void Level_Init() {}
+	virtual void Level_Term() {}
+	virtual void Level_AddAll(ByteCode* pByteCode);
+	virtual void Level_ClearAll();
+	virtual void Level_Manage() {}
+	virtual void Level_ManagePaused() {}
+	virtual void Level_Create(ByteCode* pMemoryStream);
+	virtual void Level_Reset() {}
+
 	void Level_PostCreate();
-	void Level_AddAll(ByteCode* pByteCode);
 
 	static bool IsASlidingGround(s_collision_contact* pContact);
 	static float GetMaterialSlidingCoef(s_collision_contact* pContact);

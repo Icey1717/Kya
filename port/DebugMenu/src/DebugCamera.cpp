@@ -16,6 +16,9 @@
 #include "TimeController.h"
 #include "CameraGame.h"
 #include "DebugSetting.h"
+#include "CameraFixePerso.h"
+#include "ActorHero.h"
+#include "Actor/DebugActor.h"
 
 GLFWwindow* GetGLFWWindow();
 
@@ -200,14 +203,100 @@ namespace Debug::Camera {
 		UpdateCameraPosition(DebugMenu::GetDeltaTime());
 	}
 
+	static void ShowCameraDetails(CCamera* pCamera)
+	{
+		ImGui::Text("field_0x8: %d", pCamera->field_0x8);
+		ImGui::Text("flags_0xc: 0x%x", pCamera->flags_0xc);
+
+		ImGui::Text("transformationMatrix: %s", pCamera->transformationMatrix.ToString().c_str());
+
+		ImGui::Text("field_0x50: %s", pCamera->field_0x50.ToString().c_str());
+		ImGui::Text("lookAt: %s", pCamera->lookAt.ToString().c_str());
+
+		DebugHelpers::TextValidValue("pOtherTarget: %p", pCamera->pOtherTarget);
+
+		ImGui::Text("fov: %f", pCamera->fov);
+	}
+
+	static CCameraFixePerso* pDebugCamera = nullptr;
+	static CActor* pOverrideTarget = nullptr;
+
+	static void ShowPushedCameraWindow()
+	{
+		bool bOpen = true;
+		ImGui::Begin("Pushed Camera", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+		ShowCameraDetails(pDebugCamera);
+
+		auto ShowFlagCheckbox = [](const char* name, uint flag) {
+			bool bFlag = (pDebugCamera->flags_0xc & flag) != 0;
+			if (ImGui::Checkbox(name, &bFlag)) {
+				if (bFlag) {
+					pDebugCamera->flags_0xc = pDebugCamera->flags_0xc | flag;
+				}
+				else {
+					pDebugCamera->flags_0xc = pDebugCamera->flags_0xc & ~flag;
+				}
+			}
+			};
+
+		static Debug::Setting<bool> gFilterBySector("Filter by Sector", false);
+		gFilterBySector.DrawImguiControl();
+
+		// Use a list box
+		const ImVec2 listboxSize = ImVec2(300, 300);
+		if (ImGui::ListBoxHeader("##ActorList", listboxSize)) {
+			auto pFunc = gFilterBySector ? Debug::Actor::ForEachSectorActor : Debug::Actor::ForEachActor;
+
+			pFunc([](CActor* pActor)
+				{
+					std::string name = std::string(pActor->name) + " (" + Debug::Actor::GetActorTypeString(pActor->typeID) + ")";
+					if (ImGui::Selectable(name.c_str())) {
+						pOverrideTarget = pActor;
+						pDebugCamera->SetTarget(pOverrideTarget);
+						pDebugCamera->transformationMatrix.rowT = pActor->currentLocation;
+						pDebugCamera->transformationMatrix.rowT.y += 10.f;
+						pDebugCamera->flags_0xc = pDebugCamera->flags_0xc & ~0x800000;
+					}
+				});
+
+			ImGui::EndListBox();
+		}
+
+		ShowFlagCheckbox("Flag A", 0x400);
+		ShowFlagCheckbox("Flag B", 0x800);
+		ShowFlagCheckbox("Flag C", 0x800000);
+
+		ImGui::End();
+
+		if (!bOpen) {
+			CCameraManager::_gThis->PopCamera(pDebugCamera);
+			delete pDebugCamera;
+			pDebugCamera = nullptr;
+		}
+	}
+
 	static void ShowStackWindow()
 	{
+		if (pDebugCamera) {
+			ShowPushedCameraWindow();
+		}
+
 		bool bOpen = true;
 		ImGui::Begin("Camera Stack", &bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 		auto& cameraStack = CCameraManager::_gThis->cameraStack;
 
 		ImGui::Text("Camera Stack Size: %d", cameraStack.stackSize);
+
+		if (ImGui::Button("Push Debug Camera")) {
+			if (!pDebugCamera) {
+				pDebugCamera = new CCameraFixePerso();
+				pDebugCamera->SetTarget(CActorHero::_gThis);
+			}
+
+			CCameraManager::_gThis->PushCamera(pDebugCamera, 0);
+		}
 
 		for (int i = 0; i < cameraStack.stackSize; i++) {
 			if (cameraStack.pActiveCamera == cameraStack.aCameras[i].pCamera) {
@@ -225,21 +314,7 @@ namespace Debug::Camera {
 
 				ImGui::Separator();
 
-				CCamera* pCamera = entry.pCamera;
-
-				ImGui::Text("field_0x8: %d", pCamera->field_0x8);
-				ImGui::Text("flags_0xc: 0x%x", pCamera->flags_0xc);
-
-				ImGui::Text("transformationMatrix: %s", pCamera->transformationMatrix.ToString().c_str());
-
-				ImGui::Text("field_0x50: %s", pCamera->field_0x50.ToString().c_str());
-				ImGui::Text("lookAt: %s", pCamera->lookAt.ToString().c_str());
-				
-				DebugHelpers::TextValidValue("pOtherTarget: %p", pCamera->pOtherTarget);
-
-				ImGui::Text("fov: %f", pCamera->fov);
-
-
+				ShowCameraDetails(entry.pCamera);
 			}
 		}
 

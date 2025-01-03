@@ -5,6 +5,11 @@
 #include "Actor.h"
 #include "ScenaricCondition.h"
 
+class CBehaviourTeleporterDefault : public CBehaviour
+{
+
+};
+
 class CActorTeleporter : public CActor {
 public:
 	CActorTeleporter(){
@@ -12,8 +17,11 @@ public:
 	}
 
 	virtual void Create(ByteCode* pByteCode);
+	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
 	ConditionedOperationArray condOpArray;
+
+	CBehaviourTeleporterDefault behaviourTeleporterDefault;
 };
 
 #endif //ACTOR_TELEPORTER_H

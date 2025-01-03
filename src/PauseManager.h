@@ -128,8 +128,19 @@ public:
 
 	// Manager
 	virtual void Game_Init();
+	virtual void Game_Term();
+
+	virtual bool LevelLoading_Manage();
 	virtual void LevelLoading_Draw();
+
 	virtual void Level_Init();
+	virtual void Level_Term();
+
+	virtual void Level_ClearAll();
+
+	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
+
 	virtual void Level_Draw();
 	// End Manager
 

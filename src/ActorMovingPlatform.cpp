@@ -54,6 +54,23 @@ struct PlatformHeader
 
 		return pBehaviour;
 	}
+
+	inline static void Release(PlatformHeader** pObj) {
+		do {
+			if ((*pObj) == (PlatformHeader*)0x0) {
+				return;
+			}
+
+			PlatformHeader* pPrevHeader = (*pObj)->pPrev;
+
+			if ((*pObj)->aPlatforms) {
+				delete[](*pObj)->aPlatforms;
+			}
+
+			delete (*pObj);
+			(*pObj) = pPrevHeader;
+		} while (true);
+	}
 };
 
 
@@ -474,6 +491,42 @@ CBehaviour* CActorMovingPlatform::BuildBehaviour(int behaviourType)
 	}
 	pBehaviour = CActor::BuildBehaviour(behaviourType);
 	return pBehaviour;
+}
+
+void CActorMovingPlatform::TermBehaviour(int behaviourId, CBehaviour* pBehaviour)
+{
+	if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER) {
+		PlatformHeader<CBehaviourSelectorMaster>::Release(&gPlatform_00448e28);
+	}
+	else {
+		if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW) {
+			PlatformHeader<CBehaviourSelectorNew>::Release(&gPlatform_00448e24);
+		}
+		else {
+			if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_STAND) {
+				PlatformHeader<CBehaviourPlatformStand>::Release(&gPlatform_00448e20);
+			}
+			else {
+				if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_DESTROYED) {
+					PlatformHeader<CBehaviourPlatformDestroyed>::Release(&gPlatform_00448e1c);
+				}
+				else {
+					if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_SLAB) {
+						PlatformHeader<CBehaviourPlatformSlab>::Release(&gPlatform_00448e18);
+					}
+					else {
+						if (behaviourId == MOVING_PLATFORM_BEHAVIOUR_TRAJECTORY) {
+							PlatformHeader<CBehaviourPlatformTrajectory>::Release(&gPlatform_00448e14);
+						}
+						else {
+							CActor::TermBehaviour(behaviourId, pBehaviour);
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
 }
 
 bool CActorMovingPlatform::Slab_MoveAndDetectCarriedObject(CBehaviourPlatformSlab* pBehaviour, int param_3)

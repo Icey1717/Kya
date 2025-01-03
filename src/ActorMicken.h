@@ -5,6 +5,13 @@
 #include "ActorAutonomous.h"
 #include "WayPoint.h"
 
+#define MICKEN_BEHAVIOUR_EAT 4
+
+#define MICKEN_EAT_STATE_STAND			0x6
+#define MICKEN_EAT_STATE_WALK_TO_FRUIT	0x8
+#define MICKEN_EAT_STATE_EAT			0x9
+#define MICKEN_EAT_STATE_CHEW			0xa
+
 class CActorMicken;
 class CActorHeroPrivate;
 
@@ -87,6 +94,8 @@ public:
 	void BehaviourMickenSquashed_Manage(CBehaviourMickenSquashed* pBehaviour);
 
 	void BehaviourMicken_Manage(int state, CBehaviourMicken* pBehaviourMicken);
+
+	int WalkToPos(float param_1, CBehaviourMickenEat* pBehaviour, edF32VECTOR4* pPosition, int param_5);
 
 	S_STREAM_REF<CWayPoint> streamRefWayPoint;
 	S_STREAM_REF<CActor> streamRefActor;

@@ -27,6 +27,7 @@ struct ScenaricCondition {
 	int GetDataSize();
 	int* GetBeginPtr();
 	int* GetEndPtr();
+	void Invalidate();
 };
 
 struct CND_OP_HEADER {
@@ -63,6 +64,7 @@ struct ConditionedOperationArray {
 	CND_OP_HEADER* pHeader;
 	void Create(struct ByteCode* pByteCode);
 	void Perform();
+	void Invalidate();
 };
 
 #endif // _SCENARICCONDITION_H

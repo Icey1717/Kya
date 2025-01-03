@@ -33,3 +33,17 @@ void CActorFogManager::Create(ByteCode* pByteCode)
 	}
 	return;
 }
+
+CBehaviour* CActorFogManager::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pBehaviour;
+
+	if (behaviourType == 2) {
+		pBehaviour = &this->behaviourFogManagerZones;
+	}
+	else {
+		pBehaviour = CActor::BuildBehaviour(behaviourType);
+	}
+
+	return pBehaviour;
+}

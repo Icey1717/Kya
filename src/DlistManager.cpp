@@ -187,8 +187,14 @@ void CGlobalDListManager::Level_ClearAll()
 				iVar2 = iVar2 + 1;
 			} while (iVar2 < this->dlistCount);
 		}
+
 		delete[] this->ppGlobalDlist;
+
+		// HACK
+		this->ppGlobalDlist = 0x0;
+		this->dlistCount = 0;
 	}
+
 	return;
 }
 
@@ -287,11 +293,13 @@ void CGlobalDListManager::Level_Draw()
 		if ((iVar1 != 0) && (iVar1 != 0)) {
 			edDlistAddtoView(pCVar2->pDisplayListInternal);
 		}
+
 		if (1 < this->dlistCount) {
 			pCVar2 = (CGlobalDListPatch*)0x0;
 			if (this->field_0x14 != -1) {
 				pCVar2 = this->ppGlobalDlist[this->field_0x14].pDlistPatch;
 			}
+
 			if ((((pCVar2 != (CGlobalDListPatch*)0x0) && (iVar1 = pCVar2->bEnabled, iVar1 != 0)) &&
 				(this->field_0x18 != 2)) && (iVar1 != 0)) {
 				edDlistAddtoView(pCVar2->pDisplayListInternal);

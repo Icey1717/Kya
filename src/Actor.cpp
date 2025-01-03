@@ -1351,6 +1351,33 @@ void CActor::UpdatePostAnimEffects()
 	return;
 }
 
+void CActor::Destroy()
+{
+	int iVar2;
+	BehaviourEntry* piVar3;
+
+	if (this->typeID != -1) {
+		BehaviourList<1>* pComponentList = (BehaviourList<1>*)this->aComponents;
+
+		if ((pComponentList != (BehaviourList<1>*)0x0) && (this->typeID != 1)) {
+			piVar3 = pComponentList->aComponents;
+			for (iVar2 = pComponentList->count; 0 < iVar2; iVar2 = iVar2 + -1) {
+				if (piVar3->pBehaviour != 0) {
+					TermBehaviour(piVar3->id, piVar3->GetBehaviour());
+				}
+
+				piVar3 = piVar3 + 1;
+			}
+		}
+
+		if (this->pMBNK != (void*)0x0) {
+			edMemFree(this->pMBNK);
+		}
+	}
+
+	return;
+}
+
 int CActor::ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam)
 {
 	int bHandled;
@@ -1830,7 +1857,7 @@ void CActor::SV_InstanciateMaterialBank()
 	size = ed3DHierarchyBankMatGetSize(&this->p3DHierNode->base);
 	pvVar1 = edMemAlloc(TO_HEAP(H_MAIN), size);
 	pvVar1 = ed3DHierarchyBankMatInstanciate(&this->p3DHierNode->base, pvVar1);
-	this->field_0x98 = pvVar1;
+	this->pMBNK = pvVar1;
 	return;
 }
 
@@ -2220,7 +2247,9 @@ void CActor::Term()
 
 	for (componentCount = pComponentList->count; componentCount != 0; componentCount = componentCount + -1) {
 		CBehaviour* pBehaviour = pEntry->GetBehaviour();
+		if (pBehaviour == NULL) { pEntry = pEntry + 1; continue; } // HACK FOR BEHAVIOUR WHILE IMPLEMENTING
 		pBehaviour->Term();
+		pEntry = pEntry + 1;
 	}
 
 	IMPLEMENTATION_GUARD_AUDIO(
@@ -2371,8 +2400,7 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 		else {
 			iVar3 = ed3DHierarchyBankMatGetSize((ed_3d_hierarchy*)this->p3DHierNode);
 			pvVar4 = edMemAlloc(TO_HEAP(H_MAIN), iVar3);
-			uVar6 = ed3DHierarchyBankMatInstanciate((ed_3d_hierarchy*)this->p3DHierNode, pvVar4);
-			this->pMBNK = uVar6;
+			this->pMBNK = ed3DHierarchyBankMatInstanciate((ed_3d_hierarchy*)this->p3DHierNode, pvVar4);
 		}
 
 		if (pTextureInfo != (ed_g2d_manager*)0x0) {
@@ -3078,6 +3106,18 @@ bool CActor::SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBo
 	COLLISION_LOG(LogLevel::VeryVerbose, "CActor::SV_IsWorldBoundingSphereIntersectingBox {} {}", this->name, bIsIntersecting);
 
 	return bIsIntersecting;
+}
+
+void CActor::TermBehaviour(int behaviourId, CBehaviour* pBehaviour)
+{
+	// Basically only delete the behaviour if its not a class member...
+	if ((((reinterpret_cast<char*>(pBehaviour) < reinterpret_cast<char*>(this)) ||
+		((reinterpret_cast<char*>(this) + (CScene::ptable.g_ActorManager_004516a4)->aClassInfo[this->typeID].size) < reinterpret_cast<char*>(pBehaviour))) &&
+		(behaviourId != 1)) && (pBehaviour != (CBehaviour*)0x0)) {
+		delete pBehaviour;
+	}
+
+	return;
 }
 
 CBehaviour* CActor::BuildBehaviour(int behaviourType)
@@ -4277,6 +4317,15 @@ uint CActor::GetStateFlags(int state)
 	else {
 		return this->GetStateCfg(state)->flags_0x4;
 	}
+}
+
+void CActor::UpdateClusterNode()
+{
+	if (this->pClusterNode != (CClusterNode*)0x0) {
+		this->pClusterNode->Update(&(CScene::ptable.g_ActorManager_004516a4)->cluster);
+	}
+
+	return;
 }
 
 void CActor::UpdateShadow(edF32VECTOR4* pLocation, int bInAir, ushort param_4)

@@ -289,7 +289,7 @@ public:
 	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
-	virtual void TermBehaviour(int behaviourId, undefined8) { IMPLEMENTATION_GUARD(); }
+	virtual void TermBehaviour(int behaviourId, CBehaviour* pBehaviour);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
 	virtual bool IsLockable();

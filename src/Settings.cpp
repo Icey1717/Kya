@@ -57,7 +57,7 @@ void CSettings::SetSettingsToGlobal()
 	CCameraManager* pCVar3;
 	//CAudioManager* pGVar4;
 	LANGUAGE prevLanguageID;
-	LocalizationManager* pManager;
+	CLocalizationManager* pManager;
 	int iVar5;
 	long lVar6;
 	float fVar7;

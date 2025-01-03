@@ -4615,7 +4615,7 @@ void edColInit(void)
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x8000);
 	gColData.field_0x1c = (uint)gColConfig.field_0x3 << 4;
 	pvVar6 = edMemAlloc(TO_HEAP(H_MAIN), gColData.field_0x1c);
-	gColData.field_0x18 = (undefined*)((uint)pvVar6 | 0x20000000);
+	gColData.field_0x18 = (undefined*)((ulong)pvVar6 | 0x20000000);
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x8000);
 
 	gColTD.field_0x0 = 0;
@@ -5539,4 +5539,77 @@ float edObbIntersectObbTreeRayPrim(void** pOutHit, uint* pOutType, edObbTREE_DYN
 	}
 
 	return distance;
+}
+
+void edColTerm(void)
+{
+	int iVar1;
+	byte* pbVar2;
+	int iVar3;
+	edColDatabase* peVar4;
+	int iVar5;
+
+	for (iVar5 = 0; iVar5 < gColConfig.databaseCount; iVar5 = iVar5 + 1) {
+		peVar4 = gColData.aDatabases + iVar5;
+		for (iVar1 = 0; iVar1 < peVar4->curObjId; iVar1 = iVar1 + 1) {
+			iVar3 = 0;
+			do {
+				if (peVar4->aColObj[iVar1].field_0x18[iVar3] != 0) {
+					peVar4->aColObj[iVar1].field_0x18[iVar3] = 0;
+				}
+
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < 2);
+
+			if (peVar4->aColObj[iVar1].pPrim != 0x0) {
+				peVar4->aColObj[iVar1].pPrim = 0x0;
+			}
+		}
+
+		if (peVar4->aPrim != (edColPrimEntry*)0x0) {
+			edMemFree(peVar4->aPrim);
+			peVar4->aPrim = (edColPrimEntry*)0x0;
+			peVar4->curPrimId = 0;
+		}
+
+		if (peVar4->field_0x1c != (undefined*)0x0) {
+			edMemFree(peVar4->field_0x1c);
+			peVar4->field_0x1c = (undefined*)0x0;
+			peVar4->field_0xc = 0;
+		}
+
+		if (peVar4->aColObj != (edColOBJECT*)0x0) {
+			edMemFree(peVar4->aColObj);
+			peVar4->aColObj = (edColOBJECT*)0x0;
+		}
+
+		if (peVar4->aDbEntries != (edColDbObj_80*)0x0) {
+			edMemFree(peVar4->aDbEntries);
+			peVar4->aDbEntries = (edColDbObj_80*)0x0;
+		}
+
+		if (peVar4->field_0x20 != (byte*)0x0) {
+			edMemFree(peVar4->field_0x20);
+			peVar4->field_0x20 = (byte*)0x0;
+		}
+	}
+
+	if (gColData.aDatabases != (edColDatabase*)0x0) {
+		edMemFree(gColData.aDatabases);
+		gColData.aDatabases = (edColDatabase*)0x0;
+	}
+
+	if (gColData.field_0x18 != (undefined*)0x0) {
+	//	edMemFree(gColData.field_0x18);
+		gColData.field_0x18 = (undefined*)0x0;
+	}
+
+	if (gColConfig.bCreateProfileObj != 0) {
+		//edProfileDel(prof_obb_col);
+		//edProfileDel(prof_prim_col);
+	}
+
+	gColData.bInitialized = 0;
+
+	return;
 }

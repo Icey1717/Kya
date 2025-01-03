@@ -4,6 +4,11 @@
 #include "Types.h"
 #include "Actor.h"
 
+class CBehaviourRopeStand : public CBehaviour
+{
+
+};
+
 class CActorRope : public CActor {
 public:
 	CActorRope(){
@@ -11,6 +16,9 @@ public:
 	}
 
 	virtual void Create(ByteCode* pByteCode);
+	virtual CBehaviour* BuildBehaviour(int behaviourType);
+
+	CBehaviourRopeStand behaviourRopeStand;
 };
 
 #endif //ACTOR_ROPE_H

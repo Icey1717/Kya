@@ -84,6 +84,21 @@ void StaticMeshComponent::Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager
 	return;
 }
 
+void StaticMeshComponent::Term(ed_3D_Scene* pScene)
+{
+	if (pScene == (ed_3D_Scene*)0x0) {
+		pScene = CScene::_scene_handleA;
+	}
+
+	if (this->pMeshTransformParent != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(pScene, this->pMeshTransformParent);
+	}
+
+	this->pMeshTransformParent = (edNODE*)0x0;
+
+	return;
+}
+
 StateConfig CActorAmbre::_gStateCfg_AMB[6]
 {
 	StateConfig(0x0, 0x0),
@@ -223,7 +238,20 @@ void CActorAmbre::Init()
 
 void CActorAmbre::Term()
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+
+	CActor::Term();
+
+	bVar1 = (this->staticMesh).textureIndex != -1;
+	if (bVar1) {
+		bVar1 = (this->staticMesh).meshIndex != -1;
+	}
+
+	if (bVar1) {
+		this->staticMesh.Term((ed_3D_Scene*)0x0);
+	}
+
+	return;
 }
 
 void CActorAmbre::Draw()

@@ -7,16 +7,16 @@
 #include <stdio.h>
 #endif
 
-LocalizationManager* g_LocalizationManager_00449744 = (LocalizationManager*)0x0;
+CLocalizationManager* g_LocalizationManager_00449744 = (CLocalizationManager*)0x0;
 
-LocalizationManager::LocalizationManager()
+CLocalizationManager::CLocalizationManager()
 {
 	g_LocalizationManager_00449744 = this;
 }
 
 char* sz_GAMENAME_004349a8 = "GAMENAME";
 
-void LocalizationManager::Game_Init()
+void CLocalizationManager::Game_Init()
 {
 	char* pcVar1;
 
@@ -27,9 +27,14 @@ void LocalizationManager::Game_Init()
 	return;
 }
 
+void CLocalizationManager::Game_Term()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 char* sz_LevelTextSuffix_004349a0 = "_xx.bin";
 
-void LocalizationManager::Level_Init()
+void CLocalizationManager::Level_Init()
 {
 	int iVar1;
 	CLevelScheduler* pLVar2;
@@ -45,8 +50,63 @@ void LocalizationManager::Level_Init()
 	return;
 }
 
-void LocalizationManager::Level_Term()
+void CLocalizationManager::Level_Term()
 {
 	this->levelText.select_language((edCBankBufferEntry*)0x0, (char*)0x0, AUTO);
+	return;
+}
+
+void CLocalizationManager::Level_AddAll(struct ByteCode* pByteCode)
+{
+	return;
+}
+
+void CLocalizationManager::Level_ClearAll()
+{
+	return;
+}
+
+void CLocalizationManager::Level_Manage()
+{
+	return;
+}
+
+void CLocalizationManager::Level_ManagePaused()
+{
+	return;
+}
+
+void CLocalizationManager::Level_Draw()
+{
+	return;
+}
+
+void CLocalizationManager::Level_Reset()
+{
+	return;
+}
+
+void CLocalizationManager::Level_CheckpointReset()
+{
+	return;
+}
+
+void CLocalizationManager::Level_SectorChange(int oldSectorId, int newSectorId)
+{
+	return;
+}
+
+void CLocalizationManager::Level_PauseChange()
+{
+	return;
+}
+
+void CLocalizationManager::Level_SaveContext()
+{
+	return;
+}
+
+void CLocalizationManager::Level_LoadContext()
+{
 	return;
 }

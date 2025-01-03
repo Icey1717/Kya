@@ -586,3 +586,8 @@ void CAnimationManager::Level_Create(ByteCode* pMemoryStream)
 	} while (0 < iVar1);
 	return;
 }
+
+void CAnimationManager::Level_Term()
+{
+	return;
+}

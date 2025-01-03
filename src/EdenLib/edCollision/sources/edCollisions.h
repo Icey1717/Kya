@@ -60,8 +60,7 @@ struct edColOBJECT {
 	int field_0xc;
 	uint colResult;
 	int pDynObj; // edDynOBJECT* 
-	undefined4 field_0x18;
-	undefined4 field_0x1c;
+	uint field_0x18[2];
 	undefined field_0x20;
 	undefined field_0x21;
 	undefined field_0x22;
@@ -531,6 +530,7 @@ void edColGetNormalInWorldFromLocal(edF32VECTOR4* param_1, edF32MATRIX4* param_2
 
 edColConfig* edColGetConfig(void);
 void edColInit(void);
+void edColTerm(void);
 void edColSetDataBase(int databaseId);
 void edColBegin(int param_1, int databaseId);
 void edColObjectSetCollisionsType(byte param_1, byte param_2, byte param_3);

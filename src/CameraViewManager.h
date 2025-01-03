@@ -5924,9 +5924,17 @@ public:
 	// CObjectManager
 	virtual void Game_Init();
 	virtual void LevelLoading_Begin();
+	virtual void LevelLoading_End();
 	virtual bool LevelLoading_Manage();
 	virtual void Level_Init();
+	virtual void Level_Term();
 	virtual void Level_AddAll(ByteCode* pByteCode);
+	virtual void Level_ClearAll();
+	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
+	virtual void Level_Draw();
+	virtual void Level_Reset();
+	virtual void Level_CheckpointReset();
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
 	void KeepSameParam(CCamera* pNewCamera, uint flag);
@@ -5934,7 +5942,6 @@ public:
 	float Manage_EarthQuake(edF32VECTOR4* param_2);
 	void ComputeFrustrumPlanes(float param_1, edF32MATRIX4* m0);
 	void BuildDisplayMatrix();
-	virtual void Level_Manage();
 
 	void Level_Init(bool bProcessEvents);
 	void Level_ClearInternalData();
@@ -6674,7 +6681,7 @@ public:
 	undefined field_0xa1d;
 	undefined field_0xa1e;
 	undefined field_0xa1f;
-	edF32VECTOR4 shadowCameraLookat;
+	edF32VECTOR4 activeCameraLookAt;
 	float distance_0xa30;
 	float fov_0xa34;
 	undefined field_0xa38;
@@ -6742,7 +6749,7 @@ public:
 	undefined field_0xa76;
 	undefined field_0xa77;
 	undefined4 field_0xa78;
-	byte field_0xa7c;
+	byte cheatIdleCameraActive;
 	undefined field_0xa7d;
 	undefined field_0xa7e;
 	undefined field_0xa7f;

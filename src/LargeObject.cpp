@@ -41,6 +41,7 @@
 #include "EventTrack.h"
 #include "CameraGame.h"
 #include "kya.h"
+#include "PoolAllocators.h"
 
 #define SCENE_STATE_RESET 0x5
 
@@ -141,7 +142,7 @@ CScene::CScene()
 	void** errorPrinter;
 	//LocalizationManager* pManager;
 	//Manager_170* pMVar1;
-	FrontendManager* pFrontendManager;
+	CFrontendDisplay* pFrontendManager;
 	//HelpManager* pHelpManager;
 	CPauseManager* pPVar2;
 	//MapManager* pMVar3;
@@ -173,7 +174,7 @@ CScene::CScene()
 	ed_3D_Scene** ppSVar20;
 	edFCamera* pCVar21;
 	CameraObjParams local_8;
-	LocalizationManager* pManager;
+	CLocalizationManager* pManager;
 
 	this->field_0x38 = 1;
 	//errorPrinter = (void**)Allocate(4);
@@ -215,7 +216,7 @@ CScene::CScene()
 	if (CScene::ptable.g_LevelScheduleManager_00451660 != (CLevelScheduler*)0x0) {
 		CLevelScheduler::gThis = CScene::ptable.g_LevelScheduleManager_00451660;
 	}
-	pManager = new LocalizationManager();
+	pManager = new CLocalizationManager();
 	CScene::ptable.g_LocalizationManager_00451678 = pManager;
 	//g_Manager1e4_00451678 = pManager;
 	//pMVar1 = (Manager_170*)Allocate(0x170);
@@ -224,7 +225,7 @@ CScene::CScene()
 	//	pMVar1 = (Manager_170*)uVar17;
 	//}
 	//g_Manager170_00451674 = pMVar1;
-	pFrontendManager = new FrontendManager();
+	pFrontendManager = new CFrontendDisplay();
 	CScene::ptable.g_FrontendManager_00451680 = pFrontendManager;
 	//pHelpManager = (HelpManager*)Allocate(0x1e4);
 	//if (pHelpManager != (HelpManager*)0x0) {
@@ -663,7 +664,7 @@ void CScene::HandleCurState()
 		if (uVar2 == 0) {
 			Fade(1.0f, 1, 0);
 
-			GameFlags = GameFlags | 2;
+			GameFlags = GameFlags | GAME_REQUEST_TERM;
 
 			if (this->curState != 0) {
 				this->timeInState = 0.0f;
@@ -724,8 +725,69 @@ void CScene::InitiateCheckpointReset(int param_2)
 			this->curState = 1;
 		}
 
-		GameFlags = GameFlags | 0x80;
+		GameFlags = GameFlags | GAME_CUTSCENE_80;
 	}
+
+	return;
+}
+
+void CScene::Level_Term(void)
+{
+	FxFogProp* pFVar2;
+	int iVar4;
+
+
+	g_CinematicManager_0048efc->StopAllCutscenes();
+
+	CLevelScheduler::gThis->Level_PreTerm();
+
+	iVar4 = 0;
+	CObjectManager** pMVar2 = CScene::ptable.aManagers;
+	do {
+		if (*pMVar2 != (CObjectManager*)0x0) {
+			(*pMVar2)->Level_Term();
+		}
+		iVar4 = iVar4 + 1;
+		pMVar2 = pMVar2 + 1;
+	} while (iVar4 < 0x18);
+
+	PopFogAndClippingSettings(this->pFogClipStream);
+
+	this->pFogClipStream = (S_STREAM_FOG_DEF*)0x0;
+	this->field_0x48 = 0;
+
+	edViewportSetClearMask(this->pViewportA, 0);
+	edViewportSetClearMask(this->pViewportB, 0);
+
+	pFVar2 = ed3DGetFxFogProp();
+	pFVar2->field_0x0 = pFVar2->field_0x0 & 0xfffffffe;
+	if (g_CinematicManager_0048efc->pCinematic == (CCinematic*)0x0) {
+		this->fogClipSettingStackSize = -1;
+	}
+
+	edDListDeleteFrameBufferMaterial(&this->field_0xfc);
+
+	GlobalDList_AddToView();
+
+#ifndef PLATFORM_WIN
+	edVideoFlip();
+#endif
+
+	iVar4 = 0;
+	pMVar2 = CScene::ptable.aManagers;
+	do {
+		if (*pMVar2 != (CObjectManager*)0x0) {
+			(*pMVar2)->Level_ClearAll();
+		}
+		iVar4 = iVar4 + 1;
+		pMVar2 = pMVar2 + 1;
+	} while (iVar4 < 0x18);
+
+	FreeAllAllocators();
+
+	this->field_0x10c = -1;
+	this->field_0x110 = -1;
+	this->field_0x114 = 0;
 
 	return;
 }
@@ -866,9 +928,9 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	return;
 }
 
-bool CScene::CheckFunc_001b9300()
+bool CScene::IsFadeTermActive()
 {
-	return this->curState - 6U < 2;
+	return (this->curState - 6U) < 2;
 }
 
 void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height)
@@ -1124,21 +1186,17 @@ void CScene::PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStrea
 	return;
 }
 
-void CScene::FUN_001b9350(bool param_2)
+void CScene::SetFadeStateTerm(bool bFadeOut)
 {
-	int iVar1;
-
-	iVar1 = this->curState;
-
-	if (1 < iVar1 - 6U) {
-		if (param_2 == false) {
-			if (iVar1 != 7) {
+	if (1 < this->curState - 6U) {
+		if (bFadeOut == false) {
+			if (this->curState != 7) {
 				this->timeInState = 0.0f;
 				this->curState = 7;
 			}
 		}
 		else {
-			if (iVar1 != 6) {
+			if (this->curState != 6) {
 				this->timeInState = 0.0f;
 				this->curState = 6;
 			}

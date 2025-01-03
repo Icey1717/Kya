@@ -105,15 +105,22 @@ public:
 	void Level_ClearInternalData();
 	void InstallEnterSector();
 
-	// Manager
 	virtual void LevelLoading_Begin();
 	virtual bool LevelLoading_Manage();
+
 	virtual void Level_Install();
 	virtual void Level_Init();
-	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
+	virtual void Level_Term();
+	virtual void Level_AddAll(struct ByteCode* pByteCode);
+	virtual void Level_ClearAll();
+
 	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
+	virtual void Level_Draw();
+
+	virtual void Level_Reset();
+
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
-	// End Manager
 
 	void SetupCompanionSectors(uint flags);
 

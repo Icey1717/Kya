@@ -451,6 +451,7 @@ public:
 
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
+	virtual void Destroy();
 	virtual void Init();
 	virtual void Term();
 	virtual void Manage();
@@ -463,7 +464,7 @@ public:
 	virtual void SaveContext(uint*, int);
 	virtual void LoadContext(uint*, int);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
-	virtual void TermBehaviour(int behaviourId, undefined8) { IMPLEMENTATION_GUARD(); }
+	virtual void TermBehaviour(int behaviourId, CBehaviour* pBehaviour);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
 	virtual uint IsLookingAt();
@@ -508,6 +509,8 @@ public:
 	void EvaluateDisplayState();
 
 	uint GetStateFlags(int state);
+
+	void UpdateClusterNode();
 
 	void SetScale(float x, float y, float z);
 	void SnapOrientation(float x, float y, float z);
@@ -649,7 +652,7 @@ public:
 	ed_g3d_hierarchy* pHier;
 
 	// pMaterial bank from SV_InstanciateMaterialBank
-	void* field_0x98;
+	void* pMBNK;
 
 	CinNamedObject30 namedObjSectionStart;
 	CinNamedObject30* pCinData;
@@ -697,8 +700,6 @@ public:
 	CCollision* pCollisionData;
 	CShadow* pShadow;
 
-	void* pMBNK;
-
 	CBehaviourStand standBehaviour;
 
 	CActor* pTiedActor;
@@ -726,6 +727,7 @@ class CAddOnGenerator {
 public:
 	void Create(CActor* pActor, ByteCode* pByteCode);
 	void Init(int) { IMPLEMENTATION_GUARD_LOG(); }
+	void Term() { IMPLEMENTATION_GUARD_LOG(); }
 
 	CAddOnGenerator_SubObj subObj;
 };
@@ -747,11 +749,6 @@ struct ActorAndWaypoint {
 struct S_ACTOR_STREAM_REF {
 	int entryCount;
 	S_STREAM_REF<CActor> aEntries[];
-};
-
-struct S_ZONE_STREAM_REF {
-	int entryCount;
-	S_STREAM_REF<ed_zone_3d> aEntries[];
 };
 
 #endif // _ACTOR_H

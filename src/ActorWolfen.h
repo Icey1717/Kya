@@ -275,7 +275,7 @@ class CBehaviourTrackWeaponStand : public CBehaviourWolfenWeapon
 public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
-	virtual void Term() { IMPLEMENTATION_GUARD(); }
+	virtual void Term();
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
@@ -399,7 +399,7 @@ public:
 	virtual bool IsKindOfObject(ulong kind);
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
-	virtual void Term() { IMPLEMENTATION_GUARD(); }
+	virtual void Term();
 	virtual void Manage();
 	virtual void Draw();
 	virtual void Reset();

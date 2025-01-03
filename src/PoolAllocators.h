@@ -13,4 +13,6 @@ float* NewPool_edF32(int count);
 ushort* NewPool_edU16(int count);
 void** NewPool_Pointer(int count);
 
+void FreeAllAllocators();
+
 #endif // _POOL_ALLOCATORS_H

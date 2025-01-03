@@ -1733,7 +1733,7 @@ bool CMagicInterface::Manage()
 {
 	bool bSuccess;
 
-	bSuccess = CScene::_pinstance->CheckFunc_001b9300();
+	bSuccess = CScene::_pinstance->IsFadeTermActive();
 	return bSuccess == false;
 }
 
@@ -1786,7 +1786,7 @@ bool CMoneyInterface::Manage()
 {
 	bool bVar1;
 
-	bVar1 = CScene::_pinstance->CheckFunc_001b9300();
+	bVar1 = CScene::_pinstance->IsFadeTermActive();
 	return bVar1 == false;
 }
 

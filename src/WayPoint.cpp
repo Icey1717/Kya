@@ -27,6 +27,14 @@ void CWayPointManager::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
+void CWayPointManager::Level_ClearAll()
+{
+	this->aWaypoints = (CWayPoint*)0x0;
+	this->waypointCount = 0;
+
+	return;
+}
+
 template<>
 void S_STREAM_REF<CWayPoint>::Init()
 {

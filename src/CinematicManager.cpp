@@ -149,9 +149,9 @@ void CCinematicManager::LevelLoading_Begin()
 		pCamera->field_0x98 = 0.0f;
 		pCamera->field_0x94 = SWITCH_MODE_B;
 		pCamera->field_0x9c = 0.0f;
-		IMPLEMENTATION_GUARD();
-		//pCameraManager->PushCamera((Camera*)this->pCameraLocationObj, 1);
+		pCameraManager->PushCamera(this->pCinematicCamera, 1);
 	}
+
 	return;
 }
 
@@ -205,12 +205,14 @@ bool CCinematicManager::LevelLoading_Manage()
 	else {
 		this->field_0x38 = 0;
 		this->field_0x40 = 0;
-		IMPLEMENTATION_GUARD(CCinematic::Manage(this->pCinematic));
+		this->pCinematic->Manage();
+
 		bVar1 = false;
 		if ((this->pCinematic->flags_0x4 & 8) == 0) {
 			bVar1 = this->pCinematic->state != CS_Stopped;
 		}
 	}
+
 	return bVar1;
 }
 
@@ -835,9 +837,9 @@ void CCinematic::Create(ByteCode* pByteCode)
 		this->defaultAudioTrackId = this->aAudioTrackIds[0];
 	}
 
-	this->field_0x6c = pByteCode->GetS32();
-	this->field_0x70 = pByteCode->GetS32();
-	this->field_0x74 = pByteCode->GetS32();
+	this->endLevelId = pByteCode->GetS32();
+	this->endElevatorId = pByteCode->GetS32();
+	this->endCutsceneId = pByteCode->GetS32();
 	this->field_0x78 = pByteCode->GetU32();
 	this->field_0x7c = pByteCode->GetU32();
 	this->field_0x80 = pByteCode->GetF32();
@@ -1098,9 +1100,7 @@ void CCinematic::Start()
 				iVar16 = (this->cineBank).pBankFileAccessObject->get_index(this->fileName);
 				if ((((iVar16 != -1) &&
 					(bVar7 = (this->cineBank).pBankFileAccessObject->get_info(iVar16, &eStack48, (char*)0x0), bVar7 != false)) &&
-					(bVar7 = ((edCinematic*)eStack48.fileBufferStart)->ExtractVersions
-					(eStack48.size, &cinematicLibraryVersion,
-						&cinematicCompilerVersion), bVar7 != false)) &&
+					(bVar7 = ((edCinematic*)eStack48.fileBufferStart)->ExtractVersions(eStack48.size, &cinematicLibraryVersion, &cinematicCompilerVersion), bVar7 != false)) &&
 					((cinematicLibraryVersion != 0x81 || (cinematicCompilerVersion != 0xa0)))) {
 					/* Cinematic library version: %d (should be %d)\n */
 					edDebugPrintf("Cinematic library version: %d (should be %d)\n", cinematicLibraryVersion, 0x81);
@@ -1126,6 +1126,7 @@ void CCinematic::Start()
 				this->count_0x224 = 0;
 				this->count_0x22c = 0;
 				this->numberOfParticles = 0;
+
 				/* This will take a cinematic file and load all of its assets
 				   Example: AIRLIFT_TO_NATIV_Cin_Montage_SceneMontage.cin */
 				this->cinFileData.Create(this->cinematicLoadObject, this->fileName);
@@ -1146,10 +1147,7 @@ void CCinematic::Start()
 					if (this->pActor != (Actor*)0x0) {
 						edF32Matrix4FromEulerSoft(&eStack176, (int)&(this->pActor->actorBase).data.rotationVector, s_XYZ_0042b950);
 						pAVar1 = this->pActor;
-						eStack176.da = (pAVar1->actorBase).data.currentLocation.x;
-						eStack176.db = (pAVar1->actorBase).data.currentLocation.y;
-						eStack176.dc = (pAVar1->actorBase).data.currentLocation.z;
-						eStack176.dd = (pAVar1->actorBase).data.currentLocation.w;
+						eStack176.rowT = (pAVar1->actorBase).data.currentLocation;
 						edF32Matrix4MulF32Matrix4Hard(&local_70, &local_70, &eStack176);
 					})
 				}
@@ -1162,10 +1160,12 @@ void CCinematic::Start()
 
 				if (this->pMeshInfo != (ed_g3d_manager*)0x0) {
 					ed3DScenePushCluster(CScene::_scene_handleA, this->pMeshInfo);
+
 					ed_g3d_hierarchy* pNewHier = ed3DG3DHierarchyGetFromHashcode(this->pMeshInfo, 0x43494d414e5944);
 					if (pNewHier != 0) {
 						ed3DG3DHierarchySetStripShadowReceiveFlag(pNewHier, 0xffff);
 					}
+
 					pMVar9 = ed3DHierarchyAddToSceneByHashcode(CScene::_scene_handleA, this->pMeshInfo, 0x43494d414e5944);
 					this->pMeshTransform = pMVar9;
 					if (this->pMeshTransform != (edNODE*)0x0) {
@@ -1187,11 +1187,11 @@ void CCinematic::Start()
 
 				if ((this->flags_0x4 & 0x400) != 0) {
 					CScene::ptable.g_FrontendManager_00451680->SetActive(false);
-					GameFlags = GameFlags | 0x100;
+					GameFlags = GameFlags | GAME_CUTSCENE_100;
 				}
 
 				if ((this->flags_0x4 & 0x20000200) != 0) {
-					GameFlags = GameFlags | 0x80;
+					GameFlags = GameFlags | GAME_CUTSCENE_80;
 				}
 
 				uVar3 = this->flags_0x4;
@@ -1227,14 +1227,17 @@ void CCinematic::Start()
 										pCurrentConfig->flags = pCurrentConfig->flags | 0x80000000;
 									}
 								}
+
 								if ((pCurrentConfig->flags & 1) != 0) {
 									pConfigActor->CinematicMode_Enter(true);
 									bVar7 = true;
 								}
 							}
+
 							currentConfigIndex = currentConfigIndex + 1;
 						} while (currentConfigIndex < configCount);
 					}
+
 					if ((this->flags_0x4 & 0x1000) != 0) {
 						bVar7 = true;
 					}
@@ -1292,7 +1295,7 @@ void CCinematic::Start()
 					if (bHasEventData) {
 						for (int i = 0; i < pSwitchList->count; i++) {
 							pSwitchList->aSwitches[i].Switch((CActor*)0x0);
-						}						
+						}
 
 						this->pStreamEventCameraA->SwitchOn((CActor*)0x0);
 
@@ -1331,7 +1334,7 @@ void CCinematic::Start()
 							LevelScheduleManager::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);)
 					}
 					else {
-						CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->field_0x6c, this->field_0x70, this->field_0x74, 0xffffffff);
+						CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->endLevelId, this->endElevatorId, this->endCutsceneId, 0xffffffff);
 					}
 				}
 
@@ -1539,6 +1542,7 @@ void CCinematic::Install()
 	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	}
+
 	if (this->cinFileCount != 0) {
 		pCVar3 = new CinFileContainer[this->cinFileCount];
 		this->fileInfoStart = pCVar3;
@@ -1552,20 +1556,23 @@ void CCinematic::Install()
 			} while (uVar4 < (uint)this->cinFileCount);
 		}
 	}
+
 	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 		edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 	}
+
 	this->matrix_0x120 = gF32Matrix4Unit;
 	if (this->defaultAudioTrackId != -1) {
 		this->flags_0x8 = this->flags_0x8 | 1;
 	}
+
 	this->cineBankLoadStage_0x2b4 = 4;
+
 	if (this->pActor != (CActor*)0x0) {
-		IMPLEMENTATION_GUARD();
 		local_4 = &local_10;
 		local_c = 0;
 		local_10 = this;
-		//(*(code*)((this->pActor->actorBase).pVTable)->ReceiveMessage)(this->pActor, 0, 0x7c, local_4);
+		this->pActor->ReceiveMessage(0, (ACTOR_MESSAGE)0x7c, local_4);
 	}
 	return;
 }
@@ -2247,11 +2254,11 @@ void CCinematic::Stop()
 		}
 
 		if ((this->flags_0x4 & 0x20000200) != 0) {
-			GameFlags = GameFlags & 0xffffff7f;
+			GameFlags = GameFlags & ~GAME_CUTSCENE_80;
 		}
 
 		if ((this->flags_0x4 & 0x400) != 0) {
-			GameFlags = GameFlags & 0xfffffeff;
+			GameFlags = GameFlags & ~GAME_CUTSCENE_100;
 			CScene::ptable.g_FrontendManager_00451680->SetActive(true);
 		}
 
@@ -2346,7 +2353,7 @@ void CCinematic::Stop()
 					CLevelScheduler::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);)
 			}
 			else {
-				CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->field_0x6c, this->field_0x70, this->field_0x74, -1);
+				CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->endLevelId, this->endElevatorId, this->endCutsceneId, -1);
 			}
 		}
 
@@ -2793,6 +2800,74 @@ CActor* CCinematic::GetActorByHashcode(uint hashCode)
 	}
 
 	return pFoundActor;
+}
+
+CCinematic::~CCinematic()
+{
+	bool bVar1 = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+	if (bVar1) {
+		bVar1 = this->cineBankLoadStage_0x2b4 != 4;
+	}
+
+	if (bVar1) {
+		Load(0);
+	}
+
+	if (this->cineBankLoadStage_0x2b4 == 4) {
+		Flush(true);
+	}
+
+	FUN_001cbe40();
+
+	if ((this != (CCinematic*)0xffffff64) && (this->aCineActorConfig != (CCineActorConfig*)0x0)) {
+		delete[] this->aCineActorConfig;
+	}
+}
+
+void CCinematic::FUN_001cbe40()
+{
+	if (this->aActorCinematic != (CActorCinematic*)0x0) {
+		delete[] this->aActorCinematic;
+		this->aActorCinematic = (CActorCinematic*)0x0;
+		this->nbCinematicActors = 0;
+	}
+
+	if (this->ppActorCinematics != (CActorCinematic**)0x0) {
+		delete(this->ppActorCinematics);
+		this->ppActorCinematics = (CActorCinematic**)0x0;
+		this->nbActorRefs = 0;
+	}
+
+	IMPLEMENTATION_GUARD_LOG();
+
+	//if (this->pCineSunHolderArray != (BWCinSunLight*)0x0) {
+	//	__destroy_new_array((undefined*)this->pCineSunHolderArray, BWCinSunLight::~BWCinSunLight);
+	//	this->pCineSunHolderArray = (BWCinSunLight*)0x0;
+	//	this->count_0x224 = 0;
+	//}
+	//
+	//if (this->pCineSpotHolderArray != (BWCinSpotLight*)0x0) {
+	//	__destroy_new_array((undefined*)this->pCineSpotHolderArray, BWCinSpotLight::~BWCinSpotLight);
+	//	this->pCineSpotHolderArray = (BWCinSpotLight*)0x0;
+	//	this->count_0x22c = 0;
+	//}
+	//
+	//if ((void*)this->buffer_0x2e4 != (void*)0x0) {
+	//	delete((void*)this->buffer_0x2e4);
+	//	this->buffer_0x2e4 = 0;
+	//}
+	//
+	//if ((void*)this->particleSectionStart != (void*)0x0) {
+	//	delete((void*)this->particleSectionStart);
+	//	this->particleSectionStart = 0;
+	//}
+	//
+	//if ((void*)this->field_0x2ec != (void*)0x0) {
+	//	edMemFree((void*)this->field_0x2ec);
+	//	this->field_0x2ec = 0;
+	//}
+
+	return;
 }
 
 void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
@@ -3410,6 +3485,31 @@ void CCinematic::FUN_001c7390(bool param_2)
 			}
 		}
 	}
+	return;
+}
+
+void CCinematic::FUN_001caeb0()
+{
+	this->fileName = "";
+	this->pBankName_0x48 = "";
+	this->pBankName_0x50 = "";
+	(this->zoneRefA).index = 0x0;
+	(this->triggerActorRef).index = 0x0;
+	(this->zoneRefB).index = 0x0;
+	(this->zoneRefC).index = 0x0;
+	this->cond_0x248.Invalidate();
+	this->field_0x25c = (int*)0x0;
+
+	this->condArray_0x244.Invalidate();
+
+	this->pSwitchListA = (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
+	this->pStreamEventCameraA = (S_STREAM_EVENT_CAMERA*)0x0;
+	this->pSwitchListB = (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
+	this->pStreamEventCameraB = (S_STREAM_EVENT_CAMERA*)0x0;
+	this->pActor = (CActor*)0x0;
+	this->defaultAudioTrackId = -1;
+	this->flags_0x4 = this->flags_0x4 & 0xffefffff;
+
 	return;
 }
 
@@ -4110,7 +4210,7 @@ void S_STREAM_EVENT_CAMERA::Init()
 
 void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 {
-	undefined* puVar1;
+	CActor* puVar1;
 	float fVar3;
 	float fVar4;
 	float fVar5;
@@ -4119,45 +4219,45 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 	uint uVar8;
 	uint uVar9;
 	float fVar10;
+	ed_zone_3d* pEVar2;
 
 	if ((this->field_0x4 & 0x40000000U) != 0) {
-		IMPLEMENTATION_GUARD(
 		pTVar7 = GetTimer();
-		fVar10 = pTVar7->scaledTotalTime - (float)this->field_0x1c;
+		fVar10 = pTVar7->scaledTotalTime - this->field_0x1c;
 		if (this->field_0xc <= fVar10) {
 			bVar6 = false;
 			if (((this->field_0x4 & 1U) != 0) &&
-				((0.4 <= gPlayerInput.field_0x5fc || ((gPlayerInput.pressedBitfield & 0x7f0) != 0))
-					)) {
+				((0.4f <= gPlayerInput.aAnalogSticks[0].magnitude || ((gPlayerInput.pressedBitfield & 0x7f0) != 0)))) {
 				bVar6 = true;
 			}
-			if ((this->field_0x8 != 0.0) &&
-				(fVar3 = (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.x -
-					(pActor->data).currentLocation.x,
-					fVar4 = (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.y -
-					(pActor->data).currentLocation.y,
-					fVar5 = (CActorHero::_gThis->character).characterBase.actorBase.currentLocation.z -
-					(pActor->data).currentLocation.z, this->field_0x8 <= fVar3 * fVar3 + fVar4 * fVar4 + fVar5 * fVar5)) {
+
+			if ((this->field_0x8 != 0.0f) &&
+				(fVar3 = CActorHero::_gThis->currentLocation.x - pActor->currentLocation.x,
+					fVar4 = CActorHero::_gThis->currentLocation.y - pActor->currentLocation.y,
+					fVar5 = CActorHero::_gThis->currentLocation.z - pActor->currentLocation.z,
+					this->field_0x8 <= fVar3 * fVar3 + fVar4 * fVar4 + fVar5 * fVar5)) {
 				bVar6 = true;
 			}
+
 			if (this->field_0x10 <= fVar10) {
 				bVar6 = true;
 			}
-			puVar1 = this->pActor;
-			if ((puVar1 != (undefined*)0x0) && (pEVar2 = this->pEventChunk24_0x18, pEVar2 != (EventChunk_24*)0x0)) {
+
+			puVar1 = LOAD_SECTION_CAST(CActor*, this->pActor);
+			if ((puVar1 != (CActor*)0x0) && (pEVar2 = LOAD_SECTION_CAST(ed_zone_3d*, this->pEventChunk24_0x18), pEVar2 != (ed_zone_3d*)0x0)) {
 				uVar9 = this->field_0x4 & 0x20000000;
 				this->field_0x4 = this->field_0x4 & 0xdfffffff;
-				if ((puVar1 != (undefined*)0x0) &&
-					((pEVar2 != (EventChunk_24*)0x0 &&
-						(uVar8 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeEventChunkID_0x8, pEVar2,
-							(edF32VECTOR4*)(puVar1 + 0x30), 0), (uVar8 & 1) != 0)))) {
+				if ((puVar1 != (CActor*)0x0) && ((pEVar2 != (ed_zone_3d*)0x0 &&
+						(uVar8 = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pEVar2, &puVar1->currentLocation, 0), (uVar8 & 1) != 0)))) {
 					this->field_0x4 = this->field_0x4 | 0x20000000;
 				}
+
 				uVar8 = this->field_0x4;
 				if ((uVar8 & 0x20000000) == 0) {
 					if ((uVar8 & 0x20) != 0) {
 						bVar6 = true;
 					}
+
 					if ((uVar9 != 0) && ((this->field_0x4 & 8U) != 0)) {
 						bVar6 = true;
 					}
@@ -4166,6 +4266,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 					if ((uVar8 & 0x10) != 0) {
 						bVar6 = true;
 					}
+
 					if ((uVar9 == 0) && ((this->field_0x4 & 4U) != 0)) {
 						bVar6 = true;
 					}
@@ -4173,8 +4274,8 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 			}
 
 			if ((bVar6) && ((this->field_0x4 & 0x40000000U) != 0)) {
-				if ((CCamera*)this->field_0x0 != (CCamera*)0xffffffff) {
-					CCameraManager::PopCamera(CCameraManager::_gThis, (CCamera*)this->field_0x0);
+				if ((this->cameraIndex != -1)) {
+					CCameraManager::_gThis->PopCamera(this->cameraIndex);
 					this->field_0x4 = this->field_0x4 & 0xbfffffff;
 				}
 
@@ -4183,11 +4284,12 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 						pActor = (CActor*)CActorHero::_gThis;
 					}
 
-					CActor::DoMessage(pActor, CActorHero::_gThis, MESSAGE_ENABLE_INPUT, (GetPositionMsgParams*)0x0);
+					pActor->DoMessage(CActorHero::_gThis, MESSAGE_ENABLE_INPUT, (GetPositionMsgParams*)0x0);
 				}
 			}
-		})
+		}
 	}
+
 	return;
 }
 
@@ -4222,6 +4324,30 @@ void S_STREAM_EVENT_CAMERA::SwitchOn(CActor* pActor)
 	return;
 }
 
+
+void S_STREAM_EVENT_CAMERA::SwitchOff(CActor* pActor)
+
+{
+	if ((this->field_0x4 & 0x40000000U) != 0) {
+		if (this->cameraIndex != -1) {
+			CCameraManager::_gThis->PopCamera(this->cameraIndex);
+			this->field_0x4 = this->field_0x4 & 0xbfffffff;
+		}
+
+		if (((this->field_0x4 & 0x40U) != 0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+			if (pActor == (CActor*)0x0) {
+				pActor = (CActor*)CActorHero::_gThis;
+			}
+
+			pActor->DoMessage(CActorHero::_gThis, MESSAGE_ENABLE_INPUT, 0);
+		}
+	}
+
+	return;
+}
+
+
+
 void S_STREAM_EVENT_CAMERA::Reset(CActor* pActor)
 {
 	if ((this->field_0x4 & 0x40000000U) != 0) {
@@ -4250,10 +4376,10 @@ bool CCinematicManagerB::LevelLoading_Manage()
 
 	pCVar1 = g_CinematicManager_0048efc;
 	if (g_CinematicManager_0048efc->pCinematic != (CCinematic*)0x0) {
-		IMPLEMENTATION_GUARD(
 		g_CinematicManager_0048efc->pCinematic->Level_ClearAll();
-		pCVar1->pCinematic->FUN_001c7390(true);)
+		pCVar1->pCinematic->FUN_001c7390(true);
 	}
+
 	return false;
 }
 
@@ -4401,6 +4527,207 @@ CCinematic* CCinematicManager::GetCinematic(int index)
 		pCinematic = this->ppCinematicObjB_A[index];
 	}
 	return pCinematic;
+}
+
+void CCinematicManager::StopAllCutscenes()
+{
+	bool bVar1;
+	CCinematic** ppCVar2;
+	int iVar3;
+	CCinematic* pCinematic;
+
+	iVar3 = this->numCutscenes_0x8;
+	if (iVar3 != 0) {
+		ppCVar2 = this->ppCinematicObjB_A + iVar3;
+		for (; iVar3 != 0; iVar3 = iVar3 + -1) {
+			ppCVar2 = ppCVar2 + -1;
+			pCinematic = *ppCVar2;
+
+			bVar1 = (pCinematic->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+			if (bVar1) {
+				bVar1 = pCinematic->cineBankLoadStage_0x2b4 != 4;
+			}
+
+			if (bVar1) {
+				pCinematic->Load(0);
+			}
+
+			if ((this->pCinematic != pCinematic) && (pCinematic->state != CS_Stopped)) {
+				pCinematic->Stop();
+			}
+		}
+	}
+	return;
+}
+
+bool CCinematicManager::PlayOutroCinematic(int index, CActor* param_3)
+{
+	bool bVar1;
+	CActor* in_a2_lo;
+	int iVar2;
+	int iVar3;
+	CCinematic* pCinematic;
+
+	if ((index < 0) || (this->numCutscenes_0x8 <= index)) {
+		pCinematic = (CCinematic*)0x0;
+	}
+	else {
+		pCinematic = this->ppCinematicObjB_A[index];
+	}
+
+	if (pCinematic != (CCinematic*)0x0) {
+		if (pCinematic->state == CS_Stopped) {
+			bVar1 = (pCinematic->flags_0x4 & 1) != 0;
+			if (bVar1) {
+				bVar1 = (pCinematic->flags_0x8 & 0x400) != 0;
+			}
+
+			if (!bVar1) {
+				bVar1 = (pCinematic->flags_0x8 & 0x28) != 0;
+			}
+
+			bVar1 = (bool)(bVar1 ^ 1);
+			if (!bVar1) {
+				bVar1 = (pCinematic->flags_0x8 & 0x800) != 0;
+			}
+
+			if (bVar1) {
+				pCinematic->pActor = param_3;
+				if ((pCinematic->flags_0x8 & 0x800) == 0) {
+					bVar1 = false;
+					if ((pCinematic->pSwitchListA != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0) &&
+						(pCinematic->pStreamEventCameraA != (S_STREAM_EVENT_CAMERA*)0x0)) {
+						bVar1 = true;
+					}
+
+					if (bVar1) {
+						iVar3 = 0;
+						for (int i = 0; i < pCinematic->pSwitchListA->count; i++) {
+							pCinematic->pSwitchListA->aSwitches[i].Switch((CActor*)0x0);
+						}
+
+						pCinematic->pStreamEventCameraA->SwitchOn((CActor*)0x0);
+
+						for (int i = 0; i < pCinematic->pSwitchListA->count; i++) {
+							pCinematic->pSwitchListA->aSwitches[i].PostSwitch((CActor*)0x0);
+						}
+					}
+				}
+
+				pCinematic->Start();
+			}
+		}
+
+		if (pCinematic->state != CS_Stopped) {
+			this->pCinematic = pCinematic;
+		}
+	}
+
+	return this->pCinematic != (CCinematic*)0x0;
+}
+
+void CCinematicManager::Level_ClearAll()
+{
+	int iVar3;
+
+	if (this->ppCinematicObjB_A != (CCinematic**)0x0) {
+		iVar3 = 0;
+		if (0 < this->numCutscenes_0x8) {
+			do {
+				CCinematic** pCin = this->ppCinematicObjB_A + iVar3;
+				if (this->pCinematic != *pCin) {
+					delete (*pCin);
+				}
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < this->numCutscenes_0x8);
+		}
+
+		delete this->ppCinematicObjB_A;
+		delete this->ppCinematicObjB_B;
+	}
+
+	this->ppCinematicObjB_A = (CCinematic**)0x0;
+	this->numCutscenes_0x8 = 0;
+	this->ppCinematicObjB_B = (CCinematic**)0x0;
+	this->activeCinematicCount = 0;
+	this->pCurCinematic = (CCinematic*)0x0;
+	this->field_0x28 = 0;
+	this->field_0x2c = 0;
+
+	return;
+}
+
+void CCinematicManager::Level_Term()
+{
+	float fVar1;
+	CCinematic* this_00;
+	bool bVar2;
+	CCinematicManager* pCVar3;
+	int iVar4;
+	edF32MATRIX4* peVar5;
+	edF32MATRIX4* peVar6;
+	CCinematic** ppCVar7;
+
+	this->matrix_0x70 = this->pCinematicCamera->transformationMatrix;
+	this->field_0xb0 = this->pCinematicCamera->fov;
+
+	iVar4 = this->numCutscenes_0x8;
+	if (iVar4 != 0) {
+		ppCVar7 = this->ppCinematicObjB_A + iVar4;
+		pCVar3 = g_CinematicManager_0048efc;
+		for (; g_CinematicManager_0048efc = pCVar3, iVar4 != 0; iVar4 = iVar4 + -1) {
+			ppCVar7 = ppCVar7 + -1;
+			this_00 = *ppCVar7;
+
+			if (this->pCinematic == this_00) {
+				this_00->FUN_001caeb0();
+			}
+			else {
+				bVar2 = (this_00->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
+				if ((bVar2) && (bVar2 = true, (this_00->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 != 0.0)) {
+					bVar2 = false;
+				}
+
+				if (bVar2) {
+					pCVar3->pCurCinematic = this_00;
+					this_00->cinematicLoadObject.BWCinSourceAudio_Obj.Stop();
+					pCVar3->pCurCinematic = (CCinematic*)0x0;
+				}
+
+				bVar2 = (this_00->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+				if (bVar2) {
+					bVar2 = this_00->cineBankLoadStage_0x2b4 != 4;
+				}
+
+				if (bVar2) {
+					this_00->Load(0);
+				}
+
+				if (this_00->state != CS_Stopped) {
+					this_00->Stop();
+				}
+
+				this_00->flags_0x8 = this_00->flags_0x8 & 0xfffffffb;
+				this_00->pActor = (CActor*)0x0;
+			}
+
+			pCVar3 = g_CinematicManager_0048efc;
+		}
+	}
+
+	this->pCinematicCamera = (CCameraCinematic*)0x0;
+
+	return;
+}
+
+void CCinematicManager::Level_PreCheckpointReset()
+{
+	return;
+}
+
+void CCinematicManager::Level_CheckpointReset()
+{
+	return;
 }
 
 CBWCinSourceAudio::CBWCinSourceAudio()

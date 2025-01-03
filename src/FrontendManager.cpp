@@ -110,7 +110,7 @@ namespace Frontend {
 
 CFrontendMagicGauge gMagicGauge;
 
-FrontendManager::FrontendManager()
+CFrontendDisplay::CFrontendDisplay()
 {
 	this->pViewport = (ed_viewport*)0x0;
 	//FUN_001dcc10((long)&this->field_0x54);
@@ -126,7 +126,7 @@ FrontendManager::FrontendManager()
 	//this->field_0x78 = (char*)&FLOAT_00456220;
 }
 
-void FrontendManager::Game_Init()
+void CFrontendDisplay::Game_Init()
 {
 	Manager_170* pMVar1;
 	char* soundFileBuffer;
@@ -200,7 +200,7 @@ void FrontendManager::Game_Init()
 	return;
 }
 
-void FrontendManager::SetActive(bool bActive)
+void CFrontendDisplay::SetActive(bool bActive)
 {
 	if ((uint)this->bHideHUD == (bActive & 0xffU)) {
 		this->bHideHUD = bActive == 0;

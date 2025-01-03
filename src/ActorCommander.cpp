@@ -133,6 +133,29 @@ void CActorCommander::Init()
 	return;
 }
 
+void CActorCommander::Term()
+{
+	CTeamElt* pCVar1;
+
+	pCVar1 = this->aTeamElt;
+	if (pCVar1 != (CTeamElt*)0x0) {
+		if (pCVar1 != (CTeamElt*)0x0) {
+			IMPLEMENTATION_GUARD_LOG(); // VECTOR?
+			delete pCVar1;
+		}
+
+		this->aTeamElt = (CTeamElt*)0x0;
+	}
+
+	this->nbTeams = 0;
+
+	this->squad.Term();
+
+	CActor::Term();
+
+	return;
+}
+
 void CActorCommander::Manage()
 {
 	int iVar1;
@@ -777,6 +800,11 @@ void CSquad::Create(ByteCode* pByteCode)
 	memset(this->aSubObjs[1].field_0x10, 0, sizeof(this->aSubObjs[1].field_0x10));
 
 	return;
+}
+
+void CSquad::Term()
+{
+	IMPLEMENTATION_GUARD_LOG();
 }
 
 void CSquad::Clear()

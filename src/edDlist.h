@@ -134,6 +134,8 @@ uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4
 
 void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g2d_manager* textureInfoObj, uint mode);
 bool edDListTermMaterial(edDList_material* pMaterial);
+
+void edDListDeleteFrameBufferMaterial(edDList_material* pMaterial);
 edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, int mode);
 
 #ifdef PLATFORM_WIN

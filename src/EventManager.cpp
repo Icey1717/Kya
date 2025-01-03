@@ -561,11 +561,10 @@ CEventManager::CEventManager()
 void CEventManager::Level_Term()
 {
 	if (this->activeChunkId != -1) {
-		IMPLEMENTATION_GUARD(
 		edEventClearMessageQueue();
 		edEventRemoveChunk(this->activeChunkId);
 		this->activeChunkId = -1;
-		this->field_0x4 = 0;)
+		this->nbEvents = 0;
 	}
 	return;
 }
@@ -854,9 +853,60 @@ void _edEventInitChunk(ed_event_chunk* pEventChunk)
 	return;
 }
 
+static void _edEventUninstallGameData(ed_event_chunk* pEventChunk)
+{
+	_edCluster* p_Var1;
+	uint uVar2;
+	ed_event_alloc_10* peVar3;
+	uint uVar4;
+
+	if (pEventChunk->count_0x38 != 0) {
+		peVar3 = pEventChunk->field_0x3c;
+
+		uVar4 = 0;
+		if (pEventChunk->count_0x38 != 0) {
+			do {
+				p_Var1 = peVar3->aClusters;
+				uVar2 = 0;
+				if (peVar3->clusterCount != 0) {
+					do {
+						IMPLEMENTATION_GUARD(
+						edClusterRemoveNode(p_Var1, peVar3->field_0x8, p_Var1->field_0x30);)
+						uVar2 = uVar2 + 1;
+						p_Var1 = p_Var1 + 1;
+					} while (uVar2 < peVar3->clusterCount);
+				}
+
+				edMemFree(peVar3->aClusters);
+				uVar4 = uVar4 + 1;
+				peVar3 = peVar3 + 1;
+			} while (uVar4 < pEventChunk->count_0x38);
+		}
+
+		edMemFree(pEventChunk->field_0x3c);
+	}
+
+	return;
+}
+
+static void _edEventUninstallChunk(ed_event_chunk* pEventChunk)
+{
+	_edEventUninstallGameData(pEventChunk);
+	return;
+}
+
 void edEventInitChunk(int eventChunkID)
 {
 	_edEventInitChunk(pedEventChunks[eventChunkID]);
+	return;
+}
+
+void edEventRemoveChunk(int eventChunkID)
+{
+	ed_event_chunk* pEventChunk = pedEventChunks[eventChunkID];
+	_edEventUninstallChunk(pEventChunk);
+	pedEventChunks[eventChunkID] = (ed_event_chunk*)0x0;
+	edMemFree(pEventChunk);
 	return;
 }
 

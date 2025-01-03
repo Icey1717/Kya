@@ -35,7 +35,7 @@ edFCamera CCameraManager::_gFrontEndCamera = { 0 };
 CCameraManager::CCameraManager()
 {
 	_gThis = this;
-	this->field_0xa7c = 0;
+	this->cheatIdleCameraActive = 0;
 	Level_ClearInternalData();
 	return;
 }
@@ -636,7 +636,7 @@ void CCameraManager::Level_Init(bool bProcessEvents)
 	}
 	this->field_0x480.field_0x20 = 0;
 	(this->transformationMatrix).rowT = gF32Vertex4Zero;
-	(this->shadowCameraLookat) = gF32Vertex4Zero;
+	(this->activeCameraLookAt) = gF32Vertex4Zero;
 	this->fov_0xa34 = 0.84f;
 	edF32Matrix4SetIdentityHard(&this->matrix_0x10);
 	this->activeCamManager.ClearActiveCam();
@@ -695,6 +695,11 @@ void CCameraManager::Level_Init()
 	Level_Init(true);
 }
 
+void CCameraManager::Level_Term()
+{
+	return;
+}
+
 void CCameraManager::Level_AddAll(ByteCode* pByteCode)
 {
 	int iVar1;
@@ -714,6 +719,24 @@ void CCameraManager::Level_AddAll(ByteCode* pByteCode)
 		} while (iVar1 < this->count_0x9f4);
 	}
 
+	return;
+}
+
+void CCameraManager::Level_ClearAll()
+{
+	CCamera* pCVar1;
+	CCamera* pCVar2;
+
+	pCVar2 = this->pInitialView_0x4b4;
+	do {
+		if (pCVar2 != (CCamera*)0x0) {
+			pCVar1 = pCVar2->pNextCameraView_0xa4;
+			delete pCVar2;
+			pCVar2 = pCVar1;
+		}
+	} while (pCVar2 != (CCamera*)0x0);
+
+	Level_ClearInternalData();
 	return;
 }
 
@@ -741,46 +764,48 @@ void CCameraManager::Level_SectorChange(int oldSectorId, int newSectorId)
 
 void CCameraManager::KeepSameParam(CCamera* pNewCamera, uint flag)
 {
-	bool bVar1;
-	edF32VECTOR4 eStack32;
-	edF32VECTOR3 local_10;
-
 	if (this->pActiveCamera != (CCamera*)0x0) {
 		if ((flag & 8) != 0) {
 			pNewCamera->fov = this->fov_0xa34;
 		}
+
 		if ((flag & 4) != 0) {
 			pNewCamera->SetDistance(this->distance_0xa30);
 		}
+
 		if ((flag & 1) != 0) {
 			(pNewCamera->transformationMatrix).rowT = (this->transformationMatrix).rowT;
 		}
+
 		if ((flag & 2) != 0) {
-			pNewCamera->lookAt = this->shadowCameraLookat;
+			pNewCamera->lookAt = this->activeCameraLookAt;
 		}
+
 		if ((flag & 0x70) != 0) {
-			local_10.x = (this->angle_0xa08).x;
-			local_10.y = (this->angle_0xa08).y;
-			local_10.z = (this->angle_0xa08).z;
-			bVar1 = pNewCamera->IsKindOfObject(0x40);
-			if (bVar1 == false) {
-				SetVectorFromAngles(&eStack32, &local_10);
-				edF32Vector4SubHard(&eStack32, &this->shadowCameraLookat, &transformationMatrix.rowT);
-				edF32Vector4NormalizeHard(&eStack32, &eStack32);
+			edF32VECTOR3 local_10 = this->angle_0xa08;
+
+			if (pNewCamera->IsKindOfObject(0x40) == false) {
+				edF32VECTOR4 newDirection;
+				SetVectorFromAngles(&newDirection, &local_10);
+				edF32Vector4SubHard(&newDirection, &this->activeCameraLookAt, &transformationMatrix.rowT);
+				edF32Vector4NormalizeHard(&newDirection, &newDirection);
 			}
 			else {
 				if ((flag & 0x10) != 0) {
 					pNewCamera->SetAngleAlpha(local_10.x);
 				}
+
 				if ((flag & 0x20) != 0) {
 					pNewCamera->SetAngleBeta(local_10.y);
 				}
+
 				if ((flag & 0x40) != 0) {
 					pNewCamera->SetAngleGamma(local_10.z);
 				}
 			}
 		}
 	}
+
 	return;
 }
 
@@ -994,7 +1019,7 @@ void CCameraManager::BuildDisplayMatrix()
 
 	edF32Matrix4GetInverseOrthoHard(&this->worldToCamera_0x3d0, &this->transMatrix_0x390);
 	_gDisplayCamera.position = (this->displayTransformMatrix).rowT;
-	_gDisplayCamera.lookAt = this->shadowCameraLookat;
+	_gDisplayCamera.lookAt = this->activeCameraLookAt;
 	_gDisplayCamera.rotationZ = 0.0;
 
 	edF32Vector4ScaleHard(-1.0f, &_gDisplayCamera.transformMatrix.rowX, &this->displayTransformMatrix.rowX);
@@ -1092,7 +1117,7 @@ void CCameraManager::Level_Manage()
 				pCVar1 = (CCameraShadow*)this->pActiveCamera;
 				if (pCVar1 != (CCameraShadow*)0x0) {
 					(this->transformationMatrix).rowT = pCVar1->transformationMatrix.rowT;
-					(this->shadowCameraLookat) = pCVar1->lookAt;
+					(this->activeCameraLookAt) = pCVar1->lookAt;
 
 					/* Focus object camera? */
 					this->distance_0xa30 = pActiveCamera->GetDistance();
@@ -1128,7 +1153,7 @@ void CCameraManager::Level_Manage()
 
 				if ((this->activeCamManager).activeIndex != -1) {
 					ActiveCamManagerEntry* pEntry = this->activeCamManager.GetState();
-					this->shadowCameraLookat = pEntry->props.lookAt;
+					this->activeCameraLookAt = pEntry->props.lookAt;
 
 					(this->transformationMatrix).rowT = pEntry->props.location;
 
@@ -1173,9 +1198,134 @@ void CCameraManager::Level_Manage()
 	return;
 }
 
+void CCameraManager::Level_ManagePaused()
+{
+	Level_Manage();
+
+	return;
+}
+
+void CCameraManager::Level_Draw()
+{
+	CCameraShadow** pCVar1;
+	uint uVar2;
+
+	if ((GameFlags & 0x200) == 0) {
+		if (this->pActiveCamera != (CCamera*)0x0) {
+			pActiveCamera->Draw();
+		}
+
+		uVar2 = 0;
+		pCVar1 = this->aCameraShadow;
+		if (this->field_0xa04 != 0) {
+			do {
+				if (*pCVar1 != (CCameraShadow*)0x0) {
+					(*pCVar1)->Draw();
+				}
+
+				uVar2 = uVar2 + 1;
+				pCVar1 = pCVar1 + 1;
+			} while (uVar2 < this->field_0xa04);
+		}
+	}
+
+	return;
+}
+
+void CCameraManager::Level_Reset()
+{
+	CCamera* pCVar1;
+	bool bVar2;
+	ECameraType EVar3;
+	int iVar4;
+
+	pCVar1 = this->pInitialView_0x4b4;
+	do {
+		if ((pCVar1->flags_0xc & 2) != 0) {
+			pCVar1->ResetEvent();
+		}
+		pCVar1 = pCVar1->pNextCameraView_0xa4;
+	} while (pCVar1 != (CCamera*)0x0);
+
+	this->cameraStack.Reset();
+
+	this->activeCamManager.ClearActiveCam();
+
+	this->flags = this->flags & 0xebffffff;
+
+	for (pCVar1 = this->pInitialView_0x4b4;
+		(pCVar1 != (CCamera*)0x0 &&	((pCVar1->GetMode() != CT_MouseQuake || (pCVar1->field_0x8 != -0x9f)))); pCVar1 = pCVar1->pNextCameraView_0xa4) {
+	}
+
+	if (pCVar1 != (CCamera*)0x0) {
+		this->cameraStack.SetMainCamera(pCVar1);
+		this->activeCamManager.SetActiveCam(pCVar1);
+		bVar2 = this->activeCamManager.SwitchActiveCam(0.0f, pCVar1, SWITCH_MODE_B);
+		if ((bVar2 == false) && (pCVar1 != (CCamera*)0x0)) {
+			if (pCVar1->GetMode() == CT_ShadowSun) {
+				CCameraShadow* pCameraShadow = static_cast<CCameraShadow*>(pCVar1);
+				this->pActiveCamera = pCVar1;
+				pCameraShadow->sceneIndex = -1;
+				pCameraShadow->sceneFlags = 0;
+			}
+			else {
+				this->pActiveCamera = pCVar1;
+			}
+		}
+
+		this->flags = this->flags & 0xfbffffff;
+	}
+
+	(this->field_0x480).field_0x20 = 0;
+
+	if (this->pActiveCamera != (CCamera*)0x0) {
+		this->pActiveCamera->Reset();
+		this->pActiveCamera->AlertCamera(2, 1, (CCamera*)0x0);
+	}
+
+	iVar4 = 0;
+	do {
+		this->aCameraShadow[iVar4]->SetTarget((CActor*)0x0);
+		iVar4 = iVar4 + 1;
+	} while (iVar4 < 10);
+
+	return;
+}
+
+void CCameraManager::Level_CheckpointReset()
+{
+	CCamera* piVar1;
+	int iVar2;
+
+	iVar2 = 0;
+	if (0 < (this->cameraStack).stackSize + 1) {
+		do {
+			piVar1 = this->cameraStack.aCameras[iVar2].pCamera;
+			if (piVar1 != (CCamera*)0x0) {
+				piVar1->AlertCamera(0, 0, (CCamera*)0x0);
+				piVar1->AlertCamera(1, 1, (CCamera*)0x0);
+			}
+			iVar2 = iVar2 + 1;
+		} while (iVar2 < (this->cameraStack).stackSize + 1);
+	}
+
+	Level_Reset();
+
+	return;
+}
+
 void CCameraManager::LevelLoading_Begin()
 {
 	Level_Init(false);
+
+	return;
+}
+
+void CCameraManager::LevelLoading_End()
+{
+	Level_Term();
+	Level_ClearAll();
+
 	return;
 }
 
@@ -1924,7 +2074,7 @@ void CCameraManager::ApplyActiveCamera()
 	if (pCVar1 != (CCamera*)0x0) {
 
 		(this->transformationMatrix).rowT = (pCVar1->transformationMatrix).rowT;
-		this->shadowCameraLookat = pCVar1->lookAt;
+		this->activeCameraLookAt = pCVar1->lookAt;
 		
 		this->distance_0xa30 = this->pActiveCamera->GetDistance();
 		this->fov_0xa34 = this->pActiveCamera->fov;

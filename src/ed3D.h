@@ -604,6 +604,8 @@ edNODE* ed3DHierarchyAddToScene(ed_3D_Scene* pScene, ed_g3d_manager* pG3D, char*
 edNODE* ed3DHierarchyAddToSceneByHashcode(ed_3D_Scene* pStaticMeshMaster, ed_g3d_manager* pMeshInfo, ulong hash);
 edNODE* ed3DHierarchyRefreshSonNumbers(edNODE* pMeshTransformParent, short* outMeshCount);
 
+void ed3DRunTimeStripBufferReset(void);
+
 void ed3DLinkG2DToG3D(ed_g3d_manager* pMeshInfo, ed_g2d_manager* pTextureInfo);
 
 PACK(

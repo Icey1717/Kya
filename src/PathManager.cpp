@@ -19,6 +19,11 @@ void CPathManager::Level_Init()
 	}
 }
 
+void CPathManager::Level_Term()
+{
+	return;
+}
+
 void CPathManager::Level_AddAll(ByteCode* pByteCode)
 {
 	uint count;
@@ -62,5 +67,20 @@ void CPathManager::Level_ClearAll()
 	this->pathFollowCount = 0;
 	this->pBasicPathFinder = (CBasicPathFinder*)0x0;
 
+	return;
+}
+
+void CPathManager::Level_Manage()
+{
+	return;
+}
+
+void CPathManager::Level_ManagePaused()
+{
+	return;
+}
+
+void CPathManager::Level_Draw()
+{
 	return;
 }

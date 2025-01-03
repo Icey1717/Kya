@@ -69,6 +69,7 @@ public:
 
 	void FUN_00199b80();
 	void ManageEvents();
+	void ResetEvent();
 
 	static CCameraManager* _gpcam_man;
 
@@ -80,7 +81,7 @@ public:
 	CActor* pOtherTarget;
 	float fov;
 	SpecificCondition specCondition;
-	int field_0x7c;
+	uint field_0x7c;
 
 	S_STREAM_REF<ed_zone_3d> field_0x80;
 	S_ACTOR_STREAM_REF* field_0x84;

@@ -105,7 +105,10 @@ void CActorDCA::Init()
 
 void CActorDCA::Term()
 {
-	IMPLEMENTATION_GUARD();
+	this->pAnimationController->UnRegisterBone(this->field_0x450);
+	CActor::Term();
+
+	return;
 }
 
 void CActorDCA::Reset()

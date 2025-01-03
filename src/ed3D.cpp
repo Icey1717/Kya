@@ -11699,6 +11699,12 @@ edNODE* ed3DHierarchyRefreshSonNumbers(edNODE* pInNode, short* outMeshCount)
 	return pOutNode;
 }
 
+void ed3DRunTimeStripBufferReset(void)
+{
+	g_pStrippBufLastPos = g_pStripBufResetPos;
+	return;
+}
+
 bool CHierarchyAnm::UpdateMatrix(float param_1, edF32MATRIX4* pMatrix, S_HIERANM_ANIM* pHierAnim, int param_5)
 {
 	int iVar1;

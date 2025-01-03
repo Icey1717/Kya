@@ -18,6 +18,72 @@ C3DFileManager::C3DFileManager()
 	return;
 }
 
+void C3DFileManager::Level_Term()
+{
+	int iVar1;
+	int iVar2;
+	int iVar3;
+	undefined4* puVar4;
+	ed_g2d_manager* pTextureInfo;
+	ParticleInfo* pPVar5;
+
+	if (this->pLastMeshTransformParent != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pLastMeshTransformParent);
+		this->pLastMeshTransformParent = (edNODE*)0x0;
+	}
+
+	if (this->pMeshInfo != (ed_g3d_manager*)0x0) {
+		ed3DScenePopCluster(CScene::_scene_handleA, this->pMeshInfo);
+		this->pMeshInfo = (ed_g3d_manager*)0x0;
+	}
+
+	if (this->pBackgroundNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pBackgroundNode);
+		this->pBackgroundNode = (edNODE*)0x0;
+	}
+
+	iVar1 = 0;
+	if (0 < this->meshCount) {
+		do {
+			if (this->aCommonLevelMeshes[iVar1].pTextureInfo != (TextureInfo*)0x0) {
+				ed3DUnInstallG3D(&this->aCommonLevelMeshes[iVar1].meshInfo);
+				this->aCommonLevelMeshes[iVar1].pTextureInfo = (TextureInfo*)0x0;
+				this->aCommonLevelMeshes[iVar1].pFileData = (char*)0x0;
+			}
+
+			iVar1 = iVar1 + 1;
+		} while (iVar1 < this->meshCount);
+	}
+
+	pPVar5 = this->pParticleInfoArray_0x50;
+	for (iVar1 = 0; (pPVar5->ID != -1 && (iVar1 < this->textureCount)); iVar1 = iVar1 + 1) {
+		iVar3 = 0;
+		if (0 < pPVar5->materialCount_0x4) {
+			do {
+				edDListTermMaterial(&pPVar5->materialInfoArray_0x8[iVar3]);
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < pPVar5->materialCount_0x4);
+		}
+
+		pPVar5->materialInfoArray_0x8 = (edDList_material*)0x0;
+		pPVar5 = pPVar5 + 1;
+	}
+
+	iVar1 = 0;
+	if (0 < this->textureCount) {
+		do {
+			if (this->aCommonLevelTextures[iVar1].pFileBuffer != (char*)0x0) {
+				ed3DUnInstallG2D(&this->aCommonLevelTextures[iVar1].manager);
+				this->aCommonLevelTextures[iVar1].pFileBuffer = (char*)0x0;
+			}
+
+			iVar1 = iVar1 + 1;
+		} while (iVar1 < this->textureCount);
+	}
+
+	return;
+}
+
 void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 {
 	int iVar1;
@@ -73,6 +139,30 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 		if (this->pBackgroundNode != (edNODE*)0x0) {
 			SetupBackground(this->pBackgroundNode);
 		}
+	}
+
+	return;
+}
+
+void C3DFileManager::Level_ClearAll()
+{
+	delete[] this->aCommonLevelMeshes;
+	delete[] this->aCommonLevelTextures;
+
+	Level_ClearInternalData();
+
+	return;
+}
+
+void C3DFileManager::Level_Manage()
+{
+	ManageBackground(this->pBackgroundNode, CScene::_pinstance->field_0x18);
+}
+
+void C3DFileManager::Level_ManagePaused()
+{
+	if ((GameFlags & 0x200) == 0) {
+		Level_Manage();
 	}
 
 	return;

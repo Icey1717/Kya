@@ -36,7 +36,7 @@ void Debug::FrameBuffer::ShowNativeFrameBuffer(bool* bOpen) {
 	}
 	else {
 		auto windowSize = SetupGameFramebuffer();
-		ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground);
+		ImGui::Begin("NativeFrameBuffer", bOpen, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoNav);
 		ImGui::Image(gFrameBuffer, windowSize);
 	}
 

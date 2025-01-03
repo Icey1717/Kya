@@ -3,35 +3,41 @@
 
 #include "Types.h"
 #include "edMem.h"
+#include "edDlist.h"
 
 class CObjectManager
 {
 public:
-	virtual void Game_Init() {};
-	virtual void Game_Term() {};
+	virtual void Game_Init() {}
+	virtual void Game_Term() {}
 
-	virtual void LevelLoading_Begin() {};
-	virtual void LevelLoading_End() {};
+	virtual void LevelLoading_Begin() {}
+	virtual void LevelLoading_End() {}
 	virtual bool LevelLoading_Manage() { return false; }
-	virtual void LevelLoading_Draw() {};
+	virtual void LevelLoading_Draw() {}
 
-	virtual void Level_Install() {};
-	virtual void Level_Init() {};
-	virtual void Level_Term() {};
-	virtual void Level_AddAll(struct ByteCode* pByteCode) {};
+	virtual void Level_Install() {}
+	virtual void Level_Init() {}
+	virtual void Level_Term() {}
+	virtual void Level_AddAll(struct ByteCode* pByteCode) {}
 	virtual void Level_ClearAll() {}
-	virtual void Level_Manage() {};
-	virtual void Level_ManagePaused() {};
-	virtual void Level_Draw() {};
 
-	virtual void Level_PreReset() {};
-	virtual void Level_Reset() {};
+	virtual void Level_Manage() {}
+	virtual void Level_ManagePaused() {}
+	virtual void Level_Draw() {}
 
-	virtual void Level_PreCheckpointReset() {};
-	virtual void Level_CheckpointReset() {};
+	virtual void Level_PreReset() {}
+	virtual void Level_Reset() {}
 
+	virtual void Level_PreCheckpointReset() {}
+	virtual void Level_CheckpointReset() {}
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
+
+	virtual void Level_PauseChange() {}
+
+	virtual void Level_SaveContext() {}
+	virtual void Level_LoadContext() {}
 
 	void* operator new(size_t size)
 	{
@@ -55,9 +61,9 @@ union ManagerContainer {
 		struct CCinematicManagerB* g_CinematicManagerB_0045166c;
 		struct CSectorManager* g_SectorManager_00451670;
 		struct Manager_170* g_Manager170_00451674;
-		struct LocalizationManager* g_LocalizationManager_00451678;
+		struct CLocalizationManager* g_LocalizationManager_00451678;
 		struct CCameraManager* g_CameraManager_0045167c;
-		struct FrontendManager* g_FrontendManager_00451680;
+		struct CFrontendDisplay* g_FrontendManager_00451680;
 		struct HelpManager* g_HelpManager_00451684;
 		struct CPauseManager* g_PauseManager_00451688;
 		struct MapManager* g_MapManager_0045168c;
@@ -251,22 +257,7 @@ public:
 	short mode_0xf8;
 	undefined field_0xfa;
 	undefined field_0xfb;
-	undefined field_0xfc;
-	undefined field_0xfd;
-	undefined field_0xfe;
-	undefined field_0xff;
-	undefined field_0x100;
-	undefined field_0x101;
-	undefined field_0x102;
-	undefined field_0x103;
-	undefined field_0x104;
-	undefined field_0x105;
-	undefined field_0x106;
-	undefined field_0x107;
-	undefined field_0x108;
-	undefined field_0x109;
-	undefined field_0x10a;
-	undefined field_0x10b;
+	edDList_material field_0xfc;
 	int field_0x10c;
 	int field_0x110;
 	undefined4 field_0x114;
@@ -280,11 +271,11 @@ public:
 
 public:
 	void Level_Setup(struct ByteCode* pMemoryStream);
-	bool CheckFunc_001b9300(void);
+	bool IsFadeTermActive(void);
 
 	void LoadFunc_001b87b0(void);
 
-	void FUN_001b9350(bool param_2);
+	void SetFadeStateTerm(bool bFadeOut);
 
 	void HandleFogAndClippingSettings();
 
@@ -301,6 +292,8 @@ public:
 
 	void Level_CheckpointReset(void);
 	void Level_Reset(void);
+
+	void Level_Term(void);
 
 	void Level_SectorChange(int oldSectorId, int newSectorId);
 
@@ -335,6 +328,9 @@ extern uint gMipmapL;
 extern ed_3D_Scene* g_CameraPanStaticMasterArray_00451630[10];
 
 #define GAME_STATE_PAUSED 0x20
+#define GAME_CUTSCENE_100 0x100
+#define GAME_CUTSCENE_80 0x80
+#define GAME_REQUEST_TERM 0x2
 
 extern uint GameFlags;
 

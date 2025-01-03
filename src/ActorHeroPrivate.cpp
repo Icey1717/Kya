@@ -2830,6 +2830,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		})
 		return 0;
 	}
+
 	if (msg == 0x7d) {
 		IMPLEMENTATION_GUARD(
 		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
@@ -2846,6 +2847,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		})
 		return 0;
 	}
+
 	if (msg == MESSAGE_GET_BONE_ID) {
 		uint boneType = reinterpret_cast<uint>(pMsgParam);
 		switch (boneType) {

@@ -976,6 +976,53 @@ float CCollisionManager::GetWallNormalYLimit(s_collision_contact* pContact)
 	return _material_table[uVar1].field_0x8;
 }
 
+void CCollisionManager::Level_ClearAll()
+{
+	edObbTREE_DYN** pCVar1;
+	int iVar2;
+
+	edColTerm();
+
+	if (this->pDynColHeap != (DynColEntry*)0x0) {
+		edMemFree(this->pDynColHeap);
+	}
+
+	if (this->pBankCollisionData != (BankCollision_14*)0x0) {
+		delete this->pBankCollisionData;
+	}
+
+	if (this->pCollisionDataArray != (CCollision*)0x0) {
+		delete[] this->pCollisionDataArray;
+	}
+
+	this->bankCollisionCount = 0;
+	this->loadedBankCount_0x8 = 0;
+	iVar2 = 0;
+	this->pBankCollisionData = (BankCollision_14*)0x0;
+	this->pCollisionDataArray = (CCollision*)0x0;
+	this->inUseCollisionDataCount = 0;
+	this->totalCollisionCount = 0;
+	this->pDynColHeap = (DynColEntry*)0x0;
+
+	pCVar1 = this->aStaticCollisionRefs;
+	do {
+		pCVar1[0] = (edObbTREE_DYN*)0x0;
+		pCVar1[1] = (edObbTREE_DYN*)0x0;
+		pCVar1[2] = (edObbTREE_DYN*)0x0;
+		pCVar1[3] = (edObbTREE_DYN*)0x0;
+		pCVar1[4] = (edObbTREE_DYN*)0x0;
+		pCVar1[5] = (edObbTREE_DYN*)0x0;
+		pCVar1[6] = (edObbTREE_DYN*)0x0;
+		pCVar1[7] = (edObbTREE_DYN*)0x0;
+		iVar2 = iVar2 + 8;
+		pCVar1 = pCVar1 + 8;
+	} while (iVar2 < 0x10);
+
+	this->staticCollisionCount = 0;
+
+	return;
+}
+
 float CCollisionManager::GetGroundSpeedDecreaseNormalYLimit(s_collision_contact* pContact)
 
 {

@@ -869,6 +869,7 @@ void CSectorManager::Level_Init()
 			{
 				CScene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar4 + 0xc));
 			}
+
 			if ((iVar2 != -1) && (puVar4 = pSVar5->subObjArray[iVar2].pFileData, puVar4 != (undefined*)0x0)) {
 				CScene::_pinstance->PushFogAndClippingSettings(*(float*)(puVar4 + 0x1c), (S_STREAM_FOG_DEF*)(puVar4 + 0xc));
 			}
@@ -876,6 +877,68 @@ void CSectorManager::Level_Init()
 		(this->baseSector).sectID = iVar2;
 		this->field_0x36c = iVar1;
 	}
+	return;
+}
+
+void CSectorManager::Level_Term()
+{
+	undefined* puVar1;
+	edCBankBufferEntry* peVar2;
+	bool bBankIsLoaded;
+	bool bVar4;
+	int iVar5;
+	int iVar6;
+	CSector* pSector;
+
+	iVar6 = this->field_0x36c;
+	iVar5 = (this->baseSector).sectID;
+	if ((iVar5 != -1) || (iVar6 == 0)) {
+		if ((iVar5 != -1) && ((iVar5 != -1 && (puVar1 = (CScene::ptable.g_SectorManager_00451670)->subObjArray[iVar5].pFileData, puVar1 != (undefined*)0x0)))) {
+			CScene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar1 + 0xc));
+		}
+
+		(this->baseSector).sectID = -1;
+		this->field_0x36c = iVar6;
+	}
+
+	if ((this->baseSector).loadStage_0x8 != 0) {
+		peVar2 = (this->baseSector).bankObject.pBankFileAccessObject;
+		bBankIsLoaded = false;
+		if ((peVar2 != (edCBankBufferEntry*)0x0) && (bVar4 = peVar2->is_loaded(), bVar4 != false)) {
+			bBankIsLoaded = true;
+		}
+
+		if (!bBankIsLoaded) {
+			(this->baseSector).bankObject.pBankFileAccessObject->wait();
+		}
+
+		this->baseSector.Flush();
+		(this->baseSector).loadStage_0x8 = 0;
+	}
+
+	iVar6 = 0;
+	if (0 < this->nbSectors) {
+		do {
+			pSector = this->aSectors + iVar6;
+			if (pSector->loadStage_0x8 != 0) {
+				peVar2 = (pSector->bankObject).pBankFileAccessObject;
+				bBankIsLoaded = false;
+				if ((peVar2 != (edCBankBufferEntry*)0x0) && (bVar4 = peVar2->is_loaded(), bVar4 != false)) {
+					bBankIsLoaded = true;
+				}
+
+				if (!bBankIsLoaded) {
+					(pSector->bankObject).pBankFileAccessObject->wait();
+				}
+
+				pSector->Flush();
+				pSector->loadStage_0x8 = 0;
+			}
+
+			iVar6 = iVar6 + 1;
+		} while (iVar6 < this->nbSectors);
+	}
+
 	return;
 }
 
@@ -917,6 +980,43 @@ void CSectorManager::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
+void CSectorManager::Level_ClearAll()
+{
+	int curSectorIndex;
+	edCBankBufferEntry* pBank;
+
+	pBank = (this->baseSector).bankObject.pBankFileAccessObject;
+	if (pBank != (edCBankBufferEntry*)0x0) {
+		pBank->close();
+		(this->baseSector).bankObject.pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+	}
+
+	(this->baseSector).bankObject.terminate();
+
+	if (this->aSectors != (CSector*)0x0) {
+		curSectorIndex = 0;
+		if (0 < this->nbSectors) {
+			do {
+				CSector* pSector = this->aSectors + curSectorIndex;
+				if (pSector->bankObject.pBankFileAccessObject != (edCBankBufferEntry*)0x0) {
+					pSector->bankObject.pBankFileAccessObject->close();
+					pSector->bankObject.pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+				}
+
+				pSector->bankObject.terminate();
+				curSectorIndex = curSectorIndex + 1;
+			} while (curSectorIndex < this->nbSectors);
+		}
+		
+		delete[] this->aSectors;
+		this->aSectors = (CSector*)0x0;
+	}
+
+	Level_ClearInternalData();
+
+	return;
+}
+
 void CSectorManager::Level_Manage()
 {
 	CSector* pSector;
@@ -941,6 +1041,48 @@ void CSectorManager::Level_Manage()
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < this->nbSectors);
 	}
+	return;
+}
+
+void CSectorManager::Level_ManagePaused()
+{
+	if ((GameFlags & 0x200) == 0) {
+		Level_Manage();
+	}
+
+	return;
+}
+
+void CSectorManager::Level_Draw()
+{
+	return;
+}
+
+void CSectorManager::Level_Reset()
+{
+	int iVar1;
+	int iVar2;
+	undefined* puVar3;
+	CSectorManager* pCVar4;
+
+	pCVar4 = CScene::ptable.g_SectorManager_00451670;
+
+	iVar1 = (this->baseSector).sectID;
+	iVar2 = CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].sectorStartIndex;
+	if (iVar1 != iVar2) {
+		if ((iVar1 != -1) &&
+			(puVar3 = (CScene::ptable.g_SectorManager_00451670)->subObjArray[iVar1].pFileData, puVar3 != (undefined*)0x0)) {
+			CScene::_pinstance->PopFogAndClippingSettings((S_STREAM_FOG_DEF*)(puVar3 + 0xc));
+		}
+
+		if ((iVar2 != -1) && (puVar3 = pCVar4->subObjArray[iVar2].pFileData, puVar3 != (undefined*)0x0)) {
+			CScene::_pinstance->PushFogAndClippingSettings(*(float*)(puVar3 + 0x1c), (S_STREAM_FOG_DEF*)(puVar3 + 0xc));
+		}
+	}
+
+	(this->baseSector).sectID = iVar2;
+	this->field_0x36c = 0;
+
 	return;
 }
 

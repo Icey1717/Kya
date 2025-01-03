@@ -16,7 +16,7 @@
 #endif
 #include "InputManager.h"
 #include "LevelScheduleManager.h"
-#include "Iop.h"
+#include "CompatibilityHandlingPS2.h"
 
 bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulong msgD)
 {
@@ -241,7 +241,8 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 			fVar13 = fVar13 + 20.0;
 			pNewFont = edTextStyleGetCurrent();
 			edTextStyleSetCurrent(&local_c0);
-			bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+
+			bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
 			if (bVar1 == false) {
 				pcVar4 = gMessageManager.get_message(msgA);
 				edTextDraw(x, fVar13, pcVar4);

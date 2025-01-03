@@ -86,12 +86,19 @@ class CActorManager : public CObjectManager {
 public:
 	CActorManager();
 	virtual void Level_Init();
+	virtual void Level_Term();
 	virtual void Level_AddAll(struct ByteCode* pMemoryStream);
+	virtual void Level_ClearAll();
 	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
 	virtual void Level_Draw();
-	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+	virtual void Level_PreReset();
+	virtual void Level_Reset();
 	virtual void Level_PreCheckpointReset();
 	virtual void Level_CheckpointReset();
+	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+	virtual void Level_PauseChange();
+	virtual void Level_SaveContext();
 
 	void Level_ClearInternalData();
 

@@ -124,6 +124,7 @@ public:
 
 struct WeaponGlobal
 {
+	void Term();
 	int field_0x0;
 	int field_0x4;
 };

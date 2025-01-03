@@ -443,10 +443,27 @@ void CBehaviourSwitchMagic::Begin(CActor* pOwner, int newState, int newAnimation
 	return;
 }
 
+void CBehaviourSwitchMagic::End(int newBehaviourId)
+{
+	this->pStreamEventCamera->Reset(this->pOwner);
+	ChangeManageState(0);
+
+	return;
+}
+
 void CBehaviourSwitchMagic::InitState(int newState)
 {
 	if (newState == 6) {
 		this->pStreamEventCamera->SwitchOn(this->pOwner);
+	}
+
+	return;
+}
+
+void CBehaviourSwitchMagic::TermState(int oldState, int newState)
+{
+	if (oldState == 6) {
+		this->pStreamEventCamera->SwitchOff(this->pOwner);
 	}
 
 	return;
@@ -918,6 +935,16 @@ void CBehaviourSwitchLever::InitState(int newState)
 		if (newState == 6) {
 			this->pActor->pAnimationController->RegisterBone(0x414dad8d);
 		}
+	}
+
+	return;
+}
+
+void CBehaviourSwitchLever::TermState(int oldState, int newState)
+{
+	if (oldState == 6) {
+		this->pActor->pAnimationController->UnRegisterBone(0x414dad8d);
+		this->pActor = (CActor*)0x0;
 	}
 
 	return;

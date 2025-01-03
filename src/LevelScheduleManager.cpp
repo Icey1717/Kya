@@ -177,7 +177,7 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 	undefined* puVar1;
 	int iVar2;
 	uint uVar3;
-	S_LEVEL_INFO* pcVar3;
+	S_LEVEL_INFO* pLevelInfo;
 	CChunk* pCVar2;
 
 	if (aLevelInfo[levelID].levelName[0] == '\0') {
@@ -185,24 +185,25 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 		elevatorID = -1;
 	}
 	nextLevelID = levelID;
-	level_0x5b3c = -1;
+	outroCutsceneId = -1;
 	nextElevatorID = elevatorID;
-	pcVar3 = &aLevelInfo[levelID];
-	baseSectorIndex = pcVar3->sectorStartIndex;
+	pLevelInfo = &aLevelInfo[levelID];
+
+	baseSectorIndex = pLevelInfo->sectorStartIndex;
 	currentElevatorID = -1;
 	level_0x5b50 = 0x10;
 	level_0x5b54 = -1;
 	if (field_0x78 == 0) {
 		// Check maxElevatorID_0xa8 and field_0xf4
 		iVar2 = nextElevatorID;
-		if (((iVar2 != -1) && (-1 < iVar2)) && (iVar2 < pcVar3->maxElevatorID_0xa8)) {
-			IMPLEMENTATION_GUARD(
-			iVar2 = *(int*)(&pcVar3->field_0xf4 + iVar2 * 0x28);
+		if (((iVar2 != -1) && (-1 < iVar2)) && (iVar2 < pLevelInfo->maxElevatorId)) {
+			iVar2 = pLevelInfo->field_0x58[iVar2].field_0x20;
 			if (iVar2 != -1) {
 				baseSectorIndex = iVar2;
 			}
+
 			level_0x5b50 = currentLevelID;
-			level_0x5b54 = param_4;)
+			level_0x5b54 = param_4;
 		}
 	}
 	else {
@@ -212,10 +213,12 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 			this->currentSaveIndex = this->currentSaveIndex + 1;
 			this->aSaveDataArray[this->currentSaveIndex] = pCVar2;
 		}
+
 		this->baseSectorIndex = pCVar2[1].field_0x4;
 		this->aSaveDataArray[this->currentSaveIndex] = (CChunk*)0x0;
 		this->currentSaveIndex = this->currentSaveIndex + -1;
 	}
+
 	return;
 }
 
@@ -259,7 +262,7 @@ void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 {
 	LoadLoopObject_418_18* pLVar1;
 	int iVar2;
-	undefined8* puVar3;
+	LevelInfoSubObj_28* pLevelInfoSubObj;
 
 	/* This will clear our current level name */
 	if (param_2 != false) {
@@ -267,32 +270,38 @@ void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 		pLevelInfo->bankSizeLevel = 0;
 		pLevelInfo->bankSizeSect = 0;
 		pLevelInfo->sectorCount_0x14 = 0;
-		pLevelInfo->field_0x18 = 0;
+		pLevelInfo->maxElevatorId = 0;
 		pLevelInfo->field_0x20 = 0;
 		pLevelInfo->levelName[0] = '\0';
 		pLevelInfo->aCompanionInfo = (S_COMPANION_INFO*)0x0;
 		pLevelInfo->pSimpleConditionData = 0;
 	}
+
 	pLevelInfo->field_0x50 = 0;
-	//puVar3 = &pLevelInfo->field_0x58;
-	//iVar2 = 0;
-	//do {
-	//	if (param_2 != false) {
-	//		*puVar3 = 0;
-	//		*(undefined4*)(puVar3 + 1) = 0xffffffff;
-	//		*(undefined4*)((int)puVar3 + 0xc) = 0xffffffff;
-	//		*(undefined4*)(puVar3 + 2) = 0;
-	//		*(undefined4*)((int)puVar3 + 0x14) = 0;
-	//	}
-	//	*(undefined4*)(puVar3 + 3) = 0;
-	//	*(undefined4*)((int)puVar3 + 0x1c) = 0;
-	//	*(undefined4*)(puVar3 + 4) = 0;
-	//	if ((*(uint*)(puVar3 + 2) & 1) != 0) {
-	//		*(uint*)((int)puVar3 + 0x1c) = *(uint*)((int)puVar3 + 0x1c) | 1;
-	//	}
-	//	iVar2 = iVar2 + 1;
-	//	puVar3 = puVar3 + 5;
-	//} while (iVar2 < 0xc);
+
+	pLevelInfoSubObj = pLevelInfo->field_0x58;
+	iVar2 = 0;
+	do {
+		if (param_2 != false) {
+			pLevelInfoSubObj->field_0x0 = 0;
+			pLevelInfoSubObj->field_0x8 = -1;
+			pLevelInfoSubObj->field_0xc = -1;
+			pLevelInfoSubObj->field_0x10 = 0;
+			pLevelInfoSubObj->field_0x14 = 0;
+		}
+
+		pLevelInfoSubObj->field_0x18 = 0;
+		pLevelInfoSubObj->field_0x1c = 0;
+		pLevelInfoSubObj->field_0x20 = 0;
+
+		if ((pLevelInfoSubObj->field_0x10 & 1) != 0) {
+			pLevelInfoSubObj->field_0x1c = pLevelInfoSubObj->field_0x1c | 1;
+		}
+
+		iVar2 = iVar2 + 1;
+		pLevelInfoSubObj = pLevelInfoSubObj + 1;
+	} while (iVar2 < 0xc);
+	
 	//pLVar1 = pLevelInfo->field_0x238;
 	//iVar2 = 0;
 	//do {
@@ -626,48 +635,55 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 	return pCurConditionData;
 }
 
-void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(char* pFileData, int count, S_LEVEL_INFO* pLevelInfo)
+void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo)
 {
 	int iVar1;
-	undefined8* puVar2;
-	char* pcVar3;
+	LevelInfoSubObj_28* pLevelInfoSubObj;
 	int iVar4;
 
-	pLevelInfo->field_0x18 = 0;
+	pLevelInfo->maxElevatorId = 0;
 	if (count != 0) {
 		do {
-			iVar1 = *(int*)(pFileData + 8);
+			iVar1 = pFileData->field_0x8;
 			if (iVar1 < 0) {
 				iVar1 = 0;
 			}
-			if (pLevelInfo->field_0x18 <= iVar1) {
-				pLevelInfo->field_0x18 = iVar1 + 1;
+
+			if (pLevelInfo->maxElevatorId <= iVar1) {
+				pLevelInfo->maxElevatorId = iVar1 + 1;
 			}
+
 			count = count + -1;
-			pcVar3 = pLevelInfo->levelName + iVar1 * 0x28 + -0x24;
-			*(undefined8*)(pcVar3 + 0x58) = *(undefined8*)(pFileData + 0x14);
-			*(undefined4*)(pcVar3 + 0x60) = *(undefined4*)pFileData;
-			*(undefined4*)(pcVar3 + 100) = *(undefined4*)(pFileData + 4);
-			*(undefined4*)(pcVar3 + 0x68) = *(undefined4*)(pFileData + 0xc);
-			*(undefined4*)(pcVar3 + 0x6c) = *(undefined4*)(pFileData + 0x10);
-			pFileData = (char*)(pFileData + 0x1c);
+
+			pLevelInfoSubObj = pLevelInfo->field_0x58 + iVar1;
+
+			pLevelInfoSubObj->field_0x0 = pFileData->field_0x14;
+			pLevelInfoSubObj->field_0x8 = pFileData->field_0x0;
+			pLevelInfoSubObj->field_0xc = pFileData->field_0x4;
+			pLevelInfoSubObj->field_0x10 = pFileData->field_0xc;
+			pLevelInfoSubObj->field_0x14 = pFileData->field_0x10;
+			pFileData = pFileData + 1;
 		} while (count != 0);
 	}
+
 	iVar4 = 0;
-	puVar2 = &pLevelInfo->field_0x58;
+	pLevelInfoSubObj = pLevelInfo->field_0x58;
 	iVar1 = 0;
-	if (0 < pLevelInfo->field_0x18) {
+	if (0 < pLevelInfo->maxElevatorId) {
 		do {
-			iVar4 = iVar4 + *(int*)(puVar2 + 0x14);
-			if ((*(uint*)(puVar2 + 2) & 1) != 0) {
-				*(uint*)(puVar2 + 0x1c) = *(uint*)(puVar2 + 0x1c) | 1;
+			iVar4 = iVar4 + pLevelInfoSubObj->field_0x14;
+			if ((pLevelInfoSubObj->field_0x10 & 1) != 0) {
+				pLevelInfoSubObj->field_0x1c = pLevelInfoSubObj->field_0x1c | 1;
 			}
+
 			iVar1 = iVar1 + 1;
-			puVar2 = puVar2 + 5;
-		} while (iVar1 < pLevelInfo->field_0x18);
+			pLevelInfoSubObj = pLevelInfoSubObj + 1;
+		} while (iVar1 < pLevelInfo->maxElevatorId);
 	}
-	pLevelInfo->field_0x6c = pLevelInfo->field_0x6c + (pLevelInfo->field_0x20 - iVar4);
-	pLevelInfo->field_0x20 = pLevelInfo->field_0x20 - pLevelInfo->field_0x6c;
+
+	pLevelInfo->field_0x58[0].field_0x14 = pLevelInfo->field_0x58[0].field_0x14 + (pLevelInfo->field_0x20 - iVar4);
+	pLevelInfo->field_0x20 = pLevelInfo->field_0x20 - pLevelInfo->field_0x58[0].field_0x14;
+
 	return;
 }
 
@@ -717,7 +733,7 @@ void CLevelScheduler::Levels_LoadInfoBank()
 						if ((-1 < iVar2) && (iVar2 < 0x10)) {
 							pLevelInfo = &aLevelInfo[iVar2];
 							LevelsInfo_ReadHeader_V7_V9((char*)fileData, pLevelInfo);
-							LevelsInfo_ReadTeleporters_V7_V9((char*)(puVar3 + 0xf), puVar3[0xc], pLevelInfo);
+							LevelsInfo_ReadTeleporters_V7_V9(reinterpret_cast<S_LVLNFO_TELEPORTERS_V7_V9*>(puVar3 + 0xf), puVar3[0xc], pLevelInfo);
 							puVar5 = LevelsInfo_ReadSectors_V7_V9(reinterpret_cast<S_LVLNFO_SECTOR_V7_V9*>(puVar3 + 0xf + puVar3[0xc] * 7), puVar3[10], pLevelInfo);
 							//LevelsInfo_ReadLanguageFileNames_V7_V9(this, puVar5, puVar3[0xe], *fileData);
 							//iVar9 = puVar3[0xd];
@@ -753,6 +769,11 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	}
 	bank.terminate();
 	return;
+}
+
+void CLevelScheduler::SaveGame_SaveCurLevelState(int param_2)
+{
+	IMPLEMENTATION_GUARD_SAVE();
 }
 
 int CLevelScheduler::SaveGame_GetMaxBufferSize()
@@ -1096,8 +1117,8 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		//Level_FillRunInfo(0x1, -1, -1);
-		Level_FillRunInfo(0x4, 9, -1);
+		Level_FillRunInfo(0x1, -1, -1);
+		//Level_FillRunInfo(0x4, 9, -1);
 	}
 	return;
 }
@@ -1657,8 +1678,7 @@ bool CLevelScheduler::LevelLoading_Manage()
 				if (loadStage == 1) {
 					levelToLoadID = this->nextLevelID;
 					memset(&bankFilePathContainer, 0, sizeof(edCBankInstall));
-					this->levelBank.initialize(this->aLevelInfo[levelToLoadID].bankSizeLevel + 0x1000, 1,
-						&bankFilePathContainer);
+					this->levelBank.initialize(this->aLevelInfo[levelToLoadID].bankSizeLevel + 0x1000, 1, &bankFilePathContainer);
 					this->levelBank.bank_buffer_setcb(TableBankCallback);
 					/* / + level.bnk */
 					edStrCatMulti(filePath, this->levelPath, this->aLevelInfo[levelToLoadID].levelName, sz_bankSlash, sz_LevelBank_00433bd8, 0);
@@ -1860,7 +1880,33 @@ void CLevelScheduler::LevelLoading_End()
 {
 	this->currentLevelID = this->nextLevelID;
 	this->nextLevelID = 0x10;
-	this->level_0x5b3c = -1;
+	this->outroCutsceneId = -1;
+	return;
+}
+
+void CLevelScheduler::Level_PreTerm()
+{
+	LevelInfoSubObj_28* pLVar1;
+	int iVar2;
+
+	iVar2 = 0;
+	pLVar1 = this->aLevelInfo[this->currentLevelID].field_0x58;
+	do {
+		pLVar1->field_0x20 = 0;
+		pLVar1[1].field_0x20 = 0;
+		pLVar1[2].field_0x20 = 0;
+		pLVar1[3].field_0x20 = 0;
+		pLVar1[4].field_0x20 = 0;
+		pLVar1[5].field_0x20 = 0;
+		iVar2 = iVar2 + 6;
+		pLVar1 = pLVar1 + 6;
+	} while (iVar2 < 0xc);
+
+	g_CinematicManager_0048efc->PlayOutroCinematic(this->outroCutsceneId, (CActor*)0x0);
+	SaveGame_SaveCurLevelState(0);
+
+	this->field_0x84 = 0.0f;
+
 	return;
 }
 
@@ -1895,8 +1941,6 @@ void CLevelScheduler::OnSceneVarSet()
 	return;
 }
 
-int DAT_004253fc = 0;
-
 void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6)
 {
 	int iVar1;
@@ -1906,19 +1950,19 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 	CSectorManager* pSectorManager;
 
 	if ((levelId == 0x10) || (levelId != this->currentLevelID)) {
-		if ((levelId != 0x10) && (bVar3 = CScene::_pinstance->CheckFunc_001b9300(), bVar3 == false)) {
-			if ((levelId == 0) && (DAT_004253fc != 0)) {
+		if ((levelId != 0x10) && (CScene::_pinstance->IsFadeTermActive() == false)) {
+			if ((levelId == 0) && (_gScenVarInfo[5].currentValue != 0)) {
 				levelId = 6;
 			}
 
 			Level_FillRunInfo(levelId, elevatorId, param_6);
 
-			this->level_0x5b3c = cutsceneId;
-			CScene::_pinstance->FUN_001b9350(false);
+			this->outroCutsceneId = cutsceneId;
+			CScene::_pinstance->SetFadeStateTerm(false);
 		}
 	}
 	else {
-		if ((-1 < elevatorId) && (elevatorId < *(int*)(this->levelPath + this->currentLevelID * 0x418 + -8 + 0xa8))) {
+		if ((-1 < elevatorId) && (elevatorId < this->aLevelInfo[this->currentLevelID].maxElevatorId)) {
 			IMPLEMENTATION_GUARD(
 			iVar1 = *(int*)(this->levelPath + this->currentLevelID * 0x418 + -8 + elevatorId * 0x28 + 0xf0);
 			if ((iVar1 != -1) &&
@@ -1928,8 +1972,7 @@ void CLevelScheduler::Level_Teleport(CActor* pActor, int levelId, int elevatorId
 				cVar2 = '\0';
 				if ((iVar1 == ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID) || (iVar1 == -1)) {
 					if (cutsceneId != -1) {
-						cVar2 = CCinematicManager::RunSectorLoadingCinematic
-						(g_CinematicManager_0048efc, cutsceneId, pActor, elevatorId, param_6);
+						cVar2 = CCinematicManager::RunSectorLoadingCinematic (g_CinematicManager_0048efc, cutsceneId, pActor, elevatorId, param_6);
 					}
 				}
 				else {

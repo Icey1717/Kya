@@ -184,7 +184,10 @@ void CActorAmortos::Init()
 
 void CActorAmortos::Term()
 {
-	IMPLEMENTATION_GUARD();
+	CActor::Term();
+	this->addOnGenerator.Term();
+
+	return;
 }
 
 void CActorAmortos::Reset()

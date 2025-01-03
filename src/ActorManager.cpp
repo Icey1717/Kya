@@ -40,6 +40,72 @@ void CActorManager::Level_Init()
 	return;
 }
 
+void CActorManager::Level_Term()
+{
+	edAnmLayer* peVar1;
+	int iVar2;
+	uint classId;
+	int iVar3;
+	CClassInfo* pCVar4;
+
+	iVar3 = this->nbActors + -1;
+	if (-1 < iVar3) {
+		do {
+			this->aActors[iVar3]->Term();
+			iVar3 = iVar3 + -1;
+		} while (-1 < iVar3);
+	}
+
+	iVar3 = this->nbActors + -1;
+	if (-1 < iVar3) {
+		do {
+			this->aActors[iVar3]->Destroy();
+			iVar3 = iVar3 + -1;
+		} while (-1 < iVar3);
+	}
+
+	classId = 0;
+	pCVar4 = this->aClassInfo;
+	do {
+		if (pCVar4->aActors != (CActor*)0x0) {
+			CActorFactory::Factory((ACTOR_CLASS)classId, 0, (int*)0x0);
+		}
+
+		pCVar4->aActors = (CActor*)0x0;
+		pCVar4->totalCount = 0;
+		pCVar4->allocatedCount = 0;
+		pCVar4->size = 0;
+
+		classId = classId + 1;
+		pCVar4 = pCVar4 + 1;
+	} while ((int)classId < 0x57);
+
+	this->cluster.Term();
+	
+	delete[] this->aSectorBoundingBoxes;
+
+	if (this->aActors != (CActor**)0x0) {
+		delete[] this->aActors;
+	}
+
+	if (this->aAnimation != (CAnimation*)0x0) {
+		delete[] this->aAnimation;
+	}
+
+	peVar1 = this->aAnimLayers;
+	if ((peVar1 != (edAnmLayer*)0x0) && (peVar1 != (edAnmLayer*)0x0)) {
+		delete[] this->aAnimLayers;
+	}
+
+	if (this->aShadows != (CShadow*)0x0) {
+		delete[] this->aShadows;
+	}
+
+	Level_ClearInternalData();
+
+	return;
+}
+
 void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 {
 	int actorCount = pMemoryStream->GetS32();
@@ -169,6 +235,11 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 	return;
 }
 
+void CActorManager::Level_ClearAll()
+{
+	return;
+}
+
 void CActorManager::Level_Manage()
 {
 	int iVar1;
@@ -284,6 +355,15 @@ void CActorManager::Level_Manage()
 	return;
 }
 
+void CActorManager::Level_ManagePaused()
+{
+	if ((GameFlags & 0x200) == 0) {
+		Level_Manage();
+	}
+
+	return;
+}
+
 void CActorManager::Level_Draw()
 {
 	CActor* pActor;
@@ -316,6 +396,16 @@ void CActorManager::Level_Draw()
 		}
 	}
 	return;
+}
+
+void CActorManager::Level_PreReset()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorManager::Level_Reset()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
@@ -368,8 +458,7 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 			this->aSectorActors[this->nbSectorActors] = pActor;
 			this->nbSectorActors = this->nbSectorActors + 1;
 
-			IMPLEMENTATION_GUARD_LOG(
-			pActor->UpdateClusterNode();)
+			pActor->UpdateClusterNode();
 		}
 
 		pActorItr = pActorItr + 1;
@@ -383,6 +472,16 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 		}
 	}
 	return;
+}
+
+void CActorManager::Level_PauseChange()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorManager::Level_SaveContext()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CActorManager::Level_PreCheckpointReset()

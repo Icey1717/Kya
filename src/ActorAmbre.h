@@ -39,6 +39,7 @@ public:
 	virtual bool HasMesh();
 
 	void Init(ed_3D_Scene* pScene, ed_g3d_manager* pMeshManager, ed_3d_hierarchy_setup* pHierarchySetup, char* szString);
+	void Term(ed_3D_Scene* pScene);
 
 	edNODE* pMeshTransformParent;
 	ed_3d_hierarchy_node* pMeshTransformData;

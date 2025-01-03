@@ -13,7 +13,7 @@
 #include "edVideo/VideoD.h"
 #include "TimeController.h"
 
-extern EFileLoadMode g_FileLoadMode_00448810;
+extern EFileLoadMode VERSION;
 
 CPlayerInput gPlayerInput = { 0 };
 CPlayerInput gPlayerInput_2 = { 0 };
@@ -349,7 +349,7 @@ bool CPlayerInput::SoftReset()
 
 	if ((((this->aButtons[5].clickedDuration <= 0.1f) || (this->aButtons[0x1b].clickedDuration <= 0.1f)) ||
 		(this->aButtons[6].clickedDuration <= 0.1f)) ||
-		((this->aButtons[10].clickedDuration <= 0.1f || (bVar1 = true, g_FileLoadMode_00448810 == FLM_CD_DVD)))) {
+		((this->aButtons[10].clickedDuration <= 0.1f || (bVar1 = true, VERSION == FLM_CD_DVD)))) {
 		bVar1 = false;
 	}
 	return bVar1;

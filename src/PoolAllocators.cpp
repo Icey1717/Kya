@@ -81,7 +81,6 @@ edF32MATRIX4* NewPool_edF32MATRIX4(int count)
 	void** ppvVar3;
 	PoolAllocator* pPVar4;
 	PoolAllocator* pPVar5;
-	void* pvVar6;
 	edF32MATRIX4* peVar7;
 	int iVar8;
 
@@ -99,8 +98,7 @@ edF32MATRIX4* NewPool_edF32MATRIX4(int count)
 			pPVar4 = g_edF32MATRIX4_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = 0x20;
-				pvVar6 = new edF32MATRIX4[pPVar5->size];
-				pPVar5->pValue = pvVar6;
+				pPVar5->pValue = new edF32MATRIX4[pPVar5->size];
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -110,8 +108,7 @@ edF32MATRIX4* NewPool_edF32MATRIX4(int count)
 			pPVar4 = g_edF32MATRIX4_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = count;
-				pvVar6 = new edF32MATRIX4[pPVar5->size];
-				pPVar5->pValue = pvVar6;
+				pPVar5->pValue = new edF32MATRIX4[pPVar5->size];
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -159,8 +156,7 @@ CBehaviourCinematic* NewPool_CBehaviourCinematic(int count)
 			pPVar4 = g_CBehaviourCinematic_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = 0x20;
-				pvVar6 = new CBehaviourCinematic[pPVar5->size];
-				pPVar5->pValue = pvVar6;
+				pPVar5->pValue = new CBehaviourCinematic[pPVar5->size];
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -170,8 +166,7 @@ CBehaviourCinematic* NewPool_CBehaviourCinematic(int count)
 			pPVar4 = g_CBehaviourCinematic_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = count;
-				pvVar6 = new CBehaviourCinematic[pPVar5->size];
-				pPVar5->pValue = pvVar6;
+				pPVar5->pValue = new CBehaviourCinematic[pPVar5->size];
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -218,8 +213,7 @@ float* NewPool_edF32(int count)
 			pOldAllocator = g_U32_allocator;
 			if (pAllocator != (PoolAllocator*)0x0) {
 				pAllocator->size = 0x20;
-				pBuff = new float[pAllocator->size];
-				pAllocator->pValue = pBuff;
+				pAllocator->pValue = new float[pAllocator->size];
 				pAllocator->pAllocator = pOldAllocator;
 				pAllocator->free = 0;
 			}
@@ -229,8 +223,7 @@ float* NewPool_edF32(int count)
 			pOldAllocator = g_U32_allocator;
 			if (pAllocator != (PoolAllocator*)0x0) {
 				pAllocator->size = count;
-				pBuff = new float[pAllocator->size];
-				pAllocator->pValue = pBuff;
+				pAllocator->pValue = new float[pAllocator->size];
 				pAllocator->pAllocator = pOldAllocator;
 				pAllocator->free = 0;
 			}
@@ -276,8 +269,7 @@ ushort* NewPool_edU16(int count)
 			pOldAllocator = g_U32_allocator;
 			if (pAllocator != (PoolAllocator*)0x0) {
 				pAllocator->size = 0x20;
-				pBuff = new ushort[pAllocator->size];
-				pAllocator->pValue = pBuff;
+				pAllocator->pValue = new ushort[pAllocator->size];
 				pAllocator->pAllocator = pOldAllocator;
 				pAllocator->free = 0;
 			}
@@ -287,8 +279,7 @@ ushort* NewPool_edU16(int count)
 			pOldAllocator = g_U32_allocator;
 			if (pAllocator != (PoolAllocator*)0x0) {
 				pAllocator->size = count;
-				pBuff = new ushort[pAllocator->size];
-				pAllocator->pValue = pBuff;
+				pAllocator->pValue = new ushort[pAllocator->size];
 				pAllocator->pAllocator = pOldAllocator;
 				pAllocator->free = 0;
 			}
@@ -335,8 +326,7 @@ void** NewPool_Pointer(int count)
 			pPVar4 = g_U32_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = 0x20;
-				pvVar6 = new void*[pPVar5->size];
-				pPVar5->pValue = pvVar6;
+				pPVar5->pValue = new void* [pPVar5->size];
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -346,8 +336,7 @@ void** NewPool_Pointer(int count)
 			pPVar4 = g_U32_allocator;
 			if (pPVar5 != (PoolAllocator*)0x0) {
 				pPVar5->size = count;
-				pvVar6 = new void* [pPVar5->size];
-				pPVar5->pValue = pvVar6;
+				pPVar5->pValue = new void* [pPVar5->size];
 				pPVar5->pAllocator = pPVar4;
 				pPVar5->free = 0;
 			}
@@ -368,4 +357,79 @@ void** NewPool_Pointer(int count)
 	}
 
 	return peVar7;
+}
+
+void FreeAllAllocators()
+{
+	if (g_U32_allocator != (PoolAllocator*)0x0) {
+		bool bVar1 = g_U32_allocator != (PoolAllocator*)0x0;
+		PoolAllocator* pPVar5 = g_U32_allocator;
+		while (g_U32_allocator = pPVar5, bVar1) {
+			PoolAllocator* pPVar2 = pPVar5->pAllocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				if (pPVar5->pValue != (void*)0x0) {
+					delete(pPVar5->pValue);
+				}
+
+				//edMemFree(pPVar5);
+			}
+
+			bVar1 = pPVar2 != (PoolAllocator*)0x0;
+			pPVar5 = pPVar2;
+		}
+	}
+
+	if (g_CBehaviourCinematic_allocator != (PoolAllocator*)0x0) {
+		bool bVar1 = g_CBehaviourCinematic_allocator != (PoolAllocator*)0x0;
+		PoolAllocator* pPVar5 = g_CBehaviourCinematic_allocator;
+		while (g_CBehaviourCinematic_allocator = pPVar5, bVar1) {
+			PoolAllocator* pPVar2 = pPVar5->pAllocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				if (pPVar5->pValue != (void*)0x0) {
+					delete(pPVar5->pValue);
+				}
+
+				//edMemFree(pPVar5);
+			}
+
+			bVar1 = pPVar2 != (PoolAllocator*)0x0;
+			pPVar5 = pPVar2;
+		}
+	}
+
+	if (g_edF32MATRIX4_allocator != (PoolAllocator*)0x0) {
+		bool bVar1 = g_edF32MATRIX4_allocator != (PoolAllocator*)0x0;
+		PoolAllocator* pPVar5 = g_edF32MATRIX4_allocator;
+		while (g_edF32MATRIX4_allocator = pPVar5, bVar1) {
+			PoolAllocator* pPVar2 = pPVar5->pAllocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				if (pPVar5->pValue != (void*)0x0) {
+					delete(pPVar5->pValue);
+				}
+
+				//edMemFree(pPVar5);
+			}
+
+			bVar1 = pPVar2 != (PoolAllocator*)0x0;
+			pPVar5 = pPVar2;
+		}
+	}
+
+	if (g_S_EYES_BRIGHT_SHADOW_allocator != (PoolAllocator*)0x0) {
+		bool bVar1 = g_S_EYES_BRIGHT_SHADOW_allocator != (PoolAllocator*)0x0;
+		PoolAllocator* pPVar5 = g_S_EYES_BRIGHT_SHADOW_allocator;
+		while (g_S_EYES_BRIGHT_SHADOW_allocator = pPVar5, bVar1) {
+			PoolAllocator* pPVar2 = pPVar5->pAllocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				if (pPVar5->pValue != (void*)0x0) {
+					delete(pPVar5->pValue);
+				}
+
+				//edMemFree(pPVar5);
+			}
+
+			bVar1 = pPVar2 != (PoolAllocator*)0x0;
+			pPVar5 = pPVar2;
+		}
+	}
 }

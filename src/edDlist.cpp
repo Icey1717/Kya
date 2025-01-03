@@ -2537,6 +2537,17 @@ bool edDListTermMaterial(edDList_material* pMaterial)
 	return true;
 }
 
+void edDListDeleteFrameBufferMaterial(edDList_material* pMaterial)
+{
+	if ((gBankMaterial[pMaterial->index].hash.number != 0) && (gBankMaterial[pMaterial->index].pData != 0x0)) {
+		gBankMaterial[pMaterial->index].hash.number = 0;
+		gBankMaterial[pMaterial->index].pData = 0x0;
+		gNbUsedMaterial = gNbUsedMaterial + -1;
+	}
+
+	return;
+}
+
 edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, int mode)
 {
 	ed_hash_code* pHASH_MAT;

@@ -219,14 +219,14 @@ enum ACTOR_CLASS {
 	BONUS_FOUNTAIN = 0x52,
 };
 
-struct IopPaths {
+struct ED_PSX2_MODULES_INIT {
 	char* pIopRoot;
 	char* pImgName;
 	int modulesCount;
 	char* pModulesName;
 };
 
-struct InputSetupParams {
+struct edSYS_CONFIG {
 
 	int argc;
 	char** argv;
@@ -241,13 +241,13 @@ struct InputSetupParams {
 	undefined field_0x19;
 	undefined field_0x1a;
 	undefined field_0x1b;
-	EFileLoadMode fileLoadMode;
+	EFileLoadMode version;
 	char* field_0x20;
-	IopPaths* pIopPaths;
+	ED_PSX2_MODULES_INIT* pIopPaths;
 };
 
 EFileLoadMode GetFileLoadMode_00424d9c(void);
-InputSetupParams* edSysGetConfig(void);
+edSYS_CONFIG* edSysGetConfig(void);
 
 #define trap assert
 
@@ -674,6 +674,8 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 
 #define IMPLEMENTATION_GUARD_FX(x)
 #define IMPLEMENTATION_GUARD_AUDIO(x)
+#define IMPLEMENTATION_GUARD_UI(x)
+#define IMPLEMENTATION_GUARD_SAVE(x)
 #define IMPLEMENTATION_GUARD_LOG(x) MY_LOG_CATEGORY("ImplementationGuard", LogLevel::Verbose, "IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 
 #ifdef PLATFORM_WIN
@@ -859,6 +861,11 @@ PACK(
 	uint flags;
 	int pMatrix; // edF32MATRIX4*
 };)
+
+struct S_ZONE_STREAM_REF {
+	int entryCount;
+	S_STREAM_REF<ed_zone_3d> aEntries[];
+};
 
 // This shows up when the VIF0 does an MR32.w to zero out the w element of the vector register.
 // Define it here and check wherever it shows up in the code to make sure an appropriate MR32.w inst is ther.

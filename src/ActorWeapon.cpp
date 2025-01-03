@@ -957,7 +957,23 @@ void CBehaviourWeaponSniper::Init(CActor* pOwner)
 
 void CBehaviourWeaponSniper::Term()
 {
-	IMPLEMENTATION_GUARD();
+	Bullet* pCVar1;
+	int iVar2;
+
+	iVar2 = 0;
+	pCVar1 = this->aBullets;
+	do {
+		ResetBullet(pCVar1);
+		iVar2 = iVar2 + 1;
+		pCVar1 = pCVar1 + 1;
+	} while (iVar2 < 8);
+
+	INT_00449718 = INT_00449718 + -1;
+
+	if (INT_00449718 == 0) {
+		WeaponGlobal_0048dd60.Term();
+	}
+	return;
 }
 
 void CBehaviourWeaponSniper::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -966,5 +982,26 @@ void CBehaviourWeaponSniper::Begin(CActor* pOwner, int newState, int newAnimatio
 
 	this->pOwner->field_0x1d0 = 5;
 
+	return;
+}
+
+void WeaponGlobal::Term()
+{
+	IMPLEMENTATION_GUARD_LOG();
+	//WeaponGlobalSubObj* pWVar1;
+	//
+	//pWVar1 = this->field_0x18;
+	//if (pWVar1 != (WeaponGlobalSubObj*)0x0) {
+	//	if (pWVar1 != (WeaponGlobalSubObj*)0x0) {
+	//		delete(&pWVar1[-1].field_0x30);
+	//	}
+	//	this->field_0x18 = (WeaponGlobalSubObj*)0x0;
+	//}
+	//if (this->pEntries != (WeaponGlobalSubObj**)0x0) {
+	//	delete(this->pEntries);
+	//	this->pEntries = (WeaponGlobalSubObj**)0x0;
+	//}
+	//this->field_0x10 = 0;
+	//this->nbEntries = 0;
 	return;
 }

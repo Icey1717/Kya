@@ -9,13 +9,6 @@
 #include "ActorHeroPrivate.h"
 #include "InputManager.h"
 
-#define MICKEN_BEHAVIOUR_EAT 4
-
-#define MICKEN_EAT_STATE_STAND			0x6
-#define MICKEN_EAT_STATE_WALK_TO_FRUIT	0x8
-#define MICKEN_EAT_STATE_EAT			0x9
-#define MICKEN_EAT_STATE_CHEW			0xa
-
 CActorMicken::CActorMicken()
 {
 	this->field_0x360 = 0;
@@ -974,11 +967,10 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 		this->SetState(iVar7, -1);)
 		break;
 	case MICKEN_EAT_STATE_WALK_TO_FRUIT:
-		IMPLEMENTATION_GUARD(
 		iVar7 = WalkToPos(0.3f, pBehaviour, &this->pNearestFruit->currentLocation, 0);
 		if (iVar7 != 0) {
 			this->SetState(MICKEN_EAT_STATE_EAT, -1);
-		})
+		}
 		break;
 	case MICKEN_EAT_STATE_EAT:
 		IMPLEMENTATION_GUARD(
@@ -989,11 +981,10 @@ void CActorMicken::BehaviourMickenEat_Manage(CBehaviourMickenEat* pBehaviour)
 			StateMickenChew(this, pBehaviour);)
 		break;
 	case 0xb:
-		IMPLEMENTATION_GUARD(
-		iVar7 = WalkToPos(0.3, this, (CBehaviourMicken*)pBehaviour, (float*)&this->field_0x370, 0);
+		iVar7 = WalkToPos(0.3f, pBehaviour, &this->field_0x370, 0);
 		if (iVar7 != 0) {
 			this->SetState(MICKEN_EAT_STATE_STAND, -1);
-		})
+		}
 		break;
 	case 0xc:
 		IMPLEMENTATION_GUARD(
@@ -1491,6 +1482,62 @@ void CActorMicken::BehaviourMicken_Manage(int state, CBehaviourMicken* pBehaviou
 	}
 
 	return;
+}
+
+int CActorMicken::WalkToPos(float param_1, CBehaviourMickenEat* pBehaviour, edF32VECTOR4* pPosition, int param_5)
+{
+	CCollision* pCVar1;
+	float fVar2;
+	int iVar4;
+	float fVar5;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+
+	pCVar1 = this->pCollisionData;
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.rotSpeed = 8.377581f;
+	movParamsIn.speed = 3.0f;
+	movParamsIn.flags = 0x12;
+
+	SV_MOV_MoveTo(&movParamsOut, &movParamsIn, pPosition);
+	ManageDyn(4.0f, 0x1002023b, (CActorsTable*)0x0);
+
+	if (param_5 != 0) {
+		fVar5 = pPosition->x - this->currentLocation.x;
+		fVar2 = pPosition->z - this->currentLocation.z;
+		fVar5 = sqrtf(fVar5 * fVar5 + 0.0f + fVar2 * fVar2);
+		if (fabs(this->field_0x3ec - fVar5) < 0.1f) {
+			if (1.0f < GetTimer()->scaledTotalTime - this->field_0x3f0) {
+				SetState(6, -1);
+				return 0;
+			}
+		}
+		else {
+			this->field_0x3ec = fVar5;
+			this->field_0x3f0 = GetTimer()->scaledTotalTime;
+		}
+	}
+
+	if ((param_1 + ((this->pCollisionData)->pObbPrim->field_0x90).z <= movParamsOut.moveVelocity) ||
+		(1.0f <= fabs(this->currentLocation.y - pPosition->y))) {
+		if ((pCVar1->flags_0x4 & 2) == 0) {
+			if (0.2f < this->timeInAir) {
+				SetState(7, -1);
+				return 0;
+			}
+		}
+		else {
+			this->timeInAir = 0.0f;
+		}
+
+		iVar4 = 0;
+	}
+	else {
+		iVar4 = 1;
+	}
+
+	return iVar4;
 }
 
 void CBehaviourMicken::Init(CActor* pOwner)

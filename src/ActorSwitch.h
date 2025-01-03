@@ -41,7 +41,7 @@ public:
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void InitState(int newState);
-	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
+	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); return 0; }
 
 	virtual void SaveContext(uint*, int) {}
@@ -66,9 +66,9 @@ public:
 	virtual void Manage();
 	virtual void Draw();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
-	virtual void End(int newBehaviourId) { IMPLEMENTATION_GUARD(); }
+	virtual void End(int newBehaviourId);
 	virtual void InitState(int newState);
-	virtual void TermState(int oldState, int newState) { IMPLEMENTATION_GUARD(); }
+	virtual void TermState(int oldState, int newState);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(uint*, int) { IMPLEMENTATION_GUARD(); }

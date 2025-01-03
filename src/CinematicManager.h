@@ -308,11 +308,12 @@ struct S_STREAM_EVENT_CAMERA {
 	float field_0x10;
 	int pActor; // CActor*
 	int pEventChunk24_0x18; // EventChunk_24*
-	undefined4 field_0x1c;
+	float field_0x1c;
 
 	void Init();
 	void Manage(CActor* pActor);
 	void SwitchOn(CActor* pActor);
+	void SwitchOff(CActor* pActor);
 	void Reset(CActor* pActor);
 });
 
@@ -446,6 +447,10 @@ struct CCinematic {
 	void SetupInternalData();
 
 	CCinematic();
+	~CCinematic();
+
+	void FUN_001cbe40();
+
 	void Create(struct ByteCode* pByteCode);
 	void Init();
 
@@ -470,6 +475,7 @@ struct CCinematic {
 	void Level_ClearAll();
 
 	void FUN_001c7390(bool param_2);
+	void FUN_001caeb0();
 
 	void Manage();
 	void ManageState_Playing();
@@ -517,9 +523,11 @@ struct CCinematic {
 	float field_0x60;
 	SWITCH_MODE field_0x64;
 	float field_0x68;
-	int field_0x6c;
-	int field_0x70;
-	int field_0x74;
+
+	int endLevelId;
+	int endElevatorId;
+	int endCutsceneId;
+
 	undefined4 field_0x78;
 	undefined4 field_0x7c;
 	float field_0x80;
@@ -652,20 +660,29 @@ public:
 
 class CCinematicManager : public CObjectManager {
 public:
-	CCinematicManager::CCinematicManager();
+	CCinematicManager();
 
 	virtual void Game_Init();
-	virtual void Game_Term() {}
+	virtual void Game_Term() { IMPLEMENTATION_GUARD(); }
 
 	virtual void LevelLoading_Begin();
 	virtual void LevelLoading_End();
 	virtual bool LevelLoading_Manage();
+	virtual void LevelLoading_Draw() { IMPLEMENTATION_GUARD_FX(); }
 
 	virtual void Level_Init();
-
+	virtual void Level_Term();
 	virtual void Level_AddAll(struct ByteCode* pByteCode);
+	virtual void Level_ClearAll();
 	virtual void Level_Manage();
+	virtual void Level_ManagePaused() { IMPLEMENTATION_GUARD(); }
 	virtual void Level_Draw();
+
+	virtual void Level_PreReset() { IMPLEMENTATION_GUARD(); }
+	virtual void Level_Reset() { IMPLEMENTATION_GUARD(); }
+
+	virtual void Level_PreCheckpointReset();
+	virtual void Level_CheckpointReset();
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
 
@@ -678,6 +695,10 @@ public:
 	bool IsCutsceneActive();
 	int GetNumCutscenes_001c50b0();
 	CCinematic* GetCinematic(int index);
+
+	void StopAllCutscenes();
+
+	bool PlayOutroCinematic(int index, CActor* param_3);
 
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;

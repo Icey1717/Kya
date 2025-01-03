@@ -6,7 +6,7 @@
 #include "Rendering/Font.h"
 #include "edText.h"
 #include "TranslatedTextData.h"
-#include "Iop.h"
+#include "CompatibilityHandlingPS2.h"
 #include "InputManager.h"
 #include <assert.h>
 #include "LargeObject.h"
@@ -61,6 +61,16 @@ void CPauseManager::Game_Init()
 	field_0x11 = 0;
 	//FUN_001b5d20(&PTR_PTR_00450900);
 	return;
+}
+
+void CPauseManager::Game_Term()
+{
+	return;
+}
+
+bool CPauseManager::LevelLoading_Manage()
+{
+	return false;
 }
 
 edCTextFont* BootDataFont = NULL;
@@ -244,6 +254,45 @@ void CPauseManager::Level_Init()
 	return;
 }
 
+void CPauseManager::Level_Term()
+{
+	CSimpleMenu* pCVar1;
+
+	IMPLEMENTATION_GUARD_LOG(
+	if (this->pTexture_0x2c != (CSplashScreen*)0x0) {
+		this->pTexture_0x2c->Term();
+		delete this->pTexture_0x2c;
+		this->pTexture_0x2c = (CSplashScreen*)0x0;
+	})
+
+	pCVar1 = this->pSimpleMenu;
+	if (pCVar1 != (CSimpleMenu*)0x0) {
+		delete this->pSimpleMenu;
+		this->pSimpleMenu = (CSimpleMenu*)0x0;
+	}
+
+	return;
+}
+
+void CPauseManager::Level_ClearAll()
+{
+	return;
+}
+
+void CPauseManager::Level_Manage()
+{
+	if (gCompatibilityHandlingPtr->TestCheatCode_IdleCamera() != false) {
+		(CScene::ptable.g_CameraManager_0045167c)->cheatIdleCameraActive = 1;
+	}
+
+	return;
+}
+
+void CPauseManager::Level_ManagePaused()
+{
+	return;
+}
+
 void CPauseManager::Level_Draw()
 {
 	CCinematicManager* pCinematicManager;
@@ -260,13 +309,14 @@ void CPauseManager::Level_Draw()
 	float fVar9;
 
 	if ((this->pSimpleMenu != (CSimpleMenu*)0x0) && (this->pSplashScreen != (CSplashScreen*)0x0)) {
-		bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+		bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
+
 		pTVar3 = GetTimer();
 		fVar9 = pTVar3->totalPlayTime;
 		if ((gPlayerInput.pressedBitfield != 0) ||
 			(((this->field_0x34 == 0 &&
 				(EVar4 = this->pSimpleMenu->get_current_page(), EVar4 != PM_MainMenu)) ||
-				(bVar2 = CScene::_pinstance->CheckFunc_001b9300(), bVar2 != 0)))) {
+				(bVar2 = CScene::_pinstance->IsFadeTermActive(), bVar2 != 0)))) {
 			this->totalPlayTime = fVar9;
 		}
 		pCinematicManager = g_CinematicManager_0048efc;
@@ -947,7 +997,7 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 	EPauseMenu EVar4;
 	uint uVar5;
 
-	bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+	bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
 	if (bVar1 == false) {
 		EVar4 = pMenu->get_current_page();
 		uVar5 = 1;
@@ -991,6 +1041,7 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 				}
 			}
 		}
+
 		if ((((uVar5 != 0) && (EVar4 = pMenu->get_current_page(), EVar4 != PM_MainMenu)) &&
 			(EVar4 = pMenu->get_current_page(), EVar4 != PM_DisplayOptions)) &&
 			(EVar4 = pMenu->get_current_page(), EVar4 != PM_Bonus)) {
@@ -1010,6 +1061,7 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 		CSimpleMenu::draw_option(pMenu, pcVar3, 0xffffffff);
 		uVar5 = 1;)
 	}
+
 	return uVar5;
 }
 

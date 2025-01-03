@@ -124,7 +124,10 @@ void CActorBasicBox::Init()
 
 void CActorBasicBox::Term()
 {
-	IMPLEMENTATION_GUARD();
+	CActor::Term();
+	this->addOnGenerator.Term();
+
+	return;
 }
 
 void CActorBasicBox::Reset()
@@ -208,7 +211,171 @@ StateConfig* CActorBasicBox::GetStateCfg(int state)
 
 int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
+	edF32VECTOR4* peVar1;
+	edF32VECTOR4* v2;
+	int iVar2;
+	long lVar3;
+	float fVar4;
+	void* local_64;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	lVar3 = (long)(int)this;
+	local_64 = pMsgParam;
+	if (msg == 3) {
+		IMPLEMENTATION_GUARD(
+		if (this->field_0x168 <= 0.0) {
+			iVar2 = 0;
+		}
+		else {
+			(*((this->base).pVTable)->SetState)((CActor*)this, 7, -1);
+			iVar2 = 1;
+		})
+	}
+	else {
+		if (msg == 7) {
+			IMPLEMENTATION_GUARD(
+			peVar1 = CActor::GetTopPosition((CActor*)this);
+			edF32Vector4SubHard(&eStack16, peVar1, &(this->base).currentLocation);
+			fVar4 = edF32Vector4DotProductHard(&eStack16, (edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba)
+				;
+			edF32Vector4ScaleHard(fVar4, &eStack16, (edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba);
+			peVar1 = CActor::GetBottomPosition((CActor*)this);
+			v2 = CActor::GetTopPosition((CActor*)this);
+			edF32Vector4SubHard((edF32VECTOR4*)((int)local_64 + 0x20), peVar1, v2);
+			fVar4 = edF32Vector4DotProductHard
+			((edF32VECTOR4*)((int)local_64 + 0x20),
+				(edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba);
+			edF32Vector4ScaleHard
+			(fVar4 * 0.5, (edF32VECTOR4*)((int)local_64 + 0x20),
+				(edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba);
+			edF32Vector4AddHard((edF32VECTOR4*)((int)local_64 + 0x20), (edF32VECTOR4*)((int)local_64 + 0x20), &eStack16);
+			iVar2 = 1;)
+		}
+		else {
+			if (msg == 2) {
+				IMPLEMENTATION_GUARD(
+				if (this->field_0x168 <= 0.0) {
+					iVar2 = 0;
+				}
+				else {
+					this->field_0x2e0 = *(undefined4*)((int)pMsgParam + 0x30);
+					/* WARNING: Load size is inaccurate */
+					switch (*pMsgParam) {
+					case 4:
+						if ((this->field_0x180 & 2) != 0) {
+							FUN_0038d5d0(lVar3, (int*)&local_64);
+							return 1;
+						}
+						break;
+					case 7:
+						if ((this->field_0x180 & 0x40) != 0) {
+							FUN_00114fc0(*(undefined4*)((int)pMsgParam + 0xc));
+							if (this->field_0x168 <= 0.0) {
+								peVar1 = (edF32VECTOR4*)((int)local_64 + 0x40);
+								if ((this->field_0x180 & 1) != 0) {
+									if (((this->base).flags & 0x1000) != 0) {
+										SetVectorFromAngles(&(this->base).rotationQuat, (edF32VECTOR3*)&(this->base).rotationEuler);
+									}
+									edF32Vector4SubHard(&eStack80, &(this->base).currentLocation, peVar1);
+									fVar4 = edF32Vector4DotProductHard(&eStack80, &(this->base).rotationQuat);
+									if (fVar4 < 0.0) {
+										edF32Vector4ScaleHard((float)&DAT_bf800000, &local_60, &(this->base).rotationQuat);
+										(this->base).rotationQuat.x = local_60.x;
+										(this->base).rotationQuat.y = local_60.y;
+										(this->base).rotationQuat.z = local_60.z;
+										(this->base).rotationQuat.w = local_60.w;
+										if (((this->base).flags & 0x1000) != 0) {
+											GetAnglesFromVector((edF32VECTOR3*)&(this->base).rotationEuler, &(this->base).rotationQuat);
+										}
+									}
+								}
+								(*((this->base).pVTable)->SetState)((CActor*)this, 7, -1);
+								return 1;
+							}
+							iVar2 = FUN_0038ce50((int)this, (edF32VECTOR4*)&this->field_0x290, (edF32VECTOR4*)((int)local_64 + 0x40), 0
+							);
+							if (iVar2 != 0) {
+								(this->vibrationDyn).field_0x40 = this->field_0x170;
+								FUN_00116a00(*(float*)((int)local_64 + 0x30), (float*)&this->vibrationDyn,
+									(edF32VECTOR4*)&this->field_0x290, (edF32VECTOR4*)((int)local_64 + 0x40));
+								(*((this->base).pVTable)->SetState)((CActor*)this, 6, -1);
+								return 1;
+							}
+						}
+						break;
+					case 8:
+						if ((this->field_0x180 & 4) != 0) {
+							if ((this->field_0x180 & 1) != 0) {
+								if (((this->base).flags & 0x1000) != 0) {
+									SetVectorFromAngles(&(this->base).rotationQuat, (edF32VECTOR3*)&(this->base).rotationEuler);
+								}
+								edF32Vector4SubHard(&eStack48, &(this->base).currentLocation, (edF32VECTOR4*)((int)pMsgParam + 0x40));
+								fVar4 = edF32Vector4DotProductHard(&eStack48, &(this->base).rotationQuat);
+								if (fVar4 < 0.0) {
+									edF32Vector4ScaleHard((float)&DAT_bf800000, &local_40, &(this->base).rotationQuat);
+									(this->base).rotationQuat.x = local_40.x;
+									(this->base).rotationQuat.y = local_40.y;
+									(this->base).rotationQuat.z = local_40.z;
+									(this->base).rotationQuat.w = local_40.w;
+									if (((this->base).flags & 0x1000) != 0) {
+										GetAnglesFromVector((edF32VECTOR3*)&(this->base).rotationEuler, &(this->base).rotationQuat);
+									}
+								}
+							}
+							(*((this->base).pVTable)->SetState)((CActor*)this, 7, -1);
+							return 1;
+						}
+						break;
+					case 9:
+						if ((this->field_0x180 & 8) != 0) {
+							FUN_0038d5d0(lVar3, (int*)&local_64);
+							return 1;
+						}
+						break;
+					case 10:
+						if (((this->field_0x180 & 0x10) != 0) && (0.0 < *(float*)((int)pMsgParam + 0xc))) {
+							if ((this->field_0x180 & 1) != 0) {
+								if (((this->base).flags & 0x1000) != 0) {
+									SetVectorFromAngles(&(this->base).rotationQuat, (edF32VECTOR3*)&(this->base).rotationEuler);
+								}
+								fVar4 = edF32Vector4DotProductHard((edF32VECTOR4*)((int)pMsgParam + 0x20), &(this->base).rotationQuat);
+								if (fVar4 < 0.0) {
+									edF32Vector4ScaleHard((float)&DAT_bf800000, &local_20, &(this->base).rotationQuat);
+									(this->base).rotationQuat.x = local_20.x;
+									(this->base).rotationQuat.y = local_20.y;
+									(this->base).rotationQuat.z = local_20.z;
+									(this->base).rotationQuat.w = local_20.w;
+									if (((this->base).flags & 0x1000) != 0) {
+										GetAnglesFromVector((edF32VECTOR3*)&(this->base).rotationEuler, &(this->base).rotationQuat);
+									}
+								}
+							}
+							(*((this->base).pVTable)->SetState)((CActor*)this, 7, -1);
+							return 1;
+						}
+						break;
+					case 0xb:
+						if ((this->field_0x180 & 0x20) != 0) {
+							*(float*)((int)pMsgParam + 0xc) = this->field_0x16c;
+							FUN_0038d5d0(lVar3, (int*)&local_64);
+							return 1;
+						}
+					}
+					iVar2 = 0;
+				})
+			}
+			else {
+				iVar2 = CActor::InterpretMessage(pSender, msg, (GetPositionMsgParams*)pMsgParam);
+			}
+		}
+	}
+
+	return iVar2;
 }
 
 int CActorBasicBox::InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5)

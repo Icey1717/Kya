@@ -6,6 +6,8 @@
 #include "edBankBuffer.h"
 
 struct MapManager : public CObjectManager {
+	void OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream);
+
 	int field_0x4;
 	undefined4 field_0x8;
 	float field_0xc;
@@ -666,8 +668,6 @@ struct MapManager : public CObjectManager {
 	undefined field_0x39d;
 	undefined field_0x39e;
 	undefined field_0x39f;
-
-	void OnLoadLevelBnk_003f9a60(ByteCode* pMemoryStream);
 };
 
 #endif // _MAP_MANAGER_H

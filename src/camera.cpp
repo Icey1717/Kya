@@ -582,7 +582,7 @@ void CCamera::ManageEvents()
 		uVar9 = uVar9 & uVar8;
 	}
 
-	uVar8 = uVar9 | (long)(this->field_0x7c << 1);
+	uVar8 = uVar9 | (ulong)(this->field_0x7c << 1);
 
 	if (uVar8 == 1) {
 		fVar12 = this->field_0x8c;
@@ -629,7 +629,16 @@ void CCamera::ManageEvents()
 		}
 	}
 
-	this->field_0x7c = (int)uVar9;
+	this->field_0x7c = uVar9;
+
+	return;
+}
+
+void CCamera::ResetEvent()
+{
+	if ((this->flags_0xc & 2) != 0) {
+		this->field_0x7c = 0;
+	}
 
 	return;
 }

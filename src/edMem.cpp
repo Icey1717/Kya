@@ -234,6 +234,13 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 		pHeap = edmemGetMainHeader((void*)heapID);
 		pNewAllocation = edMemAllocAlignBoundary(heapID, size, align, pHeap->offset);
 	}
+
+	if (!pNewAllocation) {
+		FLUSH_LOG();
+	}
+
+	assert(pNewAllocation);
+
 	return pNewAllocation;
 }
 

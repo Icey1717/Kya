@@ -116,3 +116,17 @@ LAB_002ef408:
 	//this->field_0x2b0 = -1;
 	return;
 }
+
+CBehaviour* CActorTeleporter::BuildBehaviour(int behaviourType)
+{
+	CBehaviour* pBehaviour;
+
+	if (behaviourType == 2) {
+		pBehaviour = &this->behaviourTeleporterDefault;
+	}
+	else {
+		pBehaviour = CActor::BuildBehaviour(behaviourType);
+	}
+
+	return pBehaviour;
+}

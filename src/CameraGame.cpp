@@ -1647,7 +1647,7 @@ void CCameraGame::_Normal_ManageIdle()
 	float fVar6;
 
 	fVar3 = 0.0f;
-	if (((CCamera::_gpcam_man->field_0xa7c == 0) || (0.05f <= this->field_0xd0->dynamic.speed)) ||
+	if (((CCamera::_gpcam_man->cheatIdleCameraActive == 0) || (0.05f <= this->field_0xd0->dynamic.speed)) ||
 		(iVar1 = CCameraStack::GetCurHeroState(), iVar1 != 4)) {
 		(this->field_0x450).x = 0.0f;
 	}

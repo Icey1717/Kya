@@ -1788,7 +1788,12 @@ void CBehaviourProjectileStand::Init(CActor* pOwner)
 
 void CBehaviourProjectileStand::Term()
 {
-	IMPLEMENTATION_GUARD();
+	if (this->field_0xc == 2) {
+		IMPLEMENTATION_GUARD_LOG(
+		__destroy_new_array((undefined*)this->aSparks, FUN_00131670);)
+		this->aSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
+	}
+	return;
 }
 
 void CBehaviourProjectileStand::Manage()

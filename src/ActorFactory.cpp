@@ -70,6 +70,12 @@ class CActorBrazul : public CActor {
 
 CActor* CActorFactory::Factory(ACTOR_CLASS classId, int count, int* outSize)
 {
+	int tempOutSize;
+
+	if (outSize == (int*)0x0) {
+		outSize = &tempOutSize;
+	}
+
 	if (classId < 0x57) {
 		switch (classId) {
 		case ACTOR:

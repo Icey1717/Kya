@@ -44,7 +44,7 @@ extern "C" {
 #endif
 
 #include "IniFile.h"
-#include "Iop.h"
+#include "CompatibilityHandlingPS2.h"
 #include "edMem.h"
 
 #include "Types.h"
@@ -87,16 +87,16 @@ T* CreateNew()
 	return new T;
 }
 
-InputSetupParams g_InputSetupParams = { 0, 0, 0, 0x8C };
+edSYS_CONFIG g_InputSetupParams = { 0, 0, 0, 0x8C };
 
-InputSetupParams* edSysGetConfig(void)
+edSYS_CONFIG* edSysGetConfig(void)
 {
 	return &g_InputSetupParams;
 }
 
 EFileLoadMode GetFileLoadMode_00424d9c(void)
 {
-	return g_InputSetupParams.fileLoadMode;
+	return g_InputSetupParams.version;
 }
 
 char* g_szCdRomPrefix_00438548 = "cdrom0:";
@@ -245,7 +245,7 @@ void InitIopAndRPC_00291de0(void)
 byte g_LoadedModulesIDs_00489280[0x20];
 int g_LoadedModulesCount_004892a4;
 
-void StartCDBootModuleAndInitCDDVD(IopPaths* pIopPaths)
+void StartCDBootModuleAndInitCDDVD(ED_PSX2_MODULES_INIT* pIopPaths)
 {
 	char* pcVar1;
 	char* __src;
@@ -617,7 +617,7 @@ struct edModule {
 void edPsx2ModuleLoad(char* pModulesName)
 {
 	bool bVar1;
-	InputSetupParams* pIVar2;
+	edSYS_CONFIG* pIVar2;
 	EFileLoadMode EVar3;
 	int iVar4;
 	int nbyte;
@@ -717,7 +717,7 @@ void edPsx2ModuleLoad(char* pModulesName)
 void edPsx2ModuleLoad(int count, edPsx2Module* aModules)
 {
 	bool bVar1;
-	InputSetupParams* pIVar2;
+	edSYS_CONFIG* pIVar2;
 	EFileLoadMode EVar3;
 	char* pcVar4;
 	int iVar5;
@@ -787,8 +787,8 @@ void edPsx2ModuleLoad(int count, edPsx2Module* aModules)
 
 void _edSystemInitSpecific(void)
 {
-	IopPaths* pIopPaths;
-	InputSetupParams* pIVar1;
+	ED_PSX2_MODULES_INIT* pIopPaths;
+	edSYS_CONFIG* pIVar1;
 	uint uVar2;
 	undefined4 uVar3;
 
@@ -872,7 +872,7 @@ void edSysInit(void)
 	return;
 }
 
-EFileLoadMode g_FileLoadMode_00448810 = FLM_CD_DVD;
+EFileLoadMode VERSION = FLM_CD_DVD;
 
 char* LoadFileFromDisk(char* fileName, uint* outSize)
 {
@@ -884,10 +884,10 @@ char* LoadFileFromDisk(char* fileName, uint* outSize)
 	char filePath[256];
 
 #if defined(PLATFORM_PS2)
-	scePrintf("Loading ini %d\n", g_FileLoadMode_00448810);
+	scePrintf("Loading ini %d\n", VERSION);
 	sceCdlFILE inFile;
 
-	if (g_FileLoadMode_00448810 == FLM_CD_DVD) {
+	if (VERSION == FLM_CD_DVD) {
 		/* Format: '\Param 1;1' */
 		strcpy(filePath, "\\");
 		edStrCat(filePath, fileName);
@@ -1275,7 +1275,7 @@ edCdlFolder* PTR_edCdlFolder_00448ef4;
 void Init_edFile(void)
 {
 	bool bVar1;
-	InputSetupParams* pIVar2;
+	edSYS_CONFIG* pIVar2;
 	undefined4 uVar3;
 	int local_4;
 
@@ -1283,11 +1283,11 @@ void Init_edFile(void)
 	//uVar3 = edFileGetConfig();
 	//uVar3->field_0x0 = g_ProfileModeSetup_00448edc != 0;
 	edFileInit();
-	if (g_FileLoadMode_00448810 == FLM_Net) {
+	if (VERSION == FLM_Net) {
 		edFileSetPath(sz_ModeNet_0042b7f8);
 	}
 	else {
-		if (g_FileLoadMode_00448810 == FLM_CD_DVD) {
+		if (VERSION == FLM_CD_DVD) {
 			edFileSetPath(sz_ModeCdvd_0042b800);
 		}
 		else {
@@ -1401,7 +1401,7 @@ char* sz_BNK_Messages_Path = "CDEURO/menu/Messages.bnk";
 
 void MainInit(int argc,char **argv)
 {
-	InputSetupParams *pIVar1;
+	edSYS_CONFIG *pIVar1;
 	char* pFileBuffer;
 	uint fileSize;
 	
@@ -1415,7 +1415,7 @@ void MainInit(int argc,char **argv)
 	pIVar1->field_0x14 = 10000;
 	pIVar1->headerCount = 0x1000;
 
-	gCompatibilityHandlingPtr->SetupIopPaths(pIVar1);
+	gCompatibilityHandlingPtr->edSysInit(pIVar1);
 
 	edSysInit();
 
@@ -1456,7 +1456,7 @@ void MainInit(int argc,char **argv)
 	//edClusterConfig->field_0x0 = 6;
 	//edClusterInit();
 	//ProfileInit(0);
-	gCompatibilityHandlingPtr->IOPFunc_0x10(0);
+	gCompatibilityHandlingPtr->edVideoInit(0);
 	edDebugPrintf("---- Init edDlist \n");
 	//edDListConfig_ = edDListGetConfig();
 	//edDListConfig_->field_0x0 = 0x14;
@@ -1531,7 +1531,7 @@ void MainInit(int argc,char **argv)
 #endif
 
 	///* May jump to 003965B8 */
-	bool bVar1 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+	bool bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
 	/* This doesn't seem to trigger on main run. */
 	if (bVar1 != false) {
 		MenuMessageBoxDisplay(8, 0, 0x52525f503700080c, 0x171d0d0b190f111a, 0);
@@ -2078,9 +2078,9 @@ void GameLoop(void)
 	timeController = GetTimer();
 	do {
 		ZONE_SCOPED;
-		gCompatibilityHandlingPtr->IOPFunc_0x14(0);
+		gCompatibilityHandlingPtr->BeginFrame(0);
 		CPlayerInput::Update(timeController->cutsceneDeltaTime);
-		cVar4 = gCompatibilityHandlingPtr->GetAnyControllerConnected();
+		cVar4 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
 		bVar4 = gPlayerInput.SoftReset();
 		if (bVar4 != false) {
 			IMPLEMENTATION_GUARD();
@@ -2195,8 +2195,8 @@ void GameLoop(void)
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
 		edVideoFlip();
 		/* Determine if we should exit the main game loop here. */
-		if ((GameFlags & 2) != 0) {
-			GameFlags = GameFlags & 0xfffffe7d;
+		if ((GameFlags & GAME_REQUEST_TERM) != 0) {
+			GameFlags = GameFlags & ~(GAME_REQUEST_TERM | GAME_CUTSCENE_100 | GAME_CUTSCENE_80);
 			return;
 		}
 	} while (true);
@@ -2216,6 +2216,14 @@ void LevelInit(void)
 	pSceneInstance->Level_Install();
 	pSceneInstance->Level_Init();
 	MY_LOG("LevelInit End\n");
+	return;
+}
+
+void LevelTerm(void)
+{
+	CScene::_pinstance->Level_Term();
+	CPlayerInput::Reset();
+	ed3DRunTimeStripBufferReset();
 	return;
 }
 
@@ -2264,7 +2272,7 @@ int main_internal(int argc, char** argv)
 	do {
 		LevelInit();
 		GameLoop();
-	//	LevelTerm();
+		LevelTerm();
 	} while ((GameFlags & 1) == 0);
 	//MainTerm();
 	return 0;

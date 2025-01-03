@@ -121,6 +121,12 @@ int* ScenaricCondition::GetEndPtr()
 	return this->pData + *this->pData * 4 + 1;
 }
 
+void ScenaricCondition::Invalidate()
+{
+	pData = (int*)0x0;
+	return;
+}
+
 void ConditionedOperationArray::Create(ByteCode* pByteCode)
 {
 	CND_OP_HEADER* puVar1;
@@ -238,5 +244,11 @@ void ConditionedOperationArray::Perform()
 			} while (uVar3 < this->pHeader->cndOpCount);
 		}
 	}
+	return;
+}
+
+void ConditionedOperationArray::Invalidate()
+{
+	this->pHeader = (CND_OP_HEADER*)0x0;
 	return;
 }

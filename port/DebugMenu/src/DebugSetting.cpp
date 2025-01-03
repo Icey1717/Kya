@@ -53,3 +53,12 @@ bool Debug::Setting<float>::DrawImguiControl()
 
 	return true;
 }
+
+template<>
+bool Debug::Setting<int>::DrawImguiControl()
+{
+	if (ImGui::InputInt(name.c_str(), &value)) {
+		return UpdateValue();
+	}
+	return true;
+}
