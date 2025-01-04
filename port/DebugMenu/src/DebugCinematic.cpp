@@ -38,7 +38,7 @@ namespace Debug::Cinematic
 			ImGui::Text("Zone Flags: 0x%x", pZone->flags);
 		}
 
-		ImGui::Text("Trigger Actor: %s", pCinematic->triggerActorRef.index >= 0 ? pCinematic->triggerActorRef.Get()->name : "None");
+		ImGui::Text("Trigger Actor: %s", (pCinematic->triggerActorRef.index >= 0 && pCinematic->triggerActorRef.Get()) ? pCinematic->triggerActorRef.Get()->name : "None");
 
 		if (pCinematic->cineBankLoadStage_0x2b4 == 4 && pCinematic->cinFileData.pCinTag && pCinematic->state != CS_Stopped) {
 			// Play/Pause button

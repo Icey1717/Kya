@@ -83,7 +83,7 @@ CBehaviour* CActorWeapon::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
-StateConfig CActorWeapon::_gStateCfg_WEA[6] =
+StateConfig CActorWeapon::_gStateCfg_WEA[9] =
 {
 	StateConfig(0x0, 0x0),
 	StateConfig(0x0, 0x0),
@@ -91,6 +91,9 @@ StateConfig CActorWeapon::_gStateCfg_WEA[6] =
 	StateConfig(0x0, 0x0),
 	StateConfig(0x6, 0x0),
 	StateConfig(0x7, 0x0),
+	StateConfig(0x0, 0x0),
+	StateConfig(0x0, 0x0),
+	StateConfig(0x0, 0x0),
 };
 
 StateConfig* CActorWeapon::GetStateCfg(int state)
@@ -101,7 +104,7 @@ StateConfig* CActorWeapon::GetStateCfg(int state)
 		pStateConfig = CActorMovable::GetStateCfg(state);
 	}
 	else {
-		assert((state - 5) < 6);
+		assert((state - 5) < 9);
 		pStateConfig = _gStateCfg_WEA + state + -5;
 	}
 

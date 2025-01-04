@@ -32,6 +32,8 @@
 #include "ActorHero.h"
 #include "Actor.h"
 #include "EventManager.h"
+#include "Rendering/DisplayList.h"
+#include "edVideo/VideoD.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
 
@@ -162,35 +164,46 @@ void CCinematicManager::LevelLoading_End()
 	CCinematicManager* pCVar2;
 
 	pCVar2 = g_CinematicManager_0048efc;
+
 	pCinematic = this->pCinematic;
 	if (pCinematic != (CCinematic*)0x0) {
-		IMPLEMENTATION_GUARD(
-			bVar1 = (pCinematic->cinematicLoadObject).soundObject.intFieldA != 0;
-		if ((bVar1) && (bVar1 = true, (pCinematic->cinematicLoadObject).soundObject.field_0x8 != 0.0)) {
+		bVar1 = (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA != 0;
+		if ((bVar1) && (bVar1 = true, (pCinematic->cinematicLoadObject).BWCinSourceAudio_Obj.field_0x8 != 0.0f)) {
 			bVar1 = false;
 		}
+
 		if (bVar1) {
 			g_CinematicManager_0048efc->pCurCinematic = pCinematic;
-			(**(code**)(*(int*)&(pCinematic->cinematicLoadObject).soundObject + 0x10))();
+			pCinematic->cinematicLoadObject.BWCinSourceAudio_Obj.Stop();
 			pCVar2->pCurCinematic = (CCinematic*)0x0;
 		}
+
 		bVar1 = (pCinematic->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
 		if (bVar1) {
 			bVar1 = pCinematic->cineBankLoadStage_0x2b4 != 4;
 		}
+
 		if (bVar1) {
-			CCinematic::Load(pCinematic, 0);
+			pCinematic->Load(0);
 		}
+
 		if (pCinematic->state != CS_Stopped) {
-			ActorGlobalFunc_001c84a0(pCinematic);
+			pCinematic->Stop();
 		}
+
 		pCinematic->flags_0x8 = pCinematic->flags_0x8 & 0xfffffffb;
-		pCinematic->pActor = (Actor*)0x0;
+		pCinematic->pActor = (CActor*)0x0;
+
 		GlobalDList_AddToView();
+
+#ifndef PLATFORM_WIN
 		edVideoFlip();
-		CCinematic::Manage((long)(int)this->pCinematic, 1);
-		this->pCinematic = (CCinematic*)0x0;);
+#endif
+
+		delete this->pCinematic;
+		this->pCinematic = (CCinematic*)0x0;
 	}
+
 	this->pCinematicCamera = (CCameraCinematic*)0x0;
 	return;
 }
@@ -1328,10 +1341,7 @@ void CCinematic::Start()
 					}
 
 					if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
-						IMPLEMENTATION_GUARD(
-						LevelScheduleManager::HoldsGetActorFunc_002dc200
-						(LevelScheduleManager::gThis, g_CinematicManager_0048efc->field_0x20,
-							LevelScheduleManager::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);)
+						CLevelScheduler::gThis->FUN_002dc200(g_CinematicManager_0048efc->field_0x20, CLevelScheduler::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);
 					}
 					else {
 						CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->endLevelId, this->endElevatorId, this->endCutsceneId, 0xffffffff);
@@ -2347,10 +2357,7 @@ void CCinematic::Stop()
 			}
 
 			if ((this == g_CinematicManager_0048efc->pCinematic) && (g_CinematicManager_0048efc->field_0x20 != -1)) {
-				IMPLEMENTATION_GUARD(
-				CLevelScheduler::HoldsGetActorFunc_002dc200
-				(CLevelScheduler::gThis, g_CinematicManager_0048efc->field_0x20,
-					CLevelScheduler::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);)
+				CLevelScheduler::gThis->FUN_002dc200(g_CinematicManager_0048efc->field_0x20, CLevelScheduler::gThis->currentLevelID, g_CinematicManager_0048efc->field_0x24);
 			}
 			else {
 				CLevelScheduler::gThis->Level_Teleport((CActor*)0x0, this->endLevelId, this->endElevatorId, this->endCutsceneId, -1);
@@ -4624,6 +4631,36 @@ bool CCinematicManager::PlayOutroCinematic(int index, CActor* param_3)
 	}
 
 	return this->pCinematic != (CCinematic*)0x0;
+}
+
+bool CCinematicManager::FUN_001c5c60()
+{
+	bool bVar1;
+	CCinematic** ppCVar2;
+	int iVar3;
+
+	bVar1 = false;
+	iVar3 = 0;
+	if (0 < this->activeCinematicCount) {
+		ppCVar2 = this->ppCinematicObjB_B;
+		do {
+			if (((*ppCVar2)->state != CS_Stopped) && (((*ppCVar2)->flags_0x4 & 0x200) != 0)) {
+				bVar1 = true;
+			}
+			iVar3 = iVar3 + 1;
+			ppCVar2 = ppCVar2 + 1;
+		} while (iVar3 < this->activeCinematicCount);
+	}
+
+	if ((!bVar1) && (bVar1 = true, this->field_0x34 == 0.0f)) {
+		bVar1 = false;
+	}
+
+	if ((!bVar1) && (bVar1 = this->field_0x38 != 0, bVar1)) {
+		bVar1 = this->field_0x44 == 0;
+	}
+
+	return bVar1;
 }
 
 void CCinematicManager::Level_ClearAll()

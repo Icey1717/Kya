@@ -66,7 +66,13 @@ void CActorPunchingBall::Init()
 
 void CActorPunchingBall::Term()
 {
-	IMPLEMENTATION_GUARD();
+	CActorFighter::Term();
+
+	//(*(code*)((this->field_0xe50).pVTable)->field_0x10)(&this->field_0xe50);
+
+	this->field_0xa90 = (S_TRAP_STREAM_REF*)0x0;
+
+	return;
 }
 
 void CActorPunchingBall::Manage()

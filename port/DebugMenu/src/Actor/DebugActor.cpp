@@ -155,6 +155,10 @@ namespace Debug {
 		}
 
 		static void ShowActorOverlay(CActor* pActor) {
+			if (!CActorHero::_gThis) {
+				return;
+			}
+
 			const edF32VECTOR4 heroLocation = CActorHero::_gThis->currentLocation;
 			const edF32VECTOR4 worldPos = pActor->currentLocation;
 

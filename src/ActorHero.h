@@ -120,6 +120,7 @@
 
 struct CPlayerInput;
 class CActorBoomy;
+class CCamera;
 
 struct AnimResultHero : public StateConfig {
 	AnimResultHero(int inA, uint inB, uint inC)
@@ -275,9 +276,22 @@ public:
 	CMagicInterface magicInterface;
 	CMoneyInterface moneyInterface;
 
+	CCamera* pMainCamera;
+	CCamera* pCameraViewBase_0x15b0;
+	CCamera* pWindWallCamera_0x15b4;
+	CCamera* pCameraKyaJamgut;
+	CCamera* pFightCamera;
+
+	CCamera* pDeathCamera;
+
+	CCamera* pJamgutCamera_0x15b8;
+	CCamera* pIntViewCamera_0x15bc;
+
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];
 	static HeroActionStateCfg _gActionCfg_HRO[16];
+
+	~CActorHero();
 
 	// CActor
 	virtual StateConfig* GetStateCfg(int state);

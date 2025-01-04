@@ -374,6 +374,7 @@ namespace Debug {
 			gTeleportCutsceneId.DrawImguiControl();
 
 			if (ImGui::Button("Level Teleport")) {
+				bShowMenus = false;
 				CScene::ptable.g_LevelScheduleManager_00451660->Level_Teleport(nullptr, gTeleportLevelId, gTeleportElevatorId, gTeleportCutsceneId, -1);
 			}
 		}

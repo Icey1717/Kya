@@ -1230,6 +1230,11 @@ HeroActionStateCfg CActorHero::_gActionCfg_HRO[16] = {
 	{ 0x11 },
 };
 
+CActorHero::~CActorHero()
+{
+	_gThis = (CActorHero*)0x0;
+}
+
 HeroActionStateCfg* CActorHero::GetActionCfg(int index)
 {
 	return _gActionCfg_HRO + index;

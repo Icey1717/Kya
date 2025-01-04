@@ -8,7 +8,9 @@
 #define PROJECTILE_BEHAVIOUR_STRAIGHT 0x4
 #define PROJECTILE_BEHAVIOUR_PORTABLE 0x5
 #define PROJECTILE_BEHAVIOUR_INVENTORY 0x9
-#define PROJECTILE_BEHAVIOUR_INACTIVE 0xb
+#define PROJECTILE_BEHAVIOUR_LAVA_BALL 0xa
+#define PROJECTILE_BEHAVIOUR_EXCUSE 0xb
+#define PROJECTILE_BEHAVIOUR_INACTIVE 0xc
 
 class CPointPattern
 {
@@ -104,6 +106,11 @@ public:
 };
 
 class CBehaviourInventory : public CBehaviour
+{
+
+};
+
+class CBehaviourProjectileLavaBall : public CBehaviour
 {
 
 };

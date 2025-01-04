@@ -1,16 +1,16 @@
-#ifndef ACTOR_BLAZER_H
-#define ACTOR_BLAZER_H
+#ifndef ACTOR_CREDITS_H
+#define ACTOR_CREDITS_H
 
 #include "Types.h"
 #include "Actor.h"
 
-class CActorBlazer : public CActor {
+class CActorCredits : public CActor {
 public:
-	CActorBlazer(){
+	CActorCredits(){
 		IMPLEMENTATION_GUARD_LOG()
 	}
 
 	virtual void Create(ByteCode* pByteCode);
 };
 
-#endif //ACTOR_BLAZER_H
+#endif //ACTOR_CREDITS_H

@@ -19,9 +19,13 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 
+	void UpdateCurTeleporterState(int levelId, int param_3);
+
 	ConditionedOperationArray condOpArray;
 
 	CBehaviourTeleporterDefault behaviourTeleporterDefault;
+
+	undefined4 field_0x2a0;
 };
 
 #endif //ACTOR_TELEPORTER_H

@@ -34,6 +34,7 @@
 #include "ActorHero.h"
 #include "TimeController.h"
 #include "CameraViewManager.h"
+#include "ActorTeleporter.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -184,26 +185,26 @@ void CLevelScheduler::Level_FillRunInfo(int levelID, int elevatorID, int param_4
 		levelID = nextLevelId;
 		elevatorID = -1;
 	}
-	nextLevelID = levelID;
-	outroCutsceneId = -1;
-	nextElevatorID = elevatorID;
+	this->nextLevelID = levelID;
+	this->outroCutsceneId = -1;
+	this->nextElevatorID = elevatorID;
 	pLevelInfo = &aLevelInfo[levelID];
 
-	baseSectorIndex = pLevelInfo->sectorStartIndex;
-	currentElevatorID = -1;
-	level_0x5b50 = 0x10;
-	level_0x5b54 = -1;
-	if (field_0x78 == 0) {
+	this->baseSectorIndex = pLevelInfo->sectorStartIndex;
+	this->currentElevatorID = -1;
+	this->level_0x5b50 = 0x10;
+	this->level_0x5b54 = -1;
+	if (this->field_0x78 == 0) {
 		// Check maxElevatorID_0xa8 and field_0xf4
-		iVar2 = nextElevatorID;
+		iVar2 = this->nextElevatorID;
 		if (((iVar2 != -1) && (-1 < iVar2)) && (iVar2 < pLevelInfo->maxElevatorId)) {
-			iVar2 = pLevelInfo->field_0x58[iVar2].field_0x20;
+			iVar2 = pLevelInfo->field_0x58[iVar2].field_0xc;
 			if (iVar2 != -1) {
-				baseSectorIndex = iVar2;
+				this->baseSectorIndex = iVar2;
 			}
 
-			level_0x5b50 = currentLevelID;
-			level_0x5b54 = param_4;
+			this->level_0x5b50 = currentLevelID;
+			this->level_0x5b54 = param_4;
 		}
 	}
 	else {
@@ -253,7 +254,6 @@ void CLevelScheduler::Level_LoadObjectives(ByteCode* pMemoryStream)
 	return;
 }
 
-
 struct LoadLoopObject_418_18 {
 	SectorManagerSubObj aSubObj[6];
 };
@@ -262,7 +262,7 @@ void SetupLevelInfo_002d97c0(S_LEVEL_INFO* pLevelInfo, bool param_2)
 {
 	LoadLoopObject_418_18* pLVar1;
 	int iVar2;
-	LevelInfoSubObj_28* pLevelInfoSubObj;
+	S_SUBSECTOR_INFO* pLevelInfoSubObj;
 
 	/* This will clear our current level name */
 	if (param_2 != false) {
@@ -345,7 +345,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	}
 
 	this->field_0x5b30 = 0;
-	this->field_0x4214 = 0;
+	this->field_0x4214 = 0.0f;
 
 
 	pSVar5 = _gScenVarInfo;
@@ -638,7 +638,7 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo)
 {
 	int iVar1;
-	LevelInfoSubObj_28* pLevelInfoSubObj;
+	S_SUBSECTOR_INFO* pLevelInfoSubObj;
 	int iVar4;
 
 	pLevelInfo->maxElevatorId = 0;
@@ -1121,6 +1121,11 @@ LAB_002e26c8:
 		//Level_FillRunInfo(0x4, 9, -1);
 	}
 	return;
+}
+
+void CLevelScheduler::Game_Term()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 bool BnkInstallScene(char* pFileData, int size)
@@ -1876,6 +1881,456 @@ void CLevelScheduler::Level_Init()
 	return;
 }
 
+void CLevelScheduler::Level_Term()
+{
+	if (this->currentLevelID == 0xe) {
+		GameFlags = GameFlags & 0xffffffbf;
+	}
+
+	return;
+}
+
+void CLevelScheduler::Level_AddAll(struct ByteCode* pByteCode)
+{
+	return;
+}
+
+void CLevelScheduler::Level_ClearAll()
+{
+	undefined4 uVar1;
+	undefined4 uVar2;
+	bool bVar3;
+	int iVar4;
+	undefined4* puVar5;
+	undefined4* puVar6;
+	ScenarioVariable* pSVar7;
+	//SaveStruct_16* pSVar8;
+	CChunk* pCVar9;
+	int iVar10;
+	S_LEVEL_INFO* pSVar11;
+	char local_80[128];
+
+	(this->levelBank).pBankFileAccessObject->close();
+	(this->levelBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+
+	this->levelBank.terminate();
+
+	if ((this->field_0x80 | this->field_0x78 | this->field_0x7c) == 0) {
+		_gScenVarInfo[1].currentValue = this->currentLevelID;
+	}
+
+	this->currentLevelID = 0x10;
+	this->field_0x84 = 0.0f;
+	this->field_0x88 = 0.0f;
+	this->pObjectiveStreamBegin = (int*)0x0;
+	this->pObjectiveStreamEnd = (int*)0x0;
+
+	if (this->field_0x78 != 0) {
+		MoreLoadLoopObjectSetup(false);
+
+		IMPLEMENTATION_GUARD_LOG(
+		Levels_UpdateDataFromSavedGame();)
+	}
+
+	if (this->field_0x7c != 0) {
+		MoreLoadLoopObjectSetup(false);
+
+		IMPLEMENTATION_GUARD_LOG(
+		Episode_LoadFromIniFile();
+		pCVar9 = this->pSaveData_0x48;
+		pCVar9->field_0x0 = 0x16660666;
+		pCVar9->field_0x4 = 0x56415342;
+		pCVar9->size = 0x50000;
+		pCVar9->offset = 0;
+		for (pSVar8 = SaveStruct_16_ARRAY_00433aa0; (iVar10 = *(int*)pSVar8->header, iVar10 != 0x44485342 && (iVar10 != 0))
+			; pSVar8 = pSVar8 + 1) {
+		}
+		if (iVar10 == 0) {
+			pSVar8 = (SaveStruct_16*)0x0;
+		}
+		uVar1 = pSVar8->field_0xc;
+		uVar2 = pSVar8->field_0x8;
+		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
+			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		pCVar9 = (CChunk*)(iVar10 + 0x10);
+		if (pSVar8->field_0x4 == 0) {
+			pCVar9->field_0x0 = 0x16660666;
+		}
+		else {
+			pCVar9->field_0x0 = 0x6667666;
+		}
+		*(undefined4*)(iVar10 + 0x14) = 0x44485342;
+		*(undefined4*)(iVar10 + 0x18) = uVar2;
+		*(undefined4*)(iVar10 + 0x1c) = uVar1;
+		this->currentSaveIndex = this->currentSaveIndex + 1;
+		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		if (pCVar9->field_0x0 == 0x6667666) {
+			puVar6 = (undefined4*)(iVar10 + 0x20);
+		}
+		else {
+			puVar6 = (undefined4*)0x0;
+		}
+		*puVar6 = 0x10;
+		puVar6[2] = 0;
+		puVar6[1] = 0xffffffff;
+		puVar6[3] = 0xffffffff;
+		puVar6[4] = 0xffffffff;
+		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
+		this->currentSaveIndex = this->currentSaveIndex + -1;
+		this->aSaveDataArray[this->currentSaveIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		for (pSVar8 = SaveStruct_16_ARRAY_00433aa0; (iVar10 = *(int*)pSVar8->header, iVar10 != 0x4e435342 && (iVar10 != 0))
+			; pSVar8 = pSVar8 + 1) {
+		}
+		if (iVar10 == 0) {
+			pSVar8 = (SaveStruct_16*)0x0;
+		}
+		uVar1 = pSVar8->field_0xc;
+		uVar2 = pSVar8->field_0x8;
+		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
+			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		pCVar9 = (CChunk*)(iVar10 + 0x10);
+		if (pSVar8->field_0x4 == 0) {
+			pCVar9->field_0x0 = 0x16660666;
+		}
+		else {
+			pCVar9->field_0x0 = 0x6667666;
+		}
+		*(undefined4*)(iVar10 + 0x14) = 0x4e435342;
+		*(undefined4*)(iVar10 + 0x18) = uVar2;
+		*(undefined4*)(iVar10 + 0x1c) = uVar1;
+		this->currentSaveIndex = this->currentSaveIndex + 1;
+		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		puVar6 = (undefined4*)0x0;
+		if (pCVar9->field_0x0 == 0x6667666) {
+			puVar6 = (undefined4*)(iVar10 + 0x20);
+		}
+		*puVar6 = 0x62;
+		pSVar7 = _gScenVarInfo;
+		puVar5 = puVar6;
+		iVar10 = 0;
+		do {
+			iVar4 = iVar10;
+			iVar10 = iVar4 + 8;
+			puVar5[1] = pSVar7->currentValue;
+			puVar5[2] = pSVar7[1].currentValue;
+			puVar5[3] = pSVar7[2].currentValue;
+			puVar5[4] = pSVar7[3].currentValue;
+			puVar5[5] = pSVar7[4].currentValue;
+			puVar5[6] = pSVar7[5].currentValue;
+			puVar5[7] = pSVar7[6].currentValue;
+			puVar5[8] = pSVar7[7].currentValue;
+			pSVar7 = pSVar7 + 8;
+			puVar5 = puVar5 + 8;
+		} while (iVar10 < 0x5a);
+		(puVar6 + iVar10)[1] = _gScenVarInfo[iVar10].currentValue;
+		(puVar6 + iVar10)[2] = _gScenVarInfo[iVar4 + 9].currentValue;
+		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
+		this->currentSaveIndex = this->currentSaveIndex + -1;
+		*(int*)(iVar10 + 0xc) = (int)puVar6 + (0x18c - (iVar10 + 0x10));
+		this->aSaveDataArray[this->currentSaveIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		SaveGame_SaveScenVars(this);
+		SaveGame_SaveGameInfo(this);)
+	}
+
+	if (this->field_0x80 != 0) {
+		edStrCopy(this->levelPath, g_CD_LevelPath_00433bf8);
+		/* Router - Set Path */
+		bVar3 = gIniFile.ReadString_001aa520(g_szRouter_00433c08, g_szSetPath_00433c10, this->levelPath);
+		if (bVar3 == false) {
+			/* No path found in .INI -> use default !\n */
+			edDebugPrintf(g_szNoPathError_00433c20);
+		}
+
+		/* Router - Add Level */
+		local_80[0] = 0;
+		gIniFile.ReadString_001aa520(g_szRouter_00433c08, g_szAddLevel_00433c48, local_80);
+		pSVar11 = this->aLevelInfo;
+		iVar10 = 0;
+		do {
+			if (pSVar11->aCompanionInfo != (S_COMPANION_INFO*)0x0) {
+				delete[] pSVar11->aCompanionInfo;
+				pSVar11->aCompanionInfo = (S_COMPANION_INFO*)0x0;
+			}
+			if (pSVar11->pSimpleConditionData != (void*)0x0) {
+				edMemFree(pSVar11->pSimpleConditionData);
+				pSVar11->pSimpleConditionData = 0;
+			}
+
+			iVar10 = iVar10 + 1;
+			pSVar11 = pSVar11 + 1;
+		} while (iVar10 < 0x10);
+
+		MoreLoadLoopObjectSetup(true);
+		Levels_LoadInfoBank();
+
+		IMPLEMENTATION_GUARD_LOG(
+		Episode_LoadFromIniFile();
+		pSVar11 = this->aLevelInfo;
+		iVar10 = 0;
+		do {
+			iVar4 = edStrICmp((byte*)local_80, (byte*)pSVar11->levelName);
+			if (iVar4 == 0) goto LAB_002dce40;
+			iVar10 = iVar10 + 1;
+			pSVar11 = pSVar11 + 1;
+		} while (iVar10 < 0x10);
+		iVar10 = 0;
+	LAB_002dce40:
+		this->nextLevelId = iVar10;
+		pCVar9 = this->pSaveData_0x48;
+		pCVar9->field_0x0 = 0x16660666;
+		pCVar9->field_0x4 = 0x56415342;
+		pCVar9->size = 0x50000;
+		pCVar9->offset = 0;
+		for (pSVar8 = SaveStruct_16_ARRAY_00433aa0; (iVar10 = *(int*)pSVar8->header, iVar10 != 0x44485342 && (iVar10 != 0))
+			; pSVar8 = pSVar8 + 1) {
+		}
+		if (iVar10 == 0) {
+			pSVar8 = (SaveStruct_16*)0x0;
+		}
+		uVar1 = pSVar8->field_0xc;
+		uVar2 = pSVar8->field_0x8;
+		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
+			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		pCVar9 = (CChunk*)(iVar10 + 0x10);
+		if (pSVar8->field_0x4 == 0) {
+			pCVar9->field_0x0 = 0x16660666;
+		}
+		else {
+			pCVar9->field_0x0 = 0x6667666;
+		}
+		*(undefined4*)(iVar10 + 0x14) = 0x44485342;
+		*(undefined4*)(iVar10 + 0x18) = uVar2;
+		*(undefined4*)(iVar10 + 0x1c) = uVar1;
+		this->currentSaveIndex = this->currentSaveIndex + 1;
+		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		if (pCVar9->field_0x0 == 0x6667666) {
+			puVar6 = (undefined4*)(iVar10 + 0x20);
+		}
+		else {
+			puVar6 = (undefined4*)0x0;
+		}
+		*puVar6 = 0x10;
+		puVar6[2] = 0;
+		puVar6[1] = 0xffffffff;
+		puVar6[3] = 0xffffffff;
+		puVar6[4] = 0xffffffff;
+		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
+		this->currentSaveIndex = this->currentSaveIndex + -1;
+		this->aSaveDataArray[this->currentSaveIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		for (pSVar8 = SaveStruct_16_ARRAY_00433aa0; (iVar10 = *(int*)pSVar8->header, iVar10 != 0x4e435342 && (iVar10 != 0))
+			; pSVar8 = pSVar8 + 1) {
+		}
+		if (iVar10 == 0) {
+			pSVar8 = (SaveStruct_16*)0x0;
+		}
+		uVar1 = pSVar8->field_0xc;
+		uVar2 = pSVar8->field_0x8;
+		iVar10 = (int)&this->aSaveDataArray[this->currentSaveIndex]->field_0x0 +
+			this->aSaveDataArray[this->currentSaveIndex]->offset;
+		pCVar9 = (CChunk*)(iVar10 + 0x10);
+		if (pSVar8->field_0x4 == 0) {
+			pCVar9->field_0x0 = 0x16660666;
+		}
+		else {
+			pCVar9->field_0x0 = 0x6667666;
+		}
+		*(undefined4*)(iVar10 + 0x14) = 0x4e435342;
+		*(undefined4*)(iVar10 + 0x18) = uVar2;
+		*(undefined4*)(iVar10 + 0x1c) = uVar1;
+		this->currentSaveIndex = this->currentSaveIndex + 1;
+		this->aSaveDataArray[this->currentSaveIndex] = pCVar9;
+		puVar6 = (undefined4*)0x0;
+		if (pCVar9->field_0x0 == 0x6667666) {
+			puVar6 = (undefined4*)(iVar10 + 0x20);
+		}
+		*puVar6 = 0x62;
+		pSVar7 = _gScenVarInfo;
+		puVar5 = puVar6;
+		iVar10 = 0;
+		do {
+			iVar4 = iVar10;
+			iVar10 = iVar4 + 8;
+			puVar5[1] = pSVar7->currentValue;
+			puVar5[2] = pSVar7[1].currentValue;
+			puVar5[3] = pSVar7[2].currentValue;
+			puVar5[4] = pSVar7[3].currentValue;
+			puVar5[5] = pSVar7[4].currentValue;
+			puVar5[6] = pSVar7[5].currentValue;
+			puVar5[7] = pSVar7[6].currentValue;
+			puVar5[8] = pSVar7[7].currentValue;
+			pSVar7 = pSVar7 + 8;
+			puVar5 = puVar5 + 8;
+		} while (iVar10 < 0x5a);
+		(puVar6 + iVar10)[1] = _gScenVarInfo[iVar10].currentValue;
+		(puVar6 + iVar10)[2] = _gScenVarInfo[iVar4 + 9].currentValue;
+		iVar10 = *(int*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50);
+		*(undefined4*)(this->levelPath + this->currentSaveIndex * 4 + -8 + 0x50) = 0;
+		this->currentSaveIndex = this->currentSaveIndex + -1;
+		*(int*)(iVar10 + 0xc) = (int)puVar6 + (0x18c - (iVar10 + 0x10));
+		this->aSaveDataArray[this->currentSaveIndex]->offset =
+			iVar10 + ((*(int*)(iVar10 + 0xc) + 0x10) - (int)(this->aSaveDataArray[this->currentSaveIndex] + 1));
+		SaveGame_SaveScenVars(this);
+		SaveGame_SaveGameInfo(this);)
+	}
+
+	//FUN_002daf70();
+
+	return;
+}
+
+void CLevelScheduler::Level_Manage()
+{
+	int* piVar1;
+	bool bVar2;
+	CActorHero* pCVar3;
+	Timer* pTVar4;
+	CLifeInterface* pCVar5;
+	StateConfig* pSVar6;
+	ulong uVar7;
+	uint uVar8;
+	uint* puVar9;
+	CActorsTable* pCVar10;
+	uint** ppuVar11;
+	int iVar12;
+	int iVar13;
+	float fVar14;
+	float fVar15;
+	CActorsTable local_110;
+
+	pTVar4 = Timer::GetTimer();
+	fVar15 = pTVar4->cutsceneDeltaTime;
+	this->field_0x4214 = this->field_0x4214 + pTVar4->lastFrameTime;
+
+	IMPLEMENTATION_GUARD_LOG(
+	piVar1 = this->pObjectiveStreamBegin;
+	if (piVar1 != (int*)0x0) {
+		ppuVar11 = (uint**)(piVar1 + 1);
+		uVar8 = 0;
+		if (*piVar1 != 0) {
+			do {
+				FUN_002d8970(ppuVar11);
+				uVar8 = uVar8 + 1;
+				ppuVar11 = ppuVar11 + (int)ppuVar11[7] * 4 + 8;
+			} while (uVar8 < (uint)*this->pObjectiveStreamBegin);
+		}
+	}
+
+	piVar1 = this->pObjectiveStreamEnd;
+	iVar12 = 0;
+	if (piVar1 != (int*)0x0) {
+		iVar12 = *piVar1;
+	}
+
+	if (iVar12 != 0) {
+		puVar9 = (uint*)(piVar1 + 1);
+		for (iVar12 = *piVar1; iVar12 != 0; iVar12 = iVar12 + -1) {
+			if ((((*puVar9 != 0x20) && ((ed_zone_3d*)puVar9[1] != (ed_zone_3d*)0x0)) &&
+				(CActorHero::_gThis != (CActorHero*)0x0)) &&
+				(uVar8 = edEventComputeZoneAgainstVertex
+				((CScene::ptable.g_EventManager_006f5080)->activeChunkId, (ed_zone_3d*)puVar9[1],
+					&(CActorHero::_gThis->character).characterBase.base.base.currentLocation, 0),
+					(uVar8 & 1) != 0)) {
+				gThis->field_0x5b30 = gThis->field_0x5b30 | 1 << (*puVar9 & 0x1f);
+			}
+			puVar9 = puVar9 + 2;
+		}
+	})
+
+	if (this->currentLevelID == 0) {
+		local_110.entryCount = 0;
+		CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(NATIV_SHOP, &local_110);
+
+		IMPLEMENTATION_GUARD(
+		this->field_0x5620 = local_110.entryCount;
+		if (10 < this->field_0x5620) {
+			this->field_0x5620 = 10;
+		}
+		iVar13 = &this->field_0x5630;
+		iVar12 = 0;
+		if (0 < this->field_0x5620) {
+			pCVar10 = &local_110;
+			do {
+				FUN_002d8d10(iVar13, (int)pCVar10->aEntries[0]);
+				iVar12 = iVar12 + 1;
+				pCVar10 = (CActorsTable*)pCVar10->aEntries;
+				iVar13 = iVar13 + 0x80;
+			} while (iVar12 < this->field_0x5620);
+		})
+	}
+
+	if (this->currentElevatorID != -1) {
+		FUN_002dc200(this->currentElevatorID, this->level_0x5b50, this->level_0x5b54);
+		this->currentElevatorID = -1;
+		this->level_0x5b50 = 0x10;
+		this->level_0x5b54 = -1;
+	}
+
+	if (this->field_0x84 <= 0.0f) {
+		return;
+	}
+
+	fVar14 = this->field_0x84 - fVar15;
+	this->field_0x84 = fVar14;
+	if (0.0 < fVar14) {
+		return;
+	}
+
+	if (((GameFlags & 0x1c) != 0) || (g_CinematicManager_0048efc->FUN_001c5c60() != false)) {
+		this->field_0x84 = this->field_0x84 + fVar15;
+		return;
+	}
+
+	IMPLEMENTATION_GUARD_LOG(
+	if (((gSaveManagement.field_0x0 != 0) && (gSaveManagement.slotID_0x28 != -1)) &&
+		((uVar7 = FUN_002f39c0((int)&gSaveManagement), uVar7 == 0 &&
+			(uVar7 = FUN_001b92f0(CScene::_pinstance), pCVar3 = CActorHero::_gThis, uVar7 == 0)))) {
+		if (CActorHero::_gThis != (CActorHero*)0x0) {
+			pCVar5 = (*((CActorHero::_gThis->character).characterBase.base.base.pVTable)->GetLifeInterface)
+				((CActor*)CActorHero::_gThis);
+			fVar15 = (float)(**(code**)((int)pCVar5->pVtable + 0x24))(pCVar5);
+			bVar2 = fVar15 - (pCVar3->character).characterBase.field_0x2e4 <= 0.0;
+			if (!bVar2) {
+				iVar12 = (pCVar3->character).characterBase.base.base.actorState;
+				if (iVar12 == -1) {
+					uVar8 = 0;
+				}
+				else {
+					pSVar6 = (*((pCVar3->character).characterBase.base.base.pVTable)->GetStateCfg)((CActor*)pCVar3, iVar12);
+					uVar8 = pSVar6->flags_0x4 & 1;
+				}
+				bVar2 = uVar8 != 0;
+			}
+			if (bVar2) goto LAB_002dc8d8;
+		}
+		SaveManagement_MemCardAutoSave();
+		this->field_0x88 = pTVar4->scaledTotalTime;
+	})
+
+LAB_002dc8d8:
+	this->field_0x84 = 0.0f;
+	return;
+}
+
+void CLevelScheduler::Level_ManagePaused()
+{
+	if ((GameFlags & 0x1c) == 0) {
+		Level_Manage();
+	}
+
+	return;
+}
+
+void CLevelScheduler::Level_Draw()
+{
+	return;
+}
+
 void CLevelScheduler::LevelLoading_End()
 {
 	this->currentLevelID = this->nextLevelID;
@@ -1886,7 +2341,7 @@ void CLevelScheduler::LevelLoading_End()
 
 void CLevelScheduler::Level_PreTerm()
 {
-	LevelInfoSubObj_28* pLVar1;
+	S_SUBSECTOR_INFO* pLVar1;
 	int iVar2;
 
 	iVar2 = 0;
@@ -2009,6 +2464,26 @@ void CLevelScheduler::SetLevelTimerFunc_002df450(float param_1, int mode)
 			this->field_0x88 = 0.0f;
 		}
 	}
+	return;
+}
+
+void CLevelScheduler::FUN_002dc200(int elevatorId, int levelId, int param_4)
+{
+	CActorTeleporter* pTeleporter;
+	CCameraManager* pCameraManager;
+
+	if ((((elevatorId != -1) && (-1 < elevatorId)) && (elevatorId < this->aLevelInfo[this->currentLevelID].maxElevatorId) &&
+		(((pTeleporter = (CActorTeleporter*)
+			CScene::ptable.g_ActorManager_004516a4->GetActorByHashcode(this->aLevelInfo[this->currentLevelID].field_0x58[elevatorId].field_0x0)),
+			pTeleporter != (CActorTeleporter*)0x0 && (pTeleporter->field_0x2a0 != 0)) &&
+			(pTeleporter->UpdateCurTeleporterState(levelId, param_4),
+				(CActorHero::_gThis->flags & 0x800000) == 0)))) {
+		pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+		pCameraManager->Level_Reset();
+		pCameraManager->SetMainCamera(CActorHero::_gThis->pMainCamera);
+		pCameraManager->AlertCamera(2, 1);
+	}
+
 	return;
 }
 

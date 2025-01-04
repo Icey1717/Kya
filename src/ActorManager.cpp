@@ -68,7 +68,7 @@ void CActorManager::Level_Term()
 	pCVar4 = this->aClassInfo;
 	do {
 		if (pCVar4->aActors != (CActor*)0x0) {
-			CActorFactory::Factory((ACTOR_CLASS)classId, 0, (int*)0x0);
+			CActorFactory::Factory((ACTOR_CLASS)classId, 0, (int*)0x0, pCVar4->aActors);
 		}
 
 		pCVar4->aActors = (CActor*)0x0;
@@ -831,7 +831,7 @@ void CActorManager::Level_LoadClassesInfo(struct ByteCode* pMemoryStream)
 			pClassInfo->allocatedCount = 0;
 
 			if (pClassInfo->totalCount != 0) {
-				pClassInfo->aActors = CActorFactory::Factory(classId, pClassInfo->totalCount, &pClassInfo->size);
+				pClassInfo->aActors = CActorFactory::Factory(classId, pClassInfo->totalCount, &pClassInfo->size, (void*)0x0);
 			}
 		}
 	}
@@ -875,20 +875,20 @@ void CActorManager::GetActorsByClassID(int classId, CActorsTable* pOutList)
 		totalCount = 0x40;
 	}
 
+	// #UnrolledLoop
 	curIndex = 0;
 	if (0 < totalCount) {
 		pList = pOutList->aEntries;
 		if (8 < totalCount) {
 			do {
-				IMPLEMENTATION_GUARD(); // CHECK CORRECT
-				pList[curIndex + 0] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 0) * pClassInfo->size);
-				pList[curIndex + 1] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 1) * pClassInfo->size);
-				pList[curIndex + 2] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 2) * pClassInfo->size);
-				pList[curIndex + 3] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 3) * pClassInfo->size);
-				pList[curIndex + 4] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 4) * pClassInfo->size);
-				pList[curIndex + 5] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 5) * pClassInfo->size);
-				pList[curIndex + 6] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 6) * pClassInfo->size);
-				pList[curIndex + 7] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + (curIndex + 7) * pClassInfo->size);
+				pList[curIndex + 0] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 0) * pClassInfo->size));
+				pList[curIndex + 1] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 1) * pClassInfo->size));
+				pList[curIndex + 2] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 2) * pClassInfo->size));
+				pList[curIndex + 3] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 3) * pClassInfo->size));
+				pList[curIndex + 4] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 4) * pClassInfo->size));
+				pList[curIndex + 5] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 5) * pClassInfo->size));
+				pList[curIndex + 6] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 6) * pClassInfo->size));
+				pList[curIndex + 7] = reinterpret_cast<CActor*>(reinterpret_cast<char*>(pClassInfo->aActors) + ((curIndex + 7) * pClassInfo->size));
 
 				curIndex = curIndex + 8;
 			} while (curIndex < totalCount + -8);

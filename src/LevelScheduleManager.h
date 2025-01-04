@@ -133,7 +133,7 @@ struct S_LVLNFO_TELEPORTERS_V7_V9
 
 static_assert(sizeof(S_LVLNFO_TELEPORTERS_V7_V9) == 0x1c);
 
-struct LevelInfoSubObj_28
+struct S_SUBSECTOR_INFO
 {
 	ulong field_0x0;
 	int field_0x8;
@@ -179,7 +179,7 @@ struct S_LEVEL_INFO {
 	undefined field_0x55;
 	undefined field_0x56;
 	undefined field_0x57;
-	LevelInfoSubObj_28 field_0x58[12];
+	S_SUBSECTOR_INFO field_0x58[12];
 	SectorManagerSubObjOther aSectorSubObj[30];
 };
 
@@ -198,12 +198,22 @@ public:
 
 	// Begin Manager
 	virtual void Game_Init();
+	virtual void Game_Term();
 
 	virtual void LevelLoading_Begin();
 	virtual void LevelLoading_End();
 	virtual bool LevelLoading_Manage();
+
 	virtual void Level_Install();
 	virtual void Level_Init();
+	virtual void Level_Term();
+	virtual void Level_AddAll(struct ByteCode* pByteCode);
+	virtual void Level_ClearAll();
+
+	virtual void Level_Manage();
+	virtual void Level_ManagePaused();
+	virtual void Level_Draw();
+
 	// End Manager
 
 	virtual void Level_PreTerm();
@@ -235,6 +245,7 @@ public:
 	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6);
 
 	void SetLevelTimerFunc_002df450(float param_1, int mode);
+	void FUN_002dc200(int elevatorId, int levelId, int param_4);
 public:
 
 	static CLevelScheduler* gThis;
@@ -310,7 +321,7 @@ public:
 	undefined field_0x8f;
 	S_LEVEL_INFO aLevelInfo[16];
 	int field_0x4210;
-	undefined4 field_0x4214;
+	float field_0x4214;
 	int objCount_0x4218;
 	undefined field_0x421c;
 	undefined field_0x421d;

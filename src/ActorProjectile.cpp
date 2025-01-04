@@ -286,8 +286,14 @@ CBehaviour* CActorProjectile::BuildBehaviour(int behaviourType)
 	case PROJECTILE_BEHAVIOUR_INVENTORY:
 		pBehaviour = new CBehaviourInventory;
 		break;
-	case PROJECTILE_BEHAVIOUR_INACTIVE:
+	case PROJECTILE_BEHAVIOUR_LAVA_BALL:
+		pBehaviour = new CBehaviourProjectileLavaBall;
+		break;
+	case PROJECTILE_BEHAVIOUR_EXCUSE:
 		pBehaviour = new CBehaviourProjectileExcuse;
+		break;
+	case PROJECTILE_BEHAVIOUR_INACTIVE:
+		pBehaviour = new CBehaviourInactive;
 		break;
 	case 0xd:
 		pBehaviour = new CBehaviourProjectileNew;

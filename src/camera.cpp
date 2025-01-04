@@ -36,16 +36,15 @@ bool S_STREAM_SIMPLE_ACT_COND::IsVerified(bool bDefault)
 
 		switch (this->field_0x8) {
 		case 0:
-			IMPLEMENTATION_GUARD(
-				AVar2 = (pAVar6->data).actorState;
+			AVar2 = pAVar6->actorState;
 			if (AVar2 == AS_None) {
 				bVar4 = false;
 			}
 			else {
-				pAVar4 = (*pAVar6->pVTable->getAnimForState)(pAVar6, AVar2);
-				bVar4 = (bool)((byte)pAVar4->flags_0x4 & 1);
-			})
-				break;
+				pAVar4 = pAVar6->GetStateCfg(AVar2);
+				bVar4 = pAVar4->flags_0x4 & 1;
+			}
+			break;
 		case 1:
 			AVar2 = pAVar6->actorState;
 			if (AVar2 == AS_None) {

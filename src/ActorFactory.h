@@ -16,7 +16,7 @@ class CActor;
 
 class CActorFactory {
 public:
-	static CActor* Factory(ACTOR_CLASS classId, int count, int* outSize);
+	static CActor* Factory(ACTOR_CLASS classId, int count, int* outSize, void* pAlloc);
 	static ActorClassProperties gClassProperties[ACTOR_NUM_CLASSES];
 };
 

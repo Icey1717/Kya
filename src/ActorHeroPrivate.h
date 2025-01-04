@@ -524,17 +524,6 @@ public:
 
 	CLifeInterface field_0xee4;
 
-	CCamera* pMainCamera;
-	CCamera* pCameraViewBase_0x15b0;
-	CCamera* pWindWallCamera_0x15b4;
-	CCamera* pCameraKyaJamgut;
-	CCamera* pFightCamera;
-
-	CCamera* pDeathCamera;
-
-	CCamera* pJamgutCamera_0x15b8;
-	CCamera* pIntViewCamera_0x15bc;
-
 	int field_0xe3c;
 
 	float airMinSpeed;

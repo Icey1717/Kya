@@ -700,6 +700,8 @@ public:
 
 	bool PlayOutroCinematic(int index, CActor* param_3);
 
+	bool FUN_001c5c60();
+
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;
 	struct CCameraCinematic* pCinematicCamera;
@@ -712,7 +714,7 @@ public:
 	CCinematic* field_0x28;
 	undefined4 field_0x2c;
 	uint bInitialized;
-	undefined4 field_0x34;
+	float field_0x34;
 	undefined4 field_0x38;
 	undefined field_0x3c;
 	undefined field_0x3d;

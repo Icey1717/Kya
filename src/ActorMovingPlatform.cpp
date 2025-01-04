@@ -484,6 +484,11 @@ CBehaviour* CActorMovingPlatform::BuildBehaviour(int behaviourType)
 			pBehaviour = PlatformHeader<CBehaviourSelectorNew>::Get(&gPlatform_00448e24);
 		}
 		break;
+		case MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM:
+		{
+			pBehaviour = new CBehaviourTeleportRandom;
+		}
+		break;
 		default:
 			assert(false);
 		}
@@ -4438,35 +4443,31 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 
 void CBehaviourPlatformSlab::Create(ByteCode* pByteCode)
 {
-	int* piVar1;
-	char* pcVar2;
+	S_TARGET_ON_OFF_STREAM_REF* piVar1;
+	S_STREAM_EVENT_CAMERA* pcVar2;
 	int iVar3;
 	float pCVar2;
 	float fVar4;
 
 	ACTOR_LOG(LogLevel::Info, "CBehaviourPlatformSlab::Create");
 
-	piVar1 = (int*)pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = (char*)(piVar1 + 1);
-	if (*piVar1 != 0) {
-		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *piVar1 * sizeof(S_TARGET_ON_OFF_STREAM_REF);
+	piVar1 = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+	if (piVar1->entryCount != 0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + piVar1->entryCount * sizeof(S_STREAM_NTF_TARGET_ONOFF);
 	}
-	this->pTargetStream = reinterpret_cast<S_TARGET_ON_OFF_STREAM_REF*>(piVar1);
+	this->pTargetStream = piVar1;
 
-	pcVar2 = pByteCode->currentSeekPos;
-	pByteCode->currentSeekPos = pcVar2 + sizeof(S_STREAM_EVENT_CAMERA);
-	this->streamEventCamera = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pcVar2);
+	pcVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = pByteCode->currentSeekPos + sizeof(S_STREAM_EVENT_CAMERA);
+	this->streamEventCamera = pcVar2;
 
-	pCVar2 = pByteCode->GetF32();
-	this->field_0x10 = pCVar2;
-	fVar4 = pByteCode->GetF32();
-	this->field_0x14 = fVar4;
-	fVar4 = pByteCode->GetF32();
-	this->field_0x18 = fVar4;
-	fVar4 = pByteCode->GetF32();
-	this->field_0x1c = fVar4;
-	iVar3 = pByteCode->GetS32();
-	this->field_0x20.index = iVar3;
+	this->field_0x10 = pByteCode->GetF32();
+	this->field_0x14 = pByteCode->GetF32();
+	this->field_0x18 = pByteCode->GetF32();
+	this->field_0x1c = pByteCode->GetF32();
+
+	this->field_0x20.index = pByteCode->GetF32();
 	return;
 }
 
@@ -5243,4 +5244,44 @@ void CBehaviourSelectorNew::Begin(CActor* pOwner, int newState, int newAnimation
 	pPlatform->Platform_UpdatePosition(&eStack16, 1, (CActorsTable*)0x0);
 
 	return;
+}
+
+void CBehaviourTeleportRandom::Create(ByteCode* pByteCode)
+{
+	int pathIndex = pByteCode->GetS32();
+	CPathFollow* pNewPathFollow = (CPathFollow*)0x0;
+	if (pathIndex != -1) {
+		pNewPathFollow = CScene::ptable.g_PathManager_004516a0->aPathFollow + pathIndex;
+	}
+	this->pPathFollow = pNewPathFollow;
+
+	this->field_0xc = 0;
+
+	return;
+}
+
+void CBehaviourTeleportRandom::Init()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourTeleportRandom::Manage()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourTeleportRandom::ManageFrozen()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourTeleportRandom::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+int CBehaviourTeleportRandom::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	IMPLEMENTATION_GUARD();
+	return 0;
 }

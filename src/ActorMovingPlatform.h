@@ -14,6 +14,7 @@
 #define MOVING_PLATFORM_BEHAVIOUR_STAND						0x7
 #define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_MASTER			0x8
 #define MOVING_PLATFORM_BEHAVIOUR_SELECTOR_NEW				0x9
+#define MOVING_PLATFORM_BEHAVIOUR_TELEPORT_RANDOM			0xa
 
 #define MOVING_PLATFORM_FLAG_CAN_BE_DESTROYED				0x10000
 
@@ -55,6 +56,20 @@ public:
 	int field_0xc;
 	CinNamedObject30* pCinData;
 	CActor* pTiedActor;
+};
+
+class CBehaviourTeleportRandom : public CBehaviourPlatform
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init();
+	virtual void Manage();
+	virtual void ManageFrozen();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	CPathFollow* pPathFollow;
+	undefined2 field_0xc;
 };
 
 class CBehaviourPlatformTrajectory : public CBehaviourPlatform

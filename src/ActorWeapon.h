@@ -154,7 +154,7 @@ public:
 class CActorWeapon : public CActorMovable
 {
 public:
-	static StateConfig _gStateCfg_WEA[6];
+	static StateConfig _gStateCfg_WEA[9];
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();

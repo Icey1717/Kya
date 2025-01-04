@@ -130,3 +130,8 @@ CBehaviour* CActorTeleporter::BuildBehaviour(int behaviourType)
 
 	return pBehaviour;
 }
+
+void CActorTeleporter::UpdateCurTeleporterState(int levelId, int param_3)
+{
+	IMPLEMENTATION_GUARD();
+}

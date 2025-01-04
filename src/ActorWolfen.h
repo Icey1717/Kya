@@ -392,7 +392,7 @@ class CActorWolfen : public CActorFighter
 {
 public:
 	static WolfenConfig _gStateCfg_WLF[68];
-	static WolfenCollisionSphere _pDefCollisions[3];
+	static WolfenCollisionSphere _pDefCollisions[4];
 	static int _waitStandAnimArray[8];
 	static int _waitDefendAnimArray[4];
 

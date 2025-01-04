@@ -520,7 +520,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc pBlockStart 0x{:x} freeBytes 0x{:x} prevBlock 0x{:x} nextBlock 0x{:x}", (uintptr_t)pBlockStart, freeBytes, prevBlock, nextBlock);
 
 							ulong remainingBlockSpace = (ulong)pBlockStart + (freeBytes - (ulong)(pReturn + size));
-							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc freeBytes: 0x{:x} size: {:x} remainingBlockSpace 0x{:x}", freeBytes, size, remainingBlockSpace);
+							ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc freeBytes: 0x{:x} size: 0x{:x} remainingBlockSpace 0x{:x}", freeBytes, size, remainingBlockSpace);
 							if (remainingBlockSpace == 0) {
 								ED_MEM_LOG(LogLevel::Info, "edmemWorkAlloc Completely filled block");
 
@@ -858,6 +858,26 @@ void edmemWorkFree(S_MAIN_MEMORY_HEADER* pBlockToFree)
 	}
 
 	PrintBlockInfo("EndFree", pBlockToFree);
+
+	// Sanity check that we can find our way back to the big block
+	{
+		S_MAIN_MEMORY_HEADER* pMainMemHeader = edmemGetMasterMemoryHeader(pBlockToFree);
+
+		auto currentBlockIndex = pMainMemHeader->freeListHead;
+
+		while (true) {
+			auto* pBlock = pBlocks + currentBlockIndex;
+
+			if (pBlock->freeBytes > 0x100000) {
+				ED_MEM_LOG(LogLevel::Error, "edmemWorkFree SANITY Block 0x{:x} has freeBytes > 0x100000 (0x{:x} free)", currentBlockIndex, pBlock->freeBytes);
+				break;
+			}
+
+			if (pBlock->nextFreeBlock != -1) {
+				currentBlockIndex = pBlock->nextFreeBlock;
+			}
+		}
+	}
 
 	return;
 }
