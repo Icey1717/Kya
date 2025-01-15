@@ -1303,6 +1303,46 @@ void edF32Matrix4BuildFromVectorAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR
 	return;
 }
 
+void F32MatrixBuildFromF32VectorAndF32Matrix(edF32MATRIX4* m0, edF32VECTOR4* v1, edF32MATRIX4* m1)
+{
+	edF32VECTOR4* peVar1;
+	float in_vf0x = 0.0f;
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	peVar1 = &m1->rowX;
+	if (fabs(v1->x * m1->ba + v1->y * m1->bb + v1->z * m1->bc) <= 0.999f) {
+		peVar1 = &m1->rowY;
+	}
+
+	fVar4 = peVar1->y * v1->z - v1->y * peVar1->z;
+	fVar5 = peVar1->z * v1->x - v1->z * peVar1->x;
+	fVar6 = peVar1->x * v1->y - v1->x * peVar1->y;
+	fVar1 = v1->x;
+	fVar2 = v1->y;
+	fVar3 = v1->z;
+	m0->aa = fVar4;
+	m0->ab = fVar5;
+	m0->ac = fVar6;
+	m0->ad = in_vf0x;
+	m0->ba = fVar2 * fVar6 - fVar5 * fVar3;
+	m0->bb = fVar3 * fVar4 - fVar6 * fVar1;
+	m0->bc = fVar1 * fVar5 - fVar4 * fVar2;
+	m0->bd = in_vf0x;
+
+	m0->rowZ = *v1;
+
+	if (m0 != m1) {
+		m0->rowT = m1->rowT;
+	}
+
+	return;
+}
+
 void edF32Matrix4TransposeHard(edF32MATRIX4* m0)
 {
 	edF32MATRIX4 m1 = *m0;

@@ -981,7 +981,7 @@ void CActor::ChangeManageState(int state)
 
 		if (uVar5 != 0) {
 			IMPLEMENTATION_GUARD_AUDIO(
-			StateTransitionSoundFunc_00184470((int)CScene::ptable.g_GlobalSoundPtr_00451698);)
+			StateTransitionSoundFunc_00184470((int)CScene::ptable.g_AudioManager_00451698);)
 		}
 	}
 	else {
@@ -1003,7 +1003,7 @@ void CActor::ChangeManageState(int state)
 
 		if (uVar5 != 0) {
 			IMPLEMENTATION_GUARD_LOG(
-			StateTransitionSoundFunc_001844a0((int)CScene::ptable.g_GlobalSoundPtr_00451698);)
+			StateTransitionSoundFunc_001844a0((int)CScene::ptable.g_AudioManager_00451698);)
 		}
 	}
 
@@ -1081,7 +1081,7 @@ void CActor::SetState(int newState, int animType)
 		animType = pNewStateCfg->animId;
 	}
 
-	pGVar2 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	pGVar2 = CScene::ptable.g_AudioManager_00451698;
 
 	curActorState = this->actorState;
 	if (curActorState == newState) {

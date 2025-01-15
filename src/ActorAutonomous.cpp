@@ -1403,8 +1403,7 @@ void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, 
 	}
 	else {
 		if (GetPathfinderClient()->pPathDynamic == (CPathDynamic*)0x0) {
-			IMPLEMENTATION_GUARD(
-			GetPathfinderClient()->FindPathDynamic(this, pLocation);)
+			GetPathfinderClient()->FindPathDynamic(this, pLocation);
 		}
 
 		if (GetPathfinderClient()->pPathDynamic == (CPathDynamic*)0x0) {

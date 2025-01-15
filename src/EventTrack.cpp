@@ -162,6 +162,37 @@ void CTrackManager::Level_ClearAll()
 	return;
 }
 
+bool CEventTrack::FUN_0019f140()
+{
+	bool bVar1;
+	s_track_event* psVar2;
+	uint uVar3;
+
+	psVar2 = this->pTrackEvent;
+	uVar3 = (uint)this->eventCount;
+
+	if (this->eventCount != 0) {
+		do {
+			uVar3 = uVar3 - 1;
+			if (((psVar2->field_0x1c == 0x0) || (psVar2->field_0x18 == 0)) ||
+				(psVar2->field_0x18 != LOAD_SECTION_CAST(int*, psVar2->field_0x1c)[6])) {
+				bVar1 = false;
+			}
+			else {
+				bVar1 = true;
+			}
+
+			if (bVar1) {
+				return true;
+			}
+
+			psVar2 = psVar2 + 1;
+		} while (uVar3 != 0);
+	}
+
+	return false;
+}
+
 void CEventTrack::Stop()
 {
 	int* piVar1;

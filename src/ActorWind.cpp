@@ -59,7 +59,7 @@ void CActorWind::Create(ByteCode* pByteCode)
 		SnapOrientation(0.01745329f, 0.01745329f, 0.01745329f);
 	}
 
-	pGVar5 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	pGVar5 = CScene::ptable.g_AudioManager_00451698;
 	uVar6 = pByteCode->GetU32();
 	this->activationZone.index = pByteCode->GetS32();
 	piVar2 = (int*)pByteCode->currentSeekPos;

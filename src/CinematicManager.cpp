@@ -1210,7 +1210,7 @@ void CCinematic::Start()
 				uVar3 = this->flags_0x4;
 				if ((uVar3 & 0x280000) != 0) {
 					IMPLEMENTATION_GUARD_AUDIO(
-					FUN_00182db0(0x3f800000, (int)CScene::ptable.g_GlobalSoundPtr_00451698, uVar3 & 0x80000, uVar3 & 0x200000);)
+					FUN_00182db0(0x3f800000, (int)CScene::ptable.g_AudioManager_00451698, uVar3 & 0x80000, uVar3 & 0x200000);)
 				}
 
 				if ((this->flags_0x4 & 0x100) == 0) {
@@ -1713,7 +1713,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 			}
 			else {
 				IMPLEMENTATION_GUARD(
-				outMeshInfo = (ed_g3d_manager*)AudioManager::GetSampleByName((int)CScene::ptable.g_GlobalSoundPtr_00451698, (byte*)fileName);)
+				outMeshInfo = (ed_g3d_manager*)AudioManager::GetSampleByName((int)CScene::ptable.g_AudioManager_00451698, (byte*)fileName);)
 			}
 		}
 		else {

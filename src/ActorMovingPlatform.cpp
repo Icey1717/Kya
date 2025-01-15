@@ -4441,6 +4441,15 @@ void CPathFollowReaderAbsolute::Create(float param_1, float param_2, CPathFollow
 	return;
 }
 
+void CPathFollowReaderAbsolute::Create(float param_1, CPathFollow* pPathFollow, int type)
+{
+	if (pPathFollow != (CPathFollow*)0x0) {
+		Create(param_1, param_1, pPathFollow, pPathFollow->mode, pPathFollow->type, 4, type);
+	}
+
+	return;
+}
+
 void CBehaviourPlatformSlab::Create(ByteCode* pByteCode)
 {
 	S_TARGET_ON_OFF_STREAM_REF* piVar1;

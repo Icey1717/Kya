@@ -32,6 +32,8 @@ public:
 	void Stop();
 	void Reset();
 
+	bool FUN_0019f140();
+
 	ushort eventCount;
 	s_track_event* pTrackEvent;
 };

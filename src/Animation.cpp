@@ -3156,3 +3156,32 @@ void CAnimation::GetDefaultBoneMatrix(uint boneId, edF32MATRIX4* pDefaultMatrix)
 
 	return;
 }
+
+bool CAnimation::FUN_0017f730()
+{
+	int iVar1;
+	CEventTrack* pEventTrack;
+	int index;
+	uint uVar2;
+
+	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+		index = 0;
+
+		for (uVar2 = this->count_0x2c; uVar2 != 0; uVar2 = uVar2 >> 1) {
+			if ((uVar2 & 1) != 0) {
+				iVar1 = this->anmBinMetaAnimator.GetAnimEventTrackID(index);
+
+				if (iVar1 != -1) {
+					pEventTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(iVar1);
+					if (pEventTrack->FUN_0019f140() != false) {
+						return true;
+					}
+				}
+
+				index = index + 1;
+			}
+		}
+	}
+
+	return false;
+}

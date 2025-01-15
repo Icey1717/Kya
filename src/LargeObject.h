@@ -53,6 +53,19 @@ enum MANAGER_TYPE {
 
 struct CEventManager;
 
+class CSoundSample {
+
+};
+
+class CAudioManager
+{
+public:
+	CSoundSample* GetSound(uint id)
+	{
+		return nullptr;
+	}
+};
+
 union ManagerContainer {
 	struct {
 		struct CLevelScheduler* g_LevelScheduleManager_00451660;
@@ -69,7 +82,7 @@ union ManagerContainer {
 		struct MapManager* g_MapManager_0045168c;
 		class CCollisionManager* g_CollisionManager_00451690;
 		struct CLipTrackManager* g_LipTrackManager_00451694;
-		struct CAudioManager* g_GlobalSoundPtr_00451698;
+		struct CAudioManager* g_AudioManager_00451698;
 		struct CWayPointManager* g_WayPointManager_0045169c;
 		struct CPathManager* g_PathManager_004516a0;
 		struct CActorManager* g_ActorManager_004516a4;

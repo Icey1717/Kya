@@ -1337,20 +1337,20 @@ bool BnkInstallSample(char* pFileData, int length)
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
-	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	pGVar1 = CScene::ptable.g_AudioManager_00451698;
 	if (DAT_00448ef0 == 0) {
 		uVar2 = length - 0x30;
 		if ((uVar2 & 0x3f) != 0) {
 			uVar2 = (uVar2 & 0xffffffc0) + 0x40;
 		}
-		if (0x1ee3c0 - (CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xb4 < (int)uVar2) {
+		if (0x1ee3c0 - (CScene::ptable.g_AudioManager_00451698)->field_0xb4 < (int)uVar2) {
 			*(undefined4*)
-				((CScene::ptable.g_GlobalSoundPtr_00451698)->field_0x14 +
-					(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xc * 0x18) = 0;
+				((CScene::ptable.g_AudioManager_00451698)->field_0x14 +
+					(CScene::ptable.g_AudioManager_00451698)->field_0xc * 0x18) = 0;
 		}
 		else {
-			(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xb4 =
-				(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xb4 + uVar2;
+			(CScene::ptable.g_AudioManager_00451698)->field_0xb4 =
+				(CScene::ptable.g_AudioManager_00451698)->field_0xb4 + uVar2;
 			edSoundSampleLoadNoWait(pFileData, (ed_sound_sample*)(pGVar1->field_0x14 + pGVar1->field_0xc * 0x18), 0);
 		}
 	}
@@ -1369,10 +1369,10 @@ bool BnkInstallBank(char* pFileData, int length)
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
-	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	pGVar1 = CScene::ptable.g_AudioManager_00451698;
 	if (DAT_00448ef0 == 0) {
-		*(char**)(*(int*)&(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0x60 +
-			(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xc * 8) = pFileData;
+		*(char**)(*(int*)&(CScene::ptable.g_AudioManager_00451698)->field_0x60 +
+			(CScene::ptable.g_AudioManager_00451698)->field_0xc * 8) = pFileData;
 		*(int*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->field_0x60 + 4) = length;
 	}
 	pGVar1->field_0xc = pGVar1->field_0xc + 1;
@@ -1392,11 +1392,11 @@ bool BnkInstallBankHeader(char* pFileData, int length)
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
-	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	pGVar1 = CScene::ptable.g_AudioManager_00451698;
 	if (DAT_00448ef0 == 0) {
 		puVar2 = (undefined4*)
-			(*(int*)&(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0x60 +
-				(CScene::ptable.g_GlobalSoundPtr_00451698)->field_0xc * 8);
+			(*(int*)&(CScene::ptable.g_AudioManager_00451698)->field_0x60 +
+				(CScene::ptable.g_AudioManager_00451698)->field_0xc * 8);
 		uVar3 = FUN_00267e20(*puVar2, pFileData, (long)(int)puVar2[1], (long)length);
 		*(uint*)(pGVar1->field_0x50 + pGVar1->field_0xc * 4) = uVar3;
 		*(undefined4*)&pGVar1->field_0xb8 = *(undefined4*)(pGVar1->field_0xc * 8 + *(int*)&pGVar1->field_0x60 + 4);
@@ -1422,7 +1422,7 @@ bool BnkInstallSong(char* pFileData, int length)
 
 	IMPLEMENTATION_GUARD_AUDIO(
 
-	pGVar1 = CScene::ptable.g_GlobalSoundPtr_00451698;
+	pGVar1 = CScene::ptable.g_AudioManager_00451698;
 	if (DAT_00448ef0 == 0) {
 		uVar2 = FUN_00267d30(pFileData, (long)length);
 		*(uint*)(pGVar1->field_0x4c + pGVar1->field_0xc * 4) = uVar2;
@@ -1582,7 +1582,7 @@ void WillLoadFilefromBank(bool param_1, void* pObj)
 	pLVar1 = CLevelScheduler::gThis;
 	if (param_1 != false) {
 		WillLoadFileFromBank
-		(CScene::ptable.g_GlobalSoundPtr_00451698,
+		(CScene::ptable.g_AudioManager_00451698,
 			(CLevelScheduler::gThis->levelIOPBank).pBankFileAccessObject);
 		pLVar1->loadStage_0x5b48 = 1;
 	}

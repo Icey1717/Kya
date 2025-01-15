@@ -68,7 +68,7 @@ void CSettings::SetSettingsToGlobal()
 	pCVar3 = CScene::ptable.g_CameraManager_0045167c;
 	//pCVar2 = g_CinematicManager_0048efc;
 	currentLanguageID = this->languageID;
-	lVar6 = (long)(int)CScene::ptable.g_GlobalSoundPtr_00451698;
+	lVar6 = (long)(int)CScene::ptable.g_AudioManager_00451698;
 	prevLanguageID = CMessageFile::get_default_language();
 	if (currentLanguageID != prevLanguageID) {
 		IMPLEMENTATION_GUARD(

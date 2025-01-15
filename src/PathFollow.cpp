@@ -402,8 +402,8 @@ int CPathFollowReaderAbsolute::ComputePosition(float param_1, edF32VECTOR4* para
 int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatrix, edF32VECTOR4* param_4, S_PATHREADER_POS_INFO* param_5)
 {
 	int iVar1;
-	edF32VECTOR4* peVar2;
-	edF32VECTOR4* peVar3;
+	edF32VECTOR4* pPointB;
+	edF32VECTOR4* pPointA;
 	float fVar4;
 	float fVar5;
 	float fVar6;
@@ -411,86 +411,162 @@ int CPathFollowReaderAbsolute::ComputeMatrix(float param_1, edF32MATRIX4* pMatri
 	float fVar8;
 	float fVar9;
 	edF32VECTOR4 eStack32;
-	int local_c;
-	int local_8;
+	int pointB;
+	int pointA;
 	float local_4;
 
 	if (this->pActor3C_0x0 == (CPathFollow*)0x0) {
 		iVar1 = 2;
 	}
 	else {
-		iVar1 = ComputeSegment(param_1, &local_8, &local_c, &local_4);
+		iVar1 = ComputeSegment(param_1, &pointA, &pointB, &local_4);
 
-		peVar3 = this->pActor3C_0x0->aSplineRotationsQuat;
-		if (peVar3 == (edF32VECTOR4*)0x0) {
-			peVar3 = &CPathFollow::gPathDefQuat;
+		pPointA = this->pActor3C_0x0->aSplineRotationsQuat;
+		if (pPointA == (edF32VECTOR4*)0x0) {
+			pPointA = &CPathFollow::gPathDefQuat;
 		}
 		else {
-			peVar3 = peVar3 + local_c;
+			pPointA = pPointA + pointB;
 		}
 
-		peVar2 = this->pActor3C_0x0->aSplineRotationsQuat;
-		if (peVar2 == (edF32VECTOR4*)0x0) {
-			peVar2 = &CPathFollow::gPathDefQuat;
+		pPointB = this->pActor3C_0x0->aSplineRotationsQuat;
+		if (pPointB == (edF32VECTOR4*)0x0) {
+			pPointB = &CPathFollow::gPathDefQuat;
 		}
 		else {
-			peVar2 = peVar2 + local_8;
+			pPointB = pPointB + pointA;
 		}
 
-		edQuatShortestSLERPAccurate(local_4, &eStack32, peVar3, peVar2);
+		edQuatShortestSLERPAccurate(local_4, &eStack32, pPointA, pPointB);
 		edQuatToMatrix4Hard(&eStack32, pMatrix);
 
-		peVar3 = this->pActor3C_0x0->aSplinePoints;
-		if (peVar3 == (edF32VECTOR4*)0x0) {
-			peVar3 = &gF32Vertex4Zero;
+		pPointA = this->pActor3C_0x0->aSplinePoints;
+		if (pPointA == (edF32VECTOR4*)0x0) {
+			pPointA = &gF32Vertex4Zero;
 		}
 		else {
-			peVar3 = peVar3 + local_8;
+			pPointA = pPointA + pointA;
 		}
 
-		peVar2 = this->pActor3C_0x0->aSplinePoints;
-		if (peVar2 == (edF32VECTOR4*)0x0) {
-			peVar2 = &gF32Vertex4Zero;
+		pPointB = this->pActor3C_0x0->aSplinePoints;
+		if (pPointB == (edF32VECTOR4*)0x0) {
+			pPointB = &gF32Vertex4Zero;
 		}
 		else {
-			peVar2 = peVar2 + local_c;
+			pPointB = pPointB + pointB;
 		}
 
-		fVar4 = peVar3->y;
-		fVar5 = peVar3->z;
-		fVar6 = peVar3->w;
-		fVar7 = peVar2->y;
-		fVar8 = peVar2->z;
-		fVar9 = peVar2->w;
-		pMatrix->da = peVar3->x - peVar2->x;
-		pMatrix->db = fVar4 - fVar7;
-		pMatrix->dc = fVar5 - fVar8;
-		pMatrix->dd = fVar6 - fVar9;
-		pMatrix->da = pMatrix->da * local_4;
-		pMatrix->db = pMatrix->db * local_4;
-		pMatrix->dc = pMatrix->dc * local_4;
-		pMatrix->dd = pMatrix->dd * local_4;
-		fVar4 = peVar2->y;
-		fVar5 = peVar2->z;
-		fVar6 = peVar2->w;
-		pMatrix->da = pMatrix->da + peVar2->x;
-		pMatrix->db = pMatrix->db + fVar4;
-		pMatrix->dc = pMatrix->dc + fVar5;
-		pMatrix->dd = pMatrix->dd + fVar6;
+		pMatrix->rowT = *pPointA - *pPointB;
+		pMatrix->rowT = pMatrix->rowT * local_4;
+		pMatrix->rowT = pMatrix->rowT + *pPointB;
+
 
 		if (param_4 != (edF32VECTOR4*)0x0) {
-			IMPLEMENTATION_GUARD(
-				ComputeTangent(local_4, param_4, local_8, local_c);)
+			ComputeTangent(local_4, param_4, pointA, pointB);
 		}
 
 		if (param_5 != (S_PATHREADER_POS_INFO*)0x0) {
-			param_5->field_0x0 = local_8;
-			param_5->field_0x4 = local_c;
+			param_5->field_0x0 = pointA;
+			param_5->field_0x4 = pointB;
 			param_5->field_0x8 = local_4;
 		}
 	}
 
 	return iVar1;
+}
+
+void CPathFollowReaderAbsolute::ComputeTangent(float param_1, edF32VECTOR4* param_3, int pointA, int pointB)
+{
+	int iVar1;
+	edF32VECTOR4* pPointB;
+	edF32VECTOR4* pPointA;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	edF32VECTOR4 local_10;
+
+	pPointA = this->pActor3C_0x0->aSplinePoints;
+	if (pPointA == (edF32VECTOR4*)0x0) {
+		pPointA = &gF32Vertex4Zero;
+	}
+	else {
+		pPointA = pPointA + pointB;
+	}
+
+	pPointB = this->pActor3C_0x0->aSplinePoints;
+	if (pPointB == (edF32VECTOR4*)0x0) {
+		pPointB = &gF32Vertex4Zero;
+	}
+	else {
+		pPointB = pPointB + pointA;
+	}
+
+	*param_3 = *pPointB - *pPointA;
+	edF32Vector4SafeNormalize1Hard(param_3, param_3);
+
+	if (param_1 < 0.1f) {
+		iVar1 = this->pActor3C_0x0->splinePointCount;
+		if (iVar1 == 0) {
+			trap(7);
+		}
+
+		pPointA = this->pActor3C_0x0->aSplinePoints;
+		if (pPointA == (edF32VECTOR4*)0x0) {
+			pPointA = &gF32Vertex4Zero;
+		}
+		else {
+			pPointA = pPointA + ((pointB * 2 - pointA) + iVar1) % iVar1;
+		}
+
+		pPointB = this->pActor3C_0x0->aSplinePoints;
+		if (pPointB == (edF32VECTOR4*)0x0) {
+			pPointB = &gF32Vertex4Zero;
+		}
+		else {
+			pPointB = pPointB + pointB;
+		}
+
+		local_10 = *pPointB - *pPointA;
+		edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
+
+		edF32Vector4LERPHard((param_1 + 0.1f) * 5.0f, param_3, &local_10, param_3);
+		edF32Vector4SafeNormalize1Hard(param_3, param_3);
+	}
+	else {
+		if (0.9f < param_1) {
+			iVar1 = this->pActor3C_0x0->splinePointCount;
+			if (iVar1 == 0) {
+				trap(7);
+			}
+
+			pPointA = this->pActor3C_0x0->aSplinePoints;
+			if (pPointA == (edF32VECTOR4*)0x0) {
+				pPointA = &gF32Vertex4Zero;
+			}
+			else {
+				pPointA = pPointA + pointA;
+			}
+
+			pPointB = this->pActor3C_0x0->aSplinePoints;
+			if (pPointB == (edF32VECTOR4*)0x0) {
+				pPointB = &gF32Vertex4Zero;
+			}
+			else {
+				pPointB = pPointB + ((pointA * 2 - pointB) + iVar1) % iVar1;
+			}
+
+			local_10 = *pPointB - *pPointA;
+			edF32Vector4SafeNormalize1Hard(&local_10, &local_10);
+
+			edF32Vector4LERPHard(((1.0f - param_1) + 0.1f) * 5.0f, param_3, &local_10, param_3);
+			edF32Vector4SafeNormalize1Hard(param_3, param_3);
+		}
+	}
+
+	return;
 }
 
 int CPathFollowReader::GetNextPlace(int param_2, int param_3)

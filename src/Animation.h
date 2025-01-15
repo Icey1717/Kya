@@ -185,6 +185,8 @@ public:
 	edF32MATRIX4* GetCurBoneMatrix(uint boneId);
 	void GetDefaultBoneMatrix(uint boneId, edF32MATRIX4* pDefaultMatrix);
 
+	bool FUN_0017f730();
+
 	struct DisabledBoneEntry {
 		uint boneId;
 		int nodeId;

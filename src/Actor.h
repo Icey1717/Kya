@@ -729,6 +729,8 @@ public:
 	void Init(int) { IMPLEMENTATION_GUARD_LOG(); }
 	void Term() { IMPLEMENTATION_GUARD_LOG(); }
 
+	void Generate(edF32VECTOR4* pPosition) { IMPLEMENTATION_GUARD_LOG(); }
+
 	CAddOnGenerator_SubObj subObj;
 };
 
