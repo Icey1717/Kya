@@ -165,12 +165,12 @@ int edMemGetMemoryAvailable(EHeap heapID)
 		freeBytes = 0;
 		for (nextBlockID = pHeap->freeListHead; nextBlockID != -1;
 			nextBlockID = MemoryMasterBlock.aBlocks[nextBlockID].nextFreeBlock) {
-			iVar2 = MemoryMasterBlock.aBlocks[nextBlockID].freeBytes;
-			if (freeBytes < iVar2) {
-				freeBytes = iVar2;
+			if (freeBytes < MemoryMasterBlock.aBlocks[nextBlockID].freeBytes) {
+				freeBytes = MemoryMasterBlock.aBlocks[nextBlockID].freeBytes;
 			}
 		}
 	}
+
 	MY_LOG("edMemGetMemoryAvailable 0x{:x} bytes\n", freeBytes);
 	return freeBytes;
 }

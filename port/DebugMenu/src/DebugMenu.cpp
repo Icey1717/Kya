@@ -479,12 +479,14 @@ namespace Debug {
 		ImGui::Spacing();
 		ImGui::Spacing();
 
-		ImGui::Text("Allocations:");
-		ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_COMMAND: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_COMMAND));
-		ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_OBJECT: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_OBJECT));
-		ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_CACHE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_CACHE));
-		ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_DEVICE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_DEVICE));
-		ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE));
+		if (ImGui::CollapsingHeader("Vulkan")) {
+			ImGui::Text("Allocations:");
+			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_COMMAND: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_COMMAND));
+			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_OBJECT: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_OBJECT));
+			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_CACHE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_CACHE));
+			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_DEVICE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_DEVICE));
+			ImGui::Text("VkAllocations VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE: %u", GetAllocationCount(VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE));
+		}
 
 		ImGui::End();
 	}
@@ -505,7 +507,7 @@ namespace Debug {
 	{
 		{"Demo", ImGui::ShowDemoWindow },
 		{"Log", ShowLogWindow },
-		//{"Native FrameBuffer", Debug::FrameBuffer::ShowNativeFrameBuffer, true },
+		{"Framebuffer", Debug::FrameBuffer::ShowMenu },
 		{"Framebuffers", Debug::FrameBuffer::ShowFramebuffers },
 		{"Cutscene", Debug::Cinematic::ShowMenu, true },
 		{"Rendering", ShowRenderingMenu },

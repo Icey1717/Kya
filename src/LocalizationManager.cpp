@@ -110,3 +110,8 @@ void CLocalizationManager::Level_LoadContext()
 {
 	return;
 }
+
+char* CLocalizationManager::GetLevelText(ulong key)
+{
+	return this->levelText.get_message(key, 0);
+}

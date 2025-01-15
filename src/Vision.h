@@ -11,6 +11,7 @@ public:
 	CVision();
 	void Create(CActor* pOwner, ByteCode* pByteCode);
 	void Reset();
+	void Draw() {}
 
 	CActor* ScanForTarget(CActor* pTarget, int mode);
 

@@ -35,6 +35,8 @@ public:
 	virtual void Level_LoadContext();
 	// End Manager
 
+	char* GetLevelText(ulong key);
+
 	CMessageFile trcText;
 	CMessageFile levelText;
 	CMessageFile userInterfaceText;
