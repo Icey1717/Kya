@@ -3183,9 +3183,8 @@ void ed3DFlushStrip(edNODE* pNode)
 		pPktBufferA = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
 #ifdef PLATFORM_WIN
-		if (Renderer::Native::GetUsePreprocessedVertices()) {
-			return;
-		}
+		// This is all we need to do on windows, return here to save some processing time.
+		return;
 #endif
 
 #ifdef PLATFORM_WIN
@@ -3429,9 +3428,8 @@ void ed3DFlushStrip(edNODE* pNode)
 		pPktBufferB = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
 #ifdef PLATFORM_WIN
-		if (Renderer::Native::GetUsePreprocessedVertices()) {
-			return;
-		}
+		// This is all we need to do on windows, return here to save some processing time.
+		return;
 #endif
 
 #ifdef PLATFORM_WIN

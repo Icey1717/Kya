@@ -173,7 +173,10 @@ public:
 
 struct CSprite {
 public:
-	void ClearLocalData();
+	CSprite();
+
+	virtual void ClearLocalData();
+
 	void Install(char* pFileBuffer);
 	void DrawXYXY(uint param_2, float param_3, float param_4, float param_5, float param_6, float param_7);
 	byte field_0x4;
@@ -230,9 +233,11 @@ public:
 struct CSplashScreen : public CSprite {
 public:
 	CSplashScreen();
+
 	bool Init(float param_1, char* filePath);
 	bool Manage(ulong param_2, bool param_3, bool param_4);
 	void SetDrawLocation(float x, float y, float z, float w);
+
 	char* pTextureFileData;
 	float field_0xc4;
 	float field_0xc8;

@@ -26,6 +26,7 @@
 
 #ifdef PLATFORM_WIN
 #include "Texture.h"
+#include "displaylist.h"
 #endif
 
 #define EDDLIST_LOG(level, format, ...) MY_LOG_CATEGORY("edDList", level, format, ##__VA_ARGS__)
@@ -60,6 +61,7 @@ ed_viewport* gCurViewport = NULL;
 
 ed_hash_code* gBankMaterial;
 
+// Header packet of the draw list. Set in edDListBegin and updated with the correct number of prims in edDListEnd.
 edpkt_data* gCurStatePKT = NULL;
 
 int gNbUsedMaterial;
@@ -653,11 +655,8 @@ void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 
 void edDListBlendSet(uint mode)
 {
-	if ((((gbInsideBegin == false) &&
-		(gBlendMode = mode & 0xff,
-			gCurMaterial != (edDList_material*)0x0)) &&
-		(gCurMaterial->pMaterial != (ed_g2d_material*)0x0)) &&
-		(gBlendMode == 1)) {
+	if ((((gbInsideBegin == false) && (gBlendMode = mode & 0xff, gCurMaterial != (edDList_material*)0x0)) &&
+		(gCurMaterial->pMaterial != (ed_g2d_material*)0x0)) && (gBlendMode == 1)) {
 		ApplyFlag_0029f1e0(gCurMaterial->pMaterial, 0, 4);
 	}
 	return;
@@ -1188,28 +1187,29 @@ void edDListTexCoo2f_2D(float inS, float inT)
 	return;
 }
 
-void edDListBegin2D(ulong count)
+void edDListBegin2D(ulong mode)
 {
-	edpkt_data* pRVar1;
-	edpkt_data** ppRVar2;
 	uint uVar3;
 	long lVar4;
 
+	// Make sure that the current command is aligned to 16 bytes.
 	uVar3 = (uint)gCurDList->pRenderCommands & 0xf;
 	if (uVar3 != 0) {
-		gCurDList->pRenderCommands =
-			(edpkt_data*)((int)gCurDList->pRenderCommands + (0x10 - uVar3));
+		IMPLEMENTATION_GUARD();
+		gCurDList->pRenderCommands = (edpkt_data*)((int)gCurDList->pRenderCommands + (0x10 - uVar3));
 	}
-	ppRVar2 = &gCurDList->pRenderCommands;
-	pRVar1 = gCurDList->pRenderCommands;
+
 	if ((gCurMaterial != (edDList_material*)0x0) || (lVar4 = 0, gCurFlashMaterial != 0)) {
 		lVar4 = 1;
 	}
-	gCurStatePKT = pRVar1;
-	uint primReg = gBlendMode << 6 | count & 0xffffffff | lVar4 << 4;
+
+	// Store this command as the top of the draw, to be updated in edDListEnd or edDListPatchGifTag3D.
+	gCurStatePKT = gCurDList->pRenderCommands;
+
+	uint primReg = gBlendMode << 6 | mode & 0xffffffff | lVar4 << 4;
 	if (Mode_00449694 == 0) {
-		pRVar1->cmdA = SCE_GIF_SET_TAG(
-			0,							// NLOOP
+		gCurDList->pRenderCommands->cmdA = SCE_GIF_SET_TAG(
+			0,							// NLOOP (Will be updated later in edDListEnd)
 			SCE_GS_TRUE,				// EOP
 			SCE_GS_TRUE,				// PRE
 			primReg,					// PRIM
@@ -1219,8 +1219,8 @@ void edDListBegin2D(ulong count)
 	}
 	else {
 		primReg = primReg | 8;
-		pRVar1->cmdA = SCE_GIF_SET_TAG(
-			0,							// NLOOP
+		gCurDList->pRenderCommands->cmdA = SCE_GIF_SET_TAG(
+			0,							// NLOOP (Will be updated later in edDListEnd)
 			SCE_GS_TRUE,				// EOP
 			SCE_GS_TRUE,				// PRE
 			primReg,					// PRIM
@@ -1229,8 +1229,13 @@ void edDListBegin2D(ulong count)
 		);
 
 	}
-	pRVar1->cmdB = SCE_GIF_PACKED_AD;
-	*ppRVar2 = pRVar1 + 1;
+
+	gCurDList->pRenderCommands->cmdB = SCE_GIF_PACKED_AD;
+
+	gCurDList->pRenderCommands = gCurDList->pRenderCommands + 1;
+
+	DISPLAY_LIST_2D_START();
+
 	return;
 }
 
@@ -1555,6 +1560,7 @@ void edDListBegin(float x, float y, float z, uint mode, int nbVertex)
 		gbInsideBegin = false;
 		gCurDList = gCurDListHandle + gCurRenderState;
 	}
+
 	uVar5 = mode;
 	gCurPrimType = uVar5 & 0xff;
 	gNbAddedVertex = 0;
@@ -1593,17 +1599,22 @@ void edDListBegin(float x, float y, float z, uint mode, int nbVertex)
 			g_Count_004495f8 = 0;
 			edDListBegin2D(4);
 		}
+
 		gAddVertexFUNC = edDListVertex4f_2D;
 		gAddColorFUNC = edDListColor4u8_2D;
 		gAddSTFUNC = edDListTexCoo2f_2D;
 		gbInsideBegin = true;
 		return;
 	}
+
 	edDListPatchGifTag3D();
+
 	if (((0 < gSubdivideLevel) && ((mode & 0xff) == 0xb)) || ((mode & 0xff) == 0xc)) {
 		IMPLEMENTATION_GUARD(edDListSubDivBegin();)
 	}
+
 	pDVar6 = gCurDList->pDisplayListInternalSubObj + gCurDList->subCommandBufferCount;
+
 	if (gNbMatrixInArray < 1) {
 		pDVar6->nbMatrix = 0;
 		pDVar6->pCurMatrixArray = (edF32MATRIX4*)0x0;
@@ -1614,6 +1625,7 @@ void edDListBegin(float x, float y, float z, uint mode, int nbVertex)
 		gCurMatrixArray = (edF32MATRIX4*)0x0;
 		gNbMatrixInArray = 0;
 	}
+
 	switch (uVar5 & 0xff) {
 		case 0:
 		case 2:
@@ -1642,6 +1654,7 @@ void edDListBegin(float x, float y, float z, uint mode, int nbVertex)
 		case 1:
 			edDListBeginStrip(x, y, z, nbVertex, 2);
 	}
+
 	uVar5 = (uint)mode;
 LAB_002ca38c:
 	uVar5 = uVar5 & 0xff;
@@ -1649,6 +1662,7 @@ LAB_002ca38c:
 	gAddVertexFUNC = gTableAddVertexFUNC_3D[uVar5];
 	gAddColorFUNC = gTableAddColorFUNC_3D[uVar5];
 	gAddSTFUNC = gTableAddSTFUNC_3D[uVar5];
+
 	return;
 }
 
@@ -2157,18 +2171,21 @@ void edDListEnd(void)
 {
 	ushort uVar1;
 	edpkt_data* pRVar2;
-	uint uVar3;
 	ulong uVar4;
 	DisplayListInternalSubObj_60* pDVar5;
 
 	if (gbInsideBegin != false) {
 		if ((gCurDList->flags_0x0 & 1) == 0) {
 			if ((gCurDList->flags_0x0 & 2) != 0) {
-				pRVar2 = gCurDList->pRenderCommands;
-				int len = (int)((char*)pRVar2 - (char*)gCurStatePKT);
-				uVar3 = gCurStatePKT->asU32[0];
+				// Update NLOOP of the header packet, based on how many commands were added to the display list.
+				const int nloop = ((static_cast<int>(reinterpret_cast<char*>(gCurDList->pRenderCommands) - reinterpret_cast<char*>(gCurStatePKT))) >> 4) - 1;
+				const uint existingPktData = gCurStatePKT->asU32[0];
 				gCurStatePKT->asU32[0] = 0;
-				gCurStatePKT->asU32[0] = uVar3 & 0xffff8000 | (len >> 4) - 1 & 0x7fff;					
+				gCurStatePKT->asU32[0] = existingPktData & 0xffff8000 | nloop & 0x7fff;
+
+				DUMP_TAG_ADV(gCurStatePKT->cmdA);
+
+				DISPLAY_LIST_2D_END();
 			}
 		}
 		else {
@@ -2176,6 +2193,7 @@ void edDListEnd(void)
 				if (gCurPrimType == 10) {
 					edDListVertex4f(Vector3_0048d390.x, Vector3_0048d390.y, Vector3_0048d390.z, 10);
 				}
+
 				gNbVertexDMA = 0x48;
 				gCurStatePKTSize = 0;
 				gCurStatePKT = (edpkt_data*)0x0;
@@ -2214,6 +2232,7 @@ void edDListEnd(void)
 				gCurDList->pRenderCommands = (edpkt_data*)gCurDListBuf;
 			}
 		}
+
 		gNbAddedVertex = 0;
 		gMaxNbVertex = 0;
 		gCurStatePKT = (edpkt_data*)0x0;
@@ -2221,6 +2240,7 @@ void edDListEnd(void)
 		gAddVertexFUNC = (DisplayListXYZFunc)0x0;
 		gAddColorFUNC = (DisplayListRGBAQFunc)0x0;
 	}
+
 	return;
 }
 

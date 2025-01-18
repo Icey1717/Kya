@@ -103,6 +103,7 @@ void DrawLoadingScreen_001b05e0(void)
 		if (!bIsLoadingScreen) {
 			localAlpha = 0xff;
 		}
+
 		bVar2 = GuiDList_BeginCurrent();
 		if (bVar2 != false) {
 			FStack192.Reset();
@@ -127,9 +128,10 @@ void DrawLoadingScreen_001b05e0(void)
 				drawTextParams.FormatString(pcVar4);
 				drawTextParams.Display((float)gVideoConfig.screenWidth * 0.5f, (float)gVideoConfig.screenHeight * 0.5f);
 			}
+
 			edTextStyleSetCurrent(pNewFont);
 			GuiDList_EndCurrent();
-			//RunInPlaceDestructors_002173e0(drawTextParams.fontData_0x850, Free_00166e40, 0xc0, 0x11);
+
 		}
 	}
 	return;
@@ -1207,6 +1209,23 @@ void CSimpleMenu::on_change_selection()
 
 float FLOAT_ARRAY_00448cd0[2] = { 1.0f, 1.0f };
 
+CSprite::CSprite()
+{
+	this->field_0x68 = 0;
+	this->field_0x64 = 0;
+	this->field_0x60 = 0;
+	this->field_0x5c = 0;
+	this->field_0x78 = 0.0f;
+	this->field_0x74 = 0.0f;
+	this->field_0x70 = (undefined*)0x0;
+	this->field_0x6c = 0;
+	this->flags_0x7c = 0;
+
+	ClearLocalData();
+
+	return;
+}
+
 void CSprite::ClearLocalData()
 {
 	undefined4* puVar1;
@@ -1507,27 +1526,16 @@ void CSprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5
 
 CSplashScreen::CSplashScreen()
 {
-	//(this->base).pVTable = &G2DObj_VTable_004446e0;
-	this->field_0x68 = 0;
-	this->field_0x64 = 0;
-	this->field_0x60 = 0;
-	this->field_0x5c = 0;
-	this->field_0x78 = 0.0;
-	this->field_0x74 = 0.0;
-	this->field_0x70 = (undefined*)0x0;
-	this->field_0x6c = 0;
-	this->flags_0x7c = 0;
-	//(*((this->base).pVTable)->init)((Sprite*)this);
 	this->pTextureFileData = (char*)0x0;
 	this->field_0xcc = 0;
-	this->field_0xc4 = 0.0;
+	this->field_0xc4 = 0.0f;
 	this->field_0xd0 = 0;
 	return;
 }
 
 bool CSplashScreen::Init(float param_1, char* filePath)
 {
-	uint uVar1;
+	uint fileSize;
 	edFILEH* pLoadedFile;
 	int iVar2;
 	char* pcVar3;
@@ -1538,53 +1546,58 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 	int iStack4;
 
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
+
 	pLoadedFile = edFileOpen(filePath, 9);
 	if (pLoadedFile != (edFILEH*)0x0) {
-		iVar2 = GetFileSize_0025bd70(pLoadedFile);
-		uVar1 = iVar2 + 0x7ffU & 0xfffff800;
-		pcVar3 = (char*)edMemAllocAlign(TO_HEAP(H_MAIN), (long)(int)uVar1, 0x40);
-		this->pTextureFileData = pcVar3;
+		fileSize = edFileLoadSize(pLoadedFile) + 0x7ffU & 0xfffff800;
+		this->pTextureFileData = (char*)edMemAllocAlign(TO_HEAP(H_MAIN), fileSize, 0x40);
 		if (this->pTextureFileData != (char*)0x0) {
-			SetRead_0025be80(pLoadedFile, this->pTextureFileData, uVar1);
-			iVar2 = pLoadedFile->count_0x228;
-			while (iVar2 != 0) {
+			edFileRead(pLoadedFile, this->pTextureFileData, fileSize);
+
+			while (pLoadedFile->nbQueuedActions != 0) {
 				edFileNoWaitStackFlush();
-				iVar2 = pLoadedFile->count_0x228;
 			}
 		}
+
 		edFileClose(pLoadedFile);
 	}
 
 	pcVar3 = this->pTextureFileData;
 	if (pcVar3 != (char*)0x0) {
 		ed3DInstallG2D(pcVar3, *(int*)(pcVar3 + 8), &iStack4, &this->textureManager, 0);
+
 		this->flags_0x7c = this->flags_0x7c | 2;
 		this->field_0x4 = 0;
+
 		pMaterialSection = ed3DG2DGetG2DMaterialFromIndex(&this->textureManager, 0);
 		pBitmap = ed3DG2DGetBitmapFromMaterial(pMaterialSection, 0);
 		edDListCreatMaterialFromIndex(&this->materialInfo, 0, &this->textureManager, 2);
+
 		this->flags_0x7c = this->flags_0x7c | 1;
+
 		this->iWidth = pBitmap->width;
 		this->iHeight = pBitmap->height;
+
 		this->pMaterialInfo = &this->materialInfo;
 		this->fWidth = (float)(uint)this->iWidth;
 		this->fHeight = (float)(uint)this->iHeight;
 	}
 
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
+
 	this->field_0xc8 = param_1;
 	if (param_1 <= 0.0f) {
 		this->field_0xc8 = 0.0001f;
 	}
+
 	this->field_0xcc = 0;
-	pTVar5 = GetTimer();
-	this->field_0xc4 = pTVar5->totalTime;
-	uVar1 = gVideoConfig.screenWidth;
-	fVar6 = (float)gVideoConfig.screenHeight;
+	this->field_0xc4 = GetTimer()->totalTime;
+
 	(this->drawOffsets).x = 0.0f;
 	(this->drawOffsets).y = 0.0f;
-	(this->drawOffsets).z = (float)uVar1;
-	(this->drawOffsets).w = fVar6;
+	(this->drawOffsets).z = (float)gVideoConfig.screenWidth;
+	(this->drawOffsets).w = (float)gVideoConfig.screenHeight;
+
 	return this->pTextureFileData != (char*)0x0;
 }
 
@@ -1648,6 +1661,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			}
 		}
 	}
+
 	bVar1 = GuiDList_BeginCurrent();
 	if (bVar1 != false) {
 		if ((this->pTextureFileData != (char*)0x0) && (param_4 == false)) {
@@ -1663,6 +1677,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 				edDListVertex4f(fVar13, fVar10, 0.0f, iVar9);
 				edDListEnd();
 			}
+
 			edDListUseMaterial(&this->materialInfo);
 			edDListLoadIdentity();
 			edDListBlendSet(1);
@@ -1670,12 +1685,12 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			r = (byte)uVar8;
 			edDListColor4u8(r, r, r, r);
 			y_00 = (this->drawOffsets).y;
-			iVar7 = (int)(fVar13 / 32.0) + 1;
-			iVar9 = (int)(fVar10 / 32.0);
-			fVar11 = y_00 + 32.0;
+			iVar7 = (int)(fVar13 / 32.0f) + 1;
+			iVar9 = (int)(fVar10 / 32.0f);
+			fVar11 = y_00 + 32.0f;
 			fVar10 = 1.0f / (float)(int)(fVar13 / 32.0);
 			fVar13 = 1.0f / (float)iVar9;
-			fVar16 = fVar13 + 0.0;
+			fVar16 = fVar13 + 0.0f;
 			if (iVar9 != 0) {
 				fVar18 = 0.0;
 				do {
@@ -1698,7 +1713,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 						}
 						else {
 							fVar14 = fVar14 + fVar10;
-							x = x + 32.0;
+							x = x + 32.0f;
 						}
 					}
 					iVar9 = iVar9 + -1;
@@ -1708,17 +1723,16 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 					}
 					else {
 						fVar16 = fVar17 + fVar13;
-						fVar11 = y + 32.0;
+						fVar11 = y + 32.0f;
 					}
+
 					edDListEnd();
 					y_00 = y;
 					fVar18 = fVar17;
 				} while (iVar9 != 0);
-#ifdef PLATFORM_WIN
-				Renderer::Draw();
-#endif
 			}
 		}
+
 		if (param_2 != 0) {
 			fVar12 = fmodf(fVar12, 0.4f);
 			uVar3 = gVideoConfig.screenWidth;
@@ -1748,14 +1762,18 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 				pcVar4 = gMessageManager.get_message(0x52525f503700080c);
 				edTextDraw(fVar10, fVar12 * 0.5f + 60.0f, pcVar4);
 			}
+
 			edTextStyleSetCurrent(pNewFont);
+
 			param_2 = (ulong)(this->field_0xcc != 0);
 			if (param_2 != 0) {
 				param_2 = (ulong)(1.0f <= fVar15);
 			}
 		}
+
 		GuiDList_EndCurrent();
 	}
+
 	return param_2 == 0;
 }
 

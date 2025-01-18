@@ -248,8 +248,6 @@ namespace Renderer
 	};
 
 	namespace Native {
-		bool& GetUsePreprocessedVertices();
-
 		struct MatrixPacket
 		{
 			float camNormalX[4]; // 0x0

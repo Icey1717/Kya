@@ -37,8 +37,6 @@ namespace Renderer
 
 		static bool bForceAnimMatrixIdentity = false;
 
-		static bool gUsePreprocessedVertices = false;
-
 		struct LightingData {
 			glm::mat4 lightDirection;
 			glm::mat4 lightColor;
@@ -142,7 +140,7 @@ namespace Renderer
 
 		void FillIndexData(Draw::Instance& instance)
 		{
-			auto& vertexBufferData = gUsePreprocessedVertices ? instance.pMesh->GetInternalVertexBufferData() : gNativeVertexBufferDataDraw;
+			auto& vertexBufferData = instance.pMesh->GetInternalVertexBufferData();
 
 			instance.indexCount = vertexBufferData.GetIndexTail();
 			instance.indexStart = gNativeVertexBuffer.GetDrawBufferData().GetIndexTail();
@@ -153,10 +151,6 @@ namespace Renderer
 
 			// Copy into the real buffer.
 			gNativeVertexBuffer.MergeData(vertexBufferData);
-
-			if (!gUsePreprocessedVertices) {
-				vertexBufferData.ResetAfterDraw();
-			}
 		}
 
 		void MergeIndexData()
@@ -675,7 +669,7 @@ namespace Renderer
 
 Renderer::NativeVertexBufferData& Renderer::SimpleMesh::GetVertexBufferData()
 {
-	return Native::gUsePreprocessedVertices ? internalVertexBufferData : Native::gNativeVertexBufferDataDraw;
+	return internalVertexBufferData;
 }
 
 void Renderer::Native::SignalEndCommands()
@@ -1074,11 +1068,6 @@ const VkSampler& Renderer::Native::GetSampler()
 const VkImageView& Renderer::Native::GetColorImageView()
 {
 	return PostProcessing::GetColorImageView();
-}
-
-bool& Renderer::Native::GetUsePreprocessedVertices()
-{
-	return gUsePreprocessedVertices;
 }
 
 bool& Renderer::GetForceAnimMatrixIdentity()

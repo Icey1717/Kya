@@ -57,7 +57,6 @@ extern int gCurRenderState;
 extern DisplayListInternal* gCurDList;
 extern edDList_material* gCurMaterial;
 extern int gNbStateAdded;
-extern edpkt_data* gCurStatePKT;
 extern int gbDispList;
 extern int gCurStatePKTSize;
 extern ed_hash_code* gBankMaterial;

@@ -137,15 +137,15 @@ TEST(IO, MenuSplashOpen) {
 	edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	pLoadedFile = edFileOpen(filePath, 9);
 	if (pLoadedFile != (edFILEH*)0x0) {
-		fileSize = GetFileSize_0025bd70(pLoadedFile);
+		fileSize = edFileLoadSize(pLoadedFile);
 		alignedSize = fileSize + 0x7ffU & 0xfffff800;
 		pTextureFileData = (char*)edMemAllocAlign(TO_HEAP(H_MAIN), (long)(int)alignedSize, 0x40);
 		if (pTextureFileData != (char*)0x0) {
-			SetRead_0025be80(pLoadedFile, pTextureFileData, alignedSize);
-			fileSize = pLoadedFile->count_0x228;
+			edFileRead(pLoadedFile, pTextureFileData, alignedSize);
+			fileSize = pLoadedFile->nbQueuedActions;
 			while (fileSize != 0) {
 				edFileNoWaitStackFlush();
-				fileSize = pLoadedFile->count_0x228;
+				fileSize = pLoadedFile->nbQueuedActions;
 			}
 		}
 		edFileClose(pLoadedFile);

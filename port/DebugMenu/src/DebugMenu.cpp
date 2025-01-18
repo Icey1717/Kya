@@ -178,7 +178,6 @@ namespace Debug {
 	static Debug::Setting<bool> gDisableClusterRendering = { "Disable Cluster Rendering", false };
 	static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
 	static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
-	static Debug::Setting<bool> gUsePreprocessedVertices = { "Use Preprocessed Vertices", false };
 
 	static void ShowRenderingMenu(bool* bOpen) {
 		// Create a new ImGui window
@@ -217,10 +216,6 @@ namespace Debug {
 
 		if (gEnableEmulatedRendering.DrawImguiControl()) {
 			VU1Emu::GetEnableEmulatedRendering() = gEnableEmulatedRendering;
-		}
-
-		if (gUsePreprocessedVertices.DrawImguiControl()) {
-			Renderer::Native::GetUsePreprocessedVertices() = gUsePreprocessedVertices;
 		}
 
 		// End the ImGui window
@@ -594,7 +589,6 @@ void DebugMenu::Init()
 	ed3D::DebugOptions::GetDisableClusterRendering() = Debug::gDisableClusterRendering;
 	Renderer::GetForceAnimMatrixIdentity() = Debug::gForceAnimMatrixIdentity;
 	VU1Emu::GetEnableEmulatedRendering() = Debug::gEnableEmulatedRendering;
-	Renderer::Native::GetUsePreprocessedVertices() = Debug::gUsePreprocessedVertices;
 }
 
 static Input::InputFunctions gInputFunctions;

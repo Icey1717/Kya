@@ -652,11 +652,7 @@ void Renderer::Kya::MeshLibrary::AddFromStrip(const ed_3d_strip* pStrip) const
 	const G3D::Strip* pRendererStrip = FindStrip(pStrip);
 	assert(pRendererStrip);
 
-	if (pRendererStrip && pRendererStrip->pSimpleMesh) {
-		if (!Renderer::Native::GetUsePreprocessedVertices()) {
-			pRendererStrip->KickVertices();
-		}
-	
+	if (pRendererStrip && pRendererStrip->pSimpleMesh) {	
 		Renderer::AddMesh(pRendererStrip->pSimpleMesh);
 	}
 }
