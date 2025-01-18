@@ -1117,7 +1117,7 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		Level_FillRunInfo(0x1, -1, -1);
+		Level_FillRunInfo(0xe, -1, -1);
 		//Level_FillRunInfo(0x4, 9, -1);
 	}
 	return;

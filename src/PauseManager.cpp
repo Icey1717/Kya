@@ -1207,7 +1207,7 @@ void CSimpleMenu::on_change_selection()
 
 float FLOAT_ARRAY_00448cd0[2] = { 1.0f, 1.0f };
 
-Sprite::Sprite()
+void CSprite::ClearLocalData()
 {
 	undefined4* puVar1;
 	int puVar4;
@@ -1232,8 +1232,8 @@ Sprite::Sprite()
 	this->fHeight = (float)(uint)this->iHeight;
 	this->field_0x20 = 0;
 	this->field_0x24 = 0;
-	this->field_0x28 = 1.0;
-	this->field_0x2c = 1.0;
+	this->field_0x28 = 1.0f;
+	this->field_0x2c = 1.0f;
 	this->pMaterialInfo = (edDList_material*)0x0;
 	this->field_0x4c = local_8;
 	this->field_0x50 = local_4;
@@ -1251,7 +1251,7 @@ Sprite::Sprite()
 	return;
 }
 
-void Sprite::Install(char* pFileBuffer)
+void CSprite::Install(char* pFileBuffer)
 {
 	ed_g2d_material* pMaterial;
 	ed_g2d_bitmap* pBitmap;
@@ -1277,7 +1277,7 @@ void Sprite::Install(char* pFileBuffer)
 	return;
 }
 
-void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5, float param_6, float param_7)
+void CSprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5, float param_6, float param_7)
 {
 	uint uVar1;
 	byte b;
@@ -1302,23 +1302,28 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 	if (param_4 == param_6) {
 		param_6 = param_4 + (float)(uint)this->iWidth;
 	}
+
 	if (param_5 == param_7) {
 		param_7 = param_5 + (float)(uint)this->iHeight;
 	}
+
 	edDListUseMaterial(&this->materialInfo);
 	edDListLoadIdentity();
+
 	local_c = this->field_0x58;
 	local_4 = this->field_0x50;
 	if ((this->field_0x34 & 0x2000) != 0) {
 		local_c = this->field_0x50;
 		local_4 = this->field_0x58;
 	}
+
 	local_10 = this->field_0x54;
 	local_8 = this->field_0x4c;
 	if ((param_2 & 0x1000) != 0) {
 		local_10 = this->field_0x4c;
 		local_8 = this->field_0x54;
 	}
+
 	local_18 = local_10;
 	local_14 = local_4;
 	local_20 = local_8;
@@ -1353,11 +1358,12 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 		if ((param_2 & 0x200) != 0) {
 			y = y + fVar4 * 2.0;
 		}
+
 		edDListBlendSet(1);
 		edDListBlendFunc50();
 		edDListColor4u8(0, 0, 0, 0x80);
 		iVar3 = 4;
-		edDListBegin(1.0, 1.0, 1.0, 4, 4);
+		edDListBegin(1.0f, 1.0f, 1.0f, 4, 4);
 		edDListTexCoo2f(local_8, local_4);
 		edDListVertex4f(x, y_00, 0.0, iVar3);
 		edDListTexCoo2f(local_18, local_14);
@@ -1368,13 +1374,16 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 		edDListVertex4f(fVar5, y, 0.0, iVar3);
 		edDListEnd();
 	}
+
 	if ((param_2 & 0x800) == 0) {
 		edDListBlendSet(1);
 	}
 	else {
 		edDListBlendSet(0);
 	}
+
 	edDListBlendFuncNormal();
+
 	if ((param_2 & 0x400) == 0) {
 		edDListColor4u8(this->field_0x30[0], this->field_0x30[1], this->field_0x30[2], this->field_0x30[3]);
 	}
@@ -1408,10 +1417,11 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 		}
 		edDListColor4u8(r, g, b, bVar2);
 	}
+
 	uVar1 = param_2 & 0x30000;
 	if (uVar1 == 0) {
 		iVar3 = 4;
-		edDListBegin(1.0, 1.0, 1.0, 4, 4);
+		edDListBegin(1.0f, 1.0f, 1.0f, 4, 4);
 		edDListTexCoo2f(local_8, local_4);
 		edDListVertex4f(param_4, param_5, 0.0, iVar3);
 		edDListTexCoo2f(local_18, local_14);
@@ -1425,7 +1435,7 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 	else {
 		if (uVar1 == 0x20000) {
 			iVar3 = 4;
-			edDListBegin(1.0, 1.0, 1.0, 4, 8);
+			edDListBegin(1.0f, 1.0f, 1.0f, 4, 8);
 			edDListTexCoo2f(local_8, local_4);
 			edDListVertex4f(param_4, param_5, 0.0, iVar3);
 			edDListTexCoo2f(local_18, local_14);
@@ -1444,7 +1454,7 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 		else {
 			if (uVar1 == 0x10000) {
 				iVar3 = 4;
-				edDListBegin(1.0, 1.0, 1.0, 4, 6);
+				edDListBegin(1.0f, 1.0f, 1.0f, 4, 6);
 				edDListTexCoo2f(local_8, local_4);
 				edDListVertex4f(param_4, param_5, 0.0, iVar3);
 				edDListTexCoo2f(local_20, local_1c);
@@ -1462,7 +1472,7 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 			}
 			else {
 				iVar3 = 4;
-				edDListBegin(1.0, 1.0, 1.0, 4, 0xb);
+				edDListBegin(1.0f, 1.0f, 1.0f, 4, 0xb);
 				edDListTexCoo2f(local_8, local_4);
 				edDListVertex4f(param_4, param_5, 0.0, iVar3);
 				edDListTexCoo2f(local_20, local_1c);
@@ -1491,6 +1501,7 @@ void Sprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5,
 			}
 		}
 	}
+
 	return;
 }
 
@@ -1662,8 +1673,8 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			iVar7 = (int)(fVar13 / 32.0) + 1;
 			iVar9 = (int)(fVar10 / 32.0);
 			fVar11 = y_00 + 32.0;
-			fVar10 = 1.0 / (float)(int)(fVar13 / 32.0);
-			fVar13 = 1.0 / (float)iVar9;
+			fVar10 = 1.0f / (float)(int)(fVar13 / 32.0);
+			fVar13 = 1.0f / (float)iVar9;
 			fVar16 = fVar13 + 0.0;
 			if (iVar9 != 0) {
 				fVar18 = 0.0;
@@ -1682,7 +1693,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 						edDListVertex4f(x, y, 0.0f, (int)uVar5);
 						iVar6 = iVar6 + -1;
 						if (iVar6 == 1) {
-							fVar14 = 1.0;
+							fVar14 = 1.0f;
 							x = (this->drawOffsets).z;
 						}
 						else {
@@ -1692,7 +1703,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 					}
 					iVar9 = iVar9 + -1;
 					if (iVar9 == 1) {
-						fVar16 = 1.0;
+						fVar16 = 1.0f;
 						fVar11 = (this->drawOffsets).w;
 					}
 					else {

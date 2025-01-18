@@ -7,10 +7,10 @@
 struct edCTextStyle;
 struct edBANK_ENTRY_INFO;
 
-extern Sprite MenuBitmaps[13];
+extern CSprite MenuBitmaps[13];
 extern char* MenuElementsBitmapNames[13];
 
-extern Sprite BootBitmaps[23];
+extern CSprite BootBitmaps[23];
 
 void InstallBootData(void);
 

@@ -86,7 +86,6 @@ namespace Renderer {
 		PS2::GetPipelines().clear();
 	}
 
-	TextureData gTextureData;
 	SimpleTexture* gBoundTexture = nullptr;
 
 	InUseTextureList gInUseTextures;
@@ -1772,10 +1771,6 @@ namespace PipelineDebug
 	};
 }
 
-//void Renderer::SetTextureData(Renderer::TextureData inTextureData) {
-//	gTextureData = inTextureData;
-//}
-
 void Renderer::BindTexture(SimpleTexture* pNewTexture)
 {
 	assert(pNewTexture);
@@ -1800,10 +1795,6 @@ void Renderer::PushModelMatrix(float* pModel) {
 
 void Renderer::PushAnimMatrix(float* pAnim) {
 	Native::PushAnimMatrix(pAnim);
-}
-
-Renderer::TextureData& Renderer::GetTextureData() {
-	return gTextureData;
 }
 
 const Renderer::InUseTextureList& Renderer::GetInUseTextures() {

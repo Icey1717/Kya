@@ -171,9 +171,9 @@ public:
 	int field_0x34;
 };
 
-struct Sprite {
+struct CSprite {
 public:
-	Sprite();
+	void ClearLocalData();
 	void Install(char* pFileBuffer);
 	void DrawXYXY(uint param_2, float param_3, float param_4, float param_5, float param_6, float param_7);
 	byte field_0x4;
@@ -227,7 +227,7 @@ public:
 	ed_g2d_manager textureManager;
 };
 
-struct CSplashScreen : public Sprite {
+struct CSplashScreen : public CSprite {
 public:
 	CSplashScreen();
 	bool Init(float param_1, char* filePath);

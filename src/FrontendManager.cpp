@@ -137,7 +137,7 @@ void CFrontendDisplay::Game_Init()
 	char* pFileBuffer;
 	undefined8 uVar4;
 	char** fileToLoad;
-	Sprite* pTexture;
+	CSprite* pTexture;
 	int iVar5;
 	char** wolfenFileName;
 	char* puVar6;

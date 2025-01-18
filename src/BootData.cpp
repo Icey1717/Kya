@@ -24,7 +24,7 @@ char* BootDataBankName = sz_MenuDataBankName_00435610;
 char* sz_MediumFont_004355f8 = "medium.fon";
 char* sz_MediumFontFileName_00448b60 = sz_MediumFont_004355f8;
 
-Sprite MenuBitmaps[13];
+CSprite MenuBitmaps[13];
 
 char* MenuElementsBitmapNames[13] = {
 	"i_wolfen.g2d",
@@ -68,14 +68,14 @@ char* BootBitmapNames[23] = {
 	"memory_card.g2d"
 };
 
-Sprite BootBitmaps[23] = {};
+CSprite BootBitmaps[23] = {};
 
 void InstallBootData(void)
 {
 	char* puVar1;
 	int fileIndex;
 	char* messagesFilePointer;
-	Sprite* pIconTexture;
+	CSprite* pIconTexture;
 	char** ppcVar2;
 	int iVar3;
 	edCBankInstall bankHeader;

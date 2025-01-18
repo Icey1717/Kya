@@ -983,16 +983,20 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 	gCurFlashMaterial = 0;
 	gCurMaterial = pMaterialInfo;
 	edDListPatchGifTag2D();
+
 	if ((gCurDList->flags_0x0 & 2) == 0) {
 		return;
 	}
+
 	pDVar5 = gCurDList->pDisplayListInternalSubObj;
 	pRVar1 = gCurDList->pRenderCommands;
+
 	if (gCurDList->subCommandBufferCount != 0) {
 		pDVar4 = pDVar5->aCommandArray + (gCurDList->subCommandBufferCount - 1);
 		pDVar4->size = (uint)((int)pRVar1 - (int)pDVar4->pCommandBuffer);
 		pDVar5 = (DisplayListInternalSubObj_60*)(pDVar4 + 1);
 	}
+
 	if (pMaterialInfo != (edDList_material*)0x0) {
 		if ((pMaterialInfo->mode & 4U) == 0) {
 			if (pMaterialInfo->pMaterial != (ed_g2d_material*)0x0) {
@@ -1016,7 +1020,6 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 
 #ifdef PLATFORM_WIN
-					//Renderer::SetTextureData(MakeTextureDataFromPacket(pMaterialInfo->pMaterial, pTextureBitmap, pPaletteBitmap, 0));
 					const Renderer::Kya::G2D::Material* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(pMaterialInfo->pMaterial);
 					Renderer::BindTexture(pMaterial->layers.front().textures.front().pSimpleTexture);
 #endif
@@ -1028,42 +1031,6 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 					*(uint*)((int)&pDVar6->pCommandBuffer[1].cmdA + 4) =
 						*(uint*)((int)&pDVar6->pCommandBuffer[1].cmdA + 4) & 0xfffc001f | 0x10000;
 				}
-
-				// Texture palette hacks.
-#if 0
-				//{
-				//	int* pAddr = (int*)(pDVar5->aCommandArray[0].pCommandBuffer + 7);
-				//	uint* pCol = (uint*)LOAD_SECTION(pAddr[1]);
-				//
-				//	int i = 0;
-				//	for (; i < 0x40 * 0x80 * 1; i++) {
-				//		pCol[i] = 0x1234567;
-				//	}
-				//
-				//	i = 0;
-				//	for (; i < 0x40 / 4; i++) {
-				//		pCol[i] = 0x0;
-				//	}
-				//}
-
-				//uint palette[8] = {
-				//	0xFF0000FF,  // Red (ARGB)		0
-				//	0xFF00FF00,  // Green (ARGB)	1
-				//	0xFFFF0000,  // Blue (ARGB)		2
-				//	0xFF00FFFF,  // Yellow (ARGB)	3
-				//	0xFFFF00FF,  // Magenta (ARGB)	4
-				//	0xFFFFFF00,  // Cyan (ARGB)		5
-				//	0xFFFFFFFF,  // White (ARGB)	6
-				//	0x00000000   // Black (ARGB)	7
-				//};
-
-				{
-					//int* pAddr = (int*)(pDVar5->aCommandArray[0].pCommandBuffer + 7 + 8);
-					//uint* pCol = (uint*)LOAD_SECTION(pAddr[1]);
-					//memcpy(pCol, palette, 8 * 4);
-					//pCol[4] = 0xFFFF00FF;
-				}
-#endif
 
 #ifdef PLATFORM_WIN
 				ProcessTextureCommands(pDVar6->pCommandBuffer, pMaterialInfo->pMaterial->commandBufferTextureSize);

@@ -487,8 +487,6 @@ namespace Renderer
 	void PushModelMatrix(float* pModel);
 	void PushAnimMatrix(float* pAnim);
 
-	TextureData& GetTextureData();
-
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;
 
 	RenderDelegate& GetRenderDelegate();
