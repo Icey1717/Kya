@@ -19,6 +19,8 @@ namespace Debug {
 		static Setting<bool> gOnlyActiveActors("Show Only Active", true);
 		static Setting<float> gActorInfoDistance("Actor Info Distance", 500.0f);
 
+		static bool bShowActorList = false;
+
 		// Helper functions for ImVec2 operations
 		static ImVec2 operator+(const ImVec2& a, const ImVec2& b) {
 			return ImVec2(a.x + b.x, a.y + b.y);
@@ -96,6 +98,12 @@ namespace Debug {
 			case MINI_GAME_TIME_ATTACK: return "Mini Game Time Attack";
 			case MINI_GAME_BOX_COUNTER: return "Mini Game Box Counter";
 			case HUNTER: return "Hunter";
+			case MINI_GAME_BOOMY: return "Mini Game Boomy";
+			case STILLER: return "Stiller";
+			case BOMB_LAUNCHER: return "Bomb Launcher";
+			case WANTED_ZOO: return "Wanted Zoo";
+			case MINI_GAME_DISTANCE: return "Mini Game Distance";
+			case CREDITS: return "Credits";
 			default: return "Unknown";
 			}
 		}
@@ -214,6 +222,10 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 
 	gActorInfoDistance.DrawImguiControl();
 
+	if (ImGui::Button("Show Actor List")) {
+		bShowActorList = true;
+	}
+
 	ImGui::End();
 
 	if (gShowActorNamesOverlay) {
@@ -231,6 +243,52 @@ void Debug::Actor::ShowMenu(bool* bOpen)
 			ForEachActor(ShowActorOverlay);
 		}
 
+		ImGui::End();
+	}
+
+	static CActor* pSelectedActor = nullptr;
+
+	if (bShowActorList) {
+		ImGui::Begin("Actor List", &bShowActorList, ImGuiWindowFlags_AlwaysAutoResize);
+
+		auto DisplayActorInfo = [](CActor* pActor) {
+			std::string name = std::string(pActor->name) + " (" + Debug::Actor::GetActorTypeString(pActor->typeID) + ")";
+			if (ImGui::Selectable(name.c_str())) {
+				pSelectedActor = pActor;
+			}
+			};
+
+		auto ShowListFunc = [DisplayActorInfo](auto pFunc) {
+			const ImVec2 listboxSize = ImVec2(300, 300);
+			if (ImGui::ListBoxHeader("##ActorList", listboxSize)) {
+				pFunc(DisplayActorInfo);
+				ImGui::EndListBox();
+			};
+			};
+
+		if (ImGui::CollapsingHeader("All")) {
+			ShowListFunc(ForEachActor);
+		}
+
+		if (ImGui::CollapsingHeader("Active")) {
+			ShowListFunc(ForEachActiveActor);
+		}
+
+		if (ImGui::CollapsingHeader("Sector")) {
+			ShowListFunc(ForEachSectorActor);
+		}
+
+		ImGui::End();
+	}
+
+	if (pSelectedActor) {
+		ImGui::Begin("Selected Actor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text("Name: %s", pSelectedActor->name);
+		ImGui::Text("Sector: 0x%x", pSelectedActor->objectId);
+		ImGui::Text("Type: %s", GetActorTypeString(pSelectedActor->typeID));
+		ImGui::Text("Location: %s", pSelectedActor->currentLocation.ToString().c_str());
+		ImGui::Text("Behaviour: %s", Actor::Behaviour::GetActorBehaviourName(pSelectedActor).c_str());
+		ImGui::Text("State: %s", Actor::State::GetActorStateName(pSelectedActor).c_str());
 		ImGui::End();
 	}
 }

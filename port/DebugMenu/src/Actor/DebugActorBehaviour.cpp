@@ -3,10 +3,11 @@
 #include "ActorTrap.h"
 #include "ActorMovingPlatform.h"
 #include "ActorWolfen.h"
-#include "../../../../src/ActorHero.h"
-#include "../../../../src/ActorPunchingBall.h"
-#include "../../../../src/ActorWeapon.h"
-#include "../../../../src/ActorNativ.h"
+#include "ActorHero.h"
+#include "ActorPunchingBall.h"
+#include "ActorWeapon.h"
+#include "ActorNativ.h"
+#include "ActorAraignos.h"
 
 namespace Aton
 {
@@ -507,6 +508,30 @@ namespace Nativ
 	}
 }
 
+namespace Araignos {
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case ARAIGNOS_BEHAVIOUR_DEFAULT:
+			return "Default";
+		default:
+			return "Unknown";
+		}
+	}
+
+	static const char* GetStateName(int state)
+	{
+		switch (state) {
+		case ARAIGNOS_STATE_DEFAULT:
+			return "Default";
+		case ARAIGNOS_STATE_DIE:
+			return "Die";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
 std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 {
 	const int behaviourId = pActor->curBehaviourId;
@@ -535,6 +560,8 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Weapon::GetBehaviourName(behaviourId);
 	case NATIV:
 		return Nativ::GetBehaviourName(behaviourId);
+	case ARAIGNOS:
+		return Araignos::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}
@@ -549,6 +576,8 @@ std::string Debug::Actor::State::GetActorStateName(CActor* pActor)
 		return Weapon::GetStateName(pActor->actorState);
 	case NATIV:
 		return Nativ::GetStateName(pActor->actorState);
+	case ARAIGNOS:
+		return Araignos::GetStateName(pActor->actorState);
 	default:
 		std::stringstream sstream;
 		sstream << "0x" << std::hex << pActor->actorState;

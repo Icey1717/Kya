@@ -6,6 +6,8 @@
 
 class CActorHedgehog : public CActor {
 public:
+	static StateConfig _gStateCfg_ABV[28];
+
 	CActorHedgehog(){
 		IMPLEMENTATION_GUARD_LOG()
 	}

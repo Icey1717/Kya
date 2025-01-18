@@ -83,13 +83,15 @@ void CActorAraignos::Reset()
 
 	this->pCollisionData->flags_0x0 = this->pCollisionData->flags_0x0 & 0xfffffffd;
 	this->pCollisionData->flags_0x0 = this->pCollisionData->flags_0x0 | 0x9000;
+
+	return;
 }
 
 CBehaviour* CActorAraignos::BuildBehaviour(int behaviourType)
 {
 	CBehaviour* pBehaviour;
 
-	if (behaviourType == 2) {
+	if (behaviourType == ARAIGNOS_BEHAVIOUR_DEFAULT) {
 		pBehaviour = &this->behaviourDefault;
 	}
 	else {
@@ -99,36 +101,10 @@ CBehaviour* CActorAraignos::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
-StateConfig CActorAraignos::_gStateCfg_ARA[28] =
+StateConfig CActorAraignos::_gStateCfg_ARA[2] =
 {
 	StateConfig(0x6, 0x4),
 	StateConfig(0x7, 0x1),
-	StateConfig(0x0, 0x4),
-	StateConfig(0x7, 0x4),
-	StateConfig(0x0, 0x4),
-	StateConfig(0x7, 0x4),
-	StateConfig(0xD, 0x0),
-	StateConfig(0xE, 0x0),
-	StateConfig(0xF, 0x0),
-	StateConfig(0x10, 0x0),
-	StateConfig(0x11, 0x0),
-	StateConfig(0x12, 0x0),
-	StateConfig(0x7, 0x4),
-	StateConfig(0x7, 0x4),
-	StateConfig(0xC, 0x4),
-	StateConfig(0x13, 0x4),
-	StateConfig(0x0, 0x4),
-	StateConfig(0x0, 0x4),
-	StateConfig(0x15, 0x4),
-	StateConfig(0x16, 0x4),
-	StateConfig(0x17, 0x4),
-	StateConfig(0x1B, 0x4),
-	StateConfig(0x18, 0x4),
-	StateConfig(0x18, 0x4),
-	StateConfig(0x19, 0x4),
-	StateConfig(0x1A, 0x4),
-	StateConfig(0x1C, 0x0),
-	StateConfig(0x0, 0x1),
 };
 
 StateConfig* CActorAraignos::GetStateCfg(int state)
@@ -139,6 +115,7 @@ StateConfig* CActorAraignos::GetStateCfg(int state)
 		pStateConfig = CActorMovable::GetStateCfg(state);
 	}
 	else {
+		assert((state - 5) < 2);
 		pStateConfig = _gStateCfg_ARA + state + -5;
 	}
 
@@ -285,7 +262,7 @@ int CActorAraignos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					}
 					else {
 						if ((msg == 2) || (msg == 3)) {
-							SetState(6, -1);
+							SetState(ARAIGNOS_STATE_DIE, -1);
 							iVar3 = 1;
 						}
 						else {
@@ -466,7 +443,7 @@ void CActorAraignos::CBhvDefault::Begin(CActor* pOwner, int newState, int newAni
 {
 	this->pOwner = static_cast<CActorAraignos*>(pOwner);
 
-	this->pOwner->SetState(5, -1);
+	this->pOwner->SetState(ARAIGNOS_STATE_DEFAULT, -1);
 
 	return;
 }

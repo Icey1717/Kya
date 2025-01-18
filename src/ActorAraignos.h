@@ -5,6 +5,11 @@
 #include "ActorMovable.h"
 #include "PathFollow.h"
 
+#define ARAIGNOS_BEHAVIOUR_DEFAULT 2
+
+#define ARAIGNOS_STATE_DEFAULT 5
+#define ARAIGNOS_STATE_DIE 6
+
 class CActorAraignos : public CActorMovable {
 public:
 	class CBhvDefault : public CBehaviour
@@ -19,7 +24,7 @@ public:
 		CActorAraignos* pOwner;
 	};
 
-	static StateConfig _gStateCfg_ARA[28];
+	static StateConfig _gStateCfg_ARA[2];
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();

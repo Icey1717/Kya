@@ -299,7 +299,6 @@ struct CCineActorConfig {
 	edF32VECTOR4 postCinematicRotationEuler;
 };
 
-PACK(
 struct S_STREAM_EVENT_CAMERA {
 	int cameraIndex;
 	int field_0x4;
@@ -315,7 +314,9 @@ struct S_STREAM_EVENT_CAMERA {
 	void SwitchOn(CActor* pActor);
 	void SwitchOff(CActor* pActor);
 	void Reset(CActor* pActor);
-});
+};
+
+static_assert(sizeof(S_STREAM_EVENT_CAMERA) == 0x20);
 
 struct S_STREAM_EVENT_CAMERA_CONTAINER
 {
