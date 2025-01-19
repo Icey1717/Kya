@@ -54,11 +54,11 @@ namespace Renderer {
 	bool gHeadless = false;
 }
 
-void Renderer::CreateCommandBuffers(CommandBufferVector& commandBuffers) {
+void Renderer::CreateCommandBuffers(CommandBufferVector& commandBuffers, const char* name /*= nullptr*/) {
 	CreateCommandBuffers(GetCommandPool(), commandBuffers);
 }
 
-void Renderer::CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVector& commandBuffers)
+void Renderer::CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVector& commandBuffers, const char* name /*= nullptr*/)
 {
 	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -70,6 +70,12 @@ void Renderer::CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVect
 
 	if (vkAllocateCommandBuffers(GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate command buffers!");
+	}
+
+	if (name) {
+		for (size_t i = 0; i < commandBuffers.size(); i++) {
+			SetObjectName(reinterpret_cast<uint64_t>(commandBuffers[i]), VK_OBJECT_TYPE_COMMAND_BUFFER, "%s %d", name, i);
+		}
 	}
 }
 
@@ -1670,7 +1676,7 @@ uint32_t GetAllocationCount(VkSystemAllocationScope scope)
 	return Renderer::gAllocations[scope].size();
 }
 
-VkCommandPool Renderer::CreateCommandPool()
+VkCommandPool Renderer::CreateCommandPool(const char* name /*= nullptr*/)
 {
 	VkCommandPool commandPool = VK_NULL_HANDLE;
 
@@ -1683,6 +1689,10 @@ VkCommandPool Renderer::CreateCommandPool()
 
 	if (vkCreateCommandPool(GetDevice(), &poolInfo, GetAllocator(), &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics command pool!");
+	}
+
+	if (name != nullptr) {
+		SetObjectName(reinterpret_cast<uint64_t>(commandPool), VK_OBJECT_TYPE_COMMAND_POOL, name);
 	}
 
 	return commandPool;

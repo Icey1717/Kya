@@ -268,7 +268,7 @@ namespace Renderer
 
 		void PushMatrixPacket(const MatrixPacket* const pPkt);
 
-		void SignalEndCommands();
+		void OnVideoFlip();
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;
@@ -476,7 +476,6 @@ namespace Renderer
 	void SetClamp(GIFReg::GSClamp clamp);
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
-	//void SetTextureData(TextureData inTextureData);
 	void BindTexture(SimpleTexture* pNewTexture);
 
 	void AddMesh(SimpleMesh* pNewMesh);

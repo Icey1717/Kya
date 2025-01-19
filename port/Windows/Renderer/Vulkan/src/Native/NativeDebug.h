@@ -14,7 +14,7 @@ namespace Renderer
 	{
 		namespace Debug 
 		{
-			void Reset();
+			void Reset(const VkCommandBuffer& cmd);
 			void UpdateLabel(const SimpleTexture* pTexture, const VkCommandBuffer& cmd);
 		};
 	}

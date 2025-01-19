@@ -12,6 +12,7 @@ namespace Renderer
 
 	namespace Native
 	{
+		void SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd);
 		void SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd);
 	}
 }

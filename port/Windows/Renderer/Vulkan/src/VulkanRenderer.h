@@ -21,10 +21,10 @@ namespace Renderer {
 
 	using CommandBufferVector = std::vector<VkCommandBuffer>;
 
-	void CreateCommandBuffers(CommandBufferVector& commandBuffers);
-	void CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVector& commandBuffers);
+	void CreateCommandBuffers(CommandBufferVector& commandBuffers, const char* name = nullptr);
+	void CreateCommandBuffers(const VkCommandPool& pool, CommandBufferVector& commandBuffers, const char* name = nullptr);
 
-	VkCommandPool CreateCommandPool();
+	VkCommandPool CreateCommandPool(const char* name = nullptr);
 }
 
 VkDevice GetDevice();

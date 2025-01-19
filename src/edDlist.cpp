@@ -1020,7 +1020,10 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 
 #ifdef PLATFORM_WIN
 					const Renderer::Kya::G2D::Material* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(pMaterialInfo->pMaterial);
+					// Can probably remove this bind later and rely on the DisplayList binding only.
 					Renderer::BindTexture(pMaterial->layers.front().textures.front().pSimpleTexture);
+
+					DISPLAY_LIST_BIND_TEXTURE(pMaterial->layers.front().textures.front().pSimpleTexture);
 #endif
 				}
 
@@ -1118,8 +1121,8 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 	local_10.y = inY;
 	edF32Matrix4MulF32Vector4Hard(&local_10, gCurMatrix + gNbMatrix, &local_10);
 	pDVar1 = gCurDList;
-	x = gIncViewportX + (int)(local_10.x * 16.0);
-	y = gIncViewportY + (int)(local_10.y * 16.0);
+	x = gIncViewportX + (int)(local_10.x * 16.0f);
+	y = gIncViewportY + (int)(local_10.y * 16.0f);
 	if (gCurPrimType == 8) {
 		g_Count_004495f8 = g_Count_004495f8 + 1;
 #ifdef PLATFORM_WIN
@@ -1129,6 +1132,8 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 			gCurDList->pRenderCommands->cmdA = SCE_GS_SET_XYZ(x, y, inZ);
 			pDVar1->pRenderCommands->cmdB = SCE_GS_XYZ3;
 			pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
+
+			DISPLAY_LIST_SET_VERTEX(x, y, inZ, 1);
 		}
 		else {
 			gCurDList->pRenderCommands->cmdA = SCE_GS_SET_XYZ(x, y, inZ);
@@ -1137,6 +1142,8 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 			if (g_Count_004495f8 == 4) {
 				g_Count_004495f8 = 0;
 			}
+
+			DISPLAY_LIST_SET_VERTEX(x, y, inZ, 0);
 		}
 	}
 	else {
@@ -1151,9 +1158,14 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 		else {
 			(*ppRVar4)->cmdB = SCE_GS_XYZ2;
 		}
+
 		*ppRVar4 = *ppRVar4 + 1;
+
+		DISPLAY_LIST_SET_VERTEX(x, y, inZ, param_4 == 0xc000);
 	}
+
 	gNbAddedVertex = gNbAddedVertex + 1;
+
 	return;
 }
 
@@ -1169,6 +1181,9 @@ void edDListColor4u8_2D(byte r, byte g, byte b, byte a)
 	gCurDList->pRenderCommands->cmdA = SCE_GS_SET_RGBAQ(r, g, b, a, 0x3f800000);
 	pDVar1->pRenderCommands->cmdB = SCE_GS_RGBAQ;
 	pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
+
+	DISPLAY_LIST_SET_COLOR(r, g, b, a, 1.0f);
+
 	return;
 }
 
@@ -1184,6 +1199,9 @@ void edDListTexCoo2f_2D(float inS, float inT)
 	gCurDList->pRenderCommands->cmdA = SCE_GS_SET_ST(S, T);
 	pDVar1->pRenderCommands->cmdB = SCE_GS_ST;
 	pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
+
+	DISPLAY_LIST_SET_TEXCOORD(inS, inT);
+
 	return;
 }
 
@@ -1703,9 +1721,11 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 		g_RGBAQ_00448aa0[gCurColorNbInVertex].g = g;
 		g_RGBAQ_00448aa0[gCurColorNbInVertex].b = b;
 		g_RGBAQ_00448aa0[gCurColorNbInVertex].a = a;
+
 		if (((gCurPrimType == 0xb) || (gCurPrimType == 0xc)) && (gCurColorNbInVertex < gEndColorNbInVertex)) {
 			gCurColorNbInVertex = gCurColorNbInVertex + 1;
 		}
+
 		if (((gCurDList->flags_0x0 & 2) == 0) && (gCurPrimType == 7)) {
 			gCurColorBuf->r = g_RGBAQ_00448aa0->r;
 			gCurColorBuf->g = g_RGBAQ_00448aa0->g;
@@ -1717,6 +1737,7 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 			gCurColorBuf[1].a = g_RGBAQ_00448aa0->a;
 			gCurColorBuf = gCurColorBuf + 2;
 		}
+
 		if ((gCurDList->flags_0x0 & 2) != 0) {
 			edDListPatchGifTag2D();
 			if (gbInsideBegin == 0) {
@@ -1732,6 +1753,7 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 	else {
 		(gAddColorFUNC)(r, g, b, a);
 	}
+
 	return;
 }
 

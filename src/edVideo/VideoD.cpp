@@ -291,7 +291,7 @@ void edVideoFlip(void)
 		edSysHandlerVideo_0048cee0.maxEventID, 9, (void*)0x0);
 
 #ifdef PLATFORM_WIN
-	Renderer::Native::SignalEndCommands();
+	Renderer::Native::OnVideoFlip();
 #endif
 
 	edVideoWaitVsync(1);

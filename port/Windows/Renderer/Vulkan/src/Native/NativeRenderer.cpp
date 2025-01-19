@@ -18,6 +18,7 @@
 #include "log.h"
 #include "ScopedTimer.h"
 #include "PostProcessing.h"
+#include "NativeDisplayList.h"
 
 #define DEBUG_TEXTURE_NAME "BACKGROUND.g2d"
 #define DEBUG_TEXTURE_MATERIAL_INDEX 5
@@ -29,8 +30,8 @@ namespace Renderer
 {
 	namespace Native
 	{
-		double gRenderTime = 0.0;
-		double gRenderWaitTime = 0.0;
+		static double gRenderTime = 0.0;
+		static double gRenderWaitTime = 0.0;
 
 		constexpr int gMaxAnimMatrices = 0x60;
 		constexpr int gMaxStripIndex = 0x20;
@@ -60,19 +61,19 @@ namespace Renderer
 
 		constexpr int gMaxModelMatrices = 1024;
 
-		int gMaxAnimationMatrices = 0;
+		static int gMaxAnimationMatrices = 0;
 
-		PipelineMap gPipelines;
-		FrameBufferBase gFrameBuffer;
+		static PipelineMap gPipelines;
+		static FrameBufferBase gFrameBuffer;
 
-		VkSampler gFrameBufferSampler;
+		static VkSampler gFrameBufferSampler;
 
-		VkRenderPass gRenderPass;
-		VkCommandPool gCommandPool;
-		CommandBufferVector gCommandBuffers;
+		static VkRenderPass gRenderPass;
+		static VkCommandPool gCommandPool;
+		static CommandBufferVector gCommandBuffers;
 
-		UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
-		DynamicUniformBuffer<glm::mat4> gModelBuffer;
+		static UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
+		static DynamicUniformBuffer<glm::mat4> gModelBuffer;
 
 		struct AlphaConstantBuffer {
 			alignas(4) VkBool32 enable; // Use VkBool32 for proper alignment
@@ -89,14 +90,14 @@ namespace Renderer
 		DynamicUniformBuffer<AlphaConstantBuffer> gAlphaBuffer;
 
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
-		NativeVertexBuffer gNativeVertexBuffer;
+		static NativeVertexBuffer gNativeVertexBuffer;
 		// As each draw comes in this buffer is filled.
-		NativeVertexBufferData gNativeVertexBufferDataDraw;
+		static NativeVertexBufferData gNativeVertexBufferDataDraw;
 
-		DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
-		std::vector<glm::mat4> gAnimationMatrices;
+		static DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
+		static std::vector<glm::mat4> gAnimationMatrices;
 
-		std::vector<glm::mat4> gModelMatrices;
+		static std::vector<glm::mat4> gModelMatrices;
 
 		struct Draw {
 			SimpleTexture* pTexture = nullptr;
@@ -120,13 +121,13 @@ namespace Renderer
 			std::vector<Instance> instances;
 		};
 
-		std::optional<Draw> gCurrentDraw;
+		static std::optional<Draw> gCurrentDraw;
 
-		glm::mat4 gCachedModelMatrix;
-		glm::mat4 gCachedViewMatrix;
-		glm::mat4 gCachedProjMatrix;
+		static glm::mat4 gCachedModelMatrix;
+		static glm::mat4 gCachedViewMatrix;
+		static glm::mat4 gCachedProjMatrix;
 
-		LightingData gCachedLightingData;
+		static LightingData gCachedLightingData;
 
 		double GetRenderTime()
 		{
@@ -138,7 +139,7 @@ namespace Renderer
 			return gRenderWaitTime;
 		}
 
-		void FillIndexData(Draw::Instance& instance)
+		static void FillIndexData(Draw::Instance& instance)
 		{
 			auto& vertexBufferData = instance.pMesh->GetInternalVertexBufferData();
 
@@ -153,7 +154,7 @@ namespace Renderer
 			gNativeVertexBuffer.MergeData(vertexBufferData);
 		}
 
-		void MergeIndexData()
+		static void MergeIndexData()
 		{
 			assert(gCurrentDraw->instances.size() > 0);
 			NATIVE_LOG_VERBOSE(LogLevel::Info, "MergeIndexData Merging instance: {}", gCurrentDraw->instances.size() - 1);
@@ -181,12 +182,12 @@ namespace Renderer
 			return true;
 		}
 
-		void CreateFramebuffer()
+		static void CreateFramebuffer()
 		{
 			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, true);
 		}
 
-		void CreateFramebufferSampler()
+		static void CreateFramebufferSampler()
 		{
 			VkSamplerCreateInfo samplerCreateInfo{};
 			samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -212,7 +213,7 @@ namespace Renderer
 			}
 		}
 
-		void CreatePipeline()
+		static void CreatePipeline()
 		{
 			PipelineKey key;
 			key.options.bGlsl = true;
@@ -221,7 +222,7 @@ namespace Renderer
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
 		}
 
-		Pipeline& GetPipeline() {
+		static Pipeline& GetPipeline() {
 			PipelineKey pipelineKey;
 			pipelineKey.options.bWireframe = false;
 			pipelineKey.options.bGlsl = true;
@@ -311,7 +312,7 @@ namespace Renderer
 			glm::mat4 lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
 		};
 
-		void UpdateConstantBuffers(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
+		static void UpdateConstantBuffers(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
 		{
 			gVertexConstantBuffer.GetBufferData().view = viewMatrix;
 			gVertexConstantBuffer.GetBufferData().proj = projMatrix;
@@ -319,7 +320,7 @@ namespace Renderer
 			gVertexConstantBuffer.Update(GetCurrentFrame());
 		}
 
-		void UpdateDescriptors()
+		static void UpdateDescriptors()
 		{
 			gModelBuffer.Update(GetCurrentFrame());
 			gAlphaBuffer.Update(GetCurrentFrame());
@@ -401,7 +402,7 @@ namespace Renderer
 			return maxUboSize;
 		}
 
-		bool CanMergeMesh()
+		static bool CanMergeMesh()
 		{
 			if (!gCurrentDraw) {
 				return false;
@@ -424,12 +425,12 @@ namespace Renderer
 			return true;
 		}
 
-		void CreateDraw()
+		static void CreateDraw()
 		{
 			gCurrentDraw = Draw{};
 		}
 
-		void RecordBeginCommandBuffer()
+		static void RecordBeginCommandBuffer()
 		{
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
@@ -474,19 +475,16 @@ namespace Renderer
 			gNativeVertexBuffer.BindBuffers(cmd);
 		}
 
-		void RecordEndCommandBuffer()
+		static void RecordEndCommandBuffer()
 		{
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+
+			Debug::Reset(cmd);
 
 			UpdateConstantBuffers(gFinalViewMatrix, gFinalProjMatrix);
 			UpdateDescriptors();
 
 			gNativeVertexBuffer.MapData();
-
-			int textureIndex = 0;
-			int modelIndex = 0;
-
-			Debug::Reset();
 
 			gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
 
@@ -622,7 +620,7 @@ namespace Renderer
 			return gRenderThread->GetRenderThreadTime();
 		}
 
-		void SanityCheck(SimpleMesh* pMesh)
+		static void SanityCheck(SimpleMesh* pMesh)
 		{
 			auto& internalBuffer = pMesh->GetInternalVertexBufferData();
 
@@ -672,7 +670,7 @@ Renderer::NativeVertexBufferData& Renderer::SimpleMesh::GetVertexBufferData()
 	return internalVertexBufferData;
 }
 
-void Renderer::Native::SignalEndCommands()
+void Renderer::Native::OnVideoFlip()
 {
 	gRenderThread->SignalEndCommands();
 }
@@ -866,11 +864,11 @@ Renderer::FrameBufferBase& Renderer::Native::GetFrameBuffer()
 
 void Renderer::Native::Setup()
 {
-	CreateRenderPass(gRenderPass, "Mesh Previewer");
+	CreateRenderPass(gRenderPass, "Native Render Pass");
 	CreateFramebuffer();
 	CreateFramebufferSampler();
-	gCommandPool = CreateCommandPool();
-	CreateCommandBuffers(gCommandPool, gCommandBuffers);
+	gCommandPool = CreateCommandPool("Native Renderer Command Pool");
+	CreateCommandBuffers(gCommandPool, gCommandBuffers, "Native Renderer Command Buffer");
 	CreatePipeline();
 
 	const VkDeviceSize maxUboSize = CheckBufferSizes();
@@ -893,6 +891,7 @@ void Renderer::Native::Setup()
 	gRenderThread = std::make_unique<RenderThread>();
 
 	PostProcessing::Setup();
+	DisplayList::Setup();
 }
 
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
@@ -920,15 +919,16 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	Renderer::Debug::EndLabel(cmd);
 	vkEndCommandBuffer(cmd);
 
+	std::array<VkCommandBuffer, 2> cmdBuffers = { cmd, DisplayList::FinalizeCommandBuffer() };
+
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &cmd;
+	submitInfo.commandBufferCount = cmdBuffers.size();
+	submitInfo.pCommandBuffers = cmdBuffers.data();
 
 	vkQueueSubmit(GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 
 	gNativeVertexBuffer.Reset();
-
 	gAnimationMatrices.clear();
 
 	NATIVE_LOG(LogLevel::Info, "Renderer::Native::Render Complete!");

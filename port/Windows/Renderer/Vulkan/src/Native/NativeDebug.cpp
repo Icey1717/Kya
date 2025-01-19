@@ -15,8 +15,21 @@ namespace Renderer
 	} // Native
 } // Renderer
 
-void Renderer::Native::Debug::Reset()
+void Renderer::Native::Debug::Reset(const VkCommandBuffer& cmd)
 {
+	if (!gLabelState.lastTextureName.empty())
+	{
+		Renderer::Debug::EndLabel(cmd);
+
+		if (gLabelState.lastMaterialIndex != -1) {
+			Renderer::Debug::EndLabel(cmd);
+		}
+
+		if (gLabelState.lastLayerIndex != -1) {
+			Renderer::Debug::EndLabel(cmd);
+		}
+	}
+
 	gLabelState = {};
 }
 

@@ -156,7 +156,8 @@ namespace Renderer
 } // Renderer
 
 
-void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd)
+
+void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
 {
 	static auto pvkCmdSetColorBlendEnableEXT = (PFN_vkCmdSetColorBlendEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorBlendEnableEXT");
 	assert(pvkCmdSetColorBlendEnableEXT);
@@ -164,12 +165,10 @@ void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, co
 	static auto pvkCmdSetColorBlendEquationEXT = (PFN_vkCmdSetColorBlendEquationEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorBlendEquationEXT");
 	assert(pvkCmdSetColorBlendEquationEXT);
 
-	const bool bEnableAlpha = pMesh ? pMesh->GetPrim().ABE : true;
-
-	VkBool32 bEnableAlphaVk = bEnableAlpha ? VK_TRUE : VK_FALSE;
+	VkBool32 bEnableAlphaVk = bAlphaBlendEnabled ? VK_TRUE : VK_FALSE;
 	pvkCmdSetColorBlendEnableEXT(cmd, 0, 1, &bEnableAlphaVk);
 
-	if (bEnableAlpha) {
+	if (bAlphaBlendEnabled) {
 		const auto alpha = pTexture->GetTextureRegisters().alpha;
 
 		uint8_t blend_index = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);
@@ -196,4 +195,16 @@ void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, co
 
 		pvkCmdSetColorBlendEquationEXT(cmd, 0, 1, &colorBlendEquation);
 	}
+	else {
+		// We always need to call this
+		VkColorBlendEquationEXT colorBlendEquation{};
+		pvkCmdSetColorBlendEquationEXT(cmd, 0, 1, &colorBlendEquation);
+	}
+}
+
+void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd)
+{
+	const bool bEnableAlpha = pMesh ? pMesh->GetPrim().ABE : true;
+
+	SetBlendingDynamicState(pTexture, bEnableAlpha, cmd);
 }
