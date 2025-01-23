@@ -17,6 +17,10 @@ namespace PS2 {
 			return descriptorSets[index];
 		}
 
+		size_t GetSetCount() const {
+			return descriptorSets.size();
+		}
+
 		VkDescriptorPool descriptorPool;
 		std::vector<VkDescriptorSet> descriptorSets;
 		Renderer::LayoutBindingMap layoutBindingMap;
@@ -48,7 +52,7 @@ namespace PS2 {
 
 		bool HasDescriptorSets(const Renderer::Pipeline& pipeline) const;
 
-		void UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList);
+		void UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, int frameIndex);
 		void UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList);
 
 		std::unordered_map<const Renderer::Pipeline*, GSTexDescriptor> descriptorMap;

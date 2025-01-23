@@ -312,7 +312,9 @@ namespace Renderer::Native::DisplayList
 		DescriptorWriteList writeList;
 		writeList.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
-		pTextureData->UpdateDescriptorSets(gPipeline, writeList);
+		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			pTextureData->UpdateDescriptorSets(gPipeline, writeList, i);
+		}
 	}
 
 	static void FinalizeDraw()
@@ -322,7 +324,7 @@ namespace Renderer::Native::DisplayList
 		if (indexCount > 0) {
 			VkCommandBuffer& cmd = GetCommandBuffer();
 
-			Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
+			Native::SetBlendingDynamicState(gBoundTexture, false, cmd);
 
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(gPipeline).GetSet(GetCurrentFrame()), 0, NULL);
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, gVertexStart, 0);

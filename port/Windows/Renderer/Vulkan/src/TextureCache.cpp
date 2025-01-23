@@ -1225,9 +1225,9 @@ bool PS2::GSSimpleTexture::HasDescriptorSets(const Renderer::Pipeline& pipeline)
 	return it->second.descriptorPool != VK_NULL_HANDLE;
 }
 
-void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList)
+void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList, int frameIndex)
 {
-	UpdateDescriptorSets(GetDescriptorSets(pipeline, &writeList).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings, writeList);
+	UpdateDescriptorSets(GetDescriptorSets(pipeline, &writeList).GetSet(frameIndex), pipeline.descriptorSetLayoutBindings, writeList);
 }
 
 void PS2::GSSimpleTexture::UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList)

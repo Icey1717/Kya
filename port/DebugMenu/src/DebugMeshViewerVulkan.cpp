@@ -103,36 +103,40 @@ namespace DebugMeshViewer {
 			return gPipelines[pipelineKey.key];
 		}
 
-		void UpdateDescriptors()
+		void UpdateDescriptors(Renderer::SimpleTexture* pTexture)
 		{
 			auto& pipeline = GetPipeline();
 
 			gVertexConstantBuffer.Update(GetCurrentFrame());
 
-			for (auto& drawCommand : gPreviewerDrawCommands) {
-				Renderer::SimpleTexture* pTexture = drawCommand.first;
+			if (!pTexture) {
+				return;
+			}
 
-				if (!pTexture) {
-					break;
-				}
+			PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
-				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
-				VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
+			if (pTextureData->HasDescriptorSets(pipeline)) {
+				return;
+			}
 
-				VkDescriptorImageInfo imageInfo{};
-				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo.imageView = pTextureData->imageView;
-				imageInfo.sampler = sampler;
+			VkSampler& sampler = PS2::GetSampler(pTextureData->samplerSelector);
 
-				const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
+			VkDescriptorImageInfo imageInfo{};
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = pTextureData->imageView;
+			imageInfo.sampler = sampler;
+
+			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+				const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(i);
 
 				Renderer::DescriptorWriteList writeList;
+
 				writeList.EmplaceWrite({ 0, Renderer::EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 				writeList.EmplaceWrite({ 1, Renderer::EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
-				pTextureData->UpdateDescriptorSets(pipeline, writeList);
-
+				pTextureData->UpdateDescriptorSets(pipeline, writeList, i);
 			}
+
 		}
 	} // Vulkan
 
@@ -151,6 +155,8 @@ namespace DebugMeshViewer {
 
 			Vulkan::pBoundTexture = pTexture;
 			Vulkan::pBoundMesh = pMesh;
+
+			Vulkan::UpdateDescriptors(pTexture);
 
 			Vulkan::gPreviewerDrawCommands[Vulkan::drawCounter].first = pTexture;
 		}
@@ -236,7 +242,7 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	auto& pipeline = GetPipeline();
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-	UpdateDescriptors();
+	gVertexConstantBuffer.Update(GetCurrentFrame());
 
 	for (auto& drawCommand : gPreviewerDrawCommands) {
 		Renderer::SimpleTexture* pTexture = drawCommand.first;
