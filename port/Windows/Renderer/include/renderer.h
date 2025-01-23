@@ -148,6 +148,11 @@ namespace Renderer
 		float FOG[4]; // FOG:28
 	};
 
+	struct alignas(32) DisplayListVertex : public GSVertex
+	{
+		float XYZ[3];
+	};
+
 	struct ImageData {
 		void* pImage = nullptr;
 		uint32_t canvasWidth = 0;

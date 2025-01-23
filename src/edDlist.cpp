@@ -89,7 +89,7 @@ int gNbAddedVertex = 0;
 int gMaxNbVertex = 0;
 int gNbDMAVertex = 0;
 
-typedef void (*DisplayListXYZFunc)(float, float, float, float);
+typedef void (*DisplayListXYZFunc)(float, float, float, uint);
 typedef void (*DisplayListRGBAQFunc)(byte, byte, byte, byte);
 typedef void (*DisplayListSTFunc)(float, float);
 
@@ -1107,7 +1107,7 @@ void edDlistAddtoView(DisplayListInternal* pInDisplayList)
 	return;
 }
 
-void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
+void edDListVertex4f_2D(float inX, float inY, float inZ, uint param_4)
 {
 	DisplayListInternal* pDVar1;
 	int y;
@@ -1115,14 +1115,18 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 	edpkt_data** ppRVar4;
 	edF32VECTOR4 local_10;
 
-	local_10.w = 1.0;
-	local_10.z = 0.0;
+	local_10.w = 1.0f;
+	local_10.z = 0.0f;
 	local_10.x = inX;
 	local_10.y = inY;
+
 	edF32Matrix4MulF32Vector4Hard(&local_10, gCurMatrix + gNbMatrix, &local_10);
+
 	pDVar1 = gCurDList;
+
 	x = gIncViewportX + (int)(local_10.x * 16.0f);
 	y = gIncViewportY + (int)(local_10.y * 16.0f);
+
 	if (gCurPrimType == 8) {
 		g_Count_004495f8 = g_Count_004495f8 + 1;
 #ifdef PLATFORM_WIN
@@ -1133,7 +1137,7 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 			pDVar1->pRenderCommands->cmdB = SCE_GS_XYZ3;
 			pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
 
-			DISPLAY_LIST_SET_VERTEX(x, y, inZ, 1);
+			DISPLAY_LIST_SET_VERTEX(local_10.x, local_10.y, inZ, 1);
 		}
 		else {
 			gCurDList->pRenderCommands->cmdA = SCE_GS_SET_XYZ(x, y, inZ);
@@ -1143,7 +1147,7 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 				g_Count_004495f8 = 0;
 			}
 
-			DISPLAY_LIST_SET_VERTEX(x, y, inZ, 0);
+			DISPLAY_LIST_SET_VERTEX(local_10.x, local_10.y, inZ, 0);
 		}
 	}
 	else {
@@ -1161,7 +1165,7 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, float param_4)
 
 		*ppRVar4 = *ppRVar4 + 1;
 
-		DISPLAY_LIST_SET_VERTEX(x, y, inZ, param_4 == 0xc000);
+		DISPLAY_LIST_SET_VERTEX(local_10.x, local_10.y, inZ, param_4 == 0xc000);
 	}
 
 	gNbAddedVertex = gNbAddedVertex + 1;
@@ -1252,7 +1256,7 @@ void edDListBegin2D(ulong mode)
 
 	gCurDList->pRenderCommands = gCurDList->pRenderCommands + 1;
 
-	DISPLAY_LIST_2D_START();
+	DISPLAY_LIST_2D_START(gCurViewport->screenWidth, gCurViewport->screenHeight);
 
 	return;
 }
@@ -1453,13 +1457,13 @@ _rgba* gCurColor_SPR = &gCurColor;
 float gCurST[8] = {};
 float* gCurST_SPR = gCurST;
 
-void edDListVertex4f_3D_TRIANGLE(float x, float y, float z, float skip)
+void edDListVertex4f_3D_TRIANGLE(float x, float y, float z, uint skip)
 {
 	short* puVar1;
 	_rgba* p_Var1;
-	int local_4;
+	uint local_4;
 
-	if (((uint)(gNbAddedVertex % 3) < 2) || (local_4 = (int)skip, skip == 49152.0)) {
+	if (((uint)(gNbAddedVertex % 3) < 2) || (local_4 = skip, skip == 49152.0f)) {
 		local_4 = 0xc000;
 	}
 	gNbAddedVertex = gNbAddedVertex + 1;
@@ -1748,6 +1752,8 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 			gCurDList->pRenderCommands->cmdA = SCE_GS_SET_RGBAQ(r, g, b, a, 0x3f800000);
 			pDVar1->pRenderCommands->cmdB = SCE_GS_RGBAQ;
 			pDVar1->pRenderCommands = pDVar1->pRenderCommands + 1;
+
+			DISPLAY_LIST_SET_COLOR(r, g, b, a, 1.0f);
 		}
 	}
 	else {
@@ -1765,7 +1771,7 @@ void edDListTexCoo2f(float s, float t)
 	return;
 }
 
-void edDListVertex4f(float x, float y, float z, int param_4)
+void edDListVertex4f(float x, float y, float z, uint param_4)
 {
 	/* WARNING: Could not recover jumptable at 0x002cd6e4. Too many branches */
 	/* WARNING: Treating indirect jump as call */

@@ -22,10 +22,15 @@ namespace Renderer::Native::DisplayList
 	static VkRenderPass gRenderPass;
 	static Pipeline gPipeline;
 
-	static PS2::FrameVertexBuffers<Renderer::GSVertex, uint16_t> gVertexBuffers;
+	static PS2::FrameVertexBuffers<Renderer::DisplayListVertex, uint16_t> gVertexBuffers;
 
 	int gIndexStart = 0;
 	int gVertexStart = 0;
+
+	struct {
+		float width;
+		float height;
+	} gViewport;
 
 	VkCommandBuffer& GetCommandBuffer()
 	{
@@ -178,7 +183,7 @@ namespace Renderer::Native::DisplayList
 		auto& bindingDescription = vertShader.reflectData.bindingDescription;
 		const auto& attributeDescriptions = vertShader.reflectData.GetAttributes();
 
-		bindingDescription.stride = sizeof(GSVertexUnprocessed);
+		bindingDescription.stride = sizeof(DisplayListVertex);
 
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -280,22 +285,68 @@ namespace Renderer::Native::DisplayList
 		PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", key };
 		DisplayList::CreatePipeline(createInfo, gRenderPass, gPipeline, "Native Previewer GLSL");
 	}
+
+	static void UpdateDescriptors(Renderer::SimpleTexture* pTexture)
+	{
+		if (!pTexture) {
+			return;
+		}
+
+		PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
+
+		// Work out the sampler
+		auto& textureRegisters = pTexture->GetTextureRegisters();
+		PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
+
+		VkSampler& sampler = PS2::GetSampler(selector);
+
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = pTextureData->imageView;
+		imageInfo.sampler = sampler;
+
+		DescriptorWriteList writeList;
+		writeList.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+
+		pTextureData->UpdateDescriptorSets(gPipeline, writeList);
+	}
+
+	static void FinalizeDraw()
+	{
+		const int indexCount = gVertexBuffers.GetDrawBufferData().GetIndexTail() - gIndexStart;
+
+		if (indexCount > 0) {
+			VkCommandBuffer& cmd = GetCommandBuffer();
+
+			Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
+
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(gPipeline).GetSet(GetCurrentFrame()), 0, NULL);
+			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, gVertexStart, 0);
+		}
+
+		gVertexBuffers.Reset();
+
+		Renderer::Debug::EndLabel(GetCommandBuffer());
+	}
 }
 
 // Implementations from "displaylist.h"
 
-void Renderer::DisplayList::Begin2D()
+void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight)
 {
 	using namespace Renderer::Native::DisplayList;
 
-	if (!gRecordingCommandBuffer) {
-		BeginCommandBufferRecording();
-	}
+	gViewport.width = viewportWidth;
+	gViewport.height = viewportHeight;
 
-	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture->GetName().c_str());
-
-	gIndexStart = gVertexBuffers.GetDrawBufferData().GetIndexTail();
-	gVertexStart = gVertexBuffers.GetDrawBufferData().GetVertexTail();
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = gViewport.width;
+	viewport.height = gViewport.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(GetCommandBuffer(), 0, 1, &viewport);
 }
 
 void Renderer::DisplayList::SetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a, float q)
@@ -322,34 +373,58 @@ void Renderer::DisplayList::SetVertex(uint16_t x, uint16_t y, uint32_t z, uint32
 {
 	using namespace Renderer::Native::DisplayList;
 
-	Renderer::GSVertex vertex { { gTexCoord.s, gTexCoord.t }, {gColor.r, gColor.g, gColor.b, gColor.a }, gQ, { x, y }, z, 0, 0 };
+	// Convert x, y to normalized viewport coords for vulkan between -1.0 and 1.0
+	float newx = (2.0f * x / gViewport.width) - 1.0f;
+	float newy = (2.0f * y / gViewport.height) - 1.0f;
 
-	KickVertex<GSVertex, uint16_t>(vertex, PS2::GetGSState().PRIM, skip, gVertexBuffers.GetDrawBufferData());
+	Renderer::DisplayListVertex vertex{};
+
+	vertex.XY[0] = x;
+	vertex.XY[1] = y;
+	vertex.Z = z;
+
+	vertex.RGBA[0] = gColor.r;
+	vertex.RGBA[1] = gColor.g;
+	vertex.RGBA[2] = gColor.b;
+	vertex.RGBA[3] = gColor.a;
+
+	vertex.ST[0] = gTexCoord.s;
+	vertex.ST[1] = gTexCoord.t;
+
+	vertex.Q = gQ;
+
+	vertex.XYZ[0] = newx;
+	vertex.XYZ[1] = newy;
+	vertex.XYZ[2] = static_cast<float>(z);	
+
+	KickVertex<DisplayListVertex, uint16_t>(vertex, PS2::GetGSState().PRIM, skip, gVertexBuffers.GetDrawBufferData());
 }
 
 void Renderer::DisplayList::End2D()
 {
 	using namespace Renderer::Native::DisplayList;
 
-	const int indexCount = gVertexBuffers.GetDrawBufferData().GetIndexTail() - gIndexStart;
-
-	if (indexCount > 0) {
-		VkCommandBuffer& cmd = GetCommandBuffer();
-
-		Native::SetBlendingDynamicState(gBoundTexture, false, cmd);
-
-		//vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(gPipeline).GetSet(GetCurrentFrame()), 0, NULL);
-		vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, gVertexStart, 0);
-	}
-
-	Renderer::Debug::EndLabel(GetCommandBuffer());
+	// Nothing for now.
 }
 
 void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 {
 	using namespace Renderer::Native::DisplayList;
+
+	if (gBoundTexture) {
+		FinalizeDraw();
+	}
+
+	if (!gRecordingCommandBuffer) {
+		BeginCommandBufferRecording();
+	}
 	
 	gBoundTexture = pNewTexture;
+
+	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture->GetName().c_str());
+
+	gIndexStart = gVertexBuffers.GetDrawBufferData().GetIndexTail();
+	gVertexStart = gVertexBuffers.GetDrawBufferData().GetVertexTail();
 }
 
 // End of "displaylist.h"
@@ -370,6 +445,10 @@ VkCommandBuffer& Renderer::Native::DisplayList::FinalizeCommandBuffer()
 {
 	if (!gRecordingCommandBuffer) {
 		BeginCommandBufferRecording();
+	}
+
+	if (gBoundTexture) {
+		FinalizeDraw();
 	}
 
 	VkCommandBuffer& cmd = GetCommandBuffer();

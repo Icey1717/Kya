@@ -1891,9 +1891,9 @@ bool CCameraShadow::InitDlistPatchable()
 	edDListColor4u8(0, 0, 0, 0x7f);
 	iVar2 = 0;
 	do {
-		edDListVertex4f(0.0f, 0.0f, 0.0f, (int)uVar1);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, (int)uVar1);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, (int)uVar1);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
 		iVar2 = iVar2 + 1;
 	} while (iVar2 < 0xfa);
 	edDListEnd();

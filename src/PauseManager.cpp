@@ -1688,11 +1688,11 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 			iVar7 = (int)(fVar13 / 32.0f) + 1;
 			iVar9 = (int)(fVar10 / 32.0f);
 			fVar11 = y_00 + 32.0f;
-			fVar10 = 1.0f / (float)(int)(fVar13 / 32.0);
+			fVar10 = 1.0f / (float)(int)(fVar13 / 32.0f);
 			fVar13 = 1.0f / (float)iVar9;
 			fVar16 = fVar13 + 0.0f;
 			if (iVar9 != 0) {
-				fVar18 = 0.0;
+				fVar18 = 0.0f;
 				do {
 					uVar5 = 4;
 					edDListBegin(0.0f, 0.0f, 0.0f, 4, iVar7 * 2);
@@ -1703,9 +1703,9 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 					fVar17 = fVar16;
 					while (iVar6 != 0) {
 						edDListTexCoo2f(fVar14, fVar18);
-						edDListVertex4f(x, y_00, 0.0f, (int)uVar5);
+						edDListVertex4f(x, y_00, 0.0f, uVar5);
 						edDListTexCoo2f(fVar14, fVar17);
-						edDListVertex4f(x, y, 0.0f, (int)uVar5);
+						edDListVertex4f(x, y, 0.0f, uVar5);
 						iVar6 = iVar6 + -1;
 						if (iVar6 == 1) {
 							fVar14 = 1.0f;

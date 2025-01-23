@@ -8,7 +8,7 @@ namespace Renderer
 
 	namespace DisplayList
 	{
-		void Begin2D();
+		void Begin2D(short viewportWidth, short viewportHeight);
 
 		void SetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a, float q);
 		void SetTexCoord(float s, float t);
@@ -20,7 +20,7 @@ namespace Renderer
 }
 
 #ifdef PLATFORM_WIN
-#define DISPLAY_LIST_2D_START(...) Renderer::DisplayList::Begin2D()
+#define DISPLAY_LIST_2D_START(viewportWidth, viewportHeight) Renderer::DisplayList::Begin2D(viewportWidth, viewportHeight)
 
 #define DISPLAY_LIST_SET_COLOR(r, g, b, a, q) Renderer::DisplayList::SetColor(r, g, b, a, q)
 #define DISPLAY_LIST_SET_TEXCOORD(s, t) Renderer::DisplayList::SetTexCoord(s, t)

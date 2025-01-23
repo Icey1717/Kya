@@ -119,7 +119,7 @@ void edDListBegin(float x, float y, float z, uint mode, int count);
 void edDListColor4u8(byte r, byte g, byte b, byte a);
 
 void edDListTexCoo2f(float param_1, float param_2);
-void edDListVertex4f(float x, float y, float param_3, int param_4);
+void edDListVertex4f(float x, float y, float param_3, uint param_4);
 void edDListSetProperty(uint type, uint value);
 
 void edDListEnd(void);

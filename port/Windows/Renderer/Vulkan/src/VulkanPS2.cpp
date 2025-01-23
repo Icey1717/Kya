@@ -266,6 +266,11 @@ namespace Renderer {
 	}
 
 	template<>
+	void UpdateXyTail<DisplayListVertex, uint16_t>(const DisplayListVertex& vtx, PS2::DrawBufferData<DisplayListVertex, uint16_t>& drawBuffer, const size_t& xy_tail) {
+		//UpdateXyTail<GSVertex, uint16_t>(vtx, *reinterpret_cast<PS2::DrawBufferData<GSVertex, uint16_t>*>(&drawBuffer), xy_tail);
+	}
+
+	template<>
 	void TraceUpdateSkip<GSVertexUnprocessedNormal, uint16_t>(uint32_t& skip, PS2::DrawBufferData<GSVertexUnprocessedNormal, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
 	{
 
@@ -367,6 +372,12 @@ namespace Renderer {
 		}
 
 		skip |= test.mask() & 15;
+	}
+
+	template<>
+	void TraceUpdateSkip<DisplayListVertex, uint16_t>(uint32_t& skip, PS2::DrawBufferData<DisplayListVertex, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
+	{
+		//TraceUpdateSkip<GSVertex, uint16_t>(skip, *reinterpret_cast<PS2::DrawBufferData<GSVertex, uint16_t>*>(&drawBuffer), prim, xy_tail, m);
 	}
 
 	void SetScissor(int x, int y, uint32_t width, uint32_t height) {
