@@ -5,5 +5,5 @@
 namespace Renderer::Native::DisplayList
 {
 	void Setup();
-	VkCommandBuffer& FinalizeCommandBuffer();
+	VkCommandBuffer& FinalizeCommandBuffer(bool bEndCommandBuffer = true);
 }

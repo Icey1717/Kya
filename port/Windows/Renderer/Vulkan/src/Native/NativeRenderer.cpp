@@ -931,14 +931,24 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 	ScopedTimer timer(gRenderTime);
 
-	const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+	std::array<VkCommandBuffer, 2> cmdBuffers;
 
-	PostProcessing::AddPostProcessEffect(cmd, PostProcessing::Effect::AlphaFix);
+	{
+		const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
-	Renderer::Debug::EndLabel(cmd);
-	vkEndCommandBuffer(cmd);
+		Renderer::Debug::EndLabel(cmd);
+		vkEndCommandBuffer(cmd);
 
-	std::array<VkCommandBuffer, 2> cmdBuffers = { cmd, DisplayList::FinalizeCommandBuffer() };
+		cmdBuffers[0] = cmd;
+	}
+
+	{
+		const VkCommandBuffer& cmd = DisplayList::FinalizeCommandBuffer(false);
+		PostProcessing::AddPostProcessEffect(cmd, PostProcessing::Effect::AlphaFix);
+		vkEndCommandBuffer(cmd);
+
+		cmdBuffers[1] = cmd;
+	}
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

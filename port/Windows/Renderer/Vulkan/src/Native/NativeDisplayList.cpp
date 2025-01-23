@@ -324,7 +324,7 @@ namespace Renderer::Native::DisplayList
 		if (indexCount > 0) {
 			VkCommandBuffer& cmd = GetCommandBuffer();
 
-			Native::SetBlendingDynamicState(gBoundTexture, false, cmd);
+			Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
 
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(gPipeline).GetSet(GetCurrentFrame()), 0, NULL);
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, gVertexStart, 0);
@@ -449,7 +449,7 @@ void Renderer::Native::DisplayList::Setup()
 	gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 }
 
-VkCommandBuffer& Renderer::Native::DisplayList::FinalizeCommandBuffer()
+VkCommandBuffer& Renderer::Native::DisplayList::FinalizeCommandBuffer(bool bEndCommandBuffer /*= true*/)
 {
 	if (!gRecordingCommandBuffer) {
 		BeginCommandBufferRecording();
@@ -469,7 +469,9 @@ VkCommandBuffer& Renderer::Native::DisplayList::FinalizeCommandBuffer()
 
 	Renderer::Debug::EndLabel(cmd);
 
-	vkEndCommandBuffer(cmd);
+	if (bEndCommandBuffer) {
+		vkEndCommandBuffer(cmd);
+	}
 
 	gRecordingCommandBuffer = false;
 
