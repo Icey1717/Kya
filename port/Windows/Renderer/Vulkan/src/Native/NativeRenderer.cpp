@@ -231,10 +231,10 @@ namespace Renderer
 			return gPipelines[pipelineKey.key];
 		}
 
-		class DrawDescritorSetUpdate
+		class InstanceDataUpdate
 		{
 		public:
-			void UpdateDescriptors(Draw& draw, Pipeline& pipeline)
+			void UpdateInstanceData(Draw& draw, Pipeline& pipeline)
 			{
 				SimpleTexture* pTexture = draw.pTexture;
 
@@ -247,37 +247,6 @@ namespace Renderer
 				if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
 					pTexture->GetName();
 				}
-
-				PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
-
-				// Work out the sampler
-				auto& textureRegisters = pTexture->GetTextureRegisters();
-				PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
-
-				VkSampler& sampler = PS2::GetSampler(selector);
-
-				VkDescriptorImageInfo imageInfo{};
-				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo.imageView = pTextureData->imageView;
-				imageInfo.sampler = sampler;
-
-				const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
-				const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(GetCurrentFrame());
-				const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(GetCurrentFrame(), 27 * sizeof(glm::mat4));
-
-				const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(GetCurrentFrame());
-
-				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
-
-				DescriptorWriteList writeList;
-				writeList.EmplaceWrite({ 0, EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
-				writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-				writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-
-				writeList.EmplaceWrite({ 4, EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
-				writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
-
-				pTextureData->UpdateDescriptorSets(pipeline, writeList);
 
 				for (auto& instance : draw.instances) {
 					assert(modelIndex < gMaxModelMatrices);
@@ -320,7 +289,7 @@ namespace Renderer
 			gVertexConstantBuffer.Update(GetCurrentFrame());
 		}
 
-		static void UpdateDescriptors()
+		static void DynamicDataUpdate()
 		{
 			gModelBuffer.Update(GetCurrentFrame());
 			gAlphaBuffer.Update(GetCurrentFrame());
@@ -482,7 +451,7 @@ namespace Renderer
 			Debug::Reset(cmd);
 
 			UpdateConstantBuffers(gFinalViewMatrix, gFinalProjMatrix);
-			UpdateDescriptors();
+			DynamicDataUpdate();
 
 			gNativeVertexBuffer.MapData();
 
@@ -526,7 +495,7 @@ namespace Renderer
 							FillIndexData(instance);
 						}
 
-						drawDescriptorSetUpdate.UpdateDescriptors(draw, GetPipeline());
+						drawInstanceDataUpdate.UpdateInstanceData(draw, GetPipeline());
 					}
 
 					for (auto& draw : draws) {
@@ -560,7 +529,7 @@ namespace Renderer
 
 			void Reset()
 			{
-				drawDescriptorSetUpdate.Reset();
+				drawInstanceDataUpdate.Reset();
 				drawCommandRecorder.Reset();
 
 				bRecordedCommands = false;
@@ -586,7 +555,7 @@ namespace Renderer
 
 			std::thread thread;
 			std::vector<Draw> draws;
-			DrawDescritorSetUpdate drawDescriptorSetUpdate;
+			InstanceDataUpdate drawInstanceDataUpdate;
 			DrawCommandRecorder drawCommandRecorder;
 			std::atomic<bool> bShouldStop = false;
 			std::atomic<bool> bWaitingForCommands = true;
@@ -735,6 +704,54 @@ void Renderer::Native::CreateRenderPass(VkRenderPass& renderPass, const char* na
 	}
 
 	SetObjectName(reinterpret_cast<uint64_t>(renderPass), VK_OBJECT_TYPE_RENDER_PASS, name);
+}
+
+void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
+{
+	if (!pTexture) {
+		return;
+	}
+
+	NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
+
+	if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
+		pTexture->GetName();
+	}
+
+	PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
+
+	if (pTextureData->HasDescriptorSets(GetPipeline())) {
+		return;
+	}
+
+	// Work out the sampler
+	auto& textureRegisters = pTexture->GetTextureRegisters();
+	PS2::PSSamplerSelector selector = PS2::EmulateTextureSampler(pTextureData->width, pTextureData->height, textureRegisters.clamp, textureRegisters.tex, {});
+
+	VkSampler& sampler = PS2::GetSampler(selector);
+
+	VkDescriptorImageInfo imageInfo{};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = pTextureData->imageView;
+	imageInfo.sampler = sampler;
+
+	const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(GetCurrentFrame());
+	const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(GetCurrentFrame());
+	const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(GetCurrentFrame(), 27 * sizeof(glm::mat4));
+
+	const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(GetCurrentFrame());
+
+	NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
+
+	DescriptorWriteList writeList;
+	writeList.EmplaceWrite({ 0, EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+	writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+	writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+
+	writeList.EmplaceWrite({ 4, EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+	writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
+
+	pTextureData->UpdateDescriptorSets(GetPipeline(), writeList);
 }
 
 void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)
@@ -941,6 +958,8 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 	if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
 		pTexture->GetName();
 	}
+
+	InitializeDescriptorsSets(pTexture);
 
 	if (gCurrentDraw) {
 		gCurrentDraw->pTexture = pTexture;

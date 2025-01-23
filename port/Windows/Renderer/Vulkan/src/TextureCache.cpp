@@ -1214,6 +1214,17 @@ PS2::GSTexDescriptor& PS2::GSSimpleTexture::GetDescriptorSets(const Renderer::Pi
 	return gsDescriptor;
 }
 
+bool PS2::GSSimpleTexture::HasDescriptorSets(const Renderer::Pipeline& pipeline) const
+{
+	const auto it = descriptorMap.find(&pipeline);
+
+	if (it == descriptorMap.end()) {
+		return false;
+	}
+
+	return it->second.descriptorPool != VK_NULL_HANDLE;
+}
+
 void PS2::GSSimpleTexture::UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList)
 {
 	UpdateDescriptorSets(GetDescriptorSets(pipeline, &writeList).GetSet(GetCurrentFrame()), pipeline.descriptorSetLayoutBindings, writeList);

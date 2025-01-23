@@ -286,9 +286,13 @@ namespace Renderer::Native::DisplayList
 		DisplayList::CreatePipeline(createInfo, gRenderPass, gPipeline, "Native Previewer GLSL");
 	}
 
-	static void UpdateDescriptors(Renderer::SimpleTexture* pTexture)
+	static void InitializeDescriptorsSets(Renderer::SimpleTexture* pTexture)
 	{
 		if (!pTexture) {
+			return;
+		}
+
+		if (pTexture->GetRenderer()->HasDescriptorSets(gPipeline)) {
 			return;
 		}
 
@@ -420,6 +424,8 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 	}
 	
 	gBoundTexture = pNewTexture;
+
+	InitializeDescriptorsSets(pNewTexture);
 
 	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture->GetName().c_str());
 

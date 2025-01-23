@@ -46,6 +46,8 @@ namespace PS2 {
 		GSTexDescriptor& AddDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList = nullptr);
 		GSTexDescriptor& GetDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList* const pWriteList = nullptr);
 
+		bool HasDescriptorSets(const Renderer::Pipeline& pipeline) const;
+
 		void UpdateDescriptorSets(const Renderer::Pipeline& pipeline, const Renderer::DescriptorWriteList& writeList);
 		void UpdateDescriptorSets(const VkDescriptorSet& descriptorSet, const Renderer::LayoutBindingMap& layoutBindingMap, const Renderer::DescriptorWriteList& writeList);
 
