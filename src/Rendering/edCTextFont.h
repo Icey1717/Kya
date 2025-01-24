@@ -23,7 +23,7 @@ struct FontPacked_2C {
 };
 
 PACK(
-	struct Segment_1C_Packed {
+	struct FontSymbolData {
 	float field_0x0;
 	float field_0x4;
 	float field_0x8;
@@ -54,8 +54,8 @@ PACK(
 	ushort count_0x18;
 	ushort pageOffset;
 	char glyphHeader[4];
-	Segment_1C_Packed* GetSymbol(uint character);
-	float GetRelativeAlignment(ulong param_2, ulong param_3);
+	FontSymbolData* GetSymbol(uint character);
+	float GetRelativeAlignment(uint param_2, uint param_3);
 });
 
 #endif // _EDCTEXTFONT_H

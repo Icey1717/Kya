@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <string.h>
 #include "kya.h"
-#include "FrontendManager.h"
+#include "Frontend.h"
 #include "InputManager.h"
 #include "Actor_Cinematic.h"
 #include "ActorManager.h"

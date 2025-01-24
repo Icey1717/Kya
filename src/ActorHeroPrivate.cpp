@@ -17,7 +17,7 @@
 #include "ActorFactory.h"
 #include "ActorManager.h"
 #include "edVideo/VideoA.h"
-#include "FrontendManager.h"
+#include "Frontend.h"
 #include "EventManager.h"
 #include "ActorCommander.h"
 #include "ActorWolfen.h"

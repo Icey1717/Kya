@@ -1,4 +1,4 @@
-#include "FrontendManager.h"
+#include "Frontend.h"
 #include "edBankBuffer.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
@@ -12,6 +12,7 @@
 #include "edStr.h"
 #include "BootData.h"
 #include "MathOps.h"
+#include "FrontEndBank.h"
 
 struct Bank {
 	Bank() {}
@@ -128,7 +129,7 @@ CFrontendDisplay::CFrontendDisplay()
 
 void CFrontendDisplay::Game_Init()
 {
-	Manager_170* pMVar1;
+	CFrontendBank* pMVar1;
 	char* soundFileBuffer;
 	edVideo_Globals* peVar2;
 	edSurface* pVidModeDataA;
@@ -153,7 +154,8 @@ void CFrontendDisplay::Game_Init()
 	fileToLoad = g_FrontendSoundFiles_0040ec90;
 	do {
 		soundFileBuffer = frontendBank.GetResource(*fileToLoad, (edBANK_ENTRY_INFO*)0x0);
-		//edSoundSampleLoad(soundFileBuffer, (ed_sound_sample*)(puVar6 + 4), 0);
+		IMPLEMENTATION_GUARD_AUDIO(
+		edSoundSampleLoad(soundFileBuffer, (ed_sound_sample*)(puVar6 + 4), 0);)
 		iVar5 = iVar5 + 1;
 		fileToLoad = fileToLoad + 1;
 		puVar6 = puVar6 + 0x18;
@@ -179,12 +181,12 @@ void CFrontendDisplay::Game_Init()
 	wolfenFileName = MenuElementsBitmapNames;
 	pTexture = MenuBitmaps;
 	do {
-		//pFileBuffer = OpenOrLoadSomeFile(pMVar1, *wolfenFileName, 0);
-		//Sprite::Install(pTexture, pFileBuffer);
+		pTexture->Install(pMVar1->GetResource(*wolfenFileName, 0));
 		iVar5 = iVar5 + 1;
 		wolfenFileName = wolfenFileName + 1;
 		pTexture = pTexture + 1;
 	} while (iVar5 < 0xd);
+
 	//(**(code**)(*(int*)this->pHealthBar + 0x20))();
 	//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.field_0x20)();
 	//(*(code*)this->pNooties->pVTable->field_0x20)();
@@ -193,6 +195,7 @@ void CFrontendDisplay::Game_Init()
 	//(**(code**)(*(int*)this->pMenuObj_0x70 + 8))();
 	//(*(code*)this->pMenuObj_0x6c->pVTable->field_0x20)();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x20))();
+
 	if (this->bHideHUD == 0) {
 		this->bHideHUD = 1;
 		this->pMagicOrbs->Magic_SetDisplay(false);

@@ -10,7 +10,7 @@ layout(location = 0, index = 1) out vec4 outAlphaBlend;
 
 void main() {
 	vec4 textureColor = texture(textureSampler, fragTexCoord.xy);
-    outColor = textureColor; //vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    outColor = textureColor * fragColor;
 
 	// For dual source blending
 	vec4 alpha_blend = vec4(outColor.a / (128.0 / 255.0));

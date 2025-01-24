@@ -14,6 +14,6 @@ layout(location = 1) out vec2 fragTexCoord;
 
 void main() {
     gl_Position = vec4(inXYZ, 1.0);
-    fragColor = inColor;
+    fragColor = inColor / 127.0;
     fragTexCoord = inST;
 }

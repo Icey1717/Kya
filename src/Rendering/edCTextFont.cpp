@@ -1,7 +1,7 @@
 #include "edCTextFont.h"
 #include "port/pointer_conv.h"
 
-Segment_1C_Packed* edCTextFont::GetSymbol(uint character)
+FontSymbolData* edCTextFont::GetSymbol(uint character)
 {
 	FontPacked_2C* pFVar1;
 	uint uVar2;
@@ -22,20 +22,20 @@ Segment_1C_Packed* edCTextFont::GetSymbol(uint character)
 		do {
 			uVar3 = (uint)pSVar5->header;
 			if (character < uVar3) {
-				return (Segment_1C_Packed*)0x0;
+				return (FontSymbolData*)0x0;
 			}
 			if (character < uVar3 + pSVar5->field_0x2) {
-				return (Segment_1C_Packed*)((char*)pFVar1->field_0x4 + (iVar4 + (character - uVar3)) * 0x1c);
+				return (FontSymbolData*)((char*)pFVar1->field_0x4 + (iVar4 + (character - uVar3)) * 0x1c);
 			}
 			uVar2 = uVar2 + 1;
 			iVar4 = iVar4 + (uint)pSVar5->field_0x2;
 			pSVar5 = pSVar5 + 1;
 		} while (uVar2 < this->pageOffset);
 	}
-	return (Segment_1C_Packed*)0x0;
+	return (FontSymbolData*)0x0;
 }
 
-float edCTextFont::GetRelativeAlignment(ulong param_2, ulong param_3)
+float edCTextFont::GetRelativeAlignment(uint param_2, uint param_3)
 {
 	int* piVar1;
 	ushort* puVar2;

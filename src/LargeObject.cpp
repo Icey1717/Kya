@@ -22,7 +22,7 @@
 #include "edVideo/VideoC.h"
 #include "TimeController.h"
 #include "MemoryStream.h"
-#include "FrontendManager.h"
+#include "Frontend.h"
 #include "CameraViewManager.h"
 #include "FileManager3D.h"
 #include "MathOps.h"

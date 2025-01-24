@@ -14,9 +14,9 @@
 #else
 #include "port/pointer_conv.h"
 #endif
-#include "FrontendManager.h"
+#include "Frontend.h"
 
-edCBankBuffer BootData_BankBuffer = { 0 };
+edCBankBuffer BootData_BankBuffer; // = { 0 };
 edCBankBufferEntry* BootData_BankBufferEntry = NULL;
 char* sz_MenuDataBankName_00435610 = "CDEURO/menu/MenuData.bnk";
 char* BootDataBankName = sz_MenuDataBankName_00435610;

@@ -46,16 +46,21 @@ void edCTextFormat::DisplayWindow(float x, float y, edF32VECTOR4* param_4)
 		(this->vector_0x10).y = param_4->y + this->offsetY_0x4;
 		(this->vector_0x10).z = param_4->z;
 		(this->vector_0x10).w = param_4->w;
+
 		this->fontData_0x850->TransformMatrix(x, y, &textMatrix);
 		edDListLoadMatrix(&textMatrix);
-		if ((this->flags_0x28 & 0x100) != 0) {
+
+		if ((this->flags_0x28 & TEXT_FLAG_SHADOW) != 0) {
 			this->fontData_0x850->GetShadowShift(&shadowShiftX, &shadowShiftY);
 		}
-		if ((this->flags_0x28 & 0x100) != 0) {
+
+		if ((this->flags_0x28 & TEXT_FLAG_SHADOW) != 0) {
 			DrawString(shadowShiftX + this->offsetX_0x0, shadowShiftY + this->offsetY_0x4, false);
 		}
+
 		DrawString(this->offsetX_0x0, this->offsetY_0x4, true);
 	}
+
 	return;
 }
 
@@ -130,24 +135,24 @@ void edCTextFormat::DisplayDebugInfos(float x, float y)
 
 void edCTextFormat::DrawString(float x, float y, bool bFlag)
 {
-	byte bVar1;
+	byte curCharacter;
 	ushort uVar2;
 	edDList_material* pMVar3;
 	edCTextFont* pFontPacked;
 	bool bVar4;
 	bool bVar5;
 	void* pvVar6;
-	Segment_1C_Packed* ppcVar7;
+	FontSymbolData* pSymbolData;
 	CharacterData* puVar7;
 	uint uVar7;
 	char* pcVar8;
-	edCTextStyle* pFVar9;
+	edCTextStyle* pTextStyle;
 	ulong uVar10;
-	TextLine* ppbVar13;
-	byte* pbVar11;
+	TextLine* pCurTextLine;
+	char* pCurCharacter;
 	uint unaff_s7_lo;
 	byte* pbVar12;
-	float fVar13;
+	float characterWidth;
 	float fVar14;
 	float fVar15;
 	float fVar16;
@@ -156,49 +161,51 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 	float fVar19;
 	float in_f21;
 	float in_f23;
-	float unaff_f22;
+	float drawX2;
 	float in_f25;
-	float unaff_f24;
+	float drawX1;
 	float in_f27;
 	float unaff_f26;
-	float fVar20;
+	float curX;
 	float unaff_f28;
-	float fVar21;
+	float spaceBetweenCharacters;
 	float local_68;
-	int local_44;
+	uint local_44;
 	uint local_30;
-	DrawText16 local_10;
+	DrawText16 drawCommandParams;
 
 	pvVar6 = edSystemFastRamGetAddr();
-	local_10.pCharacterData = (CharacterData*)((char*)pvVar6 + 0x800);
-	local_10.characterCount = 0;
-	local_10.pMaterialInfoA = (edDList_material*)0x0;
-	local_10.pMaterialInfoB = (edDList_material*)0x0;
+	drawCommandParams.pCharacterData = (CharacterData*)((char*)pvVar6 + 0x800);
+	drawCommandParams.characterCount = 0;
+	drawCommandParams.pMaterialInfoA = (edDList_material*)0x0;
+	drawCommandParams.pMaterialInfoB = (edDList_material*)0x0;
+
 	local_30 = 0;
-	ppbVar13 = this->aTextLines;
+	pCurTextLine = this->aTextLines;
+
 	if (this->lineCount != 0) {
 		do {
-			fVar21 = 0.0f;
-			local_68 = ppbVar13->pFontFileData->field_0x90;
-			fVar20 = x;
-			if (ppbVar13->field_0x24 == '\0') {
-				uVar7 = this->flags_0x28;
-				if (((uVar7 & 0x80) == 0) || ((uVar7 & 0x10) == 0)) {
-					if ((uVar7 & 2) == 0) {
-						if ((uVar7 & 1) != 0) {
-							fVar20 = x + (this->field_0x8 - ppbVar13->field_0x10);
+			spaceBetweenCharacters = 0.0f;
+			local_68 = pCurTextLine->pTextStyle->field_0x90;
+			curX = x;
+
+			if (pCurTextLine->field_0x24 == false) {
+				if (((this->flags_0x28 & 0x80) == 0) || ((this->flags_0x28 & 0x10) == 0)) {
+					if ((this->flags_0x28 & 2) == 0) {
+						if ((this->flags_0x28 & 1) != 0) {
+							curX = x + (this->field_0x8 - pCurTextLine->field_0x10);
 						}
 					}
 					else {
-						fVar20 = x + (this->field_0x8 - ppbVar13->field_0x10) / 2.0f;
+						curX = x + (this->field_0x8 - pCurTextLine->field_0x10) / 2.0f;
 					}
 				}
 				else {
-					pcVar8 = ppbVar13->pTextEnd + (-(uint)ppbVar13->field_0x22 - (int)ppbVar13->pTextStart);
-					fVar13 = ppbVar13->pFontFileData->GetHorizontalSize();
-					uVar2 = ppbVar13->field_0x20;
+					pcVar8 = pCurTextLine->pTextEnd + (-(uint)pCurTextLine->field_0x22 - (int)pCurTextLine->pTextStart);
+					characterWidth = pCurTextLine->pTextStyle->GetHorizontalSize();
+					uVar2 = pCurTextLine->field_0x20;
 					uVar7 = (uint)uVar2;
-					fVar13 = fVar13 - ppbVar13->field_0x10;
+					characterWidth = characterWidth - pCurTextLine->field_0x10;
 					if ((uVar7 == 0) || (pcVar8 == (char*)0x0)) {
 						if (uVar7 == 0) {
 							if (pcVar8 != (char*)0x0) {
@@ -209,29 +216,32 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 								else {
 									fVar14 = (float)(int)pcVar8;
 								}
-								local_68 = local_68 + fVar13 / fVar14;
+
+								local_68 = local_68 + characterWidth / fVar14;
 							}
 						}
 						else {
 							if (false) {
-								fVar21 = (float)((uint)(uVar2 >> 1) | uVar7 & 1);
-								fVar21 = fVar21 + fVar21;
+								spaceBetweenCharacters = (float)((uint)(uVar2 >> 1) | uVar7 & 1);
+								spaceBetweenCharacters = spaceBetweenCharacters + spaceBetweenCharacters;
 							}
 							else {
-								fVar21 = (float)uVar7;
+								spaceBetweenCharacters = (float)uVar7;
 							}
-							fVar21 = fVar13 / fVar21 + 0.0f;
+
+							spaceBetweenCharacters = characterWidth / spaceBetweenCharacters + 0.0f;
 						}
 					}
 					else {
 						if (false) {
-							fVar21 = (float)((uint)(uVar2 >> 1) | uVar7 & 1);
-							fVar21 = fVar21 + fVar21;
+							spaceBetweenCharacters = (float)((uint)(uVar2 >> 1) | uVar7 & 1);
+							spaceBetweenCharacters = spaceBetweenCharacters + spaceBetweenCharacters;
 						}
 						else {
-							fVar21 = (float)uVar7;
+							spaceBetweenCharacters = (float)uVar7;
 						}
-						fVar21 = (fVar13 / fVar21) / 2.0f + 0.0f;
+
+						spaceBetweenCharacters = (characterWidth / spaceBetweenCharacters) / 2.0f + 0.0f;
 						if (false) {
 							fVar14 = (float)((uint)(uVar2 >> 1) | uVar7 & 1);
 							fVar14 = fVar14 + fVar14;
@@ -239,6 +249,7 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 						else {
 							fVar14 = (float)uVar7;
 						}
+
 						if ((int)pcVar8 < 0) {
 							fVar15 = (float)((uint)pcVar8 >> 1 | (uint)pcVar8 & 1);
 							fVar15 = fVar15 + fVar15;
@@ -246,155 +257,175 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 						else {
 							fVar15 = (float)(int)pcVar8;
 						}
-						local_68 = local_68 + (fVar13 - fVar21 * fVar14) / fVar15;
+
+						local_68 = local_68 + (characterWidth - spaceBetweenCharacters * fVar14) / fVar15;
 					}
 				}
 			}
 			else {
 				if ((this->flags_0x28 & 2) == 0) {
 					if ((this->flags_0x28 & 1) != 0) {
-						fVar20 = x + (this->field_0x8 - ppbVar13->field_0x10);
+						curX = x + (this->field_0x8 - pCurTextLine->field_0x10);
 					}
 				}
 				else {
-					fVar20 = x + (this->field_0x8 - ppbVar13->field_0x10) / 2.0f;
+					curX = x + (this->field_0x8 - pCurTextLine->field_0x10) / 2.0f;
 				}
 			}
+
 			bVar4 = true;
-			pbVar11 = (byte*)ppbVar13->pTextStart;
-			pFVar9 = ppbVar13->pFontFileData;
-			pbVar12 = (byte*)ppbVar13->pText;
+			pCurCharacter = pCurTextLine->pTextStart;
+			pTextStyle = pCurTextLine->pTextStyle;
+			pbVar12 = (byte*)pCurTextLine->pText;
 			uVar10 = 0xffffffffffffffff;
-			if (pbVar11 <= (byte*)ppbVar13->pTextEnd) {
+			if (pCurCharacter <= pCurTextLine->pTextEnd) {
 				do {
 					if (bVar4) {
-						local_44 = (int)uVar10;
+						local_44 = uVar10;
 					}
 					else {
 						bVar4 = true;
 					}
-					bVar1 = *pbVar11;
-					uVar10 = (ulong)bVar1;
-					fVar13 = 0.0f;
+
+					curCharacter = *pCurCharacter;
+					uVar10 = curCharacter;
+					characterWidth = 0.0f;
 					bVar5 = false;
-					pbVar11 = pbVar11 + 1;
+					pCurCharacter = pCurCharacter + 1;
+
 					if (uVar10 == 2) {
-						pFVar9 = pFVar9 + 1;
+						pTextStyle = pTextStyle + 1;
 						bVar4 = false;
 					}
 					else {
 						if (uVar10 == 1) {
 							bVar5 = true;
-							bVar1 = *pbVar12;
+							curCharacter = *pbVar12;
 							pbVar12 = pbVar12 + 1;
-							pMVar3 = (edDList_material*)this->field_0x38[bVar1];
-							local_10.pMaterialInfoA = (edDList_material*)pMVar3->pManager;
-							fVar13 = (float)pMVar3->index;
+							pMVar3 = (edDList_material*)this->field_0x38[curCharacter];
+							drawCommandParams.pMaterialInfoA = (edDList_material*)pMVar3->pManager;
+							characterWidth = (float)pMVar3->index;
 							unaff_f28 = *(float*)((int)(pMVar3 + 1) + 4);
 							in_f27 = *(float*)((int)(pMVar3 + 1) + 8);
 							unaff_f26 = *(float*)((int)(pMVar3 + 1) + 0xc);
 							in_f25 = *(float*)(pMVar3 + 2);
-							in_f23 = y + (ppbVar13->field_0x14 + ppbVar13->field_0x18) / 2.0f + (float)pMVar3->mode * (*(float*)(pMVar3 + 1) - 1.0f);
+							in_f23 = y + (pCurTextLine->field_0x14 + pCurTextLine->field_0x18) / 2.0f + (float)pMVar3->mode * (*(float*)(pMVar3 + 1) - 1.0f);
 							in_f21 = in_f23 + *(float*)(pMVar3 + 1);
-							unaff_f22 = fVar20 + fVar13;
-							unaff_f24 = fVar20;
+							drawX2 = curX + characterWidth;
+							drawX1 = curX;
+
 							if (bFlag == false) {
-								unaff_s7_lo = pFVar9->alpha;
+								unaff_s7_lo = pTextStyle->alpha;
 							}
 							else {
-								unaff_s7_lo = pFVar9->altColour;
+								unaff_s7_lo = pTextStyle->altColour;
 							}
 						}
 						else {
 							if (uVar10 == 0x20) {
-								fVar13 = fVar21 + pFVar9->spaceSize;
+								characterWidth = spaceBetweenCharacters + pTextStyle->spaceSize;
 							}
 							else {
 								if ((uVar10 != 10) && (uVar10 != 0)) {
-									pFontPacked = pFVar9->pPackedFont;
-									ppcVar7 = pFontPacked->GetSymbol((uint)bVar1);
-									if (ppcVar7 != (Segment_1C_Packed*)0x0) {
-										local_10.pMaterialInfoA = &(RESOLVE_FONT_SUB_DATA(pFontPacked->pSubData))->materialInfo;
+									pFontPacked = pTextStyle->pPackedFont;
+									pSymbolData = pFontPacked->GetSymbol(curCharacter);
+
+									if (pSymbolData != (FontSymbolData*)0x0) {
+										drawCommandParams.pMaterialInfoA = &(RESOLVE_FONT_SUB_DATA(pFontPacked->pSubData))->materialInfo;
+
 										if (bFlag == false) {
-											unaff_s7_lo = pFVar9->alpha;
+											unaff_s7_lo = pTextStyle->alpha;
 										}
 										else {
-											unaff_s7_lo = pFVar9->rgbaColour;
+											unaff_s7_lo = pTextStyle->rgbaColour;
 										}
-										fVar14 = ppcVar7->field_0x10;
-										fVar13 = pFontPacked->GetRelativeAlignment((long)local_44, uVar10);
-										fVar13 = fVar14 + fVar13;
-										unaff_f22 = fVar20 + fVar14;
+
+										fVar14 = pSymbolData->field_0x10;
+										characterWidth = pFontPacked->GetRelativeAlignment(local_44, uVar10);
+										characterWidth = fVar14 + characterWidth;
+										drawX2 = curX + fVar14;
 										bVar5 = true;
-										unaff_f28 = ppcVar7->field_0x0;
-										in_f27 = ppcVar7->field_0x4;
-										unaff_f26 = ppcVar7->field_0x8;
-										in_f25 = ppcVar7->field_0xc;
-										in_f23 = ppcVar7->field_0x18 + ((y + ppbVar13->field_0x1c) - ppcVar7->field_0x14);
-										in_f21 = in_f23 + ppcVar7->field_0x14;
-										unaff_f24 = fVar20;
+										unaff_f28 = pSymbolData->field_0x0;
+										in_f27 = pSymbolData->field_0x4;
+										unaff_f26 = pSymbolData->field_0x8;
+										in_f25 = pSymbolData->field_0xc;
+										in_f23 = pSymbolData->field_0x18 + ((y + pCurTextLine->field_0x1c) - pSymbolData->field_0x14);
+										in_f21 = in_f23 + pSymbolData->field_0x14;
+										drawX1 = curX;
 									}
 								}
 							}
 						}
 					}
+
 					if (bVar4) {
 						if (bVar5) {
 							fVar14 = (this->vector_0x10).x;
 							fVar15 = (this->vector_0x10).z;
 							fVar18 = fVar14 + fVar15;
-							if ((unaff_f24 <= fVar18) && (fVar14 <= unaff_f22)) {
+
+							if ((drawX1 <= fVar18) && (fVar14 <= drawX2)) {
 								fVar16 = (this->vector_0x10).y;
 								fVar17 = (this->vector_0x10).w;
 								fVar19 = fVar16 + fVar17;
+
 								if ((in_f23 <= fVar19) && (fVar16 <= in_f21)) {
-									if (unaff_f24 < fVar14) {
-										unaff_f28 = unaff_f26 - ((unaff_f26 - unaff_f28) * (unaff_f22 - fVar14)) / (unaff_f22 - unaff_f24);
-										unaff_f24 = fVar14;
+									if (drawX1 < fVar14) {
+										unaff_f28 = unaff_f26 - ((unaff_f26 - unaff_f28) * (drawX2 - fVar14)) / (drawX2 - drawX1);
+										drawX1 = fVar14;
 									}
-									if (fVar18 < unaff_f22) {
+
+									if (fVar18 < drawX2) {
 										fVar14 = fVar14 + fVar15;
-										unaff_f26 = unaff_f28 + ((unaff_f26 - unaff_f28) * (fVar14 - unaff_f24)) / (unaff_f22 - unaff_f24);
-										unaff_f22 = fVar14;
+										unaff_f26 = unaff_f28 + ((unaff_f26 - unaff_f28) * (fVar14 - drawX1)) / (drawX2 - drawX1);
+										drawX2 = fVar14;
 									}
+
 									if (in_f23 < fVar16) {
 										in_f27 = in_f25 - ((in_f25 - in_f27) * (in_f21 - fVar16)) / (in_f21 - in_f23);
 										in_f23 = fVar16;
 									}
+
 									if (fVar19 < in_f21) {
 										fVar16 = fVar16 + fVar17;
 										in_f25 = in_f27 + ((in_f25 - in_f27) * (fVar16 - in_f23)) / (in_f21 - in_f23);
 										in_f21 = fVar16;
 									}
-									if ((local_10.characterCount != 0) && (local_10.pMaterialInfoB != local_10.pMaterialInfoA)) {
-										SendTextRenderCommands_0028b0e0(&local_10);
+
+									if ((drawCommandParams.characterCount != 0) && (drawCommandParams.pMaterialInfoB != drawCommandParams.pMaterialInfoA)) {
+										SendTextRenderCommands_0028b0e0(&drawCommandParams);
 									}
-									local_10.pMaterialInfoB = local_10.pMaterialInfoA;
-									puVar7 = local_10.pCharacterData + local_10.characterCount;
+
+									drawCommandParams.pMaterialInfoB = drawCommandParams.pMaterialInfoA;
+									puVar7 = drawCommandParams.pCharacterData + drawCommandParams.characterCount;
 									puVar7->colour = unaff_s7_lo;
-									puVar7->pos_x1 = unaff_f24;
+									puVar7->pos_x1 = drawX1;
 									puVar7->pos_y1 = in_f23;
-									puVar7->pos_x2 = unaff_f22;
+									puVar7->pos_x2 = drawX2;
 									puVar7->pos_y2 = in_f21;
 									puVar7->tex_x1 = unaff_f28;
 									puVar7->tex_y1 = in_f27;
 									puVar7->tex_x2 = unaff_f26;
 									puVar7->tex_y2 = in_f25;
-									local_10.characterCount = local_10.characterCount + 1;
+									drawCommandParams.characterCount = drawCommandParams.characterCount + 1;
 								}
 							}
 						}
-						if (fVar13 != 0.0f) {
-							fVar20 = fVar20 + fVar13 + local_68;
+
+						if (characterWidth != 0.0f) {
+							curX = curX + characterWidth + local_68;
 						}
 					}
-				} while (pbVar11 <= (byte*)ppbVar13->pTextEnd);
+				} while (pCurCharacter <= pCurTextLine->pTextEnd);
 			}
+
 			local_30 = local_30 + 1;
-			ppbVar13 = ppbVar13 + 1;
+			pCurTextLine = pCurTextLine + 1;
 		} while (local_30 < this->lineCount);
 	}
-	SendTextRenderCommands_0028b0e0(&local_10);
+
+	SendTextRenderCommands_0028b0e0(&drawCommandParams);
+
 	return;
 }
 
@@ -446,7 +477,7 @@ void edCTextFormat::GetRect()
 	bool bVar3;
 	bool bVar4;
 	bool bVar5;
-	Segment_1C_Packed* pSVar6;
+	FontSymbolData* pSVar6;
 	uint uVar7;
 	byte* pbVar8;
 	byte* pbVar9;
@@ -491,7 +522,7 @@ void edCTextFormat::GetRect()
 		pTVar11->pTextStart = (char*)pbVar9;
 		pTVar11->pTextEnd = (char*)0x0;
 		fVar18 = 0.0f;
-		pTVar11->pFontFileData = pFVar12;
+		pTVar11->pTextStyle = pFVar12;
 		pTVar11->pText = (char*)pbVar13;
 		pTVar11->field_0x10 = 0.0f;
 		pTVar11->field_0x20 = 0;
@@ -499,7 +530,7 @@ void edCTextFormat::GetRect()
 		bVar3 = false;
 		bVar5 = false;
 		bVar2 = false;
-		pTVar11->field_0x24 = '\0';
+		pTVar11->field_0x24 = false;
 		pTVar11->field_0x14 = 9999.0f;
 		fVar19 = 0.0f;
 		pTVar11->field_0x18 = -9999.0f;
@@ -549,13 +580,13 @@ void edCTextFormat::GetRect()
 					else {
 						if ((uVar10 == 10) || (uVar10 == 0)) {
 							unaff_f20 = 0.0f;
-							pTVar11->field_0x24 = '\x01';
+							pTVar11->field_0x24 = true;
 							bVar3 = true;
 						}
 						else {
 							pFontPacked = pFVar12->pPackedFont;
 							pSVar6 = pFontPacked->GetSymbol((uint)*pbVar8);
-							if (pSVar6 == (Segment_1C_Packed*)0x0) {
+							if (pSVar6 == (FontSymbolData*)0x0) {
 								unaff_f20 = 0.0f;
 							}
 							else {

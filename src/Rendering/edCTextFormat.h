@@ -4,10 +4,12 @@
 #include "Types.h"
 #include "edCTextStyle.h"
 
+#define TEXT_FLAG_SHADOW 0x100
+
 struct TextLine {
 	char* pTextStart;
 	char* pTextEnd;
-	struct edCTextStyle* pFontFileData;
+	struct edCTextStyle* pTextStyle;
 	char* pText;
 	float field_0x10;
 	float field_0x14;
@@ -15,7 +17,7 @@ struct TextLine {
 	float field_0x1c;
 	ushort field_0x20;
 	ushort field_0x22;
-	char field_0x24;
+	bool field_0x24;
 	undefined field_0x25;
 	undefined field_0x26;
 	undefined field_0x27;

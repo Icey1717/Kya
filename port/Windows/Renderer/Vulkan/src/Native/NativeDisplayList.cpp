@@ -327,7 +327,7 @@ namespace Renderer::Native::DisplayList
 			Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
 
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(gPipeline).GetSet(GetCurrentFrame()), 0, NULL);
-			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, gVertexStart, 0);
+			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
 		}
 
 		gVertexBuffers.Reset();
@@ -470,6 +470,7 @@ VkCommandBuffer& Renderer::Native::DisplayList::FinalizeCommandBuffer(bool bEndC
 
 	gVertexBuffers.MapData();
 
+	gVertexBuffers.Reset();
 	gVertexBuffers.GetDrawBufferData().ResetAfterDraw();
 
 	vkCmdEndRenderPass(cmd);
