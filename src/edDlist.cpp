@@ -1609,17 +1609,17 @@ void edDListBegin(float x, float y, float z, uint mode, int nbVertex)
 		case 1:
 		case 2:
 		case 3:
-		case 4:
+		case PRIM_TYPE_TRIANGLE_LIST:
 		case 5:
 		case 6:
 			edDListBegin2D(mode & 0xff);
 			break;
 		default:
-			edDListBegin2D(4);
+			edDListBegin2D(PRIM_TYPE_TRIANGLE_LIST);
 			break;
 		case 8:
 			g_Count_004495f8 = 0;
-			edDListBegin2D(4);
+			edDListBegin2D(PRIM_TYPE_TRIANGLE_LIST);
 		}
 
 		gAddVertexFUNC = edDListVertex4f_2D;

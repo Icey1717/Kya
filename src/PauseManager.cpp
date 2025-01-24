@@ -538,7 +538,7 @@ float CSimpleMenu::draw_func(float param_2)
 			s = 1.0f;
 		}
 		iVar4 = 4;
-		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, PRIM_TYPE_TRIANGLE_LIST, 4);
 		edDListTexCoo2f(s, s);
 		iVar2 = this->field_0xf8;
 		if (iVar2 < 0) {
@@ -1382,7 +1382,7 @@ void CSprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5
 		edDListBlendFunc50();
 		edDListColor4u8(0, 0, 0, 0x80);
 		iVar3 = 4;
-		edDListBegin(1.0f, 1.0f, 1.0f, 4, 4);
+		edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 4);
 		edDListTexCoo2f(local_8, local_4);
 		edDListVertex4f(x, y_00, 0.0, iVar3);
 		edDListTexCoo2f(local_18, local_14);
@@ -1440,7 +1440,7 @@ void CSprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5
 	uVar1 = param_2 & 0x30000;
 	if (uVar1 == 0) {
 		iVar3 = 4;
-		edDListBegin(1.0f, 1.0f, 1.0f, 4, 4);
+		edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 4);
 		edDListTexCoo2f(local_8, local_4);
 		edDListVertex4f(param_4, param_5, 0.0, iVar3);
 		edDListTexCoo2f(local_18, local_14);
@@ -1454,7 +1454,7 @@ void CSprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5
 	else {
 		if (uVar1 == 0x20000) {
 			iVar3 = 4;
-			edDListBegin(1.0f, 1.0f, 1.0f, 4, 8);
+			edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 8);
 			edDListTexCoo2f(local_8, local_4);
 			edDListVertex4f(param_4, param_5, 0.0, iVar3);
 			edDListTexCoo2f(local_18, local_14);
@@ -1473,7 +1473,7 @@ void CSprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5
 		else {
 			if (uVar1 == 0x10000) {
 				iVar3 = 4;
-				edDListBegin(1.0f, 1.0f, 1.0f, 4, 6);
+				edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 6);
 				edDListTexCoo2f(local_8, local_4);
 				edDListVertex4f(param_4, param_5, 0.0, iVar3);
 				edDListTexCoo2f(local_20, local_1c);
@@ -1491,7 +1491,7 @@ void CSprite::DrawXYXY(uint param_2, float param_3, float param_4, float param_5
 			}
 			else {
 				iVar3 = 4;
-				edDListBegin(1.0f, 1.0f, 1.0f, 4, 0xb);
+				edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 0xb);
 				edDListTexCoo2f(local_8, local_4);
 				edDListVertex4f(param_4, param_5, 0.0, iVar3);
 				edDListTexCoo2f(local_20, local_1c);
@@ -1672,7 +1672,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 				edDListColor4u8(0, 0, 0, 0x80);
 				edDListLoadIdentity();
 				iVar9 = 6;
-				edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
+				edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_SPRITE, 2);
 				edDListVertex4f(0.0f, 0.0f, 0.0f, iVar9);
 				edDListVertex4f(fVar13, fVar10, 0.0f, iVar9);
 				edDListEnd();
@@ -1695,7 +1695,7 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 				fVar18 = 0.0f;
 				do {
 					uVar5 = 4;
-					edDListBegin(0.0f, 0.0f, 0.0f, 4, iVar7 * 2);
+					edDListBegin(0.0f, 0.0f, 0.0f, PRIM_TYPE_TRIANGLE_LIST, iVar7 * 2);
 					x = (this->drawOffsets).x;
 					fVar14 = 0.0;
 					iVar6 = iVar7;

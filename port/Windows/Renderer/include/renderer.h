@@ -52,6 +52,7 @@ namespace PS2 {
 			size_t head{}, tail{}, next{}, maxcount{}; // head: first vertex, tail: last vertex + 1, next: last indexed + 1
 			size_t xy_tail{};
 			uint64_t xy[4]{};
+			float fxyz[4][3]{};
 		};
 
 		void Reset() {

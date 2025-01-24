@@ -353,6 +353,13 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight)
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(GetCommandBuffer(), 0, 1, &viewport);
+
+	// We also need to apply prim here
+	// Based on GSState::ApplyPRIM
+	if (gVertexBuffers.GetDrawBufferData().index.tail == 0)
+		gVertexBuffers.GetDrawBufferData().vertex.next = 0;
+
+	gVertexBuffers.GetDrawBufferData().vertex.head = gVertexBuffers.GetDrawBufferData().vertex.tail = gVertexBuffers.GetDrawBufferData().vertex.next;
 }
 
 void Renderer::DisplayList::SetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a, float q)

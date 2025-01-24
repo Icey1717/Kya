@@ -8,6 +8,7 @@
 #include "VulkanRenderer.h"
 #include "FrameBuffer.h"
 #include "NativeRenderer.h"
+#include "../../include/renderer.h"
 
 namespace Renderer
 {
@@ -254,14 +255,30 @@ void Renderer::Native::PostProcessing::AddPostProcessEffect(const VkCommandBuffe
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = { gWidth, gHeight };
 
+	Debug::BeginLabel(cmd, "Post Processing - %s", GetEffectName(effect).c_str());
+
 	vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pipeline.descriptorSets[GetCurrentFrame()], 0, nullptr);
 	vkCmdDraw(cmd, 3, 1, 0, 0); // Draw a single triangle to cover the screen
 	vkCmdEndRenderPass(cmd);
+
+	Debug::EndLabel(cmd);
 }
 
 const VkImageView& Renderer::Native::PostProcessing::GetColorImageView()
 {
 	return gFrameBuffer.colorImageView;
+}
+
+std::string Renderer::Native::PostProcessing::GetEffectName(Effect effect)
+{
+	switch (effect) {
+	case Effect::Greyscale:
+		return "Greyscale";
+	case Effect::AlphaFix:
+		return "Alpha Fix";
+	default:
+		return "Unknown";
+	}
 }

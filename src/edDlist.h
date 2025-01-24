@@ -9,8 +9,11 @@
 #include "renderer.h"
 #endif
 
-struct edSysHandlerDisplayList {
+#define PRIM_TYPE_TRIANGLE_LIST 4
+#define PRIM_TYPE_SPRITE 6
 
+struct edSysHandlerDisplayList
+{
 	edSysHandlerDisplayList(struct edSysHandlersNodeTable* inNodeParent, int inMaxEventID, int inMainIdentifier)
 		: nodeParent(inNodeParent)
 		, maxEventID(inMaxEventID)
@@ -25,7 +28,8 @@ struct edSysHandlerDisplayList {
 	int mainIdentifier;
 };
 
-struct DisplayList_0x10 {
+struct DisplayList_0x10
+{
 	undefined field_0x0;
 	undefined field_0x1;
 	undefined field_0x2;
@@ -61,7 +65,8 @@ extern int gbDispList;
 extern int gCurStatePKTSize;
 extern ed_hash_code* gBankMaterial;
 
-typedef enum DL_LINK_MODE {
+typedef enum DL_LINK_MODE
+{
 	LM_CALL = 2,
 	LM_FUNC = 4,
 	LM_REF_0 = 0,
@@ -70,7 +75,8 @@ typedef enum DL_LINK_MODE {
 	LM_SKIP = 3
 } DL_LINK_MODE;
 
-struct edDlistConfiguration {
+struct edDlistConfiguration
+{
 	int field_0x0;
 	int field_0x4;
 	int matrixCount;
@@ -78,7 +84,8 @@ struct edDlistConfiguration {
 	int bankMaterialCount;
 };
 
-struct edDList_material {
+struct edDList_material
+{
 	ed_g2d_manager* pManager;
 	ed_g2d_material* pMaterial;
 	int mode;

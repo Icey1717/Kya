@@ -20,6 +20,8 @@ namespace Renderer
 			void Setup();
 			void AddPostProcessEffect(const VkCommandBuffer& cmd, Effect effect);
 			const VkImageView& GetColorImageView();
+
+			std::string GetEffectName(Effect effect);
 		}
 	}
 }

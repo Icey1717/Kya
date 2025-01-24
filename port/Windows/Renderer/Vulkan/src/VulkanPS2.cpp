@@ -267,7 +267,9 @@ namespace Renderer {
 
 	template<>
 	void UpdateXyTail<DisplayListVertex, uint16_t>(const DisplayListVertex& vtx, PS2::DrawBufferData<DisplayListVertex, uint16_t>& drawBuffer, const size_t& xy_tail) {
-		//UpdateXyTail<GSVertex, uint16_t>(vtx, *reinterpret_cast<PS2::DrawBufferData<GSVertex, uint16_t>*>(&drawBuffer), xy_tail);
+		drawBuffer.vertex.fxyz[xy_tail & 3][0] = vtx.XYZ[0];
+		drawBuffer.vertex.fxyz[xy_tail & 3][1] = vtx.XYZ[1];
+		drawBuffer.vertex.fxyz[xy_tail & 3][2] = vtx.XYZ[2];
 	}
 
 	template<>
@@ -377,7 +379,34 @@ namespace Renderer {
 	template<>
 	void TraceUpdateSkip<DisplayListVertex, uint16_t>(uint32_t& skip, PS2::DrawBufferData<DisplayListVertex, uint16_t>& drawBuffer, const GS_PRIM& prim, const size_t& xy_tail, const size_t& m)
 	{
-		//TraceUpdateSkip<GSVertex, uint16_t>(skip, *reinterpret_cast<PS2::DrawBufferData<GSVertex, uint16_t>*>(&drawBuffer), prim, xy_tail, m);
+		auto v0 = drawBuffer.vertex.fxyz[(xy_tail + 1) & 3]; // T-3
+		auto v1 = drawBuffer.vertex.fxyz[(xy_tail + 2) & 3]; // T-2
+		auto v2 = drawBuffer.vertex.fxyz[(xy_tail + 3) & 3]; // T-1
+		auto v3 = drawBuffer.vertex.fxyz[(xy_tail - m) & 3]; // H
+
+		auto verticesEqual = [](const float* a, const float* b) {
+			return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+			};
+
+		switch (prim)
+		{
+		case GS_TRIANGLELIST:
+		case GS_TRIANGLESTRIP:
+			if (verticesEqual(v0, v1) || verticesEqual(v1, v2) || verticesEqual(v0, v2)) {
+				skip = 0;
+			}
+			break;
+		case GS_TRIANGLEFAN:
+			/*
+			cross = GSVector4(v2.xyxyl().i16to32().sub32(v3.upl32(v1).i16to32())); // x23, y23, x21, y21
+			cross = cross * cross.wzwz(); // x23 * y21, y23 * x21
+			test |= GSVector4i::cast(cross == cross.yxwz());
+			*/
+			//test = (test | v3 == v1) | (v1 == v2 | v3 == v2);
+			break;
+		default:
+			break;
+		}
 	}
 
 	void SetScissor(int x, int y, uint32_t width, uint32_t height) {
