@@ -9,7 +9,7 @@
 #include "../edDlist.h"
 #include <assert.h>
 #include "../LargeObject.h"
-#include "../Frontend.h"
+#include "../FrontendDisp.h"
 #include "../DlistManager.h"
 #include "../Actor.h"
 #include "../PoolAllocators.h"

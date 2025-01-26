@@ -45,7 +45,7 @@ void CLocalizationManager::Level_Init()
 	if ((iVar1 != -1) && (iVar1 != 0)) {
 		/* Format: %s%s LEVEL_x '_xx.bin' */
 		sprintf(filePath, "%s%s", CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].levelPath, sz_LevelTextSuffix_004349a0);
-		this->levelText.select_language((pLVar2->levelBank).pBankFileAccessObject, filePath, AUTO);
+		this->levelText.select_language((pLVar2)->pLevelBankBufferEntry, filePath, AUTO);
 	}
 	return;
 }
@@ -96,7 +96,7 @@ void CLocalizationManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
-void CLocalizationManager::Level_PauseChange()
+void CLocalizationManager::Level_PauseChange(bool bPaused)
 {
 	return;
 }

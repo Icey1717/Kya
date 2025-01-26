@@ -616,6 +616,7 @@ struct CCinematic {
 	uint aAudioTrackIds[5];
 	uint defaultAudioTrackId;
 	edCBankBuffer cineBank;
+	edCBankBufferEntry* pCineBankEntry;
 	int cineBankLoadStage_0x2b4;
 	int soundCount_0x2b8;
 	ed_sound_sample* sound_0x2bc;

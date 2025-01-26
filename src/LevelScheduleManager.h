@@ -1634,7 +1634,9 @@ public:
 	int* pObjectiveStreamBegin;
 	int* pObjectiveStreamEnd;
 	edCBankBuffer levelBank;
+	edCBankBufferEntry* pLevelBankBufferEntry;
 	edCBankBuffer levelIOPBank;
+	edCBankBufferEntry* pIOPBankBufferEntry;
 	undefined field_0x5bd8;
 	undefined field_0x5bd9;
 	undefined field_0x5bda;

@@ -17,10 +17,11 @@
 #include "ActorFactory.h"
 #include "ActorManager.h"
 #include "edVideo/VideoA.h"
-#include "Frontend.h"
+#include "FrontendDisp.h"
 #include "EventManager.h"
 #include "ActorCommander.h"
 #include "ActorWolfen.h"
+#include "FrontEndLife.h"
 
 CActorHeroPrivate::CActorHeroPrivate()
 {

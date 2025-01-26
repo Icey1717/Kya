@@ -34,7 +34,7 @@ public:
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
 
-	virtual void Level_PauseChange() {}
+	virtual void Level_PauseChange(bool bPaused) {}
 
 	virtual void Level_SaveContext() {}
 	virtual void Level_LoadContext() {}
@@ -73,7 +73,7 @@ union ManagerContainer {
 		struct CAnimationManager* g_AnimManager_00451668;
 		struct CCinematicManagerB* g_CinematicManagerB_0045166c;
 		struct CSectorManager* g_SectorManager_00451670;
-		struct CFrontendBank* g_Manager170_00451674;
+		struct CFrontendBank* g_FrontEndBank_00451674;
 		struct CLocalizationManager* g_LocalizationManager_00451678;
 		struct CCameraManager* g_CameraManager_0045167c;
 		struct CFrontendDisplay* g_FrontendManager_00451680;
@@ -114,6 +114,46 @@ class CScene
 {
 public:
 	CScene();
+
+	void Level_Setup(struct ByteCode* pMemoryStream);
+	bool IsFadeTermActive(void);
+
+	void LoadFunc_001b87b0(void);
+
+	void SetFadeStateTerm(bool bFadeOut);
+
+	void HandleFogAndClippingSettings();
+
+	void PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream);
+	void PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream);
+
+	void Level_Install(void);
+	void Level_Init(void);
+	void Level_Manage(void);
+	void LevelLoading_Draw(void);
+	void LevelLoading_End(void);
+	bool LevelLoading_Manage(void);
+	void LevelLoading_Begin(void);
+
+	void Level_CheckpointReset(void);
+	void Level_Reset(void);
+
+	void Level_Term(void);
+
+	void Level_SectorChange(int oldSectorId, int newSectorId);
+
+	void HandleCurState();
+
+	void InitiateCheckpointReset(int param_2);
+
+	static void CreateScene(void);
+	static void* GetManager(MANAGER_TYPE type);
+
+	static CScene* _pinstance;
+	static struct ed_3D_Scene* _scene_handleA;
+	static struct ed_3D_Scene* _scene_handleB;
+
+	static ManagerContainer ptable;
 
 	void* operator new(size_t size)
 	{
@@ -281,47 +321,6 @@ public:
 	undefined field_0x125;
 	undefined field_0x126;
 	undefined field_0x127;
-
-public:
-	void Level_Setup(struct ByteCode* pMemoryStream);
-	bool IsFadeTermActive(void);
-
-	void LoadFunc_001b87b0(void);
-
-	void SetFadeStateTerm(bool bFadeOut);
-
-	void HandleFogAndClippingSettings();
-
-	void PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream);
-	void PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream);
-
-	void Level_Install(void);
-	void Level_Init(void);
-	void Level_Manage(void);
-	void LevelLoading_Draw(void);
-	void LevelLoading_End(void);
-	bool LevelLoading_Manage(void);
-	void LevelLoading_Begin(void);
-
-	void Level_CheckpointReset(void);
-	void Level_Reset(void);
-
-	void Level_Term(void);
-
-	void Level_SectorChange(int oldSectorId, int newSectorId);
-
-	void HandleCurState();
-
-	void InitiateCheckpointReset(int param_2);
-
-	static void CreateScene(void);
-	static void* GetManager(MANAGER_TYPE type);
-
-	static CScene* _pinstance;
-	static struct ed_3D_Scene* _scene_handleA;
-	static struct ed_3D_Scene* _scene_handleB;
-
-	static ManagerContainer ptable;
 };
 
 void Game_Init(void);

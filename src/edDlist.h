@@ -142,7 +142,8 @@ void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g
 bool edDListTermMaterial(edDList_material* pMaterial);
 
 void edDListDeleteFrameBufferMaterial(edDList_material* pMaterial);
-edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, int mode);
+edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, uint mode);
+edDList_material* edDListCreatMaterialFromHashCode(edDList_material* pMaterial, ulong hashCode, ed_g2d_manager* pManager, uint mode);
 
 #ifdef PLATFORM_WIN
 Multidelegate<edDList_material*>& edDListGetMaterialLoadedDelegate();

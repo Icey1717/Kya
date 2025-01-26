@@ -792,6 +792,10 @@ void ed3DHierarchyNodeSetBFCulling(edNODE* pNode, byte bActive);
 
 ed_3D_Scene* ed3DGetScene(int index);
 
+ulong ed3DComputeHashCode(char* inString);
+ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode);
+ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index);
+
 void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier);
 void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod);
 

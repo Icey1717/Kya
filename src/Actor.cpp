@@ -611,35 +611,6 @@ bool CActor::IsKindOfObject(ulong kind)
 	return (kind & 1) != 0;
 }
 
-ulong ed3DComputeHashCode(char* inString)
-{
-	size_t sVar1;
-	char currentCharacter;
-	uint uVar2;
-	ulong uVar3;
-	ulong local_8;
-	bool isTildeOrCurlyBracket;
-
-	local_8 = 0;
-	sVar1 = strlen(inString);
-	uVar3 = 0;
-	while (true) {
-		uVar2 = (uint)uVar3;
-		if (sVar1 <= uVar3) break;
-		currentCharacter = inString[uVar2];
-		isTildeOrCurlyBracket = false;
-		if (('`' < currentCharacter) && (currentCharacter < '{')) {
-			isTildeOrCurlyBracket = true;
-		}
-		if (isTildeOrCurlyBracket) {
-			currentCharacter = currentCharacter + -0x20;
-		}
-		uVar3 = uVar2 + 1;
-		*(char*)((char*)&local_8 + (uVar2 & 7)) = *(char*)((char*)&local_8 + (uVar2 & 7)) + currentCharacter;
-	}
-	return local_8;
-}
-
 void CActor::FUN_00115ea0(uint param_2)
 {
 	edNODE* pNode;

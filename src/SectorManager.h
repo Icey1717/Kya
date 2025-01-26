@@ -84,6 +84,7 @@ public:
 	int sectorIndex;
 	int loadStage_0x8;
 	edCBankBuffer bankObject;
+	edCBankBufferEntry* pBankBufferEntry;
 	ed_g3d_manager sectorMesh;
 	ed_g2d_manager sectorTexture;
 	edObbTREE_DYN* pObbTree;

@@ -644,8 +644,8 @@ void edDListPatchGifTag2D(void)
 void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 {
 	if (index < pMAT_Internal->nbLayers) {
-		int* hash = (int*)(pMAT_Internal + 1);
-		ed_Chunck* pLAY = (ed_Chunck*)LOAD_SECTION(hash[index]);
+		int* hash = reinterpret_cast<int*>(pMAT_Internal + 1);
+		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[index]);
 
 		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 		pLayer->flags_0x0 |= flag;
@@ -2563,7 +2563,7 @@ void edDListDeleteFrameBufferMaterial(edDList_material* pMaterial)
 	return;
 }
 
-edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, int mode)
+edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, uint mode)
 {
 	ed_hash_code* pHASH_MAT;
 
@@ -2577,4 +2577,18 @@ edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo,
 		edDListInitMaterial(pMaterialInfo, pHASH_MAT, pTextureInfo, mode);
 	}
 	return pMaterialInfo;
+}
+
+edDList_material* edDListCreatMaterialFromHashCode(edDList_material* pMaterial, ulong hashCode, ed_g2d_manager* pManager, uint mode)
+{
+	ed_hash_code* pHASH_MAT = ed3DG2DGetMaterial(pManager, hashCode);
+
+	if (pHASH_MAT == (ed_hash_code*)0x0) {
+		pMaterial = (edDList_material*)0x0;
+	}
+	else {
+		edDListInitMaterial(pMaterial, pHASH_MAT, pManager, mode);
+	}
+
+	return pMaterial;
 }

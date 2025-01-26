@@ -913,8 +913,8 @@ void CLevelScheduler::Game_Init()
 	field_0x78 = 0;
 	field_0x7c = 0;
 	field_0x80 = 0;
-	(levelBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
-	(levelIOPBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+	pLevelBankBufferEntry = (edCBankBufferEntry*)0x0;
+	pIOPBankBufferEntry = (edCBankBufferEntry*)0x0;
 	loadStage_0x5b48 = 4;
 	field_0x84 = 0.0;
 	field_0x88 = 0.0;
@@ -1117,7 +1117,7 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		Level_FillRunInfo(0xe, -1, -1);
+		Level_FillRunInfo(0x1, -1, -1);
 		//Level_FillRunInfo(0x4, 9, -1);
 	}
 	return;
@@ -1485,30 +1485,30 @@ bool BnkInstallLiptracks(char* pFileData, int length)
 }
 
 edCBankCallback TableBankCallback[24] = {
-	{ 0x02, 1, { BnkInstallAnim, 0, 0, 0, 0, 0 } },
-	{ 0x02, 2, { BnkInstallAnimMacro, 0, 0, 0, 0, 0 } },
-	{ 0x03, 4, { BnkInstallSoundCfg, 0, 0, 0, 0, 0 } },
-	{ 0x03, 1, { BnkInstallSample, 0, 0, 0, 0, 0 } },
-	{ 0x03, 5, { BnkInstallSong, 0, 0, 0, 0, 0 } },
-	{ 0x03, 6, { BnkInstallBank, 0, 0, 0, 0, 0 } },
-	{ 0x03, 7, { BnkInstallBankHeader, 0, 0, 0, 0, 0 } },
-	{ 0x06, 1, { BnkInstallScene, 0, 0, 0, 0, 0 } },
-	{ 0x06, 2, { BnkInstallSceneCfg, 0, 0, 0, 0, 0 } },
-	{ 0x04, 1, { BnkInstallG3D, 0, 0, 0, 0, 0 } },
-	{ 0x05, 1, { BnkInstallG2D, 0, 0, 0, 0, 0 } },
-	{ 0x07, 1, { BnkInstallCol, 0, 0, 0, 0, 0 } },
-	{ 0x07, 2, { BnkInstallDynCol, 0, 0, 0, 0, 0 } },
-	{ 0x08, 1, { BnkInstallEvents, 0, 0, 0, 0, 0 } },
-	{ 0x0A, 1, { BnkInstallTrack, 0, 0, 0, 0, 0 } },
-	{ 0x0B, 1, { BnkInstallCameras, 0, 0, 0, 0, 0 } },
-	{ 0x0C, 1, { NULL, 0, 0, 0, 0, 0 } },
-	{ 0x0F, 1, { BnkInstallAstar, 0, 0, 0, 0, 0 } },
-	{ 0x10, 1, { BnkInstallLights, 0, 0, 0, 0, 0 } },
-	{ 0x11, 1, { BnkInstallLiptracks, 0, 0, 0, 0, 0 } },
-	{ 0x09, 1, { BnkInstallFxCfg, 0, 0, 0, 0, 0 } },
-	{ 0x13, 1, { BnkInstallCinematic, 0, 0, 0, 0, 0 } },
-	{ 0x09, 2, { BnkInstallParticleManager, 0, 0, 0, 0, 0 } },
-	{ 0xFFFFFFFF, 0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
+	{ 0x02,						0x1, { BnkInstallAnim, 0, 0, 0, 0, 0 } },
+	{ 0x02,						0x2, { BnkInstallAnimMacro, 0, 0, 0, 0, 0 } },
+	{ 0x03,						0x4, { BnkInstallSoundCfg, 0, 0, 0, 0, 0 } },
+	{ 0x03,						0x1, { BnkInstallSample, 0, 0, 0, 0, 0 } },
+	{ 0x03,						0x5, { BnkInstallSong, 0, 0, 0, 0, 0 } },
+	{ 0x03,						0x6, { BnkInstallBank, 0, 0, 0, 0, 0 } },
+	{ 0x03,						0x7, { BnkInstallBankHeader, 0, 0, 0, 0, 0 } },
+	{ 0x06,						0x1, { BnkInstallScene, 0, 0, 0, 0, 0 } },
+	{ 0x06,						0x2, { BnkInstallSceneCfg, 0, 0, 0, 0, 0 } },
+	{ BANK_CALLBACK_MESH,		0x1, { BnkInstallG3D, 0, 0, 0, 0, 0 } },
+	{ BANK_CALLBACK_TEXTURE,	0x1, { BnkInstallG2D, 0, 0, 0, 0, 0 } },
+	{ 0x07,						0x1, { BnkInstallCol, 0, 0, 0, 0, 0 } },
+	{ 0x07,						0x2, { BnkInstallDynCol, 0, 0, 0, 0, 0 } },
+	{ 0x08,						0x1, { BnkInstallEvents, 0, 0, 0, 0, 0 } },
+	{ 0x0A,						0x1, { BnkInstallTrack, 0, 0, 0, 0, 0 } },
+	{ 0x0B,						0x1, { BnkInstallCameras, 0, 0, 0, 0, 0 } },
+	{ 0x0C,						0x1, { NULL, 0, 0, 0, 0, 0 } },
+	{ 0x0F,						0x1, { BnkInstallAstar, 0, 0, 0, 0, 0 } },
+	{ 0x10,						0x1, { BnkInstallLights, 0, 0, 0, 0, 0 } },
+	{ 0x11,						0x1, { BnkInstallLiptracks, 0, 0, 0, 0, 0 } },
+	{ 0x09,						0x1, { BnkInstallFxCfg, 0, 0, 0, 0, 0 } },
+	{ 0x13,						0x1, { BnkInstallCinematic, 0, 0, 0, 0, 0 } },
+	{ 0x09,						0x2, { BnkInstallParticleManager, 0, 0, 0, 0, 0 } },
+	{ 0xFFFFFFFF,				0xFFFFFFFF, { NULL, 0, 0, 0, 0, 0 } },
 };
 
 void WillLoadFileFromBank(struct CAudioManager* param_1, edCBankBufferEntry* pBankBuffer)
@@ -1581,9 +1581,7 @@ void WillLoadFilefromBank(bool param_1, void* pObj)
 
 	pLVar1 = CLevelScheduler::gThis;
 	if (param_1 != false) {
-		WillLoadFileFromBank
-		(CScene::ptable.g_AudioManager_00451698,
-			(CLevelScheduler::gThis->levelIOPBank).pBankFileAccessObject);
+		WillLoadFileFromBank(CScene::ptable.g_AudioManager_00451698, CLevelScheduler::gThis->pIOPBankBufferEntry);
 		pLVar1->loadStage_0x5b48 = 1;
 	}
 	return;
@@ -1595,7 +1593,6 @@ const char* sz_LevelIOPBankName = "LevelIOP.bnk";
 
 void CLevelScheduler::LevelLoading_Begin()
 {
-	edCBankBufferEntry* pBankBuffer;
 	int cachedNextLevelID;
 	char filePath[128];
 	edCBankInstall bankContainer;
@@ -1617,10 +1614,9 @@ void CLevelScheduler::LevelLoading_Begin()
 	bankContainer.pObjectReference = (void*)0x0;
 	bankContainer.fileFlagA = 4;
 	bankContainer.fileFunc = WillLoadFilefromBank;
-	pBankBuffer = levelIOPBank.get_free_entry();
-	(levelIOPBank).pBankFileAccessObject = pBankBuffer;
+	pIOPBankBufferEntry = levelIOPBank.get_free_entry();
 	loadStage_0x5b48 = 0;
-	(levelIOPBank).pBankFileAccessObject->load(&bankContainer);
+	pIOPBankBufferEntry->load(&bankContainer);
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 }
 
@@ -1652,7 +1648,6 @@ bool edMusicAreAllMusicDataLoaded()
 
 bool CLevelScheduler::LevelLoading_Manage()
 {
-	edCBankBufferEntry* pBVar1;
 	bool bVar1;
 	char filePath[128];
 	edCBankInstall bankFilePathContainer;
@@ -1664,7 +1659,7 @@ bool CLevelScheduler::LevelLoading_Manage()
 	loadStage = this->loadStage_0x5b48;
 	if (loadStage != 4) {
 		if (loadStage == 3) {
-			bVar1 = (this->levelBank).pBankFileAccessObject->is_loaded();
+			bVar1 = this->pLevelBankBufferEntry->is_loaded();
 			if (bVar1 != false) {
 				this->loadStage_0x5b48 = 4;
 			}
@@ -1673,8 +1668,8 @@ bool CLevelScheduler::LevelLoading_Manage()
 			if (loadStage == 2) {
 				bVar1 = edSoundAreAllSoundDataLoaded();
 				if ((bVar1 != false) && (bVar1 = edMusicAreAllMusicDataLoaded(), bVar1 != false)) {
-					(this->levelIOPBank).pBankFileAccessObject->close();
-					(this->levelIOPBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+					this->pIOPBankBufferEntry->close();
+					this->pIOPBankBufferEntry = (edCBankBufferEntry*)0x0;
 					this->levelIOPBank.terminate();
 					this->loadStage_0x5b48 = 3;
 				}
@@ -1689,9 +1684,8 @@ bool CLevelScheduler::LevelLoading_Manage()
 					edStrCatMulti(filePath, this->levelPath, this->aLevelInfo[levelToLoadID].levelName, sz_bankSlash, sz_LevelBank_00433bd8, 0);
 					bankFilePathContainer.filePath = filePath;
 					bankFilePathContainer.fileFlagA = 0xc;
-					pBVar1 = this->levelBank.get_free_entry();
-					(this->levelBank).pBankFileAccessObject = pBVar1;
-					(this->levelBank).pBankFileAccessObject->load(&bankFilePathContainer);
+					this->pLevelBankBufferEntry = this->levelBank.get_free_entry();
+					this->pLevelBankBufferEntry->load(&bankFilePathContainer);
 					this->loadStage_0x5b48 = 2;
 				}
 			}
@@ -1706,7 +1700,7 @@ void CLevelScheduler::Level_Install()
 
 	memset(&SStack32, 0, sizeof(edCBankInstall));
 	SStack32.fileFlagA = 0;
-	(this->levelBank).pBankFileAccessObject->install(&SStack32);
+	this->pLevelBankBufferEntry->install(&SStack32);
 	return;
 }
 
@@ -1910,8 +1904,8 @@ void CLevelScheduler::Level_ClearAll()
 	S_LEVEL_INFO* pSVar11;
 	char local_80[128];
 
-	(this->levelBank).pBankFileAccessObject->close();
-	(this->levelBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+	this->pLevelBankBufferEntry->close();
+	this->pLevelBankBufferEntry = (edCBankBufferEntry*)0x0;
 
 	this->levelBank.terminate();
 

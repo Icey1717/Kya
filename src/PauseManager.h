@@ -10,6 +10,7 @@
 #include "ed3D.h"
 #include "edDlist.h"
 #include "Settings.h"
+#include "Sprite.h"
 
 typedef enum EPauseMenu {
 	PM_Bonus = 13,
@@ -169,65 +170,6 @@ public:
 	struct CSplashScreen* pSplashScreen;
 	float totalPlayTime;
 	int field_0x34;
-};
-
-struct CSprite {
-public:
-	CSprite();
-
-	virtual void ClearLocalData();
-
-	void Install(char* pFileBuffer);
-	void DrawXYXY(uint param_2, float param_3, float param_4, float param_5, float param_6, float param_7);
-	byte field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	undefined4 field_0x8;
-	struct edDList_material* pMaterialInfo;
-	undefined4 field_0x10;
-	float field_0x14;
-	float fWidth;
-	float fHeight;
-	undefined4 field_0x20;
-	undefined4 field_0x24;
-	float field_0x28;
-	float field_0x2c;
-	byte field_0x30[4];
-	undefined4 field_0x34;
-	ushort iWidth;
-	ushort iHeight;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
-	undefined field_0x40;
-	undefined field_0x41;
-	undefined field_0x42;
-	undefined field_0x43;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
-	undefined field_0x48;
-	undefined field_0x49;
-	undefined field_0x4a;
-	undefined field_0x4b;
-	float field_0x4c;
-	float field_0x50;
-	float field_0x54;
-	float field_0x58;
-	undefined4 field_0x5c;
-	undefined4 field_0x60;
-	undefined4 field_0x64;
-	undefined4 field_0x68;
-	undefined4 field_0x6c;
-	undefined* field_0x70;
-	float field_0x74;
-	float field_0x78;
-	uint flags_0x7c;
-	edDList_material materialInfo;
-	ed_g2d_manager textureManager;
 };
 
 struct CSplashScreen : public CSprite {

@@ -2093,6 +2093,15 @@ void edF32Vector2Sub(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2)
 	return;
 }
 
+void edF32Vector2LERP(edF32VECTOR2* pDst, edF32VECTOR2* pA, edF32VECTOR2* pB, float alpha)
+{
+	pDst->x = pA->x * (1.0f - alpha) + pB->x * alpha;
+	pDst->y = pB->y * alpha + pA->y * (1.0f - alpha);
+
+
+	return;
+}
+
 float edF32Vector4DotProductHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	return v0->x * v1->x + v0->y * v1->y + v0->z * v1->z;

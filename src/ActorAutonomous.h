@@ -123,6 +123,7 @@ public:
 	void SetValueMax(float max);
 
 	void SetPriority(int newPriority);
+	float GetPriority();
 };
 
 class CActorAutonomous : public CActorMovable

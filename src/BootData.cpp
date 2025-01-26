@@ -14,7 +14,7 @@
 #else
 #include "port/pointer_conv.h"
 #endif
-#include "Frontend.h"
+#include "FrontendDisp.h"
 
 edCBankBuffer BootData_BankBuffer; // = { 0 };
 edCBankBufferEntry* BootData_BankBufferEntry = NULL;

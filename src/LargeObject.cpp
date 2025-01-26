@@ -22,7 +22,7 @@
 #include "edVideo/VideoC.h"
 #include "TimeController.h"
 #include "MemoryStream.h"
-#include "Frontend.h"
+#include "FrontendDisp.h"
 #include "CameraViewManager.h"
 #include "FileManager3D.h"
 #include "MathOps.h"
@@ -42,6 +42,7 @@
 #include "CameraGame.h"
 #include "kya.h"
 #include "PoolAllocators.h"
+#include "FrontEndBank.h"
 
 #define SCENE_STATE_RESET 0x5
 
@@ -218,15 +219,8 @@ CScene::CScene()
 	}
 	pManager = new CLocalizationManager();
 	CScene::ptable.g_LocalizationManager_00451678 = pManager;
-	//g_Manager1e4_00451678 = pManager;
-	//pMVar1 = (Manager_170*)Allocate(0x170);
-	//if (pMVar1 != (Manager_170*)0x0) {
-	//	uVar17 = ManagerConstructor_001dba90(pMVar1);
-	//	pMVar1 = (Manager_170*)uVar17;
-	//}
-	//g_Manager170_00451674 = pMVar1;
-	pFrontendManager = new CFrontendDisplay();
-	CScene::ptable.g_FrontendManager_00451680 = pFrontendManager;
+	CScene::ptable.g_FrontEndBank_00451674 = new CFrontendBank();
+	CScene::ptable.g_FrontendManager_00451680 = new CFrontendDisplay();
 	//pHelpManager = (HelpManager*)Allocate(0x1e4);
 	//if (pHelpManager != (HelpManager*)0x0) {
 	//	uVar17 = SetupHelpManager_0037bc70(pHelpManager);

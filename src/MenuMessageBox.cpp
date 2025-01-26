@@ -9,7 +9,7 @@
 #include "edText.h"
 #include "edVideo/VideoD.h"
 #include "BootData.h"
-#include "Frontend.h"
+#include "FrontendDisp.h"
 
 #ifdef PLATFORM_PS2
 #include "libpc.h"

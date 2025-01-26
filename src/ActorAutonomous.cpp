@@ -1738,6 +1738,11 @@ void CLifeInterface::SetPriority(int newPriority)
 	return;
 }
 
+float CLifeInterface::GetPriority()
+{
+	return this->priority;
+}
+
 void CBehaviourAutonomous::Init(CActor* pOwner)
 {
 	this->pOwner = static_cast<CActorAutonomous*>(pOwner);

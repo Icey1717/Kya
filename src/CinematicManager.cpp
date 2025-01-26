@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <string.h>
 #include "kya.h"
-#include "Frontend.h"
+#include "FrontendDisp.h"
 #include "InputManager.h"
 #include "Actor_Cinematic.h"
 #include "ActorManager.h"
@@ -178,7 +178,7 @@ void CCinematicManager::LevelLoading_End()
 			pCVar2->pCurCinematic = (CCinematic*)0x0;
 		}
 
-		bVar1 = (pCinematic->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+		bVar1 = (pCinematic)->pCineBankEntry != (edCBankBufferEntry*)0x0;
 		if (bVar1) {
 			bVar1 = pCinematic->cineBankLoadStage_0x2b4 != 4;
 		}
@@ -593,7 +593,7 @@ void CCinematic::InitInternalData()
 	this->nbActorRefs = 0;
 	this->fileInfoStart = (CinFileContainer*)0x0;
 	this->cinFileCount = 0;
-	(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+	this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 	this->totalCutsceneDelta = 0.0;
 	this->pActor = (CActor*)0x0;
 	this->pMeshInfo = (ed_g3d_manager*)0x0;
@@ -1110,9 +1110,9 @@ void CCinematic::Start()
 				pCVar6->pCurCinematic = this;
 				/* Takes in a bank header and file name, and returns index of file in bank
 				   Example: Start_ff_Montage_SceneMontage.cin returns 59. */
-				iVar16 = (this->cineBank).pBankFileAccessObject->get_index(this->fileName);
+				iVar16 = this->pCineBankEntry->get_index(this->fileName);
 				if ((((iVar16 != -1) &&
-					(bVar7 = (this->cineBank).pBankFileAccessObject->get_info(iVar16, &eStack48, (char*)0x0), bVar7 != false)) &&
+					(bVar7 = this->pCineBankEntry->get_info(iVar16, &eStack48, (char*)0x0), bVar7 != false)) &&
 					(bVar7 = ((edCinematic*)eStack48.fileBufferStart)->ExtractVersions(eStack48.size, &cinematicLibraryVersion, &cinematicCompilerVersion), bVar7 != false)) &&
 					((cinematicLibraryVersion != 0x81 || (cinematicCompilerVersion != 0xa0)))) {
 					/* Cinematic library version: %d (should be %d)\n */
@@ -1368,7 +1368,7 @@ void CCinematic::Load(int mode)
 
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Current stage: {} mode: {}", this->cineBankLoadStage_0x2b4, mode);
 
-	bool bBankLoaded = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+	bool bBankLoaded = this->pCineBankEntry != (edCBankBufferEntry*)0x0;
 	if (bBankLoaded) {
 		bBankLoaded = this->cineBankLoadStage_0x2b4 != CINEMATIC_LOAD_STATE_COMPLETE;
 	}
@@ -1382,7 +1382,7 @@ void CCinematic::Load(int mode)
 
 				if (this->cineBankLoadStage_0x2b4 != CINEMATIC_LOAD_STATE_COMPLETE) {
 					if (this->cineBankLoadStage_0x2b4 == 3) {
-						if ((this->cineBank).pBankFileAccessObject->is_loaded() != false) {
+						if (this->pCineBankEntry->is_loaded() != false) {
 							CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Complete!");
 							this->cineBankLoadStage_0x2b4 = CINEMATIC_LOAD_STATE_COMPLETE;
 						}
@@ -1390,8 +1390,8 @@ void CCinematic::Load(int mode)
 					else {
 						if (((this->cineBankLoadStage_0x2b4 == 2) && (bVar2 = edSoundAreAllSoundDataLoaded(), bVar2 != false)) &&
 							(bVar2 = edMusicAreAllMusicDataLoaded(), bVar2 != false)) {
-							(this->cineBank).pBankFileAccessObject->close();
-							(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+							this->pCineBankEntry->close();
+							this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 							LoadCineBnk(1);
 						}
 					}
@@ -1442,8 +1442,8 @@ void CCinematic::Load(int mode)
 			}
 			else {
 				if ((LoadInternal(mode) != false) && (mode == 0)) {
-					(this->cineBank).pBankFileAccessObject->close();
-					(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+					this->pCineBankEntry->close();
+					this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 					this->LoadCineBnk(0);
 
 					CUTSCENE_LOG(LogLevel::Info, "Cinematic::Load Closing bank...");
@@ -1510,18 +1510,18 @@ bool CCinematic::LoadInternal(long mode)
 	local_420.fileFunc = _gCinSoundCallback;
 	local_420.pObjectReference = this;
 	peVar5 = this->cineBank.get_free_entry();
-	(this->cineBank).pBankFileAccessObject = peVar5;
+	this->pCineBankEntry = peVar5;
 	local_420.fileFlagA = 4;
 	this->cineBankLoadStage_0x2b4 = 1;
-	bVar3 = (this->cineBank).pBankFileAccessObject->load(&local_420);
+	bVar3 = this->pCineBankEntry->load(&local_420);
 	if (bVar3 == false) {
-		(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+		this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 		this->cineBank.terminate();
 		this->cineBankLoadStage_0x2b4 = 0;
 	}
 	else {
 		if (mode == 0) {
-			(this->cineBank).pBankFileAccessObject->wait();
+			this->pCineBankEntry->wait();
 		}
 	}
 	return this->cineBankLoadStage_0x2b4 != 0;
@@ -1547,7 +1547,7 @@ void CCinematic::Install()
 	CCinematic** local_4;
 	CinFileContainer* pCVar3;
 
-	uVar2 = (this->cineBank).pBankFileAccessObject->get_element_count();
+	uVar2 = this->pCineBankEntry->get_element_count();
 	this->cinFileCount = uVar2;
 	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
@@ -1604,18 +1604,18 @@ bool CCinematic::LoadCineBnk(bool mode)
 	filePathContainer.fileFunc = _gCinCallback;
 	filePathContainer.pObjectReference = this;
 	peVar2 = this->cineBank.get_free_entry();
-	(this->cineBank).pBankFileAccessObject = peVar2;
+	this->pCineBankEntry = peVar2;
 	filePathContainer.fileFlagA = 4;
 	this->cineBankLoadStage_0x2b4 = 3;
-	bVar1 = (this->cineBank).pBankFileAccessObject->load(&filePathContainer);
+	bVar1 = this->pCineBankEntry->load(&filePathContainer);
 	if (bVar1 == false) {
-		(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+		this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 		this->cineBank.terminate();
 		this->cineBankLoadStage_0x2b4 = 0;
 	}
 	else {
 		if (mode == false) {
-			(this->cineBank).pBankFileAccessObject->wait();
+			this->pCineBankEntry->wait();
 		}
 	}
 	return this->cineBankLoadStage_0x2b4 == 3;
@@ -1720,10 +1720,10 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 			/* First cutscene object load falls into here
 			   Get the appropriate bank file */
 			if (type2 == 0) {
-				bankObj = (this->cineBank).pBankFileAccessObject;
+				bankObj = this->pCineBankEntry;
 			}
 			else {
-				bankObj = (CLevelScheduler::gThis->levelBank).pBankFileAccessObject;
+				bankObj = (CLevelScheduler::gThis)->pLevelBankBufferEntry;
 			}
 			/* Get the file index from the bank file */
 			iVar4 = bankObj->get_index(fileName);
@@ -2051,7 +2051,7 @@ void CCinematic::Manage()
 		iVar2 = this->cineBankLoadStage_0x2b4;
 		if (iVar2 != 4) {
 			if (iVar2 == 3) {
-				bVar1 = (this->cineBank).pBankFileAccessObject->is_loaded();
+				bVar1 = this->pCineBankEntry->is_loaded();
 				if (bVar1 != false) {
 					this->cineBankLoadStage_0x2b4 = 4;
 				}
@@ -2059,8 +2059,8 @@ void CCinematic::Manage()
 			else {
 				if (((iVar2 == 2) && (bVar1 = edSoundAreAllSoundDataLoaded(), bVar1 != false)) &&
 					(bVar1 = edMusicAreAllMusicDataLoaded(), bVar1 != false)) {
-					(this->cineBank).pBankFileAccessObject->close();
-					(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+					this->pCineBankEntry->close();
+					this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 					LoadCineBnk(true);
 				}
 			}
@@ -2710,17 +2710,17 @@ void CCinematic::InstallSounds()
 	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	}
-	BWBankManagerGetFileNames((this->cineBank).pBankFileAccessObject, 3, 1, &this->soundCount_0x2b8, &this->playingSounds_0x2c0, &this->field_0x2c4);
+	BWBankManagerGetFileNames(this->pCineBankEntry, 3, 1, &this->soundCount_0x2b8, &this->playingSounds_0x2c0, &this->field_0x2c4);
 	this->cineBankLoadStage_0x2b4 = 2;
 	if (this->soundCount_0x2b8 != 0) {
 		aSamples = (ed_sound_sample*)edMemAlloc(TO_HEAP(H_MAIN), this->soundCount_0x2b8 * sizeof(ed_sound_sample));
 		this->sound_0x2bc = aSamples;
-		elementCount = (this->cineBank).pBankFileAccessObject->get_element_count();
+		elementCount = this->pCineBankEntry->get_element_count();
 		size = 0;
 		inFileIndex = 0;
 		if (elementCount != 0) {
 			do {
-				bSuccess = (this->cineBank).pBankFileAccessObject->get_info(inFileIndex, &bankEntry, (char*)0x0);
+				bSuccess = this->pCineBankEntry->get_info(inFileIndex, &bankEntry, (char*)0x0);
 				if (bSuccess != false) {
 					if (bankEntry.size == 0) {
 #ifdef PLATFORM_PS2
@@ -2756,7 +2756,7 @@ void CCinematic::InstallSounds()
 		//	if (elementCount != 0) {
 		//		offset = 0;
 		//		do {
-		//			bSuccess = edCBankBufferEntry::get_info((this->cineBank).pBankFileAccessObject, size, &bankEntry, (char*)0x0);
+		//			bSuccess = edCBankBufferEntry::get_info(this->pCineBankEntry, size, &bankEntry, (char*)0x0);
 		//			if ((bSuccess != false) && ((bankEntry.type << 0x10 | bankEntry.stype) == 0x30001)) {
 		//				edSoundSampleLoad(bankEntry.fileBufferStart, (ed_sound_sample*)(&this->sound_0x2bc->field_0x0 + offset), 1);
 		//				offset = offset + 0x18;
@@ -2811,7 +2811,7 @@ CActor* CCinematic::GetActorByHashcode(uint hashCode)
 
 CCinematic::~CCinematic()
 {
-	bool bVar1 = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+	bool bVar1 = this->pCineBankEntry != (edCBankBufferEntry*)0x0;
 	if (bVar1) {
 		bVar1 = this->cineBankLoadStage_0x2b4 != 4;
 	}
@@ -2912,7 +2912,7 @@ void CCinematic::TryTriggerCutscene(CActor* pActor, int param_3)
 				Load(1);
 			}
 
-			bVar1 = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+			bVar1 = this->pCineBankEntry != (edCBankBufferEntry*)0x0;
 			if (bVar1) {
 				bVar1 = this->cineBankLoadStage_0x2b4 != 4;
 			}
@@ -3073,8 +3073,8 @@ void CCinematic::Flush(bool param_2)
 			this->sound_0x2bc = (ed_sound_sample*)0x0;
 			this->soundCount_0x2b8 = 0;
 		}
-		(this->cineBank).pBankFileAccessObject->close();
-		(this->cineBank).pBankFileAccessObject = (edCBankBufferEntry*)0x0;
+		this->pCineBankEntry->close();
+		this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 		this->cineBank.terminate();
 		this->cineBankLoadStage_0x2b4 = 0;
 		pCVar1->pCurCinematic = (CCinematic*)0x0;
@@ -3105,7 +3105,7 @@ void CCinematic::PreReset()
 		pCVar2->pCurCinematic = (CCinematic*)0x0;
 	}
 
-	bVar1 = (this->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+	bVar1 = this->pCineBankEntry != (edCBankBufferEntry*)0x0;
 	if (bVar1) {
 		bVar1 = this->cineBankLoadStage_0x2b4 != 4;
 	}
@@ -3453,7 +3453,7 @@ void CCinematic::FUN_001c7390(bool param_2)
 		}
 		if (bVar2) {
 			bVar2 = this->cineBankLoadStage_0x2b4 != 4;
-			if ((bVar2) && ((this->cineBank).pBankFileAccessObject == (edCBankBufferEntry*)0x0 || !bVar2)) {
+			if ((bVar2) && (this->pCineBankEntry == (edCBankBufferEntry*)0x0 || !bVar2)) {
 				bVar2 = true;
 				if (this->count_0x2d8 < 1) {
 					peVar1 = (this->zoneRefB).Get();
@@ -4550,7 +4550,7 @@ void CCinematicManager::StopAllCutscenes()
 			ppCVar2 = ppCVar2 + -1;
 			pCinematic = *ppCVar2;
 
-			bVar1 = (pCinematic->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+			bVar1 = (pCinematic)->pCineBankEntry != (edCBankBufferEntry*)0x0;
 			if (bVar1) {
 				bVar1 = pCinematic->cineBankLoadStage_0x2b4 != 4;
 			}
@@ -4731,7 +4731,7 @@ void CCinematicManager::Level_Term()
 					pCVar3->pCurCinematic = (CCinematic*)0x0;
 				}
 
-				bVar2 = (this_00->cineBank).pBankFileAccessObject != (edCBankBufferEntry*)0x0;
+				bVar2 = (this_00)->pCineBankEntry != (edCBankBufferEntry*)0x0;
 				if (bVar2) {
 					bVar2 = this_00->cineBankLoadStage_0x2b4 != 4;
 				}

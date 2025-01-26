@@ -474,7 +474,7 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 	return;
 }
 
-void CActorManager::Level_PauseChange()
+void CActorManager::Level_PauseChange(bool bPaused)
 {
 	IMPLEMENTATION_GUARD();
 }

@@ -13693,10 +13693,79 @@ ed_3D_Scene* ed3DGetScene(int index)
 	return g_CameraPanStaticMasterArray_00451630[index];
 }
 
+ulong ed3DComputeHashCode(char* inString)
+{
+	size_t len;
+	char currentCharacter;
+	uint uVar2;
+	ulong uVar3;
+	ulong hashCode;
+	bool isTildeOrCurlyBracket;
+
+	hashCode = 0;
+	len = strlen(inString);
+
+	uVar3 = 0;
+	while (true) {
+		uVar2 = (uint)uVar3;
+
+		if (len <= uVar3) break;
+
+		currentCharacter = inString[uVar2];
+		isTildeOrCurlyBracket = false;
+
+		if (('`' < currentCharacter) && (currentCharacter < '{')) {
+			isTildeOrCurlyBracket = true;
+		}
+
+		if (isTildeOrCurlyBracket) {
+			currentCharacter = currentCharacter + -0x20;
+		}
+
+		uVar3 = uVar2 + 1;
+
+		*(char*)((char*)&hashCode + (uVar2 & 7)) = *(char*)((char*)&hashCode + (uVar2 & 7)) + currentCharacter;
+	}
+
+	return hashCode;
+}
+
+ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode)
+{
+	ed_hash_code* pHashCode;
+	ed_g2d_material* pMaterial;
+
+	pHashCode = edHashcodeGet(hashCode, pManager->pMATA_HASH);
+
+	if (pHashCode == (ed_hash_code*)0x0) {
+		pMaterial = (ed_g2d_material*)0x0;
+	}
+	else {
+		ed_Chunck* pMAT = LOAD_SECTION_CAST(ed_Chunck*, pHashCode->pData);
+		pMaterial = reinterpret_cast<ed_g2d_material*>(pMAT + 1);
+	}
+
+	return pMaterial;
+}
+
+ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index)
+{
+	ed_g2d_layer* pLayer = (ed_g2d_layer*)0x0;
+
+	if (index < pMaterial->nbLayers) {
+		int* hash = reinterpret_cast<int*>(pMaterial + 1);
+		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[index]);
+		pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+	}
+
+	return pLayer;
+}
+
 void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier)
 {
 	pHier->base.flags_0x9e = pHier->base.flags_0x9e & 0xff7f;
 	pHier->base.desiredLod = 0xff;
+
 	return;
 }
 
@@ -13704,5 +13773,6 @@ void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod)
 {
 	(pNode->base).flags_0x9e = (pNode->base).flags_0x9e | 0x80;
 	(pNode->base).desiredLod = desiredLod;
+
 	return;
 }

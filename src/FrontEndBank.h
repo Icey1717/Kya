@@ -4,16 +4,30 @@
 #include "Types.h"
 #include "LargeObject.h"
 #include "EdenLib/edBank/include/edBankBuffer.h"
+#include "ed3D.h"
 
-class CFrontendBankSubObjA
+struct FrontendTextureListEntry
 {
-public:
-
+	char* pData;
+	int size;
+	ed_g2d_manager manager;
 };
 
-class CFrontendBankSubObjB
+struct FrontendTextureList
 {
-public:
+	FrontendTextureListEntry aEntries[4];
+};
+
+struct FrontendMeshListEntry
+{
+	char* pData;
+	int size;
+	ed_g3d_manager manager;
+};
+
+struct FrontendMeshList
+{
+	FrontendMeshListEntry aEntries[1];
 };
 
 class CFrontendBank : public CObjectManager
@@ -32,12 +46,17 @@ public:
 	virtual void Level_Manage();
 	virtual void Level_ManagePaused();
 
+	char* GetResource(char* pFileName, edBANK_ENTRY_INFO* pEntryInfo);
+	ed_g2d_manager* GetG2D(int index);
+
 	edCBankBufferEntry* pBankBufferEntry;
 	edCBankBuffer bankBuffer;
-	undefined4 field_0x44;
 
-	CFrontendBankSubObjA texture;
-	CFrontendBankSubObjB mesh;
+	int nbTextures;
+	int nbMeshes;
+
+	FrontendTextureList texture;
+	FrontendMeshList mesh;
 };
 
 #endif // FRONTEND_BANK_H
