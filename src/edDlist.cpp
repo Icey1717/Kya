@@ -1256,7 +1256,7 @@ void edDListBegin2D(ulong mode)
 
 	gCurDList->pRenderCommands = gCurDList->pRenderCommands + 1;
 
-	DISPLAY_LIST_2D_START(gCurViewport->screenWidth, gCurViewport->screenHeight);
+	DISPLAY_LIST_2D_START(gCurViewport->screenWidth, gCurViewport->screenHeight, mode);
 
 	return;
 }
@@ -1611,7 +1611,7 @@ void edDListBegin(float x, float y, float z, uint mode, int nbVertex)
 		case 3:
 		case PRIM_TYPE_TRIANGLE_LIST:
 		case 5:
-		case 6:
+		case PRIM_TYPE_SPRITE:
 			edDListBegin2D(mode & 0xff);
 			break;
 		default:

@@ -149,8 +149,11 @@ namespace Renderer
 		float FOG[4]; // FOG:28
 	};
 
-	struct alignas(32) DisplayListVertex : public GSVertex
+	struct alignas(32) DisplayListVertex
 	{
+		float ST[2]; // S:0, T:4
+		uint32_t RGBA[4]; // RGBA:8, Q:12
+		float Q;
 		float XYZ[3];
 	};
 

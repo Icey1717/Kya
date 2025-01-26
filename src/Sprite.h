@@ -47,7 +47,10 @@ public:
 	// New Function from suspected inline
 	void UpdateSlotPositionAndScale(float x, float y, float xScale, float yScale);
 
-	byte bValid;
+	void SetIsValid(bool bNewValid);
+	bool GetIsValid();
+
+	bool bValid;
 	undefined field_0x5;
 	undefined field_0x6;
 	undefined field_0x7;
@@ -68,34 +71,15 @@ public:
 		uint color;
 	};
 
-	undefined4 field_0x34;
+	uint flags;
 	ushort iWidth;
 	ushort iHeight;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
-	undefined field_0x40;
-	undefined field_0x41;
-	undefined field_0x42;
-	undefined field_0x43;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
-	undefined field_0x48;
-	undefined field_0x49;
-	undefined field_0x4a;
-	undefined field_0x4b;
-	float field_0x4c;
-	float field_0x50;
-	float field_0x54;
-	float field_0x58;
+	edF32VECTOR2 field_0x3c;
+	edF32VECTOR2 field_0x44;
+	edF32VECTOR2 texCoordA;
+	edF32VECTOR2 texCoordB;
 	CWidgetSlot field_0x5c;
-	undefined4 field_0x6c;
-	undefined* field_0x70;
-	float field_0x74;
-	float field_0x78;
+	CWidgetSlot field_0x6c;
 	uint flags_0x7c;
 	edDList_material materialInfo;
 	ed_g2d_manager textureManager;

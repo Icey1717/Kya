@@ -218,6 +218,7 @@ namespace Renderer
 			PipelineKey key;
 			key.options.bGlsl = true;
 			key.options.bWireframe = false;
+			key.options.topology = topologyTriangleList;
 			PipelineCreateInfo createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", key };
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
 		}
@@ -226,6 +227,7 @@ namespace Renderer
 			PipelineKey pipelineKey;
 			pipelineKey.options.bWireframe = false;
 			pipelineKey.options.bGlsl = true;
+			pipelineKey.options.topology = topologyTriangleList;
 
 			assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
 			return gPipelines[pipelineKey.key];

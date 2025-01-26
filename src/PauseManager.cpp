@@ -1250,7 +1250,7 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 		ed3DInstallG2D(pcVar3, *(int*)(pcVar3 + 8), &iStack4, &this->textureManager, 0);
 
 		this->flags_0x7c = this->flags_0x7c | 2;
-		this->bValid = 0;
+		this->bValid = false;
 
 		pMaterialSection = ed3DG2DGetG2DMaterialFromIndex(&this->textureManager, 0);
 		pBitmap = ed3DG2DGetBitmapFromMaterial(pMaterialSection, 0);

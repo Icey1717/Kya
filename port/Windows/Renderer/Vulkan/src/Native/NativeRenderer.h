@@ -17,12 +17,16 @@ namespace Renderer
 		constexpr int gWidth = 0x200;
 		constexpr int gHeight = 0x200;
 
+		constexpr uint32_t topologyTriangleList = 0;
+		constexpr uint32_t topologyLineList = 1;
+
 		struct PipelineKey {
 			union {
 				// 32 bit key
 				struct {
 					uint32_t bWireframe : 1;
 					uint32_t bGlsl : 1;
+					uint32_t topology : 2;
 				} options;
 
 				uint32_t key{};

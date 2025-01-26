@@ -173,6 +173,8 @@ void CFrontendLifeGauge::Term()
 	return;
 }
 
+float FLOAT_0044885c = 2.0f;
+
 void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 {
 	CLifeInterface* pLife;
@@ -204,19 +206,17 @@ void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 		this->bVisible = 0;
 		break;
 	case 5:
-		IMPLEMENTATION_GUARD(
 		pLife = (CLifeInterface*)this->pInterface;
 		bVar1 = false;
 		if (pLife != (CLifeInterface*)0x0) {
-			fVar5 = (*pLife->pVtable->GetValue)((CInterface*)pLife);
-			fVar3 = CLifeInterface::GetValueMax(pLife);
-			bVar1 = fVar5 <= fVar3 * 0.1;
+			bVar1 = pLife->GetValue() <= pLife->GetValueMax() * 0.1f;
 		}
 
 		if ((!bVar1) && (FLOAT_0044885c < fVar4)) {
 			this->state = 3;
-			CWidget::MoveToNext((CWidget*)this, &this->slotHide);
-		})
+			MoveToNext(&this->slotHide);
+		}
+
 		break;
 	case 7:
 		IMPLEMENTATION_GUARD(
@@ -238,11 +238,11 @@ void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 		edF32Vector2LERP(&local_8, &GAUGE_OFFSET, edF32VECTOR2_ARRAY_0042c670 + this->field_0x384 + -1, fVar5);
 		edF32Vector2LERP(&local_10, &GAUGE_SCALE, &edF32VECTOR2_0042c6b0, fVar5);
 		pCVar2 = (CFrontendLifeGauge*)((int)this + (this->field_0x380 + -1) * 0x180);
-		pCVar2->aDualSprites[0].spriteGauge.bValid = 0;
+		pCVar2->aDualSprites[0].spriteGauge.bValid = false;
 		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.position.x = local_8.x;
 		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.position.y = local_8.y;
 		pCVar2 = (CFrontendLifeGauge*)((int)this + (this->field_0x380 + -1) * 0x180);
-		pCVar2->aDualSprites[0].spriteGauge.bValid = 0;
+		pCVar2->aDualSprites[0].spriteGauge.bValid = false;
 		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.scale.x = local_10.x;
 		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.scale.y = local_10.y;
 		(&this->spriteFill2)[this->field_0x380 * 2].field_0x4 = 0;
@@ -304,15 +304,15 @@ void CFrontendLifeGauge::Draw()
 
 		bVar4 = GuiDList_BeginCurrent();
 		if (bVar4 != false) {
-			if ((this->field_0x2b8).bValid == 0) {
-				this->spriteGauge.bValid = 0;
-				(this->spriteKimHead).bValid = 0;
-				this->spriteFillHit.bValid = 0;
-				this->spriteFillLife.bValid = 0;
+			if ((this->field_0x2b8).bValid == false) {
+				this->spriteGauge.bValid = false;
+				(this->spriteKimHead).bValid = false;
+				this->spriteFillHit.bValid = false;
+				this->spriteFillLife.bValid = false;
 
 				for (iVar8 = 0; iVar8 < 4; iVar8 = iVar8 + 1) {
-					this->aDualSprites->spriteGauge.bValid = 0;
-					this->aDualSprites->spriteFill.bValid = 0;
+					this->aDualSprites->spriteGauge.bValid = false;
+					this->aDualSprites->spriteFill.bValid = false;
 				}
 			}
 
@@ -376,9 +376,106 @@ bool CFrontendLifeGauge::UpdateGauge(float param_1)
 	return bVar1;
 }
 
+edF32VECTOR2 EXTRA_HEALTH_SCALE = { 0.25f, 0.0625f };
+
+edF32VECTOR2 EXTRA_HEALTH_GAUGE_POSITIONS[4] = {
+	{ 0.125f, 0.05f },
+	{ 0.118f, 0.068f },
+	{ 0.100f, 0.086f },
+	{ 0.075f, 0.104f }
+};
+
+edF32VECTOR2 EXTRA_HEALTH_FILL_POSITIONS[4] = {
+	{ 0.125f, -0.010f },
+	{ 0.118f, -0.028f },
+	{ 0.100f, -0.046f },
+	{ 0.075f, -0.064f }
+};
+
 void CFrontendLifeGauge::UpdatePercent(float value)
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	edF32VECTOR2* peVar2;
+	CDualSprite* pCVar3;
+	float* pfVar4;
+	float fVar5;
+	int iVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+
+	this->field_0x44 = 1;
+
+	iVar6 = this->field_0x384;
+	fVar9 = this->field_0x388;
+	fVar5 = (float)CLevelScheduler::ScenVar_Get(0x15);
+	this->field_0x384 = 0;
+	fVar7 = fVar9 - (float)iVar6 * fVar5;
+	fVar8 = value;
+	if (fVar5 < value) {
+		do {
+			fVar8 = fVar8 - fVar5;
+			this->field_0x384 = this->field_0x384 + 1;
+		} while (fVar5 < fVar8);
+	}
+
+	fVar10 = (value - (float)this->field_0x384 * fVar5) / fVar5;
+	this->field_0x388 = value;
+	this->field_0x5c = fVar10;
+	fVar8 = this->fillLifeMin;
+	this->spriteFillLife.ClampX(fVar8, fVar8 + (this->fillLifeMax - fVar8) * this->field_0x5c);
+	this->field_0x58 = this->field_0x4c + CFrontend::GetTime();
+
+	if (value < fVar9) {
+		if (fVar7 / fVar5 < fVar10) {
+			this->field_0x54 = 1.0f;
+		}
+	}
+	else {
+		this->field_0x54 = fVar10;
+	}
+
+	fVar8 = this->fillLifeMin;
+	fVar5 = this->fillLifeMax - fVar8;
+	this->spriteFillHit.ClampX(fVar8 + fVar5 * this->field_0x5c, fVar8 + fVar5 * this->field_0x54);
+
+	iVar1 = 0;
+	if (0 < this->field_0x384) {
+		peVar2 = EXTRA_HEALTH_GAUGE_POSITIONS;
+		pCVar3 = this->aDualSprites;
+		do {
+			pCVar3->spriteGauge.UpdateSlotPosition(peVar2->x, peVar2->y);
+			iVar1 = iVar1 + 1;
+			peVar2 = peVar2 + 1;
+			pCVar3->spriteGauge.UpdateSlotScale(EXTRA_HEALTH_SCALE.x, EXTRA_HEALTH_SCALE.y);
+
+			// Probably inlined function.
+			pCVar3->spriteGauge.bValid = false;
+			pCVar3->spriteGauge.flags = pCVar3->spriteGauge.flags | 0x2000;
+
+			pCVar3 = pCVar3 + 1;
+		} while (iVar1 < this->field_0x384);
+	}
+
+	if (iVar1 < this->field_0x380) {
+		peVar2 = EXTRA_HEALTH_FILL_POSITIONS;
+		pCVar3 = this->aDualSprites;
+		do {
+			pCVar3->spriteFill.UpdateSlotPosition(peVar2->x, peVar2->y);
+			iVar1 = iVar1 + 1;
+			peVar2 = peVar2 + 1;
+			pCVar3->spriteFill.UpdateSlotScale(EXTRA_HEALTH_SCALE.x, EXTRA_HEALTH_SCALE.y);
+
+			// Probably inlined function.
+			pCVar3->spriteFill.bValid = false;
+			pCVar3->spriteFill.flags = pCVar3->spriteFill.flags & 0xffffdfff;
+
+			pCVar3 = pCVar3 + 1;
+		} while (iVar1 < this->field_0x380);
+	}
+
+	return;
 }
 
 void CFrontendLifeGauge::FUN_001daff0()

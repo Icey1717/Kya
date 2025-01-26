@@ -20,7 +20,17 @@ namespace Renderer::Native::DisplayList
 	static SimpleTexture* gBoundTexture = nullptr;
 
 	static VkRenderPass gRenderPass;
-	static Pipeline gPipeline;
+	static PipelineMap gPipelines;
+
+	static Pipeline& GetPipeline() {
+		PipelineKey pipelineKey;
+		pipelineKey.options.bWireframe = false;
+		pipelineKey.options.bGlsl = true;
+		pipelineKey.options.topology = (PS2::GetGSState().PRIM.PRIM == 6) ? topologyLineList : topologyTriangleList;
+
+		assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
+		return gPipelines[pipelineKey.key];
+	}
 
 	static PS2::FrameVertexBuffers<Renderer::DisplayListVertex, uint16_t> gVertexBuffers;
 
@@ -75,8 +85,6 @@ namespace Renderer::Native::DisplayList
 
 		const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.pipeline);
 
 		gVertexBuffers.BindBuffers(cmd);
 
@@ -161,8 +169,10 @@ namespace Renderer::Native::DisplayList
 		SetObjectName(reinterpret_cast<uint64_t>(renderPass), VK_OBJECT_TYPE_RENDER_PASS, name);
 	}
 
-	static void CreatePipeline(const PipelineCreateInfo& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)
+	static void CreatePipeline(const PipelineCreateInfo& createInfo, const VkRenderPass& renderPass, const char* name)
 	{
+		Renderer::Pipeline& pipeline = gPipelines[createInfo.key.key];
+
 		auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
 		auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
 
@@ -192,7 +202,7 @@ namespace Renderer::Native::DisplayList
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		inputAssembly.topology = (createInfo.key.options.topology == topologyLineList) ? VK_PRIMITIVE_TOPOLOGY_LINE_LIST : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 		VkPipelineViewportStateCreateInfo viewportState{};
@@ -277,13 +287,22 @@ namespace Renderer::Native::DisplayList
 		SetObjectName(reinterpret_cast<uint64_t>(pipeline.pipeline), VK_OBJECT_TYPE_PIPELINE, name);
 	}
 
-	static void CreatePipeline()
+	static void CreatePipelines()
 	{
 		PipelineKey key;
 		key.options.bGlsl = true;
 		key.options.bWireframe = false;
-		PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", key };
-		DisplayList::CreatePipeline(createInfo, gRenderPass, gPipeline, "Native Previewer GLSL");
+		key.options.topology = topologyTriangleList;
+		{
+			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", key };
+			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL TriList");
+		}
+
+		key.options.topology = topologyLineList;
+		{
+			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", key };
+			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL LineList");
+		}
 	}
 
 	static void InitializeDescriptorsSets(Renderer::SimpleTexture* pTexture)
@@ -292,7 +311,7 @@ namespace Renderer::Native::DisplayList
 			return;
 		}
 
-		if (pTexture->GetRenderer()->HasDescriptorSets(gPipeline)) {
+		if (pTexture->GetRenderer()->HasDescriptorSets(GetPipeline())) {
 			return;
 		}
 
@@ -313,7 +332,7 @@ namespace Renderer::Native::DisplayList
 		writeList.EmplaceWrite({ 0, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
 		for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			pTextureData->UpdateDescriptorSets(gPipeline, writeList, i);
+			pTextureData->UpdateDescriptorSets(GetPipeline(), writeList, i);
 		}
 	}
 
@@ -326,7 +345,7 @@ namespace Renderer::Native::DisplayList
 
 			Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
 
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, gPipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(gPipeline).GetSet(GetCurrentFrame()), 0, NULL);
+			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(GetPipeline()).GetSet(GetCurrentFrame()), 0, NULL);
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
 		}
 
@@ -338,7 +357,7 @@ namespace Renderer::Native::DisplayList
 
 // Implementations from "displaylist.h"
 
-void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight)
+void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, uint32_t mode)
 {
 	using namespace Renderer::Native::DisplayList;
 
@@ -356,10 +375,17 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight)
 
 	// We also need to apply prim here
 	// Based on GSState::ApplyPRIM
-	if (gVertexBuffers.GetDrawBufferData().index.tail == 0)
+	PS2::GetGSState().PRIM.PRIM = mode;
+	if (gVertexBuffers.GetDrawBufferData().index.tail == 0) {
 		gVertexBuffers.GetDrawBufferData().vertex.next = 0;
+	}
 
 	gVertexBuffers.GetDrawBufferData().vertex.head = gVertexBuffers.GetDrawBufferData().vertex.tail = gVertexBuffers.GetDrawBufferData().vertex.next;
+
+	// Need to do this after we have updated prim.
+	InitializeDescriptorsSets(gBoundTexture);
+
+	vkCmdBindPipeline(GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().pipeline);
 }
 
 void Renderer::DisplayList::SetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a, float q)
@@ -382,7 +408,7 @@ void Renderer::DisplayList::SetTexCoord(float s, float t)
 	gTexCoord.t = t;
 }
 
-void Renderer::DisplayList::SetVertex(uint16_t x, uint16_t y, uint32_t z, uint32_t skip)
+void Renderer::DisplayList::SetVertex(float x, float y, float z, uint32_t skip)
 {
 	using namespace Renderer::Native::DisplayList;
 
@@ -391,10 +417,6 @@ void Renderer::DisplayList::SetVertex(uint16_t x, uint16_t y, uint32_t z, uint32
 	float newy = (2.0f * y / gViewport.height) - 1.0f;
 
 	Renderer::DisplayListVertex vertex{};
-
-	vertex.XY[0] = x;
-	vertex.XY[1] = y;
-	vertex.Z = z;
 
 	vertex.RGBA[0] = gColor.r;
 	vertex.RGBA[1] = gColor.g;
@@ -408,7 +430,7 @@ void Renderer::DisplayList::SetVertex(uint16_t x, uint16_t y, uint32_t z, uint32
 
 	vertex.XYZ[0] = newx;
 	vertex.XYZ[1] = newy;
-	vertex.XYZ[2] = static_cast<float>(z);	
+	vertex.XYZ[2] = z;
 
 	KickVertex<DisplayListVertex, uint16_t>(vertex, PS2::GetGSState().PRIM, skip, gVertexBuffers.GetDrawBufferData());
 }
@@ -434,8 +456,6 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 	
 	gBoundTexture = pNewTexture;
 
-	InitializeDescriptorsSets(pNewTexture);
-
 	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture->GetName().c_str());
 
 	gIndexStart = gVertexBuffers.GetDrawBufferData().GetIndexTail();
@@ -451,7 +471,7 @@ void Renderer::Native::DisplayList::Setup()
 
 	DisplayList::CreateRenderPass(gRenderPass, "Display List Render Pass");
 
-	CreatePipeline();
+	CreatePipelines();
 
 	gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 }

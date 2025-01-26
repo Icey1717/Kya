@@ -2102,6 +2102,22 @@ void edF32Vector2LERP(edF32VECTOR2* pDst, edF32VECTOR2* pA, edF32VECTOR2* pB, fl
 	return;
 }
 
+void edF32Vector2Mul(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2)
+{
+	v0->x = v1->x * v2->x;
+	v0->y = v1->y * v2->y;
+
+	return;
+}
+
+void edF32Vector2Add(edF32VECTOR2* v0, edF32VECTOR2* v1, edF32VECTOR2* v2)
+{
+	v0->x = v1->x + v2->x;
+	v0->y = v1->y + v2->y;
+
+	return;
+}
+
 float edF32Vector4DotProductHard_I(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	return v0->x * v1->x + v0->y * v1->y + v0->z * v1->z;
