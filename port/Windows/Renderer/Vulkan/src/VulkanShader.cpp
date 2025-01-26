@@ -70,6 +70,13 @@ namespace Shader_Internal {
 
 Shader::ReflectedModule::ReflectedModule(const std::string& filename, const VkShaderStageFlagBits stage, bool bFromArchive /*= false*/)
 {
+	if (filename.empty()) {
+		shaderModule = VK_NULL_HANDLE;
+		reflectData = {};
+		shaderStageCreateInfo = {};
+		return;
+	}
+
 	auto shaderCode = Shader_Internal::ReadFile(filename, bFromArchive);
 	shaderModule = Shader_Internal::CreateModule(shaderCode);
 	reflectData = CreateReflectionData(shaderCode);
@@ -83,7 +90,9 @@ Shader::ReflectedModule::ReflectedModule(const std::string& filename, const VkSh
 
 Shader::ReflectedModule::~ReflectedModule()
 {
-	vkDestroyShaderModule(GetDevice(), shaderModule, GetAllocator());
+	if (shaderModule != VK_NULL_HANDLE) {
+		vkDestroyShaderModule(GetDevice(), shaderModule, GetAllocator());
+	}
 }
 
 namespace {

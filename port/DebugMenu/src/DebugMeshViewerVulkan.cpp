@@ -47,7 +47,7 @@ namespace DebugMeshViewer {
 			key.options.bGlsl = true;
 			key.options.bWireframe = false;
 			key.options.topology = topologyTriangleList;
-			PipelineCreateInfo createInfo { "shaders/meshviewer.vert.spv" , "shaders/meshviewer.frag.spv", key };
+			PipelineCreateInfo createInfo { "shaders/meshviewer.vert.spv" , "shaders/meshviewer.frag.spv", "", key};
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer GLSL");
 
 			createInfo.key.options.bWireframe = true;
@@ -63,7 +63,7 @@ namespace DebugMeshViewer {
 			key.options.bGlsl = false;
 			key.options.bWireframe = false;
 			key.options.topology = topologyTriangleList;
-			PipelineCreateInfo createInfo{ "shaders/meshviewer_hlsl.vert.spv" , "shaders/meshviewer_hlsl.frag.spv", key };
+			PipelineCreateInfo createInfo{ "shaders/meshviewer_hlsl.vert.spv" , "shaders/meshviewer_hlsl.frag.spv", "", key};
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Mesh Previewer HLSL");
 
 			createInfo.key.options.bWireframe = true;

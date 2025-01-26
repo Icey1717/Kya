@@ -19,6 +19,7 @@ message("Finding shader source files in: ${CMAKE_CURRENT_SOURCE_DIR}")
 file(GLOB_RECURSE GLSL_SOURCE_FILES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.frag.glsl"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.vert.glsl"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.geom.glsl"
 	)
 
 message(Found GLSL: ${GLSL_SOURCE_FILES})
@@ -26,6 +27,7 @@ message(Found GLSL: ${GLSL_SOURCE_FILES})
 file(GLOB_RECURSE HLSL_SOURCE_FILES
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.frag.hlsl"
 	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.vert.hlsl"
+	"${CMAKE_CURRENT_SOURCE_DIR}/src/*.geom.hlsl"
 	)
 
 message(Found HLSL: ${HLSL_SOURCE_FILES})

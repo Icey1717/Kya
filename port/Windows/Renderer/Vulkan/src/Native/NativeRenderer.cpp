@@ -219,7 +219,7 @@ namespace Renderer
 			key.options.bGlsl = true;
 			key.options.bWireframe = false;
 			key.options.topology = topologyTriangleList;
-			PipelineCreateInfo createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", key };
+			PipelineCreateInfo createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key};
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
 		}
 

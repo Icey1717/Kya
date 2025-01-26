@@ -38,6 +38,7 @@ namespace Renderer
 		struct PipelineCreateInfo {
 			std::string vertShaderFilename;
 			std::string fragShaderFilename;
+			std::string geomShaderFilename;
 
 			PipelineKey key;
 		};

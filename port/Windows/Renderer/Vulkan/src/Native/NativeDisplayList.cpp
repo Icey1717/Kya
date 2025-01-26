@@ -173,11 +173,15 @@ namespace Renderer::Native::DisplayList
 	{
 		Renderer::Pipeline& pipeline = gPipelines[createInfo.key.key];
 
+		const bool bHasGeometryShader = !createInfo.geomShaderFilename.empty();
+
 		auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
 		auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto geomShader = Shader::ReflectedModule(createInfo.geomShaderFilename, VK_SHADER_STAGE_GEOMETRY_BIT);
 
 		pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
 		pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
+		pipeline.AddBindings(EBindingStage::Geometry, geomShader.reflectData);
 		pipeline.CreateDescriptorSetLayouts();
 
 		pipeline.CreateLayout(vertShader.reflectData.pushConstants);
@@ -185,7 +189,11 @@ namespace Renderer::Native::DisplayList
 		pipeline.CreateDescriptorPool();
 		pipeline.CreateDescriptorSets();
 
-		VkPipelineShaderStageCreateInfo shaderStages[] = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStages = { vertShader.shaderStageCreateInfo, fragShader.shaderStageCreateInfo };
+
+		if (bHasGeometryShader) {
+			shaderStages.push_back(geomShader.shaderStageCreateInfo);
+		}
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -265,8 +273,8 @@ namespace Renderer::Native::DisplayList
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = 2;
-		pipelineInfo.pStages = shaderStages;
+		pipelineInfo.stageCount = shaderStages.size();
+		pipelineInfo.pStages = shaderStages.data();
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
 		pipelineInfo.pInputAssemblyState = &inputAssembly;
 		pipelineInfo.pViewportState = &viewportState;
@@ -294,13 +302,13 @@ namespace Renderer::Native::DisplayList
 		key.options.bWireframe = false;
 		key.options.topology = topologyTriangleList;
 		{
-			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", key };
+			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "", key};
 			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL TriList");
 		}
 
 		key.options.topology = topologyLineList;
 		{
-			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", key };
+			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "shaders/displaylist.geom.spv", key};
 			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL LineList");
 		}
 	}
