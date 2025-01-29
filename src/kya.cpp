@@ -49,7 +49,7 @@ extern "C" {
 
 #include "Types.h"
 #include "edPacket.h"
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdSystem.h"
 #include "LargeObject.h"
 #include "TimeController.h"
 #include "LevelScheduleManager.h"
@@ -101,22 +101,6 @@ EFileLoadMode GetFileLoadMode_00424d9c(void)
 
 char* g_szCdRomPrefix_00438548 = "cdrom0:";
 char* g_szHostPrefix_00438550 = "host0:";
-
-bool edSysHandlersInit(int size)
-{
-	bool bVar1;
-
-	bVar1 = edCSysHandlerPool::initialize(&g_SysHandlersNodeTable_00489170, size);
-	if (bVar1 != false) {
-		// AddSystemMessageNodeHandler_002910f0(&edSysHandlersNodeParent_00489140, 0, SystemMessage, 1, 0);
-	}
-	else {
-		/* edSysHandlersInit: Unable to initialize handler system */
-		//SystemMessage(0, 0, s_edSysHandlersInit:_Unable_to_ini_00432b80);
-		//Break();
-	}
-	return bVar1 != false;
-}
 
 void ToUppercase(char* string)
 {

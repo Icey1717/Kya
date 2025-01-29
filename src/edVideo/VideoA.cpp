@@ -1,6 +1,6 @@
 #include "VideoA.h"
 #include "VideoB.h"
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdSystem.h"
 #include "VideoC.h"
 
 #ifdef PLATFORM_WIN
@@ -37,20 +37,20 @@ void CleanupFunc_001ba9e0(void)
 
 void edVideoSetBackgroundColor(byte param_1, byte param_2, byte param_3)
 {
-	g_ActiveVidParams_0048cd90.params18.r = param_1;
-	g_ActiveVidParams_0048cd90.params18.g = param_2;
-	g_ActiveVidParams_0048cd90.params18.b = param_3;
-	if (g_ActiveVidParams_0048cd90.pCamera != (ed_viewport*)0x0) {
-		edViewportSetBackgroundColor(g_ActiveVidParams_0048cd90.pCamera, param_1, param_2, param_3);
+	VideoManager.params18.r = param_1;
+	VideoManager.params18.g = param_2;
+	VideoManager.params18.b = param_3;
+	if (VideoManager.pCamera != (ed_viewport*)0x0) {
+		edViewportSetBackgroundColor(VideoManager.pCamera, param_1, param_2, param_3);
 	}
 	return;
 }
 
 void edVideoSetFadeColor(byte r, byte g, byte b)
 {
-	g_ActiveVidParams_0048cd90.fadeColorR = r;
-	g_ActiveVidParams_0048cd90.fadeColorG = g;
-	g_ActiveVidParams_0048cd90.fadeColorB = b;
+	VideoManager.fadeColorR = r;
+	VideoManager.fadeColorG = g;
+	VideoManager.fadeColorB = b;
 	return;
 }
 
@@ -67,11 +67,11 @@ void edVideoSetFade(float time)
 			fVar1 = time;
 		}
 	}
-	g_ActiveVidParams_0048cd90.bFadeActive = (uint)(fVar1 != 0.0);
-	g_ActiveVidParams_0048cd90.field_0x68 = 0;
-	g_ActiveVidParams_0048cd90.fadeTimeA = (int)(fVar1 * 128.0);
-	g_ActiveVidParams_0048cd90.field_0x70 = 0;
-	g_ActiveVidParams_0048cd90.fadeTimeB = (int)(fVar1 * 128.0);
+	VideoManager.bFadeActive = (uint)(fVar1 != 0.0);
+	VideoManager.field_0x68 = 0;
+	VideoManager.fadeTimeA = (int)(fVar1 * 128.0);
+	VideoManager.field_0x70 = 0;
+	VideoManager.fadeTimeB = (int)(fVar1 * 128.0);
 	return;
 }
 
@@ -80,10 +80,10 @@ void edVideoSetFadeIn(uint param_1)
 	if (0x80 < param_1) {
 		param_1 = 0x80;
 	}
-	g_ActiveVidParams_0048cd90.field_0x68 = 1;
-	g_ActiveVidParams_0048cd90.field_0x70 = -(0x80 / (int)param_1);
-	g_ActiveVidParams_0048cd90.fadeTimeB = 0;
-	g_ActiveVidParams_0048cd90.bFadeActive = 0;
+	VideoManager.field_0x68 = 1;
+	VideoManager.field_0x70 = -(0x80 / (int)param_1);
+	VideoManager.fadeTimeB = 0;
+	VideoManager.bFadeActive = 0;
 	return;
 }
 
@@ -92,23 +92,23 @@ void edVideoSetFadeOut(uint param_1, uint param_2)
 	if (0x80 < param_1) {
 		param_1 = 0x80;
 	}
-	g_ActiveVidParams_0048cd90.field_0x68 = 1;
-	g_ActiveVidParams_0048cd90.field_0x70 = 0x80 / (int)param_1;
-	g_ActiveVidParams_0048cd90.fadeTimeB = 0x80;
-	g_ActiveVidParams_0048cd90.bFadeActive = param_2;
+	VideoManager.field_0x68 = 1;
+	VideoManager.field_0x70 = 0x80 / (int)param_1;
+	VideoManager.fadeTimeB = 0x80;
+	VideoManager.bFadeActive = param_2;
 	return;
 }
 
 byte edVideoIsFadeActive(void)
 {
-	return g_ActiveVidParams_0048cd90.field_0x68;
+	return VideoManager.field_0x68;
 }
 
 void edVideoSetOffset(short inDX, short inDY)
 {
-	g_ActiveVidParams_0048cd90.params18.DX =
-		inDX * (short)(0xa00 / g_ActiveVidParams_0048cd90.screenWidth);
-	g_ActiveVidParams_0048cd90.params18.DY = inDY;
+	VideoManager.params18.DX =
+		inDX * (short)(0xa00 / VideoManager.screenWidth);
+	VideoManager.params18.DY = inDY;
 	_SetVideoEnv();
 	return;
 }

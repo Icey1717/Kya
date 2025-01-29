@@ -254,11 +254,11 @@ edSurface* edVideoGetDrawSurface(void)
 {
 	edSurface* pFVar1;
 
-	if (g_ActiveVidParams_0048cd90.pFrameBuffer == (edSurface*)0x0) {
+	if (VideoManager.pFrameBuffer == (edSurface*)0x0) {
 		pFVar1 = (edSurface*)0x0;
 	}
 	else {
-		pFVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
+		pFVar1 = (VideoManager.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
 	}
 	return pFVar1;
 }
@@ -794,8 +794,8 @@ void ed3DFlushSendDMA3D(void)
 	DPUT_D_CTRL(g_Model_DMAC_Ctrl_mode_00448984);
 	DPUT_D_STAT(D_STAT_CIS0_O);
 #endif
-	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, 1, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
+		edVideoHandlers.maxEventID, 1, (void*)0x0);
 	gCurFlushList = gCurRenderList;
 	gCurRenderList = gCurRenderList != 0 ^ 1;
 	edSysHandlersCall(sysHandler_0048cb90.mainIdentifier, sysHandler_0048cb90.entries,
@@ -9993,11 +9993,9 @@ void ed3DInit(void)
 	}
 	/* Add render handler */
 	edSysHandlersAdd
-	(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, ESHT_RenderScene, ed3DSceneRender, 1, 1);
+	(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, 6, ed3DSceneRender, 1, 1);
 	edSysHandlersAdd
-	(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, ESHT_Sound, ed3DSceneCompute, 1, 0);
+	(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, 7, ed3DSceneCompute, 1, 0);
 	if (ged3DConfig.meshHeaderCountBAlt < 0x180) {
 		ged3DConfig.meshHeaderCountBAlt = ged3DConfig.meshHeaderCountBAlt + 0x180;
 	}

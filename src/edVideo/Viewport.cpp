@@ -56,7 +56,7 @@ ed_viewport* edViewportNew(CameraObjParams* pParams, edSurface* pVidModeDataA, e
 	__s->clearColor.g = 0x40;
 	__s->clearColor.r = 0x40;
 	if ((alpha & 4) != 0) {
-		g_ActiveVidParams_0048cd90.pCamera = __s;
+		VideoManager.pCamera = __s;
 		pCVar1 = (CameraObj_390*)edMemAlloc(TO_HEAP(H_MAIN), sizeof(CameraObj_390));
 		__s->pCameraObj390_0x24 = pCVar1;
 		if (__s->pColorBuffer == (edSurface*)0x0) {
@@ -106,8 +106,8 @@ void edViewportDel(ed_viewport* pCamera, bool bDestroyFrameBuffers)
 			edSurfaceDel(pCamera->pZBuffer);
 		}
 	}
-	if (g_ActiveVidParams_0048cd90.pCamera == pCamera) {
-		g_ActiveVidParams_0048cd90.pCamera = (ed_viewport*)0x0;
+	if (VideoManager.pCamera == pCamera) {
+		VideoManager.pCamera = (ed_viewport*)0x0;
 	}
 	edMemFree(pCamera);
 	return;
@@ -156,7 +156,7 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 
 	// SCAN MASK
 	if ((pViewport->clearColor.a & 4) != 0) {
-		if ((g_ActiveVidParams_0048cd90.params18.ffmode == SCE_GS_FIELD) && (pVVar1->pNext == pVVar1)) {
+		if ((VideoManager.params18.ffmode == SCE_GS_FIELD) && (pVVar1->pNext == pVVar1)) {
 			iVar3 = 3; // Drawing of pixel with odd Y coordinate is prohibited.
 			if (pVVar1->pSurfaceDispEnv->csrValue_0x10 == 0) {
 				iVar3 = 2; // Drawing of pixel with even Y coordinate is prohibited.

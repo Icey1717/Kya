@@ -1,5 +1,5 @@
 #include "edMem.h"
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdHandlers.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -29,22 +29,12 @@ struct HeapFuncTable
 
 HeapFuncTable MemoryHandlers[2];
 
-struct edSysHandlerMemory {
-	edSysHandlerMemory(struct edSysHandlersNodeTable* inNodeParent, int inMaxEventID, int inMainIdentifier)
-		: nodeParent(inNodeParent)
-		, maxEventID(inMaxEventID)
-		, mainIdentifier(inMainIdentifier)
-	{
+typedef edCSysHandlerSystem<8, &edSysHandlerMainPool, 3> edSysHandlerMemory;
 
-	}
+uint edVarMemWorkSize = 0x1B4A880;
 
-	struct edSysHandlersNodeTable* nodeParent;
-	struct edSysHandlersPoolEntry* entries[8];
-	int maxEventID;
-	int mainIdentifier;
-};
-
-uint g_MemWorkSizeB = 0x1B4A880;
+char* edVarMemStackStart = (char*)0x01ff8000;
+uint edVarMemStackSize = 0x8000;
 
 // Contiguous
 
@@ -101,7 +91,7 @@ void sanityCheckFreeList(S_MAIN_MEMORY_HEADER* freeListHead) {
 
 // End Contiguous
 
-edSysHandlerMemory edSysHandlerMemory_004890c0 = edSysHandlerMemory(&g_SysHandlersNodeTable_00489170, 8, 3);
+edSysHandlerMemory edSysHandlerMemory_004890c0;
 
 // Contiguous
 
@@ -129,10 +119,7 @@ char* g_szEdMemClearFlags_00432b40 = "edMemClearFlags";
 
 // End Contiguous
 
-edHeapParams g_SystemHeap_0042df0 = { (char*)0x0, 0x0, 0x10, 0x0 };
-edHeapParams g_Heap3_00424e00 = { (char*)0x02000000, 0x6000000, 0x10, 0x0 };
-edHeapParams g_ScratchpadHeap_00424e10 = { (char*)0x70000000, 0x4000, 0x10, 0x0 };
-edHeapParams g_Heap4_00424e20 = { (char*)0x0, 0x400000, 0x4, 0x0 };
+edSystemData edSystem = { { (char*)0x0, 0x0, 0x10, 0x0 }, { (char*)0x02000000, 0x6000000, 0x10, 0x0 }, { (char*)0x70000000, 0x4000, 0x10, 0x0 }, { (char*)0x0, 0x400000, 0x4, 0x0 } };
 
 void CallHandlerFunction(edSysHandlerMemory* pHandler, int id, char* pData)
 {
@@ -1247,11 +1234,11 @@ void memMastersInit(void)
 	pBlocks[1].maxStackLevel = 0;
 	pBlocks[1].pStartAddr = (char*)(MemoryMasterBlock.aBlocks + MemoryMasterBlock.nbTotalBlocks);
 	int initialAlloc = (int)((char*)pBlocks[1].pStartAddr - (char*)MemoryMasterBlock.aBlocks);
-	pBlocks[1].freeBytes = g_MemWorkSizeB - initialAlloc;
+	pBlocks[1].freeBytes = edVarMemWorkSize - initialAlloc;
 	pBlocks[1].parentBlockIndex = -1;
 	pBlocks[1].freeListHeadAllocatedTo = 2;
-	pBlocks[1].align = g_SystemHeap_0042df0.align;
-	pBlocks[1].offset = g_SystemHeap_0042df0.offset;
+	pBlocks[1].align = edSystem.system.align;
+	pBlocks[1].offset = edSystem.system.offset;
 	pBlocks[1].blockIndex = -1;
 	pBlocks[1].freeListHead = -1;
 	pBlocks[1].prevFreeBlock = -1;
@@ -1262,12 +1249,12 @@ void memMastersInit(void)
 	pBlocks[2].flags = 0x96;
 	pBlocks[2].funcTableID = 0;
 	pBlocks[2].maxStackLevel = 0;
-	pBlocks[2].pStartAddr = g_Heap3_00424e00.startAddress;
-	pBlocks[2].freeBytes = g_Heap3_00424e00.size;
+	pBlocks[2].pStartAddr = edSystem.heap3.startAddress;
+	pBlocks[2].freeBytes = edSystem.heap3.size;
 	pBlocks[2].parentBlockIndex = 1;
 	pBlocks[2].freeListHeadAllocatedTo = 3;
-	pBlocks[2].align = g_Heap3_00424e00.align;
-	pBlocks[2].offset = g_Heap3_00424e00.offset;
+	pBlocks[2].align = edSystem.heap3.align;
+	pBlocks[2].offset = edSystem.heap3.offset;
 	pBlocks[2].blockIndex = -1;
 	pBlocks[2].freeListHead = -1;
 	pBlocks[2].prevFreeBlock = -1;
@@ -1278,12 +1265,12 @@ void memMastersInit(void)
 	pBlocks[3].flags = 0x96;
 	pBlocks[3].funcTableID = 0;
 	pBlocks[3].maxStackLevel = 0;
-	pBlocks[3].pStartAddr = g_ScratchpadHeap_00424e10.startAddress;
-	pBlocks[3].freeBytes = g_ScratchpadHeap_00424e10.size;
+	pBlocks[3].pStartAddr = edSystem.scratchpad.startAddress;
+	pBlocks[3].freeBytes = edSystem.scratchpad.size;
 	pBlocks[3].parentBlockIndex = 2;
 	pBlocks[3].freeListHeadAllocatedTo = 4;
-	pBlocks[3].align = g_ScratchpadHeap_00424e10.align;
-	pBlocks[3].offset = g_ScratchpadHeap_00424e10.offset;
+	pBlocks[3].align = edSystem.scratchpad.align;
+	pBlocks[3].offset = edSystem.scratchpad.offset;
 	pBlocks[3].blockIndex = -1;
 	pBlocks[3].freeListHead = -1;
 	pBlocks[3].prevFreeBlock = -1;
@@ -1294,12 +1281,12 @@ void memMastersInit(void)
 	pBlocks[4].flags = 0x86;
 	pBlocks[4].funcTableID = 1;
 	pBlocks[4].maxStackLevel = 0;
-	pBlocks[4].pStartAddr = g_Heap4_00424e20.startAddress;
-	pBlocks[4].freeBytes = g_Heap4_00424e20.size;
+	pBlocks[4].pStartAddr = edSystem.heap4.startAddress;
+	pBlocks[4].freeBytes = edSystem.heap4.size;
 	pBlocks[4].parentBlockIndex = 3;
 	pBlocks[4].freeListHeadAllocatedTo = -1;
-	pBlocks[4].align = g_Heap4_00424e20.align;
-	pBlocks[4].offset = g_Heap4_00424e20.offset;
+	pBlocks[4].align = edSystem.heap4.align;
+	pBlocks[4].offset = edSystem.heap4.offset;
 	pBlocks[4].blockIndex = -1;
 	pBlocks[4].freeListHead = -1;
 	pBlocks[4].prevFreeBlock = -1;
@@ -1328,14 +1315,14 @@ void memDebugInformationInit(void)
 
 
 #ifdef PLATFORM_WIN
-S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = NULL;
+S_MAIN_MEMORY_HEADER* edVarMemWorkStart = NULL;
 #else
-S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370 = (S_MAIN_MEMORY_HEADER*)0x004a5780;
+S_MAIN_MEMORY_HEADER* edVarMemWorkStart = (S_MAIN_MEMORY_HEADER*)0x004a5780;
 #endif
 
 S_MAIN_MEMORY_HEADER* edmemGetMainHeader()
 {
-	return g_HeapPtr_0040f370;
+	return edVarMemWorkStart;
 }
 
 void edMemInit(short nbTotalBlocks)
@@ -1344,7 +1331,7 @@ void edMemInit(short nbTotalBlocks)
 	MemoryMasterBlock.nextFreeBlock = 0;
 	MemoryMasterBlock.stackLevel = 0;
 	MemoryMasterBlock.field_0xd = 0;
-	MemoryMasterBlock.aBlocks = reinterpret_cast<S_MAIN_MEMORY_HEADER*>(g_SystemHeap_0042df0.startAddress);
+	MemoryMasterBlock.aBlocks = reinterpret_cast<S_MAIN_MEMORY_HEADER*>(edSystem.system.startAddress);
 	MemoryMasterBlock.nbTotalBlocks = nbTotalBlocks;
 	MemoryMasterBlock.nbFreeBlocks = nbTotalBlocks;
 
@@ -1404,7 +1391,7 @@ void* edSystemFastRamGetAddr(void)
 	static void* g_fakeScratch = malloc(0x10000);
 	return g_fakeScratch;
 #endif
-	return (void*)g_ScratchpadHeap_00424e10.startAddress;
+	return (void*)edSystem.scratchpad.startAddress;
 }
 
 // Not in this file.

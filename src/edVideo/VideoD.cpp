@@ -1,6 +1,6 @@
 #include "VideoD.h"
 #include "VideoB.h"
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdSystem.h"
 #include "Viewport.h"
 #include "edDlist.h"
 
@@ -39,13 +39,13 @@ edVideo_Globals edVideo_Globals_00449590 = { 0 };
 
 void _UpdateVideoInfo(void)
 {
-	if (g_ActiveVidParams_0048cd90.omode == SCE_GS_PAL) {
+	if (VideoManager.omode == SCE_GS_PAL) {
 		edVideo_Globals_00449590.field_0x4 = (undefined*)0x0059f740;
 	}
 	else {
 		edVideo_Globals_00449590.field_0x4 = (undefined*)&edmemGetMainHeader()[0x59b].pStartAddr;
 	}
-	edVideo_Globals_00449590.pActiveVidParams = &g_ActiveVidParams_0048cd90;
+	edVideo_Globals_00449590.pActiveVidParams = &VideoManager;
 	return;
 }
 
@@ -66,17 +66,17 @@ ed_video_attr::ed_video_attr()
 	return;
 }
 
-edSysHandlerVideo edSysHandlerVideo_0048cee0 = { &g_SysHandlersNodeTable_00489170, {}, 0xb, 2 };
+edSysHandlerVideo edVideoHandlers;
 
 void edVideoSwap(void)
 {
 	edSurface* pVVar1;
 
-	pVVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
-	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, 0, pVVar1);
-	if (g_ActiveVidParams_0048cd90.field_0xf != 0) {
-		(g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc = pVVar1->pNext;
+	pVVar1 = (VideoManager.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
+		edVideoHandlers.maxEventID, 0, pVVar1);
+	if (VideoManager.field_0xf != 0) {
+		(VideoManager.pFrameBuffer)->pSurfaceDesc->pLink_0xc = pVVar1->pNext;
 	}
 	return;
 }
@@ -84,12 +84,12 @@ void edVideoSwap(void)
 void SetGSRegistersFromVidModeData_002b8e20(edSurface* param_1)
 {
 #ifdef PLATFORM_PS2
-	DPUT_GS_PMODE((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.gs_pmode);
-	DPUT_GS_SMODE2((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.gs_smode2);
+	DPUT_GS_PMODE((ulong)(ushort)VideoManager.params18.gs_pmode);
+	DPUT_GS_SMODE2((ulong)(ushort)VideoManager.params18.gs_smode2);
 	DPUT_GS_DISPFB2(*(u_long*)&param_1->pSurfaceDispEnv->dispfb2);
-	DPUT_GS_DISPLAY2(*(u_long*)&g_ActiveVidParams_0048cd90.disp2);
+	DPUT_GS_DISPLAY2(*(u_long*)&VideoManager.disp2);
 	DPUT_GS_BGCOLOR(0);
-	DPUT_GS_DISPLAY1(*(u_long*)&g_ActiveVidParams_0048cd90.disp1);
+	DPUT_GS_DISPLAY1(*(u_long*)&VideoManager.disp1);
 	DPUT_GS_DISPFB1(*(u_long*)&param_1->pSurfaceDispEnv->dispfb1);
 #endif
 	return;
@@ -100,9 +100,9 @@ void edVideoPutDisplayEnv(void)
 	edSurface* pVVar1;
 	ulong uVar2;
 
-	pVVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
+	pVVar1 = (VideoManager.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
 	SetGSRegistersFromVidModeData_002b8e20(pVVar1->pNext);
-	if ((g_ActiveVidParams_0048cd90.params18.ffmode == SCE_GS_FIELD) && (pVVar1->pNext == pVVar1)) {
+	if ((VideoManager.params18.ffmode == SCE_GS_FIELD) && (pVVar1->pNext == pVVar1)) {
 #ifdef PLATFORM_PS2
 		uVar2 = DGET_GS_CSR();
 		pVVar1->pSurfaceDispEnv->csrValue_0x10 = (byte)((uVar2 & 0x2000) >> 0xd);
@@ -113,43 +113,43 @@ void edVideoPutDisplayEnv(void)
 
 void edVideoPutDrawEnv(void)
 {
-	if (g_ActiveVidParams_0048cd90.pCamera != (ed_viewport*)0x0) {
-		edViewPortApplyDrawingEnv(g_ActiveVidParams_0048cd90.pCamera);
+	if (VideoManager.pCamera != (ed_viewport*)0x0) {
+		edViewPortApplyDrawingEnv(VideoManager.pCamera);
 	}
 	return;
 }
 
 void _ManageFade(void)
 {
-	if (g_ActiveVidParams_0048cd90.field_0x78 != 0) {
+	if (VideoManager.field_0x78 != 0) {
 		IMPLEMENTATION_GUARD_FX();
 		//_DrawFade();
 	}
-	if (g_ActiveVidParams_0048cd90.field_0x68 != 0) {
-		g_ActiveVidParams_0048cd90.fadeTimeA =
-			g_ActiveVidParams_0048cd90.fadeTimeA + g_ActiveVidParams_0048cd90.field_0x70;
-		if (0x80 < g_ActiveVidParams_0048cd90.fadeTimeA) {
-			g_ActiveVidParams_0048cd90.field_0x70 = -1;
+	if (VideoManager.field_0x68 != 0) {
+		VideoManager.fadeTimeA =
+			VideoManager.fadeTimeA + VideoManager.field_0x70;
+		if (0x80 < VideoManager.fadeTimeA) {
+			VideoManager.field_0x70 = -1;
 		}
-		if (g_ActiveVidParams_0048cd90.fadeTimeA == 0) {
-			g_ActiveVidParams_0048cd90.field_0x70 = 1;
+		if (VideoManager.fadeTimeA == 0) {
+			VideoManager.field_0x70 = 1;
 		}
-		if (((0 < g_ActiveVidParams_0048cd90.field_0x70) &&
-			(g_ActiveVidParams_0048cd90.fadeTimeB < g_ActiveVidParams_0048cd90.fadeTimeA)) ||
-			((g_ActiveVidParams_0048cd90.field_0x70 < 0 &&
-				(g_ActiveVidParams_0048cd90.fadeTimeA < g_ActiveVidParams_0048cd90.fadeTimeB)))) {
-			g_ActiveVidParams_0048cd90.field_0x68 = 0;
-			g_ActiveVidParams_0048cd90.fadeTimeA = g_ActiveVidParams_0048cd90.fadeTimeB;
+		if (((0 < VideoManager.field_0x70) &&
+			(VideoManager.fadeTimeB < VideoManager.fadeTimeA)) ||
+			((VideoManager.field_0x70 < 0 &&
+				(VideoManager.fadeTimeA < VideoManager.fadeTimeB)))) {
+			VideoManager.field_0x68 = 0;
+			VideoManager.fadeTimeA = VideoManager.fadeTimeB;
 		}
 	}
-	if (g_ActiveVidParams_0048cd90.field_0x68 != 0 || g_ActiveVidParams_0048cd90.bFadeActive == 1) {
-		g_ActiveVidParams_0048cd90.field_0x7c = g_ActiveVidParams_0048cd90.fadeTimeA;
-		g_ActiveVidParams_0048cd90.field_0x79 = g_ActiveVidParams_0048cd90.fadeColorR;
-		g_ActiveVidParams_0048cd90.field_0x7a = g_ActiveVidParams_0048cd90.fadeColorG;
-		g_ActiveVidParams_0048cd90.field_0x7b = g_ActiveVidParams_0048cd90.fadeColorB;
+	if (VideoManager.field_0x68 != 0 || VideoManager.bFadeActive == 1) {
+		VideoManager.field_0x7c = VideoManager.fadeTimeA;
+		VideoManager.field_0x79 = VideoManager.fadeColorR;
+		VideoManager.field_0x7a = VideoManager.fadeColorG;
+		VideoManager.field_0x7b = VideoManager.fadeColorB;
 	}
-	g_ActiveVidParams_0048cd90.field_0x78 =
-		g_ActiveVidParams_0048cd90.field_0x68 != 0 || g_ActiveVidParams_0048cd90.bFadeActive == 1;
+	VideoManager.field_0x78 =
+		VideoManager.field_0x68 != 0 || VideoManager.bFadeActive == 1;
 	return;
 }
 
@@ -183,8 +183,8 @@ void _VideoTimerSyncVbl(void)
 	uint waitTime;
 	int iVar2;
 
-	waitTime = (uint)g_ActiveVidParams_0048cd90.maxVblank_0xe * (int)edVideo_Globals_00449590.field_0x4;
-	iVar2 = UINT_00449584 - g_ActiveVidParams_0048cd90.lastCount;
+	waitTime = (uint)VideoManager.maxVblank_0xe * (int)edVideo_Globals_00449590.field_0x4;
+	iVar2 = UINT_00449584 - VideoManager.lastCount;
 	puVar1 = (undefined*)abs(iVar2);
 	if (edVideo_Globals_00449590.field_0x4 < puVar1) {
 		iVar2 = 0;
@@ -206,20 +206,20 @@ void edVideoWaitVsync(byte param_1)
 #ifdef PLATFORM_PS2
 	ulong uVar1;
 
-	g_ActiveVidParams_0048cd90.bWaitingForVSync = 1;
-	if (g_ActiveVidParams_0048cd90.bVSyncForever == 0) {
-		g_ActiveVidParams_0048cd90.field_0x52 = param_1;
+	VideoManager.bWaitingForVSync = 1;
+	if (VideoManager.bVSyncForever == 0) {
+		VideoManager.field_0x52 = param_1;
 		_VideoTimerSyncVbl();
-		if ((((g_ActiveVidParams_0048cd90.field_0x52 == 0) ||
-			(g_ActiveVidParams_0048cd90.inter == SCE_GS_NOINTERLACE)) ||
-			(g_ActiveVidParams_0048cd90.params18.ffmode == SCE_GS_FIELD)) ||
-			(g_ActiveVidParams_0048cd90.pFrameBuffer == (edSurface*)0x0)) {
+		if ((((VideoManager.field_0x52 == 0) ||
+			(VideoManager.inter == SCE_GS_NOINTERLACE)) ||
+			(VideoManager.params18.ffmode == SCE_GS_FIELD)) ||
+			(VideoManager.pFrameBuffer == (edSurface*)0x0)) {
 			_edVideoSyncReset();
 		}
 		else {
 			uVar1 = DGET_GS_CSR();
 			if ((uint)((uVar1 & 0x2000) >> 0xd) ==
-				(uint)(g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc->pSurfaceDispEnv->csrValue_0x10) {
+				(uint)(VideoManager.pFrameBuffer)->pSurfaceDesc->pLink_0xc->pSurfaceDispEnv->csrValue_0x10) {
 				_edVideoSyncReset();
 			}
 		}
@@ -227,7 +227,7 @@ void edVideoWaitVsync(byte param_1)
 		return;
 	}
 	do {
-	} while (g_ActiveVidParams_0048cd90.bWaitingForVSync != 0);
+	} while (VideoManager.bWaitingForVSync != 0);
 #else
 	static const double targetFrameTime = 1.0 / 60.0;  // Target frame time for 60 fps (in seconds)
 
@@ -266,19 +266,19 @@ void edVideoFlip(void)
 	}
 #endif
 	/* Render scene */
-	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, 6, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
+		edVideoHandlers.maxEventID, 6, (void*)0x0);
 #ifdef PLATFORM_WIN
 	VU1Emu::Wait();
 #endif
 	edDmaSyncPath();
 	_ManageFade();
 	/* Render UI */
-	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, 10, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
+		edVideoHandlers.maxEventID, 10, (void*)0x0);
 	edDmaSyncPath();
-	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, 9, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
+		edVideoHandlers.maxEventID, 9, (void*)0x0);
 
 #ifdef PLATFORM_WIN
 	Renderer::Native::OnVideoFlip();
@@ -286,13 +286,13 @@ void edVideoFlip(void)
 
 	edVideoWaitVsync(1);
 
-	if (g_ActiveVidParams_0048cd90.field_0xf != 0) {
+	if (VideoManager.field_0xf != 0) {
 		edVideoPutDisplayEnv();
 		edVideoPutDrawEnv();
 	}
 	edVideoSwap();
-	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, 7, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
+		edVideoHandlers.maxEventID, 7, (void*)0x0);
 
 #ifdef PLATFORM_WIN
 	VU1Emu::EndFrame();
@@ -307,8 +307,8 @@ edSurface* edVideoGetDisplaySurface(void)
 	edSurface* pVVar1;
 
 	pVVar1 = (edSurface*)0x0;
-	if (g_ActiveVidParams_0048cd90.pFrameBuffer != (edSurface*)0x0) {
-		pVVar1 = g_ActiveVidParams_0048cd90.pFrameBuffer->pSurfaceDesc->pLink_0xc;
+	if (VideoManager.pFrameBuffer != (edSurface*)0x0) {
+		pVVar1 = VideoManager.pFrameBuffer->pSurfaceDesc->pLink_0xc;
 	}
 	if ((pVVar1 != (edSurface*)0x0) && (pVVar1->pNext != (edSurface*)0x0)) {
 		pVVar1 = pVVar1->pNext;

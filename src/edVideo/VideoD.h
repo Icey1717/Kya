@@ -2,7 +2,7 @@
 #define VIDEO_D_H
 
 #include "Types.h"
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdHandlers.h"
 
 #ifdef PLATFORM_WIN
 #include "delegate.h"
@@ -17,12 +17,7 @@ struct edVideo_Globals {
 	undefined* field_0x4;
 };
 
-struct edSysHandlerVideo {
-	edSysHandlersNodeTable* nodeParent;
-	edSysHandlersPoolEntry* entries[11];
-	int maxEventID;
-	int mainIdentifier;
-};
+typedef edCSysHandlerSystem<11, &edSysHandlerMainPool, 2> edSysHandlerVideo;
 
 void _UpdateVideoInfo(void);
 void edVideoFlip(void);
@@ -31,6 +26,6 @@ edVideo_Globals* edVideoGetInfo(void);
 void edVideoWaitVsync(byte param_1);
 unsigned int _VideoTimerGet(void);
 
-extern edSysHandlerVideo edSysHandlerVideo_0048cee0;
+extern edSysHandlerVideo edVideoHandlers;
 
 #endif //VIDEO_D_H

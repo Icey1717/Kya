@@ -9,7 +9,7 @@
 #include "edC/edCBankBuffer.h"
 #include "edText.h"
 #include "edMem.h"
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdSystem.h"
 #include "Kya.h"
 
 #include "renderer.h"

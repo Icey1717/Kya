@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Rendering/DisplayListData.h"
+#include "EdenLib/edSys/sources/EdHandlers.h"
 
 #ifdef PLATFORM_WIN
 #include "port.h"
@@ -11,22 +12,6 @@
 
 #define PRIM_TYPE_TRIANGLE_LIST 4
 #define PRIM_TYPE_SPRITE 6
-
-struct edSysHandlerDisplayList
-{
-	edSysHandlerDisplayList(struct edSysHandlersNodeTable* inNodeParent, int inMaxEventID, int inMainIdentifier)
-		: nodeParent(inNodeParent)
-		, maxEventID(inMaxEventID)
-		, mainIdentifier(inMainIdentifier)
-	{
-
-	}
-
-	struct edSysHandlersNodeTable* nodeParent;
-	struct edSysHandlersPoolEntry* entries[5];
-	int maxEventID;
-	int mainIdentifier;
-};
 
 struct DisplayList_0x10
 {
@@ -94,7 +79,7 @@ struct edDList_material
 
 extern edDlistConfiguration edDlistConfig;
 
-extern edSysHandlerDisplayList sysHandler_0048cb90;
+extern edCSysHandlerSystem<10, &edSysHandlerMainPool, 5> sysHandler_0048cb90;
 
 #ifdef PLATFORM_WIN
 Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap, int index);

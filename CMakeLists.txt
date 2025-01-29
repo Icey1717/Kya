@@ -68,8 +68,6 @@ set(main_src
 	"${src_root}/edPacket.h"
 	"${src_root}/edMem.cpp"
 	"${src_root}/edMem.h"
-	"${src_root}/edSystem.cpp"
-	"${src_root}/edSystem.h"
 	"${src_root}/edText.cpp"
 	"${src_root}/edText.h"
 	"${src_root}/CollisionRay.cpp"
@@ -315,6 +313,13 @@ set(main_src
 	"${src_root}/EdenLib/edFile/sources/edFilePath.cpp"
 	"${src_root}/EdenLib/edFile/sources/edFileCRC32.cpp"
 	"${src_root}/EdenLib/edFile/sources/ps2/_edFileFilerCDVD.cpp"
+
+	"${src_root}/EdenLib/edSys/sources/EdSystem.cpp"
+	"${src_root}/EdenLib/edSys/sources/EdSystem.h"
+	"${src_root}/EdenLib/edSys/sources/EdHandlers.cpp"
+	"${src_root}/EdenLib/edSys/sources/EdHandlers.h"
+	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.cpp"
+	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.h"
 
 	"${src_root}/edVideo/VideoA.cpp"
 	"${src_root}/edVideo/VideoA.h"

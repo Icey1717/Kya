@@ -96,10 +96,21 @@ void* AllocateFunc_001002a0(size_t size);
 void* Allocate(long amount);
 void _edSystemInitVideoHandlers(void);
 
-extern edHeapParams g_SystemHeap_0042df0;
-extern uint g_MemWorkSizeB;
+struct edSystemData
+{
+	edHeapParams system;
+	edHeapParams heap3;
+	edHeapParams scratchpad;
+	edHeapParams heap4;
+};
 
-extern S_MAIN_MEMORY_HEADER* g_HeapPtr_0040f370;
+extern edSystemData edSystem;
+
+extern uint edVarMemWorkSize;
+extern char* edVarMemStackStart;
+extern uint edVarMemStackSize;
+
+extern S_MAIN_MEMORY_HEADER* edVarMemWorkStart;
 
 #define TO_HEAP(a) (void*)a
 

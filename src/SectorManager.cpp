@@ -1,6 +1,6 @@
 #include "SectorManager.h"
 #include <string.h>
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdSystem.h"
 #include "LevelScheduleManager.h"
 #include "TimeController.h"
 #include "Rendering/CameraPanMasterHeader.h"

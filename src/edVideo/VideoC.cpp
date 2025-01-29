@@ -21,8 +21,8 @@ void _FadeUpdateScreenSize(edSurface* pFrameBuffer)
 
 	iVar2 = (0x800 - ((int)(uint)pFrameBuffer->pSurfaceDesc->screenWidth >> 1)) * 0x10;
 	iVar1 = (0x800 - ((int)(uint)pFrameBuffer->pSurfaceDesc->screenHeight >> 1)) * 0x10;
-	*g_ActiveVidParams_0048cd90.listDataAC.field_0xa4 = (ulong)iVar2 & 0xffffffffU | ((ulong)iVar1 & 0xffffffffU) << 0x10;
-	*g_ActiveVidParams_0048cd90.listDataAC.field_0xa8 =
+	*VideoManager.listDataAC.field_0xa4 = (ulong)iVar2 & 0xffffffffU | ((ulong)iVar1 & 0xffffffffU) << 0x10;
+	*VideoManager.listDataAC.field_0xa8 =
 		(ulong)(int)(iVar2 + (uint)pFrameBuffer->pSurfaceDesc->screenWidth * 0x10) & 0xffffffffU |
 		((ulong)(int)(iVar1 + (uint)pFrameBuffer->pSurfaceDesc->screenHeight * 0x10) & 0xffffffffU) << 0x10;
 	return;
@@ -98,14 +98,14 @@ int _HighResMode(void)
 	int iVar1;
 
 	iVar1 = 0;
-	if (g_ActiveVidParams_0048cd90.inter != SCE_GS_NOINTERLACE) {
-		if ((g_ActiveVidParams_0048cd90.omode == SCE_GS_NTSC) &&
-			(0xe0 < g_ActiveVidParams_0048cd90.screenHeight)) {
+	if (VideoManager.inter != SCE_GS_NOINTERLACE) {
+		if ((VideoManager.omode == SCE_GS_NTSC) &&
+			(0xe0 < VideoManager.screenHeight)) {
 			iVar1 = 1;
 		}
 		else {
-			if ((g_ActiveVidParams_0048cd90.omode == SCE_GS_PAL) &&
-				(0x100 < g_ActiveVidParams_0048cd90.screenHeight)) {
+			if ((VideoManager.omode == SCE_GS_PAL) &&
+				(0x100 < VideoManager.screenHeight)) {
 				iVar1 = 1;
 			}
 		}
@@ -117,44 +117,44 @@ void _SetVideoEnv(void)
 {
 	ulong uVar1;
 
-	if (g_ActiveVidParams_0048cd90.omode == SCE_GS_NTSC) {
-		if (g_ActiveVidParams_0048cd90.inter == SCE_GS_NOINTERLACE) {
+	if (VideoManager.omode == SCE_GS_NTSC) {
+		if (VideoManager.inter == SCE_GS_NOINTERLACE) {
 
-			ulong dispfb2 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O |
-					(ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
-					(ulong)(g_ActiveVidParams_0048cd90.params18.DX + 0x27c << GS_DISPLAY2_DX_O) |
-					(ulong)(g_ActiveVidParams_0048cd90.params18.DY + 0x19) << GS_DISPLAY2_DY_O |
+			ulong dispfb2 = ((ulong)(ushort)VideoManager.params18.DH << GS_DISPLAY2_DH_O |
+					(ulong)(ushort)VideoManager.params18.MAGH << GS_DISPLAY2_MAGH_O |
+					(ulong)(VideoManager.params18.DX + 0x27c << GS_DISPLAY2_DX_O) |
+					(ulong)(VideoManager.params18.DY + 0x19) << GS_DISPLAY2_DY_O |
 					0x9ff00000000);
-			g_ActiveVidParams_0048cd90.disp2 = *(tGS_DISPLAY2*)&dispfb2;
+			VideoManager.disp2 = *(tGS_DISPLAY2*)&dispfb2;
 		}
 		else {
-			uVar1 = (ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
-				(ulong)(g_ActiveVidParams_0048cd90.params18.DX + 0x27c) | (ulong)(g_ActiveVidParams_0048cd90.params18.DY + 0x32) << GS_DISPLAY2_DY_O |
+			uVar1 = (ulong)(ushort)VideoManager.params18.MAGH << GS_DISPLAY2_MAGH_O |
+				(ulong)(VideoManager.params18.DX + 0x27c) | (ulong)(VideoManager.params18.DY + 0x32) << GS_DISPLAY2_DY_O |
 				0x9ff00000000;
-			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)g_ActiveVidParams_0048cd90.params18.DH - (uint)edVideoConfiguration.field_0x1) <<
+			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)VideoManager.params18.DH - (uint)edVideoConfiguration.field_0x1) <<
 				GS_DISPLAY2_DH_O);
-			g_ActiveVidParams_0048cd90.disp2 = *(tGS_DISPLAY2*)&dispfb2;
-			ulong dispfb1 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O | uVar1);
-			g_ActiveVidParams_0048cd90.disp1 = *(tGS_DISPLAY1*)&dispfb1;
+			VideoManager.disp2 = *(tGS_DISPLAY2*)&dispfb2;
+			ulong dispfb1 = ((ulong)(ushort)VideoManager.params18.DH << GS_DISPLAY2_DH_O | uVar1);
+			VideoManager.disp1 = *(tGS_DISPLAY1*)&dispfb1;
 		}
 	}
 	else {
-		if (g_ActiveVidParams_0048cd90.inter == SCE_GS_NOINTERLACE) {
-			ulong dispfb2 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O |
-					(ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
-					(ulong)(g_ActiveVidParams_0048cd90.params18.DX + 0x290) | (ulong)(g_ActiveVidParams_0048cd90.params18.DY + 0x24) << GS_DISPLAY2_DY_O |
+		if (VideoManager.inter == SCE_GS_NOINTERLACE) {
+			ulong dispfb2 = ((ulong)(ushort)VideoManager.params18.DH << GS_DISPLAY2_DH_O |
+					(ulong)(ushort)VideoManager.params18.MAGH << GS_DISPLAY2_MAGH_O |
+					(ulong)(VideoManager.params18.DX + 0x290) | (ulong)(VideoManager.params18.DY + 0x24) << GS_DISPLAY2_DY_O |
 					0x9ff00000000);
-			g_ActiveVidParams_0048cd90.disp2 = *(tGS_DISPLAY2*)&dispfb2;
+			VideoManager.disp2 = *(tGS_DISPLAY2*)&dispfb2;
 		}
 		else {
-			uVar1 = (ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
-				(ulong)(g_ActiveVidParams_0048cd90.params18.DX + 0x290) | (ulong)(g_ActiveVidParams_0048cd90.params18.DY + 0x48) << GS_DISPLAY2_DY_O |
+			uVar1 = (ulong)(ushort)VideoManager.params18.MAGH << GS_DISPLAY2_MAGH_O |
+				(ulong)(VideoManager.params18.DX + 0x290) | (ulong)(VideoManager.params18.DY + 0x48) << GS_DISPLAY2_DY_O |
 				0x9ff00000000;
-			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)g_ActiveVidParams_0048cd90.params18.DH - (uint)edVideoConfiguration.field_0x1) <<
+			ulong dispfb2 = (uVar1 | (ulong)(int)((uint)(ushort)VideoManager.params18.DH - (uint)edVideoConfiguration.field_0x1) <<
 				GS_DISPLAY2_DH_O);
-			g_ActiveVidParams_0048cd90.disp2 = *(tGS_DISPLAY2*)&dispfb2;
-			ulong dispfb1 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O | uVar1);
-			g_ActiveVidParams_0048cd90.disp1 = *(tGS_DISPLAY1*)&dispfb1;
+			VideoManager.disp2 = *(tGS_DISPLAY2*)&dispfb2;
+			ulong dispfb1 = ((ulong)(ushort)VideoManager.params18.DH << GS_DISPLAY2_DH_O | uVar1);
+			VideoManager.disp1 = *(tGS_DISPLAY1*)&dispfb1;
 		}
 	}
 	return;
@@ -174,21 +174,21 @@ void _VideoUpdateSystemViewport(edSurface* pColorBuffer)
 		params.screenHeight = pColorBuffer->pSurfaceDesc->screenHeight;
 	}
 	alpha = 4;
-	if (g_ActiveVidParams_0048cd90.field_0xc != 0) {
+	if (VideoManager.field_0xc != 0) {
 		alpha = 6;
 	}
-	if (g_ActiveVidParams_0048cd90.field_0xb != 0) {
+	if (VideoManager.field_0xb != 0) {
 		alpha = alpha | 1;
 	}
-	if (g_ActiveVidParams_0048cd90.pCamera == (ed_viewport*)0x0) {
+	if (VideoManager.pCamera == (ed_viewport*)0x0) {
 		edViewportNew(&params, pColorBuffer, (edSurface*)0x0, alpha);
-		edViewportSetBackgroundColor(g_ActiveVidParams_0048cd90.pCamera, 0x20, 0x20, 0x40);
+		edViewportSetBackgroundColor(VideoManager.pCamera, 0x20, 0x20, 0x40);
 	}
 	else {
-		edViewportUpdate(g_ActiveVidParams_0048cd90.pCamera, &params, pColorBuffer, 0, alpha);
+		edViewportUpdate(VideoManager.pCamera, &params, pColorBuffer, 0, alpha);
 		edViewportSetBackgroundColor
-		(g_ActiveVidParams_0048cd90.pCamera, g_ActiveVidParams_0048cd90.params18.r,
-			g_ActiveVidParams_0048cd90.params18.g, g_ActiveVidParams_0048cd90.params18.b);
+		(VideoManager.pCamera, VideoManager.params18.r,
+			VideoManager.params18.g, VideoManager.params18.b);
 	}
 	return;
 }
@@ -321,7 +321,7 @@ edSurface* edSurfaceNew(ed_surface_desc* pVidModeData)
 			}
 			if ((pVidModeData->flags_0x8 & 0x20) != 0) {
 				interlaceFormat = 0;
-				if (g_ActiveVidParams_0048cd90.params18.ffmode != SCE_GS_FIELD) {
+				if (VideoManager.params18.ffmode != SCE_GS_FIELD) {
 					interlaceFormat = (byte)uVar4 & 1;
 				}
 				_SetSurfaceDispEnv(pNewFrameBuffer, interlaceFormat);
@@ -358,8 +358,8 @@ void edSurfaceDel(edSurface* pFrameBuffer)
 	uVar3 = 0;
 	if (bVar1 != 0) {
 		do {
-			if (g_ActiveVidParams_0048cd90.pFrameBuffer == pFrameBuffer) {
-				g_ActiveVidParams_0048cd90.pFrameBuffer = (edSurface*)0x0;
+			if (VideoManager.pFrameBuffer == pFrameBuffer) {
+				VideoManager.pFrameBuffer = (edSurface*)0x0;
 			}
 			if (pFrameBuffer->pSurfaceDispEnv != (SurfaceDispEnv*)0x0) {
 				edMemFree(pFrameBuffer->pSurfaceDispEnv);

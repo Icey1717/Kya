@@ -228,6 +228,6 @@ void edVideoInit(void);
 void _edVideoSyncReset(void);
 
 extern edVideoConfig edVideoConfiguration;
-extern ed_video_attr g_ActiveVidParams_0048cd90;
+extern ed_video_attr VideoManager;
 
 #endif //VIDEO_B_H

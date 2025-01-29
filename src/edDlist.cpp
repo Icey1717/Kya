@@ -16,7 +16,7 @@
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/Viewport.h"
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdSystem.h"
 #include "edVideo/VideoD.h"
 #include "port/pointer_conv.h"
 
@@ -120,7 +120,7 @@ _rgba ByteColor_ARRAY_0048dd40[4];
 
 _rgba* g_RGBAQ_00448aa0 = ByteColor_ARRAY_0048dd40;
 
-edSysHandlerDisplayList sysHandler_0048cb90 = edSysHandlerDisplayList(&g_SysHandlersNodeTable_00489170, 5, 10);
+edCSysHandlerSystem<10, &edSysHandlerMainPool, 5> sysHandler_0048cb90;
 
 void edDListInitMemory(void)
 {
@@ -597,16 +597,13 @@ void edDListInit(void)
 	gCurRenderState = 1;
 	gNbMatrix = 0;
 	gCurFlushState = 0;
-	edSysHandlersAdd(sysHandler_0048cb90.nodeParent, sysHandler_0048cb90.entries, sysHandler_0048cb90.maxEventID, (edSysHandlerType)0, edDListInterrupt, 1, 0);
-	edSysHandlersAdd(sysHandler_0048cb90.nodeParent, sysHandler_0048cb90.entries, sysHandler_0048cb90.maxEventID, (edSysHandlerType)1, edDListInterrupt, 1, 0);
-	edSysHandlersAdd(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, (edSysHandlerType)2, edDListInterrupt, 1, 0);
+	edSysHandlersAdd(sysHandler_0048cb90.nodeParent, sysHandler_0048cb90.entries, sysHandler_0048cb90.maxEventID, 0, edDListInterrupt, 1, 0);
+	edSysHandlersAdd(sysHandler_0048cb90.nodeParent, sysHandler_0048cb90.entries, sysHandler_0048cb90.maxEventID, 1, edDListInterrupt, 1, 0);
+	edSysHandlersAdd(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, 2, edDListInterrupt, 1, 0);
 	edSysHandlersAdd
-	(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, ESHT_Profile_1, edDListInterrupt, 1, 0);
+	(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, 0, edDListInterrupt, 1, 0);
 	edSysHandlersAdd
-	(edSysHandlerVideo_0048cee0.nodeParent, edSysHandlerVideo_0048cee0.entries,
-		edSysHandlerVideo_0048cee0.maxEventID, ESHT_RenderUI, edDListInterrupt, 1, 0);
+	(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, 10, edDListInterrupt, 1, 0);
 	gbInitDone = 1;
 	//edDlistDebugInit();
 	edDListInitStripPKT();

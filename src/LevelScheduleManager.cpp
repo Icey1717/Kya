@@ -14,7 +14,7 @@
 #include "port.h"
 #endif
 
-#include "edSystem.h"
+#include "EdenLib/edSys/sources/EdSystem.h"
 #include "MemoryStream.h"
 #include "ed3D.h"
 #include "FileManager3D.h"
