@@ -171,8 +171,8 @@ void CFrontendDisplay::Game_Init()
 	peVar2 = edVideoGetInfo();
 	local_8.posY = 0;
 	local_8.posX = 0;
-	local_8.screenWidth = (peVar2->pActiveVidParams->params26).screenWidth;
-	local_8.screenHeight = (peVar2->pActiveVidParams->params26).screenHeight;
+	local_8.screenWidth = peVar2->pActiveVidParams->screenWidth;
+	local_8.screenHeight = peVar2->pActiveVidParams->screenHeight;
 	pVidModeDataA = VideoGetDisplaybuffer();
 	pVidModeDataB = VideoGetZbuffer();
 	pCVar3 = edViewportNew(&local_8, pVidModeDataA, pVidModeDataB, 2);
@@ -355,6 +355,26 @@ void CFrontendDisplay::Level_LoadContext()
 		//FUN_00408c60(this->pFreedWolfun);
 	}
 
+	return;
+}
+
+void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInterface* pInterface)
+{
+	switch (interfaceType) {
+	case FRONTEND_INTERFACE_LIFE:
+		this->pHealthBar->SetInterface(pInterface);
+		break;
+	default:
+		IMPLEMENTATION_GUARD();
+		break;
+	}
+
+	return;
+}
+
+void CFrontendDisplay::SetGlobalFunc_001cf8e0(void)
+{
+	Global_00448814 = 1;
 	return;
 }
 

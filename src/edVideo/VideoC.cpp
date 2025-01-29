@@ -98,14 +98,14 @@ int _HighResMode(void)
 	int iVar1;
 
 	iVar1 = 0;
-	if (g_ActiveVidParams_0048cd90.params26.inter != SCE_GS_NOINTERLACE) {
-		if ((g_ActiveVidParams_0048cd90.params26.omode == SCE_GS_NTSC) &&
-			(0xe0 < g_ActiveVidParams_0048cd90.params26.screenHeight)) {
+	if (g_ActiveVidParams_0048cd90.inter != SCE_GS_NOINTERLACE) {
+		if ((g_ActiveVidParams_0048cd90.omode == SCE_GS_NTSC) &&
+			(0xe0 < g_ActiveVidParams_0048cd90.screenHeight)) {
 			iVar1 = 1;
 		}
 		else {
-			if ((g_ActiveVidParams_0048cd90.params26.omode == SCE_GS_PAL) &&
-				(0x100 < g_ActiveVidParams_0048cd90.params26.screenHeight)) {
+			if ((g_ActiveVidParams_0048cd90.omode == SCE_GS_PAL) &&
+				(0x100 < g_ActiveVidParams_0048cd90.screenHeight)) {
 				iVar1 = 1;
 			}
 		}
@@ -117,8 +117,8 @@ void _SetVideoEnv(void)
 {
 	ulong uVar1;
 
-	if (g_ActiveVidParams_0048cd90.params26.omode == SCE_GS_NTSC) {
-		if (g_ActiveVidParams_0048cd90.params26.inter == SCE_GS_NOINTERLACE) {
+	if (g_ActiveVidParams_0048cd90.omode == SCE_GS_NTSC) {
+		if (g_ActiveVidParams_0048cd90.inter == SCE_GS_NOINTERLACE) {
 
 			ulong dispfb2 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O |
 					(ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
@@ -139,7 +139,7 @@ void _SetVideoEnv(void)
 		}
 	}
 	else {
-		if (g_ActiveVidParams_0048cd90.params26.inter == SCE_GS_NOINTERLACE) {
+		if (g_ActiveVidParams_0048cd90.inter == SCE_GS_NOINTERLACE) {
 			ulong dispfb2 = ((ulong)(ushort)g_ActiveVidParams_0048cd90.params18.DH << GS_DISPLAY2_DH_O |
 					(ulong)(ushort)g_ActiveVidParams_0048cd90.params18.MAGH << GS_DISPLAY2_MAGH_O |
 					(ulong)(g_ActiveVidParams_0048cd90.params18.DX + 0x290) | (ulong)(g_ActiveVidParams_0048cd90.params18.DY + 0x24) << GS_DISPLAY2_DY_O |
@@ -174,10 +174,10 @@ void _VideoUpdateSystemViewport(edSurface* pColorBuffer)
 		params.screenHeight = pColorBuffer->pSurfaceDesc->screenHeight;
 	}
 	alpha = 4;
-	if (g_ActiveVidParams_0048cd90.params26.field_0xc != 0) {
+	if (g_ActiveVidParams_0048cd90.field_0xc != 0) {
 		alpha = 6;
 	}
-	if (g_ActiveVidParams_0048cd90.params26.field_0xb != 0) {
+	if (g_ActiveVidParams_0048cd90.field_0xb != 0) {
 		alpha = alpha | 1;
 	}
 	if (g_ActiveVidParams_0048cd90.pCamera == (ed_viewport*)0x0) {

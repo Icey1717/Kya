@@ -118,6 +118,9 @@ public:
 	void Level_Setup(struct ByteCode* pMemoryStream);
 	bool IsFadeTermActive(void);
 
+	bool FUN_001b9340(void);
+	bool FUN_001b9320(void);
+
 	void LoadFunc_001b87b0(void);
 
 	void SetFadeStateTerm(bool bFadeOut);

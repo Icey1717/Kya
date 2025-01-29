@@ -13,12 +13,11 @@ Multidelegate<>& GetOnVideoFlip();
 #endif // PLATFORM_WIN
 
 struct edVideo_Globals {
-	struct edVideoData* pActiveVidParams;
+	struct ed_video_attr* pActiveVidParams;
 	undefined* field_0x4;
 };
 
 struct edSysHandlerVideo {
-	edSysHandlerVideo();
 	edSysHandlersNodeTable* nodeParent;
 	edSysHandlersPoolEntry* entries[11];
 	int maxEventID;

@@ -644,13 +644,14 @@ void CActorHeroPrivate::Init()
 	local_10 = 0;
 	DoMessage(this, (ACTOR_MESSAGE)0x79, (MSG_PARAM)0);
 	this->field_0xcbc = 0;
-	//pFVar4 = CScene::ptable.g_FrontendManager_00451680;
-	//uVar7 = (**(code**)((int)(this->pVTable + 1) + 0x44))(this);
-	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 0, uVar7);
+	
 	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 2, &this->field_0xab8);
 	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 3, &this->field_0xad8);
 	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 6, &this->field_0xadc);
 	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 7, &this->field_0xc84);
+
+	CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_LIFE, GetLifeInterfaceOther());
+
 	return;
 }
 

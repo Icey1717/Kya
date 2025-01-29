@@ -16,7 +16,7 @@
 #include "Viewport.h"
 
 edVideoConfig edVideoConfiguration = { 0 };
-edVideoData g_ActiveVidParams_0048cd90 = { 0 };
+ed_video_attr g_ActiveVidParams_0048cd90;
 
 void _VideoManagerAddFlippingSurface(edSurface* pNewFrameBuffer)
 {
@@ -84,8 +84,8 @@ void _FadeInit(void)
 	int iVar1;
 	int iVar2;
 
-	iVar2 = (0x800 - ((int)(uint)g_ActiveVidParams_0048cd90.params26.screenWidth >> 1)) * 0x10;
-	iVar1 = (0x800 - ((int)(uint)g_ActiveVidParams_0048cd90.params26.screenHeight >> 1)) * 0x10;
+	iVar2 = (0x800 - ((int)(uint)g_ActiveVidParams_0048cd90.screenWidth >> 1)) * 0x10;
+	iVar1 = (0x800 - ((int)(uint)g_ActiveVidParams_0048cd90.screenHeight >> 1)) * 0x10;
 	g_ActiveVidParams_0048cd90.fadeColorR = 0;
 	g_ActiveVidParams_0048cd90.fadeColorG = 0;
 	g_ActiveVidParams_0048cd90.fadeColorB = 0;
@@ -152,8 +152,8 @@ void _FadeInit(void)
 
 	// XYZF2
 	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[16] = SCE_GS_SET_XYZF(
-		(int)(iVar2 + (uint)g_ActiveVidParams_0048cd90.params26.screenWidth * 0x10) & 0xffffffffU,
-		(int)(iVar1 + (uint)g_ActiveVidParams_0048cd90.params26.screenHeight * 0x10) & 0xffffffffU,
+		(int)(iVar2 + (uint)g_ActiveVidParams_0048cd90.screenWidth * 0x10) & 0xffffffffU,
+		(int)(iVar1 + (uint)g_ActiveVidParams_0048cd90.screenHeight * 0x10) & 0xffffffffU,
 		0, 0);
 	g_ActiveVidParams_0048cd90.listDataAC.field_0x0[17] = SCE_GS_XYZF2;
 
@@ -176,7 +176,6 @@ void _FadeInit(void)
 	return;
 }
 
-
 void edVideoSetAttribute(ed_video_attr* pAttr)
 {
 	int canInterlace;
@@ -186,9 +185,27 @@ void edVideoSetAttribute(ed_video_attr* pAttr)
 	bool bShouldInterlace;
 
 	if (pAttr == (ed_video_attr*)0x0) {
-		pAttr = &g_ActiveVidParams_0048cd90.params26;
+		pAttr = &g_ActiveVidParams_0048cd90;
 	}
-	g_ActiveVidParams_0048cd90.params26 = *pAttr;
+
+	g_ActiveVidParams_0048cd90.screenWidth = pAttr->screenWidth;
+	g_ActiveVidParams_0048cd90.screenHeight = pAttr->screenHeight;
+	g_ActiveVidParams_0048cd90.vidMode1 = pAttr->vidMode1;
+	g_ActiveVidParams_0048cd90.omode = pAttr->omode;
+	g_ActiveVidParams_0048cd90.isNTSC = pAttr->isNTSC;
+	g_ActiveVidParams_0048cd90.inter = pAttr->inter;
+	g_ActiveVidParams_0048cd90.field_0xb = pAttr->field_0xb;
+	g_ActiveVidParams_0048cd90.field_0xc = pAttr->field_0xc;
+	g_ActiveVidParams_0048cd90.bVSyncForever = pAttr->bVSyncForever;
+	g_ActiveVidParams_0048cd90.maxVblank_0xe = pAttr->maxVblank_0xe;
+	g_ActiveVidParams_0048cd90.field_0xf = pAttr->field_0xf;
+	g_ActiveVidParams_0048cd90.field_0x10[0] = pAttr->field_0x10[0];
+	g_ActiveVidParams_0048cd90.field_0x10[1] = pAttr->field_0x10[1];
+	g_ActiveVidParams_0048cd90.field_0x10[2] = pAttr->field_0x10[2];
+	g_ActiveVidParams_0048cd90.field_0x10[3] = pAttr->field_0x10[3];
+	g_ActiveVidParams_0048cd90.field_0x14 = pAttr->field_0x14;
+	g_ActiveVidParams_0048cd90.field_0x18 = pAttr->field_0x18;
+	g_ActiveVidParams_0048cd90.field_0x19 = pAttr->field_0x19;
 #ifdef PLATFORM_PS2
 	sceGsSyncV(0);
 #endif
@@ -201,7 +218,7 @@ void edVideoSetAttribute(ed_video_attr* pAttr)
 	g_ActiveVidParams_0048cd90.params18.ffmode = bShouldInterlace ^ 1;
 	if (pAttr->field_0x10[0] != '\0') {
 #ifdef PLATFORM_PS2
-		sceGsResetGraph(0, (ushort)pAttr->inter, g_ActiveVidParams_0048cd90.params26.omode, (ushort)g_ActiveVidParams_0048cd90.params18.ffmode);
+		sceGsResetGraph(0, (ushort)pAttr->inter, g_ActiveVidParams_0048cd90.omode, (ushort)g_ActiveVidParams_0048cd90.params18.ffmode);
 #endif
 	}
 #ifdef PLATFORM_PS2
@@ -299,7 +316,7 @@ int _edVideoSync(int cause)
 
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 3, (void*)0x0);
-	if (g_ActiveVidParams_0048cd90.params26.bVSyncForever == 0) {
+	if (g_ActiveVidParams_0048cd90.bVSyncForever == 0) {
 		if (g_ActiveVidParams_0048cd90.vblankCount == 0) {
 			g_ActiveVidParams_0048cd90.lastCount = _VideoTimerGet();
 		}
@@ -307,8 +324,8 @@ int _edVideoSync(int cause)
 	}
 	else {
 		g_ActiveVidParams_0048cd90.vblankCount = g_ActiveVidParams_0048cd90.vblankCount + 1;
-		if (g_ActiveVidParams_0048cd90.params26.maxVblank_0xe <= g_ActiveVidParams_0048cd90.vblankCount) {
-			if ((((g_ActiveVidParams_0048cd90.field_0x52 == 0) || (g_ActiveVidParams_0048cd90.params26.inter == SCE_GS_NOINTERLACE)) ||
+		if (g_ActiveVidParams_0048cd90.maxVblank_0xe <= g_ActiveVidParams_0048cd90.vblankCount) {
+			if ((((g_ActiveVidParams_0048cd90.field_0x52 == 0) || (g_ActiveVidParams_0048cd90.inter == SCE_GS_NOINTERLACE)) ||
 				(g_ActiveVidParams_0048cd90.params18.ffmode == SCE_GS_FIELD)) ||
 				(g_ActiveVidParams_0048cd90.pFrameBuffer == (edSurface*)0x0)) {
 				_edVideoSyncReset();
@@ -381,7 +398,7 @@ void edVideoInit(void)
 	local_20.maxVblank_0xe = 1;
 	local_20.field_0xf = 1;
 	local_20.field_0x10[0] = '\x01';
-	memset(&g_ActiveVidParams_0048cd90, 0, sizeof(edVideoData));
+	memset(&g_ActiveVidParams_0048cd90, 0, sizeof(ed_video_attr));
 	local_20.screenWidth = 0x280;
 	local_20.screenHeight = 0x100;
 	local_20.vidMode1 = 0;

@@ -6,6 +6,7 @@
 #include "Frontend.h"
 #include "Rendering/DisplayList.h"
 #include "TimeController.h"
+#include "MathOps.h"
 
 float gLifePopupTime = 0.2f;
 
@@ -175,6 +176,24 @@ void CFrontendLifeGauge::Term()
 
 float FLOAT_0044885c = 2.0f;
 
+edF32VECTOR2 EXTRA_HEALTH_SCALE = { 0.25f, 0.0625f };
+
+edF32VECTOR2 EXTRA_HEALTH_GAUGE_POSITIONS[4] = {
+	{ 0.125f, 0.05f },
+	{ 0.118f, 0.068f },
+	{ 0.100f, 0.086f },
+	{ 0.075f, 0.104f }
+};
+
+edF32VECTOR2 EXTRA_HEALTH_FILL_POSITIONS[4] = {
+	{ 0.125f, -0.010f },
+	{ 0.118f, -0.028f },
+	{ 0.100f, -0.046f },
+	{ 0.075f, -0.064f }
+};
+
+float DISPLAY_TIME_EXT = 1.0f;
+
 void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 {
 	CLifeInterface* pLife;
@@ -219,7 +238,6 @@ void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 
 		break;
 	case 7:
-		IMPLEMENTATION_GUARD(
 		if (fVar4 < DISPLAY_TIME_EXT) {
 			fVar5 = fVar4 / DISPLAY_TIME_EXT;
 		}
@@ -235,18 +253,12 @@ void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 			this->field_0x3c = fVar4;
 		}
 
-		edF32Vector2LERP(&local_8, &GAUGE_OFFSET, edF32VECTOR2_ARRAY_0042c670 + this->field_0x384 + -1, fVar5);
-		edF32Vector2LERP(&local_10, &GAUGE_SCALE, &edF32VECTOR2_0042c6b0, fVar5);
-		pCVar2 = (CFrontendLifeGauge*)((int)this + (this->field_0x380 + -1) * 0x180);
-		pCVar2->aDualSprites[0].spriteGauge.bValid = false;
-		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.position.x = local_8.x;
-		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.position.y = local_8.y;
-		pCVar2 = (CFrontendLifeGauge*)((int)this + (this->field_0x380 + -1) * 0x180);
-		pCVar2->aDualSprites[0].spriteGauge.bValid = false;
-		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.scale.x = local_10.x;
-		pCVar2->aDualSprites[0].spriteGauge.field_0x5c.scale.y = local_10.y;
-		(&this->spriteFill2)[this->field_0x380 * 2].field_0x4 = 0;
-		)
+		edF32Vector2LERP(&local_8, &GAUGE_OFFSET, EXTRA_HEALTH_GAUGE_POSITIONS + this->field_0x384 + -1, fVar5);
+		edF32Vector2LERP(&local_10, &GAUGE_SCALE, &EXTRA_HEALTH_SCALE, fVar5);
+
+		this->aDualSprites[this->field_0x380 - 1].spriteGauge.UpdateSlotPosition(local_8.x, local_8.y);
+		this->aDualSprites[this->field_0x380 - 1].spriteGauge.UpdateSlotScale(local_10.x, local_10.y);
+		this->aDualSprites[this->field_0x380 - 1].spriteFill.bValid = false;
 	}
 
 	return;
@@ -375,22 +387,6 @@ bool CFrontendLifeGauge::UpdateGauge(float param_1)
 
 	return bVar1;
 }
-
-edF32VECTOR2 EXTRA_HEALTH_SCALE = { 0.25f, 0.0625f };
-
-edF32VECTOR2 EXTRA_HEALTH_GAUGE_POSITIONS[4] = {
-	{ 0.125f, 0.05f },
-	{ 0.118f, 0.068f },
-	{ 0.100f, 0.086f },
-	{ 0.075f, 0.104f }
-};
-
-edF32VECTOR2 EXTRA_HEALTH_FILL_POSITIONS[4] = {
-	{ 0.125f, -0.010f },
-	{ 0.118f, -0.028f },
-	{ 0.100f, -0.046f },
-	{ 0.075f, -0.064f }
-};
 
 void CFrontendLifeGauge::UpdatePercent(float value)
 {
@@ -628,6 +624,35 @@ void CFrontendLifeGauge::HideLifeAlways()
 
 void CFrontendLifeGauge::ShowLifeExt()
 {
-	IMPLEMENTATION_GUARD();
+	float fVar1;
+
+	switch (this->state) {
+	case 0:
+		this->state = 2;
+		break;
+	case 1:
+		this->state = 2;
+		break;
+	case 3:
+		MoveToNext(&this->slotShow);
+		this->state = 2;
+		break;
+	case 4:
+		MoveToNext(&this->slotShow);
+		this->state = 2;
+		this->bVisible = 1;
+		break;
+	case 5:
+		fVar1 = CFrontend::GetTime();
+		this->field_0x3c = fVar1;
+		this->state = 7;
+		break;
+	case 6:
+		fVar1 = CFrontend::GetTime();
+		this->field_0x3c = fVar1;
+		this->state = 7;
+	}
+
+	return;
 }
 

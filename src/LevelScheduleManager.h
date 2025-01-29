@@ -226,6 +226,7 @@ public:
 	int* LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* pFileBuffer, int count, S_LEVEL_INFO* pLevelInfo);
 	void LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo);
 	void Levels_LoadInfoBank();
+	void Episode_LoadFromIniFile();
 
 	void SaveGame_SaveCurLevelState(int param_2);
 

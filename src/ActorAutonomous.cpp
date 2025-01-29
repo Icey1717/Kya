@@ -1706,8 +1706,22 @@ CLifeInterface::CLifeInterface()
 
 bool CLifeInterface::Manage()
 {
-	IMPLEMENTATION_GUARD();
-	return true;
+	bool bVar1;
+
+	bVar1 = CScene::_pinstance->IsFadeTermActive();
+	bVar1 = bVar1 != false;
+
+	if (!bVar1) {
+		bVar1 = CScene::_pinstance->FUN_001b9340();
+		bVar1 = bVar1 != false;
+	}
+
+	if (!bVar1) {
+		bVar1 = CScene::_pinstance->FUN_001b9320();
+		bVar1 = bVar1 != false;
+	}
+
+	return (bVar1 ^ 1);
 }
 
 float CLifeInterface::GetValue()

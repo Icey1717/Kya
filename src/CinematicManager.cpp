@@ -1999,10 +1999,8 @@ void CCinematic::Manage()
 		if (this->triggerActorRef.Get() == (CActor*)0x0) {
 			pTriggerActor = CActorHero::_gThis;
 		}
-
-		int computeZoneResult;
 	
-		if ((pTriggerActor == (CActorHero*)0x0) || (computeZoneResult = edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pTriggerActor->currentLocation , 0), computeZoneResult == 2)) {
+		if ((pTriggerActor == (CActorHero*)0x0) || (edEventComputeZoneAgainstVertex((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, &pTriggerActor->currentLocation, 0) == 2)) {
 			this->flags_0x8 = this->flags_0x8 & 0xfffffdff;
 			bVar1 = this->state != CS_Stopped;
 
@@ -2017,33 +2015,28 @@ void CCinematic::Manage()
 			}
 		}
 	}
+
 	bVar1 = this->pSwitchListA != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
 	if (bVar1) {
 		bVar1 = this->pStreamEventCameraA != 0;
 	}
+
 	if (bVar1) {
 		this->pStreamEventCameraA->Manage((CActor*)0x0);
 	}
+
 	bVar1 = this->pSwitchListB != (S_STREAM_NTF_TARGET_SWITCH_LIST*)0x0;
 	if (bVar1) {
 		bVar1 = this->pStreamEventCameraB != 0;
 	}
+
 	if (bVar1) {
 		this->pStreamEventCameraA->Manage((CActor*)0x0);
 	}
+
 	if ((this->state != CS_Stopped) && ((GameFlags & GAME_STATE_PAUSED) == 0)) {
 
-		// #HACK
-		//if (this->totalCutsceneDelta < 1.0f) 
-		{
-			//this->totalCutsceneDelta = 43.661f;
-			//this->totalCutsceneDelta = 29.3129902f;
-			//this->totalCutsceneDelta = 51.703;
-			IncrementCutsceneDelta();
-		}
-		//else {
-		//	this->totalCutsceneDelta = 1.0f;
-		//}
+		IncrementCutsceneDelta();
 
 		CUTSCENE_LOG(LogLevel::Verbose, "CCinematic::Manage Updating cutscene time: {}", this->totalCutsceneDelta);
 	}
@@ -2051,16 +2044,15 @@ void CCinematic::Manage()
 		iVar2 = this->cineBankLoadStage_0x2b4;
 		if (iVar2 != 4) {
 			if (iVar2 == 3) {
-				bVar1 = this->pCineBankEntry->is_loaded();
-				if (bVar1 != false) {
+				if (this->pCineBankEntry->is_loaded() != false) {
 					this->cineBankLoadStage_0x2b4 = 4;
 				}
 			}
 			else {
-				if (((iVar2 == 2) && (bVar1 = edSoundAreAllSoundDataLoaded(), bVar1 != false)) &&
-					(bVar1 = edMusicAreAllMusicDataLoaded(), bVar1 != false)) {
+				if (((iVar2 == 2) && (bVar1 = edSoundAreAllSoundDataLoaded(), bVar1 != false)) && (bVar1 = edMusicAreAllMusicDataLoaded(), bVar1 != false)) {
 					this->pCineBankEntry->close();
 					this->pCineBankEntry = (edCBankBufferEntry*)0x0;
+
 					LoadCineBnk(true);
 				}
 			}
@@ -2076,13 +2068,14 @@ void CCinematic::Manage()
 				ManageState_InterpolateBegin(this);)
 			}
 		}
+
 		if ((this != (CCinematic*)0xffffff4c) && (this->field_0x2c8 != -1.0f)) {
 			IMPLEMENTATION_GUARD_AUDIO(
 			fVar4 = edFIntervalLERP((this->pActor->actorBase).data.adjustedMagnitude, this->field_0x2c8, this->field_0x2cc,
 				this->field_0x2d4, this->field_0x2d0);
 			soundInfo = (this->cinematicLoadObject).BWCinSourceAudio_Obj.intFieldA;
 			if (soundInfo != 0) {
-				UsedInCutsceneManagerUpdateI(fVar4, soundInfo);
+				edSoundInstanceSetVolume(fVar4, soundInfo);
 			})
 		}
 	}

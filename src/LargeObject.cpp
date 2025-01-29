@@ -265,8 +265,8 @@ CScene::CScene()
 	peVar11 = edVideoGetInfo();
 	local_8.posY = 0;
 	local_8.posX = 0;
-	local_8.screenWidth = peVar11->pActiveVidParams->params26.screenWidth;
-	local_8.screenHeight = peVar11->pActiveVidParams->params26.screenHeight;
+	local_8.screenWidth = peVar11->pActiveVidParams->screenWidth;
+	local_8.screenHeight = peVar11->pActiveVidParams->screenHeight;
 	pVVar12 = VideoGetDisplaybuffer();
 	pVVar13 = VideoGetZbuffer();
 	pCVar14 = edViewportNew(&local_8, pVVar12, pVVar13, 3);
@@ -927,6 +927,16 @@ bool CScene::IsFadeTermActive()
 	return (this->curState - 6U) < 2;
 }
 
+bool CScene::FUN_001b9340(void)
+{
+	return (this->curState - 1U) < 3;
+}
+
+bool CScene::FUN_001b9320(void)
+{
+	return (this->curState - 4U) < 2;
+}
+
 void Func_002b6db0(ed_3D_Scene* pStaticMeshMaster, uint width, uint height)
 {
 	ed_viewport* peVar1;
@@ -1110,7 +1120,6 @@ void CScene::HandleFogAndClippingSettings()
 	}
 	return;
 }
-
 
 void CScene::PopFogAndClippingSettings(S_STREAM_FOG_DEF* pFogStream)
 {

@@ -39,7 +39,7 @@ edVideo_Globals edVideo_Globals_00449590 = { 0 };
 
 void _UpdateVideoInfo(void)
 {
-	if (g_ActiveVidParams_0048cd90.params26.omode == SCE_GS_PAL) {
+	if (g_ActiveVidParams_0048cd90.omode == SCE_GS_PAL) {
 		edVideo_Globals_00449590.field_0x4 = (undefined*)0x0059f740;
 	}
 	else {
@@ -49,34 +49,24 @@ void _UpdateVideoInfo(void)
 	return;
 }
 
-void SetVideoDefaults_002ba440(edVideoData* param_1)
+ed_video_attr::ed_video_attr()
 {
-	(param_1->params26).screenWidth = 0x200;
-	(param_1->params26).screenHeight = 0x200;
-	(param_1->params26).vidMode1 = 0;
-	(param_1->params26).omode = SCE_GS_PAL;
-	(param_1->params26).isNTSC = 1;
-	(param_1->params26).inter = SCE_GS_INTERLACE;
-	(param_1->params26).field_0xb = 1;
-	(param_1->params26).field_0xc = 1;
-	(param_1->params26).bVSyncForever = 1;
-	(param_1->params26).maxVblank_0xe = 1;
-	(param_1->params26).field_0xf = 1;
-	(param_1->params26).field_0x10[0] = '\x01';
+	this->screenWidth = 0x200;
+	this->screenHeight = 0x200;
+	this->vidMode1 = 0;
+	this->omode = SCE_GS_PAL;
+	this->isNTSC = 1;
+	this->inter = SCE_GS_INTERLACE;
+	this->field_0xb = 1;
+	this->field_0xc = 1;
+	this->bVSyncForever = 1;
+	this->maxVblank_0xe = 1;
+	this->field_0xf = 1;
+	this->field_0x10[0] = '\x01';
 	return;
 }
 
-edSysHandlerVideo edSysHandlerVideo_0048cee0;
-
-edSysHandlerVideo::edSysHandlerVideo()
-{
-	SetVideoDefaults_002ba440(&g_ActiveVidParams_0048cd90);
-	nodeParent = &g_SysHandlersNodeTable_00489170;
-	maxEventID = 0xb;
-	mainIdentifier = 2;
-	//__register_global_object((undefined*)&edSysHandlerVideo_0048cee0, Destructor, &EdFileGlobal_10_0048ced0);
-	return;
-}
+edSysHandlerVideo edSysHandlerVideo_0048cee0 = { &g_SysHandlersNodeTable_00489170, {}, 0xb, 2 };
 
 void edVideoSwap(void)
 {
@@ -85,7 +75,7 @@ void edVideoSwap(void)
 	pVVar1 = (g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc;
 	edSysHandlersCall(edSysHandlerVideo_0048cee0.mainIdentifier, edSysHandlerVideo_0048cee0.entries,
 		edSysHandlerVideo_0048cee0.maxEventID, 0, pVVar1);
-	if (g_ActiveVidParams_0048cd90.params26.field_0xf != 0) {
+	if (g_ActiveVidParams_0048cd90.field_0xf != 0) {
 		(g_ActiveVidParams_0048cd90.pFrameBuffer)->pSurfaceDesc->pLink_0xc = pVVar1->pNext;
 	}
 	return;
@@ -193,7 +183,7 @@ void _VideoTimerSyncVbl(void)
 	uint waitTime;
 	int iVar2;
 
-	waitTime = (uint)g_ActiveVidParams_0048cd90.params26.maxVblank_0xe * (int)edVideo_Globals_00449590.field_0x4;
+	waitTime = (uint)g_ActiveVidParams_0048cd90.maxVblank_0xe * (int)edVideo_Globals_00449590.field_0x4;
 	iVar2 = UINT_00449584 - g_ActiveVidParams_0048cd90.lastCount;
 	puVar1 = (undefined*)abs(iVar2);
 	if (edVideo_Globals_00449590.field_0x4 < puVar1) {
@@ -217,11 +207,11 @@ void edVideoWaitVsync(byte param_1)
 	ulong uVar1;
 
 	g_ActiveVidParams_0048cd90.bWaitingForVSync = 1;
-	if (g_ActiveVidParams_0048cd90.params26.bVSyncForever == 0) {
+	if (g_ActiveVidParams_0048cd90.bVSyncForever == 0) {
 		g_ActiveVidParams_0048cd90.field_0x52 = param_1;
 		_VideoTimerSyncVbl();
 		if ((((g_ActiveVidParams_0048cd90.field_0x52 == 0) ||
-			(g_ActiveVidParams_0048cd90.params26.inter == SCE_GS_NOINTERLACE)) ||
+			(g_ActiveVidParams_0048cd90.inter == SCE_GS_NOINTERLACE)) ||
 			(g_ActiveVidParams_0048cd90.params18.ffmode == SCE_GS_FIELD)) ||
 			(g_ActiveVidParams_0048cd90.pFrameBuffer == (edSurface*)0x0)) {
 			_edVideoSyncReset();
@@ -296,7 +286,7 @@ void edVideoFlip(void)
 
 	edVideoWaitVsync(1);
 
-	if (g_ActiveVidParams_0048cd90.params26.field_0xf != 0) {
+	if (g_ActiveVidParams_0048cd90.field_0xf != 0) {
 		edVideoPutDisplayEnv();
 		edVideoPutDrawEnv();
 	}

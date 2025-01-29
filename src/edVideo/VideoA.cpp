@@ -107,7 +107,7 @@ byte edVideoIsFadeActive(void)
 void edVideoSetOffset(short inDX, short inDY)
 {
 	g_ActiveVidParams_0048cd90.params18.DX =
-		inDX * (short)(0xa00 / g_ActiveVidParams_0048cd90.params26.screenWidth);
+		inDX * (short)(0xa00 / g_ActiveVidParams_0048cd90.screenWidth);
 	g_ActiveVidParams_0048cd90.params18.DY = inDY;
 	_SetVideoEnv();
 	return;

@@ -35,6 +35,7 @@
 #include "TimeController.h"
 #include "CameraViewManager.h"
 #include "ActorTeleporter.h"
+#include "FrontEndDisp.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -771,6 +772,82 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	return;
 }
 
+void CLevelScheduler::Episode_LoadFromIniFile(void)
+{
+	//int iVar1;
+	//bool bVar2;
+	//int* episodesPtr;
+	//Episode* episodePtr;
+	//uint episodeCounter;
+	//int minWolfen;
+	//int scenery;
+	//int monster;
+	//int bet;
+	//undefined4 local_120;
+	//int local_11c;
+	//char Section[256];
+	//int local_10;
+	//int local_c;
+	//char episodeCounterString[4];
+	//
+	//episodesPtr = &_gGameNfo;
+	//_gGameNfo.count = 0;
+	//_gGameNfo.nbMagic = 0;
+	//_gGameNfo.nbMoney = 0;
+	//_gGameNfo.scenery = 0;
+	//_gGameNfo.monster = 0;
+	//_gGameNfo.bet = 0;
+	//_gGameNfo.field_0x1c = 0;
+	//_gGameNfo.field_0x20 = 0;
+	//_gGameNfo.health = (float)_gScenVarInfo[20].currentValue;
+	//iVar1 = 0;
+	//do {
+	//	local_10 = iVar1;
+	//	local_c = 0;
+	//	bVar2 = true;
+	//	while (bVar2) {
+	//		episodesPtr->field_0x24[local_c].field_0x0 = -1;
+	//		episodesPtr->field_0x24[local_c].field_0x4 = 0;
+	//		local_c = local_c + 1;
+	//		bVar2 = local_c < 0x10;
+	//	}
+	//	episodesPtr = (EpStructComplete*)&episodesPtr->field_0x24[0xb].field_0x4;
+	//	iVar1 = local_10 + 1;
+	//} while (local_10 + 1 < 2);
+	///* Episode_ + General */
+	//edStrCatMulti(Section, s_Episode__00433b70, 0x433b80, 0);
+	///* HeroMagic */
+	//IniFile::ReadInt_001a9830(&gIniFile, Section, s_HeroMagic_00433b88, &_gGameNfo.nbMagic);
+	//bVar2 = IniFile::ReadInt_001a9830(&gIniFile, Section, s_NbEpisodes_00433b98, (int*)&_gGameNfo);
+	//if (((bVar2 != false) && (0 < _gGameNfo.count)) && (episodeCounter = 0, 0 < _gGameNfo.count)) {
+	//	episodePtr = g_EpisodeDataArray_0048eb0;
+	//	do {
+	//		edStrInt2Str(episodeCounter, episodeCounterString, 2, true);
+	//		edStrCatMulti(Section, s_Episode__00433b70, episodeCounterString);
+	//		/* MinWolfen */
+	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_MinWolfen_00433ba8, &minWolfen);
+	//		/* Scenery */
+	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_Scenery_00433bb8, &scenery);
+	//		/* Monster */
+	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_Monster_00433bc0, &monster);
+	//		/* Bet */
+	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_Bet_00433bc8, &bet);
+	//		local_120 = 0;
+	//		episodeCounter = episodeCounter + 1;
+	//		episodePtr->minWolfen = minWolfen;
+	//		episodePtr->scenery = scenery;
+	//		episodePtr->monster = monster;
+	//		episodePtr->bet = bet;
+	//		episodePtr->field_0x10 = 0;
+	//		episodePtr->total_0x14 = local_11c;
+	//		episodePtr = episodePtr + 1;
+	//	} while ((int)episodeCounter < _gGameNfo.count);
+	//}
+	CScene::ptable.g_FrontendManager_00451680->SetGlobalFunc_001cf8e0();
+	//FUN_002daf70();
+	return;
+}
+
 void CLevelScheduler::SaveGame_SaveCurLevelState(int param_2)
 {
 	IMPLEMENTATION_GUARD_SAVE();
@@ -1005,7 +1082,7 @@ void CLevelScheduler::Game_Init()
 	} while (iVar11 < 0x10);
 	MoreLoadLoopObjectSetup(true);
 	Levels_LoadInfoBank();
-	//Episode_LoadFromIniFile();
+	Episode_LoadFromIniFile();
 	pLVar12 = aLevelInfo;
 	iVar11 = 0;
 	do {
@@ -1928,9 +2005,9 @@ void CLevelScheduler::Level_ClearAll()
 
 	if (this->field_0x7c != 0) {
 		MoreLoadLoopObjectSetup(false);
+		Episode_LoadFromIniFile();
 
 		IMPLEMENTATION_GUARD_LOG(
-		Episode_LoadFromIniFile();
 		pCVar9 = this->pSaveData_0x48;
 		pCVar9->field_0x0 = 0x16660666;
 		pCVar9->field_0x4 = 0x56415342;
@@ -2060,9 +2137,9 @@ void CLevelScheduler::Level_ClearAll()
 
 		MoreLoadLoopObjectSetup(true);
 		Levels_LoadInfoBank();
+		Episode_LoadFromIniFile();
 
 		IMPLEMENTATION_GUARD_LOG(
-		Episode_LoadFromIniFile();
 		pSVar11 = this->aLevelInfo;
 		iVar10 = 0;
 		do {

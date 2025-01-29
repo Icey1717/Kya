@@ -85,10 +85,7 @@ edF32VECTOR2 edF32VECTOR2_00448ce0 = { 0.5f, 0.5f };
 
 void CSprite::Validate()
 {
-	edF32VECTOR2* peVar1;
-	edF32VECTOR2* peVar2;
-	edF32VECTOR2* peVar3;
-	edF32VECTOR2 local_20;
+	edF32VECTOR2 screenDimensions;
 	edF32VECTOR2 eStack24;
 	edF32VECTOR2 local_10;
 	edF32VECTOR2 local_8;
@@ -106,19 +103,19 @@ void CSprite::Validate()
 		edF32Vector2Add(&this->field_0x6c.position, &this->pParent->field_0x6c.position, &eStack24);
 	}
 
-	peVar3 = &(this->field_0x6c).scale;
-	edF32Vector2Mul(&local_10, &local_10, peVar3);
-	edF32Vector2Mul(&local_8, &local_8, peVar3);
+	edF32Vector2Mul(&local_10, &local_10, &(this->field_0x6c).scale);
+	edF32Vector2Mul(&local_8, &local_8, &(this->field_0x6c).scale);
+
 	edF32Vector2Add(&local_10, &local_10, &this->field_0x6c.position);
 	edF32Vector2Add(&local_8, &local_8, &this->field_0x6c.position);
 
-	local_20 = {};
+	screenDimensions = {};
 
-	local_20.x = (float)gVideoConfig.screenWidth;
-	local_20.y = (float)gVideoConfig.screenHeight;
+	screenDimensions.x = (float)gVideoConfig.screenWidth;
+	screenDimensions.y = (float)gVideoConfig.screenHeight;
 
-	edF32Vector2Mul(&this->field_0x3c, &local_8, &local_20);
-	edF32Vector2Mul(&this->field_0x44, &local_10, &local_20);
+	edF32Vector2Mul(&this->screenCoordsTL, &local_8, &screenDimensions);
+	edF32Vector2Mul(&this->screenCoordsBR, &local_10, &screenDimensions);
 
 	this->bValid = true;
 
@@ -168,9 +165,9 @@ void CSprite::DrawSprite()
 	uVar1 = 6;
 	edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_SPRITE, 2);
 	edDListTexCoo2f(local_8, local_4);
-	edDListVertex4f((this->field_0x3c).x, (this->field_0x3c).y, 0.0f, uVar1);
+	edDListVertex4f((this->screenCoordsTL).x, (this->screenCoordsTL).y, 0.0f, uVar1);
 	edDListTexCoo2f(local_10, local_c);
-	edDListVertex4f((this->field_0x44).x, (this->field_0x44).y, 0.0f, uVar1);
+	edDListVertex4f((this->screenCoordsBR).x, (this->screenCoordsBR).y, 0.0f, uVar1);
 	edDListEnd();
 
 	return;
@@ -564,8 +561,8 @@ void CSpriteWindow::Validate()
 	this->texCoordB.x = this->xMax;
 	this->texCoordB.y = 1.0f;
 
-	this->field_0x3c.x = this->xMin * this->field_0x44.x + (1.0f - this->xMin) * this->field_0x3c.x;
-	this->field_0x44.x = this->xMax * this->field_0x44.x + (1.0f - this->xMax) * this->field_0x3c.x;
+	this->screenCoordsTL.x = this->xMin * this->screenCoordsBR.x + (1.0f - this->xMin) * this->screenCoordsTL.x;
+	this->screenCoordsBR.x = this->xMax * this->screenCoordsBR.x + (1.0f - this->xMax) * this->screenCoordsTL.x;
 
 	return;
 }
@@ -603,9 +600,9 @@ void CSpriteWindow::DrawSprite()
 		uVar1 = 6;
 		edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
 		edDListTexCoo2f(local_8, local_4);
-		edDListVertex4f(this->field_0x3c.x, this->field_0x3c.y, 0.0f, uVar1);
+		edDListVertex4f(this->screenCoordsTL.x, this->screenCoordsTL.y, 0.0f, uVar1);
 		edDListTexCoo2f(local_10, local_c);
-		edDListVertex4f(this->field_0x44.x, this->field_0x44.y, 0.0f, uVar1);
+		edDListVertex4f(this->screenCoordsBR.x, this->screenCoordsBR.y, 0.0f, uVar1);
 		edDListEnd();
 	}
 

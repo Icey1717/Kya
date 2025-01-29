@@ -74,8 +74,8 @@ public:
 	uint flags;
 	ushort iWidth;
 	ushort iHeight;
-	edF32VECTOR2 field_0x3c;
-	edF32VECTOR2 field_0x44;
+	edF32VECTOR2 screenCoordsTL;
+	edF32VECTOR2 screenCoordsBR;
 	edF32VECTOR2 texCoordA;
 	edF32VECTOR2 texCoordB;
 	CWidgetSlot field_0x5c;

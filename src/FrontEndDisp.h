@@ -5,6 +5,20 @@
 #include "Frontend.h"
 #include "LargeObject.h"
 
+class CInterface;
+
+enum FRONTEND_INTERFACE
+{
+	FRONTEND_INTERFACE_LIFE,
+	FRONTEND_INTERFACE_ENEMY_LIST,
+	FRONTEND_INTERFACE_MAGIC,
+	FRONTEND_INTERFACE_MONEY,
+	FRONTEND_INTERFACE_FREED_WOLFEN,
+	FRONTEND_INTERFACE_ACTION,
+	FRONTEND_INTERFACE_MENU_0x6c,
+	FRONTEND_INTERFACE_MENU_0x74,
+};
+
 struct CFrontendMagicGauge {
 	unsigned char bVisible;
 	void Magic_SetDisplay(unsigned char bNewVisible);
@@ -34,6 +48,9 @@ struct CFrontendDisplay : public CFrontend {
 	virtual void Level_PauseChange(bool bPaused);
 
 	virtual void Level_LoadContext();
+
+	virtual void DeclareInterface(FRONTEND_INTERFACE interfaceType, CInterface* pInterface);
+	virtual void SetGlobalFunc_001cf8e0();
 
 	void SetActive(bool bActive);
 

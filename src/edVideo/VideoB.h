@@ -46,24 +46,6 @@ struct edVideoConfig {
 	undefined field_0x7;
 };
 
-struct ed_video_attr {
-	ushort screenWidth;
-	ushort screenHeight;
-	ushort vidMode1;
-	ushort omode;
-	ushort isNTSC;
-	byte inter;
-	byte field_0xb;
-	byte field_0xc;
-	byte bVSyncForever;
-	byte maxVblank_0xe;
-	byte field_0xf;
-	char field_0x10[4];
-	int field_0x14;
-	byte field_0x18;
-	byte field_0x19;
-};
-
 struct VidParams18 {
 	short gs_pmode;
 	short gs_smode2;
@@ -143,8 +125,23 @@ struct VideoListData_AC {
 	ulong* field_0xa8;
 };
 
-struct edVideoData {
-	struct ed_video_attr params26;
+struct ed_video_attr {
+	ed_video_attr();
+	ushort screenWidth;
+	ushort screenHeight;
+	ushort vidMode1;
+	ushort omode;
+	ushort isNTSC;
+	byte inter;
+	byte field_0xb;
+	byte field_0xc;
+	byte bVSyncForever;
+	byte maxVblank_0xe;
+	byte field_0xf;
+	char field_0x10[4];
+	int field_0x14;
+	byte field_0x18;
+	byte field_0x19;
 	undefined field_0x1a;
 	undefined field_0x1b;
 	undefined field_0x1c;
@@ -231,6 +228,6 @@ void edVideoInit(void);
 void _edVideoSyncReset(void);
 
 extern edVideoConfig edVideoConfiguration;
-extern edVideoData g_ActiveVidParams_0048cd90;
+extern ed_video_attr g_ActiveVidParams_0048cd90;
 
 #endif //VIDEO_B_H
