@@ -5,6 +5,8 @@
 #include "ActorMovable.h"
 #include "Vision.h"
 #include "ActorAmbre.h"
+#include "Fx_Tail.h"
+#include "FxLightEmitter.h"
 
 class CActorBoomy;
 class CedMathTCBSpline;
@@ -59,6 +61,7 @@ public:
 
 	float field_0x1dc;
 
+	CFxTail fxTail;
 	CBehaviourBoomyLaunch launchBehaviour;
 
 	CedMathTCBSpline* pSpline;
@@ -84,6 +87,9 @@ public:
 	int particleID_0x3dc;
 
 	CActor* field_0x3e0;
+
+	CFxLightEmitter fxLightEmitterA;
+	CFxLightEmitter fxLightEmitterB;
 
 	StaticMeshComponent staticMeshComponent;
 

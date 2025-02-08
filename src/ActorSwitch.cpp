@@ -623,7 +623,7 @@ void CBehaviourSwitchMagic::ChangeManageState(int state)
 				pCVar1 = this->field_0x20;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1c != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1c == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable();
+					pCVar1->InitDlistPatchable(0);
 				}
 			}
 			if (((this->pHierarchy == (edNODE*)0x0) && (this->field_0x24 != -1)) && (this->field_0x28 != -1)) {
@@ -684,7 +684,7 @@ void CBehaviourSwitchMagic::ChangeManageState(int state)
 				pCVar1 = this->field_0x54;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x50 != (CinNamedObject30*)0x0)) &&
 					(this->field_0x50 == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable();
+					pCVar1->InitDlistPatchable(0);
 				}
 			}
 		}

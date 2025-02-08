@@ -34,8 +34,14 @@
 #include "EventManager.h"
 #include "Rendering/DisplayList.h"
 #include "edVideo/VideoD.h"
+#include "Rendering/edCTextFormat.h"
+#include "Rendering/edCTextFont.h"
+#include "edText.h"
+#include "edVideo/VideoA.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
+
+#define CUTSCENE_MAX_LOAD_TIME 15.0f
 
 #define CUTSCENE_LOG(level, format, ...) MY_LOG_CATEGORY("Cutscene", level, format, ##__VA_ARGS__)
 
@@ -120,8 +126,8 @@ CCinematicManager::CCinematicManager()
 	ppCinematicObjB_B = (CCinematic**)0x0;
 	activeCinematicCount = 0;
 	pCurCinematic = (CCinematic*)0x0;
-	field_0x28 = 0;
-	field_0x2c = 0;
+	field_0x28 = (CCinematic*)0x0;
+	startTime = 0.0f;
 	return;
 }
 
@@ -216,7 +222,7 @@ bool CCinematicManager::LevelLoading_Manage()
 		bVar1 = false;
 	}
 	else {
-		this->field_0x38 = 0;
+		this->pSubtitleText = (char*)0x0;
 		this->field_0x40 = 0;
 		this->pCinematic->Manage();
 
@@ -231,37 +237,24 @@ bool CCinematicManager::LevelLoading_Manage()
 
 void CCinematicManager::Level_Init()
 {
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	CCameraCinematic* pCVar4;
-	CCinematic** pCVar5;
-	int iVar5;
+	CCinematic** pCurCinematic;
+	int curIndex;
 
-	pCVar4 = (CCameraCinematic*)CCameraManager::_gThis->GetDefGameCamera(CT_Cinematic);
-	this->pCinematicCamera = pCVar4;
+	this->pCinematicCamera = reinterpret_cast<CCameraCinematic*>(CCameraManager::_gThis->GetDefGameCamera(CT_Cinematic));
 	this->field_0x34 = 0;
-	this->field_0x38 = 0;
+	this->pSubtitleText = (char*)0x0;
 	this->field_0x40 = 0;
 	this->field_0x44 = 0;
-	fVar3 = gF32Vertex4Zero.w;
-	fVar2 = gF32Vertex4Zero.z;
-	fVar1 = gF32Vertex4Zero.y;
-	(this->vector_0x50).x = gF32Vertex4Zero.x;
-	(this->vector_0x50).y = fVar1;
-	(this->vector_0x50).z = fVar2;
-	(this->vector_0x50).w = fVar3;
-	this->field_0x6c = 0;
-	fVar2 = gF32Vector4Zero.z;
-	fVar1 = gF32Vector4Zero.y;
-	this->x_0x60 = gF32Vector4Zero.x;
-	this->y_0x64 = fVar1;
-	this->z_0x68 = fVar2;
-	pCVar5 = this->ppCinematicObjB_A;
-	for (iVar5 = this->numCutscenes_0x8; iVar5 != 0; iVar5 = iVar5 + -1) {
-		(*pCVar5)->Init();
-		pCVar5 = pCVar5 + 1;
+	this->vector_0x50 = gF32Vertex4Zero;
+	this->fadeDuration = 0.0f;
+	this->fadeColor = gF32Vector4Zero.xyz;
+
+	pCurCinematic = this->ppCinematicObjB_A;
+	for (curIndex = this->numCutscenes_0x8; curIndex != 0; curIndex = curIndex + -1) {
+		(*pCurCinematic)->Init();
+		pCurCinematic = pCurCinematic + 1;
 	}
+
 	return;
 }
 
@@ -314,9 +307,9 @@ void CCinematicManager::Level_Manage()
 {
 	int iVar1;
 
-	this->field_0x38 = 0;
+	this->pSubtitleText = (char*)0x0;
 	this->field_0x40 = 0;
-	this->field_0x6c = 0;
+	this->fadeDuration = 0.0f;
 
 	iVar1 = 0;
 	if (0 < this->activeCinematicCount) {
@@ -1060,7 +1053,6 @@ void CCinematic::Start()
 	CActorHero* pAVar5;
 	CCinematicManager* pCVar6;
 	bool bVar7;
-	Timer* pTVar8;
 	edNODE* pMVar9;
 	int* piVar10;
 	edF32MATRIX4* peVar11;
@@ -1091,13 +1083,16 @@ void CCinematic::Start()
 		if (bVar7) {
 			bVar7 = (this->flags_0x8 & 0x400) != 0;
 		}
+
 		if (!bVar7) {
 			bVar7 = (this->flags_0x8 & 0x28) != 0;
 		}
+
 		bVar7 = (bool)(bVar7 ^ 1);
 		if (!bVar7) {
 			bVar7 = (this->flags_0x8 & 0x800) != 0;
 		}
+
 		if (bVar7) {
 			if (this->cineBankLoadStage_0x2b4 != 4) {
 				Load(0);
@@ -1258,13 +1253,11 @@ void CCinematic::Start()
 
 				if (bVar7) {
 					this->state = CS_Interpolate;
-					pTVar8 = GetTimer();
-					this->time_0x88 = pTVar8->scaledTotalTime;
+					this->time_0x88 = GetTimer()->scaledTotalTime;
 				}
 				else {
 					this->state = CS_Playing;
-					pTVar8 = GetTimer();
-					this->time_0x88 = pTVar8->scaledTotalTime;
+					this->time_0x88 = GetTimer()->scaledTotalTime;
 					this->cinFileData.Initialize();
 					this->flags_0x8 = this->flags_0x8 | 0x10;
 				}
@@ -1295,8 +1288,7 @@ void CCinematic::Start()
 			else {
 				g_CinematicManager_0048efc->field_0x28 = this;
 
-				pTVar8 = GetTimer();
-				pCVar6->field_0x2c = pTVar8->totalTime;
+				pCVar6->startTime = GetTimer()->totalTime;
 				if ((this->flags_0x8 & 0x800) == 0) {
 					S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList = this->pSwitchListA;
 
@@ -1754,8 +1746,8 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 						pMVar1 = CScene::ptable.g_LipTrackManager_00451694;
 						if (objectType == edResCollection::COT_Particle) {
 							IMPLEMENTATION_GUARD_LOG(
-							uVar3 = LoadCutsceneParticle
-							((ParticleData*)(this->particleSectionStart + this->numberOfParticles * 0x218),
+							uVar3 = InstallFromDSC
+							((ParticleEntry*)(this->particleSectionStart + this->numberOfParticles * 0x218),
 								(byte*)outFileData.fileBufferStart, outFileData.size, bankObj);
 							iVar4 = -1;
 							if (uVar3 != 0) {
@@ -4448,9 +4440,9 @@ void CCinematicManagerB::Level_PreReset()
 
 	pCutsceneManager = g_CinematicManager_0048efc;
 	pCutsceneManager->field_0x34 = 0;
-	pCutsceneManager->field_0x38 = 0;
+	pCutsceneManager->pSubtitleText = (char*)0x0;
 	pCutsceneManager->field_0x40 = 0.0f;
-	pCutsceneManager->field_0x6c = 0;
+	pCutsceneManager->fadeDuration = 0.0f;
 	ppCinematic = pCutsceneManager->ppCinematicObjB_A;
 
 	for (i = pCutsceneManager->numCutscenes_0x8; i != 0; i = i + -1) {
@@ -4471,9 +4463,9 @@ void CCinematicManagerB::Level_PreCheckpointReset()
 
 	pCutsceneManager = g_CinematicManager_0048efc;
 	pCutsceneManager->field_0x34 = 0;
-	pCutsceneManager->field_0x38 = 0;
+	pCutsceneManager->pSubtitleText = (char*)0x0;
 	pCutsceneManager->field_0x40 = 0.0f;
-	pCutsceneManager->field_0x6c = 0;
+	pCutsceneManager->fadeDuration = 0.0f;
 	ppCinematic = pCutsceneManager->ppCinematicObjB_A;
 
 	for (i = pCutsceneManager->numCutscenes_0x8; i != 0; i = i + -1) {
@@ -4489,6 +4481,24 @@ void CCinematicManagerB::Level_PreCheckpointReset()
 int CCinematicManager::GetNumCutscenes_001c50b0()
 {
 	return this->numCutscenes_0x8;
+}
+
+void CCinematicManager::LevelLoading_Draw()
+{
+	int iVar1;
+
+	if (this->pCinematic != (CCinematic*)0x0) {
+		this->pCinematic->Draw();
+
+		iVar1 = 0;
+		if ((this->pCinematic->state != CS_Stopped) && ((this->pCinematic->flags_0x4 & 0x200) != 0)) {
+			iVar1 = 1;
+		}
+
+		DrawBandsAndSubtitle(iVar1);
+	}
+
+	return;
 }
 
 bool CCinematicManager::IsCutsceneActive()
@@ -4649,11 +4659,186 @@ bool CCinematicManager::FUN_001c5c60()
 		bVar1 = false;
 	}
 
-	if ((!bVar1) && (bVar1 = this->field_0x38 != 0, bVar1)) {
+	if ((!bVar1) && (bVar1 = this->pSubtitleText != (char*)0x0, bVar1)) {
 		bVar1 = this->field_0x44 == 0;
 	}
 
 	return bVar1;
+}
+
+extern EFileLoadMode VERSION;
+
+void CCinematicManager::DrawBandsAndSubtitle(int param_2)
+{
+	edF32VECTOR4* peVar1;
+	bool bVar2;
+	byte bVar3;
+	edCTextStyle* pNewFont;
+	int iVar4;
+	edF32VECTOR4* peVar5;
+	edF32VECTOR4* peVar7;
+	uint uVar8;
+	undefined8 uVar9;
+	byte b;
+	int iVar10;
+	int iVar11;
+	byte r;
+	byte g;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	Rectangle local_15f0;
+	edCTextStyle textStyle;
+	edF32VECTOR2 screenCoords;
+
+	if ((GameFlags & 0x1c) == 0) {
+		if (GuiDList_BeginCurrent()) {
+			textStyle.Reset();
+
+			pNewFont = edTextStyleSetCurrent(&textStyle);
+			textStyle.SetFont(BootDataFont, false);
+
+			if ((this->pSubtitleText != (char*)0x0) && (this->field_0x44 != 0)) {
+				textStyle.SetHorizontalAlignment(this->subtitleHorizontalAlignment);
+				textStyle.SetVerticalAlignment(8);
+
+				ed3DComputeSceneCoordinate(&screenCoords, &this->vector_0x50, CScene::_scene_handleA);
+
+				screenCoords.x = (screenCoords.x * 0.5f + 0.5f) * (float)gVideoConfig.screenWidth;
+				screenCoords.y = (0.5f - screenCoords.y * 0.5f) * (float)gVideoConfig.screenHeight;
+				edTextDraw(screenCoords.x, screenCoords.y, this->pSubtitleText);
+			}
+			if ((CCameraManager::_gThis->aspectRatio != 1.777778f) && ((param_2 != 0 || (this->field_0x34 != 0.0f)))) {
+				fVar13 = (float)gVideoConfig.screenHeight * 0.25f * 0.5f;
+				fVar12 = fVar13 * GetTimer()->cutsceneDeltaTime * 2.0f;
+				if (param_2 == 0) {
+					fVar12 = this->field_0x34 - fVar12;
+					this->field_0x34 = fVar12;
+					if (fVar12 < 0.0f) {
+						this->field_0x34 = 0.0f;
+					}
+				}
+				else {
+					fVar12 = this->field_0x34 + fVar12;
+					this->field_0x34 = fVar12;
+					if (fVar13 < fVar12) {
+						this->field_0x34 = fVar13;
+					}
+				}
+
+				if (0.0f < this->field_0x34) {
+					edDListBlendSet(0);
+					edDListLoadIdentity();
+					edDListUseMaterial((edDList_material*)0x0);
+					edDListColor4u8(0, 0, 0, 0x80);
+
+					iVar4 = gVideoConfig.screenWidth;
+					if (gVideoConfig.screenWidth < 0) {
+						iVar4 = gVideoConfig.screenWidth + 0x1f;
+					}
+
+					fVar12 = this->field_0x34;
+					fVar13 = 0.0f;
+					iVar11 = 2;
+					do {
+						uVar9 = 4;
+						edDListBegin(0.0f, 0.0f, 0.0f, 4, ((iVar4 >> 5) + 1) * 2);
+						uVar8 = (uint)uVar9;
+						fVar14 = 0.0f;
+						for (iVar10 = iVar4 >> 5; iVar10 != 0; iVar10 = iVar10 + -1) {
+							edDListVertex4f(fVar14, fVar13, 0.0f, (uint)uVar9);
+							edDListVertex4f(fVar14, fVar12, 0.0f, (uint)uVar9);
+							uVar8 = (uint)uVar9;
+							fVar14 = fVar14 + 32.0f;
+						}
+
+						fVar14 = (float)gVideoConfig.screenWidth;
+						edDListVertex4f(fVar14, fVar13, 0.0f, uVar8);
+						edDListVertex4f(fVar14, fVar12, 0.0f, uVar8);
+						edDListEnd();
+
+						iVar11 = iVar11 + -1;
+						fVar12 = (float)gVideoConfig.screenHeight;
+						fVar13 = fVar12 - this->field_0x34;
+					} while (0 < iVar11);
+				}
+			}
+
+			if (((this->pSubtitleText != (char*)0x0) && (this->field_0x44 == 0)) && (this->bInitialized != 0)) {
+				fVar14 = (float)gVideoConfig.screenWidth - 40.0f;
+				local_15f0.width = fVar14 - 40.0f;
+				textStyle.SetShadow(0x100);
+				textStyle.SetHorizontalAlignment(this->subtitleHorizontalAlignment);
+				textStyle.SetVerticalAlignment(0);
+				textStyle.SetEolAutomatic(0x80);
+				textStyle.SetHorizontalJustification(0x10);
+				textStyle.SetHorizontalSize(local_15f0.width);
+				textStyle.SetScale(1.0f, 1.0f);
+				textStyle.field_0x8c = textStyle.field_0x8c * 1.0f;
+
+				edCTextFormat textFormat;
+				textFormat.FormatString(this->pSubtitleText);
+
+				fVar12 = (float)(uint)BootDataFont->field_0x16 + textStyle.field_0x8c;
+				local_15f0.y = (float)(int)(this->field_0x40 * (float)(int)(textFormat.field_0xc / fVar12)) * fVar12;
+				fVar13 = ((float)gVideoConfig.screenHeight - (float)gVideoConfig.screenHeight * 0.25f * 0.5f) + 12.0f;
+				local_15f0.height = ((fVar13 + fVar12 * 1.0f) - fVar13) / 1.0f;
+				fVar13 = fVar13 - local_15f0.y * 1.0f;
+
+				local_15f0 = {};
+
+				iVar4 = this->subtitleHorizontalAlignment;
+				if (iVar4 == 2) {
+					textFormat.DisplayWindow((fVar14 + 40.0f) * 0.5f, fVar13, &local_15f0);
+				}
+				else {
+					if (iVar4 == 1) {
+						textFormat.DisplayWindow(fVar14, fVar13, &local_15f0);
+					}
+					else {
+						if (iVar4 == 0) {
+							textFormat.DisplayWindow(40.0f, fVar13, &local_15f0);
+						}
+					}
+				}
+			}
+
+			edTextStyleSetCurrent(pNewFont);
+			GuiDList_EndCurrent();
+		}
+
+		if (edVideoIsFadeActive() == 0) {
+			if (this->fadeDuration != 0.0f) {
+				r = this->fadeColor.x * 128.0f;
+				g = this->fadeColor.y * 128.0f;
+				b = this->fadeColor.z * 128.0f;
+				edVideoSetFadeColor(r, g, b);
+			}
+
+			edVideoSetFade(this->fadeDuration);
+		}
+
+		// If we haven't started playing the cutscene in 15 seconds, display an error message.
+		if ((VERSION != FLM_CD_DVD) && (this->field_0x28 != (CCinematic*)0x0)) {
+			if ((Timer::GetTimer()->totalTime - this->startTime) < CUTSCENE_MAX_LOAD_TIME) {
+				bVar2 = GuiDList_BeginCurrent();
+				if (bVar2 != false) {
+					IMPLEMENTATION_GUARD(
+					edDebugMenu.DrawDebugTextLocationX_00468f34 = 0x14;
+					edDebugMenu.DrawDebugTextLocationY_00468f38 = 0xdc;
+					edDebugSetFontColor(7);
+					edDebugPrintText("Cinematic %s\ncould not be loaded", this->field_0x28->fileName);
+					GuiDList_EndCurrent();)
+				}
+			}
+			else {
+				this->field_0x28 = (CCinematic*)0x0;
+				this->startTime = 0.0f;
+			}
+		}
+	}
+
+	return;
 }
 
 void CCinematicManager::Level_ClearAll()
@@ -4681,8 +4866,8 @@ void CCinematicManager::Level_ClearAll()
 	this->ppCinematicObjB_B = (CCinematic**)0x0;
 	this->activeCinematicCount = 0;
 	this->pCurCinematic = (CCinematic*)0x0;
-	this->field_0x28 = 0;
-	this->field_0x2c = 0;
+	this->field_0x28 = (CCinematic*)0x0;
+	this->startTime = 0.0f;
 
 	return;
 }

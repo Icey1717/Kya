@@ -116,6 +116,8 @@ void edDListSetProperty(uint type, uint value);
 
 void edDListEnd(void);
 
+void edDListPatchableReset(DisplayListInternal* pList, uint param_2, uint param_3, uint param_4);
+
 void edDListLoadIdentity(void);
 
 DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList);
@@ -129,6 +131,8 @@ bool edDListTermMaterial(edDList_material* pMaterial);
 void edDListDeleteFrameBufferMaterial(edDList_material* pMaterial);
 edDList_material* edDListCreatMaterialFromIndex(edDList_material* pMaterialInfo, int index, ed_g2d_manager* pTextureInfo, uint mode);
 edDList_material* edDListCreatMaterialFromHashCode(edDList_material* pMaterial, ulong hashCode, ed_g2d_manager* pManager, uint mode);
+
+void edDListCreateFrameBufferMaterial(edDList_material* pMaterial);
 
 #ifdef PLATFORM_WIN
 Multidelegate<edDList_material*>& edDListGetMaterialLoadedDelegate();

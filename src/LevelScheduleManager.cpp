@@ -36,6 +36,8 @@
 #include "CameraViewManager.h"
 #include "ActorTeleporter.h"
 #include "FrontEndDisp.h"
+#include "Fx.h"
+#include "FxParticle.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -246,12 +248,14 @@ void CLevelScheduler::Level_LoadObjectives(ByteCode* pMemoryStream)
 			uVar3 = uVar3 + 1;
 		} while (uVar3 < (uint)*this->pObjectiveStreamBegin);
 	}
+
 	piVar1 = (int*)pMemoryStream->currentSeekPos;
 	pMemoryStream->currentSeekPos = (char*)(piVar1 + 1);
 	if (*piVar1 != 0) {
 		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar1 * 8;
 	}
 	this->pObjectiveStreamEnd = piVar1;
+
 	return;
 }
 
@@ -1255,7 +1259,8 @@ bool BnkInstallSceneCfg(char* pFileData, int size)
 	CScene::ptable.g_SectorManager_00451670->Level_Create(&byteCode);
 	CScene::ptable.g_ActorManager_004516a4->Level_LoadClassesInfo(&byteCode);
 	CScene::ptable.g_CollisionManager_00451690->Level_PostCreate();
-	//CFxParticleManager::Level_Create(&BStack16);
+	CFxParticleManager::Level_Create(&byteCode);
+
 	return false;
 }
 
@@ -1371,12 +1376,11 @@ bool BnkInstallLights(char* pFileData, int length)
 bool BnkInstallFxCfg(char* pFileData, int length)
 {
 	ByteCode MStack16;
-	LEVEL_SCHEDULER_LOG(LogLevel::Info, "MISSING HANDLER OnEffectLoaded_001a0870\n");
+	LEVEL_SCHEDULER_LOG(LogLevel::Info, "BnkInstallFxCfg\n");
 
 	MStack16.Init(pFileData);
-	//(*(code*)(Scene::ptable.g_EffectsManager_004516b8)->pManagerFunctionData->deserializeFunc)();
-	//::EmptyFunction();
-	//ByteCodeDestructor(&MStack16, -1);
+	CScene::ptable.g_EffectsManager_004516b8->Level_AddAll(&MStack16);
+	MStack16.Term();
 	return false;
 }
 

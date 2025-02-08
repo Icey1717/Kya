@@ -1739,6 +1739,26 @@ int CActor::GetNumVisualDetectionPoints()
 	return 1;
 }
 
+bool CActor::InitDlistPatchable(int param_2)
+{
+	uint uVar3;
+
+	if (GetBehaviour(this->curBehaviourId)->InitDlistPatchable(param_2) == false) {
+		edDListLoadIdentity();
+		edDListUseMaterial((edDList_material*)0x0);
+		edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
+		uVar3 = 0;
+		edDListColor4u8(0, 0, 0, 0);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
+		edDListEnd();
+	}
+
+	return true;
+}
+
 void CActor::SV_GetActorHitPos(CActor* pOtherActor, edF32VECTOR4* v0)
 {
 	int iVar1;

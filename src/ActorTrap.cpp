@@ -727,7 +727,7 @@ void CBehaviourTrapStand_ActorTrap::BehaviourTrapStand_Manage()
 				pOtherActor = this->field_0x70;
 				if (((pOtherActor != (CActor*)0x0) && (this->field_0x6c != (CinNamedObject30*)0x0)) &&
 					(this->field_0x6c == pOtherActor->pCinData)) {
-					pOtherActor->InitDlistPatchable();
+					pOtherActor->InitDlistPatchable(0);
 				}
 			}
 		}
@@ -1016,7 +1016,7 @@ void CBehaviourTrapStand::InitState(int newState)
 			pCVar5 = this->field_0x78;
 			if (((pCVar5 != (CActorTrap*)0x0) && (this->field_0x74 != (CinNamedObject30*)0x0) &&
 				(this->field_0x74 == pCVar5->pCinData))) {
-				pCVar5->InitDlistPatchable();
+				pCVar5->InitDlistPatchable(0);
 			}
 		}
 	}

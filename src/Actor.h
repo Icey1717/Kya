@@ -132,7 +132,7 @@ struct SPEED_DYN {
 	float field_0x4;
 };
 
-class CBehaviour 
+class CBehaviour : public CObject
 {
 public:
 	virtual void Create(ByteCode* pByteCode) {}
@@ -201,16 +201,6 @@ template<int T>
 struct BehaviourList {
 	int count;
 	BehaviourEntry aComponents[T];
-};
-
-class CObject {
-public:
-	CObject() : objectId(-1) { }
-
-	int objectId;
-
-	virtual bool IsKindOfObject(ulong kind) { return false; }
-	virtual bool InitDlistPatchable() { return false; }
 };
 
 PACK(
@@ -450,6 +440,7 @@ public:
 	CActor();
 
 	virtual bool IsKindOfObject(ulong kind);
+	virtual bool InitDlistPatchable(int);
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Destroy();
 	virtual void Init();

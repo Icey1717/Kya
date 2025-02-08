@@ -2278,7 +2278,7 @@ void CBehaviourNativSpeak::Reset()
 
 void CEmotionInfo::DoAnimation(float, float, CActor*)
 {
-	IMPLEMENTATION_GUARD_FX();
+	IMPLEMENTATION_GUARD_EMOTION();
 }
 
 bool CTakePutTrajectoryParam::IsWayPointValidPosition(CPathFinderClient* pPathFinderClient)

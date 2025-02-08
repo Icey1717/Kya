@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Actor.h"
+#include "Fx_Spark.h"
 
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
@@ -50,6 +51,13 @@ public:
 	edF32MATRIX4 perspectiveMatrix;
 };
 
+struct AmberSparkProps
+{
+	uint boneId;
+	float field_0x4;
+	float field_0x8;
+};
+
 class CActorAmbre : public CActor {
 public:
 	static StateConfig _gStateCfg_AMB[6];
@@ -66,20 +74,13 @@ public:
 
 	void BehaviourStand_Manage(CBehaviourAmbre* pBehaviour);
 
+	CFxSparkNoAlloc<4, 12> aFxSparks[3];
+	AmberSparkProps aFxSparkProps[3];
+
 	CFxHandle effectsStructC;
 	StaticMeshComponent staticMesh;
 
 	int field_0x1d0;
-
-	uint field_0x1200;
-	undefined4 field_0x1204;
-	uint field_0x120c;
-	uint field_0x1218;
-	float field_0x1208;
-	float field_0x1210;
-	float field_0x1214;
-	float field_0x121c;
-	float field_0x1220;
 
 	S_TARGET_STREAM_REF* pMagicalSwitch1CBase_0x1224;
 

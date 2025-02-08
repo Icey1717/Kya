@@ -571,7 +571,11 @@ void CBehaviourWeaponBullets::Manage()
 
 void CBehaviourWeaponBullets::Draw()
 {
-	IMPLEMENTATION_GUARD_FX();
+	if (0 < this->nbBullets) {
+		DrawBullets();
+	}
+
+	return;
 }
 
 void CBehaviourWeaponBullets::Begin(CActor* pOwner, int newState, int newAnimationType)
@@ -876,6 +880,11 @@ void CBehaviourWeaponPistol::Begin(CActor* pOwner, int newState, int newAnimatio
 	return;
 }
 
+void CBehaviourWeaponPistol::DrawBullets()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CBehaviourWeaponRpg::Create(ByteCode* pByteCode)
 {
 	CBehaviourWeaponBurst::Create(pByteCode);
@@ -986,6 +995,11 @@ void CBehaviourWeaponSniper::Begin(CActor* pOwner, int newState, int newAnimatio
 	this->pOwner->field_0x1d0 = 5;
 
 	return;
+}
+
+void CBehaviourWeaponSniper::DrawBullets()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void WeaponGlobal::Term()

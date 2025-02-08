@@ -5,15 +5,6 @@
 
 struct S_MAIN_MEMORY_HEADER;
 
-//enum edSysHandlerType
-//{
-//	ESHT_Profile_1 = 0,
-//	ESHT_LoadFile = 4,
-//	ESHT_RenderScene = 6,
-//	ESHT_Sound = 7,
-//	ESHT_RenderUI = 10,
-//};
-
 extern S_MAIN_MEMORY_HEADER* edSystemDataPtr_0042df0;
 
 void _edSystemPrintf(int type, int eventID, char* format);

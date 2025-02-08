@@ -65,10 +65,9 @@ void CActorBoomy::Create(ByteCode* pByteCode)
 	CActor::SV_InstallMaterialId(this->particleID_0x3d4);
 	CActor::SV_InstallMaterialId(this->particleID_0x3dc);
 
-	IMPLEMENTATION_GUARD_FX(
 	this->fxTail.Create(0.5f, count, 4, this->particleID_0x3d0);
-	(this->fxTail).field_0xb0 = uVar4;
-	CFxTail::ChangeOrder(&this->fxTail, s_ZXY_00428f30);)
+	this->fxTail.field_0xb0 = uVar4;
+	this->fxTail.ChangeOrder("ZXY");
 
 	pCVar2 = this->pCollisionData;
 	pCVar2->flags_0x0 = pCVar2->flags_0x0 & 0xffffaff7;
@@ -108,6 +107,9 @@ void CActorBoomy::Create(ByteCode* pByteCode)
 	return;
 }
 
+edF32VECTOR4 edF32VECTOR4_0040e200 = { 0.2617994f, 0.2617994f, 0.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_0040e210 = { 0.6981317f, 0.6981317f, 0.0f, 0.0f };
+
 void CActorBoomy::Init()
 {
 	CShadow* pCVar1;
@@ -139,7 +141,6 @@ void CActorBoomy::Init()
 	this->field_0x2b8.Init();
 	this->field_0x2bc.Init();
 
-	IMPLEMENTATION_GUARD_FX(
 	this->fxTail.Init(16.0f, this->objectId);
 
 	local_4 = this->aBoomyTypeInfo[0].field_0x10;
@@ -150,23 +151,23 @@ void CActorBoomy::Init()
 
 	(this->fxTail).field_0x30 = (float)((int)((local_4 >> 0x18) * 6) / iVar2);
 
-	this->field_0x530.Create(0.4f, 0x80, 0x10);
-	this->field_0x530.ChangeMaterialId(this->particleID_0x3d4, 0);
-	this->field_0x530.ChangeRadius(0.1f, 0.2f);
-	this->field_0x530.ChangeLengthAndWidth(1.0f, 0.2f, 0.2f, 0.2f);
-	this->field_0x530.ChangeSpeedAndAccel(3.0f, 4.0f, 5.0f, -8.0f);
-	(this->field_0x530).field_0x20 = edF32VECTOR4_0040e200;
-	this->field_0x530.ChangeColors(0x20406040);
-	this->field_0x530.ChangeStallTime((this->field_0x530).field_0x60);
+	this->fxLightEmitterA.Create(0.4f, 0x80, 0x10);
+	this->fxLightEmitterA.ChangeMaterialId(this->particleID_0x3d4, 0);
+	this->fxLightEmitterA.ChangeRadius(0.1f, 0.2f);
+	this->fxLightEmitterA.ChangeLengthAndWidth(1.0f, 0.2f, 0.2f, 0.2f);
+	this->fxLightEmitterA.ChangeSpeedAndAccel(3.0f, 4.0f, 5.0f, -8.0f);
+	this->fxLightEmitterA.field_0x20 = edF32VECTOR4_0040e200;
+	this->fxLightEmitterA.ChangeColors(0x20406040);
+	this->fxLightEmitterA.ChangeStallTime(this->fxLightEmitterA.field_0x60);
 
-	this->fxLightEmitter.Create(0.54f, 0x80, 0x18);
-	this->fxLightEmitter.ChangeMaterialId(this->particleID_0x3d4, 1);
-	this->fxLightEmitter.ChangeRadius(0.1f, 0.2f);
-	this->fxLightEmitter.ChangeLengthAndWidth(1.0f, 0.05f, 0.15f, 0.0f);
-	this->fxLightEmitter.ChangeSpeedAndAccel(4.0f, 5.0f, 6.0f, -9.0f);
-	(this->fxLightEmitter).field_0x20 = edF32VECTOR4_0040e210;
-	this->fxLightEmitter.ChangeColors(0x80808080);
-	this->fxLightEmitter.ChangeStallTime((this->fxLightEmitter).field_0x60);)
+	this->fxLightEmitterB.Create(0.54f, 0x80, 0x18);
+	this->fxLightEmitterB.ChangeMaterialId(this->particleID_0x3d4, 1);
+	this->fxLightEmitterB.ChangeRadius(0.1f, 0.2f);
+	this->fxLightEmitterB.ChangeLengthAndWidth(1.0f, 0.05f, 0.15f, 0.0f);
+	this->fxLightEmitterB.ChangeSpeedAndAccel(4.0f, 5.0f, 6.0f, -9.0f);
+	this->fxLightEmitterB.field_0x20 = edF32VECTOR4_0040e210;
+	this->fxLightEmitterB.ChangeColors(0x80808080);
+	this->fxLightEmitterB.ChangeStallTime(this->fxLightEmitterB.field_0x60);
 
 	bVar3 = (this->staticMeshComponent).textureIndex != -1;
 	if (bVar3) {
@@ -208,10 +209,10 @@ void CActorBoomy::Draw()
 		CActor::Draw();
 
 		IMPLEMENTATION_GUARD_FX(
-		this->fxLightEmitter.Draw(0xffffffff, 0, 0);
+		this->fxLightEmitterB.Draw(0xffffffff, 0, 0);
 
 		if (this->field_0x2c4 == 2) {
-			this->field_0x530.Draw(0xffffffff, 0, 0);
+			this->fxLightEmitterA.Draw(0xffffffff, 0, 0);
 		})
 	}
 
@@ -346,9 +347,9 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					((this->pShadow)->base).field_0x48 = 0.75;
 					(this->pShadow)->field_0x50 = 0.75;
 				}
-				CFxLightEmitter::InitRays(&this->field_0x530, (this->field_0x530).field_0x4c);
-				CFxLightEmitter::InitRays(&this->fxLightEmitter, (this->fxLightEmitter).field_0x4c);
-				CFxLightEmitter::ChangeGenAtHand(&this->fxLightEmitter, 0);
+				CFxLightEmitter::InitRays(&this->fxLightEmitterA, (this->fxLightEmitterA).field_0x4c);
+				CFxLightEmitter::InitRays(&this->fxLightEmitterB, (this->fxLightEmitterB).field_0x4c);
+				CFxLightEmitter::ChangeGenAtHand(&this->fxLightEmitterB, 0);
 				this->field_0x1f0 = 0;
 			}
 			else {
@@ -360,7 +361,7 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					((this->pShadow)->base).field_0x48 = 0.3;
 					(this->pShadow)->field_0x50 = 0.3;
 				}
-				CFxLightEmitter::ChangeGenAtHand(&this->fxLightEmitter, 1);
+				CFxLightEmitter::ChangeGenAtHand(&this->fxLightEmitterB, 1);
 			}
 			this->field_0x2c8 = 0;
 			(*(this->pVTable)->SetState)((CActor*)this, 6, -1);
@@ -407,7 +408,7 @@ void CActorBoomy::BehaviourBoomyLaunch_Manage()
 
 	IMPLEMENTATION_GUARD_FX(
 	if (this->field_0x2c4 == 2) {
-		CFxLightEmitter::ChangeColors(&this->fxLightEmitter, 0x80808080);
+		CFxLightEmitter::ChangeColors(&this->fxLightEmitterB, 0x80808080);
 	})
 
 	switch (this->actorState) {
@@ -429,9 +430,9 @@ void CActorBoomy::BehaviourBoomyLaunch_Manage()
 		this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffe;
 		this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffb;
 		this->field_0x294 = 1;
-		bVar1 = CFxLightEmitter::Manage(&this->fxLightEmitter, 0, 0);
+		bVar1 = CFxLightEmitter::Manage(&this->fxLightEmitterB, 0, 0);
 		iVar3 = CFxTail::Manage(&this->fxTail, 0, 0.0, 1);
-		bVar2 = CFxLightEmitter::Manage(&this->field_0x530, 0, 0);
+		bVar2 = CFxLightEmitter::Manage(&this->fxLightEmitterA, 0, 0);
 		if ((bVar1 != false && iVar3 != 0) && bVar2 != false) {
 			this->flags = this->flags & 0xfffffffd;
 			this->flags = this->flags | 1;
@@ -501,12 +502,11 @@ void CActorBoomy::ClearLocalData()
 
 	this->flags = this->flags & 0xfffffbff;
 
-	IMPLEMENTATION_GUARD_FX(
 	this->fxTail.Reset();
 	this->fxTail.SetPatchActive(0);
 
-	this->field_0x530.ResetRays();
-	this->fxLightEmitter.ResetRays();)
+	this->fxLightEmitterA.ResetRays();
+	this->fxLightEmitterB.ResetRays();
 
 	this->field_0x1dc = 0.1f;
 

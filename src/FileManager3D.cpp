@@ -10,10 +10,11 @@
 
 #include "edDlist.h"
 #include "CameraViewManager.h"
+#include "PoolAllocators.h"
 
 C3DFileManager::C3DFileManager()
 {
-	this->pParticleInfoArray_0x50 = new ParticleInfo[0x600];
+	this->pParticleInfoArray_0x50 = new ParticleInfo[0x80];
 	Level_ClearInternalData();
 	return;
 }
@@ -205,20 +206,65 @@ int C3DFileManager::InstanciateG2D(int index)
 	for (iVar2 = 0; (pPVar1->ID != index && (iVar2 < 0x80)); iVar2 = iVar2 + 1) {
 		pPVar1 = pPVar1 + 1;
 	}
+
+	// If we failed to find an entry, we go one past the end of the array. This is fine cause it indexes into the memory footer and 8 bytes in is zeroed out...
+	// But for PC I'll patch it
+
+#ifdef PLATFORM_WIN
+	if (iVar2 == 0x80) {
+		pPVar1 = (ParticleInfo*)0x0;
+	}
+#else
 	if (pPVar1->materialInfoArray_0x8 == (edDList_material*)0x0) {
 		pPVar1 = (ParticleInfo*)0x0;
 	}
+#endif
+
 	if (pPVar1 == (ParticleInfo*)0x0) {
-		IMPLEMENTATION_GUARD(
-		pPVar1 = _CreateG2DInfo(index);)
+		pPVar1 = _CreateG2DInfo(index);
 	}
+
 	if (pPVar1 == (ParticleInfo*)0x0) {
 		iVar2 = -1;
 	}
 	else {
 		iVar2 = pPVar1->materialCount_0x4;
 	}
+
 	return iVar2;
+}
+
+ParticleInfo* C3DFileManager::_CreateG2DInfo(int index)
+{
+	TextureInfo* pTVar1;
+	int iVar2;
+	ParticleInfo* pPVar4;
+	ParticleInfo* piVar4;
+
+	piVar4 = this->pParticleInfoArray_0x50;
+	for (iVar2 = 0; (piVar4->ID != -1 && (iVar2 < 0x80)); iVar2 = iVar2 + 1) {
+		piVar4 = piVar4 + 1;
+	}
+
+	pPVar4 = (ParticleInfo*)0x0;
+	if (iVar2 != 0x80) {
+		pTVar1 = this->aCommonLevelTextures;
+		piVar4->ID = index;
+
+		iVar2 = ed3DG2DGetG2DNbMaterials(&pTVar1[index].manager);
+		piVar4->materialCount_0x4 = iVar2;
+		piVar4->materialInfoArray_0x8 = NewPool_edDLIST_MATERIAL(piVar4->materialCount_0x4);
+		iVar2 = 0;
+		pPVar4 = piVar4;
+		if (0 < piVar4->materialCount_0x4) {
+			do {
+				edDListCreatMaterialFromIndex(piVar4->materialInfoArray_0x8 + iVar2, iVar2, &pTVar1[index].manager, 2);
+				iVar2 = iVar2 + 1;
+			} while (iVar2 < piVar4->materialCount_0x4);
+		}
+	}
+
+	return pPVar4;
 }
 
 TextureInfo* C3DFileManager::GetCommonSectorG2D()
@@ -228,11 +274,11 @@ TextureInfo* C3DFileManager::GetCommonSectorG2D()
 
 void C3DFileManager::Level_ClearInternalData()
 {
-	void* pvVar1;
 	ParticleInfo* pPVar2;
 	int iVar3;
 
 	iVar3 = 0x80;
+
 	this->meshCount = 0;
 	this->meshLoadedCount = 0;
 	this->aCommonLevelMeshes = (Mesh*)0x0;
@@ -241,6 +287,7 @@ void C3DFileManager::Level_ClearInternalData()
 	this->aCommonLevelTextures = (TextureInfo*)0x0;
 	this->pMeshInfo = (ed_g3d_manager*)0x0;
 	this->pBackgroundNode = (edNODE*)0x0;
+
 	pPVar2 = this->pParticleInfoArray_0x50;
 	do {
 		pPVar2->ID = -1;
@@ -270,10 +317,13 @@ void C3DFileManager::Level_ClearInternalData()
 		pPVar2[7].materialInfoArray_0x8 = (edDList_material*)0x0;
 		pPVar2 = pPVar2 + 8;
 	} while (0 < iVar3);
-	pvVar1 = memset(&this->backgroundHierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
+
+	memset(&this->backgroundHierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
+
 	this->field_0x30 = 10000.0f;
 	this->backgroundHierarchySetup.clipping_0x0 = &this->field_0x30;
 	(this->backgroundHierarchySetup).pBoundingSphere = (edF32VECTOR4*)0x0;
+
 	return;
 }
 
@@ -470,4 +520,27 @@ ed_g3d_manager* C3DFileManager::GetInfoForCommonLevelMesh(char* pFileData)
 	}
 
 	return &pMesh->meshInfo;
+}
+
+int C3DFileManager::GetNbMaterialInG2D(int id)
+{
+	int nbMaterials;
+	ParticleInfo* pParticleMaterialInfo;
+
+	pParticleMaterialInfo = this->pParticleInfoArray_0x50;
+
+	for (nbMaterials = 0; (pParticleMaterialInfo->ID != id && (nbMaterials < 0x80)); nbMaterials = nbMaterials + 1) {
+		pParticleMaterialInfo = pParticleMaterialInfo + 1;
+	}
+
+	if (pParticleMaterialInfo->materialInfoArray_0x8 == (edDList_material*)0x0) {
+		pParticleMaterialInfo = (ParticleInfo*)0x0;
+	}
+
+	nbMaterials = -1;
+	if (pParticleMaterialInfo != (ParticleInfo*)0x0) {
+		nbMaterials = pParticleMaterialInfo->materialCount_0x4;
+	}
+
+	return nbMaterials;
 }

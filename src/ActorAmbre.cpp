@@ -123,7 +123,7 @@ void CActorAmbre::Create(ByteCode* pByteCode)
 	int materialId;
 	undefined* puVar4;
 	int iVar5;
-	CActorAmbre* pCVar6;
+	CFxSparkNoAlloc<4, 12>* pFxSpark;
 
 	CActor::Create(pByteCode);
 	materialId = pByteCode->GetS32();
@@ -149,26 +149,25 @@ void CActorAmbre::Create(ByteCode* pByteCode)
 
 	CActor::SV_InstallMaterialId(materialId);
 
-	IMPLEMENTATION_GUARD_FX(
 	iVar5 = 0;
-	pCVar6 = this;
+	pFxSpark = this->aFxSparks;
 	do {
-		CFxSpark::Create((CFxSpark*)pCVar6->particleData_0x1e0, 4, 0x10, pCVar6->particleData_0x1e0[0].field_0xf0,
-			pCVar6->particleData_0x1e0[0].field_0x120, materialId);
-		pCVar6->particleData_0x1e0[0].subObj.field_0xe4 = &pCVar6->particleData_0x1e0[0].field_0x160;
-		CFxSpark::SetParameters(0.35, 0.05, 30.0, 0.1, 2.0, (CFxSpark*)pCVar6->particleData_0x1e0, 1);
-		pCVar6->particleData_0x1e0[0].subObj.field_0x90 = 0x800060c0;
+		pFxSpark->Create(4, 0x10, pFxSpark->field_0xf0, pFxSpark->field_0x120, materialId);
+		pFxSpark->field_0xe4 = &pFxSpark->field_0x160;
+		pFxSpark->SetParameters(0.35f, 0.05f, 30.0f, 0.1f, 2.0f, 1);
+		pFxSpark->field_0x90 = 0x800060c0;
+		pFxSpark->field_0x94 = 0x802020c0;
 		iVar5 = iVar5 + 1;
-		pCVar6->particleData_0x1e0[0].subObj.field_0x94 = 0x802020c0;
-		pCVar6 = (CActorAmbre*)&pCVar6->particleData_0x1e0[0].field_0x380;
-	} while (iVar5 < 3);)
+		pFxSpark = pFxSpark + 1;
+	} while (iVar5 < 3);
 
-	this->field_0x1204 = 0;
-	this->field_0x1210 = 0.2f;
-	this->field_0x121c = -0.2f;
-	this->field_0x1208 = 0.2f;
-	this->field_0x1214 = 0.05f;
-	this->field_0x1220 = 0.05f;
+	this->aFxSparkProps[0].field_0x4 = 0.0f;
+	this->aFxSparkProps[1].field_0x4 = 0.2f;
+	this->aFxSparkProps[2].field_0x4 = -0.2f;
+
+	this->aFxSparkProps[0].field_0x8 = 0.2f;
+	this->aFxSparkProps[1].field_0x8 = 0.05f;
+	this->aFxSparkProps[2].field_0x8 = 0.05f;
 
 	return;
 }
@@ -180,8 +179,8 @@ void CActorAmbre::Init()
 	CActorHero* pReceiver;
 	int iVar3;
 	S_TARGET_STREAM_REF* pSVar4;
-	CActorAmbre* pCVar5;
-	CActorAmbre* pCVar6;
+	AmberSparkProps* pCurProps;
+	CFxSparkNoAlloc<4, 12>* pFxSpark;
 	CActorAmbre* iVar6;
 	int iVar7;
 	float fVar8;
@@ -201,25 +200,25 @@ void CActorAmbre::Init()
 
 	CActor::Init();
 
-	this->field_0x1200 = DoMessage(CActorHero::_gThis, MESSAGE_GET_BONE_ID, (MSG_PARAM)5);
-	this->field_0x120c = DoMessage(CActorHero::_gThis, MESSAGE_GET_BONE_ID, (MSG_PARAM)0xa);
-	this->field_0x1218 = DoMessage(CActorHero::_gThis, MESSAGE_GET_BONE_ID, (MSG_PARAM)0xd);
+	this->aFxSparkProps[0].boneId = DoMessage(CActorHero::_gThis, MESSAGE_GET_BONE_ID, (MSG_PARAM)5);
+	this->aFxSparkProps[1].boneId = DoMessage(CActorHero::_gThis, MESSAGE_GET_BONE_ID, (MSG_PARAM)0xa);
+	this->aFxSparkProps[2].boneId = DoMessage(CActorHero::_gThis, MESSAGE_GET_BONE_ID, (MSG_PARAM)0xd);
 
-	IMPLEMENTATION_GUARD_FX(
 	iVar3 = 0;
-	pCVar5 = this;
-	pCVar6 = this;
+	pCurProps = this->aFxSparkProps;
+	pFxSpark = this->aFxSparks;
 	do {
-		CFxSpark::Init((CFxSpark*)pCVar6->particleData_0x1e0, this->objectId);
-		fVar8 = pCVar5->field_0x1208;
+		pFxSpark->Init(this->objectId);
+
 		iVar3 = iVar3 + 1;
-		pCVar6->particleData_0x1e0[0].subObj.vector_0x80.x = (float)pCVar5->field_0x1204;
-		pCVar5 = (CActorAmbre*)&(pCVar5->base).actorFieldS;
-		pCVar6->particleData_0x1e0[0].subObj.vector_0x80.y = fVar8;
-		pCVar6->particleData_0x1e0[0].subObj.vector_0x80.z = 0.0;
-		pCVar6->particleData_0x1e0[0].subObj.vector_0x80.w = 0.0;
-		pCVar6 = (CActorAmbre*)&pCVar6->particleData_0x1e0[0].field_0x380;
-	} while (iVar3 < 3););
+		pFxSpark->vector_0x80.x = pCurProps->field_0x4;
+		pFxSpark->vector_0x80.y = pCurProps->field_0x8;
+		pFxSpark->vector_0x80.z = 0.0f;
+		pFxSpark->vector_0x80.w = 0.0f;
+
+		pCurProps = pCurProps + 1;
+		pFxSpark = pFxSpark + 1;
+	} while (iVar3 < 3);
 
 	for (int i = 0; i < this->pMagicalSwitch1CBase_0x1224->entryCount; i++) {
 		this->pMagicalSwitch1CBase_0x1224->aEntries[i].Init();
@@ -580,7 +579,7 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 		//iVar10 = rand();
 		//local_2c = local_2c + ((float)iVar10 / 2.147484e+09) * 0.6 + 0.2;
 		//CActor::SV_GetBoneWorldPosition((CActor*)pCVar6, *(int*)(&this->field_0x1200 + iVar8 * 0xc), &someVector);
-		//CFxSpark::Manage(((int)(this->particleData_0x1e0 + iVar8), &local_30, (undefined4*)&someVector);
+		//CFxSpark::Manage(((int)(this->aFxSparks + iVar8), &local_30, (undefined4*)&someVector);
 	})
 
 	return;

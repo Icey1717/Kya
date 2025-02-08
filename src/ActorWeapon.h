@@ -106,6 +106,7 @@ public:
 	virtual void ResetBullet(Bullet* pBullet);
 	virtual void FireBullet(Bullet* pBullet);
 	virtual void HitBullet(float param_1, Bullet* pBullet);
+	virtual void DrawBullets() = 0;
 
 	Bullet* GetFreeBullet();
 	void UpdateBulletsLife();
@@ -137,6 +138,8 @@ public:
 	virtual void Term();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
+	virtual void DrawBullets();
+
 	int field_0x344;
 };
 
@@ -146,6 +149,8 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+
+	virtual void DrawBullets();
 
 	int field_0x2e0;
 	int field_0x2e4;

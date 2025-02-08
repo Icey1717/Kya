@@ -316,7 +316,7 @@ public:
 	edDList_material field_0xfc;
 	int field_0x10c;
 	int field_0x110;
-	undefined4 field_0x114;
+	int* field_0x114;
 	float field_0x118;
 	undefined4 field_0x11c;
 	uint count_0x120;

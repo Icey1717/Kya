@@ -159,13 +159,14 @@ public:
 
 void CameraSet3DPos(edFCamera* pCamera);
 void edFCameraSetSizeRatioFov(float halfFOV, float aspectRatio, float sizeRatio, edFCamera* pCamera);
-
+float edFCameraGetFov(edFCamera* pCamera);
+float edFCameraGetRatio(edFCamera* pCamera);
 
 struct CCameraShadow : public CCameraExt {
 	CCameraShadow(ByteCode* pByteCode);
 
 	// CObject
-	virtual bool InitDlistPatchable();
+	virtual bool InitDlistPatchable(int);
 
 	virtual void Init();
 	virtual ECameraType GetMode();

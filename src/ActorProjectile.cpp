@@ -1130,7 +1130,7 @@ void CActorProjectile::BehaviourProjectileStand_TermState(int oldState, int newS
 		iVar2 = 0;
 		do {
 			IMPLEMENTATION_GUARD_LOG(
-			FUN_001d64b0((int)&pBehaviourStand->aSparks->field_0x0 + iVar2);
+			FUN_001d64b0((int)&pBehaviourStand->aFxSparks->field_0x0 + iVar2);
 			iVar3 = iVar3 + 1;
 			iVar2 = iVar2 + 0x390;)
 		} while (iVar3 < 4);
@@ -1754,10 +1754,10 @@ void CBehaviourProjectileStand::Create(ByteCode* pByteCode)
 	this->materialId = pByteCode->GetS32();
 	if (this->field_0xc == 2) {
 		CActor::SV_InstallMaterialId(this->materialId);
-		this->aSparks = new CFxSparkNoAlloc<3, 12>[4];
+		this->aFxSparks = new CFxSparkNoAlloc<3, 12>[4];
 		iVar3 = 0;
 		do {
-			pAVar4 = this->aSparks + iVar3;
+			pAVar4 = this->aFxSparks + iVar3;
 
 			IMPLEMENTATION_GUARD_LOG(
 			pAVar4->Create(3, 0xc, &pAVar4->field_0xf0, &pAVar4->field_0x114, this->materialId);
@@ -1767,7 +1767,7 @@ void CBehaviourProjectileStand::Create(ByteCode* pByteCode)
 		} while (iVar3 < 4);
 	}
 	else {
-		this->aSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
+		this->aFxSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
 	}
 
 	return;
@@ -1783,8 +1783,8 @@ void CBehaviourProjectileStand::Init(CActor* pOwner)
 		iVar2 = 0;
 		do {
 			IMPLEMENTATION_GUARD_LOG(
-			this->aSparks[iVar2].Init();
-			this->aSparks[iVar2].field_0x90 = 0x80f09614;)
+			this->aFxSparks[iVar2].Init();
+			this->aFxSparks[iVar2].field_0x90 = 0x80f09614;)
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < 4);
 	}
@@ -1796,8 +1796,8 @@ void CBehaviourProjectileStand::Term()
 {
 	if (this->field_0xc == 2) {
 		IMPLEMENTATION_GUARD_LOG(
-		__destroy_new_array((undefined*)this->aSparks, FUN_00131670);)
-		this->aSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
+		__destroy_new_array((undefined*)this->aFxSparks, FUN_00131670);)
+		this->aFxSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
 	}
 	return;
 }

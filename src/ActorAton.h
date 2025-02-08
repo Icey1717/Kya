@@ -5,20 +5,10 @@
 #include "ActorAutonomous.h"
 #include "PathManager.h"
 #include "Path.h"
+#include "Fx_Tail.h"
 
 struct edDList_material;
 class CActorAton;
-
-class CFxTail : public CObject
-{
-public:
-	CFxTail() : pData_0x18((undefined*)0x0) {}
-
-	void Create(float param_1, int count, int param_4, int materialId);
-	void Init(float param_1, int id);
-
-	undefined* pData_0x18;
-};
 
 class CStaticMeshComponent
 {

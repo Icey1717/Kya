@@ -128,7 +128,7 @@ union _rgba {
 		, a(ia)
 	{}
 
-	void LerpRGBA(float alpha, _rgba param_3, _rgba param_4);
+	void LerpRGBA(float alpha, uint src, uint dst);
 };
 
 static_assert(sizeof(_rgba) == 4, "sizeof(_rgba) != 4");
@@ -374,6 +374,14 @@ inline edF32VECTOR3 operator-(const float& lhs, const edF32VECTOR3& rhs)
 	ret.z = lhs - rhs.z;
 	return ret;
 }
+
+struct Rectangle
+{
+	float x;
+	float y;
+	float width;
+	float height;
+};
 
 #ifdef PLATFORM_PS2
 union
@@ -678,7 +686,8 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 	return ret;
 }
 
-#define IMPLEMENTATION_GUARD_FX(x)
+#define IMPLEMENTATION_GUARD_FX(x) assert(false);
+#define IMPLEMENTATION_GUARD_EMOTION(x)
 #define IMPLEMENTATION_GUARD_AUDIO(x)
 #define IMPLEMENTATION_GUARD_UI(x)
 #define IMPLEMENTATION_GUARD_SAVE(x)
@@ -906,5 +915,15 @@ struct sceCdlFILE {
 #ifdef PLATFORM_WIN
 #define sqrtf(x) (std::sqrtf(std::fabs(x)))
 #endif
+
+class CObject {
+public:
+	CObject() : objectId(-1) {}
+
+	int objectId;
+
+	virtual bool IsKindOfObject(ulong kind) { return false; }
+	virtual bool InitDlistPatchable(int) { return false; }
+};
 
 #endif //_TYPES_H

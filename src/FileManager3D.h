@@ -35,6 +35,7 @@ struct C3DFileManager : public CObjectManager {
 	edDList_material* GetMaterialFromId(int materialId, int internalId);
 
 	int InstanciateG2D(int index);
+	ParticleInfo* _CreateG2DInfo(int index);
 	struct TextureInfo* GetCommonSectorG2D();
 	void Level_ClearInternalData();
 	void Level_Create(ByteCode* pMemoryStream);
@@ -53,6 +54,8 @@ struct C3DFileManager : public CObjectManager {
 
 	ed_g2d_manager * LoadDefaultTexture_001a65d0();
 	ed_g3d_manager* GetInfoForCommonLevelMesh(char* pFileData);
+
+	int GetNbMaterialInG2D(int id);
 
 	struct ed_g3d_manager* pMeshInfo;
 	struct edNODE* pBackgroundNode;

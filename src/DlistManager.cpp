@@ -200,80 +200,88 @@ void CGlobalDListManager::Level_ClearAll()
 
 void CGlobalDListManager::Level_Manage()
 {
-	CGlobalDListPatch* pCVar1;
-	int* piVar3;
+	CGlobalDListPatch* pCurList;
 	uint uVar4;
 	uint uVar5;
 	int iVar6;
-	CGlobalDListPatch* pCVar7;
+	S_EYES_BRIGHT_SHADOW** pCurEntry;
 	int iVar8;
 	int iVar9;
 	//ParticleData_b8* piVar2;
 
-	// This is broken.
-	//IMPLEMENTATION_GUARD();
-	//return;
-
 	if (this->dlistCount != 0) {
 		if (this->field_0x1c == 1) {
-			pCVar1 = this->ppGlobalDlist->pDlistPatch;
-			if ((pCVar1 != (CGlobalDListPatch*)0x0) && (iVar6 = pCVar1->brightEyeCount, iVar6 != 0)) {
-				if (pCVar1->bEnabled != 0) {
-					pCVar1->field_0x18 = 1;
-					edDListSetCurrent(pCVar1->pDisplayListInternal);
+			pCurList = this->ppGlobalDlist->pDlistPatch;
+
+			if ((pCurList != (CGlobalDListPatch*)0x0) && (iVar6 = pCurList->brightEyeCount, iVar6 != 0)) {
+				if (pCurList->bEnabled != 0) {
+					pCurList->field_0x18 = 1;
+					edDListSetCurrent(pCurList->pDisplayListInternal);
 				}
+
 				iVar9 = 0;
-				pCVar7 = pCVar1;
+				pCurEntry = pCurList->pBrightEye;
 				if (0 < iVar6) {
 					do {
-						if (pCVar7->pBrightEye[iVar9] != (S_EYES_BRIGHT_SHADOW*)0x0) {
-							pCVar7->pBrightEye[iVar9]->pObject->InitDlistPatchable();
+						if (*pCurEntry != (S_EYES_BRIGHT_SHADOW*)0x0) {
+							(*pCurEntry)->pObject->InitDlistPatchable(iVar9);
 						}
+
+						pCurEntry = pCurEntry + 1;
 						iVar9 = iVar9 + 1;
 					} while (iVar9 < iVar6);
 				}
-				if (pCVar1->bEnabled != 0) {
-					pCVar1->field_0x18 = 0;
+
+				if (pCurList->bEnabled != 0) {
+					pCurList->field_0x18 = 0;
 				}
 			}
+
 			this->field_0x1c = 0;
 		}
+
 		if (((1 < this->dlistCount) && (this->field_0x18 == 1)) && (iVar6 = this->field_0x14, iVar6 != -1)) {
-			pCVar1 = this->ppGlobalDlist[iVar6].pDlistPatch;
-			if ((pCVar1 != (CGlobalDListPatch*)0x0) && (iVar9 = pCVar1->brightEyeCount, iVar9 != 0)) {
-				if (pCVar1->bEnabled != 0) {
-					pCVar1->field_0x18 = 1;
-					edDListSetCurrent(pCVar1->pDisplayListInternal);
+			pCurList = this->ppGlobalDlist[iVar6].pDlistPatch;
+
+			if ((pCurList != (CGlobalDListPatch*)0x0) && (iVar9 = pCurList->brightEyeCount, iVar9 != 0)) {
+				if (pCurList->bEnabled != 0) {
+					pCurList->field_0x18 = 1;
+					edDListSetCurrent(pCurList->pDisplayListInternal);
 				}
+
 				iVar8 = 0;
 				if (0 < iVar9) {
 					iVar6 = iVar6 << 0x10;
-					pCVar7 = pCVar1;
+					pCurEntry = pCurList->pBrightEye;
 					do {
-						IMPLEMENTATION_GUARD(
-						if (pCVar7->pBrightEye[0] != (char*)0x0) {
-							piVar3 = *(int**)(pCVar7->pBrightEye[0] + 4);
-							(**(code**)(*piVar3 + 0x10))(piVar3, iVar6);
+						if (*pCurEntry != (S_EYES_BRIGHT_SHADOW*)0x0) {
+							(*pCurEntry)->pObject->InitDlistPatchable(iVar6);
 						}
+
 						iVar8 = iVar8 + 1;
-						pCVar7 = (CGlobalDListPatch*)&(pCVar7->base).pDisplayListInternal;
-						iVar6 = iVar6 + 1;)
+						pCurEntry = pCurEntry + 1;
+						iVar6 = iVar6 + 1;
 					} while (iVar8 < iVar9);
 				}
-				if (pCVar1->bEnabled != 0) {
-					pCVar1->field_0x18 = 0;
+
+				if (pCurList->bEnabled != 0) {
+					pCurList->field_0x18 = 0;
 				}
 			}
+
 			this->field_0x18 = 0;
 		}
+
 		_ExecuteCallFunc();
 	}
+
 	uVar5 = this->field_0x24 + 1;
 	uVar4 = uVar5 & 1;
 	if (((int)uVar5 < 0) && (uVar4 != 0)) {
 		uVar4 = uVar4 - 2;
 	}
 	this->field_0x24 = uVar4;
+
 	return;
 }
 
@@ -442,9 +450,11 @@ void CGlobalDListManager::SectorChange(int newSectorId)
 		else {
 			pCVar6 = this->ppGlobalDlist[this->field_0x14].pDlistPatch;
 		}
+
 		if (pCVar6 != (CGlobalDListPatch*)0x0) {
 			pCVar6->bEnabled = 0;
 		}
+
 		this->field_0x14 = -1;
 	}
 	else {
@@ -453,6 +463,7 @@ void CGlobalDListManager::SectorChange(int newSectorId)
 		if (this->field_0x14 != -1) {
 			pCVar6 = this->ppGlobalDlist[this->field_0x14].pDlistPatch;
 		}
+
 		if (pCVar6 != (CGlobalDListPatch*)0x0) {
 			pGVar1 = &this->ppGlobalDlist[newSectorId];
 			if ((pGVar1->field_0x8 == 0) ||
@@ -462,18 +473,20 @@ void CGlobalDListManager::SectorChange(int newSectorId)
 			else {
 				iVar2 = this->field_0x14;
 				pCVar3 = this->ppGlobalDlist[iVar2].pDlistPatch;
+
 				if (pCVar3 != (CGlobalDListPatch*)0x0) {
 					uVar4 = pGVar1->field_0x8;
 					uVar5 = pGVar1->field_0x4;
 					if ((uVar4 != 0) && ((pGVar1->field_0xc != 0 || (uVar5 != 0)))) {
-						IMPLEMENTATION_GUARD(
-						edDListPatchableReset(pCVar3->pDisplayListInternal, uVar4, pGVar1[iVar2].field_0xc, uVar5);)
+						edDListPatchableReset(pCVar3->pDisplayListInternal, uVar4, pGVar1[iVar2].field_0xc, uVar5);
 					}
 				}
+
 				pCVar6->bEnabled = 1;
 			}
 		}
 	}
+
 	return;
 }
 

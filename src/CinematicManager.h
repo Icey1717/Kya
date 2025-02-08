@@ -670,7 +670,7 @@ public:
 	virtual void LevelLoading_Begin();
 	virtual void LevelLoading_End();
 	virtual bool LevelLoading_Manage();
-	virtual void LevelLoading_Draw() { IMPLEMENTATION_GUARD_FX(); }
+	virtual void LevelLoading_Draw();
 
 	virtual void Level_Init();
 	virtual void Level_Term();
@@ -704,6 +704,8 @@ public:
 
 	bool FUN_001c5c60();
 
+	void DrawBandsAndSubtitle(int param_2);
+
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;
 	struct CCameraCinematic* pCinematicCamera;
@@ -714,14 +716,11 @@ public:
 	int field_0x20;
 	int field_0x24;
 	CCinematic* field_0x28;
-	undefined4 field_0x2c;
+	float startTime;
 	uint bInitialized;
 	float field_0x34;
-	undefined4 field_0x38;
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
+	char* pSubtitleText;
+	int subtitleHorizontalAlignment;
 	undefined4 field_0x40;
 	undefined4 field_0x44;
 	undefined field_0x48;
@@ -733,10 +732,8 @@ public:
 	undefined field_0x4e;
 	undefined field_0x4f;
 	edF32VECTOR4 vector_0x50;
-	float x_0x60;
-	float y_0x64;
-	float z_0x68;
-	undefined4 field_0x6c;
+	edF32VECTOR3 fadeColor;
+	float fadeDuration;
 	edF32MATRIX4 matrix_0x70;
 	float field_0xb0;
 	undefined field_0xb4;

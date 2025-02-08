@@ -6,6 +6,7 @@
 #include "TimeController.h"
 #include "ActorHero.h"
 #include "LocalizationManager.h"
+#include "CameraViewManager.h"
 
 CActorCompanion* CActorCompanion::_gThis = NULL;
 
@@ -56,7 +57,228 @@ void CActorCompanion::Term()
 
 void CActorCompanion::Draw()
 {
-	IMPLEMENTATION_GUARD_FX();
+	CShadow* pCVar1;
+	CCameraManager* pCVar2;
+	bool bVar3;
+	CBehaviourCompanionSubObj_80* pCVar4;
+	edF32MATRIX4* peVar5;
+	edDList_material* peVar6;
+	int iVar7;
+	int iVar8;
+	uint uVar9;
+	uint uVar10;
+	uint uVar11;
+	float fVar12;
+	float x;
+	edF32MATRIX4 local_110;
+	edF32MATRIX4 local_d0;
+	edF32VECTOR4 eStack144;
+	edF32VECTOR4 eStack128;
+	edF32VECTOR4 local_70;
+	edF32MATRIX4 eStack96;
+	edF32VECTOR2 eStack32;
+	edF32VECTOR2 local_18;
+	edF32VECTOR2 eStack16;
+	float fStack8;
+	float fStack4;
+	C3DFileManager* pFileManager;
+
+	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
+	pCVar2 = CCameraManager::_gThis;
+	CActorAutonomous::Draw();
+	iVar7 = this->actorState;
+	if ((iVar7 == 0xe) || (iVar7 == 0xd)) {
+		pCVar1 = this->pShadow;
+		if (pCVar1 != (CShadow*)0x0) {
+			IMPLEMENTATION_GUARD(
+			(**(code**)((pCVar1->base).pVTable + 0x14))(pCVar1, 0);)
+		}
+	}
+	else {
+		if ((GameFlags & 0x20) == 0) {
+			IMPLEMENTATION_GUARD(
+			pCVar1 = this->pShadow;
+			if (pCVar1 != (CShadow*)0x0) {
+				(**(code**)((pCVar1->base).pVTable + 0x14))(pCVar1, 1);
+			}
+			iVar7 = this->actorState;
+			if ((7 < iVar7) && (iVar7 < 0xb)) {
+				iVar7 = (this->behaviourCompanion).activeSubObjId;
+				if (iVar7 < 0) {
+					pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+				}
+				else {
+					pCVar4 = (this->behaviourCompanion).aSubObjs + iVar7;
+				}
+				if (pCVar4 != (CBehaviourCompanionSubObj_80*)0x0) {
+					FUN_001e82a0((int)this);
+				}
+			}
+			bVar3 = GameDList_BeginCurrent();
+			if (bVar3 != false) {
+				peVar5 = CAnimation::GetCurBoneMatrix(this->pAnimationController, 0x5579b496);
+				local_70.x = peVar5->da;
+				local_70.y = peVar5->db;
+				local_70.z = peVar5->dc;
+				local_70.w = peVar5->dd;
+				peVar5 = CAnimation::GetCurBoneMatrix(this->pAnimationController, 0x5579b496);
+				edF32Matrix4MulF32Vector4Hard(&eStack144, peVar5, &gF32Vector4Zero);
+				edF32Vector4AddHard(&local_70, &local_70, &eStack144);
+				edF32Matrix4MulF32Vector4Hard(&local_70, (edF32MATRIX4*)this->pMeshTransform, &local_70);
+				edF32Vector4SubHard(&eStack128, (edF32VECTOR4*)&(pCVar2->transformationMatrix).da, &local_70);
+				edF32Vector4NormalizeHard(&eStack128, &eStack128);
+				edF32Vector4ScaleHard(0.1, &eStack128, &eStack128);
+				edF32Vector4AddHard(&local_70, &local_70, &eStack128);
+				local_70.w = 1.0;
+				edF32Matrix4CopyHard(&eStack96, &pCVar2->transMatrix_0x390);
+				eStack96.da = local_70.x;
+				eStack96.db = local_70.y;
+				eStack96.dc = local_70.z;
+				eStack96.dd = local_70.w;
+				edDListLoadMatrix(&eStack96);
+				peVar6 = C3DFileManager::GetMaterialFromId(pFileManager, this->field_0x358, 0);
+				edDListUseMaterial(peVar6);
+				edDListBegin(0.0, 0.0, 0.0, 8, 4);
+				iVar7 = rand();
+				uVar11 = (uint) * (byte*)((int)&this->field_0x354 + 3);
+				uVar9 = (uint) * (byte*)&this->field_0x354;
+				edDListColor4u8(*(byte*)&this->field_0x354, *(byte*)((int)&this->field_0x354 + 1),
+					*(byte*)((int)&this->field_0x354 + 2),
+					(byte)(int)((float)uVar11 * 0.5 + (float)uVar11 * ((float)iVar7 / 2.147484e+09) * 0.4));
+				edDListTexCoo2f(0.0, 0.0);
+				edDListVertex4f(-0.1, 0.1, 0.0, uVar9);
+				edDListTexCoo2f(1.0, 0.0);
+				edDListVertex4f(0.1, 0.1, 0.0, uVar9);
+				edDListTexCoo2f(0.0, 1.0);
+				edDListVertex4f(-0.1, -0.1, 0.0, uVar9);
+				edDListTexCoo2f(1.0, 1.0);
+				edDListVertex4f(0.1, -0.1, 0.0, uVar9);
+				edDListEnd();
+				if (this->actorState == 10) {
+					iVar7 = (this->behaviourCompanion).activeSubObjId;
+					pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+					if (-1 < iVar7) {
+						pCVar4 = (this->behaviourCompanion).aSubObjs + iVar7;
+					}
+					if (pCVar4 != (CBehaviourCompanionSubObj_80*)0x0) {
+						pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+						if (-1 < iVar7) {
+							pCVar4 = (this->behaviourCompanion).aSubObjs + iVar7;
+						}
+						if (pCVar4->field_0x44 != 0) {
+							pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+							if (-1 < iVar7) {
+								pCVar4 = (this->behaviourCompanion).aSubObjs + iVar7;
+							}
+							eStack96.da = this->currentLocation.x;
+							eStack96.dc = this->currentLocation.z;
+							eStack96.dd = this->currentLocation.w;
+							eStack96.db = this->currentLocation.y + -0.4;
+							x = (float)-pCVar4->field_0x44 * 0.5;
+							if (*(int*)&this->field_0x368 != 0) {
+								edF32Vector4ScaleHard((float)&DAT_bf800000, (edF32VECTOR4*)&eStack96, (edF32VECTOR4*)&eStack96);
+							}
+							edDListLoadMatrix(&eStack96);
+							uVar11 = 0;
+							iVar7 = 0;
+							while (true) {
+								iVar8 = (this->behaviourCompanion).activeSubObjId;
+								uVar9 = uRam00000044;
+								if (-1 < iVar8) {
+									uVar9 = (this->behaviourCompanion).aSubObjs[iVar8].field_0x44;
+								}
+								if (uVar9 <= uVar11) break;
+								pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+								if (-1 < iVar8) {
+									pCVar4 = (this->behaviourCompanion).aSubObjs + iVar8;
+								}
+								peVar6 = C3DFileManager::GetMaterialFromId
+								(pFileManager, this->field_0x35c, (int)*(short*)((int)pCVar4->field_0x34 + iVar7));
+								edDListUseMaterial(peVar6);
+								edDListBegin(0.0, 0.0, 0.0, 8, 4);
+								edDListColor4u8(0x80, 0x80, 0x80, 0x80);
+								iVar8 = (this->behaviourCompanion).activeSubObjId;
+								if (iVar8 < 0) {
+									pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+								}
+								else {
+									pCVar4 = (this->behaviourCompanion).aSubObjs + iVar8;
+								}
+								uVar9 = 8;
+								if (*(short*)((int)pCVar4->field_0x34 + iVar7) == 2) {
+									iVar8 = CScene::GetManager(MO_Frontend);
+									iVar8 = *(int*)(iVar8 + 0x6c);
+									fVar12 = 0.0;
+									uVar9 = CFrontEndInventory::ComputeGameScreenCoordinate
+									((long)iVar8, (float*)&eStack16, &this->currentLocation, &fStack4, 0);
+									uVar10 = CFrontEndInventory::ComputeGameScreenCoordinate
+									((long)iVar8, (float*)&eStack32, &(this->behaviourCompanion).field_0x40, &fStack8, 0);
+									if ((uVar9 & uVar10) != 0) {
+										edF32Vector2Sub(&local_18, &eStack32, &eStack16);
+										fVar12 = atan2f(local_18.x, local_18.y);
+									}
+									if (*(int*)&this->field_0x368 == 0) {
+										fVar12 = edF32Between_2Pi(fVar12 - 1.570796);
+									}
+									else {
+										fVar12 = edF32Between_2Pi(-fVar12 - 1.570796);
+									}
+									local_110.aa = (float)&DAT_bf000000;
+									local_110.ab = (float)&DAT_bf000000;
+									local_110.ac = 0.0;
+									local_110.ad = 1.0;
+									local_110.ba = 0.5;
+									local_110.bb = (float)&DAT_bf000000;
+									local_110.bc = 0.0;
+									local_110.bd = 1.0;
+									local_110.ca = (float)&DAT_bf000000;
+									local_110.cb = 0.5;
+									local_110.cc = 0.0;
+									local_110.cd = 1.0;
+									local_110.da = 0.5;
+									local_110.db = 0.5;
+									local_110.dc = 0.0;
+									local_110.dd = 1.0;
+									edF32Matrix4RotateZHard(fVar12, &local_d0, &gF32Matrix4Unit);
+									peVar5 = &local_d0;
+									local_d0.da = 0.5;
+									local_d0.db = 0.5;
+									edF32Matrix4MulF32Matrix4Hard(peVar5, &local_110, peVar5);
+									edDListTexCoo2f(0.0, 0.0);
+									edDListVertex4f(x + local_d0.aa, local_d0.ab, 0.0, (uint)peVar5);
+									edDListTexCoo2f(1.0, 0.0);
+									edDListVertex4f(x + local_d0.ba, local_d0.bb, 0.0, (uint)peVar5);
+									edDListTexCoo2f(0.0, 1.0);
+									edDListVertex4f(x + local_d0.ca, local_d0.cb, 0.0, (uint)peVar5);
+									edDListTexCoo2f(1.0, 1.0);
+									edDListVertex4f(x + local_d0.da, local_d0.db, 0.0, (uint)peVar5);
+								}
+								else {
+									edDListTexCoo2f(0.0, 0.0);
+									edDListVertex4f(x, 1.0, 0.0, uVar9);
+									edDListTexCoo2f(1.0, 0.0);
+									fVar12 = x + 1.0;
+									edDListVertex4f(fVar12, 1.0, 0.0, uVar9);
+									edDListTexCoo2f(0.0, 1.0);
+									edDListVertex4f(x, 0.0, 0.0, uVar9);
+									edDListTexCoo2f(1.0, 1.0);
+									edDListVertex4f(fVar12, 0.0, 0.0, uVar9);
+								}
+								edDListEnd();
+								iVar7 = iVar7 + 2;
+								uVar11 = uVar11 + 1;
+								x = x + 1.0;
+							}
+						}
+					}
+				}
+
+				GameDList_EndCurrent();
+			})
+		}
+	}
+
+	return;
 }
 
 void CActorCompanion::Reset()
@@ -584,7 +806,137 @@ LAB_001e7598:
 
 void CBehaviourCompanion::Draw()
 {
-	IMPLEMENTATION_GUARD_FX();
+	int iVar1;
+	bool bVar2;
+	Timer* pTVar3;
+	CBehaviourCompanionSubObj_80* pCVar4;
+	CBehaviourCompanionSubObj_80* pCVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+
+	if (((GameFlags & 0x20) == 0) && (this->field_0x64 != 0)) {
+		iVar1 = this->field_0x18;
+
+		pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+		if (-1 < iVar1) {
+			pCVar4 = this->aSubObjs + iVar1;
+		}
+
+		if (pCVar4 != (CBehaviourCompanionSubObj_80*)0x0) {
+			pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+			if (-1 < iVar1) {
+				pCVar4 = this->aSubObjs + iVar1;
+			}
+
+			if ((pCVar4->flags_0x2 & 2) != 0) {
+				if (this->field_0x60 == 0) {
+					pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+					if (-1 < iVar1) {
+						pCVar4 = this->aSubObjs + iVar1;
+					}
+
+					if ((pCVar4->flags_0x4 & 2) != 0) {
+						if (iVar1 < 0) {
+							pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+						}
+						else {
+							pCVar4 = this->aSubObjs + iVar1;
+						}
+
+						if (this->activeSubObjId < 0) {
+							pCVar5 = (CBehaviourCompanionSubObj_80*)0x0;
+						}
+						else {
+							pCVar5 = this->aSubObjs + this->activeSubObjId;
+						}
+
+						if (pCVar5 == pCVar4) {
+							IMPLEMENTATION_GUARD(
+							this->field_0x20 = 0.0f;
+							this->field_0x1c = 0.0f;
+							pTVar3 = GetTimer();
+							fVar6 = fmodf(pTVar3->scaledTotalTime, 3.0f);
+							bVar2 = GuiDList_BeginCurrent();
+							if (bVar2 != false) {
+								_Display_Text(0.0f, (float)&DAT_3f333333, fVar6, this);
+								GuiDList_EndCurrent();
+							})
+						}
+					}
+				}
+				else {
+					if (this->field_0x60 == 1) {
+						pTVar3 = GetTimer();
+						fVar6 = this->field_0x1c + pTVar3->cutsceneDeltaTime;
+						this->field_0x1c = fVar6;
+
+						if (0.5f < fVar6) {
+							this->field_0x1c = 1.0f;
+							pTVar3 = GetTimer();
+							this->field_0x20 = this->field_0x20 + pTVar3->cutsceneDeltaTime;
+						}
+
+						if (this->field_0x18 < 0) {
+							pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+						}
+						else {
+							pCVar4 = this->aSubObjs + this->field_0x18;
+						}
+
+						if ((pCVar4->flags_0x4 & 1) == 0) {
+							fVar6 = -0.15f;
+						}
+						else {
+							fVar6 = 0.0f;
+							this->field_0x20 = 10000.0f;
+						}
+					}
+					else {
+						pTVar3 = GetTimer();
+						fVar6 = this->field_0x1c - pTVar3->cutsceneDeltaTime;
+						this->field_0x1c = fVar6;
+						if (fVar6 < 0.0f) {
+							this->field_0x20 = 0.0f;
+							this->field_0x1c = 0.0f;
+							this->field_0x60 = 0;
+							pCVar4 = (CBehaviourCompanionSubObj_80*)0x0;
+							if (-1 < this->field_0x18) {
+								pCVar4 = this->aSubObjs + this->field_0x18;
+							}
+							pCVar4->flags_0x4 = pCVar4->flags_0x4 & 0xffdf;
+						}
+						fVar6 = -0.15f;
+					}
+
+					fVar7 = this->field_0x1c / 0.5f;
+					if (fVar7 < 0.5f) {
+						fVar8 = 1.1f;
+						fVar6 = fVar6 + fVar7 * 2.0f * -fVar6;
+					}
+					else {
+						fVar8 = (fVar7 - 0.5f) * 2.0f * -0.4f + 1.1f;
+						fVar6 = 0.0f;
+					}
+
+					IMPLEMENTATION_GUARD(
+					fVar7 = 0.54f;
+					bVar2 = GuiDList_BeginCurrent();
+					if (bVar2 != false) {
+						DrawRectangle_001afe20
+						(fVar7 * (float)gVideoConfig.screenWidth, (fVar8 + 0.125f) * (float)gVideoConfig.screenHeight,
+							(float)gVideoConfig.screenWidth * 0.91f, (float)gVideoConfig.screenHeight * 0.3f, 12.0f, 12.0f,
+							DAT_0042ca58, (uint)PTR_DAT_0042ca60, 0);
+						FUN_001e5b90(fVar7, fVar8, this->field_0x20, this);
+						_Display_Text(fVar6, (float)&DAT_3f333333, 3.0f, this);
+						GuiDList_EndCurrent();
+					})
+				}
+			}
+		}
+	}
+
+	return;
 }
 
 void CBehaviourCompanion::Begin(CActor* pOwner, int newState, int newAnimationType)

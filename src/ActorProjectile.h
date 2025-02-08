@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "ActorAutonomous.h"
+#include "Fx_Spark.h"
 
 #define PROJECTILE_BEHAVIOUR_STAND 0x3
 #define PROJECTILE_BEHAVIOUR_STRAIGHT 0x4
@@ -19,13 +20,6 @@ public:
 	undefined4 field_0x20;
 	byte field_0x24;
 	byte field_0x25;
-};
-
-template<int, int>
-class CFxSparkNoAlloc
-{
-	edF32VECTOR3 field_0xf0;
-	float field_0x114;
 };
 
 class CPatternPart
@@ -102,7 +96,7 @@ public:
 	int field_0xc;
 	int materialId;
 
-	CFxSparkNoAlloc<3, 12>* aSparks;
+	CFxSparkNoAlloc<3, 12>* aFxSparks;
 };
 
 class CBehaviourInventory : public CBehaviour

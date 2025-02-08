@@ -1214,7 +1214,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 				pCVar1 = this->field_0x1f8;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1f4 != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1f4 == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable();
+					pCVar1->InitDlistPatchable(0);
 				}
 			}
 
@@ -1348,7 +1348,7 @@ void CActorMovingPlatform::GenericManage(int param_2, int param_3, int param_4, 
 				pCVar1 = this->field_0x1f0;
 				if (((pCVar1 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1ec == pCVar1->pCinData)) {
-					pCVar1->InitDlistPatchable();
+					pCVar1->InitDlistPatchable(0);
 				}
 			}
 
@@ -3158,8 +3158,7 @@ void CActorMovingPlatform::ChangeManageState(int state)
 				pCVar2 = this->field_0x1f0;
 				if (((pCVar2 != (CActor*)0x0) && (this->field_0x1ec != (CinNamedObject30*)0x0)) &&
 					(this->field_0x1ec == pCVar2->pCinData)) {
-					IMPLEMENTATION_GUARD(
-					(*(code*)pCVar2->pVTable->InitDlistPatchable)(0, 0);)
+					pCVar2->InitDlistPatchable(0);
 				}
 			}
 		}
@@ -3833,7 +3832,7 @@ void CBehaviourPlatformStand::ChangeManageState(int state)
 			pCVar1 = this->pTiedActor;
 			if (((pCVar1 != (CActor*)0x0) && (this->pCinData != (CinNamedObject30*)0x0)) &&
 				(this->pCinData == pCVar1->pCinData)) {
-				pCVar1->InitDlistPatchable();
+				pCVar1->InitDlistPatchable(0);
 			}
 		}
 	}

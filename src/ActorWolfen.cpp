@@ -742,7 +742,24 @@ StateConfig* CActorWolfen::GetStateCfg(int state)
 
 void CActorWolfen::UpdatePostAnimEffects()
 {
-	IMPLEMENTATION_GUARD_FX();
+	uint uVar1;
+	EnemyComponent80* this_00;
+
+	uVar1 = this->field_0xb74;
+	if (uVar1 == 3) {
+		if (this->pEnemyComponent80_0xd34 != (EnemyComponent80*)0x0) {
+			IMPLEMENTATION_GUARD(
+			this->pEnemyComponent80_0xd34->FUN_003c1400();)
+		}
+	}
+	else {
+		if ((((uVar1 == 1) || (uVar1 == 0)) && (this_00 = this->pEnemyComponent80_0xd34, this_00 != (EnemyComponent80*)0x0)) && (this_00->pEnemy_0x60 == this)) {
+			IMPLEMENTATION_GUARD(
+			this_00->FUN_003c2b20();)
+		}
+	}
+
+	return;
 }
 
 void CActorWolfen::SetState(int newState, int animType)

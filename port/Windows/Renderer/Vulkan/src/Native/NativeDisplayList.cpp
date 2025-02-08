@@ -365,9 +365,19 @@ namespace Renderer::Native::DisplayList
 
 // Implementations from "displaylist.h"
 
+static bool gNoBinding = false;
+
 void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, uint32_t mode)
 {
 	using namespace Renderer::Native::DisplayList;
+
+	gNoBinding = !gBoundTexture;
+
+	if (gNoBinding) {
+		if (!gRecordingCommandBuffer) {
+			BeginCommandBufferRecording();
+		}
+	}
 
 	gViewport.width = viewportWidth;
 	gViewport.height = viewportHeight;
@@ -446,6 +456,10 @@ void Renderer::DisplayList::SetVertex(float x, float y, float z, uint32_t skip)
 void Renderer::DisplayList::End2D()
 {
 	using namespace Renderer::Native::DisplayList;
+
+	if (gNoBinding) {
+		FinalizeDraw();
+	}
 
 	// Nothing for now.
 }

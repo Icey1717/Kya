@@ -765,6 +765,8 @@ ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier);
 int ed3DG2DGetG2DNbMaterials(ed_Chunck* pChunck);
 
 int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode);
+int ed3DG2DGetG2DNbMaterials(ed_g2d_manager* pManager);
+
 int ed3DHierarchyBankMatGetSize(ed_3d_hierarchy* pHier);
 void* ed3DHierarchyBankMatInstanciate(ed_3d_hierarchy* pHier, void* pData);
 void ed3DHierarchyBankMatLinkG2D(ed_3d_hierarchy_node* pHier, ed_g2d_manager* pTexture);
@@ -793,6 +795,7 @@ void ed3DHierarchyNodeSetBFCulling(edNODE* pNode, byte bActive);
 ed_3D_Scene* ed3DGetScene(int index);
 
 ulong ed3DComputeHashCode(char* inString);
+bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPosition, ed_3D_Scene* pScene);
 ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode);
 ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index);
 

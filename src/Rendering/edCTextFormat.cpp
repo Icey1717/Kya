@@ -35,17 +35,17 @@ struct DrawText16 {
 };
 
 
-void edCTextFormat::DisplayWindow(float x, float y, edF32VECTOR4* param_4)
+void edCTextFormat::DisplayWindow(float x, float y, Rectangle* pRect)
 {
 	edF32MATRIX4 textMatrix;
 	float shadowShiftY;
 	float shadowShiftX;
 
-	if ((((this->field_0x30 != 0) || (this->field_0x34 != 0)) && (param_4->z != 0.0f)) && (param_4->w != 0.0f)) {
-		(this->vector_0x10).x = param_4->x + this->offsetX_0x0;
-		(this->vector_0x10).y = param_4->y + this->offsetY_0x4;
-		(this->vector_0x10).z = param_4->z;
-		(this->vector_0x10).w = param_4->w;
+	if ((((this->field_0x30 != 0) || (this->field_0x34 != 0)) && (pRect->width != 0.0f)) && (pRect->height != 0.0f)) {
+		(this->vector_0x10).x = pRect->x + this->offsetX_0x0;
+		(this->vector_0x10).y = pRect->y + this->offsetY_0x4;
+		(this->vector_0x10).width = pRect->width;
+		(this->vector_0x10).height = pRect->height;
 
 		this->fontData_0x850->TransformMatrix(x, y, &textMatrix);
 		edDListLoadMatrix(&textMatrix);
@@ -66,13 +66,14 @@ void edCTextFormat::DisplayWindow(float x, float y, edF32VECTOR4* param_4)
 
 void edCTextFormat::Display(float x, float y)
 {
-	edF32VECTOR4 local_10;
+	Rectangle window;
 
-	local_10.z = 640.0f;
-	local_10.x = 0.0f;
-	local_10.w = 512.0f;
-	local_10.y = 0.0f;
-	DisplayWindow(x, y, &local_10);
+	window.width = 640.0f;
+	window.x = 0.0f;
+	window.height = 512.0f;
+	window.y = 0.0f;
+	DisplayWindow(x, y, &window);
+
 	return;
 }
 
@@ -361,12 +362,12 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 					if (bVar4) {
 						if (bVar5) {
 							fVar14 = (this->vector_0x10).x;
-							fVar15 = (this->vector_0x10).z;
+							fVar15 = (this->vector_0x10).width;
 							fVar18 = fVar14 + fVar15;
 
 							if ((drawX1 <= fVar18) && (fVar14 <= drawX2)) {
 								fVar16 = (this->vector_0x10).y;
-								fVar17 = (this->vector_0x10).w;
+								fVar17 = (this->vector_0x10).height;
 								fVar19 = fVar16 + fVar17;
 
 								if ((in_f23 <= fVar19) && (fVar16 <= in_f21)) {

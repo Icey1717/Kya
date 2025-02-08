@@ -3802,16 +3802,6 @@ void CBehaviourAddOnAton::Manage()
 	IMPLEMENTATION_GUARD_LOG();
 }
 
-void CFxTail::Create(float param_1, int count, int param_4, int materialId)
-{
-	IMPLEMENTATION_GUARD_LOG();
-}
-
-void CFxTail::Init(float param_1, int id)
-{
-	IMPLEMENTATION_GUARD_LOG();
-}
-
 CStaticMeshComponent::CStaticMeshComponent()
 {
 	//this->field_0x634 = 0;

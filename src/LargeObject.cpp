@@ -810,7 +810,9 @@ void CScene::Level_Manage()
 			_scene_handleB->ed3DSceneSetFlag(4);
 		}
 	}
+
 	//EmptyFunction();
+
 	if ((GameFlags & GAME_STATE_PAUSED) == 0) {
 		iVar2 = 0;
 		ppMVar1 = CScene::ptable.aManagers;
@@ -833,7 +835,9 @@ void CScene::Level_Manage()
 			ppMVar1 = ppMVar1 + 1;
 		} while (iVar2 < 0x18);
 	}
+
 	HandleCurState();
+
 	return;
 }
 
@@ -901,7 +905,7 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	}
 	iVar4 = pMemoryStream->GetS32();
 	this->defaultTextureIndex_0x2c = iVar4;
-	//FUN_002cbc90((undefined4*)&this->field_0xfc);
+	edDListCreateFrameBufferMaterial(&this->field_0xfc);
 	iVar4 = pMemoryStream->GetS32();
 	this->defaultMaterialIndex = iVar4;
 	CScene::ptable.g_EffectsManager_004516b8->AddPool(pMemoryStream);
@@ -918,7 +922,7 @@ void CScene::Level_Setup(ByteCode* pMemoryStream)
 	if (*piVar2 != 0) {
 		pMemoryStream->currentSeekPos = pMemoryStream->currentSeekPos + *piVar2 * 4;
 	}
-	//this->field_0x114 = piVar2;
+	this->field_0x114 = piVar2;
 	return;
 }
 
@@ -1032,19 +1036,19 @@ void CScene::LoadFunc_001b87b0()
 	return;
 }
 
-void _rgba::LerpRGBA(float alpha, _rgba param_3, _rgba param_4)
+void _rgba::LerpRGBA(float alpha, uint src, uint dst)
 {
-	byte bStack7;
-	byte bStack6;
-	byte bStack5;
+	byte bStack11;
+	byte bStack10;
+	byte bStack9;
 
-	bStack7 = param_3.b;
-	bStack6 = param_3.g;
-	bStack5 = param_3.a;
-	this->r = (byte)(int)((float)(param_3.r) + alpha * (float)((param_4.r) - (param_3.r)));
-	this->g = (byte)(int)((float)(uint)bStack7 + alpha * (float)((param_4.g) - (uint)bStack7));
-	this->b = (byte)(int)((float)(uint)bStack6 + alpha * (float)((param_4.b) - (uint)bStack6));
-	this->a = (byte)(int)((float)(uint)bStack5 + alpha * (float)((param_4.a) - (uint)bStack5));
+	this->r = (byte)(int)((float)(src & 0xff) + alpha * (float)((dst & 0xff) - (src & 0xff)));
+	bStack11 = (byte)(src >> 8);
+	this->g = (byte)(int)((float)(uint)bStack11 + alpha * (float)((dst >> 8 & 0xff) - (uint)bStack11));
+	bStack10 = (byte)(src >> 0x10);
+	this->b = (byte)(int)((float)(uint)bStack10 + alpha * (float)((dst >> 0x10 & 0xff) - (uint)bStack10));
+	bStack9 = (byte)(src >> 0x18);
+	this->a = (byte)(int)((float)(uint)bStack9 + alpha * (float)((dst >> 0x18) - (uint)bStack9));
 	return;
 }
 
@@ -1095,7 +1099,7 @@ void CScene::HandleFogAndClippingSettings()
 			fVar4 = fVar4 / this->field_0xd4;
 			this->clipValue_0xe8 = this->field_0xd8 + fVar4 * (pSVar1->clipValue_0x0 - this->field_0xd8);
 			this->field_0xec = this->field_0xdc + fVar4 * (pSVar1->field_0x4 - this->field_0xdc);
-			this->fogRGBA.LerpRGBA(fVar4, this->prevFogRGBA, pSVar1->fogRGBA);
+			this->fogRGBA.LerpRGBA(fVar4, this->prevFogRGBA.rgba, pSVar1->fogRGBA.rgba);
 		}
 		pSVar3 = ed3DSceneGetConfig(_scene_handleA);
 		pSVar3->clipValue_0x4 = this->clipValue_0xe8;

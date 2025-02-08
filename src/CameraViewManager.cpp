@@ -1343,6 +1343,16 @@ void edFCameraSetSizeRatioFov(float halfFOV, float aspectRatio, float sizeRatio,
 	return;
 }
 
+float edFCameraGetFov(edFCamera* pCamera)
+{
+	return pCamera->halfFOV / pCamera->verticalHalfFOV;
+}
+
+float edFCameraGetRatio(edFCamera* pCamera)
+{
+	return pCamera->horizontalHalfFOV / pCamera->halfFOV;
+}
+
 void CCameraManager::Level_ClearInternalData()
 {
 	edFCamera* m0;
@@ -1877,10 +1887,10 @@ CCameraShadow::CCameraShadow(ByteCode* pByteCode)
 	return;
 }
 
-bool CCameraShadow::InitDlistPatchable()
+bool CCameraShadow::InitDlistPatchable(int)
 {
 	CGlobalDListManager* pDlistmanager;
-	undefined8 uVar1;
+	uint uVar1;
 	int iVar2;
 
 	edDListLoadIdentity();
@@ -1896,10 +1906,13 @@ bool CCameraShadow::InitDlistPatchable()
 		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
 		iVar2 = iVar2 + 1;
 	} while (iVar2 < 0xfa);
+
 	edDListEnd();
 	edDListSetProperty(4, 0);
-	pDlistmanager = (CGlobalDListManager*)CScene::GetManager(MO_GlobalDListManager);
+
+	pDlistmanager = reinterpret_cast<CGlobalDListManager*>(CScene::GetManager(MO_GlobalDListManager));
 	pDlistmanager->SetActive(this->patchRegister, 1);
+
 	return true;
 }
 

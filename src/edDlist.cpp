@@ -508,6 +508,109 @@ void edDListInitStripPKT(void)
 	return;
 }
 
+ed_hash_code* gFrameBufHASHPtr;
+ed_g2d_material* gFrameBufMaterialPtr;
+
+
+struct
+{
+	// Header
+	ushort field_0x0;
+	ushort field_0x2;
+	int field_0x4;
+	int field_0x8;
+	Hash_4 hash;
+
+	ed_Chunck TWOD;
+	ed_Chunck MATA;
+	ed_Chunck HASH;
+
+	ed_hash_code hashCode;
+
+	ed_Chunck MAT;
+
+	ed_g2d_material material;
+
+	int aLayers[4];
+
+	ed_Chunck LAYA;
+	ed_Chunck LAY;
+
+	ed_g2d_layer layer;
+
+} gFrameBufG2D;
+
+void edDlistFrameBufMaterialInit(void)
+{
+	// Construct a whole .G2D file from scratch.
+
+	gFrameBufG2D.field_0x0 = 1;
+	gFrameBufG2D.field_0x2 = 0;
+	gFrameBufG2D.field_0x4 = 5;
+	gFrameBufG2D.field_0x8 = 0x10;
+	gFrameBufG2D.hash.number = 0x4432472e; // .G2D
+
+	gFrameBufG2D.TWOD.hash = 0x2a44322a; // *2D*
+	gFrameBufG2D.TWOD.field_0x4 = 1;
+	gFrameBufG2D.TWOD.field_0x6 = 0;
+	gFrameBufG2D.TWOD.size = 0xd0;
+	gFrameBufG2D.TWOD.nextChunckOffset = 0x10;
+
+	gFrameBufG2D.MATA.hash = 0x4154414d; // MATA
+	gFrameBufG2D.MATA.field_0x4 = 1;
+	gFrameBufG2D.MATA.field_0x6 = 0;
+	gFrameBufG2D.MATA.size = 0x60;
+	gFrameBufG2D.MATA.nextChunckOffset = 0x10;
+
+	gFrameBufG2D.HASH.hash = 0x48534148; // HASH
+	gFrameBufG2D.HASH.field_0x4 = 1;
+	gFrameBufG2D.HASH.field_0x6 = 0;
+	gFrameBufG2D.HASH.size = 0x20;
+	gFrameBufG2D.HASH.nextChunckOffset = 0x20;
+
+	gFrameBufHASHPtr = &gFrameBufG2D.hashCode;
+	gFrameBufG2D.hashCode.hash = ed3DComputeHashCode("FRAMEBUF");
+	gFrameBufMaterialPtr = &gFrameBufG2D.material;
+	gFrameBufG2D.hashCode.pData = STORE_SECTION(&gFrameBufG2D.MAT);
+
+	gFrameBufG2D.MAT.hash = 0x2e54414d; // MAT.
+	gFrameBufG2D.MAT.field_0x4 = 1;
+	gFrameBufG2D.MAT.field_0x6 = 0;
+	gFrameBufG2D.MAT.size = 0x20;
+	gFrameBufG2D.MAT.nextChunckOffset = 0x20;
+
+	gFrameBufG2D.material.nbLayers = 1;
+	gFrameBufG2D.material.field_0x1 = 0;
+	gFrameBufG2D.material.flags = 4;
+	gFrameBufG2D.material.pDMA_Material = 0x0;
+	gFrameBufG2D.material.pCommandBufferTexture = 0x0;
+	gFrameBufG2D.material.commandBufferTextureSize = 0;
+
+	gFrameBufG2D.aLayers[0] = STORE_SECTION(&gFrameBufG2D.LAY);
+
+	gFrameBufG2D.LAYA.hash = 0x4159414c; // LAYA
+	gFrameBufG2D.LAYA.field_0x4 = 1;
+	gFrameBufG2D.LAYA.field_0x6 = 0;
+	gFrameBufG2D.LAYA.size = 0x50;
+	gFrameBufG2D.LAYA.nextChunckOffset = 0x10;
+
+	gFrameBufG2D.LAY.hash = 0x2e59414c; // LAY.
+	gFrameBufG2D.LAY.field_0x4 = 1;
+	gFrameBufG2D.LAY.field_0x6 = 1;
+	gFrameBufG2D.LAY.size = 0x40;
+	gFrameBufG2D.LAY.nextChunckOffset = 0x40;
+
+	gFrameBufG2D.layer.flags_0x0 = 0;
+	gFrameBufG2D.layer.flags_0x4 = 0x800;
+	gFrameBufG2D.layer.field_0x1b = 0xff;
+	gFrameBufG2D.layer.bHasTexture = 0;
+	gFrameBufG2D.layer.paletteId = 0;
+
+	return;
+}
+
+ed_3d_hierarchy gCurUnitHierachy;
+
 void edDListInit(void)
 {
 	DisplayListInternal** pDVar1;
@@ -567,7 +670,7 @@ void edDListInit(void)
 	gNbDList_3D[0] = 0;
 	gNbDList_3D[1] = 0;
 
-	//memset(&gCurUnitHierachy, 0, 0xb0);
+	memset(&gCurUnitHierachy, 0, sizeof(ed_3d_hierarchy));
 	edDListInitMemory();
 	gBankMaterial = (ed_hash_code*)edDListAllocMemory(edDlistConfig.bankMaterialCount & 0xfffffff);
 	//gPKTBlit = edDListAllocMemory(100);
@@ -607,7 +710,7 @@ void edDListInit(void)
 	gbInitDone = 1;
 	//edDlistDebugInit();
 	edDListInitStripPKT();
-	//FUN_002cdd00();
+	edDlistFrameBufMaterialInit();
 	return;
 }
 
@@ -1495,12 +1598,57 @@ void edDListVertex4f_3D_TRIANGLE(float x, float y, float z, uint skip)
 	return;
 }
 
+void edDListVertex4f_3D_DEFAULT(float x, float y, float z, uint skip)
+{
+	short* puVar1;
+	_rgba* p_Var1;
+	uint local_4;
+
+	local_4 = skip;
+	if ((float)skip == 49152.0f) {
+		local_4 = 0xc000;
+	}
+
+	gNbAddedVertex = gNbAddedVertex + 1;
+	gCurVertexBuf->x = (int)x;
+	gCurVertexBuf->y = (int)y;
+	gCurVertexBuf->z = (int)z;
+	gCurVertexBuf->skip = local_4;
+	gCurVertexBuf[1].skip = 0xc000;
+	gCurColorBuf->r = gCurColor_SPR->r;
+	gCurColorBuf->g = gCurColor_SPR->g;
+	gCurColorBuf->b = gCurColor_SPR->b;
+	gCurColorBuf->a = gCurColor_SPR->a;
+	p_Var1 = gCurColorBuf + 1;
+	*gCurSTBuf = (short)(int)(gCurST_SPR)[0];
+	gCurSTBuf[1] = (short)(int)(gCurST_SPR)[1];
+	puVar1 = gCurSTBuf + 2;
+	if (gNbDMAVertex == 0x47) {
+		*p_Var1 = gCurColorBuf[-1];
+		gCurColorBuf[2] = *gCurColorBuf;
+		p_Var1 = gCurColorBuf + 3;
+		*(undefined4*)puVar1 = *(undefined4*)(gCurSTBuf + -2);
+		*(undefined4*)(gCurSTBuf + 4) = *(undefined4*)gCurSTBuf;
+		gNbDMAVertex = 2;
+		puVar1 = gCurSTBuf + 6;
+	}
+	else {
+		gNbDMAVertex = gNbDMAVertex + 1;
+	}
+
+	gCurVertexBuf = gCurVertexBuf + 1;
+	gCurColorBuf = p_Var1;
+	gCurSTBuf = puVar1;
+
+	return;
+}
+
 DisplayListXYZFunc gTableAddVertexFUNC_3D[13] = {
 	NULL,
 	NULL,
 	NULL,
 	edDListVertex4f_3D_TRIANGLE,
-	NULL,
+	edDListVertex4f_3D_DEFAULT,
 	NULL,
 	NULL,
 	NULL,
@@ -1538,8 +1686,8 @@ DisplayListRGBAQFunc gTableAddColorFUNC_3D[13] = {
 
 void edDListTexCoo2f_3D(float s, float t)
 {
-	*gCurST_SPR = s * 4096.0;
-	gCurST_SPR[1] = t * 4096.0;
+	gCurST_SPR[0] = s * 4096.0f;
+	gCurST_SPR[1] = t * 4096.0f;
 	return;
 }
 
@@ -1548,7 +1696,7 @@ DisplayListSTFunc gTableAddSTFUNC_3D[13] = {
 	NULL,
 	NULL,
 	edDListTexCoo2f_3D,
-	NULL,
+	edDListTexCoo2f_3D,
 	NULL,
 	NULL,
 	NULL,
@@ -2269,6 +2417,45 @@ void edDListEnd(void)
 	return;
 }
 
+void edDListPatchableReset(DisplayListInternal* pList, uint param_2, uint param_3, uint param_4)
+{
+	ed_3D_Scene* pStaticMeshMaster;
+	DisplayListInternal* pDVar1;
+	uint uVar2;
+
+	if (param_2 != 0xffffffff) {
+		uVar2 = 0;
+
+		if (param_4 == 0xffffffff) goto LAB_002d0e38;
+
+		if (param_3 != 0xffffffff) {
+			pStaticMeshMaster = pList->pStaticMeshMaster_0x20;
+			edDListNew(TO_HEAP(H_MAIN), (uint)pList->flags_0x0, param_2, param_3, param_4, 0, pList);
+			edDListSetSceneUsed(pList, pStaticMeshMaster);
+			return;
+		}
+	}
+
+	uVar2 = 0;
+
+LAB_002d0e38:
+	do {
+		pDVar1 = pList + uVar2;
+		pDVar1->subCommandBufferCount = 0;
+
+		if ((pDVar1->flags_0x0 & 1) != 0) {
+			pDVar1->field_0x10 = (edpkt_data*)pDVar1->pCommandBuffer;
+			pDVar1->field_0x14 = (edpkt_data*)pDVar1->pCommandBuffer;
+		}
+
+		pDVar1->field_0x6 = 0;
+		uVar2 = uVar2 + 1;
+		pDVar1->pRenderCommands = pDVar1->field_0x14;
+	} while (uVar2 < 2);
+
+	return;
+}
+
 void edDListLoadIdentity(void)
 {
 	EDDLIST_LOG(LogLevel::Verbose, "edDListLoadIdentity {}", gNbMatrix);
@@ -2588,4 +2775,29 @@ edDList_material* edDListCreatMaterialFromHashCode(edDList_material* pMaterial, 
 	}
 
 	return pMaterial;
+}
+
+void edDListCreateFrameBufferMaterial(edDList_material* pMaterial)
+{
+	ed_hash_code* pBankHashes;
+	uint freeIndex;
+
+	memset(pMaterial, 0, sizeof(edDList_material));
+
+	pBankHashes = gBankMaterial;
+
+	for (freeIndex = 0; (gBankMaterial[freeIndex].hash.number != 0 && (freeIndex < edDlistConfig.bankMaterialCount - 1U)); freeIndex = freeIndex + 1) {
+	}
+
+	pBankHashes[freeIndex].hash = ed3DComputeHashCode("FRAMEBUF");
+	pBankHashes[freeIndex].pData = STORE_SECTION(gFrameBufHASHPtr);
+	pMaterial->index = freeIndex;
+
+	gNbUsedMaterial = gNbUsedMaterial + 1;
+
+	pMaterial->mode = 4;
+	pMaterial->pManager = (ed_g2d_manager*)0x0;
+	pMaterial->pMaterial = gFrameBufMaterialPtr;
+
+	return;
 }

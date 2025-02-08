@@ -13,6 +13,7 @@ PoolAllocator* g_S_EYES_BRIGHT_SHADOW_allocator;
 PoolAllocator* g_edF32MATRIX4_allocator;
 PoolAllocator* g_CBehaviourCinematic_allocator;
 PoolAllocator* g_U32_allocator;
+PoolAllocator* g_edDLIST_MATERIAL_allocator;
 
 S_EYES_BRIGHT_SHADOW* NewPool_S_EYES_BRIGHT_SHADOW(int count)
 {
@@ -359,6 +360,64 @@ void** NewPool_Pointer(int count)
 	return peVar7;
 }
 
+edDList_material* NewPool_edDLIST_MATERIAL(int count)
+{
+	int iVar1;
+	bool bVar2;
+	void** ppvVar3;
+	PoolAllocator* pPVar4;
+	PoolAllocator* pPVar5;
+	void* pvVar6;
+	edDList_material* peVar7;
+	int iVar8;
+	bVar2 = true;
+	if ((g_edDLIST_MATERIAL_allocator != (PoolAllocator*)0x0) &&
+		(g_edDLIST_MATERIAL_allocator->free + count <= g_edDLIST_MATERIAL_allocator->size)) {
+		bVar2 = false;
+	}
+
+	pPVar5 = g_edDLIST_MATERIAL_allocator;
+	if (bVar2) {
+		if (count < 0x21) {
+			pPVar5 = new PoolAllocator;
+			pPVar4 = g_edDLIST_MATERIAL_allocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				pPVar5->size = 0x20;
+				pvVar6 = new edDList_material[pPVar5->size];
+				pPVar5->pValue = pvVar6;
+				pPVar5->pAllocator = pPVar4;
+				pPVar5->free = 0;
+			}
+		}
+		else {
+			pPVar5 = new PoolAllocator;
+			pPVar4 = g_edDLIST_MATERIAL_allocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				pPVar5->size = count;
+				pvVar6 = new edDList_material[pPVar5->size];
+				pPVar5->pValue = pvVar6;
+				pPVar5->pAllocator = pPVar4;
+				pPVar5->free = 0;
+			}
+		}
+	}
+
+	g_edDLIST_MATERIAL_allocator = pPVar5;
+	iVar1 = g_edDLIST_MATERIAL_allocator->free;
+	iVar8 = iVar1 + count;
+
+	if (g_edDLIST_MATERIAL_allocator->size < iVar8) {
+		peVar7 = (edDList_material*)0x0;
+	}
+	else {
+		ppvVar3 = &g_edDLIST_MATERIAL_allocator->pValue;
+		g_edDLIST_MATERIAL_allocator->free = iVar8;
+		peVar7 = (edDList_material*)((char*)*ppvVar3 + iVar1 * sizeof(edDList_material));
+	}
+
+	return peVar7;
+}
+
 void FreeAllAllocators()
 {
 	if (g_U32_allocator != (PoolAllocator*)0x0) {
@@ -428,6 +487,22 @@ void FreeAllAllocators()
 				//edMemFree(pPVar5);
 			}
 
+			bVar1 = pPVar2 != (PoolAllocator*)0x0;
+			pPVar5 = pPVar2;
+		}
+	}
+
+	if (g_edDLIST_MATERIAL_allocator != (PoolAllocator*)0x0) {
+		bool bVar1 = g_edDLIST_MATERIAL_allocator != (PoolAllocator*)0x0;
+		PoolAllocator* pPVar5 = g_edDLIST_MATERIAL_allocator;
+		while (g_edDLIST_MATERIAL_allocator = pPVar5, bVar1) {
+			PoolAllocator* pPVar2 = pPVar5->pAllocator;
+			if (pPVar5 != (PoolAllocator*)0x0) {
+				if (pPVar5->pValue != (void*)0x0) {
+					delete(pPVar5->pValue);
+				}
+				//edMemFree(pPVar5);
+			}
 			bVar1 = pPVar2 != (PoolAllocator*)0x0;
 			pPVar5 = pPVar2;
 		}

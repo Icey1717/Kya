@@ -143,10 +143,9 @@ void edTextDraw(float x, float y, char* text)
 {
 	bool bVar1;
 	uint uVar2;
-	edF32VECTOR4 local_1590;
+	Rectangle window;
 	edCTextFormat auStack5504;
 
-	//DrawTextParams::Constructor_0028c7d0(&auStack5504);
 	bVar1 = auStack5504.FormatString(text);
 	if (bVar1 != false) {
 		auStack5504.GetRect();
@@ -154,12 +153,12 @@ void edTextDraw(float x, float y, char* text)
 		if (uVar2 != 0) {
 			auStack5504.DisplayDebugInfos(x, y);
 		}
-		local_1590.z = 640.0f;
-		local_1590.w = 512.0f;
-		local_1590.x = 0.0f;
-		local_1590.y = 0.0f;
-		auStack5504.DisplayWindow(x, y, &local_1590);
+		window.width = 640.0f;
+		window.height = 512.0f;
+		window.x = 0.0f;
+		window.y = 0.0f;
+		auStack5504.DisplayWindow(x, y, &window);
 	}
-	//RunInPlaceDestructors_002173e0(auStack5504.fontData_0x850, Free_00166e40, 0xc0, 0x11);
+
 	return;
 }

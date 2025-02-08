@@ -80,7 +80,7 @@ public:
 	int field_0x10;
 	int activeSubObjId;
 	int field_0x18;
-	undefined4 field_0x1c;
+	float field_0x1c;
 	float field_0x20;
 
 	edF32VECTOR4 field_0x30;

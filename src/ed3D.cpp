@@ -13367,6 +13367,13 @@ int ed3DG2DGetG2DNbMaterials(ed_hash_code* pHashCode)
 	return ed3DG2DGetG2DNbMaterials(pChunck);
 }
 
+int ed3DG2DGetG2DNbMaterials(ed_g2d_manager* pManager)
+{
+	// Get the hash code out
+	ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pManager->pMATA_HASH + 1);
+	return ed3DG2DGetG2DNbMaterials(pHashCode);
+}
+
 ed_hash_code* ed3DHierarchyGetMaterialBank(ed_3d_hierarchy* pHier)
 {
 	ed_hash_code* peVar1;
@@ -13726,6 +13733,31 @@ ulong ed3DComputeHashCode(char* inString)
 	}
 
 	return hashCode;
+}
+
+bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPosition, ed_3D_Scene* pScene)
+{
+	float fVar1;
+	float fVar2;
+	edF32VECTOR4 local_90;
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 eStack64;
+	edFCamera* pCamera;
+
+	edF32Matrix4SetIdentityHard(&eStack128);
+	eStack128.cc = -1.0f;
+	pCamera = pScene->pCamera;
+	fVar1 = edFCameraGetFov(pCamera);
+	fVar2 = edFCameraGetRatio(pCamera);
+	edF32Matrix4MulF32Matrix4Hard(&eStack64, &pScene->pCamera->worldToCamera, &eStack128);
+	edF32Matrix4MulF32Vector4Hard(&local_90, &eStack64, pPosition);
+
+	if (0.0f < local_90.z) {
+		pOutScreenCoord->x = (local_90.x / fVar2) / (local_90.z * fVar1);
+		pOutScreenCoord->y = local_90.y / (local_90.z * fVar1);
+	}
+
+	return 0.0f < local_90.z;
 }
 
 ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode)
