@@ -219,7 +219,7 @@ namespace Renderer
 			key.options.bGlsl = true;
 			key.options.bWireframe = false;
 			key.options.topology = topologyTriangleList;
-			PipelineCreateInfo createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key};
+			PipelineCreateInfo<PipelineKey> createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key};
 			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
 		}
 
@@ -758,7 +758,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 	}
 }
 
-void Renderer::Native::CreatePipeline(const PipelineCreateInfo& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)
+void Renderer::Native::CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name)
 {
 	auto vertShader = Shader::ReflectedModule(createInfo.vertShaderFilename, VK_SHADER_STAGE_VERTEX_BIT);
 	auto fragShader = Shader::ReflectedModule(createInfo.fragShaderFilename, VK_SHADER_STAGE_FRAGMENT_BIT);

@@ -81,7 +81,7 @@ bool edCinematic::Create(edCinGameInterface& pInterface, const char* fileName)
 bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& resPtr)
 {
 	char* pcVar1;
-	int* local_10;
+	edCinSourceSubtitleI* local_10;
 	edCinSourceAudioI* local_c;
 	int sceFileLength;
 	edScene local_4;
@@ -107,13 +107,18 @@ bool edCinematicSource::Create(edCinGameInterface& loadObj, edResCollection& res
 		}
 		else {
 			if (dataValue == 3) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				local_10 = (int*)0x0;
-				(*(code*)loadObj->vt->GetSourceSubtitleInterface)(loadObj, &local_10);
-				dataValue = (*ppSource)->offset;
-				pcVar1 = edResCollection::GetResFilename(resPtr, dataValue);
-				(**(code**)(*local_10 + 8))(local_10, pcVar1, ((uint)(*resPtr)[dataValue * 3 + 1].pData & 0x80000000) != 0);
-				(*ppSource)->pFileData = (char*)local_10;)
+				local_10 = (edCinSourceSubtitleI*)0x0;
+				loadObj.GetSourceSubtitleInterface(&local_10);
+				pcVar1 = resPtr.GetResFilename(this->pInternal->offset);
+
+				uint offset = ((this->pInternal->offset * 2) + this->pInternal->offset) * 4;
+
+				char* pOffsetData = reinterpret_cast<char*>(resPtr.pData) + offset;
+
+				uint* pOffsetDataPtr = reinterpret_cast<uint*>(pOffsetData);
+
+				local_10->Create(pcVar1, (pOffsetDataPtr[1] & 0x80000000) != 0);
+				this->pInternal->pTag = STORE_SECTION(local_10);
 			}
 		}
 	}
@@ -139,8 +144,8 @@ bool edCinematicSource::Initialize()
 		}
 		else {
 			if (iVar2 == 3) {
-				IMPLEMENTATION_GUARD_AUDIO(
-				(**(code**)(*(int*)peVar1->pFileData + 0xc))();)
+				edCinSourceSubtitleI* pSubtitleInterface = LOAD_SECTION_CAST(edCinSourceSubtitleI*, peVar1->pTag);
+				pSubtitleInterface->Init();
 			}
 		}
 	}
@@ -177,8 +182,8 @@ bool edCinematicSource::Shutdown()
 		}
 		else {
 			if (iVar2 == 3) {
-				IMPLEMENTATION_GUARD_LOG(
-				(**(code**)(*(int*)peVar1->pTag + 0x18))();)
+				edCinSourceSubtitleI* pSubtitleInterface = LOAD_SECTION_CAST(edCinSourceSubtitleI*, peVar1->pTag);
+				pSubtitleInterface->Shutdown();
 			}
 		}
 	}
@@ -208,10 +213,9 @@ bool edCinematicSource::Destroy(edCinGameInterface& pCinGameInterface)
 		}
 		else {
 			if (type == 3) {
-				IMPLEMENTATION_GUARD_LOG(
-				peVar3 = pSrcTag->pTag;
-				(**(code**)(*(int*)peVar3 + 0x1c))(peVar3);
-				(*(code*)pCinGameInterface->vt->ReleaseSourceSubtitleInterface)(pCinGameInterface, peVar3);)
+				edCinSourceSubtitleI* pSubtitleInterface = LOAD_SECTION_CAST(edCinSourceSubtitleI*, pSrcTag->pTag);
+				pSubtitleInterface->Destroy();
+				pCinGameInterface.ReleaseSourceSubtitleInterface(pSubtitleInterface);
 				this->pInternal->pTag = 0x0;
 			}
 		}
@@ -271,7 +275,7 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 	uint uVar4;
 	ushort* puVar5;
 	int i;
-	CinKey* peVar5;
+	CinKey* pCurKey;
 	float fVar6;
 	float currentPlayTime;
 	float fVar7;
@@ -309,12 +313,12 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 	i = pCinFileHeader->field_0x10 + -1;
 
 	CinKey* pKeyBuffer = (CinKey*)(pCinFileHeader + 1);
-	peVar5 = &pKeyBuffer[pCinFileHeader->srcCount];
+	pCurKey = pKeyBuffer + pCinFileHeader->srcCount;
 
 	if (-1 < i) {
 		do {
-			if (peVar5->keyType == 2) {
-				CinKeyBPre* pre = (CinKeyBPre*)(peVar5 + 1);
+			if (pCurKey->keyType == 2) {
+				CinKeyBPre* pre = (CinKeyBPre*)(pCurKey + 1);
 				uVar4 = (uint)pre->field_0x0;
 				if ((pre->field_0x2 & 1) == 0) {
 					iVar3 = uVar4 * 2 + 2;
@@ -326,7 +330,7 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 					iVar3 = uVar4 + 4;
 				}
 
-				CinKeyB* keyB = (CinKeyB*)(((char*)(peVar5 + 1)) + iVar3 + sizeof(CinKeyBPre));
+				CinKeyB* keyB = (CinKeyB*)(((char*)(pCurKey + 1)) + iVar3 + sizeof(CinKeyBPre));
 
 				edCinematicSource sceFileA = { (edCinematicSourceInternal*)(&pKeyBuffer[keyB->field_0x4])};
 				sceFileA.Timeslice(adjustedDelta.durationA, (uint)&adjustedDelta);
@@ -338,8 +342,8 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 				}
 			}
 			else {
-				if (peVar5->keyType == 1) {
-					edAnmSubControler local_8 = edAnmSubControler((edAnmSubControlerTag*)(peVar5 + 1));
+				if (pCurKey->keyType == 1) {
+					edAnmSubControler local_8 = edAnmSubControler((edAnmSubControlerTag*)(pCurKey + 1));
 					pfVar2 = local_8.GetClosestKeyIndex(adjustedDelta.durationA, &local_c);
 					uVar4 = (uint)local_8.pData->keyCount;
 					fVar7 = adjustedDelta.durationA - *pfVar2;
@@ -366,40 +370,51 @@ bool edCinematic::Timeslice(float deltaTime, FrameInfo* pFrameInfo)
 					}
 				}
 			}
+
 			i = i + -1;
-			peVar5 = (CinKey*)(((char*)peVar5) + peVar5->keySizeBytes);
+			pCurKey = reinterpret_cast<CinKey*>(reinterpret_cast<char*>(pCurKey) + pCurKey->keySizeBytes);
 		} while (-1 < i);
 	}
+
 	i = this->pCinTag->field_0x14;
 	while (i = i + -1, -1 < i) {
-		edAnimatedPropertyTag* pAnimTag = (edAnimatedPropertyTag*)peVar5;
-		edAnimatedProperty local_14 = edAnimatedProperty(pAnimTag);
-		if (pAnimTag->propType == 3) {
+		edAnimatedPropertyTag* pAnimProp = (edAnimatedPropertyTag*)pCurKey;
+		edAnimatedProperty animatedProperty = edAnimatedProperty(pAnimProp);
+		if (pAnimProp->propType == 3) {
 			keyIndex = 0;
-			bool bValidKey = local_14.GetKeyIndexAndTime(adjustedDelta.durationA, &keyIndex, &keyTime);
+			bool bValidKey = animatedProperty.GetKeyIndexAndTime(adjustedDelta.durationA, &keyIndex, &keyTime);
 			if (bValidKey != false) {
-				local_14.pData->size;
 				// Subtitles
-				IMPLEMENTATION_GUARD_LOG();
-				//pfVar3 = (astruct_1*)
-				//	(&this->pCinTag->field_0x0 +
-				//		*(int*)((int)((uint)(ushort)((CinKey*)((int)local_14 + 0xc))->field_0x0 * 4 + (int)local_14) +
-				//			keyIndex * 0x14 + 0x10) * 3);
-				//adjustedDelta.durationB = (float)this->pRes[(int)pfVar3->field_0x30 * 3 + 2].pData;
-				//(*pfVar3->field_0x34->vt->SetSubtitle)
-				//	(keyTime, pfVar3->field_0x34, (SUBTITLE_PARAMStag*)&adjustedDelta.durationB);
+				edAnmSubControlerTag* pSubControllerTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+				edCinSourceSubtitleI::SUBTITLE_PARAMStag subtitleParams;
+
+				// Advance past the keys where the subtitle tags are stored.
+				edCinSourceSubtitleI::SUBTITLE_PARAMStag* pSubtitleTags = reinterpret_cast<edCinSourceSubtitleI::SUBTITLE_PARAMStag*>(pSubControllerTag->keyTimes + pSubControllerTag->keyCount);
+
+				subtitleParams.field_0x0 = pSubtitleTags[keyIndex].field_0x0; // Not sure if this is correct.
+				subtitleParams.keyA = pSubtitleTags[keyIndex].keyA;
+				subtitleParams.keyB = pSubtitleTags[keyIndex].keyB;
+				subtitleParams.time = pSubtitleTags[keyIndex].time;
+
+				subtitleParams.flags = pSubtitleTags[keyIndex].flags;
+
+				// Find the end of the cin tag cause that's where the 
+				edCinematicSourceInternal* pSourceInternals = reinterpret_cast<edCinematicSourceInternal*>(this->pCinTag + 1);
+				edCinSourceSubtitleI* pSubtitle = LOAD_SECTION_CAST(edCinSourceSubtitleI*, pSourceInternals[pSubtitleTags[keyIndex].field_0x0].pTag);
+
+				pSubtitle->SetSubtitle(keyTime, &subtitleParams);
 			}
 		}
 		else {
 			bool bValidVector;
-			if ((pAnimTag->propType == 4) &&
-				(bValidVector = local_14.GetVector3Value(adjustedDelta.durationA, &local_28), bValidVector != false)) {
+			if ((pAnimProp->propType == 4) &&
+				(bValidVector = animatedProperty.GetVector3Value(adjustedDelta.durationA, &local_28), bValidVector != false)) {
 				IMPLEMENTATION_GUARD();
 				//(**(code**)(**(int**)(&this->pCinTag[1].field_0x8 + *(int*)(local_14 + 8) * 0xc) + 0x10))
 				//	(local_28, local_24, local_20);
 			}
 		}
-		pAnimTag = (edAnimatedPropertyTag*)(((char*)pAnimTag) + pAnimTag->size);
+		pAnimProp = (edAnimatedPropertyTag*)(((char*)pAnimProp) + pAnimProp->size);
 	}
 	return bVar1;
 }

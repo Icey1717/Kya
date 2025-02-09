@@ -21,7 +21,7 @@ struct SaveDataSection_44484c42 {
 struct LoadLoopObject_50 {
 	int field_0x0;
 	undefined4 field_0x4;
-	ulong field_0x8;
+	ulong messageKey;
 	float field_0x10;
 	float field_0x14;
 	float field_0x18;
@@ -30,10 +30,7 @@ struct LoadLoopObject_50 {
 	undefined4 field_0x24;
 	undefined4 field_0x28;
 	undefined4 field_0x2c;
-	float field_0x30;
-	float field_0x34;
-	float field_0x38;
-	float field_0x3c;
+	edF32VECTOR4 field_0x30;
 	undefined8 field_0x40;
 	undefined field_0x48;
 	undefined field_0x49;
@@ -159,19 +156,7 @@ struct S_LEVEL_INFO {
 	int field_0x20;
 	char levelName[12];
 	int field_0x30;
-	char levelPath[8];
-	undefined field_0x3c;
-	undefined field_0x3d;
-	undefined field_0x3e;
-	undefined field_0x3f;
-	undefined field_0x40;
-	undefined field_0x41;
-	undefined field_0x42;
-	undefined field_0x43;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
+	char levelPath[20];
 	S_COMPANION_INFO* aCompanionInfo;
 	char* pSimpleConditionData;
 	undefined4 field_0x50;
@@ -182,6 +167,19 @@ struct S_LEVEL_INFO {
 	S_SUBSECTOR_INFO field_0x58[12];
 	SectorManagerSubObjOther aSectorSubObj[30];
 };
+
+struct S_LVLNFO_LANGUAGE_V7_V9
+{
+	undefined4 field_0x0;
+	uint keyA;
+	uint keyB;
+	undefined4 field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+};
+
+static_assert(sizeof(S_LVLNFO_LANGUAGE_V7_V9) == 0x1c);
 
 class CActor;
 
@@ -225,6 +223,7 @@ public:
 	void LevelsInfo_ReadHeader_V7_V9(char* fileData, S_LEVEL_INFO* pLevelInfo);
 	int* LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* pFileBuffer, int count, S_LEVEL_INFO* pLevelInfo);
 	void LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo);
+	void LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* param_2, int nbObj, undefined4 param_4);
 	void Levels_LoadInfoBank();
 	void Episode_LoadFromIniFile();
 

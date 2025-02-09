@@ -35,18 +35,19 @@ namespace Renderer
 
 		static_assert(sizeof(uint32_t) == sizeof(PipelineKey), "PipelineKey size mismatch");
 
+		template<typename KeyType>
 		struct PipelineCreateInfo {
 			std::string vertShaderFilename;
 			std::string fragShaderFilename;
 			std::string geomShaderFilename;
 
-			PipelineKey key;
+			KeyType key;
 		};
 
 		using PipelineMap = std::unordered_map<size_t, Renderer::Pipeline>;
 
 		void CreateRenderPass(VkRenderPass& renderPass, const char* name);
-		void CreatePipeline(const PipelineCreateInfo& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name);
+		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name);
 
 		// Initializes and updates descriptor sets for the native pipeline.
 		void InitializeDescriptorsSets(SimpleTexture* pTexture);

@@ -22,10 +22,22 @@ namespace Renderer::Native::DisplayList
 	static VkRenderPass gRenderPass;
 	static PipelineMap gPipelines;
 
+	struct DisplayListPipelineKey
+	{
+		union {
+			// 32 bit key
+			struct {
+				uint32_t topology : 2;
+				uint32_t bBoundTexture : 1;
+			} options;
+
+			uint32_t key{};
+		};
+	};
+
 	static Pipeline& GetPipeline() {
-		PipelineKey pipelineKey;
-		pipelineKey.options.bWireframe = false;
-		pipelineKey.options.bGlsl = true;
+		DisplayListPipelineKey pipelineKey;
+		pipelineKey.options.bBoundTexture = gBoundTexture != nullptr;
 		pipelineKey.options.topology = (PS2::GetGSState().PRIM.PRIM == 6) ? topologyLineList : topologyTriangleList;
 
 		assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
@@ -169,7 +181,7 @@ namespace Renderer::Native::DisplayList
 		SetObjectName(reinterpret_cast<uint64_t>(renderPass), VK_OBJECT_TYPE_RENDER_PASS, name);
 	}
 
-	static void CreatePipeline(const PipelineCreateInfo& createInfo, const VkRenderPass& renderPass, const char* name)
+	static void CreatePipeline(const PipelineCreateInfo<DisplayListPipelineKey>& createInfo, const VkRenderPass& renderPass, const char* name)
 	{
 		Renderer::Pipeline& pipeline = gPipelines[createInfo.key.key];
 
@@ -222,7 +234,7 @@ namespace Renderer::Native::DisplayList
 		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		rasterizer.depthClampEnable = VK_FALSE;
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
-		rasterizer.polygonMode = createInfo.key.options.bWireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
 		rasterizer.cullMode = VK_CULL_MODE_NONE; //VK_CULL_MODE_BACK_BIT;
 		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -297,18 +309,23 @@ namespace Renderer::Native::DisplayList
 
 	static void CreatePipelines()
 	{
-		PipelineKey key;
-		key.options.bGlsl = true;
-		key.options.bWireframe = false;
+		DisplayListPipelineKey key;
 		key.options.topology = topologyTriangleList;
 		{
-			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "", key};
+			key.options.bBoundTexture = true;
+			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "", key};
 			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL TriList");
 		}
-
-		key.options.topology = topologyLineList;
 		{
-			PipelineCreateInfo createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "shaders/displaylist.geom.spv", key};
+			key.options.bBoundTexture = false;
+			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylistnotex.frag.spv", "", key };
+			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL TriList No Tex");
+		}
+
+		{
+			key.options.bBoundTexture = true;
+			key.options.topology = topologyLineList;
+			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "shaders/displaylist.geom.spv", key};
 			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL LineList");
 		}
 	}
@@ -353,7 +370,13 @@ namespace Renderer::Native::DisplayList
 
 			Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
 
-			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(GetPipeline()).GetSet(GetCurrentFrame()), 0, NULL);
+			if (gBoundTexture) {
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(GetPipeline()).GetSet(GetCurrentFrame()), 0, NULL);
+			}
+			else {
+				
+			}
+
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
 		}
 
@@ -366,10 +389,17 @@ namespace Renderer::Native::DisplayList
 // Implementations from "displaylist.h"
 
 static bool gNoBinding = false;
+static bool bCalledBegin = false;
 
 void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, uint32_t mode)
 {
 	using namespace Renderer::Native::DisplayList;
+
+	if (bCalledBegin) {
+		return;
+	}
+
+	bCalledBegin = true;
 
 	gNoBinding = !gBoundTexture;
 
@@ -377,6 +407,8 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 		if (!gRecordingCommandBuffer) {
 			BeginCommandBufferRecording();
 		}
+
+		Renderer::Debug::BeginLabel(GetCommandBuffer(), "Empty binding");
 	}
 
 	gViewport.width = viewportWidth;
@@ -460,6 +492,8 @@ void Renderer::DisplayList::End2D()
 	if (gNoBinding) {
 		FinalizeDraw();
 	}
+
+	bCalledBegin = false;
 
 	// Nothing for now.
 }

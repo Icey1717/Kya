@@ -194,8 +194,9 @@ struct edAnimatedProperty {
 };
 
 PACK(
-	struct edAnmSubControlerTag {
-	ushort keyCount;
+struct edAnmSubControlerTag 
+{
+	ushort keyCount; // The number of keys held in the keyTimes array
 	ushort field_0x2;
 	float keyTimes[];
 });

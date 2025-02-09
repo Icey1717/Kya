@@ -32,6 +32,7 @@ public:
 	virtual bool SetHeadingQuat(float x, float y, float z, float w);
 	virtual bool SetScale(float x, float y, float z);
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
+	virtual bool SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams);
 	virtual bool Shutdown();
 
 	void SetupTransform(edF32VECTOR4* position, edF32VECTOR4* heading, edF32VECTOR4* scale, ed_g3d_manager* pMeshManager);
@@ -66,7 +67,8 @@ public:
 	ed_g3d_manager* pAltModelManager;
 };
 
-class CBWCinCam : public edCinCamInterface {
+class CBWCinCam : public edCinCamInterface
+{
 public:
 	virtual bool Activate();
 	virtual bool Initialize(bool param_2, uint* flags);
@@ -75,6 +77,19 @@ public:
 	virtual bool SetHeadingQuat(float x, float y, float z, float w);
 	virtual bool SetHeadingEuler(float x, float y, float z, bool param_5);
 	virtual bool Shutdown() { return true; }
+};
+
+class CBWCinSourceSubtitle : public edCinSourceSubtitleI
+{
+public:
+	virtual bool Create(char* pFileName, long param_3);
+	virtual bool Init() { return true; }
+	virtual bool SetPos(float x, float y, float z);
+	virtual bool SetSubtitle(float keyTime, SUBTITLE_PARAMStag* pTag);
+	virtual bool Shutdown() { return true; }
+	virtual bool Destroy() { return true; }
+
+	edF32VECTOR4 position;
 };
 
 struct GlobalSound_FileData;
@@ -123,8 +138,12 @@ public:
 	virtual bool GetSourceAudioInterface(edCinSourceAudioI** ppSourceAudioInterface);
 	virtual bool ReleaseSourceAudioInterface(edCinSourceAudioI*);
 
+	virtual bool GetSourceSubtitleInterface(edCinSourceSubtitleI** ppSourceSubtitleInterface);
+	virtual bool ReleaseSourceSubtitleInterface(edCinSourceSubtitleI*);
+
 	CBWCinSourceAudio BWCinSourceAudio_Obj;
 	CBWCinCam BWCinCam_Obj;
+	CBWCinSourceSubtitle BWCinSourceSubtitle_Obj;
 };
 
 
@@ -705,6 +724,7 @@ public:
 	bool FUN_001c5c60();
 
 	void DrawBandsAndSubtitle(int param_2);
+	void SetSubtitle(float param_1, char* pText, edF32VECTOR4* param_4, int param_5);
 
 	struct CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;

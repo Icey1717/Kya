@@ -838,7 +838,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 	int local_10;
 	int local_c;
 	int local_8;
-	edAnimatedProperty animatedProp;
+	edAnimatedProperty animatedProperty;
 	CineCreatureObject* pCineCreature;
 	uint currentTrackType;
 	edCinActorInterface* pCinActorInterface;
@@ -854,7 +854,8 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 	if (bFrameDirected != 0) {
 		while (bUpdateRotationSuccess = 0 < numTracks, numTracks = numTracks + -1, bUpdateRotationSuccess) {
 			currentTrackType = pAnimProp->type;
-			animatedProp = edAnimatedProperty(pAnimProp);
+			animatedProperty = edAnimatedProperty(pAnimProp);
+
 			if (currentTrackType == 0x73d8ccae) {
 				IMPLEMENTATION_GUARD(
 				locationOutVector.w = (float)(trackSeekPos + 3);
@@ -864,8 +865,8 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 						edAnmSubControler::GetClosestKeyIndexSafe
 						(currentPlayTime, (edAnmSubControler*)&locationOutVector.w, &local_1c);
 					pTrackDataStart =
-						(int*)((int)animatedProp + 0xc) +
-						(uint) * (ushort*)((int)animatedProp + 0xc) + local_1c * 2;
+						(int*)((int)animatedProperty + 0xc) +
+						(uint) * (ushort*)((int)animatedProperty + 0xc) + local_1c * 2;
 					local_98 = pTrackDataStart[1];
 					local_94 = resCollection->pData[pTrackDataStart[1]].pData;
 					local_90 = pTrackDataStart[2];
@@ -874,13 +875,28 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 			}
 			else {
 				if (currentTrackType == 0xd9cee9bc) {
-					IMPLEMENTATION_GUARD(
-					local_48 = (edAnmSubControlerTag*)(trackSeekPos + 3);
-					local_18 = 0;
-					if ((float)trackSeekPos[4] <= currentPlayTime) {
-						currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_48, &local_18);
-						(*(code*)pCinActorInterface->vt->SetSubtitle)(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
-					})
+					edAnmSubControlerTag* pSubControllerTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+
+					edAnmSubControler anmSubController = edAnmSubControler(pSubControllerTag);
+					float* pKeyTimes = pSubControllerTag->keyTimes;
+					int closestKeyIndex = 0;
+					if (pKeyTimes[0] <= currentPlayTime) {
+						currentKeyframePtr = anmSubController.GetClosestKeyIndexSafe(currentPlayTime, &closestKeyIndex);
+						edCinSourceSubtitleI::SUBTITLE_PARAMStag subtitleParams;
+						
+						// Advance past the keys where the subtitle tags are stored.
+						edCinSourceSubtitleI::SUBTITLE_PARAMStag* pSubtitleTags = reinterpret_cast<edCinSourceSubtitleI::SUBTITLE_PARAMStag*>(pSubControllerTag->keyTimes + pSubControllerTag->keyCount);
+
+						subtitleParams.keyA = pSubtitleTags[closestKeyIndex].keyA;
+						subtitleParams.keyB = pSubtitleTags[closestKeyIndex].keyB;
+						subtitleParams.time = pSubtitleTags[closestKeyIndex].time;
+
+						subtitleParams.flags = pSubtitleTags[closestKeyIndex].flags;
+
+						IMPLEMENTATION_GUARD(); // Check
+
+						pCinActorInterface->SetSubtitle(currentPlayTime - *currentKeyframePtr, &subtitleParams);
+					}
 				}
 				else {
 					if (currentTrackType == 0x6e756fb7) {
@@ -893,8 +909,8 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 							currentKeyframePtr =
 								edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &soundTrackBuffer, &soundKeyframe);
 							keyframeBodyPtr =
-								(float*)((int*)((int)animatedProp + 0xc) +
-									(uint) * (ushort*)((int)animatedProp + 0xc) + soundKeyframe * 3);
+								(float*)((int*)((int)animatedProperty + 0xc) +
+									(uint) * (ushort*)((int)animatedProperty + 0xc) + soundKeyframe * 3);
 							soundFileInfoObj = resCollection->pData[(int)keyframeBodyPtr[1]].pData;
 							soundStart = keyframeBodyPtr[2];
 							soundStop = keyframeBodyPtr[3];
@@ -910,8 +926,8 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 								currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_40, &local_10);
 								(*(code*)pCinActorInterface->vt->SetLipsynch)
 									((currentPlayTime - *currentKeyframePtr) +
-										(float)((int*)((uint) * (ushort*)((int)animatedProp + 0xc) * 4 +
-											(int)animatedProp))[local_10 * 2 + 5], pCinActorInterface);
+										(float)((int*)((uint) * (ushort*)((int)animatedProperty + 0xc) * 4 +
+											(int)animatedProperty))[local_10 * 2 + 5], pCinActorInterface);
 							})
 						}
 						else {
@@ -922,8 +938,8 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 								if ((float)trackSeekPos[4] <= currentPlayTime) {
 									currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_3c, &local_c);
 									pTrackDataStart =
-										(int*)((int)animatedProp + 0xc) +
-										(uint) * (ushort*)((int)animatedProp + 0xc) + local_c * 2;
+										(int*)((int)animatedProperty + 0xc) +
+										(uint) * (ushort*)((int)animatedProperty + 0xc) + local_c * 2;
 									local_78 = pTrackDataStart + 1;
 									local_74 = resCollection->pData[pTrackDataStart[1]].pData;
 									local_70 = pTrackDataStart[2];
@@ -987,7 +1003,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 										/* ROTATION */
 										sVar2 = pAnimProp->propType;
 										if (sVar2 == 2) {
-											bUpdateRotationSuccess = animatedProp.GetQuaternionValue(currentPlayTime, &outRotation);
+											bUpdateRotationSuccess = animatedProperty.GetQuaternionValue(currentPlayTime, &outRotation);
 											if (bUpdateRotationSuccess != false) {
 												CUTSCENE_LOG_WIN(LogLevel::Verbose, "edSceneActor::Timeslice Key update name: {} heading: {}", this->pObj->name, outRotation.ToString());
 												pCinActorInterface->SetHeadingQuat(outRotation.x, outRotation.y, outRotation.z, outRotation.w);

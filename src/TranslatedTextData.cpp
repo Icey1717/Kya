@@ -142,16 +142,19 @@ void CMessageFile::select_language(edCBankBufferEntry* pBankAccess, const char* 
 			bVar1 = true;
 		}
 	}
+
 	if (pBankAccess != (edCBankBufferEntry*)0x0) {
 		if (languageID == AUTO) {
 			languageID = CMessageFile::sm_default_language;
 		}
+
 		if (pFilePath != (char*)0x0) {
 			iVar6 = edStrCopy(this->field_0x8, pFilePath);
 			(this->field_0x8 + iVar6 + -8)[2] = '%';
 			(this->field_0x8 + iVar6 + -8)[3] = 's';
 		}
-		sprintf(acStack512, this->field_0x8);
+
+		sprintf(acStack512, this->field_0x8, g_LanguageSuffixArray_00425840[languageID]);
 		iVar6 = pBankAccess->get_index(acStack512);
 		if ((iVar6 != -1) && (bVar5 = pBankAccess->get_info(iVar6, &BStack544, (char*)0x0), bVar5 != false)) {
 			this->languageID = languageID;

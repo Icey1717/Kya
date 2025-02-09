@@ -38,6 +38,7 @@
 #include "Rendering/edCTextFont.h"
 #include "edText.h"
 #include "edVideo/VideoA.h"
+#include "TranslatedTextData.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
 
@@ -569,8 +570,8 @@ void CCinematicManager::Level_Draw()
 				}
 			}
 		}
-		IMPLEMENTATION_GUARD_LOG(
-		DrawBandsAndSubtitle(iVar3);)
+		
+		DrawBandsAndSubtitle(iVar3);
 	}
 	return;
 }
@@ -718,11 +719,8 @@ CCinematic::CCinematic()
 	
 	// CBWitchCin Constructor
 	// CBWCinSourceAudio Constructor
+	// CBWCinSourceSubtitle Constructor
 
-	//(this->cinematicLoadObject).BWCinCam_Obj.vt = &BWCinCam_VTable_0043dd20;
-	//(this->cinematicLoadObject).BWCinCam_Obj.vt = &g_CinematicUpdateCameraFuncData_0043df90;
-	//this->BWCinSourceSubtitle_Obj = (BWCinSourceSubtitle*)&BWCinSourceSubtitle_VTable_0043dd00;
-	//this->BWCinSourceSubtitle_Obj = (BWCinSourceSubtitle*)&BWCinSourceSubtitle_VTable_0043def0;
 	//(this->cinFileData).headerPtr = (CinematicFileDataHeader*)0x0;
 	InitInternalData();
 	return;
@@ -3717,6 +3715,17 @@ bool CBWitchCin::ReleaseSourceAudioInterface(edCinSourceAudioI*)
 	return true;
 }
 
+bool CBWitchCin::GetSourceSubtitleInterface(edCinSourceSubtitleI** ppSourceSubtitleInterface)
+{
+	*ppSourceSubtitleInterface = &this->BWCinSourceSubtitle_Obj;
+	return true;
+}
+
+bool CBWitchCin::ReleaseSourceSubtitleInterface(edCinSourceSubtitleI*)
+{
+	return false;
+}
+
 char* CBWitchCin::GetResource(edResCollection::RES_TYPE type1, bool type2, const char* fileName, int* bufferLengthOut)
 {
 	int* fileBufferStart;
@@ -4086,6 +4095,33 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 	else {
 		pParent->CinematicMode_SetAnimation(pTag, bVar6);
 	}
+	return true;
+}
+
+bool CBWCinActor::SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams)
+{
+	char* pText;
+	ulong key;
+	uint uVar1;
+	undefined4 uVar2;
+
+	if (param_1 < pParams->time) {
+		key = ByteCode::BuildU64(pParams->keyB, pParams->keyA);
+		pText = gMessageManager.get_message(key);
+		uVar1 = pParams->flags & 3;
+		uVar2 = 0;
+		if (uVar1 == 2) {
+			uVar2 = 2;
+		}
+		else {
+			if (uVar1 == 1) {
+				uVar2 = 1;
+			}
+		}
+
+		g_CinematicManager_0048efc->SetSubtitle(param_1 / pParams->time, pText, &this->pParent->currentLocation, uVar2);
+	}
+
 	return true;
 }
 
@@ -4708,6 +4744,7 @@ void CCinematicManager::DrawBandsAndSubtitle(int param_2)
 				screenCoords.y = (0.5f - screenCoords.y * 0.5f) * (float)gVideoConfig.screenHeight;
 				edTextDraw(screenCoords.x, screenCoords.y, this->pSubtitleText);
 			}
+
 			if ((CCameraManager::_gThis->aspectRatio != 1.777778f) && ((param_2 != 0 || (this->field_0x34 != 0.0f)))) {
 				fVar13 = (float)gVideoConfig.screenHeight * 0.25f * 0.5f;
 				fVar12 = fVar13 * GetTimer()->cutsceneDeltaTime * 2.0f;
@@ -4785,7 +4822,7 @@ void CCinematicManager::DrawBandsAndSubtitle(int param_2)
 				local_15f0.height = ((fVar13 + fVar12 * 1.0f) - fVar13) / 1.0f;
 				fVar13 = fVar13 - local_15f0.y * 1.0f;
 
-				local_15f0 = {};
+				//local_15f0 = {};
 
 				iVar4 = this->subtitleHorizontalAlignment;
 				if (iVar4 == 2) {
@@ -4836,6 +4873,23 @@ void CCinematicManager::DrawBandsAndSubtitle(int param_2)
 				this->startTime = 0.0f;
 			}
 		}
+	}
+
+	return;
+}
+
+void CCinematicManager::SetSubtitle(float param_1, char* pText, edF32VECTOR4* param_4, int param_5)
+{
+	this->pSubtitleText = pText;
+	this->subtitleHorizontalAlignment = param_5;
+	this->field_0x40 = param_1;
+
+	if (param_4 == (edF32VECTOR4*)0x0) {
+		this->field_0x44 = 0;
+	}
+	else {
+		this->vector_0x50 = *param_4;
+		this->field_0x44 = 1;
 	}
 
 	return;
@@ -5028,4 +5082,87 @@ bool CBWCinSourceAudio::Destroy()
 void CBWCinSourceAudio::SetAudioTrack(int audioTrackId)
 {
 	IMPLEMENTATION_GUARD_AUDIO();
+}
+
+bool CBWCinSourceSubtitle::Create(char* pFileName, long param_3)
+{
+	int iStack4;
+
+	g_CinematicManager_0048efc->pCurCinematic->InstallResource(edResCollection::COT_Text, param_3, pFileName, (ed_g2d_manager*)0x0, &iStack4);
+	this->position = gF32Vertex4Zero;
+
+	return true;
+}
+
+bool CBWCinSourceSubtitle::SetPos(float x, float y, float z)
+{
+	bool bVar1 = g_CinematicManager_0048efc->pCurCinematic->state != CS_Interpolate;
+
+	if (bVar1) {
+		(this->position).x = x;
+		(this->position).y = y;
+		(this->position).z = z;
+	}
+
+	return bVar1;
+}
+
+bool CBWCinSourceSubtitle::SetSubtitle(float keyTime, SUBTITLE_PARAMStag* pTag)
+{
+	CCinematicManager* pCVar1;
+	bool bSuccess;
+	char* pcVar3;
+	ulong key;
+	uint uVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+
+	if (g_CinematicManager_0048efc->pCurCinematic->state == CS_Interpolate) {
+		bSuccess = false;
+	}
+	else {
+		if (keyTime < pTag->time) {
+			key = ByteCode::BuildU64(pTag->keyB, pTag->keyA);
+			pcVar3 = gMessageManager.get_message(key);
+			pCVar1 = g_CinematicManager_0048efc;
+			uVar4 = pTag->flags & 3;
+			iVar5 = 0;
+			if (uVar4 == 2) {
+				iVar5 = 2;
+			}
+			else {
+				if (uVar4 == 1) {
+					iVar5 = 1;
+				}
+			}
+
+			if ((pTag->flags & 4) == 0) {
+				fVar6 = pTag->time;
+				g_CinematicManager_0048efc->pSubtitleText = pcVar3;
+				pCVar1->subtitleHorizontalAlignment = iVar5;
+				pCVar1->field_0x40 = keyTime / fVar6;
+				pCVar1->field_0x44 = 0;
+			}
+			else {
+				fVar6 = pTag->time;
+				g_CinematicManager_0048efc->pSubtitleText = pcVar3;
+				pCVar1->subtitleHorizontalAlignment = iVar5;
+				pCVar1->field_0x40 = keyTime / fVar6;
+
+				if (&this->position == (edF32VECTOR4*)0x0) {
+					pCVar1->field_0x44 = 0;
+				}
+				else {
+					pCVar1->vector_0x50 = this->position;
+					pCVar1->field_0x44 = 1;
+				}
+			}
+		}
+
+		bSuccess = true;
+	}
+
+	return bSuccess;
 }

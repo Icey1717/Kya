@@ -36,6 +36,30 @@ struct edCinCamInterface
 	virtual bool Shutdown() = 0;
 };
 
+struct edCinSourceSubtitleI
+{
+	struct SUBTITLE_PARAMStag
+	{
+		int field_0x0;
+
+		uint keyA;
+		uint keyB;
+
+		float time;
+
+		uint flags;
+	};
+
+	static_assert(sizeof(SUBTITLE_PARAMStag) == 0x14, "SUBTITLE_PARAMStag size is incorrect");
+
+	virtual bool Create(char* pFileName, long param_3) = 0;
+	virtual bool Init() = 0;
+	virtual bool SetPos(float x, float y, float z) = 0;
+	virtual bool SetSubtitle(float keyTime, SUBTITLE_PARAMStag* pTag) = 0;
+	virtual bool Shutdown() = 0;
+	virtual bool Destroy() = 0;
+};
+
 struct edCinActorInterface {
 	struct ANIM_PARAMStag_Anim {
 		int pHdr; // edANM_HDR*
@@ -60,6 +84,7 @@ struct edCinActorInterface {
 	virtual bool SetHeadingQuat(float x, float y, float z, float w) = 0;
 	virtual bool SetScale(float x, float y, float z) = 0;
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag) = 0;
+	virtual bool SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams) = 0;
 	virtual bool Shutdown() = 0;
 };
 
@@ -127,16 +152,22 @@ struct edCinGameInterface
 
 	virtual bool GetSourceAudioInterface(edCinSourceAudioI** ppSourceAudioInterface) = 0;
 	virtual bool ReleaseSourceAudioInterface(edCinSourceAudioI*) = 0;
+
+	virtual bool GetSourceSubtitleInterface(edCinSourceSubtitleI** ppSourceSubtitleInterface) = 0;
+	virtual bool ReleaseSourceSubtitleInterface(edCinSourceSubtitleI*) = 0;
 };
 
-PACK(
-	struct edCinematicSourceInternal {
+struct edCinematicSourceInternal
+{
 	int type;
 	int offset;
 	int pTag; // edSCENEtag *
-});
+};
 
-struct edCinematicSource {
+static_assert(sizeof(edCinematicSourceInternal) == 0xc, "edCinematicSourceInternal size is incorrect");
+
+struct edCinematicSource
+{
 	bool Create(edCinGameInterface& loadObj, edResCollection& resPtr);
 	bool Initialize();
 	bool Timeslice(float currentPlayTime, uint param_3);
@@ -145,7 +176,8 @@ struct edCinematicSource {
 	edCinematicSourceInternal* pInternal;
 };
 
-struct FrameInfo {
+struct FrameInfo
+{
 	float* field_0x0;
 	float field_0x4;
 	float field_0x8;

@@ -38,6 +38,7 @@
 #include "FrontEndDisp.h"
 #include "Fx.h"
 #include "FxParticle.h"
+#include "MathOps.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -640,6 +641,50 @@ int* CLevelScheduler::LevelsInfo_ReadSectors_V7_V9(S_LVLNFO_SECTOR_V7_V9* aLvlNf
 	return pCurConditionData;
 }
 
+void CLevelScheduler::LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* param_2, int nbObj, undefined4 param_4)
+{
+	int iVar1;
+	float fVar2;
+	ulong uVar3;
+	int iVar4;
+	LoadLoopObject_50* pLVar6;
+	float fVar5;
+	float fVar6;
+
+	iVar1 = this->objCount_0x4218;
+	iVar4 = iVar1 + nbObj;
+	if (iVar4 < 0x41) {
+		this->objCount_0x4218 = iVar4;
+		iVar4 = 0;
+		pLVar6 = this->field_0x4220 + iVar1;
+		if (0 < nbObj) {
+			do {
+				pLVar6->field_0x24 = 0x20;
+				pLVar6->field_0x28 = 0;
+				pLVar6->field_0x2c = 0;
+				pLVar6->field_0x40 = 0;
+				pLVar6->field_0x30 = gF32Vertex4Zero;
+
+				pLVar6->field_0x0 = param_2->field_0x0;
+				pLVar6->field_0x20 = param_4;
+				pLVar6->field_0x4 = param_2->field_0xc;
+				pLVar6->messageKey = ByteCode::BuildU64(param_2->keyA, param_2->keyB);
+				iVar4 = iVar4 + 1;
+				fVar5 = param_2->field_0x14;
+				fVar6 = param_2->field_0x18;
+				pLVar6->field_0x10 = param_2->field_0x10;
+				param_2 = param_2 + 1;
+				pLVar6->field_0x14 = fVar5;
+				pLVar6->field_0x18 = fVar6;
+				pLVar6->field_0x1c = 1.0f;
+				pLVar6 = pLVar6 + 1;
+			} while (iVar4 < nbObj);
+		}
+	}
+
+	return;
+}
+
 void CLevelScheduler::LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo)
 {
 	int iVar1;
@@ -740,31 +785,34 @@ void CLevelScheduler::Levels_LoadInfoBank()
 							LevelsInfo_ReadHeader_V7_V9((char*)fileData, pLevelInfo);
 							LevelsInfo_ReadTeleporters_V7_V9(reinterpret_cast<S_LVLNFO_TELEPORTERS_V7_V9*>(puVar3 + 0xf), puVar3[0xc], pLevelInfo);
 							puVar5 = LevelsInfo_ReadSectors_V7_V9(reinterpret_cast<S_LVLNFO_SECTOR_V7_V9*>(puVar3 + 0xf + puVar3[0xc] * 7), puVar3[10], pLevelInfo);
-							//LevelsInfo_ReadLanguageFileNames_V7_V9(this, puVar5, puVar3[0xe], *fileData);
-							//iVar9 = puVar3[0xd];
-							//puVar5 = puVar5 + puVar3[0xe] * 7;
-							//if (1 < iVar9) {
-							//	iVar9 = 1;
-							//}
-							//iVar8 = 0;
-							//if (0 < iVar9) {
-							//	do {
-							//		iVar6 = 0;
-							//		do {
-							//			iVar7 = iVar6;
-							//			if (iVar6 < 0x14) {
-							//				iVar7 = iVar6 + 1;
-							//				levelNameHolderObj->levelPath[iVar6] = *(char*)puVar5;
-							//			}
-							//			cVar1 = *(char*)puVar5;
-							//			puVar5 = (uint*)((int)puVar5 + 1);
-							//			iVar6 = iVar7;
-							//		} while (cVar1 != '\0');
-							//		iVar8 = iVar8 + 1;
-							//		levelNameHolderObj = (LevelInfo*)&levelNameHolderObj->field_0x14;
-							//	} while (iVar8 < iVar9);
-							//}
-							//this->field_0x4210 = this->field_0x4210 + *(int*)(this->levelPath + iVar2 * 0x418 + -8 + 0xb0);
+							LevelsInfo_ReadLanguageFileNames_V7_V9(reinterpret_cast<S_LVLNFO_LANGUAGE_V7_V9*>(puVar5), puVar3[0xe], *fileData);
+							iVar9 = puVar3[0xd];
+							puVar5 = puVar5 + puVar3[0xe] * 7;
+
+							char* pLevelPath = reinterpret_cast<char*>(puVar5);
+
+							if (1 < iVar9) {
+								iVar9 = 1;
+							}
+							iVar8 = 0;
+							if (0 < iVar9) {
+								do {
+									iVar6 = 0;
+									do {
+										iVar7 = iVar6;
+										if (iVar6 < 0x14) {
+											iVar7 = iVar6 + 1;
+											pLevelInfo->levelPath[iVar6] = *pLevelPath;
+										}
+										cVar1 = *pLevelPath;
+										pLevelPath = pLevelPath + 1;
+										iVar6 = iVar7;
+									} while (cVar1 != '\0');
+									iVar8 = iVar8 + 1;
+									pLevelInfo = pLevelInfo + 1;
+								} while (iVar8 < iVar9);
+							}
+							this->field_0x4210 = this->field_0x4210 + *(int*)(this->levelPath + iVar2 * 0x418 + -8 + 0xb0);
 						}
 					}
 				}

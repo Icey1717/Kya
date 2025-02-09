@@ -168,7 +168,7 @@ void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bo
 	VkBool32 bEnableAlphaVk = bAlphaBlendEnabled ? VK_TRUE : VK_FALSE;
 	pvkCmdSetColorBlendEnableEXT(cmd, 0, 1, &bEnableAlphaVk);
 
-	if (bAlphaBlendEnabled) {
+	if (pTexture && bAlphaBlendEnabled) {
 		const auto alpha = pTexture->GetTextureRegisters().alpha;
 
 		uint8_t blend_index = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);
