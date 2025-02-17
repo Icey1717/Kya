@@ -1312,12 +1312,84 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 	if (uVar2 == 0) {
 		this->cameraConfig.flags = this->cameraConfig.flags & 0xffffdfff;
 	}
-	IMPLEMENTATION_GUARD_LOG(
-		_TestRay_Sphere(this);)
-		LAB_002c1448:
+
+	_TestRay_Sphere();
+
+	LAB_002c1448:
 	(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 & 0xfffffffe;
 	CCamera::AlertCamera(alertType, pParams, param_4);
 	return true;
+}
+
+static edF32VECTOR4 edF32VECTOR4_004250a0 = { 0.0f, 3.1415927f, 1.5707964f, -1.5707964f };
+
+void CCameraGame::_TestRay_Sphere()
+{
+	bool bVar1;
+	CActor* pActor;
+	float* pfVar2;
+	edF32VECTOR4* peVar3;
+	int iVar4;
+	float fVar5;
+	float in_f21;
+	float puVar6;
+	float unaff_f20;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	iVar4 = 0;
+	bVar1 = false;
+	peVar3 = &local_20;
+	pfVar2 = &(this->cameraConfig).field_0xbc;
+	local_20 = edF32VECTOR4_004250a0;
+
+	while ((!bVar1 && (iVar4 < 4))) {
+		unaff_f20 = edF32Between_2Pi(peVar3->x + this->field_0x204);
+		CCollisionRay CStack64 = CCollisionRay(this->targetPitch, unaff_f20, *pfVar2 + 0.8f, &this->gameLookAt, &eStack16);
+		edF32Vector4ScaleHard(-1.0f, &eStack16, &eStack16);
+		pActor = this->GetTarget();
+		fVar5 = CStack64.Intersect(RAY_FLAG_ACTOR_SCENERY, pActor, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+		if (fVar5 == 1e+30f) {
+			bVar1 = true;
+			in_f21 = *pfVar2 + 0.8f;
+		}
+		else {
+			in_f21 = 0.8f;
+			if (0.8f <= (fVar5 - 0.8f)) {
+				in_f21 = (fVar5 - 0.8f);
+			}
+
+			if (1.0f < in_f21) {
+				bVar1 = true;
+			}
+			else {
+				peVar3 = (edF32VECTOR4*)&peVar3->y;
+				iVar4 = iVar4 + 1;
+			}
+		}
+	}
+
+	if (iVar4 == 4) {
+		unaff_f20 = this->field_0x204;
+		in_f21 = 0.8f;
+	}
+
+	edF32Vector4ScaleHard(in_f21, &eStack16, &eStack16);
+	edF32Vector4AddHard(&local_50, &this->gameLookAt, &eStack16);
+
+	puVar6 = 0.25f;
+
+	this->transformationMatrix.rowT = local_50;
+
+	if (0.25f <= in_f21) {
+		puVar6 = in_f21;
+	}
+
+	this->field_0x208 = puVar6;
+	this->field_0x204 = unaff_f20;
+
+	return;
 }
 
 void CCameraGame::FUN_002c7ee0()
@@ -3288,14 +3360,11 @@ void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
 		v0->z = 0.0f;
 	}
 
-	if (((this->flags_0xc & 1) == 0) &&
-		(pCVar2 = GetTarget(), pCVar2->typeID == ACTOR_HERO_PRIVATE)) {
+	if (((this->flags_0xc & 1) == 0) && (pCVar2 = GetTarget(), pCVar2->typeID == ACTOR_HERO_PRIVATE)) {
 		pHero = (CActorHero*)GetTarget();
-		IMPLEMENTATION_GUARD_LOG(
-			uVar3 = pHero->TestState_IsCrouched(0xffffffff);
-		if (uVar3 != 0) {
-			v0->y = (float)&DAT_3f333333;
-		})
+		if (pHero->TestState_IsCrouched(0xffffffff) != 0) {
+			v0->y = 0.7f;
+		}
 	}
 
 	fVar7 = (this->cameraConfig).field_0x58.x;

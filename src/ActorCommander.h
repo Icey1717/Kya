@@ -120,6 +120,8 @@ public:
 
 	CTeamElt* GetTeamElt(CActor* pActor);
 
+	void _UpdateCamera();
+
 	uint detectAreaZoneId;
 	uint guardAreaZoneId;
 
@@ -138,6 +140,7 @@ public:
 
 	int field_0x194;
 
+	float field_0x1d4;
 	float field_0x1dc;
 	int field_0x1e0;
 	float field_0x1e4;
@@ -158,6 +161,10 @@ public:
 	int nbTeams;
 
 	CBehaviourCommanderDefault behaviourCommanderDefault;
+
+	undefined4 field_0x2f4;
+
+	CActorFighter* field_0x9f0;
 };
 
 #endif //ACTOR_COMMANDER_H

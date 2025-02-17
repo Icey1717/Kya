@@ -6,17 +6,10 @@
 #include "PathManager.h"
 #include "Path.h"
 #include "Fx_Tail.h"
+#include "ActorAmbre.h"
 
 struct edDList_material;
 class CActorAton;
-
-class CStaticMeshComponent
-{
-public:
-	CStaticMeshComponent();
-
-	virtual void Reset();
-};
 
 class CBehaviourAddOnAton : public CAddOn {
 public:
@@ -25,10 +18,16 @@ public:
 	virtual void Init(CActor* pActor);
 	virtual void Manage();
 
+	byte field_0xc;
+	byte field_0xd;
+
 	int field_0x10;
 	int* field_0x14;
 	int field_0x1c;
 	int* field_0x20;
+
+	float field_0x24;
+	float field_0x28;
 };
 
 class CBehaviourAton : public CBehaviour
@@ -168,7 +167,7 @@ public:
 
 	edDList_material* pTrailMaterial;
 
-	CStaticMeshComponent staticMeshComponent;
+	StaticMeshComponent staticMeshComponent;
 };
 
 #endif //ACTOR_ATON_H

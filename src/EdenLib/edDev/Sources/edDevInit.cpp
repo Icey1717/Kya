@@ -131,7 +131,7 @@ void edDevInit(uint flags)
 	edDebugPrintf("< edDev Version : 1.000 >\n");
 	_edDevInitRoot();
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_PS2(
 		_edDevInitLibs(););
 	_edDevScanPorts(flags);
 	return;

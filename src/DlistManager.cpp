@@ -359,7 +359,7 @@ void CGlobalDListManager::Level_Create()
 	this->field_0x1c = 0;
 	//this->field_0x20 = -1;
 	this->bCompletedLevelInit = 0;
-	this->field_0x12e8 = 0;
+	this->nbActiveCallFuncElements = 0;
 	//this->count_0x25ac = 0;
 	this->field_0x24 = 0;
 	this->field_0x29b0 = 0;
@@ -389,25 +389,28 @@ void CGlobalDListManager::Level_Create()
 	//	puVar4[-5] = 0;
 	//	puVar4 = puVar4 + -6;
 	//} while (-1 < iVar7);
+
 	iVar7 = (CScene::ptable.g_ActorManager_004516a4)->nbActors;
 	iVar10 = 0;
 	if (0 < iVar7) {
-		IMPLEMENTATION_GUARD_LOG(
 		iVar9 = 0;
 		do {
-			iVar2 = 0;
+			CActor* pActor = (CActor*)0x0;
 			if (iVar10 != -1) {
-				iVar2 = *(int*)((int)(CScene::ptable.g_ActorManager_004516a4)->aActors + iVar9);
+				pActor = (CScene::ptable.g_ActorManager_004516a4)->aActors[iVar10];
 			}
-			iVar2 = *(int*)(iVar2 + 4);
+
+			iVar2 = pActor->objectId;
 			if (iVar2 < 0) {
 				iVar2 = 0;
 			}
+
 			iVar10 = iVar10 + 1;
 			iVar9 = iVar9 + 4;
 			local_80[iVar2] = local_80[iVar2] + 1;
-		} while (iVar10 < iVar7);)
+		} while (iVar10 < iVar7);
 	}
+
 	if (this->dlistCount != 0) {
 		pGVar1 = new GlobalDlistEntry[this->dlistCount];
 		this->ppGlobalDlist = pGVar1;
@@ -431,6 +434,7 @@ void CGlobalDListManager::Level_Create()
 			} while ((int)uVar12 < this->dlistCount);
 		}
 	}
+
 	return;
 }
 
@@ -492,7 +496,7 @@ void CGlobalDListManager::SectorChange(int newSectorId)
 
 void CGlobalDListManager::_ExecuteCallFunc()
 {
-	char cVar1;
+	byte cVar1;
 	ushort uVar2;
 	GlobalDlistEntry* pGVar3;
 	char* pcVar4;
@@ -500,28 +504,27 @@ void CGlobalDListManager::_ExecuteCallFunc()
 	DisplayListInternalSubObj_60* pDVar6;
 	CGlobalDListPatch* pCVar7;
 	uint uVar8;
-	//ManagerFunctionData** ppMVar9;
+	CallFuncElement* ppMVar9;
 	int iVar10;
 	undefined4* puVar11;
 	undefined4* puVar12;
 	CGlobalDListPatch* pCVar13;
 	int iVar14;
 	uint* puVar15;
-	CGlobalDListManager* pCVar16;
-	//ManagerFunctionData** ppMVar17;
+	CallFuncElement* pCVar16;
+	CallFuncElement* ppMVar17;
 	int iVar18;
 	undefined4 uVar19;
 	undefined4 uVar20;
 	uint local_c;
 
 	iVar18 = 0;
-	pCVar16 = this;
-	if (0 < this->field_0x12e8) {
-		IMPLEMENTATION_GUARD(
+	pCVar16 = this->aActiveCallFuncElements;
+	if (0 < this->nbActiveCallFuncElements) {
 		do {
 			pGVar3 = this->ppGlobalDlist;
-			ppMVar17 = (ManagerFunctionData**)&pCVar16->field_0x28;
-			uVar8 = *(int*)&pCVar16->field_0x28 >> 0x10;
+			ppMVar17 = pCVar16;
+			uVar8 = pCVar16->field_0x0 >> 0x10;
 			pCVar7 = pGVar3[uVar8].pDlistPatch;
 			bVar5 = false;
 			if (uVar8 != 0) {
@@ -532,7 +535,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 						pCVar13 = pGVar3[iVar10].pDlistPatch;
 					}
 					if (pCVar13 == (CGlobalDListPatch*)0x0) {
-						*(undefined*)&pCVar16->field_0x31 = 0;
+						pCVar16->nbElements = 0;
 						bVar5 = true;
 					}
 					else {
@@ -548,55 +551,60 @@ void CGlobalDListManager::_ExecuteCallFunc()
 								bVar5 = false;
 								if (uVar8 == pCVar13->field_0x4dc) goto LAB_002d73f0;
 							}
-							*(undefined*)&pCVar16->field_0x31 = 0;
+							pCVar16->nbElements = 0;
 							bVar5 = true;
 						}
 					}
 				}
 				else {
-					*(undefined*)&pCVar16->field_0x31 = 0;
+					pCVar16->nbElements = 0;
 					bVar5 = true;
 				}
 			}
 		LAB_002d73f0:
 			if (!bVar5) {
-				cVar1 = *(char*)&pCVar16->field_0x30;
-				if (cVar1 == '\x01') {
-					uVar2 = *(ushort*)ppMVar17;
-					if ((pCVar7->base).bEnabled != 0) {
-						(pCVar7->base).field_0x18 = 1;
-						edDListSetCurrent((pCVar7->base).pDisplayListInternal);
+				cVar1 = pCVar16->type;
+				if (cVar1 == 1) {
+					uVar2 = *reinterpret_cast<ushort*>(ppMVar17);
+					if (pCVar7->bEnabled != 0) {
+						pCVar7->field_0x18 = 1;
+						edDListSetCurrent(pCVar7->pDisplayListInternal);
+
+						IMPLEMENTATION_GUARD_DLIST_PATCH(
 						pCVar7->field_0x4d0 = (pCVar7->pBrightEye + (uVar2 - 8))[8];
 						iVar10 = pCVar7->field_0x4d0;
 						pcVar4 = (pCVar7->pBrightEye + (uVar2 - 8))[8];
 						pDVar6 = edDListPatchableInfo
 						((long)(iVar10 + 0x10), (long)(iVar10 + 0x14), (long)(iVar10 + 0x18), (long)(iVar10 + 0x1c),
 							*(int*)(pcVar4 + 8) + *(int*)(pcVar4 + 0xc), (ulong)uVar2);
-						*(DisplayListInternalSubObj_60**)(iVar10 + 0x20) = pDVar6;
+						*(DisplayListInternalSubObj_60**)(iVar10 + 0x20) = pDVar6;)
 						pCVar7->field_0x4d8 = 1;
 					}
-					iVar10 = *(int*)&pCVar16->field_0x2c;
-					uVar8 = (uint) * (ushort*)ppMVar17;
+
+					iVar10 = pCVar16->bActive;
+					uVar8 = *reinterpret_cast<ushort*>(ppMVar17);
 					if (iVar10 == 0) {
-						*(uint*)pCVar7->pBrightEye[uVar8] = *(uint*)pCVar7->pBrightEye[uVar8] & 0xfffffffe;
+						pCVar7->pBrightEye[uVar8]->field_0x0 = pCVar7->pBrightEye[uVar8]->field_0x0 & 0xfffffffe;
 					}
 					else {
-						*(uint*)pCVar7->pBrightEye[uVar8] = *(uint*)pCVar7->pBrightEye[uVar8] | 1;
+						pCVar7->pBrightEye[uVar8]->field_0x0 = pCVar7->pBrightEye[uVar8]->field_0x0 | 1;
 					}
+					IMPLEMENTATION_GUARD_DLIST_PATCH(
 					edDListPatchableShowProp(uVar8, (uchar)iVar10);
 					edDListPatcheEnd(-1, 0);
-					if ((pCVar7->base).bEnabled != 0) {
-						(pCVar7->base).field_0x18 = 0;
+					if (pCVar7->bEnabled != 0) {
+						pCVar7->field_0x18 = 0;
 					}
 					pCVar7->field_0x4d8 = 0;
-					pCVar7->field_0x4d0 = 0;
+					pCVar7->field_0x4d0 = 0;)
 				}
 				else {
-					if (cVar1 == '\x03') {
+					if (cVar1 == 3) {
+						IMPLEMENTATION_GUARD(
 						uVar2 = *(ushort*)ppMVar17;
-						if ((pCVar7->base).bEnabled != 0) {
-							(pCVar7->base).field_0x18 = 1;
-							edDListSetCurrent((pCVar7->base).pDisplayListInternal);
+						if (pCVar7->bEnabled != 0) {
+							pCVar7->field_0x18 = 1;
+							edDListSetCurrent(pCVar7->pDisplayListInternal);
 							pCVar7->field_0x4d0 = (pCVar7->pBrightEye + (uVar2 - 8))[8];
 							iVar10 = pCVar7->field_0x4d0;
 							pcVar4 = (pCVar7->pBrightEye + (uVar2 - 8))[8];
@@ -616,18 +624,19 @@ void CGlobalDListManager::_ExecuteCallFunc()
 						puVar15[2] = local_c;
 						puVar15[3] = local_c;
 						edDListPatcheEnd(-1, 0);
-						if ((pCVar7->base).bEnabled != 0) {
-							(pCVar7->base).field_0x18 = 0;
+						if (pCVar7->bEnabled != 0) {
+							pCVar7->field_0x18 = 0;
 						}
 						pCVar7->field_0x4d8 = 0;
-						pCVar7->field_0x4d0 = 0;
+						pCVar7->field_0x4d0 = 0;)
 					}
 					else {
-						if (cVar1 == '\x02') {
+						if (cVar1 == 2) {
+							IMPLEMENTATION_GUARD(
 							uVar2 = *(ushort*)ppMVar17;
-							if ((pCVar7->base).bEnabled != 0) {
-								(pCVar7->base).field_0x18 = 1;
-								edDListSetCurrent((pCVar7->base).pDisplayListInternal);
+							if (pCVar7->bEnabled != 0) {
+								pCVar7->field_0x18 = 1;
+								edDListSetCurrent(pCVar7->pDisplayListInternal);
 								pCVar7->field_0x4d0 = (pCVar7->pBrightEye + (uVar2 - 8))[8];
 								iVar10 = pCVar7->field_0x4d0;
 								pcVar4 = (pCVar7->pBrightEye + (uVar2 - 8))[8];
@@ -666,47 +675,49 @@ void CGlobalDListManager::_ExecuteCallFunc()
 							}
 							DAT_0044970c = 0;
 							edDListPatcheEnd(-1, 0);
-							if ((pCVar7->base).bEnabled != 0) {
-								(pCVar7->base).field_0x18 = 0;
+
+							if (pCVar7->bEnabled != 0) {
+								pCVar7->field_0x18 = 0;
 							}
+
 							pCVar7->field_0x4d8 = 0;
-							pCVar7->field_0x4d0 = 0;
+							pCVar7->field_0x4d0 = 0;)
 						}
 						else {
-							if (cVar1 == '\0') {
-								if ((pCVar7->base).bEnabled != 0) {
-									(pCVar7->base).field_0x18 = 1;
-									edDListSetCurrent((pCVar7->base).pDisplayListInternal);
+							if (cVar1 == 0) {
+								IMPLEMENTATION_GUARD(
+								if (pCVar7->bEnabled != 0) {
+									pCVar7->field_0x18 = 1;
+									edDListSetCurrent(pCVar7->pDisplayListInternal);
 								}
 								(**(code**)(**(int**)&pCVar16->field_0x2c + 0x10))(*(int**)&pCVar16->field_0x2c, *ppMVar17);
-								if ((pCVar7->base).bEnabled != 0) {
-									(pCVar7->base).field_0x18 = 0;
-								}
+								if (pCVar7->bEnabled != 0) {
+									pCVar7->field_0x18 = 0;
+								})
 							}
 						}
 					}
 				}
-				*(char*)&pCVar16->field_0x31 = *(char*)&pCVar16->field_0x31 + -1;
+
+				pCVar16->nbElements = pCVar16->nbElements + -1;
 			}
-			if (*(char*)&pCVar16->field_0x31 == '\0') {
-				this->field_0x12e8 = this->field_0x12e8 + -1;
-				if (this->field_0x12e8 != 0) {
-					ppMVar9 = &this->pManagerFunctionData + this->field_0x12e8 * 3;
-					*ppMVar17 = ppMVar9[10];
-					*(ManagerFunctionData**)&pCVar16->field_0x2c = ppMVar9[0xb];
-					*(undefined*)&pCVar16->field_0x30 = *(undefined*)(ppMVar9 + 0xc);
-					*(undefined*)&pCVar16->field_0x31 = *(undefined*)((int)ppMVar9 + 0x31);
+			if (pCVar16->nbElements == 0) {
+				this->nbActiveCallFuncElements = this->nbActiveCallFuncElements + -1;
+
+				if (this->nbActiveCallFuncElements != 0) {
+					ppMVar9 = this->aActiveCallFuncElements + this->nbActiveCallFuncElements;
+					*ppMVar17 = *ppMVar9;
 				}
 			}
 			else {
-				pCVar16 = (CGlobalDListManager*)&pCVar16->pDisplayList;
+				pCVar16 = pCVar16 + 1;
 				iVar18 = iVar18 + 1;
 			}
-		} while (iVar18 < this->field_0x12e8);
-		)
+		} while (iVar18 < this->nbActiveCallFuncElements);
 	}
+
 	iVar18 = 0;
-	pCVar16 = this;
+	pCVar16 = this->aActiveCallFuncElements;
 	if (0 < this->field_0x29b0) {
 		IMPLEMENTATION_GUARD(
 		do {
@@ -718,8 +729,8 @@ void CGlobalDListManager::_ExecuteCallFunc()
 					_ExecuteCallFunc_BeginDList(this, (int)(ManagerFunctionData**)&pCVar16->field_0x25b0);
 					pCVar7 = this->ppGlobalDlist[this->field_0x20 >> 0x10].pDlistPatch;
 					edDListPatcheEnd(-1, 0);
-					if ((pCVar7->base).bEnabled != 0) {
-						(pCVar7->base).field_0x18 = 0;
+					if (pCVar7->bEnabled != 0) {
+						pCVar7->field_0x18 = 0;
 					}
 					pCVar7->field_0x4d8 = 0;
 					pCVar7->field_0x4d0 = 0;
@@ -741,6 +752,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 			}
 		} while (iVar18 < this->field_0x29b0);)
 	}
+
 	return;
 }
 
@@ -758,8 +770,7 @@ bool CGlobalDListManager::SetActive(int param_2, int param_3)
 	uVar1 = false;
 	if (iVar1 == 1) {
 		if ((this->field_0x14 == param_2 >> 0x10) || (param_2 >> 0x10 == 0)) {
-			IMPLEMENTATION_GUARD_LOG(
-			uVar1 = _AddCallFuncElement(this, param_2, 1, param_3);)
+			uVar1 = _AddCallFuncElement(param_2, 1, param_3);
 		}
 		else {
 			uVar1 = false;
@@ -767,3 +778,49 @@ bool CGlobalDListManager::SetActive(int param_2, int param_3)
 	}
 	return uVar1;
 }
+
+
+bool CGlobalDListManager::_AddCallFuncElement(int param_2, int param_3, int bActive)
+{
+	int iVar1;
+	bool bSuccess;
+	CallFuncElement* pCVar3;
+	int iVar4;
+
+	iVar1 = this->nbActiveCallFuncElements;
+	bSuccess = false;
+	if (iVar1 < 400) {
+		iVar4 = 0;
+		pCVar3 = this->aActiveCallFuncElements;
+		if (0 < iVar1) {
+			do {
+				if (((pCVar3->field_0x0 == param_2) && (pCVar3->type == 1)) && (param_3 == 1)) {
+					bSuccess = true;
+					pCVar3->type = param_3;
+					pCVar3->bActive = bActive;
+					pCVar3->nbElements = 2;
+					break;
+				}
+
+				iVar4 = iVar4 + 1;
+				pCVar3 = pCVar3 + 1;
+			} while (iVar4 < iVar1);
+		}
+
+		if (!bSuccess) {
+			this->aActiveCallFuncElements[this->nbActiveCallFuncElements].field_0x0 = param_2;
+			this->aActiveCallFuncElements[this->nbActiveCallFuncElements].type = param_3;
+			this->aActiveCallFuncElements[this->nbActiveCallFuncElements].bActive = bActive;
+			this->aActiveCallFuncElements[this->nbActiveCallFuncElements].nbElements = 2;
+			this->nbActiveCallFuncElements = this->nbActiveCallFuncElements + 1;
+		}
+
+		bSuccess = true;
+	}
+	else {
+		bSuccess = false;
+	}
+
+	return bSuccess;
+}
+

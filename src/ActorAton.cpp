@@ -3786,38 +3786,27 @@ void CBehaviourAddOnAton::Create(ByteCode* pByteCode)
 			} while (iVar9 < this->field_0x10);
 		}
 	}
-	fVar10 = pByteCode->GetF32();
-	//this->field_0x24 = fVar10;
-	//this->field_0x24 = 10.0;
+
+	this->field_0x24 = pByteCode->GetF32();
+	this->field_0x24 = 10.0f;
+
 	return;
 }
 
 void CBehaviourAddOnAton::Init(CActor* pActor)
 {
-	IMPLEMENTATION_GUARD_LOG();
+	this->pOwner = (CActorAton*)pOwner;
+	this->field_0x8 = 0;
+	this->field_0xc = 0;
+	this->field_0xd = 1;
+	this->field_0x28 = this->field_0x24;
+
+	return;
 }
 
 void CBehaviourAddOnAton::Manage()
 {
-	IMPLEMENTATION_GUARD_LOG();
-}
-
-CStaticMeshComponent::CStaticMeshComponent()
-{
-	//this->field_0x634 = 0;
-	//this->field_0x638 = 0;
-	//this->staticMeshComponent = &StaticMeshComponent::VTable_0043a7a0;
-	//this->field_0x690 = 0;
-	//this->field_0x694 = 0;
-	//this->field_0x648 = -1;
-	//this->field_0x644 = -1;
-	//this->staticMeshComponent = &StaticMeshComponent::VTable_0043a6f0;
-	//this->staticMeshComponent = &StaticMeshComponent::VTable_0043a6d0;
-}
-
-void CStaticMeshComponent::Reset()
-{
-	IMPLEMENTATION_GUARD_LOG();
+	IMPLEMENTATION_GUARD_ADD_ON();
 }
 
 void CBehaviourAton::Begin(CActor* pOwner, int newState, int newAnimationType)

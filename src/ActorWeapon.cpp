@@ -943,7 +943,7 @@ void CBehaviourWeaponSniper::Init(CActor* pOwner)
 	CBehaviourWeaponBullets::Init(pOwner);
 
 	if (INT_00449718 == 0) {
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD_SNIPER_BULLET(
 		WeaponGlobal::Init(0.0, 0.0, &WeaponGlobal_0048dd60, 0x10, (ed_3D_Scene*)0x0);
 		uVar2 = 0;
 		puVar1 = &DAT_0048ddb0;

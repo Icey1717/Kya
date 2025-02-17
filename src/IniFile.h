@@ -3,6 +3,8 @@
 
 #include "Types.h"
 
+typedef void (*ReadFunction)(char*, int, int);
+
 class CIniFile
 {
 public:
@@ -20,6 +22,8 @@ public:
 
 	bool ReadInt_001a9830(char* section, char* key, int* outValue);
 	bool ReadString_001aa520(const char* section, const char* key, char* outValue);
+
+	int GetAllKeys(char* section, char* key, ReadFunction pReadFunc, int param_5);
 
 	char* fileBufferStart;
 private:

@@ -988,7 +988,7 @@ void CBehaviourCompanion::Begin(CActor* pOwner, int newState, int newAnimationTy
 
 			iVar9 = this->aSubObjs + iVar4;
 			if ((iVar9->flags_0x2 & 2) != 0) {
-				pcVar5 = CScene::ptable.g_LocalizationManager_00451678->GetLevelText(iVar9->field_0x48);
+				pcVar5 = CScene::ptable.g_LocalizationManager_00451678->GetLevelString(iVar9->field_0x48);
 				iVar12 = 0;
 				iVar10 = 0;
 				do {

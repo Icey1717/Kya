@@ -273,32 +273,15 @@ void CActorAutonomous::Reset()
 
 void CActorAutonomous::Init()
 {
-	//CVision* pCVar1;
 	int iVar2;
 	float fVar3;
 	float fVar4;
 	float fVar5;
 
-	IMPLEMENTATION_GUARD_LOG(
-	pCVar1 = (*((this->pVTable)->actorBase).getPerception)((CActorWolfen*)this);
-	if (pCVar1 != (CVision*)0x0) {
-		pCVar1 = (*((this->pVTable)->actorBase).getPerception)((CActorWolfen*)this);
-		fVar5 = this->currentLocation.y;
-		fVar3 = this->currentLocation.z;
-		fVar4 = this->currentLocation.w;
-		(pCVar1->baseLocation_0x10).x = this->currentLocation.x;
-		(pCVar1->baseLocation_0x10).y = fVar5;
-		(pCVar1->baseLocation_0x10).z = fVar3;
-		(pCVar1->baseLocation_0x10).w = fVar4;
-		pCVar1 = (*((this->pVTable)->actorBase).getPerception)((CActorWolfen*)this);
-		fVar5 = this->rotationQuat.y;
-		fVar3 = this->rotationQuat.z;
-		fVar4 = this->rotationQuat.w;
-		(pCVar1->vectorB_0x20).x = this->rotationQuat.x;
-		(pCVar1->vectorB_0x20).y = fVar5;
-		(pCVar1->vectorB_0x20).z = fVar3;
-		(pCVar1->vectorB_0x20).w = fVar4;
-	})
+	if (GetVision() != (CVision*)0x0) {
+		GetVision()->location = this->currentLocation;
+		GetVision()->rotationQuat = this->rotationQuat;
+	}
 
 	GetLifeInterfaceOther()->SetPriority(0);
 	LifeRestore();
@@ -462,22 +445,22 @@ void CActorAutonomous::SetLookingAtOn()
 
 void CActorAutonomous::SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation)
 {
-	IMPLEMENTATION_GUARD_LOG();
+	IMPLEMENTATION_GUARD_LOOK_AT();
 }
 
 void CActorAutonomous::SetLookingAt(float x, float y, float z)
 {
-	IMPLEMENTATION_GUARD_LOG();
+	IMPLEMENTATION_GUARD_LOOK_AT();
 }
 
 void CActorAutonomous::SetLookingAtBounds(float param_1, float param_2, float param_3, float param_4)
 {
-	IMPLEMENTATION_GUARD_LOG();
+	IMPLEMENTATION_GUARD_LOOK_AT();
 }
 
 void CActorAutonomous::SetLookingAtBones(uint leftBoneId, uint rightBoneId)
 {
-	IMPLEMENTATION_GUARD_LOG();
+	IMPLEMENTATION_GUARD_LOOK_AT();
 }
 
 void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)

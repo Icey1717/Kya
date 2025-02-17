@@ -20,6 +20,7 @@ struct CCameraGame : public CCameraExt {
 	void _ResetDataForCut(int param_2);
 
 	void CameraFunc_002c5b50();
+	void _TestRay_Sphere();
 	void FUN_002c8160();
 	void FUN_002c7ee0();
 	void FUN_00199c20(edF32VECTOR4* param_2, edF32VECTOR4* param_3);

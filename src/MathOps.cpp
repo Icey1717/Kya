@@ -1559,9 +1559,6 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 	float auStack64[8];
 	float afStack32[8];
 
-	// Is this correct?
-	IMPLEMENTATION_GUARD_LOG();
-
 	local_90[0] = afStack32;
 	local_90[1] = auStack64;
 	local_90[2] = auStack96;

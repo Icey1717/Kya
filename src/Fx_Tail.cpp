@@ -144,3 +144,50 @@ bool CFxTail::SetPatchActive(int bActive)
 	pDlistManager = reinterpret_cast<CGlobalDListManager*>(CScene::GetManager(MO_GlobalDListManager));
 	return pDlistManager->SetActive(this->dlistPatchId, bActive);
 }
+
+bool CFxTail::Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4)
+{
+	bool bVar1;
+	ulong uVar2;
+	int iVar3;
+
+	if (param_4 == 0) {
+		this->flags = this->flags & 0xfffdffff;
+	}
+	else {
+		this->flags = this->flags | 0x20000;
+	}
+
+	if (((this->flags & 0x1000) == 0) && ((this->flags & 0x20000) != 0)) {
+		bVar1 = true;
+	}
+	else {
+		uVar2 = (long)(int)this->flags | 0x1000;
+		this->flags = (uint)uVar2;
+		IMPLEMENTATION_GUARD(
+		GameDListPatch_BeginCurrent((long)this->dlistPatchId);
+		this->field_0x8 = (int)uVar2;
+		if (uVar2 != 0) {
+			edF32Matrix4CopyHard
+			(*(edF32MATRIX4**)(*(int*)(this->field_0x8 + 0x4d0) + 0x20), (edF32MATRIX4*)&this->field_0x70);
+			if (param_4 == 0) {
+				FUN_001d1aa0((int)this, (undefined4*)param_2, (undefined4*)param_3);
+				this->field_0x38 = this->field_0x38 + 1;
+				iVar3 = this->count_0x34 + 1;
+				if (iVar3 < (int)this->field_0x38) {
+					this->field_0x38 = iVar3;
+				}
+				if (this->count_0x34 == 0) {
+					trap(7);
+				}
+				this->field_0x3c = (this->field_0x3c + 1) % this->count_0x34;
+			}
+			_ManageLife(this);
+			GameDListPatch_EndCurrent(this->field_0x38 << 1, 1);
+		})
+
+		bVar1 = false;
+	}
+
+	return bVar1;
+}

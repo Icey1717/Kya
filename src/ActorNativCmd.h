@@ -64,7 +64,7 @@ public:
 class CActorNativCmd : public CActor {
 public:
 	CActorNativCmd(){
-		IMPLEMENTATION_GUARD_LOG()
+		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
 	static StateConfig _gStateCfg_NVC[2];

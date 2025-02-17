@@ -6,6 +6,7 @@
 #include "EventManager.h"
 #include "MathOps.h"
 #include "TimeController.h"
+#include "CameraGame.h"
 
 
 
@@ -208,9 +209,9 @@ void CActorCommander::Manage()
 	this->bInCombat_0x1b0 = 0;
 	CActor::Manage();
 
-	IMPLEMENTATION_GUARD_LOG(
 	_UpdateCamera();
-	this->field_0x2f4 = 0;)
+	this->field_0x2f4 = 0;
+
 	return;
 }
 
@@ -308,15 +309,15 @@ void CActorCommander::ClearLocalData()
 	//	} while (iVar5 < this->nbTeams);
 	//}
 
-	//(this->camFigData).pCommanderRef_0x230 = this;
-	//CCamFigData::Reset(&this->camFigData);
-	//this->field_0x9f0 = 0;
+	this->camFigData.pCommanderRef_0x230 = this;
+	this->camFigData.Reset();
+	this->field_0x9f0 = (CActorFighter*)0x0;
 	//this->field_0x9f4 = 0;
 	//this->field_0x164 = 0;
 	//this->field_0x160 = 0;
 	//this->field_0x168 = 0;
 	//this->field_0x174 = 0;
-	//this->field_0x2f4 = 0;
+	this->field_0x2f4 = 0;
 	//this->field_0x6d0 = 1;
 	return;
 }
@@ -727,6 +728,143 @@ CTeamElt* CActorCommander::GetTeamElt(CActor* pActor)
 	}
 
 	return (CTeamElt*)0x0;
+}
+
+void CActorCommander::_UpdateCamera()
+{
+	CCameraGame* pFightCamera;
+	bool bVar2;
+	bool bVar3;
+	StateConfig* pSVar4;
+	CActor* pCVar6;
+	CBehaviour* pCVar7;
+	CLifeInterface* pCVar8;
+	int iVar9;
+	long lVar10;
+	CCamFigData* pCVar11;
+	uint uVar12;
+	CTeamElt* pCVar13;
+	CActorFighter* pCurAdversary;
+	undefined4 uVar15;
+	float fVar16;
+	float fVar17;
+	float t0;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	ed_Bound_Sphere local_10;
+
+	bVar3 = false;
+	pCurAdversary = (CActorFighter*)0x0;
+
+	if (CActorHero::_gThis != (CActorHero*)0x0) {
+		if (CActorHero::_gThis->IsFightRelated(CActorHero::_gThis->curBehaviourId) == false) {
+			this->field_0x1d4 = this->field_0x1d4 + GetTimer()->cutsceneDeltaTime;
+		}
+		else {
+			this->field_0x1d4 = 0.0f;
+			pCurAdversary = CActorHero::_gThis->pAdversary;
+			if (pCurAdversary == (CActorFighter*)0x0) {
+				if ((CActorHero::_gThis->GetStateFlags(CActorHero::_gThis->actorState) & 0xff800) == 0x4000) {
+					this->camFigData.IsValid(0);
+				}
+				else {
+					pCurAdversary = CActorHero::_gThis->field_0x354;
+				}
+			}
+		}
+	}
+
+	if (pCurAdversary != (CActorFighter*)0x0) {
+		for (iVar9 = 0; (pCVar13 = (CTeamElt*)0x0, iVar9 < this->nbTeams && (pCVar13 = this->aTeamElt + iVar9, pCVar13->pEnemyActor != pCurAdversary)); iVar9 = iVar9 + 1) {
+		}
+
+		if (pCVar13 != (CTeamElt*)0x0) {
+			bVar3 = true;
+		}
+	}
+
+	if (bVar3) {
+		IMPLEMENTATION_GUARD(
+		pFightCamera = (CCameraGame*)CActorHero::_gThis->pFightCamera;
+		pCVar11 = CCameraGame::_pfig_data;
+		if (CCameraGame::_b_use_fig_data == 0) {
+			pCVar11 = (CCamFigData*)0x0;
+		}
+		if ((pCVar11 != &this->camFigData) || ((this->camFigData).field_0x2a0 == 0)) {
+			pCVar6 = (*((pFightCamera->view).camera.objBase.pVTable)->GetTarget)((CCamera*)pFightCamera);
+			CCamFigData::SetPosParam(&this->camFigData, &pCVar6->currentLocation);
+			CCameraGame::Fight_SetConfig(pFightCamera, (long)(int)&this->camFigData);
+			this->field_0x9f0 = 0;
+			CCamFigData::IsValid(&this->camFigData, 1);
+		}
+		CSquad::ComputeBoundingSphere(&this->squad, &local_10);
+		CCamFigData::SetBoundingSphere(&this->camFigData, &local_10);
+		pCVar7 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
+		lVar10 = (*(code*)pCVar7->pVTable->LoadContext)();
+		if (lVar10 == 0) {
+			local_30.x = local_10.x;
+			local_30.y = local_10.y;
+			local_30.z = local_10.z;
+			local_30.w = 1.0;
+			CCamFigData::SetAdversaryPos(&this->camFigData, &local_30);
+		}
+		else {
+			iVar9 = (int)lVar10;
+			local_20.z = *(float*)(iVar9 + 0x38);
+			local_20.w = *(float*)(iVar9 + 0x3c);
+			local_20.x = (float)*(undefined8*)(iVar9 + 0x30);
+			local_20.y = (float)((ulong) * (undefined8*)(iVar9 + 0x30) >> 0x20) - *(float*)(iVar9 + 0xec);
+			CCamFigData::SetAdversaryPos(&this->camFigData, &local_20);
+		}
+		pCVar1 = CActorHero::_gThis;
+		if ((((CActorHero::_gThis != (CActorHero*)0x0) &&
+			(pCurAdversary = (CActorHero::_gThis->character).pAdversary, pCurAdversary != (CActorFighter*)0x0)) &&
+			(pCurAdversary != (CActorFighter*)this->field_0x9f0)) &&
+			((bVar3 = CActorFighter::FUN_0031b790
+			((CActorFighter*)CActorHero::_gThis,
+				(CActorHero::_gThis->character).characterBase.base.base.actorState), bVar3 != false &&
+				(((pCVar1->character).fightFlags & 0x40) != 0)))) {
+			pCurAdversary = (pCVar1->character).pAdversary;
+			pCVar8 = (*((pCurAdversary->characterBase).base.base.pVTable)->GetLifeInterface)((CActor*)pCurAdversary);
+			fVar16 = (*pCVar8->pVtable->GetValue)((CInterface*)pCVar8);
+			if ((fVar16 <= 0.0) &&
+				(((iVar9 = (pCVar1->character).field_0x830, iVar9 != 0 && ((*(byte*)(iVar9 + 6) & 1) != 0)) ||
+					((iVar9 = (pCVar1->character).field_0x840, iVar9 != 0 && (*(int*)(iVar9 + 0x38) == 2)))))) {
+				fVar16 = GetAngleYFromVector(&CActorHero::_gThis->rotationQuat);
+				fVar17 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)(pFightCamera);
+				fVar17 = edF32GetAnglesDelta(fVar17, fVar16 - 0.7853982);
+				t0 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)(pFightCamera);
+				fVar16 = edF32GetAnglesDelta(t0, fVar16 + 0.7853982);
+				if (ABS(fVar17) <= ABS(fVar16)) {
+					fVar16 = fVar17;
+				}
+				fVar17 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)();
+				iVar9 = FUN_003c79f0(fVar16 + fVar17, 0.1396263, &this->camFigData);
+				if (iVar9 != 0) {
+					uVar15 = 2;
+					if (0.0 <= fVar16) {
+						uVar15 = 3;
+					}
+					fVar17 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)();
+					CCamFigData::FUN_003c5ba0(fVar16 + fVar17, &this->camFigData, uVar15, 1);
+				}
+
+				this->field_0x9f0 = (pCVar1->character).pAdversary;
+			}
+		}
+
+		if ((this->camFigData).field_0x2b4 == 1) {
+			FUN_001717b0(pFightCamera);
+		})
+	}
+	else {
+		if (((this->flags_0x18c & 7) == 0) || (1.0f <= this->field_0x1d4)) {
+			this->camFigData.IsValid(0);
+			this->field_0x9f0 = (CActorFighter*)0x0;
+		}
+	}
+
+	return;
 }
 
 void CActorCommander::_UpdateSquad()

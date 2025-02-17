@@ -115,6 +115,7 @@ namespace Frontend {
 
 CFrontendLifeGauge gFrontendLifeGauge;
 CFrontendMagicGauge gMagicGauge;
+CFrontendAction gFrontendAction;
 
 CFrontendDisplay::CFrontendDisplay()
 {
@@ -125,7 +126,7 @@ CFrontendDisplay::CFrontendDisplay()
 	this->pMagicOrbs = &gMagicGauge;
 	//this->pNooties = &HNootiesWolfun_004528b0;
 	//this->pFreedWolfun = &HNootiesWolfun_00452ae0;
-	//this->pMenuObj_0x68 = &MenuObj_164_00452d10;
+	this->pFrontendAction = &gFrontendAction;
 	//this->pMenuObj_0x6c = &MenuObj_Big_00452ea0;
 	//this->pMenuObj_0x74 = (undefined*)&PTR_DAT_004544c0;
 	//this->pMenuObj_0x70 = (undefined*)&PTR_DAT_00454b80;
@@ -364,12 +365,25 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 	case FRONTEND_INTERFACE_LIFE:
 		this->pHealthBar->SetInterface(pInterface);
 		break;
+	case FRONTEND_INTERFACE_MAGIC:
+		//this->pMagicOrbs->SetInterface(pInterface);
+		break;
 	default:
-		IMPLEMENTATION_GUARD();
+		//IMPLEMENTATION_GUARD();
 		break;
 	}
 
 	return;
+}
+
+void CFrontendDisplay::SetHeroActionA(int actionId)
+{
+	this->pFrontendAction->SetActionA(actionId);
+}
+
+void CFrontendDisplay::SetHeroActionB(int actionId)
+{
+	this->pFrontendAction->SetActionB(actionId);
 }
 
 void CFrontendDisplay::SetGlobalFunc_001cf8e0(void)

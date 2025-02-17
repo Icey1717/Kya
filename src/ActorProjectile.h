@@ -241,6 +241,10 @@ public:
 	ed_3D_Light_Config lightConfig;
 
 	ProjectileSubObj* field_0x350;
+	int field_0x354;
+	int* field_0x358;
+	int field_0x35c;
+	int* field_0x360;
 
 	float field_0x3f0;
 	undefined4 field_0x3f4;

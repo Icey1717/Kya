@@ -74,7 +74,7 @@ union ManagerContainer {
 		struct CCinematicManagerB* g_CinematicManagerB_0045166c;
 		struct CSectorManager* g_SectorManager_00451670;
 		struct CFrontendBank* g_FrontEndBank_00451674;
-		struct CLocalizationManager* g_LocalizationManager_00451678;
+		struct CLanguageManager* g_LocalizationManager_00451678;
 		struct CCameraManager* g_CameraManager_0045167c;
 		struct CFrontendDisplay* g_FrontendManager_00451680;
 		struct HelpManager* g_HelpManager_00451684;

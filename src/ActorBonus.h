@@ -41,7 +41,7 @@ template<class T, int count>
 class CSharedLights
 {
 public:
-	void Init(int param_1, int param_2, uint param_4, uint param_5, uint param_6) { IMPLEMENTATION_GUARD_LOG(); }
+	void Init(int param_1, int param_2, uint param_4, uint param_5, uint param_6) { IMPLEMENTATION_GUARD_LIGHT(); }
 	void Term() { field_0x0 = 0; }
 
 	undefined4 field_0x0;
@@ -50,7 +50,7 @@ public:
 class CActorBonus : public CActorMovable {
 public:
 	CActorBonus() {
-		IMPLEMENTATION_GUARD_LOG()
+		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
 	static CSharedLights<COmniLight, 3> _gBNS_Lights;

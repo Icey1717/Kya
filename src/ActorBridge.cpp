@@ -8,55 +8,67 @@
 #include "WayPoint.h"
 #include "TimeController.h"
 #include "ActorMovingPlatform.h"
+#include "EventManager.h"
 
 int CVerletBridge::GetMemRequirement(CVerletBridge::Config* pConfig)
 {
 	int iVar1;
 	bool cVar2;
 	bool cVar3;
-	int iVar2;
+	int nbLinkConstraints;
 	int iVar3;
 
 	if (pConfig->field_0xe == false) {
-		iVar2 = pConfig->stepCount;
+		nbLinkConstraints = pConfig->stepCount;
 		cVar3 = pConfig->field_0xd;
-		iVar3 = (iVar2 + 1) * 2;
+		iVar3 = (nbLinkConstraints + 1) * 2;
+
 		if (cVar3 != false) {
 			iVar3 = iVar3 + 4;
 		}
+
 		cVar2 = pConfig->field_0xc;
 		if (cVar2 != false) {
 			iVar3 = iVar3 + 2;
 		}
 	}
 	else {
-		iVar2 = pConfig->stepCount;
+		nbLinkConstraints = pConfig->stepCount;
 		cVar3 = pConfig->field_0xd;
-		iVar3 = iVar2 + 1;
+		iVar3 = nbLinkConstraints + 1;
 		if (cVar3 != false) {
-			iVar3 = iVar2 + 3;
+			iVar3 = nbLinkConstraints + 3;
 		}
+
 		cVar2 = pConfig->field_0xc;
 		if (cVar2 != false) {
 			iVar3 = iVar3 + 1;
 		}
 	}
+
 	if (pConfig->field_0xe == false) {
-		iVar1 = iVar2 * 4;
-		iVar2 = iVar1 + -3;
+		iVar1 = nbLinkConstraints * 4;
+		nbLinkConstraints = iVar1 + -3;
 		if (cVar3 != false) {
-			iVar2 = iVar1 + 1;
+			nbLinkConstraints = iVar1 + 1;
 		}
+
 		if (cVar2 != false) {
-			iVar2 = iVar2 + 1;
+			nbLinkConstraints = nbLinkConstraints + 1;
 		}
 	}
 	else {
 		if (cVar3 != false) {
-			iVar2 = iVar2 + 2;
+			nbLinkConstraints = nbLinkConstraints + 2;
 		}
 	}
-	return (pConfig->field_0x8 + 1) * 4 + iVar3 * 0x40 + pConfig->field_0x4 * 4 + iVar2 * 0x14;
+
+	return (pConfig->nbLinkConstraints + 1) * sizeof(CLinkConstraint*) + iVar3 * 0x40 + pConfig->nbUnknown * 4 + nbLinkConstraints * sizeof(S_LINK_SUB_OBJ);
+}
+
+CVerletBridge::CVerletBridge()
+{
+
 }
 
 void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
@@ -118,7 +130,7 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 
 	edF32Vector4SubHard(&eStack16, v1, v2);
 
-	piVar11 = this->linkConstraint.field_0x4;
+	piVar11 = this->linkConstraint.field_0x8;
 
 	fVar18 = edF32Vector4GetLengthSoft(&eStack16);
 
@@ -130,7 +142,7 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 
 	peVar13 = (edF32VECTOR4*)this->pBridgeMem;
 	pfVar10 = this->field_0x1c;
-	puVar4 = this->field_0x20;
+	puVar4 = this->aParticleSubObjs;
 
 	local_30 = gF32Vector4Zero;
 
@@ -432,132 +444,40 @@ void CVerletBridge::Reset(CVerletBridge::Config* pConfig)
 	edF32VECTOR4* pVec = reinterpret_cast<edF32VECTOR4*>(this->pBridgeMem);
 	puVar6 = this->field_0x1c;
 
-	this->field_0x20[0].field_0x0 = 0.0f;
+	this->aParticleSubObjs[0].field_0x0 = 0.0f;
 	puVar6[0] = pVec[0];
 
 	iVar12 = this->altStepCount;
-	this->field_0x20[iVar12].field_0x0 = 0.0f;
+	this->aParticleSubObjs[iVar12].field_0x0 = 0.0f;
 	puVar6[iVar12] = pVec[iVar12];
 
 	if (this->field_0x69 != false) {
-		this->field_0x20[unaff_s7_lo].field_0x0 = 0.0f;
+		this->aParticleSubObjs[unaff_s7_lo].field_0x0 = 0.0f;
 		puVar6[unaff_s7_lo] = pVec[unaff_s7_lo];
 
-		this->field_0x20[unaff_s7_lo + 1].field_0x0 = 0.0f;
+		this->aParticleSubObjs[unaff_s7_lo + 1].field_0x0 = 0.0f;
 		puVar6[unaff_s7_lo + 1] = pVec[unaff_s7_lo + 1];
 	}
 
 	if (this->field_0x68 == false) {
 		iVar12 = this->altStepCount + 1;
 
-		this->field_0x20[iVar12].field_0x0 = 0.0f;
+		this->aParticleSubObjs[iVar12].field_0x0 = 0.0f;
 		puVar6[iVar12] = pVec[iVar12];
 ;
 		iVar12 = this->altStepCount * 2 + 1;
 	
-		this->field_0x20[iVar12].field_0x0 = 0.0f;
+		this->aParticleSubObjs[iVar12].field_0x0 = 0.0f;
 		puVar6[iVar12] = pVec[iVar12];
 
 		if (this->field_0x69 != false) {
-			this->field_0x20[(unaff_s7_lo + 2)].field_0x0 = 0.0f;
+			this->aParticleSubObjs[(unaff_s7_lo + 2)].field_0x0 = 0.0f;
 			puVar6[unaff_s7_lo + 2] = pVec[unaff_s7_lo + 2];
 
-			this->field_0x20[(unaff_s7_lo + 3)].field_0x0 = 0.0f;
+			this->aParticleSubObjs[(unaff_s7_lo + 3)].field_0x0 = 0.0f;
 			puVar6[unaff_s7_lo + 3] = pVec[unaff_s7_lo + 3];
 		}
 	}
-}
-
-CActorBridge::CActorBridge()
-{
-	float fVar1;
-	float fVar2;
-	float fVar3;
-	int iVar4;
-	float* pfVar5;
-	edF32MATRIX4* peVar6;
-
-	CActor();
-
-	IMPLEMENTATION_GUARD_LOG(
-	this->pVTable = (CActorFighterVTable*)&_vt;
-	(this->openBoxConstraint).pVTable = &CVerletConstraint::_vt;
-	this->field_0x170 = 1;
-	peVar6 = &gF32Matrix4Unit;
-	(this->openBoxConstraint).pVTable = &COpenBoxConstraint::_vt;
-	pfVar5 = (float*)&(this->openBoxConstraint).field_0x3c;
-	(this->openBoxConstraint).field_0x2c = 0;
-	iVar4 = 8;
-	(this->openBoxConstraint).field_0x2d = 0;
-	do {
-		iVar4 = iVar4 + -1;
-		fVar1 = peVar6->ab;
-		*pfVar5 = peVar6->aa;
-		peVar6 = (edF32MATRIX4*)&peVar6->ac;
-		pfVar5[1] = fVar1;
-		pfVar5 = pfVar5 + 2;
-	} while (0 < iVar4);
-	(this->openBoxConstraint).field_0xc = -0.5f;
-	(this->openBoxConstraint).field_0x10 = -0.5f;
-	(this->openBoxConstraint).field_0x14 = -0.5f;
-	(this->openBoxConstraint).field_0x18 = 0.0;
-	(this->openBoxConstraint).field_0x1c = 0.5;
-	(this->openBoxConstraint).field_0x20 = 0.5;
-	(this->openBoxConstraint).field_0x24 = 0.5;
-	(this->openBoxConstraint).field_0x28 = 0.0;
-	(this->verletBridge).pVTable = (int)CVerletParticles::_vt;
-	*(undefined4*)&this->field_0x270 = 0;
-	*(undefined4*)&this->field_0x278 = 0;
-	*(undefined4*)&this->field_0x284 = 0;
-	*(undefined4*)&this->field_0x280 = 0;
-	*(undefined4*)&this->field_0x2a0 = 0;
-	this->field_0x2a4 = -9.81;
-	*(undefined4*)&this->field_0x2a8 = 0;
-	*(undefined4*)&this->field_0x2ac = 0;
-	(this->verletBridge).pVTable = (int)CVerletBridge::_vt;
-	(this->verletBridge).linkConstraint.pVTable = &CVerletConstraint::_vt;
-	(this->verletBridge).field_0x10 = 1;
-	(this->verletBridge).linkConstraint.pVTable = &CLinkConstraint::_vt;
-	(this->verletBridge).linkConstraint.field_0x4 = 0;
-	(this->verletBridge).linkConstraint.field_0x8 = (int*)0x0;
-	(this->verletBridge).linkConstraint.field_0xc = 0;
-	(this->behaviourBasic).pVTable = &CBehaviour::_vt;
-	(this->behaviourBasic).pVTable = &CBhvBasic::_vt;
-	(this->field_0x370).pVTable = &CVerletForceGen::_vt;
-	(this->field_0x370).pVTable = &CWindForce::_vt;
-	(this->field_0x370).pVTable = &CPulsedWindForce::_vt;
-	*(undefined4*)&this->field_0x3a0 = 0;
-	*(undefined4*)&this->field_0x3a4 = 0;
-	*(undefined4*)&this->field_0x3a8 = 0x3f800000;
-	*(undefined4*)&this->field_0x3ac = 0x3f800000;
-	*(undefined4*)&this->field_0x3b0 = 0x3f800000;
-	*(undefined4*)&this->field_0x3b8 = 0;
-	fVar3 = gF32Vector4Zero.w;
-	fVar2 = gF32Vector4Zero.z;
-	fVar1 = gF32Vector4Zero.y;
-	(this->field_0x390).x = gF32Vector4Zero.x;
-	(this->field_0x390).y = fVar1;
-	(this->field_0x390).z = fVar2;
-	(this->field_0x390).w = fVar3;
-	(this->behaviourWindAware).pVTable = &CBehaviour::_vt;
-	(this->behaviourWindAware).pVTable = &CBhvWindAware::_vt;
-	(this->field_0x3e0).pVTable = &CVerletForceGen::_vt;
-	(this->field_0x3e0).pVTable = &CWindForce::_vt;
-	(this->field_0x3e0).pVTable = &CPulsedWindForce::_vt;
-	*(undefined4*)&this->field_0x410 = 0;
-	*(undefined4*)&this->field_0x414 = 0;
-	*(undefined4*)&this->field_0x418 = 0x3f800000;
-	*(undefined4*)&this->field_0x41c = 0x3f800000;
-	*(undefined4*)&this->field_0x420 = 0x3f800000;
-	*(undefined4*)&this->field_0x428 = 0;
-	fVar3 = gF32Vector4Zero.w;
-	fVar2 = gF32Vector4Zero.z;
-	fVar1 = gF32Vector4Zero.y;
-	(this->field_0x400).x = gF32Vector4Zero.x;
-	(this->field_0x400).y = fVar1;
-	(this->field_0x400).z = fVar2;
-	(this->field_0x400).w = fVar3;)
-	return;
 }
 
 void CActorBridge::Create(ByteCode* pByteCode)
@@ -715,7 +635,7 @@ void CActorBridge::Initialize()
 	bool cVar13;
 	bool cVar14;
 	edF32MATRIX4* peVar14;
-	int iVar15;
+	int nbSteps;
 	undefined4* puVar16;
 	undefined4* puVar17;
 	float fVar18;
@@ -728,7 +648,7 @@ void CActorBridge::Initialize()
 	edF32MATRIX4 eStack112;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 local_20;
-	//e_ed_event_prim3d_type eStack4;
+	e_ed_event_prim3d_type eStack4;
 	CActor* pCurActor;
 
 	local_20.xyz = this->field_0x160->location;
@@ -763,8 +683,7 @@ void CActorBridge::Initialize()
 
 	this->verletBridgeConfig = CVerletBridge::Config(iVar7, 1, 2, (uVar2 & 1) != 0, (uVar2 & 2) != 0, (uVar2 & 4) != 0, &local_90, &local_80, fVar20, fVar18, fVar19);
 
-	iVar7 = CVerletBridge::GetMemRequirement(&this->verletBridgeConfig);
-	this->pBridgeMem = new char[iVar7];
+	this->pBridgeMem = new char[CVerletBridge::GetMemRequirement(&this->verletBridgeConfig)];
 
 	static const edF32VECTOR4 edF32VECTOR4_0040ed60 = { 0.0f, 0.0f, -9.81f, 0.0f };
 	local_a0 = edF32VECTOR4_0040ed60;
@@ -773,50 +692,46 @@ void CActorBridge::Initialize()
 	(this->verletBridge).field_0x30 = local_a0;
 	(this->verletBridge).field_0x30.w = 0.0f;
 
-	this->verletBridgeConfig.ComputeNbParticles(&iVar7, &iVar15);
+	this->verletBridgeConfig.ComputeNbParticles(&iVar7, &nbSteps);
 	this->verletBridgeConfig.ComputeNbLinks(&piVar12, &piVar8);
 
 	(this->verletBridge).altStepCount = (this->verletBridgeConfig).stepCount;
 	(this->verletBridge).field_0x68 = (this->verletBridgeConfig).field_0xe;
 	(this->verletBridge).field_0x69 = (this->verletBridgeConfig).field_0xd;
 
-	void* pMem = this->verletBridge.Initialize(pBridgeMem, iVar15, (this->verletBridgeConfig).field_0x4, (this->verletBridgeConfig).field_0x8);
+	void* pMem = this->verletBridge.Initialize(pBridgeMem, nbSteps, (this->verletBridgeConfig).nbUnknown, (this->verletBridgeConfig).nbLinkConstraints);
 
-	IMPLEMENTATION_GUARD_LOG(
-	this->field_0x280 = iVar7;)
+	this->verletBridge.field_0x10 = iVar7;
 
-	(this->verletBridge).linkConstraint.field_0xc = piVar8;
-	(this->verletBridge).linkConstraint.field_0x8 = 0x0;
-	(this->verletBridge).linkConstraint.field_0x4 = (S_LINK_SUB_OBJ*)pMem;
-	(this->verletBridge).linkConstraint.field_0x8 = piVar12;
+	(this->verletBridge).linkConstraint.field_0x10 = piVar8;
+	(this->verletBridge).linkConstraint.field_0xc = 0x0;
+	(this->verletBridge).linkConstraint.field_0x8 = (S_LINK_SUB_OBJ*)pMem;
+	(this->verletBridge).linkConstraint.field_0xc = piVar12;
 
-	IMPLEMENTATION_GUARD_LOG(
-	peVar14 = &gF32Matrix4Unit;
-	(this->verletBridge).field_0x10 = 3;
-	peVar10 = &this->field_0x1b0;
-	iVar7 = 8;
-	*(int**)(*(int*)&this->field_0x270 + this->field_0x274 * 4) = &(this->verletBridge).field_0x10;
-	this->field_0x274 = this->field_0x274 + 1;
-	(this->verletBridge).field_0x10 = this->field_0x344;
-	this->field_0x1a0 = 0;
-	this->field_0x1a1 = 0;
-	do {
-		iVar7 = iVar7 + -1;
-		fVar18 = peVar14->ab;
-		peVar10->aa = peVar14->aa;
-		peVar14 = (edF32MATRIX4*)&peVar14->ac;
-		peVar10->ab = fVar18;
-		peVar10 = (edF32MATRIX4*)&peVar10->ac;
-	} while (0 < iVar7);
-	(this->field_0x180).x = -0.5f;
-	(this->field_0x180).y = -0.5f;
-	(this->field_0x180).z = -0.5f;
-	(this->field_0x180).w = 0.0;
-	(this->field_0x190).x = 0.5;
-	(this->field_0x190).y = 0.5;
-	(this->field_0x190).z = 0.5;
-	(this->field_0x190).w = 0.0;
-	this->field_0x1a1 = 0;
+	
+	(this->verletBridge).linkConstraint.field_0x0 = 3;
+	(this->verletBridge).aLinkConstraints[(this->verletBridge).field_0x4] = &(this->verletBridge).linkConstraint;
+	(this->verletBridge).field_0x4 = (this->verletBridge).field_0x4 + 1;
+
+	(this->verletBridge).linkConstraint.field_0x0 = this->field_0x344;
+
+	(this->openBoxConstraint).field_0x30 = 0;
+	(this->openBoxConstraint).field_0x31 = 0;
+
+	(this->openBoxConstraint).field_0x40 = gF32Matrix4Unit;
+
+	(this->openBoxConstraint).field_0x10.x = -0.5f;
+	(this->openBoxConstraint).field_0x10.y = -0.5f;
+	(this->openBoxConstraint).field_0x10.z = -0.5f;
+	(this->openBoxConstraint).field_0x10.w = 0.0f;
+
+	(this->openBoxConstraint).field_0x20.x = 0.5f;
+	(this->openBoxConstraint).field_0x20.y = 0.5f;
+	(this->openBoxConstraint).field_0x20.z = 0.5f;
+	(this->openBoxConstraint).field_0x20.w = 0.0f;
+
+	(this->openBoxConstraint).field_0x31 = 0;
+
 	pCVar6 = CScene::ptable.g_EventManager_006f5080;
 	uVar2 = this->field_0x348;
 	if (-1 < (int)uVar2) {
@@ -824,22 +739,15 @@ void CActorBridge::Initialize()
 		if (uVar2 != 0xffffffff) {
 			peVar9 = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, uVar2);
 		}
-		peVar10 = (edF32MATRIX4*)edEventGetChunkZonePrimitive(pCVar6->activeChunkId, peVar9, 0, &eStack4);
+
+		peVar10 = edEventGetChunkZonePrimitive(pCVar6->activeChunkId, peVar9, 0, &eStack4);
 		edF32Matrix4MulF32Matrix4Hard(&local_e0, &this->field_0x2f0, peVar10);
-		peVar14 = &local_e0;
-		this->field_0x1a0 = 1;
-		peVar10 = &this->field_0x1b0;
-		iVar7 = 8;
-		do {
-			iVar7 = iVar7 + -1;
-			fVar18 = peVar14->ab;
-			peVar10->aa = peVar14->aa;
-			peVar14 = (edF32MATRIX4*)&peVar14->ac;
-			peVar10->ab = fVar18;
-			peVar10 = (edF32MATRIX4*)&peVar10->ac;
-		} while (0 < iVar7);
-		edF32Matrix4GetInverseGaussSoft(&this->field_0x1f0, &this->field_0x1b0);
-	})
+
+		(this->openBoxConstraint).field_0x30 = 1;
+		(this->openBoxConstraint).field_0x40 = local_e0;
+
+		edF32Matrix4GetInverseGaussSoft(&(this->openBoxConstraint).field_0x80, &(this->openBoxConstraint).field_0x40);
+	}
 
 
 	if (this->pActorStream == (S_ACTOR_STREAM_REF*)0x0) {
@@ -850,7 +758,7 @@ void CActorBridge::Initialize()
 	}
 
 	this->aHeights = new float[iVar7];
-	iVar15 = 0;
+	nbSteps = 0;
 	iVar7 = 0;
 	while (true) {
 		pSVar5 = this->pActorStream;
@@ -860,16 +768,16 @@ void CActorBridge::Initialize()
 			iVar12 = pSVar5->entryCount;
 		}
 
-		if (iVar12 <= iVar15) break;
+		if (iVar12 <= nbSteps) break;
 
-		pCurActor = pSVar5->aEntries[iVar15].Get();
+		pCurActor = pSVar5->aEntries[nbSteps].Get();
 
 		if (((pCurActor != (CActor*)0x0) && (pCurActor->pCollisionData != (CCollision*)0x0)) &&
 			(peVar4 = pCurActor->pCollisionData->pObbPrim, peVar4 != (edColPRIM_OBJECT*)0x0)) {
-			this->aHeights[iVar15] = (peVar4->field_0x90).z;
+			this->aHeights[nbSteps] = (peVar4->field_0x90).z;
 		}
 		iVar7 = iVar7 + 4;
-		iVar15 = iVar15 + 1;
+		nbSteps = nbSteps + 1;
 	}
 	return;
 }
@@ -1039,7 +947,7 @@ LAB_001e1120:
 					auStack64.dc = (local_80.z + local_70.z + local_60.z + local_48) * 0.25;)
 				}
 				else {
-					S_LINK_SUB_OBJ* pLinkSubObj = (this->verletBridge).linkConstraint.field_0x4 + iVar5;
+					S_LINK_SUB_OBJ* pLinkSubObj = (this->verletBridge).linkConstraint.field_0x8 + iVar5;
 
 					edF32VECTOR4* pVectorData = reinterpret_cast<edF32VECTOR4*>(this->verletBridge.pBridgeMem);
 
@@ -1088,12 +996,12 @@ LAB_001e1120:
 						if (local_1a0.entryCount == 0) {
 							fVar23 = 1.0f / this->field_0x33c;
 							if ((1 < iVar5) &&
-								(this->verletBridge.field_0x20[iVar5].field_0x0 = fVar23, (this->verletBridge).field_0x68 == false)) {
-								(this->verletBridge).field_0x20[iVar5 + (this->verletBridge).altStepCount + 1].field_0x0 = fVar23;
+								(this->verletBridge.aParticleSubObjs[iVar5].field_0x0 = fVar23, (this->verletBridge).field_0x68 == false)) {
+								(this->verletBridge).aParticleSubObjs[iVar5 + (this->verletBridge).altStepCount + 1].field_0x0 = fVar23;
 							}
 
-							if ((iVar5 < (this->verletBridge).altStepCount + -1) && (this->verletBridge.field_0x20[iVar5 + 1].field_0x0 = fVar23, (this->verletBridge).field_0x68 == false)) {
-								this->verletBridge.field_0x20[iVar5 + 2 + (this->verletBridge).altStepCount].field_0x0 = fVar23;
+							if ((iVar5 < (this->verletBridge).altStepCount + -1) && (this->verletBridge.aParticleSubObjs[iVar5 + 1].field_0x0 = fVar23, (this->verletBridge).field_0x68 == false)) {
+								this->verletBridge.aParticleSubObjs[iVar5 + 2 + (this->verletBridge).altStepCount].field_0x0 = fVar23;
 							}
 						}
 						else {
@@ -1114,15 +1022,15 @@ LAB_001e1120:
 							fVar23 = 1.0f / fVar23;
 
 							if ((1 < iVar5) &&
-								(this->verletBridge.field_0x20[iVar5 * 8] = fVar23,
+								(this->verletBridge.aParticleSubObjs[iVar5 * 8] = fVar23,
 									(this->verletBridge).field_0x68 == false)) {
-								this->verletBridge.field_0x20[(iVar5 + (this->verletBridge).altStepCount) * 8 + 8] = fVar23
+								this->verletBridge.aParticleSubObjs[(iVar5 + (this->verletBridge).altStepCount) * 8 + 8] = fVar23
 									;
 							}
 							if ((iVar5 < (this->verletBridge).altStepCount + -1) &&
-								(this->verletBridge.field_0x20[iVar5 * 8 + 8] = fVar23,
+								(this->verletBridge.aParticleSubObjs[iVar5 * 8 + 8] = fVar23,
 									(this->verletBridge).field_0x68 == false)) {
-								this->verletBridge.field_0x20[(iVar5 + 2 + (this->verletBridge).altStepCount) * 8] = fVar23
+								this->verletBridge.aParticleSubObjs[(iVar5 + 2 + (this->verletBridge).altStepCount) * 8] = fVar23
 									;
 							})
 						}
@@ -1232,6 +1140,13 @@ void CActorBridge::CBhvBasic::Begin(CActor* pOwner, int newState, int newAnimati
 	return;
 }
 
+void CActorBridge::CBhvBasic::End(int newBehaviourId)
+{
+	this->pOwner->ApplyStepsCollisionScale(0);
+
+	return;
+}
+
 void CActorBridge::CBhvWindAware::Create(ByteCode* pByteCode)
 {
 	float fVar1;
@@ -1251,8 +1166,8 @@ void CActorBridge::CBhvWindAware::Create(ByteCode* pByteCode)
 CVerletBridge::Config::Config(int stepCount, int param_2, int param_3, bool param_4, bool param_5, bool param_6, edF32VECTOR4* param_7, edF32VECTOR4* param_8, float param_9, float param_10, float param_11)
 {
 	this->stepCount = stepCount;
-	this->field_0x4 = param_2;
-	this->field_0x8 = param_3;
+	this->nbUnknown = param_2;
+	this->nbLinkConstraints = param_3;
 	this->field_0xc = param_4;
 	this->field_0xd = param_5;
 	this->field_0xe = param_6;
@@ -1328,41 +1243,223 @@ void CVerletBridge::Split(int param_1)
 	IMPLEMENTATION_GUARD();
 }
 
-void* CVerletParticles::Initialize(void* pBridgeMem, int stepCount, int param_3, int param_4)
+CVerletParticles::CVerletParticles()
 {
-	char* iVar1;
-	undefined4* puVar2;
-	undefined4* puVar3;
+	this->aLinkConstraints = (CLinkConstraint**)0x0;
+	this->field_0x8 = 0;
+	this->stepCount = 0;
+	this->field_0x10 = 0;
+
+	this->field_0x30.x = 0.0f;
+	this->field_0x30.y = -9.81f;
+	this->field_0x30.z = 0.0f;
+	this->field_0x30.w = 0.0f;
+
+	return;
+}
+
+void* CVerletParticles::Initialize(void* pBridgeMem, int stepCount, int nbUnknown, int nbLinkConstraints)
+{
+	S_PARTICLE_SUB_OBJ* pEnd;
+	S_PARTICLE_SUB_OBJ* pCurParticleSubObj;
 
 	this->stepCount = stepCount;
-	//this->field_0x10 = 0;
+	this->field_0x10 = 0;
+
 	this->pBridgeMem = reinterpret_cast<edF32VECTOR4*>(pBridgeMem);
 	this->field_0x1c = this->pBridgeMem + stepCount;
-	this->field_0x20 = reinterpret_cast<S_PARTICLE_SUB_OBJ*>(this->field_0x1c + stepCount);
-	this->field_0x8 = reinterpret_cast<char*>(this->field_0x20 + stepCount);
-	this->field_0x0 = this->field_0x8 + param_3 * 4;
-	iVar1 = this->field_0x0;
-	//this->field_0xc = 0;
-	//this->field_0x4 = 0;
-	//puVar3 = (undefined4*)this->field_0x20;
-	//puVar2 = puVar3 + stepCount * 8;
-	//if (puVar3 < puVar2) {
-	//	if (8 < (int)puVar2 + (0x1f - (int)puVar3) >> 5) {
-	//		do {
-	//			*puVar3 = 0x3f800000;
-	//			puVar3[8] = 0x3f800000;
-	//			puVar3[0x10] = 0x3f800000;
-	//			puVar3[0x18] = 0x3f800000;
-	//			puVar3[0x20] = 0x3f800000;
-	//			puVar3[0x28] = 0x3f800000;
-	//			puVar3[0x30] = 0x3f800000;
-	//			puVar3[0x38] = 0x3f800000;
-	//			puVar3 = puVar3 + 0x40;
-	//		} while (puVar3 < puVar2 + -0x40);
-	//	}
-	//	for (; puVar3 < puVar2; puVar3 = puVar3 + 8) {
-	//		*puVar3 = 0x3f800000;
-	//	}
-	//}
-	return iVar1 + (param_4 + 1) * 4;
+
+	this->aParticleSubObjs = reinterpret_cast<S_PARTICLE_SUB_OBJ*>(this->field_0x1c + stepCount);
+	this->field_0x8 = this->aParticleSubObjs + stepCount;
+
+	this->aLinkConstraints = reinterpret_cast<CLinkConstraint**>(reinterpret_cast<int*>(this->field_0x8) + nbUnknown);
+
+	this->field_0xc = 0;
+	this->field_0x4 = 0;
+
+	pCurParticleSubObj = this->aParticleSubObjs;
+	pEnd = pCurParticleSubObj + stepCount;
+
+	// #UnrolledLoop
+	if (pCurParticleSubObj < pEnd) {
+		while (pCurParticleSubObj < pEnd) {
+			pCurParticleSubObj->field_0x0 = 1.0f;
+			pCurParticleSubObj = pCurParticleSubObj + 1;
+		}
+	}
+
+	return reinterpret_cast<void*>(this->aLinkConstraints + nbLinkConstraints);
+}
+
+COpenBoxConstraint::COpenBoxConstraint()
+{
+	this->field_0x30 = 0;
+	this->field_0x31 = 0;
+
+	this->field_0x10.x = -0.5f;
+	this->field_0x10.y = -0.5f;
+	this->field_0x10.z = -0.5f;
+	this->field_0x10.w = 0.0f;
+	this->field_0x20.x = 0.5f;
+	this->field_0x20.y = 0.5f;
+	this->field_0x20.z = 0.5f;
+	this->field_0x20.w = 0.0f;
+
+	this->field_0x40 = gF32Matrix4Unit;
+
+	return;
+}
+
+void COpenBoxConstraint::Resolve(CVerletParticles* pParticles, edF32VECTOR4* param_3, int param_4)
+{
+	bool bVar1;
+	edF32VECTOR4* peVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 local_10;
+
+	peVar2 = param_3 + param_4;
+
+	if (this->field_0x31 == 0) {
+		if (this->field_0x30 == 0) {
+			for (; param_3 < peVar2; param_3 = param_3 + 1) {
+				if (param_3->y < (this->field_0x20).y) {
+					fVar3 = (this->field_0x10).x;
+					fVar5 = param_3->x;
+					if ((fVar3 <= fVar5) && (fVar3 = (this->field_0x20).x, fVar5 <= fVar3)) {
+						fVar3 = fVar5;
+					}
+					param_3->x = fVar3;
+
+					fVar3 = (this->field_0x10).y;
+					if (param_3->y < fVar3) {
+						param_3->y = fVar3;
+					}
+
+					fVar3 = (this->field_0x10).z;
+					fVar5 = param_3->z;
+					if ((fVar3 <= fVar5) && (fVar3 = (this->field_0x20).z, fVar5 <= fVar3)) {
+						fVar3 = fVar5;
+					}
+					param_3->z = fVar3;
+				}
+			}
+		}
+		else {
+			if (param_3 < peVar2) {
+				do {
+					param_3->w = 1.0f;
+
+					edF32Matrix4MulF32Vector4Hard(&local_10, &this->field_0x40, param_3);
+
+					if (local_10.y < (this->field_0x20).y) {
+						fVar3 = (this->field_0x10).x;
+						bVar1 = false;
+						if (local_10.x < fVar3) {
+							bVar1 = true;
+							local_10.x = fVar3;
+						}
+						else {
+							fVar3 = (this->field_0x20).x;
+							if (fVar3 < local_10.x) {
+								bVar1 = true;
+								local_10.x = fVar3;
+							}
+						}
+
+						fVar3 = (this->field_0x10).y;
+						if (local_10.y < fVar3) {
+							bVar1 = true;
+							local_10.y = fVar3;
+						}
+
+						fVar3 = (this->field_0x10).z;
+						if (local_10.z < fVar3) {
+							bVar1 = true;
+							local_10.z = fVar3;
+						}
+						else {
+							fVar3 = (this->field_0x20).z;
+							if (fVar3 < local_10.z) {
+								bVar1 = true;
+								local_10.z = fVar3;
+							}
+						}
+
+						if (bVar1) {
+							edF32Matrix4MulF32Vector4Hard(param_3, &this->field_0x80, &local_10);
+							param_3->w = 1.0f;
+						}
+					}
+
+					param_3 = param_3 + 1;
+				} while (param_3 < peVar2);
+			}
+		}
+	}
+	else {
+		if (param_3 < peVar2) {
+			do {
+				if (param_3->y < (this->field_0x20).y) {
+					fVar5 = (this->field_0x10).z;
+					fVar3 = param_3->z;
+					if (fVar3 < fVar5) {
+						param_3->z = fVar5;
+					}
+					else {
+						fVar4 = (this->field_0x20).z;
+						if (fVar4 < fVar3) {
+							param_3->z = fVar4;
+						}
+						else {
+							if (fVar3 - fVar5 < 0.01f) {
+								param_3->z = fVar5 + (fVar3 - fVar5) * 0.9f;
+							}
+							else {
+								if (fVar4 - fVar3 < 0.01f) {
+									param_3->z = fVar4 - (fVar4 - fVar3) * 0.9f;
+								}
+							}
+						}
+					}
+
+					fVar3 = (this->field_0x10).y;
+					if (param_3->y < fVar3) {
+						param_3->y = fVar3;
+					}
+
+					fVar3 = (this->field_0x10).x;
+					fVar5 = param_3->x;
+					if ((fVar3 <= fVar5) && (fVar3 = (this->field_0x20).x, fVar5 <= fVar3)) {
+						fVar3 = fVar5;
+					}
+					param_3->x = fVar3;
+				}
+
+				param_3 = param_3 + 1;
+			} while (param_3 < peVar2);
+		}
+	}
+
+	return;
+}
+
+CVerletConstraint::CVerletConstraint()
+{
+	this->field_0x0 = 1;
+
+	return;
+}
+
+CLinkConstraint::CLinkConstraint()
+{
+	this->field_0x8 = (S_LINK_SUB_OBJ*)0x0;
+	this->field_0xc = 0x0;
+	this->field_0x10 = 0;
+}
+
+void CLinkConstraint::Resolve(CVerletParticles* pParticles, edF32VECTOR4* param_3, int param_4)
+{
+	IMPLEMENTATION_GUARD();
 }

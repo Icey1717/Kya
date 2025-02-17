@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "LargeObject.h"
 
+#define IMPLEMENTATION_GUARD_DLIST_PATCH(x)
+
 struct DisplayListInternal;
 
 class CGlobalDList {
@@ -82,6 +84,14 @@ struct GlobalDlistEntry
 	int field_0xc;
 };
 
+struct CallFuncElement
+{
+	int field_0x0;
+	int bActive;
+	byte type;
+	byte nbElements;
+};
+
 class CGlobalDListManager : public CObjectManager 
 {
 public:
@@ -105,6 +115,8 @@ public:
 
 	bool SetActive(int param_2, int param_3);
 
+	bool _AddCallFuncElement(int param_2, int param_3, int bActive);
+
 	int dlistCount;
 	byte bBeganLevelInit;
 	byte bCompletedLevelInit;
@@ -116,7 +128,8 @@ public:
 	int field_0x18;
 	uint field_0x24;
 
-	int field_0x12e8;
+	CallFuncElement aActiveCallFuncElements[400];
+	int nbActiveCallFuncElements;
 	int field_0x29b0;
 };
 

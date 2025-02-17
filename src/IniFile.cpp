@@ -1236,3 +1236,370 @@ LAB_001ab190:
 	return bAtEndOfFile;
 }
 
+int CIniFile::GetAllKeys(char* section, char* key, ReadFunction pReadFunc, int param_5)
+{
+	char cVar1;
+	char cVar2;
+	char* pcVar3;
+	bool bHasSection;
+	bool bVar4;
+	bool bVar5;
+	char* pcVar6;
+	int iVar7;
+	char acStack128[128];
+
+	if (this->fileBufferStart == (char*)0x0) {
+		edDebugPrintf(".INI file empty !\n");
+		return 0;
+	}
+
+	bHasSection = section == (char*)0x0;
+	this->currentSeekPosition = this->fileBufferStart;
+	if (!bHasSection) {
+		while (bVar5 = false, this->currentSeekPosition != this->endSeekPosition) {
+			while (true) {
+				pcVar6 = this->currentSeekPosition;
+				bVar5 = pcVar6 == this->endSeekPosition;
+				if (bVar5) break;
+				cVar2 = *pcVar6;
+				cVar1 = cVar2;
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar1 = cVar2 + -0x20;
+				}
+				bVar4 = cVar1 == '\r';
+				if (bVar4) {
+					cVar1 = pcVar6[1];
+					if (('`' < cVar1) && (cVar1 < '{')) {
+						cVar1 = cVar1 + -0x20;
+					}
+					bVar4 = cVar1 == '\n';
+				}
+				if (bVar4) break;
+				cVar1 = cVar2;
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar1 = cVar2 + -0x20;
+				}
+				bVar4 = cVar1 == ' ';
+				if (!bVar4) {
+					if (('`' < cVar2) && (cVar2 < '{')) {
+						cVar2 = cVar2 + -0x20;
+					}
+					bVar4 = cVar2 == '\t';
+				}
+				if (!bVar4) break;
+				this->currentSeekPosition = this->currentSeekPosition + 1;
+			}
+			bVar5 = !bVar5;
+			if (bVar5) {
+				cVar2 = *pcVar6;
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar2 = cVar2 + -0x20;
+				}
+				bVar5 = cVar2 == '\r';
+				if (bVar5) {
+					cVar2 = pcVar6[1];
+					if (('`' < cVar2) && (cVar2 < '{')) {
+						cVar2 = cVar2 + -0x20;
+					}
+					bVar5 = cVar2 == '\n';
+				}
+				bVar5 = !bVar5;
+			}
+			if (bVar5) {
+				cVar2 = *pcVar6;
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar2 = cVar2 + -0x20;
+				}
+				bVar5 = cVar2 == '/';
+				if (bVar5) {
+					cVar2 = pcVar6[1];
+					if (('`' < cVar2) && (cVar2 < '{')) {
+						cVar2 = cVar2 + -0x20;
+					}
+					bVar5 = cVar2 == '/';
+				}
+				bVar5 = !bVar5;
+			}
+			if (bVar5) {
+				cVar2 = *pcVar6;
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar2 = cVar2 + -0x20;
+				}
+				if (cVar2 == '[') {
+					this->currentSeekPosition = this->currentSeekPosition + 1;
+					while (true) {
+						pcVar6 = this->currentSeekPosition;
+						bVar5 = pcVar6 == this->endSeekPosition;
+						if (bVar5) break;
+						cVar2 = *pcVar6;
+						cVar1 = cVar2;
+						if (('`' < cVar2) && (cVar2 < '{')) {
+							cVar1 = cVar2 + -0x20;
+						}
+						bVar4 = cVar1 == '\r';
+						if (bVar4) {
+							cVar1 = pcVar6[1];
+							if (('`' < cVar1) && (cVar1 < '{')) {
+								cVar1 = cVar1 + -0x20;
+							}
+							bVar4 = cVar1 == '\n';
+						}
+						if (bVar4) break;
+						cVar1 = cVar2;
+						if (('`' < cVar2) && (cVar2 < '{')) {
+							cVar1 = cVar2 + -0x20;
+						}
+						bVar4 = cVar1 == ' ';
+						if (!bVar4) {
+							if (('`' < cVar2) && (cVar2 < '{')) {
+								cVar2 = cVar2 + -0x20;
+							}
+							bVar4 = cVar2 == '\t';
+						}
+						if (!bVar4) break;
+						this->currentSeekPosition = this->currentSeekPosition + 1;
+					}
+					bVar5 = !bVar5;
+					if (bVar5) {
+						cVar2 = *pcVar6;
+						if (('`' < cVar2) && (cVar2 < '{')) {
+							cVar2 = cVar2 + -0x20;
+						}
+						bVar5 = cVar2 == '\r';
+						if (bVar5) {
+							cVar2 = pcVar6[1];
+							if (('`' < cVar2) && (cVar2 < '{')) {
+								cVar2 = cVar2 + -0x20;
+							}
+							bVar5 = cVar2 == '\n';
+						}
+						bVar5 = !bVar5;
+					}
+					if (bVar5) {
+						cVar2 = *pcVar6;
+						if (('`' < cVar2) && (cVar2 < '{')) {
+							cVar2 = cVar2 + -0x20;
+						}
+						bVar5 = cVar2 == '/';
+						if (bVar5) {
+							cVar2 = pcVar6[1];
+							if (('`' < cVar2) && (cVar2 < '{')) {
+								cVar2 = cVar2 + -0x20;
+							}
+							bVar5 = cVar2 == '/';
+						}
+						bVar5 = !bVar5;
+					}
+					pcVar6 = section;
+					if (bVar5) {
+						while (pcVar3 = this->currentSeekPosition, pcVar3 != this->endSeekPosition) {
+							cVar2 = *pcVar3;
+							if (('`' < cVar2) && (cVar2 < '{')) {
+								cVar2 = cVar2 + -0x20;
+							}
+							bVar5 = cVar2 == '\r';
+							if (bVar5) {
+								cVar2 = pcVar3[1];
+								if (('`' < cVar2) && (cVar2 < '{')) {
+									cVar2 = cVar2 + -0x20;
+								}
+								bVar5 = cVar2 == '\n';
+							}
+							if ((bVar5) || (cVar2 = *pcVar6, cVar2 == '\0')) break;
+							cVar1 = *pcVar3;
+							if (('`' < cVar1) && (cVar1 < '{')) {
+								cVar1 = cVar1 + -0x20;
+							}
+							if (('`' < cVar2) && (cVar2 < '{')) {
+								cVar2 = cVar2 + -0x20;
+							}
+							if (cVar1 != cVar2) break;
+							this->currentSeekPosition = this->currentSeekPosition + 1;
+							pcVar6 = pcVar6 + 1;
+						}
+						if (*pcVar6 == '\0') {
+							while (true) {
+								pcVar6 = this->currentSeekPosition;
+								bVar5 = pcVar6 == this->endSeekPosition;
+								if (bVar5) break;
+								cVar2 = *pcVar6;
+								cVar1 = cVar2;
+								if (('`' < cVar2) && (cVar2 < '{')) {
+									cVar1 = cVar2 + -0x20;
+								}
+								bVar4 = cVar1 == '\r';
+								if (bVar4) {
+									cVar1 = pcVar6[1];
+									if (('`' < cVar1) && (cVar1 < '{')) {
+										cVar1 = cVar1 + -0x20;
+									}
+									bVar4 = cVar1 == '\n';
+								}
+								if (bVar4) break;
+								cVar1 = cVar2;
+								if (('`' < cVar2) && (cVar2 < '{')) {
+									cVar1 = cVar2 + -0x20;
+								}
+								bVar4 = cVar1 == ' ';
+								if (!bVar4) {
+									if (('`' < cVar2) && (cVar2 < '{')) {
+										cVar2 = cVar2 + -0x20;
+									}
+									bVar4 = cVar2 == '\t';
+								}
+								if (!bVar4) break;
+								this->currentSeekPosition = this->currentSeekPosition + 1;
+							}
+							bVar5 = !bVar5;
+							if (bVar5) {
+								cVar2 = *pcVar6;
+								if (('`' < cVar2) && (cVar2 < '{')) {
+									cVar2 = cVar2 + -0x20;
+								}
+								bVar5 = cVar2 == '\r';
+								if (bVar5) {
+									cVar2 = pcVar6[1];
+									if (('`' < cVar2) && (cVar2 < '{')) {
+										cVar2 = cVar2 + -0x20;
+									}
+									bVar5 = cVar2 == '\n';
+								}
+								bVar5 = !bVar5;
+							}
+							if (bVar5) {
+								cVar2 = *pcVar6;
+								if (('`' < cVar2) && (cVar2 < '{')) {
+									cVar2 = cVar2 + -0x20;
+								}
+								bVar5 = cVar2 == '/';
+								if (bVar5) {
+									cVar2 = pcVar6[1];
+									if (('`' < cVar2) && (cVar2 < '{')) {
+										cVar2 = cVar2 + -0x20;
+									}
+									bVar5 = cVar2 == '/';
+								}
+								bVar5 = !bVar5;
+							}
+							if (bVar5) {
+								cVar2 = *pcVar6;
+								if (('`' < cVar2) && (cVar2 < '{')) {
+									cVar2 = cVar2 + -0x20;
+								}
+								if (cVar2 == ']') {
+									bVar5 = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			while (true) {
+				pcVar6 = this->currentSeekPosition;
+				bVar5 = pcVar6 == this->endSeekPosition;
+				if (bVar5) break;
+				cVar2 = *pcVar6;
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar2 = cVar2 + -0x20;
+				}
+				bVar4 = cVar2 == '\r';
+				if (bVar4) {
+					cVar2 = pcVar6[1];
+					if (('`' < cVar2) && (cVar2 < '{')) {
+						cVar2 = cVar2 + -0x20;
+					}
+					bVar4 = cVar2 == '\n';
+				}
+				if (bVar4) break;
+				this->currentSeekPosition = this->currentSeekPosition + 1;
+			}
+			if (!bVar5) {
+				this->currentSeekPosition = this->currentSeekPosition + 1;
+				this->currentSeekPosition = this->currentSeekPosition + 1;
+			}
+		}
+		if (!bVar5) {
+			edDebugPrintf("Section [%s] not found !\n");
+			bVar5 = false;
+			goto LAB_001a9698;
+		}
+		while (true) {
+			pcVar6 = this->currentSeekPosition;
+			bVar5 = pcVar6 == this->endSeekPosition;
+			if (bVar5) break;
+			cVar2 = *pcVar6;
+			if (('`' < cVar2) && (cVar2 < '{')) {
+				cVar2 = cVar2 + -0x20;
+			}
+			bVar4 = cVar2 == '\r';
+			if (bVar4) {
+				cVar2 = pcVar6[1];
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar2 = cVar2 + -0x20;
+				}
+				bVar4 = cVar2 == '\n';
+			}
+			if (bVar4) break;
+			this->currentSeekPosition = this->currentSeekPosition + 1;
+		}
+		if (!bVar5) {
+			this->currentSeekPosition = this->currentSeekPosition + 1;
+			this->currentSeekPosition = this->currentSeekPosition + 1;
+		}
+	}
+	bVar5 = SeekToKey_001a7ed0(key, bHasSection);
+	if (bVar5 == false) {
+		edDebugPrintf("Key %s = not found in section [%s]!\n", key, section);
+		bVar5 = false;
+	}
+	else {
+		bVar5 = true;
+	}
+LAB_001a9698:
+	if (bVar5) {
+		iVar7 = 0;
+		do {
+			bVar5 = ReadQuotedString(acStack128);
+			if (bVar5 == false) {
+				edDebugPrintf("Invalid string Key %s in section [%s]!\n", key, section);
+			}
+			else {
+				if (pReadFunc != 0x0) {
+					pReadFunc(acStack128, iVar7, param_5);
+				}
+				iVar7 = iVar7 + 1;
+			}
+			while (true) {
+				pcVar6 = this->currentSeekPosition;
+				bVar5 = pcVar6 == this->endSeekPosition;
+				if (bVar5) break;
+				cVar2 = *pcVar6;
+				if (('`' < cVar2) && (cVar2 < '{')) {
+					cVar2 = cVar2 + -0x20;
+				}
+				bVar4 = cVar2 == '\r';
+				if (bVar4) {
+					cVar2 = pcVar6[1];
+					if (('`' < cVar2) && (cVar2 < '{')) {
+						cVar2 = cVar2 + -0x20;
+					}
+					bVar4 = cVar2 == '\n';
+				}
+				if (bVar4) break;
+				this->currentSeekPosition = this->currentSeekPosition + 1;
+			}
+			if (!bVar5) {
+				this->currentSeekPosition = this->currentSeekPosition + 1;
+				this->currentSeekPosition = this->currentSeekPosition + 1;
+			}
+			bVar5 = SeekToKey_001a7ed0(key, bHasSection);
+		} while (bVar5 != false);
+	}
+	else {
+		iVar7 = 0;
+	}
+
+	return iVar7;
+}
+

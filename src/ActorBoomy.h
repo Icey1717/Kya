@@ -35,8 +35,8 @@ public:
 	static CActorBoomy* _gThis;
 	static StateConfig _gStateCfg_BMY[7];
 
-	CActorBoomy(){
-		IMPLEMENTATION_GUARD_LOG()
+	CActorBoomy() {
+		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
 	virtual void Create(ByteCode* pByteCode);

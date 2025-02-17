@@ -21,7 +21,7 @@ class CActorFogManager : public CActor
 {
 public:
 	CActorFogManager(){
-		IMPLEMENTATION_GUARD_LOG()
+		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
 	virtual void Create(ByteCode* pByteCode);

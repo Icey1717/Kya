@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "ActorMovable.h"
 
+#define IMPLEMENTATION_GUARD_SNIPER_BULLET(x)
+
 #define WEAPON_BEHAVIOUR_PISTOL 0x3
 #define WEAPON_BEHAVIOUR_SNIPER 0x4
 #define WEAPON_BEHAVIOUR_RPG 0x6

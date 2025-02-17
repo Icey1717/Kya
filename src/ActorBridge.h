@@ -5,6 +5,7 @@
 #include "Actor.h"
 
 class CWayPoint;
+class CLinkConstraint;
 
 static_assert(sizeof(S_STREAM_REF<CActor>) == 4);
 
@@ -22,35 +23,75 @@ struct S_LINK_SUB_OBJ {
 	int field_0x10;
 };
 
-class CVerletParticles {
+class CVerletParticlesBase
+{
 public:
+	CLinkConstraint** aLinkConstraints;
+	int field_0x4;
+	S_PARTICLE_SUB_OBJ* field_0x8;
+	int field_0xc;
+	int field_0x10;
 	int stepCount;
 	edF32VECTOR4* pBridgeMem;
-
-	char* field_0x0;
-	int field_0x4;
-	char* field_0x8;
-	int field_0xc;
-
 	edF32VECTOR4* field_0x1c;
-	S_PARTICLE_SUB_OBJ* field_0x20;
-
-	void* Initialize(void* param_1, int param_2, int param_3, int param_4);
+	S_PARTICLE_SUB_OBJ* aParticleSubObjs;
+	undefined field_0x24;
+	undefined field_0x25;
+	undefined field_0x26;
+	undefined field_0x27;
+	undefined field_0x28;
+	undefined field_0x29;
+	undefined field_0x2a;
+	undefined field_0x2b;
+	undefined field_0x2c;
+	undefined field_0x2d;
+	undefined field_0x2e;
+	undefined field_0x2f;
+	edF32VECTOR4 field_0x30;
 };
 
-class CLinkConstraint {
+class CVerletParticles : public CVerletParticlesBase
+{
 public:
-	S_LINK_SUB_OBJ* field_0x4;
-	int field_0x8;
-	int field_0xc;
+	CVerletParticles();
+
+	virtual void* Initialize(void* param_1, int param_2, int param_3, int param_4);
 };
 
-class CVerletBridge : public CVerletParticles {
+class CVerletConstraintBase
+{
+public:
+	int field_0x0;
+};
+
+class CVerletConstraint : public CVerletConstraintBase
+{
+public:
+	CVerletConstraint();
+	virtual void Resolve(CVerletParticles* pParticles, edF32VECTOR4* param_3, int param_4) = 0;
+	virtual void Render() {}
+};
+
+class CLinkConstraint : public CVerletConstraint
+{
+public:
+	CLinkConstraint();
+
+	virtual void Resolve(CVerletParticles* pParticles, edF32VECTOR4* param_3, int param_4);
+	virtual void Render() {}
+
+	S_LINK_SUB_OBJ* field_0x8;
+	int field_0xc;
+	int field_0x10;
+};
+
+class CVerletBridge : public CVerletParticles
+{
 public:
 	struct Config {
 		int stepCount;
-		int field_0x4;
-		int field_0x8;
+		int nbUnknown;
+		int nbLinkConstraints;
 		bool field_0xc;
 		bool field_0xd;
 		bool field_0xe;
@@ -71,25 +112,38 @@ public:
 		void ComputeNbLinks(int* param_1, int* param_2);
 	};
 
-	edF32VECTOR4 field_0x30;
+	static int GetMemRequirement(CVerletBridge::Config* pConfig);
+
+	CVerletBridge();
+	void Reset(CVerletBridge::Config* pConfig);
+	void Split(int param_1);
+
 	int altStepCount;
 
 	CLinkConstraint linkConstraint;
 
 	bool field_0x68;
 	bool field_0x69;
-
-	static int GetMemRequirement(CVerletBridge::Config* pConfig);
-
-	void Reset(CVerletBridge::Config* pConfig);
-	void Split(int param_1);
 };
 
 class CWindForce {};
 
-class COpenBoxConstraint {
+class COpenBoxConstraint : public CVerletConstraint
+{
 public:
+	COpenBoxConstraint();
+
+	virtual void Resolve(CVerletParticles* pParticles, edF32VECTOR4* param_3, int param_4);
+
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+
+	byte field_0x30;
 	byte field_0x31;
+
+	edF32MATRIX4 field_0x40;
+
+	edF32MATRIX4 field_0x80;
 };
 
 class CActorBridge : public CActor {
@@ -99,6 +153,7 @@ public:
 		virtual void Create(ByteCode* pByteCode);
 		virtual void Manage();
 		virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+		virtual void End(int newBehaviourId);
 
 		edF32VECTOR4 field_0x20;
 		edF32VECTOR4 field_0x30;
@@ -126,8 +181,6 @@ public:
 		float field_0x4c;
 		float field_0x50;
 	};
-
-	CActorBridge();
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();

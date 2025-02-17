@@ -152,7 +152,7 @@ namespace Debug
 
 					ImGui::Text("stripCount: %d", pObject->stripCount);
 					ImGui::Text("boundingSphere: %s", pObject->boundingSphere.ToString().c_str());
-					DebugHelpers::TextValidValue("p3DStrip: %p", LOAD_SECTION(pObject->p3DStrip));
+					DebugHelpers::TextValidValue("p3DStrip: %p", LOAD_SECTION(pObject->p3DData));
 
 					// clamp our strip count
 					gSelectedStripIndex = std::clamp(gSelectedStripIndex, 0, pObject->stripCount - 1);
@@ -160,8 +160,8 @@ namespace Debug
 					ImGui::Spacing();
 					ImGui::Spacing();
 
-					if (pObject->p3DStrip) {
-						ShowStripDetails(pMaterialBank, LOAD_SECTION_CAST(ed_3d_strip* ,pObject->p3DStrip), pObject->stripCount);
+					if (pObject->p3DData) {
+						ShowStripDetails(pMaterialBank, LOAD_SECTION_CAST(ed_3d_strip* ,pObject->p3DData), pObject->stripCount);
 					}
 				}
 			}

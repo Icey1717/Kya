@@ -1781,6 +1781,20 @@ void CMagicInterface::SetValueMax(float max)
 	return;
 }
 
+void CMagicInterface::SetTransit(float transit)
+{
+	this->transit = transit;
+	return;
+}
+
+void CMagicInterface::FUN_001dcd70()
+{
+	this->field_0x10 = this->field_0xc;
+	this->field_0xc = 3.402823e+38f;
+
+	return;
+}
+
 void CMagicInterface::SetHasMagicInteractionAround(int bHasMagicAround)
 {
 	this->bHasMagicAround = bHasMagicAround;

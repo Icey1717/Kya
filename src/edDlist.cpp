@@ -634,7 +634,7 @@ void edDListInit(void)
 	gCurViewport = (ed_viewport*)0x0;
 	gNbAddedVertex = 0;
 	gCurDListBuf = (ed_3d_strip*)0x0;
-	//gCurDListBufEnd = (undefined*)0x0;
+	gCurDListBufEnd = (ed_3d_strip*)0x0;
 	gCurVertexBuf = (edVertex*)0x0;
 	gCurColorBuf = (_rgba*)0x0;
 	gCurSTBuf = (short*)0x0;
@@ -2466,6 +2466,7 @@ void edDListLoadIdentity(void)
 
 DisplayListInternal* gCurDListHandle = NULL;
 ed_3d_strip* gCurDListBuf = NULL;
+ed_3d_strip* gCurDListBufEnd = NULL;
 
 DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList)
 {
@@ -2491,16 +2492,12 @@ DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList)
 		gCurDListBuf = (ed_3d_strip*)pDVar1->field_0x10;
 		if (((ulong)gCurDListBuf & 0xf) != 0) {
 			IMPLEMENTATION_GUARD(
-			gCurDListBuf =
-				(edpkt_data*)
-				((int)gCurDListBuf + (sizeof(edpkt_data) - ((uint)gCurDListBuf & 0xf)));)
+			gCurDListBuf = (edpkt_data*)((int)gCurDListBuf + (sizeof(edpkt_data) - ((uint)gCurDListBuf & 0xf)));)
 		}
 	}
 	gNbStateAdded = 0;
 	gCurDList = pDVar1;
-	//gCurDListBufEnd =
-	//	(undefined*)
-	//	((int)pDVar1->field_0x14 + (int)((int)pNewDisplayList[1].field_0x14 - (int)pNewDisplayList->field_0x14));
+	gCurDListBufEnd = (ed_3d_strip*)((ulong)pDVar1->field_0x14 + (int)((ulong)pNewDisplayList[1].field_0x14 - (ulong)pNewDisplayList->field_0x14));
 	gCurMaterial = (edDList_material*)0x0;
 	gCurStatePKT = (edpkt_data*)0x0;
 	gCurStatePKTSize = 0;
@@ -2508,100 +2505,118 @@ DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList)
 	return pPreviousDList;
 }
 
-void edDListSetBuffer(DisplayListInternal* pDisplayListInternal, char* param_2, uint param_3, ushort inFlags,
-	char* pEndInternalData, uint param_6, undefined4 param_7,
-	ed_3D_Scene* pStaticMeshMaster)
-
+void edDListSetBuffer(DisplayListInternal* pDisplayLists, uint* param_2, uint param_3, ushort inFlags, void* pEndInternalData, uint param_6, uint param_7, uint bInUse)
 {
 	int iVar1;
-	DisplayListInternal* pDVar2;
-	uint uVar3;
-	uint uVar4;
+	DisplayListInternal* pCurDisplayList;
+	uint curIndex;
+	uint alignOffset;
 
-	uVar3 = 0;
+	curIndex = 0;
 	do {
-		pDVar2 = pDisplayListInternal + uVar3;
-		pDVar2->flags_0x0 = inFlags;
-		pDVar2->subCommandBufferCount = 0;
-		pDVar2->field_0x8 = param_7;
-		pDVar2->pStaticMeshMaster_0x20 = pStaticMeshMaster;
-		pDVar2->pDisplayListInternalSubObj =
-			(DisplayListInternalSubObj_60*)(pEndInternalData + (param_6 >> 1) * uVar3);
-		uVar4 = (uint)pDVar2->pDisplayListInternalSubObj & 0xf;
-		if (uVar4 != 0) {
-			pDVar2->pDisplayListInternalSubObj =
-				(DisplayListInternalSubObj_60*)
-				((int)pDVar2->pDisplayListInternalSubObj + (0x10 - uVar4));
+		pCurDisplayList = pDisplayLists + curIndex;
+
+		pCurDisplayList->flags_0x0 = inFlags;
+		pCurDisplayList->subCommandBufferCount = 0;
+		pCurDisplayList->field_0x8 = param_7;
+		pCurDisplayList->pStaticMeshMaster_0x20 = (ed_3D_Scene*)bInUse;
+		pCurDisplayList->pDisplayListInternalSubObj = (DisplayListInternalSubObj_60*)(reinterpret_cast<char*>(pEndInternalData) + (param_6 >> 1) * curIndex);
+
+		// Need to align to 16 bytes.
+		alignOffset = (uint)pCurDisplayList->pDisplayListInternalSubObj & 0xf;
+		if (alignOffset != 0) {
+			pCurDisplayList->pDisplayListInternalSubObj = reinterpret_cast<DisplayListInternalSubObj_60*>(reinterpret_cast<char*>(pCurDisplayList->pDisplayListInternalSubObj) + (0x10 - alignOffset));
 		}
+
 		if ((inFlags & 2) == 0) {
 			if ((inFlags & 1) != 0) {
-				iVar1 = (param_3 - (ulong)(param_2 + 0x640 + -(ulong)param_2) >> 1) * uVar3;
-				pDVar2->field_0x14 = (edpkt_data*)(param_2 + uVar3 * 800);
-				pDVar2->pCommandBuffer = param_2 + 0x640 + iVar1;
-				pDVar2->field_0x10 = (edpkt_data*)pDVar2->pCommandBuffer;
-				pDVar2->field_0x28 = pDVar2->pCommandBuffer + iVar1;
-				pDVar2->field_0x14 = (edpkt_data*)pDVar2->pCommandBuffer;
-				uVar4 = (uint)pDVar2->pCommandBuffer & 0xf;
-				if (uVar4 != 0) {
-					pDVar2->pCommandBuffer = pDVar2->pCommandBuffer + (0x10 - uVar4);
+				iVar1 = (param_3 - (ulong)((ulong)(param_2 + 400) - (ulong)param_2) >> 1) * curIndex;
+
+				pCurDisplayList->field_0x14 = (edpkt_data*)(param_2 + (curIndex * 200));
+				pCurDisplayList->pCommandBuffer = (char*)((ulong)(param_2 + 400) + iVar1);
+				pCurDisplayList->field_0x10 = (edpkt_data*)pCurDisplayList->pCommandBuffer;
+				pCurDisplayList->field_0x28 = pCurDisplayList->pCommandBuffer + iVar1;
+				pCurDisplayList->field_0x14 = (edpkt_data*)pCurDisplayList->pCommandBuffer;
+
+				alignOffset = (uint)pCurDisplayList->pCommandBuffer & 0xf;
+				if (alignOffset != 0) {
+					pCurDisplayList->pCommandBuffer = pCurDisplayList->pCommandBuffer + (0x10 - alignOffset);
 				}
-				uVar4 = (uint)pDVar2->field_0x10 & 0xf;
-				if (uVar4 != 0) {
-					pDVar2->field_0x10 = pDVar2->field_0x10 + (0x10 - uVar4);
+
+				alignOffset = (uint)pCurDisplayList->field_0x10 & 0xf;
+				if (alignOffset != 0) {
+					pCurDisplayList->field_0x10 = reinterpret_cast<edpkt_data*>(reinterpret_cast<char*>(pCurDisplayList->field_0x10) + (0x10 - alignOffset));
 				}
 			}
 		}
 		else {
-			pDVar2->field_0x14 = (edpkt_data*)(param_2 + (param_3 >> 1) * uVar3);
+			pCurDisplayList->field_0x14 = (edpkt_data*)((ulong)param_2 + (param_3 >> 1) * curIndex);
 		}
-		uVar4 = (uint)pDVar2->field_0x14 & 0xf;
-		if (uVar4 != 0) {
-			pDVar2->field_0x14 = (edpkt_data*)((int)pDVar2->field_0x14 + (0x10 - uVar4));
+
+		alignOffset = (uint)pCurDisplayList->field_0x14 & 0xf;
+		if (alignOffset != 0) {
+			pCurDisplayList->field_0x14 = reinterpret_cast<edpkt_data*>(reinterpret_cast<char*>(pCurDisplayList->field_0x14) + (0x10 - alignOffset));
 		}
-		uVar3 = uVar3 + 1;
-		pDVar2->pRenderCommands = pDVar2->field_0x14;
-	} while (uVar3 < 2);
+
+		curIndex = curIndex + 1;
+		pCurDisplayList->pRenderCommands = pCurDisplayList->field_0x14;
+	} while (curIndex < 2);
+
 	return;
 }
 
-DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, undefined8 param_6, DisplayListInternal* pInBuffer)
+DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer)
 {
 	int iVar1;
 	uint displayListMemSize;
 	uint uVar2;
 	DisplayListInternal* pDVar3;
 	uint uVar4;
-	char* pcVar5;
+	uint* pcVar5;
 	uint local_8;
 	uint local_4;
 
 	displayListMemSize = edDListGetBufSizeNeeded(inFlags, param_3, param_4, param_5, &local_8, &local_4);
+
 	if (pInBuffer == (DisplayListInternal*)0x0) {
 		pInBuffer = (DisplayListInternal*)edMemAlloc(heapID, displayListMemSize);
 	}
+
+	DisplayListInternal* pDisplayList = reinterpret_cast<DisplayListInternal*>(pInBuffer);
+
 	memset(pInBuffer, 0, displayListMemSize);
-	pcVar5 = (char*)((char*)&pInBuffer[2].flags_0x0 + local_8);
-	edDListSetBuffer(pInBuffer, pcVar5, local_4, (ushort)inFlags, (char*)(pInBuffer + 2), local_8, param_3, (ed_3D_Scene*)1);
+
+	char* pEnd = reinterpret_cast<char*>(pDisplayList + 2); // 2 DisplayListInternal objects for double buffering.
+
+	pcVar5 = reinterpret_cast<uint*>(pEnd + local_8);
+	edDListSetBuffer(pDisplayList, pcVar5, local_4, inFlags, reinterpret_cast<void*>(pEnd), local_8, param_3, 1);
+
+	assert(reinterpret_cast<char*>(pDisplayList[0].field_0x10) < reinterpret_cast<char*>(pInBuffer) + displayListMemSize);
+	assert(reinterpret_cast<char*>(pDisplayList[1].field_0x10) < reinterpret_cast<char*>(pInBuffer) + displayListMemSize);
+	assert(reinterpret_cast<char*>(pDisplayList[0].field_0x14) < reinterpret_cast<char*>(pInBuffer) + displayListMemSize);
+	assert(reinterpret_cast<char*>(pDisplayList[1].field_0x14) < reinterpret_cast<char*>(pInBuffer) + displayListMemSize);
+
 	uVar4 = 0;
 	if ((inFlags & 0x100) == 0) {
 		do {
 			uVar2 = uVar4 + 1;
-			pInBuffer[uVar4].field_0x2c = 0x0;
-			pInBuffer[uVar4].field_0x6 = 0;
+			pDisplayList[uVar4].field_0x2c = 0x0;
+			pDisplayList[uVar4].field_0x6 = 0;
 			uVar4 = uVar2;
 		} while (uVar2 < 2);
 	}
 	else {
 		uVar4 = 0;
 		do {
-			pDVar3 = pInBuffer + uVar4;
+			pDVar3 = pDisplayList + uVar4;
 			iVar1 = uVar4 * param_3 * 4;
 			uVar4 = uVar4 + 1;
 			pDVar3->field_0x2c = (DisplayListInternalSubObj_60**)(pcVar5 + iVar1 + local_4);
 			pDVar3->field_0x6 = 0;
 		} while (uVar4 < 2);
 	}
-	return pInBuffer;
+
+	return pDisplayList;
 }
 
 void edDListSetSceneUsed(DisplayListInternal* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster)
@@ -2618,7 +2633,7 @@ void edDListSetSceneUsed(DisplayListInternal* pDisplayListInternalArray, ed_3D_S
 	return;
 }
 
-uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4, uint* param_5, uint* param_6)
+uint edDListGetBufSizeNeeded(uint flags, int param_2, int param_3, int param_4, uint* param_5, uint* param_6)
 {
 	int iVar1;
 	uint uVar2;
@@ -2627,50 +2642,65 @@ uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4
 	uint uVar5;
 
 	iVar4 = param_4 + param_3 * 4;
+
 	if (param_2 == 0) {
-		//trap(7);
+		trap(7);
 	}
+
 	if (false) {
-		//trap(7);
+		trap(7);
 	}
+
 	iVar1 = ((iVar4 / param_2) / 0x46 + 1) * param_2;
-	if ((param_1 & 2) == 0) {
-		if ((param_1 & 1) == 0) {
+	if ((flags & 2) == 0) {
+		if ((flags & 1) == 0) {
 			return 0;
 		}
+
 		iVar3 = param_2 * 0xc0;
 		iVar4 = iVar4 * 0x20 + param_2 * 0x90 + 0x640 + iVar1 * 0xc0;
-		if ((param_1 & 0x100) != 0) {
+
+		if ((flags & 0x100) != 0) {
 			iVar4 = iVar4 + iVar1 * 0x10;
 		}
-		if ((param_1 & 0x100) != 0) {
+
+		if ((flags & 0x100) != 0) {
 			iVar4 = iVar4 + iVar1 * 0x10;
 		}
+
 		uVar5 = (iVar4 + 0x40) * 2;
 	}
 	else {
 		uVar5 = iVar4 * 0x40;
 		iVar3 = param_2 << 5;
 	}
+
 	if (false) {
 		iVar3 = iVar3 + 0x10;
 	}
+
 	if (false) {
 		uVar5 = uVar5 + 0x10;
 	}
-	uVar2 = uVar5 + iVar3 + 0x60;
+
+	uVar2 = uVar5 + iVar3 + (sizeof(DisplayListInternal) * 2);
+
 	if (false) {
 		uVar2 = uVar5 + iVar3 + 0x70;
 	}
-	if ((param_1 & 0x100) != 0) {
+
+	if ((flags & 0x100) != 0) {
 		uVar2 = uVar2 + param_2 * 8;
 	}
+
 	if (param_5 != (uint*)0x0) {
 		*param_5 = iVar3;
 	}
+
 	if (param_6 != (uint*)0x0) {
 		*param_6 = uVar5;
 	}
+
 	return uVar2;
 }
 

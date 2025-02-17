@@ -152,6 +152,10 @@ public:
 	float GetValueMax();
 	void SetValueMax(float max);
 
+	void SetTransit(float transit);
+
+	void FUN_001dcd70();
+
 	void SetHasMagicInteractionAround(int bHasMagicAround);
 
 	int bActive;
@@ -213,16 +217,18 @@ public:
 	edF32VECTOR4 field_0xec0;
 	int field_0xed0;
 
+	int* field_0x14a4;
+
 	// Bones
 	uint field_0x157c;
 	uint animKey_0x1584;
 	uint animKey_0x1588;
-	uint animKey_0x158c;
-	uint animKey_0x1590;
-	uint animKey_0x1594;
-	uint field_0x1594;
+	uint fxGlideBoneA;
+	uint fxGlideBoneB;
+	uint fxGlideBoneC;
+	uint fxGlideBoneD;
 	uint field_0x1598;
-	uint field_0x159c;
+	uint braceletBone;
 
 	uint medallionBone;
 
@@ -286,6 +292,10 @@ public:
 
 	CCamera* pJamgutCamera_0x15b8;
 	CCamera* pIntViewCamera_0x15bc;
+
+	int braceletLevel;
+	uint field_0x1874;
+	uint field_0x1878;
 
 	static AnimResultHero _gStateCfg_HRO[HERO_STATE_COUNT];
 	static uint _gStateCfg_ELE[HERO_BHVR_COUNT];

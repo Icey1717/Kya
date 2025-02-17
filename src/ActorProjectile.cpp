@@ -132,10 +132,11 @@ void CPatternPart::FUN_003a7cc0(float param_2)
 
 CActorProjectile::CActorProjectile()
 {
-	//this->field_0x354 = 0;
-	//this->field_0x358 = 0;
-	//this->field_0x35c = 0;
-	//this->field_0x360 = 0;
+	this->field_0x354 = 0;
+	this->field_0x358 = 0;
+	this->field_0x35c = 0;
+	this->field_0x360 = 0;
+
 	//this->field_0x574 = 0;
 	//this->field_0x578 = 0;
 	//this->field_0x590 = 0;
@@ -231,21 +232,25 @@ void CActorProjectile::Reset()
 	CActorAutonomous::Reset();
 	this->patternPart.Reset();
 
-	IMPLEMENTATION_GUARD_LOG(
-	piVar1 = (int*)this->field_0x358;
+	piVar1 = this->field_0x358;
 	if (((piVar1 == (int*)0x0) || (this->field_0x354 == 0)) || (bVar3 = true, this->field_0x354 != piVar1[6])) {
 		bVar3 = false;
 	}
+
 	if (((bVar3) && (piVar1 != (int*)0x0)) && ((this->field_0x354 != 0 && (this->field_0x354 == piVar1[6])))) {
-		(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);
+		IMPLEMENTATION_GUARD(
+		(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
 	}
+
 	piVar1 = (int*)this->field_0x360;
 	if (((piVar1 == (int*)0x0) || (this->field_0x35c == 0)) || (bVar3 = true, this->field_0x35c != piVar1[6])) {
 		bVar3 = false;
 	}
+
 	if ((((bVar3) && (piVar1 != (int*)0x0)) && (this->field_0x35c != 0)) && (this->field_0x35c == piVar1[6])) {
-		(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);
-	})
+		IMPLEMENTATION_GUARD(
+		(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
+	}
 	
 	this->lightAmbient = gF32Vector4Zero;
 	this->lightDirections = gF32Matrix4Unit;
@@ -1759,10 +1764,9 @@ void CBehaviourProjectileStand::Create(ByteCode* pByteCode)
 		do {
 			pAVar4 = this->aFxSparks + iVar3;
 
-			IMPLEMENTATION_GUARD_LOG(
-			pAVar4->Create(3, 0xc, &pAVar4->field_0xf0, &pAVar4->field_0x114, this->materialId);
-			pAVar4->field_0xe4 = (undefined*)&pAVar4->field_0x150;
-			pAVar4->SetParameters(0.5f, 0.025f, 10.0f, 0.125f, 2.0f, 3);)
+			pAVar4->Create(3, 0xc, pAVar4->aVectorData, pAVar4->aFloatData, this->materialId);
+			pAVar4->field_0xe4 = pAVar4->aUnknown;
+			pAVar4->SetParameters(0.5f, 0.025f, 10.0f, 0.125f, 2.0f, 3);
 			iVar3 = iVar3 + 1;
 		} while (iVar3 < 4);
 	}
@@ -1782,9 +1786,8 @@ void CBehaviourProjectileStand::Init(CActor* pOwner)
 	if (this->field_0xc == 2) {
 		iVar2 = 0;
 		do {
-			IMPLEMENTATION_GUARD_LOG(
-			this->aFxSparks[iVar2].Init();
-			this->aFxSparks[iVar2].field_0x90 = 0x80f09614;)
+			this->aFxSparks[iVar2].Init(this->pOwner->objectId);
+			this->aFxSparks[iVar2].field_0x90 = 0x80f09614;
 			iVar2 = iVar2 + 1;
 		} while (iVar2 < 4);
 	}
@@ -1795,10 +1798,10 @@ void CBehaviourProjectileStand::Init(CActor* pOwner)
 void CBehaviourProjectileStand::Term()
 {
 	if (this->field_0xc == 2) {
-		IMPLEMENTATION_GUARD_LOG(
-		__destroy_new_array((undefined*)this->aFxSparks, FUN_00131670);)
+		delete[] this->aFxSparks;
 		this->aFxSparks = (CFxSparkNoAlloc<3, 12> *)0x0;
 	}
+
 	return;
 }
 

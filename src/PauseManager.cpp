@@ -167,7 +167,7 @@ void CSettings::StoreGlobalSettings()
 	pGVar3 = CScene::ptable.g_AudioManager_00451698;
 	pCVar2 = CScene::ptable.g_CameraManager_0045167c;
 	pCVar1 = g_CinematicManager_0048efc;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_AUDIO(
 	fVar6 = (CScene::ptable.g_AudioManager_00451698)->field_0xbc * 12.0;
 	if (fVar6 < 2.147484e+09f) {
 		this->field_0x18 = (int)fVar6;

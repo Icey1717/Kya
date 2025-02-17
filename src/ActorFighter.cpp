@@ -139,7 +139,7 @@ void CActorFighter::Init()
 	CActorAutonomous::Init();
 	this->flags = this->flags | 0x100000;
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	_InitBlowsDB(this);
 	FUN_00302b20(this);
 	fVar3 = (float)_InitGrabsDB(this);
@@ -373,10 +373,10 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	ClearLocalData();
 
 	this->field_0x358 = 5.5;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x35c = 2.5;)
 	this->field_0x360 = 5.0f;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x364 = 2.0;
 	this->field_0x488 = 0xd;
 	this->field_0x484 = this->field_0x484 & 0xf0;
@@ -1998,10 +1998,10 @@ void CActorFighter::ClearLocalData()
 	this->field_0x6b0 = 0.0f;
 	this->hitDamage = 0.0f;
 	this->field_0x684 = 0;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x7d8 = 0x3db851ec;)
 	this->field_0x6c4 = 0.1f;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x6c8 = 0x3f800000;
 	this->field_0x6cc = 0x3f800000;
 	this->field_0x7e4 = 0;
@@ -2015,7 +2015,7 @@ void CActorFighter::ClearLocalData()
 
 	this->fighterAnatomyZones.field_0x0 = this->fighterAnatomyZones.field_0x10;
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x830 = 0;
 	this->field_0x840 = 0;
 	this->field_0x834 = 0;)
@@ -2025,10 +2025,10 @@ void CActorFighter::ClearLocalData()
 
 	this->pFighterCombo = (s_fighter_combo*)0x0;
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x630 = 0;)
 	this->field_0x8e0 = 0;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this[1].characterBase.base.base.field_0x13c = 0;
 	this[1].characterBase.base.base.aActorSounds = (CActorSound*)0x0;
 	*(undefined4*)&this[1].characterBase.base.base.field_0x144 = 0;
@@ -2038,17 +2038,17 @@ void CActorFighter::ClearLocalData()
 	this[1].characterBase.base.dynamic.rotationQuat.x = 0.1;
 	*(undefined2*)&this[1].characterBase.base.dynamic.rotationQuat.y = 3;)
 	this->field_0x47c = 23.56194f;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x4c0 = 0x3fe00000;
 	this->field_0x4c4 = 0x40200000;
 	this->field_0x4c8 = 0x3f96cbe4;)
 	this->field_0x4cc = 4.0f;
 	this->field_0x4f4 = 1.2f;
 	this->field_0x4f8 = 17.0f;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x508 = 0x40600000;)
 	this->field_0x504 = 7.0f;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_FIGHT(
 	this->field_0x500 = 0;)
 	this->standAnim = -1;
 	return;

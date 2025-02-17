@@ -1890,7 +1890,6 @@ void CLightManager::BuildActiveList()
 						uVar5 = 3;
 					}
 
-					IMPLEMENTATION_GUARD_LOG();
 					long long shifted = (long long)uVar5 << 0x38;
 					shifted = shifted >> 0x38;
 					byte a = (byte)((shifted & 0xf) << 4);

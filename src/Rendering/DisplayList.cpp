@@ -214,14 +214,13 @@ void GlobalDList_Init(void)
 bool GuiDList_BeginCurrent(void)
 {
 	bool bVar1;
-	GlobalDList* pDVar2;
 
-	pDVar2 = pGuiDList;
 	bVar1 = pGuiDList->bEnabled != 0;
 	if (bVar1) {
 		pGuiDList->field_0x18 = 1;
-		edDListSetCurrent(pDVar2->pDisplayListInternal);
+		edDListSetCurrent(pGuiDList->pDisplayListInternal);
 	}
+
 	return bVar1;
 }
 
@@ -241,30 +240,28 @@ void GlobalDList_AddToView(void)
 
 GlobalDList::GlobalDList()
 {
-	field_0x8 = -1;
-	field_0xc = -1;
-	field_0x10 = -1;
-	pDisplayListInternal = (DisplayListInternal*)0x0;
-	bEnabled = 0;
+	this->field_0x8 = -1;
+	this->field_0xc = -1;
+	this->field_0x10 = -1;
+	this->pDisplayListInternal = (DisplayListInternal*)0x0;
+	this->bEnabled = 0;
 }
 
 GlobalDList::GlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster)
 {
-    DisplayListInternal* pDVar3;
+	this->field_0x8 = inField_0x8;
+	this->field_0xc = inField_0xc;
+	this->field_0x10 = inField_0x10;
+	this->field_0x1c = inField_0x1c;
 
-	field_0x8 = inField_0x8;
-	field_0xc = inField_0xc;
-	field_0x10 = inField_0x10;
-	field_0x1c = inField_0x1c;
-	pDVar3 = edDListNew(TO_HEAP(H_MAIN), field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
-	pDisplayListInternal = pDVar3;
-	edDListSetSceneUsed(pDisplayListInternal, pInStaticMeshMaster);
+	this->pDisplayListInternal = edDListNew(TO_HEAP(H_MAIN), field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
+	edDListSetSceneUsed(this->pDisplayListInternal, pInStaticMeshMaster);
 }
 
 void GlobalDList::Init()
 {
-	bEnabled = 1;
-	field_0x18 = 0;
+	this->bEnabled = 1;
+	this->field_0x18 = 0;
 }
 
 void ed_3D_Scene::ed3DSceneRemoveFlag(uint flag)

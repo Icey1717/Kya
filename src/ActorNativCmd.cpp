@@ -297,7 +297,7 @@ void CBehaviourNativCmdStand::Manage()
 		//pNativCmd->FUN_00393470();
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_ADD_ON(
 	pNativCmd->addOnA.Manage();
 	pNativCmd->addOnB.Manage();
 	pNativCmd->addOnC.Manage();

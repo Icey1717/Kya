@@ -16,7 +16,10 @@ struct CBehaviourCinematic : public CBehaviour {
 	CActorCinematic* pOwner;
 	CBWCinActor cinActor;
 	int leaveCinematicBehaviourId;
-	int field_0x144;
+
+	CEmotionInfo field_0x144;
+
+	int field_0x178;
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);

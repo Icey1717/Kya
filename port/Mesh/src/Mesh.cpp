@@ -425,8 +425,8 @@ void Renderer::Kya::G3D::Lod::ProcessObject(ed_g3d_object* pObject, const int he
 	object.pObject = pObject;
 	object.pParent = this;
 
-	if (pObject->p3DStrip) {
-		ed_3d_strip* pStrip = LOAD_SECTION_CAST(ed_3d_strip*, pObject->p3DStrip);
+	if (pObject->p3DData) {
+		ed_3d_strip* pStrip = LOAD_SECTION_CAST(ed_3d_strip*, pObject->p3DData);
 		int stripIndex = 0;
 
 		while (stripIndex < pObject->stripCount) {
@@ -461,6 +461,9 @@ void Renderer::Kya::G3D::Hierarchy::ProcessLod(ed3DLod* pLod, const int heirarch
 			ed_g3d_object* pObject = reinterpret_cast<ed_g3d_object*>(pOBJ + 1);
 			lod.ProcessObject(pObject, heirarchyIndex, lodIndex);
 		}
+	}
+	else {
+		MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Hierarchy::ProcessLod No lod data");
 	}
 }
 

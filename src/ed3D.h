@@ -446,7 +446,7 @@ PACK(struct ed_g3d_hierarchy {
 	byte field_0x88;
 	byte field_0x89;
 	ushort bRenderShadow;
-	int pShadowAnimMatrix; // edF32MATRIX4*
+	uint pShadowAnimMatrix; // edF32MATRIX4*
 	int pLinkTransformData; // ed_3d_hierarchy*
 	int field_0x94; // undefined*
 	int pTextureInfo; // undefined*
@@ -682,6 +682,29 @@ struct ed_3d_strip {
 	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
 };
 
+struct ed_3d_sprite
+{
+	uint flags_0x0;
+	short field_0x4;
+	short field_0x6;
+	int offsetA;
+	int pNext; // ed_3d_sprite*
+	edF32VECTOR4 vector_0x10;
+	int pSTBuf; // char*
+	int pColorBuf; // _rgba*
+	int pVertexBuf; // edVertex*
+	int field_0x2c; // char*
+	short bUseShadowMatrix_0x30;
+	ushort field_0x32;
+	ushort pRenderFrame30;
+	undefined field_0x36;
+	undefined field_0x37;
+	byte field_0x38;
+	byte cameraPanIndex;
+	short meshSectionCount_0x3a;
+	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
+};
+
 static_assert(sizeof(ed_3d_strip) == 0x40, "Invalid ed_3d_strip size");
 
 
@@ -743,7 +766,7 @@ PACK(struct ed_g3d_object {
 	undefined field_0x29;
 	undefined field_0x2a;
 	undefined field_0x2b;
-	int p3DStrip; //struct ed_3d_strip*
+	int p3DData; //ed_3d_strip* or ed_3d_sprite* 
 });
 
 ed_g3d_object* ed3DHierarchyGetObject(ed_3d_hierarchy* pHier);

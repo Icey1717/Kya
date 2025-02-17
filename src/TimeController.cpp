@@ -80,7 +80,11 @@ float _edSystemTimerGet(void)
 	}
 	return fVar2 / 1000.0;
 #else
-	return 0.033f;
+	// Get the current time in milliseconds on windows using chrono
+	auto now = std::chrono::high_resolution_clock::now();
+	auto duration = now.time_since_epoch();
+	auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+	return (float)millis / 1000.0f;
 #endif
 }
 

@@ -372,7 +372,7 @@ class CActorFighter : public CActorAutonomous
 {
 public:
 	CActorFighter() {
-		IMPLEMENTATION_GUARD_LOG()
+		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
 	static StateConfig _gStateCfg_FIG[0x6c];

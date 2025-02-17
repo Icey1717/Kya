@@ -152,8 +152,8 @@ void CActorAmbre::Create(ByteCode* pByteCode)
 	iVar5 = 0;
 	pFxSpark = this->aFxSparks;
 	do {
-		pFxSpark->Create(4, 0x10, pFxSpark->field_0xf0, pFxSpark->field_0x120, materialId);
-		pFxSpark->field_0xe4 = &pFxSpark->field_0x160;
+		pFxSpark->Create(4, 0x10, pFxSpark->aVectorData, pFxSpark->aFloatData, materialId);
+		pFxSpark->field_0xe4 = pFxSpark->aUnknown;
 		pFxSpark->SetParameters(0.35f, 0.05f, 30.0f, 0.1f, 2.0f, 1);
 		pFxSpark->field_0x90 = 0x800060c0;
 		pFxSpark->field_0x94 = 0x802020c0;

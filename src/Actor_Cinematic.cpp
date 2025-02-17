@@ -39,7 +39,7 @@ CActorCinematic::CActorCinematic()
 	//(this->behaviourCinematic).cinActor.field_0xc0 = 0;
 	//GetParam1((long)&(this->behaviourCinematic).cinActor.field_0x110);
 	//(this->behaviourCinematic).field_0x140 = -1;
-	(this->behaviourCinematic).field_0x144 = -1;
+	(this->behaviourCinematic).field_0x144.macroAnimId = -1;
 	this->animationController = CAnimation();
 }
 
@@ -302,66 +302,72 @@ void CBehaviourCinematic::Create(ByteCode* pByteCode)
 void CBehaviourCinematic::Init(CActor* pOwner)
 {
 	CActorCinematic* pActor;
-	//CAnimation* pAnimationController;
-	//AnimationSubObj* pAVar1;
+	CAnimation* pAnimationController;
+	edAnmLayer* pAVar1;
 	bool bVar2;
 	int physLayer;
 	float fVar3;
 
 	this->pOwner = (CActorCinematic*)pOwner;
 	(this->cinActor).pParent = this->pOwner;
+
 	physLayer = this->pOwner->GetIdMacroAnim(0x3);
 	if (physLayer != -1) {
 		pActor = this->pOwner;
 		physLayer = this->pOwner->GetIdMacroAnim(0x3);
-		this->field_0x144 = physLayer;
-		if (this->field_0x144 != -1) {
-			IMPLEMENTATION_GUARD_LOG(
-			this->field_0x14c = -1;
-			this->field_0x148 = -1;
-			this->field_0x160 = 0.0;
-			this->field_0x150 = 0.0;
-			this->field_0x154 = 0.0;
-			this->field_0x158 = 0.0;
-			this->field_0x15c = 1.0;
-			if (this->field_0x144 != -1) {
-				this->field_0x16c = 1.0;
-				this->field_0x170 = 2.0;
-				this->field_0x168 = 0.0;
-				this->field_0x174 = 0.3;
-				if ((this->field_0x144 != -1) && (this->field_0x148 != 0)) {
-					this->field_0x14c = this->field_0x148;
-					this->field_0x148 = 0;
-					this->field_0x160 = 0.0;
-					this->field_0x164 = 0.5;
-					if (this->field_0x148 == -1) {
-						fVar3 = 0.0;
+		this->field_0x144.macroAnimId = physLayer;
+
+		if ((this->field_0x144).macroAnimId != -1) {
+			(this->field_0x144).field_0x8 = -1;
+			(this->field_0x144).field_0x4 = -1;
+			(this->field_0x144).field_0x1c = 0.0f;
+			(this->field_0x144).field_0xc = 0.0f;
+			(this->field_0x144).field_0x10 = 0.0f;
+			(this->field_0x144).field_0x14 = 0.0f;
+			(this->field_0x144).field_0x18 = 1.0f;
+
+			if ((this->field_0x144).macroAnimId != -1) {
+				(this->field_0x144).field_0x28 = 1.0f;
+				(this->field_0x144).field_0x2c = 2.0f;
+				(this->field_0x144).field_0x24 = 0.0f;
+				(this->field_0x144).field_0x30 = 0.3f;
+
+				if (((this->field_0x144).macroAnimId != -1) && (physLayer = (this->field_0x144).field_0x4, physLayer != 0)) {
+					(this->field_0x144).field_0x8 = physLayer;
+					(this->field_0x144).field_0x4 = 0;
+					(this->field_0x144).field_0x1c = 0.0f;
+					(this->field_0x144).field_0x20 = 0.5f;
+
+					if ((this->field_0x144).field_0x4 == -1) {
+						fVar3 = 0.0f;
 					}
 					else {
-						fVar3 = 0.3;
-						if (this->field_0x14c == -1) {
-							this->field_0x154 = 0.0;
-							fVar3 = 0.3;
+						fVar3 = 0.3f;
+
+						if ((this->field_0x144).field_0x8 == -1) {
+							(this->field_0x144).field_0x10 = 0.0f;
+							fVar3 = 0.3f;
 						}
 					}
-					if (this->field_0x144 != -1) {
-						this->field_0x150 = this->field_0x154;
-						this->field_0x158 = fVar3;
-						this->field_0x15c = 0.5;
+
+					if ((this->field_0x144).macroAnimId != -1) {
+						(this->field_0x144).field_0xc = (this->field_0x144).field_0x10;
+						(this->field_0x144).field_0x14 = fVar3;
+						(this->field_0x144).field_0x18 = 0.5f;
 					}
 				}
 			}
-			pAnimationController = (pActor->baseData).pAnimationController;
-			bVar2 = CAnimation::IsLayerActive(pAnimationController, 2);
-			if (bVar2 == false) {
-				this->field_0x144 = -1;
+
+			pAnimationController = pActor->pAnimationController;
+			if (pAnimationController->IsLayerActive(2) == false) {
+				this->field_0x144.macroAnimId = -1;
 			}
 			else {
-				physLayer = CAnimation::PhysicalLayerFromLayerId(pAnimationController, 2);
-				pAVar1 = pAnimationController->pAnimData;
-				pAVar1[physLayer].field_0x0 = 3;
-				pAVar1[physLayer].field_0x4 = 0.0;
-			})
+				physLayer = pAnimationController->PhysicalLayerFromLayerId(2);
+				pAVar1 = pAnimationController->anmBinMetaAnimator.aAnimData + physLayer;
+				pAVar1[physLayer].blendOp = 3;
+				pAVar1[physLayer].field_0x4 = 0.0f;
+			}
 		}
 	}
 	return;
@@ -388,42 +394,49 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 	else {
 		this->pOwner->SetState(newState, newAnimationType);
 	}
+
 	bVar2 = this->pOwner->IsKindOfObject(4);
-	IMPLEMENTATION_GUARD_LOG(
 	if (bVar2 != false) {
 		pCVar1 = this->pOwner;
+		IMPLEMENTATION_GUARD_AUDIO(
 		*(undefined4*)&(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.field_0x8 = 0;
 		(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.SoundStructPtr = (CSound*)0x0;
 		(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.SoundID = 0;
 		(pCVar1->behaviourCinematic).cinActor.soundInternalStruct.field_0x14 = 0;
-		(pCVar1->behaviourCinematic).cinActor.field_0xbc = 0;
+		(pCVar1->behaviourCinematic).cinActor.field_0xbc = 0;)
 	}
+
 	this->field_0x178 = 0;
-	bool bVar3 = this->field_0x144 != -1;
+
+	bool bVar3 = this->field_0x144.macroAnimId != -1;
 	if (bVar3) {
-		if ((bVar3) && (this->field_0x148 != -1)) {
-			this->field_0x14c = this->field_0x148;
-			this->field_0x148 = -1;
-			this->field_0x160 = 0.0f;
-			this->field_0x164 = 0.5f;
-			if (this->field_0x148 == -1) {
+		if ((bVar3) && ((this->field_0x144).field_0x4 != -1)) {
+			(this->field_0x144).field_0x8 = this->field_0x144.field_0x4;
+			(this->field_0x144).field_0x4 = -1;
+			(this->field_0x144).field_0x1c = 0.0f;
+			(this->field_0x144).field_0x20 = 0.5f;
+
+			if ((this->field_0x144).field_0x4 == -1) {
 				fVar4 = 0.0f;
 			}
 			else {
-				fVar4 = 1.0;
-				if (this->field_0x14c == -1) {
-					this->field_0x154 = 0.0f;
+				fVar4 = 1.0f;
+				if ((this->field_0x144).field_0x8 == -1) {
+					(this->field_0x144).field_0x10 = 0.0f;
 					fVar4 = 1.0f;
 				}
 			}
-			if (this->field_0x144 != -1) {
-				this->field_0x150 = this->field_0x154;
-				this->field_0x158 = fVar4;
-				this->field_0x15c = 0.5f;
+
+			if ((this->field_0x144).macroAnimId != -1) {
+				(this->field_0x144).field_0xc = (this->field_0x144).field_0x10;
+				(this->field_0x144).field_0x14 = fVar4;
+				(this->field_0x144).field_0x18 = 0.5f;
 			}
 		}
-		this->field_0x168 = -1.0f;
-	})
+
+		(this->field_0x144).field_0x24 = -1.0f;
+	}
+
 	return;
 }
 
@@ -441,32 +454,35 @@ void CBehaviourCinematic::End(int newBehaviourId)
 	float fVar7;
 	edF32VECTOR3 local_10;
 	CAnimation* pAnimation;
+	int iVar1;
 
-	bVar3 = this->field_0x144 != -1;
+	bVar3 = (this->field_0x144).macroAnimId != -1;
 	if (bVar3) {
-		IMPLEMENTATION_GUARD_LOG(
-		if ((bVar3) && (this->field_0x148 != -1)) {
-			this->field_0x14c = this->field_0x148;
-			this->field_0x148 = -1;
-			this->field_0x160 = 0.0f;
-			this->field_0x164 = 0.5f;
-			if (this->field_0x148 == -1) {
-				fVar6 = 0.0f;
+		if ((bVar3) && (iVar1 = (this->field_0x144).field_0x4, iVar1 != -1)) {
+			(this->field_0x144).field_0x8 = iVar1;
+			(this->field_0x144).field_0x4 = -1;
+			(this->field_0x144).field_0x1c = 0.0f;
+			(this->field_0x144).field_0x20 = 0.5f;
+
+			if ((this->field_0x144).field_0x4 == -1) {
+				fVar7 = 0.0f;
 			}
 			else {
-				fVar6 = 1.0;
-				if (this->field_0x14c == -1) {
-					this->field_0x154 = 0.0f;
-					fVar6 = 1.0f;
+				fVar7 = 1.0f;
+				if ((this->field_0x144).field_0x8 == -1) {
+					(this->field_0x144).field_0x10 = 0.0f;
+					fVar7 = 1.0f;
 				}
 			}
-			if (this->field_0x144 != -1) {
-				this->field_0x150 = this->field_0x154;
-				this->field_0x158 = fVar6;
-				this->field_0x15c = 0.5f;
+
+			if ((this->field_0x144).macroAnimId != -1) {
+				(this->field_0x144).field_0xc = (this->field_0x144).field_0x10;
+				(this->field_0x144).field_0x14 = fVar7;
+				(this->field_0x144).field_0x18 = 0.5f;
 			}
 		}
-		this->field_0x168 = -1.0f;)
+
+		(this->field_0x144).field_0x24 = -1.0f;
 	}
 
 	if ((this->cinActor).pAltModelManager != (ed_g3d_manager*)0x0) {
@@ -589,9 +605,10 @@ void CBehaviourCinematic::Manage()
 		}
 		pCVar2 = this->pOwner;
 		pCVar2->previousLocation = pCVar2->currentLocation.xyz;
-		//if ((this->field_0x178 == 3) || (this->field_0x178 == 2)) {
-		//	ManageLipsync(this);
-		//}
+		if ((this->field_0x178 == 3) || (this->field_0x178 == 2)) {
+			IMPLEMENTATION_GUARD_LIP(
+			ManageLipsync(this);)
+		}
 	}
 	else {
 		if (((AVar3 != 2) && (AVar3 == 1)))
@@ -754,20 +771,18 @@ bool CBehaviourCinematic::CinematicMode_InterpreteCinMessage(int param_2, int pa
 		})
 		break;
 	case 0xb:
-		IMPLEMENTATION_GUARD(
-		CAnimation::PhysicalLayerFromLayerId(this->pOwner->pAnimationController, 4);
+		this->pOwner->pAnimationController->PhysicalLayerFromLayerId(4);
 		iVar2 = this->field_0x178;
 		if (((iVar2 == 3) || (iVar2 == 2)) || ((iVar2 == 1 || (iVar2 == 0)))) {
 			this->field_0x178 = 2;
-		})
+		}
 		break;
 	case 0xc:
-		IMPLEMENTATION_GUARD(
-		CAnimation::PhysicalLayerFromLayerId(this->pOwner->pAnimationController, 4);
+		this->pOwner->pAnimationController->PhysicalLayerFromLayerId(4);
 		iVar2 = this->field_0x178;
 		if ((((iVar2 == 3) || (iVar2 == 2)) || (iVar2 == 1)) || (iVar2 == 0)) {
 			this->field_0x178 = 3;
-		})
+		}
 		break;
 	case 0xd:
 		IMPLEMENTATION_GUARD(

@@ -73,8 +73,7 @@ void CActorBasicBox::Init()
 		pStreamEntry = pStreamEntry + 1;
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	this->addOnGenerator.Init(0);)
+	this->addOnGenerator.Init(0);
 
 	CActor::Init();
 

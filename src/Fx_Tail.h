@@ -20,6 +20,8 @@ public:
 
 	bool SetPatchActive(int bActive);
 
+	bool Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4);
+
 	int dlistPatchId;
 
 	uint flags;

@@ -13,7 +13,7 @@ class CBehaviourTeleporterDefault : public CBehaviour
 class CActorTeleporter : public CActor {
 public:
 	CActorTeleporter(){
-		IMPLEMENTATION_GUARD_LOG()
+		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
 	virtual void Create(ByteCode* pByteCode);

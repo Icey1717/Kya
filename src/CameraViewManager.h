@@ -155,6 +155,7 @@ public:
 	CActor* pCommanderRef_0x230;
 	edF32VECTOR4 field_0x290;
 	undefined4 field_0x2a0;
+	int field_0x2b4;
 };
 
 void CameraSet3DPos(edFCamera* pCamera);
@@ -5887,6 +5888,7 @@ struct ActiveCamManager {
 	bool FUN_003feb30();
 	CCamera* FUN_003feab0(int index);
 	ActiveCamManagerEntry* GetState();
+	float GetInternalViewAlpha();
 	ActiveCamManager();
 
 	ActiveCamManagerEntry aEntries[8];

@@ -22,6 +22,8 @@
 #include "ActorCommander.h"
 #include "ActorWolfen.h"
 #include "FrontEndLife.h"
+#include "Rendering/DisplayList.h"
+#include "edText.h"
 
 CActorHeroPrivate::CActorHeroPrivate()
 {
@@ -165,7 +167,6 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	ulong uVar9;
 	int iVar10;
 	int iVar11;
-	CActorHeroPrivate* pCVar12;
 	float fVar13;
 
 	if (CActorHero::_gThis == (CActorHero*)0x0) {
@@ -176,47 +177,22 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->field_0x18dc = 1;
 	this->bIsSettingUp = 0;
 
-	// HACK
-	//{
-	//	CActorFighter::Create(pByteCode);
-	//
-	//	static bool bInitedFirst = true;
-	//
-	//	if (bInitedFirst) {
-	//		char* pCurrent = pByteCode->currentSeekPos;
-	//
-	//		while (true) {
-	//			if (strncmp(pCurrent, "TSNI", 4) == 0) {
-	//				break;
-	//			}
-	//			pCurrent++;
-	//		}
-	//
-	//		pByteCode->currentSeekPos = pCurrent;
-	//
-	//		this->pActorBoomy = (CActorBoomy*)0x0;
-	//		return;
-	//	}
-	//
-	//	bInitedFirst = true;
-	//}
-
 	CActorFighter::Create(pByteCode);
 
-	//this->field_0x1870 = 0;
-	//this->field_0x1874 = this->field_0x444;
-	//*(undefined4*)&this->field_0x1878 = *(undefined4*)&this->field_0x448;
+	this->braceletLevel = 0;
+	this->field_0x1874 = this->field_0x444;
+	this->field_0x1878 = this->field_0x448.all;
 	//this->field_0xff0 = 0;
+
 	this->field_0x157c = pByteCode->GetU32();
-	//assert(this->field_0x157c == 0xDCF9FCDC);
 	this->animKey_0x1584 = pByteCode->GetU32();
 	this->animKey_0x1588 = pByteCode->GetU32();
-	this->animKey_0x158c = pByteCode->GetU32();
-	this->animKey_0x1590 = pByteCode->GetU32();
-	this->animKey_0x1594 = pByteCode->GetU32();
-	this->field_0x1594 = pByteCode->GetU32();
+	this->fxGlideBoneA = pByteCode->GetU32();
+	this->fxGlideBoneB = pByteCode->GetU32();
+	this->fxGlideBoneC = pByteCode->GetU32();
+	this->fxGlideBoneD = pByteCode->GetU32();
 	this->field_0x1598 = pByteCode->GetU32();
-	this->field_0x159c = pByteCode->GetU32();
+	this->braceletBone = pByteCode->GetU32();
 	this->medallionBone = pByteCode->GetU32();
 
 	int* pSeekpiVar5 = (int*)pByteCode->currentSeekPos;
@@ -224,26 +200,28 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	if (*pSeekpiVar5 != 0) {
 		pByteCode->currentSeekPos = pByteCode->currentSeekPos + *pSeekpiVar5 * 4;
 	}
-	//*(int**)&this->field_0x14a4 = pSeekpiVar5;
-	//iVar11 = 0;
-	//pCVar12 = this;
-	//do {
-	//	iVar10 = 0;
-	//	do {
-	//		iVar8 = (int)&(pCVar12->base).base.pVTable + iVar10;
-	//		*(undefined*)(iVar8 + 0xd34) = 0;
-	//		iVar10 = iVar10 + 8;
-	//		*(undefined*)(iVar8 + 0xd35) = 0;
-	//		*(undefined*)(iVar8 + 0xd36) = 0;
-	//		*(undefined*)(iVar8 + 0xd37) = 0;
-	//		*(undefined*)(iVar8 + 0xd38) = 0;
-	//		*(undefined*)(iVar8 + 0xd39) = 0;
-	//		*(undefined*)(iVar8 + 0xd3a) = 0;
-	//		*(undefined*)(iVar8 + 0xd3b) = 0;
-	//	} while (iVar10 < 0x10);
-	//	iVar11 = iVar11 + 1;
-	//	pCVar12 = (CActorHeroPrivate*)&(pCVar12->base).base.data.field_0xc;
-	//} while (iVar11 < 0x10);
+	this->field_0x14a4 = pSeekpiVar5;
+
+	iVar11 = 0;
+	byte(*pCVar12)[16]  = this->field_0xd34;
+	do {
+		iVar10 = 0;
+		do {
+			*pCVar12[iVar8 + 0] = 0;
+			*pCVar12[iVar8 + 1] = 0;
+			*pCVar12[iVar8 + 2] = 0;
+			*pCVar12[iVar8 + 3] = 0;
+			*pCVar12[iVar8 + 4] = 0;
+			*pCVar12[iVar8 + 5] = 0;
+			*pCVar12[iVar8 + 6] = 0;
+			*pCVar12[iVar8 + 7] = 0;
+
+			iVar10 = iVar10 + 8;
+		} while (iVar10 < 0x10);
+		iVar11 = iVar11 + 1;
+		pCVar12 = pCVar12 + 1;
+	} while (iVar11 < 0x10);
+
 	iVar11 = pByteCode->GetS32();
 	//this->field_0xd20 = iVar11;
 	//this->pEventChunk24_0xd24 = (ed_zone_3d*)0x0;
@@ -268,7 +246,6 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 				fVar13 = pByteCode->GetF32();
 				//piVar5[6] = (int)fVar13;
 				if (2.24f <= CScene::_pinstance->field_0x1c) {
-					IMPLEMENTATION_GUARD_LOG();
 					piVar7 = (int*)pByteCode->currentSeekPos;
 					pByteCode->currentSeekPos = (char*)(piVar7 + 1);
 					if (*piVar7 != 0) {
@@ -363,25 +340,27 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->field_0x12e0 = iVar11;
 	iVar11 = this->field_0x12e0;
 	if (iVar11 != -1) {
-		IMPLEMENTATION_GUARD_LOG(
 		CActor::SV_InstallMaterialId(iVar11);
-		CFxTail::Create(1.0f, (CFxTail*)&this->fxTrailA.field_0x4, 0x10, 4, this->field_0x12e0);
-		CFxTail::Create(1.0f, (CFxTail*)&this->fxTrailB.field_0x4, 0x10, 4, this->field_0x12e0);)
+		this->fxTrailA.Create(1.0f, 0x10, 4, this->field_0x12e0);
+		this->fxTrailB.Create(1.0f, 0x10, 4, this->field_0x12e0);
 	}
+
 	iVar11 = pByteCode->GetS32();
 	//*(int*)&this->field_0x13c8 = iVar11;
 	fVar13 = pByteCode->GetF32();
 	this->jokeWarnRadius = fVar13;
-	//this->bCanUseCheats = 0;
+	this->bCanUseCheats = 0;
 	//this->pCameraViewBase_0xaa8 = (CCamera*)0x0;
 	iVar11 = CLevelScheduler::ScenVar_Get(0x11);
 	iVar10 = CLevelScheduler::ScenVar_Get(0x12);
 	const int maxHealth = CLevelScheduler::ScenVar_Get(SCENE_VAR_MAX_HEALTH);
 	assert(maxHealth != 0);
 	this->lifeInterface.SetValueMax((float)maxHealth);
-	//SetParam2_0x18ToParam1((float)(iVar11 * iVar10), &this->field_0xab8);
-	//SetFloatParam1_0x1cToParam2(0.0, &this->field_0xab8);
-	//(**(code**)(*(int*)&this->field_0xab8 + 0x20))((float)_gGameNfo.heroMagic, &this->field_0xab8);
+
+	this->magicInterface.SetValueMax((float)(iVar11 * iVar10));
+	this->magicInterface.SetTransit(0.0f);
+	this->magicInterface.SetValue((float)CLevelScheduler::_gGameNfo.nbMagic);
+
 	iVar11 = pByteCode->GetS32();
 	if (iVar11 != 0) {
 		pOther = (CCameraManager*)CScene::GetManager(MO_Camera);
@@ -618,19 +597,19 @@ void CActorHeroPrivate::Init()
 	_InitHeroFight();
 
 	if (this->field_0x12e0 != -1) {
-		this->pAnimationController->RegisterBone(this->animKey_0x158c);
-		this->pAnimationController->RegisterBone(this->animKey_0x1590);
+		this->pAnimationController->RegisterBone(this->fxGlideBoneA);
+		this->pAnimationController->RegisterBone(this->fxGlideBoneB);
 
-		IMPLEMENTATION_GUARD_LOG(
-		CFxTail::Init(0.3333333f, (int)&this->fxTrailA.field_0x4, this->objectId);)
+		this->fxTrailA.Init(0.3333333f, this->objectId);
 
-		this->pAnimationController->RegisterBone(this->animKey_0x1594);
-		this->pAnimationController->RegisterBone(this->field_0x1594);
+		this->pAnimationController->RegisterBone(this->fxGlideBoneC);
+		this->pAnimationController->RegisterBone(this->fxGlideBoneD);
 
-		IMPLEMENTATION_GUARD_LOG(
-		CFxTail::Init(0.3333333f, (int)&this->fxTrailB.field_0x4, this->objectId);)
+		this->fxTrailB.Init(0.3333333f, this->objectId);
 	}
+
 	this->bIsSettingUp = 0;
+
 	local_4 = CLevelScheduler::ScenVar_Get(9);
 	DoMessage(this, (ACTOR_MESSAGE)0x62, (MSG_PARAM)local_4);
 	if (this->pActorBoomy != (CActorBoomy*)0x0) {
@@ -644,13 +623,12 @@ void CActorHeroPrivate::Init()
 	local_10 = 0;
 	DoMessage(this, (ACTOR_MESSAGE)0x79, (MSG_PARAM)0);
 	this->field_0xcbc = 0;
-	
-	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 2, &this->field_0xab8);
-	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 3, &this->field_0xad8);
-	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 6, &this->field_0xadc);
-	//(*(code*)pFVar4->pManagerFunctionData[1].field_0x0)(pFVar4, 7, &this->field_0xc84);
 
 	CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_LIFE, GetLifeInterfaceOther());
+	CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_MAGIC, &this->magicInterface);
+	CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_MONEY, &this->moneyInterface);
+	CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_MENU_INVENTORY, &this->inventory);
+	//CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_MENU_0x74, this->field_0xc84);
 
 	return;
 }
@@ -1668,6 +1646,7 @@ bool CActorHeroPrivate::ManageActions()
 	if (((GetStateFlags(this->actorState) & 1) == 0) && (lVar9 = this->inventory.IsActive(), lVar9 == 0)) {
 		iVar5 = CLevelScheduler::ScenVar_Get(0x11);
 		iVar6 = CLevelScheduler::ScenVar_Get(0x12);
+
 		valueMax = (float)(iVar5 * iVar6);
 		fVar12 = this->magicInterface.GetValueMax();
 
@@ -1678,13 +1657,16 @@ bool CActorHeroPrivate::ManageActions()
 				valueMax = (float)iVar5;
 				iVar5 = CLevelScheduler::ScenVar_Get(0x13);
 				iVar6 = CLevelScheduler::ScenVar_Get(0x12);
+
 				if (iVar6 == 0) {
 					trap(7);
 				}
+
 				CLevelScheduler::ScenVar_Set(0x11, iVar5 / iVar6);
 			}
 
 			this->magicInterface.SetValueMax(valueMax);
+
 			fVar12 = this->magicInterface.GetValue();
 			fVar13 = this->magicInterface.GetValueMax();
 			if (fVar13 < fVar12) {
@@ -1890,9 +1872,182 @@ bool CActorHeroPrivate::ManageActions()
 		this->field_0x1a44 = 0;
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	this->magicInterface.FUN_001dcd70();)
+	this->magicInterface.FUN_001dcd70();
+
 	return false;
+}
+
+edF32VECTOR4 edF32VECTOR4_004258b0 = { 1.0f, 1.0f, 1.0f, 0.0f };
+edF32VECTOR4 edF32VECTOR4_004258c0 = { 1.0f, 0.0f, 0.0f, 0.0f };
+
+void CActorHeroPrivate::FxManageGlideTail()
+{
+	bool bVar1;
+	uint uVar2;
+	edCTextStyle* pNewFont;
+	undefined uVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	edCTextStyle textStyle;
+	edF32VECTOR4 local_90;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+
+	if (this->field_0x12e0 == -1) {
+		bVar1 = GuiDList_BeginCurrent();
+		if ((bVar1 != false) && (this->actorState == 0xf0)) {
+			textStyle.Reset();
+
+			fVar7 = edFIntervalLERP(GetTimer()->scaledTotalTime - this->field_0x1548, this->field_0x1410, this->field_0x1414, 255.0f, 0.0f);
+			textStyle.rgbaColour = (int)fVar7 << 0x10 | 0xff000000U | (int)fVar7 << 8 | 0xff;
+			textStyle.SetShadow(0x100);
+			textStyle.alpha = 0xff;
+			textStyle.SetScale(2.0f, 2.0f);
+			pNewFont = edTextStyleSetCurrent(&textStyle);
+
+			if (this->field_0x1424 == 0) {
+				if (this->field_0x1420 != 0) {
+					edTextDraw(200.0f, 20.0f, "MAYDAY");
+				}
+			}
+			else {
+				edTextDraw(180.0f, 20.0f, "CRASH SOON");
+			}
+
+			edTextStyleSetCurrent(pNewFont);
+			GuiDList_EndCurrent();
+		}
+	}
+	else {
+		uVar2 = TestState_IsFlying(0xffffffff);
+		if (uVar2 == 0) {
+			this->fxTrailA.Manage(&gF32Vertex4Zero, &gF32Vertex4Zero, 1);
+			this->fxTrailB.Manage(&gF32Vertex4Zero, &gF32Vertex4Zero, 1);
+		}
+		else {
+			if (GetTimer()->scaledTotalTime - this->field_0x1548 < this->field_0x1410) {
+				fVar7 = edFIntervalUnitDstLERP(GetTimer()->scaledTotalTime - this->field_0x1548, 0.0f, this->field_0x1410);
+				fVar5 = fVar7 * 128.0f;
+				this->fxTrailA.field_0x28 = this->fxTrailA.field_0x24;
+				this->fxTrailA.field_0x24.r = 0x80;
+				this->fxTrailA.field_0x24.g = 0x80;
+				this->fxTrailA.field_0x24.b = 0x80;
+				if (fVar5 < 2.147484e+09) {
+					this->fxTrailA.field_0x24.a = (char)(int)fVar5;
+				}
+				else {
+					this->fxTrailA.field_0x24.a = (char)(int)(fVar5 - 2.147484e+09f);
+				}
+
+				fVar7 = fVar7 * 128.0f;
+				this->fxTrailB.field_0x28 = this->fxTrailB.field_0x24;
+				this->fxTrailB.field_0x24.r = 0x80;
+				this->fxTrailB.field_0x24.g = 0x80;
+				this->fxTrailB.field_0x24.b = 0x80;
+				if (fVar7 < 2.147484e+09) {
+					this->fxTrailB.field_0x24.a = (char)(int)fVar7;
+				}
+				else {
+					this->fxTrailB.field_0x24.a = (char)(int)(fVar7 - 2.147484e+09f);
+				}
+			}
+			else {
+				local_20 = edF32VECTOR4_004258b0;
+				local_30 = edF32VECTOR4_004258c0;
+
+				fVar8 = edFIntervalUnitDstLERP(GetTimer()->scaledTotalTime - this->field_0x1548, this->field_0x1410, this->field_0x1414);
+				fVar7 = 1.0f - fVar8;
+				fVar5 = local_30.x * fVar8 + local_20.x * fVar7;
+				fVar6 = local_30.y * fVar8 + local_20.y * fVar7;
+				fVar7 = local_30.z * fVar8 + local_20.z * fVar7;
+				fVar8 = fVar5 * 128.0f;
+
+				this->fxTrailA.field_0x28 = this->fxTrailA.field_0x24;
+
+				if (fVar8 < 2.147484e+09) {
+					uVar4 = (undefined)(int)fVar8;
+				}
+				else {
+					uVar4 = (undefined)(int)(fVar8 - 2.147484e+09f);
+				}
+
+				fVar8 = fVar6 * 128.0f;
+				this->fxTrailA.field_0x24.r = uVar4;
+				if (fVar8 < 2.147484e+09) {
+					uVar4 = (undefined)(int)fVar8;
+				}
+				else {
+					uVar4 = (undefined)(int)(fVar8 - 2.147484e+09f);
+				}
+
+				fVar8 = fVar7 * 128.0f;
+				this->fxTrailA.field_0x24.g = uVar4;
+				if (fVar8 < 2.147484e+09) {
+					this->fxTrailA.field_0x24.b = (char)(int)fVar8;
+				}
+				else {
+					this->fxTrailA.field_0x24.b = (char)(int)(fVar8 - 2.147484e+09f);
+				}
+				this->fxTrailA.field_0x24.a = 100;
+
+				fVar5 = fVar5 * 128.0f;
+				this->fxTrailB.field_0x28 = this->fxTrailB.field_0x24;
+				if (fVar5 < 2.147484e+09) {
+					uVar4 = (undefined)(int)fVar5;
+				}
+				else {
+					uVar4 = (undefined)(int)(fVar5 - 2.147484e+09f);
+				}
+				fVar6 = fVar6 * 128.0f;
+				this->fxTrailB.field_0x24.r = uVar4;
+				if (fVar6 < 2.147484e+09) {
+					uVar4 = (undefined)(int)fVar6;
+				}
+				else {
+					uVar4 = (undefined)(int)(fVar6 - 2.147484e+09f);
+				}
+				fVar7 = fVar7 * 128.0f;
+				this->fxTrailB.field_0x24.g = uVar4;
+				if (fVar7 < 2.147484e+09) {
+					this->fxTrailB.field_0x24.b = (char)(int)fVar7;
+				}
+				else {
+					this->fxTrailB.field_0x24.b = (char)(int)(fVar7 - 2.147484e+09f);
+				}
+				this->fxTrailB.field_0x24.a = 100;
+			}
+
+			SV_GetBoneWorldPosition(this->fxGlideBoneA, &local_60);
+			SV_GetBoneWorldPosition(this->fxGlideBoneB, &local_50);
+
+			local_40 = (local_50 + local_60) * 0.5f;
+			local_50 = (local_50 - local_40) * 1.2f;
+			local_60 = local_40 - local_50;
+			local_50 = local_40 + local_50;
+
+			this->fxTrailA.Manage(&local_50, &local_60, 0);
+
+			SV_GetBoneWorldPosition(this->fxGlideBoneC, &local_90);
+			SV_GetBoneWorldPosition(this->fxGlideBoneD, &local_80);
+
+			local_70 = (local_80 + local_90) * 0.5f;
+			local_80 = (local_80 - local_70) * 1.2f;
+
+			local_90 = local_70 - local_80;
+			local_80 = local_70 + local_80;
+
+			this->fxTrailB.Manage(&local_80, &local_90, 0);
+		}
+	}
+
+	return;
 }
 
 void CActorHeroPrivate::UpdateMedallion()
@@ -2144,7 +2299,7 @@ void CActorHeroPrivate::Manage()
 {
 	CAnimation* pCVar1;
 	CPlayerInput* pCVar2;
-	//CFrontendDisplay* pCVar3;
+	CFrontendDisplay* pCVar3;
 	bool bVar4;
 	Timer* pTVar5;
 	uint uVar6;
@@ -2178,22 +2333,20 @@ void CActorHeroPrivate::Manage()
 
 	CActorFighter::Manage();
 
-	IMPLEMENTATION_GUARD_LOG(
 	pCVar3 = CScene::ptable.g_FrontendManager_00451680;
 	if (this == (CActorHeroPrivate*)CActorHero::_gThis) {
 		iVar8 = this->field_0xd30;
 		if ((iVar8 == 1) || (iVar8 == 2)) {
-			(*(code*)(CScene::ptable.g_FrontendManager_00451680)->pManagerFunctionData[1].field_0x4)
-				(CScene::ptable.g_FrontendManager_00451680, 0);
-			(*(code*)pCVar3->pManagerFunctionData[1].free)(pCVar3);
+			CScene::ptable.g_FrontendManager_00451680->SetHeroActionA(0);
+			CScene::ptable.g_FrontendManager_00451680->SetHeroActionB(0);
 		}
 		else {
-			(*(code*)(CScene::ptable.g_FrontendManager_00451680)->pManagerFunctionData[1].field_0x4)
-				(CScene::ptable.g_FrontendManager_00451680, this->field_0x1a10);
-			(*(code*)pCVar3->pManagerFunctionData[1].free)(pCVar3);
+			CScene::ptable.g_FrontendManager_00451680->SetHeroActionA(this->heroActionParams.actionId);
+			CScene::ptable.g_FrontendManager_00451680->SetHeroActionB(this->field_0x1a40);
 		}
 	}
 
+	IMPLEMENTATION_GUARD_BOOMY(
 	ManageBoomyState(this);)
 
 	if (0.0f <= this->field_0x1000) {
@@ -2235,7 +2388,7 @@ void CActorHeroPrivate::Manage()
 		})
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_INVENTORY(
 	ManageInventory(this);)
 
 	if (this->field_0x1554 != 0.0f) {
@@ -2243,8 +2396,7 @@ void CActorHeroPrivate::Manage()
 		this->field_0x1550 = this->field_0x1550 + pTVar5->cutsceneDeltaTime;
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	ManageInternalView(this);)
+	ManageInternalView();
 
 	pTVar5 = Timer::GetTimer();
 	if (this->field_0x155c <= pTVar5->scaledTotalTime) {
@@ -2256,8 +2408,7 @@ void CActorHeroPrivate::Manage()
 		this->field_0x1560 = this->field_0x1560 + 1 & 7;
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-	FxManageGlideTail(this);)
+	FxManageGlideTail();
 
 	uVar6 = TestState_IsOnAToboggan(0xffffffff);
 	if (uVar6 != 0) {
@@ -2413,7 +2564,7 @@ void CActorHeroPrivate::Manage()
 							}
 						}
 
-						IMPLEMENTATION_GUARD_LOG(
+						IMPLEMENTATION_GUARD_OBJECTIVE(
 						ActorFunc_00347660((CActorHero*)this);
 						ActorFunc_00347290((CActorHero*)this);)
 					}
@@ -2865,7 +3016,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		case 0xc:
 			return this->animKey_0x1584;
 		case 0xd:
-			return this->animKey_0x158c;
+			return this->fxGlideBoneA;
 		}
 	}
 
@@ -3593,14 +3744,16 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							pCVar11 = GetLifeInterface();
 							fVar25 = pCVar11->GetValue();
 							bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
+
 							if (!bVar9) {
 								bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 							}
+
 							if ((bVar9) || (0.0f < this->field_0x1558)) {
 								return 0;
 							}
-							IMPLEMENTATION_GUARD_LOG(
-							FUN_00326d90((int)this, (uint)pMsgParam);)
+
+							UpdateBracelet((uint)pMsgParam);
 						}
 						else {
 							if (msg == 0x62) {
@@ -4041,8 +4194,7 @@ void CActorHeroPrivate::ResetStdDefaultSettings()
 	this->field_0x1150 = 17.0f;
 	this->field_0x1154 = 1.7f;
 	this->field_0x1158 = 0.2f;
-	IMPLEMENTATION_GUARD_LOG(
-	this->field_0x115c = 0.18f;)
+	this->field_0x115c = 0.18f;
 	this->field_0x1160 = 0.1f;
 	this->field_0x1164 = 1.5f;
 	
@@ -4065,16 +4217,14 @@ void CActorHeroPrivate::ResetSlideDefaultSettings()
 
 	this->field_0x1068 = 0.5f;
 	this->field_0x106c = 12.0f;
-	IMPLEMENTATION_GUARD_LOG(
-	this->field_0x1070 = 35.0f;)
+	this->field_0x1070 = 35.0f;
 	this->field_0x1074 = 2.094395f;
 	this->field_0x1078 = 0.6f;
 	this->field_0x107c = 0.2f;
 	this->field_0x1080 = 100.0f;
 	this->field_0x1084 = 300.0f;
-	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x1088 = 1.0472f;
-	this->field_0x108c = 0.95f;)
+	this->field_0x108c = 0.95f;
 	this->field_0x10c0 = 19.0f;
 	this->field_0x10c4 = 25.0f;
 	this->field_0x10c8 = 17.0f;
@@ -4096,9 +4246,9 @@ void CActorHeroPrivate::ResetSlideDefaultSettings()
 	this->field_0x10f4 = 0.0f;
 	this->field_0x10f8 = 0.0f;
 
-	IMPLEMENTATION_GUARD_LOG(
-	this->field_0x1104 = 0.0;)
+	this->field_0x1104 = 0.0f;
 	this->field_0x1108 = 0.0f;
+
 	return;
 }
 
@@ -4106,7 +4256,7 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 {
 	uint* puVar1;
 	ulong uVar2;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_BOOMY(
 	CScene::GetManager(MO_Camera);
 	this->field_0x1ba0 = 0x41000000;
 	*(undefined4*)&this->field_0x1b98 = 0;
@@ -4118,11 +4268,11 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 	this->field_0x1b6c = 0;
 	SetBoomyFunc(0);
 	this->field_0x1b78 = 0;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_BOOMY(
 	this->field_0x1b74 = 0;)
 	this->field_0x1000 = -1.0f;
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_BOOMY(
 	*(undefined4*)&this->field_0x1004 = 0x41200000;
 	*(undefined4*)&this->field_0x1008 = 0x40a00000;
 	DisableLayer(this, 8);
@@ -4138,7 +4288,7 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 	})
 	/* BOOMY_1 */
 	this->field_0x1ba4 = 0;
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_BOOMY(
 	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_1_00429998);
 	*(uint**)&this->field_0x1bb0 = puVar1;
 	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_2_004299a0);
@@ -5154,19 +5304,16 @@ LAB_00341590:
 	uVar6 = this->heroFlags;
 	lVar10 = (long)(int)uVar6;
 
-	IMPLEMENTATION_GUARD_LOG(
-	uVar6 = TestState_WindWall((Actor*)this, uVar6);
-	if (uVar6 == 0) {
+	if (TestState_WindWall(uVar6) == 0) {
 		lVar10 = -1;
-		uVar6 = TestState_WindWall((Actor*)this, 0xffffffff);
-		if (uVar6 != 0) {
+		if (TestState_WindWall(0xffffffff) != 0) {
 			pCVar5 = (CCameraManager*)CScene::GetManager(MO_Camera);
 			pCamera = this->pJamgutCamera_0x15b8;
 			lVar10 = (long)(int)pCamera;
 			in_a2_lo = (edF32VECTOR4*)0x0;
-			CCameraManager::PushCamera(pCVar5, pCamera, 0);
+			pCVar5->PushCamera(pCamera, 0);
 		}
-	})
+	}
 
 	switch (newState) {
 	case STATE_HERO_SLIDE_SLIP_C:
@@ -15198,6 +15345,135 @@ void CActorHeroPrivate::FUN_00325d00()
 	}
 	else {
 		this->field_0x156c = this->field_0x156c + 1 & 7;
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::UpdateBracelet(uint flags)
+{
+	byte bVar1;
+	int iVar2;
+
+	this->braceletLevel = 0;
+
+	if ((flags & 0xff000000) != 0) {
+		flags = 0xff;
+	}
+
+	if ((flags & 0x10000) != 0) {
+		flags = 0;
+	}
+
+	if (flags == 0) {
+		this->field_0x444 = 0;
+		this->field_0x448.all = 0;
+		this->field_0x440 = 0.0f;
+		this->pAnimationController->AddDisabledBone(this->braceletBone);
+	}
+	else {
+		this->field_0x444 = this->field_0x1874;
+		this->field_0x448.all = this->field_0x1878;
+		this->field_0x440 = 1.0f;
+
+		if ((flags & 2) == 0) {
+			bVar1 = this->field_0x448.flags[1];
+			this->field_0x448.flags[1] = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) & 2) << 4);
+		}
+
+		if ((flags & 4) == 0) {
+			this->field_0x448.flags[1] = this->field_0x448.flags[1] & 0xfb;
+			this->field_0x448.flags[1] = this->field_0x448.flags[1] & 0xfd;
+			this->field_0x444 = this->field_0x444 & 0xfffffffe;
+		}
+
+		if ((flags & 8) == 0) {
+			bVar1 = this->field_0x448.flags[0];
+			this->field_0x448.flags[0] = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) & 0xd) << 4);
+		}
+
+		if ((flags & 0x20) == 0) {
+			bVar1 = this->field_0x448.flags[1];
+			this->field_0x448.flags[1] = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) & 1) << 4);
+		}
+
+		if ((flags & 0x40) != 0) {
+			this->field_0x440 = 1.1f;
+		}
+
+		if ((flags & 0x80) != 0) {
+			this->field_0x440 = 1.3f;
+		}
+
+		for (; flags != 0; flags = flags >> 1) {
+			this->braceletLevel = this->braceletLevel + 1;
+		}
+
+		iVar2 = this->braceletLevel;
+		if (iVar2 != 0) {
+			SV_PatchMaterial(gFightHashCodes[1], gFightHashCodes[iVar2], (ed_g2d_manager*)0x0);
+		}
+
+		this->pAnimationController->RemoveDisabledBone(this->braceletBone);
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::ManageInternalView()
+{
+	int iVar3;
+	CCameraManager* pCameraManager;
+	float fVar4;
+
+	iVar3 = this->field_0x1a54;
+
+	if (iVar3 == 4) {
+		SetBFCulling(0);
+		SetAlpha(0x80);
+
+		this->field_0x1a54 = 0;
+	}
+	else {
+		if (iVar3 == 3) {
+			pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+			if ((pCameraManager->flags & 0x4000000) == 0) {
+				this->field_0x1a54 = 4;
+			}
+			else {
+				this->flags = this->flags | 0x100;
+				fVar4 = pCameraManager->activeCamManager.GetInternalViewAlpha();
+				this->field_0x1a58 = fVar4;
+				SetAlpha((byte)(int)(this->field_0x1a58 * 128.0f));
+			}
+		}
+		else {
+			if (iVar3 == 2) {
+				this->flags = this->flags & 0xfffffeff;
+				this->field_0x1a58 = 0.0f;
+				SetAlpha(0);
+			}
+			else {
+				if (iVar3 == 1) {
+					pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+					if ((pCameraManager->flags & 0x4000000) == 0) {
+						this->field_0x1a54 = 2;
+					}
+					else {
+						SetBFCulling(1);
+
+						fVar4 = pCameraManager->activeCamManager.GetInternalViewAlpha();
+						this->field_0x1a58 = 1.0f - fVar4;
+						SetAlpha((byte)(int)((1.0f - fVar4) * 128.0f));
+					}
+				}
+				else {
+					if (iVar3 == 0) {
+						this->field_0x1a58 = 1.0f;
+					}
+				}
+			}
+		}
 	}
 
 	return;

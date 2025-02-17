@@ -13,6 +13,8 @@
 
 #include "EdenLib/edCinematic/Sources/Cinematic.h"
 
+#define IMPLEMENTATION_GUARD_LIP(x)
+
 struct ed_g2d_manager;
 struct ed_g3d_manager;
 struct CActorCinematic;

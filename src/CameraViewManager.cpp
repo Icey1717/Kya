@@ -379,6 +379,52 @@ ActiveCamManagerEntry* ActiveCamManager::GetState()
 	return pAVar1;
 }
 
+float ActiveCamManager::GetInternalViewAlpha()
+{
+	ActiveCamManager* pAVar1;
+	int iVar2;
+	ActiveCamManagerEntry* pAVar3;
+	int iVar4;
+	float fVar5;
+
+	iVar2 = this->activeIndex + 1;
+
+	if (iVar2 == 0) {
+		fVar5 = 0.0f;
+	}
+	else {
+		fVar5 = 0.0f;
+		iVar4 = 0;
+
+		if (0 < iVar2) {
+			IMPLEMENTATION_GUARD(
+			pAVar1 = this;
+			if (8 < iVar2) {
+				do {
+					iVar4 = iVar4 + 8;
+					fVar5 = fVar5 + pAVar1->aEntries[0].blendAlpha + pAVar1->aEntries[1].blendAlpha +
+						pAVar1->aEntries[2].blendAlpha + pAVar1->aEntries[3].blendAlpha + pAVar1->aEntries[4].blendAlpha +
+						pAVar1->aEntries[5].blendAlpha + pAVar1->aEntries[6].blendAlpha + pAVar1->aEntries[7].blendAlpha;
+					pAVar1 = (ActiveCamManager*)&pAVar1->activeIndex;
+				} while (iVar4 < this->activeIndex + -7);
+			}
+
+			if (iVar4 < iVar2) {
+				pAVar3 = this->aEntries + iVar4;
+				do {
+					iVar4 = iVar4 + 1;
+					fVar5 = fVar5 + (&pAVar3->props)[1].location.z;
+					pAVar3 = (ActiveCamManagerEntry*)&(&pAVar3->props)[1].location.w;
+				} while (iVar4 < this->activeIndex + 1);
+			})
+		}
+
+		fVar5 = fVar5 / (float)iVar2;
+	}
+
+	return fVar5;
+}
+
 void ActiveCamManager::ClearActiveCam()
 {
 	this->activeIndex = -1;
@@ -1961,7 +2007,7 @@ bool CCameraShadow::Manage()
 	bVar4 = CCamera::Manage();
 	pLVar3 = CScene::ptable.g_LightManager_004516b0;
 	if (bVar4 == false) {
-		IMPLEMENTATION_GUARD_LOG();
+		IMPLEMENTATION_GUARD_SHADOW();
 	}
 	else {
 		bVar4 = false;

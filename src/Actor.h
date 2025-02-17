@@ -717,10 +717,10 @@ public:
 class CAddOnGenerator {
 public:
 	void Create(CActor* pActor, ByteCode* pByteCode);
-	void Init(int) { IMPLEMENTATION_GUARD_LOG(); }
-	void Term() { IMPLEMENTATION_GUARD_LOG(); }
+	void Init(int) { IMPLEMENTATION_GUARD_ADD_ON(); }
+	void Term() { IMPLEMENTATION_GUARD_ADD_ON(); }
 
-	void Generate(edF32VECTOR4* pPosition) { IMPLEMENTATION_GUARD_LOG(); }
+	void Generate(edF32VECTOR4* pPosition) { IMPLEMENTATION_GUARD_ADD_ON(); }
 
 	CAddOnGenerator_SubObj subObj;
 };
@@ -742,6 +742,25 @@ struct ActorAndWaypoint {
 struct S_ACTOR_STREAM_REF {
 	int entryCount;
 	S_STREAM_REF<CActor> aEntries[];
+};
+
+class CEmotionInfo {
+public:
+	void DoAnimation(float, float, CActor*);
+
+	int macroAnimId;
+	int field_0x4;
+	int field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	float field_0x1c;
+	float field_0x20;
+	float field_0x24;
+	float field_0x28;
+	float field_0x2c;
+	float field_0x30;
 };
 
 #endif // _ACTOR_H

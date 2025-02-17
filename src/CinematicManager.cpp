@@ -1172,8 +1172,7 @@ void CCinematic::Start()
 						ed3DG3DHierarchySetStripShadowReceiveFlag(pNewHier, 0xffff);
 					}
 
-					pMVar9 = ed3DHierarchyAddToSceneByHashcode(CScene::_scene_handleA, this->pMeshInfo, 0x43494d414e5944);
-					this->pMeshTransform = pMVar9;
+					this->pMeshTransform = ed3DHierarchyAddToSceneByHashcode(CScene::_scene_handleA, this->pMeshInfo, 0x43494d414e5944);
 					if (this->pMeshTransform != (edNODE*)0x0) {
 						ed3DSetMeshTransformFlag_002abd80(this->pMeshTransform, 0xffff);
 						ed3DSetMeshTransformFlag_002abff0(this->pMeshTransform, 0xffff);
@@ -1762,7 +1761,7 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 							}
 							else {
 								if (objectType == edResCollection::COT_LipTrack) {
-									IMPLEMENTATION_GUARD_LOG(
+									IMPLEMENTATION_GUARD_LIP(
 									iVar4 = FUN_001ad730((int)CScene::ptable.g_LipTrackManager_00451694, (int)outFileData.fileBufferStart);
 									piVar7->pData = *(int*)(&pMVar1->field_0x8 + iVar4 * 4);)
 								}
@@ -2952,7 +2951,7 @@ void CCinematic::Draw()
 			}
 		}
 
-		IMPLEMENTATION_GUARD_LOG(
+		IMPLEMENTATION_GUARD_FX(
 		bVar2 = GameDList_BeginCurrent();
 		if (bVar2 != false) {
 			iVar5 = 0;
@@ -3672,9 +3671,11 @@ bool CBWitchCin::CreateScenery(edCinSceneryInterface** ppActorInterface, const e
 	CCinematic* pCinematic;
 
 	pCinematic = g_CinematicManager_0048efc->pCurCinematic;
-	/* Load the texture */
+
+	CUTSCENE_LOG(LogLevel::Info, "CBWitchCin::CreateScenery Install", pTag->szTexturePath);
 	ret = (ed_g2d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshTexture, (ulong)pTag->textureType, pTag->szTexturePath, (ed_g2d_manager*)0x0, &iStack4);
-	/* Load the mesh */
+	
+	CUTSCENE_LOG(LogLevel::Info, "CBWitchCin::CreateScenery Install", pTag->szMeshPath);
 	outMeshInfo = (ed_g3d_manager*)pCinematic->InstallResource(edResCollection::COT_MeshModel, (ulong)pTag->meshType, pTag->szMeshPath, ret, &iStack4);
 	pCinematic->pMeshInfo = outMeshInfo;
 	return true;

@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Sprite.h"
+#include "Rendering/edCTextStyle.h"
 
 class CInterface;
 
@@ -69,6 +70,42 @@ public:
 
 	float fillLifeMin;
 	float fillLifeMax;
+};
+
+class CFrontendLabelText : public CWidget
+{
+public:
+	CFrontendLabelText();
+
+	char szLabel[32];
+};
+
+class CFrontendAction : public CFrontendLabelText
+{
+public:
+	CFrontendAction();
+
+	virtual void Reset();
+	virtual void Init();
+	virtual void UpdatePos_StateWait(float param_1);
+	virtual bool UpdateDisp(float param_1);
+	virtual void Draw();
+
+	void SetActionA(int actionId);
+	void SetActionB(int actionId);
+
+	edCTextStyle textStyle;
+
+	int field_0x130;
+	float field_0x134;
+
+	int curActionId;
+	int otherActionId;
+
+	CWidgetSlot slotOn;
+	CWidgetSlot slotOff;
+
+	char szOtherText[32];
 };
 
 #endif // !FRONTEND_WIDGET_H

@@ -686,11 +686,19 @@ inline edF32MATRIX4 operator*(const edF32MATRIX4& lhs, const edF32MATRIX4& rhs)
 	return ret;
 }
 
-#define IMPLEMENTATION_GUARD_FX(x) assert(false);
+#define PLAY_INTRO_VIDEO 0
+
+#define IMPLEMENTATION_GUARD_FX(x)
 #define IMPLEMENTATION_GUARD_EMOTION(x)
+#define IMPLEMENTATION_GUARD_PS2(x)
 #define IMPLEMENTATION_GUARD_AUDIO(x)
+#define IMPLEMENTATION_GUARD_ACTOR(x)
+#define IMPLEMENTATION_GUARD_LIGHT(x)
 #define IMPLEMENTATION_GUARD_UI(x)
 #define IMPLEMENTATION_GUARD_SAVE(x)
+#define IMPLEMENTATION_GUARD_SHADOW(x)
+#define IMPLEMENTATION_GUARD_ADD_ON(x)
+#define IMPLEMENTATION_GUARD_LOOK_AT(x)
 #define IMPLEMENTATION_GUARD_LOG(x) MY_LOG_CATEGORY("ImplementationGuard", LogLevel::Verbose, "IMPLEMENTATION_GUARD_LOG {}, {}\n", __FILE__, __LINE__);
 
 #ifdef PLATFORM_WIN
@@ -924,6 +932,14 @@ public:
 
 	virtual bool IsKindOfObject(ulong kind) { return false; }
 	virtual bool InitDlistPatchable(int) { return false; }
+};
+
+struct ed_Bound_Sphere
+{
+	float x;
+	float y;
+	float z;
+	float radius;
 };
 
 #endif //_TYPES_H

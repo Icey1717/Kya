@@ -220,18 +220,20 @@ void CActorManager::Level_AddAll(ByteCode* pMemoryStream)
 				}
 
 				if (pActor->subObjA->field_0x40 == 0) {
-					IMPLEMENTATION_GUARD_LOG(
+					IMPLEMENTATION_GUARD_SHADOW(
 					pActor->SetupShadow((CShadow*)0x0);)
 				}
 				else {
-					IMPLEMENTATION_GUARD_LOG(
+					IMPLEMENTATION_GUARD_SHADOW(
 					pActor->SetupShadow(&this->aShadows[this->initializedShadowCount]);)
 					this->initializedShadowCount++;
 				}
 			}
 		}
+
 		delete[] aActorLayerCounts;
 	}
+
 	return;
 }
 
@@ -980,11 +982,11 @@ CCluster::CCluster()
 	this->aClusterNodes = (CClusterNode*)0x0;
 	this->nbClusterNodes = 0;
 
-	IMPLEMENTATION_GUARD_LOG(
 	this->field_0x30 = 0;
-	this->field_0x32 = 0;)
+	this->field_0x32 = 0;
 	this->field_0x34 = 0;
 	this->pClusterNode = (CClusterNode*)0x0;
+
 	return;
 }
 

@@ -121,7 +121,7 @@ void edDListPatchableReset(DisplayListInternal* pList, uint param_2, uint param_
 void edDListLoadIdentity(void);
 
 DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList);
-DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, undefined8 param_6, DisplayListInternal* pInBuffer);
+DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer);
 void edDListSetSceneUsed(DisplayListInternal* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster);
 uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4, uint* param_5, uint* param_6);
 

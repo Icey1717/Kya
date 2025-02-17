@@ -97,7 +97,7 @@ float* edAnmSubControler::GetClosestKeyIndex(float time, int* outIndex)
 	pfVar5 = peVar4->keyTimes;
 	uVar3 = (uint)uVar1;
 	if (time < pfVar5[uVar3 - 1]) {
-		IMPLEMENTATION_GUARD_LOG();
+		// #cleanup
 		peVar4 = peVar4 + 1;
 		if ((((8 < uVar1) && (iVar2 = (int)(uVar1 - 1) >> 2, *(float*)(&peVar4->keyCount + iVar2 * 2) <= time)) &&
 			(peVar4 = (edAnmSubControlerTag*)(&peVar4->keyCount + iVar2 * 2),

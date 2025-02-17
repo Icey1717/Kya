@@ -2014,8 +2014,9 @@ void LoadingLoop(void)
 	MY_LOG("LoadLevel Begin\n");
 
 	/* These functions just run once */
-	IMPLEMENTATION_GUARD_LOG(
-	PlayIntroVideo(0);)
+#if PLAY_INTRO_VIDEO
+	PlayIntroVideo(0);
+#endif
 	pSceneInstance = CScene::_pinstance;
 	inTimeController = GetTimer();
 	pSceneInstance->LevelLoading_Begin();

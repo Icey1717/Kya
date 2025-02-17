@@ -11,6 +11,8 @@
 
 union edF32VECTOR4;
 struct ed_3d_strip;
+struct ed_3D_Scene;
+struct ed_g3d_manager;
 
 struct RenderCommandUint {
 	uint type;
@@ -33,11 +35,11 @@ struct DisplayListInternalSubObj_60 {
 	byte field_0x41;
 	ushort type_0x42;
 	RenderInput pRenderInput;
-	union edpkt_data* pCurDListBuf;
+	edpkt_data* pCurDListBuf;
 	int primType;
 	uint nbAddedVertex;
 	int nbMatrix;
-	union edF32MATRIX4* pCurMatrixArray;
+	edF32MATRIX4* pCurMatrixArray;
 	undefined field_0x5c;
 	undefined field_0x5d;
 	undefined field_0x5e;
@@ -53,11 +55,11 @@ struct DisplayListInternal {
 	ushort field_0x6;
 	undefined4 field_0x8;
 	char* pCommandBuffer;
-	union edpkt_data* field_0x10;
-	union edpkt_data* field_0x14;
-	union edpkt_data* pRenderCommands;
-	struct DisplayListInternalSubObj_60* pDisplayListInternalSubObj;
-	struct ed_3D_Scene* pStaticMeshMaster_0x20;
+	edpkt_data* field_0x10;
+	edpkt_data* field_0x14;
+	edpkt_data* pRenderCommands;
+	DisplayListInternalSubObj_60* pDisplayListInternalSubObj;
+	ed_3D_Scene* pStaticMeshMaster_0x20;
 	float field_0x24;
 	char* field_0x28;
 	DisplayListInternalSubObj_60** field_0x2c;
@@ -80,7 +82,7 @@ struct edCluster {
 	undefined field_0xd;
 	undefined field_0xe;
 	undefined field_0xf;
-	struct ed_g3d_manager* pMeshInfo;
+	ed_g3d_manager* pMeshInfo;
 	uint flags;
 	float distanceToCamera;
 	undefined field_0x1c;
@@ -112,7 +114,7 @@ public:
 
 	void Init();
 
-	DisplayListInternal* pDisplayListInternal;
+	DisplayListInternal* pDisplayListInternal; // Double buffered display list data.
 	int field_0x8;
 	int field_0xc;
 	int field_0x10;
@@ -143,5 +145,6 @@ int GameDListPatch_Register(CObject* pObject, int param_2, int param_3);
 
 extern DisplayListInternal* gCurDListHandle;
 extern ed_3d_strip* gCurDListBuf;
+extern ed_3d_strip* gCurDListBufEnd;
 
 #endif // _DISPLAYLIST_H

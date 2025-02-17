@@ -10,6 +10,8 @@
 #include "ScenaricCondition.h"
 #include "SectorManager.h"
 
+#define IMPLEMENTATION_GUARD_OBJECTIVE(x)
+
 struct SaveDataSection_44484c42 {
 	int field_0x0;
 	int field_0x4;

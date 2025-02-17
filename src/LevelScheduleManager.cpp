@@ -1998,9 +1998,11 @@ void CLevelScheduler::Level_Init()
 	//	_gGameNfo.bet = _gGameNfo.bet - episodeNumber;
 	//	_gGameNfo.field_0x1c = _gGameNfo.field_0x1c + episodeNumber;
 	//}
+
 	if (this->currentLevelID == 0xe) {
 		GameFlags = GameFlags | 0x40;
 	}
+
 	return;
 }
 
@@ -2330,7 +2332,7 @@ void CLevelScheduler::Level_Manage()
 	fVar15 = pTVar4->cutsceneDeltaTime;
 	this->field_0x4214 = this->field_0x4214 + pTVar4->lastFrameTime;
 
-	IMPLEMENTATION_GUARD_LOG(
+	IMPLEMENTATION_GUARD_OBJECTIVE(
 	piVar1 = this->pObjectiveStreamBegin;
 	if (piVar1 != (int*)0x0) {
 		ppuVar11 = (uint**)(piVar1 + 1);

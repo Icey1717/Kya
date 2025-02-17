@@ -4,6 +4,10 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorHero.h"
+#include "Fx_Tail.h"
+
+#define IMPLEMENTATION_GUARD_BOOMY(x)
+#define IMPLEMENTATION_GUARD_INVENTORY(x)
 
 enum EBoomyThrowState
 {
@@ -162,6 +166,8 @@ public:
 
 	EBoomyThrowState ManageEnterAttack();
 	bool ManageActions();
+
+	void FxManageGlideTail();
 
 	void UpdateMedallion();
 
@@ -364,6 +370,9 @@ public:
 
 	void FUN_00325c40(float t0, int param_3);
 	void FUN_00325d00();
+	void UpdateBracelet(uint flags);
+
+	void ManageInternalView();
 
 	CBehaviourHeroDefault behaviourHeroDefault;
 
@@ -380,6 +389,9 @@ public:
 	CActorFighter* field_0x1618;
 
 	CActorWindState field_0x1190;
+
+	CFxTail fxTrailA;
+	CFxTail fxTrailB;
 
 	float field_0x1000;
 
@@ -417,6 +429,7 @@ public:
 	int field_0x12e0;
 
 	undefined4 field_0x1a50;
+	float field_0x1a58;
 	int field_0x1094;
 
 	float jokeWarnRadius;
@@ -476,11 +489,14 @@ public:
 	// Run settings.
 	float field_0x1068;
 	float field_0x106c;
+	float field_0x1070;
 	float field_0x1074;
 	float field_0x1078;
 	float field_0x107c;
 	float field_0x1080;
 	float field_0x1084;
+	float field_0x1088;
+	float field_0x108c;
 
 	float field_0x10c0;
 	float field_0x10c4;
@@ -535,6 +551,7 @@ public:
 	float field_0x1150;
 	float field_0x1154;
 	float field_0x1158;
+	float field_0x115c;
 
 	int boomyThrowState;
 	int activeBoomyThrowState;
@@ -563,6 +580,7 @@ public:
 	float field_0x10f4;
 	float field_0x10f8;
 
+	float field_0x1104;
 	float field_0x1108;
 
 	float windBoostStrength;

@@ -37,18 +37,16 @@ public:
 	edF32VECTOR4 field_0xd0;
 
 	undefined4 field_0xe0;
-	undefined* field_0xe4;
-
-	undefined field_0x160;
-
+	byte* field_0xe4;
 };
 
 template<int countA, int countB>
 class CFxSparkNoAlloc : public CFxSpark
 {
 public:
-	edF32VECTOR3 field_0xf0[countA];
-	float field_0x120[countB];
+	edF32VECTOR3 aVectorData[countA];
+	float aFloatData[countB];
+	byte aUnknown[countB];
 };
 
 #endif // FX_SPARK_H

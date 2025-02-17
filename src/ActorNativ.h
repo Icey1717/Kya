@@ -112,25 +112,6 @@ struct ActionEntry {
 	float field_0x4;
 };
 
-class CEmotionInfo {
-public:
-	void DoAnimation(float, float, CActor*);
-
-	int macroAnimId;
-	int field_0x4;
-	int field_0x8;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-	float field_0x18;
-	float field_0x1c;
-	float field_0x20;
-	float field_0x24;
-	float field_0x28;
-	float field_0x2c;
-	float field_0x30;
-};
-
 class CActorNativ : public CActorAutonomous 
 {
 public:

@@ -15,7 +15,7 @@ enum FRONTEND_INTERFACE
 	FRONTEND_INTERFACE_MONEY,
 	FRONTEND_INTERFACE_FREED_WOLFEN,
 	FRONTEND_INTERFACE_ACTION,
-	FRONTEND_INTERFACE_MENU_0x6c,
+	FRONTEND_INTERFACE_MENU_INVENTORY,
 	FRONTEND_INTERFACE_MENU_0x74,
 };
 
@@ -50,6 +50,8 @@ struct CFrontendDisplay : public CFrontend {
 	virtual void Level_LoadContext();
 
 	virtual void DeclareInterface(FRONTEND_INTERFACE interfaceType, CInterface* pInterface);
+	virtual void SetHeroActionA(int actionId);
+	virtual void SetHeroActionB(int actionId);
 	virtual void SetGlobalFunc_001cf8e0();
 
 	void SetActive(bool bActive);
@@ -76,7 +78,7 @@ struct CFrontendDisplay : public CFrontend {
 	struct CFrontendMagicGauge* pMagicOrbs;
 	struct HNootiesWolfun* pNooties;
 	struct HNootiesWolfun* pFreedWolfun;
-	struct MenuObj_164* pMenuObj_0x68;
+	struct CFrontendAction* pFrontendAction;
 	struct MenuObj_Big* pMenuObj_0x6c;
 	char* pMenuObj_0x70;
 	char* pMenuObj_0x74;

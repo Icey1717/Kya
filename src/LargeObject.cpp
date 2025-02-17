@@ -175,7 +175,7 @@ CScene::CScene()
 	ed_3D_Scene** ppSVar20;
 	edFCamera* pCVar21;
 	CameraObjParams local_8;
-	CLocalizationManager* pManager;
+	CLanguageManager* pManager;
 
 	this->field_0x38 = 1;
 	//errorPrinter = (void**)Allocate(4);
@@ -217,7 +217,7 @@ CScene::CScene()
 	if (CScene::ptable.g_LevelScheduleManager_00451660 != (CLevelScheduler*)0x0) {
 		CLevelScheduler::gThis = CScene::ptable.g_LevelScheduleManager_00451660;
 	}
-	pManager = new CLocalizationManager();
+	pManager = new CLanguageManager();
 	CScene::ptable.g_LocalizationManager_00451678 = pManager;
 	CScene::ptable.g_FrontEndBank_00451674 = new CFrontendBank();
 	CScene::ptable.g_FrontendManager_00451680 = new CFrontendDisplay();

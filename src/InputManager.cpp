@@ -873,6 +873,11 @@ void CPlayerInput::Reset()
 	return;
 }
 
+void _PlayerInput_SetActionCallBack(char* line, int, int)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CPlayerInput::ReadConfig(CIniFile* pIniFile)
 {
 	int iVar1;
@@ -914,10 +919,8 @@ void CPlayerInput::ReadConfig(CIniFile* pIniFile)
 		} while (port < MaxControllers);
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
 	/* Devices - SetAction - ReadDevice function */
-	CIniFile::GetAllKeys(pIniFile, s_Devices_0042b2f8, s_SetAction_0042b300, _PlayerInput_SetActionCallBack, 0);
-	);
+	pIniFile->GetAllKeys("Devices", "SetAction", _PlayerInput_SetActionCallBack, 0);
 
 	gPlayerInput.Init(1);
 	gPlayerInput_2.Init(0);
@@ -1075,11 +1078,12 @@ void CPlayerInput::InitDev()
 	}
 
 	// Wait?
-	IMPLEMENTATION_GUARD_LOG(
+#ifndef PLATFORM_WIN
 	fVar3 = edTimerTimeGet();
 	do {
 		fVar4 = edTimerTimeGet();
-	} while (fVar4 - fVar3 < 2.0f);)
+	} while (fVar4 - fVar3 < 2.0f);
+#endif
 	return;
 }
 

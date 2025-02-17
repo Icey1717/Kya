@@ -1306,13 +1306,12 @@ void CActor::UpdateLookingAt()
 
 void CActor::UpdateAnimEffects()
 {
-	CBehaviour* pCVar1;
+	CBehaviour* pBehaviour;
 	Timer* pTVar2;
 
-	if (((this->flags & 0x800000) != 0) && (pCVar1 = GetBehaviour(1), pCVar1 != (CBehaviour*)0x0)) {
-		pTVar2 = Timer::GetTimer();
-		IMPLEMENTATION_GUARD_LOG(
-		CEmotionInfo::DoAnimation(pTVar2->cutsceneDeltaTime, 1.0, (int*)(pCVar1 + 0x51), (int)pCVar1[1].pVTable);)
+	if (((this->flags & 0x800000) != 0) && (pBehaviour = GetBehaviour(1), pBehaviour != (CBehaviour*)0x0)) {
+		CBehaviourCinematic* pCinematicBehaviour = reinterpret_cast<CBehaviourCinematic*>(pBehaviour);
+		pCinematicBehaviour->field_0x144.DoAnimation(Timer::GetTimer()->cutsceneDeltaTime, 1.0f, pCinematicBehaviour->pOwner);
 	}
 	return;
 }
@@ -2304,23 +2303,25 @@ void CActor::SV_SetModel(int meshIndex, int textureIndex, int count, MeshTexture
 	ed_g2d_manager* pTVar1;
 	ed_g2d_manager* pTVar2;
 	ed_g2d_manager* pTextureInfo;
-	C3DFileManager* pFileManager;
 
-	pFileManager = CScene::ptable.g_C3DFileManager_00451664;
 	pMeshInfo = (ed_g3d_manager*)0x0;
 	pTextureInfo = (ed_g2d_manager*)0x0;
+
 	if (textureIndex == -1) {
 		textureIndex = CScene::_pinstance->defaultTextureIndex_0x2c;
 	}
+
 	if ((meshIndex != -1) && (textureIndex != -1)) {
-		pMeshInfo = pFileManager->GetG3DManager(meshIndex, textureIndex);
-		pTVar1 = pFileManager->GetActorsCommonMaterial(textureIndex);
-		pTVar2 = pFileManager->GetActorsCommonMeshMaterial(meshIndex);
+		pMeshInfo = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(meshIndex, textureIndex);
+		pTVar1 = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMaterial(textureIndex);
+		pTVar2 = CScene::ptable.g_C3DFileManager_00451664->GetActorsCommonMeshMaterial(meshIndex);
 		if (pTVar2 != pTVar1) {
 			pTextureInfo = pTVar1;
 		}
 	}
+
 	SV_SetModel(pMeshInfo, count, aHashes, pTextureInfo);
+
 	return;
 }
 
@@ -2363,13 +2364,15 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 				if (1 < peVar1->lodCount) {
 					peVar1->flags_0x9e = peVar1->flags_0x9e | 0x100;
 				}
+
 				ed3DG3DHierarchySetStripShadowCastFlag(this->pHier, 0xffff);
 			}
+
 			if ((CActorFactory::gClassProperties[this->typeID].flags & 0x2000) != 0) {
-				IMPLEMENTATION_GUARD_LOG(
-				ed3DG3DHierarchySetStripShadowReceiveFlag(this->pHier, 0xffff);)
+				ed3DG3DHierarchySetStripShadowReceiveFlag(this->pHier, 0xffff);
 			}
 		}
+
 		peVar2 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pMeshInfo, (char*)0x0);
 		this->pMeshNode = peVar2;
 		this->p3DHierNode = (ed_3d_hierarchy_node*)(this->pMeshNode)->pData;
@@ -2423,6 +2426,7 @@ void CActor::SV_SetModel(ed_g3d_manager* pMeshInfo, int count, MeshTextureHash* 
 				} while (iVar11 < count);
 			}
 		}
+
 		memset(&this->hierarchySetup, 0, sizeof(ed_3d_hierarchy_setup));
 
 		if (1 < ((this->p3DHierNode)->base).lodCount) {
@@ -3160,6 +3164,7 @@ bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager*
 	if (pMaterial == (ed_g2d_manager*)0x0) {
 		pMaterial = pFileManager->LoadDefaultTexture_001a65d0();
 	}
+
 	pHashCode = ed3DHierarchyGetMaterialBank((ed_3d_hierarchy*)this->p3DHierNode);
 	peVar2 = ed3DG2DGetMaterial(pMaterial, newHash);
 	iVar3 = ed3DG2DGetG2DNbMaterials(pHashCode);
@@ -3168,9 +3173,11 @@ bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager*
 		pTextureInfo = pFileManager->GetActorsCommonMaterial(index);
 		peVar2 = ed3DG2DGetMaterial(pTextureInfo, newHash);
 	}
+
 	for (; (pHashCode->hash.number != originalHash && (iVar4 < iVar3)); iVar4 = iVar4 + 1) {
 		pHashCode = pHashCode + 1;
 	}
+
 	if ((iVar4 == iVar3) || (peVar2 == (ed_hash_code*)0x0)) {
 		bVar1 = false;
 	}
@@ -3178,6 +3185,7 @@ bool CActor::SV_PatchMaterial(ulong originalHash, ulong newHash, ed_g2d_manager*
 		pHashCode->pData = STORE_SECTION(peVar2);
 		bVar1 = true;
 	}
+
 	return bVar1;
 }
 
