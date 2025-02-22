@@ -685,7 +685,7 @@ struct ed_3d_strip {
 struct ed_3d_sprite
 {
 	uint flags_0x0;
-	short field_0x4;
+	short materialIndex;
 	short field_0x6;
 	int offsetA;
 	int pNext; // ed_3d_sprite*

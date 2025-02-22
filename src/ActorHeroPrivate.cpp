@@ -207,17 +207,18 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	do {
 		iVar10 = 0;
 		do {
-			*pCVar12[iVar8 + 0] = 0;
-			*pCVar12[iVar8 + 1] = 0;
-			*pCVar12[iVar8 + 2] = 0;
-			*pCVar12[iVar8 + 3] = 0;
-			*pCVar12[iVar8 + 4] = 0;
-			*pCVar12[iVar8 + 5] = 0;
-			*pCVar12[iVar8 + 6] = 0;
-			*pCVar12[iVar8 + 7] = 0;
+			*pCVar12[iVar10 + 0] = 0;
+			*pCVar12[iVar10 + 1] = 0;
+			*pCVar12[iVar10 + 2] = 0;
+			*pCVar12[iVar10 + 3] = 0;
+			*pCVar12[iVar10 + 4] = 0;
+			*pCVar12[iVar10 + 5] = 0;
+			*pCVar12[iVar10 + 6] = 0;
+			*pCVar12[iVar10 + 7] = 0;
 
 			iVar10 = iVar10 + 8;
 		} while (iVar10 < 0x10);
+
 		iVar11 = iVar11 + 1;
 		pCVar12 = pCVar12 + 1;
 	} while (iVar11 < 0x10);
