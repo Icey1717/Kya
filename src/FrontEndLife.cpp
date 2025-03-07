@@ -614,7 +614,40 @@ void CFrontendLifeGauge::UpdateInternal()
 
 void CFrontendLifeGauge::ShowLifeAlways()
 {
-	IMPLEMENTATION_GUARD();
+	switch (this->state) {
+	case 0:
+		this->state = 1;
+		this->field_0x3ac = this->field_0x3ac + 1;
+		break;
+	case 1:
+		this->field_0x3ac = this->field_0x3ac + 1;
+		break;
+	case 2:
+		this->field_0x3ac = this->field_0x3ac + 1;
+		break;
+	case 3:
+		MoveToNext(&this->slotShow);
+		this->field_0x3ac = this->field_0x3ac + 1;
+		this->state = 1;
+		break;
+	case 4:
+		MoveToNext(&this->slotShow);
+		this->field_0x3ac = this->field_0x3ac + 1;
+		this->state = 1;
+		this->bVisible = 1;
+		break;
+	case 5:
+		this->field_0x3ac = this->field_0x3ac + 1;
+		this->state = 6;
+		break;
+	case 6:
+		this->field_0x3ac = this->field_0x3ac + 1;
+		break;
+	case 7:
+		this->field_0x3ac = this->field_0x3ac + 1;
+	}
+
+	return;
 }
 
 void CFrontendLifeGauge::HideLifeAlways()

@@ -117,3 +117,8 @@ void CFxPath::Draw()
 {
 	return;
 }
+
+void CFxPath::CheckpointResetAll(uint count, CFx* aFx)
+{
+	return;
+}

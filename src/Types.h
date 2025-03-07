@@ -644,6 +644,7 @@ union edpkt_data {
 	};
 	uint asU32[4];
 	edF32VECTOR4 asVector;
+	float asF32[4];
 };
 
 enum LANGUAGE

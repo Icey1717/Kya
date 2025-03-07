@@ -682,6 +682,9 @@ struct ed_3d_strip {
 	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
 };
 
+static_assert(sizeof(ed_3d_strip) == 0x40, "Invalid ed_3d_strip size");
+
+
 struct ed_3d_sprite
 {
 	uint flags_0x0;
@@ -692,21 +695,17 @@ struct ed_3d_sprite
 	edF32VECTOR4 vector_0x10;
 	int pSTBuf; // char*
 	int pColorBuf; // _rgba*
-	int pVertexBuf; // edVertex*
+	int pVertexBuf; // edF32VECTOR4*
 	int field_0x2c; // char*
 	short bUseShadowMatrix_0x30;
 	ushort field_0x32;
 	ushort pRenderFrame30;
-	undefined field_0x36;
-	undefined field_0x37;
+	ushort field_0x36;
 	byte field_0x38;
 	byte cameraPanIndex;
 	short meshSectionCount_0x3a;
-	int pBoundSpherePkt; // ed_Bound_Sphere_packet*
+	ushort pTextureDataMystery;
 };
-
-static_assert(sizeof(ed_3d_strip) == 0x40, "Invalid ed_3d_strip size");
-
 
 struct ed_dma_matrix : public edLIST {
 	edF32MATRIX4* pObjToWorld;

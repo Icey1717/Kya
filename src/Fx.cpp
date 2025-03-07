@@ -304,7 +304,33 @@ void CFxManager::Level_Reset()
 
 void CFxManager::Level_CheckpointReset()
 {
-	IMPLEMENTATION_GUARD();
+	CFx* pFx;
+	uint* pCount;
+	uint uVar3;
+	CFx** ppCurFx;
+
+	pCount = this->orderedCountArray + this->count_0x4;
+	ppCurFx = this->aFx + this->count_0x4;
+	if (this->aFx < ppCurFx) {
+		do {
+			ppCurFx = ppCurFx + -1;
+			pFx = *ppCurFx;
+			pCount = pCount + -1;
+			if (pFx != (CFx*)0x0) {
+				pFx->CheckpointResetAll(*pCount, pFx);
+			}
+		} while (this->aFx < ppCurFx);
+	}
+
+	uVar3 = 0;
+	do {
+		if (this->aEffectCategory[uVar3] != (CFxPoolManagerFather*)0x0) {
+			this->aEffectCategory[uVar3]->CheckpointReset();
+		}
+		uVar3 = uVar3 + 1;
+	} while (uVar3 < 7);
+
+	return;
 }
 
 void CFxManager::Level_PauseChange(bool bPaused)
@@ -446,4 +472,9 @@ CFx::CFx()
 	(this->vector_0x20).z = 1.0f;
 	(this->vector_0x20).y = 1.0f;
 	(this->vector_0x20).x = 1.0f;
+}
+
+void CFx::CheckpointResetAll(uint count, CFx* aFx)
+{
+
 }

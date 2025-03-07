@@ -505,8 +505,8 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 					this->field_0x348 = this->field_0x348 + 1;
 					lVar3 = pActorsTable->aEntries[iVar5]->IsKindOfObject(4);
 					if (lVar3 != 0) {
-						IMPLEMENTATION_GUARD(
-						*(byte*)(pCVar4->field_0x4[0] + 0x344) = *(byte*)(pCVar4->field_0x4[0] + 0x344) & 0xfe;)
+						CActorAutonomous* pAutonomous = reinterpret_cast<CActorAutonomous*>(pActorsTable->aEntries[iVar5]);
+						pAutonomous->field_0x344 = pAutonomous->field_0x344 & 0xfe;
 					}
 				}
 				iVar5 = iVar5 + 1;

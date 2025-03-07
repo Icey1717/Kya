@@ -14,3 +14,8 @@ void CFxGroup::Draw()
 {
 	return;
 }
+
+void CFxGroup::CheckpointResetAll(uint count, CFx* aFx)
+{
+	return;
+}

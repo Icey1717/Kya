@@ -162,16 +162,16 @@ bool CFxTail::Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4)
 		bVar1 = true;
 	}
 	else {
+		IMPLEMENTATION_GUARD_LOG(
 		uVar2 = (long)(int)this->flags | 0x1000;
 		this->flags = (uint)uVar2;
-		IMPLEMENTATION_GUARD(
 		GameDListPatch_BeginCurrent((long)this->dlistPatchId);
 		this->field_0x8 = (int)uVar2;
 		if (uVar2 != 0) {
 			edF32Matrix4CopyHard
 			(*(edF32MATRIX4**)(*(int*)(this->field_0x8 + 0x4d0) + 0x20), (edF32MATRIX4*)&this->field_0x70);
 			if (param_4 == 0) {
-				FUN_001d1aa0((int)this, (undefined4*)param_2, (undefined4*)param_3);
+				CFxTail::_CreateSegment((int)this, (undefined4*)param_2, (undefined4*)param_3);
 				this->field_0x38 = this->field_0x38 + 1;
 				iVar3 = this->count_0x34 + 1;
 				if (iVar3 < (int)this->field_0x38) {

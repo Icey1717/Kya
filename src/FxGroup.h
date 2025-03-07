@@ -12,6 +12,7 @@ public:
 	virtual void AddAll(ByteCode* pByteCode, CFx* aFx, int count);
 	virtual void ManageAll(uint count, CFx* aFx);
 	virtual void Draw();
+	virtual void CheckpointResetAll(uint count, CFx* aFx);
 };
 
 class CFxGroupScenaricData
