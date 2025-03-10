@@ -107,12 +107,13 @@ struct edCluster {
 	undefined field_0x2f;
 };
 
-class GlobalDList {
+class CGlobalDList {
 public:
-	GlobalDList();
-	GlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster);
+	CGlobalDList();
+	CGlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster);
 
 	void Init();
+	void Term() {}
 
 	DisplayListInternal* pDisplayListInternal; // Double buffered display list data.
 	int field_0x8;
@@ -139,6 +140,9 @@ void GlobalDList_Init(void);
 bool GuiDList_BeginCurrent(void);
 void GlobalDList_AddToView(void);
 void GuiDList_EndCurrent(void);
+
+bool Frontend2DDList_BeginCurrent(void);
+void FrontendDList_EndCurrent(void);
 
 int GameDListPatch_Register(CObject* pObject, int param_2, int param_3);
 

@@ -152,6 +152,50 @@ void CTrackManager::Level_Init()
 	return;
 }
 
+void CEventTrack::Resume()
+{
+	int* piVar1;
+	s_track_event* psVar2;
+	uint uVar3;
+
+	psVar2 = this->pTrackEvent;
+	uVar3 = (uint)this->eventCount;
+	if (this->eventCount != 0) {
+		do {
+			uVar3 = uVar3 - 1;
+			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_SECTION_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
+				&& (psVar2->field_0x18 == piVar1[6])) {
+				IMPLEMENTATION_GUARD(
+				(**(code**)(*piVar1 + 0x18))();)
+			}
+			psVar2 = psVar2 + 1;
+		} while (uVar3 != 0);
+	}
+	return;
+}
+
+void CEventTrack::Pause()
+{
+	int* piVar1;
+	s_track_event* psVar2;
+	uint uVar3;
+
+	psVar2 = this->pTrackEvent;
+	uVar3 = (uint)this->eventCount;
+	if (this->eventCount != 0) {
+		do {
+			uVar3 = uVar3 - 1;
+			if ((((psVar2->type == 0x39) && (piVar1 = LOAD_SECTION_CAST(int*, psVar2->field_0x1c), piVar1 != (int*)0x0)) && (psVar2->field_0x18 != 0))
+				&& (psVar2->field_0x18 == piVar1[6])) {
+				IMPLEMENTATION_GUARD(
+					(**(code**)(*piVar1 + 0x14))();)
+			}
+			psVar2 = psVar2 + 1;
+		} while (uVar3 != 0);
+	}
+	return;
+}
+
 void CTrackManager::Level_ClearAll()
 {
 	if (this->aTracks != (CEventTrack*)0x0) {

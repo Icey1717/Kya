@@ -1,6 +1,8 @@
 #include "edTextResources.h"
 #include "edMem.h"
 
+#define TEXT_RESOURCES_LOG(level, format, ...) MY_LOG_CATEGORY("textresources", level, format, ##__VA_ARGS__)
+
 edCTextResourcePool edTextResources;
 
 bool edCTextResourcePool::CallbackAdd(char* name, edResourceFunc pFunc)
@@ -63,7 +65,7 @@ bool edCTextResourcePool::TextAdd(char* key, char* value)
 	edCTextResource* peVar5;
 	ulong uVar6;
 
-	MY_LOG("edCTextResourcePool::AddTextEntry key: %u value: %s\n", key, value);
+	TEXT_RESOURCES_LOG(LogLevel::Info, "edCTextResourcePool::TextAdd key: %u value: %s\n", key, value);
 
 	iVar3 = 0;
 	uVar6 = 0;
@@ -107,14 +109,16 @@ LAB_0028d978:
 	return peVar5 != (edCTextResource*)0x0;
 }
 
-bool edCTextResourcePool::BitmapAdd(char* label, void* param_3)
+bool edCTextResourcePool::BitmapAdd(char* label, edTextBitmap* pBitmap)
 {
 	int characterCount;
-	int iVar1;
-	edCTextResource* peVar2;
+	int curEntryIndex;
+	edCTextResource* pNewResource;
 	ulong uVar3;
 	char currentChar;
 	char* nextCharPtr;
+
+	TEXT_RESOURCES_LOG(LogLevel::Info, "edCTextResourcePool::BitmapAdd key: %s\n", label);
 
 	characterCount = 0;
 	uVar3 = 0;
@@ -130,32 +134,63 @@ bool edCTextResourcePool::BitmapAdd(char* label, void* param_3)
 		currentChar = *nextCharPtr;
 		nextCharPtr = nextCharPtr + 1;
 	}
-	characterCount = this->currentEntries;
-	peVar2 = this->pEntries;
-	iVar1 = 0;
-	if (0 < characterCount) {
+
+	int nbEntries = this->currentEntries;
+	pNewResource = this->pEntries;
+	curEntryIndex = 0;
+	if (0 < nbEntries) {
 		do {
-			if ((peVar2->key == uVar3) && (peVar2->index == 2)) {
-				peVar2 = (edCTextResource*)0x0;
+			if ((pNewResource->key == uVar3) && (pNewResource->index == 2)) {
+				pNewResource = (edCTextResource*)0x0;
 				goto LAB_0028da78;
 			}
-			iVar1 = iVar1 + 1;
-			peVar2 = peVar2 + 1;
-		} while (iVar1 < characterCount);
+			curEntryIndex = curEntryIndex + 1;
+			pNewResource = pNewResource + 1;
+		} while (curEntryIndex < nbEntries);
 	}
-	if (characterCount == this->maxEntries) {
-		peVar2 = (edCTextResource*)0x0;
+
+	if (nbEntries == this->maxEntries) {
+		pNewResource = (edCTextResource*)0x0;
 	}
 	else {
 		this->currentEntries = this->currentEntries + 1;
 	}
+
 LAB_0028da78:
-	if (peVar2 != (edCTextResource*)0x0) {
-		peVar2->key = uVar3;
-		peVar2->pMessageData = param_3;
-		peVar2->index = 2;
+	if (pNewResource != (edCTextResource*)0x0) {
+		pNewResource->key = uVar3;
+		pNewResource->pMessageData = pBitmap;
+		pNewResource->index = 2;
 	}
-	return peVar2 != (edCTextResource*)0x0;
+
+	return pNewResource != (edCTextResource*)0x0;
+}
+
+edTextBitmap* edCTextResourcePool::GetResourcePtr(ulong key, int index)
+{
+	edTextBitmap* pvVar1;
+	int iVar2;
+	edCTextResource* peVar3;
+
+	iVar2 = 0;
+	peVar3 = edTextResources.pEntries;
+
+	if (0 < edTextResources.currentEntries) {
+		do {
+			if ((peVar3->key == key) && (peVar3->index == index)) goto LAB_0028db08;
+			iVar2 = iVar2 + 1;
+			peVar3 = peVar3 + 1;
+		} while (iVar2 < edTextResources.currentEntries);
+	}
+
+	peVar3 = (edCTextResource*)0x0;
+LAB_0028db08:
+	pvVar1 = (edTextBitmap*)0x0;
+	if (peVar3 != (edCTextResource*)0x0) {
+		pvVar1 = reinterpret_cast<edTextBitmap*>(peVar3->pMessageData);
+	}
+
+	return pvVar1;
 }
 
 edCTextResourcePool::edCTextResourcePool()

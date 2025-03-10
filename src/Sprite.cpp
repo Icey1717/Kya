@@ -24,15 +24,15 @@ void CSprite::ClearLocalData()
 
 	local_8 = {};
 
-	this->field_0x10 = 0;
-	this->field_0x14 = -0.5f;
-	this->fWidth = (float)(uint)this->iWidth;
-	this->fHeight = (float)(uint)this->iHeight;
-	this->field_0x20 = 0;
-	this->field_0x24 = 0;
-	this->field_0x28 = 1.0f;
-	this->field_0x2c = 1.0f;
-	this->pMaterialInfo = (edDList_material*)0x0;
+	(this->textBitmap).field_0x4 = 0.0f;
+	(this->textBitmap).field_0x8 = -0.5f;
+	(this->textBitmap).fWidth = (float)(uint)this->iWidth;
+	(this->textBitmap).fHeight = (float)(uint)this->iHeight;
+	(this->textBitmap).field_0x14 = 0.0f;
+	(this->textBitmap).field_0x18 = 0.0f;
+	(this->textBitmap).field_0x1c = 1.0f;
+	(this->textBitmap).field_0x20 = 1.0f;
+	(this->textBitmap).pMaterial = (edDList_material*)0x0;
 	this->texCoordA = local_8;
 	local_10 = FLOAT_ARRAY_00448cd0;
 	this->texCoordB = local_10;
@@ -192,9 +192,9 @@ void CSprite::Install(char* pFileBuffer)
 	this->flags_0x7c = this->flags_0x7c | 1;
 	this->iWidth = pBitmap->width;
 	this->iHeight = pBitmap->height;
-	this->pMaterialInfo = &this->materialInfo;
-	this->fWidth = (float)(uint)this->iWidth;
-	this->fHeight = (float)(uint)this->iHeight;
+	this->textBitmap.pMaterial = &this->materialInfo;
+	this->textBitmap.fWidth = (float)(uint)this->iWidth;
+	this->textBitmap.fHeight = (float)(uint)this->iHeight;
 
 	return;
 }
@@ -226,9 +226,9 @@ ed_g2d_layer* CSprite::Install(ed_g2d_manager* pManager, char* pFileName)
 	pBitmap = ed3DG2DGetBitmapFromMaterial(pMaterial, 0);
 	this->iWidth = pBitmap->width;
 	this->iHeight = pBitmap->height;
-	this->pMaterialInfo = &this->materialInfo;
-	this->fWidth = (float)(uint)this->iWidth;
-	this->fHeight = (float)(uint)this->iHeight;
+	this->textBitmap.pMaterial = &this->materialInfo;
+	this->textBitmap.fWidth = (float)(uint)this->iWidth;
+	this->textBitmap.fHeight = (float)(uint)this->iHeight;
 
 	return ed3DG2DMaterialGetLayer(pMaterial, 0);
 }
@@ -247,9 +247,9 @@ void CSprite::Install(edDList_material* pMaterial)
 	pBitmap = ed3DG2DGetBitmapFromMaterial(pMaterial->pMaterial, 0);
 	this->iWidth = pBitmap->width;
 	this->iHeight = pBitmap->height;
-	this->pMaterialInfo = &this->materialInfo;
-	this->fWidth = (float)(uint)this->iWidth;
-	this->fHeight = (float)(uint)this->iHeight;
+	this->textBitmap.pMaterial = &this->materialInfo;
+	this->textBitmap.fWidth = (float)(uint)this->iWidth;
+	this->textBitmap.fHeight = (float)(uint)this->iHeight;
 
 	return;
 }

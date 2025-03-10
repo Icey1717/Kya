@@ -14,6 +14,8 @@ public:
 	bool boot_check_load();
 	bool message_box(long operationID, long messageID);
 
+	void clear_slot();
+
 public:
 	byte field_0x0;
 	byte field_0x1;

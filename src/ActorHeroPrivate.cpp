@@ -6212,14 +6212,12 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 	int iVar2;
 	CPlayerInput* pInput;
 	int iVar4;
-	uint uVar5;
 	edF32VECTOR4* peVar6;
 	StateConfig* pAVar7;
 	Timer* pTVar8;
 	int iVar9;
 	bool bSuccess;
 	long lVar10;
-	ulong uVar11;
 	undefined4 uVar12;
 	int regularAnimType;
 	float fVar13;
@@ -6343,18 +6341,20 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 		if (this->field_0x1574 == 0) {
 			pInput = this->pPlayerInput;
 
+			uint jumpBitmask;
+
 			if ((pInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 				/* No input manager so jump key can't be pressed */
-				uVar5 = 0;
+				jumpBitmask = 0;
 			}
 			else {
 				/* Check with the input manager if the jump key is pressed */
-				uVar5 = pInput->pressedBitfield & PAD_BITMASK_X;
+				jumpBitmask = pInput->pressedBitfield & PAD_BITMASK_X;
 			}
-			if (uVar5 == 0) {
-				uVar11 = CanEnterToboggan();
 
-				if (uVar11 == 0) {
+			if (jumpBitmask == 0) {
+				/*Not Jumping*/
+				if (CanEnterToboggan() == 0) {
 					if ((this->dynamic.flags & 2) == 0) {
 						pInput = this->pPlayerInput;
 

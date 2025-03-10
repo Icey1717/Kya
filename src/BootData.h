@@ -2,7 +2,7 @@
 #define _BOOT_DATA_H
 
 #include "Types.h"
-#include "PauseManager.h"
+#include "Pause.h"
 
 struct edCTextStyle;
 struct edBANK_ENTRY_INFO;

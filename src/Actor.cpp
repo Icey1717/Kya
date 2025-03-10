@@ -4308,6 +4308,35 @@ void CActor::SetBFCulling(byte bActive)
 	return;
 }
 
+void CActor::PauseChange(int bIsPaused)
+{
+	CActorSound* pCVar1;
+	CBehaviour* pCVar2;
+
+	IMPLEMENTATION_GUARD_AUDIO(
+	if (bIsPaused == 0) {
+		for (pCVar1 = this->aActorSounds; pCVar1 != (CActorSound*)0x0; pCVar1 = (CActorSound*)pCVar1[1].field_0x0) {
+			CActorSound::ResumeSounds((int)pCVar1);
+		}
+	}
+	else {
+		for (pCVar1 = this->aActorSounds; pCVar1 != (CActorSound*)0x0; pCVar1 = (CActorSound*)pCVar1[1].field_0x0) {
+			CActorSounds::PauseSounds((int)pCVar1);
+		}
+	})
+
+	if (this->pAnimationController != (CAnimation*)0x0) {
+		this->pAnimationController->PauseChange(bIsPaused);
+	}
+
+	pCVar2 = GetBehaviour(this->curBehaviourId);
+	if (pCVar2 != (CBehaviour*)0x0) {
+		pCVar2->PauseChange(bIsPaused);
+	}
+
+	return;
+}
+
 uint CActor::GetStateFlags(int state)
 {
 	if (state == -1) {

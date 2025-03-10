@@ -1,4 +1,4 @@
-#include "PauseManager.h"
+#include "Pause.h"
 #include "TimeController.h"
 #include "CinematicManager.h"
 #include "LevelScheduleManager.h"
@@ -26,8 +26,14 @@
 #include "kya.h"
 #include "ActorHero.h"
 #include "SaveManagement.h"
+#include "BootData.h"
+#include "FrontEndDisp.h"
+#include "Cheat.h"
+#include "MenuMessageBox.h"
 
-CSimpleMenu g_PauseScreenData_004507f0;
+CSimpleMenuPause gPauseMenu;
+
+uint UINT_00448eac;
 
 CPauseManager::CPauseManager()
 {
@@ -50,16 +56,46 @@ CPauseManager::CPauseManager()
 	return;
 }
 
+struct SliderParams
+{
+	void Init();
+
+	edDList_material* pMaterial;
+	uint field_0x4;
+	undefined4 field_0x8;
+	uint field_0xc;
+	int field_0x10;
+	int field_0x14;
+	int field_0x18;
+	uint field_0x1c;
+};
+
+void SliderParams::Init()
+{
+	this->field_0x10 = 0xd;
+	this->field_0x14 = 0x20;
+	this->field_0x18 = 0x20;
+	this->field_0x1c = 0xfffffff2;
+	this->field_0xc = 0x2a7f7f7f;
+	this->field_0x8 = 0;
+	this->field_0x4 = 0x7f7f7f7f;
+	this->pMaterial = &MenuBitmaps[5].materialInfo;
+
+	return;
+}
+
+SliderParams SliderParams_00450900;
+
 void CPauseManager::Game_Init()
 {
-	g_PauseScreenData_004507f0.set_font_title(BootDataFont);
-	g_PauseScreenData_004507f0.set_font_message(BootDataFont);
-	g_PauseScreenData_004507f0.set_font_help(BootDataFont);
-	g_PauseScreenData_004507f0.set_message_manager(NULL);
+	gPauseMenu.set_font_title(BootDataFont);
+	gPauseMenu.set_font_message(BootDataFont);
+	gPauseMenu.set_font_help(BootDataFont);
+	gPauseMenu.set_message_manager(NULL);
 	field_0xf = 0;
 	field_0x10 = 0;
 	field_0x11 = 0;
-	//FUN_001b5d20(&PTR_PTR_00450900);
+	SliderParams_00450900.Init();
 	return;
 }
 
@@ -74,6 +110,144 @@ bool CPauseManager::LevelLoading_Manage()
 }
 
 edCTextFont* BootDataFont = NULL;
+
+void ProfileDraw(int)
+{
+	IMPLEMENTATION_GUARD_LOG();
+}
+
+void PauseEnter(EPauseMenu mode)
+{
+	uint uVar1;
+	CPauseManager* pCVar2;
+	int iVar3;
+	uint uVar4;
+	int* piVar5;
+	int* piVar6;
+
+	pCVar2 = CScene::ptable.g_PauseManager_00451688;
+	if ((GameFlags & 4) == 0) {
+		ProfileDraw(0);
+
+		gPauseMenu.set_mode(mode);
+		gSettings.StoreGlobalSettings();
+
+		iVar3 = CLevelScheduler::gThis->GetNbAreas(CLevelScheduler::gThis->currentLevelID);
+		piVar6 = &pCVar2->currentAreaIndex;
+		piVar5 = &pCVar2->totalAreaCount;
+		if (iVar3 < 2) {
+			*piVar5 = 0;
+			*piVar6 = 0;
+		}
+		else {
+			*piVar5 = iVar3 + -1;
+			if (*piVar5 <= *piVar6) {
+				*piVar6 = 0;
+			}
+		}
+
+		uVar4 = GameFlags | 4;
+		if ((GameFlags & 0x800) == 0) {
+			if ((GameFlags & 0x40) == 0) {
+				uVar1 = GameFlags & 0xc;
+				UINT_00448eac = 1;
+				GameFlags = uVar4;
+				if ((uVar1 | 4) != 0) {
+					CScene::_pinstance->SetGlobalPaused_001b8c30(1);
+				}
+
+				CScene::_pinstance->Level_PauseChange(1);
+			}
+			else {
+				UINT_00448eac = 2;
+				GameFlags = uVar4;
+			}
+		}
+		else {
+			UINT_00448eac = 2;
+			GameFlags = uVar4;
+			CScene::_pinstance->Level_PauseChange(1);
+			CScene::_pinstance->SetGlobalPaused_001b8c30(1);
+		}
+
+		gCompatibilityHandlingPtr->ActivatePadAutoRepeat();
+	}
+
+	return;
+}
+
+void PauseLeave()
+{
+	gSettings.SetSettingsToGlobal();
+
+	gSettings.field_0x0 = gSettings.field_0x0;
+	gSettings.languageID = gSettings.languageID;
+	gSettings.field_0x8 = gSettings.field_0x8;
+	gSettings.bWidescreen = gSettings.bWidescreen;
+	gSettings.setOffsetX = gSettings.setOffsetX;
+	gSettings.setOffsetY = gSettings.setOffsetY;
+	gSettings.field_0x14 = gSettings.field_0x14;
+	gSettings.field_0x18 = gSettings.field_0x18;
+	gSettings.field_0x1c = gSettings.field_0x1c;
+
+	CScene::_pinstance->Level_PauseChange(0);
+	CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+
+	if ((GameFlags & 4) == 0) {
+		if ((GameFlags & 8) != 0) {
+			GameFlags = GameFlags & 0xfffffff7;
+		}
+	}
+	else {
+		gCompatibilityHandlingPtr->DisactivatePadAutoRepeat();
+		GameFlags = GameFlags & 0xfffffffb;
+	}
+
+	UINT_00448eac = 0;
+	CScene::ptable.g_FrontendManager_00451680->SetActive(true);
+	ProfileDraw(1);
+
+	return;
+}
+
+undefined4 DAT_00448ea8;
+
+void CallPauseChange(int param_1)
+{
+	CScene::_pinstance->Level_PauseChange(param_1);
+	return;
+}
+
+
+void ResumeGame(int)
+{
+	if ((GameFlags & 0x800) != 0) {
+		CallPauseChange(0);
+	}
+
+	DAT_00448ea8 = 0;
+
+	if (UINT_00448eac == 2) {
+		GetTimer()->Update();
+		PauseLeave();
+	}
+	else {
+		if ((GameFlags & 0xc) != 0) {
+			GetTimer()->Update();
+			PauseLeave();
+		}
+
+		UINT_00448eac = 0;
+		CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+	}
+
+	return;
+}
+
+bool UnpauseBlocked(void)
+{
+	return gPauseMenu.get_current_page() + ~PM_InitialSave < 2;
+}
 
 void DrawLoadingScreen_001b05e0(void)
 {
@@ -144,8 +318,6 @@ void CPauseManager::LevelLoading_Draw()
 	DrawLoadingScreen_001b05e0();
 	return;
 }
-
-uint UINT_00448eac;
 
 int INT_00483804 = 0;
 
@@ -295,60 +467,372 @@ void CPauseManager::Level_ManagePaused()
 	return;
 }
 
-void CPauseManager::Level_Draw()
+void ExitLevel(int)
 {
-	CCinematicManager* pCinematicManager;
-	CLevelScheduler* pLevelScheduleManager;
 	bool bVar1;
-	bool bVar2;
-	Timer* pTVar3;
+	uint uVar2;
+	uint uVar3;
+
+	bVar1 = MenuMessageBoxDisplay(4, 0x400c190c0b091d16, 0x4e5b5e041e161e02, 0x49461b10070b1e1b, 0x54120c1a0b051a07);
+	if (bVar1 == true) {
+		CLevelScheduler::gThis->ExitLevel(0);
+		uVar2 = GameFlags & 0xfffff7ff;
+		uVar3 = GameFlags & 0xc;
+		GameFlags = uVar2;
+		if (uVar3 != 0) {
+			if (DAT_00448ea8 == 0) {
+				GetTimer()->Update();
+			}
+
+			PauseLeave();
+		}
+
+		UINT_00448eac = 0;
+		CScene::_pinstance->SetGlobalPaused_001b8c30(0);
+	}
+
+	return;
+}
+
+int INT_00448ed0 = 0;
+int INT_00448650 = 0x3c;
+bool BOOL_00448ed4 = 0;
+
+void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
+{
+	CPauseManager* pCVar1;
+	bool bShowLevelSwitchUI;
+	int iVar2;
+	int iVar3;
+	Timer* pTVar4;
+
+	pCVar1 = CScene::ptable.g_PauseManager_00451688;
+
+	iVar2 = gVideoConfig.screenWidth;
+	if (gVideoConfig.screenWidth < 0) {
+		iVar2 = gVideoConfig.screenWidth + 1;
+	}
+	iVar3 = gVideoConfig.screenHeight;
+	if (gVideoConfig.screenHeight < 0) {
+		iVar3 = gVideoConfig.screenHeight + 1;
+	}
+
+	//DrawRectangle_001afe20((float)(iVar2 >> 1) + DAT_00448668, (float)(iVar3 >> 1) + DAT_0044866c, FLOAT_00448660, FLOAT_00448664, 4.0, 4.0 , DAT_00448654, DAT_00448658, 1);
+	//
+	//MenuBitmaps[12].color[0] = 0x7f;
+	//MenuBitmaps[12].color[1] = 0x69;
+	//MenuBitmaps[12].color[2] = 0x5f;
+	//MenuBitmaps[12].color[3] = 0x4d;
+	//
+	//iVar2 = gVideoConfig.screenWidth;
+	//if (gVideoConfig.screenWidth < 0) {
+	//	iVar2 = gVideoConfig.screenWidth + 1;
+	//}
+	//iVar3 = gVideoConfig.screenHeight;
+	//if (gVideoConfig.screenHeight < 0) {
+	//	iVar3 = gVideoConfig.screenHeight + 1;
+	//}
+	//CSprite::Draw(FLOAT_00448670, FLOAT_00448674, (float)(iVar2 >> 1) + DAT_00448678, (float)(iVar3 >> 1) + DAT_0044867c,
+	//	MenuBitmaps + 0xc, 0xc012);
+	//
+	//iVar2 = gVideoConfig.screenWidth;
+	//if (gVideoConfig.screenWidth < 0) {
+	//	iVar2 = gVideoConfig.screenWidth + 1;
+	//}
+	//iVar3 = gVideoConfig.screenHeight;
+	//if (gVideoConfig.screenHeight < 0) {
+	//	iVar3 = gVideoConfig.screenHeight + 1;
+	//}
+	//CSprite::Draw(FLOAT_00448670, FLOAT_00448674, (float)(iVar2 >> 1) + DAT_00448680, (float)(iVar3 >> 1) + DAT_00448684,
+	//	MenuBitmaps + 0xc, 0x4012);
+	//MenuBitmaps[12].color[0] = 0x7f;
+	//MenuBitmaps[12].color[1] = 0x69;
+	//MenuBitmaps[12].color[2] = 0x5f;
+	//MenuBitmaps[12].color[3] = 0x4d;
+	//
+	//iVar2 = gVideoConfig.screenWidth;
+	//if (gVideoConfig.screenWidth < 0) {
+	//	iVar2 = gVideoConfig.screenWidth + 1;
+	//}
+	//iVar3 = gVideoConfig.screenHeight;
+	//if (gVideoConfig.screenHeight < 0) {
+	//	iVar3 = gVideoConfig.screenHeight + 1;
+	//}
+	//CSprite::Draw(DAT_00448690, DAT_00448694, DAT_00448698 + (float)(iVar2 >> 1) + DAT_00448688,
+	//	DAT_0044869c + (float)(iVar3 >> 1) + DAT_0044868c, MenuBitmaps + 0xc, 0xc012);
+	//MenuBitmaps[12].color[0] = 0x7f;
+	//MenuBitmaps[12].color[1] = 0x69;
+	//MenuBitmaps[12].color[2] = 0x5f;
+	//MenuBitmaps[12].color[3] = 0x4d;
+	//
+	//iVar2 = gVideoConfig.screenWidth;
+	//if (gVideoConfig.screenWidth < 0) {
+	//	iVar2 = gVideoConfig.screenWidth + 1;
+	//}
+	//iVar3 = gVideoConfig.screenHeight;
+	//if (gVideoConfig.screenHeight < 0) {
+	//	iVar3 = gVideoConfig.screenHeight + 1;
+	//}
+	//CSprite::Draw(DAT_004486a0, DAT_004486a4, DAT_004486a8 + (float)(iVar2 >> 1) + DAT_00448688,
+	//	DAT_004486ac + (float)(iVar3 >> 1) + DAT_0044868c, MenuBitmaps + 0xc, 0x4012);
+	//iVar2 = gVideoConfig.screenWidth;
+	//if (gVideoConfig.screenWidth < 0) {
+	//	iVar2 = gVideoConfig.screenWidth + 1;
+	//}
+	//iVar3 = gVideoConfig.screenHeight;
+	//if (gVideoConfig.screenHeight < 0) {
+	//	iVar3 = gVideoConfig.screenHeight + 1;
+	//}
+	//
+	//DrawRectangle_001afe20((float)(iVar2 >> 1) + DAT_00448688, (float)(iVar3 >> 1) + DAT_0044868c, DAT_004486b0, DAT_004486b4, 4.0, 4.0, DAT_00448654, (uint)&DAT_007f7f7f, 1);
+	pPauseMenu->draw_title(CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].titleMsgHash, -0x5a);
+	pPauseMenu->set_vertical_spacing(0);
+
+	if (BOOL_00448ed4 == false) {
+		iVar2 = gVideoConfig.screenHeight;
+		if (gVideoConfig.screenHeight < 0) {
+			iVar2 = gVideoConfig.screenHeight + 1;
+		}
+
+		BOOL_00448ed4 = true;
+		INT_00448ed0 = (iVar2 >> 1) + INT_00448650;
+	}
+	pPauseMenu->set_vertical_position(INT_00448ed0);
+
+	//iVar2 = pCVar1->totalAreaCount;
+	//bShowLevelSwitchUI = false;
+	//if (0 < iVar2) {
+	//	bShowLevelSwitchUI = pPauseMenu->draw_option_type_wheel(&pCVar1->currentAreaIndex, 0, iVar2);
+	//}
+
+	/*Resume Button*/
+	pPauseMenu->draw_action(0x31a1c100c180c0c, ResumeGame, 0, -2);
+	pPauseMenu->set_vertical_spacing(0x18);
+
+	iVar2 = gSaveManagement.slotID_0x28;
+	if (gSaveManagement.slotID_0x28 == -1) {
+		iVar2 = 0;
+	}
+	pPauseMenu->draw_option_type_page(0, 0x5e470f181a0c1217, PM_SaveMenu, iVar2, 0);
+	pPauseMenu->draw_option_type_page(0, 0x49460f181a0c0d19, PM_LoadMenu, iVar2, 0);
+
+	pPauseMenu->draw_option_type_page(0, 0x40a00065f4f5054, PM_OptionsMenu, 0, 0);
+
+	pPauseMenu->draw_action(0x31a0b0d16194149, ExitLevel, 0, -3);
+
+	gSettings.SetSettingsToGlobal();
+	gSettings.field_0x0 = gSettings.field_0x0;
+	gSettings.languageID = gSettings.languageID;
+	gSettings.field_0x8 = gSettings.field_0x8;
+	gSettings.bWidescreen = gSettings.bWidescreen;
+	gSettings.setOffsetX = gSettings.setOffsetX;
+	gSettings.setOffsetY = gSettings.setOffsetY;
+	gSettings.field_0x14 = gSettings.field_0x14;
+	gSettings.field_0x18 = gSettings.field_0x18;
+	gSettings.field_0x1c = gSettings.field_0x1c;
+
+	//PauseDrawInterface(bShowLevelSwitchUI);
+
+	if (pPauseMenu->lastInput_0x14 == 8) {
+		ResumeGame(0);
+	}
+
+	return;
+}
+
+
+
+uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
+{
+	CFrontendDisplay* this_00;
+	CPauseManager* pCVar1;
+	bool bHandleDisconnectedDevicesResult;
+	int iVar3;
+	char* pMessage;
 	EPauseMenu EVar4;
-	int iVar5;
-	CCinematic* pCVar6;
-	ulong uVar7;
-	int index;
-	CCinematic* pCVar8;
-	float fVar9;
+	uint bResult;
+	float fVar5;
 
-	if ((this->pSimpleMenu != (CSimpleMenu*)0x0) && (this->pSplashScreen != (CSplashScreen*)0x0)) {
-		bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
+	bHandleDisconnectedDevicesResult = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
 
-		pTVar3 = GetTimer();
-		fVar9 = pTVar3->totalPlayTime;
-		if ((gPlayerInput.pressedBitfield != 0) ||
-			(((this->field_0x34 == 0 &&
-				(EVar4 = this->pSimpleMenu->get_current_page(), EVar4 != PM_MainMenu)) ||
-				(bVar2 = CScene::_pinstance->IsFadeTermActive(), bVar2 != 0)))) {
-			this->totalPlayTime = fVar9;
-		}
-		pCinematicManager = g_CinematicManager_0048efc;
-		pCVar8 = (CCinematic*)0x0;
-		iVar5 = g_CinematicManager_0048efc->GetNumCutscenes_001c50b0();
-		index = 0;
-		if (0 < iVar5) {
-			do {
-				pCVar6 = pCinematicManager->GetCinematic(index);
-				if ((pCVar6->state != CS_Stopped) && ((pCVar6->flags_0x4 & 8) != 0)) {
-					pCVar8 = pCVar6;
-				}
-				index = index + 1;
-			} while (index < iVar5);
-		}
-		pLevelScheduleManager = CLevelScheduler::gThis;
-		if (60.0f < fVar9 - this->totalPlayTime) {
-			this->pSplashScreen->Manage((long)this->field_0x34, false, bVar1);
-			if (pCVar8 == (CCinematic*)0x0) {
+	this_00 = CScene::ptable.g_FrontendManager_00451680;
+	if (bHandleDisconnectedDevicesResult == false) {
+		bResult = 1;
+		EVar4 = pMenu->get_current_page();
+		this_00->SetActive(EVar4 == PM_PauseMenu);
+		EVar4 = pMenu->get_current_page();
+		switch (EVar4) {
+		case PM_PauseMenu:
+			MenuFramePause_Draw(pMenu);
+			pCVar1 = CScene::ptable.g_PauseManager_00451688;
+			if ((CScene::ptable.g_PauseManager_00451688)->field_0x24 != 0) {
 				IMPLEMENTATION_GUARD(
-				CLevelScheduler::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
-				if ((g_DebugCameraFlag_00448ea4 & 4) != 0) {
-					FUN_001b51e0();
-				})
+				FUN_002f1b50(pMenu, FUN_002f33e0, 0);
+				pCVar1->field_0x24 = 0;)
+			}
+
+			gToggleShrinkJamgutCheatCode_004a5720.Update();
+			gRefillLifeCheatCode_004a5740.Update();
+			break;
+		case PM_MiniGame:
+			IMPLEMENTATION_GUARD(
+			fVar5 = (float)gVideoConfig.screenHeight * 0.4;
+			if (fVar5 < 2.147484e+09) {
+				BootBitmaps[18].iHeight = (ushort)(int)fVar5;
 			}
 			else {
-				if (pCVar8->totalCutsceneDelta < 0.5) {
+				BootBitmaps[18].iHeight = (ushort)(int)(fVar5 - 2.147484e+09);
+			}
+
+			fVar5 = (float)gVideoConfig.screenWidth * 0.55;
+			if (fVar5 < 2.147484e+09) {
+				BootBitmaps[18].iWidth = (ushort)(int)fVar5;
+			}
+			else {
+				BootBitmaps[18].iWidth = (ushort)(int)(fVar5 - 2.147484e+09);
+			}
+			BootBitmaps[18].color[3] = 0x50;
+			(*(code*)(BootBitmaps[18].pVTable)->DrawB)
+				(0x3f800000, (float)gVideoConfig.screenWidth * 0.5, (float)gVideoConfig.screenHeight * 0.5, 0x4915c0, 0x12);
+			fVar5 = pMenu->selectedScaleX;
+			pMenu->field_0xf0 = 1.5;
+			draw_title(pMenu, 0x11a1d0e0a14044d, (int)((float)gVideoConfig.screenHeight * -0.11));
+			pMenu->field_0xf0 = fVar5;
+			draw_action(pMenu, 0x31a1c100c180c0c, FUN_001b5110, -2, -3);
+			draw_action(pMenu, 0x5e5b000c110c1f08, FUN_001b5030, -2, -3);)
+			break;
+		case PM_SaveMenu:
+			IMPLEMENTATION_GUARD(
+			bHandleDisconnectedDevicesResult = MenuFrameSave_Draw(pMenu);
+			bResult = (int)bHandleDisconnectedDevicesResult & 0xff;)
+			break;
+		case PM_LoadMenu:
+			IMPLEMENTATION_GUARD(
+			bResult = DrawLoadMenu_001b2ad0(pMenu);
+			bResult = bResult & 0xff;)
+			break;
+		case PM_OptionsMenu:
+			IMPLEMENTATION_GUARD(
+			MenuFrameOption_Draw(pMenu);)
+			break;
+		case PM_DisplayOptions:
+			IMPLEMENTATION_GUARD(
+			MenuFrameCentering_Draw(pMenu, action);)
+		}
+
+		if (((((GameFlags & 0x800) == 0) && (bResult != 0)) && (EVar4 = pMenu->get_current_page(), EVar4 != PM_PauseMenu)) && (EVar4 = pMenu->get_current_page(), EVar4 != PM_DisplayOptions)) {
+			pMenu->DrawInitialSaveMenuHelp(0x1d1a0c141c03454c, 0xffffffff);
+		}
+	}
+	else {
+		IMPLEMENTATION_GUARD(
+		set_vertical_spacing(pMenu, 0);
+		iVar3 = gVideoConfig.screenHeight;
+		if (gVideoConfig.screenHeight < 0) {
+			iVar3 = gVideoConfig.screenHeight + 1;
+		}
+		set_vertical_position(pMenu, (iVar3 >> 1) + 0x3c);
+		FUN_002f2c60(pMenu);
+		pMessage = get_message(&gMessageManager, 0x52525f503700080c);
+		draw_option(pMenu, pMessage, 0xffffffff);
+		bResult = 1;)
+	}
+
+	return bResult;
+}
+
+edF32VECTOR2 edF32VECTOR2_00448640 = { -0.005f, -0.005f };
+edF32VECTOR2 edF32VECTOR2_00448648 = { 1.005f, 1.005f };
+
+void ClearDisplay(void)
+{
+	CFrontendDisplay* pFrontendManager;
+	bool bVar1;
+	ulong uVar2;
+	ulong uVar3;
+	uint uVar4;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR2 local_10;
+	edF32VECTOR2 local_8;
+
+	pFrontendManager = CScene::ptable.g_FrontendManager_00451680;
+	local_8 = edF32VECTOR2_00448640;
+	local_10 = edF32VECTOR2_00448648;
+	uVar2 = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(50.0f, &local_20, &local_8);
+	uVar3 = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(50.0f, &local_30, &local_10);
+	if ((((uVar2 & 0xff) != 0) && ((uVar3 & 0xff) != 0)) && (bVar1 = Frontend2DDList_BeginCurrent(), bVar1 != false)) {
+		edDListLoadIdentity();
+		edDListUseMaterial(&MenuBitmaps[0xb].materialInfo);
+		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
+		uVar4 = 4;
+		edDListBegin(0.0, 0.0, 0.0, 4, 4);
+		edDListTexCoo2f(0.0, 0.0);
+		edDListVertex4f(local_20.x, local_20.y, local_20.z, uVar4);
+		edDListTexCoo2f(1.0, 0.0);
+		edDListVertex4f(local_30.x, local_20.y, local_20.z, uVar4);
+		edDListTexCoo2f(0.0, 1.0);
+		edDListVertex4f(local_20.x, local_30.y, local_20.z, uVar4);
+		edDListTexCoo2f(1.0, 1.0);
+		edDListVertex4f(local_30.x, local_30.y, local_20.z, uVar4);
+		edDListEnd();
+
+		FrontendDList_EndCurrent();
+	}
+
+	return;
+}
+
+void CPauseManager::Level_Draw()
+{
+	CLevelScheduler* pLevelScheduleManager;
+	bool bHandleDisconnectedDevicesResult;
+	bool bVar2;
+	EPauseMenu EVar4;
+	int nbCinematics;
+	CCinematic* pCurCinematic;
+	ulong uVar7;
+	int index;
+	CCinematic* pActiveCinematic;
+	float totalPlayTime;
+
+	if ((this->pSimpleMenu != (CSimpleMenu*)0x0) && (this->pSplashScreen != (CSplashScreen*)0x0)) {
+		bHandleDisconnectedDevicesResult = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
+
+		totalPlayTime = GetTimer()->totalPlayTime;
+		if ((gPlayerInput.pressedBitfield != 0) || (((this->field_0x34 == 0 && (EVar4 = this->pSimpleMenu->get_current_page(), EVar4 != PM_MainMenu)) ||
+				(bVar2 = CScene::_pinstance->IsFadeTermActive(), bVar2 != 0)))) {
+			this->totalPlayTime = totalPlayTime;
+		}
+
+		pActiveCinematic = (CCinematic*)0x0;
+		nbCinematics = g_CinematicManager_0048efc->GetNumCutscenes_001c50b0();
+		index = 0;
+		if (0 < nbCinematics) {
+			do {
+				pCurCinematic = g_CinematicManager_0048efc->GetCinematic(index);
+				if ((pCurCinematic->state != CS_Stopped) && ((pCurCinematic->flags_0x4 & 8) != 0)) {
+					pActiveCinematic = pCurCinematic;
+				}
+
+				index = index + 1;
+			} while (index < nbCinematics);
+		}
+
+		pLevelScheduleManager = CLevelScheduler::gThis;
+		if (60.0f < totalPlayTime - this->totalPlayTime) {
+			this->pSplashScreen->Manage(this->field_0x34, false, bHandleDisconnectedDevicesResult);
+			if (pActiveCinematic == (CCinematic*)0x0) {
+				pLevelScheduleManager->Level_Run(0, 0xe, -1, -1, -1, 1);
+				if ((GameFlags & 4) != 0) {
+					PauseLeave();
+				}
+			}
+			else {
+				if (pActiveCinematic->totalCutsceneDelta < 0.5) {
 					IMPLEMENTATION_GUARD();
-					//LevelScheduleManager::FUN_002db9d0(pLevelScheduleManager, 0, 0xe, 0xffffffff, 0xffffffff, 0xffffffff, 1);
-					//g_DebugCameraFlag_00448ea4 = g_DebugCameraFlag_00448ea4 | 2;
+					pLevelScheduleManager->Level_Run(0, 0xe, -1, -1, -1, 1);
+					GameFlags = GameFlags | 2;
 				}
 			}
 		}
@@ -360,17 +844,18 @@ void CPauseManager::Level_Draw()
 						this->pSimpleMenu->draw(DrawGameMenu);
 						GuiDList_EndCurrent();
 					}
+
 					this->pSimpleMenu->perform_action();
-					EVar4 = this->pSimpleMenu->get_current_page();
-					if ((EVar4 == PM_MainMenu) && (bVar1 == false)) {
-						this->pSplashScreen->Manage((long)this->field_0x34, false, false);
+
+					if ((this->pSimpleMenu->get_current_page() == PM_MainMenu) && (bHandleDisconnectedDevicesResult == false)) {
+						this->pSplashScreen->Manage(this->field_0x34, false, false);
 					}
 				}
 				else {
-					bVar1 = this->pSplashScreen->Manage(this->field_0x34, false, bVar1);
-					this->field_0x34 = (int)bVar1;
+					this->field_0x34 = this->pSplashScreen->Manage(this->field_0x34, false, bHandleDisconnectedDevicesResult);
+
 					if (this->field_0x34 == 0) {
-						g_PauseScreenData_004507f0.SetMode(PM_MainMenu);
+						gPauseMenu.set_mode(PM_MainMenu);
 						UINT_00448eac = 2;
 					}
 				}
@@ -380,19 +865,64 @@ void CPauseManager::Level_Draw()
 	if ((GameFlags & 4) != 0) {
 		if ((UINT_00448eac == 1) || (UINT_00448eac == 2)) {
 			if ((GameFlags & 0x800) == 0) {
-				IMPLEMENTATION_GUARD();
-				//FUN_001b48c0();
+				ClearDisplay();
 			}
-			bVar1 = GuiDList_BeginCurrent();
-			if (bVar1 != false) {
-				IMPLEMENTATION_GUARD();
-				//gPauseMenu->draw(DrawPauseMenu);
+
+			if (GuiDList_BeginCurrent() != false) {
+				gPauseMenu.draw(DrawPauseMenu);
 				GuiDList_EndCurrent();
 			}
 		}
-		//gPauseMenu->perform_action();
+
+		gPauseMenu.perform_action();
 	}
-	//PauseManagerFunc_001b0860(this, 0);
+
+	FUN_001b0860(0);
+
+	return;
+}
+
+void CPauseManager::FUN_001b0860(int param_2)
+{
+	bool bVar1;
+	Timer* pTVar2;
+	ulong uVar3;
+	uint uVar4;
+	float fVar5;
+	float fVar6;
+
+	IMPLEMENTATION_GUARD_LOG(
+	uVar3 = CSaveManagement::FUN_002f39c0(&gSaveManagement);
+	if ((uVar3 != 0) || (param_2 != 0)) {
+		pTVar2 = Timer::GetTimer();
+		fVar5 = pTVar2->totalTime * 256.0;
+		if (fVar5 < 2.147484e+09) {
+			uVar4 = (uint)fVar5;
+		}
+		else {
+			uVar4 = (int)(fVar5 - 2.147484e+09) | 0x80000000;
+		}
+		uVar4 = (int)uVar4 % 0x140;
+		if (0xff < uVar4) {
+			uVar4 = (0x40 - (uVar4 - 0x100)) * 0xff >> 6;
+		}
+		if (param_2 == 0) {
+			fVar5 = 64.0;
+			fVar6 = ((float)gVideoConfig.screenHeight * 320.0) / 512.0;
+		}
+		else {
+			fVar5 = (float)gVideoConfig.screenWidth / 2.0;
+			fVar6 = (float)gVideoConfig.screenHeight / 2.0 - ((float)gVideoConfig.screenHeight * 32.0) / 512.0;
+		}
+		bVar1 = GuiDList_BeginCurrent();
+		if (bVar1 != false) {
+			BootBitmaps[22].color[3] = (byte)(uVar4 >> 1);
+			CSprite::Draw((float)&DAT_3f333333, fVar5, fVar6, BootBitmaps + 0x16, 0x12);
+			BootBitmaps[22].color[3] = 0x7f;
+			GuiDList_EndCurrent();
+		}
+	})
+
 	return;
 }
 
@@ -425,19 +955,15 @@ void CSimpleMenu::reset()
 	return;
 }
 
-void CSimpleMenu::SetMode(EPauseMenu mode)
-{
-	reset();
-	this->currentPage = mode;
-	this->colorA = 0xfc9900ff;
-	this->colorB = 0xffffd2ff;
-	this->field_0xd4 = 0xe9e6e7ff;
-	return;
-}
-
 void CSimpleMenu::set_vertical_position(int verticalPos)
 {
 	this->verticalPos = verticalPos;
+	return;
+}
+
+void CSimpleMenu::set_vertical_spacing(int verticalSpacing)
+{
+	this->verticalSpacing = verticalSpacing;
 	return;
 }
 
@@ -649,7 +1175,7 @@ void CSimpleMenu::draw_option(char* pMessage, uint color)
 		}
 	}
 
-	this->verticalPos = this->verticalPos + this->field_0x3c;
+	this->verticalPos = this->verticalPos + this->verticalSpacing;
 	textStyle.SetFont(this->pFontB, false);
 	pNewFont = edTextStyleSetCurrent(&textStyle);
 
@@ -745,6 +1271,85 @@ bool CSimpleMenu::draw_option_type_page(ulong helpMsgId, ulong msgId, EPauseMenu
 	return bResult;
 }
 
+bool CSimpleMenu::draw_option(char* pMsg, ActionFuncPtr pFunc, int slotID, int param_5)
+{
+	int iVar1;
+	HistoryEntry* pHVar3;
+
+	iVar1 = this->field_0x20;
+	draw_option(pMsg, 0);
+
+	if ((iVar1 != this->selectedIndex) || (pFunc == (ActionFuncPtr)0x0)) {
+		return false;
+	}
+	if (this->screenState_0x1c == 1) {
+		if (this->lastInput_0x14 == 5) {
+			this->screenState_0x1c = 2;
+			this->totalTime = Timer::GetTimer()->totalTime;
+			on_validate();
+		}
+	}
+	else {
+		if (this->screenState_0x1c == 3) {
+			this->pFunc_0x40 = pFunc;
+			this->slotID_0x44 = slotID;
+
+			if (param_5 != -1) {
+				if (param_5 == -2) {
+					this->screenState_0x1c = 4;
+					this->totalTime = Timer::GetTimer()->totalTime;
+					reset();
+					return true;
+				}
+
+				if (param_5 == -3) {
+					this->screenState_0x1c = 4;
+					this->totalTime = Timer::GetTimer()->totalTime;
+					return true;
+				}
+			}
+
+			if (param_5 == -1) {
+				this->field_0x2c = this->field_0x2c + -1;
+				pHVar3 = this->aHistory + this->field_0x2c + -7;
+				this->currentPage = (EPauseMenu)pHVar3[7].currentPage;
+				this->selectedIndex = pHVar3[7].selectedIndex;
+				this->field_0x50 = pHVar3[7].field_0x8;
+			}
+			else {
+				/* pop page? */
+				pHVar3 = this->aHistory + this->field_0x2c + -7;
+				pHVar3[7].currentPage = this->currentPage;
+				pHVar3[7].selectedIndex = this->selectedIndex;
+				pHVar3[7].field_0x8 = this->field_0x50;
+				this->field_0x2c = this->field_0x2c + 1;
+				this->currentPage = (EPauseMenu)param_5;
+				this->selectedIndex = 0;
+			}
+
+			this->screenState_0x1c = 4;
+			this->totalTime = Timer::GetTimer()->totalTime;
+		}
+	}
+
+	return true;
+}
+
+bool CSimpleMenu::draw_action(ulong actionMsgId, ActionFuncPtr pFunc, int slotID, int param_5)
+{
+	bool bVar1;
+	char* pMsg;
+
+	if (this->pTranslatedTextData == (CMessageFile*)0x0) {
+		pMsg = gMessageManager.get_message(actionMsgId);
+	}
+	else {
+		pMsg = this->pTranslatedTextData->get_message(actionMsgId, 0);
+	}
+
+	return draw_option(pMsg, pFunc, slotID, param_5);
+}
+
 void CSimpleMenu::set_font_help(edCTextFont* pFont)
 {
 	pFontC = pFont;
@@ -777,9 +1382,8 @@ EPauseMenu CSimpleMenu::get_current_page()
 void CSimpleMenu::perform_action()
 {
 	if (this->pFunc_0x40 != 0x0) {
-		IMPLEMENTATION_GUARD();
-		//(*(code*)param_1->pFunc_0x40)(param_1->slotID_0x44);
-		this->pFunc_0x40 = 0;
+		this->pFunc_0x40(this->slotID_0x44);
+		this->pFunc_0x40 = (ActionFuncPtr)0x0;
 		this->slotID_0x44 = 0;
 	}
 	return;
@@ -863,7 +1467,7 @@ void CSimpleMenu::draw_title(ulong msgHash, int offset)
 	pNewFont = edTextStyleSetCurrent(&eStack192);
 	edTextDraw((float)this->horizontalPos, (float)this->verticalPos, text);
 	edTextStyleSetCurrent(pNewFont);
-	this->field_0x3c = 0x28;
+	this->verticalSpacing = 0x28;
 	return;
 }
 
@@ -1122,7 +1726,7 @@ void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
 
 	this->field_0x20 = 0;
 	this->counter_0x24 = 0;
-	this->field_0x3c = 0x28;
+	this->verticalSpacing = 0x28;
 	this->horizontalAllignment = 0;
 	this->field_0xdc = 6.0f;
 	this->selectedScaleX = 1.0f;
@@ -1207,6 +1811,11 @@ void CSimpleMenu::on_change_selection()
 
 }
 
+float CSimpleMenu::get_time_in_state()
+{
+	return Timer::GetTimer()->totalTime - this->totalTime;
+}
+
 CSplashScreen::CSplashScreen()
 {
 	this->pTextureFileData = (char*)0x0;
@@ -1261,9 +1870,9 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 		this->iWidth = pBitmap->width;
 		this->iHeight = pBitmap->height;
 
-		this->pMaterialInfo = &this->materialInfo;
-		this->fWidth = (float)(uint)this->iWidth;
-		this->fHeight = (float)(uint)this->iHeight;
+		this->textBitmap.pMaterial = &this->materialInfo;
+		this->textBitmap.fWidth = (float)(uint)this->iWidth;
+		this->textBitmap.fHeight = (float)(uint)this->iHeight;
 	}
 
 	edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
@@ -1284,7 +1893,7 @@ bool CSplashScreen::Init(float param_1, char* filePath)
 	return this->pTextureFileData != (char*)0x0;
 }
 
-bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
+bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 {
 	bool bVar1;
 	Timer* pTVar2;
@@ -1314,12 +1923,13 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 	uVar8 = 0x7f;
 	pTVar2 = GetTimer();
 	fVar12 = pTVar2->totalTime;
-	if (((param_2 != 0) && ((gPlayerInput.releasedBitfield & KEY_START) != 0)) && (this->field_0xcc == 0))
+	if (((param_2 != 0) && ((gPlayerInput.releasedBitfield & PAD_BITMASK_START) != 0)) && (this->field_0xcc == 0))
 	{
 		this->field_0xcc = 1;
 		pTVar2 = GetTimer();
 		this->field_0xc4 = pTVar2->totalTime;
 	}
+
 	fVar15 = (fVar12 - this->field_0xc4) / this->field_0xc8;
 	if (param_3 != false) {
 		if (this->field_0xcc == 0) {
@@ -1448,9 +2058,9 @@ bool CSplashScreen::Manage(ulong param_2, bool param_3, bool param_4)
 
 			edTextStyleSetCurrent(pNewFont);
 
-			param_2 = (ulong)(this->field_0xcc != 0);
+			param_2 = (uint)(this->field_0xcc != 0);
 			if (param_2 != 0) {
-				param_2 = (ulong)(1.0f <= fVar15);
+				param_2 = (uint)(1.0f <= fVar15);
 			}
 		}
 
@@ -1466,5 +2076,44 @@ void CSplashScreen::SetDrawLocation(float x, float y, float z, float w)
 	(this->drawOffsets).y = y;
 	(this->drawOffsets).z = z;
 	(this->drawOffsets).w = w;
+
 	return;
+}
+
+bool CSimpleMenuPause::disappear_draw()
+{
+	return 0.3f <= get_time_in_state();
+}
+
+void CSimpleMenuPause::set_mode(EPauseMenu mode)
+{
+	reset();
+
+	this->currentPage = mode;
+
+	this->colorB = 0xfc9900ff;
+	this->colorA = 0xffffd2ff;
+	this->field_0xd4 = 0xe9e6e7ff;
+
+	return;
+}
+
+void HelpEnter()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void HelpLeave()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void MapEnter()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void MapLeave()
+{
+	IMPLEMENTATION_GUARD();
 }

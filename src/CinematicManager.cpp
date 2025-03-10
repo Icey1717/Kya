@@ -6,7 +6,7 @@
 #include "Rendering/CameraPanMasterHeader.h"
 #include "SectorManager.h"
 #include "TimeController.h"
-#include "PauseManager.h"
+#include "Pause.h"
 #include "MathOps.h"
 #include "LevelScheduleManager.h"
 #include "edStr.h"
@@ -1049,8 +1049,8 @@ void CCinematic::Start()
 	uint uVar3;
 	uint uVar4;
 	CActorHero* pAVar5;
-	CCinematicManager* pCVar6;
-	bool bVar7;
+	CCinematicManager* pCinematicManager;
+	bool bShouldPlay;
 	edNODE* pMVar9;
 	int* piVar10;
 	edF32MATRIX4* peVar11;
@@ -1077,36 +1077,39 @@ void CCinematic::Start()
 
 	this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
 	if (this->state == CS_Stopped) {
-		bVar7 = (this->flags_0x4 & 1) != 0;
-		if (bVar7) {
-			bVar7 = (this->flags_0x8 & 0x400) != 0;
+		bShouldPlay = (this->flags_0x4 & 1) != 0;
+		if (bShouldPlay) {
+			bShouldPlay = (this->flags_0x8 & 0x400) != 0;
 		}
 
-		if (!bVar7) {
-			bVar7 = (this->flags_0x8 & 0x28) != 0;
+		if (!bShouldPlay) {
+			bShouldPlay = (this->flags_0x8 & 0x28) != 0;
 		}
 
-		bVar7 = (bool)(bVar7 ^ 1);
-		if (!bVar7) {
-			bVar7 = (this->flags_0x8 & 0x800) != 0;
+		bShouldPlay = (bool)(bShouldPlay ^ 1);
+		if (!bShouldPlay) {
+			bShouldPlay = (this->flags_0x8 & 0x800) != 0;
 		}
 
-		if (bVar7) {
+		if (bShouldPlay) {
 			if (this->cineBankLoadStage_0x2b4 != 4) {
 				Load(0);
 			}
-			pCVar6 = g_CinematicManager_0048efc;
+
+			pCinematicManager = g_CinematicManager_0048efc;
 			if (this->cineBankLoadStage_0x2b4 == 4) {
 				if (this->zoneRefA.pObj != 0) {
 					this->flags_0x8 = this->flags_0x8 | 0x200;
 				}
-				pCVar6->pCurCinematic = this;
+
+				pCinematicManager->pCurCinematic = this;
+
 				/* Takes in a bank header and file name, and returns index of file in bank
 				   Example: Start_ff_Montage_SceneMontage.cin returns 59. */
 				iVar16 = this->pCineBankEntry->get_index(this->fileName);
 				if ((((iVar16 != -1) &&
-					(bVar7 = this->pCineBankEntry->get_info(iVar16, &eStack48, (char*)0x0), bVar7 != false)) &&
-					(bVar7 = ((edCinematic*)eStack48.fileBufferStart)->ExtractVersions(eStack48.size, &cinematicLibraryVersion, &cinematicCompilerVersion), bVar7 != false)) &&
+					(bShouldPlay = this->pCineBankEntry->get_info(iVar16, &eStack48, (char*)0x0), bShouldPlay != false)) &&
+					(bShouldPlay = ((edCinematic*)eStack48.fileBufferStart)->ExtractVersions(eStack48.size, &cinematicLibraryVersion, &cinematicCompilerVersion), bShouldPlay != false)) &&
 					((cinematicLibraryVersion != 0x81 || (cinematicCompilerVersion != 0xa0)))) {
 					/* Cinematic library version: %d (should be %d)\n */
 					edDebugPrintf("Cinematic library version: %d (should be %d)\n", cinematicLibraryVersion, 0x81);
@@ -1213,7 +1216,7 @@ void CCinematic::Start()
 					this->flags_0x8 = this->flags_0x8 | 0x40;
 				}
 
-				bVar7 = false;
+				bShouldPlay = false;
 				if ((this->flags_0x8 & 0x800) == 0) {
 					int configCount = this->cineActorConfigCount;
 					int currentConfigIndex = 0;
@@ -1235,7 +1238,7 @@ void CCinematic::Start()
 
 								if ((pCurrentConfig->flags & 1) != 0) {
 									pConfigActor->CinematicMode_Enter(true);
-									bVar7 = true;
+									bShouldPlay = true;
 								}
 							}
 
@@ -1244,11 +1247,11 @@ void CCinematic::Start()
 					}
 
 					if ((this->flags_0x4 & 0x1000) != 0) {
-						bVar7 = true;
+						bShouldPlay = true;
 					}
 				}
 
-				if (bVar7) {
+				if (bShouldPlay) {
 					this->state = CS_Interpolate;
 					this->time_0x88 = GetTimer()->scaledTotalTime;
 				}
@@ -1262,14 +1265,14 @@ void CCinematic::Start()
 				if ((this->flags_0x8 & 2) != 0) {
 					this->cinematicLoadObject.BWCinCam_Obj.Activate();
 					this->cinFileData.Timeslice(0.0f, &FStack224);
-					CCameraManager::_gThis->PushCamera(pCVar6->pCinematicCamera, 1);
+					CCameraManager::_gThis->PushCamera(pCinematicManager->pCinematicCamera, 1);
 				}
 
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 					edMemClearFlags(TO_HEAP(H_MAIN), 0x100);
 				}
 
-				pCVar6->pCurCinematic = (CCinematic*)0x0;
+				pCinematicManager->pCurCinematic = (CCinematic*)0x0;
 				if ((this->flags_0x4 & 2) == 0) {
 					this->flags_0x8 = this->flags_0x8 | 0x1400;
 				}
@@ -1285,7 +1288,7 @@ void CCinematic::Start()
 			else {
 				g_CinematicManager_0048efc->field_0x28 = this;
 
-				pCVar6->startTime = GetTimer()->totalTime;
+				pCinematicManager->startTime = GetTimer()->totalTime;
 				if ((this->flags_0x8 & 0x800) == 0) {
 					S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList = this->pSwitchListA;
 
@@ -1502,8 +1505,8 @@ bool CCinematic::LoadInternal(long mode)
 	this->pCineBankEntry = peVar5;
 	local_420.fileFlagA = 4;
 	this->cineBankLoadStage_0x2b4 = 1;
-	bVar3 = this->pCineBankEntry->load(&local_420);
-	if (bVar3 == false) {
+
+	if (this->pCineBankEntry->load(&local_420) == false) {
 		this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 		this->cineBank.terminate();
 		this->cineBankLoadStage_0x2b4 = 0;
@@ -1513,6 +1516,7 @@ bool CCinematic::LoadInternal(long mode)
 			this->pCineBankEntry->wait();
 		}
 	}
+
 	return this->cineBankLoadStage_0x2b4 != 0;
 }
 
@@ -1526,33 +1530,20 @@ void _gCinCallback(bool bSuccess, void* pObj)
 
 void CCinematic::Install()
 {
-	float fVar1;
-	undefined4 uVar2;
-	void* pvVar3;
-	uint uVar4;
-	int iVar5;
-	CCinematic* local_10;
-	undefined4 local_c;
-	CCinematic** local_4;
-	CinFileContainer* pCVar3;
+	this->cinFileCount = this->pCineBankEntry->get_element_count();
 
-	uVar2 = this->pCineBankEntry->get_element_count();
-	this->cinFileCount = uVar2;
 	if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 		edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
 	}
 
 	if (this->cinFileCount != 0) {
-		pCVar3 = new CinFileContainer[this->cinFileCount];
-		this->fileInfoStart = pCVar3;
-		pCVar3 = this->fileInfoStart;
-		uVar4 = 0;
+		this->fileInfoStart = new CinFileContainer[this->cinFileCount];
+		int uVar4 = 0;
 		if (this->cinFileCount != 0) {
 			do {
-				pCVar3->pData = (char*)0x0;
+				this->fileInfoStart[uVar4].pData = (char*)0x0;
 				uVar4 = uVar4 + 1;
-				pCVar3 = pCVar3 + 1;
-			} while (uVar4 < (uint)this->cinFileCount);
+			} while (uVar4 < this->cinFileCount);
 		}
 	}
 
@@ -1561,6 +1552,7 @@ void CCinematic::Install()
 	}
 
 	this->matrix_0x120 = gF32Matrix4Unit;
+
 	if (this->defaultAudioTrackId != -1) {
 		this->flags_0x8 = this->flags_0x8 | 1;
 	}
@@ -1568,36 +1560,37 @@ void CCinematic::Install()
 	this->cineBankLoadStage_0x2b4 = 4;
 
 	if (this->pActor != (CActor*)0x0) {
-		local_4 = &local_10;
-		local_c = 0;
-		local_10 = this;
+		CCinematic** local_4;// = &local_10;
+		undefined4 local_c = 0;
+		CCinematic* local_10 = this;
 		this->pActor->ReceiveMessage(0, (ACTOR_MESSAGE)0x7c, local_4);
 	}
+
 	return;
 }
 
 bool CCinematic::LoadCineBnk(bool mode)
 {
-	bool bVar1;
-	edCBankBufferEntry* peVar2;
-	edCBankInstall filePathContainer;
-	char outFilePath[512];
+	edCBankInstall bankInstall;
+	char cinematicFilePath[512];
 
 	/* Loads a bank file from the cine folder
 	   Example: CDEURO/LEVEL/PREINTRO/CINE/1c9de79b.bnk */
-	edStrCatMulti(outFilePath, CLevelScheduler::gThis->levelPath,
-		CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].levelName, "\\Cine\\",
-		this->pBankName_0x48, NULL);
-	memset(&filePathContainer, 0, sizeof(edCBankInstall));
-	filePathContainer.filePath = outFilePath;
-	filePathContainer.fileFunc = _gCinCallback;
-	filePathContainer.pObjectReference = this;
-	peVar2 = this->cineBank.get_free_entry();
-	this->pCineBankEntry = peVar2;
-	filePathContainer.fileFlagA = 4;
+	edStrCatMulti(cinematicFilePath, CLevelScheduler::gThis->levelPath, CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].levelName,
+		"\\Cine\\", this->pBankName_0x48, NULL);
+
+	memset(&bankInstall, 0, sizeof(edCBankInstall));
+
+	bankInstall.filePath = cinematicFilePath;
+	bankInstall.fileFunc = _gCinCallback;
+	bankInstall.pObjectReference = this;
+
+	this->pCineBankEntry = this->cineBank.get_free_entry();
+
+	bankInstall.fileFlagA = 4;
 	this->cineBankLoadStage_0x2b4 = 3;
-	bVar1 = this->pCineBankEntry->load(&filePathContainer);
-	if (bVar1 == false) {
+
+	if (this->pCineBankEntry->load(&bankInstall) == false) {
 		this->pCineBankEntry = (edCBankBufferEntry*)0x0;
 		this->cineBank.terminate();
 		this->cineBankLoadStage_0x2b4 = 0;
@@ -1607,6 +1600,7 @@ bool CCinematic::LoadCineBnk(bool mode)
 			this->pCineBankEntry->wait();
 		}
 	}
+
 	return this->cineBankLoadStage_0x2b4 == 3;
 }
 
@@ -4673,6 +4667,15 @@ bool CCinematicManager::PlayOutroCinematic(int index, CActor* param_3)
 	return this->pCinematic != (CCinematic*)0x0;
 }
 
+void CCinematicManager::Level_ManagePaused()
+{
+	if ((GameFlags & 0x200) == 0) {
+		Level_Manage();
+	}
+
+	return;
+}
+
 bool CCinematicManager::FUN_001c5c60()
 {
 	bool bVar1;
@@ -4891,6 +4894,33 @@ void CCinematicManager::SetSubtitle(float param_1, char* pText, edF32VECTOR4* pa
 	else {
 		this->vector_0x50 = *param_4;
 		this->field_0x44 = 1;
+	}
+
+	return;
+}
+
+void CCinematicManager::Level_PauseChange(bool bPaused)
+{
+	int iVar1;
+	int iVar2;
+
+	if (this->activeCinematicCount == 0) {
+		if (this->pCinematic != (CCinematic*)0x0) {
+			IMPLEMENTATION_GUARD(
+			PauseCutscene_001cac20(this->pCinematic, (long)bPaused);)
+		}
+	}
+	else {
+		iVar1 = 0;
+		if (0 < this->activeCinematicCount) {
+			iVar2 = 0;
+			do {
+				IMPLEMENTATION_GUARD_LOG(
+				PauseCutscene_001cac20(*(CCinematic**)((int)this->ppCinematicObjB_B + iVar2), (long)bPaused);)
+				iVar1 = iVar1 + 1;
+				iVar2 = iVar2 + 4;
+			} while (iVar1 < this->activeCinematicCount);
+		}
 	}
 
 	return;

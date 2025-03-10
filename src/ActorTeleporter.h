@@ -21,6 +21,8 @@ public:
 
 	void UpdateCurTeleporterState(int levelId, int param_3);
 
+	edDList_material* GetMySubSectorMaterial(int levelId, int nbAreas);
+
 	ConditionedOperationArray condOpArray;
 
 	CBehaviourTeleporterDefault behaviourTeleporterDefault;

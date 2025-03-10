@@ -122,7 +122,7 @@ struct S_LVLNFO_SECTOR_V7_V9
 PACK(
 struct S_LVLNFO_TELEPORTERS_V7_V9
 {
-	int field_0x0;
+	uint field_0x0;
 	int field_0x4;
 	int field_0x8;
 	uint field_0xc;
@@ -135,7 +135,7 @@ static_assert(sizeof(S_LVLNFO_TELEPORTERS_V7_V9) == 0x1c);
 struct S_SUBSECTOR_INFO
 {
 	ulong field_0x0;
-	int field_0x8;
+	uint field_0x8;
 	int field_0xc;
 	uint field_0x10;
 	int field_0x14;
@@ -144,11 +144,15 @@ struct S_SUBSECTOR_INFO
 	undefined field_0x1a;
 	undefined field_0x1b;
 	uint field_0x1c;
-	int field_0x20;
+	edDList_material* field_0x20;
+	undefined field_0x24;
+	undefined field_0x25;
+	undefined field_0x26;
+	undefined field_0x27;
 };
 
 struct S_LEVEL_INFO {
-	undefined8 field_0x0;
+	ulong titleMsgHash;
 	int bankSizeLevel;
 	int bankSizeSect;
 	int bankSizeIOP;
@@ -166,7 +170,7 @@ struct S_LEVEL_INFO {
 	undefined field_0x55;
 	undefined field_0x56;
 	undefined field_0x57;
-	S_SUBSECTOR_INFO field_0x58[12];
+	S_SUBSECTOR_INFO aSubSectorInfo[12];
 	SectorManagerSubObjOther aSectorSubObj[30];
 };
 
@@ -244,9 +248,12 @@ public:
 
 	static void OnSceneVarSet();
 
+	void Level_Run(undefined8 param_2, int levelID, int elevatorID, int param_5, int param_6, bool bFadeOut);
 	void Level_Teleport(CActor* pActor, int levelId, int elevatorId, int cutsceneId, int param_6);
 
 	void SetLevelTimerFunc_002df450(float param_1, int mode);
+	int GetNbAreas(int currentLevelID);
+	void ExitLevel(int param_2);
 	void FUN_002dc200(int elevatorId, int levelId, int param_4);
 public:
 
@@ -1654,5 +1661,7 @@ bool edMusicAreAllMusicDataLoaded();
 
 extern ulong gMedallionHashCodes[9];
 extern ulong gFightHashCodes[8];
+
+extern int INT_ARRAY_0048ed60[16];
 
 #endif //_LEVELSCHEDULEMANAGER_H

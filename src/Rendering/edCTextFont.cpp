@@ -24,9 +24,11 @@ FontSymbolData* edCTextFont::GetSymbol(uint character)
 			if (character < uVar3) {
 				return (FontSymbolData*)0x0;
 			}
+
 			if (character < uVar3 + pSVar5->field_0x2) {
 				return (FontSymbolData*)((char*)pFVar1->field_0x4 + (iVar4 + (character - uVar3)) * 0x1c);
 			}
+
 			uVar2 = uVar2 + 1;
 			iVar4 = iVar4 + (uint)pSVar5->field_0x2;
 			pSVar5 = pSVar5 + 1;

@@ -4,7 +4,7 @@
 #include "TimeController.h"
 #include "edVideo/Viewport.h"
 #include "kya.h"
-#include "PauseManager.h"
+#include "Pause.h"
 #include "TranslatedTextData.h"
 #include "edText.h"
 #include "edVideo/VideoD.h"
@@ -29,7 +29,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	char* pcVar4;
 	int iVar5;
 	int iVar6;
-	bool cVar8;
+	bool bCloseResult;
 	ulong uVar7;
 	float fVar8;
 	float fVar9;
@@ -50,6 +50,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 		IMPLEMENTATION_GUARD(
 		FUN_001a7220(1);)
 	}
+
 	fVar10 = ((float)gVideoConfig.screenHeight * 2.0f) / 2.5f;
 	x = (float)gVideoConfig.screenWidth / 2.0f;
 	fVar12 = ((float)gVideoConfig.screenWidth * 2.0f) / 2.5f;
@@ -61,45 +62,17 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	local_c0.SetFont(BootDataFont, false);
 	local_c0.SetHorizontalAlignment(2);
 	local_c0.SetVerticalAlignment(0);
-	local_c0.spaceSize = 6.0;
+	local_c0.spaceSize = 6.0f;
 	local_180.field_0x8c = local_c0.field_0x8c * 0.5f;
-	local_180.m0.aa = local_c0.m0.aa;
-	local_180.m0.ab = local_c0.m0.ab;
-	local_180.m0.ac = local_c0.m0.ac;
-	local_180.m0.ad = local_c0.m0.ad;
-	local_180.m0.ba = local_c0.m0.ba;
-	local_180.m0.bb = local_c0.m0.bb;
-	local_180.m0.bc = local_c0.m0.bc;
-	local_180.m0.bd = local_c0.m0.bd;
-	local_180.m0.ca = local_c0.m0.ca;
-	local_180.m0.cb = local_c0.m0.cb;
-	local_180.m0.cc = local_c0.m0.cc;
-	local_180.m0.cd = local_c0.m0.cd;
-	local_180.m0.da = local_c0.m0.da;
-	local_180.m0.db = local_c0.m0.db;
-	local_180.m0.dc = local_c0.m0.dc;
-	local_180.m0.dd = local_c0.m0.dd;
-	local_180.m1.aa = local_c0.m1.aa;
-	local_180.m1.ab = local_c0.m1.ab;
-	local_180.m1.ac = local_c0.m1.ac;
-	local_180.m1.ad = local_c0.m1.ad;
-	local_180.m1.ba = local_c0.m1.ba;
-	local_180.m1.bb = local_c0.m1.bb;
-	local_180.m1.bc = local_c0.m1.bc;
-	local_180.m1.bd = local_c0.m1.bd;
-	local_180.m1.ca = local_c0.m1.ca;
-	local_180.m1.cb = local_c0.m1.cb;
-	local_180.m1.cc = local_c0.m1.cc;
-	local_180.m1.cd = local_c0.m1.cd;
-	local_180.m1.da = local_c0.m1.da;
-	local_180.m1.db = local_c0.m1.db;
-	local_180.m1.dc = local_c0.m1.dc;
-	local_180.m1.dd = local_c0.m1.dd;
+
+	local_180.m0 = local_c0.m0;
+	local_180.m1 = local_c0.m1;
+
 	local_180.pFunction = local_c0.pFunction;
 	local_180.flags_0x84 = local_c0.flags_0x84;
 	local_180.pPackedFont = local_c0.pPackedFont;
 	local_180.field_0x90 = local_c0.field_0x90;
-	local_180.spaceSize = 6.0;
+	local_180.spaceSize = 6.0f;
 	local_180.rotation = local_c0.rotation;
 	local_180.xScale = local_c0.xScale;
 	local_180.yScale = local_c0.yScale;
@@ -114,39 +87,11 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	local_180.SetEolAutomatic(0x80);
 	local_180.SetHorizontalJustification(0x10);
 	local_180.SetHorizontalAlignment(0);
-	local_180.spaceSize = 6.0;
-	local_240.m0.aa = local_c0.m0.aa;
-	local_240.m0.ab = local_c0.m0.ab;
-	local_240.m0.ac = local_c0.m0.ac;
-	local_240.m0.ad = local_c0.m0.ad;
-	local_240.m0.ba = local_c0.m0.ba;
-	local_240.m0.bb = local_c0.m0.bb;
-	local_240.m0.bc = local_c0.m0.bc;
-	local_240.m0.bd = local_c0.m0.bd;
-	local_240.m0.ca = local_c0.m0.ca;
-	local_240.m0.cb = local_c0.m0.cb;
-	local_240.m0.cc = local_c0.m0.cc;
-	local_240.m0.cd = local_c0.m0.cd;
-	local_240.m0.da = local_c0.m0.da;
-	local_240.m0.db = local_c0.m0.db;
-	local_240.m0.dc = local_c0.m0.dc;
-	local_240.m0.dd = local_c0.m0.dd;
-	local_240.m1.aa = local_c0.m1.aa;
-	local_240.m1.ab = local_c0.m1.ab;
-	local_240.m1.ac = local_c0.m1.ac;
-	local_240.m1.ad = local_c0.m1.ad;
-	local_240.m1.ba = local_c0.m1.ba;
-	local_240.m1.bb = local_c0.m1.bb;
-	local_240.m1.bc = local_c0.m1.bc;
-	local_240.m1.bd = local_c0.m1.bd;
-	local_240.m1.ca = local_c0.m1.ca;
-	local_240.m1.cb = local_c0.m1.cb;
-	local_240.m1.cc = local_c0.m1.cc;
-	local_240.m1.cd = local_c0.m1.cd;
-	local_240.m1.da = local_c0.m1.da;
-	local_240.m1.db = local_c0.m1.db;
-	local_240.m1.dc = local_c0.m1.dc;
-	local_240.m1.dd = local_c0.m1.dd;
+	local_180.spaceSize = 6.0f;
+
+	local_240.m0 = local_c0.m0;
+	local_240.m1 = local_c0.m1;
+
 	local_240.pFunction = local_c0.pFunction;
 	local_240.flags_0x84 = local_c0.flags_0x84;
 	local_240.pPackedFont = local_c0.pPackedFont;
@@ -165,38 +110,10 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 	local_240.altColour = local_c0.altColour;
 	local_240.SetHorizontalAlignment(0);
 	local_240.SetVerticalAlignment(4);
-	local_300.m0.aa = local_c0.m0.aa;
-	local_300.m0.ab = local_c0.m0.ab;
-	local_300.m0.ac = local_c0.m0.ac;
-	local_300.m0.ad = local_c0.m0.ad;
-	local_300.m0.ba = local_c0.m0.ba;
-	local_300.m0.bb = local_c0.m0.bb;
-	local_300.m0.bc = local_c0.m0.bc;
-	local_300.m0.bd = local_c0.m0.bd;
-	local_300.m0.ca = local_c0.m0.ca;
-	local_300.m0.cb = local_c0.m0.cb;
-	local_300.m0.cc = local_c0.m0.cc;
-	local_300.m0.cd = local_c0.m0.cd;
-	local_300.m0.da = local_c0.m0.da;
-	local_300.m0.db = local_c0.m0.db;
-	local_300.m0.dc = local_c0.m0.dc;
-	local_300.m0.dd = local_c0.m0.dd;
-	local_300.m1.aa = local_c0.m1.aa;
-	local_300.m1.ab = local_c0.m1.ab;
-	local_300.m1.ac = local_c0.m1.ac;
-	local_300.m1.ad = local_c0.m1.ad;
-	local_300.m1.ba = local_c0.m1.ba;
-	local_300.m1.bb = local_c0.m1.bb;
-	local_300.m1.bc = local_c0.m1.bc;
-	local_300.m1.bd = local_c0.m1.bd;
-	local_300.m1.ca = local_c0.m1.ca;
-	local_300.m1.cb = local_c0.m1.cb;
-	local_300.m1.cc = local_c0.m1.cc;
-	local_300.m1.cd = local_c0.m1.cd;
-	local_300.m1.da = local_c0.m1.da;
-	local_300.m1.db = local_c0.m1.db;
-	local_300.m1.dc = local_c0.m1.dc;
-	local_300.m1.dd = local_c0.m1.dd;
+
+	local_300.m0 = local_c0.m0;
+	local_300.m1 = local_c0.m1;
+
 	local_300.pFunction = local_c0.pFunction;
 	local_300.flags_0x84 = local_c0.flags_0x84;
 	local_300.pPackedFont = local_c0.pPackedFont;
@@ -221,7 +138,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 #ifdef PLATFORM_PS2
 		scePcStop();
 #endif
-		cVar8 = false;
+		bCloseResult = false;
 		if ((flags & 2) == 0) {
 			pTVar3 = GetTimer();
 			CPlayerInput::Update(pTVar3->cutsceneDeltaTime);
@@ -232,13 +149,14 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 		else {
 			cVar1 = true;
 		}
+
 		if (cVar1 != false) {
 			fVar11 = ((float)gVideoConfig.screenWidth - fVar12) / 2.0f;
 			fVar13 = ((float)gVideoConfig.screenHeight - fVar10) / 2.0f;
 			fVar8 = fVar11 + fVar12;
 			fVar9 = fVar13 + fVar10;
 			BootBitmaps[0x12].DrawXYXY(0, 1.0f, fVar11, fVar13, fVar8, fVar9);
-			fVar13 = fVar13 + 20.0;
+			fVar13 = fVar13 + 20.0f;
 			pNewFont = edTextStyleGetCurrent();
 			edTextStyleSetCurrent(&local_c0);
 
@@ -254,28 +172,32 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 						edTextStyleSetCurrent(&local_180);
 					}
 					pcVar4 = gMessageManager.get_message(msgB);
-					edTextDraw(x_00, fVar13 + 40.0, pcVar4);
+					edTextDraw(x_00, fVar13 + 40.0f, pcVar4);
 				}
+
 				if (msgC != 0) {
 					edTextStyleSetCurrent(&local_240);
 					pcVar4 = gMessageManager.get_message(msgC);
 					edTextDraw(fVar11 + 20.0f, fVar9 - 20.0f, pcVar4);
 				}
+
 				if (msgD != 0) {
 					edTextStyleSetCurrent(&local_300);
 					pcVar4 = gMessageManager.get_message(msgD);
 					edTextDraw(fVar8 - 20.0f, fVar9 - 20.0f, pcVar4);
 				}
+
 				edTextStyleSetCurrent(pNewFont);
 			}
 			else {
 				pcVar4 = gMessageManager.get_message(0x52525f503700080c);
 				edTextDraw(x, fVar13 + 40.0f, pcVar4);
 			}
+
 			if ((msgC == 0) && (msgD == 0)) {
 				iVar6 = iVar6 + 1;
 				if (5 < iVar6) {
-					cVar8 = true;
+					bCloseResult = true;
 				}
 			}
 			else {
@@ -285,18 +207,17 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 				}
 
 				if ((msgC == 0) || ((gPlayerInput.pressedBitfield & 1 << iVar5) == 0)) {
-					if ((msgD != 0) &&
-						(((gPlayerInput.pressedBitfield & 0x4000000) != 0 &&
-							(cVar8 = true, CLevelScheduler::gThis->currentLevelID != 0x10)))) {
-						IMPLEMENTATION_GUARD(
-						FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)
+					if ((msgD != 0) && (((gPlayerInput.pressedBitfield & 0x4000000) != 0 &&
+							(bCloseResult = true, CLevelScheduler::gThis->currentLevelID != 0x10)))) {
+						IMPLEMENTATION_GUARD_AUDIO(
+						PlaySample(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)
 					}
 				}
 				else {
-					cVar8 = true;
+					bCloseResult = true;
 					if (CLevelScheduler::gThis->currentLevelID != 0x10) {
-						IMPLEMENTATION_GUARD(
-						FUN_001cf3d0(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);)
+						IMPLEMENTATION_GUARD_AUDIO(
+						PlaySample(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 0, 0);)
 					}
 				}
 			}
@@ -306,17 +227,19 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 				GuiDList_EndCurrent();
 				GlobalDList_AddToView();
 			}
+
 			//edDebugMenuLoop();
 			pViewport = (CScene::ptable.g_FrontendManager_00451680)->pViewport;
 			edViewportSetClearMask(pViewport, 0);
 			edVideoFlip();
 			edViewportSetClearMask(pViewport, 0xffffffff);
 		}
-	} while (((cVar8 == false) && (uVar7 == 0)) && ((GameFlags & 3) == 0));
+	} while (((bCloseResult == false) && (uVar7 == 0)) && ((GameFlags & 3) == 0));
 
 	if ((uVar7 == 0) && (gPlayerInput.pressedBitfield = gPlayerInput.pressedBitfield & 0xfffffeff, uVar2 == 0)) {
 		IMPLEMENTATION_GUARD(
 		FUN_001a7220(0);)
 	}
-	return cVar8;
+
+	return bCloseResult;
 }

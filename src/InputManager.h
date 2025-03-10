@@ -40,7 +40,7 @@ struct AnalogStickData {
 
 class CIniFile;
 
-#define KEY_START 0x40000
+#define PAD_BITMASK_START 0x40000
 
 struct CPlayerInputSubObj {
 	float field_0x0;

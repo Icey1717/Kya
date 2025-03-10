@@ -269,3 +269,9 @@ bool CSaveManagement::message_box(long operationID, long messageID)
 	bVar1 = MenuMessageBoxDisplay(flags, uVar5, uVar4, uVar3, uVar2);
 	return bVar1;
 }
+
+void CSaveManagement::clear_slot()
+{
+	this->slotID_0x28 = -1;
+	return;
+}

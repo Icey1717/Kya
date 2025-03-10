@@ -9,13 +9,6 @@
 #include <eekernel.h>
 #endif
 
-void CGlobalDList::Init()
-{
-	this->bEnabled = 1;
-	this->field_0x18 = 0;
-	return;
-}
-
 void CGlobalDListManager::Level_Init()
 {
 	GlobalDlistEntry* pGVar1;

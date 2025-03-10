@@ -23,6 +23,7 @@ struct CBehaviourCinematic : public CBehaviour {
 
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
+	virtual void PauseChange(int bPaused);
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual void End(int newBehaviourId);
 	virtual void Manage();

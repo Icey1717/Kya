@@ -11,9 +11,8 @@
 #include <libvu0.h>
 #include <libdma.h>
 #endif
-#include "../MathOps.h"
-
-
+#include "MathOps.h"
+#include "EdenLib/edText/sources/edTextResources.h"
 
 struct CharacterData {
 	uint colour;
@@ -41,7 +40,7 @@ void edCTextFormat::DisplayWindow(float x, float y, Rectangle* pRect)
 	float shadowShiftY;
 	float shadowShiftX;
 
-	if ((((this->field_0x30 != 0) || (this->field_0x34 != 0)) && (pRect->width != 0.0f)) && (pRect->height != 0.0f)) {
+	if ((((this->field_0x30 != 0) || (this->nbBitmaps != 0)) && (pRect->width != 0.0f)) && (pRect->height != 0.0f)) {
 		(this->vector_0x10).x = pRect->x + this->offsetX_0x0;
 		(this->vector_0x10).y = pRect->y + this->offsetY_0x4;
 		(this->vector_0x10).width = pRect->width;
@@ -138,7 +137,7 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 {
 	byte curCharacter;
 	ushort uVar2;
-	edDList_material* pMVar3;
+	edTextBitmap* pTextBitmap;
 	edCTextFont* pFontPacked;
 	bool bVar4;
 	bool bVar5;
@@ -303,15 +302,15 @@ void edCTextFormat::DrawString(float x, float y, bool bFlag)
 							bVar5 = true;
 							curCharacter = *pbVar12;
 							pbVar12 = pbVar12 + 1;
-							pMVar3 = (edDList_material*)this->field_0x38[curCharacter];
-							drawCommandParams.pMaterialInfoA = (edDList_material*)pMVar3->pManager;
-							characterWidth = (float)pMVar3->index;
-							unaff_f28 = *(float*)((int)(pMVar3 + 1) + 4);
-							in_f27 = *(float*)((int)(pMVar3 + 1) + 8);
-							unaff_f26 = *(float*)((int)(pMVar3 + 1) + 0xc);
-							in_f25 = *(float*)(pMVar3 + 2);
-							in_f23 = y + (pCurTextLine->field_0x14 + pCurTextLine->field_0x18) / 2.0f + (float)pMVar3->mode * (*(float*)(pMVar3 + 1) - 1.0f);
-							in_f21 = in_f23 + *(float*)(pMVar3 + 1);
+							pTextBitmap = this->aBitmaps[curCharacter];
+							drawCommandParams.pMaterialInfoA = pTextBitmap->pMaterial;
+							characterWidth = pTextBitmap->fWidth;
+							unaff_f28 = pTextBitmap->field_0x14;
+							in_f27 = pTextBitmap->field_0x18;
+							unaff_f26 = pTextBitmap->field_0x1c;
+							in_f25 = pTextBitmap->field_0x20;
+							in_f23 = y + (pCurTextLine->field_0x14 + pCurTextLine->field_0x18) / 2.0f + pTextBitmap->field_0x8 * (pTextBitmap->fHeight - 1.0f);
+							in_f21 = in_f23 + pTextBitmap->fHeight;
 							drawX2 = curX + characterWidth;
 							drawX1 = curX;
 
@@ -559,11 +558,9 @@ void edCTextFormat::GetRect()
 			}
 			else {
 				if (uVar10 == 1) {
-					IMPLEMENTATION_GUARD();
-#if 0
-					fVar15 = *(float*)(field_0x38[*pbVar13] + 0x10);
-					unaff_f20 = *(float*)(field_0x38[*pbVar13] + 0xc);
-#endif
+					fVar15 = aBitmaps[*pbVar13]->fHeight;
+					unaff_f20 = aBitmaps[*pbVar13]->fWidth;
+
 					pbVar13 = pbVar13 + 1;
 					if (fVar15 <= fVar16) {
 						fVar15 = fVar16;
@@ -743,7 +740,7 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 	float fVar31;
 	float fVar32;
 	byte bVar33;
-	char* pcVar34;
+	edTextBitmap* pTextBitmap;
 	char* pcVar19;
 	char* unaff_s0_lo;
 	edCTextStyle* pFVar35;
@@ -759,7 +756,7 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 	char* pcVar41;
 	char local_3b0;
 	int local_3a0;
-	long local_390;
+	ulong local_390;
 	int local_380;
 	uint local_370;
 	int local_360;
@@ -874,7 +871,7 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 					pcVar10 = pScratchpadA;
 					pcVar38 = pScratchpadB;
 					field_0x30 = 0;
-					field_0x34 = 0;
+					nbBitmaps = 0;
 					paVar18 = paVar38;
 					do {
 						pbVar36 = (byte*)paVar38->pText;
@@ -1057,16 +1054,13 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 #endif
 								break;
 							case 7:
-								IMPLEMENTATION_GUARD();
-#if 0
-								pcVar34 = *ppcVar10;
+								pTextBitmap = reinterpret_cast<edTextBitmap*>(*ppcVar10);
 								*pcVar38 = 1;
 								pcVar38 = (char*)((byte*)pcVar38 + 1);
-								*pcVar10 = (char)field_0x34;
+								*pcVar10 = (char)this->nbBitmaps;
 								pcVar10 = pcVar10 + 1;
-								field_0x38[field_0x34] = pcVar34;
-								field_0x34 = field_0x34 + 1;
-#endif
+								this->aBitmaps[nbBitmaps] = pTextBitmap;
+								this->nbBitmaps = this->nbBitmaps + 1;
 								break;
 							case 8:
 								IMPLEMENTATION_GUARD();
@@ -1240,7 +1234,7 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 						paVar18 = paVar18 + 1;
 					} while (uVar40 <= local_370);
 					*pcVar38 = 0;
-					if ((field_0x30 != 0) || (bVar9 = false, field_0x34 != 0)) {
+					if ((field_0x30 != 0) || (bVar9 = false, nbBitmaps != 0)) {
 						bVar9 = true;
 					}
 					return bVar9;
@@ -1255,6 +1249,7 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 			piVar38->characterCount = piVar38->characterCount + 1;
 			pText = (char*)pbVar36;
 		}
+
 		iVar11 = local_380;
 		if (uVar17 == 0x5b) {
 			uVar27 = (ulong)*pbVar36;
@@ -1374,6 +1369,7 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 				}
 			}
 		}
+
 		piVar38->field_0x18 = iVar11;
 		if (piVar38->field_0x15 == '\0') {
 			if (iVar25 == 8) {
@@ -1393,24 +1389,24 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 					}
 				}
 			}
-			IMPLEMENTATION_GUARD();
-#if 0
-			pcVar10 = (char*)edCTextResourcePool::GetEntry(local_390, local_3a0);
+
+			pcVar10 = (char*)edTextResources.GetResourcePtr(local_390, local_3a0);
 			if ((pcVar10 == (char*)0x0) && (local_3a0 != 3)) {
 				iVar25 = 5;
-				piVar38->field_0x10 = s_(? ? ? )_004323b8;
+				piVar38->field_0x10 = "(???)";
 			}
 			else {
 				piVar38->field_0x10 = pcVar10;
 			}
-#endif
 		}
 		else {
 			if (uVar40 < iVar11 + 1U) {
 				uVar40 = iVar11 + 1U;
 			}
+
 			local_380 = local_380 + 1;
 		}
+
 		piVar38->switchMode = iVar25;
 		piVar38 = piVar38 + 1;
 		bVar9 = true;

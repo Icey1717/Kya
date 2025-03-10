@@ -119,37 +119,42 @@ void edVideoPutDrawEnv(void)
 	return;
 }
 
+void _DrawFade(void)
+{
+
+}
+
 void _ManageFade(void)
 {
-	if (VideoManager.field_0x78 != 0) {
-		IMPLEMENTATION_GUARD_FX();
-		//_DrawFade();
+	if (VideoManager.bShouldDrawFade != 0) {
+		_DrawFade();
 	}
-	if (VideoManager.field_0x68 != 0) {
-		VideoManager.fadeTimeA =
-			VideoManager.fadeTimeA + VideoManager.field_0x70;
-		if (0x80 < VideoManager.fadeTimeA) {
-			VideoManager.field_0x70 = -1;
+
+	if (VideoManager.bFadeActive != 0) {
+		VideoManager.fadeAlpha = VideoManager.fadeAlpha + VideoManager.fadeSpeed;
+		if (0x80 < VideoManager.fadeAlpha) {
+			VideoManager.fadeSpeed = -1;
 		}
-		if (VideoManager.fadeTimeA == 0) {
-			VideoManager.field_0x70 = 1;
+
+		if (VideoManager.fadeAlpha == 0) {
+			VideoManager.fadeSpeed = 1;
 		}
-		if (((0 < VideoManager.field_0x70) &&
-			(VideoManager.fadeTimeB < VideoManager.fadeTimeA)) ||
-			((VideoManager.field_0x70 < 0 &&
-				(VideoManager.fadeTimeA < VideoManager.fadeTimeB)))) {
-			VideoManager.field_0x68 = 0;
-			VideoManager.fadeTimeA = VideoManager.fadeTimeB;
+
+		if (((0 < VideoManager.fadeSpeed) && (VideoManager.fadeAlphaTarget < VideoManager.fadeAlpha)) ||
+			((VideoManager.fadeSpeed < 0 && (VideoManager.fadeAlpha < VideoManager.fadeAlphaTarget)))) {
+			VideoManager.bFadeActive = 0;
+			VideoManager.fadeAlpha = VideoManager.fadeAlphaTarget;
 		}
 	}
-	if (VideoManager.field_0x68 != 0 || VideoManager.bFadeActive == 1) {
-		VideoManager.field_0x7c = VideoManager.fadeTimeA;
-		VideoManager.field_0x79 = VideoManager.fadeColorR;
-		VideoManager.field_0x7a = VideoManager.fadeColorG;
-		VideoManager.field_0x7b = VideoManager.fadeColorB;
+
+	if (VideoManager.bFadeActive != 0 || VideoManager.fadeFlags == 1) {
+		VideoManager.activeFadeAlpha = VideoManager.fadeAlpha;
+		VideoManager.activeFadeColorR = VideoManager.fadeColorR;
+		VideoManager.activeFadeColorG = VideoManager.fadeColorG;
+		VideoManager.activeFadeColorB = VideoManager.fadeColorB;
 	}
-	VideoManager.field_0x78 =
-		VideoManager.field_0x68 != 0 || VideoManager.bFadeActive == 1;
+
+	VideoManager.bShouldDrawFade = VideoManager.bFadeActive != 0 || VideoManager.fadeFlags == 1;
 	return;
 }
 

@@ -652,7 +652,31 @@ void CFrontendLifeGauge::ShowLifeAlways()
 
 void CFrontendLifeGauge::HideLifeAlways()
 {
-	IMPLEMENTATION_GUARD();
+	switch (this->state) {
+	case 1:
+		this->field_0x3ac = this->field_0x3ac + -1;
+		if (this->field_0x3ac == 0) {
+			this->state = 0;
+		}
+		break;
+	case 2:
+		this->field_0x3ac = this->field_0x3ac + -1;
+		break;
+	case 5:
+		this->field_0x3ac = this->field_0x3ac + -1;
+		break;
+	case 6:
+		this->field_0x3ac = this->field_0x3ac + -1;
+		if (this->field_0x3ac == 0) {
+			this->field_0x3c = CFrontend::GetTime();
+			this->state = 5;
+		}
+		break;
+	case 7:
+		this->field_0x3ac = this->field_0x3ac + -1;
+	}
+
+	return;
 }
 
 void CFrontendLifeGauge::ShowLifeExt()

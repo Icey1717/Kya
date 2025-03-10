@@ -14,9 +14,9 @@
 #include "../Actor.h"
 #include "../PoolAllocators.h"
 
-GlobalDList* g_GameDisplayListPtr_0044971c = NULL;
-GlobalDList* g_FrontendDisplayListPtr_00449720 = NULL;
-GlobalDList* pGuiDList = NULL;
+CGlobalDList* g_GameDisplayListPtr_0044971c = NULL;
+CGlobalDList* pFrontend2DDList = NULL;
+CGlobalDList* pGuiDList = NULL;
 
 void GuiDList_EndCurrent(void)
 {
@@ -151,7 +151,7 @@ void GlobalDList_Init(void)
 {
 	ed_3D_Scene* pSVar1;
 	int freeMemCalcA;
-	GlobalDList* pDVar2;
+	CGlobalDList* pDVar2;
 	DisplayListInternal* pDVar3;
 	int iVar4;
 	int iVar5;
@@ -166,21 +166,21 @@ void GlobalDList_Init(void)
 	edDebugPrintf("----- Memory used by display list -------\n");
 	edDebugPrintf(g_NewLine);
 	freeMemCalcA = edMemGetAvailable(TO_HEAP(H_MAIN));
-	pDVar2 = new GlobalDList(0x200, 0x1000, 0, 0x11, CScene::_scene_handleA);
+	pDVar2 = new CGlobalDList(0x200, 0x1000, 0, 0x11, CScene::_scene_handleA);
 	g_GameDisplayListPtr_0044971c = pDVar2;
 	iVar5 = edMemGetAvailable(TO_HEAP(H_MAIN));
 
 	/* - Game list          : %07d\n */
 	edDebugPrintf("- Game list          : %07d\n", freeMemCalcA - iVar5);
 	iVar4 = edMemGetAvailable(TO_HEAP(H_MAIN));
-	pDVar2 = new GlobalDList(0x20, 0x80, 0, 0x11, Frontend::_scene_handle);
-	g_FrontendDisplayListPtr_00449720 = pDVar2;
+	pDVar2 = new CGlobalDList(0x20, 0x80, 0, 0x11, CFrontend::_scene_handle);
+	pFrontend2DDList = pDVar2;
 	iVar5 = edMemGetAvailable(TO_HEAP(H_MAIN));
 
 	/* - Frontend 3D list   : %07d\n */
 	edDebugPrintf("- Frontend 3D list   : %07d\n", iVar4 - iVar5);
 	iVar4 = edMemGetAvailable(TO_HEAP(H_MAIN));
-	pDVar2 = new GlobalDList(0x180, 0xe74, 0, 0x12, pSVar1);
+	pDVar2 = new CGlobalDList(0x180, 0xe74, 0, 0x12, pSVar1);
 	pGuiDList = pDVar2;
 	iVar5 = edMemGetAvailable(TO_HEAP(H_MAIN));
 	/* - Gui list           : %07d\n */
@@ -203,8 +203,8 @@ void GlobalDList_Init(void)
 	edDebugPrintf(sz_DisplayListSpacer_00433970);
 	edDebugPrintf(g_NewLine);
 	g_GameDisplayListPtr_0044971c->Init();
-	g_FrontendDisplayListPtr_00449720->Init();
-	if (pGuiDList != (GlobalDList*)0x0) {
+	pFrontend2DDList->Init();
+	if (pGuiDList != (CGlobalDList*)0x0) {
 		pGuiDList->Init();
 	}
 	edDListSetActiveViewPort(CScene::_pinstance->pViewportA);
@@ -229,16 +229,38 @@ void GlobalDList_AddToView(void)
 	if (g_GameDisplayListPtr_0044971c->bEnabled != 0) {
 		edDlistAddtoView(g_GameDisplayListPtr_0044971c->pDisplayListInternal);
 	}
-	if (g_FrontendDisplayListPtr_00449720->bEnabled != 0) {
-		edDlistAddtoView(g_FrontendDisplayListPtr_00449720->pDisplayListInternal);
+	if (pFrontend2DDList->bEnabled != 0) {
+		edDlistAddtoView(pFrontend2DDList->pDisplayListInternal);
 	}
-	if ((pGuiDList != (GlobalDList*)0x0) && (pGuiDList->bEnabled != 0)) {
+	if ((pGuiDList != (CGlobalDList*)0x0) && (pGuiDList->bEnabled != 0)) {
 		edDlistAddtoView(pGuiDList->pDisplayListInternal);
 	}
 	return;
 }
 
-GlobalDList::GlobalDList()
+bool Frontend2DDList_BeginCurrent(void)
+{
+	bool bVar1;
+	CGlobalDList* pCVar2;
+
+	pCVar2 = pFrontend2DDList;
+	bVar1 = pFrontend2DDList->bEnabled != 0;
+	if (bVar1) {
+		pFrontend2DDList->field_0x18 = 1;
+		edDListSetCurrent(pCVar2->pDisplayListInternal);
+	}
+	return bVar1;
+}
+
+void FrontendDList_EndCurrent(void)
+{
+	if (pFrontend2DDList->bEnabled != 0) {
+		pFrontend2DDList->field_0x18 = 0;
+	}
+	return;
+}
+
+CGlobalDList::CGlobalDList()
 {
 	this->field_0x8 = -1;
 	this->field_0xc = -1;
@@ -247,7 +269,7 @@ GlobalDList::GlobalDList()
 	this->bEnabled = 0;
 }
 
-GlobalDList::GlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster)
+CGlobalDList::CGlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster)
 {
 	this->field_0x8 = inField_0x8;
 	this->field_0xc = inField_0xc;
@@ -258,10 +280,12 @@ GlobalDList::GlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int
 	edDListSetSceneUsed(this->pDisplayListInternal, pInStaticMeshMaster);
 }
 
-void GlobalDList::Init()
+void CGlobalDList::Init()
 {
 	this->bEnabled = 1;
 	this->field_0x18 = 0;
+
+	return;
 }
 
 void ed_3D_Scene::ed3DSceneRemoveFlag(uint flag)

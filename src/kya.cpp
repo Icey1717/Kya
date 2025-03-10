@@ -60,7 +60,7 @@ extern "C" {
 #include "edVideo/VideoA.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
-#include "PauseManager.h"
+#include "Pause.h"
 
 #include "Rendering/CustomShell.h"
 #include "InputManager.h"
@@ -1717,18 +1717,21 @@ void ShowCompanySplashScreen(char* file_name, bool param_2, bool param_3)
 			}
 #endif
 		}
+
 		if (param_2 != false) {
 			if (param_3 == false) {
 				uVar2 = 1;
-				if (((gPlayerInput.pressedBitfield & KEY_START) == 0) && ((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
+				if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) == 0) && ((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 					uVar2 = 0;
 				}
 			}
 			else {
-				uVar2 = gPlayerInput.pressedBitfield & KEY_START;
+				uVar2 = gPlayerInput.pressedBitfield & PAD_BITMASK_START;
 			}
+
 			if (uVar2 != 0) break;
 		}
+
 		iVar3 = 1;
 		if (display->fileReadSuccess != 0) {
 			iVar3 = hasVideoEnded();
@@ -1824,7 +1827,9 @@ void PlayIntroVideo(long mode)
 						}
 #endif
 					}
-					if ((gPlayerInput.pressedBitfield & KEY_START) != 0) break;
+
+					if ((gPlayerInput.pressedBitfield & PAD_BITMASK_START) != 0) break;
+
 					currentLanguage = 1;
 					if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 						currentLanguage = hasVideoEnded();
@@ -1865,11 +1870,13 @@ void PlayIntroVideo(long mode)
 #endif
 							}
 							bVar2 = true;
-							if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+							if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) == 0) &&
 								((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 								bVar2 = false;
 							}
+
 							if (bVar2) break;
+
 							currentLanguage = 1;
 							if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 								currentLanguage = hasVideoEnded();
@@ -1904,7 +1911,7 @@ void PlayIntroVideo(long mode)
 #endif
 							}
 							bVar2 = true;
-							if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+							if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) == 0) &&
 								((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 								bVar2 = false;
 							}
@@ -1944,7 +1951,7 @@ void PlayIntroVideo(long mode)
 #endif
 						}
 						bVar2 = true;
-						if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+						if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) == 0) &&
 							((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 							bVar2 = false;
 						}
@@ -1987,11 +1994,13 @@ void PlayIntroVideo(long mode)
 #endif
 			}
 			bVar2 = true;
-			if (((gPlayerInput.pressedBitfield & KEY_START) == 0) &&
+			if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) == 0) &&
 				((gPlayerInput.pressedBitfield & 0x1000000) == 0)) {
 				bVar2 = false;
 			}
+
 			if (bVar2) break;
+
 			currentLanguage = 1;
 			if (currentLanguage_videoPointer->fileReadSuccess != 0) {
 				currentLanguage = hasVideoEnded();
@@ -2045,140 +2054,110 @@ void LoadingLoop(void)
 
 void GameLoop(void)
 {
-	int AVar1;
-	CActorHero* pAVar2;
-	CScene* pLVar3;
-	bool cVar4;
-	bool bVar4;
-	Timer* timeController;
-	CLifeInterface* piVar5;
-	StateConfig* pAVar6;
-	uint uVar7;
-	ulong uVar8;
-	float fVar9;
-
 	MY_LOG("GameLoop Begin\n");
 
-	pLVar3 = CScene::_pinstance;
-	timeController = GetTimer();
 	do {
 		ZONE_SCOPED;
 		gCompatibilityHandlingPtr->BeginFrame(0);
-		CPlayerInput::Update(timeController->cutsceneDeltaTime);
-		cVar4 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
-		bVar4 = gPlayerInput.SoftReset();
-		if (bVar4 != false) {
+		CPlayerInput::Update(GetTimer()->cutsceneDeltaTime);
+
+		bool bHandleDisconnectedDevicesResult = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
+
+		if (gPlayerInput.SoftReset() != false) {
 			IMPLEMENTATION_GUARD();
 			//Scene::_pinstance->InitiateReset();
 		}
-		pAVar2 = CActorHero::_gThis;
+
 		if ((GameFlags & 0xc0) == 0) {
 			if (CActorHero::_gThis != (CActorHero*)0x0) {
-				piVar5 = CActorHero::_gThis->GetLifeInterface();
-				fVar9 = piVar5->GetValue();
-				bVar4 = fVar9 - pAVar2->field_0x2e4 <= 0.0f;
-				if (!bVar4) {
-					AVar1 = pAVar2->actorState;
-					if (AVar1 == AS_None) {
-						uVar7 = 0;
-					}
-					else {
-						pAVar6 = pAVar2->GetStateCfg(AVar1);
-						uVar7 = pAVar6->flags_0x4 & 1;
-					}
-					bVar4 = uVar7 != 0;
+				bool bHeroDead = CActorHero::_gThis->GetLifeInterface()->GetValue() - CActorHero::_gThis->field_0x2e4 <= 0.0f;
+				if (!bHeroDead) {
+					bHeroDead = (CActorHero::_gThis->GetStateFlags(CActorHero::_gThis->actorState) & 1) != 0;
 				}
-				if (bVar4) goto LAB_001a7608;
+
+				if (bHeroDead) goto LAB_001a7608;
 			}
 
-			if (cVar4 != false) {
+			if (bHandleDisconnectedDevicesResult != false) {
 				if ((GameFlags & 8) != 0) {
-					IMPLEMENTATION_GUARD();
-					//LoadFrontendWithuRam00451684();
+					HelpLeave();
 				}
+
 				if ((GameFlags & 0x10) != 0) {
-					IMPLEMENTATION_GUARD();
-					//OpenMapScreen_003f59b0();
+					MapLeave();
 				}
+
 				if ((GameFlags & 0x3c) == 0) {
 					if ((GameFlags & 0x800) == 0) {
-						IMPLEMENTATION_GUARD();
-						//ActivatePause_001b5320(PM_PauseMenu);
+						PauseEnter(PM_PauseMenu);
 					}
 					else {
-						IMPLEMENTATION_GUARD();
-						//ActivatePause_001b5320(PM_MiniGame);
+						PauseEnter(PM_MiniGame);
 					}
 				}
 			}
 			if ((((GameFlags & 0x8000) == 0) && ((gPlayerInput.pressedBitfield & 0x80000) != 0)) && (gPlayerInput.aButtons[18].clickValue == 0.0f)) {
 				if ((GameFlags & 8) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
-						IMPLEMENTATION_GUARD(
-						HelpEnter();)
+						HelpEnter();
 					}
 				}
 				else {
-					IMPLEMENTATION_GUARD();
-					//LoadFrontendWithuRam00451684();
+					HelpLeave();
 				}
 			}
 
-			bVar4 = gPlayerInput.aButtons[6].clickValue != 0.0f || gPlayerInput.aButtons[10].clickValue != 0.0f;
+			bool bButtonPressed = gPlayerInput.aButtons[6].clickValue != 0.0f || gPlayerInput.aButtons[10].clickValue != 0.0f;
 			if ((gPlayerInput.field_0x40.field_0x18 != 4) || (gPlayerInput.field_0x1c.field_0x18 != 4)) {
-				bVar4 = true;
+				bButtonPressed = true;
 			}
 
-			if ((((gPlayerInput.pressedBitfield & 0x8000000) != 0) && (!bVar4)) ||
+			if ((((gPlayerInput.pressedBitfield & 0x8000000) != 0) && (!bButtonPressed)) ||
 				((GameFlags & 0x400) != 0)) {
 				if (((GameFlags & 0x10) == 0) || ((GameFlags & 0x400) != 0)) {
 					if ((GameFlags & 0x3c) == 0) {
-						IMPLEMENTATION_GUARD();
-						//LoadMaps();
+						MapEnter();
 					}
 				}
 				else {
-					IMPLEMENTATION_GUARD();
-					//OpenMapScreen_003f59b0();
+					MapLeave();
 				}
+
 				GameFlags = GameFlags & 0xfffffbff;
 			}
 
-			if (((gPlayerInput.pressedBitfield & KEY_START) != 0) && ((gPlayerInput.pressedBitfield & 0x80000) == 0)) {
+			if (((gPlayerInput.pressedBitfield & PAD_BITMASK_START) != 0) && ((gPlayerInput.pressedBitfield & 0x80000) == 0)) {
 				if ((GameFlags & 4) == 0) {
 					if ((GameFlags & 0x3c) == 0) {
 						if ((GameFlags & 0x800) == 0) {
-							IMPLEMENTATION_GUARD();
-							//ActivatePause_001b5320(PM_PauseMenu);
+							PauseEnter(PM_PauseMenu);
 						}
 						else {
-							IMPLEMENTATION_GUARD();
-							//ActivatePause_001b5320(PM_MiniGame);
+							PauseEnter(PM_MiniGame);
 						}
 					}
 				}
 				else {
-					IMPLEMENTATION_GUARD();
-					//uVar8 = FUN_001b5d90();
-					//if (uVar8 == 0) {
-					//	FUN_001b5110();
-					//}
+					if (UnpauseBlocked() == false) {
+						ResumeGame(0);
+					}
 				}
 			}
 		}
 	LAB_001a7608:
-		if (((long)(int)GameFlags & 0xffffffff80000000U) != 0) {
-			GameFlags = (uint)((ulong)((long)(int)GameFlags << 0x21) >> 0x21);
-			IMPLEMENTATION_GUARD();
-			//SetPaused_001b8c40(Scene::_pinstance, 1);
+		if (((ulong)(int)GameFlags & 0xffffffff80000000U) != 0) {
+			GameFlags = (uint)((ulong)((ulong)(int)GameFlags << 0x21) >> 0x21);
+			CScene::_pinstance->Level_PauseChange(1);
 		}
 
-		timeController->Update();
-		/* This may control cine cutscenes */
-		pLVar3->Level_Manage();
-		UpdateObjectsMain();
+		GetTimer()->Update();
+		CScene::_pinstance->Level_Manage();
+		CScene::_pinstance->Level_Draw();
+
 		//SaveRelated_002f37d0(&SaveDataLoadStruct_0048ee30);
+
 		edVideoFlip();
+
 		/* Determine if we should exit the main game loop here. */
 		if ((GameFlags & GAME_REQUEST_TERM) != 0) {
 			GameFlags = GameFlags & ~(GAME_REQUEST_TERM | GAME_CUTSCENE_100 | GAME_CUTSCENE_80);

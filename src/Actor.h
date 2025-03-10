@@ -141,6 +141,7 @@ public:
 	virtual void Manage() {}
 	virtual void ManageFrozen() {}
 	virtual void SectorChange(int oldSectorId, int newSectorId) {}
+	virtual void PauseChange(int bPaused) {}
 	virtual void Draw() {}
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) {}
 	virtual void End(int newBehaviourId) {}
@@ -498,6 +499,8 @@ public:
 	bool SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox);
 	void EvaluateManageState();
 	void EvaluateDisplayState();
+
+	void PauseChange(int bIsPaused);
 
 	uint GetStateFlags(int state);
 

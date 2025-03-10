@@ -51,57 +51,64 @@ void edVideoSetFadeColor(byte r, byte g, byte b)
 	VideoManager.fadeColorR = r;
 	VideoManager.fadeColorG = g;
 	VideoManager.fadeColorB = b;
+
 	return;
 }
 
-void edVideoSetFade(float time)
+void edVideoSetFade(float alpha)
 {
-	float fVar1;
+	float adjustedAlpha;
 
-	if (time < 0.0) {
-		fVar1 = 0.0;
+	if (alpha < 0.0f) {
+		adjustedAlpha = 0.0f;
 	}
 	else {
-		fVar1 = 1.0;
-		if (time <= 1.0) {
-			fVar1 = time;
+		adjustedAlpha = 1.0f;
+		if (alpha <= 1.0f) {
+			adjustedAlpha = alpha;
 		}
 	}
-	VideoManager.bFadeActive = (uint)(fVar1 != 0.0);
-	VideoManager.field_0x68 = 0;
-	VideoManager.fadeTimeA = (int)(fVar1 * 128.0);
-	VideoManager.field_0x70 = 0;
-	VideoManager.fadeTimeB = (int)(fVar1 * 128.0);
-	return;
-}
 
-void edVideoSetFadeIn(uint param_1)
-{
-	if (0x80 < param_1) {
-		param_1 = 0x80;
-	}
-	VideoManager.field_0x68 = 1;
-	VideoManager.field_0x70 = -(0x80 / (int)param_1);
-	VideoManager.fadeTimeB = 0;
+	VideoManager.fadeFlags = (uint)(adjustedAlpha != 0.0f);
 	VideoManager.bFadeActive = 0;
+	VideoManager.fadeAlpha = (int)(adjustedAlpha * 128.0f);
+	VideoManager.fadeSpeed = 0;
+	VideoManager.fadeAlphaTarget = (int)(adjustedAlpha * 128.0f);
+
 	return;
 }
 
-void edVideoSetFadeOut(uint param_1, uint param_2)
+void edVideoSetFadeIn(uint speed)
 {
-	if (0x80 < param_1) {
-		param_1 = 0x80;
+	if (0x80 < speed) {
+		speed = 0x80;
 	}
-	VideoManager.field_0x68 = 1;
-	VideoManager.field_0x70 = 0x80 / (int)param_1;
-	VideoManager.fadeTimeB = 0x80;
-	VideoManager.bFadeActive = param_2;
+
+	VideoManager.bFadeActive = 1;
+	VideoManager.fadeSpeed = -(0x80 / (int)speed);
+	VideoManager.fadeAlphaTarget = 0;
+	VideoManager.fadeFlags = 0;
+
+	return;
+}
+
+void edVideoSetFadeOut(uint speed, uint flags)
+{
+	if (0x80 < speed) {
+		speed = 0x80;
+	}
+
+	VideoManager.bFadeActive = 1;
+	VideoManager.fadeSpeed = 0x80 / (int)speed;
+	VideoManager.fadeAlphaTarget = 0x80;
+	VideoManager.fadeFlags = flags;
+
 	return;
 }
 
 byte edVideoIsFadeActive(void)
 {
-	return VideoManager.field_0x68;
+	return VideoManager.bFadeActive;
 }
 
 void edVideoSetOffset(short inDX, short inDY)

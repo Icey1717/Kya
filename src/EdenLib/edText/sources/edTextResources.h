@@ -4,6 +4,8 @@
 #include "Types.h"
 
 class edCTextStyle;
+struct edDList_material;
+struct edTextBitmap;
 
 typedef void (*edResourceFunc)(edCTextStyle*);
 
@@ -19,7 +21,8 @@ public:
 
 	bool CallbackAdd(char* name, edResourceFunc pFunc);
 	bool TextAdd(char* key, char* value);
-	bool BitmapAdd(char* label, void* param_3);
+	bool BitmapAdd(char* label, edTextBitmap* param_3);
+	edTextBitmap* GetResourcePtr(ulong key, int index);
 
 	edCTextResourcePool();
 	bool Init(int maxEntries);

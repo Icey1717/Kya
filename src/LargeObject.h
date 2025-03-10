@@ -131,8 +131,10 @@ public:
 	void PushFogAndClippingSettings(float other, S_STREAM_FOG_DEF* pFogStream);
 
 	void Level_Install(void);
+	void Level_PauseChange(int bPaused);
 	void Level_Init(void);
 	void Level_Manage(void);
+	void Level_Draw(void);
 	void LevelLoading_Draw(void);
 	void LevelLoading_End(void);
 	bool LevelLoading_Manage(void);
@@ -144,6 +146,8 @@ public:
 	void Level_Term(void);
 
 	void Level_SectorChange(int oldSectorId, int newSectorId);
+
+	void SetGlobalPaused_001b8c30(int param_2);
 
 	void HandleCurState();
 
@@ -185,7 +189,7 @@ public:
 	ulong field_0x38;
 	int curState;
 	float timeInState;
-	undefined4 field_0x48;
+	int field_0x48;
 	FogClipEntry aFogClipStack[2];
 	undefined field_0x5c;
 	undefined field_0x5d;
@@ -327,7 +331,7 @@ public:
 };
 
 void Game_Init(void);
-void UpdateObjectsMain(void);
+void Level_Draw(void);
 void ed3DSetMipmapProp(bool bDoMipmap, uint mipMapL, uint mipMapK);
 
 ed_3D_Scene* GetStaticMeshMasterA_001031b0(void);

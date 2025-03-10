@@ -129,8 +129,11 @@ uint Input::_edDevKeyboard(uint eventID, EDDEV_PORT* pController, void* param_3)
 	break;
 	case 0x90000006:
 	{
+		pController->pPadD[ROUTE_START].bPressed = gInputFunctions.keyPressed(ROUTE_START);
 		pController->pPadD[ROUTE_START].bReleased = gInputFunctions.keyReleased(ROUTE_START);
+
 		pController->pPadD[ROUTE_SELECT].bPressed = gInputFunctions.keyPressed(ROUTE_SELECT);
+		pController->pPadD[ROUTE_SELECT].bReleased = gInputFunctions.keyReleased(ROUTE_SELECT);
 
 		pController->pPadD[ROUTE_L1].bPressed = gInputFunctions.keyPressed(ROUTE_L1);
 		pController->pPadD[ROUTE_L1].clickValue = gInputFunctions.keyAnalog(ROUTE_L1);

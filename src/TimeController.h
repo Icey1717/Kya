@@ -12,6 +12,8 @@ public:
 	void ResetGameTimers();
 	static Timer* GetTimer();
 
+	void SetTimeScale_001ba6f0(int bPaused);
+
 	float totalPlayTime;
 	float frameDelta;
 	float field_0x8;

@@ -1,6 +1,7 @@
 #include "ActorTeleporter.h"
 #include "MemoryStream.h"
 #include "FileManager3D.h"
+#include "LevelScheduleManager.h"
 
 void CActorTeleporter::Create(ByteCode* pByteCode)
 {
@@ -134,4 +135,61 @@ CBehaviour* CActorTeleporter::BuildBehaviour(int behaviourType)
 void CActorTeleporter::UpdateCurTeleporterState(int levelId, int param_3)
 {
 	IMPLEMENTATION_GUARD();
+}
+
+edDList_material* CActorTeleporter::GetMySubSectorMaterial(int levelId, int nbAreas)
+{
+	int* piVar1;
+	bool bVar2;
+	CLevelScheduler* pCVar3;
+	edDList_material* pSubSectorMaterial;
+	int iVar5;
+	int iVar6;
+	int iVar7;
+
+	pCVar3 = CLevelScheduler::gThis;
+	pSubSectorMaterial = (edDList_material*)0x0;
+
+	IMPLEMENTATION_GUARD_LOG(
+	bVar2 = levelId == 0 || levelId == INT_ARRAY_0048ed60[0];
+	if (levelId != 0 && levelId != INT_ARRAY_0048ed60[0]) {
+		bVar2 = INT_ARRAY_0048ed60[levelId] == 0;
+	}
+
+	if (bVar2) {
+		pSubSectorMaterial = GetDestinationMaterial(0, 1);
+	}
+	else {
+		iVar7 = 0;
+		iVar6 = 0;
+		while (true) {
+			piVar1 = *(int**)&this->field_0x2bc;
+			iVar5 = 0;
+			if (piVar1 != (int*)0x0) {
+				iVar5 = *piVar1;
+			}
+			if ((iVar5 <= iVar7) || (pSubSectorMaterial != (edDList_material*)0x0)) break;
+			iVar5 = *(int*)((int)piVar1 + iVar6 + 4);
+			if (iVar5 != 0x10) {
+				bVar2 = levelId == iVar5;
+				if (!bVar2) {
+					bVar2 = iVar5 == INT_ARRAY_0048ed60[levelId];
+				}
+				if (!bVar2) {
+					bVar2 = levelId == INT_ARRAY_0048ed60[iVar5];
+				}
+				if (bVar2) {
+					pSubSectorMaterial = GetDestinationMaterial(iVar5, nbAreas);
+				}
+			}
+			iVar6 = iVar6 + 0xc;
+			iVar7 = iVar7 + 1;
+		}
+
+		if ((pSubSectorMaterial == (edDList_material*)0x0) && (levelId == pCVar3->currentLevelID)) {
+			pSubSectorMaterial = GetDestinationMaterial(this, levelId, nbAreas);
+		}
+	})
+
+	return pSubSectorMaterial;
 }

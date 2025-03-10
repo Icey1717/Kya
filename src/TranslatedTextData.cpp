@@ -5,7 +5,7 @@
 #include "edFile.h"
 #include <assert.h>
 #include "edStr.h"
-#include "PauseManager.h"
+#include "Pause.h"
 
 MessageManager gMessageManager = { NULL };
 

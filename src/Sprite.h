@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "edDlist.h"
 #include "ed3D.h"
+#include "Rendering/edCTextFormat.h"
 
 class CWidgetSlot
 {
@@ -55,15 +56,7 @@ public:
 	undefined field_0x6;
 	undefined field_0x7;
 	CSprite* pParent;
-	struct edDList_material* pMaterialInfo;
-	undefined4 field_0x10;
-	float field_0x14;
-	float fWidth;
-	float fHeight;
-	undefined4 field_0x20;
-	undefined4 field_0x24;
-	float field_0x28;
-	float field_0x2c;
+	edTextBitmap textBitmap;
 
 	union
 	{

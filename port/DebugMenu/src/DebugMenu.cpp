@@ -175,6 +175,18 @@ namespace Debug {
 		ImGui::End();
 	}
 
+	static void ShowLevelSchedulerMenu(bool* bOpen) {
+		// Create a new ImGui window
+		ImGui::Begin("Level Scheduler", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
+		ImGui::Text("Boomy Level: %d", CLevelScheduler::GetBoomyLevel());
+		ImGui::Text("Medallion Level: %d", CLevelScheduler::GetMedallionLevel());
+		ImGui::Text("Fight Level: %d", CLevelScheduler::GetFightLevel());
+
+		ImGui::InputInt("Current Level", &CLevelScheduler::gThis->currentLevelID);
+		// End the ImGui window
+		ImGui::End();
+	}
+
 	static Debug::Setting<bool> gDisableClusterRendering = { "Disable Cluster Rendering", false };
 	static Debug::Setting<bool> gForceAnimMatrixIdentity = { "Force animation matrix to identity", false };
 	static Debug::Setting<bool> gEnableEmulatedRendering = { "Enable Emulated Rendering", false };
@@ -508,6 +520,7 @@ namespace Debug {
 		{"Rendering", ShowRenderingMenu },
 		{"Hero", Debug::Hero::ShowMenu, true },
 		{"Sector", ShowSectorMenu, true },
+		{"Level Scheduler", ShowLevelSchedulerMenu, true },
 		{"Memory", ShowMemoryMenu, false },
 		{"Texture", Debug::Texture::ShowMenu, false },
 		{"Mesh", Debug::Mesh::ShowMenu, false },

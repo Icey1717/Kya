@@ -698,7 +698,7 @@ public:
 	virtual void Level_AddAll(struct ByteCode* pByteCode);
 	virtual void Level_ClearAll();
 	virtual void Level_Manage();
-	virtual void Level_ManagePaused() { IMPLEMENTATION_GUARD(); }
+	virtual void Level_ManagePaused();
 	virtual void Level_Draw();
 
 	virtual void Level_PreReset() { IMPLEMENTATION_GUARD(); }
@@ -708,6 +708,8 @@ public:
 	virtual void Level_CheckpointReset();
 
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId);
+
+	virtual void Level_PauseChange(bool bPaused);
 
 	void WillLoadCinematic();
 

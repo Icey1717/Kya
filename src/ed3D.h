@@ -817,6 +817,7 @@ void ed3DHierarchyNodeSetBFCulling(edNODE* pNode, byte bActive);
 ed_3D_Scene* ed3DGetScene(int index);
 
 ulong ed3DComputeHashCode(char* inString);
+bool ed3DComputeScreenCoordinate(float param_1, edF32VECTOR4* pWorldPosition, edF32VECTOR2* pScreenCoordinate, ed_3D_Scene* pScene);
 bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPosition, ed_3D_Scene* pScene);
 ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode);
 ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index);

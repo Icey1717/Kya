@@ -478,7 +478,23 @@ void CActorManager::Level_SectorChange(int oldSectorId, int newSectorId)
 
 void CActorManager::Level_PauseChange(bool bPaused)
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+	int iVar2;
+	CActor* pActor;
+
+	iVar2 = 0;
+	if (0 < this->nbActors) {
+		iVar1 = 0;
+		do {
+			pActor = this->aActors[iVar2];
+			pActor->PauseChange(bPaused);
+
+			iVar2 = iVar2 + 1;
+			iVar1 = iVar1 + 4;
+		} while (iVar2 < this->nbActors);
+	}
+
+	return;
 }
 
 void CActorManager::Level_SaveContext()
@@ -840,7 +856,7 @@ void CActorManager::Level_LoadClassesInfo(struct ByteCode* pMemoryStream)
 	return;
 }
 
-CActor* CActorManager::GetActorByHashcode(int hashCode)
+CActor* CActorManager::GetActorByHashcode(uint hashCode)
 {
 	CActor* pCVar1;
 	int iVar1;

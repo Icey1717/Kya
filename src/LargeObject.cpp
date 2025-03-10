@@ -1,7 +1,7 @@
 #include "LargeObject.h"
 #include <stdlib.h>
 #include "LevelScheduleManager.h"
-#include "PauseManager.h"
+#include "Pause.h"
 #include "CinematicManager.h"
 #include "Rendering/DisplayList.h"
 #include "LocalizationManager.h"
@@ -433,6 +433,30 @@ void CScene::Level_Install(void)
 	return;
 }
 
+
+void CScene::Level_PauseChange(int bPaused)
+{
+	CObjectManager** ppMVar1;
+	int iVar4;
+
+	Timer::GetTimer()->SetTimeScale_001ba6f0(bPaused);
+
+	iVar4 = 0;
+	ppMVar1 = CScene::ptable.aManagers;
+	do {
+		if (*ppMVar1 != (CObjectManager*)0x0) {
+			(*ppMVar1)->Level_PauseChange(bPaused);
+		}
+
+		iVar4 = iVar4 + 1;
+		ppMVar1 = ppMVar1 + 1;
+	} while (iVar4 < 0x18);
+
+	return;
+}
+
+
+
 void edViewportSetClearMask(ed_viewport* pViewport, uint clearMask)
 {
 	pViewport->clearMask = clearMask;
@@ -573,6 +597,13 @@ static void Fade(float param_1, int param_2, int param_3)
 			uVar1 = edVideoIsFadeActive();
 		}
 	}
+	return;
+}
+
+void CScene::SetGlobalPaused_001b8c30(int param_2)
+{
+	this->field_0x48 = param_2;
+
 	return;
 }
 
@@ -841,7 +872,7 @@ void CScene::Level_Manage()
 	return;
 }
 
-void UpdateObjectsMain(void)
+void CScene::Level_Draw(void)
 {
 	CObjectManager** ppMVar1;
 	int iVar2;
@@ -855,7 +886,9 @@ void UpdateObjectsMain(void)
 		iVar2 = iVar2 + 1;
 		ppMVar1 = ppMVar1 + 1;
 	} while (iVar2 < 0x18);
+
 	GlobalDList_AddToView();
+
 	return;
 }
 

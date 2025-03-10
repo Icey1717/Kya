@@ -3,35 +3,11 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "Rendering/DisplayList.h"
 
 #define IMPLEMENTATION_GUARD_DLIST_PATCH(x)
 
 struct DisplayListInternal;
-
-class CGlobalDList {
-public:
-	DisplayListInternal* pDisplayListInternal;
-	int field_0x8;
-	int field_0xc;
-	int field_0x10;
-	int bEnabled;
-	byte field_0x18;
-	byte field_0x19;
-	byte field_0x1a;
-	byte field_0x1b;
-	int field_0x1c;
-
-	inline CGlobalDList() 
-	{
-		this->field_0x8 = -1;
-		this->field_0xc = -1;
-		this->field_0x10 = -1;
-		this->pDisplayListInternal = (DisplayListInternal*)0x0;
-		this->bEnabled = 0;
-	}
-	virtual void Init();
-	virtual void Term() {}
-};
 
 struct S_EYES_BRIGHT_SHADOW;
 

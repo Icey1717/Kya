@@ -107,7 +107,7 @@ public:
 	void UpdateLinkedActors();
 	void Level_LoadClassesInfo(struct ByteCode* pMemoryStream);
 
-	CActor* GetActorByHashcode(int hashCode);
+	CActor* GetActorByHashcode(uint hashCode);
 	void GetActorsByClassID(int classId, CActorsTable* pOutList);
 
 	_linked_actor* FindLinkedActor(CActor* pActor);

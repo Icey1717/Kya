@@ -3157,6 +3157,36 @@ void CAnimation::GetDefaultBoneMatrix(uint boneId, edF32MATRIX4* pDefaultMatrix)
 	return;
 }
 
+void CAnimation::PauseChange(int bIsPaused)
+{
+	int index;
+	CEventTrack* pTrack;
+	int index_00;
+	uint uVar1;
+
+	if (((this->anmBinMetaAnimator).aAnimData)->animPlayState == 1) {
+		index_00 = 0;
+		for (uVar1 = this->count_0x2c; uVar1 != 0; uVar1 = uVar1 >> 1) {
+			if ((uVar1 & 1) != 0) {
+				index = this->anmBinMetaAnimator.GetAnimEventTrackID(index_00);
+				if (index != -1) {
+					pTrack = CScene::ptable.g_TrackManager_004516b4->GetTrack(index);
+					if (bIsPaused == 0) {
+						pTrack->Resume();
+					}
+					else {
+						pTrack->Pause();
+					}
+				}
+
+				index_00 = index_00 + 1;
+			}
+		}
+	}
+
+	return;
+}
+
 bool CAnimation::FUN_0017f730()
 {
 	int iVar1;

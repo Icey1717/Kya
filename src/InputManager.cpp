@@ -605,7 +605,7 @@ void CPlayerInput::UpdateOne(float delta)
 					this->aButtons[i].releasedDuration = 0.0f;
 
 
-					if ((this->releasedBitfield & KEY_START) != 0) {
+					if ((this->releasedBitfield & PAD_BITMASK_START) != 0) {
 						this->aButtons[i].releasedDuration = 0.0f;
 					}
 				}

@@ -1,6 +1,6 @@
 #include "BootData.h"
 #include "edBankBuffer.h"
-#include "PauseManager.h"
+#include "Pause.h"
 #include "edText.h"
 #include "Rendering/edCTextFont.h"
 #include "EdenLib/edText/sources/edTextResources.h"
@@ -69,6 +69,7 @@ char* BootBitmapNames[23] = {
 };
 
 CSprite BootBitmaps[23] = {};
+ushort USHORT_ARRAY_0048fc60[256] = {};
 
 void InstallBootData(void)
 {
@@ -124,36 +125,38 @@ void InstallBootData(void)
 	NAME_NEXT_OBJECT(sz_MediumFontFileName_00448b60);
 	edTextInstallFont(BootDataFont);
 	if ((FontPacked_2C*)BootDataFont->pSubData != (FontPacked_2C*)0x0) {
-		//BootDataFont->pSubData->pOverrideData = USHORT_ARRAY_0048fc60;
+		LOAD_SECTION_CAST(FontPacked_2C*, BootDataFont->pSubData)->pOverrideData = USHORT_ARRAY_0048fc60;
 	}
-	//USHORT_ARRAY_0048fc60[156] = 0x153;
-	//USHORT_ARRAY_0048fc60[241] = 0xf1;
-	//USHORT_ARRAY_0048fc60[231] = 0xe7;
-	//USHORT_ARRAY_0048fc60[199] = 199;
-	//USHORT_ARRAY_0048fc60[220] = 0xdc;
-	edTextResources.BitmapAdd("MAGIC", &BootBitmaps[0].pMaterialInfo);
-	edTextResources.BitmapAdd("CATCH", &BootBitmaps[1].pMaterialInfo);
-	edTextResources.BitmapAdd("ACTION", &BootBitmaps[2].pMaterialInfo);
-	edTextResources.BitmapAdd("JUMP", &BootBitmaps[3].pMaterialInfo);
-	edTextResources.BitmapAdd("CROUCH", &BootBitmaps[6].pMaterialInfo);
-	edTextResources.BitmapAdd("SNEAK", &BootBitmaps[6].pMaterialInfo);
-	edTextResources.BitmapAdd("VIEW", &BootBitmaps[5].pMaterialInfo);
-	edTextResources.BitmapAdd("MAP", &BootBitmaps[4].pMaterialInfo);
-	edTextResources.BitmapAdd("INVENT", &BootBitmaps[7].pMaterialInfo);
-	edTextResources.BitmapAdd("CAMERA", &BootBitmaps[10].pMaterialInfo);
-	edTextResources.BitmapAdd("CONTROL", &BootBitmaps[10].pMaterialInfo);
-	edTextResources.BitmapAdd("MONEY", &BootBitmaps[0x15].pMaterialInfo);
-	edTextResources.BitmapAdd("BACK", &BootBitmaps[0].pMaterialInfo);
-	edTextResources.BitmapAdd("VALID", &BootBitmaps[3].pMaterialInfo);
-	edTextResources.BitmapAdd("VALDSAFE", &BootBitmaps[1].pMaterialInfo);
-	edTextResources.BitmapAdd("UDLR", &BootBitmaps[0xb].pMaterialInfo);
-	edTextResources.BitmapAdd("LR", &BootBitmaps[0xc].pMaterialInfo);
-	edTextResources.BitmapAdd("STIK_ROT", &BootBitmaps[9].pMaterialInfo);
-	edTextResources.BitmapAdd("UP", &BootBitmaps[0xd].pMaterialInfo);
-	edTextResources.BitmapAdd("RIGHT", &BootBitmaps[0xe].pMaterialInfo);
-	edTextResources.BitmapAdd("LEFT", &BootBitmaps[0xf].pMaterialInfo);
-	edTextResources.BitmapAdd("DOWN", &BootBitmaps[0x10].pMaterialInfo);
-	edTextResources.BitmapAdd("HELP", &BootBitmaps[8].pMaterialInfo);
+	USHORT_ARRAY_0048fc60[156] = 0x153;
+	USHORT_ARRAY_0048fc60[241] = 0xf1;
+	USHORT_ARRAY_0048fc60[231] = 0xe7;
+	USHORT_ARRAY_0048fc60[199] = 199;
+	USHORT_ARRAY_0048fc60[220] = 0xdc;
+
+	edTextResources.BitmapAdd("MAGIC", &BootBitmaps[0].textBitmap);
+	edTextResources.BitmapAdd("CATCH", &BootBitmaps[1].textBitmap);
+	edTextResources.BitmapAdd("ACTION", &BootBitmaps[2].textBitmap);
+	edTextResources.BitmapAdd("JUMP", &BootBitmaps[3].textBitmap);
+	edTextResources.BitmapAdd("CROUCH", &BootBitmaps[6].textBitmap);
+	edTextResources.BitmapAdd("SNEAK", &BootBitmaps[6].textBitmap);
+	edTextResources.BitmapAdd("VIEW", &BootBitmaps[5].textBitmap);
+	edTextResources.BitmapAdd("MAP", &BootBitmaps[4].textBitmap);
+	edTextResources.BitmapAdd("INVENT", &BootBitmaps[7].textBitmap);
+	edTextResources.BitmapAdd("CAMERA", &BootBitmaps[10].textBitmap);
+	edTextResources.BitmapAdd("CONTROL", &BootBitmaps[10].textBitmap);
+	edTextResources.BitmapAdd("MONEY", &BootBitmaps[0x15].textBitmap);
+	edTextResources.BitmapAdd("BACK", &BootBitmaps[0].textBitmap);
+	edTextResources.BitmapAdd("VALID", &BootBitmaps[3].textBitmap);
+	edTextResources.BitmapAdd("VALDSAFE", &BootBitmaps[1].textBitmap);
+	edTextResources.BitmapAdd("UDLR", &BootBitmaps[0xb].textBitmap);
+	edTextResources.BitmapAdd("LR", &BootBitmaps[0xc].textBitmap);
+	edTextResources.BitmapAdd("STIK_ROT", &BootBitmaps[9].textBitmap);
+	edTextResources.BitmapAdd("UP", &BootBitmaps[0xd].textBitmap);
+	edTextResources.BitmapAdd("RIGHT", &BootBitmaps[0xe].textBitmap);
+	edTextResources.BitmapAdd("LEFT", &BootBitmaps[0xf].textBitmap);
+	edTextResources.BitmapAdd("DOWN", &BootBitmaps[0x10].textBitmap);
+	edTextResources.BitmapAdd("HELP", &BootBitmaps[8].textBitmap);
+
 	edTextResources.CallbackAdd("RED", gTextCallback_Red);
 	edTextResources.CallbackAdd("GREEN", gTextCallback_Green);
 	edTextResources.CallbackAdd("BLUE", gTextCallback_Blue);
@@ -167,6 +170,7 @@ void InstallBootData(void)
 	edTextResources.CallbackAdd("ALPHA50", gTextCallback_Alpha50);
 	edTextResources.CallbackAdd("ALPHA75", gTextCallback_Alpha75);
 	edTextResources.CallbackAdd("RESET", NULL);
+
 	return;
 }
 

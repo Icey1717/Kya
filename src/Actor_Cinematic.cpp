@@ -373,6 +373,11 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 	return;
 }
 
+void CBehaviourCinematic::PauseChange(int bPaused)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	CActorCinematic* pCVar1;

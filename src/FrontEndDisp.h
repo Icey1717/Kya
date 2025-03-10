@@ -89,10 +89,4 @@ struct CFrontendDisplay : public CFrontend {
 	undefined field_0x7f;
 };
 
-struct ed_3D_Scene;
-
-namespace Frontend {
-	extern ed_3D_Scene* _scene_handle;
-}
-
 #endif // FRONTEND_DISP_H

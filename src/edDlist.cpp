@@ -396,7 +396,6 @@ void edDListSwapList(void)
 		if (gNbDList_3D[gCurFlushState] <= displayListIndex) break;
 		pDVar1 = pDisplayListArray[displayListIndex];
 		if (((pDVar1->flags_0x0 & 4) == 0) && ((pDVar1->flags_0x0 & 0x100) == 0)) {
-			IMPLEMENTATION_GUARD_LOG(); // Check
 			pDVar1->subCommandBufferCount = 0;
 			pDVar1->pRenderCommands = (edpkt_data*)pDVar1->pCommandBuffer;
 			pDVar1->field_0x10 = (edpkt_data*)pDVar1->pCommandBuffer;

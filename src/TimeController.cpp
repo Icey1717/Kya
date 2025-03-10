@@ -1,5 +1,6 @@
 #include "TimeController.h"
 #include "EdenLib/edSys/sources/EdSystem.h"
+#include "LargeObject.h"
 
 float g_DesiredFrameTime_00483824;
 
@@ -126,4 +127,22 @@ void Timer::ResetGameTimers()
 Timer* Timer::GetTimer()
 {
 	return &gTimer;
+}
+
+void Timer::SetTimeScale_001ba6f0(int bPaused)
+{
+	if (bPaused == 0) {
+		GameFlags = GameFlags & 0xffffffdf;
+		this->timeScale = this->field_0x8;
+	}
+	else {
+		if (this->field_0x8 != this->timeScale) {
+			this->field_0x8 = this->timeScale;
+		}
+
+		this->timeScale = 0.0;
+		GameFlags = GameFlags | 0x20;
+	}
+
+	return;
 }

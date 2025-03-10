@@ -73,7 +73,7 @@ void CFxManager::Level_Init()
 
 void CFxManager::Level_Term()
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_FX();
 }
 
 void CFxManager::Level_AddAll(struct ByteCode* pByteCode)
@@ -335,7 +335,7 @@ void CFxManager::Level_CheckpointReset()
 
 void CFxManager::Level_PauseChange(bool bPaused)
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_FX();
 }
 
 void CFxManager::AddPool(ByteCode* pByteCode)

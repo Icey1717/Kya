@@ -1,7 +1,7 @@
 #include "FrontEndWidget.h"
 #include "Frontend.h"
 #include "MathOps.h"
-#include "PauseManager.h"
+#include "Pause.h"
 #include "LocalizationManager.h"
 #include "edStr.h"
 #include "Rendering/DisplayList.h"

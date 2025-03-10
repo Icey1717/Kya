@@ -882,7 +882,7 @@ void CBehaviourWeaponPistol::Begin(CActor* pOwner, int newState, int newAnimatio
 
 void CBehaviourWeaponPistol::DrawBullets()
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_FX();
 }
 
 void CBehaviourWeaponRpg::Create(ByteCode* pByteCode)

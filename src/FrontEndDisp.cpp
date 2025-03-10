@@ -2,7 +2,7 @@
 #include "edBankBuffer.h"
 #include "edVideo/VideoB.h"
 #include "edVideo/VideoD.h"
-#include "PauseManager.h"
+#include "Pause.h"
 #include "edVideo/Viewport.h"
 
 #include <string.h>
@@ -109,10 +109,6 @@ char* g_FrontendSoundFiles_0040ec90[5] =
 	"takeMoney.vag",
 };
 
-namespace Frontend {
-	ed_3D_Scene* _scene_handle = NULL;
-}
-
 CFrontendLifeGauge gFrontendLifeGauge;
 CFrontendMagicGauge gMagicGauge;
 CFrontendAction gFrontendAction;
@@ -179,7 +175,7 @@ void CFrontendDisplay::Game_Init()
 	pCVar3 = edViewportNew(&local_8, pVidModeDataA, pVidModeDataB, 2);
 	this->pViewport = pCVar3;
 	edViewportSetBackgroundColor(this->pViewport, 0, 0, 0);
-	Frontend::_scene_handle = ed3DSceneCreate(&CCameraManager::_gFrontEndCamera, this->pViewport, 1);
+	CFrontend::_scene_handle = ed3DSceneCreate(&CCameraManager::_gFrontEndCamera, this->pViewport, 1);
 
 	edF32Matrix4SetIdentityHard(&this->field_0x10);
 	iVar5 = 0;
@@ -236,7 +232,7 @@ void CFrontendDisplay::Level_Init()
 
 	//(*(code*)this->pManagerFunctionData[1].field_0x0)(this, 4, &this->field_0x54);
 
-	ed3DSceneComputeCameraToScreenMatrix(Frontend::_scene_handle, &this->field_0x10);
+	ed3DSceneComputeCameraToScreenMatrix(CFrontend::_scene_handle, &this->field_0x10);
 
 	return;
 }

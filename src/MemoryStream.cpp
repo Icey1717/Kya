@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-ulong ByteCode::BuildU64(int param_1, int param_2)
+ulong ByteCode::BuildU64(uint param_1, uint param_2)
 {
 	return (ulong)param_1 & 0xffffffffU | (ulong)param_2 << 0x20;
 }

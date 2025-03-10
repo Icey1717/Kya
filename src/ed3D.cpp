@@ -14901,6 +14901,33 @@ bool ed3DComputeSceneCoordinate(edF32VECTOR2* pOutScreenCoord, edF32VECTOR4* pPo
 	return 0.0f < local_90.z;
 }
 
+bool ed3DComputeScreenCoordinate(float param_1, edF32VECTOR4* pWorldPosition, edF32VECTOR2* pScreenCoordinate, ed_3D_Scene* pScene)
+{
+	edFCamera* pCamera;
+	float fVar1;
+	float fVar2;
+	edF32VECTOR4 local_90;
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 eStack64;
+
+	if (0.0f < param_1) {
+		edF32Matrix4SetIdentityHard(&eStack128);
+		eStack128.cc = -1.0f;
+		pCamera = pScene->pCamera;
+		fVar1 = edFCameraGetFov(pCamera);
+		fVar2 = edFCameraGetRatio(pCamera);
+		edF32Matrix4MulF32Matrix4Hard(&eStack64, &pScene->pCamera->transformMatrix, &eStack128);
+		local_90.y = pScreenCoordinate->y * param_1 * fVar1;
+		local_90.w = 1.0f;
+		local_90.x = pScreenCoordinate->x * fVar2 * param_1 * fVar1;
+		local_90.z = param_1;
+
+		edF32Matrix4MulF32Vector4Hard(pWorldPosition, &eStack64, &local_90);
+	}
+
+	return 0.0f < param_1;
+}
+
 ed_g2d_material* ed3DG2DGetG2DMaterial(ed_g2d_manager* pManager, ulong hashCode)
 {
 	ed_hash_code* pHashCode;

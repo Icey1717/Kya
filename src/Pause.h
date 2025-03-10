@@ -28,6 +28,7 @@ typedef enum EPauseMenu {
 struct CSimpleMenu;
 
 typedef uint(*DrawMenuFuncPtr)(CSimpleMenu*, uint);
+typedef void(*ActionFuncPtr)(int);
 
 uint DrawGameMenu(CSimpleMenu* pMenu, uint input);
 
@@ -41,15 +42,18 @@ struct CSimpleMenu {
 public:
 	CSimpleMenu();
 	void reset();
-	void SetMode(EPauseMenu mode);
 
 	void set_vertical_position(int verticalPos);
+	void set_vertical_spacing(int verticalSpacing);
 
 	float draw_func(float param_2);
 
 	void draw_option(char* pMessage, uint color);
 	bool draw_option_type_page(ulong helpMsgId, ulong msgId, EPauseMenu mode, int param_5, uint color);
 	bool draw_option_type_page(ulong helpMsgId, char* pMessage, EPauseMenu mode, int param_5, uint color);
+	bool draw_option(char* pMsg, ActionFuncPtr pFunc, int slotID, int param_5);
+
+	bool draw_action(ulong actionMsgId, ActionFuncPtr pFunc, int slotID, int param_5);
 
 	void set_font_help(struct edCTextFont* pFont);
 	void set_font_message(struct edCTextFont* pFont);
@@ -76,6 +80,8 @@ public:
 	virtual void on_cancel();
 	virtual void on_change_selection();
 
+	float get_time_in_state();
+
 	struct CMessageFile* pTranslatedTextData;
 	struct edCTextFont* pFontA;
 	struct edCTextFont* pFontB;
@@ -93,8 +99,8 @@ public:
 	int horizontalPos;
 	int verticalPos;
 	int horizontalAllignment;
-	undefined4 field_0x3c;
-	undefined4 pFunc_0x40;
+	undefined4 verticalSpacing;
+	ActionFuncPtr pFunc_0x40;
 	undefined4 slotID_0x44;
 	enum EPauseMenu currentPage;
 	int selectedIndex;
@@ -145,6 +151,8 @@ public:
 	virtual void Level_Draw();
 	// End Manager
 
+	void FUN_001b0860(int param_2);
+
 	int currentAreaIndex;
 	int totalAreaCount;
 	byte field_0xc;
@@ -177,7 +185,7 @@ public:
 	CSplashScreen();
 
 	bool Init(float param_1, char* filePath);
-	bool Manage(ulong param_2, bool param_3, bool param_4);
+	bool Manage(uint param_2, bool param_3, bool param_4);
 	void SetDrawLocation(float x, float y, float z, float w);
 
 	char* pTextureFileData;
@@ -207,6 +215,27 @@ struct PauseStaticObj {
 	uint field_0x1c;
 };
 
+void PauseEnter(EPauseMenu mode);
+void PauseLeave();
+void ResumeGame(int);
+bool UnpauseBlocked();
+
+void HelpEnter();
+void HelpLeave();
+
+void MapEnter();
+void MapLeave();
+
 extern CSettings gSettings;
+
+class CSimpleMenuPause : public CSimpleMenu
+{
+public:
+	virtual bool disappear_draw();
+
+	virtual void set_mode(EPauseMenu mode);
+};
+extern CSimpleMenuPause gPauseMenu;
+extern int gDebugLevelCheatEnabled_00449824;
 
 #endif // _PAUSEMANAGER_H

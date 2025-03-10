@@ -89,7 +89,7 @@ void _FadeInit(void)
 	VideoManager.fadeColorR = 0;
 	VideoManager.fadeColorG = 0;
 	VideoManager.fadeColorB = 0;
-	VideoManager.bFadeActive = 0;
+	VideoManager.fadeFlags = 0;
 
 	// GIF TAG
 	VideoManager.listDataAC.field_0x0[0] = SCE_GIF_SET_TAG(
@@ -143,7 +143,7 @@ void _FadeInit(void)
 
 	// RGBAQ
 	VideoManager.listDataAC.field_0x0[12] =
-		(ulong)(int7)((uint7)VideoManager.fadeTimeA << 0x18) | 0x3f80000000000000;
+		(ulong)(int7)((uint7)VideoManager.fadeAlpha << 0x18) | 0x3f80000000000000;
 	VideoManager.listDataAC.field_0x0[13] = SCE_GS_RGBAQ;
 
 	// XYZF2
@@ -413,13 +413,16 @@ void edVideoInit(void)
 	edVideoSetAttribute(&local_20);
 	VideoManager.vblankCount = 0;
 	VideoManager.bWaitingForVSync = 0;
-	VideoManager.field_0x68 = 0;
+	VideoManager.bFadeActive = 0;
+
 #ifdef PLATFORM_PS2
 	_edVideoVSyncCallback(_edVideoSync);
 	_edVideoGSCallback(_edVideoGs);
 	sceGsSyncV(0);
 #endif
+
 	edVideoClearVram(0, 0, 0, 0x80);
+
 #ifdef PLATFORM_PS2
 	_PutFakeDisplayEnv();
 	iVar1 = 0;
@@ -428,6 +431,7 @@ void edVideoInit(void)
 		iVar1 = iVar1 + 1;
 	} while (iVar1 < 0x14);
 #endif
+
 	_VideoUpdateSystemViewport((edSurface*)0x0);
 	_FadeInit();
 	return;

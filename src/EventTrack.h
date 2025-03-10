@@ -31,6 +31,8 @@ public:
 	void Play(float param_1, float param_2, undefined8 param_4, CActor* pActor);
 	void Stop();
 	void Reset();
+	void Pause();
+	void Resume();
 
 	bool FUN_0019f140();
 
