@@ -4,6 +4,10 @@
 
 char* FRONTEND_BANK_NAME = "Frontend";
 
+#ifdef PLATFORM_WIN
+static std::string gDebugTexNames[4];
+#endif
+
 // This one is unused, instead the ones initialized in CScene constructor is used.
 CFrontendBank gFrontendBank;
 
@@ -36,6 +40,10 @@ bool BnkFrontendInstallG2D(char* pData, int size)
 
 	pFrontendBank->texture.aEntries[pFrontendBank->nbTextures].pData = pData;
 	pFrontendBank->texture.aEntries[pFrontendBank->nbTextures].size = size;
+
+#ifdef PLATFORM_WIN
+	gDebugTexNames[pFrontendBank->nbTextures] = ObjectNaming::CopyObjectName();
+#endif
 
 	pFrontendBank->nbTextures = pFrontendBank->nbTextures + 1;
 
@@ -75,7 +83,7 @@ void CFrontendBank::Game_Init()
 	pCurEntry = this->texture.aEntries;
 	if (0 < this->nbTextures) {
 		do {
-			NAME_NEXT_OBJECT("CDEURO/Frontend/BANK_FILE_2D_%d", curIndex);
+			NAME_NEXT_OBJECT(gDebugTexNames[curIndex].c_str());
 			ed3DInstallG2D(pCurEntry->pData, pCurEntry->size, &iStack4, &pCurEntry->manager, 1);
 			curIndex = curIndex + 1;
 			pCurEntry = pCurEntry + 1;
