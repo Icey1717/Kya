@@ -1505,7 +1505,7 @@ void MainInit(int argc,char **argv)
 	pVVar4->field_0x1 = 1;
 	pVVar4->field_0x4 = 0;
 	edVideoInit();
-	SetVideoMode((short)gVideoConfig.omode, (short)gVideoConfig.screenWidth, (short)gVideoConfig.screenHeight, (short)gVideoConfig.field_0x8, 0);
+	SetVideoMode(gVideoConfig.omode, gVideoConfig.screenWidth, gVideoConfig.screenHeight, gVideoConfig.field_0x8, 0);
 	CPlayerInput::ReadConfig(&gIniFile);
 	CScene::CreateScene();
 	Game_Init();

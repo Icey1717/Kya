@@ -118,8 +118,8 @@ public:
 	void Level_Setup(struct ByteCode* pMemoryStream);
 	bool IsFadeTermActive(void);
 
-	bool FUN_001b9340(void);
-	bool FUN_001b9320(void);
+	bool IsCutsceneFadeActive(void);
+	bool IsResetFadeActive(void);
 
 	void LoadFunc_001b87b0(void);
 
@@ -149,6 +149,7 @@ public:
 
 	void SetGlobalPaused_001b8c30(int param_2);
 
+	void SetState(int state);
 	void HandleCurState();
 
 	void InitiateCheckpointReset(int param_2);

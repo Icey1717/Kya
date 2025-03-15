@@ -56,6 +56,10 @@ namespace Renderer
 			glm::mat4 proj;
 		};
 
+		struct FadeConstantBuffer {
+			glm::vec4 fadeColor;
+		};
+
 		glm::mat4 gFinalViewMatrix;
 		glm::mat4 gFinalProjMatrix;
 
@@ -74,6 +78,9 @@ namespace Renderer
 
 		static UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
 		static DynamicUniformBuffer<glm::mat4> gModelBuffer;
+
+		static UniformBuffer<FadeConstantBuffer> gFadeBuffer;
+		static bool bFadeActive = false;
 
 		struct AlphaConstantBuffer {
 			alignas(4) VkBool32 enable; // Use VkBool32 for proper alignment
@@ -631,6 +638,18 @@ namespace Renderer
 			}
 		}
 
+		static void InitFade()
+		{
+			gFadeBuffer.Init();
+
+			for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+				const VkDescriptorBufferInfo vertexDescBufferInfo = gFadeBuffer.GetDescBufferInfo(i);
+
+				DescriptorWriteList writeList;
+				writeList.EmplaceWrite({ 1, EBindingStage::Fragment, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
+				PostProcessing::UpdateDescriptorSets(PostProcessing::Effect::Fade, i, writeList);
+			}
+		}
 	} // Native
 } // Renderer
 
@@ -913,6 +932,8 @@ void Renderer::Native::Setup()
 
 	PostProcessing::Setup();
 	DisplayList::Setup();
+
+	InitFade();
 }
 
 void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent)
@@ -947,6 +968,12 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	{
 		const VkCommandBuffer& cmd = DisplayList::FinalizeCommandBuffer(false);
 		PostProcessing::AddPostProcessEffect(cmd, PostProcessing::Effect::AlphaFix);
+
+		if (bFadeActive) {
+			PostProcessing::AddPostProcessEffect(cmd, PostProcessing::Effect::Fade); // Currently these effects don't chain, so fade also does alpha fix
+			bFadeActive = false;
+		}
+
 		vkEndCommandBuffer(cmd);
 
 		cmdBuffers[1] = cmd;
@@ -1106,4 +1133,12 @@ const VkImageView& Renderer::Native::GetColorImageView()
 bool& Renderer::GetForceAnimMatrixIdentity()
 {
 	return Native::bForceAnimMatrixIdentity;
+}
+
+void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)
+{
+	bFadeActive = true;
+
+	gFadeBuffer.GetBufferData().fadeColor = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 127.0f);
+	gFadeBuffer.Update(GetCurrentFrame());
 }

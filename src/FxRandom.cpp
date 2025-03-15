@@ -8,6 +8,11 @@ CFxRandomScenaricData::CFxRandomScenaricData()
 	return;
 }
 
+void CFxRandomScenaricData::Init()
+{
+	return;
+}
+
 void CFxRandomScenaricData::Create(ByteCode* pByteCode)
 {
 	this->nbData = pByteCode->GetU32();

@@ -1695,12 +1695,12 @@ bool CLifeInterface::Manage()
 	bVar1 = bVar1 != false;
 
 	if (!bVar1) {
-		bVar1 = CScene::_pinstance->FUN_001b9340();
+		bVar1 = CScene::_pinstance->IsCutsceneFadeActive();
 		bVar1 = bVar1 != false;
 	}
 
 	if (!bVar1) {
-		bVar1 = CScene::_pinstance->FUN_001b9320();
+		bVar1 = CScene::_pinstance->IsResetFadeActive();
 		bVar1 = bVar1 != false;
 	}
 

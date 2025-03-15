@@ -240,6 +240,7 @@ void Renderer::Native::PostProcessing::Setup()
 	CreateRenderPass(gRenderPass);
 	gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, false);
 	CreatePipeline(Effect::AlphaFix, "shaders/alphafix.frag.spv");
+	CreatePipeline(Effect::Fade, "shaders/fade.frag.spv");
 	CreateSampler();
 	UpdateDescriptorSets();
 }
@@ -271,6 +272,17 @@ const VkImageView& Renderer::Native::PostProcessing::GetColorImageView()
 	return gFrameBuffer.colorImageView;
 }
 
+void Renderer::Native::PostProcessing::UpdateDescriptorSets(const Effect effect, const int frameIndex, const DescriptorWriteList& writeList)
+{
+	auto& pipeline = gPipelines[effect];
+
+	std::vector<VkWriteDescriptorSet> descriptorWrites = writeList.CreateWriteDescriptorSetList(pipeline.descriptorSets[frameIndex], pipeline.descriptorSetLayoutBindings);
+
+	if (descriptorWrites.size() > 0) {
+		vkUpdateDescriptorSets(GetDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	}
+}
+
 std::string Renderer::Native::PostProcessing::GetEffectName(Effect effect)
 {
 	switch (effect) {
@@ -278,6 +290,8 @@ std::string Renderer::Native::PostProcessing::GetEffectName(Effect effect)
 		return "Greyscale";
 	case Effect::AlphaFix:
 		return "Alpha Fix";
+	case Effect::Fade:
+		return "Fade";
 	default:
 		return "Unknown";
 	}

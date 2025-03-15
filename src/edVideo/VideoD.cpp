@@ -121,7 +121,12 @@ void edVideoPutDrawEnv(void)
 
 void _DrawFade(void)
 {
-
+#ifdef PLATFORM_WIN
+	Renderer::Native::DrawFade(VideoManager.activeFadeColorR, VideoManager.activeFadeColorG,
+		VideoManager.activeFadeColorB, VideoManager.activeFadeAlpha);
+#else
+	IMPLEMENTATION_GUARD();
+#endif
 }
 
 void _ManageFade(void)

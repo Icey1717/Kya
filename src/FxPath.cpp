@@ -27,6 +27,11 @@ void CFxPath::AddAll(ByteCode* pByteCode, CFx* aFx, int count)
 	IMPLEMENTATION_GUARD();
 }
 
+void CFxPath::InitAll(CFx* aFx, int count)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CFxPath::ManageAll(uint count, CFx* aFx)
 {
 	bool bVar1;

@@ -14,6 +14,7 @@ class CFxLod : public CNewFx
 class CFxLodScenaricData
 {
 public:
+	void Init();
 	void Create(ByteCode* pByteCode);
 };
 

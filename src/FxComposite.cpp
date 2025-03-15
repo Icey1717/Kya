@@ -1,6 +1,11 @@
 #include "FxComposite.h"
 #include "MemoryStream.h"
 
+void CFxCompositeScenaricData::Init()
+{
+	return;
+}
+
 CFxCompositeScenaricData::CFxCompositeScenaricData()
 {
 	this->nbData = 0;

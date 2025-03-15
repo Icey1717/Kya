@@ -4,6 +4,7 @@
 #include <string>
 
 #include "VulkanIncludes.h"
+#include "Pipeline.h"
 
 namespace Renderer
 {
@@ -15,11 +16,13 @@ namespace Renderer
 			{
 				Greyscale,
 				AlphaFix,
+				Fade,
 			};
 
 			void Setup();
 			void AddPostProcessEffect(const VkCommandBuffer& cmd, Effect effect);
 			const VkImageView& GetColorImageView();
+			void UpdateDescriptorSets(const Effect effect, const int frameIndex, const DescriptorWriteList& writeList);
 
 			std::string GetEffectName(Effect effect);
 		}

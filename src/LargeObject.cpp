@@ -44,7 +44,13 @@
 #include "PoolAllocators.h"
 #include "FrontEndBank.h"
 
+#define SCENE_STATE_NONE 0x0
+#define SCENE_STATE_CHECKPOINT_FADE_OUT 0x1
+#define SCENE_STATE_CHECKPOINT_FADE_IN 0x2
+#define SCENE_STATE_CHECKPOINT_FADE_IN_IMMEDIATE 0x3
 #define SCENE_STATE_RESET 0x5
+#define SCENE_STATE_EXIT_FADE_OUT 0x6
+#define SCENE_STATE_EXIT_FADE_IN 0x7
 
 CScene* CScene::_pinstance = NULL;
 
@@ -481,24 +487,23 @@ void CScene::Level_Init()
 	Timer* pTimeController;
 	CObjectManager** loadFuncPtr;
 	int loopCounter;
+	
+	SetState(SCENE_STATE_NONE);
+	this->timeInState = 0.0f;
 
-	if (this->curState != 0) {
-		this->timeInState = 0.0;
-		this->curState = 0;
-	}
-	this->timeInState = 0.0;
 	if ((this->pFogClipStream->flags & 1) == 0) {
 		this->fogClipSettingStackSize = this->fogClipSettingStackSize + 1;
 		this->field_0xd8 = this->clipValue_0xe8;
 		this->field_0xdc = this->field_0xec;
 		this->prevFogRGBA = this->fogRGBA;
 		this->prevFogFlags = this->fogFlags;
-		this->field_0xd0 = 0.0;
-		this->field_0xd4 = 0.0;
+		this->field_0xd0 = 0.0f;
+		this->field_0xd4 = 0.0f;
 		loopCounter = this->fogClipSettingStackSize;
 		this->aFogClipStack[loopCounter].pStreamDef = this->pFogClipStream;
 		this->aFogClipStack[loopCounter].field_0x4 = 0.0f;
 	}
+
 	S_STREAM_FOG_DEF* pSVar1 = this->pFogClipStream;
 	this->field_0xd8 = pSVar1->clipValue_0x0;
 	this->field_0xdc = pSVar1->field_0x4;
@@ -522,7 +527,7 @@ void CScene::Level_Init()
 	pTimeController->ResetGameTimers();
 	ed3DResetTime();
 	this->field_0x38 = 1;
-	//EffectsManager::Level_PreInit((EffectsManager*)Scene::ptable[22]);
+	ptable.g_EffectsManager_004516b8->Level_PreInit();
 	loopCounter = 0;
 	/* Init loop Initially points at 006db5b0 */
 	loadFuncPtr = CScene::ptable.aManagers;
@@ -550,53 +555,56 @@ void CScene::Level_Init()
 	return;
 }
 
-static void Fade(float param_1, int param_2, int param_3)
+static void Fade(float speed, int bFadeIn, int bWaitForFade)
 {
 	ulong uVar1;
 	float fVar2;
-	uint uVar3;
+	uint fadeSpeed;
 
 	if (gVideoConfig.isNTSC == 1) {
-		fVar2 = param_1 * 50.0f;
+		fVar2 = speed * 50.0f;
 		if (fVar2 < 2.147484e+09f) {
-			uVar3 = (uint)fVar2;
+			fadeSpeed = (uint)fVar2;
 		}
 		else {
-			uVar3 = (int)(fVar2 - 2.147484e+09f) | 0x80000000;
+			fadeSpeed = (int)(fVar2 - 2.147484e+09f) | 0x80000000;
 		}
 	}
 	else {
-		fVar2 = param_1 * 60.0f;
+		fVar2 = speed * 60.0f;
 		if (fVar2 < 2.147484e+09f) {
-			uVar3 = (uint)fVar2;
+			fadeSpeed = (uint)fVar2;
 		}
 		else {
-			uVar3 = (int)(fVar2 - 2.147484e+09f) | 0x80000000;
+			fadeSpeed = (int)(fVar2 - 2.147484e+09f) | 0x80000000;
 		}
 	}
 
-	if (uVar3 == 0) {
-		uVar3 = 1;
+	if (fadeSpeed == 0) {
+		fadeSpeed = 1;
 	}
 
 	edVideoSetFadeColor(0, 0, 0);
-	if (param_2 == 1) {
+
+	if (bFadeIn == 1) {
 		edVideoSetFadeColor(0, 0, 0);
-		edVideoSetFade(1.0);
-		edVideoSetFadeIn(uVar3);
+		edVideoSetFade(1.0f);
+		edVideoSetFadeIn(fadeSpeed);
 	}
 	else {
 		edVideoSetFadeColor(0, 0, 0);
-		edVideoSetFade(0.0);
-		edVideoSetFadeOut(uVar3, 1);
+		edVideoSetFade(0.0f);
+		edVideoSetFadeOut(fadeSpeed, 1);
 	}
-	if (param_3 != 0) {
+
+	if (bWaitForFade != 0) {
 		uVar1 = edVideoIsFadeActive();
 		while (uVar1 != 0) {
 			edVideoFlip();
 			uVar1 = edVideoIsFadeActive();
 		}
 	}
+
 	return;
 }
 
@@ -607,94 +615,63 @@ void CScene::SetGlobalPaused_001b8c30(int param_2)
 	return;
 }
 
+#define FADE_DIRECTION_IN 1
+#define FADE_DIRECTION_OUT 2
+
+void CScene::SetState(int state)
+{
+	if (this->curState != state) {
+		this->timeInState = 0.0f;
+		this->curState = state;
+	}
+}
+
 void CScene::HandleCurState()
 {
-	Timer* pTVar1;
-	ulong uVar2;
-
 	HandleFogAndClippingSettings();
 
-	pTVar1 = GetTimer();
-	this->timeInState = this->timeInState + pTVar1->lastFrameTime;
+	this->timeInState = this->timeInState + GetTimer()->lastFrameTime;
 
 	switch (this->curState) {
-	case 1:
-		Fade(1.0f, 2, 0);
-
-		if (this->curState != 2) {
-			this->timeInState = 0.0f;
-			this->curState = 2;
-		}
+	case SCENE_STATE_CHECKPOINT_FADE_OUT:
+		Fade(1.0f, FADE_DIRECTION_OUT, 0);
+		SetState(2);
 		break;
-	case 2:
-		uVar2 = edVideoIsFadeActive();
-		if (uVar2 == 0) {
+	case SCENE_STATE_CHECKPOINT_FADE_IN:
+		if (edVideoIsFadeActive() == 0) {
 			GameFlags = GameFlags & 0xfffffe7f;
-
 			Level_CheckpointReset();
-
-			Fade(1.0f, 1, 0);
-
-			if (this->curState != 0) {
-				this->timeInState = 0.0f;
-				this->curState = 0;
-			}
+			Fade(1.0f, FADE_DIRECTION_IN, 0);
+			SetState(SCENE_STATE_NONE);
 		}
 		break;
-	case 3:
+	case SCENE_STATE_CHECKPOINT_FADE_IN_IMMEDIATE:
 		GameFlags = GameFlags & 0xfffffe7f;
-
 		Level_CheckpointReset();
-
-		Fade(1.0f, 1, 0);
-
-		if (this->curState != 0) {
-			this->timeInState = 0.0f;
-			this->curState = 0;
-		}
+		Fade(1.0f, FADE_DIRECTION_IN, 0);
+		SetState(SCENE_STATE_NONE);
 		break;
 	case 4:
-		Fade(1.0f, 2, 0);
-
-		if (this->curState != SCENE_STATE_RESET) {
-			this->timeInState = 0.0f;
-			this->curState = SCENE_STATE_RESET;
-		}
+		Fade(1.0f, FADE_DIRECTION_OUT, 0);
+		SetState(SCENE_STATE_RESET);
 		break;
 	case SCENE_STATE_RESET:
-		uVar2 = edVideoIsFadeActive();
-		if (uVar2 == 0) {
+		if (edVideoIsFadeActive() == 0) {
 			GameFlags = GameFlags & 0xfffffe7f;
-
 			Level_Reset();
-
-			Fade(1.0f, 1, 0);
-
-			if (this->curState != 0) {
-				this->timeInState = 0.0f;
-				this->curState = 0;
-			}
+			Fade(1.0f, FADE_DIRECTION_IN, 0);
+			SetState(SCENE_STATE_NONE);
 		}
 		break;
-	case 6:
-		Fade(1.0f, 2, 0);
-
-		if (this->curState != 7) {
-			this->timeInState = 0.0f;
-			this->curState = 7;
-		}
+	case SCENE_STATE_EXIT_FADE_OUT:
+		Fade(1.0f, FADE_DIRECTION_OUT, 0);
+		SetState(SCENE_STATE_EXIT_FADE_IN);
 		break;
-	case 7:
-		uVar2 = edVideoIsFadeActive();
-		if (uVar2 == 0) {
-			Fade(1.0f, 1, 0);
-
+	case SCENE_STATE_EXIT_FADE_IN:
+		if (edVideoIsFadeActive() == 0) {
+			Fade(1.0f, FADE_DIRECTION_IN, 0);
 			GameFlags = GameFlags | GAME_REQUEST_TERM;
-
-			if (this->curState != 0) {
-				this->timeInState = 0.0f;
-				this->curState = 0;
-			}
+			SetState(SCENE_STATE_NONE);
 		}
 	}
 	return;
@@ -738,16 +715,16 @@ void CScene::Level_CheckpointReset(void)
 	return;
 }
 
-void CScene::InitiateCheckpointReset(int param_2)
+void CScene::InitiateCheckpointReset(int bFadeOut)
 {
-	if (this->curState == 0) {
-		if (param_2 == 0) {
+	if (this->curState == SCENE_STATE_NONE) {
+		if (bFadeOut == 0) {
 			this->timeInState = 0.0f;
-			this->curState = 3;
+			this->curState = SCENE_STATE_CHECKPOINT_FADE_IN_IMMEDIATE;
 		}
 		else {
 			this->timeInState = 0.0f;
-			this->curState = 1;
+			this->curState = SCENE_STATE_CHECKPOINT_FADE_OUT;
 		}
 
 		GameFlags = GameFlags | GAME_CUTSCENE_80;
@@ -964,12 +941,12 @@ bool CScene::IsFadeTermActive()
 	return (this->curState - 6U) < 2;
 }
 
-bool CScene::FUN_001b9340(void)
+bool CScene::IsCutsceneFadeActive(void)
 {
 	return (this->curState - 1U) < 3;
 }
 
-bool CScene::FUN_001b9320(void)
+bool CScene::IsResetFadeActive(void)
 {
 	return (this->curState - 4U) < 2;
 }
@@ -1230,15 +1207,15 @@ void CScene::SetFadeStateTerm(bool bFadeOut)
 {
 	if (1 < this->curState - 6U) {
 		if (bFadeOut == false) {
-			if (this->curState != 7) {
+			if (this->curState != SCENE_STATE_EXIT_FADE_IN) {
 				this->timeInState = 0.0f;
-				this->curState = 7;
+				this->curState = SCENE_STATE_EXIT_FADE_IN;
 			}
 		}
 		else {
-			if (this->curState != 6) {
+			if (this->curState != SCENE_STATE_EXIT_FADE_OUT) {
 				this->timeInState = 0.0f;
-				this->curState = 6;
+				this->curState = SCENE_STATE_EXIT_FADE_OUT;
 			}
 		}
 

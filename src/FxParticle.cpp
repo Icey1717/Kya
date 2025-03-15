@@ -133,6 +133,10 @@ bool CFxParticleManager::ReadPrtResChunk(ByteCode* pByteCode)
 	return bSuccess;
 }
 
+void CFxParticleScenaricData::Init()
+{
+	return;
+}
 
 void CFxParticleScenaricData::Create(ByteCode* pByteCode)
 {

@@ -22,27 +22,31 @@ edSurface* VideoGetZbuffer(void)
 	return pzbuf;
 }
 
-void CleanupFunc_001ba9e0(void)
+void ClearVideoMode(void)
 {
 	if (psurf != (edSurface*)0x0) {
 		edSurfaceDel(psurf);
 		psurf = (edSurface*)0x0;
 	}
+
 	if (pzbuf != (edSurface*)0x0) {
 		edSurfaceDel(pzbuf);
 		pzbuf = (edSurface*)0x0;
 	}
+
 	return;
 }
 
-void edVideoSetBackgroundColor(byte param_1, byte param_2, byte param_3)
+void edVideoSetBackgroundColor(byte r, byte g, byte b)
 {
-	VideoManager.params18.r = param_1;
-	VideoManager.params18.g = param_2;
-	VideoManager.params18.b = param_3;
+	VideoManager.params18.r = r;
+	VideoManager.params18.g = g;
+	VideoManager.params18.b = b;
+
 	if (VideoManager.pCamera != (ed_viewport*)0x0) {
-		edViewportSetBackgroundColor(VideoManager.pCamera, param_1, param_2, param_3);
+		edViewportSetBackgroundColor(VideoManager.pCamera, r, g, b);
 	}
+
 	return;
 }
 
@@ -113,66 +117,73 @@ byte edVideoIsFadeActive(void)
 
 void edVideoSetOffset(short inDX, short inDY)
 {
-	VideoManager.params18.DX =
-		inDX * (short)(0xa00 / VideoManager.screenWidth);
+	VideoManager.params18.DX = inDX * (short)(0xa00 / VideoManager.screenWidth);
 	VideoManager.params18.DY = inDY;
 	_SetVideoEnv();
+
 	return;
 }
 
 void SetVideoMode(short omode, short screenWidth, short screenHeight, short vidMode1, int param_5)
 {
 	edVideoConfig* pVVar1;
-	ed_surface_desc local_30;
-	ed_video_attr local_20;
+	ed_surface_desc surfaceDesc;
+	ed_video_attr videoAttr;
 
-	local_20.field_0xf = 1;
-	local_20.isNTSC = (ushort)g_isNTSC;
-	local_20.inter = SCE_GS_INTERLACE;
-	local_20.field_0xb = 0;
-	local_20.field_0xc = 0;
-	local_20.bVSyncForever = 0;
-	local_20.maxVblank_0xe = 1;
-	local_20.field_0x10[0] = '\0';
-	local_20.screenWidth = screenWidth;
-	local_20.screenHeight = screenHeight;
-	local_20.vidMode1 = vidMode1;
-	local_20.omode = omode;
-	edVideoSetAttribute(&local_20);
+	videoAttr.field_0xf = 1;
+	videoAttr.isNTSC = (ushort)g_isNTSC;
+	videoAttr.inter = SCE_GS_INTERLACE;
+	videoAttr.field_0xb = 0;
+	videoAttr.field_0xc = 0;
+	videoAttr.bVSyncForever = 0;
+	videoAttr.maxVblank_0xe = 1;
+	videoAttr.field_0x10[0] = '\0';
+	videoAttr.screenWidth = screenWidth;
+	videoAttr.screenHeight = screenHeight;
+	videoAttr.vidMode1 = vidMode1;
+	videoAttr.omode = omode;
+	edVideoSetAttribute(&videoAttr);
+
 	if (psurf != (edSurface*)0x0) {
 		edSurfaceDel(psurf);
 	}
-	local_30.pixelStoreMode = SCE_GS_PSMCT32;
-	local_30.field_0x6 = 2;
-	local_30.flags_0x8 = 0x24;
-	local_30.bUseGlobalFrameBuffer = false;
-	local_30.screenWidth = screenWidth;
-	local_30.screenHeight = screenHeight;
+
+	surfaceDesc.pixelStoreMode = SCE_GS_PSMCT32;
+	surfaceDesc.field_0x6 = 2;
+	surfaceDesc.flags_0x8 = 0x24;
+	surfaceDesc.bUseGlobalFrameBuffer = false;
+	surfaceDesc.screenWidth = screenWidth;
+	surfaceDesc.screenHeight = screenHeight;
 	pVVar1 = edVideoGetConfig();
 	if (pVVar1->field_0x1 == 0) {
-		local_30.frameBufferCount = 1;
+		surfaceDesc.frameBufferCount = 1;
 	}
 	else {
-		local_30.frameBufferCount = 2;
+		surfaceDesc.frameBufferCount = 2;
 	}
-	psurf = edSurfaceNew(&local_30);
+	psurf = edSurfaceNew(&surfaceDesc);
+
 	if (pzbuf != (edSurface*)0x0) {
 		edSurfaceDel(pzbuf);
 	}
+
 	if (param_5 == 2) {
-		local_30.pixelStoreMode = SCE_GS_PSMCT16;
+		surfaceDesc.pixelStoreMode = SCE_GS_PSMCT16;
 	}
 	else {
-		local_30.pixelStoreMode = SCE_GS_PSMCT32;
+		surfaceDesc.pixelStoreMode = SCE_GS_PSMCT32;
 	}
-	local_30.field_0x6 = 2;
-	local_30.flags_0x8 = 8;
-	local_30.bUseGlobalFrameBuffer = false;
-	local_30.frameBufferCount = 1;
-	local_30.screenWidth = screenWidth;
-	local_30.screenHeight = screenHeight;
-	pzbuf = edSurfaceNew(&local_30);
+
+	surfaceDesc.field_0x6 = 2;
+	surfaceDesc.flags_0x8 = 8;
+	surfaceDesc.bUseGlobalFrameBuffer = false;
+	surfaceDesc.frameBufferCount = 1;
+	surfaceDesc.screenWidth = screenWidth;
+	surfaceDesc.screenHeight = screenHeight;
+	pzbuf = edSurfaceNew(&surfaceDesc);
+
 	edVideoSetBackgroundColor(0, 0, 0);
-	edVideoSetOffset((short)gVideoConfig.offsetX, (short)gVideoConfig.offsetY);
+	edVideoSetOffset(gVideoConfig.offsetX, gVideoConfig.offsetY);
+
 	return;
 }

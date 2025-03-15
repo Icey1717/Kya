@@ -338,6 +338,37 @@ void CFxManager::Level_PauseChange(bool bPaused)
 	IMPLEMENTATION_GUARD_FX();
 }
 
+void CFxManager::Level_PreInit()
+{
+	CFx* pFx;
+	uint* pCount;
+	uint uVar3;
+	CFx** ppCurFx;
+
+	pCount = this->orderedCountArray + this->count_0x4;
+	ppCurFx = this->aFx + this->count_0x4;
+	if (this->aFx < ppCurFx) {
+		do {
+			ppCurFx = ppCurFx + -1;
+			pFx = *ppCurFx;
+			pCount = pCount + -1;
+			if (pFx != (CFx*)0x0) {
+				pFx->InitAll(pFx, *pCount);
+			}
+		} while (this->aFx < ppCurFx);
+	}
+
+	uVar3 = 0;
+	do {
+		if (this->aEffectCategory[uVar3] != (CFxPoolManagerFather*)0x0) {
+			this->aEffectCategory[uVar3]->Init();
+		}
+		uVar3 = uVar3 + 1;
+	} while (uVar3 < 7);
+
+	return;
+}
+
 void CFxManager::AddPool(ByteCode* pByteCode)
 {
 	uint uVar3;

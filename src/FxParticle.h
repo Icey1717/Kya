@@ -22,6 +22,7 @@ public:
 		int field_0x4;
 	};
 
+	void Init();
 	void Create(ByteCode* pByteCode);
 
 	uint field_0x0;

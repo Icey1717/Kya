@@ -1054,7 +1054,6 @@ void CCinematic::Start()
 	edNODE* pMVar9;
 	int* piVar10;
 	edF32MATRIX4* peVar11;
-	long lVar12;
 	edF32MATRIX4* peVar13;
 	int** ppiVar14;
 	int iVar15;
@@ -1076,8 +1075,10 @@ void CCinematic::Start()
 	CUTSCENE_LOG(LogLevel::Info, "Cinematic::Start");
 
 	this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
+
 	if (this->state == CS_Stopped) {
 		bShouldPlay = (this->flags_0x4 & 1) != 0;
+
 		if (bShouldPlay) {
 			bShouldPlay = (this->flags_0x8 & 0x400) != 0;
 		}
@@ -1111,19 +1112,17 @@ void CCinematic::Start()
 					(bShouldPlay = this->pCineBankEntry->get_info(iVar16, &eStack48, (char*)0x0), bShouldPlay != false)) &&
 					(bShouldPlay = ((edCinematic*)eStack48.fileBufferStart)->ExtractVersions(eStack48.size, &cinematicLibraryVersion, &cinematicCompilerVersion), bShouldPlay != false)) &&
 					((cinematicLibraryVersion != 0x81 || (cinematicCompilerVersion != 0xa0)))) {
-					/* Cinematic library version: %d (should be %d)\n */
 					edDebugPrintf("Cinematic library version: %d (should be %d)\n", cinematicLibraryVersion, 0x81);
-					/* Cinematic compiler version: %d (should be %d)\n */
 					edDebugPrintf("Cinematic compiler version: %d (should be %d)\n", cinematicCompilerVersion, 0xa0);
 				}
 
 				if (this->defaultAudioTrackId != -1) {
-					lVar12 = this->aAudioTrackIds[CMessageFile::get_default_language()];
-					if (lVar12 == -1) {
-						lVar12 = this->defaultAudioTrackId;
+					int audioTrackId = this->aAudioTrackIds[CMessageFile::get_default_language()];
+					if (audioTrackId == -1) {
+						audioTrackId = this->defaultAudioTrackId;
 					}
 
-					this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(lVar12);
+					this->cinematicLoadObject.BWCinSourceAudio_Obj.SetAudioTrack(audioTrackId);
 				}
 
 				if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
@@ -1217,6 +1216,7 @@ void CCinematic::Start()
 				}
 
 				bShouldPlay = false;
+
 				if ((this->flags_0x8 & 0x800) == 0) {
 					int configCount = this->cineActorConfigCount;
 					int currentConfigIndex = 0;
@@ -1273,6 +1273,7 @@ void CCinematic::Start()
 				}
 
 				pCinematicManager->pCurCinematic = (CCinematic*)0x0;
+
 				if ((this->flags_0x4 & 2) == 0) {
 					this->flags_0x8 = this->flags_0x8 | 0x1400;
 				}
@@ -1286,9 +1287,11 @@ void CCinematic::Start()
 				}
 			}
 			else {
+				/* Cutscene failed to enter load state */
 				g_CinematicManager_0048efc->field_0x28 = this;
 
 				pCinematicManager->startTime = GetTimer()->totalTime;
+
 				if ((this->flags_0x8 & 0x800) == 0) {
 					S_STREAM_NTF_TARGET_SWITCH_LIST* pSwitchList = this->pSwitchListA;
 

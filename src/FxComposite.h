@@ -15,6 +15,7 @@ class CFxCompositeScenaricData
 {
 public:
 	CFxCompositeScenaricData();
+	void Init();
 	void Create(ByteCode* pByteCode);
 
 	uint nbData;

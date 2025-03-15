@@ -38,6 +38,7 @@ class CFx
 public:
 	CFx();
 	virtual void AddAll(ByteCode* pByteCode, CFx* aFx, int count) = 0;
+	virtual void InitAll(CFx* aFx, int count) = 0;
 	virtual void ManageAll(uint count, CFx* aFx) = 0;
 	virtual void Draw() = 0;
 	virtual void CheckpointResetAll(uint count, CFx* aFx) = 0;
@@ -105,6 +106,7 @@ public:
 	{
 	}
 
+	virtual void Init() = 0;
 	virtual void CheckpointReset() = 0;
 	virtual void Manage() = 0;
 	virtual void Play(uint* pCount, s_fx_sort_data* pSortData, CCameraManager* pCameraManager) = 0;
@@ -131,6 +133,15 @@ public:
 		this->aFx = (FxType*)0x0;
 		this->nbScenaricData = 0;
 		this->aScenaricData = 0;
+	}
+
+	virtual void Init()
+	{
+		for (uint i = 0; i < this->nbScenaricData; i++) {
+			this->aScenaricData[i].Init();
+		}
+
+		return;
 	}
 
 	virtual void CheckpointReset()
@@ -295,6 +306,8 @@ struct CFxManager : public CObjectManager {
 	virtual void Level_CheckpointReset();
 
 	virtual void Level_PauseChange(bool bPaused);
+
+	void Level_PreInit();
 
 	void AddPool(ByteCode* pMemoryStream);
 

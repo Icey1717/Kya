@@ -5,6 +5,11 @@ void CFxGroup::AddAll(ByteCode* pByteCode, CFx* aFx, int count)
 	IMPLEMENTATION_GUARD();
 }
 
+void CFxGroup::InitAll(CFx* aFx, int count)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CFxGroup::ManageAll(uint count, CFx* aFx)
 {
 	return;

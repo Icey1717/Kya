@@ -22,6 +22,7 @@ public:
 	};
 
 	CFxRandomScenaricData();
+	void Init();
 	void Create(ByteCode* pByteCode);
 
 	uint nbData;

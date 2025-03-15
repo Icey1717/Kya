@@ -14,6 +14,7 @@ class CFxSound : public CNewFx
 class CFxSoundScenaricData
 {
 public:
+	void Init();
 	void Create(ByteCode* pByteCode);
 
 	int field_0x0;

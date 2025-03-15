@@ -178,14 +178,14 @@ struct ed_video_attr {
 	byte fadeColorR;
 	byte fadeColorG;
 	byte fadeColorB;
-	undefined4 fadeAlpha;
-	undefined4 fadeSpeed;
-	undefined4 fadeAlphaTarget;
+	int fadeAlpha;
+	int fadeSpeed;
+	int fadeAlphaTarget;
 	byte bShouldDrawFade;
 	byte activeFadeColorR;
 	byte activeFadeColorG;
 	byte activeFadeColorB;
-	undefined4 activeFadeAlpha;
+	int activeFadeAlpha;
 	uint fadeFlags;
 	undefined field_0x84;
 	undefined field_0x85;

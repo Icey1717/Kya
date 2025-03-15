@@ -278,6 +278,8 @@ namespace Renderer
 		void PushMatrixPacket(const MatrixPacket* const pPkt);
 
 		void OnVideoFlip();
+
+		void DrawFade(uint8_t r, uint8_t g, uint8_t b, int a);
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;
