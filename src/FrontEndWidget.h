@@ -19,11 +19,11 @@ public:
 	virtual void CheckpointReset();
 	virtual void Init();
 	virtual void Term();
-	virtual bool UpdatePos(float param_2);
-	virtual void UpdatePos_StateWait(float param_1);
-	virtual void UpdatePos_StateMove(float param_1);
-	virtual bool UpdateDisp(float param_1);
-	virtual void Update(float param_1);
+	virtual bool UpdatePos(float time);
+	virtual void UpdatePos_StateWait(float time);
+	virtual void UpdatePos_StateMove(float time);
+	virtual bool UpdateDisp(float time);
+	virtual void Update(float time);
 	virtual void Draw();
 
 	void MoveToNext(CWidgetSlot* pNext);
@@ -36,7 +36,7 @@ public:
 
 	int field_0x38;
 
-	float field_0x3c;
+	float prevTime;
 	float slotAlpha;
 
 	bool field_0x44;
@@ -53,9 +53,9 @@ public:
 	// CWidget
 	virtual void Reset();
 	virtual void Init();
-	virtual bool UpdateDisp(float param_1);
+	virtual bool UpdateDisp(float time);
 
-	virtual bool UpdateGauge(float param_1);
+	virtual bool UpdateGauge(float time);
 
 	CSprite spriteGauge;
 	CSpriteWindow spriteFillLife;
@@ -64,9 +64,9 @@ public:
 	float field_0x4c;
 	float field_0x50;
 
-	float field_0x54;
+	float hitAlpha;
 	float field_0x58;
-	float field_0x5c;
+	float fillAlpha;
 
 	float fillLifeMin;
 	float fillLifeMax;

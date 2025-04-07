@@ -512,7 +512,7 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 	
 	gBoundTexture = pNewTexture;
 
-	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture->GetName().c_str());
+	Renderer::Debug::BeginLabel(GetCommandBuffer(), gBoundTexture ? gBoundTexture->GetName().c_str() : "No Texture Binding");
 
 	gIndexStart = gVertexBuffers.GetDrawBufferData().GetIndexTail();
 	gVertexStart = gVertexBuffers.GetDrawBufferData().GetVertexTail();

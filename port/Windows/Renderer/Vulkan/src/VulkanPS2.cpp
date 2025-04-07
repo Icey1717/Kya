@@ -86,7 +86,7 @@ namespace Renderer {
 		PS2::GetPipelines().clear();
 	}
 
-	SimpleTexture* gBoundTexture = nullptr;
+	SimpleTexture* gBoundTexturePS2 = nullptr;
 
 	InUseTextureList gInUseTextures;
 
@@ -1814,7 +1814,7 @@ namespace PipelineDebug
 void Renderer::BindTexture(SimpleTexture* pNewTexture)
 {
 	assert(pNewTexture);
-	gBoundTexture = pNewTexture;
+	gBoundTexturePS2 = pNewTexture;
 	Native::BindTexture(pNewTexture);
 }
 
@@ -1842,11 +1842,11 @@ const Renderer::InUseTextureList& Renderer::GetInUseTextures() {
 }
 
 void Renderer::Draw() {
-	Draw(GetDefaultDrawBuffer(), gBoundTexture, PS2::GetGSState());
+	Draw(GetDefaultDrawBuffer(), gBoundTexturePS2, PS2::GetGSState());
 }
 
 void Renderer::Draw(PS2::DrawBufferBase& drawBuffer) {
-	Draw(drawBuffer, gBoundTexture, PS2::GetGSState(), true);
+	Draw(drawBuffer, gBoundTexturePS2, PS2::GetGSState(), true);
 }
 
 //#define DISABLE_DRAW

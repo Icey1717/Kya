@@ -50,7 +50,7 @@ void CWidget::Reset()
 	this->field_0x38 = 1;
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
-	this->field_0x3c = CFrontend::GetTime();
+	this->prevTime = CFrontend::GetTime();
 	this->field_0x44 = 0;
 
 	return;
@@ -61,7 +61,7 @@ void CWidget::CheckpointReset()
 	this->field_0x38 = 1;
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
-	this->field_0x3c = CFrontend::GetTime();
+	this->prevTime = CFrontend::GetTime();
 	this->field_0x44 = 0;
 
 	return;
@@ -72,7 +72,7 @@ void CWidget::Init()
 	this->field_0x38 = 1;
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
-	this->field_0x3c = CFrontend::GetTime();
+	this->prevTime = CFrontend::GetTime();
 	this->field_0x44 = 0;
 
 	return;
@@ -85,7 +85,7 @@ void CWidget::Term()
 	return;
 }
 
-bool CWidget::UpdatePos(float param_2)
+bool CWidget::UpdatePos(float time)
 {
 	int iVar1;
 	bool bVar2;
@@ -95,11 +95,11 @@ bool CWidget::UpdatePos(float param_2)
 	fVar3 = this->slotAlpha;
 
 	if (iVar1 == 0) {
-		UpdatePos_StateMove(param_2);
+		UpdatePos_StateMove(time);
 	}
 	else {
 		if (iVar1 == 1) {
-			UpdatePos_StateWait(param_2);
+			UpdatePos_StateWait(time);
 		}
 	}
 
@@ -111,33 +111,32 @@ bool CWidget::UpdatePos(float param_2)
 	return bVar2;
 }
 
-void CWidget::UpdatePos_StateWait(float param_1)
+void CWidget::UpdatePos_StateWait(float time)
 {
 	return;
 }
 
-void CWidget::UpdatePos_StateMove(float param_1)
+void CWidget::UpdatePos_StateMove(float time)
 {
-	float fVar1;
-	float fVar2;
+	float deltaTime;
 
-	fVar2 = param_1 - this->field_0x3c;
-	if (GetPopupTime() < fVar2) {
+	deltaTime = time - this->prevTime;
+	if (GetPopupTime() < deltaTime) {
 		this->slotAlpha = 1.0f;
 		this->field_0x38 = 1;
-		this->field_0x3c = param_1;
+		this->prevTime = time;
 
 		(this->widgetSlotC).position = (this->widgetSlotB).position;
 		(this->widgetSlotC).scale = (this->widgetSlotB).scale;
 	}
 	else {
-		this->slotAlpha = fVar2 / GetPopupTime();
+		this->slotAlpha = deltaTime / GetPopupTime();
 	}
 
 	return;
 }
 
-bool CWidget::UpdateDisp(float param_1)
+bool CWidget::UpdateDisp(float time)
 {
 	bool bVar1;
 
@@ -147,16 +146,17 @@ bool CWidget::UpdateDisp(float param_1)
 	return bVar1;
 }
 
-void CWidget::Update(float param_1)
+void CWidget::Update(float time)
 {
 	byte cVar1;
 	byte cVar2;
 
-	cVar1 = UpdatePos(param_1);
-	cVar2 = UpdateDisp(param_1);
+	cVar1 = UpdatePos(time);
+	cVar2 = UpdateDisp(time);
 	if (cVar1 != false || cVar2 != false) {
 		CWidgetSlot::LERP(this->slotAlpha, &this->widgetSlotA, &this->widgetSlotC, &this->widgetSlotB);
 	}
+
 	return;
 }
 
@@ -167,8 +167,6 @@ void CWidget::Draw()
 
 void CWidget::MoveToNext(CWidgetSlot* pNext)
 {
-	float fVar1;
-
 	CWidgetSlot::LERP(this->slotAlpha, &this->widgetSlotA, &this->widgetSlotC, &this->widgetSlotB);
 
 	this->widgetSlotC.position = this->widgetSlotA.position;
@@ -177,7 +175,7 @@ void CWidget::MoveToNext(CWidgetSlot* pNext)
 	this->widgetSlotB.position = pNext->position;
 	this->widgetSlotB.scale = pNext->scale;
 
-	this->field_0x3c = CFrontend::GetTime();
+	this->prevTime = CFrontend::GetTime();
 	this->field_0x38 = 0;
 	this->field_0x44 = 1;
 	this->slotAlpha = 0.0f;
@@ -216,8 +214,8 @@ void CFrontendBitmapGauge::Reset()
 {
 	CWidget::Reset();
 
-	this->field_0x5c = 1.0f;
-	this->field_0x54 = 1.0f;
+	this->fillAlpha = 1.0f;
+	this->hitAlpha = 1.0f;
 	this->field_0x58 = 0.0f;
 
 	return;
@@ -227,45 +225,45 @@ void CFrontendBitmapGauge::Init()
 {
 	CWidget::Init();
 
-	this->field_0x5c = 1.0f;
-	this->field_0x54 = 1.0f;
+	this->fillAlpha = 1.0f;
+	this->hitAlpha = 1.0f;
 	this->field_0x58 = 0.0f;
 
 	return;
 }
 
-bool CFrontendBitmapGauge::UpdateDisp(float param_1)
+bool CFrontendBitmapGauge::UpdateDisp(float time)
 {
 	if (this->field_0x44 != 0) {
-		this->field_0x44 = UpdateGauge(param_1);
+		this->field_0x44 = UpdateGauge(time);
 	}
 
 	return false;
 }
 
-bool CFrontendBitmapGauge::UpdateGauge(float param_1)
+bool CFrontendBitmapGauge::UpdateGauge(float time)
 {
 	bool bVar1;
 	float fVar2;
 	float fVar3;
 
-	fVar2 = this->field_0x54;
-	if (param_1 < fVar2) {
+	fVar2 = this->field_0x58;
+	if (time < fVar2) {
 		bVar1 = true;
 	}
 	else {
-		fVar3 = this->field_0x58;
-		fVar2 = this->field_0x50 - this->field_0x4c * (param_1 - fVar2);
+		fVar3 = this->fillAlpha;
+		fVar2 = this->hitAlpha - this->field_0x50 * (time - fVar2);
 
 		if (fVar2 < fVar3) {
-			this->field_0x50 = fVar3;
+			this->hitAlpha = fVar3;
 		}
 		else {
-			this->field_0x50 = fVar2;
+			this->hitAlpha = fVar2;
 		}
 
 		bVar1 = fVar2 >= fVar3;
-		this->field_0x54 = param_1;
+		this->field_0x58 = time;
 	}
 
 	return bVar1;
@@ -459,7 +457,7 @@ void CFrontendAction::SetActionA(int actionId)
 			this->widgetSlotB.position = this->slotOn.position;
 			this->widgetSlotB.scale = this->slotOn.scale;
 
-			this->field_0x3c = CFrontend::GetTime();
+			this->prevTime = CFrontend::GetTime();
 			this->field_0x38 = 0;
 			this->field_0x44 = 1;
 			this->slotAlpha = 0.0f;
@@ -475,7 +473,7 @@ void CFrontendAction::SetActionA(int actionId)
 				this->widgetSlotB.position = this->slotOff.position;
 				this->widgetSlotB.scale = this->slotOff.scale;
 
-				this->field_0x3c = CFrontend::GetTime();
+				this->prevTime = CFrontend::GetTime();
 				this->field_0x38 = 0;
 				this->field_0x44 = 1;
 				this->slotAlpha = 0.0f;
@@ -508,7 +506,7 @@ void CFrontendAction::SetActionB(int actionId)
 					this->widgetSlotB.position = this->slotOn.position;
 					this->widgetSlotB.scale = this->slotOn.scale;
 
-					this->field_0x3c = CFrontend::GetTime();
+					this->prevTime = CFrontend::GetTime();
 					this->field_0x38 = 0;
 					this->field_0x44 = 1;
 					this->slotAlpha = 0.0f;
@@ -525,7 +523,7 @@ void CFrontendAction::SetActionB(int actionId)
 						this->widgetSlotB.position = this->slotOff.position;
 						this->widgetSlotB.scale = this->slotOff.scale;
 
-						this->field_0x3c = CFrontend::GetTime();
+						this->prevTime = CFrontend::GetTime();
 						this->field_0x38 = 0;
 						this->field_0x44 = 1;
 						this->slotAlpha = 0.0f;

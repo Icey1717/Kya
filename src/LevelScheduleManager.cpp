@@ -744,9 +744,8 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	char cVar1;
 	int iVar2;
 	undefined4* puVar3;
-	bool bVar4;
 	edCBankBufferEntry* infoLevelsFileBuffer;
-	int inFileIndex;
+	int curFileIndex;
 	int* puVar5;
 	S_LEVEL_INFO* pLevelInfo;
 	int iVar6;
@@ -762,22 +761,23 @@ void CLevelScheduler::Levels_LoadInfoBank()
 	memset(&infoLevelsPathPtr, 0, sizeof(edCBankInstall));
 	bank.initialize(0x10000, 1, &infoLevelsPathPtr);
 	bank.bank_buffer_setcb(&_gLevelsTableBankCallback);
+
 	/* CDEURO/LEVEL/ + Info/levels.bnk */
 	levelInfoFilePath[0] = '\0';
 	edStrCatMulti(levelInfoFilePath, levelPath, "Info/levels.bnk", 0);
 	infoLevelsFileBuffer = bank.get_free_entry();
 	infoLevelsPathPtr.filePath = levelInfoFilePath;
-	bVar4 = infoLevelsFileBuffer->load(&infoLevelsPathPtr);
-	if (bVar4 != false) {
-		inFileIndex = infoLevelsFileBuffer->get_element_count();
-		while (inFileIndex != 0) {
-			inFileIndex = inFileIndex + -1;
-			bVar4 = infoLevelsFileBuffer->get_info(inFileIndex, &outHeader, (char*)0x0);
+	bool bLoadSucess = infoLevelsFileBuffer->load(&infoLevelsPathPtr);
+	if (bLoadSucess != false) {
+		curFileIndex = infoLevelsFileBuffer->get_element_count();
+		while (curFileIndex != 0) {
+			curFileIndex = curFileIndex + -1;
+			bool bGetInfoSuccess = infoLevelsFileBuffer->get_info(curFileIndex, &outHeader, (char*)0x0);
 			puVar3 = (undefined4*)outHeader.fileBufferStart;
-			if (bVar4 != false) {
+			if (bGetInfoSuccess != false) {
 				fileData = (int*)(outHeader.fileBufferStart + 4);
 				if (true) {
-					switch (*(undefined4*)outHeader.fileBufferStart) {
+					switch (*(int*)outHeader.fileBufferStart) {
 					case 9:
 						iVar2 = *fileData;
 						if ((-1 < iVar2) && (iVar2 < 0x10)) {
@@ -794,6 +794,7 @@ void CLevelScheduler::Levels_LoadInfoBank()
 							if (1 < iVar9) {
 								iVar9 = 1;
 							}
+
 							iVar8 = 0;
 							if (0 < iVar9) {
 								do {
@@ -812,14 +813,17 @@ void CLevelScheduler::Levels_LoadInfoBank()
 									pLevelInfo = pLevelInfo + 1;
 								} while (iVar8 < iVar9);
 							}
+
 							this->field_0x4210 = this->field_0x4210 + *(int*)(this->levelPath + iVar2 * 0x418 + -8 + 0xb0);
 						}
 					}
 				}
 			}
 		}
+
 		infoLevelsFileBuffer->close();
 	}
+
 	bank.terminate();
 	return;
 }

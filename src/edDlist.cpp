@@ -1157,6 +1157,11 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 			gCurDList->subCommandBufferCount = gCurDList->subCommandBufferCount + 1;
 		}
 	}
+#ifdef PLATFORM_WIN
+	else {
+		DISPLAY_LIST_BIND_TEXTURE(nullptr);
+	}
+#endif
 	pDVar5->aCommandArray[0].pCommandBuffer = pRVar1;
 LAB_002cba4c:
 	pDVar5->aCommandArray[0].type = LM_REF_0;

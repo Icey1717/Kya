@@ -179,27 +179,27 @@ float FLOAT_0044885c = 2.0f;
 edF32VECTOR2 EXTRA_HEALTH_SCALE = { 0.25f, 0.0625f };
 
 edF32VECTOR2 EXTRA_HEALTH_GAUGE_POSITIONS[4] = {
-	{ 0.125f, 0.05f },
-	{ 0.118f, 0.068f },
-	{ 0.100f, 0.086f },
-	{ 0.075f, 0.104f }
-};
-
-edF32VECTOR2 EXTRA_HEALTH_FILL_POSITIONS[4] = {
 	{ 0.125f, -0.010f },
 	{ 0.118f, -0.028f },
 	{ 0.100f, -0.046f },
 	{ 0.075f, -0.064f }
 };
 
+edF32VECTOR2 EXTRA_HEALTH_FILL_POSITIONS[4] = {
+	{ 0.125f, 0.05f },
+	{ 0.118f, 0.068f },
+	{ 0.100f, 0.086f },
+	{ 0.075f, 0.104f }
+};
+
 float DISPLAY_TIME_EXT = 1.0f;
 
-void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
+void CFrontendLifeGauge::UpdatePos_StateWait(float time)
 {
 	CLifeInterface* pLife;
 	CFrontendLifeGauge* pCVar2;
 	float fVar3;
-	float fVar4;
+	float deltaTime;
 	float fVar5;
 	edF32VECTOR2 local_10;
 	edF32VECTOR2 local_8;
@@ -208,7 +208,7 @@ void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 	fVar5 = 1.0f;
 
 	this->slotAlpha = 1.0f;
-	fVar4 = param_1 - this->field_0x3c;
+	deltaTime = time - this->prevTime;
 
 	switch (this->state) {
 	case 0:
@@ -231,15 +231,15 @@ void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 			bVar1 = pLife->GetValue() <= pLife->GetValueMax() * 0.1f;
 		}
 
-		if ((!bVar1) && (FLOAT_0044885c < fVar4)) {
+		if ((!bVar1) && (FLOAT_0044885c < deltaTime)) {
 			this->state = 3;
 			MoveToNext(&this->slotHide);
 		}
 
 		break;
 	case 7:
-		if (fVar4 < DISPLAY_TIME_EXT) {
-			fVar5 = fVar4 / DISPLAY_TIME_EXT;
+		if (deltaTime < DISPLAY_TIME_EXT) {
+			fVar5 = deltaTime / DISPLAY_TIME_EXT;
 		}
 		else {
 			this->field_0x378 = 0;
@@ -249,26 +249,26 @@ void CFrontendLifeGauge::UpdatePos_StateWait(float param_1)
 			else {
 				this->state = 6;
 			}
-			fVar4 = CFrontend::GetTime();
-			this->field_0x3c = fVar4;
+
+			this->prevTime = CFrontend::GetTime();
 		}
 
-		edF32Vector2LERP(&local_8, &GAUGE_OFFSET, EXTRA_HEALTH_GAUGE_POSITIONS + this->field_0x384 + -1, fVar5);
+		edF32Vector2LERP(&local_8, &GAUGE_OFFSET, EXTRA_HEALTH_GAUGE_POSITIONS + this->nbExtraFills + -1, fVar5);
 		edF32Vector2LERP(&local_10, &GAUGE_SCALE, &EXTRA_HEALTH_SCALE, fVar5);
 
-		this->aDualSprites[this->field_0x380 - 1].spriteGauge.UpdateSlotPosition(local_8.x, local_8.y);
-		this->aDualSprites[this->field_0x380 - 1].spriteGauge.UpdateSlotScale(local_10.x, local_10.y);
-		this->aDualSprites[this->field_0x380 - 1].spriteFill.bValid = false;
+		this->aDualSprites[this->nbExtraLifeGauges - 1].spriteGauge.UpdateSlotPosition(local_8.x, local_8.y);
+		this->aDualSprites[this->nbExtraLifeGauges - 1].spriteGauge.UpdateSlotScale(local_10.x, local_10.y);
+		this->aDualSprites[this->nbExtraLifeGauges - 1].spriteFill.bValid = false;
 	}
 
 	return;
 }
 
-void CFrontendLifeGauge::Update(float param_1)
+void CFrontendLifeGauge::Update(float time)
 {
 	UpdateInternal();
 
-	CWidget::Update(param_1);
+	CWidget::Update(time);
 
 	return;
 }
@@ -330,14 +330,13 @@ void CFrontendLifeGauge::Draw()
 
 			pLife = static_cast<CLifeInterface*>(this->pInterface);
 
-			bVar4 = false;
+			bool bLowHealth = false;
 			if (pLife != (CLifeInterface*)0x0) {
-				fVar9 = pLife->GetValue();
-				fVar10 = pLife->GetValueMax();
-				bVar4 = fVar9 <= fVar10 * 0.1f;
+				bLowHealth = pLife->GetValue() <= pLife->GetValueMax() * 0.1f;
 			}
 
-			if (bVar4) {
+			if (bLowHealth) {
+				IMPLEMENTATION_GUARD_LOG("Check");
 				fVar9 = cosf(Timer::GetTimer()->totalTime * 8.0f) * 64.0f + 64.0f;
 				if (2.147484e+09 <= fVar9) {
 					fVar9 = fVar9 - 2.147484e+09;
@@ -351,12 +350,12 @@ void CFrontendLifeGauge::Draw()
 
 			this->spriteGauge.color = local_4;
 
-			for (iVar8 = 0; iVar8 < this->field_0x380; iVar8 = iVar8 + 1) {
+			for (iVar8 = 0; iVar8 < this->nbExtraLifeGauges; iVar8 = iVar8 + 1) {
 				this->aDualSprites->spriteGauge.color = local_4;
 				this->aDualSprites->spriteGauge.Draw(true);
 			}
 
-			for (iVar8 = 0; iVar8 < this->field_0x384; iVar8 = iVar8 + 1) {
+			for (iVar8 = 0; iVar8 < this->nbExtraFills; iVar8 = iVar8 + 1) {
 				this->aDualSprites->spriteFill.color = local_4;
 				this->aDualSprites->spriteFill.Draw(true);
 			}
@@ -373,19 +372,17 @@ void CFrontendLifeGauge::Draw()
 	return;
 }
 
-bool CFrontendLifeGauge::UpdateGauge(float param_1)
+bool CFrontendLifeGauge::UpdateGauge(float time)
 {
-	bool bVar1;
-	float fVar2;
-	float fVar3;
+	bool bSuccess;
+	float lifeDelta;
 
-	bVar1 = CFrontendBitmapGauge::UpdateGauge(param_1);
+	bSuccess = CFrontendBitmapGauge::UpdateGauge(time);
 
-	fVar2 = this->fillLifeMin;
-	fVar3 = this->fillLifeMax - fVar2;
-	this->spriteFillHit.ClampX(fVar2 + fVar3 * this->field_0x5c, fVar2 + fVar3 * this->field_0x54, true);
+	lifeDelta = this->fillLifeMax - this->fillLifeMin;
+	this->spriteFillHit.ClampX(this->fillLifeMin + lifeDelta * this->fillAlpha, this->fillLifeMin + lifeDelta * this->hitAlpha, true);
 
-	return bVar1;
+	return bSuccess;
 }
 
 void CFrontendLifeGauge::UpdatePercent(float value)
@@ -403,42 +400,42 @@ void CFrontendLifeGauge::UpdatePercent(float value)
 
 	this->field_0x44 = 1;
 
-	iVar6 = this->field_0x384;
+	iVar6 = this->nbExtraFills;
 	fVar9 = this->field_0x388;
 	fVar5 = (float)CLevelScheduler::ScenVar_Get(0x15);
-	this->field_0x384 = 0;
+	this->nbExtraFills = 0;
 	fVar7 = fVar9 - (float)iVar6 * fVar5;
 	fVar8 = value;
 	if (fVar5 < value) {
 		do {
 			fVar8 = fVar8 - fVar5;
-			this->field_0x384 = this->field_0x384 + 1;
+			this->nbExtraFills = this->nbExtraFills + 1;
 		} while (fVar5 < fVar8);
 	}
 
-	fVar10 = (value - (float)this->field_0x384 * fVar5) / fVar5;
+	fVar10 = (value - (float)this->nbExtraFills * fVar5) / fVar5;
 	this->field_0x388 = value;
-	this->field_0x5c = fVar10;
-	fVar8 = this->fillLifeMin;
-	this->spriteFillLife.ClampX(fVar8, fVar8 + (this->fillLifeMax - fVar8) * this->field_0x5c);
+	this->fillAlpha = fVar10;
+
+	this->spriteFillLife.ClampX(this->fillLifeMin, this->fillLifeMin + (this->fillLifeMax - this->fillLifeMin) * this->fillAlpha);
 	this->field_0x58 = this->field_0x4c + CFrontend::GetTime();
 
 	if (value < fVar9) {
 		if (fVar7 / fVar5 < fVar10) {
-			this->field_0x54 = 1.0f;
+			this->hitAlpha = 1.0f;
 		}
 	}
 	else {
-		this->field_0x54 = fVar10;
+		this->hitAlpha = fVar10;
 	}
 
-	fVar8 = this->fillLifeMin;
-	fVar5 = this->fillLifeMax - fVar8;
-	this->spriteFillHit.ClampX(fVar8 + fVar5 * this->field_0x5c, fVar8 + fVar5 * this->field_0x54);
+
+	float fillDelta = this->fillLifeMax - this->fillLifeMin;
+	this->spriteFillHit.ClampX(this->fillLifeMin + fillDelta * this->fillAlpha, this->fillLifeMin + fillDelta * this->hitAlpha);
 
 	iVar1 = 0;
-	if (0 < this->field_0x384) {
-		peVar2 = EXTRA_HEALTH_GAUGE_POSITIONS;
+	if (0 < this->nbExtraFills) {
+		peVar2 = EXTRA_HEALTH_FILL_POSITIONS;
 		pCVar3 = this->aDualSprites;
 		do {
 			pCVar3->spriteGauge.UpdateSlotPosition(peVar2->x, peVar2->y);
@@ -451,11 +448,11 @@ void CFrontendLifeGauge::UpdatePercent(float value)
 			pCVar3->spriteGauge.flags = pCVar3->spriteGauge.flags | 0x2000;
 
 			pCVar3 = pCVar3 + 1;
-		} while (iVar1 < this->field_0x384);
+		} while (iVar1 < this->nbExtraFills);
 	}
 
-	if (iVar1 < this->field_0x380) {
-		peVar2 = EXTRA_HEALTH_FILL_POSITIONS;
+	if (iVar1 < this->nbExtraLifeGauges) {
+		peVar2 = EXTRA_HEALTH_GAUGE_POSITIONS;
 		pCVar3 = this->aDualSprites;
 		do {
 			pCVar3->spriteFill.UpdateSlotPosition(peVar2->x, peVar2->y);
@@ -468,7 +465,7 @@ void CFrontendLifeGauge::UpdatePercent(float value)
 			pCVar3->spriteFill.flags = pCVar3->spriteFill.flags & 0xffffdfff;
 
 			pCVar3 = pCVar3 + 1;
-		} while (iVar1 < this->field_0x380);
+		} while (iVar1 < this->nbExtraLifeGauges);
 	}
 
 	return;
@@ -509,7 +506,7 @@ void CFrontendLifeGauge::FUN_001daff0()
 	this->aDualSprites[3].spriteGauge.SetParent(&this->field_0x2b8);
 	this->aDualSprites[3].spriteFill.SetParent(&this->aDualSprites[3].spriteGauge);
 
-	this->field_0x384 = 0;
+	this->nbExtraFills = 0;
 	this->field_0x378 = 0;
 
 	UpdateField0x380();
@@ -530,7 +527,7 @@ void CFrontendLifeGauge::ShowLife()
 		this->bVisible = 1;
 		break;
 	case 5:
-		this->field_0x3c = CFrontend::GetTime();
+		this->prevTime = CFrontend::GetTime();
 	}
 
 	return;
@@ -561,7 +558,7 @@ void CFrontendLifeGauge::UpdateField0x380()
 		trap(7);
 	}
 
-	this->field_0x380 = CLevelScheduler::ScenVar_Get(0x14) / iVar3 + -1;
+	this->nbExtraLifeGauges = CLevelScheduler::ScenVar_Get(0x14) / iVar3 + -1;
 }
 
 void CFrontendLifeGauge::UpdateInternal()
@@ -668,7 +665,7 @@ void CFrontendLifeGauge::HideLifeAlways()
 	case 6:
 		this->field_0x3ac = this->field_0x3ac + -1;
 		if (this->field_0x3ac == 0) {
-			this->field_0x3c = CFrontend::GetTime();
+			this->prevTime = CFrontend::GetTime();
 			this->state = 5;
 		}
 		break;
@@ -700,13 +697,11 @@ void CFrontendLifeGauge::ShowLifeExt()
 		this->bVisible = 1;
 		break;
 	case 5:
-		fVar1 = CFrontend::GetTime();
-		this->field_0x3c = fVar1;
+		this->prevTime = CFrontend::GetTime();
 		this->state = 7;
 		break;
 	case 6:
-		fVar1 = CFrontend::GetTime();
-		this->field_0x3c = fVar1;
+		this->prevTime = CFrontend::GetTime();
 		this->state = 7;
 	}
 

@@ -561,8 +561,11 @@ void CSpriteWindow::Validate()
 	this->texCoordB.x = this->xMax;
 	this->texCoordB.y = 1.0f;
 
-	this->screenCoordsTL.x = this->xMin * this->screenCoordsBR.x + (1.0f - this->xMin) * this->screenCoordsTL.x;
-	this->screenCoordsBR.x = this->xMax * this->screenCoordsBR.x + (1.0f - this->xMax) * this->screenCoordsTL.x;
+	float baseTLx = this->screenCoordsTL.x;
+	float baseBRx = this->screenCoordsBR.x;
+
+	this->screenCoordsTL.x = this->xMin * baseBRx + (1.0f - this->xMin) * baseTLx;
+	this->screenCoordsBR.x = this->xMax * baseBRx + (1.0f - this->xMax) * baseTLx;
 
 	return;
 }

@@ -21,12 +21,12 @@ public:
 	virtual void Reset();
 	virtual void Init();
 	virtual void Term();
-	virtual void UpdatePos_StateWait(float param_1);
-	virtual void Update(float param_1);
+	virtual void UpdatePos_StateWait(float time);
+	virtual void Update(float time);
 	virtual void Draw();
 
 	// CFrontendBitmapGauge
-	virtual bool UpdateGauge(float param_1);
+	virtual bool UpdateGauge(float time);
 
 	void UpdatePercent(float value);
 
@@ -49,8 +49,8 @@ public:
 	CSprite field_0x2b8;
 	undefined4 field_0x378;
 	float valueMax;
-	int field_0x380;
-	int field_0x384;
+	int nbExtraLifeGauges;
+	int nbExtraFills;
 	float field_0x388;
 
 	CWidgetSlot slotShow;

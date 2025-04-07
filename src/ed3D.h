@@ -367,7 +367,8 @@ struct ed_3D_Scene {
 	undefined field_0x1bf;
 };
 
-struct ed_3d_hierarchy_setup {
+struct ed_3d_hierarchy_setup
+{
 	float* clipping_0x0;
 	union edF32VECTOR4* pBoundingSphere;
 	struct ed_3D_Light_Config* pLightData;
@@ -376,7 +377,8 @@ struct ed_3d_hierarchy_setup {
 };
 
 
-struct ed3DLod {
+struct ed3DLod
+{
 	int pObj; // char*
 	short renderType;
 	short sizeBias;
@@ -384,7 +386,8 @@ struct ed3DLod {
 
 static_assert(sizeof(ed3DLod) == 0x8, "Invalid ed3DLod size");
 
-struct ed_3d_hierarchy {
+struct ed_3d_hierarchy
+{
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
 	Hash_8 hash;
@@ -405,7 +408,8 @@ struct ed_3d_hierarchy {
 	char GlobalAlhaON;
 };
 
-PACK(struct MeshData_ANHR {
+PACK(struct MeshData_ANHR
+{
 	uint hash;
 	undefined field_0x4;
 	undefined field_0x5;
@@ -422,7 +426,8 @@ union ObbFloat
 	float number;
 };
 
-PACK(struct ANHR_Internal {
+PACK(struct ANHR_Internal
+{
 	int pHierNode; // edNode*
 	int pHierNodeData; // ed_3d_hierarchy_node*
 	int pHierAnimStream; // S_HIERANM_ANIM
@@ -439,7 +444,8 @@ PACK(struct ANHR_Internal {
 	float field_0x34;
 });
 
-PACK(struct ed_g3d_hierarchy {
+PACK(struct ed_g3d_hierarchy
+{
 	edF32MATRIX4 transformA;
 	edF32MATRIX4 transformB;
 	Hash_8 hash;
@@ -461,17 +467,20 @@ PACK(struct ed_g3d_hierarchy {
 	ed3DLod aLods[];
 });
 
-struct ed_3d_hierarchy_node {
+struct ed_3d_hierarchy_node
+{
 	ed_3d_hierarchy base;
 	ed3DLod aLods[4];
 };
 
-struct TextureInfo {
+struct TextureInfo
+{
 	ed_g2d_manager manager;
 	char* pFileBuffer;
 };
 
-struct ScratchPadRenderInfo {
+struct ScratchPadRenderInfo
+{
 	edF32MATRIX4* pSharedMeshTransform;
 	edF32MATRIX4* pMeshTransformMatrix;
 	int boundingSphereTestResult;
@@ -482,7 +491,8 @@ struct ScratchPadRenderInfo {
 	ed_3d_hierarchy* pMeshTransformData;
 };
 
-struct ed3DConfig {
+struct ed3DConfig
+{
 	ed3DConfig();
 
 	int meshHeaderCountB;
@@ -508,7 +518,8 @@ struct ed3DConfig {
 };
 
 PACK(
-	struct ed_g2d_material {
+	struct ed_g2d_material
+{
 	byte nbLayers;
 	undefined field_0x1;
 	ushort flags;
@@ -525,7 +536,8 @@ struct edPSX2Header
 };
 
 PACK(
-	struct ed_g2d_layer {
+	struct ed_g2d_layer
+{
 	uint flags_0x0;
 	uint flags_0x4;
 	undefined field_0x8;

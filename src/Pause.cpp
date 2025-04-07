@@ -1586,25 +1586,26 @@ void CSimpleMenu::DrawInitialSaveMenuHelp(ulong helpMsgId, uint color)
 
 	if (helpMsgId != 0) {
 		xOffset = 0xc2;
+
 		if (gVideoConfig.omode == 3) {
 			xOffset = 0xe0;
 		}
+
 		draw_help_line(helpMsgId, 0, xOffset + this->counter_0x24 * -0x20, color);
 		this->counter_0x24 = this->counter_0x24 + 1;
 	}
+
 	return;
 }
 
 uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 {
-	bool bVar1;
 	int iVar2;
 	char* pcVar3;
 	EPauseMenu EVar4;
 	uint uVar5;
 
-	bVar1 = gCompatibilityHandlingPtr->HandleDisconnectedDevices(0);
-	if (bVar1 == false) {
+	if (gCompatibilityHandlingPtr->HandleDisconnectedDevices(0) == false) {
 		EVar4 = pMenu->get_current_page();
 		uVar5 = 1;
 		if (EVar4 == PM_Bonus) {
@@ -1637,10 +1638,9 @@ uint DrawGameMenu(CSimpleMenu* pMenu, uint input)
 						else {
 							if (EVar4 == PM_MainMenu) {
 								pMenu->DrawMainMenu();
-								IMPLEMENTATION_GUARD_LOG(
-								CheatCodeSequence::Update_00407760(&gToggleDebugLevelCheatCode_004a5700);
-								CheatCodeSequence::Update_00407760(&gShowGalleryCheatCode_004a5760);
-								CheatCodeSequence::Update_00407760(&gRefillLifeCheatCode_004a5740);)
+								gToggleDebugLevelCheatCode_004a5700.Update();
+								gShowGalleryCheatCode_004a5760.Update();
+								gRefillLifeCheatCode_004a5740.Update();
 							}
 						}
 					}
@@ -1707,6 +1707,7 @@ void CSimpleMenu::update_page()
 				if (this->selectedIndex < 0) {
 					this->selectedIndex = this->field_0x50 + -1;
 				}
+
 				if (1 < this->field_0x50) {
 					on_change_selection();
 				}
@@ -1719,10 +1720,6 @@ void CSimpleMenu::update_page()
 void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
 {
 	int iVar1;
-	char cVar2;
-	uint uVar3;
-	Timer* pTVar4;
-	long lVar5;
 
 	this->field_0x20 = 0;
 	this->counter_0x24 = 0;
@@ -1737,47 +1734,41 @@ void CSimpleMenu::draw(DrawMenuFuncPtr pInputFunc)
 	iVar1 = this->field_0x2c;
 	this->pFunc_0x40 = 0;
 	this->slotID_0x44 = 0;
-	uVar3 = get_action();
-	this->lastInput_0x14 = uVar3;
-	cVar2 = pInputFunc(this, this->lastInput_0x14);
-	if ((iVar1 == this->field_0x2c) && (cVar2 != '\0')) {
+	this->lastInput_0x14 = get_action();
+	if ((iVar1 == this->field_0x2c) && (pInputFunc(this, this->lastInput_0x14) != false)) {
 		update_page();
 	}
+
 	iVar1 = this->screenState_0x1c;
 	if (iVar1 == 4) {
 		this->screenState_0x1c = 0;
-		pTVar4 = Timer::GetTimer();
-		this->totalTime = pTVar4->totalTime;
+		this->totalTime = Timer::GetTimer()->totalTime;
 	}
 	else {
 		if (iVar1 != 3) {
 			if (iVar1 == 2) {
-				lVar5 = disappear_draw();
-				if (lVar5 != 0) {
+				if (disappear_draw() != 0) {
 					this->screenState_0x1c = 3;
-					pTVar4 = Timer::GetTimer();
-					this->totalTime = pTVar4->totalTime;
+					this->totalTime = Timer::GetTimer()->totalTime;
 				}
 			}
 			else {
 				if (iVar1 == 1) {
-					lVar5 = select_draw();
-					if (lVar5 != 0) {
+					if (select_draw() != 0) {
 						this->screenState_0x1c = 2;
-						pTVar4 = Timer::GetTimer();
-						this->totalTime = pTVar4->totalTime;
+						this->totalTime = Timer::GetTimer()->totalTime;
 					}
 				}
 				else {
-					if ((iVar1 == 0) && (lVar5 = appear_draw(), lVar5 != 0)) {
+					if ((iVar1 == 0) && (appear_draw() != 0)) {
 						this->screenState_0x1c = 1;
-						pTVar4 = Timer::GetTimer();
-						this->totalTime = pTVar4->totalTime;
+						this->totalTime = Timer::GetTimer()->totalTime;
 					}
 				}
 			}
 		}
 	}
+
 	return;
 }
 

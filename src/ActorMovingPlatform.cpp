@@ -2178,8 +2178,7 @@ void CActorMovingPlatform::BehaviourSlab_Manage(CBehaviourPlatformSlab* pBehavio
 						iVar6 = 0;
 						if (0 < pSVar3->entryCount) {
 							do {
-								IMPLEMENTATION_GUARD(
-								pSVar3->aEntries[iVar5].SwitchOff(this);)
+								pSVar3->aEntries[iVar5].SwitchOff(this);
 								pSVar3 = pBehaviour->pTargetStream;
 								iVar6 = iVar6 + 1;
 							} while (iVar6 < pSVar3->entryCount);
