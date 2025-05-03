@@ -181,7 +181,7 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 
 	this->braceletLevel = 0;
 	this->field_0x1874 = this->field_0x444;
-	this->field_0x1878 = this->field_0x448.all;
+	this->field_0x1878 = this->validCommandMask.all;
 	//this->field_0xff0 = 0;
 
 	this->field_0x157c = pByteCode->GetU32();
@@ -15368,34 +15368,34 @@ void CActorHeroPrivate::UpdateBracelet(uint flags)
 
 	if (flags == 0) {
 		this->field_0x444 = 0;
-		this->field_0x448.all = 0;
+		this->validCommandMask.all = 0;
 		this->field_0x440 = 0.0f;
 		this->pAnimationController->AddDisabledBone(this->braceletBone);
 	}
 	else {
 		this->field_0x444 = this->field_0x1874;
-		this->field_0x448.all = this->field_0x1878;
+		this->validCommandMask.all = this->field_0x1878;
 		this->field_0x440 = 1.0f;
 
 		if ((flags & 2) == 0) {
-			bVar1 = this->field_0x448.flags[1];
-			this->field_0x448.flags[1] = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) & 2) << 4);
+			bVar1 = this->validCommandMask.flags[1];
+			this->validCommandMask.flags[1] = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) & 2) << 4);
 		}
 
 		if ((flags & 4) == 0) {
-			this->field_0x448.flags[1] = this->field_0x448.flags[1] & 0xfb;
-			this->field_0x448.flags[1] = this->field_0x448.flags[1] & 0xfd;
+			this->validCommandMask.flags[1] = this->validCommandMask.flags[1] & 0xfb;
+			this->validCommandMask.flags[1] = this->validCommandMask.flags[1] & 0xfd;
 			this->field_0x444 = this->field_0x444 & 0xfffffffe;
 		}
 
 		if ((flags & 8) == 0) {
-			bVar1 = this->field_0x448.flags[0];
-			this->field_0x448.flags[0] = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) & 0xd) << 4);
+			bVar1 = this->validCommandMask.flags[0];
+			this->validCommandMask.flags[0] = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) & 0xd) << 4);
 		}
 
 		if ((flags & 0x20) == 0) {
-			bVar1 = this->field_0x448.flags[1];
-			this->field_0x448.flags[1] = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) & 1) << 4);
+			bVar1 = this->validCommandMask.flags[1];
+			this->validCommandMask.flags[1] = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) & 1) << 4);
 		}
 
 		if ((flags & 0x40) != 0) {
@@ -16103,6 +16103,40 @@ void CActorHeroPrivate::UpdateFightCommand()
 bool CActorHeroPrivate::Func_0x1a4()
 {
 	return this->heroActionParams.actionId == 0;
+}
+
+bool FUN_0034ccb0(void)
+{
+	uint uVar1;
+
+	uVar1 = CLevelScheduler::ScenVar_Get(10);
+	if ((uVar1 & 0x10000) != 0) {
+		uVar1 = 0;
+	}
+
+	return uVar1 != 0;
+}
+
+bool CActorHeroPrivate::Func_0x1a8()
+{
+	bool bVar1;
+
+	bVar1 = FUN_0034ccb0();
+
+	bVar1 = bVar1 != false;
+	if (bVar1) {
+		bVar1 = (this->flags & 0x800000) == 0;
+	}
+
+	return bVar1;
+}
+
+bool CActorHeroPrivate::Func_0x1c0(s_fighter_combo* pCombo)
+{
+	uint uVar1;
+
+	uVar1 = CLevelScheduler::ScenVar_Get(10);
+	return (pCombo->field_0x4.field_0x0byte & uVar1) != 0;
 }
 
 void CActorHeroPrivate::_Proj_GetPossibleExit()

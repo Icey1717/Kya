@@ -41,6 +41,7 @@
 #include "MathOps.h"
 #include "SaveManagement.h"
 #include "Pause.h"
+#include "ActorBoomy.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -1250,8 +1251,8 @@ LAB_002e26c8:
 	else {
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
-		Level_FillRunInfo(0x1, -1, -1);
-		//Level_FillRunInfo(0x4, 9, -1);
+		//Level_FillRunInfo(0x4, -1, -1);
+		Level_FillRunInfo(0x4, 9, -1);
 	}
 	return;
 }
@@ -2505,8 +2506,6 @@ void CLevelScheduler::ScenVar_Set(SCENARIC_VARIABLE scenVarId, int newValue)
 	return;
 }
 
-undefined4 DAT_00425424 = 0;
-
 void CLevelScheduler::OnSceneVarSet()
 {
 	CActorHero* pHero;
@@ -2514,12 +2513,11 @@ void CLevelScheduler::OnSceneVarSet()
 	pHero = CActorHero::_gThis;
 	if (CActorHero::_gThis != (CActorHero*)0x0) {
 		if (CActorHero::_gThis->pActorBoomy != (CActorBoomy*)0x0) {
-			IMPLEMENTATION_GUARD(
-			pHero->DoMessage(pHero, 0x62, gBoomyLevel);
-			pHero->DoMessage(pHero->pBoomySnipeCamera_0xc94, 0x62, gBoomyLevel);)
+			pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x62, (MSG_PARAM)_gScenVarInfo[9].currentValue);
+			pHero->DoMessage(pHero->pActorBoomy, (ACTOR_MESSAGE)0x62, (MSG_PARAM)_gScenVarInfo[9].currentValue);
 		}
 
-		pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x6b, (MSG_PARAM)DAT_00425424);
+		pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x6b, (MSG_PARAM)_gScenVarInfo[10].currentValue);
 		pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x79, 0);
 	}
 	return;

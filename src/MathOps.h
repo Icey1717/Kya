@@ -23,6 +23,8 @@ float edDistPointToPlane(edF32VECTOR4* subvector2, edF32VECTOR4* innerProductVec
 void edQuatToMatrix4Hard(edF32VECTOR4* v0, edF32MATRIX4* m0);
 void edQuatInverse(edF32VECTOR4* param_1, edF32VECTOR4* param_2);
 void edQuatMul(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3);
+float edQuatToAngAxis(edF32VECTOR4* v0, float* f0, edF32VECTOR3* v1);
+void edQuatFromEuler(edF32VECTOR4* v0, float x, float y, float z);
 void edQuatNormalize(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
 void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4);

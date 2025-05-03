@@ -375,6 +375,15 @@ inline edF32VECTOR3 operator-(const float& lhs, const edF32VECTOR3& rhs)
 	return ret;
 }
 
+inline edF32VECTOR3 operator/(const edF32VECTOR3& lhs, const float& rhs)
+{
+	edF32VECTOR3 ret;
+	ret.x = lhs.x / rhs;
+	ret.y = lhs.y / rhs;
+	ret.z = lhs.z / rhs;
+	return ret;
+}
+
 struct Rectangle
 {
 	float x;

@@ -269,6 +269,7 @@ public:
 	void BuildFromSpeedDist(float param_1, float param_2, float distance);
 	void BuildFromSpeedDistTime(float param_1, float param_2, float distance, float time);
 	void BuildFromSpeedTime(float param_1, float param_2, float param_3);
+	void BuildFromDistTimeNoAccel(float dist, float time);
 	void Reset();
 	bool IsFinished();
 	void Integrate(float param_1);

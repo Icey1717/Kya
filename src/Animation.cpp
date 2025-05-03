@@ -2887,6 +2887,18 @@ BoneData* CAnimation::FindReggedBone(int bone)
 	return pAVar1;
 }
 
+bool CAnimation::IsBonePresent(uint boneId)
+{
+	int nodeIndex;
+
+	nodeIndex = -1;
+	if ((this->anmSkeleton).pTag != (edANM_SKELETON*)0x0) {
+		nodeIndex = this->anmSkeleton.NodeIndexFromID(boneId);
+	}
+
+	return nodeIndex != -1;
+}
+
 void CAnimation::RegisterBone(uint boneId)
 {
 	ushort boneCount;

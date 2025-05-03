@@ -1397,6 +1397,11 @@ bool CActorWolfen::Func_0x1ac()
 	IMPLEMENTATION_GUARD();
 }
 
+void CActorWolfen::_Std_OnFightActionSuccess()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CActorWolfen::Func_0x204(CActorFighter* pOther)
 {
 	CActorFighter* pCVar1;
@@ -1995,7 +2000,7 @@ void CActorWolfen::ManageKnowledge()
 				fVar2 = (pAdv->characterBase).base.base.currentLocation.z -
 				this->currentLocation.z,
 				fVar1 * fVar1 + fVar2 * fVar2 <=
-				*(float*)(pFighterCombo->field_0x18 + 0x4c) * *(float*)(pFighterCombo->field_0x18 + 0x4c) * 1.25)) {
+				*(float*)(pFighterCombo->actionHash + 0x4c) * *(float*)(pFighterCombo->actionHash + 0x4c) * 1.25)) {
 			pKnowledge = this->pWolfenKnowledge;
 			if (pKnowledge->field_0x1c == 0) {
 				CActorWolfenKnowledge::BeginMemory(pKnowledge, pFighterCombo);

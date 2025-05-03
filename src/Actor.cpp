@@ -4978,6 +4978,22 @@ void CScalarDyn::BuildFromSpeedTime(float param_1, float param_2, float param_3)
 	return;
 }
 
+void CScalarDyn::BuildFromDistTimeNoAccel(float dist, float time)
+{
+	this->field_0x14 = 0.0f;
+	this->field_0x10 = 0.0f;
+	this->field_0xc = dist / time;
+	this->flags = 0;
+	this->field_0x4 = 0.0f;
+	this->field_0x18 = 0.0f;
+	this->field_0x24 = 0.0f;
+	this->field_0x20 = 0.0f;
+	this->field_0x1c = 0.0f;
+	this->duration = time;
+
+	return;
+}
+
 void CScalarDyn::Stop()
 {
 	this->field_0xc = 0.0f;

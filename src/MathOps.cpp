@@ -118,6 +118,49 @@ void edQuatMul(edF32VECTOR4* param_1, edF32VECTOR4* param_2, edF32VECTOR4* param
 	return;
 }
 
+float edQuatToAngAxis(edF32VECTOR4* v0, float* f0, edF32VECTOR3* v1)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar3 = sqrtf(v0->z * v0->z + v0->x * v0->x + v0->y * v0->y);
+	fVar1 = edF32ACosHard(v0->w);
+	*f0 = fVar1 * 2.0f;
+
+	if (g_TinyFloat_00448548 < fVar3) {
+		*v1 = v0->xyz / fVar3;
+	}
+	else {
+		*v1 = v0->xyz;
+	}
+
+	return fVar3;
+}
+
+void edQuatFromEuler(edF32VECTOR4* v0, float x, float y, float z)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar6 = x / 2.0f;
+	fVar1 = cosf(fVar6);
+	fVar2 = cosf(y / 2.0f);
+	fVar3 = cosf(z / 2.0f);
+	fVar6 = sinf(fVar6);
+	fVar4 = sinf(y / 2.0f);
+	fVar5 = sinf(z / 2.0f);
+	v0->w = fVar6 * fVar4 * fVar5 + fVar1 * fVar2 * fVar3;
+	v0->x = fVar6 * fVar2 * fVar3 - fVar1 * fVar4 * fVar5;
+	v0->y = fVar5 * fVar6 * fVar2 + fVar3 * fVar1 * fVar4;
+	v0->z = fVar5 * fVar1 * fVar2 - fVar3 * fVar6 * fVar4;
+	return;
+}
+
 void edQuatShortestSLERPAccurate(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
 {
 	bool bVar1;

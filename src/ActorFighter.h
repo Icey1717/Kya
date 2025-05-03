@@ -20,6 +20,10 @@
 #define FIGHTER_PROJECTED_HIT_SLIDE 0x57
 #define FIGHTER_PROJECTED_HIT_WAKING_UP 0x59
 
+#define FIGHTER_BLOW_BEGIN 0x65
+#define FIGHTER_EXECUTE_BLOW 0x66
+#define FIGHTER_BLOW_END 0x67
+
 struct s_fighter_anatomy_zones
 {
 	edF32VECTOR4 field_0x0;
@@ -56,17 +60,33 @@ struct s_input_pattern
 	uint field_0x4;
 };
 
-struct s_fighter_combo
+union s_fighter_action_hash
 {
-	undefined4 field_0x0;
-	short field_0x4;
-	short field_0x6;
+	uint hash;
+	int pData; // void* (s_fighter_combo/blow/grab)
+};
+
+struct s_fighter_move
+{
+	s_fighter_action_hash hash;
+	s_input_pattern field_0x4;
+};
+
+struct s_fighter_combo : public s_fighter_move
+{
 	float field_0x8;
 	float field_0xc;
-	s_input_pattern field_0x10;
-	undefined4 field_0x18;
-	void* field_0x1c;
-	uint field_0x20;
+	s_input_pattern pattern;
+	s_fighter_action_hash actionHash;
+	s_fighter_action_hash* aBranches;
+	uint nbBranches;
+};
+
+struct s_input_pattern_cmp
+{
+	uint field_0x0;
+	uint field_0x4;
+	float field_0x8;
 };
 
 struct CInputAnalyser
@@ -74,16 +94,18 @@ struct CInputAnalyser
 	CInputAnalyser();
 	void _CumulateDirections(CPlayerInput* pInput, edF32VECTOR4* pDir);
 	int Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+	void Reset();
+	static bool Compare(s_input_pattern* pPatternA, s_input_pattern* pPatternB, s_input_pattern_cmp* pPatternCmp);
 
-	s_input_pattern field_0x0;
-	s_input_pattern field_0x8;
+	s_input_pattern patternA;
+	s_input_pattern patternB;
 
 	edF32VECTOR4 field_0x10;
 	uint lastStickDirFlags;
 
 	uint flags;
-	s_fighter_combo* field_0x34;
-	s_fighter_combo* field_0x38;
+	s_fighter_combo* pComboA;
+	s_fighter_combo* pComboB;
 };
 
 class StaticMeshComponentAdvanced : public StaticMeshComponent
@@ -110,17 +132,16 @@ public:
 	float field_0x78;
 };
 
+struct s_fighter_blow_bone_ref
+{
+	CActor* pActor;
+	uint boneId;
+};
+
 struct s_fighter_blow_sub_obj {
-	undefined field_0x0;
-	undefined field_0x1;
-	undefined field_0x2;
-	undefined field_0x3;
-	uint field_0x4;
-	undefined field_0x8;
-	undefined field_0x9;
-	undefined field_0xa;
-	undefined field_0xb;
-	uint field_0xc;
+	s_fighter_blow_bone_ref boneRefA;
+	s_fighter_blow_bone_ref boneRefB;
+
 	int materialId;
 	union
 	{
@@ -139,31 +160,30 @@ struct s_fighter_blow_sub_obj {
 	uint field_0x20;
 };
 
-struct s_fighter_blow {
-	undefined4 field_0x0;
-	char field_0x4;
-	char field_0x5;
-	char field_0x6;
-	undefined field_0x7;
+struct _s_fighter_blow_stage
+{
+	int animId;
+	float field_0x4;
+	float field_0x8;
+	uint flags;
+	edF32VECTOR4 field_0x10;
+};
+
+struct s_fighter_blow : public s_fighter_move
+{
 	float field_0x8;
 	float field_0xc;
 	float field_0x10;
 	float field_0x14;
 	float field_0x18;
 	float field_0x1c;
-	float field_0x20;
-	float field_0x24;
-	float field_0x28;
-	undefined4 field_0x2c;
+	edF32VECTOR4 field_0x20;
 	edF32VECTOR4 field_0x30;
 	uint field_0x40;
 	uint nbSubObjs;
 	s_fighter_blow_sub_obj* field_0x48;
 	float field_0x4c;
-	undefined field_0x50;
-	undefined field_0x51;
-	undefined field_0x52;
-	undefined field_0x53;
+	float field_0x50;
 	undefined field_0x54;
 	undefined field_0x55;
 	undefined field_0x56;
@@ -172,42 +192,12 @@ struct s_fighter_blow {
 	undefined field_0x59;
 	undefined field_0x5a;
 	undefined field_0x5b;
-	int field_0x5c;
-	int field_0x60;
-	uint field_0x64;
-	undefined field_0x68;
-	undefined field_0x69;
-	undefined field_0x6a;
-	undefined field_0x6b;
-	undefined field_0x6c;
-	undefined field_0x6d;
-	undefined field_0x6e;
-	undefined field_0x6f;
-	int field_0x70;
-	float field_0x74;
-	float field_0x78;
-	uint field_0x7c;
-	float field_0x80;
-	float field_0x84;
-	float field_0x88;
-	undefined4 field_0x8c;
-	int field_0x90;
-	float field_0x94;
-	float field_0x98;
-	uint field_0x9c;
-	float field_0xa0;
-	float field_0xa4;
-	float field_0xa8;
-	undefined4 field_0xac;
-	int field_0xb0;
-	float field_0xb4;
-	float field_0xb8;
-	uint field_0xbc;
-	float field_0xc0;
-	float field_0xc4;
-	float field_0xc8;
-	undefined4 field_0xcc;
-	undefined4 field_0xd0;
+	int nbBoneRefs;
+	s_fighter_blow_bone_ref aBoneRefs[2];
+	_s_fighter_blow_stage blowStageBegin;
+	_s_fighter_blow_stage blowStageExecute;
+	_s_fighter_blow_stage blowStageEnd;
+	void* field_0xd0;
 	undefined field_0xd4;
 	undefined field_0xd5;
 	undefined field_0xd6;
@@ -222,20 +212,12 @@ struct s_fighter_blow {
 	undefined field_0xdf;
 };
 
-struct s_fighter_grab
+struct s_fighter_grab : public s_fighter_move
 {
-	undefined4 field_0x0;
-	char field_0x4;
-	char field_0x5;
-	short field_0x6;
 	float field_0x8;
 	float field_0xc;
 	float field_0x10;
-	undefined field_0x14;
-	undefined field_0x15;
-	undefined field_0x16;
-	undefined field_0x17;
-	uint field_0x18;
+	s_fighter_blow_bone_ref field_0x14;
 	undefined field_0x1c;
 	undefined field_0x1d;
 	undefined field_0x1e;
@@ -321,7 +303,7 @@ struct s_fighter_grab
 
 struct s_fighter_grab_react
 {
-	int field_0x0;
+	s_fighter_action_hash hash;
 	uint field_0x4;
 	uint field_0x8;
 };
@@ -358,6 +340,12 @@ struct s_fighter_action
 			byte field_0x3;
 		};
 
+		struct
+		{
+			ushort field_0x0_2;
+			ushort field_0x2_2;
+		};
+
 		uint all;
 	};
 };
@@ -365,7 +353,36 @@ struct s_fighter_action
 struct s_fighter_action_param
 {
 	edF32VECTOR4* field_0x0;
-	uint field_0x4;
+
+	union 
+	{
+		uint field_0x4;
+		void* pData;
+	};
+};
+
+struct s_fighter_fight_collision
+{
+	CActor* pActor;
+	uint boneId;
+	undefined field_0x8;
+	undefined field_0x9;
+	undefined field_0xa;
+	undefined field_0xb;
+	undefined field_0xc;
+	undefined field_0xd;
+	undefined field_0xe;
+	undefined field_0xf;
+	edF32VECTOR4 prevBonePosition;
+	edF32VECTOR4 curBonePosition;
+};
+
+struct s_fighter_collision_desc
+{
+	CActor* pActor;
+	edF32VECTOR4 field_0x10;
+	edF32VECTOR4 field_0x20;
+	float field_0x30;
 };
 
 class CActorFighter : public CActorAutonomous
@@ -413,9 +430,11 @@ public:
 	virtual bool Func_0x1a4();
 	virtual bool Func_0x1a8();
 	virtual bool Func_0x1ac();
+	virtual bool Func_0x1c0(s_fighter_combo* pCombo);
 	virtual void _Execute_Std(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	virtual void _Std_GetPossibleHit(bool bPlayImpact);
 	virtual void _Std_GetPossibleExit();
+	virtual void _Std_OnFightActionSuccess();
 	virtual void _StateFighterRun(CActorsTable* pTable);
 	virtual void _Ride_GetPossibleHit(bool bPlayImpact);
 	virtual void _Ride_GetPossibleExit();
@@ -442,15 +461,23 @@ public:
 	void _StateFighterHitFlyToSlide();
 	void _StateFighterHitSlide();
 
+	float _StateFighterFightActionDynInit(_s_fighter_blow_stage* pStage);
+	void _StateFighterExecuteBlow(int nextStateA, int nextStateB, int param_4);
+
 	void _LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode);
 	void _CreateBlowsDB(ByteCode* pByteCode);
 
 	void _LoadGrab(s_fighter_grab* pGrab, ByteCode* pByteCode);
 	void _CreateGrabsDB(ByteCode* pByteCode);
 
+	int _MarkCombosRoots(s_fighter_combo* aCombos, int nbCombos);
 	void _LoadCombo(s_fighter_combo* pCombo, ByteCode* pByteCode);
 	void _CreateCombosDB(ByteCode* pByteCode);
 
+	void _SV_HIT_FightCollisionsBegin();
+	bool _SV_HIT_FightCollisionCheckIntersect(s_fighter_collision_desc* pCollisionDesc, edF32VECTOR4* param_3, edF32VECTOR4* param_4, uint kindMask);
+	uint _SV_HIT_FightCollisionsGet(s_fighter_collision_desc* aCollisionDescs, uint param_3, uint param_4);
+	void _SV_HIT_FightCollisionsEnd();
 	int _SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5, CActorsTable* param_6, CFighterExcludedTable* param_7, bool param_8, ushort param_9, ushort param_10);
 
 	void _SV_DYN_SetRotationAroundMassCenter(edF32MATRIX4* param_2);
@@ -465,15 +492,35 @@ public:
 	CActorWeapon* GetWeapon();
 
 	void SetFighterCombo(s_fighter_combo* pCombo);
+	s_fighter_blow* FindBlowByName(char* szName);
 
 	void SetStandAnim(int newStandAnim);
 
+	void FUN_0031a7c0(int inState);
+
+	void FUN_0031aad0(float animLength, s_fighter_blow* pBlow);
 	bool FUN_0031b790(int state);
 	uint FUN_0031b4d0(int state);
+	bool FUN_0031ac10(float param_1, s_fighter_blow* pBlow);
 	int FUN_0030a6a0();
 	bool FUN_003175e0(s_fighter_action* pFighterAction, float* param_3);
 	bool FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_param* pActionParam);
 
+	float _GetFighterAnimationLength(int animId);
+
+	void _InitBoneRef(s_fighter_blow_bone_ref* pBoneRef);
+
+	void _InitBlow(s_fighter_blow* pBlow);
+	void _InitGrab(s_fighter_grab* pGrab);
+
+	void _InitBlowsDB();
+	void _InitGrabsDB();
+	void _InitCombosDB();
+
+	void _UpdateComboSituation();
+	s_fighter_combo* _FindComboBestRoot(s_input_pattern* pPattern, uint flags);
+	s_fighter_combo* _FindComboBestNext(s_input_pattern* pPattern, uint flags);
+	s_fighter_combo* _FindBestCombo(s_input_pattern* pPattern, uint flags);
 	bool _ValidateCommand(s_fighter_action* pActionA, s_fighter_action* pActionB);
 	void _SetRelativeSpeedOnGround(float speed, edF32VECTOR4* pDirection);
 	void _BuildCommandFromAbsoluteVector(edF32VECTOR4* param_2, s_fighter_action* pFighterAction, edF32VECTOR4* param_4);
@@ -518,7 +565,7 @@ public:
 	{
 		uint all;
 		byte flags[4];
-	} field_0x448;
+	} validCommandMask;
 
 	s_fighter_action_param field_0x454;
 	float field_0x45c;
@@ -598,8 +645,10 @@ public:
 	float hitDamage;
 	int hitFlags;
 	float field_0x6bc;
-
+	float field_0x6c0;
 	float field_0x6c4;
+	float field_0x6c8;
+	float field_0x6cc;
 
 	s_fighter_multiways_anim field_0x730;
 
@@ -628,13 +677,20 @@ public:
 	float field_0x800;
 	edF32VECTOR4 field_0x810[2];
 
+	s_fighter_blow* pBlow;
+	s_fighter_blow* field_0x834;
+	s_fighter_blow* field_0x840;
+
 	undefined4 field_0x860;
-	undefined4 field_0x864;
-	undefined4 field_0x868;
+	s_fighter_blow* field_0x864;
+	uint comboFlags;
 
 	s_fighter_combo* pFighterCombo;
 
-	int field_0x8e0;
+	uint field_0x630;
+
+	s_fighter_fight_collision aFightCollisions[2];
+	int nbFightCollisions;
 	int field_0x8e4;
 
 	edF32VECTOR4 field_0x8f0;

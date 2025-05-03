@@ -828,7 +828,7 @@ void CActorCommander::_UpdateCamera()
 			pCVar8 = (*((pCurAdversary->characterBase).base.base.pVTable)->GetLifeInterface)((CActor*)pCurAdversary);
 			fVar16 = (*pCVar8->pVtable->GetValue)((CInterface*)pCVar8);
 			if ((fVar16 <= 0.0) &&
-				(((iVar9 = (pCVar1->character).field_0x830, iVar9 != 0 && ((*(byte*)(iVar9 + 6) & 1) != 0)) ||
+				(((iVar9 = (pCVar1->character).pBlow, iVar9 != 0 && ((*(byte*)(iVar9 + 6) & 1) != 0)) ||
 					((iVar9 = (pCVar1->character).field_0x840, iVar9 != 0 && (*(int*)(iVar9 + 0x38) == 2)))))) {
 				fVar16 = GetAngleYFromVector(&CActorHero::_gThis->rotationQuat);
 				fVar17 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)(pFightCamera);

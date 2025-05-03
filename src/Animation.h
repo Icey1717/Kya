@@ -171,6 +171,7 @@ public:
 	void PlayAnim(CActor* pActor, int animType, int origAnimType);
 	void Reset(CActor* pActor);
 	BoneData* FindReggedBone(int bone);
+	bool IsBonePresent(uint boneId);
 	void RegisterBone(uint boneId);
 	void UnRegisterBone(uint boneId);
 

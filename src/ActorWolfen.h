@@ -437,6 +437,8 @@ public:
 	virtual bool Func_0x19c();
 	virtual bool Func_0x1ac();
 
+	virtual void _Std_OnFightActionSuccess();
+
 	virtual void Func_0x204(CActorFighter* pOther);
 	virtual void Func_0x20c(float param_1);
 

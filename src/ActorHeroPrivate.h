@@ -151,6 +151,8 @@ public:
 	virtual void Func_0x194(float param_1);
 	virtual void UpdateFightCommand();
 	virtual bool Func_0x1a4();
+	virtual bool Func_0x1a8();
+	virtual bool Func_0x1c0(s_fighter_combo* pCombo);
 	virtual void _Proj_GetPossibleExit();
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);

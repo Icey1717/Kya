@@ -142,3 +142,5 @@ CheatCodeSequenceEntry gShowGalleryCheatCodeSeq_00427cd0[9] = {
 	{ 0x16, 1.0f, FUN_004078f0 },
 	{ 0x20, 1.0f, (CheatExecuteFunc)0x0 },
 };
+
+CheatCodeSequence gShowGalleryCheatCode_004a5760(gShowGalleryCheatCodeSeq_00427cd0);
