@@ -94,7 +94,7 @@ bool CCameraFixePerso::Manage()
 			fVar5 = fabs(fVar6 - this->field_0xd8);
 
 			pCVar2 = GetTarget();
-			bVar1 = pCVar2->IsKindOfObject(4);
+			bVar1 = pCVar2->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 			if (bVar1 != false) {
 				uVar4 = GetTarget()->GetStateFlags(GetTarget()->actorState) & 0x100;
 			}

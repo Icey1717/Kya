@@ -503,7 +503,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 						this->field_0x34c = pActorsTable->aEntries[iVar5];
 					}
 					this->field_0x348 = this->field_0x348 + 1;
-					lVar3 = pActorsTable->aEntries[iVar5]->IsKindOfObject(4);
+					lVar3 = pActorsTable->aEntries[iVar5]->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 					if (lVar3 != 0) {
 						CActorAutonomous* pAutonomous = reinterpret_cast<CActorAutonomous*>(pActorsTable->aEntries[iVar5]);
 						pAutonomous->field_0x344 = pAutonomous->field_0x344 & 0xfe;
@@ -1596,7 +1596,7 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 		}
 	}
 
-	if ((this->curBehaviourId == 3) && (bVar2 = IsKindOfObject(8), bVar2 != false)) {
+	if ((this->curBehaviourId == 3) && (bVar2 = IsKindOfObject(OBJ_TYPE_FIGHTER), bVar2 != false)) {
 		IMPLEMENTATION_GUARD(
 		local_4 = 0x1c;
 		edF32Vector4SubHard(&eStack112, pLocation, &this->currentLocation);

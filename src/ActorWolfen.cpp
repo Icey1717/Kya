@@ -4680,7 +4680,7 @@ bool CActorWolfen::CanSwitchToFight_Area(CActor* pTarget)
 	bCanSwitchToFight = false;
 	if ((this->combatFlags_0xb78 & 4) != 0) {
 		bVar4 = false;
-		bVar3 = pTarget->IsKindOfObject(8);
+		bVar3 = pTarget->IsKindOfObject(OBJ_TYPE_FIGHTER);
 		if (((bVar3 != false) &&
 			(fVar1 = (pTarget->currentLocation).x - this->currentLocation.x,
 				fVar2 = (pTarget->currentLocation).z - this->currentLocation.z,
@@ -4698,7 +4698,7 @@ bool CActorWolfen::CanSwitchToFight_Area(CActor* pTarget)
 
 			IMPLEMENTATION_GUARD(
 			if ((bVar4) &&
-				((bVar4 = pTarget->IsKindOfObject(4), bVar4 == false ||
+				((bVar4 = pTarget->IsKindOfObject(OBJ_TYPE_AUTONOMOUS), bVar4 == false ||
 					(lVar7 = (*(code*)this->pVTable[1].field_0x4)(this), lVar7 == 0)))) {
 				bVar4 = false;
 				if ((pTarget != (CActor*)0x0) && ((pTarget->typeID == ACTOR_HERO_PRIVATE && (pTarget->curBehaviourId == 8)))) {

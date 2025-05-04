@@ -1415,7 +1415,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 					}
 				}
 
-				if ((pHitParam->field_0x8 == 0) && ((pHitParam->projectileType == 0 || (pHitParam->projectileType == 6)))) {
+				if ((pHitParam->flags == 0) && ((pHitParam->projectileType == 0 || (pHitParam->projectileType == 6)))) {
 				LAB_0013ee80:
 					uVar2 = GetLifeInterface();
 					fVar7 = uVar2->GetValue();
@@ -10249,7 +10249,7 @@ void gActorHero_GetNearestKickable(CActor* pActor, void* pParams)
 
 	GetKickableParams* pKickableParams = reinterpret_cast<GetKickableParams*>(pParams);
 
-	bVar1 = pActor->IsKindOfObject(4);
+	bVar1 = pActor->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 	if (((bVar1 != false) && (pActor->pCollisionData != (CCollision*)0x0)) && ((CActorFactory::gClassProperties[pActor->typeID].flags & 0x400) != 0)) {
 		CActorMovable* pMovable = static_cast<CActorMovable*>(pActor);
 
@@ -14679,7 +14679,7 @@ bool CActorHeroPrivate::CheckHitAndDeath()
 	}
 	local_90.damage = 2.0f;
 LAB_0013e9f0:
-	local_90.field_0x8 = 1;
+	local_90.flags = 1;
 	local_90.projectileType = 0;
 
 	AccomplishHit((CActor*)0x0, &local_90, &local_10);
@@ -15314,7 +15314,7 @@ void CActorHeroPrivate::FUN_00325c40(float t0, int param_3)
 {
 	if (param_3 == 0) {
 		if (this->field_0x1568 != 0) {
-			this->field_0x440 = this->field_0x440 - 0.2f;
+			this->hitMultiplier = this->hitMultiplier - 0.2f;
 		}
 
 		this->field_0x1564 = Timer::GetTimer()->scaledTotalTime;
@@ -15323,7 +15323,7 @@ void CActorHeroPrivate::FUN_00325c40(float t0, int param_3)
 	}
 	else {
 		if (this->field_0x1568 == 0) {
-			this->field_0x440 = this->field_0x440 + 0.2f;
+			this->hitMultiplier = this->hitMultiplier + 0.2f;
 		}
 
 		this->field_0x1564 = t0 + Timer::GetTimer()->scaledTotalTime;
@@ -15337,7 +15337,7 @@ void CActorHeroPrivate::FUN_00325d00()
 {
 	if (this->field_0x1564 <= Timer::GetTimer()->scaledTotalTime) {
 		if (this->field_0x1568 != 0) {
-			this->field_0x440 = this->field_0x440 - 0.2f;
+			this->hitMultiplier = this->hitMultiplier - 0.2f;
 		}
 
 		this->field_0x1564 = Timer::GetTimer()->scaledTotalTime;
@@ -15369,13 +15369,13 @@ void CActorHeroPrivate::UpdateBracelet(uint flags)
 	if (flags == 0) {
 		this->field_0x444 = 0;
 		this->validCommandMask.all = 0;
-		this->field_0x440 = 0.0f;
+		this->hitMultiplier = 0.0f;
 		this->pAnimationController->AddDisabledBone(this->braceletBone);
 	}
 	else {
 		this->field_0x444 = this->field_0x1874;
 		this->validCommandMask.all = this->field_0x1878;
-		this->field_0x440 = 1.0f;
+		this->hitMultiplier = 1.0f;
 
 		if ((flags & 2) == 0) {
 			bVar1 = this->validCommandMask.flags[1];
@@ -15399,11 +15399,11 @@ void CActorHeroPrivate::UpdateBracelet(uint flags)
 		}
 
 		if ((flags & 0x40) != 0) {
-			this->field_0x440 = 1.1f;
+			this->hitMultiplier = 1.1f;
 		}
 
 		if ((flags & 0x80) != 0) {
-			this->field_0x440 = 1.3f;
+			this->hitMultiplier = 1.3f;
 		}
 
 		for (; flags != 0; flags = flags >> 1) {
@@ -16131,6 +16131,19 @@ bool CActorHeroPrivate::Func_0x1a8()
 	return bVar1;
 }
 
+bool CActorHeroPrivate::Func_0x1b0(CActor* pOther)
+{
+	bool bVar1;
+
+	bVar1 = pOther->IsKindOfObject(OBJ_TYPE_HERO);
+	CActorHero* pHero = static_cast<CActorHero*>(pOther);
+	if (((bVar1 == false) || (4 < this->braceletLevel)) || (bVar1 = false, pHero->inventory.aSlots[0][9].field_0x4 == 0)) {
+		bVar1 = true;
+	}
+
+	return bVar1;
+}
+
 bool CActorHeroPrivate::Func_0x1c0(s_fighter_combo* pCombo)
 {
 	uint uVar1;
@@ -16773,7 +16786,7 @@ bool Criterion_FightLock_NoOcclusion(CActor* pActor, void* pParams)
 	fVar6 = fabs(pActorParam->currentLocation.y - (pActor->currentLocation).y);
 
 	if (pActor != pActorParam) {
-		if (((((((pActor->GetStateFlags(pActor->actorState) & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) &&
+		if (((((((pActor->GetStateFlags(pActor->actorState) & 1) == 0) && (bVar3 = pActor->IsKindOfObject(OBJ_TYPE_FIGHTER), bVar3 != false)) &&
 			((pActor->flags & 0x800000) == 0)) && ((pActor != pActorParam->field_0x354 &&
 				(fVar1 = (pActor->currentLocation).x - pActorParam->currentLocation.x,
 					fVar2 = (pActor->currentLocation).z - pActorParam->currentLocation.z,
@@ -16803,7 +16816,7 @@ bool Criterion_FightLock(CActor* pActor, void* pParams)
 	fVar6 = fabs(pActorParam->currentLocation.y - (pActor->currentLocation).y);
 
 	if (pActor != pActorParam) {
-		if (((((((pActor->GetStateFlags(pActor->actorState) & 1) == 0) && (bVar3 = pActor->IsKindOfObject(8), bVar3 != false)) && ((pActor->flags & 0x800000) == 0)) &&
+		if (((((((pActor->GetStateFlags(pActor->actorState) & 1) == 0) && (bVar3 = pActor->IsKindOfObject(OBJ_TYPE_FIGHTER), bVar3 != false)) && ((pActor->flags & 0x800000) == 0)) &&
 			((pActor != pActorParam->field_0x354 && (fVar1 = (pActor->currentLocation).x - pActorParam->currentLocation.x,
 					fVar2 = (pActor->currentLocation).z - pActorParam->currentLocation.z,
 					fVar1 * fVar1 + fVar2 * fVar2 <= 49.0f)))) && ((pActor->curBehaviourId != 4 || (fVar6 <= 4.0f)))) &&

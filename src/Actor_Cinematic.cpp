@@ -400,7 +400,7 @@ void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationTy
 		this->pOwner->SetState(newState, newAnimationType);
 	}
 
-	bVar2 = this->pOwner->IsKindOfObject(4);
+	bVar2 = this->pOwner->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 	if (bVar2 != false) {
 		pCVar1 = this->pOwner;
 		IMPLEMENTATION_GUARD_AUDIO(
@@ -550,7 +550,7 @@ void CBehaviourCinematic::End(int newBehaviourId)
 		CActorMovable* pMoveable = reinterpret_cast<CActorMovable*>(this->pOwner);
 		pMoveable->dynamic.Reset(pMoveable);
 
-		bVar3 = this->pOwner->IsKindOfObject(4);
+		bVar3 = this->pOwner->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 		if (bVar3 != false) {
 			CActorAutonomous* pAutonomous = reinterpret_cast<CActorAutonomous*>(this->pOwner);
 			pCVar2 = this->pOwner;

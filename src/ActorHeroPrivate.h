@@ -152,6 +152,7 @@ public:
 	virtual void UpdateFightCommand();
 	virtual bool Func_0x1a4();
 	virtual bool Func_0x1a8();
+	virtual bool Func_0x1b0(CActor* pOther);
 	virtual bool Func_0x1c0(s_fighter_combo* pCombo);
 	virtual void _Proj_GetPossibleExit();
 

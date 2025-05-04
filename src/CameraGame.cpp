@@ -1308,7 +1308,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 
 	SetAngleGamma(0.0f);
 	pCVar4 = GetTarget();
-	uVar2 = IsKindOfObject(4);
+	uVar2 = IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 	if (uVar2 == 0) {
 		this->cameraConfig.flags = this->cameraConfig.flags & 0xffffdfff;
 	}

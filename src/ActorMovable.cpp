@@ -348,34 +348,35 @@ bool CActorMovable::CarriedByActor(CActor* pActor, edF32MATRIX4* m0)
 
 int CActorMovable::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	int uVar1;
+	int bProcessed;
 
 	if (msg == 0x48) {
-		uVar1 = 1;
+		bProcessed = 1;
 		(this->dynamic).weightA = 1.2f;
 	}
 	else {
 		if (msg == 0x47) {
 			(this->dynamic).weightA = 1.0f;
-			uVar1 = 1;
+			bProcessed = 1;
 		}
 		else {
 			if (msg == 0x46) {
 				(this->dynamic).weightA = 0.5f;
-				uVar1 = 1;
+				bProcessed = 1;
 			}
 			else {
 				if (msg == 0x45) {
-					uVar1 = 1;
+					bProcessed = 1;
 					(this->dynamic).weightA = 0.8f;
 				}
 				else {
-					uVar1 = CActor::InterpretMessage(pSender, msg, pMsgParam);
+					bProcessed = CActor::InterpretMessage(pSender, msg, pMsgParam);
 				}
 			}
 		}
 	}
-	return uVar1;
+
+	return bProcessed;
 }
 
 void CActorMovable::ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable)

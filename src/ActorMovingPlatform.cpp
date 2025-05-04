@@ -2671,23 +2671,26 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 				*(undefined4*)((int)pMsgParam + 0x74) = 0;)
 				break;
 			case 8:
-				IMPLEMENTATION_GUARD(
 				uVar10 = 0;
 				if ((this->pProperties->flags_0x24 & 0x20000) != 0) {
-					(*(this->pVTable)->SetBehaviour)(this, 6, -1, -1);
+					SetBehaviour(MOVING_PLATFORM_BEHAVIOUR_DESTROYED, -1, -1);
+
 					iVar6 = 0;
 					if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
 						iVar6 = this->pCameraStream->entryCount;
 					}
+
 					iVar7 = 0;
 					if (0 < iVar6) {
-						iVar8 = 0;
 						do {
-							iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
-							if (*(int*)(iVar4 + 4) == 7) {
-								S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), this);
-								S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), this);
-								S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), this);
+							S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = this->pCameraStream->aEntries + iVar7;
+
+							if (pEntry->field_0x4 == 7) {
+								pEntry->streamTarget.Switch(this);
+								pEntry->streamTarget.PostSwitch(this);
+								pEntry->streamCameraEvent.SwitchOn(this);
+
+								IMPLEMENTATION_GUARD_AUDIO(
 								pCVar3 = *(CSound**)(iVar4 + 0x48);
 								if (pCVar3 != (CSound*)0x0) {
 									uVar5 = *(uint*)&this->pActorSound->field_0x4;
@@ -2703,27 +2706,30 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 											break;
 										}
 									}
-								}
+								})
 							}
+
 							iVar7 = iVar7 + 1;
-							iVar8 = iVar8 + 0x48;
 						} while (iVar7 < iVar6);
 					}
 					uVar10 = 1;
 				}
+
 				iVar6 = 0;
 				if (this->pCameraStream != (S_BRIDGE_CAMERA_STREAM*)0x0) {
 					iVar6 = this->pCameraStream->entryCount;
 				}
+
 				iVar7 = 0;
 				if (0 < iVar6) {
-					iVar8 = 0;
 					do {
-						iVar4 = (int)&this->pCameraStream->entryCount + iVar8;
-						if (*(int*)(iVar4 + 4) == 0x13) {
-							S_STREAM_NTF_TARGET_SWITCH::Switch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), this);
-							S_STREAM_NTF_TARGET_SWITCH::PostSwitch((S_STREAM_NTF_TARGET_SWITCH*)(iVar4 + 0xc), this);
-							S_STREAM_EVENT_CAMERA::SwitchOn((S_STREAM_EVENT_CAMERA*)(iVar4 + 0x28), this);
+						S_BRIDGE_CAMERA_STREAM_ENTRY* pEntry = this->pCameraStream->aEntries + iVar7;
+						if (pEntry->field_0x4 == 0x13) {
+							pEntry->streamTarget.Switch(this);
+							pEntry->streamTarget.PostSwitch(this);
+							pEntry->streamCameraEvent.SwitchOn(this);
+
+							IMPLEMENTATION_GUARD_AUDIO(
 							pCVar3 = *(CSound**)(iVar4 + 0x48);
 							if (pCVar3 != (CSound*)0x0) {
 								uVar5 = *(uint*)&this->pActorSound->field_0x4;
@@ -2739,13 +2745,14 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 										break;
 									}
 								}
-							}
+							})
 						}
+
 						iVar7 = iVar7 + 1;
-						iVar8 = iVar8 + 0x48;
 					} while (iVar7 < iVar6);
 				}
-				*(undefined4*)((int)pMsgParam + 0x74) = uVar10;)
+
+				pHitMessageParams->field_0x74 = uVar10;
 				break;
 			case 9:
 				if (pSender->typeID == WEAPON) {

@@ -404,7 +404,7 @@ void CActorAraignos::BehaviourDefault_Manage()
 			this->field_0x1d0 = this->field_0x1d0 + Timer::GetTimer()->cutsceneDeltaTime;
 			if (this->field_0x1d4 != (CActor*)0x0) {
 				local_f0.damage = this->field_0x200;
-				local_f0.field_0x8 = 1;
+				local_f0.flags = 1;
 				local_f0.projectileType = 0;
 
 				DoMessage(this->field_0x1d4, MESSAGE_KICKED, &local_f0);

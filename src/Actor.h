@@ -87,6 +87,11 @@ enum ACTOR_MESSAGE {
 	MESSAGE_GET_BONE_ID = 0x4d,
 };
 
+#define OBJ_TYPE_MOVABLE	0x2
+#define OBJ_TYPE_AUTONOMOUS 0x4
+#define OBJ_TYPE_FIGHTER	0x8
+#define OBJ_TYPE_HERO		0x10
+
 typedef void* MSG_PARAM;
 
 #define HERO_ACTION_ID_JOKE 0x3
@@ -345,7 +350,7 @@ struct CActorParamsIn {
 struct _msg_hit_param {
 	int projectileType;
 	int field_0x4;
-	int field_0x8;
+	uint flags;
 	float damage;
 	undefined field_0x10;
 	undefined field_0x11;
@@ -394,22 +399,7 @@ struct _msg_hit_param {
 	undefined field_0x5d;
 	undefined field_0x5e;
 	undefined field_0x5f;
-	undefined field_0x60;
-	undefined field_0x61;
-	undefined field_0x62;
-	undefined field_0x63;
-	undefined field_0x64;
-	undefined field_0x65;
-	undefined field_0x66;
-	undefined field_0x67;
-	undefined field_0x68;
-	undefined field_0x69;
-	undefined field_0x6a;
-	undefined field_0x6b;
-	undefined field_0x6c;
-	undefined field_0x6d;
-	undefined field_0x6e;
-	undefined field_0x6f;
+	edF32VECTOR4 field_0x60;
 	undefined field_0x70;
 	undefined field_0x71;
 	undefined field_0x72;

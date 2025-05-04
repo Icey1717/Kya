@@ -1182,7 +1182,7 @@ bool gTrpDetectCallback(CActor* pActor, void* pParams)
 	CActor* pOtherActor = (CActor*)pParams;
 
 	bVar1 = false;
-	bVar2 = pActor->IsKindOfObject(4);
+	bVar2 = pActor->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 	if (((bVar2 != false) && (pActor->typeID != 0x2c)) && (pActor->typeID != 0x1c)) {
 		if (pActor->actorState == -1) {
 			uVar3 = 0;

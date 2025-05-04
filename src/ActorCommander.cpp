@@ -331,7 +331,7 @@ bool CActorCommander::BeginFightIntruder(CActor* pInstigator, CActor* pIntruder)
 
 	bSuccess = false;
 
-	if (pIntruder->IsKindOfObject(8) != false) {
+	if (pIntruder->IsKindOfObject(OBJ_TYPE_FIGHTER) != false) {
 		iVar4 = 0;
 		pCVar3 = (CTeamElt*)0x0;
 		if (0 < this->nbTeams) {

@@ -1128,7 +1128,7 @@ void CActorWind::NotifyActorInWindArea(float param_1, CActor* pNotifyActor)
 		edProjectVectorOnPlane(0.0f, &local_20, &local_20, &this->rotationQuat, 0);
 	}
 
-	pNotifyActor->IsKindOfObject(4);
+	pNotifyActor->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 
 	if ((this->field_0x160 & 1) == 0) {
 		fVar2 = edDistPointToPlane(&this->currentLocation, &this->rotationQuat, &pNotifyActor->currentLocation);

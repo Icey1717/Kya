@@ -43,6 +43,7 @@ class CVibrationDyn
 {
 public:
 	void Init(VibrationParam* pParams);
+	void UpdateAllFactors(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* pPosition);
 	int UpdateKineticToPotentialUpDown();
 	int ComputeCurFactor();
 	bool MakeVibrate(edF32VECTOR3* param_2);
@@ -63,7 +64,7 @@ public:
 	byte field_0x31;
 	undefined field_0x32;
 	undefined field_0x33;
-	struct CActor* field_0x34;
+	struct CActor* pActor;
 	float field_0x38;
 	float field_0x3c;
 	float field_0x40;

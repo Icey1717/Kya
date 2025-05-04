@@ -844,24 +844,46 @@ public:
 		return;
 	}
 
-	inline T Pop(int param_2) {
+	inline T Pop(int index)
+	{
 		T pCVar1;
 		T* ppCVar2;
 		int iVar3;
 
-		ppCVar2 = this->aEntries + param_2 + -1;
+		ppCVar2 = this->aEntries + index + -1;
 		iVar3 = this->entryCount + -1;
 		pCVar1 = ppCVar2[1];
-		if (param_2 < iVar3) {
+		if (index < iVar3) {
 			do {
-				param_2 = param_2 + 1;
+				index = index + 1;
 				ppCVar2[1] = ppCVar2[2];
 				ppCVar2 = ppCVar2 + 1;
-			} while (param_2 < iVar3);
+			} while (index < iVar3);
 		}
 
 		this->entryCount = this->entryCount + -1;
 		return pCVar1;
+	}
+
+	inline void Pop(T* pOut, int index)
+	{
+		T pCVar1;
+		T* ppCVar2;
+		int iVar3;
+		ppCVar2 = this->aEntries + index + -1;
+		iVar3 = this->entryCount + -1;
+		pCVar1 = ppCVar2[1];
+		if (index < iVar3) {
+			do {
+				index = index + 1;
+				ppCVar2[1] = ppCVar2[2];
+				ppCVar2 = ppCVar2 + 1;
+			} while (index < iVar3);
+		}
+
+		this->entryCount = this->entryCount + -1;
+		pOut[0] = pCVar1;
+		return;
 	}
 
 	inline T PopCurrent() {

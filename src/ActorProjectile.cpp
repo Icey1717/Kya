@@ -1599,7 +1599,7 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 				}
 			}
 
-			auStack160.field_0x8 = 0;
+			auStack160.flags = 0;
 			if (explode == 3) {
 				hitMsgId = 99;
 			}
@@ -1610,7 +1610,7 @@ void CActorProjectile::HitActor(edF32VECTOR4* pSphere, CActor* pHitActor, int ex
 				}
 				else {
 					if (explode == 1) {
-						auStack160.field_0x8 = 1;
+						auStack160.flags = 1;
 						auStack160.projectileType = 0;
 						hitMsgId = 2;
 					}

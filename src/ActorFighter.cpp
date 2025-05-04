@@ -565,7 +565,7 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	uVar2 = pByteCode->GetU32();
 	this->field_0x444 = 0xffffffff;
 	this->validCommandMask.all = 0xffffffff;
-	this->field_0x440 = 1.0f;
+	this->hitMultiplier = 1.0f;
 	if ((uVar2 & 1) == 0) {
 		this->validCommandMask.flags[0] = this->validCommandMask.flags[0] & 0xf | (byte)(((uint)(((ulong)this->validCommandMask.flags[0] << 0x38) >> 0x3c) & 0xb) << 4);
 	}
@@ -869,7 +869,7 @@ bool Criterion_AcquireAdversary(CActor* pActor, void* pParams)
 	StateConfig* pSVar2;
 	uint uVar3;
 
-	if ((pParams != pActor) && (bVar1 = pActor->IsKindOfObject(8), bVar1 != false)) {
+	if ((pParams != pActor) && (bVar1 = pActor->IsKindOfObject(OBJ_TYPE_FIGHTER), bVar1 != false)) {
 		if (pActor->actorState == -1) {
 			uVar3 = 0;
 		}
@@ -957,6 +957,11 @@ void CActorFighter::Func_0x194(float param_1)
 bool CActorFighter::Func_0x1ac()
 {
 	return (((ulong)this->validCommandMask.flags[0] << 0x38) >> 0x3c & 2) != 0;
+}
+
+bool CActorFighter::Func_0x1b0(CActor* pOther)
+{
+	return true;
 }
 
 bool CActorFighter::Func_0x1c0(s_fighter_combo* pCombo)
@@ -3016,6 +3021,43 @@ void CActorFighter::_StateFighterHitFall(float param_1, edF32VECTOR4* pRotation,
 	return;
 }
 
+static float FLOAT_00448b04 = 10.0f;
+
+void CActorFighter::_StateFighterHitFly()
+{
+	int iVar2;
+	float fVar3;
+	float fVar5;
+	edF32MATRIX4 eStack336;
+	CActorsTable local_110;
+
+	local_110.entryCount = 0;
+	edF32Vector4ScaleHard(this->dynamicExt.field_0x6c, &this->field_0x740, &this->dynamicExt.normalizedTranslation);
+
+	this->field_0x7d0 = (this->fighterAnatomyZones).field_0x0.y + this->currentLocation.y;
+
+	ManageDyn(4.0f, 0x8000120, &local_110);
+
+	this->field_0x7b0 = this->field_0x7b0 + this->field_0x7b4 * GetTimer()->cutsceneDeltaTime;
+	fVar3 = this->field_0x7b4;
+	this->field_0x7b4 = fVar3 - FLOAT_00448b04 * fVar3 * fVar3 * GetTimer()->cutsceneDeltaTime * GetTimer()->cutsceneDeltaTime;
+
+	MatrixRotationFromVectorAndAngle(-this->field_0x7b0, &eStack336, &this->field_0x7a0);
+	edF32Matrix4MulF32Matrix4Hard(&eStack336, &this->field_0x760, &eStack336);
+	_SV_DYN_SetRotationAroundMassCenter(&eStack336);
+
+	this->field_0x8e4 = _SV_HIT_ProcessActorsCollisions(0.0f, &this->field_0x8f0, &this->field_0x900, &this->field_0x740, &local_110, &this->actorsExcludeTable, true, 6, 0);
+
+	if ((((this->pCollisionData)->flags_0x4 & 7) == 0) && (this->field_0x8e4 == 0)) {
+		this->field_0x750 = this->field_0x740;
+	}
+	else {
+		_InterpretCollisions(0);
+	}
+
+	return;
+}
+
 void CActorFighter::_StateFighterHitWakingUpInit()
 {
 	edF32VECTOR4* v0;
@@ -3074,8 +3116,6 @@ void CActorFighter::_StateFighterHitWakingUpInit()
 
 	return;
 }
-
-static float FLOAT_00448b04 = 10.0f;
 
 void CActorFighter::_StateFighterHitFlyToSlide()
 {
@@ -3195,7 +3235,7 @@ LAB_00306b50:
 			this->field_0x750 = this->field_0x740;
 			if ((((this->hitFlags & 4U) == 0) && (15.0f < this->dynamicExt.field_0x6c)) &&
 				(this->dynamicExt.normalizedTranslation.y < 0.0f)) {
-				SetState(0x55, -1);
+				SetState(FIGHTER_PROJECTED_HIT_FLY, -1);
 			}
 		}
 		else {
@@ -3325,13 +3365,12 @@ void CActorFighter::_StateFighterExecuteBlow(int nextStateA, int nextStateB, int
 	uVar5 = _SV_HIT_FightCollisionsGet(local_80, 2, 1);
 	uVar6 = 0;
 	if (uVar5 != 0) {
-		IMPLEMENTATION_GUARD(
 		psVar7 = local_80;
 		do {
-			_SV_HIT_FightCollisionProcess(this, psVar7->pActor, this->pBlow, &psVar7->field_0x10, param_4);
+			_SV_HIT_FightCollisionProcessHit(psVar7->pActor, this->pBlow, &psVar7->field_0x10, param_4);
 			uVar6 = uVar6 + 1;
 			psVar7 = psVar7 + 1;
-		} while (uVar6 < uVar5);)
+		} while (uVar6 < uVar5);
 	}
 
 	pCVar1 = this->pAnimationController;
@@ -3438,7 +3477,7 @@ void CActorFighter::_LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode)
 	pBlow->field_0x8 = pByteCode->GetF32();
 	pBlow->field_0xc = pByteCode->GetF32();
 	pBlow->field_0x10 = pByteCode->GetF32();
-	pBlow->field_0x14 = pByteCode->GetF32();
+	pBlow->damage = pByteCode->GetF32();
 	pBlow->field_0x18 = pByteCode->GetF32();
 
 	pBlow->field_0x20.x = pByteCode->GetF32();
@@ -3926,6 +3965,26 @@ void CActorFighter::_CreateCombosDB(ByteCode* pByteCode)
 	return;
 }
 
+uint CActorFighter::_SV_HIT_GetHitZoneFromImpact(s_fighter_anatomy_zones* pAnatomyZones, edF32VECTOR4* pHitPosition, edF32VECTOR4* pActorPosition)
+{
+	uint uVar1;
+	float fVar2;
+	float fVar3;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4SubHard(&eStack16, pHitPosition, pActorPosition);
+	fVar2 = edF32Vector4SafeNormalize0Hard(&eStack32, &pAnatomyZones->field_0x0);
+	fVar3 = edF32Vector4DotProductHard(&eStack32, &eStack16);
+	uVar1 = 2;
+
+	if (pAnatomyZones->field_0x20 <= fVar3 / fVar2) {
+		uVar1 = pAnatomyZones->field_0x24 < fVar3 / fVar2 ^ 1;
+	}
+
+	return uVar1;
+}
+
 void CActorFighter::_SV_HIT_FightCollisionsBegin()
 {
 	uint curColIndex;
@@ -4108,6 +4167,81 @@ void CActorFighter::_SV_HIT_FightCollisionsEnd()
 	return;
 }
 
+
+void CActorFighter::_SV_HIT_FightCollisionProcessHit(CActor* pHitActor, s_fighter_blow* pBlow, edF32VECTOR4* pPosition, int param_5)
+{
+	int iVar1;
+	bool bVar2;
+	uint uVar3;
+	long lVar4;
+	s_fighter_hit_exclusion* pCVar5;
+	int iVar6;
+	float angle;
+	_msg_hit_param hitMsg;
+	edF32MATRIX4 rotMatrix;
+
+	bVar2 = this->actorsExcludeTable.IsInList(pHitActor);
+
+	if (!bVar2) {
+		hitMsg.projectileType = 7;
+		hitMsg.field_0x10 = pBlow->field_0x10 - this->timeInAir;
+		hitMsg.field_0x30 = pBlow->field_0x18;
+		hitMsg.field_0x70 = pBlow->field_0x1c;
+		hitMsg.damage = pBlow->damage;
+		hitMsg.field_0x50 = 1;
+		hitMsg.flags = pBlow->field_0x4.field_0x2ushort;
+
+		if (Func_0x1b0(pHitActor) == 0) {
+			hitMsg.flags = hitMsg.flags & 0xfffffff8;
+		}
+
+		if (param_5 == 1) {
+			hitMsg.field_0x30 = hitMsg.field_0x30 * this->hitMultiplier;
+			hitMsg.field_0x70 = hitMsg.field_0x70 * this->hitMultiplier;
+		}
+
+		hitMsg.damage = hitMsg.damage * this->hitMultiplier;
+
+		if ((this->flags & 0x1000) == 0) {
+			angle = GetAngleYFromVector(&this->rotationQuat);
+			edF32Matrix4RotateYHard(angle, &rotMatrix, &gF32Matrix4Unit);
+		}
+		else {
+			edF32Matrix4RotateYHard(this->rotationEuler.y, &rotMatrix, &gF32Matrix4Unit);
+		}
+
+		edF32Matrix4MulF32Vector4Hard(&hitMsg.field_0x20, &rotMatrix, &pBlow->field_0x20);
+		edF32Matrix4MulF32Vector4Hard(&hitMsg.field_0x60, &rotMatrix, &pBlow->field_0x30);
+		hitMsg.field_0x40 = *pPosition;
+
+		CActor::DoMessage(pHitActor, MESSAGE_KICKED, &hitMsg);
+
+		bVar2 = pHitActor->IsKindOfObject(OBJ_TYPE_FIGHTER);
+		if (bVar2 == true) {
+			CActorFighter* pFighter = static_cast<CActorFighter*>(pHitActor);
+			uVar3 = pFighter->FUN_0031b4d0(pFighter->actorState);
+			if (uVar3 == 0) {
+				this->fightFlags = this->fightFlags | 0x40;
+			}
+		}
+		else {
+			this->fightFlags = this->fightFlags | 0x40;
+		}
+
+		iVar1 = (this->actorsExcludeTable).nbEntries;
+		if (iVar1 < 6) {
+			(this->actorsExcludeTable).aEntries[iVar1].pActor = pHitActor;
+			(this->actorsExcludeTable).aEntries[(this->actorsExcludeTable).nbEntries].maxDuration = -1.0f;
+			(this->actorsExcludeTable).aEntries[(this->actorsExcludeTable).nbEntries].currentDuration = 0.0f;
+			(this->actorsExcludeTable).nbEntries = (this->actorsExcludeTable).nbEntries + 1;
+		}
+	}
+
+	return;
+}
+
+
+
 int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5, CActorsTable* param_6, CFighterExcludedTable* param_7, bool param_8, ushort param_9, ushort param_10)
 {
 	CActor* pReceiver;
@@ -4181,7 +4315,7 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 			pReceiver = local_200->aEntries[0];
 			local_1f0 = local_1f0 + 1;
 			local_200 = (CActorsTable*)local_200->aEntries;
-			bVar4 = pReceiver->IsKindOfObject(8);
+			bVar4 = pReceiver->IsKindOfObject(OBJ_TYPE_FIGHTER);
 
 			if (bVar4 != false) {
 				if (param_7 != (CFighterExcludedTable*)0x0) goto code_r0x0030b96c;
@@ -4940,6 +5074,50 @@ bool CActorFighter::FUN_0031b7f0(s_fighter_action* pAction, s_fighter_action_par
 	return bVar2;
 }
 
+void CActorFighter::PlayOrientedFx(edF32VECTOR4* param_2, edF32VECTOR4* param_3, uint param_4, int* param_5)
+{
+	IMPLEMENTATION_GUARD_FX();
+}
+
+void CActorFighter::PlayImpactFx(edF32VECTOR4* pPosition, edF32VECTOR4* param_3, int param_4, bool param_5)
+{
+	uint uVar1;
+
+	if (param_5 == false) {
+		uVar1 = _SV_HIT_GetHitZoneFromImpact(&this->fighterAnatomyZones, pPosition, &this->currentLocation);
+		if (uVar1 == 0) {
+			if (param_4 == 0) {
+				uVar1 = this->field_0x524;
+			}
+			else {
+				uVar1 = this->field_0x51c;
+			}
+		}
+		else {
+			if (param_4 == 0) {
+				uVar1 = this->field_0x528;
+			}
+			else {
+				uVar1 = this->field_0x520;
+			}
+		}
+	}
+	else {
+		if (param_4 == 0) {
+			uVar1 = this->field_0x534;
+		}
+		else {
+			uVar1 = this->field_0x530;
+		}
+	}
+
+	PlayOrientedFx(pPosition, param_3, uVar1, (int*)0x0);
+
+	return;
+}
+
+
+
 float CActorFighter::_GetFighterAnimationLength(int animId)
 {
 	int idMacroAnim = CActor::GetIdMacroAnim(animId);
@@ -5490,6 +5668,41 @@ void CActorFighter::_UpdateDynForExplosion(_msg_hit_param* pHitParams)
 		(this->field_0x7a0).z = -local_10.x;
 		(this->field_0x7a0).w = 0.0f;
 		this->field_0x7b4 = fVar3;
+	}
+
+	return;
+}
+
+void CActorFighter::_UpdateDynForHit(float maxDuration, _msg_hit_param* pHitParams)
+{
+	CActor* pActor;
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+
+	this->field_0x690 = pHitParams->field_0x40;
+
+	this->hitDamage = pHitParams->damage;
+
+	edF32Vector4SafeNormalize0Hard(&this->field_0x6a0, &pHitParams->field_0x20);
+	pActor = this->field_0x634;
+	bVar1 = this->actorsExcludeTable.IsInList(pActor);
+
+	if (bVar1 == false) {
+		this->actorsExcludeTable.Add(maxDuration, pActor);
+	}
+
+	this->hitFlags = pHitParams->flags;
+	this->field_0x474 = pHitParams->field_0x10;
+	this->field_0x6b0 = pHitParams->field_0x30;
+	this->field_0x684 = pHitParams->field_0x50;
+	this->field_0x686 = pHitParams->field_0x52;
+
+	if ((this->field_0x684 & 1U) != 0) {
+		this->field_0x7a0 = pHitParams->field_0x60;
+		this->field_0x7b4 = pHitParams->field_0x70;
 	}
 
 	return;
@@ -6491,11 +6704,11 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						_ManageHit(false);
 						return 1;
 					}
+
 					if (iVar2 == 8) {
 						if (((uVar5 & 0x2000000) == 0) ||
-							(((uVar5 & 0x80000) != 0 && ((CActorFighter*)pSender == this->pOwner->pAdversary)))) {
-							IMPLEMENTATION_GUARD(
-							_UpdateDynForHit(1.0f, pMsgHitParam);)
+							(((uVar5 & 0x80000) != 0 && (pSender == this->pOwner->pAdversary)))) {
+							this->pOwner->_UpdateDynForHit(1.0f, pMsgHitParam);
 							_ManageHit((this->pOwner->hitFlags & 0x80U) == 0);
 							return 1;
 						}
@@ -6504,10 +6717,10 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						if (iVar2 != 7) {
 							return 0;
 						}
+
 						if (((uVar5 & 0x2000000) == 0) ||
-							(((uVar5 & 0x80000) != 0 && ((CActorFighter*)pSender == this->pOwner->pAdversary)))) {
-							IMPLEMENTATION_GUARD(
-							_UpdateDynForHit(-1.0f, pMsgHitParam);)
+							(((uVar5 & 0x80000) != 0 && (pSender == this->pOwner->pAdversary)))) {
+							this->pOwner->_UpdateDynForHit(-1.0f, pMsgHitParam);
 							_ManageHit((this->pOwner->hitFlags & 0x80U) == 0);
 							return 1;
 						}
@@ -6687,6 +6900,9 @@ void CBehaviourFighterProjected::Manage()
 			pFighter->SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
 		}
 		break;
+	case FIGHTER_PROJECTED_HIT_FLY:
+		pFighter->_StateFighterHitFly();
+		break;
 	case FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE:
 		pFighter->_StateFighterHitFlyToSlide();
 		break;
@@ -6813,7 +7029,7 @@ void CBehaviourFighterProjected::Begin(CActor* pOwner, int newState, int newAnim
 			pFighter->SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
 		}
 		else {
-			pFighter->SetState(0x55, -1);
+			pFighter->SetState(FIGHTER_PROJECTED_HIT_FLY, -1);
 		}
 	}
 	else {
@@ -6862,6 +7078,7 @@ void CBehaviourFighterProjected::InitState(int newState)
 	case 0x54:
 		this->pOwner->LifeDecrease(2.0f);
 		break;
+	case FIGHTER_PROJECTED_HIT_FLY:
 	case FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE:
 		pFighter = this->pOwner;
 
@@ -6944,7 +7161,7 @@ void CBehaviourFighterProjected::TermState(int oldState, int newState)
 	}
 	else {
 		if (oldState != 0x61) {
-			if ((oldState == FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE) || (oldState == 0x55)) {
+			if ((oldState == FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE) || (oldState == FIGHTER_PROJECTED_HIT_FLY)) {
 				pFighter = this->pOwner;
 				if ((newState == FIGHTER_PROJECTED_HIT_SLIDE) || (newState == 0x54)) {
 					pFighter->Func_0x194(pFighter->field_0x7c8 - pFighter->field_0x7d0);
@@ -7130,7 +7347,7 @@ void CBehaviourFighterProjected::_ManageHit(bool bPlayImpact)
 			this->pOwner->SetState(FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE, -1);
 		}
 		else {
-			this->pOwner->SetState(0x55, -1);
+			this->pOwner->SetState(FIGHTER_PROJECTED_HIT_FLY, -1);
 		}
 	}
 
@@ -7673,22 +7890,55 @@ CFighterExcludedTable::CFighterExcludedTable()
 
 void CFighterExcludedTable::EmptyByTime(float time)
 {
-	CFighterExcludedTable* pCVar1;
+	s_fighter_hit_exclusion sStack16;
+	s_fighter_hit_exclusion* pCVar1;
 	int iVar2;
-	int aiStack16[4];
 
 	iVar2 = 0;
-	pCVar1 = this;
+	pCVar1 = this->aEntries;
 	if (0 < this->nbEntries) {
-		IMPLEMENTATION_GUARD(
 		do {
-			pCVar1->field_0x8 = (int)((float)pCVar1->field_0x8 + time);
-			if (((float)pCVar1->field_0xc < (float)pCVar1->field_0x8) && ((float)pCVar1->field_0xc != -1.0)) {
-				aiStack16->Pop((int*)this, iVar2);
+			pCVar1->currentDuration = pCVar1->currentDuration + time;
+
+			const float fVar3 = pCVar1->maxDuration;
+			if ((fVar3 < pCVar1->currentDuration) && (fVar3 != -1.0f)) {
+				Pop(&sStack16, iVar2);
 			}
+
 			iVar2 = iVar2 + 1;
-			pCVar1 = (CFighterExcludedTable*)&pCVar1->field_0xc;
-		} while (iVar2 < this->nbEntries);)
+			pCVar1 = pCVar1 + 1;
+		} while (iVar2 < this->nbEntries);
 	}
+
+	return;
+}
+
+bool CFighterExcludedTable::IsInList(CActor* pActor)
+{
+	int iVar1 = this->nbEntries;
+	int iVar6 = 0;
+	s_fighter_hit_exclusion* pCVar5 = this->aEntries;
+	if (0 < iVar1) {
+		do {
+			if (pCVar5->pActor == pActor) return true;
+
+			iVar6 = iVar6 + 1;
+			pCVar5 = pCVar5 + 1;
+		} while (iVar6 < iVar1);
+	}
+
+	return false;
+}
+
+void CFighterExcludedTable::Add(float maxDuration, CActor* pActor)
+{
+	if (this->nbEntries < 6) {
+		this->aEntries[this->nbEntries].pActor = pActor;
+		this->aEntries[this->nbEntries].maxDuration = maxDuration;
+		this->aEntries[this->nbEntries].currentDuration = 0.0f;
+
+		this->nbEntries = this->nbEntries + 1;
+	}
+
 	return;
 }

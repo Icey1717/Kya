@@ -352,47 +352,45 @@ int CActorPunchingBall::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 					iVar3 = CActorFighter::InterpretMessage(pSender, msg, pMsgParam);
 					return iVar3;
 				}
-				IMPLEMENTATION_GUARD(
-				v0 = &(this->base).field_0x6a0;
-				fVar7 = *(float*)((int)pMsgParam + 0x24);
-				fVar5 = *(float*)((int)pMsgParam + 0x28);
-				fVar6 = *(float*)((int)pMsgParam + 0x2c);
-				(this->base).field_0x6a0.x = *(float*)((int)pMsgParam + 0x20);
-				(this->base).field_0x6a0.y = fVar7;
-				(this->base).field_0x6a0.z = fVar5;
-				(this->base).field_0x6a0.w = fVar6;
-				(this->base).field_0x6a0.x = *(float*)((int)pMsgParam + 0x20);
-				(this->base).field_0x6a0.y = 0.0;
-				(this->base).field_0x6a0.z = *(float*)((int)pMsgParam + 0x28);
-				(this->base).field_0x6a0.w = 0.0;
+
+				_msg_hit_param* pHitMsg = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
+				v0 = &this->field_0x6a0;
+
+				this->field_0x6a0 = pHitMsg->field_0x20;
+
+				this->field_0x6a0.x = pHitMsg->field_0x20.x;
+				this->field_0x6a0.y = 0.0f;
+				this->field_0x6a0.z = pHitMsg->field_0x20.z;
+				this->field_0x6a0.w = 0.0f;
+
 				edF32Vector4NormalizeHard(v0, v0);
-				(this->base).field_0x6b4 = *(undefined4*)((int)pMsgParam + 0xc);
-				/* WARNING: Load size is inaccurate */
-				if ((*pMsgParam == 8) || (*pMsgParam == 7)) {
-					pCVar1 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
-					fVar5 = (float)(**(code**)((int)pCVar1->pVtable + 0x24))();
-					if (0.0 < fVar5) {
-						if ((*(uint*)((int)pMsgParam + 8) & 1) != 0) {
+
+				this->hitDamage = pHitMsg->damage;
+	
+				if ((pHitMsg->projectileType == 8) || (pHitMsg->projectileType == 7)) {
+					if (0.0f < GetLifeInterface()->GetValue()) {
+						if ((pHitMsg->flags & 1) != 0) {
 							local_20.field_0x0 = this->field_0xa88;
 							local_20.field_0x4 = this->field_0xa8c;
 							local_20.field_0x8 = this->field_0xa80;
-							local_20.field_0x10 = 1.355;
-							local_20.field_0x14 = 0.05;
-							local_20.field_0xc = (this->field_0xa84 * 3.141593) / 180.0;
-							local_20.pActor = (CActor*)this;
-							CVibrationDyn::Init(&this->vibrationDyn, &local_20);
-							iVar3 = CActorFighter::InterpretMessage((CActorFighter*)this, pSender, 2, pMsgParam);
-							return iVar3;
+							local_20.field_0x10 = 1.355f;
+							local_20.field_0x14 = 0.05f;
+							local_20.field_0xc = (this->field_0xa84 * 3.141593f) / 180.0f;
+							local_20.pActor = this;
+							this->vibrationDyn.Init(&local_20);
+
+							return CActorFighter::InterpretMessage(pSender, 2, pMsgParam);
 						}
-						CActorFighter::PlayImpactFx
-						((CActorFighter*)this, (long)((int)pMsgParam + 0x40), &(this->base).field_0x6a0, 0, '\0');
+
+						PlayImpactFx(&pHitMsg->field_0x40, &this->field_0x6a0, 0, false);
+
 						if (this->curBehaviourId == 7) {
-							FUN_00116a00((float)(this->base).field_0x6b4, (float*)&this->vibrationDyn, &(this->base).field_0x6a0,
-								(edF32VECTOR4*)((int)pMsgParam + 0x40));
-							(*(this->pVTable)->SetBehaviour)((CActor*)this, 7, 0x77, -1);
+							this->vibrationDyn.UpdateAllFactors(this->hitDamage, &this->field_0x6a0, &pHitMsg->field_0x40);
+							SetBehaviour(7, 0x77, -1);
 						}
 					}
-				})
+				}
 			}
 		}
 	}
@@ -402,7 +400,69 @@ int CActorPunchingBall::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 
 void CActorPunchingBall::ProcessDeath()
 {
-	IMPLEMENTATION_GUARD();
+	CActor* pActor;
+	CBehaviour* pCVar1;
+	StateConfig* pSVar2;
+	int iVar3;
+	uint uVar4;
+	int iVar5;
+	int iVar6;
+	S_STREAM_NTF_TARGET_SWITCH* pSVar8;
+
+	if (this->field_0xa90 == (S_TRAP_STREAM_REF*)0x0) {
+		iVar6 = 0;
+	}
+	else {
+		iVar6 = this->field_0xa90->entryCount;
+	}
+
+	pActor = (this->field_0xa98).Get();
+	if (pActor == (CActor*)0x0) {
+		iVar5 = 0;
+		if (0 < iVar6) {
+			do {
+				S_TRAP_STREAM_ENTRY* pEntry = this->field_0xa90->aEntries + iVar5;
+				pEntry->onoff.Switch(this);
+				pEntry->onoff.PostSwitch(this);
+				pEntry->eventCamera.SwitchOn(this);
+
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < iVar6);
+		}
+	}
+	else {
+		pCVar1 = pActor->GetBehaviour(8);
+		IMPLEMENTATION_GUARD(
+		uVar4 = 0;
+		if (pCVar1[0x5af].pVTable != (CBehaviourFighterVTable*)0xffffffff) {
+			pSVar2 = (*pActor->pVTable->GetStateCfg)(pActor, (int)pCVar1[0x5af].pVTable);
+			uVar4 = pSVar2->flags_0x4;
+		}
+		if (((uVar4 & 0x200000) != 0) && (iVar5 = 0, 0 < iVar6)) {
+			do {
+				S_TRAP_STREAM_ENTRY* pEntry = this->field_0xa90->aEntries + iVar5;
+				pEntry->onoff.Switch(this);
+				pEntry->onoff.PostSwitch(this);
+				pEntry->eventCamera.SwitchOn(this);
+
+				iVar5 = iVar5 + 1;
+			} while (iVar5 < iVar6);
+		})
+	}
+
+	LifeRestore();
+
+	this->flags = this->flags & 0xfffffffc;
+	this->flags = this->flags & 0xffffff5f;
+	EvaluateDisplayState();
+
+	PlayAnim(-1);
+
+	this->field_0xee4 = 1;
+
+	SetBehaviour(7, 0x75, -1);
+
+	return;
 }
 
 void CActorPunchingBall::ClearLocalData()

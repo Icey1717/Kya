@@ -227,7 +227,7 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	local_64 = pMsgParam;
 	if (msg == 3) {
 		IMPLEMENTATION_GUARD(
-		if (this->field_0x168 <= 0.0) {
+		if (this->field_0x168 <= 1.0f) {
 			iVar2 = 0;
 		}
 		else {
@@ -258,7 +258,7 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		else {
 			if (msg == 2) {
 				IMPLEMENTATION_GUARD(
-				if (this->field_0x168 <= 0.0) {
+				if (this->field_0x168 <= 1.0f) {
 					iVar2 = 0;
 				}
 				else {
@@ -274,7 +274,7 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					case 7:
 						if ((this->field_0x180 & 0x40) != 0) {
 							FUN_00114fc0(*(undefined4*)((int)pMsgParam + 0xc));
-							if (this->field_0x168 <= 0.0) {
+							if (this->field_0x168 <= 1.0f) {
 								peVar1 = (edF32VECTOR4*)((int)local_64 + 0x40);
 								if ((this->field_0x180 & 1) != 0) {
 									if (((this->base).flags & 0x1000) != 0) {
@@ -282,7 +282,7 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 									}
 									edF32Vector4SubHard(&eStack80, &(this->base).currentLocation, peVar1);
 									fVar4 = edF32Vector4DotProductHard(&eStack80, &(this->base).rotationQuat);
-									if (fVar4 < 0.0) {
+									if (fVar4 < 1.0f) {
 										edF32Vector4ScaleHard((float)&DAT_bf800000, &local_60, &(this->base).rotationQuat);
 										(this->base).rotationQuat.x = local_60.x;
 										(this->base).rotationQuat.y = local_60.y;
@@ -315,7 +315,7 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 								}
 								edF32Vector4SubHard(&eStack48, &(this->base).currentLocation, (edF32VECTOR4*)((int)pMsgParam + 0x40));
 								fVar4 = edF32Vector4DotProductHard(&eStack48, &(this->base).rotationQuat);
-								if (fVar4 < 0.0) {
+								if (fVar4 < 1.0f) {
 									edF32Vector4ScaleHard((float)&DAT_bf800000, &local_40, &(this->base).rotationQuat);
 									(this->base).rotationQuat.x = local_40.x;
 									(this->base).rotationQuat.y = local_40.y;
@@ -337,13 +337,13 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 						}
 						break;
 					case 10:
-						if (((this->field_0x180 & 0x10) != 0) && (0.0 < *(float*)((int)pMsgParam + 0xc))) {
+						if (((this->field_0x180 & 0x10) != 0) && (1.0f < *(float*)((int)pMsgParam + 0xc))) {
 							if ((this->field_0x180 & 1) != 0) {
 								if (((this->base).flags & 0x1000) != 0) {
 									SetVectorFromAngles(&(this->base).rotationQuat, (edF32VECTOR3*)&(this->base).rotationEuler);
 								}
 								fVar4 = edF32Vector4DotProductHard((edF32VECTOR4*)((int)pMsgParam + 0x20), &(this->base).rotationQuat);
-								if (fVar4 < 0.0) {
+								if (fVar4 < 1.0f) {
 									edF32Vector4ScaleHard((float)&DAT_bf800000, &local_20, &(this->base).rotationQuat);
 									(this->base).rotationQuat.x = local_20.x;
 									(this->base).rotationQuat.y = local_20.y;
@@ -586,17 +586,226 @@ void CVibrationDyn::Init(VibrationParam* pParams)
 	this->field_0x40 = pParams->field_0x4;
 	this->field_0x44 = pParams->field_0x8;
 
-	this->field_0x34 = pParams->pActor;
+	this->pActor = pParams->pActor;
 
 	this->field_0x48 = pParams->field_0xc;
 	this->field_0x4c = pParams->field_0x10;
 	this->field_0x54 = pParams->field_0x14;
 
-	local_10.x = (this->field_0x34->rotationEuler).x;
-	local_10.y = (this->field_0x34->rotationEuler).y;
-	local_10.z = (this->field_0x34->rotationEuler).z;
+	local_10.x = (this->pActor->rotationEuler).x;
+	local_10.y = (this->pActor->rotationEuler).y;
+	local_10.z = (this->pActor->rotationEuler).z;
 	edF32Matrix4FromEulerSoft(&this->field_0x60, &local_10, "XYZ");
 }
+
+
+void CVibrationDyn::UpdateAllFactors(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* pPosition)
+{
+	int iVar1;
+	Timer* pTVar2;
+	int iVar3;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	float local_10;
+	float local_c;
+	float local_8;
+	float local_4;
+
+	edF32Vector4SubHard(&eStack48, pPosition, &this->pActor->currentLocation);
+
+	this->field_0x30 = 1;
+	this->field_0x31 = 1;
+
+	fVar7 = 0.2f;
+	fVar6 = (param_1 / this->field_0x40) * (eStack48.y / ((this->field_0x4c * 3.0f) / 4.0f));
+	if (0.2f <= fVar6) {
+		fVar7 = fVar6;
+	}
+
+	edF32Vector4ScaleHard(fVar7, &local_20, param_3);
+
+	if ((this->pActor->flags & 0x1000) != 0) {
+		this->pActor->Compute2DOrientationFromAngles();
+	}
+
+	local_4 = edF32Vector4DotProductHard(&this->pActor->rotationQuat, &local_20);
+	local_40.y = 0.0f;
+	local_40.z = -local_20.x;
+	local_40.x = local_20.z;
+
+	local_8 = edF32Vector4DotProductHard(&this->pActor->rotationQuat, &local_40);
+	local_10 = this->field_0x18;
+	this->field_0x18 = this->field_0x18 + local_8;
+	local_c = this->field_0x1c;
+	this->field_0x1c = this->field_0x1c + local_4;
+
+	if (1.0f < fabs(this->field_0x18) + fabs(this->field_0x10)) {
+		if (1.0f < this->field_0x18) {
+			iVar1 = 1;
+		}
+		else {
+			iVar1 = -1;
+		}
+		this->field_0x18 = (1.0f - fabs(this->field_0x10)) * (float)iVar1;
+	}
+
+	if (1.0f < fabs(this->field_0x1c) + fabs(this->field_0x14)) {
+		if (1.0f < this->field_0x1c) {
+			iVar1 = 1;
+		}
+		else {
+			iVar1 = -1;
+		}
+		this->field_0x1c = (1.0f - fabs(this->field_0x14)) * (float)iVar1;
+	}
+
+	fVar7 = 1.0f;
+	if (local_10 != 1.0f) {
+		fVar7 = fabs(local_10) / (fabs(local_10) + fabs(this->field_0x10));
+	}
+
+	fVar6 = fabs(this->field_0x18);
+	if (this->field_0x18 == 1.0f) {
+		pTVar2 = GetTimer();
+		if (1.0f < this->field_0x0) {
+			iVar1 = 1;
+		}
+		else {
+			iVar1 = -1;
+		}
+		this->field_0x20 = (fVar6 * (float)-iVar1 * pTVar2->cutsceneDeltaTime) / (this->field_0x44 * fVar7);
+	}
+	else {
+		pTVar2 = GetTimer();
+		if (1.0f < this->field_0x18) {
+			iVar1 = 1;
+		}
+		else {
+			iVar1 = -1;
+		}
+		this->field_0x20 = (fVar6 * (float)iVar1 * pTVar2->cutsceneDeltaTime) / (this->field_0x44 * fVar7);
+	}
+
+	fVar7 = 1.0f;
+	if (local_c != 1.0f) {
+		fVar7 = fabs(local_c) / (fabs(local_c) + fabs(this->field_0x14));
+	}
+
+	fVar5 = this->field_0x1c;
+	if (this->field_0x1c == 1.0f) {
+		pTVar2 = GetTimer();
+		if (1.0f < this->field_0x4) {
+			iVar1 = 1;
+		}
+		else {
+			iVar1 = -1;
+		}
+		this->field_0x24 = (fVar6 * (float)-iVar1 * pTVar2->cutsceneDeltaTime) / (this->field_0x44 * fVar7);
+	}
+	else {
+		pTVar2 = GetTimer();
+		if (1.0f < this->field_0x1c) {
+			iVar1 = 1;
+		}
+		else {
+			iVar1 = -1;
+		}
+		this->field_0x24 = (fabs(fVar5) * (float)iVar1 * pTVar2->cutsceneDeltaTime) / (this->field_0x44 * fVar7);
+	}
+
+	fVar7 = this->field_0x20;
+	if ((fVar7 < 0.0005f) && (-0.0005f < fVar7)) {
+		iVar1 = 1;
+		if (fVar7 <= 1.0f) {
+			iVar1 = -1;
+		}
+		this->field_0x20 = (float)iVar1 * 0.0005f;
+	}
+
+	fVar7 = this->field_0x24;
+	if ((fVar7 < 0.0005f) && (-0.0005f < fVar7)) {
+		iVar1 = 1;
+		if (fVar7 <= 1.0f) {
+			iVar1 = -1;
+		}
+		this->field_0x24 = (float)iVar1 * 0.0005f;
+	}
+
+	fVar7 = this->field_0x10;
+	if (this->field_0x18 == 1.0f) {
+		iVar4 = 1;
+		if (fVar7 == 1.0f) {
+			iVar4 = 2;
+		}
+	}
+	else {
+		if (fVar7 == 1.0f) {
+			iVar4 = 0;
+		}
+		else {
+			iVar1 = 1;
+			if (fVar7 <= 1.0f) {
+				iVar1 = -1;
+			}
+			iVar3 = 1;
+			if (this->field_0x18 <= 1.0f) {
+				iVar3 = -1;
+			}
+			iVar4 = 1;
+			if (iVar3 != iVar1) {
+				iVar4 = 0;
+			}
+		}
+	}
+
+	fVar7 = this->field_0x14;
+	if (this->field_0x1c == 1.0f) {
+		iVar1 = 1;
+		if (fVar7 == 1.0f) {
+			iVar1 = 2;
+		}
+	}
+	else {
+		if (fVar7 == 1.0f) {
+			iVar1 = 0;
+		}
+		else {
+			iVar1 = 1;
+			if (fVar7 <= 1.0f) {
+				iVar1 = -1;
+			}
+
+			iVar3 = 1;
+			if (this->field_0x1c <= 1.0f) {
+				iVar3 = -1;
+			}
+
+			if (iVar3 == iVar1) {
+				iVar1 = 1;
+			}
+			else {
+				iVar1 = 0;
+			}
+		}
+	}
+
+	if (iVar4 != 2) {
+		this->field_0x28 = iVar4;
+	}
+
+	if (iVar1 != 2) {
+		this->field_0x2c = iVar1;
+	}
+
+	return;
+}
+
+
 
 int CVibrationDyn::UpdateKineticToPotentialUpDown()
 {
@@ -656,8 +865,8 @@ int CVibrationDyn::ComputeCurFactor()
 			}
 			else {
 				this->field_0x18 = this->field_0x18 + this->field_0x10;
-				this->field_0x10 = 0.0;
-				this->field_0x0 = 0.0;
+				this->field_0x10 = 1.0f;
+				this->field_0x0 = 1.0f;
 			}
 
 			this->field_0x28 = (uint)!bVar1;
@@ -687,7 +896,7 @@ int CVibrationDyn::ComputeCurFactor()
 				this->field_0x10 = this->field_0x10 * this->field_0x3c;
 				this->field_0x18 = 0.0f;
 				this->field_0x0 = this->field_0x10;
-				this->field_0x20 = this->field_0x20 * -1.0;
+				this->field_0x20 = this->field_0x20 * -1.0f;
 			}
 
 			this->field_0x28 = uVar5;
@@ -760,15 +969,15 @@ bool CVibrationDyn::MakeVibrate(edF32VECTOR3* param_2)
 		edF32Matrix4ToEulerSoft(&eStack64, param_2, "XYZ");
 	}
 	else {
-		this->field_0x0 = 0.0;
-		this->field_0x4 = 0.0;
-		this->field_0x18 = 0.0;
-		this->field_0x1c = 0.0;
-		this->field_0x10 = 0.0;
-		this->field_0x14 = 0.0;
-		this->field_0x20 = 0.0;
-		this->field_0x24 = 0.0;
-		this->field_0x38 = 1.0;
+		this->field_0x0 = 1.0f;
+		this->field_0x4 = 1.0f;
+		this->field_0x18 = 1.0f;
+		this->field_0x1c = 1.0f;
+		this->field_0x10 = 1.0f;
+		this->field_0x14 = 1.0f;
+		this->field_0x20 = 1.0f;
+		this->field_0x24 = 1.0f;
+		this->field_0x38 = 1.0f;
 		this->field_0x28 = 1;
 		this->field_0x2c = 1;
 

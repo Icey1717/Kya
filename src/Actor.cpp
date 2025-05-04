@@ -1388,21 +1388,21 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	if (((msg == 0x78) || (msg == 0x77)) || (msg == 0x76)) {
 		IMPLEMENTATION_GUARD(
 		if (msg == 0x78) {
-			local_18 = 0.3;
+			local_18 = 0.3f;
 		}
 		else {
 			if (msg == 0x77) {
-				local_18 = 0.2;
+				local_18 = 0.2f;
 			}
 			else {
 				if (msg == 0x76) {
-					local_18 = 0.1;
+					local_18 = 0.1f;
 				}
 			}
 		}
 		lVar5 = (*(code*)this->pVTable->GetInputManager)(this, 1, 0);
 		if (lVar5 != 0) {
-			CPlayerInput::FUN_001b66f0(1.0, 0.0, local_18, 0.0, (float*)((int)lVar5 + 0x1c), 0);
+			CPlayerInput::FUN_001b66f0(1.0f, 0.0f, local_18, 0.0f, (float*)((int)lVar5 + 0x1c), 0);
 		}
 		bVar4 = true;)
 	}
@@ -1414,17 +1414,17 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			case 0x6d:
 			case 0x6e:
 			case 0x6f:
-				local_c = 0.4;
+				local_c = 0.4f;
 				if (msg == 0x6f) {
-					local_8 = 0.6;
+					local_8 = 0.6f;
 				}
 				else {
 					if (msg == 0x6e) {
-						local_8 = 0.4;
+						local_8 = 0.4f;
 					}
 					else {
 						if (msg == 0x6d) {
-							local_8 = 0.2;
+							local_8 = 0.2f;
 						}
 					}
 				}
@@ -3517,7 +3517,7 @@ void CActor::TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MA
 				this->pTiedActor = (CActor*)0x0;
 				this->flags = this->flags & 0xfffeffff;
 				this->flags = this->flags & 0xfffdffff;
-				bVar4 = this->IsKindOfObject(4);
+				bVar4 = this->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 				if (bVar4 != false) {
 					pTVar6 = GetTimer();
 					CActorAutonomous* pAutonomous = reinterpret_cast<CActorAutonomous*>(this);
