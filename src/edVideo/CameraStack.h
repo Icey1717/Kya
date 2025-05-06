@@ -27,8 +27,8 @@ struct CCameraStack {
 	float field_0x200;
 	CCamera* pActiveCamera;
 	int stackSize;
-	CCamera* field_0x20c;
-	undefined4 field_0x210;
+	CCamera* pPrevActiveCamera;
+	int field_0x210;
 	enum SWITCH_MODE switchMode;
 	float field_0x218;
 };

@@ -380,6 +380,36 @@ CBehaviour* CActorFighter::BuildBehaviour(int behaviourType)
 	return pNewBehaviour;
 }
 
+bool CActorFighter::SetBehaviour(int behaviourId, int newState, int animationType)
+{
+	CCollision* pCVar1;
+	ulong uVar2;
+
+	if (behaviourId != this->curBehaviourId) {
+		uVar2 = GetBehaviourFlags(behaviourId);
+		if ((uVar2 & 1) == 0) {
+			if ((this->flags & 0x1000) != 0) {
+				Compute2DOrientationFromAngles();
+				this->flags = this->flags & 0xffffefff;
+			}
+
+			pCVar1 = this->pCollisionData;
+			pCVar1->flags_0x0 = pCVar1->flags_0x0 & 0xfffff7ff;
+		}
+		else {
+			if ((this->flags & 0x1000) == 0) {
+				GetAnglesFromVector(&this->rotationEuler.xyz, &this->rotationQuat);
+				this->flags = this->flags | 0x1000;
+			}
+
+			pCVar1 = this->pCollisionData;
+			pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x800;
+		}
+	}
+
+	return CActor::SetBehaviour(behaviourId, newState, animationType);
+}
+
 StateConfig* CActorFighter::GetStateCfg(int state)
 {
 	StateConfig* pStateConfig;
@@ -910,7 +940,7 @@ void CActorFighter::AcquireAdversary()
 					fVar1 = pNewAdversary->currentLocation.z - this->currentLocation.z,
 					fVar5 = sqrtf(fVar5 * fVar5 + 0.0f + fVar1 * fVar1),
 					this->pAdversary == (CActorFighter*)0x0 && (fVar5 < this->field_0x360)) ||
-					((this->pAdversary != (CActorFighter*)0x0 && (fVar5 < this->field_0x370)))))) {
+					((this->pAdversary != (CActorFighter*)0x0 && (fVar5 < this->adversaryDistance)))))) {
 				SetAdversary(pNewAdversary);
 			}
 		}
@@ -1178,9 +1208,7 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 					local_20.w = 0.0f;
 					edF32Vector4SafeNormalize0Hard(&local_20, &local_20);
 					edF32Vector4ScaleHard(this->field_0x4cc, &local_20, &local_20);
-					pTVar7 = GetTimer();
-					fVar13 = pTVar7->cutsceneDeltaTime;
-					local_70 = gF32Vector4Zero;
+					memset(&local_70, 0, sizeof(edF32VECTOR4));
 
 					if ((this->flags & 0x1000) == 0) {
 						GetAnglesFromVector(&auStack16, &this->rotationQuat);
@@ -1193,14 +1221,14 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 					local_70.z = edF32Vector4DotProductHard(&local_20, &auStack96.rowZ);
 					local_70.x = edF32Vector4DotProductHard(&local_20, &auStack96.rowX);
 
-					_SetRelativeSpeedOnGround(fVar13, &local_70);
+					_SetRelativeSpeedOnGround(GetTimer()->cutsceneDeltaTime, &local_70);
 				}
 			}
 			else {
 				if (((bVar1 & 0xf) != 0) &&
 					(this->field_0x36c = this->field_0x36c | 1, ((ulong)pAction->field_0x0 << 0x38) >> 0x3c != 2)) {
 					IMPLEMENTATION_GUARD(
-					this->field_0x37c.BuildFromSpeedTime(this->field_0x4cc, this->field_0x4cc, GetTimer()->cutsceneDeltaTime);)
+					this->scalarDynA.BuildFromSpeedTime(this->field_0x4cc, this->field_0x4cc, GetTimer()->cutsceneDeltaTime);)
 				}
 			}
 
@@ -1216,18 +1244,9 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 					if (uVar11 == 2) {
 						if ((pAction->field_0x1 & 0xf) == 0) {
 							IMPLEMENTATION_GUARD(
-							iVar8 = _SV_ANM_GetMultiWaysAnim2D
-							(this, (s_fighter_multiways_anim*)&this->field_0x484, this->field_0x44c & 0xf);
-							pAnim = this->pAnimationController;
-							iVar9 = CActor::GetIdMacroAnim((CActor*)this, iVar8);
-							if (iVar9 < 0) {
-								fVar13 = 0.0;
-								bVar1 = this->field_0x44c;
-							}
-							else {
-								fVar13 = CAnimation::GetAnimLength(pAnim, iVar9, 1);
-								bVar1 = this->field_0x44c;
-							}
+							iVar8 = _SV_ANM_GetMultiWaysAnim2D(this, (s_fighter_multiways_anim*)&this->field_0x484, this->field_0x44c & 0xf);
+							fVar13 = _GetFighterAnimationLength(iVar8);
+							bVar1 = this->field_0x44c;
 							uVar12 = bVar1 & 0xf;
 							if ((uVar12 == 3) || (uVar12 == 6)) {
 								if (uVar12 < 6) {
@@ -1244,15 +1263,15 @@ void CActorFighter::_Execute_Std(s_fighter_action* pAction, s_fighter_action_par
 								else {
 									this->field_0x44c = bVar1 & 0xf0 | 2;
 								}
-								if (this->field_0x370 < 0.75) {
-									distance = this->field_0x370 * 1.570796;
+								if (this->adversaryDistance < 0.75) {
+									distance = this->adversaryDistance * 1.570796;
 								}
 								else {
 									distance = this->field_0x4c8;
 								}
 							}
-							this->field_0x37c.BuildFromSpeedDistTime(v1$12742, v2$12743, distance, fVar13);
-							CScalarDyn::Reset(&this->field_0x3a4);
+							this->scalarDynA.BuildFromSpeedDistTime(v1$12742, v2$12743, distance, fVar13);
+							CScalarDyn::Reset(&this->scalarDynB);
 							this->field_0x474 = 0.0;
 							SetState(7, iVar8);)
 						}
@@ -1393,8 +1412,8 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 					static float FLOAT_00448b28 = 2.0f;
 					edF32Vector4ScaleHard(this->field_0x6b0 * FLOAT_00448b28 * 0.040625f, &local_40, &eStack80);
 					edF32Vector4ScaleHard(this->field_0x6b0, &local_60, &eStack80);
-					this->field_0x37c.BuildFromSpeedDistTime(fabs(local_60.z), 0.0f, fabs(local_40.z), fVar9);
-					this->field_0x3a4.BuildFromSpeedDistTime(fabs(local_60.x), 0.0f, fabs(local_40.x), fVar9);
+					this->scalarDynA.BuildFromSpeedDistTime(fabs(local_60.z), 0.0f, fabs(local_40.z), fVar9);
+					this->scalarDynB.BuildFromSpeedDistTime(fabs(local_60.x), 0.0f, fabs(local_40.x), fVar9);
 					this->scalarDynJump.Reset();
 					SetState(0x1f, -1);
 
@@ -1534,10 +1553,10 @@ void CActorFighter::_StateFighterRun(CActorsTable* pTable)
 	_ManageFighterDyn(0x1d, 0x1002023b, pTable);
 
 	if (this->dynamic.speed != 0.0) {
-		RunInternal(this->field_0x378, &this->dynamic.rotationQuat);
+		RunInternal(this->adversaryAngleDiff, &this->dynamic.rotationQuat);
 	}
 
-	if (this->field_0x37c.IsFinished() != false) {
+	if (this->scalarDynA.IsFinished() != false) {
 		SetState(6, this->standAnim);
 	}
 	return;
@@ -2052,12 +2071,12 @@ void CActorFighter::ClearLocalData()
 	this->field_0x354 = (CActorFighter*)0x0;
 
 	this->field_0x36c = 1;
-	this->field_0x370 = 0.0f;
+	this->adversaryDistance = 0.0f;
 	this->field_0x374 = 0;
-	this->field_0x378 = 0.0f;
+	this->adversaryAngleDiff = 0.0f;
 
-	this->field_0x37c.Reset();
-	this->field_0x3a4.Reset();
+	this->scalarDynA.Reset();
+	this->scalarDynB.Reset();
 	this->scalarDynJump.Reset();
 
 	this->field_0x3f4 = 1.0f;
@@ -2213,8 +2232,8 @@ void CActorFighter::SetAdversary(CActorFighter* pNewAdversary)
 		}
 
 		this->pAdversary = (CActorFighter*)0x0;
-		this->field_0x370 = 0.0f;
-		this->field_0x378 = 0.0f;
+		this->adversaryDistance = 0.0f;
+		this->adversaryAngleDiff = 0.0f;
 	}
 	else {
 		pCVar1 = this->pAdversary;
@@ -2230,10 +2249,10 @@ void CActorFighter::SetAdversary(CActorFighter* pNewAdversary)
 			edF32Vector4SubHard(&eStack16, v1, &this->currentLocation);
 			eStack16.y = 0.0f;
 			fVar2 = edF32Vector4SafeNormalize0Hard(&eStack16, &eStack16);
-			this->field_0x370 = fVar2;
+			this->adversaryDistance = fVar2;
 			if (fVar2 != 0.0f) {
 				fVar2 = GetAngleYFromVector(&eStack16);
-				this->field_0x378 = fVar2;
+				this->adversaryAngleDiff = fVar2;
 			}
 		}
 	}
@@ -2241,15 +2260,13 @@ void CActorFighter::SetAdversary(CActorFighter* pNewAdversary)
 	return;
 }
 
-void CActorFighter::_ManageFighterDyn(uint param_2, uint inFlags, CActorsTable* pTable)
+void CActorFighter::_ManageFighterDyn(uint flags, uint dynFlags, CActorsTable* pTable)
 {
 	undefined* puVar1;
 	edF32VECTOR4* peVar2;
 	bool bVar3;
-	Timer* pTVar4;
 	undefined* puVar5;
 	edF32VECTOR4* peVar6;
-	edF32VECTOR4* peVar7;
 	byte bVar8;
 	float puVar11;
 	uint uVar12;
@@ -2263,37 +2280,35 @@ void CActorFighter::_ManageFighterDyn(uint param_2, uint inFlags, CActorsTable* 
 	edF32MATRIX4 eStack224;
 	edF32VECTOR4 local_a0;
 	edF32VECTOR4 local_90;
-	edF32MATRIX4 eStack128;
-	edF32VECTOR4 local_40;
+	edF32VECTOR4 newDynRotQuat;
 	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
-	edF32VECTOR4 eStack16;
+	edF32VECTOR4 toAdversaryNormalized;
+	edF32VECTOR4 toAdversary;
 
-	pTVar4 = GetTimer();
-	t = pTVar4->cutsceneDeltaTime;
+	t = GetTimer()->cutsceneDeltaTime;
 
-	local_30 = {};
-	local_40 = {};
+	memset(&local_30, 0, sizeof(edF32VECTOR4));
+	memset(&newDynRotQuat, 0, sizeof(edF32VECTOR4));
 
-	fVar14 = 0.0f;
-	peVar7 = GetAdversaryPos();
-	edF32Vector4SubHard(&eStack16, peVar7, &this->currentLocation);
-	eStack16.y = 0.0f;
-	fVar13 = edF32Vector4SafeNormalize0Hard(&local_20, &eStack16);
-	this->field_0x370 = fVar13;
-	if (fVar14 != fVar13) {
-		fVar13 = GetAngleYFromVector(&eStack16);
-		this->field_0x378 = fVar13;
+	edF32Vector4SubHard(&toAdversary, GetAdversaryPos(), &this->currentLocation);
+	toAdversary.y = 0.0f;
+	const float adversaryDist = edF32Vector4SafeNormalize0Hard(&toAdversaryNormalized, &toAdversary);
+	this->adversaryDistance = adversaryDist;
+	if (0.0f != adversaryDist) {
+		this->adversaryAngleDiff = GetAngleYFromVector(&toAdversary);
 	}
 
-	if ((param_2 & 8) != 0) {
-		if ((param_2 & 1) != 0) {
+	if ((flags & 8) != 0) {
+		float newDynSpeed = 0.0f;
+
+		if ((flags & 1) != 0) {
 			if ((this->field_0x36c & 1) == 0) {
-				local_90 = {};
-				local_a0 = {};
+				memset(&local_90, 0, sizeof(edF32VECTOR4));
+				memset(&local_a0, 0, sizeof(edF32VECTOR4));
 
 				local_90.x = this->rotationQuat.x;
 				local_90.z = this->rotationQuat.z;
+
 				local_a0.x = this->rotationQuat.z;
 				local_a0.z = -this->rotationQuat.x;
 
@@ -2307,39 +2322,39 @@ void CActorFighter::_ManageFighterDyn(uint param_2, uint inFlags, CActorsTable* 
 					edF32Vector4GetNegHard(&local_a0, &local_a0);
 				}
 
-				this->field_0x37c.Integrate(t);
-				this->field_0x3a4.Integrate(t);
+				this->scalarDynA.Integrate(t);
+				this->scalarDynB.Integrate(t);
 
-				if ((param_2 & 0x10) != 0) {
-					bVar3 = this->field_0x37c.IsFinished();
+				if ((flags & 0x10) != 0) {
+					bVar3 = this->scalarDynA.IsFinished();
 					if (bVar3 != false) {
-						this->field_0x37c.Stop();
+						this->scalarDynA.Stop();
 					}
 
-					bVar3 = this->field_0x3a4.IsFinished();
+					bVar3 = this->scalarDynB.IsFinished();
 					if (bVar3 != false) {
-						this->field_0x3a4.Stop();
+						this->scalarDynB.Stop();
 					}
 				}
 
-				edF32Vector4ScaleHard((this->field_0x37c).field_0x20, &local_90, &local_90);
-				edF32Vector4ScaleHard((this->field_0x3a4).field_0x20, &local_a0, &local_a0);
-				edF32Vector4AddHard(&local_40, &local_90, &local_a0);
-				edF32Vector4ScaleHard(t, &local_20, &local_40);
-				edF32Vector4SubHard(&local_20, &eStack16, &local_20);
+				edF32Vector4ScaleHard((this->scalarDynA).field_0x20, &local_90, &local_90);
+				edF32Vector4ScaleHard((this->scalarDynB).field_0x20, &local_a0, &local_a0);
+				edF32Vector4AddHard(&newDynRotQuat, &local_90, &local_a0);
+				edF32Vector4ScaleHard(t, &toAdversaryNormalized, &newDynRotQuat);
+				edF32Vector4SubHard(&toAdversaryNormalized, &toAdversary, &toAdversaryNormalized);
 			}
 			else {
-				this->field_0x37c.Integrate(t);
+				this->scalarDynA.Integrate(t);
 
-				if ((param_2 & 0x10) != 0) {
-					bVar3 = this->field_0x37c.IsFinished();
+				if ((flags & 0x10) != 0) {
+					bVar3 = this->scalarDynA.IsFinished();
 					if (bVar3 != false) {
-						this->field_0x37c.Stop();
+						this->scalarDynA.Stop();
 					}
 				}
 
 				bVar8 = this->field_0x44c & 0xf;
-				fVar13 = (this->field_0x37c).field_0x20 * t;
+				fVar13 = (this->scalarDynA).field_0x20 * t;
 				if ((this->field_0x44c & 0xf) != 0) {
 					if (((bVar8 != 2) && (bVar8 != 1)) && ((bVar8 != 3 && (bVar8 != 6)))) {
 						fVar13 = fVar13 / 2.0f;
@@ -2348,47 +2363,47 @@ void CActorFighter::_ManageFighterDyn(uint param_2, uint inFlags, CActorsTable* 
 					bVar8 = this->field_0x44c & 0xf;
 					if ((bVar8 != 2) && (bVar8 != 1)) {
 						if (bVar8 < 6) {
-							this->field_0x370 = this->field_0x370 - fVar13;
+							this->adversaryDistance = this->adversaryDistance - fVar13;
 						}
 						else {
-							this->field_0x370 = this->field_0x370 + fVar13;
+							this->adversaryDistance = this->adversaryDistance + fVar13;
 						}
 
-						if (this->field_0x370 < 0.0f) {
-							this->field_0x370 = this->field_0x370 * -1.0f;
-							this->field_0x378 = this->field_0x378 + 3.141593f;
+						if (this->adversaryDistance < 0.0f) {
+							this->adversaryDistance = this->adversaryDistance * -1.0f;
+							this->adversaryAngleDiff = this->adversaryAngleDiff + 3.141593f;
 						}
 					}
 
 					uVar12 = this->field_0x44c & 0xf;
-					if (((uVar12 != 3) && (uVar12 != 6)) && (fVar14 = this->field_0x370, fVar14 != 0.0f)) {
+					if (((uVar12 != 3) && (uVar12 != 6)) && (this->adversaryDistance != 0.0f)) {
 						if (uVar12 % 3 == 1) {
-							this->field_0x378 = this->field_0x378 + fVar13 / fVar14;
+							this->adversaryAngleDiff = this->adversaryAngleDiff + fVar13 / this->adversaryDistance;
 						}
 						else {
-							this->field_0x378 = this->field_0x378 - fVar13 / fVar14;
+							this->adversaryAngleDiff = this->adversaryAngleDiff - fVar13 / this->adversaryDistance;
 						}
 
-						fVar13 = edF32Between_2Pi(this->field_0x378);
-						this->field_0x378 = fVar13;
+						this->adversaryAngleDiff = edF32Between_2Pi(this->adversaryAngleDiff);
 					}
 
-					edF32Matrix4SetIdentityHard(&eStack128);
-					edF32Matrix4RotateYHard(this->field_0x378, &eStack128, &eStack128);
-					edF32Matrix4MulF32Vector4Hard(&local_20, &eStack128, &gF32Vector4UnitZ);
-					edF32Vector4ScaleHard(this->field_0x370, &local_40, &local_20);
-					edF32Vector4SubHard(&local_40, &eStack16, &local_40);
-					edF32Vector4ScaleHard(1.0f / t, &local_40, &local_40);
+					edF32MATRIX4 advRotationMatrix;
+					edF32Matrix4SetIdentityHard(&advRotationMatrix);
+					edF32Matrix4RotateYHard(this->adversaryAngleDiff, &advRotationMatrix, &advRotationMatrix);
+					edF32Matrix4MulF32Vector4Hard(&toAdversaryNormalized, &advRotationMatrix, &gF32Vector4UnitZ);
+					edF32Vector4ScaleHard(this->adversaryDistance, &newDynRotQuat, &toAdversaryNormalized);
+					edF32Vector4SubHard(&newDynRotQuat, &toAdversary, &newDynRotQuat);
+					edF32Vector4ScaleHard(1.0f / t, &newDynRotQuat, &newDynRotQuat);
 				}
 			}
 
-			fVar14 = edF32Vector4SafeNormalize0Hard(&local_40, &local_40);
+			newDynSpeed = edF32Vector4SafeNormalize0Hard(&newDynRotQuat, &newDynRotQuat);
 		}
-		if (((param_2 & 2) != 0) &&
-			(((param_2 & 0x20) == 0 || (bVar3 = this->scalarDynJump.IsFinished(), bVar3 == false)))) {
+
+		if (((flags & 2) != 0) && (((flags & 0x20) == 0 || (bVar3 = this->scalarDynJump.IsFinished(), bVar3 == false)))) {
 			this->scalarDynJump.Integrate(t);
 
-			if ((param_2 & 0x20) != 0) {
+			if ((flags & 0x20) != 0) {
 				bVar3 = this->scalarDynJump.OnLastValidSample();
 				if (bVar3 != false) {
 					this->scalarDynJump.Stop();
@@ -2399,20 +2414,20 @@ void CActorFighter::_ManageFighterDyn(uint param_2, uint inFlags, CActorsTable* 
 			this->dynamic.field_0x4c = this->dynamic.field_0x4c | 0x8000;
 		}
 
-		this->dynamic.rotationQuat = local_40;
-		this->dynamic.speed = fVar14;
+		this->dynamic.rotationQuat = newDynRotQuat;
+		this->dynamic.speed = newDynSpeed;
 	}
 
-	if (((param_2 & 4) != 0) && (((local_20.x != 0.0f || (local_20.y != 0.0f)) || (local_20.z != 0.0f)))) {
-		edF32Vector4NormalizeHard(&local_f0, &local_20);
+	if (((flags & 4) != 0) && (((toAdversaryNormalized.x != 0.0f || (toAdversaryNormalized.y != 0.0f)) || (toAdversaryNormalized.z != 0.0f)))) {
+		edF32Vector4NormalizeHard(&local_f0, &toAdversaryNormalized);
 
 		puVar9 = edF32Vector4DotProductHard(&local_f0, &this->rotationQuat);
 		if (1.0f < puVar9) {
 			puVar11 = 1.0f;
 		}
 		else {
-			puVar11 = -.10f;
-			if (-1.0 <= puVar9) {
+			puVar11 = -1.0f;
+			if (-1.0f <= puVar9) {
 				puVar11 = puVar9;
 			}
 		}
@@ -2445,7 +2460,8 @@ void CActorFighter::_ManageFighterDyn(uint param_2, uint inFlags, CActorsTable* 
 		this->rotationQuat = local_f0;
 	}
 
-	ManageDyn(4.0f, inFlags, pTable);
+	ManageDyn(4.0f, dynFlags, pTable);
+
 	return;
 }
 
@@ -5552,30 +5568,30 @@ void CActorFighter::_SetRelativeSpeedOnGround(float speed, edF32VECTOR4* pDirect
 {
 	this->field_0x44c = this->field_0x44c & 0xf0;
 	if (pDirection->z == 0.0f) {
-		this->field_0x37c.Reset();
+		this->scalarDynA.Reset();
 	}
 	else {
 		if (0.0f < pDirection->z) {
 			this->field_0x44c = this->field_0x44c & 0xf0 | (this->field_0x44c & 0xf) + 3 & 0xf;
-			this->field_0x37c.BuildFromSpeedTime(pDirection->z, pDirection->z, speed);
+			this->scalarDynA.BuildFromSpeedTime(pDirection->z, pDirection->z, speed);
 		}
 		else {
 			this->field_0x44c = this->field_0x44c & 0xf0 | (this->field_0x44c & 0xf) + 6 & 0xf;
-			this->field_0x37c.BuildFromSpeedTime(-pDirection->z, -pDirection->z, speed);
+			this->scalarDynA.BuildFromSpeedTime(-pDirection->z, -pDirection->z, speed);
 		}
 	}
 
 	if (pDirection->x == 0.0f) {
-		this->field_0x3a4.Reset();
+		this->scalarDynB.Reset();
 	}
 	else {
 		if (0.0 < pDirection->x) {
 			this->field_0x44c = this->field_0x44c & 0xf0 | (this->field_0x44c & 0xf) + 2 & 0xf;
-			this->field_0x3a4.BuildFromSpeedTime(pDirection->x, pDirection->x, speed);
+			this->scalarDynB.BuildFromSpeedTime(pDirection->x, pDirection->x, speed);
 		}
 		else {
 			this->field_0x44c = this->field_0x44c & 0xf0 | (this->field_0x44c & 0xf) + 1 & 0xf;
-			this->field_0x3a4.BuildFromSpeedTime(-pDirection->x, -pDirection->x, speed);
+			this->scalarDynB.BuildFromSpeedTime(-pDirection->x, -pDirection->x, speed);
 		}
 	}
 
@@ -5768,15 +5784,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 	local_c = (undefined*)0x0;
 	local_30 = gF32Vector4Zero;
 
-	psVar6 = (s_fighter_action_param*)0x8;
-	psVar14 = &fighterActionParam;
-	psVar2 = psVar14;
-	//while (psVar2 != (s_fighter_action_param*)0x0) {
-	//	*(undefined*)&psVar14->field_0x0 = 0;
-	//	psVar14 = (s_fighter_action_param*)((int)&psVar14->field_0x0 + 1);
-	//	psVar6 = (s_fighter_action_param*)((int)&psVar6[-1].field_0x0 + 3);
-	//	psVar2 = psVar6;
-	//}
+	memset(&fighterActionParam, 0, sizeof(s_fighter_action));
 
 	local_4.all = 0;
 	iVar9 = 2;
@@ -5785,10 +5793,13 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 		local_20.w = 0.0f;
 		edF32Matrix4GetTransposeHard(&eStack112, &(CScene::ptable.g_CameraManager_0045167c)->transMatrix_0x390);
 		edF32Matrix4MulF32Vector4Hard(&local_20, &eStack112, &local_20);
-		local_30.z = local_20.z * -1.0;
-		local_30 = local_20;
+		local_30.z = local_20.z * -1.0f;
+		local_30.x = local_20.x;
+		local_30.y = local_20.y;
+		local_30.w = local_20.w;
+		local_20.z = local_30.z;
 		edF32Matrix4SetIdentityHard(&eStack112);
-		edF32Matrix4RotateYHard(this->field_0x378, &eStack112, &eStack112);
+		edF32Matrix4RotateYHard(this->adversaryAngleDiff, &eStack112, &eStack112);
 		edF32Matrix4TransposeHard(&eStack112);
 		edF32Matrix4MulF32Vector4Hard(&local_20, &eStack112, &local_20);
 		uVar12 = FUN_00337d20(&local_20);
@@ -5841,7 +5852,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 
 	if (Func_0x1a0() == 0) {
 		IMPLEMENTATION_GUARD(
-		SetVectorFromAngleY(this->field_0x378, &eStack144);
+		SetVectorFromAngleY(this->adversaryAngleDiff, &eStack144);
 		iVar9 = this->pInputAnalyser->Cumulate(pPlayerInput, &eStack144, &local_20);
 		if (iVar9 != 0) {
 			uVar12 = ((ulong) * (ushort*)((int)&(this->pInputAnalyser->patternA).patternA + 2) << 0x34) >> 0x38;
@@ -5859,7 +5870,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 		goto LAB_0030a390;)
 	}
 
-	SetVectorFromAngleY(this->field_0x378, &eStack128);
+	SetVectorFromAngleY(this->adversaryAngleDiff, &eStack128);
 
 	iVar7 = this->actorState;
 	if (((iVar7 == 0x6b) || (iVar7 == FIGHTER_BLOW_BEGIN)) && (psVar8 = this->pInputAnalyser->pComboA, psVar8 != (s_fighter_combo*)0x0)) {
@@ -6144,8 +6155,8 @@ void CBehaviourFighter::Manage()
 		}
 
 		if (bVar8) {
-			pFighter->field_0x37c.Reset();
-			pFighter->field_0x3a4.Reset();
+			pFighter->scalarDynA.Reset();
+			pFighter->scalarDynB.Reset();
 			pFighter->scalarDynJump.Reset();
 
 			CBehaviourFighter* pBehaviourFighter = reinterpret_cast<CBehaviourFighter*>(pFighter->GetBehaviour(pFighter->curBehaviourId));
@@ -6479,8 +6490,8 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 
 		if (uVar14 != 0) {
 			pFighter->pFighterCombo = (s_fighter_combo*)0x0;
-			pFighter->field_0x37c.Reset();
-			pFighter->field_0x3a4.Reset();
+			pFighter->scalarDynA.Reset();
+			pFighter->scalarDynB.Reset();
 		}
 
 		bVar6 = true;
@@ -6995,8 +7006,8 @@ void CBehaviourFighterProjected::Begin(CActor* pOwner, int newState, int newAnim
 	pCol = this->pOwner->pCollisionData;
 	pCol->flags_0x0 = pCol->flags_0x0 | 0x10800;
 
-	this->pOwner->field_0x37c.Reset();
-	this->pOwner->field_0x3a4.Reset();
+	this->pOwner->scalarDynA.Reset();
+	this->pOwner->scalarDynB.Reset();
 	this->pOwner->scalarDynJump.Reset();
 
 	_ComputeDynamics();

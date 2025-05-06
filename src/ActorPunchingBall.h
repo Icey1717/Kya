@@ -12,6 +12,8 @@ struct S_TRAP_STREAM_REF;
 
 #define PUNCHING_BALL_BEHAVIOUR_STAND 7
 
+#define PUNCHING_BALL_STAND_STATE_IDLE 0x73
+
 class CBehaviourPunchingBall : public CBehaviour
 {
 public:
@@ -66,6 +68,7 @@ public:
 	virtual uint GetBehaviourFlags(int state);
 	virtual void UpdatePostAnimEffects();
 	virtual void SetState(int newState, int animType);
+	virtual bool Can_0x9c();
 	virtual void ChangeManageState(int state);
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);

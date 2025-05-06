@@ -4,6 +4,7 @@
 #include "CinematicManager.h"
 #include "TimeController.h"
 #include "ActorHero.h"
+#include "CameraGame.h"
 
 void CActorPunchingBall::Create(ByteCode* pByteCode)
 {
@@ -240,6 +241,35 @@ void CActorPunchingBall::SetState(int newState, int animType)
 	return;
 }
 
+bool CActorPunchingBall::Can_0x9c()
+{
+	CCamFigData* pCamFigData;
+
+	pCamFigData = (CCamFigData*)0x0;
+
+	if (CCameraGame::_b_use_fig_data != 0) {
+		pCamFigData = CCameraGame::_pfig_data;
+	}
+
+	if (pCamFigData != (CCamFigData*)0x0) {
+		pCamFigData = (CCamFigData*)0x0;
+
+		if (CCameraGame::_b_use_fig_data != 0) {
+			pCamFigData = CCameraGame::_pfig_data;
+		}
+
+		if (pCamFigData->field_0x2a0 != 0) {
+			return false;
+		}
+	}
+
+	if (((this->actorState != 0x72) && (0.0f < this->field_0xee0)) && ((this->flags & 4) != 0)) {
+		return true;
+	}
+
+	return false;
+}
+
 void CActorPunchingBall::ChangeManageState(int state)
 {
 	if (state == 0) {
@@ -259,9 +289,10 @@ void CActorPunchingBall::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimato
 	uint uVar2;
 	float r2;
 	float r1;
-	edAnmMacroBlendN local_4;
+	edAnmMacroBlendN anmMacroBlendN;
 
-	local_4 = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
+	anmMacroBlendN = edAnmMacroBlendN(pAnimator->pAnimKeyTableEntry);
+
 	if (newAnim == 0x8b) {	
 		r2 = (this->vibrationDyn).field_0x4;
 		uVar2 = 0;
@@ -269,28 +300,28 @@ void CActorPunchingBall::AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimato
 		
 		char* pBase = (char*)pAnimator->pAnimKeyTableEntry;
 		AnimKeySomething* pValue = (AnimKeySomething*)(pBase + pAnimator->pAnimKeyTableEntry->keyIndex_0x8.asKey * 4);
-		if (local_4.pHdr->keyIndex_0x8.asKey != 0) {
+		if (anmMacroBlendN.pHdr->keyIndex_0x8.asKey != 0) {
 			do {
 				pValue->field_0xc_array[uVar2] = 0.0f;
 				uVar2 = uVar2 + 1;
-			} while (uVar2 < local_4.pHdr->keyIndex_0x8.asKey);
+			} while (uVar2 < anmMacroBlendN.pHdr->keyIndex_0x8.asKey);
 		}
 
 		if ((r2 < 0.0f) || (r1 < 0.0f)) {
 			if ((r2 <= 0.0f) && (0.0f <= r1)) {
-				CActor::SV_Blend3AnimationsWith2Ratios(r1, -r2, &local_4, 0, 4, 1);
+				CActor::SV_Blend3AnimationsWith2Ratios(r1, -r2, &anmMacroBlendN, 0, 4, 1);
 			}
 			if ((r2 < 0.0f) || (0.0f < r1)) {
 				if ((r2 <= 0.0f) && (r1 <= 0.0f)) {
-					CActor::SV_Blend3AnimationsWith2Ratios(-r1, -r2, &local_4, 0, 3, 1);
+					CActor::SV_Blend3AnimationsWith2Ratios(-r1, -r2, &anmMacroBlendN, 0, 3, 1);
 				}
 			}
 			else {
-				CActor::SV_Blend3AnimationsWith2Ratios(-r1, r2, &local_4, 0, 3, 2);
+				CActor::SV_Blend3AnimationsWith2Ratios(-r1, r2, &anmMacroBlendN, 0, 3, 2);
 			}
 		}
 		else {
-			CActor::SV_Blend3AnimationsWith2Ratios(r1, r2, &local_4, 0, 4, 2);
+			CActor::SV_Blend3AnimationsWith2Ratios(r1, r2, &anmMacroBlendN, 0, 4, 2);
 		}
 	}
 	else {
@@ -315,7 +346,7 @@ int CActorPunchingBall::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 	float fVar5;
 	float fVar6;
 	float fVar7;
-	VibrationParam local_20;
+	VibrationParam vibrationParam;
 
 	if (msg != 3) {
 		if (msg == 0x5d) {
@@ -371,14 +402,14 @@ int CActorPunchingBall::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 				if ((pHitMsg->projectileType == 8) || (pHitMsg->projectileType == 7)) {
 					if (0.0f < GetLifeInterface()->GetValue()) {
 						if ((pHitMsg->flags & 1) != 0) {
-							local_20.field_0x0 = this->field_0xa88;
-							local_20.field_0x4 = this->field_0xa8c;
-							local_20.field_0x8 = this->field_0xa80;
-							local_20.field_0x10 = 1.355f;
-							local_20.field_0x14 = 0.05f;
-							local_20.field_0xc = (this->field_0xa84 * 3.141593f) / 180.0f;
-							local_20.pActor = this;
-							this->vibrationDyn.Init(&local_20);
+							vibrationParam.field_0x0 = this->field_0xa88;
+							vibrationParam.field_0x4 = this->field_0xa8c;
+							vibrationParam.field_0x8 = this->field_0xa80;
+							vibrationParam.field_0x10 = 1.355f;
+							vibrationParam.field_0x14 = 0.05f;
+							vibrationParam.field_0xc = (this->field_0xa84 * 3.141593f) / 180.0f;
+							vibrationParam.pActor = this;
+							this->vibrationDyn.Init(&vibrationParam);
 
 							return CActorFighter::InterpretMessage(pSender, 2, pMsgParam);
 						}
@@ -567,6 +598,7 @@ void CBehaviourPunchingBallStand::Manage()
 		if (bVar1 != false) {
 			pPunchingBall->SetState(0x73, -1);
 		}
+
 		pPunchingBall->UpdatePosition(&pPunchingBall->currentLocation, true);
 	}
 

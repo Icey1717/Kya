@@ -529,8 +529,6 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	uint uVar2;
 	bool bVar3;
 	bool bVar4;
-	Timer* pTVar5;
-	Timer* pTVar6;
 	uint uVar7;
 	int iVar8;
 	edF32VECTOR4* peVar9;
@@ -549,7 +547,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	edF32VECTOR4 newLocation;
 	edF32VECTOR4 eStack192;
 	edF32VECTOR4 horizontalTranslation;
-	edF32VECTOR4 local_a0;
+	edF32VECTOR4 summedImpulseVelocities;
 	edF32VECTOR4 eStack144;
 	edF32VECTOR4 eStack128;
 	edF32VECTOR4 local_70;
@@ -564,7 +562,6 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	AUTONOMOUS_LOG(LogLevel::Verbose, "CActorAutonomous::ManageDyn flags: 0x{:x}", this->pCollisionData->flags_0x4);
 
 	pCollision = this->pCollisionData;
-	pTVar5 = GetTimer();
 	bVar3 = false;
 	uVar2 = this->dynamic.flags;
 
@@ -590,8 +587,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		edF32Vector4ScaleHard(this->dynamicExt.gravityScale, &eStack128, &CDynamicExt::gForceGravity);
 		peVar9 = this->dynamicExt.aImpulseVelocities;
 		edF32Vector4AddHard(peVar9, peVar9, &eStack128);
-		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[0]);
-		this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar15;
+		this->dynamicExt.aImpulseVelocityMagnitudes[0] = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[0]);
 	}
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Gravity: {}", this->dynamicExt.aImpulseVelocities[0].ToString());
@@ -599,16 +595,12 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	if (((uVar10 & 0x100) != 0) && ((pCollision->flags_0x4 & 2) == 0)) {
 		if ((uVar10 & 0x100000) == 0) {
 			fVar15 = this->dynamic.linearAcceleration;
-			pTVar6 = GetTimer();
-			fVar15 = pTVar6->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
-
+			fVar15 = GetTimer()->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
 			AUTONOMOUS_LOG(LogLevel::Verbose, "Acceleration: {} ({})", fVar15, this->dynamic.linearAcceleration);
 		}
 		else {
 			fVar15 = this->dynamicExt.field_0x6c;
-			pTVar6 = GetTimer();
-			fVar15 = pTVar6->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
-
+			fVar15 = GetTimer()->cutsceneDeltaTime * -param_1 * fVar15 * fVar15;
 			AUTONOMOUS_LOG(LogLevel::Verbose, "dynamicExt.field_0x6c: {} ({})", fVar15, this->dynamicExt.field_0x6c);
 
 		}
@@ -623,19 +615,16 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 		AUTONOMOUS_LOG(LogLevel::Verbose, "vel[1] result: {}", this->dynamicExt.aImpulseVelocities[1].ToString());
 
-		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[1]);
-		this->dynamicExt.aImpulseVelocityMagnitudes[1] = fVar15;
+		this->dynamicExt.aImpulseVelocityMagnitudes[1] = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[1]);
 	}
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Unknown: {}", this->dynamicExt.aImpulseVelocities[1].ToString());
 
 	if (this->pTiedActor == (CActor*)0x0) {
-		pTVar6 = GetTimer();
-		edF32Vector4ScaleHard(0.02f / pTVar6->cutsceneDeltaTime, aeStack544, &this->dynamic.field_0x10);
+		edF32Vector4ScaleHard(0.02f / GetTimer()->cutsceneDeltaTime, aeStack544, &this->dynamic.field_0x10);
 		peVar9 = this->dynamicExt.aImpulseVelocities;
 		edF32Vector4AddHard(peVar9, peVar9, aeStack544);
-		fVar15 = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[0]);
-		this->dynamicExt.aImpulseVelocityMagnitudes[0] = fVar15;
+		this->dynamicExt.aImpulseVelocityMagnitudes[0] = edF32Vector4GetDistHard(&this->dynamicExt.aImpulseVelocities[0]);
 		this->dynamic.field_0x10.x = 0.0f;
 		this->dynamic.field_0x10.y = 0.0f;
 		this->dynamic.field_0x10.z = 0.0f;
@@ -644,25 +633,22 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Tied Actor: {}", this->dynamicExt.aImpulseVelocities[0].ToString());
 
-	local_a0.x = 0.0f;
-	local_a0.y = 0.0f;
-	local_a0.z = 0.0f;
-	local_a0.w = 0.0f;
+	summedImpulseVelocities.x = 0.0f;
+	summedImpulseVelocities.y = 0.0f;
+	summedImpulseVelocities.z = 0.0f;
+	summedImpulseVelocities.w = 0.0f;
 
 	for (iVar8 = 0; iVar8 < 3; iVar8 = iVar8 + 1) {
 		AUTONOMOUS_LOG(LogLevel::Verbose, "Vel {}: {}", iVar8, this->dynamicExt.aImpulseVelocities[iVar8].ToString());
-		edF32Vector4AddHard(&local_a0, &local_a0, &this->dynamicExt.aImpulseVelocities[iVar8]);
+		edF32Vector4AddHard(&summedImpulseVelocities, &summedImpulseVelocities, &this->dynamicExt.aImpulseVelocities[iVar8]);
 	}
 
-	AUTONOMOUS_LOG(LogLevel::Verbose, "Summed Velocities: {} 3: {} scale: {}", local_a0.ToString(), this->dynamicExt.normalizedTranslation.ToString(), this->dynamicExt.field_0x6c);
+	AUTONOMOUS_LOG(LogLevel::Verbose, "Summed Velocities: {} 3: {} scale: {}", summedImpulseVelocities.ToString(), this->dynamicExt.normalizedTranslation.ToString(), this->dynamicExt.field_0x6c);
 
-	fVar15 = pTVar5->cutsceneDeltaTime;
-	local_a0.x = local_a0.x * fVar15;
-	local_a0.y = local_a0.y * fVar15;
-	local_a0.z = local_a0.z * fVar15;
-	local_a0.w = local_a0.w * fVar15;
+	summedImpulseVelocities = summedImpulseVelocities * GetTimer()->cutsceneDeltaTime;
+
 	edF32Vector4ScaleHard(this->dynamicExt.field_0x6c, &translation, &this->dynamicExt.normalizedTranslation);
-	edF32Vector4AddHard(&translation, &translation, &local_a0);
+	edF32Vector4AddHard(&translation, &translation, &summedImpulseVelocities);
 
 	if ((uVar10 & 0x4000) != 0) {
 		translation.x = this->dynamicExt.field_0x60.x;
@@ -676,8 +662,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation: {}", translation.ToString());
 
-	fVar15 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &translation);
-	this->dynamicExt.field_0x6c = fVar15;
+	this->dynamicExt.field_0x6c = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &translation);
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "New normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
 
@@ -822,16 +807,12 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation: {}", translation.ToString());
 
 	if (((uVar10 & 0x40) != 0) || (bVar3)) {
-		fVar15 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &translation);
-		this->dynamicExt.field_0x6c = fVar15;
-
+		this->dynamicExt.field_0x6c = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &translation);
 		AUTONOMOUS_LOG(LogLevel::Verbose, "New normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
 	}
 
 	if (bVar4) {
-		fVar15 = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &local_30);
-		this->dynamicExt.field_0x6c = fVar15;
-
+		this->dynamicExt.field_0x6c = edF32Vector4SafeNormalize0Hard(&this->dynamicExt.normalizedTranslation, &local_30);
 		AUTONOMOUS_LOG(LogLevel::Verbose, "New normalizedTranslation.y: {}", this->dynamicExt.normalizedTranslation.ToString());
 	}
 
@@ -842,14 +823,13 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		AUTONOMOUS_LOG(LogLevel::Verbose, "Translation result: {} collision contact: {}", translation.ToString(), this->collisionContact.location.ToString());
 	}
 
-	fVar15 = pTVar5->cutsceneDeltaTime;
-	translation = translation * fVar15;
+	translation = translation * GetTimer()->cutsceneDeltaTime;
 
 	AUTONOMOUS_LOG(LogLevel::Verbose, "Translation delta time: {}", translation.ToString());
 
 	if ((uVar10 & 0x400) == 0) {
 		if ((((uVar10 & 0x80000) == 0) || ((pCollision->flags_0x4 & 2) == 0)) ||
-			(pTVar5->scaledTotalTime - this->dynamicExt.scaledTotalTime < 0.5f)) {
+			(GetTimer()->scaledTotalTime - this->dynamicExt.scaledTotalTime < 0.5f)) {
 
 			local_1e0.entryCount = 0;
 			if (pActorsTable == (CActorsTable*)0x0) {
@@ -923,9 +903,8 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	if (((uVar10 & 0x2000000) != 0) && ((pCollision->flags_0x4 & 1) != 0)) {
 		edF32Vector4NormalizeHard(&eStack496, &local_30);
-		fVar15 = edF32Vector4DotProductHard(&pCollision->aCollisionContact[0].location, &eStack496);
 
-		if (fVar15 < -0.99f) {
+		if (edF32Vector4DotProductHard(&pCollision->aCollisionContact[0].location, &eStack496) < -0.99f) {
 			this->dynamicExt.field_0x6c = this->dynamicExt.field_0x6c * this->dynamicExt.normalizedTranslation.y;
 
 			this->dynamicExt.normalizedTranslation.x = 0.0f;
@@ -1012,9 +991,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 
 	fVar15 = 0.05f;
 	if (0.05f < this->dynamic.linearAcceleration) {
-		pTVar5 = GetTimer();
-		fVar15 = pTVar5->scaledTotalTime;
-		this->dynamicExt.scaledTotalTime = fVar15;
+		this->dynamicExt.scaledTotalTime = GetTimer()->scaledTotalTime;
 	}
 
 	if (this->bCollisionSphereDirty != 0) {

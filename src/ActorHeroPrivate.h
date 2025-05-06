@@ -122,17 +122,28 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Manage();
+
 	virtual void PreCheckpointReset();
 	virtual void CheckpointReset();
+
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+
+	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
 	virtual void SetState(int newState, int animType);
+
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
+
 	virtual void CinematicMode_Leave(int behaviourId);
+
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
+
 	virtual bool IsMakingNoise();
+
 	virtual void GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index);
+
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
+	// End CActor
 
 	// CActorAutonomous
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);

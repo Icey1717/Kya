@@ -5,6 +5,7 @@
 #include "Actor.h"
 #include "ActorAutonomous.h"
 #include "ActorAmbre.h"
+#include "Dynamic.h"
 
 #define IMPLEMENTATION_GUARD_FIGHT(x)
 
@@ -399,19 +400,34 @@ public:
 
 	static StateConfig _gStateCfg_FIG[0x6c];
 
+	// CActor
 	virtual bool IsKindOfObject(ulong kind);
+
+	virtual void Create(ByteCode* pByteCode);
+
 	virtual void Init();
 	virtual void Term();
+
 	virtual void Manage();
+
 	virtual void Reset();
+
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
+	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
+
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
-	virtual void Create(ByteCode* pByteCode);
-	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
+
 	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
+
+	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
+
 	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	// End Interface
 
 	// CActorAutonomous
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
@@ -448,7 +464,6 @@ public:
 	virtual void _Hold_GetPossibleExit();
 	virtual void _Proj_GetPossibleExit();
 
-	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
 	void ClearLocalData();
 
 	void RunInternal(float param_1, edF32VECTOR4* pRotation);
@@ -548,16 +563,16 @@ public:
 	float field_0x358;
 	float field_0x360;
 	int field_0x36c;
-	float field_0x370;
+	float adversaryDistance;
 	undefined4 field_0x374;
-	float field_0x378;
+	float adversaryAngleDiff;
 
 	uint fightFlags;
 
 	s_fighter_anatomy_zones fighterAnatomyZones;
 
-	CScalarDyn field_0x37c;
-	CScalarDyn field_0x3a4;
+	CScalarDyn scalarDynA;
+	CScalarDyn scalarDynB;
 	CScalarDyn scalarDynJump;
 
 	float field_0x3f4;

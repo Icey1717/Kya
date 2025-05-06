@@ -216,6 +216,8 @@ set(main_src
 	"${src_root}/Animation.h"
 	"${src_root}/CollisionManager.cpp"
 	"${src_root}/CollisionManager.h"
+	"${src_root}/Dynamic.cpp"
+	"${src_root}/Dynamic.h"
 
 	"${src_root}/Fx.cpp"
 	"${src_root}/Fx.h"

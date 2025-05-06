@@ -310,28 +310,28 @@ void CCamera::Init()
 
 bool CCamera::Manage()
 {
-	CActor* pActorA;
 	bool returnVal;
-	CActor* pAVar1;
-	void* actorAddrA;
+	CActor* pNewOtherTarget;
 
 	if ((this->flags_0xc & 0x800000) == 0) {
 		this->flags_0xc = this->flags_0xc | 0x800000;
-		actorAddrA = GetTarget();
-		if (actorAddrA != 0) {
-			pActorA = GetTarget();
-			pAVar1 = pActorA->pTiedActor;
-			if (pAVar1 == (CActor*)0x0) {
-				pAVar1 = GetTarget();
-				pAVar1 = pAVar1->GetCollidingActor();
+
+		pNewOtherTarget = GetTarget();
+		if (pNewOtherTarget != (CActor*)0x0) {
+			pNewOtherTarget = GetTarget()->pTiedActor;
+			if (pNewOtherTarget == (CActor*)0x0) {
+				pNewOtherTarget = GetTarget()->GetCollidingActor();
 			}
-			SetOtherTarget(pAVar1);
+
+			SetOtherTarget(pNewOtherTarget);
 		}
+
 		returnVal = false;
 	}
 	else {
 		returnVal = true;
 	}
+
 	return returnVal;
 }
 

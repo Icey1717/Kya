@@ -409,7 +409,7 @@ public:
 	virtual void LoadContext(uint*, int) { IMPLEMENTATION_GUARD(); }
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual StateConfig* GetStateCfg(int state);
-	virtual uint GetBehaviourFlags(int state) { IMPLEMENTATION_GUARD(); }
+	virtual uint GetBehaviourFlags(int state);
 	virtual void UpdateLookingAt() { IMPLEMENTATION_GUARD(); }
 	virtual void UpdatePostAnimEffects();
 	virtual void SetState(int newState, int animType);

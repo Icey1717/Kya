@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "ActorAutonomous.h"
 #include "Fx_Spark.h"
+#include "Dynamic.h"
 
 #define PROJECTILE_BEHAVIOUR_STAND 0x3
 #define PROJECTILE_BEHAVIOUR_STRAIGHT 0x4

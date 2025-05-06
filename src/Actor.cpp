@@ -2297,6 +2297,43 @@ void CActor::SetupModel(int count, MeshTextureHash* aHashes)
 	return;
 }
 
+bool CActor::CanPassThrough()
+{
+	bool bVar1;
+	bool bCanPassThrough;
+	uint stateFlags;
+
+	stateFlags = GetStateFlags(this->actorState);
+	bCanPassThrough = true;
+	bVar1 = true;
+
+	if (((CActorFactory::gClassProperties[this->typeID].field_0x4 & 0x2000) == 0) && ((stateFlags & 8) == 0)) {
+		bVar1 = false;
+	}
+
+	if ((!bVar1) && ((stateFlags & 1) == 0)) {
+		bCanPassThrough = false;
+	}
+
+	return bCanPassThrough;
+}
+
+bool CActor::IsProjectionAim()
+{
+	bool bIsProjectionAim;
+
+	bIsProjectionAim = this->pCollisionData != (CCollision*)0x0;
+	if (bIsProjectionAim) {
+		bIsProjectionAim = (GetStateFlags(this->actorState) & 1) == 0;
+	}
+
+	if (bIsProjectionAim) {
+		bIsProjectionAim = (CActorFactory::gClassProperties[this->typeID].flags & 0x8000) != 0;
+	}
+
+	return bIsProjectionAim;
+}
+
 void CActor::SV_SetModel(int meshIndex, int textureIndex, int count, MeshTextureHash* aHashes)
 {
 	ed_g3d_manager* pMeshInfo;
@@ -3731,6 +3768,11 @@ void CActor::SetLocalBoundingSphere(float radius, edF32VECTOR4* pLocation)
 	return;
 }
 
+void CActor::CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32MATRIX4* param_3, edF32MATRIX4* param_4)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 bool CActor::ColWithAToboggan()
 {
 	CCollision* pColData;
@@ -4656,354 +4698,6 @@ void CActor::SV_SetOrientationToPosition2D(edF32VECTOR4* pPosition)
 	edF32Vector4SubHard(&eStack16, pPosition, &this->currentLocation);
 	eStack16.y = 0.0f;
 	edF32Vector4NormalizeHard(&this->rotationQuat, &eStack16);
-	return;
-}
-
-void CScalarDyn::BuildFromSpeedDist(float param_1, float param_2, float distance)
-{
-	if (distance == 0.0f) {
-		this->field_0xc = param_1;
-		this->field_0x14 = 0.0f;
-		this->field_0x10 = 0.0f;
-		this->duration = 0.0f;
-		this->field_0x4 = 0.0f;
-		this->field_0x18 = 0.0f;
-		this->flags = 1;
-		this->field_0x20 = param_2;
-		this->field_0x1c = 0.0f;
-		this->field_0x24 = 0.0f;
-	}
-	else {
-		this->field_0xc = param_1;
-		this->field_0x10 = 0.0f;
-		this->field_0x14 = (param_2 * param_2 - param_1 * param_1) / (distance * 2.0f);
-		this->field_0x20 = param_1;
-		this->field_0x24 = this->field_0x14;
-		this->flags = 0;
-		this->field_0x4 = 0.0f;
-		this->field_0x18 = 0.0f;
-		this->field_0x1c = 0.0f;
-		this->duration = (param_2 - param_1) / this->field_0x14;
-	}
-
-	return;
-}
-
-void CScalarDyn::BuildFromSpeedDistTime(float param_1, float param_2, float distance, float time)
-{
-	float fVar1;
-	float fVar2;
-
-	fVar2 = 1.0f / time;
-	fVar1 = (fVar2 / time) * 6.0f * ((param_1 + param_2) - distance * 2.0f * fVar2);
-	this->field_0xc = param_1;
-	this->field_0x10 = fVar1;
-	this->field_0x14 = (distance * 2.0f * (fVar2 / time) - param_1 * 2.0f * fVar2) - (time / 3.0f) * fVar1;
-	this->field_0x20 = param_1;
-	this->field_0x24 = this->field_0x14;
-	this->flags = 0;
-	this->field_0x4 = 0.0f;
-	this->field_0x18 = 0.0f;
-	this->field_0x1c = 0.0f;
-	this->duration = time;
-
-	return;
-}
-
-void CScalarDyn::Reset()
-{
-	this->field_0x24 = 0.0f;
-	this->field_0x20 = 0.0f;
-	this->field_0x1c = 0.0f;
-	this->field_0x18 = 0.0f;
-	this->field_0x14 = 0.0f;
-	this->field_0x10 = 0.0f;
-	this->field_0xc = 0.0f;
-	this->duration = 0.0f;
-	this->field_0x4 = 0.0f;
-	this->flags = 1;
-	return;
-}
-
-bool CScalarDyn::IsFinished()
-{
-	return (this->flags & 1) != 0;
-}
-
-void CScalarDyn::Integrate(float param_1, float param_2)
-{
-	float fVar1;
-	float fVar2;
-
-	if ((param_2 != 0.0f) && (param_1 != 0.0f)) {
-		if (this->flags == 0) {
-			fVar1 = this->field_0x4 + param_1;
-			if ((this->duration <= fVar1) || (fabs(fVar1 - this->duration) < 1e-06f)) {
-				fVar1 = this->duration;
-				this->flags = 2;
-			}
-			else {
-				this->flags = 0;
-			}
-			fVar2 = this->field_0x4;
-			this->field_0x1c = (this->field_0x10 * (fVar1 * fVar1 * fVar1 - fVar2 * fVar2 * fVar2)) / 6.0f;
-			this->field_0x1c = this->field_0x1c + (this->field_0x14 * (fVar1 * fVar1 - fVar2 * fVar2)) / 2.0f;
-			this->field_0x1c = this->field_0x1c + this->field_0xc * (fVar1 - this->field_0x4);
-		}
-		else {
-			this->flags = 1;
-		}
-		this->field_0x18 = this->field_0x18 + this->field_0x1c;
-		this->field_0x4 = this->field_0x4 + param_1;
-		fVar1 = this->field_0x1c / param_2;
-		this->field_0x20 = fVar1;
-		this->field_0x24 = fVar1 / param_2;
-	}
-	return;
-}
-
-void CScalarDyn::Integrate(float param_1)
-{
-	Integrate(param_1, param_1);
-}
-
-float CScalarDyn::GetInstantSpeed()
-{
-	float fVar1;
-
-	fVar1 = this->field_0x4;
-	return this->field_0xc + (fVar1 * this->field_0x10 * fVar1) / 2.0f + this->field_0x14 * fVar1;
-}
-
-bool CScalarDyn::OnLastValidSample()
-{
-	return (this->flags & 2) != 0;
-}
-
-void CVectorDyn::Integrate(float param_1, float param_2)
-{
-	float fVar1;
-	float fVar2;
-
-	if ((param_2 != 0.0f) && (param_1 != 0.0f)) {
-		if (this->field_0x0 == 0) {
-			fVar1 = this->field_0x8 + param_1;
-
-			if (this->field_0x4 != 0) {
-				if ((this->field_0xc <= fVar1) || (fabs(fVar1 - this->field_0xc) < 1e-06f)) {
-					fVar1 = this->field_0xc;
-					this->field_0x0 = 2;
-				}
-				else {
-					this->field_0x0 = 0;
-				}
-			}
-
-			fVar2 = fVar1 * fVar1 - this->field_0x8 * this->field_0x8;
-			(this->field_0x50).x = ((this->field_0x20).x * fVar2) / 2.0f;
-			(this->field_0x50).x = (this->field_0x50).x + (this->field_0x10).x * (fVar1 - this->field_0x8);
-			(this->field_0x50).y = ((this->field_0x20).y * fVar2) / 2.0f;
-			(this->field_0x50).y = (this->field_0x50).y + (this->field_0x10).y * (fVar1 - this->field_0x8);
-			(this->field_0x50).z = ((this->field_0x20).z * fVar2) / 2.0f;
-			(this->field_0x50).z = (this->field_0x50).z + (this->field_0x10).z * (fVar1 - this->field_0x8);
-			(this->field_0x50).w = 0.0f;
-		}
-		else {
-			this->field_0x0 = 1;
-		}
-
-		edF32Vector4AddHard(&this->field_0x30, &this->field_0x30, &this->field_0x50);
-		this->field_0x8 = this->field_0x8 + param_1;
-		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x60, &this->field_0x50);
-		edF32Vector4ScaleHard(1.0f / param_2, &this->field_0x70, &this->field_0x60);
-	}
-
-	assert(std::isnan(this->field_0x50.x) == false);
-	assert(std::isnan(this->field_0x50.y) == false);
-	assert(std::isnan(this->field_0x50.z) == false);
-
-	assert(std::isnan(this->field_0x60.x) == false);
-	assert(std::isnan(this->field_0x60.y) == false);
-	assert(std::isnan(this->field_0x60.z) == false);
-
-	return;
-}
-
-void CVectorDyn::Integrate(float param_1)
-{
-	Integrate(param_1, param_1);
-}
-
-void CVectorDyn::Reset()
-{
-	this->field_0x0 = 1;
-	this->field_0xc = 0.0f;
-	this->field_0x8 = 0.0f;
-
-	(this->field_0x10).x = 0.0f;
-	(this->field_0x10).y = 0.0f;
-	(this->field_0x10).z = 0.0f;
-	(this->field_0x10).w = 0.0f;
-
-	(this->field_0x20).x = 0.0f;
-	(this->field_0x20).y = 0.0f;
-	(this->field_0x20).z = 0.0f;
-	(this->field_0x20).w = 0.0f;
-
-	(this->field_0x50).x = 0.0f;
-	(this->field_0x50).y = 0.0f;
-	(this->field_0x50).z = 0.0f;
-	(this->field_0x50).w = 0.0f;
-
-	(this->field_0x60).x = 0.0f;
-	(this->field_0x60).y = 0.0f;
-	(this->field_0x60).z = 0.0f;
-	(this->field_0x60).w = 0.0f;
-
-	(this->field_0x70).x = 0.0f;
-	(this->field_0x70).y = 0.0f;
-	(this->field_0x70).z = 0.0f;
-	(this->field_0x70).w = 0.0f;
-
-	(this->field_0x30).x = 0.0f;
-	(this->field_0x30).y = 0.0f;
-	(this->field_0x30).z = 0.0f;
-	(this->field_0x30).w = 0.0f;
-	return;
-}
-
-bool CVectorDyn::IsFinished()
-{
-	return (this->field_0x0 & 1) != 0;
-}
-
-void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravity, edF32VECTOR4* param_4, byte param_5)
-{
-	float fVar1;
-	float angle;
-	float fVar2;
-	float puVar3;
-	edF32VECTOR4 local_70;
-	edF32VECTOR4 local_60;
-	edF32VECTOR4 local_50;
-	edF32MATRIX4 eStack64;
-
-	fVar1 = edF32Vector4SafeNormalize0Hard(&local_60, pGravity);
-
-	if (1.0f < local_60.y) {
-		puVar3 = 1.0f;
-	}
-	else {
-		puVar3 = -1.0f;
-		if (-1.0f <= local_60.y) {
-			puVar3 = local_60.y;
-		}
-	}
-
-	angle = acosf(puVar3);
-
-	local_50.y = 0.0f;
-	local_50.w = 0.0f;
-	local_50.z = -local_60.x;
-	local_50.x = local_60.z;
-
-	edF32Vector4SafeNormalize0Hard(&local_50, &local_50);
-	MatrixRotationFromVectorAndAngle(angle, &eStack64, &local_50);
-	edF32Matrix4MulF32Vector4Hard(&local_70, &eStack64, param_4);
-
-	if (local_70.y < 0.0f) {
-		param_1 = param_1 - local_70.y;
-	}
-
-	fVar2 = -sqrtf(param_1 * fVar1 * 2.0f);
-	(this->field_0x10).y = fVar2;
-	this->field_0x40 = -fVar2 / fVar1;
-	float oaeuoaeuoeau = ((local_70.y + param_1) * 2.0f) / fVar1;
-	float aoeuoaeu = sqrtf(oaeuoaeuoeau);
-	this->field_0xc = this->field_0x40 + sqrtf(((local_70.y + param_1) * 2.0f) / fVar1);
-
-	assert(std::isnan(this->field_0xc) == false);
-
-	(this->field_0x10).x = local_70.x / this->field_0xc;
-	(this->field_0x10).z = local_70.z / this->field_0xc;
-	(this->field_0x10).w = 0.0f;
-	(this->field_0x20).x = pGravity->x;
-	(this->field_0x20).y = pGravity->y;
-	(this->field_0x20).z = pGravity->z;
-	(this->field_0x20).w = pGravity->w;
-
-	MatrixRotationFromVectorAndAngle(-angle, &eStack64, &local_50);
-	edF32Matrix4MulF32Vector4Hard(&this->field_0x10, &eStack64, &this->field_0x10);
-
-	this->field_0x4 = param_5;
-	this->field_0x0 = 0;
-	this->field_0x8 = 0.0f;
-
-	(this->field_0x50).x = 0.0f;
-	(this->field_0x50).y = 0.0f;
-	(this->field_0x50).z = 0.0f;
-	(this->field_0x50).w = 0.0f;
-
-	(this->field_0x60).x = 0.0f;
-	(this->field_0x60).y = 0.0f;
-	(this->field_0x60).z = 0.0f;
-	(this->field_0x60).w = 0.0f;
-
-	(this->field_0x70).x = 0.0f;
-	(this->field_0x70).y = 0.0f;
-	(this->field_0x70).z = 0.0f;
-	(this->field_0x70).w = 0.0f;
-
-	(this->field_0x30).x = 0.0f;
-	(this->field_0x30).y = 0.0f;
-	(this->field_0x30).z = 0.0f;
-	(this->field_0x30).w = 0.0f;
-
-	return;
-}
-
-void CScalarDyn::BuildFromSpeedTime(float param_1, float param_2, float param_3)
-{
-	this->field_0xc = param_1;
-	this->field_0x10 = 0.0f;
-	this->field_0x14 = (param_2 - param_1) / param_3;
-	this->field_0x20 = param_1;
-	this->field_0x24 = this->field_0x14;
-	this->flags = 0;
-	this->field_0x4 = 0.0f;
-	this->field_0x18 = 0.0f;
-	this->field_0x1c = 0.0f;
-	this->duration = param_3;
-
-	return;
-}
-
-void CScalarDyn::BuildFromDistTimeNoAccel(float dist, float time)
-{
-	this->field_0x14 = 0.0f;
-	this->field_0x10 = 0.0f;
-	this->field_0xc = dist / time;
-	this->flags = 0;
-	this->field_0x4 = 0.0f;
-	this->field_0x18 = 0.0f;
-	this->field_0x24 = 0.0f;
-	this->field_0x20 = 0.0f;
-	this->field_0x1c = 0.0f;
-	this->duration = time;
-
-	return;
-}
-
-void CScalarDyn::Stop()
-{
-	this->field_0xc = 0.0f;
-	this->field_0x10 = 0.0f;
-	this->field_0x14 = 0.0f;
-	this->field_0x24 = 0.0f;
-	this->field_0x20 = 0.0f;
-	this->field_0x1c = 0.0f;
-	this->flags = 1;
-
 	return;
 }
 

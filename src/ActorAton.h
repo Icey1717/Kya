@@ -7,6 +7,7 @@
 #include "Path.h"
 #include "Fx_Tail.h"
 #include "ActorAmbre.h"
+#include "Dynamic.h"
 
 struct edDList_material;
 class CActorAton;

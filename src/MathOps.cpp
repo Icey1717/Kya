@@ -783,7 +783,7 @@ edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char
 	float fVar9;
 	float fVar10;
 	float fVar11;
-	edF32VECTOR4 local_20 = {};
+	edF32VECTOR4 local_20;
 	int firstOrderIndex;
 	int secondOrderIndex;
 	int thirdOrderIndex;
@@ -792,25 +792,16 @@ edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char
 	char secondChar;
 	char thirdChar;
 
-	//puVar2 = (edF32VECTOR4*)0xc;
 
 	firstChar = order[0];
 	secondChar = order[1];
 	thirdChar = order[2];
 
-	//puVar3 = &local_20;
-
 	firstOrderIndex = firstChar + -0x58;
 	secondOrderIndex = secondChar + -0x58;
 	thirdOrderIndex = thirdChar + -0x58;
 
-	//puVar1 = puVar3;
-	//while (puVar1 != (edF32VECTOR4*)0x0) {
-	//	*(undefined*)&puVar3->x = 0;
-	//	puVar3 = (edF32VECTOR4*)((ulong)&puVar3->x + 1);
-	//	puVar2 = (edF32VECTOR4*)((ulong)&puVar2[-1].w + 3);
-	//	puVar1 = puVar2;
-	//}
+	memset(&local_20, 0, sizeof(local_20));
 
 	fVar5 = v0->raw[firstOrderIndex];
 	fVar6 = v0->raw[secondOrderIndex];
@@ -1115,17 +1106,7 @@ void edF32Matrix4GetInverseOrthoHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 
 void edF32Vector4ScaleHard(float t, edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
-	float fVar1;
-	float fVar2;
-	float fVar3;
-
-	fVar1 = v1->y;
-	fVar2 = v1->z;
-	fVar3 = v1->w;
-	v0->x = v1->x * t;
-	v0->y = fVar1 * t;
-	v0->z = fVar2 * t;
-	v0->w = fVar3 * t;
+	*v0 = *v1 * t;
 	return;
 }
 
@@ -1849,6 +1830,7 @@ float edF32Vector4SafeNormalize0Hard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 		const float invMagnitude = 1.0f / v1Magnitude;
 		*v0 = *v1 * invMagnitude;
 	}
+
 	return v1Magnitude;
 }
 

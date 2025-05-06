@@ -740,6 +740,51 @@ StateConfig* CActorWolfen::GetStateCfg(int state)
 	return pWVar1;
 }
 
+uint _gBehaviourFlags_WLF[27] =
+{
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x1,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+	0x0,
+};
+
+uint CActorWolfen::GetBehaviourFlags(int state)
+{
+	uint behaviourFlags;
+
+	if (state < 7) {
+		behaviourFlags = CActorFighter::GetBehaviourFlags(state);
+	}
+	else {
+		behaviourFlags = _gBehaviourFlags_WLF[state];
+	}
+
+	return behaviourFlags;
+}
+
 void CActorWolfen::UpdatePostAnimEffects()
 {
 	uint uVar1;
@@ -1416,14 +1461,14 @@ void CActorWolfen::Func_0x204(CActorFighter* pOther)
 	this->runSpeed = 0.0f;
 	pCVar1 = this->pAdversary;
 	if (pCVar1 == (CActorFighter*)0x0) {
-		this->field_0x370 = this->field_0x358;
-		this->field_0x378 = GetAngleYFromVector(&this->rotationQuat);
+		this->adversaryDistance = this->field_0x358;
+		this->adversaryAngleDiff = GetAngleYFromVector(&this->rotationQuat);
 		Func_0x20c(this->field_0xc5c);
 	}
 	else {
 		edF32Vector4SubHard(&eStack32, &pCVar1->currentLocation, &this->currentLocation);
-		this->field_0x378 = GetAngleYFromVector(&eStack32);
-		this->field_0x370 = edF32Vector4GetDistHard(&eStack32);
+		this->adversaryAngleDiff = GetAngleYFromVector(&eStack32);
+		this->adversaryDistance = edF32Vector4GetDistHard(&eStack32);
 		local_8 = &local_4;
 		iVar2 = DoMessage(this->pAdversary, (ACTOR_MESSAGE)0xc, (void*)local_8);
 		if (iVar2 != 0) {

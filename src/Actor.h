@@ -269,68 +269,6 @@ struct MeshTextureHash {
 	ulong textureHash;
 };
 
-class CScalarDyn {
-public:
-	void BuildFromSpeedDist(float param_1, float param_2, float distance);
-	void BuildFromSpeedDistTime(float param_1, float param_2, float distance, float time);
-	void BuildFromSpeedTime(float param_1, float param_2, float param_3);
-	void BuildFromDistTimeNoAccel(float dist, float time);
-	void Reset();
-	bool IsFinished();
-	void Integrate(float param_1);
-	void Integrate(float param_1, float param_2);
-	float GetInstantSpeed();
-	bool OnLastValidSample();
-	void Stop();
-
-	uint flags;
-	float field_0x4;
-	float duration;
-	float field_0xc;
-	float field_0x10;
-	float field_0x14;
-	float field_0x18;
-	float field_0x1c;
-	float field_0x20;
-	float field_0x24;
-};
-
-class CVectorDyn {
-public:
-	void Integrate(float param_1, float param_2);
-	void Integrate(float param_1);
-	void Reset();
-	bool IsFinished();
-	void BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, byte param_5);
-
-	undefined4 field_0x0;
-	byte field_0x4;
-	undefined field_0x5;
-	undefined field_0x6;
-	undefined field_0x7;
-	float field_0x8;
-	float field_0xc;
-	edF32VECTOR4 field_0x10;
-	edF32VECTOR4 field_0x20;
-	edF32VECTOR4 field_0x30;
-	float field_0x40;
-	undefined field_0x44;
-	undefined field_0x45;
-	undefined field_0x46;
-	undefined field_0x47;
-	undefined field_0x48;
-	undefined field_0x49;
-	undefined field_0x4a;
-	undefined field_0x4b;
-	undefined field_0x4c;
-	undefined field_0x4d;
-	undefined field_0x4e;
-	undefined field_0x4f;
-	edF32VECTOR4 field_0x50;
-	edF32VECTOR4 field_0x60;
-	edF32VECTOR4 field_0x70;
-};
-
 class CPathFollowReaderAbsolute;
 struct S_PATHREADER_POS_INFO;
 struct edAnmMacroBlendN;
@@ -427,62 +365,93 @@ struct GetPositionMsgParams
 	edF32VECTOR4 vectorFieldB;
 };
 
+struct CCineActorConfig;
+
 class CActor : public CObject {
 public:
 	CActor();
 
+	// CActor Interface
 	virtual bool IsKindOfObject(ulong kind);
 	virtual bool InitDlistPatchable(int);
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Destroy();
+
 	virtual void Init();
 	virtual void Term();
+
 	virtual void Manage();
 	virtual void Draw();
 	virtual void ComputeLighting();
+
 	virtual void Reset();
 	virtual void PreCheckpointReset() {}
 	virtual void CheckpointReset();
+
 	virtual void SectorChange(int oldSectorId, int newSectorId);
+	virtual void PauseChange(int bIsPaused);
+
 	virtual void SaveContext(uint*, int);
 	virtual void LoadContext(uint*, int);
+
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual void TermBehaviour(int behaviourId, CBehaviour* pBehaviour);
+
 	virtual StateConfig* GetStateCfg(int state);
 	virtual uint GetBehaviourFlags(int state);
+
 	virtual uint IsLookingAt();
 	virtual void SetLookingAtOn();
 	virtual void SetLookingAtOff();
 	virtual void UpdateLookingAt();
+
+	virtual void UpdateAnimEffects();
+	virtual void UpdatePostAnimEffects();
+
+	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
 	virtual void SetState(int newState, int animType);
+
 	virtual void ChangeManageState(int state);
 	virtual void ChangeDisplayState(int state);
 	virtual void ChangeVisibleState(int bVisible);
+
 	virtual bool IsLockable();
-	virtual void UpdateAnimEffects();
-	virtual bool SetBehaviour(int behaviourId, int newState, int animationType);
+	virtual bool IsProjectionAim();
+	virtual bool CanPassThrough();
+	virtual bool Can_0x9c();
+
 	virtual void AnimEvaluate(uint layerId, edAnmMacroAnimator* pAnimator, uint newAnim);
+
+	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
+
 	virtual void CinematicMode_Enter(bool bSetState);
 	virtual void CinematicMode_Leave(int behaviourId);
 	virtual void CinematicMode_Manage() { return; }
 	virtual void CinematicMode_UpdateMatrix(edF32MATRIX4* pPosition);
 	virtual void CinematicMode_SetAnimation(edCinActorInterface::ANIM_PARAMStag* const pTag, int);
+	virtual void CinematicMode_InterpolateTo(CCineActorConfig* pConfig, edF32MATRIX4* param_3, edF32MATRIX4* param_4);
+	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
+
+	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
+
+	virtual CPlayerInput* GetInputManager(int, int);
+
 	virtual bool IsMakingNoise();
+
 	virtual void TieToActor(CActor* pTieActor, int carryMethod, int param_4, edF32MATRIX4* param_5);
+
 	virtual void Func_0xd4(ed_zone_3d* pZone) {}
 	virtual void Func_0xd8(ed_zone_3d* pZone) {}
+
 	virtual CVision* GetVision() { IMPLEMENTATION_GUARD(); }
 	virtual int GetNumVisualDetectionPoints();
 	virtual void GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index);
-	virtual void UpdatePostAnimEffects();
-	virtual bool Can_0x9c();
-	virtual int ReceiveMessage(CActor* pSender, ACTOR_MESSAGE msg, MSG_PARAM pMsgParam);
+
 	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
-	virtual bool CinematicMode_InterpreteCinMessage(float, float, int param_2, int param_3);
-	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
-	virtual CPlayerInput* GetInputManager(int, int);
+	// End Interface
 
 	void PreInit();
 	void SetScaleVector(float x, float y, float z);
@@ -490,8 +459,6 @@ public:
 	bool SV_IsWorldBoundingSphereIntersectingBox(S_BOUNDING_BOX* pBoundingBox);
 	void EvaluateManageState();
 	void EvaluateDisplayState();
-
-	void PauseChange(int bIsPaused);
 
 	uint GetStateFlags(int state);
 

@@ -224,7 +224,7 @@ CCameraGame::CCameraGame(ECameraType type, ByteCode* pMemoryStream)
 	long lVar2;
 	CAMERA_CONFIG* puVar3;
 
-	this->field_0x340 = 0;
+	this->actorsTable.entryCount = 0;
 	cameraConfig.Create(pMemoryStream);
 	lVar2 = subObj_12.Init(pMemoryStream);
 
@@ -338,21 +338,21 @@ void CCameraGame::Reset()
 	this->field_0x270 = gF32Vector4Zero;
 
 	this->field_0x280 = 0;
-	this->field_0x1bc = 0;
+	this->mode_0x1bc = 0;
 	this->field_0x20c = 0.0f;
 	this->field_0x214 = 2.0f;
 
 	this->pitchDyn.Init(0.0f, this->cameraConfig.field_0x34);
 
-	this->field_0x2e4 = 3;
+	this->mode_0x2e4 = 3;
 	this->field_0x2e8 = 0.0f;
-	this->field_0x2ec = 0;
+	this->modeFlags = 0;
 	this->flags_0x2e0 = (this->cameraConfig).flags_0x70;
 	this->field_0x300 = gF32Vertex4Zero;
 	this->field_0x330 = gF32Vertex4Zero;
-	this->field_0x444 = 0;
+	this->field_0x444 = 0.0f;
 	this->field_0x2f0 = 0.0f;
-	this->field_0x340 = 0;
+	this->actorsTable.entryCount = 0;
 	EVar4 = GetMode();
 	switch (EVar4) {
 	case CT_Main:
@@ -788,29 +788,20 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 	edF32VECTOR4* peVar4;
 	edF32MATRIX4* m0;
 	float fVar5;
-	edF32VECTOR4 local_130 = {};
-	edF32VECTOR4 eStack288 = {};
-	edF32MATRIX4 eStack272 = {};
-	edF32VECTOR4 local_d0 = {};
-	edF32VECTOR4 eStack192 = {};
-	edF32MATRIX4 eStack176 = {};
-	edF32VECTOR4 local_70 = {};
-	edF32VECTOR4 local_60 = {};
-	edF32MATRIX4 eStack80 = {};
-	edF32VECTOR4 local_10 = {};
+	edF32VECTOR4 local_130;
+	edF32VECTOR4 eStack288;
+	edF32MATRIX4 eStack272;
+	edF32VECTOR4 local_d0;
+	edF32VECTOR4 eStack192;
+	edF32MATRIX4 eStack176;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 local_10;
 
 	EVar2 = GetMode();
 	if (EVar2 == CT_KyaJamgut) {
-		// This should be fixed, but it just sets the values to 0 for the vectors and matrices #fix
-		//peVar3 = (edF32VECTOR4*)&DAT_00000010;
-		//peVar4 = &local_130;
-		//peVar1 = peVar4;
-		//while (peVar1 != (edF32VECTOR4*)0x0) {
-		//	*(undefined*)&peVar4->x = 0;
-		//	peVar4 = (edF32VECTOR4*)((int)&peVar4->x + 1);
-		//	peVar3 = (edF32VECTOR4*)((int)&peVar3[-1].w + 3);
-		//	peVar1 = peVar3;
-		//}
+		memset(&local_130, 0, sizeof(edF32VECTOR4));
 
 		local_130.z = -this->field_0x208;
 
@@ -831,15 +822,7 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 	else {
 		if (((((EVar2 == 4) || (EVar2 == 9)) || (EVar2 == 8)) || ((EVar2 == 6 || (EVar2 == CT_KyaWindWall)))) ||
 			(EVar2 == CT_Main)) {
-			//peVar3 = (edF32VECTOR4*)&DAT_00000010;
-			//peVar4 = &local_d0;
-			//peVar1 = peVar4;
-			//while (peVar1 != (edF32VECTOR4*)0x0) {
-			//	*(undefined*)&peVar4->x = 0;
-			//	peVar4 = (edF32VECTOR4*)((int)&peVar4->x + 1);
-			//	peVar3 = (edF32VECTOR4*)((int)&peVar3[-1].w + 3);
-			//	peVar1 = peVar3;
-			//}
+			memset(&local_d0, 0, sizeof(edF32VECTOR4));
 
 			local_d0.z = -this->field_0x208;
 			edF32Matrix4RotateXHard(this->targetPitch, &eStack176, &gF32Matrix4Unit);
@@ -1200,17 +1183,17 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 	(this->cameraConfig).field_0xbc = this->cameraConfig.field_0x58.x;
 	UpdateTarget(&this->field_0x2a0, false);
 
-	this->field_0x2e4 = 3;
+	this->mode_0x2e4 = 3;
 	this->field_0x2e8 = 0;
-	this->field_0x2ec = 0;
+	this->modeFlags = 0;
 
 	this->flags_0x2e0 = *puVar9;
 
 	this->field_0x300 = gF32Vertex4Zero;
 	this->field_0x330 = gF32Vertex4Zero;
-	this->field_0x444 = 0;
+	this->field_0x444 = 0.0f;
 	this->field_0x2f0 = 0;
-	this->field_0x340 = 0;
+	this->actorsTable.entryCount = 0;
 
 	if ((this->cameraConfig.flags & 0x20000) != 0) {
 		this->cameraConfig.field_0x58.z = (this->subObj_12).field_0x20 + peVar11->x + 1.0;
@@ -1392,9 +1375,9 @@ void CCameraGame::_TestRay_Sphere()
 	return;
 }
 
-void CCameraGame::FUN_002c7ee0()
+void CCameraGame::UpdateMode()
 {
-	ECameraType EVar1;
+	ECameraType typeMode;
 	CActor* pCameraActorA;
 	CActor* pCameraActorB;
 	uint uVar2;
@@ -1402,19 +1385,18 @@ void CCameraGame::FUN_002c7ee0()
 	float t0;
 	edF32VECTOR4 localVector;
 
-	EVar1 = GetMode();
-	if (EVar1 == 4) {
-		this->field_0x1bc = 3;
+	typeMode = GetMode();
+	if (typeMode == 4) {
+		this->mode_0x1bc = 3;
 	}
 	else {
-		if (((EVar1 == 9) || (EVar1 == 8)) || (EVar1 == CT_KyaJamgut)) {
-			this->field_0x1bc = 2;
+		if (((typeMode == 9) || (typeMode == 8)) || (typeMode == CT_KyaJamgut)) {
+			this->mode_0x1bc = 2;
 		}
 		else {
-			if (EVar1 == CT_Main) {
-				if (((((this->cameraConfig).flags_0x70 & 0x2000000) == 0) && ((this->field_0x2ec & 1) != 0)) &&
-					(pCameraActorA = GetTarget(),
-						pCameraActorA->typeID == ACTOR_HERO_PRIVATE)) {
+			if (typeMode == CT_Main) {
+				if (((((this->cameraConfig).flags_0x70 & 0x2000000) == 0) && ((this->modeFlags & 1) != 0)) &&
+					(pCameraActorA = GetTarget(), pCameraActorA->typeID == ACTOR_HERO_PRIVATE)) {
 					this->flags_0x2e0 = (this->cameraConfig).flags_0x70 & 0x60;
 					(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 & 0xffffff9f;
 
@@ -1424,12 +1406,12 @@ void CCameraGame::FUN_002c7ee0()
 					fVar3 = GetAngleYFromVector(&localVector);
 					fVar3 = edF32GetAnglesDelta(t0, fVar3);
 
-					if ((this->field_0x340 == 0) || (uVar2 = this->field_0x2ec & 0x60, uVar2 == 0x40)) {
-						this->field_0x2e4 = 4;
+					if ((this->actorsTable.entryCount == 0) || (uVar2 = this->modeFlags & 0x60, uVar2 == 0x40)) {
+						this->mode_0x2e4 = 4;
 					}
 					else {
 						if (uVar2 == 0x20) {
-							this->field_0x2e4 = 3;
+							this->mode_0x2e4 = 3;
 						}
 						else {
 							if (((this->cameraConfig).flags_0x70 & 0x800000) == 0) {
@@ -1441,7 +1423,7 @@ void CCameraGame::FUN_002c7ee0()
 									this->field_0x2e8 = fVar3;
 									if ((this->subObj_12).field_0x0 < fVar3) {
 										this->field_0x2e8 = 0;
-										this->field_0x2e4 = 4;
+										this->mode_0x2e4 = 4;
 									}
 								}
 								else {
@@ -1449,23 +1431,25 @@ void CCameraGame::FUN_002c7ee0()
 										(fVar3 = this->field_0x2e8 + CCamera::_gpcam_man->time_0x4, this->field_0x2e8 = fVar3,
 											(this->subObj_12).field_0x0 < fVar3)) {
 										this->field_0x2e8 = 0;
-										this->field_0x2e4 = 3;
+										this->mode_0x2e4 = 3;
 									}
 								}
 							}
 						}
 					}
-					this->field_0x1bc = this->field_0x2e4;
+
+					this->mode_0x1bc = this->mode_0x2e4;
 				}
 				else {
-					this->field_0x1bc = 1;
+					this->mode_0x1bc = 1;
 				}
 			}
 			else {
-				this->field_0x1bc = 1;
+				this->mode_0x1bc = 1;
 			}
 		}
 	}
+
 	return;
 }
 
@@ -1504,32 +1488,143 @@ void CCameraGame::FUN_00199c20(edF32VECTOR4* param_2, edF32VECTOR4* param_3)
 
 bool FUN_002bf4b0(CActor* pActor, void* pData)
 {
-	GameCheckStruct* pGameCheckStruct = (GameCheckStruct*)pData;
+	GameCheckStruct* pGameCheckStruct = reinterpret_cast<GameCheckStruct*>(pData);
 
 	CActor* pCVar1;
 	float fVar2;
 	float fVar3;
 	float fVar4;
-	bool bVar5;
-	long lVar6;
+	bool bPass;
 
-	lVar6 = pActor->Can_0x9c();
-	if ((lVar6 == 0) ||
+	if ((pActor->Can_0x9c() == 0) ||
 		(pCVar1 = pGameCheckStruct->gCameraGameHero, fVar2 = (pCVar1->currentLocation).x - (pActor->currentLocation).x,
 			fVar3 = (pCVar1->currentLocation).y - (pActor->currentLocation).y,
 			fVar4 = (pCVar1->currentLocation).z - (pActor->currentLocation).z,
 			pGameCheckStruct->FLOAT_004495a4 * pGameCheckStruct->FLOAT_004495a4 < fVar2 * fVar2 + fVar3 * fVar3 + fVar4 * fVar4)) {
-		bVar5 = false;
+		bPass = false;
 	}
 	else {
-		bVar5 = true;
+		bPass = true;
 	}
-	return bVar5;
+
+	return bPass;
+}
+
+struct cam_temp_struct
+{
+	edF32VECTOR4* pVector;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+};
+
+void CCameraGame::FUN_002bff30(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
+{
+	ECameraType EVar1;
+	cam_temp_struct* ppeVar2;
+	float fVar3;
+	float peVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float puVar8;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	cam_temp_struct local_20;
+
+	ppeVar2 = (cam_temp_struct*)0x0;
+	EVar1 = GetMode();
+	if (EVar1 == 4) {
+		if (_pfig_data != (CCamFigData*)0x0) {
+			IMPLEMENTATION_GUARD(
+			ppeVar2 = (edF32VECTOR4**)CCamFigData::Cam_Update(_pfig_data, v1, _b_use_fig_data);)
+		}
+	}
+	else {
+		fVar3 = edFIntervalLERP(this->field_0x444, (this->subObj_12).field_0x4, (this->subObj_12).field_0x8, 0.0f, 1.0f);
+		if (this->mode_0x1bc == 3) {
+			this->field_0x300 = this->field_0x330;
+			(this->field_0x300).y = v1->y + v2->y;
+		}
+		else {
+			edF32Vector4LERPHard(0.1f, &this->field_0x300, &this->field_0x330, v1);
+			(this->field_0x300).y = v1->y + v2->y;
+			(this->field_0x300).w = 1.0f;
+		}
+
+		local_20.pVector = &this->field_0x300;
+		fVar7 = 0.0f;
+		fVar5 = 0.0f;
+		if ((this->mode_0x1bc == 3) && ((this->modeFlags & 2) == 0)) {
+			UpdateTarget(&local_30, false);
+			local_30.z = 0.0f;
+			local_30.x = 0.0f;
+			edF32Vector4AddHard(&local_30, &local_30, &GetTarget()->currentLocation);
+			edF32Vector4SubHard(&local_30, &this->field_0x320, &local_30);
+			local_30.y = 0.0f;
+
+			if (0.25f <= edF32Vector4GetDistHard(&local_30)) {
+				fVar5 = (this->subObj_12).field_0x14;
+				fVar6 = this->field_0x204;
+				fVar5 = fVar5 + fVar3 * ((this->subObj_12).field_0x18 - fVar5);
+				fVar7 = GetAngleYFromVector(&local_30);
+				fVar7 = edF32Between_0_2Pi((this->subObj_12).field_0x10 + fVar7);
+				fVar7 = edF32GetAnglesDelta(fVar6, fVar7);
+			}
+		}
+
+		local_20.field_0xc = edF32Between_0_2Pi(this->field_0x204 + fVar7 * fVar5 * CCamera::_gpcam_man->time_0x4);
+		local_20.field_0x8 = this->targetPitch;
+		fVar5 = (this->subObj_12).field_0x1c;
+
+		local_20.field_0x10 = (((fVar5 + fVar3 * ((this->subObj_12).field_0x20 - fVar5) + (this->cameraConfig).field_0xbc) - this->field_0x208) + this->field_0x208);
+
+		CCollisionRay CStack112 = CCollisionRay(local_20.field_0x8, local_20.field_0xc, local_20.field_0x10 + 0.8f, local_20.pVector, &eStack64);
+		edF32Vector4ScaleHard(-1.0f, &eStack64, &eStack64);
+		fVar3 = CStack112.Intersect(this->cameraRayFlags, GetTarget(), (CActor*)0x0, 0x40000004, &eStack80, (_ray_info_out*)0x0);
+
+		puVar8 = local_20.field_0x10;
+		if ((fVar3 != 1e+30f) && (fVar5 = edF32Vector4DotProductHard(&eStack80, &eStack64), puVar8 = local_20.field_0x10, fVar5 < 0.0f)) {
+			puVar8 = 0.8f;
+			if (0.8f <= (fVar3 - 0.8f)) {
+				puVar8 = (fVar3 - 0.8f);
+			}
+		}
+
+		if (puVar8 != local_20.field_0x10) {
+			local_20.field_0x10 = puVar8;
+		}
+
+		local_20.pVector = &this->field_0x300;
+		ppeVar2 = &local_20;
+	}
+
+	if (ppeVar2 == (cam_temp_struct*)0x0) {
+		*v0 = *v1;
+	}
+	else {
+		peVar4 = 0.25f;
+		if (0.25f <= ppeVar2->field_0x10) {
+			peVar4 = ppeVar2->field_0x10;
+		}
+		this->field_0x208 = peVar4;
+		peVar4 = ppeVar2->field_0x8;
+		(this->pitchDyn).currentAlpha = peVar4;
+		this->targetPitch = peVar4;
+		this->field_0x204 = ppeVar2->field_0xc;
+		*v0 = *ppeVar2->pVector;
+	}
+
+	this->gameLookAt = *v0;
+
+	return;
 }
 
 void CCameraGame::FUN_002bee80()
 {
-	int iVar1;
+	CActor* pCurEntry;
 	CActor* pCVar2;
 	CActor* pCVar3;
 	int iVar4;
@@ -1549,77 +1644,77 @@ void CCameraGame::FUN_002bee80()
 	edF32VECTOR4 eStack336;
 	edF32VECTOR4 eStack320;
 	edF32VECTOR4 local_130;
-	CActorsTable local_120;
-	edF32VECTOR4 local_10;
+	CActorsTable intersectingActors;
+	edF32VECTOR4 intersectionSphere;
 
 	if ((((this->cameraConfig).flags & 0x20000) == 0) || (((this->cameraConfig).flags_0x70 & 0x2000000) != 0)) {
-		this->field_0x2ec = 0;
+		this->modeFlags = 0;
 	}
 	else {
-		local_120.entryCount = 0;
+		intersectingActors.entryCount = 0;
 		gGameCheckStruct.gCameraGameHero = (CActorHeroPrivate*)GetTarget();
 		gGameCheckStruct.FLOAT_004495a4 = this->field_0x2dc;
-		pCVar2 = GetTarget();
-		local_130.xyz = (pCVar2->sphereCentre).xyz;
+		local_130.xyz = (GetTarget()->sphereCentre).xyz;
 		local_130.w = 1.0f;
 
 		CScene::GetManager(MO_Camera);
 
-		local_10.w = this->field_0x2dc;
-		local_10.xyz = gGameCheckStruct.gCameraGameHero->sphereCentre.xyz;
+		intersectionSphere.w = this->field_0x2dc;
+		intersectionSphere.xyz = gGameCheckStruct.gCameraGameHero->sphereCentre.xyz;
 
-		(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_120, &local_10, FUN_002bf4b0, &gGameCheckStruct);
+		(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&intersectingActors, &intersectionSphere, FUN_002bf4b0, &gGameCheckStruct);
 
-		while (iVar6 = 0, local_120.entryCount != 0) {
-			IMPLEMENTATION_GUARD(
-			pCVar2 = local_120.PopCurrent();
-			if (this->field_0x340 == 0) {
-				if ((this->field_0x2ec & 2) == 0) {
-					UpdateTarget(this, &this->field_0x330, false);
-					pCVar3 = GetTarget();
-					edF32Vector4AddHard(&this->field_0x330, &this->field_0x330, &pCVar3->currentLocation);
-					(this->field_0x330).y = 0.0;
+		while (iVar6 = 0, intersectingActors.entryCount != 0) {
+			pCVar2 = intersectingActors.PopCurrent();
+			if (this->actorsTable.entryCount == 0) {
+				if ((this->modeFlags & 2) == 0) {
+					UpdateTarget(&this->field_0x330, false);
+					edF32Vector4AddHard(&this->field_0x330, &this->field_0x330, &GetTarget()->currentLocation);
+					(this->field_0x330).y = 0.0f;
 				}
-				this->field_0x444 = 0;
+
+				this->field_0x444 = 0.0f;
 				this->field_0x2f0 = 0;
-				this->field_0x2ec = this->field_0x2ec | 1;
+				this->modeFlags = this->modeFlags | 1;
 			}
-			iVar6 = this->field_0x340.IsInList(pCVar2);
+
+			iVar6 = this->actorsTable.IsInList(pCVar2);
+
 			if (iVar6 == 0) {
-				this->field_0x340.Add(pCVar2);
-			})
+				this->actorsTable.Add(pCVar2);
+			}
 		}
 
-		while (iVar6 < this->field_0x340) {
-			IMPLEMENTATION_GUARD(
-			lVar5 = (**(code**)(**(int**)(&this->field_0x344 + iVar6 * 4) + 0x9c))();
-			if ((lVar5 == 0) ||
-				(iVar1 = *(int*)(&this->field_0x344 + iVar6 * 4), fVar12 = local_130.x - *(float*)(iVar1 + 0x30),
-					fVar7 = local_130.y - *(float*)(iVar1 + 0x34), fVar8 = local_130.z - *(float*)(iVar1 + 0x38),
+		while (iVar6 < this->actorsTable.entryCount) {
+			if ((this->actorsTable.aEntries[iVar6]->Can_0x9c() == 0) ||
+				(pCurEntry = this->actorsTable.aEntries[iVar6], fVar12 = local_130.x - pCurEntry->currentLocation.x,
+					fVar7 = local_130.y - pCurEntry->currentLocation.y, fVar8 = local_130.z - pCurEntry->currentLocation.z,
 					this->field_0x2dc * this->field_0x2dc < fVar12 * fVar12 + fVar7 * fVar7 + fVar8 * fVar8)) {
-				iVar1 = *(int*)(&this->field_0x344 + iVar6 * 4);
-				iVar4 = this->field_0x340.IsInList(iVar1);
-				if (iVar4 != 0) {
-					FUN_002c9f30(&this->field_0x340, iVar1);
+				pCurEntry = this->actorsTable.aEntries[iVar6];
+
+				if (this->actorsTable.IsInList(pCurEntry) != 0) {
+					IMPLEMENTATION_GUARD(
+					FUN_002c9f30(&this->actorsTable, pCurEntry);)
 				}
-				if (this->field_0x340 == 0) {
+
+				if (this->actorsTable.entryCount == 0) {
 					this->field_0x2f0 = 0;
 				}
 			}
 			else {
 				iVar6 = iVar6 + 1;
-			})
+			}
 		}
 
 		this->field_0x2f0 = this->field_0x2f0 + ((this->subObj_12).field_0xc - this->field_0x2f0) * 0.025f;
 
-		if (this->field_0x340 == 0) {
-			if ((this->field_0x2ec & 4) != 0) {
-				this->field_0x2ec = this->field_0x2ec | 2;
+		if (this->actorsTable.entryCount == 0) {
+			if ((this->modeFlags & 4) != 0) {
+				this->modeFlags = this->modeFlags | 2;
 			}
+
 			UpdateTarget(&eStack320, false);
-			pCVar2 = GetTarget();
-			edF32Vector4AddHard(&eStack320, &eStack320, &pCVar2->currentLocation);
+			edF32Vector4AddHard(&eStack320, &eStack320, &GetTarget()->currentLocation);
 			eStack320.y = 0.0f;
 			edF32Vector4LERPHard(this->field_0x2f0, &this->field_0x330, &this->field_0x330, &eStack320);
 			(this->field_0x330).w = 1.0f;
@@ -1629,47 +1724,54 @@ void CCameraGame::FUN_002bee80()
 			this->field_0x444 = fVar12;
 
 			if (fVar12 < 0.05f) {
-				this->field_0x2ec = 0;
+				this->modeFlags = 0;
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			this->field_0x2ec = this->field_0x2ec & 0xffffff99;
-			for (iVar6 = 0; iVar6 < this->field_0x340; iVar6 = iVar6 + 1) {
-				this->field_0x2ec = this->field_0x2ec | *(uint*)(*(int*)(&this->field_0x344 + iVar6 * 4) + 0xc) & 0x60;
+			this->modeFlags = this->modeFlags & 0xffffff99;
+			for (iVar6 = 0; iVar6 < this->actorsTable.entryCount; iVar6 = iVar6 + 1) {
+				this->modeFlags = this->modeFlags | this->actorsTable.aEntries[iVar6]->actorFieldS & 0x60;
 			}
-			local_170.y = 1e+08;
-			local_180.y = -1e+08;
+
+			local_170.y = 1e+08f;
+			local_180.y = -1e+08f;
 			fVar12 = local_180.y;
 			local_180.z = local_180.y;
 			local_170.z = local_170.y;
 			local_170.x = local_170.y;
-			for (iVar6 = 0; local_180.x = fVar12 - local_170.x, iVar6 < this->field_0x340; iVar6 = iVar6 + 1) {
-				iVar1 = *(int*)(&this->field_0x344 + iVar6 * 4);
-				fVar7 = *(float*)(iVar1 + 0x30);
+
+			for (iVar6 = 0; local_180.x = fVar12 - local_170.x, iVar6 < this->actorsTable.entryCount; iVar6 = iVar6 + 1) {
+				pCurEntry = this->actorsTable.aEntries[iVar6];
+				fVar7 = pCurEntry->currentLocation.x;
 				if (local_170.x <= fVar7) {
 					fVar7 = local_170.x;
 				}
-				fVar8 = *(float*)(iVar1 + 0x30);
+
+				fVar8 = pCurEntry->currentLocation.x;
 				if (fVar8 <= fVar12) {
 					fVar8 = fVar12;
 				}
-				fVar9 = *(float*)(iVar1 + 0x34);
+
+				fVar9 = pCurEntry->currentLocation.y;
 				if (local_170.y <= fVar9) {
 					fVar9 = local_170.y;
 				}
-				fVar12 = *(float*)(iVar1 + 0x34);
+
+				fVar12 = pCurEntry->currentLocation.y;
 				if (fVar12 <= local_180.y) {
 					fVar12 = local_180.y;
 				}
-				fVar10 = *(float*)(iVar1 + 0x38);
+
+				fVar10 = pCurEntry->currentLocation.z;
 				if (local_170.z <= fVar10) {
 					fVar10 = local_170.z;
 				}
-				fVar11 = *(float*)(iVar1 + 0x38);
+
+				fVar11 = pCurEntry->currentLocation.z;
 				if (fVar11 <= local_180.z) {
 					fVar11 = local_180.z;
 				}
+
 				local_180.y = fVar12;
 				fVar12 = fVar8;
 				local_180.z = fVar11;
@@ -1677,35 +1779,37 @@ void CCameraGame::FUN_002bee80()
 				local_170.z = fVar10;
 				local_170.x = fVar7;
 			}
-			local_170.w = 1.0;
-			local_180.w = 0.0;
+
+			local_170.w = 1.0f;
+			local_180.w = 0.0f;
 			local_180.y = local_180.y - local_170.y;
 			local_180.z = local_180.z - local_170.z;
-			edF32Vector4ScaleHard(0.5, &eStack400, &local_180);
-			edF32Vector4AddHard((edF32VECTOR4*)&this->field_0x320, &local_170, &eStack400);
-			local_10.x = *(float*)&this->field_0x320;
-			local_10.y = *(float*)&this->field_0x324;
-			local_10.z = *(float*)&this->field_0x328;
-			local_10.w = edF32Vector4GetDistHard(&local_180);
-			local_10.w = local_10.w * 0.5;
-			UpdateTarget(this, &eStack320, false);
-			pCVar2 = GetTarget();
-			edF32Vector4AddHard(&eStack320, &eStack320, &pCVar2->currentLocation);
-			eStack320.y = 0.0;
-			edF32Vector4SubHard(&eStack352, (edF32VECTOR4*)&this->field_0x320, &eStack320);
-			edF32Vector4ScaleHard(0.5, &eStack352, &eStack352);
+			edF32Vector4ScaleHard(0.5f, &eStack400, &local_180);
+			edF32Vector4AddHard(&this->field_0x320, &local_170, &eStack400);
+
+			intersectionSphere.xyz = this->field_0x320.xyz;
+			intersectionSphere.w = edF32Vector4GetDistHard(&local_180);
+			intersectionSphere.w = intersectionSphere.w * 0.5f;
+
+			UpdateTarget(&eStack320, false);
+			edF32Vector4AddHard(&eStack320, &eStack320, &GetTarget()->currentLocation);
+			eStack320.y = 0.0f;
+
+			edF32Vector4SubHard(&eStack352, &this->field_0x320, &eStack320);
+			edF32Vector4ScaleHard(0.5f, &eStack352, &eStack352);
 			edF32Vector4AddHard(&eStack336, &eStack320, &eStack352);
-			eStack336.y = 0.0;
+			eStack336.y = 0.0f;
 			edF32Vector4LERPHard(this->field_0x2f0, &this->field_0x330, &this->field_0x330, &eStack336);
-			(this->field_0x330).w = 1.0;
+			(this->field_0x330).w = 1.0f;
 			edF32Vector4SubHard(&eStack352, &this->field_0x330, &eStack320);
 			fVar12 = edF32Vector4GetDistHard(&eStack352);
-			this->field_0x444 = fVar12;)
+			this->field_0x444 = fVar12;
 		}
 
 		FUN_00199c20(&local_1a0, &this->field_0x330);
 		this->field_0x330 = local_1a0;
 	}
+
 	return;
 }
 
@@ -2029,7 +2133,7 @@ void CCameraGame::_UpdateAngleAlphaData()
 		}
 		else {
 			/* Camera mode is not (5) */
-			if ((this->field_0x1bc == 4) || (this->field_0x1bc == 3)) {
+			if ((this->mode_0x1bc == 4) || (this->mode_0x1bc == 3)) {
 				pitch = this->targetPitch + (this->cameraConfig.baseTargetPitch - this->targetPitch) * 0.1f;
 				this->pitchDyn.currentAlpha = pitch;
 				this->targetPitch = pitch;
@@ -2370,7 +2474,7 @@ void CCameraGame::_UpdateAngleBetaData()
 				fVar5 = 0.0f;
 				fVar6 = (this->cameraConfig).field_0x78;
 
-				if (this->field_0x1bc != 3) {
+				if (this->mode_0x1bc != 3) {
 					fVar3 = GetAngleYFromVector(&this->transformationMatrix.rowZ);
 
 					if ((((((this->cameraConfig).flags_0x70 & 0x800000) == 0) && (fabs(fVar3 - this->field_0x204) < 0.001f)) ||
@@ -2391,7 +2495,7 @@ void CCameraGame::_UpdateAngleBetaData()
 						}
 					}
 
-					if (this->field_0x1bc == 2) {
+					if (this->mode_0x1bc == 2) {
 						this->field_0x204 = fVar3;
 					}
 
@@ -2712,7 +2816,7 @@ void CCameraGame::_Manage_Leash()
 			this->field_0x208 = fVar10;
 		}
 
-		if (((((this->cameraConfig).flags_0x70 & 0x80) != 0) && (this->field_0x1bc != 4)) && (this->field_0x1bc != 3)) {
+		if (((((this->cameraConfig).flags_0x70 & 0x80) != 0) && (this->mode_0x1bc != 4)) && (this->mode_0x1bc != 3)) {
 			EVar6 = GetMode();
 			if ((EVar6 == 9) || (EVar6 == 8)) {
 				fVar13 = 30.0f;
@@ -3120,7 +3224,7 @@ void CCameraGame::CameraGetWorldTranslation(edF32VECTOR4* outTranslation)
 
 	*outTranslation = this->lookAt;
 
-	if (((this->field_0x1bc == 3) || (this->field_0x1bc == 4)) ||
+	if (((this->mode_0x1bc == 3) || (this->mode_0x1bc == 4)) ||
 		(EVar1 = GetMode(), EVar1 != CT_Main)) {
 		fVar5 = (this->cameraConfig).field_0x58.y;
 		fVar4 = 0.25f;
@@ -3344,7 +3448,7 @@ void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
 	ComputeTargetOffset(v0);
 	EVar1 = GetMode();
 	if (((EVar1 == CT_Main) &&
-		(pActorA = GetTarget(), pActorA->typeID == ACTOR_HERO_PRIVATE)) && ((this->field_0x2ec & 1) == 0)) {
+		(pActorA = GetTarget(), pActorA->typeID == ACTOR_HERO_PRIVATE)) && ((this->modeFlags & 1) == 0)) {
 		pHero = (CActorHero*)GetTarget();
 		lVar4 = pHero->IsFightRelated(pHero->curBehaviourId);
 		if (lVar4 != 0) {
@@ -3387,7 +3491,7 @@ void CCameraGame::UpdateTarget(edF32VECTOR4* v0, bool doSomething)
 
 		EVar1 = GetMode();
 		if ((((EVar1 == CT_Main) && (v0->y = v0->y - 0.15f, ((this->cameraConfig).flags & 0x20000) != 0)) &&
-			((this->field_0x2ec & 1) != 0)) && ((this->field_0x2ec & 2) == 0)) {
+			((this->modeFlags & 1) != 0)) && ((this->modeFlags & 2) == 0)) {
 			v0->x = 0.0f;
 			v0->z = 0.0f;
 		}
@@ -3492,20 +3596,16 @@ bool CCameraGame::Manage()
 			pActorC = GetTarget();
 			floatA = GetAngleYFromVector(&pActorC->rotationQuat);
 			this->angleBeta_0x1e8 = floatA;
-			FUN_002c7ee0();
+			UpdateMode();
 			FUN_002bee80();
 
-			camMode = this->field_0x1bc;
+			camMode = this->mode_0x1bc;
 			if ((camMode == 4) || (camMode == 3)) {
-				IMPLEMENTATION_GUARD(
 				/* Generic camera does not go in here (Val is 1) */
-				CCameraExt::ComputeTargetPosition((CCameraExt*)this, &vectorB);
-				_Manage_TargetPos(this, &vectorB);
-				FUN_002bff30(this, &vectorC, &vectorB, &vectorA);
-				this->lookAt.x = vectorC.x;
-				this->lookAt.y = vectorC.y;
-				this->lookAt.z = vectorC.z;
-				this->lookAt.w = vectorC.w;)
+				ComputeTargetPosition(&vectorB);
+				_Manage_TargetPos(&vectorB);
+				FUN_002bff30(&vectorC, &vectorB, &vectorA);
+				this->lookAt = vectorC;
 			}
 			else {
 				if ((camMode == 2) || (camMode == 1)) {
@@ -3523,7 +3623,7 @@ bool CCameraGame::Manage()
 
 					edF32Vector4AddHard(&vectorC, &vectorB, &vectorA);
 
-					if (this->field_0x1bc == 2) {
+					if (this->mode_0x1bc == 2) {
 						/* Generic camera does not go in here (Val is 1) */
 						this->lookAt = vectorC;
 					}
@@ -3960,7 +4060,7 @@ bool CCameraGame::Manage()
 
 			this->field_0x1ac = *pFlag;
 			this->field_0x1b4 = this->field_0x1b0;
-			if ((this->field_0x1bc == 3) || (this->field_0x1bc == 4)) {
+			if ((this->mode_0x1bc == 3) || (this->mode_0x1bc == 4)) {
 				*pFlag = this->flags_0x2e0 | *pFlag & 0xffffff9f;
 			}
 			EVar2 = GetMode();

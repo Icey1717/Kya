@@ -1046,6 +1046,7 @@ void CCameraManager::BuildDisplayMatrix()
 	else {
 		edF32Matrix4CopyHard(&this->transformationMatrix, &this->pActiveCamera->transformationMatrix);
 	}
+
 	fVar1 = Manage_EarthQuake(&(this->transformationMatrix).rowT);
 	this->displayTransformMatrix = this->transformationMatrix;
 	if ((this->flags & 0x18000000) == 0x18000000) {
@@ -1056,6 +1057,7 @@ void CCameraManager::BuildDisplayMatrix()
 			this->displayTransformMatrix = this->pMouseQuakeCamera_0x4e8->transformationMatrix;
 		}
 	}
+
 	edF32Matrix4GetInverseOrthoHard(&this->field_0x350, &this->transformationMatrix);
 	edF32Vector4ScaleHard(-1.0f, &this->transMatrix_0x390.rowX, &this->transformationMatrix.rowX);
 	edF32Vector4ScaleHard(-1.0f, &(this->transMatrix_0x390).rowZ, &(this->transformationMatrix).rowZ);
@@ -1092,6 +1094,7 @@ void CCameraManager::BuildDisplayMatrix()
 
 	edFCameraSetSizeRatioFov(0.03f, this->aspectRatio, fVar1 / 1.333333f, &_gDisplayCamera);
 	ComputeFrustrumPlanes(fVar1, &this->displayTransformMatrix);
+
 	return;
 }
 

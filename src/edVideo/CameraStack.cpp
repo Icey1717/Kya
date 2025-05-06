@@ -66,40 +66,39 @@ CCamera* CCameraStack::FindActivableCameraInStack(uint param_2)
 
 bool CCameraStack::FindCameraState()
 {
-	bool bVar1;
-	uint uVar2;
-	CCamera* pCVar3;
-	CameraStackEntry* pCVar4;
+	bool bUpdated;
+	CCamera* pActivatableCamera;
+	CameraStackEntry* pCurEntry;
 	int iVar5;
 
-	uVar2 = GetCurHeroState();
-	pCVar3 = FindActivableCameraInStack(uVar2);
-	if (this->pActiveCamera == pCVar3) {
-		bVar1 = false;
+	pActivatableCamera = FindActivableCameraInStack(GetCurHeroState());
+
+	if (this->pActiveCamera == pActivatableCamera) {
+		bUpdated = false;
 	}
 	else {
-		this->field_0x20c = this->pActiveCamera;
-		this->pActiveCamera = pCVar3;
-		pCVar3 = this->field_0x20c;
+		this->pPrevActiveCamera = this->pActiveCamera;
+		this->pActiveCamera = pActivatableCamera;
+		CCamera* pPrevCamera = this->pPrevActiveCamera;
 
-		if ((pCVar3->field_0x8c != 0.0f) && (0.0f < this->field_0x200)) {
+		if ((pPrevCamera->field_0x8c != 0.0f) && (0.0f < this->field_0x200)) {
 			iVar5 = this->stackSize;
-			pCVar4 = this->aCameras + iVar5;
+			pCurEntry = this->aCameras + iVar5;
 
-			for (; ((pCVar4->pCamera != pCVar3) && (0 < iVar5)); iVar5 = iVar5 + -1) {
-				pCVar4 = pCVar4 + -1;
+			for (; ((pCurEntry->pCamera != pPrevCamera) && (0 < iVar5)); iVar5 = iVar5 + -1) {
+				pCurEntry = pCurEntry + -1;
 			}
 
 			if (0 < iVar5) {
-				pCVar3->flags_0xc = pCVar3->flags_0xc & 0xffdfffff;
+				pPrevCamera->flags_0xc = pPrevCamera->flags_0xc & 0xffdfffff;
 
 				if (iVar5 < this->stackSize) {
-					pCVar4 = this->aCameras + iVar5;
+					pCurEntry = this->aCameras + iVar5;
 					do {
 						iVar5 = iVar5 + 1;
-						pCVar4->field_0x0 = pCVar4[1].field_0x0;
-						pCVar4->pCamera = pCVar4[1].pCamera;
-						pCVar4 = pCVar4 + 1;
+						pCurEntry->field_0x0 = pCurEntry[1].field_0x0;
+						pCurEntry->pCamera = pCurEntry[1].pCamera;
+						pCurEntry = pCurEntry + 1;
 					} while (iVar5 < this->stackSize);
 				}
 
@@ -107,10 +106,10 @@ bool CCameraStack::FindCameraState()
 			}
 		}
 
-		bVar1 = true;
+		bUpdated = true;
 	}
 
-	return bVar1;
+	return bUpdated;
 }
 
 int CCameraStack::GetCurHeroState(void)
@@ -191,12 +190,12 @@ bool CCameraStack::Contains(CCamera* pCamera)
 bool CCameraStack::Pop(CCamera* pCamera)
 {
 	int iVar1;
-	bool uVar2;
+	bool bUpdated;
 	CameraStackEntry* pCVar2;
 	int iVar3;
 
 	if (this->stackSize == 0) {
-		uVar2 = false;
+		bUpdated = false;
 	}
 	else {
 		iVar1 = this->stackSize;
@@ -206,7 +205,8 @@ bool CCameraStack::Pop(CCamera* pCamera)
 			pCVar2 = pCVar2 + -1;
 		}
 
-		uVar2 = false;
+		bUpdated = false;
+
 		if (0 < iVar3) {
 			if (iVar3 < iVar1) {
 				pCVar2 = this->aCameras + iVar3;
@@ -218,11 +218,11 @@ bool CCameraStack::Pop(CCamera* pCamera)
 			}
 
 			this->stackSize = this->stackSize + -1;
-			uVar2 = FindCameraState();
+			bUpdated = FindCameraState();
 
-			if (this->field_0x20c != 0) {
-				this->switchMode = this->field_0x20c->field_0x94;
-				this->field_0x218 = this->field_0x20c->field_0x9c;
+			if (this->pPrevActiveCamera != 0) {
+				this->switchMode = this->pPrevActiveCamera->field_0x94;
+				this->field_0x218 = this->pPrevActiveCamera->field_0x9c;
 			}
 
 			if (this->switchMode == SWITCH_MODE_A) {
@@ -236,18 +236,19 @@ bool CCameraStack::Pop(CCamera* pCamera)
 			}
 		}
 	}
-	return uVar2;
+
+	return bUpdated;
 }
 
 bool CCameraStack::Push(CCamera* pCamera, int param_3)
 {
 	int iVar1;
-	bool uVar1;
+	bool bUpdated;
 	CameraStackEntry* pCVar2;
 	int iVar3;
 
 	if (pCamera == this->aCameras[this->stackSize].pCamera) {
-		uVar1 = false;
+		bUpdated = false;
 	}
 	else {
 		pCVar2 = this->aCameras;
@@ -256,20 +257,21 @@ bool CCameraStack::Push(CCamera* pCamera, int param_3)
 		}
 
 		iVar1 = this->stackSize;
-		uVar1 = false;
+		bUpdated = false;
 
-		if ((iVar3 == iVar1) && (uVar1 = false, iVar1 < 0x3f)) {
+		if ((iVar3 == iVar1) && (bUpdated = false, iVar1 < 0x3f)) {
 			this->stackSize = iVar1 + 1;
 			this->aCameras[iVar1 + 1].field_0x0 = (uint)(param_3 != 0);
 			this->aCameras[iVar1 + 1].pCamera = pCamera;
-			uVar1 = FindCameraState();
+			bUpdated = FindCameraState();
+
 			this->switchMode = this->pActiveCamera->switchMode;
 			this->field_0x218 = this->pActiveCamera->field_0x98;
 
 			if (this->switchMode == SWITCH_MODE_A) {
-				if (this->field_0x20c != 0) {
-					this->switchMode = this->field_0x20c->field_0x94;
-					this->field_0x218 = this->field_0x20c->field_0x9c;
+				if (this->pPrevActiveCamera != 0) {
+					this->switchMode = this->pPrevActiveCamera->field_0x94;
+					this->field_0x218 = this->pPrevActiveCamera->field_0x9c;
 				}
 
 				if (this->switchMode == SWITCH_MODE_A) {
@@ -279,7 +281,8 @@ bool CCameraStack::Push(CCamera* pCamera, int param_3)
 			}
 		}
 	}
-	return uVar1;
+
+	return bUpdated;
 }
 
 void CCameraStack::SetMainCamera(CCamera* pCamera)
@@ -293,23 +296,23 @@ void CCameraStack::SetMainCamera(CCamera* pCamera)
 bool CCameraStack::Manage()
 {
 	int iVar1;
-	bool uVar2;
-	int iVar2;
-	Timer* pTVar3;
+	bool bUpdatedState;
+	int currentHeroState;
 	CameraStackEntry* pCVar4;
 	int iVar5;
 	float fVar6;
 
-	iVar2 = GetCurHeroState();
-	uVar2 = false;
-	if (0.0 < this->field_0x200) {
-		pTVar3 = GetTimer();
-		fVar6 = this->field_0x200 - pTVar3->cutsceneDeltaTime;
+	currentHeroState = GetCurHeroState();
+	bUpdatedState = false;
+
+	if (0.0f < this->field_0x200) {
+		fVar6 = this->field_0x200 - GetTimer()->cutsceneDeltaTime;
 		this->field_0x200 = fVar6;
-		if (fVar6 <= 0.0) {
+
+		if (fVar6 <= 0.0f) {
 			this->pActiveCamera->flags_0xc = this->pActiveCamera->flags_0xc & 0xffdfffff;
 			if (this->stackSize == 0) {
-				uVar2 = false;
+				bUpdatedState = false;
 			}
 			else {
 				iVar1 = this->stackSize;
@@ -319,7 +322,7 @@ bool CCameraStack::Manage()
 					pCVar4 = pCVar4 + -1;
 				}
 
-				uVar2 = false;
+				bUpdatedState = false;
 				if (0 < iVar5) {
 					if (iVar5 < iVar1) {
 						pCVar4 = this->aCameras + iVar5;
@@ -332,10 +335,11 @@ bool CCameraStack::Manage()
 					}
 
 					this->stackSize = this->stackSize + -1;
-					uVar2 = FindCameraState();
-					if (this->field_0x20c != (CCamera*)0x0) {
-						this->switchMode = this->field_0x20c->field_0x94;
-						this->field_0x218 = this->field_0x20c->field_0x9c;
+
+					bUpdatedState = FindCameraState();
+					if (this->pPrevActiveCamera != (CCamera*)0x0) {
+						this->switchMode = this->pPrevActiveCamera->field_0x94;
+						this->field_0x218 = this->pPrevActiveCamera->field_0x9c;
 					}
 
 					if (this->switchMode == SWITCH_MODE_A) {
@@ -351,23 +355,29 @@ bool CCameraStack::Manage()
 			}
 		}
 	}
-	if (this->field_0x210 != iVar2) {
-		uVar2 = FindCameraState();
+
+	if (this->field_0x210 != currentHeroState) {
+		bUpdatedState = FindCameraState();
+
 		this->switchMode = this->pActiveCamera->switchMode;
 		this->field_0x218 = this->pActiveCamera->field_0x98;
+
 		if (this->switchMode == SWITCH_MODE_A) {
-			if (this->field_0x20c != 0) {
-				this->switchMode = *(SWITCH_MODE*)(this->field_0x20c + 0x94);
-				this->field_0x218 = *(float*)(this->field_0x20c + 0x9c);
+			if (this->pPrevActiveCamera != 0) {
+				this->switchMode = this->pPrevActiveCamera->field_0x94;
+				this->field_0x218 = this->pPrevActiveCamera->field_0x9c;
 			}
+
 			if (this->switchMode == SWITCH_MODE_A) {
 				this->switchMode = SWITCH_MODE_B;
 				this->field_0x218 = 0.8f;
 			}
 		}
-		this->field_0x210 = iVar2;
+
+		this->field_0x210 = currentHeroState;
 	}
-	return uVar2;
+
+	return bUpdatedState;
 }
 
 void CCameraStack::Reset()
@@ -375,7 +385,7 @@ void CCameraStack::Reset()
 	CCameraStack* pCVar1;
 	int iVar2;
 
-	this->field_0x20c = 0;
+	this->pPrevActiveCamera = 0;
 	iVar2 = 0;
 	this->field_0x210 = 0;
 	this->stackSize = 0;
@@ -446,7 +456,7 @@ CCameraStack::CCameraStack()
 	CCameraStack* pCVar1;
 	int iVar2;
 
-	this->field_0x20c = 0;
+	this->pPrevActiveCamera = 0;
 	iVar2 = 0;
 	this->field_0x210 = 0;
 	this->stackSize = 0;

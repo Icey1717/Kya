@@ -2612,6 +2612,25 @@ CBehaviour* CActorHeroPrivate::BuildBehaviour(int behaviourType)
 	return pNewBehaviour;
 }
 
+bool CActorHeroPrivate::SetBehaviour(int behaviourId, int newState, int animationType)
+{
+	bool bSuccess;
+
+	const int prevBehaivour = this->curBehaviourId;
+
+	bSuccess = CActorFighter::SetBehaviour(behaviourId, newState, animationType);
+
+	if ((IsFightRelated(prevBehaivour) == 0) && (IsFightRelated(behaviourId) != 0)) {
+		EnableFightCamera(1);
+	}
+
+	if ((IsFightRelated(prevBehaivour) != 0) && (IsFightRelated(behaviourId) == 0)) {
+		EnableFightCamera(0);
+	}
+
+	return bSuccess;
+}
+
 void CActorHeroPrivate::SetState(int newState, int animType)
 {
 	int iVar2;
@@ -12111,14 +12130,14 @@ LAB_0014a028:
 	}
 
 	if (this->field_0x1428 == 0) {
-		fVar27 = edFIntervalUnitDstLERP(this->field_0x37c.field_0x4, this->field_0x37c.duration, 0.0f);
+		fVar27 = edFIntervalUnitDstLERP(this->scalarDynA.field_0x4, this->scalarDynA.duration, 0.0f);
 		this->field_0x11fc = fVar27;
 
 		pTVar9 = GetTimer();
 		this->scalarDynJump.Integrate(pTVar9->cutsceneDeltaTime);
 		pTVar9 = GetTimer();
-		this->field_0x37c.Integrate(pTVar9->cutsceneDeltaTime);
-		fVar27 = this->field_0x37c.GetInstantSpeed();
+		this->scalarDynA.Integrate(pTVar9->cutsceneDeltaTime);
+		fVar27 = this->scalarDynA.GetInstantSpeed();
 		edF32Vector4ScaleHard(fVar27, &local_180, &this->field_0x1400);
 		local_180.y = this->scalarDynJump.field_0x20;
 		fVar27 = edF32Vector4NormalizeHard(&local_180, &local_180);
@@ -12572,7 +12591,7 @@ void CActorHeroPrivate::StateHeroWindCanonInit()
 	edF32VECTOR4 eStack32;
 	edF32VECTOR4 local_10;
 
-	this->field_0x37c.Reset();
+	this->scalarDynA.Reset();
 	this->scalarDynJump.Reset();
 
 	if (GetWindState() == (CActorWindState*)0x0) {
@@ -12625,14 +12644,14 @@ void CActorHeroPrivate::StateHeroWindCanonInit()
 		fVar9 = GetWindState()->field_0x34;
 	}
 
-	this->field_0x37c.BuildFromSpeedDist(fVar5, fVar9, fVar4);
+	this->scalarDynA.BuildFromSpeedDist(fVar5, fVar9, fVar4);
 
 	fVar4 = 1.0f;
 	if (0.0f < fVar7) {
 		fVar4 = fVar7;
 	}
 
-	this->scalarDynJump.BuildFromSpeedDistTime(fVar8, 0.0f, fVar4, this->field_0x37c.duration);
+	this->scalarDynJump.BuildFromSpeedDistTime(fVar8, 0.0f, fVar4, this->scalarDynA.duration);
 	this->dynamicExt.normalizedTranslation.x = 0.0f;
 	this->dynamicExt.normalizedTranslation.y = 0.0f;
 	this->dynamicExt.normalizedTranslation.z = 0.0f;
@@ -15123,8 +15142,8 @@ uint CFightLock_SE::_Rule_DistMin(CFightLock_SE* pLock, uint prevValue)
 
 			do {
 				if (pAVar5->field_0x1c == 2) {
-					fVar8 = pAVar5->pActorFighter->field_0x370;
-					fVar7 = (pAVar3[uVar6].pActorFighter)->field_0x370;
+					fVar8 = pAVar5->pActorFighter->adversaryDistance;
+					fVar7 = (pAVar3[uVar6].pActorFighter)->adversaryDistance;
 					if (fVar8 != fVar7) {
 						AdversaryEntry* pfVar4 = pLock->aAdversaries + uVar6;
 
