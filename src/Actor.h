@@ -686,13 +686,36 @@ public:
 	CAddOnGenerator_SubObj subObj;
 };
 
+class CCinematic;
+
+class CAddOnSubObj
+{
+public:
+	void SetCinematic(CCinematic* pCinematic);
+
+	uint field_0x0;
+	int* field_0x4;
+	int field_0x8;
+	CCinematic* pCinematic;
+	int field_0x10;
+	float field_0x14;
+};
+
 class CAddOn {
 public:
 	CAddOn();
 	virtual void Create(ByteCode* pByteCode) = 0;
+	virtual void Init(CActor* pActor);
+	virtual void Manage();
+	virtual void Reset();
+	virtual bool Func_0x20() = 0;
+
+	CCinematic* GetCinematic();
 
 	CActor* pOwner;
-	undefined4 field_0x8;
+	CAddOnSubObj* pSubObj;
+	byte field_0xc;
+	byte field_0xd;
 };
 
 struct ActorAndWaypoint {

@@ -18,6 +18,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pActor);
 	virtual void Manage();
+	virtual bool Func_0x20();
 
 	byte field_0xc;
 	byte field_0xd;

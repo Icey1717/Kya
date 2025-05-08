@@ -19,9 +19,17 @@ enum FRONTEND_INTERFACE
 	FRONTEND_INTERFACE_MENU_0x74,
 };
 
-struct CFrontendMagicGauge {
+class CFrontendMagicGauge
+{
+public:
 	unsigned char bVisible;
 	void Magic_SetDisplay(unsigned char bNewVisible);
+};
+
+class CFrontendMoney
+{
+public:
+	int field_0x74;
 };
 
 class CFrontendLifeGauge;
@@ -76,7 +84,7 @@ struct CFrontendDisplay : public CFrontend {
 	undefined field_0x57;
 	CFrontendLifeGauge* pHealthBar;
 	struct CFrontendMagicGauge* pMagicOrbs;
-	struct HNootiesWolfun* pNooties;
+	struct CFrontendMoney* pMoney;
 	struct HNootiesWolfun* pFreedWolfun;
 	struct CFrontendAction* pFrontendAction;
 	struct MenuObj_Big* pMenuObj_0x6c;

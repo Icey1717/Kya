@@ -4,7 +4,9 @@
 #include "Types.h"
 #include "camera.h"
 
-struct CCameraCinematic : public CCamera {
+class CCameraCinematic : public CCamera
+{
+public:
 	CCameraCinematic();
 
 	void SetTransform(edF32MATRIX4* transformMatrix);

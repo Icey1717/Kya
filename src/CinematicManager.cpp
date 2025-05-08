@@ -3499,6 +3499,36 @@ void CCinematic::FUN_001caeb0()
 	return;
 }
 
+void CCinematic::FUN_001c92b0()
+{
+	if (this->state != CS_Stopped) {
+		this->flags_0x8 = this->flags_0x8 & 0xffffff7f;
+		this->flags_0x8 = this->flags_0x8 | 0x100;
+	}
+	return;
+}
+
+bool CCinematic::Has_0x2d8()
+{
+	return 0 < this->count_0x2d8;
+}
+
+void CCinematic::Remove_0x2d8()
+{
+	if (0 < this->count_0x2d8) {
+		this->count_0x2d8 = this->count_0x2d8 + -1;
+	}
+
+	return;
+}
+
+void CCinematic::Add_0x2d8()
+{
+	this->count_0x2d8 = this->count_0x2d8 + 1;
+
+	return;
+}
+
 void CCinematic::Level_ClearAll()
 {
 	ed_zone_3d* pZone;

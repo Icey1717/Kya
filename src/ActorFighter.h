@@ -515,6 +515,7 @@ public:
 
 	CActorWeapon* GetWeapon();
 
+	s_fighter_combo* FindComboByName(char* szName);
 	void SetFighterCombo(s_fighter_combo* pCombo);
 	s_fighter_blow* FindBlowByName(char* szName);
 

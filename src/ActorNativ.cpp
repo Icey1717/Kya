@@ -4,8 +4,11 @@
 #include "EventManager.h"
 #include "TimeController.h"
 #include "FileManager3D.h"
-#include "ActorNativCmd.h"
 #include "ActorHero.h"
+#include "CinematicManager.h"
+#include "FrontEndDisp.h"
+#include "LevelScheduleManager.h"
+#include "kya.h"
 
 void CActorNativ::Create(ByteCode* pByteCode)
 {
@@ -251,9 +254,8 @@ void CActorNativ::Manage()
 
 	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 	if (pCVar5 != (CBehaviour*)0x0) {
-		IMPLEMENTATION_GUARD_LOG(
-		pCVar5 = CActor::GetBehaviour((CActor*)this, NATIVE_BEHAVIOUR_SELLER);
-		FUN_003f2150((long)(int)pCVar5);)
+		CBehaviourNativSeller* pBehaviourSeller = static_cast<CBehaviourNativSeller*>(GetBehaviour(NATIVE_BEHAVIOUR_SELLER));
+		pBehaviourSeller->FUN_003f2150();
 	}
 
 	pCVar5 = GetBehaviour(7);
@@ -1219,6 +1221,110 @@ void CActorNativ::BehaviourNativTakeAndPut_TermState(int oldState)
 	return;
 }
 
+void CActorNativ::BehaviourNativSeller_InitState(int newState, CBehaviourNativSeller* pBehaviour)
+{
+	undefined4 local_20;
+	undefined4 local_1c;
+	undefined4 local_18;
+	undefined4 local_14;
+	undefined4* local_4;
+
+	if (newState == 0x38) {
+		pBehaviour->field_0x16c4 = 0.0f;
+		pBehaviour->field_0x16c8 = 0.0f;
+		pBehaviour->field_0x16cc = 0.0f;
+	}
+	else {
+		if (newState == 0x20) {
+			CScene::ptable.g_FrontendManager_00451680->pMoney->field_0x74 = 0;
+		}
+		else {
+			if ((newState != 0x39) && (newState == 0x26)) {
+				IMPLEMENTATION_GUARD(
+				local_4 = &local_20;
+				local_1c = 1;
+				local_18 = 1;
+				local_14 = 1;
+				local_20 = 0;
+				CActor::DoMessage((CActor*)this, (CActor*)CActorHero::_gThis, 0x23, (uint)local_4);)
+			}
+		}
+	}
+	return;
+}
+
+void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
+{
+	uint** ppuVar1;
+	int iVar2;
+	int iVar3;
+
+	switch (this->actorState) {
+	case 0x20:
+		CScene::ptable.g_FrontendManager_00451680->pMoney->field_0x74 = 0;
+		break;
+	case 0x21:
+		State_0x21(pBehaviour);
+		break;
+	case 0x26:
+		IMPLEMENTATION_GUARD(
+		iVar3 = CBehaviourNativSeller::FUN_003efdf0(pBehaviour);
+		CBehaviourNativSeller::FUN_003eef80(pBehaviour);
+		FUN_003eed60();
+		if (iVar3 == 1) {
+			if (pBehaviour->field_0x8 == 0xffffffff) {
+				(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x20, -1);
+				CBehaviourNativSeller::FUN_003f1e90(pBehaviour, 0x28);
+			}
+			else {
+				(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x27, -1);
+			}
+		}
+		else {
+			if (iVar3 == 2) {
+				(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x1f, -1);
+			}
+		})
+		break;
+	case 0x27:
+		IMPLEMENTATION_GUARD(
+		ppuVar1 = CBehaviourNativSeller::IsEventActive(pBehaviour);
+		if (ppuVar1 != (uint**)0x0) {
+			FUN_003ebee0(pBehaviour, 1);
+			(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x20, -1);
+			CBehaviourNativSeller::FUN_003f1e90(pBehaviour, 0x28);
+			iVar3 = 0;
+			if (0 < pBehaviour->field_0x48->entryCount) {
+				iVar2 = 0;
+				do {
+					S_STREAM_NTF_TARGET_SWITCH::Switch
+					((S_STREAM_NTF_TARGET_SWITCH*)((int)&pBehaviour->field_0x48->aEntries[0].base.pRef + iVar2),
+						(CActor*)this);
+					iVar3 = iVar3 + 1;
+					iVar2 = iVar2 + 0x1c;
+				} while (iVar3 < pBehaviour->field_0x48->entryCount);
+			}
+			S_STREAM_EVENT_CAMERA::SwitchOn(pBehaviour->streamEventCamera_0x4c, (CActor*)this);
+		})
+	}
+
+	return;
+}
+
+void CActorNativ::BehaviourNativSeller_TermState(int oldState)
+{
+	if (oldState == 0x20) {
+		(CScene::ptable.g_FrontendManager_00451680)->pMoney->field_0x74 = 1;
+	}
+	else {
+		if (oldState == 0x26) {
+			DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)0x24, 0);
+		}
+	}
+
+	return;
+}
+
 void CActorNativ::StateNativTakePutTurnTo()
 {
 	IMPLEMENTATION_GUARD(
@@ -1807,6 +1913,113 @@ float CActorNativ::FUN_00164070()
 	}
 
 	return fVar7;
+}
+
+void CActorNativ::State_0x21(CBehaviourNativSeller* pBehaviour)
+{
+	int curSwitchIndex;
+
+	if (pBehaviour->IsEventActive() != false) {
+		pBehaviour->FUN_003ebee0(0);
+		SetState(0x20, -1);
+		pBehaviour->SetBehaviourState(0x22);
+
+		curSwitchIndex = 0;
+		if (0 < pBehaviour->field_0x48->entryCount) {
+			do {
+				pBehaviour->field_0x48->aEntries[curSwitchIndex].Switch(this);
+				curSwitchIndex = curSwitchIndex + 1;
+			} while (curSwitchIndex < pBehaviour->field_0x48->entryCount);
+		}
+
+		pBehaviour->streamEventCamera_0x4c->SwitchOn(this);
+	}
+
+	return;
+}
+
+void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
+{
+	int activeSubObjIndex;
+	s_fighter_combo* pCombo;
+	bool bVar3;
+	NativSubObjA* pSubObjA;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	activeSubObjIndex = (pBehaviour->subObjC).activeSubObjIndex;
+	if (activeSubObjIndex == -1) {
+		pSubObjA = (NativSubObjA*)0x0;
+	}
+	else {
+		pSubObjA = (pBehaviour->subObjC).aSubObjsA + activeSubObjIndex;
+	}
+
+	if (((pBehaviour->field_0x16ac != 2) &&
+		(bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+		pBehaviour->FUN_003f1da0(pCombo);
+	}
+
+	bVar3 = pHero->FUN_0031b790(pHero->actorState);
+	if (bVar3 != false) {
+		if (((pBehaviour->field_0x16ac != 2) &&
+			(bVar3 = pHero->FUN_0031b790(pHero->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+			pBehaviour->FUN_003f1da0(pCombo);
+		}
+
+		if ((pSubObjA != (NativSubObjA*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+			bVar3 = (pSubObjA->aSubObjsB + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo);
+			if (bVar3 == false) {
+				IMPLEMENTATION_GUARD(
+				pBehaviour->FUN_003f1810(3, 0, 0);)
+			}
+			else {
+				if (((pHero->fightFlags & 0x40) == 0) &&
+					(((pHero->pFighterCombo)->field_0x4.field_0x0ushort & 0x100U) == 0)) {
+					pBehaviour->SetBehaviourState(0x23);
+				}
+				else {
+					pBehaviour->SetBehaviourState(0x24);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
+{
+	int iVar1;
+	s_fighter_combo* pCombo;
+	NativSubObjA* pSubObjA;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	iVar1 = (pBehaviour->subObjC).activeSubObjIndex;
+	if (iVar1 == -1) {
+		pSubObjA = (NativSubObjA*)0x0;
+	}
+	else {
+		pSubObjA = (pBehaviour->subObjC).aSubObjsA + iVar1;
+	}
+
+	if (CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState) == false) {
+		pBehaviour->FUN_003ebd90();
+	}
+	else {
+		if ((pSubObjA != (NativSubObjA*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+			if ((pSubObjA->aSubObjsB + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo) == false) {
+				pBehaviour->SetBehaviourState(0x36);
+			}
+			else {
+				if ((pHero->fightFlags & 0x40) != 0) {
+					pBehaviour->SetBehaviourState(0x24);
+				}
+			}
+		}
+	}
+	return;
 }
 
 CBehaviourNativTakeAndPut::CBehaviourNativTakeAndPut()
@@ -2693,7 +2906,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 		}
 		if (msg == 0x12) {
 			IMPLEMENTATION_GUARD(
-			((this->base).pOwner)->field_0x508 = 1.0;
+			((this->base).pOwner)->field_0x508 = 1.0f;
 			pCVar1 = (this->base).pOwner;
 			iVar7 = (pCVar1->base).base.base.actorState;
 			if (iVar7 == -1) {
@@ -2720,4 +2933,912 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	}
 
 	return 0;
+}
+
+CBehaviourNativSeller::CBehaviourNativSeller()
+{
+	//this->field_0x60 = 0;
+	//this->field_0x64 = 0;
+}
+
+void CBehaviourNativSeller::Create(ByteCode* pByteCode)
+{
+	S_TARGET_STREAM_REF* pSVar1;
+	S_STREAM_EVENT_CAMERA* pSVar2;
+	int uVar3;
+	int iVar4;
+	int iVar8;
+
+	if (2.26f <= CScene::_pinstance->field_0x1c) {
+		this->field_0xc = pByteCode->GetS32();
+	}
+	else {
+		this->field_0xc = -1;
+	}
+
+	this->field_0x8 = pByteCode->GetU32();
+
+	this->subObjC.nbSubObjA = pByteCode->GetS32();
+	uVar3 = this->subObjC.nbSubObjA;
+	if (uVar3 != 0) {
+		this->subObjC.aSubObjsA = new NativSubObjA[uVar3];
+
+		iVar4 = 0;
+		if (0 < this->subObjC.nbSubObjA) {
+			do {
+				NativSubObjA* pSubObjA = this->subObjC.aSubObjsA + iVar4;
+				pSubObjA->nbSubObjB = pByteCode->GetS32();
+				uVar3 = pSubObjA->nbSubObjB;
+				if (uVar3 != 0) {
+					pSubObjA->aSubObjsB = new NativSubObjB[uVar3];
+					iVar8 = 0;
+					if (0 < pSubObjA->nbSubObjB) {
+						do {
+							pSubObjA->aSubObjsB[iVar8].Create(pByteCode);
+							iVar8 = iVar8 + 1;
+						} while (iVar8 < pSubObjA->nbSubObjB);
+					}
+				}
+
+				iVar4 = iVar4 + 1;
+			} while (iVar4 < this->subObjC.nbSubObjA);
+		}
+	}
+
+	this->addOn.Create(pByteCode);
+
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+		if (pTargetStreamRef->entryCount != 0) {
+			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
+		}
+		this->field_0x38 = pTargetStreamRef;
+	}
+
+	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
+	this->streamEventCamera_0x3c = pSVar2;
+
+
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+		if (pTargetStreamRef->entryCount != 0) {
+			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
+		}
+		this->field_0x40 = pTargetStreamRef;
+	}
+
+	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
+	this->streamEventCamera_0x44 = pSVar2;
+
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+		if (pTargetStreamRef->entryCount != 0) {
+			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
+		}
+		this->field_0x48 = pTargetStreamRef;
+	}
+
+	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
+	this->streamEventCamera_0x4c = pSVar2;
+
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = reinterpret_cast<S_TARGET_STREAM_REF*>(pByteCode->currentSeekPos);
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + 4;
+		if (pTargetStreamRef->entryCount != 0) {
+			pByteCode->currentSeekPos = pByteCode->currentSeekPos + pTargetStreamRef->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
+		}
+		this->field_0x50 = pTargetStreamRef;
+	}
+
+	pSVar2 = reinterpret_cast<S_STREAM_EVENT_CAMERA*>(pByteCode->currentSeekPos);
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar2 + 1);
+	this->streamEventCamera_0x54 = pSVar2;
+
+	CActor::SV_InstallMaterialId(this->field_0xc);
+
+	return;
+}
+
+void CBehaviourNativSeller::Init(CActor* pOwner)
+{
+	S_TARGET_STREAM_REF* pSVar1;
+	int iVar2;
+	int iVar3;
+
+	this->pOwner = static_cast<CActorNativ*>(pOwner);
+
+	this->activeSubObjBIndex = 0;
+
+	this->addOn.Init(pOwner);
+
+	this->subObjC.Init();
+
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x38;
+		iVar3 = 0;
+		if (0 < pTargetStreamRef->entryCount) {
+			do {
+				pTargetStreamRef->aEntries[iVar3].Init();
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < pTargetStreamRef->entryCount);
+		}
+	}
+
+	this->streamEventCamera_0x3c->Init();
+
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x40;
+		iVar3 = 0;
+		if (0 < pTargetStreamRef->entryCount) {
+			do {
+				pTargetStreamRef->aEntries[iVar3].Init();
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < pTargetStreamRef->entryCount);
+		}
+	}
+
+	this->streamEventCamera_0x44->Init();
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x48;
+		iVar3 = 0;
+		if (0 < pTargetStreamRef->entryCount) {
+			do {
+				pTargetStreamRef->aEntries[iVar3].Init();
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < pTargetStreamRef->entryCount);
+		}
+	}
+
+	this->streamEventCamera_0x4c->Init();
+	{
+		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x50;
+		iVar3 = 0;
+		if (0 < pTargetStreamRef->entryCount) {
+			do {
+				pTargetStreamRef->aEntries[iVar3].Init();
+				iVar3 = iVar3 + 1;
+			} while (iVar3 < pTargetStreamRef->entryCount);
+		}
+	}
+
+	this->streamEventCamera_0x54->Init();
+
+	this->addOn.Reset();
+
+	this->initialAnimId = -1;
+	this->field_0x16ac = 0;
+	//this->field_0x16b0 = 0;
+	this->field_0x16b4 = 0;
+	//FUN_003fffa0((int)&this->field_0x60);
+
+	this->currentBehaviourState = -1;
+
+	this->field_0x16c0 = 0.0f;
+
+	this->field_0x16c4 = 0.0f;
+	this->field_0x16c8 = 0.0f;
+	this->field_0x16cc = 0.0f;
+
+	this->field_0x16d0 = 0.0f;
+	this->field_0x16d4 = 0.0f;
+	this->field_0x16d8 = 0.0f;
+
+	//this->field_0x16b8 = 0;
+	this->field_0x16a4 = 0;
+
+	return;
+}
+
+void CBehaviourNativSeller::Manage()
+{
+	this->pOwner->BehaviourNativSeller_Manage(this);
+
+	return;
+}
+
+void CBehaviourNativSeller::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->pOwner = static_cast<CActorNativ*>(pOwner);
+
+	if (newState == -1) {
+		if (this->initialAnimId == -1) {
+			this->pOwner->SetState(0x1f, -1);
+		}
+		else {
+			this->pOwner->SetState(this->initialAnimId, -1);
+		}
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+void CBehaviourNativSeller::End(int newBehaviourId)
+{
+	return;
+}
+
+void CBehaviourNativSeller::InitState(int newState)
+{
+	this->pOwner->BehaviourNativSeller_InitState(newState, this);
+
+	return;
+}
+
+void CBehaviourNativSeller::TermState(int oldState, int newState)
+{
+	this->pOwner->BehaviourNativSeller_TermState(oldState);
+
+	return;
+}
+
+int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorNativ* pCVar1;
+	int iVar2;
+	int iVar3;
+	StateConfig* pSVar4;
+	uint uVar5;
+
+	if (msg == 0x7a) {
+		IMPLEMENTATION_GUARD(
+		CLevelScheduler::ScenVar_Get(0);)
+	}
+	else {
+		if (msg == 0x14) {
+			this->field_0x16b4 = 1;
+			this->pOwner->SetState(0x26, -1);
+			return 1;
+		}
+
+		if (msg == 0x12) {
+			IMPLEMENTATION_GUARD(
+			CLevelScheduler::ScenVar_Get(0);
+			iVar2 = CLevelScheduler::ScenVar_Get(0);
+			if (0 < iVar2) {
+				pCVar1 = this->pOwner;
+				iVar2 = (pCVar1->base).base.base.actorState;
+				uVar5 = 0;
+				if (iVar2 != -1) {
+					pSVar4 = (*((pCVar1->base).base.base.pVTable)->GetStateCfg)((CActor*)pCVar1, iVar2);
+					uVar5 = pSVar4->flags_0x4;
+				}
+				if ((uVar5 & 0x400000) != 0) {
+					return 0xf;
+				}
+			})
+			return 0;
+		}
+
+		if (msg != 0xf) {
+			return 0;
+		}
+
+		CLevelScheduler::ScenVar_Get(0);
+		iVar2 = CLevelScheduler::ScenVar_Get(0);
+		if (iVar2 == 0) {
+			this->field_0x16b4 = 0;
+			if (this->field_0x8 == 0xffffffff) {
+				SetBehaviourState(0x22);
+
+				iVar2 = this->field_0x16b4;
+				if (iVar2 == 0) {
+					(this->subObjC).activeSubObjIndex = -1;
+					if (this->subObjC.Add_0xc() == -1) {
+						return 0;
+					}
+				}
+
+				if (iVar2 == 1) {
+					IMPLEMENTATION_GUARD(
+					this->field_0x60.FUN_003fff90();
+					if (this->field_0x60.FUN_003ffea0(this->field_0x16b0) == 0) {
+						return 0;
+					})
+				}
+
+				FUN_003ed150();
+			}
+			else {
+				SetBehaviourState(0x21);
+			}
+		}
+	}
+
+	return 0;
+}
+
+
+void CBehaviourNativSeller::FUN_003f2150()
+{
+	CActorNativ* pNativ;
+	bool bVar2;
+	CEventManager* pEventManager;
+	ed_zone_3d* pZone;
+	int iVar6;
+	uint uVar7;
+	int iVar9;
+
+	this->field_0x16d0 = this->field_0x16d0 + (this->field_0x16c4 - this->field_0x16d0) * 0.15f;
+	this->field_0x16d4 = this->field_0x16d4 + (this->field_0x16c8 - this->field_0x16d4) * 0.05f;
+	this->field_0x16d8 = this->field_0x16d8 + (this->field_0x16cc - this->field_0x16d8) * 0.04f;
+
+	this->field_0x16c0 = this->field_0x16c0 + GetTimer()->cutsceneDeltaTime;
+	iVar6 = this->currentBehaviourState;
+	if (iVar6 != -1) {
+		uVar7 = pOwner->GetStateFlags(iVar6);
+
+		pEventManager = CScene::ptable.g_EventManager_006f5080;
+		if ((uVar7 & 0x200000) != 0) {
+			uVar7 = this->field_0x8;
+			iVar6 = 0;
+			if (uVar7 == 0xffffffff) {
+				bVar2 = false;
+			}
+			else {
+				pZone = (ed_zone_3d*)0x0;
+				if (uVar7 != 0xffffffff) {
+					pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, uVar7);
+				}
+
+				if (pZone != (ed_zone_3d*)0x0) {
+					iVar6 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0);
+				}
+
+				if (iVar6 == 1) {
+					bVar2 = true;
+				}
+				else {
+					bVar2 = false;
+				}
+			}
+
+			if (!bVar2) {
+				this->field_0x16c4 = 0.0f;
+				this->field_0x16c8 = 0.0f;
+				this->field_0x16cc = 0.0f;
+
+				pNativ = this->pOwner;
+				iVar6 = 0;
+				if (0 < this->field_0x50->entryCount) {
+					do {
+						this->field_0x50->aEntries[iVar6].Switch(pNativ);
+						iVar6 = iVar6 + 1;
+					} while (iVar6 < this->field_0x50->entryCount);
+				}
+
+				this->streamEventCamera_0x54->SwitchOn(pNativ);
+
+				this->currentBehaviourState = -1;
+
+				pNativ = this->pOwner;
+				if (pNativ->curBehaviourId == 1) {
+					this->initialAnimId = 0x1f;
+				}
+				else {
+					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SELLER, 0x1f, -1);
+				}
+			}
+		}
+	}
+
+	iVar6 = this->currentBehaviourState;
+
+	switch (iVar6) {
+	case -1:
+		break;
+	case 0x21:
+		this->pOwner->State_0x21(this);
+		break;
+	case 0x22:
+		this->pOwner->State_0x22(this);
+		break;
+	case 0x23:
+		this->pOwner->State_0x23(this);
+		break;
+	default:
+		IMPLEMENTATION_GUARD();
+		break;
+	}
+
+	if (((this->field_0x16a4 == 0) && (this->field_0x16ac == 2)) && ((((CActorHero::_gThis->fightFlags & 0x40) != 0 ||
+			((((iVar6 = CActorHero::_gThis->actorState, iVar6 == 0x6f || (iVar6 == 0x34)) || (iVar6 == 0x36)) || ((iVar6 == 10 &&
+				(CActorHero::_gThis->prevActorState == 0x20)))))) || (iVar6 == 0x22)))) {
+		pNativ = this->pOwner;
+
+		iVar6 = 0;
+		if (0 < this->field_0x38->entryCount) {
+			do {
+				this->field_0x38->aEntries[iVar6].Switch(pNativ);
+				iVar6 = iVar6 + 1;
+			} while (iVar6 < this->field_0x38->entryCount);
+		}
+
+		this->streamEventCamera_0x3c->SwitchOn(pNativ);
+
+		this->field_0x16a4 = 1;
+	}
+
+	this->streamEventCamera_0x3c->Manage(this->pOwner);
+	this->streamEventCamera_0x44->Manage(this->pOwner);
+	this->streamEventCamera_0x4c->Manage(this->pOwner);
+	this->streamEventCamera_0x54->Manage(this->pOwner);
+
+	this->addOn.Manage();
+
+	if (((this->field_0x16d0 != 0.0f) || (this->field_0x16d4 != 0.0f)) || (this->field_0x16d8 != 0.0f)) {
+		if (this->field_0x16b4 == 0) {
+			DrawButtonPromptA();
+		}
+		if (this->field_0x16b4 == 1) {
+			IMPLEMENTATION_GUARD(
+			FUN_003ec0e0(this);)
+		}
+	}
+
+	return;
+}
+
+
+
+void CBehaviourNativSeller::FUN_003ed150()
+{
+	byte bVar1;
+	s_fighter_combo* psVar2;
+	NativSubObjA* pNVar3;
+	int iVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float local_10;
+	float local_c;
+	float local_8;
+	float local_4;
+
+	fVar7 = 0.0f;
+	fVar8 = (float)gVideoConfig.screenWidth * 0.13f;
+	fVar6 = (float)gVideoConfig.screenHeight * 0.2f;
+
+	if (CActorHero::_gThis != (CActorHero*)0x0) {
+		CActorHero::_gThis->_UpdateComboSituation();
+
+		if (this->field_0x16b4 == 0) {
+			iVar4 = (this->subObjC).activeSubObjIndex;
+
+			if (iVar4 == -1) {
+				pNVar3 = (NativSubObjA*)0x0;
+			}
+			else {
+				pNVar3 = (this->subObjC).aSubObjsA + iVar4;
+			}
+
+			iVar4 = 0;
+			if (pNVar3 != (NativSubObjA*)0x0) {
+				for (; iVar4 < pNVar3->nbSubObjB; iVar4 = iVar4 + 1) {
+					psVar2 = pNVar3->aSubObjsB[iVar4].aRequiredCombos[0];
+
+					s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, psVar2->actionHash.pData);
+
+					bVar1 = pMove->field_0x4.field_0x0byte;
+					if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
+						fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.08f;
+					}
+
+					FUN_003eccb0(psVar2, &local_8, &local_4);
+
+					fVar6 = (float)((int)fVar6 * (uint)(local_4 < fVar6) | (int)local_4 * (uint)(local_4 >= fVar6));
+					fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.05 + local_8;
+				}
+			}
+		}
+		if (this->field_0x16b4 == 1) {
+			IMPLEMENTATION_GUARD(
+			iVar4 = *(int*)&this->field_0x1690;
+			if (iVar4 == 0) {
+				iVar4 = 0;
+			}
+			iVar5 = 0;
+			if (iVar4 != 0) {
+				for (; iVar5 < *(int*)(iVar4 + 0x80); iVar5 = iVar5 + 1) {
+					psVar2 = *(s_fighter_combo**)(iVar4 + iVar5 * 0x10 + 4);
+					bVar1 = *(byte*)((int)&psVar2->actionHash->field_0x4 + 1);
+					if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
+						fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.08;
+					}
+					FUN_003eccb0(this, psVar2, &local_10, &local_c);
+					fVar7 = (float)((int)fVar7 * (uint)(local_c < fVar7) | (int)local_c * (uint)(local_c >= fVar7));
+					fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.05 + local_10;
+				}
+			})
+		}
+
+		fVar6 = fVar6 + fVar7;
+		fVar8 = fVar8 + ((float)gVideoConfig.screenWidth * 0.05f) / 2.0f;
+	}
+
+	this->field_0x16c4 = fVar8;
+	this->field_0x16c8 = fVar6;
+	this->field_0x16cc = 1.0f;
+
+	return;
+}
+
+void CBehaviourNativSeller::FUN_003ebd90()
+{
+	CActorHero* pHero;
+	long lVar2;
+	undefined8 unaff_s1;
+
+	pHero = CActorHero::_gThis;
+	if (this->field_0x16ac == 2) {
+		unaff_s1 = 4;
+	}
+
+	if (this->field_0x16ac == 1) {
+		unaff_s1 = 3;
+	}
+
+	if (this->field_0x16a4 != 0) {
+		this->field_0x16a4 = 0;
+	}
+
+	this->field_0x16ac = 0;
+	this->activeSubObjBIndex = 0;
+
+	if (this->field_0x16b4 == 0) {
+		SetBehaviourState(0x22);
+	}
+	else {
+		SetBehaviourState(0x28);
+	}
+	if (((pHero->fightFlags & 0x40) != 0) && (lVar2 = this->addOn.Func_0x20(/*unaff_s1, 0, 0*/), lVar2 != 0)) {
+		this->initialAnimId = 0x20;
+	}
+	return;
+}
+
+void CBehaviourNativSeller::FUN_003eccb0(s_fighter_combo* pCombo, float* param_3, float* param_4)
+{
+	uint uVar1;
+	char cVar2;
+	ulong uVar3;
+	uint uVar4;
+	float fVar5;
+	float fVar6;
+
+	if (pCombo != (s_fighter_combo*)0x0) {
+		fVar6 = 1.0f;
+		fVar5 = 0.0f;
+
+		uVar3 = ((ulong)pCombo->pattern.field_0x2ushort << 0x34) >> 0x38;
+		if ((uVar3 & 1) != 0) {
+			fVar5 = 1.0f;
+		}
+
+		if ((uVar3 & 2) != 0) {
+			fVar5 = fVar5 + 1.0f;
+		}
+
+		if ((uVar3 & 4) != 0) {
+			fVar5 = fVar5 + 1.0f;
+		}
+
+		if ((uVar3 & 8) != 0) {
+			fVar5 = fVar5 + 1.0f;
+		}
+
+		if ((uVar3 & 0x10) != 0) {
+			fVar5 = fVar5 + 1.0f;
+		}
+
+		for (uVar4 = 0; uVar4 < (pCombo->pattern).field_0x4; uVar4 = uVar4 + 1) {
+			uVar1 = (uint)((ulong)(pCombo->pattern.field_0x0uint << 0x2c) >> 0x2c) >> ((uVar4 & 7) << 2) & 0xf;
+			if (uVar1 == 1) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 2) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 4) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 8) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 3) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 9) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 6) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 0xc) {
+				fVar5 = fVar5 + 1.0f;
+			}
+
+			if (uVar1 == 10) {
+				fVar5 = fVar5 + 1.0f;
+			}
+		}
+
+		s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+
+		cVar2 = (pMove->field_0x4.field_0x0byte & 1) != 0;
+		if ((pMove->field_0x4.field_0x0byte & 2) != 0) {
+			cVar2 = cVar2 + '\x02';
+		}
+
+		if ((pMove->field_0x4.field_0x0byte & 0x20) != 0) {
+			cVar2 = cVar2 + '\x04';
+		}
+
+		if ((pMove->field_0x4.field_0x0byte & 0x40) != 0) {
+			cVar2 = cVar2 + '\b';
+		}
+
+		if (cVar2 == '\b') {
+			fVar6 = 2.0f;
+			fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+		}
+		else {
+			if (cVar2 == '\x04') {
+				fVar6 = 2.0f;
+				fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+			}
+			else {
+				if (cVar2 == '\x02') {
+					fVar6 = 2.0f;
+					fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+				}
+				else {
+					if (cVar2 == '\x01') {
+						fVar6 = 2.0f;
+						fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+					}
+				}
+			}
+		}
+
+		uVar3 = ((ulong)pCombo->pattern.field_0x3byte << 0x38) >> 0x3c;
+		if ((uVar3 & 1) != 0) {
+			fVar5 = fVar5 + 1.0f;
+		}
+
+		if ((uVar3 & 2) != 0) {
+			fVar5 = fVar5 + 1.0f;
+		}
+
+		if (fVar5 <= 0.0f) {
+			fVar6 = 0.0f;
+		}
+
+		*param_3 = (float)gVideoConfig.screenWidth * 0.068f *
+			(float)((int)fVar5 * (uint)(fVar5 < 1.0f) | (uint)(fVar5 >= 1.0f) * 0x3f800000) +
+			(float)gVideoConfig.screenWidth * 0.08f * (float)((int)(fVar5 - 1.0f) * (uint)(0.0f < fVar5 - 1.0f));
+
+		*param_4 = (float)gVideoConfig.screenHeight * 0.07f * (float)((int)(fVar6 - 1.0f) * (uint)(0.0f < fVar6 - 1.0f));
+	}
+
+	return;
+}
+
+void CBehaviourNativSeller::FUN_003f1da0(s_fighter_combo* pCombo)
+{
+	if ((pCombo->field_0x4.field_0x0ushort & 0x400U) == 0) {
+		s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+		if ((pMove->field_0x4.field_0x2ushort & 1) == 0) {
+			this->field_0x16ac = 1;
+		}
+		else {
+			this->field_0x16ac = 2;
+		}
+	}
+	else {
+		this->field_0x16ac = 2;
+	}
+
+	return;
+}
+
+bool CBehaviourNativSeller::FUN_003ebee0(int param_2)
+{
+	int iVar1;
+
+	if (param_2 == 0) {
+		(this->subObjC).activeSubObjIndex = -1;
+		iVar1 = this->subObjC.Add_0xc();
+		if (iVar1 == -1) {
+			return true;
+		}
+	}
+
+	if (param_2 == 1) {
+		IMPLEMENTATION_GUARD(
+		FUN_003fff90((int)&this->field_0x60);
+		iVar1 = FUN_003ffea0(&this->field_0x60, (long)(int)this->field_0x16b0);
+		if (iVar1 == 0) {
+			return true;
+		})
+	}
+	
+	FUN_003ed150();
+
+	return false;
+}
+
+bool CBehaviourNativSeller::IsEventActive()
+{
+	uint zoneId;
+	CEventManager* pEventManager;
+	bool bEventActive;
+	ed_zone_3d* pZone;
+	int iVar2;
+
+	pEventManager = CScene::ptable.g_EventManager_006f5080;
+	zoneId = this->field_0x8;
+	iVar2 = 0;
+
+	if (zoneId == 0xffffffff) {
+		bEventActive = false;
+	}
+	else {
+		pZone = (ed_zone_3d*)0x0;
+		if (zoneId != 0xffffffff) {
+			pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, zoneId);
+		}
+
+		if (pZone != (ed_zone_3d*)0x0) {
+			iVar2 = edEventComputeZoneAgainstVertex(pEventManager->activeChunkId, pZone, &CActorHero::_gThis->currentLocation, 0);
+		}
+
+		bEventActive = true;
+
+		if (iVar2 != 1) {
+			bEventActive = false;
+		}
+	}
+
+	return bEventActive;
+}
+
+void CBehaviourNativSeller::SetBehaviourState(int newState)
+{
+	if (newState != this->currentBehaviourState) {
+		TermState(this->currentBehaviourState, -1);
+		InitState(newState);
+
+		this->field_0x16c0 = 0.0f;
+		this->currentBehaviourState = newState;
+	}
+
+	return;
+}
+
+NativSubObjB::NativSubObjB()
+{
+	this->nbRequiredCombos = 0;
+	this->aRequiredCombos[0] = (s_fighter_combo*)0x0;
+	this->aRequiredCombos[1] = (s_fighter_combo*)0x0;
+	this->field_0xc = 0;
+
+	return;
+}
+
+void NativSubObjB::Create(ByteCode* pByteCode)
+{
+	int iVar2;
+	uint* puVar4;
+	s_fighter_combo** pCombo;
+
+	this->nbRequiredCombos = pByteCode->GetS32();
+	assert(this->nbRequiredCombos <= 2);
+
+	iVar2 = 0;
+	pCombo = this->aRequiredCombos;
+	if (0 < this->nbRequiredCombos) {
+		do {
+			*pCombo = CActorHero::_gThis->FindComboByName(pByteCode->GetString());
+			iVar2 = iVar2 + 1;
+			pCombo = pCombo + 1;
+		} while (iVar2 < this->nbRequiredCombos);
+	}
+
+	return;
+}
+
+bool NativSubObjB::IsRequiredCombo(s_fighter_combo* pCombo)
+{
+	int iVar2;
+
+	iVar2 = 0;
+	if (0 < this->nbRequiredCombos) {
+		do {
+			if (this->aRequiredCombos[iVar2] == pCombo) {
+				return true;
+			}
+
+			iVar2 = iVar2 + 1;
+		} while (iVar2 < this->nbRequiredCombos);
+	}
+
+	return false;
+}
+
+NativSubObjA::NativSubObjA()
+{
+	this->nbSubObjB = 0;
+	this->aSubObjsB = (NativSubObjB*)0x0;
+
+	return;
+}
+
+NativSellerSubObjA::NativSellerSubObjA()
+{
+	this->field_0x88 = 0;
+	this->field_0x8c = 0;
+
+	return;
+}
+
+NativSellerSubObjC::NativSellerSubObjC()
+{
+	this->nbSubObjA = 0;
+	this->aSubObjsA = (NativSubObjA*)0x0;
+
+	return;
+}
+
+void NativSellerSubObjC::Init()
+{
+	int iVar3;
+	NativSubObjA* piVar4;
+	int iVar4;
+
+	iVar4 = 0;
+	if (0 < this->nbSubObjA) {
+		do {
+			piVar4 = this->aSubObjsA + iVar4;
+			iVar3 = 0;
+			if (0 < piVar4->nbSubObjB) {
+				do {
+					piVar4->aSubObjsB[iVar3].field_0xc = 0;
+					iVar3 = iVar3 + 1;
+				} while (iVar3 < piVar4->nbSubObjB);
+			}
+
+			iVar4 = iVar4 + 1;
+		} while (iVar4 < this->nbSubObjA);
+	}
+
+	this->activeSubObjIndex = -1;
+
+	return;
+}
+
+int NativSellerSubObjC::Add_0xc()
+{
+	this->activeSubObjIndex = this->activeSubObjIndex + 1;
+	if (this->nbSubObjA <= this->activeSubObjIndex) {
+		this->activeSubObjIndex = -1;
+	}
+
+	return this->activeSubObjIndex;
 }

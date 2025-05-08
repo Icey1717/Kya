@@ -5,6 +5,7 @@
 #include "ActorAutonomous.h"
 #include "ed3D.h"
 #include "PathFollow.h"
+#include "ActorNativCmd.h"
 
 #define NATIVE_BEHAVIOUR_SPEAK 0x3
 #define NATIVE_BEHAVIOUR_EXORCISM 0x4
@@ -14,6 +15,9 @@
 
 #define NATIVE_STATE_TAKE_PUT_WALK 0x15
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
+
+struct S_TARGET_STREAM_REF;
+struct S_STREAM_EVENT_CAMERA;
 
 template<typename T>
 class CRndChooser
@@ -40,9 +44,111 @@ class CBehaviourNativExorcisme : public CBehaviourNativ
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
+struct s_fighter_combo;
+
+struct NativSubObjB
+{
+	NativSubObjB();
+
+	void Create(ByteCode* pByteCode);
+	bool IsRequiredCombo(s_fighter_combo* pCombo);
+
+	int nbRequiredCombos;
+	s_fighter_combo* aRequiredCombos[2];
+	undefined4 field_0xc;
+};
+
+struct NativSubObjA
+{
+	NativSubObjA();
+
+	int nbSubObjB;
+	NativSubObjB* aSubObjsB;
+};
+
+struct NativSellerSubObjA
+{
+	NativSellerSubObjA();
+
+	NativSubObjB aSubObjB[0x8];
+	undefined4 field_0x88;
+	undefined4 field_0x8c;
+};
+
+struct NativSellerSubObjC
+{
+	NativSellerSubObjC();
+	virtual void Init();
+
+	int Add_0xc();
+
+	int nbSubObjA;
+	NativSubObjA* aSubObjsA;
+	int activeSubObjIndex;
+};
+
 class CBehaviourNativSeller : public CBehaviourNativ
 {
+public:
+	CBehaviourNativSeller();
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
 
+	void FUN_003f2150();
+	void FUN_003ed150();
+
+	void FUN_003ebd90();
+
+	void FUN_003eccb0(s_fighter_combo* pCombo, float* param_3, float* param_4);
+	void FUN_003f1da0(s_fighter_combo* pCombo);
+	bool FUN_003ebee0(int param_2);
+	bool IsEventActive();
+	void SetBehaviourState(int newState);
+
+	uint field_0x8;
+	int field_0xc;
+
+	NativSellerSubObjC subObjC;
+
+	CAddOnNativ addOn;
+
+	S_TARGET_STREAM_REF* field_0x38;
+	S_STREAM_EVENT_CAMERA* streamEventCamera_0x3c;
+
+	S_TARGET_STREAM_REF* field_0x40;
+	S_STREAM_EVENT_CAMERA* streamEventCamera_0x44;
+
+	S_TARGET_STREAM_REF* field_0x48;
+	S_STREAM_EVENT_CAMERA* streamEventCamera_0x4c;
+
+	S_TARGET_STREAM_REF* field_0x50;
+	S_STREAM_EVENT_CAMERA* streamEventCamera_0x54;
+
+	NativSellerSubObjA field_0x68[0x1e];
+
+	int initialAnimId;
+
+	int activeSubObjBIndex;
+	undefined4 field_0x16a4;
+	int field_0x16ac;
+	int field_0x16b4;
+	int currentBehaviourState;
+
+	float field_0x16c0;
+	float field_0x16c4;
+	float field_0x16c8;
+	float field_0x16cc;
+
+	float field_0x16d0;
+	float field_0x16d4;
+	float field_0x16d8;
 };
 
 class CTakePutTrajectoryParam
@@ -148,6 +254,10 @@ public:
 	void BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBehaviour);
 	void BehaviourNativTakeAndPut_TermState(int oldState);
 
+	void BehaviourNativSeller_InitState(int newState, CBehaviourNativSeller* pBehaviour);
+	void BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour);
+	void BehaviourNativSeller_TermState(int oldState);
+
 	void StateNativTakePutTurnTo();
 	void StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour);
 
@@ -156,6 +266,10 @@ public:
 
 	uint FUN_00162270();
 	float FUN_00164070();
+
+	void State_0x21(CBehaviourNativSeller* pBehaviour);
+	void State_0x22(CBehaviourNativSeller* pBehaviour);
+	void State_0x23(CBehaviourNativSeller* pBehaviour);
 
 	static StateConfig _gStateCfg_NTV[54];
 

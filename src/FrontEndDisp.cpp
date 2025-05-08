@@ -112,6 +112,7 @@ char* g_FrontendSoundFiles_0040ec90[5] =
 CFrontendLifeGauge gFrontendLifeGauge;
 CFrontendMagicGauge gMagicGauge;
 CFrontendAction gFrontendAction;
+CFrontendMoney gFrontendMoney;
 
 CFrontendDisplay::CFrontendDisplay()
 {
@@ -120,7 +121,7 @@ CFrontendDisplay::CFrontendDisplay()
 	this->bHideHUD = 0;
 	this->pHealthBar = &gFrontendLifeGauge;
 	this->pMagicOrbs = &gMagicGauge;
-	//this->pNooties = &HNootiesWolfun_004528b0;
+	this->pMoney = &gFrontendMoney;
 	//this->pFreedWolfun = &HNootiesWolfun_00452ae0;
 	this->pFrontendAction = &gFrontendAction;
 	//this->pMenuObj_0x6c = &MenuObj_Big_00452ea0;
@@ -283,9 +284,9 @@ void CFrontendDisplay::Level_Draw()
 {
 	if (this->bHideHUD == 0) {
 		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x3c))();
-		pHealthBar->Draw();
+		this->pHealthBar->Draw();
 		//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.Draw)();
-		//(*(code*)this->pNooties->pVTable->Draw)();
+		//this->pMoney->Draw();
 		//(*(code*)this->pFreedWolfun->pVTable->Draw)();
 		//(*(code*)((this->pFrontendAction->base).pVTable)->Draw)();
 		//FUN_001d89d0((int)this->pFrontendEnemyList);
@@ -297,9 +298,9 @@ void CFrontendDisplay::Level_Draw()
 
 void CFrontendDisplay::Level_Reset()
 {
-	pHealthBar->Reset();
+	this->pHealthBar->Reset();
 	//(*(this->pMagicOrbs->pVTable->pVTable).pVTable.Reset)((CWidget*)this->pMagicOrbs);
-	//(*this->pNooties->pVTable->Reset)((CWidget*)this->pNooties);
+	//this->pMoney->Reset();
 	//(*this->pFreedWolfun->pVTable->Reset)((CWidget*)this->pFreedWolfun);
 	//(*((this->pFrontendAction->base).pVTable)->Reset)((CWidget*)this->pFrontendAction);
 	//(**(code**)(*(int*)this->pFrontendEnemyList + 0x10))();

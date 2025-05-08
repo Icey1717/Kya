@@ -4704,7 +4704,139 @@ void CActor::SV_SetOrientationToPosition2D(edF32VECTOR4* pPosition)
 CAddOn::CAddOn()
 {
 	this->pOwner = (CActor*)0x0;
-	this->field_0x8 = 0;
+	this->pSubObj = 0;
+
+	return;
+}
+
+void CAddOn::Init(CActor* pActor)
+{
+	this->pOwner = pActor;
+	this->pSubObj = (CAddOnSubObj*)0x0;
+
+	this->field_0xc = 0;
+	this->field_0xd = 1;
+
+	return;
+}
+
+void CAddOn::Reset()
+{
+	CAddOnSubObj* pCVar1;
+
+	pCVar1 = this->pSubObj;
+
+	if (pCVar1 != (CAddOnSubObj*)0x0) {
+		pCVar1->pCinematic = (CCinematic*)0x0;
+		pCVar1->field_0x10 = -1;
+		pCVar1->field_0x14 = 0.0f;
+	}
+
+	this->pSubObj = (CAddOnSubObj*)0x0;
+	this->field_0xc = 0;
+	this->field_0xd = 1;
+
+	return;
+}
+
+void CAddOn::Manage()
+{
+	CAddOnSubObj* pSub;
+	bool bVar2;
+	CCinematic* pCinematic;
+
+	if (GetCinematic() == (CCinematic*)0x0) {
+		return;
+	}
+
+	if ((GameFlags & 0x4020) == 0) goto LAB_003e3558;
+
+	pCinematic = GetCinematic();
+
+	if (pCinematic == (CCinematic*)0x0) {
+	LAB_003e34e0:
+		bVar2 = false;
+	}
+	else {
+		pCinematic = GetCinematic();
+
+		if ((pCinematic->state == CS_Stopped) || (bVar2 = true, this->field_0xc == 0)) goto LAB_003e34e0;
+	}
+
+	if (bVar2) {
+		GetCinematic()->FUN_001c92b0();
+
+		bVar2 = GetCinematic()->Has_0x2d8();
+		if (bVar2 != false) {
+			GetCinematic()->Remove_0x2d8();
+		}
+
+		Reset();
+	}
+LAB_003e3558:
+	if (this->field_0xc != 0) {
+		if (GetCinematic()->state == CS_Stopped) {
+			if ((GetCinematic()->flags_0x8 & 0x80) == 0) {
+				this->field_0xc = 0;
+				if (this->pSubObj != (CAddOnSubObj*)0x0) {
+					this->pSubObj->SetCinematic((CCinematic*)0x0);
+				}
+
+				this->pSubObj = (CAddOnSubObj*)0x0;
+			}
+		}
+	}
+
+	return;
+}
+
+CCinematic* CAddOn::GetCinematic()
+{
+	CCinematic* pCinematic = (CCinematic*)0x0;
+	if (this->pSubObj != (CAddOnSubObj*)0x0) {
+		pCinematic = this->pSubObj->pCinematic;
+	}
+
+	return pCinematic;
+}
+
+void CAddOnSubObj::SetCinematic(CCinematic* pCinematic)
+{
+	bool bVar1;
+
+	if ((this->pCinematic != (CCinematic*)0x0) && (pCinematic == (CCinematic*)0x0)) {
+		bVar1 = this->pCinematic->Has_0x2d8();
+		if (bVar1 != false) {
+			this->pCinematic->Remove_0x2d8();
+		}
+
+		this->field_0x14 = 0.0f;
+	}
+
+	if ((this->pCinematic == (CCinematic*)0x0) && (pCinematic != (CCinematic*)0x0)) {
+		bVar1 = pCinematic->Has_0x2d8();
+		if (bVar1 == false) {
+			pCinematic->Add_0x2d8();
+		}
+
+		this->field_0x14 = 0.0f;
+	}
+
+	if (((this->pCinematic != (CCinematic*)0x0) && (pCinematic != (CCinematic*)0x0)) && (this->pCinematic != pCinematic)) {
+		bVar1 = this->pCinematic->Has_0x2d8();
+		if (bVar1 != false) {
+			this->pCinematic->Remove_0x2d8();
+		}
+
+		bVar1 = pCinematic->Has_0x2d8();
+		if (bVar1 == false) {
+			pCinematic->Add_0x2d8();
+		}
+
+		this->field_0x14 = 0.0f;
+	}
+
+	this->pCinematic = pCinematic;
 
 	return;
 }

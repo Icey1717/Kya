@@ -39,11 +39,16 @@ struct CActorNativMsgParamOther
 class CAddOnNativ : public CAddOn 
 {
 public:
-	virtual void Create(ByteCode* pByteCode);
-	virtual void Init(CActor* pActor) {}
-	virtual void Reset() {}
+	CAddOnNativ();
 
-	int field_0x10;
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pActor);
+	virtual void Manage();
+	virtual void Reset();
+	virtual bool Func_0x20();
+
+	int nbSubObjs;
+	CAddOnSubObj* aSubObjs;
 };
 
 class CActorNativCmd;

@@ -4655,6 +4655,18 @@ CActorWeapon* CActorFighter::GetWeapon()
 	return reinterpret_cast<CActorWeapon*>(this->pWeaponActor.Get());
 }
 
+s_fighter_combo* CActorFighter::FindComboByName(char* szName)
+{
+	const uint hash = CreateHashFromName(szName);
+
+	s_fighter_combo* pCombo = _FindByHashcode<s_fighter_combo>(this->aCombos, this->nbComboRoots, hash);
+	if (pCombo == (s_fighter_combo*)0x0) {
+		pCombo = _FindByHashcode<s_fighter_combo>(this->aCombos + this->nbComboRoots, this->nbCombos, hash);
+	}
+
+	return pCombo;
+}
+
 void CActorFighter::SetFighterCombo(s_fighter_combo* pCombo)
 {
 	this->pFighterCombo = pCombo;

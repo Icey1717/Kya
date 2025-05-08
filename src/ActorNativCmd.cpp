@@ -4,6 +4,7 @@
 #include "TimeController.h"
 #include "ActorHero.h"
 #include "MathOps.h"
+#include "CinematicManager.h"
 
 void CActorNativCmd::Create(ByteCode* pByteCode)
 {
@@ -207,55 +208,121 @@ int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	IMPLEMENTATION_GUARD();
 }
 
+CAddOnNativ::CAddOnNativ()
+{
+	this->nbSubObjs = 0;
+	this->aSubObjs = (CAddOnSubObj*)0x0;
+
+	return;
+}
+
 void CAddOnNativ::Create(ByteCode* pByteCode)
 {
 	uint uVar1;
 	int* piVar2;
 	void* pvVar3;
 	int iVar4;
-	int iVar5;
-	int iVar6;
 	int iVar7;
-	uint* puVar8;
 	int iVar9;
 	float fVar10;
 
-	uVar1 = pByteCode->GetS32();
-	this->field_0x10 = uVar1;
-	uVar1 = this->field_0x10;
+	this->nbSubObjs = pByteCode->GetS32();
+	uVar1 = this->nbSubObjs;
+
 	if (uVar1 != 0) {
-		//piVar2 = (int*)operator.new.array((long)(int)(uVar1 * 0x18 + 0x10));
-		//piVar2 = __construct_new_array(piVar2, (ActorConstructorA*)&LAB_003e1f60, FUN_003e3a70, 0x18, uVar1);
-		//this->field_0x14 = piVar2;
+		this->aSubObjs = new CAddOnSubObj[uVar1];
 		iVar9 = 0;
-		if (0 < this->field_0x10) {
-			iVar6 = 0;
+		if (0 < this->nbSubObjs) {
 			do {
-				//puVar8 = (uint*)((int)this->field_0x14 + iVar6);
-				uVar1 = pByteCode->GetU32();
-				//*puVar8 = uVar1;
-				uVar1 = pByteCode->GetS32();
-				//puVar8[2] = uVar1;
-				//if (0 < (int)puVar8[2]) {
-				//	pvVar3 = operator.new.array((long)(int)(puVar8[2] << 2));
-				//	puVar8[1] = (uint)pvVar3;
-				//}
-				iVar7 = 0;
-				if (0 < uVar1) {
-					iVar5 = 0;
-					do {
-						iVar4 = pByteCode->GetS32();
-						iVar7 = iVar7 + 1;
-						//*(int*)(puVar8[1] + iVar5) = iVar4;
-						iVar5 = iVar5 + 4;
-					} while (iVar7 < uVar1);
+				CAddOnSubObj* puVar9 = this->aSubObjs + iVar9;
+				puVar9->field_0x0 = pByteCode->GetU32();
+				puVar9->field_0x8 = pByteCode->GetS32();
+				if (0 < puVar9->field_0x8) {
+					puVar9->field_0x4 = new int[puVar9->field_0x8];
 				}
-				//puVar8[4] = 0xffffffff;
+
+				iVar7 = 0;
+				if (0 < puVar9->field_0x8) {
+					do {
+						puVar9->field_0x4[iVar7] = pByteCode->GetS32();
+						iVar7 = iVar7 + 1;
+					} while (iVar7 < puVar9->field_0x8);
+				}
+
+				puVar9->field_0x10 = -1;
 				iVar9 = iVar9 + 1;
-				iVar6 = iVar6 + 0x18;
-			} while (iVar9 < this->field_0x10);
+			} while (iVar9 < this->nbSubObjs);
 		}
 	}
+}
+
+void CAddOnNativ::Init(CActor* pActor)
+{
+	CAddOn::Init(pActor);
+
+	this->field_0xd = 0;
+
+	return;
+}
+
+void CAddOnNativ::Manage()
+{
+	CAddOn::Manage();
+
+	int iVar5;
+
+	bool bVar1;
+	if (GetCinematic()) {
+		if ((GetCinematic()->state != CS_Stopped) && (bVar1 = true, this->field_0xc != 0)) goto LAB_003e1a88;
+	}
+
+	bVar1 = false;
+
+LAB_003e1a88:
+
+	if ((!bVar1) && (iVar5 = 0, 0 < this->nbSubObjs)) {
+		do {
+			CAddOnSubObj* pSubObj = this->aSubObjs + iVar5;
+			if (pSubObj != (CAddOnSubObj*)0x0) {
+				float fVar7 = pSubObj->field_0x14 + GetTimer()->cutsceneDeltaTime;
+				pSubObj->field_0x14 = fVar7;
+
+				if ((1.0f <= fVar7) && (pSubObj->pCinematic != (CCinematic*)0x0)) {
+					pSubObj->SetCinematic((CCinematic*)0x0);
+				}
+			}
+
+			iVar5 = iVar5 + 1;
+		} while (iVar5 < this->nbSubObjs);
+	}
+
+	return;
+}
+
+void CAddOnNativ::Reset()
+{
+	CAddOn::Reset();
+
+	this->field_0xd = 0;
+	int iVar3 = 0;
+	if (0 < this->nbSubObjs) {
+		do {
+			CAddOnSubObj* pSubObj = this->aSubObjs + iVar3;
+
+			pSubObj->pCinematic = (CCinematic*)0x0;
+			pSubObj->field_0x10 = -1;
+			pSubObj->field_0x14 = 0.0f;
+
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < this->nbSubObjs);
+	}
+
+	return;
+}
+
+bool CAddOnNativ::Func_0x20()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CBehaviourNativCmdStand::Manage()

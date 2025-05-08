@@ -464,7 +464,9 @@ struct S_TRAP_STREAM_REF {
 	S_TRAP_STREAM_ENTRY aEntries[];
 };
 
-struct CCinematic {
+class CCinematic
+{
+public:
 	void InitInternalData();
 	void SetupInternalData();
 
@@ -498,6 +500,12 @@ struct CCinematic {
 
 	void FUN_001c7390(bool param_2);
 	void FUN_001caeb0();
+
+	void FUN_001c92b0();
+
+	bool Has_0x2d8();
+	void Remove_0x2d8();
+	void Add_0x2d8();
 
 	void Manage();
 	void ManageState_Playing();
@@ -655,7 +663,8 @@ struct CCinematic {
 	int field_0x2ec;
 };
 
-class CCinematicManagerB : public CObjectManager {
+class CCinematicManagerB : public CObjectManager
+{
 public:
 	virtual void Game_Init() {};
 	virtual void Game_Term() {};
@@ -681,7 +690,11 @@ public:
 	virtual void Level_SectorChange(int oldSectorId, int newSectorId) {}
 };
 
-class CCinematicManager : public CObjectManager {
+class CCinematic;
+class CCameraCinematic;
+
+class CCinematicManager : public CObjectManager
+{
 public:
 	CCinematicManager();
 
@@ -730,13 +743,13 @@ public:
 	void DrawBandsAndSubtitle(int param_2);
 	void SetSubtitle(float param_1, char* pText, edF32VECTOR4* param_4, int param_5);
 
-	struct CCinematic** ppCinematicObjB_A;
+	CCinematic** ppCinematicObjB_A;
 	int numCutscenes_0x8;
-	struct CCameraCinematic* pCinematicCamera;
-	struct CCinematic** ppCinematicObjB_B;
+	CCameraCinematic* pCinematicCamera;
+	CCinematic** ppCinematicObjB_B;
 	int activeCinematicCount;
-	struct CCinematic* pCurCinematic;
-	struct CCinematic* pCinematic;
+	CCinematic* pCurCinematic;
+	CCinematic* pCinematic;
 	int field_0x20;
 	int field_0x24;
 	CCinematic* field_0x28;
