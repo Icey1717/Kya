@@ -91,8 +91,8 @@ void edDListLoadMatrix(edF32MATRIX4* m0);
 
 void edDListUseMaterial(struct edDList_material* pMaterialInfo);
 
-void edDListAlphaTestAndZTest(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7,
-	ulong param_8);
+void edDListAlphaTestAndZTest(ulong param_1, ulong param_2, ulong param_3, ulong param_4, ulong param_5, ulong param_6, ulong param_7, ulong param_8);
+void edDListAlphaBlend(uint a, uint b, uint c, uint d, uint fix);
 
 struct ed_g2d_bitmap* edDListGetG2DBitmap(struct ed_g2d_material* pMAT, int offset, bool* bHasPalette, struct ed_g2d_bitmap** pOutAddr);
 
@@ -119,6 +119,8 @@ void edDListEnd(void);
 void edDListPatchableReset(DisplayListInternal* pList, uint param_2, uint param_3, uint param_4);
 
 void edDListLoadIdentity(void);
+
+void edDlistSetUseUV(int newUseUV);
 
 DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList);
 DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer);

@@ -112,6 +112,10 @@ public:
 	bool IsEventActive();
 	void SetBehaviourState(int newState);
 
+	void DrawButtonPromptA();
+
+	NativSubObjA* GetActiveSubObjA();
+
 	uint field_0x8;
 	int field_0xc;
 
@@ -148,7 +152,7 @@ public:
 
 	float field_0x16d0;
 	float field_0x16d4;
-	float field_0x16d8;
+	float promptAlpha;
 };
 
 class CTakePutTrajectoryParam

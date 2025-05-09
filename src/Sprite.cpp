@@ -70,14 +70,66 @@ void CSprite::Draw(bool bUpdateMaterial)
 	return;
 }
 
-void CSprite::Draw(uint drawFlag, float param_2, float param_3, float param_4)
+void CSprite::Draw(float param_2, float param_3, float param_4, uint drawFlags)
 {
 	IMPLEMENTATION_GUARD();
 }
 
-void CSprite::Draw(uint drawFlag, float param_2, float param_3, float param_4, float param_5)
+void CSprite::Draw(float ratio, float x1, float y1, float param_4, uint drawFlags)
 {
-	IMPLEMENTATION_GUARD();
+	ushort uVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+
+	if ((drawFlags & 0x4000) == 0) {
+		uVar1 = this->iWidth;
+	}
+	else {
+		uVar1 = this->iHeight;
+	}
+
+	fVar4 = ratio * (float)(uint)uVar1;
+	if ((drawFlags & 0x4000) == 0) {
+		uVar1 = this->iHeight;
+	}
+	else {
+		uVar1 = this->iWidth;
+	}
+
+	fVar2 = x1 * (float)(uint)uVar1;
+	if ((drawFlags & 2) == 0) {
+		if ((drawFlags & 4) == 0) {
+			fVar3 = y1 + fVar4;
+		}
+		else {
+			fVar3 = y1;
+			y1 = y1 - fVar4;
+		}
+	}
+	else {
+		y1 = y1 - fVar4 / 2.0;
+		fVar3 = y1 + fVar4;
+	}
+
+	if ((drawFlags & 0x10) == 0) {
+		if ((drawFlags & 0x20) == 0) {
+			fVar2 = param_4 + fVar2;
+			fVar4 = param_4;
+		}
+		else {
+			fVar4 = param_4 - fVar2;
+			fVar2 = param_4;
+		}
+	}
+	else {
+		fVar4 = param_4 - fVar2 / 2.0;
+		fVar2 = fVar4 + fVar2;
+	}
+
+	DrawXYXY(drawFlags, ratio, y1, fVar4, fVar3, fVar2);
+
+	return;
 }
 
 edF32VECTOR2 edF32VECTOR2_00448cd8 = { -0.5f, -0.5f };
@@ -271,6 +323,42 @@ void CSprite::Remove()
 	return;
 }
 
+void FUN_0038c6f0(edF32VECTOR2* v0, edF32VECTOR2* v1, int param_3)
+{
+	float local_8;
+	float local_4;
+
+	local_8 = v1->x;
+	local_4 = v1->y;
+
+	if (param_3 != 0) {
+		do {
+			if (local_8 == 0.0f) {
+				if (local_4 == 1.0f) {
+					local_4 = 0.0f;
+				}
+				else {
+					local_8 = 1.0f;
+				}
+			}
+			else {
+				if (local_4 == 0.0f) {
+					local_4 = 1.0f;
+				}
+				else {
+					local_8 = 0.0f;
+				}
+			}
+			param_3 = param_3 + -1;
+		} while (param_3 != 0);
+	}
+
+	v0->x = local_8;
+	v0->y = local_4;
+
+	return;
+}
+
 void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_5, float param_6, float param_7)
 {
 	uint uVar1;
@@ -284,14 +372,10 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 	float y;
 	float x;
 	float y_00;
-	float local_20;
-	float local_1c;
-	float local_18;
-	float local_14;
-	float local_10;
-	float local_c;
-	float local_8;
-	float local_4;
+	edF32VECTOR2 local_20;
+	edF32VECTOR2 local_18;
+	edF32VECTOR2 local_10;
+	edF32VECTOR2 local_8;
 
 	if (param_4 == param_6) {
 		param_6 = param_4 + (float)(uint)this->iWidth;
@@ -304,36 +388,40 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 	edDListUseMaterial(&this->materialInfo);
 	edDListLoadIdentity();
 
-	local_c = this->texCoordB.y;
-	local_4 = this->texCoordA.y;
+	local_10.y = this->texCoordB.y;
+	local_8.y = this->texCoordA.y;
 	if ((this->flags & 0x2000) != 0) {
-		local_c = this->texCoordA.y;
-		local_4 = this->texCoordB.y;
+		local_10.y = this->texCoordA.y;
+		local_8.y = this->texCoordB.y;
 	}
 
-	local_10 = this->texCoordB.x;
-	local_8 = this->texCoordA.x;
+	local_10.x = this->texCoordB.x;
+	local_8.x = this->texCoordA.x;
 	if ((drawFlag & 0x1000) != 0) {
-		local_10 = this->texCoordA.x;
-		local_8 = this->texCoordB.x;
+		local_10.x = this->texCoordA.x;
+		local_8.x = this->texCoordB.x;
 	}
 
-	local_18 = local_10;
-	local_14 = local_4;
-	local_20 = local_8;
-	local_1c = local_c;
+	local_18.x = local_10.x;
+	local_18.y = local_8.y;
+
+	local_20.x = local_8.x;
+	local_20.y = local_10.y;
+
 	if ((drawFlag & 0xc000) != 0) {
-		IMPLEMENTATION_GUARD(
-			iVar3 = 2;
+		iVar3 = 2;
 		if ((drawFlag & 0x8000) == 0) {
 			iVar3 = 0;
 		}
+
 		iVar3 = (uint)((drawFlag & 0x4000) != 0) + iVar3;
+
 		FUN_0038c6f0(&local_8, &local_8, iVar3);
 		FUN_0038c6f0(&local_10, &local_10, iVar3);
 		FUN_0038c6f0(&local_18, &local_18, iVar3);
-		FUN_0038c6f0(&local_20, &local_20, iVar3);)
+		FUN_0038c6f0(&local_20, &local_20, iVar3);
 	}
+
 	if ((drawFlag & 0x3c0) != 0) {
 		fVar4 = param_3 * 3.0f;
 		x = param_4 + fVar4;
@@ -358,13 +446,13 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 		edDListColor4u8(0, 0, 0, 0x80);
 		iVar3 = 4;
 		edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 4);
-		edDListTexCoo2f(local_8, local_4);
+		edDListTexCoo2f(local_8.x, local_8.y);
 		edDListVertex4f(x, y_00, 0.0f, iVar3);
-		edDListTexCoo2f(local_18, local_14);
+		edDListTexCoo2f(local_18.x, local_18.y);
 		edDListVertex4f(fVar5, y_00, 0.0f, iVar3);
-		edDListTexCoo2f(local_20, local_1c);
+		edDListTexCoo2f(local_20.x, local_20.y);
 		edDListVertex4f(x, y, 0.0f, iVar3);
-		edDListTexCoo2f(local_10, local_c);
+		edDListTexCoo2f(local_10.x, local_10.y);
 		edDListVertex4f(fVar5, y, 0.0f, iVar3);
 		edDListEnd();
 	}
@@ -416,13 +504,13 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 	if (uVar1 == 0) {
 		iVar3 = 4;
 		edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 4);
-		edDListTexCoo2f(local_8, local_4);
+		edDListTexCoo2f(local_8.x, local_8.y);
 		edDListVertex4f(param_4, param_5, 0.0f, iVar3);
-		edDListTexCoo2f(local_18, local_14);
+		edDListTexCoo2f(local_18.x, local_18.y);
 		edDListVertex4f(param_6, param_5, 0.0f, iVar3);
-		edDListTexCoo2f(local_20, local_1c);
+		edDListTexCoo2f(local_20.x, local_20.y);
 		edDListVertex4f(param_4, param_7, 0.0f, iVar3);
-		edDListTexCoo2f(local_10, local_c);
+		edDListTexCoo2f(local_10.x, local_10.y);
 		edDListVertex4f(param_6, param_7, 0.0f, iVar3);
 		edDListEnd();
 	}
@@ -430,18 +518,18 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 		if (uVar1 == 0x20000) {
 			iVar3 = 4;
 			edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 8);
-			edDListTexCoo2f(local_8, local_4);
+			edDListTexCoo2f(local_8.x, local_8.y);
 			edDListVertex4f(param_4, param_5, 0.0f, iVar3);
-			edDListTexCoo2f(local_18, local_14);
+			edDListTexCoo2f(local_18.x, local_18.y);
 			edDListVertex4f(param_6, param_5, 0.0f, iVar3);
-			edDListTexCoo2f(local_20, local_1c);
+			edDListTexCoo2f(local_20.x, local_20.y);
 			fVar4 = (param_5 + param_7) / 2.0f;
 			edDListVertex4f(param_4, fVar4, 0.0f, iVar3);
-			edDListTexCoo2f(local_10, local_c);
+			edDListTexCoo2f(local_10.x, local_10.y);
 			edDListVertex4f(param_6, fVar4, 0.0f, iVar3);
-			edDListTexCoo2f(local_8, local_4);
+			edDListTexCoo2f(local_8.x, local_8.y);
 			edDListVertex4f(param_4, param_7, 0.0f, iVar3);
-			edDListTexCoo2f(local_18, local_14);
+			edDListTexCoo2f(local_18.x, local_18.y);
 			edDListVertex4f(param_6, param_7, 0.0f, iVar3);
 			edDListEnd();
 		}
@@ -449,47 +537,47 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 			if (uVar1 == 0x10000) {
 				iVar3 = 4;
 				edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 6);
-				edDListTexCoo2f(local_8, local_4);
+				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_4, param_5, 0.0f, iVar3);
-				edDListTexCoo2f(local_20, local_1c);
+				edDListTexCoo2f(local_20.x, local_20.y);
 				edDListVertex4f(param_4, param_7, 0.0f, iVar3);
-				edDListTexCoo2f(local_18, local_14);
+				edDListTexCoo2f(local_18.x, local_18.y);
 				fVar4 = (param_4 + param_6) / 2.0f;
 				edDListVertex4f(fVar4, param_5, 0.0f, iVar3);
-				edDListTexCoo2f(local_10, local_c);
+				edDListTexCoo2f(local_10.x, local_10.y);
 				edDListVertex4f(fVar4, param_7, 0.0f, iVar3);
-				edDListTexCoo2f(local_8, local_4);
+				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_6, param_5, 0.0f, iVar3);
-				edDListTexCoo2f(local_20, local_1c);
+				edDListTexCoo2f(local_20.x, local_20.y);
 				edDListVertex4f(param_6, param_7, 0.0f, iVar3);
 				edDListEnd();
 			}
 			else {
 				iVar3 = 4;
 				edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_TRIANGLE_LIST, 0xb);
-				edDListTexCoo2f(local_8, local_4);
+				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_4, param_5, 0.0f, iVar3);
-				edDListTexCoo2f(local_20, local_1c);
+				edDListTexCoo2f(local_20.x, local_20.y);
 				fVar4 = (param_5 + param_7) / 2.0f;
 				edDListVertex4f(param_4, fVar4, 0.0f, iVar3);
-				edDListTexCoo2f(local_18, local_14);
+				edDListTexCoo2f(local_18.x, local_18.y);
 				fVar5 = (param_4 + param_6) / 2.0f;
 				edDListVertex4f(fVar5, param_5, 0.0f, iVar3);
-				edDListTexCoo2f(local_10, local_c);
+				edDListTexCoo2f(local_10.x, local_10.y);
 				edDListVertex4f(fVar5, fVar4, 0.0f, iVar3);
-				edDListTexCoo2f(local_8, local_4);
+				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_6, param_5, 0.0f, iVar3);
-				edDListTexCoo2f(local_20, local_1c);
+				edDListTexCoo2f(local_20.x, local_20.y);
 				edDListVertex4f(param_6, fVar4, 0.0f, iVar3);
-				edDListTexCoo2f(local_8, local_4);
+				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_6, param_7, 0.0f, iVar3);
-				edDListTexCoo2f(local_10, local_c);
+				edDListTexCoo2f(local_10.x, local_10.y);
 				edDListVertex4f(fVar5, fVar4, 0.0f, iVar3);
-				edDListTexCoo2f(local_18, local_14);
+				edDListTexCoo2f(local_18.x, local_18.y);
 				edDListVertex4f(fVar5, param_7, 0.0f, iVar3);
-				edDListTexCoo2f(local_20, local_1c);
+				edDListTexCoo2f(local_20.x, local_20.y);
 				edDListVertex4f(param_4, fVar4, 0.0f, iVar3);
-				edDListTexCoo2f(local_8, local_4);
+				edDListTexCoo2f(local_8.x, local_8.y);
 				edDListVertex4f(param_4, param_7, 0.0f, iVar3);
 				edDListEnd();
 			}

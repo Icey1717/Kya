@@ -153,6 +153,8 @@ public:
 
 	void FUN_001b0860(int param_2);
 
+	static void DrawRectangleBorder(float x, float y, float param_3, float param_4, float param_5, float param_6, uint colorA, uint colorB, long bAlphaBlend);
+
 	int currentAreaIndex;
 	int totalAreaCount;
 	byte field_0xc;

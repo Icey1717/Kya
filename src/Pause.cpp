@@ -467,6 +467,162 @@ void CPauseManager::Level_ManagePaused()
 	return;
 }
 
+struct RectVertex
+{
+	float x;
+	float y;
+	float z;
+	uint field_0xc;
+	uint color;
+	float u;
+	float v;
+};
+
+int gRectangleIndices[4] = { 7, 5, 6, 4 };
+int gRectangleBorderIndices[10] = { 4, 0, 5, 1, 7, 3, 6, 2, 4, 0 };
+
+void CPauseManager::DrawRectangleBorder(float tlx, float tly, float param_3, float param_4, float borderWidth, float borderHeight, uint color, uint borderColor, long bAlphaBlend)
+{
+	uint vtxSkip;
+	int* pCurrentIndex;
+	int iVar1;
+	int aIndicesB[10];
+	int aIndicesA[4];
+	RectVertex aVertices[8];
+	uint curColor;
+	int curIndex;
+
+	if (param_3 <= borderWidth * 2.0f) {
+		borderWidth = param_3 * 0.5f;
+	}
+	if (param_4 <= borderHeight * 2.0f) {
+		borderHeight = param_4 * 0.5f;
+	}
+	edDListUseMaterial((edDList_material*)0x0);
+	edDListLoadIdentity();
+	aVertices[0].z = 0.0f;
+	aVertices[0].field_0xc = 0;
+	aVertices[0].u = 0.0f;
+	aVertices[0].v = 0.0f;
+	aVertices[0].x = tlx - param_3 * 0.5f;
+
+	aVertices[1].z = 0.0f;
+	aVertices[1].field_0xc = 0;
+	aVertices[1].u = 1.0f;
+	aVertices[1].v = 0.0f;
+
+	aVertices[2].z = 0.0f;
+	aVertices[2].field_0xc = 0;
+	aVertices[2].u = 0.0f;
+
+	aVertices[1].x = tlx + param_3 * 0.5f;
+	aVertices[2].v = 1.0f;
+	aVertices[3].z = 0.0f;
+	aVertices[3].field_0xc = 0;
+	aVertices[3].u = 1.0f;
+	aVertices[4].x = borderWidth + aVertices[0].x;
+	aVertices[3].v = 1.0f;
+	aVertices[4].z = 0.0f;
+	aVertices[4].field_0xc = 0;
+	aVertices[4].u = 0.25f;
+	aVertices[4].v = 0.25f;
+	aVertices[5].x = aVertices[1].x - borderWidth;
+	aVertices[5].z = 0.0f;
+	aVertices[5].field_0xc = 0;
+	aVertices[5].u = 0.75f;
+	aVertices[5].v = 0.25f;
+	aVertices[6].u = 0.25f;
+	aVertices[0].y = tly - param_4 * 0.5f;
+	aVertices[6].z = 0.0f;
+	aVertices[6].field_0xc = 0;
+	aVertices[6].v = 0.75f;
+	aVertices[7].z = 0.0f;
+	aVertices[2].y = tly + param_4 * 0.5f;
+	aVertices[7].field_0xc = 0;
+	aVertices[7].u = 0.75f;
+	aVertices[7].v = 0.75f;
+	aVertices[4].y = borderHeight + aVertices[0].y;
+	aVertices[6].y = aVertices[2].y - borderHeight;
+
+	aIndicesA[0] = gRectangleIndices[0];
+	aIndicesA[1] = gRectangleIndices[1];
+	aIndicesA[2] = gRectangleIndices[2];
+	aIndicesA[3] = gRectangleIndices[3];
+
+	aIndicesB[0] = gRectangleBorderIndices[0];
+	aIndicesB[1] = gRectangleBorderIndices[1];
+	aIndicesB[2] = gRectangleBorderIndices[2];
+	aIndicesB[3] = gRectangleBorderIndices[3];
+	aIndicesB[4] = gRectangleBorderIndices[4];
+	aIndicesB[5] = gRectangleBorderIndices[5];
+	aIndicesB[6] = gRectangleBorderIndices[6];
+	aIndicesB[7] = gRectangleBorderIndices[7];
+	aIndicesB[8] = gRectangleBorderIndices[8];
+	aIndicesB[9] = gRectangleBorderIndices[9];
+
+	aVertices[0].color = borderColor;
+	aVertices[1].y = aVertices[0].y;
+	aVertices[1].color = borderColor;
+	aVertices[2].x = aVertices[0].x;
+	aVertices[2].color = borderColor;
+	aVertices[3].x = aVertices[1].x;
+	aVertices[3].y = aVertices[2].y;
+	aVertices[3].color = borderColor;
+	aVertices[4].color = color;
+	aVertices[5].y = aVertices[4].y;
+	aVertices[5].color = color;
+	aVertices[6].x = aVertices[4].x;
+	aVertices[6].color = color;
+	aVertices[7].x = aVertices[5].x;
+	aVertices[7].y = aVertices[6].y;
+	aVertices[7].color = color;
+
+	edDListBlendSet(1);
+
+	if (bAlphaBlend == 0) {
+		edDListBlendFuncNormal();
+	}
+	else {
+		edDListAlphaBlend(1, 2, 0, 1, 0);
+	}
+
+	edDlistSetUseUV(1);
+
+	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	iVar1 = 0;
+	pCurrentIndex = aIndicesA;
+	do {
+		curIndex = *pCurrentIndex;
+		curColor = aVertices[curIndex].color;
+		vtxSkip = (curColor & 0xff0000) >> 0x10;
+		edDListColor4u8((byte)((curColor & 0xff0000) >> 0x10), (byte)(curColor >> 8), (byte)curColor, (byte)(curColor >> 0x18));
+		edDListTexCoo2f(aVertices[curIndex].u, aVertices[curIndex].v);
+		edDListVertex4f(aVertices[curIndex].x, aVertices[curIndex].y, aVertices[curIndex].z, vtxSkip);
+		iVar1 = iVar1 + 1;
+		pCurrentIndex = pCurrentIndex + 1;
+	} while (iVar1 < 4);
+	edDListEnd();
+	
+	edDListBegin(0.0f, 0.0f, 0.0f, 4, 10);
+	iVar1 = 0;
+	pCurrentIndex = aIndicesB;
+	do {
+		curIndex = *pCurrentIndex;
+		curColor = aVertices[curIndex].color;
+		vtxSkip = (curColor & 0xff0000) >> 0x10;
+		edDListColor4u8((byte)((curColor & 0xff0000) >> 0x10), (byte)(curColor >> 8), (byte)curColor, (byte)(curColor >> 0x18));
+		edDListTexCoo2f(aVertices[curIndex].u, aVertices[curIndex].v);
+		edDListVertex4f(aVertices[curIndex].x, aVertices[curIndex].y, aVertices[curIndex].z, vtxSkip);
+		iVar1 = iVar1 + 1;
+		pCurrentIndex = pCurrentIndex + 1;
+	} while (iVar1 < 10);
+	edDListEnd();
+
+	return;
+}
+
+
+
 void ExitLevel(int)
 {
 	bool bVar1;
@@ -498,104 +654,105 @@ int INT_00448ed0 = 0;
 int INT_00448650 = 0x3c;
 bool BOOL_00448ed4 = 0;
 
+float LevelNameRectPos_00448660 = 300.0f;
+float LevelNameRectPos_00448664 = 35.0f;
+
+float LevelNameRectPos_00448668 = 0.0f;
+float LevelNameRectPos_0044866c = -90.0f;
+
+uint levelNameRectColor = 0x407F7F7F;
+uint levelNameRectBorderColor = 0x7F7F7F7F;
+
+int GetScreenWidthSafe()
+{
+	int screenWidth = gVideoConfig.screenWidth;
+
+	if (gVideoConfig.screenWidth < 0) {
+		screenWidth = gVideoConfig.screenWidth + 1;
+	}
+
+	return screenWidth;
+}
+
+int GetScreenHeightSafe()
+{
+	int screenHeight = gVideoConfig.screenHeight;
+
+	if (gVideoConfig.screenHeight < 0) {
+		screenHeight = gVideoConfig.screenHeight + 1;
+	}
+
+	return screenHeight;
+}
+
+float FLOAT_00448670 = 0.25f;
+float FLOAT_00448674 = 0.5f;
+
+float FLOAT_00448678 = -85.0f;
+float FLOAT_0044867c = 0.0f;
+
+float FLOAT_00448680 = 85.0f;
+float FLOAT_00448684 = 0.0f;
+
+float FLOAT_00448688 = 0.0f;
+float FLOAT_0044868c = 120.0f;
+
+float FLOAT_00448690 = 0.25f;
+float FLOAT_00448694 = 0.75f;
+float FLOAT_00448698 = -135.0f;
+float FLOAT_0044869c = 0.0f;
+
+float FLOAT_004486a0 = 0.25f;
+float FLOAT_004486a4 = 0.75f;
+float FLOAT_004486a8 = 135.0f;
+float FLOAT_004486ac = 0.0f;
+
+float FLOAT_004486b0 = 320.0f;
+float FLOAT_004486b4 = 130.0f;
+
 void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 {
 	CPauseManager* pCVar1;
 	bool bShowLevelSwitchUI;
-	int iVar2;
-	int iVar3;
+	int saveSlotId;
 	Timer* pTVar4;
 
 	pCVar1 = CScene::ptable.g_PauseManager_00451688;
 
-	iVar2 = gVideoConfig.screenWidth;
-	if (gVideoConfig.screenWidth < 0) {
-		iVar2 = gVideoConfig.screenWidth + 1;
-	}
-	iVar3 = gVideoConfig.screenHeight;
-	if (gVideoConfig.screenHeight < 0) {
-		iVar3 = gVideoConfig.screenHeight + 1;
-	}
+	CPauseManager::DrawRectangleBorder((float)(GetScreenWidthSafe() >> 1) + LevelNameRectPos_00448668, (float)(GetScreenHeightSafe() >> 1) + LevelNameRectPos_0044866c,
+		LevelNameRectPos_00448660, LevelNameRectPos_00448664, 4.0f, 4.0f, levelNameRectColor, levelNameRectBorderColor, 1);
+	
+	MenuBitmaps[12].rgba[0] = 0x7f;
+	MenuBitmaps[12].rgba[1] = 0x69;
+	MenuBitmaps[12].rgba[2] = 0x5f;
+	MenuBitmaps[12].rgba[3] = 0x4d;
+	
+	MenuBitmaps[12].Draw(FLOAT_00448670, FLOAT_00448674, (float)(GetScreenWidthSafe() >> 1) + FLOAT_00448678, (float)(GetScreenHeightSafe() >> 1) + FLOAT_0044867c, 0xc012);
+	MenuBitmaps[12].Draw(FLOAT_00448670, FLOAT_00448674, (float)(GetScreenWidthSafe() >> 1) + FLOAT_00448680, (float)(GetScreenHeightSafe() >> 1) + FLOAT_00448684, 0x4012);
 
-	//DrawRectangle_001afe20((float)(iVar2 >> 1) + DAT_00448668, (float)(iVar3 >> 1) + DAT_0044866c, FLOAT_00448660, FLOAT_00448664, 4.0, 4.0 , DAT_00448654, DAT_00448658, 1);
-	//
-	//MenuBitmaps[12].color[0] = 0x7f;
-	//MenuBitmaps[12].color[1] = 0x69;
-	//MenuBitmaps[12].color[2] = 0x5f;
-	//MenuBitmaps[12].color[3] = 0x4d;
-	//
-	//iVar2 = gVideoConfig.screenWidth;
-	//if (gVideoConfig.screenWidth < 0) {
-	//	iVar2 = gVideoConfig.screenWidth + 1;
-	//}
-	//iVar3 = gVideoConfig.screenHeight;
-	//if (gVideoConfig.screenHeight < 0) {
-	//	iVar3 = gVideoConfig.screenHeight + 1;
-	//}
-	//CSprite::Draw(FLOAT_00448670, FLOAT_00448674, (float)(iVar2 >> 1) + DAT_00448678, (float)(iVar3 >> 1) + DAT_0044867c,
-	//	MenuBitmaps + 0xc, 0xc012);
-	//
-	//iVar2 = gVideoConfig.screenWidth;
-	//if (gVideoConfig.screenWidth < 0) {
-	//	iVar2 = gVideoConfig.screenWidth + 1;
-	//}
-	//iVar3 = gVideoConfig.screenHeight;
-	//if (gVideoConfig.screenHeight < 0) {
-	//	iVar3 = gVideoConfig.screenHeight + 1;
-	//}
-	//CSprite::Draw(FLOAT_00448670, FLOAT_00448674, (float)(iVar2 >> 1) + DAT_00448680, (float)(iVar3 >> 1) + DAT_00448684,
-	//	MenuBitmaps + 0xc, 0x4012);
-	//MenuBitmaps[12].color[0] = 0x7f;
-	//MenuBitmaps[12].color[1] = 0x69;
-	//MenuBitmaps[12].color[2] = 0x5f;
-	//MenuBitmaps[12].color[3] = 0x4d;
-	//
-	//iVar2 = gVideoConfig.screenWidth;
-	//if (gVideoConfig.screenWidth < 0) {
-	//	iVar2 = gVideoConfig.screenWidth + 1;
-	//}
-	//iVar3 = gVideoConfig.screenHeight;
-	//if (gVideoConfig.screenHeight < 0) {
-	//	iVar3 = gVideoConfig.screenHeight + 1;
-	//}
-	//CSprite::Draw(DAT_00448690, DAT_00448694, DAT_00448698 + (float)(iVar2 >> 1) + DAT_00448688,
-	//	DAT_0044869c + (float)(iVar3 >> 1) + DAT_0044868c, MenuBitmaps + 0xc, 0xc012);
-	//MenuBitmaps[12].color[0] = 0x7f;
-	//MenuBitmaps[12].color[1] = 0x69;
-	//MenuBitmaps[12].color[2] = 0x5f;
-	//MenuBitmaps[12].color[3] = 0x4d;
-	//
-	//iVar2 = gVideoConfig.screenWidth;
-	//if (gVideoConfig.screenWidth < 0) {
-	//	iVar2 = gVideoConfig.screenWidth + 1;
-	//}
-	//iVar3 = gVideoConfig.screenHeight;
-	//if (gVideoConfig.screenHeight < 0) {
-	//	iVar3 = gVideoConfig.screenHeight + 1;
-	//}
-	//CSprite::Draw(DAT_004486a0, DAT_004486a4, DAT_004486a8 + (float)(iVar2 >> 1) + DAT_00448688,
-	//	DAT_004486ac + (float)(iVar3 >> 1) + DAT_0044868c, MenuBitmaps + 0xc, 0x4012);
-	//iVar2 = gVideoConfig.screenWidth;
-	//if (gVideoConfig.screenWidth < 0) {
-	//	iVar2 = gVideoConfig.screenWidth + 1;
-	//}
-	//iVar3 = gVideoConfig.screenHeight;
-	//if (gVideoConfig.screenHeight < 0) {
-	//	iVar3 = gVideoConfig.screenHeight + 1;
-	//}
-	//
-	//DrawRectangle_001afe20((float)(iVar2 >> 1) + DAT_00448688, (float)(iVar3 >> 1) + DAT_0044868c, DAT_004486b0, DAT_004486b4, 4.0, 4.0, DAT_00448654, (uint)&DAT_007f7f7f, 1);
+	MenuBitmaps[12].rgba[0] = 0x7f;
+	MenuBitmaps[12].rgba[1] = 0x69;
+	MenuBitmaps[12].rgba[2] = 0x5f;
+	MenuBitmaps[12].rgba[3] = 0x4d;
+	
+	MenuBitmaps[12].Draw(FLOAT_00448690, FLOAT_00448694, FLOAT_00448698 + (float)(GetScreenWidthSafe() >> 1) + FLOAT_00448688, FLOAT_0044869c + (float)(GetScreenHeightSafe() >> 1) + FLOAT_0044868c, 0xc012);
+	
+	MenuBitmaps[12].rgba[0] = 0x7f;
+	MenuBitmaps[12].rgba[1] = 0x69;
+	MenuBitmaps[12].rgba[2] = 0x5f;
+	MenuBitmaps[12].rgba[3] = 0x4d;
+	
+	MenuBitmaps[12].Draw(FLOAT_004486a0, FLOAT_004486a4, FLOAT_004486a8 + (float)(GetScreenWidthSafe() >> 1) + FLOAT_00448688, FLOAT_004486ac + (float)(GetScreenHeightSafe() >> 1) + FLOAT_0044868c, 0x4012);
+	
+	CPauseManager::DrawRectangleBorder((float)(GetScreenWidthSafe() >> 1) + FLOAT_00448688, (float)(GetScreenHeightSafe() >> 1) + FLOAT_0044868c,
+		FLOAT_004486b0, FLOAT_004486b4, 4.0f, 4.0f, levelNameRectColor, 0x007f7f7f, 1);
+
 	pPauseMenu->draw_title(CLevelScheduler::gThis->aLevelInfo[CLevelScheduler::gThis->currentLevelID].titleMsgHash, -0x5a);
 	pPauseMenu->set_vertical_spacing(0);
 
 	if (BOOL_00448ed4 == false) {
-		iVar2 = gVideoConfig.screenHeight;
-		if (gVideoConfig.screenHeight < 0) {
-			iVar2 = gVideoConfig.screenHeight + 1;
-		}
-
 		BOOL_00448ed4 = true;
-		INT_00448ed0 = (iVar2 >> 1) + INT_00448650;
+		INT_00448ed0 = (GetScreenWidthSafe() >> 1) + INT_00448650;
 	}
 	pPauseMenu->set_vertical_position(INT_00448ed0);
 
@@ -609,12 +766,12 @@ void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 	pPauseMenu->draw_action(0x31a1c100c180c0c, ResumeGame, 0, -2);
 	pPauseMenu->set_vertical_spacing(0x18);
 
-	iVar2 = gSaveManagement.slotID_0x28;
+	saveSlotId = gSaveManagement.slotID_0x28;
 	if (gSaveManagement.slotID_0x28 == -1) {
-		iVar2 = 0;
+		saveSlotId = 0;
 	}
-	pPauseMenu->draw_option_type_page(0, 0x5e470f181a0c1217, PM_SaveMenu, iVar2, 0);
-	pPauseMenu->draw_option_type_page(0, 0x49460f181a0c0d19, PM_LoadMenu, iVar2, 0);
+	pPauseMenu->draw_option_type_page(0, 0x5e470f181a0c1217, PM_SaveMenu, saveSlotId, 0);
+	pPauseMenu->draw_option_type_page(0, 0x49460f181a0c0d19, PM_LoadMenu, saveSlotId, 0);
 
 	pPauseMenu->draw_option_type_page(0, 0x40a00065f4f5054, PM_OptionsMenu, 0, 0);
 
@@ -766,14 +923,14 @@ void ClearDisplay(void)
 		edDListUseMaterial(&MenuBitmaps[0xb].materialInfo);
 		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
 		uVar4 = 4;
-		edDListBegin(0.0, 0.0, 0.0, 4, 4);
-		edDListTexCoo2f(0.0, 0.0);
+		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		edDListTexCoo2f(0.0f, 0.0f);
 		edDListVertex4f(local_20.x, local_20.y, local_20.z, uVar4);
-		edDListTexCoo2f(1.0, 0.0);
+		edDListTexCoo2f(1.0f, 0.0f);
 		edDListVertex4f(local_30.x, local_20.y, local_20.z, uVar4);
-		edDListTexCoo2f(0.0, 1.0);
+		edDListTexCoo2f(0.0f, 1.0f);
 		edDListVertex4f(local_20.x, local_30.y, local_20.z, uVar4);
-		edDListTexCoo2f(1.0, 1.0);
+		edDListTexCoo2f(1.0f, 1.0f);
 		edDListVertex4f(local_30.x, local_30.y, local_20.z, uVar4);
 		edDListEnd();
 
@@ -1981,7 +2138,7 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 					uVar5 = 4;
 					edDListBegin(0.0f, 0.0f, 0.0f, PRIM_TYPE_TRIANGLE_LIST, iVar7 * 2);
 					x = (this->drawOffsets).x;
-					fVar14 = 0.0;
+					fVar14 = 0.0f;
 					iVar6 = iVar7;
 					y = fVar11;
 					fVar17 = fVar16;

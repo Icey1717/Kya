@@ -9,6 +9,9 @@
 #include "FrontEndDisp.h"
 #include "LevelScheduleManager.h"
 #include "kya.h"
+#include "Rendering/edCTextStyle.h"
+#include "Pause.h"
+#include "Rendering/DisplayList.h"
 
 void CActorNativ::Create(ByteCode* pByteCode)
 {
@@ -1940,20 +1943,14 @@ void CActorNativ::State_0x21(CBehaviourNativSeller* pBehaviour)
 
 void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 {
-	int activeSubObjIndex;
 	s_fighter_combo* pCombo;
 	bool bVar3;
 	NativSubObjA* pSubObjA;
 	CActorHero* pHero;
 
 	pHero = CActorHero::_gThis;
-	activeSubObjIndex = (pBehaviour->subObjC).activeSubObjIndex;
-	if (activeSubObjIndex == -1) {
-		pSubObjA = (NativSubObjA*)0x0;
-	}
-	else {
-		pSubObjA = (pBehaviour->subObjC).aSubObjsA + activeSubObjIndex;
-	}
+
+	pSubObjA = pBehaviour->GetActiveSubObjA();
 
 	if (((pBehaviour->field_0x16ac != 2) &&
 		(bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
@@ -1990,19 +1987,12 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 
 void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
 {
-	int iVar1;
 	s_fighter_combo* pCombo;
 	NativSubObjA* pSubObjA;
 	CActorHero* pHero;
 
 	pHero = CActorHero::_gThis;
-	iVar1 = (pBehaviour->subObjC).activeSubObjIndex;
-	if (iVar1 == -1) {
-		pSubObjA = (NativSubObjA*)0x0;
-	}
-	else {
-		pSubObjA = (pBehaviour->subObjC).aSubObjsA + iVar1;
-	}
+	pSubObjA = pBehaviour->GetActiveSubObjA();
 
 	if (CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState) == false) {
 		pBehaviour->FUN_003ebd90();
@@ -3127,7 +3117,7 @@ void CBehaviourNativSeller::Init(CActor* pOwner)
 
 	this->field_0x16d0 = 0.0f;
 	this->field_0x16d4 = 0.0f;
-	this->field_0x16d8 = 0.0f;
+	this->promptAlpha = 0.0f;
 
 	//this->field_0x16b8 = 0;
 	this->field_0x16a4 = 0;
@@ -3269,7 +3259,7 @@ void CBehaviourNativSeller::FUN_003f2150()
 
 	this->field_0x16d0 = this->field_0x16d0 + (this->field_0x16c4 - this->field_0x16d0) * 0.15f;
 	this->field_0x16d4 = this->field_0x16d4 + (this->field_0x16c8 - this->field_0x16d4) * 0.05f;
-	this->field_0x16d8 = this->field_0x16d8 + (this->field_0x16cc - this->field_0x16d8) * 0.04f;
+	this->promptAlpha = this->promptAlpha + (this->field_0x16cc - this->promptAlpha) * 0.04f;
 
 	this->field_0x16c0 = this->field_0x16c0 + GetTimer()->cutsceneDeltaTime;
 	iVar6 = this->currentBehaviourState;
@@ -3374,7 +3364,7 @@ void CBehaviourNativSeller::FUN_003f2150()
 
 	this->addOn.Manage();
 
-	if (((this->field_0x16d0 != 0.0f) || (this->field_0x16d4 != 0.0f)) || (this->field_0x16d8 != 0.0f)) {
+	if (((this->field_0x16d0 != 0.0f) || (this->field_0x16d4 != 0.0f)) || (this->promptAlpha != 0.0f)) {
 		if (this->field_0x16b4 == 0) {
 			DrawButtonPromptA();
 		}
@@ -3412,14 +3402,7 @@ void CBehaviourNativSeller::FUN_003ed150()
 		CActorHero::_gThis->_UpdateComboSituation();
 
 		if (this->field_0x16b4 == 0) {
-			iVar4 = (this->subObjC).activeSubObjIndex;
-
-			if (iVar4 == -1) {
-				pNVar3 = (NativSubObjA*)0x0;
-			}
-			else {
-				pNVar3 = (this->subObjC).aSubObjsA + iVar4;
-			}
+			pNVar3 = GetActiveSubObjA();
 
 			iVar4 = 0;
 			if (pNVar3 != (NativSubObjA*)0x0) {
@@ -3730,6 +3713,87 @@ void CBehaviourNativSeller::SetBehaviourState(int newState)
 	}
 
 	return;
+}
+
+void CBehaviourNativSeller::DrawButtonPromptA()
+{
+	int iVar1;
+	bool bVar2;
+	edCTextStyle* pPrevTextStyle;
+	int funcIndex;
+	NativSubObjA* pNVar4;
+	int iVar5;
+	long lVar6;
+	float screenHeight;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	edCTextStyle textStyle;
+	float local_4;
+
+	pNVar4 = GetActiveSubObjA();
+
+	local_4 = (float)gVideoConfig.screenWidth * 0.13f;
+	textStyle.Reset();
+	textStyle.SetFont(BootDataFont, false);
+	textStyle.SetHorizontalAlignment(2);
+	textStyle.SetVerticalAlignment(8);
+	textStyle.rgbaColour = (int)(this->promptAlpha * 255.0f) & 0xffU | 0xffffff00;
+	textStyle.SetShadow(0x100);
+
+	pPrevTextStyle = edTextStyleSetCurrent(&textStyle);
+	lVar6 = 0;
+	if ((pNVar4 != (NativSubObjA*)0x0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+		fVar8 = this->field_0x16d0;
+		screenHeight = (float)gVideoConfig.screenHeight;
+		fVar9 = this->field_0x16d4;
+		fVar10 = fVar8 / 2.0f - (float)gVideoConfig.screenWidth * 0.02f;
+		bVar2 = GuiDList_BeginCurrent();
+		if (bVar2 != false) {
+			CPauseManager::DrawRectangleBorder(fVar10, screenHeight * 1.04f - fVar9 / 2.0f, fVar8, fVar9, (float)gVideoConfig.screenWidth * 0.01f, (float)gVideoConfig.screenHeight * 0.01f, 0x40101030, 0, 0);
+			GuiDList_EndCurrent();
+		}
+
+		CActorHero::_gThis->_UpdateComboSituation();
+
+		iVar5 = 0;
+		if (0 < pNVar4->nbSubObjB) {
+			do {
+				IMPLEMENTATION_GUARD_LOG(
+				NativSubObjB* pSubObjB = pNVar4->aSubObjsB + iVar5;
+
+				funcIndex = FUN_003ecad0(iVar5, lVar6);
+				FUN_003ec660(funcIndex);
+				FUN_003ed440(pSubObjB, &local_4, funcIndex);
+
+				if (funcIndex == 4) {
+					lVar6 = 1;
+				}
+
+				FUN_003ed820(pSubObjB, &local_4, funcIndex);
+				iVar5 = iVar5 + 1;
+				local_4 = local_4 + (float)gVideoConfig.screenWidth * 0.05f;)
+			} while (iVar5 < pNVar4->nbSubObjB);
+		}
+	}
+
+	edTextStyleSetCurrent(pPrevTextStyle);
+
+	return;
+}
+
+NativSubObjA* CBehaviourNativSeller::GetActiveSubObjA()
+{
+	NativSubObjA* pSubObjA;
+	const int index = (this->subObjC).activeSubObjIndex;
+	if (index == -1) {
+		pSubObjA = (NativSubObjA*)0x0;
+	}
+	else {
+		pSubObjA = (this->subObjC).aSubObjsA + index;
+	}
+
+	return pSubObjA;
 }
 
 NativSubObjB::NativSubObjB()

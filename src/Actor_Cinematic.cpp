@@ -375,7 +375,28 @@ void CBehaviourCinematic::Init(CActor* pOwner)
 
 void CBehaviourCinematic::PauseChange(int bPaused)
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	long lVar2;
+	IMPLEMENTATION_GUARD_AUDIO(
+	SoundStructAInternal* soundInternal;
+
+	soundInternal = &(this->cinActor).soundInternalStruct;
+	bVar1 = edSoundInstanceIsAlive(soundInternal);
+	if (bVar1 != false) {
+		if (bPaused == 0) {
+			if (((NoAudio == 0) && (bVar1 = edSoundInstanceIsAlive(soundInternal), bVar1 != false)) &&
+				(lVar2 = (long)(int)(this->cinActor).soundInternalStruct.SoundStructPtr, lVar2 != 0)) {
+				FUN_001884d0(lVar2, (this->cinActor).soundInternalStruct.SoundID, 0);
+			}
+		}
+		else {
+			if (((NoAudio == 0) && (bVar1 = edSoundInstanceIsAlive(soundInternal), bVar1 != false)) &&
+				(lVar2 = (long)(int)(this->cinActor).soundInternalStruct.SoundStructPtr, lVar2 != 0)) {
+				FUN_001884d0(lVar2, (this->cinActor).soundInternalStruct.SoundID, 1);
+			}
+		}
+	})
+	return;
 }
 
 void CBehaviourCinematic::Begin(CActor* pOwner, int newState, int newAnimationType)

@@ -24,8 +24,8 @@ public:
 	virtual void ClearLocalData();
 	virtual void Draw(bool bUpdateMaterial);
 	virtual void DrawXYXY(uint drawFlag, float param_3, float param_4, float param_5, float param_6, float param_7);
-	virtual void Draw(uint drawFlag, float param_2, float param_3, float param_4);
-	virtual void Draw(uint drawFlag, float param_2, float param_3, float param_4, float param_5);
+	virtual void Draw(float param_2, float param_3, float param_4, uint drawFlags);
+	virtual void Draw(float param_2, float param_3, float param_4, float param_5, uint drawFlags);
 	virtual void Validate();
 	virtual void PrepareDraw(bool bUpdateMaterial);
 	virtual void DrawSprite();

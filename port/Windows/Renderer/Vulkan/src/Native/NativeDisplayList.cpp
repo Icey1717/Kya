@@ -361,7 +361,7 @@ namespace Renderer::Native::DisplayList
 		}
 	}
 
-	static void FinalizeDraw()
+	static void FinalizeDraw(bool bEndLabel = true)
 	{
 		const int indexCount = gVertexBuffers.GetDrawBufferData().GetIndexTail() - gIndexStart;
 
@@ -382,7 +382,9 @@ namespace Renderer::Native::DisplayList
 
 		gVertexBuffers.Reset();
 
-		Renderer::Debug::EndLabel(GetCommandBuffer());
+		if (bEndLabel) {
+			Renderer::Debug::EndLabel(GetCommandBuffer());
+		}
 	}
 }
 
@@ -407,8 +409,6 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 		if (!gRecordingCommandBuffer) {
 			BeginCommandBufferRecording();
 		}
-
-		Renderer::Debug::BeginLabel(GetCommandBuffer(), "Empty binding");
 	}
 
 	gViewport.width = viewportWidth;
@@ -490,7 +490,7 @@ void Renderer::DisplayList::End2D()
 	using namespace Renderer::Native::DisplayList;
 
 	if (gNoBinding) {
-		FinalizeDraw();
+		FinalizeDraw(false);
 	}
 
 	bCalledBegin = false;
@@ -504,6 +504,10 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 
 	if (gBoundTexture) {
 		FinalizeDraw();
+	}
+	
+	if (gNoBinding && pNewTexture) {
+		Renderer::Debug::EndLabel(GetCommandBuffer());
 	}
 
 	if (!gRecordingCommandBuffer) {

@@ -114,7 +114,7 @@ byte DAT_00449660 = 0;
 bool gbForceMaterialUse = false;
 int g_Count_004495f8 = 0;
 
-int Mode_00449694 = 0;
+int edDlistUseUV = 0;
 
 _rgba ByteColor_ARRAY_0048dd40[4];
 
@@ -915,8 +915,7 @@ void edDListSetState(ulong cmdA, ulong cmdB)
 }
 
 void edDListAlphaTestAndZTest
-(ulong ate, ulong atst, ulong aref, ulong afail, ulong date, ulong datm, ulong zte,
-	ulong ztst)
+(ulong ate, ulong atst, ulong aref, ulong afail, ulong date, ulong datm, ulong zte, ulong ztst)
 {
 	edDListSetState
 	(
@@ -931,6 +930,25 @@ void edDListAlphaTestAndZTest
 			ztst & 0xffffffff	// ZTST
 		),
 		SCE_GS_TEST_1);
+
+	return;
+}
+
+void edDListAlphaBlend(uint a, uint b, uint c, uint d, uint fix)
+{
+	edDListBlendSet(1);
+
+	edDListSetState(
+		SCE_GS_SET_ALPHA(
+			a & 0xff,	// A
+			b & 0xff,	// B
+			c & 0xff,	// C
+			d & 0xff,	// D
+			fix & 0xff	// FIX
+		),
+		SCE_GS_ALPHA_1);
+
+	return;
 }
 
 void edDListBlendFuncNormal(void)
@@ -1334,7 +1352,7 @@ void edDListBegin2D(ulong mode)
 	gCurStatePKT = gCurDList->pRenderCommands;
 
 	uint primReg = gBlendMode << 6 | mode & 0xffffffff | lVar4 << 4;
-	if (Mode_00449694 == 0) {
+	if (edDlistUseUV == 0) {
 		gCurDList->pRenderCommands->cmdA = SCE_GIF_SET_TAG(
 			0,							// NLOOP (Will be updated later in edDListEnd)
 			SCE_GS_TRUE,				// EOP
@@ -1345,7 +1363,9 @@ void edDListBegin2D(ulong mode)
 		);
 	}
 	else {
+		// Enable UV instead of STQ.
 		primReg = primReg | 8;
+
 		gCurDList->pRenderCommands->cmdA = SCE_GIF_SET_TAG(
 			0,							// NLOOP (Will be updated later in edDListEnd)
 			SCE_GS_TRUE,				// EOP
@@ -2465,6 +2485,13 @@ void edDListLoadIdentity(void)
 {
 	EDDLIST_LOG(LogLevel::Verbose, "edDListLoadIdentity {}", gNbMatrix);
 	edF32Matrix4SetIdentityHard((gCurMatrix + gNbMatrix));
+	return;
+}
+
+void edDlistSetUseUV(int newUseUV)
+{
+	edDlistUseUV = newUseUV;
+
 	return;
 }
 
