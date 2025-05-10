@@ -4,6 +4,10 @@
 #include "DlistManager.h"
 #include "FileManager3D.h"
 
+#ifdef PLATFORM_WIN
+#include "displaylist.h"
+#endif
+
 char* gDefaultOrder = "XYZ";
 
 bool CFxTail::IsKindOfObject(ulong kind)
@@ -17,6 +21,8 @@ bool CFxTail::InitDlistPatchable(int)
 	int iVar2;
 	float fVar3;
 	float s;
+
+	DISPLAY_LIST_PATCH_BEGIN();
 
 	edDListLoadIdentity();
 
@@ -44,6 +50,8 @@ bool CFxTail::InitDlistPatchable(int)
 	}
 
 	edDListEnd();
+
+	DISPLAY_LIST_PATCH_END();
 
 	return true;
 }

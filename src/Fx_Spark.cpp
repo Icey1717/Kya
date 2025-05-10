@@ -4,6 +4,10 @@
 #include "edDlist.h"
 #include "FileManager3D.h"
 
+#ifdef PLATFORM_WIN
+#include "displaylist.h"
+#endif
+
 bool CFxSpark::IsKindOfObject(ulong kind)
 {
 	return (kind & 0x90000) != 0;
@@ -18,6 +22,8 @@ bool CFxSpark::InitDlistPatchable(int)
 	float x;
 	float s;
 	_rgba local_4;
+
+	DISPLAY_LIST_PATCH_BEGIN();
 
 	edDListLoadIdentity();
 
@@ -55,6 +61,8 @@ bool CFxSpark::InitDlistPatchable(int)
 	}
 
 	edDListEnd();
+
+	DISPLAY_LIST_PATCH_END();
 
 	return true;
 }

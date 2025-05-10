@@ -22,6 +22,10 @@
 #include "ActorAutonomous.h"
 #include "Vision.h"
 
+#ifdef PLATFORM_WIN
+#include "displaylist.h"
+#endif
+
 CPathFollowReader::CPathFollowReader()
 {
 	this->splinePointIndex = 0;
@@ -1740,19 +1744,22 @@ int CActor::GetNumVisualDetectionPoints()
 
 bool CActor::InitDlistPatchable(int param_2)
 {
-	uint uVar3;
-
 	if (GetBehaviour(this->curBehaviourId)->InitDlistPatchable(param_2) == false) {
+		DISPLAY_LIST_PATCH_BEGIN();
+
 		edDListLoadIdentity();
 		edDListUseMaterial((edDList_material*)0x0);
 		edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
-		uVar3 = 0;
+
+		uint vtxSkip = 0;
 		edDListColor4u8(0, 0, 0, 0);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar3);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
 		edDListEnd();
+
+		DISPLAY_LIST_PATCH_END();
 	}
 
 	return true;

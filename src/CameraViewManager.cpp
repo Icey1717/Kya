@@ -25,6 +25,10 @@
 #include "CameraFixe.h"
 #include "CameraRail.h"
 
+#ifdef PLATFORM_WIN
+#include "displaylist.h"
+#endif
+
 CCameraManager* CCameraManager::_gThis = NULL;
 CCameraManager* CCamera::_gpcam_man = NULL;
 edFCamera _gDisplayCamera = { 0 };
@@ -1939,25 +1943,29 @@ CCameraShadow::CCameraShadow(ByteCode* pByteCode)
 bool CCameraShadow::InitDlistPatchable(int)
 {
 	CGlobalDListManager* pDlistmanager;
-	uint uVar1;
-	int iVar2;
+	uint vtxSkip;
+	int curVtxIndex;
+
+	DISPLAY_LIST_PATCH_BEGIN();
 
 	edDListLoadIdentity();
 	edDListUseMaterial((edDList_material*)0x0);
 	edDListSetProperty(4, this->sceneFlags);
 	edDListBegin(0.0f, 0.0f, 0.0f, 3, 0x2ee);
-	uVar1 = 0;
+	vtxSkip = 0;
 	edDListColor4u8(0, 0, 0, 0x7f);
-	iVar2 = 0;
+	curVtxIndex = 0;
 	do {
-		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
-		iVar2 = iVar2 + 1;
-	} while (iVar2 < 0xfa);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		curVtxIndex = curVtxIndex + 1;
+	} while (curVtxIndex < 0xfa);
 
 	edDListEnd();
 	edDListSetProperty(4, 0);
+
+	DISPLAY_LIST_PATCH_END();
 
 	pDlistmanager = reinterpret_cast<CGlobalDListManager*>(CScene::GetManager(MO_GlobalDListManager));
 	pDlistmanager->SetActive(this->patchRegister, 1);

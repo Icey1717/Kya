@@ -742,6 +742,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 	PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
 	if (pTextureData->HasDescriptorSets(GetPipeline())) {
+		// Already have descriptor sets, no need to initialize them.
 		return;
 	}
 
