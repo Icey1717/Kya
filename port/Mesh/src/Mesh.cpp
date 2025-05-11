@@ -349,6 +349,8 @@ void Renderer::Kya::G3D::Cluster::ProcessStrip(ed_3d_strip* pStrip, const int st
 {
 	assert(pStrip);
 
+	assert(pStrip->meshCount > 0);
+
 	MESH_LOG(LogLevel::Info, "Renderer::Kya::G3D::Cluster::ProcessStrip Processing strip flags: 0x{:x}", pStrip->flags);
 
 	Strip& strip = strips.emplace_back();

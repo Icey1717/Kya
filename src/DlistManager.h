@@ -7,7 +7,7 @@
 
 #define IMPLEMENTATION_GUARD_DLIST_PATCH(x)
 
-struct DisplayListInternal;
+struct DisplayList;
 
 struct S_EYES_BRIGHT_SHADOW;
 
@@ -98,7 +98,7 @@ public:
 	byte bCompletedLevelInit;
 	int field_0x1c;
 	GlobalDlistEntry* ppGlobalDlist;
-	DisplayListInternal* pDisplayList;
+	DisplayList* pDisplayList;
 
 	int field_0x14;
 	int field_0x18;

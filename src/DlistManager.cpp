@@ -15,7 +15,7 @@ void CGlobalDListManager::Level_Init()
 	CGlobalDListPatch* pCVar2;
 	CGlobalDListPatch* pCVar3;
 	ed_3D_Scene* peVar4;
-	DisplayListInternal* pDVar5;
+	DisplayList* pDVar5;
 	int iVar6;
 	int iVar7;
 	uint uVar8;
@@ -39,11 +39,11 @@ void CGlobalDListManager::Level_Init()
 			iVar9 = pGVar1->field_0x4;
 			iVar6 = pGVar1->field_0xc;
 			pCVar2 = pGVar1->pDlistPatch;
-			pCVar2->field_0x8 = iVar10;
-			pCVar2->field_0xc = iVar9;
+			pCVar2->nbCommands = iVar10;
+			pCVar2->nbMatrices = iVar9;
 			pCVar2->field_0x10 = iVar6;
-			pCVar2->field_0x1c = 0x101;
-			pDVar5 = edDListNew(TO_HEAP(H_MAIN), 0x101, iVar10, iVar6, iVar9, 0, (DisplayListInternal*)0x0);
+			pCVar2->flags = 0x101;
+			pDVar5 = edDListNew(TO_HEAP(H_MAIN), 0x101, iVar10, iVar6, iVar9, 0, (DisplayList*)0x0);
 			pCVar2->pDisplayListInternal = pDVar5;
 			edDListSetSceneUsed(pCVar2->pDisplayListInternal, peVar4);
 			this->ppGlobalDlist->pDlistPatch->Init();
@@ -108,15 +108,15 @@ void CGlobalDListManager::Level_Init()
 			}
 			if (size != 0) {
 				iVar10 = edMemGetAvailable(TO_HEAP(H_MAIN));
-				pDVar5 = (DisplayListInternal*)edMemAlloc(TO_HEAP(H_MAIN), size);
+				pDVar5 = (DisplayList*)edMemAlloc(TO_HEAP(H_MAIN), size);
 				this->pDisplayList = pDVar5;
 				peVar4 = CScene::_scene_handleA;
 				pDVar5 = this->pDisplayList;
 				pCVar2 = this->ppGlobalDlist[1].pDlistPatch;
-				pCVar2->field_0x8 = unaff_s7_lo;
-				pCVar2->field_0xc = unaff_s6_lo;
+				pCVar2->nbCommands = unaff_s7_lo;
+				pCVar2->nbMatrices = unaff_s6_lo;
 				pCVar2->field_0x10 = unaff_s8_lo;
-				pCVar2->field_0x1c = 0x101;
+				pCVar2->flags = 0x101;
 				pDVar5 = edDListNew(TO_HEAP(H_MAIN), 0x101, unaff_s7_lo, unaff_s8_lo, unaff_s6_lo, 0, pDVar5);
 				pCVar2->pDisplayListInternal = pDVar5;
 				edDListSetSceneUsed(pCVar2->pDisplayListInternal, peVar4);
@@ -141,10 +141,10 @@ void CGlobalDListManager::Level_Init()
 							pCVar3 = pGVar1[iVar9].pDlistPatch;
 							pCVar3->field_0x4d9 = 1;
 							pCVar3->pDisplayListInternal = pCVar2->pDisplayListInternal;
-							pCVar3->field_0x8 = pCVar2->field_0x8;
-							pCVar3->field_0xc = pCVar2->field_0xc;
+							pCVar3->nbCommands = pCVar2->nbCommands;
+							pCVar3->nbMatrices = pCVar2->nbMatrices;
 							pCVar3->field_0x10 = pCVar2->field_0x10;
-							pCVar3->field_0x1c = pCVar2->field_0x1c;
+							pCVar3->flags = pCVar2->flags;
 							iVar9 = iVar10;
 							if (iVar10 == -1) {
 								iVar9 = 0;
@@ -345,7 +345,7 @@ void CGlobalDListManager::Level_Create()
 	iVar7 = 0;
 	this->dlistCount = -1;
 	this->bBeganLevelInit = 0;
-	this->pDisplayList = (DisplayListInternal*)0x0;
+	this->pDisplayList = (DisplayList*)0x0;
 	this->ppGlobalDlist = (GlobalDlistEntry*)0x0;
 	this->field_0x14 = -1;
 	this->field_0x18 = 0;
@@ -494,7 +494,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 	GlobalDlistEntry* pGVar3;
 	char* pcVar4;
 	bool bVar5;
-	DisplayListInternalSubObj_60* pDVar6;
+	DisplayListCommand* pDVar6;
 	CGlobalDListPatch* pCVar7;
 	uint uVar8;
 	CallFuncElement* ppMVar9;
@@ -570,7 +570,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 						pDVar6 = edDListPatchableInfo
 						((long)(iVar10 + 0x10), (long)(iVar10 + 0x14), (long)(iVar10 + 0x18), (long)(iVar10 + 0x1c),
 							*(int*)(pcVar4 + 8) + *(int*)(pcVar4 + 0xc), (ulong)uVar2);
-						*(DisplayListInternalSubObj_60**)(iVar10 + 0x20) = pDVar6;)
+						*(DisplayListCommand**)(iVar10 + 0x20) = pDVar6;)
 						pCVar7->field_0x4d8 = 1;
 					}
 
@@ -604,7 +604,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 							pDVar6 = edDListPatchableInfo
 							((long)(iVar10 + 0x10), (long)(iVar10 + 0x14), (long)(iVar10 + 0x18),
 								(long)(iVar10 + 0x1c), *(int*)(pcVar4 + 8) + *(int*)(pcVar4 + 0xc), (ulong)uVar2);
-							*(DisplayListInternalSubObj_60**)(iVar10 + 0x20) = pDVar6;
+							*(DisplayListCommand**)(iVar10 + 0x20) = pDVar6;
 							pCVar7->field_0x4d8 = 1;
 						}
 						iVar10 = *(int*)(pCVar7->field_0x4d0 + 0x14);
@@ -636,7 +636,7 @@ void CGlobalDListManager::_ExecuteCallFunc()
 								pDVar6 = edDListPatchableInfo
 								((long)(iVar10 + 0x10), (long)(iVar10 + 0x14), (long)(iVar10 + 0x18),
 									(long)(iVar10 + 0x1c), *(int*)(pcVar4 + 8) + *(int*)(pcVar4 + 0xc), (ulong)uVar2);
-								*(DisplayListInternalSubObj_60**)(iVar10 + 0x20) = pDVar6;
+								*(DisplayListCommand**)(iVar10 + 0x20) = pDVar6;
 								pCVar7->field_0x4d8 = 1;
 							}
 							uVar8 = *(uint*)&pCVar16->field_0x2c;

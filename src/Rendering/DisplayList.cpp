@@ -152,7 +152,7 @@ void GlobalDList_Init(void)
 	ed_3D_Scene* pSVar1;
 	int freeMemCalcA;
 	CGlobalDList* pDVar2;
-	DisplayListInternal* pDVar3;
+	DisplayList* pDVar3;
 	int iVar4;
 	int iVar5;
 	uint uVar6;
@@ -262,21 +262,21 @@ void FrontendDList_EndCurrent(void)
 
 CGlobalDList::CGlobalDList()
 {
-	this->field_0x8 = -1;
-	this->field_0xc = -1;
+	this->nbCommands = -1;
+	this->nbMatrices = -1;
 	this->field_0x10 = -1;
-	this->pDisplayListInternal = (DisplayListInternal*)0x0;
+	this->pDisplayListInternal = (DisplayList*)0x0;
 	this->bEnabled = 0;
 }
 
-CGlobalDList::CGlobalDList(int inField_0x8, int inField_0xc, int inField_0x10, int inField_0x1c, ed_3D_Scene* pInStaticMeshMaster)
+CGlobalDList::CGlobalDList(int nbCommands, int nbMatrices, int inField_0x10, int flags, ed_3D_Scene* pInStaticMeshMaster)
 {
-	this->field_0x8 = inField_0x8;
-	this->field_0xc = inField_0xc;
+	this->nbCommands = nbCommands;
+	this->nbMatrices = nbMatrices;
 	this->field_0x10 = inField_0x10;
-	this->field_0x1c = inField_0x1c;
+	this->flags = flags;
 
-	this->pDisplayListInternal = edDListNew(TO_HEAP(H_MAIN), field_0x1c, field_0x8, 0, field_0xc, 0, (DisplayListInternal*)0x0);
+	this->pDisplayListInternal = edDListNew(TO_HEAP(H_MAIN), flags, nbCommands, inField_0x10, nbMatrices, 0, (DisplayList*)0x0);
 	edDListSetSceneUsed(this->pDisplayListInternal, pInStaticMeshMaster);
 }
 

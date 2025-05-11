@@ -597,7 +597,7 @@ struct edFCamera;
 struct ed_3D_Scene;
 
 struct ed_g3d_manager;
-struct DisplayListInternal;
+struct DisplayList;
 struct edCluster;
 struct edNODE;
 

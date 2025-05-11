@@ -10,30 +10,41 @@
 #include "../edList.h"
 
 union edF32VECTOR4;
+union edpkt_data;
+
 struct ed_3d_strip;
+struct ed_3d_sprite;
 struct ed_3D_Scene;
 struct ed_g3d_manager;
 
-struct RenderCommandUint {
+struct DisplayList;
+
+struct RenderCommandUint
+{
 	uint type;
-	union edpkt_data* pCommandBuffer;
+	edpkt_data* pCommandBuffer;
 	uint size;
-	struct DisplayListInternal* pDisplayList;
+	DisplayList* pDisplayList;
 };
 
-union RenderInput {
-	union edpkt_data* pPkt;
+union RenderInput
+{
+	edpkt_data* pPkt;
 	ed_3d_strip* pStrip;
+	ed_3d_sprite* pSprite;
 };
 
-struct DisplayListInternalSubObj_60 {
-	union {
+struct DisplayListCommand
+{
+	union
+	{
 		RenderCommandUint aCommandArray[4];
 		edF32MATRIX4 matrix;
 	};
+
 	byte bActive;
 	byte field_0x41;
-	ushort type_0x42;
+	ushort dataType;
 	RenderInput pRenderInput;
 	edpkt_data* pCurDListBuf;
 	int primType;
@@ -47,22 +58,23 @@ struct DisplayListInternalSubObj_60 {
 };
 
 
-struct DisplayListInternal {
+struct DisplayList
+{
 	ushort flags_0x0;
 	undefined field_0x2;
 	byte field_0x3;
-	ushort subCommandBufferCount;
-	ushort field_0x6;
-	undefined4 field_0x8;
+	ushort nbCommands;
+	ushort nbSavedCommands;
+	int nbMaxCommands;
 	char* pCommandBuffer;
 	edpkt_data* field_0x10;
 	edpkt_data* field_0x14;
 	edpkt_data* pRenderCommands;
-	DisplayListInternalSubObj_60* pDisplayListInternalSubObj;
-	ed_3D_Scene* pStaticMeshMaster_0x20;
+	DisplayListCommand* aCommands;
+	ed_3D_Scene* pScene;
 	float field_0x24;
 	char* field_0x28;
-	DisplayListInternalSubObj_60** field_0x2c;
+	DisplayListCommand** aSavedCommands;
 };
 
 struct edCluster {
@@ -115,16 +127,16 @@ public:
 	void Init();
 	void Term() {}
 
-	DisplayListInternal* pDisplayListInternal; // Double buffered display list data.
-	int field_0x8;
-	int field_0xc;
+	DisplayList* pDisplayListInternal; // Double buffered display list data.
+	int nbCommands;
+	int nbMatrices;
 	int field_0x10;
 	int bEnabled;
 	byte field_0x18;
 	byte field_0x19;
 	byte field_0x1a;
 	byte field_0x1b;
-	int field_0x1c;
+	int flags;
 };
 
 class CObject;
@@ -147,7 +159,7 @@ void FrontendDList_EndCurrent(void);
 int GameDListPatch_Register(CObject* pObject, int param_2, int param_3);
 
 
-extern DisplayListInternal* gCurDListHandle;
+extern DisplayList* gCurDListHandle;
 extern ed_3d_strip* gCurDListBuf;
 extern ed_3d_strip* gCurDListBufEnd;
 

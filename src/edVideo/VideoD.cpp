@@ -276,19 +276,16 @@ void edVideoFlip(void)
 	}
 #endif
 	/* Render scene */
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-		edVideoHandlers.maxEventID, 6, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_VIDEO_HANDLER_RENDER, (void*)0x0);
 #ifdef PLATFORM_WIN
 	VU1Emu::Wait();
 #endif
 	edDmaSyncPath();
 	_ManageFade();
 	/* Render UI */
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-		edVideoHandlers.maxEventID, 10, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_HANDLER_VIDEO_SEND_2D, (void*)0x0);
 	edDmaSyncPath();
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-		edVideoHandlers.maxEventID, 9, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, 9, (void*)0x0);
 
 #ifdef PLATFORM_WIN
 	Renderer::Native::OnVideoFlip();
@@ -300,9 +297,9 @@ void edVideoFlip(void)
 		edVideoPutDisplayEnv();
 		edVideoPutDrawEnv();
 	}
+
 	edVideoSwap();
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-		edVideoHandlers.maxEventID, 7, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_VIDEO_HANDLER_COMPUTE, (void*)0x0);
 
 #ifdef PLATFORM_WIN
 	VU1Emu::EndFrame();

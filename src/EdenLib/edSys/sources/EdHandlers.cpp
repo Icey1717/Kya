@@ -2,7 +2,7 @@
 #include "EdSystem.h"
 
 edCSysHandlerPool edSysHandlerMainPool;
-edCSysHandlerSystem<9, &edSysHandlerMainPool, 3> edSoftHandlers;
+edSysHandlerSoft edSoftHandlers;
 
 bool edSysHandlersInit(int size)
 {
@@ -10,7 +10,7 @@ bool edSysHandlersInit(int size)
 
 	bVar1 = edSysHandlerMainPool.initialize(size);
 	if (bVar1 != false) {
-		edSoftHandlers.add(0, _edSystemPrintf, 1, 0);
+		edSoftHandlers.add(0, _edSystemPrintf, ED_HANDLER_SOFT_PRINT, 0);
 	}
 	else {
 		_edSystemPrintf(0, 0, "edSysHandlersInit: Unable to initialize handler system");

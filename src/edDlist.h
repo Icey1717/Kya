@@ -10,8 +10,13 @@
 #include "renderer.h"
 #endif
 
-#define PRIM_TYPE_TRIANGLE_LIST 4
-#define PRIM_TYPE_SPRITE 6
+#define DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST 4
+#define DISPLAY_LIST_DATA_TYPE_SPRITE 6
+#define DISPLAY_LIST_DATA_TYPE_PKT 9
+
+#define DISPLAY_LIST_SCENE_ALWAYS (ed_3D_Scene*)0x1
+
+#define DISPLAY_LIST_FLAG_SAVE_COMMANDS 0x100
 
 struct DisplayList_0x10
 {
@@ -30,7 +35,7 @@ struct DisplayList_0x10
 	undefined field_0xf;
 };
 
-struct DisplayListInternal;
+struct DisplayList;
 union edpkt_data;
 struct edDList_material;
 struct ed_viewport;
@@ -43,7 +48,7 @@ struct ed_dma_material;
 
 extern int gNbUsedMaterial;
 extern int gCurRenderState;
-extern DisplayListInternal* gCurDList;
+extern DisplayList* gCurDList;
 extern edDList_material* gCurMaterial;
 extern int gNbStateAdded;
 extern int gbDispList;
@@ -79,7 +84,12 @@ struct edDList_material
 
 extern edDlistConfiguration edDlistConfig;
 
-extern edCSysHandlerSystem<10, &edSysHandlerMainPool, 5> sysHandler_0048cb90;
+typedef edCSysHandlerSystem<ED_SYSTEM_HANDLER_3D, &edSysHandlerMainPool, 5> edSysHandler3D;
+
+#define ED_HANDLER_3D_SEND_3D 0
+#define ED_HANDLER_3D_SEND_2D 1
+
+extern edSysHandler3D ed3DHandlers;
 
 #ifdef PLATFORM_WIN
 Renderer::TextureData MakeTextureDataFromPacket(ed_g2d_material* pMaterial, struct ed_g2d_bitmap* pTextureBitmap, struct ed_g2d_bitmap* pPaletteBitmap, int index);
@@ -104,7 +114,7 @@ void edDListBlendFunc50(void);
 
 void edDListSetActiveViewPort(ed_viewport* pCamera);
 
-void edDlistAddtoView(DisplayListInternal* param_1);
+void edDlistAddtoView(DisplayList* param_1);
 
 void edDListBegin(float x, float y, float z, uint mode, int count);
 
@@ -116,15 +126,15 @@ void edDListSetProperty(uint type, uint value);
 
 void edDListEnd(void);
 
-void edDListPatchableReset(DisplayListInternal* pList, uint param_2, uint param_3, uint param_4);
+void edDListPatchableReset(DisplayList* pList, uint param_2, uint param_3, uint param_4);
 
 void edDListLoadIdentity(void);
 
 void edDlistSetUseUV(int newUseUV);
 
-DisplayListInternal* edDListSetCurrent(DisplayListInternal* pNewDisplayList);
-DisplayListInternal* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer);
-void edDListSetSceneUsed(DisplayListInternal* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster);
+DisplayList* edDListSetCurrent(DisplayList* pNewDisplayList);
+DisplayList* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer);
+void edDListSetSceneUsed(DisplayList* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster);
 uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4, uint* param_5, uint* param_6);
 
 void edDListInitMaterial(edDList_material* outObj, ed_hash_code* pHASH_MAT, ed_g2d_manager* textureInfoObj, uint mode);

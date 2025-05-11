@@ -1101,12 +1101,6 @@ void Renderer::Native::PushMatrixPacket(const MatrixPacket* const pPkt)
 
 	assert(pPkt);
 
-	// Need to convert to matrix ?
-	//gCachedLightingData.lightDirection[0] = glm::vec4(glm::make_vec3(pPkt->objLightDirectionsMatrix), 0.0f);
-	//gCachedLightingData.lightDirection[1] = glm::vec4(glm::make_vec3(pPkt->objLightDirectionsMatrix + 3), 0.0f);
-	//gCachedLightingData.lightDirection[2] = glm::vec4(glm::make_vec3(pPkt->objLightDirectionsMatrix + 6), 0.0f);
-	//gCachedLightingData.lightDirection[3] = glm::vec4(glm::make_vec3(pPkt->objLightDirectionsMatrix + 9), 0.0f);
-
 	gCachedLightingData.lightDirection = glm::make_mat4(pPkt->objLightDirectionsMatrix);
 	gCachedLightingData.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
 	gCachedLightingData.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);

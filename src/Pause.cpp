@@ -898,40 +898,45 @@ uint DrawPauseMenu(CSimpleMenu* pMenu, uint action)
 	return bResult;
 }
 
-edF32VECTOR2 edF32VECTOR2_00448640 = { -0.005f, -0.005f };
-edF32VECTOR2 edF32VECTOR2_00448648 = { 1.005f, 1.005f };
+edF32VECTOR2 gClearDispTL = { -0.005f, -0.005f };
+edF32VECTOR2 gClearDispBR = { 1.005f, 1.005f };
 
 void ClearDisplay(void)
 {
 	CFrontendDisplay* pFrontendManager;
-	bool bVar1;
-	ulong uVar2;
-	ulong uVar3;
-	uint uVar4;
-	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
-	edF32VECTOR2 local_10;
-	edF32VECTOR2 local_8;
+	bool tlSuccess;
+	bool brSuccess;
+	uint vtxSkip;
+	edF32VECTOR4 brScreen;
+	edF32VECTOR4 tlScreen;
+	edF32VECTOR2 br;
+	edF32VECTOR2 tl;
 
 	pFrontendManager = CScene::ptable.g_FrontendManager_00451680;
-	local_8 = edF32VECTOR2_00448640;
-	local_10 = edF32VECTOR2_00448648;
-	uVar2 = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(50.0f, &local_20, &local_8);
-	uVar3 = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(50.0f, &local_30, &local_10);
-	if ((((uVar2 & 0xff) != 0) && ((uVar3 & 0xff) != 0)) && (bVar1 = Frontend2DDList_BeginCurrent(), bVar1 != false)) {
+
+	tl = gClearDispTL;
+	br = gClearDispBR;
+
+	tlSuccess = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(50.0f, &tlScreen, &tl);
+	brSuccess = CScene::ptable.g_FrontendManager_00451680->ComputeSceneCoordinate(50.0f, &brScreen, &br);
+
+	if (((tlSuccess != false) && (brSuccess != false)) && (Frontend2DDList_BeginCurrent() != false)) {
 		edDListLoadIdentity();
+		
 		edDListUseMaterial(&MenuBitmaps[0xb].materialInfo);
 		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
-		uVar4 = 4;
+		vtxSkip = 4;
 		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+
 		edDListTexCoo2f(0.0f, 0.0f);
-		edDListVertex4f(local_20.x, local_20.y, local_20.z, uVar4);
+		edDListVertex4f(tlScreen.x, tlScreen.y, tlScreen.z, vtxSkip);
 		edDListTexCoo2f(1.0f, 0.0f);
-		edDListVertex4f(local_30.x, local_20.y, local_20.z, uVar4);
+		edDListVertex4f(brScreen.x, tlScreen.y, tlScreen.z, vtxSkip);
 		edDListTexCoo2f(0.0f, 1.0f);
-		edDListVertex4f(local_20.x, local_30.y, local_20.z, uVar4);
+		edDListVertex4f(tlScreen.x, brScreen.y, tlScreen.z, vtxSkip);
 		edDListTexCoo2f(1.0f, 1.0f);
-		edDListVertex4f(local_30.x, local_30.y, local_20.z, uVar4);
+		edDListVertex4f(brScreen.x, brScreen.y, tlScreen.z, vtxSkip);
+
 		edDListEnd();
 
 		FrontendDList_EndCurrent();
@@ -1221,7 +1226,7 @@ float CSimpleMenu::draw_func(float param_2)
 			s = 1.0f;
 		}
 		iVar4 = 4;
-		edDListBegin(0.0f, 0.0f, 0.0f, PRIM_TYPE_TRIANGLE_LIST, 4);
+		edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
 		edDListTexCoo2f(s, s);
 		iVar2 = this->field_0xf8;
 		if (iVar2 < 0) {
@@ -2113,7 +2118,7 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 				edDListColor4u8(0, 0, 0, 0x80);
 				edDListLoadIdentity();
 				iVar9 = 6;
-				edDListBegin(1.0f, 1.0f, 1.0f, PRIM_TYPE_SPRITE, 2);
+				edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_SPRITE, 2);
 				edDListVertex4f(0.0f, 0.0f, 0.0f, iVar9);
 				edDListVertex4f(fVar13, fVar10, 0.0f, iVar9);
 				edDListEnd();
@@ -2136,7 +2141,7 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 				fVar18 = 0.0f;
 				do {
 					uVar5 = 4;
-					edDListBegin(0.0f, 0.0f, 0.0f, PRIM_TYPE_TRIANGLE_LIST, iVar7 * 2);
+					edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, iVar7 * 2);
 					x = (this->drawOffsets).x;
 					fVar14 = 0.0f;
 					iVar6 = iVar7;

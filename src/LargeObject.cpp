@@ -140,7 +140,7 @@ ed_3D_Scene* ed3DSceneCastShadow(ed_3D_Scene* p3DScene, edFCamera* pCamera)
 
 	p3DScene->flags = p3DScene->flags | SCENE_FLAG_CAST_SHADOW;
 	pDisplayList = ed3DShadowCreateScene(p3DScene, pCamera);
-	edListAddNode(&p3DScene->meshClusterShadowList, (DisplayListInternal*)pDisplayList);
+	edListAddNode(&p3DScene->meshClusterShadowList, (DisplayList*)pDisplayList);
 	return pDisplayList;
 }
 

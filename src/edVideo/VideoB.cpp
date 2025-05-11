@@ -294,16 +294,16 @@ int _edVideoGs(int cause)
 		DPUT_GS_CSR((ulong)(int)(uVar2 & 0xfffffcf0) & 0xffffffffU | 1);
 		__asm__ volatile(" sync.l ");
 		if ((((eventID == 8) || (eventID == 5)) || (eventID == 4)) || (eventID == 1)) {
-			edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-				edVideoHandlers.maxEventID, eventID, pvVar1);
+			edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, eventID, pvVar1);
 		}
 	}
+
 	if ((uVar2 & 2) != 0) {
 		DPUT_GS_CSR((ulong)(int)(uVar2 & 0xfffffcf0) & 0xffffffffU | 2);
 		__asm__ volatile(" sync.l ");
-		edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-			edVideoHandlers.maxEventID, 2, pvVar1);
+		edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, 2, pvVar1);
 	}
+
 	isceGsPutIMR(flag);
 	ExitHandler();
 	return 0;
@@ -314,8 +314,8 @@ int _edVideoSync(int cause)
 {
 	ulong uVar1;
 
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-		edVideoHandlers.maxEventID, 3, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_HANDLER_VIDEO_SYNC, (void*)0x0);
+
 	if (VideoManager.bVSyncForever == 0) {
 		if (VideoManager.vblankCount == 0) {
 			VideoManager.lastCount = _VideoTimerGet();

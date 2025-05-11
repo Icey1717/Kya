@@ -17,7 +17,7 @@ struct edVideo_Globals {
 	undefined* field_0x4;
 };
 
-typedef edCSysHandlerSystem<11, &edSysHandlerMainPool, 2> edSysHandlerVideo;
+typedef edCSysHandlerSystem<ED_SYSTEM_HANDLER_VIDEO, &edSysHandlerMainPool, 0xb> edSysHandlerVideo;
 
 void _UpdateVideoInfo(void);
 void edVideoFlip(void);
@@ -25,6 +25,12 @@ struct edSurface* edVideoGetDisplaySurface(void);
 edVideo_Globals* edVideoGetInfo(void);
 void edVideoWaitVsync(byte param_1);
 unsigned int _VideoTimerGet(void);
+
+#define ED_HANDLER_VIDEO_SWAP 0
+#define ED_HANDLER_VIDEO_SYNC 3
+#define ED_VIDEO_HANDLER_RENDER 6
+#define ED_VIDEO_HANDLER_COMPUTE 7
+#define ED_HANDLER_VIDEO_SEND_2D 10
 
 extern edSysHandlerVideo edVideoHandlers;
 
