@@ -22,8 +22,6 @@ bool CFxTail::InitDlistPatchable(int)
 	float fVar3;
 	float s;
 
-	DISPLAY_LIST_PATCH_BEGIN();
-
 	edDListLoadIdentity();
 
 	edDListUseMaterial(CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->particleID_0x14, 0));
@@ -50,8 +48,6 @@ bool CFxTail::InitDlistPatchable(int)
 	}
 
 	edDListEnd();
-
-	DISPLAY_LIST_PATCH_END();
 
 	return true;
 }

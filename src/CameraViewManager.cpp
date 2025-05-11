@@ -1946,8 +1946,6 @@ bool CCameraShadow::InitDlistPatchable(int)
 	uint vtxSkip;
 	int curVtxIndex;
 
-	DISPLAY_LIST_PATCH_BEGIN();
-
 	edDListLoadIdentity();
 	edDListUseMaterial((edDList_material*)0x0);
 	edDListSetProperty(4, this->sceneFlags);
@@ -1964,8 +1962,6 @@ bool CCameraShadow::InitDlistPatchable(int)
 
 	edDListEnd();
 	edDListSetProperty(4, 0);
-
-	DISPLAY_LIST_PATCH_END();
 
 	pDlistmanager = reinterpret_cast<CGlobalDListManager*>(CScene::GetManager(MO_GlobalDListManager));
 	pDlistmanager->SetActive(this->patchRegister, 1);

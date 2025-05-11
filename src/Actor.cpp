@@ -1745,7 +1745,6 @@ int CActor::GetNumVisualDetectionPoints()
 bool CActor::InitDlistPatchable(int param_2)
 {
 	if (GetBehaviour(this->curBehaviourId)->InitDlistPatchable(param_2) == false) {
-		DISPLAY_LIST_PATCH_BEGIN();
 
 		edDListLoadIdentity();
 		edDListUseMaterial((edDList_material*)0x0);
@@ -1758,8 +1757,6 @@ bool CActor::InitDlistPatchable(int param_2)
 		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
 		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
 		edDListEnd();
-
-		DISPLAY_LIST_PATCH_END();
 	}
 
 	return true;

@@ -392,7 +392,6 @@ namespace Renderer::Native::DisplayList
 
 static bool gNoBinding = false;
 static bool bCalledBegin = false;
-static bool bRecordingPatch = false;
 
 void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, uint32_t mode)
 {
@@ -439,11 +438,6 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 	vkCmdBindPipeline(GetCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().pipeline);
 }
 
-void Renderer::DisplayList::Begin3D(short viewportWidth, short viewportHeight, uint32_t mode)
-{
-	Begin2D(viewportWidth, viewportHeight, mode);
-}
-
 void Renderer::DisplayList::SetColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a, float q)
 {
 	using namespace Renderer::Native::DisplayList;
@@ -467,10 +461,6 @@ void Renderer::DisplayList::SetTexCoord(float s, float t)
 void Renderer::DisplayList::SetVertex(float x, float y, float z, uint32_t skip)
 {
 	using namespace Renderer::Native::DisplayList;
-
-	if (bRecordingPatch) {
-		return;
-	}
 
 	// Convert x, y to normalized viewport coords for vulkan between -1.0 and 1.0
 	float newx = (2.0f * x / gViewport.width) - 1.0f;
@@ -508,12 +498,6 @@ void Renderer::DisplayList::End2D()
 	// Nothing for now.
 }
 
-void Renderer::DisplayList::End3D()
-{
-	// Same as 2D for now.
-	End2D();
-}
-
 void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 {
 	using namespace Renderer::Native::DisplayList;
@@ -536,16 +520,6 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 
 	gIndexStart = gVertexBuffers.GetDrawBufferData().GetIndexTail();
 	gVertexStart = gVertexBuffers.GetDrawBufferData().GetVertexTail();
-}
-
-void Renderer::DisplayList::PatchBegin()
-{
-	bRecordingPatch = true;
-}
-
-void Renderer::DisplayList::PatchEnd()
-{
-	bRecordingPatch = false;
 }
 
 // End of "displaylist.h"

@@ -983,7 +983,7 @@ void edDListSetActiveViewPort(ed_viewport* pViewport)
 		gIncViewportY = (0x800 - ((int)(uint)pViewport->pColorBuffer->pSurfaceDesc->screenHeight >> 1)) * 0x10;
 		gCurViewport = pViewport;
 		if ((((gCurDList != (DisplayList*)0x0) &&
-			(gCurDList->nbCommands != 0)) && ((gCurDList->flags_0x0 & 2) != 0))
+			(gCurDList->nbCommands != 0)) && ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) != 0))
 			&& (gCurDList->aCommands->aCommandArray
 				[gCurDList->nbCommands - 1].type == LM_REF_0)) {
 			edDListSetState(
@@ -1118,6 +1118,12 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 	gCurFlashMaterial = 0;
 	gCurMaterial = pMaterialInfo;
 
+	edDListPatchGifTag2D();
+
+	if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) {
+		return;
+	}
+
 #ifdef PLATFORM_WIN
 	if (pMaterialInfo == (edDList_material*)0x0) {
 		DISPLAY_LIST_BIND_TEXTURE(nullptr);
@@ -1130,12 +1136,6 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 		DISPLAY_LIST_BIND_TEXTURE(pMaterial->layers.front().textures.front().pSimpleTexture);
 	}
 #endif
-
-	edDListPatchGifTag2D();
-
-	if ((gCurDList->flags_0x0 & 2) == 0) {
-		return;
-	}
 
 	pDVar5 = gCurDList->aCommands;
 	pRVar1 = gCurDList->pRenderCommands;
@@ -1620,8 +1620,6 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	edF32Matrix4CopyHard(&pNewCommand->matrix, gCurMatrix + gNbMatrix);
 	gNbVertexDMA = 0x48;
 
-	DISPLAY_LIST_3D_BEGIN(gCurViewport->screenWidth, gCurViewport->screenHeight, type);
-
 	return;
 }
 
@@ -1970,7 +1968,7 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 			gCurColorNbInVertex = gCurColorNbInVertex + 1;
 		}
 
-		if (((gCurDList->flags_0x0 & 2) == 0) && (gCurPrimType == 7)) {
+		if (((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) && (gCurPrimType == 7)) {
 			gCurColorBuf->r = g_RGBAQ_00448aa0->r;
 			gCurColorBuf->g = g_RGBAQ_00448aa0->g;
 			gCurColorBuf->b = g_RGBAQ_00448aa0->b;
@@ -1982,7 +1980,7 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 			gCurColorBuf = gCurColorBuf + 2;
 		}
 
-		if ((gCurDList->flags_0x0 & 2) != 0) {
+		if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) != 0) {
 			edDListPatchGifTag2D();
 			if (gbInsideBegin == 0) {
 				pRVar2 = edDListCheckState(gCurDList->pRenderCommands);
@@ -2450,8 +2448,6 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 		edDlistCopyInPatchableStrip(pStrip);
 	}
 
-	DISPLAY_LIST_3D_END();
-
 	return;
 }
 
@@ -2462,7 +2458,7 @@ void edDListEnd(void)
 
 	if (gbInsideBegin != false) {
 		if ((gCurDList->flags_0x0 & 1) == 0) {
-			if ((gCurDList->flags_0x0 & 2) != 0) {
+			if ((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) != 0) {
 				// Update NLOOP of the header packet, based on how many commands were added to the display list.
 				const int nloop = ((static_cast<int>(reinterpret_cast<char*>(gCurDList->pRenderCommands) - reinterpret_cast<char*>(gCurStatePKT))) >> 4) - 1;
 				const uint existingPktData = gCurStatePKT->asU32[0];
