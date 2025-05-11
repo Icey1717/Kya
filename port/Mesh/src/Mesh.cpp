@@ -20,6 +20,8 @@ namespace Renderer
 		using StripCache = std::unordered_map<const ed_3d_strip*, Renderer::Kya::G3D::Strip*>;
 		static StripCache gStripCache;
 
+		static std::vector<Renderer::Kya::G3D::Object*> gObjectCache;
+
 		static Gif_Tag ExtractGifTagFromVifList(ed_3d_strip* pStrip, int index = 0)
 		{
 			// Pull the prim reg out from the gif packet, not a big fan of this.
@@ -222,7 +224,7 @@ void Renderer::Kya::G3D::Strip::PreProcessVertices()
 		vtxOffset += 2;
 	}
 
-	assert(internalVertexBuffer.GetIndexTail() > 0);
+	//assert(internalVertexBuffer.GetIndexTail() > 0);
 }
 
 void Renderer::Kya::G3D::Strip::KickVertices() const
@@ -402,7 +404,8 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int hei
 	const GIFReg::GSPrim prim = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
 	// strip everything before the last forward slash
-	std::string meshName = this->pParent->pParent->pParent->GetName().substr(this->pParent->pParent->pParent->GetName().find_last_of('\\') + 1);
+	std::string meshName = this->pParent ? this->pParent->pParent->pParent->GetName().substr(this->pParent->pParent->pParent->GetName().find_last_of('\\') + 1) :
+		"None";
 	meshName += "_";
 	meshName += std::to_string(heirarchyIndex);
 	meshName += "_";
@@ -622,6 +625,7 @@ const Renderer::Kya::G3D::Strip* Renderer::Kya::MeshLibrary::FindStrip(const ed_
 	constexpr bool bUseStripCache = true;
 
 	if (bUseStripCache) {
+		assert(gStripCache.find(pStrip) != gStripCache.end());
 		return gStripCache[pStrip];
 	}
 	
@@ -662,12 +666,25 @@ void Renderer::Kya::MeshLibrary::AddFromStrip(const ed_3d_strip* pStrip) const
 	}
 }
 
+void Renderer::Kya::MeshLibrary::CacheDlistStrip(ed_3d_strip* pStrip)
+{
+	auto* pObj = new Renderer::Kya::G3D::Object();
+	gObjectCache.push_back(pObj);
+	pObj->ProcessStrip(pStrip, 0, 0, 0);
+	pObj->CacheStrips();
+}
+
 void Renderer::Kya::MeshLibrary::AddMesh(ed_g3d_manager* pManager, std::string name)
 {
 	gMeshLibrary.gMeshes.emplace_back(pManager, name);
 }
 
 const Renderer::Kya::MeshLibrary& Renderer::Kya::GetMeshLibrary()
+{
+	return gMeshLibrary;
+}
+
+Renderer::Kya::MeshLibrary& Renderer::Kya::GetMeshLibraryMutable()
 {
 	return gMeshLibrary;
 }

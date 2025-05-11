@@ -27,6 +27,7 @@
 #ifdef PLATFORM_WIN
 #include "Texture.h"
 #include "displaylist.h"
+#include "Mesh.h"
 #endif
 
 #define EDDLIST_LOG(level, format, ...) MY_LOG_CATEGORY("edDList", level, format, ##__VA_ARGS__)
@@ -266,8 +267,10 @@ void edDListSend2DList(edLIST* pList)
 			if (pRVar2->type == LM_REF_0) {
 				pRVar2->size = (uint)((ulong)pDisplayList->pRenderCommands - (ulong)pRVar2->pCommandBuffer);
 			}
+
 			pCommandBuffer = edDListRecurseRefTag(pDisplayList, pCommandBuffer);
 		}
+
 		if ((pDisplayList->flags_0x0 & 0x10) != 0) {
 			pDVar1 = pDisplayList->aCommands;
 			pDisplayList->pRenderCommands = pDisplayList->field_0x14;
@@ -275,14 +278,18 @@ void edDListSend2DList(edLIST* pList)
 			pDVar1->aCommandArray[0].type = LM_REF_0;
 			pDisplayList->nbCommands = 0;
 		}
+
 		pDisplayList->field_0x3 = 0;
 	}
+
 	if ((pBuffer != pCommandBuffer) && (gbDispList != 0)) {
 		pCommandBuffer->cmdA = 0x70000000;
 		pCommandBuffer->cmdB = 0;
+
 		edDmaFlushCache();
 		edDmaSyncPath();
 		edDmaSyncPath();
+
 		static bool bDisp2D = 1;
 		if (bDisp2D != false) {
 			EDDLIST_LOG(LogLevel::VeryVerbose, "DMA Begin RenderUI_002cea00\n");
@@ -290,7 +297,9 @@ void edDListSend2DList(edLIST* pList)
 		}
 		edDmaSyncPath();
 	}
+
 	edListClear(pList);
+
 	return;
 }
 
@@ -1446,7 +1455,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	DisplayListCommand* pNewCommand;
 	ushort uVar7;
 	ushort meshCount;
-	ed_3d_strip* peVar9;
+	ulong newVifOffset;
 	uint uVar10;
 	ed_3d_strip* pNewStrip;
 
@@ -1581,12 +1590,11 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 		nbVertex = nbVertex + (4 - (nbVertex & 3));
 	}
 
-	peVar9 = (ed_3d_strip*)((int)(ed_3d_strip*)(gCurVertexBuf + nbVertex) - (ulong)pNewStrip);
-	ppeVar1 = (ed_3d_strip**)&pNewStrip->vifListOffset;
+	newVifOffset = ((ulong)(gCurVertexBuf + nbVertex) - (ulong)pNewStrip);
 
 	gCurDListBuf = (ed_3d_strip*)(gCurVertexBuf + nbVertex);
 	gStartVertexBuf = (undefined*)gCurVertexBuf;
-	*ppeVar1 = peVar9;
+	pNewStrip->vifListOffset = newVifOffset;
 	pNewStrip->field_0x2c = 0x0;
 	peVar2 = gCurVertexBuf;
 	gCurVertexBuf->skip = 0xc000;
@@ -2352,28 +2360,30 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 
 void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 {
-	ed_3d_strip* pStrip_00;
+	ed_3d_strip* pNewStrip;
 	edVertex* peVar1;
-	edpkt_data* peVar2;
 	uint uVar3;
-	DisplayListCommand* pDVar4;
-	DisplayList* pDVar5;
+	DisplayListCommand* pCommand;
+	DisplayList* pDisplayList;
 
-	pDVar5 = gCurDListHandle + gCurFlushState;
-	pDVar4 = pDVar5->aCommands + (pDVar5->nbCommands - 1);
-	pStrip_00 = pDVar4->pRenderInput.pStrip;
-	pDVar4->pCurDListBuf = (edpkt_data*)((char*)pStrip_00 + pStrip_00->vifListOffset);
-	pStrip_00->meshCount = pStrip->meshCount;
+	pDisplayList = gCurDListHandle + gCurFlushState;
 
-	assert(pStrip_00->meshCount > 0);
+	pCommand = pDisplayList->aCommands + (pDisplayList->nbCommands - 1);
 
-	pStrip_00->field_0x38 = pStrip->field_0x38;
+	pNewStrip = pCommand->pRenderInput.pStrip;
+
+	pCommand->pCurDListBuf = (edpkt_data*)((char*)pNewStrip + pNewStrip->vifListOffset);
+	pNewStrip->meshCount = pStrip->meshCount;
+
+	assert(pNewStrip->meshCount > 0);
+
+	pNewStrip->field_0x38 = pStrip->field_0x38;
 	peVar1 = (edVertex*)LOAD_SECTION(pStrip->pVertexBuf);
 	uVar3 = 0;
 	while (uVar3 < (ushort)pStrip->meshCount) {
 		ed_Bound_Sphere_packet* pSpherePkt = (ed_Bound_Sphere_packet*)LOAD_SECTION(pStrip->pBoundSpherePkt) + uVar3;
-		if (uVar3 == (ushort)pStrip_00->meshCount - 1) {
-			edDListFindBoundingSphere((edF32VECTOR4*)(peVar1 + uVar3 * 0x46), (uint)pStrip_00->field_0x38, pSpherePkt);
+		if (uVar3 == (ushort)pNewStrip->meshCount - 1) {
+			edDListFindBoundingSphere((edF32VECTOR4*)(peVar1 + uVar3 * 0x46), (uint)pNewStrip->field_0x38, pSpherePkt);
 			uVar3 = uVar3 + 1;
 		}
 		else {
@@ -2381,10 +2391,15 @@ void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 			uVar3 = uVar3 + 1;
 		}
 	}
-	memcpy(pStrip_00 + 1, pStrip + 1, pStrip_00->vifListOffset + -0x40);
-	peVar2 = edDListStripPreparePacket(pStrip_00, pDVar4->pCurDListBuf);
-	pDVar5->pRenderCommands = peVar2;
-	pDVar5->field_0x10 = pDVar5->pRenderCommands;
+
+	memcpy(pNewStrip + 1, pStrip + 1, pNewStrip->vifListOffset + -0x40);
+	pDisplayList->pRenderCommands = edDListStripPreparePacket(pNewStrip, pCommand->pCurDListBuf);
+	pDisplayList->field_0x10 = pDisplayList->pRenderCommands;
+
+#ifdef PLATFORM_WIN
+	Renderer::Kya::GetMeshLibraryMutable().CacheDlistStrip(pNewStrip);
+#endif
+
 	return;
 }
 
@@ -2431,6 +2446,7 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 				uVar4 = uVar4 + 1;
 			}
 		}
+
 		edDlistCopyInPatchableStrip(pStrip);
 	}
 
@@ -2442,7 +2458,7 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 void edDListEnd(void)
 {
 	ushort dataType;
-	DisplayListCommand* pDVar5;
+	DisplayListCommand* pCommand;
 
 	if (gbInsideBegin != false) {
 		if ((gCurDList->flags_0x0 & 1) == 0) {
@@ -2467,33 +2483,38 @@ void edDListEnd(void)
 				gNbVertexDMA = 0x48;
 				gCurStatePKTSize = 0;
 				gCurStatePKT = (edpkt_data*)0x0;
-				pDVar5 = gCurDList->aCommands + (gCurDList->nbCommands - 1);
-				pDVar5->pCurDListBuf = (edpkt_data*)gCurDListBuf;
 
-				dataType = pDVar5->dataType;
+				pCommand = gCurDList->aCommands + (gCurDList->nbCommands - 1);
+				pCommand->pCurDListBuf = (edpkt_data*)gCurDListBuf;
+
+				dataType = pCommand->dataType;
 				if (dataType != DISPLAY_LIST_DATA_TYPE_PKT) {
 					if ((((dataType == 0xc) || (dataType == 0xb)) || (dataType == 7)) || (dataType == 6)) {
 						if (gNbAddedVertex < 1) {
 							gCurDList->nbCommands = gCurDList->nbCommands - 1;
-							gCurDListBuf = pDVar5->pRenderInput.pStrip;
-							assert(pDVar5->pRenderInput.pStrip->meshCount > 0);
+							gCurDListBuf = pCommand->pRenderInput.pStrip;
+							assert(pCommand->pRenderInput.pStrip->meshCount > 0);
 						}
 						else {
 							IMPLEMENTATION_GUARD(
-							edDListEndSprite(pDVar5->pRenderInput.pSprite);
-							gCurDListBuf = ed3DSpritePreparePacket(pDVar5->pRenderInput.pSprite, (undefined4*)gCurDListBuf, (int)gBankMaterial, (ulong)pDVar5->dataType);)
+							edDListEndSprite(pCommand->pRenderInput.pSprite);
+							gCurDListBuf = ed3DSpritePreparePacket(pCommand->pRenderInput.pSprite, (undefined4*)gCurDListBuf, (int)gBankMaterial, (ulong)pCommand->dataType);)
 						}
 					}
 					else {
 						if (((dataType == 4) || (dataType == 2)) || (dataType == 0)) {
 							if (gNbAddedVertex < 2) {
 								gCurDList->nbCommands = gCurDList->nbCommands - 1;
-								gCurDListBuf = pDVar5->pRenderInput.pStrip;
+								gCurDListBuf = pCommand->pRenderInput.pStrip;
 							}
 							else {
-								pDVar5->nbAddedVertex = gNbAddedVertex;
-								edDListEndStrip(pDVar5->pRenderInput.pStrip);
-								gCurDListBuf = (ed_3d_strip*)edDListStripPreparePacket(pDVar5->pRenderInput.pStrip, (edpkt_data*)gCurDListBuf);
+								pCommand->nbAddedVertex = gNbAddedVertex;
+								edDListEndStrip(pCommand->pRenderInput.pStrip);
+								gCurDListBuf = (ed_3d_strip*)edDListStripPreparePacket(pCommand->pRenderInput.pStrip, (edpkt_data*)gCurDListBuf);
+
+#ifdef PLATFORM_WIN
+								Renderer::Kya::GetMeshLibraryMutable().CacheDlistStrip(pCommand->pRenderInput.pStrip);
+#endif
 							}
 						}
 					}

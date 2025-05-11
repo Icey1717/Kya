@@ -3782,12 +3782,7 @@ void ed3DFlushStrip(edNODE* pNode)
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip 0x{:x} (From Node: 0x{:x})", (uintptr_t)p3dStrip, (uintptr_t)pNode);
 	ZONE_SCOPED;
 
-	if (p3dStrip->meshCount == 0) {
-		ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip No mesh count");
-		FLUSH_LOG();
-		//assert(false);
-		return;
-	}
+	assert(p3dStrip->meshCount > 0);
 
 	pNextNode = pNode->pNext;
 	pVifList = reinterpret_cast<char*>(p3dStrip) + p3dStrip->vifListOffset;
@@ -8797,11 +8792,7 @@ void _ed3DLinkStripToViewport(ed_3d_strip* pStrip, ed_hash_code* pMBNK)
 		}
 	}
 
-	if (pStrip->meshCount == 0) {
-		ED3D_LOG(LogLevel::Info, "Strip has no mesh count: 0x{:x}", (uintptr_t)pStrip);
-		FLUSH_LOG();
-		assert(pStrip->meshCount > 0);
-	}
+	assert(pStrip->meshCount > 0);
 
 	pStrip->pDMA_Matrix.pDMA_Matrix = 0x0;
 	if (gRender_info_SPR->boundingSphereTestResult == 8) {

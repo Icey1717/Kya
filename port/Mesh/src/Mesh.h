@@ -98,7 +98,10 @@ namespace Renderer
 			using ForEachMesh = std::function<void(const G3D&)>;
 
 			static void Init();
+			void AddFromStrip(const ed_3d_strip* pStrip) const;
+			void CacheDlistStrip(ed_3d_strip* pStrip);
 
+			// Debug
 			inline void ForEach(ForEachMesh func) const
 			{
 				for (const auto& texture : gMeshes)
@@ -110,9 +113,6 @@ namespace Renderer
 			inline int GetMeshCount() const { return gMeshes.size(); }
 
 			const G3D::Strip* FindStrip(const ed_3d_strip* pStrip) const;
-
-			void AddFromStrip(const ed_3d_strip* pStrip) const;
-
 		private:
 			static void AddMesh(ed_g3d_manager* pManager, std::string name);
 
@@ -120,5 +120,6 @@ namespace Renderer
 		};
 
 		const MeshLibrary& GetMeshLibrary();
+		MeshLibrary& GetMeshLibraryMutable();
 	}
 }
