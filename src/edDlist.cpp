@@ -1130,10 +1130,7 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 	}
 	else {
 		const Renderer::Kya::G2D::Material* pMaterial = Renderer::Kya::GetTextureLibrary().FindMaterial(pMaterialInfo->pMaterial);
-		// Can probably remove this bind later and rely on the DisplayList binding only.
-		Renderer::BindTexture(pMaterial->layers.front().textures.front().pSimpleTexture);
-
-		DISPLAY_LIST_BIND_TEXTURE(pMaterial->layers.front().textures.front().pSimpleTexture);
+		DISPLAY_LIST_BIND_TEXTURE(pMaterial->layers.front().textures.front().pSimpleTexture.get());
 	}
 #endif
 

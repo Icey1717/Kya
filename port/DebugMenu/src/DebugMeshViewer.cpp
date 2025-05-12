@@ -228,7 +228,7 @@ namespace DebugMeshViewer {
 			// Check layers and textures to make sure they are size 1
 			assert(pMaterial->layers.size() > 0);
 			assert(pMaterial->layers.begin()->textures.size() > 0);
-			return &AddPreviewerDrawCommand(pMaterial->layers.begin()->textures.begin()->pSimpleTexture, pMeshStrip->pSimpleMesh);
+			return &AddPreviewerDrawCommand(pMaterial->layers.begin()->textures.begin()->pSimpleTexture.get(), pMeshStrip->pSimpleMesh.get());
 		}
 
 		return nullptr;

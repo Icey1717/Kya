@@ -20,7 +20,7 @@ namespace Renderer
 		using StripCache = std::unordered_map<const ed_3d_strip*, Renderer::Kya::G3D::Strip*>;
 		static StripCache gStripCache;
 
-		static std::vector<Renderer::Kya::G3D::Object*> gObjectCache;
+		static std::unordered_map<const ed_3d_strip*, Renderer::Kya::G3D::Object*> gObjectCache;
 
 		static Gif_Tag ExtractGifTagFromVifList(ed_3d_strip* pStrip, int index = 0)
 		{
@@ -370,7 +370,7 @@ void Renderer::Kya::G3D::Cluster::ProcessStrip(ed_3d_strip* pStrip, const int st
 	meshName += "_";
 	meshName += std::to_string(stripIndex);
 
-	strip.pSimpleMesh = new SimpleMesh(meshName, prim);
+	strip.pSimpleMesh = std::make_unique<SimpleMesh>(meshName, prim);
 
 	strip.PreProcessVertices();
 }
@@ -413,7 +413,7 @@ void Renderer::Kya::G3D::Object::ProcessStrip(ed_3d_strip* pStrip, const int hei
 	meshName += "_";
 	meshName += std::to_string(stripIndex);
 
-	strip.pSimpleMesh = new SimpleMesh(meshName, prim);
+	strip.pSimpleMesh = std::make_unique<SimpleMesh>(meshName, prim);
 
 	strip.PreProcessVertices();
 }
@@ -662,14 +662,18 @@ void Renderer::Kya::MeshLibrary::AddFromStrip(const ed_3d_strip* pStrip) const
 	assert(pRendererStrip);
 
 	if (pRendererStrip && pRendererStrip->pSimpleMesh) {	
-		Renderer::AddMesh(pRendererStrip->pSimpleMesh);
+		Renderer::AddMesh(pRendererStrip->pSimpleMesh.get());
 	}
 }
 
 void Renderer::Kya::MeshLibrary::CacheDlistStrip(ed_3d_strip* pStrip)
 {
-	auto* pObj = new Renderer::Kya::G3D::Object();
-	gObjectCache.push_back(pObj);
+	if (gObjectCache.find(pStrip) == gObjectCache.end()) {
+		gObjectCache[pStrip] = new Renderer::Kya::G3D::Object();
+	}
+
+	auto* pObj = gObjectCache[pStrip];
+	pObj->strips.clear();
 	pObj->ProcessStrip(pStrip, 0, 0, 0);
 	pObj->CacheStrips();
 }

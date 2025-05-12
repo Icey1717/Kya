@@ -11,6 +11,8 @@ struct ed_g3d_object;
 struct ed_3d_strip;
 struct ed_g3d_cluster;
 
+#include <memory>
+
 namespace Renderer
 {
 	struct SimpleMesh;
@@ -28,7 +30,7 @@ namespace Renderer
 
 				ed_3d_strip* pStrip = nullptr;
 				void* pParent = nullptr;
-				SimpleMesh* pSimpleMesh = nullptr;
+				std::unique_ptr<SimpleMesh> pSimpleMesh;
 			};
 
 			struct Hierarchy {
