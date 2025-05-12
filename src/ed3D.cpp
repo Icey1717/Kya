@@ -115,7 +115,7 @@ namespace ed3D {
 
 int gCurTime = 0;
 int gStepTime = 0;
-byte BYTE_00448a5c = 1;
+byte gRenderDlist_00448a5c = 1;
 
 FxFogProp g3DFXFog = { };
 
@@ -240,7 +240,7 @@ int GetStaticMeshMasterIndex(ed_3D_Scene* pStaticMeshMaster)
 struct ed_3d_extra_stuff_param {
 	struct ed_3D_Scene* pStaticMeshMaster;
 	int isChild;
-	ushort taskID;
+	ushort taskFlags;
 };
 
 ed_Chunck* edChunckGetFirst(void* pBuffStart, char* pBuffEnd)
@@ -925,12 +925,12 @@ void ed3DFlushSendDMA3D(void)
 	DPUT_D_CTRL(g_Model_DMAC_Ctrl_mode_00448984);
 	DPUT_D_STAT(D_STAT_CIS0_O);
 #endif
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries,
-		edVideoHandlers.maxEventID, 1, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, 1, (void*)0x0);
 	gCurFlushList = gCurRenderList;
 	gCurRenderList = gCurRenderList != 0 ^ 1;
-	edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries,
-		ed3DHandlers.maxEventID, 1, (void*)0x0);
+
+	edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, ED_HANDLER_3D_SEND_2D, (void*)0x0);
+
 	if ((edLIST*)gPrim_List_FlushTex[gCurFlushList].pPrev != gPrim_List_FlushTex + gCurFlushList) {
 		ed3DFlushTexPrepareDMA(gPrim_List_FlushTex + gCurFlushList);
 	}
@@ -947,10 +947,12 @@ void ed3DFlushSendDMA3D(void)
 			edDmaSyncPath();
 		}
 	}
+
 	return;
 }
 
-struct ed3D_Allocator {
+struct ed3D_Allocator
+{
 	char* base;
 	char* end;
 	char* current;
@@ -958,7 +960,8 @@ struct ed3D_Allocator {
 
 ed3D_Allocator ed3D_Allocator_00449248 = { 0 };
 
-struct ed3D_SubAllocator {
+struct ed3D_SubAllocator
+{
 	char* base;
 	char* current;
 	char* end;
@@ -9887,31 +9890,29 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 			}
 
 			renderTaskData.pStaticMeshMaster = pScene;
-			if (BYTE_00448a5c == 0) {
+			if (gRenderDlist_00448a5c == 0) {
 				if (pShadowScene == pScene) {
 					renderTaskData.isChild = pShadowScene->bShadowScene;
-					renderTaskData.taskID = 2;
-					edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries,
-						ed3DHandlers.maxEventID, 0, &renderTaskData);
+					renderTaskData.taskFlags = 2;
+					edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, ED_HANDLER_3D_SEND_3D, &renderTaskData);
 				}
 				else {
 					renderTaskData.isChild = pShadowScene->bShadowScene;
-					renderTaskData.taskID = 1;
+					renderTaskData.taskFlags = 1;
 					if (pShadowScene != pScene) {
-						renderTaskData.taskID = 3;
+						renderTaskData.taskFlags = 3;
 					}
-					edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries,
-						ed3DHandlers.maxEventID, 0, &renderTaskData);
+					edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, ED_HANDLER_3D_SEND_3D, &renderTaskData);
 				}
 			}
 			else {
 				renderTaskData.isChild = pShadowScene->bShadowScene;
-				renderTaskData.taskID = 1;
+				renderTaskData.taskFlags = 1;
 				if (pShadowScene != pScene) {
-					renderTaskData.taskID = 3;
+					renderTaskData.taskFlags = 3;
 				}
-				edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries,
-					ed3DHandlers.maxEventID, 0, &renderTaskData);
+
+				edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, ED_HANDLER_3D_SEND_3D, &renderTaskData);
 			}
 
 			if (ged3DConfig.bEnableProfile != 0) {
@@ -10037,7 +10038,7 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 	bool bVar2;
 	byte bVar3;
 	int iVar4;
-	edpkt_data* pRVar5;
+	edpkt_data* pPkt;
 	uint uVar6;
 	edpkt_data* pRVar7;
 	uint uVar8;
@@ -10070,9 +10071,11 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
 			})
 	}
-	pRVar5 = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
-	g_VifRefPktCur = pRVar5;
+
+	g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
+
 	ed3DFlushSceneInit();
+
 	uVar8 = ed3DInitRenderEnvironement(pStaticMeshMaster, (ulong)((pStaticMeshMaster->flags & 0x20) != 0));
 	if (ged3DConfig.bEnableProfile != 0) {
 		IMPLEMENTATION_GUARD(
@@ -10121,11 +10124,14 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 					g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
 				})
 		}
+
 		ed3DInitVU1Globals();
+
 		bVar3 = pStaticMeshMaster->pViewport->clearColor.a;
 		pStaticMeshMaster->pViewport->clearColor.a = bVar3 & 0xfc;
 		g_VifRefPktCur = ed3DSceneAddContextPacket(pStaticMeshMaster, g_VifRefPktCur);
 		pStaticMeshMaster->pViewport->clearColor.a = bVar3;
+
 		if (ged3DConfig.bEnableProfile != 0) {
 			IMPLEMENTATION_GUARD(
 				uVar6 = (uint)gIDProfileFlush >> 4;
@@ -10169,8 +10175,9 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
 			})
 		}
+
 		renderTaskData.isChild = pStaticMeshMaster->bShadowScene;
-		renderTaskData.taskID = 2;
+		renderTaskData.taskFlags = 2;
 		renderTaskData.pStaticMeshMaster = pStaticMeshMaster;
 		edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, 0, &renderTaskData);
 
@@ -10217,19 +10224,26 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
 			})
 		}
-		pRVar7 = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
-		g_VifRefPktCur = pRVar7;
+
+		g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
+
 		ed3DFlushList();
+
 		bVar1 = g_VifRefPktCur == pRVar7;
-		pRVar7 = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
-		g_VifRefPktCur = pRVar7;
+
+		g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
+
 		ed3DFlushShadowList();
+
 		bVar2 = g_VifRefPktCur == pRVar7;
+
 		ed3DPrimlistMatrixBufferReset();
+
 		if (bVar2 && bVar1) {
-			g_VifRefPktCur = pRVar5;
+			g_VifRefPktCur = pPkt;
 		}
-		pRVar5 = g_VifRefPktCur;
+
+		pPkt = g_VifRefPktCur;
 		if (ged3DConfig.bEnableProfile != 0) {
 			IMPLEMENTATION_GUARD(
 				uVar6 = (uint)gIDProfileFlush >> 4;
@@ -10238,10 +10252,10 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 				ProfileManagerB[uVar6].field_0x8 =
 					ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
 				pPVar9 = ProfileManagerB + uVar6;
-				pRVar5 = g_VifRefPktCur;
+				pPkt = g_VifRefPktCur;
 				if (pPVar9->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
 					pPVar9->field_0x10 = pPVar9->field_0x0;
-					pRVar5 = g_VifRefPktCur;
+					pPkt = g_VifRefPktCur;
 				}
 			}
 			else {
@@ -10249,15 +10263,17 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 				g_ProfileObjA_0041ed40[uVar6].field_0x8 =
 					g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
 				pPVar9 = g_ProfileObjA_0041ed40 + uVar6;
-				pRVar5 = g_VifRefPktCur;
+				pPkt = g_VifRefPktCur;
 				if (pPVar9->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
 					pPVar9->field_0x10 = pPVar9->field_0x0;
-					pRVar5 = g_VifRefPktCur;
+					pPkt = g_VifRefPktCur;
 				}
 			})
 		}
 	}
-	g_VifRefPktCur = pRVar5;
+
+	g_VifRefPktCur = pPkt;
+
 	return uVar8 & 0xff;
 }
 
@@ -10362,6 +10378,7 @@ void ed3DPrimlistTermMaterialRenderList(void)
 		gPrim_List_FlushTex_Last->pPrev = gPrim_List_FlushTex + gCurRenderList;
 		ED3D_LOG(LogLevel::VeryVerbose, "ed3DPrimlistTermMaterialRenderList {}", (uintptr_t)(gPrim_List_FlushTex + gCurRenderList));
 	}
+
 	return;
 }
 
@@ -10408,7 +10425,7 @@ void ed3DRefreshSracthGlobalVar(void)
 
 void ed3DSceneRender(int, int, char*)
 {
-	ed_viewport* pCVar1;
+	ed_viewport* pViewport;
 	ulong uVar2;
 	bool bVar3;
 	int iVar4;
@@ -10424,9 +10441,9 @@ void ed3DSceneRender(int, int, char*)
 	undefined4 uVar10;
 	undefined4 uVar11;
 	edLIST* pCVar12;
-	ed_3D_Scene* pInStaticMeshMaster;
-	uint staticMeshMasterIndex;
-	uint staticMeshMasterFlags;
+	ed_3D_Scene* pScene;
+	uint curSceneIndex;
+	uint sceneFlags;
 
 	// HACK: This is a hack to prevent the game from rendering.
 	//return;
@@ -10466,10 +10483,13 @@ void ed3DSceneRender(int, int, char*)
 					g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 = g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 + 1;
 				})
 		}
+
 		ed3DRefreshSracthGlobalVar();
+
 		if ((ged3DConfig.field_0x2c & 1) != 0) {
 			ed3DComputeSonHierarchy();
 		}
+
 		if (ged3DConfig.bEnableProfile != 0) {
 			IMPLEMENTATION_GUARD(
 				uVar6 = (uint)gIDProfileRender >> 4;
@@ -10494,22 +10514,17 @@ void ed3DSceneRender(int, int, char*)
 		}
 		bVar3 = false;
 
-		// Up to scene.
-#ifdef PLATFORM_WIN
-		//VU1Emu::UpdateMemory(g_pStartPktData, g_VifRefPktCur);
-#endif
-
-		for (staticMeshMasterIndex = 0; staticMeshMasterIndex < (uint)ged3DConfig.sceneCount;
-			staticMeshMasterIndex = staticMeshMasterIndex + 1) {
+		for (curSceneIndex = 0; curSceneIndex < (uint)ged3DConfig.sceneCount; curSceneIndex = curSceneIndex + 1) {
 
 #ifdef PLATFORM_WIN
 			// Starting for each scene.
 			g_pStartPortPktData = g_VifRefPktCur;
 #endif
 
-			staticMeshMasterFlags = gScene3D[staticMeshMasterIndex].flags;
-			if ((((staticMeshMasterFlags & 1) != 0) && ((staticMeshMasterFlags & 4) == 0)) &&
-				(gScene3D[staticMeshMasterIndex].bShadowScene == 0)) {
+			sceneFlags = gScene3D[curSceneIndex].flags;
+
+			if ((((sceneFlags & 1) != 0) && ((sceneFlags & 4) == 0)) &&
+				(gScene3D[curSceneIndex].bShadowScene == 0)) {
 				if (bVar3) {
 					bVar3 = false;
 					pFVar6 = edVideoGetDrawSurface();
@@ -10568,34 +10583,40 @@ void ed3DSceneRender(int, int, char*)
 						g_VifRefPktCur = g_VifRefPktCur + 6;
 					}
 				}
-				pRVar5 = g_VifRefPktCur;
-				pInStaticMeshMaster = gScene3D + staticMeshMasterIndex;
 
-				ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRender Processing 0x{:x} ({})", (uintptr_t)pInStaticMeshMaster, staticMeshMasterIndex);
+				pRVar5 = g_VifRefPktCur;
+				pScene = gScene3D + curSceneIndex;
+
+				ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRender Processing 0x{:x} ({})", (uintptr_t)pScene, curSceneIndex);
 
 				if (gCurViewportUsed == (ed_viewport*)0x0) {
-					gCurViewportUsed = pInStaticMeshMaster->pViewport;
+					gCurViewportUsed = pScene->pViewport;
 				}
-				pCVar1 = pInStaticMeshMaster->pViewport;
-				gCurRectViewport.x = pCVar1->posX;
-				gCurRectViewport.y = pCVar1->posY;
-				gCurRectViewport.w = pCVar1->screenWidth;
-				gCurRectViewport.h = pCVar1->screenHeight;
-				gCurScene = pInStaticMeshMaster;
-				ed3DSceneRenderOne(pInStaticMeshMaster, pInStaticMeshMaster);
+
+				pViewport = pScene->pViewport;
+				gCurRectViewport.x = pViewport->posX;
+				gCurRectViewport.y = pViewport->posY;
+				gCurRectViewport.w = pViewport->screenWidth;
+				gCurRectViewport.h = pViewport->screenHeight;
+
+				gCurScene = pScene;
+
+				ed3DSceneRenderOne(pScene, pScene);
 
 				ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRender Begin Processing Children");
-				for (pCVar12 = (edLIST*)(pInStaticMeshMaster->meshClusterShadowList).pPrev;
-					pCVar12 != &pInStaticMeshMaster->meshClusterShadowList; pCVar12 = (edLIST*)pCVar12->pPrev) {
+				for (pCVar12 = (edLIST*)(pScene->meshClusterShadowList).pPrev;
+					pCVar12 != &pScene->meshClusterShadowList; pCVar12 = (edLIST*)pCVar12->pPrev) {
 					if ((((ed_3D_Scene*)pCVar12->pData)->flags & 4) == 0) {
-						ed3DSceneRenderOne((ed_3D_Scene*)pCVar12->pData, pInStaticMeshMaster);
+						ed3DSceneRenderOne((ed_3D_Scene*)pCVar12->pData, pScene);
 					}
 				}
+
 				ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRender End Processing Children");
 
-				if (BYTE_00448a5c != 0) {
-					ed3DSceneRenderDlist(pInStaticMeshMaster);
+				if (gRenderDlist_00448a5c != 0) {
+					ed3DSceneRenderDlist(pScene);
 				}
+
 				iVar4 = gIDProfileFlush;
 				if (ged3DConfig.bEnableProfile != 0) {
 					IMPLEMENTATION_GUARD(
@@ -10622,13 +10643,15 @@ void ed3DSceneRender(int, int, char*)
 								g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 + 1;
 						})
 				}
+
 				if (pRVar5 != g_VifRefPktCur) {
-					if ((pInStaticMeshMaster->flags & SCENE_FLAG_FOG_PROPERTY) != 0) {
+					if ((pScene->flags & SCENE_FLAG_FOG_PROPERTY) != 0) {
 						bVar3 = true;
 						ed3DFlushFogFX();
 					}
-					if ((pInStaticMeshMaster->flags & 0x800) == 0) {
-						if ((pInStaticMeshMaster->flags & 0x80) != 0) {
+
+					if ((pScene->flags & 0x800) == 0) {
+						if ((pScene->flags & 0x80) != 0) {
 							bVar3 = true;
 							g_VifRefPktCur = ed3DFlushAAEffect(g_VifRefPktCur);
 						}
@@ -10639,6 +10662,7 @@ void ed3DSceneRender(int, int, char*)
 						//g_VideoMemoryPtr_00449280 = (sceDmaTag*)FUN_002b8030((ulong*)g_VideoMemoryPtr_00449280);
 					}
 				}
+
 				if (ged3DConfig.bEnableProfile != 0) {
 					IMPLEMENTATION_GUARD(
 						uVar6 = (uint)gIDProfileFlush >> 4;
@@ -10663,9 +10687,11 @@ void ed3DSceneRender(int, int, char*)
 				}
 			}
 		}
+
 		if (BYTE_00449424 != 0) {
 			IMPLEMENTATION_GUARD(g_VifRefPktCur = (sceDmaTag*)FUN_002aa4f0((ulong*)g_VifRefPktCur));
 		}
+
 		iVar4 = gIDProfileFlush;
 		if (ged3DConfig.bEnableProfile != 0) {
 			if ((gIDProfileFlush & 1U) == 0) {
@@ -10692,7 +10718,9 @@ void ed3DSceneRender(int, int, char*)
 				//g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 = g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 + 1;
 			}
 		}
+
 		ed3DPrimlistTermMaterialRenderList();
+
 		if ((g_pStartPktData != (edpkt_data*)0x0) && (g_pStartPktData != g_VifRefPktCur)) {
 			g_VifRefPktCur = ed3DAddViewport2DAfter3D(g_VifRefPktCur);
 			if (gBlurON != 0) {
@@ -10742,6 +10770,7 @@ void ed3DSceneRender(int, int, char*)
 				gpPKTDataRefMasPath3->cmdB = 0;
 			}
 		}
+
 		if (ged3DConfig.bEnableProfile != 0) {
 			IMPLEMENTATION_GUARD();
 			uVar7 = (uint)gIDProfileFlush >> 4;
@@ -11142,8 +11171,8 @@ void ed3DInit(void)
 		edListLink(&gScene3D[uVar2].meshClusterShadowList, gNodeCluster, 0, 0);
 	}
 	/* Add render handler */
-	edSysHandlersAdd(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_VIDEO_HANDLER_RENDER, ed3DSceneRender, 1, 1);
-	edSysHandlersAdd(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_VIDEO_HANDLER_COMPUTE, ed3DSceneCompute, 1, 0);
+	edSysHandlersAdd(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_HANDLER_VIDEO_RENDER, ed3DSceneRender, 1, 1);
+	edSysHandlersAdd(edVideoHandlers.nodeParent, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_HANDLER_VIDEO_COMPUTE, ed3DSceneCompute, 1, 0);
 	if (ged3DConfig.meshHeaderCountBAlt < 0x180) {
 		ged3DConfig.meshHeaderCountBAlt = ged3DConfig.meshHeaderCountBAlt + 0x180;
 	}

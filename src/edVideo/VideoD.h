@@ -28,8 +28,8 @@ unsigned int _VideoTimerGet(void);
 
 #define ED_HANDLER_VIDEO_SWAP 0
 #define ED_HANDLER_VIDEO_SYNC 3
-#define ED_VIDEO_HANDLER_RENDER 6
-#define ED_VIDEO_HANDLER_COMPUTE 7
+#define ED_HANDLER_VIDEO_RENDER 6
+#define ED_HANDLER_VIDEO_COMPUTE 7
 #define ED_HANDLER_VIDEO_SEND_2D 10
 
 extern edSysHandlerVideo edVideoHandlers;

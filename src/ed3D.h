@@ -849,7 +849,7 @@ void ProcessTextureCommands(edpkt_data* aPkt, int size);
 #endif
 
 extern int gFXBufAddr;
-extern byte BYTE_00448a5c;
+extern byte gRenderDlist_00448a5c;
 extern edCluster* gCluster;
 extern edNODE* gHierarchyManagerFirstFreeNode;
 extern ed_3d_hierarchy_node* gHierarchyManagerBuffer;

@@ -276,7 +276,7 @@ void edVideoFlip(void)
 	}
 #endif
 	/* Render scene */
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_VIDEO_HANDLER_RENDER, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_HANDLER_VIDEO_RENDER, (void*)0x0);
 #ifdef PLATFORM_WIN
 	VU1Emu::Wait();
 #endif
@@ -299,7 +299,7 @@ void edVideoFlip(void)
 	}
 
 	edVideoSwap();
-	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_VIDEO_HANDLER_COMPUTE, (void*)0x0);
+	edSysHandlersCall(edVideoHandlers.mainIdentifier, edVideoHandlers.entries, edVideoHandlers.maxEventID, ED_HANDLER_VIDEO_COMPUTE, (void*)0x0);
 
 #ifdef PLATFORM_WIN
 	VU1Emu::EndFrame();

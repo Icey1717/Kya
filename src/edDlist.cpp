@@ -306,7 +306,7 @@ void edDListSend2DList(edLIST* pList)
 struct ed_3d_extra_stuff_param {
 	ed_3D_Scene* pScene;
 	int isChild;
-	ushort taskID;
+	ushort taskFlags;
 };
 
 int gNbToPix = 0;
@@ -333,9 +333,9 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pParams)
 		for (displayListIndex = 0; displayListIndex < gNbDList_3D[gCurRenderState]; displayListIndex = displayListIndex + 1) {
 			pDisplayList = gDList_3D[gCurRenderState][(gNbDList_3D[gCurRenderState] - 1) - displayListIndex];
 
-			if (((BYTE_00448a5c == 0) ||
-				(((pParams->taskID & 1) != 0 && ((pDisplayList->flags_0x0 & 0x40) != 0)))) ||
-				(((pParams->taskID & 2) != 0 && ((pDisplayList->flags_0x0 & 0x40) == 0)))) {
+			if (((gRenderDlist_00448a5c == 0) ||
+				(((pParams->taskFlags & 1) != 0 && ((pDisplayList->flags_0x0 & 0x40) != 0)))) ||
+				(((pParams->taskFlags & 2) != 0 && ((pDisplayList->flags_0x0 & 0x40) == 0)))) {
 				pPkt = (edpkt_data*)0x0;
 
 				if ((pDisplayList->pScene == DISPLAY_LIST_SCENE_ALWAYS) || (pDisplayList->pScene == pParams->pScene)) {

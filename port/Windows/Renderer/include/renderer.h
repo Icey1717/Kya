@@ -26,6 +26,7 @@ namespace PS2 {
 
 	template<typename VertexType, typename IndexType>
 	struct DrawBufferData : public DrawBufferBase {
+		DrawBufferData() = default;
 
 		void Init(const int vertexCount, const int indexCount) {
 			vertex.buff = (VertexType*)_aligned_malloc(sizeof(VertexType) * vertexCount, 32);
@@ -38,6 +39,10 @@ namespace PS2 {
 			_aligned_free(vertex.buff);
 			_aligned_free(index.buff);
 		}
+
+		// Delete copy constructor and assignment operator
+		DrawBufferData(const DrawBufferData&) = delete;
+		DrawBufferData& operator=(const DrawBufferData&) = delete;
 
 		struct Index
 		{
