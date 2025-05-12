@@ -187,7 +187,6 @@ void CSprite::PrepareDraw(bool bUpdateMaterial)
 
 void CSprite::DrawSprite()
 {
-	uint uVar1;
 	float fVar2;
 	float fVar3;
 	float local_10;
@@ -214,12 +213,11 @@ void CSprite::DrawSprite()
 
 	edDListLoadIdentity();
 
-	uVar1 = 6;
 	edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_SPRITE, 2);
 	edDListTexCoo2f(local_8, local_4);
-	edDListVertex4f((this->screenCoordsTL).x, (this->screenCoordsTL).y, 0.0f, uVar1);
+	edDListVertex4f((this->screenCoordsTL).x, (this->screenCoordsTL).y, 0.0f, 0.0f);
 	edDListTexCoo2f(local_10, local_c);
-	edDListVertex4f((this->screenCoordsBR).x, (this->screenCoordsBR).y, 0.0f, uVar1);
+	edDListVertex4f((this->screenCoordsBR).x, (this->screenCoordsBR).y, 0.0f, 0.0f);
 	edDListEnd();
 
 	return;
@@ -444,16 +442,15 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 		edDListBlendSet(1);
 		edDListBlendFunc50();
 		edDListColor4u8(0, 0, 0, 0x80);
-		iVar3 = 4;
 		edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
 		edDListTexCoo2f(local_8.x, local_8.y);
-		edDListVertex4f(x, y_00, 0.0f, iVar3);
+		edDListVertex4f(x, y_00, 0.0f, 0.0f);
 		edDListTexCoo2f(local_18.x, local_18.y);
-		edDListVertex4f(fVar5, y_00, 0.0f, iVar3);
+		edDListVertex4f(fVar5, y_00, 0.0f, 0.0f);
 		edDListTexCoo2f(local_20.x, local_20.y);
-		edDListVertex4f(x, y, 0.0f, iVar3);
+		edDListVertex4f(x, y, 0.0f, 0.0f);
 		edDListTexCoo2f(local_10.x, local_10.y);
-		edDListVertex4f(fVar5, y, 0.0f, iVar3);
+		edDListVertex4f(fVar5, y, 0.0f, 0.0f);
 		edDListEnd();
 	}
 
@@ -502,83 +499,79 @@ void CSprite::DrawXYXY(uint drawFlag, float param_3, float param_4, float param_
 
 	uVar1 = drawFlag & 0x30000;
 	if (uVar1 == 0) {
-		iVar3 = 4;
 		edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
 		edDListTexCoo2f(local_8.x, local_8.y);
-		edDListVertex4f(param_4, param_5, 0.0f, iVar3);
+		edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 		edDListTexCoo2f(local_18.x, local_18.y);
-		edDListVertex4f(param_6, param_5, 0.0f, iVar3);
+		edDListVertex4f(param_6, param_5, 0.0f, 0.0f);
 		edDListTexCoo2f(local_20.x, local_20.y);
-		edDListVertex4f(param_4, param_7, 0.0f, iVar3);
+		edDListVertex4f(param_4, param_7, 0.0f, 0.0f);
 		edDListTexCoo2f(local_10.x, local_10.y);
-		edDListVertex4f(param_6, param_7, 0.0f, iVar3);
+		edDListVertex4f(param_6, param_7, 0.0f, 0.0f);
 		edDListEnd();
 	}
 	else {
 		if (uVar1 == 0x20000) {
-			iVar3 = 4;
 			edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 8);
 			edDListTexCoo2f(local_8.x, local_8.y);
-			edDListVertex4f(param_4, param_5, 0.0f, iVar3);
+			edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 			edDListTexCoo2f(local_18.x, local_18.y);
-			edDListVertex4f(param_6, param_5, 0.0f, iVar3);
+			edDListVertex4f(param_6, param_5, 0.0f, 0.0f);
 			edDListTexCoo2f(local_20.x, local_20.y);
 			fVar4 = (param_5 + param_7) / 2.0f;
-			edDListVertex4f(param_4, fVar4, 0.0f, iVar3);
+			edDListVertex4f(param_4, fVar4, 0.0f, 0.0f);
 			edDListTexCoo2f(local_10.x, local_10.y);
-			edDListVertex4f(param_6, fVar4, 0.0f, iVar3);
+			edDListVertex4f(param_6, fVar4, 0.0f, 0.0f);
 			edDListTexCoo2f(local_8.x, local_8.y);
-			edDListVertex4f(param_4, param_7, 0.0f, iVar3);
+			edDListVertex4f(param_4, param_7, 0.0f, 0.0f);
 			edDListTexCoo2f(local_18.x, local_18.y);
-			edDListVertex4f(param_6, param_7, 0.0f, iVar3);
+			edDListVertex4f(param_6, param_7, 0.0f, 0.0f);
 			edDListEnd();
 		}
 		else {
 			if (uVar1 == 0x10000) {
-				iVar3 = 4;
 				edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 6);
 				edDListTexCoo2f(local_8.x, local_8.y);
-				edDListVertex4f(param_4, param_5, 0.0f, iVar3);
+				edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_20.x, local_20.y);
-				edDListVertex4f(param_4, param_7, 0.0f, iVar3);
+				edDListVertex4f(param_4, param_7, 0.0f, 0.0f);
 				edDListTexCoo2f(local_18.x, local_18.y);
 				fVar4 = (param_4 + param_6) / 2.0f;
-				edDListVertex4f(fVar4, param_5, 0.0f, iVar3);
+				edDListVertex4f(fVar4, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_10.x, local_10.y);
-				edDListVertex4f(fVar4, param_7, 0.0f, iVar3);
+				edDListVertex4f(fVar4, param_7, 0.0f, 0.0f);
 				edDListTexCoo2f(local_8.x, local_8.y);
-				edDListVertex4f(param_6, param_5, 0.0f, iVar3);
+				edDListVertex4f(param_6, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_20.x, local_20.y);
-				edDListVertex4f(param_6, param_7, 0.0f, iVar3);
+				edDListVertex4f(param_6, param_7, 0.0f, 0.0f);
 				edDListEnd();
 			}
 			else {
-				iVar3 = 4;
 				edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 0xb);
 				edDListTexCoo2f(local_8.x, local_8.y);
-				edDListVertex4f(param_4, param_5, 0.0f, iVar3);
+				edDListVertex4f(param_4, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_20.x, local_20.y);
 				fVar4 = (param_5 + param_7) / 2.0f;
-				edDListVertex4f(param_4, fVar4, 0.0f, iVar3);
+				edDListVertex4f(param_4, fVar4, 0.0f, 0.0f);
 				edDListTexCoo2f(local_18.x, local_18.y);
 				fVar5 = (param_4 + param_6) / 2.0f;
-				edDListVertex4f(fVar5, param_5, 0.0f, iVar3);
+				edDListVertex4f(fVar5, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_10.x, local_10.y);
-				edDListVertex4f(fVar5, fVar4, 0.0f, iVar3);
+				edDListVertex4f(fVar5, fVar4, 0.0f, 0.0f);
 				edDListTexCoo2f(local_8.x, local_8.y);
-				edDListVertex4f(param_6, param_5, 0.0f, iVar3);
+				edDListVertex4f(param_6, param_5, 0.0f, 0.0f);
 				edDListTexCoo2f(local_20.x, local_20.y);
-				edDListVertex4f(param_6, fVar4, 0.0f, iVar3);
+				edDListVertex4f(param_6, fVar4, 0.0f, 0.0f);
 				edDListTexCoo2f(local_8.x, local_8.y);
-				edDListVertex4f(param_6, param_7, 0.0f, iVar3);
+				edDListVertex4f(param_6, param_7, 0.0f, 0.0f);
 				edDListTexCoo2f(local_10.x, local_10.y);
-				edDListVertex4f(fVar5, fVar4, 0.0f, iVar3);
+				edDListVertex4f(fVar5, fVar4, 0.0f, 0.0f);
 				edDListTexCoo2f(local_18.x, local_18.y);
-				edDListVertex4f(fVar5, param_7, 0.0f, iVar3);
+				edDListVertex4f(fVar5, param_7, 0.0f, 0.0f);
 				edDListTexCoo2f(local_20.x, local_20.y);
-				edDListVertex4f(param_4, fVar4, 0.0f, iVar3);
+				edDListVertex4f(param_4, fVar4, 0.0f, 0.0f);
 				edDListTexCoo2f(local_8.x, local_8.y);
-				edDListVertex4f(param_4, param_7, 0.0f, iVar3);
+				edDListVertex4f(param_4, param_7, 0.0f, 0.0f);
 				edDListEnd();
 			}
 		}
@@ -660,7 +653,6 @@ void CSpriteWindow::Validate()
 
 void CSpriteWindow::DrawSprite()
 {
-	uint uVar1;
 	float fVar2;
 	float fVar3;
 	float local_10;
@@ -688,12 +680,11 @@ void CSpriteWindow::DrawSprite()
 
 		edDListLoadIdentity();
 
-		uVar1 = 6;
 		edDListBegin(1.0f, 1.0f, 1.0f, 6, 2);
 		edDListTexCoo2f(local_8, local_4);
-		edDListVertex4f(this->screenCoordsTL.x, this->screenCoordsTL.y, 0.0f, uVar1);
+		edDListVertex4f(this->screenCoordsTL.x, this->screenCoordsTL.y, 0.0f, 0.0f);
 		edDListTexCoo2f(local_10, local_c);
-		edDListVertex4f(this->screenCoordsBR.x, this->screenCoordsBR.y, 0.0f, uVar1);
+		edDListVertex4f(this->screenCoordsBR.x, this->screenCoordsBR.y, 0.0f, 0.0f);
 		edDListEnd();
 	}
 

@@ -3756,10 +3756,10 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 
 		CActorHero::_gThis->_UpdateComboSituation();
 
+		IMPLEMENTATION_GUARD_LOG(
 		iVar5 = 0;
 		if (0 < pNVar4->nbSubObjB) {
 			do {
-				IMPLEMENTATION_GUARD_LOG(
 				NativSubObjB* pSubObjB = pNVar4->aSubObjsB + iVar5;
 
 				funcIndex = FUN_003ecad0(iVar5, lVar6);
@@ -3772,9 +3772,9 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 
 				FUN_003ed820(pSubObjB, &local_4, funcIndex);
 				iVar5 = iVar5 + 1;
-				local_4 = local_4 + (float)gVideoConfig.screenWidth * 0.05f;)
+				local_4 = local_4 + (float)gVideoConfig.screenWidth * 0.05f;
 			} while (iVar5 < pNVar4->nbSubObjB);
-		}
+		})
 	}
 
 	edTextStyleSetCurrent(pPrevTextStyle);

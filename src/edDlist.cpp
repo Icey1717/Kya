@@ -90,7 +90,7 @@ int gNbAddedVertex = 0;
 int gMaxNbVertex = 0;
 int gNbDMAVertex = 0;
 
-typedef void (*DisplayListXYZFunc)(float, float, float, uint);
+typedef void (*DisplayListXYZFunc)(float, float, float, float);
 typedef void (*DisplayListRGBAQFunc)(byte, byte, byte, byte);
 typedef void (*DisplayListSTFunc)(float, float);
 
@@ -1249,7 +1249,7 @@ void edDlistAddtoView(DisplayList* pInDisplayList)
 	return;
 }
 
-void edDListVertex4f_2D(float inX, float inY, float inZ, uint param_4)
+void edDListVertex4f_2D(float inX, float inY, float inZ, float skip)
 {
 	DisplayList* pDVar1;
 	int y;
@@ -1295,10 +1295,10 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, uint param_4)
 	else {
 		ppRVar4 = &gCurDList->pRenderCommands;
 #ifdef PLATFORM_WIN
-		Renderer::SetVertexSkip(param_4 == 0xc000);
+		Renderer::SetVertexSkip(*reinterpret_cast<uint*>(&skip) == 0xc000);
 #endif
 		gCurDList->pRenderCommands->cmdA = SCE_GS_SET_XYZ(x, y, inZ);
-		if (param_4 == 0xc000) {
+		if (*reinterpret_cast<uint*>(&skip) == 0xc000) {
 			(*ppRVar4)->cmdB = SCE_GS_XYZ3;
 		}
 		else {
@@ -1307,7 +1307,7 @@ void edDListVertex4f_2D(float inX, float inY, float inZ, uint param_4)
 
 		*ppRVar4 = *ppRVar4 + 1;
 
-		DISPLAY_LIST_SET_VERTEX(local_10.x, local_10.y, inZ, param_4 == 0xc000);
+		DISPLAY_LIST_SET_VERTEX(local_10.x, local_10.y, inZ, *reinterpret_cast<uint*>(&skip) == 0xc000);
 	}
 
 	gNbAddedVertex = gNbAddedVertex + 1;
@@ -1597,8 +1597,8 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	pNewStrip->vifListOffset = newVifOffset;
 	pNewStrip->field_0x2c = 0x0;
 	peVar2 = gCurVertexBuf;
-	gCurVertexBuf->skip = 0xc000;
-	peVar2[1].skip = 0xc000;
+	gCurVertexBuf->uSkip = 0xc000;
+	peVar2[1].uSkip = 0xc000;
 	gEndSTNbInVertex = 1;
 	gEndColorNbInVertex = 1;
 	gCurSTNbInVertex = 0;
@@ -1629,64 +1629,14 @@ _rgba* gCurColor_SPR = &gCurColor;
 float gCurST[8] = {};
 float* gCurST_SPR = gCurST;
 
-void edDListVertex4f_3D_TRIANGLE(float x, float y, float z, uint skip)
+void edDListVertex4f_3D_TRIANGLE(float x, float y, float z, float fSkip)
 {
 	short* puVar1;
 	_rgba* p_Var1;
-	uint local_4;
+	float uSkip;
 
-	if (((uint)(gNbAddedVertex % 3) < 2) || (local_4 = skip, skip == 49152.0f)) {
-		local_4 = 0xc000;
-	}
-	gNbAddedVertex = gNbAddedVertex + 1;
-	gCurVertexBuf->x = (int)x;
-	gCurVertexBuf->y = (int)y;
-	gCurVertexBuf->z = (int)z;
-	gCurVertexBuf->skip = local_4;
-	gCurVertexBuf[1].skip = 0xc000;
-
-	gCurColorBuf->r = gCurColor_SPR->r;
-	gCurColorBuf->g = gCurColor_SPR->g;
-	gCurColorBuf->b = gCurColor_SPR->b;
-	gCurColorBuf->a = gCurColor_SPR->a;
-
-	p_Var1 = gCurColorBuf + 1;
-
-	gCurSTBuf[0] = (short)(int)(gCurST_SPR)[0];
-	gCurSTBuf[1] = (short)(int)(gCurST_SPR)[1];
-	puVar1 = gCurSTBuf + 2;
-	if (gNbDMAVertex == 0x47) {
-		*p_Var1 = gCurColorBuf[-1];
-		gCurColorBuf[2] = *gCurColorBuf;
-		p_Var1 = gCurColorBuf + 3;
-		*(undefined4*)puVar1 = *(undefined4*)(gCurSTBuf + -2);
-		*(undefined4*)(gCurSTBuf + 4) = *(undefined4*)gCurSTBuf;
-		gNbDMAVertex = 2;
-		puVar1 = gCurSTBuf + 6;
-	}
-	else {
-		gNbDMAVertex = gNbDMAVertex + 1;
-	}
-
-	DISPLAY_LIST_SET_COLOR(gCurColorBuf->r, gCurColorBuf->g, gCurColorBuf->b, gCurColorBuf->a, 1.0f);
-	DISPLAY_LIST_SET_TEXCOORD(gCurSTBuf[0], gCurSTBuf[1]);
-	DISPLAY_LIST_SET_VERTEX(x, y, z, local_4 == 49152.0f);
-
-	gCurVertexBuf = gCurVertexBuf + 1;
-	gCurColorBuf = p_Var1;
-	gCurSTBuf = puVar1;
-	return;
-}
-
-void edDListVertex4f_3D_DEFAULT(float x, float y, float z, uint skip)
-{
-	short* puVar1;
-	_rgba* p_Var1;
-	uint local_4;
-
-	local_4 = skip;
-	if ((float)skip == 49152.0f) {
-		local_4 = 0xc000;
+	if (((uint)(gNbAddedVertex % 3) < 2) || (uSkip = fSkip, fSkip == 49152.0f)) {
+		*reinterpret_cast<uint*>(&uSkip) = 0xc000; // Convert to float representation.
 	}
 
 	gNbAddedVertex = gNbAddedVertex + 1;
@@ -1694,8 +1644,59 @@ void edDListVertex4f_3D_DEFAULT(float x, float y, float z, uint skip)
 	gCurVertexBuf->x = x;
 	gCurVertexBuf->y = y;
 	gCurVertexBuf->z = z;
-	gCurVertexBuf->skip = local_4;
-	gCurVertexBuf[1].skip = 0xc000;
+	gCurVertexBuf->fSkip = uSkip;
+
+	gCurVertexBuf[1].uSkip = 0xc000;
+
+	gCurColorBuf->r = gCurColor_SPR->r;
+	gCurColorBuf->g = gCurColor_SPR->g;
+	gCurColorBuf->b = gCurColor_SPR->b;
+	gCurColorBuf->a = gCurColor_SPR->a;
+
+	p_Var1 = gCurColorBuf + 1;
+
+	gCurSTBuf[0] = (short)(int)(gCurST_SPR)[0];
+	gCurSTBuf[1] = (short)(int)(gCurST_SPR)[1];
+	puVar1 = gCurSTBuf + 2;
+	if (gNbDMAVertex == 0x47) {
+		*p_Var1 = gCurColorBuf[-1];
+		gCurColorBuf[2] = *gCurColorBuf;
+		p_Var1 = gCurColorBuf + 3;
+		*(undefined4*)puVar1 = *(undefined4*)(gCurSTBuf + -2);
+		*(undefined4*)(gCurSTBuf + 4) = *(undefined4*)gCurSTBuf;
+		gNbDMAVertex = 2;
+		puVar1 = gCurSTBuf + 6;
+	}
+	else {
+		gNbDMAVertex = gNbDMAVertex + 1;
+	}
+
+	gCurVertexBuf = gCurVertexBuf + 1;
+	gCurColorBuf = p_Var1;
+	gCurSTBuf = puVar1;
+
+	return;
+}
+
+void edDListVertex4f_3D_DEFAULT(float x, float y, float z, float fSkip)
+{
+	short* puVar1;
+	_rgba* p_Var1;
+	float uSkip;
+
+	uSkip = fSkip;
+	if (fSkip == 49152.0f) { // AKA 0xc000
+		*reinterpret_cast<uint*>(&uSkip) = 0xc000; // Convert to float representation.
+	}
+
+	gNbAddedVertex = gNbAddedVertex + 1;
+
+	gCurVertexBuf->x = x;
+	gCurVertexBuf->y = y;
+	gCurVertexBuf->z = z;
+	gCurVertexBuf->fSkip = uSkip;
+
+	gCurVertexBuf[1].uSkip = 0xc000;
 
 	gCurColorBuf->r = gCurColor_SPR->r;
 	gCurColorBuf->g = gCurColor_SPR->g;
@@ -1720,10 +1721,6 @@ void edDListVertex4f_3D_DEFAULT(float x, float y, float z, uint skip)
 	else {
 		gNbDMAVertex = gNbDMAVertex + 1;
 	}
-
-	DISPLAY_LIST_SET_COLOR(gCurColorBuf->r, gCurColorBuf->g, gCurColorBuf->b, gCurColorBuf->a, 1.0f);
-	DISPLAY_LIST_SET_TEXCOORD(gCurSTBuf[0], gCurSTBuf[1]);
-	DISPLAY_LIST_SET_VERTEX(x, y, z, local_4 == 49152.0f);
 
 	gCurVertexBuf = gCurVertexBuf + 1;
 	gCurColorBuf = p_Var1;
@@ -2003,17 +2000,15 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 
 void edDListTexCoo2f(float s, float t)
 {
-	/* WARNING: Could not recover jumptable at 0x002cdff4. Too many branches */
-	/* WARNING: Treating indirect jump as call */
 	(gAddSTFUNC)(s, t);
+
 	return;
 }
 
-void edDListVertex4f(float x, float y, float z, uint param_4)
+void edDListVertex4f(float x, float y, float z, float skip)
 {
-	/* WARNING: Could not recover jumptable at 0x002cd6e4. Too many branches */
-	/* WARNING: Treating indirect jump as call */
-	(gAddVertexFUNC)(x, y, z, param_4);
+	(gAddVertexFUNC)(x, y, z, skip);
+
 	return;
 }
 
@@ -2053,6 +2048,7 @@ void edDListSetProperty(uint type, uint value)
 }
 
 edF32VECTOR3 Vector3_0048d390 = { };
+float FLOAT_0048d39c = 0.0f;
 
 float FLOAT_ARRAY_004253a0[12] = {
 	1.0f, 0.0f, 0.0f, 0.0f,
@@ -2473,7 +2469,7 @@ void edDListEnd(void)
 		else {
 			if (gCurDList->nbCommands != 0) {
 				if (gCurPrimType == 10) {
-					edDListVertex4f(Vector3_0048d390.x, Vector3_0048d390.y, Vector3_0048d390.z, 10);
+					edDListVertex4f(Vector3_0048d390.x, Vector3_0048d390.y, Vector3_0048d390.z, FLOAT_0048d39c);
 				}
 
 				gNbVertexDMA = 0x48;

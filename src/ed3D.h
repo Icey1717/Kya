@@ -640,7 +640,8 @@ public:
 };
 
 
-struct FxFogProp {
+struct FxFogProp
+{
 	uint field_0x0;
 	uint field_0x4;
 	int field_0x8;
@@ -649,15 +650,21 @@ struct FxFogProp {
 	uint field_0x14;
 };
 
-struct edVertex {
+struct edVertex
+{
 	float x;
 	float y;
 	float z;
-	uint skip;
+	union
+	{
+		float fSkip;
+		uint uSkip;
+	};
 };
 
 PACK(
-	struct ed_Bound_Sphere_packet {
+	struct ed_Bound_Sphere_packet 
+{
 	edF32VECTOR3 field_0x0;
 	ushort field_0xc;
 	undefined field_0xe;

@@ -1749,13 +1749,11 @@ bool CActor::InitDlistPatchable(int param_2)
 		edDListLoadIdentity();
 		edDListUseMaterial((edDList_material*)0x0);
 		edDListBegin(0.0f, 0.0f, 0.0f, 8, 4);
-
-		uint vtxSkip = 0;
 		edDListColor4u8(0, 0, 0, 0);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
 		edDListEnd();
 	}
 

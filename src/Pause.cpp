@@ -472,7 +472,7 @@ struct RectVertex
 	float x;
 	float y;
 	float z;
-	uint field_0xc;
+	float skip;
 	uint color;
 	float u;
 	float v;
@@ -501,44 +501,44 @@ void CPauseManager::DrawRectangleBorder(float tlx, float tly, float param_3, flo
 	edDListUseMaterial((edDList_material*)0x0);
 	edDListLoadIdentity();
 	aVertices[0].z = 0.0f;
-	aVertices[0].field_0xc = 0;
+	aVertices[0].skip = 0.0f;
 	aVertices[0].u = 0.0f;
 	aVertices[0].v = 0.0f;
 	aVertices[0].x = tlx - param_3 * 0.5f;
 
 	aVertices[1].z = 0.0f;
-	aVertices[1].field_0xc = 0;
+	aVertices[1].skip = 0.0f;
 	aVertices[1].u = 1.0f;
 	aVertices[1].v = 0.0f;
 
 	aVertices[2].z = 0.0f;
-	aVertices[2].field_0xc = 0;
+	aVertices[2].skip = 0.0f;
 	aVertices[2].u = 0.0f;
 
 	aVertices[1].x = tlx + param_3 * 0.5f;
 	aVertices[2].v = 1.0f;
 	aVertices[3].z = 0.0f;
-	aVertices[3].field_0xc = 0;
+	aVertices[3].skip = 0.0f;
 	aVertices[3].u = 1.0f;
 	aVertices[4].x = borderWidth + aVertices[0].x;
 	aVertices[3].v = 1.0f;
 	aVertices[4].z = 0.0f;
-	aVertices[4].field_0xc = 0;
+	aVertices[4].skip = 0.0f;
 	aVertices[4].u = 0.25f;
 	aVertices[4].v = 0.25f;
 	aVertices[5].x = aVertices[1].x - borderWidth;
 	aVertices[5].z = 0.0f;
-	aVertices[5].field_0xc = 0;
+	aVertices[5].skip = 0.0f;
 	aVertices[5].u = 0.75f;
 	aVertices[5].v = 0.25f;
 	aVertices[6].u = 0.25f;
 	aVertices[0].y = tly - param_4 * 0.5f;
 	aVertices[6].z = 0.0f;
-	aVertices[6].field_0xc = 0;
+	aVertices[6].skip = 0.0f;
 	aVertices[6].v = 0.75f;
 	aVertices[7].z = 0.0f;
 	aVertices[2].y = tly + param_4 * 0.5f;
-	aVertices[7].field_0xc = 0;
+	aVertices[7].skip = 0.0f;
 	aVertices[7].u = 0.75f;
 	aVertices[7].v = 0.75f;
 	aVertices[4].y = borderHeight + aVertices[0].y;
@@ -594,10 +594,9 @@ void CPauseManager::DrawRectangleBorder(float tlx, float tly, float param_3, flo
 	do {
 		curIndex = *pCurrentIndex;
 		curColor = aVertices[curIndex].color;
-		vtxSkip = (curColor & 0xff0000) >> 0x10;
 		edDListColor4u8((byte)((curColor & 0xff0000) >> 0x10), (byte)(curColor >> 8), (byte)curColor, (byte)(curColor >> 0x18));
 		edDListTexCoo2f(aVertices[curIndex].u, aVertices[curIndex].v);
-		edDListVertex4f(aVertices[curIndex].x, aVertices[curIndex].y, aVertices[curIndex].z, vtxSkip);
+		edDListVertex4f(aVertices[curIndex].x, aVertices[curIndex].y, aVertices[curIndex].z, aVertices[curIndex].skip);
 		iVar1 = iVar1 + 1;
 		pCurrentIndex = pCurrentIndex + 1;
 	} while (iVar1 < 4);
@@ -609,10 +608,9 @@ void CPauseManager::DrawRectangleBorder(float tlx, float tly, float param_3, flo
 	do {
 		curIndex = *pCurrentIndex;
 		curColor = aVertices[curIndex].color;
-		vtxSkip = (curColor & 0xff0000) >> 0x10;
 		edDListColor4u8((byte)((curColor & 0xff0000) >> 0x10), (byte)(curColor >> 8), (byte)curColor, (byte)(curColor >> 0x18));
 		edDListTexCoo2f(aVertices[curIndex].u, aVertices[curIndex].v);
-		edDListVertex4f(aVertices[curIndex].x, aVertices[curIndex].y, aVertices[curIndex].z, vtxSkip);
+		edDListVertex4f(aVertices[curIndex].x, aVertices[curIndex].y, aVertices[curIndex].z, aVertices[curIndex].skip);
 		iVar1 = iVar1 + 1;
 		pCurrentIndex = pCurrentIndex + 1;
 	} while (iVar1 < 10);
@@ -906,7 +904,6 @@ void ClearDisplay(void)
 	CFrontendDisplay* pFrontendManager;
 	bool tlSuccess;
 	bool brSuccess;
-	uint vtxSkip;
 	edF32VECTOR4 brScreen;
 	edF32VECTOR4 tlScreen;
 	edF32VECTOR2 br;
@@ -925,17 +922,16 @@ void ClearDisplay(void)
 		
 		edDListUseMaterial(&MenuBitmaps[0xb].materialInfo);
 		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
-		vtxSkip = 4;
 		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
 
 		edDListTexCoo2f(0.0f, 0.0f);
-		edDListVertex4f(tlScreen.x, tlScreen.y, tlScreen.z, vtxSkip);
+		edDListVertex4f(tlScreen.x, tlScreen.y, tlScreen.z, 1.0f);
 		edDListTexCoo2f(1.0f, 0.0f);
-		edDListVertex4f(brScreen.x, tlScreen.y, tlScreen.z, vtxSkip);
+		edDListVertex4f(brScreen.x, tlScreen.y, tlScreen.z, 1.0f);
 		edDListTexCoo2f(0.0f, 1.0f);
-		edDListVertex4f(tlScreen.x, brScreen.y, tlScreen.z, vtxSkip);
+		edDListVertex4f(tlScreen.x, brScreen.y, tlScreen.z, 1.0f);
 		edDListTexCoo2f(1.0f, 1.0f);
-		edDListVertex4f(brScreen.x, brScreen.y, tlScreen.z, vtxSkip);
+		edDListVertex4f(brScreen.x, brScreen.y, tlScreen.z, 1.0f);
 
 		edDListEnd();
 
@@ -1225,7 +1221,7 @@ float CSimpleMenu::draw_func(float param_2)
 			s_00 = 0.0f;
 			s = 1.0f;
 		}
-		iVar4 = 4;
+
 		edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
 		edDListTexCoo2f(s, s);
 		iVar2 = this->field_0xf8;
@@ -1236,7 +1232,7 @@ float CSimpleMenu::draw_func(float param_2)
 		if (iVar3 < 0) {
 			iVar3 = iVar3 + 1;
 		}
-		edDListVertex4f(in_f23 - (float)(iVar2 >> 1), unaff_f22 - (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListVertex4f(in_f23 - (float)(iVar2 >> 1), unaff_f22 - (float)(iVar3 >> 1), 0.0f, 0.0f);
 		edDListTexCoo2f(s_00, s);
 		iVar2 = this->field_0xf8;
 		if (iVar2 < 0) {
@@ -1246,7 +1242,7 @@ float CSimpleMenu::draw_func(float param_2)
 		if (iVar3 < 0) {
 			iVar3 = iVar3 + 1;
 		}
-		edDListVertex4f(in_f23 + (float)(iVar2 >> 1), unaff_f22 - (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListVertex4f(in_f23 + (float)(iVar2 >> 1), unaff_f22 - (float)(iVar3 >> 1), 0.0f, 0.0f);
 		edDListTexCoo2f(s, s_00);
 		iVar2 = this->field_0xf8;
 		if (iVar2 < 0) {
@@ -1256,7 +1252,7 @@ float CSimpleMenu::draw_func(float param_2)
 		if (iVar3 < 0) {
 			iVar3 = iVar3 + 1;
 		}
-		edDListVertex4f(in_f23 - (float)(iVar2 >> 1), unaff_f22 + (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListVertex4f(in_f23 - (float)(iVar2 >> 1), unaff_f22 + (float)(iVar3 >> 1), 0.0f, 0.0f);
 		edDListTexCoo2f(s_00, s_00);
 		iVar2 = this->field_0xf8;
 		if (iVar2 < 0) {
@@ -1266,7 +1262,7 @@ float CSimpleMenu::draw_func(float param_2)
 		if (iVar3 < 0) {
 			iVar3 = iVar3 + 1;
 		}
-		edDListVertex4f(in_f23 + (float)(iVar2 >> 1), unaff_f22 + (float)(iVar3 >> 1), 0.0f, iVar4);
+		edDListVertex4f(in_f23 + (float)(iVar2 >> 1), unaff_f22 + (float)(iVar3 >> 1), 0.0f, 0.0f);
 		edDListEnd();
 	}
 	return xPos;
@@ -2117,10 +2113,9 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 				edDListUseMaterial((edDList_material*)0x0);
 				edDListColor4u8(0, 0, 0, 0x80);
 				edDListLoadIdentity();
-				iVar9 = 6;
 				edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_SPRITE, 2);
-				edDListVertex4f(0.0f, 0.0f, 0.0f, iVar9);
-				edDListVertex4f(fVar13, fVar10, 0.0f, iVar9);
+				edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+				edDListVertex4f(fVar13, fVar10, 0.0f, 0.0f);
 				edDListEnd();
 			}
 
@@ -2140,7 +2135,6 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 			if (iVar9 != 0) {
 				fVar18 = 0.0f;
 				do {
-					uVar5 = 4;
 					edDListBegin(0.0f, 0.0f, 0.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, iVar7 * 2);
 					x = (this->drawOffsets).x;
 					fVar14 = 0.0f;
@@ -2149,9 +2143,9 @@ bool CSplashScreen::Manage(uint param_2, bool param_3, bool param_4)
 					fVar17 = fVar16;
 					while (iVar6 != 0) {
 						edDListTexCoo2f(fVar14, fVar18);
-						edDListVertex4f(x, y_00, 0.0f, uVar5);
+						edDListVertex4f(x, y_00, 0.0f, 0.0f);
 						edDListTexCoo2f(fVar14, fVar17);
-						edDListVertex4f(x, y, 0.0f, uVar5);
+						edDListVertex4f(x, y, 0.0f, 0.0f);
 						iVar6 = iVar6 + -1;
 						if (iVar6 == 1) {
 							fVar14 = 1.0f;

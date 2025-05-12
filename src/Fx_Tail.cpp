@@ -17,7 +17,6 @@ bool CFxTail::IsKindOfObject(ulong kind)
 
 bool CFxTail::InitDlistPatchable(int)
 {
-	uint uVar1;
 	int iVar2;
 	float fVar3;
 	float s;
@@ -31,12 +30,11 @@ bool CFxTail::InitDlistPatchable(int)
 	iVar2 = 0;
 	if (0 < this->count_0x34 + 1) {
 		do {
-			uVar1 = this->field_0x24.rgba;
 			edDListColor4u8(this->field_0x24.r, this->field_0x24.g, this->field_0x24.b, this->field_0x24.a);
 			edDListTexCoo2f(s, this->field_0xc0);
-			edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
+			edDListVertex4f(0.0f, 0.0f, 0.0f, 49152.0f);
 			edDListTexCoo2f(s, this->field_0xc4);
-			edDListVertex4f(0.0f, 0.0f, 0.0f, uVar1);
+			edDListVertex4f(0.0f, 0.0f, 0.0f, 49152.0f);
 			fVar3 = s + this->field_0xb8;
 			s = -8.0f;
 			if (fVar3 <= 8.0f) {

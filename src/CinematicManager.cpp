@@ -4815,20 +4815,17 @@ void CCinematicManager::DrawBandsAndSubtitle(int param_2)
 					fVar13 = 0.0f;
 					iVar11 = 2;
 					do {
-						uVar9 = 4;
 						edDListBegin(0.0f, 0.0f, 0.0f, 4, ((iVar4 >> 5) + 1) * 2);
-						uVar8 = (uint)uVar9;
 						fVar14 = 0.0f;
 						for (iVar10 = iVar4 >> 5; iVar10 != 0; iVar10 = iVar10 + -1) {
-							edDListVertex4f(fVar14, fVar13, 0.0f, (uint)uVar9);
-							edDListVertex4f(fVar14, fVar12, 0.0f, (uint)uVar9);
-							uVar8 = (uint)uVar9;
+							edDListVertex4f(fVar14, fVar13, 0.0f, 0.0f);
+							edDListVertex4f(fVar14, fVar12, 0.0f, 0.0f);
 							fVar14 = fVar14 + 32.0f;
 						}
 
 						fVar14 = (float)gVideoConfig.screenWidth;
-						edDListVertex4f(fVar14, fVar13, 0.0f, uVar8);
-						edDListVertex4f(fVar14, fVar12, 0.0f, uVar8);
+						edDListVertex4f(fVar14, fVar13, 0.0f, 0.0f);
+						edDListVertex4f(fVar14, fVar12, 0.0f, 0.0f);
 						edDListEnd();
 
 						iVar11 = iVar11 + -1;

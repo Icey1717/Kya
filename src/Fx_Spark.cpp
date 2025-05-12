@@ -20,6 +20,7 @@ bool CFxSpark::InitDlistPatchable(int)
 	int iVar3;
 	int iVar4;
 	float x;
+	float fVar4;
 	float s;
 	_rgba local_4;
 
@@ -41,14 +42,24 @@ bool CFxSpark::InitDlistPatchable(int)
 					edDListColor4u8(local_4.r, local_4.g, local_4.b, 0);
 					edDListTexCoo2f(s, 0.0f);
 					if (iVar3 == 0) {
+						fVar4 = 49152.0f;
 						x = this->field_0xb0;
 					}
 					else {
+						fVar4 = 1.0f;
 						x = this->field_0xb0;
 					}
-					edDListVertex4f(x, 0.0f, 0.0f, uVar2);
+					edDListVertex4f(x, 0.0f, 0.0f, fVar4);
 					edDListTexCoo2f(s, 1.0f);
-					edDListVertex4f(-this->field_0xb0, 0.0f, 0.0f, uVar2);
+
+					if (iVar3 == 0) {
+						fVar4 = 49152.0f;
+					}
+					else {
+						fVar4 = 1.0f;
+					}
+
+					edDListVertex4f(-this->field_0xb0, 0.0f, 0.0f, fVar4);
 					iVar1 = this->count_0xa0;
 					iVar3 = iVar3 + 1;
 					s = s + this->field_0xc0 / (float)iVar1;

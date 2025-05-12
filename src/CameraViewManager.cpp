@@ -1943,20 +1943,18 @@ CCameraShadow::CCameraShadow(ByteCode* pByteCode)
 bool CCameraShadow::InitDlistPatchable(int)
 {
 	CGlobalDListManager* pDlistmanager;
-	uint vtxSkip;
 	int curVtxIndex;
 
 	edDListLoadIdentity();
 	edDListUseMaterial((edDList_material*)0x0);
 	edDListSetProperty(4, this->sceneFlags);
 	edDListBegin(0.0f, 0.0f, 0.0f, 3, 0x2ee);
-	vtxSkip = 0;
 	edDListColor4u8(0, 0, 0, 0x7f);
 	curVtxIndex = 0;
 	do {
-		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
-		edDListVertex4f(0.0f, 0.0f, 0.0f, vtxSkip);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
+		edDListVertex4f(0.0f, 0.0f, 0.0f, 0.0f);
 		curVtxIndex = curVtxIndex + 1;
 	} while (curVtxIndex < 0xfa);
 

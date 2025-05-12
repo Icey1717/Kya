@@ -78,7 +78,6 @@ void edCTextFormat::Display(float x, float y)
 
 void edCTextFormat::DisplayDebugInfos(float x, float y)
 {
-	int iVar1;
 	TextLine* pTVar2;
 	uint uVar3;
 	float fVar4;
@@ -97,12 +96,11 @@ void edCTextFormat::DisplayDebugInfos(float x, float y)
 	fVar6 = fVar6 + 1.0f;
 	fVar7 = fVar7 + 1.0f;
 	edDListColor4u8(0xff, 0xff, 0xff, 0x40);
-	iVar1 = 4;
 	edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
-	edDListVertex4f(fVar5, fVar4, 0.0f, iVar1);
-	edDListVertex4f(fVar6, fVar4, 0.0f, iVar1);
-	edDListVertex4f(fVar5, fVar7, 0.0f, iVar1);
-	edDListVertex4f(fVar6, fVar7, 0.0f, iVar1);
+	edDListVertex4f(fVar5, fVar4, 0.0f, 0.0f);
+	edDListVertex4f(fVar6, fVar4, 0.0f, 0.0f);
+	edDListVertex4f(fVar5, fVar7, 0.0f, 0.0f);
+	edDListVertex4f(fVar6, fVar7, 0.0f, 0.0f);
 	edDListEnd();
 	pTVar2 = this->aTextLines;
 	uVar3 = 0;
@@ -116,12 +114,11 @@ void edCTextFormat::DisplayDebugInfos(float x, float y)
 			fVar4 = fVar6 + fVar4 + 1.0f;
 			fVar5 = fVar5 + 1.0f;
 			edDListColor4u8(0x7f, (char)((uVar3 & 1) << 7) + 0x7f, 0xff, 0x40);
-			iVar1 = 4;
 			edDListBegin(1.0f, 1.0f, 1.0f, DISPLAY_LIST_DATA_TYPE_TRIANGLE_LIST, 4);
-			edDListVertex4f(fVar6, fVar7, 0.0f, iVar1);
-			edDListVertex4f(fVar4, fVar7, 0.0f, iVar1);
-			edDListVertex4f(fVar6, fVar5, 0.0f, iVar1);
-			edDListVertex4f(fVar4, fVar5, 0.0f, iVar1);
+			edDListVertex4f(fVar6, fVar7, 0.0f, 0.0f);
+			edDListVertex4f(fVar4, fVar7, 0.0f, 0.0f);
+			edDListVertex4f(fVar6, fVar5, 0.0f, 0.0f);
+			edDListVertex4f(fVar4, fVar5, 0.0f, 0.0f);
 			edDListEnd();
 #ifdef PLATFORM_WIN
 			Renderer::Draw();
@@ -433,7 +430,6 @@ void edCTextFormat::SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderComma
 {
 	int iVar1;
 	uint uVar2;
-	uint uVar3;
 	CharacterData* pCharacterData;
 
 	if (pTextRenderCommands->characterCount != 0) {
@@ -446,18 +442,20 @@ void edCTextFormat::SendTextRenderCommands_0028b0e0(DrawText16* pTextRenderComma
 		iVar1 = pTextRenderCommands->characterCount;
 		while (iVar1 != 0) {
 			uVar2 = pCharacterData->colour;
-			uVar3 = (uVar2 >> 0x18) + 1 >> 1;
-			edDListColor4u8
-			((byte)uVar3, (byte)((uVar2 >> 0x10 & 0xff) + 1 >> 1), (byte)((uVar2 >> 8 & 0xff) + 1 >> 1),
+			edDListColor4u8((byte)((uVar2 >> 0x18) + 1 >> 1), 
+				(byte)((uVar2 >> 0x10 & 0xff) + 1 >> 1), 
+				(byte)((uVar2 >> 8 & 0xff) + 1 >> 1),
 				(byte)((uVar2 & 0xff) + 1 >> 1));
+
 			edDListTexCoo2f(pCharacterData->tex_x1, pCharacterData->tex_y1);
-			edDListVertex4f(pCharacterData->pos_x1, pCharacterData->pos_y1, 0.0f, uVar3);
+			edDListVertex4f(pCharacterData->pos_x1, pCharacterData->pos_y1, 0.0f, 0.0f);
 			edDListTexCoo2f(pCharacterData->tex_x1, pCharacterData->tex_y2);
-			edDListVertex4f(pCharacterData->pos_x1, pCharacterData->pos_y2, 0.0f, uVar3);
+			edDListVertex4f(pCharacterData->pos_x1, pCharacterData->pos_y2, 0.0f, 0.0f);
 			edDListTexCoo2f(pCharacterData->tex_x2, pCharacterData->tex_y1);
-			edDListVertex4f(pCharacterData->pos_x2, pCharacterData->pos_y1, 0.0f, uVar3);
+			edDListVertex4f(pCharacterData->pos_x2, pCharacterData->pos_y1, 0.0f, 0.0f);
 			edDListTexCoo2f(pCharacterData->tex_x2, pCharacterData->tex_y2);
-			edDListVertex4f(pCharacterData->pos_x2, pCharacterData->pos_y2, 0.0f, uVar3);
+			edDListVertex4f(pCharacterData->pos_x2, pCharacterData->pos_y2, 0.0f, 0.0f);
+
 			pTextRenderCommands->characterCount = pTextRenderCommands->characterCount + -1;
 			pCharacterData = pCharacterData + 1;
 			iVar1 = pTextRenderCommands->characterCount;

@@ -146,13 +146,13 @@ void CActorCompanion::Draw()
 					*(byte*)((int)&this->field_0x354 + 2),
 					(byte)(int)((float)uVar11 * 0.5 + (float)uVar11 * ((float)iVar7 / 2.147484e+09) * 0.4));
 				edDListTexCoo2f(0.0, 0.0);
-				edDListVertex4f(-0.1, 0.1, 0.0, uVar9);
+				edDListVertex4f(-0.1, 0.1, 0.0, 0.0f);
 				edDListTexCoo2f(1.0, 0.0);
-				edDListVertex4f(0.1, 0.1, 0.0, uVar9);
+				edDListVertex4f(0.1, 0.1, 0.0, 0.0f);
 				edDListTexCoo2f(0.0, 1.0);
-				edDListVertex4f(-0.1, -0.1, 0.0, uVar9);
+				edDListVertex4f(-0.1, -0.1, 0.0, 0.0f);
 				edDListTexCoo2f(1.0, 1.0);
-				edDListVertex4f(0.1, -0.1, 0.0, uVar9);
+				edDListVertex4f(0.1, -0.1, 0.0, 0.0f);
 				edDListEnd();
 				if (this->actorState == 10) {
 					iVar7 = (this->behaviourCompanion).activeSubObjId;
@@ -245,24 +245,24 @@ void CActorCompanion::Draw()
 									local_d0.db = 0.5;
 									edF32Matrix4MulF32Matrix4Hard(peVar5, &local_110, peVar5);
 									edDListTexCoo2f(0.0, 0.0);
-									edDListVertex4f(x + local_d0.aa, local_d0.ab, 0.0, (uint)peVar5);
+									edDListVertex4f(x + local_d0.aa, local_d0.ab, 0.0, 0.0f);
 									edDListTexCoo2f(1.0, 0.0);
-									edDListVertex4f(x + local_d0.ba, local_d0.bb, 0.0, (uint)peVar5);
+									edDListVertex4f(x + local_d0.ba, local_d0.bb, 0.0, 0.0f);
 									edDListTexCoo2f(0.0, 1.0);
-									edDListVertex4f(x + local_d0.ca, local_d0.cb, 0.0, (uint)peVar5);
+									edDListVertex4f(x + local_d0.ca, local_d0.cb, 0.0, 0.0f);
 									edDListTexCoo2f(1.0, 1.0);
-									edDListVertex4f(x + local_d0.da, local_d0.db, 0.0, (uint)peVar5);
+									edDListVertex4f(x + local_d0.da, local_d0.db, 0.0, 0.0f);
 								}
 								else {
 									edDListTexCoo2f(0.0, 0.0);
-									edDListVertex4f(x, 1.0, 0.0, uVar9);
+									edDListVertex4f(x, 1.0, 0.0, 0.0f);
 									edDListTexCoo2f(1.0, 0.0);
 									fVar12 = x + 1.0;
-									edDListVertex4f(fVar12, 1.0, 0.0, uVar9);
+									edDListVertex4f(fVar12, 1.0, 0.0, 0.0f);
 									edDListTexCoo2f(0.0, 1.0);
-									edDListVertex4f(x, 0.0, 0.0, uVar9);
+									edDListVertex4f(x, 0.0, 0.0, 0.0f);
 									edDListTexCoo2f(1.0, 1.0);
-									edDListVertex4f(fVar12, 0.0, 0.0, uVar9);
+									edDListVertex4f(fVar12, 0.0, 0.0, 0.0f);
 								}
 								edDListEnd();
 								iVar7 = iVar7 + 2;
