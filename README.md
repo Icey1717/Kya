@@ -69,7 +69,7 @@ Please include comprehensive documentation for any new features or changes.
 
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE), allowing for open collaboration and distribution.
+This project is licensed under the GPL 3.0 license.
 
 ---
 
