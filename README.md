@@ -1,7 +1,5 @@
 # Kya: Dark Lineage Decompilation
 
-![Kya: Dark Lineage](https://upload.wikimedia.org/wikipedia/en/3/3e/Kya_Dark_Lineage_Coverart.png)
-
 This repository hosts an ongoing decompilation of *Kya: Dark Lineage*, a 2003 action-adventure platformer developed by Eden Games and published by Atari for the PlayStation 2.  
 The goal is to reverse-engineer the game's original C++ source code from its compiled binaries, facilitating a deeper understanding of its mechanics, enabling modding, and preserving its legacy.
 
