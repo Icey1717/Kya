@@ -1818,12 +1818,6 @@ void Renderer::BindTexture(SimpleTexture* pNewTexture)
 	Native::BindTexture(pNewTexture);
 }
 
-void Renderer::AddMesh(SimpleMesh* pNewMesh)
-{
-	assert(pNewMesh);
-	Native::AddMesh(pNewMesh);
-}
-
 void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj) 
 {
 	Native::PushGlobalMatrices(pModel, pView, pProj);

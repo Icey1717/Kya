@@ -5,11 +5,16 @@
 
 #include "MathOps.h"
 #include "port/pointer_conv.h"
+#include "../../../profile.h"
 
 GlobalCollisionData gColData;
 CollisionTD gColTD;
 
 edColConfig gColConfig;
+
+uint prof_obb_col;
+uint prof_prim_col;
+uint prof_fast_col;
 
 #ifdef PLATFORM_WIN
 struct edF32TRIANGLE4_Stack
@@ -3999,7 +4004,6 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 	int local_10[3];
 	float local_4;
 
-	//uVar5 = prof_obb_col;
 	uVar13 = 0;
 	uVar10 = 0;
 	local_340[0][0] = pObbTreeB;
@@ -4007,31 +4011,9 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 	intersectCountA = 0;
 	local_10[1] = 0;
 	intersectCountB = 0;
-#if 0
 	if (gColConfig.bCreateProfileObj != 0) {
-		if ((prof_obb_col & 1) == 0) {
-			uVar7 = prof_obb_col >> 4;
-			if (ProfileManager.ProfileManager[uVar7].field_0x34 != 0) {
-				ProfileManager.ProfileManager[uVar7].field_0x8 = 0;
-				ProfileManager.ProfileManager[uVar7].field_0x20 = 0;
-				ProfileManager.ProfileManager[uVar7].field_0x34 = 0;
-			}
-			ProfileManager.ProfileManager[uVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-			ProfileManager.ProfileManager[uVar5 >> 4].field_0x20 = ProfileManager.ProfileManager[uVar5 >> 4].field_0x20 + 1;
-		}
-		else {
-			uVar7 = prof_obb_col >> 4;
-			if (ProfileManager.g_ProfileObjA_0041ed40[uVar7].field_0x34 != 0) {
-				ProfileManager.g_ProfileObjA_0041ed40[uVar7].field_0x8 = 0;
-				ProfileManager.g_ProfileObjA_0041ed40[uVar7].field_0x20 = 0;
-				ProfileManager.g_ProfileObjA_0041ed40[uVar7].field_0x34 = 0;
-			}
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5 >> 4].field_0x20 =
-				ProfileManager.g_ProfileObjA_0041ed40[uVar5 >> 4].field_0x20 + 1;
-		}
+		edProfileBegin(prof_obb_col);
 	}
-#endif
 
 	// Initial BB tests.
 	COLLISION_LOG(LogLevel::VeryVerbose, "\nedObbTreeIntersectObbTree");
@@ -4155,55 +4137,9 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 		} while (local_10[uVar10] != 0);
 	}
 
-#if 0
-	if (gColConfig.bCreateProfileObj != 0) {
-		uVar5 = prof_obb_col >> 4;
-		if ((prof_obb_col & 1) == 0) {
-			ProfileManager.ProfileManager[uVar5].field_0x0 = (long)PCR1 - ProfileManager.ProfileManager[uVar5].field_0x0;
-			ProfileManager.ProfileManager[uVar5].field_0x8 =
-				ProfileManager.ProfileManager[uVar5].field_0x8 + ProfileManager.ProfileManager[uVar5].field_0x0;
-			pPVar9 = ProfileManager.ProfileManager + uVar5;
-			if (pPVar9->field_0x10 < ProfileManager.ProfileManager[uVar5].field_0x0) {
-				pPVar9->field_0x10 = pPVar9->field_0x0;
-			}
-		}
-		else {
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0 =
-				(long)PCR1 - ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0;
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x8 =
-				ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x8 +
-				ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0;
-			pPVar9 = ProfileManager.g_ProfileObjA_0041ed40 + uVar5;
-			if (pPVar9->field_0x10 < ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0) {
-				pPVar9->field_0x10 = pPVar9->field_0x0;
-			}
-		}
-	}
-	uVar5 = prof_prim_col;
-	if (gColConfig.bCreateProfileObj != 0) {
-		if ((prof_prim_col & 1) == 0) {
-			uVar10 = prof_prim_col >> 4;
-			if (ProfileManager.ProfileManager[uVar10].field_0x34 != 0) {
-				ProfileManager.ProfileManager[uVar10].field_0x8 = 0;
-				ProfileManager.ProfileManager[uVar10].field_0x20 = 0;
-				ProfileManager.ProfileManager[uVar10].field_0x34 = 0;
-			}
-			ProfileManager.ProfileManager[uVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-			ProfileManager.ProfileManager[uVar5 >> 4].field_0x20 = ProfileManager.ProfileManager[uVar5 >> 4].field_0x20 + 1;
-		}
-		else {
-			uVar10 = prof_prim_col >> 4;
-			if (ProfileManager.g_ProfileObjA_0041ed40[uVar10].field_0x34 != 0) {
-				ProfileManager.g_ProfileObjA_0041ed40[uVar10].field_0x8 = 0;
-				ProfileManager.g_ProfileObjA_0041ed40[uVar10].field_0x20 = 0;
-				ProfileManager.g_ProfileObjA_0041ed40[uVar10].field_0x34 = 0;
-			}
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5 >> 4].field_0x20 =
-				ProfileManager.g_ProfileObjA_0041ed40[uVar5 >> 4].field_0x20 + 1;
-		}
-	}
-#endif
+	edProfileEnd(prof_obb_col);
+
+	edProfileBegin(prof_prim_col);
 
 	// Go through results.
 	puVar12 = aIntersectResultsB;
@@ -4511,31 +4447,8 @@ uint edObbTreeIntersectObbTree(edColINFO_OBBTREE_OBBTREE* pColInfoObbTree, edObb
 		puVar12 = puVar12 + 1;
 	}
 
-#if 0
-	if (gColConfig.bCreateProfileObj != 0) {
-		uVar5 = prof_prim_col >> 4;
-		if ((prof_prim_col & 1) == 0) {
-			ProfileManager.ProfileManager[uVar5].field_0x0 = (long)PCR1 - ProfileManager.ProfileManager[uVar5].field_0x0;
-			ProfileManager.ProfileManager[uVar5].field_0x8 =
-				ProfileManager.ProfileManager[uVar5].field_0x8 + ProfileManager.ProfileManager[uVar5].field_0x0;
-			pPVar9 = ProfileManager.ProfileManager + uVar5;
-			if (pPVar9->field_0x10 < ProfileManager.ProfileManager[uVar5].field_0x0) {
-				pPVar9->field_0x10 = pPVar9->field_0x0;
-			}
-		}
-		else {
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0 =
-				(long)PCR1 - ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0;
-			ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x8 =
-				ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x8 +
-				ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0;
-			pPVar9 = ProfileManager.g_ProfileObjA_0041ed40 + uVar5;
-			if (pPVar9->field_0x10 < ProfileManager.g_ProfileObjA_0041ed40[uVar5].field_0x0) {
-				pPVar9->field_0x10 = pPVar9->field_0x0;
-			}
-		}
-	}
-#endif
+	edProfileEnd(prof_prim_col);
+
 	return uVar13;
 }
 
@@ -4622,16 +4535,12 @@ void edColInit(void)
 	gColData.bInitialized = 1;
 	gColTD.pCurDatabase = gColData.aDatabases;
 
-#if 0
 	if (gColConfig.bCreateProfileObj != 0) {
-		/* OBB_TEST */
-		prof_obb_col = edProfileNew(1, 0x80, 0x80, 0x80, s_OBB_TEST_00430060);
-		/* PRIM_TEST */
-		prof_prim_col = edProfileNew(1, 0x80, 0x40, 0x40, s_PRIM_TEST_00430070);
-		/* FAST_TEST */
-		prof_fast_col = edProfileNew(1, 0x40, 0x40, 0x80, s_FAST_TEST_00430080);
+		prof_obb_col = edProfileNew(1, 0x80, 0x80, 0x80, "OBB_TEST");
+		prof_prim_col = edProfileNew(1, 0x80, 0x40, 0x40, "PRIM_TEST");
+		prof_fast_col = edProfileNew(1, 0x40, 0x40, 0x80, "FAST_TEST");
 	}
-#endif
+
 	return;
 }
 
@@ -5605,8 +5514,8 @@ void edColTerm(void)
 	}
 
 	if (gColConfig.bCreateProfileObj != 0) {
-		//edProfileDel(prof_obb_col);
-		//edProfileDel(prof_prim_col);
+		edProfileDel(prof_obb_col);
+		edProfileDel(prof_prim_col);
 	}
 
 	gColData.bInitialized = 0;

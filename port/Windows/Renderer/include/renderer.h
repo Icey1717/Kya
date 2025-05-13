@@ -493,7 +493,6 @@ namespace Renderer
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void BindTexture(SimpleTexture* pNewTexture);
-
 	void AddMesh(SimpleMesh* pNewMesh);
 
 	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);

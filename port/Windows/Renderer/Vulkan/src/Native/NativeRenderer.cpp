@@ -290,7 +290,8 @@ namespace Renderer
 			glm::mat4 lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
 		};
 
-		static void UpdateConstantBuffers(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
+		// Updates GPU side memory (Static Uniform Buffers | Per Frame Data)
+		static void StaticUniformBufferUpdate(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
 		{
 			gVertexConstantBuffer.GetBufferData().view = viewMatrix;
 			gVertexConstantBuffer.GetBufferData().proj = projMatrix;
@@ -298,7 +299,8 @@ namespace Renderer
 			gVertexConstantBuffer.Update(GetCurrentFrame());
 		}
 
-		static void DynamicDataUpdate()
+		// Updates GPU side memory (Dynamic Uniform Buffers | Per Instance Data)
+		static void DynamicUniformBufferUpdate()
 		{
 			gModelBuffer.Update(GetCurrentFrame());
 			gAlphaBuffer.Update(GetCurrentFrame());
@@ -459,11 +461,13 @@ namespace Renderer
 
 			Debug::Reset(cmd);
 
-			UpdateConstantBuffers(gFinalViewMatrix, gFinalProjMatrix);
-			DynamicDataUpdate();
+			StaticUniformBufferUpdate(gFinalViewMatrix, gFinalProjMatrix);
+			DynamicUniformBufferUpdate();
 
+			// Map the vertex buffer data to the GPU
 			gNativeVertexBuffer.MapData();
 
+			// Reset the index and vertex heads for the next frame.
 			gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
 
 			vkCmdEndRenderPass(cmd);
@@ -1128,6 +1132,12 @@ const VkImageView& Renderer::Native::GetColorImageView()
 bool& Renderer::GetForceAnimMatrixIdentity()
 {
 	return Native::bForceAnimMatrixIdentity;
+}
+
+void Renderer::AddMesh(SimpleMesh* pNewMesh)
+{
+	assert(pNewMesh);
+	Native::AddMesh(pNewMesh);
 }
 
 void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)

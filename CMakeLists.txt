@@ -80,6 +80,8 @@ set(main_src
 	"${src_root}/edDlist.h"
 	"${src_root}/edList.cpp"
 	"${src_root}/edList.h"
+	"${src_root}/profile.cpp"
+	"${src_root}/profile.h"
 	"${src_root}/Debug.cpp"
 	"${src_root}/Debug.h"
 	"${src_root}/PackedFont.h"

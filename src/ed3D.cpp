@@ -16,6 +16,8 @@
 #include "profiling.h"
 #endif
 
+#include "profile.h"
+
 #include "edVideo/VideoD.h"
 #include "port/pointer_conv.h"
 #include "edVideo/VideoB.h"
@@ -1559,33 +1561,12 @@ void ed3DSceneCompute(int param_1, int param_2, char* param_3)
 {
 	int iVar1;
 	uint uVar2;
-	//ProfileObject* pPVar3;
-	//
-	//iVar1 = gIDProfileRender;
 	gCurSceneID = 0;
+
 	if (ged3DConfig.bEnableProfile != 0) {
-		IMPLEMENTATION_GUARD(
-			if ((gIDProfileRender & 1U) == 0) {
-				uVar2 = (uint)gIDProfileRender >> 4;
-				if (ProfileManagerB[uVar2].field_0x34 != 0) {
-					ProfileManagerB[uVar2].field_0x8 = 0;
-					ProfileManagerB[uVar2].field_0x20 = 0;
-					ProfileManagerB[uVar2].field_0x34 = 0;
-				}
-				ProfileManagerB[(uint)iVar1 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				ProfileManagerB[(uint)iVar1 >> 4].field_0x20 = ProfileManagerB[(uint)iVar1 >> 4].field_0x20 + 1;
-			}
-			else {
-				uVar2 = (uint)gIDProfileRender >> 4;
-				if (g_ProfileObjA_0041ed40[uVar2].field_0x34 != 0) {
-					g_ProfileObjA_0041ed40[uVar2].field_0x8 = 0;
-					g_ProfileObjA_0041ed40[uVar2].field_0x20 = 0;
-					g_ProfileObjA_0041ed40[uVar2].field_0x34 = 0;
-				}
-				g_ProfileObjA_0041ed40[(uint)iVar1 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				g_ProfileObjA_0041ed40[(uint)iVar1 >> 4].field_0x20 = g_ProfileObjA_0041ed40[(uint)iVar1 >> 4].field_0x20 + 1;
-			})
+		edProfileBegin(gIDProfileRender);
 	}
+
 	ed3DFlushSendDMA3D();
 	gCurFreeScene = 0;
 	ed3DClusterReset();
@@ -9734,79 +9715,20 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 	else {
 		ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRenderOne DRAW");
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				if ((gIDProfileFlush & 1U) == 0) {
-					uVar6 = (uint)gIDProfileFlush >> 4;
-					if (ProfileManagerB[uVar6].field_0x34 != 0) {
-						ProfileManagerB[uVar6].field_0x8 = 0;
-						ProfileManagerB[uVar6].fileCount = 0;
-						ProfileManagerB[uVar6].field_0x34 = 0;
-					}
-					ProfileManagerB[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					ProfileManagerB[(uint)iVar3 >> 4].fileCount = ProfileManagerB[(uint)iVar3 >> 4].fileCount + 1;
-				}
-				else {
-					uVar6 = (uint)gIDProfileFlush >> 4;
-					if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
-						g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
-						g_ProfileObjA_0041ed40[uVar6].fileCount = 0;
-						g_ProfileObjA_0041ed40[uVar6].field_0x34 = 0;
-					}
-					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount + 1;
-				})
+			edProfileBegin(gIDProfileFlush);
 		}
 
 		ed3DFlushSceneInit();
 
 		uVar6 = ed3DInitRenderEnvironement(pShadowScene, (ulong)((pShadowScene->flags & 0x20) != 0));
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				uVar5 = (uint)gIDProfileFlush >> 4;
-			if ((gIDProfileFlush & 1U) == 0) {
-				ProfileManagerB[uVar5].field_0x0 = (long)PCR1 - ProfileManagerB[uVar5].field_0x0;
-				ProfileManagerB[uVar5].field_0x8 =
-					ProfileManagerB[uVar5].field_0x8 + ProfileManagerB[uVar5].field_0x0;
-				pPVar7 = ProfileManagerB + uVar5;
-				if (pPVar7->field_0x10 < ProfileManagerB[uVar5].field_0x0) {
-					pPVar7->field_0x10 = pPVar7->field_0x0;
-				}
-			}
-			else {
-				g_ProfileObjA_0041ed40[uVar5].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar5].field_0x0;
-				g_ProfileObjA_0041ed40[uVar5].field_0x8 =
-					g_ProfileObjA_0041ed40[uVar5].field_0x8 + g_ProfileObjA_0041ed40[uVar5].field_0x0;
-				pPVar7 = g_ProfileObjA_0041ed40 + uVar5;
-				if (pPVar7->field_0x10 < g_ProfileObjA_0041ed40[uVar5].field_0x0) {
-					pPVar7->field_0x10 = pPVar7->field_0x0;
-				}
-			})
+			edProfileEnd(gIDProfileFlush);
 		}
-		iVar3 = gIDProfileFlush;
+
 		if ((uVar6 & 0xff) != 0) {
 			gCurSceneID = gCurSceneID + 1;
 			if (ged3DConfig.bEnableProfile != 0) {
-				IMPLEMENTATION_GUARD(
-					if ((gIDProfileFlush & 1U) == 0) {
-						uVar5 = (uint)gIDProfileFlush >> 4;
-						if (ProfileManagerB[uVar5].field_0x34 != 0) {
-							ProfileManagerB[uVar5].field_0x8 = 0;
-							ProfileManagerB[uVar5].fileCount = 0;
-							ProfileManagerB[uVar5].field_0x34 = 0;
-						}
-						ProfileManagerB[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-						ProfileManagerB[(uint)iVar3 >> 4].fileCount = ProfileManagerB[(uint)iVar3 >> 4].fileCount + 1;
-					}
-					else {
-						uVar5 = (uint)gIDProfileFlush >> 4;
-						if (g_ProfileObjA_0041ed40[uVar5].field_0x34 != 0) {
-							g_ProfileObjA_0041ed40[uVar5].field_0x8 = 0;
-							g_ProfileObjA_0041ed40[uVar5].fileCount = 0;
-							g_ProfileObjA_0041ed40[uVar5].field_0x34 = 0;
-						}
-						g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-						g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount + 1;
-					})
+				edProfileBegin(gIDProfileFlush);
 			}
 
 			ed3DInitVU1Globals();
@@ -9814,47 +9736,8 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 			g_VifRefPktCur = ed3DSceneAddContextPacket(pShadowScene, g_VifRefPktCur);
 
 			if (ged3DConfig.bEnableProfile != 0) {
-				IMPLEMENTATION_GUARD(
-					uVar5 = (uint)gIDProfileFlush >> 4;
-				if ((gIDProfileFlush & 1U) == 0) {
-					ProfileManagerB[uVar5].field_0x0 = (long)PCR1 - ProfileManagerB[uVar5].field_0x0;
-					ProfileManagerB[uVar5].field_0x8 =
-						ProfileManagerB[uVar5].field_0x8 + ProfileManagerB[uVar5].field_0x0;
-					pPVar7 = ProfileManagerB + uVar5;
-					if (pPVar7->field_0x10 < ProfileManagerB[uVar5].field_0x0) {
-						pPVar7->field_0x10 = pPVar7->field_0x0;
-					}
-				}
-				else {
-					g_ProfileObjA_0041ed40[uVar5].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar5].field_0x0;
-					g_ProfileObjA_0041ed40[uVar5].field_0x8 =
-						g_ProfileObjA_0041ed40[uVar5].field_0x8 + g_ProfileObjA_0041ed40[uVar5].field_0x0;
-					pPVar7 = g_ProfileObjA_0041ed40 + uVar5;
-					if (pPVar7->field_0x10 < g_ProfileObjA_0041ed40[uVar5].field_0x0) {
-						pPVar7->field_0x10 = pPVar7->field_0x0;
-					}
-				}
-				iVar3 = gIDProfileRender;
-				if ((gIDProfileRender & 1U) == 0) {
-					uVar5 = (uint)gIDProfileRender >> 4;
-					if (ProfileManagerB[uVar5].field_0x34 != 0) {
-						ProfileManagerB[uVar5].field_0x8 = 0;
-						ProfileManagerB[uVar5].fileCount = 0;
-						ProfileManagerB[uVar5].field_0x34 = 0;
-					}
-					ProfileManagerB[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					ProfileManagerB[(uint)iVar3 >> 4].fileCount = ProfileManagerB[(uint)iVar3 >> 4].fileCount + 1;
-				}
-				else {
-					uVar5 = (uint)gIDProfileRender >> 4;
-					if (g_ProfileObjA_0041ed40[uVar5].field_0x34 != 0) {
-						g_ProfileObjA_0041ed40[uVar5].field_0x8 = 0;
-						g_ProfileObjA_0041ed40[uVar5].fileCount = 0;
-						g_ProfileObjA_0041ed40[uVar5].field_0x34 = 0;
-					}
-					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount + 1;
-				})
+				edProfileEnd(gIDProfileFlush);
+				edProfileBegin(gIDProfileRender);
 			}
 
 			pCVar8 = (edNODE*)pScene->pHierListA;
@@ -9916,47 +9799,8 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 			}
 
 			if (ged3DConfig.bEnableProfile != 0) {
-				IMPLEMENTATION_GUARD(
-					uVar5 = (uint)gIDProfileRender >> 4;
-				if ((gIDProfileRender & 1U) == 0) {
-					ProfileManagerB[uVar5].field_0x0 = (long)PCR1 - ProfileManagerB[uVar5].field_0x0;
-					ProfileManagerB[uVar5].field_0x8 =
-						ProfileManagerB[uVar5].field_0x8 + ProfileManagerB[uVar5].field_0x0;
-					pPVar7 = ProfileManagerB + uVar5;
-					if (pPVar7->field_0x10 < ProfileManagerB[uVar5].field_0x0) {
-						pPVar7->field_0x10 = pPVar7->field_0x0;
-					}
-				}
-				else {
-					g_ProfileObjA_0041ed40[uVar5].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar5].field_0x0;
-					g_ProfileObjA_0041ed40[uVar5].field_0x8 =
-						g_ProfileObjA_0041ed40[uVar5].field_0x8 + g_ProfileObjA_0041ed40[uVar5].field_0x0;
-					pPVar7 = g_ProfileObjA_0041ed40 + uVar5;
-					if (pPVar7->field_0x10 < g_ProfileObjA_0041ed40[uVar5].field_0x0) {
-						pPVar7->field_0x10 = pPVar7->field_0x0;
-					}
-				}
-				iVar3 = gIDProfileFlush;
-				if ((gIDProfileFlush & 1U) == 0) {
-					uVar5 = (uint)gIDProfileFlush >> 4;
-					if (ProfileManagerB[uVar5].field_0x34 != 0) {
-						ProfileManagerB[uVar5].field_0x8 = 0;
-						ProfileManagerB[uVar5].fileCount = 0;
-						ProfileManagerB[uVar5].field_0x34 = 0;
-					}
-					ProfileManagerB[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					ProfileManagerB[(uint)iVar3 >> 4].fileCount = ProfileManagerB[(uint)iVar3 >> 4].fileCount + 1;
-				}
-				else {
-					uVar5 = (uint)gIDProfileFlush >> 4;
-					if (g_ProfileObjA_0041ed40[uVar5].field_0x34 != 0) {
-						g_ProfileObjA_0041ed40[uVar5].field_0x8 = 0;
-						g_ProfileObjA_0041ed40[uVar5].fileCount = 0;
-						g_ProfileObjA_0041ed40[uVar5].field_0x34 = 0;
-					}
-					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar3 >> 4].fileCount + 1;
-				})
+				edProfileEnd(gIDProfileRender);
+				edProfileBegin(gIDProfileFlush);
 			}
 
 			if (pShadowScene->bShadowScene == 1) {
@@ -10004,26 +9848,7 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 			ed3DPrimlistMatrixBufferReset();
 
 			if (ged3DConfig.bEnableProfile != 0) {
-				IMPLEMENTATION_GUARD(
-					uVar5 = (uint)gIDProfileFlush >> 4;
-				if ((gIDProfileFlush & 1U) == 0) {
-					ProfileManagerB[uVar5].field_0x0 = (long)PCR1 - ProfileManagerB[uVar5].field_0x0;
-					ProfileManagerB[uVar5].field_0x8 =
-						ProfileManagerB[uVar5].field_0x8 + ProfileManagerB[uVar5].field_0x0;
-					pPVar7 = ProfileManagerB + uVar5;
-					if (pPVar7->field_0x10 < ProfileManagerB[uVar5].field_0x0) {
-						pPVar7->field_0x10 = pPVar7->field_0x0;
-					}
-				}
-				else {
-					g_ProfileObjA_0041ed40[uVar5].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar5].field_0x0;
-					g_ProfileObjA_0041ed40[uVar5].field_0x8 =
-						g_ProfileObjA_0041ed40[uVar5].field_0x8 + g_ProfileObjA_0041ed40[uVar5].field_0x0;
-					pPVar7 = g_ProfileObjA_0041ed40 + uVar5;
-					if (pPVar7->field_0x10 < g_ProfileObjA_0041ed40[uVar5].field_0x0) {
-						pPVar7->field_0x10 = pPVar7->field_0x0;
-					}
-				})
+				edProfileEnd(gIDProfileFlush);
 			}
 		}
 	}
@@ -10049,27 +9874,7 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 
 	iVar4 = gIDProfileFlush;
 	if (ged3DConfig.bEnableProfile != 0) {
-		IMPLEMENTATION_GUARD(
-			if ((gIDProfileFlush & 1U) == 0) {
-				uVar8 = (uint)gIDProfileFlush >> 4;
-				if (ProfileManagerB[uVar8].field_0x34 != 0) {
-					ProfileManagerB[uVar8].field_0x8 = 0;
-					ProfileManagerB[uVar8].fileCount = 0;
-					ProfileManagerB[uVar8].field_0x34 = 0;
-				}
-				ProfileManagerB[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				ProfileManagerB[(uint)iVar4 >> 4].fileCount = ProfileManagerB[(uint)iVar4 >> 4].fileCount + 1;
-			}
-			else {
-				uVar8 = (uint)gIDProfileFlush >> 4;
-				if (g_ProfileObjA_0041ed40[uVar8].field_0x34 != 0) {
-					g_ProfileObjA_0041ed40[uVar8].field_0x8 = 0;
-					g_ProfileObjA_0041ed40[uVar8].fileCount = 0;
-					g_ProfileObjA_0041ed40[uVar8].field_0x34 = 0;
-				}
-				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
-			})
+		edProfileBegin(gIDProfileFlush);
 	}
 
 	g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
@@ -10078,51 +9883,12 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 
 	uVar8 = ed3DInitRenderEnvironement(pStaticMeshMaster, (ulong)((pStaticMeshMaster->flags & 0x20) != 0));
 	if (ged3DConfig.bEnableProfile != 0) {
-		IMPLEMENTATION_GUARD(
-			uVar6 = (uint)gIDProfileFlush >> 4;
-		if ((gIDProfileFlush & 1U) == 0) {
-			ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
-			ProfileManagerB[uVar6].field_0x8 =
-				ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
-			pPVar9 = ProfileManagerB + uVar6;
-			if (pPVar9->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
-				pPVar9->field_0x10 = pPVar9->field_0x0;
-			}
-		}
-		else {
-			g_ProfileObjA_0041ed40[uVar6].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar6].field_0x0;
-			g_ProfileObjA_0041ed40[uVar6].field_0x8 =
-				g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
-			pPVar9 = g_ProfileObjA_0041ed40 + uVar6;
-			if (pPVar9->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
-				pPVar9->field_0x10 = pPVar9->field_0x0;
-			}
-		})
+		edProfileEnd(gIDProfileFlush);
 	}
-	iVar4 = gIDProfileFlush;
+
 	if ((uVar8 & 0xff) != 0) {
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				if ((gIDProfileFlush & 1U) == 0) {
-					uVar6 = (uint)gIDProfileFlush >> 4;
-					if (ProfileManagerB[uVar6].field_0x34 != 0) {
-						ProfileManagerB[uVar6].field_0x8 = 0;
-						ProfileManagerB[uVar6].fileCount = 0;
-						ProfileManagerB[uVar6].field_0x34 = 0;
-					}
-					ProfileManagerB[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					ProfileManagerB[(uint)iVar4 >> 4].fileCount = ProfileManagerB[(uint)iVar4 >> 4].fileCount + 1;
-				}
-				else {
-					uVar6 = (uint)gIDProfileFlush >> 4;
-					if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
-						g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
-						g_ProfileObjA_0041ed40[uVar6].fileCount = 0;
-						g_ProfileObjA_0041ed40[uVar6].field_0x34 = 0;
-					}
-					g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
-				})
+			edProfileBegin(gIDProfileFlush);
 		}
 
 		ed3DInitVU1Globals();
@@ -10133,96 +9899,18 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 		pStaticMeshMaster->pViewport->clearColor.a = bVar3;
 
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				uVar6 = (uint)gIDProfileFlush >> 4;
-			if ((gIDProfileFlush & 1U) == 0) {
-				ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
-				ProfileManagerB[uVar6].field_0x8 =
-					ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
-				pPVar9 = ProfileManagerB + uVar6;
-				if (pPVar9->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
-					pPVar9->field_0x10 = pPVar9->field_0x0;
-				}
-			}
-			else {
-				g_ProfileObjA_0041ed40[uVar6].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				g_ProfileObjA_0041ed40[uVar6].field_0x8 =
-					g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				pPVar9 = g_ProfileObjA_0041ed40 + uVar6;
-				if (pPVar9->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
-					pPVar9->field_0x10 = pPVar9->field_0x0;
-				}
-			}
-			iVar4 = gIDProfileRender;
-			if ((gIDProfileRender & 1U) == 0) {
-				uVar6 = (uint)gIDProfileRender >> 4;
-				if (ProfileManagerB[uVar6].field_0x34 != 0) {
-					ProfileManagerB[uVar6].field_0x8 = 0;
-					ProfileManagerB[uVar6].fileCount = 0;
-					ProfileManagerB[uVar6].field_0x34 = 0;
-				}
-				ProfileManagerB[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				ProfileManagerB[(uint)iVar4 >> 4].fileCount = ProfileManagerB[(uint)iVar4 >> 4].fileCount + 1;
-			}
-			else {
-				uVar6 = (uint)gIDProfileRender >> 4;
-				if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
-					g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
-					g_ProfileObjA_0041ed40[uVar6].fileCount = 0;
-					g_ProfileObjA_0041ed40[uVar6].field_0x34 = 0;
-				}
-				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
-			})
+			edProfileEnd(gIDProfileFlush);
+			edProfileBegin(gIDProfileRender);
 		}
 
 		renderTaskData.isChild = pStaticMeshMaster->bShadowScene;
 		renderTaskData.taskFlags = 2;
 		renderTaskData.pStaticMeshMaster = pStaticMeshMaster;
-		edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, 0, &renderTaskData);
+		edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, ED_HANDLER_3D_SEND_3D, &renderTaskData);
 
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				uVar6 = (uint)gIDProfileRender >> 4;
-			if ((gIDProfileRender & 1U) == 0) {
-				ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
-				ProfileManagerB[uVar6].field_0x8 =
-					ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
-				pPVar9 = ProfileManagerB + uVar6;
-				if (pPVar9->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
-					pPVar9->field_0x10 = pPVar9->field_0x0;
-				}
-			}
-			else {
-				g_ProfileObjA_0041ed40[uVar6].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				g_ProfileObjA_0041ed40[uVar6].field_0x8 =
-					g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				pPVar9 = g_ProfileObjA_0041ed40 + uVar6;
-				if (pPVar9->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
-					pPVar9->field_0x10 = pPVar9->field_0x0;
-				}
-			}
-			iVar4 = gIDProfileFlush;
-			if ((gIDProfileFlush & 1U) == 0) {
-				uVar6 = (uint)gIDProfileFlush >> 4;
-				if (ProfileManagerB[uVar6].field_0x34 != 0) {
-					ProfileManagerB[uVar6].field_0x8 = 0;
-					ProfileManagerB[uVar6].fileCount = 0;
-					ProfileManagerB[uVar6].field_0x34 = 0;
-				}
-				ProfileManagerB[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				ProfileManagerB[(uint)iVar4 >> 4].fileCount = ProfileManagerB[(uint)iVar4 >> 4].fileCount + 1;
-			}
-			else {
-				uVar6 = (uint)gIDProfileFlush >> 4;
-				if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
-					g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
-					g_ProfileObjA_0041ed40[uVar6].fileCount = 0;
-					g_ProfileObjA_0041ed40[uVar6].field_0x34 = 0;
-				}
-				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount = g_ProfileObjA_0041ed40[(uint)iVar4 >> 4].fileCount + 1;
-			})
+			edProfileEnd(gIDProfileRender);
+			edProfileBegin(gIDProfileFlush);
 		}
 
 		g_VifRefPktCur = ed3DFlushResetOffset(g_VifRefPktCur, &gCurRectViewport);
@@ -10245,30 +9933,7 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 
 		pPkt = g_VifRefPktCur;
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				uVar6 = (uint)gIDProfileFlush >> 4;
-			if ((gIDProfileFlush & 1U) == 0) {
-				ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
-				ProfileManagerB[uVar6].field_0x8 =
-					ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
-				pPVar9 = ProfileManagerB + uVar6;
-				pPkt = g_VifRefPktCur;
-				if (pPVar9->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
-					pPVar9->field_0x10 = pPVar9->field_0x0;
-					pPkt = g_VifRefPktCur;
-				}
-			}
-			else {
-				g_ProfileObjA_0041ed40[uVar6].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				g_ProfileObjA_0041ed40[uVar6].field_0x8 =
-					g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				pPVar9 = g_ProfileObjA_0041ed40 + uVar6;
-				pPkt = g_VifRefPktCur;
-				if (pPVar9->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
-					pPVar9->field_0x10 = pPVar9->field_0x0;
-					pPkt = g_VifRefPktCur;
-				}
-			})
+			edProfileEnd(gIDProfileFlush);
 		}
 	}
 
@@ -10460,28 +10125,9 @@ void ed3DSceneRender(int, int, char*)
 	else {
 		gCurViewportUsed = (ed_viewport*)0x0;
 		gCurFrame = gCurFrame != 0 ^ 1;
+
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				if ((gIDProfileRender & 1U) == 0) {
-					uVar6 = (uint)gIDProfileRender >> 4;
-					if (ProfileManagerB[uVar6].field_0x34 != 0) {
-						ProfileManagerB[uVar6].field_0x8 = 0;
-						ProfileManagerB[uVar6].field_0x20 = 0;
-						ProfileManagerB[uVar6].field_0x34 = 0;
-					}
-					ProfileManagerB[(uint)iVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					ProfileManagerB[(uint)iVar5 >> 4].field_0x20 = ProfileManagerB[(uint)iVar5 >> 4].field_0x20 + 1;
-				}
-				else {
-					uVar6 = (uint)gIDProfileRender >> 4;
-					if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
-						g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
-						g_ProfileObjA_0041ed40[uVar6].field_0x20 = 0;
-						g_ProfileObjA_0041ed40[uVar6].field_0x34 = 0;
-					}
-					g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-					g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 = g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 + 1;
-				})
+			edProfileBegin(gIDProfileRender);
 		}
 
 		ed3DRefreshSracthGlobalVar();
@@ -10491,26 +10137,7 @@ void ed3DSceneRender(int, int, char*)
 		}
 
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD(
-				uVar6 = (uint)gIDProfileRender >> 4;
-			if ((gIDProfileRender & 1U) == 0) {
-				ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
-				ProfileManagerB[uVar6].field_0x8 =
-					ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
-				pPVar7 = ProfileManagerB + uVar6;
-				if (pPVar7->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
-					pPVar7->field_0x10 = pPVar7->field_0x0;
-				}
-			}
-			else {
-				g_ProfileObjA_0041ed40[uVar6].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				g_ProfileObjA_0041ed40[uVar6].field_0x8 =
-					g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
-				pPVar7 = g_ProfileObjA_0041ed40 + uVar6;
-				if (pPVar7->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
-					pPVar7->field_0x10 = pPVar7->field_0x0;
-				}
-			})
+			edProfileEnd(gIDProfileRender);
 		}
 		bVar3 = false;
 
@@ -10619,29 +10246,7 @@ void ed3DSceneRender(int, int, char*)
 
 				iVar4 = gIDProfileFlush;
 				if (ged3DConfig.bEnableProfile != 0) {
-					IMPLEMENTATION_GUARD(
-						if ((gIDProfileFlush & 1U) == 0) {
-							uVar6 = (uint)gIDProfileFlush >> 4;
-							if (ProfileManagerB[uVar6].field_0x34 != 0) {
-								ProfileManagerB[uVar6].field_0x8 = 0;
-								ProfileManagerB[uVar6].field_0x20 = 0;
-								ProfileManagerB[uVar6].field_0x34 = 0;
-							}
-							ProfileManagerB[(uint)iVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-							ProfileManagerB[(uint)iVar5 >> 4].field_0x20 =
-								ProfileManagerB[(uint)iVar5 >> 4].field_0x20 + 1;
-						}
-						else {
-							uVar6 = (uint)gIDProfileFlush >> 4;
-							if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
-								g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
-								g_ProfileObjA_0041ed40[uVar6].field_0x20 = 0;
-								g_ProfileObjA_0041ed40[uVar6].field_0x34 = 0;
-							}
-							g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-							g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 =
-								g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 + 1;
-						})
+					edProfileBegin(gIDProfileFlush);
 				}
 
 				if (pRVar5 != g_VifRefPktCur) {
@@ -10664,26 +10269,7 @@ void ed3DSceneRender(int, int, char*)
 				}
 
 				if (ged3DConfig.bEnableProfile != 0) {
-					IMPLEMENTATION_GUARD(
-						uVar6 = (uint)gIDProfileFlush >> 4;
-					if ((gIDProfileFlush & 1U) == 0) {
-						ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
-						ProfileManagerB[uVar6].field_0x8 =
-							ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
-						pPVar7 = ProfileManagerB + uVar6;
-						if (pPVar7->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
-							pPVar7->field_0x10 = pPVar7->field_0x0;
-						}
-					}
-					else {
-						g_ProfileObjA_0041ed40[uVar6].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar6].field_0x0;
-						g_ProfileObjA_0041ed40[uVar6].field_0x8 =
-							g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
-						pPVar7 = g_ProfileObjA_0041ed40 + uVar6;
-						if (pPVar7->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
-							pPVar7->field_0x10 = pPVar7->field_0x0;
-						}
-					})
+					edProfileEnd(gIDProfileFlush);
 				}
 			}
 		}
@@ -10694,29 +10280,7 @@ void ed3DSceneRender(int, int, char*)
 
 		iVar4 = gIDProfileFlush;
 		if (ged3DConfig.bEnableProfile != 0) {
-			if ((gIDProfileFlush & 1U) == 0) {
-				IMPLEMENTATION_GUARD(
-					uVar6 = (uint)gIDProfileFlush >> 4;
-				if (ProfileManagerB[uVar6].field_0x34 != 0) {
-					ProfileManagerB[uVar6].field_0x8 = 0;
-					ProfileManagerB[uVar6].field_0x20 = 0;
-					ProfileManagerB[uVar6].field_0x34 = 0;
-				}
-				ProfileManagerB[(uint)iVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				ProfileManagerB[(uint)iVar5 >> 4].field_0x20 = ProfileManagerB[(uint)iVar5 >> 4].field_0x20 + 1;
-				)
-			}
-			else {
-				IMPLEMENTATION_GUARD();
-				//uVar6 = (uint)gIDProfileFlush >> 4;
-				//if (g_ProfileObjA_0041ed40[uVar6].field_0x34 != 0) {
-				//	g_ProfileObjA_0041ed40[uVar6].field_0x8 = 0;
-				//	g_ProfileObjA_0041ed40[uVar6].field_0x20 = 0;
-				//	g_ProfileObjA_0041ed40[uVar6].field_0x34 = 0;
-				//}
-				//g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x0 = (long)PCR1 & 0xffffffff;
-				//g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 = g_ProfileObjA_0041ed40[(uint)iVar5 >> 4].field_0x20 + 1;
-			}
+			edProfileBegin(gIDProfileFlush);
 		}
 
 		ed3DPrimlistTermMaterialRenderList();
@@ -10772,26 +10336,7 @@ void ed3DSceneRender(int, int, char*)
 		}
 
 		if (ged3DConfig.bEnableProfile != 0) {
-			IMPLEMENTATION_GUARD();
-			uVar7 = (uint)gIDProfileFlush >> 4;
-			//if ((gIDProfileFlush & 1U) == 0) {
-			//	ProfileManagerB[uVar6].field_0x0 = (long)PCR1 - ProfileManagerB[uVar6].field_0x0;
-			//	ProfileManagerB[uVar6].field_0x8 =
-			//		ProfileManagerB[uVar6].field_0x8 + ProfileManagerB[uVar6].field_0x0;
-			//	pPVar7 = ProfileManagerB + uVar6;
-			//	if (pPVar7->field_0x10 < ProfileManagerB[uVar6].field_0x0) {
-			//		pPVar7->field_0x10 = pPVar7->field_0x0;
-			//	}
-			//}
-			//else {
-			//	g_ProfileObjA_0041ed40[uVar6].field_0x0 = (long)PCR1 - g_ProfileObjA_0041ed40[uVar6].field_0x0;
-			//	g_ProfileObjA_0041ed40[uVar6].field_0x8 =
-			//		g_ProfileObjA_0041ed40[uVar6].field_0x8 + g_ProfileObjA_0041ed40[uVar6].field_0x0;
-			//	pPVar7 = g_ProfileObjA_0041ed40 + uVar6;
-			//	if (pPVar7->field_0x10 < g_ProfileObjA_0041ed40[uVar6].field_0x0) {
-			//		pPVar7->field_0x10 = pPVar7->field_0x0;
-			//	}
-			//}
+			edProfileEnd(gIDProfileFlush);
 		}
 	}
 
@@ -11210,18 +10755,20 @@ void ed3DInit(void)
 	ed3DPrepareMaterial(&gMaterial_Render_Zbuffer_Only_Cluster, true);
 	ed3DPrepareMaterial(&gMaterial_Render_Zbuffer_Only, true);
 	gZbuf_ScreenZMax = 0xffffffff;
-	g_pStripBufResetPos = g_pStrippBufLastPos;;
+	g_pStripBufResetPos = g_pStrippBufLastPos;
+
 	if (ged3DConfig.bEnableProfile == 1) {
-		IMPLEMENTATION_GUARD(
-			gIDProfileRender = edProfileNew(1, 0, 0, 0x80, s_3DRend_004333b8);
-		gIDProfileFlush = edProfileNew(1, 0x80, 0, 0, s_3DFlush_004333c0);)
+		gIDProfileRender = edProfileNew(1, 0, 0, 0x80, "3DRend");
+		gIDProfileFlush = edProfileNew(1, 0x80, 0, 0, "3DFlush");
 	}
+
 	edDebugPrintf(g_szed3DAllocInfo_004333d0,
 		ged3DConfig.matrixBufferCount * 0x220 +
 		ged3DConfig.field_0x18 * 0x10 +
 		ged3DConfig.meshHeaderCountBAlt +
 		ged3DConfig.g3dManagerCount * 0x40 + ged3DConfig.g2dManagerCount * 0x30 +
 		ged3DConfig.materialBufferCount * 0x60);
+
 	return;
 }
 
