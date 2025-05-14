@@ -25,5 +25,7 @@ set(SOURCES
 
 add_library(libmpeg2 ${SOURCES})
 
-target_include_directories(libmpeg2 PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(libmpeg2 PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libmpeg2/include)
+target_include_directories(libmpeg2 PUBLIC ${CMAKE_CURRENT_LIST_DIR}/libmpeg2/vc++)
+
 

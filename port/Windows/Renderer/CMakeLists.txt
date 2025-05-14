@@ -72,10 +72,10 @@ target_compile_definitions(Renderer PUBLIC "GLM_FORCE_RADIANS")
 #target_compile_features(Renderer PRIVATE cxx_std_20)
 
 set (ReflectPrintSrc
-	"ext/SPIRV-Reflect/common/output_stream.h"
-	"ext/SPIRV-Reflect/common/output_stream.cpp"
-	"ext/SPIRV-Reflect/examples/common.h"
-	"ext/SPIRV-Reflect/examples/common.cpp"
+	"ext/SPIRV-Reflect/SPIRV-Reflect/common/output_stream.h"
+	"ext/SPIRV-Reflect/SPIRV-Reflect/common/output_stream.cpp"
+	"ext/SPIRV-Reflect/SPIRV-Reflect/examples/common.h"
+	"ext/SPIRV-Reflect/SPIRV-Reflect/examples/common.cpp"
 )
 
 option(RENDERER_HEADLESS "Skip rendering commands" OFF)
@@ -88,7 +88,7 @@ endif()
 
 add_library(reflect-print ${ReflectPrintSrc})
 target_link_libraries(reflect-print PRIVATE ${Vulkan_LIBRARIES} spirv-reflect-static)
-target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/examples/")
+target_include_directories(reflect-print PUBLIC "ext/SPIRV-Reflect/SPIRV-Reflect/examples/")
 
 target_link_libraries(Renderer PRIVATE glfw ${Vulkan_LIBRARIES} spirv-reflect-static reflect-print imgui Log Hash Archive readerwriterqueue)
 target_link_libraries(Renderer PUBLIC TextureUpload)

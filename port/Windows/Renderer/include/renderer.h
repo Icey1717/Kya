@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cassert>
 #include <string>
+#include <unordered_map>
 #include "delegate.h"
 #include "GIFReg.h"
 #include "GSState.h"

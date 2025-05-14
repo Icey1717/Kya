@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.19.4)
 
 include("src/port/ispc/ispc.cmake")
 
+set (CMAKE_CXX_STANDARD 17)
 if (PS2)
 else()
 set(CMAKE_C_COMPILER "clang")

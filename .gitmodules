@@ -49,12 +49,12 @@
 [submodule "port/Windows/Renderer/ext/imgui/imgui"]
 	path = port/Windows/Renderer/ext/imgui/imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "port/Windows/Renderer/ext/SPIRV-Reflect"]
-	path = port/Windows/Renderer/ext/SPIRV-Reflect
-	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
 [submodule "port/DebugMenu/ext/gizmo/imGuIZMO.quat"]
 	path = port/DebugMenu/ext/gizmo/imGuIZMO.quat
 	url = https://github.com/BrutPitt/imGuIZMO.quat.git
 [submodule "port/ext/pss/pss/ext/libmpeg2/libmpeg2"]
 	path = port/ext/pss/pss/ext/libmpeg2/libmpeg2
 	url = https://github.com/cisco-open-source/libmpeg2.git
+[submodule "port/Windows/Renderer/ext/SPIRV-Reflect/SPIRV-Reflect"]
+	path = port/Windows/Renderer/ext/SPIRV-Reflect/SPIRV-Reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
