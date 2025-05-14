@@ -9857,7 +9857,7 @@ void ed3DSceneRenderOne(ed_3D_Scene* pShadowScene, ed_3D_Scene* pScene)
 	return;
 }
 
-uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
+uint ed3DSceneRenderDlist(ed_3D_Scene* pScene)
 {
 	bool bVar1;
 	bool bVar2;
@@ -9870,7 +9870,7 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 	//ProfileObject* pPVar9;
 	ed_3d_extra_stuff_param renderTaskData;
 
-	ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRenderDlist 0x{:x} ({}) (child: {})", (uintptr_t)pStaticMeshMaster, GetStaticMeshMasterIndex(pStaticMeshMaster), pStaticMeshMaster->bShadowScene);
+	ED3D_LOG(LogLevel::VeryVerbose, "ed3DSceneRenderDlist 0x{:x} ({}) (child: {})", (uintptr_t)pScene, GetStaticMeshMasterIndex(pScene), pScene->bShadowScene);
 
 	iVar4 = gIDProfileFlush;
 	if (ged3DConfig.bEnableProfile != 0) {
@@ -9881,7 +9881,7 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 
 	ed3DFlushSceneInit();
 
-	uVar8 = ed3DInitRenderEnvironement(pStaticMeshMaster, (ulong)((pStaticMeshMaster->flags & 0x20) != 0));
+	uVar8 = ed3DInitRenderEnvironement(pScene, (ulong)((pScene->flags & 0x20) != 0));
 	if (ged3DConfig.bEnableProfile != 0) {
 		edProfileEnd(gIDProfileFlush);
 	}
@@ -9893,19 +9893,19 @@ uint ed3DSceneRenderDlist(ed_3D_Scene* pStaticMeshMaster)
 
 		ed3DInitVU1Globals();
 
-		bVar3 = pStaticMeshMaster->pViewport->clearColor.a;
-		pStaticMeshMaster->pViewport->clearColor.a = bVar3 & 0xfc;
-		g_VifRefPktCur = ed3DSceneAddContextPacket(pStaticMeshMaster, g_VifRefPktCur);
-		pStaticMeshMaster->pViewport->clearColor.a = bVar3;
+		bVar3 = pScene->pViewport->clearColor.a;
+		pScene->pViewport->clearColor.a = bVar3 & 0xfc;
+		g_VifRefPktCur = ed3DSceneAddContextPacket(pScene, g_VifRefPktCur);
+		pScene->pViewport->clearColor.a = bVar3;
 
 		if (ged3DConfig.bEnableProfile != 0) {
 			edProfileEnd(gIDProfileFlush);
 			edProfileBegin(gIDProfileRender);
 		}
 
-		renderTaskData.isChild = pStaticMeshMaster->bShadowScene;
+		renderTaskData.isChild = pScene->bShadowScene;
 		renderTaskData.taskFlags = 2;
-		renderTaskData.pStaticMeshMaster = pStaticMeshMaster;
+		renderTaskData.pStaticMeshMaster = pScene;
 		edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, ED_HANDLER_3D_SEND_3D, &renderTaskData);
 
 		if (ged3DConfig.bEnableProfile != 0) {

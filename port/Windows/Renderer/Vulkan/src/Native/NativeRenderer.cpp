@@ -291,19 +291,19 @@ namespace Renderer
 		};
 
 		// Updates GPU side memory (Static Uniform Buffers | Per Frame Data)
-		static void StaticUniformBufferUpdate(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
+		static void MapStaticUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
 		{
 			gVertexConstantBuffer.GetBufferData().view = viewMatrix;
 			gVertexConstantBuffer.GetBufferData().proj = projMatrix;
 
-			gVertexConstantBuffer.Update(GetCurrentFrame());
+			gVertexConstantBuffer.Map(GetCurrentFrame());
 		}
 
 		// Updates GPU side memory (Dynamic Uniform Buffers | Per Instance Data)
-		static void DynamicUniformBufferUpdate()
+		static void MapDynamicUniformBuffers()
 		{
-			gModelBuffer.Update(GetCurrentFrame());
-			gAlphaBuffer.Update(GetCurrentFrame());
+			gModelBuffer.Map(GetCurrentFrame());
+			gAlphaBuffer.Map(GetCurrentFrame());
 
 			for (int i = 0; i < gAnimationMatrices.size() ; i++) {
 				if (bForceAnimMatrixIdentity) {
@@ -313,7 +313,7 @@ namespace Renderer
 				gAnimationBuffer.SetInstanceData(i, gAnimationMatrices[i]);
 			}
 
-			gAnimationBuffer.Update(GetCurrentFrame());
+			gAnimationBuffer.Map(GetCurrentFrame());
 		}
 
 		class DrawCommandRecorder
@@ -455,20 +455,23 @@ namespace Renderer
 			gNativeVertexBuffer.BindBuffers(cmd);
 		}
 
+		// Copy all our data to the GPU.
+		static void MapBuffers()
+		{
+			MapStaticUniformBuffer(gFinalViewMatrix, gFinalProjMatrix);
+			MapDynamicUniformBuffers();
+
+			gNativeVertexBuffer.MapData();
+
+			// Reset the index and vertex heads for the next frame.
+			gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
+		}
+
 		static void RecordEndCommandBuffer()
 		{
 			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
 
 			Debug::Reset(cmd);
-
-			StaticUniformBufferUpdate(gFinalViewMatrix, gFinalProjMatrix);
-			DynamicUniformBufferUpdate();
-
-			// Map the vertex buffer data to the GPU
-			gNativeVertexBuffer.MapData();
-
-			// Reset the index and vertex heads for the next frame.
-			gNativeVertexBuffer.GetDrawBufferData().ResetAfterDraw();
 
 			vkCmdEndRenderPass(cmd);
 		}
@@ -491,6 +494,31 @@ namespace Renderer
 				thread.join();
 			}
 
+			void UpdateInstanceDataForDraws()
+			{
+				for (auto& draw : draws) {
+					for (auto& instance : draw.instances) {
+						FillIndexData(instance);
+					}
+
+					drawInstanceDataUpdate.UpdateInstanceData(draw, GetPipeline());
+				}
+			}
+
+			void RecordDrawCommands()
+			{
+				for (auto& draw : draws) {
+					drawCommandRecorder.RecordDrawCommand(draw, GetPipeline());
+				}
+			}
+
+			void BeginWaitingForCommands()
+			{
+				draws.clear();
+				bRecordedCommands = true;
+				bWaitingForCommands = true;
+			}
+
 			void Run()
 			{
 				while (!bShouldStop) {
@@ -501,26 +529,21 @@ namespace Renderer
 
 					timer.Start();
 
+					// Begins render pass, binds pipeline, etc.
 					RecordBeginCommandBuffer();
 
-					for (auto& draw : draws) {
-						for (auto& instance : draw.instances) {
-							FillIndexData(instance);
-						}
+					UpdateInstanceDataForDraws();
 
-						drawInstanceDataUpdate.UpdateInstanceData(draw, GetPipeline());
-					}
+					RecordDrawCommands();
 
-					for (auto& draw : draws) {
-						drawCommandRecorder.RecordDrawCommand(draw, GetPipeline());
-					}
+					MapBuffers();
 
+					// Ends renderpass etc. 
 					RecordEndCommandBuffer();
 
-					draws.clear();
+					BeginWaitingForCommands();
+
 					timer.End();
-					bRecordedCommands = true;
-					bWaitingForCommands = true;
 				}
 			}
 
@@ -1145,5 +1168,5 @@ void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)
 	bFadeActive = true;
 
 	gFadeBuffer.GetBufferData().fadeColor = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 127.0f);
-	gFadeBuffer.Update(GetCurrentFrame());
+	gFadeBuffer.Map(GetCurrentFrame());
 }

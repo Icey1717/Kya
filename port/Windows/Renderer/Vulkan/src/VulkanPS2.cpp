@@ -2057,8 +2057,8 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexScale = GSVector4(sx, -sy, ldexpf(1, -32), 0.0f);
 			PS2_Internal::gVertexConstBuffer.GetBufferData().VertexOffset = GSVector4(ox * sx + ox2 + 1, -(oy * sy + oy2 + 1), 0.0f, -1.0f);
 
-			PS2_Internal::gVertexConstBuffer.Update(GetCurrentFrame());
-			PS2_Internal::gPixelConstBuffer.Update(GetCurrentFrame());
+			PS2_Internal::gVertexConstBuffer.Map(GetCurrentFrame());
+			PS2_Internal::gPixelConstBuffer.Map(GetCurrentFrame());
 		}
 
 
@@ -2076,8 +2076,8 @@ void Renderer::Draw(PS2::DrawBufferBase& drawBuffer, SimpleTexture* pBoundTextur
 		{
 			pTextureData->GetDescriptorSets(pipeline).vertexConstBuffer.GetBufferData() = PS2_Internal::gVertexConstBuffer.GetBufferData();
 			pTextureData->GetDescriptorSets(pipeline).pixelConstBuffer.GetBufferData() = PS2_Internal::gPixelConstBuffer.GetBufferData();
-			pTextureData->GetDescriptorSets(pipeline).vertexConstBuffer.Update(GetCurrentFrame());
-			pTextureData->GetDescriptorSets(pipeline).pixelConstBuffer.Update(GetCurrentFrame());
+			pTextureData->GetDescriptorSets(pipeline).vertexConstBuffer.Map(GetCurrentFrame());
+			pTextureData->GetDescriptorSets(pipeline).pixelConstBuffer.Map(GetCurrentFrame());
 		}
 
 		vkCmdBindDescriptorSets(GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, nullptr);

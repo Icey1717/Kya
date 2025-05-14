@@ -42,7 +42,7 @@ struct DynamicUniformBuffer {
 
 	inline uint32_t GetDynamicAlignment() const { return static_cast<uint32_t>(dynamicAlignment); }
 
-	inline void Update(const int index) {
+	inline void Map(const int index) {
 		void* data;
 		vkMapMemory(GetDevice(), buffersMemory[index], 0, size, 0, &data);
 		memcpy(data, bufferData, size);
@@ -82,7 +82,7 @@ struct UniformBuffer {
 
 	inline BufferType& GetBufferData() { return bufferData; }
 
-	inline void Update(const int index) {
+	inline void Map(const int index) {
 		void* data;
 		vkMapMemory(GetDevice(), buffersMemory[index], 0, sizeof(BufferType), 0, &data);
 		memcpy(data, &bufferData, sizeof(BufferType));
