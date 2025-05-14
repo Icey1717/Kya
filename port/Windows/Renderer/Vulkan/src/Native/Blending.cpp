@@ -155,9 +155,7 @@ namespace Renderer
 	} // Native
 } // Renderer
 
-
-
-void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
+void Renderer::Native::SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
 {
 	static auto pvkCmdSetColorBlendEnableEXT = (PFN_vkCmdSetColorBlendEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorBlendEnableEXT");
 	assert(pvkCmdSetColorBlendEnableEXT);
@@ -168,9 +166,7 @@ void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bo
 	VkBool32 bEnableAlphaVk = bAlphaBlendEnabled ? VK_TRUE : VK_FALSE;
 	pvkCmdSetColorBlendEnableEXT(cmd, 0, 1, &bEnableAlphaVk);
 
-	if (pTexture && bAlphaBlendEnabled) {
-		const auto alpha = pTexture->GetTextureRegisters().alpha;
-
+	if (bAlphaBlendEnabled) {
 		uint8_t blend_index = static_cast<uint8_t>(((alpha.A * 3 + alpha.B) * 3 + alpha.C) * 3 + alpha.D);
 		const HWBlend blend = GetBlend(blend_index);
 
@@ -200,6 +196,13 @@ void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bo
 		VkColorBlendEquationEXT colorBlendEquation{};
 		pvkCmdSetColorBlendEquationEXT(cmd, 0, 1, &colorBlendEquation);
 	}
+}
+
+void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
+{
+	assert(pTexture);
+
+	SetBlendingDynamicState(pTexture->GetTextureRegisters().alpha, bAlphaBlendEnabled, cmd);
 }
 
 void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd)

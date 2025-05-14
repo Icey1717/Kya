@@ -117,11 +117,10 @@ int g_Count_004495f8 = 0;
 
 int edDlistUseUV = 0;
 
-_rgba ByteColor_ARRAY_0048dd40[4];
-
-_rgba* g_RGBAQ_00448aa0 = ByteColor_ARRAY_0048dd40;
-
 edSysHandler3D ed3DHandlers;
+
+_rgba gCurColor = _rgba(0, 0, 0, 0);
+_rgba* gCurColor_SPR = &gCurColor;
 
 void edDListInitMemory(void)
 {
@@ -771,9 +770,9 @@ void ApplyFlag_0029f1e0(ed_g2d_material* pMAT_Internal, uint index, uint flag)
 	return;
 }
 
-void edDListBlendSet(uint mode)
+void edDListBlendSet(uint bAlphaBlendEnable)
 {
-	if ((((gbInsideBegin == false) && (gBlendMode = mode & 0xff, gCurMaterial != (edDList_material*)0x0)) &&
+	if ((((gbInsideBegin == false) && (gBlendMode = bAlphaBlendEnable & 0xff, gCurMaterial != (edDList_material*)0x0)) &&
 		(gCurMaterial->pMaterial != (ed_g2d_material*)0x0)) && (gBlendMode == 1)) {
 		ApplyFlag_0029f1e0(gCurMaterial->pMaterial, 0, 4);
 	}
@@ -783,7 +782,16 @@ void edDListBlendSet(uint mode)
 void edDListBlendFunc50(void)
 {
 	edDListBlendSet(1);
-	edDListSetState(0x4000000064, 0x42);
+	edDListSetState(
+		SCE_GS_SET_ALPHA(
+			1,	 // A
+			2,	 // B
+			1,	 // C
+			0,	 // D
+			0x40 // FIX
+		),
+		SCE_GS_ALPHA_1);
+
 	return;
 }
 
@@ -935,8 +943,7 @@ void edDListSetState(ulong cmdA, ulong cmdB)
 void edDListAlphaTestAndZTest
 (ulong ate, ulong atst, ulong aref, ulong afail, ulong date, ulong datm, ulong zte, ulong ztst)
 {
-	edDListSetState
-	(
+	edDListSetState(
 		SCE_GS_SET_TEST(
 			ate & 0xff,			// ATE 
 			atst & 0xffffffff,	// ATST
@@ -955,7 +962,6 @@ void edDListAlphaTestAndZTest
 void edDListAlphaBlend(uint a, uint b, uint c, uint d, uint fix)
 {
 	edDListBlendSet(1);
-
 	edDListSetState(
 		SCE_GS_SET_ALPHA(
 			a & 0xff,	// A
@@ -972,7 +978,15 @@ void edDListAlphaBlend(uint a, uint b, uint c, uint d, uint fix)
 void edDListBlendFuncNormal(void)
 {
 	edDListBlendSet(1);
-	edDListSetState(SCE_GS_SET_ALPHA(SCE_GS_ALPHA_CS, SCE_GS_ALPHA_CD, SCE_GS_ALPHA_CS, SCE_GS_ALPHA_CD, 0), SCE_GS_ALPHA_1);
+	edDListSetState(
+		SCE_GS_SET_ALPHA(
+			SCE_GS_ALPHA_CS,
+			SCE_GS_ALPHA_CD,
+			SCE_GS_ALPHA_CS,
+			SCE_GS_ALPHA_CD,
+			0),
+		SCE_GS_ALPHA_1);
+
 	return;
 }
 
@@ -1316,10 +1330,10 @@ void edDListColor4u8_2D(byte r, byte g, byte b, byte a)
 {
 	DisplayList* pDVar1;
 
-	g_RGBAQ_00448aa0->r = r;
-	g_RGBAQ_00448aa0->g = g;
-	g_RGBAQ_00448aa0->b = b;
-	g_RGBAQ_00448aa0->a = a;
+	gCurColor_SPR->r = r;
+	gCurColor_SPR->g = g;
+	gCurColor_SPR->b = b;
+	gCurColor_SPR->a = a;
 	pDVar1 = gCurDList;
 	gCurDList->pRenderCommands->cmdA = SCE_GS_SET_RGBAQ(r, g, b, a, 0x3f800000);
 	pDVar1->pRenderCommands->cmdB = SCE_GS_RGBAQ;
@@ -1581,7 +1595,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	}
 
 	gCurColorBuf = (_rgba*)LOAD_SECTION(pNewStrip->pColorBuf);
-	gCurSTBuf = (short*)LOAD_SECTION(pNewStrip->pSTBuf) + 0x10;
+	gCurSTBuf = LOAD_SECTION_CAST(short*, pNewStrip->pSTBuf) + 0x8;
 	gCurVertexBuf = (edVertex*)LOAD_SECTION(pNewStrip->pVertexBuf);
 	if ((nbVertex & 3) != 0) {
 		nbVertex = nbVertex + (4 - (nbVertex & 3));
@@ -1619,9 +1633,6 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 
 	return;
 }
-
-_rgba gCurColor = _rgba(0, 0, 0, 0);
-_rgba* gCurColor_SPR = &gCurColor;
 
 float gCurST[8] = {};
 float* gCurST_SPR = gCurST;
@@ -1726,20 +1737,55 @@ void edDListVertex4f_3D_DEFAULT(float x, float y, float z, float fSkip)
 	return;
 }
 
+void edDListVertex4f_3D_LINE(float x, float y, float z, float fSkip)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void edDListVertex4f_3D_Sprite(float x, float y, float z, float fSkip)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void edDListVertex4f_3D_SpriteQUICK(float x, float y, float z, float fSkip)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void edDListVertex4f_3D_QUAD(float x, float y, float z, float fSkip)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void edDListVertex4f_3D_LINE_LOOP(float x, float y, float z, float fSkip)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void edDListVertex4f_3D_Sprite_FLARE(float x, float y, float z, float fSkip)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void edDListVertex4f_3D_Sprite_FLARE_WITH_REJECTION(float x, float y, float z, float fSkip)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 DisplayListXYZFunc gTableAddVertexFUNC_3D[13] = {
-	NULL,
-	NULL,
-	NULL,
+	edDListVertex4f_3D_DEFAULT,
+	edDListVertex4f_3D_LINE,
+	edDListVertex4f_3D_DEFAULT,
 	edDListVertex4f_3D_TRIANGLE,
 	edDListVertex4f_3D_DEFAULT,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	edDListVertex4f_3D_DEFAULT,
+	edDListVertex4f_3D_Sprite,
+	edDListVertex4f_3D_SpriteQUICK,
+	edDListVertex4f_3D_QUAD,
+	edDListVertex4f_3D_DEFAULT,
+	edDListVertex4f_3D_LINE_LOOP,
+	edDListVertex4f_3D_Sprite_FLARE,
+	edDListVertex4f_3D_Sprite_FLARE_WITH_REJECTION,
 };
 
 void edDListColor4u8_3D(byte r, byte g, byte b, byte a)
@@ -1751,43 +1797,107 @@ void edDListColor4u8_3D(byte r, byte g, byte b, byte a)
 	return;
 }
 
+void edDListColor4u8_3D_SPRITE_QUICK(byte r, byte g, byte b, byte a)
+{
+	gCurColor_SPR->r = r;
+	gCurColor_SPR->g = g;
+	gCurColor_SPR->b = b;
+	gCurColor_SPR->a = a;
+
+	gCurColorBuf->r = gCurColor_SPR->r;
+	gCurColorBuf->g = gCurColor_SPR->g;
+	gCurColorBuf->b = gCurColor_SPR->b;
+	gCurColorBuf->a = gCurColor_SPR->a;
+
+	gCurColorBuf[1].r = gCurColor_SPR->r;
+	gCurColorBuf[1].g = gCurColor_SPR->g;
+	gCurColorBuf[1].b = gCurColor_SPR->b;
+	gCurColorBuf[1].a = gCurColor_SPR->a;
+
+	gCurColorBuf = gCurColorBuf + 2;
+
+	return;
+}
+
+void edDListColor4u8_3D_ALL_FLARE(byte r, byte g, byte b, byte a)
+{
+	gCurColor_SPR[gCurColorNbInVertex].r = r;
+	gCurColor_SPR[gCurColorNbInVertex].g = g;
+	gCurColor_SPR[gCurColorNbInVertex].b = b;
+	gCurColor_SPR[gCurColorNbInVertex].a = a;
+
+	gCurColorNbInVertex = gCurColorNbInVertex + 1;
+
+	return;
+}
+
 DisplayListRGBAQFunc gTableAddColorFUNC_3D[13] = {
-	NULL,
-	NULL,
-	NULL,
 	edDListColor4u8_3D,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D_SPRITE_QUICK,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D,
+	edDListColor4u8_3D_ALL_FLARE,
+	edDListColor4u8_3D_ALL_FLARE,
 };
 
 void edDListTexCoo2f_3D(float s, float t)
 {
 	gCurST_SPR[0] = s * 4096.0f;
 	gCurST_SPR[1] = t * 4096.0f;
+
 	return;
 }
 
-DisplayListSTFunc gTableAddSTFUNC_3D[13] = {
-	NULL,
-	NULL,
-	NULL,
+edF32VECTOR4 gCurFloatST;
+
+void edDListTexCoo2f_3D_ALL_SPRITE(float s, float t)
+{
+	if (gCurSTNbInVertex == 0) {
+		gCurFloatST.x = s * 4096.0f;
+		gCurFloatST.y = t * 4096.0f;
+
+		gCurST_SPR[0] = gCurFloatST.x;
+		gCurST_SPR[gCurSTNbInVertex * 2 + 1] = gCurFloatST.y;
+	}
+	else {
+		gCurFloatST.z = s * 4096.0f;
+		gCurFloatST.w = t * 4096.0f;
+
+		gCurST_SPR[gCurSTNbInVertex * 2] = gCurFloatST.z;
+		gCurST_SPR[gCurSTNbInVertex * 2 + 1] = gCurFloatST.w;
+	}
+
+	gCurSTNbInVertex = gCurSTNbInVertex + 1;
+
+	if (gMaxSTNbInVertex < gCurSTNbInVertex) {
+		gMaxSTNbInVertex = gCurSTNbInVertex;
+	}
+
+	return;
+}
+
+DisplayListSTFunc gTableAddSTFUNC_3D[13] =
+{
 	edDListTexCoo2f_3D,
 	edDListTexCoo2f_3D,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	edDListTexCoo2f_3D,
+	edDListTexCoo2f_3D,
+	edDListTexCoo2f_3D,
+	edDListTexCoo2f_3D,
+	edDListTexCoo2f_3D_ALL_SPRITE,
+	edDListTexCoo2f_3D_ALL_SPRITE,
+	edDListTexCoo2f_3D,
+	edDListTexCoo2f_3D,
+	edDListTexCoo2f_3D,
+	edDListTexCoo2f_3D_ALL_SPRITE,
+	edDListTexCoo2f_3D_ALL_SPRITE,
 };
 
 void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
@@ -1953,24 +2063,24 @@ void edDListColor4u8(byte r, byte g, byte b, byte a)
 	edpkt_data* pRVar2;
 
 	if (gAddColorFUNC == (DisplayListRGBAQFunc)0x0) {
-		g_RGBAQ_00448aa0[gCurColorNbInVertex].r = r;
-		g_RGBAQ_00448aa0[gCurColorNbInVertex].g = g;
-		g_RGBAQ_00448aa0[gCurColorNbInVertex].b = b;
-		g_RGBAQ_00448aa0[gCurColorNbInVertex].a = a;
+		gCurColor_SPR[gCurColorNbInVertex].r = r;
+		gCurColor_SPR[gCurColorNbInVertex].g = g;
+		gCurColor_SPR[gCurColorNbInVertex].b = b;
+		gCurColor_SPR[gCurColorNbInVertex].a = a;
 
 		if (((gCurPrimType == 0xb) || (gCurPrimType == 0xc)) && (gCurColorNbInVertex < gEndColorNbInVertex)) {
 			gCurColorNbInVertex = gCurColorNbInVertex + 1;
 		}
 
 		if (((gCurDList->flags_0x0 & DISPLAY_LIST_FLAG_RECORDING_PATCH) == 0) && (gCurPrimType == 7)) {
-			gCurColorBuf->r = g_RGBAQ_00448aa0->r;
-			gCurColorBuf->g = g_RGBAQ_00448aa0->g;
-			gCurColorBuf->b = g_RGBAQ_00448aa0->b;
-			gCurColorBuf->a = g_RGBAQ_00448aa0->a;
-			gCurColorBuf[1].r = g_RGBAQ_00448aa0->r;
-			gCurColorBuf[1].g = g_RGBAQ_00448aa0->g;
-			gCurColorBuf[1].b = g_RGBAQ_00448aa0->b;
-			gCurColorBuf[1].a = g_RGBAQ_00448aa0->a;
+			gCurColorBuf->r = gCurColor_SPR->r;
+			gCurColorBuf->g = gCurColor_SPR->g;
+			gCurColorBuf->b = gCurColor_SPR->b;
+			gCurColorBuf->a = gCurColor_SPR->a;
+			gCurColorBuf[1].r = gCurColor_SPR->r;
+			gCurColorBuf[1].g = gCurColor_SPR->g;
+			gCurColorBuf[1].b = gCurColor_SPR->b;
+			gCurColorBuf[1].a = gCurColor_SPR->a;
 			gCurColorBuf = gCurColorBuf + 2;
 		}
 

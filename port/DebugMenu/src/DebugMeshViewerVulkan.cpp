@@ -110,7 +110,7 @@ namespace DebugMeshViewer {
 		{
 			auto& pipeline = GetPipeline();
 
-			gVertexConstantBuffer.Update(GetCurrentFrame());
+			gVertexConstantBuffer.Map(GetCurrentFrame());
 
 			if (!pTexture) {
 				return;
@@ -245,7 +245,7 @@ void DebugMeshViewer::Vulkan::Render(const VkFramebuffer& framebuffer, const VkE
 	auto& pipeline = GetPipeline();
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
-	gVertexConstantBuffer.Update(GetCurrentFrame());
+	gVertexConstantBuffer.Map(GetCurrentFrame());
 
 	for (auto& drawCommand : gPreviewerDrawCommands) {
 		Renderer::SimpleTexture* pTexture = drawCommand.first;

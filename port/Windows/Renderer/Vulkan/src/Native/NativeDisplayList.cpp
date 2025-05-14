@@ -368,13 +368,12 @@ namespace Renderer::Native::DisplayList
 		if (indexCount > 0) {
 			VkCommandBuffer& cmd = GetCommandBuffer();
 
-			Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
-
 			if (gBoundTexture) {
+				Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
 				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(GetPipeline()).GetSet(GetCurrentFrame()), 0, NULL);
 			}
 			else {
-				
+				Native::SetBlendingDynamicState(PS2::GetGSState().ALPHA, true, cmd);
 			}
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);

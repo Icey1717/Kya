@@ -921,7 +921,7 @@ void ClearDisplay(void)
 		edDListLoadIdentity();
 		
 		edDListUseMaterial(&MenuBitmaps[0xb].materialInfo);
-		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f);
+		edDListColor4u8(0x7f, 0x7f, 0x7f, 0x7f); // This is an error, it should be after edDListBegin, the correct color func is not bound here.
 		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
 
 		edDListTexCoo2f(0.0f, 0.0f);

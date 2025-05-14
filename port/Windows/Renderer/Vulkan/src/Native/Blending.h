@@ -4,6 +4,7 @@
 #include <string>
 
 #include "VulkanIncludes.h"
+#include "GIFReg.h"
 
 namespace Renderer
 {
@@ -12,6 +13,7 @@ namespace Renderer
 
 	namespace Native
 	{
+		void SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd);
 		void SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd);
 		void SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd);
 	}
