@@ -55,3 +55,6 @@
 [submodule "port/DebugMenu/ext/gizmo/imGuIZMO.quat"]
 	path = port/DebugMenu/ext/gizmo/imGuIZMO.quat
 	url = https://github.com/BrutPitt/imGuIZMO.quat.git
+[submodule "port/ext/pss/pss/ext/libmpeg2/libmpeg2"]
+	path = port/ext/pss/pss/ext/libmpeg2/libmpeg2
+	url = https://github.com/cisco-open-source/libmpeg2.git

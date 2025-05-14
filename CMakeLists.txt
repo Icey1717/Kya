@@ -637,7 +637,7 @@ else()
 		"src"
 	)
 
-	target_link_libraries(Kya PUBLIC Port Log VU Job steinwurf::recycle)
+	target_link_libraries(Kya PUBLIC Port Log VU Job steinwurf::recycle mpeg)
 
 	if (ENABLE_ISPC)
 		target_sources(Kya PRIVATE ${ISPC_OBJECTS})
