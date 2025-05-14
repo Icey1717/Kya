@@ -486,7 +486,7 @@ set (actor_src
 	"${src_root}/ActorNativShop.h"
 	"${src_root}/ActorAddOnPurchase.cpp"
 	"${src_root}/ActorAddOnPurchase.h"
-	"${src_root}/ActorJamgut.cpp"
+	"${src_root}/ActorJamGut.cpp"
 	"${src_root}/ActorJamgut.h"
 	"${src_root}/ActorShip.cpp"
 	"${src_root}/ActorShip.h"
