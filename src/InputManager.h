@@ -87,7 +87,7 @@ public:
 	int bDisconnected;
 	int bConnected;
 	float floatFieldA;
-	int field_0x14;
+	int bEnableVibration;
 	uint portIndex;
 	CPlayerInputSubObj field_0x1c;
 	CPlayerInputSubObj field_0x40;

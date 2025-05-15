@@ -5,6 +5,7 @@
 
 class CSettings {
 public:
+	//undefined fields seem to be unused (previously used? The May 12 prototype did have some extra settings)
 	static int GetMaxSaveBufferSize();
 	bool LoadFromBuffer(void* pDataV);
 	void SetSettingsToGlobal();

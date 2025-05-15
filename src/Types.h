@@ -669,8 +669,8 @@ enum LANGUAGE
 enum AUDIO_MODE
 {
 	MONO,
-  	STEREO,
-  	SURROUND
+	STEREO,
+	SURROUND
 };
 
 // Overload the * operator as a non-member function
