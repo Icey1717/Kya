@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <io.h>
-#include "libfmemopen/libfmemopen.h"
+#include "libfmemopen.h"
 
 #ifdef ENABLE_PSS_LOG
 #define printf

@@ -1,6 +1,22 @@
 cmake_minimum_required(VERSION 3.19.4)
 
+# Override SPIRV-Reflect settings
+OPTION(SPIRV_REFLECT_EXECUTABLE     "Build spirv-reflect executable" OFF)
+OPTION(SPIRV_REFLECT_EXAMPLES       "Build stripper examples" OFF)
+OPTION(SPIRV_REFLECT_STRIPPER       "Build stripper utility" OFF)
+OPTION(SPIRV_REFLECT_STATIC_LIB     "Build a SPIRV-Reflect static library" ON)
+OPTION(SPIRV_REFLECT_BUILD_TESTS    "Build the SPIRV-Reflect test suite" OFF)
+OPTION(SPIRV_REFLECT_ENABLE_ASSERTS "Enable asserts for debugging" OFF)
+
 include("src/port/ispc/ispc.cmake")
+
+set(CMAKE_C_COMPILER "clang")
+set(CMAKE_CXX_COMPILER "clang")
+
+
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_EXTENSIONS YES)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (PS2)
 else()
