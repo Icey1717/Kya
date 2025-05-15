@@ -38,7 +38,7 @@ For additional resources, for additional technical documentation, please visit [
 **Requirements**:  
 - Visual Studio 2022  
 - Clang builder and tools for VS2022 (from the Visual Studio Installer) 
-- Vulkan SDK
+- Vulkan SDK (including GLM Headers)
 
 To begin working with the decompiled code:
 
