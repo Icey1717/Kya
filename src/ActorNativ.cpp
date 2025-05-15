@@ -3716,6 +3716,72 @@ void CBehaviourNativSeller::SetBehaviourState(int newState)
 	return;
 }
 
+int CBehaviourNativSeller::FUN_003ecad0(int currentIndex, int param_3)
+{
+	int iVar1;
+	CActorHero* pCVar2;
+	bool bVar3;
+	int iVar4;
+	long lVar5;
+
+	pCVar2 = CActorHero::_gThis;
+	iVar4 = this->currentBehaviourState;
+	if ((iVar4 == 0x38) || (iVar4 == -1)) {
+		iVar4 = 0;
+	}
+	else {
+		if (iVar4 == 0x37) {
+			iVar4 = 3;
+		}
+		else {
+			iVar1 = this->activeSubObjBIndex;
+			if (iVar1 + -1 < currentIndex) {
+				if (currentIndex == iVar1) {
+					if (iVar4 == 0x36) {
+						return 4;
+					}
+
+					if (((((iVar4 == 0x22) || (iVar4 == 0x28)) || (iVar4 == 0x32)) || ((iVar4 - 0x2fU < 2 || (iVar4 == 0x2c)))) || (iVar4 == 0x34)) {
+						return 1;
+					}
+
+					if (((iVar4 == 0x24) || (iVar4 == 0x2a)) || ((iVar4 == 0x31 || (iVar4 == 0x35)))) {
+						return 3;
+					}
+
+					if ((((iVar4 == 0x23) || (iVar4 == 0x29)) || (iVar4 - 0x2dU < 2)) || (iVar4 == 0x33)) {
+						return 2;
+					}
+
+					if ((iVar4 == 0x25) || (iVar4 == 0x2b)) {
+						lVar5 = CActorHero::_gThis->FUN_0031c9e0();
+						if (lVar5 != 0) {
+							return 1;
+						}
+
+						return 0;
+					}
+				}
+
+				if (currentIndex == iVar1 + 1) {
+					bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState);
+					if (((bVar3 == false) || (lVar5 = pCVar2->FUN_0031c9e0(), lVar5 == 0)) || (iVar4 = 1, param_3 != 0)) {
+						iVar4 = 0;
+					}
+				}
+				else {
+					iVar4 = 0;
+				}
+			}
+			else {
+				iVar4 = 5;
+			}
+		}
+	}
+
+	return iVar4;
+}
+
 void CBehaviourNativSeller::DrawButtonPromptA()
 {
 	int iVar1;
@@ -3757,25 +3823,24 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 
 		CActorHero::_gThis->_UpdateComboSituation();
 
-		IMPLEMENTATION_GUARD_LOG(
 		iVar5 = 0;
 		if (0 < pNVar4->nbRequiredMoves) {
 			do {
 				NativSubObjB* pSubObjB = pNVar4->aRequiredMoves + iVar5;
 
 				funcIndex = FUN_003ecad0(iVar5, lVar6);
-				FUN_003ec660(funcIndex);
-				FUN_003ed440(pSubObjB, &local_4, funcIndex);
-
-				if (funcIndex == 4) {
-					lVar6 = 1;
-				}
-
-				FUN_003ed820(pSubObjB, &local_4, funcIndex);
+				//FUN_003ec660(funcIndex);
+				//FUN_003ed440(pSubObjB, &local_4, funcIndex);
+				//
+				//if (funcIndex == 4) {
+				//	lVar6 = 1;
+				//}
+				//
+				//FUN_003ed820(pSubObjB, &local_4, funcIndex);
 				iVar5 = iVar5 + 1;
 				local_4 = local_4 + (float)gVideoConfig.screenWidth * 0.05f;
 			} while (iVar5 < pNVar4->nbRequiredMoves);
-		})
+		}
 	}
 
 	edTextStyleSetCurrent(pPrevTextStyle);

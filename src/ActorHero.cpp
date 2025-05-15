@@ -1188,7 +1188,7 @@ void CActorHero::ActivateCheckpoint(_evt_checkpoint_param* pEventCheckpointParam
 
 	if (((pEventCheckpointParam->flags & 0x40000000U) != 0) && (this->curBehaviourId == 8)) {
 		IMPLEMENTATION_GUARD(
-		pCVar3 = CActor::GetBehaviour(this, (this->character).characterBase.base.base.curBehaviourId);
+		pCVar3 = CActor::GetBehaviour(this, this->curBehaviourId);
 		pCVar2 = pCVar3[0x23].pVTable;
 		if (pCVar2 != (CBehaviourVtable*)0x0) {
 			(**(code**)(pCVar2->_vt + 0xfc))(pCVar2, pEventCheckpointParam->pWayPointB, pEventCheckpointParam->flags & 8);
@@ -1690,6 +1690,57 @@ bool CActorHero::FUN_0014cb60(edF32VECTOR4* v0)
 	}
 
 	return ret;
+}
+
+bool CActorHero::FUN_0031c9e0()
+{
+	s_fighter_combo* pCombo;
+	bool bVar2;
+	uint uVar3;
+	StateConfig* pSVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+	CAnimation* pAnim;
+
+	pCombo = this->pFighterCombo;
+
+	uVar3 = GetStateFlags(this->actorState);
+
+	if ((uVar3 & 0x4000) == 0) {
+		bVar2 = false;
+
+		if (pCombo != (s_fighter_combo*)0x0) {
+			if ((this->field_0x860 & 0x400) == 0) {
+				iVar5 = this->actorState;
+				if ((iVar5 == 0x65) || (iVar5 == 0x66)) {
+					return true;
+				}
+
+				if (iVar5 == 0x67) {
+					if (this->timeInAir <= pCombo->field_0x8 * _GetFighterAnimationLength(this->currentAnimType)) {
+						return true;
+					}
+				}
+			}
+			else {
+				iVar5 = this->actorState;
+				if ((iVar5 == 0x6d) || (iVar5 == 0x6e)) {
+					return true;
+				}
+			}
+
+			bVar2 = false;
+		}
+	}
+	else {
+		bVar2 = true;
+		if ((GetStateFlags(this->actorState) & 0x800000) == 0) {
+			bVar2 = false;
+		}
+	}
+
+	return bVar2;
 }
 
 float CActorHero::GetMagicalForce()

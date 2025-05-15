@@ -114,6 +114,7 @@ public:
 	bool IsEventActive();
 	void SetBehaviourState(int newState);
 
+	int FUN_003ecad0(int currentIndex, int param_3);
 	void DrawButtonPromptA();
 
 	ArenaRequiredCombo* GetActiveComboTutorial();

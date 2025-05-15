@@ -344,6 +344,7 @@ public:
 	uint TestState_AllowInternalView(uint inFlags);
 
 	bool FUN_0014cb60(edF32VECTOR4* v0);
+	bool FUN_0031c9e0();
 
 	float GetMagicalForce();
 };
