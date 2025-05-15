@@ -82,7 +82,7 @@ namespace Renderer
 				pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
 				pipeline.CreateDescriptorSetLayouts();
 
-				pipeline.CreateLayout(vertShader.reflectData.pushConstants);
+				pipeline.CreateLayout();
 
 				pipeline.CreateDescriptorPool();
 				pipeline.CreateDescriptorSets();

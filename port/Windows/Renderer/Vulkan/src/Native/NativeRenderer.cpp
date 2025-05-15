@@ -379,6 +379,8 @@ namespace Renderer
 			assert(maxUboSize >= sizeof(VertexConstantBuffer));
 			assert(maxUboSize >= (sizeof(glm::mat4) * gMaxModelMatrices));
 
+			assert(properties.limits.maxPushConstantsSize >= sizeof(LightingData));
+
 			return maxUboSize;
 		}
 
@@ -818,7 +820,7 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo<PipelineKey>& cre
 	pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
 	pipeline.CreateDescriptorSetLayouts();
 
-	pipeline.CreateLayout(vertShader.reflectData.pushConstants);
+	pipeline.CreateLayout();
 
 	pipeline.CreateDescriptorPool();
 	pipeline.CreateDescriptorSets();

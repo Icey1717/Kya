@@ -9,7 +9,7 @@ layout(location = 0) out vec4 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 
 void main() {
-    gl_Position = vec4(inXYZ, 1.0);
-    fragColor = inColor / 127.0;
-    fragTexCoord = inST;
+	gl_Position = vec4(inXYZ, 1.0);
+	fragColor = vec4(inColor.rgb / 127.0, inColor.a / 128.0);
+	fragTexCoord = inST;
 }

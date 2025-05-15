@@ -61,7 +61,7 @@ namespace Renderer
 			{ 0                        , OP_ADD          , DST_ALPHA       , INV_DST_ALPHA}   , // 0111: (Cs - Cd)*Ad + Cd ==> Cs*Ad + Cd*(1 - Ad)
 			{ 0                        , OP_SUBTRACT     , DST_ALPHA       , DST_ALPHA}       , // 0112: (Cs - Cd)*Ad +  0 ==> Cs*Ad - Cd*Ad
 			{ BLEND_A_MAX | BLEND_MIX2 , OP_SUBTRACT     , CONST_ONE       , CONST_COLOR}     , // 0120: (Cs - Cd)*F  + Cs ==> Cs*(F + 1) - Cd*F
-			{ BLEND_MIX1               , OP_ADD          , CONST_COLOR     , INV_CONST_COLOR} , // 0121: (Cs - Cd)*F  + Cd ==> Cs*F + Cd*(1 - F)
+			{ BLEND_MIX1               , OP_ADD          , CONST_COLOR     , INV_CONST_COLOR} , // 0121: (Cs - Cd)*F  + Cd ==> Cs*F + Cd*(1 - F) (0x10)
 			{ BLEND_MIX1               , OP_SUBTRACT     , CONST_COLOR     , CONST_COLOR}     , // 0122: (Cs - Cd)*F  +  0 ==> Cs*F - Cd*F
 			{ BLEND_NO_REC             , OP_ADD          , CONST_ONE       , CONST_ZERO}      , // 0200: (Cs -  0)*As + Cs ==> Cs*(As + 1)
 			{ BLEND_ACCU               , OP_ADD          , SRC1_ALPHA      , CONST_ONE}       , // 0201: (Cs -  0)*As + Cd ==> Cs*As + Cd
@@ -77,7 +77,7 @@ namespace Renderer
 			{ BLEND_MIX1               , OP_REV_SUBTRACT , SRC1_ALPHA      , SRC1_ALPHA}      , // 1002: (Cd - Cs)*As +  0 ==> Cd*As - Cs*As
 			{ 0                        , OP_ADD          , INV_DST_ALPHA   , DST_ALPHA}       , // 1010: (Cd - Cs)*Ad + Cs ==> Cd*Ad + Cs*(1 - Ad)
 			{ BLEND_A_MAX              , OP_REV_SUBTRACT , DST_ALPHA       , CONST_ONE}       , // 1011: (Cd - Cs)*Ad + Cd ==> Cd*(Ad + 1) - Cs*Ad
-			{ 0                        , OP_REV_SUBTRACT , DST_ALPHA       , DST_ALPHA}       , // 1012: (Cd - Cs)*Ad +  0 ==> Cd*Ad - Cs*Ad
+			{ 0                        , OP_REV_SUBTRACT , DST_ALPHA       , DST_ALPHA}       , // 1012: (Cd - Cs)*Ad +  0 ==> Cd*Ad - Cs*Ad (0x20)
 			{ BLEND_MIX3               , OP_ADD          , INV_CONST_COLOR , CONST_COLOR}     , // 1020: (Cd - Cs)*F  + Cs ==> Cd*F + Cs*(1 - F)
 			{ BLEND_A_MAX | BLEND_MIX1 , OP_REV_SUBTRACT , CONST_COLOR     , CONST_ONE}       , // 1021: (Cd - Cs)*F  + Cd ==> Cd*(F + 1) - Cs*F
 			{ BLEND_MIX1               , OP_REV_SUBTRACT , CONST_COLOR     , CONST_COLOR}     , // 1022: (Cd - Cs)*F  +  0 ==> Cd*F - Cs*F
@@ -91,8 +91,8 @@ namespace Renderer
 			{ BLEND_CD                 , OP_ADD          , CONST_ZERO      , CONST_ONE}       , // 1121: (Cd - Cd)*F  + Cd ==> Cd
 			{ BLEND_NO_REC             , OP_ADD          , CONST_ZERO      , CONST_ZERO}      , // 1122: (Cd - Cd)*F  +  0 ==> 0
 			{ 0                        , OP_ADD          , CONST_ONE       , SRC1_ALPHA}      , // 1200: (Cd -  0)*As + Cs ==> Cs + Cd*As
-			{ BLEND_HW_CLR1            , OP_ADD          , DST_COLOR       , SRC1_ALPHA}      , // 1201: (Cd -  0)*As + Cd ==> Cd*(1 + As)
-			{ BLEND_HW_CLR2            , OP_ADD          , DST_COLOR       , SRC1_ALPHA}      , // 1202: (Cd -  0)*As +  0 ==> Cd*As
+			{ BLEND_HW_CLR1            , OP_ADD          , DST_COLOR       , SRC1_ALPHA}      , // 1201: (Cd -  0)*As + Cd ==> Cd*(1 + As) 0x2e
+			{ BLEND_HW_CLR2            , OP_ADD          , DST_COLOR       , SRC1_ALPHA}      , // 1202: (Cd -  0)*As +  0 ==> Cd*As 
 			{ 0                        , OP_ADD          , CONST_ONE       , DST_ALPHA}       , // 1210: (Cd -  0)*Ad + Cs ==> Cs + Cd*Ad
 			{ BLEND_HW_CLR1            , OP_ADD          , DST_COLOR       , DST_ALPHA}       , // 1211: (Cd -  0)*Ad + Cd ==> Cd*(1 + Ad)
 			{ 0                        , OP_ADD          , CONST_ZERO      , DST_ALPHA}       , // 1212: (Cd -  0)*Ad +  0 ==> Cd*Ad
@@ -155,8 +155,10 @@ namespace Renderer
 	} // Native
 } // Renderer
 
-void Renderer::Native::SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
+Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
 {
+	BlendingState blendState{};
+
 	static auto pvkCmdSetColorBlendEnableEXT = (PFN_vkCmdSetColorBlendEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorBlendEnableEXT");
 	assert(pvkCmdSetColorBlendEnableEXT);
 
@@ -185,6 +187,12 @@ void Renderer::Native::SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, boo
 		colorBlendEquation.dstColorBlendFactor = vk_blend_factors[blend.dst];
 		colorBlendEquation.colorBlendOp = vk_blend_ops[blend.op];
 
+		if (blend.flags & BLEND_HW_CLR1)
+		{
+			colorBlendEquation.dstColorBlendFactor = VK_BLEND_FACTOR_SRC1_COLOR;
+			blendState.hwBlendMode = 0x1;
+		}
+
 		colorBlendEquation.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 		colorBlendEquation.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 		colorBlendEquation.alphaBlendOp = VK_BLEND_OP_ADD;
@@ -196,18 +204,18 @@ void Renderer::Native::SetBlendingDynamicState(const GIFReg::GSAlpha& alpha, boo
 		VkColorBlendEquationEXT colorBlendEquation{};
 		pvkCmdSetColorBlendEquationEXT(cmd, 0, 1, &colorBlendEquation);
 	}
+
+	return blendState;
 }
 
-void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
+Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, bool bAlphaBlendEnabled, const VkCommandBuffer& cmd)
 {
 	assert(pTexture);
-
-	SetBlendingDynamicState(pTexture->GetTextureRegisters().alpha, bAlphaBlendEnabled, cmd);
+	return SetBlendingDynamicState(pTexture->GetTextureRegisters().alpha, bAlphaBlendEnabled, cmd);
 }
 
-void Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd)
+Renderer::Native::BlendingState Renderer::Native::SetBlendingDynamicState(const SimpleTexture* pTexture, const SimpleMesh* pMesh, const VkCommandBuffer& cmd)
 {
 	const bool bEnableAlpha = pMesh ? pMesh->GetPrim().ABE : true;
-
-	SetBlendingDynamicState(pTexture, bEnableAlpha, cmd);
+	return SetBlendingDynamicState(pTexture, bEnableAlpha, cmd);
 }

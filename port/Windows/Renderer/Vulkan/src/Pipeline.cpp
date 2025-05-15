@@ -53,7 +53,7 @@ namespace PS2_Internal {
 		pipeline.AddBindings(Renderer::EBindingStage::Geometry, geomShader.reflectData);
 		pipeline.AddBindings(Renderer::EBindingStage::Fragment, fragShader.reflectData);
 		pipeline.CreateDescriptorSetLayouts();
-		pipeline.CreateLayout(vertShader.reflectData.pushConstants);
+		pipeline.CreateLayout();
 
 		// Common state
 		gpb.SetPipelineLayout(pipeline.layout);
@@ -289,6 +289,10 @@ void Renderer::Pipeline::AddBindings(const EBindingStage bindingStage, const Ref
 	for (auto& layout : reflectData.GetLayouts()) {
 		descriptorSetLayoutBindings[layout.setNumber][bindingStage] = layout.bindings;
 	}
+
+	for (auto& pushConstant : reflectData.pushConstants) {
+		pushConstants.push_back(pushConstant);
+	}
 }
 
 void Renderer::Pipeline::CreateDescriptorSetLayouts()
@@ -334,7 +338,7 @@ void Renderer::Pipeline::CreateDescriptorSetLayouts()
 	}
 }
 
-void Renderer::Pipeline::CreateLayout(const PushConstantList& pushConstants)
+void Renderer::Pipeline::CreateLayout()
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

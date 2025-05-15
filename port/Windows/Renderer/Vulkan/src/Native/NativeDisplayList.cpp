@@ -196,7 +196,7 @@ namespace Renderer::Native::DisplayList
 		pipeline.AddBindings(EBindingStage::Geometry, geomShader.reflectData);
 		pipeline.CreateDescriptorSetLayouts();
 
-		pipeline.CreateLayout(vertShader.reflectData.pushConstants);
+		pipeline.CreateLayout();
 
 		pipeline.CreateDescriptorPool();
 		pipeline.CreateDescriptorSets();
@@ -321,13 +321,20 @@ namespace Renderer::Native::DisplayList
 			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylistnotex.frag.spv", "", key };
 			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL TriList No Tex");
 		}
-
 		{
 			key.options.bBoundTexture = true;
 			key.options.topology = topologyLineList;
 			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "shaders/displaylist.geom.spv", key};
 			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL LineList");
 		}
+	}
+
+	void CheckBufferSizes()
+	{
+		VkPhysicalDeviceProperties properties{};
+		vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
+
+		assert(properties.limits.maxPushConstantsSize >= sizeof(BlendingState));
 	}
 
 	static void InitializeDescriptorsSets(Renderer::SimpleTexture* pTexture)
@@ -361,35 +368,39 @@ namespace Renderer::Native::DisplayList
 		}
 	}
 
-	static void FinalizeDraw(bool bEndLabel = true)
+	static void FinalizeDraw()
 	{
 		const int indexCount = gVertexBuffers.GetDrawBufferData().GetIndexTail() - gIndexStart;
 
 		if (indexCount > 0) {
 			VkCommandBuffer& cmd = GetCommandBuffer();
 
+			BlendingState blendState = [&cmd]()
+				{
+					return gBoundTexture ? Native::SetBlendingDynamicState(gBoundTexture, true, cmd) : Native::SetBlendingDynamicState(PS2::GetGSState().ALPHA, true, cmd);
+				}();
+
+			auto& pipeline = GetPipeline();
+
 			if (gBoundTexture) {
-				Native::SetBlendingDynamicState(gBoundTexture, true, cmd);
-				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline().layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(GetPipeline()).GetSet(GetCurrentFrame()), 0, NULL);
+				
+				vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &gBoundTexture->GetRenderer()->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), 0, NULL);
 			}
 			else {
-				Native::SetBlendingDynamicState(PS2::GetGSState().ALPHA, true, cmd);
+				vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(BlendingState), &blendState);
 			}
 
 			vkCmdDrawIndexed(cmd, static_cast<uint32_t>(indexCount), 1, gIndexStart, 0, 0);
+
+			Renderer::Debug::EndLabel(GetCommandBuffer());
 		}
 
 		gVertexBuffers.Reset();
-
-		if (bEndLabel) {
-			Renderer::Debug::EndLabel(GetCommandBuffer());
-		}
 	}
 }
 
 // Implementations from "displaylist.h"
 
-static bool gNoBinding = false;
 static bool bCalledBegin = false;
 
 void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, uint32_t mode)
@@ -401,14 +412,6 @@ void Renderer::DisplayList::Begin2D(short viewportWidth, short viewportHeight, u
 	}
 
 	bCalledBegin = true;
-
-	gNoBinding = !gBoundTexture;
-
-	if (gNoBinding) {
-		if (!gRecordingCommandBuffer) {
-			BeginCommandBufferRecording();
-		}
-	}
 
 	gViewport.width = viewportWidth;
 	gViewport.height = viewportHeight;
@@ -488,10 +491,6 @@ void Renderer::DisplayList::End2D()
 {
 	using namespace Renderer::Native::DisplayList;
 
-	if (gNoBinding) {
-		FinalizeDraw(false);
-	}
-
 	bCalledBegin = false;
 
 	// Nothing for now.
@@ -501,13 +500,7 @@ void Renderer::DisplayList::BindTexture(SimpleTexture* pNewTexture)
 {
 	using namespace Renderer::Native::DisplayList;
 
-	if (gBoundTexture) {
-		FinalizeDraw();
-	}
-	
-	if (gNoBinding && pNewTexture) {
-		Renderer::Debug::EndLabel(GetCommandBuffer());
-	}
+	FinalizeDraw();
 
 	if (!gRecordingCommandBuffer) {
 		BeginCommandBufferRecording();
@@ -531,6 +524,7 @@ void Renderer::Native::DisplayList::Setup()
 	DisplayList::CreateRenderPass(gRenderPass, "Display List Render Pass");
 
 	CreatePipelines();
+	CheckBufferSizes();
 
 	gVertexBuffers.Init(Renderer::VertexIndexBufferSizeGPU, Renderer::VertexIndexBufferSizeGPU);
 }

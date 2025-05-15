@@ -390,7 +390,7 @@ static uint32_t FormatSize(VkFormat format) {
 	return result;
 }
 
-static void GetPushConstantRanges(SpvReflectShaderModule& module, std::vector<VkPushConstantRange>& pushConstantRanges) {
+static void GetPushConstantRanges(SpvReflectShaderModule& module, std::vector<VkPushConstantRange>& pushConstantRanges, const SpvReflectShaderStageFlagBits& stageFlags) {
 	uint32_t pushConstantBlockCount = 0;
 	spvReflectEnumeratePushConstantBlocks(&module, &pushConstantBlockCount, NULL);
 
@@ -399,7 +399,7 @@ static void GetPushConstantRanges(SpvReflectShaderModule& module, std::vector<Vk
 
 	for (const auto& block : pushConstantBlocks) {
 		VkPushConstantRange pushConstantRange = {};
-		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // Set appropriate shader stage
+		pushConstantRange.stageFlags = stageFlags;
 		pushConstantRange.offset = block->offset;
 		pushConstantRange.size = block->size;
 		pushConstantRanges.push_back(pushConstantRange);
@@ -525,7 +525,7 @@ ReflectData CreateReflectionData(const std::vector<char>& shaderCode) {
 
 	reflectData.entryPointname = module.entry_point_name;
 
-	GetPushConstantRanges(module, reflectData.pushConstants);
+	GetPushConstantRanges(module, reflectData.pushConstants, module.shader_stage);
 
 	// Log the descriptor set contents to stdout
 	const char* t = "  ";

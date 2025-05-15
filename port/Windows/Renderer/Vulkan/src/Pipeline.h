@@ -65,6 +65,8 @@ namespace Renderer {
 
 	struct Pipeline
 	{
+		using PushConstantList = std::vector<VkPushConstantRange>;
+
 		VkPipeline pipeline;
 		VkPipelineLayout layout;
 		VkDescriptorPool descriptorPool;
@@ -72,14 +74,13 @@ namespace Renderer {
 		LayoutVector descriptorSetLayouts;
 		// Set - Descriptor Binding
 		LayoutBindingMap descriptorSetLayoutBindings;
+		PushConstantList pushConstants;
 
 		PS2::PipelineKey key;
 
-		using PushConstantList = std::vector<VkPushConstantRange>;
-
 		void AddBindings(const EBindingStage bindingStage, const ReflectData& reflectData);
 		void CreateDescriptorSetLayouts();
-		void CreateLayout(const PushConstantList& pushConstants);
+		void CreateLayout();
 
 		void CreateDescriptorPool();
 		void CreateDescriptorSets();
