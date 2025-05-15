@@ -37,3 +37,24 @@
 [submodule "KyaTextureUpload"]
 	path = port/Windows/Renderer/Vulkan/src/pcsx2/TextureUpload
 	url = https://github.com/Icey1717/TextureUpload.git
+[submodule "port/DebugMenu/ext/json"]
+	path = port/DebugMenu/ext/json
+	url = https://github.com/nlohmann/json.git
+[submodule "port/DebugMenu/ext/magic_enum"]
+	path = port/DebugMenu/ext/magic_enum
+	url = https://github.com/Neargye/magic_enum.git
+[submodule "port/DebugMenu/ext/gizmo/imGuIZMO.quat"]
+	path = port/DebugMenu/ext/gizmo/imGuIZMO.quat
+	url = https://github.com/BrutPitt/imGuIZMO.quat.git
+[submodule "port/Windows/Renderer/ext/glfw"]
+	path = port/Windows/Renderer/ext/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "port/Windows/Renderer/ext/glm"]
+	path = port/Windows/Renderer/ext/glm
+	url = https://github.com/icaven/glm.git
+[submodule "port/ext/pss/pss/ext/libfmemopen/fmemopen_windows"]
+	path = port/ext/pss/pss/ext/libfmemopen/fmemopen_windows
+	url = https://github.com/Arryboom/fmemopen_windows.git
+[submodule "port/ext/pss/pss/ext/libmpeg2/libmpeg2"]
+	path = port/ext/pss/pss/ext/libmpeg2/libmpeg2
+	url = https://github.com/cisco-open-source/libmpeg2.git
