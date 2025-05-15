@@ -46,9 +46,6 @@
 [submodule "port/Windows/Renderer/ext/glfw"]
 	path = port/Windows/Renderer/ext/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "port/Windows/Renderer/ext/glm"]
-	path = port/Windows/Renderer/ext/glm
-	url = https://github.com/icaven/glm.git
 [submodule "port/ext/pss/pss/ext/libfmemopen/fmemopen_windows"]
 	path = port/ext/pss/pss/ext/libfmemopen/fmemopen_windows
 	url = https://github.com/Arryboom/fmemopen_windows.git
@@ -58,3 +55,6 @@
 [submodule "port/Windows/Renderer/ext/imgui/imgui"]
 	path = port/Windows/Renderer/ext/imgui/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "port/Windows/Renderer/ext/glm"]
+	path = port/Windows/Renderer/ext/glm
+	url = https://github.com/g-truc/glm.git
