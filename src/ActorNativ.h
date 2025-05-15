@@ -16,6 +16,8 @@
 #define NATIVE_STATE_TAKE_PUT_WALK 0x15
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
 
+#define NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY 0x21
+
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
@@ -58,12 +60,12 @@ struct NativSubObjB
 	undefined4 field_0xc;
 };
 
-struct NativSubObjA
+struct ArenaRequiredCombo
 {
-	NativSubObjA();
+	ArenaRequiredCombo();
 
-	int nbSubObjB;
-	NativSubObjB* aSubObjsB;
+	int nbRequiredMoves;
+	NativSubObjB* aRequiredMoves;
 };
 
 struct NativSellerSubObjA
@@ -75,16 +77,16 @@ struct NativSellerSubObjA
 	undefined4 field_0x8c;
 };
 
-struct NativSellerSubObjC
+struct ComboTutorialManager
 {
-	NativSellerSubObjC();
+	ComboTutorialManager();
 	virtual void Init();
 
-	int Add_0xc();
+	int StepRequiredCombo();
 
-	int nbSubObjA;
-	NativSubObjA* aSubObjsA;
-	int activeSubObjIndex;
+	int nbTutorials;
+	ArenaRequiredCombo* aTutorials;
+	int activeTutorialIndex;
 };
 
 class CBehaviourNativSeller : public CBehaviourNativ
@@ -101,12 +103,12 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
 
-	void FUN_003f2150();
-	void FUN_003ed150();
+	void ManageComboTutorial();
+	void ArenaUpdateDisplayBorderSize();
 
 	void FUN_003ebd90();
 
-	void FUN_003eccb0(s_fighter_combo* pCombo, float* param_3, float* param_4);
+	void GetComboButtonDisplaySize(s_fighter_combo* pCombo, float* param_3, float* param_4);
 	void FUN_003f1da0(s_fighter_combo* pCombo);
 	bool FUN_003ebee0(int param_2);
 	bool IsEventActive();
@@ -114,12 +116,12 @@ public:
 
 	void DrawButtonPromptA();
 
-	NativSubObjA* GetActiveSubObjA();
+	ArenaRequiredCombo* GetActiveComboTutorial();
 
 	uint field_0x8;
 	int field_0xc;
 
-	NativSellerSubObjC subObjC;
+	ComboTutorialManager comboTutorialManager;
 
 	CAddOnNativ addOn;
 
@@ -146,13 +148,13 @@ public:
 	int currentBehaviourState;
 
 	float field_0x16c0;
-	float field_0x16c4;
-	float field_0x16c8;
-	float field_0x16cc;
+	float comboDesiredDisplayWidth;
+	float comboDesiredDisplayHeight;
+	float comboDesiredDisplayAlpha;
 
-	float field_0x16d0;
-	float field_0x16d4;
-	float promptAlpha;
+	float comboDisplayWidth;
+	float comboDisplayHeight;
+	float comboDisplayAlpha;
 };
 
 class CTakePutTrajectoryParam
@@ -271,7 +273,7 @@ public:
 	uint FUN_00162270();
 	float FUN_00164070();
 
-	void State_0x21(CBehaviourNativSeller* pBehaviour);
+	void StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour);
 	void State_0x22(CBehaviourNativSeller* pBehaviour);
 	void State_0x23(CBehaviourNativSeller* pBehaviour);
 

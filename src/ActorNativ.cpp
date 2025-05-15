@@ -258,7 +258,7 @@ void CActorNativ::Manage()
 	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 	if (pCVar5 != (CBehaviour*)0x0) {
 		CBehaviourNativSeller* pBehaviourSeller = static_cast<CBehaviourNativSeller*>(GetBehaviour(NATIVE_BEHAVIOUR_SELLER));
-		pBehaviourSeller->FUN_003f2150();
+		pBehaviourSeller->ManageComboTutorial();
 	}
 
 	pCVar5 = GetBehaviour(7);
@@ -1233,9 +1233,9 @@ void CActorNativ::BehaviourNativSeller_InitState(int newState, CBehaviourNativSe
 	undefined4* local_4;
 
 	if (newState == 0x38) {
-		pBehaviour->field_0x16c4 = 0.0f;
-		pBehaviour->field_0x16c8 = 0.0f;
-		pBehaviour->field_0x16cc = 0.0f;
+		pBehaviour->comboDesiredDisplayWidth = 0.0f;
+		pBehaviour->comboDesiredDisplayHeight = 0.0f;
+		pBehaviour->comboDesiredDisplayAlpha = 0.0f;
 	}
 	else {
 		if (newState == 0x20) {
@@ -1266,8 +1266,8 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 	case 0x20:
 		CScene::ptable.g_FrontendManager_00451680->pMoney->field_0x74 = 0;
 		break;
-	case 0x21:
-		State_0x21(pBehaviour);
+	case NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY:
+		StateInitArenaDisplay(pBehaviour);
 		break;
 	case 0x26:
 		IMPLEMENTATION_GUARD(
@@ -1918,7 +1918,7 @@ float CActorNativ::FUN_00164070()
 	return fVar7;
 }
 
-void CActorNativ::State_0x21(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour)
 {
 	int curSwitchIndex;
 
@@ -1945,12 +1945,12 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 {
 	s_fighter_combo* pCombo;
 	bool bVar3;
-	NativSubObjA* pSubObjA;
+	ArenaRequiredCombo* pSubObjA;
 	CActorHero* pHero;
 
 	pHero = CActorHero::_gThis;
 
-	pSubObjA = pBehaviour->GetActiveSubObjA();
+	pSubObjA = pBehaviour->GetActiveComboTutorial();
 
 	if (((pBehaviour->field_0x16ac != 2) &&
 		(bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar3 != false)) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
@@ -1964,8 +1964,8 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 			pBehaviour->FUN_003f1da0(pCombo);
 		}
 
-		if ((pSubObjA != (NativSubObjA*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
-			bVar3 = (pSubObjA->aSubObjsB + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo);
+		if ((pSubObjA != (ArenaRequiredCombo*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+			bVar3 = (pSubObjA->aRequiredMoves + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo);
 			if (bVar3 == false) {
 				IMPLEMENTATION_GUARD(
 				pBehaviour->FUN_003f1810(3, 0, 0);)
@@ -1988,18 +1988,18 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
 {
 	s_fighter_combo* pCombo;
-	NativSubObjA* pSubObjA;
+	ArenaRequiredCombo* pSubObjA;
 	CActorHero* pHero;
 
 	pHero = CActorHero::_gThis;
-	pSubObjA = pBehaviour->GetActiveSubObjA();
+	pSubObjA = pBehaviour->GetActiveComboTutorial();
 
 	if (CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState) == false) {
 		pBehaviour->FUN_003ebd90();
 	}
 	else {
-		if ((pSubObjA != (NativSubObjA*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
-			if ((pSubObjA->aSubObjsB + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo) == false) {
+		if ((pSubObjA != (ArenaRequiredCombo*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+			if ((pSubObjA->aRequiredMoves + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo) == false) {
 				pBehaviour->SetBehaviourState(0x36);
 			}
 			else {
@@ -2948,30 +2948,30 @@ void CBehaviourNativSeller::Create(ByteCode* pByteCode)
 
 	this->field_0x8 = pByteCode->GetU32();
 
-	this->subObjC.nbSubObjA = pByteCode->GetS32();
-	uVar3 = this->subObjC.nbSubObjA;
+	this->comboTutorialManager.nbTutorials = pByteCode->GetS32();
+	uVar3 = this->comboTutorialManager.nbTutorials;
 	if (uVar3 != 0) {
-		this->subObjC.aSubObjsA = new NativSubObjA[uVar3];
+		this->comboTutorialManager.aTutorials = new ArenaRequiredCombo[uVar3];
 
 		iVar4 = 0;
-		if (0 < this->subObjC.nbSubObjA) {
+		if (0 < this->comboTutorialManager.nbTutorials) {
 			do {
-				NativSubObjA* pSubObjA = this->subObjC.aSubObjsA + iVar4;
-				pSubObjA->nbSubObjB = pByteCode->GetS32();
-				uVar3 = pSubObjA->nbSubObjB;
+				ArenaRequiredCombo* pSubObjA = this->comboTutorialManager.aTutorials + iVar4;
+				pSubObjA->nbRequiredMoves = pByteCode->GetS32();
+				uVar3 = pSubObjA->nbRequiredMoves;
 				if (uVar3 != 0) {
-					pSubObjA->aSubObjsB = new NativSubObjB[uVar3];
+					pSubObjA->aRequiredMoves = new NativSubObjB[uVar3];
 					iVar8 = 0;
-					if (0 < pSubObjA->nbSubObjB) {
+					if (0 < pSubObjA->nbRequiredMoves) {
 						do {
-							pSubObjA->aSubObjsB[iVar8].Create(pByteCode);
+							pSubObjA->aRequiredMoves[iVar8].Create(pByteCode);
 							iVar8 = iVar8 + 1;
-						} while (iVar8 < pSubObjA->nbSubObjB);
+						} while (iVar8 < pSubObjA->nbRequiredMoves);
 					}
 				}
 
 				iVar4 = iVar4 + 1;
-			} while (iVar4 < this->subObjC.nbSubObjA);
+			} while (iVar4 < this->comboTutorialManager.nbTutorials);
 		}
 	}
 
@@ -3047,7 +3047,7 @@ void CBehaviourNativSeller::Init(CActor* pOwner)
 
 	this->addOn.Init(pOwner);
 
-	this->subObjC.Init();
+	this->comboTutorialManager.Init();
 
 	{
 		S_TARGET_STREAM_REF* pTargetStreamRef = this->field_0x38;
@@ -3111,13 +3111,13 @@ void CBehaviourNativSeller::Init(CActor* pOwner)
 
 	this->field_0x16c0 = 0.0f;
 
-	this->field_0x16c4 = 0.0f;
-	this->field_0x16c8 = 0.0f;
-	this->field_0x16cc = 0.0f;
+	this->comboDesiredDisplayWidth = 0.0f;
+	this->comboDesiredDisplayHeight = 0.0f;
+	this->comboDesiredDisplayAlpha = 0.0f;
 
-	this->field_0x16d0 = 0.0f;
-	this->field_0x16d4 = 0.0f;
-	this->promptAlpha = 0.0f;
+	this->comboDisplayWidth = 0.0f;
+	this->comboDisplayHeight = 0.0f;
+	this->comboDisplayAlpha = 0.0f;
 
 	//this->field_0x16b8 = 0;
 	this->field_0x16a4 = 0;
@@ -3221,8 +3221,8 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 
 				iVar2 = this->field_0x16b4;
 				if (iVar2 == 0) {
-					(this->subObjC).activeSubObjIndex = -1;
-					if (this->subObjC.Add_0xc() == -1) {
+					(this->comboTutorialManager).activeTutorialIndex = -1;
+					if (this->comboTutorialManager.StepRequiredCombo() == -1) {
 						return 0;
 					}
 				}
@@ -3235,10 +3235,10 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 					})
 				}
 
-				FUN_003ed150();
+				ArenaUpdateDisplayBorderSize();
 			}
 			else {
-				SetBehaviourState(0x21);
+				SetBehaviourState(NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY);
 			}
 		}
 	}
@@ -3247,7 +3247,7 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 }
 
 
-void CBehaviourNativSeller::FUN_003f2150()
+void CBehaviourNativSeller::ManageComboTutorial()
 {
 	CActorNativ* pNativ;
 	bool bVar2;
@@ -3257,9 +3257,9 @@ void CBehaviourNativSeller::FUN_003f2150()
 	uint uVar7;
 	int iVar9;
 
-	this->field_0x16d0 = this->field_0x16d0 + (this->field_0x16c4 - this->field_0x16d0) * 0.15f;
-	this->field_0x16d4 = this->field_0x16d4 + (this->field_0x16c8 - this->field_0x16d4) * 0.05f;
-	this->promptAlpha = this->promptAlpha + (this->field_0x16cc - this->promptAlpha) * 0.04f;
+	this->comboDisplayWidth = this->comboDisplayWidth + (this->comboDesiredDisplayWidth - this->comboDisplayWidth) * 0.15f;
+	this->comboDisplayHeight = this->comboDisplayHeight + (this->comboDesiredDisplayHeight - this->comboDisplayHeight) * 0.05f;
+	this->comboDisplayAlpha = this->comboDisplayAlpha + (this->comboDesiredDisplayAlpha - this->comboDisplayAlpha) * 0.04f;
 
 	this->field_0x16c0 = this->field_0x16c0 + GetTimer()->cutsceneDeltaTime;
 	iVar6 = this->currentBehaviourState;
@@ -3292,9 +3292,9 @@ void CBehaviourNativSeller::FUN_003f2150()
 			}
 
 			if (!bVar2) {
-				this->field_0x16c4 = 0.0f;
-				this->field_0x16c8 = 0.0f;
-				this->field_0x16cc = 0.0f;
+				this->comboDesiredDisplayWidth = 0.0f;
+				this->comboDesiredDisplayHeight = 0.0f;
+				this->comboDesiredDisplayAlpha = 0.0f;
 
 				pNativ = this->pOwner;
 				iVar6 = 0;
@@ -3325,8 +3325,8 @@ void CBehaviourNativSeller::FUN_003f2150()
 	switch (iVar6) {
 	case -1:
 		break;
-	case 0x21:
-		this->pOwner->State_0x21(this);
+	case NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY:
+		this->pOwner->StateInitArenaDisplay(this);
 		break;
 	case 0x22:
 		this->pOwner->State_0x22(this);
@@ -3364,10 +3364,11 @@ void CBehaviourNativSeller::FUN_003f2150()
 
 	this->addOn.Manage();
 
-	if (((this->field_0x16d0 != 0.0f) || (this->field_0x16d4 != 0.0f)) || (this->promptAlpha != 0.0f)) {
+	if (((this->comboDisplayWidth != 0.0f) || (this->comboDisplayHeight != 0.0f)) || (this->comboDisplayAlpha != 0.0f)) {
 		if (this->field_0x16b4 == 0) {
 			DrawButtonPromptA();
 		}
+
 		if (this->field_0x16b4 == 1) {
 			IMPLEMENTATION_GUARD(
 			FUN_003ec0e0(this);)
@@ -3379,50 +3380,51 @@ void CBehaviourNativSeller::FUN_003f2150()
 
 
 
-void CBehaviourNativSeller::FUN_003ed150()
+void CBehaviourNativSeller::ArenaUpdateDisplayBorderSize()
 {
 	byte bVar1;
-	s_fighter_combo* psVar2;
-	NativSubObjA* pNVar3;
+	s_fighter_combo* pCurrentCombo;
+	ArenaRequiredCombo* pReqCombo;
 	int iVar4;
 	int iVar5;
-	float fVar6;
+	float totalComboDisplayHeight;
 	float fVar7;
-	float fVar8;
+	float totalComboDisplayWidth;
 	float local_10;
 	float local_c;
-	float local_8;
-	float local_4;
+	float comboButtonWidth;
+	float comboButtonHeight;
 
 	fVar7 = 0.0f;
-	fVar8 = (float)gVideoConfig.screenWidth * 0.13f;
-	fVar6 = (float)gVideoConfig.screenHeight * 0.2f;
+	totalComboDisplayWidth = (float)gVideoConfig.screenWidth * 0.13f;
+	totalComboDisplayHeight = (float)gVideoConfig.screenHeight * 0.2f;
 
 	if (CActorHero::_gThis != (CActorHero*)0x0) {
 		CActorHero::_gThis->_UpdateComboSituation();
 
 		if (this->field_0x16b4 == 0) {
-			pNVar3 = GetActiveSubObjA();
+			pReqCombo = GetActiveComboTutorial();
 
 			iVar4 = 0;
-			if (pNVar3 != (NativSubObjA*)0x0) {
-				for (; iVar4 < pNVar3->nbSubObjB; iVar4 = iVar4 + 1) {
-					psVar2 = pNVar3->aSubObjsB[iVar4].aRequiredCombos[0];
+			if (pReqCombo != (ArenaRequiredCombo*)0x0) {
+				for (; iVar4 < pReqCombo->nbRequiredMoves; iVar4 = iVar4 + 1) {
+					pCurrentCombo = pReqCombo->aRequiredMoves[iVar4].aRequiredCombos[0];
 
-					s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, psVar2->actionHash.pData);
+					s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCurrentCombo->actionHash.pData);
 
 					bVar1 = pMove->field_0x4.field_0x0byte;
 					if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
-						fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.08f;
+						totalComboDisplayWidth = totalComboDisplayWidth + (float)gVideoConfig.screenWidth * 0.08f;
 					}
 
-					FUN_003eccb0(psVar2, &local_8, &local_4);
+					GetComboButtonDisplaySize(pCurrentCombo, &comboButtonWidth, &comboButtonHeight);
 
-					fVar6 = (float)((int)fVar6 * (uint)(local_4 < fVar6) | (int)local_4 * (uint)(local_4 >= fVar6));
-					fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.05 + local_8;
+					totalComboDisplayHeight = std::max<float>(comboButtonHeight, totalComboDisplayHeight);
+					totalComboDisplayWidth = totalComboDisplayWidth + (float)gVideoConfig.screenWidth * 0.05f + comboButtonWidth;
 				}
 			}
 		}
+
 		if (this->field_0x16b4 == 1) {
 			IMPLEMENTATION_GUARD(
 			iVar4 = *(int*)&this->field_0x1690;
@@ -3432,25 +3434,25 @@ void CBehaviourNativSeller::FUN_003ed150()
 			iVar5 = 0;
 			if (iVar4 != 0) {
 				for (; iVar5 < *(int*)(iVar4 + 0x80); iVar5 = iVar5 + 1) {
-					psVar2 = *(s_fighter_combo**)(iVar4 + iVar5 * 0x10 + 4);
-					bVar1 = *(byte*)((int)&psVar2->actionHash->field_0x4 + 1);
+					pCurrentCombo = *(s_fighter_combo**)(iVar4 + iVar5 * 0x10 + 4);
+					bVar1 = *(byte*)((int)&pCurrentCombo->actionHash->field_0x4 + 1);
 					if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
-						fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.08;
+						totalComboDisplayWidth = totalComboDisplayWidth + (float)gVideoConfig.screenWidth * 0.08f;
 					}
-					FUN_003eccb0(this, psVar2, &local_10, &local_c);
+					GetComboButtonDisplaySize(this, pCurrentCombo, &local_10, &local_c);
 					fVar7 = (float)((int)fVar7 * (uint)(local_c < fVar7) | (int)local_c * (uint)(local_c >= fVar7));
-					fVar8 = fVar8 + (float)gVideoConfig.screenWidth * 0.05 + local_10;
+					totalComboDisplayWidth = totalComboDisplayWidth + (float)gVideoConfig.screenWidth * 0.05f + local_10;
 				}
 			})
 		}
 
-		fVar6 = fVar6 + fVar7;
-		fVar8 = fVar8 + ((float)gVideoConfig.screenWidth * 0.05f) / 2.0f;
+		totalComboDisplayHeight = totalComboDisplayHeight + fVar7;
+		totalComboDisplayWidth = totalComboDisplayWidth + ((float)gVideoConfig.screenWidth * 0.05f) / 2.0f;
 	}
 
-	this->field_0x16c4 = fVar8;
-	this->field_0x16c8 = fVar6;
-	this->field_0x16cc = 1.0f;
+	this->comboDesiredDisplayWidth = totalComboDisplayWidth;
+	this->comboDesiredDisplayHeight = totalComboDisplayHeight;
+	this->comboDesiredDisplayAlpha = 1.0f;
 
 	return;
 }
@@ -3489,7 +3491,7 @@ void CBehaviourNativSeller::FUN_003ebd90()
 	return;
 }
 
-void CBehaviourNativSeller::FUN_003eccb0(s_fighter_combo* pCombo, float* param_3, float* param_4)
+void CBehaviourNativSeller::GetComboButtonDisplaySize(s_fighter_combo* pCombo, float* param_3, float* param_4)
 {
 	uint uVar1;
 	char cVar2;
@@ -3579,22 +3581,22 @@ void CBehaviourNativSeller::FUN_003eccb0(s_fighter_combo* pCombo, float* param_3
 
 		if (cVar2 == '\b') {
 			fVar6 = 2.0f;
-			fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+			fVar5 = std::max<float>(fVar5, 1.0f);
 		}
 		else {
 			if (cVar2 == '\x04') {
 				fVar6 = 2.0f;
-				fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+				fVar5 = std::max<float>(fVar5, 1.0f);
 			}
 			else {
 				if (cVar2 == '\x02') {
 					fVar6 = 2.0f;
-					fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+					fVar5 = std::max<float>(fVar5, 1.0f);
 				}
 				else {
 					if (cVar2 == '\x01') {
 						fVar6 = 2.0f;
-						fVar5 = (float)((int)fVar5 * (uint)(1.0 < fVar5) | (uint)(1.0 >= fVar5) * 0x3f800000);
+						fVar5 = std::max<float>(fVar5, 1.0f);
 					}
 				}
 			}
@@ -3613,11 +3615,9 @@ void CBehaviourNativSeller::FUN_003eccb0(s_fighter_combo* pCombo, float* param_3
 			fVar6 = 0.0f;
 		}
 
-		*param_3 = (float)gVideoConfig.screenWidth * 0.068f *
-			(float)((int)fVar5 * (uint)(fVar5 < 1.0f) | (uint)(fVar5 >= 1.0f) * 0x3f800000) +
-			(float)gVideoConfig.screenWidth * 0.08f * (float)((int)(fVar5 - 1.0f) * (uint)(0.0f < fVar5 - 1.0f));
+		*param_3 = (float)gVideoConfig.screenWidth * 0.068f * std::max<float>(fVar5, 1.0f) + (float)gVideoConfig.screenWidth * 0.08f * std::max(fVar5 - 1.0f, 0.0f);
 
-		*param_4 = (float)gVideoConfig.screenHeight * 0.07f * (float)((int)(fVar6 - 1.0f) * (uint)(0.0f < fVar6 - 1.0f));
+		*param_4 = (float)gVideoConfig.screenHeight * 0.07f * std::max(fVar6 - 1.0f, 0.0f);
 	}
 
 	return;
@@ -3646,8 +3646,9 @@ bool CBehaviourNativSeller::FUN_003ebee0(int param_2)
 	int iVar1;
 
 	if (param_2 == 0) {
-		(this->subObjC).activeSubObjIndex = -1;
-		iVar1 = this->subObjC.Add_0xc();
+		(this->comboTutorialManager).activeTutorialIndex = -1;
+
+		iVar1 = this->comboTutorialManager.StepRequiredCombo();
 		if (iVar1 == -1) {
 			return true;
 		}
@@ -3662,7 +3663,7 @@ bool CBehaviourNativSeller::FUN_003ebee0(int param_2)
 		})
 	}
 	
-	FUN_003ed150();
+	ArenaUpdateDisplayBorderSize();
 
 	return false;
 }
@@ -3721,7 +3722,7 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 	bool bVar2;
 	edCTextStyle* pPrevTextStyle;
 	int funcIndex;
-	NativSubObjA* pNVar4;
+	ArenaRequiredCombo* pNVar4;
 	int iVar5;
 	long lVar6;
 	float screenHeight;
@@ -3731,22 +3732,22 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 	edCTextStyle textStyle;
 	float local_4;
 
-	pNVar4 = GetActiveSubObjA();
+	pNVar4 = GetActiveComboTutorial();
 
 	local_4 = (float)gVideoConfig.screenWidth * 0.13f;
 	textStyle.Reset();
 	textStyle.SetFont(BootDataFont, false);
 	textStyle.SetHorizontalAlignment(2);
 	textStyle.SetVerticalAlignment(8);
-	textStyle.rgbaColour = (int)(this->promptAlpha * 255.0f) & 0xffU | 0xffffff00;
+	textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
 	textStyle.SetShadow(0x100);
 
 	pPrevTextStyle = edTextStyleSetCurrent(&textStyle);
 	lVar6 = 0;
-	if ((pNVar4 != (NativSubObjA*)0x0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
-		fVar8 = this->field_0x16d0;
+	if ((pNVar4 != (ArenaRequiredCombo*)0x0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+		fVar8 = this->comboDisplayWidth;
 		screenHeight = (float)gVideoConfig.screenHeight;
-		fVar9 = this->field_0x16d4;
+		fVar9 = this->comboDisplayHeight;
 		fVar10 = fVar8 / 2.0f - (float)gVideoConfig.screenWidth * 0.02f;
 		bVar2 = GuiDList_BeginCurrent();
 		if (bVar2 != false) {
@@ -3758,9 +3759,9 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 
 		IMPLEMENTATION_GUARD_LOG(
 		iVar5 = 0;
-		if (0 < pNVar4->nbSubObjB) {
+		if (0 < pNVar4->nbRequiredMoves) {
 			do {
-				NativSubObjB* pSubObjB = pNVar4->aSubObjsB + iVar5;
+				NativSubObjB* pSubObjB = pNVar4->aRequiredMoves + iVar5;
 
 				funcIndex = FUN_003ecad0(iVar5, lVar6);
 				FUN_003ec660(funcIndex);
@@ -3773,7 +3774,7 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 				FUN_003ed820(pSubObjB, &local_4, funcIndex);
 				iVar5 = iVar5 + 1;
 				local_4 = local_4 + (float)gVideoConfig.screenWidth * 0.05f;
-			} while (iVar5 < pNVar4->nbSubObjB);
+			} while (iVar5 < pNVar4->nbRequiredMoves);
 		})
 	}
 
@@ -3782,18 +3783,18 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 	return;
 }
 
-NativSubObjA* CBehaviourNativSeller::GetActiveSubObjA()
+ArenaRequiredCombo* CBehaviourNativSeller::GetActiveComboTutorial()
 {
-	NativSubObjA* pSubObjA;
-	const int index = (this->subObjC).activeSubObjIndex;
+	ArenaRequiredCombo* pReqCombo;
+	const int index = (this->comboTutorialManager).activeTutorialIndex;
 	if (index == -1) {
-		pSubObjA = (NativSubObjA*)0x0;
+		pReqCombo = (ArenaRequiredCombo*)0x0;
 	}
 	else {
-		pSubObjA = (this->subObjC).aSubObjsA + index;
+		pReqCombo = (this->comboTutorialManager).aTutorials + index;
 	}
 
-	return pSubObjA;
+	return pReqCombo;
 }
 
 NativSubObjB::NativSubObjB()
@@ -3846,10 +3847,10 @@ bool NativSubObjB::IsRequiredCombo(s_fighter_combo* pCombo)
 	return false;
 }
 
-NativSubObjA::NativSubObjA()
+ArenaRequiredCombo::ArenaRequiredCombo()
 {
-	this->nbSubObjB = 0;
-	this->aSubObjsB = (NativSubObjB*)0x0;
+	this->nbRequiredMoves = 0;
+	this->aRequiredMoves = (NativSubObjB*)0x0;
 
 	return;
 }
@@ -3862,47 +3863,47 @@ NativSellerSubObjA::NativSellerSubObjA()
 	return;
 }
 
-NativSellerSubObjC::NativSellerSubObjC()
+ComboTutorialManager::ComboTutorialManager()
 {
-	this->nbSubObjA = 0;
-	this->aSubObjsA = (NativSubObjA*)0x0;
+	this->nbTutorials = 0;
+	this->aTutorials = (ArenaRequiredCombo*)0x0;
 
 	return;
 }
 
-void NativSellerSubObjC::Init()
+void ComboTutorialManager::Init()
 {
 	int iVar3;
-	NativSubObjA* piVar4;
-	int iVar4;
+	ArenaRequiredCombo* pTutorial;
+	int curTutorialIndex;
 
-	iVar4 = 0;
-	if (0 < this->nbSubObjA) {
+	curTutorialIndex = 0;
+	if (0 < this->nbTutorials) {
 		do {
-			piVar4 = this->aSubObjsA + iVar4;
+			pTutorial = this->aTutorials + curTutorialIndex;
 			iVar3 = 0;
-			if (0 < piVar4->nbSubObjB) {
+			if (0 < pTutorial->nbRequiredMoves) {
 				do {
-					piVar4->aSubObjsB[iVar3].field_0xc = 0;
+					pTutorial->aRequiredMoves[iVar3].field_0xc = 0;
 					iVar3 = iVar3 + 1;
-				} while (iVar3 < piVar4->nbSubObjB);
+				} while (iVar3 < pTutorial->nbRequiredMoves);
 			}
 
-			iVar4 = iVar4 + 1;
-		} while (iVar4 < this->nbSubObjA);
+			curTutorialIndex = curTutorialIndex + 1;
+		} while (curTutorialIndex < this->nbTutorials);
 	}
 
-	this->activeSubObjIndex = -1;
+	this->activeTutorialIndex = -1;
 
 	return;
 }
 
-int NativSellerSubObjC::Add_0xc()
+int ComboTutorialManager::StepRequiredCombo()
 {
-	this->activeSubObjIndex = this->activeSubObjIndex + 1;
-	if (this->nbSubObjA <= this->activeSubObjIndex) {
-		this->activeSubObjIndex = -1;
+	this->activeTutorialIndex = this->activeTutorialIndex + 1;
+	if (this->nbTutorials <= this->activeTutorialIndex) {
+		this->activeTutorialIndex = -1;
 	}
 
-	return this->activeSubObjIndex;
+	return this->activeTutorialIndex;
 }
