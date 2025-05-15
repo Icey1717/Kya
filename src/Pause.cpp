@@ -180,15 +180,15 @@ void PauseLeave()
 {
 	gSettings.SetSettingsToGlobal();
 
-	gSettings.field_0x0 = gSettings.field_0x0;
+	gSettings.bEnableVibration = gSettings.bEnableVibration;
 	gSettings.languageID = gSettings.languageID;
-	gSettings.field_0x8 = gSettings.field_0x8;
+	gSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
 	gSettings.bWidescreen = gSettings.bWidescreen;
 	gSettings.setOffsetX = gSettings.setOffsetX;
 	gSettings.setOffsetY = gSettings.setOffsetY;
-	gSettings.field_0x14 = gSettings.field_0x14;
-	gSettings.field_0x18 = gSettings.field_0x18;
-	gSettings.field_0x1c = gSettings.field_0x1c;
+	gSettings.audioMode = gSettings.audioMode;
+	gSettings.musicVolume = gSettings.musicVolume;
+	gSettings.sfxVolume = gSettings.sfxVolume;
 
 	CScene::_pinstance->Level_PauseChange(0);
 	CScene::_pinstance->SetGlobalPaused_001b8c30(0);
@@ -328,46 +328,47 @@ int FUN_00284930(void)
 
 void CSettings::StoreGlobalSettings()
 {
-	CCinematicManager* pCVar1;
-	CCameraManager* pCVar2;
-	CAudioManager* pGVar3;
+	CCinematicManager* cCinematicManagerInstance;
+	CCameraManager* cCameraManagerInstance;
+	CAudioManager* cAudioManagerInstance;
 	undefined4 uVar4;
 	LANGUAGE LVar5;
-	float fVar6;
-	int iVar4;
+	float volume;
+	AUDIO_MODE audioMode;
 
-	pGVar3 = CScene::ptable.g_AudioManager_00451698;
-	pCVar2 = CScene::ptable.g_CameraManager_0045167c;
-	pCVar1 = g_CinematicManager_0048efc;
+	cAudioManagerInstance = CScene::ptable.g_AudioManager_00451698;
+	cCameraManagerInstance = CScene::ptable.g_CameraManager_0045167c;
+	cCinematicManagerInstance = g_CinematicManager_0048efc;
 	IMPLEMENTATION_GUARD_AUDIO(
-	fVar6 = (CScene::ptable.g_AudioManager_00451698)->field_0xbc * 12.0;
-	if (fVar6 < 2.147484e+09f) {
-		this->field_0x18 = (int)fVar6;
-	}
-	else {
-		this->field_0x18 = (int)(fVar6 - 2.147484e+09f) | 0x80000000;
-	}
-	fVar6 = pGVar3->field_0xc0 * 12.0;
-	if (fVar6 < 2.147484e+09f) {
-		this->field_0x1c = (int)fVar6;
-	}
-	else {
-		this->field_0x1c = (int)(fVar6 - 2.147484e+09f) | 0x80000000;
-	}
-	iVar4 = edSoundOutputModeGet();
-	this->field_0x14 = iVar4;)
+		volume = (CScene::ptable.g_AudioManager_00451698)->field_0xbc * 12.0;
+		if (volume < 2.147484e+09f) {
+			this->musicVolume = (int)volume;
+		}
+		else {
+			this->musicVolume = (int)(volume - 2.147484e+09f) | 0x80000000;
+		}
+		volume = cAudioManagerInstance->field_0xc0 * 12.0;
+		if (volume < 2.147484e+09f) {
+			this->sfxVolume = (int)volume;
+		}
+		else {
+			this->sfxVolume = (int)(volume - 2.147484e+09f) | 0x80000000;
+		}
+		audioMode = edSoundOutputModeGet();
+		this->audioMode = audioMode;
+	)
 	this->setOffsetX = gVideoConfig.offsetX;
 	this->setOffsetY = gVideoConfig.offsetY;
-	if (pCVar2->aspectRatio == 1.777778) {
+	if (cCameraManagerInstance->aspectRatio == 1.777778) {
 		this->bWidescreen = 1;
 	}
 	else {
 		this->bWidescreen = 0;
 	}
-	this->field_0x8 = pCVar1->bInitialized != 0;
+	this->bEnableSubtitles = bool(cCinematicManagerInstance->bInitialized);
 	LVar5 = CMessageFile::get_default_language();
 	this->languageID = LVar5;
-	this->field_0x0 = gPlayerInput.field_0x14 != 0;
+	this->bEnableVibration = (bool)gPlayerInput.bEnableVibration;
 	return;
 }
 
@@ -776,15 +777,15 @@ void MenuFramePause_Draw(CSimpleMenu* pPauseMenu)
 	pPauseMenu->draw_action(0x31a0b0d16194149, ExitLevel, 0, -3);
 
 	gSettings.SetSettingsToGlobal();
-	gSettings.field_0x0 = gSettings.field_0x0;
+	gSettings.bEnableVibration = gSettings.bEnableVibration;
 	gSettings.languageID = gSettings.languageID;
-	gSettings.field_0x8 = gSettings.field_0x8;
+	gSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
 	gSettings.bWidescreen = gSettings.bWidescreen;
 	gSettings.setOffsetX = gSettings.setOffsetX;
 	gSettings.setOffsetY = gSettings.setOffsetY;
-	gSettings.field_0x14 = gSettings.field_0x14;
-	gSettings.field_0x18 = gSettings.field_0x18;
-	gSettings.field_0x1c = gSettings.field_0x1c;
+	gSettings.audioMode = gSettings.audioMode;
+	gSettings.musicVolume = gSettings.musicVolume;
+	gSettings.sfxVolume = gSettings.sfxVolume;
 
 	//PauseDrawInterface(bShowLevelSwitchUI);
 
@@ -1726,15 +1727,15 @@ void CSimpleMenu::DrawMainMenu()
 
 	gSettings.SetSettingsToGlobal();
 
-	gSettings.field_0x0 = gSettings.field_0x0;
+	gSettings.bEnableVibration = gSettings.bEnableVibration;
 	gSettings.languageID = gSettings.languageID;
-	gSettings.field_0x8 = gSettings.field_0x8;
+	gSettings.bEnableSubtitles = gSettings.bEnableSubtitles;
 	gSettings.bWidescreen = gSettings.bWidescreen;
 	gSettings.setOffsetX = gSettings.setOffsetX;
 	gSettings.setOffsetY = gSettings.setOffsetY;
-	gSettings.field_0x14 = gSettings.field_0x14;
-	gSettings.field_0x18 = gSettings.field_0x18;
-	gSettings.field_0x1c = gSettings.field_0x1c;
+	gSettings.audioMode = gSettings.audioMode;
+	gSettings.musicVolume = gSettings.musicVolume;
+	gSettings.sfxVolume = gSettings.sfxVolume;
 	return;
 }
 

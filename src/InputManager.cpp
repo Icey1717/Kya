@@ -182,7 +182,7 @@ void CPlayerInput::Init(int bInitialActive)
 	this->aButtons[5].bActive = 1;
 	this->aButtons[6].bActive = 1;
 
-	this->field_0x14 = 1;
+	this->bEnableVibration = 1;
 	
 	(this->field_0x1c).field_0x0 = 0.0f;
 	(this->field_0x1c).field_0x4 = 0.0f;
@@ -795,7 +795,7 @@ void CPlayerInput::FUN_001b6e20(float param_1, float param_2)
 	float fVar1;
 	//InputEventData local_4;
 
-	if ((((this->field_0x14 != 0) && (this->bDisconnected == 0)) && (this->portIndex != 0xffffffff)) &&
+	if ((((this->bEnableVibration != 0) && (this->bDisconnected == 0)) && (this->portIndex != 0xffffffff)) &&
 		((this->field_0x1c.field_0x1c != 0 || (this->field_0x40.field_0x1c != 0)))) {
 		IMPLEMENTATION_GUARD(
 		if (this->field_0x38 == 0) {

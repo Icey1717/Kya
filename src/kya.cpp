@@ -1802,7 +1802,7 @@ void PlayIntroVideo(long mode)
 				   First param is = "int_nw"
 				   Second param is "ufgsi" (US, French, German, Spanish, Italian) */
 				sprintf(introFileName, "%s%c", PTR_IntroVideoTitleStart[uVar4][WTVersion], s_ufgsi_004381a8[currentLanguage]);
-				if (gSettings.field_0x8 != false) {
+				if (gSettings.bEnableSubtitles != false) {
 					/* If we have subtitles on, append an 's' */
 					strcat(introFileName, s_SubtitleSuffix);
 				}
