@@ -17,8 +17,7 @@ bool CSettings::LoadFromBuffer(void* pDataV)
 	bool bValidSettings;
 
 	bValidSettings = false;
-	char stgs[4] = { 'S', 'T', 'G', 'S' };
-	if (memcmp(pData, stgs, 4)) {
+	if (*(int*)pData == 0x53544753) { // 0x53544753 == "STGS"
 		bValidSettings = false;
 		if (*(int*)(pData + 4) == 3) { //Apparently this value just needs to be 3?
 			this->languageID = (LANGUAGE)*(int*)(pData + 0x08);
