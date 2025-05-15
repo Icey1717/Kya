@@ -33,25 +33,28 @@ For additional resources, for additional technical documentation, please visit [
 
 ## 🧩 Getting Started
 
+**This is a work in progress, currently needs fixing as it may not run succesfully once built. It also currently only compiles for Windows.**
+
+**Requirements**:  
+- Visual Studio 2022  
+- Clang builder and tools for VS2022 (from the Visual Studio Installer) 
+- Vulkan SDK (including GLM Headers)
+
 To begin working with the decompiled code:
 
-1. **Clone the Repository:**
+1. **Clone the repository, including submodules:**
 
    ```bash
-   git clone https://github.com/Icey1717/Kya.git
+   git clone --recursive https://github.com/Icey1717/Kya.git
    ```
 
-2. **Set Up the Build Environment:**
-
-   Ensure you have a compatible C++ compiler and necessary build tools installed.
+2. **Open the Repository in Visual Studio**
 
 3. **Build the Project:**
 
-   Navigate to the `build/` directory and follow the provided instructions to compile the project.
+   Select *x64 Debug* as the configuration, and *Kya_Debug.exe* as the target.
 
-4. **Run and Test:**
-
-   Execute the built binaries and test functionalities to verify correctness.
+4. **Run and Test**
 
 ---
 

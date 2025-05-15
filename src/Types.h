@@ -666,6 +666,13 @@ enum LANGUAGE
 	AUTO
 };
 
+enum AUDIO_MODE
+{
+	MONO,
+	STEREO,
+	SURROUND
+};
+
 // Overload the * operator as a non-member function
 inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32MATRIX4& rhs)
 {

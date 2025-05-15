@@ -14,46 +14,32 @@ int CSettings::GetMaxSaveBufferSize()
 bool CSettings::LoadFromBuffer(void* pDataV)
 {
 	char* pData = (char*)pDataV;
-	bool bVar1;
+	bool bValidSettings;
 
-	bVar1 = false;
-	if (*(int*)pData == 0x53544753) {
-		bVar1 = false;
-		if (*(int*)(pData + 4) == 3) {
-			this->languageID = (LANGUAGE)*(int*)(pData + 8);
-			this->field_0x14 = *(undefined4*)(pData + 0xc);
-			this->field_0x18 = *(uint*)(pData + 0x10);
-			this->field_0x1c = *(uint*)(pData + 0x14);
+	bValidSettings = false;
+	if (*(int*)pData == 0x53544753) { // 0x53544753 == "STGS"
+		bValidSettings = false;
+		if (*(int*)(pData + 4) == 3) { //Apparently this value just needs to be 3?
+			this->languageID = (LANGUAGE)*(int*)(pData + 0x08);
+			this->audioMode = (AUDIO_MODE)*(pData + 0x0c);
+			this->musicVolume = *(uint*)(pData + 0x10);
+			this->sfxVolume = *(uint*)(pData + 0x14);
 			this->setOffsetX = *(int*)(pData + 0x1c);
 			this->setOffsetY = *(int*)(pData + 0x20);
-			if (pData[0x24] == '\0') {
-				this->field_0x0 = false;
-			}
-			else {
-				this->field_0x0 = true;
-			}
-			if (pData[0x25] == '\0') {
-				this->field_0x8 = false;
-			}
-			else {
-				this->field_0x8 = true;
-			}
-			if (pData[0x27] == '\0') {
-				this->bWidescreen = 0;
-			}
-			else {
-				this->bWidescreen = 1;
-			}
-			bVar1 = true;
+			this->bEnableVibration = (bool)pData[0x24];
+			this->bEnableSubtitles = (bool)pData[0x25];
+			//0x26 is skipped, perhaps it was used in prototype builds
+			this->bWidescreen = (bool)pData[0x27];
+			bValidSettings = true;
 		}
 	}
-	return bVar1;
+	return bValidSettings;
 }
 
 void CSettings::SetSettingsToGlobal()
 {
 	int iVar1;
-	uint uVar2;
+	uint volume;
 	CCameraManager* pCVar3;
 	//CAudioManager* pGVar4;
 	LANGUAGE prevLanguageID;
@@ -89,35 +75,35 @@ void CSettings::SetSettingsToGlobal()
 			pCVar3->aspectRatio = 1.777778f;
 		}
 	}
-	iVar1 = this->setOffsetX;
-	if ((gVideoConfig.offsetX != iVar1) || (gVideoConfig.offsetY != this->setOffsetY)) {
+	if ((gVideoConfig.offsetX != this->setOffsetX) || (gVideoConfig.offsetY != this->setOffsetY)) {
 		gVideoConfig.offsetY = this->setOffsetY;
-		gVideoConfig.offsetX = iVar1;
-		edVideoSetOffset((short)iVar1, (short)gVideoConfig.offsetY);
+		gVideoConfig.offsetX = this->setOffsetX;
+		edVideoSetOffset((short)this->setOffsetX, (short)gVideoConfig.offsetY);
 	}
-	uVar2 = this->field_0x18;
-	if ((int)uVar2 < 0) {
-		fVar7 = (float)(uVar2 >> 1 | uVar2 & 1);
+	volume = this->musicVolume;
+	// TODO: check this mess with shift and bitwise is (maybe normalizing?)
+	if ((int)volume < 0) {
+		fVar7 = (float)(volume >> 1 | volume & 1);
 		fVar7 = fVar7 + fVar7;
 	}
 	else {
-		fVar7 = (float)uVar2;
+		fVar7 = (float)volume;
 	}
 	//if (fVar7 / 12.0 != pGVar4->field_0xbc) {
 	//	FUN_00182000(fVar7 / 12.0, (int)pGVar4);
 	//}
-	uVar2 = this->field_0x1c;
-	if ((int)uVar2 < 0) {
-		fVar7 = (float)(uVar2 >> 1 | uVar2 & 1);
+	volume = this->sfxVolume;
+	if ((int)volume < 0) {
+		fVar7 = (float)(volume >> 1 | volume & 1);
 		fVar7 = fVar7 + fVar7;
 	}
 	else {
-		fVar7 = (float)uVar2;
+		fVar7 = (float)volume;
 	}
 	//if (fVar7 / 12.0 != pGVar4->field_0xc0) {
 	//	FUN_00181f80(fVar7 / 12.0, pGVar4);
 	//}
-	iVar1 = this->field_0x14;
+	iVar1 = this->audioMode;
 	//iVar5 = thunk_FUN_00284930();
 	//if ((long)iVar1 != (long)iVar5) {
 	//	FUN_00181ef0(lVar6, (long)iVar1);
