@@ -103,7 +103,7 @@ add_dependencies(Renderer Shaders)
 
 set(DXC_COMPILER "$ENV{VULKAN_SDK}/Bin/dxc.exe")
 set(SHADER_OUTPUT_FOLDER "${CMAKE_SOURCE_DIR}/bin/WIN/shaders")
-set( SHADER_SRC_DIR "G:/repos/Kya/port/Windows/Renderer/Shaders/src/")
+set( SHADER_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/Shaders/src/")
 
 
 cmake_path(NATIVE_PATH SHADER_SRC_DIR SHADER_SRC_DIR)

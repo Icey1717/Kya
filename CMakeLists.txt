@@ -10,6 +10,14 @@ OPTION(SPIRV_REFLECT_ENABLE_ASSERTS "Enable asserts for debugging" OFF)
 
 include("src/port/ispc/ispc.cmake")
 
+set(CMAKE_C_COMPILER "clang")
+set(CMAKE_CXX_COMPILER "clang")
+
+
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_EXTENSIONS YES)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if (PS2)
 else()
 set(CMAKE_C_COMPILER "clang")
