@@ -20,23 +20,23 @@ bool CSettings::LoadFromBuffer(void* pDataV)
 	if (*(int*)pData == 0x53544753) {
 		bVar1 = false;
 		if (*(int*)(pData + 4) == 3) {
-			this->languageID = (LANGUAGE)*(int*)(pData + 8);
-			this->field_0x14 = *(undefined4*)(pData + 0xc);
-			this->field_0x18 = *(uint*)(pData + 0x10);
-			this->field_0x1c = *(uint*)(pData + 0x14);
+			this->languageID = (LANGUAGE)*(int*)(pData + 0x8);
+			this->audioMode = (AUDIO_MODE)*(int*)(pData + 0xc);
+			this->musicVolume = *(uint*)(pData + 0x10);
+			this->sfxVolume = *(uint*)(pData + 0x14);
 			this->setOffsetX = *(int*)(pData + 0x1c);
 			this->setOffsetY = *(int*)(pData + 0x20);
 			if (pData[0x24] == '\0') {
-				this->field_0x0 = false;
+				this->bEnableVibration = false;
 			}
 			else {
-				this->field_0x0 = true;
+				this->bEnableVibration = true;
 			}
 			if (pData[0x25] == '\0') {
-				this->field_0x8 = false;
+				this->bEnableSubtitles = false;
 			}
 			else {
-				this->field_0x8 = true;
+				this->bEnableSubtitles = true;
 			}
 			if (pData[0x27] == '\0') {
 				this->bWidescreen = 0;
