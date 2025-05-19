@@ -18,7 +18,9 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pActor);
 	virtual void Manage();
-	virtual bool Func_0x20();
+	virtual CAddOnSubObj* GetSubObj(uint param_2, int pActor);
+	virtual bool Func_0x20(uint param_2, CActor* param_3, int pActor);
+	virtual bool Func_0x24(uint param_2, CActor* pActor);
 
 	byte field_0xc;
 	byte field_0xd;

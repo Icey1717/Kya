@@ -519,6 +519,8 @@ public:
 
 	CActor* GetActorByHashcode(uint hashCode);
 
+	bool FUN_001c9500();
+
 	int prtBuffer;
 	uint flags_0x4;
 	uint flags_0x8;

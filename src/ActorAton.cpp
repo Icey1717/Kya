@@ -3809,7 +3809,17 @@ void CBehaviourAddOnAton::Manage()
 	IMPLEMENTATION_GUARD_ADD_ON();
 }
 
-bool CBehaviourAddOnAton::Func_0x20()
+CAddOnSubObj* CBehaviourAddOnAton::GetSubObj(uint param_2, int pActor)
+{
+	IMPLEMENTATION_GUARD_ADD_ON();
+}
+
+bool CBehaviourAddOnAton::Func_0x20(uint param_2, CActor* param_3, int pActor)
+{
+	IMPLEMENTATION_GUARD_ADD_ON();
+}
+
+bool CBehaviourAddOnAton::Func_0x24(uint param_2, CActor* pActor)
 {
 	IMPLEMENTATION_GUARD_ADD_ON();
 }

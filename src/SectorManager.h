@@ -63,15 +63,6 @@ struct SectorManagerSubObjOther {
 	S_COMPANION_INFO* aCompanionInfo;
 };
 
-struct StaticEdFileBase {
-	struct edCFiler* pEdFileBase;
-	undefined4 field_0x4;
-};
-
-extern StaticEdFileBase StaticEdFileBase_004497f0;
-
-bool CheckFunc_00401fd0(StaticEdFileBase* param_1);
-
 struct CSector {
 public:
 	CSector();

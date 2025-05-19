@@ -812,7 +812,7 @@ void CActorWolfen::SetState(int newState, int animType)
 	int iVar1;
 	ulong uVar2;
 
-	if (newState == WOLFEN_STATE_TRACK_WEAPON_CHASE) {
+	if (newState == WOLFEN_STATE_TRACK_CHASE) {
 		animType = 7;
 
 		if (this->combatMode_0xb7c == ECM_InCombat) {
@@ -873,7 +873,7 @@ void CActorWolfen::ChangeManageState(int state)
 					(*(code*)pCVar2->pVTable->SaveContext)(pCVar2, state);)
 				}
 				else {
-					if (this->actorState == WOLFEN_STATE_TRACK_WEAPON_CHASE) {
+					if (this->actorState == WOLFEN_STATE_TRACK_CHASE) {
 						if (state == 0) {
 							IMPLEMENTATION_GUARD_AUDIO(
 							FUN_001844c0(CScene::ptable.g_AudioManager_00451698);)
@@ -1463,7 +1463,7 @@ void CActorWolfen::Func_0x204(CActorFighter* pOther)
 	if (pCVar1 == (CActorFighter*)0x0) {
 		this->adversaryDistance = this->field_0x358;
 		this->adversaryAngleDiff = GetAngleYFromVector(&this->rotationQuat);
-		Func_0x20c(this->field_0xc5c);
+		SetRunSpeed(this->field_0xc5c);
 	}
 	else {
 		edF32Vector4SubHard(&eStack32, &pCVar1->currentLocation, &this->currentLocation);
@@ -1479,10 +1479,31 @@ void CActorWolfen::Func_0x204(CActorFighter* pOther)
 	return;
 }
 
-void CActorWolfen::Func_0x20c(float param_1)
+void CActorWolfen::SetRunSpeed(float param_1)
 {
 	this->runSpeed = param_1;
+
 	return;
+}
+
+bool CActorWolfen::IsCurrentPositionValid()
+{
+	bool bValid;
+
+	if ((this->combatFlags_0xb78 & 0x400) == 0) {
+	LAB_00173a88:
+		bValid = false;
+	}
+	else {
+		if (GetPathfinderClientAlt()->id != -1) {
+			bValid = GetPathfinderClientAlt()->IsValidPosition(&this->currentLocation);
+			if (bValid == false) goto LAB_00173a88;
+		}
+
+		bValid = true;
+	}
+
+	return bValid;
 }
 
 void CActorWolfen::SetCombatMode(EEnemyCombatMode newCombatMode)
@@ -2502,7 +2523,7 @@ void CActorWolfen::BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour
 												ActorFunc_0035eac0(this);)
 											}
 											else {
-												if (iVar6 == WOLFEN_STATE_TRACK_WEAPON_CHASE) {
+												if (iVar6 == WOLFEN_STATE_TRACK_CHASE) {
 													StateTrackWeaponChase(pBehaviour);
 												}
 											}
@@ -2709,6 +2730,90 @@ void CActorWolfen::BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* 
 	}
 	else {
 		SetBehaviour(iVar6, -1, -1);
+	}
+
+	return;
+}
+
+void CActorWolfen::BehaviourTrack_Manage(CBehaviourTrack* pBehaviour)
+{
+	int iVar1;
+	float fVar4;
+	CActorFighter* pTargetFighter;
+
+	iVar1 = this->actorState;
+	if (iVar1 == WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION) {
+		StateTrackCheckPosition(pBehaviour);
+	}
+	else {
+		if (iVar1 == 0xaa) {
+			IMPLEMENTATION_GUARD(
+			FUN_0035d950(this, (CBehaviourWolfen*)pBehaviour);)
+		}
+		else {
+			if (iVar1 == 0xa9) {
+				IMPLEMENTATION_GUARD(
+				FUN_0035dbb0(this, (CBehaviourWolfen*)pBehaviour);)
+			}
+			else {
+				if (iVar1 == 0x99) {
+					IMPLEMENTATION_GUARD(
+					FUN_0035e120(this);)
+				}
+				else {
+					if (iVar1 == 0x78) {
+						IMPLEMENTATION_GUARD(
+						FUN_0035e560(this, (CBehaviourWolfen*)pBehaviour);)
+					}
+					else {
+						if (iVar1 == WOLFEN_STATE_TRACK_DEFEND) {
+							StateTrackDefend(pBehaviour);
+						}
+						else {
+							if (iVar1 == 0x74) {
+								IMPLEMENTATION_GUARD(
+								FUN_0035eac0(this);)
+							}
+							else {
+								if (iVar1 == WOLFEN_STATE_TRACK_CHASE) {
+									StateTrackChase(pBehaviour);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	pBehaviour->CheckDetection_Intruder();
+
+	iVar1 = pBehaviour->FUN_001f0ab0();
+	if (iVar1 == -1) {
+		pTargetFighter = this->pTargetActor_0xc80;
+		if (pTargetFighter != (CActorFighter*)0x0) {
+			if (pTargetFighter->GetLifeInterface()->GetValue() <= 0.0f) {
+				SetBehaviour((this->subObjA)->defaultBehaviourId, -1, -1);
+				return;
+			}
+		}
+
+		if (this->actorState == 0xb3) {
+			SetBehaviour(this->subObjA->defaultBehaviourId, -1, -1);
+		}
+		else {
+			if ((this->actorState == 0x9a) || (this->actorState == 0x9b)) {
+				SetBehaviour(pBehaviour->GetNotificationTargetArray()->field_0x34, this->actorState, -1);
+			}
+			else {
+				if (this->actorState == 0xb4) {
+					SetBehaviour(0x18, -1, -1);
+				}
+			}
+		}
+	}
+	else {
+		SetBehaviour(iVar1, -1, -1);
 	}
 
 	return;
@@ -4127,63 +4232,239 @@ void CActorWolfen::StateTrackWeaponDefend(CBehaviourTrackWeapon* pBehaviour)
 	return;
 }
 
-void CActorWolfen::StateTrackCheckPosition(CBehaviourTrackWeapon* pBehaviour)
+void CActorWolfen::StateTrackCheckPosition(CBehaviourWolfen* pBehaviour)
 {
-	CActorCommander* pCVar1;
-	CAnimation* pCVar2;
-	edAnmLayer* peVar3;
-	float fVar4;
-	float fVar5;
-	float fVar6;
+	CAnimation* pAnim;
+	edAnmLayer* pAnmLayer;
 	bool bVar7;
-	undefined4 uVar8;
-	int iVar9;
-	CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* this_00;
+	int newState;
 
 	this->dynamic.speed = 0.0f;
 	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
 	InternState_WolfenLocate();
 
-	pCVar1 = this->pCommander;
-	if (pCVar1->field_0x194 < 1) {
-		pCVar2 = this->pAnimationController;
-		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
-		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
-			bVar7 = false;
-			if (peVar3->animPlayState != 0) {
-				bVar7 = (peVar3->field_0xcc & 2) != 0;
+	if (this->pCommander->field_0x194 < 1) {
+		pAnim = this->pAnimationController;
+		pAnmLayer = (pAnim->anmBinMetaAnimator).aAnimData;
+
+		bVar7 = false;
+		if ((pAnmLayer->currentAnimDesc).animType == pAnim->currentAnimType_0x30) {
+			if (pAnmLayer->animPlayState == 0) {
+				bVar7 = false;
+			}
+			else {
+				bVar7 = (pAnmLayer->field_0xcc & 2) != 0;
 			}
 		}
-		else {
-			bVar7 = false;
-		}
+
 		if (bVar7) {
-			bVar7 = pBehaviour->GetNotificationTargetArray()->FUN_003c38c0(this);
-			if (bVar7 == false) {
+			if (pBehaviour->GetNotificationTargetArray()->FUN_003c38c0(this) == false) {
 				SetState(0xb3, -1);
 			}
 			else {
-				SetState(pBehaviour->GetStateWolfenWeapon(), -1);
+				SetState(0xa9, -1);
 			}
 		}
 		else {
-			iVar9 = pBehaviour->GetState_001f0b30();
-			if (iVar9 != -1) {
-				SetState(iVar9, -1);
+			newState = pBehaviour->GetState_001f0930();
+			if (newState != -1) {
+				SetState(newState, -1);
 			}
 		}
 	}
 	else {
-		if (((this->combatFlags_0xb78 & 4) == 0) ||
-			(fVar4 = (pCVar1->targetPosition).x - this->currentLocation.x,
-				fVar5 = (pCVar1->targetPosition).y - this->currentLocation.y,
-				fVar6 = (pCVar1->targetPosition).z - this->currentLocation.z,
-				pBehaviour->field_0x90 < sqrtf(fVar4 * fVar4 + fVar5 * fVar5 + fVar6 * fVar6))) {
+		SetState(GetState_00174190(), -1);
+	}
+
+	return;
+}
+
+void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
+{
+	CActorFighter* pTarget;
+	float fVar1;
+	float fVar2;
+	bool bVar3;
+	int iVar4;
+	CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* pCVar5;
+	undefined4 uVar6;
+	float fVar7;
+	CActorMovParamsIn movParamsIn;
+	CActorMovParamsOut movParamsOut;
+	CActorsTable actorsTable;
+	CActor* pActor;
+	CActorCommander* pCommander;
+
+	iVar4 = -1;
+	pTarget = this->pTargetActor_0xc80;
+	actorsTable.entryCount = 0;
+
+	if (CheckLost() != false) {
+		this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x40000;
+	}
+
+	movParamsOut.flags = 0;
+	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
+	movParamsIn.speed = 0.0f;
+	movParamsIn.flags = 0x150;
+
+	if (this->currentAnimType == 7) {
+		movParamsIn.rotSpeed = GetWalkRotSpeed();
+		movParamsIn.flags = movParamsIn.flags | 2;
+		movParamsIn.acceleration = GetWalkAcceleration();
+		movParamsIn.speed = GetWalkSpeed();
+	}
+	else {
+		movParamsIn.rotSpeed = GetRunRotSpeed();
+		movParamsIn.flags = movParamsIn.flags | 2;
+		movParamsIn.acceleration = GetRunAcceleration();
+		movParamsIn.speed = GetRunSpeed();
+	}
+
+	movParamsIn.flags = movParamsIn.flags | 0x400;
+
+	SV_WLF_MoveTo(&movParamsOut, &movParamsIn, &this->pCommander->targetGroundPosition);
+
+	if ((movParamsOut.flags & 2) != 0) {
+		iVar4 = pBehaviour->GetStateWolfenWeapon();
+	}
+
+	ManageDyn(4.0f, 0x1002023b, &actorsTable);
+
+	if (iVar4 == -1) {
+		iVar4 = SV_WLF_CheckBoxOnWay(&actorsTable);
+	}
+
+	if (iVar4 == -1) {
+		if ((this->combatMode_0xb7c == ECM_InCombat) && (pCVar5 = pBehaviour->GetNotificationTargetArray(), (int)pCVar5->combatMode < 2)) {
 			SetState(pBehaviour->GetState_001f0b30(), -1);
 		}
 		else {
-			SetState(pBehaviour->Func_0x74(), -1);
+			if ((pTarget == (CActorFighter*)0x0) || (bVar3 = CanSwitchToFight_Area(pTarget), bVar3 == false))
+			{
+				if ((~this->combatFlags_0xb78 & 0x420) == 0x420) {
+					SetState(pBehaviour->GetStateWolfenWeapon(), -1);
+				}
+				else {
+					pCommander = this->pCommander;
+					fVar1 = (pCommander->targetGroundPosition).x - this->currentLocation.x;
+					fVar2 = (pCommander->targetGroundPosition).y - this->currentLocation.y;
+					fVar7 = (pCommander->targetGroundPosition).z - this->currentLocation.z;
+					if (0.5f <= sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar7 * fVar7)) {
+						pCommander = this->pCommander;
+						for (iVar4 = 0; bVar3 = false, iVar4 < actorsTable.entryCount; iVar4 = iVar4 + 1) {
+							pActor = actorsTable.aEntries[iVar4];
+							if ((pActor->typeID == 0x1b) || (pActor->typeID == 0x1c)) {
+								fVar1 = (pCommander->targetGroundPosition).x - (pActor->currentLocation).x;
+								fVar2 = (pCommander->targetGroundPosition).z - (pActor->currentLocation).z;
+								fVar7 = pActor->GetPosition_00117db0();
+								bVar3 = true;
+								if (sqrtf(fVar1 * fVar1 + 0.0f + fVar2 * fVar2) < fVar7) break;
+							}
+						}
+
+						if (bVar3) {
+							SetState(pBehaviour->Func_0x70(), -1);
+						}
+						else {
+							iVar4 = pBehaviour->GetState_001f0930();
+							if (iVar4 != -1) {
+								SetState(iVar4, -1);
+							}
+						}
+					}
+					else {
+						if ((int)this->combatMode_0xb7c < 1) {
+							SetState(pBehaviour->Func_0x70(), -1);
+						}
+						else {
+							SetState(pBehaviour->GetStateWolfenWeapon(), -1);
+						}
+					}
+				}
+			}
+			else {
+				if (this->pCommander->BeginFightIntruder(this, pTarget) == false) {
+					SetState(0x99, -1);
+				}
+				else {
+					Func_0x204(pTarget);
+					if (SetBehaviour(3, -1, -1) == false) {
+						SetState(0x99, -1);
+						this->pCommander->EndFightIntruder(this);
+					}
+				}
+			}
 		}
+	}
+	else {
+		SetState(iVar4, -1);
+	}
+
+	return;
+}
+
+void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
+{
+	CActorFighter* pTarget;
+	CActorCommander* pCVar1;
+	float fVar2;
+	float fVar3;
+	bool bVar4;
+	bool bVar5;
+	undefined4 uVar6;
+	int iVar7;
+	float fVar8;
+	edF32VECTOR4 eStack16;
+
+	edF32Vector4SubHard(&eStack16, &this->pCommander->targetPosition, &this->currentLocation);
+	edF32Vector4NormalizeHard(&eStack16, &eStack16);
+	bVar4 = SV_WLF_UpdateOrientation2D(GetWalkRotSpeed(), &eStack16, 0);
+
+	this->dynamic.speed = 0.0f;
+
+	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
+
+	if (0 < this->pCommander->field_0x194) {
+		WaitingAnimation_Defend();
+	}
+
+	pTarget = this->pTargetActor_0xc80;
+
+	if ((((this->combatFlags_0xb78 & 0x420) == 0) ||
+		(pCVar1 = this->pCommander,
+			fVar8 = (pCVar1->targetGroundPosition).x - this->currentLocation.x,
+			fVar2 = (pCVar1->targetGroundPosition).y - this->currentLocation.y,
+			fVar3 = (pCVar1->targetGroundPosition).z - this->currentLocation.z,
+			sqrtf(fVar8 * fVar8 + fVar2 * fVar2 + fVar3 * fVar3) < 0.5f)) ||
+		(bVar5 = SV_WLF_CanMoveTo(&this->pCommander->targetGroundPosition), bVar5 == false)) {
+		if (((bVar4 != true) || (0 < this->pCommander->field_0x194)) ||
+			(this->timeInAir <= 1.0f)) {
+			if ((pTarget == (CActorFighter*)0x0) || (bVar4 = CanSwitchToFight_Area(pTarget), bVar4 == false))
+			{
+				iVar7 = pBehaviour->GetState_001f0930();
+				if (iVar7 != -1) {
+					SetState(iVar7, -1);
+				}
+			}
+			else {
+				if (this->pCommander->BeginFightIntruder(this, pTarget) == false) {
+					SetState(0x99, -1);
+				}
+				else {
+					Func_0x204(pTarget);
+					if (SetBehaviour(3, -1, -1) == false) {
+						this->pCommander->EndFightIntruder(this);
+					}
+				}
+			}
+		}
+		else {
+			SetState(pBehaviour->Func_0x70(), -1);
+		}
+	}
+	else {
+		SetState(0x73, -1);
 	}
 
 	return;
@@ -4815,6 +5096,11 @@ void CActorWolfen::TermFightAction()
 	return;
 }
 
+bool CActorWolfen::CheckLost()
+{
+	return false;
+}
+
 void CActorWolfen::UpdateCombatMode()
 {
 	if ((this->combatFlags_0xb78 & 4) == 0) {
@@ -4986,9 +5272,8 @@ void CBehaviourWolfen::Init(CActor* pOwner)
 
 void CBehaviourWolfen::End(int newBehaviourId)
 {	
-	if (this->pOwner->GetPathfinderClient() != (CPathFinderClient*)0x0) {
-		this->pOwner->GetPathfinderClient()->CleanPathDynamic();
-	}
+	this->pOwner->SV_AUT_PathfindingEnd();
+
 	return;
 }
 
@@ -5024,7 +5309,7 @@ void CBehaviourWolfen::InitState(int newState)
 					this->pOwner->SetCombatMode(ECM_None);
 				}
 				else {
-					if (newState == WOLFEN_STATE_TRACK_WEAPON_CHASE) {
+					if (newState == WOLFEN_STATE_TRACK_CHASE) {
 						IMPLEMENTATION_GUARD_AUDIO(
 						GlobalSound::Func_001844f0(CScene::ptable.g_AudioManager_00451698);)
 					}
@@ -5172,7 +5457,7 @@ void CBehaviourWolfen::TermState(int oldState, int newState)
 							}
 						}
 						else {
-							if (oldState == WOLFEN_STATE_TRACK_WEAPON_CHASE) {
+							if (oldState == WOLFEN_STATE_TRACK_CHASE) {
 								IMPLEMENTATION_GUARD_AUDIO(
 								FUN_001844c0(CScene::ptable.g_AudioManager_00451698);)
 								this->pOwner->SV_AUT_PathfindingEnd();
@@ -5622,6 +5907,72 @@ void CBehaviourTrack::Create(ByteCode* pByteCode)
 	GetNotificationTargetArray()->field_0x0 = pByteCode->GetF32();
 }
 
+void CBehaviourTrack::Manage()
+{
+	this->pOwner->BehaviourTrack_Manage(this);
+
+	return;
+}
+
+void CBehaviourTrack::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	EEnemyCombatMode EVar1;
+	CActorWolfen* pCVar2;
+	bool bVar3;
+	CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* pCVar4;
+	int iVar5;
+	undefined4 uVar6;
+	long lVar7;
+
+	if (this->pOwner->IsFightRelated(this->pOwner->prevBehaviourId) == 0) {
+		GetNotificationTargetArray()->field_0x34 = this->pOwner->prevBehaviourId;
+	}
+
+	if (newState == -1) {
+		this->pOwner->SetState(0x73, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	GetNotificationTargetArray()->FUN_003c3a30();
+	GetNotificationTargetArray()->combatMode = this->pOwner->combatMode_0xb7c;
+
+	if ((int)this->pOwner->combatMode_0xb7c < 2) {
+		this->pOwner->combatFlags_0xb78 = this->pOwner->combatFlags_0xb78 & 0xffefffff;
+	}
+	else {
+		this->pOwner->combatFlags_0xb78 = this->pOwner->combatFlags_0xb78 | 0x100000;
+	}
+
+	if (newState == -1) {
+		if ((this->pOwner->IsFightRelated(this->pOwner->prevBehaviourId) != false) && ((this->pOwner->combatFlags_0xb78 & 0x80000) != 0)) {
+			if (this->pOwner->IsCurrentPositionValid() == false) {
+				this->pOwner->SetState(0x78, -1);
+			}
+			else {
+				this->pOwner->SetState(GetStateWolfenWeapon(), -1);
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourTrack::End(int newBehaviourId)
+{
+	End(newBehaviourId);
+
+	this->pOwner->combatFlags_0xb78 = this->pOwner->combatFlags_0xb78 & 0xfffffebf;
+
+	return;
+}
+
+int CBehaviourTrack::Func_0x70()
+{
+	return GetNotificationTargetArray()->GetState_003c37c0(this->pOwner);
+}
+
 void HearingDetectionProps::Create(ByteCode* pByteCode)
 {
 	const float range = pByteCode->GetF32();
@@ -5733,7 +6084,7 @@ void CBehaviourTrackWeapon::Begin(CActor* pOwner, int newState, int newAnimation
 
 void CBehaviourTrackWeapon::TermState(int oldState, int newState)
 {
-	if (oldState == WOLFEN_STATE_TRACK_WEAPON_CHASE) {
+	if (oldState == WOLFEN_STATE_TRACK_CHASE) {
 		this->pOwner->SV_AUT_PathfindingEnd();
 	}
 
@@ -5750,11 +6101,12 @@ int CBehaviourTrackWeapon::Func_0x70()
 {
 	if (this->pOwner->GetWeapon()->FUN_002d58a0() != 0) {
 		if (this->pOwner->GetWeapon()->FUN_002d5830() == 0) {
-			this->pOwner->field_0xcf8 = WOLFEN_STATE_TRACK_WEAPON_CHASE;
+			this->pOwner->field_0xcf8 = WOLFEN_STATE_TRACK_CHASE;
 			return 0x97;
 		}
 	};
-	return WOLFEN_STATE_TRACK_WEAPON_CHASE;
+
+	return WOLFEN_STATE_TRACK_CHASE;
 }
 
 void CBehaviourTrackWeapon::Func_0x80(int* param_2, int* param_3, CActor* pTarget)
@@ -6096,6 +6448,11 @@ int CBehaviourTrackWeaponStand::GetStateWolfenWeapon()
 	}
 
 	return WOLFEN_STATE_TRACK_DEFEND;
+}
+
+int CBehaviourTrackWeaponStand::Func_0x70()
+{
+	return -1;
 }
 
 int CBehaviourTrackWeaponStand::Func_0x74()

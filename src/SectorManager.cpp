@@ -19,6 +19,7 @@
 #include "CollisionManager.h"
 #include "ActorManager.h"
 #include "ActorClusteriser.h"
+#include "EdFileBase.h"
 
 #define SECTOR_LOG(level, format, ...) MY_LOG_CATEGORY("Sector", level, format, ##__VA_ARGS__)
 
@@ -447,13 +448,6 @@ bool CSectorManager::LevelLoading_Manage()
 	return bStillLoading;
 }
 
-StaticEdFileBase StaticEdFileBase_004497f0 = { 0 };
-
-bool CheckFunc_00401fd0(StaticEdFileBase* param_1)
-{
-	return param_1->field_0x4 == 0;
-}
-
 void CSectorManager::SetupCompanionSectors(uint flags)
 {
 	uint uVar1;
@@ -751,7 +745,7 @@ void CSector::Load(int sectorIndex, int param_3, bool bFileFlag)
 
 	/* Loads a sectx.bnk file for a level
 	   Example: CDEURO/LEVEL/PREINTRO/SECT1.bnk */
-	bVar3 = CheckFunc_00401fd0(&StaticEdFileBase_004497f0);
+	bVar3 = StaticEdFileBase_004497f0.Check();
 	if (bVar3 != false) {
 		fVar5 = edTimerTimeGet();
 		this->field_0x134 = fVar5;

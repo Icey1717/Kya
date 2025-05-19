@@ -273,27 +273,27 @@ class CPathFollowReaderAbsolute;
 struct S_PATHREADER_POS_INFO;
 struct edAnmMacroBlendN;
 
-struct CActorParamsOut {
+struct CActorParamsOut
+{
 	edF32VECTOR4 moveDirection;
 	float moveVelocity;
 	uint flags;
 };
 
-struct CActorParamsIn {
+struct CActorParamsIn
+{
 	uint flags;
 	float rotSpeed;
 	edF32VECTOR4* pRotation;
 };
 
-struct _msg_hit_param {
+struct _msg_hit_param
+{
 	int projectileType;
 	int field_0x4;
 	uint flags;
 	float damage;
-	undefined field_0x10;
-	undefined field_0x11;
-	undefined field_0x12;
-	undefined field_0x13;
+	float field_0x10;
 	undefined field_0x14;
 	undefined field_0x15;
 	undefined field_0x16;
@@ -321,10 +321,8 @@ struct _msg_hit_param {
 	undefined field_0x3e;
 	undefined field_0x3f;
 	edF32VECTOR4 field_0x40;
-	undefined field_0x50;
-	undefined field_0x51;
-	undefined field_0x52;
-	undefined field_0x53;
+	short field_0x50;
+	ushort field_0x52;
 	undefined field_0x54;
 	undefined field_0x55;
 	undefined field_0x56;
@@ -692,6 +690,7 @@ class CAddOnSubObj
 {
 public:
 	void SetCinematic(CCinematic* pCinematic);
+	int FUN_003e37e0();
 
 	uint field_0x0;
 	int* field_0x4;
@@ -701,14 +700,18 @@ public:
 	float field_0x14;
 };
 
-class CAddOn {
+class CAddOn
+{
 public:
 	CAddOn();
 	virtual void Create(ByteCode* pByteCode) = 0;
 	virtual void Init(CActor* pActor);
 	virtual void Manage();
 	virtual void Reset();
-	virtual bool Func_0x20() = 0;
+	virtual CAddOnSubObj* GetSubObj(uint param_2, int pActor) = 0;
+	virtual bool Func_0x20(uint param_2, CActor* param_3, int pActor) = 0;
+	virtual bool Func_0x24(uint param_2, CActor* pActor) = 0;
+	virtual bool Func_0x34(uint param_2, CActor* pActor);
 
 	CCinematic* GetCinematic();
 

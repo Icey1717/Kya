@@ -61,7 +61,7 @@ struct s_input_pattern
 		uint field_0x0uint;
 	};
 
-	uint field_0x4;
+	uint nbInputs;
 };
 
 union s_fighter_action_hash

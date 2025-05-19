@@ -45,7 +45,11 @@ public:
 	virtual void Init(CActor* pActor);
 	virtual void Manage();
 	virtual void Reset();
-	virtual bool Func_0x20();
+	virtual CAddOnSubObj* GetSubObj(uint param_2, int pActor);
+	virtual bool Func_0x20(uint param_2, CActor* param_3, int pActor);
+	virtual bool Func_0x24(uint param_2, CActor* pActor);
+	virtual bool Func_0x2c(uint param_2);
+	virtual void Func_0x30(uint param_2);
 
 	int nbSubObjs;
 	CAddOnSubObj* aSubObjs;

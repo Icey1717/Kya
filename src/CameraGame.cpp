@@ -1693,8 +1693,7 @@ void CCameraGame::FUN_002bee80()
 				pCurEntry = this->actorsTable.aEntries[iVar6];
 
 				if (this->actorsTable.IsInList(pCurEntry) != 0) {
-					IMPLEMENTATION_GUARD(
-					FUN_002c9f30(&this->actorsTable, pCurEntry);)
+					this->actorsTable.Add(pCurEntry);
 				}
 
 				if (this->actorsTable.entryCount == 0) {

@@ -39,6 +39,7 @@
 #include "edText.h"
 #include "edVideo/VideoA.h"
 #include "TranslatedTextData.h"
+#include "EdFileBase.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
 
@@ -1279,11 +1280,10 @@ void CCinematic::Start()
 				}
 
 				if (this->pActor != (CActor*)0x0) {
-					IMPLEMENTATION_GUARD(
 					local_14 = 2;
 					local_10 = &local_18;
 					local_18 = this;
-					(*(code*)((this->pActor->actorBase).pVTable)->interactWith)(this->pActor, 0, 0x7c, local_10);)
+					this->pActor->ReceiveMessage((CActor*)0x0, (ACTOR_MESSAGE)0x7c, local_10);
 				}
 			}
 			else {
@@ -1416,7 +1416,7 @@ void CCinematic::Load(int mode)
 			bVar2 = (this->flags_0x8 & 0x800) != 0;
 		}
 
-		if (((bVar2) && (bVar2 = CheckFunc_00401fd0(&StaticEdFileBase_004497f0), bVar2 != false)) &&
+		if (((bVar2) && (bVar2 = StaticEdFileBase_004497f0.Check(), bVar2 != false)) &&
 			(uVar3 = edMemGetMemoryAvailable(TO_HEAP(H_MAIN)), size + 0x2800 < uVar3)) {
 			if ((this->prtBuffer == 1) || ((this->flags_0x4 & 8) != 0)) {
 				edMemSetFlags(TO_HEAP(H_MAIN), 0x100);
@@ -2201,11 +2201,10 @@ void CCinematic::Stop()
 
 	if (this->state != CS_Stopped) {
 		if (this->pActor != (CActor*)0x0) {
-			IMPLEMENTATION_GUARD(
 			local_c = 3;
 			local_4 = &local_10;
 			local_10 = this;
-			(*(code*)this->pActor->pVTable->ReceiveMessage)();)
+			this->pActor->ReceiveMessage((CActor*)0x0, (ACTOR_MESSAGE)0x7c, local_4);
 		}
 
 		pCVar2 = g_CinematicManager_0048efc;
@@ -2786,6 +2785,28 @@ CActor* CCinematic::GetActorByHashcode(uint hashCode)
 	}
 
 	return pFoundActor;
+}
+
+bool CCinematic::FUN_001c9500()
+{
+	bool bVar1;
+
+	bVar1 = (this->flags_0x4 & 1) != 0;
+
+	if (bVar1) {
+		bVar1 = (this->flags_0x8 & 0x400) != 0;
+	}
+
+	if (!bVar1) {
+		bVar1 = (this->flags_0x8 & 0x28) != 0;
+	}
+
+	bVar1 = (bool)(bVar1 ^ 1);
+	if (!bVar1) {
+		bVar1 = (this->flags_0x8 & 0x800) != 0;
+	}
+
+	return bVar1;
 }
 
 CCinematic::~CCinematic()

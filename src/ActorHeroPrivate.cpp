@@ -14742,11 +14742,11 @@ int CActorHeroPrivate::ChooseFightAnim(int newState, int initialAnim)
 			indexValue = 0;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			indexValue = pCVar5[8].baseLocation.y;
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pCVar5);
+			indexValue = pWolfen->field_0xb74;
 			if (3 < indexValue) {
 				indexValue = indexValue - 1;
-			})
+			}
 		}
 
 		if ((initialAnim == 0x182) || (initialAnim == 0x181)) {

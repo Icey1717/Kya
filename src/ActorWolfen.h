@@ -26,7 +26,7 @@
 #define WOLFEN_BEHAVIOUR_AVOID 0x19
 
 #define WOLFEN_STATE_WATCH_DOG_GUARD 0x72
-#define WOLFEN_STATE_TRACK_WEAPON_CHASE 0x73
+#define WOLFEN_STATE_TRACK_CHASE 0x73
 #define WOLFEN_STATE_TRACK_DEFEND 0x76
 #define WOLFEN_STATE_COME_BACK 0x77
 #define WOLFEN_STATE_RELOAD 0x91
@@ -204,9 +204,11 @@ class CBehaviourTrack : public CBehaviourTrackStand
 {
 public:
 	virtual void Create(ByteCode* pByteCode);
-	virtual void Manage() { IMPLEMENTATION_GUARD(); }
-	virtual void Begin(CActor* pOwner, int newState, int newAnimationType) { IMPLEMENTATION_GUARD(); }
-	virtual void End(int newBehaviourId) { IMPLEMENTATION_GUARD(); }
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+
+	virtual int Func_0x70();
 };
 
 class CBehaviourWatchDog : public CBehaviourWolfen
@@ -285,7 +287,7 @@ public:
 	virtual CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* GetNotificationTargetArray();
 
 	virtual int GetStateWolfenWeapon();
-	virtual int Func_0x70() { IMPLEMENTATION_GUARD(); }
+	virtual int Func_0x70();
 	virtual int Func_0x74();
 	virtual int Func_0x78();
 	virtual void Func_0x80(int* param_2, int* param_3, CActor* pTarget);
@@ -440,7 +442,9 @@ public:
 	virtual void _Std_OnFightActionSuccess();
 
 	virtual void Func_0x204(CActorFighter* pOther);
-	virtual void Func_0x20c(float param_1);
+	virtual void SetRunSpeed(float param_1);
+
+	bool IsCurrentPositionValid();
 
 	void SetCombatMode(EEnemyCombatMode newCombatMode);
 	uint GetStateWolfenFlags(int state);
@@ -456,6 +460,7 @@ public:
 	void BehaviourWatchDog_Manage(CBehaviourWatchDog* pBehaviour);
 	void BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour);
 	void BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* pBehaviour);
+	void BehaviourTrack_Manage(CBehaviourTrack* pBehaviour);
 
 	void WaitingAnimation_Defend();
 	void WaitingAnimation_Guard();
@@ -473,7 +478,9 @@ public:
 	void StateTrackWeaponAim(CBehaviourTrackWeapon* pBehaviour);
 	void StateTrackWeaponChase(CBehaviourTrackWeapon* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeapon* pBehaviour);
-	void StateTrackCheckPosition(CBehaviourTrackWeapon* pBehaviour);
+	void StateTrackCheckPosition(CBehaviourWolfen* pBehaviour);
+	void StateTrackChase(CBehaviourTrack* pBehaviour);
+	void StateTrackDefend(CBehaviourTrack* pBehaviour);
 
 	void StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour);
@@ -503,6 +510,8 @@ public:
 	void InternState_WolfenLocate();
 
 	void TermFightAction();
+
+	bool CheckLost();
 
 	void UpdateCombatMode(); // new
 

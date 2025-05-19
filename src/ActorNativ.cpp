@@ -12,6 +12,7 @@
 #include "Rendering/edCTextStyle.h"
 #include "Pause.h"
 #include "Rendering/DisplayList.h"
+#include "edText.h"
 
 void CActorNativ::Create(ByteCode* pByteCode)
 {
@@ -1918,6 +1919,200 @@ float CActorNativ::FUN_00164070()
 	return fVar7;
 }
 
+bool CBehaviourNativSeller::AdvanceTutorial(int param_2)
+{
+	ArenaTutorial* pTutorial;
+	int iVar2;
+	int iVar3;
+
+	if (param_2 == 0) {
+		pTutorial = GetActiveComboTutorial();
+
+		if (this->activeSubObjBIndex == pTutorial->nbRequiredMoves + -1) {
+			this->activeSubObjBIndex = 0;
+			return true;
+		}
+
+		iVar3 = (this->comboTutorialManager).activeTutorialIndex;
+		if (iVar3 == -1) {
+			pTutorial = (ArenaTutorial*)0x0;
+		}
+		else {
+			pTutorial = (this->comboTutorialManager).aTutorials + iVar3;
+		}
+
+		if ((pTutorial->aRequiredMoves[this->activeSubObjBIndex].aRequiredCombos[0]->field_0x4.field_0x0ushort & 0x100U) != 0) {
+			this->activeSubObjBIndex = this->activeSubObjBIndex + 1;
+			AdvanceTutorial(0);
+			return false;
+		}
+	}
+
+	if (param_2 == 1) {
+		IMPLEMENTATION_GUARD(
+		iVar3 = *(int*)&this->field_0x1690;
+		iVar2 = 0;
+		if (iVar3 != 0) {
+			iVar2 = iVar3;
+		}
+
+		if (this->activeSubObjBIndex == *(int*)(iVar2 + 0x80) + -1) {
+			this->activeSubObjBIndex = 0;
+			return true;
+		}
+
+		if (iVar3 == 0) {
+			iVar3 = 0;
+		}
+
+		if ((*(ushort*)(*(int*)(iVar3 + this->activeSubObjBIndex * 0x10 + 4) + 4) & 0x100) != 0) {
+			this->activeSubObjBIndex = this->activeSubObjBIndex + 1;
+			AdvanceTutorial(1);
+			return false;
+		})
+	}
+
+	this->activeSubObjBIndex = this->activeSubObjBIndex + 1;
+	return false;
+
+}
+
+int CBehaviourNativSeller::FUN_003f1b90(int param_2)
+{
+	CActorNativ* pActor;
+	bool bVar1;
+	int iVar2;
+	long lVar3;
+	undefined8 uVar4;
+	int iVar5;
+
+	bVar1 = AdvanceTutorial(param_2);
+	if (bVar1 == false) {
+		iVar2 = 1;
+	}
+	else {
+		if (this->field_0x16a4 != 0) {
+			this->field_0x16a4 = 0;
+		}
+		if ((param_2 == 0) && (iVar2 = this->comboTutorialManager.StepRequiredCombo(), iVar2 == -1)) {
+			bVar1 = true;
+		}
+		else {
+			if ((param_2 == 1) && (this->field_0x60.Set_0x1630(this->field_0x16b0) == false)) {
+				bVar1 = true;
+			}
+			else {
+				this->comboDisplayAlpha = 0.0f;
+				bVar1 = false;
+			}
+		}
+
+		if (bVar1) {
+			pActor = this->pOwner;
+			iVar2 = 0;
+			if (0 < this->field_0x40->entryCount) {
+				do {
+					this->field_0x40->aEntries[iVar2].Switch(pActor);
+					iVar2 = iVar2 + 1;
+				} while (iVar2 < this->field_0x40->entryCount);
+			}
+
+			this->streamEventCamera_0x44->SwitchOn(pActor);
+
+			if (this->addOn.Func_0x20(5, (this->addOn).pOwner, 1) == 0) {
+				iVar2 = 4;
+			}
+			else {
+				SetBehaviourState(-1);
+				this->initialAnimId = 0x39;
+				iVar2 = 0;
+			}
+		}
+		else {
+			uVar4 = 0;
+			if (this->field_0x16ac == 2) {
+				uVar4 = 2;
+			}
+
+			if (this->field_0x16ac == 1) {
+				uVar4 = 1;
+			}
+
+			this->field_0x16ac = 0;
+
+			if (this->addOn.Func_0x20(uVar4, (this->addOn).pOwner, 0) != 0) {
+				this->initialAnimId = 0x20;
+			}
+
+			ArenaUpdateDisplayBorderSize();
+			iVar2 = 2;
+		}
+	}
+
+	return iVar2;
+}
+
+void CBehaviourNativSeller::FUN_003f1810(int param_2, int param_3, int param_4)
+{
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	if (param_2 == 4) {
+		SetBehaviourState(-1);
+
+		if (param_3 == 0) {
+			this->pOwner->SetBehaviour(8, 0x39, -1);
+		}
+		else {
+			this->pOwner->SetBehaviour(8, 0x1f, -1);
+		}
+	}
+	else {
+		if (param_2 == 3) {
+			SetBehaviourState(NATIVE_STATE_SELLER_INPUT_FAILED);
+		}
+		else {
+			if (param_2 == 2) {
+				SetBehaviourState(0x38);
+			}
+			else {
+				if (param_2 == 1) {
+					if (param_4 == 2) {
+						SetBehaviourState(0x32);
+					}
+					else {
+						if (param_4 == 1) {
+							SetBehaviourState(0x2f);
+						}
+						else {
+							if (param_4 == 0) {
+								if (param_3 == 0) {
+									if (CActorHero::_gThis->pFighterCombo == (s_fighter_combo*)0x0) {
+										SetBehaviourState(0x25);
+									}
+									else {
+										SetBehaviourState(0x22);
+									}
+								}
+								if (param_3 == 1) {
+									if (pHero->pFighterCombo == (s_fighter_combo*)0x0) {
+										SetBehaviourState(0x2b);
+									}
+									else {
+										SetBehaviourState(0x28);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
 void CActorNativ::StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour)
 {
 	int curSwitchIndex;
@@ -1945,7 +2140,7 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 {
 	s_fighter_combo* pCombo;
 	bool bVar3;
-	ArenaRequiredCombo* pSubObjA;
+	ArenaTutorial* pSubObjA;
 	CActorHero* pHero;
 
 	pHero = CActorHero::_gThis;
@@ -1964,11 +2159,10 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 			pBehaviour->FUN_003f1da0(pCombo);
 		}
 
-		if ((pSubObjA != (ArenaRequiredCombo*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+		if ((pSubObjA != (ArenaTutorial*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
 			bVar3 = (pSubObjA->aRequiredMoves + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo);
 			if (bVar3 == false) {
-				IMPLEMENTATION_GUARD(
-				pBehaviour->FUN_003f1810(3, 0, 0);)
+				pBehaviour->FUN_003f1810(3, 0, 0);
 			}
 			else {
 				if (((pHero->fightFlags & 0x40) == 0) &&
@@ -1988,19 +2182,19 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
 {
 	s_fighter_combo* pCombo;
-	ArenaRequiredCombo* pSubObjA;
+	ArenaTutorial* pTutorial;
 	CActorHero* pHero;
 
 	pHero = CActorHero::_gThis;
-	pSubObjA = pBehaviour->GetActiveComboTutorial();
+	pTutorial = pBehaviour->GetActiveComboTutorial();
 
 	if (CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState) == false) {
 		pBehaviour->FUN_003ebd90();
 	}
 	else {
-		if ((pSubObjA != (ArenaRequiredCombo*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
-			if ((pSubObjA->aRequiredMoves + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo) == false) {
-				pBehaviour->SetBehaviourState(0x36);
+		if ((pTutorial != (ArenaTutorial*)0x0) && (pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+			if ((pTutorial->aRequiredMoves + pBehaviour->activeSubObjBIndex)->IsRequiredCombo(pCombo) == false) {
+				pBehaviour->SetBehaviourState(NATIVE_STATE_SELLER_INPUT_FAILED);
 			}
 			else {
 				if ((pHero->fightFlags & 0x40) != 0) {
@@ -2009,6 +2203,104 @@ void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
 			}
 		}
 	}
+
+	return;
+}
+
+void CActorNativ::State_0x24(CBehaviourNativSeller* pBehaviour)
+{
+	ArenaTutorial* pTutorial;
+
+	pTutorial = pBehaviour->GetActiveComboTutorial();
+
+	if (pTutorial->aRequiredMoves[pBehaviour->activeSubObjBIndex].IsRequiredCombo(CActorHero::_gThis->pFighterCombo) == false) {
+		pBehaviour->FUN_003f1810(pBehaviour->FUN_003f1b90(0), 0, 0);
+	}
+
+	return;
+}
+
+void CActorNativ::State_0x25(CBehaviourNativSeller* pBehaviour)
+{
+	s_fighter_combo* pCombo;
+	bool bVar1;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+
+	if (((pBehaviour->field_0x16ac != 2) && (CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState) != false)) &&
+		(pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+		pBehaviour->FUN_003f1da0(pCombo);
+	}
+
+	bVar1 = pHero->FUN_0031b790(pHero->actorState);
+	if (bVar1 == false) {
+		pBehaviour->field_0x16a4 = 0;
+		(pBehaviour->field_0x60).activeSubObjIndex = 0;
+		pBehaviour->SetBehaviourState(0x22);
+	}
+
+	return;
+}
+
+void CActorNativ::StateInputFailed(CBehaviourNativSeller* pBehaviour)
+{
+	s_fighter_combo* pCombo;
+	int iVar1;
+	bool bVar2;
+	StateConfig* pSVar3;
+	uint uVar4;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+	if (((pBehaviour->field_0x16ac != 2) && (bVar2 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar2 != false)) &&
+		(pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+		pBehaviour->FUN_003f1da0(pCombo);
+	}
+
+	bVar2 = pHero->FUN_0031b790(pHero->actorState);
+	if (((bVar2 == false) && (iVar1 = pHero->actorState, iVar1 != 0x68)) && ((iVar1 != 0x69 && (iVar1 != NATIVE_STATE_SELLER_INPUT_FAILED)))) {
+		uVar4 = GetStateFlags(iVar1);
+
+		if ((uVar4 & 0x8000) == 0) {
+			uVar4 = GetStateFlags(iVar1) & 0x4000;
+
+			if (((uVar4 == 0) && ((iVar1 = pHero->actorState, iVar1 != 10 || (pHero->prevActorState != 0x20)))) && (iVar1 != 0x23)) {
+				pBehaviour->activeSubObjBIndex = 0;
+				pBehaviour->FUN_003ebd90();
+			}
+		}
+	}
+
+	return;
+}
+
+void CActorNativ::State_0x38(CBehaviourNativSeller* pBehaviour)
+{
+	s_fighter_combo* pCombo;
+	bool bVar1;
+	CActorHero* pHero;
+
+	pHero = CActorHero::_gThis;
+
+	if (((pBehaviour->field_0x16ac != 2) && (bVar1 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar1 != false)) &&
+		(pCombo = pHero->pFighterCombo, pCombo != (s_fighter_combo*)0x0)) {
+		pBehaviour->FUN_003f1da0(pCombo);
+	}
+
+	if (0.8f < pBehaviour->field_0x16c0) {
+		pBehaviour->ArenaUpdateDisplayBorderSize();
+
+		if (pBehaviour->field_0x16b4 == 0) {
+			pBehaviour->SetBehaviourState(0x22);
+		}
+		else {
+			if (pBehaviour->field_0x16b4 == 1) {
+				pBehaviour->SetBehaviourState(0x28);
+			}
+		}
+	}
+
 	return;
 }
 
@@ -2951,12 +3243,12 @@ void CBehaviourNativSeller::Create(ByteCode* pByteCode)
 	this->comboTutorialManager.nbTutorials = pByteCode->GetS32();
 	uVar3 = this->comboTutorialManager.nbTutorials;
 	if (uVar3 != 0) {
-		this->comboTutorialManager.aTutorials = new ArenaRequiredCombo[uVar3];
+		this->comboTutorialManager.aTutorials = new ArenaTutorial[uVar3];
 
 		iVar4 = 0;
 		if (0 < this->comboTutorialManager.nbTutorials) {
 			do {
-				ArenaRequiredCombo* pSubObjA = this->comboTutorialManager.aTutorials + iVar4;
+				ArenaTutorial* pSubObjA = this->comboTutorialManager.aTutorials + iVar4;
 				pSubObjA->nbRequiredMoves = pByteCode->GetS32();
 				uVar3 = pSubObjA->nbRequiredMoves;
 				if (uVar3 != 0) {
@@ -3103,7 +3395,7 @@ void CBehaviourNativSeller::Init(CActor* pOwner)
 
 	this->initialAnimId = -1;
 	this->field_0x16ac = 0;
-	//this->field_0x16b0 = 0;
+	this->field_0x16b0 = 0;
 	this->field_0x16b4 = 0;
 	//FUN_003fffa0((int)&this->field_0x60);
 
@@ -3119,7 +3411,7 @@ void CBehaviourNativSeller::Init(CActor* pOwner)
 	this->comboDisplayHeight = 0.0f;
 	this->comboDisplayAlpha = 0.0f;
 
-	//this->field_0x16b8 = 0;
+	this->field_0x16b8 = 0;
 	this->field_0x16a4 = 0;
 
 	return;
@@ -3320,9 +3612,7 @@ void CBehaviourNativSeller::ManageComboTutorial()
 		}
 	}
 
-	iVar6 = this->currentBehaviourState;
-
-	switch (iVar6) {
+	switch (this->currentBehaviourState) {
 	case -1:
 		break;
 	case NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY:
@@ -3334,13 +3624,25 @@ void CBehaviourNativSeller::ManageComboTutorial()
 	case 0x23:
 		this->pOwner->State_0x23(this);
 		break;
+	case 0x24:
+		this->pOwner->State_0x24(this);
+		break;
+	case 0x25:
+		this->pOwner->State_0x25(this);
+		break;
+	case NATIVE_STATE_SELLER_INPUT_FAILED:
+		this->pOwner->StateInputFailed(this);
+		break;
+	case 0x38:
+		this->pOwner->State_0x38(this);
+		break;
 	default:
 		IMPLEMENTATION_GUARD();
 		break;
 	}
 
 	if (((this->field_0x16a4 == 0) && (this->field_0x16ac == 2)) && ((((CActorHero::_gThis->fightFlags & 0x40) != 0 ||
-			((((iVar6 = CActorHero::_gThis->actorState, iVar6 == 0x6f || (iVar6 == 0x34)) || (iVar6 == 0x36)) || ((iVar6 == 10 &&
+			((((iVar6 = CActorHero::_gThis->actorState, iVar6 == 0x6f || (iVar6 == 0x34)) || (iVar6 == NATIVE_STATE_SELLER_INPUT_FAILED)) || ((iVar6 == 10 &&
 				(CActorHero::_gThis->prevActorState == 0x20)))))) || (iVar6 == 0x22)))) {
 		pNativ = this->pOwner;
 
@@ -3384,7 +3686,7 @@ void CBehaviourNativSeller::ArenaUpdateDisplayBorderSize()
 {
 	byte bVar1;
 	s_fighter_combo* pCurrentCombo;
-	ArenaRequiredCombo* pReqCombo;
+	ArenaTutorial* pReqCombo;
 	int iVar4;
 	int iVar5;
 	float totalComboDisplayHeight;
@@ -3406,7 +3708,7 @@ void CBehaviourNativSeller::ArenaUpdateDisplayBorderSize()
 			pReqCombo = GetActiveComboTutorial();
 
 			iVar4 = 0;
-			if (pReqCombo != (ArenaRequiredCombo*)0x0) {
+			if (pReqCombo != (ArenaTutorial*)0x0) {
 				for (; iVar4 < pReqCombo->nbRequiredMoves; iVar4 = iVar4 + 1) {
 					pCurrentCombo = pReqCombo->aRequiredMoves[iVar4].aRequiredCombos[0];
 
@@ -3485,7 +3787,8 @@ void CBehaviourNativSeller::FUN_003ebd90()
 	else {
 		SetBehaviourState(0x28);
 	}
-	if (((pHero->fightFlags & 0x40) != 0) && (lVar2 = this->addOn.Func_0x20(/*unaff_s1, 0, 0*/), lVar2 != 0)) {
+
+	if (((pHero->fightFlags & 0x40) != 0) && (lVar2 = this->addOn.Func_0x20(unaff_s1, (CActor*)0x0, 0), lVar2 != 0)) {
 		this->initialAnimId = 0x20;
 	}
 	return;
@@ -3525,7 +3828,7 @@ void CBehaviourNativSeller::GetComboButtonDisplaySize(s_fighter_combo* pCombo, f
 			fVar5 = fVar5 + 1.0f;
 		}
 
-		for (uVar4 = 0; uVar4 < (pCombo->pattern).field_0x4; uVar4 = uVar4 + 1) {
+		for (uVar4 = 0; uVar4 < (pCombo->pattern).nbInputs; uVar4 = uVar4 + 1) {
 			uVar1 = (uint)((ulong)(pCombo->pattern.field_0x0uint << 0x2c) >> 0x2c) >> ((uVar4 & 7) << 2) & 0xf;
 			if (uVar1 == 1) {
 				fVar5 = fVar5 + 1.0f;
@@ -3716,47 +4019,52 @@ void CBehaviourNativSeller::SetBehaviourState(int newState)
 	return;
 }
 
-int CBehaviourNativSeller::FUN_003ecad0(int currentIndex, int param_3)
+#define INPUT_STATE_NORMAL 0x1
+#define INPUT_STATE_CORRECT 0x2
+#define INPUT_STATE_CORRECT_HIT 0x3
+#define INPUT_STATE_INCORRECT 0x4
+
+int CBehaviourNativSeller::GetInputState(int currentIndex, int param_3)
 {
 	int iVar1;
 	CActorHero* pCVar2;
 	bool bVar3;
-	int iVar4;
+	int inputState;
 	long lVar5;
 
 	pCVar2 = CActorHero::_gThis;
-	iVar4 = this->currentBehaviourState;
-	if ((iVar4 == 0x38) || (iVar4 == -1)) {
-		iVar4 = 0;
+	inputState = this->currentBehaviourState;
+	if ((inputState == 0x38) || (inputState == -1)) {
+		inputState = 0;
 	}
 	else {
-		if (iVar4 == 0x37) {
-			iVar4 = 3;
+		if (inputState == 0x37) {
+			inputState = INPUT_STATE_CORRECT_HIT;
 		}
 		else {
 			iVar1 = this->activeSubObjBIndex;
 			if (iVar1 + -1 < currentIndex) {
 				if (currentIndex == iVar1) {
-					if (iVar4 == 0x36) {
-						return 4;
+					if (inputState == NATIVE_STATE_SELLER_INPUT_FAILED) {
+						return INPUT_STATE_INCORRECT;
 					}
 
-					if (((((iVar4 == 0x22) || (iVar4 == 0x28)) || (iVar4 == 0x32)) || ((iVar4 - 0x2fU < 2 || (iVar4 == 0x2c)))) || (iVar4 == 0x34)) {
-						return 1;
+					if (((((inputState == 0x22) || (inputState == 0x28)) || (inputState == 0x32)) || ((inputState - 0x2fU < 2 || (inputState == 0x2c)))) || (inputState == 0x34)) {
+						return INPUT_STATE_NORMAL;
 					}
 
-					if (((iVar4 == 0x24) || (iVar4 == 0x2a)) || ((iVar4 == 0x31 || (iVar4 == 0x35)))) {
-						return 3;
+					if (((inputState == 0x24) || (inputState == 0x2a)) || ((inputState == 0x31 || (inputState == 0x35)))) {
+						return INPUT_STATE_CORRECT_HIT;
 					}
 
-					if ((((iVar4 == 0x23) || (iVar4 == 0x29)) || (iVar4 - 0x2dU < 2)) || (iVar4 == 0x33)) {
-						return 2;
+					if ((((inputState == 0x23) || (inputState == 0x29)) || (inputState - 0x2dU < 2)) || (inputState == 0x33)) {
+						return INPUT_STATE_CORRECT;
 					}
 
-					if ((iVar4 == 0x25) || (iVar4 == 0x2b)) {
+					if ((inputState == 0x25) || (inputState == 0x2b)) {
 						lVar5 = CActorHero::_gThis->FUN_0031c9e0();
 						if (lVar5 != 0) {
-							return 1;
+							return INPUT_STATE_NORMAL;
 						}
 
 						return 0;
@@ -3765,21 +4073,556 @@ int CBehaviourNativSeller::FUN_003ecad0(int currentIndex, int param_3)
 
 				if (currentIndex == iVar1 + 1) {
 					bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState);
-					if (((bVar3 == false) || (lVar5 = pCVar2->FUN_0031c9e0(), lVar5 == 0)) || (iVar4 = 1, param_3 != 0)) {
-						iVar4 = 0;
+					if (((bVar3 == false) || (lVar5 = pCVar2->FUN_0031c9e0(), lVar5 == 0)) || (inputState = 1, param_3 != 0)) {
+						inputState = 0;
 					}
 				}
 				else {
-					iVar4 = 0;
+					inputState = 0;
 				}
 			}
 			else {
-				iVar4 = 5;
+				inputState = 5;
 			}
 		}
 	}
 
-	return iVar4;
+	return inputState;
+}
+
+uint INPUT_COLOR_NORMAL = 0x80806060;
+uint INPUT_COLOR = 0x80303030;
+uint INPUT_COLOR_CORRECT = 0x80007000;
+uint INPUT_COLOR_INCORRECT = 0x80000070;
+
+void CBehaviourNativSeller::SetupTextStyle(int funcIndex, edCTextStyle* pTextStyle)
+{
+	uint inputColorNormal;
+	uint inputColor;
+	uint inputColorCorrect;
+	uint inputColorIncorrect;
+
+	inputColorNormal = INPUT_COLOR_NORMAL & 0xffffff | (int)(this->comboDisplayAlpha * 128.0f) << 0x18;
+	inputColor = INPUT_COLOR & 0xffffff | (int)(this->comboDisplayAlpha * 128.0f) << 0x18;
+	inputColorCorrect = INPUT_COLOR_CORRECT & 0xffffff | (int)(this->comboDisplayAlpha * 128.0f) << 0x18;
+	inputColorIncorrect = INPUT_COLOR_INCORRECT & 0xffffff | (int)(this->comboDisplayAlpha * 128.0f) << 0x18;
+
+	if ((uint)funcIndex < 6) {
+		switch (funcIndex) {
+		case 0:
+			pTextStyle->SetScale(1.0f, 1.0f);
+			pTextStyle->rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			pTextStyle->altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			pTextStyle->alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+			this->field_0x16b8 = inputColor;
+			break;
+		case INPUT_STATE_NORMAL:
+			pTextStyle->SetScale(1.3f, 1.3f);
+			pTextStyle->rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+			this->field_0x16b8 = inputColorNormal;
+			break;
+		case INPUT_STATE_CORRECT:
+			pTextStyle->SetScale(1.3f, 1.3f);
+			pTextStyle->rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+			this->field_0x16b8 = inputColorCorrect;
+			break;
+		case INPUT_STATE_CORRECT_HIT:
+			pTextStyle->SetScale(1.3f, 1.3f);
+			pTextStyle->rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+			this->field_0x16b8 = inputColorCorrect;
+			break;
+		case INPUT_STATE_INCORRECT:
+			pTextStyle->SetScale(1.3f, 1.3f);
+			pTextStyle->rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+			this->field_0x16b8 = inputColorIncorrect;
+			break;
+		case 5:
+			pTextStyle->SetScale(1.3f, 1.3f);
+			pTextStyle->rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+			pTextStyle->alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+			this->field_0x16b8 = inputColorCorrect;
+			break;
+		}
+	}
+	return;
+}
+
+uint UINT_00448d68 = 0x80007000;
+uint UINT_00448d6c = 0x80303030;
+
+void DrawInputBorder(edF32VECTOR2* v0, edF32VECTOR2* v1, _rgba* color, edDList_material* pMaterial, int param_5)
+{
+	float fVar1;
+	float fVar2;
+	float y;
+	float x;
+
+	fVar1 = v1->x / 2.0f;
+	fVar2 = v1->y / 2.0f;
+	x = v0->x - fVar1;
+	fVar1 = v0->x + fVar1;
+	y = v0->y - fVar2;
+	fVar2 = v0->y + fVar2;
+
+	edDListUseMaterial(pMaterial);
+	edDListLoadIdentity();
+
+	if (param_5 != 0) {
+		edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+		if (color != (_rgba*)0x0) {
+			edDListColor4u8(0, 0, 0, 0x80);
+		}
+
+		edDListTexCoo2f(0.0f, 0.0f);
+		edDListVertex4f(x, y, 0.0f, 0.0f);
+		edDListTexCoo2f(1.0f, 0.0f);
+		edDListVertex4f(fVar1, y, 0.0f, 0.0f);
+		edDListTexCoo2f(0.0f, 1.0f);
+		edDListVertex4f(x, fVar2, 0.0f, 0.0f);
+		edDListTexCoo2f(1.0f, 1.0f);
+		edDListVertex4f(fVar1, fVar2, 0.0f, 0.0f);
+		edDListEnd();
+	}
+
+	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	if (color != (_rgba*)0x0) {
+		edDListColor4u8(color->r, color->g, color->b, color->a);
+	}
+
+	edDListTexCoo2f(0.0f, 0.0f);
+	edDListVertex4f(x, y, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 0.0f);
+	edDListVertex4f(fVar1, y, 0.0f, 0.0f);
+	edDListTexCoo2f(0.0f, 1.0f);
+	edDListVertex4f(x, fVar2, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 1.0f);
+	edDListVertex4f(fVar1, fVar2, 0.0f, 0.0f);
+	edDListEnd();
+
+	return;
+}
+
+bool CBehaviourNativSeller::DrawButton(s_fighter_combo* pCombo, float* pOutWidth, int param_4)
+{
+	byte bVar1;
+	uint uVar2;
+	bool bVar3;
+	edCTextStyle* pTextStyle;
+	edDList_material* pMaterial;
+	int iVar4;
+	float fVar5;
+	edCTextStyle textStyle;
+	edF32VECTOR2 local_20;
+	edF32VECTOR2 local_18;
+	uint textColor;
+	float textScale;
+	uint local_8;
+	uint local_4;
+	CActorHero* pHero;
+
+	iVar4 = (int)(this->comboDisplayAlpha * 128.0f);
+	local_8 = UINT_00448d6c & 0xffffff | iVar4 << 0x18;
+	local_4 = UINT_00448d68 & 0xffffff | iVar4 << 0x18;
+
+	pTextStyle = edTextStyleGetCurrent();
+	textStyle = *pTextStyle;
+	pTextStyle = edTextStyleSetCurrent(&textStyle);
+
+	pHero = CActorHero::_gThis;
+	textStyle.GetScale(&textScale, &textScale);
+	textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+
+	s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+
+	bVar1 = pMove->field_0x4.field_0x1byte;
+	bVar3 = true;
+
+	if (((bVar1 & 4) == 0) && (((bVar1 & 8) != 0 || ((bVar1 & 0x10) != 0)))) {
+		textColor = this->field_0x16b8;
+		if (param_4 == 1) {
+			uVar2 = pHero->comboFlags;
+			if (((uVar2 & 8) == 0) && ((uVar2 & 0x10) == 0)) {
+				bVar3 = false;
+			}
+			else {
+				bVar3 = true;
+				textColor = local_4;
+			}
+		}
+
+		local_18.x = *pOutWidth;
+		fVar5 = (float)gVideoConfig.screenHeight;
+		local_18.y = fVar5 * 0.92f - fVar5 * 0.008f;
+		local_20.x = (float)gVideoConfig.screenWidth * 0.068f * textScale;
+		local_20.y = fVar5 * 0.075f * textScale;
+
+		pMaterial = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->field_0xc, 0);
+
+		DrawInputBorder(&local_18, &local_20, reinterpret_cast<_rgba*>(&textColor), pMaterial, 0);
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[VALID]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f * textScale;
+	}
+
+	if (!bVar3) {
+		this->field_0x16b8 = local_8;
+		pTextStyle->SetScale(1.0f, 1.0f);
+		pTextStyle->rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+		pTextStyle->altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+		pTextStyle->alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+	}
+
+	edTextStyleSetCurrent(pTextStyle);
+
+	return bVar3;
+}
+
+
+void CBehaviourNativSeller::DrawInventoryCrouch(uint flags, float* pOutWidth)
+{
+	byte bVar1;
+	CInputAnalyser* pCVar2;
+	CActorHero* pHero;
+	edCTextStyle* pTextStyle;
+	edCTextStyle textStyle;
+	float fStack4;
+
+	pHero = CActorHero::_gThis;
+	pTextStyle = edTextStyleGetCurrent();
+	textStyle = *pTextStyle;
+	pTextStyle = edTextStyleSetCurrent(&textStyle);
+
+	if ((flags & 1) != 0) {
+		pCVar2 = pHero->pInputAnalyser;
+		bVar1 = 0xb;
+		if (pCVar2 != (CInputAnalyser*)0x0) {
+			bVar1 = pCVar2->patternB.field_0x3byte;
+		}
+
+		if ((((ulong)bVar1 << 0x38) >> 0x3c & 1) == 0) {
+			textStyle.SetScale(1.0f, 1.0f);
+			textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			textStyle.altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			textStyle.alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+		}
+
+		textStyle.GetScale(&fStack4, &fStack4);
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[INVENT]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+	}
+
+	if ((flags & 2) != 0) {
+		pCVar2 = pHero->pInputAnalyser;
+		bVar1 = 0xb;
+		if (pCVar2 != (CInputAnalyser*)0x0) {
+			bVar1 = pCVar2->patternB.field_0x3byte;
+		}
+		if ((((ulong)bVar1 << 0x38) >> 0x3c & 2) == 0) {
+			textStyle.SetScale(1.0f, 1.0f);
+			textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			textStyle.altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			textStyle.alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+		}
+
+		textStyle.GetScale(&fStack4, &fStack4);
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[CROUCH]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+	}
+
+	edTextStyleSetCurrent(pTextStyle);
+
+	return;
+}
+
+void CBehaviourNativSeller::DrawDirectionArrow(s_input_pattern* pPattern, float* pOutWidth)
+{
+	edCTextStyle* pNewFont;
+	edCTextStyle* pNewFont_00;
+	uint uVar1;
+	uint uVar2;
+	uint uVar3;
+	float fonScale;
+
+	pNewFont = edTextStyleGetCurrent();
+	pNewFont_00 = edTextStyleSetCurrent(pNewFont);
+	pNewFont->GetScale(&fonScale, &fonScale);
+
+	uVar3 = 0;
+	if (pPattern->nbInputs != 0) {
+		uVar1 = 0;
+		do {
+			uVar2 = (uint)((ulong)((ulong)(uint)pPattern->field_0x0uint << 0x2c) >> 0x2c) >> (uVar1 & 0x1f) & 0xf;
+			if (uVar2 == 1) {
+				/* %[RIGHT]b */
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[RIGHT]b");
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			if ((uVar2 == 2) || (uVar2 == 10)) {
+				/* %[UP]b */
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[UP]b");
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			if (uVar2 == 4) {
+				/* %[LEFT]b */
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[LEFT]b");
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			if (uVar2 == 8) {
+				/* %[DOWN]b */
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[DOWN]b");
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			if (uVar2 == 3) {
+				/* %[UP]b */
+				pNewFont->SetRotation(0.7853982f);
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[UP]b");
+				pNewFont->SetRotation(0.0f);
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			if (uVar2 == 9) {
+				/* %[LEFT]b */
+				pNewFont->SetRotation(0.7853982f);
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[LEFT]b");
+				pNewFont->SetRotation(0.0f);
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			if (uVar2 == 6) {
+				/* %[RIGHT]b */
+				pNewFont->SetRotation(0.7853982f);
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[RIGHT]b");
+				pNewFont->SetRotation(0.0f);
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			if (uVar2 == 0xc) {
+				/* %[DOWN]b */
+				pNewFont->SetRotation(0.7853982f);
+				edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[DOWN]b");
+				pNewFont->SetRotation(0.0f);
+				*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+			}
+
+			uVar3 = uVar3 + 1;
+			uVar1 = uVar1 + 4;
+		} while (uVar3 < pPattern->nbInputs);
+	}
+
+	edTextStyleSetCurrent(pNewFont_00);
+
+	return;
+}
+
+bool CBehaviourNativSeller::FUN_003ede90(s_fighter_combo* pCombo, float* pOutWidth, int param_4)
+{
+	byte bVar1;
+	CActorHero* pHero;
+	byte cVar3;
+	edCTextStyle* pTextStyle;
+	bool bVar5;
+	float y;
+	edCTextStyle textStyle;
+	float textScale;
+
+	pTextStyle = edTextStyleGetCurrent();
+	textStyle = *pTextStyle;
+	pTextStyle = edTextStyleSetCurrent(&textStyle);
+
+	pHero = CActorHero::_gThis;
+
+	textStyle.GetScale(&textScale, &textScale);
+	bVar5 = true;
+	textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0xffffff00;
+
+	s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
+	bVar1 = pMove->field_0x4.field_0x1byte;
+	cVar3 = (bVar1 & 1) != 0;
+
+	y = (float)gVideoConfig.screenHeight * 0.92f - (float)gVideoConfig.screenHeight * 0.07f * textScale;
+
+	if ((bVar1 & 2) != 0) {
+		cVar3 = cVar3 + 2;
+	}
+
+	if ((bVar1 & 0x20) != 0) {
+		cVar3 = cVar3 + 4;
+	}
+
+	if ((bVar1 & 0x40) != 0) {
+		cVar3 = cVar3 + 8;
+	}
+
+	if (cVar3 == 8) {
+		if ((param_4 == 1) && ((pHero->comboFlags & 0x40) == 0)) {
+			textStyle.SetScale(0.8f, 0.8f);
+			textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			textStyle.altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+			textStyle.alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+			textStyle.GetScale(&textScale, &textScale);
+			bVar5 = false;
+		}
+		else {
+			textStyle.SetScale(1.0f, 1.0f);
+			textStyle.GetScale(&textScale, &textScale);
+		}
+
+		edTextDraw(*pOutWidth, y, gMessageManager.get_message(0x9101806180e064f));
+	}
+	else {
+		if (cVar3 == 4) {
+			if ((param_4 == 1) && ((pHero->comboFlags & 0x20) == 0)) {
+				textStyle.SetScale(0.8f, 0.8f);
+				textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+				textStyle.altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+				textStyle.alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+				textStyle.GetScale(&textScale, &textScale);
+				bVar5 = false;
+			}
+			else {
+				textStyle.SetScale(1.0f, 1.0f);
+				textStyle.GetScale(&textScale, &textScale);
+			}
+
+			edTextDraw(*pOutWidth, y, gMessageManager.get_message(0x910060a1912524f));
+		}
+		else {
+			if (cVar3 == 2) {
+				if ((param_4 == 1) && ((pHero->comboFlags & 2) == 0)) {
+					textStyle.SetScale(0.8f, 0.8f);
+					textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+					textStyle.altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+					textStyle.alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+					textStyle.GetScale(&textScale, &textScale);
+					bVar5 = false;
+				}
+				else {
+					textStyle.SetScale(1.0f, 1.0f);
+					textStyle.GetScale(&textScale, &textScale);
+				}
+
+				edTextDraw(*pOutWidth, y, gMessageManager.get_message(0x9100c1d1008064f));
+			}
+			else {
+				if (cVar3 == 1) {
+					if ((param_4 == 1) && ((pHero->comboFlags & 1) == 0)) {
+						textStyle.SetScale(0.8f, 0.8f);
+						textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+						textStyle.altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+						textStyle.alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+						textStyle.GetScale(&textScale, &textScale);
+						bVar5 = false;
+					}
+					else {
+						textStyle.SetScale(1.0f, 1.0f);
+						textStyle.GetScale(&textScale, &textScale);
+					}
+
+					edTextDraw(*pOutWidth, y, gMessageManager.get_message(0x910080e1c0d524f));
+				}
+			}
+		}
+	}
+
+	edTextStyleSetCurrent(pTextStyle);
+
+	return bVar5;
+}
+
+void CBehaviourNativSeller::DrawButton(uint flags, float* pOutWidth, int param_4, int param_5)
+{
+	edCTextStyle* pTextStyle;
+	edCTextStyle textStyle;
+	float textScale;
+
+	pTextStyle = edTextStyleGetCurrent();
+	textStyle = *pTextStyle;
+	pTextStyle = edTextStyleSetCurrent(&textStyle);
+
+	if ((param_4 == 1) && (param_5 == 0)) {
+		textStyle.rgbaColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+		textStyle.altColour = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x80808000;
+		textStyle.alpha = (int)(this->comboDisplayAlpha * 255.0f) & 0xffU | 0x40404000;
+	}
+
+	textStyle.GetScale(&textScale, &textScale);
+
+	if ((flags & 1) != 0) {
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[ACTION]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+	}
+
+	if ((flags & 2) != 0) {
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[BACK]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+	}
+
+	if ((flags & 4) != 0) {
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[CATCH]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+	}
+
+	if ((flags & 8) != 0) {
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[VALID]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+	}
+
+	if ((flags & 0x10) != 0) {
+		edTextDraw(*pOutWidth, (float)gVideoConfig.screenHeight * 0.92f, "%[STIK_ROT]b");
+		*pOutWidth = *pOutWidth + (float)gVideoConfig.screenWidth * 0.08f;
+	}
+
+	edTextStyleSetCurrent(pTextStyle);
+
+	return;
+}
+
+void CBehaviourNativSeller::FUN_003ed820(s_fighter_combo* pCombo, float* param_3, int param_4)
+{
+	bool bVar1;
+	edCTextStyle* pTextStyle;
+	edDList_material* pMaterial;
+	bool uVar3;
+	edCTextStyle textStyle;
+	edF32VECTOR2 local_20;
+	edF32VECTOR2 local_18;
+	float local_c;
+	float fStack8;
+	float local_4;
+
+	if (pCombo != (s_fighter_combo*)0x0) {
+		GetComboButtonDisplaySize(pCombo, &local_4, &fStack8);
+		local_18.x = *param_3 + (local_4 - (float)gVideoConfig.screenWidth * 0.068f) / 2.0f;
+		local_18.y = (float)gVideoConfig.screenHeight * 0.92f - (float)gVideoConfig.screenHeight * 0.008f;
+		pTextStyle = edTextStyleGetCurrent();
+		textStyle = *pTextStyle;
+		textStyle.GetScale(&local_c, &local_c);
+		bVar1 = GuiDList_BeginCurrent();
+		if (bVar1 != false) {
+			local_20.x = local_4 * local_c;
+			local_20.y = (float)gVideoConfig.screenHeight * 0.075f * local_c;
+			pMaterial = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->field_0xc, 0);
+			DrawInputBorder(&local_18, &local_20, reinterpret_cast<_rgba*>(&this->field_0x16b8), pMaterial, 0);
+			DrawInventoryCrouch(pCombo->pattern.field_0x3byte, param_3);
+			DrawDirectionArrow(&pCombo->pattern, param_3);
+			uVar3 = FUN_003ede90(pCombo, param_3, param_4);
+			DrawButton(((ulong)pCombo->pattern.field_0x2ushort << 0x34) >> 0x38, param_3, param_4, uVar3);
+			GuiDList_EndCurrent();
+		}
+	}
+	return;
 }
 
 void CBehaviourNativSeller::DrawButtonPromptA()
@@ -3787,8 +4630,8 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 	int iVar1;
 	bool bVar2;
 	edCTextStyle* pPrevTextStyle;
-	int funcIndex;
-	ArenaRequiredCombo* pNVar4;
+	int inputState;
+	ArenaTutorial* pNVar4;
 	int iVar5;
 	long lVar6;
 	float screenHeight;
@@ -3810,7 +4653,7 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 
 	pPrevTextStyle = edTextStyleSetCurrent(&textStyle);
 	lVar6 = 0;
-	if ((pNVar4 != (ArenaRequiredCombo*)0x0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
+	if ((pNVar4 != (ArenaTutorial*)0x0) && (CActorHero::_gThis != (CActorHero*)0x0)) {
 		fVar8 = this->comboDisplayWidth;
 		screenHeight = (float)gVideoConfig.screenHeight;
 		fVar9 = this->comboDisplayHeight;
@@ -3826,17 +4669,17 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 		iVar5 = 0;
 		if (0 < pNVar4->nbRequiredMoves) {
 			do {
-				NativSubObjB* pSubObjB = pNVar4->aRequiredMoves + iVar5;
+				s_fighter_combo* pCombo = pNVar4->aRequiredMoves[iVar5].aRequiredCombos[0];
 
-				funcIndex = FUN_003ecad0(iVar5, lVar6);
-				//FUN_003ec660(funcIndex);
-				//FUN_003ed440(pSubObjB, &local_4, funcIndex);
-				//
-				//if (funcIndex == 4) {
-				//	lVar6 = 1;
-				//}
-				//
-				//FUN_003ed820(pSubObjB, &local_4, funcIndex);
+				inputState = GetInputState(iVar5, lVar6);
+				SetupTextStyle(inputState, &textStyle);
+				DrawButton(pCombo, &local_4, inputState);
+
+				if (inputState == 4) {
+					lVar6 = 1;
+				}
+
+				FUN_003ed820(pCombo, &local_4, inputState);
 				iVar5 = iVar5 + 1;
 				local_4 = local_4 + (float)gVideoConfig.screenWidth * 0.05f;
 			} while (iVar5 < pNVar4->nbRequiredMoves);
@@ -3848,12 +4691,12 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 	return;
 }
 
-ArenaRequiredCombo* CBehaviourNativSeller::GetActiveComboTutorial()
+ArenaTutorial* CBehaviourNativSeller::GetActiveComboTutorial()
 {
-	ArenaRequiredCombo* pReqCombo;
+	ArenaTutorial* pReqCombo;
 	const int index = (this->comboTutorialManager).activeTutorialIndex;
 	if (index == -1) {
-		pReqCombo = (ArenaRequiredCombo*)0x0;
+		pReqCombo = (ArenaTutorial*)0x0;
 	}
 	else {
 		pReqCombo = (this->comboTutorialManager).aTutorials + index;
@@ -3912,7 +4755,7 @@ bool NativSubObjB::IsRequiredCombo(s_fighter_combo* pCombo)
 	return false;
 }
 
-ArenaRequiredCombo::ArenaRequiredCombo()
+ArenaTutorial::ArenaTutorial()
 {
 	this->nbRequiredMoves = 0;
 	this->aRequiredMoves = (NativSubObjB*)0x0;
@@ -3931,7 +4774,7 @@ NativSellerSubObjA::NativSellerSubObjA()
 ComboTutorialManager::ComboTutorialManager()
 {
 	this->nbTutorials = 0;
-	this->aTutorials = (ArenaRequiredCombo*)0x0;
+	this->aTutorials = (ArenaTutorial*)0x0;
 
 	return;
 }
@@ -3939,7 +4782,7 @@ ComboTutorialManager::ComboTutorialManager()
 void ComboTutorialManager::Init()
 {
 	int iVar3;
-	ArenaRequiredCombo* pTutorial;
+	ArenaTutorial* pTutorial;
 	int curTutorialIndex;
 
 	curTutorialIndex = 0;
@@ -3971,4 +4814,9 @@ int ComboTutorialManager::StepRequiredCombo()
 	}
 
 	return this->activeTutorialIndex;
+}
+
+NativSellerSubObjA* NativSubObjD::Set_0x1630(int param_2)
+{
+	IMPLEMENTATION_GUARD();
 }

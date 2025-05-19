@@ -17,9 +17,11 @@
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
 
 #define NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY 0x21
+#define NATIVE_STATE_SELLER_INPUT_FAILED 0x36
 
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
+class edCTextStyle;
 
 template<typename T>
 class CRndChooser
@@ -47,6 +49,7 @@ class CBehaviourNativExorcisme : public CBehaviourNativ
 };
 
 struct s_fighter_combo;
+struct s_input_pattern;
 
 struct NativSubObjB
 {
@@ -60,9 +63,9 @@ struct NativSubObjB
 	undefined4 field_0xc;
 };
 
-struct ArenaRequiredCombo
+struct ArenaTutorial
 {
-	ArenaRequiredCombo();
+	ArenaTutorial();
 
 	int nbRequiredMoves;
 	NativSubObjB* aRequiredMoves;
@@ -85,8 +88,16 @@ struct ComboTutorialManager
 	int StepRequiredCombo();
 
 	int nbTutorials;
-	ArenaRequiredCombo* aTutorials;
+	ArenaTutorial* aTutorials;
 	int activeTutorialIndex;
+};
+
+struct NativSubObjD
+{
+	NativSellerSubObjA* Set_0x1630(int param_2);
+
+	NativSellerSubObjA field_0x8[0x1e];
+	int activeSubObjIndex;
 };
 
 class CBehaviourNativSeller : public CBehaviourNativ
@@ -108,16 +119,27 @@ public:
 
 	void FUN_003ebd90();
 
+	bool AdvanceTutorial(int param_2);
+	int FUN_003f1b90(int param_2);
+	void FUN_003f1810(int param_2, int param_3, int param_4);
+
 	void GetComboButtonDisplaySize(s_fighter_combo* pCombo, float* param_3, float* param_4);
 	void FUN_003f1da0(s_fighter_combo* pCombo);
 	bool FUN_003ebee0(int param_2);
 	bool IsEventActive();
 	void SetBehaviourState(int newState);
 
-	int FUN_003ecad0(int currentIndex, int param_3);
+	int GetInputState(int currentIndex, int param_3);
+	void SetupTextStyle(int funcIndex, edCTextStyle* pTextStyle);
+	bool DrawButton(s_fighter_combo* pCombo, float* pOutWidth, int param_4);
+	void DrawInventoryCrouch(uint flags, float* pOutWidth);
+	void DrawDirectionArrow(s_input_pattern* pPattern, float* pOutWidth);
+	bool FUN_003ede90(s_fighter_combo* pCombo, float* pOutWidth, int param_4);
+	void DrawButton(uint flags, float* pOutWidth, int param_4, int param_5);
+	void FUN_003ed820(s_fighter_combo* pCombo, float* param_3, int param_4);
 	void DrawButtonPromptA();
 
-	ArenaRequiredCombo* GetActiveComboTutorial();
+	ArenaTutorial* GetActiveComboTutorial();
 
 	uint field_0x8;
 	int field_0xc;
@@ -138,14 +160,16 @@ public:
 	S_TARGET_STREAM_REF* field_0x50;
 	S_STREAM_EVENT_CAMERA* streamEventCamera_0x54;
 
-	NativSellerSubObjA field_0x68[0x1e];
+	NativSubObjD field_0x60;
 
 	int initialAnimId;
 
 	int activeSubObjBIndex;
 	undefined4 field_0x16a4;
 	int field_0x16ac;
+	int field_0x16b0;
 	int field_0x16b4;
+	uint field_0x16b8;
 	int currentBehaviourState;
 
 	float field_0x16c0;
@@ -277,6 +301,10 @@ public:
 	void StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour);
 	void State_0x22(CBehaviourNativSeller* pBehaviour);
 	void State_0x23(CBehaviourNativSeller* pBehaviour);
+	void State_0x24(CBehaviourNativSeller* pBehaviour);
+	void State_0x25(CBehaviourNativSeller* pBehaviour);
+	void StateInputFailed(CBehaviourNativSeller* pBehaviour);
+	void State_0x38(CBehaviourNativSeller* pBehaviour);
 
 	static StateConfig _gStateCfg_NTV[54];
 

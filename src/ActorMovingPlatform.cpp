@@ -2667,8 +2667,7 @@ int CActorMovingPlatform::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 				*(undefined4*)((int)pMsgParam + 0x74) = uVar10;)
 				break;
 			default:
-				IMPLEMENTATION_GUARD(
-				*(undefined4*)((int)pMsgParam + 0x74) = 0;)
+				pHitMessageParams->field_0x74 = uVar10;
 				break;
 			case 8:
 				uVar10 = 0;

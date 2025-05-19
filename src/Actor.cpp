@@ -4792,6 +4792,11 @@ LAB_003e3558:
 	return;
 }
 
+bool CAddOn::Func_0x34(uint param_2, CActor* pActor)
+{
+	return Func_0x24(param_2, pActor);
+}
+
 CCinematic* CAddOn::GetCinematic()
 {
 	CCinematic* pCinematic = (CCinematic*)0x0;
@@ -4841,6 +4846,87 @@ void CAddOnSubObj::SetCinematic(CCinematic* pCinematic)
 	this->pCinematic = pCinematic;
 
 	return;
+}
+
+int CAddOnSubObj::FUN_003e37e0()
+{
+	bool bVar1;
+	bool bVar2;
+	CCinematic* pCVar3;
+	ulong uVar4;
+	int iVar5;
+	int iVar6;
+	int iVar7;
+	int iVar8;
+
+	iVar8 = 0;
+	iVar6 = 0;
+	bVar1 = false;
+	if (0 < this->field_0x8) {
+		do {
+			pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar8]);
+			if (pCVar3 != (CCinematic*)0x0) {
+				pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar8]);
+				bVar2 = pCVar3->FUN_001c9500();
+				if (bVar2 != false) {
+					iVar6 = iVar6 + 1;
+				}
+			}
+
+			iVar8 = iVar8 + 1;
+		} while (iVar8 < this->field_0x8);
+	}
+
+	if (((1 < iVar6) && (this->field_0x10 != -1)) &&
+		(pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[this->field_0x10]), pCVar3 != (CCinematic*)0x0)) {
+		pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[this->field_0x10]);
+		bVar2 = pCVar3->FUN_001c9500();
+		if (bVar2 != false) {
+			iVar6 = iVar6 + -1;
+			bVar1 = true;
+		}
+	}
+
+	if (0 < iVar6) {
+		uVar4 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+		CScene::_pinstance->field_0x38 = uVar4;
+		iVar6 = iVar6 * ((uint)(uVar4 >> 0x10) & 0x7fff);
+
+		if (iVar6 < 0) {
+			iVar6 = iVar6 + 0x7fff;
+		}
+
+		iVar5 = 0;
+		iVar8 = 0;
+		if (0 < this->field_0x8) {
+			do {
+				if (((!bVar1) || (iVar8 != this->field_0x10)) &&
+					(pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar7]), pCVar3 != (CCinematic*)0x0)) {
+					pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar7]);
+					bVar2 = pCVar3->FUN_001c9500();
+					if (bVar2 != false) {
+						iVar5 = iVar5 + 1;
+					}
+				}
+
+				if (iVar5 + -1 == iVar6 >> 0xf) {
+					iVar6 = this->field_0x4[iVar8];
+					pCVar3 = g_CinematicManager_0048efc->GetCinematic(iVar6);
+					SetCinematic(pCVar3);
+					this->field_0x10 = iVar8;
+					return iVar6;
+				}
+
+				iVar8 = iVar8 + 1;
+			} while (iVar8 < this->field_0x8);
+		}
+	}
+
+	SetCinematic((CCinematic*)0x0);
+
+	this->field_0x10 = -1;
+
+	return -1;
 }
 
 bool CActorsTable::IsInList(CActor* pActor)

@@ -3911,13 +3911,13 @@ void CActorFighter::_LoadCombo(s_fighter_combo* pCombo, ByteCode* pByteCode)
 	pCombo->field_0x4.field_0x2ushort = pByteCode->GetU32();
 	pCombo->field_0x8 = pByteCode->GetF32();
 	pCombo->pattern.field_0x0uint = pCombo->pattern.field_0x0uint & 0xfff00000;
-	pCombo->pattern.field_0x4 = pByteCode->GetU32();
+	pCombo->pattern.nbInputs = pByteCode->GetU32();
 
 	FIGHTER_LOG(LogLevel::Info, "CActorFighter::_LoadCombo pattern field_0x0uint 0x{:x}", pCombo->pattern.field_0x0uint);
-	FIGHTER_LOG(LogLevel::Info, "CActorFighter::_LoadCombo pattern field_0x4 0x{:x}", pCombo->pattern.field_0x4);
+	FIGHTER_LOG(LogLevel::Info, "CActorFighter::_LoadCombo pattern field_0x4 0x{:x}", pCombo->pattern.nbInputs);
 
 	uVar5 = 0;
-	if (pCombo->pattern.field_0x4 != 0) {
+	if (pCombo->pattern.nbInputs != 0) {
 		uVar6 = 0;
 		do {
 			uVar3 = pByteCode->GetU32();
@@ -3926,7 +3926,7 @@ void CActorFighter::_LoadCombo(s_fighter_combo* pCombo, ByteCode* pByteCode)
 				((pCombo->pattern.field_0x0uint & 0xfffffU |
 					((ulong)(UINT_ARRAY_00425710[uVar3] << (uVar6 & 0x1f)) & 0xffffU) << 0x2c) >> 0x2c);
 			uVar6 = uVar6 + 4;
-		} while (uVar5 < pCombo->pattern.field_0x4);
+		} while (uVar5 < pCombo->pattern.nbInputs);
 	}
 
 	pCombo->pattern.field_0x2ushort = pCombo->pattern.field_0x2ushort & 0xf00f | (ushort)((pByteCode->GetU32() & 0xff) << 4);
@@ -4265,7 +4265,6 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 	edColPRIM_OBJECT* peVar2;
 	ed_3d_hierarchy_node* peVar3;
 	bool bVar4;
-	CFighterExcludedTable* pCVar5;
 	int iVar6;
 	float fVar8;
 	CActorsTable* local_200;
@@ -4414,19 +4413,19 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 	return uVar7;
 code_r0x0030b96c:
 	iVar6 = 0;
-	pCVar5 = param_7;
+	s_fighter_hit_exclusion* pCVar5 = param_7->aEntries;
 	if (0 < param_7->nbEntries) {
 		do {
-			IMPLEMENTATION_GUARD(
-			local_18 = pCVar5->field_0x4;
-			local_14 = pCVar5->field_0x8;
-			local_10 = pCVar5->field_0xc;
+			local_18 = pCVar5->pActor;
+			//local_14 = pCVar5->field_0x8; UNUSED?
+			//local_10 = pCVar5->field_0xc; UNUSED?
 			if (local_18 == pReceiver) {
 				bVar4 = true;
 				goto LAB_0030b9d0;
 			}
+
 			iVar6 = iVar6 + 1;
-			pCVar5 = (CFighterExcludedTable*)&pCVar5->field_0xc;)
+			pCVar5 = pCVar5 + 1;
 		} while (iVar6 < param_7->nbEntries);
 	}
 
@@ -7206,10 +7205,10 @@ void CBehaviourFighterProjected::TermState(int oldState, int newState)
 
 int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	CActorFighter* pCVar1;
+	CActorFighter* pFighter;
 	CActor* pCVar2;
 	StateConfig* pSVar3;
-	int iVar4;
+	int result;
 	uint uVar5;
 	edF32VECTOR4* v0;
 	float fVar6;
@@ -7218,125 +7217,105 @@ int CBehaviourFighterProjected::InterpretMessage(CActor* pSender, int msg, void*
 	edF32VECTOR4 eStack16;
 
 	if (msg == 0x27) {
-		iVar4 = 0;
+		result = 0;
 	}
 	else {
 		if (msg == 0x16) {
 			IMPLEMENTATION_GUARD(
 			edF32Vector4ScaleHard(*(float*)((int)pMsgParam + 0x10), &eStack16, (edF32VECTOR4*)pMsgParam);
-			pCVar1 = this->pOwner;
-			v0 = (pCVar1->characterBase).dynamicExt.aImpulseVelocities + 2;
+			pFighter = this->pOwner;
+			v0 = (pFighter->characterBase).dynamicExt.aImpulseVelocities + 2;
 			edF32Vector4AddHard(v0, v0, &eStack16);
 			fVar6 = edF32Vector4GetDistHard(v0);
-			(pCVar1->characterBase).dynamicExt.aImpulseVelocityMagnitudes[2] = fVar6;
-			iVar4 = 1;)
+			(pFighter->characterBase).dynamicExt.aImpulseVelocityMagnitudes[2] = fVar6;
+			result = 1;)
 		}
 		else {
 			if (msg == 2) {
-				IMPLEMENTATION_GUARD(
-				pCVar1 = this->pOwner;
-				iVar4 = pCVar1->actorState;
-				uVar5 = 0;
-				if (iVar4 != -1) {
-					pSVar3 = pCVar1->GetStateCfg(iVar4);
-					uVar5 = pSVar3->flags_0x4;
-				}
+				pFighter = this->pOwner;
+				uVar5 = pFighter->GetStateFlags(pFighter->actorState);
 
 				if ((uVar5 & 0x2000000) == 0) {
-					/* WARNING: Load size is inaccurate */
-					iVar4 = *pMsgParam;
-					if (iVar4 == 10) {
-						FUN_00306eb0((int)this->pOwner, (int)pMsgParam);
-						(*(code*)this->pVTable->_ManageHit)(this, 0);
-						iVar4 = 1;
+					_msg_hit_param* pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
+					int projType = pMsgHitParam->projectileType;
+
+					if (projType == 10) {
+						this->pOwner->_UpdateDynForExplosion(pMsgHitParam);
+						_ManageHit(false);
+						result = 1;
 					}
 					else {
-						if (iVar4 == 8) {
-							pCVar1 = this->pOwner;
-							fVar8 = *(float*)((int)pMsgParam + 0x44);
-							fVar6 = *(float*)((int)pMsgParam + 0x48);
-							fVar7 = *(float*)((int)pMsgParam + 0x4c);
-							(pCVar1->field_0x690).x = *(float*)((int)pMsgParam + 0x40);
-							(pCVar1->field_0x690).y = fVar8;
-							(pCVar1->field_0x690).z = fVar6;
-							(pCVar1->field_0x690).w = fVar7;
-							pCVar1->hitDamage = *(undefined4*)((int)pMsgParam + 0xc);
-							edF32Vector4SafeNormalize0Hard(&pCVar1->field_0x6a0, (edF32VECTOR4*)((int)pMsgParam + 0x20));
-							pCVar2 = pCVar1->field_0x634;
-							iVar4 = FUN_0030c650(&pCVar1->actorsExcludeTable, (int)pCVar2);
-							if (iVar4 == 0) {
-								FUN_0030c5e0(0x3f800000, &pCVar1->actorsExcludeTable, (int)pCVar2);
+						if (projType == 8) {
+							pFighter = this->pOwner;
+							pFighter->field_0x690 = pMsgHitParam->field_0x40;
+							pFighter->hitDamage = pMsgHitParam->damage;
+							edF32Vector4SafeNormalize0Hard(&pFighter->field_0x6a0, &pMsgHitParam->field_0x20);
+
+							pCVar2 = pFighter->field_0x634;
+							if (pFighter->actorsExcludeTable.IsInList(pCVar2) == false) {
+								pFighter->actorsExcludeTable.Add(1.0f, pCVar2);
 							}
-							pCVar1->hitFlags = *(int*)((int)pMsgParam + 8);
-							pCVar1->field_0x474 = *(undefined4*)((int)pMsgParam + 0x10);
-							pCVar1->field_0x6b0 = *(float*)((int)pMsgParam + 0x30);
-							pCVar1->field_0x684 = *(short*)((int)pMsgParam + 0x50);
-							pCVar1->field_0x686 = *(ushort*)((int)pMsgParam + 0x52);
-							if ((pCVar1->field_0x684 & 1U) != 0) {
-								fVar8 = *(float*)((int)pMsgParam + 100);
-								fVar6 = *(float*)((int)pMsgParam + 0x68);
-								fVar7 = *(float*)((int)pMsgParam + 0x6c);
-								(pCVar1->field_0x7a0).x = *(float*)((int)pMsgParam + 0x60);
-								(pCVar1->field_0x7a0).y = fVar8;
-								(pCVar1->field_0x7a0).z = fVar6;
-								(pCVar1->field_0x7a0).w = fVar7;
-								pCVar1->field_0x7b4 = *(float*)((int)pMsgParam + 0x70);
+
+							pFighter->hitFlags = pMsgHitParam->flags;
+							pFighter->field_0x474 = pMsgHitParam->field_0x10;
+							pFighter->field_0x6b0 = pMsgHitParam->field_0x30;
+							pFighter->field_0x684 = pMsgHitParam->field_0x50;
+							pFighter->field_0x686 = pMsgHitParam->field_0x52;
+
+							if ((pFighter->field_0x684 & 1U) != 0) {
+								pFighter->field_0x7a0 = pMsgHitParam->field_0x60;
+								pFighter->field_0x7b4 = pMsgHitParam->field_0x70;
 							}
-							(*(code*)this->pVTable->_ManageHit)(this, (*(uint*)((int)pMsgParam + 8) & 0x80) == 0);
-							iVar4 = 1;
+
+							_ManageHit((pMsgHitParam->flags & 0x80) == 0);
+
+							result = 1;
 						}
 						else {
-							if (iVar4 == 7) {
-								pCVar1 = this->pOwner;
-								fVar8 = *(float*)((int)pMsgParam + 0x44);
-								fVar6 = *(float*)((int)pMsgParam + 0x48);
-								fVar7 = *(float*)((int)pMsgParam + 0x4c);
-								(pCVar1->field_0x690).x = *(float*)((int)pMsgParam + 0x40);
-								(pCVar1->field_0x690).y = fVar8;
-								(pCVar1->field_0x690).z = fVar6;
-								(pCVar1->field_0x690).w = fVar7;
-								pCVar1->hitDamage = *(undefined4*)((int)pMsgParam + 0xc);
-								edF32Vector4SafeNormalize0Hard(&pCVar1->field_0x6a0, (edF32VECTOR4*)((int)pMsgParam + 0x20));
-								pCVar2 = pCVar1->field_0x634;
-								iVar4 = FUN_0030c650(&pCVar1->actorsExcludeTable, (int)pCVar2);
-								if (iVar4 == 0) {
-									FUN_0030c5e0((int)&DAT_bf800000, &pCVar1->actorsExcludeTable, (int)pCVar2);
+							if (projType == 7) {
+								pFighter = this->pOwner;
+								pFighter->field_0x690 = pMsgHitParam->field_0x40;
+								pFighter->hitDamage = pMsgHitParam->damage;
+								edF32Vector4SafeNormalize0Hard(&pFighter->field_0x6a0, &pMsgHitParam->field_0x20);
+
+								pCVar2 = pFighter->field_0x634;
+								if (pFighter->actorsExcludeTable.IsInList(pCVar2) == false) {
+									pFighter->actorsExcludeTable.Add(-1.0f, pCVar2);
 								}
-								pCVar1->hitFlags = *(int*)((int)pMsgParam + 8);
-								pCVar1->field_0x474 = *(undefined4*)((int)pMsgParam + 0x10);
-								pCVar1->field_0x6b0 = *(float*)((int)pMsgParam + 0x30);
-								pCVar1->field_0x684 = *(short*)((int)pMsgParam + 0x50);
-								pCVar1->field_0x686 = *(ushort*)((int)pMsgParam + 0x52);
-								if ((pCVar1->field_0x684 & 1U) != 0) {
-									fVar8 = *(float*)((int)pMsgParam + 100);
-									fVar6 = *(float*)((int)pMsgParam + 0x68);
-									fVar7 = *(float*)((int)pMsgParam + 0x6c);
-									(pCVar1->field_0x7a0).x = *(float*)((int)pMsgParam + 0x60);
-									(pCVar1->field_0x7a0).y = fVar8;
-									(pCVar1->field_0x7a0).z = fVar6;
-									(pCVar1->field_0x7a0).w = fVar7;
-									pCVar1->field_0x7b4 = *(float*)((int)pMsgParam + 0x70);
+
+								pFighter->hitFlags = pMsgHitParam->flags;
+								pFighter->field_0x474 = pMsgHitParam->field_0x10;
+								pFighter->field_0x6b0 = pMsgHitParam->field_0x30;
+								pFighter->field_0x684 = pMsgHitParam->field_0x50;
+								pFighter->field_0x686 = pMsgHitParam->field_0x52;
+
+								if ((pFighter->field_0x684 & 1U) != 0) {
+									pFighter->field_0x7a0 = pMsgHitParam->field_0x60;
+									pFighter->field_0x7b4 = pMsgHitParam->field_0x70;
 								}
-								(*(code*)this->pVTable->_ManageHit)(this, (*(uint*)((int)pMsgParam + 8) & 0x80) == 0);
-								iVar4 = 1;
+
+								_ManageHit((pMsgHitParam->flags & 0x80) == 0);
+
+								result = 1;
 							}
 							else {
-								iVar4 = 0;
+								result = 0;
 							}
 						}
 					}
 				}
 				else {
-					iVar4 = 0;
-				})
+					result = 0;
+				}
 			}
 			else {
-				iVar4 = 0;
+				result = 0;
 			}
 		}
 	}
 
-	return iVar4;
+	return result;
 }
 
 bool CBehaviourFighterProjected::Execute(s_fighter_action* param_2, s_fighter_action_param* param_3)
@@ -7498,10 +7477,10 @@ CInputAnalyser::CInputAnalyser()
 	_last_dir_time = GetTimer()->scaledTotalTime;
 
 	this->patternA.field_0x0uint = 0;
-	this->patternA.field_0x4 = 0;
+	this->patternA.nbInputs = 0;
 
 	this->patternB.field_0x0uint = 0;
-	this->patternB.field_0x4 = 0;
+	this->patternB.nbInputs = 0;
 
 	this->lastStickDirFlags = 0;
 	
@@ -7538,20 +7517,20 @@ void CInputAnalyser::_CumulateDirections(CPlayerInput* pInput, edF32VECTOR4* pDi
 	if (dirFlags == this->lastStickDirFlags) {
 		if (_max_dir_time <= GetTimer()->scaledTotalTime - _last_dir_time) {
 			this->patternB.field_0x0uint = this->patternB.field_0x0uint & 0xfff00000 | (uint)((ulong)((ulong)(int)this->lastStickDirFlags << 0x2c) >> 0x2c);
-			this->patternB.field_0x4 = 1;
+			this->patternB.nbInputs = 1;
 		}
 	}
 	else {
 		_last_dir_time = GetTimer()->scaledTotalTime;
 		this->lastStickDirFlags = dirFlags;
 
-		if (4 < this->patternB.field_0x4) {
+		if (4 < this->patternB.nbInputs) {
 			this->patternB.field_0x0uint = this->patternB.field_0x0uint & 0xfff00000 | (uint)((ulong)((ulong)(int)(uint)((ulong)((ulong)(int)this->patternB.field_0x0uint << 0x2c) >> 0x30) << 0x2c) >> 0x2c);
-			this->patternB.field_0x4 = this->patternB.field_0x4 - 1;
+			this->patternB.nbInputs = this->patternB.nbInputs - 1;
 		}
 
-		this->patternB.field_0x0uint = this->patternB.field_0x0uint & 0xfff00000 | (uint)((((ulong)(int)this->patternB.field_0x0uint & 0xfffffU | (ulong)(int)(this->lastStickDirFlags << ((this->patternB.field_0x4 & 7) << 2))) << 0x2c) >> 0x2c);
-		this->patternB.field_0x4 = this->patternB.field_0x4 + 1;
+		this->patternB.field_0x0uint = this->patternB.field_0x0uint & 0xfff00000 | (uint)((((ulong)(int)this->patternB.field_0x0uint & 0xfffffU | (ulong)(int)(this->lastStickDirFlags << ((this->patternB.nbInputs & 7) << 2))) << 0x2c) >> 0x2c);
+		this->patternB.nbInputs = this->patternB.nbInputs + 1;
 	}
 
 	return;
@@ -7570,7 +7549,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, 
 	float fVar6;
 
 	if (pPalyerInput != (CPlayerInput*)0x0) {
-		if (this->patternB.field_0x4 != 0) {
+		if (this->patternB.nbInputs != 0) {
 			puVar3 = edF32Vector4DotProductHard(param_3, &this->field_0x10);
 			if (1.0f < puVar3) {
 				puVar5 = 1.0f;
@@ -7641,7 +7620,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, 
 		if ((this->patternB.field_0x2ushort << 0x34) >> 0x38 != 0) {
 			this->patternA = this->patternB;
 			this->patternB.field_0x0uint = 0;
-			this->patternB.field_0x4 = 0;
+			this->patternB.nbInputs = 0;
 
 			this->lastStickDirFlags = 0;
 			return 1;
@@ -7656,10 +7635,10 @@ void CInputAnalyser::Reset()
 	_last_dir_time = GetTimer()->scaledTotalTime;
 
 	(this->patternA).field_0x0uint = 0;
-	(this->patternA).field_0x4 = 0;
+	(this->patternA).nbInputs = 0;
 
 	(this->patternB).field_0x0uint = 0;
-	(this->patternB).field_0x4 = 0;
+	(this->patternB).nbInputs = 0;
 
 	this->lastStickDirFlags = 0;
 
@@ -7682,17 +7661,17 @@ bool CInputAnalyser::Compare(s_input_pattern* pPatternA, s_input_pattern* pPatte
 	float fVar10;
 
 	// Log out patterns
-	FIGHTER_LOG(LogLevel::Info, "CInputAnalyser::Compare Pattern A: 0x{:x} 0x{:x}", pPatternA->field_0x0uint, pPatternA->field_0x4);
-	FIGHTER_LOG(LogLevel::Info, "CInputAnalyser::Compare Pattern B: 0x{:x} 0x{:x}", pPatternB->field_0x0uint, pPatternB->field_0x4);
+	FIGHTER_LOG(LogLevel::Info, "CInputAnalyser::Compare Pattern A: 0x{:x} 0x{:x}", pPatternA->field_0x0uint, pPatternA->nbInputs);
+	FIGHTER_LOG(LogLevel::Info, "CInputAnalyser::Compare Pattern B: 0x{:x} 0x{:x}", pPatternB->field_0x0uint, pPatternB->nbInputs);
 
 	pPatternCmp->field_0x0 = 0;
 	pPatternCmp->field_0x8 = 0.0f;
-	pPatternCmp->field_0x4 = pPatternA->field_0x4;
+	pPatternCmp->field_0x4 = pPatternA->nbInputs;
 	iVar6 = 0;
 
 	if ((pPatternA->field_0x2ushort & pPatternB->field_0x2ushort) == 0 ||
 		(pPatternA->field_0x3byte != pPatternB->field_0x3byte) ||
-		(pPatternA->field_0x4 < pPatternB->field_0x4)) {
+		(pPatternA->nbInputs < pPatternB->nbInputs)) {
 		bVar1 = false;
 	}
 	else {
@@ -7715,17 +7694,17 @@ bool CInputAnalyser::Compare(s_input_pattern* pPatternA, s_input_pattern* pPatte
 
 		pPatternCmp->field_0x8 = -fVar10;
 		uVar5 = 0;
-		if (pPatternA->field_0x4 != 0) {
+		if (pPatternA->nbInputs != 0) {
 			uVar3 = 0;
 			uVar2 = 0;
 			do {
 				uVar8 = (uint)((ulong)((ulong)(uint)pPatternA->field_0x0uint << 0x2c) >> 0x2c) >> (uVar3 & 0x1f) & 0xf;
 				uVar7 = (uint)((ulong)((ulong)(uint)pPatternB->field_0x0uint << 0x2c) >> 0x2c) >> (uVar2 & 0x1f) & 0xf;
 				if ((uVar8 & uVar7) == 0) {
-					if (pPatternA->field_0x4 - uVar5 <= pPatternB->field_0x4 - iVar6) {
+					if (pPatternA->nbInputs - uVar5 <= pPatternB->nbInputs - iVar6) {
 						pPatternCmp->field_0x0 = 0;
 						pPatternCmp->field_0x8 = 0.0f;
-						pPatternCmp->field_0x4 = pPatternA->field_0x4;
+						pPatternCmp->field_0x4 = pPatternA->nbInputs;
 						return false;
 					}
 				}
@@ -7747,12 +7726,12 @@ bool CInputAnalyser::Compare(s_input_pattern* pPatternA, s_input_pattern* pPatte
 					uVar2 = uVar2 + 4;
 					iVar6 = iVar6 + 1;
 					pPatternCmp->field_0x8 = pPatternCmp->field_0x8 - fVar10;
-					pPatternCmp->field_0x4 = pPatternA->field_0x4 - (uVar5 + 1);
+					pPatternCmp->field_0x4 = pPatternA->nbInputs - (uVar5 + 1);
 				}
 
 				uVar5 = uVar5 + 1;
 				uVar3 = uVar3 + 4;
-			} while (uVar5 < pPatternA->field_0x4);
+			} while (uVar5 < pPatternA->nbInputs);
 		}
 
 		uVar5 = pPatternCmp->field_0x0;
