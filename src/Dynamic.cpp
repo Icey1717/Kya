@@ -771,3 +771,362 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 
 	return;
 }
+
+
+void CVertexDyn::Init(float param_1, edF32VECTOR4* pPosition)
+{
+	this->field_0x20 = *pPosition;
+	this->field_0x30 = this->field_0x20;
+	this->field_0x10 = param_1;
+	this->field_0x1c = 0.0f;
+
+	return;
+}
+
+void CVertexDyn::MoveTo(edF32VECTOR4* pPosition)
+{
+	float fVar2;
+	float fVar4;
+	edF32VECTOR4 eStack16;
+
+	this->field_0x1c = 0;
+
+	if (this->field_0xc != 0.0f) {
+		edF32Vector4SubHard(&eStack16, pPosition, &this->field_0x30);
+		fVar2 = edF32Vector4GetDistHard(&eStack16);
+		if (fVar2 < this->field_0xc) {
+			return;
+		}
+	}
+
+	edF32Vector4SubHard(&eStack16, pPosition, &this->field_0x20);
+
+	fVar2 = edF32Vector4SafeNormalize0Hard(&eStack16, &eStack16);
+	if (fVar2 <= this->field_0x0) {
+		this->field_0x10 = 0.0f;
+		this->field_0x20 = *pPosition;
+		this->field_0x30 = this->field_0x20;
+	}
+	else {
+		this->field_0x1c = 1;
+
+		fVar4 = this->field_0x10;
+		if (fVar2 <= ((0.0f - fVar4) / -this->field_0x18) * (fVar4 + 0.0f) * 0.5f) {
+			if (fVar4 < 0.0f) {
+				fVar2 = this->field_0x10 + this->field_0x18 * GetTimer()->lastFrameTime;
+				this->field_0x10 = fVar2;
+				if (0.0f < fVar2) {
+					this->field_0x10 = 0.0f;
+				}
+			}
+			else {
+				fVar2 = this->field_0x10 - this->field_0x18 * GetTimer()->lastFrameTime;
+				this->field_0x10 = fVar2;
+				if (fVar2 < 0.0f) {
+					this->field_0x10 = 0.0f;
+				}
+			}
+		}
+		else {
+			if (fVar4 < this->field_0x14) {
+				this->field_0x10 = this->field_0x10 + this->field_0x18 * GetTimer()->lastFrameTime;
+				fVar2 = this->field_0x14;
+				if (fVar2 < this->field_0x10) {
+					this->field_0x10 = fVar2;
+				}
+			}
+			else {
+				this->field_0x10 = this->field_0x10 - this->field_0x18 * GetTimer()->lastFrameTime;
+				fVar2 = this->field_0x14;
+				if (this->field_0x10 < fVar2) {
+					this->field_0x10 = fVar2;
+				}
+			}
+		}
+
+		edF32Vector4ScaleHard(this->field_0x10 * GetTimer()->lastFrameTime, &eStack16, &eStack16);
+		edF32Vector4AddHard(&this->field_0x20, &this->field_0x20, &eStack16);
+		(this->field_0x20).w = 1.0f;
+	}
+	return;
+}
+
+void CValueDyn::MoveTo(float param_1)
+{
+	float fVar2;
+	float lastFrameTime;
+	float fVar4;
+	float fVar5;
+
+	lastFrameTime = GetTimer()->lastFrameTime;
+	this->field_0x1c = 0;
+
+	if ((this->field_0xc == 0.0f) || (this->field_0xc <= fabs(param_1 - this->field_0x8))) {
+		fVar2 = param_1 - this->field_0x4;
+		if (fabs(fVar2) <= this->field_0x0) {
+			this->field_0x4 = param_1;
+			this->field_0x8 = param_1;
+			this->field_0x10 = 0.0f;
+		}
+		else {
+			this->field_0x1c = 1;
+			fVar4 = this->field_0x18;
+			fVar5 = this->field_0x10;
+
+			if (fabs(fVar2) < ((0.0f - fVar5) / (fVar4 * -2.0f)) * (fVar5 + 0.0f) * 0.5f) {
+				if (fVar5 < 0.0f) {
+					fVar5 = fVar5 + lastFrameTime * 2.0f * fVar4;
+					this->field_0x10 = fVar5;
+
+					if (0.0f < fVar5) {
+						this->field_0x10 = 0.0f;
+					}
+				}
+				else {
+					fVar5 = fVar5 - lastFrameTime * 2.0f * fVar4;
+					this->field_0x10 = fVar5;
+
+					if (fVar5 < 0.0f) {
+						this->field_0x10 = 0.0f;
+					}
+				}
+			}
+			else {
+				if (0.0f <= fVar2) {
+					fVar5 = this->field_0x14;
+				}
+				else {
+					fVar5 = -this->field_0x14;
+				}
+
+				fVar4 = this->field_0x10;
+				if (fVar4 < fVar5) {
+					this->field_0x10 = fVar4 + lastFrameTime * 2.0f * this->field_0x18;
+					if (0.0f <= fVar2) {
+						fVar5 = this->field_0x14;
+					}
+					else {
+						fVar5 = -this->field_0x14;
+					}
+
+					if (fVar5 < this->field_0x10) {
+						if (0.0f <= fVar2) {
+							fVar2 = this->field_0x14;
+						}
+						else {
+							fVar2 = -this->field_0x14;
+						}
+						this->field_0x10 = fVar2;
+					}
+				}
+				else {
+					this->field_0x10 = fVar4 - lastFrameTime * 2.0f * this->field_0x18;
+					if (0.0f <= fVar2) {
+						fVar5 = this->field_0x14;
+					}
+					else {
+						fVar5 = -this->field_0x14;
+					}
+
+					if (this->field_0x10 < fVar5) {
+						if (0.0f <= fVar2) {
+							fVar2 = this->field_0x14;
+						}
+						else {
+							fVar2 = -this->field_0x14;
+						}
+
+						this->field_0x10 = fVar2;
+					}
+				}
+			}
+
+			this->field_0x4 = this->field_0x4 + lastFrameTime * this->field_0x10;
+		}
+	}
+
+	return;
+}
+
+void CDynBase::Init(float param_1, float param_2)
+{
+	this->field_0x4 = param_1;
+	this->field_0x8 = param_1;
+	this->field_0x10 = param_2;
+	this->field_0x1c = 0;
+
+	return;
+}
+
+void SPEED_DYN::Init(float param_1, float param_2)
+{
+	this->currentAlpha = param_1;
+	this->field_0x4 = param_2;
+}
+
+float SPEED_DYN::UpdateLerp(float target)
+{
+	Timer* pTimeController;
+	float adjustedDelta;
+	float delta;
+
+	adjustedDelta = this->field_0x4;
+	delta = target - this->currentAlpha;
+	pTimeController = GetTimer();
+	adjustedDelta = adjustedDelta * pTimeController->cutsceneDeltaTime;
+
+	if (fabs(delta) < this->field_0x4) {
+		pTimeController = GetTimer();
+		adjustedDelta = fabs(delta * pTimeController->cutsceneDeltaTime);
+	}
+
+	if (adjustedDelta < fabs(delta)) {
+		if (delta < 0.0f) {
+			adjustedDelta = -adjustedDelta;
+		}
+		this->currentAlpha = this->currentAlpha + adjustedDelta;
+	}
+	else {
+		this->currentAlpha = target;
+	}
+
+	return this->currentAlpha;
+}
+
+void SPEED_DYN::Update(float param_1)
+{
+	float fVar2;
+	float fVar3;
+
+	fVar3 = this->field_0x4;
+	fVar2 = param_1 - this->currentAlpha;
+	fVar3 = fVar3 * GetTimer()->cutsceneDeltaTime;
+
+	if (fVar3 < fabs(fVar2)) {
+		if (fVar2 < 0.0f) {
+			fVar3 = -fVar3;
+		}
+		this->currentAlpha = this->currentAlpha + fVar3;
+	}
+	else {
+		this->currentAlpha = param_1;
+	}
+
+	return;
+}
+
+
+void CAngleDyn::MoveTo(float angle, int mode)
+{
+	float fVar2;
+	float fVar3;
+	float unaff_f20;
+
+	fVar2 = edF32Between_2Pi(this->field_0x4);
+	this->field_0x4 = fVar2;
+	fVar2 = edF32Between_2Pi(angle);
+	this->field_0x1c = 0;
+
+	if ((this->field_0xc == 0.0f) || (unaff_f20 = edF32GetAnglesDelta(this->field_0x8, fVar2), this->field_0xc <= fabs(unaff_f20))) {
+		if (mode == 1) {
+			fVar3 = edF32Between_0_2Pi(fVar2 - this->field_0x4);
+			unaff_f20 = fVar3 - 6.283185f;
+		}
+		else {
+			if (mode == 2) {
+				unaff_f20 = edF32Between_0_2Pi(fVar2 - this->field_0x4);
+			}
+			else {
+				if (mode == 0) {
+					unaff_f20 = edF32GetAnglesDelta(this->field_0x4, fVar2);
+				}
+			}
+		}
+
+		if (fabs(unaff_f20) <= this->field_0x0) {
+			this->field_0x4 = fVar2;
+			this->field_0x8 = fVar2;
+			this->field_0x10 = 0.0f;
+		}
+		else {
+			this->field_0x1c = 1;
+			fVar2 = this->field_0x10;
+
+			if (fabs(unaff_f20) <= ((0.0f - fVar2) / -this->field_0x18) * (fVar2 + 0.0f) * 0.5f) {
+				if (fVar2 < 0.0f) {
+					fVar2 = this->field_0x10 + this->field_0x18 * GetTimer()->lastFrameTime * 2.0f;
+					this->field_0x10 = fVar2;
+
+					if (0.0f < fVar2) {
+						this->field_0x10 = 0.0f;
+					}
+				}
+				else {
+					fVar2 = this->field_0x10 - this->field_0x18 * GetTimer()->lastFrameTime * 2.0f;
+					this->field_0x10 = fVar2;
+
+					if (fVar2 < 0.0f) {
+						this->field_0x10 = 0.0f;
+					}
+				}
+			}
+			else {
+				if (0.0f <= unaff_f20) {
+					fVar2 = this->field_0x14;
+				}
+				else {
+					fVar2 = -this->field_0x14;
+				}
+
+				if (this->field_0x10 < fVar2) {
+					this->field_0x10 = this->field_0x10 + this->field_0x18 * GetTimer()->lastFrameTime * 2.0f;
+
+					if (0.0f <= unaff_f20) {
+						fVar2 = this->field_0x14;
+					}
+					else {
+						fVar2 = -this->field_0x14;
+					}
+
+					if (fVar2 < this->field_0x10) {
+						if (0.0f <= unaff_f20) {
+							fVar2 = this->field_0x14;
+						}
+						else {
+							fVar2 = -this->field_0x14;
+						}
+
+						this->field_0x10 = fVar2;
+					}
+				}
+				else {
+					this->field_0x10 = this->field_0x10 - this->field_0x18 * GetTimer()->lastFrameTime * 2.0f;
+
+					if (0.0f <= unaff_f20) {
+						fVar2 = this->field_0x14;
+					}
+					else {
+						fVar2 = -this->field_0x14;
+					}
+
+					if (this->field_0x10 < fVar2) {
+						if (0.0f <= unaff_f20) {
+							fVar2 = this->field_0x14;
+						}
+						else {
+							fVar2 = -this->field_0x14;
+						}
+
+						this->field_0x10 = fVar2;
+					}
+				}
+			}
+
+			this->field_0x4 = this->field_0x4 + this->field_0x10 * GetTimer()->lastFrameTime;
+		}
+	}
+
+	return;
+}
+
+

@@ -4,70 +4,38 @@
 #include "Types.h"
 #include "Actor.h"
 #include "CameraViewManager.h"
+#include "Squad.h"
+#include "ChessBoard.h"
+#include "CameraFightData.h"
 
 class CActorFighter;
 class CActorWolfen;
-
-class CTeamElt
-{
-public:
-	CTeamElt();
-	int field_0x0;
-	int field_0x4;
-	int field_0x14;
-	int enemyIndex;
-	CActorFighter* pEnemyActor;
-};
+class CActorCommander;
 
 class ACommanderComponent_10 {};
 
-class CChessboard
-{
-public:
-};
-
-struct SquadSubObj_0x20
-{
-	CActorWolfen* pWolfen;
-	CActorWolfen* field_0x4;
-	undefined4 field_0x8;
-	uint flags;
-	undefined4 field_0x10;
-};
-
-struct SquadSubObj_0xb0
-{
-	undefined4 field_0x0;
-	float field_0x4;
-	int field_0x8;
-	uint field_0xc;
-
-	SquadSubObj_0x20 field_0x10[5];
-};
-
-class CSquad 
-{
-public:
-	void Create(ByteCode* pByteCode);
-	void Term();
-
-	void Clear();
-
-	int NbElt();
-
-	void ClearSquadDeadAndNonFightingElt();
-
-	void RemoveFighter(CTeamElt* pTeamElt);
-
-	CFixedTable<CTeamElt*, 5> eltTable;
-	CChessboard chessboard;
-
-	SquadSubObj_0xb0 aSubObjs[2];
-};
+struct S_TARGET_ON_OFF_STREAM_REF;
+struct S_STREAM_EVENT_CAMERA;
 
 class CBehaviourCommander : public CBehaviour
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+
+	virtual bool CanReleaseSemaphore();
+	virtual CActorFighter* GetFocus();
+	virtual void TestSwitch();
+	virtual bool UpdateTeamAnim();
+
+	CActorCommander* pOwner;
+
+	CSquadConfig squadConfig;
+
+	S_TARGET_ON_OFF_STREAM_REF* pMagicalSwitch1C_0x10;
+	S_STREAM_EVENT_CAMERA* pMagicalSwitch20_0x14;
+	undefined4 field_0x18;
+	float field_0x1c;
 };
 
 class CBehaviourCommanderBeatUp : public CBehaviourCommander
@@ -78,10 +46,20 @@ public:
 class CBehaviourCommanderDefault : public CBehaviourCommander
 {
 public:
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual void TestSwitch();
+	virtual bool UpdateTeamAnim();
+
+	byte field_0x20;
 };
 
 class CActorCommander : public CActor {
 public:
+	static StateConfig _gStateCfg_CMD[4];
+
 	CActorCommander();
 
 	virtual void Create(ByteCode* pByteCode);
@@ -90,11 +68,13 @@ public:
 	virtual void Manage();
 	virtual void Reset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
-	virtual StateConfig* GetStateCfg(int state) { IMPLEMENTATION_GUARD(); }
+	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); }
 
 	virtual void _UpdateSquad();
+	virtual void _UpdateSequence();
+	virtual void _UpdatePattern();
 
 	void ClearLocalData();
 
@@ -122,6 +102,8 @@ public:
 
 	void _UpdateCamera();
 
+	void StateCommanderDefault();
+
 	uint detectAreaZoneId;
 	uint guardAreaZoneId;
 
@@ -131,7 +113,10 @@ public:
 	CTeamElt* aTeamElt;
 	ACommanderComponent_10* aComponent_0x170;
 
+	int field_0x168;
 	int count_0x16c;
+
+	CActor* field_0x174;
 
 	uint field_0x180;
 	int newPathFindingId;
@@ -163,6 +148,8 @@ public:
 	CBehaviourCommanderDefault behaviourCommanderDefault;
 
 	undefined4 field_0x2f4;
+
+	int field_0x6d0;
 
 	CActorFighter* field_0x9f0;
 };

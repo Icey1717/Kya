@@ -349,6 +349,34 @@ class CBehaviourAvoid : public CBehaviour
 public:
 };
 
+class CBehaviourFighterWolfen : public CBehaviourFighter
+{
+public:
+	void SetPositionToHold(float param_1, edF32VECTOR4* pPosition);
+
+	int field_0x3c;
+	edF32VECTOR4 holdPosition;
+	float field_0x50;
+};
+
+class CBehaviourWolfenFighterRidden : public CBehaviourFighterRidden
+{
+public:
+
+};
+
+class CBehaviourWolfenFighterSlave : public CBehaviourFighterSlave
+{
+public:
+
+};
+
+class CBehaviourWolfenFighterProjected : public CBehaviourFighterProjected
+{
+public:
+
+};
+
 struct WolfenConfig : public StateConfig
 {
 	WolfenConfig(int inA, uint inB, int inC)
@@ -442,6 +470,7 @@ public:
 	virtual void _Std_OnFightActionSuccess();
 
 	virtual void Func_0x204(CActorFighter* pOther);
+	virtual bool AcquireAdversary(CActorFighter* pTarget);
 	virtual void SetRunSpeed(float param_1);
 
 	bool IsCurrentPositionValid();
@@ -515,8 +544,12 @@ public:
 
 	void UpdateCombatMode(); // new
 
-	CBehaviourLost behaviourLost;
+	CBehaviourWolfenFighterProjected behaviourWolfenFighterProjected;
+	CBehaviourWolfenFighterRidden behaviourWolfenFighterRidden;
+	CBehaviourWolfenFighterSlave behaviourWolfenFighterSlave;
 	CBehaviourTrack behaviourTrack;
+	CBehaviourFighterWolfen behaviourFighterWolfen;
+	CBehaviourLost behaviourLost;
 	CBehaviourExorcism behaviourExorcism;
 
 	int field_0xb2c;
@@ -535,12 +568,12 @@ public:
 	float walkSpeed;
 	float walkAcceleration;
 	float walkRotSpeed;
-	float field_0xc5c;
+	float defaultRunSpeed;
 
 	float runSpeed;
 	float runAcceleration;
 	float rotRunSpeed;
-	float field_0xc6c;
+	float runSpeedScale;
 
 	edF32VECTOR4 pathOriginPosition;
 
@@ -557,7 +590,7 @@ public:
 	uint field_0xd30;
 
 	CActorProjectile* pTrackedProjectile;
-	undefined4 field_0xd14;
+	CActor* pBoxInWay;
 	float field_0xd1c;
 	float field_0xd20;
 

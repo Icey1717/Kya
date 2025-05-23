@@ -2,10 +2,13 @@
 #define _CAMERA_GAME_H
 
 #include "CameraViewManager.h"
+#include "Dynamic.h"
 
 class CActorHeroPrivate;
+class CCamFigData;
 
-struct CCameraGame : public CCameraExt {
+struct CCameraGame : public CCameraExt
+{
 	CCameraGame(ECameraType type, struct ByteCode* pMemoryStream);
 	virtual void Init();
 	virtual bool Manage();
@@ -50,6 +53,8 @@ struct CCameraGame : public CCameraExt {
 	void CameraGetWorldTranslation(edF32VECTOR4* outTranslation);
 
 	void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
+
+	void Fight_SetConfig(CCamFigData* pConfig);
 
 	static int _b_use_fig_data;
 	static CCamFigData* _pfig_data;
@@ -252,5 +257,29 @@ struct CCameraGame : public CCameraExt {
 	undefined field_0x4ae;
 	undefined field_0x4af;
 };
+
+class CSP_Manager
+{
+public:
+	void* GetFreeBuffer(size_t size) {
+#ifdef PLATFORM_PS2
+		IMPLEMENTATION_GUARD();
+		return (void*)0x0;
+#else
+		return malloc(size);
+#endif
+	}
+
+	void ReleaseBuffer(void* ptr) {
+#ifdef PLATFORM_PS2
+		IMPLEMENTATION_GUARD();
+		return;
+#else
+		return free(ptr);
+#endif
+	}
+};
+
+extern CSP_Manager gSP_Manager;
 
 #endif

@@ -478,7 +478,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 	edF32VECTOR4 local_10;
 
 	pCVar1 = this->pCollisionData;
-	if (pActorsTable->entryCount < 1) {
+	if (pActorsTable->nbEntries < 1) {
 		this->field_0x348 = 0;
 	}
 	else {
@@ -491,7 +491,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 		fVar7 = (peVar2->field_0xb0).y;
 		fVar6 = (peVar2->field_0x90).y * 0.5f;
 		fVar8 = fVar7 - fVar6;
-		if (0 < pActorsTable->entryCount) {
+		if (0 < pActorsTable->nbEntries) {
 			do {
 				if (((pActorsTable->aEntries[iVar5] != this->pTiedActor) &&
 					(edF32Vector4SubHard(&eStack32, &(pActorsTable->aEntries[iVar5]->pCollisionData)->field_0x90, &this->currentLocation), fVar8 < eStack32.y)) &&
@@ -511,7 +511,7 @@ void CActorAutonomous::_ManageDynamicFence(CActorsTable* pActorsTable)
 				}
 				iVar5 = iVar5 + 1;
 		
-			} while (iVar5 < pActorsTable->entryCount);
+			} while (iVar5 < pActorsTable->nbEntries);
 		}
 
 		if (0 < this->field_0x348) {
@@ -831,7 +831,7 @@ void CActorAutonomous::ManageDyn(float param_1, uint flags, CActorsTable* pActor
 		if ((((uVar10 & 0x80000) == 0) || ((pCollision->flags_0x4 & 2) == 0)) ||
 			(GetTimer()->scaledTotalTime - this->dynamicExt.scaledTotalTime < 0.5f)) {
 
-			local_1e0.entryCount = 0;
+			local_1e0.nbEntries = 0;
 			if (pActorsTable == (CActorsTable*)0x0) {
 				pActorsTable = &local_1e0;
 			}
@@ -1316,20 +1316,20 @@ void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, CActor* pA
 	CActor* local_4;
 
 	if ((radius != 0.0) && (radius != param_2)) {
-		local_130.entryCount = 0;
+		local_130.nbEntries = 0;
 		local_20.xyz = this->currentLocation.xyz;
 		local_20.w = radius;
 
 		(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_130, &local_20, Wolfen_CriterionWarn, this);
 		iVar3 = 0;
 		if (param_2 == 0.0) {
-			for (; iVar3 < local_130.entryCount; iVar3 = iVar3 + 1) {
+			for (; iVar3 < local_130.nbEntries; iVar3 = iVar3 + 1) {
 				local_4 = pActor;
 				DoMessage(local_130.aEntries[iVar3], (ACTOR_MESSAGE)0x3a, (MSG_PARAM)pActor);
 			}
 		}
 		else {
-			for (iVar3 = 0; iVar3 < local_130.entryCount; iVar3 = iVar3 + 1) {
+			for (iVar3 = 0; iVar3 < local_130.nbEntries; iVar3 = iVar3 + 1) {
 				pReceiver = local_130.aEntries[iVar3];
 				fVar4 = (pReceiver->currentLocation).x - this->currentLocation.x;
 				fVar1 = (pReceiver->currentLocation).y - this->currentLocation.y;
@@ -1346,36 +1346,38 @@ void CActorAutonomous::SV_AUT_WarnActors(float radius, float param_2, CActor* pA
 	return;
 }
 
-void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation)
+void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsOut, CActorMovParamsIn* pParamsIn, edF32VECTOR4* pPosition)
 {
 	int* piVar1;
 	int iVar2;
 	CPathFinderClient* pCVar3;
-	edF32VECTOR4* peVar5;
+	edF32VECTOR4* pPathPosition;
 	float fVar6;
 	edF32VECTOR4 local_10;
 
-	peVar5 = pLocation;
-	if (((GetPathfinderClient() == 0) || (GetPathfinderClient()->id != -1)) || ((pParamsOut->flags & 0x20) != 0)) {
+	pPathPosition = pPosition;
+
+	if (((GetPathfinderClient() == 0) || (GetPathfinderClient()->id == -1)) || ((pParamsIn->flags & 0x20) != 0)) {
 		if (GetPathfinderClient() != 0) {
 			GetPathfinderClient()->CleanPathDynamic();
 		}
 	}
 	else {
 		if (GetPathfinderClient()->pPathDynamic == (CPathDynamic*)0x0) {
-			GetPathfinderClient()->FindPathDynamic(this, pLocation);
+			GetPathfinderClient()->FindPathDynamic(this, pPosition);
 		}
 
 		if (GetPathfinderClient()->pPathDynamic == (CPathDynamic*)0x0) {
-			pParamsIn->flags = 2;
-			peVar5 = (edF32VECTOR4*)0x0;
+			// Pathfinding failed.
+			pParamsOut->flags = 2;
+			pPathPosition = (edF32VECTOR4*)0x0;
 		}
 		else {
 			IMPLEMENTATION_GUARD(
-			int lVar4 = GetPathfinderClient()->CheckAndUpdatePathDynamic(this, pLocation);
+			int lVar4 = GetPathfinderClient()->CheckAndUpdatePathDynamic(this, pPosition);
 			if (lVar4 == 0) {
 				GetPathfinderClient()->ComputeSubTargetPathDynamic(this, &GetPathfinderClient()->field_0x20);
-				peVar5 = &GetPathfinderClient()->field_0x20;
+				pPathPosition = &GetPathfinderClient()->field_0x20;
 			}
 			else {
 				if (lVar4 == 1) {
@@ -1383,22 +1385,23 @@ void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsIn, 
 				}
 				else {
 					if (lVar4 == 3) {
-						pParamsIn->flags = 2;
+						pParamsOut->flags = 2;
 					}
 
 					GetPathfinderClient()->CleanPathDynamic();
-					peVar5 = (edF32VECTOR4*)0x0;
+					pPathPosition = (edF32VECTOR4*)0x0;
 				}
 			})
 		}
 	}
 
-	if (peVar5 != (edF32VECTOR4*)0x0) {
-		SV_AUT_MoveTo_DynFence(pParamsIn, pParamsOut, peVar5);
-		local_10 = *pLocation - *peVar5;
+	if (pPathPosition != (edF32VECTOR4*)0x0) {
+		SV_AUT_MoveTo_DynFence(pParamsOut, pParamsIn, pPathPosition);
+		local_10 = *pPosition - *pPathPosition;
 		fVar6 = edF32Vector4GetDistHard(&local_10);
-		pParamsIn->moveVelocity = fVar6 + pParamsIn->moveVelocity;
+		pParamsOut->moveVelocity = fVar6 + pParamsOut->moveVelocity;
 	}
+
 	return;
 }
 

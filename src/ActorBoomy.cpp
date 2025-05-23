@@ -322,10 +322,10 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			return 1;)
 		}
 
-		if (uVar4 == 0xc) {
-			IMPLEMENTATION_GUARD(
-			*(float*)pMsgParam = this->field_0x2c0;
-			return 1;)
+		if (uVar4 == MESSAGE_GET_RUN_SPEED) {
+			float* pRunSpeedParam = reinterpret_cast<float*>(pMsgParam);
+			*pRunSpeedParam = this->field_0x2c0;
+			return 1;
 		}
 
 		if (uVar4 == 4) {

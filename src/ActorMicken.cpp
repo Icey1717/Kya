@@ -805,13 +805,13 @@ void CActorMicken::StateMickenKickFly(CBehaviourMicken* pBehaviour, int param_3)
 
 	pCVar1 = this->pCollisionData;
 	pCVar2 = this->pAnimationController;
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 	ManageDyn(4.0f, 0x41920, &local_110);
 
 	if ((pCVar1->flags_0x4 & 2) != 0) {
 		if (param_3 == 0) {
 			if (fabs(this->dynamic.linearAcceleration * this->dynamic.velocityDirectionEuler.y) < 1.0f) {
-				for (iVar5 = 0; iVar5 < local_110.entryCount; iVar5 = iVar5 + 1) {
+				for (iVar5 = 0; iVar5 < local_110.nbEntries; iVar5 = iVar5 + 1) {
 					pReceiver = local_110.aEntries[iVar5];
 
 					if ((pReceiver->typeID == AMORTOS) && (2.0f < this->currentLocation.y - (pReceiver->currentLocation).y)) {

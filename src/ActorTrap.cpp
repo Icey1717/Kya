@@ -1255,7 +1255,7 @@ int CBehaviourTrapStand::DetectActor()
 
 	pCVar2 = CActorHero::_gThis;
 	sphere.w = 1.5f;
-	intersectActorTable.entryCount = 0;
+	intersectActorTable.nbEntries = 0;
 	pCVar1 = this->pOwner;
 
 	sphere.x = pCVar1->currentLocation.x;
@@ -1273,7 +1273,7 @@ int CBehaviourTrapStand::DetectActor()
 
 		if (iVar6 == 0) {
 			CScene::ptable.g_ActorManager_004516a4->cluster.GetActorsIntersectingSphereWithCriterion(&intersectActorTable, &sphere, gTrpDetectCallback, this->pOwner);
-			if (intersectActorTable.entryCount != 0) {
+			if (intersectActorTable.nbEntries != 0) {
 				pReceiver = (CActorHero*)intersectActorTable.aEntries[0];
 			}
 		}

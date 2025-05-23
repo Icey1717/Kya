@@ -4,6 +4,7 @@
 #include "../ActorHero.h"
 #include "CameraGame.h"
 #include "CameraViewManager.h"
+#include "../CameraFightData.h"
 
 CCamera* CCameraStack::FindActivableCameraInStack(uint param_2)
 {
@@ -154,10 +155,9 @@ int CCameraStack::GetCurHeroState(void)
 				pCVar3 = CCameraGame::_pfig_data;
 			}
 
-			IMPLEMENTATION_GUARD(
 			if (pCVar3->field_0x2a0 != 0) {
 				return 0x40;
-			})
+			}
 		}
 
 		uVar1 = pHero->TestState_IsGrippedOrClimbing(0xffffffff);

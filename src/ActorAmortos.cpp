@@ -245,7 +245,7 @@ CActorAmortos::CActorAmortos()
 	//*(undefined4*)&this->field_0x244 = 0;
 
 	//*(undefined4*)&this->field_0x304 = 0;
-	this->field_0x408.entryCount = 0;
+	this->field_0x408.nbEntries = 0;
 }
 
 StateConfig CActorAmortos::_gStateCfg_AMO[5] = {
@@ -681,11 +681,11 @@ void CActorAmortos::StateAmortosWaitReSwell()
 
 	if ((fVar5 < 0.0f) && ((this->field_0x190).Get() == (CActor*)0x0)) {
 		if ((this->actorFieldS & 8) == 0) {
-			local_110.entryCount = 0;
+			local_110.nbEntries = 0;
 			intersectSphere.w = 2.3f;
 			intersectSphere.xyz = this->currentLocation.xyz;
 			pCVar3->cluster.GetActorsIntersectingSphereWithCriterion(&local_110, &intersectSphere, gAmoReswellCallback, this);
-			if (local_110.entryCount == 0) {
+			if (local_110.nbEntries == 0) {
 				SetState(9, -1);
 			}
 		}
@@ -735,7 +735,7 @@ bool gAmoExplodeCallbackDeluxe(CActor* pActor, void* pParams)
 			edF32Vector4SubHard(&eStack16, &eStack16, &eStack32);
 			fVar4 = edF32Vector4GetDistHard(&eStack16);
 			if (fVar4 < 2.0f) {
-				iVar1 = (pAmortos->field_0x408).entryCount;
+				iVar1 = (pAmortos->field_0x408).nbEntries;
 				iVar3 = 0;
 				if (0 < iVar1) {
 					do {
@@ -775,10 +775,10 @@ void CActorAmortos::StateAmortosExplode()
 	intersectSphere.xyz = this->currentLocation.xyz;
 	intersectSphere.w = this->field_0x2b4;
 
-	table.entryCount = 0;
+	table.nbEntries = 0;
 	(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&table, &intersectSphere, gAmoExplodeCallbackDeluxe, this);
 
-	for (iVar4 = 0; iVar4 < table.entryCount; iVar4 = iVar4 + 1) {
+	for (iVar4 = 0; iVar4 < table.nbEntries; iVar4 = iVar4 + 1) {
 		pNewEntry = table.aEntries[iVar4];
 		this->field_0x408.Add(pNewEntry);
 		local_1b0[0] = 10;
@@ -795,7 +795,7 @@ void CActorAmortos::StateAmortosExplode()
 	}
 
 	if (this->field_0x164 <= this->field_0x2b4) {
-		this->field_0x408.entryCount = 0;
+		this->field_0x408.nbEntries = 0;
 		SetState(8, -1);
 	}
 	return;

@@ -15,6 +15,7 @@ extern edF32MATRIX4 gF32Matrix4Unit;
 extern edF32VECTOR4 gF32Vertex4Zero;
 extern edF32VECTOR4 gF32Vector4Zero;
 extern edF32VECTOR4 gF32Vector4UnitX;
+extern edF32VECTOR4 gF32Vector4UnitY;
 extern edF32VECTOR4 gF32Vector4UnitZ;
 extern edF32VECTOR4 g_xVector;
 

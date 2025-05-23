@@ -2373,11 +2373,11 @@ void CLevelScheduler::Level_Manage()
 	})
 
 	if (this->currentLevelID == 0) {
-		local_110.entryCount = 0;
+		local_110.nbEntries = 0;
 		CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(NATIV_SHOP, &local_110);
 
 		IMPLEMENTATION_GUARD(
-		this->field_0x5620 = local_110.entryCount;
+		this->field_0x5620 = local_110.nbEntries;
 		if (10 < this->field_0x5620) {
 			this->field_0x5620 = 10;
 		}

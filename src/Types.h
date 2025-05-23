@@ -785,22 +785,22 @@ template<typename T, int Size>
 class CFixedTable {
 public:
 	CFixedTable()
-		: entryCount(0)
+		: nbEntries(0)
 	{
 	}
 
-	int entryCount;
+	int nbEntries;
 	T aEntries[Size];
 
 	inline void Add(T value) {
-		if (this->entryCount < Size) {
-			this->aEntries[this->entryCount] = value;
-			this->entryCount++;
+		if (this->nbEntries < Size) {
+			this->aEntries[this->nbEntries] = value;
+			this->nbEntries++;
 		}
 	}
 
 	inline bool IsInList(T value) {
-		for (int i = 0; i < this->entryCount; i++) {
+		for (int i = 0; i < this->nbEntries; i++) {
 			if (this->aEntries[i] == value) {
 				return true;
 			}
@@ -826,26 +826,26 @@ public:
 		int iVar5;
 
 		iVar5 = 0;
-		if (0 < pTable->entryCount) {
+		if (0 < pTable->nbEntries) {
 			do {
 				iVar4 = 0;
-				if (0 < this->entryCount) {
+				if (0 < this->nbEntries) {
 					do {
 						bVar1 = true;
 						if (pTable->aEntries[iVar4] == this->aEntries[iVar4]) goto LAB_001985c0;
 
 						iVar4 = iVar4 + 1;
-					} while (iVar4 < this->entryCount);
+					} while (iVar4 < this->nbEntries);
 				}
 
 				bVar1 = false;
 			LAB_001985c0:
-				if ((!bVar1) && (this->entryCount < Size)) {
-					this->aEntries[this->entryCount] = pTable->aEntries[iVar5];
-					this->entryCount = this->entryCount + 1;
+				if ((!bVar1) && (this->nbEntries < Size)) {
+					this->aEntries[this->nbEntries] = pTable->aEntries[iVar5];
+					this->nbEntries = this->nbEntries + 1;
 				}
 				iVar5 = iVar5 + 1;
-			} while (iVar5 < pTable->entryCount);
+			} while (iVar5 < pTable->nbEntries);
 		}
 
 		return;
@@ -858,7 +858,7 @@ public:
 		int iVar3;
 
 		ppCVar2 = this->aEntries + index + -1;
-		iVar3 = this->entryCount + -1;
+		iVar3 = this->nbEntries + -1;
 		pCVar1 = ppCVar2[1];
 		if (index < iVar3) {
 			do {
@@ -868,7 +868,7 @@ public:
 			} while (index < iVar3);
 		}
 
-		this->entryCount = this->entryCount + -1;
+		this->nbEntries = this->nbEntries + -1;
 		return pCVar1;
 	}
 
@@ -878,7 +878,7 @@ public:
 		T* ppCVar2;
 		int iVar3;
 		ppCVar2 = this->aEntries + index + -1;
-		iVar3 = this->entryCount + -1;
+		iVar3 = this->nbEntries + -1;
 		pCVar1 = ppCVar2[1];
 		if (index < iVar3) {
 			do {
@@ -888,7 +888,7 @@ public:
 			} while (index < iVar3);
 		}
 
-		this->entryCount = this->entryCount + -1;
+		this->nbEntries = this->nbEntries + -1;
 		pOut[0] = pCVar1;
 		return;
 	}
@@ -898,9 +898,9 @@ public:
 		T pCVar2;
 
 		pCVar2 = (T)0x0;
-		if (this->entryCount != 0) {
-			iVar1 = this->entryCount;
-			this->entryCount = iVar1 + -1;
+		if (this->nbEntries != 0) {
+			iVar1 = this->nbEntries;
+			this->nbEntries = iVar1 + -1;
 			pCVar2 = this->aEntries[iVar1 + -1];
 		}
 
@@ -914,6 +914,7 @@ class CActorsTable : public CFixedTable<CActor*, 64>
 public:
 	bool IsInList(CActor* pActor);
 	bool IsInList(int value);
+	CActor* Remove(CActor* pActor);
 };
 
 PACK(
@@ -975,9 +976,17 @@ public:
 
 struct ed_Bound_Sphere
 {
-	float x;
-	float y;
-	float z;
+	union
+	{
+		struct {
+			float x;
+			float y;
+			float z;
+		};
+
+		edF32VECTOR3 xyz;
+	};
+
 	float radius;
 };
 

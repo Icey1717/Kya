@@ -7,6 +7,7 @@
 #include "ActorAmbre.h"
 #include "Fx_Tail.h"
 #include "FxLightEmitter.h"
+#include "Dynamic.h"
 
 class CActorBoomy;
 class CedMathTCBSpline;

@@ -10,6 +10,7 @@ edF32MATRIX4 gF32Matrix4Unit = { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 edF32VECTOR4 gF32Vertex4Zero = { 0.0f, 0.0f, 0.0f, 1.0f };
 edF32VECTOR4 gF32Vector4Zero = { 0.0f, 0.0f, 0.0f, 0.0f };
 edF32VECTOR4 gF32Vector4UnitX = { 1.0f, 0.0f, 0.0f, 0.0f };
+edF32VECTOR4 gF32Vector4UnitY = { 0.0f, 1.0f, 0.0f, 0.0f };
 edF32VECTOR4 gF32Vector4UnitZ = { 0.0f, 0.0f, 1.0f, 0.0f };
 edF32VECTOR4 g_xVector = { 0.0f, 1.0f, 0.0f, 0.0f };
 

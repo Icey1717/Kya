@@ -1367,7 +1367,7 @@ void CCollision::TranslateList(CActor* pActor, CActorsTable* param_3, edF32MATRI
 
 		edF32Matrix4MulF32Matrix4Hard(&local_40, &local_a0, m0);
 
-		iVar9 = param_3->entryCount;
+		iVar9 = param_3->nbEntries;
 
 		while (0 < iVar9) {
 			iVar8 = iVar9 + -1;
@@ -1440,7 +1440,7 @@ uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0)
 
 	clusterCallbackParams.pTable = &actorIntersectTable;
 	result = 0;
-	actorIntersectTable.entryCount = 0;
+	actorIntersectTable.nbEntries = 0;
 	clusterCallbackParams.pActor = pActor;
 
 	edF32Matrix4ScaleHard(&worldBoundingSphereMatrix, m0, &pActor->scale);
@@ -1459,15 +1459,15 @@ uint CCollision::CheckCollisionsWithActors(CActor* pActor, edF32MATRIX4* m0)
 		}
 	}
 
-	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} entry count: {}", pActor->name, actorIntersectTable.entryCount);
+	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} entry count: {}", pActor->name, actorIntersectTable.nbEntries);
 
-	entryCount = actorIntersectTable.entryCount;
-	if (actorIntersectTable.entryCount != 0) {
+	entryCount = actorIntersectTable.nbEntries;
+	if (actorIntersectTable.nbEntries != 0) {
 		colInfoObbTreeObbTree.pColObj = this->pColObj;
 		currentEntryIndex = 0;
 		colInfoObbTreeObbTree.field_0xc = (char*)0x0;
 
-		if (0 < actorIntersectTable.entryCount) {
+		if (0 < actorIntersectTable.nbEntries) {
 			do {
 				COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisionsWithActors {} with: {}", pActor->name, actorIntersectTable.aEntries[currentEntryIndex]->name);
 
@@ -2079,7 +2079,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 
 	COLLISION_LOG(LogLevel::VeryVerbose, "CCollision::CheckCollisions_UpdateCollisionMatrix {}", pActor->name);
 
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 	uVar3 = this->flags_0x0 & 0x480;
 	bVar2 = pMatrix->cc + pMatrix->aa + pMatrix->bb != 3.0f;
 	matrixType = (uint)bVar2;
@@ -2237,7 +2237,7 @@ void CCollision::CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATR
 		}
 	}
 
-	if ((uVar3 != 0) && ((pActorsTable->entryCount != 0 || (this->pTiedActorEntry != (S_TIED_ACTOR_ENTRY*)0x0)))) {
+	if ((uVar3 != 0) && ((pActorsTable->nbEntries != 0 || (this->pTiedActorEntry != (S_TIED_ACTOR_ENTRY*)0x0)))) {
 		TranslateList(pActor, pActorsTable, pMatrix, param_5);
 	}
 

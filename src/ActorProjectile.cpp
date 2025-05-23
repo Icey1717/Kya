@@ -1058,11 +1058,11 @@ void CActorProjectile::BehaviourProjectile_Manage(CBehaviourProjectileStand* pBe
 	else {
 		bVar5 = false;
 		if (0.0f < this->field_0x350->explosionRange) {
-			local_120.entryCount = 0;
+			local_120.nbEntries = 0;
 			local_10.xyz = this->currentLocation.xyz;
 			local_10.w = this->field_0x350->explosionRange;
 			(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_120, &local_10, Projectile_CriterionExploder, this);
-			if (0 < local_120.entryCount) {
+			if (0 < local_120.nbEntries) {
 				bVar5 = true;
 			}
 		}
@@ -1340,13 +1340,13 @@ void CActorProjectile::StateFlyingDirected(ulong flags, int param_3)
 		}
 	}
 	else {
-		local_110.entryCount = 0;
+		local_110.nbEntries = 0;
 		ManageDyn(4.0f, dynFlags, &local_110);
 
 		bVar1 = false;
 		do {
 			do {
-				if (local_110.entryCount == 0) goto LAB_002061f0;
+				if (local_110.nbEntries == 0) goto LAB_002061f0;
 				pCVar3 = local_110.PopCurrent();
 			} while (pCVar3 == this->pFiringActor);
 
@@ -1470,11 +1470,11 @@ void CActorProjectile::StateDie(uint dynFlags, int param_3, int param_4)
 			local_20.w = this->field_0x350->hitRadius;
 
 			if ((this->actorFieldS & 8) == 0) {
-				local_130.entryCount = 0;
+				local_130.nbEntries = 0;
 				(CScene::ptable.g_ActorManager_004516a4)->cluster.GetActorsIntersectingSphereWithCriterion(&local_130, &local_20,
 					CActorProjectile_HitActorCriterion, (void*)0x0);
 
-				for (int i = 0; i < local_130.entryCount; i++) {
+				for (int i = 0; i < local_130.nbEntries; i++) {
 					HitActor(&local_20, local_130.aEntries[i], param_3, 1);
 				}
 			}

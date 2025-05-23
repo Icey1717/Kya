@@ -4936,7 +4936,7 @@ bool CActorsTable::IsInList(CActor* pActor)
 
 	piVar1 = this->aEntries;
 	iVar2 = 0;
-	if (0 < this->entryCount) {
+	if (0 < this->nbEntries) {
 		do {
 			if (pActor == (*piVar1)) {
 				return true;
@@ -4944,7 +4944,7 @@ bool CActorsTable::IsInList(CActor* pActor)
 
 			iVar2 = iVar2 + 1;
 			piVar1 = piVar1 + 1;
-		} while (iVar2 < this->entryCount);
+		} while (iVar2 < this->nbEntries);
 	}
 
 	return false;
@@ -4958,7 +4958,7 @@ bool CActorsTable::IsInList(int typeId)
 
 	piVar1 = this->aEntries;
 	iVar2 = 0;
-	if (0 < this->entryCount) {
+	if (0 < this->nbEntries) {
 		do {
 			if (typeId == (*piVar1)->typeID) {
 				return true;
@@ -4966,10 +4966,52 @@ bool CActorsTable::IsInList(int typeId)
 
 			iVar2 = iVar2 + 1;
 			piVar1 = piVar1 + 1;
-		} while (iVar2 < this->entryCount);
+		} while (iVar2 < this->nbEntries);
 	}
 
 	return false;
+}
+
+CActor* CActorsTable::Remove(CActor* pActor)
+{
+	int totalEntries;
+	bool bFound;
+	CActor* pRemovedActor;
+	CActor** ppCVar4;
+	CActor** pCVar5;
+	int actorIndex;
+
+	totalEntries = this->nbEntries;
+	actorIndex = 0;
+	pRemovedActor = (CActor*)0x0;
+	pCVar5 = this->aEntries;
+	while (true) {
+		bFound = false;
+		if ((actorIndex < totalEntries) && (*pCVar5 != pActor)) {
+			bFound = true;
+		}
+
+		if (!bFound) break;
+
+		pCVar5 = pCVar5 + 1;
+		actorIndex = actorIndex + 1;
+	}
+
+	if (actorIndex < totalEntries) {
+		ppCVar4 = this->aEntries + actorIndex + -1;
+		pRemovedActor = ppCVar4[1];
+		if (actorIndex < totalEntries + -1) {
+			do {
+				actorIndex = actorIndex + 1;
+				ppCVar4[1] = ppCVar4[2];
+				ppCVar4 = ppCVar4 + 1;
+			} while (actorIndex < this->nbEntries + -1);
+		}
+
+		this->nbEntries = this->nbEntries + -1;
+	}
+
+	return pRemovedActor;
 }
 
 void CBehaviourInactive::Create(ByteCode* pByteCode)

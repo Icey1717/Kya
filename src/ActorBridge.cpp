@@ -976,7 +976,7 @@ LAB_001e1120:
 				this->rotationEuler.xyz = local_90;
 
 				if (param_2 == 0) {
-					local_1a0.entryCount = 0;
+					local_1a0.nbEntries = 0;
 
 					if (this->typeID == MOVING_PLATFORM) {
 						pMovingPlatform->Platform_UpdateMatrix(&auStack64, 1, &local_1a0);
@@ -993,7 +993,7 @@ LAB_001e1120:
 					}
 
 					if (this->actorState != 7) {
-						if (local_1a0.entryCount == 0) {
+						if (local_1a0.nbEntries == 0) {
 							fVar23 = 1.0f / this->field_0x33c;
 							if ((1 < iVar5) &&
 								(this->verletBridge.aParticleSubObjs[iVar5].field_0x0 = fVar23, (this->verletBridge).field_0x68 == false)) {
@@ -1007,7 +1007,7 @@ LAB_001e1120:
 						else {
 							IMPLEMENTATION_GUARD(
 							fVar23 = this->field_0x33c;
-							for (iVar17 = 0; iVar17 < local_1a0.entryCount; iVar17 = iVar17 + 1) {
+							for (iVar17 = 0; iVar17 < local_1a0.nbEntries; iVar17 = iVar17 + 1) {
 								bVar2 = (*local_1a0.aEntries[iVar17]->pVTable->IsKindOfObject)(local_1a0.aEntries[iVar17], 2);
 								if (bVar2 == false) {
 									fVar21 = this->field_0x340 * 10.0;

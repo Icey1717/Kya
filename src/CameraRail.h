@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "camera.h"
 #include "edMathTCBSpline.h"
+#include "Dynamic.h"
 
 struct ByteCode;
 

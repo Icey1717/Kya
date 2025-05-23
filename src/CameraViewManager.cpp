@@ -1651,118 +1651,6 @@ bool CCameraManager::IsSphereVisible(float other, edF32VECTOR4* pSphere)
 	return bVar2;
 }
 
-void CCamFigData::Create(ByteCode* pByteCode)
-{
-	float fVar1;
-	float fVar2;
-	float* pfVar3;
-	int iVar4;
-	float fVar5;
-	float fVar6;
-	float local_40[14];
-
-	iVar4 = 0;
-	pfVar3 = local_40;
-	do {
-		fVar5 = pByteCode->GetF32();
-		iVar4 = iVar4 + 1;
-		*pfVar3 = fVar5;
-		pfVar3 = pfVar3 + 1;
-	} while (iVar4 < 0xe);
-	//this->field_0x4 = local_40[0] * 0.01745329;
-	//fVar5 = local_40[2] * 0.01745329;
-	//this->field_0x64 = fVar5;
-	//this->field_0x68 = fVar5 * 3.0;
-	//this->field_0x40 = fVar5 * 0.5;
-	//this->field_0x44 = fVar5 * 3.0 * 0.5;
-	//this->field_0x0 = local_40[3] * 0.01745329;
-	//this->field_0x8 = local_40[1];
-	//this->field_0xc = local_40[4];
-	//this->field_0x10 = local_40[5];
-	//this->field_0x14 = local_40[6];
-	//this->field_0x94 = local_40[7];
-	//this->field_0x98 = local_40[7] * 3.0;
-	//this->field_0x204 = local_40[7];
-	//this->field_0x208 = local_40[7] * 3.0;
-	//this->field_0x8c = local_40[8];
-	//this->field_0x18 = local_40[9];
-	//this->field_0x1c = local_40[10];
-	//this->field_0x20 = 0.2;
-	//this->field_0x24 = 0.25;
-	//fVar6 = local_40[11] * 3.0;
-	//SetMatrixTransformFunc_00213e40(0, &this->field_0xa0, &gF32Vertex4Zero);
-	//SetMatrixTransformFunc_00213e40(0, &this->field_0x1b0, &gF32Vertex4Zero);
-	//SetMatrixTransformFunc_00213e40(0, &this->field_0x160, &gF32Vertex4Zero);
-	//FloatFunc_002144c0(0, 0, (int)&this->field_0x1f0);
-	//fVar2 = gF32Vertex4Zero.w;
-	//fVar1 = gF32Vertex4Zero.z;
-	//fVar5 = gF32Vertex4Zero.y;
-	//this->field_0x2e0 = gF32Vertex4Zero.x;
-	//this->field_0x2e4 = fVar5;
-	//this->field_0x2e8 = fVar1;
-	//this->field_0x2ec = fVar2;
-	//fVar2 = gF32Vertex4Zero.w;
-	//fVar1 = gF32Vertex4Zero.z;
-	//fVar5 = gF32Vertex4Zero.y;
-	//this->field_0x250 = gF32Vertex4Zero.x;
-	//this->field_0x254 = fVar5;
-	//this->field_0x258 = fVar1;
-	//this->field_0x25c = fVar2;
-	//SetMatrixTransformFunc_00213e40(0, &this->field_0x120, &gF32Vertex4Zero);
-	//this->field_0x28 = 0.5;
-	//(this->field_0xa0).bb = local_40[11];
-	//(this->field_0xa0).bc = fVar6;
-	//(this->field_0x1b0).bb = local_40[11];
-	//(this->field_0x1b0).bc = fVar6;
-	//(this->field_0x160).bb = local_40[11];
-	//(this->field_0x160).bc = fVar6;
-	//(this->field_0x120).bb = local_40[11];
-	//(this->field_0x120).bc = fVar6;
-	//(this->field_0xa0).ad = local_40[12];
-	//(this->field_0x160).ad = local_40[13];
-	//fVar2 = gF32Vector4Zero.w;
-	//fVar1 = gF32Vector4Zero.z;
-	//fVar5 = gF32Vector4Zero.y;
-	//(this->field_0x290).x = gF32Vector4Zero.x;
-	//(this->field_0x290).y = fVar5;
-	//(this->field_0x290).z = fVar1;
-	//(this->field_0x290).w = fVar2;
-	return;
-}
-
-void CCamFigData::IsValid(undefined4 param_2)
-{
-	this->field_0x2a0 = param_2;
-	return;
-}
-
-void CCamConfig::ResetWithConfig()
-{
-	this->field_0x74 = this->field_0xc;
-	this->field_0x78 = this->field_0x10;
-	this->field_0x7c = this->field_0x14;
-	this->targetPitch = this->baseTargetPitch;
-	this->field_0x90 = 0.0f;
-	this->field_0x8c = 0.0f;
-	this->field_0x80 = 0;
-	this->field_0x94 = this->field_0x38.x;
-	this->field_0x98 = this->field_0x38.y;
-	this->field_0xa0 = this->field_0x38.z;
-	this->field_0xac = 0.0f;
-	this->field_0xa8 = 0.0f;
-	this->field_0x9c = 0;
-	this->field_0xb0 = this->field_0x48.z;
-	this->field_0xb4 = this->field_0x48.w;
-	this->field_0xbc = this->field_0x58.x;
-	this->field_0xc0 = this->field_0x58.x;
-	this->field_0xc8 = 0;
-	this->field_0xc4 = 0;
-	this->field_0xb8 = 0;
-	this->field_0xcc = this->field_0x68;
-	this->field_0xd0 = this->field_0x6c;
-	return;
-}
-
 void CAMERA_CONFIG::Create(struct ByteCode* pMemoryStream)
 {
 	uint uVar1;
@@ -1883,6 +1771,32 @@ bool astruct_12::Init(struct ByteCode* pMemoryStream)
 	return uVar1 == 1;
 }
 
+void CCamConfig::ResetWithConfig()
+{
+	this->field_0x74 = this->field_0xc;
+	this->field_0x78 = this->field_0x10;
+	this->field_0x7c = this->field_0x14;
+	this->targetPitch = this->baseTargetPitch;
+	this->field_0x90 = 0.0f;
+	this->field_0x8c = 0.0f;
+	this->field_0x80 = 0;
+	this->field_0x94 = this->field_0x38.x;
+	this->field_0x98 = this->field_0x38.y;
+	this->field_0xa0 = this->field_0x38.z;
+	this->field_0xac = 0.0f;
+	this->field_0xa8 = 0.0f;
+	this->field_0x9c = 0;
+	this->field_0xb0 = this->field_0x48.z;
+	this->field_0xb4 = this->field_0x48.w;
+	this->field_0xbc = this->field_0x58.x;
+	this->field_0xc0 = this->field_0x58.x;
+	this->field_0xc8 = 0;
+	this->field_0xc4 = 0;
+	this->field_0xb8 = 0;
+	this->field_0xcc = this->field_0x68;
+	this->field_0xd0 = this->field_0x6c;
+	return;
+}
 
 void CameraSet3DPos(edFCamera* pCamera)
 {
@@ -2381,8 +2295,8 @@ void CCameraManager::Func_00194e00()
 	CActorsTable local_110;
 
 	uVar16 = 0;
-	local_110.entryCount = 0;
-	local_220.entryCount = 0;
+	local_110.nbEntries = 0;
+	local_220.nbEntries = 0;
 	Func_00194a10(&local_110);
 
 	pCVar8 = CActorHero::_gThis;
@@ -2410,7 +2324,7 @@ void CCameraManager::Func_00194e00()
 			if (pCVar1 != (CCameraShadow*)0x0) {
 				iVar13 = -1;
 				fVar21 = 3.402823e+38f;
-				for (iVar15 = 0; iVar15 < local_220.entryCount; iVar15 = iVar15 + 1) {
+				for (iVar15 = 0; iVar15 < local_220.nbEntries; iVar15 = iVar15 + 1) {
 					pCVar2 = this->pActiveCamera;
 					pCVar12 = local_220.aEntries[iVar15];
 					fVar19 = (pCVar2->transformationMatrix).da - (pCVar12->currentLocation).x;

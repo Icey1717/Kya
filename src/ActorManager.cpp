@@ -922,7 +922,7 @@ void CActorManager::GetActorsByClassID(int classId, CActorsTable* pOutList)
 		}
 	}
 
-	pOutList->entryCount = curIndex;
+	pOutList->nbEntries = curIndex;
 	return;
 }
 
@@ -1275,7 +1275,7 @@ bool CCluster::GetActorsIntersectingSphereWithCriterion(CActorsTable* pTable, ed
 
 	ApplyCallbackToActorsIntersectingSphere(pLocation, gClusterCallback_GetActorsWithCriterion, &local_10);
 
-	return pTable->entryCount != 0;
+	return pTable->nbEntries != 0;
 }
 
 void CCluster::ApplyCallbackToActorsIntersectingSphere(edF32VECTOR4* pSphere, ColCallbackFuncPtr* pFunc, void* pParams)

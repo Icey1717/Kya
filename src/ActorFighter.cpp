@@ -888,6 +888,38 @@ bool CActorFighter::IsFightRelated(int behaviourId)
 	return bFightRelated;
 }
 
+bool CActorFighter::IsInHitState()
+{
+	int iVar1;
+	bool bVar2;
+	uint uVar3;
+	bool bVar4;
+
+	iVar1 = this->actorState;
+	bVar4 = true;
+	uVar3 = iVar1 - 0x14;
+	bVar2 = false;
+
+	if ((uVar3 < 0xc) && ((1 << (uVar3 & 0x1f) & 0x897U) != 0)) {
+		bVar2 = true;
+	}
+
+	uVar3 = iVar1 - 0x38;
+	if (!bVar2) {
+		bVar2 = false;
+
+		if ((uVar3 < 0x1c) && ((1 << (uVar3 & 0x1f) & 0xc800001U) != 0)) {
+			bVar2 = true;
+		}
+
+		if (!bVar2) {
+			bVar4 = false;
+		}
+	}
+
+	return bVar4;
+}
+
 bool CActorFighter::IsAlive()
 {
 	return 0.0f < GetLifeInterface()->GetValue();
@@ -926,14 +958,14 @@ void CActorFighter::AcquireAdversary()
 	edF32VECTOR4 local_120;
 	CActorsTable local_110;
 
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 	SetAdversary((CActorFighter*)0x0);
 	local_120.xyz = this->currentLocation.xyz;
 	local_120.w = 5.5f;
 	bVar3 = CScene::ptable.g_ActorManager_004516a4->cluster.GetActorsIntersectingSphereWithCriterion(&local_110, &local_120, Criterion_AcquireAdversary, this);
 	iVar4 = 0;
 	if (bVar3 != false) {
-		for (; iVar4 < local_110.entryCount; iVar4 = iVar4 + 1) {
+		for (; iVar4 < local_110.nbEntries; iVar4 = iVar4 + 1) {
 			pNewAdversary = (CActorFighter*)local_110.aEntries[iVar4];
 			if ((pNewAdversary != this->field_0x354) &&
 				(((fVar5 = pNewAdversary->currentLocation.x - this->currentLocation.x,
@@ -3047,7 +3079,7 @@ void CActorFighter::_StateFighterHitFly()
 	edF32MATRIX4 eStack336;
 	CActorsTable local_110;
 
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 	edF32Vector4ScaleHard(this->dynamicExt.field_0x6c, &this->field_0x740, &this->dynamicExt.normalizedTranslation);
 
 	this->field_0x7d0 = (this->fighterAnatomyZones).field_0x0.y + this->currentLocation.y;
@@ -3153,7 +3185,7 @@ void CActorFighter::_StateFighterHitFlyToSlide()
 	CActorsTable local_120;
 	_ray_info_out _Stack16;
 
-	local_120.entryCount = 0;
+	local_120.nbEntries = 0;
 	edF32Vector4ScaleHard(this->dynamicExt.field_0x6c, &this->field_0x740, &this->dynamicExt.normalizedTranslation);
 
 	this->field_0x7d0 = (this->fighterAnatomyZones).field_0x0.y + this->currentLocation.y;
@@ -4309,7 +4341,7 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 
 	uVar7 = 0;
 	local_1f0 = 0;
-	if (param_6->entryCount != 0) {
+	if (param_6->nbEntries != 0) {
 		if (param_3 != (edF32VECTOR4*)0x0) {
 			param_3->x = 0.0f;
 			param_3->y = 0.0f;
@@ -4326,7 +4358,7 @@ int CActorFighter::_SV_HIT_ProcessActorsCollisions(float param_1, edF32VECTOR4* 
 
 		local_200 = param_6;
 	LAB_0030bdc0:
-		while (local_1f0 < param_6->entryCount) {
+		while (local_1f0 < param_6->nbEntries) {
 			pReceiver = local_200->aEntries[0];
 			local_1f0 = local_1f0 + 1;
 			local_200 = (CActorsTable*)local_200->aEntries;
@@ -6659,17 +6691,14 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 	uVar5 = this->pOwner->GetStateFlags(this->pOwner->actorState);
 
 	if (msg == 7) {
-		IMPLEMENTATION_GUARD(
-		/* WARNING: Load size is inaccurate */
-		if (*pMsgParam == 5) {
+		GetPositionMsgParams* pPositionParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+		if (pPositionParams->field_0x0 == 5) {
 			if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0xff800) == 0x4000) {
-				edF32Vector4ScaleHard
-				(2.0, (edF32VECTOR4*)((int)pMsgParam + 0x20),
-					&(this->pOwner->field_0x354->fighterAnatomyZones).field_0x10);
-				*(undefined4*)((int)pMsgParam + 0x2c) = 0;
+				edF32Vector4ScaleHard(2.0f, &pPositionParams->vectorFieldB, &(this->pOwner->field_0x354->fighterAnatomyZones).field_0x10);
+				pPositionParams->vectorFieldB.w = 0.0f;
 				return 1;
 			}
-		})
+		}
 	}
 	else {
 		if (msg == MESSAGE_REQUEST_CAMERA_TARGET) {
@@ -7883,11 +7912,6 @@ edF32VECTOR4* StaticMeshComponentAdvanced::GetTextureAnimSpeedNormalExtruder()
 	}
 
 	return peVar4;
-}
-
-CFighterExcludedTable::CFighterExcludedTable()
-{
-	this->nbEntries = 0;
 }
 
 void CFighterExcludedTable::EmptyByTime(float time)

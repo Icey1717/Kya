@@ -104,15 +104,15 @@ void CSectorManager::InstallEnterSector()
 		}
 	}
 
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 	CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(CLUSTERISER, &local_110);
 	iVar1 = 0;
-	if (0 < local_110.entryCount) {
+	if (0 < local_110.nbEntries) {
 		do {
 			piVar2 = reinterpret_cast<CActorClusteriser*>(local_110.aEntries[iVar1]);
 			piVar2->Sector_Enter();
 			iVar1 = iVar1 + 1;
-		} while (iVar1 < local_110.entryCount);
+		} while (iVar1 < local_110.nbEntries);
 	}
 	return;
 }
@@ -244,9 +244,9 @@ void CSectorManager::LevelLoading_Begin()
 		}
 
 		iVar13 = 0;
-		if (0 < table.entryCount + -1) {
+		if (0 < table.nbEntries + -1) {
 			piVar2 = table.aEntries;
-			iVar10 = table.entryCount;
+			iVar10 = table.nbEntries;
 			do {
 				iVar11 = iVar13 + 1;
 				if (iVar11 < iVar10) {
@@ -257,8 +257,8 @@ void CSectorManager::LevelLoading_Begin()
 						}
 						iVar11 = iVar11 + 1;
 						piVar9 = piVar9 + 1;
-						iVar10 = table.entryCount;
-					} while (iVar11 < table.entryCount);
+						iVar10 = table.nbEntries;
+					} while (iVar11 < table.nbEntries);
 				}
 				iVar13 = iVar13 + 1;
 				piVar2 = piVar2 + 1;
@@ -268,7 +268,7 @@ void CSectorManager::LevelLoading_Begin()
 		this->field_0x370 = 1;
 		iVar13 = 0;
 		piVar2 = table.aEntries;
-		while ((iVar13 < table.entryCount && (this->field_0x370 != 0))) {
+		while ((iVar13 < table.nbEntries && (this->field_0x370 != 0))) {
 			local_8 = table.aEntries[iVar13];
 			uVar8 = ~(1 << (local_8 & 0x1f)) & auStack144[local_8];
 			uVar12 = 0;
@@ -1144,15 +1144,15 @@ void CSectorManager::Flush()
 	CActorsTable local_110;
 	S_HIERANM_HIER* piStack4;
 
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 	CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(CLUSTERISER, &local_110);
 
 	iVar3 = 0;
-	if (0 < local_110.entryCount) {
+	if (0 < local_110.nbEntries) {
 		do {
 			//::EmptyFunction();
 			iVar3 = iVar3 + 1;
-		} while (iVar3 < local_110.entryCount);
+		} while (iVar3 < local_110.nbEntries);
 	}
 
 	for (pCVar1 = this->pSectorHierarchy; pCVar1 != (CSectorHierarchy*)0x0; pCVar1 = pCVar1->pNext) {

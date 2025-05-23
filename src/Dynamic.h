@@ -5,7 +5,8 @@
 
 class CActor;
 
-struct VibrationParam {
+struct VibrationParam
+{
 	float field_0x0;
 	float field_0x4;
 	float field_0x8;
@@ -126,6 +127,56 @@ public:
 	edF32VECTOR4 field_0x50;
 	edF32VECTOR4 field_0x60;
 	edF32VECTOR4 field_0x70;
+};
+
+class CDynBase
+{
+public:
+	void Init(float param_1, float param_2);
+
+	float field_0x0;
+	float field_0x4;
+	float field_0x8;
+	float field_0xc;
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+	int field_0x1c;
+};
+
+class CValueDyn : public CDynBase
+{
+public:
+	void MoveTo(float param_1);
+
+	edF32VECTOR4 field_0x20;
+	float field_0x30;
+};
+
+class CVertexDyn : public CDynBase
+{
+public:
+	void Init(float param_1, edF32VECTOR4* pPosition);
+	void MoveTo(edF32VECTOR4* pPosition);
+
+	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 field_0x30;
+};
+
+class CAngleDyn : public CDynBase
+{
+public:
+	void MoveTo(float angle, int mode);
+};
+
+struct SPEED_DYN
+{
+	void Init(float param_1, float param_2);
+	float UpdateLerp(float target);
+	void Update(float param_1);
+
+	float currentAlpha;
+	float field_0x4;
 };
 
 #endif // DYNAMIC_H

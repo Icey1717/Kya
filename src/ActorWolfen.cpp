@@ -151,9 +151,9 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	this->walkAcceleration = pByteCode->GetF32();
 	this->walkRotSpeed = pByteCode->GetF32();
 
-	this->field_0xc6c = pByteCode->GetF32();
+	this->runSpeedScale = pByteCode->GetF32();
 	fVar7 = pByteCode->GetF32();
-	this->field_0xc5c = fVar7;
+	this->defaultRunSpeed = fVar7;
 
 	this->runSpeed = fVar7;
 	this->runAcceleration = pByteCode->GetF32();
@@ -672,6 +672,20 @@ CBehaviour* CActorWolfen::BuildBehaviour(int behaviourType)
 	CBehaviour* pBehaviour;
 
 	switch (behaviourType) {
+	case FIGHTER_BEHAVIOUR_DEFAULT:
+		pBehaviour = &this->behaviourFighterWolfen;
+		break;
+	case FIGHTER_BEHAVIOUR_PROJECTED:
+		pBehaviour = &this->behaviourWolfenFighterProjected;
+		break;
+	case FIGHTER_BEHAVIOUR_RIDDEN:
+		pBehaviour = &this->behaviourWolfenFighterRidden;
+		break;
+	case FIGHTER_BEHAVIOUR_SLAVE:
+		pBehaviour = &this->behaviourWolfenFighterSlave;
+		break;
+		IMPLEMENTATION_GUARD();
+		break;
 	case WOLFEN_BEHAVIOUR_WATCH_DOG:
 		pBehaviour = new CBehaviourWatchDog;
 		break;
@@ -1184,10 +1198,10 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			return 1;
 		}
 
-		if (msg == 0xc) {
-			IMPLEMENTATION_GUARD(
-			*(float*)pMsgParam = this->field_0xc5c;
-			return 1;)
+		if (msg == MESSAGE_GET_RUN_SPEED) {
+			float* pRunSpeedParam = reinterpret_cast<float*>(pMsgParam);
+			*pRunSpeedParam = this->defaultRunSpeed;
+			return 1;
 		}
 
 		if ((msg == 0x66) || (msg == 0x27)) {
@@ -1453,8 +1467,7 @@ void CActorWolfen::Func_0x204(CActorFighter* pOther)
 	int iVar2;
 	float fVar3;
 	edF32VECTOR4 eStack32;
-	float* local_8;
-	float local_4;
+	float adversaryRunSpeed;
 
 	SetAdversary(pOther);
 
@@ -1463,20 +1476,74 @@ void CActorWolfen::Func_0x204(CActorFighter* pOther)
 	if (pCVar1 == (CActorFighter*)0x0) {
 		this->adversaryDistance = this->field_0x358;
 		this->adversaryAngleDiff = GetAngleYFromVector(&this->rotationQuat);
-		SetRunSpeed(this->field_0xc5c);
+		SetRunSpeed(this->defaultRunSpeed);
 	}
 	else {
 		edF32Vector4SubHard(&eStack32, &pCVar1->currentLocation, &this->currentLocation);
 		this->adversaryAngleDiff = GetAngleYFromVector(&eStack32);
 		this->adversaryDistance = edF32Vector4GetDistHard(&eStack32);
-		local_8 = &local_4;
-		iVar2 = DoMessage(this->pAdversary, (ACTOR_MESSAGE)0xc, (void*)local_8);
-		if (iVar2 != 0) {
-			IMPLEMENTATION_GUARD(
-			(*(code*)(this->pVTable)->field_0x20c)(local_4 * this->field_0xc6c, this);)
+		if (DoMessage(this->pAdversary, MESSAGE_GET_RUN_SPEED, &adversaryRunSpeed) != 0) {
+			SetRunSpeed(adversaryRunSpeed * this->runSpeedScale);
 		}
 	}
 	return;
+}
+
+bool CActorWolfen::AcquireAdversary(CActorFighter* pTarget)
+{
+	float fVar1;
+	bool bVar2;
+	CBehaviour* pCVar3;
+	bool bSuccess;
+	float fVar6;
+
+	bSuccess = false;
+	if (((pTarget == CActorHero::_gThis) && (this->pTargetActor_0xc80 == (CActorFighter*)0x0)) && ((~this->combatFlags_0xb78 & 0x30) == 0x30)) {
+		bSuccess = true;
+	}
+	else {
+		if ((this->pTargetActor_0xc80 == pTarget) && ((int)this->combatMode_0xb7c < 1)) {
+			bSuccess = true;
+		}
+		else {
+			if ((this->combatFlags_0xb78 & 0x200) == 0) {
+				bSuccess = true;
+			}
+			else {
+				fVar6 = pTarget->currentLocation.x - this->currentLocation.x;
+				fVar1 = pTarget->currentLocation.z - this->currentLocation.z;
+				bVar2 = this->field_0xb94 <= sqrtf(fVar6 * fVar6 + 0.0f + fVar1 * fVar1);
+				if (!bVar2) {
+					bVar2 = this->field_0xb98 < fabs((this->distanceToGround + this->currentLocation.y) - (pTarget->distanceToGround + pTarget->currentLocation.y));
+				}
+				if (bVar2) {
+					bSuccess = true;
+				}
+				else {
+					bVar2 = false;
+					if (((pTarget != (CActorFighter*)0x0) && (pTarget->typeID == ACTOR_HERO_PRIVATE)) && (pTarget->curBehaviourId == 8)) {
+						bVar2 = true;
+					}
+
+					if ((bVar2) && (pCVar3 = GetBehaviour(0x18), pCVar3 != (CBehaviour*)0x0)) {
+						bSuccess = true;
+					}
+					else {
+						if (((this->combatFlags_0xb78 & 7) == 0) && (bVar2 = SV_AUT_CanMoveTo(&pTarget->currentLocation), bVar2 == false)) {
+							bSuccess = true;
+						}
+						else {
+							if (pTarget->GetLifeInterface()->GetValue() <= 0.0f) {
+								bSuccess = true;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return bSuccess;
 }
 
 void CActorWolfen::SetRunSpeed(float param_1)
@@ -3423,18 +3490,23 @@ void CActorWolfen::StateWolfenComeBack(CBehaviourWolfen* pBehaviour)
 		this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x40000;
 	}
 LAB_0017ae10:
-	actorsTable.entryCount = 0;
+	actorsTable.nbEntries = 0;
 	ManageDyn(4.0f, 0x1002023b, &actorsTable);
 
 	nextState = SV_WLF_CheckBoxOnWay(&actorsTable);
+
 	if (nextState == -1) {
 		nextState = pBehaviour->TestState_001f0a90();
+
 		if (nextState == -1) {
 			nextState = pBehaviour->TestState_001f0a70();
+
 			if (nextState == -1) {
 				nextState = pBehaviour->TestState_001f0a30();
+
 				if (nextState == -1) {
 					pComeBackPosition = pBehaviour->GetComeBackPosition();
+
 					if (0.5f <= sqrtf(edF32Vector4DotProductHard_I(pComeBackPosition, &this->currentLocation))) {
 						if ((this->pTargetActor_0xc80 != (CActorFighter*)0x0) &&
 							(nextState = pBehaviour->TestState_001f09b0(), nextState != -1)) {
@@ -3669,11 +3741,11 @@ void CActorWolfen::StateWolfenLocate(CBehaviourWolfen* pBehaviour)
 	if (((this->combatFlags_0xb78 & 4) == 0) || ((int)this->combatMode_0xb7c < 1)) {
 		if ((this->combatFlags_0xb78 & 0x80) != 0) {
 			if ((this->field_0xb74 == 1) || (this->field_0xb74 == 0)) {
-				local_110.entryCount = 0;
+				local_110.nbEntries = 0;
 				GetVision()->ScanFromClassID(PROJECTILE, &local_110, 1);
 				iVar13 = 0;
-				if (local_110.entryCount != 0) {
-					for (; iVar13 < local_110.entryCount; iVar13 = iVar13 + 1) {
+				if (local_110.nbEntries != 0) {
+					for (; iVar13 < local_110.nbEntries; iVar13 = iVar13 + 1) {
 						if (local_110.aEntries[iVar13]->actorState == 0xc) {
 							this->pTrackedProjectile = static_cast<CActorProjectile*>(local_110.aEntries[iVar13]);
 							iVar7 = 0x9a;
@@ -3692,9 +3764,9 @@ void CActorWolfen::StateWolfenLocate(CBehaviourWolfen* pBehaviour)
 	}
 
 	if ((this->combatFlags_0xb78 & 0x40) != 0) {
-		local_220.entryCount = 0;
+		local_220.nbEntries = 0;
 		GetVision()->ScanFromClassID(WOLFEN, &local_220, 1);
-		for (iVar13 = 0; pScannedWolfen = static_cast<CActorWolfen*>(local_220.aEntries[0]), iVar13 < local_220.entryCount; iVar13 = iVar13 + 1) {
+		for (iVar13 = 0; pScannedWolfen = static_cast<CActorWolfen*>(local_220.aEntries[0]), iVar13 < local_220.nbEntries; iVar13 = iVar13 + 1) {
 			fVar14 = pScannedWolfen->GetLifeInterface()->GetValue();
 			if ((0.0f < fVar14) &&
 				(fVar14 = pScannedWolfen->currentLocation.x - this->currentLocation.x,
@@ -4014,7 +4086,7 @@ void CActorWolfen::StateTrackWeaponChase(CBehaviourTrackWeapon* pBehaviour)
 	CActorsTable actorsTable;
 	CActorCommander* pCommander;
 
-	actorsTable.entryCount = 0;
+	actorsTable.nbEntries = 0;
 	movParamsOut.flags = 0;
 	movParamsIn.pRotation = (edF32VECTOR4*)0x0;
 	movParamsIn.speed = 0.0;
@@ -4285,7 +4357,8 @@ void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 	float fVar1;
 	float fVar2;
 	bool bVar3;
-	int iVar4;
+	int nextState;
+	int iVar5;
 	CNotificationTargetArray<S_STREAM_NTF_TARGET_ONOFF>* pCVar5;
 	undefined4 uVar6;
 	float fVar7;
@@ -4295,9 +4368,9 @@ void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 	CActor* pActor;
 	CActorCommander* pCommander;
 
-	iVar4 = -1;
+	nextState = -1;
 	pTarget = this->pTargetActor_0xc80;
-	actorsTable.entryCount = 0;
+	actorsTable.nbEntries = 0;
 
 	if (CheckLost() != false) {
 		this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x40000;
@@ -4326,16 +4399,16 @@ void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 	SV_WLF_MoveTo(&movParamsOut, &movParamsIn, &this->pCommander->targetGroundPosition);
 
 	if ((movParamsOut.flags & 2) != 0) {
-		iVar4 = pBehaviour->GetStateWolfenWeapon();
+		nextState = pBehaviour->GetStateWolfenWeapon();
 	}
 
 	ManageDyn(4.0f, 0x1002023b, &actorsTable);
 
-	if (iVar4 == -1) {
-		iVar4 = SV_WLF_CheckBoxOnWay(&actorsTable);
+	if (nextState == -1) {
+		nextState = SV_WLF_CheckBoxOnWay(&actorsTable);
 	}
 
-	if (iVar4 == -1) {
+	if (nextState == -1) {
 		if ((this->combatMode_0xb7c == ECM_InCombat) && (pCVar5 = pBehaviour->GetNotificationTargetArray(), (int)pCVar5->combatMode < 2)) {
 			SetState(pBehaviour->GetState_001f0b30(), -1);
 		}
@@ -4352,8 +4425,8 @@ void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 					fVar7 = (pCommander->targetGroundPosition).z - this->currentLocation.z;
 					if (0.5f <= sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar7 * fVar7)) {
 						pCommander = this->pCommander;
-						for (iVar4 = 0; bVar3 = false, iVar4 < actorsTable.entryCount; iVar4 = iVar4 + 1) {
-							pActor = actorsTable.aEntries[iVar4];
+						for (iVar5 = 0; bVar3 = false, iVar5 < actorsTable.nbEntries; iVar5 = iVar5 + 1) {
+							pActor = actorsTable.aEntries[iVar5];
 							if ((pActor->typeID == 0x1b) || (pActor->typeID == 0x1c)) {
 								fVar1 = (pCommander->targetGroundPosition).x - (pActor->currentLocation).x;
 								fVar2 = (pCommander->targetGroundPosition).z - (pActor->currentLocation).z;
@@ -4367,9 +4440,9 @@ void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 							SetState(pBehaviour->Func_0x70(), -1);
 						}
 						else {
-							iVar4 = pBehaviour->GetState_001f0930();
-							if (iVar4 != -1) {
-								SetState(iVar4, -1);
+							nextState = pBehaviour->GetState_001f0930();
+							if (nextState != -1) {
+								SetState(nextState, -1);
 							}
 						}
 					}
@@ -4398,7 +4471,7 @@ void CActorWolfen::StateTrackChase(CBehaviourTrack* pBehaviour)
 		}
 	}
 	else {
-		SetState(iVar4, -1);
+		SetState(nextState, -1);
 	}
 
 	return;
@@ -4410,8 +4483,8 @@ void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
 	CActorCommander* pCVar1;
 	float fVar2;
 	float fVar3;
-	bool bVar4;
-	bool bVar5;
+	bool bUpdateOrientationSuccess;
+	bool bCanMoveTo;
 	undefined4 uVar6;
 	int iVar7;
 	float fVar8;
@@ -4419,7 +4492,7 @@ void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
 
 	edF32Vector4SubHard(&eStack16, &this->pCommander->targetPosition, &this->currentLocation);
 	edF32Vector4NormalizeHard(&eStack16, &eStack16);
-	bVar4 = SV_WLF_UpdateOrientation2D(GetWalkRotSpeed(), &eStack16, 0);
+	bUpdateOrientationSuccess = SV_WLF_UpdateOrientation2D(GetWalkRotSpeed(), &eStack16, 0);
 
 	this->dynamic.speed = 0.0f;
 
@@ -4437,10 +4510,9 @@ void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
 			fVar2 = (pCVar1->targetGroundPosition).y - this->currentLocation.y,
 			fVar3 = (pCVar1->targetGroundPosition).z - this->currentLocation.z,
 			sqrtf(fVar8 * fVar8 + fVar2 * fVar2 + fVar3 * fVar3) < 0.5f)) ||
-		(bVar5 = SV_WLF_CanMoveTo(&this->pCommander->targetGroundPosition), bVar5 == false)) {
-		if (((bVar4 != true) || (0 < this->pCommander->field_0x194)) ||
-			(this->timeInAir <= 1.0f)) {
-			if ((pTarget == (CActorFighter*)0x0) || (bVar4 = CanSwitchToFight_Area(pTarget), bVar4 == false))
+		(bCanMoveTo = SV_WLF_CanMoveTo(&this->pCommander->targetGroundPosition), bCanMoveTo == false)) {
+		if (((bUpdateOrientationSuccess != true) || (0 < this->pCommander->field_0x194)) || (this->timeInAir <= 1.0f)) {
+			if ((pTarget == (CActorFighter*)0x0) || (CanSwitchToFight_Area(pTarget) == false))
 			{
 				iVar7 = pBehaviour->GetState_001f0930();
 				if (iVar7 != -1) {
@@ -4464,7 +4536,8 @@ void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
 		}
 	}
 	else {
-		SetState(0x73, -1);
+		// CAN path to our target ground position, so chase to that position.
+		SetState(WOLFEN_STATE_TRACK_CHASE, -1);
 	}
 
 	return;
@@ -4521,24 +4594,29 @@ void CActorWolfen::StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour
 
 int CActorWolfen::SV_WLF_CheckBoxOnWay(CActorsTable* pTable)
 {
-	bool bVar1;
-	int iVar2;
+	int nextState;
+	CActor* pBox;
 
-	iVar2 = -1;
-	if (((this->field_0xb74 != 5) && (this->field_0xd14 == 0)) && ((bVar1 = pTable->IsInList(BOX), bVar1 != false ||
-			(bVar1 = pTable->IsInList(BASIC_BOX), bVar1 != false)))) {
-		iVar2 = this->field_0xd14;
-		while (iVar2 == 0) {
-			iVar2 = pTable->aEntries[0]->typeID;
-			if ((iVar2 == 0x35) || (iVar2 == 0x39)) {
-				this->field_0xd14 = (int)pTable->aEntries[0];
+	nextState = -1;
+
+	if (((this->field_0xb74 != 5) && (this->pBoxInWay == (CActor*)0x0)) && ((pTable->IsInList(BOX) != false || (pTable->IsInList(BASIC_BOX) != false)))) {
+		pBox = this->pBoxInWay;
+
+		CActor** pEntry = pTable->aEntries;
+
+		while (pBox == (CActor*)0x0) {
+			if (((*pEntry)->typeID == BOX) || ((*pEntry)->typeID == BASIC_BOX)) {
+				this->pBoxInWay = *pEntry;
 			}
-			pTable = (CActorsTable*)pTable->aEntries;
-			iVar2 = this->field_0xd14;
+
+			pEntry = pEntry + 1;
+			pBox = this->pBoxInWay;
 		}
-		iVar2 = 0x74;
+
+		nextState = 0x74;
 	}
-	return iVar2;
+
+	return nextState;
 }
 
 void CActorWolfen::ClearLocalData()
@@ -4580,7 +4658,7 @@ void CActorWolfen::ClearLocalData()
 	//this->field_0xd0c = 0;
 	this->field_0xd08 = 0;
 	this->pTrackedProjectile = (CActorProjectile*)0x0;
-	this->field_0xd14 = 0;
+	this->pBoxInWay = (CActor*)0x0;
 	this->field_0xd24 = 0.0f;
 	this->field_0xd28 = 1.0f;
 	this->pTargetActor_0xc80 = (CActorFighter*)0x0;
@@ -4882,7 +4960,7 @@ bool CActorWolfen::FUN_0035f1e0(CActorsTable* pTable, edF32VECTOR4* pPosition)
 
 	curEntryIndex = 0;
 	while (true) {
-		if (pTable->entryCount <= curEntryIndex) {
+		if (pTable->nbEntries <= curEntryIndex) {
 			return false;
 		}
 
@@ -5016,24 +5094,24 @@ bool CActorWolfen::CanSwitchToFight_Area(CActor* pTarget)
 		}
 
 		if (bVar4) {
+			CActorFighter* pFighter = static_cast<CActorFighter*>(pTarget);
 			bVar4 = false;
 			if (((this->combatFlags_0xb78 & 0x30) != 0) &&
-				(iVar5 = SV_AUT_CanMoveTo(&pTarget->currentLocation), iVar5 != 0)) {
+				(iVar5 = SV_AUT_CanMoveTo(&pFighter->currentLocation), iVar5 != 0)) {
 				bVar4 = true;
 			}
 
-			IMPLEMENTATION_GUARD(
-			if ((bVar4) &&
-				((bVar4 = pTarget->IsKindOfObject(OBJ_TYPE_AUTONOMOUS), bVar4 == false ||
-					(lVar7 = (*(code*)this->pVTable[1].field_0x4)(this), lVar7 == 0)))) {
+			if ((bVar4) && ((bVar4 = pFighter->IsKindOfObject(OBJ_TYPE_AUTONOMOUS), bVar4 == false || (AcquireAdversary(pFighter) == 0)))) {
 				bVar4 = false;
-				if ((pTarget != (CActor*)0x0) && ((pTarget->typeID == ACTOR_HERO_PRIVATE && (pTarget->curBehaviourId == 8)))) {
+
+				if ((pFighter != (CActor*)0x0) && ((pFighter->typeID == ACTOR_HERO_PRIVATE && (pFighter->curBehaviourId == 8)))) {
 					bVar4 = true;
 				}
-				if ((!bVar4) || (pCVar6 = CActor::GetBehaviour((CActor*)this, 0x18), pCVar6 == (CBehaviour*)0x0)) {
+
+				if ((!bVar4) || (pCVar6 = GetBehaviour(0x18), pCVar6 == (CBehaviour*)0x0)) {
 					bCanSwitchToFight = true;
 				}				
-			})
+			}
 		}
 	}
 
@@ -5961,7 +6039,7 @@ void CBehaviourTrack::Begin(CActor* pOwner, int newState, int newAnimationType)
 
 void CBehaviourTrack::End(int newBehaviourId)
 {
-	End(newBehaviourId);
+	CBehaviourWolfen::End(newBehaviourId);
 
 	this->pOwner->combatFlags_0xb78 = this->pOwner->combatFlags_0xb78 & 0xfffffebf;
 
@@ -6594,4 +6672,14 @@ int CBehaviourLost::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 
 	return iVar1;
+}
+
+void CBehaviourFighterWolfen::SetPositionToHold(float param_1, edF32VECTOR4* pPosition)
+{
+	this->holdPosition = *pPosition;
+
+	this->field_0x50 = param_1;
+	this->field_0x3c = 1;
+
+	return;
 }

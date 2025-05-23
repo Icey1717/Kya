@@ -7,8 +7,16 @@
 #include "MathOps.h"
 #include "TimeController.h"
 #include "CameraGame.h"
+#include "CinematicManager.h"
 
 
+StateConfig CActorCommander::_gStateCfg_CMD[4] =
+{
+	StateConfig(0x0, 0x0),
+	StateConfig(0x0, 0x300),
+	StateConfig(0x0, 0x300),
+	StateConfig(0x0, 0x0),
+};
 
 CActorCommander::CActorCommander()
 {
@@ -248,6 +256,20 @@ CBehaviour* CActorCommander::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
+StateConfig* CActorCommander::GetStateCfg(int state)
+{
+	StateConfig* pStateConfig;
+
+	if (state < 5) {
+		pStateConfig = CActor::GetStateCfg(state);
+	}
+	else {
+		pStateConfig = _gStateCfg_CMD + state + -5;
+	}
+
+	return pStateConfig;
+}
+
 void CActorCommander::ChangeManageState(int state)
 {
 	if ((state == 0) && ((this->camFigData).field_0x2a0 != 0)) {
@@ -315,10 +337,10 @@ void CActorCommander::ClearLocalData()
 	//this->field_0x9f4 = 0;
 	//this->field_0x164 = 0;
 	//this->field_0x160 = 0;
-	//this->field_0x168 = 0;
-	//this->field_0x174 = 0;
+	this->field_0x168 = 0;
+	this->field_0x174 = (CActor*)0x0;
 	this->field_0x2f4 = 0;
-	//this->field_0x6d0 = 1;
+	this->field_0x6d0 = 1;
 	return;
 }
 
@@ -326,30 +348,31 @@ bool CActorCommander::BeginFightIntruder(CActor* pInstigator, CActor* pIntruder)
 {
 	bool bSuccess;
 	CTeamElt* pCVar2;
-	CTeamElt* pCVar3;
+	CTeamElt* pTeamElt;
 	int iVar4;
 
 	bSuccess = false;
 
 	if (pIntruder->IsKindOfObject(OBJ_TYPE_FIGHTER) != false) {
+		CActorFighter* pActorFighter = static_cast<CActorFighter*>(pInstigator);
 		iVar4 = 0;
-		pCVar3 = (CTeamElt*)0x0;
+		pTeamElt = (CTeamElt*)0x0;
+
 		if (0 < this->nbTeams) {
 			pCVar2 = this->aTeamElt;
 			do {
-				pCVar3 = pCVar2;
+				pTeamElt = pCVar2;
 
-				if (pCVar3->pEnemyActor == pInstigator) break;
+				if (pTeamElt->pEnemyActor == pActorFighter) break;
 
 				iVar4 = iVar4 + 1;
-				pCVar2 = pCVar3 + 1;
-				pCVar3 = (CTeamElt*)0x0;
+				pCVar2 = pTeamElt + 1;
+				pTeamElt = (CTeamElt*)0x0;
 			} while (iVar4 < this->nbTeams);
 		}
 
-		IMPLEMENTATION_GUARD(
-		bSuccess = CSquad::AddFighter(&this->squad, pCVar3);
-		CActorFighter::SetStandAnim((CActorFighter*)pInstigator, 0xe2);)
+		bSuccess = this->squad.AddFighter(pTeamElt);
+		pActorFighter->SetStandAnim(0xe2);
 	}
 
 	return bSuccess;
@@ -453,7 +476,7 @@ void CActorCommander::CheckExorcism()
 	undefined4* local_4;
 	CActorWolfen* pWolfen;
 
-	if (0 < (this->exorcismActorsTable).entryCount) {
+	if (0 < (this->exorcismActorsTable).nbEntries) {
 		if (this->field_0x1e0 == 0) {
 			this->field_0x1e0 = 1;
 			IMPLEMENTATION_GUARD(
@@ -483,7 +506,7 @@ void CActorCommander::CheckExorcism()
 			this->field_0x1e4 = Timer::GetTimer()->scaledTotalTime;)
 		}
 
-		if ((this->exorcismActorsTable).entryCount == 0) {
+		if ((this->exorcismActorsTable).nbEntries == 0) {
 			this->field_0x1e0 = 0;
 		}
 	}
@@ -740,8 +763,9 @@ void CActorCommander::_UpdateCamera()
 	CBehaviour* pCVar7;
 	CLifeInterface* pCVar8;
 	int iVar9;
-	long lVar10;
-	CCamFigData* pCVar11;
+	s_fighter_blow* pBlow;
+	CActorFighter* pFocus;
+	CCamFigData* pFigData;
 	uint uVar12;
 	CTeamElt* pCVar13;
 	CActorFighter* pCurAdversary;
@@ -784,78 +808,79 @@ void CActorCommander::_UpdateCamera()
 	}
 
 	if (bVar3) {
-		IMPLEMENTATION_GUARD(
 		pFightCamera = (CCameraGame*)CActorHero::_gThis->pFightCamera;
-		pCVar11 = CCameraGame::_pfig_data;
+		pFigData = CCameraGame::_pfig_data;
+
 		if (CCameraGame::_b_use_fig_data == 0) {
-			pCVar11 = (CCamFigData*)0x0;
+			pFigData = (CCamFigData*)0x0;
 		}
-		if ((pCVar11 != &this->camFigData) || ((this->camFigData).field_0x2a0 == 0)) {
-			pCVar6 = (*((pFightCamera->view).camera.objBase.pVTable)->GetTarget)((CCamera*)pFightCamera);
-			CCamFigData::SetPosParam(&this->camFigData, &pCVar6->currentLocation);
-			CCameraGame::Fight_SetConfig(pFightCamera, (long)(int)&this->camFigData);
+
+		if ((pFigData != &this->camFigData) || ((this->camFigData).field_0x2a0 == 0)) {
+			pCVar6 = pFightCamera->GetTarget();
+			this->camFigData.SetPosParam(&pCVar6->currentLocation);
+			pFightCamera->Fight_SetConfig(&this->camFigData);
+
 			this->field_0x9f0 = 0;
-			CCamFigData::IsValid(&this->camFigData, 1);
+			this->camFigData.IsValid(1);
 		}
-		CSquad::ComputeBoundingSphere(&this->squad, &local_10);
-		CCamFigData::SetBoundingSphere(&this->camFigData, &local_10);
-		pCVar7 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-		lVar10 = (*(code*)pCVar7->pVTable->LoadContext)();
-		if (lVar10 == 0) {
-			local_30.x = local_10.x;
-			local_30.y = local_10.y;
-			local_30.z = local_10.z;
-			local_30.w = 1.0;
-			CCamFigData::SetAdversaryPos(&this->camFigData, &local_30);
+
+		this->squad.ComputeBoundingSphere(&local_10);
+		this->camFigData.SetBoundingSphere(&local_10);
+
+		pCVar7 = GetBehaviour(this->curBehaviourId);
+		CBehaviourCommander* pBehaviourCommander = static_cast<CBehaviourCommander*>(pCVar7);
+		pFocus = pBehaviourCommander->GetFocus();
+		if (pFocus == (CActorFighter*)0x0) {
+			local_30.xyz = local_10.xyz;
+			local_30.w = 1.0f;
+			this->camFigData.SetAdversaryPos(&local_30);
 		}
 		else {
-			iVar9 = (int)lVar10;
-			local_20.z = *(float*)(iVar9 + 0x38);
-			local_20.w = *(float*)(iVar9 + 0x3c);
-			local_20.x = (float)*(undefined8*)(iVar9 + 0x30);
-			local_20.y = (float)((ulong) * (undefined8*)(iVar9 + 0x30) >> 0x20) - *(float*)(iVar9 + 0xec);
-			CCamFigData::SetAdversaryPos(&this->camFigData, &local_20);
+			local_20.x = pFocus->currentLocation.x;
+			local_20.y = pFocus->currentLocation.y - pFocus->distanceToGround;
+			local_20.z = pFocus->currentLocation.z;
+			local_20.w = pFocus->currentLocation.w;
+			this->camFigData.SetAdversaryPos(&local_20);
 		}
-		pCVar1 = CActorHero::_gThis;
-		if ((((CActorHero::_gThis != (CActorHero*)0x0) &&
-			(pCurAdversary = (CActorHero::_gThis->character).pAdversary, pCurAdversary != (CActorFighter*)0x0)) &&
-			(pCurAdversary != (CActorFighter*)this->field_0x9f0)) &&
-			((bVar3 = CActorFighter::FUN_0031b790
-			((CActorFighter*)CActorHero::_gThis,
-				(CActorHero::_gThis->character).characterBase.base.base.actorState), bVar3 != false &&
-				(((pCVar1->character).fightFlags & 0x40) != 0)))) {
-			pCurAdversary = (pCVar1->character).pAdversary;
-			pCVar8 = (*((pCurAdversary->characterBase).base.base.pVTable)->GetLifeInterface)((CActor*)pCurAdversary);
-			fVar16 = (*pCVar8->pVtable->GetValue)((CInterface*)pCVar8);
-			if ((fVar16 <= 0.0) &&
-				(((iVar9 = (pCVar1->character).pBlow, iVar9 != 0 && ((*(byte*)(iVar9 + 6) & 1) != 0)) ||
-					((iVar9 = (pCVar1->character).field_0x840, iVar9 != 0 && (*(int*)(iVar9 + 0x38) == 2)))))) {
+
+	
+		CActorHero* pCVar1 = CActorHero::_gThis;
+		if ((((CActorHero::_gThis != (CActorHero*)0x0) && (pCurAdversary = CActorHero::_gThis->pAdversary, pCurAdversary != (CActorFighter*)0x0)) &&
+			(pCurAdversary != this->field_0x9f0)) && ((bVar3 = CActorHero::_gThis->FUN_0031b790(CActorHero::_gThis->actorState), bVar3 != false &&
+				((pCVar1->fightFlags & 0x40) != 0)))) {
+			pCurAdversary = pCVar1->pAdversary;
+			fVar16 = pCurAdversary->GetLifeInterface()->GetValue();
+			if ((fVar16 <= 0.0f) && (((pBlow = pCVar1->pBlow, pBlow != (s_fighter_blow*)0x0 && ((pBlow->field_0x4.field_0x2byte & 1) != 0)) ||
+					((pBlow = pCVar1->field_0x840, pBlow != (s_fighter_blow*)0x0 && (assert(false), (pBlow->field_0x30).z == 2)))))) {
 				fVar16 = GetAngleYFromVector(&CActorHero::_gThis->rotationQuat);
-				fVar17 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)(pFightCamera);
-				fVar17 = edF32GetAnglesDelta(fVar17, fVar16 - 0.7853982);
-				t0 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)(pFightCamera);
-				fVar16 = edF32GetAnglesDelta(t0, fVar16 + 0.7853982);
-				if (ABS(fVar17) <= ABS(fVar16)) {
+				fVar17 = edF32GetAnglesDelta(pFightCamera->GetAngleBeta(), fVar16 - 0.7853982f);
+				fVar16 = edF32GetAnglesDelta(pFightCamera->GetAngleBeta(), fVar16 + 0.7853982f);
+
+				if (fabs(fVar17) <= fabs(fVar16)) {
 					fVar16 = fVar17;
 				}
-				fVar17 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)();
-				iVar9 = FUN_003c79f0(fVar16 + fVar17, 0.1396263, &this->camFigData);
+
+				IMPLEMENTATION_GUARD(
+				fVar17 = pFightCamera->GetAngleBeta();
+				iVar9 = this->camFigData.FUN_003c79f0(fVar16 + fVar17, 0.1396263f);
 				if (iVar9 != 0) {
 					uVar15 = 2;
-					if (0.0 <= fVar16) {
+					if (0.0f <= fVar16) {
 						uVar15 = 3;
 					}
-					fVar17 = (*((pFightCamera->view).camera.objBase.pVTable)->GetAngleBeta)();
-					CCamFigData::FUN_003c5ba0(fVar16 + fVar17, &this->camFigData, uVar15, 1);
-				}
 
-				this->field_0x9f0 = (pCVar1->character).pAdversary;
+					fVar17 = pFightCamera->GetAngleBeta();
+					this->camFigData.FUN_003c5ba0(fVar16 + fVar17, uVar15, 1);
+				})
+
+				this->field_0x9f0 = pCVar1->pAdversary;
 			}
 		}
 
 		if ((this->camFigData).field_0x2b4 == 1) {
-			FUN_001717b0(pFightCamera);
-		})
+			IMPLEMENTATION_GUARD(
+			FUN_001717b0(pFightCamera);)
+		}
 	}
 	else {
 		if (((this->flags_0x18c & 7) == 0) || (1.0f <= this->field_0x1d4)) {
@@ -863,6 +888,123 @@ void CActorCommander::_UpdateCamera()
 			this->field_0x9f0 = (CActorFighter*)0x0;
 		}
 	}
+		
+	return;
+}
+
+void CActorCommander::StateCommanderDefault()
+{
+	CActorFighter* pFirstEntry;
+	bool bVar2;
+	CCameraManager* pCameraManager;
+	int iVar3;
+	int iVar4;
+	int* piVar5;
+	long lVar6;
+	CChessBoard* pChessBoard;
+	CActorFighter* pAdversary;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 local_10;
+
+	pCameraManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+
+	local_10 = (pCameraManager->transformationMatrix).rowZ;
+
+	pChessBoard = &(this->squad).chessboard;
+
+	local_10.y = 0.0f;
+
+	edF32Vector4GetNegHard(&local_10, &local_10);
+	edF32Vector4NormalizeHard(&local_10, &local_10);
+
+	iVar3 = this->squad.NbElt();
+	if (iVar3 == 0) {
+		(this->squad).chessboard.field_0x240 = gF32Vector4UnitZ;
+		(this->squad).chessboard.field_0x230 = pCameraManager->activeCameraLookAt;
+		(this->squad).chessboard.writeLayerMask = 3;
+		(this->squad).chessboard.readLayerMask = 3;
+
+		pChessBoard->ValidateAll();
+
+		(this->squad).chessboard.writeLayerMask = 1;
+		(this->squad).chessboard.readLayerMask = 1;
+		pChessBoard->InvalidateSection(1.570796f, &local_10);
+	}
+	else {
+		pFirstEntry = (this->squad).eltTable.aEntries[0]->pEnemyActor;
+
+		pAdversary = pFirstEntry->pAdversary;
+		if (pAdversary == (CActorFighter*)0x0) {
+			pAdversary = pFirstEntry->field_0x354;
+		}
+
+		if (pAdversary != (CActorFighter*)0x0) {
+			fVar10 = (this->squad).chessboard.field_0x230.x - pAdversary->currentLocation.x;
+			fVar12 = (this->squad).chessboard.field_0x230.z - pAdversary->currentLocation.z;
+			fVar11 = (this->squad).chessboard.field_0x210 + (this->squad).chessboard.field_0x21c / 2.0f;
+			if (fVar11 * fVar11 < fVar10 * fVar10 + fVar12 * fVar12) {
+				(this->squad).chessboard.field_0x220 = 1;
+				(this->squad).chessboard.field_0x230 = pAdversary->currentLocation;
+			}
+			else {
+				iVar3 = 0;
+				bVar2 = false;
+				if (pAdversary->IsInHitState() == 0) {
+					while ((iVar4 = this->squad.NbElt(), iVar3 < iVar4 && (!bVar2))) {
+						if ((this->squad).eltTable.aEntries[iVar3]->pEnemyActor->IsInHitState() != 0) {
+							bVar2 = true;
+							(this->squad).chessboard.field_0x230 = pAdversary->currentLocation;
+						}
+
+						iVar3 = iVar3 + 1;
+					}
+				}
+				else {
+					pAdversary = (CActorFighter*)pAdversary->field_0x634;
+					while ((iVar4 = this->squad.NbElt(), iVar3 < iVar4 && (!bVar2))) {
+						if ((this->squad).eltTable.aEntries[iVar3]->pEnemyActor == pAdversary) {
+							bVar2 = true;
+							(this->squad).chessboard.field_0x230 = pAdversary->currentLocation;
+						}
+
+						iVar3 = iVar3 + 1;
+					}
+				}
+			}
+		}
+
+		(this->squad).chessboard.writeLayerMask = 3;
+		(this->squad).chessboard.readLayerMask = 3;
+
+		pChessBoard->ValidateAll();
+
+		(this->squad).chessboard.writeLayerMask = 2;
+		(this->squad).chessboard.readLayerMask = 2;
+
+		CPathFinderClient* pPathFinderClient = pFirstEntry->GetPathfinderClient();
+
+		if (pPathFinderClient->id == -1) {
+			if (pFirstEntry->IsKindOfObject(0x10) == 0) {
+				pChessBoard->InvalidateByRayTrace();
+			}
+			else {
+				CActorWolfen* pActorWolfen = static_cast<CActorWolfen*>(pFirstEntry);
+				pChessBoard->InvalidateByZone(pActorWolfen->pCommander->guardAreaZoneId);
+			}
+		}
+		else {
+			pChessBoard->InvalidateByPath(pPathFinderClient);
+		}
+
+		(this->squad).chessboard.writeLayerMask = 1;
+		(this->squad).chessboard.readLayerMask = 1;
+
+		pChessBoard->InvalidateSection(1.570796f, &local_10);
+	}
+
+	_UpdatePattern();
 
 	return;
 }
@@ -881,13 +1023,12 @@ void CActorCommander::_UpdateSquad()
 		return;
 	}
 
-	IMPLEMENTATION_GUARD(
 	if ((GetStateFlags(this->actorState) & 0x100) == 0) {
 		this_00 = (this->squad).eltTable.aEntries[0]->pEnemyActor->pAdversary;
 		if ((this_00 != (CActorFighter*)0x0) &&
 			(bVar1 = this_00->FUN_0031b790(this_00->actorState), bVar1 != false)) {
 			bVar1 = false;
-			if ((this_00->pFighterCombo != (s_fighter_combo*)0x0) && ((this_00->pFighterCombo->field_0x4 & 0x100U) != 0)) {
+			if ((this_00->pFighterCombo != (s_fighter_combo*)0x0) && ((this_00->pFighterCombo->field_0x4.field_0x0ushort & 0x100U) != 0)) {
 				bVar1 = true;
 			}
 
@@ -901,190 +1042,341 @@ LAB_00172118:
 		this->squad.ManageSemaphore(1);
 	}
 
-	this->squad.SynchronizePawns();)
-	return;
-}
-
-void CSquad::Create(ByteCode* pByteCode)
-{
-	uint uVar1;
-	uint uVar2;
-	float fVar3;
-	float fVar4;
-
-	fVar3 = pByteCode->GetF32();
-	uVar1 = pByteCode->GetU32();
-	uVar2 = pByteCode->GetU32();
-	if ((int)uVar1 < 0) {
-		fVar4 = (float)(uVar1 >> 1 | uVar1 & 1);
-		fVar4 = fVar4 + fVar4;
-	}
-	else {
-		fVar4 = (float)uVar1;
-	}
-
-	//CChessBoard::Init(fVar3, fVar3 * fVar4, &this->chessboard, uVar1, uVar2);
-
-	this->aSubObjs[0].field_0x0 = 0;
-	this->aSubObjs[0].field_0x4 = 0.6f;
-	this->aSubObjs[0].field_0xc = 0;
-	this->aSubObjs[0].field_0x8 = 0;
-	memset(this->aSubObjs[0].field_0x10, 0, sizeof(this->aSubObjs[0].field_0x10));
-
-	this->aSubObjs[1].field_0x0 = 1;
-	this->aSubObjs[1].field_0x4 = 0.0f;
-	this->aSubObjs[1].field_0xc = 0;
-	this->aSubObjs[1].field_0x8 = 0;
-	memset(this->aSubObjs[1].field_0x10, 0, sizeof(this->aSubObjs[1].field_0x10));
+	this->squad.SynchronizePawns();
 
 	return;
 }
 
-void CSquad::Term()
-{
-	IMPLEMENTATION_GUARD_LOG();
-}
-
-void CSquad::Clear()
+void CActorCommander::_UpdateSequence()
 {
 	int iVar1;
 	uint uVar2;
-	SquadSubObj_0x20* pCVar3;
-	uint uVar4;
-	uint uVar5;
+	bool bVar3;
 
-	iVar1 = (this->eltTable).entryCount;
-	while (iVar1 != 0) {
-		CActorWolfen* pWolfen = static_cast<CActorWolfen*>((this->eltTable).aEntries[iVar1 - 1]->pEnemyActor);
-		pWolfen->TermFightAction();
-		this->eltTable.PopCurrent();
-		iVar1 = (this->eltTable).entryCount;
-	}
-
-	SquadSubObj_0xb0* pSubObj_0xb0 = this->aSubObjs;
-
-	uVar5 = 0;
-	do {
-		uVar4 = 0;
-		pCVar3 = pSubObj_0xb0->field_0x10;
-
-		if (pSubObj_0xb0->field_0x8 != 0) {
-			do {
-				uVar2 = pCVar3->flags & 1;
-				if (((uVar2 != 0) && (uVar4 != 0xffffffff)) && (uVar2 != 0)) {
-					CActorWolfen* pWolfen = pCVar3->pWolfen;
-					if (pWolfen != (CActorWolfen*)0x0) {
-						IMPLEMENTATION_GUARD(
-						pWolfen->DisableFightAction();)
-					}
-
-					pWolfen = pCVar3->pWolfen;
-					if (pWolfen != (CActorWolfen*)0x0) {
-						pCVar3->field_0x4 = pWolfen;
-					}
-
-					if ((pCVar3->flags & 5) != 0) {
-						pSubObj_0xb0->field_0xc = pSubObj_0xb0->field_0xc + 1;
-					}
-
-					pCVar3->flags = 0;
-					pCVar3->field_0x10 = 0;
-					pCVar3->pWolfen = (CActorWolfen*)0x0;
-					pCVar3->field_0x8 = 0;
+	iVar1 = this->count_0x16c;
+	if (iVar1 != 0) {
+		bVar3 = iVar1 == 0;
+		if (!bVar3) {
+			bVar3 = this->field_0x168 == iVar1 + -1;
+		}
+		if (!bVar3) {
+			uVar2 = this->flags_0x18c;
+			if ((uVar2 & 0x10) == 0) {
+				if ((uVar2 & 10) == 10) {
+					this->flags_0x18c = this->flags_0x18c | 0x10;
+				}
+			}
+			else {
+				if ((uVar2 & 6) != 0) {
+					IMPLEMENTATION_GUARD(
+					UpdateKilled();
+					UpdateAttack();)
 				}
 
-				CActorWolfen* pWolfen = pCVar3->pWolfen;
-				if (pWolfen != (CActorWolfen*)0x0) {
-					pCVar3->field_0x4 = pWolfen;
+				if (((this->flags_0x18c & 8) == 0) || ((~this->flags_0x18c & 6) == 6)) {
+					this->flags_0x18c = this->flags_0x18c & 0xffffffef;
 				}
-
-				if ((pCVar3->flags & 5) != 0) {
-					pSubObj_0xb0->field_0xc = pSubObj_0xb0->field_0xc + 1;
-				}
-
-				pCVar3->flags = 0;
-				pCVar3->field_0x10 = 0;
-				uVar4 = uVar4 + 1;
-				pCVar3->pWolfen = (CActorWolfen*)0x0;
-				pCVar3->field_0x8 = 0;
-				pCVar3 = pCVar3 + 1;
-			} while (uVar4 < pSubObj_0xb0->field_0x8);
+			}
 		}
 
-		uVar5 = uVar5 + 1;
-		pSubObj_0xb0 = pSubObj_0xb0 + 1;
-	} while (uVar5 < 2);
+		if ((((this->flags_0x18c & 8) != 0) && ((~this->flags_0x18c & 6) == 6)) && (this->field_0x174 != (CActor*)0x0)) {
+			DoMessage(this->field_0x174, (ACTOR_MESSAGE)0x10, 0);
+		}
+	}
+	return;
+}
+
+void CActorCommander::_UpdatePattern()
+{
+	if (this->field_0x6d0 != 0) {
+		this->squad.SynchronizePattern((CChessBoardPawnsRefTable*)0x0);
+	}
+	return;
+}
+
+void CBehaviourCommander::Create(ByteCode* pByteCode)
+{
+	S_TARGET_ON_OFF_STREAM_REF* pSVar1;
+	int pCVar2;
+	S_STREAM_EVENT_CAMERA* pSVar3;
+
+	this->squadConfig.Create(pByteCode);
+
+	pSVar1 = (S_TARGET_ON_OFF_STREAM_REF*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(&pSVar1->aEntries);
+	if (pSVar1->entryCount != 0x0) {
+		pByteCode->currentSeekPos = pByteCode->currentSeekPos + pSVar1->entryCount * sizeof(S_STREAM_NTF_TARGET_SWITCH);
+	}
+	this->pMagicalSwitch1C_0x10 = pSVar1;
+
+	pSVar3 = (S_STREAM_EVENT_CAMERA*)pByteCode->currentSeekPos;
+	pByteCode->currentSeekPos = reinterpret_cast<char*>(pSVar3 + 1);
+	this->pMagicalSwitch20_0x14 = pSVar3;
 
 	return;
 }
 
-int CSquad::NbElt()
+void CBehaviourCommander::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	return this->eltTable.entryCount;
+	this->pOwner = static_cast<CActorCommander*>(pOwner);
+
+	if (newState == -1) {
+		this->pOwner->SetState(5, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	this->pOwner->squad.InitSemaphores(&this->squadConfig);
+
+	return;
 }
 
-void CSquad::ClearSquadDeadAndNonFightingElt()
+bool CBehaviourCommander::CanReleaseSemaphore()
 {
-	CTeamElt* pEntry;
-	CActorWolfen* pWolfen;
-	CTeamElt** pEntries;
-	int curIndex;
+	return 1 < this->pOwner->squad.NbElt();
+}
 
-	curIndex = 0;
-	pEntries = this->eltTable.aEntries;
-	if (0 < (this->eltTable).entryCount) {
-		do {
-			pEntry = *pEntries;
-			if (pEntry != (CTeamElt*)0x0) {
-				pWolfen = static_cast<CActorWolfen*>(pEntry->pEnemyActor);
-			
-				if ((pWolfen->GetLifeInterface()->GetValue() <= 0.0f) || (pWolfen->IsFightRelated(pWolfen->curBehaviourId) == false) || ((pWolfen->flags & 4) == 0)) {
-					pWolfen->TermFightAction();
-					this->eltTable.Pop(curIndex);
+CActorFighter* CBehaviourCommander::GetFocus()
+{
+	return CActorHero::_gThis->pAdversary;
+}
+
+void CBehaviourCommander::TestSwitch()
+{
+	return;
+}
+
+bool CBehaviourCommander::UpdateTeamAnim()
+{
+	CTeamElt* pCurEntry;
+	CScene* pCVar2;
+	bool bVar3;
+	int iVar4;
+	ulong uVar5;
+	CTeamElt** pEntryIt;
+	int iVar7;
+	CSquad* pSquad;
+	float fVar8;
+	uint uVar9;
+	undefined4 local_20[7];
+	undefined4* local_4;
+
+	pSquad = &this->pOwner->squad;
+	if (this->field_0x18 == 0) {
+		bVar3 = false;
+	}
+	else {
+		local_20[0] = 0xf;
+		iVar7 = 0;
+		iVar4 = pSquad->NbElt();
+		if (0 < iVar4) {
+			pEntryIt = pSquad->eltTable.aEntries;
+			do {
+				pCVar2 = CScene::_pinstance;
+				pCurEntry = *pEntryIt;
+				if (pCurEntry->field_0x14 == -1) {
+					uVar5 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+					CScene::_pinstance->field_0x38 = uVar5;
+					if ((int)((uint)(uVar5 >> 0x10) & 0x7fff) < 0) {
+						bVar3 = false;
+					}
+					else {
+						uVar5 = pCVar2->field_0x38 * 0x343fd + 0x269ec3;
+						pCVar2->field_0x38 = uVar5;
+						fVar8 = this->field_0x1c * 32767.0f;
+						if (fVar8 < 2.147484e+09f) {
+							uVar9 = (uint)fVar8;
+						}
+						else {
+							uVar9 = (int)(fVar8 - 2.147484e+09f) | 0x80000000;
+						}
+
+						bVar3 = ((uint)(uVar5 >> 0x10) & 0x7fff) <= uVar9;
+					}
+					if (bVar3) {
+						local_4 = local_20;
+						this->pOwner->DoMessage(pCurEntry->pEnemyActor, (ACTOR_MESSAGE)0x1a, local_20);
+					}
 				}
-			}
 
-			curIndex = curIndex + 1;
-			pEntries = pEntries + 1;
-		} while (curIndex < (this->eltTable).entryCount);
+				pEntryIt = pEntryIt + 1;
+				iVar7 = iVar7 + 1;
+				iVar4 = pSquad->NbElt();
+			} while (iVar7 < iVar4);
+		}
+
+		this->field_0x18 = 0;
+		bVar3 = true;
 	}
+
+	return bVar3;
+}
+
+void CBehaviourCommanderDefault::Manage()
+{
+	CActorCommander* pCommander;
+
+	this->pOwner->_UpdateSequence();
+
+	pCommander = this->pOwner;
+	if (pCommander->actorState == 5) {
+		pCommander->StateCommanderDefault();
+	}
+
+	TestSwitch();
+
+	this->pMagicalSwitch20_0x14->Manage(this->pOwner);
+
+	UpdateTeamAnim();
 
 	return;
 }
 
-void CSquad::RemoveFighter(CTeamElt* pTeamElt)
+void CBehaviourCommanderDefault::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	int iVar1;
-	CTeamElt** pCVar2;
-	int iVar3;
+	CBehaviourCommander::Begin(pOwner, newState, newAnimationType);
 
-	iVar1 = (this->eltTable).entryCount;
-	iVar3 = 0;
-	pCVar2 = this->eltTable.aEntries;
-	if (0 < iVar1) {
+	this->field_0x20 = 0;
+
+	S_STREAM_NTF_TARGET_SWITCH* pSVar2 = this->pMagicalSwitch1C_0x10->aEntries;
+	int iVar3 = 0;
+	if (0 < this->pMagicalSwitch1C_0x10->entryCount) {
 		do {
-			if (*pCVar2 == pTeamElt) {
-				CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pTeamElt->pEnemyActor);
-				pWolfen->TermFightAction();
-				this->eltTable.Pop(iVar3);
-				IMPLEMENTATION_GUARD(
-				SynchronizePawns();)
-				return;
+			pSVar2->Reset();
+			pSVar2 = pSVar2 + 1;
+			iVar3 = iVar3 + 1;
+		} while (iVar3 < this->pMagicalSwitch1C_0x10->entryCount);
+	}
+
+	this->pMagicalSwitch20_0x14->Reset(this->pOwner);
+
+	return;
+}
+
+int CBehaviourCommanderDefault::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int* piVar1;
+	CLifeInterface* pLife;
+	int iVar2;
+	undefined8 uVar3;
+	float fVar4;
+	float fVar5;
+
+	if (msg == 0x1b) {
+		IMPLEMENTATION_GUARD(
+		if (*pMsgParam == 1) {
+			piVar1 = (int*)pMsgParam[1];
+			this->field_0x18 = 1;
+			pLife = (CLifeInterface*)(**(code**)(*piVar1 + 0x138))(piVar1, pSender);
+			fVar4 = CLifeInterface::GetValueMax(pLife);
+			uVar3 = (**(code**)(*piVar1 + 0x138))(piVar1);
+			fVar5 = (float)(**(code**)(*(int*)uVar3 + 0x24))(uVar3);
+			iVar2 = 1;
+			this->field_0x1c = 1.0 - fVar5 / fVar4;
+		}
+		else {
+			iVar2 = 0;
+		})
+	}
+	else {
+		iVar2 = 0;
+	}
+
+	return iVar2;
+}
+
+void CBehaviourCommanderDefault::TestSwitch()
+{
+	CActorCommander* pCommander;
+	int* piVar2;
+	bool bVar3;
+	undefined8 uVar4;
+	long lVar5;
+	S_TARGET_ON_OFF_STREAM_REF* pSVar6;
+	byte bVar7;
+	int iVar8;
+	int iVar9;
+
+	pCommander = this->pOwner;
+	iVar9 = pCommander->count_0x16c;
+	bVar7 = 1;
+	if (iVar9 == 0) {
+		for (iVar8 = 0; (bVar7 != 0 && (pCommander = this->pOwner, iVar8 < pCommander->nbTeams)); iVar8 = iVar8 + 1) {
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pCommander->aTeamElt[iVar8].pEnemyActor);
+			if ((0.0f < pWolfen->GetLifeInterface()->GetValue()) || ((pWolfen->IsKindOfObject(0x10) != 0 && (pWolfen->field_0xb80 != 2)))) {
+				bVar7 = 0;
+			}
+		}
+	}
+	else {
+		bVar3 = iVar9 == 0;
+		if (!bVar3) {
+			bVar3 = pCommander->field_0x168 == iVar9 + -1;
+		}
+
+		if (!bVar3) {
+			bVar7 = 0;
+		}
+	}
+
+	if (this->field_0x20 != bVar7) {
+		if ((this->field_0x20 == 1) && (bVar7 == 0)) {
+			pSVar6 = this->pMagicalSwitch1C_0x10;
+			pCommander = this->pOwner;
+			iVar9 = 0;
+			if (0 < pSVar6->entryCount) {
+				do {
+					pSVar6->aEntries[iVar9].SwitchOff(pCommander);
+					iVar9 = iVar9 + 1;
+				} while (iVar9 < pSVar6->entryCount);
+			}
+		}
+
+		if ((this->field_0x20 == 0) && (bVar7 == 1)) {
+			pSVar6 = this->pMagicalSwitch1C_0x10;
+			pCommander = this->pOwner;
+			iVar9 = 0;
+			if (0 < pSVar6->entryCount) {
+				do {
+					pSVar6->aEntries[iVar9].SwitchOn(pCommander);
+					iVar9 = iVar9 + 1;
+				} while (iVar9 < pSVar6->entryCount);
 			}
 
-			iVar3 = iVar3 + 1;
-			pCVar2 = pCVar2 + 1;
-		} while (iVar3 < iVar1);
+			this->pMagicalSwitch20_0x14->SwitchOn(pCommander);
+		}
+
+		this->field_0x20 = bVar7;
 	}
 
 	return;
 }
 
-CTeamElt::CTeamElt()
+bool CBehaviourCommanderDefault::UpdateTeamAnim()
 {
-	this->field_0x0 = 2;
-	this->field_0x4 = 2;
-	this->field_0x14 = -1;
+	if (!CBehaviourCommander::UpdateTeamAnim()) {
+		int iVar8 = 0;
+		CSquad* pSquad = &this->pOwner->squad;
+		int nbElt = pSquad->NbElt();
+		CTeamElt** pEntryIt = pSquad->eltTable.aEntries;
+		if (0 < nbElt) {
+			do {
+				CTeamElt* pCurEntry = *pEntryIt;
+				if ((pCurEntry->field_0x14 == -1) && (pCurEntry->pEnemyActor->actorState == 6)) {
+					float fVar10 = ((float)rand() / 2.147484e+09f) * 2.0f + 2.0f;
+					nbElt = rand();
+					int iVar5 = rand();
+					pCurEntry->pEnemyActor->PlayWaitingAnimation(((float)iVar5 / 2.147484e+09f) * 2.5f + 0.5f, ((float)nbElt / 2.147484e+09f) * 0.6f + 0.8f,
+						0xe3, -1, (char)(int)fVar10);
+				}
 
-	return;
+				pEntryIt = pEntryIt + 1;
+				iVar8 = iVar8 + 1;
+				nbElt = pSquad->NbElt();
+			} while (iVar8 < nbElt);
+		}
+	}
+
+	return true;
 }

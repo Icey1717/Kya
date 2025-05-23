@@ -881,14 +881,14 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 	local_20.xyz = this->sphereCentre.xyz;
 
 	CScene::ptable.g_ActorManager_004516a4->cluster.GetActorsIntersectingSphereWithCriterion(pTable, &local_20, gHeroMagicCallback, this);
-	this->magicInterface.SetHasMagicInteractionAround(pTable->entryCount == 0 ^ 1);
+	this->magicInterface.SetHasMagicInteractionAround(pTable->nbEntries == 0 ^ 1);
 
 	iVar3 = 0;
-	iVar2 = pTable->entryCount;
+	iVar2 = pTable->nbEntries;
 	if (0 < iVar2) {
 		local_4 = 0;
 		pCVar5 = pTable->aEntries;
-		while (iVar2 = pTable->entryCount, iVar3 < iVar2) {
+		while (iVar2 = pTable->nbEntries, iVar3 < iVar2) {
 			iVar2 = DoMessage(*pCVar5, (ACTOR_MESSAGE)0x2f, (MSG_PARAM)local_4);
 			if (iVar2 == 4) {
 				pTable->Pop(iVar3);
@@ -909,7 +909,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 				if (iVar2 != 0) {
 					iVar2 = 0;
 					pCVar5 = pTable->aEntries;
-					if (0 < pTable->entryCount) {
+					if (0 < pTable->nbEntries) {
 						do {
 							if ((*pCVar5)->typeID == AMBER) {
 								pCVar5 = pCVar5 + 1;
@@ -918,7 +918,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 							else {
 								pTable->Pop(iVar2);
 							}
-						} while (iVar2 < pTable->entryCount);
+						} while (iVar2 < pTable->nbEntries);
 					}
 
 					this->field_0x1a40 = 1;
@@ -927,7 +927,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 			else {
 				iVar2 = 0;
 				pCVar5 = pTable->aEntries;
-				if (0 < pTable->entryCount) {
+				if (0 < pTable->nbEntries) {
 					do {
 						if ((*pCVar5)->typeID == SWITCH) {
 							pCVar5 = pCVar5 + 1;
@@ -936,14 +936,14 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 						else {
 							pTable->Pop(iVar2);
 						}
-					} while (iVar2 < pTable->entryCount);
+					} while (iVar2 < pTable->nbEntries);
 				}
 
 				this->field_0x1a40 = 2;
 			}
 		}
 		else {
-			iVar2 = pTable->entryCount;
+			iVar2 = pTable->nbEntries;
 			iVar3 = 0;
 			pCVar5 = pTable->aEntries;
 			if (0 < iVar2) {
@@ -957,7 +957,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 						iVar3 = iVar3 + 1;
 					}
 
-					iVar2 = pTable->entryCount;
+					iVar2 = pTable->nbEntries;
 				} while (iVar3 < iVar2);
 			}
 
@@ -974,7 +974,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 								(float)pCVar5->aEntries[0][8].pClusterNode - (float)pCVar5->aEntries[0][8].pMeshNode) {
 								pTable->Swap(iVar3, iVar6);
 							})
-							iVar2 = pTable->entryCount;
+							iVar2 = pTable->nbEntries;
 							iVar6 = iVar6 + 1;
 							ppCVar4 = ppCVar4 + 1;
 						} while (iVar6 < iVar2);
@@ -987,7 +987,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 
 			iVar2 = 0;
 			fVar7 = GetMagicalForce();
-			if (0 < pTable->entryCount) {
+			if (0 < pTable->nbEntries) {
 				do {
 					IMPLEMENTATION_GUARD(
 					fVar8 = (float)pTable->aEntries[iVar2][8].pClusterNode - (float)pTable->aEntries[iVar2][8].pMeshNode;)
@@ -1004,7 +1004,7 @@ void CActorHeroPrivate::GetPossibleMagicalTargets(CActorsTable* pTable)
 							iVar2 = iVar2 + 1;
 						}
 					}
-				} while (iVar2 < pTable->entryCount);
+				} while (iVar2 < pTable->nbEntries);
 			}
 
 			this->field_0x1a40 = 3;
@@ -1682,7 +1682,7 @@ bool CActorHeroPrivate::ManageActions()
 		}
 		else {
 			if (this->field_0x1a44 == 0) {
-				local_110.entryCount = 0;
+				local_110.nbEntries = 0;
 				GetPossibleMagicalTargets(&local_110);
 			}
 		}
@@ -1715,10 +1715,10 @@ bool CActorHeroPrivate::ManageActions()
 
 			if (uVar7 != 0) {
 				IMPLEMENTATION_GUARD(
-				local_220.entryCount = 0;
+				local_220.nbEntries = 0;
 				GetPossibleMagicalTargets(this, &local_220);
 				iVar5 = 0;
-				if (0 < local_220.entryCount) {
+				if (0 < local_220.nbEntries) {
 					pActorTable = &local_220;
 					do {
 						if (pActorTable->aEntries[0]->typeID == AMBER) {
@@ -1727,7 +1727,7 @@ bool CActorHeroPrivate::ManageActions()
 						}
 						iVar5 = iVar5 + 1;
 						pActorTable = (CActorsTable*)pActorTable->aEntries;
-					} while (iVar5 < local_220.entryCount);
+					} while (iVar5 < local_220.nbEntries);
 				}
 				this->field_0x1a40 = 0;
 				this->field_0x1a44 = 0;
@@ -3593,9 +3593,9 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			return 1;
 		}
 
-		if (msg == 0xc) {
-			IMPLEMENTATION_GUARD(
-			*(undefined4*)pMsgParam = 0x40accccd;)
+		if (msg == MESSAGE_GET_RUN_SPEED) {
+			float* pRunSpeedParam = reinterpret_cast<float*>(pMsgParam);
+			*pRunSpeedParam = 5.4f;
 			return 1;
 		}
 
@@ -8535,13 +8535,13 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 	this->dynamicExt.normalizedTranslation.w = 0.0f;
 	this->dynamicExt.field_0x6c = 0.0f;
 
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 
 	ManageDyn(4.0f, 0x1002023b, &local_110);
 
 	iVar10 = 0;
 	do {
-		if (local_110.entryCount <= iVar10) {
+		if (local_110.nbEntries <= iVar10) {
 		LAB_0032b168:
 			if (boolA == false) {
 				if (boolB != false) {
@@ -11881,7 +11881,7 @@ void CActorHeroPrivate::StateHeroGlide(int param_2, int nextState)
 	pCVar2 = this->pCollisionData;
 	pCVar3 = this->pAnimationController;
 	bVar5 = false;
-	local_130.entryCount = 0;
+	local_130.nbEntries = 0;
 	uVar22 = 0;
 
 	fVar26 = edFIntervalUnitSrcLERP(this->field_0x11ec, 0.5f, 1.0f);
@@ -12440,7 +12440,7 @@ LAB_0014a028:
 
 		bVar5 = (pCVar2->flags_0x4 & 2) != 0;
 		if ((this->field_0x1424 != 0) && (bVar8 = false, bVar5)) {
-			for (iVar20 = 0; iVar20 < local_130.entryCount; iVar20 = iVar20 + 1) {
+			for (iVar20 = 0; iVar20 < local_130.nbEntries; iVar20 = iVar20 + 1) {
 				IMPLEMENTATION_GUARD(
 				lVar24 = BreakActor(0, 5.0, 10.0, local_130.aEntries[iVar20], 1, 0, 0);
 				if (lVar24 == 1) {
@@ -13141,18 +13141,18 @@ int CActorHeroPrivate::SlideOnGround(float param_1, float param_2, float param_3
 		}
 	}
 
-	local_150.entryCount = 0;
+	local_150.nbEntries = 0;
 	ManageDyn(4.0f, flags, &local_150);
 
 	iVar4 = 0;
-	if (0 < local_150.entryCount) {
+	if (0 < local_150.nbEntries) {
 		do {
 			if (local_150.aEntries[iVar4]->typeID != 0xd) {
 				return 1;
 			}
 
 			iVar4 = iVar4 + 1;
-		} while (iVar4 < local_150.entryCount);
+		} while (iVar4 < local_150.nbEntries);
 	}
 
 	return 0;
@@ -15759,14 +15759,14 @@ void CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 		CActorAutonomous::ManageDyn(param_1, flags, pActorsTable);
 	}
 	else {
-		local_110.entryCount = 0;
+		local_110.nbEntries = 0;
 		bVar2 = false;
 		if (pActorsTable == (CActorsTable*)0x0) {
 			pActorsTable = &local_110;
 		}
 		CActorAutonomous::ManageDyn(param_1, flags, pActorsTable);
 		iVar7 = 0;
-		if (0 < pActorsTable->entryCount) {
+		if (0 < pActorsTable->nbEntries) {
 			do {
 				IMPLEMENTATION_GUARD()
 				if (pActorsTable->aEntries[iVar7] == this->field_0xf54) {
@@ -15774,7 +15774,7 @@ void CActorHeroPrivate::ManageDyn(float param_1, uint flags, CActorsTable* pActo
 					break;
 				}
 				iVar7 = iVar7 + 1;
-			} while (iVar7 < pActorsTable->entryCount);
+			} while (iVar7 < pActorsTable->nbEntries);
 		}
 		if (!bVar2) {
 			IMPLEMENTATION_GUARD(
@@ -16876,7 +16876,7 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 	edF32VECTOR4 local_120;
 	CActorsTable local_110;
 
-	local_110.entryCount = 0;
+	local_110.nbEntries = 0;
 	pOwningFighter = this->pOwner;
 	local_120.xyz = pOwningFighter->currentLocation.xyz;
 	local_120.w = 7.0f;
@@ -16894,8 +16894,8 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 	if (this->nbPotentialAdversaries != 0) {
 		do {
 			iVar8 = 0;
-			iVar5 = local_110.entryCount;
-			if (0 < local_110.entryCount) {
+			iVar5 = local_110.nbEntries;
+			if (0 < local_110.nbEntries) {
 				do {
 					if (local_110.aEntries[iVar8] == pAdversaryEntryB->pActorFighter) {
 						memcpy(pAdversaryEntryA, pAdversaryEntryB, sizeof(AdversaryEntry));
@@ -16903,8 +16903,8 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 
 						pAdversaryEntryA = pAdversaryEntryA + 1;
 						uVar10 = uVar10 + 1;
-						iVar5 = local_110.entryCount;
-						iVar8 = local_110.entryCount;
+						iVar5 = local_110.nbEntries;
+						iVar8 = local_110.nbEntries;
 					}
 					else {
 						iVar8 = iVar8 + 1;
@@ -16920,7 +16920,7 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 	this->nbPotentialAdversaries = uVar10;
 
 	uVar10 = 0;
-	while ((uVar10 < local_110.entryCount && (this->nbPotentialAdversaries < 0x10))) {
+	while ((uVar10 < local_110.nbEntries && (this->nbPotentialAdversaries < 0x10))) {
 		this->aAdversaries[this->nbPotentialAdversaries].pActorFighter = reinterpret_cast<CActorFighter*>(local_110.aEntries[uVar10]);
 
 		entryIndex = this->nbPotentialAdversaries;

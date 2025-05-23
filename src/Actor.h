@@ -72,6 +72,7 @@ struct MessageKickedParams
 enum ACTOR_MESSAGE {
 	MESSAGE_KICKED = 0x2,
 	MESSAGE_GET_VISUAL_DETECTION_POINT = 0x7,
+	MESSAGE_GET_RUN_SPEED = 0xc,
 	MESSAGE_GET_ACTION = 0x12,
 	MESSAGE_TRAP_STRUGGLE = 0x14,
 	MESSAGE_IN_WIND_AREA = 0x16,
@@ -127,14 +128,6 @@ public:
 	virtual void Reset() = 0;
 	virtual float GetValue() = 0;
 	virtual void SetValue(float value) = 0;
-};
-
-struct SPEED_DYN {
-	void Init(float param_1, float param_2);
-	float UpdateLerp(float target);
-
-	float currentAlpha;
-	float field_0x4;
 };
 
 class CBehaviour : public CObject

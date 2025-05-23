@@ -113,7 +113,7 @@ float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint f
 	edF32VECTOR4 local_120;
 	CActorsTable actorIntersectingBoxTable;
 
-	actorIntersectingBoxTable.entryCount = 0;
+	actorIntersectingBoxTable.nbEntries = 0;
 
 	pLoc = this->pLocation;
 	pDir = this->pLeadVector;
@@ -147,7 +147,7 @@ float CCollisionRay::IntersectActors(CActor* pActor, CActor* pOtherActor, uint f
 
 	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingBox(&boundingBox, gClusterCallback_GetActorsRay, &callbackParams);
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors intersecting actors: {}", actorIntersectingBoxTable.entryCount);
+	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActors intersecting actors: {}", actorIntersectingBoxTable.nbEntries);
 
 	const float distance = IntersectActorsTable(&actorIntersectingBoxTable, pOutVector, pOutResult);
 
@@ -172,7 +172,7 @@ float CCollisionRay::IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0
 	uint local_4;
 	int total;
 
-	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable count: {}", pTable->entryCount);
+	COLLISION_LOG(LogLevel::Verbose, "CCollisionRay::IntersectActorsTable count: {}", pTable->nbEntries);
 
 	distance = 1e+30f;
 
@@ -180,7 +180,7 @@ float CCollisionRay::IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0
 	outHitType = 0;
 	local_4 = 0;
 	this->lengthA = this->lengthB.x;
-	total = pTable->entryCount;
+	total = pTable->nbEntries;
 	counter = 0;
 
 	if (0 < total) {

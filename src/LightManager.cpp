@@ -12,8 +12,6 @@
 
 #define LIGHT_MANAGER_LOG(level, format, ...) MY_LOG_CATEGORY("LightManager", level, format, ##__VA_ARGS__)
 
-edF32VECTOR4 gF32Vector4UnitY = { 0.0f, 1.0f, 0.0f, 0.0f };
-
 CLightManager::CLightManager()
 {
 	uint count;

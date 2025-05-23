@@ -5,6 +5,7 @@
 #include "ActorFighter.h"
 #include "ActorBasicBox.h"
 #include "CameraViewManager.h"
+#include "CameraFightData.h"
 
 class CActorPunchingBall;
 

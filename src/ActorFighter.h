@@ -324,13 +324,9 @@ struct s_fighter_hit_exclusion
 class CFighterExcludedTable : public CFixedTable<s_fighter_hit_exclusion, 6>
 {
 public:
-	CFighterExcludedTable();
-
 	void EmptyByTime(float time);
 	bool IsInList(CActor* pActor);
 	void Add(float maxDuration, CActor* pActor);
-
-	undefined4 nbEntries;
 };
 
 
@@ -438,6 +434,7 @@ public:
 	virtual void SetFightBehaviour();
 	virtual int GetFightBehaviour();
 	virtual bool IsFightRelated(int behaviourId);
+	virtual bool IsInHitState();
 	virtual void ProcessDeath() {}
 	virtual bool IsAlive();
 	virtual void EnableFightCamera() {}
