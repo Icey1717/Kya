@@ -182,7 +182,7 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 	this->braceletLevel = 0;
 	this->field_0x1874 = this->field_0x444;
 	this->field_0x1878 = this->validCommandMask.all;
-	//this->field_0xff0 = 0;
+	this->field_0xff0 = (edF32MATRIX3*)0x0;
 
 	this->field_0x157c = pByteCode->GetU32();
 	this->animKey_0x1584 = pByteCode->GetU32();
@@ -417,7 +417,7 @@ void CActorHeroPrivate::Create(ByteCode* pByteCode)
 
 void CActorHeroPrivate::Init()
 {
-	//ushort uVar1;
+	ushort uVar1;
 	//int* piVar2;
 	//CAnimation* pAnimationController;
 	//edANM_HDR** ppeVar3;
@@ -588,12 +588,11 @@ void CActorHeroPrivate::Init()
 	//this->field_0x1998.w = 0.4;
 	//*(undefined4*)&this->field_0x19ac = 0x40000000;
 	//this->field_0x1998.y = 0.0;
-	//uVar1 = ((pAnimationController->anmSkeleton).pTag)->boneCount;
-	//pvVar6 = operator.new.array((long)(int)((uint)uVar1 * 0x30));
-	//this->field_0xff0 = pvVar6;
-	//CAnimation::SetField_0017f7f0(pAnimationController, (AnimData_30*)this->field_0xff0, (ulong)uVar1);
+	uVar1 = ((pAnimationController->anmSkeleton).pTag)->boneCount;
+	this->field_0xff0 = new edF32MATRIX3[uVar1];
+	pAnimationController->SetBoneMatrixData(this->field_0xff0, uVar1);
 	//FUN_003cb7b0();
-	//LevelScheduleManager::FUN_002db410(LevelScheduleManager::gThis, &this->field_0xadc);
+	//LevelScheduleManager::Game_LoadInventory(LevelScheduleManager::gThis, &this->field_0xadc);
 
 	_InitHeroFight();
 
@@ -16954,7 +16953,7 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 			if (entryIndex != 0) {
 				do {
 					pAdversaryEntryA->field_0x14 = 0.0f;
-					pAdversaryEntryA->field_0x18 = 0.0f;
+					pAdversaryEntryA->field_0x18 = 0;
 
 					uVar6 = uVar6 + 1;
 					pAdversaryEntryA = pAdversaryEntryA + 1;
@@ -16964,7 +16963,7 @@ void CFightLock_SE::BuildKnowledgeBase(edF32VECTOR4* pDirection)
 		else {
 			puVar3 = this->aAdversaries + entryIndex;
 			puVar3->field_0x14 = 0.0f;
-			puVar3->field_0x18 = 0.0f;
+			puVar3->field_0x18 = 0;
 		}
 
 		uVar10 = uVar10 + 1;
@@ -17163,6 +17162,8 @@ void CFightLock_SE::_Heuristic_Aim(edF32VECTOR4* pDirection)
 	return;
 }
 
+float FLOAT_00448b4c = 5.0f;
+
 void CFightLock_SE::_Heuristic_Danger()
 {
 	CActorFighter* pActor;
@@ -17195,36 +17196,31 @@ void CFightLock_SE::_Heuristic_Danger()
 
 				if ((bVar3 != false) &&
 					(pCVar4 = pWolfen->pCommander->GetTeamElt(pActor), dangerRating = 0.5f, pCVar4->field_0x14 == 0)) {
-					IMPLEMENTATION_GUARD(
 					dangerRating = 0.75f;
-					lVar7 = (*(code*)((pActor->characterBase).base.base.pVTable)->IsInHitState)();
-					if ((lVar7 == 0) &&
-						((1.0 <= *(float*)&(&pActor->staticMeshComponentAdvanced)[2].field_0x60 &&
-							(((uint)(&pActor->characterBase)[1].base.base.pCinData & 1) == 0)))) {
-						puVar8 = &this->field_0x10[uVar9 - 1].field_0x10;
-						if ((float)puVar8[9] < 0.75f) {
-							puVar8[10] = puVar8[10] & 0xfffffffe;
+					lVar7 = pActor->IsInHitState();
+					if ((lVar7 == 0) && ((1.0f <= pActor->field_0x6c8 && ((pActor->fightFlags & 1) == 0)))) {
+						if (this->aAdversaries[uVar9].field_0x14 < 0.75f) {
+							this->aAdversaries[uVar9].field_0x18 = this->aAdversaries[uVar9].field_0x18 & 0xfffffffe;
 						}
+
 						if (uVar9 == this->adversaryIndex) {
-							puVar8 = &this->field_0x10[uVar9 - 1].field_0x10;
-							puVar8[10] = puVar8[10] | 1;
+							this->aAdversaries[uVar9].field_0x18 = this->aAdversaries[uVar9].field_0x18 | 1;
 						}
-						if ((this->field_0x10[uVar9].field_0x18 & 1) == 0) {
+
+						if ((this->aAdversaries[uVar9].field_0x18 & 1) == 0) {
 							dangerRating = 2.0f;
 						}
 						else {
-							fVar1 = ((edF32VECTOR4*)&pActor->characterBase)->x -
-								this->pOwner->currentLocation.x;
-							fVar2 = ((edF32VECTOR4*)&pActor->characterBase)->z -
-								this->pOwner->currentLocation.z;
-							if (fVar1 * fVar1 + fVar2 * fVar2 < DAT_00448b4c * DAT_00448b4c) {
+							fVar1 = pActor->currentLocation.x - this->pOwner->currentLocation.x;
+							fVar2 = pActor->currentLocation.z - this->pOwner->currentLocation.z;
+							if (fVar1 * fVar1 + fVar2 * fVar2 < FLOAT_00448b4c * FLOAT_00448b4c) {
 								dangerRating = 2.0f;
 							}
 							else {
 								dangerRating = 1.0f;
 							}
 						}
-					})
+					}
 				}
 			}
 			else {

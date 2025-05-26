@@ -21,6 +21,9 @@ class CTeamElt
 {
 public:
 	CTeamElt();
+	void EnableFightAction(int index);
+	void DisableFightAction();
+
 	int field_0x0;
 	int field_0x4;
 	int pawnId;
@@ -31,24 +34,28 @@ public:
 
 struct SquadSemaphore
 {
-	CActorWolfen* pWolfen;
-	CActorWolfen* field_0x4;
-	undefined4 field_0x8;
+	CTeamElt* pTeamElt;
+	CTeamElt* field_0x4;
+	float field_0x8;
 	uint flags;
 	float duration;
+	float field_0x14;
 };
 
 struct SquadSemaphoreManager
 {
 	void ManageSemaphore();
+	uint GetToken(CTeamElt* pTeamElt, int param_3);
 
-	undefined4 field_0x0;
+	int field_0x0;
 	float field_0x4;
 	int nbSemaphores;
 	uint field_0xc;
 
 	SquadSemaphore aSemaphores[5];
 };
+
+typedef CFixedTable<CTeamElt*, 5> CSquadTeam;
 
 class CSquad
 {
@@ -71,7 +78,10 @@ public:
 	void ManageSemaphore(int index);
 	void SynchronizePawns();
 
-	CFixedTable<CTeamElt*, 5> eltTable;
+	void ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4);
+	bool QuerySemaphoreCold(int index, CTeamElt* pTeamElt);
+
+	CSquadTeam eltTable;
 	CChessBoard chessboard;
 
 	SquadSemaphoreManager aSemaphores[2];

@@ -17,7 +17,7 @@ edAnmStage::edAnmStage()
 	this->field_0x8 = -1.0f;
 	this->pFrameMatrixData = (edF32MATRIX4*)0x0;
 	this->pConstantMatrixData = (edF32MATRIX3*)0x0;
-	this->pAnimMatrix = (AnimMatrix*)0x0;
+	this->pAnimMatrix = (edF32MATRIX3*)0x0;
 	this->pRelativeTransformMatrixBuffer = (edANM_WRTS*)0x0;
 	this->anmSkeleton = (edANM_SKELETON*)0x0;
 	this->pKeyData = (edANM_HDR*)0x0;
@@ -33,7 +33,7 @@ CAnimation::CAnimation()
 	(this->anmBinMetaAnimator).pAnimKeyEntryData = (int*)0x0;
 	(this->anmSkeleton).pTag = (edANM_SKELETON*)0x0;
 	this->pAnimMatrix = (edF32MATRIX3*)0x0;
-	this->field_0x28 = 0;
+	this->bUseAnimMatrixData = 0;
 	return;
 }
 
@@ -1639,6 +1639,68 @@ void edAnmStage::AnimBlendToWRTS(float param_1)
 	return;
 }
 
+void edAnmStage::PreviousPostureToWRTS(float param_1)
+{
+	ushort uVar1;
+	edF32MATRIX3* peVar5;
+	edF32MATRIX4* peVar6;
+	uint uVar7;
+
+	peVar6 = this->pRelativeTransformMatrixBuffer->matrices;
+	peVar5 = this->pAnimMatrix;
+	uVar1 = ((this->anmSkeleton).pTag)->boneCount;
+	uVar7 = uVar1;
+	if (uVar1 != 0) {
+		do {
+			uVar7 = uVar7 - 1;
+			*peVar6 = *peVar5;
+			peVar5 = peVar5 + 1;
+			peVar6->da = param_1;
+			peVar6 = peVar6 + 1;
+		} while (0 < uVar7);
+	}
+
+	return;
+}
+
+void edAnmStage::WRTSToPreviousPosture()
+{
+	ushort uVar1;
+	undefined8 uVar2;
+	float fVar3;
+	float fVar4;
+	edF32MATRIX3* peVar5;
+	edF32MATRIX3* peVar6;
+	edF32MATRIX4* peVar7;
+	uint meshSectionCount;
+
+	peVar7 = this->pRelativeTransformMatrixBuffer->matrices;
+	peVar6 = this->pAnimMatrix;
+	uVar1 = ((this->anmSkeleton).pTag)->boneCount;
+	peVar5 = this->pConstantMatrixData;
+
+	meshSectionCount = (uint)uVar1;
+
+	if (uVar1 != 0) {
+		do {
+			meshSectionCount = meshSectionCount - 1;
+			if (peVar7->da == -1.0f) {
+				*peVar6 = *peVar5;
+			}
+			else {
+				peVar6->rowX = peVar7->rowX;
+				peVar6->rowY = peVar7->rowY;
+				peVar6->rowZ = peVar7->rowZ;
+			}
+
+			peVar7 = peVar7 + 1;
+			peVar6 = peVar6 + 1;
+			peVar5 = peVar5 + 1;
+		} while (0 < (int)meshSectionCount);
+	}
+	return;
+}
+
 void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlayingAnimation)
 {
 	ushort uVar1;
@@ -1739,11 +1801,11 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 			pMatrixBuffer = TheAnimManager.AllocWRTSBuffer();
 			TheAnimStage.SetDestinationWRTS(pMatrixBuffer, -1);
 
-			if ((prevLodBoneCount == ((this->anmSkeleton).pTag)->boneCount) && (this->field_0x28 == 0)) {
-				TheAnimStage.pAnimMatrix = (AnimMatrix*)this->pAnimMatrix;
+			if ((prevLodBoneCount == ((this->anmSkeleton).pTag)->boneCount) && (this->bUseAnimMatrixData == 0)) {
+				TheAnimStage.pAnimMatrix = this->pAnimMatrix;
 			}
 			else {
-				TheAnimStage.pAnimMatrix = (AnimMatrix*)0x0;
+				TheAnimStage.pAnimMatrix = (edF32MATRIX3*)0x0;
 			}
 
 			TheAnimStage.pFrameMatrixData = pFrameMatrixData;
@@ -1769,11 +1831,10 @@ void CAnimation::Manage(float deltaTime, CActor* pActor, int bHasFlag, int bPlay
 
 			TheAnimStage.ToonWRTSToGlobalMatrices(1);
 
-			if ((AnimMatrix*)this->pAnimMatrix != (AnimMatrix*)0x0) {
-				IMPLEMENTATION_GUARD(
-				TheAnimStage.pAnimMatrix = (AnimMatrix*)this->pAnimMatrix;
-				edAnmStage::WRTSToPreviousPosture(&TheAnimStage);
-				this->field_0x28 = 0;)
+			if (this->pAnimMatrix != (edF32MATRIX3*)0x0) {
+				TheAnimStage.pAnimMatrix = this->pAnimMatrix;
+				TheAnimStage.WRTSToPreviousPosture();
+				this->bUseAnimMatrixData = 0;
 			}
 
 			pActor->UpdatePostAnimEffects();
@@ -2302,7 +2363,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 
 	ANIMATION_LOG(LogLevel::Verbose, "edAnmLayer::MorphingDT playTime: {}", playTime);
 
-	if ((this->nextAnimDesc.animMode == -6) && (TheAnimStage.pAnimMatrix == (AnimMatrix*)0x0)) {
+	if ((this->nextAnimDesc.animMode == -6) && (TheAnimStage.pAnimMatrix == (edF32MATRIX3*)0x0)) {
 		fVar6 = this->nextAnimDesc.state.time_0x10;
 		this->currentAnimDesc.state.playingDuration = 0.0f;
 		this->field_0xc = this->currentAnimDesc.animMode;
@@ -2405,12 +2466,10 @@ bool edAnmLayer::MorphingDT(float playTime)
 		IMPLEMENTATION_GUARD(this->currentAnimDesc.state.AnimateIT(0.0f));
 		break;
 	case -6:
-		IMPLEMENTATION_GUARD(
-		TheAnimStage.PreviousPostureToWRTS(1.0f));
+		TheAnimStage.PreviousPostureToWRTS(1.0f);
 		break;
 	case -5:
-		if (TheAnimStage.pAnimMatrix != (AnimMatrix*)0x0) {
-			IMPLEMENTATION_GUARD(
+		if (TheAnimStage.pAnimMatrix != (edF32MATRIX3*)0x0) {
 			TheAnimStage.PreviousPostureToWRTS(1.0f);
 			if (0.0f < fVar6) {
 				fVar4 = 0.0f;
@@ -2433,7 +2492,7 @@ bool edAnmLayer::MorphingDT(float playTime)
 				if (fVar4 < 1.0f) {
 					fVar6 = (fVar6 - fVar4) / (1.0f - fVar4);
 				}
-			})
+			}
 			break;
 		}
 	case -4:
@@ -3226,4 +3285,17 @@ bool CAnimation::FUN_0017f730()
 	}
 
 	return false;
+}
+
+bool CAnimation::SetBoneMatrixData(edF32MATRIX3* pData, uint nbMatrices)
+{
+	bool bSuccess;
+
+	bSuccess = ((this->anmSkeleton).pTag)->boneCount <= nbMatrices;
+	if (bSuccess) {
+		this->pAnimMatrix = pData;
+		this->bUseAnimMatrixData = 1;
+	}
+
+	return bSuccess;
 }

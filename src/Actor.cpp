@@ -4888,9 +4888,7 @@ int CAddOnSubObj::FUN_003e37e0()
 	}
 
 	if (0 < iVar6) {
-		uVar4 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar4;
-		iVar6 = iVar6 * ((uint)(uVar4 >> 0x10) & 0x7fff);
+		iVar6 = iVar6 * CScene::Rand();
 
 		if (iVar6 < 0) {
 			iVar6 = iVar6 + 0x7fff;

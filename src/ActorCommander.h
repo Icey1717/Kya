@@ -23,7 +23,7 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 
-	virtual bool CanReleaseSemaphore();
+	virtual bool CanReleaseSemaphore(int, CActorWolfen*);
 	virtual CActorFighter* GetFocus();
 	virtual void TestSwitch();
 	virtual bool UpdateTeamAnim();
@@ -56,7 +56,8 @@ public:
 	byte field_0x20;
 };
 
-class CActorCommander : public CActor {
+class CActorCommander : public CActor
+{
 public:
 	static StateConfig _gStateCfg_CMD[4];
 
@@ -103,6 +104,13 @@ public:
 	void _UpdateCamera();
 
 	void StateCommanderDefault();
+
+	bool CanContinueToFight(CActorFighter* pFighter);
+
+	bool CanReleaseSemaphore(CActorWolfen* pWolfen);
+	void ReleaseSemaphore(int index, CActorWolfen* pWolfen);
+	bool QuerySemaphoreCold(int index, CActorWolfen* pWolfen);
+	bool IsValidEnemy(CActorWolfen* pWolfen);
 
 	uint detectAreaZoneId;
 	uint guardAreaZoneId;

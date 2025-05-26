@@ -1780,8 +1780,6 @@ void CActorNativ::SetHasObject(bool bHasObject)
 
 void CActorNativ::ChooseToolState()
 {
-	ulong uVar1;
-
 	this->field_0x534 = 0;
 	switch (this->field_0x370) {
 	case 1:
@@ -1792,15 +1790,11 @@ void CActorNativ::ChooseToolState()
 			SetState(0x18, 0x14);
 		}
 		else {
-			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-			CScene::_pinstance->field_0x38 = uVar1;
-			SetState(0x17, ((int)(((uint)(uVar1 >> 0x10) & 0x7fff) * 2) >> 0xf) + 0x12);
+			SetState(0x17, ((int)(CScene::Rand() * 2) >> 0xf) + 0x12);
 		}
 		break;
 	case 3:
-		uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar1;
-		SetState(0x17, ((int)(((uint)(uVar1 >> 0x10) & 0x7fff) * 2) >> 0xf) + 0x12);
+		SetState(0x17, ((int)(CScene::Rand() * 2) >> 0xf) + 0x12);
 		break;
 	case 4:
 		SetState(0x17, 0x12);
@@ -2824,9 +2818,7 @@ void CBehaviourNativExorcisme::InitState(int newState)
 	edF32VECTOR4 local_10;
 
 	if (newState == 0x10) {
-		uVar2 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar2;
-		this->pOwner->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(((float)((uint)(uVar2 >> 0x10) & 0x7fff) * 0.4f) / 32767.0f + 0.8f, 0);
+		this->pOwner->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(((float)CScene::Rand() * 0.4f) / 32767.0f + 0.8f, 0);
 	}
 	else {
 		if (newState == 0xe) {

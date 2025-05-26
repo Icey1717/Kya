@@ -157,6 +157,8 @@ public:
 	static void CreateScene(void);
 	static void* GetManager(MANAGER_TYPE type);
 
+	static uint Rand();
+
 	static CScene* _pinstance;
 	static struct ed_3D_Scene* _scene_handleA;
 	static struct ed_3D_Scene* _scene_handleB;

@@ -347,31 +347,12 @@ void CActorCommander::ClearLocalData()
 bool CActorCommander::BeginFightIntruder(CActor* pInstigator, CActor* pIntruder)
 {
 	bool bSuccess;
-	CTeamElt* pCVar2;
-	CTeamElt* pTeamElt;
-	int iVar4;
 
 	bSuccess = false;
 
 	if (pIntruder->IsKindOfObject(OBJ_TYPE_FIGHTER) != false) {
 		CActorFighter* pActorFighter = static_cast<CActorFighter*>(pInstigator);
-		iVar4 = 0;
-		pTeamElt = (CTeamElt*)0x0;
-
-		if (0 < this->nbTeams) {
-			pCVar2 = this->aTeamElt;
-			do {
-				pTeamElt = pCVar2;
-
-				if (pTeamElt->pEnemyActor == pActorFighter) break;
-
-				iVar4 = iVar4 + 1;
-				pCVar2 = pTeamElt + 1;
-				pTeamElt = (CTeamElt*)0x0;
-			} while (iVar4 < this->nbTeams);
-		}
-
-		bSuccess = this->squad.AddFighter(pTeamElt);
+		bSuccess = this->squad.AddFighter(GetTeamElt(pActorFighter));
 		pActorFighter->SetStandAnim(0xe2);
 	}
 
@@ -380,24 +361,7 @@ bool CActorCommander::BeginFightIntruder(CActor* pInstigator, CActor* pIntruder)
 
 void CActorCommander::EndFightIntruder(CActorFighter* pIntruder)
 {
-	CTeamElt* pCVar1;
-	CTeamElt* pTeamElt;
-	int iVar2;
-
-	iVar2 = 0;
-	pTeamElt = (CTeamElt*)0x0;
-	if (0 < this->nbTeams) {
-		pCVar1 = this->aTeamElt;
-		do {
-			pTeamElt = pCVar1;
-			if (pTeamElt->pEnemyActor == pIntruder) break;
-			iVar2 = iVar2 + 1;
-			pCVar1 = pTeamElt + 1;
-			pTeamElt = (CTeamElt*)0x0;
-		} while (iVar2 < this->nbTeams);
-	}
-
-	this->squad.RemoveFighter(pTeamElt);
+	this->squad.RemoveFighter(GetTeamElt(pIntruder));
 	pIntruder->SetStandAnim(-1);
 
 	return;
@@ -1009,6 +973,55 @@ void CActorCommander::StateCommanderDefault()
 	return;
 }
 
+bool CActorCommander::CanContinueToFight(CActorFighter* pFighter)
+{
+	return (this->squad).eltTable.IsInList(GetTeamElt(pFighter));
+}
+
+bool CActorCommander::CanReleaseSemaphore(CActorWolfen* pWolfen)
+{
+	CBehaviourCommander* pCVar1;
+	ulong uVar2;
+	CTeamElt* pCVar3;
+	int iVar4;
+	CTeamElt* pCVar5;
+
+	pCVar1 = static_cast<CBehaviourCommander*>(GetBehaviour(this->curBehaviourId));
+	iVar4 = 0;
+	pCVar5 = (CTeamElt*)0x0;
+
+	if (0 < this->nbTeams) {
+		pCVar3 = this->aTeamElt;
+		do {
+			pCVar5 = pCVar3;
+
+			if ((CActorWolfen*)pCVar3->pEnemyActor == pWolfen) break;
+
+			iVar4 = iVar4 + 1;
+			pCVar3 = pCVar3 + 1;
+			pCVar5 = (CTeamElt*)0x0;
+		} while (iVar4 < this->nbTeams);
+	}
+
+	uVar2 = pCVar1->CanReleaseSemaphore(pCVar5->field_0x14, pWolfen);
+	return uVar2 & 0xff;
+}
+
+void CActorCommander::ReleaseSemaphore(int index, CActorWolfen* pWolfen)
+{
+	this->squad.ForceReleaseSemaphore(index, GetTeamElt(pWolfen), (this->flags_0x18c & 6) != 0);
+}
+
+bool CActorCommander::QuerySemaphoreCold(int index, CActorWolfen* pWolfen)
+{
+	return this->squad.QuerySemaphoreCold(index, GetTeamElt(pWolfen));
+}
+
+bool CActorCommander::IsValidEnemy(CActorWolfen* pWolfen)
+{
+	return this->squad.eltTable.IsInList(GetTeamElt(pWolfen));
+}
+
 void CActorCommander::_UpdateSquad()
 {
 	CActorFighter* this_00;
@@ -1132,7 +1145,7 @@ void CBehaviourCommander::Begin(CActor* pOwner, int newState, int newAnimationTy
 	return;
 }
 
-bool CBehaviourCommander::CanReleaseSemaphore()
+bool CBehaviourCommander::CanReleaseSemaphore(int, CActorWolfen*)
 {
 	return 1 < this->pOwner->squad.NbElt();
 }
@@ -1153,7 +1166,6 @@ bool CBehaviourCommander::UpdateTeamAnim()
 	CScene* pCVar2;
 	bool bVar3;
 	int iVar4;
-	ulong uVar5;
 	CTeamElt** pEntryIt;
 	int iVar7;
 	CSquad* pSquad;
@@ -1176,14 +1188,10 @@ bool CBehaviourCommander::UpdateTeamAnim()
 				pCVar2 = CScene::_pinstance;
 				pCurEntry = *pEntryIt;
 				if (pCurEntry->field_0x14 == -1) {
-					uVar5 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-					CScene::_pinstance->field_0x38 = uVar5;
-					if ((int)((uint)(uVar5 >> 0x10) & 0x7fff) < 0) {
+					if ((int)CScene::Rand() < 0) {
 						bVar3 = false;
 					}
 					else {
-						uVar5 = pCVar2->field_0x38 * 0x343fd + 0x269ec3;
-						pCVar2->field_0x38 = uVar5;
 						fVar8 = this->field_0x1c * 32767.0f;
 						if (fVar8 < 2.147484e+09f) {
 							uVar9 = (uint)fVar8;
@@ -1192,7 +1200,7 @@ bool CBehaviourCommander::UpdateTeamAnim()
 							uVar9 = (int)(fVar8 - 2.147484e+09f) | 0x80000000;
 						}
 
-						bVar3 = ((uint)(uVar5 >> 0x10) & 0x7fff) <= uVar9;
+						bVar3 = CScene::Rand() <= uVar9;
 					}
 					if (bVar3) {
 						local_4 = local_20;

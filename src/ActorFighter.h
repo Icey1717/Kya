@@ -441,6 +441,7 @@ public:
 	virtual void AcquireAdversary();
 	virtual edF32VECTOR4* GetAdversaryPos();
 	virtual int Func_0x18c();
+	virtual bool Func_0x190(CActor* pOther);
 	virtual void Func_0x194(float param_1);
 	virtual void UpdateFightCommand();
 	virtual bool Func_0x19c();
@@ -462,6 +463,9 @@ public:
 	virtual void _Proj_GetPossibleExit();
 
 	void ClearLocalData();
+
+	void _ExeceuteCommand(s_fighter_action* pAction, s_fighter_action_param* pParam);
+	bool Execute(s_fighter_action* pAction, s_fighter_action_param* pParams);
 
 	void RunInternal(float param_1, edF32VECTOR4* pRotation);
 
@@ -518,6 +522,7 @@ public:
 
 	void SetStandAnim(int newStandAnim);
 
+	bool FUN_0031b5d0(int state);
 	void FUN_0031a7c0(int inState);
 
 	void FUN_0031aad0(float animLength, s_fighter_blow* pBlow);
@@ -622,6 +627,9 @@ public:
 	float field_0x47c;
 	int standAnim;
 
+	float field_0x4c0;
+	float field_0x4c4;
+	float field_0x4c8;
 	float field_0x4cc;
 
 	edF32VECTOR4 field_0x4d0;

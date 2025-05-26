@@ -901,9 +901,7 @@ void CActorNativCmd::FUN_00394250(CActorNativ* pNativ)
 			local_50.field_0x4 = 0;
 			iVar10 = 0;
 			fVar12 = 0.0f;
-			uVar7 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-			CScene::_pinstance->field_0x38 = uVar7;
-			fVar11 = (fVar11 * (float)((uint)(uVar7 >> 0x10) & 0x7fff)) / 32767.0f;
+			fVar11 = (fVar11 * (float)CScene::Rand()) / 32767.0f;
 			if (0 < pNativ->nbActions) {
 				do {
 					pAction = pNativ->aActions + iVar10;

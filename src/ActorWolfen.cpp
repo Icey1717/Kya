@@ -8,6 +8,27 @@
 #include "MathOps.h"
 #include "EventManager.h"
 #include "ActorProjectile.h"
+#include "FrontEndDisp.h"
+#include "InputManager.h"
+
+struct WolfenAnimMatrixData
+{
+	void Init()
+	{
+		edF32MATRIX3* peVar1;
+
+		if ((this->aMatrices == (edF32MATRIX3*)0x0) && (this->nbBones != 0)) {
+			this->aMatrices = new edF32MATRIX3[this->nbBones];
+			this->pWolfen = (CActorWolfen*)0x0;
+		}
+
+		return;
+	}
+
+	edF32MATRIX3* aMatrices;
+	int nbBones;
+	CActorWolfen* pWolfen;
+} gWolfenAnimMatrixData;
 
 WolfenConfig CActorWolfen::_gStateCfg_WLF[68]
 {
@@ -170,22 +191,23 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 	this->field_0xb84 = fVar7;
 
 	this->field_0xd30 = pByteCode->GetU32();
-	//uVar3 = this->nbComboRoots;
-	//if (uVar3 == 0) {
-	//	this->field_0xbe8 = (edF32VECTOR4*)0x0;
-	//}
-	//else {
-	//	this->count_0xbd4 = uVar3;
-	//	if (this->count_0xbd4 == 0) {
-	//		this->field_0xbd0 = (edF32VECTOR4*)0x0;
-	//	}
-	//	else {
-	//		peVar5 = (edF32VECTOR4*)operator.new.array((long)(this->count_0xbd4 << 4));
-	//		this->field_0xbd0 = peVar5;
-	//	}
-	//	peVar5 = (edF32VECTOR4*)operator.new.array((long)(int)(this->nbComboRoots << 4));
-	//	this->field_0xbe8 = peVar5;
-	//}
+
+	uVar3 = this->nbComboRoots;
+	if (uVar3 == 0) {
+		this->aComboMatchValues = (edF32VECTOR4*)0x0;
+	}
+	else {
+		this->nbComboMatchValues = uVar3;
+
+		if (this->nbComboMatchValues == 0) {
+			this->field_0xbd0 = (ComboData*)0x0;
+		}
+		else {
+			this->field_0xbd0 = new ComboData[this->nbComboMatchValues];
+		}
+
+		this->aComboMatchValues = new edF32VECTOR4[this->nbComboRoots];
+	}
 
 	this->field_0xb90 = pByteCode->GetF32();
 	this->field_0xb94 = pByteCode->GetF32();
@@ -209,8 +231,6 @@ void CActorWolfen::Create(ByteCode* pByteCode)
 		this->field_0xcf0 = (peVar2->field_0xb0).y + (peVar2->field_0x90).y * 0.6f;
 	}
 
-	SkipToNextActorNoBase(pByteCode);
-
 	return;
 }
 
@@ -218,7 +238,7 @@ void CActorWolfen::Init()
 {
 	int* piVar1;
 	CShadow* pCVar2;
-	s_fighter_combo* psVar3;
+	s_fighter_combo* pCombos;
 	CLifeInterface* pCVar4;
 	int iVar5;
 	uint uVar6;
@@ -226,7 +246,7 @@ void CActorWolfen::Init()
 	int iVar8;
 	uint uVar9;
 	edF32VECTOR4* peVar10;
-	char* pcVar11;
+	byte* pcVar11;
 	int iVar12;
 	float fVar13;
 	float fVar14;
@@ -242,23 +262,26 @@ void CActorWolfen::Init()
 	float fVar24;
 	float fVar25;
 	float fVar26;
-	undefined4 uVar27;
+	float uVar27;
 
 	CActorFighter::Init();
 	this->combatFlags_0xb78 = 0;
 
-	//pCVar2 = this->pShadow;
-	//if (pCVar2 != (CShadow*)0x0) {
-	//	(pCVar2->base).field_0x48 = (float)&DAT_3f4ccccd;
-	//	(this->pShadow)->field_0x50 = (float)&DAT_3f4ccccd;
-	//}
-	//if (PTR_DAT_004574a0 == (undefined*)0x0) {
-	//	FUN_001fbaa0((int*)&PTR_DAT_004574a0);
-	//}
+	pCVar2 = this->pShadow;
+	if (pCVar2 != (CShadow*)0x0) {
+		IMPLEMENTATION_GUARD(
+		(pCVar2->base).field_0x48 = (float)&DAT_3f4ccccd;
+		(this->pShadow)->field_0x50 = (float)&DAT_3f4ccccd;)
+	}
+
+	if (gWolfenAnimMatrixData.aMatrices == (edF32MATRIX3*)0x0) {
+		gWolfenAnimMatrixData.Init();
+	}
+
 	uVar6 = this->nbComboRoots;
 	uVar9 = 0;
-	fVar17 = 3.402823e+38;
-	fVar13 = -3.402823e+38;
+	fVar17 = 3.402823e+38f;
+	fVar13 = -3.402823e+38f;
 	fVar14 = fVar17;
 	fVar24 = fVar17;
 	fVar15 = fVar17;
@@ -266,181 +289,198 @@ void CActorWolfen::Init()
 	fVar22 = fVar13;
 	fVar25 = fVar13;
 	if (uVar6 != 0) {
-		iVar7 = 0;
-		iVar5 = 0;
 		fVar19 = fVar13;
 		fVar16 = fVar13;
 		fVar20 = fVar13;
 		fVar26 = fVar13;
-		//do {
-		//	fVar23 = 0.0;
-		//	fVar21 = 0.0;
-		//	iVar8 = (int)&(this->aCombos)->field_0x0 + iVar7;
-		//	fVar25 = *(float*)(*(int*)(iVar8 + 0x18) + 0x50);
-		//	fVar22 = *(float*)(*(int*)(iVar8 + 0x18) + 0x4c);
-		//	do {
-		//		piVar1 = (int*)(iVar8 + 0x18);
-		//		fVar23 = fVar23 + *(float*)(*piVar1 + 0x14);
-		//		if (*(int*)(iVar8 + 0x20) == 0) {
-		//			iVar8 = 0;
-		//			fVar25 = fVar25 + *(float*)(*piVar1 + 0x54);
-		//		}
-		//		else {
-		//			iVar8 = **(int**)(iVar8 + 0x1c);
-		//		}
-		//		fVar21 = fVar21 + 1.0;
-		//	} while (iVar8 != 0);
-		//	*(float*)((int)&this->field_0xbe8->x + iVar5) = fVar25;
-		//	*(float*)((int)&this->field_0xbe8->y + iVar5) = fVar22;
-		//	*(float*)((int)&this->field_0xbe8->z + iVar5) = fVar23;
-		//	*(float*)((int)&this->field_0xbe8->w + iVar5) = fVar21;
-		//	fVar13 = fVar22;
-		//	if (fVar22 <= fVar19) {
-		//		fVar13 = fVar19;
-		//	}
-		//	if (fVar18 <= fVar22) {
-		//		fVar22 = fVar18;
-		//	}
-		//	fVar18 = fVar22;
-		//	fVar22 = fVar25;
-		//	if (fVar25 <= fVar20) {
-		//		fVar22 = fVar20;
-		//	}
-		//	if (fVar15 <= fVar25) {
-		//		fVar25 = fVar15;
-		//	}
-		//	fVar15 = fVar25;
-		//	fVar25 = fVar23;
-		//	if (fVar23 <= fVar26) {
-		//		fVar25 = fVar26;
-		//	}
-		//	if (fVar14 <= fVar23) {
-		//		fVar23 = fVar14;
-		//	}
-		//	fVar14 = fVar23;
-		//	fVar20 = fVar21;
-		//	if (fVar21 <= fVar16) {
-		//		fVar20 = fVar16;
-		//	}
-		//	if (fVar21 < fVar24) {
-		//		uVar6 = this->nbComboRoots;
-		//		fVar24 = fVar21;
-		//	}
-		//	else {
-		//		uVar6 = this->nbComboRoots;
-		//	}
-		//	uVar9 = uVar9 + 1;
-		//	iVar7 = iVar7 + 0x24;
-		//	iVar5 = iVar5 + 0x10;
-		//	fVar19 = fVar13;
-		//	fVar16 = fVar20;
-		//	fVar20 = fVar22;
-		//	fVar26 = fVar25;
-		//} while (uVar9 < uVar6);
+		do {
+			fVar23 = 0.0f;
+			fVar21 = 0.0f;
+			s_fighter_combo* pCombo = this->aCombos + uVar9;
+			s_fighter_blow* pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+
+			fVar25 = pCurrentBlow->field_0x50;
+			fVar22 = pCurrentBlow->field_0x4c;
+
+			do {
+				pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+				fVar23 = fVar23 + pCurrentBlow->damage;
+				if (pCombo->nbBranches == 0) {
+					pCombo = (s_fighter_combo*)0x0;
+					fVar25 = fVar25 + pCurrentBlow->field_0x54;
+				}
+				else {
+					pCombo = LOAD_SECTION_CAST(s_fighter_combo*, pCombo->aBranches[0].pData);
+				}
+
+				fVar21 = fVar21 + 1.0f;
+			} while (pCombo != (s_fighter_combo*)0x0);
+
+			this->aComboMatchValues[uVar9].x = fVar25;
+			this->aComboMatchValues[uVar9].y = fVar22;
+			this->aComboMatchValues[uVar9].z = fVar23;
+			this->aComboMatchValues[uVar9].w = fVar21;
+
+			fVar13 = fVar22;
+			if (fVar22 <= fVar19) {
+				fVar13 = fVar19;
+			}
+
+			if (fVar18 <= fVar22) {
+				fVar22 = fVar18;
+			}
+
+			fVar18 = fVar22;
+			fVar22 = fVar25;
+			if (fVar25 <= fVar20) {
+				fVar22 = fVar20;
+			}
+
+			if (fVar15 <= fVar25) {
+				fVar25 = fVar15;
+			}
+
+			fVar15 = fVar25;
+			fVar25 = fVar23;
+			if (fVar23 <= fVar26) {
+				fVar25 = fVar26;
+			}
+
+			if (fVar14 <= fVar23) {
+				fVar23 = fVar14;
+			}
+
+			fVar14 = fVar23;
+			fVar20 = fVar21;
+			if (fVar21 <= fVar16) {
+				fVar20 = fVar16;
+			}
+
+			if (fVar21 < fVar24) {
+				uVar6 = this->nbComboRoots;
+				fVar24 = fVar21;
+			}
+			else {
+				uVar6 = this->nbComboRoots;
+			}
+
+			uVar9 = uVar9 + 1;
+			fVar19 = fVar13;
+			fVar16 = fVar20;
+			fVar20 = fVar22;
+			fVar26 = fVar25;
+		} while (uVar9 < uVar6);
 	}
 	uVar9 = 0;
 	fVar19 = fVar17;
 	if (uVar6 != 0) {
-		//iVar8 = 0;
-		//iVar7 = 0;
-		//iVar5 = 0;
-		//fVar16 = fVar17;
-		//fVar20 = fVar17;
-		//do {
-		//	psVar3 = this->aCombos;
-		//	fVar26 = 1.0;
-		//	if (fVar13 - fVar18 != 0.0) {
-		//		fVar26 = (*(float*)((int)&this->field_0xbe8->y + iVar7) - fVar18) / (fVar13 - fVar18);
-		//	}
-		//	fVar23 = 1.0;
-		//	if (fVar22 - fVar15 != 0.0) {
-		//		fVar23 = 1.0 - (*(float*)((int)&this->field_0xbe8->x + iVar7) - fVar15) / (fVar22 - fVar15);
-		//	}
-		//	uVar27 = 0x3f800000;
-		//	fVar21 = 1.0;
-		//	if (fVar25 - fVar14 == 0.0) {
-		//		peVar10 = this->field_0xbe8;
-		//	}
-		//	else {
-		//		fVar21 = (*(float*)((int)&this->field_0xbe8->z + iVar7) - fVar14) / (fVar25 - fVar14);
-		//		peVar10 = this->field_0xbe8;
-		//	}
-		//	iVar12 = (int)&peVar10->x + iVar7;
-		//	if (fVar24 != *(float*)(iVar12 + 0xc)) {
-		//		uVar27 = 0;
-		//	}
-		//	fVar17 = fVar16;
-		//	fVar19 = fVar20;
-		//	if (0.5 <= fVar26) {
-		//		fVar17 = *(float*)(iVar12 + 4);
-		//		if (fVar16 <= *(float*)(iVar12 + 4)) {
-		//			fVar17 = fVar16;
-		//		}
-		//	}
-		//	else {
-		//		fVar19 = *(float*)(iVar12 + 4);
-		//		if (fVar20 <= fVar19) {
-		//			fVar19 = fVar20;
-		//		}
-		//	}
-		//	*(float*)(iVar12 + 4) = fVar26;
-		//	*(float*)((int)&this->field_0xbe8->x + iVar7) = fVar23;
-		//	*(float*)((int)&this->field_0xbe8->z + iVar7) = fVar21;
-		//	*(undefined4*)((int)&this->field_0xbe8->w + iVar7) = uVar27;
-		//	*(int*)((int)&this->field_0xbd0->w + iVar5) = (int)&psVar3->field_0x0 + iVar8;
-		//	this->field_0xbd8 = 0;
-		//	*(float*)((int)&this->field_0xbd0->y + iVar5) = fVar23 + 0.3;
-		//	this->field_0xbd8 = 0;
-		//	pcVar11 = (char*)((int)&this->field_0xbd0->x + iVar5);
-		//	if (*pcVar11 != '\x01') {
-		//		*pcVar11 = '\x01';
-		//		this->field_0xbd8 = 0;
-		//	}
-		//	uVar9 = uVar9 + 1;
-		//	iVar5 = iVar5 + 0x10;
-		//	iVar8 = iVar8 + 0x24;
-		//	iVar7 = iVar7 + 0x10;
-		//	fVar16 = fVar17;
-		//	fVar20 = fVar19;
-		//} while (uVar9 < this->nbComboRoots);
+		fVar16 = fVar17;
+		fVar20 = fVar17;
+
+		do {
+			pCombos = this->aCombos;
+
+			fVar26 = 1.0f;
+			if (fVar13 - fVar18 != 0.0f) {
+				fVar26 = (this->aComboMatchValues[uVar9].y - fVar18) / (fVar13 - fVar18);
+			}
+
+			fVar23 = 1.0f;
+			if (fVar22 - fVar15 != 0.0f) {
+				fVar23 = 1.0f - (this->aComboMatchValues[uVar9].x - fVar15) / (fVar22 - fVar15);
+			}
+
+			uVar27 = 1.0f;
+			fVar21 = 1.0f;
+			if (fVar25 - fVar14 == 0.0f) {
+			}
+			else {
+				fVar21 = (this->aComboMatchValues[uVar9].z - fVar14) / (fVar25 - fVar14);
+			}
+
+			edF32VECTOR4* pVec = this->aComboMatchValues + uVar9;
+
+			if (fVar24 != pVec->z) {
+				uVar27 = 0.0f;
+			}
+
+			fVar17 = fVar16;
+			fVar19 = fVar20;
+			if (0.5f <= fVar26) {
+				fVar17 = pVec->y;
+				if (fVar16 <= pVec->y) {
+					fVar17 = fVar16;
+				}
+			}
+			else {
+				fVar19 = pVec->y;
+				if (fVar20 <= fVar19) {
+					fVar19 = fVar20;
+				}
+			}
+			pVec->y = fVar26;
+
+			this->aComboMatchValues[uVar9].x = fVar23;
+			this->aComboMatchValues[uVar9].y = fVar21;
+			this->aComboMatchValues[uVar9].w = uVar27;
+
+			field_0xbd0[uVar9].pCombo = &pCombos[uVar9];
+			this->field_0xbd8 = 0;
+			field_0xbd0[uVar9].field_0x4 = fVar23 + 0.3f;
+			this->field_0xbd8 = 0;
+			pcVar11 = &field_0xbd0[uVar9].field_0x0;
+			if (*pcVar11 != 1) {
+				*pcVar11 = 1;
+				this->field_0xbd8 = 0;
+			}
+
+			uVar9 = uVar9 + 1;
+			fVar16 = fVar17;
+			fVar20 = fVar19;
+		} while (uVar9 < this->nbComboRoots);
 	}
-	//this->field_0xbe4 = 2;
-	//uVar6 = 0;
-	//if (this->count_0xbd4 != 0) {
-	//	iVar5 = 0;
-	//	do {
-	//		uVar6 = uVar6 + 1;
-	//		*(undefined*)((int)&this->field_0xbd0->x + iVar5) = 1;
-	//		iVar5 = iVar5 + 0x10;
-	//	} while (uVar6 < (uint)this->count_0xbd4);
-	//}
-	//this->field_0xbe0 = 0;
-	//this->field_0xbd8 = 0;
-	//if (fVar13 - fVar18 == 0.0) {
-	//	this->field_0xbf0 = fVar13;
-	//	this->field_0xbec = fVar13;
-	//}
-	//else {
-	//	this->field_0xbec = fVar19;
-	//	this->field_0xbf0 = fVar17 * 0.9;
-	//}
-	//fVar14 = this->field_0xbec;
-	//fVar24 = ((this->pCollisionData)->pObbPrim->field_0x90).z +
-	//	(((CActorHero::_gThis->character).characterBase.base.base.pCollisionData)->pObbPrim->field_0x90).z + 0.1;
-	//if (fVar24 < fVar14) {
-	//	this->field_0xbec = fVar14;
-	//}
-	//else {
-	//	this->field_0xbec = fVar24;
-	//	fVar14 = fVar24;
-	//}
-	//if (this->field_0xbf0 < fVar14) {
-	//	this->field_0xbf0 = fVar14;
-	//}
-	//fVar14 = edFIntervalUnitSrcLERP(this->field_0xa80, fVar24, this->field_0xbec);
-	//this->field_0xbec = fVar14;
-	//fVar14 = edFIntervalUnitSrcLERP(this->field_0xa80, (float)&DAT_3f333333, 0.0);
-	//this->field_0xbf0 = this->field_0xbf0 - fVar14;
+
+	this->field_0xbe4 = 2;
+
+	uVar6 = 0;
+	if (this->nbComboMatchValues != 0) {
+		iVar5 = 0;
+		do {
+			this->field_0xbd0[uVar6].field_0x0 = 1;
+			uVar6 = uVar6 + 1;
+		} while (uVar6 < this->nbComboMatchValues);
+	}
+
+	this->field_0xbe0 = 0;
+	this->field_0xbd8 = 0;
+
+	if (fVar13 - fVar18 == 0.0f) {
+		this->field_0xbf0 = fVar13;
+		this->field_0xbec = fVar13;
+	}
+	else {
+		this->field_0xbec = fVar19;
+		this->field_0xbf0 = fVar17 * 0.9f;
+	}
+
+	fVar14 = this->field_0xbec;
+	fVar24 = ((this->pCollisionData)->pObbPrim->field_0x90).z + (CActorHero::_gThis->pCollisionData->pObbPrim->field_0x90).z + 0.1f;
+	if (fVar24 < fVar14) {
+		this->field_0xbec = fVar14;
+	}
+	else {
+		this->field_0xbec = fVar24;
+		fVar14 = fVar24;
+	}
+
+	if (this->field_0xbf0 < fVar14) {
+		this->field_0xbf0 = fVar14;
+	}
+
+	fVar14 = edFIntervalUnitSrcLERP(this->field_0xa80, fVar24, this->field_0xbec);
+	this->field_0xbec = fVar14;
+	fVar14 = edFIntervalUnitSrcLERP(this->field_0xa80, 0.7f, 0.0f);
+	this->field_0xbf0 = this->field_0xbf0 - fVar14;
 	this->field_0xb80 = 1;
 	this->field_0xb88 = 0;
 	pCVar4 = GetLifeInterfaceOther();
@@ -456,13 +496,15 @@ void CActorWolfen::Term()
 	CActorWeapon* pCVar2;
 	CActor* pCVar3;
 
-	//if (this->field_0xbe8 != (edF32VECTOR4*)0x0) {
-	//	delete(this->field_0xbe8);
-	//	this->field_0xbe8 = (edF32VECTOR4*)0x0;
+	if (this->aComboMatchValues != (edF32VECTOR4*)0x0) {
+		delete[] this->aComboMatchValues;
+		this->aComboMatchValues = (edF32VECTOR4*)0x0;
+	}
+
+	//if (gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) {
+	//	FreeFunc_001fba40((int*)&gWolfenAnimMatrixData);
 	//}
-	//if (PTR_DAT_004574a0 != (undefined*)0x0) {
-	//	FreeFunc_001fba40((int*)&PTR_DAT_004574a0);
-	//}
+
 	//uVar1 = this->field_0xb74;
 	//if (uVar1 == 3) {
 	//	if (this->pEnemyComponent80_0xd34 != (EnemyComponent80*)0x0) {
@@ -497,10 +539,10 @@ void CActorWolfen::Term()
 
 	CActorFighter::Term();
 
-	//if (*(void**)&this->field_0xb64 != (void*)0x0) {
-	//	Free(*(void**)&this->field_0xb64);
-	//	*(undefined4*)&this->field_0xb64 = 0;
-	//}
+	if (this->field_0xb64 != (WolfenComboData*)0x0) {
+		delete this->field_0xb64;
+		this->field_0xb64 = (WolfenComboData*)0x0;
+	}
 
 	//if (this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) {
 	//	CActorWolfenKnowledge::Term(this->pWolfenKnowledge);
@@ -841,8 +883,7 @@ void CActorWolfen::SetState(int newState, int animType)
 			}
 		}
 		else {
-			if (((newState == 0x99) && (iVar1 = GetIdMacroAnim(0x8a), iVar1 != -1)) && (uVar2 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3, CScene::_pinstance->field_0x38 = uVar2,
-					((uint)(uVar2 >> 0x10) & 0x7fff) < 0x4000)) {
+			if (((newState == 0x99) && (iVar1 = GetIdMacroAnim(0x8a), iVar1 != -1)) && (CScene::Rand() < 0x4000)) {
 				animType = 0x8a;
 			}
 		}
@@ -1728,12 +1769,12 @@ void CActorWolfen::Create_FightParam(ByteCode* pByteCode)
 	uint uVar2;
 	void* pvVar3;
 	uint uVar4;
-	uint uVar5;
+	int uVar5;
 	CActorWolfenKnowledge* pKnowledge;
 	undefined8 uVar6;
 	int iVar7;
 	char* pcVar8;
-	uint* puVar9;
+	WolfenComboData* puVar9;
 	uint uVar10;
 	int iVar11;
 	float fVar12;
@@ -1742,365 +1783,159 @@ void CActorWolfen::Create_FightParam(ByteCode* pByteCode)
 	uint local_2c0;
 	uint local_2b0;
 	uint local_290;
-	uint local_280[4];
-	undefined4 local_270;
-	undefined4 local_26c;
-	undefined4 local_268;
-	undefined4 local_264;
-	undefined4 local_260;
-	undefined4 local_25c;
-	undefined4 local_258;
-	undefined4 local_254;
-	undefined4 local_250;
-	undefined4 local_24c;
-	undefined4 local_248;
-	undefined4 local_244;
-	undefined4 local_240;
-	undefined4 local_23c;
-	undefined4 local_238;
-	undefined4 local_234;
-	undefined4 local_230;
-	undefined4 local_22c;
-	undefined4 local_228;
-	undefined4 local_224;
-	undefined4 local_220;
-	undefined4 local_21c;
-	undefined4 local_218;
-	undefined4 local_214;
-	undefined4 local_210;
-	undefined4 local_20c;
-	undefined4 local_208;
-	undefined4 local_204;
-	undefined4 local_200;
-	undefined4 local_1fc;
-	undefined4 local_1f8;
-	undefined4 local_1f4;
-	undefined4 local_1f0;
-	undefined4 local_1ec;
-	undefined4 local_1e8;
-	undefined4 local_1e4;
-	uint local_1e0[120];
+	WolfenComboData local_280[40];
 
-	//ByteCode::GetU32(pByteCode);
-	//*(undefined4*)&this->field_0xa90 = 0;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xa94 = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xa98 = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xa9c = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xaa0 = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xaa4 = uVar1;
-	//*(undefined4*)&this->field_0xaf8 = 1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xafc = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xb00 = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xb04 = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xb08 = uVar1;
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xb0c = uVar1;
-	//memcpy((void*)&this->field_0xac4, (void*)&this->field_0xa90, 0x18);
-	//*(undefined4*)&this->field_0xb30 = 3;
-	this->field_0xb2c = 3;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//this->field_0xa80 = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xa84 = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xa88 = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xa8c = fVar12;
-	//local_260 = 0x20000;
-	//local_25c = 2;
-	//local_24c = 3;
-	//local_280[0] = 1;
-	//local_23c = 4;
-	//uVar1 = 10;
-	//local_280[2] = 1;
-	//local_22c = 5;
-	//local_268 = 0xffffffff;
-	//local_220 = 0x40000;
-	//local_26c = 1;
-	//local_21c = 6;
-	//local_258 = 0xffffffff;
-	//local_210 = 0x4000;
-	//local_250 = 0x80000;
-	//local_20c = 7;
-	//local_248 = 0xffffffff;
-	//local_200 = 0x400;
-	//local_240 = 0x80000;
-	//local_1f0 = 0x10000;
-	//local_230 = 0x80000;
-	//local_1ec = 9;
-	//local_238 = 0xffffffff;
-	//local_228 = 0xffffffff;
-	//local_218 = 0xffffffff;
-	//local_208 = 8;
-	//local_1fc = 8;
-	//local_204 = 1;
-	//local_1f4 = 1;
-	//local_1f8 = 0xffffffff;
-	//local_1e8 = 0xffffffff;
-	//local_280[1] = 0;
-	//local_280[3] = 0;
-	//local_270 = 0;
-	//local_264 = 0;
-	//local_254 = 0;
-	//local_244 = 0;
-	//local_234 = 0;
-	//local_224 = 0;
-	//local_214 = 0;
-	//local_1e4 = 0;
-	//uVar2 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xac0 = uVar2;
-	//*(undefined4*)&this->field_0xaac = *(undefined4*)&this->field_0xac0;
-	//if (*(int*)&this->field_0xaac == 0) {
-	//	*(undefined4*)&this->field_0xaa8 = 0;
-	//}
-	//else {
-	//	pvVar3 = operator.new.array((long)(*(int*)&this->field_0xaac * 0x14));
-	//	*(void**)&this->field_0xaa8 = pvVar3;
-	//}
-	//local_290 = 0;
-	//puVar9 = local_1e0;
-	//if (*(int*)&this->field_0xac0 != 0) {
-	//	iVar11 = 0;
-	//	uVar2 = uVar1;
-	//	do {
-	//		uVar4 = ByteCode::GetU32(pByteCode);
-	//		uVar10 = 0;
-	//		uVar1 = uVar2;
-	//		if (uVar4 != 0) {
-	//			do {
-	//				uVar5 = ByteCode::GetU32(pByteCode);
-	//				*puVar9 = uVar5;
-	//				if (uVar10 < uVar4 - 1) {
-	//					uVar5 = uVar1 + 1;
-	//				}
-	//				else {
-	//					uVar5 = 0xffffffff;
-	//				}
-	//				puVar9[2] = uVar5;
-	//				uVar10 = uVar10 + 1;
-	//				puVar9[1] = uVar1;
-	//				puVar9 = puVar9 + 4;
-	//				uVar1 = uVar1 + 1;
-	//			} while (uVar10 < uVar4);
-	//		}
-	//		fVar13 = ByteCode::GetF32(pByteCode);
-	//		fVar14 = ByteCode::GetF32(pByteCode);
-	//		fVar12 = *(float*)&this->field_0xa8c;
-	//		iVar7 = *(int*)&this->field_0xaa8 + iVar11;
-	//		*(uint*)(iVar7 + 0xc) = uVar4;
-	//		*(uint*)(iVar7 + 0x10) = uVar2;
-	//		*(undefined4*)&this->field_0xab0 = 0;
-	//		*(float*)(*(int*)&this->field_0xaa8 + iVar11 + 4) = fVar14 + fVar12 * (fVar13 - fVar14);
-	//		*(undefined4*)&this->field_0xab0 = 0;
-	//		pcVar8 = (char*)(*(int*)&this->field_0xaa8 + iVar11);
-	//		if (*pcVar8 != '\x01') {
-	//			*pcVar8 = '\x01';
-	//			*(undefined4*)&this->field_0xab0 = 0;
-	//		}
-	//		local_290 = local_290 + 1;
-	//		iVar11 = iVar11 + 0x14;
-	//		uVar2 = uVar1;
-	//	} while (local_290 < *(uint*)&this->field_0xac0);
-	//}
-	//uVar2 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xaf4 = uVar2;
-	//*(undefined4*)&this->field_0xae0 = *(undefined4*)&this->field_0xaf4;
-	//if (*(int*)&this->field_0xae0 == 0) {
-	//	*(undefined4*)&this->field_0xadc = 0;
-	//}
-	//else {
-	//	pvVar3 = operator.new.array((long)(*(int*)&this->field_0xae0 * 0x14));
-	//	*(void**)&this->field_0xadc = pvVar3;
-	//}
-	//local_2c0 = 0;
-	//if (*(int*)&this->field_0xaf4 != 0) {
-	//	iVar11 = 0;
-	//	puVar9 = local_280 + uVar1 * 4;
-	//	uVar2 = uVar1;
-	//	do {
-	//		uVar4 = ByteCode::GetU32(pByteCode);
-	//		uVar10 = 0;
-	//		uVar1 = uVar2;
-	//		if (uVar4 != 0) {
-	//			do {
-	//				uVar5 = ByteCode::GetU32(pByteCode);
-	//				*puVar9 = uVar5;
-	//				if (uVar10 < uVar4 - 1) {
-	//					uVar5 = uVar1 + 1;
-	//				}
-	//				else {
-	//					uVar5 = 0xffffffff;
-	//				}
-	//				puVar9[2] = uVar5;
-	//				uVar10 = uVar10 + 1;
-	//				puVar9[1] = uVar1;
-	//				puVar9 = puVar9 + 4;
-	//				uVar1 = uVar1 + 1;
-	//			} while (uVar10 < uVar4);
-	//		}
-	//		fVar13 = ByteCode::GetF32(pByteCode);
-	//		fVar14 = ByteCode::GetF32(pByteCode);
-	//		fVar12 = *(float*)&this->field_0xa8c;
-	//		iVar7 = *(int*)&this->field_0xadc + iVar11;
-	//		*(uint*)(iVar7 + 0xc) = uVar4;
-	//		*(uint*)(iVar7 + 0x10) = uVar2;
-	//		*(undefined4*)&this->field_0xae4 = 0;
-	//		*(float*)(*(int*)&this->field_0xadc + iVar11 + 4) = fVar14 + fVar12 * (fVar13 - fVar14);
-	//		*(undefined4*)&this->field_0xae4 = 0;
-	//		pcVar8 = (char*)(*(int*)&this->field_0xadc + iVar11);
-	//		if (*pcVar8 != '\x01') {
-	//			*pcVar8 = '\x01';
-	//			*(undefined4*)&this->field_0xae4 = 0;
-	//		}
-	//		local_2c0 = local_2c0 + 1;
-	//		iVar11 = iVar11 + 0x14;
-	//		uVar2 = uVar1;
-	//	} while (local_2c0 < *(uint*)&this->field_0xaf4);
-	//}
-	//uVar2 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xb28 = uVar2;
-	//*(undefined4*)&this->field_0xb14 = *(undefined4*)&this->field_0xb28;
-	//if (*(int*)&this->field_0xb14 == 0) {
-	//	*(undefined4*)&this->field_0xb10 = 0;
-	//}
-	//else {
-	//	pvVar3 = operator.new.array((long)(*(int*)&this->field_0xb14 * 0x14));
-	//	*(void**)&this->field_0xb10 = pvVar3;
-	//}
-	//local_2b0 = 0;
-	//if (*(int*)&this->field_0xb28 != 0) {
-	//	iVar11 = 0;
-	//	puVar9 = local_280 + uVar1 * 4;
-	//	uVar2 = uVar1;
-	//	do {
-	//		uVar4 = ByteCode::GetU32(pByteCode);
-	//		uVar10 = 0;
-	//		uVar1 = uVar2;
-	//		if (uVar4 != 0) {
-	//			do {
-	//				uVar5 = ByteCode::GetU32(pByteCode);
-	//				*puVar9 = uVar5;
-	//				if (uVar10 < uVar4 - 1) {
-	//					uVar5 = uVar1 + 1;
-	//				}
-	//				else {
-	//					uVar5 = 0xffffffff;
-	//				}
-	//				puVar9[2] = uVar5;
-	//				uVar10 = uVar10 + 1;
-	//				puVar9[1] = uVar1;
-	//				puVar9 = puVar9 + 4;
-	//				uVar1 = uVar1 + 1;
-	//			} while (uVar10 < uVar4);
-	//		}
-	//		fVar13 = ByteCode::GetF32(pByteCode);
-	//		fVar14 = ByteCode::GetF32(pByteCode);
-	//		fVar12 = *(float*)&this->field_0xa8c;
-	//		iVar7 = *(int*)&this->field_0xb10 + iVar11;
-	//		*(uint*)(iVar7 + 0xc) = uVar4;
-	//		*(uint*)(iVar7 + 0x10) = uVar2;
-	//		*(undefined4*)&this->field_0xb18 = 0;
-	//		*(float*)(*(int*)&this->field_0xb10 + iVar11 + 4) = fVar14 + fVar12 * (fVar13 - fVar14);
-	//		*(undefined4*)&this->field_0xb18 = 0;
-	//		pcVar8 = (char*)(*(int*)&this->field_0xb10 + iVar11);
-	//		if (*pcVar8 != '\x01') {
-	//			*pcVar8 = '\x01';
-	//			*(undefined4*)&this->field_0xb18 = 0;
-	//		}
-	//		local_2b0 = local_2b0 + 1;
-	//		iVar11 = iVar11 + 0x14;
-	//		uVar2 = uVar1;
-	//	} while (local_2b0 < *(uint*)&this->field_0xb28);
-	//}
-	//uVar4 = ByteCode::GetU32(pByteCode);
-	//uVar2 = uVar1;
-	//if (uVar4 == 0) {
-	//	uVar2 = 0;
-	//}
-	//uVar10 = 0;
-	//if (uVar4 != 0) {
-	//	puVar9 = local_280 + uVar1 * 4;
-	//	do {
-	//		uVar5 = ByteCode::GetU32(pByteCode);
-	//		*puVar9 = uVar5;
-	//		if (uVar10 < uVar4 - 1) {
-	//			uVar5 = uVar1 + 1;
-	//		}
-	//		else {
-	//			uVar5 = 0xffffffff;
-	//		}
-	//		puVar9[2] = uVar5;
-	//		uVar10 = uVar10 + 1;
-	//		puVar9[1] = uVar1;
-	//		puVar9 = puVar9 + 4;
-	//		uVar1 = uVar1 + 1;
-	//	} while (uVar10 < uVar4);
-	//}
-	//*(uint*)&this->field_0xb34 = uVar4;
-	//*(uint*)&this->field_0xb38 = uVar2;
-	//uVar4 = ByteCode::GetU32(pByteCode);
-	//uVar2 = uVar1;
-	//if (uVar4 == 0) {
-	//	uVar2 = 0;
-	//}
-	//uVar10 = 0;
-	//if (uVar4 != 0) {
-	//	puVar9 = local_280 + uVar1 * 4;
-	//	do {
-	//		uVar5 = ByteCode::GetU32(pByteCode);
-	//		*puVar9 = uVar5;
-	//		if (uVar10 < uVar4 - 1) {
-	//			uVar5 = uVar1 + 1;
-	//		}
-	//		else {
-	//			uVar5 = 0xffffffff;
-	//		}
-	//		puVar9[2] = uVar5;
-	//		uVar10 = uVar10 + 1;
-	//		puVar9[1] = uVar1;
-	//		puVar9 = puVar9 + 4;
-	//		uVar1 = uVar1 + 1;
-	//	} while (uVar10 < uVar4);
-	//}
-	//*(uint*)&this->field_0xb3c = uVar4;
-	//*(uint*)&this->field_0xb40 = uVar2;
-	//ByteCode::GetU32(pByteCode);
-	//uVar2 = ByteCode::GetU32(pByteCode);
-	//*(uint*)&this->field_0xb44 = uVar2;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xb48 = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xb4c = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xb50 = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xb54 = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xb58 = fVar12;
-	//fVar12 = ByteCode::GetF32(pByteCode);
-	//*(float*)&this->field_0xb5c = fVar12;
-	//*(uint*)&this->field_0xb60 = uVar1;
-	//pvVar3 = operator.new.array((long)(int)(uVar1 << 4));
-	//*(void**)&this->field_0xb64 = pvVar3;
-	//memcpy(*(void**)&this->field_0xb64, local_280, uVar1 << 4);
-	//uVar1 = ByteCode::GetU32(pByteCode);
-	//uVar2 = ByteCode::GetU32(pByteCode);
-	//uVar4 = ByteCode::GetU32(pByteCode);
-	//uVar10 = ByteCode::GetU32(pByteCode);
-	//if (uVar2 == 0) {
-	if (true) {
+	pByteCode->GetU32();
+	this->aCapabilities[0].semaphoreId = 0;
+	this->aCapabilities[0].field_0x4 = pByteCode->GetU32();
+	this->aCapabilities[0].field_0x8 = pByteCode->GetU32();
+	this->aCapabilities[0].field_0xc = pByteCode->GetU32();
+	this->aCapabilities[0].field_0x10 = pByteCode->GetU32();
+	this->aCapabilities[0].field_0x14 = pByteCode->GetU32();
+
+	this->aCapabilities[2].semaphoreId = 1;
+	this->aCapabilities[2].field_0x4 = pByteCode->GetU32();
+	this->aCapabilities[2].field_0x8 = pByteCode->GetU32();
+	this->aCapabilities[2].field_0xc = pByteCode->GetU32();
+	this->aCapabilities[2].field_0x10 = pByteCode->GetU32();
+	this->aCapabilities[2].field_0x14 = pByteCode->GetU32();
+	
+	memcpy(this->aCapabilities + 1, this->aCapabilities, sizeof(WFIGS_Capability));
+
+	this->field_0xb30 = 3;
+	this->activeCapabilityIndex = 3;
+	this->field_0xa80 = pByteCode->GetF32();
+	this->field_0xa84 = pByteCode->GetF32();
+	this->field_0xa88 = pByteCode->GetF32();
+	this->field_0xa8c = pByteCode->GetF32();
+
+	local_280[2].field_0x0 = 0x20000;
+	local_280[2].field_0x4 = 2;
+	local_280[3].field_0x4 = 3;
+	local_280[0].field_0x0 = 1;
+	local_280[4].field_0x4 = 4;
+	local_280[0].field_0x8 = 1;
+	local_280[5].field_0x4 = 5;
+	local_280[1].field_0x8 = -1;
+	local_280[6].field_0x0 = 0x40000;
+	local_280[1].field_0x4 = 1;
+	local_280[6].field_0x4 = 6;
+	local_280[2].field_0x8 = -1;
+	local_280[7].field_0x0 = 0x4000;
+	local_280[3].field_0x0 = 0x80000;
+	local_280[7].field_0x4 = 7;
+	local_280[3].field_0x8 = -1;
+	local_280[8].field_0x0 = 0x400;
+	local_280[4].field_0x0 = 0x80000;
+	local_280[9].field_0x0 = 0x10000;
+	local_280[5].field_0x0 = 0x80000;
+	local_280[9].field_0x4 = 9;
+	local_280[4].field_0x8 = -1;
+	local_280[5].field_0x8 = -1;
+	local_280[6].field_0x8 = -1;
+	local_280[7].field_0x8 = 8;
+	local_280[8].field_0x4 = 8;
+	local_280[7].field_0xc = 1;
+	local_280[8].field_0xc = 1;
+	local_280[8].field_0x8 = -1;
+	local_280[9].field_0x8 = -1;
+	local_280[0].field_0x4 = 0;
+	local_280[0].field_0xc = 0;
+	local_280[1].field_0x0 = 0;
+	local_280[1].field_0xc = 0;
+	local_280[2].field_0xc = 0;
+	local_280[3].field_0xc = 0;
+	local_280[4].field_0xc = 0;
+	local_280[5].field_0xc = 0;
+	local_280[6].field_0xc = 0;
+	local_280[9].field_0xc = 0;
+
+	uint nbComboItems = 10;
+	this->aCapabilities[0].Create(pByteCode, local_280 + nbComboItems, this->field_0xa8c, &nbComboItems);
+	this->aCapabilities[1].Create(pByteCode, local_280 + nbComboItems, this->field_0xa8c, &nbComboItems);
+	this->aCapabilities[2].Create(pByteCode, local_280 + nbComboItems, this->field_0xa8c, &nbComboItems);
+
+	uVar4 = pByteCode->GetU32();
+	uVar2 = nbComboItems;
+	if (uVar4 == 0) {
+		uVar2 = 0;
+	}
+
+	uVar10 = 0;
+	if (uVar4 != 0) {
+		puVar9 = local_280 + nbComboItems;
+		do {
+			puVar9->field_0x0 = pByteCode->GetU32();
+			if (uVar10 < uVar4 - 1) {
+				uVar5 = nbComboItems + 1;
+			}
+			else {
+				uVar5 = -1;
+			}
+
+			puVar9->field_0x8 = uVar5;
+			uVar10 = uVar10 + 1;
+			puVar9->field_0x4 = nbComboItems;
+			puVar9 = puVar9 + 1;
+			nbComboItems = nbComboItems + 1;
+		} while (uVar10 < uVar4);
+	}
+
+	this->field_0xb34 = uVar4;
+	this->field_0xb38 = uVar2;
+
+	uVar4 = pByteCode->GetU32();
+	uVar2 = nbComboItems;
+	if (uVar4 == 0) {
+		uVar2 = 0;
+	}
+
+	uVar10 = 0;
+	if (uVar4 != 0) {
+		puVar9 = local_280 + nbComboItems;
+		do {
+			puVar9->field_0x0 = pByteCode->GetU32();
+			if (uVar10 < uVar4 - 1) {
+				uVar5 = nbComboItems + 1;
+			}
+			else {
+				uVar5 = -1;
+			}
+
+			puVar9->field_0x8 = uVar5;
+			uVar10 = uVar10 + 1;
+			puVar9->field_0x4 = nbComboItems;
+			puVar9 = puVar9 + 1;
+			nbComboItems = nbComboItems + 1;
+		} while (uVar10 < uVar4);
+	}
+
+	this->field_0xb3c = uVar4;
+	this->field_0xb40 = uVar2;
+
+	pByteCode->GetU32();
+	this->field_0xb44 = pByteCode->GetU32();
+	this->field_0xb48 = pByteCode->GetF32();
+	this->field_0xb4c = pByteCode->GetF32();
+	this->field_0xb50 = pByteCode->GetF32();
+	this->field_0xb54 = pByteCode->GetF32();
+	this->field_0xb58 = pByteCode->GetF32();
+	this->field_0xb5c = pByteCode->GetF32();
+	this->field_0xb60 = nbComboItems;
+	
+	assert(nbComboItems < 40);
+	this->field_0xb64 = new WolfenComboData[nbComboItems];
+	memcpy(this->field_0xb64, local_280, nbComboItems * sizeof(WolfenComboData));
+
+	uVar1 = pByteCode->GetU32();
+	uVar2 = pByteCode->GetU32();
+	uVar4 = pByteCode->GetU32();
+	uVar10 = pByteCode->GetU32();
+	if (uVar2 == 0) {
 		this->pWolfenKnowledge = (CActorWolfenKnowledge*)0x0;
 	}
 	else {
+		IMPLEMENTATION_GUARD();
 		//pKnowledge = (CActorWolfenKnowledge*)operator.new(0x30);
 		//if (pKnowledge != (CActorWolfenKnowledge*)0x0) {
 		//	uVar6 = CActorWolfenKnowledge::CActorWolfenKnowledge(pKnowledge);
@@ -2886,6 +2721,70 @@ void CActorWolfen::BehaviourTrack_Manage(CBehaviourTrack* pBehaviour)
 	return;
 }
 
+void CActorWolfen::BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour)
+{
+	int iVar1;
+	CActorHero* pCVar2;
+	bool bVar3;
+	bool bVar4;
+	CActorFighter* pActor;
+	StateConfig* pSVar5;
+	CLifeInterface* pCVar6;
+	long lVar7;
+	uint uVar8;
+	float fVar9;
+
+	pActor = this->pCommander->GetIntruder();
+	if ((((pActor != this->pAdversary) && ((this->combatFlags_0xb78 & 0x10) != 0)) &&
+		((bVar4 = SV_WLF_IsIntruderMakingNoise(pActor), bVar4 != false ||
+			((bVar4 = SV_WLF_IsIntruderInVitalSphere(pActor), bVar4 != false ||
+				(bVar4 = SV_WLF_IsIntruderInVision(pActor), bVar4 != false)))))) &&
+		(this->combatMode_0xb7c == ECM_None)) {
+		SetCombatMode( ECM_InCombat);
+	}
+
+	uVar8 = GetStateFlags(this->actorState);
+
+	bVar4 = (uVar8 & 0x100000) != 0;
+
+	bVar3 = bVar4 && iVar1 != 0x50;
+	if (bVar4 && iVar1 != 0x50) {
+		bVar3 = iVar1 != 0x55;
+	}
+
+	if (bVar3) {
+		bVar3 = iVar1 != 0x56;
+	}
+
+	if (bVar3) {
+		pCVar2 = static_cast<CActorHero*>(this->pAdversary);
+		if (pCVar2 == CActorHero::_gThis) {
+			lVar7 = this->AcquireAdversary(pCVar2);
+			if (lVar7 == 0) {
+				bVar4 = this->pCommander->CanContinueToFight(this);
+				if (bVar4 == false) {
+					SetBehaviour(pBehaviour->behaviourId, -1, -1);
+				}
+			}
+			else {
+				SetBehaviour(pBehaviour->behaviourId, -1, -1);
+			}
+		}
+		else {
+			if (((int)this->combatMode_0xb7c < 1) && (pCVar2 != (CActorHero*)0x0)) {
+				fVar9 = pCVar2->GetLifeInterface()->GetValue();
+				if (0.0f < fVar9) {
+					return;
+				}
+			}
+
+			SetBehaviour(pBehaviour->behaviourId, -1, -1);
+		}
+	}
+
+	return;
+}
+
 int CActorWolfen::_waitStandAnimArray[8] =
 {
 	0x96,
@@ -2910,12 +2809,8 @@ void CActorWolfen::WaitingAnimation_Defend()
 	int inAnimType;
 	int iVar1;
 	int iVar2;
-	ulong uVar3;
 
-	uVar3 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-	CScene::_pinstance->field_0x38 = uVar3;
-
-	inAnimType = _waitDefendAnimArray[((uint)(uVar3 >> 0x10) & 0x7fff) % 3];
+	inAnimType = _waitDefendAnimArray[CScene::Rand() % 3];
 	iVar1 = GetIdMacroAnim(inAnimType);
 	if (iVar1 != -1) {
 		iVar1 = rand();
@@ -2927,10 +2822,7 @@ void CActorWolfen::WaitingAnimation_Defend()
 
 void CActorWolfen::WaitingAnimation_Guard()
 {
-	ulong uVar3 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-	CScene::_pinstance->field_0x38 = uVar3;
-
-	int newState = _waitStandAnimArray[(((uint)(uVar3 >> 0x10) & 0x7fff) % 7)];
+	int newState = _waitStandAnimArray[(CScene::Rand() % 7)];
 	int iVar1 = GetIdMacroAnim(newState);
 	if (iVar1 != -1) {
 		iVar1 = rand();
@@ -2944,13 +2836,10 @@ void CActorWolfen::StateStandGuard()
 	int inAnimType;
 	int iVar1;
 	int iVar2;
-	ulong uVar3;
 
 	this->dynamic.speed = 0.0f;
 	ManageDyn(4.0f, 0x100a023b, (CActorsTable*)0x0);
-	uVar3 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-	CScene::_pinstance->field_0x38 = uVar3;
-	inAnimType = _waitStandAnimArray[((uint)(uVar3 >> 0x10) & 0x7fff) % 7];
+	inAnimType = _waitStandAnimArray[CScene::Rand() % 7];
 	iVar1 = GetIdMacroAnim(inAnimType);
 	if (iVar1 != -1) {
 		iVar1 = rand();
@@ -3255,16 +3144,10 @@ void CActorWolfen::StateTrackStandAim(CBehaviourTrackWeaponStand* pBehaviour)
 		fVar14 = pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x4;
 		GetWeapon();
 		fVar13 = fVar14 * 0.5f;
-		uVar12 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar12;
-		local_10.x = (local_10.x - fVar13) + (fVar14 * (float)((uint)(uVar12 >> 0x10) & 0x7fff)) / 32767.0f;
-		uVar12 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar12;
-		local_10.y = (local_10.y - fVar13) + (fVar14 * (float)((uint)(uVar12 >> 0x10) & 0x7fff)) / 32767.0f;
-		uVar12 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar12;
+		local_10.x = (local_10.x - fVar13) + (fVar14 * (float)CScene::Rand()) / 32767.0f;
+		local_10.y = (local_10.y - fVar13) + (fVar14 * (float)CScene::Rand()) / 32767.0f;
 		local_10.w = 1.0f;
-		local_10.z = (local_10.z - fVar13) + (fVar14 * (float)((uint)(uVar12 >> 0x10) & 0x7fff)) / 32767.0f;
+		local_10.z = (local_10.z - fVar13) + (fVar14 * (float)CScene::Rand()) / 32767.0f;
 
 		iVar9 = GetWeapon()->GetBurstState();
 		if (iVar9 == 1) {
@@ -4026,16 +3909,10 @@ void CActorWolfen::StateTrackWeaponAim(CBehaviourTrackWeapon* pBehaviour)
 		fVar14 = pBehaviour->aSubObjs[pBehaviour->field_0xe8].field_0x4.field_0x4;
 		GetWeapon();
 		fVar13 = fVar14 * 0.5f;
-		uVar12 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar12;
-		local_10.x = (local_10.x - fVar13) + (fVar14 * (float)((uint)(uVar12 >> 0x10) & 0x7fff)) / 32767.0f;
-		uVar12 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar12;
-		local_10.y = (local_10.y - fVar13) + (fVar14 * (float)((uint)(uVar12 >> 0x10) & 0x7fff)) / 32767.0f;
-		uVar12 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar12;
+		local_10.x = (local_10.x - fVar13) + (fVar14 * (float)CScene::Rand()) / 32767.0f;
+		local_10.y = (local_10.y - fVar13) + (fVar14 * (float)CScene::Rand()) / 32767.0f;
 		local_10.w = 1.0f;
-		local_10.z = (local_10.z - fVar13) + (fVar14 * (float)((uint)(uVar12 >> 0x10) & 0x7fff)) / 32767.0f;
+		local_10.z = (local_10.z - fVar13) + (fVar14 * (float)CScene::Rand()) / 32767.0f;
 
 		iVar9 = GetWeapon()->GetBurstState();
 		if (iVar9 == 3) {
@@ -4644,16 +4521,16 @@ void CActorWolfen::ClearLocalData()
 	this->combatFlags_0xb78 = 0;
 	this->combatMode_0xb7c = ECM_None;
 	//uVar5 = 0;
-	//if (this->count_0xbd4 != 0) {
+	//if (this->nbComboMatchValues != 0) {
 	//	iVar4 = 0;
 	//	do {
 	//		uVar5 = uVar5 + 1;
 	//		*(undefined*)((int)&this->field_0xbd0->x + iVar4) = 1;
 	//		iVar4 = iVar4 + 0x10;
-	//	} while (uVar5 < (uint)this->count_0xbd4);
+	//	} while (uVar5 < (uint)this->nbComboMatchValues);
 	//}
 	//this->field_0xbe0 = 0;
-	//this->field_0xbd8 = 0;
+	this->field_0xbd8 = 0;
 	this->field_0xd04 = (CActor*)0x0;
 	//this->field_0xd0c = 0;
 	this->field_0xd08 = 0;
@@ -4689,6 +4566,11 @@ void CActorWolfen::ClearLocalData()
 	}
 
 	return;
+}
+
+int CActorWolfen::CheckDetectArea(edF32VECTOR4* pPosition)
+{
+	return this->pCommander->CheckDetectArea(pPosition);
 }
 
 void CActorWolfen::SV_WLF_MoveTo(CActorMovParamsOut* pMovParamsOut, CActorMovParamsIn* pMovParamsIn, edF32VECTOR4* pPosition)
@@ -5159,14 +5041,14 @@ void CActorWolfen::TermFightAction()
 	undefined4* puVar1;
 	long lVar2;
 
-	if (this->field_0xb2c != 3) {
+	if (this->activeCapabilityIndex != 3) {
 		IMPLEMENTATION_GUARD(
 		this_00 = this->pCommander;
 		lVar2 = CActorCommander::FUN_00171440(this_00, (int)this);
 		if (lVar2 != 0) {
 			puVar1 = (undefined4*)0x0;
-			if (this->field_0xb2c != 3) {
-				puVar1 = (undefined4*)(&this->field_0xa90 + this->field_0xb2c * 0x34);
+			if (this->activeCapabilityIndex != 3) {
+				puVar1 = (undefined4*)(&this->field_0xa90 + this->activeCapabilityIndex * 0x34);
 			}
 			CActorCommander::ReleaseSemaphore(this_00, (undefined4*)*puVar1, (int)this);
 		})
@@ -5177,6 +5059,289 @@ void CActorWolfen::TermFightAction()
 bool CActorWolfen::CheckLost()
 {
 	return false;
+}
+
+void CActorWolfen::CheckValidPatterns(CRndChooser<CFightIA::WFIGS_Chain>* pRndChooser)
+{
+	bool bVar1;
+	s_fighter_blow* psVar2;
+	CActorWeapon* pCVar3;
+	byte* pbVar4;
+	uint uVar5;
+	int iVar6;
+	uint local_30;
+	uint currentIndex;
+	float local_10;
+	float local_c;
+	float local_8;
+	float local_4;
+
+	currentIndex = 0;
+	if (pRndChooser->nbItems != 0) {
+		do {
+			iVar6 = pRndChooser->pItems[currentIndex].rndData.commandId;
+			while (iVar6 != -1) {
+				bVar1 = false;
+				if (iVar6 == -1) {
+					uVar5 = 0;
+				}
+				else {
+					uVar5 = this->field_0xb64[iVar6].field_0x0;
+				}
+
+				if ((uVar5 & 0x1e0) != 0) {
+					local_30 = 0;
+					if (this->nbComboMatchValues != 0) {
+						do {
+							GetComboMatchValues(local_30, &local_4, &local_8, &local_c, &local_10);
+							if ((((((uVar5 & 0x20) == 0) || (0.5 <= local_8)) && (((uVar5 & 0x40) == 0 || (0.5 <= local_4)))) &&
+								(((uVar5 & 0x80) == 0 || (0.5 <= local_c)))) && (((uVar5 & 0x100) == 0 || (0.5 <= local_10)))) {
+								bVar1 = true;
+								break;
+							}
+							local_30 = local_30 + 1;
+						} while (local_30 < (uint)this->nbComboMatchValues);
+					}
+				}
+
+				if (((uVar5 & 0x200) != 0) &&
+					(psVar2 = FindBlowByName("BASE_CATCH"),
+						psVar2 != (s_fighter_blow*)0x0)) {
+					bVar1 = true;
+				}
+
+				if (((uVar5 & 0x10) != 0) &&
+					(pCVar3 = GetWeapon(), pCVar3 != (CActorWeapon*)0x0)) {
+					bVar1 = true;
+				}
+
+				if (!bVar1) {
+					pbVar4 = &pRndChooser->pItems[currentIndex].field_0x0;
+					if (*pbVar4 != 0) {
+						*pbVar4 = 0;
+						pRndChooser->field_0x8 = 0;
+					}
+					break;
+				}
+
+				pbVar4 = &pRndChooser->pItems[currentIndex].field_0x0;
+				if (*pbVar4 != 1) {
+					*pbVar4 = 1;
+					pRndChooser->field_0x8 = 0;
+				}
+
+				if (iVar6 == -1) {
+					iVar6 = -1;
+				}
+				else {
+					iVar6 = this->field_0xb64[iVar6].field_0x8;
+				}
+			}
+
+			currentIndex = currentIndex + 1;
+		} while (currentIndex < pRndChooser->nbItems);
+	}
+
+	return;
+}
+
+void CActorWolfen::GetComboMatchValues(int index, float* param_3, float* param_4, float* param_5, float* param_6)
+{
+	*param_3 = this->aComboMatchValues[index].x;
+	*param_4 = this->aComboMatchValues[index].y;
+	*param_5 = this->aComboMatchValues[index].z;
+	*param_6 = this->aComboMatchValues[index].w;
+
+	return;
+}
+
+bool CActorWolfen::CanPerformWeaponCommand()
+{
+	CActorWeapon* pWeapon;
+	bool bVar2;
+
+	pWeapon = static_cast<CActorWeapon*>(this->pWeaponActor.Get());
+
+	bVar2 = false;
+	if ((pWeapon != (CActorWeapon*)0x0) && (pWeapon->field_0x1d0 == 2)) {
+		bVar2 = true;
+	}
+
+	return bVar2;
+}
+
+bool CActorWolfen::RequestFightAction(int index)
+{
+	uint uVar1;
+	uint uVar2;
+	WFIGS_Capability* pCabability;
+	CBehaviourFighterWolfen* pCVar5;
+	int iVar7;
+	int pCVar9;
+	int pCVar10;
+	CActorCommander* pCommander;
+
+	pCabability = this->aCapabilities + index;
+
+	uVar1 = pCabability->field_0xc;
+	uVar2 = pCabability->field_0x8;
+	iVar7 = ((uVar1 - uVar2) + 1) * (CScene::Rand());
+	if (iVar7 < 0) {
+		iVar7 = iVar7 + 0x7fff;
+	}
+
+	pCVar9 = uVar2 + (iVar7 >> 0xf);
+	uVar1 = pCabability->field_0x14;
+	uVar2 = pCabability->field_0x10;
+
+	iVar7 = ((uVar1 - uVar2) + 1) * (CScene::Rand());
+	if (iVar7 < 0) {
+		iVar7 = iVar7 + 0x7fff;
+	}
+
+	pCVar10 = uVar2 + (iVar7 >> 0xf);
+	if ((pCVar9 != 0x0) && (pCVar10 != 0x0)) {
+		if ((this->activeCapabilityIndex != 3) && (this->activeCapabilityIndex != 3)) {
+			pCommander = this->pCommander;
+			if (pCommander->IsValidEnemy(this) != false) {
+				pCommander->ReleaseSemaphore(GetActiveCapability()->semaphoreId, this);
+			}
+		}
+
+		if (this->pCommander->QuerySemaphoreCold(pCabability->semaphoreId, this) != 0) {
+			pCVar5 = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(3));
+			pCVar5->field_0x24 = pCVar9;
+			pCVar5->field_0x2c = pCVar10;
+			pCVar5->field_0x30 = 0;
+			pCVar5->field_0x28 = 0;
+			this->activeCapabilityIndex = 3;
+			this->field_0xb30 = index;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+float CActorWolfen::SemaphoreEval()
+{
+	CBehaviourFighterWolfen* pCVar1;
+	CBehaviourFighterWolfen::Rule* pCVar2;
+	int iVar3;
+	float fVar4;
+	float fVar5;
+
+	pCVar1 = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(3));
+	if (pCVar1 == (CBehaviourFighterWolfen*)0x0) {
+		fVar5 = 0.0f;
+	}
+	else {
+		fVar5 = 0.0f;
+		iVar3 = 0;
+		pCVar2 = pCVar1->aRules;
+		if (pCVar1->pOwner->curBehaviourId == 3) {
+			do {
+				fVar4 = pCVar2->pFunc(this);
+				iVar3 = iVar3 + 1;
+				fVar5 = fVar5 + pCVar2->value * fVar4;
+				pCVar2 = pCVar2 + 1;
+			} while (iVar3 < 3);
+		}
+	}
+
+	return fVar5;
+}
+
+bool CActorWolfen::SemaphoreKeepIt()
+{
+	CActorWolfen* pCVar1;
+	bool bVar2;
+	CBehaviourFighterWolfen* pFighterBehaviour;
+	ulong uVar3;
+	uint uVar4;
+	WFIGS_Capability* pWVar5;
+
+	uVar3 = this->pCommander->CanReleaseSemaphore(this);
+	if ((uVar3 == 1) && (pFighterBehaviour = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(3)), pFighterBehaviour != (CBehaviourFighterWolfen*)0x0)) {
+		uVar4 = 0;
+		if (pFighterBehaviour->currentCommandId != -1) {
+			pCVar1 = static_cast<CActorWolfen*>(pFighterBehaviour->pOwner);
+			uVar4 = pCVar1->field_0xb64[pFighterBehaviour->currentCommandId].field_0xc;
+		}
+
+		if ((uVar4 & 1) == 0) {
+			pCVar1 = static_cast<CActorWolfen*>(pFighterBehaviour->pOwner);
+			pWVar5 = (WFIGS_Capability*)0x0;
+			if (pCVar1->activeCapabilityIndex != 3) {
+				pWVar5 = pCVar1->aCapabilities + pCVar1->activeCapabilityIndex;
+			}
+
+			if (pWVar5 == (WFIGS_Capability*)0x0) {
+				bVar2 = false;
+			}
+			else {
+				pWVar5 = (WFIGS_Capability*)0x0;
+				if (pCVar1->activeCapabilityIndex != 3) {
+					pWVar5 = pCVar1->aCapabilities + pCVar1->activeCapabilityIndex;
+				}
+
+				bVar2 = (pWVar5->field_0x4 & 1) != 0;
+			}
+
+			if ((!bVar2) && (((uint)pFighterBehaviour->field_0x24 <= (uint)pFighterBehaviour->field_0x28 || ((uint)pFighterBehaviour->field_0x2c <= (uint)pFighterBehaviour->field_0x30)))) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+
+
+void CActorWolfen::EnableFightAction()
+{
+	if (this->curBehaviourId == 3) {
+		this->activeCapabilityIndex = this->field_0xb30;
+		this->field_0xb30 = 3;
+	}
+	else {
+		this->pCommander->ReleaseSemaphore(this->aCapabilities[this->field_0xb30].semaphoreId, this);
+		this->field_0xb30 = 3;
+		this->activeCapabilityIndex = 3;
+	}
+
+	if (gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) {
+		if (gWolfenAnimMatrixData.pWolfen != (CActorWolfen*)0x0) {
+			gWolfenAnimMatrixData.pWolfen->pAnimationController->pAnimMatrix = (edF32MATRIX3*)0x0;
+		}
+
+		gWolfenAnimMatrixData.pWolfen = this;
+		this->pAnimationController->SetBoneMatrixData(gWolfenAnimMatrixData.aMatrices, gWolfenAnimMatrixData.nbBones);
+	}
+
+	return;
+}
+
+void CActorWolfen::DisableFightAction()
+{
+	CBehaviourFighterWolfen* pCVar3;
+
+	this->field_0xb30 = 3;
+	this->activeCapabilityIndex = 3;
+
+	if (this->curBehaviourId == 3) {
+		pCVar3 = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(3));
+		pCVar3->ValidateCommand();
+		pCVar3->currentCommandId = -1;
+	}
+
+	if ((gWolfenAnimMatrixData.aMatrices != (edF32MATRIX3*)0x0) && (gWolfenAnimMatrixData.pWolfen == this)) {
+		gWolfenAnimMatrixData.pWolfen->pAnimationController->pAnimMatrix = (edF32MATRIX3*)0x0;
+		gWolfenAnimMatrixData.pWolfen = (CActorWolfen*)0x0;
+	}
+
+	return;
 }
 
 void CActorWolfen::UpdateCombatMode()
@@ -5194,6 +5359,16 @@ void CActorWolfen::UpdateCombatMode()
 
 	if ((this->combatMode_0xb7c < 2) && (this->combatMode_0xb7c != ECM_InCombat)) {
 		this->combatMode_0xb7c = ECM_InCombat;
+	}
+}
+
+WFIGS_Capability* CActorWolfen::GetActiveCapability()
+{
+	if (this->activeCapabilityIndex == 3) {
+		return (WFIGS_Capability*)0x0;
+	}
+	else {
+		return this->aCapabilities + this->activeCapabilityIndex;
 	}
 }
 
@@ -5415,9 +5590,7 @@ void CBehaviourWolfen::InitState(int newState)
 			this->pOwner->SetCombatMode(ECM_None);
 		}
 
-		uVar7 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-		CScene::_pinstance->field_0x38 = uVar7;
-		fVar8 = ((float)((uint)(uVar7 >> 0x10) & 0x7fff) * 0.4f) / 32767.0f + 0.8f;
+		fVar8 = ((float)CScene::Rand() * 0.4f) / 32767.0f + 0.8f;
 
 		if ((this->pOwner->combatFlags_0xb78 & 0x100000) == 0) {
 			fVar8 = fVar8 * 0.7f;
@@ -5608,7 +5781,7 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 
 	if (msg == 7) {
 		IMPLEMENTATION_GUARD(
-		pCVar3 = (*((this->pOwner->base).characterBase.base.base.pVTable)->GetLifeInterface)((CActor*)this->pOwner);
+		pCVar3 = (*(this->pOwner->pVTable)->GetLifeInterface)((CActor*)this->pOwner);
 		fVar7 = (*pCVar3->pVtable->GetValue)((CInterface*)pCVar3);
 		if (fVar7 <= 0.0) {
 			return 0;
@@ -5638,15 +5811,15 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 	}
 	if (((iVar4 != 7) && (iVar4 != 8)) && (iVar4 != 10)) {
 		IMPLEMENTATION_GUARD(
-		pCVar3 = (*((this->pOwner->base).characterBase.base.base.pVTable)->GetLifeInterface)((CActor*)this->pOwner);
+		pCVar3 = (*(this->pOwner->pVTable)->GetLifeInterface)((CActor*)this->pOwner);
 		fVar7 = (*pCVar3->pVtable->GetValue)((CInterface*)pCVar3);
 		if (0.0 < fVar7) {
 			/* WARNING: Load size is inaccurate */
 			if ((pSender->typeID != 0x20) && (*pMsgParam != 4)) {
-				(*((this->pOwner->base).characterBase.base.base.pVTable)->LifeDecrease)
+				(*(this->pOwner->pVTable)->LifeDecrease)
 					(*(float*)((int)pMsgParam + 0xc), (CActorAutonomous*)this->pOwner);
 			}
-			pCVar3 = (*((this->pOwner->base).characterBase.base.base.pVTable)->GetLifeInterface)((CActor*)this->pOwner);
+			pCVar3 = (*(this->pOwner->pVTable)->GetLifeInterface)((CActor*)this->pOwner);
 			fVar7 = (*pCVar3->pVtable->GetValue)();
 			if (fVar7 <= 0.0) {
 				local_90[0] = 7;
@@ -5664,7 +5837,7 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 				local_48 = *(undefined4*)((int)pMsgParam + 0x48);
 				local_44 = *(undefined4*)((int)pMsgParam + 0x4c);
 				local_60 = 0x41800000;
-				edF32Vector4SubHard(&eStack112, &(this->pOwner->base).characterBase.base.base.currentLocation,
+				edF32Vector4SubHard(&eStack112, &this->pOwner->currentLocation,
 					&pSender->currentLocation);
 				edF32Vector4SafeNormalize1Hard(&eStack112, &eStack112);
 				local_4 = local_90;
@@ -5971,7 +6144,7 @@ int CBehaviourWolfen::GetState_001f08a0()
 	if (((pIntruder != (CActorFighter*)0x0) && (bVar1 = this->pOwner->CanSwitchToFight_Area(pIntruder), bVar1 != false)) &&
 		(iVar2 = this->pOwner->pCommander->BeginFightIntruder(this->pOwner, pIntruder), iVar2 != 0)) {
 		IMPLEMENTATION_GUARD(
-		(*(code*)(this->pOwner->base).characterBase.base.base.pVTable[1].actorBase)(this->pOwner, pIntruder);)
+		(*(code*)this->pOwner->pVTable[1].actorBase)(this->pOwner, pIntruder);)
 		newState = 0xb0;
 	}
 
@@ -6674,6 +6847,497 @@ int CBehaviourLost::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	return iVar1;
 }
 
+void CBehaviourFighterWolfen::Create(ByteCode* pByteCode)
+{
+	return;
+}
+
+float _Rule_Life(CActorWolfen* pWolfen)
+{
+	return pWolfen->GetLifeInterface()->GetValue() / pWolfen->GetLifeInterface()->GetValueMax();
+}
+
+float _Rule_Unknown(CActorWolfen* pWolfen)
+{
+	return 0.0f;
+}
+
+float _Rule_Agressivity(CActorWolfen* pWolfen)
+{
+	CActorFighter* pCVar1;
+	float fVar2;
+
+	pCVar1 = pWolfen->pAdversary;
+	if ((pCVar1 == (CActorFighter*)0x0) || (pCVar1->pAdversary != pWolfen)) {
+		fVar2 = 0.0f;
+	}
+	else {
+		fVar2 = 1.0f;
+	}
+
+	return fVar2;
+}
+
+void CBehaviourFighterWolfen::Init(CActor* pOwner)
+{
+	CActorWolfen* pWolfen;
+	int iVar3;
+	uint uVar5;
+	float fVar6;
+	float fVar7;
+
+	CBehaviourFighter::Init(pOwner);
+
+	if ((gWolfenAnimMatrixData.aMatrices == (edF32MATRIX3*)0x0) && (uVar5 = this->pOwner->pAnimationController->anmSkeleton.pTag->boneCount,
+		gWolfenAnimMatrixData.nbBones < uVar5)) {
+		gWolfenAnimMatrixData.nbBones = uVar5;
+	}
+
+	this->aRules[0].pFunc = _Rule_Life;
+	this->aRules[0].value = 1.0f;
+	this->aRules[1].pFunc = _Rule_Unknown;
+	this->aRules[1].value = 1.0f;
+	this->aRules[2].pFunc = _Rule_Agressivity;
+	this->aRules[2].value = 1.0f;
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+	fVar6 = pWolfen->field_0xb48;
+	fVar7 = pWolfen->field_0xb4c;
+
+	if (pWolfen->field_0xb44 == 1) {
+		this->field_0x38 = GetTimer()->scaledTotalTime;
+		this->field_0x34 = fVar6 + ((fVar7 - fVar6) * (float)CScene::Rand()) / 32767.0f;
+	}
+	else {
+		if (pWolfen->field_0xb44 == 0) {
+			this->field_0x38 = 0.0f;
+			iVar3 = (((int)fVar7 - (int)fVar6) + 1) * CScene::Rand();
+			if (iVar3 < 0) {
+				iVar3 = iVar3 + 0x7fff;
+			}
+			this->field_0x34 = (float)((int)fVar6 + (iVar3 >> 0xf));
+		}
+	}
+
+	return;
+}
+
+CActorWolfen* gWolfenPtr;
+
+void CBehaviourFighterWolfen::Manage()
+{
+	CAnimation* pCVar1;
+	edAnmLayer* peVar2;
+	bool bVar3;
+	StateConfig* pSVar4;
+	CActorFighter* pCVar5;
+	CLifeInterface* pCVar6;
+	int iVar7;
+	Timer* pTVar8;
+	CPlayerInput* pPlayerInput;
+	uint uVar9;
+	undefined4 newPriority;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	CActorWolfen* pWolfen;
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+
+	if (pWolfen == gWolfenPtr) {
+		if (pWolfen == gWolfenPtr) {
+			pPlayerInput = GetPlayerInput(1);
+			pWolfen->UpdateFightCommandInternal(pPlayerInput, 1);
+		}
+
+		CBehaviourFighter::Manage();
+		goto LAB_001f96e0;
+	}
+
+	uVar9 = pWolfen->GetStateFlags(pWolfen->actorState);
+	uVar9 = uVar9 & 0xff800;
+	if (uVar9 == 0x8000) {
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+		CBehaviourFighter::Manage();
+		pCVar6 = pWolfen->GetLifeInterfaceOther();
+		pCVar6->SetPriority(4);
+		if (pWolfen->actorState == 0x38) {
+			this->adversaryBlowDuration = 0.0f;
+		}
+		else {
+			pTVar8 = GetTimer();
+			this->adversaryBlowDuration = this->adversaryBlowDuration + pTVar8->cutsceneDeltaTime;
+		}
+	}
+	else {
+		if ((((uVar9 == 0x80000) || (uVar9 == 0x4000)) || (uVar9 == 0x2000)) || ((uVar9 == 0x1000 || (uVar9 == 0x800)))) {
+			pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+			if (this->currentCommandId == -1) {
+				PickCommand();
+			}
+
+			UpdateFightContext(&this->fightContext);
+			ManageWFigState(this->currentCommandId);
+
+			pCVar5 = (CActorFighter*)pWolfen->pCommander->GetIntruder();
+			if ((pWolfen->pTargetActor_0xc80 == pCVar5) && ((pWolfen->combatFlags_0xb78 & 0x10) != 0)) {
+				pCVar6 = pCVar5->GetLifeInterface();
+				fVar10 = pCVar6->GetValue();
+				if (fVar10 <= 0.0) goto LAB_001f9458;
+				pWolfen->SV_WLF_IsIntruderMakingNoise(pCVar5);
+				pWolfen->SV_WLF_IsIntruderInVitalSphere(pCVar5);
+				pWolfen->SV_WLF_IsIntruderInVision(pCVar5);
+			}
+			else {
+			LAB_001f9458:
+				pCVar6 = pCVar5->GetLifeInterface();
+				fVar10 = pCVar6->GetValue();
+				if (fVar10 <= 0.0f) {
+					pWolfen->SetCombatMode(ECM_None);
+				}
+
+				pWolfen->combatFlags_0xb78 = pWolfen->combatFlags_0xb78 & 0xfffffff8;
+			}
+
+			pWolfen->UpdateInRange_001744a0((pWolfen->combatFlags_0xb78 & 7) != 0);
+
+			iVar7 = pWolfen->actorState;
+			if (iVar7 == 0x74) {
+				IMPLEMENTATION_GUARD(
+				CActorWolfen::FUN_0035eac0(pWolfen);)
+			}
+			else {
+				if (iVar7 == 0xad) {
+					if (pWolfen->field_0xd00 < pWolfen->timeInAir) {
+						iVar7 = rand();
+						pWolfen->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(((float)iVar7 / 2.147484e+09f) * 0.8000001f + 1.6f, 0);
+						pWolfen->SetLookingAtOff();
+						pWolfen->PlayAnim(0xe5);
+					}
+
+					if (pWolfen->currentAnimType == 0xe5) {
+						pCVar1 = pWolfen->pAnimationController;
+						peVar2 = (pCVar1->anmBinMetaAnimator).aAnimData;
+
+						bVar3 = false;
+						if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
+							if (peVar2->animPlayState == 0) {
+								bVar3 = false;
+							}
+							else {
+								bVar3 = (peVar2->field_0xcc & 2) != 0;
+							}
+						}
+
+						if (bVar3) {
+							pWolfen->SetState(6, -1);
+						}
+					}
+				}
+				else {
+					CBehaviourFighter::Manage();
+				}
+			}
+
+			pCVar5 = pWolfen->pAdversary;
+			if (pCVar5 != (CActorFighter*)0x0) {
+				newPriority = 4;
+				if ((CActorWolfen*)pCVar5->pAdversary == pWolfen) {
+					newPriority = 5;
+				}
+
+				pCVar6 = pWolfen->GetLifeInterfaceOther();
+				pCVar6->SetPriority(newPriority);
+			}
+		}
+	}
+
+	ManageExit();
+
+LAB_001f96e0:
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+	this->field_0x58 = pWolfen->fighterAnatomyZones.field_0x0.y + pWolfen->currentLocation.y;
+
+	iVar7 = -1;
+	if (((pWolfen->pCollisionData)->flags_0x4 & 2) != 0) {
+		this->field_0x5c = this->field_0x58;
+	}
+
+	if (((pWolfen->combatFlags_0xb78 & 0x20000) != 0) &&
+		(pWolfen->field_0x7cc < this->field_0x5c - this->field_0x58)) {
+		iVar7 = 4;
+		pWolfen->field_0x6a0 = pWolfen->dynamic.velocityDirectionEuler;
+
+		pWolfen->field_0x6b0 = pWolfen->dynamic.linearAcceleration;
+		pWolfen->field_0x684 = 1;
+		pWolfen->field_0x7a0 = gF32Vector4UnitY;
+		pWolfen->field_0x7b4 = 0.0f;
+	}
+
+	if (iVar7 != -1) {
+		this->pOwner->SetBehaviour(iVar7, -1, -1);
+		this->pOwner->field_0x7c8 = this->field_0x5c;
+		this->pOwner->field_0x7d0 = this->field_0x58;
+	}
+
+	return;
+}
+
+void CBehaviourFighterWolfen::Draw()
+{
+	return;
+}
+
+void CBehaviourFighterWolfen::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActorWolfen* pCVar1;
+	CActorFighter* pCVar2;
+	float fVar3;
+	float fVar4;
+	bool bVar6;
+	int iVar8;
+	uint uVar9;
+	float fVar10;
+
+	fVar10 = this->pOwner->GetLifeInterfaceOther()->GetValue();
+	if (0.0f < fVar10) {
+		CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_ENEMY_LIST, this->pOwner->GetLifeInterfaceOther());
+	}
+
+	CBehaviourFighter::Begin(pOwner, newState, newAnimationType);
+
+	CActorWolfen* pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+
+	pWolfen->CheckValidPatterns(&pWolfen->aCapabilities[0].rndChooser);
+	pWolfen->CheckValidPatterns(&pWolfen->aCapabilities[1].rndChooser);
+	pWolfen->CheckValidPatterns(&pWolfen->aCapabilities[2].rndChooser);
+
+	//this->field_0x64 = 0;
+
+	pWolfen->aCapabilities[0].Begin();
+	pWolfen->aCapabilities[1].Begin();
+	pWolfen->aCapabilities[2].Begin();
+	
+	this->currentCommandId = -1;
+
+	ValidateCommand();
+
+	this->currentCommandId = -1;
+	this->field_0x70 = 1;
+	this->field_0x71 = 0;
+
+	this->field_0x74.all = 0;
+	this->pActiveBlow = (s_fighter_blow*)0x0;
+
+	this->field_0x80 = gF32Vector4Zero;
+
+	this->field_0x90.field_0x4 = 0;
+	this->field_0x90.field_0x0 = (edF32VECTOR4*)0x0;
+
+	FlushInput();
+
+	memset(&this->fightContext, 0, sizeof(CFightContext));
+	(this->fightContext).state_0x14 = -1;
+
+	UpdateFightContext(&this->fightContext);
+	TreatContext(&this->fightContext);
+
+	this->field_0x68 = 0;
+	this->field_0x3c = 0;
+
+	return;
+}
+
+void CBehaviourFighterWolfen::End(int newBehaviourId)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourFighterWolfen::InitState(int newState)
+{
+	CActorWolfen* pWolfen;
+	uint stateFlags;
+
+	stateFlags = this->pOwner->GetStateFlags(newState);
+
+	if ((stateFlags & 0xff800) == 0x8000) {
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+		stateFlags = pWolfen->GetStateFlags(pWolfen->prevActorState);
+
+		if ((stateFlags & 0xff800) != 0x8000) {
+			this->adversaryBlowDuration = 0.0f;
+		}
+	}
+
+	if (newState == 0xad) {
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+		pWolfen->PlayAnim(pWolfen->standAnim);
+		pWolfen->field_0xd00 = (((float)rand() / 2.147484e+09f) * 0.6f + 0.0f);
+		pWolfen->fightFlags = pWolfen->fightFlags | 1;
+	}
+	else {
+		if (newState == 6) {
+			pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+			this->pOwner->SV_AUT_WarnActors(pWolfen->field_0xcf4, 0.0f, (CActor*)0x0);
+			CBehaviourFighter::InitState(6);
+		}
+		else {
+			if (newState == 0x74) {
+				pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+				pWolfen->field_0xd18 = pWolfen->_GetFighterAnimationLength(pWolfen->GetStateCfg(0x74)->animId);
+			}
+			else {
+				CBehaviourFighter::InitState(newState);
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourFighterWolfen::TermState(int oldState, int newState)
+{
+	CActorWolfen* pCVar1;
+
+	if (oldState == 0xad) {
+		pCVar1 = static_cast<CActorWolfen*>(this->pOwner);
+		pCVar1->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(1.0f, 0);
+		pCVar1->fightFlags = pCVar1->fightFlags & 0xfffffffe;
+		pCVar1->SetLookingAtOn();
+	}
+	else {
+		CBehaviourFighter::TermState(oldState, newState);
+	}
+
+	return;
+}
+
+int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorWolfen* pCVar1;
+	CActorFighter* pCVar2;
+	bool bVar3;
+	WFIGS_Capability* pWVar4;
+	uint uVar5;
+	int iVar6;
+	long lVar7;
+	CActorCommander* pCommander;
+
+	if (msg == 0x66) {
+		IMPLEMENTATION_GUARD(
+		uVar5 = this->pOwner->field_0xb74;
+		if ((uVar5 == 0) || (uVar5 == 1)) {
+			iVar6 = CBehaviourFighter::InterpretMessage
+			((CBehaviourFighter*)this, pSender, 0x66, (GetPositionMsgParams*)pMsgParam);
+		}
+		else {
+			iVar6 = 0;
+		})
+	}
+	else {
+		if (msg == 0x27) {
+			IMPLEMENTATION_GUARD(
+			uVar5 = this->pOwner->field_0xb74;
+			if ((uVar5 == 0) || (uVar5 == 1)) {
+				iVar6 = 1;
+			}
+			else {
+				lVar7 = (*(code*)(this->pOwner->pVTable)->Func_0x1ac)();
+				if (lVar7 != 0) {
+					ValidateCommand();
+					InitCommand(this, this->pOwner->field_0xb64[6].field_0x0, 6);
+					this->field_0x68 = 1;
+					this->currentCommandId = 6;
+				}
+				iVar6 = 0;
+			})
+		}
+		else {
+			if (msg == 2) {
+				IMPLEMENTATION_GUARD(
+				if ((CActorFighter*)pSender == this->pOwner->pAdversary) {
+					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfd | 2;
+					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfe;
+					bVar3 = CActorFighter::FUN_0031b5d0
+					((CActorFighter*)this->pOwner, this->pOwner->actorState);
+					if (bVar3 == false) {
+						if (((uint)pMsgParam->z & 8) == 0) {
+							*(int*)&this->field_0x30 = *(int*)&this->field_0x30 + 1;
+						}
+						else {
+							pCVar1 = this->pOwner;
+							if (pCVar1->activeCapabilityIndex != 3) {
+								pCommander = pCVar1->pCommander;
+								lVar7 = CActorCommander::FUN_00171440(pCommander, (int)pCVar1);
+								if (lVar7 != 0) {
+									pWVar4 = (WFIGS_Capability*)0x0;
+									if (pCVar1->activeCapabilityIndex != 3) {
+										pWVar4 = pCVar1->aCapabilities + pCVar1->activeCapabilityIndex;
+									}
+									CActorCommander::ReleaseSemaphore(pCommander, pWVar4->semaphoreId, (int)pCVar1);
+								}
+							}
+						}
+
+						ValidateCommand();
+						this->currentCommandId = -1;
+					}
+
+					if (this->pOwner->field_0xb44 == 0) {
+						this->field_0x38 = 0;
+					}
+				})
+
+				iVar6 = CBehaviourFighter::InterpretMessage(pSender, 2, (GetPositionMsgParams*)pMsgParam);
+			}
+			else {
+				iVar6 = CBehaviourFighter::InterpretMessage(pSender, msg, pMsgParam);
+			}
+		}
+	}
+	return iVar6;
+}
+
+void CBehaviourFighterWolfen::ManageExit()
+{
+	StateConfig* pSVar1;
+	int iVar2;
+	uint uVar3;
+	CActorWolfen* pWolfen;
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+	uVar3 = pWolfen->GetStateFlags(pWolfen->actorState);
+
+	uVar3 = uVar3 & 0xff800;
+	if (uVar3 == 0x8000) {
+		iVar2 = pWolfen->pCommander->squad.NbElt();
+		if ((iVar2 < 2) || (6.0f < this->adversaryBlowDuration)) {
+			(this->field_0x74).field_0x1 = (this->field_0x74).field_0x1 & 0xf0 | 1;
+			this->pActiveCombo = (s_fighter_combo*)0x0;
+			this->pActiveBlow = (s_fighter_blow*)0x0;
+			this->field_0x70 = 1;
+			FlushInput();
+		}
+	}
+	else {
+		if ((((uVar3 == 0x80000) || (uVar3 == 0x4000)) || (uVar3 == 0x2000)) || ((uVar3 == 0x1000 || (uVar3 == 0x800)))) {
+			pWolfen->BehaviourFighterStd_Exit(this);
+		}
+	}
+
+	return;
+}
+
+void CBehaviourFighterWolfen::Func_0x60()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourFighterWolfen::Func_0x64()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CBehaviourFighterWolfen::SetPositionToHold(float param_1, edF32VECTOR4* pPosition)
 {
 	this->holdPosition = *pPosition;
@@ -6682,4 +7346,1420 @@ void CBehaviourFighterWolfen::SetPositionToHold(float param_1, edF32VECTOR4* pPo
 	this->field_0x3c = 1;
 
 	return;
+}
+
+void CBehaviourFighterWolfen::InputPunch(uint cmd)
+{
+	byte bVar1;
+	s_fighter_combo* pCombo;
+
+	pCombo = PickCombo_Attack(&this->fightContext, (cmd & 0x40) != 0, (cmd & 0x20) != 0, (cmd & 0x80) != 0, (cmd & 0x100) != 0);
+	if (pCombo == (s_fighter_combo*)0x0) {
+		this->pActiveBlow = (s_fighter_blow*)0x0;
+		this->field_0x70 = 0;
+	}
+	else {
+		this->field_0x70 = 1;
+		this->pActiveCombo = pCombo;
+
+		if ((pCombo->field_0x4.field_0x0ushort & 0x400U) == 0) {
+			bVar1 = (this->field_0x74).field_0x1;
+			(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 1;
+			this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+		}
+		else {
+			bVar1 = (this->field_0x74).field_0x1;
+			(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 4;
+			this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
+		}
+	}
+
+	return;
+}
+
+void CBehaviourFighterWolfen::FlushInput()
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	byte bVar4;
+
+	bVar4 = 0;
+	if (this->field_0x70 == 1) {
+		if (((this->field_0x74).field_0x1 & 0xf) == 0) {
+			if (((this->field_0x74).field_0x0 & 0xf) == 0xc) {
+				this->field_0x90.field_0x0 = &this->field_0x80;
+				this->field_0x90.field_0x4 = 0;
+				bVar4 = Conditional_Execute(&this->field_0x74, &this->field_0x90);
+			}
+			else {
+				bVar4 = Conditional_Execute(&this->field_0x74, (s_fighter_action_param*)0x0);
+			}
+		}
+		else {
+			this->field_0x90.field_0x0 = (edF32VECTOR4*)0x0;
+			this->field_0x90.pData = this->pActiveBlow;
+			bVar4 = CBehaviourFighter::Conditional_Execute(&this->field_0x74, &this->field_0x90);
+		}
+	}
+
+	this->field_0x70 = 1;
+	this->field_0x71 = 0;
+
+	this->field_0x74.all = 0x0;
+	this->pActiveBlow = (s_fighter_blow*)0x0;
+	this->field_0x80 = gF32Vector4Zero;
+	(this->field_0x90).field_0x4 = 0;
+	(this->field_0x90).field_0x0 = (edF32VECTOR4*)0x0;
+	this->field_0x70 = 0;
+	this->field_0x71 = bVar4;
+
+	return;
+}
+
+void CBehaviourFighterWolfen::UpdateFightContext(CFightContext* pFightContext)
+{
+	byte bVar1;
+	byte bVar2;
+	byte bVar3;
+	int iVar4;
+	CActorWolfen* pWolfen;
+	int iVar6;
+	int iVar7;
+	bool bVar8;
+	edF32VECTOR4* v2;
+	long lVar10;
+	ulong uVar11;
+	float fVar12;
+	float fVar13;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+	CActorFighter* pFighter;
+
+	pFighter = this->pOwner->pAdversary;
+	if (pFighter != (CActorFighter*)0x0) {
+		iVar4 = pFighter->actorState;
+		pFightContext->state_0x14 = pFightContext->state_0x10;
+		pFightContext->state_0x10 = iVar4;
+
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+		iVar4 = pFightContext->field_0x8;
+
+		v2 = pWolfen->GetAdversaryPos();
+		edF32Vector4SubHard(&eStack16, &pWolfen->currentLocation, v2);
+		eStack16.y = 0.0f;
+		fVar12 = edF32Vector4SafeNormalize1Hard(&eStack16, &eStack16);
+		if (0.001f < fabs(pFightContext->field_0xc - fVar12)) {
+			if (pFightContext->field_0xc < fVar12) {
+				pFightContext->field_0x8 = 2;
+			}
+			else {
+				pFightContext->field_0x8 = 0;
+			}
+		}
+		else {
+			pFightContext->field_0x8 = 1;
+		}
+
+		pFightContext->field_0xc = fVar12;
+		iVar6 = pFightContext->field_0x4;
+		if (pFightContext->field_0xc < pWolfen->field_0xbec) {
+			pFightContext->field_0x4 = 0;
+		}
+		else {
+			if (fabs(pFightContext->field_0xc - pWolfen->field_0xbf0) < 0.1f) {
+				pFightContext->field_0x4 = 2;
+			}
+			else {
+				pFightContext->field_0x4 = 1;
+			}
+		}
+
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+		if ((pWolfen->flags & 0x1000) == 0) {
+			local_20.x = pWolfen->rotationQuat.x;
+			local_20.z = pWolfen->rotationQuat.z;
+			local_20.w = pWolfen->rotationQuat.w;
+			local_20.y = 0.0f;
+			edF32Vector4NormalizeHard(&local_20, &local_20);
+		}
+		else {
+			SetVectorFromAngleY(pWolfen->rotationEuler.y, &local_20);
+		}
+		if ((pFighter->flags & 0x1000) == 0) {
+			local_30.x = pFighter->rotationQuat.x;
+			local_30.z = pFighter->rotationQuat.z;
+			local_30.w = pFighter->rotationQuat.w;
+			local_30.y = 0.0f;
+			edF32Vector4NormalizeHard(&local_30, &local_30);
+		}
+		else {
+			SetVectorFromAngleY(pFighter->rotationEuler.y, &local_30);
+		}
+
+		bVar1 = pFightContext->field_0x0;
+		pFightContext->field_0x0 = bVar1 & 0xf7;
+
+		fVar13 = edF32Vector4DotProductHard(&local_20, &eStack16);
+		if (((((fVar13 <= 0.0f) && (fVar13 = edF32Vector4DotProductHard(&local_20, &local_30), 0.707f < fVar13)) &&
+			(lVar10 = pFighter->Func_0x190(this->pOwner), lVar10 != 0)) &&
+			(((pFighter->field_0x44d & 0xf) != 0 && (pFighter->pFighterCombo != (s_fighter_combo*)0x0)))) &&
+			((pFighter->pFighterCombo->field_0x4.field_0x0ushort & 0x400U) == 0)) {
+			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xf7 | 8;
+		}
+
+		bVar2 = pFightContext->field_0x0;
+		pFightContext->field_0x0 = bVar2 & 0xef;
+
+		iVar7 = pWolfen->field_0xb44;
+		if (iVar7 == 0) {
+			bVar8 = pFighter->FUN_0031b5d0(pFighter->actorState);
+			if ((bVar8 != false) && ((uint)this->field_0x34 <= (uint)this->field_0x38)) {
+				pFightContext->field_0x0 = pFightContext->field_0x0 & 0xef | 0x10;
+			}
+		}
+		else {
+			if (iVar7 == 1) {
+				bVar8 = pFighter->FUN_0031b5d0(pFighter->actorState);
+				if (bVar8 == false) {
+					this->field_0x38 = (int)GetTimer()->scaledTotalTime;
+				}
+				else {
+					if (this->field_0x34 <= GetTimer()->scaledTotalTime - (float)this->field_0x38) {
+						pFightContext->field_0x0 = pFightContext->field_0x0 & 0xef | 0x10;
+					}
+				}
+			}
+		}
+
+		if (((long)((ulong)pFightContext->field_0x0 << 0x3b) < 0) &&
+			((fVar13 = edF32Vector4DotProductHard(&local_20, &local_30), 0.0f < fVar13 || ((this->fightContext).field_0x4 != 0)))) {
+			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xef;
+		}
+
+		bVar3 = pFightContext->field_0x0;
+		bVar8 = pFighter->FUN_0031b790(pFighter->actorState);
+		if (((bVar8 != true) || (pFighter->pBlow == (s_fighter_blow*)0x0)) || (pFighter->pBlow->field_0x4c < fVar12 - 0.5))
+		{
+			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xfd;
+		}
+		else {
+			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xfd | 2;
+		}
+
+		uVar11 = (ulong)pFightContext->field_0x0;
+		if (((uVar11 & 1) == 1) &&
+			((((((ulong)bVar3 << 0x3e) >> 0x3f != (uVar11 << 0x3e) >> 0x3f || (iVar4 != pFightContext->field_0x8)) ||
+				((iVar6 != pFightContext->field_0x4 ||
+					((((ulong)bVar1 << 0x3c) >> 0x3f != (uVar11 << 0x3c) >> 0x3f ||
+						(((ulong)bVar2 << 0x3b) >> 0x3f != (uVar11 << 0x3b) >> 0x3f)))))) ||
+				(pFightContext->state_0x14 != pFightContext->state_0x10)))) {
+			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xfe;
+		}
+	}
+
+	return;
+}
+
+void CBehaviourFighterWolfen::ManageWFigState(uint commandId)
+{
+	CActorWolfen* pWolfen;
+	int iVar2;
+	bool bTreatSuccess;
+	bool bVar3;
+	uint uVar4;
+	int iVar5;
+	CActorFighter* pFighter;
+
+	bTreatSuccess = false;
+	if (commandId == 0xffffffff) {
+		uVar4 = 0;
+	}
+	else {
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+		uVar4 = pWolfen->field_0xb64[commandId].field_0x0;
+	}
+
+	if ((uVar4 & 0x3f9ef) != 0) {
+		bTreatSuccess = TreatContext(&this->fightContext);
+	}
+
+	if (bTreatSuccess == false) {
+		if (this->field_0x68 == 0) {
+			InitCommand(uVar4);
+			this->field_0x68 = 1;
+		}
+		else {
+			ExecuteCommand(uVar4, commandId);
+			uVar4 = IsCommandFinished(uVar4);
+			if (uVar4 != 0) {
+				iVar5 = -1;
+				pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+				if (commandId != 0xffffffff) {
+					iVar5 = pWolfen->field_0xb64[commandId].field_0x8;
+				}
+
+				ValidateCommand();
+
+				if (iVar5 != -1) {
+					if (iVar5 == -1) {
+						uVar4 = 0;
+					}
+					else {
+						uVar4 = pWolfen->field_0xb64[iVar5].field_0x0;
+					}
+
+					InitCommand(uVar4);
+					this->field_0x68 = 1;
+				}
+
+				this->currentCommandId = iVar5;
+			}
+		}
+	}
+
+	return;
+}
+
+
+bool CBehaviourFighterWolfen::TreatContext(CFightContext* pFightContext)
+{
+	CActorWolfen* pCVar1;
+	CActorFighter* pCVar2;
+	bool bVar3;
+	bool uVar4;
+	bool bVar4;
+	int iVar5;
+	byte* pbVar6;
+	uint uVar7;
+	int local_4;
+
+	uVar4 = false;
+	local_4 = 0;
+	if ((pFightContext->field_0x0 & 1) == 0) {
+		if ((long)((ulong)pFightContext->field_0x0 << 0x3e) < 0) {
+			IMPLEMENTATION_GUARD(
+			uVar4 = TreatContext_Attacked(pFightContext, &local_4);)
+		}
+
+		if ((long)((ulong)pFightContext->field_0x0 << 0x3d) < 0) {
+			pCVar1 = static_cast<CActorWolfen*>(this->pOwner);
+			uVar4 = false;
+			if (pCVar1->pAdversary != (CActorFighter*)0x0) {
+				bVar4 = pCVar1->aCapabilities[1].Get();
+
+				if (bVar4) {
+					if (pCVar1->activeCapabilityIndex == 0) {
+						pCVar1->activeCapabilityIndex = 1;
+						ValidateCommand();
+						this->currentCommandId = -1;
+					}
+					else {
+						IMPLEMENTATION_GUARD(
+						pCVar1->FUN_001fbff0(1, '\0');)
+						ValidateCommand();
+						this->currentCommandId = -1;
+					}
+
+					uVar4 = true;
+				}
+			}
+
+			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xfb;
+		}
+
+		if ((uVar4 == false) && ((long)((ulong)pFightContext->field_0x0 << 0x3c) < 0)) {
+			pCVar1 = static_cast<CActorWolfen*>(this->pOwner);
+			uVar4 = false;
+			if (pCVar1->pAdversary != (CActorFighter*)0x0) {
+				bVar4 = pCVar1->aCapabilities[2].Get();
+
+				IMPLEMENTATION_GUARD(
+				if ((bVar4) && (iVar5 = pCVar1->FUN_001fc300(2), iVar5 != 0)) {
+					ValidateCommand();
+					this->currentCommandId = -1;
+					uVar4 = true;
+				})
+			}
+		}
+
+		if ((uVar4 == false) && ((long)((ulong)pFightContext->field_0x0 << 0x3b) < 0)) {
+			IMPLEMENTATION_GUARD(
+			uVar4 = FUN_001f6110(this, pFightContext, &local_4);)
+		}
+
+		if (local_4 == 0) {
+			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xfe | 1;
+		}
+	}
+
+	return uVar4;
+}
+
+void CBehaviourFighterWolfen::InitCommand(uint commandId)
+{
+	byte bVar1;
+	bool bVar2;
+	s_fighter_blow* psVar4;
+	CPathFinderClient* pCVar5;
+	int iVar6;
+	long lVar7;
+	ulong uVar8;
+	CActorWolfen* pWolfen;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	float time;
+	edF32VECTOR4 eStack16;
+
+	time = GetTimer()->scaledTotalTime;
+
+	if (commandId != 0x80000) {
+		if (commandId != 0x40000) {
+			if (commandId == 0x20000) {
+				bVar1 = (this->field_0x74).field_0x1;
+				(this->field_0x74).field_0x1 = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) | 1) << 4);
+				this->field_0x70 = 1;
+				FlushInput();
+			}
+			else {
+				if (commandId != 0x10000) {
+					if (commandId == 0x4000) {
+						this->adversaryBlowDuration = time + 2.0f;
+					}
+					else {
+						if ((((commandId != 0x8000) && (commandId != 0x2000)) && (commandId != 0x1000)) && (commandId != 0x800)) {
+							if (commandId == 0x400) {
+								IMPLEMENTATION_GUARD(
+								FUN_001fa910();)
+								FlushInput();
+							}
+							else {
+								if (commandId == 0x200) {
+									bVar1 = (this->field_0x74).field_0x1;
+									(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 2;
+									psVar4 = this->pOwner->FindBlowByName("BASE_CATCH");
+									if ((psVar4 == (s_fighter_blow*)0x0) || (psVar4->field_0x4c < (this->fightContext).field_0xc)) {
+										this->pActiveCombo = (s_fighter_combo*)0x0;
+										this->pActiveBlow = (s_fighter_blow*)0x0;
+										this->field_0x70 = 0;
+									}
+									else {
+										this->pActiveCombo = (s_fighter_combo*)0x0;
+										this->pActiveBlow = psVar4;
+										this->field_0x70 = 1;
+									}
+
+									FlushInput();
+								}
+								else {
+									if (commandId == 0x10) {
+										bVar1 = (this->field_0x74).field_0x1;
+										(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 1;
+										psVar4 = this->pOwner->FindBlowByName("CROSSBOW_FIRE");
+										if (psVar4 == (s_fighter_blow*)0x0) {
+											this->pActiveCombo = (s_fighter_combo*)0x0;
+											this->pActiveBlow = (s_fighter_blow*)0x0;
+											this->field_0x70 = 0;
+										}
+										else {
+											this->pActiveCombo = (s_fighter_combo*)0x0;
+											this->pActiveBlow = psVar4;
+											this->field_0x70 = 1;
+										}
+
+										FlushInput();
+									}
+									else {
+										if (((((commandId == 0x1e0) || (commandId == 0x1c0)) ||
+											((commandId == 0x160 || ((commandId == 0xe0 || (commandId == 0x180)))))) ||
+											(commandId == 0x120)) ||
+											(((((commandId == 0xa0 || (commandId == 0x140)) || (commandId == 0xc0)) ||
+												((commandId == 0x60 || (commandId == 0x100)))) ||
+												((commandId == 0x80 || ((commandId == 0x40 || (commandId == 0x20)))))))) {
+											InputPunch(commandId);
+											FlushInput();
+										}
+										else {
+											pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+											if (commandId == 8) {
+												this->adversaryBlowDuration = time + pWolfen->field_0xb5c;
+											}
+											else {
+												if (commandId == 4) {
+													this->adversaryBlowDuration = time + pWolfen->field_0xb58;
+												}
+												else {
+													if (commandId == 2) {
+														this->adversaryBlowDuration = time + pWolfen->field_0xb54;
+													}
+													else {
+														if (commandId == 1) {
+															this->adversaryBlowDuration = time + pWolfen->field_0xb50;
+														}
+														else {
+															if (commandId == 0) {
+																FunReset();
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			goto LAB_001f8e50;
+		}
+
+		FunReset();
+
+		(this->field_0x74).field_0x1 = (this->field_0x74).field_0x1 & 0xf0 | 8;
+		this->field_0x70 = 1;
+
+		FlushInput();
+
+		FunReset();
+
+		edF32Vector4ScaleHard(this->pOwner->field_0x4c4 * 1.1f, &eStack16, &this->pOwner->rotationQuat);
+		edF32Vector4SubHard(&eStack16, &this->pOwner->currentLocation, &eStack16);
+
+		if (this->pOwner->GetPathfinderClient()->id == -1) {
+		LAB_001f8c78:
+			pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+			lVar7 = pWolfen->CheckDetectArea(&eStack16);
+
+			if (lVar7 == 1) goto LAB_001f8c90;
+
+			if ((CScene::Rand() & 0x10000) == 0) {
+				(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 2;
+				(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x20;
+				this->field_0x70 = 1;
+			}
+			else {
+				(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 1;
+				(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x20;
+				this->field_0x70 = 1;
+			}
+		}
+		else {
+			bVar2 = this->pOwner->GetPathfinderClient()->IsValidPosition(&eStack16);
+
+			if (bVar2 == false) goto LAB_001f8c78;
+
+		LAB_001f8c90:
+			(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 6;
+			(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x20;
+			this->field_0x70 = 1;
+		}
+
+		FlushInput();
+	}
+
+	if ((this->pOwner->pAdversary)->pBlow == (s_fighter_blow*)0x0) {
+		this->adversaryBlowDuration = 0.0f;
+	}
+	else {
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+		fVar11 = this->pOwner->_GetFighterAnimationLength(0xd);
+		fVar10 = pWolfen->field_0x474;
+		fVar12 = (pWolfen->pAdversary)->pBlow->field_0x50 - fVar10;
+		this->adversaryBlowDuration = time + fVar10;
+		if (fVar11 * 0.8f < fVar12) {
+			this->adversaryBlowDuration = this->adversaryBlowDuration + (fVar12 - fVar11 * 0.8f);
+		}
+	}
+
+LAB_001f8e50:
+	this->field_0x64 = time;
+	return;
+}
+
+void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
+{
+	byte bVar1;
+	int iVar2;
+	CActorWolfen* pCVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	edF32VECTOR4* pPosition;
+	Timer* pTVar7;
+	ulong uVar8;
+	CActorMovParamsIn movParamsInA;
+	CActorMovParamsOut movParamsOutA;
+	float local_50;
+	undefined4 local_4c;
+	float fStack72;
+	float fStack68;
+	CActorMovParamsIn movParamsInB;
+	CActorMovParamsOut movParamsOutB;
+
+	if (param_2 == 0x1000) {
+		(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 6;
+		(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x10;
+		this->field_0x70 = 1;
+		FlushInput();
+	}
+	else {
+		if (param_2 == 0x800) {
+			(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 3;
+			(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x10;
+			this->field_0x70 = 1;
+			FlushInput();
+		}
+		else {
+			if (param_2 == 0x80000) {
+				IMPLEMENTATION_GUARD(
+				if (((((ulong)this->pOwner->field_0x44c << 0x38) >> 0x3c != 2) &&
+					(this->pOwner->prevActorState != 8)) &&
+					(pTVar7 = Timer::GetTimer(), this->adversaryBlowDuration <= pTVar7->scaledTotalTime)) {
+					this->field_0x70 = 1;
+					this->field_0x71 = 0;
+					this->field_0x74 = (s_fighter_action)0x0;
+					this->pActiveBlow = (s_fighter_blow*)0x0;
+					fVar6 = gF32Vector4Zero.w;
+					fVar5 = gF32Vector4Zero.z;
+					fVar4 = gF32Vector4Zero.y;
+					(this->field_0x80).x = gF32Vector4Zero.x;
+					(this->field_0x80).y = fVar4;
+					(this->field_0x80).z = fVar5;
+					(this->field_0x80).w = fVar6;
+					(this->field_0x90).field_0x4 = 0;
+					(this->field_0x90).field_0x0 = (edF32VECTOR4*)0x0;
+					if (param_3 == 5) {
+						(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 1;
+						(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x20;
+						this->field_0x70 = 1;
+					}
+					else {
+						if (param_3 == 4) {
+							(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 2;
+							(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x20;
+							this->field_0x70 = 1;
+						}
+						else {
+							uVar8 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+							CScene::_pinstance->field_0x38 = uVar8;
+							if ((uVar8 & 0x10000) == 0) {
+								(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 2;
+								(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x20;
+								this->field_0x70 = 1;
+							}
+							else {
+								(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf0 | 1;
+								(this->field_0x74).field_0x0 = (this->field_0x74).field_0x0 & 0xf | 0x20;
+								this->field_0x70 = 1;
+							}
+						}
+					}
+					FlushInput();
+				})
+			}
+			else {
+				if (param_2 != 0x40000) {
+					if (param_2 == 0x20000) {
+						bVar1 = (this->field_0x74).field_0x1;
+						(this->field_0x74).field_0x1 = bVar1 & 0xcf | (byte)(((uint)(((ulong)bVar1 << 0x3a) >> 0x3e) | 1) << 4);
+						this->field_0x70 = 1;
+
+						FlushInput();
+					}
+					else {
+						if (param_2 == 0x10000) {
+							IMPLEMENTATION_GUARD(
+							pCVar3 = this->pOwner;
+							local_50 = (this->holdPosition).x - (pCVar3->base).characterBase.base.base.currentLocation.x;
+							fStack72 = (this->holdPosition).z - (pCVar3->base).characterBase.base.base.currentLocation.z;
+							fStack68 = (this->holdPosition).w - (pCVar3->base).characterBase.base.base.currentLocation.w;
+							local_4c = 0;
+							if (((this->field_0x50 < SQRT(local_50 * local_50 + 0.0 + fStack72 * fStack72)) && (this->field_0x3c != 0)
+								) && ((this->pOwner->fightFlags & 1) == 0)) {
+								movParamsOutA.flags = 0;
+								movParamsInA.pRotation = (edF32VECTOR4*)0x0;
+								movParamsInA.speed = 0.0;
+								movParamsInA.flags = 0x110;
+								movParamsInA.rotSpeed =
+									(float)(*(code*)(this->pOwner->pVTable)->GetRunRotSpeed)();
+								movParamsInA.flags = movParamsInA.flags | 2;
+								movParamsInA.acceleration =
+									(float)(*(code*)(this->pOwner->pVTable)->GetRunAcceleration)();
+								movParamsInA.speed =
+									(float)(*(code*)(this->pOwner->pVTable)->GetRunSpeed)();
+								movParamsInA.speed = movParamsInA.speed * 2.0;
+								movParamsInA.flags = movParamsInA.flags | 0x400;
+								CActorWolfen::SV_WLF_MoveTo(this->pOwner, &movParamsOutA, &movParamsInA, &this->holdPosition);
+							})
+						}
+						else {
+							if ((param_2 == 0x4000) || (param_2 == 0x8000)) {
+								movParamsOutB.flags = 0;
+								movParamsInB.pRotation = (edF32VECTOR4*)0x0;
+								movParamsInB.speed = 0.0;
+								movParamsInB.flags = 0x110;
+								movParamsInB.rotSpeed = this->pOwner->GetRunRotSpeed();
+								movParamsInB.flags = movParamsInB.flags | 2;
+								movParamsInB.acceleration = this->pOwner->GetRunAcceleration();
+								movParamsInB.speed = this->pOwner->GetRunSpeed();
+								movParamsInB.flags = movParamsInB.flags | 0x400;
+								pCVar3 = static_cast<CActorWolfen*>(this->pOwner);
+								pPosition = pCVar3->GetAdversaryPos();
+								pCVar3->SV_WLF_MoveTo(&movParamsOutB, &movParamsInB, pPosition);
+							}
+							else {
+								if (param_2 == 0x2000) {
+									IMPLEMENTATION_GUARD(
+									uVar8 = FUN_001faae0((int)this);
+									if ((uVar8 & 0xff) == 0) {
+										(this->fightContext).field_0x4 = 2;
+									})
+								}
+								else {
+									if (((param_2 != 0x400) && (param_2 != 0x200)) &&
+										(((((param_2 == 0x1e0 ||
+											((((param_2 == 0x1c0 || (param_2 == 0x160)) || (param_2 == 0xe0)) ||
+												((param_2 == 0x180 || (param_2 == 0x120)))))) || (param_2 == 0xa0)) ||
+											(((param_2 == 0x140 || (param_2 == 0xc0)) ||
+												((param_2 == 0x60 || (((param_2 == 0x100 || (param_2 == 0x80)) || (param_2 == 0x40)))))))) ||
+											(param_2 == 0x20)))) {
+										iVar2 = this->pOwner->actorState;
+										if ((iVar2 == 0x65) || (iVar2 == 0x6d)) {
+											this->field_0xb8 = 1;
+										}
+
+										iVar2 = this->pOwner->actorState;
+										if (((iVar2 == 0x66) || (iVar2 == 0x6e)) && (this->field_0xb8 != 0)) {
+											s_fighter_combo* pCombo = this->pActiveCombo;
+											if ((iVar2 == 0) || (pCombo->nbBranches == 0)) {
+												this->pActiveCombo = (s_fighter_combo*)0x0;
+												this->pActiveBlow = (s_fighter_blow*)0x0;
+												this->field_0x70 = 0;
+											}
+											else {
+												this->pActiveCombo = LOAD_SECTION_CAST(s_fighter_combo*, pCombo->aBranches[0].pData);
+												this->field_0x70 = 1;
+
+												if ((this->pActiveCombo->field_0x4.field_0x0ushort & 0x400) == 0) {
+													bVar1 = (this->field_0x74).field_0x1;
+													(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 1;
+													this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, this->pActiveCombo->actionHash.pData);
+												}
+												else {
+													bVar1 = (this->field_0x74).field_0x1;
+													(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 4;
+													this->pActiveBlow = LOAD_SECTION_CAST(s_fighter_blow*, this->pActiveCombo->actionHash.pData);
+												}
+											}
+
+											FlushInput();
+											this->field_0xb8 = 0;
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+bool CBehaviourFighterWolfen::IsCommandFinished(uint param_2)
+{
+	CActorWolfen* pWolfen;
+	int iVar2;
+	CActorFighter* pCVar3;
+	float fVar4;
+	float fVar5;
+	bool bVar6;
+	bool bVar7;
+	bool bVar8;
+	StateConfig* pSVar9;
+	uint uVar10;
+	Timer* pTVar11;
+	float fVar12;
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+	iVar2 = pWolfen->actorState;
+	bVar7 = false;
+	uVar10 = pWolfen->GetStateFlags(pWolfen->actorState);
+	if ((uVar10 & 8) == 0) {
+		if ((param_2 == 0x80000) || (param_2 == 0x40000)) {
+			if (this->pOwner->prevActorState == 8) {
+				bVar7 = true;
+			}
+		}
+		else {
+			if (param_2 == 0x20000) {
+				pCVar3 = this->pOwner->pAdversary;
+				if ((pCVar3 == (CActorFighter*)0x0) ||
+					(bVar8 = pCVar3->FUN_0031b790(pCVar3->actorState), bVar8 == false)) {
+					bVar7 = true;
+				}
+			}
+			else {
+				if (param_2 == 0x10000) {
+					if (this->field_0x3c == 0) {
+						bVar7 = true;
+					}
+					else {
+						fVar4 = (this->holdPosition).x - this->pOwner->currentLocation.x;
+						fVar5 = (this->holdPosition).z - this->pOwner->currentLocation.z;
+						bVar7 = sqrtf(fVar4 * fVar4 + 0.0f + fVar5 * fVar5) < this->field_0x50;
+					}
+				}
+				else {
+					if (param_2 == 0x4000) {
+						if (((ulong)this->pOwner->field_0x44c << 0x38) >> 0x3c != 1) {
+							pTVar11 = Timer::GetTimer();
+							this->adversaryBlowDuration = pTVar11->scaledTotalTime + 2.0f;
+						}
+						pTVar11 = Timer::GetTimer();
+						if (pTVar11->scaledTotalTime < this->adversaryBlowDuration) {
+							pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+							pCVar3 = pWolfen->pAdversary;
+							if ((pCVar3 == (CActorFighter*)0x0) ||
+								(fVar12 = ((pWolfen->pCollisionData)->pObbPrim->field_0x90).z +
+									((pCVar3->pCollisionData)->pObbPrim->field_0x90).z + 0.2f,
+									fVar4 = pCVar3->currentLocation.x -
+									pWolfen->currentLocation.x,
+									fVar5 = pCVar3->currentLocation.z -
+									pWolfen->currentLocation.z, bVar7 = false,
+									fVar4 * fVar4 + fVar5 * fVar5 <= fVar12 * fVar12)) {
+								bVar7 = true;
+							}
+							if (!bVar7) {
+								return false;
+							}
+						}
+						bVar7 = true;
+					}
+					else {
+						if (param_2 == 0x8000) {
+							if ((this->fightContext).field_0x4 == 0) {
+								bVar7 = true;
+							}
+						}
+						else {
+							if (param_2 == 0x2000) {
+								if ((this->fightContext).field_0x4 == 2) {
+									bVar7 = true;
+								}
+							}
+							else {
+								if ((param_2 == 0x1000) || (param_2 == 0x800)) {
+									bVar7 = true;
+								}
+								else {
+									if ((param_2 == 0x200) || (param_2 == 0x10)) {
+										bVar6 = false;
+										bVar8 = false;
+										if ((((ulong)this->pOwner->field_0x44c << 0x38) >> 0x3c == 0) &&
+											((this->pOwner->field_0x44d & 0xf) == 0)) {
+											bVar8 = true;
+										}
+										if ((bVar8) && ((this->pOwner->fightFlags & 1) == 0)) {
+											bVar6 = true;
+										}
+										if (bVar6) {
+											bVar7 = true;
+										}
+									}
+									else {
+										if (((((((param_2 == 0x400) || (param_2 == 0x1e0)) || (param_2 == 0x1c0)) ||
+											((param_2 == 0x160 || (param_2 == 0xe0)))) || (param_2 == 0x180)) ||
+											((((param_2 == 0x120 || (param_2 == 0xa0)) ||
+												((param_2 == 0x140 || (((param_2 == 0xc0 || (param_2 == 0x60)) || (param_2 == 0x100)))))) ||
+												((param_2 == 0x80 || (param_2 == 0x40)))))) || (param_2 == 0x20)) {
+											bVar8 = this->pOwner->FUN_0031b790(this->pOwner->actorState);
+											if ((bVar8 == false) && ((this->pOwner->field_0x44d & 0xf) == 0)) {
+												bVar7 = true;
+											}
+										}
+										else {
+											if ((((param_2 == 8) || (param_2 == 4)) || (param_2 == 2)) || (param_2 == 1)) {
+												pTVar11 = Timer::GetTimer();
+												if (this->adversaryBlowDuration <= pTVar11->scaledTotalTime) {
+													bVar6 = false;
+													bVar8 = false;
+													if ((((ulong)this->pOwner->field_0x44c << 0x38) >> 0x3c == 0) &&
+														((this->pOwner->field_0x44d & 0xf) == 0)) {
+														bVar8 = true;
+													}
+													if ((bVar8) && ((this->pOwner->fightFlags & 1) == 0)) {
+														bVar6 = true;
+													}
+													if (bVar6) {
+														bVar7 = true;
+													}
+												}
+											}
+											else {
+												if (param_2 == 0) {
+													bVar6 = false;
+													bVar8 = false;
+													if ((((ulong)this->pOwner->field_0x44c << 0x38) >> 0x3c == 0) &&
+														((this->pOwner->field_0x44d & 0xf) == 0)) {
+														bVar8 = true;
+													}
+													if ((bVar8) && ((this->pOwner->fightFlags & 1) == 0)) {
+														bVar6 = true;
+													}
+													if (bVar6) {
+														bVar7 = true;
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	else {
+		bVar7 = false;
+	}
+	return bVar7;
+}
+
+
+
+void CBehaviourFighterWolfen::ValidateCommand()
+{
+	CActorFighter* pCVar2;
+	bool bVar4;
+
+	int iVar5 = this->currentCommandId;
+	if (iVar5 != -1) {
+		if (iVar5 == -1) {
+			iVar5 = 0;
+		}
+		else {
+			CActorWolfen* pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+			iVar5 = pWolfen->field_0xb64[iVar5].field_0x0;
+		}
+
+		if (iVar5 == 0x80000) {
+			if (this->pOwner->prevActorState == 8) {
+				(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfb | 4;
+			}
+		}
+		else {
+			if ((iVar5 != 0x40000) &&
+				(((((((iVar5 == 0x400 || (iVar5 == 0x200)) || (iVar5 == 0x10)) || ((iVar5 == 0x1e0 || (iVar5 == 0x1c0)))) || (iVar5 == 0x160)) ||
+					((((iVar5 == 0xe0 || (iVar5 == 0x180)) || ((iVar5 == 0x120 || (((iVar5 == 0xa0 || (iVar5 == 0x140)) || (iVar5 == 0xc0)))))) ||
+						((iVar5 == 0x60 || (iVar5 == 0x100)))))) || ((iVar5 == 0x80 || ((iVar5 == 0x40 || (iVar5 == 0x20)))))))) {
+				this->field_0x28 = this->field_0x28 + 1;
+
+				if (((this->pOwner->fightFlags & 0x40) == 0) && ((pCVar2 = this->pOwner->pAdversary, pCVar2 != (CActorFighter*)0x0 &&
+					(bVar4 = pCVar2->FUN_0031b5d0(pCVar2->actorState), bVar4 != false)))) {
+					this->field_0x38 = this->field_0x38 + 1;
+				}
+			}
+		}
+
+		this->currentCommandId = -1;
+	}
+
+	return;
+}
+
+void CBehaviourFighterWolfen::PickCommand()
+{
+	CActorWolfen* pWolfen;
+	int pCVar2;
+	CActorFighter* pAdversary;
+	float fVar4;
+	float fVar5;
+	bool bVar6;
+	bool bVar7;
+	WFIGS_Capability* pWVar8;
+	uint commandId;
+	RndData* pRndData;
+	StateConfig* pSVar11;
+	int iVar12;
+	CActorWeapon* pWeapon;
+	s_fighter_blow* psVar13;
+	edF32VECTOR4* pfVar14;
+	long lVar15;
+	ulong uVar16;
+	uint uVar17;
+	CFightIA::WFIGS_Chain* pCVar18;
+	float local_8;
+	float local_4;
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+	commandId = 0;
+
+	if (pWolfen->pTargetActor_0xc80 == pWolfen->pAdversary) {
+		if (pWolfen->pCommander->CanContinueToFight(pWolfen) != false) {
+			pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+			pCVar2 = pWolfen->activeCapabilityIndex;
+			if (((pCVar2 == 0x2) || (pCVar2 == 0x1)) || (pCVar2 == 0x0)) {
+				pAdversary = this->pOwner->pAdversary;
+
+				commandId = pAdversary->GetStateFlags(pAdversary->actorState);
+
+				if ((commandId & 0x2000000) == 0) {
+					pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+
+					if (pWolfen->GetActiveCapability() == (WFIGS_Capability*)0x0) {
+						bVar7 = false;
+					}
+					else {
+						bVar7 = pWolfen->GetActiveCapability()->rndChooser.CanPickRndData();
+					}
+
+					if (bVar7) {
+						pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+						
+						if (pWolfen->GetActiveCapability() == (WFIGS_Capability*)0x0) {
+							pRndData = (RndData*)0x0;
+						}
+						else {
+							pRndData = pWolfen->GetActiveCapability()->rndChooser.PickRndData();
+						}
+
+						commandId = pRndData->commandId;
+					}
+					else
+					{
+						commandId = 0;
+					}
+
+					if (pWolfen->activeCapabilityIndex == 1) {
+						pWolfen->activeCapabilityIndex = 0;
+					}
+				}
+				else {
+					commandId = 0xffffffff;
+				}
+			}
+			else {
+				commandId = pWolfen->GetStateFlags(pWolfen->actorState);
+
+				if ((commandId & 0x800000) == 0) {
+					commandId = 0;
+				}
+				else {
+					commandId = 0xffffffff;
+
+					if (pWolfen->RequestFightAction(0) == false) {
+						commandId = pWolfen->field_0xb38;
+					}
+				}
+			}
+		}
+	}
+	else {
+		IMPLEMENTATION_GUARD(
+		pWolfen->FUN_001fbff0(0, '\x01');)
+
+		pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+
+		if (pWolfen->GetActiveCapability() == (WFIGS_Capability*)0x0) {
+			bVar7 = false;
+		}
+		else {
+			bVar7 = pWolfen->GetActiveCapability()->rndChooser.CanPickRndData();
+		}
+
+		if (bVar7) {
+			pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+
+			if (pWolfen->GetActiveCapability() == (WFIGS_Capability*)0x0) {
+				pRndData = (RndData*)0x0;
+			}
+			else {
+				pRndData = pWolfen->GetActiveCapability()->rndChooser.PickRndData();
+			}
+
+			commandId = pRndData->commandId;
+		}
+		else {
+			commandId = 0;
+		}
+	}
+
+	bVar7 = pWolfen->CanPerformWeaponCommand();
+	if (bVar7 != false) {
+		pWeapon = this->pOwner->GetWeapon();
+		iVar12 = pWeapon->GetBurstState();
+		if ((((iVar12 == 1) && (psVar13 = this->pOwner->FindBlowByName("CROSSBOW_FIRE"), psVar13 != (s_fighter_blow*)0x0)) &&
+			(pfVar14 = this->pOwner->GetAdversaryPos(),
+				fVar4 = pfVar14->x - this->pOwner->currentLocation.x,
+				fVar5 = pfVar14->z - this->pOwner->currentLocation.z,
+				4.0f < sqrtf(fVar4 * fVar4 + 0.0f + fVar5 * fVar5))) &&
+			(pfVar14 = this->pOwner->GetAdversaryPos(),
+				fVar4 = pfVar14->x - this->pOwner->currentLocation.x,
+				fVar5 = pfVar14->z - this->pOwner->currentLocation.z,
+				sqrtf(fVar4 * fVar4 + 0.0f + fVar5 * fVar5) < 10.0f)) {
+			commandId = pWolfen->field_0xb40;
+		}
+	}
+
+	ValidateCommand();
+
+	this->currentCommandId = -1;
+
+	if (commandId != 0xffffffff) {
+		if (commandId == 0xffffffff) {
+			uVar17 = 0;
+		}
+		else {
+			uVar17 = pWolfen->field_0xb64[commandId].field_0x0;
+		}
+
+		InitCommand(uVar17);
+		this->field_0x68 = 1;
+	}
+
+	this->currentCommandId = commandId;
+	return;
+}
+
+
+s_fighter_combo* CBehaviourFighterWolfen::PickCombo_Attack(CFightContext* pFightContext, bool param_3, bool param_4, bool param_5, bool param_6)
+{
+	CActorWolfen* pCVar1;
+	uint uVar2;
+	bool bVar3;
+	bool bVar4;
+	ulong uVar5;
+	ComboData* pCVar6;
+	int iVar7;
+	uint uVar8;
+	ComboData** ppCVar9;
+	s_fighter_combo* psVar10;
+	s_fighter_combo* psVar11;
+	float fVar12;
+	float fVar13;
+	float fVar14;
+	float local_14;
+	float local_10;
+	float local_c;
+	float local_8;
+	float local_4;
+
+	psVar11 = (s_fighter_combo*)0x0;
+	pCVar1 = static_cast<CActorWolfen*>(this->pOwner);
+	ppCVar9 = &pCVar1->field_0xbd0;
+	uVar8 = 0;
+	if (pCVar1->nbComboMatchValues != 0) {
+		fVar13 = -3.402823e+38f;
+		psVar10 = psVar11;
+		do {
+			psVar11 = (*ppCVar9)[uVar8].pCombo;
+			pCVar1->GetComboMatchValues(uVar8, &local_4, &local_8, &local_c, &local_10);
+			fVar14 = 0.0f;
+			bVar3 = true;
+			fVar12 = 0.0f;
+
+			if (param_3 != false) {
+				local_4 = edFIntervalLERP(pCVar1->field_0xa84, 1.0f, 0.0f, local_4, 1.0f);
+				if (0.5f <= local_4) {
+					fVar14 = local_4 + 0.0f;
+					fVar12 = fVar12 + 1.0f;
+				}
+				else {
+					bVar3 = false;
+				}
+			}
+
+			if (param_5 != false) {
+				local_c = edFIntervalLERP(pCVar1->field_0xa84, 1.0f, 0.0f, local_c, 1.0f);
+				if (0.5f <= local_c) {
+					fVar14 = fVar14 + local_c;
+					fVar12 = fVar12 + 1.0f;
+				}
+				else {
+					bVar3 = false;
+				}
+			}
+
+			if (param_4 != false) {
+				local_8 = edFIntervalLERP(pCVar1->field_0xa84, 1.0f, 0.0f, local_8, 1.0f);
+				if (0.5 <= local_8) {
+					fVar14 = fVar14 + local_8;
+					fVar12 = fVar12 + 1.0;
+				}
+				else {
+					bVar3 = false;
+				}
+			}
+
+			if (param_6 != false) {
+				local_10 = edFIntervalLERP(pCVar1->field_0xa84, 1.0f, 0.0f, local_10, 1.0f);
+				if (0.5f <= local_10) {
+					fVar14 = fVar14 + local_10;
+					fVar12 = fVar12 + 1.0f;
+				}
+				else {
+					bVar3 = false;
+				}
+			}
+
+			if (0.0f < fVar14) {
+				fVar14 = fVar14 / fVar12;
+			}
+			else {
+				bVar3 = false;
+			}
+
+			fVar12 = fVar14;
+			if (fVar14 <= fVar13) {
+				fVar12 = fVar13;
+				psVar11 = psVar10;
+			}
+
+			if (bVar3) {
+				(*ppCVar9)[uVar8].field_0x4 = fVar14;
+				pCVar1->field_0xbd8 = 0;
+
+				if ((*ppCVar9)[uVar8].field_0x0 != 1) {
+					(*ppCVar9)[uVar8].field_0x0 = 1;
+					pCVar1->field_0xbd8 = 0;
+				}
+			}
+			else {
+				if ((*ppCVar9)[uVar8].field_0x0 != 0) {
+					(*ppCVar9)[uVar8].field_0x0 = 0;
+					pCVar1->field_0xbd8 = 0;
+				}
+			}
+
+			uVar8 = uVar8 + 1;
+			fVar13 = fVar12;
+			psVar10 = psVar11;
+		} while (uVar8 < pCVar1->nbComboMatchValues);
+	}
+
+	bVar3 = false;
+	uVar8 = 0;
+	while (true) {
+		bVar4 = false;
+		if ((!bVar3) && (uVar8 < pCVar1->nbComboMatchValues)) {
+			bVar4 = true;
+		}
+
+		if (!bVar4) break;
+
+		bVar4 = false;
+		if (((*ppCVar9)[uVar8].field_0x0 == 1) && (0.0f < (*ppCVar9)[uVar8].field_0x4)) {
+			bVar4 = true;
+		}
+
+		if (bVar4) {
+			bVar3 = true;
+		}
+
+		uVar8 = uVar8 + 1;
+	}
+	if (bVar3) {
+		if (pCVar1->field_0xbd8 == 0) {
+			local_14 = 0.0;
+			uVar8 = 0;
+			if (pCVar1->nbComboMatchValues != 0) {
+				do {
+					if ((*ppCVar9)[uVar8].field_0x0 != 0) {
+						local_14 = local_14 + (*ppCVar9)[uVar8].field_0x4;
+					}
+
+					(*ppCVar9)[uVar8].field_0x8 = local_14;
+					uVar8 = uVar8 + 1;
+				} while (uVar8 < pCVar1->nbComboMatchValues);
+			}
+
+			uVar8 = 0;
+			if (pCVar1->nbComboMatchValues != 0) {
+				do {
+					(*ppCVar9)[uVar8].field_0x8 = ((*ppCVar9)[uVar8].field_0x8 * 32767.0f) / local_14;
+					uVar8 = uVar8 + 1;
+				} while (uVar8 < pCVar1->nbComboMatchValues);
+			}
+
+			(*ppCVar9)[pCVar1->nbComboMatchValues - 1].field_0x8 = 0x7fff;
+			pCVar1->field_0xbd8 = 1;
+		}
+
+		uVar2 = pCVar1->nbComboMatchValues;
+		uVar8 = 0;
+		if (uVar2 != 0) {
+			pCVar6 = *ppCVar9;
+			do {
+				if ((int)CScene::Rand() <= (int)pCVar6->field_0x8) {
+					if (uVar8 == pCVar1->field_0xbdc) {
+						if (pCVar1->field_0xbe0 < pCVar1->field_0xbe4) {
+							pCVar1->field_0xbe0 = pCVar1->field_0xbe0 + 1;
+						}
+						else {
+							do {
+								uVar8 = (int)(uVar8 + 1) % (int)uVar2;
+								if (uVar2 == 0) {
+									trap(7);
+								}
+
+								bVar3 = true;
+
+								if (((*ppCVar9)[uVar8].field_0x4 != 0.0f) && ((*ppCVar9)[uVar8].field_0x0 != 0)) {
+									bVar3 = false;
+								}
+							} while (bVar3);
+
+							pCVar1->field_0xbdc = uVar8;
+							pCVar1->field_0xbe0 = 0;
+						}
+					}
+					else {
+						pCVar1->field_0xbdc = uVar8;
+						pCVar1->field_0xbe0 = 0;
+					}
+					break;
+				}
+
+				uVar8 = uVar8 + 1;
+				pCVar6 = pCVar6 + 1;
+			} while (uVar8 < pCVar1->nbComboMatchValues);
+		}
+
+		psVar11 = (*ppCVar9)[uVar8].pCombo;
+	}
+
+	return psVar11;
+}
+
+
+
+void CBehaviourFighterWolfen::FunReset()
+{
+	this->field_0x70 = 1;
+	this->field_0x71 = 0;
+	this->field_0x74.all = 0x0;
+	this->pActiveBlow = (s_fighter_blow*)0x0;
+	this->field_0x80 = gF32Vector4Zero;
+	(this->field_0x90).field_0x4 = 0;
+	(this->field_0x90).field_0x0 = (edF32VECTOR4*)0x0;
+
+	(this->field_0x74).field_0x1 = (this->field_0x74).field_0x1 & 0xf0 | 8;
+	this->field_0x70 = 1;
+
+	return;
+}
+
+void WFIGS_Capability::Create(ByteCode* pByteCode, WolfenComboData* pComboData, float multiplier, uint* pOutCount)
+{
+	this->nbItems = pByteCode->GetU32();
+	this->rndChooser.nbItems = this->nbItems;
+	if (this->rndChooser.nbItems == 0) {
+		this->rndChooser.pItems = (CFightIA::WFIGS_Chain*)0x0;
+	}
+	else {
+		this->rndChooser.pItems = new CFightIA::WFIGS_Chain[this->rndChooser.nbItems];
+	}
+
+	uint curItemIndex = 0;
+	if (this->nbItems != 0) {
+		uint uVar2 = (*pOutCount);
+		do {
+			uint uVar4 = pByteCode->GetU32();
+			uint uVar10 = 0;
+			(*pOutCount) = uVar2;
+			if (uVar4 != 0) {
+				do {
+					pComboData->field_0x0 = pByteCode->GetU32();
+					int uVar5;
+					if (uVar10 < uVar4 - 1) {
+						uVar5 = (*pOutCount) + 1;
+					}
+					else {
+						uVar5 = -1;
+					}
+					pComboData->field_0x8 = uVar5;
+					uVar10 = uVar10 + 1;
+					pComboData->field_0x4 = (*pOutCount);
+					pComboData = pComboData + 1;
+					(*pOutCount) = (*pOutCount) + 1;
+				} while (uVar10 < uVar4);
+			}
+
+			float fVar13 = pByteCode->GetF32();
+			float fVar14 = pByteCode->GetF32();
+			float fVar12 = multiplier;
+
+			CFightIA::WFIGS_Chain* pChain = this->rndChooser.pItems + curItemIndex;
+
+			pChain->rndData.field_0x0 = uVar4;
+			pChain->rndData.commandId = uVar2;
+
+			this->rndChooser.field_0x8 = 0;
+			pChain->field_0x4 = fVar14 + fVar12 * (fVar13 - fVar14);
+			this->rndChooser.field_0x8 = 0;
+
+			if (pChain->field_0x0 != 1) {
+				pChain->field_0x0 = 1;
+				this->rndChooser.field_0x8 = 0;
+			}
+
+			curItemIndex = curItemIndex + 1;
+			uVar2 = (*pOutCount);
+		} while (curItemIndex < this->nbItems);
+	}
+}
+
+void WFIGS_Capability::Begin()
+{
+	uint curIndex = 0;
+	if (this->rndChooser.nbItems != 0) {
+		do {
+			this->rndChooser.pItems[curIndex].field_0x0 = 1;
+			curIndex = curIndex + 1;
+		} while (curIndex < this->rndChooser.nbItems);
+	}
+
+	this->rndChooser.field_0x10 = 0;
+	this->rndChooser.field_0x8 = 0;
+
+	return;
+}
+
+bool WFIGS_Capability::Get()
+{
+	bool bResult = false;
+	uint currentIndex = 0;
+
+	while (true) {
+		bool bVar3 = false;
+		if ((!bResult) && (currentIndex < this->rndChooser.nbItems)) {
+			bVar3 = true;
+		}
+
+		if (!bVar3) break;
+
+		CFightIA::WFIGS_Chain* pChain = &this->rndChooser.pItems[currentIndex];
+		bVar3 = false;
+
+		if ((pChain->field_0x0 == 1) && (0.0f < pChain->field_0x4)) {
+			bVar3 = true;
+		}
+
+		if (bVar3) {
+			bResult = true;
+		}
+
+		currentIndex = currentIndex + 1;
+	}
+
+	return bResult;
 }

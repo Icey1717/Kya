@@ -21,7 +21,7 @@ struct edAnmStage {
 	float field_0x8;
 	edF32MATRIX4* pFrameMatrixData;
 	edF32MATRIX3* pConstantMatrixData;
-	struct AnimMatrix* pAnimMatrix;
+	edF32MATRIX3* pAnimMatrix;
 	struct edANM_WRTS* pRelativeTransformMatrixBuffer;
 	edAnmSkeleton anmSkeleton;
 	edANM_HDR* pKeyData;
@@ -60,6 +60,8 @@ struct edAnmStage {
 	void SetTime(float time);
 	void AnimToWRTS();
 	void AnimBlendToWRTS(float param_1);
+	void PreviousPostureToWRTS(float param_1);
+	void WRTSToPreviousPosture();
 
 };
 
@@ -190,6 +192,8 @@ public:
 
 	bool FUN_0017f730();
 
+	bool SetBoneMatrixData(edF32MATRIX3* pData, uint nbMatrices);
+
 	struct DisabledBoneEntry {
 		uint boneId;
 		int nodeId;
@@ -200,7 +204,7 @@ public:
 	BoneData* pBoneData;
 	float aTrackData[4];
 	edF32MATRIX3* pAnimMatrix;
-	undefined4 field_0x28;
+	undefined4 bUseAnimMatrixData;
 	uint count_0x2c;
 	int currentAnimType_0x30;
 	DisabledBoneEntry aDisabledBoneData[4];

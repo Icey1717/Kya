@@ -882,7 +882,6 @@ void CCameraManager::Func_001947e0()
 
 float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 {
-	ulong uVar1;
 	float fVar2;
 	float fVar3;
 	float fVar4;
@@ -919,9 +918,7 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 
 		if (((this->field_0x480).field_0x20 & 2U) != 0) {
 			fVar4 = (this->field_0x480).field_0x0.x;
-			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-			CScene::_pinstance->field_0x38 = uVar1;
-			local_10.x = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0f - (this->field_0x480).field_0x0.x * 0.5f;
+			local_10.x = (fVar4 * (float)CScene::Rand()) / 32767.0f - (this->field_0x480).field_0x0.x * 0.5f;
 		}
 
 		if (((this->field_0x480).field_0x20 & 0x10U) != 0) {
@@ -934,9 +931,7 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 
 		if (((this->field_0x480).field_0x20 & 8U) != 0) {
 			fVar4 = (this->field_0x480).field_0x0.y;
-			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-			CScene::_pinstance->field_0x38 = uVar1;
-			local_10.y = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0f - (this->field_0x480).field_0x0.y * 0.5f;
+			local_10.y = (fVar4 * (float)CScene::Rand()) / 32767.0f - (this->field_0x480).field_0x0.y * 0.5f;
 		}
 
 		if (((this->field_0x480).field_0x20 & 0x40U) != 0) {
@@ -950,9 +945,7 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 		if (((this->field_0x480).field_0x20 & 0x20U) != 0) {
 			IMPLEMENTATION_GUARD(
 			fVar4 = (this->field_0x480).field_0x0.z;
-			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-			CScene::_pinstance->field_0x38 = uVar1;
-			local_10.z = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0 - (this->field_0x480).field_0x0.z * 0.5;)
+			local_10.z = (fVar4 * (float)CScene::Rand()) / 32767.0 - (this->field_0x480).field_0x0.z * 0.5;)
 		}
 
 		local_10.w = 0.0f;
@@ -961,9 +954,7 @@ float CCameraManager::Manage_EarthQuake(edF32VECTOR4* param_2)
 		if (((this->field_0x480).field_0x20 & 0x80U) != 0) {
 			IMPLEMENTATION_GUARD(
 			fVar4 = (this->field_0x480).field_0x0.w;
-			uVar1 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-			CScene::_pinstance->field_0x38 = uVar1;
-			fVar4 = (fVar4 * (float)((uint)(uVar1 >> 0x10) & 0x7fff)) / 32767.0 - (this->field_0x480).field_0x0.w * 0.5;)
+			fVar4 = (fVar4 * (float)CScene::Rand()) / 32767.0 - (this->field_0x480).field_0x0.w * 0.5;)
 		}
 
 		edF32Vector4ScaleHard(fVar2, &local_10, &local_10);

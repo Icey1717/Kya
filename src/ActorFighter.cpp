@@ -1004,6 +1004,32 @@ int CActorFighter::Func_0x18c()
 	return 1;
 }
 
+bool CActorFighter::Func_0x190(CActor* pOther)
+{
+	int iVar1;
+	StateConfig* pSVar2;
+	uint uVar3;
+	float fVar4;
+
+	fVar4 = edF32Vector4DotProductHard(&pOther->rotationQuat, &this->rotationQuat);
+	if (-0.5f < fVar4) {
+		uVar3 = GetStateFlags(this->actorState);
+
+		if ((uVar3 & 0xff800) != 0x800) {
+			uVar3 = GetStateFlags(this->actorState);
+			if ((uVar3 & 0xff800) != 0) {
+				return false;
+			}
+		}
+
+		if (fabs((pOther->currentLocation).y - this->currentLocation.y) < 0.8f) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void CActorFighter::Func_0x194(float param_1)
 {
 	CLifeInterface* pCVar1;
@@ -2170,10 +2196,9 @@ void CActorFighter::ClearLocalData()
 	this[1].characterBase.base.dynamic.rotationQuat.x = 0.1;
 	*(undefined2*)&this[1].characterBase.base.dynamic.rotationQuat.y = 3;)
 	this->field_0x47c = 23.56194f;
-	IMPLEMENTATION_GUARD_FIGHT(
-	this->field_0x4c0 = 0x3fe00000;
-	this->field_0x4c4 = 0x40200000;
-	this->field_0x4c8 = 0x3f96cbe4;)
+	this->field_0x4c0 = 1.75f;
+	this->field_0x4c4 = 2.5f;
+	this->field_0x4c8 = 1.178097f;
 	this->field_0x4cc = 4.0f;
 	this->field_0x4f4 = 1.2f;
 	this->field_0x4f8 = 17.0f;
@@ -2184,6 +2209,49 @@ void CActorFighter::ClearLocalData()
 	this->field_0x500 = 0;)
 	this->standAnim = -1;
 	return;
+}
+
+bool CActorFighter::Execute(s_fighter_action* pAction, s_fighter_action_param* pParams)
+{
+	int iVar1;
+	bool bVar2;
+	StateConfig* pSVar3;
+	uint uVar4;
+	s_fighter_action local_4;
+
+	if ((this->fightFlags & 1) == 0) {
+		_ValidateCommand(pAction, &local_4);
+
+		iVar1 = this->actorState;
+		uVar4 = GetStateFlags(this->actorState);
+		uVar4 = uVar4 & 0xff800;
+		if (uVar4 == 0x8000) {
+			IMPLEMENTATION_GUARD(
+			(*(code*)((this->characterBase).base.base.pVTable)->_Execute_Hold)(&local_4, pParams);)
+		}
+		else {
+			if (uVar4 == 0x4000) {
+				IMPLEMENTATION_GUARD(
+				(*(code*)((this->characterBase).base.base.pVTable)->_Execute_Ride)(&local_4, pParams);)
+			}
+			else {
+				if (uVar4 == 0x2000) {
+					IMPLEMENTATION_GUARD(
+					(*(code*)((this->characterBase).base.base.pVTable)->_Execute_Flip)(&local_4, pParams);)
+				}
+				else {
+					if (uVar4 == 0x800) {
+						_Execute_Std(&local_4, pParams);
+					}
+				}
+			}
+		}
+		bVar2 = local_4.all != 0x0;
+	}
+	else {
+		bVar2 = false;
+	}
+	return bVar2;
 }
 
 void CActorFighter::RunInternal(float param_1, edF32VECTOR4* pRotation)
@@ -2640,6 +2708,7 @@ void CActorFighter::SetInitialState()
 		this->dynamicExt.normalizedTranslation.y = 0.0f;
 		this->dynamicExt.normalizedTranslation.z = 0.0f;
 		this->dynamicExt.normalizedTranslation.w = 0.0f;
+
 		this->dynamicExt.field_0x6c = 0.0f;
 		SetState(6, this->standAnim);
 	}
@@ -4717,6 +4786,11 @@ void CActorFighter::SetStandAnim(int newStandAnim)
 	}
 
 	return;
+}
+
+bool CActorFighter::FUN_0031b5d0(int state)
+{
+	return state - 0x17U < 5;
 }
 
 void CActorFighter::FUN_0031a7c0(int inState)
@@ -6807,17 +6881,17 @@ bool CBehaviourFighter::Execute(s_fighter_action* param_2, s_fighter_action_para
 		uVar4 = pFighter->GetStateFlags(pFighter->actorState) & 0xff800;
 		if (uVar4 == 0x8000) {
 			IMPLEMENTATION_GUARD(
-			pFighter->_Execute_Hold(&local_4, param_3);)
+				pFighter->_Execute_Hold(&local_4, param_3);)
 		}
 		else {
 			if (uVar4 == 0x4000) {
 				IMPLEMENTATION_GUARD(
-				pFighter->_Execute_Ride(&local_4, param_3);)
+					pFighter->_Execute_Ride(&local_4, param_3);)
 			}
 			else {
 				if (uVar4 == 0x2000) {
 					IMPLEMENTATION_GUARD(
-					pFighter->_Execute_Flip(&local_4, param_3);)
+						pFighter->_Execute_Flip(&local_4, param_3);)
 				}
 				else {
 					if (uVar4 == 0x800) {
@@ -7565,7 +7639,7 @@ void CInputAnalyser::_CumulateDirections(CPlayerInput* pInput, edF32VECTOR4* pDi
 	return;
 }
 
-int CInputAnalyser::Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
+int CInputAnalyser::Cumulate(CPlayerInput* pPlayerInput, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
 {
 	byte bVar1;
 	ushort uVar2;
@@ -7577,7 +7651,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, 
 	float fVar5;
 	float fVar6;
 
-	if (pPalyerInput != (CPlayerInput*)0x0) {
+	if (pPlayerInput != (CPlayerInput*)0x0) {
 		if (this->patternB.nbInputs != 0) {
 			puVar3 = edF32Vector4DotProductHard(param_3, &this->field_0x10);
 			if (1.0f < puVar3) {
@@ -7606,9 +7680,9 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, 
 		}
 
 		this->field_0x10 = *param_3;
-		_CumulateDirections(pPalyerInput, param_4);
+		_CumulateDirections(pPlayerInput, param_4);
 
-		if (pPalyerInput->aButtons[6].clickValue == 0.0f) {
+		if (pPlayerInput->aButtons[6].clickValue == 0.0f) {
 			bVar1 = this->patternB.field_0x3byte;
 			this->patternB.field_0x3byte = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) & 0xe) << 4);
 		}
@@ -7617,7 +7691,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, 
 			this->patternB.field_0x3byte = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) | 1) << 4);
 		}
 
-		if (pPalyerInput->aButtons[5].clickValue == 0.0f) {
+		if (pPlayerInput->aButtons[5].clickValue == 0.0f) {
 			bVar1 = this->patternB.field_0x3byte;
 			this->patternB.field_0x3byte = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) & 0xd) << 4);
 		}
@@ -7626,22 +7700,22 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, 
 			this->patternB.field_0x3byte = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) | 2) << 4);
 		}
 
-		if ((pPalyerInput->pressedBitfield & 0x200) != 0) {
+		if ((pPlayerInput->pressedBitfield & 0x200) != 0) {
 			uVar2 = this->patternB.field_0x2ushort;
 			this->patternB.field_0x2ushort = uVar2 & 0xf00f | (ushort)(((uint)(((ulong)uVar2 << 0x34) >> 0x38) | 1) << 4);
 		}
 
-		if ((pPalyerInput->pressedBitfield & 0x80) != 0) {
+		if ((pPlayerInput->pressedBitfield & 0x80) != 0) {
 			uVar2 = this->patternB.field_0x2ushort;
 			this->patternB.field_0x2ushort = uVar2 & 0xf00f | (ushort)(((uint)(((ulong)uVar2 << 0x34) >> 0x38) | 2) << 4);
 		}
 
-		if ((pPalyerInput->pressedBitfield & 0x100) != 0) {
+		if ((pPlayerInput->pressedBitfield & 0x100) != 0) {
 			uVar2 = this->patternB.field_0x2ushort;
 			this->patternB.field_0x2ushort = uVar2 & 0xf00f | (ushort)(((uint)(((ulong)uVar2 << 0x34) >> 0x38) | 4) << 4);
 		}
 
-		if ((pPalyerInput->pressedBitfield & 0x10) != 0) {
+		if ((pPlayerInput->pressedBitfield & 0x10) != 0) {
 			uVar2 = this->patternB.field_0x2ushort;
 			this->patternB.field_0x2ushort = uVar2 & 0xf00f | (ushort)(((uint)(((ulong)uVar2 << 0x34) >> 0x38) | 8) << 4);
 		}

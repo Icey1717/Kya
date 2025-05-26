@@ -1248,9 +1248,7 @@ void CActorAton::BehaviourAtonEscape_InitState(int newState)
 													}
 													else {
 														if (newState == 0xd) {
-															uVar10 = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
-															CScene::_pinstance->field_0x38 = uVar10;
-															this->field_0x3d0 = ((float)((uint)(uVar10 >> 0x10) & 0x7fff) * 2.0f) / 32767.0f + 1.0f;
+															this->field_0x3d0 = ((float)CScene::Rand() * 2.0f) / 32767.0f + 1.0f;
 														}
 														else {
 															if ((newState == 9) || (newState == ATON_ESCAPE_STATE_PATH_BEGIN)) {

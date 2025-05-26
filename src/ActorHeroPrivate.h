@@ -33,7 +33,7 @@ struct AdversaryEntry
 	float field_0xc;
 	float field_0x10;
 	float field_0x14;
-	float field_0x18;
+	uint field_0x18;
 	int field_0x1c;
 };
 
@@ -391,6 +391,8 @@ public:
 	CBehaviourHeroDefault behaviourHeroDefault;
 
 	SPEED_DYN field_0xcb4;
+
+	edF32MATRIX3* field_0xff0;
 
 	CActor* pTrappedByActor;
 	uint trapLinkedBone;

@@ -1250,6 +1250,13 @@ void* CScene::GetManager(MANAGER_TYPE type)
 	return (void*)pManager;
 }
 
+uint CScene::Rand()
+{
+	const uint value = CScene::_pinstance->field_0x38 * 0x343fd + 0x269ec3;
+	CScene::_pinstance->field_0x38 = value;
+	return (value >> 0x10) & 0x7fff; // Return the upper 15 bits
+}
+
 ed_3D_Scene* GetStaticMeshMasterA_001031b0(void)
 {
 	return CScene::_scene_handleA;

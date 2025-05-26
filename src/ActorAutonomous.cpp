@@ -9,6 +9,7 @@
 #include "CollisionManager.h"
 #include "ActorManager.h"
 #include "Vision.h"
+#include "ActorFighter.h"
 
 int INT_00448e08 = 0;
 
@@ -1515,9 +1516,8 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 	edF32VECTOR4 local_40;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 local_20;
-	CActorMovParamsOut* local_10;
-	undefined4 local_c;
-	uint local_4;
+	s_fighter_action_param local_10;
+	s_fighter_action local_4;
 
 	if ((pParamsOut->flags & 0xc0) != 0) {
 		edF32Vector4SubHard(&local_20, pLocation, &this->currentLocation);
@@ -1577,14 +1577,14 @@ void CActorAutonomous::SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActo
 	}
 
 	if ((this->curBehaviourId == 3) && (bVar2 = IsKindOfObject(OBJ_TYPE_FIGHTER), bVar2 != false)) {
-		IMPLEMENTATION_GUARD(
-		local_4 = 0x1c;
+		CActorFighter* pFighter = static_cast<CActorFighter*>(this);
+		local_4.all = 0x1c;
 		edF32Vector4SubHard(&eStack112, pLocation, &this->currentLocation);
-		fVar3 = edF32Vector4SafeNormalize0Hard((edF32VECTOR4*)pParamsIn, &eStack112);
-		(pParamsIn->base).floatField = fVar3;
-		local_c = 0;
-		local_10 = pParamsIn;
-		CActorFighter::Execute((CActorFighter*)this, &local_4, (long)(int)&local_10);)
+		fVar3 = edF32Vector4SafeNormalize0Hard(&pParamsIn->moveDirection, &eStack112);
+		pParamsIn->moveVelocity = fVar3;
+		local_10.field_0x4 = 0;
+		local_10.field_0x0 = &pParamsIn->moveDirection;
+		pFighter->Execute(&local_4, &local_10);
 	}
 	else {
 		SV_MOV_MoveTo(pParamsIn, pParamsOut, pLocation);

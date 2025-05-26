@@ -23,14 +23,6 @@ struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 class edCTextStyle;
 
-template<typename T>
-class CRndChooser
-{
-public:
-	undefined4 field_0x0;
-	undefined4 field_0x4;
-};
-
 class CActorNativ;
 
 class CBehaviourNativ : public CBehaviour

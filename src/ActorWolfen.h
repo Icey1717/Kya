@@ -129,6 +129,172 @@ public:
 	int field_0x34;
 };
 
+struct RndData
+{
+	uint field_0x0;
+	uint commandId;
+};
+
+template<typename T>
+class CRndChooser
+{
+public:
+	CRndChooser()
+	{
+		this->nbItems = 0;
+		this->pItems = (T*)0x0;
+
+		this->prevPickedIndex = -1;
+		this->field_0x10 = 0;
+		this->field_0x14 = 3;
+		this->field_0x8 = 0;
+	}
+
+	bool CanPickRndData()
+	{
+		bool bCanPick = false;
+		uint currentItemIndex = 0;
+
+		while (true) {
+			bool bVar6 = false;
+			if ((!bCanPick) && (currentItemIndex < this->nbItems)) {
+				bVar6 = true;
+			}
+
+			if (!bVar6) break;
+
+			T* pItem = this->pItems + currentItemIndex;
+			bVar6 = false;
+
+			if ((pItem->field_0x0 == 1) && (0.0f < pItem->field_0x4)) {
+				bVar6 = true;
+			}
+
+			if (bVar6) {
+				bCanPick = true;
+			}
+
+			currentItemIndex = currentItemIndex + 1;
+		}
+
+		return bCanPick;
+	}
+
+	RndData* PickRndData()
+	{
+		uint currentItemIndex;
+		uint uVar17;
+		bool bVar7;
+
+		if (this->field_0x8 == 0) {
+			float local_4 = 0.0f;
+
+			for (currentItemIndex = 0; currentItemIndex < this->nbItems; currentItemIndex = currentItemIndex + 1) {
+				CFightIA::WFIGS_Chain* pCVar18 = this->pItems + currentItemIndex;
+				if (pCVar18->field_0x0 != 0) {
+					local_4 = local_4 + pCVar18->field_0x4;
+				}
+
+				this->pItems[currentItemIndex].field_0x8 = (int)local_4;
+			}
+
+			for (currentItemIndex = 0; uVar17 = this->nbItems, currentItemIndex < uVar17; currentItemIndex = currentItemIndex + 1) {
+				CFightIA::WFIGS_Chain* pCVar18 = this->pItems + currentItemIndex;
+				pCVar18->field_0x8 = (int)(((float)pCVar18->field_0x8 * 32767.0f) / local_4);
+			}
+
+			this->pItems[uVar17 - 1].field_0x8 = 0x7fff;
+			this->field_0x8 = 1;
+		}
+
+		for (currentItemIndex = 0; currentItemIndex < this->nbItems; currentItemIndex = currentItemIndex + 1) {
+			if ((int)CScene::Rand() <= this->pItems[currentItemIndex].field_0x8) {
+				if (currentItemIndex == this->prevPickedIndex) {
+					int iVar12 = this->field_0x10;
+
+					if (iVar12 < (int)this->field_0x14) {
+						this->field_0x10 = iVar12 + 1;
+					}
+					else {
+						do {
+							uint uVar17 = this->nbItems;
+
+							currentItemIndex = (int)(currentItemIndex + 1) % (int)uVar17;
+							if (uVar17 == 0) {
+								trap(7);
+							}
+
+							CFightIA::WFIGS_Chain* pCVar18 = this->pItems + currentItemIndex;
+							bVar7 = true;
+							if ((pCVar18->field_0x4 != 0.0) && (pCVar18->field_0x0 != 0)) {
+								bVar7 = false;
+							}
+						} while (bVar7);
+
+						this->prevPickedIndex = currentItemIndex;
+						this->field_0x10 = 0;
+					}
+				}
+				else {
+					this->prevPickedIndex = currentItemIndex;
+					this->field_0x10 = 0;
+				}
+
+				break;
+			}
+		}
+
+		return &this->pItems[currentItemIndex].rndData;
+	}
+
+	T* pItems;
+	uint nbItems;
+
+	undefined4 field_0x8;
+	int prevPickedIndex;
+	undefined4 field_0x10;
+	int field_0x14;
+};
+
+class CFightIA
+{
+public:
+	struct WFIGS_Chain
+	{
+		byte field_0x0;
+		float field_0x4;
+		int field_0x8;
+		RndData rndData;
+	};
+};
+
+struct WolfenComboData
+{
+	uint field_0x0;
+	int field_0x4;
+	int field_0x8;
+	int field_0xc;
+};
+
+struct WFIGS_Capability
+{
+	void Create(ByteCode* pByteCode, WolfenComboData* pComboData, float multiplier, uint* pOutCount);
+	void Begin();
+
+	bool Get();
+
+	uint semaphoreId;
+	uint field_0x4;
+	uint field_0x8;
+	uint field_0xc;
+	uint field_0x10;
+	uint field_0x14;
+
+	CRndChooser<CFightIA::WFIGS_Chain> rndChooser;
+
+	uint nbItems;
+};
+
 class CBehaviourWolfen : public CBehaviour
 {
 public:
@@ -349,14 +515,95 @@ class CBehaviourAvoid : public CBehaviour
 public:
 };
 
+class CFightContext
+{
+public:
+	byte field_0x0;
+	int field_0x4;
+	int field_0x8;
+	float field_0xc;
+	int state_0x10;
+	int state_0x14;
+};
+
 class CBehaviourFighterWolfen : public CBehaviourFighter
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Draw();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	// New virtual functions
+	virtual void ManageExit();
+	virtual void Func_0x60();
+	virtual void Func_0x64();
+
 	void SetPositionToHold(float param_1, edF32VECTOR4* pPosition);
+	void InputPunch(uint cmd);
+	void FlushInput();
+	void UpdateFightContext(CFightContext* pFightContext);
+	void ManageWFigState(uint commandId);
+	bool TreatContext(CFightContext* pFightContext);
+
+	void InitCommand(uint commandId);
+	void ExecuteCommand(uint param_2, uint param_3);
+	bool IsCommandFinished(uint param_2);
+	void ValidateCommand();
+	void PickCommand();
+	s_fighter_combo* PickCombo_Attack(CFightContext* pFightContext, bool param_3, bool param_4, bool param_5, bool param_6);
+
+	void FunReset();
+
+	struct Rule
+	{
+		float (*pFunc)(CActorWolfen* pWolfen);
+		float value;
+	};
+
+	Rule aRules[3];
 
 	int field_0x3c;
 	edF32VECTOR4 holdPosition;
+
+	int field_0x24;
+	int field_0x28;
+	int field_0x2c;
+	int field_0x30;
+	float field_0x34;
+	int field_0x38;
 	float field_0x50;
+	float adversaryBlowDuration;
+
+	float field_0x58;
+	float field_0x5c;
+
+	int currentCommandId;
+
+	float field_0x64;
+
+	int field_0x68;
+
+	byte field_0x70;
+	byte field_0x71;
+
+	s_fighter_action field_0x74;
+
+	s_fighter_combo* pActiveCombo;
+	s_fighter_blow* pActiveBlow;
+
+	s_fighter_action_param field_0x90;
+
+	edF32VECTOR4 field_0x80;
+
+	CFightContext fightContext;
+
+	byte field_0xb8;
 };
 
 class CBehaviourWolfenFighterRidden : public CBehaviourFighterRidden
@@ -416,6 +663,16 @@ struct InitPathfindingClientMsgParams
 	int newId;
 
 	CActorFighter* pActor;
+};
+
+struct ComboData
+{
+	byte field_0x0;
+
+	float field_0x4;
+	float field_0x8;
+
+	s_fighter_combo* pCombo;
 };
 
 class CActorWolfen : public CActorFighter 
@@ -491,6 +748,8 @@ public:
 	void BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* pBehaviour);
 	void BehaviourTrack_Manage(CBehaviourTrack* pBehaviour);
 
+	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);
+
 	void WaitingAnimation_Defend();
 	void WaitingAnimation_Guard();
 
@@ -518,6 +777,8 @@ public:
 
 	void ClearLocalData();
 
+	int CheckDetectArea(edF32VECTOR4* pPosition);
+
 	void SV_WLF_MoveTo(CActorMovParamsOut* pMovParamsOut, CActorMovParamsIn* pMovParamsIn, edF32VECTOR4* pPosition);
 	bool SV_WLF_CanMoveTo(edF32VECTOR4* pPosition);
 	bool SV_WLF_UpdateOrientation2D(float param_1, edF32VECTOR4* v0, int rotationType);
@@ -542,7 +803,20 @@ public:
 
 	bool CheckLost();
 
+	void CheckValidPatterns(CRndChooser<CFightIA::WFIGS_Chain>* pRndChooser);
+	void GetComboMatchValues(int index, float* param_3, float* param_4, float* param_5, float* param_6);
+	bool CanPerformWeaponCommand();
+
+	bool RequestFightAction(int index);
+
+	float SemaphoreEval();
+	bool SemaphoreKeepIt();
+
+	void EnableFightAction();
+	void DisableFightAction();
+
 	void UpdateCombatMode(); // new
+	WFIGS_Capability* GetActiveCapability(); // new
 
 	CBehaviourWolfenFighterProjected behaviourWolfenFighterProjected;
 	CBehaviourWolfenFighterRidden behaviourWolfenFighterRidden;
@@ -552,7 +826,33 @@ public:
 	CBehaviourLost behaviourLost;
 	CBehaviourExorcism behaviourExorcism;
 
-	int field_0xb2c;
+	float field_0xa80;
+	float field_0xa84;
+	float field_0xa88;
+	float field_0xa8c;
+
+	WFIGS_Capability aCapabilities[3];
+
+	int activeCapabilityIndex;
+	int field_0xb30;
+
+	uint field_0xb34;
+	uint field_0xb38;
+	uint field_0xb3c;
+	uint field_0xb40;
+
+	uint field_0xb44;
+
+	float field_0xb48;
+	float field_0xb4c;
+
+	float field_0xb50;
+	float field_0xb54;
+	float field_0xb58;
+	float field_0xb5c;
+
+	uint field_0xb60;
+	WolfenComboData* field_0xb64;
 
 	uint field_0xb74;
 	uint combatFlags_0xb78 = 0; // delete init
@@ -564,6 +864,18 @@ public:
 	float field_0xb90;
 	float field_0xb94;
 	float field_0xb98;
+
+	int field_0xbd8;
+	uint field_0xbdc;
+
+	undefined4 field_0xbe0;
+	int field_0xbe4;
+	float field_0xbec;
+	float field_0xbf0;
+
+	ComboData* field_0xbd0;
+	uint nbComboMatchValues;
+	edF32VECTOR4* aComboMatchValues;
 
 	float walkSpeed;
 	float walkAcceleration;
@@ -581,6 +893,7 @@ public:
 	float field_0xcf4;
 	int field_0xcf8;
 
+	float field_0xd00;
 	CActor* field_0xd04;
 	float field_0xd08;
 	float field_0xd18;
