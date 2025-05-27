@@ -1121,8 +1121,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 
 					if ((bVar1) && ((param_4 == 0 || (lVar8 = param_4->GetMode(), lVar8 != 4)))) {
 						if (_pfig_data != (CCamFigData*)0x0) {
-							IMPLEMENTATION_GUARD(
-								_pfig_data->IsValid(1);)
+								_pfig_data->IsValid(1);
 						}
 
 						CCameraGame::_b_use_fig_data = 0;

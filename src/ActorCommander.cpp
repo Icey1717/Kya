@@ -1192,7 +1192,7 @@ bool CBehaviourCommander::UpdateTeamAnim()
 						bVar3 = false;
 					}
 					else {
-						fVar8 = this->field_0x1c * 32767.0f;
+						fVar8 = this->healthRatio * 32767.0f;
 						if (fVar8 < 2.147484e+09f) {
 							uVar9 = (uint)fVar8;
 						}
@@ -1264,28 +1264,23 @@ void CBehaviourCommanderDefault::Begin(CActor* pOwner, int newState, int newAnim
 
 int CBehaviourCommanderDefault::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	int* piVar1;
 	CLifeInterface* pLife;
 	int iVar2;
 	undefined8 uVar3;
 	float fVar4;
 	float fVar5;
 
-	if (msg == 0x1b) {
-		IMPLEMENTATION_GUARD(
-		if (*pMsgParam == 1) {
-			piVar1 = (int*)pMsgParam[1];
+	if (msg == MESSAGE_FIGHT_ACTION_SUCCESS) {
+		_msg_fight_action_success_params* pParams = reinterpret_cast<_msg_fight_action_success_params*>(pMsgParam);
+		if (pParams->field_0x0 == 1) {
+			CActorFighter* pAdversary = pParams->pAdversary;
 			this->field_0x18 = 1;
-			pLife = (CLifeInterface*)(**(code**)(*piVar1 + 0x138))(piVar1, pSender);
-			fVar4 = CLifeInterface::GetValueMax(pLife);
-			uVar3 = (**(code**)(*piVar1 + 0x138))(piVar1);
-			fVar5 = (float)(**(code**)(*(int*)uVar3 + 0x24))(uVar3);
 			iVar2 = 1;
-			this->field_0x1c = 1.0 - fVar5 / fVar4;
+			this->healthRatio = 1.0f - pAdversary->GetLifeInterface()->GetValue() / pAdversary->GetLifeInterface()->GetValueMax();
 		}
 		else {
 			iVar2 = 0;
-		})
+		}
 	}
 	else {
 		iVar2 = 0;

@@ -488,90 +488,103 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	this->field_0x48e = this->field_0x48e & 0xf | 0x30;
 	this->field_0x48f = this->field_0x48f & 0xf0;
 	this->field_0x48f = this->field_0x48f & 0xf | 0x10;
-	this->field_0x6d4 = 0x60;
-	this->field_0x6d0 = this->field_0x6d0 & 0xf0;
-	this->field_0x6d1 = this->field_0x6d1 & 0xf0 | 4;
-	this->field_0x6d2 = this->field_0x6d2 & 0xf0 | 3;
-	this->field_0x6d0 = this->field_0x6d0 & 0xf | 0x10;
-	this->field_0x6d1 = this->field_0x6d1 & 0xf | 0x50;
-	this->field_0x6d2 = this->field_0x6d2 & 0xf | 0x20;
-	this->field_0x6dc = 0x66;
-	this->field_0x6d8 = this->field_0x6d8 & 0xf0;
-	this->field_0x6d9 = this->field_0x6d9 & 0xf0 | 2;
-	this->field_0x6da = this->field_0x6da & 0xf0 | 3;
-	this->field_0x6d8 = this->field_0x6d8 & 0xf | 0x10;
-	this->field_0x6d9 = this->field_0x6d9 & 0xf | 0x20;
-	this->field_0x6da = this->field_0x6da & 0xf | 0x20;
-	this->field_0x6e4 = 0x66;
-	this->field_0x6e0 = this->field_0x6e0 & 0xf0;
-	this->field_0x6e1 = this->field_0x6e1 & 0xf0 | 2;
-	this->field_0x6e2 = this->field_0x6e2 & 0xf0 | 3;
-	this->field_0x6e0 = this->field_0x6e0 & 0xf | 0x10;
-	this->field_0x6e1 = this->field_0x6e1 & 0xf | 0x20;
-	this->field_0x6e2 = this->field_0x6e2 & 0xf | 0x20;
-	this->field_0x6ec = 0x47;
-	this->field_0x6e8 = this->field_0x6e8 & 0xf0;
-	this->field_0x6e9 = this->field_0x6e9 & 0xf0 | 2;
-	this->field_0x6ea = this->field_0x6ea & 0xf0 | 2;
-	this->field_0x6e8 = this->field_0x6e8 & 0xf | 0x10;
-	this->field_0x6e9 = this->field_0x6e9 & 0xf | 0x20;
-	this->field_0x6ea = this->field_0x6ea & 0xf | 0x20;
-	this->field_0x6f4 = 0x4a;
-	this->field_0x6f0 = this->field_0x6f0 & 0xf0;
-	this->field_0x6f1 = this->field_0x6f1 & 0xf0 | 2;
-	this->field_0x6f2 = this->field_0x6f2 & 0xf0 | 2;
-	this->field_0x6f0 = this->field_0x6f0 & 0xf | 0x10;
-	this->field_0x6f1 = this->field_0x6f1 & 0xf | 0x20;
-	this->field_0x6f2 = this->field_0x6f2 & 0xf | 0x20;
-	this->field_0x6fc = 0x4a;
-	this->field_0x6f8 = this->field_0x6f8 & 0xf0;
-	this->field_0x6f9 = this->field_0x6f9 & 0xf0 | 2;
-	this->field_0x6fa = this->field_0x6fa & 0xf0 | 2;
-	this->field_0x6f8 = this->field_0x6f8 & 0xf | 0x10;
-	this->field_0x6f9 = this->field_0x6f9 & 0xf | 0x20;
-	this->field_0x6fa = this->field_0x6fa & 0xf | 0x20;
-	this->field_0x704 = 0x55;
-	this->field_0x700 = this->field_0x700 & 0xf0;
-	this->field_0x701 = this->field_0x701 & 0xf0 | 2;
-	this->field_0x702 = this->field_0x702 & 0xf0 | 2;
-	this->field_0x700 = this->field_0x700 & 0xf | 0x10;
-	this->field_0x701 = this->field_0x701 & 0xf | 0x20;
-	this->field_0x702 = this->field_0x702 & 0xf | 0x20;
-	this->field_0x70c = 0x58;
-	this->field_0x708 = this->field_0x708 & 0xf0;
-	this->field_0x709 = this->field_0x709 & 0xf0 | 2;
-	this->field_0x70a = this->field_0x70a & 0xf0 | 2;
-	this->field_0x708 = this->field_0x708 & 0xf | 0x10;
-	this->field_0x709 = this->field_0x709 & 0xf | 0x20;
-	this->field_0x70a = this->field_0x70a & 0xf | 0x20;
-	this->field_0x714 = 0x58;
-	this->field_0x710 = this->field_0x710 & 0xf0;
-	this->field_0x711 = this->field_0x711 & 0xf0 | 2;
-	this->field_0x712 = this->field_0x712 & 0xf0 | 2;
-	this->field_0x710 = this->field_0x710 & 0xf | 0x10;
-	this->field_0x711 = this->field_0x711 & 0xf | 0x20;
-	this->field_0x712 = this->field_0x712 & 0xf | 0x20;
-	this->field_0x71c = 0x21;
-	this->field_0x718 = this->field_0x718 & 0xf0;
-	this->field_0x719 = this->field_0x719 & 0xf0 | 2;
-	this->field_0x71a = this->field_0x71a & 0xf0 | 2;
-	this->field_0x718 = this->field_0x718 & 0xf | 0x10;
-	this->field_0x719 = this->field_0x719 & 0xf | 0x20;
-	this->field_0x71a = this->field_0x71a & 0xf | 0x20;
-	this->field_0x724 = 0x24;
-	this->field_0x720 = this->field_0x720 & 0xf0;
-	this->field_0x721 = this->field_0x721 & 0xf0 | 2;
-	this->field_0x722 = this->field_0x722 & 0xf0 | 2;
-	this->field_0x720 = this->field_0x720 & 0xf | 0x10;
-	this->field_0x721 = this->field_0x721 & 0xf | 0x20;
-	this->field_0x722 = this->field_0x722 & 0xf | 0x20;
-	this->field_0x72c = 0x24;
-	this->field_0x728 = this->field_0x728 & 0xf0;
-	this->field_0x729 = this->field_0x729 & 0xf0 | 2;
-	this->field_0x72a = this->field_0x72a & 0xf0 | 2;
-	this->field_0x728 = this->field_0x728 & 0xf | 0x10;
-	this->field_0x729 = this->field_0x729 & 0xf | 0x20;
-	this->field_0x72a = this->field_0x72a & 0xf | 0x20;)
+	this->field_0x6d4 = 0x60;)
+
+	this->field_0x6d0[0].field_0x4 = 0x60;
+	this->field_0x6d0[0].field_0x0[0] = this->field_0x6d0[0].field_0x0[0] & 0xf0;
+	this->field_0x6d0[0].field_0x0[1] = this->field_0x6d0[0].field_0x0[1] & 0xf0 | 4;
+	this->field_0x6d0[0].field_0x0[2] = this->field_0x6d0[0].field_0x0[2] & 0xf0 | 3;
+	this->field_0x6d0[0].field_0x0[0] = this->field_0x6d0[0].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[0].field_0x0[1] = this->field_0x6d0[0].field_0x0[1] & 0xf | 0x50;
+	this->field_0x6d0[0].field_0x0[2] = this->field_0x6d0[0].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[1].field_0x4 = 0x66;
+	this->field_0x6d0[1].field_0x0[0] = this->field_0x6d0[1].field_0x0[0] & 0xf0;
+	this->field_0x6d0[1].field_0x0[1] = this->field_0x6d0[1].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[1].field_0x0[2] = this->field_0x6d0[1].field_0x0[2] & 0xf0 | 3;
+	this->field_0x6d0[1].field_0x0[0] = this->field_0x6d0[1].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[1].field_0x0[1] = this->field_0x6d0[1].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[1].field_0x0[2] = this->field_0x6d0[1].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[2].field_0x4 = 0x66;
+	this->field_0x6d0[2].field_0x0[0] = this->field_0x6d0[2].field_0x0[0] & 0xf0;
+	this->field_0x6d0[2].field_0x0[1] = this->field_0x6d0[2].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[2].field_0x0[2] = this->field_0x6d0[2].field_0x0[2] & 0xf0 | 3;
+	this->field_0x6d0[2].field_0x0[0] = this->field_0x6d0[2].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[2].field_0x0[1] = this->field_0x6d0[2].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[2].field_0x0[2] = this->field_0x6d0[2].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[3].field_0x4 = 0x47;
+	this->field_0x6d0[3].field_0x0[0] = this->field_0x6d0[3].field_0x0[0] & 0xf0;
+	this->field_0x6d0[3].field_0x0[1] = this->field_0x6d0[3].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[3].field_0x0[2] = this->field_0x6d0[3].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[3].field_0x0[0] = this->field_0x6d0[3].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[3].field_0x0[1] = this->field_0x6d0[3].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[3].field_0x0[2] = this->field_0x6d0[3].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[4].field_0x4 = 0x4a;
+	this->field_0x6d0[4].field_0x0[0] = this->field_0x6d0[4].field_0x0[0] & 0xf0;
+	this->field_0x6d0[4].field_0x0[1] = this->field_0x6d0[4].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[4].field_0x0[2] = this->field_0x6d0[4].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[4].field_0x0[0] = this->field_0x6d0[4].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[4].field_0x0[1] = this->field_0x6d0[4].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[4].field_0x0[2] = this->field_0x6d0[4].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[5].field_0x4 = 0x4a;
+	this->field_0x6d0[5].field_0x0[0] = this->field_0x6d0[5].field_0x0[0] & 0xf0;
+	this->field_0x6d0[5].field_0x0[1] = this->field_0x6d0[5].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[5].field_0x0[2] = this->field_0x6d0[5].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[5].field_0x0[0] = this->field_0x6d0[5].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[5].field_0x0[1] = this->field_0x6d0[5].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[5].field_0x0[2] = this->field_0x6d0[5].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[6].field_0x4 = 0x55;
+	this->field_0x6d0[6].field_0x0[0] = this->field_0x6d0[6].field_0x0[0] & 0xf0;
+	this->field_0x6d0[6].field_0x0[1] = this->field_0x6d0[6].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[6].field_0x0[2] = this->field_0x6d0[6].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[6].field_0x0[0] = this->field_0x6d0[6].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[6].field_0x0[1] = this->field_0x6d0[6].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[6].field_0x0[2] = this->field_0x6d0[6].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[7].field_0x4 = 0x58;
+	this->field_0x6d0[7].field_0x0[0] = this->field_0x6d0[7].field_0x0[0] & 0xf0;
+	this->field_0x6d0[7].field_0x0[1] = this->field_0x6d0[7].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[7].field_0x0[2] = this->field_0x6d0[7].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[7].field_0x0[0] = this->field_0x6d0[7].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[7].field_0x0[1] = this->field_0x6d0[7].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[7].field_0x0[2] = this->field_0x6d0[7].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[8].field_0x4 = 0x58;
+	this->field_0x6d0[8].field_0x0[0] = this->field_0x6d0[8].field_0x0[0] & 0xf0;
+	this->field_0x6d0[8].field_0x0[1] = this->field_0x6d0[8].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[8].field_0x0[2] = this->field_0x6d0[8].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[8].field_0x0[0] = this->field_0x6d0[8].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[8].field_0x0[1] = this->field_0x6d0[8].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[8].field_0x0[2] = this->field_0x6d0[8].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[9].field_0x4 = 0x21;
+	this->field_0x6d0[9].field_0x0[0] = this->field_0x6d0[9].field_0x0[0] & 0xf0;
+	this->field_0x6d0[9].field_0x0[1] = this->field_0x6d0[9].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[9].field_0x0[2] = this->field_0x6d0[9].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[9].field_0x0[0] = this->field_0x6d0[9].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[9].field_0x0[1] = this->field_0x6d0[9].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[9].field_0x0[2] = this->field_0x6d0[9].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[10].field_0x4 = 0x24;
+	this->field_0x6d0[10].field_0x0[0] = this->field_0x6d0[10].field_0x0[0] & 0xf0;
+	this->field_0x6d0[10].field_0x0[1] = this->field_0x6d0[10].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[10].field_0x0[2] = this->field_0x6d0[10].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[10].field_0x0[0] = this->field_0x6d0[10].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[10].field_0x0[1] = this->field_0x6d0[10].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[10].field_0x0[2] = this->field_0x6d0[10].field_0x0[2] & 0xf | 0x20;
+
+	this->field_0x6d0[0xb].field_0x4 = 0x24;
+	this->field_0x6d0[0xb].field_0x0[0] = this->field_0x6d0[0xb].field_0x0[0] & 0xf0;
+	this->field_0x6d0[0xb].field_0x0[1] = this->field_0x6d0[0xb].field_0x0[1] & 0xf0 | 2;
+	this->field_0x6d0[0xb].field_0x0[2] = this->field_0x6d0[0xb].field_0x0[2] & 0xf0 | 2;
+	this->field_0x6d0[0xb].field_0x0[0] = this->field_0x6d0[0xb].field_0x0[0] & 0xf | 0x10;
+	this->field_0x6d0[0xb].field_0x0[1] = this->field_0x6d0[0xb].field_0x0[1] & 0xf | 0x20;
+	this->field_0x6d0[0xb].field_0x0[2] = this->field_0x6d0[0xb].field_0x0[2] & 0xf | 0x20;
 
 	(this->field_0x730).field_0x4 = 0x6a;
 	(this->field_0x730).field_0x0[0] = (this->field_0x730).field_0x0[0] & 0xf0;
@@ -1542,7 +1555,7 @@ void CActorFighter::_Std_GetPossibleHit(bool bPlayImpact)
 					}
 				}
 
-				SetState(0x4f, -1);
+				SetState(FIGHTER_HIT_STEP_BACK, -1);
 				goto LAB_00319fb0;
 			}
 		}
@@ -3417,6 +3430,83 @@ void CActorFighter::_StateFighterHitSlide()
 	return;
 }
 
+void CActorFighter::_StateFighterHitStepBackInit(int animationId, int param_3)
+{
+	int iVar1;
+	float time;
+	edF32VECTOR4 local_40;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 eStack32;
+	s_fighter_action local_4;
+
+	time = _GetFighterAnimationLength(animationId);
+
+	if (param_3 != 0) {
+		this->pAnimationController->anmBinMetaAnimator.SetLayerTimeWarper(5.0f, 0);
+	}
+
+	PlayAnim(animationId);
+	edF32Vector4SubHard(&local_30, &this->currentLocation, &this->field_0x634->currentLocation);
+	local_30.y = 0.0f;
+	edF32Vector4NormalizeHard(&local_30, &local_30);
+	_BuildCommandFromAbsoluteVector(&local_30, &local_4, &eStack32);
+	this->field_0x44c = this->field_0x44c & 0xf0 | local_4.field_0x0 & 0xf;
+	this->field_0x36c = this->field_0x36c & 0xfffffffe;
+	edF32Vector4ScaleHard(this->field_0x6b0 * 0.040625f, &local_30, &eStack32);
+	edF32Vector4ScaleHard(this->field_0x6b0, &local_40, &eStack32);
+	this->scalarDynA.BuildFromSpeedDistTime(fabs(local_40.z), 0.0f, fabs(local_30.z), time);
+	this->scalarDynB.BuildFromSpeedDistTime(fabs(local_40.x), 0.0f, fabs(local_30.x), time);
+	this->scalarDynJump.Reset();
+
+	return;
+}
+
+void CActorFighter::_StateFighterHitStepBack(int nextState, int animationId, int param_4)
+{
+	bool bVar1;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	CAnimation* pAnim;
+
+	_ManageFighterDyn(0x19, 0x1006023b, (CActorsTable*)0x0);
+
+	if (this->scalarDynA.IsFinished() != false) {
+		this->field_0x36c = this->field_0x36c | 1;
+
+		fVar5 = GetLifeInterface()->GetValue();
+		if (fVar5 <= 0.0f) {
+			SetBehaviour(4, 0x5a, -1);
+		}
+		else {
+			if (param_4 != 0) {
+				pAnim = this->pAnimationController;
+				if (animationId == -1) {
+					iVar4 = GetIdMacroAnim(GetStateCfg(nextState)->animId);
+				}
+				else {
+					iVar4 = CActor::GetIdMacroAnim(animationId);
+				}
+
+				if (iVar4 < 0) {
+					fVar5 = 0.0f;
+				}
+				else {
+					fVar5 = pAnim->GetAnimLength(iVar4, 1);
+					fVar6 = pAnim->GetAnimLength(iVar4, 2);
+					fVar5 = fVar5 - fVar6;
+				}
+
+				pAnim->anmBinMetaAnimator.SetLayerTimeWarper(fVar5 / this->field_0x474, 0);
+			}
+
+			SetState(nextState, animationId);
+		}
+	}
+
+	return;
+}
+
 float CActorFighter::_StateFighterFightActionDynInit(_s_fighter_blow_stage* pStage)
 {
 	int iVar1;
@@ -4669,7 +4759,7 @@ void CActorFighter::_SV_VOLDYN_GetCollisionPosFromVector(edF32VECTOR4* v0, edF32
 	return;
 }
 
-int CActorFighter::_SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
+int CActorFighter::_SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* pAnimation, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
 {
 	float fVar1;
 	int iVar2;
@@ -4695,44 +4785,44 @@ int CActorFighter::_SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* param_2,
 	if (fabs(fVar5) <= fabs(fVar3)) {
 		if (fabs(fVar4) <= fabs(fVar3)) {
 			if (0.0f < fVar3) {
-				iVar2 = param_2->field_0x4 + (param_2->field_0x0[0] & 0xf);
+				iVar2 = pAnimation->field_0x4 + (pAnimation->field_0x0[0] & 0xf);
 				local_50.x = 1.0f;
 			}
 			else {
 				local_50.x = -1.0f;
-				iVar2 = param_2->field_0x4 + (uint)(((ulong)param_2->field_0x0[0] << 0x38) >> 0x3c);
+				iVar2 = pAnimation->field_0x4 + (uint)(((ulong)pAnimation->field_0x0[0] << 0x38) >> 0x3c);
 			}
 		}
 		else {
 			if (0.0f < fVar4) {
-				iVar2 = param_2->field_0x4 + (param_2->field_0x0[1] & 0xf);
+				iVar2 = pAnimation->field_0x4 + (pAnimation->field_0x0[1] & 0xf);
 				local_50.y = 1.0f;
 			}
 			else {
 				local_50.y = -1.0f;
-				iVar2 = param_2->field_0x4 + (uint)(((ulong)param_2->field_0x0[1] << 0x38) >> 0x3c);
+				iVar2 = pAnimation->field_0x4 + (uint)(((ulong)pAnimation->field_0x0[1] << 0x38) >> 0x3c);
 			}
 		}
 	}
 	else {
 		if (fabs(fVar4) <= fabs(fVar5)) {
 			if (0.0f < fVar5) {
-				iVar2 = param_2->field_0x4 + (param_2->field_0x0[2] & 0xf);
+				iVar2 = pAnimation->field_0x4 + (pAnimation->field_0x0[2] & 0xf);
 				local_50.z = 1.0f;
 			}
 			else {
 				local_50.z = -1.0f;
-				iVar2 = param_2->field_0x4 + (uint)(((ulong)param_2->field_0x0[2] << 0x38) >> 0x3c);
+				iVar2 = pAnimation->field_0x4 + (uint)(((ulong)pAnimation->field_0x0[2] << 0x38) >> 0x3c);
 			}
 		}
 		else {
 			if (0.0f < fVar4) {
-				iVar2 = param_2->field_0x4 + (param_2->field_0x0[1] & 0xf);
+				iVar2 = pAnimation->field_0x4 + (pAnimation->field_0x0[1] & 0xf);
 				local_50.y = 1.0f;
 			}
 			else {
 				local_50.y = -1.0f;
-				iVar2 = param_2->field_0x4 + (uint)(((ulong)param_2->field_0x0[1] << 0x38) >> 0x3c);
+				iVar2 = pAnimation->field_0x4 + (uint)(((ulong)pAnimation->field_0x0[1] << 0x38) >> 0x3c);
 			}
 		}
 	}
@@ -4793,6 +4883,8 @@ bool CActorFighter::FUN_0031b5d0(int state)
 	return state - 0x17U < 5;
 }
 
+uint gBoneIds_004343a0[2] = { 0x7bafa38c, 0x7bafa389 };
+
 void CActorFighter::FUN_0031a7c0(int inState)
 {
 	edNODE* pNode;
@@ -4803,7 +4895,7 @@ void CActorFighter::FUN_0031a7c0(int inState)
 	uint* puVar4;
 	uint uVar5;
 	CActorFighter* pCVar6;
-	int* piVar7;
+	uint* piVar7;
 	uint uVar8;
 	float fVar9;
 	edF32MATRIX4 eStack176;
@@ -4875,23 +4967,24 @@ void CActorFighter::FUN_0031a7c0(int inState)
 	}
 
 	iVar2 = this->actorState;
-	if ((iVar2 == 0x4f) || (iVar2 == 0x18)) {
+	if ((iVar2 == FIGHTER_HIT_STEP_BACK) || (iVar2 == 0x18)) {
 		fVar9 = GetAngleYFromVector(&this->dynamic.velocityDirectionEuler);
 		fVar9 = edF32Between_0_2Pi(fVar9 + 3.141593f);
 		uVar8 = 0;
 
-		IMPLEMENTATION_GUARD(
-		piVar7 = &DAT_004343a0;
-		pCVar6 = this;
+		piVar7 = gBoneIds_004343a0;
+		//pCVar6 = this;
 		do {
-			CActor::SV_GetBoneWorldPosition((CActor*)this, *piVar7, &eStack112);
+			SV_GetBoneWorldPosition(*piVar7, &eStack112);
 			edF32Matrix4RotateYHard(fVar9, &eStack96, &gF32Matrix4Unit);
 			edF32Matrix4TranslateHard(&eStack96, &eStack96, &eStack112);
-			FUN_001a0600((long)(int)pCVar6->field_0x550, (long)(int)&eStack96, (long)(int)pCVar6->field_0x550);
+
+			IMPLEMENTATION_GUARD_FX(
+			FUN_001a0600((long)(int)pCVar6->field_0x550, (long)(int)&eStack96, (long)(int)pCVar6->field_0x550);)
 			uVar8 = uVar8 + 1;
 			piVar7 = piVar7 + 1;
-			pCVar6 = (CActorFighter*)&(pCVar6->characterBase).base.base.actorFieldS;
-		} while (uVar8 < 2);)
+			//pCVar6 = (CActorFighter*)&(pCVar6->characterBase).base.base.actorFieldS;
+		} while (uVar8 < 2);
 	}
 
 	return;
@@ -6062,7 +6155,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 				iVar9 = 2;
 			}
 			else {
-				if (iVar7 == 0x4f) {
+				if (iVar7 == FIGHTER_HIT_STEP_BACK) {
 					iVar9 = 0;
 				}
 				else {
@@ -6231,6 +6324,9 @@ void CBehaviourFighter::Manage()
 	case FIGHTER_DEFAULT_STATE_RUN:
 		this->pOwner->_StateFighterRun((CActorsTable*)0x0);
 		break;
+	case FIGHTER_HIT_STEP_BACK:
+		this->pOwner->_StateFighterHitStepBack(6, iVar9, 1);
+		break;
 	case FIGHTER_BLOW_BEGIN:
 		this->pOwner->_ManageFighterDyn((this->pOwner->pBlow->blowStageBegin).flags, 0x40121, (CActorsTable*)0x0);
 
@@ -6393,8 +6489,8 @@ void CBehaviourFighter::InitState(int newState)
 	edF32VECTOR4 local_40;
 	edF32VECTOR4 local_30;
 	edF32VECTOR4 eStack32;
-	//s_fighter_action local_8;
-	//s_fighter_action local_4;
+	s_fighter_action local_8;
+	s_fighter_action local_4;
 	CAnimation* pAnim;
 
 	pFighter = this->pOwner;
@@ -6424,15 +6520,12 @@ void CBehaviourFighter::InitState(int newState)
 		(pFighter, (long)(int)pFighter, (edF32VECTOR4*)(iVar9 + 0x20), pFighter->field_0x5f0, (int*)0x0, 0);)
 	}
 
-	iVar9 = (int)in_a2;
-
-	if ((newState == 0x4f) || (newState == 0x18)) {
-		IMPLEMENTATION_GUARD(
-		for (uVar10 = 0; iVar9 = (int)in_a2, uVar10 < 2; uVar10 = uVar10 + 1) {
-			CAnimation::RegisterBone(pFighter->pAnimationController, (&DAT_004343a0)[uVar10]);
-			in_a2 = 0;
-			CFxHandle::FUN_004074f0(pFighter->field_0x550 + uVar10, 0, 0);
-		})
+	if ((newState == FIGHTER_HIT_STEP_BACK) || (newState == 0x18)) {
+		for (uVar10 = 0; uVar10 < 2; uVar10 = uVar10 + 1) {
+			pFighter->pAnimationController->RegisterBone(gBoneIds_004343a0[uVar10]);
+			IMPLEMENTATION_GUARD_FX(
+			CFxHandle::FUN_004074f0(pFighter->field_0x550 + uVar10, 0, 0);)
+		}
 	}
 
 	pFighter = this->pOwner;
@@ -6519,6 +6612,23 @@ void CBehaviourFighter::InitState(int newState)
 
 		pFighter->field_0x4e0 = gF32Vector4Zero;
 		break;
+	case FIGHTER_HIT_STEP_BACK:
+	{
+		pFighter = this->pOwner;
+
+		uint uVar8;
+
+		if ((pFighter->field_0x684 & 8U) == 0) {
+			uVar8 = pFighter->_SV_HIT_GetHitZoneFromImpact(&pFighter->fighterAnatomyZones, &pFighter->field_0x690, &pFighter->currentLocation);
+		}
+		else {
+			uVar8 = (uint)pFighter->field_0x686;
+		}
+
+		const int animationId = pFighter->_SV_ANM_GetMultiWaysAnim3D(pFighter->field_0x6d0 + uVar8, &pFighter->field_0x6a0, (edF32VECTOR4*)0x0);
+		pFighter->_StateFighterHitStepBackInit(animationId, 1);
+	}
+		break;
 	case FIGHTER_BLOW_BEGIN:
 	case 0x68:
 	{
@@ -6581,6 +6691,7 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 	{
 	case FIGHTER_DEFAULT_STATE_IDLE:
 	case FIGHTER_DEFAULT_STATE_RUN:
+	case FIGHTER_HIT_STEP_BACK:
 	case FIGHTER_BLOW_END:
 		break;
 	case FIGHTER_BLOW_BEGIN:
@@ -6732,18 +6843,19 @@ void CBehaviourFighter::TermState(int oldState, int newState)
 			StaticMeshComponentAdvanced::FUN_00406f90(&pFighter->staticMeshComponentAdvanced);)
 	}
 
-	if ((oldState == 0x4f) || (oldState == 0x18)) {
-		IMPLEMENTATION_GUARD(
-			uVar13 = 0;
-		puVar12 = &DAT_004343a0;
-		pCVar11 = pFighter;
+	if ((oldState == FIGHTER_HIT_STEP_BACK) || (oldState == 0x18)) {
+		uVar13 = 0;
+		puVar12 = gBoneIds_004343a0;
+		//pCVar11 = pFighter;
 		do {
-			CAnimation::UnRegisterBone((pFighter->characterBase).base.base.pAnimationController, *puVar12);
-			CFxHandle::FUN_00407310(pCVar11->field_0x550);
+			pFighter->pAnimationController->UnRegisterBone(*puVar12);
+
+			IMPLEMENTATION_GUARD_FX(
+			CFxHandle::FUN_00407310(pCVar11->field_0x550);)
 			uVar13 = uVar13 + 1;
 			puVar12 = puVar12 + 1;
-			pCVar11 = (CActorFighter*)&(pCVar11->characterBase).base.base.actorFieldS;
-		} while (uVar13 < 2);)
+			//pCVar11 = (CActorFighter*)&(pCVar11->characterBase).base.base.actorFieldS;
+		} while (uVar13 < 2);
 	}
 
 	return;
@@ -7674,8 +7786,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPlayerInput, edF32VECTOR4* param_3, 
 
 			iVar4 = (int)((fVar3 * puVar4) / 0.7853982f + 0.5f);
 			if (iVar4 != 0) {
-				IMPLEMENTATION_GUARD(
-				_SV_RotatePattern(this, iVar4);)
+				_SV_RotatePattern(iVar4);
 			}
 		}
 
@@ -7851,6 +7962,52 @@ bool CInputAnalyser::Compare(s_input_pattern* pPatternA, s_input_pattern* pPatte
 	}
 
 	return bVar1;
+}
+
+ushort _u16Rot_precompute[8] = { 0x1, 0x3, 0x2, 0x6, 0x4, 0xc, 0x8, 0x9 };
+
+void CInputAnalyser::_SV_RotatePattern(int index)
+{
+	uint uVar1;
+	uint uVar2;
+	uint uVar3;
+	uint uVar4;
+	ushort* puVar5;
+	int iVar6;
+
+	uVar4 = (this->patternB).field_0x0uint;
+	(this->patternB).field_0x0uint = uVar4 & 0xfff00000;
+	uVar3 = 0;
+	if ((this->patternB).nbInputs != 0) {
+		uVar2 = 0;
+		do {
+			if ((uVar4 & 0xf) != 0) {
+				iVar6 = 0;
+				for (puVar5 = _u16Rot_precompute; (iVar6 < 8 && ((uVar4 & 0xf) != *puVar5)); puVar5 = puVar5 + 1) {
+					iVar6 = iVar6 + 1;
+				}
+
+				iVar6 = iVar6 + index;
+				if (iVar6 < 0) {
+					iVar6 = iVar6 + 8;
+				}
+				else {
+					if (7 < iVar6) {
+						iVar6 = iVar6 + -8;
+					}
+				}
+
+				uVar1 = (this->patternB).field_0x0uint;
+
+				(this->patternB).field_0x0uint = uVar1 & 0xfff00000 | (uint)((((ulong)(int)uVar1 & 0xfffffU | (ulong)(int)((uint)_u16Rot_precompute[iVar6] << (uVar2 & 0x1f)) & 0xffffU) << 0x2c) >> 0x2c);
+			}
+			uVar3 = uVar3 + 1;
+			uVar4 = (uVar4 & 0xffff) >> 4;
+			uVar2 = uVar2 + 4;
+		} while (uVar3 < (this->patternB).nbInputs);
+	}
+
+	return;
 }
 
 void StaticMeshComponentAdvanced::Create(ByteCode* pByteCode)

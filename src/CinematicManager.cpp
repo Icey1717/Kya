@@ -2787,7 +2787,7 @@ CActor* CCinematic::GetActorByHashcode(uint hashCode)
 	return pFoundActor;
 }
 
-bool CCinematic::FUN_001c9500()
+bool CCinematic::CanBePlayed()
 {
 	bool bVar1;
 

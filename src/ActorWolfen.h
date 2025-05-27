@@ -541,7 +541,7 @@ public:
 
 	// New virtual functions
 	virtual void ManageExit();
-	virtual void Func_0x60();
+	virtual void ManageCombatMusic(int state);
 	virtual void Func_0x64();
 
 	void SetPositionToHold(float param_1, edF32VECTOR4* pPosition);
@@ -663,6 +663,12 @@ struct InitPathfindingClientMsgParams
 	int newId;
 
 	CActorFighter* pActor;
+};
+
+struct _msg_fight_action_success_params
+{
+	int field_0x0;
+	CActorFighter* pAdversary;
 };
 
 struct ComboData

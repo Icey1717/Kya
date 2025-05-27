@@ -17,6 +17,8 @@
 #define FIGHTER_DEFAULT_STATE_IDLE 0x6
 #define FIGHTER_DEFAULT_STATE_RUN 0x9
 
+#define FIGHTER_HIT_STEP_BACK 0x4f
+
 #define FIGHTER_PROJECTED_HIT_FLY 0x55
 #define FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE 0x56
 #define FIGHTER_PROJECTED_HIT_SLIDE 0x57
@@ -100,6 +102,7 @@ struct CInputAnalyser
 	int Cumulate(CPlayerInput* pPalyerInput, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	void Reset();
 	static bool Compare(s_input_pattern* pPatternA, s_input_pattern* pPatternB, s_input_pattern_cmp* pPatternCmp);
+	void _SV_RotatePattern(int index);
 
 	s_input_pattern patternA;
 	s_input_pattern patternB;
@@ -484,6 +487,9 @@ public:
 	void _StateFighterHitFlyToSlide();
 	void _StateFighterHitSlide();
 
+	void _StateFighterHitStepBackInit(int animationId, int param_3);
+	void _StateFighterHitStepBack(int nextState, int animationId, int param_4);
+
 	float _StateFighterFightActionDynInit(_s_fighter_blow_stage* pStage);
 	void _StateFighterExecuteBlow(int nextStateA, int nextStateB, int param_4);
 
@@ -511,7 +517,7 @@ public:
 	void _SV_VOLDYN_PointSpeedFromVolumeSpeed(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, edF32VECTOR4* param_5, edF32VECTOR4* param_6, edF32VECTOR4* param_7);
 	void _SV_VOLDYN_GetCollisionPosFromVector(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
-	int _SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+	int _SV_ANM_GetMultiWaysAnim3D(s_fighter_multiways_anim* pAnimation, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	int _SV_ANM_GetTwoSidedAnim(int param_2, int param_3);
 
 	CActorWeapon* GetWeapon();
@@ -684,6 +690,7 @@ public:
 	float field_0x6c8;
 	float field_0x6cc;
 
+	s_fighter_multiways_anim field_0x6d0[12];
 	s_fighter_multiways_anim field_0x730;
 
 	uint field_0x738;

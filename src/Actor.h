@@ -78,6 +78,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_IN_WIND_AREA = 0x16,
 	MESSAGE_ENTER_WIND = 0x17,
 	MESSAGE_LEAVE_WIND = 0x18,
+	MESSAGE_FIGHT_ACTION_SUCCESS = 0x1b,
 	MESSAGE_ENTER_TRAMPO = 0x1d,
 	MESSAGE_IMPULSE = 0x1e,
 	MESSAGE_DISABLE_INPUT = 0x25,
@@ -683,13 +684,13 @@ class CAddOnSubObj
 {
 public:
 	void SetCinematic(CCinematic* pCinematic);
-	int FUN_003e37e0();
+	int PickCinematic();
 
 	uint field_0x0;
-	int* field_0x4;
-	int field_0x8;
+	int* aCinematicIds;
+	int nbCinematics;
 	CCinematic* pCinematic;
-	int field_0x10;
+	int lastPlayedCinematicId;
 	float field_0x14;
 };
 

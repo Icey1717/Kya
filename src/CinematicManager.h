@@ -519,7 +519,7 @@ public:
 
 	CActor* GetActorByHashcode(uint hashCode);
 
-	bool FUN_001c9500();
+	bool CanBePlayed();
 
 	int prtBuffer;
 	uint flags_0x4;

@@ -34,8 +34,8 @@ public:
 
 	S_TARGET_ON_OFF_STREAM_REF* pMagicalSwitch1C_0x10;
 	S_STREAM_EVENT_CAMERA* pMagicalSwitch20_0x14;
-	undefined4 field_0x18;
-	float field_0x1c;
+	int field_0x18;
+	float healthRatio;
 };
 
 class CBehaviourCommanderBeatUp : public CBehaviourCommander

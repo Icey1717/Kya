@@ -238,20 +238,20 @@ void CAddOnNativ::Create(ByteCode* pByteCode)
 			do {
 				CAddOnSubObj* puVar9 = this->aSubObjs + iVar9;
 				puVar9->field_0x0 = pByteCode->GetU32();
-				puVar9->field_0x8 = pByteCode->GetS32();
-				if (0 < puVar9->field_0x8) {
-					puVar9->field_0x4 = new int[puVar9->field_0x8];
+				puVar9->nbCinematics = pByteCode->GetS32();
+				if (0 < puVar9->nbCinematics) {
+					puVar9->aCinematicIds = new int[puVar9->nbCinematics];
 				}
 
 				iVar7 = 0;
-				if (0 < puVar9->field_0x8) {
+				if (0 < puVar9->nbCinematics) {
 					do {
-						puVar9->field_0x4[iVar7] = pByteCode->GetS32();
+						puVar9->aCinematicIds[iVar7] = pByteCode->GetS32();
 						iVar7 = iVar7 + 1;
-					} while (iVar7 < puVar9->field_0x8);
+					} while (iVar7 < puVar9->nbCinematics);
 				}
 
-				puVar9->field_0x10 = -1;
+				puVar9->lastPlayedCinematicId = -1;
 				iVar9 = iVar9 + 1;
 			} while (iVar9 < this->nbSubObjs);
 		}
@@ -312,7 +312,7 @@ void CAddOnNativ::Reset()
 			CAddOnSubObj* pSubObj = this->aSubObjs + iVar3;
 
 			pSubObj->pCinematic = (CCinematic*)0x0;
-			pSubObj->field_0x10 = -1;
+			pSubObj->lastPlayedCinematicId = -1;
 			pSubObj->field_0x14 = 0.0f;
 
 			iVar3 = iVar3 + 1;
@@ -508,7 +508,7 @@ bool CAddOnNativ::Func_0x24(uint param_2, CActor* pActor)
 
 			do {
 				if (param_2 == pSubObj->field_0x0) {
-					iVar2 = pSubObj->FUN_003e37e0();
+					iVar2 = pSubObj->PickCinematic();
 					if (iVar2 == -1) {
 						pSubObj = (CAddOnSubObj*)0x0;
 					}

@@ -917,9 +917,8 @@ void CActorWolfen::ChangeManageState(int state)
 		}
 		else {
 			if (iVar1 == 3) {
-				IMPLEMENTATION_GUARD(
-				pCVar2 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-				(*(code*)pCVar2->pVTable[1].field_0x0._dt)(pCVar2, state);)
+				CBehaviourFighterWolfen* pWolfenBehaviour = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(this->curBehaviourId));
+				pWolfenBehaviour->ManageCombatMusic(state);
 			}
 			else {
 				if (iVar1 == 0xe) {
@@ -1499,7 +1498,13 @@ bool CActorWolfen::Func_0x1ac()
 
 void CActorWolfen::_Std_OnFightActionSuccess()
 {
-	IMPLEMENTATION_GUARD();
+	_msg_fight_action_success_params params;
+
+	params.field_0x0 = 1;
+	params.pAdversary = this->pAdversary;
+	DoMessage(this->pCommander, MESSAGE_FIGHT_ACTION_SUCCESS, &params);
+
+	return;
 }
 
 void CActorWolfen::Func_0x204(CActorFighter* pOther)
@@ -4520,16 +4525,16 @@ void CActorWolfen::ClearLocalData()
 
 	this->combatFlags_0xb78 = 0;
 	this->combatMode_0xb7c = ECM_None;
-	//uVar5 = 0;
-	//if (this->nbComboMatchValues != 0) {
-	//	iVar4 = 0;
-	//	do {
-	//		uVar5 = uVar5 + 1;
-	//		*(undefined*)((int)&this->field_0xbd0->x + iVar4) = 1;
-	//		iVar4 = iVar4 + 0x10;
-	//	} while (uVar5 < (uint)this->nbComboMatchValues);
-	//}
-	//this->field_0xbe0 = 0;
+
+	uVar5 = 0;
+	if (this->nbComboMatchValues != 0) {
+		do {
+			this->field_0xbd0[uVar5].field_0x0 = 1;
+			uVar5 = uVar5 + 1;
+		} while (uVar5 < this->nbComboMatchValues);
+	}
+
+	this->field_0xbe0 = 0;
 	this->field_0xbd8 = 0;
 	this->field_0xd04 = (CActor*)0x0;
 	//this->field_0xd0c = 0;
@@ -7112,7 +7117,7 @@ void CBehaviourFighterWolfen::Begin(CActor* pOwner, int newState, int newAnimati
 	pWolfen->CheckValidPatterns(&pWolfen->aCapabilities[1].rndChooser);
 	pWolfen->CheckValidPatterns(&pWolfen->aCapabilities[2].rndChooser);
 
-	//this->field_0x64 = 0;
+	this->field_0x64 = 0.0f;
 
 	pWolfen->aCapabilities[0].Begin();
 	pWolfen->aCapabilities[1].Begin();
@@ -7328,9 +7333,16 @@ void CBehaviourFighterWolfen::ManageExit()
 	return;
 }
 
-void CBehaviourFighterWolfen::Func_0x60()
+void CBehaviourFighterWolfen::ManageCombatMusic(int state)
 {
-	IMPLEMENTATION_GUARD();
+	IMPLEMENTATION_GUARD_AUDIO(
+	if (state == 0) {
+		CAudioManager::StopCombatMusic(CScene::ptable.g_AudioManager_00451698);
+	}
+	else {
+		CAudioManager::PlayCombatMusic(CScene::ptable.g_AudioManager_00451698);
+	})
+	return;
 }
 
 void CBehaviourFighterWolfen::Func_0x64()

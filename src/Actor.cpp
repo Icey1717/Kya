@@ -4730,7 +4730,7 @@ void CAddOn::Reset()
 
 	if (pCVar1 != (CAddOnSubObj*)0x0) {
 		pCVar1->pCinematic = (CCinematic*)0x0;
-		pCVar1->field_0x10 = -1;
+		pCVar1->lastPlayedCinematicId = -1;
 		pCVar1->field_0x14 = 0.0f;
 	}
 
@@ -4848,81 +4848,68 @@ void CAddOnSubObj::SetCinematic(CCinematic* pCinematic)
 	return;
 }
 
-int CAddOnSubObj::FUN_003e37e0()
+int CAddOnSubObj::PickCinematic()
 {
 	bool bVar1;
-	bool bVar2;
-	CCinematic* pCVar3;
-	ulong uVar4;
 	int iVar5;
-	int iVar6;
-	int iVar7;
-	int iVar8;
+	int nbValidCinematics;
+	int cinematicIndex;
 
-	iVar8 = 0;
-	iVar6 = 0;
+	cinematicIndex = 0;
+	nbValidCinematics = 0;
 	bVar1 = false;
-	if (0 < this->field_0x8) {
+	if (0 < this->nbCinematics) {
 		do {
-			pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar8]);
-			if (pCVar3 != (CCinematic*)0x0) {
-				pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar8]);
-				bVar2 = pCVar3->FUN_001c9500();
-				if (bVar2 != false) {
-					iVar6 = iVar6 + 1;
+			if (g_CinematicManager_0048efc->GetCinematic(this->aCinematicIds[cinematicIndex]) != (CCinematic*)0x0) {
+				if (g_CinematicManager_0048efc->GetCinematic(this->aCinematicIds[cinematicIndex])->CanBePlayed() != false) {
+					nbValidCinematics = nbValidCinematics + 1;
 				}
 			}
 
-			iVar8 = iVar8 + 1;
-		} while (iVar8 < this->field_0x8);
+			cinematicIndex = cinematicIndex + 1;
+		} while (cinematicIndex < this->nbCinematics);
 	}
 
-	if (((1 < iVar6) && (this->field_0x10 != -1)) &&
-		(pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[this->field_0x10]), pCVar3 != (CCinematic*)0x0)) {
-		pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[this->field_0x10]);
-		bVar2 = pCVar3->FUN_001c9500();
-		if (bVar2 != false) {
-			iVar6 = iVar6 + -1;
+	// If there are multiple valid cinematics, we check if the last played cinematic should be skipped.
+	if (((1 < nbValidCinematics) && (this->lastPlayedCinematicId != -1)) && (g_CinematicManager_0048efc->GetCinematic(this->aCinematicIds[this->lastPlayedCinematicId]) != (CCinematic*)0x0)) {
+		if (g_CinematicManager_0048efc->GetCinematic(this->aCinematicIds[lastPlayedCinematicId])->CanBePlayed() != false) {
+			nbValidCinematics = nbValidCinematics + -1;
 			bVar1 = true;
 		}
 	}
 
-	if (0 < iVar6) {
-		iVar6 = iVar6 * CScene::Rand();
+	if (0 < nbValidCinematics) {
+		nbValidCinematics = nbValidCinematics * CScene::Rand();
 
-		if (iVar6 < 0) {
-			iVar6 = iVar6 + 0x7fff;
+		if (nbValidCinematics < 0) {
+			nbValidCinematics = nbValidCinematics + 0x7fff;
 		}
 
 		iVar5 = 0;
-		iVar8 = 0;
-		if (0 < this->field_0x8) {
+		cinematicIndex = 0;
+		if (0 < this->nbCinematics) {
 			do {
-				if (((!bVar1) || (iVar8 != this->field_0x10)) &&
-					(pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar7]), pCVar3 != (CCinematic*)0x0)) {
-					pCVar3 = g_CinematicManager_0048efc->GetCinematic(this->field_0x4[iVar7]);
-					bVar2 = pCVar3->FUN_001c9500();
-					if (bVar2 != false) {
+				if (((!bVar1) || (cinematicIndex != this->lastPlayedCinematicId)) && (g_CinematicManager_0048efc->GetCinematic(this->aCinematicIds[cinematicIndex]) != (CCinematic*)0x0)) {
+					if (g_CinematicManager_0048efc->GetCinematic(this->aCinematicIds[cinematicIndex])->CanBePlayed() != false) {
 						iVar5 = iVar5 + 1;
 					}
 				}
 
-				if (iVar5 + -1 == iVar6 >> 0xf) {
-					iVar6 = this->field_0x4[iVar8];
-					pCVar3 = g_CinematicManager_0048efc->GetCinematic(iVar6);
-					SetCinematic(pCVar3);
-					this->field_0x10 = iVar8;
-					return iVar6;
+				if (iVar5 + -1 == nbValidCinematics >> 0xf) {
+					const int cinematicId = this->aCinematicIds[cinematicIndex];
+					SetCinematic(g_CinematicManager_0048efc->GetCinematic(cinematicId));
+					this->lastPlayedCinematicId = cinematicIndex;
+					return cinematicId;
 				}
 
-				iVar8 = iVar8 + 1;
-			} while (iVar8 < this->field_0x8);
+				cinematicIndex = cinematicIndex + 1;
+			} while (cinematicIndex < this->nbCinematics);
 		}
 	}
 
 	SetCinematic((CCinematic*)0x0);
 
-	this->field_0x10 = -1;
+	this->lastPlayedCinematicId = -1;
 
 	return -1;
 }

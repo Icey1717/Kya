@@ -1928,6 +1928,7 @@ bool CBehaviourNativSeller::AdvanceTutorial(int param_2)
 		}
 
 		iVar3 = (this->comboTutorialManager).activeTutorialIndex;
+
 		if (iVar3 == -1) {
 			pTutorial = (ArenaTutorial*)0x0;
 		}
@@ -2164,7 +2165,7 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 					pBehaviour->SetBehaviourState(0x23);
 				}
 				else {
-					pBehaviour->SetBehaviourState(0x24);
+					pBehaviour->SetBehaviourState(NATIVE_STATE_SELLER_INPUT_SUCCEEDED);
 				}
 			}
 		}
@@ -2192,7 +2193,7 @@ void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
 			}
 			else {
 				if ((pHero->fightFlags & 0x40) != 0) {
-					pBehaviour->SetBehaviourState(0x24);
+					pBehaviour->SetBehaviourState(NATIVE_STATE_SELLER_INPUT_SUCCEEDED);
 				}
 			}
 		}
@@ -2201,7 +2202,7 @@ void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
 	return;
 }
 
-void CActorNativ::State_0x24(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::StateInputSucceeded(CBehaviourNativSeller* pBehaviour)
 {
 	ArenaTutorial* pTutorial;
 
@@ -3474,21 +3475,16 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 		}
 
 		if (msg == 0x12) {
-			IMPLEMENTATION_GUARD(
 			CLevelScheduler::ScenVar_Get(0);
 			iVar2 = CLevelScheduler::ScenVar_Get(0);
 			if (0 < iVar2) {
 				pCVar1 = this->pOwner;
-				iVar2 = (pCVar1->base).base.base.actorState;
-				uVar5 = 0;
-				if (iVar2 != -1) {
-					pSVar4 = (*((pCVar1->base).base.base.pVTable)->GetStateCfg)((CActor*)pCVar1, iVar2);
-					uVar5 = pSVar4->flags_0x4;
-				}
+				uVar5 = pCVar1->GetStateFlags(pCVar1->actorState);
 				if ((uVar5 & 0x400000) != 0) {
 					return 0xf;
 				}
-			})
+			}
+
 			return 0;
 		}
 
@@ -3616,8 +3612,8 @@ void CBehaviourNativSeller::ManageComboTutorial()
 	case 0x23:
 		this->pOwner->State_0x23(this);
 		break;
-	case 0x24:
-		this->pOwner->State_0x24(this);
+	case NATIVE_STATE_SELLER_INPUT_SUCCEEDED:
+		this->pOwner->StateInputSucceeded(this);
 		break;
 	case 0x25:
 		this->pOwner->State_0x25(this);
@@ -4045,7 +4041,7 @@ int CBehaviourNativSeller::GetInputState(int currentIndex, int param_3)
 						return INPUT_STATE_NORMAL;
 					}
 
-					if (((inputState == 0x24) || (inputState == 0x2a)) || ((inputState == 0x31 || (inputState == 0x35)))) {
+					if (((inputState == NATIVE_STATE_SELLER_INPUT_SUCCEEDED) || (inputState == 0x2a)) || ((inputState == 0x31 || (inputState == 0x35)))) {
 						return INPUT_STATE_CORRECT_HIT;
 					}
 

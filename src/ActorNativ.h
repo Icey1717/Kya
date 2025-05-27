@@ -17,6 +17,7 @@
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
 
 #define NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY 0x21
+#define NATIVE_STATE_SELLER_INPUT_SUCCEEDED 0x24
 #define NATIVE_STATE_SELLER_INPUT_FAILED 0x36
 
 struct S_TARGET_STREAM_REF;
@@ -293,7 +294,7 @@ public:
 	void StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour);
 	void State_0x22(CBehaviourNativSeller* pBehaviour);
 	void State_0x23(CBehaviourNativSeller* pBehaviour);
-	void State_0x24(CBehaviourNativSeller* pBehaviour);
+	void StateInputSucceeded(CBehaviourNativSeller* pBehaviour);
 	void State_0x25(CBehaviourNativSeller* pBehaviour);
 	void StateInputFailed(CBehaviourNativSeller* pBehaviour);
 	void State_0x38(CBehaviourNativSeller* pBehaviour);

@@ -2445,41 +2445,30 @@ void CActorHeroPrivate::Manage()
 				CLifeInterface* pLifeInterface = GetLifeInterface();
 				fVar14 = pLifeInterface->GetValue();
 				if (fVar14 - this->field_0x2e4 <= 0.0f) {
-					iVar8 = this->actorState;
-					if (iVar8 == -1) {
-						uVar6 = 0;
-					}
-					else {
-						pSVar9 = this->GetStateCfg(iVar8);
-						uVar6 = pSVar9->flags_0x4 & 1;
-					}
+					uVar6 = GetStateFlags(this->actorState);
 
 					if (uVar6 == 0) {
-						IMPLEMENTATION_GUARD(
-						uVar7 = GetWindState();
 						peVar13 = (edF32VECTOR4*)0x0;
-						if (uVar7 != 0) {
-							iVar8 = GetWindState();
-							peVar13 = (edF32VECTOR4*)(iVar8 + 0x40);
+						if (GetWindState() != (CActorWindState*)0x0) {
+							peVar13 = &GetWindState()->field_0x40;
 						}
-						uVar7 = GetWindState();
-						if (uVar7 == 0) {
-							fVar14 = 0.0;
+
+						if (GetWindState() != (CActorWindState*)0x0) {
+							fVar14 = 0.0f;
 						}
 						else {
-							iVar8 = GetWindState();
-							fVar14 = *(float*)(iVar8 + 0x38);
+							fVar14 = GetWindState()->field_0x38;
 						}
-						uVar7 = GetWindState();
-						peVar12 = (edF32VECTOR4*)0x0;
-						if (uVar7 != 0) {
-							iVar8 = GetWindState();
-							peVar12 = *(edF32VECTOR4**)(iVar8 + 0x2c);
+
+						peVar12 = (CWayPoint*)0x0;
+						if (GetWindState() != (CActorWindState*)0x0) {
+							peVar12 = GetWindState()->pWayPoint;
 						}
-						iVar8 = GetPossibleWind(fVar14, this, peVar13, peVar12);
+
+						iVar8 = GetPossibleWind(fVar14, peVar13, peVar12);
 						if (iVar8 != -1) {
-							(*(this->pVTable)->SetBehaviour)(this, 7, 0x99, -1);
-						})
+							SetBehaviour(7, 0x99, -1);
+						}
 					}
 				}
 			}
