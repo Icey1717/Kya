@@ -341,6 +341,9 @@ CBehaviour* CActorNativ::BuildBehaviour(int behaviourType)
 	case NATIVE_BEHAVIOUR_TAKE_AND_PUT:
 		pBehaviour = &behaviourTakeAndPut;
 		break;
+	case NATIVE_BEHAVIOUR_UNKNOWN:
+		pBehaviour = new CBehaviourNativUnknown;
+		break;
 	case NATIVE_BEHAVIOUR_SELLER:
 		pBehaviour = new CBehaviourNativSeller;
 		break;
@@ -779,13 +782,11 @@ void CActorNativ::ChooseBehaviour()
 		piVar4 = GetPathfinderClient();
 		if (piVar4->id != -1) {
 			pPathFinderClient = GetPathfinderClient();
-			IMPLEMENTATION_GUARD(
-			uVar5 = pPathFinderClient->IsValidPosition(&this->cinematicCachedLocation);
-			if (uVar5 != 0) {
+			if (pPathFinderClient->IsValidPosition(&this->cinematicCachedLocation) != false) {
 				this->field_0x504 = 0;
 				SetBehaviour(NATIVE_BEHAVIOUR_LIVE, 0x14, -1);
 				return;
-			})
+			}
 		}
 
 		this->field_0x504 = 0;
@@ -1018,8 +1019,7 @@ void CActorNativ::BehaviourNativTakeAndPut_InitState(int newState)
 		else {
 			if (newState == 0x18) {
 				this->field_0x534 = 0;
-				IMPLEMENTATION_GUARD(
-				uVar1 = FUN_00162270(this);)
+				uVar1 = FUN_00162270();
 				if (uVar1 != 0) {
 					SetState(NATIVE_STATE_TAKE_PUT_TURN_TO, -1);
 				}
@@ -1027,8 +1027,7 @@ void CActorNativ::BehaviourNativTakeAndPut_InitState(int newState)
 			else {
 				if (newState == 0x17) {
 					this->field_0x534 = 0;
-					IMPLEMENTATION_GUARD(
-					uVar1 = FUN_00162270(this);)
+					uVar1 = FUN_00162270();
 					if (uVar1 != 0) {
 						SetState(NATIVE_STATE_TAKE_PUT_TURN_TO, -1);
 					}
@@ -1104,23 +1103,7 @@ void CActorNativ::BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBe
 		}
 
 		if (bVar4) {
-			iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
-			pCVar5 = (CTakePutTrajectoryParam*)0x0;
-			if (iVar1 != -1) {
-				pCVar5 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-			}
-			if (pCVar5 == (CTakePutTrajectoryParam*)0x0) {
-				pCVar7 = (CPathFollowReader*)0x0;
-			}
-			else {
-				pCVar5 = (CTakePutTrajectoryParam*)0x0;
-				if (iVar1 != -1) {
-					pCVar5 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-				}
-				pCVar7 = &pCVar5->pathFollowReader;
-			}
-
-			bVar4 = pCVar7->AtGoal(pCVar7->splinePointIndex, pCVar7->field_0xc);
+			bVar4 = this->behaviourTakeAndPut.GetCurrentPathFollowReader()->AtGoal(pCVar7->splinePointIndex, pCVar7->field_0xc);
 			if (bVar4 == false) {
 				SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
 			}
@@ -1151,14 +1134,12 @@ void CActorNativ::BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBe
 			}
 
 			if (1 < this->field_0x534) {
-				IMPLEMENTATION_GUARD(
-				ChooseToolState();)
+				ChooseToolState();
 			}
 		}
 		else {
-			if (iVar1 == 0x17) {
-				IMPLEMENTATION_GUARD(
-				StateNativTakePutUsedTool(pBehaviour);)
+			if (iVar1 == NATIVE_STATE_TAKE_PUT_USED_TOOL) {
+				StateNativTakePutUsedTool(pBehaviour);
 			}
 			else {
 				if (iVar1 == NATIVE_STATE_TAKE_PUT_WALK) {
@@ -1182,36 +1163,15 @@ void CActorNativ::BehaviourNativTakeAndPut_TermState(int oldState)
 	CPathFollowReader* pPathFollowReader;
 
 	if (oldState == 0x19) {
-		IMPLEMENTATION_GUARD(
-		SetHasObject(false);)
-
-		iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
-		if (iVar1 == -1) {
-			pCVar2 = (CTakePutTrajectoryParam*)0x0;
-		}
-		else {
-			pCVar2 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-		}
-
-		if (pCVar2 == (CTakePutTrajectoryParam*)0x0) {
-			pPathFollowReader = (CPathFollowReader*)0x0;
-		}
-		else {
-			pCVar2 = (CTakePutTrajectoryParam*)0x0;
-			if (iVar1 != -1) {
-				pCVar2 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-			}
-			pPathFollowReader = &pCVar2->pathFollowReader;
-		}
-
-		pPathFollowReader->Reset();
+		SetHasObject(false);
+		this->behaviourTakeAndPut.GetCurrentPathFollowReader()->Reset();
 	}
 	else {
 		if (oldState == 0x18) {
 			this->field_0x530 = 1;
 		}
 		else {
-			if (oldState == 0x17) {
+			if (oldState == NATIVE_STATE_TAKE_PUT_USED_TOOL) {
 				this->field_0x530 = 1;
 			}
 			else {
@@ -1277,16 +1237,16 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 		FUN_003eed60();
 		if (iVar3 == 1) {
 			if (pBehaviour->field_0x8 == 0xffffffff) {
-				(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x20, -1);
+				SetState(0x20, -1);
 				CBehaviourNativSeller::FUN_003f1e90(pBehaviour, 0x28);
 			}
 			else {
-				(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x27, -1);
+				SetState(0x27, -1);
 			}
 		}
 		else {
 			if (iVar3 == 2) {
-				(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x1f, -1);
+				SetState(0x1f, -1);
 			}
 		})
 		break;
@@ -1295,7 +1255,7 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 		ppuVar1 = CBehaviourNativSeller::IsEventActive(pBehaviour);
 		if (ppuVar1 != (uint**)0x0) {
 			FUN_003ebee0(pBehaviour, 1);
-			(*((this->base).base.base.pVTable)->SetState)((CActor*)this, 0x20, -1);
+			SetState(0x20, -1);
 			CBehaviourNativSeller::FUN_003f1e90(pBehaviour, 0x28);
 			iVar3 = 0;
 			if (0 < pBehaviour->field_0x48->entryCount) {
@@ -1329,28 +1289,162 @@ void CActorNativ::BehaviourNativSeller_TermState(int oldState)
 	return;
 }
 
-void CActorNativ::StateNativTakePutTurnTo()
+void CActorNativ::BehaviourNativUnknown_InitState(int newState)
 {
-	IMPLEMENTATION_GUARD(
-		iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
-	pCVar5 = (CTakePutTrajectoryParam*)0x0;
-	if (iVar1 != -1) {
-		pCVar5 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
+	if (newState == 0x1a) {
+		this->flags = this->flags & 0xffffff7f;
+		this->flags = this->flags | 0x20;
+		EvaluateDisplayState();
 	}
-	if (pCVar5 == (CTakePutTrajectoryParam*)0x0) {
-		pCVar7 = (CPathFollowReader*)0x0;
+
+	return;
+}
+
+void CActorNativ::BehaviourNativUnknown_Manage(CBehaviourNativUnknown* pBehaviour)
+{
+	CAnimation* pCVar1;
+	edAnmLayer* peVar2;
+	uint zoneId;
+	bool bVar3;
+	float fVar4;
+	CActorHero* pCVar5;
+	CEventManager* pCVar6;
+	ed_zone_3d* pZone;
+	int iVar7;
+	long lVar8;
+	float fVar9;
+	float fVar10;
+
+	iVar7 = this->actorState;
+	if (iVar7 == 0x1e) {
+		fVar10 = pBehaviour->field_0x8;
+		fVar9 = pBehaviour->FUN_003f3210();
+		if (fVar9 < fVar10) {
+			SetState(0x1b, -1);
+		}
+		else {
+			pCVar1 = this->pAnimationController;
+			peVar2 = pCVar1->anmBinMetaAnimator.aAnimData;
+			if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
+				bVar3 = false;
+				if (peVar2->animPlayState != 0) {
+					bVar3 = (peVar2->field_0xcc & 2) != 0;
+				}
+			}
+			else {
+				bVar3 = false;
+			}
+			if (bVar3) {
+				SetState(0x1a, -1);
+			}
+		}
 	}
 	else {
-		pCVar5 = (CTakePutTrajectoryParam*)0x0;
-		if (iVar1 != -1) {
-			pCVar5 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
+		if (iVar7 == 0x1d) {
+			if ((20.0f < this->timeInAir) && (pBehaviour->addOn.Func_0x20(3, (CActor*)0x0, 0) != 0)) {
+				pBehaviour->field_0x28 = 0x1d;
+			}
 		}
-		pCVar7 = &pCVar5->pathFollowReader;
+		else {
+			if (iVar7 == 0x1c) {
+				IMPLEMENTATION_GUARD(
+				FUN_00160910();)
+			}
+			else {
+				if (iVar7 == 0x1b) {
+					fVar10 = pBehaviour->field_0x8;
+					fVar9 = pBehaviour->FUN_003f3210();
+					if (fVar10 * 1.1f < fVar9) {
+						SetState(0x1e, -1);
+					}
+					else {
+						pCVar1 = this->pAnimationController;
+						peVar2 = pCVar1->anmBinMetaAnimator.aAnimData;
+						if ((peVar2->currentAnimDesc).animType == pCVar1->currentAnimType_0x30) {
+							bVar3 = false;
+							if (peVar2->animPlayState != 0) {
+								bVar3 = (peVar2->field_0xcc & 2) != 0;
+							}
+						}
+						else {
+							bVar3 = false;
+						}
+
+						if (bVar3) {
+							IMPLEMENTATION_GUARD(
+							if (pBehaviour->addOn.Func_0x20() == 0) {
+								SetState(0x1c, -1);
+							}
+							else {
+								pBehaviour->field_0x28 = 0x1c;
+							})
+						}
+					}
+				}
+				else {
+					if ((iVar7 == 0x1a) && (fVar10 = pBehaviour->field_0x8, fVar9 = pBehaviour->FUN_003f3210(), fVar9 < fVar10))
+					{
+						SetState(0x1b, -1);
+					}
+				}
+			}
+		}
 	}
-	rotEuler = CPathFollowReader::GetWayPointAngles(pCVar7);
-	SetVectorFromAngles(&eStack16, (edF32VECTOR3*)rotEuler);
-	bVar4 = CActor::SV_UpdateOrientation2D(2.0, (CActor*)this, &eStack16, 0);
-	(*(this->pVTable)->ManageDyn)(4.0, (CActorHero*)this, 0x400, (CActorsTable*)0x0);
+	
+	pBehaviour->addOn.Manage();
+
+	pCVar6 = CScene::ptable.g_EventManager_006f5080;
+	pCVar5 = CActorHero::_gThis;
+	zoneId = this->field_0x380;
+
+	if (zoneId == 0xffffffff) {
+		return;
+	}
+
+	if (CActorHero::_gThis != (CActorHero*)0x0) {
+		pZone = (ed_zone_3d*)0x0;
+		if (zoneId != 0xffffffff) {
+			pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, zoneId);
+		}
+		if (pZone == (ed_zone_3d*)0x0) {
+			fVar9 = pCVar5->currentLocation.x - this->currentLocation.x;
+			fVar10 = pCVar5->currentLocation.y - this->currentLocation.y;
+			fVar4 = pCVar5->currentLocation.z - this->currentLocation.z;
+			if (sqrtf(fVar9 * fVar9 + fVar10 * fVar10 + fVar4 * fVar4) < 5.0f) {
+				bVar3 = true;
+				goto LAB_0015e1f0;
+			}
+		}
+		else {
+			iVar7 = edEventComputeZoneAgainstVertex(pCVar6->activeChunkId, pZone, &pCVar5->currentLocation, 0);
+			bVar3 = true;
+
+			if (iVar7 == 1) goto LAB_0015e1f0;
+		}
+	}
+
+	bVar3 = false;
+
+LAB_0015e1f0:
+	if (bVar3) {
+		pBehaviour->FUN_003f3070();
+	}
+	else {
+		pBehaviour->FUN_003f3020();
+	}
+
+	return;
+}
+
+void CActorNativ::StateNativTakePutTurnTo()
+{
+	edF32VECTOR4* rotEuler = this->behaviourTakeAndPut.GetCurrentPathFollowReader()->GetWayPointAngles();
+	edF32VECTOR4 eStack16;
+	SetVectorFromAngles(&eStack16, &rotEuler->xyz);
+	bool bVar4 = CActor::SV_UpdateOrientation2D(2.0f, &eStack16, 0);
+
+	ManageDyn(4.0f, 0x400, (CActorsTable*)0x0);
+
 	if (bVar4 == true) {
 		if ((this->field_0x370 - 5 < 2) || (this->field_0x370 == 7)) {
 			bVar4 = true;
@@ -1358,14 +1452,16 @@ void CActorNativ::StateNativTakePutTurnTo()
 		else {
 			bVar4 = false;
 		}
+
 		if (bVar4) {
-			(*(this->pVTable)->SetState)((CActor*)this, 0x17, 0x16);
+			SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, 0x16);
 		}
 		else {
-			ChooseToolState(this);
+			ChooseToolState();
 		}
-	})
-		return;
+	}
+
+	return;
 }
 
 void CActorNativ::StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour)
@@ -1409,88 +1505,16 @@ void CActorNativ::StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour)
 	movParamsIn.flags = 0x406;
 	movParamsIn.acceleration = 5.0f;
 
-	iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
 	bVar3 = false;
-	if (iVar1 == -1) {
-		pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-	}
-	else {
-		pTrajectoryParam = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-	}
 
-	if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-		pPathFollowReader = (CPathFollowReader*)0x0;
-	}
-	else {
-		iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
-		if (iVar1 == -1) {
-			pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-		}
-		else {
-			pTrajectoryParam = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-		}
-
-		pPathFollowReader = &pTrajectoryParam->pathFollowReader;
-	}
-
-	this->curWayPointLocation = *pPathFollowReader->GetWayPoint();
-
-	iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
-	if (iVar1 == -1) {
-		pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-	}
-	else {
-		pTrajectoryParam = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-	}
+	this->curWayPointLocation = *pBehaviour->GetCurrentPathFollowReader()->GetWayPoint();
 
 	pPathFinderClient = GetPathfinderClient();
-	bVar2 = pTrajectoryParam->IsWayPointValidPosition(pPathFinderClient);
+	bVar2 = pBehaviour->GetCurrentTrajectoryParam()->IsWayPointValidPosition(pPathFinderClient);
 
 	if (bVar2 != false) {
-		if (pBehaviour->curTrajectoryParamIndex == -1) {
-			pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-		}
-		else {
-			pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-		}
-
-		if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-			pPathFollowReader = (CPathFollowReader*)0x0;
-		}
-		else {
-			if (pBehaviour->curTrajectoryParamIndex == -1) {
-				pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-			}
-			else {
-				pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-			}
-
-			pPathFollowReader = &pTrajectoryParam->pathFollowReader;
-		}
-
-		if (pPathFollowReader->field_0xc != 0) {
-			if (pBehaviour->curTrajectoryParamIndex == -1) {
-				pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-			}
-			else {
-				pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-			}
-
-			if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-				pPathFollowReader = (CPathFollowReader*)0x0;
-			}
-			else {
-				if (pBehaviour->curTrajectoryParamIndex == -1) {
-					pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-				}
-				else {
-					pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-				}
-
-				pPathFollowReader = &pTrajectoryParam->pathFollowReader;
-			}
-
-			if (pPathFollowReader->splinePointIndex == 0) {
+		if (pBehaviour->GetCurrentPathFollowReader()->field_0xc != 0) {
+			if (pBehaviour->GetCurrentPathFollowReader()->splinePointIndex == 0) {
 				if (GetPathfinderClient()->id != -1) {
 					pPathFinderClient = GetPathfinderClient();
 					bVar2 = pPathFinderClient->IsValidPosition(&this->currentLocation);
@@ -1535,69 +1559,11 @@ LAB_00161180:
 	fVar12 = CActorMovable::FUN_00120250(0.2f);
 	fVar12 = CActorMovable::FUN_00120250(fVar12);
 	if (sqrtf(fVar10 * fVar10 + 0.0f + fVar11 * fVar11) < fVar12) {
-		if (pBehaviour->curTrajectoryParamIndex == -1) {
-			pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-		}
-		else {
-			pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-		}
-
-		if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-			pPathFollowReader = (CPathFollowReader*)0x0;
-		}
-		else {
-			if (pBehaviour->curTrajectoryParamIndex == -1) {
-				pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-			}
-			else {
-				pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-			}
-			pPathFollowReader = &pTrajectoryParam->pathFollowReader;
-		}
+		pPathFollowReader = pBehaviour->GetCurrentPathFollowReader();
 
 		bVar3 = pPathFollowReader->AtGoal(pPathFollowReader->splinePointIndex, pPathFollowReader->field_0xc);
 		if (bVar3 == false) {
-			if (pBehaviour->curTrajectoryParamIndex == -1) {
-				pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-			}
-			else {
-				pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-			}
-
-			if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-				pPathFollowReader = (CPathFollowReader*)0x0;
-			}
-			else {
-				if (pBehaviour->curTrajectoryParamIndex == -1) {
-					pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-				}
-				else {
-					pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-				}
-				pPathFollowReader = &pTrajectoryParam->pathFollowReader;
-			}
-
-			if (pBehaviour->curTrajectoryParamIndex == -1) {
-				pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-			}
-			else {
-				pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-			}
-
-			if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-				pCVar7 = (CPathFollowReader*)0x0;
-			}
-			else {
-				if (pBehaviour->curTrajectoryParamIndex == -1) {
-					pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-				}
-				else {
-					pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-				}
-				pCVar7 = &pTrajectoryParam->pathFollowReader;
-			}
-
-			if (pPathFollowReader->splinePointIndex == pCVar7->pPathFollow->splinePointCount + -1) {
+			if (pBehaviour->GetCurrentPathFollowReader()->splinePointIndex == pBehaviour->GetCurrentPathFollowReader()->pPathFollow->splinePointCount + -1) {
 				this->dynamicExt.normalizedTranslation.x = 0.0f;
 				this->dynamicExt.normalizedTranslation.y = 0.0f;
 				this->dynamicExt.normalizedTranslation.z = 0.0f;
@@ -1616,7 +1582,7 @@ LAB_00161180:
 						bVar3 = false;
 					}
 					if (bVar3) {
-						SetState(0x17, 0x16);
+						SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, 0x16);
 					}
 					else {
 						ChooseToolState();
@@ -1627,25 +1593,7 @@ LAB_00161180:
 				}
 			}
 			else {
-				if (pBehaviour->curTrajectoryParamIndex == -1) {
-					pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-				}
-				else {
-					pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-				}
-				if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-					pPathFollowReader = (CPathFollowReader*)0x0;
-				}
-				else {
-					if (pBehaviour->curTrajectoryParamIndex == -1) {
-						pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-					}
-					else {
-						pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-					}
-					pPathFollowReader = &pTrajectoryParam->pathFollowReader;
-				}
-				if ((pPathFollowReader->splinePointIndex == 0) && (this->bHasObject != 0)) {
+				if ((pBehaviour->GetCurrentPathFollowReader()->splinePointIndex == 0) && (this->bHasObject != 0)) {
 					uVar8 = this->field_0x370;
 					if ((uVar8 == 6) || ((uVar8 == 5 || (uVar8 == 7)))) {
 						bVar3 = true;
@@ -1680,34 +1628,14 @@ LAB_00161180:
 							return;
 						}
 
-						SetState(0x17, 0x16);
+						SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, 0x16);
 						return;
 					}
 
 					SetHasObject(false);
 				}
 
-				if (pBehaviour->curTrajectoryParamIndex == -1) {
-					pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-				}
-				else {
-					pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-				}
-
-				if (pTrajectoryParam == (CTakePutTrajectoryParam*)0x0) {
-					pPathFollowReader = (CPathFollowReader*)0x0;
-				}
-				else {
-					if (pBehaviour->curTrajectoryParamIndex == -1) {
-						pTrajectoryParam = (CTakePutTrajectoryParam*)0x0;
-					}
-					else {
-						pTrajectoryParam = pBehaviour->aTrajectoryParams + pBehaviour->curTrajectoryParamIndex;
-					}
-					pPathFollowReader = &pTrajectoryParam->pathFollowReader;
-				}
-
-				pPathFollowReader->NextWayPoint();
+				pBehaviour->GetCurrentPathFollowReader()->NextWayPoint();
 			}
 		}
 		else {
@@ -1742,6 +1670,90 @@ LAB_00161180:
 
 	return;
 }
+
+
+void CActorNativ::StateNativTakePutUsedTool(CBehaviourNativTakeAndPut* pBehaviour)
+{
+	int iVar1;
+	CAnimation* pCVar2;
+	edAnmLayer* peVar3;
+	bool bVar4;
+	edF32VECTOR4* rotEuler;
+	edF32VECTOR4 eStack16;
+
+	rotEuler = pBehaviour->GetCurrentPathFollowReader()->GetWayPointAngles();
+	SetVectorFromAngles(&eStack16, &rotEuler->xyz);
+	SV_UpdateOrientation2D(1.0f, &eStack16, 0);
+
+	ManageDyn(4.0f, 0x400, (CActorsTable*)0x0);
+	this->field_0x408 = this->field_0x408 + GetTimer()->cutsceneDeltaTime;
+
+	if ((this->field_0x370 - 5 < 2) || (this->field_0x370 == 7)) {
+		bVar4 = true;
+	}
+	else {
+		bVar4 = false;
+	}
+
+	if (bVar4) {
+		if (this->bHasObject == 0) {
+			if ((this->pAnimationController->anmBinMetaAnimator.aAnimData)->animPlayState == 1) {
+				SetHasObject(true);
+			}
+		}
+		else {
+			pCVar2 = this->pAnimationController;
+			peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
+			bVar4 = false;
+			if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
+				if (peVar3->animPlayState == 0) {
+					bVar4 = false;
+				}
+				else {
+					bVar4 = (peVar3->field_0xcc & 2) != 0;
+				}
+			}
+
+			if (bVar4) {
+				pBehaviour->GetCurrentPathFollowReader()->NextWayPoint();
+				SetState(NATIVE_STATE_TAKE_PUT_WALK, 0x17);
+			}
+		}
+	}
+	else {
+		pCVar2 = this->pAnimationController;
+		peVar3 = (pCVar2->anmBinMetaAnimator).aAnimData;
+		bVar4 = false;
+		if ((peVar3->currentAnimDesc).animType == pCVar2->currentAnimType_0x30) {
+			if (peVar3->animPlayState == 0) {
+				bVar4 = false;
+			}
+			else {
+				bVar4 = (peVar3->field_0xcc & 2) != 0;
+			}
+		}
+
+		if (bVar4) {
+			this->field_0x534 = this->field_0x534 + 1;
+		}
+
+		if (2 < this->field_0x534) {
+			if (pBehaviour->GetCurrentTrajectoryParam()->field_0x18 < this->field_0x408) {
+				pBehaviour->GetCurrentPathFollowReader()->NextWayPoint();
+
+				SetHasObject(true);
+				SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
+			}
+			else {
+				ChooseToolState();
+			}
+		}
+	}
+
+	return;
+}
+
+
 
 void CActorNativ::SetHasObject(bool bHasObject)
 {
@@ -1783,26 +1795,26 @@ void CActorNativ::ChooseToolState()
 	this->field_0x534 = 0;
 	switch (this->field_0x370) {
 	case 1:
-		SetState(0x17, -1);
+		SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, -1);
 		break;
 	case 2:
-		if (this->actorState == 0x17) {
+		if (this->actorState == NATIVE_STATE_TAKE_PUT_USED_TOOL) {
 			SetState(0x18, 0x14);
 		}
 		else {
-			SetState(0x17, ((int)(CScene::Rand() * 2) >> 0xf) + 0x12);
+			SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, ((int)(CScene::Rand() * 2) >> 0xf) + 0x12);
 		}
 		break;
 	case 3:
-		SetState(0x17, ((int)(CScene::Rand() * 2) >> 0xf) + 0x12);
+		SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, ((int)(CScene::Rand() * 2) >> 0xf) + 0x12);
 		break;
 	case 4:
-		SetState(0x17, 0x12);
+		SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, 0x12);
 		break;
 	case 5:
 	case 6:
 	case 7:
-		SetState(0x17, 0);
+		SetState(NATIVE_STATE_TAKE_PUT_USED_TOOL, 0);
 	}
 
 	return;
@@ -1823,23 +1835,7 @@ uint CActorNativ::FUN_00162270()
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 local_10;
 
-	iVar1 = (this->behaviourTakeAndPut).curTrajectoryParamIndex;
-	pCVar2 = (CTakePutTrajectoryParam*)0x0;
-	if (iVar1 != -1) {
-		pCVar2 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-	}
-	if (pCVar2 == (CTakePutTrajectoryParam*)0x0) {
-		pPathFollowReader = (CPathFollowReader*)0x0;
-	}
-	else {
-		pCVar2 = (CTakePutTrajectoryParam*)0x0;
-		if (iVar1 != -1) {
-			pCVar2 = (this->behaviourTakeAndPut).aTrajectoryParams + iVar1;
-		}
-		pPathFollowReader = &pCVar2->pathFollowReader;
-	}
-
-	rotEuler = pPathFollowReader->GetWayPointAngles();
+	rotEuler = this->behaviourTakeAndPut.GetCurrentPathFollowReader()->GetWayPointAngles();
 	SetVectorFromAngles(&local_30, &rotEuler->xyz);
 	local_10.x = this->rotationQuat.x;
 	local_10.y = 0.0f;
@@ -1867,6 +1863,257 @@ uint CActorNativ::FUN_00162270()
 
 	fVar4 = acosf(puVar5);
 	return fVar4 < fVar5 * 2.0f * 10.0f ^ 1;
+}
+
+
+int CActorNativ::FUN_00162a70()
+{
+	uint uVar1;
+	bool bVar2;
+	int iVar3;
+
+	switch (this->field_0x378) {
+	case 0:
+	case 1:
+		uVar1 = this->field_0x37c;
+		if (uVar1 == 3) {
+			uVar1 = this->field_0x370;
+			switch (uVar1) {
+			case 1:
+				return 4;
+			case 2:
+			case 3:
+			case 4:
+				return 8;
+			case 5:
+				if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+					bVar2 = true;
+				}
+				else {
+					bVar2 = false;
+				}
+				if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+					bVar2 = false;
+				}
+				if (!bVar2) {
+					return 4;
+				}
+				return 9;
+			case 6:
+				if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+					bVar2 = true;
+				}
+				else {
+					bVar2 = false;
+				}
+				if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+					bVar2 = false;
+				}
+				if (!bVar2) {
+					return 4;
+				}
+				return 10;
+			case 7:
+				if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+					bVar2 = true;
+				}
+				else {
+					bVar2 = false;
+				}
+				if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+					bVar2 = false;
+				}
+				if (!bVar2) {
+					return 4;
+				}
+				return 0xb;
+			}
+		}
+		else {
+			if (uVar1 == 2) {
+				uVar1 = this->field_0x370;
+				switch (uVar1) {
+				case 1:
+					return 3;
+				case 2:
+				case 3:
+				case 4:
+					return 7;
+				case 5:
+					if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+						bVar2 = true;
+					}
+					else {
+						bVar2 = false;
+					}
+					if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+						bVar2 = false;
+					}
+					if (!bVar2) {
+						return 3;
+					}
+					return 9;
+				case 6:
+					if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+						bVar2 = true;
+					}
+					else {
+						bVar2 = false;
+					}
+					if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+						bVar2 = false;
+					}
+					if (!bVar2) {
+						return 3;
+					}
+					return 10;
+				case 7:
+					if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+						bVar2 = true;
+					}
+					else {
+						bVar2 = false;
+					}
+					if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+						bVar2 = false;
+					}
+					if (!bVar2) {
+						return 3;
+					}
+					return 0xb;
+				}
+			}
+			else {
+				if (uVar1 == 1) {
+					uVar1 = this->field_0x370;
+					switch (uVar1) {
+					case 1:
+						return 2;
+					case 2:
+					case 3:
+					case 4:
+						return 6;
+					case 5:
+						if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+							bVar2 = true;
+						}
+						else {
+							bVar2 = false;
+						}
+						if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+							bVar2 = false;
+						}
+						if (!bVar2) {
+							return 2;
+						}
+						return 9;
+					case 6:
+						if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+							bVar2 = true;
+						}
+						else {
+							bVar2 = false;
+						}
+						if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+							bVar2 = false;
+						}
+						if (!bVar2) {
+							return 2;
+						}
+						return 10;
+					case 7:
+						if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+							bVar2 = true;
+						}
+						else {
+							bVar2 = false;
+						}
+						if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+							bVar2 = false;
+						}
+						if (!bVar2) {
+							return 2;
+						}
+						return 0xb;
+					}
+				}
+				else {
+					if (uVar1 == 0) {
+						uVar1 = this->field_0x370;
+						switch (uVar1) {
+						case 1:
+							return 1;
+						case 2:
+						case 3:
+						case 4:
+							return 5;
+						case 5:
+							if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+								bVar2 = true;
+							}
+							else {
+								bVar2 = false;
+							}
+							if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+								bVar2 = false;
+							}
+							if (bVar2) {
+								return 9;
+							}
+							return 1;
+						case 6:
+							if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+								bVar2 = true;
+							}
+							else {
+								bVar2 = false;
+							}
+							if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+								bVar2 = false;
+							}
+							if (bVar2) {
+								return 10;
+							}
+							return 1;
+						case 7:
+							if ((uVar1 - 5 < 2) || (uVar1 == 7)) {
+								bVar2 = true;
+							}
+							else {
+								bVar2 = false;
+							}
+							if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+								bVar2 = false;
+							}
+							if (bVar2) {
+								return 0xb;
+							}
+							return 1;
+						}
+					}
+				}
+			}
+		}
+	default:
+		iVar3 = 0;
+		break;
+	case 2:
+		iVar3 = 0xc;
+		break;
+	case 3:
+		iVar3 = 0xd;
+		break;
+	case 4:
+		iVar3 = 0xe;
+		break;
+	case 5:
+		iVar3 = 0xf;
+		break;
+	case 6:
+		iVar3 = 0x10;
+	}
+
+	return iVar3;
 }
 
 float CActorNativ::FUN_00164070()
@@ -1911,6 +2158,30 @@ float CActorNativ::FUN_00164070()
 	}
 
 	return fVar7;
+}
+
+void* CActorNativ::FUN_0036f330(int param_2)
+{
+	CBehaviour* pCVar1;
+	void* uVar1;
+	//CActorFighterVTable** ppCVar2;
+
+	pCVar1 = GetBehaviour(2);
+	if (pCVar1 == (CBehaviourNativ*)0x0) {
+		uVar1 = 0;
+	}
+	else {
+		IMPLEMENTATION_GUARD(
+		if (((param_2 < 0) || (4 < param_2)) ||
+			(ppCVar2 = &this->pVTable + param_2 * 6, ppCVar2[0x66] == (CActorFighterVTable*)0x0)) {
+			uVar1 = 0;
+		}
+		else {
+			uVar1 = (**(code**)(ppCVar2[0x61]->actorBase + 0xe8))();
+		})
+	}
+
+	return uVar1;
 }
 
 bool CBehaviourNativSeller::AdvanceTutorial(int param_2)
@@ -2314,7 +2585,7 @@ void CBehaviourNativTakeAndPut::Create(ByteCode* pByteCode)
 	CTakePutTrajectoryParam* pfVar3;
 	float fVar5;
 
-	this->curTrajectoryParamIndex = 0xffffffff;
+	this->curTrajectoryParamIndex = -1;
 	this->nbTrajectoryParams = pByteCode->GetS32();
 	uVar3 = this->nbTrajectoryParams;
 	if (uVar3 != 0) {
@@ -2372,80 +2643,26 @@ void CBehaviourNativTakeAndPut::Manage()
 
 void CBehaviourNativTakeAndPut::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
-	CActorNativ* pCVar1;
-	int iVar2;
-	CTakePutTrajectoryParam* pCVar3;
-	CPathFollowReader* pCVar4;
+	CActorNativ* pNativ;
 
 	this->pOwner = reinterpret_cast<CActorNativ*>(pOwner);
 
 	if (newState == -1) {
-		pCVar1 = this->pOwner;
-		if ((pCVar1->cinematicCachedState == -1) || (pCVar1->cinematicCachedBehaviour == -1)) {
-			iVar2 = this->curTrajectoryParamIndex;
-			pCVar3 = (CTakePutTrajectoryParam*)0x0;
-			if (iVar2 != -1) {
-				pCVar3 = this->aTrajectoryParams + iVar2;
-			}
-
-			if (pCVar3 == (CTakePutTrajectoryParam*)0x0) {
-				pCVar4 = (CPathFollowReader*)0x0;
+		pNativ = this->pOwner;
+		if ((pNativ->cinematicCachedState == -1) || (pNativ->cinematicCachedBehaviour == -1)) {
+			if (this->GetCurrentPathFollowReader() == (CPathFollowReader*)0x0) {
+				pNativ->SetState(6, -1);
 			}
 			else {
-				pCVar3 = (CTakePutTrajectoryParam*)0x0;
-				if (iVar2 != -1) {
-					pCVar3 = this->aTrajectoryParams + iVar2;
-				}
-				pCVar4 = &pCVar3->pathFollowReader;
-			}
-
-			if (pCVar4 == (CPathFollowReader*)0x0) {
-				pCVar1->SetState(6, -1);
-			}
-			else {
-				pCVar3 = (CTakePutTrajectoryParam*)0x0;
-				if (iVar2 != -1) {
-					pCVar3 = this->aTrajectoryParams + iVar2;
-				}
-
-				if (pCVar3 == (CTakePutTrajectoryParam*)0x0) {
-					pCVar4 = (CPathFollowReader*)0x0;
-				}
-				else {
-					pCVar3 = (CTakePutTrajectoryParam*)0x0;
-					if (iVar2 != -1) {
-						pCVar3 = this->aTrajectoryParams + iVar2;
-					}
-					pCVar4 = &pCVar3->pathFollowReader;
-				}
-
-				if (pCVar4->splinePointIndex != 0) {
-					if (iVar2 == -1) {
-						pCVar3 = (CTakePutTrajectoryParam*)0x0;
-					}
-					else {
-						pCVar3 = this->aTrajectoryParams + iVar2;
-					}
-
-					pCVar4 = (CPathFollowReader*)0x0;
-					if (pCVar3 != (CTakePutTrajectoryParam*)0x0) {
-						if (iVar2 == -1) {
-							pCVar3 = (CTakePutTrajectoryParam*)0x0;
-						}
-						else {
-							pCVar3 = this->aTrajectoryParams + iVar2;
-						}
-						pCVar4 = &pCVar3->pathFollowReader;
-					}
-
-					pCVar4->SetToClosestSplinePoint(&pCVar1->currentLocation);
+				if (this->GetCurrentPathFollowReader()->splinePointIndex != 0) {
+					this->GetCurrentPathFollowReader()->SetToClosestSplinePoint(&pNativ->currentLocation);
 				}
 
 				this->pOwner->SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
 			}
 		}
 		else {
-			pCVar1->ChooseBehaviour();
+			pNativ->ChooseBehaviour();
 		}
 	}
 	else {
@@ -2472,7 +2689,7 @@ void CBehaviourNativTakeAndPut::TermState(int oldState, int newState)
 
 int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	CActorNativ* pCVar1;
+	CActorNativ* pNativ;
 	//CBehaviourMovingPlatformVTable* pCVar2;
 	undefined4* puVar3;
 	bool bVar4;
@@ -2499,12 +2716,12 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 			IMPLEMENTATION_GUARD(
 			bVar4 = CActorNativ::FUN_00162910(this->pOwner);
 			if (bVar4 == false) {
-				pCVar1 = this->pOwner;
-				(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xd, -1);
+				pNativ = this->pOwner;
+				(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 0xd, -1);
 			}
 			else {
-				pCVar1 = this->pOwner;
-				(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xd, NATIVE_STATE_TAKE_PUT_WALK);
+				pNativ = this->pOwner;
+				(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 0xd, NATIVE_STATE_TAKE_PUT_WALK);
 			})
 		}
 		else {
@@ -2512,146 +2729,128 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 				IMPLEMENTATION_GUARD(
 				bVar4 = CActorNativ::FUN_00162910(this->pOwner);
 				if (bVar4 == false) {
-					pCVar1 = this->pOwner;
-					(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xc, -1);
+					pNativ = this->pOwner;
+					(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 0xc, -1);
 				}
 				else {
-					pCVar1 = this->pOwner;
-					(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xc, NATIVE_STATE_TAKE_PUT_WALK);
+					pNativ = this->pOwner;
+					(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 0xc, NATIVE_STATE_TAKE_PUT_WALK);
 				})
 			}
 			else {
 				if (iVar7 == 0xd) {
 					IMPLEMENTATION_GUARD(
-					pCVar1 = this->pOwner;
-					pCVar1->field_0x4f8 = (pCVar1->base).base.base.curBehaviourId;
-					pCVar1 = this->pOwner;
-					pCVar1->field_0x4fc = (pCVar1->base).base.base.actorState;
-					pCVar1 = this->pOwner;
-					pCVar1->field_0x500 = (pCVar1->base).base.base.currentAnimType;
-					pCVar1 = this->pOwner;
+					pNativ = this->pOwner;
+					pNativ->field_0x4f8 = pNativ->curBehaviourId;
+					pNativ = this->pOwner;
+					pNativ->field_0x4fc = pNativ->actorState;
+					pNativ = this->pOwner;
+					pNativ->field_0x500 = pNativ->currentAnimType;
+					pNativ = this->pOwner;
 					puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 					uVar15 = puVar3[1];
 					uVar11 = puVar3[2];
 					uVar13 = puVar3[3];
-					*(undefined4*)&(pCVar1->behaviourSpeak).field_0x10 = *puVar3;
-					*(undefined4*)&(pCVar1->behaviourSpeak).field_0x14 = uVar15;
-					*(undefined4*)&(pCVar1->behaviourSpeak).field_0x18 = uVar11;
-					*(undefined4*)&(pCVar1->behaviourSpeak).field_0x1c = uVar13;
+					*(undefined4*)&(pNativ->behaviourSpeak).field_0x10 = *puVar3;
+					*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
+					*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
+					*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
 					((this->pOwner)->behaviourSpeak).field_0x24 = *(undefined4*)((int)pMsgParam + 8);
 					((this->pOwner)->behaviourSpeak).field_0x28 = *(undefined**)((int)pMsgParam + 0x14);
-					pCVar1 = this->pOwner;
-					(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd);
+					pNativ = this->pOwner;
+					(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd);
 					(this->pOwner)->field_0x530 = 0;)
 				}
 				else {
 					if (iVar7 == 6) {
 						IMPLEMENTATION_GUARD(
 						*(undefined4*)&((this->pOwner)->behaviourSpeak).field_0x20 = *(undefined4*)((int)pMsgParam + 4);
-						pCVar1 = this->pOwner;
+						pNativ = this->pOwner;
 						puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 						uVar15 = puVar3[1];
 						uVar11 = puVar3[2];
 						uVar13 = puVar3[3];
-						*(undefined4*)&(pCVar1->behaviourSpeak).field_0x10 = *puVar3;
-						*(undefined4*)&(pCVar1->behaviourSpeak).field_0x14 = uVar15;
-						*(undefined4*)&(pCVar1->behaviourSpeak).field_0x18 = uVar11;
-						*(undefined4*)&(pCVar1->behaviourSpeak).field_0x1c = uVar13;
+						*(undefined4*)&(pNativ->behaviourSpeak).field_0x10 = *puVar3;
+						*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
+						*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
+						*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
 						((this->pOwner)->behaviourSpeak).field_0x24 = *(undefined4*)((int)pMsgParam + 8);
 						((this->pOwner)->behaviourSpeak).field_0x28 = *(undefined**)((int)pMsgParam + 0x14);
-						pCVar1 = this->pOwner;
-						(pCVar1->field_0x570).x = (pCVar1->base).base.base.currentLocation.x;
-						(pCVar1->field_0x570).y = (pCVar1->base).base.base.currentLocation.y;
-						(pCVar1->field_0x570).z = (pCVar1->base).base.base.currentLocation.z;
-						(pCVar1->field_0x570).w = (pCVar1->base).base.base.currentLocation.w;
-						pCVar1 = this->pOwner;
-						(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 10, -1);)
+						pNativ = this->pOwner;
+						(pNativ->field_0x570).x = pNativ->currentLocation.x;
+						(pNativ->field_0x570).y = pNativ->currentLocation.y;
+						(pNativ->field_0x570).z = pNativ->currentLocation.z;
+						(pNativ->field_0x570).w = pNativ->currentLocation.w;
+						pNativ = this->pOwner;
+						(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 10, -1);)
 					}
 					else {
 						if (iVar7 == 9) {
 							IMPLEMENTATION_GUARD(
 							*(undefined4*)&((this->pOwner)->behaviourSpeak).field_0x20 = *(undefined4*)((int)pMsgParam + 4);
-							pCVar1 = this->pOwner;
+							pNativ = this->pOwner;
 							puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 							uVar15 = puVar3[1];
 							uVar11 = puVar3[2];
 							uVar13 = puVar3[3];
-							*(undefined4*)&(pCVar1->behaviourSpeak).field_0x10 = *puVar3;
-							*(undefined4*)&(pCVar1->behaviourSpeak).field_0x14 = uVar15;
-							*(undefined4*)&(pCVar1->behaviourSpeak).field_0x18 = uVar11;
-							*(undefined4*)&(pCVar1->behaviourSpeak).field_0x1c = uVar13;
+							*(undefined4*)&(pNativ->behaviourSpeak).field_0x10 = *puVar3;
+							*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
+							*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
+							*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
 							((this->pOwner)->behaviourSpeak).field_0x24 = *(undefined4*)((int)pMsgParam + 8);
 							((this->pOwner)->behaviourSpeak).field_0x28 = *(undefined**)((int)pMsgParam + 0x14);
-							pCVar1 = this->pOwner;
-							(*((pCVar1->base).base.base.pVTable)->SetBehaviour)
-								((CActor*)pCVar1, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd);)
+							pNativ = this->pOwner;
+							(*(pNativ->pVTable)->SetBehaviour)
+								((CActor*)pNativ, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd);)
 						}
 						else {
 							if (iVar7 == 5) {
 								IMPLEMENTATION_GUARD(
 								*(undefined4*)&((this->pOwner)->behaviourSpeak).field_0x20 = *(undefined4*)((int)pMsgParam + 4);
-								pCVar1 = this->pOwner;
+								pNativ = this->pOwner;
 								puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 								uVar15 = puVar3[1];
 								uVar11 = puVar3[2];
 								uVar13 = puVar3[3];
-								*(undefined4*)&(pCVar1->behaviourSpeak).field_0x10 = *puVar3;
-								*(undefined4*)&(pCVar1->behaviourSpeak).field_0x14 = uVar15;
-								*(undefined4*)&(pCVar1->behaviourSpeak).field_0x18 = uVar11;
-								*(undefined4*)&(pCVar1->behaviourSpeak).field_0x1c = uVar13;
+								*(undefined4*)&(pNativ->behaviourSpeak).field_0x10 = *puVar3;
+								*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
+								*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
+								*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
 								((this->pOwner)->behaviourSpeak).field_0x24 = *(undefined4*)((int)pMsgParam + 8);
 								((this->pOwner)->behaviourSpeak).field_0x28 = *(undefined**)((int)pMsgParam + 0x14);
-								pCVar1 = this->pOwner;
-								(pCVar1->field_0x570).x = (pCVar1->base).base.base.currentLocation.x;
-								(pCVar1->field_0x570).y = (pCVar1->base).base.base.currentLocation.y;
-								(pCVar1->field_0x570).z = (pCVar1->base).base.base.currentLocation.z;
-								(pCVar1->field_0x570).w = (pCVar1->base).base.base.currentLocation.w;
-								pCVar1 = this->pOwner;
-								(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xb, -1);
-								pCVar1 = this->pOwner;
-								(pCVar1->field_0x570).x = (pCVar1->base).base.base.currentLocation.x;
-								(pCVar1->field_0x570).y = (pCVar1->base).base.base.currentLocation.y;
-								(pCVar1->field_0x570).z = (pCVar1->base).base.base.currentLocation.z;
-								(pCVar1->field_0x570).w = (pCVar1->base).base.base.currentLocation.w;)
+								pNativ = this->pOwner;
+								(pNativ->field_0x570).x = pNativ->currentLocation.x;
+								(pNativ->field_0x570).y = pNativ->currentLocation.y;
+								(pNativ->field_0x570).z = pNativ->currentLocation.z;
+								(pNativ->field_0x570).w = pNativ->currentLocation.w;
+								pNativ = this->pOwner;
+								(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 0xb, -1);
+								pNativ = this->pOwner;
+								(pNativ->field_0x570).x = pNativ->currentLocation.x;
+								(pNativ->field_0x570).y = pNativ->currentLocation.y;
+								(pNativ->field_0x570).z = pNativ->currentLocation.z;
+								(pNativ->field_0x570).w = pNativ->currentLocation.w;)
 							}
 							else {
 								if (iVar7 == 4) {
 									this->curTrajectoryParamIndex = pParams->field_0x4;
-									pCVar1 = this->pOwner;
-									iVar7 = (pCVar1->behaviourTakeAndPut).curTrajectoryParamIndex;
-									if (iVar7 == -1) {
-										pCVar9 = (CTakePutTrajectoryParam*)0x0;
-									}
-									else {
-										pCVar9 = (pCVar1->behaviourTakeAndPut).aTrajectoryParams + iVar7;
-									}
+									pNativ = this->pOwner;
 
-									if (pCVar9 == (CTakePutTrajectoryParam*)0x0) {
-										pPathFollowReader = (CPathFollowReader*)0x0;
-									}
-									else {
-										pCVar9 = (CTakePutTrajectoryParam*)0x0;
-										if (iVar7 != -1) {
-											pCVar9 = (pCVar1->behaviourTakeAndPut).aTrajectoryParams + iVar7;
-										}
-										pPathFollowReader = &pCVar9->pathFollowReader;
-									}
-
-									pPathFollowReader->Reset();
-									pCVar1 = this->pOwner;
-									pCVar1->SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
+									pNativ->behaviourTakeAndPut.GetCurrentPathFollowReader()->Reset();
+									pNativ = this->pOwner;
+									pNativ->SetState(NATIVE_STATE_TAKE_PUT_WALK, -1);
 								}
 								else {
 									if (iVar7 == 3) {
 										IMPLEMENTATION_GUARD(
 										((this->pOwner)->behaviourSpeak).field_0x24 = *(undefined4*)((int)pMsgParam + 8);
-										pCVar1 = this->pOwner;
-										if ((pCVar1->field_0x4f8 == -1) && (pCVar1->field_0x4fc == -1)) {
-											(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 5, 6, -1);
+										pNativ = this->pOwner;
+										if ((pNativ->field_0x4f8 == -1) && (pNativ->field_0x4fc == -1)) {
+											(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 5, 6, -1);
 										}
 										else {
-											(*((pCVar1->base).base.base.pVTable)->SetBehaviour)
-												((CActor*)pCVar1, pCVar1->field_0x4f8, pCVar1->field_0x4fc, pCVar1->field_0x500);
+											(*(pNativ->pVTable)->SetBehaviour)
+												((CActor*)pNativ, pNativ->field_0x4f8, pNativ->field_0x4fc, pNativ->field_0x500);
 											(this->pOwner)->field_0x4f8 = -1;
 											(this->pOwner)->field_0x4fc = -1;
 											(this->pOwner)->field_0x500 = -1;
@@ -2659,10 +2858,9 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 									}
 									else {
 										if (iVar7 == 2) {
-											IMPLEMENTATION_GUARD(
-											this->curTrajectoryParamIndex = 0xffffffff;
-											pCVar1 = this->pOwner;
-											(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 5, 0x13, -1);)
+											this->curTrajectoryParamIndex = -1;
+											pNativ = this->pOwner;
+											pNativ->SetBehaviour(NATIVE_BEHAVIOUR_LIVE, 0x13, -1);
 										}
 										else {
 											if (iVar7 == 0x10) {
@@ -2685,8 +2883,8 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 													pCVar8[6].pVTable = pCVar10;
 													pCVar8[7].pVTable = pCVar12;
 												}
-												pCVar1 = this->pOwner;
-												(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 9, 0x3a, -1);)
+												pNativ = this->pOwner;
+												(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 9, 0x3a, -1);)
 											}
 										}
 									}
@@ -2703,16 +2901,16 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 			IMPLEMENTATION_GUARD(
 			local_20[0] = 9;
 			local_10 = CActorNativ::FUN_00162a70(this->pOwner);
-			pCVar1 = this->pOwner;
+			pNativ = this->pOwner;
 			local_4 = local_20;
-			iVar7 = CActor::DoMessage((CActor*)pCVar1, (CActor*)pCVar1->field_0x3f0, 0x4e, (uint)local_4);
+			iVar7 = CActor::DoMessage((CActor*)pNativ, (CActor*)pNativ->field_0x3f0, 0x4e, (uint)local_4);
 			if (iVar7 != 0) {
-				pCVar1 = this->pOwner;
-				pCVar1->cinematicCachedBehaviour = (pCVar1->base).base.base.curBehaviourId;
-				pCVar1 = this->pOwner;
-				pCVar1->cinematicCachedState = (pCVar1->base).base.base.actorState;
-				pCVar1 = this->pOwner;
-				pCVar1->cinematicCachedAnim = (pCVar1->base).base.base.currentAnimType;
+				pNativ = this->pOwner;
+				pNativ->cinematicCachedBehaviour = pNativ->curBehaviourId;
+				pNativ = this->pOwner;
+				pNativ->cinematicCachedState = pNativ->actorState;
+				pNativ = this->pOwner;
+				pNativ->cinematicCachedAnim = pNativ->currentAnimType;
 				return 1;
 			})
 			return 0;
@@ -2721,23 +2919,23 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 	
 			(this->pOwner)->field_0x508 = 1.0f;
 
-			pCVar1 = this->pOwner;
-			iVar7 = pCVar1->actorState;
+			pNativ = this->pOwner;
+			iVar7 = pNativ->actorState;
 			if (iVar7 == -1) {
 				uVar6 = 0;
 			}
 			else {
-				pSVar5 = pCVar1->GetStateCfg(iVar7);
+				pSVar5 = pNativ->GetStateCfg(iVar7);
 				uVar6 = pSVar5->flags_0x4 & 0x4000;
 			}
 
 			if (uVar6 == 0) {
-				pCVar1 = this->pOwner;
-				pCVar1->field_0x4f8 = pCVar1->curBehaviourId;
-				pCVar1 = this->pOwner;
-				pCVar1->field_0x4fc = pCVar1->actorState;
-				pCVar1 = this->pOwner;
-				pCVar1->field_0x500 = pCVar1->currentAnimType;
+				pNativ = this->pOwner;
+				pNativ->field_0x4f8 = pNativ->curBehaviourId;
+				pNativ = this->pOwner;
+				pNativ->field_0x4fc = pNativ->actorState;
+				pNativ = this->pOwner;
+				pNativ->field_0x500 = pNativ->currentAnimType;
 				(this->pOwner)->field_0x504 = 1;
 			}
 
@@ -2750,6 +2948,26 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 	}
 
 	return 0;
+}
+
+CTakePutTrajectoryParam* CBehaviourNativTakeAndPut::GetCurrentTrajectoryParam()
+{
+	if (this->curTrajectoryParamIndex == -1) {
+		return (CTakePutTrajectoryParam*)0x0;
+	}
+	else {
+		return this->aTrajectoryParams + this->curTrajectoryParamIndex;
+	}
+}
+
+CPathFollowReader* CBehaviourNativTakeAndPut::GetCurrentPathFollowReader()
+{
+	if (GetCurrentTrajectoryParam() == (CTakePutTrajectoryParam*)0x0) {
+		return (CPathFollowReader*)0x0;
+	}
+	else {
+		return &GetCurrentTrajectoryParam()->pathFollowReader;
+	}
 }
 
 CBehaviourNativSpeak::CBehaviourNativSpeak()
@@ -2963,11 +3181,11 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			bVar4 = CActorNativ::FUN_00162910((this->base).pOwner);
 			if (bVar4 == false) {
 				pCVar1 = (this->base).pOwner;
-				(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xd, -1);
+				(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xd, -1);
 			}
 			else {
 				pCVar1 = (this->base).pOwner;
-				(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xd, 0x15);
+				(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xd, 0x15);
 			})
 		}
 		else {
@@ -2976,22 +3194,22 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 				bVar4 = CActorNativ::FUN_00162910((this->base).pOwner);
 				if (bVar4 == false) {
 					pCVar1 = (this->base).pOwner;
-					(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xc, -1);
+					(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xc, -1);
 				}
 				else {
 					pCVar1 = (this->base).pOwner;
-					(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xc, 0x15);
+					(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xc, 0x15);
 				})
 			}
 			else {
 				if (iVar7 == 0xd) {
 					IMPLEMENTATION_GUARD(
 					pCVar1 = (this->base).pOwner;
-					pCVar1->field_0x4f8 = (pCVar1->base).base.base.curBehaviourId;
+					pCVar1->field_0x4f8 = pCVar1->curBehaviourId;
 					pCVar1 = (this->base).pOwner;
-					pCVar1->field_0x4fc = (pCVar1->base).base.base.actorState;
+					pCVar1->field_0x4fc = pCVar1->actorState;
 					pCVar1 = (this->base).pOwner;
-					pCVar1->field_0x500 = (pCVar1->base).base.base.currentAnimType;
+					pCVar1->field_0x500 = pCVar1->currentAnimType;
 					pCVar1 = (this->base).pOwner;
 					puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
 					uVar15 = puVar3[1];
@@ -3004,7 +3222,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 					(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
 					(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
 					pCVar1 = (this->base).pOwner;
-					(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd)
+					(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd)
 						;
 					((this->base).pOwner)->field_0x530 = 0;)
 				}
@@ -3025,7 +3243,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 							(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
 							(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
 							pCVar1 = (this->base).pOwner;
-							(*((pCVar1->base).base.base.pVTable)->SetBehaviour)
+							(*(pCVar1->pVTable)->SetBehaviour)
 								((CActor*)pCVar1, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd);)
 						}
 						else {
@@ -3045,12 +3263,12 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 								(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
 								(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
 								pCVar1 = (this->base).pOwner;
-								(pCVar1->field_0x570).x = (pCVar1->base).base.base.currentLocation.x;
-								(pCVar1->field_0x570).y = (pCVar1->base).base.base.currentLocation.y;
-								(pCVar1->field_0x570).z = (pCVar1->base).base.base.currentLocation.z;
-								(pCVar1->field_0x570).w = (pCVar1->base).base.base.currentLocation.w;
+								(pCVar1->field_0x570).x = pCVar1->currentLocation.x;
+								(pCVar1->field_0x570).y = pCVar1->currentLocation.y;
+								(pCVar1->field_0x570).z = pCVar1->currentLocation.z;
+								(pCVar1->field_0x570).w = pCVar1->currentLocation.w;
 								pCVar1 = (this->base).pOwner;
-								(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 10, -1);)
+								(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 10, -1);)
 							}
 							else {
 								if (iVar7 == 5) {
@@ -3069,39 +3287,20 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 									(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
 									(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
 									pCVar1 = (this->base).pOwner;
-									(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xb, -1);
+									(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 3, 0xb, -1);
 									pCVar1 = (this->base).pOwner;
-									(pCVar1->field_0x570).x = (pCVar1->base).base.base.currentLocation.x;
-									(pCVar1->field_0x570).y = (pCVar1->base).base.base.currentLocation.y;
-									(pCVar1->field_0x570).z = (pCVar1->base).base.base.currentLocation.z;
-									(pCVar1->field_0x570).w = (pCVar1->base).base.base.currentLocation.w;)
+									(pCVar1->field_0x570).x = pCVar1->currentLocation.x;
+									(pCVar1->field_0x570).y = pCVar1->currentLocation.y;
+									(pCVar1->field_0x570).z = pCVar1->currentLocation.z;
+									(pCVar1->field_0x570).w = pCVar1->currentLocation.w;)
 								}
 								else {
 									if (iVar7 == 4) {
-										IMPLEMENTATION_GUARD(
-										(((this->base).pOwner)->behaviourTakeAndPut).curTrajectoryParamIndex =
-											*(undefined4*)((int)pMsgParam + 4);
-										pCVar1 = (this->base).pOwner;
-										iVar7 = (pCVar1->behaviourTakeAndPut).curTrajectoryParamIndex;
-										if (iVar7 == -1) {
-											pCVar9 = (CTakePutTrajectoryParam*)0x0;
-										}
-										else {
-											pCVar9 = (pCVar1->behaviourTakeAndPut).aTrajectoryParams + iVar7;
-										}
-										if (pCVar9 == (CTakePutTrajectoryParam*)0x0) {
-											pPathFollow = (CPathFollowReader*)0x0;
-										}
-										else {
-											pCVar9 = (CTakePutTrajectoryParam*)0x0;
-											if (iVar7 != -1) {
-												pCVar9 = (pCVar1->behaviourTakeAndPut).aTrajectoryParams + iVar7;
-											}
-											pPathFollow = &pCVar9->pathFollowReader;
-										}
-										CPathFollowReader::Reset(pPathFollow);
-										pCVar1 = (this->base).pOwner;
-										(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 6, -1, -1);)
+										CActorNativMsgParamOther* pTajectoryParam = reinterpret_cast<CActorNativMsgParamOther*>(pMsgParam);
+										this->pOwner->behaviourTakeAndPut.curTrajectoryParamIndex = pTajectoryParam->field_0x4;
+										this->pOwner->behaviourTakeAndPut.GetCurrentPathFollowReader()->Reset();
+										pCVar1 = this->pOwner;
+										pCVar1->SetBehaviour(NATIVE_BEHAVIOUR_TAKE_AND_PUT, -1, -1);
 									}
 									else {
 										if (iVar7 == 3) {
@@ -3109,10 +3308,10 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 											(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
 											pCVar1 = (this->base).pOwner;
 											if ((pCVar1->field_0x4f8 == -1) && (pCVar1->field_0x4fc == -1)) {
-												(*((pCVar1->base).base.base.pVTable)->SetState)((CActor*)pCVar1, 6, -1);
+												(*(pCVar1->pVTable)->SetState)((CActor*)pCVar1, 6, -1);
 											}
 											else {
-												(*((pCVar1->base).base.base.pVTable)->SetBehaviour)
+												(*(pCVar1->pVTable)->SetBehaviour)
 													((CActor*)pCVar1, pCVar1->field_0x4f8, pCVar1->field_0x4fc, pCVar1->field_0x500);
 												((this->base).pOwner)->field_0x4f8 = -1;
 												((this->base).pOwner)->field_0x4fc = -1;
@@ -3121,9 +3320,8 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 										}
 										else {
 											if (iVar7 == 2) {
-												IMPLEMENTATION_GUARD(
-												pCVar1 = (this->base).pOwner;
-												(*((pCVar1->base).base.base.pVTable)->SetState)((CActor*)pCVar1, 0x13, -1);)
+												pCVar1 = this->pOwner;
+												pCVar1->SetState(0x13, -1);
 											}
 											else {
 												if (iVar7 == 0x10) {
@@ -3147,7 +3345,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 														pCVar8[7].pVTable = pCVar12;
 													}
 													pCVar1 = (this->base).pOwner;
-													(*((pCVar1->base).base.base.pVTable)->SetBehaviour)((CActor*)pCVar1, 9, 0x3a, -1);)
+													(*(pCVar1->pVTable)->SetBehaviour)((CActor*)pCVar1, 9, 0x3a, -1);)
 												}
 											}
 										}
@@ -3170,11 +3368,11 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			iVar7 = CActor::DoMessage((CActor*)pCVar1, pCVar1->field_0x3f0, 0x4e, (uint)local_4);
 			if (iVar7 != 0) {
 				pCVar1 = (this->base).pOwner;
-				pCVar1->cinematicCachedBehaviour = (pCVar1->base).base.base.curBehaviourId;
+				pCVar1->cinematicCachedBehaviour = pCVar1->curBehaviourId;
 				pCVar1 = (this->base).pOwner;
-				pCVar1->cinematicCachedState = (pCVar1->base).base.base.actorState;
+				pCVar1->cinematicCachedState = pCVar1->actorState;
 				pCVar1 = (this->base).pOwner;
-				pCVar1->cinematicCachedAnim = (pCVar1->base).base.base.currentAnimType;
+				pCVar1->cinematicCachedAnim = pCVar1->currentAnimType;
 				return 1;
 			})
 			return 0;
@@ -3183,21 +3381,21 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			IMPLEMENTATION_GUARD(
 			((this->base).pOwner)->field_0x508 = 1.0f;
 			pCVar1 = (this->base).pOwner;
-			iVar7 = (pCVar1->base).base.base.actorState;
+			iVar7 = pCVar1->actorState;
 			if (iVar7 == -1) {
 				uVar6 = 0;
 			}
 			else {
-				pSVar5 = (*((pCVar1->base).base.base.pVTable)->GetStateCfg)((CActor*)pCVar1, iVar7);
+				pSVar5 = (*(pCVar1->pVTable)->GetStateCfg)((CActor*)pCVar1, iVar7);
 				uVar6 = pSVar5->flags_0x4 & 0x4000;
 			}
 			if (uVar6 == 0) {
 				pCVar1 = (this->base).pOwner;
-				pCVar1->field_0x4f8 = (pCVar1->base).base.base.curBehaviourId;
+				pCVar1->field_0x4f8 = pCVar1->curBehaviourId;
 				pCVar1 = (this->base).pOwner;
-				pCVar1->field_0x4fc = (pCVar1->base).base.base.actorState;
+				pCVar1->field_0x4fc = pCVar1->actorState;
 				pCVar1 = (this->base).pOwner;
-				pCVar1->field_0x500 = (pCVar1->base).base.base.currentAnimType;
+				pCVar1->field_0x500 = pCVar1->currentAnimType;
 				((this->base).pOwner)->field_0x504 = 1;
 			}
 			if ((((this->base).pOwner)->base).base.base.actorState == 0xc) {
@@ -4807,4 +5005,214 @@ int ComboTutorialManager::StepRequiredCombo()
 NativSellerSubObjA* NativSubObjD::Set_0x1630(int param_2)
 {
 	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourNativUnknown::Create(ByteCode* pByteCode)
+{
+	this->field_0x8 = pByteCode->GetF32();
+	this->addOn.Create(pByteCode);
+
+	return;
+}
+
+void CBehaviourNativUnknown::Init(CActor* pOwner)
+{
+	this->field_0x28 = -1;
+	this->pOwner = static_cast<CActorNativ*>(pOwner);
+
+	this->addOn.Init(pOwner);
+
+	this->field_0x24 = (CActor*)0x0;
+
+	this->addOn.Reset();
+	this->addOn.field_0xd = 1;
+
+	return;
+}
+
+void CBehaviourNativUnknown::Manage()
+{
+	this->pOwner->BehaviourNativUnknown_Manage(this);
+
+	return;
+}
+
+void CBehaviourNativUnknown::ManageFrozen()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourNativUnknown::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	this->pOwner = static_cast<CActorNativ*>(pOwner);
+	if (newState == -1) {
+		if (this->field_0x28 == -1) {
+			this->pOwner->SetState(0x1a, -1);
+		}
+		else {
+			this->pOwner->SetState(this->field_0x28, -1);
+		}
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+void CBehaviourNativUnknown::End(int newBehaviourId)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourNativUnknown::InitState(int newState)
+{
+	this->pOwner->BehaviourNativUnknown_InitState(newState);
+
+	return;
+}
+
+void CBehaviourNativUnknown::TermState(int oldState, int newState)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+int CBehaviourNativUnknown::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	int iVar1;
+	CActorNativ* pCVar2;
+	undefined4 uVar3;
+	int iVar4;
+	long lVar5;
+
+	if (msg == 0x60) {
+		IMPLEMENTATION_GUARD(
+		iVar4 = 1;
+		iVar1 = *pMsgParam;
+		if (iVar1 == 1) {
+			lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, 0x25, 0, 0);
+			if (lVar5 == 0) {
+				pCVar2 = this->pOwner;
+				if ((pCVar2->base).base.base.curBehaviourId == 1) {
+					this->field_0x28 = 0x1c;
+				}
+				else {
+					(*((pCVar2->base).base.base.pVTable)->SetState)((CActor*)pCVar2, 0x1c, -1);
+				}
+			}
+			else {
+				this->field_0x28 = 0x1c;
+			}
+			iVar4 = 1;
+		}
+		else {
+			if (iVar1 == 2) {
+				IMPLEMENTATION_GUARD(
+				lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, 0x24, 0, 0);
+				if (lVar5 != 0) {
+					this->field_0x28 = 0x1d;
+				}
+				iVar4 = 1;)
+			}
+			else {
+				if (iVar1 == 3) {
+					IMPLEMENTATION_GUARD(
+					uVar3 = FUN_003f30d0((long)(int)this, (long)pMsgParam[1]);
+					lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, uVar3, 0, 1);
+					if (lVar5 != 0) {
+						this->field_0x28 = 0x1d;
+					}
+					iVar4 = 1;)
+				}
+				else {
+					if (iVar1 == 0) {
+						IMPLEMENTATION_GUARD(
+						lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, 3, 0, 0);
+						if (lVar5 == 0) {
+							pCVar2 = this->pOwner;
+							if ((pCVar2->base).base.base.curBehaviourId == 1) {
+								this->field_0x28 = 0x1d;
+							}
+							else {
+								(*((pCVar2->base).base.base.pVTable)->SetState)((CActor*)pCVar2, 0x1d, -1);
+							}
+						}
+						else {
+							this->field_0x28 = 0x1d;
+						}
+						iVar4 = 1;)
+					}
+					else {
+						if ((iVar1 == 4) && (pSender->typeID == 0x34)) {
+							this->field_0x24 = pSender;
+						}
+						else {
+							iVar4 = 0;
+						}
+					}
+				}
+			}
+		})
+	}
+	else {
+		iVar4 = 0;
+	}
+	return iVar4;
+}
+
+float CBehaviourNativUnknown::FUN_003f3210()
+{
+	CActor* pActor;
+	CActorNativ* pCVar1;
+	float fVar2;
+	float fVar3;
+	CActorHero* pCVar4;
+	CBehaviour* pCVar5;
+	edF32VECTOR4* peVar6;
+	float fVar7;
+	edF32VECTOR4 local_10;
+
+	pCVar4 = CActorHero::_gThis;
+	pActor = (CActor*)this->field_0x24;
+	if ((pActor == (CActor*)0x0) || (pActor->curBehaviourId != 2)) {
+		pCVar1 = this->pOwner;
+		fVar7 = CActorHero::_gThis->currentLocation.x - pCVar1->currentLocation.x;
+		fVar2 = CActorHero::_gThis->currentLocation.y - pCVar1->currentLocation.y;
+		fVar3 = CActorHero::_gThis->currentLocation.z - pCVar1->currentLocation.z;
+		fVar7 = sqrtf(fVar7 * fVar7 + fVar2 * fVar2 + fVar3 * fVar3);
+	}
+	else {
+		IMPLEMENTATION_GUARD(
+		pCVar5 = CActor::GetBehaviour(pActor, pActor->curBehaviourId);
+		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
+		local_10.x = peVar6->x;
+		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
+		local_10.y = peVar6->y;
+		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
+		local_10.z = peVar6->z;
+		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
+		local_10.w = peVar6->w;
+		edF32Vector4SubHard(&local_10, &local_10, &(pCVar4->character).characterBase.base.base.currentLocation);
+		local_10.y = 0.0;
+		fVar7 = edF32Vector4GetDistHard(&local_10);)
+	}
+
+	return fVar7;
+}
+
+void CBehaviourNativUnknown::FUN_003f3070()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourNativUnknown::FUN_003f3020()
+{
+	int iVar1;
+
+	iVar1 = 0;
+	do {
+		this->addOn.ClearCinematic(iVar1);
+		iVar1 = iVar1 + 1;
+	} while (iVar1 < 0x26);
+	return;
 }

@@ -526,6 +526,273 @@ void CBasicPathFinder::BuildPath(CPathDynamic* pPathDynamic, CPathNode* pNode)
 	return;
 }
 
+
+int CBasicPathFinder::CheckAndUpdatePath(CPathDynamic** ppPathDynamic, edF32VECTOR4* param_3, edF32VECTOR4* param_4)
+{
+	CBasicNaviMesh* pNaviMeshes;
+	uint cellId;
+	CPathNode* pCVar3;
+	CPathDynamic* pCVar4;
+	int naviMeshIndex;
+	float* pfVar6;
+	int iVar7;
+	long lVar8;
+	float fVar9;
+
+	pNaviMeshes = this->aNaviMeshes;
+	naviMeshIndex = (*ppPathDynamic)->naviMeshIndex;
+	cellId = pNaviMeshes[naviMeshIndex].SearchCellId(param_4);
+
+	pCVar3 = (*ppPathDynamic)->GetLastData();
+	if ((cellId & 0xffff) == (uint)(ushort)pCVar3->field_0x4) {
+
+		*(*ppPathDynamic)->GetGoalB() = *param_4;
+
+		cellId = pNaviMeshes[naviMeshIndex].SearchCellId(param_3);
+		while (true) {
+			if (((cellId & 0xffff) == (uint)(ushort)(*ppPathDynamic)->field_0x54->field_0x4) || ((*ppPathDynamic)->AtGoal() != 0)) break;
+			(*ppPathDynamic)->NextWayPoint();
+		}
+
+		pCVar4 = *ppPathDynamic;
+		if ((cellId & 0xffff) == (uint) * (ushort*)(pCVar4->field_0x54 + 4)) {
+			if (pCVar4->AtGoal() == 0) {
+				(*ppPathDynamic)->SetStatus(0);
+			}
+			else {
+				(*ppPathDynamic)->SetStatus(1);
+			}
+		}
+		else {
+			DeletePathDynamic(*ppPathDynamic);
+			*ppPathDynamic = NewPathDynamic(param_3, param_4);
+			FindPath(*ppPathDynamic, (*ppPathDynamic)->naviMeshIndex);
+
+			if (((*ppPathDynamic)->GetStatus() != 0) && ((*ppPathDynamic)->GetStatus() != 1)) {
+				(*ppPathDynamic)->SetStatus(4);
+			}
+		}
+	}
+	else {
+		if ((cellId & 0xffff) == 0xffff) {
+			(*ppPathDynamic)->SetStatus(4);
+		}
+		else {
+			DeletePathDynamic(*ppPathDynamic);
+			*ppPathDynamic = NewPathDynamic(param_3, param_4);
+			FindPath(*ppPathDynamic, (*ppPathDynamic)->naviMeshIndex);
+
+			if (((*ppPathDynamic)->GetStatus() != 0) && ((*ppPathDynamic)->GetStatus() != 1)) {
+				(*ppPathDynamic)->SetStatus(4);
+			}
+		}
+	}
+
+	return (*ppPathDynamic)->GetStatus();
+}
+
+
+bool ClipWayThroughPortal(float param_1, edF32VECTOR4* param_2, edF32VECTOR4* param_3, edF32VECTOR4* param_4, CNaviMeshPoint* param_5, CNaviMeshPoint* param_6)
+{
+	edF32VECTOR4* peVar1;
+	bool bVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	edF32VECTOR4 local_80;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 local_60;
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	bVar2 = false;
+
+	local_50.x = param_5->field_0x0;
+	local_50.y = 0.0f;
+	local_50.z = param_5->field_0x4;
+	local_50.w = 1.0f;
+
+	local_60.x = param_6->field_0x0;
+	local_60.y = 0.0f;
+	local_60.z = param_6->field_0x4;
+	local_60.w = 1.0f;
+
+	edF32Vector4SubHard(&eStack64, &local_60, &local_50);
+
+	fVar3 = edF32Vector4GetDistHard(&eStack64);
+	if (fVar3 < param_1 * 2.0f) {
+		edF32Vector4AddHard(&eStack64, &local_50, &local_60);
+		edF32Vector4ScaleHard(0.5f, param_2, &eStack64);
+	}
+	else {
+		edF32Vector4NormalizeHard(&eStack64, &eStack64);
+		edF32Vector4ScaleHard(param_1, &eStack64, &eStack64);
+		if ((param_5->field_0x8 & 1) == 0) {
+			edF32Vector4AddHard(&local_70, &local_50, &eStack64);
+		}
+		else {
+			local_70 = local_50;
+		}
+
+		if ((param_6->field_0x8 & 1) == 0) {
+			edF32Vector4SubHard(&local_80, &local_60, &eStack64);
+		}
+		else {
+			local_80 = local_60;
+		}
+
+		edF32Vector4SubHard(&eStack16, param_3, param_4);
+		edF32Vector4SubHard(&eStack32, &local_70, param_4);
+		edF32Vector4SubHard(&eStack48, &local_80, param_4);
+		eStack48.y = 0.0f;
+		eStack32.y = 0.0f;
+		eStack16.y = 0.0f;
+		fVar3 = edF32Vector4GetDistHard(&eStack16);
+		if (fVar3 <= 0.001f) {
+			bVar2 = false;
+			*param_2 = *param_3;
+		}
+		else {
+			edF32Vector4ScaleHard(1.0f / fVar3, &eStack16, &eStack16);
+			edF32Vector4NormalizeHard(&eStack32, &eStack32);
+			edF32Vector4NormalizeHard(&eStack48, &eStack48);
+			edF32Vector4CrossProductHard(&eStack64, &eStack16, &eStack32);
+			fVar3 = eStack64.y;
+			edF32Vector4CrossProductHard(&eStack64, &eStack16, &eStack48);
+			if ((fVar3 <= 0.0f) || (eStack64.y <= 0.0f)) {
+				if ((0.0f <= fVar3) || (0.0f <= eStack64.y)) {
+					*param_2 = *param_3;
+
+				}
+				else {
+					peVar1 = &local_80;
+					if (eStack64.y < fVar3) {
+						peVar1 = &local_70;
+					}
+					bVar2 = true;
+					*param_2 = *peVar1;
+				}
+			}
+			else {
+				peVar1 = &local_80;
+				if (fVar3 < eStack64.y) {
+					peVar1 = &local_70;
+				}
+
+				bVar2 = true;
+				*param_2 = *peVar1;
+			}
+		}
+	}
+
+	return bVar2;
+}
+
+
+
+void CBasicPathFinder::ComputeSubTarget(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, CPathDynamic* pPathDynamic)
+{
+	ushort uVar1;
+	ushort uVar2;
+	CPathNode* pCVar3;
+	CNaviMeshPoint* pNVar4;
+	bool bVar5;
+	float* pfVar6;
+	int iVar7;
+	CPathNode* pCVar8;
+	uint uVar9;
+	long lVar10;
+	CBasicNaviCell* pCVar11;
+	CAstarBasicTransition* pCVar12;
+	ulong uVar13;
+	ulong uVar14;
+	ulong uVar15;
+	CPathNode* pPathNode;
+	CBasicNaviMesh* pNaviMesh;
+	float fVar17;
+	float fVar18;
+	float fVar19;
+	edF32VECTOR4 local_20;
+	edF32VECTOR2 local_8;
+
+	local_8.x = param_4->x;
+	local_8.y = param_4->z;
+
+	pPathNode = pPathDynamic->field_0x54;
+	uVar1 = pPathNode->field_0x4;
+	pNaviMesh = this->aNaviMeshes + pPathDynamic->naviMeshIndex;
+
+	if (pPathNode->pNext == (CPathNode*)0x0) {
+		*param_3 = *pPathDynamic->GetGoalB();
+		pPathDynamic->SetStatus(1);
+	}
+	else {
+		uVar2 = pPathNode->pNext->field_0x4;
+		uVar14 = (ulong)uVar2;
+		pCVar11 = pNaviMesh->aNaviCells + uVar2;
+
+		if ((((local_8.x < (pCVar11->field_0x20).x) || ((pCVar11->field_0x20).z < local_8.x)) ||
+			(local_8.y < (pCVar11->field_0x20).y)) || ((pCVar11->field_0x20).w < local_8.y)) {
+			bVar5 = false;
+		}
+		else {
+			bVar5 = true;
+		}
+
+		uVar15 = (ulong)uVar1;
+		if ((bVar5) && (iVar7 = pNaviMesh->IsInCell(uVar2, &local_8), iVar7 != 0)) {
+			pPathDynamic->NextWayPoint();
+
+			if (pPathDynamic->AtGoal() != false) {
+				*param_3 = *pPathDynamic->GetGoalB();
+				pPathDynamic->SetStatus(1);
+				return;
+			}
+
+			pPathNode = pPathDynamic->field_0x54;
+			uVar14 = (ulong)(ushort)pPathNode->field_0x4;
+			uVar15 = uVar14;
+		}
+
+		uVar13 = 0xffffffffffffffff;
+		if ((pPathDynamic->field_0x30 & 1) != 0) {
+			uVar13 = (ulong)((long)*(int*)&pPathDynamic->field_0x30 << 0x2f) >> 0x30;
+		}
+
+		if (((uVar13 == 0xffffffffffffffff) || (uVar15 == uVar13)) || (uVar14 == uVar13)) {
+			pCVar8 = pPathDynamic->GetLastData();
+			local_20 = *pPathDynamic->GetGoalB();
+
+			uVar1 = pCVar8->field_0x4;
+			while (pCVar8 != pPathNode) {
+				pCVar3 = pCVar8->field_0x8;
+				uVar2 = pCVar8->field_0x4;
+				uVar9 = pNaviMesh->GetEdgeId(pCVar3->field_0x4, uVar2);
+				pNVar4 = pNaviMesh->aMeshPoints;
+				pCVar12 = pNaviMesh->aAstarBasicTransitions + (uVar9 & 0xffff);
+				lVar10 = ClipWayThroughPortal(param_1, &local_20, &local_20, param_4, pNVar4 + pCVar12->field_0x8, pNVar4 + pCVar12->field_0xa);
+				pCVar8 = pCVar3;
+				if (lVar10 != 0) {
+					uVar1 = uVar2;
+				}
+			}
+
+			*param_3 = local_20;
+			pPathDynamic->field_0x40 = local_20;
+
+			pPathDynamic->field_0x30 = pPathDynamic->field_0x30 & 0xfe | 1;
+			pPathDynamic->field_0x30_uint = pPathDynamic->field_0x30_uint & 0xfffe0001 | (uint)uVar1 << 1;
+		}
+		else {
+			*param_3 = pPathDynamic->field_0x40;
+		}
+	}
+	return;
+}
+
 CPriorityQueue::CPriorityQueue()
 {
 	this->field_0x400 = -1;

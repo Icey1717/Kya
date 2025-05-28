@@ -135,3 +135,27 @@ bool CPathFinderClient::HasPathTo(CActorMovable* pActor, edF32VECTOR4* v0)
 
 	return bHasPathTo;
 }
+
+int CPathFinderClient::CheckAndUpdatePathDynamic(CActor* pActor, edF32VECTOR4* param_3)
+{
+	CBasicPathFinder* pBasicPathFinder;
+
+	pBasicPathFinder = (CScene::ptable.g_PathManager_004516a0)->pBasicPathFinder;
+	if (pBasicPathFinder->IsValidPosition(&pActor->currentLocation, this->id) != false) {
+		this->naviMeshIndex = 1;
+		this->field_0x10 = pActor->currentLocation;
+	}
+
+	return pBasicPathFinder->CheckAndUpdatePath(&this->pPathDynamic, &this->field_0x10, param_3);
+}
+
+
+void CPathFinderClient::ComputeSubTargetPathDynamic(CActor* pActor, edF32VECTOR4* param_3)
+{
+	CScene::ptable.g_PathManager_004516a0->pBasicPathFinder->ComputeSubTarget(pActor->GetPosition_00117db0(),
+		param_3, &pActor->currentLocation, this->pPathDynamic);
+
+	return;
+}
+
+

@@ -66,6 +66,10 @@ public:
 
 	void BuildPath(CPathDynamic* pPathDynamic, CPathNode* pNode);
 
+	int CheckAndUpdatePath(CPathDynamic** ppPathDynamic, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
+
+	void ComputeSubTarget(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4, CPathDynamic* pPathDynamic);
+
 	CAstarMemBank astarMemBank;
 
 	CBasicNaviMesh* aNaviMeshes;

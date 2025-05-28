@@ -89,7 +89,21 @@ void CSquad::Create(ByteCode* pByteCode)
 
 void CSquad::Term()
 {
-	IMPLEMENTATION_GUARD();
+	int** pCVar1;
+	uint uVar2;
+
+	pCVar1 = this->chessboard.aSubObjs;
+	uVar2 = 0;
+	do {
+		if (*pCVar1 != (int*)0x0) {
+			edMemFree(*pCVar1);
+		}
+
+		uVar2 = uVar2 + 1;
+		pCVar1 = pCVar1 + 1;
+	} while (uVar2 < 2);
+
+	return;
 }
 
 void CSquad::Clear()

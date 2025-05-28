@@ -17,6 +17,7 @@ namespace Debug::Cinematic
 
 	static Debug::Setting<bool> gSkipCutscenes = { "Skip Cutscenes", false };
 	static Debug::Setting<float> gCustomCutsceneTime = { "Custom Cutscene Time", 0.0f };
+	static Debug::Setting<std::string> gCutsceneFilter = { "Cutscene Filter", "" };
 
 	static void ShowDetails(CCinematic* pCinematic)
 	{
@@ -164,8 +165,17 @@ namespace Debug::Cinematic
 		}
 
 		if (ImGui::CollapsingHeader("All Active", ImGuiTreeNodeFlags_DefaultOpen)) {
+			gCutsceneFilter.DrawImguiControl();
+
 			if (pCinematicManager->activeCinematicCount > 0) {
 				for (int i = 0; i < pCinematicManager->activeCinematicCount; i++) {
+					// Filter cutscenes based on the filter string
+					std::string filter = gCutsceneFilter;
+
+					if (!filter.empty() && !strstr(pCinematicManager->ppCinematicObjB_B[i]->fileName, filter.c_str())) {
+						continue; // Skip this cutscene if it doesn't match the filter
+					}
+
 					auto* pCinematic = pCinematicManager->ppCinematicObjB_B[i];
 					char buffer[512];
 					sprintf(buffer, "%d - %s", i, pCinematic->fileName);

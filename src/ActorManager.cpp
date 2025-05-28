@@ -605,92 +605,24 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 	CActor* pActor;
 
 	iVar1 = (CScene::ptable.g_SectorManager_00451670)->count_0x368;
+
 	peVar2 = new ed_Bound_Box[iVar1 + 1];
 	this->aSectorBoundingBoxes = peVar2;
 	puVar4 = this->aSectorBoundingBoxes;
 	iVar4 = 0;
 
 	if (-1 < iVar1) {
-		if (8 < iVar1 + 1) {
-			do {
-				(puVar4->tl).z = 1e+20f;
-				(puVar4->tl).y = 1e+20f;
-				iVar4 = iVar4 + 8;
-				(puVar4->tl).x = 1e+20f;
-				(puVar4->tl).w = 1.0f;
-				(puVar4->br).z = -1e+20f;
-				(puVar4->br).y = -1e+20f;
-				(puVar4->br).x = -1e+20f;
-				(puVar4->br).w = 1.0f;
-				puVar4[1].tl.z = 1e+20f;
-				puVar4[1].tl.y = 1e+20f;
-				puVar4[1].tl.x = 1e+20f;
-				puVar4[1].tl.w = 1.0f;
-				puVar4[1].br.z = -1e+20f;
-				puVar4[1].br.y = -1e+20f;
-				puVar4[1].br.x = -1e+20f;
-				puVar4[1].br.w = 1.0f;
-				puVar4[2].tl.z = 1e+20f;
-				puVar4[2].tl.y = 1e+20f;
-				puVar4[2].tl.x = 1e+20f;
-				puVar4[2].tl.w = 1.0f;
-				puVar4[2].br.z = -1e+20f;
-				puVar4[2].br.y = -1e+20f;
-				puVar4[2].br.x = -1e+20f;
-				puVar4[2].br.w = 1.0f;
-				puVar4[3].tl.z = 1e+20f;
-				puVar4[3].tl.y = 1e+20f;
-				puVar4[3].tl.x = 1e+20f;
-				puVar4[3].tl.w = 1.0f;
-				puVar4[3].br.z = -1e+20f;
-				puVar4[3].br.y = -1e+20f;
-				puVar4[3].br.x = -1e+20f;
-				puVar4[3].br.w = 1.0f;
-				puVar4[4].tl.z = 1e+20f;
-				puVar4[4].tl.y = 1e+20f;
-				puVar4[4].tl.x = 1e+20f;
-				puVar4[4].tl.w = 1.0f;
-				puVar4[4].br.z = -1e+20f;
-				puVar4[4].br.y = -1e+20f;
-				puVar4[4].br.x = -1e+20f;
-				puVar4[4].br.w = 1.0f;
-				puVar4[5].tl.z = 1e+20f;
-				puVar4[5].tl.y = 1e+20f;
-				puVar4[5].tl.x = 1e+20f;
-				puVar4[5].tl.w = 1.0f;
-				puVar4[5].br.z = -1e+20f;
-				puVar4[5].br.y = -1e+20f;
-				puVar4[5].br.x = -1e+20f;
-				puVar4[5].br.w = 1.0f;
-				puVar4[6].tl.z = 1e+20f;
-				puVar4[6].tl.y = 1e+20f;
-				puVar4[6].tl.x = 1e+20f;
-				puVar4[6].tl.w = 1.0f;
-				puVar4[6].br.z = -1e+20f;
-				puVar4[6].br.y = -1e+20f;
-				puVar4[6].br.x = -1e+20f;
-				puVar4[6].br.w = 1.0f;
-				puVar4[7].tl.z = 1e+20f;
-				puVar4[7].tl.y = 1e+20f;
-				puVar4[7].tl.x = 1e+20f;
-				puVar4[7].tl.w = 1.0f;
-				puVar4[7].br.z = -1e+20f;
-				puVar4[7].br.y = -1e+20f;
-				puVar4[7].br.x = -1e+20f;
-				puVar4[7].br.w = 1.0f;
-				puVar4 = puVar4 + 8;
-			} while (iVar4 <= iVar1 + -8);
-		}
-
 		for (; iVar4 <= iVar1; iVar4 = iVar4 + 1) {
 			(puVar4->tl).z = 1e+20f;
 			(puVar4->tl).y = 1e+20f;
 			(puVar4->tl).x = 1e+20f;
 			(puVar4->tl).w = 1.0f;
+
 			(puVar4->br).z = -1e+20f;
 			(puVar4->br).y = -1e+20f;
 			(puVar4->br).x = -1e+20f;
 			(puVar4->br).w = 1.0f;
+
 			puVar4 = puVar4 + 1;
 		}
 	}
@@ -699,6 +631,7 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 	local_20.y = 1e+20f;
 	local_20.x = 1e+20f;
 	local_20.w = 1.0f;
+
 	local_10.z = -1e+20f;
 	local_10.y = -1e+20f;
 	local_10.x = -1e+20f;
@@ -726,9 +659,11 @@ void CActorManager::PrecomputeSectorsBoundindBoxes()
 				if (((peVar2->br).x < fVar8) && ((peVar2->br).x = fVar8, peVar3[1].x < fVar8)) {
 					peVar3[1].x = fVar8;
 				}
+
 				if ((fVar8 < (peVar2->tl).x) && ((peVar2->tl).x = fVar8, fVar8 < peVar3->x)) {
 					peVar3->x = fVar8;
 				}
+
 				iVar7 = iVar7 + 1;
 				peVar6 = (edF32VECTOR4*)&peVar6->y;
 				peVar2 = (ed_Bound_Box*)&(peVar2->tl).y;

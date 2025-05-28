@@ -7,8 +7,9 @@
 
 bool IsInBoundingBox(edF32MATRIX4* pBox, edF32VECTOR4* pPoint);
 
-struct NaviMeshSubObj
+class CNaviMeshPoint
 {
+public:
 	float field_0x0;
 	float field_0x4;
 	uint field_0x8;
@@ -42,8 +43,10 @@ public:
 class CNaviMesh
 {
 public:
-	NaviMeshSubObj* aSubObjs;
-	uint nbSubObjs;
+	uint GetEdgeId(ushort param_2, ushort param_3);
+
+	CNaviMeshPoint* aMeshPoints;
+	uint nbMeshPoints;
 
 	CBasicNaviCell* aNaviCells;
 	uint nbCells;
@@ -64,6 +67,8 @@ public:
 	virtual void Create(ByteCode* pByteCode);
 
 	uint SearchCellId(edF32VECTOR4* pPosition);
+
+	bool IsInCell(int param_2, edF32VECTOR2* param_3);
 
 	ushort* pDataStreamA;
 	ushort* pDataStreamB;

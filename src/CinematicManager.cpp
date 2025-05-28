@@ -1143,22 +1143,19 @@ void CCinematic::Start()
 				local_70 = gF32Matrix4Unit;
 
 				if ((this->flags_0x4 & 0x2000) != 0) {
-					IMPLEMENTATION_GUARD(
-					iVar16 = this->field_0x44;
-					if (iVar16 != 0) {
-						edF32Matrix4FromEulerSoft(&local_70, *(int*)(iVar16 + 0x18) + 0x18, s_XYZ_0042b950);
-						local_70.da = *(float*)(iVar16 + 0x70);
-						local_70.db = *(float*)(iVar16 + 0x74);
-						local_70.dc = *(float*)(iVar16 + 0x78);
-						local_70.dd = *(float*)(iVar16 + 0x7c);
+					CActor* pActorRef = (this->actorRefB).Get();
+					if (pActorRef != (CActor*)0x0) {
+						edF32Matrix4FromEulerSoft(&local_70, &pActorRef->pCinData->rotationEuler, "XYZ");
+						local_70.rowT = pActorRef->baseLocation;
 						edF32Matrix4GetInverseOrthoHard(&local_70, &local_70);
 					}
-					if (this->pActor != (Actor*)0x0) {
-						edF32Matrix4FromEulerSoft(&eStack176, (int)&(this->pActor->actorBase).data.rotationVector, s_XYZ_0042b950);
-						pAVar1 = this->pActor;
-						eStack176.rowT = (pAVar1->actorBase).data.currentLocation;
+
+					if (this->pActor != (CActor*)0x0) {
+						edF32Matrix4FromEulerSoft(&eStack176, &this->pActor->rotationEuler.xyz, "XYZ");
+						pActorRef = this->pActor;
+						eStack176.rowT = pActorRef->currentLocation;
 						edF32Matrix4MulF32Matrix4Hard(&local_70, &local_70, &eStack176);
-					})
+					}
 				}
 
 				this->matrix_0x120 = local_70;

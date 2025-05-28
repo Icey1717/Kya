@@ -96,7 +96,7 @@ void CActorNativCmd::Init()
 			if (0 < iVar4->nbSubObj) {
 				iVar1 = 0;
 				do {
-					iVar4->field_0x8[iVar3].field_0x0 = 0;
+					iVar4->field_0x8[iVar3].field_0x0 = (CActorNativ*)0x0;
 					iVar4->field_0x8[iVar3].field_0x4 = 1;
 					iVar3 = iVar3 + 1;
 				} while (iVar3 < iVar4->nbSubObj);
@@ -540,6 +540,30 @@ bool CAddOnNativ::Func_0x24(uint param_2, CActor* pActor)
 	return bVar1;
 }
 
+void CAddOnNativ::ClearCinematic(int index)
+{
+	int iVar1;
+	CAddOnSubObj* this_00;
+
+	iVar1 = 0;
+	if (0 < this->nbSubObjs) {
+		this_00 = this->aSubObjs;
+		do {
+			if (index == this_00->field_0x0) goto LAB_003e1780;
+			iVar1 = iVar1 + 1;
+			this_00 = this_00 + 1;
+		} while (iVar1 < this->nbSubObjs);
+	}
+
+	this_00 = (CAddOnSubObj*)0x0;
+LAB_003e1780:
+	if ((this_00 != (CAddOnSubObj*)0x0) && (this->field_0xc == 0)) {
+		this_00->SetCinematic((CCinematic*)0x0);
+	}
+
+	return;
+}
+
 bool CAddOnNativ::Func_0x2c(uint param_2)
 {
 	CAddOnSubObj* pSubObj;
@@ -762,7 +786,7 @@ void CActorNativCmd::ManageNativWithKim()
 	bool bVar1;
 	CActorHero* pCVar2;
 	CBehaviour* pCVar3;
-	long lVar4;
+	CAddOnSubObj* lVar4;
 	int iVar5;
 	int iVar6;
 	int iVar7;
@@ -799,16 +823,16 @@ void CActorNativCmd::ManageNativWithKim()
 
 				pActor = (CActorNativ*)this->aNativs->aEntries[iVar7].Get();
 				if ((((pActor != (CActor*)0x0) && (pCVar3 = pActor->GetBehaviour(3), pCVar3 != (CBehaviour*)0x0)) && ((pActor->flags & 4) != 0)) && pActor->field_0x504 != 0) {
-					IMPLEMENTATION_GUARD(
-					FUN_00394d00((long)(int)this, (int)pActor);
+					FUN_00394d00(pActor);
 					if (iVar7 == iVar6) {
 						local_20[0] = 10;
 					}
 					else {
 						local_20[0] = 0xb;
 					}
+
 					local_4 = local_20;
-					CActor::DoMessage((CActor*)this, this->aNativs->aEntries[iVar7].pActor, 0x4e, (uint)local_4);)
+					DoMessage(this->aNativs->aEntries[iVar7].Get(), (ACTOR_MESSAGE)0x4e, local_4);
 				}
 				iVar7 = iVar7 + 1;
 			}
@@ -825,16 +849,14 @@ void CActorNativCmd::ManageNativWithKim()
 			}
 			else {
 				if (pNativ->field_0x378 == 1) {
-					IMPLEMENTATION_GUARD(
-					CActorNativ::FUN_00162a70(pNativ);
-					lVar4 = (*(code*)((this->addOnB).base.pVTable)->GetSubObj)();)
+					lVar4 = this->addOnB.GetSubObj(pNativ->FUN_00162a70(), 0x0);
 				}
 				else {
-					IMPLEMENTATION_GUARD(
-					CActorNativ::FUN_00162a70(pNativ);
-					lVar4 = (*(code*)((this->addOnA).base.pVTable)->GetSubObj)();)
+					lVar4 = this->addOnA.GetSubObj(pNativ->FUN_00162a70(), 0x0);
 				}
+
 				bVar1 = true;
+
 				if (lVar4 == 0) goto LAB_00393de0;
 			}
 
@@ -950,5 +972,79 @@ void CActorNativCmd::FUN_00394250(CActorNativ* pNativ)
 		}
 	}
 
+	return;
+}
+
+
+void CActorNativCmd::FUN_00394d00(CActorNativ* pNativ)
+{
+	CActorNativ* pCVar1;
+	CActor* pReceiver;
+	int iVar3;
+	int iVar4;
+	CTalkParam* pCVar5;
+	undefined4 local_20[7];
+	undefined4* local_4;
+
+	iVar4 = (pNativ->behaviourSpeak).field_0x24;
+	if (iVar4 != -1) {
+		pCVar5 = (CTalkParam*)0x0;
+
+		if (iVar4 < this->nbTalkParams) {
+			pCVar5 = this->aTalkParams + iVar4;
+		}
+
+		if (pCVar5->field_0x1c != 0) {
+			iVar4 = pCVar5->nbSubObj;
+			iVar3 = 0;
+
+			if (0 < iVar4) {
+				do {
+					pCVar1 = (CActorNativ*)0x0;
+					if (iVar3 < iVar4) {
+						pCVar1 = pCVar5->field_0x8[iVar3].field_0x0;
+					}
+
+					if (pCVar1 == pNativ) goto LAB_00394db8;
+
+					iVar3 = iVar3 + 1;
+				} while (iVar3 < pCVar5->nbSubObj);
+			}
+
+			iVar3 = -1;
+		LAB_00394db8:
+			if (iVar3 < iVar4) {
+				pCVar5->field_0x8[iVar3].field_0x4 = 6;
+			}
+			if (pCVar5->field_0x1d != 0) {
+				pCVar5->field_0x1d = 0;
+				iVar4 = 0;
+				if (0 < pCVar5->field_0x10) {
+					do {
+						CActorNativ* iVar2 = (CActorNativ*)0x0;
+						if (iVar4 < pCVar5->nbSubObj) {
+							iVar2 = pCVar5->field_0x8[iVar4].field_0x0;
+						}
+
+						if (iVar2->field_0x504 == 0) {
+							if (iVar4 < pCVar5->nbSubObj) {
+								pCVar5->field_0x8[iVar4].field_0x4 = 3;
+							}
+
+							local_20[0] = 7;
+							pReceiver = (CActor*)0x0;
+							if (iVar4 < pCVar5->nbSubObj) {
+								pReceiver = pCVar5->field_0x8[iVar4].field_0x0;
+							}
+
+							local_4 = local_20;
+							DoMessage(pReceiver, (ACTOR_MESSAGE)0x4e, local_20);
+						}
+						iVar4 = iVar4 + 1;
+					} while (iVar4 < pCVar5->field_0x10);
+				}
+			}
+		}
+	}
 	return;
 }

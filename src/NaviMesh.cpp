@@ -29,7 +29,7 @@ void CBasicNaviMesh::Init()
 	uint uVar4;
 	CBasicNaviCell* iVar9;
 	uint uVar5;
-	NaviMeshSubObj* pSubObj;
+	CNaviMeshPoint* pSubObj;
 	CBasicNaviCell* pBasicNaviCell;
 	edF32VECTOR4 local_20;
 	edF32VECTOR2 local_8;
@@ -46,7 +46,7 @@ void CBasicNaviMesh::Init()
 			uVar4 = 0;
 			if (pBasicNaviCell->nbSubDataB != 0) {
 				do {
-					pSubObj = this->aSubObjs + pBasicNaviCell->pDataB[uVar4];
+					pSubObj = this->aMeshPoints + pBasicNaviCell->pDataB[uVar4];
 					fVar2 = pSubObj->field_0x0;
 					if (local_20.x <= pSubObj->field_0x0) {
 						fVar2 = local_20.x;
@@ -115,14 +115,14 @@ void CBasicNaviMesh::Create(ByteCode* pByteCode)
 	uint count;
 	float fVar14;
 
-	this->nbSubObjs = pByteCode->GetU32();
+	this->nbMeshPoints = pByteCode->GetU32();
 
-	this->aSubObjs = new NaviMeshSubObj[this->nbSubObjs];
+	this->aMeshPoints = new CNaviMeshPoint[this->nbMeshPoints];
 
-	for (uint i = 0; i < this->nbSubObjs; i++) {
-		this->aSubObjs[i].field_0x0 = pByteCode->GetF32();
-		this->aSubObjs[i].field_0x4 = pByteCode->GetF32();
-		this->aSubObjs[i].field_0x8 = pByteCode->GetU32();
+	for (uint i = 0; i < this->nbMeshPoints; i++) {
+		this->aMeshPoints[i].field_0x0 = pByteCode->GetF32();
+		this->aMeshPoints[i].field_0x4 = pByteCode->GetF32();
+		this->aMeshPoints[i].field_0x8 = pByteCode->GetU32();
 	}
 
 	count = 0;
@@ -224,7 +224,7 @@ void CBasicNaviMesh::Create(ByteCode* pByteCode)
 uint CBasicNaviMesh::SearchCellId(edF32VECTOR4* pPosition)
 {
 	float* pfVar1;
-	NaviMeshSubObj* pNavMeshSubObj;
+	CNaviMeshPoint* pNavMeshSubObj;
 	uint uVar4;
 	bool bVar5;
 	float* pfVar6;
@@ -235,7 +235,7 @@ uint CBasicNaviMesh::SearchCellId(edF32VECTOR4* pPosition)
 	uint uVar12;
 	uint curCell;
 	uint maxCells;
-	NaviMeshSubObj* pNVar15;
+	CNaviMeshPoint* pNVar15;
 	uint uVar17;
 	float fVar18;
 	float fVar19;
@@ -266,7 +266,7 @@ uint CBasicNaviMesh::SearchCellId(edF32VECTOR4* pPosition)
 
 						pCurCell = this->aNaviCells + curCell;
 						if (bVar5) {
-							pNavMeshSubObj = this->aSubObjs;
+							pNavMeshSubObj = this->aMeshPoints;
 							uVar4 = pCurCell->nbSubDataB;
 							uVar12 = 0;
 							puVar9 = pCurCell->pDataB;
@@ -306,6 +306,83 @@ uint CBasicNaviMesh::SearchCellId(edF32VECTOR4* pPosition)
 
 	return 0xffff;
 }
+
+
+bool CBasicNaviMesh::IsInCell(int param_2, edF32VECTOR2* param_3)
+{
+	float* pfVar1;
+	CNaviMeshPoint* pNVar2;
+	uint uVar3;
+	float* pfVar4;
+	CBasicNaviCell* pCVar5;
+	CNaviMeshPoint* pNVar6;
+	ushort* puVar7;
+	uint uVar8;
+
+	uVar8 = 0;
+	pNVar2 = this->aMeshPoints;
+	pCVar5 = this->aNaviCells + param_2;
+
+	uVar3 = pCVar5->nbSubDataB;
+	puVar7 = pCVar5->pDataB;
+	pNVar6 = pNVar2 + puVar7[uVar3 - 1];
+
+	if (uVar3 != 0) {
+		do {
+			pfVar1 = &pNVar6->field_0x4;
+			pfVar4 = &pNVar6->field_0x0;
+
+			pNVar6 = pNVar2 + *puVar7;
+
+			if ((param_3->x - *pfVar4) * (pNVar6->field_0x4 - *pfVar1) - (pNVar6->field_0x0 - *pfVar4) * (param_3->y - *pfVar1) < 0.0f) {
+				return false;
+			}
+
+			uVar8 = uVar8 + 1;
+			puVar7 = puVar7 + 1;
+		} while (uVar8 < uVar3);
+	}
+
+	return true;
+}
+
+
+uint CNaviMesh::GetEdgeId(ushort param_2, ushort param_3)
+{
+	ulong uVar1;
+	ulong uVar2;
+	uint uVar3;
+	ulong uVar4;
+	uint uVar5;
+	uint uVar6;
+
+	uVar1 = (long)(short)param_2 & 0xffff;
+	uVar4 = (long)(short)param_3 & 0xffff;
+	uVar2 = uVar4;
+	if (uVar1 < uVar4) {
+		uVar2 = uVar1;
+		uVar1 = uVar4;
+	}
+
+	uVar3 = this->nbTransitions;
+	uVar6 = 0;
+	if (uVar3 != 1) {
+		uVar5 = uVar6;
+		do {
+			uVar6 = uVar5 + uVar3 >> 1;
+			if (((long)((int)uVar2 << 0x10) | uVar1) < (ulong)(long)*(int*)(this->aAstarBasicTransitions + (uVar6 & 0xffff)))
+			{
+				uVar3 = uVar6;
+				uVar6 = uVar5;
+			}
+			uVar5 = uVar6;
+		} while (uVar6 < uVar3 - 1);
+	}
+
+	return uVar6 & 0xffff;
+}
+
+
 
 void CAstarBasicTransition::Create(ByteCode* pByteCode)
 {

@@ -102,7 +102,25 @@ public:
 class CBehaviourSwitchWolfenCounter : public CBehaviourSwitch
 {
 public:
-	CBehaviourSwitchWolfenCounter() { IMPLEMENTATION_GUARD(); }
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+
+	virtual void Manage();
+	virtual void Draw();
+
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual void SaveContext(uint*, int);
+	virtual void LoadContext(uint*, int);
+
+	ParticleInfo* field_0x8;
+	S_STREAM_REF<ed_zone_3d> streamRefZone;
+	S_STREAM_REF<CActor> streamRefActor;
+	int field_0x14;
+	float field_0x18;
+
+	edF32MATRIX4 matrix;
 };
 
 class CBehaviourSwitchTarget : public CBehaviourSwitch

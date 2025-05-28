@@ -7,6 +7,7 @@
 #include "CameraViewManager.h"
 #include "TimeController.h"
 #include "ActorHero.h"
+#include "EventManager.h"
 
 StateConfig CActorSwitch::_gStateCfg_SWT[5] = {
 	StateConfig(0x0, 0x4),
@@ -1244,4 +1245,95 @@ int CBehaviourSwitchSequence::InterpretMessage(CActor* pSender, int msg, void* p
 {
 	IMPLEMENTATION_GUARD();
 	return 0;
+}
+
+void CBehaviourSwitchWolfenCounter::Create(ByteCode* pByteCode)
+{
+	this->field_0x14 = pByteCode->GetS32();
+	this->field_0x18 = pByteCode->GetF32();
+	this->streamRefZone.index = pByteCode->GetS32();
+	this->streamRefActor.index = pByteCode->GetS32();
+	const int materialId = pByteCode->GetS32();
+	CActor::SV_InstallMaterialId(materialId);
+	this->field_0x8 = CScene::ptable.g_C3DFileManager_00451664->GetG2DInfo(materialId);
+
+	return;
+}
+
+void CBehaviourSwitchWolfenCounter::Init(CActor* pOwner)
+{
+	ed_zone_3d* pZone;
+	e_ed_event_prim3d_type eStack4;
+
+	this->pOwner = static_cast<CActorSwitch*>(pOwner);
+
+	this->streamRefZone.Init();
+	this->streamRefActor.Init();
+
+	pZone = (this->streamRefZone).Get();
+	if (pZone == (ed_zone_3d*)0x0) {
+		this->matrix = this->pOwner->pMeshTransform->base.transformA;
+	}
+	else {
+		edF32Matrix4GetInverseGaussSoft(&this->matrix, edEventGetChunkZonePrimitive((CScene::ptable.g_EventManager_006f5080)->activeChunkId, pZone, 0, &eStack4));
+	}
+
+	return;
+}
+
+void CBehaviourSwitchWolfenCounter::Manage()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourSwitchWolfenCounter::Draw()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+edF32VECTOR4 edF32VECTOR4_0040e700 = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+void CBehaviourSwitchWolfenCounter::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CActorSwitch* pCVar1;
+	float radius;
+	edF32MATRIX4 eStack80;
+	edF32VECTOR4 local_10;
+
+	local_10 = edF32VECTOR4_0040e700;
+
+	edF32Matrix4MulF32Vector4Hard(&local_10, &this->matrix, &local_10);
+	edF32Vector4SubHard(&local_10, &local_10, &(this->matrix).rowT);
+	radius = edF32Vector4GetDistHard(&local_10);
+	edF32Matrix4FromEulerSoft(&eStack80, &this->pOwner->pCinData->rotationEuler, "XYZ");
+	pCVar1 = this->pOwner;
+	eStack80.rowT = pCVar1->baseLocation;
+
+	edF32Matrix4GetInverseOrthoHard(&eStack80, &eStack80);
+	edF32Matrix4MulF32Vector4Hard(&local_10, &eStack80, &(this->matrix).rowT);
+
+	this->pOwner->SetLocalBoundingSphere(radius, &local_10);
+	if (newState == -1) {
+		this->pOwner->SetState(5, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	return;
+}
+
+int CBehaviourSwitchWolfenCounter::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourSwitchWolfenCounter::SaveContext(uint*, int)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourSwitchWolfenCounter::LoadContext(uint*, int)
+{
+	IMPLEMENTATION_GUARD();
 }

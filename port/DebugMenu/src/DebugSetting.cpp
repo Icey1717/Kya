@@ -62,3 +62,18 @@ bool Debug::Setting<int>::DrawImguiControl()
 	}
 	return true;
 }
+
+template<>
+bool Debug::Setting<std::string>::DrawImguiControl()
+{
+	char buffer[256];
+	strncpy(buffer, value.c_str(), sizeof(buffer) - 1);
+	buffer[sizeof(buffer) - 1] = '\0'; // Ensure null-termination
+
+	if (ImGui::InputText(name.c_str(), buffer, sizeof(buffer))) {
+		value = std::string(buffer);
+		return UpdateValue();
+	}
+
+	return true;
+}

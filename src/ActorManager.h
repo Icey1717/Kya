@@ -19,8 +19,8 @@ struct CClassInfo {
 
 struct ed_Bound_Box
 {
-	edF32VECTOR4 br;
 	edF32VECTOR4 tl;
+	edF32VECTOR4 br;
 };
 
 class CClusterNode

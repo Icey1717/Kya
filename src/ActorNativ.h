@@ -11,10 +11,12 @@
 #define NATIVE_BEHAVIOUR_EXORCISM 0x4
 #define NATIVE_BEHAVIOUR_LIVE 0x5
 #define NATIVE_BEHAVIOUR_TAKE_AND_PUT 0x6
+#define NATIVE_BEHAVIOUR_UNKNOWN 0x7
 #define NATIVE_BEHAVIOUR_SELLER 0x8
 
 #define NATIVE_STATE_TAKE_PUT_WALK 0x15
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
+#define NATIVE_STATE_TAKE_PUT_USED_TOOL 0x17
 
 #define NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY 0x21
 #define NATIVE_STATE_SELLER_INPUT_SUCCEEDED 0x24
@@ -91,6 +93,31 @@ struct NativSubObjD
 
 	NativSellerSubObjA field_0x8[0x1e];
 	int activeSubObjIndex;
+};
+
+class CBehaviourNativUnknown : public CBehaviourNativ
+{
+public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void ManageFrozen();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
+
+	float FUN_003f3210();
+
+	void FUN_003f3070();
+	void FUN_003f3020();
+
+	float field_0x8;
+	CAddOnNativ addOn;
+	CActor* field_0x24;
+	int field_0x28;
 };
 
 class CBehaviourNativSeller : public CBehaviourNativ
@@ -202,15 +229,20 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
 
+	CTakePutTrajectoryParam* GetCurrentTrajectoryParam();
+	CPathFollowReader* GetCurrentPathFollowReader();
+
 	int nbTrajectoryParams;
 	CTakePutTrajectoryParam* aTrajectoryParams;
-	undefined4 curTrajectoryParamIndex;
+	int curTrajectoryParamIndex;
 };
 
 class CBehaviourNativSpeak : public CBehaviourNativ
 {
 public:
 	CBehaviourNativSpeak();
+
+
 
 	void Reset();
 
@@ -282,14 +314,21 @@ public:
 	void BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour);
 	void BehaviourNativSeller_TermState(int oldState);
 
+	void BehaviourNativUnknown_InitState(int newState);
+	void BehaviourNativUnknown_Manage(CBehaviourNativUnknown* pBehaviour);
+
 	void StateNativTakePutTurnTo();
 	void StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour);
+
+	void StateNativTakePutUsedTool(CBehaviourNativTakeAndPut* pBehaviour);
 
 	void SetHasObject(bool bHasObject);
 	void ChooseToolState();
 
 	uint FUN_00162270();
+	int FUN_00162a70();
 	float FUN_00164070();
+	void* FUN_0036f330(int param_2);
 
 	void StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour);
 	void State_0x22(CBehaviourNativSeller* pBehaviour);

@@ -25,6 +25,18 @@ edF32VECTOR4* CPathDynamic::GetStart()
 	return &this->startPosition;
 }
 
+void CPathDynamic::NextWayPoint()
+{
+	this->field_0x54 = this->field_0x54->pNext;
+
+	return;
+}
+
+bool CPathDynamic::AtGoal()
+{
+	return this->field_0x54->pNext == (CPathNode*)0x0;
+}
+
 int CPathDynamic::GetStatus()
 {
 	return this->status;
@@ -58,4 +70,18 @@ void CPathDynamic::Clear()
 	this->field_0x54 = (CPathNode*)0x0;
 	this->field_0x30 = this->field_0x30 & 0xfe;
 	return;
+}
+
+CPathNode* CPathDynamic::GetLastData()
+{
+	CPathNode* pCVar1;
+	CPathNode* pCVar2;
+
+	pCVar1 = this->pPathNode;
+	do {
+		pCVar2 = pCVar1;
+		pCVar1 = pCVar2->pNext;
+	} while (pCVar1 != (CPathNode*)0x0);
+
+	return pCVar2;
 }

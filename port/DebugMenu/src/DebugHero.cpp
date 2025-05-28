@@ -29,7 +29,7 @@ namespace Debug {
 						bool bActive;
 						char name[nbCheckpointMaxActors];
 						edF32VECTOR4 location;
-					} actors[0x300]{};
+					} actors[nbCheckpointMaxActors]{};
 
 					int sectorId;
 				};

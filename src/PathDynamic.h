@@ -11,11 +11,15 @@ public:
 
 	virtual void Init(edF32VECTOR4* pStart, edF32VECTOR4* pDestination);
 	virtual edF32VECTOR4* GetStart();
+	virtual void NextWayPoint();
+	virtual bool AtGoal();
 	virtual int GetStatus();
 	virtual void SetStatus(int newStatus);
 	virtual edF32VECTOR4* GetGoalB();
 	virtual void Reset();
 	virtual void Clear();
+
+	CPathNode* GetLastData();
 
 	int status;
 	int naviMeshIndex;
@@ -27,7 +31,12 @@ public:
 	edF32VECTOR4 destinationPosition;
 	edF32VECTOR4 startPosition;
 
-	byte field_0x30;
+	union {
+		byte field_0x30;
+		uint field_0x30_uint;
+	};
+
+	edF32VECTOR4 field_0x40;
 
 	CPathNode* field_0x54;
 };

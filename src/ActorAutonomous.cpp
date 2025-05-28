@@ -1374,7 +1374,6 @@ void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsOut,
 			pPathPosition = (edF32VECTOR4*)0x0;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
 			int lVar4 = GetPathfinderClient()->CheckAndUpdatePathDynamic(this, pPosition);
 			if (lVar4 == 0) {
 				GetPathfinderClient()->ComputeSubTargetPathDynamic(this, &GetPathfinderClient()->field_0x20);
@@ -1392,7 +1391,7 @@ void CActorAutonomous::SV_AUT_MoveTo_Pathfinding(CActorMovParamsOut* pParamsOut,
 					GetPathfinderClient()->CleanPathDynamic();
 					pPathPosition = (edF32VECTOR4*)0x0;
 				}
-			})
+			}
 		}
 	}
 

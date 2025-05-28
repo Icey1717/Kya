@@ -20,6 +20,9 @@ public:
 
 	bool HasPathTo(CActorMovable* pActor, edF32VECTOR4* v0);
 
+	int CheckAndUpdatePathDynamic(CActor* pActor, edF32VECTOR4* param_3);
+	void ComputeSubTargetPathDynamic(CActor* pActor, edF32VECTOR4* param_3);
+
 	int id;
 	CPathDynamic* pPathDynamic;
 	int naviMeshIndex;

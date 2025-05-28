@@ -42,6 +42,7 @@
 #include "SaveManagement.h"
 #include "Pause.h"
 #include "ActorBoomy.h"
+#include "ActorNativ.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -335,7 +336,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	ScenarioVariable* pSVar5;
 	int iVar6;
 	LoadLoopObject_50* pLVar7;
-	undefined4* puVar8;
+	NativShopLevelSubObj* puVar8;
 	int iVar9;
 	S_LEVEL_INFO* pLevelInfo;
 
@@ -350,7 +351,7 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	if (param_2 != false) {
 		this->field_0x4210 = 0;
 		this->objCount_0x4218 = 0;
-		this->field_0x5620 = 0;
+		this->nbNativShopSubObjs = 0;
 	}
 
 	this->field_0x5b30 = 0;
@@ -396,48 +397,42 @@ void CLevelScheduler::MoreLoadLoopObjectSetup(bool param_2)
 	//		pLVar7 = pLVar7 + 1;
 	//	} while (iVar9 < this->objCount_0x4218);
 	//}
-	//puVar8 = (undefined4*)&this->field_0x5630;
-	//iVar9 = 0;
-	//if (0 < this->field_0x5620) {
-	//	do {
-	//		if (param_2 != false) {
-	//			*puVar8 = 0xffffffff;
-	//			puVar8[1] = 0x10;
-	//			puVar8[2] = 0;
-	//			fVar3 = gF32Vertex4Zero.w;
-	//			fVar2 = gF32Vertex4Zero.z;
-	//			fVar1 = gF32Vertex4Zero.y;
-	//			puVar8[4] = gF32Vertex4Zero.x;
-	//			puVar8[5] = fVar1;
-	//			puVar8[6] = fVar2;
-	//			puVar8[7] = fVar3;
-	//			fVar3 = gF32Vector4UnitZ.w;
-	//			fVar2 = gF32Vector4UnitZ.z;
-	//			fVar1 = gF32Vector4UnitZ.y;
-	//			puVar8[8] = gF32Vector4UnitZ.x;
-	//			puVar8[9] = fVar1;
-	//			puVar8[10] = fVar2;
-	//			puVar8[0xb] = fVar3;
-	//			puVar8[0xc] = 0x20;
-	//			puVar8[0xd] = 0;
-	//			*(undefined8*)(puVar8 + 0xe) = 0;
-	//			puVar8[0x10] = 0x20;
-	//			puVar8[0x11] = 0;
-	//			*(undefined8*)(puVar8 + 0x12) = 0;
-	//			puVar8[0x14] = 0x20;
-	//			puVar8[0x15] = 0;
-	//			*(undefined8*)(puVar8 + 0x16) = 0;
-	//			puVar8[0x18] = 0x20;
-	//			puVar8[0x19] = 0;
-	//			*(undefined8*)(puVar8 + 0x1a) = 0;
-	//			puVar8[0x1c] = 0x20;
-	//			puVar8[0x1d] = 0;
-	//			*(undefined8*)(puVar8 + 0x1e) = 0;
-	//		}
-	//		iVar9 = iVar9 + 1;
-	//		puVar8 = puVar8 + 0x20;
-	//	} while (iVar9 < this->field_0x5620);
-	//}
+	puVar8 = this->aNativShopSubObjs;
+	iVar9 = 0;
+	if (0 < this->nbNativShopSubObjs) {
+		do {
+			if (param_2 != false) {
+				puVar8->field_0x0 = -1;
+				puVar8->field_0x4 = 0x10;
+				puVar8->field_0x8 = 0;
+
+				puVar8->field_0x10 = gF32Vertex4Zero;
+				puVar8->field_0x20 = gF32Vector4UnitZ;
+
+				puVar8->aSubObjs[0].field_0x0 = 0x20;
+				puVar8->aSubObjs[0].field_0x4 = 0;
+				puVar8->aSubObjs[0].field_0x8 = 0;
+
+				puVar8->aSubObjs[1].field_0x0 = 0x20;
+				puVar8->aSubObjs[1].field_0x4 = 0;
+				puVar8->aSubObjs[1].field_0x8 = 0;
+
+				puVar8->aSubObjs[2].field_0x0 = 0x20;
+				puVar8->aSubObjs[2].field_0x4 = 0;
+				puVar8->aSubObjs[2].field_0x8 = 0;
+
+				puVar8->aSubObjs[3].field_0x0 = 0x20;
+				puVar8->aSubObjs[3].field_0x4 = 0;
+				puVar8->aSubObjs[3].field_0x8 = 0;
+
+				puVar8->aSubObjs[4].field_0x0 = 0x20;
+				puVar8->aSubObjs[4].field_0x4 = 0;
+				puVar8->aSubObjs[4].field_0x8 = 0;
+			}
+			iVar9 = iVar9 + 1;
+			puVar8 = puVar8 + 1;
+		} while (iVar9 < this->nbNativShopSubObjs);
+	}
 	//pMVar4 = (MapManager*)CScene::GetManager(MO_Map);
 	//MapManager::SetupFunc_003f8150(pMVar4);
 	return;
@@ -1252,8 +1247,43 @@ LAB_002e26c8:
 		//Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
 		//Level_FillRunInfo(0x4, -1, -1);
-		Level_FillRunInfo(0x4, 9, -1);
+		//Level_FillRunInfo(0x4, 9, -1);
+		Level_FillRunInfo(0x0, 9, 0xb);
 	}
+	return;
+}
+
+void NativShopLevelSubObj::FUN_002d8d10(CActorNativ* pNativ)
+{
+	int iVar1;
+	void* lVar2;
+	int iVar3;
+
+	if (pNativ->dynamic.field_0x10.w == 0.0f) {
+		this->field_0x8 = 0;
+	}
+	else {
+		this->field_0x8 = 1;
+	}
+
+	iVar3 = 0;
+	do {
+		lVar2 = pNativ->FUN_0036f330(iVar3);
+		if (lVar2 == 0) {
+			this->aSubObjs[iVar3].field_0x0 = 0x20;
+			this->aSubObjs[iVar3].field_0x4 = 0;
+			this->aSubObjs[iVar3].field_0x8 = 0;
+		}
+		else {
+			IMPLEMENTATION_GUARD(
+			iVar1 = (int)lVar2;
+			this->aSubObjs[iVar3].field_0x0 = *(undefined4*)(iVar1 + 0x20);
+			this->aSubObjs[iVar3].field_0x4 = *(undefined4*)(iVar1 + 0x30);
+			this->aSubObjs[iVar3].field_0x8 = *(undefined8*)(iVar1 + 8);)
+		}
+
+		iVar3 = iVar3 + 1;
+	} while (iVar3 < 5);
 	return;
 }
 
@@ -2376,22 +2406,22 @@ void CLevelScheduler::Level_Manage()
 		local_110.nbEntries = 0;
 		CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(NATIV_SHOP, &local_110);
 
-		IMPLEMENTATION_GUARD(
-		this->field_0x5620 = local_110.nbEntries;
-		if (10 < this->field_0x5620) {
-			this->field_0x5620 = 10;
+		this->nbNativShopSubObjs = local_110.nbEntries;
+		if (10 < this->nbNativShopSubObjs) {
+			this->nbNativShopSubObjs = 10;
 		}
-		iVar13 = &this->field_0x5630;
+
+		NativShopLevelSubObj* pSubObj = this->aNativShopSubObjs;
 		iVar12 = 0;
-		if (0 < this->field_0x5620) {
-			pCVar10 = &local_110;
+		if (0 < this->nbNativShopSubObjs) {
+			CActor** pActor = local_110.aEntries;
 			do {
-				FUN_002d8d10(iVar13, (int)pCVar10->aEntries[0]);
+				pSubObj->FUN_002d8d10(static_cast<CActorNativ*>(*pActor));
 				iVar12 = iVar12 + 1;
-				pCVar10 = (CActorsTable*)pCVar10->aEntries;
-				iVar13 = iVar13 + 0x80;
-			} while (iVar12 < this->field_0x5620);
-		})
+				pActor = pActor + 1;
+				pSubObj = pSubObj + 1;
+			} while (iVar12 < this->nbNativShopSubObjs);
+		}
 	}
 
 	if (this->currentElevatorID != -1) {
