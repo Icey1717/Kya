@@ -258,7 +258,7 @@ void CActorNativ::Manage()
 
 	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 	if (pCVar5 != (CBehaviour*)0x0) {
-		CBehaviourNativSeller* pBehaviourSeller = static_cast<CBehaviourNativSeller*>(GetBehaviour(NATIVE_BEHAVIOUR_SELLER));
+		CBehaviourNativAkasa* pBehaviourSeller = static_cast<CBehaviourNativAkasa*>(GetBehaviour(NATIVE_BEHAVIOUR_SELLER));
 		pBehaviourSeller->ManageComboTutorial();
 	}
 
@@ -342,10 +342,10 @@ CBehaviour* CActorNativ::BuildBehaviour(int behaviourType)
 		pBehaviour = &behaviourTakeAndPut;
 		break;
 	case NATIVE_BEHAVIOUR_UNKNOWN:
-		pBehaviour = new CBehaviourNativUnknown;
+		pBehaviour = new CBehaviourNativSeller;
 		break;
 	case NATIVE_BEHAVIOUR_SELLER:
-		pBehaviour = new CBehaviourNativSeller;
+		pBehaviour = new CBehaviourNativAkasa;
 		break;
 	default:
 		assert(behaviourType < 3);
@@ -1185,7 +1185,7 @@ void CActorNativ::BehaviourNativTakeAndPut_TermState(int oldState)
 	return;
 }
 
-void CActorNativ::BehaviourNativSeller_InitState(int newState, CBehaviourNativSeller* pBehaviour)
+void CActorNativ::BehaviourNativSeller_InitState(int newState, CBehaviourNativAkasa* pBehaviour)
 {
 	undefined4 local_20;
 	undefined4 local_1c;
@@ -1217,7 +1217,7 @@ void CActorNativ::BehaviourNativSeller_InitState(int newState, CBehaviourNativSe
 	return;
 }
 
-void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativAkasa* pBehaviour)
 {
 	uint** ppuVar1;
 	int iVar2;
@@ -1232,13 +1232,13 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 		break;
 	case 0x26:
 		IMPLEMENTATION_GUARD(
-		iVar3 = CBehaviourNativSeller::FUN_003efdf0(pBehaviour);
-		CBehaviourNativSeller::FUN_003eef80(pBehaviour);
+		iVar3 = CBehaviourNativAkasa::FUN_003efdf0(pBehaviour);
+		CBehaviourNativAkasa::FUN_003eef80(pBehaviour);
 		FUN_003eed60();
 		if (iVar3 == 1) {
 			if (pBehaviour->field_0x8 == 0xffffffff) {
 				SetState(0x20, -1);
-				CBehaviourNativSeller::FUN_003f1e90(pBehaviour, 0x28);
+				CBehaviourNativAkasa::FUN_003f1e90(pBehaviour, 0x28);
 			}
 			else {
 				SetState(0x27, -1);
@@ -1252,11 +1252,11 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 		break;
 	case 0x27:
 		IMPLEMENTATION_GUARD(
-		ppuVar1 = CBehaviourNativSeller::IsEventActive(pBehaviour);
+		ppuVar1 = CBehaviourNativAkasa::IsEventActive(pBehaviour);
 		if (ppuVar1 != (uint**)0x0) {
 			FUN_003ebee0(pBehaviour, 1);
 			SetState(0x20, -1);
-			CBehaviourNativSeller::FUN_003f1e90(pBehaviour, 0x28);
+			CBehaviourNativAkasa::FUN_003f1e90(pBehaviour, 0x28);
 			iVar3 = 0;
 			if (0 < pBehaviour->field_0x48->entryCount) {
 				iVar2 = 0;
@@ -1300,7 +1300,7 @@ void CActorNativ::BehaviourNativUnknown_InitState(int newState)
 	return;
 }
 
-void CActorNativ::BehaviourNativUnknown_Manage(CBehaviourNativUnknown* pBehaviour)
+void CActorNativ::BehaviourNativUnknown_Manage(CBehaviourNativSeller* pBehaviour)
 {
 	CAnimation* pCVar1;
 	edAnmLayer* peVar2;
@@ -2184,7 +2184,7 @@ void* CActorNativ::FUN_0036f330(int param_2)
 	return uVar1;
 }
 
-bool CBehaviourNativSeller::AdvanceTutorial(int param_2)
+bool CBehaviourNativAkasa::AdvanceTutorial(int param_2)
 {
 	ArenaTutorial* pTutorial;
 	int iVar2;
@@ -2243,7 +2243,7 @@ bool CBehaviourNativSeller::AdvanceTutorial(int param_2)
 
 }
 
-int CBehaviourNativSeller::FUN_003f1b90(int param_2)
+int CBehaviourNativAkasa::FUN_003f1b90(int param_2)
 {
 	CActorNativ* pActor;
 	bool bVar1;
@@ -2318,7 +2318,7 @@ int CBehaviourNativSeller::FUN_003f1b90(int param_2)
 	return iVar2;
 }
 
-void CBehaviourNativSeller::FUN_003f1810(int param_2, int param_3, int param_4)
+void CBehaviourNativAkasa::FUN_003f1810(int param_2, int param_3, int param_4)
 {
 	CActorHero* pHero;
 
@@ -2379,7 +2379,7 @@ void CBehaviourNativSeller::FUN_003f1810(int param_2, int param_3, int param_4)
 	return;
 }
 
-void CActorNativ::StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::StateInitArenaDisplay(CBehaviourNativAkasa* pBehaviour)
 {
 	int curSwitchIndex;
 
@@ -2402,7 +2402,7 @@ void CActorNativ::StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour)
 	return;
 }
 
-void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::State_0x22(CBehaviourNativAkasa* pBehaviour)
 {
 	s_fighter_combo* pCombo;
 	bool bVar3;
@@ -2445,7 +2445,7 @@ void CActorNativ::State_0x22(CBehaviourNativSeller* pBehaviour)
 	return;
 }
 
-void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::State_0x23(CBehaviourNativAkasa* pBehaviour)
 {
 	s_fighter_combo* pCombo;
 	ArenaTutorial* pTutorial;
@@ -2473,7 +2473,7 @@ void CActorNativ::State_0x23(CBehaviourNativSeller* pBehaviour)
 	return;
 }
 
-void CActorNativ::StateInputSucceeded(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::StateInputSucceeded(CBehaviourNativAkasa* pBehaviour)
 {
 	ArenaTutorial* pTutorial;
 
@@ -2486,7 +2486,7 @@ void CActorNativ::StateInputSucceeded(CBehaviourNativSeller* pBehaviour)
 	return;
 }
 
-void CActorNativ::State_0x25(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::State_0x25(CBehaviourNativAkasa* pBehaviour)
 {
 	s_fighter_combo* pCombo;
 	bool bVar1;
@@ -2509,7 +2509,7 @@ void CActorNativ::State_0x25(CBehaviourNativSeller* pBehaviour)
 	return;
 }
 
-void CActorNativ::StateInputFailed(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::StateInputFailed(CBehaviourNativAkasa* pBehaviour)
 {
 	s_fighter_combo* pCombo;
 	int iVar1;
@@ -2541,7 +2541,7 @@ void CActorNativ::StateInputFailed(CBehaviourNativSeller* pBehaviour)
 	return;
 }
 
-void CActorNativ::State_0x38(CBehaviourNativSeller* pBehaviour)
+void CActorNativ::State_0x38(CBehaviourNativAkasa* pBehaviour)
 {
 	s_fighter_combo* pCombo;
 	bool bVar1;
@@ -3408,13 +3408,13 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	return 0;
 }
 
-CBehaviourNativSeller::CBehaviourNativSeller()
+CBehaviourNativAkasa::CBehaviourNativAkasa()
 {
 	//this->field_0x60 = 0;
 	//this->field_0x64 = 0;
 }
 
-void CBehaviourNativSeller::Create(ByteCode* pByteCode)
+void CBehaviourNativAkasa::Create(ByteCode* pByteCode)
 {
 	S_TARGET_STREAM_REF* pSVar1;
 	S_STREAM_EVENT_CAMERA* pSVar2;
@@ -3518,7 +3518,7 @@ void CBehaviourNativSeller::Create(ByteCode* pByteCode)
 	return;
 }
 
-void CBehaviourNativSeller::Init(CActor* pOwner)
+void CBehaviourNativAkasa::Init(CActor* pOwner)
 {
 	S_TARGET_STREAM_REF* pSVar1;
 	int iVar2;
@@ -3608,14 +3608,14 @@ void CBehaviourNativSeller::Init(CActor* pOwner)
 	return;
 }
 
-void CBehaviourNativSeller::Manage()
+void CBehaviourNativAkasa::Manage()
 {
 	this->pOwner->BehaviourNativSeller_Manage(this);
 
 	return;
 }
 
-void CBehaviourNativSeller::Begin(CActor* pOwner, int newState, int newAnimationType)
+void CBehaviourNativAkasa::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	this->pOwner = static_cast<CActorNativ*>(pOwner);
 
@@ -3634,26 +3634,26 @@ void CBehaviourNativSeller::Begin(CActor* pOwner, int newState, int newAnimation
 	return;
 }
 
-void CBehaviourNativSeller::End(int newBehaviourId)
+void CBehaviourNativAkasa::End(int newBehaviourId)
 {
 	return;
 }
 
-void CBehaviourNativSeller::InitState(int newState)
+void CBehaviourNativAkasa::InitState(int newState)
 {
 	this->pOwner->BehaviourNativSeller_InitState(newState, this);
 
 	return;
 }
 
-void CBehaviourNativSeller::TermState(int oldState, int newState)
+void CBehaviourNativAkasa::TermState(int oldState, int newState)
 {
 	this->pOwner->BehaviourNativSeller_TermState(oldState);
 
 	return;
 }
 
-int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+int CBehaviourNativAkasa::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	CActorNativ* pCVar1;
 	int iVar2;
@@ -3725,7 +3725,7 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 }
 
 
-void CBehaviourNativSeller::ManageComboTutorial()
+void CBehaviourNativAkasa::ManageComboTutorial()
 {
 	CActorNativ* pNativ;
 	bool bVar2;
@@ -3868,7 +3868,7 @@ void CBehaviourNativSeller::ManageComboTutorial()
 
 
 
-void CBehaviourNativSeller::ArenaUpdateDisplayBorderSize()
+void CBehaviourNativAkasa::ArenaUpdateDisplayBorderSize()
 {
 	byte bVar1;
 	s_fighter_combo* pCurrentCombo;
@@ -3945,7 +3945,7 @@ void CBehaviourNativSeller::ArenaUpdateDisplayBorderSize()
 	return;
 }
 
-void CBehaviourNativSeller::FUN_003ebd90()
+void CBehaviourNativAkasa::FUN_003ebd90()
 {
 	CActorHero* pHero;
 	long lVar2;
@@ -3980,7 +3980,7 @@ void CBehaviourNativSeller::FUN_003ebd90()
 	return;
 }
 
-void CBehaviourNativSeller::GetComboButtonDisplaySize(s_fighter_combo* pCombo, float* param_3, float* param_4)
+void CBehaviourNativAkasa::GetComboButtonDisplaySize(s_fighter_combo* pCombo, float* param_3, float* param_4)
 {
 	uint uVar1;
 	char cVar2;
@@ -4112,7 +4112,7 @@ void CBehaviourNativSeller::GetComboButtonDisplaySize(s_fighter_combo* pCombo, f
 	return;
 }
 
-void CBehaviourNativSeller::FUN_003f1da0(s_fighter_combo* pCombo)
+void CBehaviourNativAkasa::FUN_003f1da0(s_fighter_combo* pCombo)
 {
 	if ((pCombo->field_0x4.field_0x0ushort & 0x400U) == 0) {
 		s_fighter_move* pMove = LOAD_SECTION_CAST(s_fighter_move*, pCombo->actionHash.pData);
@@ -4130,7 +4130,7 @@ void CBehaviourNativSeller::FUN_003f1da0(s_fighter_combo* pCombo)
 	return;
 }
 
-bool CBehaviourNativSeller::FUN_003ebee0(int param_2)
+bool CBehaviourNativAkasa::FUN_003ebee0(int param_2)
 {
 	int iVar1;
 
@@ -4157,7 +4157,7 @@ bool CBehaviourNativSeller::FUN_003ebee0(int param_2)
 	return false;
 }
 
-bool CBehaviourNativSeller::IsEventActive()
+bool CBehaviourNativAkasa::IsEventActive()
 {
 	uint zoneId;
 	CEventManager* pEventManager;
@@ -4192,7 +4192,7 @@ bool CBehaviourNativSeller::IsEventActive()
 	return bEventActive;
 }
 
-void CBehaviourNativSeller::SetBehaviourState(int newState)
+void CBehaviourNativAkasa::SetBehaviourState(int newState)
 {
 	if (newState != this->currentBehaviourState) {
 		TermState(this->currentBehaviourState, -1);
@@ -4210,7 +4210,7 @@ void CBehaviourNativSeller::SetBehaviourState(int newState)
 #define INPUT_STATE_CORRECT_HIT 0x3
 #define INPUT_STATE_INCORRECT 0x4
 
-int CBehaviourNativSeller::GetInputState(int currentIndex, int param_3)
+int CBehaviourNativAkasa::GetInputState(int currentIndex, int param_3)
 {
 	int iVar1;
 	CActorHero* pCVar2;
@@ -4281,7 +4281,7 @@ uint INPUT_COLOR = 0x80303030;
 uint INPUT_COLOR_CORRECT = 0x80007000;
 uint INPUT_COLOR_INCORRECT = 0x80000070;
 
-void CBehaviourNativSeller::SetupTextStyle(int funcIndex, edCTextStyle* pTextStyle)
+void CBehaviourNativAkasa::SetupTextStyle(int funcIndex, edCTextStyle* pTextStyle)
 {
 	uint inputColorNormal;
 	uint inputColor;
@@ -4397,7 +4397,7 @@ void DrawInputBorder(edF32VECTOR2* v0, edF32VECTOR2* v1, _rgba* color, edDList_m
 	return;
 }
 
-bool CBehaviourNativSeller::DrawButton(s_fighter_combo* pCombo, float* pOutWidth, int param_4)
+bool CBehaviourNativAkasa::DrawButton(s_fighter_combo* pCombo, float* pOutWidth, int param_4)
 {
 	byte bVar1;
 	uint uVar2;
@@ -4472,7 +4472,7 @@ bool CBehaviourNativSeller::DrawButton(s_fighter_combo* pCombo, float* pOutWidth
 }
 
 
-void CBehaviourNativSeller::DrawInventoryCrouch(uint flags, float* pOutWidth)
+void CBehaviourNativAkasa::DrawInventoryCrouch(uint flags, float* pOutWidth)
 {
 	byte bVar1;
 	CInputAnalyser* pCVar2;
@@ -4528,7 +4528,7 @@ void CBehaviourNativSeller::DrawInventoryCrouch(uint flags, float* pOutWidth)
 	return;
 }
 
-void CBehaviourNativSeller::DrawDirectionArrow(s_input_pattern* pPattern, float* pOutWidth)
+void CBehaviourNativAkasa::DrawDirectionArrow(s_input_pattern* pPattern, float* pOutWidth)
 {
 	edCTextStyle* pNewFont;
 	edCTextStyle* pNewFont_00;
@@ -4612,7 +4612,7 @@ void CBehaviourNativSeller::DrawDirectionArrow(s_input_pattern* pPattern, float*
 	return;
 }
 
-bool CBehaviourNativSeller::FUN_003ede90(s_fighter_combo* pCombo, float* pOutWidth, int param_4)
+bool CBehaviourNativAkasa::FUN_003ede90(s_fighter_combo* pCombo, float* pOutWidth, int param_4)
 {
 	byte bVar1;
 	CActorHero* pHero;
@@ -4727,7 +4727,7 @@ bool CBehaviourNativSeller::FUN_003ede90(s_fighter_combo* pCombo, float* pOutWid
 	return bVar5;
 }
 
-void CBehaviourNativSeller::DrawButton(uint flags, float* pOutWidth, int param_4, int param_5)
+void CBehaviourNativAkasa::DrawButton(uint flags, float* pOutWidth, int param_4, int param_5)
 {
 	edCTextStyle* pTextStyle;
 	edCTextStyle textStyle;
@@ -4775,7 +4775,7 @@ void CBehaviourNativSeller::DrawButton(uint flags, float* pOutWidth, int param_4
 	return;
 }
 
-void CBehaviourNativSeller::FUN_003ed820(s_fighter_combo* pCombo, float* param_3, int param_4)
+void CBehaviourNativAkasa::FUN_003ed820(s_fighter_combo* pCombo, float* param_3, int param_4)
 {
 	bool bVar1;
 	edCTextStyle* pTextStyle;
@@ -4811,7 +4811,7 @@ void CBehaviourNativSeller::FUN_003ed820(s_fighter_combo* pCombo, float* param_3
 	return;
 }
 
-void CBehaviourNativSeller::DrawButtonPromptA()
+void CBehaviourNativAkasa::DrawButtonPromptA()
 {
 	int iVar1;
 	bool bVar2;
@@ -4877,7 +4877,7 @@ void CBehaviourNativSeller::DrawButtonPromptA()
 	return;
 }
 
-ArenaTutorial* CBehaviourNativSeller::GetActiveComboTutorial()
+ArenaTutorial* CBehaviourNativAkasa::GetActiveComboTutorial()
 {
 	ArenaTutorial* pReqCombo;
 	const int index = (this->comboTutorialManager).activeTutorialIndex;
@@ -5007,7 +5007,7 @@ NativSellerSubObjA* NativSubObjD::Set_0x1630(int param_2)
 	IMPLEMENTATION_GUARD();
 }
 
-void CBehaviourNativUnknown::Create(ByteCode* pByteCode)
+void CBehaviourNativSeller::Create(ByteCode* pByteCode)
 {
 	this->field_0x8 = pByteCode->GetF32();
 	this->addOn.Create(pByteCode);
@@ -5015,7 +5015,7 @@ void CBehaviourNativUnknown::Create(ByteCode* pByteCode)
 	return;
 }
 
-void CBehaviourNativUnknown::Init(CActor* pOwner)
+void CBehaviourNativSeller::Init(CActor* pOwner)
 {
 	this->field_0x28 = -1;
 	this->pOwner = static_cast<CActorNativ*>(pOwner);
@@ -5030,19 +5030,21 @@ void CBehaviourNativUnknown::Init(CActor* pOwner)
 	return;
 }
 
-void CBehaviourNativUnknown::Manage()
+void CBehaviourNativSeller::Manage()
 {
 	this->pOwner->BehaviourNativUnknown_Manage(this);
 
 	return;
 }
 
-void CBehaviourNativUnknown::ManageFrozen()
+void CBehaviourNativSeller::ManageFrozen()
 {
-	IMPLEMENTATION_GUARD();
+	this->addOn.Manage();
+
+	return;
 }
 
-void CBehaviourNativUnknown::Begin(CActor* pOwner, int newState, int newAnimationType)
+void CBehaviourNativSeller::Begin(CActor* pOwner, int newState, int newAnimationType)
 {
 	this->pOwner = static_cast<CActorNativ*>(pOwner);
 	if (newState == -1) {
@@ -5060,24 +5062,24 @@ void CBehaviourNativUnknown::Begin(CActor* pOwner, int newState, int newAnimatio
 	return;
 }
 
-void CBehaviourNativUnknown::End(int newBehaviourId)
+void CBehaviourNativSeller::End(int newBehaviourId)
 {
 	IMPLEMENTATION_GUARD();
 }
 
-void CBehaviourNativUnknown::InitState(int newState)
+void CBehaviourNativSeller::InitState(int newState)
 {
 	this->pOwner->BehaviourNativUnknown_InitState(newState);
 
 	return;
 }
 
-void CBehaviourNativUnknown::TermState(int oldState, int newState)
+void CBehaviourNativSeller::TermState(int oldState, int newState)
 {
 	IMPLEMENTATION_GUARD();
 }
 
-int CBehaviourNativUnknown::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	int iVar1;
 	CActorNativ* pCVar2;
@@ -5160,7 +5162,7 @@ int CBehaviourNativUnknown::InterpretMessage(CActor* pSender, int msg, void* pMs
 	return iVar4;
 }
 
-float CBehaviourNativUnknown::FUN_003f3210()
+float CBehaviourNativSeller::FUN_003f3210()
 {
 	CActor* pActor;
 	CActorNativ* pCVar1;
@@ -5200,12 +5202,12 @@ float CBehaviourNativUnknown::FUN_003f3210()
 	return fVar7;
 }
 
-void CBehaviourNativUnknown::FUN_003f3070()
+void CBehaviourNativSeller::FUN_003f3070()
 {
 	IMPLEMENTATION_GUARD();
 }
 
-void CBehaviourNativUnknown::FUN_003f3020()
+void CBehaviourNativSeller::FUN_003f3020()
 {
 	int iVar1;
 

@@ -95,7 +95,7 @@ struct NativSubObjD
 	int activeSubObjIndex;
 };
 
-class CBehaviourNativUnknown : public CBehaviourNativ
+class CBehaviourNativSeller : public CBehaviourNativ
 {
 public:
 	virtual void Create(ByteCode* pByteCode);
@@ -120,10 +120,10 @@ public:
 	int field_0x28;
 };
 
-class CBehaviourNativSeller : public CBehaviourNativ
+class CBehaviourNativAkasa : public CBehaviourNativ
 {
 public:
-	CBehaviourNativSeller();
+	CBehaviourNativAkasa();
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Manage();
@@ -310,12 +310,12 @@ public:
 	void BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBehaviour);
 	void BehaviourNativTakeAndPut_TermState(int oldState);
 
-	void BehaviourNativSeller_InitState(int newState, CBehaviourNativSeller* pBehaviour);
-	void BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour);
+	void BehaviourNativSeller_InitState(int newState, CBehaviourNativAkasa* pBehaviour);
+	void BehaviourNativSeller_Manage(CBehaviourNativAkasa* pBehaviour);
 	void BehaviourNativSeller_TermState(int oldState);
 
 	void BehaviourNativUnknown_InitState(int newState);
-	void BehaviourNativUnknown_Manage(CBehaviourNativUnknown* pBehaviour);
+	void BehaviourNativUnknown_Manage(CBehaviourNativSeller* pBehaviour);
 
 	void StateNativTakePutTurnTo();
 	void StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour);
@@ -330,13 +330,13 @@ public:
 	float FUN_00164070();
 	void* FUN_0036f330(int param_2);
 
-	void StateInitArenaDisplay(CBehaviourNativSeller* pBehaviour);
-	void State_0x22(CBehaviourNativSeller* pBehaviour);
-	void State_0x23(CBehaviourNativSeller* pBehaviour);
-	void StateInputSucceeded(CBehaviourNativSeller* pBehaviour);
-	void State_0x25(CBehaviourNativSeller* pBehaviour);
-	void StateInputFailed(CBehaviourNativSeller* pBehaviour);
-	void State_0x38(CBehaviourNativSeller* pBehaviour);
+	void StateInitArenaDisplay(CBehaviourNativAkasa* pBehaviour);
+	void State_0x22(CBehaviourNativAkasa* pBehaviour);
+	void State_0x23(CBehaviourNativAkasa* pBehaviour);
+	void StateInputSucceeded(CBehaviourNativAkasa* pBehaviour);
+	void State_0x25(CBehaviourNativAkasa* pBehaviour);
+	void StateInputFailed(CBehaviourNativAkasa* pBehaviour);
+	void State_0x38(CBehaviourNativAkasa* pBehaviour);
 
 	static StateConfig _gStateCfg_NTV[54];
 
