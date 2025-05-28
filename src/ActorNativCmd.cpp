@@ -207,7 +207,345 @@ void CActorNativCmd::ChangeManageState(int state)
 
 int CActorNativCmd::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
+	char cVar1;
+	int iVar2;
+	int uVar3;
+	int iVar3;
+	int iVar4;
+	CActor* pCVar5;
+	CActorNativ* pReceiver;
+	CTalkParam* pTalkParam;
+	int iVar6;
+	long lVar7;
+	undefined4 local_f0[8];
+	undefined4 local_d0[2];
+	undefined4 local_c8;
+	undefined4 local_b0[8];
+	undefined4 local_90[8];
+	undefined4 local_70[8];
+	edF32VECTOR4 eStack80;
+	int local_40;
+	float local_3c;
+	float local_38;
+	float local_34;
+	float local_30;
+	float local_2c;
+	edF32VECTOR4* local_28;
+	undefined4* local_24;
+	undefined4* local_20;
+	undefined4* local_1c;
+	undefined4* local_18;
+	int* local_14;
+	int* local_10;
+	int* local_c;
+	int* local_8;
+	undefined4* local_4;
+
+	if (msg == 0x4e) {
+		uVar3 = 0;
+		if (pSender->typeID == 10) {
+			CActorNativMsgParamOther* pParams = reinterpret_cast<CActorNativMsgParamOther*>(pMsgParam);
+			iVar6 = pParams->type;
+			if (iVar6 == 7) {
+				IMPLEMENTATION_GUARD(
+				local_40 = pMsgParams->field_0x0;
+				local_3c = pMsgParams->field_0x4;
+				local_38 = pMsgParams->field_0x8;
+				local_34 = pMsgParams->field_0xc;
+				local_30 = (pMsgParams->vectorFieldA).x;
+				local_2c = (pMsgParams->vectorFieldA).y;
+				local_28 = (edF32VECTOR4*)(pMsgParams->vectorFieldA).z;
+				pTalkParam = (CTalkParam*)0x0;
+				if ((int)local_38 < this->nbTalkParams) {
+					pTalkParam = this->aTalkParams + (int)local_38;
+				}
+				iVar6 = pTalkParam->nbSubObj;
+				iVar2 = 0;
+				if (0 < iVar6) {
+					iVar4 = 0;
+					do {
+						pCVar5 = (CActor*)0x0;
+						if (iVar2 < iVar6) {
+							pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->field_0x0 + iVar4);
+						}
+						if (pCVar5 == pSender) goto LAB_003958b8;
+						iVar2 = iVar2 + 1;
+						iVar4 = iVar4 + 8;
+					} while (iVar2 < pTalkParam->nbSubObj);
+				}
+				iVar2 = -1;
+			LAB_003958b8:
+				if (iVar2 == -1) {
+					local_f0[0] = 2;
+					local_24 = local_f0;
+					CActor::DoMessage((CActor*)this, pSender, 0x4e, (uint)local_24);
+				}
+				else {
+					lVar7 = 0;
+					if (0 < iVar6) {
+						iVar6 = 0;
+						do {
+							pCVar5 = (CActor*)0x0;
+							if (lVar7 < pTalkParam->nbSubObj) {
+								pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->field_0x0 + iVar6);
+							}
+							local_d0[0] = CTalkParam::ChooseFinishOrder(pTalkParam, lVar7);
+							local_c8 = 0xffffffff;
+							if (pCVar5 != (CActor*)0x0) {
+								local_20 = local_d0;
+								CActor::DoMessage((CActor*)this, pCVar5, 0x4e, (uint)local_d0);
+							}
+							lVar7 = (long)((int)lVar7 + 1);
+							iVar6 = iVar6 + 8;
+						} while (lVar7 < pTalkParam->nbSubObj);
+					}
+					pTalkParam->field_0x10 = 0;
+					pTalkParam->field_0x1c = 0;
+					pTalkParam->field_0x14 = 0;
+					pTalkParam->field_0x18 = 0;
+					pTalkParam->field_0x1d = 0;
+					iVar6 = 0;
+					if (0 < pTalkParam->nbSubObj) {
+						iVar2 = 0;
+						do {
+							iVar6 = iVar6 + 1;
+							*(undefined4*)((int)&pTalkParam->field_0x8->field_0x0 + iVar2) = 0;
+							*(undefined4*)((int)&pTalkParam->field_0x8->field_0x4 + iVar2) = 1;
+							iVar2 = iVar2 + 8;
+						} while (iVar6 < pTalkParam->nbSubObj);
+					}
+				})
+			}
+			else {
+				if (iVar6 == 0x11) {
+					IMPLEMENTATION_GUARD(
+					local_b0[0] = 0x11;
+					if (*(CActor**)&this->field_0x1d4 != (CActor*)0x0) {
+						local_1c = local_b0;
+						CActor::DoMessage((CActor*)this, *(CActor**)&this->field_0x1d4, 0x4e, (uint)local_1c);
+					})
+				}
+				else {
+					if (iVar6 == 0x12) {
+						IMPLEMENTATION_GUARD(
+						*(undefined4*)&this->field_0x1d4 = 0;
+						if (pMsgParams->field_0x8 != -NAN) {
+							local_18 = local_90;
+							local_90[0] = 0x12;
+							CActor::DoMessage((CActor*)this, this->aNativs->aEntries[(int)pMsgParams->field_0x8].pActor, 0x4e,
+								(uint)local_18);
+							pMsgParams->field_0x8 = -NAN;
+						})
+					}
+					else {
+						if (iVar6 == 0x10) {
+							IMPLEMENTATION_GUARD(
+							*(CActor**)&this->field_0x1d4 = pSender;
+							FUN_00394eb0((long)(int)this, (int*)&pMsgParams->field_0x8);)
+						}
+						else {
+							if (iVar6 == 9) {
+								IMPLEMENTATION_GUARD(
+								if (*(int*)&pSender[2].hierarchySetup.field_0x18 == 1) {
+									cVar1 = (*((this->addOnB).base.pVTable)->field_0x20)
+										((CAddOn*)&this->addOnB, (uint)(pMsgParams->vectorFieldA).x, pSender, 0);
+								}
+								else {
+									cVar1 = (*((this->addOnA).base.pVTable)->field_0x20)
+										((CAddOn*)&this->addOnA, (uint)(pMsgParams->vectorFieldA).x, pSender, 0);
+								}
+								return (int)cVar1 & 0xff;)
+							}
+							if (iVar6 == 3) {
+								local_40 = 3;
+								local_38 = -NAN;
+								local_14 = &local_40;
+								DoMessage(pSender, (ACTOR_MESSAGE)0x4e, local_14);
+								return 1;
+							}
+							if (iVar6 == 8) {
+								IMPLEMENTATION_GUARD(
+								local_40 = pMsgParams->field_0x0;
+								local_3c = pMsgParams->field_0x4;
+								local_38 = pMsgParams->field_0x8;
+								local_34 = pMsgParams->field_0xc;
+								local_30 = (pMsgParams->vectorFieldA).x;
+								local_2c = (pMsgParams->vectorFieldA).y;
+								local_28 = (edF32VECTOR4*)(pMsgParams->vectorFieldA).z;
+								pTalkParam = (CTalkParam*)0x0;
+								if ((int)local_38 < this->nbTalkParams) {
+									pTalkParam = this->aTalkParams + (int)local_38;
+								}
+								iVar6 = 0;
+								if (0 < pTalkParam->nbSubObj) {
+									iVar2 = 0;
+									do {
+										pCVar5 = (CActor*)0x0;
+										if (iVar6 < pTalkParam->nbSubObj) {
+											pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->field_0x0 + iVar2);
+										}
+										if (pCVar5 == pSender) goto LAB_00395388;
+										iVar6 = iVar6 + 1;
+										iVar2 = iVar2 + 8;
+									} while (iVar6 < pTalkParam->nbSubObj);
+								}
+								iVar6 = -1;
+							LAB_00395388:
+								local_4 = local_70;
+								if (iVar6 == -1) {
+									local_70[0] = 2;
+									CActor::DoMessage((CActor*)this, pSender, 0x4e, (uint)local_4);
+								}
+								else {
+									FUN_00392be0((int)pTalkParam, iVar6, (float*)local_28);
+									iVar2 = FUN_00392d90((int)pTalkParam);
+									if (iVar2 == 0) {
+										local_2c = FUN_00392ad0(pTalkParam, iVar6);
+										iVar2 = 0;
+										if (iVar6 < pTalkParam->nbSubObj) {
+											iVar2 = pTalkParam->field_0x8[iVar6].field_0x4;
+										}
+										local_40 = 5;
+										if (iVar2 == 6) {
+											local_40 = 0;
+										}
+										else {
+											if (iVar2 == 5) {
+												local_40 = 0xd;
+											}
+											else {
+												if (iVar2 == 4) {
+													local_40 = 9;
+												}
+												else {
+													if (iVar2 == 3) {
+														local_40 = 6;
+													}
+													else {
+														if (iVar2 != 2) {
+															local_40 = 0;
+														}
+													}
+												}
+											}
+										}
+										if (iVar6 < pTalkParam->nbSubObj) {
+											pReceiver = pTalkParam->field_0x8[iVar6].field_0x0;
+										}
+										else {
+											pReceiver = (CActorNativ*)0x0;
+										}
+										local_10 = &local_40;
+										CActor::DoMessage((CActor*)this, (CActor*)pReceiver, 0x4e, (uint)local_10);
+									}
+									else {
+										FUN_00392e30((int)pTalkParam, &eStack80);
+										local_28 = &eStack80;
+										iVar6 = 0;
+										if (0 < pTalkParam->nbSubObj) {
+											iVar2 = 0;
+											do {
+												local_2c = FUN_00392ad0(pTalkParam, iVar6);
+												iVar4 = pTalkParam->nbSubObj;
+												pCVar5 = (CActor*)0x0;
+												if (iVar6 < iVar4) {
+													pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->field_0x0 + iVar2);
+												}
+												if (pCVar5 == pSender) {
+													iVar3 = 0;
+													if (iVar6 < iVar4) {
+														iVar3 = *(int*)((int)&pTalkParam->field_0x8->field_0x4 + iVar2);
+													}
+													local_40 = 5;
+													if (iVar3 == 6) {
+														local_40 = 0;
+													}
+													else {
+														if (iVar3 == 5) {
+															local_40 = 0xd;
+														}
+														else {
+															if (iVar3 == 4) {
+																local_40 = 9;
+															}
+															else {
+																if (iVar3 == 3) {
+																	local_40 = 6;
+																}
+																else {
+																	if (iVar3 != 2) {
+																		local_40 = 0;
+																	}
+																}
+															}
+														}
+													}
+													local_34 = (float)FUN_00392860((int)pTalkParam, iVar6, 1);
+													pCVar5 = (CActor*)0x0;
+													if (iVar6 < pTalkParam->nbSubObj) {
+														pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->field_0x0 + iVar2);
+													}
+													local_c = &local_40;
+													CActor::DoMessage((CActor*)this, pCVar5, 0x4e, (uint)&local_40);
+												}
+												else {
+													iVar3 = 0;
+													if (iVar6 < iVar4) {
+														iVar3 = *(int*)((int)&pTalkParam->field_0x8->field_0x4 + iVar2);
+													}
+													local_40 = 5;
+													if (iVar3 == 6) {
+														local_40 = 0;
+													}
+													else {
+														if (iVar3 == 5) {
+															local_40 = 0xd;
+														}
+														else {
+															if (iVar3 == 4) {
+																local_40 = 9;
+															}
+															else {
+																if (iVar3 == 3) {
+																	local_40 = 6;
+																}
+																else {
+																	if (iVar3 != 2) {
+																		local_40 = 0;
+																	}
+																}
+															}
+														}
+													}
+													local_34 = (float)FUN_00392860((int)pTalkParam, iVar6, 0);
+													pCVar5 = (CActor*)0x0;
+													if (iVar6 < pTalkParam->nbSubObj) {
+														pCVar5 = *(CActor**)((int)&pTalkParam->field_0x8->field_0x0 + iVar2);
+													}
+													local_8 = &local_40;
+													CActor::DoMessage((CActor*)this, pCVar5, 0x4e, (uint)&local_40);
+												}
+												iVar6 = iVar6 + 1;
+												iVar2 = iVar2 + 8;
+											} while (iVar6 < pTalkParam->nbSubObj);
+										}
+									}
+								})
+								return 1;
+							}
+						}
+					}
+				}
+			}
+
+			uVar3 = 0;
+		}
+	}
+	else {
+		uVar3 = CActor::InterpretMessage(pSender, msg, pMsgParam);
+	}
+
+	return uVar3;
 }
 
 CAddOnNativ::CAddOnNativ()

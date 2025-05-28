@@ -488,7 +488,7 @@ namespace Nativ
 				return "Live";
 			case NATIVE_BEHAVIOUR_TAKE_AND_PUT:
 				return "Take and Put";
-			case NATIVE_BEHAVIOUR_SELLER:
+			case NATIVE_BEHAVIOUR_AKASA:
 				return "Seller";
 		default:
 			return "Unknown";

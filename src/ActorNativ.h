@@ -11,8 +11,8 @@
 #define NATIVE_BEHAVIOUR_EXORCISM 0x4
 #define NATIVE_BEHAVIOUR_LIVE 0x5
 #define NATIVE_BEHAVIOUR_TAKE_AND_PUT 0x6
-#define NATIVE_BEHAVIOUR_UNKNOWN 0x7
-#define NATIVE_BEHAVIOUR_SELLER 0x8
+#define NATIVE_BEHAVIOUR_SELLER 0x7
+#define NATIVE_BEHAVIOUR_AKASA 0x8
 
 #define NATIVE_STATE_TAKE_PUT_WALK 0x15
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
@@ -109,7 +109,7 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { return 0; }
 
-	float FUN_003f3210();
+	float GetWayPointDistance();
 
 	void FUN_003f3070();
 	void FUN_003f3020();
@@ -237,18 +237,37 @@ public:
 	int curTrajectoryParamIndex;
 };
 
+struct SpeakSubObj
+{
+	float field_0x0;
+	float field_0x4;
+};
+
 class CBehaviourNativSpeak : public CBehaviourNativ
 {
 public:
 	CBehaviourNativSpeak();
 
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
 
+	virtual void Manage();
+
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 
 	void Reset();
 
-	int nbTrajectoryParams;
-	CTakePutTrajectoryParam* aTrajectoryParams;
+	int nbSubObjs;
+	SpeakSubObj* aSubObjs;
 
+	edF32VECTOR4 field_0x10;
+
+	int field_0x20;
 	int field_0x24;
 	float field_0x28;
 };
@@ -310,12 +329,17 @@ public:
 	void BehaviourNativTakeAndPut_Manage(CBehaviourNativTakeAndPut* pBehaviour);
 	void BehaviourNativTakeAndPut_TermState(int oldState);
 
-	void BehaviourNativSeller_InitState(int newState, CBehaviourNativAkasa* pBehaviour);
-	void BehaviourNativSeller_Manage(CBehaviourNativAkasa* pBehaviour);
+	void BehaviourNativAkasa_InitState(int newState, CBehaviourNativAkasa* pBehaviour);
+	void BehaviourNativAkasa_Manage(CBehaviourNativAkasa* pBehaviour);
+	void BehaviourNativAkasa_TermState(int oldState);
+
+	void BehaviourNativSeller_InitState(int newState);
+	void BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour);
 	void BehaviourNativSeller_TermState(int oldState);
 
-	void BehaviourNativUnknown_InitState(int newState);
-	void BehaviourNativUnknown_Manage(CBehaviourNativSeller* pBehaviour);
+	void BehaviourNativSpeak_InitState(int newState);
+	void BehaviourNativSpeak_Manage(CBehaviourNativSpeak* pBehaviour);
+	void BehaviourNativSpeak_TermState(int oldState);
 
 	void StateNativTakePutTurnTo();
 	void StateNativTakePutWalk(CBehaviourNativTakeAndPut* pBehaviour);
@@ -329,6 +353,8 @@ public:
 	int FUN_00162a70();
 	float FUN_00164070();
 	void* FUN_0036f330(int param_2);
+
+	bool CanSpeak();
 
 	void StateInitArenaDisplay(CBehaviourNativAkasa* pBehaviour);
 	void State_0x22(CBehaviourNativAkasa* pBehaviour);
@@ -379,6 +405,8 @@ public:
 	int cinematicCachedState;
 	int cinematicCachedAnim;
 	edF32VECTOR4 cinematicCachedLocation;
+
+	byte field_0x4f0;
 
 	int field_0x4f8;
 	int field_0x4fc;
