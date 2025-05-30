@@ -26,12 +26,6 @@ public:
 	void Magic_SetDisplay(unsigned char bNewVisible);
 };
 
-class CFrontendMoney
-{
-public:
-	int field_0x74;
-};
-
 class CFrontendLifeGauge;
 
 struct CFrontendDisplay : public CFrontend {

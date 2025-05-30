@@ -1315,3 +1315,19 @@ void CPathPlane::computePlanesFromKeys(PlaneData* aPlaneData, int nbPoints)
 
 	return;
 }
+
+template<>
+void S_STREAM_REF<CPathFollow>::Init()
+{
+	CPathFollow* pPathFollow;
+
+	if (this->index == -1) {
+		pPathFollow = (CPathFollow*)0x0;
+	}
+	else {
+		pPathFollow = (CScene::ptable.g_PathManager_004516a0)->aPathFollow + this->index;
+	}
+
+	this->pObj = STORE_SECTION(pPathFollow);
+	return;
+}

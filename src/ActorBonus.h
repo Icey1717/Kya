@@ -4,6 +4,11 @@
 #include "Types.h"
 #include "ActorMovable.h"
 
+#define BONUS_BEHAVIOUR_TURN 0x3
+#define BONUS_BEHAVIOUR_PATH 0x4
+#define BONUS_BEHAVIOUR_FLOCK 0x5
+#define BONUS_BEHAVIOUR_ADD_ON 0x6
+
 class CBehaviourBonusBase : public CBehaviour
 {
 public:

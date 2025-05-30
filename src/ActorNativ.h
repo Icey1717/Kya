@@ -18,9 +18,15 @@
 #define NATIVE_STATE_TAKE_PUT_TURN_TO 0x16
 #define NATIVE_STATE_TAKE_PUT_USED_TOOL 0x17
 
+#define NATIVE_STATE_SPEAK_FACE_TOWARDS 0xc
+#define NATIVE_STATE_SPEAK_FACE_AWAY 0xd
+
 #define NATIVE_STATE_SELLER_INIT_ARENA_DISPLAY 0x21
 #define NATIVE_STATE_SELLER_INPUT_SUCCEEDED 0x24
 #define NATIVE_STATE_SELLER_INPUT_FAILED 0x36
+
+#define NATIVE_MESSAGE_FACE_TOWARDS 0xa
+#define NATIVE_MESSAGE_FACE_AWAY 0xb
 
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
@@ -346,6 +352,8 @@ public:
 
 	void StateNativTakePutUsedTool(CBehaviourNativTakeAndPut* pBehaviour);
 
+	void StateNativSellerStandCome(CBehaviourNativSeller* pBehaviour);
+
 	void SetHasObject(bool bHasObject);
 	void ChooseToolState();
 
@@ -353,6 +361,7 @@ public:
 	int FUN_00162a70();
 	float FUN_00164070();
 	void* FUN_0036f330(int param_2);
+	bool FUN_00162750();
 
 	bool CanSpeak();
 
@@ -363,6 +372,8 @@ public:
 	void State_0x25(CBehaviourNativAkasa* pBehaviour);
 	void StateInputFailed(CBehaviourNativAkasa* pBehaviour);
 	void State_0x38(CBehaviourNativAkasa* pBehaviour);
+
+	bool InZone_00162970(CActor* pActor);
 
 	static StateConfig _gStateCfg_NTV[54];
 
@@ -427,6 +438,7 @@ public:
 
 	edF32VECTOR4 curWayPointLocation;
 
+	edF32VECTOR4 field_0x570;
 	edF32MATRIX4 field_0x580;
 
 	ed_3d_hierarchy* pHeldItemHierarchy;

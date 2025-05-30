@@ -169,3 +169,70 @@ char* edStrChr(char* inString, char searchChar)
 	}
 	return inString;
 }
+
+
+void edStrInt2Str(uint value, char* str, uint len, bool padWithSpaces)
+{
+	uint uVar1;
+	char* pcVar2;
+	uint uVar3;
+	uint uVar4;
+	uint uVar5;
+
+	uVar1 = (len & 0xff) - 1;
+
+	if ((int)value < 0) {
+		uVar5 = 1;
+		if (padWithSpaces != false) {
+			*str = '-';
+		}
+		uVar4 = -value;
+	}
+	else {
+		uVar5 = 0;
+		uVar4 = value;
+	}
+
+	for (uVar3 = len & 0xff; uVar5 < uVar3; uVar3 = uVar3 - 1) {
+		str[uVar3 - 1] = (char)(uVar4 % 10) + '0';
+
+		if (uVar4 % 10 != 0) {
+			uVar1 = uVar3 - 1;
+		}
+		uVar4 = uVar4 / 10;
+	}
+
+	str[len & 0xff] = '\0';
+
+	if (padWithSpaces == false) {
+		uVar4 = 0;
+
+		if (uVar1 != 0) {
+			if (8 < uVar1) {
+				do {
+					pcVar2 = str + uVar4;
+					*pcVar2 = ' ';
+					uVar4 = uVar4 + 8;
+					pcVar2[1] = ' ';
+					pcVar2[2] = ' ';
+					pcVar2[3] = ' ';
+					pcVar2[4] = ' ';
+					pcVar2[5] = ' ';
+					pcVar2[6] = ' ';
+					pcVar2[7] = ' ';
+				} while (uVar4 < uVar1 - 8);
+			}
+
+			for (; uVar4 < uVar1; uVar4 = uVar4 + 1) {
+				str[uVar4] = ' ';
+			}
+		}
+
+		if ((int)value < 0) {
+			str[uVar1 - 1] = '-';
+		}
+	}
+	return;
+}
+
+

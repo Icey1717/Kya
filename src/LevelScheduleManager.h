@@ -279,6 +279,10 @@ public:
 	int GetNbAreas(int currentLevelID);
 	void ExitLevel(int param_2);
 	void FUN_002dc200(int elevatorId, int levelId, int param_4);
+
+	bool AddMoneyA(int amount);
+	bool AddMoneyB(int amount);
+
 public:
 
 	static CLevelScheduler* gThis;

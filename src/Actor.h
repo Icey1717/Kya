@@ -87,6 +87,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_SOCCER_START = 0x35,
 	MESSAGE_REQUEST_CAMERA_TARGET = 0x49,
 	MESSAGE_GET_BONE_ID = 0x4d,
+	MESSAGE_NATIV_CMD = 0x4e,
 };
 
 #define OBJ_TYPE_MOVABLE	0x2
@@ -359,6 +360,56 @@ struct GetPositionMsgParams
 
 struct CCineActorConfig;
 
+class CActInstance
+{
+public:
+	CActInstance();
+
+	virtual void SetState(int newState);
+	virtual void CheckpointReset();
+
+	void Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int param_5);
+	void SetVisible(int bVisible);
+	void Reset();
+	void SetAlive(int bAlive);
+
+	float DistSquared(edF32VECTOR4* pPosition);
+
+	void State_GotoKim();
+	void State_Wait();
+
+	void FUN_003982c0();
+
+	uint flags;
+
+	CActor* pOwner;
+
+	edF32VECTOR4 basePosition;
+	edF32VECTOR4 currentPosition;
+	edF32VECTOR4 field_0x40;
+
+	float field_0x54;
+	float field_0x58;
+	float field_0x5c;
+	int field_0x60;
+
+	edNODE* pNode;
+	ed_3d_hierarchy* pHierarchy;
+
+	int state;
+
+	edF32VECTOR3 field_0x64;
+	edF32VECTOR3 field_0x70;
+
+	float field_0x7c;
+	undefined4 field_0x84;
+	undefined4 field_0x88;
+
+	float field_0x90;
+	float angleRotY;
+	float field_0x98;
+};
+
 class CActor : public CObject {
 public:
 	CActor();
@@ -569,6 +620,8 @@ public:
 	CActorSound* CreateActorSound(int soundType);
 
 	CActor* GetLinkFather();
+
+	void UpdateBoundingSphere(CActInstance* pInstances, int nbInstances);
 
 #ifdef DEBUG_FEATURES
 	// #Debug

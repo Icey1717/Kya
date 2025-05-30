@@ -9,6 +9,8 @@
 #define IMPLEMENTATION_GUARD_BOOMY(x)
 #define IMPLEMENTATION_GUARD_INVENTORY(x)
 
+#define ACTION_SPEAK 0xf
+
 enum EBoomyThrowState
 {
 	BTS_None,

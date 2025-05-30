@@ -115,19 +115,19 @@ CBehaviour* CActorBonus::BuildBehaviour(int behaviourType)
 		pCVar1 = (CBehaviour*)0x0;
 	}
 	else {
-		if (behaviourType == 6) {
+		if (behaviourType == BONUS_BEHAVIOUR_ADD_ON) {
 			pCVar1 = new CCBehaviourBonusAddOn;
 		}
 		else {
-			if (behaviourType == 5) {
+			if (behaviourType == BONUS_BEHAVIOUR_FLOCK) {
 					pCVar1 = &this->behaviourBonusFlock;
 			}
 			else {
-				if (behaviourType == 4) {
+				if (behaviourType == BONUS_BEHAVIOUR_PATH) {
 					pCVar1 = new CBehaviourBonusPath;
 				}
 				else {
-					if (behaviourType == 3) {
+					if (behaviourType == BONUS_BEHAVIOUR_TURN) {
 						pCVar1 = new CBehaviourBonusTurn;
 					}
 					else {

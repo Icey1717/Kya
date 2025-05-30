@@ -156,6 +156,22 @@ ScenarioVariable _gScenVarInfo[98] = {
 
 CLevelScheduler* CLevelScheduler::gThis = NULL;
 
+bool CLevelScheduler::AddMoneyB(int amount)
+{
+	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
+	//_gGameNfo.scenery = _gGameNfo.scenery - amount;
+
+	return true;
+}
+
+bool CLevelScheduler::AddMoneyA(int amount)
+{
+	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
+	//_gGameNfo.field_0x1c = _gGameNfo.field_0x1c - amount;
+
+	return true;
+}
+
 GameInfo CLevelScheduler::_gGameNfo{};
 
 const char* g_CD_LevelPath_00433bf8 = "CDEURO/Level/";
@@ -844,14 +860,14 @@ void CLevelScheduler::Episode_LoadFromIniFile(void)
 	//
 	//episodesPtr = &_gGameNfo;
 	//_gGameNfo.count = 0;
-	//_gGameNfo.nbMagic = 0;
-	//_gGameNfo.nbMoney = 0;
+	_gGameNfo.nbMagic = 0;
+	_gGameNfo.nbMoney = 0;
 	//_gGameNfo.scenery = 0;
 	//_gGameNfo.monster = 0;
 	//_gGameNfo.bet = 0;
 	//_gGameNfo.field_0x1c = 0;
 	//_gGameNfo.field_0x20 = 0;
-	//_gGameNfo.health = (float)_gScenVarInfo[20].currentValue;
+	_gGameNfo.health = (float)_gScenVarInfo[20].currentValue;
 	//iVar1 = 0;
 	//do {
 	//	local_10 = iVar1;
@@ -2394,7 +2410,7 @@ void CLevelScheduler::Level_Manage()
 				(CActorHero::_gThis != (CActorHero*)0x0)) &&
 				(uVar8 = edEventComputeZoneAgainstVertex
 				((CScene::ptable.g_EventManager_006f5080)->activeChunkId, (ed_zone_3d*)puVar9[1],
-					&(CActorHero::_gThis->character).characterBase.base.base.currentLocation, 0),
+					&CActorHero::_gThis->currentLocation, 0),
 					(uVar8 & 1) != 0)) {
 				gThis->field_0x5b30 = gThis->field_0x5b30 | 1 << (*puVar9 & 0x1f);
 			}
@@ -2451,7 +2467,7 @@ void CLevelScheduler::Level_Manage()
 		((uVar7 = FUN_002f39c0((int)&gSaveManagement), uVar7 == 0 &&
 			(uVar7 = FUN_001b92f0(CScene::_pinstance), pCVar3 = CActorHero::_gThis, uVar7 == 0)))) {
 		if (CActorHero::_gThis != (CActorHero*)0x0) {
-			pCVar5 = (*((CActorHero::_gThis->character).characterBase.base.base.pVTable)->GetLifeInterface)
+			pCVar5 = (*(CActorHero::_gThis->pVTable)->GetLifeInterface)
 				((CActor*)CActorHero::_gThis);
 			fVar15 = (float)(**(code**)((int)pCVar5->pVtable + 0x24))(pCVar5);
 			bVar2 = fVar15 - (pCVar3->character).characterBase.field_0x2e4 <= 0.0;

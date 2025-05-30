@@ -121,6 +121,7 @@
 struct CPlayerInput;
 class CActorBoomy;
 class CCamera;
+class CActorNativ;
 
 struct AnimResultHero : public StateConfig {
 	AnimResultHero(int inA, uint inB, uint inC)
@@ -241,7 +242,7 @@ public:
 	int animIdleSequenceIndex;
 	float effort;
 
-	char* field_0xf24;
+	CActorNativ* pTalkingToActor;
 
 	CPlayerInput* pPlayerInput;
 
@@ -313,6 +314,8 @@ public:
 	int GetLastCheckpointSector();
 	bool CanActivateCheckpoint(uint flags);
 	void ActivateCheckpoint(_evt_checkpoint_param* pEventCheckpointParam);
+
+	edF32VECTOR4* GetPosition_00369c80();
 
 	uint GetStateHeroFlags(int state);
 

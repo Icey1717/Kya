@@ -2251,8 +2251,8 @@ void CCinematic::Stop()
 		if (CActorHero::_gThis != (CActorHero*)0x0) {
 			if ((this->flags_0x4 & 0x10000) != 0) {
 				IMPLEMENTATION_GUARD(
-				(CActorHero::_gThis->character).characterBase.base.base.data.objectId =
-					(CActorHero::_gThis->character).characterBase.base.base.data.objectId & 0xffbfffff;)
+				CActorHero::_gThis->data.objectId =
+					CActorHero::_gThis->data.objectId & 0xffbfffff;)
 			}
 
 			if ((this->flags_0x4 & 0x10) != 0) {

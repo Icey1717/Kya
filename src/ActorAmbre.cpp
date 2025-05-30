@@ -449,15 +449,15 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 		bVar5 = true;
 	}
 	if (bVar5) {
-		v1 = &(CActorHero::_gThis->character).characterBase.base.base.currentLocation;
+		v1 = &CActorHero::_gThis->currentLocation;
 		v2 = &this->currentLocation;
 		local_20.x = (float)gF32Vertex4Zero._0_8_;
 		local_20.y = (float)((ulong)gF32Vertex4Zero._0_8_ >> 0x20);
 		local_20.z = gF32Vertex4Zero.z;
 		local_20.w = gF32Vertex4Zero.w;
 		fVar12 = v1->x - v2->x;
-		fVar13 = (CActorHero::_gThis->character).characterBase.base.base.currentLocation.y - this->currentLocation.y;
-		fVar3 = (CActorHero::_gThis->character).characterBase.base.base.currentLocation.z - this->currentLocation.z;
+		fVar13 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
+		fVar3 = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
 		if (fVar12 * fVar12 + fVar13 * fVar13 + fVar3 * fVar3 <= 25.0) {
 			edF32Vector4SubHard(&local_20, v1, v2);
 			local_20.w = 1.0;

@@ -10,7 +10,7 @@ class CLanguageManager : public CObjectManager {
 public:
 	CLanguageManager();
 
-	static ulong _commands[15];
+	static ulong _commands[16];
 	static ulong ULONG_ARRAY_00434970[5];
 
 	static CLanguageManager* GetLanguageManager();

@@ -8,6 +8,8 @@
 #include "ActorWeapon.h"
 #include "ActorNativ.h"
 #include "ActorAraignos.h"
+#include "ActorBonus.h"
+#include "ActorMoney.h"
 
 namespace Aton
 {
@@ -508,7 +510,8 @@ namespace Nativ
 	}
 }
 
-namespace Araignos {
+namespace Araignos
+{
 	static const char* GetBehaviourName(int curBehaviourId)
 	{
 		switch (curBehaviourId) {
@@ -526,6 +529,40 @@ namespace Araignos {
 			return "Default";
 		case ARAIGNOS_STATE_DIE:
 			return "Die";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
+namespace Bonus
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case BONUS_BEHAVIOUR_TURN:
+			return "Turn";
+		case BONUS_BEHAVIOUR_PATH:
+			return "Path";
+		case BONUS_BEHAVIOUR_FLOCK:
+			return "Flock";
+		case BONUS_BEHAVIOUR_ADD_ON:
+			return "Add On";
+		default:
+			return "Unknown";
+		}
+	}
+}
+
+namespace Money
+{
+	static const char* GetBehaviourName(int curBehaviourId)
+	{
+		switch (curBehaviourId) {
+		case MONEY_BEHAVIOUR_FLOCK:
+			return "Flock";
+		case MONEY_BEHAVIOUR_ADD_ON:
+			return "Add On";
 		default:
 			return "Unknown";
 		}
@@ -562,6 +599,10 @@ std::string Debug::Actor::Behaviour::GetActorBehaviourName(CActor* pActor)
 		return Nativ::GetBehaviourName(behaviourId);
 	case ARAIGNOS:
 		return Araignos::GetBehaviourName(behaviourId);
+	case BONUS:
+		return Bonus::GetBehaviourName(behaviourId);
+	case MONEY:
+		return Money::GetBehaviourName(behaviourId);
 	default:
 		return std::to_string(behaviourId);
 	}

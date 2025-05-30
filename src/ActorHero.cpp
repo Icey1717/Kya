@@ -1025,6 +1025,21 @@ edF32VECTOR4* CActorHero::GetAdversaryPos()
 	return (edF32VECTOR4*)0x0;
 }
 
+edF32VECTOR4* CActorHero::GetPosition_00369c80()
+{
+	CBehaviour* pCVar1;
+
+	if (this->curBehaviourId == 8) {
+		IMPLEMENTATION_GUARD(
+		pCVar1 = CActor::GetBehaviour((CActor*)this, 8);
+		if (pCVar1[0x23].pVTable != (CBehaviourFighterVTable*)0x0) {
+			return (edF32VECTOR4*)&(pCVar1[0x23].pVTable)->End;
+		})
+	}
+
+	return &this->currentLocation;
+}
+
 uint CActorHero::GetStateHeroFlags(int state)
 {
 	uint uVar1;

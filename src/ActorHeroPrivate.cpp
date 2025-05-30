@@ -24,6 +24,7 @@
 #include "FrontEndLife.h"
 #include "Rendering/DisplayList.h"
 #include "edText.h"
+#include "ActorNativ.h"
 
 CActorHeroPrivate::CActorHeroPrivate()
 {
@@ -1590,17 +1591,16 @@ bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 		IMPLEMENTATION_GUARD(
 		SetBehaviour(7, 0x11c, 0xffffffff);)
 		break;
-	case 0xf:
-		IMPLEMENTATION_GUARD(
-		CActor::DoMessage(this, this->heroActionParams.pActor, 0x14, 0);
-		CActor::PlayAnim(this, 0x1a3);
-		this->effort = 0.0;
-		this->field_0xf24 = (char*)this->heroActionParams.pActor;
-		(*(code*)(this->pVTable)->SetLookingAtBones)(this, 0x45544554, 0x554f43);
-		CAnimation::RegisterBone(this->pAnimationController, 0x45544554);
-		CAnimation::RegisterBone(this->pAnimationController, (uint)&DAT_00554f43);
-		(*(code*)(this->pVTable)->SetLookingAtOn)(0, this);
-		(*(code*)(this->pVTable)->SetLookingAt)(0, 0, 0x42fb53d2, this);)
+	case ACTION_SPEAK:
+		DoMessage(this->heroActionParams.pActor, (ACTOR_MESSAGE)0x14, 0);
+		PlayAnim(0x1a3);
+		this->effort = 0.0f;
+		this->pTalkingToActor = static_cast<CActorNativ*>(this->heroActionParams.pActor);
+		SetLookingAtBones(0x45544554, 0x554f43);
+		this->pAnimationController->RegisterBone(0x45544554);
+		this->pAnimationController->RegisterBone(0x554f43);
+		SetLookingAtOn(0.0f);
+		SetLookingAt(0.0f, 0.0f, 125.66371f);
 		break;
 	default:
 		return false;
@@ -2337,12 +2337,12 @@ void CActorHeroPrivate::Manage()
 	if (this == (CActorHeroPrivate*)CActorHero::_gThis) {
 		iVar8 = this->field_0xd30;
 		if ((iVar8 == 1) || (iVar8 == 2)) {
-			CScene::ptable.g_FrontendManager_00451680->SetHeroActionA(0);
 			CScene::ptable.g_FrontendManager_00451680->SetHeroActionB(0);
+			CScene::ptable.g_FrontendManager_00451680->SetHeroActionA(0);
 		}
 		else {
-			CScene::ptable.g_FrontendManager_00451680->SetHeroActionA(this->heroActionParams.actionId);
-			CScene::ptable.g_FrontendManager_00451680->SetHeroActionB(this->field_0x1a40);
+			CScene::ptable.g_FrontendManager_00451680->SetHeroActionB(this->heroActionParams.actionId);
+			CScene::ptable.g_FrontendManager_00451680->SetHeroActionA(this->field_0x1a40);
 		}
 	}
 
@@ -3288,20 +3288,13 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 					}
 				}
 
-				if (this->field_0xf24 != (char*)0x0) {
-					IMPLEMENTATION_GUARD(
-					CAnimation::UnRegisterBone(this->pAnimationController, 0x45544554);
-					CAnimation::UnRegisterBone
-					(this->pAnimationController, (int)&DAT_00554f43);
-					(*(code*)(this->pVTable)->SetLookingAtOff)(this);
-					this->field_0xf24 = (char*)0x0;
-					pAVar19 = (AnimationType*)
-						(*(this->pVTable)->GetStateCfg)
-						(this, this->actorState);
-					CActor::PlayAnim(this, *pAVar19);
-					piVar17 = (int*)(*(this->pVTable)->GetStateCfg)
-						(this, this->actorState);
-					this->prevAnimType = *piVar17;)
+				if (this->pTalkingToActor != (CActorNativ*)0x0) {
+					this->pAnimationController->UnRegisterBone(0x45544554);
+					this->pAnimationController->UnRegisterBone(0x00554f43);
+					SetLookingAtOff();
+					this->pTalkingToActor = (CActorNativ*)0x0;
+					PlayAnim(GetStateCfg(this->actorState)->animId);
+					this->prevAnimType = GetStateCfg(this->actorState)->animId;
 				}
 				return 1;
 			}
@@ -3613,7 +3606,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			if (iVar13 < iVar14) {
 				iVar14 = CLevelScheduler::ScenVar_Get(0x16);
 			}
-			pCVar11 = (*((CActorHero::_gThis->character).characterBase.base.base.pVTable)->GetLifeInterfaceOther)
+			pCVar11 = (*(CActorHero::_gThis->pVTable)->GetLifeInterfaceOther)
 				((CActor*)CActorHero::_gThis);
 			CLevelScheduler::ScenVar_Set(0x14, iVar14);
 			CLifeInterface::SetValueMax((float)iVar14, pCVar11);
@@ -4992,7 +4985,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->pBounceOnActor = 0;
 	this->pSoccerActor = 0;
 	this->pTrappedByActor = (CActor*)0x0;
-	this->field_0xf24 = (char*)0x0;
+	this->pTalkingToActor = (CActorNativ*)0x0;
 	this->trapLinkedBone = 0;
 	this->field_0xf50 = (CActor*)0x0;
 	//*(undefined4*)&this->field_0xf58 = 0;
@@ -5635,13 +5628,13 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 		break;
 	}
 
-	if (this->field_0xf24 != (char*)0x0) {
+	if (this->pTalkingToActor != (CActorNativ*)0x0) {
 		this->pAnimationController->UnRegisterBone(0x45544554);
 		this->pAnimationController->UnRegisterBone(0x00554f43);
 
-		IMPLEMENTATION_GUARD_LOG(
-		SetLookingAtOff();)
-		this->field_0xf24 = (char*)0x0;
+		SetLookingAtOff();
+
+		this->pTalkingToActor = (CActorNativ*)0x0;
 	}
 
 	iVar2 = this->actorState;
@@ -6215,7 +6208,7 @@ void CActorHeroPrivate::StateHeroStandTerm()
 
 void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 {
-	char* pcVar1;
+	CActorNativ* pNativ;
 	int iVar2;
 	CPlayerInput* pInput;
 	int iVar4;
@@ -6232,28 +6225,28 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 	float in_f21;
 	float unaff_f20;
 
-	pcVar1 = this->field_0xf24;
+	pNativ = this->pTalkingToActor;
 	iVar9 = (int)this->pCollisionData;
 	CAnimation* pAnimController = this->pAnimationController;
-	if (pcVar1 != (char*)0x0) {
-		IMPLEMENTATION_GUARD(
-		param_2 = 0;
-		CActor::SV_UpdateOrientationToPosition2D(this->field_0x1040 * 0.5, this, pcVar1 + 0x30);
+	if (pNativ != (CActorNativ*)0x0) {
+		bCheckEffort = 0;
+		SV_UpdateOrientationToPosition2D(this->field_0x1040 * 0.5f, &pNativ->currentLocation);
 		this->bFacingControlDirection = 1;
-		lVar10 = (*(code*)(this->pVTable)->IsLookingAt)(this);
-		if ((lVar10 != 0) && (gPlayerInput.aButtons[4].clickValue != 0.0)) {
-			fVar14 = gPlayerInput.field_0x5f4;
-			if (gPlayerInput.field_0x5fc * 0.7853982 < fabs(gPlayerInput.field_0x5f8)) {
-				fVar14 = 0.0;
+
+		if ((IsLookingAt() != false) && (gPlayerInput.aButtons[4].clickValue != 0.0f)) {
+			fVar14 = gPlayerInput.aAnalogSticks[0].x;
+			if (gPlayerInput.aAnalogSticks[0].magnitude * 0.7853982f < fabs(gPlayerInput.aAnalogSticks[0].y)) {
+				fVar14 = 0.0f;
 			}
-			fVar13 = gPlayerInput.field_0x5f8;
-			if (gPlayerInput.field_0x5fc * 0.7853982 < fabs(fVar14)) {
-				fVar13 = 0.0;
+
+			fVar13 = gPlayerInput.aAnalogSticks[0].y;
+			if (gPlayerInput.aAnalogSticks[0].magnitude * 0.7853982f < fabs(fVar14)) {
+				fVar13 = 0.0f;
 			}
-			fVar13 = edFIntervalDotSrcLERP(fVar13, 0.5235988, -0.4363323);
-			(**(code**)((int)(this->pVTable + 1) + 0x24))
-				(fVar13 - 0.1745329, -(fVar14 * 50.0 * 0.01745329), 0x41490fdb, this);
-		})
+
+			fVar13 = edFIntervalDotSrcLERP(fVar13, 0.5235988f, -0.4363323f);
+			SetLookingAt(fVar13 - 0.1745329f, -(fVar14 * 50.0f * 0.01745329f), 12.566371f);
+		}
 	}
 
 	if (bCheckEffort != 0) {

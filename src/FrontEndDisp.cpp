@@ -16,6 +16,7 @@
 #include "FrontEndLife.h"
 #include "TimeController.h"
 #include "LevelScheduleManager.h"
+#include "FrontEndMoney.h"
 
 struct Bank {
 	Bank() {}
@@ -66,7 +67,6 @@ char* Bank::GetResource(char* fileName, edBANK_ENTRY_INFO* param_3)
 
 	fileIndex = this->pAccessObj->get_index(fileName);
 	if (fileIndex == -1) {
-		/* \r\nFile: %s\r\n */
 		edDebugPrintf("\r\nFile: %s\r\n", fileName);
 		fileBuffer = (char*)0x0;
 	}
@@ -192,9 +192,9 @@ void CFrontendDisplay::Game_Init()
 
 	this->pHealthBar->Init();
 	//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.field_0x20)();
-	//(*(code*)this->pNooties->pVTable->field_0x20)();
+	this->pMoney->Init();
 	//(*(code*)this->pFreedWolfun->pVTable->field_0x20)();
-	//(*(code*)this->pMenuObj_0x68->field_0x0->field_0x20)();
+	this->pFrontendAction->Init();
 	//(**(code**)(*(int*)this->pMenuObj_0x70 + 8))();
 	//(*(code*)this->pMenuObj_0x6c->pVTable->field_0x20)();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x20))();
@@ -223,7 +223,7 @@ void CFrontendDisplay::Level_Init()
 	if (Global_00448814 != 0) {
 		//CFrontendMagicGauge::ShowMagic(this->pMagicOrbs);
 		this->pHealthBar->ShowLife();
-		//FUN_00371cb0(this->pNooties);
+		this->pMoney->ShowMoney();
 		//FUN_00408c60(this->pFreedWolfun);
 		Global_00448814 = 0;
 	}
@@ -261,10 +261,10 @@ void CFrontendDisplay::Level_Manage()
 	if (this->bHideHUD == 0) {
 		fVar2 = Timer::GetTimer()->totalTime;
 		//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.Update)(fVar2);
-		//(*(code*)this->pNooties->pVTable->Update)(fVar2);
+		this->pMoney->Update(fVar2);
 		//(*(code*)this->pFreedWolfun->pVTable->Update)(fVar2);
-		pHealthBar->Update(fVar2);
-		//(*(code*)((this->pFrontendAction->base).pVTable)->Update)(fVar2);
+		this->pHealthBar->Update(fVar2);
+		this->pFrontendAction->Update(fVar2);
 		//FUN_001d8340(fVar2, (int*)this->pFrontendEnemyList);
 		//(*(code*)this->pMenuObj_0x6c->pVTable->Update)(fVar2);
 		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x38))(fVar2);
@@ -286,9 +286,9 @@ void CFrontendDisplay::Level_Draw()
 		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x3c))();
 		this->pHealthBar->Draw();
 		//(*(code*)(this->pMagicOrbs->pVTable->pVTable).pVTable.Draw)();
-		//this->pMoney->Draw();
+		this->pMoney->Draw();
 		//(*(code*)this->pFreedWolfun->pVTable->Draw)();
-		//(*(code*)((this->pFrontendAction->base).pVTable)->Draw)();
+		this->pFrontendAction->Draw();
 		//FUN_001d89d0((int)this->pFrontendEnemyList);
 		//(*(code*)this->pMenuObj_0x6c->pVTable->Draw)();
 	}
@@ -300,9 +300,9 @@ void CFrontendDisplay::Level_Reset()
 {
 	this->pHealthBar->Reset();
 	//(*(this->pMagicOrbs->pVTable->pVTable).pVTable.Reset)((CWidget*)this->pMagicOrbs);
-	//this->pMoney->Reset();
+	this->pMoney->Reset();
 	//(*this->pFreedWolfun->pVTable->Reset)((CWidget*)this->pFreedWolfun);
-	//(*((this->pFrontendAction->base).pVTable)->Reset)((CWidget*)this->pFrontendAction);
+	this->pFrontendAction->Reset();
 	//(**(code**)(*(int*)this->pFrontendEnemyList + 0x10))();
 	//(*this->pMenuObj_0x6c->pVTable->Reset)((CWidget*)this->pMenuObj_0x6c);
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x18))();
@@ -317,11 +317,11 @@ void CFrontendDisplay::Level_CheckpointReset()
 
 	//(*(this->pMagicOrbs->pVTable->pVTable).pVTable.Reset)((CWidget*)this->pMagicOrbs);
 	//CFrontendMagicGauge::ShowMagic(this->pMagicOrbs);
-	//(*this->pNooties->pVTable->Reset)((CWidget*)this->pNooties);
-	//FUN_00371cb0(this->pNooties);
+	this->pMoney->Reset();
+	this->pMoney->ShowMoney();
 	//(*this->pFreedWolfun->pVTable->Reset)((CWidget*)this->pFreedWolfun);
 	//FUN_00408c60(this->pFreedWolfun);
-	//(*((this->pFrontendAction->base).pVTable)->Reset)((CWidget*)this->pFrontendAction);
+	this->pFrontendAction->Reset();
 	//(**(code**)(*(int*)this->pFrontendEnemyList + 0x10))();
 	//(*(code*)this->pMenuObj_0x6c->pVTable->CheckpointReset)();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x1c))();
@@ -334,12 +334,12 @@ void CFrontendDisplay::Level_PauseChange(bool bPaused)
 	if (bPaused == 0) {
 		this->pHealthBar->HideLifeAlways();
 		//CFrontendMagicGauge::HideMagicAlways(this->pMagicOrbs, 0);
-		//CFrontendMoney::HideMoneyAlways(this->pNooties);
+		this->pMoney->HideMoneyAlways();
 	}
 	else {
 		this->pHealthBar->ShowLifeAlways();
 		//CFrontendMagicGauge::ShowMagicAlways((int)this->pMagicOrbs);
-		//CFrontendMoney::ShowMoneyAlways((int)this->pNooties);
+		this->pMoney->ShowMoneyAlways();
 	}
 	return;
 }
@@ -349,7 +349,7 @@ void CFrontendDisplay::Level_LoadContext()
 	if (CLevelScheduler::gThis->field_0x78 != 0) {
 		//CFrontendMagicGauge::ShowMagic(this->pMagicOrbs);
 		this->pHealthBar->ShowLife();
-		//FUN_00371cb0(this->pNooties);
+		this->pMoney->ShowMoney();
 		//FUN_00408c60(this->pFreedWolfun);
 	}
 
@@ -364,6 +364,12 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 		break;
 	case FRONTEND_INTERFACE_MAGIC:
 		//this->pMagicOrbs->SetInterface(pInterface);
+		break;
+	case FRONTEND_INTERFACE_MONEY:
+		this->pMoney->SetInterface(pInterface);
+		break;
+	case FRONTEND_INTERFACE_ACTION:
+		this->pFrontendAction->SetInterface(pInterface);
 		break;
 	default:
 		//IMPLEMENTATION_GUARD();

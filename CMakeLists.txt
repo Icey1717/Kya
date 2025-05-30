@@ -129,6 +129,8 @@ set(main_src
 	"${src_root}/FrontEndDisp.h"
 	"${src_root}/FrontEndLife.cpp"
 	"${src_root}/FrontEndLife.h"
+	"${src_root}/FrontEndMoney.cpp"
+	"${src_root}/FrontEndMoney.h"
 	"${src_root}/FrontEndBank.cpp"
 	"${src_root}/FrontEndBank.h"
 	"${src_root}/FrontEndWidget.cpp"

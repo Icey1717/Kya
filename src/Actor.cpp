@@ -25,6 +25,8 @@
 #ifdef PLATFORM_WIN
 #include "displaylist.h"
 #endif
+#include "ActorMoney.h"
+#include "ActorHero.h"
 
 CPathFollowReader::CPathFollowReader()
 {
@@ -242,10 +244,8 @@ int CPathFollowReader::GetPrevPlace(int param_2, int param_3)
 			}
 
 			if ((uVar2 == 0) && (pCVar1->type == 1)) {
-				IMPLEMENTATION_GUARD();
 				iVar3 = pCVar1->field_0x14;
-				fVar5 = fmodf((float)((param_2 + pCVar1->splinePointCount + -1) - iVar3),
-					(float)(((pCVar1->splinePointCount + -1) - iVar3) * 2));
+				fVar5 = fmodf((float)((param_2 + pCVar1->splinePointCount + -1) - iVar3), (float)(((pCVar1->splinePointCount + -1) - iVar3) * 2));
 				param_2 = ((int)fVar5 - iVar4) + iVar3;
 			}
 		}
@@ -2609,6 +2609,99 @@ CActor* CActor::GetLinkFather()
 
 	return pLinkFather;
 }
+
+
+void CActor::UpdateBoundingSphere(CActInstance* pInstances, int nbInstances)
+{
+	int iVar1;
+	int instanceClassSize;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	if (1 < nbInstances) {
+		instanceClassSize = sizeof(CBnsInstance);
+		if (this->typeID != BONUS) {
+			instanceClassSize = sizeof(CMnyInstance);
+		}
+
+		local_10.y = 1e+08f;
+		iVar1 = 0;
+		local_20.z = -1e+08f;
+		fVar3 = local_20.z;
+		local_20.x = local_20.z;
+		fVar4 = local_20.z;
+		local_20.y = local_20.z;
+		fVar5 = local_20.z;
+		fVar6 = local_10.y;
+		local_10.z = local_10.y;
+		fVar7 = local_10.y;
+		local_10.x = local_10.y;
+		fVar8 = local_10.y;
+		if (0 < nbInstances) {
+			do {
+				local_30 = pInstances->currentPosition;
+
+				local_10.x = local_30.x;
+				if (fVar8 <= local_30.x) {
+					local_10.x = fVar8;
+				}
+				local_20.x = local_30.x;
+				if (local_30.x <= fVar4) {
+					local_20.x = fVar4;
+				}
+				local_10.y = local_30.y;
+				if (fVar6 <= local_30.y) {
+					local_10.y = fVar6;
+				}
+				local_20.y = local_30.y;
+				if (local_30.y <= fVar5) {
+					local_20.y = fVar5;
+				}
+				local_10.z = local_30.z;
+				if (fVar7 <= local_30.z) {
+					local_10.z = fVar7;
+				}
+				local_20.z = local_30.z;
+				if (local_30.z <= fVar3) {
+					local_20.z = fVar3;
+				}
+
+				iVar1 = iVar1 + 1;
+				pInstances = reinterpret_cast<CActInstance*>(reinterpret_cast<char*>(pInstances) + instanceClassSize);
+				fVar3 = local_20.z;
+				fVar4 = local_20.x;
+				fVar5 = local_20.y;
+				fVar6 = local_10.y;
+				fVar7 = local_10.z;
+				fVar8 = local_10.x;
+			} while (iVar1 < nbInstances);
+		}
+
+		local_20.x = local_20.x - local_10.x;
+		local_20.w = 0.0f;
+		local_20.y = local_20.y - local_10.y;
+		local_20.z = local_20.z - local_10.z;
+		local_10.w = 1.0f;
+
+		edF32Vector4ScaleHard(0.5f, &eStack64, &local_20);
+		edF32Vector4AddHard(&local_10, &local_10, &eStack64);
+		fVar3 = edF32Vector4GetDistHard(&local_20);
+		edF32Vector4SubHard(&local_10, &local_10, &this->currentLocation);
+		SetLocalBoundingSphere(fVar3 * 0.5f + 10.0f, &local_10);
+	}
+
+	return;
+}
+
+
 
 StateConfig CActor::gStateCfg_ACT[5] =
 {
@@ -5077,4 +5170,290 @@ CFxHandle::CFxHandle()
 {
 	this->field_0x0 = 0;
 	this->field_0x4 = (undefined*)0x0;
+}
+
+CActInstance::CActInstance()
+{
+	this->field_0x7c = -1.0f;
+	this->field_0x84 = 0;
+	this->field_0x88 = 0;
+
+	return;
+}
+
+void CActInstance::SetState(int newState)
+{
+	this->state = newState;
+
+	this->field_0x5c = 0.0f;
+
+	if (this->state == 1) {
+		this->flags = this->flags | 0x10;
+	}
+
+	if (this->state == 3) {
+		this->field_0x54 = 0.0f;
+
+		this->field_0x40 = this->currentPosition;
+	}
+	return;
+}
+
+void CActInstance::CheckpointReset()
+{
+	return;
+}
+
+void CActInstance::Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int param_5)
+{
+	ed_3d_hierarchy* peVar1;
+	ed_g3d_manager* pG3D;
+	edNODE* peVar2;
+	ed_3D_Scene* pScene;
+	int textureIndex;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+
+	this->pOwner = pOwner;
+
+	this->basePosition = *pPosition;
+
+	this->field_0x60 = param_5;
+	this->field_0x5c = 0.0f;
+	this->field_0x58 = 0.0f;
+
+	this->flags = 1;
+
+	if (pOwner->p3DHierNode != (ed_3d_hierarchy_node*)0x0) {
+		textureIndex = pOwner->pCinData->textureIndex;
+		if (textureIndex == -1) {
+			textureIndex = CScene::_pinstance->field_0x28;
+		}
+
+		pG3D = CScene::ptable.g_C3DFileManager_00451664->GetG3DManager(pOwner->pCinData->meshIndex, textureIndex);
+
+		this->flags = this->flags | 0x80;
+		peVar2 = ed3DHierarchyAddToScene(CScene::_scene_handleA, pG3D, (char*)0x0);
+		this->pNode = peVar2;
+		this->pHierarchy = (ed_3d_hierarchy*)this->pNode->pData;
+		ed3DHierarchySetSetup(this->pHierarchy, &pOwner->hierarchySetup);
+		this->pHierarchy->pHierarchySetup->pBoundingSphere = pBoundSphere;
+	}
+
+	this->currentPosition = this->basePosition;
+
+	if ((this->flags & 0x80) != 0) {
+		this->pHierarchy->transformA.rowT = this->currentPosition;
+	}
+
+	this->field_0x64 = this->basePosition.xyz;
+	this->field_0x70 = gF32Vector3Zero;
+
+	this->flags = this->flags & 0xfffffffb;
+
+	if ((this->flags & 0x80) != 0) {
+		pScene = GetStaticMeshMasterA_001031b0();
+		ed3DHierarchyNodeSetRenderOn(pScene, this->pNode);
+	}
+
+	return;
+}
+
+void CActInstance::SetVisible(int bVisible)
+{
+	ed_3D_Scene* peVar1;
+
+	if (bVisible == 0) {
+		this->flags = this->flags & 0xfffffffb;
+	}
+	else {
+		this->flags = this->flags | 4;
+	}
+
+	if ((this->flags & 0x80) != 0) {
+		if (bVisible == 1) {
+			peVar1 = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOff(peVar1, this->pNode);
+		}
+		else {
+			peVar1 = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOn(peVar1, this->pNode);
+		}
+	}
+
+	return;
+}
+
+void CActInstance::Reset()
+{
+	this->currentPosition = this->basePosition;
+
+	if ((this->flags & 0x80) != 0) {
+		this->pHierarchy->transformA.rowT = this->currentPosition;
+	}
+
+	this->field_0x64 = this->basePosition.xyz;
+	this->field_0x70 = gF32Vector3Zero;
+
+	this->field_0x5c = 0.0f;
+	this->field_0x58 = 0.0f;
+	this->flags = this->flags | 1;
+	
+	SetState(1);
+
+	return;
+}
+
+void CActInstance::SetAlive(int bAlive)
+{
+	ed_3D_Scene* pScene;
+
+	if (bAlive == 0) {
+		this->flags = this->flags & 0xfffffffe;
+		this->flags = this->flags & 0xfffffffb;
+
+		if ((this->flags & 0x80) != 0) {
+			pScene = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOn(pScene, this->pNode);
+		}
+	}
+	else {
+		this->flags = this->flags | 1;
+	}
+
+	return;
+}
+
+float CActInstance::DistSquared(edF32VECTOR4* pPosition)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar1 = (this->currentPosition).x - pPosition->x;
+	fVar2 = (this->currentPosition).y - pPosition->y;
+	fVar3 = (this->currentPosition).z - pPosition->z;
+	return fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3;
+}
+
+void CActInstance::State_GotoKim()
+{
+	ed_3d_hierarchy* peVar1;
+	CActorHero* pCVar2;
+	edF32VECTOR4* peVar3;
+	Timer* pTVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	pCVar2 = CActorHero::_gThis;
+	peVar3 = CActorHero::_gThis->GetPosition_00369c80();
+
+	local_10.x = peVar3->x;
+	local_10.z = peVar3->z;
+	local_10.w = peVar3->w;
+	local_10.y = peVar3->y + pCVar2->subObjA->boundingSphere.w;
+
+	edF32Vector4LERPHard(this->field_0x54, &local_20, &this->field_0x40, &local_10);
+	local_20.w = 1.0f;
+
+	(this->currentPosition).xyz = local_20.xyz;
+	(this->currentPosition).w = 1.0f;
+
+	if ((this->flags & 0x80) != 0) {
+		(this->pHierarchy->transformA).rowT = this->currentPosition;
+	}
+
+	this->field_0x54 = this->field_0x54 + GetTimer()->cutsceneDeltaTime / 0.25f;
+	edF32Vector4SubHard(&eStack48, &local_10, &this->currentPosition);
+	fVar5 = edF32Vector4GetDistHard(&eStack48);
+	if ((1.0f <= this->field_0x54) || (fVar5 <= 0.25f)) {
+		SetState(4);
+	}
+	return;
+}
+
+void CActInstance::State_Wait()
+{
+	CActorHero* pCVar1;
+	edF32VECTOR4* v1;
+	int iVar2;
+	long lVar3;
+	float fVar4;
+	edF32VECTOR4 eStack32;
+	undefined4 local_4;
+
+	pCVar1 = CActorHero::_gThis;
+	v1 = CActorHero::_gThis->GetPosition_00369c80();
+	edF32Vector4SubHard(&eStack32, v1, &this->currentPosition);
+	eStack32.y = eStack32.y + pCVar1->subObjA->boundingSphere.w;
+	fVar4 = edF32Vector4GetDistHard(&eStack32);
+	this->field_0x58 = fVar4;
+	lVar3 = 7;
+	if (this->field_0x58 <= 0.85f) {
+		lVar3 = 4;
+	}
+	else {
+		if (this->field_0x58 <= 2.0f) {
+			lVar3 = 3;
+		}
+	}
+
+	if (lVar3 != 7) {
+		if ((this->flags & 8) == 0) {
+			SetState(lVar3);
+		}
+		else {
+			local_4 = 0xffffffff;
+			iVar2 = this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)9, (void*)0xffffffff);
+			if (iVar2 == 0) {
+				IMPLEMENTATION_GUARD(
+				CActorHero::_gThis->magicInterface.FUN_001dcda0(this->field_0x58);)
+			}
+			else {
+				SetState(lVar3);
+			}
+		}
+	}
+	return;
+}
+
+void CActInstance::FUN_003982c0()
+{
+	bool bVar1;
+	bool bVar2;
+	ed_3D_Scene* peVar3;
+
+	if (((this->flags & 1) == 0) && ((this->flags & 4) != 0)) {
+		this->flags = this->flags & 0xfffffffb;
+		if ((this->flags & 0x80) != 0) {
+			peVar3 = GetStaticMeshMasterA_001031b0();
+			ed3DHierarchyNodeSetRenderOn(peVar3, this->pNode);
+		}
+	}
+	else {
+		bVar2 = CCameraManager::_gThis->InFrustum(0.35f, this->pOwner->subObjA->field_0x1c, &this->currentPosition);
+		bVar1 = (this->flags & 4) != 0;
+
+		if ((bVar1) || (bVar2 == false)) {
+			if (((bVar1) && (bVar2 == false)) && (this->flags = this->flags & 0xfffffffb, (this->flags & 0x80) != 0)) {
+				peVar3 = GetStaticMeshMasterA_001031b0();
+				ed3DHierarchyNodeSetRenderOn(peVar3, this->pNode);
+			}
+		}
+		else {
+			this->flags = this->flags | 4;
+
+			if ((this->flags & 0x80) != 0) {
+				peVar3 = GetStaticMeshMasterA_001031b0();
+				ed3DHierarchyNodeSetRenderOff(peVar3, this->pNode);
+			}
+		}
+	}
+
+	return;
 }

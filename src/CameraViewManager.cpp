@@ -152,7 +152,7 @@ void Lerp_Manage(ActiveCamManagerEntry* pTarget, ActiveCamManagerEntry* pSource)
 			pTarget->gamma = fVar6;
 			pTarget->distance = pSource->distance;
 			pTarget->fov = pSource->fov;
-			iVar5 = (*(code*)((CActorHero::_gThis->character).characterBase.base.base.pVTable)->GetInputManager)
+			iVar5 = (*(code*)(CActorHero::_gThis->pVTable)->GetInputManager)
 				(CActorHero::_gThis, 0, 1);
 			if (*(int*)(iVar5 + 0x5f0) != 0) {
 				pTarget->switchMode = SWITCH_MODE_F;
@@ -2443,6 +2443,36 @@ bool CCameraManager::AlertCamera(int param_2, int param_3)
 	}
 
 	return bResult;
+}
+
+bool CCameraManager::InFrustum(float param_1, float param_2, edF32VECTOR4* pPosition)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	bool bVar5;
+
+	fVar1 = pPosition->x - (this->frustumLocation).x;
+	fVar3 = pPosition->y - (this->frustumLocation).y;
+	fVar4 = pPosition->z - (this->frustumLocation).z;
+
+	fVar2 = fVar1 * (this->field_0x450).x + fVar3 * (this->field_0x450).y + fVar4 * (this->field_0x450).z;
+	if ((fVar2 + param_1 < 0.0f) || (param_2 < fVar2 - param_1)) {
+		bVar5 = false;
+	}
+	else {
+		bVar5 = 0.0f <= (this->frustumPlane).ad * fVar1 + (this->frustumPlane).bd * fVar3 + (this->frustumPlane).cd * fVar4 +
+			(this->frustumPlane).dd * param_1 &&
+			(0.0f <= (this->frustumPlane).ac * fVar1 + (this->frustumPlane).bc * fVar3 + (this->frustumPlane).cc * fVar4
+				+ (this->frustumPlane).dc * param_1 &&
+				(0.0f <= (this->frustumPlane).aa * fVar1 + (this->frustumPlane).ba * fVar3 + (this->frustumPlane).ca * fVar4
+					+ (this->frustumPlane).da * param_1 &&
+					0.0f <= (this->frustumPlane).ab * fVar1 + (this->frustumPlane).bb * fVar3 + (this->frustumPlane).cb * fVar4 +
+					(this->frustumPlane).db * param_1));
+	}
+
+	return bVar5;
 }
 
 template<>

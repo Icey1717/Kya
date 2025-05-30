@@ -39,7 +39,7 @@ public:
 	float prevTime;
 	float slotAlpha;
 
-	bool field_0x44;
+	bool bDisplayDirty;
 	byte bVisible;
 
 	CInterface* pInterface;

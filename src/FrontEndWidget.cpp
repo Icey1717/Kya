@@ -51,7 +51,7 @@ void CWidget::Reset()
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
 	this->prevTime = CFrontend::GetTime();
-	this->field_0x44 = 0;
+	this->bDisplayDirty = 0;
 
 	return;
 }
@@ -62,7 +62,7 @@ void CWidget::CheckpointReset()
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
 	this->prevTime = CFrontend::GetTime();
-	this->field_0x44 = 0;
+	this->bDisplayDirty = 0;
 
 	return;
 }
@@ -73,7 +73,7 @@ void CWidget::Init()
 	this->bVisible = 0;
 	this->slotAlpha = 0.0f;
 	this->prevTime = CFrontend::GetTime();
-	this->field_0x44 = 0;
+	this->bDisplayDirty = 0;
 
 	return;
 }
@@ -140,8 +140,8 @@ bool CWidget::UpdateDisp(float time)
 {
 	bool bVar1;
 
-	bVar1 = this->field_0x44;
-	this->field_0x44 = 0;
+	bVar1 = this->bDisplayDirty;
+	this->bDisplayDirty = 0;
 
 	return bVar1;
 }
@@ -177,7 +177,7 @@ void CWidget::MoveToNext(CWidgetSlot* pNext)
 
 	this->prevTime = CFrontend::GetTime();
 	this->field_0x38 = 0;
-	this->field_0x44 = 1;
+	this->bDisplayDirty = 1;
 	this->slotAlpha = 0.0f;
 
 	return;
@@ -234,8 +234,8 @@ void CFrontendBitmapGauge::Init()
 
 bool CFrontendBitmapGauge::UpdateDisp(float time)
 {
-	if (this->field_0x44 != 0) {
-		this->field_0x44 = UpdateGauge(time);
+	if (this->bDisplayDirty != 0) {
+		this->bDisplayDirty = UpdateGauge(time);
 	}
 
 	return false;
@@ -360,14 +360,14 @@ void CFrontendAction::UpdatePos_StateWait(float param_1)
 	return;
 }
 
-bool CFrontendAction::UpdateDisp(float param_1)
+bool CFrontendAction::UpdateDisp(float time)
 {
 	bool bSuccess;
 	CLanguageManager* pLanguageManager;
 	char* pcVar2;
 
 	bSuccess = false;
-	if (this->field_0x44 != 0) {
+	if (this->bDisplayDirty != 0) {
 		pLanguageManager = CLanguageManager::GetLanguageManager();
 
 		pcVar2 = pLanguageManager->GetActionString(this->curActionId);
@@ -386,7 +386,7 @@ bool CFrontendAction::UpdateDisp(float param_1)
 			edStrCopy(this->szOtherText, pcVar2);
 		}
 
-		this->field_0x44 = 0;
+		this->bDisplayDirty = 0;
 		bSuccess = true;
 	}
 
@@ -394,6 +394,7 @@ bool CFrontendAction::UpdateDisp(float param_1)
 }
 
 edF32VECTOR2 edF32VECTOR2_004488c8 = { 2.250988f, 3.0f };
+uint UINT_00448f28 = 0x0;
 
 void CFrontendAction::Draw()
 {
@@ -410,28 +411,24 @@ void CFrontendAction::Draw()
 		if (this->szLabel[0] != '\0') {
 			edCTextFormat textFormat;
 			textFormat.FormatString(this->szLabel);
-			IMPLEMENTATION_GUARD(
-			DrawRectangle_001afe20
-			(((float)gVideoConfig.screenWidth + 6.0f) * 0.5f, y + textFormat.field_0xc * 0.5f,
+			CPauseManager::DrawRectangleBorder(((float)gVideoConfig.screenWidth + 6.0f) * 0.5f, y + textFormat.field_0xc * 0.5f,
 				edF32VECTOR2_004488c8.y * 2.0f + textFormat.field_0x8,
 				edF32VECTOR2_004488c8.y * 2.0f + textFormat.field_0xc, edF32VECTOR2_004488c8.y, edF32VECTOR2_004488c8.y,
-				edF32VECTOR2_004488c8.x, UINT_00448f28, 0);)
+				edF32VECTOR2_004488c8.x, UINT_00448f28, 0);
 
 			textFormat.Display(x, y);
 			y = y + edF32VECTOR2_004488c8.y * 2.0f + textFormat.field_0xc;
 		}
 
 		if (this->szOtherText[0] != '\0') {
-			edCTextFormat textFormat;
-			textFormat.FormatString(this->szOtherText);
-			IMPLEMENTATION_GUARD(
-			DrawRectangle_001afe20
-			(((float)gVideoConfig.screenWidth + 6.0f) * 0.5f, y + auStack10784.field_0xc * 0.5f,
+			edCTextFormat auStack10784;
+			auStack10784.FormatString(this->szOtherText);
+			CPauseManager::DrawRectangleBorder(((float)gVideoConfig.screenWidth + 6.0f) * 0.5f, y + auStack10784.field_0xc * 0.5f,
 				edF32VECTOR2_004488c8.y * 2.0f + auStack10784.field_0x8,
 				edF32VECTOR2_004488c8.y * 2.0f + auStack10784.field_0xc, edF32VECTOR2_004488c8.y, edF32VECTOR2_004488c8.y,
-				edF32VECTOR2_004488c8.x, UINT_00448f28, 0);)
+				edF32VECTOR2_004488c8.x, UINT_00448f28, 0);
 
-			textFormat.Display(x, y);
+			auStack10784.Display(x, y);
 		}
 
 		edTextStyleSetCurrent(pNewFont);
@@ -459,7 +456,7 @@ void CFrontendAction::SetActionA(int actionId)
 
 			this->prevTime = CFrontend::GetTime();
 			this->field_0x38 = 0;
-			this->field_0x44 = 1;
+			this->bDisplayDirty = 1;
 			this->slotAlpha = 0.0f;
 			this->field_0x130 = 0;
 			this->bVisible = 1;
@@ -475,7 +472,7 @@ void CFrontendAction::SetActionA(int actionId)
 
 				this->prevTime = CFrontend::GetTime();
 				this->field_0x38 = 0;
-				this->field_0x44 = 1;
+				this->bDisplayDirty = 1;
 				this->slotAlpha = 0.0f;
 				this->field_0x130 = 1;
 			}
@@ -508,7 +505,7 @@ void CFrontendAction::SetActionB(int actionId)
 
 					this->prevTime = CFrontend::GetTime();
 					this->field_0x38 = 0;
-					this->field_0x44 = 1;
+					this->bDisplayDirty = 1;
 					this->slotAlpha = 0.0f;
 					this->field_0x130 = 0;
 					this->bVisible = 1;
@@ -525,7 +522,7 @@ void CFrontendAction::SetActionB(int actionId)
 
 						this->prevTime = CFrontend::GetTime();
 						this->field_0x38 = 0;
-						this->field_0x44 = 1;
+						this->bDisplayDirty = 1;
 						this->slotAlpha = 0.0f;
 						this->field_0x130 = 1;
 					}

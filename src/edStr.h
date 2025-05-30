@@ -16,4 +16,6 @@ int edStrICmp(byte* __s1, byte* __s2);
 int edStrStr2Int(char* stream, int offset);
 char* edStrChr(char* inString, char searchChar);
 
+void edStrInt2Str(uint value, char* str, uint len, bool padWithSpaces);
+
 #endif //_ED_STR_H

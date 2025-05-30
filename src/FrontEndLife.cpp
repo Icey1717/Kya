@@ -398,7 +398,7 @@ void CFrontendLifeGauge::UpdatePercent(float value)
 	float fVar9;
 	float fVar10;
 
-	this->field_0x44 = 1;
+	this->bDisplayDirty = 1;
 
 	iVar6 = this->nbExtraFills;
 	fVar9 = this->field_0x388;

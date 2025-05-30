@@ -13,6 +13,7 @@
 #include "Pause.h"
 #include "Rendering/DisplayList.h"
 #include "edText.h"
+#include "FrontEndMoney.h"
 
 void CActorNativ::Create(ByteCode* pByteCode)
 {
@@ -258,17 +259,16 @@ void CActorNativ::Manage()
 
 	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_AKASA);
 	if (pCVar5 != (CBehaviour*)0x0) {
-		CBehaviourNativAkasa* pBehaviourSeller = static_cast<CBehaviourNativAkasa*>(GetBehaviour(NATIVE_BEHAVIOUR_AKASA));
-		pBehaviourSeller->ManageComboTutorial();
+		CBehaviourNativAkasa* pBehaviourAkasa = static_cast<CBehaviourNativAkasa*>(GetBehaviour(NATIVE_BEHAVIOUR_AKASA));
+		pBehaviourAkasa->ManageComboTutorial();
 	}
 
-	pCVar5 = GetBehaviour(7);
+	pCVar5 = GetBehaviour(NATIVE_BEHAVIOUR_SELLER);
 	if ((pCVar5 != (CBehaviour*)0x0) && (this->curBehaviourId == 1)) {
-		IMPLEMENTATION_GUARD(
-		pCVar5 = CActor::GetBehaviour((CActor*)this, 7);
+		CBehaviourNativSeller* pBehaviourSeller = static_cast<CBehaviourNativSeller*>(GetBehaviour(NATIVE_BEHAVIOUR_SELLER));
 		if ((GameFlags & 0x4020) != 0) {
-			(*(code*)(pCVar5->pVTable->macroAnimId).ManageFrozen)();
-		})
+			pBehaviourSeller->ManageFrozen();
+		}
 	}
 
 	return;
@@ -621,32 +621,24 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					return this->field_0x350;
 				}
 
-				CActorNativMsgParam* pParms = reinterpret_cast<CActorNativMsgParam*>(pMsgParam);
+				CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
 
-				iVar1 = pParms->type;
+				iVar1 = pParams->type;
 				if (iVar1 == 0xf) {
 					this->field_0x550 = 0;
 					return 1;
 				}
 
 				if (iVar1 == 0xe) {
-					IMPLEMENTATION_GUARD(
-					puVar2 = *(undefined4**)((int)pMsgParam + 0x18);
-					uVar12 = puVar2[1];
-					uVar10 = puVar2[2];
-					uVar11 = puVar2[3];
-					*(undefined4*)&this->field_0x540.x = *puVar2;
-					*(undefined4*)&this->field_0x540.y = uVar12;
-					*(undefined4*)&this->field_0x540.z = uVar10;
-					*(undefined4*)&this->field_0x540.w = uVar11;
-					peVar5 = CActor::GetBottomPosition((CActor*)this);
-					this->field_0x540.y = this->field_0x540.y + ((peVar5->y - this->currentLocation.y) - 0.3);
+					this->field_0x540 = *pParams->field_0x18;
+					this->field_0x540.y = this->field_0x540.y + ((CActor::GetBottomPosition()->y - this->currentLocation.y) - 0.3f);
 					this->field_0x550 = 1;
-					return 1;)
+
+					return 1;
 				}
 
 				if (iVar1 == 1) {
-					iVar1 = pParms->field_0x4;
+					iVar1 = pParams->field_0x4;
 					CPathFinderClient* pPathFinderClient = GetPathfinderClient();
 					pPathFinderClient->Init();
 					pPathFinderClient->ChangePathfindingId(this, iVar1, &this->currentLocation);
@@ -1343,8 +1335,7 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 		}
 		else {
 			if (iVar7 == 0x1c) {
-				IMPLEMENTATION_GUARD(
-					StateNativSellerStandCome();)
+				StateNativSellerStandCome(pBehaviour);
 			}
 			else {
 				if (iVar7 == 0x1b) {
@@ -1367,13 +1358,12 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 						}
 
 						if (bVar3) {
-							IMPLEMENTATION_GUARD(
-							if (pBehaviour->addOn.Func_0x20() == 0) {
+							if (pBehaviour->addOn.Func_0x20(1, (CActor*)0x0, 0) == 0) {
 								SetState(0x1c, -1);
 							}
 							else {
 								pBehaviour->field_0x28 = 0x1c;
-							})
+							}
 						}
 					}
 				}
@@ -1445,7 +1435,7 @@ void CActorNativ::BehaviourNativSeller_TermState(int oldState)
 void CActorNativ::BehaviourNativSpeak_InitState(int newState)
 {
 	if (newState != 10) {
-		if (newState == 0xc) {
+		if (newState == NATIVE_STATE_SPEAK_FACE_TOWARDS) {
 			this->field_0x504 = 1;
 		}
 		else {
@@ -1460,64 +1450,50 @@ void CActorNativ::BehaviourNativSpeak_InitState(int newState)
 
 void CActorNativ::BehaviourNativSpeak_Manage(CBehaviourNativSpeak* pBehaviour)
 {
-	Timer* pTVar1;
 	float fVar2;
-	undefined4 local_90[8];
-	undefined4 local_70[2];
-	int local_68;
-	edF32VECTOR4* local_58;
-	undefined4 local_50[8];
-	undefined4 local_30[2];
-	int local_28;
-	edF32VECTOR4* local_18;
-	undefined4* local_10;
-	undefined4* local_c;
-	undefined4* local_8;
-	undefined4* local_4;
+	CActorNativMsgParam_0xe local_90;
+	CActorNativMsgParam_0xe local_70;
+	CActorNativMsgParam_0xe local_50;
+	CActorNativMsgParam_0xe local_30;
+
 
 	switch (this->actorState) {
 	case 0xb:
 		IMPLEMENTATION_GUARD(
 		ActorInStateFunc_001619e0((Actor*)this, (int)pBehaviour);)
 		break;
-	case 0xc:
-		IMPLEMENTATION_GUARD(
-		pTVar1 = GetTimer();
-		fVar2 = this->field_0x508 - pTVar1->cutsceneDeltaTime;
-		this->field_0x508 = fVar2;
-		if (fVar2 < 0.0) {
-			this->field_0x504 = 0;
-			local_28 = pBehaviour->field_0x24;
-			local_18 = &pBehaviour->field_0x10;
-			if (local_28 == -1) {
-				local_50[0] = 3;
-				local_8 = local_50;
-				CActor::DoMessage((CActor*)this, this->field_0x3f0, 0x4e, (uint)local_8);
-			}
-			else {
-				local_30[0] = 8;
-				local_4 = local_30;
-				CActor::DoMessage((CActor*)this, this->field_0x3f0, 0x4e, (uint)local_4);
-			}
-		})
-		break;
-	case 0xd:
+	case NATIVE_STATE_SPEAK_FACE_TOWARDS:
 		fVar2 = this->field_0x508 - GetTimer()->cutsceneDeltaTime;
 		this->field_0x508 = fVar2;
-		if (fVar2 < 0.0) {
+		if (fVar2 < 0.0f) {
 			this->field_0x504 = 0;
-			local_68 = pBehaviour->field_0x24;
-			local_58 = &pBehaviour->field_0x10;
-
-			if (local_68 == -1) {
-				local_90[0] = 3;
-				local_10 = local_90;
-				DoMessage(this->field_0x3f0, (ACTOR_MESSAGE)0x4e, local_10);
+			local_30.field_0x8 = pBehaviour->field_0x24;
+			local_30.field_0x18 = &pBehaviour->field_0x10;
+			if (local_30.field_0x8 == -1) {
+				local_50.type = 3;
+				DoMessage(this->field_0x3f0, MESSAGE_NATIV_CMD, &local_50);
 			}
 			else {
-				local_70[0] = 8;
-				local_c = local_70;
-				DoMessage(this->field_0x3f0, (ACTOR_MESSAGE)0x4e, local_c);
+				local_30.type = 8;
+				DoMessage(this->field_0x3f0, MESSAGE_NATIV_CMD, &local_30);
+			}
+		}
+		break;
+	case NATIVE_STATE_SPEAK_FACE_AWAY:
+		fVar2 = this->field_0x508 - GetTimer()->cutsceneDeltaTime;
+		this->field_0x508 = fVar2;
+		if (fVar2 < 0.0f) {
+			this->field_0x504 = 0;
+			local_70.field_0x8 = pBehaviour->field_0x24;
+			local_70.field_0x18 = &pBehaviour->field_0x10;
+
+			if (local_70.field_0x8 == -1) {
+				local_90.type = 3;
+				DoMessage(this->field_0x3f0, MESSAGE_NATIV_CMD, &local_90);
+			}
+			else {
+				local_70.type = 8;
+				DoMessage(this->field_0x3f0, MESSAGE_NATIV_CMD, &local_70);
 			}
 		}
 	}
@@ -1850,6 +1826,59 @@ void CActorNativ::StateNativTakePutUsedTool(CBehaviourNativTakeAndPut* pBehaviou
 			else {
 				ChooseToolState();
 			}
+		}
+	}
+
+	return;
+}
+
+void CActorNativ::StateNativSellerStandCome(CBehaviourNativSeller* pBehaviour)
+{
+	CActor* pActor;
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	CActorHero* pCVar4;
+	bool bVar5;
+	CBehaviour* pCVar6;
+	edF32VECTOR4* peVar7;
+	float in_f0;
+	edF32VECTOR4 local_10;
+
+	pCVar4 = CActorHero::_gThis;
+	pActor = pBehaviour->field_0x24;
+	if (pActor == (CActor*)0x0) {
+		fVar1 = CActorHero::_gThis->currentLocation.x - this->currentLocation.x;
+		fVar2 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
+		fVar3 = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
+		in_f0 = sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3);
+	}
+	else {
+		if (pActor->curBehaviourId == 2) {
+			pCVar6 = pActor->GetBehaviour(pActor->curBehaviourId);
+
+			IMPLEMENTATION_GUARD(
+			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
+			local_10.x = peVar7->x;
+			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
+			local_10.y = peVar7->y;
+			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
+			local_10.z = peVar7->z;
+			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
+			local_10.w = peVar7->w;)
+			edF32Vector4SubHard(&local_10, &local_10, &pCVar4->currentLocation);
+			local_10.y = 0.0f;
+			in_f0 = edF32Vector4GetDistHard(&local_10);
+		}
+	}
+
+	if (pBehaviour->field_0x8 * 1.1f < in_f0) {
+		SetState(0x1e, -1);
+	}
+	else {
+		if ((20.0f < this->timeInAir) && (((pActor == (CActor*)0x0 || (pActor->actorState != 7)) &&
+				(bVar5 = pBehaviour->addOn.Func_0x20(2, (CActor*)0x0, 0), bVar5 != false)))) {
+			pBehaviour->field_0x28 = 0x1c;
 		}
 	}
 
@@ -2287,6 +2316,36 @@ void* CActorNativ::FUN_0036f330(int param_2)
 	return uVar1;
 }
 
+
+bool CActorNativ::FUN_00162750()
+{
+	int iVar1;
+	bool bVar2;
+	CBehaviour* pCVar3;
+
+	if (this->field_0x530 != 0) {
+		if ((this->field_0x370 - 5 < 2) || (this->field_0x370 == 7)) {
+			bVar2 = true;
+		}
+		else {
+			bVar2 = false;
+		}
+
+		if ((!bVar2) || (bVar2 = true, this->bHasObject == 0)) {
+			bVar2 = false;
+		}
+
+		if ((((!bVar2) && (pCVar3 = GetBehaviour(NATIVE_BEHAVIOUR_SPEAK), pCVar3 != (CBehaviour*)0x0)) &&
+			((this->flags & 4) != 0)) && (((iVar1 = this->curBehaviourId, iVar1 == 3 || (iVar1 == 5)) || (iVar1 == 6)))) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+
 bool CActorNativ::CanSpeak()
 {
 	bool bVar1;
@@ -2297,9 +2356,11 @@ bool CActorNativ::CanSpeak()
 	else {
 		bVar1 = false;
 	}
+
 	if ((!bVar1) || (bVar1 = true, this->bHasObject == 0)) {
 		bVar1 = false;
 	}
+
 	return bVar1;
 }
 
@@ -2689,6 +2750,41 @@ void CActorNativ::State_0x38(CBehaviourNativAkasa* pBehaviour)
 	return;
 }
 
+bool CActorNativ::InZone_00162970(CActor* pActor)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	CEventManager* pCVar4;
+	ed_zone_3d* pZone;
+	int iVar5;
+
+	pCVar4 = CScene::ptable.g_EventManager_006f5080;
+	if (pActor != (CActor*)0x0) {
+		pZone = (ed_zone_3d*)0x0;
+		if (this->field_0x380 != 0xffffffff) {
+			pZone = edEventGetChunkZone((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->field_0x380);
+		}
+		if (pZone == (ed_zone_3d*)0x0) {
+			fVar1 = (pActor->currentLocation).x - this->currentLocation.x;
+			fVar2 = (pActor->currentLocation).y - this->currentLocation.y;
+			fVar3 = (pActor->currentLocation).z - this->currentLocation.z;
+			if (sqrtf(fVar1 * fVar1 + fVar2 * fVar2 + fVar3 * fVar3) < 5.0f) {
+				return true;
+			}
+		}
+		else {
+			iVar5 = edEventComputeZoneAgainstVertex(pCVar4->activeChunkId, pZone, &pActor->currentLocation, 0);
+			if (iVar5 == 1) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+
 CBehaviourNativTakeAndPut::CBehaviourNativTakeAndPut()
 	: nbTrajectoryParams(0), aTrajectoryParams(0)
 {
@@ -2829,34 +2925,34 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 	undefined4* local_4;
 
 	if (msg == 0x4e) {
-		CActorNativMsgParamOther* pParams = reinterpret_cast<CActorNativMsgParamOther*>(pMsgParam);
+		CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
 		iVar7 = pParams->type;
-		if (iVar7 == 0xb) {
+		if (iVar7 == NATIVE_MESSAGE_FACE_AWAY) {
 			bVar4 = this->pOwner->CanSpeak();
 			if (bVar4 == false) {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xd, -1);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_AWAY, -1);
 			}
 			else {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xd, 0x15);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_AWAY, 0x15);
 			}
 		}
 		else {
-			if ((iVar7 == 10) || (iVar7 == 7)) {
+			if ((iVar7 == NATIVE_MESSAGE_FACE_TOWARDS) || (iVar7 == 7)) {
 				bVar4 = this->pOwner->CanSpeak();
 				if (bVar4 == false) {
 					pNativ = this->pOwner;
-					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xc, -1);
+					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_TOWARDS, -1);
 				}
 				else {
 					pNativ = this->pOwner;
-					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xc, 0x15);
+					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_TOWARDS, 0x15);
 				}
 			}
 			else {
 				if (iVar7 == 0xd) {
-					IMPLEMENTATION_GUARD(
+					CActorNativMsgParam_0xe* pMsgParam_0xe = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
 					pNativ = this->pOwner;
 					pNativ->field_0x4f8 = pNativ->curBehaviourId;
 					pNativ = this->pOwner;
@@ -2864,19 +2960,14 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 					pNativ = this->pOwner;
 					pNativ->field_0x500 = pNativ->currentAnimType;
 					pNativ = this->pOwner;
-					puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
-					uVar15 = puVar3[1];
-					uVar11 = puVar3[2];
-					uVar13 = puVar3[3];
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x10 = *puVar3;
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
-					((this->pOwner)->behaviourSpeak).field_0x24 = *(undefined4*)((int)pMsgParam + 8);
-					((this->pOwner)->behaviourSpeak).field_0x28 = *(undefined**)((int)pMsgParam + 0x14);
+
+					pNativ->behaviourSpeak.field_0x10 = *pMsgParam_0xe->field_0x18;
+					
+					((this->pOwner)->behaviourSpeak).field_0x24 = pMsgParam_0xe->field_0x8;
+					((this->pOwner)->behaviourSpeak).field_0x28 = pMsgParam_0xe->field_0x14;
 					pNativ = this->pOwner;
-					pNativ->SetBehaviour(3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd);
-					(this->pOwner)->field_0x530 = 0;)
+					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 9, pMsgParam_0xe->field_0xc + 0xd);
+					(this->pOwner)->field_0x530 = 0;
 				}
 				else {
 					if (iVar7 == 6) {
@@ -3033,30 +3124,18 @@ int CBehaviourNativTakeAndPut::InterpretMessage(CActor* pSender, int msg, void* 
 			return 0;
 		}
 		if (msg == MESSAGE_GET_ACTION) {
-	
-			(this->pOwner)->field_0x508 = 1.0f;
-
+			this->pOwner->field_0x508 = 1.0f;
 			pNativ = this->pOwner;
-			iVar7 = pNativ->actorState;
-			if (iVar7 == -1) {
-				uVar6 = 0;
-			}
-			else {
-				pSVar5 = pNativ->GetStateCfg(iVar7);
-				uVar6 = pSVar5->flags_0x4 & 0x4000;
-			}
+			uVar6 = pNativ->GetStateFlags(pNativ->actorState) & 0x4000;
 
 			if (uVar6 == 0) {
-				pNativ = this->pOwner;
-				pNativ->field_0x4f8 = pNativ->curBehaviourId;
-				pNativ = this->pOwner;
-				pNativ->field_0x4fc = pNativ->actorState;
-				pNativ = this->pOwner;
-				pNativ->field_0x500 = pNativ->currentAnimType;
-				(this->pOwner)->field_0x504 = 1;
+				this->pOwner->field_0x4f8 = this->pOwner->curBehaviourId;
+				this->pOwner->field_0x4fc = this->pOwner->actorState;
+				this->pOwner->field_0x500 = this->pOwner->currentAnimType;
+				this->pOwner->field_0x504 = 1;
 			}
 
-			if (this->pOwner->actorState == 0xc) {
+			if (this->pOwner->actorState == NATIVE_STATE_SPEAK_FACE_TOWARDS) {
 				return 0xf;
 			}
 
@@ -3196,13 +3275,11 @@ int CBehaviourNativSpeak::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 	float fVar13;
 	//CBehaviourFighterVTable* pCVar14;
 	float fVar15;
-	undefined4 local_20[4];
-	int local_10;
+	CActorNativMsgParam_0xe local_20;
 	undefined4* local_4;
 
 	if (msg == 0x4e) {
-		CActorNativMsgParamOther* pParams = reinterpret_cast<CActorNativMsgParamOther*>(pMsgParam);
-		/* WARNING: Load size is inaccurate */
+		CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
 		switch (pParams->type) {
 		case 2:
 			this->field_0x24 = -1;
@@ -3296,26 +3373,26 @@ int CBehaviourNativSpeak::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 			this->field_0x28 = *(float*)((int)pMsgParam + 0x14);
 			this->pOwner->SetState(9, *(int*)((int)pMsgParam + 0xc) + 0xd);)
 			break;
-		case 10:
+		case NATIVE_MESSAGE_FACE_TOWARDS:
 			bVar4 = this->pOwner->CanSpeak();
 			if (bVar4 == false) {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xc, -1);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_TOWARDS, -1);
 			}
 			else {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xc, 0x15);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_TOWARDS, 0x15);
 			}
 			break;
-		case 0xb:
+		case NATIVE_MESSAGE_FACE_AWAY:
 			bVar4 = this->pOwner->CanSpeak();
 			if (bVar4 == false) {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xd, -1);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_AWAY, -1);
 			}
 			else {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xd, 0x15);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_AWAY, 0x15);
 			}
 			break;
 		case 0xc:
@@ -3377,10 +3454,9 @@ int CBehaviourNativSpeak::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 	}
 	else {
 		if (msg == 0x14) {
-			local_20[0] = 9;
-			local_10 = this->pOwner->FUN_00162a70();
-			local_4 = local_20;
-			iVar7 = this->pOwner->DoMessage(this->pOwner->field_0x3f0, (ACTOR_MESSAGE)0x4e, local_4);
+			local_20.type = 9;
+			local_20.field_0x10 = this->pOwner->FUN_00162a70();
+			iVar7 = this->pOwner->DoMessage(this->pOwner->field_0x3f0, MESSAGE_NATIV_CMD, &local_20);
 			if (iVar7 == 0) {
 				iVar7 = 0;
 			}
@@ -3405,7 +3481,7 @@ int CBehaviourNativSpeak::InterpretMessage(CActor* pSender, int msg, void* pMsgP
 				}
 
 				iVar7 = 0xf;
-				if (this->pOwner->actorState != 0xc) {
+				if (this->pOwner->actorState != NATIVE_STATE_SPEAK_FACE_TOWARDS) {
 					iVar7 = 0;
 				}
 			}
@@ -3621,55 +3697,49 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 	undefined4* local_4;
 
 	if (msg == 0x4e) {
-		int* pMsgHeader = reinterpret_cast<int*>(pMsgParam);
-		iVar7 = *pMsgHeader;
-		if (iVar7 == 0xb) {
+		CActorNativMsgParam_0xe* pParams = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
+		iVar7 = pParams->type;
+		if (iVar7 == NATIVE_MESSAGE_FACE_AWAY) {
 			bVar4 = this->pOwner->CanSpeak();
 			if (bVar4 == false) {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xd, -1);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_AWAY, -1);
 			}
 			else {
 				pNativ = this->pOwner;
-				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xd, 0x15);
+				pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_AWAY, 0x15);
 			}
 		}
 		else {
-			if (iVar7 == 10) {
+			if (iVar7 == NATIVE_MESSAGE_FACE_TOWARDS) {
 				bVar4 = this->pOwner->CanSpeak();
 				if (bVar4 == false) {
 					pNativ = this->pOwner;
-					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xc, -1);
+					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_TOWARDS, -1);
 				}
 				else {
 					pNativ = this->pOwner;
-					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 0xc, 0x15);
+					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, NATIVE_STATE_SPEAK_FACE_TOWARDS, 0x15);
 				}
 			}
 			else {
 				if (iVar7 == 0xd) {
-					IMPLEMENTATION_GUARD(
-					pNativ = (this->base).pOwner;
+					CActorNativMsgParam_0xe* pMsgParam_0xe = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
+					pNativ = this->pOwner;
 					pNativ->field_0x4f8 = pNativ->curBehaviourId;
-					pNativ = (this->base).pOwner;
+					pNativ = this->pOwner;
 					pNativ->field_0x4fc = pNativ->actorState;
-					pNativ = (this->base).pOwner;
+					pNativ = this->pOwner;
 					pNativ->field_0x500 = pNativ->currentAnimType;
-					pNativ = (this->base).pOwner;
-					puVar3 = *(undefined4**)((int)pMsgParam + 0x18);
-					uVar15 = puVar3[1];
-					uVar11 = puVar3[2];
-					uVar13 = puVar3[3];
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x10 = *puVar3;
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x14 = uVar15;
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x18 = uVar11;
-					*(undefined4*)&(pNativ->behaviourSpeak).field_0x1c = uVar13;
-					(((this->base).pOwner)->behaviourSpeak).field_0x24 = *(int*)((int)pMsgParam + 8);
-					(((this->base).pOwner)->behaviourSpeak).field_0x28 = *(float*)((int)pMsgParam + 0x14);
-					pNativ = (this->base).pOwner;
-					(*(pNativ->pVTable)->SetBehaviour)((CActor*)pNativ, 3, 9, *(int*)((int)pMsgParam + 0xc) + 0xd)
-						;
-					((this->base).pOwner)->field_0x530 = 0;)
+					pNativ = this->pOwner;
+
+					pNativ->behaviourSpeak.field_0x10 = *pMsgParam_0xe->field_0x18;
+
+					((this->pOwner)->behaviourSpeak).field_0x24 = pMsgParam_0xe->field_0x8;
+					((this->pOwner)->behaviourSpeak).field_0x28 = pMsgParam_0xe->field_0x14;
+					pNativ = this->pOwner;
+					pNativ->SetBehaviour(NATIVE_BEHAVIOUR_SPEAK, 9, pMsgParam_0xe->field_0xc + 0xd);
+					(this->pOwner)->field_0x530 = 0;
 				}
 				else {
 					if (iVar7 != 7) {
@@ -3741,7 +3811,7 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 								}
 								else {
 									if (iVar7 == 4) {
-										CActorNativMsgParamOther* pTajectoryParam = reinterpret_cast<CActorNativMsgParamOther*>(pMsgParam);
+										CActorNativMsgParam_0xe* pTajectoryParam = reinterpret_cast<CActorNativMsgParam_0xe*>(pMsgParam);
 										this->pOwner->behaviourTakeAndPut.curTrajectoryParamIndex = pTajectoryParam->field_0x4;
 										this->pOwner->behaviourTakeAndPut.GetCurrentPathFollowReader()->Reset();
 										pNativ = this->pOwner;
@@ -3823,29 +3893,20 @@ int CBehaviourNativLive::InterpretMessage(CActor* pSender, int msg, void* pMsgPa
 			return 0;
 		}
 		if (msg == 0x12) {
-			IMPLEMENTATION_GUARD(
-			((this->base).pOwner)->field_0x508 = 1.0f;
-			pNativ = (this->base).pOwner;
-			iVar7 = pNativ->actorState;
-			if (iVar7 == -1) {
-				uVar6 = 0;
-			}
-			else {
-				pSVar5 = (*(pNativ->pVTable)->GetStateCfg)((CActor*)pNativ, iVar7);
-				uVar6 = pSVar5->flags_0x4 & 0x4000;
-			}
+			this->pOwner->field_0x508 = 1.0f;
+			pNativ = this->pOwner;
+			uVar6 = pNativ->GetStateFlags(pNativ->actorState) & 0x4000;
+
 			if (uVar6 == 0) {
-				pNativ = (this->base).pOwner;
-				pNativ->field_0x4f8 = pNativ->curBehaviourId;
-				pNativ = (this->base).pOwner;
-				pNativ->field_0x4fc = pNativ->actorState;
-				pNativ = (this->base).pOwner;
-				pNativ->field_0x500 = pNativ->currentAnimType;
-				((this->base).pOwner)->field_0x504 = 1;
+				this->pOwner->field_0x4f8 = this->pOwner->curBehaviourId;
+				this->pOwner->field_0x4fc = this->pOwner->actorState;
+				this->pOwner->field_0x500 = this->pOwner->currentAnimType;
+				this->pOwner->field_0x504 = 1;
 			}
-			if ((((this->base).pOwner)->base).base.base.actorState == 0xc) {
+
+			if (this->pOwner->actorState == NATIVE_STATE_SPEAK_FACE_TOWARDS) {
 				return 0xf;
-			})
+			}
 			return 0;
 		}
 	}
@@ -5509,7 +5570,7 @@ void CBehaviourNativSeller::Begin(CActor* pOwner, int newState, int newAnimation
 
 void CBehaviourNativSeller::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	return;
 }
 
 void CBehaviourNativSeller::InitState(int newState)
@@ -5649,7 +5710,14 @@ float CBehaviourNativSeller::GetWayPointDistance()
 
 void CBehaviourNativSeller::FUN_003f3070()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar1;
+
+	iVar1 = 0;
+	do {
+		this->addOn.Func_0x24(iVar1, (CActor*)0x0);
+		iVar1 = iVar1 + 1;
+	} while (iVar1 < 0x26);
+	return;
 }
 
 void CBehaviourNativSeller::FUN_003f3020()
