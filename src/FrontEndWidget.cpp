@@ -393,8 +393,9 @@ bool CFrontendAction::UpdateDisp(float time)
 	return bSuccess;
 }
 
-edF32VECTOR2 edF32VECTOR2_004488c8 = { 2.250988f, 3.0f };
+float FLOAT_004488c8 = 3.0f;
 uint UINT_00448f28 = 0x0;
+uint UINT_004488c8 = 0x40101030;
 
 void CFrontendAction::Draw()
 {
@@ -412,21 +413,21 @@ void CFrontendAction::Draw()
 			edCTextFormat textFormat;
 			textFormat.FormatString(this->szLabel);
 			CPauseManager::DrawRectangleBorder(((float)gVideoConfig.screenWidth + 6.0f) * 0.5f, y + textFormat.field_0xc * 0.5f,
-				edF32VECTOR2_004488c8.y * 2.0f + textFormat.field_0x8,
-				edF32VECTOR2_004488c8.y * 2.0f + textFormat.field_0xc, edF32VECTOR2_004488c8.y, edF32VECTOR2_004488c8.y,
-				edF32VECTOR2_004488c8.x, UINT_00448f28, 0);
+				FLOAT_004488c8 * 2.0f + textFormat.field_0x8,
+				FLOAT_004488c8 * 2.0f + textFormat.field_0xc, FLOAT_004488c8, FLOAT_004488c8,
+				UINT_004488c8, UINT_00448f28, 0);
 
 			textFormat.Display(x, y);
-			y = y + edF32VECTOR2_004488c8.y * 2.0f + textFormat.field_0xc;
+			y = y + FLOAT_004488c8 * 2.0f + textFormat.field_0xc;
 		}
 
 		if (this->szOtherText[0] != '\0') {
 			edCTextFormat auStack10784;
 			auStack10784.FormatString(this->szOtherText);
 			CPauseManager::DrawRectangleBorder(((float)gVideoConfig.screenWidth + 6.0f) * 0.5f, y + auStack10784.field_0xc * 0.5f,
-				edF32VECTOR2_004488c8.y * 2.0f + auStack10784.field_0x8,
-				edF32VECTOR2_004488c8.y * 2.0f + auStack10784.field_0xc, edF32VECTOR2_004488c8.y, edF32VECTOR2_004488c8.y,
-				edF32VECTOR2_004488c8.x, UINT_00448f28, 0);
+				FLOAT_004488c8 * 2.0f + auStack10784.field_0x8,
+				FLOAT_004488c8 * 2.0f + auStack10784.field_0xc, FLOAT_004488c8, FLOAT_004488c8,
+				UINT_004488c8, UINT_00448f28, 0);
 
 			auStack10784.Display(x, y);
 		}

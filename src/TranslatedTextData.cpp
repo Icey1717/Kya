@@ -257,7 +257,7 @@ void CMessageFile::select_language(const char* filePath, LANGUAGE inLanguageID)
 	return;
 }
 
-char* g_szTextNotFound_00434bf0 = "NotFound";
+char* g_szTextNotFound_00434bf0 = "";
 
 char* CMessageFile::get_message(ulong key, long mode)
 {
