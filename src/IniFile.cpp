@@ -572,7 +572,7 @@ bool CIniFile::SeekToKey_001a7ed0(const char* key, bool bHasSection)
 }
 
 
-bool CIniFile::ReadInt_001a9830(char* section, char* key, int* outValue)
+bool CIniFile::GetKey(char* section, char* key, int* outValue)
 {
 	char currentChar;
 	char compareChar;

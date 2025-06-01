@@ -1,15 +1,13 @@
-#ifndef FRONTEND_MONEY_H
-#define FRONTEND_MONEY_H
+#ifndef FRONTEND_ENEMY_H
+#define FRONTEND_ENEMY_H
 
 #include "Types.h"
 #include "FrontEndWidget.h"
-#include "Rendering/edCTextStyle.h"
-#include "Sprite.h"
 
-class CFrontendMoney : public CFrontendLabelText
+class CFrontendEnemy : public CFrontendLabelText
 {
 public:
-	CFrontendMoney();
+	CFrontendEnemy();
 
 	virtual void SetInterface(CInterface* pNewInterface);
 	virtual void Reset();
@@ -20,19 +18,12 @@ public:
 	virtual void Update(float time);
 	virtual void Draw();
 
-	void HideMoney();
-
-	void ShowMoney();
-
-	void ShowMoneyAlways();
-	void HideMoneyAlways();
+	void ShowEnemy();
 
 	float field_0x6c;
-	float field_0x70;
-
+	int field_0x70;
 	int field_0x74;
-	int field_0x78;
-	float field_0x7c;
+	float field_0x78;
 
 	CWidgetSlot slotOn;
 	CWidgetSlot slotOff;
@@ -41,4 +32,4 @@ public:
 	CSprite sprite;
 };
 
-#endif // FRONTEND_MONEY_H
+#endif // FRONTEND_ENEMY_H

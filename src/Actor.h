@@ -34,6 +34,8 @@ class CPlayerInput;
 
 class CVision;
 
+class CInventoryInfo;
+
 class CFxHandle
 {
 public:
@@ -81,6 +83,7 @@ enum ACTOR_MESSAGE {
 	MESSAGE_FIGHT_ACTION_SUCCESS = 0x1b,
 	MESSAGE_ENTER_TRAMPO = 0x1d,
 	MESSAGE_IMPULSE = 0x1e,
+	MESSAGE_ENTER_SHOP = 0x23,
 	MESSAGE_DISABLE_INPUT = 0x25,
 	MESSAGE_ENABLE_INPUT = 0x26,
 	MESSAGE_TRAP_CAUGHT = 0x31,
@@ -410,7 +413,8 @@ public:
 	float field_0x98;
 };
 
-class CActor : public CObject {
+class CActor : public CObject
+{
 public:
 	CActor();
 
@@ -490,6 +494,8 @@ public:
 	virtual CVision* GetVision() { IMPLEMENTATION_GUARD(); }
 	virtual int GetNumVisualDetectionPoints();
 	virtual void GetVisualDetectionPoint(edF32VECTOR4* pOutPoint, int index);
+
+	virtual CInventoryInfo* GetInventoryInfo() { return NULL; }
 
 	virtual void FillThisFrameExpectedDifferentialMatrix(edF32MATRIX4* pMatrix);
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);

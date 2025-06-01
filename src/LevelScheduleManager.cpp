@@ -43,6 +43,8 @@
 #include "Pause.h"
 #include "ActorBoomy.h"
 #include "ActorNativ.h"
+#include "ActorNativShop.h"
+#include "InventoryInfo.h"
 
 #define LEVEL_SCHEDULER_LOG(level, format, ...) MY_LOG_CATEGORY("levelScheduler", level, format, ##__VA_ARGS__)
 
@@ -156,18 +158,104 @@ ScenarioVariable _gScenVarInfo[98] = {
 
 CLevelScheduler* CLevelScheduler::gThis = NULL;
 
-bool CLevelScheduler::AddMoneyB(int amount)
+Episode g_EpisodeDataArray_0048eb0[16];
+
+bool CLevelScheduler::Money_GiveToShop(int amount)
 {
-	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
-	//_gGameNfo.scenery = _gGameNfo.scenery - amount;
+	_gGameNfo.nbMoney = _gGameNfo.nbMoney - amount;
+	_gGameNfo.shop = _gGameNfo.shop + amount;
 
 	return true;
 }
 
-bool CLevelScheduler::AddMoneyA(int amount)
+bool CLevelScheduler::Money_GiveToBet(int amount)
+{
+	int iVar1;
+	int iVar2;
+
+	_gGameNfo.bet = _gGameNfo.bet + amount;
+
+	if ((_gScenVarInfo[6].currentValue < 0) ||
+		(iVar1 = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+		iVar1 = _gGameNfo.nbEpisodes + -1;
+	}
+
+	iVar1 = _gGameNfo.bet - g_EpisodeDataArray_0048eb0[iVar1].bet;
+	if (iVar1 < 1) {
+		if (iVar1 < 0) {
+			iVar2 = _gGameNfo.bank;
+			if (-iVar1 <= _gGameNfo.bank) {
+				iVar2 = -iVar1;
+			}
+			if (0 < _gGameNfo.bank) {
+				_gGameNfo.bank = _gGameNfo.bank - iVar2;
+				_gGameNfo.bet = _gGameNfo.bet + iVar2;
+			}
+		}
+	}
+	else {
+		_gGameNfo.bet = _gGameNfo.bet - iVar1;
+		_gGameNfo.bank = _gGameNfo.bank + iVar1;
+	}
+
+	_gGameNfo.nbMoney = _gGameNfo.nbMoney - amount;
+
+	return true;
+}
+
+bool CLevelScheduler::Money_TakeFromBet(int amount)
+{
+	int iVar1;
+	int iVar2;
+
+	_gGameNfo.bet = _gGameNfo.bet - amount;
+	if ((_gScenVarInfo[6].currentValue < 0) ||
+		(iVar1 = _gScenVarInfo[6].currentValue, _gGameNfo.nbEpisodes <= _gScenVarInfo[6].currentValue)) {
+		iVar1 = _gGameNfo.nbEpisodes + -1;
+	}
+
+	iVar1 = _gGameNfo.bet - g_EpisodeDataArray_0048eb0[iVar1].bet;
+	if (iVar1 < 1) {
+		if (iVar1 < 0) {
+			iVar2 = _gGameNfo.bank;
+			if (-iVar1 <= _gGameNfo.bank) {
+				iVar2 = -iVar1;
+			}
+			if (0 < _gGameNfo.bank) {
+				_gGameNfo.bank = _gGameNfo.bank - iVar2;
+				_gGameNfo.bet = _gGameNfo.bet + iVar2;
+			}
+		}
+	}
+	else {
+		_gGameNfo.bet = _gGameNfo.bet - iVar1;
+		_gGameNfo.bank = _gGameNfo.bank + iVar1;
+	}
+
+	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
+
+	return true;
+}
+
+bool CLevelScheduler::Money_TakeFromBank(int amount)
 {
 	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
-	//_gGameNfo.field_0x1c = _gGameNfo.field_0x1c - amount;
+	_gGameNfo.bank = _gGameNfo.bank - amount;
+
+	return true;
+}
+
+bool CLevelScheduler::Money_TakeFromMonster(int amount)
+{
+	_gGameNfo.monster = _gGameNfo.monster - amount;
+	_gGameNfo.bank = _gGameNfo.bank + amount;
+	return true;
+}
+
+bool CLevelScheduler::Money_TakeFromScenery(int amount)
+{
+	_gGameNfo.nbMoney = _gGameNfo.nbMoney + amount;
+	_gGameNfo.scenery = _gGameNfo.scenery - amount;
 
 	return true;
 }
@@ -842,77 +930,80 @@ void CLevelScheduler::Levels_LoadInfoBank()
 
 void CLevelScheduler::Episode_LoadFromIniFile(void)
 {
-	//int iVar1;
-	//bool bVar2;
-	//int* episodesPtr;
-	//Episode* episodePtr;
-	//uint episodeCounter;
-	//int minWolfen;
-	//int scenery;
-	//int monster;
-	//int bet;
-	//undefined4 local_120;
-	//int local_11c;
-	//char Section[256];
-	//int local_10;
-	//int local_c;
-	//char episodeCounterString[4];
-	//
-	//episodesPtr = &_gGameNfo;
-	//_gGameNfo.count = 0;
+	int iVar1;
+	bool bVar2;
+	EpStruct_80* episodesPtr;
+	Episode* episodePtr;
+	uint episodeCounter;
+	int minWolfen;
+	int scenery;
+	int monster;
+	int bet;
+	undefined4 local_120;
+	int local_11c;
+	char Section[256];
+	int local_10;
+	int local_c;
+	char episodeCounterString[4];
+
+	episodesPtr = _gGameNfo.aEpisodes;
+
+	_gGameNfo.nbEpisodes = 0;
 	_gGameNfo.nbMagic = 0;
 	_gGameNfo.nbMoney = 0;
-	//_gGameNfo.scenery = 0;
-	//_gGameNfo.monster = 0;
-	//_gGameNfo.bet = 0;
-	//_gGameNfo.field_0x1c = 0;
-	//_gGameNfo.field_0x20 = 0;
+	_gGameNfo.scenery = 0;
+	_gGameNfo.monster = 0;
+	_gGameNfo.bet = 0;
+	_gGameNfo.bank = 0;
+	_gGameNfo.shop = 0;
 	_gGameNfo.health = (float)_gScenVarInfo[20].currentValue;
-	//iVar1 = 0;
-	//do {
-	//	local_10 = iVar1;
-	//	local_c = 0;
-	//	bVar2 = true;
-	//	while (bVar2) {
-	//		episodesPtr->field_0x24[local_c].field_0x0 = -1;
-	//		episodesPtr->field_0x24[local_c].field_0x4 = 0;
-	//		local_c = local_c + 1;
-	//		bVar2 = local_c < 0x10;
-	//	}
-	//	episodesPtr = (EpStructComplete*)&episodesPtr->field_0x24[0xb].field_0x4;
-	//	iVar1 = local_10 + 1;
-	//} while (local_10 + 1 < 2);
-	///* Episode_ + General */
-	//edStrCatMulti(Section, s_Episode__00433b70, 0x433b80, 0);
-	///* HeroMagic */
-	//IniFile::ReadInt_001a9830(&gIniFile, Section, s_HeroMagic_00433b88, &_gGameNfo.nbMagic);
-	//bVar2 = IniFile::ReadInt_001a9830(&gIniFile, Section, s_NbEpisodes_00433b98, (int*)&_gGameNfo);
-	//if (((bVar2 != false) && (0 < _gGameNfo.count)) && (episodeCounter = 0, 0 < _gGameNfo.count)) {
-	//	episodePtr = g_EpisodeDataArray_0048eb0;
-	//	do {
-	//		edStrInt2Str(episodeCounter, episodeCounterString, 2, true);
-	//		edStrCatMulti(Section, s_Episode__00433b70, episodeCounterString);
-	//		/* MinWolfen */
-	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_MinWolfen_00433ba8, &minWolfen);
-	//		/* Scenery */
-	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_Scenery_00433bb8, &scenery);
-	//		/* Monster */
-	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_Monster_00433bc0, &monster);
-	//		/* Bet */
-	//		IniFile::ReadInt_001a9830(&gIniFile, Section, s_Bet_00433bc8, &bet);
-	//		local_120 = 0;
-	//		episodeCounter = episodeCounter + 1;
-	//		episodePtr->minWolfen = minWolfen;
-	//		episodePtr->scenery = scenery;
-	//		episodePtr->monster = monster;
-	//		episodePtr->bet = bet;
-	//		episodePtr->field_0x10 = 0;
-	//		episodePtr->total_0x14 = local_11c;
-	//		episodePtr = episodePtr + 1;
-	//	} while ((int)episodeCounter < _gGameNfo.count);
-	//}
+
+	iVar1 = 0;
+	do {
+		local_10 = iVar1;
+		local_c = 0;
+		bVar2 = true;
+		while (bVar2) {
+			episodesPtr->aSubObj[local_c].field_0x0 = -1;
+			episodesPtr->aSubObj[local_c].field_0x4 = 0;
+			local_c = local_c + 1;
+			bVar2 = local_c < 0x10;
+		}
+
+		episodesPtr = episodesPtr + 1;
+		iVar1 = local_10 + 1;
+	} while (local_10 + 1 < 2);
+
+	edStrCatMulti(Section, "Episode_", "General", NULL);
+
+	gIniFile.GetKey(Section, "HeroMagic", &_gGameNfo.nbMagic);
+
+	bVar2 = gIniFile.GetKey(Section, "NbEpisodes", &_gGameNfo.nbEpisodes);
+	if (((bVar2 != false) && (0 < _gGameNfo.nbEpisodes)) && (episodeCounter = 0, 0 < _gGameNfo.nbEpisodes)) {
+		episodePtr = g_EpisodeDataArray_0048eb0;
+		do {
+			edStrInt2Str(episodeCounter, episodeCounterString, 2, true);
+			edStrCatMulti(Section, "Episode_", episodeCounterString, NULL);
+			gIniFile.GetKey(Section, "MinWolfen", &minWolfen);
+			gIniFile.GetKey(Section, "Scenery", &scenery);
+			gIniFile.GetKey(Section, "Monster", &monster);
+			gIniFile.GetKey(Section, "Bet", &bet);
+			local_120 = 0;
+			episodeCounter = episodeCounter + 1;
+			episodePtr->minWolfen = minWolfen;
+			episodePtr->scenery = scenery;
+			episodePtr->monster = monster;
+			episodePtr->bet = bet;
+			episodePtr->field_0x10 = 0;
+			episodePtr->total_0x14 = local_11c;
+			episodePtr = episodePtr + 1;
+		} while (episodeCounter < _gGameNfo.nbEpisodes);
+	}
+
 	CScene::ptable.g_FrontendManager_00451680->SetGlobalFunc_001cf8e0();
-	//FUN_002daf70();
+
+	Episode_ComputeCurrent();
+
 	return;
 }
 
@@ -978,6 +1069,40 @@ uint CLevelScheduler::GetMedallionLevel()
 	}
 
 	return medallionLevel;
+}
+
+void CLevelScheduler::Episode_ComputeCurrent()
+{
+	int iVar1;
+	int iVar2;
+
+	for (iVar2 = 1; iVar2 < _gGameNfo.nbEpisodes; iVar2 = iVar2 + 1) {
+		if ((iVar2 < 0) || (iVar1 = iVar2, _gGameNfo.nbEpisodes <= iVar2)) {
+			iVar1 = _gGameNfo.nbEpisodes + -1;
+		}
+
+		if (_gScenVarInfo[0].currentValue < g_EpisodeDataArray_0048eb0[iVar1].minWolfen) break;
+	}
+
+	iVar1 = iVar2 + -1;
+
+	if (iVar1 != _gScenVarInfo[6].currentValue) {
+		if ((iVar1 < 0) || (_gGameNfo.nbEpisodes <= iVar1)) {
+			iVar1 = _gGameNfo.nbEpisodes + -1;
+		}
+
+		_gScenVarInfo[6].currentValue = iVar2 + -1;
+		g_EpisodeDataArray_0048eb0[iVar1].total_0x14 = g_EpisodeDataArray_0048eb0[iVar1].bet +
+			g_EpisodeDataArray_0048eb0[iVar1].scenery + g_EpisodeDataArray_0048eb0[iVar1].monster;
+
+		_gGameNfo.scenery = _gGameNfo.scenery + g_EpisodeDataArray_0048eb0[iVar1].scenery;
+		_gGameNfo.monster = g_EpisodeDataArray_0048eb0[iVar1].monster;
+		_gGameNfo.bet = g_EpisodeDataArray_0048eb0[iVar1].bet;
+		_gGameNfo.bank = 0;
+		_gGameNfo.shop = 0;
+	}
+
+	return;
 }
 
 int CLevelScheduler::GetBoomyLevel() 
@@ -1148,9 +1273,11 @@ void CLevelScheduler::Game_Init()
 		iVar11 = iVar11 + 1;
 		pLVar12 = pLVar12 + 1;
 	} while (iVar11 < 0x10);
+
 	MoreLoadLoopObjectSetup(true);
 	Levels_LoadInfoBank();
 	Episode_LoadFromIniFile();
+
 	pLVar12 = aLevelInfo;
 	iVar11 = 0;
 	do {
@@ -1269,37 +1396,35 @@ LAB_002e26c8:
 	return;
 }
 
-void NativShopLevelSubObj::FUN_002d8d10(CActorNativ* pNativ)
+void NativShopLevelSubObj::FUN_002d8d10(CActorNativShop* pNativ)
 {
-	int iVar1;
-	void* lVar2;
-	int iVar3;
+	CInventoryInfo* pInventoryInfo;
+	int currentIndex;
 
-	if (pNativ->dynamic.field_0x10.w == 0.0f) {
+	if (pNativ->field_0x17c == 0) {
 		this->field_0x8 = 0;
 	}
 	else {
 		this->field_0x8 = 1;
 	}
 
-	iVar3 = 0;
+	currentIndex = 0;
 	do {
-		lVar2 = pNativ->FUN_0036f330(iVar3);
-		if (lVar2 == 0) {
-			this->aSubObjs[iVar3].field_0x0 = 0x20;
-			this->aSubObjs[iVar3].field_0x4 = 0;
-			this->aSubObjs[iVar3].field_0x8 = 0;
+		pInventoryInfo = pNativ->GetInventoryInfoForPurchase(currentIndex);
+		if (pInventoryInfo == (CInventoryInfo*)0x0) {
+			this->aSubObjs[currentIndex].field_0x0 = 0x20;
+			this->aSubObjs[currentIndex].field_0x4 = 0;
+			this->aSubObjs[currentIndex].field_0x8 = 0;
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			iVar1 = (int)lVar2;
-			this->aSubObjs[iVar3].field_0x0 = *(undefined4*)(iVar1 + 0x20);
-			this->aSubObjs[iVar3].field_0x4 = *(undefined4*)(iVar1 + 0x30);
-			this->aSubObjs[iVar3].field_0x8 = *(undefined8*)(iVar1 + 8);)
+			this->aSubObjs[currentIndex].field_0x0 = pInventoryInfo->field_0x20;
+			this->aSubObjs[currentIndex].field_0x4 = pInventoryInfo->moneyCost;
+			this->aSubObjs[currentIndex].field_0x8 = pInventoryInfo->field_0x8;
 		}
 
-		iVar3 = iVar3 + 1;
-	} while (iVar3 < 5);
+		currentIndex = currentIndex + 1;
+	} while (currentIndex < 5);
+
 	return;
 }
 
@@ -2355,7 +2480,7 @@ void CLevelScheduler::Level_ClearAll()
 		SaveGame_SaveGameInfo(this);)
 	}
 
-	//FUN_002daf70();
+	Episode_ComputeCurrent();
 
 	return;
 }
@@ -2432,7 +2557,7 @@ void CLevelScheduler::Level_Manage()
 		if (0 < this->nbNativShopSubObjs) {
 			CActor** pActor = local_110.aEntries;
 			do {
-				pSubObj->FUN_002d8d10(static_cast<CActorNativ*>(*pActor));
+				pSubObj->FUN_002d8d10(static_cast<CActorNativShop*>(*pActor));
 				iVar12 = iVar12 + 1;
 				pActor = pActor + 1;
 				pSubObj = pSubObj + 1;

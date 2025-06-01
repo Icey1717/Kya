@@ -3,7 +3,8 @@
 
 #include "Types.h"
 
-struct ByteCode {
+struct ByteCode
+{
 public:
 	static ulong BuildU64(uint param_1, uint param_2);
 	void Align(int param_2);

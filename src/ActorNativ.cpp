@@ -14,6 +14,7 @@
 #include "Rendering/DisplayList.h"
 #include "edText.h"
 #include "FrontEndMoney.h"
+#include "ActorNativShop.h"
 
 void CActorNativ::Create(ByteCode* pByteCode)
 {
@@ -561,9 +562,9 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	undefined4* local_4;
 
 	if (msg == 0x60) {
-		IMPLEMENTATION_GUARD(
-		/* WARNING: Load size is inaccurate */
-		if (*pMsgParam == 3) {
+		int* pIntParam = (int*)pMsgParam;
+		if (*pIntParam == 3) {
+			IMPLEMENTATION_GUARD(
 			pCVar6 = CActor::GetBehaviour((CActor*)this, 7);
 			if ((long)(int)pCVar6 != 0) {
 				uVar10 = FUN_003f30d0((long)(int)pCVar6, (long)*(int*)((int)pMsgParam + 4));
@@ -572,8 +573,8 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					pCVar6[10].pVTable = (CBehaviourMovingPlatformVTable*)0x1d;
 				}
 				return 1;
-			}
-		})
+			})
+		}
 	}
 	else {
 		if (msg == 0x8a) {
@@ -1840,13 +1841,13 @@ void CActorNativ::StateNativSellerStandCome(CBehaviourNativSeller* pBehaviour)
 	float fVar3;
 	CActorHero* pCVar4;
 	bool bVar5;
-	CBehaviour* pCVar6;
+	CBehaviourNativShopSell* pCVar6;
 	edF32VECTOR4* peVar7;
 	float in_f0;
 	edF32VECTOR4 local_10;
 
 	pCVar4 = CActorHero::_gThis;
-	pActor = pBehaviour->field_0x24;
+	pActor = pBehaviour->pNativShop;
 	if (pActor == (CActor*)0x0) {
 		fVar1 = CActorHero::_gThis->currentLocation.x - this->currentLocation.x;
 		fVar2 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
@@ -1855,17 +1856,8 @@ void CActorNativ::StateNativSellerStandCome(CBehaviourNativSeller* pBehaviour)
 	}
 	else {
 		if (pActor->curBehaviourId == 2) {
-			pCVar6 = pActor->GetBehaviour(pActor->curBehaviourId);
-
-			IMPLEMENTATION_GUARD(
-			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
-			local_10.x = peVar7->x;
-			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
-			local_10.y = peVar7->y;
-			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
-			local_10.z = peVar7->z;
-			peVar7 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar6 + 0x21), 0);
-			local_10.w = peVar7->w;)
+			pCVar6 = static_cast<CBehaviourNativShopSell*>(pActor->GetBehaviour(pActor->curBehaviourId));
+			local_10 = *pCVar6->pathFollowReader.GetWayPoint(0);
 			edF32Vector4SubHard(&local_10, &local_10, &pCVar4->currentLocation);
 			local_10.y = 0.0f;
 			in_f0 = edF32Vector4GetDistHard(&local_10);
@@ -2291,31 +2283,6 @@ float CActorNativ::FUN_00164070()
 
 	return fVar7;
 }
-
-void* CActorNativ::FUN_0036f330(int param_2)
-{
-	CBehaviour* pCVar1;
-	void* uVar1;
-	//CActorFighterVTable** ppCVar2;
-
-	pCVar1 = GetBehaviour(2);
-	if (pCVar1 == (CBehaviourNativ*)0x0) {
-		uVar1 = 0;
-	}
-	else {
-		IMPLEMENTATION_GUARD(
-		if (((param_2 < 0) || (4 < param_2)) ||
-			(ppCVar2 = &this->pVTable + param_2 * 6, ppCVar2[0x66] == (CActorFighterVTable*)0x0)) {
-			uVar1 = 0;
-		}
-		else {
-			uVar1 = (**(code**)(ppCVar2[0x61]->actorBase + 0xe8))();
-		})
-	}
-
-	return uVar1;
-}
-
 
 bool CActorNativ::FUN_00162750()
 {
@@ -5528,7 +5495,7 @@ void CBehaviourNativSeller::Init(CActor* pOwner)
 
 	this->addOn.Init(pOwner);
 
-	this->field_0x24 = (CActor*)0x0;
+	this->pNativShop = (CActorNativShop*)0x0;
 
 	this->addOn.Reset();
 	this->addOn.field_0xd = 1;
@@ -5594,10 +5561,12 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 	long lVar5;
 
 	if (msg == 0x60) {
-		IMPLEMENTATION_GUARD(
+		int* pMsg = reinterpret_cast<int*>(pMsgParam);
 		iVar4 = 1;
-		iVar1 = *pMsgParam;
+		iVar1 = *pMsg;
 		if (iVar1 == 1) {
+			IMPLEMENTATION_GUARD(
+
 			lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, 0x25, 0, 0);
 			if (lVar5 == 0) {
 				pCVar2 = this->pOwner;
@@ -5611,7 +5580,7 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 			else {
 				this->field_0x28 = 0x1c;
 			}
-			iVar4 = 1;
+			iVar4 = 1;)
 		}
 		else {
 			if (iVar1 == 2) {
@@ -5634,25 +5603,24 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 				}
 				else {
 					if (iVar1 == 0) {
-						IMPLEMENTATION_GUARD(
-						lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, 3, 0, 0);
-						if (lVar5 == 0) {
+						if (this->addOn.Func_0x20(3, 0, 0) == 0) {
 							pCVar2 = this->pOwner;
-							if ((pCVar2->base).base.base.curBehaviourId == 1) {
+							if (pCVar2->curBehaviourId == 1) {
 								this->field_0x28 = 0x1d;
 							}
 							else {
-								(*((pCVar2->base).base.base.pVTable)->SetState)((CActor*)pCVar2, 0x1d, -1);
+								pCVar2->SetState(0x1d, -1);
 							}
 						}
 						else {
 							this->field_0x28 = 0x1d;
 						}
-						iVar4 = 1;)
+
+						iVar4 = 1;
 					}
 					else {
 						if ((iVar1 == 4) && (pSender->typeID == 0x34)) {
-							this->field_0x24 = pSender;
+							this->pNativShop = static_cast<CActorNativShop*>(pSender);
 						}
 						else {
 							iVar4 = 0;
@@ -5660,7 +5628,7 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 					}
 				}
 			}
-		})
+		}
 	}
 	else {
 		iVar4 = 0;
@@ -5675,13 +5643,13 @@ float CBehaviourNativSeller::GetWayPointDistance()
 	float fVar2;
 	float fVar3;
 	CActorHero* pCVar4;
-	CBehaviour* pCVar5;
+	CBehaviourNativShopSell* pCVar5;
 	edF32VECTOR4* peVar6;
 	float fVar7;
 	edF32VECTOR4 local_10;
 
 	pCVar4 = CActorHero::_gThis;
-	pActor = (CActor*)this->field_0x24;
+	pActor = (CActor*)this->pNativShop;
 	if ((pActor == (CActor*)0x0) || (pActor->curBehaviourId != 2)) {
 		pCVar1 = this->pOwner;
 		fVar7 = CActorHero::_gThis->currentLocation.x - pCVar1->currentLocation.x;
@@ -5690,19 +5658,11 @@ float CBehaviourNativSeller::GetWayPointDistance()
 		fVar7 = sqrtf(fVar7 * fVar7 + fVar2 * fVar2 + fVar3 * fVar3);
 	}
 	else {
-		IMPLEMENTATION_GUARD(
-		pCVar5 = CActor::GetBehaviour(pActor, pActor->curBehaviourId);
-		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
-		local_10.x = peVar6->x;
-		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
-		local_10.y = peVar6->y;
-		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
-		local_10.z = peVar6->z;
-		peVar6 = CPathFollowReader::GetWayPoint((CPathFollowReader*)(pCVar5 + 0x21), 0);
-		local_10.w = peVar6->w;
-		edF32Vector4SubHard(&local_10, &local_10, &(pCVar4->character).characterBase.base.base.currentLocation);
-		local_10.y = 0.0;
-		fVar7 = edF32Vector4GetDistHard(&local_10);)
+		pCVar5 = static_cast<CBehaviourNativShopSell*>(pActor->GetBehaviour(pActor->curBehaviourId));
+		local_10 = *pCVar5->pathFollowReader.GetWayPoint(0);
+		edF32Vector4SubHard(&local_10, &local_10, &pCVar4->currentLocation);
+		local_10.y = 0.0f;
+		fVar7 = edF32Vector4GetDistHard(&local_10);
 	}
 
 	return fVar7;

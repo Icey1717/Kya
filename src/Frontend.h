@@ -4,6 +4,12 @@
 #include "Types.h"
 #include "LargeObject.h"
 
+class CFrontendSamplePlayer
+{
+public:
+	static long PlaySample(float, float*, int, int);
+};
+
 class CFrontend : public CObjectManager
 {
 public:

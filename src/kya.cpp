@@ -967,7 +967,7 @@ void VideoReadConfig(CIniFile* file)
 		}
 		/* Video - SetFrequency */
 		videoFrequency = 0;
-		bVar1 = gIniFile.ReadInt_001a9830(s_Video_0042b490, "SetFrequency", &videoFrequency);
+		bVar1 = gIniFile.GetKey(s_Video_0042b490, "SetFrequency", &videoFrequency);
 		if ((bVar1 != false) && (videoFrequency == 0x3c)) {
 			isNTSC = 0;
 		}
@@ -976,8 +976,8 @@ void VideoReadConfig(CIniFile* file)
 		gVideoConfig.screenHeight = screenHeight;
 		gVideoConfig.isNTSC = isNTSC;
 		gVideoConfig.omode = videoMode;
-		gIniFile.ReadInt_001a9830(s_Video_0042b490, "SetOffsetX", &gVideoConfig.offsetX);
-		gIniFile.ReadInt_001a9830(s_Video_0042b490, "SetOffsetY", &gVideoConfig.offsetY);
+		gIniFile.GetKey(s_Video_0042b490, "SetOffsetX", &gVideoConfig.offsetX);
+		gIniFile.GetKey(s_Video_0042b490, "SetOffsetY", &gVideoConfig.offsetY);
 	}
 	return;
 }

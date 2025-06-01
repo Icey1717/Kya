@@ -1,6 +1,7 @@
 #include "FrontEndMoney.h"
 #include "Actor.h"
 #include "FrontEndBank.h"
+#include "FrontEndDisp.h"
 #include "Pause.h"
 #include "TimeController.h"
 #include "MathOps.h"
@@ -148,8 +149,7 @@ void CFrontendMoney::UpdatePos_StateWait(float time)
 			bVar2 = (int)fVar4 != (int)(((fVar7 - Timer::GetTimer()->lastFrameTime) * 15.0f) / this->field_0x7c);
 		}
 		if (bVar2) {
-			IMPLEMENTATION_GUARD_AUDIO(
-			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 4, 0);)
+			CFrontendSamplePlayer::PlaySample(1.0f, (float*)(CScene::ptable.g_FrontendManager_00451680)->field_0x78, 4, 0);
 		}
 
 		this->bDisplayDirty = 1;
@@ -206,7 +206,7 @@ void CFrontendMoney::Update(float time)
 				this->bDisplayDirty = 1;
 			}
 			else {
-				FUN_00371c00();
+				HideMoney();
 				this->field_0x6c = (float)(int)this->field_0x70;
 			}
 		}
@@ -261,7 +261,7 @@ void CFrontendMoney::Draw()
 	return;
 }
 
-void CFrontendMoney::FUN_00371c00()
+void CFrontendMoney::HideMoney()
 {
 	switch (this->field_0x78) {
 	case 0:

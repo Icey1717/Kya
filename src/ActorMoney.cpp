@@ -477,10 +477,10 @@ void CMnyInstance::SetState(int newState)
 		pActor = static_cast<CActorMoney*>(this->pOwner);
 
 		if ((this->flags & 0x20) == 0) {
-			CLevelScheduler::gThis->AddMoneyA(pActor->moneyValue);
+			CLevelScheduler::gThis->Money_TakeFromScenery(pActor->moneyValue);
 		}
 		else {
-			CLevelScheduler::gThis->AddMoneyB(pActor->moneyValue);
+			CLevelScheduler::gThis->Money_TakeFromBank(pActor->moneyValue);
 		}
 
 		IMPLEMENTATION_GUARD_AUDIO(

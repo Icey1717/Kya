@@ -82,6 +82,9 @@ namespace Hero
 
 	static const char* GetDefaultStateName(int state) {
 		switch (state) {
+		case STATE_HERO_SHOP:
+			return "StateHeroShop";
+			break;
 		case STATE_HERO_STAND:
 			return "StateHeroStand";
 			break;

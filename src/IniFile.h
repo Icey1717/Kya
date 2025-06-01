@@ -20,7 +20,7 @@ public:
 
 	bool SeekToKey_001a7ed0(const char* key, bool bHasSection);
 
-	bool ReadInt_001a9830(char* section, char* key, int* outValue);
+	bool GetKey(char* section, char* key, int* outValue);
 	bool ReadString_001aa520(const char* section, const char* key, char* outValue);
 
 	int GetAllKeys(char* section, char* key, ReadFunction pReadFunc, int param_5);

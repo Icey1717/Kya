@@ -79,7 +79,7 @@ struct CFrontendDisplay : public CFrontend {
 	CFrontendLifeGauge* pHealthBar;
 	struct CFrontendMagicGauge* pMagicOrbs;
 	struct CFrontendMoney* pMoney;
-	struct HNootiesWolfun* pFreedWolfun;
+	struct CFrontendEnemy* pFreedWolfun;
 	struct CFrontendAction* pFrontendAction;
 	struct MenuObj_Big* pMenuObj_0x6c;
 	char* pMenuObj_0x70;

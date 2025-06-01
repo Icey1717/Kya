@@ -385,7 +385,7 @@ ActiveCamManagerEntry* ActiveCamManager::GetState()
 
 float ActiveCamManager::GetInternalViewAlpha()
 {
-	ActiveCamManager* pAVar1;
+	ActiveCamManagerEntry* pAVar1;
 	int iVar2;
 	ActiveCamManagerEntry* pAVar3;
 	int iVar4;
@@ -401,15 +401,14 @@ float ActiveCamManager::GetInternalViewAlpha()
 		iVar4 = 0;
 
 		if (0 < iVar2) {
-			IMPLEMENTATION_GUARD(
-			pAVar1 = this;
+			pAVar1 = this->aEntries;
 			if (8 < iVar2) {
 				do {
 					iVar4 = iVar4 + 8;
-					fVar5 = fVar5 + pAVar1->aEntries[0].blendAlpha + pAVar1->aEntries[1].blendAlpha +
-						pAVar1->aEntries[2].blendAlpha + pAVar1->aEntries[3].blendAlpha + pAVar1->aEntries[4].blendAlpha +
-						pAVar1->aEntries[5].blendAlpha + pAVar1->aEntries[6].blendAlpha + pAVar1->aEntries[7].blendAlpha;
-					pAVar1 = (ActiveCamManager*)&pAVar1->activeIndex;
+					fVar5 = fVar5 + pAVar1[0].blendAlpha + pAVar1[1].blendAlpha +
+						pAVar1[2].blendAlpha + pAVar1[3].blendAlpha + pAVar1[4].blendAlpha +
+						pAVar1[5].blendAlpha + pAVar1[6].blendAlpha + pAVar1[7].blendAlpha;
+					pAVar1 = pAVar1 + 8;
 				} while (iVar4 < this->activeIndex + -7);
 			}
 
@@ -417,10 +416,10 @@ float ActiveCamManager::GetInternalViewAlpha()
 				pAVar3 = this->aEntries + iVar4;
 				do {
 					iVar4 = iVar4 + 1;
-					fVar5 = fVar5 + (&pAVar3->props)[1].location.z;
-					pAVar3 = (ActiveCamManagerEntry*)&(&pAVar3->props)[1].location.w;
+					fVar5 = fVar5 + pAVar3->blendAlpha;
+					pAVar3 = pAVar3 + 1;
 				} while (iVar4 < this->activeIndex + 1);
-			})
+			}
 		}
 
 		fVar5 = fVar5 / (float)iVar2;

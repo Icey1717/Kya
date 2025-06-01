@@ -551,6 +551,7 @@ public:
 	float field_0x117c;
 	float field_0x1180;
 
+	CActor* field_0xf14;
 	CActor* pBounceOnActor;
 	CActorMovable* pSoccerActor;
 

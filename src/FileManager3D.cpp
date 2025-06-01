@@ -445,6 +445,11 @@ void C3DFileManager::ManageBackground(edNODE* pNode, uint flags)
 	return;
 }
 
+ed_g3d_manager* C3DFileManager::GetCommonLevelMeshInfo(int index)
+{
+	return &this->aCommonLevelMeshes[index].meshInfo;
+}
+
 ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
 {
 	Mesh* pCommonLevelMesh;
@@ -455,8 +460,7 @@ ed_g3d_manager* C3DFileManager::GetG3DManager(int meshIndex, int textureIndex)
 		NAME_NEXT_OBJECT("%s", pCommonLevelMesh->name.c_str());
 
 		pCommonLevelMesh->pTextureInfo = this->aCommonLevelTextures + textureIndex;
-		ed3DInstallG3D(pCommonLevelMesh->pFileData, pCommonLevelMesh->fileLength, 0, &iStack4, &pCommonLevelMesh->pTextureInfo->manager, 0xc,
-			&pCommonLevelMesh->meshInfo);
+		ed3DInstallG3D(pCommonLevelMesh->pFileData, pCommonLevelMesh->fileLength, 0, &iStack4, &pCommonLevelMesh->pTextureInfo->manager, 0xc, &pCommonLevelMesh->meshInfo);
 	}
 	return &pCommonLevelMesh->meshInfo;
 }

@@ -14,6 +14,7 @@
 
 #define STATE_HERO_NONE -1
 
+#define STATE_HERO_SHOP 0x72
 #define STATE_HERO_STAND 0x73
 #define STATE_HERO_RUN 0x76
 #define STATE_HERO_JUMP_1_1_STAND 0x78
@@ -123,6 +124,14 @@ class CActorBoomy;
 class CCamera;
 class CActorNativ;
 
+struct _msg_enter_shop
+{
+	int field_0x0;
+	int field_0x4;
+	int field_0x8;
+	int field_0xc;
+};
+
 struct AnimResultHero : public StateConfig {
 	AnimResultHero(int inA, uint inB, uint inC)
 		: StateConfig(inA, inB)
@@ -209,6 +218,7 @@ public:
 	int field_0xaa4;
 
 	int field_0x1610;
+	int field_0x1614;
 	int field_0x18dc;
 
 	int field_0xcc0;

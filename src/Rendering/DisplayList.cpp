@@ -14,7 +14,7 @@
 #include "../Actor.h"
 #include "../PoolAllocators.h"
 
-CGlobalDList* g_GameDisplayListPtr_0044971c = NULL;
+CGlobalDList* pGameDList = NULL;
 CGlobalDList* pFrontend2DDList = NULL;
 CGlobalDList* pGuiDList = NULL;
 
@@ -166,22 +166,19 @@ void GlobalDList_Init(void)
 	edDebugPrintf("----- Memory used by display list -------\n");
 	edDebugPrintf(g_NewLine);
 	freeMemCalcA = edMemGetAvailable(TO_HEAP(H_MAIN));
-	pDVar2 = new CGlobalDList(0x200, 0x1000, 0, 0x11, CScene::_scene_handleA);
-	g_GameDisplayListPtr_0044971c = pDVar2;
+	pGameDList = new CGlobalDList(0x200, 0x1000, 0, 0x11, CScene::_scene_handleA);
 	iVar5 = edMemGetAvailable(TO_HEAP(H_MAIN));
 
 	/* - Game list          : %07d\n */
 	edDebugPrintf("- Game list          : %07d\n", freeMemCalcA - iVar5);
 	iVar4 = edMemGetAvailable(TO_HEAP(H_MAIN));
-	pDVar2 = new CGlobalDList(0x20, 0x80, 0, 0x11, CFrontend::_scene_handle);
-	pFrontend2DDList = pDVar2;
+	pFrontend2DDList = new CGlobalDList(0x20, 0x80, 0, 0x11, CFrontend::_scene_handle);
 	iVar5 = edMemGetAvailable(TO_HEAP(H_MAIN));
 
 	/* - Frontend 3D list   : %07d\n */
 	edDebugPrintf("- Frontend 3D list   : %07d\n", iVar4 - iVar5);
 	iVar4 = edMemGetAvailable(TO_HEAP(H_MAIN));
-	pDVar2 = new CGlobalDList(0x180, 0xe74, 0, 0x12, pSVar1);
-	pGuiDList = pDVar2;
+	pGuiDList = new CGlobalDList(0x180, 0xe74, 0, 0x12, pSVar1);
 	iVar5 = edMemGetAvailable(TO_HEAP(H_MAIN));
 	/* - Gui list           : %07d\n */
 	edDebugPrintf("- Gui list           : %07d\n", iVar4 - iVar5);
@@ -202,7 +199,7 @@ void GlobalDList_Init(void)
 	edDebugPrintf("--- total used : \t%d (%s Mo) ----\n", freeMemCalcA - iVar4, pcVar7);
 	edDebugPrintf(sz_DisplayListSpacer_00433970);
 	edDebugPrintf(g_NewLine);
-	g_GameDisplayListPtr_0044971c->Init();
+	pGameDList->Init();
 	pFrontend2DDList->Init();
 	if (pGuiDList != (CGlobalDList*)0x0) {
 		pGuiDList->Init();
@@ -226,8 +223,8 @@ bool GuiDList_BeginCurrent(void)
 
 void GlobalDList_AddToView(void)
 {
-	if (g_GameDisplayListPtr_0044971c->bEnabled != 0) {
-		edDlistAddtoView(g_GameDisplayListPtr_0044971c->pDisplayListInternal);
+	if (pGameDList->bEnabled != 0) {
+		edDlistAddtoView(pGameDList->pDisplayListInternal);
 	}
 	if (pFrontend2DDList->bEnabled != 0) {
 		edDlistAddtoView(pFrontend2DDList->pDisplayListInternal);
@@ -256,6 +253,28 @@ void FrontendDList_EndCurrent(void)
 {
 	if (pFrontend2DDList->bEnabled != 0) {
 		pFrontend2DDList->field_0x18 = 0;
+	}
+	return;
+}
+
+bool GameDList_BeginCurrent(void)
+{
+	bool bVar1;
+	CGlobalDList* pCVar2;
+
+	pCVar2 = pGameDList;
+	bVar1 = pGameDList->bEnabled != 0;
+	if (bVar1) {
+		pGameDList->field_0x18 = 1;
+		edDListSetCurrent(pCVar2->pDisplayListInternal);
+	}
+	return bVar1;
+}
+
+void GameDList_EndCurrent(void)
+{
+	if (pGameDList->bEnabled != 0) {
+		pGameDList->field_0x18 = 0;
 	}
 	return;
 }

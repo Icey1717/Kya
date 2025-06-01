@@ -17,7 +17,7 @@ namespace Debug {
 	namespace Hero {
 		Debug::Setting<std::string> gLastCheckpoint("Last Chekpoint", "");
 
-		constexpr int nbCheckpointMaxActors = 0x300;
+		constexpr int nbCheckpointMaxActors = 0x600;
 
 		void ShowCheckpointMenu()
 		{
@@ -27,10 +27,11 @@ namespace Debug {
 				struct Checkpoint {
 					struct Actor {
 						bool bActive;
-						char name[nbCheckpointMaxActors];
+						char name[64];
 						edF32VECTOR4 location;
 					} actors[nbCheckpointMaxActors]{};
 
+					int version = 1;
 					int sectorId;
 				};
 

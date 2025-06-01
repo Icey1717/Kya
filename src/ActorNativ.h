@@ -33,6 +33,7 @@ struct S_STREAM_EVENT_CAMERA;
 class edCTextStyle;
 
 class CActorNativ;
+class CActorNativShop;
 
 class CBehaviourNativ : public CBehaviour
 {
@@ -122,7 +123,7 @@ public:
 
 	float field_0x8;
 	CAddOnNativ addOn;
-	CActor* field_0x24;
+	CActorNativShop* pNativShop;
 	int field_0x28;
 };
 

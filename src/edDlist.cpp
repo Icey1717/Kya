@@ -1690,11 +1690,11 @@ void edDListVertex4f_3D_DEFAULT(float x, float y, float z, float fSkip)
 {
 	short* puVar1;
 	_rgba* p_Var1;
-	float uSkip;
+	float skip;
 
-	uSkip = fSkip;
+	skip = fSkip;
 	if (fSkip == 49152.0f) { // AKA 0xc000
-		*reinterpret_cast<uint*>(&uSkip) = 0xc000; // Convert to float representation.
+		*reinterpret_cast<uint*>(&skip) = 0xc000; // Convert to float representation.
 	}
 
 	gNbAddedVertex = gNbAddedVertex + 1;
@@ -1702,7 +1702,7 @@ void edDListVertex4f_3D_DEFAULT(float x, float y, float z, float fSkip)
 	gCurVertexBuf->x = x;
 	gCurVertexBuf->y = y;
 	gCurVertexBuf->z = z;
-	gCurVertexBuf->fSkip = uSkip;
+	gCurVertexBuf->fSkip = skip;
 
 	gCurVertexBuf[1].uSkip = 0xc000;
 
@@ -1754,7 +1754,57 @@ void edDListVertex4f_3D_SpriteQUICK(float x, float y, float z, float fSkip)
 
 void edDListVertex4f_3D_QUAD(float x, float y, float z, float fSkip)
 {
-	IMPLEMENTATION_GUARD();
+	undefined4* puVar1;
+	_rgba* p_Var2;
+	uint uVar3;
+	float skip;
+
+	uVar3 = gNbAddedVertex & 3;
+	if ((gNbAddedVertex < 0) && (uVar3 != 0)) {
+		uVar3 = uVar3 - 4;
+	}
+
+	if ((uVar3 < 2) || (skip = fSkip, fSkip == 49152.0)) { // AKA 0xc000
+		*reinterpret_cast<uint*>(&skip) = 0xc000; // Convert to float representation.
+	}
+
+	gNbAddedVertex = gNbAddedVertex + 1;
+
+	gCurVertexBuf->x = x;
+	gCurVertexBuf->y = y;
+	gCurVertexBuf->z = z;
+	gCurVertexBuf->fSkip = skip;
+
+	gCurVertexBuf[1].uSkip = 0xc000;
+
+	gCurColorBuf->r = gCurColor_SPR->r;
+	gCurColorBuf->g = gCurColor_SPR->g;
+	gCurColorBuf->b = gCurColor_SPR->b;
+	gCurColorBuf->a = gCurColor_SPR->a;
+	p_Var2 = gCurColorBuf + 1;
+
+	gCurSTBuf[0] = (short)(int)gCurST_SPR[0];
+	gCurSTBuf[1] = (short)(int)gCurST_SPR[1];
+
+	puVar1 = (undefined4*)(gCurSTBuf + 2);
+	if (gNbDMAVertex == 0x47) {
+		*p_Var2 = gCurColorBuf[-1];
+		gCurColorBuf[2] = *gCurColorBuf;
+		p_Var2 = gCurColorBuf + 3;
+		*puVar1 = *(undefined4*)(gCurSTBuf + -2);
+		*(undefined4*)(gCurSTBuf + 4) = *(undefined4*)gCurSTBuf;
+		gNbDMAVertex = 2;
+		puVar1 = (undefined4*)(gCurSTBuf + 6);
+	}
+	else {
+		gNbDMAVertex = gNbDMAVertex + 1;
+	}
+
+	gCurVertexBuf = gCurVertexBuf + 1;
+	gCurColorBuf = p_Var2;
+	gCurSTBuf = (short*)puVar1;
+
+	return;
 }
 
 void edDListVertex4f_3D_LINE_LOOP(float x, float y, float z, float fSkip)

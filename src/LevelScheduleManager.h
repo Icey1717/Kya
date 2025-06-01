@@ -12,7 +12,7 @@
 
 #define IMPLEMENTATION_GUARD_OBJECTIVE(x)
 
-class CActorNativ;
+class CActorNativShop;
 
 struct SaveDataSection_44484c42 {
 	int field_0x0;
@@ -191,11 +191,39 @@ static_assert(sizeof(S_LVLNFO_LANGUAGE_V7_V9) == 0x1c);
 
 class CActor;
 
+struct EpStruct_8
+{
+	int field_0x0;
+	int field_0x4;
+};
+
+struct EpStruct_80
+{
+	EpStruct_8 aSubObj[0x10];
+};
+
+struct Episode
+{
+	int minWolfen;
+	int scenery;
+	int monster;
+	int bet;
+	int field_0x10;
+	int total_0x14;
+};
+
 struct GameInfo 
 {
+	int nbEpisodes;
 	float health;
 	int nbMagic;
 	int nbMoney;
+	int scenery;
+	int monster;
+	int bet;
+	int bank;
+	int shop;
+	EpStruct_80 aEpisodes[2];
 };
 
 struct NativShopLevelSubObjSubObj
@@ -216,7 +244,7 @@ struct NativShopLevelSubObj
 
 	NativShopLevelSubObjSubObj aSubObjs[5];
 	
-	void FUN_002d8d10(CActorNativ* pNativ);
+	void FUN_002d8d10(CActorNativShop* pNativ);
 };
 
 class CLevelScheduler : public CObjectManager
@@ -255,6 +283,7 @@ public:
 	void LevelsInfo_ReadTeleporters_V7_V9(S_LVLNFO_TELEPORTERS_V7_V9* pFileData, int count, S_LEVEL_INFO* pLevelInfo);
 	void LevelsInfo_ReadLanguageFileNames_V7_V9(S_LVLNFO_LANGUAGE_V7_V9* param_2, int nbObj, undefined4 param_4);
 	void Levels_LoadInfoBank();
+	void Episode_ComputeCurrent();
 	void Episode_LoadFromIniFile();
 
 	void SaveGame_SaveCurLevelState(int param_2);
@@ -280,8 +309,12 @@ public:
 	void ExitLevel(int param_2);
 	void FUN_002dc200(int elevatorId, int levelId, int param_4);
 
-	bool AddMoneyA(int amount);
-	bool AddMoneyB(int amount);
+	bool Money_GiveToShop(int amount);
+	bool Money_GiveToBet(int amount);
+	bool Money_TakeFromBet(int amount);
+	bool Money_TakeFromBank(int amount);
+	bool Money_TakeFromMonster(int amount);
+	bool Money_TakeFromScenery(int amount);
 
 public:
 

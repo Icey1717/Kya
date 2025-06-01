@@ -45,6 +45,7 @@ struct C3DFileManager : public CObjectManager {
 	void SetupBackground(edNODE* pNode);
 	void ManageBackground(edNODE* pNode, uint flags);
 
+	ed_g3d_manager* GetCommonLevelMeshInfo(int index);
 	ed_g3d_manager* GetG3DManager(int meshIndex, int textureIndex);
 
 	ParticleInfo* GetG2DInfo(int index);

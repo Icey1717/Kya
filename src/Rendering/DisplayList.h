@@ -156,6 +156,9 @@ void GuiDList_EndCurrent(void);
 bool Frontend2DDList_BeginCurrent(void);
 void FrontendDList_EndCurrent(void);
 
+bool GameDList_BeginCurrent(void);
+void GameDList_EndCurrent(void);
+
 int GameDListPatch_Register(CObject* pObject, int param_2, int param_3);
 
 

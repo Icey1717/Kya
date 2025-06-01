@@ -4904,7 +4904,7 @@ void CActorHeroPrivate::ClearLocalData()
 	//*(undefined4*)&this->field_0x100c = 0;
 	this->field_0x1a54 = 0;
 	this->field_0x1610 = 0;
-	//*(undefined4*)&this->field_0x1614 = 0;
+	this->field_0x1614 = 0;
 	pTVar5 = Timer::GetTimer();
 	this->field_0x155c = pTVar5->scaledTotalTime;
 	this->field_0x1560 = 0;
@@ -4981,7 +4981,7 @@ void CActorHeroPrivate::ClearLocalData()
 		iVar4->cameraStack.Reset();
 	}
 
-	//*(undefined4*)&this->field_0xf14 = 0;
+	this->field_0xf14 = (CActor*)0x0;
 	this->pBounceOnActor = 0;
 	this->pSoccerActor = 0;
 	this->pTrappedByActor = (CActor*)0x0;
@@ -5362,6 +5362,7 @@ LAB_00341590:
 	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
 	case STATE_HERO_WIND_FLY:
+	case STATE_HERO_SHOP:
 		break;
 	case STATE_HERO_STAND:
 		StateHeroStandInit(1);
@@ -5543,6 +5544,24 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 	case STATE_HERO_ROLL_FALL:
 	case STATE_HERO_JUMP_TO_CROUCH:
 		// Nothing
+		break;
+	case STATE_HERO_SHOP:
+		pCVar7 = this->pPlayerInput;
+		if ((pCVar7 != (CPlayerInput*)0x0) && (this->field_0x18dc == 0)) {
+			pCVar7->pressedBitfield = pCVar7->pressedBitfield & 0xfffff80f;
+		}
+
+		this->flags = this->flags | 0x80;
+		this->flags = this->flags & 0xffffffdf;
+		EvaluateDisplayState();
+		this->flags = this->flags | 0x800;
+		pCVar1 = this->pCollisionData;
+		pCVar1->flags_0x0 = pCVar1->flags_0x0 | 2;
+		local_4 = 1;
+		DoMessage(this->field_0xf14, (ACTOR_MESSAGE)0x14, (void*)1);
+		this->field_0xf14 = (CActor*)0x0;
+		this->field_0x1610 = 0;
+		this->field_0x1614 = 0;
 		break;
 	case STATE_HERO_RUN:
 		StateHeroRunTerm();
@@ -5853,6 +5872,28 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	}
 
 	switch (this->actorState) {
+	case STATE_HERO_SHOP:
+		this->dynamic.speed = 0.0f;
+		this->dynamicExt.normalizedTranslation.x = 0.0f;
+		this->dynamicExt.normalizedTranslation.y = 0.0f;
+		this->dynamicExt.normalizedTranslation.z = 0.0f;
+		this->dynamicExt.normalizedTranslation.w = 0.0f;
+		this->dynamicExt.field_0x6c = 0.0f;
+		ManageDyn(4.0f, 0, (CActorsTable*)0x0);
+		if (this->field_0x1614 != 0) {
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				uVar9 = 0;
+			}
+			else {
+				uVar9 = pCVar1->pressedBitfield & 0x80;
+			}
+
+			if (uVar9 != 0) {
+				SetState(STATE_HERO_STAND, -1);
+			}
+		}
+		break;
 	case STATE_HERO_STAND:
 		StateHeroStand(1);
 		break;
@@ -16657,7 +16698,7 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						pHeroRef->flags = pHeroRef->flags | 0x20;
 						CActor::EvaluateDisplayState((CActor*)pHeroRef);
 						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							(this->pHero, 0x72, 0xffffffff);
+							(this->pHero, STATE_HERO_SHOP, 0xffffffff);
 						pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
 						pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 & 0xfff7efff;
 						pHeroRef = this->pHero;
@@ -16720,35 +16761,35 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 					if (msg == 0x24) {
 						IMPLEMENTATION_GUARD(
 						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							(this->pHero, STATE_HERO_STAND, 0xffffffff);
+							(this->pHero, STATE_HERO_STAND, -1);
 						return 1;)
 					}
 
-					if (msg == 0x23) {
-						IMPLEMENTATION_GUARD(
-						/* WARNING: Load size is inaccurate */
-						if (*pMsgParam != 0) {
+					if (msg == MESSAGE_ENTER_SHOP) {
+						_msg_enter_shop* pMsgEnterShop = reinterpret_cast<_msg_enter_shop*>(pMsgParam);
+						if (pMsgEnterShop->field_0x0 != 0) {
 							pHeroRef = this->pHero;
-							pHeroRef->flags =
-								pHeroRef->flags & 0xffffff7f;
-							pHeroRef->flags =
-								pHeroRef->flags | 0x20;
-							CActor::EvaluateDisplayState((CActor*)pHeroRef);
+							pHeroRef->flags = pHeroRef->flags & 0xffffff7f;
+							pHeroRef->flags = pHeroRef->flags | 0x20;
+							pHeroRef->EvaluateDisplayState();
 						}
-						*(undefined4*)&(this->pHero->base).field_0x1614 = *(undefined4*)((int)pMsgParam + 4);
-						*(CActor**)&(this->pHero->base).field_0xf14 = pSender;
-						if (*(int*)((int)pMsgParam + 8) == 0) {
-							pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
+						this->pHero->field_0x1614 = pMsgEnterShop->field_0x4;
+						this->pHero->field_0xf14 = pSender;
+
+						if (pMsgEnterShop->field_0x8 == 0) {
+							pCollisionRef = this->pHero->pCollisionData;
 							pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 & 0xfffffffd;
 						}
 						else {
-							pCollisionRef = (this->pHero->base).character.characterBase.base.base.pCollisionData;
+							pCollisionRef = this->pHero->pCollisionData;
 							pCollisionRef->flags_0x0 = pCollisionRef->flags_0x0 | 2;
 						}
-						(this->pHero->base).field_0x1610 = *(int*)((int)pMsgParam + 0xc);
-						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							(this->pHero, 0x72, 0xffffffff);
-						return 1;)
+
+						this->pHero->field_0x1610 = pMsgEnterShop->field_0xc;
+
+						this->pHero->SetState(STATE_HERO_SHOP, -1);
+
+						return 1;
 					}
 				}
 
