@@ -4,11 +4,6 @@ float int12_to_float(int x) {
 	return float(x) * 0.000244140625;
 }
 
-layout(set = 0, binding = 0) uniform UniformBufferObject {
-	mat4 view;
-	mat4 proj;
-} ubo;
-
 layout(set = 0, binding = 2) uniform ModelBuffer {
 	mat4 modelMatrix;
 } model;
@@ -18,12 +13,13 @@ layout(set = 0, binding = 3) uniform AnimBuffer {
 } anim;
 
 //push constants block
-layout( push_constant ) uniform LightingData
+layout( push_constant ) uniform PerDrawData
 {
+	mat4 projXView;
 	mat4 lightDirection;
 	mat4 lightColor;
 	vec4 lightAmbient;
-} lightingData;
+} perDrawData;
 
 layout(location = 0) in ivec2 inST;
 layout(location = 1) in vec2 inQ;
@@ -56,16 +52,16 @@ void main() {
 
 		vec4 normal = currentAnimMatrix * inNormal;
 
-		normal = (lightingData.lightDirection[2] * normal.z) + (lightingData.lightDirection[1] * normal.y) + (lightingData.lightDirection[0] * normal.x);
+		normal = (perDrawData.lightDirection[2] * normal.z) + (perDrawData.lightDirection[1] * normal.y) + (perDrawData.lightDirection[0] * normal.x);
 
 		normal.x = max(normal.x, 0.0);
 		normal.y = max(normal.y, 0.0);
 		normal.z = max(normal.z, 0.0);
 		normal.w = max(normal.w, 0.0);
 
-		vec4 lightAmbientAdjusted = vec4(lightingData.lightAmbient.x, lightingData.lightAmbient.y, lightingData.lightAmbient.z, 0.0f);
+		vec4 lightAmbientAdjusted = vec4(perDrawData.lightAmbient.x, perDrawData.lightAmbient.y, perDrawData.lightAmbient.z, 0.0f);
 
-		normal = (lightAmbientAdjusted + vec4(0.0, 0.0, 0.0, 1.0)) + (lightingData.lightColor[3] * normal.w) + (lightingData.lightColor[2] * normal.z) + (lightingData.lightColor[1] * normal.y) + (lightingData.lightColor[0] * normal.x);
+		normal = (lightAmbientAdjusted + vec4(0.0, 0.0, 0.0, 1.0)) + (perDrawData.lightColor[3] * normal.w) + (perDrawData.lightColor[2] * normal.z) + (perDrawData.lightColor[1] * normal.y) + (perDrawData.lightColor[0] * normal.x);
 
 		normal.x = min(normal.x, 255.0);
 		normal.y = min(normal.y, 255.0);
@@ -73,7 +69,7 @@ void main() {
 		normal.w = min(normal.w, 255.0);
 
 		vec4 color = vec4(inColor.x, inColor.y, inColor.z, inColor.w);
-		color = color * lightingData.lightAmbient.w;
+		color = color * perDrawData.lightAmbient.w;
 		
 		color = color * normal;
 
@@ -89,7 +85,7 @@ void main() {
 		fragColor.w = inColor.w / 255.0;
 	}
 
-	vec4 pos = ubo.proj * ubo.view * model.modelMatrix * fixedPos;
+	vec4 pos = perDrawData.projXView * model.modelMatrix * fixedPos;
 
 	// Do this in the projection matrix
 	//pos.y = -pos.y;

@@ -38,22 +38,11 @@ namespace Renderer
 
 		static bool bForceAnimMatrixIdentity = false;
 
-		struct LightingData {
+		struct PerDrawData {
+			glm::mat4 projXView;
 			glm::mat4 lightDirection;
 			glm::mat4 lightColor;
 			glm::vec4 lightAmbient;
-		};
-
-		struct VertexConstantBuffer {
-
-			void Reset()
-			{
-				view = glm::mat4(1.0f);
-				proj = glm::mat4(1.0f);
-			}
-
-			glm::mat4 view;
-			glm::mat4 proj;
 		};
 
 		struct FadeConstantBuffer {
@@ -76,7 +65,6 @@ namespace Renderer
 		static VkCommandPool gCommandPool;
 		static CommandBufferVector gCommandBuffers;
 
-		static UniformBuffer<VertexConstantBuffer> gVertexConstantBuffer;
 		static DynamicUniformBuffer<glm::mat4> gModelBuffer;
 
 		static UniformBuffer<FadeConstantBuffer> gFadeBuffer;
@@ -98,6 +86,7 @@ namespace Renderer
 
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
 		static NativeVertexBuffer gNativeVertexBuffer;
+
 		// As each draw comes in this buffer is filled.
 		static NativeVertexBufferData gNativeVertexBufferDataDraw;
 
@@ -120,7 +109,7 @@ namespace Renderer
 				int vertexStart = 0;
 				int animationMatrixStart = 0;
 
-				LightingData lightingData;
+				PerDrawData perDrawData;
 
 				int modelMatrixIndex = 0;
 			};
@@ -134,7 +123,7 @@ namespace Renderer
 		static glm::mat4 gCachedViewMatrix;
 		static glm::mat4 gCachedProjMatrix;
 
-		static LightingData gCachedLightingData;
+		static PerDrawData gCachedPerDrawData;
 
 		double GetRenderTime()
 		{
@@ -291,12 +280,9 @@ namespace Renderer
 		};
 
 		// Updates GPU side memory (Static Uniform Buffers | Per Frame Data)
-		static void MapStaticUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
+		static void MapStaticUniformBuffer()
 		{
-			gVertexConstantBuffer.GetBufferData().view = viewMatrix;
-			gVertexConstantBuffer.GetBufferData().proj = projMatrix;
 
-			gVertexConstantBuffer.Map(GetCurrentFrame());
 		}
 
 		// Updates GPU side memory (Dynamic Uniform Buffers | Per Instance Data)
@@ -338,8 +324,10 @@ namespace Renderer
 						if (instance.indexCount == 0) {
 							continue;
 						}
+						
+						instance.perDrawData.projXView = drawCommand.projMatrix * drawCommand.viewMatrix;
 
-						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(LightingData), &instance.lightingData);
+						vkCmdPushConstants(cmd, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PerDrawData), &instance.perDrawData);
 
 						if (!primState.has_value() || primState.value() != instance.pMesh->GetPrim().CMD) {
 							primState = instance.pMesh->GetPrim().CMD;
@@ -376,10 +364,9 @@ namespace Renderer
 			vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
 			const VkDeviceSize maxUboSize = properties.limits.maxUniformBufferRange;
 
-			assert(maxUboSize >= sizeof(VertexConstantBuffer));
 			assert(maxUboSize >= (sizeof(glm::mat4) * gMaxModelMatrices));
 
-			assert(properties.limits.maxPushConstantsSize >= sizeof(LightingData));
+			assert(properties.limits.maxPushConstantsSize >= sizeof(PerDrawData));
 
 			return maxUboSize;
 		}
@@ -460,7 +447,7 @@ namespace Renderer
 		// Copy all our data to the GPU.
 		static void MapBuffers()
 		{
-			MapStaticUniformBuffer(gFinalViewMatrix, gFinalProjMatrix);
+			MapStaticUniformBuffer();
 			MapDynamicUniformBuffers();
 
 			gNativeVertexBuffer.MapData();
@@ -787,7 +774,6 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 	imageInfo.sampler = sampler;
 
 	for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		const VkDescriptorBufferInfo vertexDescBufferInfo = gVertexConstantBuffer.GetDescBufferInfo(i);
 		const VkDescriptorBufferInfo modelDescBufferInfo = gModelBuffer.GetDescBufferInfo(i);
 		const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(i, 27 * sizeof(glm::mat4));
 
@@ -796,7 +782,6 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 		NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 
 		DescriptorWriteList writeList;
-		writeList.EmplaceWrite({ 0, EBindingStage::Vertex, &vertexDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER });
 		writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 		writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 
@@ -934,6 +919,8 @@ Renderer::FrameBufferBase& Renderer::Native::GetFrameBuffer()
 
 void Renderer::Native::Setup()
 {
+	const VkDeviceSize maxUboSize = CheckBufferSizes();
+
 	CreateRenderPass(gRenderPass, "Native Render Pass");
 	CreateFramebuffer();
 	CreateFramebufferSampler();
@@ -941,10 +928,8 @@ void Renderer::Native::Setup()
 	CreateCommandBuffers(gCommandPool, gCommandBuffers, "Native Renderer Command Buffer");
 	CreatePipeline();
 
-	const VkDeviceSize maxUboSize = CheckBufferSizes();
 	gMaxAnimationMatrices = static_cast<int>(maxUboSize / sizeof(glm::mat4));
 
-	gVertexConstantBuffer.Init();
 	gNativeVertexBuffer.Init(0x100000, 0x100000);
 
 	gModelBuffer.Init(gMaxModelMatrices);
@@ -955,8 +940,6 @@ void Renderer::Native::Setup()
 	gAlphaBuffer.Init(gMaxModelMatrices);
 
 	GetRenderDelegate() += Render;
-
-	gVertexConstantBuffer.GetBufferData().Reset();
 
 	gRenderThread = std::make_unique<RenderThread>();
 
@@ -1081,7 +1064,7 @@ void Renderer::Native::AddMesh(SimpleMesh* pMesh)
 		instance.animationMatrixStart = gAnimationMatrices.size();
 		instance.modelMatrix = gCachedModelMatrix;
 		instance.pMesh = pMesh;
-		instance.lightingData = gCachedLightingData;
+		instance.perDrawData = gCachedPerDrawData;
 
 		NATIVE_LOG(LogLevel::Info, "AddMesh: instance anim start: {}", instance.animationMatrixStart);
 	}
@@ -1130,9 +1113,9 @@ void Renderer::Native::PushMatrixPacket(const MatrixPacket* const pPkt)
 
 	assert(pPkt);
 
-	gCachedLightingData.lightDirection = glm::make_mat4(pPkt->objLightDirectionsMatrix);
-	gCachedLightingData.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
-	gCachedLightingData.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
+	gCachedPerDrawData.lightDirection = glm::make_mat4(pPkt->objLightDirectionsMatrix);
+	gCachedPerDrawData.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
+	gCachedPerDrawData.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
 
 	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[0], pPkt->objLightDirectionsMatrix[1], pPkt->objLightDirectionsMatrix[2]);
 	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[4], pPkt->objLightDirectionsMatrix[5], pPkt->objLightDirectionsMatrix[6]);

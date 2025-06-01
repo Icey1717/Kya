@@ -479,36 +479,36 @@ void CBehaviourNativShopSell::Draw()
 
 	bVar3 = Frontend2DDList_BeginCurrent();
 	if (bVar3 != false) {
-		//Display_BottomBackGround();
+		Display_BottomBackGround();
 
-		//if (this->aSubObjs[this->field_0x94].field_0x14 == 0) {
-		//	pCVar9 = (CActor*)0x0;
-		//}
-		//
-		//this->objData.Display_Object(pCVar9);
-		//
-		//if ((this->objData).pNode != (edNODE*)0x0) {
-		//	local_8.x = (this->field_0xa4 + FLOAT_00435c40) * 2.0f + -1.0f;
-		//	local_8.y = FLOAT_00435c44 * 2.0f + -1.0f;
-		//
-		//	(this->objData).pHierarchy = (ed_3d_hierarchy*)((this->objData).pNode)->pData;
-		//	(((this->objData).pHierarchy)->transformA).aa = (((this->objData).pActor)->scale).x;
-		//	(((this->objData).pHierarchy)->transformA).bb = (((this->objData).pActor)->scale).y;
-		//	(((this->objData).pHierarchy)->transformA).cc = (((this->objData).pActor)->scale).z;
-		//
-		//	pCVar9 = (this->objData).pActor;
-		//	if (pCVar9->pAnimationController != (CAnimation*)0x0) {
-		//		((this->objData).pHierarchy)->pAnimMatrix = (pCVar9->p3DHierNode->base).pAnimMatrix;
-		//	}
-		//
-		//	bVar3 = ed3DComputeScreenCoordinate(FLOAT_00435c48, &local_100, &local_8, CFrontend::_scene_handle);
-		//	if (bVar3 != false) {
-		//		peVar2 = (this->objData).pHierarchy;
-		//		(peVar2->transformA).rowT = local_100;
-		//	}
-		//
-		//	((this->objData).pHierarchy)->pHierarchySetup->pLightData = &gShopLightConfig;
-		//}
+		if (this->aSubObjs[this->field_0x94].field_0x14 == 0) {
+			pCVar9 = (CActor*)0x0;
+		}
+		
+		this->objData.Display_Object(pCVar9);
+		
+		if ((this->objData).pNode != (edNODE*)0x0) {
+			local_8.x = (this->field_0xa4 + FLOAT_00435c40) * 2.0f + -1.0f;
+			local_8.y = FLOAT_00435c44 * 2.0f + -1.0f;
+		
+			(this->objData).pHierarchy = (ed_3d_hierarchy*)((this->objData).pNode)->pData;
+			(((this->objData).pHierarchy)->transformA).aa = (((this->objData).pActor)->scale).x;
+			(((this->objData).pHierarchy)->transformA).bb = (((this->objData).pActor)->scale).y;
+			(((this->objData).pHierarchy)->transformA).cc = (((this->objData).pActor)->scale).z;
+		
+			pCVar9 = (this->objData).pActor;
+			if (pCVar9->pAnimationController != (CAnimation*)0x0) {
+				((this->objData).pHierarchy)->pAnimMatrix = (pCVar9->p3DHierNode->base).pAnimMatrix;
+			}
+		
+			bVar3 = ed3DComputeScreenCoordinate(FLOAT_00435c48, &local_100, &local_8, CFrontend::_scene_handle);
+			if (bVar3 != false) {
+				peVar2 = (this->objData).pHierarchy;
+				(peVar2->transformA).rowT = local_100;
+			}
+		
+			((this->objData).pHierarchy)->pHierarchySetup->pLightData = &gShopLightConfig;
+		}
 
 		FrontendDList_EndCurrent();
 	}
