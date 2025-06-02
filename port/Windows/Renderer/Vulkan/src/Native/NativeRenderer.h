@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 
 #include "Pipeline.h"
 #include "FrameBuffer.h"
@@ -46,7 +47,6 @@ namespace Renderer
 
 		using PipelineMap = std::unordered_map<size_t, Renderer::Pipeline>;
 
-		void CreateRenderPass(VkRenderPass& renderPass, const char* name);
 		void CreatePipeline(const PipelineCreateInfo<PipelineKey>& createInfo, const VkRenderPass& renderPass, Renderer::Pipeline& pipeline, const char* name);
 
 		// Initializes and updates descriptor sets for the native pipeline.

@@ -285,6 +285,15 @@ namespace Renderer
 		void OnVideoFlip();
 
 		void DrawFade(uint8_t r, uint8_t g, uint8_t b, int a);
+
+		enum class EClearMode
+		{
+			None,
+			Depth,
+			ColorDepth,
+		};
+
+		void UpdateRenderPassKey(EClearMode clearMode);
 	}
 
 	using InUseTextureList = std::vector<SimpleTexture*>;

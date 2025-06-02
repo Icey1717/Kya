@@ -19,6 +19,7 @@
 #include "ScopedTimer.h"
 #include "PostProcessing.h"
 #include "NativeDisplayList.h"
+#include <functional> // For std::hash
 
 #define DEBUG_TEXTURE_NAME "BACKGROUND.g2d"
 #define DEBUG_TEXTURE_MATERIAL_INDEX 5
@@ -38,14 +39,63 @@ namespace Renderer
 
 		static bool bForceAnimMatrixIdentity = false;
 
-		struct PerDrawData {
+		struct RenderPassKey
+		{
+			static RenderPassKey Empty;
+
+			uint32_t GetKey() const
+			{
+				union
+				{
+					uint32_t key = 0;
+
+					struct
+					{
+						uint32_t clearMode : 2; // 0: Color, 1: Depth, 2: Color + Depth
+					};
+				} key;
+
+				key.clearMode = static_cast<uint32_t>(clearMode);
+
+				return key.key;
+			}
+
+			bool operator==(const RenderPassKey& other) const {
+				return GetKey() == other.GetKey();
+			}
+
+			bool operator!=(const RenderPassKey& other) const {
+				return !(*this == other);
+			}
+
+			void Reset()
+			{
+				clearMode = EClearMode::None;
+			}
+
+			EClearMode clearMode = EClearMode::None;
+		};
+
+		// Specialize std::hash for RenderPassKey
+		template <>
+		struct std::hash<RenderPassKey>
+		{
+			std::size_t operator()(const RenderPassKey& k) const noexcept
+			{
+				return std::hash<uint32_t>{}(k.GetKey());
+			}
+		};
+
+		struct PerDrawData
+		{
 			glm::mat4 projXView;
 			glm::mat4 lightDirection;
 			glm::mat4 lightColor;
 			glm::vec4 lightAmbient;
 		};
 
-		struct FadeConstantBuffer {
+		struct FadeConstantBuffer
+		{
 			glm::vec4 fadeColor;
 		};
 
@@ -56,21 +106,50 @@ namespace Renderer
 
 		static int gMaxAnimationMatrices = 0;
 
-		static PipelineMap gPipelines;
-		static FrameBufferBase gFrameBuffer;
-
 		static VkSampler gFrameBufferSampler;
 
-		static VkRenderPass gRenderPass;
+		static FrameBufferBase gFrameBuffer;
+
+		struct RenderStage
+		{
+			VkRenderPass gRenderPass = VK_NULL_HANDLE;
+
+			PipelineMap gPipelines;
+
+			void CreatePipeline()
+			{
+				PipelineKey key;
+				key.options.bGlsl = true;
+				key.options.bWireframe = false;
+				key.options.topology = topologyTriangleList;
+				PipelineCreateInfo<PipelineKey> createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key };
+				Renderer::Native::CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
+			}
+
+			const Pipeline& GetPipeline() const
+			{
+				PipelineKey pipelineKey;
+				pipelineKey.options.bWireframe = false;
+				pipelineKey.options.bGlsl = true;
+				pipelineKey.options.topology = topologyTriangleList;
+
+				assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
+				return gPipelines.at(pipelineKey.key);
+			}
+		};
+
+		static std::unordered_map<RenderPassKey, RenderStage> gRenderPass;
 		static VkCommandPool gCommandPool;
 		static CommandBufferVector gCommandBuffers;
+		static CommandBufferVector gCommandBuffersDummy;
 
 		static DynamicUniformBuffer<glm::mat4> gModelBuffer;
 
 		static UniformBuffer<FadeConstantBuffer> gFadeBuffer;
 		static bool bFadeActive = false;
 
-		struct AlphaConstantBuffer {
+		struct AlphaConstantBuffer
+		{
 			alignas(4) VkBool32 enable; // Use VkBool32 for proper alignment
 			alignas(4) int atst;
 			alignas(4) int aref;
@@ -95,11 +174,18 @@ namespace Renderer
 
 		static std::vector<glm::mat4> gModelMatrices;
 
-		struct Draw {
+		RenderPassKey gCachedRenderPassKey;
+
+		RenderPassKey RenderPassKey::Empty = RenderPassKey{ EClearMode::ColorDepth };
+
+		struct Draw
+		{
 			SimpleTexture* pTexture = nullptr;
 
 			glm::mat4 projMatrix;
 			glm::mat4 viewMatrix;
+
+			RenderPassKey renderPassKey;
 
 			struct Instance {
 				SimpleMesh* pMesh = nullptr;
@@ -124,6 +210,11 @@ namespace Renderer
 		static glm::mat4 gCachedProjMatrix;
 
 		static PerDrawData gCachedPerDrawData;
+
+		static void CreateFramebuffer()
+		{
+			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass[RenderPassKey::Empty].gRenderPass, true);
+		}
 
 		double GetRenderTime()
 		{
@@ -178,11 +269,6 @@ namespace Renderer
 			return true;
 		}
 
-		static void CreateFramebuffer()
-		{
-			gFrameBuffer.SetupBase({ gWidth, gHeight }, gRenderPass, true);
-		}
-
 		static void CreateFramebufferSampler()
 		{
 			VkSamplerCreateInfo samplerCreateInfo{};
@@ -209,30 +295,10 @@ namespace Renderer
 			}
 		}
 
-		static void CreatePipeline()
-		{
-			PipelineKey key;
-			key.options.bGlsl = true;
-			key.options.bWireframe = false;
-			key.options.topology = topologyTriangleList;
-			PipelineCreateInfo<PipelineKey> createInfo{ "shaders/native.vert.spv" , "shaders/native.frag.spv", "", key};
-			CreatePipeline(createInfo, gRenderPass, gPipelines[createInfo.key.key], "Native Previewer GLSL");
-		}
-
-		static Pipeline& GetPipeline() {
-			PipelineKey pipelineKey;
-			pipelineKey.options.bWireframe = false;
-			pipelineKey.options.bGlsl = true;
-			pipelineKey.options.topology = topologyTriangleList;
-
-			assert(gPipelines.find(pipelineKey.key) != gPipelines.end());
-			return gPipelines[pipelineKey.key];
-		}
-
 		class InstanceDataUpdate
 		{
 		public:
-			void UpdateInstanceData(Draw& draw, Pipeline& pipeline)
+			void UpdateInstanceData(Draw& draw)
 			{
 				SimpleTexture* pTexture = draw.pTexture;
 
@@ -302,17 +368,69 @@ namespace Renderer
 			gAnimationBuffer.Map(GetCurrentFrame());
 		}
 
+
+		static void RecordBeginRenderPass(const RenderPassKey& key)
+		{
+			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+
+			const RenderStage& stage = gRenderPass[key];
+
+			VkRenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = stage.gRenderPass;
+			renderPassInfo.framebuffer = gFrameBuffer.framebuffer;
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = { gWidth, gHeight };
+
+			std::array<VkClearValue, 2> clearColors;
+			clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
+			clearColors[1] = { {0.0f, 0.0f } };
+			renderPassInfo.clearValueCount = clearColors.size();
+			renderPassInfo.pClearValues = clearColors.data();
+
+			Renderer::Debug::BeginLabel(cmd, "Begin Pass 0x%x", key.GetKey());
+
+			vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+			const auto& pipeline = stage.GetPipeline();
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
+		}
+
+		static void RecordEndRenderPass()
+		{
+			const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+			vkCmdEndRenderPass(cmd);
+
+			Renderer::Debug::EndLabel(cmd);
+		}
+
 		class DrawCommandRecorder
 		{
 		public:
-			void RecordDrawCommand(Draw& drawCommand, Pipeline& pipeline)
+			void RecordDrawCommand(Draw& drawCommand)
 			{
+				if (!bInRenderPass || drawCommand.renderPassKey != currentRenderPassKey) {
+					if (bInRenderPass) {
+						const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+						Debug::Reset(cmd);
+						RecordEndRenderPass();
+					}
+
+					currentRenderPassKey = drawCommand.renderPassKey;
+
+					RecordBeginRenderPass(currentRenderPassKey);
+
+					bInRenderPass = true;
+				}
+
 				SimpleTexture* pTexture = drawCommand.pTexture;
 
 				if (pTexture && !drawCommand.instances.empty()) {
 					NATIVE_LOG_VERBOSE(LogLevel::Verbose, "RecordDrawCommand {}", pTexture->GetName());
 
 					const VkCommandBuffer& cmd = gCommandBuffers[GetCurrentFrame()];
+
+					const Pipeline& pipeline = gRenderPass[currentRenderPassKey].GetPipeline();
 
 					Debug::UpdateLabel(pTexture, cmd);
 
@@ -352,10 +470,14 @@ namespace Renderer
 			void Reset()
 			{
 				textureIndex = 0;
+				bInRenderPass = false;
+				currentRenderPassKey.Reset();
 			}
 
 		private:
 			int textureIndex = 0;
+			bool bInRenderPass = false;
+			RenderPassKey currentRenderPassKey;
 		};
 
 		VkDeviceSize CheckBufferSizes()
@@ -397,6 +519,7 @@ namespace Renderer
 		static void CreateDraw()
 		{
 			gCurrentDraw = Draw{};
+			gCurrentDraw->renderPassKey = gCachedRenderPassKey;
 		}
 
 		static void RecordBeginCommandBuffer()
@@ -411,21 +534,6 @@ namespace Renderer
 
 			Renderer::Debug::BeginLabel(cmd, "Native Render");
 
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = gRenderPass;
-			renderPassInfo.framebuffer = gFrameBuffer.framebuffer;
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = { gWidth, gHeight };
-
-			std::array<VkClearValue, 2> clearColors;
-			clearColors[0] = { {0.0f, 0.0f, 0.0f, 1.0f} };
-			clearColors[1] = { {0.0f, 0.0f } };
-			renderPassInfo.clearValueCount = clearColors.size();
-			renderPassInfo.pClearValues = clearColors.data();
-
-			vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
 			VkViewport viewport{};
 			viewport.x = 0.0f;
 			viewport.y = 0.0f;
@@ -437,9 +545,6 @@ namespace Renderer
 
 			const VkRect2D scissor = { {0, 0}, { gWidth, gHeight } };
 			vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-			auto& pipeline = GetPipeline();
-			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 
 			gNativeVertexBuffer.BindBuffers(cmd);
 		}
@@ -462,7 +567,7 @@ namespace Renderer
 
 			Debug::Reset(cmd);
 
-			vkCmdEndRenderPass(cmd);
+			RecordEndRenderPass();
 		}
 
 		class RenderThread
@@ -490,14 +595,19 @@ namespace Renderer
 						FillIndexData(instance);
 					}
 
-					drawInstanceDataUpdate.UpdateInstanceData(draw, GetPipeline());
+					drawInstanceDataUpdate.UpdateInstanceData(draw);
 				}
 			}
 
 			void RecordDrawCommands()
 			{
+				if (draws.size() == 0) {
+					RecordBeginRenderPass(RenderPassKey::Empty);
+					return;
+				}
+
 				for (auto& draw : draws) {
-					drawCommandRecorder.RecordDrawCommand(draw, GetPipeline());
+					drawCommandRecorder.RecordDrawCommand(draw);
 				}
 			}
 
@@ -666,6 +776,72 @@ namespace Renderer
 				PostProcessing::UpdateDescriptorSets(PostProcessing::Effect::Fade, i, writeList);
 			}
 		}
+
+		void CreateRenderStage(const RenderPassKey& key, const char* name)
+		{
+			RenderStage& stage = gRenderPass[key];
+
+			VkAttachmentDescription colorAttachment{};
+			colorAttachment.format = GetSwapchainImageFormat();
+			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			colorAttachment.loadOp = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Depth) ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			colorAttachment.initialLayout = (key.clearMode == EClearMode::None || key.clearMode == EClearMode::Depth) ? VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
+			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+
+			VkAttachmentReference colorAttachmentRef{};
+			colorAttachmentRef.attachment = 0;
+			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			VkAttachmentDescription depthAttachment{};
+			depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
+			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			depthAttachment.loadOp = key.clearMode == EClearMode::None ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_CLEAR;
+			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depthAttachment.initialLayout = key.clearMode == EClearMode::None ? VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
+			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
+
+			VkAttachmentReference depthAttachmentRef{};
+			depthAttachmentRef.attachment = 1;
+			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			VkSubpassDescription subpass{};
+			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass.colorAttachmentCount = 1;
+			subpass.pColorAttachments = &colorAttachmentRef;
+			subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+			VkSubpassDependency dependency{};
+			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+			dependency.dstSubpass = 0;
+			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependency.srcAccessMask = 0;
+			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+			std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+
+			VkRenderPassCreateInfo renderPassCreateInfo{};
+			renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+			renderPassCreateInfo.attachmentCount = attachments.size();
+			renderPassCreateInfo.pAttachments = attachments.data();
+			renderPassCreateInfo.subpassCount = 1;
+			renderPassCreateInfo.pSubpasses = &subpass;
+			renderPassCreateInfo.dependencyCount = 1;
+			renderPassCreateInfo.pDependencies = &dependency;
+
+			if (vkCreateRenderPass(GetDevice(), &renderPassCreateInfo, GetAllocator(), &stage.gRenderPass) != VK_SUCCESS) {
+				throw std::runtime_error("failed to create render pass!");
+			}
+
+			SetObjectName(reinterpret_cast<uint64_t>(stage.gRenderPass), VK_OBJECT_TYPE_RENDER_PASS, name);
+
+			stage.CreatePipeline();
+		}
 	} // Native
 } // Renderer
 
@@ -679,68 +855,6 @@ Renderer::NativeVertexBufferData& Renderer::SimpleMesh::GetVertexBufferData()
 void Renderer::Native::OnVideoFlip()
 {
 	gRenderThread->SignalEndCommands();
-}
-
-void Renderer::Native::CreateRenderPass(VkRenderPass& renderPass, const char* name)
-{
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = GetSwapchainImageFormat();
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentDescription depthAttachment{};
-	depthAttachment.format = VK_FORMAT_D32_SFLOAT_S8_UINT;
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-
-	VkAttachmentReference depthAttachmentRef{};
-	depthAttachmentRef.attachment = 1;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-	subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-	VkSubpassDependency dependency{};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-
-	VkRenderPassCreateInfo renderPassCreateInfo{};
-	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassCreateInfo.attachmentCount = attachments.size();
-	renderPassCreateInfo.pAttachments = attachments.data();
-	renderPassCreateInfo.subpassCount = 1;
-	renderPassCreateInfo.pSubpasses = &subpass;
-	renderPassCreateInfo.dependencyCount = 1;
-	renderPassCreateInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(GetDevice(), &renderPassCreateInfo, GetAllocator(), &renderPass) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create render pass!");
-	}
-
-	SetObjectName(reinterpret_cast<uint64_t>(renderPass), VK_OBJECT_TYPE_RENDER_PASS, name);
 }
 
 void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
@@ -757,7 +871,9 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 	PS2::GSSimpleTexture* pTextureData = pTexture->GetRenderer();
 
-	if (pTextureData->HasDescriptorSets(GetPipeline())) {
+	const Pipeline& pipeline = gRenderPass[gCachedRenderPassKey].GetPipeline();
+
+	if (pTextureData->HasDescriptorSets(pipeline)) {
 		// Already have descriptor sets, no need to initialize them.
 		return;
 	}
@@ -788,7 +904,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 		writeList.EmplaceWrite({ 4, EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 		writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
-		pTextureData->UpdateDescriptorSets(GetPipeline(), writeList, i);
+		pTextureData->UpdateDescriptorSets(pipeline, writeList, i);
 	}
 }
 
@@ -921,12 +1037,20 @@ void Renderer::Native::Setup()
 {
 	const VkDeviceSize maxUboSize = CheckBufferSizes();
 
-	CreateRenderPass(gRenderPass, "Native Render Pass");
+	RenderPassKey key;
+	key.clearMode = EClearMode::None;
+
+	CreateRenderStage(key, "Native Render Pass CM None");
+	key.clearMode = EClearMode::Depth;
+	CreateRenderStage(key, "Native Render Pass CM Depth");
+	key.clearMode = EClearMode::ColorDepth;
+	CreateRenderStage(key, "Native Render Pass CM ColorDepth");
+
 	CreateFramebuffer();
 	CreateFramebufferSampler();
 	gCommandPool = CreateCommandPool("Native Renderer Command Pool");
 	CreateCommandBuffers(gCommandPool, gCommandBuffers, "Native Renderer Command Buffer");
-	CreatePipeline();
+	CreateCommandBuffers(gCommandPool, gCommandBuffersDummy, "Native Renderer Command Buffer Dummy");
 
 	gMaxAnimationMatrices = static_cast<int>(maxUboSize / sizeof(glm::mat4));
 
@@ -959,6 +1083,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 
 		if (!gRenderThread->GetHasRecordedCommands()) {
 			RecordBeginCommandBuffer();
+			RecordBeginRenderPass(RenderPassKey::Empty);
 			RecordEndCommandBuffer();
 		}
 
@@ -1154,4 +1279,9 @@ void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)
 
 	gFadeBuffer.GetBufferData().fadeColor = glm::vec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 127.0f);
 	gFadeBuffer.Map(GetCurrentFrame());
+}
+
+void Renderer::Native::UpdateRenderPassKey(Renderer::Native::EClearMode clearMode)
+{
+	gCachedRenderPassKey.clearMode = clearMode;
 }
