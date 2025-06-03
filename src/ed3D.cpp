@@ -1847,7 +1847,7 @@ static void ComputeReverseProjectionMatrix(const float fov, const float nearClip
 }
 #endif
 
-void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float horizontalHalfFOV, float halfFOV, float verticalHalfFOV, float targetWidth, float targetHeight,
+void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, float finalHorizontalHalfFOV, float baseHorizontalHalfFOV, float computedVerticalHalfFOV, float targetWidth, float targetHeight,
 	float nearClip, edF32MATRIX4* pCameraToScreen, edF32MATRIX4* pCameraToCulling, edF32MATRIX4* pCameraToClipping, edF32MATRIX4* pCameraToFog,
 	float farClip, float projectionScaleFactorA, float projectionScaleFactorB)
 {
@@ -1861,18 +1861,21 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	edF32MATRIX4 projectionMatrix;
 
 #ifdef PLATFORM_WIN
-	const float fov = (halfFOV / verticalHalfFOV) * 1.333333f;
-	ComputeReverseProjectionMatrix(fov, nearClip, farClip);
+	const float fovy = 0.027378f / computedVerticalHalfFOV + 0.2654f;
+
+	MY_LOG_CATEGORY("Viewport", LogLevel::Verbose, "ed3DViewportComputeViewMatrices fovy: {}", fovy);
+
+	ComputeReverseProjectionMatrix(nearClip, farClip, fovy, 1.3333f);
 #endif
 
-	ED3D_LOG(LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, horizontalHalfFOV: {}, halfFOV: {}, horizontalHalfFOV: {}, targetWidth: {}, targetHeight: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n", 
-		screenWidth, screenHeight, horizontalHalfFOV, halfFOV, verticalHalfFOV, targetWidth, targetHeight, nearClip, farClip, projectionScaleFactorA, projectionScaleFactorB);
+	MY_LOG_CATEGORY("Viewport", LogLevel::Verbose, "ed3DViewportComputeViewMatrices screenWidth: {}, screenHeight: {}, finalHorizontalHalfFOV: {}, baseHorizontalHalfFOV: {}, computedVerticalHalfFOV: {}, targetWidth: {}, targetHeight: {}, nearClip: {}, farClip: {}, projectionScaleFactorA: {}, projectionScaleFactorB: {}\n",
+		screenWidth, screenHeight, finalHorizontalHalfFOV, baseHorizontalHalfFOV, computedVerticalHalfFOV, targetWidth, targetHeight, nearClip, farClip, projectionScaleFactorA, projectionScaleFactorB);
 
-	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, verticalHalfFOV, 0.0f, &projectionMatrix);
-	negHalfFOV = -halfFOV;
-	negHorizontalHalfFOV = -horizontalHalfFOV;
+	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, computedVerticalHalfFOV, 0.0f, &projectionMatrix);
+	negHalfFOV = -baseHorizontalHalfFOV;
+	negHorizontalHalfFOV = -finalHorizontalHalfFOV;
 
-	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV, horizontalHalfFOV, negHalfFOV, halfFOV, targetWidth - screenWidth * 0.5f, targetWidth + screenWidth * 0.5f,
+	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV, finalHorizontalHalfFOV, negHalfFOV, baseHorizontalHalfFOV, targetWidth - screenWidth * 0.5f, targetWidth + screenWidth * 0.5f,
 		targetHeight + screenHeight * 0.5f, targetHeight - screenHeight * 0.5f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToScreen, &projectionMatrix, &screenMatrix);
@@ -1881,7 +1884,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	pCameraToScreen->cc = fVar4 * (projectionScaleFactorB * (pCameraToScreen->dd + pCameraToScreen->cd * farClip) - projectionScaleFactorA * fVar1);
 	pCameraToScreen->dc = fVar4 * (fVar1 * farClip * projectionScaleFactorA - fVar1 * nearClip * projectionScaleFactorB);
 
-	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * 1.0f, horizontalHalfFOV * 1.0f, negHalfFOV * 1.0f, halfFOV * 1.0f, -1.0f, 1.0, -1.0f, 1.0f, &screenMatrix);
+	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * 1.0f, finalHorizontalHalfFOV * 1.0f, negHalfFOV * 1.0f, baseHorizontalHalfFOV * 1.0f, -1.0f, 1.0, -1.0f, 1.0f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToCulling, &projectionMatrix, &screenMatrix);
 	fVar2 = nearClip * 1.0f;
@@ -1890,7 +1893,7 @@ void ed3DViewportComputeViewMatrices(float screenWidth, float screenHeight, floa
 	pCameraToCulling->cc = fVar4 * ((pCameraToCulling->dd + pCameraToCulling->cd * farClip) * 1.0f - fVar1 * -1.0f);
 	pCameraToCulling->dc = fVar4 * (fVar1 * fVar3 - fVar1 * fVar2);
 
-	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * fSecInc, horizontalHalfFOV * fSecInc, negHalfFOV * fSecInc, halfFOV * fSecInc, -1.0f, 1.0f, -1.0f, 1.0f, &screenMatrix);
+	ed3DComputeProjectionToScreenMatrix(negHorizontalHalfFOV * fSecInc, finalHorizontalHalfFOV * fSecInc, negHalfFOV * fSecInc, baseHorizontalHalfFOV * fSecInc, -1.0f, 1.0f, -1.0f, 1.0f, &screenMatrix);
 
 	edF32Matrix4MulF32Matrix4Hard(pCameraToClipping, &projectionMatrix, &screenMatrix);
 
@@ -1970,15 +1973,15 @@ void ed3DFrustumCompute(SceneConfig* pSceneConfig, edFCamera* pCamera, edSurface
 	float fVar8;
 	float fVar9;
 	float fVar10;
-	float fVar11;
-	float fVar12;
-	float min;
+	float baseHorizontalHalfFOV;
+	float computedVerticalHalfFOV;
+	float finalHorizontalHalfFOV;
 
-	fVar12 = pCamera->verticalHalfFOV;
-	min = pCamera->horizontalHalfFOV;
-	fVar11 = pCamera->halfFOV;
-	fVar7 = atan2f(min, fVar12);
-	fVar8 = atan2f(fVar11, fVar12);
+	computedVerticalHalfFOV = pCamera->computedVerticalHalfFOV;
+	finalHorizontalHalfFOV = pCamera->finalHorizontalHalfFOV;
+	baseHorizontalHalfFOV = pCamera->baseHorizontalHalfFOV;
+	fVar7 = atan2f(finalHorizontalHalfFOV, computedVerticalHalfFOV);
+	fVar8 = atan2f(baseHorizontalHalfFOV, computedVerticalHalfFOV);
 	fVar9 = sinf(fVar7);
 	fVar10 = sinf(fVar8);
 	fVar7 = cosf(fVar7);
@@ -2009,27 +2012,27 @@ void ed3DFrustumCompute(SceneConfig* pSceneConfig, edFCamera* pCamera, edSurface
 	(pSceneConfig->frustumA).field_0x50.w = -pSceneConfig->clipValue_0x18;
 	uVar1 = pSurface->pSurfaceDesc->screenHeight;
 	fVar7 = 2048.0f - gfSecurity;
-	fVar8 = atan2f(((2048.0f - gfSecuritx) * min) / ((float)(uint)pSurface->pSurfaceDesc->screenWidth / 2.0f), fVar12);
-	fVar7 = atan2f((fVar7 * fVar11) / ((float)(uint)uVar1 / 2.0f), fVar12);
-	fVar11 = sinf(fVar8);
-	fVar12 = sinf(fVar7);
+	fVar8 = atan2f(((2048.0f - gfSecuritx) * finalHorizontalHalfFOV) / ((float)(uint)pSurface->pSurfaceDesc->screenWidth / 2.0f), computedVerticalHalfFOV);
+	fVar7 = atan2f((fVar7 * baseHorizontalHalfFOV) / ((float)(uint)uVar1 / 2.0f), computedVerticalHalfFOV);
+	baseHorizontalHalfFOV = sinf(fVar8);
+	computedVerticalHalfFOV = sinf(fVar7);
 	fVar7 = cosf(fVar7);
 	fVar8 = cosf(fVar8);
 	(pSceneConfig->frustumB).frustumMatrix.aa = fVar8;
 	(pSceneConfig->frustumB).frustumMatrix.ab = 0.0f;
-	(pSceneConfig->frustumB).frustumMatrix.ac = fVar11;
+	(pSceneConfig->frustumB).frustumMatrix.ac = baseHorizontalHalfFOV;
 	(pSceneConfig->frustumB).frustumMatrix.ad = 0.0f;
 	(pSceneConfig->frustumB).frustumMatrix.ba = -fVar8;
 	(pSceneConfig->frustumB).frustumMatrix.bb = 0.0f;
-	(pSceneConfig->frustumB).frustumMatrix.bc = fVar11;
+	(pSceneConfig->frustumB).frustumMatrix.bc = baseHorizontalHalfFOV;
 	(pSceneConfig->frustumB).frustumMatrix.bd = 0.0f;
 	(pSceneConfig->frustumB).frustumMatrix.ca = 0.0f;
 	(pSceneConfig->frustumB).frustumMatrix.cb = fVar7;
-	(pSceneConfig->frustumB).frustumMatrix.cc = fVar12;
+	(pSceneConfig->frustumB).frustumMatrix.cc = computedVerticalHalfFOV;
 	(pSceneConfig->frustumB).frustumMatrix.cd = 0.0f;
 	(pSceneConfig->frustumB).frustumMatrix.da = 0.0f;
 	(pSceneConfig->frustumB).frustumMatrix.db = -fVar7;
-	(pSceneConfig->frustumB).frustumMatrix.dc = fVar12;
+	(pSceneConfig->frustumB).frustumMatrix.dc = computedVerticalHalfFOV;
 	(pSceneConfig->frustumB).frustumMatrix.dd = 0.0f;
 	(pSceneConfig->frustumB).field_0x40.x = 0.0f;
 	(pSceneConfig->frustumB).field_0x40.y = 0.0f;
@@ -2054,7 +2057,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DInitRenderEnvironement: {}", mode);
 
-	originalHalfFOV = pScene->pCamera->halfFOV;
+	originalHalfFOV = pScene->pCamera->baseHorizontalHalfFOV;
 	memcpy(gRenderCamera, pScene->pCamera, sizeof(edFCamera));
 
 	edF32Matrix4CopyHard(WorldToCamera_Matrix, (&gRenderCamera->worldToCamera));
@@ -2087,7 +2090,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 	edF32Vector4NormalizeHard(&gCamNormal_Z, &gCamNormal_Z);
 	gCamPos = gRenderCamera->position;
 
-	projectionScaleFactorB = gRenderCamera->halfFOV / gRenderCamera->verticalHalfFOV;
+	projectionScaleFactorB = gRenderCamera->baseHorizontalHalfFOV / gRenderCamera->computedVerticalHalfFOV;
 	gRenderInvFovCoef = 1.0f / projectionScaleFactorB;
 	gRenderFovCoef = projectionScaleFactorB * projectionScaleFactorB;
 	if (mode != 0) {
@@ -2122,9 +2125,9 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 
 	farClip = gRenderSceneConfig_SPR->farClip;
 	ed3DViewportComputeViewMatrices
-	((float)pScene->pViewport->screenWidth,
-		(float)pScene->pViewport->screenHeight, gRenderCamera->horizontalHalfFOV,
-		gRenderCamera->halfFOV, gRenderCamera->verticalHalfFOV, 2048.0f, 2048.0f,
+	((float)pScene->pViewport->screenWidth, (float)pScene->pViewport->screenHeight,
+		gRenderCamera->finalHorizontalHalfFOV, gRenderCamera->baseHorizontalHalfFOV, gRenderCamera->computedVerticalHalfFOV, 
+		2048.0f, 2048.0f,
 		gRenderSceneConfig_SPR->nearClip, CameraToScreen_Matrix, CameraToCulling_Matrix, CameraToClipping_Matrix,
 		&CameraToFog_Matrix, gRenderSceneConfig_SPR->farClip, projectionScaleFactorB, projectionScaleFactorA);
 
@@ -2188,7 +2191,7 @@ int ed3DInitRenderEnvironement(ed_3D_Scene* pScene, long mode)
 	}
 
 	if (pScene->pViewport->screenHeight != 0x200) {
-		pScene->pCamera->halfFOV = originalHalfFOV;
+		pScene->pCamera->baseHorizontalHalfFOV = originalHalfFOV;
 	}
 
 	return 1;
@@ -5564,8 +5567,8 @@ edpkt_data* ed3DShadowManageProjectionSTMtx(edF32MATRIX4* pMtx, edpkt_data* pPkt
 	local_8 = (pScene->sceneConfig).nearClip * -1.0f;
 	local_4 = (pScene->sceneConfig).farClip * -1.0f;
 	peVar1 = pScene->pCamera;
-	fVar7 = (peVar1->horizontalHalfFOV * local_8) / peVar1->verticalHalfFOV;
-	fVar6 = (peVar1->halfFOV * local_8) / peVar1->verticalHalfFOV;
+	fVar7 = (peVar1->finalHorizontalHalfFOV * local_8) / peVar1->computedVerticalHalfFOV;
+	fVar6 = (peVar1->baseHorizontalHalfFOV * local_8) / peVar1->computedVerticalHalfFOV;
 	MTXLightFrustum(-fVar6, fVar6, -fVar7, fVar7, local_8, 0.5f, 0.5f, 0.5f, &eStack208, 0.5f);
 	edF32Matrix4GetTransposeHard(&eStack80, &eStack208);
 	edF32Matrix4MulF32Matrix4Hard(&eStack80, &eStack144, &eStack80);
@@ -13453,11 +13456,11 @@ void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0)
 	peVar3 = pScene->pCamera;
 	fVar8 = (pScene->sceneConfig).farClip;
 	fVar7 = (pScene->sceneConfig).nearClip;
-	endY = peVar3->halfFOV;
-	fVar9 = peVar3->horizontalHalfFOV;
+	endY = peVar3->baseHorizontalHalfFOV;
+	fVar9 = peVar3->finalHorizontalHalfFOV;
 	sVar1 = pScene->pViewport->screenHeight;
 	fVar10 = (float)(int)pScene->pViewport->screenWidth;
-	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, peVar3->verticalHalfFOV, 0.0f, &eStack64);
+	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, peVar3->computedVerticalHalfFOV, 0.0f, &eStack64);
 	fVar4 = (float)(int)sVar1 * 0.5;
 	ed3DComputeProjectionToScreenMatrix
 	(-fVar9, fVar9, -endY, endY, 2048.0f - fVar10 * 0.5f, fVar10 * 0.5f + 2048.0f, fVar4 + 2048.0f, 2048.0f - fVar4, &eStack128);

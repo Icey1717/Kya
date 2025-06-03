@@ -1378,22 +1378,22 @@ bool CCameraManager::LevelLoading_Manage()
 	return false;
 }
 
-void edFCameraSetSizeRatioFov(float halfFOV, float aspectRatio, float sizeRatio, edFCamera* pCamera)
+void edFCameraSetSizeRatioFov(float baseHorizontalHalfFOV, float aspectRatio, float horizontalToVerticalFovRatio, edFCamera* pCamera)
 {
-	pCamera->horizontalHalfFOV = halfFOV * aspectRatio;
-	pCamera->halfFOV = halfFOV;
-	pCamera->verticalHalfFOV = halfFOV / sizeRatio;
+	pCamera->finalHorizontalHalfFOV = baseHorizontalHalfFOV * aspectRatio;
+	pCamera->baseHorizontalHalfFOV = baseHorizontalHalfFOV;
+	pCamera->computedVerticalHalfFOV = baseHorizontalHalfFOV / horizontalToVerticalFovRatio;
 	return;
 }
 
 float edFCameraGetFov(edFCamera* pCamera)
 {
-	return pCamera->halfFOV / pCamera->verticalHalfFOV;
+	return pCamera->baseHorizontalHalfFOV / pCamera->computedVerticalHalfFOV;
 }
 
 float edFCameraGetRatio(edFCamera* pCamera)
 {
-	return pCamera->horizontalHalfFOV / pCamera->halfFOV;
+	return pCamera->finalHorizontalHalfFOV / pCamera->baseHorizontalHalfFOV;
 }
 
 void CCameraManager::Level_ClearInternalData()

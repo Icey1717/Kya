@@ -32,9 +32,9 @@ struct edFCamera {
 	undefined field_0x2f;
 
 	float rotationZ;
-	float horizontalHalfFOV;
-	float halfFOV;
-	float verticalHalfFOV;
+	float finalHorizontalHalfFOV;
+	float baseHorizontalHalfFOV;
+	float computedVerticalHalfFOV;
 
 	edF32MATRIX4 transformMatrix;
 	edF32MATRIX4 worldToCamera;
@@ -146,7 +146,7 @@ struct CCamConfig : public CAMERA_CONFIG {
 };
 
 void CameraSet3DPos(edFCamera* pCamera);
-void edFCameraSetSizeRatioFov(float halfFOV, float aspectRatio, float sizeRatio, edFCamera* pCamera);
+void edFCameraSetSizeRatioFov(float baseHorizontalHalfFOV, float aspectRatio, float horizontalToVerticalFovRatio, edFCamera* pCamera);
 float edFCameraGetFov(edFCamera* pCamera);
 float edFCameraGetRatio(edFCamera* pCamera);
 

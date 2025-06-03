@@ -209,6 +209,9 @@ edpkt_data* edViewportUpdateEnv(ed_viewport* pViewport, edpkt_data* pCommandBuf)
 	);
 	pPktA->cmdB = SCE_GS_XYOFFSET_1;
 
+	VIEWPORT_LOG(LogLevel::VeryVerbose, "edViewportUpdateEnv posX: {}, posY: {}, screenWidth: {}, screenHeight: {}",
+		pViewport->posX, pViewport->posY, pViewport->screenWidth, pViewport->screenHeight);
+
 	// SCISSOR
 	pPktA[1].cmdA = SCE_GS_SET_SCISSOR(
 		pViewport->posX,											// SCAX0
