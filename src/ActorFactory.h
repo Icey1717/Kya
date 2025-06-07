@@ -6,7 +6,7 @@
 struct ActorClassProperties {
 	uint flags;
 	uint field_0x4;
-	int field_0x8;
+	int classPriority;
 	uint field_0xc;
 	int field_0x10;
 	int field_0x14;

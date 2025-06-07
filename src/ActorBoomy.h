@@ -84,6 +84,8 @@ public:
 	void SetTarget(CActor* pActor, edF32VECTOR4* pPosition);
 	void SetTarget(edF32VECTOR4* pPosition);
 
+	CActor* GetBestActorInVision();
+
 	float field_0x1dc;
 
 	float field_0x1e0;

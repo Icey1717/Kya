@@ -2537,23 +2537,23 @@ bool edAnmLayer::MorphingDT(float playTime)
 	TheAnimManager.FreeWRTSBuffer(pMatrixBuffer_00);
 
 	if (this->blendOp != 0) {
-		IMPLEMENTATION_GUARD(
 		TheAnimStage.SetDestinationWRTS(unaff_s4_lo, 0);
-		iVar1 = this->field_0x0;
+		iVar1 = this->blendOp;
 		if (iVar1 == 1) {
-			TheAnimStage.SetSingleToDestWRTS((edF32MATRIX4*)unaff_s3_lo);
+			TheAnimStage.SetSingleToDestWRTS(unaff_s3_lo->matrices);
 		}
 		else {
 			if (iVar1 == 2) {
-				TheAnimStage.BlendWithDestWRTS(0.5, (edF32MATRIX4*)unaff_s3_lo);
+				TheAnimStage.BlendWithDestWRTS(0.5, unaff_s3_lo->matrices);
 			}
 			else {
 				if (iVar1 == 3) {
-					TheAnimStage.BlendWithDestWRTS(this->field_0x4, (edF32MATRIX4*)unaff_s3_lo);
+					TheAnimStage.BlendWithDestWRTS(this->field_0x4, unaff_s3_lo->matrices);
 				}
 			}
 		}
-		TheAnimManager.FreeWRTSBuffer(unaff_s3_lo);)
+
+		TheAnimManager.FreeWRTSBuffer(unaff_s3_lo);
 	}
 
 	return true;

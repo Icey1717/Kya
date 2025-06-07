@@ -3402,6 +3402,29 @@ int CActor::GetIdMacroAnim(int inAnimType)
 	return ret;
 }
 
+
+void CActor::SV_GetActorTargetPos(CActor* pOtherActor, edF32VECTOR4* pTargetPos)
+{
+	int iVar1;
+	GetPositionMsgParams local_50;
+	edF32VECTOR4 eStack32;
+
+	local_50.field_0x0 = 0;
+	local_50.vectorFieldA = *pTargetPos;
+
+	iVar1 = DoMessage(pOtherActor, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_50);
+	if (iVar1 != 0) {
+		iVar1 = DoMessage(pOtherActor, (ACTOR_MESSAGE)0x49, &eStack32);
+		if (iVar1 != 0) {
+			edF32Vector4AddHard(pTargetPos, &eStack32, &local_50.vectorFieldB);
+		}
+	}
+
+	return;
+}
+
+
+
 void CActor::UpdateVisibility()
 {
 	uint uVar1;
@@ -5090,6 +5113,51 @@ CActor* CActorsTable::Remove(CActor* pActor)
 	}
 
 	return pRemovedActor;
+}
+
+void CActorsTable::SortByClassPriority()
+{
+	int iVar1;
+	CActor** ppCVar2;
+	CActor** pCVar3;
+	int iVar4;
+	int iVar5;
+
+	iVar1 = this->nbEntries;
+	iVar4 = 0;
+	pCVar3 = this->aEntries;
+	if (0 < iVar1 + -1) {
+		do {
+			iVar5 = iVar4 + 1;
+			if (iVar5 < iVar1) {
+				ppCVar2 = this->aEntries + iVar4;
+				do {
+					if (CActorFactory::gClassProperties[(*pCVar3)->typeID].classPriority <
+						CActorFactory::gClassProperties[ppCVar2[1]->typeID].classPriority) {
+						Swap(iVar4, iVar5);
+					}
+
+					iVar1 = this->nbEntries;
+					iVar5 = iVar5 + 1;
+					ppCVar2 = ppCVar2 + 1;
+				} while (iVar5 < iVar1);
+			}
+			iVar4 = iVar4 + 1;
+			pCVar3 = pCVar3 + 1;
+		} while (iVar4 < iVar1 + -1);
+	}
+
+	return;
+}
+
+void CActorsTable::Swap(int a, int b)
+{
+	CActor* tmp;
+	// Access the element at position 'a' and store it in tmp
+	tmp = this->aEntries[a];
+	// Swap the values of elements at positions 'a' and 'b'
+	this->aEntries[a] = this->aEntries[b];
+	this->aEntries[b] = tmp;
 }
 
 void CBehaviourInactive::Create(ByteCode* pByteCode)

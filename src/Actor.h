@@ -568,6 +568,8 @@ public:
 	void PlayAnim(int inAnimType);
 	int GetIdMacroAnim(int inAnimType);
 
+	void SV_GetActorTargetPos(CActor* pOtherActor, edF32VECTOR4* pTargetPos);
+
 	int DoMessage(CActor* pReceiver, ACTOR_MESSAGE type, MSG_PARAM flags);
 
 	// #HACK

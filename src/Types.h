@@ -915,6 +915,8 @@ public:
 	bool IsInList(CActor* pActor);
 	bool IsInList(int value);
 	CActor* Remove(CActor* pActor);
+	void SortByClassPriority();
+	void Swap(int a, int b);
 };
 
 PACK(

@@ -48,11 +48,11 @@ void CVision::Create(CActor* pOwner, ByteCode* pByteCode)
 
 void CVision::Reset()
 {
-	//this->pActor_0x48 = (CActor*)0x0;
+	this->pActor_0x48 = (CActor*)0x0;
 	//this->field_0x4c = 0;
 	//this->field_0x54 = 0;
 	//this->field_0x50 = 0;
-	//this->field_0x58 = 0.0;
+	this->field_0x58 = 0.0;
 	return;
 }
 
@@ -69,7 +69,7 @@ CActor* CVision::ScanForTarget(CActor* pTarget, int mode)
 	else {
 		lVar2 = pTarget->GetNumVisualDetectionPoints();
 		if (((this->flags & 8) == 0) || (lVar3 = pTarget->IsLockable(), lVar3 != 0)) {
-			if (((this->flags & 0x10) == 0) || (CActorFactory::gClassProperties[pTarget->typeID].field_0x8 != 0)) {
+			if (((this->flags & 0x10) == 0) || (CActorFactory::gClassProperties[pTarget->typeID].classPriority != 0)) {
 				if (lVar2 == 1) {
 					pTarget->GetVisualDetectionPoint(&eStack16, 0);
 					uVar1 = _PointIsDetected(&eStack16, pTarget);
@@ -312,4 +312,115 @@ void CVision::ScanAccurate(float maxDistance, CActorsTable* pTable, int param_4)
 	}
 
 	return;
+}
+
+void CVision::Scan(CActorsTable* pTable, int param_3)
+{
+	CActor* pCVar1;
+	CActor** pCVar2;
+	int iVar3;
+	ScanActorsParams local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.xyz = this->location.xyz;
+	local_10.w = this->field_0x40 + this->visionRange_0x34;
+
+	local_20.pOwner = this->pOwner;
+	local_20.pVision = this;
+	local_20.pTable = pTable;
+	local_20.mode = param_3;
+
+	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_10, gClusterCallback_AllActorsInVision, &local_20);
+
+	if ((this->flags & 0x10) != 0) {
+		pTable->SortByClassPriority();
+	}
+
+	if ((this->flags & 0x20) != 0) {
+		iVar3 = 0;
+		pCVar1 = _GetBestActorInFrontOf(pTable);
+		if (pCVar1 != (CActor*)0x0) {
+			for (pCVar2 = pTable->aEntries; (iVar3 < pTable->nbEntries && (pCVar1 != (*pCVar2))); pCVar2 = pCVar2 + 1) {
+				iVar3 = iVar3 + 1;
+			}
+
+			pTable->Swap(0, iVar3);
+		}
+	}
+	return;
+}
+
+
+CActor* CVision::_GetBestActorInFrontOf(CActorsTable* pTable)
+{
+	CActor* pActor;
+	int iVar1;
+	CActor** pActorIt;
+	CActor* pCVar3;
+	CActor* pAVar4;
+	int iVar4;
+	float fVar5;
+	float puVar6;
+	float puVar7;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	fVar7 = 100000.0f;
+	iVar4 = 0;
+	pAVar4 = (CActor*)0x0;
+	if (pTable->nbEntries != 0) {
+		local_20.x = (this->rotationQuat).x;
+		local_20.z = (this->rotationQuat).z;
+		local_20.w = (this->rotationQuat).w;
+		local_20.y = 0.0f;
+
+		edF32Vector4CrossProductHard(&eStack16, &gF32Vector4UnitY, &local_20);
+
+		pActorIt = pTable->aEntries;
+		pCVar3 = pAVar4;
+		if (0 < pTable->nbEntries) {
+			do {
+				pActor = (*pActorIt);
+				iVar1 = CActorFactory::gClassProperties[pActor->typeID].classPriority;
+				fVar5 = fVar7;
+				pAVar4 = pCVar3;
+				if (iVar1 != 0) {
+					local_30 = pActor->currentLocation;
+					pActor->SV_GetActorTargetPos(pActor, &local_30);
+					edF32Vector4SubHard(&eStack16, &local_30, &this->location);
+					fVar5 = edF32Vector4NormalizeHard(&eStack16, &eStack16);
+					eStack16.y = 0.0f;
+					puVar6 = edF32Vector4DotProductHard(&eStack16, &local_20);
+					if (1.0f < puVar6) {
+						puVar7 = 1.0f;
+					}
+					else {
+						puVar7 = -1.0f;
+						if (-1.0f <= puVar6) {
+							puVar7 = puVar6;
+						}
+					}
+
+					fVar6 = acosf(puVar7);
+
+					fVar5 = (fVar5 * fVar6) / (float)iVar1;
+					pAVar4 = pActor;
+					if (fVar7 <= fVar5) {
+						fVar5 = fVar7;
+						pAVar4 = pCVar3;
+					}
+				}
+
+				iVar4 = iVar4 + 1;
+				fVar7 = fVar5;
+				pActorIt = pActorIt + 1;
+				pCVar3 = pAVar4;
+			} while (iVar4 < pTable->nbEntries);
+		}
+	}
+
+	return pAVar4;
 }

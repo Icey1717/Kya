@@ -19,7 +19,7 @@ public:
 	void ChangeSpeedAndAccel(float param_1, float param_2, float param_3, float param_4);
 	void ChangeColors(uint newColor);
 	void ChangeStallTime(float stalltime);
-	void Manage(edF32VECTOR4*, undefined4);
+	bool Manage(edF32VECTOR4*, undefined4);
 	void GenerateNewOne(edF32VECTOR4* param_2);
 
 	RAY_DEF* pRayDef;

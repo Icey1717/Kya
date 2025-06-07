@@ -190,9 +190,10 @@ void CFxLightEmitter::ChangeStallTime(float stalltime)
 	return;
 }
 
-void CFxLightEmitter::Manage(edF32VECTOR4*, undefined4)
+bool CFxLightEmitter::Manage(edF32VECTOR4*, undefined4)
 {
 	IMPLEMENTATION_GUARD_FX();
+	return true;
 }
 
 void CFxLightEmitter::GenerateNewOne(edF32VECTOR4* param_2)

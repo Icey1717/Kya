@@ -4093,6 +4093,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 									if (iVar13 == 2) {
 										static edF32VECTOR4 edF32VECTOR4_00425870 = { -0.069f, 0.837f, 0.381f, 0.0f };
+										local_20 = edF32VECTOR4_00425870;
 										SV_GetBoneWorldPosition(this->animKey_0x1588, &eStack48);
 										edF32Vector4SubHard(&eStack48, &eStack48, &this->currentLocation);
 										edF32Matrix4MulF32Vector4Hard(&local_20, &this->pMeshTransform->base.transformA, &local_20);
@@ -13178,7 +13179,7 @@ void CActorHeroPrivate::ManageBoomyState()
 {
 	CPlayerInput* pCVar1;
 	CActorBoomy* pBoomy;
-	CActorWolfen* pCVar3;
+	CActorBoomy* pCVar3;
 	CAnimation* this_00;
 	s_fighter_blow* psVar4;
 	s_fighter_blow_sub_obj* psVar5;
@@ -13294,12 +13295,12 @@ void CActorHeroPrivate::ManageBoomyState()
 
 			if (bVar10) {
 				pBoomy->UpdateFromOwner(4, &this->rotationQuat);
-				pCVar12 = 0; // this->pActorBoomy->GetBestActorInVision();
+				pCVar12 = this->pActorBoomy->GetBestActorInVision();
 				pBoomy = this->pActorBoomy;
 				pBoomy->aBoomyTypeInfo[0].flags = pBoomy->aBoomyTypeInfo[0].flags & 0xfffffffe;
 
 				if (pCVar12 == (CActor*)0x0) {
-					pCVar3 = (CActorWolfen*)this->pActorBoomy;
+					pCVar3 = this->pActorBoomy;
 					pCVar13 = pCVar3->GetVision();
 					edF32Vector4ScaleHard(pCVar13->visionRange_0x34, &eStack48, &this->rotationQuat);
 					SV_GetBoneWorldPosition(this->field_0x157c, &eStack32);
@@ -13417,89 +13418,85 @@ void CActorHeroPrivate::ManageBoomyState()
 		}
 		break;
 	case 3:
-		IMPLEMENTATION_GUARD(
-		pTVar11 = GetTimer();
-		fVar20 = this->field_0x1b74 + pTVar11->cutsceneDeltaTime;
+		fVar20 = this->field_0x1b74 + GetTimer()->cutsceneDeltaTime;
 		this->field_0x1b74 = fVar20;
-		if (0.28 <= fVar20) {
-			CAnimation::RemoveDisabledBone
-			(this->pAnimationController, this->animKey_0x1584);
+		if (0.28f <= fVar20) {
+			this->pAnimationController->RemoveDisabledBone(this->animKey_0x1584);
 		}
-		bVar10 = IsLayerAnimFinished(this, 8);
-		if ((bVar10 != false) || (bVar10 = IsLayerAnimEndReached(this, 8), bVar10 != false)) {
+
+		bVar10 = IsLayerAnimFinished(8);
+		if ((bVar10 != false) || (bVar10 = IsLayerAnimEndReached(8), bVar10 != false)) {
 			pCVar1 = this->pPlayerInput;
 			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-				fVar20 = 0.0;
+				fVar20 = 0.0f;
 			}
 			else {
 				fVar20 = pCVar1->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 			}
+
 			if (fVar20 == 0.0f) {
 				this->field_0x1b64 = 0;
 			}
+
 			if (this->actorState - 0x73U < 3) {
-				(*(this->pVTable)->SetState)((CActor*)this, 0x73, -1);
+				SetState(STATE_HERO_STAND, -1);
 			}
-			CActorHero::SetBoomyFunc((CActorHero*)this, 0);
+
+			SetBoomyFunc(0);
 		}
-		break;)
+		break;
 	case 4:
-		IMPLEMENTATION_GUARD(
-		pTVar11 = GetTimer();
-		fVar20 = this->field_0x1b74 + pTVar11->cutsceneDeltaTime;
+		fVar20 = this->field_0x1b74 + GetTimer()->cutsceneDeltaTime;
 		this->field_0x1b74 = fVar20;
-		if (fVar20 < 0.02) break;
+
+		if (fVar20 < 0.02f) break;
+
 		pBoomy = this->pActorBoomy;
 		if (pBoomy == (CActorBoomy*)0x0) {
 		LAB_00135678:
 			bVar10 = false;
 		}
 		else {
-			iVar14 = (pBoomy->base).base.actorState;
+			iVar14 = pBoomy->actorState;
 			bVar10 = true;
 			if ((iVar14 != 5) && (iVar14 != 9)) {
 				bVar10 = false;
 			}
-			if (((!bVar10) || (uVar17 = CActorHero::TestState_AllowAttack((CActorHero*)this, 0xffffffff), uVar17 == 0)) ||
-				(bVar10 = true, this->field_0x1a48 != 0)) goto LAB_00135678;
+
+			if (((!bVar10) || (TestState_AllowAttack(0xffffffff) == 0)) || (bVar10 = true, this->field_0x1a48 != 0)) goto LAB_00135678;
 		}
-		if (((bVar10) && (bVar10 = EvolutionBoomyCanLaunch(), bVar10 != false)) &&
-			(1 < this->actorState - 0x11aU)) {
-			CActorBoomy::UpdateFromOwner
-			(this->pActorBoomy, 4, &this->rotationQuat);
-			pCVar12 = (CActor*)FUN_0012c6c0((int)this->pActorBoomy);
+		if (((bVar10) && (bVar10 = EvolutionBoomyCanLaunch(), bVar10 != false)) && (1 < this->actorState - 0x11aU)) {
+			this->pActorBoomy->UpdateFromOwner(4, &this->rotationQuat);
+			pCVar12 = this->pActorBoomy->GetBestActorInVision();
 			pBoomy = this->pActorBoomy;
 			pBoomy->aBoomyTypeInfo[0].flags = pBoomy->aBoomyTypeInfo[0].flags & 0xfffffffe;
 			if (pCVar12 == (CActor*)0x0) {
-				pCVar3 = (CActorWolfen*)this->pActorBoomy;
-				pCVar13 = (*((pCVar3->base).characterBase.base.base.pVTable)->GetVision)(pCVar3);
-				edF32Vector4ScaleHard
-				(pCVar13->visionRange_0x34, &eStack48, &this->rotationQuat);
-				CActor::SV_GetBoneWorldPosition((CActor*)this, this->field_0x157c, &eStack32);
+				pCVar3 = this->pActorBoomy;
+				pCVar13 = pCVar3->GetVision();
+				edF32Vector4ScaleHard(pCVar13->visionRange_0x34, &eStack48, &this->rotationQuat);
+				SV_GetBoneWorldPosition(this->field_0x157c, &eStack32);
 				edF32Vector4AddHard(&eStack32, &eStack32, &eStack48);
-				CActorBoomy::UpdateFromOwner
-				(this->pActorBoomy, 3, &this->rotationQuat);
-				CActorBoomy::SetTarget(this->pActorBoomy, &eStack32);
+				this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
+				this->pActorBoomy->SetTarget(&eStack32);
 				(this->pActorBoomy)->field_0x1dc = 0.1;
 			}
 			else {
-				CActorBoomy::UpdateFromOwner
-				(this->pActorBoomy, 3, &this->rotationQuat);
-				CActorBoomy::SetTarget(this->pActorBoomy, pCVar12, &pCVar12->currentLocation);
-				(this->pActorBoomy)->field_0x1dc = 0.01;
+				this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
+				this->pActorBoomy->SetTarget(pCVar12, &pCVar12->currentLocation);
+				(this->pActorBoomy)->field_0x1dc = 0.01f;
 			}
-			local_c = 0;
-			CActor::DoMessage((CActor*)this, (CActor*)this->pActorBoomy, 4, 0);
+
+			DoMessage(this->pActorBoomy, (ACTOR_MESSAGE)4, 0);
 		}
-		bVar10 = IsLayerAnimFinished(this, 8);
-		if ((bVar10 != false) || (bVar10 = IsLayerAnimEndReached(this, 8), bVar10 != false)) {
+
+		bVar10 = IsLayerAnimFinished(8);
+		if ((bVar10 != false) || (bVar10 = IsLayerAnimEndReached(8), bVar10 != false)) {
 			if (this->actorState - 0x73U < 3) {
-				(*(this->pVTable)->SetState)((CActor*)this, 0x73, -1);
+				SetState(STATE_HERO_STAND, -1);
 			}
-			CActorHero::SetBoomyFunc((CActorHero*)this, 0);
-			CAnimation::AddDisabledBone
-			(this->pAnimationController, this->animKey_0x1584);
-		})
+			SetBoomyFunc(0);
+			this->pAnimationController->AddDisabledBone(this->animKey_0x1584);
+		}
 		break;
 	case 0xb:
 		IMPLEMENTATION_GUARD(

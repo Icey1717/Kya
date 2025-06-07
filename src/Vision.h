@@ -22,6 +22,9 @@ public:
 	bool _PointIsDetected(edF32VECTOR4* v0, CActor* pTargetActor);
 
 	void ScanAccurate(float param_1, CActorsTable* pTable, int param_4);
+	void Scan(CActorsTable* pTable, int param_3);
+
+	CActor* _GetBestActorInFrontOf(CActorsTable* pTable);
 
 	uint flags;
 

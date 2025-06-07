@@ -437,24 +437,26 @@ void CActorBoomy::BehaviourBoomyLaunch_Manage()
 		StateBoomyGotoLauncher();
 		break;
 	case 9:
-		IMPLEMENTATION_GUARD(
 		this->field_0x2c0 = this->aBoomyTypeInfo[this->curBoomyTypeId].field_0x4;
 		this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffe;
 		this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffb;
 		this->field_0x294 = 1;
-		bVar1 = CFxLightEmitter::Manage(&this->fxLightEmitterB, 0, 0);
-		iVar3 = this->fxTail.Manage(0, 0.0, 1);
-		bVar2 = CFxLightEmitter::Manage(&this->fxLightEmitterA, 0, 0);
+
+		bVar1 = this->fxLightEmitterB.Manage(0, 0);
+		iVar3 = this->fxTail.Manage(0, 0.0f, 1);
+		bVar2 = this->fxLightEmitterA.Manage(0, 0);
+
 		if ((bVar1 != false && iVar3 != 0) && bVar2 != false) {
 			this->flags = this->flags & 0xfffffffd;
 			this->flags = this->flags | 1;
 			this->flags = this->flags & 0xffffff7f;
 			this->flags = this->flags | 0x20;
-			CActor::EvaluateDisplayState((CActor*)this);
+			EvaluateDisplayState();
 			this->flags = this->flags & 0xfffffbff;
-			CFxTail::Reset(&this->fxTail);
-			CFxTail::SetPatchActive(&this->fxTail, 0);
-		})
+
+			this->fxTail.Reset();
+			this->fxTail.SetPatchActive(0);
+		}
 		break;
 	case BOOMY_STATE_CONTROL:
 		IMPLEMENTATION_GUARD(
@@ -1382,7 +1384,19 @@ void CActorBoomy::SetTarget(edF32VECTOR4* pPosition)
 	return;
 }
 
+CActor* CActorBoomy::GetBestActorInVision()
+{
+	CActorsTable local_110;
 
+	local_110.nbEntries = 0;
+	this->vision.Scan(&local_110, 0);
+
+	if (local_110.nbEntries == 0) {
+		local_110.aEntries[0] = (CActor*)0x0;
+	}
+
+	return local_110.aEntries[0];
+}
 
 void CBehaviourBoomyLaunch::Manage()
 {
