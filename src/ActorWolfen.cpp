@@ -1282,17 +1282,17 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					SetBehaviour(4, -1, -1);
 					return 1;)
 				}
-				if (msg == 7) {
-					IMPLEMENTATION_GUARD(
+				if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
+					GetPositionMsgParams* pGetPosMsgParam = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
 					/* WARNING: Load size is inaccurate */
-					if ((*pMsgParam == 1) || (*pMsgParam == 0)) {
+					if ((pGetPosMsgParam->field_0x0 == 1) || (pGetPosMsgParam->field_0x0 == 0)) {
 						peVar2 = (this->pCollisionData)->pObbPrim;
-						*(undefined4*)((int)pMsgParam + 0x20) = 0;
-						*(float*)((int)pMsgParam + 0x24) = (peVar2->field_0x90).y + (peVar2->field_0xb0).y;
-						*(undefined4*)((int)pMsgParam + 0x28) = 0;
-						*(undefined4*)((int)pMsgParam + 0x2c) = 0;
+						pGetPosMsgParam->vectorFieldB.x = 0.0f;
+						pGetPosMsgParam->vectorFieldB.y = (peVar2->field_0x90).y + (peVar2->field_0xb0).y;
+						pGetPosMsgParam->vectorFieldB.z = 0.0f;
+						pGetPosMsgParam->vectorFieldB.w = 0.0f;
 						return 1;
-					})
+					}
 				}
 				else {
 					if (msg == 0x36) {
@@ -5784,21 +5784,23 @@ int CBehaviourWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam
 		return 1;
 	}
 
-	if (msg == 7) {
-		IMPLEMENTATION_GUARD(
-		pCVar3 = (*(this->pOwner->pVTable)->GetLifeInterface)((CActor*)this->pOwner);
-		fVar7 = (*pCVar3->pVtable->GetValue)((CInterface*)pCVar3);
-		if (fVar7 <= 0.0) {
+	if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
+		if (this->pOwner->GetLifeInterface()->GetValue() <= 0.0f) {
 			return 0;
 		}
+
+		GetPositionMsgParams* pMsgParamPos = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+
 		/* WARNING: Load size is inaccurate */
-		if ((*pMsgParam != 1) && (*pMsgParam != 0)) {
+		if ((pMsgParamPos->field_0x0 != 1) && (pMsgParamPos->field_0x0 != 0)) {
 			return 0;
 		}
-		*(undefined4*)((int)pMsgParam + 0x20) = 0;
-		*(undefined4*)((int)pMsgParam + 0x24) = 0x3fc00000;
-		*(undefined4*)((int)pMsgParam + 0x28) = 0;
-		*(undefined4*)((int)pMsgParam + 0x2c) = 0;)
+
+		pMsgParamPos->vectorFieldB.x = 0.0f;
+		pMsgParamPos->vectorFieldB.y = 1.5f;
+		pMsgParamPos->vectorFieldB.z = 0.0f;
+		pMsgParamPos->vectorFieldB.w = 1.0f;
+
 		return 1;
 	}
 

@@ -97,6 +97,7 @@ public:
 	uint ResolveContacts(CActor* pActor, edF32VECTOR4* pTranslation, int param_4);
 	void PreprocessActorContacts(float param_1, CActor* pActor, CActorsTable* pTable, CActor** pOutActor);
 	uint CheckCollisions_OBBTree(CActor* pActor, edF32MATRIX4* m0, edF32MATRIX4* param_4, edF32VECTOR4* pTranslation, CActorsTable* param_6, CActor** param_7, int param_8);
+	bool CheckCollisions_RayIntersect(CActor* pActor, edF32VECTOR4* v0, edF32VECTOR4* v1, CActorsTable* pTable, int param_6);
 	void CheckCollisions_UpdateCollisionMatrix(CActor* pActor, edF32MATRIX4* pMatrix, CActorsTable* pActorTable, CActor* param_5, int param_6);
 	void CheckCollisions_TranslateActor(CActor* pActor, edF32VECTOR4* param_3, CActorsTable* param_4, CActor* param_5, int param_6);
 	void UpdateMatrix(edF32MATRIX4* param_2);

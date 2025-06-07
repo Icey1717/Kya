@@ -207,7 +207,7 @@ bool MenuMessageBoxDisplay(ulong flags, ulong msgA, ulong msgB, ulong msgC, ulon
 				}
 
 				if ((msgC == 0) || ((gPlayerInput.pressedBitfield & 1 << iVar5) == 0)) {
-					if ((msgD != 0) && (((gPlayerInput.pressedBitfield & 0x4000000) != 0 &&
+					if ((msgD != 0) && (((gPlayerInput.pressedBitfield & PAD_BITMASK_TRIANGLE) != 0 &&
 							(bCloseResult = true, CLevelScheduler::gThis->currentLevelID != 0x10)))) {
 						IMPLEMENTATION_GUARD_AUDIO(
 						PlaySample(1.0, (float*)(Scene::ptable.g_FrontendManager_00451680)->field_0x78, 3, 0);)

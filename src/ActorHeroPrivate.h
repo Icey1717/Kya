@@ -170,6 +170,7 @@ public:
 	virtual void _Proj_GetPossibleExit();
 
 	bool AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam, edF32VECTOR4* param_4);
+	bool AccomplishAttack();
 	bool AccomplishAction(int bUpdateActiveActionId);
 
 	void GetPossibleAction();
@@ -188,6 +189,12 @@ public:
 	void UpdateMedallion();
 
 	float GetTargetBeta();
+	void DisableLayer(uint layerId);
+	void SetLayerProperty(float param_1, uint layerId);
+	bool IsLayerAnimFinished(uint layerId);
+	bool IsLayerAnimEndReached(uint layerId);
+	void SetLayerAnim(float param_1, uint layerId, int animId);
+	void SetMagicMode(int bEnable);
 
 	void ResetStdDefaultSettings();
 	void ResetSlideDefaultSettings();
@@ -307,6 +314,10 @@ public:
 	void SetBoomyFunc(int param_2);
 	void IncreaseEffort(float param_1);
 
+	void ManageBoomyStateInit();
+	void ManageBoomyState();
+	void ManageBoomyStateTerm();
+
 	void BuildHorizontalSpeedVector(float runSpeed, float param_2, float param_3, float param_4, float param_5);
 	void ConvertSpeedSumForceExtToSpeedPlayer2D();
 
@@ -390,7 +401,15 @@ public:
 
 	void ManageInternalView();
 
+	void WhatsInVision(CActorsTable* pTable, edF32VECTOR4* pDirection);
+
+	bool FUN_00133fb0();
+
+	uint FUN_00132c60(uint state);
+
 	CBehaviourHeroDefault behaviourHeroDefault;
+
+	int field_0xe44;
 
 	SPEED_DYN field_0xcb4;
 
@@ -420,8 +439,8 @@ public:
 	CFxHandle* field_0x10fc;
 	int* field_0x1100;
 
-	CActor* field_0x1bbc;
-	edF32VECTOR4 field_0x1bc0;
+	CActor* pBoomyTarget;
+	edF32VECTOR4 boomyTargetPosition;
 
 	int bUnknownBool;
 
@@ -433,6 +452,7 @@ public:
 	float field_0x15c4;
 	float field_0x15c8;
 
+	float field_0x1b74;
 	int field_0x1b78;
 	int field_0x1b6c;
 
@@ -633,6 +653,17 @@ public:
 
 	undefined4 jmp_field_0x1144;
 	edF32VECTOR4 jmpDirection;
+
+	float boomyTargetRayDist;
+	int field_0x1b64;
+
+	int field_0x1b94;
+	float field_0x1b98;
+
+	float field_0x1ba0;
+
+	CActorsTable boomyTargetTable;
+	edF32VECTOR4 vector_0x1be0;
 };
 
 #endif //ACTOR_HERO_PRIVATE_H

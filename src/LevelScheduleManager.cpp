@@ -1107,7 +1107,7 @@ void CLevelScheduler::Episode_ComputeCurrent()
 
 int CLevelScheduler::GetBoomyLevel() 
 {
-	return _gScenVarInfo[9].currentValue;
+	return _gScenVarInfo[SCENE_VAR_BOOMY].currentValue;
 }
 
 ulong gFightHashCodes[8] = 
@@ -1128,9 +1128,9 @@ int CLevelScheduler::GetFightLevel()
 	uint uVar1;
 
 	fightLevel = 0;
-	uVar1 = _gScenVarInfo[10].currentValue;
+	uVar1 = _gScenVarInfo[SCENE_VAR_FIGHT_RING].currentValue;
 
-	if (_gScenVarInfo[10].currentValue != 0) {
+	if (_gScenVarInfo[SCENE_VAR_FIGHT_RING].currentValue != 0) {
 		do {
 			uVar1 = uVar1 >> 1;
 			fightLevel = fightLevel + 1;
@@ -1417,7 +1417,7 @@ void NativShopLevelSubObj::FUN_002d8d10(CActorNativShop* pNativ)
 			this->aSubObjs[currentIndex].field_0x8 = 0;
 		}
 		else {
-			this->aSubObjs[currentIndex].field_0x0 = pInventoryInfo->field_0x20;
+			this->aSubObjs[currentIndex].field_0x0 = pInventoryInfo->purchaseId;
 			this->aSubObjs[currentIndex].field_0x4 = pInventoryInfo->moneyCost;
 			this->aSubObjs[currentIndex].field_0x8 = pInventoryInfo->field_0x8;
 		}
@@ -2684,12 +2684,12 @@ void CLevelScheduler::OnSceneVarSet()
 	pHero = CActorHero::_gThis;
 	if (CActorHero::_gThis != (CActorHero*)0x0) {
 		if (CActorHero::_gThis->pActorBoomy != (CActorBoomy*)0x0) {
-			pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x62, (MSG_PARAM)_gScenVarInfo[9].currentValue);
-			pHero->DoMessage(pHero->pActorBoomy, (ACTOR_MESSAGE)0x62, (MSG_PARAM)_gScenVarInfo[9].currentValue);
+			pHero->DoMessage(pHero, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)_gScenVarInfo[SCENE_VAR_BOOMY].currentValue);
+			pHero->DoMessage(pHero->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)_gScenVarInfo[SCENE_VAR_BOOMY].currentValue);
 		}
 
-		pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x6b, (MSG_PARAM)_gScenVarInfo[10].currentValue);
-		pHero->DoMessage(pHero, (ACTOR_MESSAGE)0x79, 0);
+		pHero->DoMessage(pHero, MESSAGE_FIGHT_RING_CHANGED, (MSG_PARAM)_gScenVarInfo[SCENE_VAR_FIGHT_RING].currentValue);
+		pHero->DoMessage(pHero, MESSAGE_RECEPTACLE_CHANGED, 0);
 	}
 	return;
 }

@@ -88,6 +88,12 @@ namespace Hero
 		case STATE_HERO_STAND:
 			return "StateHeroStand";
 			break;
+		case STATE_HERO_BOOMY:
+			return "StateHeroBoomy";
+			break;
+		case STATE_HERO_BOOMY_CATCH:
+			return "StateHeroBoomyCatch";
+			break;
 		case STATE_HERO_JUMP_1_1_STAND:
 			return "StateHeroJump_1_1_Stand";
 			break;

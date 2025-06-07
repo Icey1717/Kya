@@ -21,6 +21,7 @@ public:
 	bool SetPatchActive(int bActive);
 
 	bool Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4);
+	bool Manage(edF32VECTOR4* param_2, int param_3, int param_4);
 
 	int dlistPatchId;
 
@@ -35,6 +36,12 @@ public:
 
 	float field_0x30;
 	int count_0x34;
+	int field_0x3c;
+	int field_0x40;
+
+	edF32VECTOR4 field_0x50;
+	edF32VECTOR4 field_0x60;
+	edF32MATRIX4 field_0x70;
 
 	uint field_0xb0;
 	float field_0xb8;

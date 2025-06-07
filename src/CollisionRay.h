@@ -13,7 +13,7 @@ class CActor;
 struct _ray_info_out {
 	CActor* pActor_0x0;
 	union {
-		uint pVector_0x4;
+		uint hitMaterialFlags;
 		short type_0x4[2];
 	};
 	uint type_0x8;
@@ -32,6 +32,7 @@ public:
 	float IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* pOutResult);
 
 	void ChangeLeadVector(edF32VECTOR4* pNewLeadVector);
+	void ChangeMaxDistance(float newDist);
 
 
 	undefined4 field_0xc;

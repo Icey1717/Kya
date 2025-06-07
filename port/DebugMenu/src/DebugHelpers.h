@@ -24,6 +24,10 @@ namespace DebugHelpers {
 	const ImVec4 sValidColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 	const ImVec4 sInvalidColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 
+	inline ImVec4 GetValidatedColor(bool valid) {
+		return valid ? sValidColor : sInvalidColor;
+	}
+
 	template<typename T>
 	inline void TextValidValue(char* fmt, T p)
 	{

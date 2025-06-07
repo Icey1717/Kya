@@ -1580,7 +1580,7 @@ int CActor::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 													*pResolvedMsg = this->currentLocation;
 												}
 												else {
-													if (msg == 7) {
+													if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
 														GetPositionMsgParams* pResolvedMsg = static_cast<GetPositionMsgParams*>(pMsgParam);
 														iVar1 = pResolvedMsg->field_0x0;
 														if (iVar1 == 5) {

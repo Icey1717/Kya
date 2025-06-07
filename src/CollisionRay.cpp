@@ -70,7 +70,7 @@ float CCollisionRay::Intersect(uint type, CActor* pActor, CActor* pOther, uint f
 
 			if (pResultData != (_ray_info_out*)0x0) {
 				pResultData->pActor_0x0 = outResult.pActor_0x0;
-				pResultData->pVector_0x4 = outResult.pVector_0x4;
+				pResultData->hitMaterialFlags = outResult.hitMaterialFlags;
 				pResultData->type_0x8 = outResult.type_0x8;
 			}
 		}
@@ -217,7 +217,7 @@ float CCollisionRay::IntersectActorsTable(CActorsTable* pTable, edF32VECTOR4* v0
 
 	if (pOutResult != (_ray_info_out*)0x0) {
 		pOutResult->pActor_0x0 = pOutActor;
-		pOutResult->pVector_0x4 = local_4;
+		pOutResult->hitMaterialFlags = local_4;
 		pOutResult->type_0x8 = outHitType;
 	}
 
@@ -391,7 +391,7 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 
 	if (pOutResult != (_ray_info_out*)0x0) {
 		pOutResult->pActor_0x0 = (CActor*)0x0;
-		pOutResult->pVector_0x4 = local_4;
+		pOutResult->hitMaterialFlags = local_4;
 		pOutResult->type_0x8 = finalType;
 	}
 
@@ -401,4 +401,14 @@ float CCollisionRay::IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* p
 void CCollisionRay::ChangeLeadVector(edF32VECTOR4* pNewLeadVector)
 {
 	this->pLeadVector = pNewLeadVector;
+
+	return;
+}
+
+void CCollisionRay::ChangeMaxDistance(float newDist)
+{
+	this->lengthA = newDist;
+	(this->lengthB).x = newDist;
+
+	return;
 }

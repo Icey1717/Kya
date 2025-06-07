@@ -173,6 +173,8 @@ set(main_src
 	"${src_root}/CameraFixe.h"
 	"${src_root}/CameraRail.cpp"
 	"${src_root}/CameraRail.h"
+	"${src_root}/CameraBoomy.cpp"
+	"${src_root}/CameraBoomy.h"
 	"${src_root}/camera.cpp"
 	"${src_root}/camera.h"
 	"${src_root}/CameraViewManager.cpp"

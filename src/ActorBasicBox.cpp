@@ -236,24 +236,19 @@ int CActorBasicBox::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		})
 	}
 	else {
-		if (msg == 7) {
-			IMPLEMENTATION_GUARD(
-			peVar1 = CActor::GetTopPosition((CActor*)this);
-			edF32Vector4SubHard(&eStack16, peVar1, &(this->base).currentLocation);
-			fVar4 = edF32Vector4DotProductHard(&eStack16, (edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba)
-				;
-			edF32Vector4ScaleHard(fVar4, &eStack16, (edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba);
-			peVar1 = CActor::GetBottomPosition((CActor*)this);
-			v2 = CActor::GetTopPosition((CActor*)this);
-			edF32Vector4SubHard((edF32VECTOR4*)((int)local_64 + 0x20), peVar1, v2);
-			fVar4 = edF32Vector4DotProductHard
-			((edF32VECTOR4*)((int)local_64 + 0x20),
-				(edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba);
-			edF32Vector4ScaleHard
-			(fVar4 * 0.5, (edF32VECTOR4*)((int)local_64 + 0x20),
-				(edF32VECTOR4*)&(((this->base).pMeshTransform)->base).transformA.ba);
-			edF32Vector4AddHard((edF32VECTOR4*)((int)local_64 + 0x20), (edF32VECTOR4*)((int)local_64 + 0x20), &eStack16);
-			iVar2 = 1;)
+		if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
+			GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+			peVar1 = GetTopPosition();
+			edF32Vector4SubHard(&eStack16, peVar1, &this->currentLocation);
+			fVar4 = edF32Vector4DotProductHard(&eStack16, &this->pMeshTransform->base.transformA.rowY);
+			edF32Vector4ScaleHard(fVar4, &eStack16, &this->pMeshTransform->base.transformA.rowY);
+			peVar1 = GetBottomPosition();
+			v2 = GetTopPosition();
+			edF32Vector4SubHard(&pGetPosMsgParams->vectorFieldB, peVar1, v2);
+			fVar4 = edF32Vector4DotProductHard(&pGetPosMsgParams->vectorFieldB, &this->pMeshTransform->base.transformA.rowY);
+			edF32Vector4ScaleHard(fVar4 * 0.5f, &pGetPosMsgParams->vectorFieldB, &this->pMeshTransform->base.transformA.rowY);
+			edF32Vector4AddHard(&pGetPosMsgParams->vectorFieldB, &pGetPosMsgParams->vectorFieldB, &eStack16);
+			iVar2 = 1;
 		}
 		else {
 			if (msg == 2) {

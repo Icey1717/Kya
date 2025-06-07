@@ -3,6 +3,8 @@
 #include "WayPoint.h"
 #include "LevelScheduleManager.h"
 #include "EventManager.h"
+#include "ActorBoomy.h"
+#include "ActorManager.h"
 
 CActorHero* CActorHero::_gThis = (CActorHero*)0x0;
 
@@ -1761,6 +1763,36 @@ bool CActorHero::FUN_0031c9e0()
 float CActorHero::GetMagicalForce()
 {
 	return this->magicInterface.GetValue();
+}
+
+void CActorHero::InitBoomy()
+{
+	CActorsTable boomyTable;
+
+	if (this == _gThis) {
+		this->pActorBoomy = CActorBoomy::_gThis;
+	}
+	else {
+		boomyTable.nbEntries = 0;
+		CScene::ptable.g_ActorManager_004516a4->GetActorsByClassID(BOOMY, &boomyTable);
+		if (boomyTable.nbEntries < 2) {
+			this->pActorBoomy = (CActorBoomy*)0x0;
+		}
+		else {
+			if ((CActorBoomy*)boomyTable.aEntries[0] == CActorBoomy::_gThis) {
+				this->pActorBoomy = (CActorBoomy*)boomyTable.aEntries[1];
+			}
+			else {
+				this->pActorBoomy = (CActorBoomy*)boomyTable.aEntries[0];
+			}
+		}
+	}
+
+	if (this->pActorBoomy != (CActorBoomy*)0x0) {
+		this->pActorBoomy->pHero = this;
+	}
+
+	return;
 }
 
 bool CMagicInterface::Activate(int bActive)

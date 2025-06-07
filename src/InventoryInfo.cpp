@@ -5,22 +5,7 @@
 #include "ActorBoomy.h"
 #include "ActorAutonomous.h"
 #include "LevelScheduleManager.h"
-
-void CInventoryInfo::ObjectPurchased()
-{
-	CActorBoomy* pCVar1;
-	uint uVar2;
-	int iVar3;
-	int iVar4;
-	CLifeInterface* pLifeInterface;
-	float fVar5;
-
-	switch (this->field_0x20) {
-	default: 
-		IMPLEMENTATION_GUARD();
-		return;
-	}
-}
+#include "ActorHero.h"
 
 int CInventoryInfo::ProcessMessage(CActor* pSender, int msg, void* pMsgParams)
 {
@@ -150,7 +135,7 @@ void CInventoryInfo::Create(ByteCode* pByteCode)
 		this->field_0x8 = pByteCode->GetU64();
 		this->field_0x10 = pByteCode->GetU64();
 
-		this->field_0x20 = pByteCode->GetS32();
+		this->purchaseId = pByteCode->GetS32();
 		this->field_0x28 = pByteCode->GetS32();
 		this->moneyCost = pByteCode->GetS32();
 		this->field_0x2c = pByteCode->GetS32();
@@ -175,6 +160,30 @@ void CInventoryInfo::Create(ByteCode* pByteCode)
 	return;
 }
 
+void CInventoryInfo::ObjectPurchased()
+{
+	CActorBoomy* pCVar1;
+	uint uVar2;
+	int iVar3;
+	int iVar4;
+	CLifeInterface* pLifeInterface;
+	float fVar5;
+
+	switch (this->purchaseId) {
+	case INVENTORY_ITEM_BASE_BOOMY:
+		if (CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY) < 1) {
+			this->pOwner->DoMessage(CActorHero::_gThis, MESSAGE_BOOMY_CHANGED, (void*)1);
+			this->pOwner->DoMessage(CActorHero::_gThis->pActorBoomy, MESSAGE_BOOMY_CHANGED, (void*)1);
+		}
+
+		CLevelScheduler::ScenVar_Set(SCENE_VAR_BOOMY, 1);
+		break;
+	default:
+		IMPLEMENTATION_GUARD();
+		return;
+	}
+}
+
 uint CInventoryInfo::IsObjectPurchased(int objId)
 {
 	int iVar1;
@@ -188,16 +197,16 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 	case 1:
 		uVar2 = CLevelScheduler::ScenVar_Get(8);
 		break;
-	case 2:
-		iVar1 = CLevelScheduler::ScenVar_Get(9);
+	case INVENTORY_ITEM_BASE_BOOMY:
+		iVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
 		uVar2 = iVar1 < 1 ^ 1;
 		break;
-	case 3:
-		iVar1 = CLevelScheduler::ScenVar_Get(9);
+	case INVENTORY_ITEM_SILVER_BOOMY:
+		iVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
 		uVar2 = iVar1 < 2 ^ 1;
 		break;
-	case 4:
-		iVar1 = CLevelScheduler::ScenVar_Get(9);
+	case INVENTORY_ITEM_GOLD_BOOMY:
+		iVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
 		uVar2 = iVar1 < 3 ^ 1;
 		break;
 	case 5:
@@ -208,7 +217,7 @@ uint CInventoryInfo::IsObjectPurchased(int objId)
 	case 10:
 	case 0xb:
 	case 0xc:
-		uVar2 = CLevelScheduler::ScenVar_Get(10);
+		uVar2 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
 		uVar2 = 1 << (objId - 5U & 0x1f) & uVar2;
 		break;
 	case 0xd:

@@ -810,6 +810,47 @@ void CBehaviourSwitchTarget::Begin(CActor* pOwner, int newState, int newAnimatio
 	return;
 }
 
+int CBehaviourSwitchTarget::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	CActorSwitch* pCVar1;
+	bool bVar2;
+	int iVar3;
+	float fVar4;
+	CActorSwitch* pActor;
+	CActorSwitch* pAVar1;
+
+	int* pIntParam = reinterpret_cast<int*>(pMsgParam);
+
+	if ((msg == 2) && (*pIntParam == 4)) {
+		IMPLEMENTATION_GUARD(
+		pCVar1 = (this->base).pOwner;
+		(*((pCVar1->base).pVTable)->SetState)((CActor*)pCVar1, 8, -1);
+		pActor = (this->base).pOwner;
+		for (iVar3 = 0; iVar3 < pActor->pTargetStreamRef->entryCount; iVar3 = iVar3 + 1) {
+			/* Will fill bar. */
+			S_STREAM_NTF_TARGET_SWITCH::Switch(pActor->pTargetStreamRef->aEntries + iVar3, (CActor*)pActor);
+		}
+		S_STREAM_EVENT_CAMERA::SwitchOn(pActor->pStreamEventCamera, (CActor*)pActor);
+		pAVar1 = (this->base).pOwner;
+		for (iVar3 = 0; iVar3 < pAVar1->pTargetStreamRef->entryCount; iVar3 = iVar3 + 1) {
+			S_STREAM_NTF_TARGET_SWITCH::PostSwitch(pAVar1->pTargetStreamRef->aEntries + iVar3, (CActor*)pAVar1);
+		}
+		fVar4 = edF32Vector4DotProductHard((edF32VECTOR4*)(pMsgParam + 8), &(((this->base).pOwner)->base).rotationQuat);
+		if (fVar4 < 0.0) {
+			this->field_0x8 = -ABS(this->field_0x8);
+		}
+		else {
+			this->field_0x8 = ABS(this->field_0x8);
+		}
+		bVar2 = true;)
+	}
+	else {
+		bVar2 = false;
+	}
+
+	return bVar2;
+}
+
 void CBehaviourSwitchLever::Create(ByteCode* pByteCode)
 {
 	this->field_0x40.index = pByteCode->GetS32();

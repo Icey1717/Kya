@@ -48,6 +48,7 @@
 #include "DebugCinematic.h"
 #include "Native/NativeRenderer.h"
 #include "LevelScheduleManager.h"
+#include "DebugShop.h"
 
 #define DEBUG_LOG(level, format, ...) MY_LOG_CATEGORY("Debug", level, format, ##__VA_ARGS__)
 
@@ -528,6 +529,7 @@ namespace Debug {
 		{"Checkpoint", Debug::Checkpoint::ShowMenu, true },
 		{"Event", Debug::Event::ShowMenu, false },
 		{"Scene", ShowSceneMenu, true },
+		{"Shop", Debug::Shop::ShowMenu, true },
 	};
 
 	static void ForEachMenu(std::function<void(Menu&)> action) {

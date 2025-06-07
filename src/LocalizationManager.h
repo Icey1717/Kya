@@ -41,6 +41,7 @@ public:
 	// End Manager
 
 	char* GetLevelString(ulong key);
+	char* GetHelpString(ulong key);
 	char* GetActionString(int index);
 	char* GetOtherActionString(int index);
 

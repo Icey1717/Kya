@@ -17,6 +17,7 @@
 #include "FrontEndEnemy.h"
 #include "ActorHero.h"
 #include "InputManager.h"
+#include "kya.h"
 
 StateConfig CActorNativShop::_gStateCfg_SHO[5]
 {
@@ -300,15 +301,8 @@ void CBehaviourNativShopSell::Manage()
 		}
 	}
 	else {
-		if (iVar5 == 8) {
-			this->field_0xa4 = 1.0f;
-			if ((pCVar3->flags & 0x4000000) == 0) {
-				this->pOwner->SetState(5, -1);
-			}
-			else {
-				fVar7 = pCVar3->activeCamManager.GetInternalViewAlpha();
-				this->field_0xa4 = -Back_Unit.z * fVar7;
-			}
+		if (iVar5 == NATIV_SHOP_STATE_LEAVING) {
+			State_Leaving();
 		}
 		else {
 			if (iVar5 == NATIV_SHOP_STATE_DISPLAY) {
@@ -400,6 +394,23 @@ float FLOAT_00435c40 = 0.19f;
 float FLOAT_00435c44 = 0.19f;
 float FLOAT_00435c48 = 8.0f;
 
+float FLOAT_00448b80 = 0.9f;
+
+float FLOAT_00435c80 = 0.215f;
+float FLOAT_00435c84 = 0.61f;
+float FLOAT_00435c88 = 0.34f;
+float FLOAT_00435c8c = 0.25f;
+
+float FLOAT_00435c90 = 0.625f;
+float FLOAT_00435c94 = 0.61f;
+float FLOAT_00435c98 = 0.1f;
+float FLOAT_00435c9c = 0.1f;
+float FLOAT_00435ca0 = 0.875f;
+float FLOAT_00435ca4 = 0.63f;
+
+float FLOAT_00435ca8 = 0.375f;
+float FLOAT_00435cac = 0.0625f;
+
 void CBehaviourNativShopSell::Draw()
 {
 	CCamera* pCVar1;
@@ -416,7 +427,6 @@ void CBehaviourNativShopSell::Draw()
 	ulong uVar8;
 	CActor* pCVar9;
 	float fVar10;
-	Rectangle local_110;
 	edF32VECTOR4 local_100;
 	Rectangle local_f0;
 	float local_e0;
@@ -513,54 +523,60 @@ void CBehaviourNativShopSell::Draw()
 		FrontendDList_EndCurrent();
 	}
 
-	IMPLEMENTATION_GUARD_LOG(
-
 	bVar3 = GuiDList_BeginCurrent();
 	if (bVar3 == false) goto LAB_0036e618;
 	if ((this->aSubObjs[this->field_0x94].field_0x14 != 0) && (1 < pCVar4->field_0x2c)) {
 		peVar6 = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->materialId, 4);
+
 		pScene = CScene::_scene_handleA;
 		if ((peVar6 != (edDList_material*)0x0) && (this->aSubObjs[this->field_0x94].field_0x14 != 0)) {
 			pPosition = this->pathFollowReader.GetWayPoint(this->field_0x94 + 2);
+
 			bVar3 = ed3DComputeSceneCoordinate(&local_10, pPosition, pScene);
 			if (bVar3 != false) {
-				local_110.height = 0.09375;
-				local_110.width = 0.125;
-				local_110.x = local_10.x * 0.5f + 0.5f + -0.01;
-				local_110.y = -local_10.y * 0.5f + 0.5f + -0.01;
-				Display_Sprite(this, peVar6, &local_110, (_rgba)0x80808080);
+				Rectangle spriteRect;
+				spriteRect.height = 0.09375f;
+				spriteRect.width = 0.125f;
+				spriteRect.x = local_10.x * 0.5f + 0.5f + -0.01f;
+				spriteRect.y = -local_10.y * 0.5f + 0.5f + -0.01f;
+				Display_Sprite(peVar6, &spriteRect, _rgba(0x80, 0x80, 0x80, 0x80));
 			}
 		}
-		Display_BubbleText(this);
+
+		Display_BubbleText(&textStyle);
 	}
+
 	if (this->aSubObjs[this->field_0x94].field_0x14 != 0) {
 		if (this->field_0xb0 != 0) {
+			IMPLEMENTATION_GUARD(
 			local_e0 = (float)_DAT_004259c0;
 			uStack220 = (undefined4)((ulong)_DAT_004259c0 >> 0x20);
 			uStack216 = DAT_004259c8;
 			uStack212 = DAT_004259cc;
 			pcVar7 = get_message(&gMessageManager, pCVar4->field_0x10);
-			FUN_0036bcc0(this, (long)(int)pcVar7, &local_e0);
+			FUN_0036bcc0(this, (long)(int)pcVar7, &local_e0);)
 		}
-		if ((long)pCVar4->objectId == 0x20) {
+
+		if (pCVar4->objectId == 0x20) {
 			uVar8 = 1;
 		}
 		else {
-			uVar8 = FUN_003cb7c0((long)pCVar4->objectId);
+			uVar8 = CInventoryInfo::IsObjectPurchased(pCVar4->objectId);
 		}
+
 		if (uVar8 == 0) {
-			pcVar7 = get_message(&gMessageManager, pCVar4->field_0x18);
+			pcVar7 = gMessageManager.get_message(pCVar4->field_0x18);
 			fVar10 = this->field_0xb4;
 			textStyle.SetEolAutomatic(0);
-			textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.375);
-			textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.21875);
+			textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.375f);
+			textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.21875f);
 			textStyle.SetHorizontalAlignment(2);
 			textStyle.SetVerticalAlignment(4);
-			textStyle.rgbaColour = (int)((1.0f - fVar10) * 255.0) & 0xffU | 0xffffff00;
-			textStyle.alpha = (int)((1.0f - this->field_0xb4) * 192.0) & 0xff;
+			textStyle.rgbaColour = (int)((1.0f - fVar10) * 255.0f) & 0xffU | 0xffffff00;
+			textStyle.alpha = (int)((1.0f - this->field_0xb4) * 192.0f) & 0xff;
 			textStyle.altColour = textStyle.rgbaColour;
 			textStyle.SetScale(FLOAT_00448b80, FLOAT_00448b80);
-			Display_Text(0.5f, 0.575, this, pcVar7);
+			Display_Text(0.5f, 0.575f, &textStyle, pcVar7);
 			textStyle.SetScale(1.2f, 1.2f);
 			textStyle.alpha = 0xc0;
 		}
@@ -569,78 +585,86 @@ void CBehaviourNativShopSell::Draw()
 				fVar10 = this->field_0xb4;
 				textStyle.SetScale(1.0f, 1.0f);
 				textStyle.SetEolAutomatic(0);
-				textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.375);
-				textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.21875);
+				textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.375f);
+				textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.21875f);
 				textStyle.SetHorizontalAlignment(0);
 				textStyle.SetVerticalAlignment(4);
-				textStyle.rgbaColour = (int)((1.0f - fVar10) * 255.0) & 0xffU | 0xffffff00;
-				textStyle.alpha = (int)((1.0f - this->field_0xb4) * 192.0) & 0xff;
+				textStyle.rgbaColour = (int)((1.0f - fVar10) * 255.0f) & 0xffU | 0xffffff00;
+				textStyle.alpha = (int)((1.0f - this->field_0xb4) * 192.0f) & 0xff;
 				textStyle.altColour = textStyle.rgbaColour;
-				pcVar7 = CLanguageManager::GetHelpString(pLanguageManager, 0x414143524b5d550c);
-				Display_Text(0.075, 0.575, this, pcVar7);
+				pcVar7 = pLanguageManager->GetHelpString(0x414143524b5d550c);
+				Display_Text(0.075f, 0.575f, &textStyle, pcVar7);
 				textStyle.SetScale(1.2f, 1.2f);
 				textStyle.alpha = 0xc0;
 			}
 		}
 	}
-	textStyle.SetHorizontalSize(DAT_00435ca8 * (float)gVideoConfig.screenWidth);
-	textStyle.SetVerticalSize(DAT_00435cac * (float)gVideoConfig.screenHeight);
+
+	textStyle.SetHorizontalSize(FLOAT_00435ca8* (float)gVideoConfig.screenWidth);
+	textStyle.SetVerticalSize(FLOAT_00435cac * (float)gVideoConfig.screenHeight);
 	textStyle.rgbaColour = -0xff01;
-	Display_Mts(-this->field_0xa4 + DAT_00435ca0, DAT_00435ca4, this);
-	peVar6 = C3DFileManager::GetMaterialFromId(CScene::ptable.g_C3DFileManager_00451664, this->materialId, 5);
-	local_f0.x = -this->field_0xa4 + DAT_00435c90;
-	local_f0.y = DAT_00435c94;
-	local_f0.width = DAT_00435c98;
-	local_f0.height = DAT_00435c9c;
-	Display_Sprite(this, peVar6, &local_f0, (_rgba)0x80808080);
+	Display_Mts(-this->field_0xa4 + FLOAT_00435ca0, FLOAT_00435ca4, &textStyle, this->field_0xac);
+
+	peVar6 = CScene::ptable.g_C3DFileManager_00451664->GetMaterialFromId(this->materialId, 5);
+	local_f0.x = -this->field_0xa4 + FLOAT_00435c90;
+	local_f0.y = FLOAT_00435c94;
+	local_f0.width = FLOAT_00435c98;
+	local_f0.height = FLOAT_00435c9c;
+	Display_Sprite(peVar6, &local_f0, _rgba(0x80, 0x80, 0x80, 0x80));
 	textStyle.SetEolAutomatic(0);
-	textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.375);
-	textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.21875);
+	textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.375f);
+	textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.21875f);
 	textStyle.SetHorizontalAlignment(0);
 	textStyle.SetVerticalAlignment(0);
 	textStyle.altColour = 0xffffffff;
 	textStyle.rgbaColour = 0xffff00ff;
-	pcVar7 = CLanguageManager::GetHelpString(pLanguageManager, 0xc0d17190b475549);
-	Display_Text(0.675 - this->field_0xa4, 0.875, this, pcVar7);
+
+	pcVar7 = pLanguageManager->GetHelpString(0xc0d17190b475549);
+	Display_Text(0.675f - this->field_0xa4, 0.875f, &textStyle, pcVar7);
+
 	if (this->aSubObjs[this->field_0x94].field_0x14 == 0) {
 	LAB_0036e3f0:
 		textStyle.rgbaColour = 0x808080ff;
 		textStyle.altColour = 0x808080ff;
 	}
 	else {
-		if ((long)pCVar4->objectId == 0x20) {
+		if (pCVar4->objectId == 0x20) {
 			uVar8 = 1;
 		}
 		else {
-			uVar8 = FUN_003cb7c0((long)pCVar4->objectId);
+			uVar8 = CInventoryInfo::IsObjectPurchased(pCVar4->objectId);
 		}
+
 		if (uVar8 == 0) goto LAB_0036e3f0;
 	}
+
 	pcVar7 = pLanguageManager->GetHelpString(0xc0a1a095f475549);
-	Display_Text(0.675 - this->field_0xa4, 0.775, this, pcVar7);
+	Display_Text(0.675f - this->field_0xa4, 0.775f, &textStyle, pcVar7);
 	if (this->aSubObjs[this->field_0x94].field_0x14 != 0) {
 		textStyle.SetHorizontalSize(FLOAT_00435c88 * (float)gVideoConfig.screenWidth);
 		textStyle.SetVerticalSize(FLOAT_00435c8c * (float)gVideoConfig.screenHeight);
 		textStyle.SetHorizontalAlignment(2);
 		textStyle.rgbaColour = -0xff01;
-		pcVar7 = get_message(&gMessageManager, pCVar4->field_0x8);
-		Display_Text(this->field_0xa4 + FLOAT_00435c80, FLOAT_00435c84, this, pcVar7);
+		pcVar7 = gMessageManager.get_message(pCVar4->field_0x8);
+		Display_Text(this->field_0xa4 + FLOAT_00435c80, FLOAT_00435c84, &textStyle, pcVar7);
 		textStyle.SetHorizontalAlignment(0);
-		textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.34);
-		textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.09375);
+		textStyle.SetHorizontalSize((float)gVideoConfig.screenWidth * 0.34f);
+		textStyle.SetVerticalSize((float)gVideoConfig.screenHeight * 0.09375f);
 		textStyle.rgbaColour = -0xff01;
-		pcVar7 = CLanguageManager::GetHelpString(pLanguageManager, 0x45425e151218051b);
-		Display_Text(this->field_0xa4 + 0.05, 0.89, this, pcVar7);
-		if (CLevelScheduler::_gGameNfo.nbMoney < pCVar4->field_0x30) {
+		pcVar7 = pLanguageManager->GetHelpString(0x45425e151218051b);
+		Display_Text(this->field_0xa4 + 0.05f, 0.89f, &textStyle, pcVar7);
+
+		if (CLevelScheduler::_gGameNfo.nbMoney < pCVar4->moneyCost) {
 			textStyle.rgbaColour = 0xff4040ff;
 		}
 		else {
 			textStyle.rgbaColour = 0x40ff40ff;
 		}
-		Display_Mts(this->field_0xa4 + 0.29, 0.89, this);
+
+		Display_Mts(this->field_0xa4 + 0.29f, 0.89f, &textStyle, pCVar4->moneyCost);
 	}
 
-	GuiDList_EndCurrent();)
+	GuiDList_EndCurrent();
 
 LAB_0036e618:
 	edTextStyleSetCurrent(pNewFont);
@@ -725,19 +749,9 @@ void CBehaviourNativShopSell::InitState(int newState)
 			State_Display_Init();
 		}
 		else {
-			if (newState == 8) {
-				IMPLEMENTATION_GUARD(
-				if (CActorHero::_gThis != (CActorHero*)0x0) {
-					local_4 = 0;
-					CActor::DoMessage((CActor*)this->pOwner, (CActor*)CActorHero::_gThis, 0x24, 0);
+			if (newState == NATIV_SHOP_STATE_LEAVING) {
+					State_Leaving_Init();
 				}
-				pCameraView = (this->streamRefCamera).pCamera;
-				if (pCameraView != (CCamera*)0x0) {
-					CCameraManager::PopCamera(CScene::ptable.g_CameraManager_0045167c, pCameraView);
-				}
-				this->field_0xb0 = 0;
-				this->field_0xb4 = 0.0f;)
-			}
 			else {
 				if (newState == NATIV_SHOP_STATE_ENTERING) {
 					State_Entering_Init();
@@ -767,7 +781,7 @@ void CBehaviourNativShopSell::TermState(int oldState, int newState)
 		pCVar4 = pCVar1->GetInventoryInfo();
 		local_4 = &local_20;
 		local_20 = 3;
-		local_1c = pCVar4->field_0x20;
+		local_1c = pCVar4->purchaseId;
 		this->pOwner->DoMessage((this->pOwner->actorRef).Get(), (ACTOR_MESSAGE)0x60, &local_20);
 		pCVar2 = CLevelScheduler::gThis;
 		pCVar1 = this->aSubObjs[this->field_0x94].streamRefActor.Get();
@@ -815,7 +829,7 @@ int CBehaviourNativShopSell::InterpretMessage(CActor* pSender, int msg, void* pM
 		else {
 			if (msg == 0x14) {
 				if (reinterpret_cast<int>(pMsgParam) == 1) {
-					this->pOwner->SetState(8, -1);
+					this->pOwner->SetState(NATIV_SHOP_STATE_LEAVING, -1);
 				}
 				else {
 					this->pOwner->SetState(NATIV_SHOP_STATE_ENTERING, -1);
@@ -868,7 +882,7 @@ void CBehaviourNativShopSell::UpdateValidity()
 	pCVar7 = this->aSubObjs;
 	do {
 		this->field_0x98 = this->field_0x98 | pCVar7->field_0x14;
-		if ((pCVar7->field_0x14 != 0) && (pCVar1 = pCVar7->streamRefActor.Get(), pCVar4 = pCVar1->GetInventoryInfo(), pCVar4->field_0x20 < 0x15)) {
+		if ((pCVar7->field_0x14 != 0) && (pCVar1 = pCVar7->streamRefActor.Get(), pCVar4 = pCVar1->GetInventoryInfo(), pCVar4->purchaseId < 0x15)) {
 			bVar3 = true;
 		}
 
@@ -890,7 +904,7 @@ void CBehaviourNativShopSell::UpdateValidity()
 			if (puVar5 <= iVar9) break;
 
 			local_4 = 0;
-			pShop->DoMessage(pShop->pActorStream->aEntries[iVar9].Get(), (ACTOR_MESSAGE)0x24, 0);
+			pShop->DoMessage(pShop->pActorStream->aEntries[iVar9].Get(), MESSAGE_LEAVE_SHOP, 0);
 			local_8 = 0;
 			this->pOwner->DoMessage(this->pOwner->pActorStream->aEntries[iVar9].Get(), (ACTOR_MESSAGE)0x51, 0);
 			iVar9 = iVar9 + 1;
@@ -1016,7 +1030,7 @@ void CBehaviourNativShopSell::State_Display()
 	pCVar1 = CActorHero::_gThis->GetInputManager(0, 0);
 	if (pCVar1 == (CPlayerInput*)0x0) {
 		this->pOwner->field_0x168 = 0;
-		this->pOwner->SetState(8, -1);
+		this->pOwner->SetState(NATIV_SHOP_STATE_LEAVING, -1);
 	}
 
 	if (this->field_0xb0 == 0) {
@@ -1082,18 +1096,51 @@ LAB_0036d528:
 	}
 
 LAB_0036d578:
-	if ((pCVar1->pressedBitfield & 0x4000000) != 0) {
+	if ((pCVar1->pressedBitfield & PAD_BITMASK_TRIANGLE) != 0) {
 		local_8 = local_30;
 		local_30[0] = 1;
 		this->pOwner->DoMessage((this->pOwner->actorRef).Get(), (ACTOR_MESSAGE)0x60, &local_30);
 		this->pOwner->field_0x168 = 0;
-		this->pOwner->SetState(8, -1);
+		this->pOwner->SetState(NATIV_SHOP_STATE_LEAVING, -1);
 	}
 
 	return;
 }
 
-void CBehaviourNativShopSell::Display_Cursor(float param_1, _rgba color)
+void CBehaviourNativShopSell::State_Leaving_Init()
+{
+	if (CActorHero::_gThis != (CActorHero*)0x0) {
+		uint local_4 = 0;
+		this->pOwner->DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)0x24, 0);
+	}
+
+	CCamera* pCameraView = (this->streamRefCamera).Get();
+	if (pCameraView != (CCamera*)0x0) {
+		CScene::ptable.g_CameraManager_0045167c->PopCamera(pCameraView);
+	}
+
+	this->field_0xb0 = 0;
+	this->field_0xb4 = 0.0f;
+
+	return;
+}
+
+void CBehaviourNativShopSell::State_Leaving()
+{
+	CCameraManager* pCVar3 = CScene::ptable.g_CameraManager_0045167c;
+
+	this->field_0xa4 = 1.0f;
+	if ((pCVar3->flags & 0x4000000) == 0) {
+		this->pOwner->SetState(5, -1);
+	}
+	else {
+		this->field_0xa4 = -Back_Unit.z * pCVar3->activeCamManager.GetInternalViewAlpha();
+	}
+
+	return;
+}
+
+void CBehaviourNativShopSell::Display_Cursor(float scale, _rgba color)
 {
 	CCameraManager* pCameraManager;
 	edF32VECTOR4* peVar2;
@@ -1127,7 +1174,7 @@ void CBehaviourNativShopSell::Display_Cursor(float param_1, _rgba color)
 	edF32Vector4SubHard(&auStack64.rowX, peVar2, peVar3);
 	edF32Vector4NormalizeHard(&auStack64.rowX, &auStack64.rowX);
 	edF32Vector4CrossProductHard(&auStack64.rowZ, pRowY, &auStack64.rowX);
-	edF32Vector4ScaleHard(param_1, &eStack80, &auStack64.rowZ);
+	edF32Vector4ScaleHard(scale, &eStack80, &auStack64.rowZ);
 	peVar2 = this->pathFollowReader.GetWayPoint(this->field_0x94 + 2);
 	edF32Vector4AddHard(&auStack64.rowT, peVar2, &eStack80);
 	edDListLoadMatrix(&auStack64);
@@ -1331,6 +1378,111 @@ void CBehaviourNativShopSell::Display_BottomBackGround()
 
 	return;
 }
+
+void CBehaviourNativShopSell::Display_Sprite(edDList_material* pMaterial, Rectangle* pRect, _rgba color)
+{
+	undefined4* puVar1;
+	undefined4* puVar2;
+	undefined4* puVar3;
+	float y;
+	float y_00;
+	float x;
+	float x_00;
+	_rgba local_4 = {};
+
+	local_4 = color;
+	edDListLoadIdentity();
+	edDListUseMaterial(pMaterial);
+
+	x = pRect->x * (float)gVideoConfig.screenWidth;
+	y = pRect->y * (float)gVideoConfig.screenHeight;
+	x_00 = x + pRect->width * (float)gVideoConfig.screenWidth;
+	y_00 = y + pRect->height * (float)gVideoConfig.screenHeight;
+
+	edDListBegin(0.0f, 0.0f, 0.0f, 4, 4);
+	edDListColor4u8(local_4.r, local_4.g, local_4.b, local_4.a);
+	edDListTexCoo2f(0.0f, 0.0f);
+	edDListVertex4f(x, y, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 0.0f);
+	edDListVertex4f(x_00, y, 0.0f, 0.0f);
+	edDListTexCoo2f(0.0f, 1.0f);
+	edDListVertex4f(x, y_00, 0.0f, 0.0f);
+	edDListTexCoo2f(1.0f, 1.0f);
+	edDListVertex4f(x_00, y_00, 0.0f, 0.0f);
+	edDListEnd();
+
+	return;
+}
+
+void CBehaviourNativShopSell::Display_BubbleText(edCTextStyle* pStyle)
+{
+	CActor* pCVar1;
+	bool bVar2;
+	edF32VECTOR4* pPosition;
+	edF32VECTOR2 local_8;
+
+	pCVar1 = this->aSubObjs[this->field_0x94].streamRefActor.Get();
+	CInventoryInfo* pInventoryInfo = pCVar1->GetInventoryInfo();
+
+	pPosition = this->pathFollowReader.GetWayPoint(this->field_0x94 + 2);
+
+	bVar2 = ed3DComputeSceneCoordinate(&local_8, pPosition, CScene::_scene_handleA);
+	if (bVar2 != false) {
+		pStyle->SetEolAutomatic(0);
+		pStyle->SetHorizontalSize(FLOAT_00435c88 * (float)gVideoConfig.screenWidth);
+		pStyle->SetVerticalSize(FLOAT_00435c8c * (float)gVideoConfig.screenHeight);
+		pStyle->SetHorizontalAlignment(2);
+		pStyle->SetVerticalAlignment(0);
+		pStyle->rgbaColour = -0xff01;
+		edCTextFormat auStack5408;
+		local_8.x = (float)gVideoConfig.screenWidth * (local_8.x * 0.5f + 0.5f + 0.05f);
+		local_8.y = (float)gVideoConfig.screenHeight * (-local_8.y * 0.5f + 0.5f + 0.0025f);
+		auStack5408.FormatString("x%u", pInventoryInfo->field_0x2c);
+		auStack5408.Display(local_8.x, local_8.y);
+	}
+
+	return;
+}
+
+void CBehaviourNativShopSell::Display_Text(float param_1, float param_2, edCTextStyle* pStyle, char* pText)
+{
+	edCTextFormat textFormat;
+	textFormat.FormatString(pText);
+	textFormat.Display(param_1 * (float)gVideoConfig.screenWidth, param_2 * (float)gVideoConfig.screenHeight);
+	return;
+}
+
+
+void CBehaviourNativShopSell::Display_Mts(float param_1, float param_2, edCTextStyle* pStyle, uint param_5)
+{
+	edDList_material* pMaterial;
+	Rectangle local_1530;
+	Rectangle local_1520;
+	edCTextFormat auStack5392;
+
+	pMaterial = &((CScene::ptable.g_FrontendManager_00451680)->pMoney->sprite).materialInfo;
+	local_1520.width = 0.06f;
+	local_1520.height = 0.06f;
+	local_1520.x = param_1;
+	local_1520.y = param_2;
+	pStyle->SetEolAutomatic(0);
+	pStyle->SetVerticalAlignment(0);
+	pStyle->SetHorizontalAlignment(1);
+	auStack5392.FormatString("%u ", param_5);
+	auStack5392.Display(param_1 * (float)gVideoConfig.screenWidth, param_2 * (float)gVideoConfig.screenHeight);
+	local_1520.y = local_1520.y + 0.005f;
+	local_1530.x = local_1520.x + 0.005f;
+	local_1530.width = local_1520.width;
+	local_1530.height = local_1520.height;
+	local_1530.y = local_1520.y + 0.005f;
+
+	Display_Sprite(pMaterial, &local_1530, _rgba(0x80, 0x80, 0x80, 0x80));
+	Display_Sprite(pMaterial, &local_1520, _rgba(0x80, 0x80, 0x80, 0x80));
+
+	return;
+}
+
+
 
 void ShopObjData::Display_Object(CActor* pActor)
 {

@@ -245,3 +245,71 @@ bool CVision::_PointIsDetected(edF32VECTOR4* v0, CActor* pTargetActor)
 
 	return bResult;
 }
+
+struct ScanActorsParams
+{
+	CVision* pVision;
+	CActor* pOwner;
+	CActorsTable* pTable;
+	int mode;
+};
+
+void gClusterCallback_AllActorsInVision(CActor* pActor, void* pData)
+{
+	CActor* pCVar1;
+
+	ScanActorsParams* pParams = reinterpret_cast<ScanActorsParams*>(pData);
+
+	if ((pActor != pParams->pOwner) &&
+		(pCVar1 = pParams->pVision->ScanForTarget(pActor, pParams->mode), pCVar1 != (CActor*)0x0)) {
+		pParams->pTable->Add(pActor);
+	}
+
+	return;
+}
+
+void CVision::ScanAccurate(float maxDistance, CActorsTable* pTable, int param_4)
+{
+	CActor** pCVar1;
+	int iVar2;
+	float fVar3;
+	edF32VECTOR4 eStack80;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	ScanActorsParams local_20;
+	_ray_info_out local_10;
+
+	local_30.xyz = (this->location).xyz;
+	local_30.w = this->field_0x40 + this->visionRange_0x34;
+
+	local_20.pOwner = this->pOwner;
+	local_20.pVision = this;
+	local_20.pTable = pTable;
+	local_20.mode = param_4;
+	(CScene::ptable.g_ActorManager_004516a4)->cluster.ApplyCallbackToActorsIntersectingSphere(&local_30, gClusterCallback_AllActorsInVision, &local_20);
+
+	CCollisionRay CStack112 =CCollisionRay(1.0f, &this->location, &gF32Vector4UnitZ);
+	iVar2 = 0;
+	pCVar1 = pTable->aEntries;
+	if (0 < pTable->nbEntries) {
+		do {
+			(*pCVar1)->GetVisualDetectionPoint(&eStack80, 0);
+			edF32Vector4SubHard(&eStack64, &eStack80, &this->location);
+			eStack64.w = 0.0f;
+			fVar3 = edF32Vector4NormalizeHard(&eStack64, &eStack64);
+			CStack112.ChangeLeadVector(&eStack64);
+			CStack112.ChangeMaxDistance(fVar3 + 1.0f);
+
+			fVar3 = CStack112.Intersect(2, (CActor*)0x0, (CActor*)0x0, 0x40000020, (edF32VECTOR4*)0x0, &local_10);
+			if ((local_10.pActor_0x0 != *pCVar1) || (maxDistance < fVar3)) {
+				pTable->Pop(iVar2);
+			}
+			else {
+				pCVar1 = pCVar1 + 1;
+				iVar2 = iVar2 + 1;
+			}
+		} while (iVar2 < pTable->nbEntries);
+	}
+
+	return;
+}

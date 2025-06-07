@@ -28,6 +28,7 @@
 #ifdef PLATFORM_WIN
 #include "displaylist.h"
 #endif
+#include "CameraBoomy.h"
 
 CCameraManager* CCameraManager::_gThis = NULL;
 CCameraManager* CCamera::_gpcam_man = NULL;
@@ -1492,12 +1493,7 @@ CCamera* CCameraManager::AddCamera(ECameraType type, ByteCode* pByteCode, char* 
 		newObjectPtr = new CCameraGame(type, pByteCode);
 		break;
 	case CT_SilverBoomy:
-		IMPLEMENTATION_GUARD(
-		pVVar5 = (VSilverBoomy*)operator.new(0x180);
-		newObjectPtr = (long)(int)pVVar5;
-		if (newObjectPtr != 0) {
-			newObjectPtr = VSilverBoomy::Constructor_0018adb0(pVVar5);
-		})
+		newObjectPtr = new CCameraAim();
 		break;
 	case CT_IntView:
 		IMPLEMENTATION_GUARD(

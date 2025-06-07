@@ -564,16 +564,16 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	if (msg == 0x60) {
 		int* pIntParam = (int*)pMsgParam;
 		if (*pIntParam == 3) {
-			IMPLEMENTATION_GUARD(
-			pCVar6 = CActor::GetBehaviour((CActor*)this, 7);
-			if ((long)(int)pCVar6 != 0) {
-				uVar10 = FUN_003f30d0((long)(int)pCVar6, (long)*(int*)((int)pMsgParam + 4));
-				lVar8 = (*(code*)((pCVar6[3].pVTable)->field_0x0).SectorChange)(pCVar6 + 3, uVar10, 0, 1);
-				if (lVar8 != 0) {
-					pCVar6[10].pVTable = (CBehaviourMovingPlatformVTable*)0x1d;
+			pCVar6 = GetBehaviour(7);
+			if (pCVar6 != (CBehaviour*)0x0) {
+				CBehaviourNativSeller* pSeller = static_cast<CBehaviourNativSeller*>(pCVar6);
+				uVar10 = pSeller->GetPurchaseCutsceneId(pIntParam[1]);
+				if (pSeller->addOn.Func_0x20(uVar10, 0, 1) != 0) {
+					pSeller->cachedStateId = 0x1d;
 				}
+
 				return 1;
-			})
+			}
 		}
 	}
 	else {
@@ -1271,7 +1271,7 @@ void CActorNativ::BehaviourNativAkasa_TermState(int oldState)
 	}
 	else {
 		if (oldState == 0x26) {
-			DoMessage(CActorHero::_gThis, (ACTOR_MESSAGE)0x24, 0);
+			DoMessage(CActorHero::_gThis, MESSAGE_LEAVE_SHOP, 0);
 		}
 	}
 
@@ -1331,7 +1331,7 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 	else {
 		if (iVar7 == 0x1d) {
 			if ((20.0f < this->timeInAir) && (pBehaviour->addOn.Func_0x20(3, (CActor*)0x0, 0) != 0)) {
-				pBehaviour->field_0x28 = 0x1d;
+				pBehaviour->cachedStateId = 0x1d;
 			}
 		}
 		else {
@@ -1363,7 +1363,7 @@ void CActorNativ::BehaviourNativSeller_Manage(CBehaviourNativSeller* pBehaviour)
 								SetState(0x1c, -1);
 							}
 							else {
-								pBehaviour->field_0x28 = 0x1c;
+								pBehaviour->cachedStateId = 0x1c;
 							}
 						}
 					}
@@ -1870,7 +1870,7 @@ void CActorNativ::StateNativSellerStandCome(CBehaviourNativSeller* pBehaviour)
 	else {
 		if ((20.0f < this->timeInAir) && (((pActor == (CActor*)0x0 || (pActor->actorState != 7)) &&
 				(bVar5 = pBehaviour->addOn.Func_0x20(2, (CActor*)0x0, 0), bVar5 != false)))) {
-			pBehaviour->field_0x28 = 0x1c;
+			pBehaviour->cachedStateId = 0x1c;
 		}
 	}
 
@@ -5490,7 +5490,7 @@ void CBehaviourNativSeller::Create(ByteCode* pByteCode)
 
 void CBehaviourNativSeller::Init(CActor* pOwner)
 {
-	this->field_0x28 = -1;
+	this->cachedStateId = -1;
 	this->pOwner = static_cast<CActorNativ*>(pOwner);
 
 	this->addOn.Init(pOwner);
@@ -5521,11 +5521,11 @@ void CBehaviourNativSeller::Begin(CActor* pOwner, int newState, int newAnimation
 {
 	this->pOwner = static_cast<CActorNativ*>(pOwner);
 	if (newState == -1) {
-		if (this->field_0x28 == -1) {
+		if (this->cachedStateId == -1) {
 			this->pOwner->SetState(0x1a, -1);
 		}
 		else {
-			this->pOwner->SetState(this->field_0x28, -1);
+			this->pOwner->SetState(this->cachedStateId, -1);
 		}
 	}
 	else {
@@ -5555,7 +5555,7 @@ void CBehaviourNativSeller::TermState(int oldState, int newState)
 int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
 	int iVar1;
-	CActorNativ* pCVar2;
+	CActorNativ* pNativ;
 	undefined4 uVar3;
 	int iVar4;
 	long lVar5;
@@ -5565,55 +5565,49 @@ int CBehaviourNativSeller::InterpretMessage(CActor* pSender, int msg, void* pMsg
 		iVar4 = 1;
 		iVar1 = *pMsg;
 		if (iVar1 == 1) {
-			IMPLEMENTATION_GUARD(
-
-			lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, 0x25, 0, 0);
-			if (lVar5 == 0) {
-				pCVar2 = this->pOwner;
-				if ((pCVar2->base).base.base.curBehaviourId == 1) {
-					this->field_0x28 = 0x1c;
+			if (this->addOn.Func_0x20(0x25, 0, 0) == 0) {
+				pNativ = this->pOwner;
+				if (pNativ->curBehaviourId == 1) {
+					this->cachedStateId = 0x1c;
 				}
 				else {
-					(*((pCVar2->base).base.base.pVTable)->SetState)((CActor*)pCVar2, 0x1c, -1);
+					pNativ->SetState(0x1c, -1);
 				}
 			}
 			else {
-				this->field_0x28 = 0x1c;
+				this->cachedStateId = 0x1c;
 			}
-			iVar4 = 1;)
+
+			iVar4 = 1;
 		}
 		else {
 			if (iVar1 == 2) {
-				IMPLEMENTATION_GUARD(
-				lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, 0x24, 0, 0);
-				if (lVar5 != 0) {
-					this->field_0x28 = 0x1d;
+				if (this->addOn.Func_0x20(0x24, 0, 0) != 0) {
+					this->cachedStateId = 0x1d;
 				}
-				iVar4 = 1;)
+
+				iVar4 = 1;
 			}
 			else {
 				if (iVar1 == 3) {
-					IMPLEMENTATION_GUARD(
-					uVar3 = FUN_003f30d0((long)(int)this, (long)pMsgParam[1]);
-					lVar5 = (*(code*)((this->addOn).base.pVTable)->field_0x20)(&this->addOn, uVar3, 0, 1);
-					if (lVar5 != 0) {
-						this->field_0x28 = 0x1d;
+					if (this->addOn.Func_0x20(GetPurchaseCutsceneId(pMsg[1]), 0, 1) != 0) {
+						this->cachedStateId = 0x1d;
 					}
-					iVar4 = 1;)
+					iVar4 = 1;
 				}
 				else {
 					if (iVar1 == 0) {
 						if (this->addOn.Func_0x20(3, 0, 0) == 0) {
-							pCVar2 = this->pOwner;
-							if (pCVar2->curBehaviourId == 1) {
-								this->field_0x28 = 0x1d;
+							pNativ = this->pOwner;
+							if (pNativ->curBehaviourId == 1) {
+								this->cachedStateId = 0x1d;
 							}
 							else {
-								pCVar2->SetState(0x1d, -1);
+								pNativ->SetState(0x1d, -1);
 							}
 						}
 						else {
-							this->field_0x28 = 0x1d;
+							this->cachedStateId = 0x1d;
 						}
 
 						iVar4 = 1;
@@ -5690,4 +5684,78 @@ void CBehaviourNativSeller::FUN_003f3020()
 		iVar1 = iVar1 + 1;
 	} while (iVar1 < 0x26);
 	return;
+}
+
+int CBehaviourNativSeller::GetPurchaseCutsceneId(int objectId)
+{
+	if (objectId < 0x20) {
+		switch (objectId) {
+		case 0:
+			return 0x4;
+		case 1:
+			return 0x5;
+		case 2:
+			return 0x6;
+		case 3:
+			return 0x7;
+		case 4:
+			return 0x8;
+		case 5:
+			return 0x9;
+		case 6:
+			return 0xa;
+		case 7:
+			return 0xe;
+		case 8:
+			return 0xb;
+		case 9:
+			return 0xc;
+		case 10:
+			return 0xd;
+		case 11:
+			return 0xf;
+		case 12:
+			return 0x10;
+		case 13:
+			return 0x11;
+		case 14:
+			return 0x12;
+		case 15:
+			return 0x13;
+		case 16:
+			return 0x14;
+		case 17:
+			return 0x15;
+		case 18:
+			return 0x16;
+		case 19:
+			return 0x17;
+		case 20:
+			return 0x18;
+		case 21:
+			return 0x19;
+		case 22:
+			return 0x1a;
+		case 23:
+			return 0x1b;
+		case 24:
+			return 0x1c;
+		case 25:
+			return 0x1d;
+		case 26:
+			return 0x1e;
+		case 27:
+			return 0x1f;
+		case 28:
+			return 0x20;
+		case 29:
+			return 0x21;
+		case 30:
+			return 0x22;
+		case 31:
+			return 0x23;
+		}
+	}
+
+	return -1;
 }

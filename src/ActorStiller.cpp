@@ -1,6 +1,7 @@
 #include "ActorStiller.h"
 #include "MemoryStream.h"
 #include "CinematicManager.h"
+#include "MathOps.h"
 
 void CActorStiller::Create(ByteCode* pByteCode)
 {
@@ -276,46 +277,28 @@ int CActorStiller::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 		return 1;
 	}
 
-	if (msg == 7) {
-		IMPLEMENTATION_GUARD(
-		iVar7 = this->actorState;
-		if (iVar7 == -1) {
-			uVar5 = 0;
-		}
-		else {
-			pSVar6 = (*(this->pVTable)->GetStateCfg)((CActor*)this, iVar7);
-			uVar5 = pSVar6->flags_0x4 & 1;
-		}
+	if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
+		uVar5 = GetStateFlags(this->actorState) & 1;
 
 		bVar1 = uVar5 != 0;
 		if (bVar1) {
 			bVar1 = this->field_0x214 != 0;
 		}
+
 		if (!bVar1) {
-			iVar7 = this->actorState;
-			if (iVar7 == -1) {
-				uVar5 = 0;
-			}
-			else {
-				pSVar6 = (*(this->pVTable)->GetStateCfg)((CActor*)this, iVar7);
-				uVar5 = pSVar6->flags_0x4 & 0x100;
-			}
-			bVar1 = uVar5 == 0;
+			bVar1 = (GetStateFlags(this->actorState) & 100) == 0;
 		}
-		fVar4 = gF32Vector4Zero.w;
-		fVar3 = gF32Vector4Zero.z;
-		fVar8 = gF32Vector4Zero.y;
+
 		if (bVar1) {
+			GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
 			if (this->field_0x1d4 != 0) {
-				CActor::SV_GetBoneWorldPosition((CActor*)this, this->field_0x1d4, &eStack16);
-				edF32Vector4SubHard((edF32VECTOR4*)((int)pMsgParam + 0x20), &eStack16, &this->currentLocation);
+				SV_GetBoneWorldPosition(this->field_0x1d4, &eStack16);
+				edF32Vector4SubHard(&pGetPosMsgParams->vectorFieldB, &eStack16, &this->currentLocation);
 				return 1;
 			}
-			*(float*)((int)pMsgParam + 0x20) = gF32Vector4Zero.x;
-			*(float*)((int)pMsgParam + 0x24) = fVar8;
-			*(float*)((int)pMsgParam + 0x28) = fVar3;
-			*(float*)((int)pMsgParam + 0x2c) = fVar4;
-		})
+
+			pGetPosMsgParams->vectorFieldB = gF32Vector4Zero;
+		}
 	}
 	else {
 		if (msg != 2) {

@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "edCTextStyle.h"
 
+#include <stdarg.h>
+
 #define TEXT_FLAG_SHADOW 0x100
 
 struct edDList_material;
@@ -21,7 +23,8 @@ struct edTextBitmap
 	float field_0x20;
 };
 
-struct TextLine {
+struct TextLine
+{
 	char* pTextStart;
 	char* pTextEnd;
 	struct edCTextStyle* pTextStyle;
@@ -38,7 +41,8 @@ struct TextLine {
 	undefined field_0x27;
 };
 
-struct astruct_5 {
+struct FormatSpec
+{
 	int switchMode;
 	int field_0x4;
 	char* pText;
@@ -49,11 +53,12 @@ struct astruct_5 {
 	undefined field_0x16;
 	undefined field_0x17;
 	int field_0x18;
-	int field_0x1c;
-	int field_0x20;
+	int numberFormatBase;
+	int caseMode;
 };
 
-struct astruct_10 {
+struct astruct_10
+{
 	int field_0x0;
 	int field_0x4;
 	int field_0x8;
@@ -64,15 +69,16 @@ struct astruct_10 {
 	int field_0x1c;
 };
 
-struct edCTextFormat {
+struct edCTextFormat
+{
 	void DisplayWindow(float x, float y, Rectangle* pRect);
 	void Display(float x, float y);
 	void DisplayDebugInfos(float x, float y);
 	void DrawString(float x, float y, bool bFlag);
 	void SendTextRenderCommands_0028b0e0(struct DrawText16* pTextRenderCommands);
 	void GetRect();
-	bool FormatString(char* pText, char* param_3);
-	bool FormatString(char* pText);
+	bool FormatString(char* pText, va_list param_3);
+	bool FormatString(char* pText, ...);
 
 	edCTextFormat();
 	edCTextFormat(edCTextStyle* pStyle);

@@ -193,3 +193,9 @@ bool CFxTail::Manage(edF32VECTOR4* param_2, edF32VECTOR4* param_3, int param_4)
 
 	return bVar1;
 }
+
+bool CFxTail::Manage(edF32VECTOR4* param_2, int param_3, int param_4)
+{
+	IMPLEMENTATION_GUARD_FX();
+	return true;
+}

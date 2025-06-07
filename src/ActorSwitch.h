@@ -131,7 +131,7 @@ public:
 
 	virtual void Manage();
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
-	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam) { IMPLEMENTATION_GUARD(); return 0; }
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 
 	virtual void SaveContext(uint*, int) {}
 	virtual void LoadContext(uint*, int) {}

@@ -298,14 +298,11 @@ int CActorAmortos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	long lVar2;
 	edF32VECTOR4 local_10;
 
-	if (msg == 7) {
-		IMPLEMENTATION_GUARD(
-		edF32Vector4ScaleHard(2.0, &local_10, (edF32VECTOR4*)&((this->pMeshTransform)->base).transformA.ba);
+	if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
+		GetPositionMsgParams* pGetPosMsgParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
+		edF32Vector4ScaleHard(2.0f, &local_10, &this->pMeshTransform->base.transformA.rowY);
 		iVar1 = 1;
-		*(float*)((int)pMsgParam + 0x20) = local_10.x;
-		*(float*)((int)pMsgParam + 0x24) = local_10.y;
-		*(float*)((int)pMsgParam + 0x28) = local_10.z;
-		*(float*)((int)pMsgParam + 0x2c) = local_10.w;)
+		pGetPosMsgParams->vectorFieldB = local_10;
 	}
 	else {
 		if ((msg == 0xf) || (msg == 0x43)) {

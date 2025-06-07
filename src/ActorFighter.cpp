@@ -3293,13 +3293,13 @@ void CActorFighter::_StateFighterHitFlyToSlide()
 	CCollisionRay CStack384 = CCollisionRay(1.2f, &local_130, &eStack336);
 	fVar5 = CStack384.Intersect(RAY_FLAG_ACTOR_SCENERY, (CActor*)0x0, (CActor*)0x0, 0x40000008, &eStack352, &_Stack16);
 	if (fVar5 != 1e+30f) {
-		uVar4 = (uint)_Stack16.pVector_0x4 & 0xf;
+		uVar4 = _Stack16.hitMaterialFlags & 0xf;
 		if (uVar4 == 0) {
 			uVar4 = CScene::_pinstance->defaultMaterialIndex;
 		}
 
 		if (CCollisionManager::_material_table[uVar4].field_0x8 <= fabs(eStack352.y)) {
-			uVar4 = (uint)_Stack16.pVector_0x4 & 0xf;
+			uVar4 = _Stack16.hitMaterialFlags & 0xf;
 			if (uVar4 == 0) {
 				uVar4 = CScene::_pinstance->defaultMaterialIndex;
 			}
@@ -5988,7 +5988,7 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 		uVar16 = pPlayerInput->releasedBitfield & 0x20;
 		local_b0 = pPlayerInput->releasedBitfield & 0x40;
 		uVar15 = pPlayerInput->pressedBitfield & 0x20;
-		uVar18 = pPlayerInput->pressedBitfield & 0x10;
+		uVar18 = pPlayerInput->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	local_c = (undefined*)0x0;
@@ -6876,7 +6876,7 @@ int CBehaviourFighter::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 
 	uVar5 = this->pOwner->GetStateFlags(this->pOwner->actorState);
 
-	if (msg == 7) {
+	if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
 		GetPositionMsgParams* pPositionParams = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
 		if (pPositionParams->field_0x0 == 5) {
 			if ((this->pOwner->GetStateFlags(this->pOwner->actorState) & 0xff800) == 0x4000) {
@@ -7811,7 +7811,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPlayerInput, edF32VECTOR4* param_3, 
 			this->patternB.field_0x3byte = bVar1 & 0xf | (byte)(((uint)(((ulong)bVar1 << 0x38) >> 0x3c) | 2) << 4);
 		}
 
-		if ((pPlayerInput->pressedBitfield & 0x200) != 0) {
+		if ((pPlayerInput->pressedBitfield & PAD_BITMASK_SQUARE) != 0) {
 			uVar2 = this->patternB.field_0x2ushort;
 			this->patternB.field_0x2ushort = uVar2 & 0xf00f | (ushort)(((uint)(((ulong)uVar2 << 0x34) >> 0x38) | 1) << 4);
 		}
@@ -7826,7 +7826,7 @@ int CInputAnalyser::Cumulate(CPlayerInput* pPlayerInput, edF32VECTOR4* param_3, 
 			this->patternB.field_0x2ushort = uVar2 & 0xf00f | (ushort)(((uint)(((ulong)uVar2 << 0x34) >> 0x38) | 4) << 4);
 		}
 
-		if ((pPlayerInput->pressedBitfield & 0x10) != 0) {
+		if ((pPlayerInput->pressedBitfield & PAD_BITMASK_CROSS) != 0) {
 			uVar2 = this->patternB.field_0x2ushort;
 			this->patternB.field_0x2ushort = uVar2 & 0xf00f | (ushort)(((uint)(((ulong)uVar2 << 0x34) >> 0x38) | 8) << 4);
 		}

@@ -1562,7 +1562,7 @@ uint CSimpleMenu::get_action()
 						uVar1 = 5;
 
 						if (((((gPlayerInput.pressedBitfield & 0x1000000) == 0) &&
-							(uVar1 = 8, (gPlayerInput.pressedBitfield & 0x4000000) == 0)) &&
+							(uVar1 = 8, (gPlayerInput.pressedBitfield & PAD_BITMASK_TRIANGLE) == 0)) &&
 							(uVar1 = 6, (gPlayerInput.pressedBitfield & 0x20) == 0)) &&
 							(uVar1 = 7, (gPlayerInput.pressedBitfield & 0x40) == 0)) {
 							uVar1 = 0;

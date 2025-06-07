@@ -10,8 +10,10 @@
 
 #define NATIV_SHOP_STATE_ENTERING 0x6
 #define NATIV_SHOP_STATE_DISPLAY 0x7
+#define NATIV_SHOP_STATE_LEAVING 0x8
 
 class CMusic;
+class edCTextStyle;
 
 struct NativShopSubObj
 {
@@ -58,8 +60,15 @@ public:
 	void State_Display_Init();
 	void State_Display();
 
-	void Display_Cursor(float param_1, _rgba color);
+	void State_Leaving_Init();
+	void State_Leaving();
+
+	void Display_Cursor(float scale, _rgba color);
 	void Display_BottomBackGround();
+	void Display_Sprite(edDList_material* pMaterial, Rectangle* pRect, _rgba color);
+	void Display_BubbleText(edCTextStyle* pStyle);
+	void Display_Text(float param_1, float param_2, edCTextStyle* pStyle, char* pText);
+	void Display_Mts(float param_1, float param_2, edCTextStyle* pStyle, uint param_5);
 
 	S_STREAM_REF<CCamera> streamRefCamera;
 	S_STREAM_REF<ed_zone_3d> streamRefZone;

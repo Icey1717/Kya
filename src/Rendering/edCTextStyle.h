@@ -3,7 +3,8 @@
 
 #include "Types.h"
 
-class edCTextStyle {
+class edCTextStyle
+{
 public:
 	void TransformMatrix(float x, float y, edF32MATRIX4* outMatrix);
 	void SetRotation(float angle);

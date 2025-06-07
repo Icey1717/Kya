@@ -4,6 +4,8 @@
 #include "Types.h"
 #include "EdenLib/edDev/Sources/edDev.h"
 
+#define INPUT_BUTTON_INDEX_SQUARE 9
+
 struct InputTest {
 	float analogValue;
 	float clickValue;
@@ -54,7 +56,9 @@ struct CPlayerInputSubObj {
 	float field_0x20;
 };
 
-#define PAD_BITMASK_X 0x10
+#define PAD_BITMASK_CROSS 0x10
+#define PAD_BITMASK_SQUARE 0x200
+#define PAD_BITMASK_TRIANGLE 0x4000000
 
 class CPlayerInput {
 

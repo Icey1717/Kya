@@ -12,6 +12,12 @@
 
 #define IMPLEMENTATION_GUARD_OBJECTIVE(x)
 
+#define SCENE_VAR_BOUNCE_JUMP 0x7
+#define SCENE_VAR_CLIMB 0x8
+#define SCENE_VAR_BOOMY 0x9
+#define SCENE_VAR_FIGHT_RING 0xa
+#define SCENE_VAR_MAX_HEALTH 0x14
+
 class CActorNativShop;
 
 struct SaveDataSection_44484c42 {

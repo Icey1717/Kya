@@ -94,9 +94,25 @@ CBehaviour* CActorMoney::BuildBehaviour(int behaviourType)
 	return pBehaviour;
 }
 
+StateConfig CActorMoney::_gStateCfg_MNY[3] = {
+	StateConfig(-1, 0),
+	StateConfig(-1, 0),
+	StateConfig(-1, 0)
+};
+
 StateConfig* CActorMoney::GetStateCfg(int state)
 {
-	IMPLEMENTATION_GUARD();
+	StateConfig* pStateConfig;
+
+	if (state < 5) {
+		pStateConfig = CActor::GetStateCfg(state);
+	}
+	else {
+		assert((state - 5) < 3);
+		pStateConfig = _gStateCfg_MNY + state + -5;
+	}
+
+	return pStateConfig;
 }
 
 void CActorMoney::ChangeVisibleState(int bVisible)

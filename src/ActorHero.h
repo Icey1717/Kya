@@ -6,16 +6,12 @@
 #include "ActorFighter.h"
 #include "ActorHero_Inventory.h"
 
-
-#define SCENE_VAR_BOUNCE_JUMP 0x7
-#define SCENE_VAR_CLIMB 0x8
-#define SCENE_VAR_BOOMY 0x9
-#define SCENE_VAR_MAX_HEALTH 0x14
-
 #define STATE_HERO_NONE -1
 
 #define STATE_HERO_SHOP 0x72
 #define STATE_HERO_STAND 0x73
+#define STATE_HERO_BOOMY 0x74
+#define STATE_HERO_BOOMY_CATCH 0x75
 #define STATE_HERO_RUN 0x76
 #define STATE_HERO_JUMP_1_1_STAND 0x78
 #define STATE_HERO_JUMP_2_3_STAND 0x79
@@ -257,6 +253,7 @@ public:
 	CPlayerInput* pPlayerInput;
 
 	CActorBoomy* pActorBoomy;
+	CCamera* field_0xc94;
 
 	edF32VECTOR4 field_0xe50;
 	edF32VECTOR3 field_0xe60;
@@ -360,6 +357,8 @@ public:
 	bool FUN_0031c9e0();
 
 	float GetMagicalForce();
+
+	void InitBoomy();
 };
 
 extern ulong gBoomyHashCodes[4];

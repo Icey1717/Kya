@@ -13,6 +13,7 @@
 #endif
 #include "MathOps.h"
 #include "EdenLib/edText/sources/edTextResources.h"
+#include "Font.h"
 
 struct CharacterData {
 	uint colour;
@@ -701,19 +702,15 @@ void edCTextFormat::GetRect()
 	return;
 }
 
-bool edCTextFormat::FormatString(char* pText, char* param_3)
+bool edCTextFormat::FormatString(char* pText, va_list param_3)
 {
 	byte bVar1;
-	int iVar2;
+	int numberFormatBase;
 	char* pcVar4;
-	undefined8 uVar5;
-	undefined8 uVar6;
-	undefined8 uVar7;
-	undefined8 uVar8;
 	bool bVar9;
 	char* pcVar10;
 	int iVar11;
-	char** ppcVar10;
+	char** pCurFormatValueA;
 	float fVar12;
 	float fVar13;
 	astruct_10* piVar13;
@@ -721,34 +718,23 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 	float fVar15;
 	float fVar16;
 	uint uVar17;
-	astruct_5* paVar18;
-	float fVar19;
-	float fVar20;
-	float fVar21;
-	float fVar22;
-	float fVar23;
-	float fVar24;
+	FormatSpec* pFormatSpecA;
 	//double* param_3;
 	int iVar25;
 	byte* pbVar26;
 	ulong uVar27;
-	float fVar28;
-	float fVar29;
-	float fVar30;
-	float fVar31;
-	float fVar32;
 	byte bVar33;
 	edTextBitmap* pTextBitmap;
-	char* pcVar19;
-	char* unaff_s0_lo;
-	edCTextStyle* pFVar35;
+	char* pOutputIt;
+	char* curFormatValue;
+	edCTextStyle* pTextStyle;
 	byte* pbVar36;
-	char** ppcVar37;
+	char** pCurFormatValueB;
 	char* pcVar38;
-	astruct_5* piVar38;
+	FormatSpec* pFormatSpecB;
 	uint unaff_s5_lo;
 	astruct_10* paVar37;
-	astruct_5* paVar38;
+	FormatSpec* pFormatSpecC;
 	double* pdVar39;
 	uint uVar40;
 	char* pcVar41;
@@ -758,33 +744,33 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 	int local_380;
 	uint local_370;
 	int local_360;
-	byte local_350[128];
-	astruct_5 local_2d0[16];
+	char aOutputA[128];
+	FormatSpec aFormatSpecs[16];
 	astruct_10 local_90[2];
-	char* local_50[19];
+	char* aFormatValues[19];
 	char* local_4;
 	char* pcVar3;
 
 	uVar40 = 0;
 	bVar9 = true;
-	pFVar35 = fontData_0x850;
+	pTextStyle = fontData_0x850;
 	local_360 = 0;
-	piVar38 = local_2d0;
+	pFormatSpecB = aFormatSpecs;
 	local_370 = 0;
 	local_380 = 0;
 	do {
 		while (true) {
 			while (true) {
 				if (bVar9) {
-					piVar38->pText = pText;
-					piVar38->switchMode = 0;
-					piVar38->characterCount = 0;
+					pFormatSpecB->pText = pText;
+					pFormatSpecB->switchMode = 0;
+					pFormatSpecB->characterCount = 0;
 					bVar9 = false;
-					piVar38->field_0x14 = 0;
-					piVar38->field_0x4 = 0;
-					piVar38->field_0x15 = '\x01';
-					piVar38->field_0x1c = 10;
-					piVar38->field_0x20 = 0;
+					pFormatSpecB->field_0x14 = 0;
+					pFormatSpecB->field_0x4 = 0;
+					pFormatSpecB->field_0x15 = '\x01';
+					pFormatSpecB->numberFormatBase = 10;
+					pFormatSpecB->caseMode = 0;
 				}
 				if (*pText == 0) {
 					uVar17 = 0;
@@ -815,65 +801,69 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 					}
 					uVar17 = 0;
 					if (local_370 != 0) {
-						paVar18 = local_2d0;
+						pFormatSpecA = aFormatSpecs;
 						do {
-							if (paVar18->field_0x15 != '\0') {
-								(&local_90[0].field_0x0)[paVar18->field_0x18] = paVar18->switchMode;
+							if (pFormatSpecA->field_0x15 != '\0') {
+								(&local_90[0].field_0x0)[pFormatSpecA->field_0x18] = pFormatSpecA->switchMode;
 							}
 							uVar17 = uVar17 + 1;
-							paVar18 = paVar18 + 1;
+							pFormatSpecA = pFormatSpecA + 1;
 						} while (uVar17 < local_370);
 					}
 					uVar17 = 0;
 					if (uVar40 != 0) {
-						IMPLEMENTATION_GUARD();
 						paVar37 = local_90;
-						ppcVar37 = local_50;
-						//do {
-						//	pdVar39 = param_3;
-						//	if (true) {
-						//		switch (paVar37->field_0x0) {
-						//		case 0:
-						//		case 1:
-						//		case 2:
-						//			pdVar39 = param_3 + 1;
-						//			*ppcVar37 = *(char**)param_3;
-						//			break;
-						//		case 3:
-						//			pdVar39 = param_3 + 1;
-						//			*ppcVar37 = *(char**)param_3;
-						//			break;
-						//		case 4:
-						//			pdVar39 = param_3 + 1;
-						//			pcVar10 = (char*)dptofp(*param_3);
-						//			*ppcVar37 = pcVar10;
-						//			break;
-						//		case 5:
-						//		case 7:
-						//		case 8:
-						//			pdVar39 = param_3 + 1;
-						//			*ppcVar37 = *(char**)param_3;
-						//		}
-						//	}
-						//	uVar17 = uVar17 + 1;
-						//	paVar37 = (astruct_10*)&paVar37->field_0x4;
-						//	ppcVar37 = ppcVar37 + 1;
-						//	param_3 = pdVar39;
-						//} while (uVar17 < uVar40);
+						pCurFormatValueB = aFormatValues;
+						do {
+							//pdVar39 = param_3;
+							if (true) {
+								switch (paVar37->field_0x0) {
+								case 0:
+								case 1:
+								case 2:
+									IMPLEMENTATION_GUARD(
+									pdVar39 = param_3 + 1;
+									*pCurFormatValueB = *(char**)param_3;)
+									break;
+								case 3:
+									*pCurFormatValueB = (char*)va_arg(param_3, uint);
+									//pdVar39 = param_3 + 1;
+									//*pCurFormatValueB = *(char**)param_3;
+									break;
+								case 4:
+									IMPLEMENTATION_GUARD(
+									pdVar39 = param_3 + 1;
+									pcVar10 = (char*)dptofp(*param_3);
+									*pCurFormatValueB = pcVar10;)
+									break;
+								case 5:
+								case 7:
+								case 8:
+									IMPLEMENTATION_GUARD(
+									pdVar39 = param_3 + 1;
+									*pCurFormatValueB = *(char**)param_3;)
+								}
+							}
+							uVar17 = uVar17 + 1;
+							paVar37 = (astruct_10*)&paVar37->field_0x4;
+							pCurFormatValueB = pCurFormatValueB + 1;
+							//param_3 = pdVar39;
+						} while (uVar17 < uVar40);
 					}
+
 					pcVar10 = (char*)edSystemFastRamGetAddr();
 					pScratchpadA = pcVar10;
-					paVar38 = local_2d0;
+					pFormatSpecC = aFormatSpecs;
 					uVar40 = 0;
 					pScratchpadB = pScratchpadA + local_360;
 					pcVar10 = pScratchpadA;
 					pcVar38 = pScratchpadB;
 					field_0x30 = 0;
 					nbBitmaps = 0;
-					paVar18 = paVar38;
+					pFormatSpecA = pFormatSpecC;
 					do {
-						pbVar36 = (byte*)paVar38->pText;
-						for (iVar11 = paVar38->characterCount; iVar11 != 0; iVar11 = iVar11 + -1) {
+						pbVar36 = (byte*)pFormatSpecC->pText;
+						for (iVar11 = pFormatSpecC->characterCount; iVar11 != 0; iVar11 = iVar11 + -1) {
 							bVar33 = *pbVar36;
 							pbVar26 = pbVar36 + 1;
 							if ((bVar33 == 0x25) && (*pbVar26 == 0x25)) {
@@ -890,150 +880,167 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 									bVar33 = 0x20;
 								}
 							}
+
 							*pcVar38 = bVar33;
 							pcVar38 = (char*)((byte*)pcVar38 + 1);
 							pbVar36 = pbVar26;
 						}
-						if (paVar18->field_0x15 == '\0') {
+
+						if (pFormatSpecA->field_0x15 == '\0') {
 							if (true) {
-								switch (paVar18->switchMode) {
+								switch (pFormatSpecA->switchMode) {
 								case 5:
 								case 7:
 								case 8:
-									local_4 = paVar38->field_0x10;
+									local_4 = pFormatSpecC->field_0x10;
 								}
 							}
-							ppcVar10 = &local_4;
+
+							pCurFormatValueA = &local_4;
 						}
 						else {
-							ppcVar10 = local_50 + paVar38->field_0x18;
+							pCurFormatValueA = aFormatValues + pFormatSpecC->field_0x18;
 						}
-						iVar11 = paVar38->switchMode;
+
+						iVar11 = pFormatSpecC->switchMode;
 						if (true) {
 							switch (iVar11) {
 							case 2:
 							case 3:
 							case 4:
-								IMPLEMENTATION_GUARD();
-#if 0
-								iVar25 = paVar38->field_0x4;
-								iVar2 = paVar38->field_0x1c;
-								bVar33 = paVar38->field_0x14;
-								if (paVar38->field_0x20 == 1) {
+								iVar25 = pFormatSpecC->field_0x4;
+								numberFormatBase = pFormatSpecC->numberFormatBase;
+								bVar33 = pFormatSpecC->field_0x14;
+
+								char* pcVar34;
+								if (pFormatSpecC->caseMode == 1) {
 									pcVar34 = s_0123456789abcdef_00432380;
 								}
 								else {
 									pcVar34 = s_0123456789ABCDEF_004323a0;
 								}
+
 								if (iVar11 == 4) {
-									pcVar41 = *ppcVar10;
+									IMPLEMENTATION_GUARD(
+									pcVar41 = *pCurFormatValueA;
 									local_3b0 = (float)pcVar41 < 0.0f;
 									if ((bool)local_3b0) {
 										pcVar41 = (char*)-(float)pcVar41;
 									}
 									if ((float)pcVar41 < 2.147484e+09f) {
-										unaff_s0_lo = (char*)(int)(float)pcVar41;
+										curFormatValue = (char*)(int)(float)pcVar41;
 									}
 									else {
-										unaff_s0_lo = (char*)((int)((float)pcVar41 - 2.147484e+09f) | 0x80000000);
+										curFormatValue = (char*)((int)((float)pcVar41 - 2.147484e+09f) | 0x80000000);
 									}
-									if ((int)unaff_s0_lo < 0) {
-										fVar12 = (float)((uint)unaff_s0_lo >> 1 | (uint)unaff_s0_lo & 1);
+
+									if ((int)curFormatValue < 0) {
+										fVar12 = (float)((uint)curFormatValue >> 1 | (uint)curFormatValue & 1);
 										fVar12 = fVar12 + fVar12;
 									}
 									else {
-										fVar12 = (float)(int)unaff_s0_lo;
+										fVar12 = (float)(int)curFormatValue;
 									}
+
 									fVar12 = ((float)pcVar41 - fVar12) * 100000.0f;
 									if (fVar12 < 2.147484e+09f) {
 										unaff_s5_lo = (uint)fVar12;
 									}
 									else {
 										unaff_s5_lo = (int)(fVar12 - 2.147484e+09f) | 0x80000000;
-									}
+									})
 								}
 								else {
 									if (iVar11 == 2) {
-										unaff_s0_lo = *ppcVar10;
-										local_3b0 = (int)unaff_s0_lo < 0;
+										IMPLEMENTATION_GUARD(
+										curFormatValue = *pCurFormatValueA;
+										local_3b0 = (int)curFormatValue < 0;
 										if ((bool)local_3b0) {
-											unaff_s0_lo = (char*)-(int)unaff_s0_lo;
+											curFormatValue = (char*)-(int)curFormatValue;
 										}
-										unaff_s5_lo = 0;
+										unaff_s5_lo = 0;)
 									}
 									else {
 										if (iVar11 == 3) {
-											unaff_s0_lo = *ppcVar10;
+											curFormatValue = *pCurFormatValueA;
 											unaff_s5_lo = 0;
 											local_3b0 = '\0';
 										}
 									}
 								}
-								pcVar19 = (char*)local_350;
+
+								pOutputIt = aOutputA;
 								if (iVar25 == 0) {
 									iVar25 = 1;
 								}
+
 								if (local_3b0 != '\0') {
 									*pcVar38 = 0x2d;
 									pcVar38 = (char*)((byte*)pcVar38 + 1);
 									field_0x30 = field_0x30 + 1;
 								}
+
 								if (unaff_s5_lo != 0) {
 									uVar17 = 100000;
 									while (unaff_s5_lo != 0) {
 										uVar17 = uVar17 / 10;
-										if (iVar2 == 0) {
+										if (numberFormatBase == 0) {
 											trap(7);
 										}
 										iVar25 = iVar25 + -1;
-										*pcVar19 = pcVar34[unaff_s5_lo - ((int)unaff_s5_lo / iVar2) * iVar2];
-										pcVar19 = pcVar19 + 1;
+										*pOutputIt = pcVar34[unaff_s5_lo - ((int)unaff_s5_lo / numberFormatBase) * numberFormatBase];
+										pOutputIt = pOutputIt + 1;
 										field_0x30 = field_0x30 + 1;
-										unaff_s5_lo = (int)unaff_s5_lo / iVar2;
+										unaff_s5_lo = (int)unaff_s5_lo / numberFormatBase;
 									}
+
 									for (; 1 < uVar17; uVar17 = uVar17 / 10) {
-										*pcVar19 = '0';
-										pcVar19 = pcVar19 + 1;
+										*pOutputIt = '0';
+										pOutputIt = pOutputIt + 1;
 										field_0x30 = field_0x30 + 1;
 									}
-									*pcVar19 = '.';
-									pcVar19 = pcVar19 + 1;
+
+									*pOutputIt = '.';
+									pOutputIt = pOutputIt + 1;
 									field_0x30 = field_0x30 + 1;
 								}
-								if (unaff_s0_lo == (char*)0x0) {
+
+								if (curFormatValue == (char*)0x0) {
 									iVar25 = iVar25 + -1;
-									*pcVar19 = 0x30;
-									pcVar19 = (char*)((byte*)pcVar19 + 1);
+									*pOutputIt = 0x30;
+									pOutputIt = pOutputIt  + 1;
 									field_0x30 = field_0x30 + 1;
 								}
 								else {
-									while (unaff_s0_lo != (char*)0x0) {
-										if (iVar2 == 0) {
+									while (curFormatValue != (char*)0x0) {
+										if (numberFormatBase == 0) {
 											trap(7);
 										}
 										iVar25 = iVar25 + -1;
-										*pcVar19 = unaff_s0_lo[(int)(pcVar34 + -((int)(char*)((int)unaff_s0_lo / iVar2) * iVar2))];
-										pcVar19 = (char*)((byte*)pcVar19 + 1);
+										*pOutputIt = curFormatValue[(ulong)(pcVar34 + -((int)(char*)((int)curFormatValue / numberFormatBase) * numberFormatBase))];
+										pOutputIt = pOutputIt  + 1;
 										field_0x30 = field_0x30 + 1;
-										unaff_s0_lo = (char*)((int)unaff_s0_lo / iVar2);
+										curFormatValue = (char*)((int)curFormatValue / numberFormatBase);
 									}
 								}
+
 								for (; 0 < iVar25; iVar25 = iVar25 + -1) {
 									if (bVar33 == 0) {
-										*pcVar19 = 0x20;
+										*pOutputIt = 0x20;
 									}
 									else {
-										*pcVar19 = 0x30;
+										*pOutputIt = 0x30;
 										field_0x30 = field_0x30 + 1;
 									}
-									pcVar19 = (char*)((byte*)pcVar19 + 1);
+
+									pOutputIt = pOutputIt  + 1;
 								}
-								while ((byte*)pcVar19 != local_350) {
-									pcVar19 = (char*)((byte*)pcVar19 + -1);
-									*pcVar38 = *pcVar19;
-									pcVar38 = (char*)((byte*)pcVar38 + 1);
+
+								while (pOutputIt != aOutputA) {
+									pOutputIt = pOutputIt - 1;
+									*pcVar38 = *pOutputIt;
+									pcVar38 = pcVar38 + 1;
 								}
-#endif
 								break;
 							case 5:
 								IMPLEMENTATION_GUARD();
@@ -1052,7 +1059,7 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 #endif
 								break;
 							case 7:
-								pTextBitmap = reinterpret_cast<edTextBitmap*>(*ppcVar10);
+								pTextBitmap = reinterpret_cast<edTextBitmap*>(*pCurFormatValueA);
 								*pcVar38 = 1;
 								pcVar38 = (char*)((byte*)pcVar38 + 1);
 								*pcVar10 = (char)this->nbBitmaps;
@@ -1067,159 +1074,12 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 								*pcVar38 = 2;
 								pcVar38 = (char*)((byte*)pcVar38 + 1);
 								if (paVar38->field_0x20 == 1) {
-									uVar5 = *(undefined8*)pFVar35->m0;
-									fVar29 = pFVar35->m0[2];
-									fVar31 = pFVar35->m0[3];
-									uVar6 = *(undefined8*)pFVar35->m0[1];
-									fVar21 = pFVar35->m0[1][2];
-									fVar23 = pFVar35->m0[1][3];
-									uVar7 = *(undefined8*)pFVar35->m0[2];
-									fVar15 = pFVar35->m0[2][2];
-									fVar16 = pFVar35->m0[2][3];
-									uVar8 = *(undefined8*)pFVar35->m0[3];
-									fVar12 = pFVar35->m0[3][2];
-									fVar13 = pFVar35->m0[3][3];
-									pFVar35[1].m0[0] = (float)uVar5;
-									pFVar35[1].m0[1] = (float)((ulong)uVar5 >> 0x20);
-									pFVar35[1].m0[2] = fVar29;
-									pFVar35[1].m0[3] = fVar31;
-									pFVar35[1].m0[1][0] = (float)uVar6;
-									pFVar35[1].m0[1][1] = (float)((ulong)uVar6 >> 0x20);
-									pFVar35[1].m0[1][2] = fVar21;
-									pFVar35[1].m0[1][3] = fVar23;
-									pFVar35[1].m0[2][0] = (float)uVar7;
-									pFVar35[1].m0[2][1] = (float)((ulong)uVar7 >> 0x20);
-									pFVar35[1].m0[2][2] = fVar15;
-									pFVar35[1].m0[2][3] = fVar16;
-									pFVar35[1].m0[3][0] = (float)uVar8;
-									pFVar35[1].m0[3][1] = (float)((ulong)uVar8 >> 0x20);
-									pFVar35[1].m0[3][2] = fVar12;
-									pFVar35[1].m0[3][3] = fVar13;
-									uVar5 = *(undefined8*)pFVar35->m1;
-									fVar29 = pFVar35->m1[2];
-									fVar31 = pFVar35->m1[3];
-									uVar6 = *(undefined8*)pFVar35->m1[1];
-									fVar21 = pFVar35->m1[1][2];
-									fVar23 = pFVar35->m1[1][3];
-									uVar7 = *(undefined8*)pFVar35->m1[2];
-									fVar15 = pFVar35->m1[2][2];
-									fVar16 = pFVar35->m1[2][3];
-									uVar8 = *(undefined8*)pFVar35->m1[3];
-									fVar12 = pFVar35->m1[3][2];
-									fVar13 = pFVar35->m1[3][3];
-									pFVar35[1].m1[0] = (float)uVar5;
-									pFVar35[1].m1[1] = (float)((ulong)uVar5 >> 0x20);
-									pFVar35[1].m1[2] = fVar29;
-									pFVar35[1].m1[3] = fVar31;
-									pFVar35[1].m1[1][0] = (float)uVar6;
-									pFVar35[1].m1[1][1] = (float)((ulong)uVar6 >> 0x20);
-									pFVar35[1].m1[1][2] = fVar21;
-									pFVar35[1].m1[1][3] = fVar23;
-									pFVar35[1].m1[2][0] = (float)uVar7;
-									pFVar35[1].m1[2][1] = (float)((ulong)uVar7 >> 0x20);
-									pFVar35[1].m1[2][2] = fVar15;
-									pFVar35[1].m1[2][3] = fVar16;
-									pFVar35[1].m1[3][0] = (float)uVar8;
-									pFVar35[1].m1[3][1] = (float)((ulong)uVar8 >> 0x20);
-									pFVar35[1].m1[3][2] = fVar12;
-									pFVar35[1].m1[3][3] = fVar13;
-									pFVar35[1].pFunction = pFVar35->pFunction;
-									pFVar35[1].flags_0x84 = pFVar35->flags_0x84;
-									pFVar35[1].pPackedFont = pFVar35->pPackedFont;
-									pFVar35[1].field_0x8c = pFVar35->field_0x8c;
-									pFVar35[1].field_0x90 = pFVar35->field_0x90;
-									pFVar35[1].spaceSize = pFVar35->spaceSize;
-									pFVar35[1].rotation = pFVar35->rotation;
-									pFVar35[1].xScale = pFVar35->xScale;
-									pFVar35[1].yScale = pFVar35->yScale;
-									pFVar35[1].field_0xa4 = pFVar35->field_0xa4;
-									pFVar35[1].field_0xa8 = pFVar35->field_0xa8;
-									pFVar35[1].offset_0xac = pFVar35->offset_0xac;
-									pFVar35[1].offset_0xb0 = pFVar35->offset_0xb0;
-									pFVar35[1].rgbaColour = pFVar35->rgbaColour;
-									pFVar35[1].alpha = pFVar35->alpha;
-									pFVar35[1].altColour = pFVar35->altColour;
+									pFVar35[1] = pFVar35[0];
 								}
 								else {
-									fVar28 = fontData_0x850[0].m0[1];
-									fVar30 = fontData_0x850[0].m0[2];
-									fVar32 = fontData_0x850[0].m0[3];
-									fVar19 = fontData_0x850[0].m0[1][0];
-									fVar20 = fontData_0x850[0].m0[1][1];
-									fVar22 = fontData_0x850[0].m0[1][2];
-									fVar24 = fontData_0x850[0].m0[1][3];
-									fVar21 = fontData_0x850[0].m0[2][0];
-									fVar23 = fontData_0x850[0].m0[2][1];
-									fVar29 = fontData_0x850[0].m0[2][2];
-									fVar31 = fontData_0x850[0].m0[2][3];
-									fVar12 = fontData_0x850[0].m0[3][0];
-									fVar13 = fontData_0x850[0].m0[3][1];
-									fVar15 = fontData_0x850[0].m0[3][2];
-									fVar16 = fontData_0x850[0].m0[3][3];
-									pFVar35[1].m0[0] = fontData_0x850[0].m0[0];
-									pFVar35[1].m0[1] = fVar28;
-									pFVar35[1].m0[2] = fVar30;
-									pFVar35[1].m0[3] = fVar32;
-									pFVar35[1].m0[1][0] = fVar19;
-									pFVar35[1].m0[1][1] = fVar20;
-									pFVar35[1].m0[1][2] = fVar22;
-									pFVar35[1].m0[1][3] = fVar24;
-									pFVar35[1].m0[2][0] = fVar21;
-									pFVar35[1].m0[2][1] = fVar23;
-									pFVar35[1].m0[2][2] = fVar29;
-									pFVar35[1].m0[2][3] = fVar31;
-									pFVar35[1].m0[3][0] = fVar12;
-									pFVar35[1].m0[3][1] = fVar13;
-									pFVar35[1].m0[3][2] = fVar15;
-									pFVar35[1].m0[3][3] = fVar16;
-									fVar28 = fontData_0x850[0].m1[1];
-									fVar30 = fontData_0x850[0].m1[2];
-									fVar32 = fontData_0x850[0].m1[3];
-									fVar19 = fontData_0x850[0].m1[1][0];
-									fVar20 = fontData_0x850[0].m1[1][1];
-									fVar22 = fontData_0x850[0].m1[1][2];
-									fVar24 = fontData_0x850[0].m1[1][3];
-									fVar21 = fontData_0x850[0].m1[2][0];
-									fVar23 = fontData_0x850[0].m1[2][1];
-									fVar29 = fontData_0x850[0].m1[2][2];
-									fVar31 = fontData_0x850[0].m1[2][3];
-									fVar12 = fontData_0x850[0].m1[3][0];
-									fVar13 = fontData_0x850[0].m1[3][1];
-									fVar15 = fontData_0x850[0].m1[3][2];
-									fVar16 = fontData_0x850[0].m1[3][3];
-									pFVar35[1].m1[0] = fontData_0x850[0].m1[0];
-									pFVar35[1].m1[1] = fVar28;
-									pFVar35[1].m1[2] = fVar30;
-									pFVar35[1].m1[3] = fVar32;
-									pFVar35[1].m1[1][0] = fVar19;
-									pFVar35[1].m1[1][1] = fVar20;
-									pFVar35[1].m1[1][2] = fVar22;
-									pFVar35[1].m1[1][3] = fVar24;
-									pFVar35[1].m1[2][0] = fVar21;
-									pFVar35[1].m1[2][1] = fVar23;
-									pFVar35[1].m1[2][2] = fVar29;
-									pFVar35[1].m1[2][3] = fVar31;
-									pFVar35[1].m1[3][0] = fVar12;
-									pFVar35[1].m1[3][1] = fVar13;
-									pFVar35[1].m1[3][2] = fVar15;
-									pFVar35[1].m1[3][3] = fVar16;
-									pFVar35[1].pFunction = fontData_0x850[0].pFunction;
-									pFVar35[1].flags_0x84 = fontData_0x850[0].flags_0x84;
-									pFVar35[1].pPackedFont = fontData_0x850[0].pPackedFont;
-									pFVar35[1].field_0x8c = fontData_0x850[0].field_0x8c;
-									pFVar35[1].field_0x90 = fontData_0x850[0].field_0x90;
-									pFVar35[1].spaceSize = fontData_0x850[0].spaceSize;
-									pFVar35[1].rotation = fontData_0x850[0].rotation;
-									pFVar35[1].xScale = fontData_0x850[0].xScale;
-									pFVar35[1].yScale = fontData_0x850[0].yScale;
-									pFVar35[1].field_0xa4 = fontData_0x850[0].field_0xa4;
-									pFVar35[1].field_0xa8 = fontData_0x850[0].field_0xa8;
-									pFVar35[1].offset_0xac = fontData_0x850[0].offset_0xac;
-									pFVar35[1].offset_0xb0 = fontData_0x850[0].offset_0xb0;
-									pFVar35[1].rgbaColour = fontData_0x850[0].rgbaColour;
-									pFVar35[1].alpha = fontData_0x850[0].alpha;
-									pFVar35[1].altColour = fontData_0x850[0].altColour;
+									pFVar35[1] = fontData_0x850[0];
 								}
+
 								pFVar35 = pFVar35 + 1;
 								if (pcVar4 != (code*)0x0) {
 									(*pcVar4)();
@@ -1228,8 +1088,8 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 							}
 						}
 						uVar40 = uVar40 + 1;
-						paVar38 = paVar38 + 1;
-						paVar18 = paVar18 + 1;
+						pFormatSpecC = pFormatSpecC + 1;
+						pFormatSpecA = pFormatSpecA + 1;
 					} while (uVar40 <= local_370);
 					*pcVar38 = 0;
 					if ((field_0x30 != 0) || (bVar9 = false, nbBitmaps != 0)) {
@@ -1238,13 +1098,13 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 					return bVar9;
 				}
 				if (*pText == 0x25) break;
-				piVar38->characterCount = piVar38->characterCount + 1;
+				pFormatSpecB->characterCount = pFormatSpecB->characterCount + 1;
 				pText = (char*)((byte*)pText + 1);
 			}
 			uVar17 = (uint)((byte*)pText)[1];
 			pbVar36 = (byte*)pText + 2;
 			if (uVar17 != 0x25) break;
-			piVar38->characterCount = piVar38->characterCount + 1;
+			pFormatSpecB->characterCount = pFormatSpecB->characterCount + 1;
 			pText = (char*)pbVar36;
 		}
 
@@ -1264,8 +1124,9 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 					pbVar36 = pbVar36 + 1;
 					uVar27 = (ulong)bVar33;
 				}
+
 				uVar17 = (uint)*pbVar36;
-				piVar38->field_0x15 = '\0';
+				pFormatSpecB->field_0x15 = '\0';
 				pbVar36 = pbVar36 + 1;
 				iVar11 = 0;
 			}
@@ -1276,10 +1137,12 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 					pbVar36 = pbVar36 + 1;
 					uVar27 = (ulong)bVar33;
 				}
+
 				uVar17 = (uint)*pbVar36;
 				pbVar36 = pbVar36 + 1;
 			}
 		}
+
 		pText = (char*)pbVar36;
 		if ((0x2f < uVar17) && (uVar17 < 0x3a)) {
 			bVar33 = 0;
@@ -1289,72 +1152,77 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 				bVar33 = 1;
 				pText = (char*)((byte*)pText + 1);
 			}
+
 			while ((0x2f < uVar17 && (uVar17 < 0x3a))) {
 				bVar1 = *pText;
 				iVar25 = (uVar17 - 0x30) + iVar25 * 10;
 				pText = (char*)((byte*)pText + 1);
 				uVar17 = (uint)bVar1;
 			}
-			piVar38->field_0x14 = bVar33;
-			piVar38->field_0x4 = iVar25;
+
+			pFormatSpecB->field_0x14 = bVar33;
+			pFormatSpecB->field_0x4 = iVar25;
 		}
+
+		int switchMode;
+
 		if (uVar17 == 0x4b) {
-			iVar25 = 8;
-			piVar38->field_0x20 = 2;
+			switchMode = 8;
+			pFormatSpecB->caseMode = 2;
 		}
 		else {
 			if (uVar17 == 0x6b) {
-				iVar25 = 8;
-				piVar38->field_0x20 = 1;
+				switchMode = 8;
+				pFormatSpecB->caseMode = 1;
 			}
 			else {
 				if ((uVar17 == 0x43) || (uVar17 == 99)) {
-					iVar25 = 6;
+					switchMode = 6;
 				}
 				else {
 					if (uVar17 == 0x73) {
-						iVar25 = 5;
+						switchMode = 5;
 					}
 					else {
 						if (uVar17 == 0x66) {
-							iVar25 = 4;
+							switchMode = 4;
 						}
 						else {
 							if (uVar17 == 0x58) {
-								piVar38->field_0x1c = 0x10;
-								iVar25 = 3;
-								piVar38->field_0x20 = 2;
+								pFormatSpecB->numberFormatBase = 0x10;
+								switchMode = 3;
+								pFormatSpecB->caseMode = 2;
 							}
 							else {
 								if (uVar17 == 0x78) {
-									piVar38->field_0x1c = 0x10;
-									iVar25 = 3;
-									piVar38->field_0x20 = 1;
+									pFormatSpecB->numberFormatBase = 0x10;
+									switchMode = 3;
+									pFormatSpecB->caseMode = 1;
 								}
 								else {
 									if (uVar17 == 0x6f) {
-										iVar25 = 2;
-										piVar38->field_0x1c = 8;
+										switchMode = 2;
+										pFormatSpecB->numberFormatBase = 8;
 									}
 									else {
 										if (uVar17 == 0x75) {
-											iVar25 = 3;
+											switchMode = 3;
 										}
 										else {
 											if ((uVar17 == 0x69) || (uVar17 == 100)) {
-												iVar25 = 2;
+												switchMode = 2;
 											}
 											else {
 												if (uVar17 == 0x6d) {
-													iVar25 = 3;
-													piVar38->field_0x1c = 2;
+													switchMode = 3;
+													pFormatSpecB->numberFormatBase = 2;
 												}
 												else {
 													if (uVar17 == 0x62) {
-														iVar25 = 7;
+														switchMode = 7;
 													}
 													else {
-														iVar25 = 0;
+														switchMode = 0;
 													}
 												}
 											}
@@ -1368,18 +1236,18 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 			}
 		}
 
-		piVar38->field_0x18 = iVar11;
-		if (piVar38->field_0x15 == '\0') {
-			if (iVar25 == 8) {
+		pFormatSpecB->field_0x18 = iVar11;
+		if (pFormatSpecB->field_0x15 == '\0') {
+			if (switchMode == 8) {
 				local_3a0 = 3;
 			}
 			else {
-				if (iVar25 == 7) {
+				if (switchMode == 7) {
 					local_3a0 = 2;
 					local_360 = local_360 + 1;
 				}
 				else {
-					if (iVar25 == 5) {
+					if (switchMode == 5) {
 						local_3a0 = 1;
 					}
 					else {
@@ -1390,11 +1258,11 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 
 			pcVar10 = (char*)edTextResources.GetResourcePtr(local_390, local_3a0);
 			if ((pcVar10 == (char*)0x0) && (local_3a0 != 3)) {
-				iVar25 = 5;
-				piVar38->field_0x10 = "(???)";
+				switchMode = 5;
+				pFormatSpecB->field_0x10 = "(???)";
 			}
 			else {
-				piVar38->field_0x10 = pcVar10;
+				pFormatSpecB->field_0x10 = pcVar10;
 			}
 		}
 		else {
@@ -1405,17 +1273,15 @@ bool edCTextFormat::FormatString(char* pText, char* param_3)
 			local_380 = local_380 + 1;
 		}
 
-		piVar38->switchMode = iVar25;
-		piVar38 = piVar38 + 1;
+		pFormatSpecB->switchMode = switchMode;
+		pFormatSpecB = pFormatSpecB + 1;
 		bVar9 = true;
 		local_370 = local_370 + 1;
 	} while (true);
 }
 
-bool edCTextFormat::FormatString(char* pText)
+bool edCTextFormat::FormatString(char* pText, ...)
 {
-	undefined8 uVar1;
-	undefined8 uVar2;
 	edCTextStyle* pFVar3;
 	bool bVar4;
 	int iVar5;
@@ -1430,7 +1296,7 @@ bool edCTextFormat::FormatString(char* pText)
 	float fVar14;
 	float fVar15;
 	float fVar16;
-	char local_30[48];
+	va_list args;
 
 	pFVar3 = pedTextCurrentStyle;
 
@@ -1460,7 +1326,10 @@ bool edCTextFormat::FormatString(char* pText)
 	else {
 		iVar5 = 0;
 	}
-	bVar4 = FormatString(pText, local_30);
+
+	va_start(args, pText);
+	bVar4 = FormatString(pText, args);
+	va_end(args);
 	if (bVar4 != false) {
 		GetRect();
 	}

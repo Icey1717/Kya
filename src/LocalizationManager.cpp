@@ -121,6 +121,11 @@ char* CLanguageManager::GetLevelString(ulong key)
 	return this->levelText.get_message(key, 0);
 }
 
+char* CLanguageManager::GetHelpString(ulong key)
+{
+	return this->userInterfaceText.get_message(key, 0);
+}
+
 ulong CLanguageManager::_commands[16] =
 {
 	0x0,				0x5D504D1A1D0A001B, 0x525A4F511D0A001B, 0x0,

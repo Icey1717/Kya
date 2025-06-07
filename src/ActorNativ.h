@@ -121,10 +121,12 @@ public:
 	void FUN_003f3070();
 	void FUN_003f3020();
 
+	int GetPurchaseCutsceneId(int objectId);
+
 	float field_0x8;
 	CAddOnNativ addOn;
 	CActorNativShop* pNativShop;
-	int field_0x28;
+	int cachedStateId;
 };
 
 class CBehaviourNativAkasa : public CBehaviourNativ

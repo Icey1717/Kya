@@ -73,6 +73,8 @@ class CBehaviourMoneyAddOn : public CBehaviourMoneyFlock
 class CActorMoney : public CActorMovable
 {
 public:
+	static StateConfig _gStateCfg_MNY[3];
+
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Reset();

@@ -85,7 +85,7 @@ CActorHeroPrivate::CActorHeroPrivate()
 	//*(undefined*)&this->pAnimKeyData_0x19b4 = 0;
 	//this->pAnimKeyData_0x19b8 = (edAnmAnim*)0x0;
 	//*(undefined4*)&this->field_0x19b8 = 0;
-	//this->field_0x1a60 = (undefined*)0x0;
+	this->boomyTargetTable.nbEntries = 0x0;
 	//Particle::Constructor_00401590((long)&(this->playerSubStruct_64_0x1bf0).field_0x4);
 	
 
@@ -536,10 +536,10 @@ void CActorHeroPrivate::Init()
 	BStack32 = ByteCode();
 
 	///* Boomy Snipe */
-	//pCVar5 = AddCamera(pCameraManager, CT_SilverBoomy, &BStack32, s_Boomy_Snipe_004350a8);
-	//*(CCamera**)&this->field_0xc94 = pCVar5;
-	//(**(code**)(**(int**)&this->field_0xc94 + 0x30))();
-	//(**(code**)(**(int**)&this->field_0xc94 + 0x18))();
+	this->field_0xc94 = pCameraManager->AddCamera(CT_SilverBoomy, &BStack32, "Boomy Snipe");
+	this->field_0xc94->SetTarget(CActorHero::_gThis);
+	this->field_0xc94->Init();
+	
 	/* Death */
 	pCVar5 = pCameraManager->AddCamera(CT_Death, &BStack32, "Death");
 	this->pDeathCamera = pCVar5;
@@ -571,7 +571,8 @@ void CActorHeroPrivate::Init()
 
 	this->field_0xf0 = 10.3f;
 
-	//FUN_00136e60((int)this);
+	InitBoomy();
+
 	//pAnimationController = this->pAnimationController;
 	//ppeVar3 = ((pAnimationController->anmBinMetaAnimator).base.aAnimData)->pAnimManagerKeyData;
 	//peVar11 = (edAnmAnim*)0x0;
@@ -611,18 +612,17 @@ void CActorHeroPrivate::Init()
 
 	this->bIsSettingUp = 0;
 
-	local_4 = CLevelScheduler::ScenVar_Get(9);
-	DoMessage(this, (ACTOR_MESSAGE)0x62, (MSG_PARAM)local_4);
+	DoMessage(this, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY));
+
 	if (this->pActorBoomy != (CActorBoomy*)0x0) {
-		local_8 = CLevelScheduler::ScenVar_Get(9);
-		DoMessage(this->pActorBoomy, (ACTOR_MESSAGE)0x62, (MSG_PARAM)local_8);
+		local_8 = CLevelScheduler::ScenVar_Get(SCENE_VAR_BOOMY);
+		DoMessage(this->pActorBoomy, MESSAGE_BOOMY_CHANGED, (MSG_PARAM)local_8);
 	}
 
-	local_c = CLevelScheduler::ScenVar_Get(10);
-	DoMessage(this, (ACTOR_MESSAGE)0x6b, (MSG_PARAM)local_c);
+	DoMessage(this, MESSAGE_FIGHT_RING_CHANGED, (MSG_PARAM)CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING));
 
 	local_10 = 0;
-	DoMessage(this, (ACTOR_MESSAGE)0x79, (MSG_PARAM)0);
+	DoMessage(this, MESSAGE_RECEPTACLE_CHANGED, (MSG_PARAM)0);
 	this->field_0xcbc = 0;
 
 	CScene::ptable.g_FrontendManager_00451680->DeclareInterface(FRONTEND_INTERFACE_LIFE, GetLifeInterfaceOther());
@@ -722,7 +722,7 @@ void CActorHeroPrivate::GetPossibleAction()
 	puVar10 = (CActor*)0x0;
 	local_20.w = this->sphereCentre.w + 2.0f;
 	local_20.xyz = this->sphereCentre.xyz;
-	params.field_0x8 = 2.0;
+	params.field_0x8 = 2.0f;
 	params.pActor = this;
 	CScene::ptable.g_ActorManager_004516a4->cluster.ApplyCallbackToActorsIntersectingSphere(&local_20, gHeroActionCallback, &params);
 
@@ -1034,23 +1034,16 @@ bool CActorHeroPrivate::AbleTo_AttackByBoomyBlow()
 		if ((((bVar3) && (uVar4 = TestState_AllowAttack(0xffffffff), uVar4 != 0)) &&
 			(bVar3 = EvolutionBoomyCanLaunch(), bVar3 != false)) && (((1 < this->actorState - 0x11aU && (uVar4 = TestState_00132b90(0xffffffff), uVar4 == 0)) &&
 				(this->field_0x1bb0 != 0x0)))) {
-			IMPLEMENTATION_GUARD(
-			iVar2 = this->actorState;
-			if (iVar2 == -1) {
-				uVar4 = 0;
-			}
-			else {
-				pSVar5 = GetStateCfg(iVar2);
-				uVar4 = pSVar5->flags_0x4 & 0x100;
-			}
+			uVar4 = GetStateFlags(this->actorState) & 0x100;
 
 			if (((uVar4 != 0) && (this->field_0x1a48 == 0)) && ((this->curBehaviourId != 8 &&
 					((((iVar2 = this->boomyState_0x1b70, iVar2 == 0 || (iVar2 == 5)) || (iVar2 == 2)) || (iVar2 == 3))))))
 			{
 				return true;
-			})
+			}
 		}
 	}
+
 	return false;
 }
 
@@ -1074,14 +1067,11 @@ bool CActorHeroPrivate::AbleTo_AttackByBoomyLaunch()
 	bVar3 = false;
 LAB_00136c48:
 	if ((bVar3) && (bVar3 = EvolutionBoomyCanLaunch(), bVar3 != false)) {
-		IMPLEMENTATION_GUARD(
 		iVar2 = this->actorState;
-		if (((1 < iVar2 - 0x11aU) &&
-			((iVar2 < 0xdc || 0xde < iVar2 &&
-				(uVar4 = TestState_00132b90(0xffffffff), uVar4 == 0)))) &&
+		if (((1 < iVar2 - 0x11aU) && ((iVar2 < 0xdc || 0xde < iVar2 && (uVar4 = TestState_00132b90(0xffffffff), uVar4 == 0)))) &&
 			((iVar2 = this->boomyState_0x1b70, iVar2 == 0 || ((iVar2 == 2 || (iVar2 == 3)))))) {
 			return true;
-		})
+		}
 	}
 
 	return false;
@@ -1108,12 +1098,10 @@ bool CActorHeroPrivate::AbleTo_AttackByBoomySnipe()
 	bVar3 = false;
 LAB_00136b08:
 	if (((bVar3) && (bVar3 = EvolutionBoomyCanSnipe(), bVar3 != false)) && (iVar2 = this->actorState, iVar2 - 0x11aU < 2)) {
-		IMPLEMENTATION_GUARD(
-		if ((((GetStateFlags(this->actorState) & 0x100) != 0) &&
-			(uVar4 = TestState_IsOnAToboggan(0xffffffff), uVar4 == 0)) &&
+		if ((((GetStateFlags(this->actorState) & 0x100) != 0) && (uVar4 = TestState_IsOnAToboggan(0xffffffff), uVar4 == 0)) &&
 			((iVar2 = this->boomyState_0x1b70, iVar2 == 0 || ((iVar2 == 2 || (iVar2 == 3)))))) {
 			return true;
-		})
+		}
 	}
 
 	return false;
@@ -1158,6 +1146,8 @@ LAB_00136998:
 	return false;
 }
 
+float FLOAT_00434cc8 = 0.965992f;
+
 EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 {
 	CPlayerInput* pCVar1;
@@ -1168,12 +1158,12 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 	EBoomyThrowState EVar6;
 	undefined* puVar7;
 	uint uVar8;
-	CActorHero* pCVar9;
+	CActor** pBoomyTableIt;
 	float fVar10;
 	undefined4 uVar11;
 	float fVar12;
 	float fVar13;
-	float fVar14;
+	float attackClickedDuration;
 	edF32VECTOR4 eStack96;
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
@@ -1182,29 +1172,29 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 
 	pCVar1 = this->pPlayerInput;
 	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-		fVar14 = 0.0f;
+		attackClickedDuration = 0.0f;
 	}
 	else {
-		fVar14 = pCVar1->aButtons[9].clickedDuration;
+		attackClickedDuration = pCVar1->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickedDuration;
 	}
 
 	if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 		uVar8 = 0;
 	}
 	else {
-		uVar8 = pCVar1->releasedBitfield & 0x200;
+		uVar8 = pCVar1->releasedBitfield & PAD_BITMASK_SQUARE;
 	}
 
-	if (((uVar8 != 0) && (fVar14 < 0.25)) && (bVar2 = AbleTo_AttackByBoomyBlow(), bVar2 != false)) {
-		IMPLEMENTATION_GUARD(
+	if (((uVar8 != 0) && (attackClickedDuration < 0.25f)) && (AbleTo_AttackByBoomyBlow() != false)) {
 		pCVar1 = this->pPlayerInput;
 		if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-			fVar10 = 0.0;
+			fVar10 = 0.0f;
 		}
 		else {
 			fVar10 = pCVar1->aAnalogSticks[0].y;
 		}
-		bVar2 = fVar10 != 0.0;
+
+		bVar2 = fVar10 != 0.0f;
 		if (!bVar2) {
 			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
 				fVar10 = 0.0;
@@ -1212,94 +1202,87 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 			else {
 				fVar10 = pCVar1->aAnalogSticks[0].x;
 			}
-			bVar2 = fVar10 != 0.0;
+
+			bVar2 = fVar10 != 0.0f;
 		}
+
+		// If we are moving, use the camera relative analogue stick direction, otherwise use the actor rotation.
 		if (bVar2) {
 			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-				local_50.x = 0.0;
+				local_50.x = 0.0f;
 			}
 			else {
 				local_50.x = pCVar1->aAnalogSticks[0].x;
 			}
-			local_50.y = 0.0;
+
+			local_50.y = 0.0f;
 			if ((this->pPlayerInput == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-				local_50.z = 0.0;
+				local_50.z = 0.0f;
 			}
 			else {
 				local_50.z = this->pPlayerInput->aAnalogSticks[0].y;
 			}
-			local_50.w = 0.0;
-			edF32Matrix4GetTransposeHard(&eStack64, &(CScene::ptable.g_CameraManager_0045167c)->field_0x390);
+
+			local_50.w = 0.0f;
+			edF32Matrix4GetTransposeHard(&eStack64, &(CScene::ptable.g_CameraManager_0045167c)->transMatrix_0x390);
 			edF32Matrix4MulF32Vector4Hard(&local_50, &eStack64, &local_50);
-			local_50.y = 0.0;
-			local_50.z = local_50.z * -1.0;
-			local_50.w = 0.0;
+			local_50.y = 0.0f;
+			local_50.z = local_50.z * -1.0f;
+			local_50.w = 0.0f;
 			edF32Vector4NormalizeHard(&local_50, &local_50);
-			(this->vector_0x1be0).y = local_50.x;
-			(this->vector_0x1be0).z = local_50.y;
-			(this->vector_0x1be0).w = local_50.z;
-			this->playerSubStruct_64_0x1bf0 = local_50.w;
+			this->vector_0x1be0 = local_50;
 		}
 		else {
-			fVar12 = (this->character).characterBase.base.base.rotationQuat.y;
-			fVar10 = (this->character).characterBase.base.base.rotationQuat.z;
-			fVar13 = (this->character).characterBase.base.base.rotationQuat.w;
-			(this->vector_0x1be0).y = (this->character).characterBase.base.base.rotationQuat.x;
-			(this->vector_0x1be0).z = fVar12;
-			(this->vector_0x1be0).w = fVar10;
-			*(float*)&this->playerSubStruct_64_0x1bf0 = fVar13;
+			this->vector_0x1be0 = this->rotationQuat;
 		}
-		WhatsInVision((CActorHeroPrivate*)this, (int*)&this->field_0x1a60, &(this->vector_0x1be0).y);
-		puVar7 = this->field_0x1a60;
+
+		WhatsInVision(&this->boomyTargetTable, &this->vector_0x1be0);
+
 		iVar5 = 0;
-		pCVar9 = this;
-		if (0 < (int)puVar7) {
+		pBoomyTableIt = this->boomyTargetTable.aEntries;
+		if (0 < this->boomyTargetTable.nbEntries) {
 			do {
-				peVar3 = CActor::GetBottomPosition(*(CActor**)&pCVar9->field_0x1a64);
-				if (peVar3->y < (this->character).characterBase.base.base.currentLocation.y) {
-					this->field_0x1a60.Pop(iVar5);
+				peVar3 = (*pBoomyTableIt)->GetBottomPosition();
+				if (peVar3->y < this->currentLocation.y) {
+					this->boomyTargetTable.Pop(iVar5);
 				}
 				else {
-					pCVar9 = (CActorHero*)&(pCVar9->character).characterBase.base.base.objectId;
+					pBoomyTableIt = pBoomyTableIt + 1;
 					iVar5 = iVar5 + 1;
 				}
-				puVar7 = this->field_0x1a60;
-			} while (iVar5 < (int)puVar7);
+			} while (iVar5 < this->boomyTargetTable.nbEntries);
 		}
-		if ((puVar7 != (undefined*)0x0) || (uVar4 = APlayer::Func_00133fb0(this), uVar4 != 0)) {
-			if (this->field_0x1a60 == &DAT_00000001) {
-				edF32Vector4SubHard(&eStack96, (edF32VECTOR4*)(*(int*)&this->field_0x1a64 + 0x30),
-					&(this->character).characterBase.base.base.currentLocation);
-				eStack96.y = 0.0;
+
+		if ((this->boomyTargetTable.nbEntries != 0) || (FUN_00133fb0() != false)) {
+			if (this->boomyTargetTable.nbEntries == 1) {
+				edF32Vector4SubHard(&eStack96, &this->boomyTargetTable.aEntries[0]->currentLocation, &this->currentLocation);
+				eStack96.y = 0.0f;
 				edF32Vector4NormalizeHard(&eStack96, &eStack96);
-				fVar14 = edF32Vector4DotProductHard((edF32VECTOR4*)&(this->vector_0x1be0).y, &eStack96);
-				if (FLOAT_00434cc8 <= fVar14) {
-					this->field_0x1bbc = this->field_0x1a64;
-					this->field_0x1bc0 = this->field_0x1bbc->currentLocation;
+				attackClickedDuration = edF32Vector4DotProductHard(&this->vector_0x1be0, &eStack96);
+				if (FLOAT_00434cc8 <= attackClickedDuration) {
+					this->pBoomyTarget = this->boomyTargetTable.aEntries[0];
+					this->boomyTargetPosition = this->pBoomyTarget->currentLocation;
 				}
 				else {
-					this->field_0x1bbc = (CActor*)0x0;
-					edF32Vector4AddHard(&this->field_0x1bc0,
-						&(this->character).characterBase.base.base.currentLocation,
-						&(this->character).characterBase.base.base.rotationQuat);
+					this->pBoomyTarget = (CActor*)0x0;
+					edF32Vector4AddHard(&this->boomyTargetPosition, &this->currentLocation, &this->rotationQuat);
 				}
 			}
 			else {
-				this->field_0x1bbc = (CActor*)0x0;
-				edF32Vector4AddHard(&this->field_0x1bc0,
-					&(this->character).characterBase.base.base.currentLocation,
-					&(this->character).characterBase.base.base.rotationQuat);
+				this->pBoomyTarget = (CActor*)0x0;
+				edF32Vector4AddHard(&this->boomyTargetPosition, &this->currentLocation, &this->rotationQuat);
 			}
+
 			return BTS_Melee;
-		})
+		}
 	}
 
 	if (this->field_0x1b78 != 4) {
-		if (((uVar8 != 0) && (fVar14 < 0.25f)) && (iVar5 = AbleTo_AttackByBoomyLaunch(), iVar5 != 0)) {
+		if (((uVar8 != 0) && (attackClickedDuration < 0.25f)) && (AbleTo_AttackByBoomyLaunch() != false)) {
 			return BTS_StandardThrow;
 		}
 
-		if ((0.0f < fVar14) && (bVar2 = AbleTo_AttackByBoomySnipe(), bVar2 != false)) {
+		if ((0.0f < attackClickedDuration) && (bVar2 = AbleTo_AttackByBoomySnipe(), bVar2 != false)) {
 			return BTS_TargettedThrow;
 		}
 
@@ -1308,10 +1291,10 @@ EBoomyThrowState CActorHeroPrivate::ManageEnterAttack()
 		}
 
 		else {
-			fVar10 = this->pPlayerInput->aButtons[9].pressedDuration;
+			fVar10 = this->pPlayerInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].pressedDuration;
 		}
 
-		if (((0.25f <= fVar14) && (fVar10 < 2.25f)) &&
+		if (((0.25f <= attackClickedDuration) && (fVar10 < 2.25f)) &&
 			(bVar2 = AbleTo_AttackByBoomyControl(), bVar2 != false)) {
 			return BTS_ControlledThrow;
 		}
@@ -1443,8 +1426,7 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 
 					if (pHitParam->projectileType == 6) {
 						this->field_0x1000 = 0.0f;
-						IMPLEMENTATION_GUARD(
-						FUN_0033dc90(this->field_0x1000, (int)this, 8, 0x1a1);)
+						SetLayerAnim(this->field_0x1000, 8, 0x1a1);
 					}
 
 					return true;
@@ -1495,6 +1477,107 @@ bool CActorHeroPrivate::AccomplishHit(CActor* pHitBy, _msg_hit_param* pHitParam,
 
 	return false;
 }
+
+bool CActorHeroPrivate::AccomplishAttack()
+{
+	CAnimation* pCVar1;
+	bool bVar2;
+	uint uVar3;
+	int iVar4;
+	int iVar5;
+	edAnmLayer* peVar6;
+	float fVar7;
+
+	iVar4 = this->activeBoomyThrowState;
+	if (iVar4 == 0) {
+		bVar2 = false;
+	}
+	else {
+		if (iVar4 == 6) {
+			this->field_0x1ba4 = 0;
+			DoMessage(this->pActorBoomy, (ACTOR_MESSAGE)6, 0);
+			SetState(0x73, 0xffffffff);
+		}
+		else {
+			if (iVar4 == 5) {
+				this->field_0xe44 = ((CScene::ptable.g_SectorManager_00451670)->baseSector).desiredSectorID;
+				this->field_0x1ba4 = 0;
+				SetState(0xda, 0xffffffff);
+			}
+			else {
+				if (iVar4 == 3) {
+					this->field_0x1ba4 = 0;
+					bVar2 = FUN_00133fb0();
+					if (bVar2 == false) {
+						uVar3 = TestState_IsCrouched(0xffffffff);
+						if (uVar3 == 0) {
+							pCVar1 = this->pAnimationController;
+							fVar7 = this->field_0x1b98;
+							this->field_0x1000 = -1.0f;
+							iVar4 = pCVar1->PhysicalLayerFromLayerId(8);
+							peVar6 = (pCVar1->anmBinMetaAnimator).aAnimData + iVar4;
+							peVar6->blendOp = 3;
+							peVar6->field_0x4 = fVar7;
+							iVar5 = GetIdMacroAnim(0x8c);
+							pCVar1->anmBinMetaAnimator.SetAnimOnLayer(iVar5, iVar4, 0xffffffff);
+						}
+						else {
+							pCVar1 = this->pAnimationController;
+							fVar7 = this->field_0x1b98;
+							this->field_0x1000 = -1.0f;
+							iVar4 = pCVar1->PhysicalLayerFromLayerId(8);
+							peVar6 = (pCVar1->anmBinMetaAnimator).aAnimData + iVar4;
+							peVar6->blendOp = 3;
+							peVar6->field_0x4 = fVar7;
+							iVar5 = GetIdMacroAnim(0x8d);
+							pCVar1->anmBinMetaAnimator.SetAnimOnLayer(iVar5, iVar4, 0xffffffff);
+						}
+						if (this->actorState - 0x73U < 3) {
+							SetState(STATE_HERO_BOOMY, 0x88);
+						}
+
+						SetBoomyFunc(1);
+					}
+				}
+				else {
+					if (iVar4 == 4) {
+						this->field_0x1ba4 = 0;
+						this->field_0x1b64 = 1;
+						SetState(0xd2, 0xffffffff);
+					}
+					else {
+						if (iVar4 == 2) {
+							IMPLEMENTATION_GUARD(
+							uVar3 = this->field_0x1ba4;
+							if (uVar3 == 0) {
+								this->character.pBlow = *(s_fighter_blow**)&this->field_0x1bb0;
+								(*(this->character.characterBase.base.base.pVTable)->SetState)
+									((CActor*)this, 0xdc, ((this->character.pBlow)->blowStageBegin).animId);
+								this->field_0x1ba8 = 0xffffffff;
+								this->field_0x1ba4 = 1;
+							}
+							else {
+								iVar4 = this->character.characterBase.base.base.actorState;
+								if ((((iVar4 == 0xdc) || (iVar4 == 0xdd)) && (this->character.field_0x860 == 0)) &&
+									((int)uVar3 < 3)) {
+									this->character.field_0x864 = *(s_fighter_blow**)(&this->field_0x1bb0 + uVar3 * 4);
+									this->character.field_0x860 = 1;
+									this->field_0x1ba4 = this->field_0x1ba4 + 1;
+								}
+							})
+						}
+					}
+				}
+			}
+		}
+
+		bVar2 = true;
+	}
+
+	return bVar2;
+}
+
+
 
 bool CActorHeroPrivate::AccomplishAction(int bUpdateActiveActionId)
 {
@@ -1770,7 +1853,7 @@ bool CActorHeroPrivate::ManageActions()
 						fVar12 = 0.0f;
 					}
 					else {
-						fVar12 = pInput->aButtons[9].clickValue;
+						fVar12 = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 					}
 
 					if (fVar12 == 0.0f) {
@@ -1785,7 +1868,7 @@ bool CActorHeroPrivate::ManageActions()
 			uVar7 = 0;
 		}
 		else {
-			uVar7 = pInput->pressedBitfield & 0x200;
+			uVar7 = pInput->pressedBitfield & PAD_BITMASK_SQUARE;
 		}
 
 		// If the square button was pressed, copy the actionId to activeActionId.
@@ -1798,7 +1881,7 @@ bool CActorHeroPrivate::ManageActions()
 			uVar7 = 0;
 		}
 		else {
-			uVar7 = pInput->releasedBitfield & 0x200;
+			uVar7 = pInput->releasedBitfield & PAD_BITMASK_SQUARE;
 		}
 
 		// If the button was released, reset the activeActionId.
@@ -1812,12 +1895,11 @@ bool CActorHeroPrivate::ManageActions()
 		if (this->heroActionParams.actionId == 0xb) {
 			uVar10 = GetBehaviourFlags(this->curBehaviourId);
 			if ((uVar10 & 0x200) != 0) {
-				IMPLEMENTATION_GUARD(
 				this->activeBoomyThrowState = this->boomyThrowState;
 				bVar2 = AccomplishAttack();
 				if (bVar2 != false) {
 					return true;
-				})
+				}
 			}
 		}
 		else {
@@ -1831,7 +1913,7 @@ bool CActorHeroPrivate::ManageActions()
 						fVar12 = 0.0f;
 					}
 					else {
-						fVar12 = pInput->aButtons[9].clickValue;
+						fVar12 = pInput->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 					}
 
 					if ((((fVar12 != 0.0f) && (uVar7 = TestState_001328a0(0xffffffff), uVar7 == 0)) &&
@@ -1846,7 +1928,7 @@ bool CActorHeroPrivate::ManageActions()
 						uVar7 = 0;
 					}
 					else {
-						uVar7 = pInput->pressedBitfield & 0x200;
+						uVar7 = pInput->pressedBitfield & PAD_BITMASK_SQUARE;
 					}
 					if (uVar7 != 0) {
 						bVar2 = true;
@@ -2083,6 +2165,89 @@ float CActorHeroPrivate::GetTargetBeta()
 	}
 
 	return fVar2;
+}
+
+void CActorHeroPrivate::DisableLayer(uint layerId)
+{
+	int layerIndex;
+
+	layerIndex = this->pAnimationController->PhysicalLayerFromLayerId(layerId);
+	this->pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(-1, layerIndex, 0xffffffff);
+
+	return;
+}
+
+void CActorHeroPrivate::SetLayerProperty(float param_1, uint layerId)
+{
+	int iVar1;
+	edAnmLayer* peVar2;
+	CAnimation* pAnim;
+
+	iVar1 = this->pAnimationController->PhysicalLayerFromLayerId(layerId);
+	peVar2 = this->pAnimationController->anmBinMetaAnimator.aAnimData + iVar1;
+	peVar2->blendOp = 3;
+	peVar2->field_0x4 = param_1;
+
+	return;
+}
+
+bool CActorHeroPrivate::IsLayerAnimFinished(uint layerId)
+{
+	int iVar1;
+
+	iVar1 = this->pAnimationController->PhysicalLayerFromLayerId(layerId);
+	return (this->pAnimationController->anmBinMetaAnimator.aAnimData[iVar1].animPlayState == 0);
+}
+
+bool CActorHeroPrivate::IsLayerAnimEndReached(uint layerId)
+{
+	bool bVar1;
+	int iVar2;
+	edAnmLayer* pLayer;
+
+	iVar2 = this->pAnimationController->PhysicalLayerFromLayerId(layerId);
+	pLayer = (this->pAnimationController->anmBinMetaAnimator).aAnimData + iVar2;
+
+	if (pLayer->animPlayState == 0) {
+		bVar1 = false;
+	}
+	else {
+		bVar1 = (pLayer->field_0xcc & 2) != 0;
+	}
+
+	return bVar1;
+}
+
+void CActorHeroPrivate::SetLayerAnim(float param_1, uint layerId, int animId)
+{
+	int layerIndex;
+	int mode;
+	edAnmLayer* peVar1;
+	CAnimation* pAnim;
+
+	pAnim = this->pAnimationController;
+	if ((layerId == 8) && (animId != 0x1a1)) {
+		this->field_0x1000 = -1.0f;
+	}
+
+	layerIndex = pAnim->PhysicalLayerFromLayerId(layerId);
+	peVar1 = (pAnim->anmBinMetaAnimator).aAnimData + layerIndex;
+	peVar1->blendOp = 3;
+	peVar1->field_0x4 = param_1;
+	mode = GetIdMacroAnim(animId);
+	pAnim->anmBinMetaAnimator.SetAnimOnLayer(mode, layerIndex, 0xffffffff);
+
+	return;
+}
+
+void CActorHeroPrivate::SetMagicMode(int bEnable)
+{
+	this->magicInterface.Activate(bEnable);
+	if (bEnable == 0) {
+		this->field_0x1a44 = 0;
+	}
+
+	return;
 }
 
 int CActorHeroPrivate::GetPossibleWind(float param_1, edF32VECTOR4* param_3, CWayPoint* pWayPoint)
@@ -2346,8 +2511,7 @@ void CActorHeroPrivate::Manage()
 		}
 	}
 
-	IMPLEMENTATION_GUARD_BOOMY(
-	ManageBoomyState(this);)
+	ManageBoomyState();
 
 	if (0.0f <= this->field_0x1000) {
 		IMPLEMENTATION_GUARD(
@@ -2649,7 +2813,7 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 
 	if ((currentState != newState) && (uVar6 = GetBehaviourFlags(this->curBehaviourId), (uVar6 & 0x200) != 0)) {
 		GetStateHeroFlags(newState);
-		//::EmptyFunction();
+		ManageBoomyStateTerm();
 	}
 
 	bFightRelated = IsFightRelated(this->curBehaviourId);
@@ -2675,7 +2839,7 @@ void CActorHeroPrivate::SetState(int newState, int animType)
 
 		uVar6 =GetBehaviourFlags(this->curBehaviourId);
 		if ((uVar6 & 0x200) != 0) {
-			//::EmptyFunction();
+			ManageBoomyStateInit();
 		}
 	}
 
@@ -3726,7 +3890,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						return pTVar15->scaledTotalTime < this->field_0x155c ^ 1;)
 					}
 
-					if (msg == 0x79) {
+					if (msg == MESSAGE_RECEPTACLE_CHANGED) {
 						pCVar11 = GetLifeInterface();
 						fVar25 = pCVar11->GetValue();
 						bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3741,7 +3905,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 						UpdateMedallion();
 					}
 					else {
-						if (msg == 0x6b) {
+						if (msg == MESSAGE_FIGHT_RING_CHANGED) {
 							pCVar11 = GetLifeInterface();
 							fVar25 = pCVar11->GetValue();
 							bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3757,7 +3921,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							UpdateBracelet((uint)pMsgParam);
 						}
 						else {
-							if (msg == 0x62) {
+							if (msg == MESSAGE_BOOMY_CHANGED) {
 								pCVar11 = GetLifeInterface();
 								fVar25 = pCVar11->GetValue();
 								bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
@@ -3776,8 +3940,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 								}
 								else {
 									if (boomyId == 2) {
-										CActor::SV_PatchMaterial(gBoomyHashCodes[1], gBoomyHashCodes[2], (ed_g2d_manager*)0x0)
-											;
+										CActor::SV_PatchMaterial(gBoomyHashCodes[1], gBoomyHashCodes[2], (ed_g2d_manager*)0x0);
 									}
 									else {
 										if (boomyId == 1) {
@@ -3794,75 +3957,77 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 							}
 							else {
 								if (msg == 6) {
-									IMPLEMENTATION_GUARD(
-									pCVar11 = (*(this->pVTable)->GetLifeInterface)
-										(this);
-									fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-									bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+									pCVar11 = GetLifeInterface();
+									fVar25 = pCVar11->GetValue();
+									bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 									if (!bVar9) {
 										bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 									}
-									if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
+
+									if ((!bVar9) && (this->field_0x1558 <= 0.0f)) {
 										if (this->actorState == 0xdb) {
-											(*(this->pVTable)->SetBehaviour)
-												(this, 7, STATE_HERO_STAND, 0xffffffff);
+											SetBehaviour(7, STATE_HERO_STAND, 0xffffffff);
 										}
+
 										return 1;
-									})
+									}
 									return 0;
 								}
+
 								if (msg == 5) {
-									IMPLEMENTATION_GUARD(
-									pCVar11 = (*(this->pVTable)->GetLifeInterface)
-										(this);
-									fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)(pCVar11);
-									bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+									pCVar11 = GetLifeInterface();
+									fVar25 = pCVar11->GetValue();
+									bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 									if (!bVar9) {
 										bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 									}
-									if ((bVar9) || (0.0 < this->field_0x1558)) {
+
+									if ((bVar9) || (0.0f < this->field_0x1558)) {
 										return 0;
 									}
-									uVar10 = ActorFunc_00132c60((Actor*)this, 0xffffffff);
+
+									uVar10 = FUN_00132c60(0xffffffff);
 									if ((uVar10 != 0) && (this->field_0x1b78 == 3)) {
 										pCVar18 = this->pPlayerInput;
 										if ((pCVar18 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
-											fVar25 = 0.0;
+											fVar25 = 0.0f;
 										}
 										else {
-											fVar25 = pCVar18->aButtons[9].clickValue;
+											fVar25 = pCVar18->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 										}
-										if (fVar25 != 0.0) {
-											*(undefined4*)&this->field_0x1b64 = 1;
-											(*(this->pVTable)->SetState)
-												(this, 0xd5, 0xffffffff);
+
+										if (fVar25 != 0.0f) {
+											this->field_0x1b64 = 1;
+											SetState(0xd5, 0xffffffff);
 											return 1;
 										}
 									}
+
 									if (this->boomyState_0x1b70 != 3) {
-										uVar10 = ActorFunc_00132c60((Actor*)this, 0xffffffff);
+										uVar10 = FUN_00132c60(0xffffffff);
 										if (uVar10 == 0) {
-											FUN_00136e50((int)this);
+											SetBoomyHairOn();
 										}
 										else {
 											pAnimationController = this->pAnimationController;
 											fVar25 = this->field_0x1b98;
 											this->field_0x1000 = -1.0f;
-											iVar13 = CAnimation::PhysicalLayerFromLayerId(pAnimationController, 8);
-											peVar23 = (pAnimationController->anmBinMetaAnimator).base.aAnimData + iVar13;
-											peVar23->field_0x0 = 3;
+											iVar13 = pAnimationController->PhysicalLayerFromLayerId(8);
+											peVar23 = (pAnimationController->anmBinMetaAnimator).aAnimData + iVar13;
+											peVar23->blendOp = 3;
 											peVar23->field_0x4 = fVar25;
-											iVar14 = CActor::GetIdMacroAnim(this, New_Name_(137));
-											edAnmBinMetaAnimator::SetAnimOnLayer(pAnimationController, iVar14, iVar13, 0xffffffff);
+											pAnimationController->anmBinMetaAnimator.SetAnimOnLayer(GetIdMacroAnim(0x89), iVar13, 0xffffffff);
 										}
+
 										if (this->actorState - 0x73U < 3) {
-											SetState(0x75, 0x82);
+											SetState(STATE_HERO_BOOMY_CATCH, 0x82);
 										}
-										CActorHero::SetBoomyFunc((CActorHero*)this, 2);
-									})
+
+										SetBoomyFunc(2);
+									}
 									return 1;
 								}
-								if (msg == 7) {
+								if (msg == MESSAGE_GET_VISUAL_DETECTION_POINT) {
 									/* WARNING: Load size is inaccurate */
 									GetPositionMsgParams* pBoneMessage = reinterpret_cast<GetPositionMsgParams*>(pMsgParam);
 									iVar13 = pBoneMessage->field_0x0;
@@ -3908,39 +4073,30 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 									}
 
 									if ((iVar13 == 4) || (iVar13 == 3)) {
-										IMPLEMENTATION_GUARD(
 										SV_GetBoneWorldPosition(this->animKey_0x1588, &eStack64);
 										edF32Vector4SubHard(&eStack64, &eStack64, &this->currentLocation);
 										/* WARNING: Load size is inaccurate */
-										if (*pMsgParam == 4) {
-											local_50.x = 0.0;
-											local_50.z = 0.0;
+										if (pBoneMessage->field_0x0 == 4) {
+											local_50.x = 0.0f;
+											local_50.z = 0.0f;
 										}
 										else {
-											local_50.x = 0.25;
-											local_50.z = 0.5;
+											local_50.x = 0.25f;
+											local_50.z = 0.5f;
 										}
-										local_50.w = 0.0;
-										local_50.y = 0.5;
-										edF32Matrix4MulF32Vector4Hard
-										(&local_50, (edF32MATRIX4*)this->pMeshTransform,
-											&local_50);
-										edF32Vector4AddHard((edF32VECTOR4*)((int)pMsgParam + 0x20), &eStack64, &local_50);)
+										local_50.w = 0.0f;
+										local_50.y = 0.5f;
+										edF32Matrix4MulF32Vector4Hard(&local_50, &this->pMeshTransform->base.transformA, &local_50);
+										edF32Vector4AddHard(&pBoneMessage->vectorFieldB, &eStack64, &local_50);
 										return 1;
 									}
+
 									if (iVar13 == 2) {
-										IMPLEMENTATION_GUARD(
-										local_20.x = (float)_DAT_00425870;
-										local_20.y = (float)((ulong)_DAT_00425870 >> 0x20);
-										local_20.z = DAT_00425878;
-										local_20.w = DAT_0042587c;
+										static edF32VECTOR4 edF32VECTOR4_00425870 = { -0.069f, 0.837f, 0.381f, 0.0f };
 										SV_GetBoneWorldPosition(this->animKey_0x1588, &eStack48);
-										edF32Vector4SubHard(&eStack48, &eStack48,
-											&this->currentLocation);
-										edF32Matrix4MulF32Vector4Hard
-										(&local_20, (edF32MATRIX4*)this->pMeshTransform,
-											&local_20);
-										edF32Vector4AddHard((edF32VECTOR4*)((int)pMsgParam + 0x20), &eStack48, &local_20);)
+										edF32Vector4SubHard(&eStack48, &eStack48, &this->currentLocation);
+										edF32Matrix4MulF32Vector4Hard(&local_20, &this->pMeshTransform->base.transformA, &local_20);
+										edF32Vector4AddHard(&pBoneMessage->vectorFieldB, &eStack48, &local_20);
 										return 1;
 									}
 								}
@@ -4257,37 +4413,36 @@ void CActorHeroPrivate::ResetBoomyDefaultSettings()
 {
 	uint* puVar1;
 	ulong uVar2;
-	IMPLEMENTATION_GUARD_BOOMY(
 	CScene::GetManager(MO_Camera);
-	this->field_0x1ba0 = 0x41000000;
-	*(undefined4*)&this->field_0x1b98 = 0;
-	*(undefined4*)&this->field_0x1b9c = 0;
+	this->field_0x1ba0 = 8.0f;
+	this->field_0x1b98 = 0.0f;
+	IMPLEMENTATION_GUARD_BOOMY(
+	*(undefined4*)&this->field_0x1b9c = 0;)
 	this->field_0x1b94 = 0;
-	*(undefined**)&this->field_0x1b90 = &DAT_bf800000;
-	*(undefined4*)&this->field_0x1b64 = 0;
+	this->boomyTargetRayDist = -1.0f;
+	this->field_0x1b64 = 0;
+	IMPLEMENTATION_GUARD_BOOMY(
 	this->field_0x1b68 = 0;)
 	this->field_0x1b6c = 0;
 	SetBoomyFunc(0);
 	this->field_0x1b78 = 0;
-	IMPLEMENTATION_GUARD_BOOMY(
-	this->field_0x1b74 = 0;)
+	this->field_0x1b74 = 0.0f;
 	this->field_0x1000 = -1.0f;
 
 	IMPLEMENTATION_GUARD_BOOMY(
-	*(undefined4*)&this->field_0x1004 = 0x41200000;
-	*(undefined4*)&this->field_0x1008 = 0x40a00000;
-	DisableLayer(this, 8);
-	SetMagicMode(this, 0);
-	uVar2 = FUN_0034cdc0();
-	if (uVar2 == 0) {
-		CAnimation::AddDisabledBone
-		(this->data.pAnimationController, this->animKey_0x1584);
+	this->field_0x1004 = 10.0f;
+	this->field_0x1008 = 5.0f;)
+
+	DisableLayer(8);
+	SetMagicMode(0);
+
+	if (EvolutionBoomyCanLaunch() == 0) {
+		this->pAnimationController->AddDisabledBone(this->animKey_0x1584);
 	}
 	else {
-		CAnimation::RemoveDisabledBone
-		(this->data.pAnimationController, this->animKey_0x1584);
-	})
-	/* BOOMY_1 */
+		this->pAnimationController->RemoveDisabledBone(this->animKey_0x1584);
+	}
+
 	this->field_0x1ba4 = 0;
 	IMPLEMENTATION_GUARD_BOOMY(
 	puVar1 = CActorFighter::FindBlowByName((CActorHero*)this, s_BOOMY_1_00429998);
@@ -5133,7 +5288,7 @@ void CActorHeroPrivate::ClearLocalData()
 	this->bUnknownBool = 1;
 	//this->field_0x1c38 = -NAN;
 	//this->stateMachine_0x1c40.pVTable = (CBehaviourVtable*)0x0;
-	//this->field_0xe44 = (int*)0x0;
+	this->field_0xe44 = 0x0;
 	
 	for (int i = 0; i < 0x10; i++) {
 		for (int j = 0; j < 0x10; j++) {
@@ -5365,8 +5520,12 @@ LAB_00341590:
 	case STATE_HERO_SHOP:
 		break;
 	case STATE_HERO_STAND:
+		this->field_0x1048 = 0.0f;
 		StateHeroStandInit(1);
 		break;
+	case STATE_HERO_BOOMY:
+	case STATE_HERO_BOOMY_CATCH:
+		StateHeroStandInit(0);
 	case STATE_HERO_RUN:
 		IMPLEMENTATION_GUARD_LOG(
 		EnableFightCamera();)
@@ -5488,6 +5647,8 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 
 	switch (oldState) {
 	case AS_None:
+	case STATE_HERO_BOOMY:
+	case STATE_HERO_BOOMY_CATCH:
 	case STATE_HERO_JOKE:
 	case STATE_HERO_SLIDE_SLIP_A:
 	case STATE_HERO_SLIDE_SLIP_B:
@@ -5897,6 +6058,9 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 	case STATE_HERO_STAND:
 		StateHeroStand(1);
 		break;
+	case STATE_HERO_BOOMY:
+	case STATE_HERO_BOOMY_CATCH:
+		StateHeroStand(0);
 	case STATE_HERO_RUN:
 		StateHeroRun();
 		break;
@@ -6178,7 +6342,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 			fVar11 = 0.0f;
 		}
 		else {
-			fVar11 = pCVar1->aButtons[9].clickValue;
+			fVar11 = pCVar1->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 		}
 
 		if (fVar11 == 0.0f) {
@@ -6186,7 +6350,7 @@ void CActorHeroPrivate::BehaviourHero_Manage()
 		}
 	}
 
-	uVar9 = CLevelScheduler::ScenVar_Get(10);
+	uVar9 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
 	if ((uVar9 & 0x10000) != 0) {
 		uVar9 = 0;
 	}
@@ -6390,7 +6554,7 @@ void CActorHeroPrivate::StateHeroStand(int bCheckEffort)
 			}
 			else {
 				/* Check with the input manager if the jump key is pressed */
-				jumpBitmask = pInput->pressedBitfield & PAD_BITMASK_X;
+				jumpBitmask = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 			}
 
 			if (jumpBitmask == 0) {
@@ -6955,7 +7119,7 @@ LAB_00329a38:
 			uVar9 = 0;
 		}
 		else {
-			uVar9 = pCVar3->pressedBitfield & PAD_BITMASK_X;
+			uVar9 = pCVar3->pressedBitfield & PAD_BITMASK_CROSS;
 		}
 
 		if ((uVar9 != 0) && (0.50022143f < local_60.y)) {
@@ -7689,7 +7853,7 @@ void CActorHeroPrivate::StateHeroWindSlide(int nextState)
 			uVar13 = 0;
 		}
 		else {
-			uVar13 = pCVar2->pressedBitfield & PAD_BITMASK_X;
+			uVar13 = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 		}
 
 		if (uVar13 == 0) {
@@ -7909,7 +8073,7 @@ void CActorHeroPrivate::StateHeroWindWallMove(float horizontalSpeed, float verti
 									bPressedJump = 0;
 								}
 								else {
-									bPressedJump = pInput->pressedBitfield & PAD_BITMASK_X;
+									bPressedJump = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 								}
 
 								if (bPressedJump != 0) {
@@ -8299,7 +8463,7 @@ void CActorHeroPrivate::StateHeroRun()
 		uVar8 = 0;
 	}
 	else {
-		uVar8 = pInput->pressedBitfield & PAD_BITMASK_X;
+		uVar8 = pInput->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if (uVar8 != 0) {
@@ -8454,7 +8618,7 @@ void CActorHeroPrivate::StateHeroJoke()
 		fVar6 = 0.0f;
 	}
 	else {
-		fVar6 = pCVar1->aButtons[9].clickValue;
+		fVar6 = pCVar1->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 	}
 
 	if (fVar6 == 0.0f) {
@@ -8462,7 +8626,7 @@ void CActorHeroPrivate::StateHeroJoke()
 			uVar5 = 0;
 		}
 		else {
-			uVar5 = pCVar1->pressedBitfield & PAD_BITMASK_X;
+			uVar5 = pCVar1->pressedBitfield & PAD_BITMASK_CROSS;
 		}
 
 		if (uVar5 != 0) {
@@ -8685,7 +8849,7 @@ void CActorHeroPrivate::StateHeroSlideSlip(int nextState, bool boolA, bool boolB
 								uVar9 = 0;
 							}
 							else {
-								uVar9 = pCVar2->pressedBitfield & PAD_BITMASK_X;
+								uVar9 = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 							}
 							if (uVar9 == 0) {
 								pCVar2 = this->pPlayerInput;
@@ -9009,7 +9173,7 @@ void CActorHeroPrivate::StateHeroSlide(int param_2)
 				uVar8 = 0;
 			}
 			else {
-				uVar8 = pCVar2->pressedBitfield & PAD_BITMASK_X;
+				uVar8 = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 			}
 			if ((uVar8 == 0) || (param_2 == 0)) {
 				if ((this->dynamic.horizontalLinearAcceleration < 0.5f) &&
@@ -9450,7 +9614,7 @@ void CActorHeroPrivate::StateHeroCrouch(int nextState)
 			uVar6 = 0;
 		}
 		else {
-			uVar6 = pCVar4->pressedBitfield & PAD_BITMASK_X;
+			uVar6 = pCVar4->pressedBitfield & PAD_BITMASK_CROSS;
 		}
 
 		if ((uVar6 == 0) || (this->field_0x1a4c != 0)) {
@@ -9689,7 +9853,7 @@ void CActorHeroPrivate::StateHeroCrouchWalk()
 		uVar4 = 0;
 	}
 	else {
-		uVar4 = pCVar1->pressedBitfield & PAD_BITMASK_X;
+		uVar4 = pCVar1->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if ((uVar4 != 0) && ((bVar3 = (pCVar2->flags_0x4 & 1) == 0, bVar3 ||  ((!bVar3 && 
@@ -10040,7 +10204,7 @@ void CActorHeroPrivate::StateHeroRoll2Crouch()
 		uVar6 = 0;
 	}
 	else {
-		uVar6 = pCVar3->pressedBitfield & PAD_BITMASK_X;
+		uVar6 = pCVar3->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if (uVar6 == 0) {
@@ -10447,7 +10611,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 			uVar6 = 0;
 		}
 		else {
-			uVar6 = pCVar1->pressedBitfield & PAD_BITMASK_X;
+			uVar6 = pCVar1->pressedBitfield & PAD_BITMASK_CROSS;
 		}
 
 		if (uVar6 == 0) {
@@ -10579,7 +10743,7 @@ void CActorHeroPrivate::StateHeroKick(int param_2, int param_3)
 					fVar9 = 0.0f;
 				}
 				else {
-					fVar9 = pCVar1->aButtons[9].clickValue;
+					fVar9 = pCVar1->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
 				}
 
 				if ((fVar9 == 0.0f) || (this->field_0x1570 <= this->field_0x1544)) {
@@ -10712,7 +10876,7 @@ void CActorHeroPrivate::StateHeroJump_2_3(int param_2, int bCheckBounce, int par
 		jumpPressed = 0;
 	}
 	else {
-		jumpPressed = pCVar2->pressedBitfield & PAD_BITMASK_X;
+		jumpPressed = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if (jumpPressed != 0) {
@@ -11001,7 +11165,7 @@ void CActorHeroPrivate::StateHeroJump_3_3(int param_2)
 		uVar8 = 0;
 	}
 	else {
-		uVar8 = pCVar3->pressedBitfield & PAD_BITMASK_X;
+		uVar8 = pCVar3->pressedBitfield & PAD_BITMASK_CROSS;
 	}
 
 	if (uVar8 != 0) {
@@ -11467,7 +11631,7 @@ LAB_00139008:
 									uVar9 = 0;
 								}
 								else {
-									uVar9 = pCVar2->pressedBitfield & PAD_BITMASK_X;
+									uVar9 = pCVar2->pressedBitfield & PAD_BITMASK_CROSS;
 								}
 
 								if (uVar9 == 0) {
@@ -12866,7 +13030,7 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 			CActor::EvaluateDisplayState(pCVar2);
 			CAnimation::UnRegisterBone(this->data.pAnimationController, this->field_0x1598);
 			CAnimation::UnRegisterBone(this->data.pAnimationController, this->field_0x157c);
-			*(undefined4*)&this->field_0x1b64 = 0;
+			this->field_0x1b64 = 0;
 			this->field_0x1b68 = 0;
 			this->field_0x1b6c = 0;
 			this->field_0x1b78 = 0;)
@@ -12972,9 +13136,8 @@ void CActorHeroPrivate::SetBoomyFunc(int param_2)
 			}
 			else {
 				if (((param_2 == 4) || (param_2 == 3)) || ((param_2 == 2 || (param_2 == 1)))) {
-					IMPLEMENTATION_GUARD(
 					this->field_0x1b98 = 1.0f;
-					this->field_0x1b9c = 1.0f;)
+					this->field_0x1b9c = 1.0f;
 				}
 				else {
 					this->field_0x1b9c = 0.0f;
@@ -13003,6 +13166,571 @@ void CActorHeroPrivate::IncreaseEffort(float param_1)
 			this->effort = 0.0f;
 		}
 	}
+	return;
+}
+
+void CActorHeroPrivate::ManageBoomyStateInit()
+{
+	return;
+}
+
+void CActorHeroPrivate::ManageBoomyState()
+{
+	CPlayerInput* pCVar1;
+	CActorBoomy* pBoomy;
+	CActorWolfen* pCVar3;
+	CAnimation* this_00;
+	s_fighter_blow* psVar4;
+	s_fighter_blow_sub_obj* psVar5;
+	uint uVar6;
+	int* piVar7;
+	int iVar8;
+	CCamera* pCVar9;
+	bool bVar10;
+	CCameraManager* pCameraViewManager;
+	Timer* pTVar11;
+	CActor* pCVar12;
+	CVision* pCVar13;
+	int iVar14;
+	//CActorFighterVTable** ppCVar15;
+	CActorHeroPrivate* pCVar16;
+	uint uVar17;
+	float fVar18;
+	undefined* puVar19;
+	float fVar20;
+	edF32VECTOR4 eStack512;
+	edF32VECTOR4 local_1f0;
+	edF32VECTOR3 local_1e0;
+	undefined4 local_1d4;
+	undefined8 local_1d0;
+	float fStack456;
+	float fStack452;
+	edF32VECTOR4 eStack448;
+	edF32MATRIX4 eStack432;
+	undefined4 local_170[2];
+	undefined4 local_168;
+	float local_164;
+	float local_160;
+	undefined* local_150;
+	undefined4 local_14c;
+	float local_148;
+	undefined4 local_144;
+	float local_140;
+	float local_130;
+	float local_12c;
+	float local_128;
+	float local_124;
+	ushort local_120;
+	float local_110;
+	undefined4 local_10c;
+	float local_108;
+	undefined4 local_104;
+	float local_100;
+	edF32VECTOR4 local_f0;
+	edF32VECTOR4 local_e0;
+	edF32VECTOR4 local_d0;
+	s_fighter_collision_desc local_c0;
+	edF32VECTOR4 eStack128;
+	edF32VECTOR4 local_70;
+	undefined4 local_60[4];
+	edF32VECTOR4 local_50;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 eStack48;
+	edF32VECTOR4 eStack32;
+	undefined4* local_10;
+	undefined4 local_c;
+	undefined4 local_8;
+	undefined4* local_4;
+
+	pCameraViewManager = (CCameraManager*)CScene::GetManager(MO_Camera);
+	this->boomyTargetRayDist = -1.0f;
+
+	if (this->boomyState_0x1b70 != 0) {
+		this->field_0x1b94 = 1;
+	}
+
+	if (this->field_0x1b94 != 0) {
+		SetLayerProperty(this->field_0x1b98, 8);
+
+		if (this->field_0x1b98 < this->field_0x1b9c) {
+			fVar20 = this->field_0x1ba0;
+			pTVar11 = GetTimer();
+			this->field_0x1b98 = this->field_0x1b98 + fVar20 * pTVar11->cutsceneDeltaTime;
+			fVar20 = this->field_0x1b9c;
+			if (fVar20 < this->field_0x1b98) {
+				this->field_0x1b98 = fVar20;
+			}
+		}
+		else {
+			fVar20 = this->field_0x1ba0;
+			pTVar11 = GetTimer();
+			this->field_0x1b98 = this->field_0x1b98 - fVar20 * pTVar11->cutsceneDeltaTime;
+			fVar20 = this->field_0x1b9c;
+			if (this->field_0x1b98 < fVar20) {
+				this->field_0x1b98 = fVar20;
+			}
+		}
+
+		if ((this->field_0x1b98 == 0.0f) && (this->field_0x1b94 = 0, this->field_0x1000 == -1.0f)) {
+			DisableLayer(8);
+		}
+	}
+	switch (this->boomyState_0x1b70) {
+	case 0:
+		this->field_0x1b74 = 0.0f;
+		break;
+	case 1:
+		this->field_0x1b78 = 2;
+		fVar20 = this->field_0x1b74 + GetTimer()->cutsceneDeltaTime;
+		this->field_0x1b74 = fVar20;
+
+		if (0.02f <= fVar20) {
+			pBoomy = this->pActorBoomy;
+			iVar14 = pBoomy->actorState;
+			bVar10 = true;
+			if ((iVar14 != 5) && (iVar14 != 9)) {
+				bVar10 = false;
+			}
+
+			if (bVar10) {
+				pBoomy->UpdateFromOwner(4, &this->rotationQuat);
+				pCVar12 = 0; // this->pActorBoomy->GetBestActorInVision();
+				pBoomy = this->pActorBoomy;
+				pBoomy->aBoomyTypeInfo[0].flags = pBoomy->aBoomyTypeInfo[0].flags & 0xfffffffe;
+
+				if (pCVar12 == (CActor*)0x0) {
+					pCVar3 = (CActorWolfen*)this->pActorBoomy;
+					pCVar13 = pCVar3->GetVision();
+					edF32Vector4ScaleHard(pCVar13->visionRange_0x34, &eStack48, &this->rotationQuat);
+					SV_GetBoneWorldPosition(this->field_0x157c, &eStack32);
+					edF32Vector4AddHard(&eStack32, &eStack32, &eStack48);
+					this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
+					this->pActorBoomy->SetTarget(&eStack32);
+					(this->pActorBoomy)->field_0x1dc = 0.1f;
+				}
+				else {
+					this->pActorBoomy->UpdateFromOwner(3, &this->rotationQuat);
+					local_60[0] = 0;
+					pBoomy = this->pActorBoomy;
+					local_4 = local_60;
+					local_50 = pBoomy->currentLocation;
+					iVar14 = DoMessage(pCVar12, (ACTOR_MESSAGE)7, (void*)local_4);
+					if (iVar14 == 0) {
+						local_70 = pCVar12->currentLocation;
+					}
+					else {
+						edF32Vector4AddHard(&local_70, &eStack64, &pCVar12->currentLocation);
+					}
+
+					this->pActorBoomy->SetTarget(pCVar12, &local_70);
+					(this->pActorBoomy)->field_0x1dc = 0.01f;
+				}
+
+				pBoomy = this->pActorBoomy;
+				pBoomy->aBoomyTypeInfo[0].flags = pBoomy->aBoomyTypeInfo[0].flags | 1;
+				local_8 = 0;
+				DoMessage(this->pActorBoomy, (ACTOR_MESSAGE)4, 0);
+				this->pAnimationController->AddDisabledBone(this->animKey_0x1584);
+			}
+		}
+
+		bVar10 = IsLayerAnimFinished(8);
+		if ((bVar10 != false) || (bVar10 = IsLayerAnimEndReached(8), bVar10 != false)) {
+			if (this->actorState - 0x73U < 3) {
+				SetState(0x73, -1);
+			}
+
+			SetBoomyFunc(0);
+		}
+		break;
+	case 2:
+		if (((this->field_0x1b6c == 0) && (bVar10 = IsLayerAnimFinished(8), bVar10 == false)) && (bVar10 = IsLayerAnimEndReached(8), bVar10 == false)) break;
+
+		this->field_0x1b6c = 0;
+		pBoomy = this->pActorBoomy;
+		if (pBoomy == (CActorBoomy*)0x0) {
+		LAB_001352d8:
+			bVar10 = false;
+		}
+		else {
+			iVar14 = pBoomy->actorState;
+			bVar10 = true;
+			if ((iVar14 != 5) && (iVar14 != 9)) {
+				bVar10 = false;
+			}
+
+			if (((!bVar10) || (uVar17 = TestState_AllowAttack(0xffffffff), uVar17 == 0)) || (bVar10 = true, this->field_0x1a48 != 0)) goto LAB_001352d8;
+		}
+
+		if ((bVar10) && (bVar10 = EvolutionBoomyCanLaunch(), bVar10 != false)) {
+			iVar14 = this->actorState;
+			if (((iVar14 - 0x11aU < 2) || ((0xdb < iVar14 && iVar14 < 0xdf || (TestState_00132b90(0xffffffff) != 0)))) ||
+				((iVar14 = this->boomyState_0x1b70, iVar14 != 0 && ((iVar14 != 2 && (iVar14 != 3))))))
+				goto LAB_00135370;
+			bVar10 = true;
+		}
+		else {
+		LAB_00135370:
+			bVar10 = false;
+		}
+
+		if (bVar10) {
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar20 = 1000000.0;
+			}
+			else {
+				fVar20 = pCVar1->aButtons[INPUT_BUTTON_INDEX_SQUARE].pressedDuration;
+			}
+
+			bVar10 = true;
+
+			if (0.2f < fVar20) goto LAB_001353d8;
+		}
+		else {
+		LAB_001353d8:
+			bVar10 = false;
+		}
+
+		if ((bVar10) &&
+			(((iVar14 = this->field_0x1b78, iVar14 == 2 || (iVar14 == 0)) && (TestState_AllowAttack(0xffffffff) != 0)))) {
+			SetLayerAnim(this->field_0x1b98, 8, 0x8a);
+			if (this->actorState - 0x73U < 3) {
+				SetState(STATE_HERO_BOOMY, -1);
+			}
+			SetBoomyFunc(4);
+		}
+		else {
+			uVar17 = FUN_00132c60(0xffffffff);
+			if (uVar17 == 0) {
+				this->pAnimationController->RemoveDisabledBone(this->animKey_0x1584);
+			}
+			else {
+				SetLayerAnim(this->field_0x1b98, 8, 0x8b);
+			}
+
+			if (this->actorState - 0x73U < 3) {
+				SetState(STATE_HERO_BOOMY_CATCH, -1);
+			}
+
+			SetBoomyFunc(3);
+		}
+		break;
+	case 3:
+		IMPLEMENTATION_GUARD(
+		pTVar11 = GetTimer();
+		fVar20 = this->field_0x1b74 + pTVar11->cutsceneDeltaTime;
+		this->field_0x1b74 = fVar20;
+		if (0.28 <= fVar20) {
+			CAnimation::RemoveDisabledBone
+			(this->pAnimationController, this->animKey_0x1584);
+		}
+		bVar10 = IsLayerAnimFinished(this, 8);
+		if ((bVar10 != false) || (bVar10 = IsLayerAnimEndReached(this, 8), bVar10 != false)) {
+			pCVar1 = this->pPlayerInput;
+			if ((pCVar1 == (CPlayerInput*)0x0) || (this->field_0x18dc != 0)) {
+				fVar20 = 0.0;
+			}
+			else {
+				fVar20 = pCVar1->aButtons[INPUT_BUTTON_INDEX_SQUARE].clickValue;
+			}
+			if (fVar20 == 0.0f) {
+				this->field_0x1b64 = 0;
+			}
+			if (this->actorState - 0x73U < 3) {
+				(*(this->pVTable)->SetState)((CActor*)this, 0x73, -1);
+			}
+			CActorHero::SetBoomyFunc((CActorHero*)this, 0);
+		}
+		break;)
+	case 4:
+		IMPLEMENTATION_GUARD(
+		pTVar11 = GetTimer();
+		fVar20 = this->field_0x1b74 + pTVar11->cutsceneDeltaTime;
+		this->field_0x1b74 = fVar20;
+		if (fVar20 < 0.02) break;
+		pBoomy = this->pActorBoomy;
+		if (pBoomy == (CActorBoomy*)0x0) {
+		LAB_00135678:
+			bVar10 = false;
+		}
+		else {
+			iVar14 = (pBoomy->base).base.actorState;
+			bVar10 = true;
+			if ((iVar14 != 5) && (iVar14 != 9)) {
+				bVar10 = false;
+			}
+			if (((!bVar10) || (uVar17 = CActorHero::TestState_AllowAttack((CActorHero*)this, 0xffffffff), uVar17 == 0)) ||
+				(bVar10 = true, this->field_0x1a48 != 0)) goto LAB_00135678;
+		}
+		if (((bVar10) && (bVar10 = EvolutionBoomyCanLaunch(), bVar10 != false)) &&
+			(1 < this->actorState - 0x11aU)) {
+			CActorBoomy::UpdateFromOwner
+			(this->pActorBoomy, 4, &this->rotationQuat);
+			pCVar12 = (CActor*)FUN_0012c6c0((int)this->pActorBoomy);
+			pBoomy = this->pActorBoomy;
+			pBoomy->aBoomyTypeInfo[0].flags = pBoomy->aBoomyTypeInfo[0].flags & 0xfffffffe;
+			if (pCVar12 == (CActor*)0x0) {
+				pCVar3 = (CActorWolfen*)this->pActorBoomy;
+				pCVar13 = (*((pCVar3->base).characterBase.base.base.pVTable)->GetVision)(pCVar3);
+				edF32Vector4ScaleHard
+				(pCVar13->visionRange_0x34, &eStack48, &this->rotationQuat);
+				CActor::SV_GetBoneWorldPosition((CActor*)this, this->field_0x157c, &eStack32);
+				edF32Vector4AddHard(&eStack32, &eStack32, &eStack48);
+				CActorBoomy::UpdateFromOwner
+				(this->pActorBoomy, 3, &this->rotationQuat);
+				CActorBoomy::SetTarget(this->pActorBoomy, &eStack32);
+				(this->pActorBoomy)->field_0x1dc = 0.1;
+			}
+			else {
+				CActorBoomy::UpdateFromOwner
+				(this->pActorBoomy, 3, &this->rotationQuat);
+				CActorBoomy::SetTarget(this->pActorBoomy, pCVar12, &pCVar12->currentLocation);
+				(this->pActorBoomy)->field_0x1dc = 0.01;
+			}
+			local_c = 0;
+			CActor::DoMessage((CActor*)this, (CActor*)this->pActorBoomy, 4, 0);
+		}
+		bVar10 = IsLayerAnimFinished(this, 8);
+		if ((bVar10 != false) || (bVar10 = IsLayerAnimEndReached(this, 8), bVar10 != false)) {
+			if (this->actorState - 0x73U < 3) {
+				(*(this->pVTable)->SetState)((CActor*)this, 0x73, -1);
+			}
+			CActorHero::SetBoomyFunc((CActorHero*)this, 0);
+			CAnimation::AddDisabledBone
+			(this->pAnimationController, this->animKey_0x1584);
+		})
+		break;
+	case 0xb:
+		IMPLEMENTATION_GUARD(
+		pTVar11 = GetTimer();
+		this->field_0x1b74 = this->field_0x1b74 + pTVar11->cutsceneDeltaTime;
+		CActor::SV_GetBoneWorldPosition((CActor*)this, this->field_0x157c, &eStack128);
+		CActor::UpdatePosition((CActor*)this->pActorBoomy, &eStack128, false);
+		if (1.7 <= this->field_0x1b74) {
+			iVar14 = *(int*)&this->field_0x18c4;
+			if (((iVar14 == 0) || (iVar8 = *(int*)&this->field_0x18c0, iVar8 == 0)) ||
+				(iVar8 != *(int*)(iVar14 + 0x18))) {
+				bVar10 = false;
+			}
+			else {
+				bVar10 = true;
+			}
+			if (!bVar10) {
+				CFxHandle::FUN_00407310((CFxHandle*)&this->field_0x18b4);
+				CFxHandle::FUN_004073b0((CFxHandle*)&this->field_0x18c0, (long)(int)this->pActorBoomy, 0x656ad6d2);
+				CFxHandle::FUN_004073b0((CFxHandle*)&this->field_0x18cc, (long)(int)this->pActorBoomy, 0x656ad6d2);
+			}
+		})
+		break;
+	case 0xd:
+		IMPLEMENTATION_GUARD(
+		fVar20 = edFIntervalUnitSrcLERP(this->field_0x1b84, 0.5, 4.0);
+		CActor::SV_GetBoneWorldPosition((CActor*)this, this->field_0x1598, &local_d0);
+		edF32Vector4SubHard(&local_f0, &local_d0, &this->currentLocation);
+		local_f0.y = 0.0;
+		fVar18 = edF32Vector4NormalizeHard(&local_f0, &local_f0);
+		if (fVar18 == 0.0) {
+			local_f0.x = this->rotationQuat.x;
+			local_f0.y = this->rotationQuat.y;
+			local_f0.z = this->rotationQuat.z;
+			local_f0.w = this->rotationQuat.w;
+		}
+		edF32Vector4ScaleHard(fVar20, &local_e0, &local_f0);
+		edF32Vector4AddHard(&local_e0, &local_e0, &this->currentLocation);
+		local_d0.x = local_e0.x;
+		local_d0.z = local_e0.z;
+		this_00 = this->pAnimationController;
+		iVar14 = CActor::GetIdMacroAnim((CActor*)this, this->currentAnimType);
+		if (iVar14 < 0) {
+			fVar20 = 0.0;
+		}
+		else {
+			fVar20 = CAnimation::GetAnimLength(this_00, iVar14, 1);
+		}
+		fVar18 = this->field_0x1b74;
+		if (fVar18 <= fVar20 * 0.1) {
+			fVar20 = edFIntervalLERP(fVar18, 0.0, fVar20 * 0.1, 0.0, 1.0);
+		}
+		else {
+			if (fVar20 * 0.9 <= fVar18) {
+				fVar20 = edFIntervalLERP(fVar18, fVar20 * 0.9, fVar20, 1.0, 0.0);
+			}
+			else {
+				fVar20 = 1.0;
+			}
+		}
+		CActor::SV_GetBoneWorldPosition((CActor*)this, this->field_0x157c, &local_e0);
+		edF32Vector4ScaleHard(fVar20, &local_d0, &local_d0);
+		edF32Vector4ScaleHard(1.0 - fVar20, &local_e0, &local_e0);
+		edF32Vector4AddHard(&local_e0, &local_e0, &local_d0);
+		local_e0.w = 1.0;
+		CActor::UpdatePosition((CActor*)this->pActorBoomy, &local_e0, false);
+		pTVar11 = GetTimer();
+		this->field_0x1b74 = this->field_0x1b74 + pTVar11->cutsceneDeltaTime;
+		CActor::SV_GetBoneWorldPosition((CActor*)this, 0x53538f8b, &local_e0);
+		bVar10 = CActorFighter::_SV_HIT_FightCollisionCheckIntersect
+		((CActorFighter*)this, &local_c0, &local_e0,
+			&((this->pActorBoomy)->base).base.currentLocation, 1);
+		if ((bVar10 != false) &&
+			(bVar10 = CFighterExcludedTable::IsInList(&this->actorsExcludeTable, local_c0.pActor),
+				bVar10 == false)) {
+			local_170[0] = 7;
+			bVar10 = 0.25 <= this->field_0x1b84;
+			if (bVar10) {
+				local_168 = 0x35;
+				local_164 = this->field_0x1b84 * 50.0;
+				local_160 = (this->pBlow)->field_0x10;
+				local_140 = this->field_0x1b84 * 14.0;
+				local_100 = this->field_0x1b84 * 8.0;
+			}
+			else {
+				local_168 = 0x30;
+				local_164 = (this->pBlow)->damage;
+				local_160 = (this->pBlow)->field_0x10;
+				local_140 = (this->pBlow)->field_0x18;
+				local_100 = 0.0;
+			}
+			local_120 = (ushort)bVar10;
+			local_10 = local_170;
+			local_130 = local_c0.field_0x10.x;
+			local_12c = local_c0.field_0x10.y;
+			local_128 = local_c0.field_0x10.z;
+			local_124 = local_c0.field_0x10.w;
+			local_14c = 0x3f800000;
+			local_144 = 0;
+			local_10c = 0;
+			local_104 = 0;
+			local_150 = (undefined*)local_f0.z;
+			local_108 = -local_f0.z;
+			local_148 = -local_f0.x;
+			local_110 = local_148;
+			CActor::DoMessage((CActor*)this, local_c0.pActor, 2, (uint)local_10);
+			CFighterExcludedTable::Add((float)&DAT_bf800000, &this->actorsExcludeTable, local_c0.pActor);
+			this->fightFlags = this->fightFlags | 0x40;
+		}
+		psVar4 = this->pBlow;
+		if ((psVar4->nbSubObjs != 0) && (this->field_0x1b84 != 0.0)) {
+			psVar5 = psVar4->field_0x48;
+			CActor::SV_GetBoneWorldPosition((psVar5->boneRefA).pActor, *(uint*)&psVar5->boneRefA, &eStack448);
+			CActor::SV_GetBoneWorldPosition((psVar5->boneRefB).pActor, *(uint*)&psVar5->boneRefB, (edF32VECTOR4*)&local_1d0);
+			edF32Vector4SubHard(&local_f0, &eStack448, (edF32VECTOR4*)&local_1d0);
+			fVar20 = edF32Vector4NormalizeHard(&local_f0, &local_f0);
+			fVar18 = fVar20 + 0.5;
+			if (fVar18 < 2.147484e+09) {
+				uVar17 = (uint)fVar18;
+			}
+			else {
+				uVar17 = (int)(fVar18 - 2.147484e+09) | 0x80000000;
+			}
+			if (uVar17 == 0) {
+				uVar17 = 1;
+			}
+			uVar6 = *(uint*)&this->field_0x18b0;
+			if (uVar17 != uVar6) {
+				if (uVar17 < uVar6) {
+					*(uint*)&this->field_0x18b0 = uVar6 - 1;
+					ppCVar15 = &this->pVTable + *(int*)&this->field_0x18b0 * 3;
+					piVar7 = (int*)ppCVar15[0x621];
+					if (((piVar7 != (int*)0x0) && (iVar14 = (int)ppCVar15[0x620], iVar14 != 0)) && (iVar14 == piVar7[6])) {
+						(**(code**)(*piVar7 + 0xc))();
+					}
+					ppCVar15[0x621] = (CActorFighterVTable*)0x0;
+					ppCVar15[0x620] = (CActorFighterVTable*)0x0;
+				}
+				else {
+					CFxHandle::FUN_004074f0((CFxHandle*)(&this->field_0x1880 + uVar6 * 0xc), 0, 0);
+					*(int*)&this->field_0x18b0 = *(int*)&this->field_0x18b0 + 1;
+				}
+			}
+			local_d0.x = -local_f0.y;
+			local_d0.y = local_f0.x;
+			local_d0.z = 0.0;
+			local_d0.w = 0.0;
+			edF32Vector4SafeNormalize0Hard(&local_d0, &local_d0);
+			if (1.0 < local_f0.z) {
+				puVar19 = (undefined*)0x3f800000;
+			}
+			else {
+				puVar19 = &DAT_bf800000;
+				if (-1.0 <= local_f0.z) {
+					puVar19 = (undefined*)local_f0.z;
+				}
+			}
+			fVar18 = acosf((float)puVar19);
+			MatrixRotationFromVectorAndAngle(-fVar18, &eStack432, &local_d0);
+			edF32Matrix4ToEulerSoft(&eStack432, &local_1e0, (char*)&PTR_DAT_00429958);
+			edF32Vector4ScaleHard(1.0, &eStack512, &local_f0);
+			local_1f0.x = (float)local_1d0;
+			local_1f0.y = (float)((ulong)local_1d0 >> 0x20);
+			local_1f0.z = fStack456;
+			local_1f0.w = fStack452;
+			uVar17 = 0;
+			pCVar16 = this;
+			if (*(int*)&this->field_0x18b0 != 1) {
+				do {
+					iVar14 = *(int*)&(pCVar16->base).field_0x1884;
+					if (((iVar14 != 0) && (iVar8 = *(int*)&(pCVar16->base).field_0x1880, iVar8 != 0)) &&
+						(iVar8 == *(int*)(iVar14 + 0x18))) {
+						*(float*)(iVar14 + 0x50) = local_1e0.x;
+						*(float*)(iVar14 + 0x54) = local_1e0.y;
+						*(float*)(iVar14 + 0x58) = local_1e0.z;
+						*(undefined4*)(iVar14 + 0x5c) = local_1d4;
+					}
+					iVar14 = *(int*)&(pCVar16->base).field_0x1884;
+					if (((iVar14 != 0) && (iVar8 = *(int*)&(pCVar16->base).field_0x1880, iVar8 != 0)) &&
+						(iVar8 == *(int*)(iVar14 + 0x18))) {
+						*(float*)(iVar14 + 0x30) = local_1f0.x;
+						*(float*)(iVar14 + 0x34) = local_1f0.y;
+						*(float*)(iVar14 + 0x38) = local_1f0.z;
+						*(float*)(iVar14 + 0x3c) = local_1f0.w;
+					}
+					edF32Vector4AddHard(&local_1f0, &local_1f0, &eStack512);
+					fVar20 = fVar20 - 1.0;
+					uVar17 = uVar17 + 1;
+					pCVar16 = (CActorHeroPrivate*)&(pCVar16->base).character.characterBase.base.base.actorFieldS;
+				} while (uVar17 < *(int*)&this->field_0x18b0 - 1U);
+			}
+			ppCVar15 = &this->pVTable + uVar17 * 3;
+			iVar14 = (int)ppCVar15[0x621];
+			if (((iVar14 != 0) && (ppCVar15[0x620] != (CActorFighterVTable*)0x0)) &&
+				(ppCVar15[0x620] == (CActorFighterVTable*)*(int*)(iVar14 + 0x18))) {
+				*(float*)(iVar14 + 0x50) = local_1e0.x;
+				*(float*)(iVar14 + 0x54) = local_1e0.y;
+				*(float*)(iVar14 + 0x58) = local_1e0.z;
+				*(undefined4*)(iVar14 + 0x5c) = local_1d4;
+			}
+			iVar14 = (int)ppCVar15[0x621];
+			if (((iVar14 != 0) && (iVar8 = *(int*)(&this->field_0x1880 + uVar17 * 0xc), iVar8 != 0)) &&
+				(iVar8 == *(int*)(iVar14 + 0x18))) {
+				*(float*)(iVar14 + 0x30) = local_1f0.x;
+				*(float*)(iVar14 + 0x34) = local_1f0.y;
+				*(float*)(iVar14 + 0x38) = local_1f0.z;
+				*(float*)(iVar14 + 0x3c) = local_1f0.w;
+			}
+			iVar14 = (int)ppCVar15[0x621];
+			if (((iVar14 != 0) && (iVar8 = *(int*)(&this->field_0x1880 + uVar17 * 0xc), iVar8 != 0)) &&
+				(iVar8 == *(int*)(iVar14 + 0x18))) {
+				*(undefined4*)(iVar14 + 0x40) = 0x3f800000;
+				*(undefined4*)(iVar14 + 0x44) = 0x3f800000;
+				*(float*)(iVar14 + 0x48) = fVar20;
+				*(undefined4*)(iVar14 + 0x4c) = 0x3f800000;
+			}
+		})
+	}
+
+	if ((this->field_0x1b64 != 0) && (pCVar9 = this->field_0xc94, (pCameraViewManager->cameraStack).pActiveCamera != pCVar9)) {
+		pCameraViewManager->PushCamera(pCVar9, 1);
+	}
+	if ((this->field_0x1b64 == 0) &&
+		(pCVar9 = *(CCamera**)&this->field_0xc94, (pCameraViewManager->cameraStack).pActiveCamera == pCVar9)) {
+		pCameraViewManager->PopCamera(pCVar9);
+	}
+	return;
+}
+
+void CActorHeroPrivate::ManageBoomyStateTerm()
+{
 	return;
 }
 
@@ -13510,7 +14238,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 		ACTOR_HERO_LOG(LogLevel::Verbose, "CActorHeroPrivate::DetectGripEdge fVar5: {}", fVar5);
 	}
 
-	if (((fVar5 != 1e+30f) && (0.01f < fVar5)) && ((((uint)local_10.pVector_0x4 & 0x1200) == 0 && ((cosf(this->field_0x14b4) <= local_30.y &&
+	if (((fVar5 != 1e+30f) && (0.01f < fVar5)) && (((local_10.hitMaterialFlags & 0x1200) == 0 && ((cosf(this->field_0x14b4) <= local_30.y &&
 				(local_30.x * local_40.x + local_30.y * local_40.y + local_30.z * local_40.z <= 0.0f)))))) {
 		local_90.x = param_3->x;
 		fVar5 = local_20.y + local_40.y * fVar5;
@@ -13539,7 +14267,7 @@ int CActorHeroPrivate::DetectGripEdge(int param_2, edF32VECTOR4* param_3, edF32V
 		}
 
 		if (((fVar6 != 1e+30f) && (0.01 < fVar6)) &&
-			((((uint)local_10.pVector_0x4 & 0x1200) == 0 &&
+			(((local_10.hitMaterialFlags & 0x1200) == 0 &&
 				((fabs(local_80.y) < cosf(this->field_0x14b0) && (local_80.x * local_70.x + local_80.y * local_70.y + local_80.z * local_70.z <= 0.0f)))))) {
 			fVar7 = ((this->pCollisionData)->pObbPrim->field_0x90).z - 0.2f;
 
@@ -13641,8 +14369,8 @@ int CActorHeroPrivate::DetectClimbCeiling(edF32VECTOR4* v0, CActor** pOutActor)
 			fVar4 = CCollisionRay::Intersect(&CStack80, 3, this, (CActor*)0x0, 0x40000100, &local_30, &local_10);
 		}
 		if ((((fVar4 != 1e+30) && (local_30.y <= -edFCosinus[1138])) &&
-			((local_10.pActor_0x0 == (CActor*)0x0 || (((uint)local_10.pVector_0x4 & 0x800) != 0)))) &&
-			((((uint)local_10.pVector_0x4 & 0x200) == 0 &&
+			((local_10.pActor_0x0 == (CActor*)0x0 || ((local_10.hitMaterialFlags & 0x800) != 0)))) &&
+			(((local_10.hitMaterialFlags & 0x200) == 0 &&
 				(local_30.x * g_xVector.x + local_30.y * g_xVector.y + local_30.z * g_xVector.z <= 0.0)))) {
 			this->field_0x14a8 = fVar4 - 0.4;
 			if (pOutActor == (CActor**)0x0) {
@@ -13742,8 +14470,8 @@ LAB_0013d298:
 	}
 	if (bVar3) {
 		bDetectClimbWall = DetectWall(this, 3, 0x40000100, &local_30, &local_20, peVar5, &eStack80, &local_10);
-		if (((local_10.pActor_0x0 != (CActor*)0x0) && (((uint)local_10.pVector_0x4 & 0x400) == 0)) ||
-			(((uint)local_10.pVector_0x4 & 0x200) != 0)) {
+		if (((local_10.pActor_0x0 != (CActor*)0x0) && ((local_10.hitMaterialFlags & 0x400) == 0)) ||
+			((local_10.hitMaterialFlags & 0x200) != 0)) {
 			bDetectClimbWall = false;
 		}
 		if (bDetectClimbWall != false) {
@@ -13761,8 +14489,7 @@ LAB_0013d298:
 		bDetectClimbWall =
 			DetectWall(this, 3, 0x40000100, &this->rotationQuat, &local_20, peVar5,
 				&eStack80, &local_10);
-		if (((local_10.pActor_0x0 != (CActor*)0x0) && (((uint)local_10.pVector_0x4 & 0x400) == 0)) ||
-			(((uint)local_10.pVector_0x4 & 0x200) != 0)) {
+		if (((local_10.pActor_0x0 != (CActor*)0x0) && ((local_10.hitMaterialFlags & 0x400) == 0)) || ((local_10.hitMaterialFlags & 0x200) != 0)) {
 			bDetectClimbWall = false;
 		}
 		if (bDetectClimbWall != false) {
@@ -15521,6 +16248,59 @@ void CActorHeroPrivate::ManageInternalView()
 	return;
 }
 
+void CActorHeroPrivate::WhatsInVision(CActorsTable* pTable, edF32VECTOR4* pDirection)
+{
+	CActor* pCVar1;
+
+	this->pActorBoomy->UpdateFromOwner(4, pDirection);
+	this->pActorBoomy->GetActorsInVision(1.5f, pTable);
+
+	if (pTable->nbEntries != 0) {
+		pCVar1 = pTable->aEntries[0];
+		this->pActorBoomy->UpdateFromOwner(3, pDirection);
+		this->pActorBoomy->SetTarget(pCVar1, &pCVar1->currentLocation);
+		this->pActorBoomy->field_0x1dc = 0.01f;
+	}
+
+	return;
+}
+
+bool CActorHeroPrivate::FUN_00133fb0()
+{
+	bool bVar1;
+	edF32VECTOR4 eStack16;
+
+	if (this->curBehaviourId == 8) {
+		bVar1 = false;
+	}
+	else {
+		if (this->boomyTargetRayDist < 0.0f) {
+			SV_GetBoneWorldPosition(0x45544554, &eStack16);
+			CCollisionRay CStack48 = CCollisionRay(2.0f, &eStack16, &this->rotationQuat);
+			this->boomyTargetRayDist = CStack48.Intersect(3, (CActor*)this, this->field_0xf50, 0x40000001, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+		}
+
+		bVar1 = this->boomyTargetRayDist != 1e+30f;
+	}
+
+	return bVar1;
+}
+
+uint CActorHeroPrivate::FUN_00132c60(uint state)
+{
+	int iVar1;
+
+	if (state == 0xffffffff) {
+		iVar1 = this->actorState;
+		state = 0;
+		if ((iVar1 != -1) && (state = 0, 0x71 < iVar1)) {
+			state = _gStateCfg_HRO[iVar1 + -0x72].heroFlags;
+		}
+	}
+
+	return state & 0x4000;
+}
+
 void CActorHeroPrivate::ComputeSoccerMoving(float param_1, float param_2, CActorMovable* pSoccerActor)
 {
 	edColPRIM_OBJECT* peVar1;
@@ -16108,11 +16888,11 @@ edF32VECTOR4* CActorHeroPrivate::GetAdversaryPos()
 	}
 
 	if (bVar3) {
-		if (this->field_0x1bbc != (CActor*)0x0) {
-			this->field_0x1bc0 = this->field_0x1bbc->currentLocation;
+		if (this->pBoomyTarget != (CActor*)0x0) {
+			this->boomyTargetPosition = this->pBoomyTarget->currentLocation;
 		}
 
-		pPosition = &this->field_0x1bc0;
+		pPosition = &this->boomyTargetPosition;
 	}
 	else {
 		pPosition = CActorFighter::GetAdversaryPos();
@@ -16150,7 +16930,7 @@ bool FUN_0034ccb0(void)
 {
 	uint uVar1;
 
-	uVar1 = CLevelScheduler::ScenVar_Get(10);
+	uVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
 	if ((uVar1 & 0x10000) != 0) {
 		uVar1 = 0;
 	}
@@ -16189,7 +16969,7 @@ bool CActorHeroPrivate::Func_0x1c0(s_fighter_combo* pCombo)
 {
 	uint uVar1;
 
-	uVar1 = CLevelScheduler::ScenVar_Get(10);
+	uVar1 = CLevelScheduler::ScenVar_Get(SCENE_VAR_FIGHT_RING);
 	return (pCombo->field_0x4.field_0x0byte & uVar1) != 0;
 }
 
@@ -16758,11 +17538,9 @@ int CBehaviourHeroDefault::InterpretMessage(CActor* pSender, int msg, void* pMsg
 						return 1;
 					}
 
-					if (msg == 0x24) {
-						IMPLEMENTATION_GUARD(
-						(*((this->pHero->base).character.characterBase.base.base.pVTable)->SetState)
-							(this->pHero, STATE_HERO_STAND, -1);
-						return 1;)
+					if (msg == MESSAGE_LEAVE_SHOP) {
+						this->pHero->SetState(STATE_HERO_STAND, -1);
+						return 1;
 					}
 
 					if (msg == MESSAGE_ENTER_SHOP) {
