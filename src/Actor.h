@@ -379,7 +379,8 @@ public:
 	virtual void SetState(int newState);
 	virtual void CheckpointReset();
 
-	void Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int param_5);
+	void Init(CActor* pOwner, edF32VECTOR4* pPosition, edF32VECTOR4* pBoundSphere, int param_5); 
+	void Term();
 	void SetVisible(int bVisible);
 	void Reset();
 	void SetAlive(int bAlive);

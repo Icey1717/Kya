@@ -315,32 +315,30 @@ int CActorAmortos::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				iVar1 = 1;
 			}
 			else {
-				if (msg == 2) {
-					lVar2 = IsLockable();
-					if (lVar2 != 0) {
-						/* WARNING: Load size is inaccurate */
-						IMPLEMENTATION_GUARD(
-						iVar1 = *pMsgParam;
+				if (msg == MESSAGE_KICKED) {
+					_msg_hit_param* pHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+					if (IsLockable() != 0) {
+						iVar1 = pHitParam->projectileType;
 						if (iVar1 == 5) {
-							if (0.0 < *(float*)((int)pMsgParam + 0xc)) {
-								SetState(7, -1);
+							if (0.0f < pHitParam->damage) {
+								SetState(AMORTOS_STATE_EXPLODE, -1);
 								return 1;
 							}
 						}
 						else {
 							if (iVar1 == 10) {
-								if (0.0 < *(float*)((int)pMsgParam + 0xc)) {
-									SetState(7, -1);
+								if (0.0f < pHitParam->damage) {
+									SetState(AMORTOS_STATE_EXPLODE, -1);
 									return 1;
 								}
 							}
 							else {
 								if ((((iVar1 == 9) || (iVar1 == 3)) || (iVar1 == 1)) || ((iVar1 == 4 || (iVar1 == 0)))) {
-									SetState(7, -1);
+									SetState(AMORTOS_STATE_EXPLODE, -1);
 									return 1;
 								}
 							}
-						})
+						}
 					}
 
 					iVar1 = 0;
@@ -408,11 +406,11 @@ void CActorAmortos::BehaviourAmortosStand_Manage()
 		}
 	}
 	else {
-		if (iVar1 == 8) {
+		if (iVar1 == AMORTOS_STATE_WAIT_RESWELL) {
 			StateAmortosWaitReSwell();
 		}
 		else {
-			if (iVar1 == 7) {
+			if (iVar1 == AMORTOS_STATE_EXPLODE) {
 				StateAmortosExplode();
 			}
 			else {
@@ -439,7 +437,7 @@ void CActorAmortos::BehaviourAmortosStand_Manage()
 
 						pReceiver = (this->field_0x190).Get();
 						if (pReceiver == (CActor*)0x0) {
-							SetState(7, -1);
+							SetState(AMORTOS_STATE_EXPLODE, -1);
 						}
 						else {
 							local_8 = 0;
@@ -793,7 +791,7 @@ void CActorAmortos::StateAmortosExplode()
 
 	if (this->field_0x164 <= this->field_0x2b4) {
 		this->field_0x408.nbEntries = 0;
-		SetState(8, -1);
+		SetState(AMORTOS_STATE_WAIT_RESWELL, -1);
 	}
 	return;
 }

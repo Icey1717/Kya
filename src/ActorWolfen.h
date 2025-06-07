@@ -48,8 +48,34 @@ class CActorWolfen;
 class CActorCommander;
 class CActorProjectile;
 
+struct CActorWolfenKnowledge_0x14
+{
+	undefined4 field_0x0;
+	void* field_0x4;
+	undefined4 field_0x8;
+	undefined4 field_0xc;
+	undefined4 field_0x10;
+};
+
 class CActorWolfenKnowledge
-{ };
+{
+public:
+	void Init(int memMode, uint param_3, uint param_4, uint nbObjs, uint param_6);
+	void Reset();
+
+	CActorWolfenKnowledge_0x14* aSubObjs;
+	int field_0x4;
+	uint nbSubObjs;
+	int field_0xc;
+	int memMode;
+	uint field_0x14;
+	uint field_0x18;
+	int field_0x1c;
+	s_fighter_combo* field_0x20;
+	int field_0x24;
+	s_fighter_combo* field_0x28;
+	byte field_0x2c;
+};
 
 enum EEnemyCombatMode
 {

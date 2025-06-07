@@ -5525,3 +5525,15 @@ void CActInstance::FUN_003982c0()
 
 	return;
 }
+
+void CActInstance::Term()
+{
+	if ((this->flags & 0x80) != 0) {
+		ed3DHierarchyRemoveFromScene(CScene::_scene_handleA, this->pNode);
+	}
+	this->pNode = (edNODE*)0x0;
+
+	return;
+}
+
+

@@ -3098,17 +3098,17 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		*(undefined4*)&this->field_0x142c = 0;)
 		return 1;
 	}
+
 	if (msg == 0x8d) {
-		IMPLEMENTATION_GUARD(
-		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
-		fVar25 = (float)(*(code*)pCVar11->pVtable->GetValue)();
-		bVar9 = fVar25 - this->field_0x2e4 <= 0.0;
+		pCVar11 = GetLifeInterface();
+		fVar25 = pCVar11->GetValue();
+		bVar9 = fVar25 - this->field_0x2e4 <= 0.0f;
 		if (!bVar9) {
 			bVar9 = (GetStateFlags(this->actorState) & 1) != 0;
 		}
 
-		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
-			if (*(int*)&this->field_0xd28 == 0) {
+		if ((!bVar9) && (this->field_0x1558 <= 0.0f)) {
+			if (this->field_0xd28 == 0) {
 				if (CLevelScheduler::gThis->currentLevelID == 0xd) {
 					if (pMsgParam == (void*)0xb5f) {
 						CLevelScheduler::ScenVar_Set(9, 0);
@@ -3130,10 +3130,13 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 			else {
 				this->field_0xd30 = 2;
 			}
+
 			return 1;
-		})
+		}
+
 		return 0;
 	}
+
 	if (msg == 0x7e) {
 		IMPLEMENTATION_GUARD(
 		pCVar11 = (*(this->pVTable)->GetLifeInterface)(this);
@@ -3144,7 +3147,7 @@ int CActorHeroPrivate::InterpretMessage(CActor* pSender, int msg, void* pMsgPara
 		}
 
 		if ((!bVar9) && (this->field_0x1558 <= 0.0)) {
-			iVar13 = *(int*)&this->field_0xd28;
+			iVar13 = this->field_0xd28;
 			if (iVar13 != 0) {
 				iVar14 = CLevelScheduler::gThis->currentLevelID;
 				*(undefined4*)&this->field_0xd30 = 1;
@@ -4288,12 +4291,10 @@ int CActorHeroPrivate::InterpretEvent(edCEventMessage* param_2, undefined8 param
 			iVar9 = 1;
 			break;
 		case 5:
-			IMPLEMENTATION_GUARD(
 			if (param_3 == 2) {
-				CLevelScheduler::Level_Teleport
-				(CLevelScheduler::gThis, this, levelId, param_5[2], param_5[3], 0xffffffff);
+				CLevelScheduler::gThis->Level_Teleport(this, levelId, param_5[2], param_5[3], 0xffffffff);
 			}
-			iVar9 = 1;)
+			iVar9 = 1;
 			break;
 		case 6:
 		case 7:
@@ -5237,7 +5238,7 @@ void CActorHeroPrivate::ClearLocalData()
 		this->flags = this->flags | 0x800;
 	}
 
-	//*(undefined4*)&this->field_0xd28 = 0;
+	this->field_0xd28 = 0;
 	this->field_0xd30 = 0;
 	//this->mode_0xd30 = 0;
 	this->field_0x18dc = 1;

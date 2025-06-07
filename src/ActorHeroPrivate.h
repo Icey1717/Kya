@@ -477,6 +477,7 @@ public:
 	CActor* field_0xf54;
 	CActor* field_0xf58;
 
+	int field_0xd28;
 	int field_0xd30;
 
 	int field_0x1a48;

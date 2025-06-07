@@ -97,7 +97,7 @@ public:
 
 	float field_0x1e8;
 
-	float field_0x1f4;
+	float distanceToTarget;
 
 	CFxTail fxTail;
 	CBehaviourBoomyLaunch launchBehaviour;
@@ -124,7 +124,7 @@ public:
 	S_STREAM_REF<CSound> field_0x2bc;
 	float field_0x2c0;
 	byte field_0x2c4;
-	CActorsTable field_0x2c8;
+	CActorsTable hitActorsTable;
 
 	uint field_0x3cc;
 

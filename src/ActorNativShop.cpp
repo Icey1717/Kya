@@ -265,7 +265,19 @@ void CBehaviourNativShopSell::Init(CActor* pOwner)
 
 void CBehaviourNativShopSell::Term()
 {
-	IMPLEMENTATION_GUARD();
+	edNODE* pNode;
+
+	pNode = (this->objData).pNode;
+	if (pNode != (edNODE*)0x0) {
+		ed3DHierarchyRemoveFromScene(CFrontend::_scene_handle, pNode);
+	}
+
+	(this->objData).pActor = (CActor*)0x0;
+	(this->objData).pNode = (edNODE*)0x0;
+	(this->objData).pHierarchy = (ed_3d_hierarchy*)0x0;
+	(this->objData).pTextureInfo = (char*)0x0;
+
+	return;
 }
 
 edF32VECTOR4 Back_Unit = { 0.0f, 0.42f, 0.5f, 0.42f };

@@ -10,6 +10,7 @@
 #include "ActorProjectile.h"
 #include "FrontEndDisp.h"
 #include "InputManager.h"
+#include <string>
 
 struct WolfenAnimMatrixData
 {
@@ -1940,14 +1941,8 @@ void CActorWolfen::Create_FightParam(ByteCode* pByteCode)
 		this->pWolfenKnowledge = (CActorWolfenKnowledge*)0x0;
 	}
 	else {
-		IMPLEMENTATION_GUARD();
-		//pKnowledge = (CActorWolfenKnowledge*)operator.new(0x30);
-		//if (pKnowledge != (CActorWolfenKnowledge*)0x0) {
-		//	uVar6 = CActorWolfenKnowledge::CActorWolfenKnowledge(pKnowledge);
-		//	pKnowledge = (CActorWolfenKnowledge*)uVar6;
-		//}
-		//this->pWolfenKnowledge = pKnowledge;
-		//CActorWolfenKnowledge::Init(this->pWolfenKnowledge, uVar1, uVar4, uVar10, uVar2, 0x80);
+		this->pWolfenKnowledge = new CActorWolfenKnowledge;
+		this->pWolfenKnowledge->Init(uVar1, uVar4, uVar10, uVar2, 0x80);
 	}
 
 	return;
@@ -8777,3 +8772,60 @@ bool WFIGS_Capability::Get()
 
 	return bResult;
 }
+
+
+void CActorWolfenKnowledge::Init(int memMode, uint param_3, uint param_4, uint nbObjs, uint param_6)
+{
+	int iVar1;
+	int iVar3;
+	uint uVar4;
+
+	this->memMode = memMode;
+	this->nbSubObjs = nbObjs;
+	this->field_0xc = param_6;
+	this->field_0x14 = param_3;
+	this->field_0x18 = param_4 + param_3;
+	iVar1 = this->field_0xc;
+	iVar3 = this->nbSubObjs * sizeof(CActorWolfenKnowledge_0x14);
+	this->aSubObjs = reinterpret_cast<CActorWolfenKnowledge_0x14*>(edMemAlloc(TO_HEAP(H_MAIN), iVar3));
+	memset(this->aSubObjs, 0, iVar3);
+
+	uVar4 = 0;
+	if (this->nbSubObjs != 0) {
+		do {
+			this->aSubObjs[uVar4].field_0x4 = edMemAlloc(TO_HEAP(H_MAIN), iVar1 * sizeof(void*));
+			uVar4 = uVar4 + 1;
+		} while (uVar4 < this->nbSubObjs);
+	}
+
+	Reset();
+
+	return;
+}
+
+void CActorWolfenKnowledge::Reset()
+{
+	uint uVar2;
+
+	uVar2 = 0;
+	if (this->nbSubObjs != 0) {
+		do {
+			memset(this->aSubObjs[uVar2].field_0x4, 0xff, this->field_0xc * sizeof(void*));
+			this->aSubObjs[uVar2].field_0x8 = 0;
+			this->aSubObjs[uVar2].field_0x0 = 0;
+			this->aSubObjs[uVar2].field_0xc = 0;
+			this->aSubObjs[uVar2].field_0x10 = 0;
+			uVar2 = uVar2 + 1;
+		} while (uVar2 < this->nbSubObjs);
+	}
+
+	this->field_0x4 = 0;
+	this->field_0x20 = (s_fighter_combo*)0x0;
+	this->field_0x24 = 0;
+	this->field_0x28 = (s_fighter_combo*)0x0;
+	this->field_0x2c = 0;
+	this->field_0x1c = 0;
+
+	return;
+}
+

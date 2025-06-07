@@ -303,7 +303,25 @@ void CBehaviourMoneyFlock::Init(CActor* pOwner)
 
 void CBehaviourMoneyFlock::Term()
 {
-	IMPLEMENTATION_GUARD();
+	int iVar2;
+
+	iVar2 = 0;
+	if (0 < this->nbMoneyInstances) {
+		do {
+			this->aMoneyInstances[iVar2].Term();
+			iVar2 = iVar2 + 1;
+		} while (iVar2 < this->nbMoneyInstances);
+	}
+
+	if (this->aMoneyInstances != (CMnyInstance*)0x0) {
+		delete[] this->aMoneyInstances;
+	}
+
+	if (this->aSharedShadows != (CShadowShared*)0x0) {
+		delete[] this->aSharedShadows;
+	}
+
+	return;
 }
 
 void CBehaviourMoneyFlock::Manage()

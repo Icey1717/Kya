@@ -4,6 +4,9 @@
 #include "Types.h"
 #include "Actor.h"
 
+#define AMORTOS_STATE_EXPLODE 0x7
+#define AMORTOS_STATE_WAIT_RESWELL 0x8
+
 class CCylinderDetection
 {
 public:

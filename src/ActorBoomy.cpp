@@ -377,7 +377,7 @@ int CActorBoomy::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				CFxLightEmitter::ChangeGenAtHand(&this->fxLightEmitterB, 1);)
 			}
 
-			this->field_0x2c8.nbEntries = 0;
+			this->hitActorsTable.nbEntries = 0;
 			SetState(BOOMY_STATE_GET_TARGET, -1);
 
 			return 1;
@@ -625,7 +625,7 @@ void CActorBoomy::StateBoomyGetTarget()
 
 	this->fxTail.SetPatchActive(1);
 	(this->speedDyn).currentAlpha = (this->pSpline->aPoints->position).y;
-	this->field_0x1d4 = FLOAT_00448604 <= this->field_0x1f4;
+	this->field_0x1d4 = FLOAT_00448604 <= this->distanceToTarget;
 	if (this->field_0x2c4 == 2) {
 		IMPLEMENTATION_GUARD_AUDIO(
 		CActorSound::SoundStart
@@ -651,33 +651,33 @@ void CActorBoomy::StateBoomyGotoTarget()
 	byte bVar1;
 	CActor* pCVar2;
 	CCollision* pCVar3;
-	bool bVar4;
-	bool bVar5;
+	bool bCollideWithEnvironment;
+	bool bHitTarget;
 	int iVar6;
 	edF32MATRIX4* peVar7;
 	edF32MATRIX4* peVar8;
-	long bCanPassThrough;
+	bool bCanPassThrough;
 	float fVar10;
 	float fVar11;
 	float fVar12;
 	GetPositionMsgParams local_230;
-	CActorsTable local_200;
+	CActorsTable actorsTable;
 	_msg_hit_param uStack240;
-	edF32VECTOR4 aeStack112[6];
+	edF32VECTOR4 aSplinePositions[6];
 
-	local_200.nbEntries = 0;
-	bVar5 = GotoTarget(&local_200, aeStack112, 6, 1);
-	bCanPassThrough = 0;
+	actorsTable.nbEntries = 0;
+	bHitTarget = GotoTarget(&actorsTable, aSplinePositions, 6, 1);
+	bCanPassThrough = false;
 
-	if ((((this->field_0x2c8).nbEntries != 0) && (pCVar2 = (this->field_0x2c8).aEntries[0], pCVar2 != (CActor*)0x0)) &&
-		((pCVar2 != this->pHero || (bVar5 != false)))) {
+	if ((((this->hitActorsTable).nbEntries != 0) && (pCVar2 = (this->hitActorsTable).aEntries[0], pCVar2 != (CActor*)0x0)) &&
+		((pCVar2 != this->pHero || (bHitTarget != false)))) {
 		pCVar3 = this->pCollisionData;
 		bVar1 = pCVar3->flags_0x4;
 		if ((bVar1 & 7) == 0) {
 			local_230.field_0x0 = 0;
 			local_230.vectorFieldA = this->currentLocation;
 			uStack240.field_0x40 = this->currentLocation;
-			iVar6 = DoMessage((this->field_0x2c8).aEntries[0], MESSAGE_GET_VISUAL_DETECTION_POINT, &uStack240);
+			iVar6 = DoMessage((this->hitActorsTable).aEntries[0], MESSAGE_GET_VISUAL_DETECTION_POINT, &uStack240);
 			if (iVar6 != 0) {
 				edF32Vector4AddHard(&uStack240.field_0x40, &this->targetPosition, &local_230.vectorFieldB);
 			}
@@ -730,20 +730,23 @@ void CActorBoomy::StateBoomyGotoTarget()
 		uStack240.field_0x30 = this->field_0x2c0 * 0.25f;
 		uStack240.field_0x20 = this->field_0x210;
 		edF32Vector4NormalizeHard(&uStack240.field_0x20, &uStack240.field_0x20);
-		DoMessage((this->field_0x2c8).aEntries[0], MESSAGE_KICKED, &uStack240);
-		bCanPassThrough = this->field_0x2c8.aEntries[0]->CanPassThrough();
-		if (bCanPassThrough == 0) {
+		DoMessage((this->hitActorsTable).aEntries[0], MESSAGE_KICKED, &uStack240);
+		bCanPassThrough = this->hitActorsTable.aEntries[0]->CanPassThrough();
+		if (bCanPassThrough == false) {
 			UpdatePosition(&uStack240.field_0x40, true);
 		}
 		else {
-			(this->field_0x2c8).nbEntries = 0;
-			local_200.nbEntries = 0;
+			(this->hitActorsTable).nbEntries = 0;
+			actorsTable.nbEntries = 0;
 		}
 	}
-	bVar4 = ((this->pCollisionData)->flags_0x4 & 7) != 0;
-	if (((bVar4) && (local_200.nbEntries == 0)) && (bCanPassThrough == 0)) {
-		_BSpline_InitWhenHit(bVar5 == false);
-		if (this->field_0x1f4 <= 8.0f) {
+
+	bCollideWithEnvironment = ((this->pCollisionData)->flags_0x4 & 7) != 0;
+
+	if (((bCollideWithEnvironment) && (actorsTable.nbEntries == 0)) && (bCanPassThrough == false)) {
+		_BSpline_InitWhenHit(bHitTarget == false);
+
+		if (this->distanceToTarget <= 8.0f) {
 			this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffd;
 		}
 
@@ -753,11 +756,11 @@ void CActorBoomy::StateBoomyGotoTarget()
 		SetState(BOOMY_STATE_GOTO_LAUNCHER, -1);
 	}
 	else {
-		if (((this->field_0x1f4 <= 0.3f) || (0.5f <= this->field_0x1e8)) || (local_200.nbEntries != 0)) {
-			if (((bVar4) || (local_200.nbEntries != 0)) ||
-				((this->pTargetActor != (CActor*)0x0 && ((this->field_0x2c4 != 1 && (this->field_0x1f4 <= 0.3f)))))) {
+		if (((this->distanceToTarget <= 0.3f) || (0.5f <= this->field_0x1e8)) || (actorsTable.nbEntries != 0)) {
+			if (((bCollideWithEnvironment) || (actorsTable.nbEntries != 0)) || ((this->pTargetActor != (CActor*)0x0 && ((this->field_0x2c4 != 1 && (this->distanceToTarget <= 0.3f)))))) {
 				_BSpline_InitWhenHit(true);
-				if (this->field_0x1f4 <= 8.0f) {
+
+				if (this->distanceToTarget <= 8.0f) {
 					this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffd;
 				}
 			}
@@ -781,7 +784,7 @@ void CActorBoomy::StateBoomyGotoTarget()
 					(this->targetPositionOffset).w = 0.0f;
 				}
 
-				if (this->field_0x1f4 <= 8.0f) {
+				if (this->distanceToTarget <= 8.0f) {
 					this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xfffffffd;
 				}
 			}
@@ -805,11 +808,11 @@ void CActorBoomy::StateBoomyGotoLauncher()
 	float fVar6;
 	float fVar7;
 	GetPositionMsgParams local_2b0;
-	CActorsTable CStack512;
+	CActorsTable actorsTable;
 	_msg_hit_param local_f0;
-	edF32VECTOR4 aeStack112;
+	edF32VECTOR4 aSplinePositions[6];
 
-	CStack512.nbEntries = 0;
+	actorsTable.nbEntries = 0;
 	pCVar4 = this->pHero;
 	local_2b0.field_0x0 = 2;
 	local_2b0.vectorFieldA = this->currentLocation;
@@ -826,9 +829,9 @@ void CActorBoomy::StateBoomyGotoLauncher()
 		(this->targetPositionOffset).w = 0.0f;
 	}
 
-	GotoTarget(&CStack512, &aeStack112, 6, 0);
+	GotoTarget(&actorsTable, aSplinePositions, 6, 0);
 
-	if (CStack512.nbEntries != 0) {
+	if (actorsTable.nbEntries != 0) {
 		local_f0.field_0x4 = 2;
 		local_f0.projectileType = 4;
 		if (this->field_0x2c4 == 2) {
@@ -879,15 +882,15 @@ void CActorBoomy::StateBoomyGotoLauncher()
 			}
 		}
 
-		while (CStack512.nbEntries != 0) {
-			pCVar4 = CStack512.PopCurrent();
+		while (actorsTable.nbEntries != 0) {
+			pCVar4 = actorsTable.PopCurrent();
 			if (pCVar4 != this->pHero) {
 				DoMessage(pCVar4, MESSAGE_KICKED, &local_f0);
 			}
 		}
 	}
 
-	if ((this->field_0x1f4 / this->field_0x2c0 <= 0.06f) || (this->field_0x1d0 != 0)) {
+	if ((this->distanceToTarget / this->field_0x2c0 <= 0.06f) || (this->field_0x1d0 != 0)) {
 		if (this->field_0x1d0 == 0) {
 			DoMessage(this->pHero, (ACTOR_MESSAGE)5, 0);
 			this->field_0x1d0 = 1;
@@ -899,6 +902,7 @@ void CActorBoomy::StateBoomyGotoLauncher()
 				this->aBoomyTypeInfo[0].flags = this->aBoomyTypeInfo[0].flags & 0xffffffef;
 			}
 		}
+
 		if (1.0f <= this->field_0x1e8) {
 			this->dynamic.speed = 0.0f;
 
@@ -916,20 +920,19 @@ void CActorBoomy::StateBoomyGotoLauncher()
 	return;
 }
 
-bool CActorBoomy::GotoTarget(CActorsTable* pTable, edF32VECTOR4* param_3, int param_4, int param_5)
+bool CActorBoomy::GotoTarget(CActorsTable* pTable, edF32VECTOR4* aSplinePositions, int nbSplinePositions, int param_5)
 {
 	CActor* pCVar1;
 	bool bVar2;
-	edF32VECTOR4* peVar4;
+	edF32VECTOR4* pSplinePosition;
 	bool bVar5;
 	int iVar6;
-	int iVar7;
+	int currentIndex;
 	float fVar8;
 	float fVar9;
 	float fVar10;
-	edF32VECTOR4 local_40;
-	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
+	edF32VECTOR4 finalTargetPosition;
+	edF32VECTOR4 newRotation;
 	uint local_8;
 	uint local_4;
 
@@ -938,56 +941,56 @@ bool CActorBoomy::GotoTarget(CActorsTable* pTable, edF32VECTOR4* param_3, int pa
 	this->vision.location = this->currentLocation;
 	this->vision.rotationQuat = this->rotationQuat;
 
-	edF32Vector4AddHard(&local_40, &this->targetPosition, &this->targetPositionOffset);
+	edF32Vector4AddHard(&finalTargetPosition, &this->targetPosition, &this->targetPositionOffset);
+
 	if (this->field_0x1d4 == 0) {
-		fVar9 = GetTimer()->cutsceneDeltaTime;
 		fVar8 = this->field_0x1e4 / this->field_0x1e0;
 		this->field_0x1e8 = fVar8;
 		if (1.0f < fVar8) {
 			this->field_0x1e8 = 1.0f;
 		}
 
-		this->pSpline->GetPosition(this->field_0x1e8, param_3 + param_4 + -1);
-		peVar4 = param_3 + param_4 + -1;
-		this->field_0x1e4 = this->field_0x1e4 + fVar9;
-		local_30 = local_40 - *peVar4;
-		this->field_0x1f4 = local_30.x * local_30.x + local_30.y * local_30.y + local_30.z * local_30.z;
+		this->pSpline->GetPosition(this->field_0x1e8, aSplinePositions + nbSplinePositions + -1);
+		pSplinePosition = aSplinePositions + nbSplinePositions + -1;
+		this->field_0x1e4 = this->field_0x1e4 + GetTimer()->cutsceneDeltaTime;
+		edF32VECTOR4 splineToTarget = finalTargetPosition - *pSplinePosition;
+		this->distanceToTarget = splineToTarget.x * splineToTarget.x + splineToTarget.y * splineToTarget.y + splineToTarget.z * splineToTarget.z;
 	}
 	else {
-		this->field_0x1f4 = 99999.0f;
-		for (iVar7 = 0; iVar7 < param_4; iVar7 = iVar7 + 1) {
-			fVar9 = GetTimer()->cutsceneDeltaTime;
+		this->distanceToTarget = 99999.0f;
+
+		for (currentIndex = 0; currentIndex < nbSplinePositions; currentIndex = currentIndex + 1) {
 			fVar8 = this->field_0x1e4 / this->field_0x1e0;
 			this->field_0x1e8 = fVar8;
 			if (1.0f < fVar8) {
 				this->field_0x1e8 = 1.0f;
 			}
 
-			this->pSpline->GetPosition(this->field_0x1e8, param_3 + iVar7);
-			peVar4 = param_3 + iVar7;
-			this->field_0x1e4 = this->field_0x1e4 + fVar9 / (float)param_4;
-			local_30 = local_40 - *peVar4;
-			fVar8 = local_30.x * local_30.x + local_30.y * local_30.y + local_30.z * local_30.z;
-			if (fVar8 < this->field_0x1f4) {
-				this->field_0x1f4 = fVar8;
+			this->pSpline->GetPosition(this->field_0x1e8, aSplinePositions + currentIndex);
+			pSplinePosition = aSplinePositions + currentIndex;
+			this->field_0x1e4 = this->field_0x1e4 + GetTimer()->cutsceneDeltaTime / (float)nbSplinePositions;
+			edF32VECTOR4 splineToTarget = finalTargetPosition - *pSplinePosition;
+			fVar8 = splineToTarget.x * splineToTarget.x + splineToTarget.y * splineToTarget.y + splineToTarget.z * splineToTarget.z;
+			if (fVar8 < this->distanceToTarget) {
+				this->distanceToTarget = fVar8;
 			}
 		}
 	}
 
-	this->field_0x1f4 = sqrtf(this->field_0x1f4);
-	if ((this->pTargetActor != (CActor*)0x0) && (this->field_0x1f4 <= 0.3f)) {
-		this->field_0x2c8.Add(this->pTargetActor);
+	this->distanceToTarget = sqrtf(this->distanceToTarget);
+	if ((this->pTargetActor != (CActor*)0x0) && (this->distanceToTarget <= 0.3f)) {
+		this->hitActorsTable.Add(this->pTargetActor);
 	}
 
-	edF32Vector4SubHard(&local_20, param_3 + param_4 + -1, &this->currentLocation);
-	fVar8 = edF32Vector4SafeNormalize1Hard(&local_20, &local_20);
+	edF32Vector4SubHard(&newRotation, aSplinePositions + nbSplinePositions + -1, &this->currentLocation);
+	fVar8 = edF32Vector4SafeNormalize1Hard(&newRotation, &newRotation);
 	if (fabs(fVar8) <= 0.001f) {
 		pCVar1 = this->pHero;
 		fVar8 = 1.0f;
-		local_20 = pCVar1->rotationQuat;
+		newRotation = pCVar1->rotationQuat;
 	}
 
-	this->dynamic.rotationQuat = local_20;
+	this->dynamic.rotationQuat = newRotation;
 	this->dynamic.speed = fVar8 / GetTimer()->cutsceneDeltaTime;
 	this->rotationQuat = this->dynamic.rotationQuat;
 
@@ -1004,51 +1007,51 @@ bool CActorBoomy::GotoTarget(CActorsTable* pTable, edF32VECTOR4* param_3, int pa
 	if ((this->field_0x1d4 == 0) || ((this->aBoomyTypeInfo[0].flags & 2) == 0)) {
 		this->fxLightEmitterB.Manage(0, 0);
 		if (this->field_0x1d4 != 0) {
-			this->fxTail.Manage(param_3, 0, 1);
+			this->fxTail.Manage(aSplinePositions, 0, 1);
 		}
 	}
 	else {
 		fVar8 = this->rotationEuler.y;
 		(this->fxLightEmitterB).field_0x40 = this->rotationEuler.x + 1.570796f;
 		(this->fxLightEmitterB).field_0x44 = fVar8 + 3.141593f;
-		for (iVar7 = 0; iVar7 < param_4; iVar7 = iVar7 + 2) {
-			this->fxLightEmitterB.GenerateNewOne(param_3 + iVar7);
+		for (currentIndex = 0; currentIndex < nbSplinePositions; currentIndex = currentIndex + 2) {
+			this->fxLightEmitterB.GenerateNewOne(aSplinePositions + currentIndex);
 		}
 
-		this->fxLightEmitterB.Manage(param_3 + param_4 + -1, 0xffffffff);
+		this->fxLightEmitterB.Manage(aSplinePositions + nbSplinePositions + -1, 0xffffffff);
 
 		(this->fxTail).field_0x60 = (this->fxTail).field_0x50;
 		(this->fxTail).field_0x50 = this->rotationEuler;
 
 		if ((this->field_0x2b0 == 0) || (this->field_0x1e8 != 1.0f)) {
-			this->fxTail.Manage(param_3, param_4, 0);
+			this->fxTail.Manage(aSplinePositions, nbSplinePositions, 0);
 		}
 		else {
-			this->fxTail.Manage(param_3 + param_4 + -1, 1, 0);
+			this->fxTail.Manage(aSplinePositions + nbSplinePositions + -1, 1, 0);
 		}
 	}
 
 	ManageDyn(4.0f, 0, pTable);
 
 	bVar5 = false;
-	iVar7 = 0;
-	while (iVar7 < pTable->nbEntries) {
-		pCVar1 = pTable->aEntries[iVar7];
+	currentIndex = 0;
+	while (currentIndex < pTable->nbEntries) {
+		pCVar1 = pTable->aEntries[currentIndex];
 		if ((pCVar1 == this->pHero) && (param_5 == 0)) {
 			bVar5 = true;
 		}
 
-		bVar2 = this->field_0x2c8.IsInList(pCVar1);
+		bVar2 = this->hitActorsTable.IsInList(pCVar1);
 		if ((bVar2 == false) && (pCVar1 != this->pHero)) {
-			this->field_0x2c8.Add(pCVar1);
-			iVar6 = iVar7;
+			this->hitActorsTable.Add(pCVar1);
+			iVar6 = currentIndex;
 		}
 		else {
-			iVar6 = iVar7 + -1;
-			pTable->Pop(iVar7);
+			iVar6 = currentIndex + -1;
+			pTable->Pop(currentIndex);
 		}
 
-		iVar7 = iVar6 + 1;
+		currentIndex = iVar6 + 1;
 	}
 
 	return bVar5;
@@ -1139,7 +1142,7 @@ void CActorBoomy::BSpline_UpdateTargetPos(CActor* pTargetActor)
 
 	edF32Vector4AddHard(&eStack16, &this->targetPosition, &this->targetPositionOffset);
 	edF32Vector4SubHard(&this->field_0x210, &eStack16, &this->currentLocation);
-	this->field_0x1f4 = edF32Vector4GetDistHard(&this->field_0x210);
+	this->distanceToTarget = edF32Vector4GetDistHard(&this->field_0x210);
 
 	return;
 }
@@ -1148,31 +1151,31 @@ void CActorBoomy::BSpline_UpdateTargetPos(CActor* pTargetActor)
 void CActorBoomy::_BSpline_ComputeWhenHit()
 {
 	edF32VECTOR4 eStack64;
-	edF32VECTOR4 local_30;
+	edF32VECTOR4 finalTargetPosition;
 	edF32VECTOR4 local_20;
 	edF32VECTOR4 eStack16;
 
-	edF32Vector4AddHard(&local_30, &this->targetPosition, &this->targetPositionOffset);
-	local_20 = local_30 - this->pSpline->aPoints->position;
+	edF32Vector4AddHard(&finalTargetPosition, &this->targetPosition, &this->targetPositionOffset);
+	local_20 = finalTargetPosition - this->pSpline->aPoints->position;
 
 	this->field_0x1d8 = edF32Vector4GetDistHard(&local_20);
 	edF32Vector4ScaleHard(0.25f, &local_20, &local_20);
 	edF32Vector4CrossProductHard(&eStack16, &local_20, &gF32Vector4UnitY);
 	edF32Vector4NormalizeHard(&eStack16, &eStack16);
 	edF32Vector4ScaleHard(this->field_0x1d8 * this->field_0x1dc * 0.75f, &eStack16, &eStack16);
-	edF32Vector4AddHard(&eStack64, &this->pSpline->aPoints->position, &eStack16);
+	edF32Vector4AddHard(&eStack64, &this->pSpline->aPoints[0].position, &eStack16);
 	edF32Vector4AddHard(&eStack64, &eStack64, &local_20);
 	this->pSpline->SetKeyPosition(1, &eStack64);
 
-	edF32Vector4AddHard(&eStack64, &this->pSpline->aPoints->field_0x20, &local_20);
+	edF32Vector4AddHard(&eStack64, &this->pSpline->aPoints[1].position, &local_20);
 	edF32Vector4AddHard(&eStack64, &eStack64, &local_20);
 	this->pSpline->SetKeyPosition(3, &eStack64);
 
 	edF32Vector4ScaleHard(0.3333333f, &eStack16, &eStack16);
-	edF32Vector4AddHard(&eStack64, &this->pSpline->aPoints->field_0x20, &eStack16);
+	edF32Vector4AddHard(&eStack64, &this->pSpline->aPoints[1].position, &eStack16);
 	edF32Vector4AddHard(&eStack64, &eStack64, &local_20);
 	this->pSpline->SetKeyPosition(2, &eStack64);
-	this->pSpline->SetKeyPosition(4, &local_30);
+	this->pSpline->SetKeyPosition(4, &finalTargetPosition);
 
 	this->pSpline->SetKeyTCB(0.0f, 0.0f, 0.0f, 4);
 	this->pSpline->PreComputeSpline(1);
@@ -1213,7 +1216,7 @@ void CActorBoomy::_BSpline_ComputeToTarget()
 	return;
 }
 
-void CActorBoomy::_BSpline_InitWhenHit(bool param_2)
+void CActorBoomy::_BSpline_InitWhenHit(bool bNotTarget)
 {
 	byte bVar1;
 	CCollision* pCVar2;
@@ -1227,8 +1230,8 @@ void CActorBoomy::_BSpline_InitWhenHit(bool param_2)
 	float fVar9;
 	GetPositionMsgParams local_a0;
 	GetPositionMsgParams local_60;
-	edF32VECTOR4 local_30;
-	edF32VECTOR4 local_20;
+	edF32VECTOR4 hitPointNormal;
+	edF32VECTOR4 hitPointPosition;
 	int local_10;
 	int* local_c;
 
@@ -1236,13 +1239,13 @@ void CActorBoomy::_BSpline_InitWhenHit(bool param_2)
 	bVar1 = pCVar2->flags_0x4;
 
 	if ((bVar1 & 7) == 0) {
-		edF32Vector4ScaleHard(-1.0f , &local_30, &this->field_0x210);
+		edF32Vector4ScaleHard(-1.0f , &hitPointNormal, &this->field_0x210);
 		local_60.field_0x0 = 0;
 		local_60.vectorFieldA = this->currentLocation;
-		local_20 = this->currentLocation;
+		hitPointPosition = this->currentLocation;
 		iVar4 = DoMessage(this->pTargetActor, MESSAGE_GET_VISUAL_DETECTION_POINT, &local_60);
 		if (iVar4 != 0) {
-			edF32Vector4AddHard(&local_20, &this->targetPosition, &local_60.vectorFieldB);
+			edF32Vector4AddHard(&hitPointPosition, &this->targetPosition, &local_60.vectorFieldB);
 		}
 	}
 	else {
@@ -1259,14 +1262,15 @@ void CActorBoomy::_BSpline_InitWhenHit(bool param_2)
 			psVar5 = pCVar2->aCollisionContact + 2;
 		}
 
-		local_20 = psVar5->field_0x10;
-		local_30 = psVar5->location;
+		hitPointPosition = psVar5->field_0x10;
+		hitPointNormal = psVar5->location;
 	}
 
-	this->pSpline->SetKeyPosition(0, &local_20);
-	UpdatePosition(&local_20, true);
+	// Set the first spline position to the hit position and update our position to that position.
+	this->pSpline->SetKeyPosition(0, &hitPointPosition);
+	UpdatePosition(&hitPointPosition, true);
 
-	if ((param_2 != false) && ((this->pTargetActor == (CActor*)0x0 || (this->pTargetActor != this->pHero)))) {
+	if ((bNotTarget != false) && ((this->pTargetActor == (CActor*)0x0 || (this->pTargetActor != this->pHero)))) {
 		local_10 = 0;
 		local_c = (int*)0x0;
 		if (this->field_0x3cc != 0xffffffff) {
@@ -1280,10 +1284,11 @@ void CActorBoomy::_BSpline_InitWhenHit(bool param_2)
 			else {
 				bVar3 = true;
 			}
+
 			if (bVar3) {
-				fVar7 = GetAngleXFromVector(&local_30);
+				fVar7 = GetAngleXFromVector(&hitPointNormal);
 				fVar7 = edF32Between_0_2Pi(fVar7 + 1.570796);
-				fVar8 = GetAngleYFromVector(&local_30);
+				fVar8 = GetAngleYFromVector(&hitPointNormal);
 				fVar8 = edF32Between_0_2Pi(fVar8 - 1.570796);
 				if (((local_c != (int*)0x0) && (local_10 != 0)) && (local_10 == local_c[6])) {
 					(**(code**)(*local_c + 0x38))();
