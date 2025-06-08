@@ -223,6 +223,18 @@ namespace Hero
 		case STATE_HERO_GRIP_RIGHT:
 			return "StateHeroGripRight";
 			break;
+		case STATE_HERO_GRIP_ANGLE_A:
+			return "StateHeroGripAngleA";
+			break;
+		case STATE_HERO_GRIP_ANGLE_B:
+			return "StateHeroGripAngleB";
+			break;
+		case STATE_HERO_GRIP_ANGLE_C:
+			return "StateHeroGripAngleC";
+			break;
+		case STATE_HERO_GRIP_ANGLE_D:
+			return "StateHeroGripAngleD";
+			break;
 		case STATE_HERO_GRIP_UP:
 			return "StateHeroGripUp";
 			break;

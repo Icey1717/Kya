@@ -4301,7 +4301,7 @@ void S_STREAM_EVENT_CAMERA::Manage(CActor* pActor)
 		if (this->field_0xc <= fVar10) {
 			bVar6 = false;
 			if (((this->field_0x4 & 1U) != 0) &&
-				((0.4f <= gPlayerInput.aAnalogSticks[0].magnitude || ((gPlayerInput.pressedBitfield & 0x7f0) != 0)))) {
+				((0.4f <= gPlayerInput.aAnalogSticks[PAD_STICK_LEFT].magnitude || ((gPlayerInput.pressedBitfield & 0x7f0) != 0)))) {
 				bVar6 = true;
 			}
 

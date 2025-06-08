@@ -257,10 +257,10 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 	fVar18 = 0.0f;
 	pCVar6 = this->pCamera->GetTarget();
 	lVar9 = pCVar6->GetInputManager(0, 0);
-	if ((lVar9 != 0) && (0.3f < fabs(lVar9->aAnalogSticks[1].x))) {
+	if ((lVar9 != 0) && (0.3f < fabs(lVar9->aAnalogSticks[PAD_STICK_RIGHT].x))) {
 		this->field_0x2ac = 1;
 
-		if (0.0f <= lVar9->aAnalogSticks[1].x) {
+		if (0.0f <= lVar9->aAnalogSticks[PAD_STICK_RIGHT].x) {
 			fVar18 = 1.3f;
 		}
 		else {

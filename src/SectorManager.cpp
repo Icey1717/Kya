@@ -1415,8 +1415,8 @@ void CSectorHierarchy::Init(int param_2)
 		}
 		else {
 			pcVar2 = (CScene::ptable.g_SectorManager_00451670)->szSectorFileRoot;
-			this->pNext = *(CSectorHierarchy**)(pcVar2 + param_2 * 0x10 + -4 + 0x4c);
-			*(CSectorHierarchy**)(pcVar2 + param_2 * 0x10 + -4 + 0x4c) = this;
+			this->pNext = (CScene::ptable.g_SectorManager_00451670)->subObjArray[param_2].aSectorHierarchies;
+			(CScene::ptable.g_SectorManager_00451670)->subObjArray[param_2].aSectorHierarchies = this;
 
 			pCVar8 = &pSectorManager->baseSector;
 			if (param_2 != (pSectorManager->baseSector).desiredSectorID) {

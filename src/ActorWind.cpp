@@ -287,7 +287,6 @@ void CActorWind::Init()
 			uVar4 = this->nbFxWind;
 			pCVar5 = this->aFxWind;
 
-			IMPLEMENTATION_GUARD_WIND_FX(
 			iVar11 = 0;
 			if (0 < (int)uVar4) {
 				do {
@@ -308,7 +307,7 @@ void CActorWind::Init()
 				} while (iVar11 < (int)this->nbFxWind);
 			}
 
-			ReComputeBoundingSphere((int)this, &eStack128);)
+			ReComputeBoundingSphere(&eStack128);
 		}
 	}
 
@@ -1169,6 +1168,238 @@ void CActorWind::NotifyActorInWindArea(float param_1, CActor* pNotifyActor)
 	return;
 }
 
+
+void ComputeDimensionsAndBase(edF32MATRIX4* m0, edF32VECTOR4* v0, edF32VECTOR4* v1)
+{
+	float fVar1;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.x = -1.0f;
+	local_10.y = 0.0f;
+	local_10.z = 0.0f;
+	local_10.w = 1.0f;
+	local_20.x = 0.5f;
+	local_20.y = 0.0f;
+	local_20.z = 0.0f;
+	local_20.w = 1.0f;
+	edF32Matrix4MulF32Vector4Hard(&local_10, m0, &local_10);
+	edF32Matrix4MulF32Vector4Hard(&local_20, m0, &local_20);
+	edF32Vector4SubHard(&local_10, &local_10, &local_20);
+	fVar1 = edF32Vector4NormalizeHard(&local_10, &local_10);
+	v0->x = fVar1;
+	local_10.x = 0.0f;
+	local_10.y = -1.0f;
+	local_10.z = 0.0f;
+	local_10.w = 1.0f;
+	local_20.x = 0.0f;
+	local_20.y = 0.5f;
+	local_20.z = 0.0f;
+	local_20.w = 1.0f;
+	edF32Matrix4MulF32Vector4Hard(v1, m0, &local_10);
+	edF32Matrix4MulF32Vector4Hard(&local_20, m0, &local_20);
+	edF32Vector4SubHard(&local_10, &local_20, v1);
+	fVar1 = edF32Vector4NormalizeHard(&local_10, &local_10);
+	v0->y = fVar1;
+	local_10.x = 0.0f;
+	local_10.y = 0.0f;
+	local_10.z = -1.0f;
+	local_10.w = 1.0f;
+	local_20.x = 0.0f;
+	local_20.y = 0.0f;
+	local_20.z = 0.5f;
+	local_20.w = 1.0f;
+	edF32Matrix4MulF32Vector4Hard(&local_10, m0, &local_10);
+	edF32Matrix4MulF32Vector4Hard(&local_20, m0, &local_20);
+	edF32Vector4SubHard(&local_10, &local_10, &local_20);
+	fVar1 = edF32Vector4NormalizeHard(&local_10, &local_10);
+	v0->z = fVar1;
+	v0->w = 0.0f;
+
+	return;
+}
+
+void CActorWind::ReComputeBoundingSphere(edF32MATRIX4* pMatrix)
+{
+	CFxWind* pCVar1;
+	KyaUpdateObjA* pKVar2;
+	bool bVar3;
+	int iVar4;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	float fVar8;
+	float fVar9;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 eStack64;
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 eStack16;
+
+	iVar4 = 1;
+	pCVar1 = this->aFxWind;
+	local_20.w = (pCVar1->field_0x140).w;
+	local_20.x = (pCVar1->field_0x140).x - pCVar1->field_0x160;
+	local_20.y = (pCVar1->field_0x140).y - pCVar1->field_0x160;
+	local_20.z = (pCVar1->field_0x140).z - pCVar1->field_0x160;
+
+	local_30.w = (pCVar1->field_0x140).w;
+	local_30.x = (pCVar1->field_0x140).x + pCVar1->field_0x160;
+	local_30.y = (pCVar1->field_0x140).y + pCVar1->field_0x160;
+	local_30.z = (pCVar1->field_0x140).z + pCVar1->field_0x160;
+	if (1 < (int)this->nbFxWind) {
+		do {
+			fVar9 = pCVar1[1].field_0x140.x;
+			fVar5 = pCVar1[1].field_0x160;
+			fVar6 = pCVar1[1].field_0x140.y;
+			fVar7 = pCVar1[1].field_0x140.z;
+
+			fVar10 = fVar9 - fVar5;
+			fVar11 = fVar6 - fVar5;
+			fVar8 = fVar7 - fVar5;
+			fVar9 = fVar9 + fVar5;
+			fVar6 = fVar6 + fVar5;
+			fVar7 = fVar7 + fVar5;
+
+			if (local_20.x <= fVar10) {
+				fVar10 = local_20.x;
+			}
+
+			local_20.x = fVar10;
+			if (local_20.y <= fVar11) {
+				fVar11 = local_20.y;
+			}
+
+			local_20.y = fVar11;
+			if (local_20.z <= fVar8) {
+				fVar8 = local_20.z;
+			}
+
+			local_20.z = fVar8;
+			if (fVar9 <= local_30.x) {
+				fVar9 = local_30.x;
+			}
+
+			local_30.x = fVar9;
+			if (fVar6 <= local_30.y) {
+				fVar6 = local_30.y;
+			}
+
+			local_30.y = fVar6;
+			if (fVar7 <= local_30.z) {
+				fVar7 = local_30.z;
+			}
+
+			local_30.z = fVar7;
+			iVar4 = iVar4 + 1;
+			pCVar1 = pCVar1 + 1;
+		} while (iVar4 < (int)this->nbFxWind);
+	}
+
+	edF32Vector4SubHard(&eStack64, &local_30, &local_20);
+	edF32Vector4ScaleHard(0.5f, &eStack64, &eStack64);
+	fVar9 = edF32Vector4GetDistHard(&eStack64);
+	edF32Vector4AddHard(&eStack16, &local_20, &eStack64);
+	edF32Matrix4MulF32Vector4Hard(&eStack16, pMatrix, &eStack16);
+
+	bVar3 = this->field_0x19c < -1.0f;
+	if ((bVar3) && (bVar3 = true, -1.0f <= this->field_0x1a0)) {
+		bVar3 = false;
+	}
+
+	if ((bVar3) && (pKVar2 = this->subObjA, fVar6 = pKVar2->visibilityDistance, pKVar2->field_0x1c < fVar6)) {
+		pKVar2 = this->subObjA;
+		pKVar2->floatFieldB = fVar6;
+		pKVar2->field_0x1c = fVar6;
+	}
+
+	CActor::SetLocalBoundingSphere(fVar9 / 1.414214f, &eStack16);
+	return;
+}
+
+
+
+bool CActorWind::IsAValidFxPrimitive(CFxWind* pFx, byte param_3, edF32MATRIX4* param_4, edF32MATRIX4* param_5)
+{
+	int iVar1;
+	edF32MATRIX4* peVar2;
+	ed_3d_hierarchy_node* peVar3;
+	edF32MATRIX4* peVar4;
+	float fVar5;
+	edF32VECTOR4 local_100;
+	edF32VECTOR4 local_f0;
+	edF32MATRIX4 eStack224;
+	edF32VECTOR4 eStack160;
+	edF32VECTOR4 local_90;
+	edF32VECTOR4 eStack128;
+	edF32VECTOR4 local_70;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 local_40;
+
+	static edF32VECTOR4 edF32VECTOR4_0040e710 = { 0.9f, 1.0f, 0.9f, 1.0f };
+
+	local_90 = edF32VECTOR4_0040e710;
+
+	edF32Matrix4GetInverseGaussSoft(&local_40, param_4);
+	local_40.dd = 1.0f;
+
+	ComputeDimensionsAndBase(&local_40, &local_50, &eStack96);
+
+	if ((pFx != (CFxWind*)0x0) && (param_3 == 3)) {
+		edF32Vector4ScaleV4Hard(&local_50, &local_50, &local_90);
+	}
+
+	if (param_3 == 2) {
+		local_50.x = local_50.x * 0.5f;
+		local_50.z = local_50.z * 0.5f;
+	}
+
+	local_70 = local_40.rowT;
+
+	edF32Vector4SubHard(&eStack128, &local_70, &eStack96);
+	edF32Vector4NormalizeHard(&eStack128, &eStack128);
+	fVar5 = edF32Vector4DotProductHard(&eStack128, &this->rotationQuat);
+	if (pFx != (CFxWind*)0x0) {
+		if (fVar5 <= -0.98f) {
+			edF32Matrix4SetIdentityHard(&eStack224);
+			edF32Matrix4RotateYHard(3.141593f, &eStack224, &eStack224);
+			edF32Matrix4MulF32Matrix4Hard(&local_40, &local_40, &eStack224);
+			local_40.rowT = local_70;
+			edF32Vector4SubHard(&eStack160, &local_70, &eStack96);
+			edF32Vector4AddHard(&local_70, &local_70, &eStack160);
+			edF32Vector4AddHard(&local_70, &local_70, &eStack160);
+			edF32Vector4ScaleHard(-1.0f, &eStack128, &eStack128);
+		}
+
+		edF32Matrix4MulF32Vector4Hard(&local_f0, param_5, &local_40.rowT);
+
+		pFx->field_0x60 = this->pMeshTransform->base.transformA;
+		pFx->field_0x58 = param_3;
+		
+		pFx->field_0xa0 = local_40;
+
+		pFx->field_0x130 = local_50;
+		pFx->field_0x150 = local_f0;
+		edF32Matrix4MulF32Vector4Hard(&local_f0, &this->pMeshTransform->base.transformA, &local_f0);
+		pFx->field_0x140 = local_f0;
+
+		local_100.x = local_50.x;
+		local_100.z = local_50.z;
+		local_100.w = local_50.w;
+		if (param_3 == 2) {
+			local_100.x = local_50.x * 2.0f;
+			local_100.z = local_50.z * 2.0f;
+		}
+
+		fVar5 = edF32Vector4GetDistHard(&local_100);
+		pFx->field_0x160 = fVar5 * 0.5f;
+	}
+
+	return true;
+}
+
 void CBehaviourWind::Manage()
 {
 	pOwner->BehaviourWind_Manage();
@@ -1253,6 +1484,204 @@ void CBehaviourWind::InitState(int newState)
 			}
 		}
 	}
+
+	return;
+}
+
+CFxEmitterPool* gpWIND_PartPool = (CFxEmitterPool*)0x0;
+
+void CFxWind::Create(CActorWind* pOwner, int param_3)
+{
+	CActorSound* pCVar1;
+	CFxEmitterPool* pCVar2;
+
+	this->pOwner = pOwner;
+	//this->field_0x4 = pOwner->objectId;
+	this->field_0x164 = param_3;
+	//this->field_0x2c8 = 1.0f;
+	//this->field_0x2cc = 0.5f;
+	//this->field_0x2d0 = 1.0f;
+	//this->field_0x2d4 = 1.0f;
+	//this->field_0x180 = (ed_g2d_manager*)0x0;
+	//this->field_0x58 = 6;
+	//this->field_0x54 = 0;
+	//this->field_0x374 = pOwner->CreateActorSound(3);
+
+	//(this->windSolid).pOwner = this;
+	//(this->windSolid).field_0x24 = 0;
+
+	pCVar2 = gpWIND_PartPool;
+	if ((gpWIND_PartPool == (CFxEmitterPool*)0x0)) {
+		pCVar2 = new CFxEmitterPool;
+	}
+	gpWIND_PartPool = pCVar2;
+
+	return;
+}
+
+void CFxWind::Init(edF32MATRIX4* pMatrix)
+{
+	byte* pbVar1;
+	byte* pbVar2;
+	CFxEmitterPool* pCVar3;
+	C3DFileManager* this_00;
+	edF32MATRIX4* peVar4;
+	edDList_material* peVar5;
+	ed_hash_code* peVar6;
+	int iVar7;
+	char* pcVar8;
+	ed_g2d_manager* peVar9;
+	ed_g2d_texture* peVar10;
+	void* pvVar11;
+	CFxEmitterPool* pCVar12;
+	int iVar13;
+	int* piVar14;
+	ed_hash_code** ppeVar15;
+	int* piVar16;
+	ed_hash_code** ppeVar17;
+	int iVar18;
+	//WindAnimST* pWVar19;
+	undefined4 uVar20;
+	undefined4 uVar21;
+	float fVar22;
+	int local_40[8];
+	ed_hash_code* local_20[7];
+	e_ed_event_prim3d_type local_4;
+
+	this_00 = CScene::ptable.g_C3DFileManager_00451664;
+	peVar4 = edEventGetChunkZonePrimitive((CScene::ptable.g_EventManager_006f5080)->activeChunkId, this->pOwner->field_0x21c, this->field_0x164, &local_4);
+	this->field_0x5c = peVar4;
+	edF32Matrix4GetInverseGaussSoft(&this->field_0x10, peVar4);
+	this->pOwner->IsAValidFxPrimitive(this, local_4, peVar4, pMatrix);
+
+	IMPLEMENTATION_GUARD_WIND_FX(
+	RetrieveFlags(this, this->pOwner);
+	edCSound3DPrim::Init((edCSound3DPrim*)&this->field_0x3a0, this->field_0x58, &this->field_0x10);
+	if (((this->field_0x54 & 0x100) == 0) || ((this->field_0x54 & 2) != 0)) {
+		ppeVar15 = local_20;
+		piVar14 = local_40;
+		iVar18 = 0;
+		iVar13 = 0;
+		pWVar19 = gUseAnimST;
+		ppeVar17 = ppeVar15;
+		piVar16 = piVar14;
+		do {
+			if (pWVar19->field_0x0 != 0) {
+				peVar5 = C3DFileManager::GetMaterialFromId(this_00, this->pOwner->materialId, iVar13);
+				peVar6 = (ed_hash_code*)ed3DG2DGetHASHFromMat(peVar5->pManager, peVar5->pMaterial);
+				*ppeVar17 = peVar6;
+				iVar7 = ed3DG2DGetNeededSizeForDuplicateMaterial(*ppeVar17);
+				*piVar16 = iVar7;
+				iVar18 = iVar18 + *piVar16;
+			}
+			iVar13 = iVar13 + 1;
+			pWVar19 = pWVar19 + 1;
+			ppeVar17 = ppeVar17 + 1;
+			piVar16 = piVar16 + 1;
+		} while (iVar13 < 5);
+		pcVar8 = (char*)edMemAlloc(H_MAIN, iVar18);
+		this->field_0x180 = pcVar8;
+		memset(this->field_0x180, 0, iVar18);
+		pcVar8 = this->field_0x180;
+		pMaterial = (MaterialManagerCombined*)&this->field_0x184;
+		iVar13 = 0;
+		pWVar19 = gUseAnimST;
+		do {
+			if (pWVar19->field_0x0 == 0) {
+				peVar5 = C3DFileManager::GetMaterialFromId(this_00, this->pOwner->materialId, iVar13);
+				(pMaterial->field_0x0).pManager = peVar5->pManager;
+				(pMaterial->field_0x0).pMaterial = peVar5->pMaterial;
+				(pMaterial->field_0x0).mode = peVar5->mode;
+				(pMaterial->field_0x0).index = peVar5->index;
+				peVar9 = (pMaterial->field_0x0).pManager;
+				(pMaterial->field_0x10).pFileBuffer = peVar9->pFileBuffer;
+				(pMaterial->field_0x10).textureFileLengthA = peVar9->textureFileLengthA;
+				(pMaterial->field_0x10).pTextureChunk = peVar9->pTextureChunk;
+				(pMaterial->field_0x10).pMATA_HASH = peVar9->pMATA_HASH;
+				(pMaterial->field_0x10).pT2DA = peVar9->pT2DA;
+				(pMaterial->field_0x10).pPALL = peVar9->pPALL;
+				*(undefined4*)&(pMaterial->field_0x10).field_0x18 = *(undefined4*)&peVar9->field_0x18;
+				(pMaterial->field_0x10).textureFileLengthB = peVar9->textureFileLengthB;
+				(pMaterial->field_0x10).pANMA = peVar9->pANMA;
+				uVar20 = *(undefined4*)&peVar9->field_0x28;
+				uVar21 = *(undefined4*)&peVar9->field_0x2c;
+				*(undefined4*)&(pMaterial->field_0x10).field_0x24 = *(undefined4*)&peVar9->field_0x24;
+				*(undefined4*)&(pMaterial->field_0x10).field_0x28 = uVar20;
+				*(undefined4*)&(pMaterial->field_0x10).field_0x2c = uVar21;
+			}
+			else {
+				peVar9 = ed3DG2DDuplicateMaterial(*ppeVar15, pcVar8, &pMaterial->field_0x10);
+				ed3DG2DGetG2DMaterial(peVar9, (*ppeVar15)->hash);
+				edDListCreatMaterialFromHashCode((edDList_material*)pMaterial, (*ppeVar15)->hash, peVar9, 0);
+				peVar10 = ed3DG2DGetTextureFromMaterial((pMaterial->field_0x0).pMaterial, 0);
+				if (peVar10->pAnimSpeedNormalExtruder != (edF32VECTOR4*)0x0) {
+					peVar10->pAnimSpeedNormalExtruder->x = 0.0;
+					peVar10->pAnimSpeedNormalExtruder->y = 0.0;
+					peVar10->pAnimSpeedNormalExtruder->z = 0.0;
+					peVar10->pAnimSpeedNormalExtruder->w = 0.0;
+				}
+				pcVar8 = pcVar8 + *piVar14;
+			}
+			iVar13 = iVar13 + 1;
+			pWVar19 = pWVar19 + 1;
+			ppeVar15 = ppeVar15 + 1;
+			piVar14 = piVar14 + 1;
+			pMaterial = pMaterial + 1;
+		} while (iVar13 < 5);
+	}
+	if ((this->field_0x54 & 2) != 0) {
+		*(undefined4*)&(this->windSolid).field_0x10 = 0x3f800000;
+		*(undefined4*)&(this->windSolid).field_0x14 = 0x3f800000;
+		*(undefined4*)&(this->windSolid).field_0xc = 0;
+		*(undefined4*)&(this->windSolid).field_0x8 = 0;
+		*(undefined4*)&this->field_0x308 = 0;
+		*(undefined4*)&this->field_0x304 = 0;
+		*(undefined4*)&this->field_0x31c = 0;
+		*(undefined4*)&this->field_0x318 = 0;
+		*(undefined4*)&this->field_0x330 = 0;
+		*(undefined4*)&this->field_0x32c = 0;
+		*(undefined4*)&this->field_0x344 = 0;
+		*(undefined4*)&this->field_0x340 = 0;
+		*(undefined4*)&this->field_0x358 = 0;
+		*(undefined4*)&this->field_0x354 = 0;
+		fVar22 = edF32Vector4GetDistHard((edF32VECTOR4*)&((this->windSolid).pOwner)->field_0x130);
+		(this->windSolid).field_0x4 = (int)(fVar22 / 20.0 + 1.0);
+		if ((int)(this->windSolid).field_0x4 < 3) {
+			(this->windSolid).field_0x4 = 3;
+		}
+		pvVar11 = edMemAlloc(H_MAIN, (this->windSolid).field_0x4 * 0x16 + -2);
+		this->field_0x2fc = pvVar11;
+		*(undefined4*)&this->field_0x314 = this->field_0x2fc;
+		*(undefined4*)&this->field_0x300 = this->field_0x2fc;
+		*(uint*)&this->field_0x328 = *(int*)&this->field_0x300 + ((this->windSolid).field_0x4 - 1) * 0xe;
+		*(uint*)&this->field_0x33c = *(int*)&this->field_0x328 + (this->windSolid).field_0x4 * 4;
+		*(uint*)&this->field_0x350 = *(int*)&this->field_0x33c + (this->windSolid).field_0x4 * 4;
+		iVar13 = GameDListPatch_Register((CObject*)this, ((this->windSolid).field_0x4 - 1) * 0x1c, 0);
+		*(int*)&this->field_0x368 = iVar13;
+		iVar13 = GameDListPatch_Register((CObject*)this, (this->windSolid).field_0x4 * 4 + 0x18, 0);
+		*(int*)&this->field_0x36c = iVar13;
+		iVar13 = GameDListPatch_Register((CObject*)this, (this->windSolid).field_0x4 << 2, 0);
+		*(int*)&this->field_0x370 = iVar13;
+		pbVar1 = *(byte**)&this->field_0x370;
+		pbVar2 = *(byte**)&this->field_0x36c;
+		(this->windSolid).field_0x18 = *(byte**)&this->field_0x368;
+		(this->windSolid).field_0x1c = pbVar2;
+		(this->windSolid).field_0x20 = pbVar1;
+	}
+	pCVar3 = gpWIND_PartPool;
+	iVar13 = -1;
+	if ((((this->pOwner->base).objectId == -1) && ((int)gpWIND_PartPool->field_0x10 < 0x40)) &&
+		(iVar18 = 0, pCVar12 = gpWIND_PartPool, gpWIND_PartPool->field_0x10 != 0x40)) {
+		do {
+			if (pCVar12->field_0x20 == 0) {
+				iVar13 = iVar18;
+			}
+			iVar18 = iVar18 + 1;
+		} while ((iVar18 < 0x40) && (pCVar12 = (CFxEmitterPool*)&pCVar12->field_0x8, iVar13 == -1));
+		(&gpWIND_PartPool->field_0x20)[iVar13 * 2] = this;
+		pCVar3->field_0x10 = pCVar3->field_0x10 + 1;
+	}
+	CSoundWind::Init(this->pOwner->pSoundWind, this);)
 
 	return;
 }

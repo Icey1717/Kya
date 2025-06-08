@@ -58,12 +58,24 @@ void CActorMoney::Init()
 
 void CActorMoney::Reset()
 {
-	IMPLEMENTATION_GUARD();
+	CActor::Reset();
+
+	if (this->curBehaviourId == 3) {
+		CheckpointReset();
+	}
+
+	return;
 }
 
 void CActorMoney::CheckpointReset()
 {
-	IMPLEMENTATION_GUARD();
+	CActorMovable::CheckpointReset();
+
+	if (GetBehaviour(this->curBehaviourId) != (CBehaviour*)0x0) {
+		static_cast<CBehaviourMoneyFlock*>(GetBehaviour(this->curBehaviourId))->CheckpointReset();
+	}
+
+	return;
 }
 
 void CActorMoney::SaveContext(uint*, int)
@@ -488,6 +500,11 @@ void CBehaviourMoneyFlock::Begin(CActor* pOwner, int newState, int newAnimationT
 bool CBehaviourMoneyFlock::InitDlistPatchable(int)
 {
 	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourMoneyFlock::CheckpointReset()
+{
+	return;
 }
 
 void CInstantFlares::Create(float, float, int)

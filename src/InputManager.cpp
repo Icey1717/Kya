@@ -208,22 +208,22 @@ void CPlayerInput::Init(int bInitialActive)
 	this->releasedBitfield = 0;
 	this->field_0x5ec = 0;
 	this->field_0x5f0 = 0;
-	this->aAnalogSticks[0].x = 0.0f;
-	this->aAnalogSticks[0].y = 0.0f;
-	this->aAnalogSticks[0].magnitude = 0.0f;
-	this->aAnalogSticks[0].prevMagnitude = 0.0f;
-	this->aAnalogSticks[0].downRouteId = 0;
-	this->aAnalogSticks[0].upRouteId = 0;
-	this->aAnalogSticks[0].rightRouteId = 0;
-	this->aAnalogSticks[0].leftRouteId = 0;
-	this->aAnalogSticks[1].x = 0.0;
-	this->aAnalogSticks[1].y = 0.0;
-	this->aAnalogSticks[1].magnitude = 0.0f;
-	this->aAnalogSticks[1].prevMagnitude = 0.0f;
-	this->aAnalogSticks[1].downRouteId = 0;
-	this->aAnalogSticks[1].upRouteId = 0;
-	this->aAnalogSticks[1].rightRouteId = 0;
-	this->aAnalogSticks[1].leftRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_LEFT].x = 0.0f;
+	this->aAnalogSticks[PAD_STICK_LEFT].y = 0.0f;
+	this->aAnalogSticks[PAD_STICK_LEFT].magnitude = 0.0f;
+	this->aAnalogSticks[PAD_STICK_LEFT].prevMagnitude = 0.0f;
+	this->aAnalogSticks[PAD_STICK_LEFT].downRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_LEFT].upRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_LEFT].rightRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_LEFT].leftRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_RIGHT].x = 0.0;
+	this->aAnalogSticks[PAD_STICK_RIGHT].y = 0.0;
+	this->aAnalogSticks[PAD_STICK_RIGHT].magnitude = 0.0f;
+	this->aAnalogSticks[PAD_STICK_RIGHT].prevMagnitude = 0.0f;
+	this->aAnalogSticks[PAD_STICK_RIGHT].downRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_RIGHT].upRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_RIGHT].rightRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_RIGHT].leftRouteId = 0;
 	(this->lAnalogStick).x = 0.0f;
 	(this->lAnalogStick).y = 0.0f;
 	(this->lAnalogStick).z = 0.0f;
@@ -234,16 +234,16 @@ void CPlayerInput::Init(int bInitialActive)
 	}
 
 	// L
-	this->aAnalogSticks[0].leftRouteId = 0;
-	this->aAnalogSticks[0].rightRouteId = 1;
-	this->aAnalogSticks[0].upRouteId = 2;
-	this->aAnalogSticks[0].downRouteId = 3;
+	this->aAnalogSticks[PAD_STICK_LEFT].leftRouteId = 0;
+	this->aAnalogSticks[PAD_STICK_LEFT].rightRouteId = 1;
+	this->aAnalogSticks[PAD_STICK_LEFT].upRouteId = 2;
+	this->aAnalogSticks[PAD_STICK_LEFT].downRouteId = 3;
 
 	// R
-	this->aAnalogSticks[1].leftRouteId = 0xc;
-	this->aAnalogSticks[1].rightRouteId = 0xd;
-	this->aAnalogSticks[1].upRouteId = 0xe;
-	this->aAnalogSticks[1].downRouteId = 0xf;
+	this->aAnalogSticks[PAD_STICK_RIGHT].leftRouteId = 0xc;
+	this->aAnalogSticks[PAD_STICK_RIGHT].rightRouteId = 0xd;
+	this->aAnalogSticks[PAD_STICK_RIGHT].upRouteId = 0xe;
+	this->aAnalogSticks[PAD_STICK_RIGHT].downRouteId = 0xf;
 	return;
 }
 
@@ -362,7 +362,7 @@ float CPlayerInput::GetAngleWithPlayerStick(edF32VECTOR4* param_2)
 	float fVar3;
 	edF32VECTOR4 local_10;
 
-	if (this->aAnalogSticks[0].magnitude < 0.3f) {
+	if (this->aAnalogSticks[PAD_STICK_LEFT].magnitude < 0.3f) {
 		edF32Vector4ScaleHard(-1.0f, &local_10, param_2);
 	}
 	else {
@@ -410,7 +410,7 @@ void CPlayerInput::GetPadRelativeToNormal2D(edF32VECTOR4* param_2, float* param_
 	local_20.y = 0.0f;
 	local_20.x = -local_10.z;
 	local_20.w = 0.0f;
-	edF32Vector4ScaleHard(this->aAnalogSticks[0].magnitude, &eStack64, &this->lAnalogStick);
+	edF32Vector4ScaleHard(this->aAnalogSticks[PAD_STICK_LEFT].magnitude, &eStack64, &this->lAnalogStick);
 	fVar1 = edF32Vector4DotProductHard(&eStack64, &local_20);
 	*param_3 = fVar1;
 	fVar1 = edF32Vector4DotProductHard(&eStack64, &local_30);
@@ -445,8 +445,8 @@ void CPlayerInput::ComputeForce()
 	if (CCameraManager::_gThis != (CCameraManager*)0x0) {
 		local_70 = this->lAnalogStick;
 
-		local_10.x = this->aAnalogSticks[0].x;
-		local_10.y = this->aAnalogSticks[0].y;
+		local_10.x = this->aAnalogSticks[PAD_STICK_LEFT].x;
+		local_10.y = this->aAnalogSticks[PAD_STICK_LEFT].y;
 		local_10.z = 0.0f;
 
 		if ((local_10.x == 0.0f) && (local_10.y == 0.0f)) {
@@ -781,8 +781,8 @@ void CPlayerInput::ComputeForce3D(edF32VECTOR4* pOutForce)
 	pCameraManager = CCameraManager::_gThis;
 
 	if (CCameraManager::_gThis != (CCameraManager*)0x0) {
-		edF32Vector4ScaleHard(-this->aAnalogSticks[0].x, &xTranslation, &CCameraManager::_gThis->transformationMatrix.rowX);
-		edF32Vector4ScaleHard(this->aAnalogSticks[0].y, &yTranslation, &(pCameraManager->transformationMatrix).rowZ);
+		edF32Vector4ScaleHard(-this->aAnalogSticks[PAD_STICK_LEFT].x, &xTranslation, &CCameraManager::_gThis->transformationMatrix.rowX);
+		edF32Vector4ScaleHard(this->aAnalogSticks[PAD_STICK_LEFT].y, &yTranslation, &(pCameraManager->transformationMatrix).rowZ);
 		edF32Vector4AddHard(pOutForce, &xTranslation, &yTranslation);
 		edF32Vector4SafeNormalize0Hard(pOutForce, pOutForce);
 	}

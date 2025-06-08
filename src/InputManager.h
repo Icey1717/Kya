@@ -60,6 +60,9 @@ struct CPlayerInputSubObj {
 #define PAD_BITMASK_SQUARE 0x200
 #define PAD_BITMASK_TRIANGLE 0x4000000
 
+#define PAD_STICK_LEFT 0x0
+#define PAD_STICK_RIGHT 0x1
+
 class CPlayerInput {
 
 public:

@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include <fstream>
 #include "ed3D.h"
+#include <iostream>
 
 namespace DebugHelpers {
 	namespace ImGui {
@@ -48,8 +49,18 @@ namespace DebugHelpers {
 		std::ofstream file(filename, std::ios::binary);
 		if (file) {
 			file.write(reinterpret_cast<const char*>(&data), sizeof(T));
+			// Check for errors
+			if (!file) {
+				// Handle error if needed
+				std::cerr << "Error writing to file: " << filename << std::endl;
+			}
 			file.close();
 		}
+	}
+
+	template<typename T>
+	void SaveTypeToFile(std::filesystem::path filename, const T& data) {
+		SaveTypeToFile(filename.string().c_str(), data);
 	}
 
 	// Function to read the matrix from a binary file
@@ -60,5 +71,10 @@ namespace DebugHelpers {
 			file.read(reinterpret_cast<char*>(&data), sizeof(T));
 			file.close();
 		}
+	}
+
+	template<typename T>
+	void LoadTypeFromFile(std::filesystem::path filename, T& data) {
+		LoadTypeFromFile(filename.string().c_str(), data);
 	}
 }

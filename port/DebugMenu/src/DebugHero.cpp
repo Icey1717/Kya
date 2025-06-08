@@ -12,6 +12,7 @@
 #include "DebugSetting.h"
 #include "ActorManager.h"
 #include "Actor/DebugActorBehaviour.h"
+#include "LevelScheduleManager.h"
 
 namespace Debug {
 	namespace Hero {
@@ -39,6 +40,11 @@ namespace Debug {
 				std::vector<std::string> options;
 
 				std::filesystem::path path = "checkpoints";
+
+				auto* pLevelScheduleManager = CScene::ptable.g_LevelScheduleManager_00451660;
+		
+				// Append the level name.
+				path /= pLevelScheduleManager->aLevelInfo[pLevelScheduleManager->currentLevelID].levelName;
 
 				if (std::filesystem::exists(path)) {
 					for (const auto& entry : std::filesystem::directory_iterator(path)) {
@@ -74,9 +80,9 @@ namespace Debug {
 					}
 
 					if (ImGui::Button("Load Checkpoint")) {
-						std::string path = "checkpoints/" + options[selectedOption];
+						std::filesystem::path chkptPath = path / options[selectedOption];
 						Checkpoint checkpoint;
-						DebugHelpers::LoadTypeFromFile(path.c_str(), checkpoint);
+						DebugHelpers::LoadTypeFromFile(chkptPath, checkpoint);
 						
 						auto* pActorManager = CScene::ptable.g_ActorManager_004516a4;
 
@@ -129,8 +135,8 @@ namespace Debug {
 							std::filesystem::create_directory(path);
 						}
 
-						std::string path = "checkpoints/" + std::string(checkpointName) + ".chkp";
-						DebugHelpers::SaveTypeToFile(path.c_str(), sNewCheckpoint);
+						std::filesystem::path chkptPath = path / (std::string(checkpointName) + ".chkp");
+						DebugHelpers::SaveTypeToFile(chkptPath, sNewCheckpoint);
 						ImGui::CloseCurrentPopup();
 					}
 

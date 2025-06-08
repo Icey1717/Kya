@@ -11,6 +11,11 @@
 class CActorWind;
 class CWayPoint;
 
+class CFxEmitterPool
+{
+
+};
+
 struct NotifyWindParam
 {
 	edF32VECTOR4 field_0x0;
@@ -20,9 +25,29 @@ struct NotifyWindParam
 class CFxWind : public CObject
 {
 public:
+	void Create(CActorWind* pOwner, int param_3);
+	void Init(edF32MATRIX4* pMatrix);
 	void SectorChange(int oldSectorId, int newSectorId) { IMPLEMENTATION_GUARD_WIND_FX(); }
 	void Draw() { IMPLEMENTATION_GUARD_WIND_FX(); }
 	void Reset() { IMPLEMENTATION_GUARD_WIND_FX(); }
+
+	CActorWind* pOwner;
+
+	edF32MATRIX4 field_0x10;
+
+	int field_0x58;
+	edF32MATRIX4* field_0x5c;
+
+	edF32MATRIX4 field_0x60;
+	edF32MATRIX4 field_0xa0;
+
+	edF32VECTOR4 field_0x130;
+	edF32VECTOR4 field_0x140;
+	edF32VECTOR4 field_0x150;
+
+	float field_0x160;
+
+	int field_0x164;
 };
 
 class CBehaviourWind : public CBehaviour 
@@ -68,6 +93,9 @@ public:
 	void ResetTiming();
 
 	void NotifyActorInWindArea(float param_1, CActor* pNotifyActor);
+
+	void ReComputeBoundingSphere(edF32MATRIX4* pMatrix);
+	bool IsAValidFxPrimitive(CFxWind* pFx, byte param_3, edF32MATRIX4* param_4, edF32MATRIX4* param_5);
 
 	CSectorHierarchy sectorObj;
 	CBehaviourWind behaviourWind;

@@ -358,7 +358,7 @@ edF32MATRIX4* edEventGetChunkZonePrimitive(uint param_1, ed_zone_3d* param_2, ui
 	peVar1 = pedEventChunks[param_1];
 
 	if (puVar3 == (uint*)0x0) {
-		puVar3 = (uint*)param_2->field_0x0[2];
+		puVar3 = LOAD_SECTION_CAST(uint*, param_2->field_0x0[2]);
 	}
 	else {
 		uVar2 = *puVar3;

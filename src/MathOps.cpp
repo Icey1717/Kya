@@ -1682,6 +1682,28 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 	return false;
 }
 
+void edF32Vector4ScaleV4Hard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2)
+{
+	float fVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	float fVar5;
+	float fVar6;
+
+	fVar1 = v1->y;
+	fVar2 = v1->z;
+	fVar3 = v1->w;
+	fVar4 = v2->y;
+	fVar5 = v2->z;
+	fVar6 = v2->w;
+	v0->x = v2->x * v1->x;
+	v0->y = fVar4 * fVar1;
+	v0->z = fVar5 * fVar2;
+	v0->w = fVar6 * fVar3;
+	return;
+}
+
 void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;

@@ -216,7 +216,7 @@ bool CCameraRail::Manage()
 			}
 
 			fVar4 = this->field_0xf4[this->field_0xe4].field_0x20;
-			this->pSpline->GetPosition(fVar5 * (fVar4 = this->field_0xf4[this->field_0xe4 + 1].field_0x20 - fVar4) + fVar4, &local_10);
+			this->pSpline->GetPosition(fVar5 * (this->field_0xf4[this->field_0xe4 + 1].field_0x20 - fVar4) + fVar4, &local_10);
 			this->transformationMatrix.rowT = local_10;
 
 			if ((this->flags_0xc & 0x400) == 0) {

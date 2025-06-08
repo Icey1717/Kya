@@ -282,9 +282,8 @@ public:
 	void StateHeroJump_3_3(int param_2);
 
 	void StateHeroGrip(float param_1, int nextState, int param_4);
-
+	void StateHeroGripAngle(int nextState, int param_3);
 	void StateHeroGripUp(float param_1, float param_2, int nextState, int param_5);
-
 	void StateHeroGripUpToJumpInit();
 
 	void StateHeroFall(float param_1, int param_3);

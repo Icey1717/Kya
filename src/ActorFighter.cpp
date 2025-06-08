@@ -5981,8 +5981,8 @@ void CActorFighter::UpdateFightCommandInternal(CPlayerInput* pPlayerInput, int p
 		fVar20 = 0.0f;
 	}
 	else {
-		local_20.z = pPlayerInput->aAnalogSticks[0].y;
-		local_20.x = pPlayerInput->aAnalogSticks[0].x;
+		local_20.z = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].y;
+		local_20.x = pPlayerInput->aAnalogSticks[PAD_STICK_LEFT].x;
 		fVar20 = pPlayerInput->aButtons[5].clickValue;
 		fVar19 = pPlayerInput->aButtons[6].clickValue;
 		uVar16 = pPlayerInput->releasedBitfield & 0x20;
@@ -7716,9 +7716,9 @@ void CInputAnalyser::_CumulateDirections(CPlayerInput* pInput, edF32VECTOR4* pDi
 	edF32VECTOR4 local_10;
 
 	if (pDir == (edF32VECTOR4*)0x0) {
-		local_10.x = pInput->aAnalogSticks[0].x;
+		local_10.x = pInput->aAnalogSticks[PAD_STICK_LEFT].x;
 		local_10.y = 0.0f;
-		local_10.z = pInput->aAnalogSticks[0].y;
+		local_10.z = pInput->aAnalogSticks[PAD_STICK_LEFT].y;
 		local_10.w = 0.0f;
 	}
 	else {

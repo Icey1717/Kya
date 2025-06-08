@@ -47,6 +47,8 @@ public:
 	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
 	virtual bool InitDlistPatchable(int);
 
+	virtual void CheckpointReset();
+
 	S_STREAM_REF<CPathFollow> pathFollow;
 
 	int nbMoneyInstances;
