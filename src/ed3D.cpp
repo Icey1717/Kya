@@ -606,6 +606,11 @@ int GetBppFromModeInVRAM(int psm)
 	return iVar1;
 }
 
+bool ed3DFXIsTrue(ed_g2d_layer* pLAY)
+{
+	return (pLAY->flags_0x0 & 0x7fff8000) != 0;
+}
+
 void ed3DPrepareVRAMBuf(void)
 {
 	int iVar1;
@@ -712,7 +717,7 @@ edNODE* gPrim_List_FlushTex_Last = NULL;
 struct ed3DFXConfig {
 	undefined4 field_0x0;
 	undefined4 field_0x4;
-	undefined4 field_0x8;
+	uint field_0x8;
 	undefined4 field_0xc;
 	undefined4 field_0x10;
 	undefined field_0x14;
@@ -3193,9 +3198,10 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		}
 		else {
 			IMPLEMENTATION_GUARD(
-				p3dStrip->flags = p3dStrip->flags | 8;
-			*(ulong*)&((edF32VECTOR4*)ppuVar15)->x = ED_VIF1_SET_TAG_REF(0, 0);
-			*(ulong*)&((edF32VECTOR4*)ppuVar15)->z = 0x1100000011000000;
+			p3dStrip->flags = p3dStrip->flags | 8;
+			ppuVar15->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			ppuVar15->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			ppuVar15->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 			if ((bNegBFC$1276 == 0) && ((gCurScene->flags & 0x200) == 0)) {
 				CurBFCFlag$1277 = 0xfffe;
 				CurBFCFlagTest$1278 = 0xfffe;
@@ -3206,18 +3212,17 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 			}
 			pBFCVect.w = (float)CurBFCFlag$1277;
 			pBFCVect.y = (float)CurBFCFlagTest$1278;
-			*(ulong*)&((edF32VECTOR4*)ppuVar15)[1].x = ED_VIF1_SET_TAG_CNT(1);
-			*(ulong*)&((edF32VECTOR4*)ppuVar15)[1].z = 0x7c01003d00000000;
-			fVar7 = pBFCVect.w;
-			fVar6 = pBFCVect.z;
-			fVar5 = pBFCVect.y;
-			((edF32VECTOR4*)ppuVar15)[2].x = pBFCVect.x;
-			*(float*)((ulong) & ((edF32VECTOR4*)ppuVar15)[2].x + 4) = fVar5;
-			((edF32VECTOR4*)ppuVar15)[2].z = fVar6;
-			*(float*)((ulong) & ((edF32VECTOR4*)ppuVar15)[2].z + 4) = fVar7;
-			ppuVar15 = (edpkt_data*)((edF32VECTOR4*)ppuVar15 + 3);)
+			ppuVar15[1].cmdA = ED_VIF1_SET_TAG_CNT(1);
+			ppuVar15[1].asU32[2] = SCE_VIF1_SET_NOP(0);
+			ppuVar15[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
+
+			ppuVar15[2].asU32[0] = pBFCVect.alphaON;
+			ppuVar15[2].asF32[1] = pBFCVect.x;
+			ppuVar15[2].asF32[2] = pBFCVect.y;
+			ppuVar15[2].asF32[3] = pBFCVect.z;)
 		}
 	}
+
 	if (((p3dStrip->flags & 0x100) != 0) || (gFushListCounter == 0xe)) {
 		// #VIF_Tidy
 		IMPLEMENTATION_GUARD();
@@ -3231,6 +3236,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 		*(float*)((ulong) & ((edF32VECTOR4*)ppuVar15)[1].z + 4) = gVU1_AnimST_NormalExtruder_Scratch->w;
 		ppuVar15 = (edpkt_data*)((edF32VECTOR4*)ppuVar15 + 2);
 	}
+
 	return ppuVar15;
 }
 
@@ -3285,9 +3291,47 @@ ed_g3d_Anim_def* ed3DG2DAnimTexGet(ed_g2d_texture* pTexture)
 
 byte gbEnv = 0;
 
+void ed3DSwapVU1Buffer(void)
+{
+	uint uVar1;
+
+	uVar1 = ed3DVU1Buffer[0];
+	if (ed3DVU1BufferCur == 2) {
+		ed3DVU1BufferCur = 0;
+	}
+	else {
+		ed3DVU1BufferCur = ed3DVU1BufferCur + 1;
+	}
+
+	ed3DVU1Buffer[0] = ed3DVU1Buffer[1];
+	ed3DVU1Buffer[1] = ed3DVU1Buffer[2];
+	ed3DVU1Buffer[2] = uVar1;
+
+	return;
+}
+
+ed3DFXConfig* ed3DGetFxConfigFromFlag(uint param_1)
+{
+	uint uVar1;
+	uint uVar2;
+
+	uVar1 = 0x8000;
+	uVar2 = 0;
+	while (true) {
+		if (0xf < uVar2) {
+			return (ed3DFXConfig*)0x0;
+		}
+
+		if ((param_1 & uVar1) != 0) break;
+
+		uVar1 = uVar1 << 1;
+		uVar2 = uVar2 + 1;
+	}
+
+	return ged3DFXConfig + uVar2;
+}
 
 void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
-
 {
 	bool bVar1;
 	byte materialNbLayers;
@@ -3320,7 +3364,7 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 	uint uVar28;
 	int iVar29;
 	uint uVar30;
-	edpkt_data* local_a0;
+	edpkt_data* pTexturePkt;
 	int* local_90;
 	int local_60;
 	int local_40;
@@ -3349,8 +3393,10 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 	if (gGlobalAlhaON != 0x80) {
 		pNode->header.typeField.flags = pNode->header.typeField.flags | 0x20;
 		pBFCVect.alphaON = gGlobalAlhaON;
-		pCurPkt->cmdA = 0xe10000001;
-		pCurPkt->cmdB = 0x7c01003d00000000;
+		pCurPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
+		pCurPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+		pCurPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
+
 		pCurPkt[1].asU32[0] = pBFCVect.alphaON;
 		pCurPkt[1].asF32[1] = pBFCVect.x;
 		pCurPkt[1].asF32[2] = pBFCVect.y;
@@ -3388,7 +3434,7 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 
 				pVfiListA = pVifList + iVar20 * curStripIndex * 0x10;
 
-				local_a0 = LOAD_SECTION_CAST(edpkt_data*, pMaterial->pCommandBufferTexture) + gVRAMBufferFlush * pMaterial->commandBufferTextureSize * (uint)pMaterial->nbLayers;
+				pTexturePkt = LOAD_SECTION_CAST(edpkt_data*, pMaterial->pCommandBufferTexture) + gVRAMBufferFlush * pMaterial->commandBufferTextureSize * (uint)pMaterial->nbLayers;
 
 				if (SCRATCHPAD_ADDRESS(0x70003fff) < pCurPkt + 8) {
 					uint pktLen = PKT_SIZE(pCurPkt, gStartPKT_SPR);
@@ -3404,7 +3450,7 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 					if (mode != 1) {
 						IMPLEMENTATION_GUARD(
 						pCurPkt->cmdA =
-							((long)(int)local_a0 & 0xfffffffU) << 0x20 |
+							((long)(int)pTexturePkt & 0xfffffffU) << 0x20 |
 							(long)(int)(pMaterial->commandBufferTextureSize * (uint)bVar1) & 0xffffffffU | 0x30000000;)
 						pCurPkt->cmdB = 0;
 						pCurPkt = pCurPkt + bVar1;
@@ -3424,7 +3470,7 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 
 					uVar30 = pVfiListA;
 					if (curStripIndex < stripMeshCountB) {
-						pCurPkt->cmdA = 0x30000000;
+						pCurPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 						iVar21 = ed3DVU1Buffer[1] + 1;
 						pCurPkt->cmdB = (long)iVar21 & 0xffffffffU | 0x200000003000000;
 						peVar27 = pCurPkt + 1;
@@ -3440,8 +3486,9 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 						peVar27->cmdB = ((long)iVar21 & 0xffffffffU | 0x4000000) << 0x20;
 						pCurPkt = peVar27 + 1;
 					}
+
 					if (curStripIndex + 1 < stripMeshCountB) {
-						pCurPkt->cmdA = 0x30000000;
+						pCurPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 						iVar21 = ed3DVU1Buffer[2] + 1;
 						pCurPkt->cmdB = (long)iVar21 & 0xffffffffU | 0x200000003000000;
 						peVar27 = pCurPkt + 1;
@@ -3463,8 +3510,9 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 							ed3DSwapVU1Buffer();
 						}
 					}
+
 					if (curStripIndex + 2 < stripMeshCountB) {
-						pCurPkt->cmdA = 0x30000000;
+						pCurPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 						iVar21 = ed3DVU1Buffer[0] + 1;
 						pCurPkt->cmdB = (long)iVar21 & 0xffffffffU | 0x200000003000000;
 						peVar27 = pCurPkt + 1;
@@ -3485,26 +3533,29 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 					}
 
 					if (((int)(stripMeshCountB - 1) % 3 == 0) && (curStripIndex == stripMeshCountB - 1)) {
-						pCurPkt->cmdA = 0x30000000;
-						pCurPkt->cmdB = 0x1100000011000000;
+						pCurPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+						pCurPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+						pCurPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 						pCurPkt = pCurPkt + 1;
 					}
 
 					local_90 = local_90 + iVar6 * 4;
-					local_a0 = local_a0 + pMaterial->commandBufferTextureSize;)
+					pTexturePkt = pTexturePkt + pMaterial->commandBufferTextureSize;)
 				}
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
 			pCurPkt = ed3DFlushStripInit(pCurPkt, (edNODE*)pNode, mode);
 			while (uVar25 < mode) {
-				iVar21 = pMaterial->commandBufferTextureSize;
-				peVar27 = pMaterial->pCommandBufferTexture;
-				curStripIndex = (uint)uVar25;
+				// Continue on with the remaining textures.
+				curStripIndex = uVar25;
+
+				pTexturePkt = LOAD_SECTION_CAST(edpkt_data*, pMaterial->pCommandBufferTexture) + gVRAMBufferFlush * (pMaterial->commandBufferTextureSize * curStripIndex) * (uint)pMaterial->nbLayers;
+
 				iVar29 = piVar5[curStripIndex * iVar6 * 4 + 2];
-				local_60 = (int)&pStrip->flags + pStrip->vifListOffset;
-				iVar7 = gVRAMBufferFlush * iVar21 * (uint)pMaterial->nbLayers;
+
+				char* pVifList = reinterpret_cast<char*>(pStrip) + pStrip->vifListOffset;
+
 				if (uVar25 == 0) {
 					pNode->header.typeField.flags = pNode->header.typeField.flags & 0xffbf;
 				}
@@ -3512,8 +3563,7 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 					peVar16 = ed3DG2DMaterialGetLayer(pMaterial, curStripIndex);
 					bVar14 = ed3DFXIsTrue(peVar16);
 					if (bVar14 != false) {
-						iVar17 = ed3DGetFxConfigFromFlag(peVar16->flags_0x0);
-						if ((*(uint*)(iVar17 + 8) & 1) == 0) {
+						if ((ed3DGetFxConfigFromFlag(peVar16->flags_0x0)->field_0x8 & 1) == 0) {
 							pNode->header.typeField.flags = pNode->header.typeField.flags & 0xffbf;
 						}
 						else {
@@ -3527,21 +3577,22 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 						pNode->header.typeField.flags = pNode->header.typeField.flags | 0x40;
 					}
 				}
-				peVar18 = ed3DFlushStripInit(pCurPkt, (edNODE*)pNode, mode);
+
+				peVar18 = ed3DFlushStripInit(pCurPkt, pNode, mode);
 				pCurPkt = peVar18 + bVar1;
-				peVar18->cmdA =
-					((long)(int)(peVar27 + iVar7 + curStripIndex * iVar21) & 0xfffffffU) << 0x20 |
+				peVar18->cmdA = ((long)(int)pTexturePkt & 0xfffffffU) << 0x20 |
 					(long)(int)(pMaterial->commandBufferTextureSize * (uint)bVar1) & 0xffffffffU | 0x30000000;
 				peVar18->cmdB = 0;
-				pCurPkt->cmdA = 0xe10000001;
-				pCurPkt->cmdB = 0x7c01003d00000000;
-				fVar10 = pBFCVect.z;
-				fVar9 = pBFCVect.y;
-				fVar8 = pBFCVect.x;
-				*(uint*)&pCurPkt[1].cmdA = pBFCVect.alphaON;
-				*(float*)((int)&pCurPkt[1].cmdA + 4) = fVar8;
-				*(float*)&pCurPkt[1].cmdB = fVar9;
-				*(float*)((int)&pCurPkt[1].cmdB + 4) = fVar10;
+
+				pCurPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
+				pCurPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+				pCurPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
+
+				pCurPkt[1].asU32[0] = pBFCVect.alphaON;
+				pCurPkt[1].asF32[1] = pBFCVect.x;
+				pCurPkt[1].asF32[2] = pBFCVect.y;
+				pCurPkt[1].asF32[3] = pBFCVect.z;
+
 				pCurPkt = pCurPkt + 2;
 				if (gGlobalAlhaON != 0x80) {
 					if (uVar25 == 0) {
@@ -3552,42 +3603,49 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 						pCurPkt = ed3DHierachyCheckForGlobalAlphaSetPKT_(pCurPkt, peVar16);
 					}
 				}
-				if ((edpkt_data*)0x70003fff < pCurPkt + stripMeshCountB * 3) {
-					peVar27 = (edpkt_data*)((int)pCurPkt - (int)gStartPKT_SPR);
-					edDmaLoadFromFastRam(gStartPKT_SPR, (uint)peVar27, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
-					pCurPkt = edpkt_data_ARRAY_70001000;
-					gStartPKT_SPR = edpkt_data_ARRAY_70001000;
-					gBackupPKT = (edpkt_data*)((int)&gBackupPKT->cmdA + ((uint)peVar27 & 0xfffffff0));
+
+				if (SCRATCHPAD_ADDRESS(0x70003fff) < pCurPkt + stripMeshCountB * 3) {
+					uint pktLen = PKT_SIZE(pCurPkt, gStartPKT_SPR);
+					edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
+					pCurPkt = SCRATCHPAD_ADDRESS(0x70001000);
+					gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+					gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 				}
-				pVfiListA = 0;
+
+				int i = 0;
 				bVar14 = stripMeshCountB != 0;
-				while (uVar13 = g_PKTHeaderRef[4].cmdB._4_4_, uVar12 = (undefined4)g_PKTHeaderRef[4].cmdB,
-					uVar11 = g_PKTHeaderRef[4].cmdA._4_4_, uVar25 = SEXT48(iVar29), bVar14) {
-					pCurPkt->cmdA = 0x30000000;
-					pCurPkt->cmdB = 0;
-					uVar19 = SEXT48(local_60);
+				while (uVar25 = iVar29, bVar14) {
+					char* pCurVifList = pVifList;
 					iVar29 = iVar29 + 0x50;
-					local_60 = local_60 + iVar20 * 0x10;
-					*(uint*)&pCurPkt->cmdB = ed3DVU1Buffer[1] + 1 | 0x3000000;
-					*(undefined4*)((int)&pCurPkt->cmdB + 4) = 0x2000000;
-					pCurPkt[1].cmdA = (uVar19 & 0xfffffff) << 0x20 | 0x50000000;
+					pVifList = pVifList + iVar20 * 0x10;
+
+					pCurPkt[0].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+					pCurPkt[0].cmdB = 0;
+					pCurPkt[0].asU32[2] = SCE_VIF1_SET_BASE(ed3DVU1Buffer[1] + 1, 0);
+					pCurPkt[0].asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
+
+					pCurPkt[1].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
+					pCurPkt[1].asU32[1] = (uint)pCurVifList & 0xfffffff;
 					pCurPkt[1].cmdB = 0;
-					*(undefined4*)&pCurPkt[1].cmdB = 0;
-					pCurPkt[2].cmdA = (uVar25 & 0xfffffff) << 0x20 | 0x50000000;
+					pCurPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
+
+					pCurPkt[2].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
+					pCurPkt[2].asU32[1] = (uint)uVar25 & 0xfffffff;
 					pCurPkt[2].cmdB = 0;
-					*(uint*)&pCurPkt[2].cmdB = ed3DVU1Buffer[1] + 1 | 0x4000000;
+					pCurPkt[2].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1Buffer[1] + 1, 0);
+
 					pCurPkt = pCurPkt + 3;
+
 					ed3DSwapVU1Buffer();
-					pVfiListA = pVfiListA + 1;
-					bVar14 = pVfiListA < stripMeshCountB;
+
+					i = i + 1;
+					bVar14 = i < stripMeshCountB;
 				}
-				*(undefined4*)&pCurPkt->cmdA = (undefined4)g_PKTHeaderRef[4].cmdA;
-				*(undefined4*)((int)&pCurPkt->cmdA + 4) = uVar11;
-				*(undefined4*)&pCurPkt->cmdB = uVar12;
-				*(undefined4*)((int)&pCurPkt->cmdB + 4) = uVar13;
+
+				*pCurPkt = g_PKTHeaderRef[4];
 				pCurPkt = pCurPkt + 1;
-				uVar25 = SEXT48((int)(curStripIndex + 1));
-			})
+				uVar25 = curStripIndex + 1;
+			}
 		}
 	}
 	else {
@@ -3607,10 +3665,13 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 		VU1Emu::UpdateMemory(g_VifRefPktCur, pCurPkt);
 #endif
 
-		pCurPkt->cmdA = 0x30000000;
-		pCurPkt->cmdB = 0x1100000011000000;
-		pCurPkt[1].cmdA = 0x30000000;
-		pCurPkt[1].cmdB = 0x1100000011000000;
+		pCurPkt[0].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+		pCurPkt[0].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+		pCurPkt[0].asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
+		pCurPkt[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+		pCurPkt[1].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+		pCurPkt[1].asU32[3] = SCE_VIF1_SET_FLUSH(0);
 
 		while (peVar27 = pCurPkt + 2, uVar25 < mode) {
 			IMPLEMENTATION_GUARD(
@@ -3643,25 +3704,29 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 				}
 			})
 
-			peVar27->cmdA =
-				((long)(int)(peVar18 + iVar7 + curStripIndex * iVar21) & 0xfffffffU) << 0x20 |
+			peVar27->cmdA = ((long)(int)(peVar18 + iVar7 + curStripIndex * iVar21) & 0xfffffffU) << 0x20 |
 				(long)(int)(pMaterial->commandBufferTextureSize * (uint)bVar1) & 0xffffffffU | 0x30000000;
 
 			pCurPkt[2].cmdB = 0;
+
 			peVar27 = peVar27 + bVar1;
-			peVar27->cmdA = 0x30000000;
-			peVar27->cmdB = 0x1100000011000000;
+			peVar27->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			peVar27->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			peVar27->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 			pCurPkt = ed3DFlushStripInit(peVar27 + 1, (edNODE*)pNode, mode);
-			pCurPkt->cmdA = 0xe10000001;
-			pCurPkt->cmdB = 0x7c01003d00000000;
+
+			pCurPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
+			pCurPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+			pCurPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
 
 			pCurPkt[1].asU32[0] = pBFCVect.alphaON;
 			pCurPkt[1].asF32[1] = pBFCVect.x;
 			pCurPkt[1].asF32[2] = pBFCVect.y;
 			pCurPkt[1].asF32[3] = pBFCVect.z;
 
-			pCurPkt[2].cmdA = 0x30000000;
-			pCurPkt[2].cmdB = 0x1100000011000000;
+			pCurPkt[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			pCurPkt[2].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pCurPkt[2].asU32[3] = SCE_VIF1_SET_FLUSH(0);
 			pCurPkt = pCurPkt + 3;
 			if (gGlobalAlhaON != 0x80) {
 				if (uVar25 == 0) {
@@ -3673,8 +3738,9 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 				}
 			}
 
-			pCurPkt->cmdA = 0x30000000;
-			pCurPkt->cmdB = 0x1100000011000000;
+			pCurPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			pCurPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pCurPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 			pCurPkt = pCurPkt + 1;
 			if (SCRATCHPAD_ADDRESS(0x70003fff) < pCurPkt + stripMeshCountA * 3) {
 				uint pktLen = PKT_SIZE(pCurPkt, gStartPKT_SPR);
@@ -3689,7 +3755,7 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 			bVar14 = stripMeshCountB != 0;
 			while (uVar25 = iVar29, bVar14) {
 				IMPLEMENTATION_GUARD(
-				pCurPkt->cmdA = 0x30000000;
+				pCurPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 				pCurPkt->cmdB = 0;
 				uVar19 = SEXT48(local_40);
 				iVar29 = iVar29 + 0x50;
@@ -3708,15 +3774,18 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 				bVar14 = pVfiListA < stripMeshCountB;)
 			}
 
-			pCurPkt->cmdA = 0x30000000;
-			pCurPkt->cmdB = 0x1100000011000000;
+			pCurPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			pCurPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pCurPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 			pCurPkt[1] = g_PKTHeaderRef[4];
 
 			uVar25 = curStripIndex + 1;
 		}
 
-		peVar27->cmdA = 0x30000000;
-		pCurPkt[2].cmdB = 0x1100000011000000;
+		peVar27->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+		pCurPkt[2].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+		pCurPkt[2].asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
 		pCurPkt = pCurPkt + 3;
 	}
 
@@ -4217,19 +4286,21 @@ void ed3DFlushStrip(edNODE* pNode)
 			pPktBufferB->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 			pPktBufferB->cmdB = 0x1300000000000000;
 			pPktBufferB[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
-			pPktBufferB[1].cmdB = 0x1100000011000000;
+			pPktBufferB[1].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pPktBufferB[1].asU32[3] = SCE_VIF1_SET_FLUSH(0);
 			pBFCVect.z = 256.0 - fVar11 * 256.0;
 			pPktBufferB[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
-			pPktBufferB[2].cmdB = 0x7c01003d00000000;
-			fVar3 = pBFCVect.w;
-			fVar27 = pBFCVect.z;
-			fVar11 = pBFCVect.y;
-			*(float*)&pPktBufferB[3].cmdA = pBFCVect.x;
-			*(float*)((ulong)&pPktBufferB[3].cmdA + 4) = fVar11;
-			*(float*)&pPktBufferB[3].cmdB = fVar27;
-			*(float*)((ulong)&pPktBufferB[3].cmdB + 4) = fVar3;
+			pPktBufferB[2].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPktBufferB[2].asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
+
+			pPktBufferB[3].asU32[0] = pBFCVect.alphaON;
+			pPktBufferB[3].asF32[1] = pBFCVect.x;
+			pPktBufferB[3].asF32[2] = pBFCVect.y;
+			pPktBufferB[3].asF32[3] = pBFCVect.z;
+
 			pPktBufferB[4].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
-			pPktBufferB[4].cmdB = 0x1100000011000000;
+			pPktBufferB[4].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pPktBufferB[4].asU32[3] = SCE_VIF1_SET_FLUSH(0);
 			ppuVar19 = pPktBufferB + 5;
 			while (pRVar25 < pPktBufferB) {
 				bVar9 = *(byte*)&pNextNode->header & 3;
@@ -4312,17 +4383,15 @@ void ed3DFlushStrip(edNODE* pNode)
 						goto LAB_002a5a74;
 					}
 
-					// #VIF_Tidy
-					IMPLEMENTATION_GUARD();
 					ppuVar19->cmdA = ED_VIF1_SET_TAG_CNT(1);
-					ppuVar19->cmdB = 0x7c01003d00000000;
-					fVar3 = pBFCVect.w;
-					fVar27 = pBFCVect.z;
-					fVar11 = pBFCVect.y;
-					*(float*)&ppuVar19[1].cmdA = pBFCVect.x;
-					*(float*)((ulong)&ppuVar19[1].cmdA + 4) = fVar11;
-					*(float*)&ppuVar19[1].cmdB = fVar27;
-					*(float*)((ulong)&ppuVar19[1].cmdB + 4) = fVar3;
+					ppuVar19->asU32[2] = SCE_VIF1_SET_NOP(0);
+					ppuVar19->asU32[3] = SCE_VIF1_SET_UNPACK(0x003d, 0x1, UNPACK_V4_32_MASKED, 0);
+
+					ppuVar19[1].asU32[0] = pBFCVect.alphaON;
+					ppuVar19[1].asF32[1] = pBFCVect.x;
+					ppuVar19[1].asF32[2] = pBFCVect.y;
+					ppuVar19[1].asF32[3] = pBFCVect.z;
+
 					ppuVar19 = ppuVar19 + 2;
 				}
 				uVar23 = uVar23 + 1;
@@ -4860,8 +4929,9 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 						pPkt = pPkt + 3;
 					}
 
-					pPkt->cmdA = 0x30000000;
-					pPkt->cmdB = 0x1100000011000000;
+					pPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+					pPkt->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+					pPkt->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 
 					pPkt[1].cmdA = 0xe10000043;
 					pPkt[1].cmdB = 0;
@@ -4883,9 +4953,10 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 					}
 
 					peVar4 = ed3DFlushSunFlare2Screen(fVar9, local_10.x, local_10.y, peVar4, pBitmap, (int)local_10.z, uVar10);
-					peVar4->cmdA = 0x30000000;
+					peVar4->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 					pPkt = peVar4 + 1;
-					peVar4->cmdB = 0x1100000011000000;
+					peVar4->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+					peVar4->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 				}
 			}
 		}
@@ -4931,7 +5002,7 @@ void ed3DFlushSprite(edLIST* pList, ed_g2d_material* pMaterial)
 				}
 
 				for (uVar8 = 0; uVar8 < uVar2; uVar8 = uVar8 + 1) {
-					pPkt->cmdA = 0x30000000;
+					pPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 					pPkt->cmdB = 0;
 					*(uint*)&pPkt->cmdB = ed3DVU1Buffer[1] + 1 | 0x3000000;
 					*(undefined4*)((int)&pPkt->cmdB + 4) = 0x2000000;
@@ -5268,10 +5339,9 @@ void ed3DFlushStripList(edLIST* pList, ed_g2d_material* pMaterial)
 				}
 
 				if (bVar3) {
-					// #VIF_Tidy
-					IMPLEMENTATION_GUARD();
 					g_VifRefPktCur->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
-					peVar4->cmdB = 0x1100000011000000;
+					peVar4->asU32[2] = SCE_VIF1_SET_FLUSH(0);
+					peVar4->asU32[3] = SCE_VIF1_SET_FLUSH(0);
 					g_VifRefPktCur = g_VifRefPktCur + 1;
 				}
 			}
@@ -5389,11 +5459,6 @@ ed_g2d_layer* ed3DGetG2DLayer(ed_g2d_material* pMAT, int index)
 		}
 	}
 	return pTVar1;
-}
-
-bool ed3DFXIsTrue(ed_g2d_layer* pLAY)
-{
-	return (pLAY->flags_0x0 & 0x7fff8000) != 0;
 }
 
 edF32VECTOR4 Vector_004489bc = { 1.0f, 1.0f, 1.0f, 1.0f };

@@ -578,35 +578,37 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	}
 	else {
 		if (msg == 0x8a) {
-			IMPLEMENTATION_GUARD(
-			pCVar6 = CActor::GetBehaviour((CActor*)this, 6);
-			if (pCVar6 != (CBehaviour*)0x0) {
+			CBehaviourNativTakeAndPut* pTakeAndPut = reinterpret_cast<CBehaviourNativTakeAndPut*>(GetBehaviour(NATIVE_BEHAVIOUR_TAKE_AND_PUT));
+			if (pTakeAndPut != (CBehaviourNativTakeAndPut*)0x0) {
 				bVar3 = false;
-				if (-1 < (int)pMsgParam) {
-					bVar3 = (int)pMsgParam <= (int)&pCVar6[2].pVTable[-1].ChangeManageState + 3;
+				int newTrajectoryParamIndex = reinterpret_cast<int>(pMsgParam);
+
+				if (-1 < newTrajectoryParamIndex) {
+					bVar3 = newTrajectoryParamIndex <= pTakeAndPut->nbTrajectoryParams + -1;
 				}
+
 				if (bVar3) {
-					ppuVar9 = &((pCVar6[3].pVTable)->field_0x0)._vt + (int)pMsgParam * 8;
-					ppuVar9[7] = (undefined*)((uint)ppuVar9[7] | 1);
+					pTakeAndPut->aTrajectoryParams[newTrajectoryParamIndex].field_0x1c = pTakeAndPut->aTrajectoryParams[newTrajectoryParamIndex].field_0x1c | 1;
 					return 1;
 				}
-			})
+			}
 		}
 		else {
-			if (msg == 0x89) {
-				IMPLEMENTATION_GUARD(
-				pCVar6 = CActor::GetBehaviour((CActor*)this, 6);
+			if (msg == 0x89) {	
+				CBehaviourNativTakeAndPut* pTakeAndPut = reinterpret_cast<CBehaviourNativTakeAndPut*>(GetBehaviour(NATIVE_BEHAVIOUR_TAKE_AND_PUT));
 				if (pCVar6 != (CBehaviour*)0x0) {
 					bVar3 = false;
-					if (-1 < (int)pMsgParam) {
-						bVar3 = (int)pMsgParam <= (int)&pCVar6[2].pVTable[-1].ChangeManageState + 3;
+					int newTrajectoryParamIndex = reinterpret_cast<int>(pMsgParam);
+
+					if (-1 < newTrajectoryParamIndex) {
+						bVar3 = newTrajectoryParamIndex <= pTakeAndPut->nbTrajectoryParams + -1;
 					}
+
 					if (bVar3) {
-						ppuVar9 = &((pCVar6[3].pVTable)->field_0x0)._vt + (int)pMsgParam * 8;
-						ppuVar9[7] = (undefined*)((uint)ppuVar9[7] & 0xfffffffe);
+						pTakeAndPut->aTrajectoryParams[newTrajectoryParamIndex].field_0x1c = pTakeAndPut->aTrajectoryParams[newTrajectoryParamIndex].field_0x1c & 0xfffffffe;
 						return 1;
 					}
-				})
+				}
 			}
 			else {
 				if (msg != 0x4e) {
