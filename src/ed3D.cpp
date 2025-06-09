@@ -3047,6 +3047,41 @@ uint ed3DFlushStripGetIncPacket(ed_3d_strip* pStrip, bool param_2, bool bCachedS
 
 ed_3D_Scene* gCurScene = NULL;
 
+void DebugDumpStripFlagInfo(uint flags)
+{
+	if ((flags & 0x8) != 0) {
+		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$BF_Culling");
+	}
+
+	if ((flags & 0x20) != 0) {
+		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Alpha_Object");
+	}
+
+	if ((flags & 0x100) != 0) {
+		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Normal_Extruder");
+	}
+
+	if ((flags & 0x4) != 0) {
+		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Animation_RGBA");
+	}
+
+	if ((flags & 0x200) != 0) {
+		ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$Animation_ST");
+	}
+
+	if ((flags & 0x1) != 0) {
+		if ((flags & 0x2) != 0) {
+			ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo Culling");
+
+		}
+		else {
+			ED3D_LOG(LogLevel::VeryVerbose, "DebugDumpStripFlagInfo _$NoClipCulling_12_1");
+		}
+	}
+
+	return;
+}
+
 edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 {
 	bool bVar1;
@@ -3072,7 +3107,7 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 
 	ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripInit 0x{:x} flags: {:x}", (uintptr_t)pPkt, pNode->header.typeField.flags);
 
-	p3dStrip = (ed_3d_strip*)pNode->pData;
+	p3dStrip = reinterpret_cast<ed_3d_strip*>(pNode->pData);
 	uVar2 = pNode->header.typeField.flags;
 	PTR_AnimScratchpad_00449554->vuFlags = (int)(short)uVar2;
 	PTR_AnimScratchpad_00449554->flags = 0;
@@ -3082,6 +3117,8 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	if ((gFushListCounter == 0xe) && (FLOAT_00448a04 != 0.0)) {
 		PTR_AnimScratchpad_00449554->flags = PTR_AnimScratchpad_00449554->flags | 1;
 	}
+
+	DebugDumpStripFlagInfo(uVar2);
 
 	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
 	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
@@ -3414,10 +3451,10 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 	if (((pStrip->flags & 0x10000) == 0) || (gpCurHierarchy == (ed_3d_hierarchy*)0x0)) {
 		if (((pStrip->flags & 2) == 0) && (bForceStrip$1330 == 0)) {
 #ifdef PLATFORM_WIN
-			Renderer::Kya::GetMeshLibrary().AddFromStrip(pStrip);
+			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 #endif
 
-			pCurPkt = ed3DFlushStripInit(pCurPkt, (edNODE*)pNode, mode);
+			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
 			// This is all we need to do on windows, return here to save some processing time.
@@ -3545,7 +3582,11 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 			}
 		}
 		else {
-			pCurPkt = ed3DFlushStripInit(pCurPkt, (edNODE*)pNode, mode);
+#ifdef PLATFORM_WIN
+			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
+#endif
+
+			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 			while (uVar25 < mode) {
 				// Continue on with the remaining textures.
 				curStripIndex = uVar25;
@@ -3650,10 +3691,10 @@ void ed3DFlushStripMultiTexture(edLIST* pNode, ed_g2d_material* pMaterial)
 	}
 	else {
 #ifdef PLATFORM_WIN
-		Renderer::Kya::GetMeshLibrary().AddFromStrip(pStrip);
+		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 #endif
 
-		pCurPkt = ed3DFlushStripInit(pCurPkt, (edNODE*)pNode, mode);
+		pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
 		// This is all we need to do on windows, return here to save some processing time.
@@ -3833,7 +3874,7 @@ void ed3DFlushStrip(edNODE* pNode)
 	ulong uVar2;
 
 	pVifRefPktCur = g_VifRefPktCur;
-	p3dStrip = (ed_3d_strip*)pNode->pData;
+	p3dStrip = reinterpret_cast<ed_3d_strip*>(pNode->pData);
 
 	ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip 0x{:x} (From Node: 0x{:x})", (uintptr_t)p3dStrip, (uintptr_t)pNode);
 	ZONE_SCOPED;
@@ -3867,7 +3908,7 @@ void ed3DFlushStrip(edNODE* pNode)
 
 #ifdef PLATFORM_WIN
 		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
-		Renderer::Kya::GetMeshLibrary().AddFromStrip(p3dStrip);
+		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 #endif
 		pPktBufferA = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
@@ -4111,7 +4152,7 @@ void ed3DFlushStrip(edNODE* pNode)
 
 #ifdef PLATFORM_WIN
 		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
-		Renderer::Kya::GetMeshLibrary().AddFromStrip(p3dStrip);
+		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 #endif
 
 		pPktBufferB = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
@@ -5202,7 +5243,7 @@ edpkt_data* ed3DFlushStripShadowRender(edNODE* pNode, ed_g2d_material* pmaterial
 	edpkt_data* peVar13;
 
 	peVar7 = ed3DShadowGenerateTexturePacket(g_VifRefPktCur);
-	peVar3 = (ed_3d_strip*)pNode->pData;
+	peVar3 = reinterpret_cast<ed_3d_strip*>(pNode->pData);
 	peVar13 = (edpkt_data*)((char*)peVar3 + peVar3->vifListOffset);
 	g_VifRefPktCur = peVar7;
 	uVar8 = ed3DFlushStripGetIncPacket(peVar3, false, true);

@@ -656,13 +656,15 @@ const Renderer::Kya::G3D::Strip* Renderer::Kya::MeshLibrary::FindStrip(const ed_
 	return nullptr;
 }
 
-void Renderer::Kya::MeshLibrary::AddFromStrip(const ed_3d_strip* pStrip) const
+void Renderer::Kya::MeshLibrary::RenderNode(const edNODE* pNode) const
 {
+	ed_3d_strip* pStrip = reinterpret_cast<ed_3d_strip*>(pNode->pData);
+
 	const G3D::Strip* pRendererStrip = FindStrip(pStrip);
 	assert(pRendererStrip);
 
 	if (pRendererStrip && pRendererStrip->pSimpleMesh) {	
-		Renderer::AddMesh(pRendererStrip->pSimpleMesh.get());
+		Renderer::RenderMesh(pRendererStrip->pSimpleMesh.get(), pNode->header.typeField.flags);
 	}
 }
 

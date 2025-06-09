@@ -1161,7 +1161,7 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 	NATIVE_LOG(LogLevel::Info, "BindTexture Done\n-------------------------------------------------------\n");
 }
 
-void Renderer::Native::AddMesh(SimpleMesh* pMesh)
+void Renderer::Native::RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags)
 {
 	if (!gCurrentDraw) {
 		NATIVE_LOG(LogLevel::Info, "AddMesh Creating new draw!");
@@ -1267,10 +1267,10 @@ bool& Renderer::GetForceAnimMatrixIdentity()
 	return Native::bForceAnimMatrixIdentity;
 }
 
-void Renderer::AddMesh(SimpleMesh* pNewMesh)
+void Renderer::RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags)
 {
 	assert(pNewMesh);
-	Native::AddMesh(pNewMesh);
+	Native::RenderMesh(pNewMesh, renderFlags);
 }
 
 void Renderer::Native::DrawFade(uint8_t r, uint8_t g, uint8_t b, int a)

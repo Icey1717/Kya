@@ -502,7 +502,7 @@ namespace Renderer
 	void SetColClamp(GIFReg::GSColClamp colClamp);
 
 	void BindTexture(SimpleTexture* pNewTexture);
-	void AddMesh(SimpleMesh* pNewMesh);
+	void RenderMesh(SimpleMesh* pNewMesh, const uint32_t renderFlags);
 
 	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
 	void PushModelMatrix(float* pModel);

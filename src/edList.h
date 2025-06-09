@@ -9,7 +9,7 @@ typedef void(edListApply)(void*);
 
 struct ShortField {
 	short type;
-	short flags;
+	ushort flags;
 };
 
 union NodeHeaderUnion {

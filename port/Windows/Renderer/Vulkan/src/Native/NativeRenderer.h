@@ -58,7 +58,7 @@ namespace Renderer
 		void Render(const VkFramebuffer& framebuffer, const VkExtent2D& extent);
 
 		void BindTexture(SimpleTexture* pTexture);
-		void AddMesh(SimpleMesh* pMesh);
+		void RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags);
 		void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
 		void PushModelMatrix(float* pModel);
 		void PushAnimMatrix(float* pAnim);

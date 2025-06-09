@@ -1909,6 +1909,79 @@ namespace VU1Emu {
 			}
 		}
 
+		void _$Animation_ST_Simple()
+		{
+			if ((vi01 & 0x200) != 0) {
+				edF32VECTOR4 animST = VIF_LOAD_F(vi00, 33);
+
+				const int vtxCount = vi14;
+				int vtxReg = vi15 + 1;
+				for (int vtxIndex = 0; vtxIndex < vtxCount; vtxIndex++) {
+					edF32VECTOR4* pSTQ = VIF_AS_F(vtxReg, 0);
+					VU_VTX_TRACE_LOG("_$Animation_ST_Simple STQ original 0x{:x} S: {} T: {} Q: {}", vtxReg, pSTQ->x, pSTQ->y, pSTQ->z);
+
+					pSTQ->x += animST.x;
+					pSTQ->y += animST.y;
+				}
+			}
+		}
+
+		void _$Animation_ST()
+		{
+			if ((vi01 & 0x200) != 0) {
+				vf02 = VIF_LOAD_F(vi00, 33);
+
+				vi03 = vi15 + 1; // Vtx data reg
+				vi02 = vi14; // Vtx count
+
+				// Load STQ 0
+				vf24 = VIF_LOAD_F(vi03, 0);
+
+				// Load STQ 1
+				vf04 = VIF_LOAD_F(vi03, 3);
+
+				// Load STQ 2
+				vf14 = VIF_LOAD_F(vi03, 6);
+
+				vf26 = vf24 + vf02;
+
+				// Load STQ 0
+				vf24 = VIF_LOAD_F(vi03, 9);
+
+				vf06 = vf04 + vf02;
+
+				while (vi02 > 0) {
+					// Load STQ 1
+					vf04 = VIF_LOAD_F(vi03, 12);
+
+					vi03 += 9;
+
+					// Store STQ 0
+					VIF_AS_F(vi03, -9)->xy = vf26.xy;
+
+					vf16 = vf14 + vf02;
+
+					// Load STQ 2
+					vf14 = VIF_LOAD_F(vi03, 6);
+
+					vi02 = vi02 - 3;
+
+					// Store STQ 1
+					VIF_AS_F(vi03, -6)->xy = vf06.xy;
+
+					vf26 = vf24 + vf02;
+
+					// Load STQ 0
+					vf24 = VIF_LOAD_F(vi03, 9);
+
+					// Store STQ 3
+					VIF_AS_F(vi03, -3)->xy = vf16.xy;
+
+					vf06 = vf04 + vf02;
+				}
+			}
+		}
+
 		void _$XYZW_16_Conv()
 		{
 			ZONE_SCOPED;
@@ -2454,10 +2527,7 @@ namespace VU1Emu {
 				IMPLEMENTATION_GUARD();
 			}
 
-			if ((vi01 & 0x200) != 0) {
-				// _$Animation_ST
-				//IMPLEMENTATION_GUARD();
-			}
+			_$Animation_ST();
 
 			if ((vi01 & 0x1) != 0) {
 				if ((vi01 & 0x2) != 0) {

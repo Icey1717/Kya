@@ -10,6 +10,7 @@ struct ed3DLod;
 struct ed_g3d_object;
 struct ed_3d_strip;
 struct ed_g3d_cluster;
+struct edNODE;
 
 #include <memory>
 
@@ -100,7 +101,7 @@ namespace Renderer
 			using ForEachMesh = std::function<void(const G3D&)>;
 
 			static void Init();
-			void AddFromStrip(const ed_3d_strip* pStrip) const;
+			void RenderNode(const edNODE* pNode) const;
 			void CacheDlistStrip(ed_3d_strip* pStrip);
 
 			// Debug
