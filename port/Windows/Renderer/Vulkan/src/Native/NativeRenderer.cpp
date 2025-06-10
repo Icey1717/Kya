@@ -21,8 +21,7 @@
 #include "NativeDisplayList.h"
 #include <functional> // For std::hash
 
-#define DEBUG_TEXTURE_NAME "BACKGROUND.g2d"
-#define DEBUG_TEXTURE_MATERIAL_INDEX 5
+#define DEBUG_TEXTURE_NAME "KIM_Scene01_L.O.D..g2d (m: 3 l: 0)"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)
@@ -89,9 +88,6 @@ namespace Renderer
 		struct PerDrawData
 		{
 			glm::mat4 projXView;
-			glm::mat4 lightDirection;
-			glm::mat4 lightColor;
-			glm::vec4 lightAmbient;
 		};
 
 		struct FadeConstantBuffer
@@ -102,7 +98,11 @@ namespace Renderer
 		glm::mat4 gFinalViewMatrix;
 		glm::mat4 gFinalProjMatrix;
 
-		constexpr int gMaxModelMatrices = 1024;
+		// Maximum number of instances we can draw in a single frame. (Meshes are split into instances for rendering)
+		constexpr int gMaxInstances = 1024;
+
+		// Maximum number of meshes we can handle in a single frame.
+		constexpr int gMaxMeshes = 256;
 
 		static int gMaxAnimationMatrices = 0;
 
@@ -163,6 +163,18 @@ namespace Renderer
 
 		DynamicUniformBuffer<AlphaConstantBuffer> gAlphaBuffer;
 
+		struct alignas(16) LightingConstantBuffer
+		{
+			glm::mat4 lightDirection;
+			glm::mat4 lightColor;
+			glm::vec4 lightAmbient;
+		};
+
+		static_assert(sizeof(LightingConstantBuffer) == 144, "Unexpected struct size for std140");
+		static_assert(alignof(LightingConstantBuffer) >= 16, "Alignment must be at least 16");
+
+		DynamicUniformBuffer<LightingConstantBuffer> gLightingBuffer;
+
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
 		static NativeVertexBuffer gNativeVertexBuffer;
 
@@ -184,6 +196,8 @@ namespace Renderer
 
 			glm::mat4 projMatrix;
 			glm::mat4 viewMatrix;
+
+			LightingConstantBuffer lightingData;
 
 			RenderPassKey renderPassKey;
 
@@ -210,6 +224,7 @@ namespace Renderer
 		static glm::mat4 gCachedProjMatrix;
 
 		static PerDrawData gCachedPerDrawData;
+		static LightingConstantBuffer gCachedLightingData;
 
 		static void CreateFramebuffer()
 		{
@@ -298,6 +313,23 @@ namespace Renderer
 		class InstanceDataUpdate
 		{
 		public:
+			void PushModelMatrix(const glm::mat4& matrix)
+			{
+				gModelBuffer.SetInstanceData(instanceMatrixIndex, matrix);
+				lastModelMatrix = matrix;
+				instanceMatrixIndex++;
+			}
+
+			void UpdateModelMatrix(Draw::Instance& instance)
+			{
+				if (lastModelMatrix != instance.modelMatrix)
+				{
+					PushModelMatrix(instance.modelMatrix);
+				}
+
+				instance.modelMatrixIndex = instanceMatrixIndex - 1;
+			}
+
 			void UpdateInstanceData(Draw& draw)
 			{
 				SimpleTexture* pTexture = draw.pTexture;
@@ -308,40 +340,34 @@ namespace Renderer
 
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 
-				if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
+				if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 					pTexture->GetName();
 				}
 
 				for (auto& instance : draw.instances) {
-					assert(modelIndex < gMaxModelMatrices);
+					assert(instanceMatrixIndex < gMaxInstances);
 
 					SimpleMesh* pMesh = instance.pMesh;
 					NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
 
-					if (lastModelMatrix != instance.modelMatrix)
-					{
-						gModelBuffer.SetInstanceData(modelIndex, instance.modelMatrix);
-						lastModelMatrix = instance.modelMatrix;
-						modelIndex++;
-					}
-
-					instance.modelMatrixIndex = modelIndex - 1;
+					UpdateModelMatrix(instance);
 				}
 
-				gAlphaBuffer.SetInstanceData(textureIndex, { pTexture->GetTextureRegisters() });
-				textureIndex++;
+				gAlphaBuffer.SetInstanceData(drawCommandIndex, { pTexture->GetTextureRegisters() });
+				gLightingBuffer.SetInstanceData(drawCommandIndex, { draw.lightingData });
+				drawCommandIndex++;
 			}
 
 			void Reset()
 			{
-				modelIndex = 0;
-				textureIndex = 0;
+				instanceMatrixIndex = 0;
+				drawCommandIndex = 0;
 				lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
 			}
 
 		private:
-			int modelIndex = 0;
-			int textureIndex = 0;
+			int instanceMatrixIndex = 0;
+			int drawCommandIndex = 0;
 			glm::mat4 lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
 		};
 
@@ -356,6 +382,7 @@ namespace Renderer
 		{
 			gModelBuffer.Map(GetCurrentFrame());
 			gAlphaBuffer.Map(GetCurrentFrame());
+			gLightingBuffer.Map(GetCurrentFrame());
 
 			for (int i = 0; i < gAnimationMatrices.size() ; i++) {
 				if (bForceAnimMatrixIdentity) {
@@ -452,10 +479,11 @@ namespace Renderer
 							SetBlendingDynamicState(pTexture, instance.pMesh, cmd);
 						}
 
-						std::array< uint32_t, 3 > dynamicOffsets = {
+						std::array< uint32_t, 4> dynamicOffsets = {
 							instance.modelMatrixIndex * gModelBuffer.GetDynamicAlignment(),
 							instance.animationMatrixStart * gAnimationBuffer.GetDynamicAlignment(),
-							textureIndex * gAlphaBuffer.GetDynamicAlignment()
+							drawCommandIndex* gLightingBuffer.GetDynamicAlignment(),
+							drawCommandIndex * gAlphaBuffer.GetDynamicAlignment(),
 						};
 
 						vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout, 0, 1, &pTextureData->GetDescriptorSets(pipeline).GetSet(GetCurrentFrame()), dynamicOffsets.size(), dynamicOffsets.data());
@@ -464,18 +492,18 @@ namespace Renderer
 					}
 				}
 
-				textureIndex++;
+				drawCommandIndex++;
 			}
 
 			void Reset()
 			{
-				textureIndex = 0;
+				drawCommandIndex = 0;
 				bInRenderPass = false;
 				currentRenderPassKey.Reset();
 			}
 
 		private:
-			int textureIndex = 0;
+			int drawCommandIndex = 0;
 			bool bInRenderPass = false;
 			RenderPassKey currentRenderPassKey;
 		};
@@ -486,7 +514,7 @@ namespace Renderer
 			vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
 			const VkDeviceSize maxUboSize = properties.limits.maxUniformBufferRange;
 
-			assert(maxUboSize >= (sizeof(glm::mat4) * gMaxModelMatrices));
+			assert(maxUboSize >= (sizeof(glm::mat4) * gMaxInstances));
 
 			assert(properties.limits.maxPushConstantsSize >= sizeof(PerDrawData));
 
@@ -865,7 +893,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 	NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 
-	if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
+	if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 		pTexture->GetName();
 	}
 
@@ -894,14 +922,16 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 		const VkDescriptorBufferInfo animDescBufferInfo = gAnimationBuffer.GetDescBufferInfo(i, 27 * sizeof(glm::mat4));
 
 		const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(i);
+		const VkDescriptorBufferInfo lightingDescBufferInfo = gLightingBuffer.GetDescBufferInfo(i);
 
 		NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 
 		DescriptorWriteList writeList;
 		writeList.EmplaceWrite({ 2, EBindingStage::Vertex, &modelDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 		writeList.EmplaceWrite({ 3, EBindingStage::Vertex, &animDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+		writeList.EmplaceWrite({ 4, EBindingStage::Vertex, &lightingDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 
-		writeList.EmplaceWrite({ 4, EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
+		writeList.EmplaceWrite({ 5, EBindingStage::Fragment, &alphaDescBufferInfo, nullptr, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC });
 		writeList.EmplaceWrite({ 1, EBindingStage::Fragment, nullptr, &imageInfo, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER });
 
 		pTextureData->UpdateDescriptorSets(pipeline, writeList, i);
@@ -915,7 +945,8 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo<PipelineKey>& cre
 
 	vertShader.reflectData.MarkUniformBufferDynamic(0, 2);
 	vertShader.reflectData.MarkUniformBufferDynamic(0, 3);
-	fragShader.reflectData.MarkUniformBufferDynamic(0, 4);
+	vertShader.reflectData.MarkUniformBufferDynamic(0, 4);
+	fragShader.reflectData.MarkUniformBufferDynamic(0, 5);
 
 	pipeline.AddBindings(EBindingStage::Vertex, vertShader.reflectData);
 	pipeline.AddBindings(EBindingStage::Fragment, fragShader.reflectData);
@@ -1056,12 +1087,14 @@ void Renderer::Native::Setup()
 
 	gNativeVertexBuffer.Init(0x100000, 0x100000);
 
-	gModelBuffer.Init(gMaxModelMatrices);
+	gModelBuffer.Init(gMaxInstances);
 	gAnimationBuffer.Init(gMaxAnimationMatrices);
 
 	gNativeVertexBufferDataDraw.Init(0x10000, 0x10000);
 
-	gAlphaBuffer.Init(gMaxModelMatrices);
+	gAlphaBuffer.Init(gMaxInstances);
+
+	gLightingBuffer.Init(gMaxMeshes);
 
 	GetRenderDelegate() += Render;
 
@@ -1134,7 +1167,7 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 {
 	NATIVE_LOG(LogLevel::Info, "BindTexture: {} material: {} layer: {} indices: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex(), gNativeVertexBufferDataDraw.GetIndexTail());
 
-	if (pTexture->GetName() == DEBUG_TEXTURE_NAME && pTexture->GetMaterialIndex() == DEBUG_TEXTURE_MATERIAL_INDEX) {
+	if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 		pTexture->GetName();
 	}
 
@@ -1145,6 +1178,7 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 
 		gCurrentDraw->projMatrix = gCachedProjMatrix;
 		gCurrentDraw->viewMatrix = gCachedViewMatrix;
+		gCurrentDraw->lightingData = gCachedLightingData;
 
 		for (auto& instance : gCurrentDraw->instances) {
 			NATIVE_LOG(LogLevel::Info, "BindTexture: instance anim start: {}", instance.animationMatrixStart);
@@ -1238,16 +1272,18 @@ void Renderer::Native::PushMatrixPacket(const MatrixPacket* const pPkt)
 
 	assert(pPkt);
 
-	gCachedPerDrawData.lightDirection = glm::make_mat4(pPkt->objLightDirectionsMatrix);
-	gCachedPerDrawData.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
-	gCachedPerDrawData.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
+	gCachedLightingData.lightDirection = glm::make_mat4(pPkt->objLightDirectionsMatrix);
+	gCachedLightingData.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
+	gCachedLightingData.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
 
 	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[0], pPkt->objLightDirectionsMatrix[1], pPkt->objLightDirectionsMatrix[2]);
 	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[4], pPkt->objLightDirectionsMatrix[5], pPkt->objLightDirectionsMatrix[6]);
 	NATIVE_LOG(LogLevel::Info, "PushLightData: direction: {} {} {}", pPkt->objLightDirectionsMatrix[8], pPkt->objLightDirectionsMatrix[9], pPkt->objLightDirectionsMatrix[10]);
+
 	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[0], pPkt->lightColorMatrix[1], pPkt->lightColorMatrix[2], pPkt->lightColorMatrix[3]);
 	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[4], pPkt->lightColorMatrix[5], pPkt->lightColorMatrix[6], pPkt->lightColorMatrix[7]);
 	NATIVE_LOG(LogLevel::Info, "PushLightData: color: {} {} {} {}", pPkt->lightColorMatrix[8], pPkt->lightColorMatrix[9], pPkt->lightColorMatrix[10], pPkt->lightColorMatrix[11]);
+
 	NATIVE_LOG(LogLevel::Info, "PushLightData: ambient: {} {} {} {}", pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
 
 }

@@ -254,22 +254,23 @@ float edF32Vector4NormalizeHard(edF32VECTOR4* v0, edF32VECTOR4* v1)
 void edF32Matrix4GetTransposeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 {
 #if 1
-	m0->aa = m1->aa;
-	m0->ab = m1->ba;
-	m0->ac = m1->ca;
-	m0->ad = m1->da;
-	m0->ba = m1->ab;
-	m0->bb = m1->bb;
-	m0->bc = m1->cb;
-	m0->bd = m1->db;
-	m0->ca = m1->ac;
-	m0->cb = m1->bc;
-	m0->cc = m1->cc;
-	m0->cd = m1->dc;
-	m0->da = m1->ad;
-	m0->db = m1->bd;
-	m0->dc = m1->cd;
-	m0->dd = m1->dd;
+	edF32MATRIX4 m1Copy = *m1;
+	m0->aa = m1Copy.aa;
+	m0->ab = m1Copy.ba;
+	m0->ac = m1Copy.ca;
+	m0->ad = m1Copy.da;
+	m0->ba = m1Copy.ab;
+	m0->bb = m1Copy.bb;
+	m0->bc = m1Copy.cb;
+	m0->bd = m1Copy.db;
+	m0->ca = m1Copy.ac;
+	m0->cb = m1Copy.bc;
+	m0->cc = m1Copy.cc;
+	m0->cd = m1Copy.dc;
+	m0->da = m1Copy.ad;
+	m0->db = m1Copy.bd;
+	m0->dc = m1Copy.cd;
+	m0->dd = m1Copy.dd;
 	return;
 #else
 	__asm__ __volatile__("\n\

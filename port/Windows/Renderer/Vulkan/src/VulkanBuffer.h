@@ -7,37 +7,63 @@ void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
 void CopyBufferImmediate(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 void CopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
+// Utility to round up to next power of two
+inline size_t NextPowerOfTwo(size_t v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+
+	if constexpr (sizeof(size_t) == 8)
+	{
+		v |= v >> 32;
+	}
+
+	v++;
+	return v;
+}
+
 template<typename BufferType>
-struct DynamicUniformBuffer {
-	void Init(int instanceCount) {
+struct DynamicUniformBuffer
+{
+	void Init(int instanceCount)
+	{
 		VkPhysicalDeviceProperties properties{};
 		vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
 
 		const size_t minUboAlignment = properties.limits.minUniformBufferOffsetAlignment;
-		dynamicAlignment = sizeof(BufferType);
-		if (minUboAlignment > 0) {
-			dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
-		}
+		size_t baseAlignment = std::max(sizeof(BufferType), minUboAlignment);
+
+		dynamicAlignment = NextPowerOfTwo(baseAlignment);
 
 		size = dynamicAlignment * instanceCount;
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 			CreateBuffer(size,
-				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				buffers[i],
 				buffersMemory[i]);
 		}
 
 		bufferData = reinterpret_cast<BufferType*>(_aligned_malloc(size, dynamicAlignment));
+		assert(bufferData != nullptr);
 	}
 
 	inline const VkBuffer& GetBuffer(const int index) { return buffers[index]; }
 
 	inline BufferType* GetBufferData() { return bufferData; }
 
-	inline void SetInstanceData(const int index, const BufferType& data) {
-		BufferType* const pInstanceData = reinterpret_cast<BufferType*>(reinterpret_cast<char*>(bufferData) + (index * dynamicAlignment));
-		*pInstanceData = data;
+	inline BufferType* GetInstancePtr(int index) {
+		return reinterpret_cast<BufferType*>(
+			reinterpret_cast<char*>(bufferData) + index * dynamicAlignment);
+	}
+
+	inline void SetInstanceData(int index, const BufferType& data) {
+		*GetInstancePtr(index) = data;
 	}
 
 	inline uint32_t GetDynamicAlignment() const { return static_cast<uint32_t>(dynamicAlignment); }

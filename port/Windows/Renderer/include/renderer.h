@@ -272,10 +272,10 @@ namespace Renderer
 			float objectToCameraMatrix[16]; // 0xe
 
 			float objLightDirectionsMatrix[12]; // 0x12
-			float lightColorMatrix[20]; // 0x15
-			float adjustedLightAmbient[4]; // 0x19
-			float animStNormalExtruder[4]; // 0x1a
-			//float objToWorldInverseNormal[4]; // 0x1b
+			float lightColorMatrix[16]; // 0x15
+			float _pad[4]; // 0x19
+			float adjustedLightAmbient[4]; // 0x1a
+			float animStNormalExtruder[4]; // 0x1b
 		};
 
 		static_assert(sizeof(MatrixPacket) == 0x1c0, "Invalid Native::MatrixPacket size");

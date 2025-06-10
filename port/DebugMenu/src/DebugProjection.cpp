@@ -1,9 +1,6 @@
 #include "DebugProjection.h"
 
-#include <glm/glm.hpp> 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "VulkanIncludes.h"
 
 #include "DebugFrameBuffer.h"
 #include "Types.h"
