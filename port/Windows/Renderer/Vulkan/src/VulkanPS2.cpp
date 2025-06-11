@@ -1818,19 +1818,6 @@ void Renderer::BindTexture(SimpleTexture* pNewTexture)
 	Native::BindTexture(pNewTexture);
 }
 
-void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj) 
-{
-	Native::PushGlobalMatrices(pModel, pView, pProj);
-}
-
-void Renderer::PushModelMatrix(float* pModel) {
-	Native::PushModelMatrix(pModel);
-}
-
-void Renderer::PushAnimMatrix(float* pAnim) {
-	Native::PushAnimMatrix(pAnim);
-}
-
 const Renderer::InUseTextureList& Renderer::GetInUseTextures() {
 	return gInUseTextures;
 }

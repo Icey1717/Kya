@@ -9,7 +9,7 @@ layout(location = 0, index = 1) out vec4 outAlphaBlend;
 // Texture sampler
 layout(binding = 1) uniform sampler2D textureSampler;
 
-layout(binding = 5) uniform Test 
+layout(binding = 6) uniform Test 
 {
 	bool enable;
 	int atst;

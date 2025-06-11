@@ -16,6 +16,7 @@ layout(set = 0, binding = 3) uniform AnimBuffer {
 layout( push_constant ) uniform PerDrawData
 {
 	mat4 projXView;
+	uint renderFlags;
 } perDrawData;
 
 layout(set = 0, binding = 4) uniform LightingData {
@@ -23,6 +24,10 @@ layout(set = 0, binding = 4) uniform LightingData {
 	mat4 lightColor;
 	vec4 lightAmbient;
 } lightingData;
+
+layout(set = 0, binding = 5) uniform AnimStData {
+	vec4 animST;
+} animStData;
 
 layout(location = 0) in ivec2 inST;
 layout(location = 1) in vec2 inQ;
@@ -95,6 +100,11 @@ void main() {
 	gl_Position = pos;
 
 	vec2 outST = vec2(int12_to_float(inST.x), int12_to_float(inST.y));
+
+	if ((perDrawData.renderFlags & 0x200) != 0) {
+		outST.x += animStData.animST.x;
+		outST.y += animStData.animST.y;
+	}
 
 	fragTexCoord = vec4(outST, inQ);
 }

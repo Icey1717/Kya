@@ -579,7 +579,7 @@ PACK(
 	ed_hash_code hashCode;
 	int bHasPalette;
 	int pAnimSpeedNormalExtruder; //edF32VECTOR4*
-	float field_0x18;
+	float animSTMaxDist;
 	int pAnimChunck; //ed_Chunck*
 });
 

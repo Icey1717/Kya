@@ -5784,9 +5784,9 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 	float fVar11;
 	float fVar12;
 
-	uVar9 = gCurLayer->flags_0x4;
-	if ((uVar9 & 0x10) == 0) {
-		if ((uVar9 & 2) != 0) {
+	uint layerFlags = gCurLayer->flags_0x4;
+	if ((layerFlags & 0x10) == 0) {
+		if ((layerFlags & 2) != 0) {
 			pTEX = LOAD_SECTION_CAST(ed_Chunck*, gCurLayer->pTex);
 
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
@@ -5895,6 +5895,8 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 
 			pPkt = pPkt + 2;
 			gCurLayer->flags_0x4 = gCurLayer->flags_0x4 | 0x400;
+
+			Renderer::PushAnimST(gVU1_AnimST_NormalExtruder_Scratch->raw);
 		}
 	}
 	else {
@@ -5902,21 +5904,26 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 		if (pTEX != (ed_Chunck*)0xfffffff0) {
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
 			peVar5 = LOAD_SECTION_CAST(edF32VECTOR4*, pTexture->pAnimSpeedNormalExtruder);
-			if (((uVar9 & 0x400) == 0) && (gStepTime != 0)) {
+
+			if (((layerFlags & 0x400) == 0) && (gStepTime != 0)) {
 				peVar5->z = peVar5->z + peVar5->x;
 				peVar5->w = peVar5->w + peVar5->y;
+
 				fVar10 = peVar5->z;
 				if (1.0f <= fVar10) {
 					peVar5->z = fVar10 - 1.0f;
 				}
+
 				fVar10 = peVar5->w;
 				if (1.0f <= fVar10) {
 					peVar5->w = fVar10 - 1.0f;
 				}
+
 				fVar10 = peVar5->z;
 				if (fVar10 <= -1.0f) {
 					peVar5->z = fVar10 + 1.0f;
 				}
+
 				fVar10 = peVar5->w;
 				if (fVar10 <= -1.0f) {
 					peVar5->w = fVar10 + 1.0f;
@@ -5933,9 +5940,13 @@ edpkt_data* ed3DFlushMaterialAnimST(edpkt_data* pPkt)
 
 			pPkt[1].asVector = *gVU1_AnimST_NormalExtruder_Scratch;
 			pPkt = pPkt + 2;
+
 			gCurLayer->flags_0x4 = gCurLayer->flags_0x4 | 0x400;
+
+			Renderer::PushAnimST(gVU1_AnimST_NormalExtruder_Scratch->raw);
 		}
 	}
+
 	return pPkt;
 }
 
@@ -7608,7 +7619,7 @@ LAB_00297680:
 				gBoundSphereCenter->w = 1.0f;
 				*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
 
-				float fVar19 = pTexture->field_0x18;
+				float fVar19 = pTexture->animSTMaxDist;
 
 				if (fVar19 <= 0.0f) {
 					fVar19 = gAnimSTMaxDist;
@@ -8982,11 +8993,11 @@ LAB_00297eec:
 		if (pLayer->bHasTexture != 0) {
 			pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
 			ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
-			pLayer->flags_0x4 = piVar12 & 0xfffffbff;
+			pLayer->flags_0x4 = piVar12 & ~0x400;
 			if ((piVar12 & 0x10) == 0) {
 			LAB_0029800c:
 				if ((piVar12 & 2) == 0) {
-					pStrip->flags = pStrip->flags & 0xfffffdff;
+					pStrip->flags = pStrip->flags & ~0x200;
 				}
 				else {
 					ed3DManageAnim(ed3DG2DAnimTexGet(pTexture));
@@ -8999,7 +9010,7 @@ LAB_00297eec:
 
 				*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
 
-				float fVar13 = pTexture->field_0x18;
+				float fVar13 = pTexture->animSTMaxDist;
 				if (fVar13 <= 0.0f) {
 					fVar13 = gAnimSTMaxDist;
 				}
@@ -10941,7 +10952,7 @@ void Init3D(void)
 	puVar1->field_0x2c = 1;
 	ed3DInit();
 	ed3DSetFxConfig(2, 0x800, 0, 1, 0);
-	ed3DSetFXAnimSTMaxDist(1000.0);
+	ed3DSetFXAnimSTMaxDist(1000.0f);
 	puVar2 = ed3DGetLodSetup();
 	puVar2->field_0x0 = 0;
 	puVar2->field_0x4 = 12.25;

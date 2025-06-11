@@ -507,6 +507,7 @@ namespace Renderer
 	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
 	void PushModelMatrix(float* pModel);
 	void PushAnimMatrix(float* pAnim);
+	void PushAnimST(float* pAnimST);
 
 	using RenderDelegate = Multidelegate<const VkFramebuffer&, const VkExtent2D&>;
 

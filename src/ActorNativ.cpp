@@ -554,12 +554,7 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	CBehaviour* pCVar6;
 	uint uVar7;
 	long lVar8;
-	undefined** ppuVar9;
-	undefined4 uVar10;
-	undefined4 uVar11;
-	undefined4 uVar12;
-	undefined4 local_20[7];
-	undefined4* local_4;
+	CActorNativMsgParam_0xe local_20;
 
 	if (msg == 0x60) {
 		int* pIntParam = (int*)pMsgParam;
@@ -567,7 +562,7 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			pCVar6 = GetBehaviour(7);
 			if (pCVar6 != (CBehaviour*)0x0) {
 				CBehaviourNativSeller* pSeller = static_cast<CBehaviourNativSeller*>(pCVar6);
-				uVar10 = pSeller->GetPurchaseCutsceneId(pIntParam[1]);
+				uint uVar10 = pSeller->GetPurchaseCutsceneId(pIntParam[1]);
 				if (pSeller->addOn.Func_0x20(uVar10, 0, 1) != 0) {
 					pSeller->cachedStateId = 0x1d;
 				}
@@ -647,10 +642,9 @@ int CActorNativ::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 					pPathFinderClient->ChangePathfindingId(this, iVar1, &this->currentLocation);
 
 					pReceiver = this->field_0x3f0;
-					if ((((pReceiver != (CActor*)0x0) && (pReceiver != pSender)) && (this->curBehaviourId == 3)) && (local_4 = local_20, (this->behaviourSpeak).field_0x24 != -1)) {
-						IMPLEMENTATION_GUARD(
-						local_20[0] = 7;
-						CActor::DoMessage((CActor*)this, pReceiver, 0x4e, (uint)local_4);)
+					if ((((pReceiver != (CActor*)0x0) && (pReceiver != pSender)) && (this->curBehaviourId == 3)) && ((this->behaviourSpeak).field_0x24 != -1)) {
+						local_20.type = 7;
+						DoMessage(pReceiver, MESSAGE_NATIV_CMD, &local_20);
 					}
 
 					this->field_0x3f0 = pSender;
