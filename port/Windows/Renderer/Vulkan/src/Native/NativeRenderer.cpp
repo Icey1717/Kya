@@ -188,8 +188,6 @@ namespace Renderer
 		static DynamicUniformBuffer<glm::mat4> gAnimationBuffer;
 		static std::vector<glm::mat4> gAnimationMatrices;
 
-		static std::vector<glm::mat4> gModelMatrices;
-
 		RenderPassKey gCachedRenderPassKey;
 
 		RenderPassKey RenderPassKey::Empty = RenderPassKey{ EClearMode::ColorDepth };
@@ -205,7 +203,6 @@ namespace Renderer
 
 			struct Instance {
 				SimpleMesh* pMesh = nullptr;
-				glm::mat4 modelMatrix;
 				int indexStart = 0;
 				int indexCount = 0;
 				int vertexStart = 0;
@@ -225,11 +222,13 @@ namespace Renderer
 
 		static std::optional<Draw> gCurrentDraw;
 
-		static glm::mat4 gCachedModelMatrix;
 		static glm::mat4 gCachedViewMatrix;
 		static glm::mat4 gCachedProjMatrix;
+		static glm::mat4 gCachedModelMatrix;
 
 		static PerDrawData gCachedPerDrawData;
+
+		static int gCurrentModelIndex = 0;
 		static int gCurrentLightingDynamicsIndex = 0;
 		static int gCurrentAnimStDynamicsIndex = 0;
 
@@ -320,23 +319,6 @@ namespace Renderer
 		class InstanceDataUpdate
 		{
 		public:
-			void PushModelMatrix(const glm::mat4& matrix)
-			{
-				gModelBuffer.SetInstanceData(instanceMatrixIndex, matrix);
-				lastModelMatrix = matrix;
-				instanceMatrixIndex++;
-			}
-
-			void UpdateModelMatrix(Draw::Instance& instance)
-			{
-				if (lastModelMatrix != instance.modelMatrix)
-				{
-					PushModelMatrix(instance.modelMatrix);
-				}
-
-				instance.modelMatrixIndex = instanceMatrixIndex - 1;
-			}
-
 			void UpdateInstanceData(Draw& draw)
 			{
 				SimpleTexture* pTexture = draw.pTexture;
@@ -351,34 +333,17 @@ namespace Renderer
 					pTexture->GetName();
 				}
 
-				for (auto& instance : draw.instances) {
-					assert(instanceMatrixIndex < gMaxInstances);
-					assert(instanceIndex < gMaxInstances);
-
-					SimpleMesh* pMesh = instance.pMesh;
-					NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {}", pMesh->GetName());
-
-					UpdateModelMatrix(instance);
-					instanceIndex++;
-				}
-
 				gAlphaBuffer.SetInstanceData(drawCommandIndex, { pTexture->GetTextureRegisters() });
 				drawCommandIndex++;
 			}
 
 			void Reset()
 			{
-				instanceMatrixIndex = 0;
-				instanceIndex = 0;
 				drawCommandIndex = 0;
-				lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
 			}
 
 		private:
-			int instanceMatrixIndex = 0;
-			int instanceIndex = 0;
 			int drawCommandIndex = 0;
-			glm::mat4 lastModelMatrix = glm::mat4(std::numeric_limits<float>().max());
 		};
 
 		// Updates GPU side memory (Static Uniform Buffers | Per Frame Data)
@@ -536,8 +501,13 @@ namespace Renderer
 			vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
 			const VkDeviceSize maxUboSize = properties.limits.maxUniformBufferRange;
 
+			// Model
 			assert(maxUboSize >= (sizeof(glm::mat4) * gMaxInstances));
+
+			// Lighting Data
 			assert(maxUboSize >= (sizeof(LightingDynamicBufferData) * gMaxLightingData));
+
+			// Anim ST
 			assert(maxUboSize >= (sizeof(glm::vec4) * gMaxAnimStData));
 
 			assert(properties.limits.maxPushConstantsSize >= sizeof(PerDrawData));
@@ -558,10 +528,6 @@ namespace Renderer
 			auto& instance = gCurrentDraw->instances.back();
 
 			if (instance.animationMatrixStart != gAnimationMatrices.size()) {
-				return false;
-			}
-
-			if (instance.modelMatrix != gCachedModelMatrix) {
 				return false;
 			}
 
@@ -897,14 +863,14 @@ namespace Renderer
 
 		void Renderer::Native::RenderMesh(SimpleMesh* pMesh, const uint32_t renderFlags)
 		{
+			gCachedPerDrawData.renderFlags = renderFlags;
+
 			if (!gCurrentDraw) {
-				NATIVE_LOG(LogLevel::Info, "AddMesh Creating new draw!");
+				NATIVE_LOG(LogLevel::Info, "RenderMesh Creating new draw!");
 				CreateDraw();
 			}
 
-			gCachedPerDrawData.renderFlags = renderFlags;
-
-			NATIVE_LOG(LogLevel::Info, "AddMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
+			NATIVE_LOG(LogLevel::Info, "RenderMesh: {} prim: 0x{:x}", pMesh->GetName(), pMesh->GetPrim().CMD);
 
 			constexpr bool bSanityCheck = false;
 
@@ -917,19 +883,23 @@ namespace Renderer
 			constexpr bool bMergingEnabeld = false;
 
 			if (bMergingEnabeld && CanMergeMesh()) {
-				NATIVE_LOG(LogLevel::Info, "AddMesh: merging");
+				NATIVE_LOG(LogLevel::Info, "RenderMesh: merging");
 				MergeIndexData();
 			}
 			else {
 				auto& instance = gCurrentDraw->instances.emplace_back();
 				instance.animationMatrixStart = gAnimationMatrices.size();
-				instance.modelMatrix = gCachedModelMatrix;
+				instance.modelMatrixIndex = gCurrentModelIndex;
 				instance.pMesh = pMesh;
 				instance.perDrawData = gCachedPerDrawData;
-				instance.lightingDataIndex = gCurrentLightingDynamicsIndex;
-				instance.animStDataIndex = gCurrentAnimStDynamicsIndex;
+				instance.lightingDataIndex = gCurrentLightingDynamicsIndex - 1;
+				instance.animStDataIndex = gCurrentAnimStDynamicsIndex - 1;
 
-				NATIVE_LOG(LogLevel::Info, "AddMesh: instance anim start: {}", instance.animationMatrixStart);
+				NATIVE_LOG(LogLevel::Info, "RenderMesh: instance anim start: {}", instance.animationMatrixStart);
+
+				gModelBuffer.SetInstanceData(gCurrentModelIndex, gCachedModelMatrix);
+				gCurrentModelIndex++;
+				assert(gCurrentModelIndex < gMaxInstances);
 			}
 		}
 
@@ -952,11 +922,6 @@ namespace Renderer
 		void PushModelMatrix(float* pModel)
 		{
 			NATIVE_LOG(LogLevel::Info, "PushModelMatrix");
-
-			if (!gCurrentDraw) {
-				NATIVE_LOG(LogLevel::Info, "PushModelMatrix Creating new draw!");
-				CreateDraw();
-			}
 
 			if (pModel) {
 				gCachedModelMatrix = glm::make_mat4(pModel);
@@ -1317,6 +1282,7 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	gNativeVertexBuffer.Reset();
 	gAnimationMatrices.clear();
 
+	gCurrentModelIndex = 0;
 	gCurrentLightingDynamicsIndex = 0;
 	gCurrentAnimStDynamicsIndex = 0;
 
