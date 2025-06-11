@@ -86,10 +86,10 @@ union Hash_8
 		memcpy(tempName, name, 8);
 		tempName[8] = '\0';
 
-		// Replace newlines with spaces if any exist in `name`
-		for (int i = 0; i < 8; i++) {
-			if (tempName[i] == '\n') {
-				tempName[i] = ' ';
+		// Sanitize the name to avoid issues with printf
+		for (int i = 0; i < 8; ++i) {
+			if (tempName[i] < ' ' || tempName[i] > '~' || tempName[i] == '\n' || tempName[i] == '\r' || tempName[i] == '\t') {
+				tempName[i] = '?'; // Replace non-printable characters with '?'
 			}
 		}
 

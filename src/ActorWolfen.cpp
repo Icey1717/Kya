@@ -7256,39 +7256,40 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 		}
 		else {
 			if (msg == 2) {
-				IMPLEMENTATION_GUARD(
-				if ((CActorFighter*)pSender == this->pOwner->pAdversary) {
+				if (pSender == this->pOwner->pAdversary) {
 					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfd | 2;
 					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfe;
-					bVar3 = CActorFighter::FUN_0031b5d0
-					((CActorFighter*)this->pOwner, this->pOwner->actorState);
+
+					bVar3 = this->pOwner->FUN_0031b5d0(this->pOwner->actorState);
 					if (bVar3 == false) {
+						IMPLEMENTATION_GUARD(
 						if (((uint)pMsgParam->z & 8) == 0) {
 							*(int*)&this->field_0x30 = *(int*)&this->field_0x30 + 1;
 						}
 						else {
-							pCVar1 = this->pOwner;
+							pCVar1 = static_cast<CActorWolfen*>(this->pOwner);
 							if (pCVar1->activeCapabilityIndex != 3) {
 								pCommander = pCVar1->pCommander;
-								lVar7 = CActorCommander::FUN_00171440(pCommander, (int)pCVar1);
+								IMPLEMENTATION_GUARD(
+								lVar7 = pCommander->FUN_00171440(pCVar1);)
 								if (lVar7 != 0) {
 									pWVar4 = (WFIGS_Capability*)0x0;
 									if (pCVar1->activeCapabilityIndex != 3) {
 										pWVar4 = pCVar1->aCapabilities + pCVar1->activeCapabilityIndex;
 									}
-									CActorCommander::ReleaseSemaphore(pCommander, pWVar4->semaphoreId, (int)pCVar1);
+									pCommander->ReleaseSemaphore(pWVar4->semaphoreId, (int)pCVar1);
 								}
 							}
-						}
+						})
 
 						ValidateCommand();
 						this->currentCommandId = -1;
 					}
 
-					if (this->pOwner->field_0xb44 == 0) {
+					if (static_cast<CActorWolfen*>(this->pOwner)->field_0xb44 == 0) {
 						this->field_0x38 = 0;
 					}
-				})
+				}
 
 				iVar6 = CBehaviourFighter::InterpretMessage(pSender, 2, (GetPositionMsgParams*)pMsgParam);
 			}

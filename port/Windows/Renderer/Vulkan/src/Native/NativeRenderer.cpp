@@ -895,7 +895,7 @@ namespace Renderer
 				instance.lightingDataIndex = gCurrentLightingDynamicsIndex - 1;
 				instance.animStDataIndex = gCurrentAnimStDynamicsIndex - 1;
 
-				NATIVE_LOG(LogLevel::Info, "RenderMesh: instance anim start: {}", instance.animationMatrixStart);
+				NATIVE_LOG(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", gCurrentModelIndex, instance.animationMatrixStart);
 
 				gModelBuffer.SetInstanceData(gCurrentModelIndex, gCachedModelMatrix);
 				gCurrentModelIndex++;

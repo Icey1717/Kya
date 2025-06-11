@@ -43,6 +43,10 @@
 #define SCENE_FLAG_CAST_SHADOW	0x2
 #define SCENE_FLAG_FOG_PROPERTY	0x40
 
+#define LAYER_FLAG_ANIM_ST_UPDATED 0x400
+
+#define RENDER_STRIP_FLAG_ANIM_ST 0x200
+
 #ifdef PLATFORM_PS2
 #define SCRATCHPAD_ADDRESS(addr) (edpkt_data*)addr
 #define SCRATCHPAD_ADDRESS_TYPE(addr, type) (type)addr
