@@ -666,6 +666,9 @@ void Renderer::Kya::MeshLibrary::RenderNode(const edNODE* pNode) const
 	if (pRendererStrip && pRendererStrip->pSimpleMesh) {	
 		Renderer::RenderMesh(pRendererStrip->pSimpleMesh.get(), pNode->header.typeField.flags);
 	}
+	else {
+		MESH_LOG(LogLevel::Error, "Renderer::Kya::MeshLibrary::RenderNode Strip not found or no simple mesh available for rendering");
+	}
 }
 
 void Renderer::Kya::MeshLibrary::CacheDlistStrip(ed_3d_strip* pStrip)

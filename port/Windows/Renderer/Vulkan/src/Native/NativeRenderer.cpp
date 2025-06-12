@@ -231,6 +231,7 @@ namespace Renderer
 		static int gCurrentModelIndex = 0;
 		static int gCurrentLightingDynamicsIndex = 0;
 		static int gCurrentAnimStDynamicsIndex = 0;
+		static int gCurrentAnimMatrixIndex = 0;
 
 		static void CreateFramebuffer()
 		{
@@ -888,7 +889,7 @@ namespace Renderer
 			}
 			else {
 				auto& instance = gCurrentDraw->instances.emplace_back();
-				instance.animationMatrixStart = gAnimationMatrices.size();
+				instance.animationMatrixStart = gCurrentAnimMatrixIndex;
 				instance.modelMatrixIndex = gCurrentModelIndex;
 				instance.pMesh = pMesh;
 				instance.perDrawData = gCachedPerDrawData;
@@ -933,6 +934,11 @@ namespace Renderer
 			NATIVE_LOG(LogLevel::Info, "PushAnimMatrix: {}", gAnimationMatrices.size());
 			//assert(!std::isnan(pAnim[0]));
 			gAnimationMatrices.push_back(glm::make_mat4(pAnim));
+		}
+
+		void StartAnimMatrix()
+		{
+			gCurrentAnimMatrixIndex = gAnimationMatrices.size();
 		}
 
 		void SetAnimStInstanceData(const glm::vec4& data)
@@ -1350,6 +1356,11 @@ void Renderer::PushGlobalMatrices(float* pModel, float* pView, float* pProj)
 void Renderer::PushModelMatrix(float* pModel)
 {
 	Native::PushModelMatrix(pModel);
+}
+
+void Renderer::StartAnimMatrix()
+{
+	Native::StartAnimMatrix();
 }
 
 void Renderer::PushAnimMatrix(float* pAnim)

@@ -506,6 +506,7 @@ namespace Renderer
 
 	void PushGlobalMatrices(float* pModel, float* pView, float* pProj);
 	void PushModelMatrix(float* pModel);
+	void StartAnimMatrix();
 	void PushAnimMatrix(float* pAnim);
 	void PushAnimST(float* pAnimST);
 

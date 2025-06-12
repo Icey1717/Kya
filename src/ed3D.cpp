@@ -3194,6 +3194,10 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 
 		ED3D_LOG(LogLevel::VeryVerbose, "ed3DFlushStripInit Building anim matrix transfer pkts count: {}", maxAnimMatrixCount);
 
+#ifdef PLATFORM_WIN
+		Renderer::StartAnimMatrix();
+#endif
+
 		// Push anim matrices.
 		for (; (bVar1 = maxAnimMatrixCount != 0, maxAnimMatrixCount = maxAnimMatrixCount + -1, bVar1 && (-1 < *pAnimIndexes)); pAnimIndexes = pAnimIndexes + 1)
 		{
@@ -3261,17 +3265,15 @@ edpkt_data* ed3DFlushStripInit(edpkt_data* pPkt, edNODE* pNode, ulong mode)
 	}
 
 	if (((p3dStrip->flags & 0x100) != 0) || (gFushListCounter == 0xe)) {
-		// #VIF_Tidy
-		IMPLEMENTATION_GUARD();
-		*(ulong*)&((edF32VECTOR4*)pNextPkt)->x = ED_VIF1_SET_TAG_CNT(1);
-		*(ulong*)&((edF32VECTOR4*)pNextPkt)->z = 0;
-		((edF32VECTOR4*)pNextPkt)->z = 0.0;
-		*(undefined4*)((ulong) & ((edF32VECTOR4*)pNextPkt)->z + 4) = 0x6c010021;
-		((edF32VECTOR4*)pNextPkt)[1].x = gVU1_AnimST_NormalExtruder_Scratch->x;
-		*(float*)((ulong) & ((edF32VECTOR4*)pNextPkt)[1].x + 4) = gVU1_AnimST_NormalExtruder_Scratch->y;
-		((edF32VECTOR4*)pNextPkt)[1].z = gVU1_AnimST_NormalExtruder_Scratch->z;
-		*(float*)((ulong) & ((edF32VECTOR4*)pNextPkt)[1].z + 4) = gVU1_AnimST_NormalExtruder_Scratch->w;
-		pNextPkt = (edpkt_data*)((edF32VECTOR4*)pNextPkt + 2);
+		pNextPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
+		pNextPkt->cmdB = 0;
+		pNextPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+		pNextPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0021, 0x01, UNPACK_V4_32, 0); //  0x6c010021;
+
+		pNextPkt->asVector = *gVU1_AnimST_NormalExtruder_Scratch;
+		pNextPkt = pNextPkt + 2;
+
+		Renderer::PushAnimST(gVU1_AnimST_NormalExtruder_Scratch->raw);
 	}
 
 	return pNextPkt;
@@ -3450,13 +3452,10 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 
 	if (((pStrip->flags & 0x10000) == 0) || (gpCurHierarchy == (ed_3d_hierarchy*)0x0)) {
 		if (((pStrip->flags & 2) == 0) && (bForceStrip$1330 == 0)) {
-#ifdef PLATFORM_WIN
-			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
-#endif
-
 			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
+			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 			// This is all we need to do on windows, return here to save some processing time.
 			return;
 #endif
@@ -3582,11 +3581,12 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 			}
 		}
 		else {
+			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
+
 #ifdef PLATFORM_WIN
 			Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
+			return; // This return is probably not correct, we should continue and do another draw?
 #endif
-
-			pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 			while (uVar25 < mode) {
 				// Continue on with the remaining textures.
 				curStripIndex = uVar25;
@@ -3690,15 +3690,11 @@ void ed3DFlushStripMultiTexture(edNODE* pNode, ed_g2d_material* pMaterial)
 		}
 	}
 	else {
-#ifdef PLATFORM_WIN
-		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
-#endif
-
 		pCurPkt = ed3DFlushStripInit(pCurPkt, pNode, mode);
 
 #ifdef PLATFORM_WIN
-		// This is all we need to do on windows, return here to save some processing time.
-		return;
+		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
+		return; // This return is probably not correct, we should continue and do another draw?
 #endif
 
 #ifdef PLATFORM_WIN
@@ -3906,18 +3902,16 @@ void ed3DFlushStrip(edNODE* pNode)
 
 		ED3D_LOG(LogLevel::Verbose, "ed3DFlushStrip partial: {} full: {}", partialMeshSectionCount, fullMeshSectionCount);
 
-#ifdef PLATFORM_WIN
-		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
-		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
-#endif
 		pPktBufferA = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
 #ifdef PLATFORM_WIN
+		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 		// This is all we need to do on windows, return here to save some processing time.
 		return;
 #endif
 
 #ifdef PLATFORM_WIN
+		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
 		// Init stuff update.
 		VU1Emu::UpdateMemory(g_VifRefPktCur, pPktBufferA);
 #endif
@@ -4149,20 +4143,16 @@ void ed3DFlushStrip(edNODE* pNode)
 		pRVar25 = 0;
 		uVar23 = 0;
 		short meshSectionCount = p3dStrip->meshCount;
-
-#ifdef PLATFORM_WIN
-		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
-		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
-#endif
-
 		pPktBufferB = ed3DFlushStripInit(pVifRefPktCur, pNode, 1);
 
 #ifdef PLATFORM_WIN
+		Renderer::Kya::GetMeshLibrary().RenderNode(pNode);
 		// This is all we need to do on windows, return here to save some processing time.
 		return;
 #endif
 
 #ifdef PLATFORM_WIN
+		VU1Emu::SetVifItop((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1);
 		VU1Emu::UpdateMemory(g_VifRefPktCur, pPktBufferB);
 #endif
 
@@ -5615,14 +5605,16 @@ void ed3DFlushMatrix(ed_dma_matrix* pDmaMatrix, ed_g2d_material* pMaterial)
 	g_VifRefPktCur->asVector = *gVU1_AnimST_NormalExtruder_Scratch;
 	g_VifRefPktCur = g_VifRefPktCur + 1;
 
+	Renderer::PushAnimST(gVU1_AnimST_NormalExtruder_Scratch->raw);
+
 	ed3DFlushStripList(pDmaMatrix, pMaterial);
 
 	pNodeManager = (edNODE_MANAGER*)pDmaMatrix->pData;
 	pDmaMatrix->pPrev = pNodeManager->pNodeHead + pNodeManager->linkCount;
 	pNodeManager->linkCount = pNodeManager->linkCount - pDmaMatrix->nodeCount;
 	pDmaMatrix->nodeCount = 0;
-	pDmaMatrix->pPrev = (edNODE*)pDmaMatrix;
-	pDmaMatrix->pNext = (edNODE*)pDmaMatrix;
+	pDmaMatrix->pPrev = pDmaMatrix;
+	pDmaMatrix->pNext = pDmaMatrix;
 	return;
 }
 
@@ -5716,7 +5708,7 @@ void ed3DFlushMaterialNode(ed_dma_material* pMaterial)
 	if ((pMaterial->flags & 1) == 0) {
 		pNode = pMaterial->list.pPrev;
 
-		if (pNode != (edLIST*)0x0) {
+		if (pNode != (edNODE*)0x0) {
 			if (gShadowFlushMode == 0) {
 				for (; pNode != &pMaterial->list; pNode = pNode->pPrev) {
 					ed3DFlushMatrix((ed_dma_matrix*)pNode->pData, pMaterial->pMaterial);
