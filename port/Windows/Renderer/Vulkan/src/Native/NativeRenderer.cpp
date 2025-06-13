@@ -38,6 +38,78 @@ namespace Renderer
 
 		static bool bForceAnimMatrixIdentity = false;
 
+		template<typename T, int MaxInstances>
+		class DynamicBuffer
+		{
+		public:
+			void Init()
+			{
+				Validate();
+
+				gUniformBuffer.Init(MaxInstances);
+			}
+
+			VkDescriptorBufferInfo GetDescBufferInfo(const int index)
+			{
+				return gUniformBuffer.GetDescBufferInfo(index);
+			}
+
+			uint32_t GetDynamicAlignment() const
+			{
+				return gUniformBuffer.GetDynamicAlignment();
+			}
+
+			void Map(const int index)
+			{
+				gUniformBuffer.Map(index);
+			}
+
+			int GetInstanceIndex() const
+			{
+				assert(currentInstanceIndex > 0);
+				return currentInstanceIndex - 1;
+			}
+
+			int GetDebugIndex() const
+			{
+				return currentInstanceIndex;
+			}
+
+			void AddInstanceData(const T& data)
+			{
+				// Re-use the current instance index if it matches the data.
+				if (currentInstanceIndex > 0 && data == *gUniformBuffer.GetInstancePtr(currentInstanceIndex - 1)) {
+					return;
+				}
+
+				assert(currentInstanceIndex < MaxInstances);
+
+				gUniformBuffer.SetInstanceData(currentInstanceIndex, data);
+				currentInstanceIndex++;
+				return;
+			}
+
+			void Reset()
+			{
+				currentInstanceIndex = 0;
+			}
+
+		private:
+			void Validate()
+			{
+				VkPhysicalDeviceProperties properties{};
+				vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
+				const VkDeviceSize maxUboSize = properties.limits.maxUniformBufferRange;
+
+				assert(properties.limits.maxUniformBufferRange >= (sizeof(T) * MaxInstances));
+			}
+
+			int currentInstanceIndex = 0;
+
+			// GPU Side Dynamic Buffer
+			DynamicUniformBuffer<T> gUniformBuffer;
+		};
+
 		struct RenderPassKey
 		{
 			static RenderPassKey Empty;
@@ -147,7 +219,7 @@ namespace Renderer
 		static CommandBufferVector gCommandBuffers;
 		static CommandBufferVector gCommandBuffersDummy;
 
-		static DynamicUniformBuffer<glm::mat4> gModelBuffer;
+		static DynamicBuffer<glm::mat4, gMaxInstances> gModelBuffer;
 
 		static UniformBuffer<FadeConstantBuffer> gFadeBuffer;
 		static bool bFadeActive = false;
@@ -172,12 +244,18 @@ namespace Renderer
 			glm::mat4 lightDirection;
 			glm::mat4 lightColor;
 			glm::vec4 lightAmbient;
+
+			bool operator==(const LightingDynamicBufferData& other) const {
+				return lightDirection == other.lightDirection &&
+					lightColor == other.lightColor &&
+					lightAmbient == other.lightAmbient;
+			}
 		};
 
 		static_assert(alignof(LightingDynamicBufferData) >= 16, "Alignment must be at least 16");
 
-		DynamicUniformBuffer<LightingDynamicBufferData> gLightingDynamicBuffer;
-		DynamicUniformBuffer<glm::vec4> gAnimStDynamicBuffer;
+		DynamicBuffer<LightingDynamicBufferData, gMaxLightingData> gLightingDynamicBuffer;
+		DynamicBuffer<glm::vec4, gMaxInstances> gAnimStBuffer;
 
 		using NativeVertexBuffer = PS2::FrameVertexBuffers<GSVertexUnprocessedNormal, uint16_t>;
 		static NativeVertexBuffer gNativeVertexBuffer;
@@ -224,13 +302,9 @@ namespace Renderer
 
 		static glm::mat4 gCachedViewMatrix;
 		static glm::mat4 gCachedProjMatrix;
-		static glm::mat4 gCachedModelMatrix;
 
 		static PerDrawData gCachedPerDrawData;
 
-		static int gCurrentModelIndex = 0;
-		static int gCurrentLightingDynamicsIndex = 0;
-		static int gCurrentAnimStDynamicsIndex = 0;
 		static int gCurrentAnimMatrixIndex = 0;
 
 		static void CreateFramebuffer()
@@ -277,18 +351,6 @@ namespace Renderer
 			// Copy into the real buffer.
 			gNativeVertexBuffer.MergeData(gNativeVertexBufferDataDraw);
 			gNativeVertexBufferDataDraw.ResetAfterDraw();
-		}
-
-		static bool NearlyEqual(const glm::mat4& mat1, const glm::mat4& mat2, float epsilon = 1e-5f) {
-			for (int i = 0; i < 4; ++i) {
-				glm::vec4 v1 = mat1[i];
-				glm::vec4 v2 = mat2[i];
-				if (!glm::all(glm::lessThan(glm::abs(v1 - v2), glm::vec4(epsilon)))) {
-					return false;
-				}
-			}
-
-			return true;
 		}
 
 		static void CreateFramebufferSampler()
@@ -359,7 +421,7 @@ namespace Renderer
 			gModelBuffer.Map(GetCurrentFrame());
 			gAlphaBuffer.Map(GetCurrentFrame());
 			gLightingDynamicBuffer.Map(GetCurrentFrame());
-			gAnimStDynamicBuffer.Map(GetCurrentFrame());
+			gAnimStBuffer.Map(GetCurrentFrame());
 
 			for (int i = 0; i < gAnimationMatrices.size() ; i++) {
 				if (bForceAnimMatrixIdentity) {
@@ -464,7 +526,7 @@ namespace Renderer
 							instance.modelMatrixIndex * gModelBuffer.GetDynamicAlignment(),
 							instance.animationMatrixStart * gAnimationBuffer.GetDynamicAlignment(),
 							instance.lightingDataIndex * gLightingDynamicBuffer.GetDynamicAlignment(),
-							instance.animStDataIndex* gAnimStDynamicBuffer.GetDynamicAlignment(),
+							instance.animStDataIndex* gAnimStBuffer.GetDynamicAlignment(),
 							drawCommandIndex * gAlphaBuffer.GetDynamicAlignment(),
 						};
 
@@ -890,17 +952,13 @@ namespace Renderer
 			else {
 				auto& instance = gCurrentDraw->instances.emplace_back();
 				instance.animationMatrixStart = gCurrentAnimMatrixIndex;
-				instance.modelMatrixIndex = gCurrentModelIndex;
+				instance.modelMatrixIndex = gModelBuffer.GetInstanceIndex();
 				instance.pMesh = pMesh;
 				instance.perDrawData = gCachedPerDrawData;
-				instance.lightingDataIndex = gCurrentLightingDynamicsIndex - 1;
-				instance.animStDataIndex = gCurrentAnimStDynamicsIndex - 1;
+				instance.lightingDataIndex = gLightingDynamicBuffer.GetInstanceIndex();
+				instance.animStDataIndex = gAnimStBuffer.GetInstanceIndex();
 
-				NATIVE_LOG(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", gCurrentModelIndex, instance.animationMatrixStart);
-
-				gModelBuffer.SetInstanceData(gCurrentModelIndex, gCachedModelMatrix);
-				gCurrentModelIndex++;
-				assert(gCurrentModelIndex < gMaxInstances);
+				NATIVE_LOG(LogLevel::Info, "RenderMesh Model index: {} instance anim start: {}", instance.modelMatrixIndex, instance.animationMatrixStart);
 			}
 		}
 
@@ -922,17 +980,13 @@ namespace Renderer
 
 		void PushModelMatrix(float* pModel)
 		{
-			NATIVE_LOG(LogLevel::Info, "PushModelMatrix");
-
-			if (pModel) {
-				gCachedModelMatrix = glm::make_mat4(pModel);
-			}
+			NATIVE_LOG(LogLevel::Info, "PushModelMatrix: {}", gModelBuffer.GetDebugIndex());
+			gModelBuffer.AddInstanceData(glm::make_mat4(pModel));
 		}
 
 		void PushAnimMatrix(float* pAnim)
 		{
 			NATIVE_LOG(LogLevel::Info, "PushAnimMatrix: {}", gAnimationMatrices.size());
-			//assert(!std::isnan(pAnim[0]));
 			gAnimationMatrices.push_back(glm::make_mat4(pAnim));
 		}
 
@@ -943,10 +997,7 @@ namespace Renderer
 
 		void SetAnimStInstanceData(const glm::vec4& data)
 		{
-			gAnimStDynamicBuffer.SetInstanceData(gCurrentAnimStDynamicsIndex, data);
-			NATIVE_LOG(LogLevel::Info, "PushLightData anim ST index: {}", gCurrentAnimStDynamicsIndex);
-			gCurrentAnimStDynamicsIndex++;
-			assert(gCurrentAnimStDynamicsIndex < gMaxAnimStData);
+			gAnimStBuffer.AddInstanceData(data);
 		}
 
 		void PushMatrixPacket(const MatrixPacket* const pPkt)
@@ -962,10 +1013,7 @@ namespace Renderer
 				data.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
 				data.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
 
-				gLightingDynamicBuffer.SetInstanceData(gCurrentLightingDynamicsIndex, data);
-				NATIVE_LOG(LogLevel::Info, "PushLightData light index: {}", gCurrentLightingDynamicsIndex);
-				gCurrentLightingDynamicsIndex++;
-				assert(gCurrentLightingDynamicsIndex < gMaxLightingData);
+				gLightingDynamicBuffer.AddInstanceData(data);
 			}
 
 			SetAnimStInstanceData(glm::make_vec4(pPkt->animStNormalExtruder));
@@ -985,7 +1033,7 @@ namespace Renderer
 
 		void PushAnimST(float* pAnimST)
 		{
-			NATIVE_LOG(LogLevel::Info, "PushAnimST");
+			NATIVE_LOG(LogLevel::Info, "PushAnimST: {}", gAnimStBuffer.GetDebugIndex());
 			assert(pAnimST);
 			NATIVE_LOG(LogLevel::Info, "PushAnimST: {} {} {} {}", pAnimST[0], pAnimST[1], pAnimST[2], pAnimST[3]);
 
@@ -1044,7 +1092,7 @@ void Renderer::Native::InitializeDescriptorsSets(SimpleTexture* pTexture)
 
 		const VkDescriptorBufferInfo alphaDescBufferInfo = gAlphaBuffer.GetDescBufferInfo(i);
 		const VkDescriptorBufferInfo vertexDynamicsDescBufferInfo = gLightingDynamicBuffer.GetDescBufferInfo(i);
-		const VkDescriptorBufferInfo animStDescBufferInfo = gAnimStDynamicBuffer.GetDescBufferInfo(i);
+		const VkDescriptorBufferInfo animStDescBufferInfo = gAnimStBuffer.GetDescBufferInfo(i);
 
 		NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: offset: {} range: {}", animDescBufferInfo.offset, animDescBufferInfo.range);
 
@@ -1214,15 +1262,15 @@ void Renderer::Native::Setup()
 
 	gNativeVertexBuffer.Init(0x100000, 0x100000);
 
-	gModelBuffer.Init(gMaxInstances);
+	gModelBuffer.Init();
 	gAnimationBuffer.Init(gMaxAnimationMatrices);
 
 	gNativeVertexBufferDataDraw.Init(0x10000, 0x10000);
 
 	gAlphaBuffer.Init(gMaxInstances);
 
-	gLightingDynamicBuffer.Init(gMaxLightingData);
-	gAnimStDynamicBuffer.Init(gMaxAnimStData);
+	gLightingDynamicBuffer.Init();
+	gAnimStBuffer.Init();
 
 	GetRenderDelegate() += Render;
 
@@ -1288,9 +1336,9 @@ void Renderer::Native::Render(const VkFramebuffer& framebuffer, const VkExtent2D
 	gNativeVertexBuffer.Reset();
 	gAnimationMatrices.clear();
 
-	gCurrentModelIndex = 0;
-	gCurrentLightingDynamicsIndex = 0;
-	gCurrentAnimStDynamicsIndex = 0;
+	gModelBuffer.Reset();
+	gLightingDynamicBuffer.Reset();
+	gAnimStBuffer.Reset();
 
 	NATIVE_LOG(LogLevel::Info, "Renderer::Native::Render Complete!");
 }
