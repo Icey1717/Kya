@@ -342,6 +342,7 @@ public:
 
 	void CheckDetection();
 	void CheckDetection_Intruder();
+	void NEW_FUN_A();
 
 	int FUN_001f0ab0();
 
@@ -529,6 +530,25 @@ public:
 class CBehaviourGuardArea : public CBehaviourWolfen
 {
 public:
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Manage();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual edF32VECTOR4* GetComeBackPosition();
+	virtual int GetTrackBehaviour();
+	virtual int GetStateWolfenGuard();
+
+	CPathFollowReader pathFollowReader;
+	S_STREAM_EVENT_CAMERA* pStreamEventCamera;
+	int trackBehaviourId;
+	undefined4 field_0x68;
+	S_TARGET_ON_OFF_STREAM_REF* field_0x6c;
+
+	int field_0x90;
+	float field_0x98;
 };
 
 class CBehaviourWolfenUnknown : public CBehaviourWolfen
@@ -779,6 +799,7 @@ public:
 	void BehaviourTrackWeapon_Manage(CBehaviourTrackWeapon* pBehaviour);
 	void BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* pBehaviour);
 	void BehaviourTrack_Manage(CBehaviourTrack* pBehaviour);
+	void BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour);
 
 	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);
 
@@ -849,6 +870,7 @@ public:
 
 	void UpdateCombatMode(); // new
 	WFIGS_Capability* GetActiveCapability(); // new
+	void NEW_FUN_B(CBehaviourWolfen* pBehaviour); // new
 
 	CBehaviourWolfenFighterProjected behaviourWolfenFighterProjected;
 	CBehaviourWolfenFighterRidden behaviourWolfenFighterRidden;

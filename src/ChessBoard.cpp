@@ -658,7 +658,73 @@ void CChessBoard::InvalidateByZone(int zoneId)
 
 void CChessBoard::InvalidateByPath(CPathFinderClient* pPathFinderClient)
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	uint uVar2;
+	int iVar3;
+	uint uVar5;
+	uint uVar6;
+	uint uVar7;
+	uint uVar8;
+	uint uVar9;
+	uint uVar10;
+	uint uVar11;
+	edF32VECTOR4 eStack32;
+	edF32VECTOR4 eStack16;
+
+	uVar11 = 0;
+	if (this->nbRows != 0) {
+		do {
+			SetVectorFromAngleY(CoordinateToFloat(uVar11) * this->field_0x218, &eStack16);
+
+			uVar10 = 0;
+			if (this->nbColumns != 0) {
+				uVar9 = 1 << (uVar11 & 0x1f);
+				do {
+					uVar2 = uVar10 + 1;
+
+					edF32Vector4ScaleHard(CoordinateToFloat(uVar2) * this->field_0x21c, &eStack32, &eStack16);
+					edF32Vector4AddHard(&eStack32, &eStack32, &this->field_0x230);
+
+					bVar1 = pPathFinderClient->IsValidPosition(&eStack32);
+					if (bVar1 == false) {
+						uVar2 = ReadLayer(uVar10);
+						uVar7 = ReadLayer(uVar10);
+						WriteLayer(uVar10, uVar2 ^ uVar9 & uVar7);
+
+						if (uVar11 == 0) {
+							uVar2 = this->nbRows;
+						}
+						else {
+							uVar2 = uVar11;
+						}
+
+						uVar2 = 1 << (uVar2 - 1 & 0x1f);
+
+						uVar7 = ReadLayer(uVar10);
+						uVar8 = ReadLayer(uVar10);
+						WriteLayer(uVar10, uVar7 ^ uVar2 & uVar8);
+						
+						iVar3 = uVar10 + 1;
+						if (uVar10 < this->nbColumns - 1) {
+							uVar5 = ReadLayer(iVar3);
+							uVar6 = ReadLayer(iVar3);
+							WriteLayer(iVar3, uVar5 ^ uVar2 & uVar6);
+							
+							uVar2 = ReadLayer(iVar3);
+							uVar7 = ReadLayer(iVar3);
+							WriteLayer(iVar3, uVar2 ^ uVar9 & uVar7);
+						}
+					}
+
+					uVar10 = uVar10 + 1;
+				} while (uVar10 < this->nbColumns);
+			}
+
+			uVar11 = uVar11 + 1;
+		} while (uVar11 < this->nbRows);
+	}
+
+	return;
 }
 
 int CChessBoardPawnsTable::Add(CActor* pActor, int param_3)

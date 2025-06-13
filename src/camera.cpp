@@ -158,7 +158,7 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	(this->lookAt).y = local_10.y;
 	(this->lookAt).z = local_10.z;
 	(this->lookAt).w = 1.0f;
-	edF32Vector4SubHard(&local_10, &this->lookAt, (edF32VECTOR4*)&(this->transformationMatrix).da);
+	edF32Vector4SubHard(&local_10, &this->lookAt, &(this->transformationMatrix).rowT);
 	edF32Vector4NormalizeHard(&local_10, &local_10);
 	(this->transformationMatrix).ca = local_10.x;
 	(this->transformationMatrix).cb = local_10.y;
@@ -172,7 +172,7 @@ CCamera::CCamera(ByteCode* pMemoryStream)
 	(this->transformationMatrix).bb = local_10.y;
 	(this->transformationMatrix).bc = local_10.z;
 	(this->transformationMatrix).bd = 0.0;
-	edF32Vector4CrossProductHard(&local_10, (edF32VECTOR4*)&(this->transformationMatrix).ba, (edF32VECTOR4*)&(this->transformationMatrix).ca);
+	edF32Vector4CrossProductHard(&local_10, &(this->transformationMatrix).rowY, &(this->transformationMatrix).rowZ);
 	local_10.w = 0.0;
 	(this->transformationMatrix).aa = local_10.x;
 	(this->transformationMatrix).ab = local_10.y;
