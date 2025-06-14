@@ -18,10 +18,22 @@ namespace Debug {
 			: name(inName)
 			, value(defaultValue)
 		{
+			Init();
+		}
+
+		Setting(std::string inName, SettingType defaultValue)
+			: name(inName)
+			, value(defaultValue)
+		{
+			Init();
+		}
+
+		inline void Init()
+		{
 			// Load the value so we have it at runtime
 			auto settings = LoadSettings();
 			if (settings) {
-				if(settings->contains(name)) {
+				if (settings->contains(name)) {
 					value = (*settings)[name].get<SettingType>();
 				}
 			}

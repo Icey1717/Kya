@@ -1376,12 +1376,7 @@ bool CChessBoard::MoveTo(s_chess_board_pawn* pPawn)
 				(pPawn->field_0x28).field_0x0 = pPawn->field_0x38.field_0x0 + (int)((float)pPawn->field_0x40.field_0x0 * (fVar7 / (float)uVar6));
 				(pPawn->field_0x28).field_0x4 = uVar5;
 
-				uVar5 = 0xffffffff;
-				for (uVar6 = 0; uVar6 < 2; uVar6 = uVar6 + 1) {
-					if ((this->readLayerMask & 1 << (uVar6 & 0x1f)) != 0) {
-						uVar5 = uVar5 & this->aSubObjs[uVar6][(pPawn->field_0x28).field_0x0];
-					}
-				}
+				uVar5 = ReadLayer((pPawn->field_0x28).field_0x0);
 			} while (((uVar5 >> ((pPawn->field_0x28).field_0x4 & 0x1f) & 1) == 0) &&
 				(((pPawn->field_0x28).field_0x0 != (pPawn->coordinates).field_0x0 ||
 					((pPawn->field_0x28).field_0x4 != (pPawn->coordinates).field_0x4))));

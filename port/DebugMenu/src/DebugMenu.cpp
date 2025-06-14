@@ -561,6 +561,7 @@ namespace Debug {
 		if (bShowMenus && !bRunningTerm) {
 			Texture::Update();
 			Debug::Camera::ShowCamera();
+			Debug::Shop::Update();
 
 			ForEachMenu([](Menu& menu) {
 				menu.Show();

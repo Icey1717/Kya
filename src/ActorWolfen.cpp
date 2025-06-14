@@ -1263,7 +1263,7 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			return 1;)
 		}
 
-		if (msg != 2) {
+		if (msg != MESSAGE_KICKED) {
 			if (msg == 1) {
 				IMPLEMENTATION_GUARD(
 				pCVar9 = (*(this->pVTable)->GetLifeInterface)((CActor*)this);
@@ -1336,16 +1336,18 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			goto LAB_0017c6e8;
 		}
 
-		IMPLEMENTATION_GUARD(
-		/* WARNING: Load size is inaccurate */
-		if ((*pMsgParam != 8) && (*pMsgParam != 7)) goto LAB_0017ba38;
+		_msg_hit_param* pMsgHitParam = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
+		if ((pMsgHitParam->projectileType != 8) && (pMsgHitParam->projectileType != 7)) goto LAB_0017ba38;
+
 		this->combatFlags_0xb78 = this->combatFlags_0xb78 | 0x100;
-		bVar6 = (*pSender->pVTable->IsKindOfObject)(pSender, 8);
+		bVar6 = pSender->IsKindOfObject(8);
 		if (bVar6 == false) {
 			return 1;
 		}
-		if (this->field_0x350 == (CActor*)0x0) {
-			(*(code*)this->pVTable[1].actorBase)();
+
+		if (this->pAdversary == (CActorFighter*)0x0) {
+			Func_0x204(static_cast<CActorFighter*>(pSender));
 		}
 
 		if (IsAlive(pSender)) {
@@ -1354,16 +1356,15 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			UpdateCombatMode();
 		}
 		
+	LAB_0017ba38:
 		iVar15 = this->actorState;
 		if ((iVar15 == 0xa1) || (iVar15 == 0xa2)) {
 			edF32Vector4GetNegHard(&local_a0, &this->rotationQuat);
-			this->rotationQuat.x = local_a0.x;
-			this->rotationQuat.y = local_a0.y;
-			this->rotationQuat.z = local_a0.z;
-			this->rotationQuat.w = local_a0.w;
+			this->rotationQuat = local_a0;
 		}
-		iVar15 = CActorFighter::InterpretMessage((CActorFighter*)this, pSender, 2, pMsgParam);
-		return iVar15;)
+
+		iVar15 = CActorFighter::InterpretMessage(pSender, MESSAGE_KICKED, pMsgParam);
+		return iVar15;
 	}
 
 	InitPathfindingClientMsgParams* pMsgParams = reinterpret_cast<InitPathfindingClientMsgParams*>(pMsgParam);
@@ -5048,22 +5049,24 @@ void CActorWolfen::InternState_WolfenLocate()
 
 void CActorWolfen::TermFightAction()
 {
-	CActorCommander* this_00;
-	undefined4* puVar1;
-	long lVar2;
+	bool bVar1;
+	WFIGS_Capability* pCabability;
+	CActorCommander* pCommander;
 
 	if (this->activeCapabilityIndex != 3) {
-		IMPLEMENTATION_GUARD(
-		this_00 = this->pCommander;
-		lVar2 = CActorCommander::FUN_00171440(this_00, (int)this);
-		if (lVar2 != 0) {
-			puVar1 = (undefined4*)0x0;
+		pCommander = this->pCommander;
+
+		bVar1 = pCommander->IsValidEnemy(this);
+		if (bVar1 != false) {
+			pCabability = (WFIGS_Capability*)0x0;
 			if (this->activeCapabilityIndex != 3) {
-				puVar1 = (undefined4*)(&this->field_0xa90 + this->activeCapabilityIndex * 0x34);
+				pCabability = this->aCapabilities + this->activeCapabilityIndex;
 			}
-			CActorCommander::ReleaseSemaphore(this_00, (undefined4*)*puVar1, (int)this);
-		})
+
+			pCommander->ReleaseSemaphore(pCabability->semaphoreId, this);
+		}
 	}
+
 	return;
 }
 
@@ -7366,32 +7369,33 @@ int CBehaviourFighterWolfen::InterpretMessage(CActor* pSender, int msg, void* pM
 			})
 		}
 		else {
-			if (msg == 2) {
+			if (msg == MESSAGE_KICKED) {
+				_msg_hit_param* pHitParams = reinterpret_cast<_msg_hit_param*>(pMsgParam);
+
 				if (pSender == this->pOwner->pAdversary) {
 					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfd | 2;
 					(this->fightContext).field_0x0 = (this->fightContext).field_0x0 & 0xfe;
 
 					bVar3 = this->pOwner->FUN_0031b5d0(this->pOwner->actorState);
 					if (bVar3 == false) {
-						IMPLEMENTATION_GUARD(
-						if (((uint)pMsgParam->z & 8) == 0) {
-							*(int*)&this->field_0x30 = *(int*)&this->field_0x30 + 1;
+			
+						if ((pHitParams->flags & 8) == 0) {
+							this->field_0x30 = this->field_0x30 + 1;
 						}
 						else {
 							pCVar1 = static_cast<CActorWolfen*>(this->pOwner);
 							if (pCVar1->activeCapabilityIndex != 3) {
 								pCommander = pCVar1->pCommander;
-								IMPLEMENTATION_GUARD(
-								lVar7 = pCommander->FUN_00171440(pCVar1);)
-								if (lVar7 != 0) {
+								if (pCommander->IsValidEnemy(pCVar1) != 0) {
 									pWVar4 = (WFIGS_Capability*)0x0;
 									if (pCVar1->activeCapabilityIndex != 3) {
 										pWVar4 = pCVar1->aCapabilities + pCVar1->activeCapabilityIndex;
 									}
-									pCommander->ReleaseSemaphore(pWVar4->semaphoreId, (int)pCVar1);
+
+									pCommander->ReleaseSemaphore(pWVar4->semaphoreId, pCVar1);
 								}
 							}
-						})
+						}
 
 						ValidateCommand();
 						this->currentCommandId = -1;
