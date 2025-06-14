@@ -132,6 +132,8 @@ public:
 class CDynBase
 {
 public:
+	CDynBase();
+
 	void Init(float param_1, float param_2);
 
 	float field_0x0;
@@ -156,6 +158,8 @@ public:
 class CVertexDyn : public CDynBase
 {
 public:
+	CVertexDyn();
+
 	void Init(float param_1, edF32VECTOR4* pPosition);
 	void MoveTo(edF32VECTOR4* pPosition);
 
@@ -166,6 +170,8 @@ public:
 class CAngleDyn : public CDynBase
 {
 public:
+	CAngleDyn();
+
 	void MoveTo(float angle, int mode);
 };
 

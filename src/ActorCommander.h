@@ -112,6 +112,8 @@ public:
 	bool QuerySemaphoreCold(int index, CActorWolfen* pWolfen);
 	bool IsValidEnemy(CActorWolfen* pWolfen);
 
+	void FUN_001717b0(CCameraGame* pCamera);
+
 	uint detectAreaZoneId;
 	uint guardAreaZoneId;
 

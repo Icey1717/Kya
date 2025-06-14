@@ -717,6 +717,101 @@ CTeamElt* CActorCommander::GetTeamElt(CActor* pActor)
 	return (CTeamElt*)0x0;
 }
 
+void CActorCommander::FUN_001717b0(CCameraGame* pCamera)
+{
+	CTeamElt* pCVar1;
+	uint uVar2;
+	bool bVar3;
+	bool bVar4;
+	int iVar5;
+	ulong uVar6;
+	ulong uVar7;
+	CChessBoard* pChess;
+	undefined4 uVar8;
+	int iVar9;
+	float fVar10;
+	float fVar11;
+	float fVar12;
+	edF32VECTOR4 local_10;
+
+	iVar9 = 0;
+	bVar3 = false;
+	pChess = &(this->squad).chessboard;
+
+	while ((iVar5 = this->squad.NbElt(), iVar9 < iVar5 && (!bVar3))) {
+		pCVar1 = (this->squad).eltTable.aEntries[iVar9];
+		iVar5 = pCVar1->pawnId;
+		if ((iVar5 == -1) || ((bVar4 = pChess->PawnShallMove(iVar5), bVar4 == false || pCVar1->pEnemyActor->curBehaviourId != 3))) {
+			iVar9 = iVar9 + 1;
+		}
+		else {
+			bVar3 = true;
+		}
+	}
+
+	uVar2 = (this->camFigData).field_0x260;
+	if ((uVar2 & 3) == 0) {
+		(this->camFigData).field_0x2b8 = 0;
+	}
+	else {
+		if (((uVar2 & 1) != 0) == ((uVar2 & 2) != 0)) {
+			fVar12 = (this->camFigData).field_0x26c;
+			fVar10 = (this->camFigData).field_0x270;
+			local_10 = pCamera->transformationMatrix.rowZ;
+			local_10.y = 0.0f;
+
+			edF32Vector4GetNegHard(&local_10, &local_10);
+			edF32Vector4NormalizeHard(&local_10, &local_10);
+
+			if (0.0f <= fVar12) {
+				fVar11 = -3.141593f;
+			}
+			else {
+				fVar11 = 3.141593f;
+			}
+			
+			uVar6 = pChess->GetPawnsInSection(fVar11, &local_10);
+			if (0.0f <= fVar10) {
+				fVar11 = -3.141593f;
+			}
+			else {
+				fVar11 = 3.141593f;
+			}
+			uVar7 = pChess->GetPawnsInSection(fVar11, &local_10);
+			fVar11 = fVar10;
+			if (((uVar6 <= uVar7) && (fVar11 = fVar12, uVar6 == uVar7)) && (fVar11 = fVar10, fabs(fVar12) <= fabs(fVar10))) {
+				fVar11 = fVar12;
+			}
+			uVar8 = 2;
+			if (0.0f <= fVar11) {
+				uVar8 = 3;
+			}
+			fVar12 = pCamera->GetAngleBeta();
+			this->camFigData.FUN_003c5ba0(fVar11 + fVar12, uVar8, 0);
+		}
+		else {
+			if ((uVar2 & 1) == 0) {
+				fVar12 = (this->camFigData).field_0x270;
+			}
+			else {
+				fVar12 = (this->camFigData).field_0x26c;
+			}
+
+			uVar8 = 2;
+			if (0.0f <= fVar12) {
+				uVar8 = 3;
+			}
+
+			fVar10 = pCamera->GetAngleBeta();
+			this->camFigData.FUN_003c5ba0(fVar12 + fVar10, uVar8, 0);
+		}
+	}
+
+	return;
+}
+
+
+
 void CActorCommander::_UpdateCamera()
 {
 	CCameraGame* pFightCamera;
@@ -842,8 +937,7 @@ void CActorCommander::_UpdateCamera()
 		}
 
 		if ((this->camFigData).field_0x2b4 == 1) {
-			IMPLEMENTATION_GUARD(
-			FUN_001717b0(pFightCamera);)
+			FUN_001717b0(pFightCamera);
 		}
 	}
 	else {

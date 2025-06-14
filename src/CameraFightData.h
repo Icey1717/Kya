@@ -64,6 +64,8 @@ struct ParCamFigLAB
 class CCamFigData
 {
 public:
+	CCamFigData();
+
 	void Create(ByteCode* pByteCode);
 	void IsValid(undefined4 param_2);
 	void SetBoundingSphere(ed_Bound_Sphere* pBoundSphere);
@@ -75,6 +77,9 @@ public:
 	void ComputeData();
 	float SV_TestCollisionSphere(ParCamFigLAB* param_2, edF32VECTOR4* param_3);
 	void _UpdateCameraData();
+
+	void CancelCurrentMovements();
+	void FUN_003c5ba0(float param_1, int param_3, long param_4);
 
 	float field_0x0;
 	float field_0x4;
@@ -108,6 +113,7 @@ public:
 	edF32VECTOR4 field_0x290;
 	undefined4 field_0x2a0;
 	int field_0x2a4;
+	undefined4 field_0x2a8;
 	int field_0x2ac;
 	int field_0x2b0;
 	int field_0x2b4;
@@ -124,6 +130,7 @@ public:
 	undefined4 field_0x2f8;
 
 	float field_0x300;
+	int field_0x304;
 
 	CAngleDyn angleDynA;
 	CAngleDyn angleBetaDyn;

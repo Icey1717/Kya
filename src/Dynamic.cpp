@@ -773,6 +773,14 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 }
 
 
+CVertexDyn::CVertexDyn()
+	: CDynBase()
+{
+	this->field_0x0 = 0.01f;
+
+	return;
+}
+
 void CVertexDyn::Init(float param_1, edF32VECTOR4* pPosition)
 {
 	this->field_0x20 = *pPosition;
@@ -948,6 +956,19 @@ void CValueDyn::MoveTo(float param_1)
 	return;
 }
 
+CDynBase::CDynBase()
+{
+	this->field_0x0 = 0.01f;
+	this->field_0xc = 0.0f;
+	this->field_0x14 = 0.0f;
+	this->field_0x10 = 0.0f;
+	this->field_0x18 = 0.0f;
+	this->field_0x8 = 0.0f;
+	this->field_0x4 = 0.0f;
+
+	return;
+}
+
 void CDynBase::Init(float param_1, float param_2)
 {
 	this->field_0x4 = param_1;
@@ -1015,6 +1036,14 @@ void SPEED_DYN::Update(float param_1)
 	return;
 }
 
+
+CAngleDyn::CAngleDyn()
+	: CDynBase()
+{
+	this->field_0x0 = 0.01f;
+
+	return;
+}
 
 void CAngleDyn::MoveTo(float angle, int mode)
 {

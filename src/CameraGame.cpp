@@ -253,7 +253,6 @@ void CCameraGame::Reset()
 	edF32VECTOR4* peVar1;
 	CActor* pCVar2;
 	edF32VECTOR4* peVar3;
-	ECameraType EVar4;
 	edF32VECTOR4* peVar5;
 	float fVar6;
 	float fVar7;
@@ -302,17 +301,6 @@ void CCameraGame::Reset()
 	}
 	this->field_0x208 = fVar6;
 
-	// This should be fixed, but it just sets the values to 0 for the vectors and matrices #fix
-	//peVar3 = (edF32VECTOR4*)&DAT_00000010;
-	//peVar5 = &local_70;
-	//peVar1 = peVar5;
-	//while (peVar1 != (edF32VECTOR4*)0x0) {
-	//	*(undefined*)&peVar5->x = 0;
-	//	peVar5 = (edF32VECTOR4*)((int)&peVar5->x + 1);
-	//	peVar3 = (edF32VECTOR4*)((int)&peVar3[-1].w + 3);
-	//	peVar1 = peVar3;
-	//}
-
 	local_70.z = -this->field_0x208;
 	edF32Matrix4RotateXHard(this->targetPitch, &eStack80, &gF32Matrix4Unit);
 	edF32Matrix4RotateYHard(this->field_0x204, &eStack80, &eStack80);
@@ -354,8 +342,8 @@ void CCameraGame::Reset()
 	this->field_0x444 = 0.0f;
 	this->field_0x2f0 = 0.0f;
 	this->actorsTable.nbEntries = 0;
-	EVar4 = GetMode();
-	switch (EVar4) {
+
+	switch (GetMode()) {
 	case CT_Main:
 		(this->field_0x450).x = 999.0f;
 		(this->field_0x450).y = 0.0f;
@@ -366,7 +354,7 @@ void CCameraGame::Reset()
 		g_CameraVectorBase.field_0x400 = gF32Vertex4Zero;
 		g_CameraVectorBase.field_0x410 = gF32Vector4Zero;
 		break;
-	case 4:
+	case CT_Fight:
 		_b_use_fig_data = 0;
 		break;
 	case CT_KyaJamgut:
@@ -382,6 +370,7 @@ void CCameraGame::Reset()
 		(this->field_0x470).w = 0.0625f;
 		this->field_0x480 = 0.0375f;
 	}
+
 	return;
 }
 
@@ -450,7 +439,7 @@ void CCameraGame::Init()
 	this->field_0x4a4 = 0xffffffff;
 	EVar4 = GetMode();
 	switch (EVar4) {
-	case 4:
+	case CT_Fight:
 		this->flags_0xc = this->flags_0xc | 1;
 		this->cameraConfig.flags = this->cameraConfig.flags | 0x6000;
 		this->cameraConfig.flags = this->cameraConfig.flags & 0xfffffbbe;
@@ -514,7 +503,7 @@ void CCameraGame::SetMode(ECameraType type)
 						}
 						else {
 							if (bVar2) {
-								type = (ECameraType)4;
+								type = CT_Fight;
 							}
 							else {
 								if (bVar7) {
@@ -570,11 +559,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	bool bVar1;
 	TargetCalc* v1;
 	CActorHeroPrivate* pCVar2;
-	CActor* local_v0_lo_80;
 	CActor* pCVar3;
-	CActor* local_v0_lo_340;
-	CActor* local_v0_lo_368;
-	CActor* local_v0_lo_400;
 	ECameraType EVar4;
 	int iVar5;
 	uint uVar6;
@@ -584,21 +569,24 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	float fVar10;
 
 	v1 = (TargetCalc*)gSP_Manager.GetFreeBuffer(0x60);
-	pCVar2 = (CActorHeroPrivate*)GetTarget();
-	local_v0_lo_80 = GetTarget();
-	if (local_v0_lo_80->typeID == ACTOR_HERO_PRIVATE) {
+
+	pCVar2 = static_cast<CActorHeroPrivate*>(GetTarget());
+
+	if (GetTarget()->typeID == ACTOR_HERO_PRIVATE) {
 		pCVar3 = GetTarget();
 	}
 	else {
 		pCVar3 = (CActor*)0x0;
 	}
+
 	v1->pActor = pCVar3;
 	v1->field_0x48 = this->field_0x1d0;
 	v1->field_0x44 = 1;
 	if (((this->cameraConfig).flags_0x70 & 0x2000000) != 0) {
 		pCVar2 = this->field_0x1ec;
 	}
-	if (this->field_0x1e4 == -1.0) {
+
+	if (this->field_0x1e4 == -1.0f) {
 		this->field_0x1e4 = pCVar2->distanceToGround;
 	}
 	
@@ -608,23 +596,16 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 
 	ComputeTargetPosition(&v1->field_0x30);
 
-	local_v0_lo_340 = GetTarget();
-	if ((local_v0_lo_340->pCollisionData != (CCollision*)0x0) &&
-		(local_v0_lo_368 = GetTarget(),
-			local_v0_lo_368->pCollisionData->pObbPrim != (edColPRIM_OBJECT*)0x0)) {
-		local_v0_lo_400 = GetTarget();
-		(v1->field_0x30).y = (v1->field_0x30).y + (local_v0_lo_400->pCollisionData->pObbPrim->field_0xb0).y;
+	if ((GetTarget()->pCollisionData != (CCollision*)0x0) && (GetTarget()->pCollisionData->pObbPrim != (edColPRIM_OBJECT*)0x0)) {
+		(v1->field_0x30).y = (v1->field_0x30).y + (GetTarget()->pCollisionData->pObbPrim->field_0xb0).y;
 	}
+
 	pCVar3 = v1->pActor;
 	if (pCVar3 == (CActor*)0x0) {
 		v1->field_0x20 = v1->field_0x30;
 
-		pCVar3 = GetTarget();
-		if ((pCVar3->pCollisionData != (CCollision*)0x0) &&
-			(pCVar3 = GetTarget(),
-				pCVar3->pCollisionData->pObbPrim != (edColPRIM_OBJECT*)0x0)) {
-			pCVar3 = GetTarget();
-			(v1->field_0x20).y = (v1->field_0x20).y + (pCVar3->pCollisionData->pObbPrim->field_0x90).y;
+		if ((GetTarget()->pCollisionData != (CCollision*)0x0) && (GetTarget()->pCollisionData->pObbPrim != (edColPRIM_OBJECT*)0x0)) {
+			(v1->field_0x20).y = (v1->field_0x20).y + (GetTarget()->pCollisionData->pObbPrim->field_0x90).y;
 		}
 	}
 	else {
@@ -640,17 +621,15 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 		}
 	}
 
-	fVar8 = CCamera::_gpcam_man->FUN_00197970(&v1->field_0x30);
-	v1->field_0x54 = fVar8;
-	fVar8 = CCamera::_gpcam_man->FUN_00197970(&v1->field_0x20);
-	v1->field_0x58 = fVar8;
+	v1->field_0x54 = CCamera::_gpcam_man->FUN_00197970(&v1->field_0x30);
+	v1->field_0x58 = CCamera::_gpcam_man->FUN_00197970(&v1->field_0x20);
+
 	if ((1.0f < v1->field_0x54) || (v1->field_0x58 < -1.0f)) {
 		v1->field_0x48 = 1;
 	}
 
 	if ((this->cameraConfig.flags & 0x2000) != 0) {
-		EVar4 = GetMode();
-		if (EVar4 == 4) {
+		if (GetMode() == CT_Fight) {
 			v1->field_0x44 = (uint)(pCVar2->distanceToGround < 0.1f);
 		}
 		else {
@@ -725,7 +704,7 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 	if (this->field_0x280 == 0) {
 		this->field_0x2b0 = 0.0f;
 		edF32Vector4LERPHard(v1->field_0x50, &v1->field_0x10, &v1->field_0x0, &v1->field_0x10);
-		(v1->field_0x10).w = 1.0;
+		(v1->field_0x10).w = 1.0f;
 	}
 	else {
 		(this->field_0x260).y = (v1->field_0x10).y;
@@ -750,13 +729,14 @@ float CCameraGame::_Manage_TargetPos(edF32VECTOR4* v0)
 			this->field_0x1e4 = pCVar2->distanceToGround;
 		}
 	}
-	this->lookAt = v1->field_0x10;
 
+	this->lookAt = v1->field_0x10;
 	this->field_0x1d0 = v1->field_0x48;
 
 	// HACK?
 	float preventUseAfterFree = v1->field_0x4c;
 	gSP_Manager.ReleaseBuffer(v1);
+
 	return preventUseAfterFree;
 }
 
@@ -801,8 +781,7 @@ void CCameraGame::_UpdateCameraData(edF32VECTOR4* translation)
 		_Toboggan_UpdateCameraData();
 	}
 	else {
-		if (((((EVar2 == 4) || (EVar2 == 9)) || (EVar2 == 8)) || ((EVar2 == 6 || (EVar2 == CT_KyaWindWall)))) ||
-			(EVar2 == CT_Main)) {
+		if (((((EVar2 == CT_Fight) || (EVar2 == 9)) || (EVar2 == 8)) || ((EVar2 == CT_Camera_6 || (EVar2 == CT_KyaWindWall)))) || (EVar2 == CT_Main)) {
 			memset(&local_d0, 0, sizeof(edF32VECTOR4));
 
 			local_d0.z = -this->field_0x208;
@@ -972,17 +951,6 @@ void CCameraGame::_ResetDataForCut(int param_2)
 		edF32Vector4AddHard(peVar3, peVar3, &eStack16);
 	}
 
-	// This should be fixed, but it just sets the values to 0 for the vectors and matrices #fix
-	//peVar2 = (edF32VECTOR4*)&DAT_00000010;
-	//peVar3 = &local_80;
-	//peVar1 = peVar3;
-	//while (peVar1 != (edF32VECTOR4*)0x0) {
-	//	*(undefined*)&peVar3->x = 0;
-	//	peVar3 = (edF32VECTOR4*)((int)&peVar3->x + 1);
-	//	peVar2 = (edF32VECTOR4*)((int)&peVar2[-1].w + 3);
-	//	peVar1 = peVar2;
-	//}
-
 	local_80.z = -this->distance;
 	ComputeTargetPosition(&local_60);
 	UpdateTarget(&eStack112, true);
@@ -1001,6 +969,7 @@ void CCameraGame::_ResetDataForCut(int param_2)
 		fVar5 = fVar4;
 	}
 	this->field_0x208 = fVar5;
+
 	fVar5 = GetAngleXFromVector(&local_80);
 	this->pitchDyn.currentAlpha = fVar5;
 	this->targetPitch = fVar5;
@@ -1009,17 +978,15 @@ void CCameraGame::_ResetDataForCut(int param_2)
 
 	_Manage_TargetPos(&this->lookAt);
 	_UpdateCameraData(&this->lookAt);
+
 	return;
 }
 
-bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
+bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* pOtherCamera)
 {
 	bool bVar1;
 	undefined uVar2;
-	CActor* pCVar4;
-	CActor* pAVar5;
 	CBehaviour* pCVar6;
-	CActor* pCVar7;
 	int lVar8;
 	uint* puVar9;
 	float* peVar10;
@@ -1097,31 +1064,25 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 
 	if (alertType != 2) {
 		if (alertType == 3) {
-			IMPLEMENTATION_GUARD_LOG(
-				pCVar4 = GetTarget();
-			if ((pCVar4 != (CActor*)0x0) &&
-				(pCVar4 = GetTarget(),
-					pCVar4->pMeshNode != (edNODE*)0x0)) {
-				pAVar5 = (Actor*)GetTarget();
-				ActorFunc_00115680(pAVar5);
-				pAVar5 = (Actor*)GetTarget();
-				ActorFunc_00115650(pAVar5, 0);
-			})
+			if ((GetTarget() != (CActor*)0x0) && (GetTarget()->pMeshNode != (edNODE*)0x0)) {
+				GetTarget()->ToggleMeshAlpha();
+				GetTarget()->SetBFCulling(0);
+			}
 		}
 		else {
 			if (alertType == 1) {
 				bVar1 = true;
-				if (GetMode() == 4) {
-					CCameraGame* pGameCamera = reinterpret_cast<CCameraGame*>(param_4);
-					if ((((param_4 != 0) && (lVar8 = param_4->IsKindOfObject(0x80), lVar8 != 0)) && ((pGameCamera->flags_0xc & 1) == 0)) &&
+				if (GetMode() == CT_Fight) {
+					CCameraGame* pGameCamera = reinterpret_cast<CCameraGame*>(pOtherCamera);
+					if ((((pOtherCamera != 0) && (lVar8 = pOtherCamera->IsKindOfObject(0x80), lVar8 != 0)) && ((pGameCamera->flags_0xc & 1) == 0)) &&
 						((((pGameCamera->cameraConfig).flags & 0x2000) == 0 && ((pGameCamera->cameraConfig).baseTargetPitch == 0.25f)
 							))) {
 						bVar1 = false;
 					}
 
-					if ((bVar1) && ((param_4 == 0 || (lVar8 = param_4->GetMode(), lVar8 != 4)))) {
+					if ((bVar1) && ((pOtherCamera == 0 || (pOtherCamera->GetMode() != CT_Fight)))) {
 						if (_pfig_data != (CCamFigData*)0x0) {
-								_pfig_data->IsValid(1);
+							_pfig_data->IsValid(1);
 						}
 
 						CCameraGame::_b_use_fig_data = 0;
@@ -1132,12 +1093,10 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 		goto LAB_002c1448;
 	}
 
-	pCVar4 = GetTarget();
-	if ((pCVar4 != (CActor*)0x0) &&
-		(pCVar4 = GetTarget(), pCVar4->typeID == ACTOR_HERO_PRIVATE)) {
-		pCVar4 = GetTarget();
-		if (pCVar4->curBehaviourId == 8) {
-			pCVar6 = pCVar4->GetBehaviour(pCVar4->curBehaviourId);
+	if ((GetTarget() != (CActor*)0x0) && (GetTarget()->typeID == ACTOR_HERO_PRIVATE)) {
+		CActor* pHero = GetTarget();
+		if (pHero->curBehaviourId == 8) {
+			pCVar6 = pHero->GetBehaviour(pHero->curBehaviourId);
 			IMPLEMENTATION_GUARD(
 				*(CBehaviourVtable**)&this->field_0x1ec = pCVar6[0x23].pVTable;)
 		}
@@ -1146,7 +1105,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 		}
 
 		puVar9 = &(this->cameraConfig).flags_0x70;
-		if (pCVar4->curBehaviourId == 8) {
+		if (pHero->curBehaviourId == 8) {
 			*puVar9 = *puVar9 | 0x2000000;
 		}
 		else {
@@ -1177,10 +1136,9 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 		this->cameraConfig.field_0x58.z = (this->subObj_12).field_0x20 + peVar11->x + 1.0;
 	}
 
-	pCVar4 = GetTarget();
-	fVar12 = GetAngleYFromVector(&pCVar4->rotationQuat);
-	this->angleBeta_0x1e8 = fVar12;
-	if (GetMode() == 4) {
+	this->angleBeta_0x1e8 = GetAngleYFromVector(&GetTarget()->rotationQuat);
+
+	if (GetMode() == CT_Fight) {
 		if (_pfig_data != (CCamFigData*)0x0) {
 			_pfig_data->IsValid(2);
 		}
@@ -1191,33 +1149,31 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 	else {
 		ECameraType EVar4;
 
-		if ((param_4 == (CCamera*)0x0) ||
-			((((EVar4 = param_4->GetMode(), EVar4 != CT_IntView &&
-				(EVar4 = param_4->GetMode(), EVar4 != CT_SilverBoomy)) &&
-				(EVar4 = param_4->GetMode(), EVar4 != 0x17)) &&
-				((EVar4 = param_4->GetMode(), EVar4 != CT_KyaJamgut ||
+		if ((pOtherCamera == (CCamera*)0x0) ||
+			((((EVar4 = pOtherCamera->GetMode(), EVar4 != CT_IntView &&
+				(EVar4 = pOtherCamera->GetMode(), EVar4 != CT_SilverBoomy)) &&
+				(EVar4 = pOtherCamera->GetMode(), EVar4 != 0x17)) &&
+				((EVar4 = pOtherCamera->GetMode(), EVar4 != CT_KyaJamgut ||
 					((*puVar9 & 0x2000000) != 0)))))) {
-
 			UpdateTarget(&this->field_0x2a0, false);
+
 			if (pParams == 1) {
-				pCVar4 = GetTarget();
-				if (pCVar4 != (CActor*)0x0) {
+				if (GetTarget() != (CActor*)0x0) {
 					CCamera::_gpcam_man->KeepSameParam(this, 0x73);
 					SetAngleAlpha(*peVar10);
+
 					if (GetMode() != 9) {
 						SetAngleBeta(this->angleBeta_0x1e8);
 					}
+
 					_ResetDataForCut(1);
 				}
 			}
 			else {
 				CCamera::_gpcam_man->KeepSameParam(this, 0x37);
-				if (param_4 != (CCamera*)0x0) {
-					CActor* pTarget = param_4->GetTarget();
-					if (pTarget != (CActor*)0x0) {
-						pCVar4 = param_4->GetTarget();
-						pCVar7 = GetTarget();
-						if (pCVar4 == pCVar7) goto LAB_002c10a0;
+				if (pOtherCamera != (CCamera*)0x0) {
+					if (pOtherCamera->GetTarget() != (CActor*)0x0) {
+						if (pOtherCamera->GetTarget() == GetTarget()) goto LAB_002c10a0;
 					}
 
 					ComputeTargetPosition(&this->lookAt);
@@ -1234,7 +1190,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 				}
 			LAB_002c10a0:
 				if (GetMode() == CT_KyaJamgut) {
-					fVar12 = param_4->GetAngleAlpha();
+					fVar12 = pOtherCamera->GetAngleAlpha();
 					if (fVar12 < 0.1963495) {
 						(this->cameraConfig).field_0x88 = 0.7853982f;
 					}
@@ -1243,13 +1199,11 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 					}
 				}
 
-				pCVar4 = GetTarget();
-				if (pCVar4->typeID == BOOMY) {
-					pCVar4 = GetTarget();
-					SetAngleBeta((pCVar4->rotationEuler).y);
+				if (GetTarget()->typeID == BOOMY) {
+					SetAngleBeta((GetTarget()->rotationEuler).y);
 				}
 				_ResetDataForCut(0);
-				if (((param_4 != 0) && (fVar12 = param_4->GetAngleAlpha(), fVar12 < 0.1963495f)) &&
+				if (((pOtherCamera != 0) && (fVar12 = pOtherCamera->GetAngleAlpha(), fVar12 < 0.1963495f)) &&
 					((*puVar9 & 0x2000000) != 0)) {
 					this->pitchDyn.currentAlpha = 0.1963495f;
 					this->targetPitch = 0.1963495f;
@@ -1265,8 +1219,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 	}
 
 	SetAngleGamma(0.0f);
-	pCVar4 = GetTarget();
-	uVar2 = IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
+	uVar2 = GetTarget()->IsKindOfObject(OBJ_TYPE_AUTONOMOUS);
 	if (uVar2 == 0) {
 		this->cameraConfig.flags = this->cameraConfig.flags & 0xffffdfff;
 	}
@@ -1275,7 +1228,7 @@ bool CCameraGame::AlertCamera(int alertType, int pParams, CCamera* param_4)
 
 	LAB_002c1448:
 	(this->cameraConfig).flags_0x70 = (this->cameraConfig).flags_0x70 & 0xfffffffe;
-	CCamera::AlertCamera(alertType, pParams, param_4);
+	CCamera::AlertCamera(alertType, pParams, pOtherCamera);
 	return true;
 }
 
@@ -1361,7 +1314,7 @@ void CCameraGame::UpdateMode()
 	edF32VECTOR4 localVector;
 
 	typeMode = GetMode();
-	if (typeMode == 4) {
+	if (typeMode == CT_Fight) {
 		this->mode_0x1bc = 3;
 	}
 	else {
@@ -1500,7 +1453,7 @@ void CCameraGame::FUN_002bff30(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4*
 	cam_temp_struct local_20;
 
 	ppeVar2 = (cam_temp_struct*)0x0;
-	if (GetMode() == 4) {
+	if (GetMode() == CT_Fight) {
 		if (_pfig_data != (CCamFigData*)0x0) {
 			ppeVar2 = _pfig_data->Cam_Update(v1, _b_use_fig_data);
 		}
@@ -2427,7 +2380,7 @@ void CCameraGame::_UpdateAngleBetaData()
 	float fVar6;
 
 	EVar1 = GetMode();
-	if ((EVar1 != CT_KyaJamgut) && (EVar1 != 4)) {
+	if ((EVar1 != CT_KyaJamgut) && (EVar1 != CT_Fight)) {
 		if (EVar1 == CT_KyaWindWall) {
 			_Behind_UpdateAngleBetaData();
 		}
@@ -2532,6 +2485,7 @@ void CCameraGame::_UpdateAngleBetaData()
 			}
 		}
 	}
+
 	return;
 }
 
@@ -2974,15 +2928,12 @@ void CCameraGame::_Manage_Leash()
 void CCameraGame::_After_Manage_Beta()
 {
 	CActor* pCVar1;
-	ECameraType EVar2;
 	float fVar3;
 	float fVar4;
 	edF32VECTOR4 local_10;
 
 	if ((this->cameraConfig).pActorRefB.Get() == (CActor*)0x0) {
-		EVar2 = GetMode();
-
-		if (EVar2 != 4) {
+		if (GetMode() != CT_Fight) {
 			fVar3 = (this->cameraConfig).field_0xa8;
 			if (fVar3 < (this->cameraConfig).field_0xac) {
 				fVar3 = fVar3 + (this->cameraConfig).field_0xb0 * CCamera::_gpcam_man->time_0x4;
@@ -3043,7 +2994,6 @@ void CCameraGame::_After_Manage_Beta()
 void CCameraGame::_After_Manage_Alpha()
 {
 	bool bVar1;
-	ECameraType EVar2;
 	CActor* pCVar3;
 	CActorHero* pHero;
 	uint uVar4;
@@ -3054,11 +3004,8 @@ void CCameraGame::_After_Manage_Alpha()
 	edF32VECTOR4 local_50;
 	edF32MATRIX4 eStack64;
 
-	EVar2 = GetMode();
-
-	if (EVar2 != 4) {
-		EVar2 = GetMode();
-		if (EVar2 == CT_KyaWindWall) {
+	if (GetMode() != CT_Fight) {
+		if (GetMode() == CT_KyaWindWall) {
 			fVar5 = (this->cameraConfig).field_0x8c;
 			if (fVar5 < (this->cameraConfig).field_0x90) {
 				fVar5 = fVar5 + (this->cameraConfig).field_0x94 * CCamera::_gpcam_man->time_0x4;
@@ -3171,6 +3118,7 @@ void CCameraGame::_After_Manage_Alpha()
 			}
 		}
 	}
+
 	return;
 }
 
@@ -3494,7 +3442,6 @@ bool CCameraGame::Manage()
 	CActor* pActorD;
 	CActor* pActorG;
 	CActor* pActorF;
-	ECameraType EVar2;
 	CActor* pActorE;
 	float floatC;
 	Timer* pTVar3;
@@ -3590,8 +3537,7 @@ bool CCameraGame::Manage()
 				if ((camMode == 2) || (camMode == 1)) {
 					ComputeTargetPosition(&vectorB);
 
-					EVar2 = GetMode();
-					if (EVar2 == CT_KyaJamgut) {
+					if (GetMode() == CT_KyaJamgut) {
 						/* Generic camera does not go in here (Val is 3) */
 						edF32Vector4AddHard(&this->gameLookAt, &vectorB, &vectorA);
 					}
@@ -3627,8 +3573,8 @@ bool CCameraGame::Manage()
 						edF32Vector4SubHard(&vectorH, &pActorF->currentLocation, &pActorG->rotationQuat);
 						this->transformationMatrix.rowT = vectorH;
 					}
-					EVar2 = GetMode();
-					if (EVar2 != 9) {
+
+					if (GetMode() != 9) {
 						/* Generic camera does go in here (Val is 3) */
 						floatA = GetAngleYFromVector(&vectorD);
 						this->field_0x204 = floatA;
@@ -3638,8 +3584,7 @@ bool CCameraGame::Manage()
 
 			FUN_002c8160();
 
-			EVar2 = GetMode();
-			if (EVar2 == CT_Main) {
+			if (GetMode() == CT_Main) {
 				/* Generic camera does go in here (Val is 3) */
 				UpdateTarget(&vectorE, true);
 				vectorE.z = 0.0f;
@@ -3678,16 +3623,14 @@ bool CCameraGame::Manage()
 			_Manage_Pad(this);
 			)
 
-			EVar2 = GetMode();
-			if (EVar2 == CT_Main) {
+			if (GetMode() == CT_Main) {
 				_Normal_ManageIdle();
 			}
 
 			_UpdateAngleAlphaData();
 			_UpdateAngleBetaData();
 
-			EVar2 = GetMode();
-			if (EVar2 == CT_Main) {
+			if (GetMode() == CT_Main) {
 				/* Generic camera does go in here (Val is 3) */
 				bValidValue = (*pFlag & 0x40000) == 0;
 				if ((bValidValue) && (bValidValue)) {
@@ -4042,10 +3985,11 @@ bool CCameraGame::Manage()
 			if ((this->mode_0x1bc == 3) || (this->mode_0x1bc == 4)) {
 				*pFlag = this->flags_0x2e0 | *pFlag & 0xffffff9f;
 			}
-			EVar2 = GetMode();
-			if (EVar2 != 4) {
+
+			if (GetMode() != CT_Fight) {
 				*pFlag = *pFlag & 0xffe03fff;
 			}
+
 			bValidValue = true;
 		}
 		else {

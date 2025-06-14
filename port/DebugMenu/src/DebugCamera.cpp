@@ -29,6 +29,27 @@ namespace Debug::Camera {
 	static float verticalAngle = 0.0f;
 	static bool bActive = false;
 
+	static std::unordered_map<ECameraType, std::string> gCameraTypeNames = {
+		{ CT_AroundSpecial, "Around Special" },
+		{ CT_Cinematic, "Cinematic" },
+		{ CT_Death, "Death" },
+		{ CT_Frontend, "Frontend" },
+		{ CT_IntView, "Int View" },
+		{ CT_Main, "Main" },
+		{ CT_Fight, "Fight" },
+		{ CT_KyaJamgut, "Kya Jamgut" },
+		{ CT_KyaWindWall, "Kya Wind Wall" },
+		{ CT_MainCamera, "Main Camera" },
+		{ CT_MouseAround, "Mouse Around" },
+		{ CT_MouseQuake, "Mouse Quake" },
+		{ CT_ShadowSun, "Shadow Sun" },
+		{ CT_SilverBoomy, "Silver Boomy" },
+		{ CT_Camera_6, "Camera 6" },
+		{ CT_RailSimple, "Rail Simple" },
+		{ CT_Rail, "Rail" },
+		{ CT_DCA, "DCA" }
+	};
+
 	Debug::Setting<bool> gShowStackWindow = { "Show Camera Stack", false };
 
 	std::string GenerateMatrixConstructionCode(const edF32MATRIX4& matrix) {
@@ -205,6 +226,7 @@ namespace Debug::Camera {
 
 	static void ShowCameraDetails(CCamera* pCamera)
 	{
+		ImGui::Text("Camera Type: %s", gCameraTypeNames[pCamera->GetMode()].c_str());
 		ImGui::Text("field_0x8: %d", pCamera->field_0x8);
 		ImGui::Text("flags_0xc: 0x%x", pCamera->flags_0xc);
 
@@ -213,7 +235,19 @@ namespace Debug::Camera {
 		ImGui::Text("field_0x50: %s", pCamera->field_0x50.ToString().c_str());
 		ImGui::Text("lookAt: %s", pCamera->lookAt.ToString().c_str());
 
-		DebugHelpers::TextValidValue("pOtherTarget: %p", pCamera->pOtherTarget);
+		if (pCamera->GetTarget()) {
+			ImGui::TextColored(DebugHelpers::sValidColor, "Target: %s", pCamera->GetTarget()->name);
+		}
+		else {
+			ImGui::TextColored(DebugHelpers::sInvalidColor, "Target: None");
+		}
+
+		if (pCamera->pOtherTarget) {
+			ImGui::TextColored(DebugHelpers::sValidColor, "Other Target: %s", pCamera->pOtherTarget->name);
+		}
+		else {
+			ImGui::TextColored(DebugHelpers::sInvalidColor, "Other Target: None");
+		}
 
 		ImGui::Text("fov: %f", pCamera->fov);
 	}
@@ -363,12 +397,8 @@ void Debug::Camera::ShowCamera()
 
 	auto* pActiveCamera = CCameraManager::_gThis->pActiveCamera;
 
-
 	if (ImGui::CollapsingHeader("Active Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
-		ImGui::Text("Position");
-		EditEdF32Vector4(pActiveCamera->transformationMatrix.rowT);
-		ImGui::Text("LookAt");
-		EditEdF32Vector4(pActiveCamera->lookAt);
+		ShowCameraDetails(pActiveCamera);
 	}
 
 	if (pActiveCamera->GetMode() == CT_Main) {

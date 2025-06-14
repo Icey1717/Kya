@@ -88,6 +88,8 @@ public:
 	void UpdatePawns();
 	bool MoveTo(s_chess_board_pawn* pPawn);
 
+	int GetPawnsInSection(float param_1, edF32VECTOR4* param_3);
+
 	uint ReadLayer(uint index);
 	void WriteLayer(uint index, uint value);
 
