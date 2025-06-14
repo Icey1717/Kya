@@ -7266,7 +7266,35 @@ void CBehaviourFighterWolfen::Begin(CActor* pOwner, int newState, int newAnimati
 
 void CBehaviourFighterWolfen::End(int newBehaviourId)
 {
-	IMPLEMENTATION_GUARD();
+	CActorWolfen* pWolfen;
+	bool bVar1;
+	WFIGS_Capability* pWVar2;
+	CActorCommander* pCommander;
+	CActorWolfenKnowledge* pKnowledge;
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+
+	if (pWolfen->activeCapabilityIndex != 3) {
+		pCommander = pWolfen->pCommander;
+		bVar1 = pCommander->IsValidEnemy(pWolfen);
+		if (bVar1 != false) {
+			pWVar2 = (WFIGS_Capability*)0x0;
+			if (pWolfen->activeCapabilityIndex != 3) {
+				pWVar2 = pWolfen->aCapabilities + pWolfen->activeCapabilityIndex;
+			}
+
+			pCommander->ReleaseSemaphore(pWVar2->semaphoreId, pWolfen);
+		}
+	}
+
+	pKnowledge = pWolfen->pWolfenKnowledge;
+	if ((pKnowledge != (CActorWolfenKnowledge*)0x0) && (pKnowledge->field_0x1c != 0)) {
+		pKnowledge->EndMemory();
+	}
+
+	CBehaviourFighter::End(newBehaviourId);
+
+	return;
 }
 
 void CBehaviourFighterWolfen::InitState(int newState)
@@ -8941,6 +8969,33 @@ void CActorWolfenKnowledge::Reset()
 	this->field_0x28 = (s_fighter_combo*)0x0;
 	this->field_0x2c = 0;
 	this->field_0x1c = 0;
+
+	return;
+}
+
+void CActorWolfenKnowledge::EndMemory()
+{
+	CActorWolfenKnowledge_0x14* piVar1;
+	uint uVar3;
+
+	this->field_0x1c = 0;
+	this->field_0x20 = (s_fighter_combo*)0x0;
+	this->field_0x24 = 0;
+	this->field_0x28 = (s_fighter_combo*)0x0;
+
+	if ((this->memMode != 1) && (uVar3 = 0, this->nbSubObjs != 0)) {
+		do {
+			piVar1 = this->aSubObjs + uVar3;
+			if ((piVar1->field_0x0 != 0) && (this->field_0x18 <= piVar1->field_0x10)) {
+				piVar1->field_0x0 = 0;
+				piVar1->field_0xc = 0;
+				piVar1->field_0x10 = 0;
+				memset(piVar1->field_0x4, 0xff, this->field_0xc * sizeof(void*));
+				piVar1->field_0x8 = 0;
+			}
+			uVar3 = uVar3 + 1;
+		} while (uVar3 < this->nbSubObjs);
+	}
 
 	return;
 }

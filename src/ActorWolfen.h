@@ -54,7 +54,7 @@ struct CActorWolfenKnowledge_0x14
 	void* field_0x4;
 	undefined4 field_0x8;
 	undefined4 field_0xc;
-	undefined4 field_0x10;
+	uint field_0x10;
 };
 
 class CActorWolfenKnowledge
@@ -62,6 +62,8 @@ class CActorWolfenKnowledge
 public:
 	void Init(int memMode, uint param_3, uint param_4, uint nbObjs, uint param_6);
 	void Reset();
+
+	void EndMemory();
 
 	CActorWolfenKnowledge_0x14* aSubObjs;
 	int field_0x4;

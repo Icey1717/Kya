@@ -2188,8 +2188,7 @@ void CActorFighter::ClearLocalData()
 	this->fighterAnatomyZones.field_0x0 = this->fighterAnatomyZones.field_0x10;
 
 	this->pBlow = 0;
-	IMPLEMENTATION_GUARD_FIGHT(
-	this->field_0x840 = 0;)
+	this->field_0x840 = (s_fighter_blow*)0;
 	this->field_0x834 = (s_fighter_blow*)0;
 	this->field_0x860 = 0;
 	this->field_0x864 = (s_fighter_blow*)0x0;

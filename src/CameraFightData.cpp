@@ -31,20 +31,20 @@ CCamFigData::CCamFigData()
 	this->field_0x280 = 1e+30f;
 	this->field_0x284 = 1e+30f;
 
-	CamUpdate_0049c760.field_0x24[0].field_0x6 = 0x23;
+	CamUpdate_0049c760.aSubObjA[0].field_0x6 = 0x23;
 	CamUpdate_0049c760.activeIndex = 0;
-	CamUpdate_0049c760.field_0x24[0].field_0x0 = 0;
-	CamUpdate_0049c760.field_0x24[0].field_0x2 = 0;
-	CamUpdate_0049c760.field_0x24[0].field_0x4 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x0 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x2 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x4 = 0;
 
 	do {
-		CamUpdate_0049c760.field_0x144[uVar2 + 0].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar2 + 1].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar2 + 2].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar2 + 3].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar2 + 4].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar2 + 5].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar2 + 6].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 0].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 1].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 2].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 3].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 4].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 5].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar2 + 6].intersectionDistance = 1e+30f;
 
 		uVar2 = uVar2 + 7;
 	} while (uVar2 < 0x23);
@@ -223,19 +223,19 @@ void CCamFigData::Cam_SetDefault(float param_1, float param_2, CCameraGame* pCam
 
 	uVar3 = 0;
 
-	CamUpdate_0049c760.field_0x24[0].field_0x6 = 0x23;
+	CamUpdate_0049c760.aSubObjA[0].field_0x6 = 0x23;
 	CamUpdate_0049c760.activeIndex = 0;
-	CamUpdate_0049c760.field_0x24[0].field_0x0 = 0;
-	CamUpdate_0049c760.field_0x24[0].field_0x2 = 0;
-	CamUpdate_0049c760.field_0x24[0].field_0x4 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x0 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x2 = 0;
+	CamUpdate_0049c760.aSubObjA[0].field_0x4 = 0;
 	do {
-		CamUpdate_0049c760.field_0x144[uVar3 + 0].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar3 + 1].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar3 + 2].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar3 + 3].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar3 + 4].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar3 + 5].intersectionDistance = 1e+30f;
-		CamUpdate_0049c760.field_0x144[uVar3 + 6].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar3 + 0].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar3 + 1].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar3 + 2].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar3 + 3].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar3 + 4].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar3 + 5].intersectionDistance = 1e+30f;
+		CamUpdate_0049c760.aSubObjB[uVar3 + 6].intersectionDistance = 1e+30f;
 
 		uVar3 = uVar3 + 7;
 	} while (uVar3 < 0x23);
@@ -405,7 +405,7 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 				bVar2 = true;
 			}
 
-			if ((bVar2) && (CamUpdate_0049c760.field_0x144[(int)((fVar14 * 35.0f) / 6.283185f)].intersectionDistance <= this->field_0xc)) {
+			if ((bVar2) && (CamUpdate_0049c760.aSubObjB[(int)((fVar14 * 35.0f) / 6.283185f)].intersectionDistance <= this->field_0xc)) {
 				bVar3 = true;
 			}
 
@@ -426,50 +426,20 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 						fVar14 = (this->angleBetaDyn).field_0x4;
 						fVar17 = fVar14 + 0.3141593f;
 						fVar14 = edF32Between_0_2Pi_Incr(fVar14 - 0.3141593f);
-						uVar13 = 0;
-						uVar15 = (uint)((fVar14 * 35.0f) / 6.283185f);
-						while (true) {
-							sVar12 = 0;
-							if ((CamUpdate_0049c760.field_0x24[uVar13].field_0x4 <= uVar15) && (uVar15 < CamUpdate_0049c760.field_0x24[uVar13].field_0x6)) {
-								sVar12 = 1;
-							}
-
-							if ((CamUpdate_0049c760.field_0x24[uVar13].field_0x2 != sVar12) || (CamUpdate_0049c760.field_0x20 <= uVar13)) break;
-
-							uVar13 = uVar13 + 1;
-						}
-
-						if (uVar13 == CamUpdate_0049c760.field_0x20) {
-							uVar13 = 0;
-						}
+						uVar13 = CamUpdate_0049c760.FUN_Count(fVar14);
 
 						fVar14 = edF32Between_0_2Pi_Incr(fVar17);
-						uVar15 = 0;
-						uVar16 = (uint)((fVar14 * 35.0f) / 6.283185f);
-						while (true) {
-							sVar12 = 0;
-							if ((CamUpdate_0049c760.field_0x24[uVar15].field_0x4 <= uVar16) && (uVar16 < CamUpdate_0049c760.field_0x24[uVar15].field_0x6)) {
-								sVar12 = 1;
-							}
-
-							if ((CamUpdate_0049c760.field_0x24[uVar15].field_0x2 != sVar12) || (CamUpdate_0049c760.field_0x20 <= uVar15)) break;
-
-							uVar15 = uVar15 + 1;
-						}
-
-						if (uVar15 == CamUpdate_0049c760.field_0x20) {
-							uVar15 = 0;
-						}
+						uVar15 = CamUpdate_0049c760.FUN_Count(fVar14);
 
 						uVar16 = uVar13;
 						if (uVar15 < uVar13) {
 							uVar16 = uVar15;
 							uVar15 = uVar13;
 						}
-						uVar11 = CamUpdate_0049c760.field_0x24[uVar16].field_0x0;
+						uVar11 = CamUpdate_0049c760.aSubObjA[uVar16].field_0x0;
 						while (uVar16 < uVar15) {
 							uVar16 = uVar16 + 1;
-							uVar11 = uVar11 | CamUpdate_0049c760.field_0x24[uVar16 + 1].field_0x0;
+							uVar11 = uVar11 | CamUpdate_0049c760.aSubObjA[uVar16 + 1].field_0x0;
 						}
 
 						if (uVar11 == 0) {
@@ -480,27 +450,12 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 						}
 						else {
 							fVar14 = edF32Between_0_2Pi_Incr(this->angleBetaDyn.field_0x4);
-							uVar13 = 0;
-							uVar15 = (uint)((fVar14 * 35.0f) / 6.283185f);
-							while (true) {
-								sVar12 = 0;
-								if ((CamUpdate_0049c760.field_0x24[uVar13].field_0x4 <= uVar15) && (uVar15 < CamUpdate_0049c760.field_0x24[uVar13].field_0x6)) {
-									sVar12 = 1;
-								}
+							uVar13 = CamUpdate_0049c760.FUN_Count(fVar14);
 
-								if ((CamUpdate_0049c760.field_0x24[uVar13].field_0x2 != sVar12) || (CamUpdate_0049c760.field_0x20 <= uVar13)) break;
+							fVar14 = FUN_00193e30(((float)(uint)CamUpdate_0049c760.aSubObjA[uVar13].field_0x4 * 6.283185f) / 35.0f,
+								((float)(uint)CamUpdate_0049c760.aSubObjA[uVar13].field_0x6 * 6.283185f) / 35.0f);
 
-								uVar13 = uVar13 + 1;
-							}
-
-							if (uVar13 == CamUpdate_0049c760.field_0x20) {
-								uVar13 = 0;
-							}
-
-							fVar14 = FUN_00193e30(((float)(uint)CamUpdate_0049c760.field_0x24[uVar13].field_0x4 * 6.283185f) / 35.0f,
-								((float)(uint)CamUpdate_0049c760.field_0x24[uVar13].field_0x6 * 6.283185f) / 35.0f);
-
-							if (CamUpdate_0049c760.field_0x24[uVar13].field_0x2 != 0) {
+							if (CamUpdate_0049c760.aSubObjA[uVar13].field_0x2 != 0) {
 								fVar14 = 6.283185f - fVar14;
 							}
 
@@ -531,7 +486,7 @@ cam_temp_struct* CCamFigData::Cam_Update(edF32VECTOR4* param_2, int param_3)
 
 								bVar2 = false;
 								fVar18 = edF32Between_0_2Pi_Incr(local_38);
-								if (CamUpdate_0049c760.field_0x18 <= CamUpdate_0049c760.field_0x144[(int)((fVar18 * 35.0f) / 6.283185f)].intersectionDistance) {
+								if (CamUpdate_0049c760.field_0x18 <= CamUpdate_0049c760.aSubObjB[(int)((fVar18 * 35.0f) / 6.283185f)].intersectionDistance) {
 									local_110 = this->vertexDynExtC.field_0x20;
 
 									local_160 = gF32Vector4UnitY;
@@ -710,9 +665,9 @@ void CCamFigData::ComputeData()
 		uVar3 = uVar6;
 	}
 
-	uVar2 = CamUpdate_0049c760.field_0x24[uVar3].field_0x0;
+	uVar2 = CamUpdate_0049c760.aSubObjA[uVar3].field_0x0;
 	for (; uVar3 < uVar7; uVar3 = uVar3 + 1) {
-		uVar2 = uVar2 | CamUpdate_0049c760.field_0x24[uVar3 + 1].field_0x0;
+		uVar2 = uVar2 | CamUpdate_0049c760.aSubObjA[uVar3 + 1].field_0x0;
 	}
 
 	if (uVar2 == 0) {
@@ -746,9 +701,9 @@ void CCamFigData::ComputeData()
 		uVar3 = uVar6;
 	}
 
-	uVar2 = CamUpdate_0049c760.field_0x24[uVar3].field_0x0;
+	uVar2 = CamUpdate_0049c760.aSubObjA[uVar3].field_0x0;
 	for (; uVar3 < uVar7; uVar3 = uVar3 + 1) {
-		uVar2 = uVar2 | CamUpdate_0049c760.field_0x24[uVar3 + 1].field_0x0;
+		uVar2 = uVar2 | CamUpdate_0049c760.aSubObjA[uVar3 + 1].field_0x0;
 	}
 
 	if (uVar2 == 0) {
@@ -954,6 +909,84 @@ void CCamFigData::FUN_003c5ba0(float param_1, int param_3, long param_4)
 	return;
 }
 
+
+bool CCamFigData::FUN_003c79f0(float param_1, float param_2)
+{
+	edF32VECTOR3* peVar1;
+	edF32VECTOR3* peVar2;
+	CActor* pCVar3;
+	edF32VECTOR3* peVar4;
+	CamUpdateSubObjA* pCVar5;
+	short sVar6;
+	ushort uVar7;
+	undefined4 uVar8;
+	uint uVar9;
+	float fVar11;
+	uint uVar12;
+	uint uVar13;
+	float f0;
+	edF32MATRIX4 auStack224;
+	edF32VECTOR4 local_a0;
+	edF32MATRIX4 auStack112;
+	edF32VECTOR4 local_30;
+	edF32VECTOR3 local_20;
+	edF32VECTOR3 local_10;
+
+	fVar11 = edF32Between_0_2Pi_Incr(param_1 - param_2);
+	uVar9 = CamUpdate_0049c760.FUN_Count(fVar11);
+
+	fVar11 = edF32Between_0_2Pi_Incr(param_1 + param_2);
+	uVar12 = CamUpdate_0049c760.FUN_Count(fVar11);
+
+	uVar13 = uVar12;
+	if (uVar12 < uVar9) {
+		uVar13 = uVar9;
+		uVar9 = uVar12;
+	}
+
+	uVar7 = CamUpdate_0049c760.aSubObjA[uVar9].field_0x0;
+	for (; uVar9 < uVar13; uVar9 = uVar9 + 1) {
+		uVar7 = uVar7 | CamUpdate_0049c760.aSubObjA[uVar9 + 1].field_0x0;
+	}
+
+	uVar8 = 0;
+	if (uVar7 == 0) {
+		uVar8 = 0;
+		local_20.x = (this->angleDynA).field_0x4;
+		f0 = this->field_0x264;
+		fVar11 = edF32Between_0_2Pi_Incr(param_1);
+		if (CamUpdate_0049c760.field_0x18 <=
+			CamUpdate_0049c760.aSubObjB[(int)((fVar11 * 35.0f) / 6.283185f)].intersectionDistance) {
+			local_30 = (this->vertexDynExtC).field_0x20;
+
+			local_10 = {};
+			local_10.x = local_20.x;
+			local_10.y = param_1;
+			edF32Matrix4FromEulerSoft(&auStack112, &local_10, "XYZ");
+			edF32Vector4SubHard(&auStack112.rowY, &gF32Vector4Zero, &auStack112.rowY);
+			CCollisionRay CStack144 = CCollisionRay(f0, &local_30, &auStack112.rowY);
+			pCVar3 = this->pCamera->GetTarget();
+			fVar11 = CStack144.Intersect(3, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+			if (this->field_0xc <= fVar11) {
+				local_a0 = this->adversaryPos;
+
+				local_20 = {};
+				local_20.y = param_1;
+				edF32Matrix4FromEulerSoft(&auStack224, &local_20, "XYZ");
+				edF32Vector4SubHard(&auStack224.rowY, &gF32Vector4Zero, &auStack224.rowY);
+				CCollisionRay CStack256 = CCollisionRay(f0, &local_a0, &auStack224.rowY);
+				pCVar3 = this->pCamera->GetTarget();
+				fVar11 = CStack256.Intersect(3, pCVar3, (CActor*)0x0, 0x40000004, (edF32VECTOR4*)0x0, (_ray_info_out*)0x0);
+				if (this->field_0xc <= fVar11) {
+					uVar8 = 1;
+				}
+			}
+		}
+	}
+
+	return uVar8;
+}
+
 CamUpdate::CamUpdate()
 {
 	this->position = gF32Vertex4Zero;
@@ -986,7 +1019,7 @@ void CamUpdate::FUN_003c4a40(edF32VECTOR4* pPosition)
 
 	this->position = *pPosition;
 
-	pCVar4 = this->field_0x144;
+	pCVar4 = this->aSubObjB;
 	do {
 		uVar6 = uVar6 + 1;
 		pCVar4->field_0x4 = pCVar4->field_0x4 + GetTimer()->cutsceneDeltaTime;
@@ -1010,12 +1043,12 @@ void CamUpdate::FUN_003c4a40(edF32VECTOR4* pPosition)
 	uVar6 = 0;
 	this->activeIndex = (this->activeIndex + 1) % 0x23;
 	this->field_0x20 = 0;
-	pCVar4 = this->field_0x144;
+	pCVar4 = this->aSubObjB;
 	do {
 		bVar2 = pCVar4->intersectionDistance < this->field_0x18;
-		this->field_0x24[this->field_0x20].field_0x0 = bVar2;
-		this->field_0x24[this->field_0x20].field_0x2 = 0;
-		this->field_0x24[this->field_0x20].field_0x4 = uVar6;
+		this->aSubObjA[this->field_0x20].field_0x0 = bVar2;
+		this->aSubObjA[this->field_0x20].field_0x2 = 0;
+		this->aSubObjA[this->field_0x20].field_0x4 = uVar6;
 		pCVar5 = pCVar4;
 		for (; (bVar2 == pCVar5->intersectionDistance < this->field_0x18 && (uVar6 < 0x23)); uVar6 = uVar6 + 1) {
 			pCVar5 = pCVar5 + 1;
@@ -1024,14 +1057,14 @@ void CamUpdate::FUN_003c4a40(edF32VECTOR4* pPosition)
 
 		iVar1 = this->field_0x20;
 		this->field_0x20 = iVar1 + 1;
-		this->field_0x24[iVar1].field_0x6 = uVar6;
+		this->aSubObjA[iVar1].field_0x6 = uVar6;
 	} while (uVar6 < 0x23);
 
 	if ((2 < this->field_0x20) &&
-		(this->field_0x24[0].field_0x0 == this->field_0x24[this->field_0x20 - 1].field_0x0)) {
-		this->field_0x24[0].field_0x4 = this->field_0x24[0].field_0x6;
-		this->field_0x24[0].field_0x6 = this->field_0x24[this->field_0x20 + -1].field_0x4;
-		this->field_0x24[0].field_0x2 = 1;
+		(this->aSubObjA[0].field_0x0 == this->aSubObjA[this->field_0x20 - 1].field_0x0)) {
+		this->aSubObjA[0].field_0x4 = this->aSubObjA[0].field_0x6;
+		this->aSubObjA[0].field_0x6 = this->aSubObjA[this->field_0x20 + -1].field_0x4;
+		this->aSubObjA[0].field_0x2 = 1;
 
 		this->field_0x20 = this->field_0x20 + -1;
 	}
@@ -1076,20 +1109,20 @@ void CamUpdate::CalculateIntersection(int index)
 			intersectDistance = this->maxDistance;
 		}
 
-		this->field_0x144[index].intersectionDistance = intersectDistance;
+		this->aSubObjB[index].intersectionDistance = intersectDistance;
 	}
 	else {
-		this->field_0x144[index].intersectionDistance = this->maxDistance;
+		this->aSubObjB[index].intersectionDistance = this->maxDistance;
 	}
 
-	this->field_0x144[index].field_0x4 = 0.0f;
+	this->aSubObjB[index].field_0x4 = 0.0f;
 	return;
 }
 
 uint CamUpdate::FUN_Count(float param_1)
 {
 	uint uVar6 = 0;
-	CamUpdateSubObjA* pCamUpdate = CamUpdate_0049c760.field_0x24;
+	CamUpdateSubObjA* pCamUpdate = CamUpdate_0049c760.aSubObjA;
 	uint uVar7 = (uint)((param_1 * 35.0f) / 6.283185f);
 	while (true) {
 		short sVar1 = 0;

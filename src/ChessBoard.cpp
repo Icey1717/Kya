@@ -1390,5 +1390,93 @@ bool CChessBoard::MoveTo(s_chess_board_pawn* pPawn)
 
 int CChessBoard::GetPawnsInSection(float param_1, edF32VECTOR4* param_3)
 {
-	IMPLEMENTATION_GUARD();
+	edF32VECTOR4* peVar1;
+	edF32VECTOR4* peVar2;
+	edF32VECTOR4* peVar3;
+	s_chess_board_pawn* psVar4;
+	int iVar5;
+	uint uVar6;
+	int iVar7;
+	uint uVar8;
+	uint uVar9;
+	float puVar12;
+	float puVar10;
+	float puVar11;
+	float fVar10;
+	float fVar11;
+	edF32VECTOR4 local_30;
+	CFixedTable<s_chess_board_pawn*, 6> local_20;
+
+	local_20.nbEntries = 0;
+	local_30 = {};
+	local_30.x = (this->field_0x240).z;
+	local_30.z = -(this->field_0x240).x;
+	puVar10 = edF32Vector4DotProductHard(param_3, &this->field_0x240);
+	if (1.0f < puVar10) {
+		puVar11 = 1.0f;
+	}
+	else {
+		puVar11 = -1.0f;
+		if (-1.0f <= puVar10) {
+			puVar11 = puVar10;
+		}
+	}
+
+	fVar10 = acosf(puVar11);
+	fVar11 = edF32Vector4DotProductHard(param_3, &local_30);
+	if (fVar11 < 0.0f) {
+		fVar10 = 6.283185f - fVar10;
+	}
+
+	uVar8 = this->nbRows;
+	fVar11 = CoordinateToFloat(uVar8);
+
+	fVar10 = (fVar10 * fVar11) / 6.283185f;
+	uVar8 = FloatToCoordinate(fVar10);
+
+	uVar9 = this->nbRows;
+	fVar10 = CoordinateToFloat(uVar9);
+	fVar10 = (fVar10 * fabs(param_1)) / 6.283185f + 0.5f;
+
+	uVar9 = FloatToCoordinate(fVar10);
+
+	iVar7 = 0;
+	for (uVar6 = 0; uVar6 < uVar9; uVar6 = uVar6 + 1) {
+		local_20.nbEntries = 0;
+		for (iVar5 = 0; iVar5 < 6; iVar5 = iVar5 + 1) {
+			psVar4 = this->pawnsTable.aPawns + iVar5;
+			if (psVar4->bActive != 0x1) {
+				psVar4 = (s_chess_board_pawn*)0x0;
+			}
+
+			if (((psVar4 != (s_chess_board_pawn*)0x0) && (psVar4->bActive == 1)) && (psVar4->coordinates.field_0x0 == uVar8)) {
+				local_20.Add(psVar4);
+			}
+		}
+
+		iVar7 = iVar7 + local_20.nbEntries;
+		if (0.0f <= param_1) {
+			puVar12 = 1.0f;
+		}
+		else {
+			puVar12 = -1.0f;
+		}
+
+		if (puVar12 < 0.0f) {
+			if (uVar8 == 0) {
+				uVar8 = this->nbRows;
+			}
+			else {
+				uVar8 = uVar8 - 1;
+			}
+		}
+		else {
+			uVar8 = (int)(uVar8 + 1) % (int)this->nbRows;
+			if (this->nbRows == 0) {
+				trap(7);
+			}
+		}
+	}
+
+	return iVar7;
 }

@@ -919,7 +919,6 @@ void CActorCommander::_UpdateCamera()
 					fVar16 = fVar17;
 				}
 
-				IMPLEMENTATION_GUARD(
 				fVar17 = pFightCamera->GetAngleBeta();
 				iVar9 = this->camFigData.FUN_003c79f0(fVar16 + fVar17, 0.1396263f);
 				if (iVar9 != 0) {
@@ -930,7 +929,7 @@ void CActorCommander::_UpdateCamera()
 
 					fVar17 = pFightCamera->GetAngleBeta();
 					this->camFigData.FUN_003c5ba0(fVar16 + fVar17, uVar15, 1);
-				})
+				}
 
 				this->field_0x9f0 = pCVar1->pAdversary;
 			}

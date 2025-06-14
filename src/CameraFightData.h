@@ -47,10 +47,10 @@ struct CamUpdate
 	float maxDistance;
 	uint field_0x20;
 
-	CamUpdateSubObjA field_0x24[0x23];
+	CamUpdateSubObjA aSubObjA[0x23];
 	int activeIndex;
 	int field_0x140;
-	CamUpdateSubObjB field_0x144[0x23];
+	CamUpdateSubObjB aSubObjB[0x23];
 };
 
 struct ParCamFigLAB
@@ -80,6 +80,7 @@ public:
 
 	void CancelCurrentMovements();
 	void FUN_003c5ba0(float param_1, int param_3, long param_4);
+	bool FUN_003c79f0(float param_1, float param_2);
 
 	float field_0x0;
 	float field_0x4;

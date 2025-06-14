@@ -587,7 +587,7 @@ void CSquad::SynchronizePawns()
 
 void CSquad::ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4)
 {
-	CActorWolfen* pCVar1;
+	CTeamElt* pCVar1;
 	bool bVar2;
 	undefined4* puVar3;
 	uint uVar4;
@@ -650,50 +650,54 @@ void CSquad::ForceReleaseSemaphore(int index, CTeamElt* pTeamElt, bool param_4)
 		})
 	}
 	else {
-		IMPLEMENTATION_GUARD(
 		uVar6 = 0;
 		bVar2 = false;
 		pSVar5 = this->aSemaphores + index;
-		puVar3 = &pSVar5->field_0x0;
-		while ((uVar6 < (uint)puVar3[2] && (!bVar2))) {
-			if ((((&pSVar5->field_0x0)[7] & 1) == 0) || ((CTeamElt*)(&pSVar5->field_0x0)[4] != pTeamElt)) {
-				pSVar5 = (SquadSemaphoreManager*)(&pSVar5->field_0x0 + 8);
+		SquadSemaphore* pSemaphore = pSVar5->aSemaphores;
+		while ((uVar6 < pSVar5->nbSemaphores && (!bVar2))) {
+			if (((pSemaphore->flags & 1) == 0) || (pSemaphore->pTeamElt != pTeamElt)) {
+				pSemaphore = pSemaphore + 1;
 				uVar6 = uVar6 + 1;
 			}
 			else {
 				bVar2 = true;
 			}
 		}
+
 		if (!bVar2) {
 			uVar6 = 0xffffffff;
 		}
+
 		if (uVar6 != 0xffffffff) {
-			pfVar9 = &this->aSemaphores[index].aSemaphores[uVar6 - 1].duration;
-			pfVar8 = pfVar9 + 7;
-			if (((uint)pfVar9[7] & 1) != 0) {
-				if ((CActorWolfen*)pfVar9[4] != (CActorWolfen*)0x0) {
-					CActorWolfen::DisableFightAction((CActorWolfen*)pfVar9[4]);
+			SquadSemaphore* pSemaphore = &this->aSemaphores[index].aSemaphores[uVar6];
+
+			if ((pSemaphore->flags & 1) != 0) {
+				if (pSemaphore->pTeamElt != (CTeamElt*)0x0) {
+					pSemaphore->pTeamElt->DisableFightAction();
 				}
-				pCVar1 = (CActorWolfen*)pfVar9[4];
-				if (pCVar1 != (CActorWolfen*)0x0) {
+
+				pCVar1 = pSemaphore->pTeamElt;
+				if (pCVar1 != (CTeamElt*)0x0) {
 					this->aSemaphores[index].aSemaphores[uVar6].field_0x4 = pCVar1;
 				}
-				pSVar5 = this->aSemaphores + index;
-				if (((float)(&pSVar5->field_0x0)[1] == 0.0) || (param_4 == false)) {
-					if (((uint)*pfVar8 & 5) != 0) {
-						(&this->aSemaphores[index].field_0x0)[3] = (&this->aSemaphores[index].field_0x0)[3] + 1;
+
+				if ((this->aSemaphores[index].field_0x4 == 0.0f) || (param_4 == false)) {
+					if ((pSemaphore->flags & 5) != 0) {
+						this->aSemaphores[index].field_0xc = this->aSemaphores[index].field_0xc + 1;
 					}
-					*pfVar8 = 0.0;
-					this->aSemaphores[index].aSemaphores[uVar6].duration = 0.0;
+
+					pSemaphore->flags = 0;
+					this->aSemaphores[index].aSemaphores[uVar6].duration = 0.0f;
 				}
 				else {
-					*pfVar8 = 5.605194e-45;
-					(&pSVar5->field_0x0)[uVar6 * 8 + 8] = (&pSVar5->field_0x0)[1];
+					pSemaphore->flags = 4;
+					pSemaphore->duration = this->aSemaphores[index].field_0x4;
 				}
-				pfVar9[4] = 0.0;
+
+				pSemaphore->pTeamElt = (CTeamElt*)0x0;
 				this->aSemaphores[index].aSemaphores[uVar6].field_0x8 = 0;
 			}
-		})
+		}
 	}
 	return;
 }
