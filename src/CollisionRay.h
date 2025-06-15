@@ -32,6 +32,7 @@ public:
 	float IntersectScenery(edF32VECTOR4* pOutVector, _ray_info_out* pOutResult);
 
 	void ChangeLeadVector(edF32VECTOR4* pNewLeadVector);
+	void ChangeOrigin(edF32VECTOR4* pNewOrigin);
 	void ChangeMaxDistance(float newDist);
 
 

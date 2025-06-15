@@ -77,12 +77,12 @@ struct CFrontendDisplay : public CFrontend {
 	undefined field_0x56;
 	undefined field_0x57;
 	CFrontendLifeGauge* pHealthBar;
-	struct CFrontendMagicGauge* pMagicOrbs;
-	struct CFrontendMoney* pMoney;
-	struct CFrontendEnemy* pFreedWolfun;
-	struct CFrontendAction* pFrontendAction;
+	class CFrontendMagicGauge* pMagicOrbs;
+	class CFrontendMoney* pMoney;
+	class CFrontendEnemyCount* pFreedWolfun;
+	class CFrontendAction* pFrontendAction;
 	struct MenuObj_Big* pMenuObj_0x6c;
-	char* pMenuObj_0x70;
+	class CFrontendEnemyList* pFrontendEnemyList;
 	char* pMenuObj_0x74;
 	char* field_0x78;
 	undefined field_0x7c;

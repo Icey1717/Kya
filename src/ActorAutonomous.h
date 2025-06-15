@@ -124,6 +124,8 @@ public:
 
 	void SetPriority(int newPriority);
 	float GetPriority();
+
+	float GetPercent();
 };
 
 class CActorAutonomous : public CActorMovable

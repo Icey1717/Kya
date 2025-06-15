@@ -114,7 +114,8 @@ CFrontendLifeGauge gFrontendLifeGauge;
 CFrontendMagicGauge gMagicGauge;
 CFrontendAction gFrontendAction;
 CFrontendMoney gFrontendMoney;
-CFrontendEnemy gFrontendEnemy;
+CFrontendEnemyCount gFrontendEnemyCount;
+CFrontendEnemyList gFrontendEnemyList;
 
 CFrontendDisplay::CFrontendDisplay()
 {
@@ -124,11 +125,11 @@ CFrontendDisplay::CFrontendDisplay()
 	this->pHealthBar = &gFrontendLifeGauge;
 	this->pMagicOrbs = &gMagicGauge;
 	this->pMoney = &gFrontendMoney;
-	this->pFreedWolfun = &gFrontendEnemy;
+	this->pFreedWolfun = &gFrontendEnemyCount;
 	this->pFrontendAction = &gFrontendAction;
 	//this->pMenuObj_0x6c = &MenuObj_Big_00452ea0;
 	//this->pMenuObj_0x74 = (undefined*)&PTR_DAT_004544c0;
-	//this->pMenuObj_0x70 = (undefined*)&PTR_DAT_00454b80;
+	this->pFrontendEnemyList = &gFrontendEnemyList;
 	//this->field_0x78 = (char*)&FLOAT_00456220;
 }
 
@@ -197,7 +198,7 @@ void CFrontendDisplay::Game_Init()
 	this->pMoney->Init();
 	this->pFreedWolfun->Init();
 	this->pFrontendAction->Init();
-	//(**(code**)(*(int*)this->pMenuObj_0x70 + 8))();
+	this->pFrontendEnemyList->Init();
 	//(*(code*)this->pMenuObj_0x6c->pVTable->field_0x20)();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x20))();
 
@@ -250,7 +251,7 @@ void CFrontendDisplay::Level_Term()
 	}
 
 	//FUN_003cb000(this->pMenuObj_0x6c);
-	//FUN_001d8220((int)this->pFrontendEnemyList);
+	this->pFrontendEnemyList->Level_Term();
 	//FUN_003c9330((int)this->pMenuObj_0x74);
 
 	return;
@@ -267,7 +268,7 @@ void CFrontendDisplay::Level_Manage()
 		this->pFreedWolfun->Update(fVar2);
 		this->pHealthBar->Update(fVar2);
 		this->pFrontendAction->Update(fVar2);
-		//FUN_001d8340(fVar2, (int*)this->pFrontendEnemyList);
+		this->pFrontendEnemyList->Update(fVar2);
 		//(*(code*)this->pMenuObj_0x6c->pVTable->Update)(fVar2);
 		//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x38))(fVar2);
 	}
@@ -291,7 +292,7 @@ void CFrontendDisplay::Level_Draw()
 		this->pMoney->Draw();
 		this->pFreedWolfun->Draw();
 		this->pFrontendAction->Draw();
-		//FUN_001d89d0((int)this->pFrontendEnemyList);
+		this->pFrontendEnemyList->Draw();
 		//(*(code*)this->pMenuObj_0x6c->pVTable->Draw)();
 	}
 
@@ -305,7 +306,7 @@ void CFrontendDisplay::Level_Reset()
 	this->pMoney->Reset();
 	this->pFreedWolfun->Reset();
 	this->pFrontendAction->Reset();
-	//(**(code**)(*(int*)this->pFrontendEnemyList + 0x10))();
+	this->pFrontendEnemyList->Reset();
 	//(*this->pMenuObj_0x6c->pVTable->Reset)((CWidget*)this->pMenuObj_0x6c);
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x18))();
 
@@ -324,7 +325,7 @@ void CFrontendDisplay::Level_CheckpointReset()
 	this->pFreedWolfun->Reset();
 	this->pFreedWolfun->ShowEnemy();
 	this->pFrontendAction->Reset();
-	//(**(code**)(*(int*)this->pFrontendEnemyList + 0x10))();
+	this->pFrontendEnemyList->Reset();
 	//(*(code*)this->pMenuObj_0x6c->pVTable->CheckpointReset)();
 	//(**(code**)(*(int*)this->pMenuObj_0x74 + 0x1c))();
 
@@ -364,6 +365,8 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 	case FRONTEND_INTERFACE_LIFE:
 		this->pHealthBar->SetInterface(pInterface);
 		break;
+	case FRONTEND_INTERFACE_ENEMY_LIST:
+		this->pFrontendEnemyList->AddFighterInterface(pInterface);
 	case FRONTEND_INTERFACE_MAGIC:
 		//this->pMagicOrbs->SetInterface(pInterface);
 		break;

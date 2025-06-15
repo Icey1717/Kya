@@ -1719,6 +1719,11 @@ float CLifeInterface::GetPriority()
 	return this->priority;
 }
 
+float CLifeInterface::GetPercent()
+{
+	return GetValue() / this->valueMax;
+}
+
 void CBehaviourAutonomous::Init(CActor* pOwner)
 {
 	this->pOwner = static_cast<CActorAutonomous*>(pOwner);

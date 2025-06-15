@@ -23,6 +23,7 @@
 #define FIGHTER_PROJECTED_HIT_FLY_TO_SLIDE 0x56
 #define FIGHTER_PROJECTED_HIT_SLIDE 0x57
 #define FIGHTER_PROJECTED_HIT_WAKING_UP 0x59
+#define FIGHTER_PROJECTED_HIT_STAGGER_CHECK 0x5a
 
 #define FIGHTER_BLOW_BEGIN 0x65
 #define FIGHTER_EXECUTE_BLOW 0x66
@@ -397,6 +398,8 @@ public:
 		IMPLEMENTATION_GUARD_ACTOR()
 	}
 
+	static float _pStagger_check[8];
+
 	static StateConfig _gStateCfg_FIG[0x6c];
 
 	// CActor
@@ -467,7 +470,7 @@ public:
 
 	void ClearLocalData();
 
-	void _ExeceuteCommand(s_fighter_action* pAction, s_fighter_action_param* pParam);
+	//void _ExecuteCommand(s_fighter_action* pAction, s_fighter_action_param* pParam);
 	bool Execute(s_fighter_action* pAction, s_fighter_action_param* pParams);
 
 	void RunInternal(float param_1, edF32VECTOR4* pRotation);
@@ -492,6 +495,10 @@ public:
 
 	float _StateFighterFightActionDynInit(_s_fighter_blow_stage* pStage);
 	void _StateFighterExecuteBlow(int nextStateA, int nextStateB, int param_4);
+
+	void _StateFighterHitStaggerCheck();
+
+	void _StateFighterHitStaggerFallInit(float param_1);
 
 	void _LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode);
 	void _CreateBlowsDB(ByteCode* pByteCode);
@@ -714,6 +721,8 @@ public:
 	float field_0x7cc;
 
 	uint field_0x7e0;
+	uint field_0x7e4;
+	edF32VECTOR4 field_0x7f0;
 
 	float field_0x800;
 	edF32VECTOR4 field_0x810[2];

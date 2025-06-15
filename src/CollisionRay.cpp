@@ -405,6 +405,12 @@ void CCollisionRay::ChangeLeadVector(edF32VECTOR4* pNewLeadVector)
 	return;
 }
 
+void CCollisionRay::ChangeOrigin(edF32VECTOR4* pNewOrigin)
+{
+	this->pLocation = pNewOrigin;
+	return;
+}
+
 void CCollisionRay::ChangeMaxDistance(float newDist)
 {
 	this->lengthA = newDist;
