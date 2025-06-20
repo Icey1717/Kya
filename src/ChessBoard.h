@@ -8,8 +8,8 @@ class CPathFinderClient;
 
 struct s_chess_board_coord
 {
-	uint field_0x0;
-	uint field_0x4;
+	int field_0x0;
+	int field_0x4;
 };
 
 struct s_chess_board_pattern

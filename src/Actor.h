@@ -36,15 +36,6 @@ class CVision;
 
 class CInventoryInfo;
 
-class CFxHandle
-{
-public:
-	CFxHandle();
-
-	undefined4 field_0x0;
-	undefined* field_0x4;
-};
-
 struct MessageSoccerParams
 {
 	int field_0x0;
@@ -135,8 +126,8 @@ public:
 
 	virtual void Draw() = 0;
 	virtual void Reset() = 0;
-	virtual float GetValue() = 0;
 	virtual void SetValue(float value) = 0;
+	virtual float GetValue() = 0;
 };
 
 class CBehaviour : public CObject

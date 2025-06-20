@@ -314,18 +314,18 @@ namespace Renderer::Native::DisplayList
 		{
 			key.options.bBoundTexture = true;
 			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "", key};
-			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL TriList");
+			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Display List TriList");
 		}
 		{
 			key.options.bBoundTexture = false;
 			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylistnotex.frag.spv", "", key };
-			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL TriList No Tex");
+			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Display List TriList No Tex");
 		}
 		{
 			key.options.bBoundTexture = true;
 			key.options.topology = topologyLineList;
 			PipelineCreateInfo<DisplayListPipelineKey> createInfo{ "shaders/displaylist.vert.spv" , "shaders/displaylist.frag.spv", "shaders/displaylist.geom.spv", key};
-			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Previewer GLSL LineList");
+			DisplayList::CreatePipeline(createInfo, gRenderPass, "Native Display List LineList");
 		}
 	}
 

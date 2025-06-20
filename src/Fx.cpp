@@ -12,6 +12,12 @@
 #include "MathOps.h"
 #include "CameraViewManager.h"
 
+CFxHandle::CFxHandle()
+{
+	this->id = 0;
+	this->pFx = (CNewFx*)0x0;
+}
+
 CFxManager::CFxManager()
 {
 	CFxManager* local_a0_lo_24;
@@ -26,7 +32,7 @@ CFxManager::CFxManager()
 	memset(this->aEffectCategory, 0, sizeof(this->aEffectCategory));
 	memset(this->effectCountByType, 0, sizeof(this->effectCountByType));
 
-	this->aParticleClassSizes[FX_TYPE_COMPOSITE]	= sizeof(CFxComposite);
+	this->aParticleClassSizes[FX_TYPE_COMPOSITE]	= sizeof(CFxNewComposite);
 	this->aParticleClassSizes[FX_TYPE_PATH]			= sizeof(CFxPath);
 	this->aParticleClassSizes[FX_TYPE_GROUP]		= sizeof(CFxGroup);
 	this->aParticleClassSizes[FX_TYPE_PARTICLE]		= sizeof(CFxNewParticle);
@@ -281,7 +287,7 @@ void CFxManager::Level_Draw()
 		uVar1 = local_4;
 		while (local_4 = uVar1 - 1, uVar1 != 0) {
 			if (psVar4->field_0x8 == 0) {
-				psVar4->pFx->Draw();
+				reinterpret_cast<CFx*>(psVar4->pFx)->Draw();
 			}
 			else {
 				IMPLEMENTATION_GUARD();
@@ -459,6 +465,49 @@ uint CFxManager::AddFxClass(ByteCode* pByteCode, CFx** pOutEffectObj, int* outCl
 	}
 
 	return outCount;
+}
+
+void CFxManager::GetDynamicFx(CFxHandle* pHandle, uint param_3, FX_MATERIAL_SELECTOR selector)
+{
+	CNewFx* pNewFx;
+	uint i;
+	uint* pEffectCountIt;
+
+	if (param_3 == 0xffffffff) {
+		pNewFx = 0;
+	}
+	else {
+		pEffectCountIt = this->effectCountByType;
+		i = 0;
+
+		do {
+			if (param_3 < *pEffectCountIt) break;
+			i = i + 1;
+			param_3 = param_3 - *pEffectCountIt;
+			pEffectCountIt = pEffectCountIt + 1;
+		} while (i < 7);
+
+		pNewFx = static_cast<CNewFx*>(this->aEffectCategory[i]->InstanciateFx(param_3, selector));
+	}
+
+	pHandle->pFx = pNewFx;
+
+	if (pNewFx == (CNewFx*)0x0) {
+		pHandle->id = 0;
+	}
+	else {
+		pNewFx->field_0x18 = this->field_0x6c;
+		pHandle->id = this->field_0x6c;
+
+		if ((uint)this->field_0x6c < 0x7fffffff) {
+			this->field_0x6c = this->field_0x6c + 1;
+		}
+		else {
+			this->field_0x6c = 2;
+		}
+	}
+
+	return;
 }
 
 CNewFx::CNewFx()

@@ -6,6 +6,8 @@
 class edCTextStyle
 {
 public:
+	inline edCTextStyle() { Reset(); }
+
 	void TransformMatrix(float x, float y, edF32MATRIX4* outMatrix);
 	void SetRotation(float angle);
 	void GetScale(float* outX, float* outY);

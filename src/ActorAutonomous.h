@@ -141,6 +141,7 @@ public:
 	virtual void CheckpointReset();
 	virtual CBehaviour* BuildBehaviour(int behaviourType);
 	virtual bool CarriedByActor(CActor* pActor, edF32MATRIX4* m0);
+	virtual CVision* GetVision() { return (CVision*)0x0; }
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 	virtual StateConfig* GetStateCfg(int state);
 	virtual void ChangeManageState(int state);
@@ -150,21 +151,26 @@ public:
 	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
 
-	virtual CVision* GetVision() { return (CVision*)0x0; }
+	// CActorAutonomous
+	virtual CActorWindState* GetWindState();
 
-	void SetLookingAtOn(float param_1);
-	void SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation);
-	void SetLookingAt(float x, float y, float z);
-	void SetLookingAtBounds(float param_1, float param_2, float param_3, float param_4);
-	void SetLookingAtBones(uint leftBoneId, uint rightBoneId);
-
-	void _ManageDynamicFence(CActorsTable* pActorsTable);
 	virtual void StoreCollisionSphere();
 	virtual void ChangeCollisionSphere(float param_1, edF32VECTOR4* param_3, edF32VECTOR4* param_4);
 	virtual void UpdateCollisionSphere();
 	virtual void RestoreCollisionSphere(float param_2);
 
-	virtual CActorWindState* GetWindState();
+	virtual void SetLookingAtOn(float param_1);
+	virtual void SetLookingAtRotationHeight(float height, edF32VECTOR4* pRotation);
+	virtual void SetLookingAt(float x, float y, float z);
+	virtual void SetLookingAtBounds(float param_1, float param_2, float param_3, float param_4);
+	virtual void SetLookingAtBones(uint leftBoneId, uint rightBoneId);
+
+	virtual void LifeDecrease(float amount);
+	virtual void LifeIncrease(float amount);
+	virtual void LifeRestore();
+	virtual void LifeAnnihilate();
+	virtual CLifeInterface* GetLifeInterface();
+	virtual CLifeInterface* GetLifeInterfaceOther();
 
 	virtual float GetWalkSpeed();
 	virtual float GetWalkRotSpeed();
@@ -172,6 +178,13 @@ public:
 	virtual float GetRunSpeed();
 	virtual float GetRunRotSpeed();
 	virtual float GetRunAcceleration();
+
+	virtual CPathFinderClient* GetPathfinderClient() { return (CPathFinderClient*)0x0; }
+	virtual CPathFinderClient* GetPathfinderClientAlt() { return (CPathFinderClient*)0x0; }
+
+	// End CActorAutonomous
+
+	void _ManageDynamicFence(CActorsTable* pActorsTable);
 	
 	static StateConfig gStateCfg_AUT[1];
 
@@ -189,14 +202,6 @@ public:
 	void SV_AUT_MoveTo_FixDyn(CActorMovParamsOut* pParamsIn, CActorMovParamsIn* pParamsOut, edF32VECTOR4* pLocation);
 	void SV_AUT_PathfindingEnd();
 	bool SV_AUT_CanMoveTo(edF32VECTOR4* v0);
-
-	virtual void LifeRestore();
-	virtual CLifeInterface* GetLifeInterface();
-	virtual CLifeInterface* GetLifeInterfaceOther();
-	virtual void LifeDecrease(float amount);
-
-	virtual CPathFinderClient* GetPathfinderClient() { return (CPathFinderClient*)0x0; }
-	virtual CPathFinderClient* GetPathfinderClientAlt() { return (CPathFinderClient*)0x0; }
 
 	float field_0x2e4;
 

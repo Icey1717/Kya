@@ -714,10 +714,10 @@ void CActorFighter::Create(ByteCode* pByteCode)
 	(this->field_0x600).x = 0.0f;
 	(this->field_0x600).y = 0.85f;
 	(this->field_0x600).z = 0.4f;
+	(this->field_0x600).w = 0.0f;
 
 	//uVar2 = 0;
 	//ppuVar6 = &PTR_ParticleVTable_0048f900;
-	//(this->field_0x600).w = 0.0;
 	//do {
 	//	if (((uint)ppuVar6[0xb] & 1) == 0) {
 	//		FUN_00401470((int)ppuVar6, 4);
@@ -1619,6 +1619,11 @@ void CActorFighter::_Std_OnFightActionSuccess()
 	return;
 }
 
+CActorFighter* CActorFighter::_Std_GetCaughtAdversary()
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CActorFighter::_StateFighterRun(CActorsTable* pTable)
 {
 	_ManageFighterDyn(0x1d, 0x1002023b, pTable);
@@ -1805,6 +1810,16 @@ void CActorFighter::_Hold_GetPossibleExit()
 	}
 
 	return;
+}
+
+void CActorFighter::_BeginFighterHold()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorFighter::_EndFighterHold()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CActorFighter::_Proj_GetPossibleExit()
@@ -3891,7 +3906,7 @@ void CActorFighter::_LoadBlow(s_fighter_blow* pBlow, ByteCode* pByteCode)
 	} while (uVar6 < 2);
 	pBlow->nbBoneRefs = iVar7;
 	
-	pBlow->field_0x4c = pByteCode->GetF32();
+	pBlow->canActivateRange = pByteCode->GetF32();
 
 	pBlow->blowStageBegin.animId = pByteCode->GetS32();	
 	pBlow->blowStageBegin.field_0x4 = pByteCode->GetF32();	
@@ -5572,7 +5587,7 @@ void CActorFighter::_InitBlow(s_fighter_blow* pBlow)
 	pBlow->field_0x50 = fVar11 / fVar10;
 	pBlow->field_0x54 = pBlow->field_0xc + fVar13 / pBlow->blowStageEnd.field_0x4 + fVar11 / pBlow->blowStageBegin.field_0x4 + fVar12 / pBlow->blowStageExecute.field_0x4;
 	pBlow->field_0x10 = fVar12 / pBlow->blowStageExecute.field_0x4 + pBlow->field_0x10 * (fVar13 / pBlow->blowStageEnd.field_0x4);
-	pBlow->field_0x4c = pBlow->field_0x4c + pBlow->blowStageBegin.field_0x10.z + pBlow->blowStageExecute.field_0x10.z;
+	pBlow->canActivateRange = pBlow->canActivateRange + pBlow->blowStageBegin.field_0x10.z + pBlow->blowStageExecute.field_0x10.z;
 
 	uVar7 = 0;
 	if (pBlow->nbBoneRefs != 0) {
@@ -8455,6 +8470,22 @@ void StaticMeshComponentAdvanced::Reset()
 	else {
 		SetVisible((ed_3D_Scene*)0x0);
 	}
+
+	return;
+}
+
+void StaticMeshComponentAdvanced::SetHidden(ed_3D_Scene* pScene)
+{
+	StaticMeshComponent::SetHidden(pScene);
+	this->field_0x61 = 0;
+
+	return;
+}
+
+void StaticMeshComponentAdvanced::SetVisible(ed_3D_Scene* pScene)
+{
+	StaticMeshComponent::SetVisible(pScene);
+	this->field_0x61 = 1;
 
 	return;
 }

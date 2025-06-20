@@ -119,8 +119,6 @@ CFrontendEnemyList gFrontendEnemyList;
 
 CFrontendDisplay::CFrontendDisplay()
 {
-	this->pViewport = (ed_viewport*)0x0;
-	//FUN_001dcc10((long)&this->field_0x54);
 	this->bHideHUD = 0;
 	this->pHealthBar = &gFrontendLifeGauge;
 	this->pMagicOrbs = &gMagicGauge;
@@ -234,7 +232,7 @@ void CFrontendDisplay::Level_Init()
 	//FUN_003cb180(this->pMenuObj_0x6c);
 	//FUN_003c9370((long)(int)this->pMenuObj_0x74);
 
-	//(*(code*)this->pManagerFunctionData[1].field_0x0)(this, 4, &this->field_0x54);
+	DeclareInterface(FRONTEND_INTERFACE_FREED_WOLFEN, &this->interfaceEnemyCount);
 
 	ed3DSceneComputeCameraToScreenMatrix(CFrontend::_scene_handle, &this->field_0x10);
 
@@ -243,7 +241,7 @@ void CFrontendDisplay::Level_Init()
 
 void CFrontendDisplay::Level_Term()
 {
-	//(*(code*)this->pManagerFunctionData[1].field_0x0)(this, 4, 0);
+	DeclareInterface(FRONTEND_INTERFACE_FREED_WOLFEN, (CInterface*)0x0);
 
 	if (this->bHideHUD == 0) {
 		this->bHideHUD = 1;
@@ -376,6 +374,8 @@ void CFrontendDisplay::DeclareInterface(FRONTEND_INTERFACE interfaceType, CInter
 	case FRONTEND_INTERFACE_ACTION:
 		this->pFrontendAction->SetInterface(pInterface);
 		break;
+	case FRONTEND_INTERFACE_FREED_WOLFEN:
+		this->pFreedWolfun->SetInterface(pInterface);
 	default:
 		//IMPLEMENTATION_GUARD();
 		break;
@@ -415,4 +415,14 @@ void CFrontendMagicGauge::Magic_SetDisplay(unsigned char bNewVisible)
 		this->bVisible = bNewVisible;
 	}
 	return;
+}
+
+bool CInterfaceEnemyCount::Manage()
+{
+	return CScene::_pinstance->IsFadeTermActive() == false;
+}
+
+float CInterfaceEnemyCount::GetValue()
+{
+	return CLevelScheduler::ScenVar_Get(SCENE_VAR_FREED_WOLFEN);
 }

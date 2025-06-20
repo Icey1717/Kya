@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "Actor.h"
 #include "Fx_Spark.h"
+#include "Fx.h"
 
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;

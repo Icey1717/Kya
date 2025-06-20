@@ -1622,6 +1622,13 @@ void CActorAutonomous::LifeRestore()
 	return;
 }
 
+void CActorAutonomous::LifeAnnihilate()
+{
+	ACTOR_LOG(LogLevel::Info, "CActorAutonomous::LifeAnnihilate Setting life to 0.0f");
+	GetLifeInterfaceOther()->SetValue(0.0f);
+	return;
+}
+
 CLifeInterface* CActorAutonomous::GetLifeInterface()
 {
 	return &this->lifeInterface;
@@ -1654,6 +1661,18 @@ void CActorAutonomous::LifeDecrease(float amount)
 			pCVar1->SetValue(fVar3 - amount);
 		}
 	}
+	return;
+}
+
+void CActorAutonomous::LifeIncrease(float amount)
+{
+	if ((amount + GetLifeInterfaceOther()->GetValue()) < GetLifeInterfaceOther()->GetValueMax()) {
+		GetLifeInterfaceOther()->SetValue(amount + GetLifeInterfaceOther()->GetValue());
+	}
+	else {
+		GetLifeInterfaceOther()->SetValue(GetLifeInterfaceOther()->GetValueMax());
+	}
+
 	return;
 }
 

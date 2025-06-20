@@ -1261,3 +1261,13 @@ ed_3D_Scene* GetStaticMeshMasterA_001031b0(void)
 {
 	return CScene::_scene_handleA;
 }
+
+void CAudioManager::PlayCombatMusic()
+{
+	IMPLEMENTATION_GUARD_AUDIO();
+}
+
+void CAudioManager::StopCombatMusic()
+{
+	IMPLEMENTATION_GUARD_AUDIO();
+}

@@ -318,25 +318,25 @@ void CActorAmbre::ChangeManageState(int state)
 	IMPLEMENTATION_GUARD_FX(
 	if ((this->effectsStructC).field_0x8 != (undefined*)0xffffffff) {
 		if ((state == 0) || (this->actorState == 5)) {
-			piVar3 = (int*)(this->effectsStructC).field_0x4;
+			piVar3 = (int*)(this->effectsStructC).pFx;
 			if ((piVar3 == (int*)0x0) ||
-				((iVar2 = (this->effectsStructC).field_0x0, iVar2 == 0 || (bVar4 = true, iVar2 != piVar3[6])))) {
+				((iVar2 = (this->effectsStructC).id, iVar2 == 0 || (bVar4 = true, iVar2 != piVar3[6])))) {
 				bVar4 = false;
 			}
 			if (bVar4) {
-				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).field_0x0, iVar2 != 0)) && (iVar2 == piVar3[6]))
+				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == piVar3[6]))
 				{
 					(**(code**)(*piVar3 + 0xc))();
 				}
-				(this->effectsStructC).field_0x4 = (undefined*)0x0;
-				(this->effectsStructC).field_0x0 = 0;
+				(this->effectsStructC).pFx = (undefined*)0x0;
+				(this->effectsStructC).id = 0;
 			}
-			(this->effectsStructC).field_0x0 = 0;
-			(this->effectsStructC).field_0x4 = (undefined*)0x0;
+			(this->effectsStructC).id = 0;
+			(this->effectsStructC).pFx = (undefined*)0x0;
 		}
 		else {
-			puVar1 = (this->effectsStructC).field_0x4;
-			if (((puVar1 == (undefined*)0x0) || (iVar2 = (this->effectsStructC).field_0x0, iVar2 == 0)) ||
+			puVar1 = (this->effectsStructC).pFx;
+			if (((puVar1 == (undefined*)0x0) || (iVar2 = (this->effectsStructC).id, iVar2 == 0)) ||
 				(iVar2 != *(int*)(puVar1 + 0x18))) {
 				bVar4 = false;
 			}
@@ -346,18 +346,18 @@ void CActorAmbre::ChangeManageState(int state)
 			if (!bVar4) {
 				CFxHandle::SV_FX_Start(&this->effectsStructC);
 			}
-			piVar3 = (int*)(this->effectsStructC).field_0x4;
-			if (((piVar3 == (int*)0x0) || (iVar2 = (this->effectsStructC).field_0x0, iVar2 == 0)) ||
+			piVar3 = (int*)(this->effectsStructC).pFx;
+			if (((piVar3 == (int*)0x0) || (iVar2 = (this->effectsStructC).id, iVar2 == 0)) ||
 				(bVar4 = true, iVar2 != piVar3[6])) {
 				bVar4 = false;
 			}
 			if (bVar4) {
-				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).field_0x0, iVar2 != 0)) && (iVar2 == piVar3[6]))
+				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == piVar3[6]))
 				{
 					(**(code**)(*piVar3 + 0x38))(piVar3, 6, this);
 				}
-				piVar3 = (int*)(this->effectsStructC).field_0x4;
-				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).field_0x0, iVar2 != 0)) && (iVar2 == piVar3[6]))
+				piVar3 = (int*)(this->effectsStructC).pFx;
+				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == piVar3[6]))
 				{
 					(**(code**)(*piVar3 + 0x10))(0, 0);
 				}
@@ -440,8 +440,8 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 
 	IMPLEMENTATION_GUARD_FX(
 	pCVar6 = CActorHero::_gThis;
-	puVar1 = (this->effectsStructC).field_0x4;
-	if (((puVar1 == (undefined*)0x0) || (iVar8 = (this->effectsStructC).field_0x0, iVar8 == 0)) ||
+	puVar1 = (this->effectsStructC).pFx;
+	if (((puVar1 == (undefined*)0x0) || (iVar8 = (this->effectsStructC).id, iVar8 == 0)) ||
 		(iVar8 != *(int*)(puVar1 + 0x18))) {
 		bVar5 = false;
 	}
@@ -518,8 +518,8 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 			(**(code**)(*piVar2 + 0x24))(&DAT_bf800000);
 		}
 		if ((this->effectsStructC).field_0x8 != (undefined*)0xffffffff) {
-			puVar1 = (this->effectsStructC).field_0x4;
-			if (((puVar1 == (undefined*)0x0) || (iVar8 = (this->effectsStructC).field_0x0, iVar8 == 0)) ||
+			puVar1 = (this->effectsStructC).pFx;
+			if (((puVar1 == (undefined*)0x0) || (iVar8 = (this->effectsStructC).id, iVar8 == 0)) ||
 				(iVar8 != *(int*)(puVar1 + 0x18))) {
 				bVar5 = false;
 			}
@@ -527,19 +527,19 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 				bVar5 = true;
 			}
 			if (bVar5) {
-				piVar2 = (int*)(this->effectsStructC).field_0x4;
-				if (((piVar2 != (int*)0x0) && (iVar8 = (this->effectsStructC).field_0x0, iVar8 != 0)) && (iVar8 == piVar2[6]))
+				piVar2 = (int*)(this->effectsStructC).pFx;
+				if (((piVar2 != (int*)0x0) && (iVar8 = (this->effectsStructC).id, iVar8 != 0)) && (iVar8 == piVar2[6]))
 				{
 					(**(code**)(*piVar2 + 0xc))();
 				}
-				(this->effectsStructC).field_0x4 = (undefined*)0x0;
-				(this->effectsStructC).field_0x0 = 0;
+				(this->effectsStructC).pFx = (undefined*)0x0;
+				(this->effectsStructC).id = 0;
 			}
-			(this->effectsStructC).field_0x0 = 0;
-			(this->effectsStructC).field_0x4 = (undefined*)0x0;
+			(this->effectsStructC).id = 0;
+			(this->effectsStructC).pFx = (undefined*)0x0;
 			CFxHandle::SV_FX_Start(&this->effectsStructC);
-			puVar1 = (this->effectsStructC).field_0x4;
-			if (((puVar1 == (undefined*)0x0) || (iVar8 = (this->effectsStructC).field_0x0, iVar8 == 0)) ||
+			puVar1 = (this->effectsStructC).pFx;
+			if (((puVar1 == (undefined*)0x0) || (iVar8 = (this->effectsStructC).id, iVar8 == 0)) ||
 				(iVar8 != *(int*)(puVar1 + 0x18))) {
 				bVar5 = false;
 			}
@@ -547,13 +547,13 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 				bVar5 = true;
 			}
 			if (bVar5) {
-				piVar2 = (int*)(this->effectsStructC).field_0x4;
-				if (((piVar2 != (int*)0x0) && (iVar8 = (this->effectsStructC).field_0x0, iVar8 != 0)) && (iVar8 == piVar2[6]))
+				piVar2 = (int*)(this->effectsStructC).pFx;
+				if (((piVar2 != (int*)0x0) && (iVar8 = (this->effectsStructC).id, iVar8 != 0)) && (iVar8 == piVar2[6]))
 				{
 					(**(code**)(*piVar2 + 0x38))(piVar2, 6, this, 0);
 				}
-				piVar2 = (int*)(this->effectsStructC).field_0x4;
-				if (((piVar2 != (int*)0x0) && (iVar8 = (this->effectsStructC).field_0x0, iVar8 != 0)) && (iVar8 == piVar2[6]))
+				piVar2 = (int*)(this->effectsStructC).pFx;
+				if (((piVar2 != (int*)0x0) && (iVar8 = (this->effectsStructC).id, iVar8 != 0)) && (iVar8 == piVar2[6]))
 				{
 					(**(code**)(*piVar2 + 0x10))(0, 0);
 				}
@@ -646,34 +646,34 @@ int CBehaviourAmbre::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			(**(code**)(*piVar2 + 0x24))(&DAT_bf800000);
 		}
 		if ((pCVar1->effectsStructC).field_0x8 != (undefined*)0xffffffff) {
-			piVar2 = (int*)(pCVar1->effectsStructC).field_0x4;
-			if (((piVar2 == (int*)0x0) || (iVar5 = (pCVar1->effectsStructC).field_0x0, iVar5 == 0)) ||
+			piVar2 = (int*)(pCVar1->effectsStructC).pFx;
+			if (((piVar2 == (int*)0x0) || (iVar5 = (pCVar1->effectsStructC).id, iVar5 == 0)) ||
 				(bVar3 = true, iVar5 != piVar2[6])) {
 				bVar3 = false;
 			}
 			if (bVar3) {
-				if (((piVar2 != (int*)0x0) && (iVar5 = (pCVar1->effectsStructC).field_0x0, iVar5 != 0)) && (iVar5 == piVar2[6])
+				if (((piVar2 != (int*)0x0) && (iVar5 = (pCVar1->effectsStructC).id, iVar5 != 0)) && (iVar5 == piVar2[6])
 					) {
 					(**(code**)(*piVar2 + 0xc))();
 				}
-				(pCVar1->effectsStructC).field_0x4 = (undefined*)0x0;
-				(pCVar1->effectsStructC).field_0x0 = 0;
+				(pCVar1->effectsStructC).pFx = (undefined*)0x0;
+				(pCVar1->effectsStructC).id = 0;
 			}
-			(pCVar1->effectsStructC).field_0x0 = 0;
-			(pCVar1->effectsStructC).field_0x4 = (undefined*)0x0;
+			(pCVar1->effectsStructC).id = 0;
+			(pCVar1->effectsStructC).pFx = (undefined*)0x0;
 			CFxHandle::SV_FX_Start(&pCVar1->effectsStructC);
-			piVar2 = (int*)(pCVar1->effectsStructC).field_0x4;
-			if (((piVar2 == (int*)0x0) || (iVar5 = (pCVar1->effectsStructC).field_0x0, iVar5 == 0)) ||
+			piVar2 = (int*)(pCVar1->effectsStructC).pFx;
+			if (((piVar2 == (int*)0x0) || (iVar5 = (pCVar1->effectsStructC).id, iVar5 == 0)) ||
 				(bVar3 = true, iVar5 != piVar2[6])) {
 				bVar3 = false;
 			}
 			if (bVar3) {
-				if (((piVar2 != (int*)0x0) && (iVar5 = (pCVar1->effectsStructC).field_0x0, iVar5 != 0)) && (iVar5 == piVar2[6])
+				if (((piVar2 != (int*)0x0) && (iVar5 = (pCVar1->effectsStructC).id, iVar5 != 0)) && (iVar5 == piVar2[6])
 					) {
 					(**(code**)(*piVar2 + 0x38))(piVar2, 6, pCVar1, 0);
 				}
-				piVar2 = (int*)(pCVar1->effectsStructC).field_0x4;
-				if (((piVar2 != (int*)0x0) && (iVar5 = (pCVar1->effectsStructC).field_0x0, iVar5 != 0)) && (iVar5 == piVar2[6])
+				piVar2 = (int*)(pCVar1->effectsStructC).pFx;
+				if (((piVar2 != (int*)0x0) && (iVar5 = (pCVar1->effectsStructC).id, iVar5 != 0)) && (iVar5 == piVar2[6])
 					) {
 					(**(code**)(*piVar2 + 0x10))(0, 0);
 				}
@@ -739,8 +739,8 @@ int CBehaviourAmbre::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 				}
 			}
 			if ((((pCVar1->effectsStructC).field_0x8 != (undefined*)0xffffffff) &&
-				(piVar2 = (int*)(pCVar1->effectsStructC).field_0x4, piVar2 != (int*)0x0)) &&
-				((iVar5 = (pCVar1->effectsStructC).field_0x0, iVar5 != 0 && (iVar5 == piVar2[6])))) {
+				(piVar2 = (int*)(pCVar1->effectsStructC).pFx, piVar2 != (int*)0x0)) &&
+				((iVar5 = (pCVar1->effectsStructC).id, iVar5 != 0 && (iVar5 == piVar2[6])))) {
 				(**(code**)(*piVar2 + 0x24))(&DAT_bf800000);
 			}
 			bVar3 = (pCVar1->staticMesh).textureIndex != -1;

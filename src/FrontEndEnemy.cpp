@@ -426,19 +426,17 @@ void CFrontendEnemyList::Update(float time)
 	pEnemyIt = this->aEnemies;
 	do {
 		pCVar7 = (CLifeInterface*)pEnemyIt->GetInterface();
-		if ((pEnemyIt->state_0x37c == 2) && (pCVar7 != (CLifeInterface*)0x0)) {
-			iVar8 = pCVar7->GetPriority();
-			if ((iVar8 != 0) &&
-				((bVar6 = this->enemyInterfaceTable.Contains(pCVar7), bVar6 == false && ((this->enemyInterfaceTable).nbEntries < 0x11)))) {
+		if ((pEnemyIt->state_0x37c == FE_ENEMY_STATE_WAIT) && (pCVar7 != (CLifeInterface*)0x0)) {
+			if ((pCVar7->GetPriority() != 0) && ((this->enemyInterfaceTable.Contains(pCVar7) == false && ((this->enemyInterfaceTable).nbEntries < 0x11)))) {
 				this->enemyInterfaceTable.Add(pCVar7);
 			}
+
 			pEnemyIt->SetInterface((CInterface*)0x0);
 		}
 
 		if ((*pEnemyWidgetIt != 0x0) && ((*pEnemyWidgetIt)->GetInterface() != (CInterface*)0x0)) {
 			pCVar7 = (CLifeInterface*)(*pEnemyWidgetIt)->GetInterface();
-			iVar8 = pCVar7->GetPriority();
-			if (iVar8 == 0) {
+			if (pCVar7->GetPriority() == 0) {
 				ppWidget = this->aWidgets + iVar12;
 				pCVar9 = (*ppWidget)->GetInterface();
 				iVar13 = 0;
@@ -473,7 +471,7 @@ LAB_001d84a8:
 
 	CFrontendEnemy* pEnemy = this->aEnemies + iVar13;
 	iVar12 = pEnemy->state_0x37c;
-	if (iVar12 == 3) {
+	if (iVar12 == FE_ENEMY_STATE_ACTIVE) {
 		pEnemy->MoveToNext(this->aSlots + iVar11);
 		pEnemy->state_0x37c = 1;
 		pEnemy->field_0x384 = pEnemy->field_0x380;
@@ -521,9 +519,8 @@ LAB_001d8578:
 
 			if ((pWidget != (CFrontendEnemy*)0x0) && (iVar8 < iVar13)) {
 				pCVar7 = (CLifeInterface*)pWidget->GetInterface();
-				iVar12 = pCVar7->GetPriority();
-				if ((iVar12 < iVar11) &&
-					(((this->aWidgets[iVar8] == 0 || (this->aWidgets[iVar8]->state_0x37c == 3)) && (this->aWidgets[iVar8]->state_0x37c == 3)))) {
+				if ((iVar12 < pCVar7->GetPriority()) &&
+					(((this->aWidgets[iVar8] == (CFrontendEnemy*)0x0 || (this->aWidgets[iVar8]->state_0x37c == FE_ENEMY_STATE_ACTIVE)) && ((*pEnemyWidgetIt)->state_0x37c == FE_ENEMY_STATE_ACTIVE)))) {
 					// Swap.
 					CFrontendEnemy** pWidgeA = this->aWidgets + iVar13;
 					CFrontendEnemy** pWidgeB = this->aWidgets + iVar8;
@@ -905,14 +902,14 @@ void CFrontendEnemy::UpdatePos_StateWait(float time)
 	int iVar1;
 
 	iVar1 = this->state_0x37c;
-	if ((iVar1 != 3) && (iVar1 != 2)) {
+	if ((iVar1 != 3) && (iVar1 != FE_ENEMY_STATE_WAIT)) {
 		if (iVar1 == 1) {
-			this->state_0x37c = 2;
+			this->state_0x37c = FE_ENEMY_STATE_WAIT;
 			this->bVisible = 0;
 		}
 		else {
 			if (iVar1 == 0) {
-				this->state_0x37c = 3;
+				this->state_0x37c = FE_ENEMY_STATE_ACTIVE;
 			}
 		}
 	}
@@ -1120,7 +1117,7 @@ void CFrontendEnemy::ResetInternal()
 	this->spriteFillHit.SetParent(&this->spriteGauge);
 
 	this->field_0x378 = -1.0f;
-	this->state_0x37c = 2;
+	this->state_0x37c = FE_ENEMY_STATE_WAIT;
 	this->spriteFillLife.ClampX(this->fillLifeMin, this->fillLifeMax);
 	this->spriteFillHit.ClampX(this->fillLifeMin, this->fillLifeMax);
 

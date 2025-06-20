@@ -58,6 +58,18 @@ bool CParticleRes::Init()
 
 uint CFxParticleManager::_prt_bank_first_index = 0;
 
+void* CFxParticleManager::InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector)
+{
+	CFxNewParticle* pNewParticle;
+
+	pNewParticle = _InstanciateFx();
+	if ((pNewParticle != 0) && (param_2 != 0xffffffff)) {
+		pNewParticle->Instanciate(this->aScenaricData + param_2, selector);
+	}
+
+	return pNewParticle;
+}
+
 void CFxParticleManager::Level_Create(ByteCode* pByteCode)
 {
 	edCBankBufferEntry* pBankBufferEntry;
@@ -154,4 +166,9 @@ void CFxParticleScenaricData::Create(ByteCode* pByteCode)
 	this->nbData = this->nbData + 1;
 
 	return;
+}
+
+void CFxNewParticle::Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SELECTOR selector)
+{
+
 }

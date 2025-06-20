@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "Frontend.h"
 #include "LargeObject.h"
+#include "Actor.h"
 
 class CInterface;
 
@@ -28,7 +29,19 @@ public:
 
 class CFrontendLifeGauge;
 
-struct CFrontendDisplay : public CFrontend {
+class CInterfaceEnemyCount : public CInterface
+{
+public:
+	virtual bool Manage();
+
+	virtual void Draw() {}
+	virtual void Reset() {}
+	virtual void SetValue(float value) {}
+	virtual float GetValue();
+};
+
+struct CFrontendDisplay : public CFrontend
+{
 	CFrontendDisplay();
 
 	virtual void Game_Init();
@@ -58,7 +71,6 @@ struct CFrontendDisplay : public CFrontend {
 
 	void SetActive(bool bActive);
 
-	struct ed_viewport* pViewport;
 	undefined field_0x8;
 	undefined field_0x9;
 	undefined field_0xa;
@@ -72,10 +84,7 @@ struct CFrontendDisplay : public CFrontend {
 	undefined field_0x51;
 	undefined field_0x52;
 	undefined field_0x53;
-	undefined field_0x54;
-	undefined field_0x55;
-	undefined field_0x56;
-	undefined field_0x57;
+	CInterfaceEnemyCount interfaceEnemyCount;
 	CFrontendLifeGauge* pHealthBar;
 	class CFrontendMagicGauge* pMagicOrbs;
 	class CFrontendMoney* pMoney;

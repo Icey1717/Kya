@@ -7,9 +7,13 @@
 struct ed_g2d_manager;
 struct ByteCode;
 
+class CFxParticleScenaricData;
+
 class CFxNewParticle : public CNewFx
 {
-	
+public:
+	void Manage() { IMPLEMENTATION_GUARD(); }
+	void Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SELECTOR selector);
 };
 
 class CFxParticleScenaricData
@@ -54,6 +58,8 @@ class CFxParticleManager : public CFxPoolManager<CFxNewParticle, CFxParticleScen
 {
 public:
 	static uint _prt_bank_first_index;
+
+	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector);
 
 	static void Level_Create(ByteCode* pByteCode);
 

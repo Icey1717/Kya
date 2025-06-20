@@ -32,6 +32,9 @@ public:
 	CSprite sprite;
 };
 
+#define FE_ENEMY_STATE_WAIT 2
+#define FE_ENEMY_STATE_ACTIVE 3
+
 class CFrontendEnemy : public CFrontendBitmapGauge
 {
 public:

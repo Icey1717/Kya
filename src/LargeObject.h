@@ -65,6 +65,9 @@ public:
 	{
 		return nullptr;
 	}
+
+	void PlayCombatMusic();
+	void StopCombatMusic();
 };
 
 union ManagerContainer {

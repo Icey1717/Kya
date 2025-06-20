@@ -5914,12 +5914,12 @@ void CActorHeroPrivate::BehaviourHero_TermState(int oldState, int newState)
 
 			IMPLEMENTATION_GUARD_LOG(
 			pCVar3 = this->field_0x10fc;
-			piVar4 = (int*)pCVar3->field_0x4;
-			if (((piVar4 != (int*)0x0) && (pCVar3->field_0x0 != 0)) && (pCVar3->field_0x0 == piVar4[6])) {
+			piVar4 = (int*)pCVar3->pFx;
+			if (((piVar4 != (int*)0x0) && (pCVar3->id != 0)) && (pCVar3->id == piVar4[6])) {
 				(**(code**)(*piVar4 + 0xc))();
 			}
-			pCVar3->field_0x4 = (undefined*)0x0;
-			pCVar3->field_0x0 = 0;)
+			pCVar3->pFx = (undefined*)0x0;
+			pCVar3->id = 0;)
 		}
 	}
 LAB_00340ec0:
@@ -7076,8 +7076,8 @@ void CActorHeroPrivate::StateHeroToboggan(int param_2)
 	// Effect
 	IMPLEMENTATION_GUARD_LOG(
 	pCVar4 = this->field_0x10fc;
-	piVar5 = (int*)pCVar4->field_0x4;
-	if ((piVar5 != (int*)0x0) && (pCVar4->field_0x0 != 0)) {
+	piVar5 = (int*)pCVar4->pFx;
+	if ((piVar5 != (int*)0x0) && (pCVar4->id != 0)) {
 		(**(code**)(*piVar5 + 0x40))(fVar13 * fVar15);
 	})
 
@@ -12051,13 +12051,13 @@ void CActorHeroPrivate::StateHeroFlyTerm()
 	IMPLEMENTATION_GUARD_LOG(
 	pCVar1 = this->field_0x13c4;
 	if (((pCVar1 == (CFxHandle*)0x0) || (iVar2 = this->field_0x13c0, iVar2 == 0)) ||
-		(bVar3 = true, iVar2 != pCVar1[2].field_0x0)) {
+		(bVar3 = true, iVar2 != pCVar1[2].id)) {
 		bVar3 = false;
 	}
 	if (bVar3) {
 		if (((pCVar1 != (CFxHandle*)0x0) && (iVar2 = this->field_0x13c0, iVar2 != 0)) &&
-			(iVar2 == pCVar1[2].field_0x0)) {
-			(**(code**)(pCVar1->field_0x0 + 0xc))();
+			(iVar2 == pCVar1[2].id)) {
+			(**(code**)(pCVar1->id + 0xc))();
 		}
 		this->field_0x13c4 = (CFxHandle*)0x0;
 		this->field_0x13c0 = 0;
@@ -14994,8 +14994,8 @@ void CActorHeroPrivate::BeginToboggan()
 	if (pCVar1 != (CFxHandle*)0x0) {
 		CFxHandle::SV_FX_Start(pCVar1);
 		pCVar1 = this->field_0x110c;
-		piVar2 = (int*)pCVar1->field_0x4;
-		if (((piVar2 != (int*)0x0) && (iVar3 = pCVar1->field_0x0, iVar3 != 0)) && (iVar3 == piVar2[6])) {
+		piVar2 = (int*)pCVar1->pFx;
+		if (((piVar2 != (int*)0x0) && (iVar3 = pCVar1->id, iVar3 != 0)) && (iVar3 == piVar2[6])) {
 			(**(code**)(*piVar2 + 0x10))(0, 0);
 		}
 	}
@@ -15004,8 +15004,8 @@ void CActorHeroPrivate::BeginToboggan()
 	if (pCVar1 != (CFxHandle*)0x0) {
 		CFxHandle::SV_FX_Start(pCVar1);
 		pCVar1 = this->field_0x1110;
-		piVar2 = (int*)pCVar1->field_0x4;
-		if (((piVar2 != (int*)0x0) && (iVar3 = pCVar1->field_0x0, iVar3 != 0)) && (iVar3 == piVar2[6])) {
+		piVar2 = (int*)pCVar1->pFx;
+		if (((piVar2 != (int*)0x0) && (iVar3 = pCVar1->id, iVar3 != 0)) && (iVar3 == piVar2[6])) {
 			(**(code**)(*piVar2 + 0x10))(0, 0);
 		}
 	}
@@ -15135,22 +15135,22 @@ void CActorHeroPrivate::EndToboggan()
 	IMPLEMENTATION_GUARD_LOG(
 	pCVar1 = this->field_0x110c;
 	if (pCVar1 != (CFxHandle*)0x0) {
-		piVar2 = (int*)pCVar1->field_0x4;
-		if (((piVar2 != (int*)0x0) && (pCVar1->field_0x0 != 0)) && (pCVar1->field_0x0 == piVar2[6])) {
+		piVar2 = (int*)pCVar1->pFx;
+		if (((piVar2 != (int*)0x0) && (pCVar1->id != 0)) && (pCVar1->id == piVar2[6])) {
 			(**(code**)(*piVar2 + 0xc))();
 		}
-		pCVar1->field_0x4 = (undefined*)0x0;
-		pCVar1->field_0x0 = 0;
+		pCVar1->pFx = (undefined*)0x0;
+		pCVar1->id = 0;
 	}
 
 	pCVar1 = this->field_0x1110;
 	if (pCVar1 != (CFxHandle*)0x0) {
-		piVar2 = (int*)pCVar1->field_0x4;
-		if (((piVar2 != (int*)0x0) && (pCVar1->field_0x0 != 0)) && (pCVar1->field_0x0 == piVar2[6])) {
+		piVar2 = (int*)pCVar1->pFx;
+		if (((piVar2 != (int*)0x0) && (pCVar1->id != 0)) && (pCVar1->id == piVar2[6])) {
 			(**(code**)(*piVar2 + 0xc))();
 		}
-		pCVar1->field_0x4 = (undefined*)0x0;
-		pCVar1->field_0x0 = 0;
+		pCVar1->pFx = (undefined*)0x0;
+		pCVar1->id = 0;
 	}
 
 	pSVar3 = (StaticMeshComponent*)this->field_0x1114;
@@ -16762,19 +16762,6 @@ void CActorHeroPrivate::BuildHorizontalSpeedVector(float runSpeed, float param_2
 	return;
 }
 
-CLifeInterface* CActorHeroPrivate::GetLifeInterface()
-{
-	CLifeInterface* pLifeInterface;
-
-	pLifeInterface = &this->lifeInterface;
-
-	if (this->field_0xcbc != 0) {
-		pLifeInterface = &this->field_0xee4;
-	}
-
-	return pLifeInterface;
-}
-
 void CActorHeroPrivate::LifeDecrease(float amount)
 {
 	Timer* pTVar1;
@@ -16790,6 +16777,53 @@ void CActorHeroPrivate::LifeDecrease(float amount)
 	}
 
 	return;
+}
+
+void CActorHeroPrivate::LifeRestore()
+{
+	if (this->field_0xcbc == 0) {
+		this->lifeInterface.SetValue(CLevelScheduler::_gGameNfo.health);
+	}
+	else {
+		CActorAutonomous::LifeRestore();
+	}
+
+	return;
+}
+
+void CActorHeroPrivate::LifeAnnihilate()
+{
+	if (this->field_0xaa4 == 0) {
+		CActorAutonomous::LifeAnnihilate();
+	}
+
+	return;
+}
+
+CLifeInterface* CActorHeroPrivate::GetLifeInterface()
+{
+	CLifeInterface* pLifeInterface;
+
+	pLifeInterface = &this->lifeInterface;
+
+	if (this->field_0xcbc != 0) {
+		pLifeInterface = &this->field_0xee4;
+	}
+
+	return pLifeInterface;
+}
+
+CLifeInterface* CActorHeroPrivate::GetLifeInterfaceOther()
+{
+	CLifeInterface* pLifeInterface;
+
+	pLifeInterface = &this->lifeInterface;
+
+	if (this->field_0xcbc != 0) {
+		pLifeInterface = &this->field_0xee4;
+	}
+
+	return pLifeInterface;
 }
 
 void CActorHeroPrivate::SetInitialState()

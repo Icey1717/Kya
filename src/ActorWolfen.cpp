@@ -11,6 +11,7 @@
 #include "FrontEndDisp.h"
 #include "InputManager.h"
 #include <string>
+#include "kya.h"
 
 struct WolfenAnimMatrixData
 {
@@ -301,7 +302,7 @@ void CActorWolfen::Init()
 			s_fighter_blow* pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
 
 			fVar25 = pCurrentBlow->field_0x50;
-			fVar22 = pCurrentBlow->field_0x4c;
+			fVar22 = pCurrentBlow->canActivateRange;
 
 			do {
 				pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pCombo->actionHash.pData);
@@ -545,11 +546,11 @@ void CActorWolfen::Term()
 		this->field_0xb64 = (WolfenComboData*)0x0;
 	}
 
-	//if (this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) {
-	//	CActorWolfenKnowledge::Term(this->pWolfenKnowledge);
-	//	Free(this->pWolfenKnowledge);
-	//	this->pWolfenKnowledge = (CActorWolfenKnowledge*)0x0;
-	//}
+	if (this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) {
+		this->pWolfenKnowledge->Term();
+		delete this->pWolfenKnowledge;
+		this->pWolfenKnowledge = (CActorWolfenKnowledge*)0x0;
+	}
 
 	return;
 }
@@ -905,37 +906,32 @@ void CActorWolfen::ChangeManageState(int state)
 	CActorAutonomous::ChangeManageState(state);
 
 	iVar1 = this->curBehaviourId;
-	if (iVar1 == 5) {
-		IMPLEMENTATION_GUARD(
-		pCVar2 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-		(*(code*)pCVar2->pVTable[1].field_0x0.field_0x4)(pCVar2, state);)
+	if (iVar1 == FIGHTER_BEHAVIOUR_RIDDEN) {
+		CBehaviourFighterWolfen* pWolfenBehaviour = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(this->curBehaviourId));
+		pWolfenBehaviour->ManageExit();
 	}
 	else {
-		if (iVar1 == 4) {
-			IMPLEMENTATION_GUARD(
-			pCVar2 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-			(*(code*)pCVar2->pVTable[1].field_0x0.field_0x4)(pCVar2, state);)
+		if (iVar1 == FIGHTER_BEHAVIOUR_PROJECTED) {
+			CBehaviourFighterWolfen* pWolfenBehaviour = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(this->curBehaviourId));
+			pWolfenBehaviour->ManageExit();
 		}
 		else {
-			if (iVar1 == 3) {
+			if (iVar1 == FIGHTER_BEHAVIOUR_DEFAULT) {
 				CBehaviourFighterWolfen* pWolfenBehaviour = static_cast<CBehaviourFighterWolfen*>(GetBehaviour(this->curBehaviourId));
 				pWolfenBehaviour->ManageCombatMusic(state);
 			}
 			else {
-				if (iVar1 == 0xe) {
-					IMPLEMENTATION_GUARD(
-					pCVar2 = CActor::GetBehaviour((CActor*)this, this->curBehaviourId);
-					(*(code*)pCVar2->pVTable->SaveContext)(pCVar2, state);)
+				if (iVar1 == WOLFEN_BEHAVIOUR_EXORCISM) {
+					CBehaviourExorcism* pExorcismBehaviour = static_cast<CBehaviourExorcism*>(GetBehaviour(this->curBehaviourId));
+					pExorcismBehaviour->ChangeManageState(state);
 				}
 				else {
 					if (this->actorState == WOLFEN_STATE_TRACK_CHASE) {
 						if (state == 0) {
-							IMPLEMENTATION_GUARD_AUDIO(
-							FUN_001844c0(CScene::ptable.g_AudioManager_00451698);)
+							CScene::ptable.g_AudioManager_00451698->StopCombatMusic();
 						}
 						else {
-							IMPLEMENTATION_GUARD_AUDIO(
-							GlobalSound::Func_001844f0(CScene::ptable.g_AudioManager_00451698);)
+							CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();
 						}
 					}
 				}
@@ -944,17 +940,14 @@ void CActorWolfen::ChangeManageState(int state)
 	}
 
 	if (GetWeapon() != (CActorWeapon*)0x0) {
-		pCVar3 = GetWeapon();
-		pCVar4 = pCVar3->GetLinkFather();
+		pCVar4 = GetWeapon()->GetLinkFather();
 		if (pCVar4 == this) {
 			if (state == 0) {
-				pCVar3 = GetWeapon();
-				pCVar3->flags = pCVar3->flags & 0xfffffffc;
+				GetWeapon()->flags = GetWeapon()->flags & 0xfffffffc;
 			}
 			else {
-				pCVar3 = GetWeapon();
-				pCVar3->flags = pCVar3->flags | 2;
-				pCVar3->flags = pCVar3->flags & 0xfffffffe;
+				GetWeapon()->flags = GetWeapon()->flags | 2;
+				GetWeapon()->flags = GetWeapon()->flags & 0xfffffffe;
 			}
 		}
 	}
@@ -1441,6 +1434,33 @@ int CActorWolfen::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 	return 1;
 }
 
+CActorWindState* CActorWolfen::GetWindState()
+{
+	return &this->windState;
+}
+
+void CActorWolfen::LifeDecrease(float amount)
+{
+	CActorAutonomous::LifeDecrease(amount);
+
+	if (GetLifeInterfaceOther()->GetValue() == 0.0f) {
+		GetLifeInterfaceOther()->SetPriority(0);
+	}
+
+	return;
+}
+
+void CActorWolfen::LifeLifeAnnihilate()
+{
+	CActorAutonomous::LifeAnnihilate();
+
+	if (GetLifeInterfaceOther()->GetValue() == 0.0f) {
+		GetLifeInterfaceOther()->SetPriority(0);
+	}
+
+	return;
+}
+
 float CActorWolfen::GetWalkSpeed()
 {
 	return this->walkSpeed;
@@ -1481,6 +1501,61 @@ CPathFinderClient* CActorWolfen::GetPathfinderClientAlt()
 	return &pathFinderClient;
 }
 
+void CActorWolfen::SetFightBehaviour()
+{
+	CActorFighter* pCVar1;
+	bool bVar2;
+	long lVar3;
+
+	if (IsFightRelated(this->curBehaviourId) == false) {
+		if (this->pAdversary == (CActorFighter*)0x0) {
+			pCVar1 = this->pTargetActor_0xc80;
+			if ((pCVar1 != (CActorFighter*)0x0) && (pCVar1->IsKindOfObject(8) != false)) {
+				Func_0x204(pCVar1);
+			}
+		}
+
+		if (this->pAdversary == (CActorFighter*)0x0) {
+			SetBehaviour(FIGHTER_BEHAVIOUR_DEFAULT, -1, -1);
+		}
+		else {
+			if (this->pCommander->CanFightIntruder(this) == 0) {
+				this->pCommander->KickIntruderFighter();
+			}
+
+			if ((this->pCommander->BeginFightIntruder(this, this->pAdversary) != false) && (SetBehaviour(FIGHTER_BEHAVIOUR_DEFAULT, -1, -1) == false)) {
+				this->pCommander->EndFightIntruder(this);
+			}
+		}
+	}
+
+	return;
+}
+
+int CActorWolfen::GetFightBehaviour()
+{
+	return FIGHTER_BEHAVIOUR_DEFAULT;
+}
+
+void CActorWolfen::ProcessDeath()
+{
+	SetBehaviour(WOLFEN_BEHAVIOUR_EXORCISM, WOLFEN_STATE_EXORCISE_IDLE, CActorFighter::_SV_ANM_GetTwoSidedAnim(0x75, (int)this->field_0x7dc));
+	return;
+}
+
+bool CActorWolfen::IsFightRelated(int behaviourId)
+{
+	bool bIsFightRelated;
+
+	bIsFightRelated = behaviourId == WOLFEN_BEHAVIOUR_EXORCISM;
+	if (!bIsFightRelated) {
+		bIsFightRelated = CActorFighter::IsFightRelated(behaviourId);
+		bIsFightRelated = bIsFightRelated != false;
+	}
+
+	return bIsFightRelated;
+}
+
 bool CActorWolfen::Func_0x19c()
 {
 	bool uVar1;
@@ -1507,6 +1582,37 @@ void CActorWolfen::_Std_OnFightActionSuccess()
 	DoMessage(this->pCommander, MESSAGE_FIGHT_ACTION_SUCCESS, &params);
 
 	return;
+}
+
+CActorFighter* CActorWolfen::_Std_GetCaughtAdversary()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorWolfen::_StateFighterRun(CActorsTable* pTable)
+{
+	int collideWithBoxState;
+	CActorsTable actorsTable;
+
+	actorsTable.nbEntries = 0;
+	CActorFighter::_StateFighterRun(&actorsTable);
+	collideWithBoxState = SV_WLF_CheckBoxOnWay(&actorsTable);
+
+	if (collideWithBoxState != -1) {
+		SetState(collideWithBoxState, -1);
+	}
+
+	return;
+}
+
+void CActorWolfen::_BeginFighterHold()
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CActorWolfen::_EndFighterHold()
+{
+	IMPLEMENTATION_GUARD();
 }
 
 void CActorWolfen::Func_0x204(CActorFighter* pOther)
@@ -1592,6 +1698,11 @@ bool CActorWolfen::AcquireAdversary(CActorFighter* pTarget)
 	}
 
 	return bSuccess;
+}
+
+void CActorWolfen::AcquireAdversary()
+{
+	return;
 }
 
 void CActorWolfen::SetRunSpeed(float param_1)
@@ -1958,24 +2069,22 @@ void CActorWolfen::ManageKnowledge()
 	CActorFighter* pAdv;
 	CActorWolfenKnowledge* pKnowledge;
 
-	if (((this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) &&
-		(pAdv = this->pAdversary, pAdv != (CActorFighter*)0x0)) && ((CActorWolfen*)pAdv->pAdversary == this)) {
-		IMPLEMENTATION_GUARD(
+	if (((this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) && (pAdv = this->pAdversary, pAdv != (CActorFighter*)0x0)) && (pAdv->pAdversary == this)) {
 		if (((pAdv->pFighterCombo != (s_fighter_combo*)0x0) &&
-			(bVar3 = CActorFighter::FUN_0031b790(pAdv, (pAdv->characterBase).base.base.actorState), bVar3 != false)) &&
+			(bVar3 = pAdv->FUN_0031b790(pAdv->actorState), bVar3 != false)) &&
 			(pFighterCombo = pAdv->pFighterCombo,
-				fVar1 = (pAdv->characterBase).base.base.currentLocation.x -
-				this->currentLocation.x,
-				fVar2 = (pAdv->characterBase).base.base.currentLocation.z -
-				this->currentLocation.z,
-				fVar1 * fVar1 + fVar2 * fVar2 <=
-				*(float*)(pFighterCombo->actionHash + 0x4c) * *(float*)(pFighterCombo->actionHash + 0x4c) * 1.25)) {
+				fVar1 = pAdv->currentLocation.x - this->currentLocation.x,
+				fVar2 = pAdv->currentLocation.z - this->currentLocation.z,
+				fVar1 * fVar1 + fVar2 * fVar2 <= 
+				LOAD_SECTION_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData)->canActivateRange * 
+				LOAD_SECTION_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData)->canActivateRange * 1.25f)) {
+
 			pKnowledge = this->pWolfenKnowledge;
 			if (pKnowledge->field_0x1c == 0) {
-				CActorWolfenKnowledge::BeginMemory(pKnowledge, pFighterCombo);
+				pKnowledge->BeginMemory(pFighterCombo);
 			}
 			else {
-				CActorWolfenKnowledge::NextStage(pKnowledge, pFighterCombo);
+				pKnowledge->NextStage(pFighterCombo);
 			}
 
 			if (this->pWolfenKnowledge->field_0x2c == 1) {
@@ -1983,10 +2092,9 @@ void CActorWolfen::ManageKnowledge()
 			}
 		}
 
-		if ((this->pWolfenKnowledge->field_0x1c != 0) &&
-			(bVar3 = CActorFighter::FUN_0031b790(pAdv, (pAdv->characterBase).base.base.actorState), bVar3 == false)) {
-			CActorWolfenKnowledge::EndMemory(this->pWolfenKnowledge);
-		})
+		if ((this->pWolfenKnowledge->field_0x1c != 0) && (pAdv->FUN_0031b790(pAdv->actorState) == false)) {
+			this->pWolfenKnowledge->EndMemory();
+		}
 	}
 
 	return;
@@ -2731,6 +2839,44 @@ void CActorWolfen::BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour)
 	pBehaviour->bool_0x68 = bVar4;
 	
 	NEW_FUN_B(pBehaviour);
+}
+
+void CActorWolfen::BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour)
+{
+	switch (this->actorState) {
+	case WOLFEN_STATE_EXORCISE_IDLE:
+		StateExorcizeIdle(pBehaviour);
+		break;
+	case WOLFEN_STATE_EXORCISE_EXORCIZE:
+		IMPLEMENTATION_GUARD(
+		StateExorcize(this, pBehaviour);)
+		break;
+	case 0x7b:
+		IMPLEMENTATION_GUARD(
+		FUN_00176910(this);)
+		break;
+	case 0x7c:
+		IMPLEMENTATION_GUARD(
+		FUN_001767f0(this);)
+		break;
+	case 0x7d:
+		IMPLEMENTATION_GUARD(
+		FUN_00176910(this);)
+		break;
+	case WOLFEN_STATE_EXORCISE_AWAKE:
+		IMPLEMENTATION_GUARD(
+		StateExorcizeAwake(this, pBehaviour);)
+		break;
+	case 0x7f:
+		IMPLEMENTATION_GUARD(
+		FUN_001763c0(this);)
+		break;
+	case 0x80:
+		IMPLEMENTATION_GUARD(
+		FUN_001762f0();)
+	}
+
+	return;
 }
 
 void CActorWolfen::BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour)
@@ -4432,6 +4578,28 @@ void CActorWolfen::StateTrackDefend(CBehaviourTrack* pBehaviour)
 	return;
 }
 
+void CActorWolfen::StateExorcizeIdle(CBehaviourExorcism* pBehaviour)
+{
+	CLifeInterface* pCVar1;
+	float fVar2;
+
+	fVar2 = GetLifeInterface()->GetValue();
+	if ((0.0f < fVar2) && (pBehaviour->field_0x18 < this->timeInAir)) {
+		SetState(WOLFEN_STATE_EXORCISE_AWAKE, -1);
+	}
+
+	this->flags = this->flags | 0x200000;
+
+	if (((this->pCollisionData)->flags_0x4 & 2) == 0) {
+		this->field_0x684 = 1;
+		this->hitFlags = 4;
+		this->field_0x6b0 = 0.0f;
+		SetBehaviour(FIGHTER_BEHAVIOUR_PROJECTED, 0x56, -1);
+	}
+
+	return;
+}
+
 void CActorWolfen::StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour)
 {
 	CActorCommander* pCVar1;
@@ -4560,9 +4728,9 @@ void CActorWolfen::ClearLocalData()
 	TermFightAction();
 
 	if (this->pWolfenKnowledge != (CActorWolfenKnowledge*)0x0) {
-		//this->pWolfenKnowledge->Reset();
-		//this->field_0xb6c = 0xffffffff;
-		//this->field_0xb70 = 1;
+		this->pWolfenKnowledge->Reset();
+		this->field_0xb6c = 0xffffffff;
+		this->field_0xb70 = 1;
 	}
 
 	if (this->field_0xb74 == 3) {
@@ -5356,6 +5524,25 @@ void CActorWolfen::DisableFightAction()
 	}
 
 	return;
+}
+
+bool CActorWolfen::FUN_00173de0(CActorFighter* pAdversary)
+{
+	bool bVar1;
+	float fVar2;
+	float fVar3;
+
+	fVar2 = pAdversary->currentLocation.x - this->currentLocation.x;
+	fVar3 = pAdversary->currentLocation.z - this->currentLocation.z;
+	bVar1 = this->field_0xb94 <= sqrtf(fVar2 * fVar2 + 0.0f + fVar3 * fVar3);
+	if (!bVar1) {
+		bVar1 = this->field_0xb98 < fabs((this->distanceToGround +
+				this->currentLocation.y) -
+				(pAdversary->distanceToGround +
+					pAdversary->currentLocation.y));
+	}
+
+	return bVar1;
 }
 
 void CActorWolfen::UpdateCombatMode()
@@ -7693,7 +7880,7 @@ void CBehaviourFighterWolfen::UpdateFightContext(CFightContext* pFightContext)
 
 		bVar3 = pFightContext->field_0x0;
 		bVar8 = pFighter->FUN_0031b790(pFighter->actorState);
-		if (((bVar8 != true) || (pFighter->pBlow == (s_fighter_blow*)0x0)) || (pFighter->pBlow->field_0x4c < fVar12 - 0.5))
+		if (((bVar8 != true) || (pFighter->pBlow == (s_fighter_blow*)0x0)) || (pFighter->pBlow->canActivateRange < fVar12 - 0.5))
 		{
 			pFightContext->field_0x0 = pFightContext->field_0x0 & 0xfd;
 		}
@@ -7893,7 +8080,7 @@ void CBehaviourFighterWolfen::InitCommand(uint commandId)
 									bVar1 = (this->field_0x74).field_0x1;
 									(this->field_0x74).field_0x1 = bVar1 & 0xf0 | bVar1 & 0xf | 2;
 									psVar4 = this->pOwner->FindBlowByName("BASE_CATCH");
-									if ((psVar4 == (s_fighter_blow*)0x0) || (psVar4->field_0x4c < (this->fightContext).field_0xc)) {
+									if ((psVar4 == (s_fighter_blow*)0x0) || (psVar4->canActivateRange < (this->fightContext).field_0xc)) {
 										this->pActiveCombo = (s_fighter_combo*)0x0;
 										this->pActiveBlow = (s_fighter_blow*)0x0;
 										this->field_0x70 = 0;
@@ -8125,29 +8312,24 @@ void CBehaviourFighterWolfen::ExecuteCommand(uint param_2, uint param_3)
 					}
 					else {
 						if (param_2 == 0x10000) {
-							IMPLEMENTATION_GUARD(
-							pCVar3 = this->pOwner;
-							local_50 = (this->holdPosition).x - (pCVar3->base).characterBase.base.base.currentLocation.x;
-							fStack72 = (this->holdPosition).z - (pCVar3->base).characterBase.base.base.currentLocation.z;
-							fStack68 = (this->holdPosition).w - (pCVar3->base).characterBase.base.base.currentLocation.w;
+							pCVar3 = static_cast<CActorWolfen*>(this->pOwner);
+							local_50 = (this->holdPosition).x - pCVar3->currentLocation.x;
+							fStack72 = (this->holdPosition).z - pCVar3->currentLocation.z;
+							fStack68 = (this->holdPosition).w - pCVar3->currentLocation.w;
 							local_4c = 0;
-							if (((this->field_0x50 < SQRT(local_50 * local_50 + 0.0 + fStack72 * fStack72)) && (this->field_0x3c != 0)
-								) && ((this->pOwner->fightFlags & 1) == 0)) {
+							if (((this->field_0x50 < sqrtf(local_50 * local_50 + 0.0f + fStack72 * fStack72)) && (this->field_0x3c != 0)) && ((this->pOwner->fightFlags & 1) == 0)) {
 								movParamsOutA.flags = 0;
 								movParamsInA.pRotation = (edF32VECTOR4*)0x0;
-								movParamsInA.speed = 0.0;
+								movParamsInA.speed = 0.0f;
 								movParamsInA.flags = 0x110;
-								movParamsInA.rotSpeed =
-									(float)(*(code*)(this->pOwner->pVTable)->GetRunRotSpeed)();
+								movParamsInA.rotSpeed = pCVar3->GetRunRotSpeed();
 								movParamsInA.flags = movParamsInA.flags | 2;
-								movParamsInA.acceleration =
-									(float)(*(code*)(this->pOwner->pVTable)->GetRunAcceleration)();
-								movParamsInA.speed =
-									(float)(*(code*)(this->pOwner->pVTable)->GetRunSpeed)();
-								movParamsInA.speed = movParamsInA.speed * 2.0;
+								movParamsInA.acceleration = pCVar3->GetRunAcceleration();
+								movParamsInA.speed = pCVar3->GetRunSpeed();
+								movParamsInA.speed = movParamsInA.speed * 2.0f;
 								movParamsInA.flags = movParamsInA.flags | 0x400;
-								CActorWolfen::SV_WLF_MoveTo(this->pOwner, &movParamsOutA, &movParamsInA, &this->holdPosition);
-							})
+								pCVar3->SV_WLF_MoveTo(&movParamsOutA, &movParamsInA, &this->holdPosition);
+							}
 						}
 						else {
 							if ((param_2 == 0x4000) || (param_2 == 0x8000)) {
@@ -8937,7 +9119,7 @@ void CActorWolfenKnowledge::Init(int memMode, uint param_3, uint param_4, uint n
 	uVar4 = 0;
 	if (this->nbSubObjs != 0) {
 		do {
-			this->aSubObjs[uVar4].field_0x4 = edMemAlloc(TO_HEAP(H_MAIN), iVar1 * sizeof(void*));
+			this->aSubObjs[uVar4].field_0x4 = reinterpret_cast<f4data*>(edMemAlloc(TO_HEAP(H_MAIN), iVar1 * sizeof(f4data)));
 			uVar4 = uVar4 + 1;
 		} while (uVar4 < this->nbSubObjs);
 	}
@@ -8954,9 +9136,9 @@ void CActorWolfenKnowledge::Reset()
 	uVar2 = 0;
 	if (this->nbSubObjs != 0) {
 		do {
-			memset(this->aSubObjs[uVar2].field_0x4, 0xff, this->field_0xc * sizeof(void*));
+			memset(this->aSubObjs[uVar2].field_0x4, 0xff, this->field_0xc * sizeof(f4data));
 			this->aSubObjs[uVar2].field_0x8 = 0;
-			this->aSubObjs[uVar2].field_0x0 = 0;
+			this->aSubObjs[uVar2].field_0x0 = (s_fighter_combo*)0x0;
 			this->aSubObjs[uVar2].field_0xc = 0;
 			this->aSubObjs[uVar2].field_0x10 = 0;
 			uVar2 = uVar2 + 1;
@@ -8964,13 +9146,153 @@ void CActorWolfenKnowledge::Reset()
 	}
 
 	this->field_0x4 = 0;
-	this->field_0x20 = (s_fighter_combo*)0x0;
-	this->field_0x24 = 0;
+	this->field_0x20 = (CActorWolfenKnowledge_0x14*)0x0;
+	this->field_0x24 = (f4data*)0;
 	this->field_0x28 = (s_fighter_combo*)0x0;
 	this->field_0x2c = 0;
 	this->field_0x1c = 0;
 
 	return;
+}
+
+void CActorWolfenKnowledge::Term()
+{
+	uint uVar1;
+
+	if (this->aSubObjs != (CActorWolfenKnowledge_0x14*)0x0) {
+		uVar1 = 0;
+		if (this->nbSubObjs != 0) {
+			do {
+				edMemFree(this->aSubObjs + uVar1);
+				uVar1 = uVar1 + 1;
+			} while (uVar1 < this->nbSubObjs);
+		}
+
+		edMemFree(this->aSubObjs);
+		this->aSubObjs = (CActorWolfenKnowledge_0x14*)0x0;
+	}
+
+	return;
+}
+
+int CActorWolfenKnowledge::BeginMemory(s_fighter_combo* pFighterCombo)
+{
+	CActorWolfenKnowledge_0x14* psVar1;
+	CActorWolfenKnowledge_0x14* psVar2;
+	uint uVar4;
+
+	if ((pFighterCombo->field_0x4.field_0x0ushort & 0x200U) != 0) {
+		psVar1 = (CActorWolfenKnowledge_0x14*)0x0;
+		uVar4 = 0;
+		while ((uVar4 < this->nbSubObjs && (psVar1 == (CActorWolfenKnowledge_0x14*)0x0))) {
+			psVar2 = this->aSubObjs + uVar4;
+			if (psVar2->field_0x0 == pFighterCombo) {
+				psVar1 = psVar2;
+			}
+			uVar4 = uVar4 + 1;
+		}
+
+		this->field_0x20 = psVar1;
+		psVar1 = this->field_0x20;
+		if (psVar1 != (CActorWolfenKnowledge_0x14*)0x0) {
+			psVar1->field_0x10 = psVar1->field_0x10 + 1;
+			this->field_0x24 = this->field_0x20->field_0x4;
+			this->field_0x28 = pFighterCombo;
+			this->field_0x2c = 1;
+			this->field_0x1c = 2;
+			return this->field_0x1c;
+		}
+
+		psVar1 = _AddComboRoot(pFighterCombo);
+		this->field_0x20 = psVar1;
+		if (this->field_0x20 != (CActorWolfenKnowledge_0x14*)0x0) {
+			uVar4 = 0;
+			if (this->nbSubObjs != 0) {
+				do {
+					psVar1 = this->aSubObjs + uVar4;
+					if ((this->field_0x20 != psVar1) && (psVar1->field_0x0 != (s_fighter_combo*)0x0)) {
+						psVar1->field_0xc = psVar1->field_0xc + 1;
+					}
+
+					uVar4 = uVar4 + 1;
+				} while (uVar4 < this->nbSubObjs);
+			}
+
+			this->field_0x24 = this->field_0x20->field_0x4;
+			this->field_0x28 = pFighterCombo;
+			this->field_0x2c = 1;
+			this->field_0x1c = 1;
+
+			return this->field_0x1c;
+		}
+	}
+
+	this->field_0x24 = (f4data*)0x0;
+	this->field_0x28 = (s_fighter_combo*)0x0;
+	this->field_0x2c = 0;
+	this->field_0x1c = 0;
+
+	return this->field_0x1c;
+}
+
+float WLF_KNW_MAX_DODGABLE_DIST$14420 = 0.3f;
+
+int CActorWolfenKnowledge::NextStage(s_fighter_combo* pFighterCombo)
+{
+	byte bVar1;
+	s_fighter_combo* psVar2;
+	f4data* pvVar3;
+	bool bVar4;
+	ushort uVar5;
+	int iVar6;
+	f4data* piVar7;
+	uint uVar8;
+
+	psVar2 = this->field_0x28;
+	if (psVar2 == pFighterCombo) {
+		this->field_0x2c = 0;
+	}
+	else {
+		uVar8 = 0;
+		bVar4 = false;
+		while ((uVar8 < psVar2->nbBranches && (!bVar4))) {
+			if (LOAD_SECTION_CAST(s_fighter_combo*, psVar2->aBranches[uVar8].pData) == pFighterCombo) {
+				bVar4 = true;
+			}
+			else {
+				uVar8 = uVar8 + 1;
+			}
+		}
+
+		pvVar3 = this->field_0x24;
+		piVar7 = this->field_0x20->field_0x4 + (pvVar3->field_0x1byte + uVar8);
+		if (piVar7->field_0x0uint == 0xffffffff) {
+			uVar5 = 0;
+			s_fighter_blow* pCurrentBlow = LOAD_SECTION_CAST(s_fighter_blow*, pFighterCombo->actionHash.pData);
+			if (WLF_KNW_MAX_DODGABLE_DIST$14420 < pCurrentBlow->field_0x50) {
+				bVar1 = pCurrentBlow->field_0x4.field_0x0byte;
+				uVar5 = (ushort)((bVar1 & 4) == 0);
+				if ((bVar1 & 2) == 0) {
+					uVar5 = uVar5 | 2;
+				}
+			}
+
+			pvVar3->field_0x0ushort = pvVar3->field_0x0ushort & uVar5;
+			this->field_0x24 = piVar7;
+			this->field_0x24->field_0x0byte = pFighterCombo->nbBranches;
+			this->field_0x24->field_0x1byte = this->field_0x20->field_0x8;
+			this->field_0x20->field_0x8 = this->field_0x20->field_0x8 + this->field_0x24->field_0x0byte;
+			this->field_0x1c = 1;
+		}
+		else {
+			this->field_0x24 = piVar7;
+		}
+
+		this->field_0x28 = pFighterCombo;
+		this->field_0x2c = 1;
+	}
+
+	return this->field_0x1c;
 }
 
 void CActorWolfenKnowledge::EndMemory()
@@ -8979,7 +9301,7 @@ void CActorWolfenKnowledge::EndMemory()
 	uint uVar3;
 
 	this->field_0x1c = 0;
-	this->field_0x20 = (s_fighter_combo*)0x0;
+	this->field_0x20 = (CActorWolfenKnowledge_0x14*)0x0;
 	this->field_0x24 = 0;
 	this->field_0x28 = (s_fighter_combo*)0x0;
 
@@ -8999,6 +9321,69 @@ void CActorWolfenKnowledge::EndMemory()
 
 	return;
 }
+
+
+CActorWolfenKnowledge_0x14* CActorWolfenKnowledge::_AddComboRoot(s_fighter_combo* pFighterCombo)
+{
+	uint uVar1;
+	CActorWolfenKnowledge_0x14* pCVar2;
+	uint uVar4;
+	uint uVar5;
+	CActorWolfenKnowledge_0x14* pCVar6;
+
+	uVar5 = 0;
+	pCVar6 = (CActorWolfenKnowledge_0x14*)0x0;
+	uVar1 = this->nbSubObjs;
+	while ((uVar5 < uVar1 && (pCVar6 == (CActorWolfenKnowledge_0x14*)0x0))) {
+		pCVar2 = this->aSubObjs + uVar5;
+		if (pCVar2->field_0x0 == (s_fighter_combo*)0x0) {
+			pCVar6 = pCVar2;
+		}
+
+		uVar5 = uVar5 + 1;
+	}
+
+	if (pCVar6 == (CActorWolfenKnowledge_0x14*)0x0) {
+		if (this->memMode != 2) {
+			uVar5 = 0;
+			uVar4 = 1;
+			if (1 < uVar1) {
+				pCVar6 = this->aSubObjs;
+				do {
+					if (this->aSubObjs[uVar5].field_0xc < pCVar6[1].field_0xc) {
+						uVar5 = uVar4;
+					}
+
+					uVar4 = uVar4 + 1;
+					pCVar6 = pCVar6 + 1;
+				} while (uVar4 < uVar1);
+			}
+
+			pCVar6 = this->aSubObjs + uVar5;
+			pCVar6->field_0x0 = (s_fighter_combo*)0x0;
+			this->aSubObjs[uVar5].field_0xc = 0;
+			this->aSubObjs[uVar5].field_0x10 = 0;
+			memset(this->aSubObjs[uVar5].field_0x4, 0xff, this->field_0xc * sizeof(void*));
+			this->aSubObjs[uVar5].field_0x8 = 0;
+		}
+	}
+	else {
+		this->field_0x4 = this->field_0x4 + 1;
+	}
+
+	if (pCVar6 != (CActorWolfenKnowledge_0x14*)0x0) {
+		pCVar6->field_0x0 = pFighterCombo;
+		pCVar6->field_0xc = 0;
+		pCVar6->field_0x10 = 0;
+		pCVar6->field_0x8 = pFighterCombo->nbBranches + 1;
+		pCVar6->field_0x4->field_0x1byte = 1;
+		pCVar6->field_0x4->field_0x0byte = pFighterCombo->nbBranches;
+	}
+
+	return pCVar6;
+}
+
+
 
 void CBehaviourGuardArea::Create(ByteCode* pByteCode)
 {
@@ -9152,4 +9537,456 @@ int CBehaviourGuardArea::GetTrackBehaviour()
 int CBehaviourGuardArea::GetStateWolfenGuard()
 {
 	return 0x8c;
+}
+
+void CBehaviourWolfenFighterProjected::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CFrontendDisplay* pCVar1;
+
+	CBehaviourFighterProjected::Begin(pOwner, newState, newAnimationType);
+
+	pCVar1 = CScene::ptable.g_FrontendManager_00451680;
+	if (0.0f < this->pOwner->GetLifeInterfaceOther()->GetValue()) {
+		pCVar1->DeclareInterface(FRONTEND_INTERFACE_ENEMY_LIST, this->pOwner->GetLifeInterfaceOther());
+	}
+
+	CScene::ptable.g_AudioManager_00451698->PlayCombatMusic();
+
+	return;
+}
+
+void CBehaviourWolfenFighterProjected::End(int newBehaviourId)
+{
+	CActorWolfen* pWolfen;
+	uint uVar1;
+
+	CBehaviourFighterProjected::End(newBehaviourId);
+
+	CScene::ptable.g_AudioManager_00451698->StopCombatMusic();
+
+	pWolfen = static_cast<CActorWolfen*>(this->pOwner);
+	if ((CActorHero::_gThis == pWolfen->pAdversary) && (pWolfen->FUN_00173de0(pWolfen->pAdversary) != 0)) {
+		CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pWolfen);
+		pWolfen->pCommander->EndFightIntruder(pWolfen);
+		pWolfen->SetAdversary((CActorFighter*)0x0);
+	}
+	return;
+}
+
+class StaticMeshComponentAdvancedEx : public StaticMeshComponentAdvanced
+{
+public:
+
+};
+
+#define IMPLEMENTATION_GUARD_ASTRUCT_5(...)
+
+struct astruct_5
+{
+	astruct_5()
+	{
+		this->flags = 0;
+	}
+
+	void Create(ByteCode* pByteCode) { IMPLEMENTATION_GUARD_ASTRUCT_5(); }
+	void Term() { IMPLEMENTATION_GUARD_ASTRUCT_5(); }
+
+	StaticMeshComponentAdvancedEx aStaticMeshComponents[8];
+	uint flags;
+} astruct_5_00456980;
+
+CBehaviourExorcism::CBehaviourExorcism()
+{
+	this->fxDigits.field_0x0 = (ParticleInfo*)0x0;
+	this->field_0x2c.id = 0;
+	this->field_0x30 = (int*)0x0;
+}
+
+void CBehaviourExorcism::Create(ByteCode* pByteCode)
+{
+	this->digitMaterialId = pByteCode->GetS32();
+	this->field_0x24 = pByteCode->GetS32();
+	this->aSubObjA = (astruct_18*)0x0;
+	astruct_5_00456980.Create(pByteCode);
+
+	return;
+}
+
+void CBehaviourExorcism::Init(CActor* pOwner)
+{
+	edF32VECTOR4* peVar1;
+	astruct_5* paVar2;
+	float* pfVar3;
+	uint uVar4;
+	int iVar5;
+	float fVar6;
+	float fVar7;
+
+	this->pOwner = static_cast<CActorWolfen*>(pOwner);
+
+	this->fxDigits.Init(this->digitMaterialId);
+
+	if (((astruct_5_00456980.flags & 1) != 0) && ((astruct_5_00456980.flags & 2) == 0)) {
+		if (gVideoConfig.isNTSC == 0) {
+			uVar4 = 0;
+			StaticMeshComponentAdvancedEx* pComponent = astruct_5_00456980.aStaticMeshComponents;
+			do {
+				peVar1 = pComponent->GetTextureAnimSpeedNormalExtruder();
+				if (peVar1 != (edF32VECTOR4*)0x0) {
+					peVar1->x = peVar1->x * 0.8333333f;
+					peVar1->y = peVar1->y * 0.8333333f;
+				}
+
+				uVar4 = uVar4 + 1;
+				pComponent = pComponent + 1;
+			} while (uVar4 < 8);
+		}
+
+		astruct_5_00456980.flags = astruct_5_00456980.flags | 2;
+	}
+
+	this->field_0x10 = 1.0f;
+	this->field_0x18 = 5.0f;
+
+	if ((astruct_5_00456980.flags & 3) == 3) {
+		IMPLEMENTATION_GUARD_ASTRUCT_5(
+		uVar4 = 0;
+		iVar5 = 0;
+		pfVar3 = FLOAT_ARRAY_004488d0;
+		fVar7 = 0.0f;
+		do {
+			fVar6 = FUN_00405d10((StaticMeshComponentAdvancedEx*)
+				((int)&((astruct_5_00456980.field_0xac4[0].field_0x0)->base).base.pVTable + iVar5));
+			fVar6 = *pfVar3 + fVar6;
+			if (fVar6 <= fVar7) {
+				fVar6 = fVar7;
+			}
+			uVar4 = uVar4 + 1;
+			iVar5 = iVar5 + 0x120;
+			pfVar3 = pfVar3 + 1;
+			fVar7 = fVar6;
+		} while (uVar4 < 2);)
+	}
+	else {
+		fVar6 = 0.0f;
+	}
+	
+	this->field_0x14 = fVar6;
+	this->field_0x8 = 0xffffffff;
+
+	return;
+}
+
+void CBehaviourExorcism::Term()
+{
+	astruct_5_00456980.Term();
+
+	return;
+}
+
+void CBehaviourExorcism::Manage()
+{
+	int* piVar1;
+	CActorWolfen* pCVar2;
+	bool bVar3;
+	Timer* pTVar4;
+	uint uVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack16;
+
+	this->pOwner->BehaviourExorcism_Manage(this);
+
+	if (((this->field_0x30 == (int*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x30[6])) {
+		bVar3 = false;
+	}
+	else {
+		bVar3 = true;
+	}
+
+	if (bVar3) {
+		IMPLEMENTATION_GUARD(
+		edF32Vector4SubHard(&eStack16, &this->field_0x40, (edF32VECTOR4*)&(CCameraManager::_gThis->transformationMatrix).da);
+		fVar6 = edF32Vector4GetDistHard(&eStack16);
+		if (fVar6 <= 3.0) {
+			fVar7 = 0.0;
+		}
+		else {
+			fVar7 = 1.0;
+			if (fVar6 < 7.0) {
+				fVar7 = (fVar6 - 3.0) / 4.0;
+			}
+		}
+		piVar1 = this->field_0x30;
+		if (((piVar1 != (int*)0x0) && (this->field_0x2c != 0)) && (this->field_0x2c == piVar1[6])) {
+			(**(code**)(*piVar1 + 0x30))(fVar7);
+		}
+		piVar1 = this->field_0x30;
+		if (((piVar1 != (int*)0x0) && (this->field_0x2c != 0)) && (this->field_0x2c == piVar1[6])) {
+			piVar1[0xc] = (int)(this->field_0x40).x;
+			piVar1[0xd] = (int)(this->field_0x40).y;
+			piVar1[0xe] = (int)(this->field_0x40).z;
+			piVar1[0xf] = (int)(this->field_0x40).w;
+		}
+		pCVar2 = this->pOwner;
+		piVar1 = this->field_0x30;
+		if (((piVar1 != (int*)0x0) && (this->field_0x2c != 0)) && (this->field_0x2c == piVar1[6])) {
+			piVar1[0x14] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.x;
+			piVar1[0x15] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.y;
+			piVar1[0x16] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.z;
+			piVar1[0x17] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.w;
+		})
+	}
+
+	if (this->aSubObjA != (astruct_18*)0x0) {
+		pTVar4 = GetTimer();
+		uVar5 = this->aSubObjA->FUN_001eeea0(pTVar4->cutsceneDeltaTime);
+		if (uVar5 == 3) {
+			this->pOwner->SetState(-1, -1);
+		}
+		else {
+			if (uVar5 == 2) {
+				this->pOwner->SetState(0x7d, -1);
+			}
+			else {
+				if (uVar5 == 1) {
+					this->pOwner->SetState(0x7c, -1);
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+void CBehaviourExorcism::Draw()
+{
+	float fVar1;
+	float fVar2;
+	edF32VECTOR4 eStack16;
+	CActorWolfen* pWolfen;
+
+	if (this->pOwner->field_0xb88 < this->pOwner->field_0xb84) {
+		edF32Vector4SubHard(&eStack16, &this->field_0x40, &(CCameraManager::_gThis->transformationMatrix).rowT);
+
+		fVar1 = edF32Vector4GetDistHard(&eStack16);
+		if (fVar1 <= 3.0f) {
+			fVar2 = 0.0f;
+		}
+		else {
+			fVar2 = 1.0f;
+			if (fVar1 < 7.0f) {
+				fVar2 = (fVar1 - 3.0f) / 4.0f;
+			}
+		}
+
+		pWolfen = this->pOwner;
+
+		this->fxDigits.Draw(pWolfen->field_0xb84, pWolfen->field_0xb88, 0.8f, fVar2, &this->field_0x40, pWolfen->actorState == WOLFEN_STATE_EXORCISE_EXORCIZE);
+	}
+
+	return;
+}
+
+void CBehaviourExorcism::Begin(CActor* pOwner, int newState, int newAnimationType)
+{
+	CCollision* pCollision;
+	CActorWolfen* pWolfen;
+
+	(this->field_0x40).x = 0.0f;
+	(this->field_0x40).y = this->pOwner->pCollisionData->pObbPrim->field_0xb0.y;
+	(this->field_0x40).z = 0.0f;
+	(this->field_0x40).w = 1.0f;
+
+	edF32Matrix4MulF32Vector4Hard(&this->field_0x40, &this->pOwner->pMeshTransform->base.transformA, &this->field_0x40);
+	(this->field_0x40).y = (this->field_0x40).y + 2.0f;
+	this->pOwner->field_0xb80 = 1;
+	this->field_0x2c.id = 0;
+	this->field_0x30 = (int*)0x0;
+
+	if (newState == -1) {
+		this->pOwner->SetState(0x79, -1);
+	}
+	else {
+		this->pOwner->SetState(newState, newAnimationType);
+	}
+
+	pCollision = this->pOwner->pCollisionData;
+	pCollision->flags_0x0 = pCollision->flags_0x0 & 0xffffefff;
+	this->pOwner->dynamic.speed = 0.0f;
+
+	pWolfen = this->pOwner;
+	pWolfen->dynamicExt.normalizedTranslation.x = 0.0f;
+	pWolfen->dynamicExt.normalizedTranslation.y = 0.0f;
+	pWolfen->dynamicExt.normalizedTranslation.z = 0.0f;
+	pWolfen->dynamicExt.normalizedTranslation.w = 0.0f;
+	pWolfen->dynamicExt.field_0x6c = 0.0f;
+
+	return;
+}
+
+void CBehaviourExorcism::End(int newBehaviourId)
+{
+	CCollision* pCVar1;
+	int* piVar2;
+	bool bVar3;
+
+	this->field_0x8 = 0xffffffff;
+	pCVar1 = this->pOwner->pCollisionData;
+	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
+	piVar2 = this->field_0x30;
+	if (((piVar2 == (int*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != piVar2[6])) {
+		bVar3 = false;
+	}
+
+	if (bVar3) {
+		if (((piVar2 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar2[6])) {
+			IMPLEMENTATION_GUARD(
+			(**(code**)(*piVar2 + 0xc))();)
+		}
+
+		this->field_0x30 = (int*)0x0;
+		this->field_0x2c.id = 0;
+	}
+
+	this->field_0x2c.id = 0;
+	this->field_0x30 = (int*)0x0;
+
+	return;
+}
+
+void CBehaviourExorcism::InitState(int newState)
+{
+	int* piVar1;
+	CActorWolfen* pCVar2;
+	bool bVar3;
+
+	if (newState == WOLFEN_STATE_EXORCISE_IDLE) {
+	
+		if (this->field_0x24 != 0xffffffff) {
+			if (((this->field_0x30 == (int*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x30[6])) {
+				bVar3 = false;
+			}
+			else {
+				bVar3 = true;
+			}
+
+			if (!bVar3) {
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x2c, this->field_0x24, (FX_MATERIAL_SELECTOR)-1);
+			}
+		}
+
+		piVar1 = this->field_0x30;
+		if (((piVar1 == (int*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != piVar1[6])) {
+			bVar3 = false;
+		}
+
+		if (bVar3) {
+			if (((piVar1 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar1[6])) {
+				IMPLEMENTATION_GUARD(
+				piVar1[0xc] = (int)(this->field_0x40).x;
+				piVar1[0xd] = (int)(this->field_0x40).y;
+				piVar1[0xe] = (int)(this->field_0x40).z;
+				piVar1[0xf] = (int)(this->field_0x40).w;)
+			}
+			pCVar2 = this->pOwner;
+			piVar1 = this->field_0x30;
+			if (((piVar1 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar1[6])) {
+				IMPLEMENTATION_GUARD(
+				piVar1[0x14] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.x;
+				piVar1[0x15] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.y;
+				piVar1[0x16] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.z;
+				piVar1[0x17] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.w;)
+			}
+			piVar1 = this->field_0x30;
+			if (((piVar1 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar1[6])) {
+				IMPLEMENTATION_GUARD(
+				(**(code**)(*piVar1 + 0x10))(0, 0);)
+			}
+		}
+	}
+	else {
+		if (newState == 0x7d) {
+			IMPLEMENTATION_GUARD(
+			CActorWolfen::StateExorcizeInit(this->pOwner);)
+		}
+		else {
+			if (newState == 0x7c) {
+				IMPLEMENTATION_GUARD(
+				CActorWolfen::FUN_00176900(this->pOwner);)
+			}
+			else {
+				if (newState == 0x7b) {
+					IMPLEMENTATION_GUARD(
+					CActorWolfen::FUN_00176940(this->pOwner);)
+				}
+				else {
+					if (newState == WOLFEN_STATE_EXORCISE_EXORCIZE) {
+						IMPLEMENTATION_GUARD(
+						CActorWolfen::StateExorcizeInit(this->pOwner, (int)this);)
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
+void CBehaviourExorcism::TermState(int oldState, int newState)
+{
+	int* piVar1;
+	bool bVar2;
+
+	if (oldState == WOLFEN_STATE_EXORCISE_IDLE) {
+		piVar1 = this->field_0x30;
+		if (((piVar1 == (int*)0x0) || (this->field_0x2c.id == 0)) || (bVar2 = true, this->field_0x2c.id != piVar1[6])) {
+			bVar2 = false;
+		}
+
+		if (((bVar2) && (piVar1 != (int*)0x0)) && ((this->field_0x2c.id != 0 && (this->field_0x2c.id == piVar1[6])))) {
+			IMPLEMENTATION_GUARD(
+			(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
+		}
+	}
+	else {
+		if (oldState == 0x7f) {
+			IMPLEMENTATION_GUARD(
+			CActorWolfen::FUN_00176300(this->pOwner, this);)
+		}
+		else {
+			if (oldState == 0x7d) {
+				IMPLEMENTATION_GUARD(
+				CActorWolfen::FUN_001764a0(this->pOwner, this);)
+			}
+			else {
+				if (oldState == 0x7c) {
+					IMPLEMENTATION_GUARD(
+					CActorWolfen::FUN_00176780(this->pOwner);)
+				}
+				else {
+					if (oldState == WOLFEN_STATE_EXORCISE_EXORCIZE) {
+						IMPLEMENTATION_GUARD(
+						CActorWolfen::FUN_00176b50(this->pOwner);)
+					}
+				}
+			}
+		}
+	}
+
+	return;
+}
+
+int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+void CBehaviourExorcism::ChangeManageState(int state)
+{
+	IMPLEMENTATION_GUARD();
+}
+
+uint astruct_18::FUN_001eeea0(float param_1)
+{
+	IMPLEMENTATION_GUARD();
 }

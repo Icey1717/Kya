@@ -4,22 +4,12 @@
 #include "Types.h"
 #include "Actor.h"
 #include "ActorMovable.h"
+#include "Fx.h"
 
 struct S_TARGET_STREAM_REF;
 struct S_STREAM_EVENT_CAMERA;
 
 class CActorSwitch;
-
-struct ParticleInfo;
-
-class CFxDigits 
-{
-public:
-	void Init(int param_2) {}
-	void Draw(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, int param_7) {}
-
-	ParticleInfo* field_0x0;
-};
 
 class CBehaviourSwitch : public CBehaviour
 {

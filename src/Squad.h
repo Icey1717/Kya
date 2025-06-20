@@ -70,6 +70,7 @@ public:
 	void ClearSquadDeadAndNonFightingElt();
 
 	void RemoveFighter(CTeamElt* pTeamElt);
+	bool RemoveElt(CTeamElt* pTeamElt);
 
 	void ComputeBoundingSphere(ed_Bound_Sphere* pBoundSphere);
 	void InitSemaphores(CSquadConfig* pConfig);

@@ -17,6 +17,27 @@ struct ByteCode;
 struct EffectsManagerObj_60;
 
 class CCameraManager;
+class CNewFx;
+
+enum FX_MATERIAL_SELECTOR
+{
+	FX_MATERIAL_SELECTOR_DEFAULT = 0,
+	FX_MATERIAL_SELECTOR_WATER = 1,
+	FX_MATERIAL_SELECTOR_LAVA = 2,
+	FX_MATERIAL_SELECTOR_SAND = 3,
+	FX_MATERIAL_SELECTOR_ICE = 4,
+	FX_MATERIAL_SELECTOR_GRASS = 5,
+	FX_MATERIAL_SELECTOR_MAX = 6
+};
+
+class CFxHandle
+{
+public:
+	CFxHandle();
+
+	undefined4 id;
+	CNewFx* pFx;
+};
 
 template <typename FxType>
 class CDoubleLinkedNode
@@ -28,7 +49,7 @@ public:
 		this->pPrev = (CDoubleLinkedNode<FxType>*)0x0;
 	}
 
-	FxType* pFx;
+	FxType* aFx;
 	CDoubleLinkedNode<FxType>* pNext;
 	CDoubleLinkedNode<FxType>* pPrev;
 };
@@ -69,8 +90,8 @@ public:
 	CNewFx();
 	virtual void Func_0x30(float param_1);
 
-	int field_0x4;
-	undefined4 field_0x8;
+	CNewFx* field_0x4;
+	int field_0x8;
 	undefined4* field_0x1c;
 
 	uint flags;
@@ -92,7 +113,7 @@ public:
 
 struct s_fx_sort_data
 {
-	CFx* pFx;
+	void* pFx;
 	float field_0x4;
 	int field_0x8;
 };
@@ -112,10 +133,46 @@ public:
 	virtual void Play(uint* pCount, s_fx_sort_data* pSortData, CCameraManager* pCameraManager) = 0;
 	virtual void SetupPool(ByteCode* pByteCode, uint param_3) = 0;
 	virtual uint InstallFxScenaricData(ByteCode* pByteCode) = 0;
+	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) = 0;
 
 	virtual int GetNbPool() = 0;
 
 	char* pData;
+};
+
+template<typename FxType>
+class CDoubleLinkedList
+{
+public:
+	CDoubleLinkedList()
+		: pHead((CDoubleLinkedNode<FxType>*)0x0)
+		, pTail((CDoubleLinkedNode<FxType>*)0x0)
+	{
+
+	}
+
+	CDoubleLinkedNode<FxType>* RemoveHead()
+	{
+		CDoubleLinkedNode<FxType>* pHead;
+
+		pHead = this->pHead;
+
+		if (pHead != (CDoubleLinkedNode<FxType>*)0x0) {
+			if (pHead->pPrev == (CDoubleLinkedNode<FxType>*)0x0) {
+				this->pTail = (CDoubleLinkedNode<FxType>*)0x0;
+			}
+			else {
+				pHead->pPrev->pNext = (CDoubleLinkedNode<FxType>*)0x0;
+			}
+
+			this->pHead = this->pHead->pPrev;
+		}
+
+		return pHead;
+	}
+
+	CDoubleLinkedNode<FxType>* pHead;
+	CDoubleLinkedNode<FxType>* pTail;
 };
 
 template<typename FxType, typename ScenaricDataType>
@@ -124,10 +181,6 @@ class CFxPoolManager : public CFxPoolManagerFather
 public:
 	CFxPoolManager()
 	{
-		this->pNodeHead = (CDoubleLinkedNode<FxType>*)0x0;
-		this->pNextNode = (CDoubleLinkedNode<FxType>*)0x0;
-		this->field_0x10 = 0;
-		this->field_0x14 = 0;
 		this->nbPool = 0;
 		this->aNodes = (CDoubleLinkedNode<FxType>*)0x0;
 		this->aFx = (FxType*)0x0;
@@ -151,67 +204,68 @@ public:
 
 	virtual void Manage()
 	{
-		CFxNewParticle* pCVar1;
-		uint uVar2;
-		bool bVar3;
-		undefined4 uVar4;
+		uint uVar1;
+		bool bVar2;
+		FxType** ppCVar3;
+		CDoubleLinkedNode<FxType>* pCVar1;
 
-		pCVar1 = (CFxNewParticle*)this->field_0x10;
-		while (pCVar1 != (CFxNewParticle*)0x0) {
-			IMPLEMENTATION_GUARD(
-			uVar4 = &pCVar1->base;
-			pCVar1 = *(CFxNewParticle**)((int)&pCVar1->base + 8);
-			uVar2 = ((*(CFxNewParticle**)uVar4)->base).flags;
-			bVar3 = false;
-			if (((uVar2 & 1) != 0) && ((uVar2 & 4) == 0)) {
-				bVar3 = true;
+		pCVar1 = (this->listB).pHead;
+
+		while (pCVar1 != (CDoubleLinkedNode<FxType>*)0x0) {
+			ppCVar3 = &pCVar1->aFx;
+			pCVar1 = pCVar1->pPrev;
+			uVar1 = (*ppCVar3)->flags;
+			bVar2 = false;
+
+			if (((uVar1 & 1) != 0) && ((uVar1 & 4) == 0)) {
+				bVar2 = true;
 			}
-			if (bVar3) {
-				CFxNewParticle::Manage(*(CFxNewParticle**)uVar4);
-			})
+
+			if (bVar2) {
+				(*ppCVar3)->Manage();
+			}
 		}
+
 		return;
 	}
 
 	virtual void Play(uint* pCount, s_fx_sort_data* pSortData, CCameraManager* pCameraManager)
 	{
-		int iVar1;
+		FxType* pCVar1;
 		bool bVar2;
-		int* piVar3;
+		CDoubleLinkedNode<FxType>* pCVar3;
 		float fVar4;
 		edF32VECTOR4 local_60;
 		edF32VECTOR4 local_50;
 		edF32MATRIX4 eStack64;
 
-		piVar3 = (int*)this->field_0x10;
-		if (piVar3 != (int*)0x0) {
+		pCVar3 = (this->listB).pHead;
+		if (pCVar3 != (CDoubleLinkedNode<FxType> *)0x0) {
 			do {
-				IMPLEMENTATION_GUARD(
-				iVar1 = *piVar3;
+				pCVar1 = pCVar3->aFx;
 				bVar2 = false;
-				if (((*(uint*)(iVar1 + 0x14) & 2) != 0) && ((*(uint*)(iVar1 + 0x14) & 8) == 0)) {
+				if (((pCVar1->flags & 2) != 0) && ((pCVar1->flags & 8) == 0)) {
 					bVar2 = true;
 				}
+
 				if (bVar2) {
 					pSortData[*pCount].field_0x8 = 1;
-					pSortData[*pCount].field_0x0 = iVar1;
+					pSortData[*pCount].pFx = pCVar1;
 					edF32Matrix4SetIdentityHard(&eStack64);
-					edF32Matrix4TranslateHard(&eStack64, &eStack64, (edF32VECTOR4*)(iVar1 + 0x30));
+					edF32Matrix4TranslateHard(&eStack64, &eStack64, &pCVar1->field_0x30);
 					edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, &pCameraManager->worldToCamera_0x3d0);
 					local_50.x = eStack64.ac;
 					local_50.y = eStack64.bc;
 					local_50.z = eStack64.cc;
-					local_60.x = *(float*)(iVar1 + 0x30);
-					local_60.y = *(float*)(iVar1 + 0x34);
-					local_60.z = *(float*)(iVar1 + 0x38);
-					local_60.w = *(float*)(iVar1 + 0x3c);
-					edF32Vector4SubHard(&local_60, &local_60, (edF32VECTOR4*)&(pCameraManager->transformationMatrix).da);
+					local_60 = pCVar1->field_0x30;
+					edF32Vector4SubHard(&local_60, &local_60, &(pCameraManager->transformationMatrix).rowT);
 					fVar4 = edF32Vector4DotProductHard(&local_50, &local_60);
 					pSortData[*pCount].field_0x4 = fVar4;
 					*pCount = *pCount + 1;
 				}
-				piVar3 = (int*)piVar3[2];)
-			} while (piVar3 != (int*)0x0);
+
+				pCVar3 = pCVar3->pPrev;
+			} while (pCVar3 != (CDoubleLinkedNode<FxType>*)0x0);
 		}
 
 		return;
@@ -232,17 +286,17 @@ public:
 
 			while (i != 0) {
 				i = i - 1;
-				pCurNode->pFx = pCurFx;
-				pCurNode->pNext = this->pNextNode;
+				pCurNode->aFx = pCurFx;
+				pCurNode->pNext = this->listA.pTail;
 				pCurNode->pPrev = (CDoubleLinkedNode<FxType>*)0x0;
 
-				if (this->pNextNode == (CDoubleLinkedNode<FxType>*)0x0) {
-					this->pNodeHead = pCurNode;
+				if (this->listA.pTail == (CDoubleLinkedNode<FxType>*)0x0) {
+					this->listA.pHead = pCurNode;
 				}
 				else {
-					this->pNextNode->pPrev = pCurNode;
+					this->listA.pTail->pPrev = pCurNode;
 				}
-				this->pNextNode = pCurNode;
+				this->listA.pTail = pCurNode;
 
 				pCurNode = pCurNode + 1;
 				pCurFx = pCurFx + 1;
@@ -270,11 +324,39 @@ public:
 		return this->nbPool;
 	}
 
-	CDoubleLinkedNode<FxType>* pNodeHead;
-	CDoubleLinkedNode<FxType>* pNextNode;
+	virtual FxType* _InstanciateFx()
+	{
+		CDoubleLinkedNode<FxType>* pTail;
+		CDoubleLinkedNode<FxType>* pPrevHead;
+		FxType* pNewFx;
 
-	undefined4 field_0x10;
-	undefined4 field_0x14;
+		pPrevHead = this->listA.RemoveHead();
+
+		if (pPrevHead == (CDoubleLinkedNode<FxType> *)0x0) {
+			pNewFx = (FxType*)0x0;
+		}
+		else {
+			pPrevHead->pNext = (this->listB).pTail;
+			pPrevHead->pPrev = (CDoubleLinkedNode<FxType> *)0x0;
+			pTail = (this->listB).pTail;
+			if (pTail == (CDoubleLinkedNode<FxType> *)0x0) {
+				(this->listB).pHead = pPrevHead;
+			}
+			else {
+				pTail->pPrev = pPrevHead;
+			}
+
+			(this->listB).pTail = pPrevHead;
+
+			pNewFx = pPrevHead->aFx;
+			pNewFx->flags = 0;
+		}
+
+		return pNewFx;
+	}
+
+	CDoubleLinkedList<FxType> listA;
+	CDoubleLinkedList<FxType> listB;
 
 	uint nbPool;
 	CDoubleLinkedNode<FxType>* aNodes;
@@ -313,6 +395,8 @@ struct CFxManager : public CObjectManager {
 
 	uint AddFxClass(ByteCode* pByteCode, CFx** pOutEffectObj, int* outClass);
 
+	void GetDynamicFx(CFxHandle* pHandle, uint param_3, FX_MATERIAL_SELECTOR selector);
+
 	uint count_0x4;
 	CFx** aFx;
 	uint* orderedCountArray;
@@ -322,6 +406,17 @@ struct CFxManager : public CObjectManager {
 	CFxPoolManagerFather* aEffectCategory[7];
 	s_fx_sort_data* pSortData;
 	int field_0x6c;
+};
+
+struct ParticleInfo;
+
+class CFxDigits
+{
+public:
+	void Init(int param_2) {}
+	void Draw(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, int param_7) {}
+
+	ParticleInfo* field_0x0;
 };
 
 #endif // FX_MANAGER_H

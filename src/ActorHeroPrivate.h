@@ -147,12 +147,18 @@ public:
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5);
 	// End CActor
 
-	// CActorAutonomous
+	// CActorMovable
 	virtual void ManageDyn(float param_1, uint flags, CActorsTable* pActorsTable);
+
+	// CActorAutonomous
 	virtual CActorWindState* GetWindState();
 	virtual void StoreCollisionSphere();
-	virtual CLifeInterface* GetLifeInterface();
+
 	virtual void LifeDecrease(float amount);
+	virtual void LifeRestore();
+	virtual void LifeAnnihilate();
+	virtual CLifeInterface* GetLifeInterface();
+	virtual CLifeInterface* GetLifeInterfaceOther();
 
 	// CActorFighter
 	virtual void SetInitialState();

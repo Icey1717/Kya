@@ -4,6 +4,13 @@
 
 ed_3D_Scene* CFrontend::_scene_handle = (ed_3D_Scene*)0x0;
 
+CFrontend::CFrontend()
+{
+	this->pViewport = (ed_viewport*)0x0;
+
+	return;
+}
+
 void CFrontend::Level_ClearAll()
 {
 	return;

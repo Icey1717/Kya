@@ -8,6 +8,7 @@
 #include "SwitchBehaviour.h"
 #include "TimeController.h"
 #include "Vision.h"
+#include "Fx.h"
 
 #define WOLFEN_BEHAVIOUR_WATCH_DOG 0x8
 #define WOLFEN_BEHAVIOUR_GUARD_AREA 0xa
@@ -35,6 +36,10 @@
 #define WOLFEN_STATE_SURPRISE 0x9a
 #define WOLFEN_STATE_LOCATE 0x9c
 
+#define WOLFEN_STATE_EXORCISE_IDLE 0x79
+#define WOLFEN_STATE_EXORCISE_EXORCIZE 0x7a
+#define WOLFEN_STATE_EXORCISE_AWAKE 0x7e
+
 #define WOLFEN_STATE_TRACK_WEAPON_CHECK_POSITION 0xab
 
 struct S_STREAM_EVENT_CAMERA;
@@ -48,12 +53,31 @@ class CActorWolfen;
 class CActorCommander;
 class CActorProjectile;
 
+union f4data
+{
+	struct
+	{
+		byte field_0x0byte;
+		byte field_0x1byte;
+		byte field_0x2byte;
+		byte field_0x3byte;
+	};
+
+	struct
+	{
+		ushort field_0x0ushort;
+		ushort field_0x2ushort;
+	};
+
+	uint field_0x0uint;
+};
+
 struct CActorWolfenKnowledge_0x14
 {
-	undefined4 field_0x0;
-	void* field_0x4;
-	undefined4 field_0x8;
-	undefined4 field_0xc;
+	s_fighter_combo* field_0x0;
+	f4data* field_0x4;
+	uint field_0x8;
+	uint field_0xc;
 	uint field_0x10;
 };
 
@@ -62,8 +86,13 @@ class CActorWolfenKnowledge
 public:
 	void Init(int memMode, uint param_3, uint param_4, uint nbObjs, uint param_6);
 	void Reset();
+	void Term();
 
+	int BeginMemory(s_fighter_combo* pFighterCombo);
+	int NextStage(s_fighter_combo* pFighterCombo);
 	void EndMemory();
+
+	CActorWolfenKnowledge_0x14* _AddComboRoot(s_fighter_combo* pFighterCombo);
 
 	CActorWolfenKnowledge_0x14* aSubObjs;
 	int field_0x4;
@@ -73,8 +102,8 @@ public:
 	uint field_0x14;
 	uint field_0x18;
 	int field_0x1c;
-	s_fighter_combo* field_0x20;
-	int field_0x24;
+	CActorWolfenKnowledge_0x14* field_0x20;
+	f4data* field_0x24;
 	s_fighter_combo* field_0x28;
 	byte field_0x2c;
 };
@@ -382,9 +411,44 @@ public:
 	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
 };
 
+struct astruct_18
+{
+	uint FUN_001eeea0(float param_1);
+};
+
 class CBehaviourExorcism : public CBehaviour
 {
 public:
+	CBehaviourExorcism();
+	virtual void Create(ByteCode* pByteCode);
+	virtual void Init(CActor* pOwner);
+	virtual void Term();
+	virtual void Manage();
+	virtual void Draw();
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
+	virtual void InitState(int newState);
+	virtual void TermState(int oldState, int newState);
+	virtual int InterpretMessage(CActor* pSender, int msg, void* pMsgParam);
+
+	virtual void ChangeManageState(int state);
+
+	CActorWolfen* pOwner;
+
+	undefined4 field_0x8;
+
+	float field_0x10;
+	float field_0x14;
+	float field_0x18;
+
+	astruct_18* aSubObjA;
+	CFxDigits fxDigits;
+	int field_0x24;
+	int digitMaterialId;
+	CFxHandle field_0x2c;
+	int* field_0x30;
+
+	edF32VECTOR4 field_0x40;
 };
 
 class CBehaviourTrackStand : public CBehaviourWolfen
@@ -669,7 +733,8 @@ public:
 class CBehaviourWolfenFighterProjected : public CBehaviourFighterProjected
 {
 public:
-
+	virtual void Begin(CActor* pOwner, int newState, int newAnimationType);
+	virtual void End(int newBehaviourId);
 };
 
 struct WolfenConfig : public StateConfig
@@ -765,6 +830,11 @@ public:
 	virtual int InterpretEvent(edCEventMessage* pEventMessage, undefined8 param_3, int param_4, uint* param_5) { IMPLEMENTATION_GUARD(); }
 
 	// CActorAutonomous
+	virtual CActorWindState* GetWindState();
+
+	virtual void LifeDecrease(float amount);
+	virtual void LifeLifeAnnihilate();
+
 	virtual float GetWalkSpeed();
 	virtual float GetWalkRotSpeed();
 	virtual float GetWalkAcceleration();
@@ -775,10 +845,21 @@ public:
 	virtual CPathFinderClient* GetPathfinderClientAlt();
 
 	// CActorFighter
+	virtual void SetFightBehaviour();
+	virtual int GetFightBehaviour();
+	virtual void ProcessDeath();
+	virtual void AcquireAdversary();
+	virtual bool IsFightRelated(int behaviourId);
+
 	virtual bool Func_0x19c();
 	virtual bool Func_0x1ac();
 
 	virtual void _Std_OnFightActionSuccess();
+	virtual CActorFighter* _Std_GetCaughtAdversary();
+	virtual void _StateFighterRun(CActorsTable* pTable);
+
+	virtual void _BeginFighterHold();
+	virtual void _EndFighterHold();
 
 	virtual void Func_0x204(CActorFighter* pOther);
 	virtual bool AcquireAdversary(CActorFighter* pTarget);
@@ -802,6 +883,7 @@ public:
 	void BehaviourTrackWeaponStand_Manage(CBehaviourTrackWeaponStand* pBehaviour);
 	void BehaviourTrack_Manage(CBehaviourTrack* pBehaviour);
 	void BehaviourGuardArea_Manage(CBehaviourGuardArea* pBehaviour);
+	void BehaviourExorcism_Manage(CBehaviourExorcism* pBehaviour);
 
 	void BehaviourFighterStd_Exit(CBehaviourFighterWolfen* pBehaviour);
 
@@ -824,6 +906,8 @@ public:
 	void StateTrackCheckPosition(CBehaviourWolfen* pBehaviour);
 	void StateTrackChase(CBehaviourTrack* pBehaviour);
 	void StateTrackDefend(CBehaviourTrack* pBehaviour);
+
+	void StateExorcizeIdle(CBehaviourExorcism* pBehaviour);
 
 	void StateTrackWeaponCheckPosition(CBehaviourTrackWeaponStand* pBehaviour);
 	void StateTrackWeaponDefend(CBehaviourTrackWeaponStand* pBehaviour);
@@ -870,6 +954,8 @@ public:
 	void EnableFightAction();
 	void DisableFightAction();
 
+	bool FUN_00173de0(CActorFighter* pAdversary);
+
 	void UpdateCombatMode(); // new
 	WFIGS_Capability* GetActiveCapability(); // new
 	void NEW_FUN_B(CBehaviourWolfen* pBehaviour); // new
@@ -881,6 +967,8 @@ public:
 	CBehaviourFighterWolfen behaviourFighterWolfen;
 	CBehaviourLost behaviourLost;
 	CBehaviourExorcism behaviourExorcism;
+
+	CActorWindState windState;
 
 	float field_0xa80;
 	float field_0xa84;
@@ -909,6 +997,9 @@ public:
 
 	uint field_0xb60;
 	WolfenComboData* field_0xb64;
+
+	undefined4 field_0xb6c;
+	int field_0xb70;
 
 	uint field_0xb74;
 	uint combatFlags_0xb78 = 0; // delete init

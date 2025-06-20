@@ -120,6 +120,8 @@ class StaticMeshComponentAdvanced : public StaticMeshComponent
 {
 public:
 	virtual void Reset();
+	virtual void SetHidden(ed_3D_Scene* pScene);
+	virtual void SetVisible(ed_3D_Scene* pScene);
 	virtual bool HasMesh();
 
 	void Create(ByteCode* pByteCode);
@@ -190,7 +192,7 @@ struct s_fighter_blow : public s_fighter_move
 	uint field_0x40;
 	uint nbSubObjs;
 	s_fighter_blow_sub_obj* field_0x48;
-	float field_0x4c;
+	float canActivateRange;
 	float field_0x50;
 	undefined field_0x54;
 	undefined field_0x55;
@@ -439,9 +441,9 @@ public:
 	virtual void SetInitialState();
 	virtual void SetFightBehaviour();
 	virtual int GetFightBehaviour();
+	virtual void ProcessDeath() {}
 	virtual bool IsFightRelated(int behaviourId);
 	virtual bool IsInHitState();
-	virtual void ProcessDeath() {}
 	virtual bool IsAlive();
 	virtual void EnableFightCamera() {}
 	virtual void AcquireAdversary();
@@ -461,11 +463,14 @@ public:
 	virtual void _Std_GetPossibleHit(bool bPlayImpact);
 	virtual void _Std_GetPossibleExit();
 	virtual void _Std_OnFightActionSuccess();
+	virtual CActorFighter* _Std_GetCaughtAdversary();
 	virtual void _StateFighterRun(CActorsTable* pTable);
 	virtual void _Ride_GetPossibleHit(bool bPlayImpact);
 	virtual void _Ride_GetPossibleExit();
 	virtual void _Hold_GetPossibleHit(bool bPlayImpact);
 	virtual void _Hold_GetPossibleExit();
+	virtual void _BeginFighterHold();
+	virtual void _EndFighterHold();
 	virtual void _Proj_GetPossibleExit();
 
 	void ClearLocalData();
@@ -797,6 +802,7 @@ class CBehaviourFighterRidden : public CBehaviourFighter
 
 class CBehaviourFighterProjected : public CBehaviourFighter
 {
+public:
 	virtual void Init(CActor* pOwner) {}
 	virtual void Term() {}
 	virtual void Manage();

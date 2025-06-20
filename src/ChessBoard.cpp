@@ -9,24 +9,24 @@ CChessBoardPawnsRefTable CChessBoard::_pawnsWork;
 s_chess_board_coord _forceNoMove = { 0xffffffff, 0xffffffff };
 s_chess_board_pattern _patternWork;
 
-float CoordinateToFloat(uint coordinate)
+float CoordinateToFloat(int coordinate)
 {
-	if ((int)coordinate < 0) {
-		float fVar8 = (float)(coordinate >> 1 | coordinate & 1);
+	if (coordinate < 0) {
+		float fVar8 = (coordinate >> 1 | coordinate & 1);
 		return fVar8 + fVar8;
 	}
 	else {
-		return (float)coordinate;
+		return coordinate;
 	}
 }
 
-uint FloatToCoordinate(float coordinate)
+int FloatToCoordinate(float coordinate)
 {
 	if (coordinate < 2.147484e+09f) {
-		return (int)coordinate;
+		return coordinate;
 	}
 	else {
-		return (int)(coordinate - 2.147484e+09f) | 0x80000000;
+		return static_cast<int>(coordinate - 2.147484e+09f) | 0x80000000;
 	}
 }
 
@@ -70,20 +70,16 @@ void CChessBoard::Init(float param_1, float param_2, uint param_4, uint param_5)
 {
 	uint uVar2;
 	uint uVar4;
-	uint uVar5;
+	int uVar5;
 	float fVar6;
 	
 	this->field_0x210 = param_1;
 	this->field_0x214 = param_2;
 	
-	fVar6 = CoordinateToFloat(param_4);
-	this->field_0x21c = this->field_0x214 / fVar6;
-
-	fVar6 = CoordinateToFloat(param_5);
-	this->field_0x218 = 6.283185f / fVar6;
+	this->field_0x21c = this->field_0x214 / CoordinateToFloat(param_4);
+	this->field_0x218 = 6.283185f / CoordinateToFloat(param_5);
 
 	this->nbRows = param_5;
-
 	this->nbColumns = FloatToCoordinate(this->field_0x214 / this->field_0x21c);
 
 	uVar4 = 0;
@@ -351,10 +347,10 @@ bool CChessBoard::PawnShallMove(int index)
 {
 	uint uVar1;
 	s_chess_board_pawn* pPawn;
-	uint piVar3;
+	int piVar3;
 	float fVar4;
 	float fVar5;
-	uint piVar6;
+	int piVar6;
 	edF32VECTOR4 eStack80;
 	edF32MATRIX4 auStack64;
 
@@ -401,7 +397,7 @@ void CChessBoard::ValidateAll()
 	int iVar3;
 	uint uVar4;
 	float fVar5;
-	uint uVar6;
+	int uVar6;
 
 	uVar6 = FloatToCoordinate(this->field_0x210 / this->field_0x21c + 0.5f);
 	uVar4 = this->nbColumns;
@@ -444,7 +440,7 @@ void CChessBoard::InvalidateSection(float param_1, edF32VECTOR4* param_3)
 	uint unaff_s0_lo;
 	uint uVar5;
 	uint uVar6;
-	uint uVar7;
+	int uVar7;
 	float puVar8;
 	float puVar9;
 	float fVar8;
@@ -942,13 +938,13 @@ LAB_003531b0:
 
 float CChessBoard::_PermutPawns(float param_1, CChessBoardPawnsRefTable* pTable, s_chess_board_pattern* pPattern, float* param_5, uint param_6)
 {
-	uint uVar1;
-	uint uVar2;
+	int uVar1;
+	int uVar2;
 	s_chess_board_pawn* psVar3;
 	bool bVar4;
-	uint* puVar5;
+	int* puVar5;
 	int iVar6;
-	uint* puVar7;
+	int* puVar7;
 	uint uVar8;
 	float fVar9;
 	float fVar10;
@@ -1397,8 +1393,8 @@ int CChessBoard::GetPawnsInSection(float param_1, edF32VECTOR4* param_3)
 	int iVar5;
 	uint uVar6;
 	int iVar7;
-	uint uVar8;
-	uint uVar9;
+	int uVar8;
+	int uVar9;
 	float puVar12;
 	float puVar10;
 	float puVar11;

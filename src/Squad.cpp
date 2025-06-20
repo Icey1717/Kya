@@ -241,6 +241,34 @@ void CSquad::RemoveFighter(CTeamElt* pTeamElt)
 	return;
 }
 
+bool CSquad::RemoveElt(CTeamElt* pTeamElt)
+{
+	int iVar1;
+	CTeamElt** pCVar2;
+	int iVar3;
+
+	iVar1 = (this->eltTable).nbEntries;
+	iVar3 = 0;
+	pCVar2 = this->eltTable.aEntries;
+	if (0 < iVar1) {
+		do {
+			if (*pCVar2 == pTeamElt) {
+				CActorWolfen* pWolfen = static_cast<CActorWolfen*>(pTeamElt->pEnemyActor);
+				pWolfen->TermFightAction();
+				this->eltTable.Pop(iVar3);
+				SynchronizePawns();
+
+				return true;
+			}
+
+			iVar3 = iVar3 + 1;
+			pCVar2 = pCVar2 + 1;
+		} while (iVar3 < iVar1);
+	}
+
+	return false;
+}
+
 void CSquad::ComputeBoundingSphere(ed_Bound_Sphere* pBoundSphere)
 {
 	CTeamElt* pCVar1;
@@ -437,7 +465,7 @@ void CSquad::SynchronizePattern(CChessBoardPawnsRefTable* pTable)
 	bool bVar1;
 	int iVar2;
 	CActor* pActor;
-	CBehaviour* pCVar3;
+	CBehaviourFighterWolfen* pCVar3;
 	edF32VECTOR4* puVar4;
 	long lVar5;
 	int currentPawnIndex;
@@ -468,9 +496,9 @@ void CSquad::SynchronizePattern(CChessBoardPawnsRefTable* pTable)
 					pActor = this->chessboard.GetPawnActor(currentPawnIndex);
 					lVar5 = pTable->IsInList(pActor);
 					if (((lVar5 == 0) && (pActor->curBehaviourId == 3)) && (pActor->IsKindOfObject(0x10) != false)) {
-						pCVar3 = pActor->GetBehaviour(pActor->curBehaviourId);
+						pCVar3 = static_cast<CBehaviourFighterWolfen*>(pActor->GetBehaviour(pActor->curBehaviourId));
 						puVar4 = this->chessboard.GetPawnPosition(currentPawnIndex);
-						//pCVar3->SetPositionToHold(0.05f, puVar4);
+						pCVar3->SetPositionToHold(0.05f, puVar4);
 					}
 				}
 			}

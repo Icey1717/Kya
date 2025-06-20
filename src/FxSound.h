@@ -8,7 +8,8 @@ struct ByteCode;
 
 class CFxSound : public CNewFx
 {
-
+public:
+	void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
 class CFxSoundScenaricData
@@ -24,6 +25,7 @@ public:
 class CFxSoundManager : public CFxPoolManager<CFxSound, CFxSoundScenaricData>
 {
 public:
+	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }
 };
 
 #endif //FX_SOUND_H

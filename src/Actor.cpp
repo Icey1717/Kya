@@ -5234,12 +5234,6 @@ int CBehaviourInactive::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 	return bVar1;
 }
 
-CFxHandle::CFxHandle()
-{
-	this->field_0x0 = 0;
-	this->field_0x4 = (undefined*)0x0;
-}
-
 CActInstance::CActInstance()
 {
 	this->field_0x7c = -1.0f;

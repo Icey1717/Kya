@@ -1115,6 +1115,66 @@ bool CActorCommander::IsValidEnemy(CActorWolfen* pWolfen)
 	return this->squad.eltTable.IsInList(GetTeamElt(pWolfen));
 }
 
+bool CActorCommander::CanFightIntruder(CActorFighter* pIntruder)
+{
+	int iVar2;
+	CTeamElt* pCVar3;
+	CTeamElt* pCVar4;
+	bool bCanFight;
+
+	iVar2 = 0;
+	bCanFight = false;
+	pCVar4 = (CTeamElt*)0x0;
+	if (0 < this->nbTeams) {
+		pCVar3 = this->aTeamElt;
+		do {
+			pCVar4 = pCVar3;
+
+			if (pCVar4->pEnemyActor == pIntruder) break;
+
+			iVar2 = iVar2 + 1;
+			pCVar3 = pCVar4 + 1;
+			pCVar4 = (CTeamElt*)0x0;
+		} while (iVar2 < this->nbTeams);
+	}
+
+	if (this->squad.eltTable.IsInList(pCVar4) == false) {
+		iVar2 = this->squad.NbElt();
+		if (iVar2 < 5) {
+			bCanFight = true;
+		}
+	}
+	else {
+		bCanFight = true;
+	}
+
+	return bCanFight;
+}
+
+void CActorCommander::KickIntruderFighter()
+{
+	CTeamElt* pTeamElt;
+	CTeamElt** pIt;
+	int i;
+
+	i = 0;
+	pIt = this->squad.eltTable.aEntries;
+	do {
+		pTeamElt = *pIt;
+		if (pTeamElt->field_0x14 == -1) {
+			this->squad.RemoveElt(pTeamElt);
+			return;
+		}
+
+		i = i + 1;
+		pIt = pIt + 1;
+	} while (i < 5);
+
+	return;
+}
+
+
+
 void CActorCommander::_UpdateSquad()
 {
 	CActorFighter* this_00;
