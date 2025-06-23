@@ -11055,7 +11055,7 @@ int* ed3DPreparePointer(char* pFileBufferA, int lengthA, char* pFileBufferB, int
 		if ((pREAA->hash == HASH_CODE_REAA) && (pREAA->field_0x4 != 0x7b6)) break;
 
 		pREAA = edChunckGetNext(pREAA, pFileBufferA + lengthA);
-		ED3D_LOG(LogLevel::Info, "ed3DPreparePointer Searching for REAA - current: {}", pREAA->GetHeaderString());
+		ED3D_LOG(LogLevel::Info, "ed3DPreparePointer Searching for REAA - current: {}", pREAA ? pREAA->GetHeaderString() : "NONE");
 	}
 
 	reaaChunkSize = pREAA->size;

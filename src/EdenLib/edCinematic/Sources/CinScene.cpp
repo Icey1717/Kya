@@ -816,9 +816,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 	int soundFileInfoObj;
 	float soundStart;
 	float soundStop;
-	int* local_78;
-	int local_74;
-	int local_70;
+	edCinActorInterface::PARTICLE_PARAMStag local_78;
 	edF32VECTOR3 local_68;
 	edF32VECTOR4 locationOutVector;
 	edAnmSubControler local_48;
@@ -932,20 +930,28 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 						}
 						else {
 							if (currentTrackType == 0xd9dec42c) {
-								IMPLEMENTATION_GUARD_LOG(
-								local_3c = (edAnmSubControlerTag*)(trackSeekPos + 3);
+								edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(pAnimProp + 1);
+
+								local_3c = edAnmSubControler(pTag);
+								float* pKeyTimes = pTag->keyTimes;
 								local_c = 0;
-								if ((float)trackSeekPos[4] <= currentPlayTime) {
-									currentKeyframePtr = edAnmSubControler::GetClosestKeyIndexSafe(currentPlayTime, &local_3c, &local_c);
-									pTrackDataStart =
-										(int*)((int)animatedProperty + 0xc) +
-										(uint) * (ushort*)((int)animatedProperty + 0xc) + local_c * 2;
-									local_78 = pTrackDataStart + 1;
-									local_74 = resCollection->pData[pTrackDataStart[1]].pData;
-									local_70 = pTrackDataStart[2];
-									(*(code*)pCinActorInterface->vt->SetParticles)
-										(currentPlayTime - *currentKeyframePtr, pCinActorInterface);
-								})
+								if (pKeyTimes[0] <= currentPlayTime) {
+									currentKeyframePtr = local_3c.GetClosestKeyIndexSafe(currentPlayTime, &local_c);
+									pTrackDataStart = (int*)((ulong)pAnimProp + 0xc) + (uint)*(ushort*)((ulong)pAnimProp + 0xc) + local_c * 2;
+
+									struct ParticleTagData
+									{
+										int field_0x0;
+										float field_0x4;
+									};
+
+									ParticleTagData* pParticleTagData = (ParticleTagData*)(pTrackDataStart + 1);
+
+									local_78.particleId = STORE_SECTION(pParticleTagData);
+									local_78.field_0x4 = LOAD_SECTION_CAST(int, resCollection.pData->aTags[pParticleTagData->field_0x0].pData);
+									local_78.field_0x8 = pParticleTagData->field_0x4;
+									pCinActorInterface->SetParticles(currentPlayTime - *currentKeyframePtr, &local_78);
+								}
 							}
 							else {
 								edAnmSubControlerTag* pTag = (edAnmSubControlerTag*)(pAnimProp + 1);
@@ -956,14 +962,15 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 									if (pKeyTimes[0] <= currentPlayTime) {
 										currentKeyframePtr = local_38.GetClosestKeyIndexSafe(currentPlayTime, &local_8);
 										float fVar6 = currentPlayTime - *currentKeyframePtr;
-										pTrackDataStart =(int*)((uint) * (ushort*)((ulong)pAnimProp + 0xc) * 4 + (ulong)pAnimProp) + 4;
+										pTrackDataStart = (int*)((uint) * (ushort*)((ulong)pAnimProp + 0xc) * 4 + (ulong)pAnimProp) + 4;
 
-										struct AnimTagData {
+										struct AnimTagData
+										{
 											int animResIndex;
 											float field_0x4;
 											float field_0x8;
 											int field_0xc;
-											float field_0x10;											
+											float field_0x10;
 										};
 
 										AnimTagData* piVar4 = (AnimTagData*)(pTrackDataStart + local_8 * 5);

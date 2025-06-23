@@ -24,7 +24,8 @@ struct CActor;
 
 #define CINEMATIC_FLAG_ACTIVE 0x80
 
-class CBWCinActor : public edCinActorInterface {
+class CBWCinActor : public edCinActorInterface
+{
 public:
 	virtual bool Initialize();
 	virtual bool SetVisibility(bool bVisible);
@@ -34,6 +35,7 @@ public:
 	virtual bool SetHeadingQuat(float x, float y, float z, float w);
 	virtual bool SetScale(float x, float y, float z);
 	virtual bool SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag);
+	virtual bool SetParticles(float param_1, edCinActorInterface::PARTICLE_PARAMStag* pTag);
 	virtual bool SetSubtitle(float param_1, edCinSourceSubtitleI::SUBTITLE_PARAMStag* pParams);
 	virtual bool Shutdown();
 
@@ -459,14 +461,50 @@ struct S_TRAP_STREAM_ENTRY {
 
 static_assert(sizeof(S_TRAP_STREAM_ENTRY) == 0x3c, "Invalid S_TRAP_STREAM_REF size");
 
-struct S_TRAP_STREAM_REF {
+struct S_TRAP_STREAM_REF
+{
 	uint entryCount;
 	S_TRAP_STREAM_ENTRY aEntries[];
+};
+
+struct _ed_particle_manager;
+struct ParticleFileData;
+
+struct ParticleInstance
+{
+	int id;
+	float field_0x4;
+	float field_0x8;
+	byte field_0xc;
+	byte field_0xd;
+	byte field_0xe;
+	byte field_0xf;
+	_ed_particle_manager* pParticle;
+	ParticleFileData* pParticleFileData;
+	CActor* pActor;
 };
 
 class CCinematic
 {
 public:
+	struct ParticleEntry
+	{
+		bool InstallFromDSC(char* pFileBuffer, int fileLength, edCBankBufferEntry* pBankBufferEntry);
+
+		char* pFileBuffer;
+		uint fileSize;
+
+		int nbMaterials;
+		edDList_material* aMaterialPtrs[16];
+
+		ulong aHashes[16];
+
+		edDList_material aMaterials[16];
+
+		uint nbManagers;
+		ed_g2d_manager* aManagers[16];
+	};
+
 	void InitInternalData();
 	void SetupInternalData();
 
@@ -518,6 +556,9 @@ public:
 	void Flush(bool param_2);
 
 	CActor* GetActorByHashcode(uint hashCode);
+
+	int CreateParticleInstance(float param_1, int index, int particleId, CActor* pActor);
+	int GetParticleInstance(int id);
 
 	bool CanBePlayed();
 
@@ -658,11 +699,11 @@ public:
 	float field_0x2d0;
 	float field_0x2d4;
 	int count_0x2d8;
-	int particleSectionStart;
+	ParticleEntry* particleSectionStart;
 	int numberOfParticles;
-	int buffer_0x2e4;
+	ParticleInstance* buffer_0x2e4;
 	int count_0x2e8;
-	int field_0x2ec;
+	void* prtFileBufferPool;
 };
 
 class CCinematicManagerB : public CObjectManager

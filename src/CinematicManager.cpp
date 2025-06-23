@@ -40,6 +40,7 @@
 #include "edVideo/VideoA.h"
 #include "TranslatedTextData.h"
 #include "EdFileBase.h"
+#include "EdenLib/edParticles/include/edParticles.h"
 
 CCinematicManager* g_CinematicManager_0048efc;
 
@@ -604,9 +605,10 @@ void CCinematic::InitInternalData()
 	this->count_0x22c = 0;
 	this->numberOfParticles = 0;
 	this->count_0x2e8 = 0;
-	this->particleSectionStart = 0;
-	this->buffer_0x2e4 = 0;
-	this->field_0x2ec = 0;
+	this->particleSectionStart = (ParticleEntry*)0x0;
+	this->buffer_0x2e4 = (ParticleInstance*)0x0;
+	this->prtFileBufferPool = (void*)0x0;
+
 	return;
 }
 
@@ -691,23 +693,21 @@ void CCinematic::SetupInternalData()
 	//}
 
 	if (this->field_0x28 == 0) {
-		this->particleSectionStart = 0;
-		this->buffer_0x2e4 = 0;
-		this->field_0x2ec = 0;
+		this->particleSectionStart = (ParticleEntry*)0x0;
+		this->buffer_0x2e4 = (ParticleInstance*)0x0;
+		this->prtFileBufferPool = (void*)0x0;
 		this->count_0x2e8 = 0;
 	}
 	else {
-		//pvVar7 = operator.new.array((long)(this->field_0x28 * 0x218));
-		//this->particleSectionStart = (int)pvVar7;
-		//this->count_0x2e8 = this->field_0x28;
-		//this->count_0x2e8 = this->count_0x2e8 << 1;
-		//if (this->count_0x2e8 < 8) {
-		//	this->count_0x2e8 = 8;
-		//}
-		//pvVar7 = operator.new.array((long)(this->count_0x2e8 * 0x1c));
-		//this->buffer_0x2e4 = (int)pvVar7;
-		//pvVar7 = edMemAlloc(H_MAIN, this->field_0x2c * this->count_0x2e8);
-		//this->field_0x2ec = (int)pvVar7;
+		this->particleSectionStart = new ParticleEntry[this->field_0x28];
+		this->count_0x2e8 = this->field_0x28;
+		this->count_0x2e8 = this->count_0x2e8 << 1;
+		if (this->count_0x2e8 < 8) {
+			this->count_0x2e8 = 8;
+		}
+
+		this->buffer_0x2e4 = new ParticleInstance[this->count_0x2e8];
+		this->prtFileBufferPool = edMemAlloc(TO_HEAP(H_MAIN), this->field_0x2c * this->count_0x2e8);
 	}
 
 	return;
@@ -1023,16 +1023,17 @@ void CCinematic::Init()
 	if (0 < this->count_0x2e8) {
 		iVar5 = 0;
 		do {
+			ParticleInstance* pParticleInstance = &this->buffer_0x2e4[iVar6];
+
+			pParticleInstance->id = -1;
+			pParticleInstance->field_0x8 = 0.0f;
+			pParticleInstance->field_0x4 = 0.0f;
+			pParticleInstance->field_0xc = 0;
+			pParticleInstance->pParticle = (_ed_particle_manager*)0x0;
+			pParticleInstance->pParticleFileData = (ParticleFileData*)0x0;
+			pParticleInstance->pActor = (CActor*)0x0;
+
 			iVar6 = iVar6 + 1;
-			puVar3 = (undefined4*)(this->buffer_0x2e4 + iVar5);
-			*puVar3 = 0xffffffff;
-			puVar3[2] = 0;
-			puVar3[1] = 0;
-			*(undefined*)(puVar3 + 3) = 0;
-			puVar3[4] = 0;
-			puVar3[5] = 0;
-			puVar3[6] = 0;
-			iVar5 = iVar5 + 0x1c;
 		} while (iVar6 < this->count_0x2e8);
 	}
 
@@ -1736,16 +1737,12 @@ int* CCinematic::InstallResource(edResCollection::RES_TYPE objectType, bool type
 						piVar7->pData = (char*)outFileData.fileBufferStart;
 						pMVar1 = CScene::ptable.g_LipTrackManager_00451694;
 						if (objectType == edResCollection::COT_Particle) {
-							IMPLEMENTATION_GUARD_LOG(
-							uVar3 = InstallFromDSC
-							((ParticleEntry*)(this->particleSectionStart + this->numberOfParticles * 0x218),
-								(byte*)outFileData.fileBufferStart, outFileData.size, bankObj);
 							iVar4 = -1;
-							if (uVar3 != 0) {
+							if (this->particleSectionStart[this->numberOfParticles].InstallFromDSC(outFileData.fileBufferStart, outFileData.size, bankObj) != false) {
 								iVar4 = this->numberOfParticles;
 								this->numberOfParticles = iVar4 + 1;
 							}
-							)
+							
 							/* For particles we store the number of particle objects. */
 							piVar7->pData = (char*)(iVar4 + 1);
 						}
@@ -1920,6 +1917,154 @@ CCineActorConfig* CCinematic::GetActorConfig(CActor* pActor)
 		}
 	}
 	return (CCineActorConfig*)0x0;
+}
+
+char* g_ParticleReturnChars = " \r\n\t";
+
+bool CCinematic::ParticleEntry::InstallFromDSC(char* pFileBuffer, int fileLength, edCBankBufferEntry* pBankBufferEntry)
+{
+	uint uVar1;
+	int numChildFiles;
+	int iVar2;
+	ed_g2d_manager* pManager;
+	ed_hash_code* peVar3;
+	size_t sVar4;
+	char* fileNameSeekPos;
+	TextureInfo* particleTextureInfo;
+	char* componentFileNamePtr;
+	int index;
+	char* fileBufferEnd;
+	edBANK_ENTRY_INFO outChildFileData;
+	char particleComponentFileName[76];
+	int iStack4;
+	char bCurrCharIsPeriod;
+
+	fileBufferEnd = pFileBuffer + fileLength;
+	this->nbManagers = 0;
+	componentFileNamePtr = particleComponentFileName;
+	this->nbMaterials = 0;
+	this->pFileBuffer = (char*)0x0;
+	fileNameSeekPos = strchr(g_ParticleReturnChars, *pFileBuffer);
+	while ((fileNameSeekPos != (char*)0x0 && (pFileBuffer < fileBufferEnd))) {
+		pFileBuffer = pFileBuffer + 1;
+		fileNameSeekPos = strchr(g_ParticleReturnChars, *pFileBuffer);
+	}
+
+	for (; (fileNameSeekPos = strchr(g_ParticleReturnChars, *pFileBuffer), fileNameSeekPos == (char*)0x0 &&
+		(pFileBuffer < fileBufferEnd)); pFileBuffer = pFileBuffer + 1) {
+		*componentFileNamePtr = *pFileBuffer;
+		componentFileNamePtr = componentFileNamePtr + 1;
+	}
+
+	*componentFileNamePtr = '\0';
+	numChildFiles = atoi(particleComponentFileName);
+
+	while (true) {
+		if (numChildFiles == 0) {
+			return true;
+		}
+
+		numChildFiles = numChildFiles + -1;
+		componentFileNamePtr = particleComponentFileName;
+		/* Search for the start of the file name */
+		fileNameSeekPos = strchr(g_ParticleReturnChars, *pFileBuffer);
+
+		while ((fileNameSeekPos != (char*)0x0 && (pFileBuffer < fileBufferEnd))) {
+			pFileBuffer = pFileBuffer + 1;
+			fileNameSeekPos = strchr(g_ParticleReturnChars, *pFileBuffer);
+		}
+
+		for (; (fileNameSeekPos = strchr(g_ParticleReturnChars, *pFileBuffer), fileNameSeekPos == (char*)0x0 &&
+			(pFileBuffer < fileBufferEnd)); pFileBuffer = pFileBuffer + 1) {
+			/* Search for the end of the file name, copying the file name into the buffer as we go */
+			*componentFileNamePtr = *pFileBuffer;
+			componentFileNamePtr = componentFileNamePtr + 1;
+		}
+
+		/* This loads other files, but if loading a particle will load in this order:
+		   d:\projects\b-witch\resource\build\level_1\cinematiques\particle\a983538304.dsc
+		   _grid_ground.g2d
+		   A983538304.prt */
+		*componentFileNamePtr = '\0';
+		iVar2 = pBankBufferEntry->get_index(particleComponentFileName);
+
+		NAME_NEXT_OBJECT(particleComponentFileName);
+
+		if (iVar2 == -1) break;
+
+		pBankBufferEntry->get_info(iVar2, &outChildFileData, (char*)0x0);
+		/* Try find the file type:
+		   Find the length of the file name, since we will search through it backwards */
+
+		sVar4 = strlen(particleComponentFileName);
+		fileNameSeekPos = particleComponentFileName + (int)sVar4;
+		/* Travel back through the file looking for a '.' */
+		bCurrCharIsPeriod = *fileNameSeekPos;
+
+		while ((bCurrCharIsPeriod != '.' && (particleComponentFileName < fileNameSeekPos))) {
+			fileNameSeekPos = fileNameSeekPos + -1;
+			bCurrCharIsPeriod = *fileNameSeekPos;
+		}
+
+		/* Check if the file is a '.g2d' file */
+		iVar2 = strcmp(fileNameSeekPos, ".g2d");
+		if (iVar2 == 0) {
+			pManager = ed3DInstallG2D(outChildFileData.fileBufferStart, outChildFileData.size, &iStack4, (ed_g2d_manager*)0x0, 1);
+			if (pManager == (ed_g2d_manager*)0x0) {
+				return false;
+			}
+
+			iVar2 = ed3DG2DGetG2DNbMaterials(pManager);
+			index = 0;
+			if (0 < iVar2) {
+				do {
+					this->aHashes[this->nbMaterials] = ed3DG2DGetMaterialFromIndex(pManager, index)->hash.number;
+					edDListCreatMaterialFromIndex(this->aMaterials + this->nbMaterials, index, pManager, 2);
+					index = index + 1;
+					this->aMaterialPtrs[this->nbMaterials] = this->aMaterials + this->nbMaterials;
+					this->nbMaterials = this->nbMaterials + 1;
+				} while (index < iVar2);
+			}
+
+			uVar1 = this->nbManagers;
+			this->nbManagers = uVar1 + 1;
+			this->aManagers[uVar1] = pManager;
+		}
+		else {
+			/* Reset the buffer and search through it again, looking for a period */
+			sVar4 = strlen(particleComponentFileName);
+			fileNameSeekPos = particleComponentFileName + (int)sVar4;
+			bCurrCharIsPeriod = *fileNameSeekPos;
+
+			while ((bCurrCharIsPeriod != '.' && (particleComponentFileName < fileNameSeekPos))) {
+				fileNameSeekPos = fileNameSeekPos + -1;
+				bCurrCharIsPeriod = *fileNameSeekPos;
+			}
+
+			/* Check if the file is a '.prt' file */
+			iVar2 = strcmp(fileNameSeekPos, ".prt");
+			if (iVar2 == 0) {
+				this->pFileBuffer = outChildFileData.fileBufferStart;
+				this->fileSize = outChildFileData.size;
+			}
+			else {
+				/* Reset the buffer and search through it again, looking for a period */
+				sVar4 = strlen(particleComponentFileName);
+				fileNameSeekPos = particleComponentFileName + (int)sVar4;
+				bCurrCharIsPeriod = *fileNameSeekPos;
+
+				while ((bCurrCharIsPeriod != '.' && (particleComponentFileName < fileNameSeekPos))) {
+					fileNameSeekPos = fileNameSeekPos + -1;
+					bCurrCharIsPeriod = *fileNameSeekPos;
+				}
+
+				/* Check if the file is a '.g3d' file */
+				strcmp(fileNameSeekPos, ".g3d");
+			}
+		}
+	}
+
+	return false;
 }
 
 void S_TARGET_STREAM_REF_CONTAINER::Create(ByteCode* pByteCode)
@@ -2784,6 +2929,81 @@ CActor* CCinematic::GetActorByHashcode(uint hashCode)
 	return pFoundActor;
 }
 
+int CCinematic::GetParticleInstance(int id)
+{
+	int iVar1;
+	ParticleInstance* piVar2;
+
+	iVar1 = 0;
+	if (0 < this->count_0x2e8) {
+		piVar2 = this->buffer_0x2e4;
+
+		do {
+			if (id == piVar2->id) {
+				return iVar1;
+			}
+
+			iVar1 = iVar1 + 1;
+			piVar2 = piVar2 + 1;
+		} while (iVar1 < this->count_0x2e8);
+	}
+
+	return -1;
+}
+
+int CCinematic::CreateParticleInstance(float param_1, int index, int particleId, CActor* pActor)
+{
+	int iVar1;
+	ParticleFileData* pFileData;
+	_ed_particle_manager* p_Var2;
+	int particleInstanceId;
+	ParticleInstance* pPVar4;
+	int iVar5;
+	ParticleEntry* pPVar6;
+
+	iVar5 = 0;
+	iVar1 = this->count_0x2e8;
+	if (0 < iVar1) {
+		pPVar4 = this->buffer_0x2e4;
+		do {
+			if (pPVar4->id == -1) break;
+
+			iVar5 = iVar5 + 1;
+			pPVar4 = pPVar4 + 1;
+		} while (iVar5 < iVar1);
+	}
+
+	particleInstanceId = -1;
+	if (iVar5 != iVar1) {
+		pPVar6 = this->particleSectionStart + index;
+		pFileData = (ParticleFileData*)edMemAlloc(this->prtFileBufferPool, pPVar6->fileSize);
+		if (pFileData == (ParticleFileData*)0x0) {
+			particleInstanceId = -1;
+		}
+		else {
+			memcpy(pFileData, pPVar6->pFileBuffer, pPVar6->fileSize);
+			p_Var2 = edParticlesInstall(pFileData, CScene::_scene_handleA, (ed_g2d_manager*)0x0, pPVar6->aMaterialPtrs, pPVar6->aHashes, pPVar6->nbMaterials, (ed_g3d_manager*)0x0, true);
+			if (p_Var2 == (_ed_particle_manager*)0x0) {
+				particleInstanceId = -1;
+			}
+			else {
+				pPVar4 = this->buffer_0x2e4 + iVar5;
+				pPVar4->id = particleId;
+				pPVar4->field_0x8 = param_1;
+				pPVar4->field_0x4 = 0.0f;
+				pPVar4->pParticle = p_Var2;
+				pPVar4->pParticleFileData = pFileData;
+				pPVar4->pActor = pActor;
+				particleInstanceId = iVar5;
+			}
+		}
+	}
+
+	return particleInstanceId;
+}
+
+
+
 bool CCinematic::CanBePlayed()
 {
 	bool bVar1;
@@ -2855,21 +3075,21 @@ void CCinematic::FUN_001cbe40()
 	//	this->pCineSpotHolderArray = (BWCinSpotLight*)0x0;
 	//	this->count_0x22c = 0;
 	//}
-	//
-	//if ((void*)this->buffer_0x2e4 != (void*)0x0) {
-	//	delete((void*)this->buffer_0x2e4);
-	//	this->buffer_0x2e4 = 0;
-	//}
-	//
-	//if ((void*)this->particleSectionStart != (void*)0x0) {
-	//	delete((void*)this->particleSectionStart);
-	//	this->particleSectionStart = 0;
-	//}
-	//
-	//if ((void*)this->field_0x2ec != (void*)0x0) {
-	//	edMemFree((void*)this->field_0x2ec);
-	//	this->field_0x2ec = 0;
-	//}
+	
+	if (this->buffer_0x2e4 != (ParticleInstance*)0x0) {
+		delete(this->buffer_0x2e4);
+		this->buffer_0x2e4 = (ParticleInstance*)0x0;
+	}
+
+	if (this->particleSectionStart != (ParticleEntry*)0x0) {
+		delete(this->particleSectionStart);
+		this->particleSectionStart = (ParticleEntry*)0x0;
+	}
+
+	if (this->prtFileBufferPool != (void*)0x0) {
+		edMemFree(this->prtFileBufferPool);
+		this->prtFileBufferPool = (void*)0x0;
+	}
 
 	return;
 }
@@ -3196,7 +3416,7 @@ void CCinematic::UninstallResources()
 
 			resourceType = *(int*)pCVar7;
 			if (resourceType == edResCollection::COT_Particle) {
-				IMPLEMENTATION_GUARD_LOG(
+				IMPLEMENTATION_GUARD(
 				iVar6 = this->particleSectionStart + ((int)&pMeshInfo[-1].ANMA + 3) * 0x218;
 				iVar5 = 0;
 				int otherResourceType = iVar6;
@@ -4141,6 +4361,36 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 	else {
 		pParent->CinematicMode_SetAnimation(pTag, bVar6);
 	}
+	return true;
+}
+
+bool CBWCinActor::SetParticles(float param_1, edCinActorInterface::PARTICLE_PARAMStag* pTag)
+{
+	bool bNeedToCreateInstance;
+	ParticleInstance* pPVar2;
+	CCinematic* pCinematic;
+	int particleInstanceId;
+
+	if (param_1 < pTag->field_0x8) {
+		pCinematic = g_CinematicManager_0048efc->GetCurCinematic();
+		particleInstanceId = pCinematic->GetParticleInstance(pTag->particleId);
+	
+		bNeedToCreateInstance = particleInstanceId == -1;
+		if (bNeedToCreateInstance) {
+			particleInstanceId = pCinematic->CreateParticleInstance(param_1, pTag->field_0x4 + -1, pTag->particleId, this->pParent);
+		}
+
+		if ((-1 < particleInstanceId) && (particleInstanceId < pCinematic->count_0x2e8)) {
+			pPVar2 = pCinematic->buffer_0x2e4;
+			if (!bNeedToCreateInstance) {
+				IMPLEMENTATION_GUARD(
+				FUN_001c6ab0(param_1, pPVar2 + particleInstanceId);)
+			}
+
+			pPVar2[particleInstanceId].field_0xc = 1;
+		}
+	}
+
 	return true;
 }
 

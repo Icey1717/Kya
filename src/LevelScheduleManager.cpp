@@ -1387,12 +1387,12 @@ LAB_002e26c8:
 		Level_FillRunInfo(nextLevelId, -1, -1);
 	}
 	else {
-		//Level_FillRunInfo(0xe, -1, -1);
+		Level_FillRunInfo(0xe, -1, -1);
 		// #HACK
 		//Level_FillRunInfo(0x4, -1, -1);
 		//Level_FillRunInfo(0x4, 9, -1);
 		//Level_FillRunInfo(0x0, 9, 0xb);
-		Level_FillRunInfo(0x2, -1, 0x5c);
+		//Level_FillRunInfo(0x2, -1, 0x5c);
 	}
 	return;
 }
