@@ -198,6 +198,8 @@ edCTextResourcePool::edCTextResourcePool()
 	pEntries = (edCTextResource*)0x0;
 	maxEntries = 0;
 	currentEntries = 0;
+
+	return;
 }
 
 bool edCTextResourcePool::Init(int maxEntries)
@@ -213,6 +215,7 @@ bool edCTextResourcePool::Init(int maxEntries)
 	if (!bVar1) {
 		this->maxEntries = 0;
 	}
+
 	return bVar1;
 }
 
@@ -221,5 +224,6 @@ edCTextResourcePool::edCTextResource::edCTextResource()
 	this->key = 0;
 	this->pMessageData = (void*)0x0;
 	this->index = 0;
+
 	return;
 }

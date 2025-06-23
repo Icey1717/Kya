@@ -1,6 +1,7 @@
 #include "FxComposite.h"
 #include "MemoryStream.h"
 #include "MathOps.h"
+#include "TimeController.h"
 
 void CFxCompositeScenaricData::Init()
 {
@@ -46,6 +47,108 @@ void* CFxCompositeManager::InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR sele
 }
 
 
+void CFxNewComposite::Draw()
+{
+	return;
+}
+
+void CFxNewComposite::Start(float param_1, float param_2)
+{
+	CNewFx::Start(param_1, param_2);
+
+	this->field_0x80 = 0.0f;
+	this->flags = this->flags & 0xfffffffd;
+
+	return;
+}
+
+int CFxNewComposite::GetType()
+{
+	return FX_TYPE_COMPOSITE;
+}
+
+void CFxNewComposite::Manage()
+{
+	CNewFx* pCVar1;
+	bool bVar2;
+	Timer* pTVar3;
+	CFxHandle* pCVar4;
+	float* pfVar5;
+	int iVar6;
+	uint uVar7;
+
+	CNewFx::Manage();
+
+	if ((this->flags & 0x20) == 0) {
+		bVar2 = (this->flags & 1) != 0;
+		if (bVar2) {
+			bVar2 = (this->flags & 4) == 0;
+		}
+
+		if (bVar2) {
+			pfVar5 = this->field_0xc8;
+			iVar6 = 0;
+			uVar7 = this->nbComponentParticles;
+			pCVar4 = this->aFxHandles;
+			pTVar3 = Timer::GetTimer();
+			this->field_0x80 = this->field_0x80 + pTVar3->cutsceneDeltaTime;
+			while (uVar7 != 0) {
+				uVar7 = uVar7 - 1;
+				pCVar1 = pCVar4->pFx;
+				if (((pCVar1 == (CNewFx*)0x0) || (pCVar4->id == 0)) || (bVar2 = true, pCVar4->id != pCVar1->field_0x18)) {
+					bVar2 = false;
+				}
+				if (bVar2) {
+					if (*pfVar5 < this->field_0x80) {
+						if (((pCVar1 == (CNewFx*)0x0) || (pCVar4->id == 0)) || (pCVar4->id != pCVar1->field_0x18)) {
+							bVar2 = false;
+						}
+						else {
+							bVar2 = false;
+							if (((pCVar1->flags & 1) != 0) && ((pCVar1->flags & 4) == 0)) {
+								bVar2 = true;
+							}
+						}
+
+						if ((((!bVar2) && (pCVar1 != (CNewFx*)0x0)) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+							pCVar1->Start(0.0f, 0.0f);
+						}
+					}
+
+					pCVar1 = pCVar4->pFx;
+					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+						pCVar1->position = this->position;
+					}
+
+					pCVar1 = pCVar4->pFx;
+					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+						pCVar1->rotationEuler = this->rotationEuler;
+					}
+
+					pCVar1 = pCVar4->pFx;
+					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+						pCVar1->scale = this->scale;
+					}
+
+					iVar6 = iVar6 + 1;
+				}
+
+				pCVar4 = pCVar4 + 1;
+				pfVar5 = pfVar5 + 1;
+			}
+
+			if (iVar6 == 0) {
+				Kill();
+			}
+		}
+	}
+	else {
+		Kill();
+	}
+
+	return;
+}
+
 void CFxNewComposite::Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_SELECTOR selector)
 {
 	CNewFx* pNewFx;
@@ -56,13 +159,13 @@ void CFxNewComposite::Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_S
 	uint nbComponents;
 	CFxManager* pEffectsManager;
 
-	this->field_0x30 = gF32Vertex4Zero;
-	this->field_0x50 = gF32Vector4Zero;
-	this->field_0x48 = 1.0f;
-	this->field_0x44 = 1.0f;
-	this->field_0x40 = 1.0f;
-	this->field_0x4c = 0.0f;
-	this->field_0x4 = 0;
+	this->position = gF32Vertex4Zero;
+	this->rotationEuler = gF32Vector4Zero;
+	this->scale.z = 1.0f;
+	this->scale.y = 1.0f;
+	this->scale.x = 1.0f;
+	this->scale.w = 0.0f;
+	this->pSon = (CNewFx*)0x0;
 
 	this->nbComponentParticles = pData->nbData;
 	this->field_0xc8 = pData->field_0x8;
@@ -86,7 +189,7 @@ void CFxNewComposite::Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_S
 
 			if (((bVar2) && (pNewFx != (CNewFx*)0x0)) &&
 				((pHandle->id != 0 && (pHandle->id == pNewFx->field_0x18)))) {
-				pNewFx->field_0x4 = this;
+				pNewFx->pSon = this;
 				pNewFx->field_0x8 = i;
 			}
 

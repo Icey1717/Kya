@@ -6,9 +6,14 @@
 
 struct ByteCode;
 
-class CFxLod : public CNewFx
+class CLodFx : public CNewFx
 {
 public:
+	virtual void Draw();
+	virtual void Kill() { IMPLEMENTATION_GUARD(); }
+	virtual void Start(float param_1, float param_2) { IMPLEMENTATION_GUARD(); }
+	virtual int GetType();
+	virtual void NotifySonIsDead(CNewFx* pSon, int) { IMPLEMENTATION_GUARD(); }
 	void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
@@ -19,7 +24,7 @@ public:
 	void Create(ByteCode* pByteCode);
 };
 
-class CFxLodManager : public CFxPoolManager<CFxLod, CFxLodScenaricData>
+class CFxLodManager : public CFxPoolManager<CLodFx, CFxLodScenaricData>
 {
 public:
 	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }

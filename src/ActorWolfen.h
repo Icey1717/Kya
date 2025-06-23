@@ -52,6 +52,7 @@ struct EnemyComponent80
 class CActorWolfen;
 class CActorCommander;
 class CActorProjectile;
+class CActorHero;
 
 union f4data
 {
@@ -419,7 +420,6 @@ struct astruct_18
 class CBehaviourExorcism : public CBehaviour
 {
 public:
-	CBehaviourExorcism();
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init(CActor* pOwner);
 	virtual void Term();
@@ -446,7 +446,6 @@ public:
 	int field_0x24;
 	int digitMaterialId;
 	CFxHandle field_0x2c;
-	int* field_0x30;
 
 	edF32VECTOR4 field_0x40;
 };
@@ -955,6 +954,9 @@ public:
 	void DisableFightAction();
 
 	bool FUN_00173de0(CActorFighter* pAdversary);
+	bool FUN_00174130();
+
+	bool IsExorcizable(CActorHero* pHero);
 
 	void UpdateCombatMode(); // new
 	WFIGS_Capability* GetActiveCapability(); // new

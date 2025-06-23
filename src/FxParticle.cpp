@@ -2,6 +2,9 @@
 #include "MemoryStream.h"
 #include "EdenLib/edBank/include/edBankBuffer.h"
 #include "LevelScheduleManager.h"
+#include "MathOps.h"
+#include "TimeController.h"
+#include "Rendering/DisplayList.h"
 
 bool CParticleRes::Init()
 {
@@ -40,7 +43,7 @@ bool CParticleRes::Init()
 			if (0 < iVar2) {
 				do {
 					this->aHashes[iVar8] = ed3DG2DGetMaterialFromIndex(pManager, index)->hash.number;
-					this->aManagers[iVar8] = pPVar3->materialInfoArray_0x8->pManager + index;
+					this->aMaterials[iVar8] = pPVar3->materialInfoArray_0x8 + index;
 					index = index + 1;
 					iVar8 = iVar8 + 1;
 					puVar5 = puVar5 + 1;
@@ -57,6 +60,13 @@ bool CParticleRes::Init()
 }
 
 uint CFxParticleManager::_prt_bank_first_index = 0;
+
+CFxParticleManager::CFxParticleManager()
+{
+	this->pPoolHeap = edMemAlloc(TO_HEAP(H_MAIN), 0x3e800);
+
+	return;
+}
 
 void* CFxParticleManager::InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector)
 {
@@ -157,18 +167,186 @@ void CFxParticleScenaricData::Create(ByteCode* pByteCode)
 
 	if (this->nbData != 0) {
 		for (uint i = 0; i < this->nbData; i++) {
-			this->aSubObjs[i].field_0x0 = pByteCode->GetU32();
+			this->aSubObjs[i].selectorType = pByteCode->GetU32();
 			this->aSubObjs[i].field_0x4 = pByteCode->GetS32();
 		}
 	}
 
-	this->field_0x8 = pByteCode->GetS32();
+	this->aSubObjs[0].field_0x4 = pByteCode->GetS32();
 	this->nbData = this->nbData + 1;
+
+	return;
+}
+
+void CFxNewParticle::Draw()
+{
+	bool bVar1;
+	float fVar2;
+	edF32MATRIX4 local_40;
+
+	if (this->pManager != (_ed_particle_manager*)0x0) {
+		edParticlesSetSystem(this->pManager);
+
+		local_40 = gF32Matrix4Unit;
+
+		if ((this->field_0x84 & 1) == 0) {
+			edF32Matrix4FromEulerSoft(&local_40, &this->rotationEuler.xyz, "XYZ");
+
+			local_40.rowX = local_40.rowX * this->scale.x;
+			local_40.rowY = local_40.rowY * this->scale.y;
+			local_40.rowZ = local_40.rowZ * this->scale.z;
+			local_40.rowT = this->position;
+		}
+
+		edPartSetDisplayMatrix(this->pManager, &local_40);
+
+		bVar1 = GameDList_BeginCurrent();
+		if (bVar1 != false) {
+			edParticlesDraw(this->pManager, this->field_0x70);
+			GameDList_EndCurrent();
+		}
+	}
+	return;
+}
+
+int CFxNewParticle::GetType()
+{
+	return FX_TYPE_PARTICLE;
+}
+
+void CFxNewParticle::Manage()
+{
+	uint uVar1;
+	bool bVar2;
+	_ed_particle_group* p_Var4;
+	int iVar5;
+	int iVar6;
+	_ed_particle_generator_param* p_Var7;
+	edF32MATRIX4 eStack128;
+	edF32MATRIX4 eStack64;
+
+	CNewFx::Manage();
+
+	if ((this->field_0x84 & 0x20) == 0) {
+		uVar1 = this->flags;
+		bVar2 = false;
+		if (((uVar1 & 1) != 0) && ((uVar1 & 4) == 0)) {
+			bVar2 = true;
+		}
+
+		if (bVar2) {
+			if (this->pManager == (_ed_particle_manager*)0x0) {
+				Kill();
+			}
+			else {
+				edParticlesSetSystem(this->pManager);
+
+				if (((this->field_0x84 & 1) != 0) && ((this->field_0x84 & 2) == 0)) {
+					p_Var7 = this->pManager->aParams.pData;
+					iVar6 = this->pManager->field_0x4c;
+					edF32Matrix4ScaleHard(&eStack128, &gF32Matrix4Unit, &this->scale);
+					edF32Matrix4FromEulerSoft(&eStack64, &this->rotationEuler.xyz, "XYZ");
+					edF32Matrix4TranslateHard(&eStack64, &eStack64, &this->position);
+					edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack128, &eStack64);
+					for (; iVar6 != 0; iVar6 = iVar6 + -1) {
+						edF32Matrix4MulF32Matrix4Hard(&p_Var7->field_0x40, &p_Var7->field_0x80, &eStack64);
+						p_Var7 = p_Var7 + 1;
+					}
+				}
+
+				edParticlesUpdate(this->field_0x80 * Timer::GetTimer()->cutsceneDeltaTime);
+
+				iVar6 = this->pManager->nbParams;
+				iVar5 = 0;
+				if (0 < iVar6) {
+					p_Var4 = this->pManager->aGroups.pData;
+					do {
+						bVar2 = p_Var4->field_0x14 != 0;
+						if (!bVar2) {
+							bVar2 = p_Var4->field_0x5c != 0;
+						}
+
+						if (!(bool)(bVar2 ^ 1)) break;
+
+						iVar5 = iVar5 + 1;
+						p_Var4 = p_Var4 + 1;
+					} while (iVar5 < iVar6);
+				}
+
+				if (iVar5 == iVar6) {
+					Kill();
+				}
+			}
+		}
+	}
+	else {
+		Kill();
+	}
 
 	return;
 }
 
 void CFxNewParticle::Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SELECTOR selector)
 {
+	uint size;
+	int iVar1;
+	ParticleFileData* pPVar2;
+	CFxParticleScenaricData::CFxParticleScenaricDataSubObj* piVar4;
+	int iVar6;
+	CParticleRes* pCVar7;
+	CFxParticleManager* pFxParticleManager;
 
+	iVar6 = 1;
+	this->position = gF32Vertex4Zero;
+	this->rotationEuler = gF32Vector4Zero;
+	this->scale.z = 1.0f;
+	this->scale.y = 1.0f;
+	this->scale.x = 1.0f;
+	this->scale.w = 0.0f;
+	this->pSon = (CNewFx*)0x0;
+	this->pFileData = (ParticleFileData*)0x0;
+	this->pManager = (_ed_particle_manager*)0x0;
+	this->field_0x80 = 1.0f;
+
+	pFxParticleManager = static_cast<CFxParticleManager*>(CScene::ptable.g_EffectsManager_004516b8->aEffectCategory[3]);
+	iVar1 = 0;
+	if (1 < pData->nbData) {
+		piVar4 = pData->aSubObjs + 1;
+		do {
+			iVar1 = iVar6;
+
+			if (piVar4->selectorType == selector) break;
+
+			iVar6 = iVar6 + 1;
+			piVar4 = piVar4 + 1;
+			iVar1 = 0;
+		} while (iVar6 < pData->nbData);
+	}
+
+	if (((selector != 8) && (selector != 4)) && (iVar1 = pData->aSubObjs[iVar1].field_0x4, iVar1 != -1)) {
+		pCVar7 = pFxParticleManager->aParticleRes + iVar1;
+		size = pCVar7->fileSize;
+
+		if (size != 0) {
+			iVar1 = edMemGetMemoryAvailable(pFxParticleManager->pPoolHeap);
+			if ((int)size < iVar1) {
+				pPVar2 = (ParticleFileData*)edMemAlloc(pFxParticleManager->pPoolHeap, size);
+				if (pPVar2 == (ParticleFileData*)0x0) {
+					IMPLEMENTATION_GUARD(
+					edMemDump(pFxParticleManager->pPoolHeap, 2);)
+				}
+			}
+			else {
+				pPVar2 = (ParticleFileData*)0x0;
+			}
+
+			this->pFileData = pPVar2;
+			if (this->pFileData != (ParticleFileData*)0x0) {
+				memcpy(this->pFileData, pCVar7->pFileStart, size);
+				this->pManager = edParticlesInstall(this->pFileData, CScene::_scene_handleA, 0, pCVar7->aMaterials, pCVar7->aHashes, pCVar7->nbLoadedRes, (ed_g3d_manager*)0x0, true);
+				this->field_0x84 = pData->field_0x0;
+			}
+		}
+	}
+	return;
 }

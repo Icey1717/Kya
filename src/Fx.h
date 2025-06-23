@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "LargeObject.h"
+#include "CameraViewManager.h"
 
 #define FX_TYPE_COMPOSITE 0
 #define FX_TYPE_PATH 1
@@ -88,27 +89,35 @@ class CNewFx
 {
 public:
 	CNewFx();
+	virtual void Draw() = 0;
+	virtual void Kill();
+	virtual void Start(float param_1, float param_2);
+	virtual int GetType() = 0;
 	virtual void Func_0x30(float param_1);
+	virtual void NotifySonIsDead(CNewFx* pSon, int);
 
-	CNewFx* field_0x4;
+	void Manage();
+
+	CNewFx* pSon;
 	int field_0x8;
-	undefined4* field_0x1c;
+
+	float field_0xc;
+	float field_0x10;
 
 	uint flags;
 	int field_0x18;
-	uint field_0x20;
+	CActor* pActor;
+	uint boneId;
 
-	edF32VECTOR4 field_0x30;
+	edF32VECTOR4 position;
 
-	float field_0x40;
-	float field_0x44;
-	float field_0x48;
-	float field_0x4c;
+	edF32VECTOR4 scale;
 
-	edF32VECTOR4 field_0x50;
+	edF32VECTOR4 rotationEuler;
 	edF32VECTOR4 field_0x60;
 
 	float field_0x70;
+	float field_0x74;
 };
 
 struct s_fx_sort_data
@@ -123,7 +132,7 @@ class CFxPoolManagerFather
 {
 public:
 	CFxPoolManagerFather()
-		: pData((char*)0x0)
+		: pPoolHeap((void*)0x0)
 	{
 	}
 
@@ -134,10 +143,10 @@ public:
 	virtual void SetupPool(ByteCode* pByteCode, uint param_3) = 0;
 	virtual uint InstallFxScenaricData(ByteCode* pByteCode) = 0;
 	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) = 0;
-
+	virtual void Remove(CNewFx* pFx) = 0;
 	virtual int GetNbPool() = 0;
 
-	char* pData;
+	void* pPoolHeap;
 };
 
 template<typename FxType>
@@ -252,12 +261,12 @@ public:
 					pSortData[*pCount].field_0x8 = 1;
 					pSortData[*pCount].pFx = pCVar1;
 					edF32Matrix4SetIdentityHard(&eStack64);
-					edF32Matrix4TranslateHard(&eStack64, &eStack64, &pCVar1->field_0x30);
+					edF32Matrix4TranslateHard(&eStack64, &eStack64, &pCVar1->position);
 					edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, &pCameraManager->worldToCamera_0x3d0);
 					local_50.x = eStack64.ac;
 					local_50.y = eStack64.bc;
 					local_50.z = eStack64.cc;
-					local_60 = pCVar1->field_0x30;
+					local_60 = pCVar1->position;
 					edF32Vector4SubHard(&local_60, &local_60, &(pCameraManager->transformationMatrix).rowT);
 					fVar4 = edF32Vector4DotProductHard(&local_50, &local_60);
 					pSortData[*pCount].field_0x4 = fVar4;
@@ -319,6 +328,11 @@ public:
 		return this->nbScenaricData;
 	}
 
+	virtual void Remove(CNewFx* pFx)
+	{
+		IMPLEMENTATION_GUARD();
+	}
+
 	virtual int GetNbPool()
 	{
 		return this->nbPool;
@@ -367,7 +381,8 @@ public:
 
 };
 
-struct CFxManager : public CObjectManager {
+struct CFxManager : public CObjectManager
+{
 
 	CFxManager();
 
@@ -413,6 +428,7 @@ struct ParticleInfo;
 class CFxDigits
 {
 public:
+	CFxDigits();
 	void Init(int param_2) {}
 	void Draw(float param_1, float param_2, float param_3, float param_4, edF32VECTOR4* param_6, int param_7) {}
 

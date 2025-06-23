@@ -43,3 +43,13 @@ void CFxSoundScenaricData::Create(ByteCode* pByteCode)
 
 	return;
 }
+
+void CFxNewSound::Draw()
+{
+	return;
+}
+
+int CFxNewSound::GetType()
+{
+	return FX_TYPE_SOUND;
+}

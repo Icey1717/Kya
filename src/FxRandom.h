@@ -6,9 +6,14 @@
 
 struct ByteCode;
 
-class CFxRandom : public CNewFx
+class CRandomFx : public CNewFx
 {
 public:
+	virtual void Draw();
+	virtual void Kill() { IMPLEMENTATION_GUARD(); }
+	virtual void Start(float param_1, float param_2) { IMPLEMENTATION_GUARD(); }
+	virtual int GetType();
+	virtual void NotifySonIsDead(CNewFx* pSon, int) { IMPLEMENTATION_GUARD(); }
 	void Manage() { IMPLEMENTATION_GUARD(); }
 };
 
@@ -31,7 +36,7 @@ public:
 	float field_0x44;
 };
 
-class CFxRandomManager : public CFxPoolManager<CFxRandom, CFxRandomScenaricData>
+class CFxRandomManager : public CFxPoolManager<CRandomFx, CFxRandomScenaricData>
 {
 public:
 	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector) { IMPLEMENTATION_GUARD(); }

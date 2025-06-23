@@ -93,7 +93,7 @@ void sanityCheckFreeList(S_MAIN_MEMORY_HEADER* freeListHead) {
 
 #define ED_HANDLER_MEMORY_LOG 1
 
-edSysHandlerMemory edSysHandlerMemory_004890c0;
+edSysHandlerMemory edMemHandlers;
 
 // Contiguous
 
@@ -137,7 +137,7 @@ int edMemGetMemoryAvailable(EHeap heapID)
 	int freeBytes;
 
 	if (heapID == TO_HEAP(H_INVALID)) {
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, g_szEdMemGetMemoryAvailable);
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, g_szEdMemGetMemoryAvailable);
 	}
 
 	pHeap = edmemGetMainHeader((void*)heapID);
@@ -170,7 +170,7 @@ void* edMemGetLocalAddress(void* pAlloc)
 	void* pBlockAddress;
 
 	if (pAlloc == (void*)0x0) {
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, g_szEdMemAlloc_004324f8);
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, g_szEdMemAlloc_004324f8);
 		pBlockAddress = (void*)0x0;
 	}
 	else {
@@ -188,7 +188,7 @@ void* edMemAlloc(EHeap heapID, size_t size)
 	ED_MEM_LOG(LogLevel::Info, "\nedMemAllocAlign Heap: {}, size: 0x{:x}", (int)heapID, size);
 
 	if (heapID == 0) {
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, "edMemAlloc");
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, "edMemAlloc");
 		pNewAlloc = (void*)0x0;
 	}
 	else {
@@ -211,13 +211,13 @@ void* edMemAllocAlign(EHeap heapID, size_t size, int align)
 
 	if (heapID == TO_HEAP(H_INVALID)) {
 		/* edMemAllocAlign */
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, "edMemAllocAlign");
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, "edMemAllocAlign");
 		pNewAllocation = (void*)0x0;
 	}
 	else {
 		if ((heapID == TO_HEAP(H_MEMKIT)) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
 			edDebugPrintf(g_szMemkitWarning);
-			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
+			CallHandlerFunction(&edMemHandlers, 4, (char*)0x0);
 		}
 
 		pHeap = edmemGetMainHeader((void*)heapID);
@@ -248,13 +248,13 @@ void* edMemAllocAlignBoundary(EHeap heap, size_t size, int align, int offset)
 
 	if (heap == TO_HEAP(H_INVALID)) {
 		/* edMemAlloc */
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, g_szEdMemAlloc_00432508);
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, g_szEdMemAlloc_00432508);
 		pNewAllocation = (void*)0x0;
 	}
 	else {
 		if ((heap == TO_HEAP(H_MEMKIT)) && (fileLoadMode = GetFileLoadMode_00424d9c(), fileLoadMode == FLM_CD_DVD)) {
 			edDebugPrintf(g_szMemkitWarning);
-			CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, (char*)0x0);
+			CallHandlerFunction(&edMemHandlers, 4, (char*)0x0);
 		}
 
 		pHeap = edmemGetMainHeader((void*)heap);
@@ -276,7 +276,7 @@ void edMemFree(void* pAlloc)
 
 	if (pAlloc == (void*)0x0) {
 		/* edMemFree */
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, g_szEdMemFree_00432598);
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, g_szEdMemFree_00432598);
 	}
 	else {
 		peVar1 = edmemGetMainHeader(pAlloc);
@@ -292,7 +292,7 @@ void* edMemShrink(void* pAlloc, int size)
 
 	if (pAlloc == (void*)0x0) {
 		/* EdMemShrink */
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, 1, g_szEdMemShrink_004325a8);
+		CallHandlerFunction(&edMemHandlers, 1, g_szEdMemShrink_004325a8);
 		pNewAllocation = (void*)0x0;
 	}
 	else {
@@ -327,11 +327,11 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 		
 	pBlocks = MemoryMasterBlock.aBlocks;
 	if (((pMainMemHeader->flags & 2) == 0) || ((pMainMemHeader->flags & 4) == 0)) {
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, 3, pMainMemHeader->pStartAddr);
+		CallHandlerFunction(&edMemHandlers, 3, pMainMemHeader->pStartAddr);
 	}
 
 	if ((pMainMemHeader->flags & 0x80) == 0) {
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, 4, pMainMemHeader->pStartAddr);
+		CallHandlerFunction(&edMemHandlers, 4, pMainMemHeader->pStartAddr);
 		pReturn = (char*)0x0;
 	}
 	else {
@@ -495,7 +495,7 @@ char* edmemWorkAlloc(S_MAIN_MEMORY_HEADER* pMainMemHeader, int size, int align, 
 
 						if (destBlock == -1) {
 							edDebugPrintf(sz_CannotAllocate_004325c0, size);
-							CallHandlerFunction(&edSysHandlerMemory_004890c0, 0, pMainMemHeader->pStartAddr);
+							CallHandlerFunction(&edMemHandlers, 0, pMainMemHeader->pStartAddr);
 							pReturn = (char*)0x0;
 						}
 						else {
@@ -987,7 +987,7 @@ S_MAIN_MEMORY_HEADER* edmemGetFreeMemoryHeader(S_MAIN_MEMORY_HEADER* pHeap, int 
 
 	if (MemoryMasterBlock.nbFreeBlocks == 0) {
 		ED_MEM_LOG(LogLevel::Error, "edmemGetFreeMemoryHeader No free blocks available");
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, 2, (char*)0x0);
+		CallHandlerFunction(&edMemHandlers, 2, (char*)0x0);
 		pNewBlock = (S_MAIN_MEMORY_HEADER*)0x0;
 	}
 	else {
@@ -1158,7 +1158,7 @@ void edMemSetFlags(EHeap heapID, ushort newFlags)
 
 	if (heapID == TO_HEAP(H_INVALID)) {
 		/* emSetFlags */
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, g_szEdMemSetFlags_00432b28);
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, g_szEdMemSetFlags_00432b28);
 	}
 	else {
 		pHeap = edmemGetMainHeader((void*)heapID);
@@ -1179,7 +1179,7 @@ void edMemClearFlags(EHeap heapID, ushort flags)
 
 	if (heapID == TO_HEAP(H_INVALID)) {
 		/* edMemClearFlags */
-		CallHandlerFunction(&edSysHandlerMemory_004890c0, ED_HANDLER_MEMORY_LOG, g_szEdMemClearFlags_00432b40);
+		CallHandlerFunction(&edMemHandlers, ED_HANDLER_MEMORY_LOG, g_szEdMemClearFlags_00432b40);
 	}
 	else {
 		pHeap = edmemGetMainHeader((void*)heapID);

@@ -11,6 +11,7 @@
 #include "FxGroup.h"
 #include "MathOps.h"
 #include "CameraViewManager.h"
+#include "TimeController.h"
 
 CFxHandle::CFxHandle()
 {
@@ -36,7 +37,7 @@ CFxManager::CFxManager()
 	this->aParticleClassSizes[FX_TYPE_PATH]			= sizeof(CFxPath);
 	this->aParticleClassSizes[FX_TYPE_GROUP]		= sizeof(CFxGroup);
 	this->aParticleClassSizes[FX_TYPE_PARTICLE]		= sizeof(CFxNewParticle);
-	this->aParticleClassSizes[FX_TYPE_SOUND]		= sizeof(CFxSound);
+	this->aParticleClassSizes[FX_TYPE_SOUND]		= sizeof(CFxNewSound);
 	this->aParticleClassSizes[FX_TYPE_RANDOM]		= 0; // ??
 	this->aParticleClassSizes[FX_TYPE_LOD]			= 0; // ??
 
@@ -290,9 +291,7 @@ void CFxManager::Level_Draw()
 				reinterpret_cast<CFx*>(psVar4->pFx)->Draw();
 			}
 			else {
-				IMPLEMENTATION_GUARD();
-				// Delete?
-				//psVar4->pFx->field_0x8();
+				reinterpret_cast<CNewFx*>(psVar4->pFx)->Draw();
 			}
 
 			psVar4 = psVar4 + 1;
@@ -512,24 +511,69 @@ void CFxManager::GetDynamicFx(CFxHandle* pHandle, uint param_3, FX_MATERIAL_SELE
 
 CNewFx::CNewFx()
 {
-	this->field_0x30 = gF32Vertex4Zero;
-	this->field_0x50 = gF32Vertex4Zero;
+	this->position = gF32Vertex4Zero;
+	this->rotationEuler = gF32Vertex4Zero;
 
-	this->field_0x4c = 1.0f;
-	this->field_0x48 = 1.0f;
-	this->field_0x44 = 1.0f;
-	this->field_0x40 = 1.0f;
+	this->scale.w = 1.0f;
+	this->scale.z = 1.0f;
+	this->scale.y = 1.0f;
+	this->scale.x = 1.0f;
 
 	this->field_0x60 = gF32Vector4Zero;
 
 	Func_0x30(1.0f);
 
-	this->field_0x4 = 0;
+	this->pSon = (CNewFx*)0x0;
 	this->field_0x8 = 0;
-	this->field_0x1c = (undefined4*)0x0;
-	this->field_0x20 = 0;
+	this->pActor = (CActor*)0x0;
+	this->boneId = 0;
 	this->field_0x18 = 1;
 	this->flags = 0;
+
+	return;
+}
+
+void CNewFx::Kill()
+{
+	uint uVar1;
+	CNewFx* pCVar2;
+	CFxManager* pCVar3;
+
+	if (this->field_0x18 != 1) {
+		this->flags = this->flags & 0xfffffffd;
+		this->flags = this->flags & 0xfffffffe;
+		pCVar3 = CScene::ptable.g_EffectsManager_004516b8;
+		pCVar3->aEffectCategory[GetType()]->Remove(this);
+		uVar1 = this->flags;
+		if ((uVar1 & 0x100) != 0) {
+			if (((this->boneId != 0) && ((uVar1 & 0x200) == 0)) && ((uVar1 & 0x400) == 0)) {
+				this->pActor->pAnimationController->UnRegisterBone(this->boneId);
+			}
+		}
+
+		pCVar2 = this->pSon;
+		if (pCVar2 != (CNewFx*)0x0) {
+			pCVar2->NotifySonIsDead(this, this->field_0x8);
+			this->pSon = (CFxNewComposite*)0x0;
+		}
+
+		this->field_0x18 = 1;
+	}
+
+	return;
+}
+
+void CNewFx::Start(float param_1, float param_2)
+{
+	this->flags = this->flags | 3;
+	this->flags = this->flags & 0xfffffff3;
+
+	if (0.0f < param_1) {
+		this->flags = this->flags | 0x40;
+	}
+
+	this->field_0xc = param_1;
+	this->field_0x10 = param_2;
 
 	return;
 }
@@ -538,6 +582,185 @@ void CNewFx::Func_0x30(float param_1)
 {
 	this->field_0x70 = param_1;
 }
+
+void CNewFx::NotifySonIsDead(CNewFx* pSon, int)
+{
+	return;
+}
+
+
+void CNewFx::Manage()
+{
+	uint uVar1;
+	CNewFx* pCVar2;
+	CActor* pCVar3;
+	edF32MATRIX4* m1;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 local_40;
+
+	uVar1 = this->flags;
+	this->flags = uVar1 & 0xffffffef;
+	if ((uVar1 & 0x10) != 0) {
+		this->flags = this->flags & 0xfffffffd;
+		this->flags = this->flags & 0xfffffffe;
+	}
+	uVar1 = this->flags;
+	if ((uVar1 & 0x400) == 0) {
+		if ((((uVar1 & 0x100) != 0) || ((uVar1 & 0x80) != 0)) && ((uVar1 & 0x20000) == 0)) {
+			if ((uVar1 & 0x200) == 0) {
+				if ((uVar1 & 0x100) == 0) {
+					if (((uVar1 & 0x80) != 0) && ((uVar1 & 0x1000) != 0)) {
+						pCVar3 = this->pActor;
+						IMPLEMENTATION_GUARD(
+						(this->position).x = (float)pCVar3->pVTable;
+						(this->position).y = (float)pCVar3->objectId;
+						(this->position).z = (float)pCVar3->flags;
+						(this->position).w = (float)pCVar3->actorFieldS;)
+					}
+				}
+				else {
+					if ((uVar1 & 0x800) != 0) {
+						if (this->boneId == 0) {
+							if ((uVar1 & 0x1000) != 0) {
+								pCVar3 = this->pActor;
+								this->position = pCVar3->currentLocation;
+							}
+
+							if ((this->flags & 0x2000) != 0) {
+								pCVar3 = this->pActor;
+								this->rotationEuler = pCVar3->rotationEuler;
+								(this->rotationEuler).w = 0.0f;
+							}
+							if ((this->flags & 0x4000) != 0) {
+								pCVar3 = this->pActor;
+								this->scale = pCVar3->scale;
+							}
+						}
+						else {
+							pCVar3 = this->pActor;
+							m1 = pCVar3->pAnimationController->GetCurBoneMatrix(this->boneId);
+							edF32Matrix4MulF32Matrix4Hard(&local_40, m1, &pCVar3->pMeshTransform->base.transformA);
+							if ((this->flags & 0x1000) != 0) {
+								this->position = local_40.rowT;
+							}
+
+							if ((this->flags & 0x4000) == 0) {
+								if ((this->flags & 0x2000) != 0) {
+									fVar6 = edF32Vector4NormalizeHard(&local_40.rowX, &local_40.rowX);
+									if (fVar6 == 0.0f) {
+										local_40.rowX = gF32Vector4UnitX;
+									}
+
+									fVar6 = edF32Vector4NormalizeHard(&local_40.rowY, &local_40.rowY);
+									if (fVar6 == 0.0f) {
+										local_40.rowY = gF32Vector4UnitY;
+									}
+
+									fVar6 = edF32Vector4NormalizeHard(&local_40.rowZ, &local_40.rowZ);
+									if (fVar6 == 0.0f) {
+										local_40.rowZ = gF32Vector4UnitZ;
+									}
+								}
+							}
+							else {
+								fVar6 = edF32Vector4NormalizeHard(&local_40.rowX, &local_40.rowX);
+								fVar7 = edF32Vector4NormalizeHard(&local_40.rowY, &local_40.rowY);
+								fVar5 = edF32Vector4NormalizeHard(&local_40.rowZ, &local_40.rowZ);
+								if (fVar6 == 0.0f) {
+									local_40.rowX = gF32Vector4UnitX;
+								}
+
+								if (fVar7 == 0.0f) {
+									local_40.rowY = gF32Vector4UnitY;
+
+								}
+
+								if (fVar5 == 0.0f) {
+									local_40.rowZ = gF32Vector4UnitZ;
+
+								}
+
+								this->scale.x = fVar6;
+								this->scale.y = fVar7;
+								this->scale.z = fVar5;
+								this->scale.w = 1.0f;
+							}
+
+							if ((this->flags & 0x2000) != 0) {
+								local_40.rowT = gF32Vertex4Zero;
+								edF32Matrix4ToEulerSoft(&local_40, &local_50.xyz, "XYZ");
+								// Note: local_50.w is unitialized.
+								this->rotationEuler = local_50;
+							}
+						}
+					}
+
+					this->flags = this->flags | 0x800;
+				}
+			}
+			else {
+				this->flags = this->flags & 0xfffffc7f;
+			}
+
+			if ((this->flags & 0x10000) != 0) {
+				edF32Vector4ScaleHard(Timer::GetTimer()->cutsceneDeltaTime, &eStack96, &this->field_0x60);
+				edF32Vector4AddHard(&this->position, &this->position, &eStack96);
+			}
+		}
+	}
+	else {
+		if ((uVar1 & 0x200) != 0) {
+			this->flags = uVar1 & 0xfffffc7f;
+		}
+		if ((this->flags & 0x1000) != 0) {
+			pCVar2 = this->pSon;
+			this->position = pCVar2->position;
+		}
+
+		if ((this->flags & 0x2000) != 0) {
+			pCVar2 = this->pSon;
+			this->rotationEuler = pCVar2->rotationEuler;
+		}
+		if ((this->flags & 0x4000) != 0) {
+			pCVar2 = this->pSon;
+			this->scale = pCVar2->scale;
+		}
+		if ((this->flags & 0x8000) != 0) {
+			pCVar2 = this->pSon;
+			this->field_0x60 = pCVar2->field_0x60;
+		}
+	}
+
+	if ((this->flags & 0x40) != 0) {
+		fVar7 = 0.0f;
+		fVar6 = this->field_0x74 - Timer::GetTimer()->cutsceneDeltaTime;
+		this->field_0x74 = fVar6;
+		if (fVar6 <= 0.0f) {
+			this->flags = this->flags & 0xffffffbf;
+			if ((this->flags & 0x10) != 0) {
+				this->flags = this->flags | 0x20;
+			}
+		}
+		else {
+			if ((this->flags & 0x10) == 0) {
+				fVar7 = 1.0f - fVar6 / this->field_0xc;
+			}
+			else {
+				fVar7 = fVar6 / this->field_0x10;
+			}
+		}
+
+		Func_0x30(fVar7);
+	}
+
+	return;
+}
+
+
 
 CFx::CFx()
 {
@@ -555,6 +778,12 @@ CFx::CFx()
 }
 
 void CFx::CheckpointResetAll(uint count, CFx* aFx)
+{
+
+}
+
+CFxDigits::CFxDigits()
+	: field_0x0((ParticleInfo*)0x0)
 {
 
 }

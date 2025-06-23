@@ -27,3 +27,13 @@ void CFxRandomScenaricData::Create(ByteCode* pByteCode)
 
 	return;
 }
+
+void CRandomFx::Draw()
+{
+	return;
+}
+
+int CRandomFx::GetType()
+{
+	return FX_TYPE_RANDOM;
+}

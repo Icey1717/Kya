@@ -11,12 +11,18 @@ class CFxCompositeScenaricData;
 class CFxNewComposite : public CNewFx
 {
 public:
-	void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Draw();
+	virtual void Kill() { IMPLEMENTATION_GUARD(); }
+	virtual void Start(float param_1, float param_2);
+	virtual int GetType();
+	void Manage();
 	void Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_SELECTOR selector);
 
 	uint nbComponentParticles;
 
 	CFxHandle aFxHandles[8];
+
+	float field_0x80;
 
 	float* field_0xc8;
 };

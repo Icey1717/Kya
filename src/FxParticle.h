@@ -3,6 +3,7 @@
 
 #include "Types.h"
 #include "Fx.h"
+#include "edParticles.h"
 
 struct ed_g2d_manager;
 struct ByteCode;
@@ -12,8 +13,16 @@ class CFxParticleScenaricData;
 class CFxNewParticle : public CNewFx
 {
 public:
-	void Manage() { IMPLEMENTATION_GUARD(); }
+	virtual void Draw();
+	virtual void Kill() { IMPLEMENTATION_GUARD(); }
+	virtual int GetType();
+	void Manage();
 	void Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SELECTOR selector);
+
+	float field_0x80;
+	uint field_0x84;
+	ParticleFileData* pFileData;
+	_ed_particle_manager* pManager;
 };
 
 class CFxParticleScenaricData
@@ -22,7 +31,7 @@ public:
 	class CFxParticleScenaricDataSubObj
 	{
 	public:
-		uint field_0x0;
+		uint selectorType;
 		int field_0x4;
 	};
 
@@ -30,8 +39,7 @@ public:
 	void Create(ByteCode* pByteCode);
 
 	uint field_0x0;
-	int field_0x8;
-	CFxParticleScenaricDataSubObj aSubObjs[7];
+	CFxParticleScenaricDataSubObj aSubObjs[8];
 	uint nbData;
 };
 
@@ -51,13 +59,15 @@ public:
 	uint aEntries[8];
 	int nbLoadedRes;
 	ulong aHashes[8];
-	ed_g2d_manager* aManagers[8];
+	edDList_material* aMaterials[8];
 };
 
 class CFxParticleManager : public CFxPoolManager<CFxNewParticle, CFxParticleScenaricData>
 {
 public:
 	static uint _prt_bank_first_index;
+
+	CFxParticleManager();
 
 	virtual void* InstanciateFx(uint param_2, FX_MATERIAL_SELECTOR selector);
 

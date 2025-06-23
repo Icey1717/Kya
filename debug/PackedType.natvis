@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="PackedType&lt;*&gt;">
+    <DisplayString>{Get()}</DisplayString>
+    <Expand>
+      <Item Name="Resolved Pointer">Get()</Item>
+      <Item Name="Raw Index">index</Item>
+    </Expand>
+  </Type>
+</AutoVisualizer>

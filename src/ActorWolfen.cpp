@@ -12,6 +12,7 @@
 #include "InputManager.h"
 #include <string>
 #include "kya.h"
+#include "LevelScheduleManager.h"
 
 struct WolfenAnimMatrixData
 {
@@ -5545,6 +5546,30 @@ bool CActorWolfen::FUN_00173de0(CActorFighter* pAdversary)
 	return bVar1;
 }
 
+
+bool CActorWolfen::FUN_00174130()
+{
+	bool bVar1;
+	int iVar2;
+
+	bVar1 = this->field_0xb80 == 1;
+	if ((bVar1) && (bVar1 = true, this->field_0xb84 <= this->field_0xb88)) {
+		bVar1 = false;
+	}
+
+	if (bVar1) {
+		iVar2 = CLevelScheduler::ScenVar_Get(0xb);
+		bVar1 = iVar2 != 0;
+	}
+
+	return bVar1;
+}
+
+bool CActorWolfen::IsExorcizable(CActorHero* pHero)
+{
+	return 0.0f < pHero->GetMagicalForce();
+}
+
 void CActorWolfen::UpdateCombatMode()
 {
 	if ((this->combatFlags_0xb78 & 4) == 0) {
@@ -9595,13 +9620,6 @@ struct astruct_5
 	uint flags;
 } astruct_5_00456980;
 
-CBehaviourExorcism::CBehaviourExorcism()
-{
-	this->fxDigits.field_0x0 = (ParticleInfo*)0x0;
-	this->field_0x2c.id = 0;
-	this->field_0x30 = (int*)0x0;
-}
-
 void CBehaviourExorcism::Create(ByteCode* pByteCode)
 {
 	this->digitMaterialId = pByteCode->GetS32();
@@ -9686,7 +9704,7 @@ void CBehaviourExorcism::Term()
 
 void CBehaviourExorcism::Manage()
 {
-	int* piVar1;
+	CNewFx* pFx;
 	CActorWolfen* pCVar2;
 	bool bVar3;
 	Timer* pTVar4;
@@ -9697,7 +9715,7 @@ void CBehaviourExorcism::Manage()
 
 	this->pOwner->BehaviourExorcism_Manage(this);
 
-	if (((this->field_0x30 == (int*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x30[6])) {
+	if (((this->field_0x2c.pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x2c.pFx->field_0x18)) {
 		bVar3 = false;
 	}
 	else {
@@ -9705,37 +9723,33 @@ void CBehaviourExorcism::Manage()
 	}
 
 	if (bVar3) {
-		IMPLEMENTATION_GUARD(
-		edF32Vector4SubHard(&eStack16, &this->field_0x40, (edF32VECTOR4*)&(CCameraManager::_gThis->transformationMatrix).da);
+		edF32Vector4SubHard(&eStack16, &this->field_0x40, &(CCameraManager::_gThis->transformationMatrix).rowT);
 		fVar6 = edF32Vector4GetDistHard(&eStack16);
-		if (fVar6 <= 3.0) {
-			fVar7 = 0.0;
+		if (fVar6 <= 3.0f) {
+			fVar7 = 0.0f;
 		}
 		else {
-			fVar7 = 1.0;
-			if (fVar6 < 7.0) {
-				fVar7 = (fVar6 - 3.0) / 4.0;
+			fVar7 = 1.0f;
+			if (fVar6 < 7.0f) {
+				fVar7 = (fVar6 - 3.0f) / 4.0f;
 			}
 		}
-		piVar1 = this->field_0x30;
-		if (((piVar1 != (int*)0x0) && (this->field_0x2c != 0)) && (this->field_0x2c == piVar1[6])) {
-			(**(code**)(*piVar1 + 0x30))(fVar7);
+
+		pFx = this->field_0x2c.pFx;
+		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+			pFx->Func_0x30(fVar7);
 		}
-		piVar1 = this->field_0x30;
-		if (((piVar1 != (int*)0x0) && (this->field_0x2c != 0)) && (this->field_0x2c == piVar1[6])) {
-			piVar1[0xc] = (int)(this->field_0x40).x;
-			piVar1[0xd] = (int)(this->field_0x40).y;
-			piVar1[0xe] = (int)(this->field_0x40).z;
-			piVar1[0xf] = (int)(this->field_0x40).w;
+
+		pFx = this->field_0x2c.pFx;
+		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+			pFx->position = this->field_0x40;
 		}
+
 		pCVar2 = this->pOwner;
-		piVar1 = this->field_0x30;
-		if (((piVar1 != (int*)0x0) && (this->field_0x2c != 0)) && (this->field_0x2c == piVar1[6])) {
-			piVar1[0x14] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.x;
-			piVar1[0x15] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.y;
-			piVar1[0x16] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.z;
-			piVar1[0x17] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.w;
-		})
+		pFx = this->field_0x2c.pFx;
+		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+			pFx->rotationEuler = pCVar2->rotationEuler;
+		}
 	}
 
 	if (this->aSubObjA != (astruct_18*)0x0) {
@@ -9802,7 +9816,7 @@ void CBehaviourExorcism::Begin(CActor* pOwner, int newState, int newAnimationTyp
 	(this->field_0x40).y = (this->field_0x40).y + 2.0f;
 	this->pOwner->field_0xb80 = 1;
 	this->field_0x2c.id = 0;
-	this->field_0x30 = (int*)0x0;
+	this->field_0x2c.pFx = (CNewFx*)0x0;
 
 	if (newState == -1) {
 		this->pOwner->SetState(0x79, -1);
@@ -9828,43 +9842,42 @@ void CBehaviourExorcism::Begin(CActor* pOwner, int newState, int newAnimationTyp
 void CBehaviourExorcism::End(int newBehaviourId)
 {
 	CCollision* pCVar1;
-	int* piVar2;
+	CNewFx* pFx;
 	bool bVar3;
 
 	this->field_0x8 = 0xffffffff;
 	pCVar1 = this->pOwner->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
-	piVar2 = this->field_0x30;
-	if (((piVar2 == (int*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != piVar2[6])) {
+	pFx = this->field_0x2c.pFx;
+	if (((pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != pFx->field_0x18)) {
 		bVar3 = false;
 	}
 
 	if (bVar3) {
-		if (((piVar2 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar2[6])) {
-			IMPLEMENTATION_GUARD(
-			(**(code**)(*piVar2 + 0xc))();)
+		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+			pFx->Kill();
 		}
 
-		this->field_0x30 = (int*)0x0;
+		this->field_0x2c.pFx = (CNewFx*)0x0;
 		this->field_0x2c.id = 0;
 	}
 
 	this->field_0x2c.id = 0;
-	this->field_0x30 = (int*)0x0;
+	this->field_0x2c.pFx = (CNewFx*)0x0;
 
 	return;
 }
 
 void CBehaviourExorcism::InitState(int newState)
 {
-	int* piVar1;
-	CActorWolfen* pCVar2;
+	CNewFx* pFx;
+	CActorWolfen* pWolfen;
 	bool bVar3;
 
 	if (newState == WOLFEN_STATE_EXORCISE_IDLE) {
 	
 		if (this->field_0x24 != 0xffffffff) {
-			if (((this->field_0x30 == (int*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x30[6])) {
+			if (((this->field_0x2c.pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x2c.pFx->field_0x18)) {
 				bVar3 = false;
 			}
 			else {
@@ -9876,32 +9889,25 @@ void CBehaviourExorcism::InitState(int newState)
 			}
 		}
 
-		piVar1 = this->field_0x30;
-		if (((piVar1 == (int*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != piVar1[6])) {
+		pFx = this->field_0x2c.pFx;
+		if (((pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != pFx->field_0x18)) {
 			bVar3 = false;
 		}
 
 		if (bVar3) {
-			if (((piVar1 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar1[6])) {
-				IMPLEMENTATION_GUARD(
-				piVar1[0xc] = (int)(this->field_0x40).x;
-				piVar1[0xd] = (int)(this->field_0x40).y;
-				piVar1[0xe] = (int)(this->field_0x40).z;
-				piVar1[0xf] = (int)(this->field_0x40).w;)
+			if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+				pFx->position = this->field_0x40;
 			}
-			pCVar2 = this->pOwner;
-			piVar1 = this->field_0x30;
-			if (((piVar1 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar1[6])) {
-				IMPLEMENTATION_GUARD(
-				piVar1[0x14] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.x;
-				piVar1[0x15] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.y;
-				piVar1[0x16] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.z;
-				piVar1[0x17] = (int)(pCVar2->base).characterBase.base.base.rotationEuler.w;)
+
+			pWolfen = this->pOwner;
+			pFx = this->field_0x2c.pFx;
+			if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+				pFx->rotationEuler = pWolfen->rotationEuler;
 			}
-			piVar1 = this->field_0x30;
-			if (((piVar1 != (int*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == piVar1[6])) {
-				IMPLEMENTATION_GUARD(
-				(**(code**)(*piVar1 + 0x10))(0, 0);)
+
+			pFx = this->field_0x2c.pFx;
+			if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+				pFx->Start(0.0f, 0.0f);
 			}
 		}
 	}
@@ -9934,18 +9940,18 @@ void CBehaviourExorcism::InitState(int newState)
 
 void CBehaviourExorcism::TermState(int oldState, int newState)
 {
-	int* piVar1;
+	CNewFx* pFx;
 	bool bVar2;
 
 	if (oldState == WOLFEN_STATE_EXORCISE_IDLE) {
-		piVar1 = this->field_0x30;
-		if (((piVar1 == (int*)0x0) || (this->field_0x2c.id == 0)) || (bVar2 = true, this->field_0x2c.id != piVar1[6])) {
+		pFx = this->field_0x2c.pFx;
+		if (((pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (bVar2 = true, this->field_0x2c.id != pFx->field_0x18)) {
 			bVar2 = false;
 		}
 
-		if (((bVar2) && (piVar1 != (int*)0x0)) && ((this->field_0x2c.id != 0 && (this->field_0x2c.id == piVar1[6])))) {
+		if (((bVar2) && (pFx != (CNewFx*)0x0)) && ((this->field_0x2c.id != 0 && (this->field_0x2c.id == pFx->field_0x18)))) {
 			IMPLEMENTATION_GUARD(
-			(**(code**)(*piVar1 + 0x24))(&DAT_bf800000);)
+			(**(code**)(*pFx + 0x24))(&DAT_bf800000);)
 		}
 	}
 	else {
@@ -9978,7 +9984,52 @@ void CBehaviourExorcism::TermState(int oldState, int newState)
 
 int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 {
-	IMPLEMENTATION_GUARD();
+	bool bVar1;
+	int iVar2;
+	undefined4 local_10[3];
+	undefined4* local_4;
+	CActorWolfen* pWolfen;
+
+	if (msg == 0x1a) {
+		IMPLEMENTATION_GUARD(
+		if (*param_4 == 0xe) {
+			*(float*)&this->field_0xc = (float)param_4[1] / this->field_0x10;
+			pWolfen = this->pOwner;
+			iVar2 = CActorWolfen::GetExorciseAnim(pWolfen);
+			(*((pWolfen->base).characterBase.base.base.pVTable)->SetState)((CActor*)pWolfen, 0x7a, iVar2);
+			return 1;
+		})
+	}
+	else {
+		if (msg == 0x30) {
+			IMPLEMENTATION_GUARD(
+			if ((this->pOwner->base).characterBase.base.base.actorState == 0x79) {
+				local_10[0] = 0;
+				local_4 = local_10;
+				CActor::DoMessage((CActor*)this->pOwner, (CActor*)this->pOwner->pCommander, 0x1b, (uint)local_4);
+				return 1;
+			})
+		}
+		else {
+			if (msg == 0x2f) {
+				if ((pSender->typeID == 6) && (this->pOwner->FUN_00174130() != false)) {
+					if (this->pOwner->IsExorcizable(static_cast<CActorHero*>(pSender)) != false) {
+						return 3;
+					}
+
+					return 4;
+				}
+
+				return 0;
+			}
+
+			if (msg == 0x3f) {
+				return 0;
+			}
+		}
+	}
+
+	return 0;
 }
 
 void CBehaviourExorcism::ChangeManageState(int state)

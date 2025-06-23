@@ -319,7 +319,8 @@ PACK(struct MeshData_CSTA {
 	edF32VECTOR4 worldLocation;
 };)
 
-struct ed_3D_Scene {
+struct ed_3D_Scene
+{
 	void ed3DSceneRemoveFlag(uint flag);
 	void ed3DSceneSetFlag(uint flag);
 	void ed3DSceneSetFogProperty(bool bValue);

@@ -381,6 +381,16 @@ set(main_src
 	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.cpp"
 	"${src_root}/EdenLib/edSys/sources/ps2/_edSystem.h"
 
+	"${src_root}/EdenLib/edParticles/sources/edParticleShaper.cpp"
+	"${src_root}/EdenLib/edParticles/sources/edParticleSelector.cpp"
+	"${src_root}/EdenLib/edParticles/sources/edParticles2.cpp"
+	"${src_root}/EdenLib/edParticles/sources/edParticles.cpp"
+	"${src_root}/EdenLib/edParticles/sources/edParticleGroup.cpp"
+	"${src_root}/EdenLib/edParticles/sources/edParticleGenerator.cpp"
+	"${src_root}/EdenLib/edParticles/sources/edParticleEffector.cpp"
+	"${src_root}/EdenLib/edParticles/sources/edParticle.cpp"
+	"${src_root}/EdenLib/edParticles/include/edParticles.h"
+
 	"${src_root}/edVideo/VideoA.cpp"
 	"${src_root}/edVideo/VideoA.h"
 	"${src_root}/edVideo/VideoB.cpp"
@@ -637,7 +647,7 @@ else()
 	add_dependencies(Kya sync_files)
 endif()
 
-target_include_directories(Kya PRIVATE ${src_root} "${src_root}/EdenLib/edBank/include" "${src_root}/EdenLib/edFile/include")
+target_include_directories(Kya PRIVATE ${src_root} "${src_root}/EdenLib/edBank/include" "${src_root}/EdenLib/edFile/include" "${src_root}/EdenLib/edParticles/include")
 
 if (PS2)
 	target_include_directories(Kya PRIVATE ${ps2_src_root})
@@ -676,6 +686,8 @@ else()
 		target_include_directories(Kya PRIVATE "${ISPC_INCLUDE_DIR}")
 		target_compile_definitions(Kya PRIVATE "ENABLE_ISPC")
 	endif()
+
+	target_sources(Kya PRIVATE debug/PackedType.natvis)
 endif()
 
 set_property( GLOBAL PROPERTY VS_STARTUP_PROJECT Kya )
