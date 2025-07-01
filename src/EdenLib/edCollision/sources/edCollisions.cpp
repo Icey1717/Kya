@@ -3104,8 +3104,6 @@ struct edColPRIM_BOX_BOX_IN {
 	edF32VECTOR4* bVecB;
 };
 
-const float M_NEG_PI = -3.1415927f;
-const float M_NEG_PI_2 = -1.5707964f;
 
 edF32VECTOR4 gColSphereVertices[128];
 

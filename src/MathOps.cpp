@@ -611,11 +611,6 @@ float edF32ATanHard(float val)
 	return edF32ATanSoft(val);
 }
 
-#define M_PI 3.1415927f
-#define M_NEG_PI -3.1415927f
-#define M_PI_2 1.5707964f
-#define M_NEG_PI_2 -1.5707964f
-
 float edF32ATan2Soft(float a, float b)
 {
 	uint uVar1;
@@ -723,7 +718,7 @@ void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationO
 	return;
 }
 
-void MatrixRotationFromVectorAndAngle(float angle, edF32MATRIX4* v0, edF32VECTOR4* v1)
+void edF32Matrix4FromAngAxisSoft(float angle, edF32MATRIX4* v0, edF32VECTOR4* v1)
 {
 	float fVar1;
 	float fVar2;
@@ -1251,6 +1246,81 @@ void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4*
 	return;
 }
 
+
+void edF32Matrix4RotateXYZHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0)
+{
+	float fVar1;
+	int iVar2;
+	edF32MATRIX4* peVar3;
+	edF32MATRIX4 local_140;
+	edF32MATRIX4 eStack256;
+	edF32MATRIX4 local_c0;
+	edF32MATRIX4 local_80;
+	edF32MATRIX4 local_40;
+
+	if (m1 == m0) {
+		local_140 = *m1;
+		m1 = &local_140;
+	}
+
+	local_80.aa = cosf(v0->y);
+	local_c0.aa = cosf(v0->z);
+	local_40.bb = cosf(v0->x);
+	local_40.bc = sinf(v0->x);
+	local_80.ca = sinf(v0->y);
+	local_40.cb = -local_40.bc;
+	local_c0.ab = sinf(v0->z);
+	local_40.aa = 1.0f;
+	local_40.ab = 0.0f;
+	local_40.ac = 0.0f;
+	local_40.ad = 0.0f;
+	local_40.ca = 0.0f;
+	local_40.cd = 0.0f;
+	local_40.da = 0.0f;
+	local_40.db = 0.0f;
+	local_40.dc = 0.0f;
+	local_40.ba = 0.0f;
+	local_40.bd = 0.0f;
+	local_80.ac = -local_80.ca;
+	local_40.dd = 1.0f;
+	local_80.ab = 0.0f;
+	local_80.ba = 0.0f;
+	local_80.bb = 1.0f;
+	local_80.bc = 0.0f;
+	local_80.bd = 0.0f;
+	local_80.cb = 0.0f;
+	local_80.cd = 0.0f;
+	local_80.da = 0.0f;
+	local_80.ad = 0.0f;
+	local_c0.ba = -local_c0.ab;
+	local_80.db = 0.0f;
+	local_80.dc = 0.0f;
+	local_80.dd = 1.0f;
+	local_c0.ac = 0.0f;
+	local_c0.ad = 0.0f;
+	local_c0.bc = 0.0f;
+	local_c0.bd = 0.0f;
+	local_c0.ca = 0.0f;
+	local_c0.cb = 0.0f;
+	local_c0.cc = 1.0f;
+	local_c0.cd = 0.0f;
+	local_c0.da = 0.0f;
+	local_c0.db = 0.0f;
+	local_c0.dc = 0.0f;
+	local_c0.dd = 1.0f;
+	local_c0.bb = local_c0.aa;
+	local_80.cc = local_80.aa;
+	local_40.cc = local_40.bb;
+
+	edF32Matrix4MulF32Matrix4Hard(&eStack256, &local_40, &local_80);
+	edF32Matrix4MulF32Matrix4Hard(&eStack256, &eStack256, &local_c0);
+	edF32Matrix4MulF32Matrix4Hard(m0, m1, &eStack256);
+
+	return;
+}
+
+
+
 void edF32Matrix4BuildFromVectorUnitAndAngle(float t0, edF32MATRIX4* m0, edF32VECTOR4* v0)
 {
 	float fVar1;
@@ -1759,6 +1829,16 @@ void edF32Vector4NormalizeSoft(edF32VECTOR4* v0, edF32VECTOR4* v1)
 	v0->y = v1->y / v1Magnitude;
 	v0->z = v1->z / v1Magnitude;
 	v0->w = v1->w;
+	return;
+}
+
+void edF32Vector4FTOI12Hard(edS32VECTOR4* s0, edF32VECTOR4* v0)
+{
+	s0->x = (int)v0->x;
+	s0->y = (int)v0->y;
+	s0->z = (int)v0->z;
+	s0->w = (int)v0->w;
+
 	return;
 }
 

@@ -655,16 +655,21 @@ struct FxFogProp
 	uint field_0x14;
 };
 
-struct edVertex
+union edVertex
 {
-	float x;
-	float y;
-	float z;
-	union
+	struct
 	{
-		float fSkip;
-		uint uSkip;
+		float x;
+		float y;
+		float z;
+		union
+		{
+			float fSkip;
+			uint uSkip;
+		};
 	};
+
+	edF32VECTOR4 vector;
 };
 
 PACK(
@@ -716,17 +721,26 @@ struct ed_3d_sprite
 	short field_0x6;
 	int offsetA;
 	int pNext; // ed_3d_sprite*
-	edF32VECTOR4 vector_0x10;
-	int pSTBuf; // char*
+	edF32VECTOR4 boundingSphere;
+	int pSTBuf; // short*
 	int pColorBuf; // _rgba*
-	int pVertexBuf; // edF32VECTOR4*
-	int field_0x2c; // char*
+	int pVertexBuf; // edVertex*
+	int pWHBuf; // short*
 	short bUseShadowMatrix_0x30;
 	ushort field_0x32;
 	ushort pRenderFrame30;
 	ushort field_0x36;
-	byte field_0x38;
-	byte cameraPanIndex;
+	union 
+	{
+		struct
+		{
+			byte field_0x38;
+			byte cameraPanIndex;
+		};
+
+		ushort cameraPanIndex_0x38;
+	};
+	
 	short meshSectionCount_0x3a;
 	ushort pTextureDataMystery;
 };
@@ -773,6 +787,7 @@ void ed3DHierarchyNodeSetRenderOn(ed_3D_Scene* pScene, edNODE* pNode);
 void ed3DHierarchyNodeSetRenderOff(ed_3D_Scene* pScene, edNODE* pNode);
 
 void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt);
+void ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt);
 edNODE* ed3DHierarchyNodeGetByHashcodeFromList(edNODE* pNode, ulong hash);
 ed_Chunck* ed3DHierarchyNodeGetSkeletonChunck(edNODE* pMeshTransformParent, bool bGetFromHierarc);
 void ed3DHierarchyNodeSetSetup(edNODE* pNode, ed_3d_hierarchy_setup* pSetup);
@@ -849,6 +864,9 @@ ed_g2d_layer* ed3DG2DMaterialGetLayer(ed_g2d_material* pMaterial, uint index);
 void ed3DUnLockLOD(ed_3d_hierarchy_node* pHier);
 void ed3DLockLOD(ed_3d_hierarchy_node* pNode, byte desiredLod);
 
+uint ed3DSpritePreparePacketGetCode(ushort param_1, uint flags);
+edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_hash_code* pHash, int type);
+
 #ifdef PLATFORM_WIN
 void ProcessTextureCommands(edpkt_data* aPkt, int size);
 #endif
@@ -891,5 +909,8 @@ extern int gNbVertexDMA;
 extern ed_3D_Scene* gScene3D;
 extern ed3DConfig ged3DConfig;
 extern edpkt_data* gPKTMatrixCur;
+
+extern edpkt_data g_PKTHeaderRef[9];
+extern edpkt_data g_PKTSpriteHeaderRef[5];
 
 #endif //_ED3D_H

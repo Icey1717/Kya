@@ -432,6 +432,14 @@ union
 #endif
 };
 
+struct edS32VECTOR4
+{
+	int x;
+	int y;
+	int z;
+	int w;
+};
+
 // Overload the * operator as a non-member function
 inline edF32VECTOR4 operator*(const edF32VECTOR4& lhs, const edF32VECTOR4& rhs)
 {

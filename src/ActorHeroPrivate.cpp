@@ -13723,7 +13723,7 @@ void CActorHeroPrivate::ManageBoomyState()
 				}
 			}
 			fVar18 = acosf((float)puVar19);
-			MatrixRotationFromVectorAndAngle(-fVar18, &eStack432, &local_d0);
+			edF32Matrix4FromAngAxisSoft(-fVar18, &eStack432, &local_d0);
 			edF32Matrix4ToEulerSoft(&eStack432, &local_1e0, (char*)&PTR_DAT_00429958);
 			edF32Vector4ScaleHard(1.0, &eStack512, &local_f0);
 			local_1f0.x = (float)local_1d0;

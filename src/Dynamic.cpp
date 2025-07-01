@@ -718,7 +718,7 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 	local_50.x = local_60.z;
 
 	edF32Vector4SafeNormalize0Hard(&local_50, &local_50);
-	MatrixRotationFromVectorAndAngle(angle, &eStack64, &local_50);
+	edF32Matrix4FromAngAxisSoft(angle, &eStack64, &local_50);
 	edF32Matrix4MulF32Vector4Hard(&local_70, &eStack64, param_4);
 
 	if (local_70.y < 0.0f) {
@@ -742,7 +742,7 @@ void CVectorDyn::BuildFromAccelDistAmplitude(float param_1, edF32VECTOR4* pGravi
 	(this->field_0x20).z = pGravity->z;
 	(this->field_0x20).w = pGravity->w;
 
-	MatrixRotationFromVectorAndAngle(-angle, &eStack64, &local_50);
+	edF32Matrix4FromAngAxisSoft(-angle, &eStack64, &local_50);
 	edF32Matrix4MulF32Vector4Hard(&this->field_0x10, &eStack64, &this->field_0x10);
 
 	this->field_0x4 = param_5;

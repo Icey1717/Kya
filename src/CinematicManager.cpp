@@ -2538,9 +2538,10 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 	//	*(undefined*)&pBVar8->field_0xc0 = 0;
 	//	pBVar8 = pBVar8 + 1;
 	//}
-	//for (i = 0; i < this->count_0x2e8; i = i + 1) {
-	//	*(undefined*)(this->buffer_0x2e4 + i * 0x1c + 0xc) = 0;
-	//}
+
+	for (i = 0; i < this->count_0x2e8; i = i + 1) {
+		this->buffer_0x2e4[i].field_0xc = 0;
+	}
 
 	this->cinFileData.Timeslice(currentPlayTime, &local_30);
 
@@ -2608,104 +2609,95 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 	//	}
 	//	pBVar8 = pBVar8 + 1;
 	//}
-	//for (; pCVar5 = g_CinematicManager_0048efc, iVar13 < this->count_0x2e8; iVar13 = iVar13 + 1) {
-	//	piVar12 = (int*)(this->buffer_0x2e4 + iVar13 * 0x1c);
-	//	if (*piVar12 != -1) {
-	//		if (*(char*)(piVar12 + 3) == '\0') {
-	//			if ((undefined*)piVar12[4] != (undefined*)0x0) {
-	//				edParticlesUnInstall((undefined*)piVar12[4], (char)CScene::_scene_handleA);
-	//			}
-	//			if ((void*)piVar12[5] != (void*)0x0) {
-	//				edMemFree((void*)piVar12[5]);
-	//			}
-	//			*piVar12 = -1;
-	//			piVar12[2] = 0;
-	//			piVar12[1] = 0;
-	//			*(undefined*)(piVar12 + 3) = 0;
-	//			piVar12[4] = 0;
-	//			piVar12[5] = 0;
-	//			piVar12[6] = 0;
-	//		}
-	//		else {
-	//			edParticlesSetSystem(piVar12[4]);
-	//			i = *(int*)(piVar12[4] + 0x40);
-	//			for (iVar11 = 0; iVar11 < i; iVar11 = iVar11 + 1) {
-	//				iVar14 = *(int*)(piVar12[4] + 0x38) + iVar11 * 0x90;
-	//				for (iVar10 = 0; iVar10 < *(int*)(iVar14 + 0x20); iVar10 = iVar10 + 1) {
-	//					iVar1 = piVar12[6];
-	//					iVar2 = *(int*)(*(int*)(iVar14 + 0x24) + iVar10 * 4);
-	//					uVar20 = *(undefined4*)(iVar1 + 0x34);
-	//					uVar15 = *(undefined4*)(iVar1 + 0x38);
-	//					uVar17 = *(undefined4*)(iVar1 + 0x3c);
-	//					*(undefined4*)(iVar2 + 0x30) = *(undefined4*)(iVar1 + 0x30);
-	//					*(undefined4*)(iVar2 + 0x34) = uVar20;
-	//					*(undefined4*)(iVar2 + 0x38) = uVar15;
-	//					*(undefined4*)(iVar2 + 0x3c) = uVar17;
-	//					iVar1 = piVar12[6];
-	//					uVar20 = *(undefined4*)(iVar1 + 0x54);
-	//					uVar15 = *(undefined4*)(iVar1 + 0x58);
-	//					uVar17 = *(undefined4*)(iVar1 + 0x5c);
-	//					*(undefined4*)(iVar2 + 0x20) = *(undefined4*)(iVar1 + 0x50);
-	//					*(undefined4*)(iVar2 + 0x24) = uVar20;
-	//					*(undefined4*)(iVar2 + 0x28) = uVar15;
-	//					*(undefined4*)(iVar2 + 0x2c) = uVar17;
-	//					iVar1 = piVar12[6];
-	//					uVar20 = *(undefined4*)(iVar1 + 100);
-	//					uVar15 = *(undefined4*)(iVar1 + 0x68);
-	//					uVar17 = *(undefined4*)(iVar1 + 0x6c);
-	//					*(undefined4*)(iVar2 + 0x10) = *(undefined4*)(iVar1 + 0x60);
-	//					*(undefined4*)(iVar2 + 0x14) = uVar20;
-	//					*(undefined4*)(iVar2 + 0x18) = uVar15;
-	//					*(undefined4*)(iVar2 + 0x1c) = uVar17;
-	//					edPartGeneratorComputeMatrices(iVar2);
-	//				}
-	//			}
-	//			fVar16 = (float)piVar12[2] - (float)piVar12[1];
-	//			uVar9 = 0;
-	//			if (fVar16 < 0.0) {
-	//				FUN_0027cd80(0);
-	//				fVar16 = (float)piVar12[2];
-	//			}
-	//			if (fVar16 < 0.0) {
-	//				fVar18 = 0.0;
-	//			}
-	//			else {
-	//				fVar18 = 1.0;
-	//				if (fVar16 <= 1.0) {
-	//					fVar18 = fVar16;
-	//				}
-	//			}
-	//			for (; 0.1 < fVar18; fVar18 = fVar18 - 0.1) {
-	//				FUN_0027fbb0(0.1, (int)uVar9);
-	//			}
-	//			FUN_0027fbb0(fVar18, (int)uVar9);
-	//		}
-	//	}
-	//}
-	//if ((local_30.field_0x0[5] == 0.0) || (local_30.field_0x0[6] < local_30.field_0x4)) {
-	//	if (local_30.field_0x0[10] != 0.0) {
-	//		if ((*local_30.field_0x0 - local_30.field_0x0[0xb] <= local_30.field_0x4) &&
-	//			(fVar16 = (local_30.field_0x4 - *local_30.field_0x0) / local_30.field_0x0[0xb] + 1.0, fVar16 != 0.0)) {
-	//			g_CinematicManager_0048efc->field_0x6c = fVar16;
-	//			fVar16 = local_30.field_0x0[0xd];
-	//			fVar18 = local_30.field_0x0[0xe];
-	//			pCVar5->x_0x60 = local_30.field_0x0[0xc];
-	//			pCVar5->y_0x64 = fVar16;
-	//			pCVar5->z_0x68 = fVar18;
-	//		}
-	//	}
-	//}
-	//else {
-	//	fVar16 = 1.0 - local_30.field_0x4 / local_30.field_0x0[6];
-	//	if (fVar16 != 0.0) {
-	//		g_CinematicManager_0048efc->field_0x6c = fVar16;
-	//		fVar16 = local_30.field_0x0[8];
-	//		fVar18 = local_30.field_0x0[9];
-	//		pCVar5->x_0x60 = local_30.field_0x0[7];
-	//		pCVar5->y_0x64 = fVar16;
-	//		pCVar5->z_0x68 = fVar18;
-	//	}
-	//}
+
+	for (iVar10 = 0; pCVar5 = g_CinematicManager_0048efc, iVar10 < this->count_0x2e8; iVar10 = iVar10 + 1) {
+		ParticleInstance* pParticleInstance = this->buffer_0x2e4 + iVar10;
+		if (pParticleInstance->id != -1) {
+			if (pParticleInstance->field_0xc == 0) {
+				if (pParticleInstance->pParticle != (_ed_particle_manager*)0x0) {
+					edParticlesUnInstall(pParticleInstance->pParticle, CScene::_scene_handleA);
+				}
+
+				if (pParticleInstance->pParticleFileData != (ParticleFileData*)0x0) {
+					edMemFree(pParticleInstance->pParticleFileData);
+				}
+
+				pParticleInstance->id = -1;
+				pParticleInstance->field_0x8 = 0.0f;
+				pParticleInstance->field_0x4 = 0.0f;
+				pParticleInstance->field_0xc = 0;
+				pParticleInstance->pParticle = (_ed_particle_manager*)0x0;
+				pParticleInstance->pParticleFileData = (ParticleFileData*)0x0;
+				pParticleInstance->pActor = (CActor*)0x0;
+			}
+			else {
+				edParticlesSetSystem(pParticleInstance->pParticle);
+
+				for (int iVar9 = 0; iVar9 < pParticleInstance->pParticle->nbParams; iVar9 = iVar9 + 1) {
+					_ed_particle_group* p_Var11 = pParticleInstance->pParticle->aGroups.pData + iVar9;
+					for (int iVar8 = 0; iVar8 < p_Var11->field_0x20; iVar8 = iVar8 + 1) {
+						CActor* pCVar1 = pParticleInstance->pActor;
+						_ed_particle_generator_param* pParam = p_Var11->field_0x24.pData[iVar8].pData;
+
+						pParam->position = pCVar1->currentLocation;
+						pParam->rotationEuler = pCVar1->rotationEuler;
+						pParam->scale = pCVar1->scale;
+						edPartGeneratorComputeMatrices(pParam);
+					}
+				}
+
+				float fVar12 = pParticleInstance->field_0x8 - pParticleInstance->field_0x4;
+				if (fVar12 < 0.0f) {
+					IMPLEMENTATION_GUARD(
+					FUN_0027cd80(0);)
+					fVar12 = pParticleInstance->field_0x8;
+				}
+
+				float fVar13;
+
+				if (fVar12 < 0.0f) {
+					fVar13 = 0.0f;
+				}
+				else {
+					fVar13 = 1.0f;
+					if (fVar12 <= 1.0f) {
+						fVar13 = fVar12;
+					}
+				}
+
+				for (; 0.1 < fVar13; fVar13 = fVar13 - 0.1f) {
+					edParticlesUpdate(0.1f);
+				}
+
+				edParticlesUpdate(fVar13);
+			}
+		}
+	}
+
+	if ((local_30.field_0x0[5] == 0.0) || (local_30.field_0x0[6] < local_30.field_0x4)) {
+		if (local_30.field_0x0[10] != 0.0f) {
+			if ((*local_30.field_0x0 - local_30.field_0x0[0xb] <= local_30.field_0x4) &&
+				(fVar16 = (local_30.field_0x4 - *local_30.field_0x0) / local_30.field_0x0[0xb] + 1.0f, fVar16 != 0.0f)) {
+				g_CinematicManager_0048efc->fadeDuration = fVar16;
+				fVar16 = local_30.field_0x0[0xd];
+				fVar18 = local_30.field_0x0[0xe];
+				pCVar5->fadeColor.x = local_30.field_0x0[0xc];
+				pCVar5->fadeColor.y = fVar16;
+				pCVar5->fadeColor.z = fVar18;
+			}
+		}
+	}
+	else {
+		fVar16 = 1.0f - local_30.field_0x4 / local_30.field_0x0[6];
+		if (fVar16 != 0.0f) {
+			g_CinematicManager_0048efc->fadeDuration = fVar16;
+			fVar16 = local_30.field_0x0[8];
+			fVar18 = local_30.field_0x0[9];
+			pCVar5->fadeColor.x = local_30.field_0x0[7];
+			pCVar5->fadeColor.y = fVar16;
+			pCVar5->fadeColor.z = fVar18;
+		}
+	}
 
 	return currentPlayTime < ((this->cinFileData).pCinTag)->totalPlayTime;
 }
@@ -3164,17 +3156,15 @@ void CCinematic::Draw()
 {
 	CCinematicManager* pCinematicManager;
 	bool bVar2;
-	//_ed_particle_manager* p_Var3;
+	_ed_particle_manager* pManager;
 	int iVar4;
-	int iVar5;
-	int* piVar6;
+	ParticleInstance* piVar6;
 	edF32MATRIX4 local_40;
 	CActorCinematic* pCinematicActor;
 
 	pCinematicManager = g_CinematicManager_0048efc;
 	if (this->state != CS_Stopped) {
 		g_CinematicManager_0048efc->pCurCinematic = this;
-		iVar5 = 0;
 		if (0 < this->nbActorRefs) {
 			for (int i = 0; i < this->nbActorRefs; i++) {
 				pCinematicActor = this->ppActorCinematics[i];
@@ -3186,42 +3176,24 @@ void CCinematic::Draw()
 			}
 		}
 
-		IMPLEMENTATION_GUARD_FX(
 		bVar2 = GameDList_BeginCurrent();
 		if (bVar2 != false) {
-			iVar5 = 0;
 			if (0 < this->count_0x2e8) {
 				iVar4 = 0;
 				do {
-					piVar6 = (int*)(this->buffer_0x2e4 + iVar4);
-					if (((*piVar6 != -1) && (*(char*)(piVar6 + 3) != '\0')) && ((*(uint*)(piVar6[6] + 8) & 0x2000060) == 0)) {
-						edParticlesSetSystem(piVar6[4]);
-						local_40.aa = gF32Matrix4Unit.aa;
-						local_40.ab = gF32Matrix4Unit.ab;
-						local_40.ac = gF32Matrix4Unit.ac;
-						local_40.ad = gF32Matrix4Unit.ad;
-						local_40.ba = gF32Matrix4Unit.ba;
-						local_40.bb = gF32Matrix4Unit.bb;
-						local_40.bc = gF32Matrix4Unit.bc;
-						local_40.bd = gF32Matrix4Unit.bd;
-						local_40.ca = gF32Matrix4Unit.ca;
-						local_40.cb = gF32Matrix4Unit.cb;
-						local_40.cc = gF32Matrix4Unit.cc;
-						local_40.cd = gF32Matrix4Unit.cd;
-						local_40.da = gF32Matrix4Unit.da;
-						local_40.db = gF32Matrix4Unit.db;
-						local_40.dc = gF32Matrix4Unit.dc;
-						local_40.dd = gF32Matrix4Unit.dd;
-						p_Var3 = (_ed_particle_manager*)piVar6[4];
-						edPartSetDisplayMatrix(p_Var3, &local_40);
-						edParticlesDraw(p_Var3);
+					piVar6 = this->buffer_0x2e4 + iVar4;
+					if (((piVar6->id != -1) && (piVar6->field_0xc != 0)) && ((piVar6->pActor->flags & 0x2000060) == 0)) {
+						edParticlesSetSystem(piVar6->pParticle);
+						local_40 = gF32Matrix4Unit;
+						pManager = piVar6->pParticle;
+						edPartSetDisplayMatrix(pManager, &local_40);
+						edParticlesDraw(pManager, 1.0f);
 					}
-					iVar5 = iVar5 + 1;
-					iVar4 = iVar4 + 0x1c;
-				} while (iVar5 < this->count_0x2e8);
+					iVar4 = iVar4 + 1;
+				} while (iVar4 < this->count_0x2e8);
 			}
 			GameDList_EndCurrent();
-		})
+		}
 
 		pCinematicManager->pCurCinematic = (CCinematic*)0x0;
 	}
@@ -4364,6 +4336,13 @@ bool CBWCinActor::SetAnim(edCinActorInterface::ANIM_PARAMStag* pTag)
 	return true;
 }
 
+void FUN_001c6ab0(float param_1, ParticleInstance* param_2)
+{
+	param_2->field_0x4 = param_2->field_0x8;
+	param_2->field_0x8 = param_1;
+	return;
+}
+
 bool CBWCinActor::SetParticles(float param_1, edCinActorInterface::PARTICLE_PARAMStag* pTag)
 {
 	bool bNeedToCreateInstance;
@@ -4383,8 +4362,7 @@ bool CBWCinActor::SetParticles(float param_1, edCinActorInterface::PARTICLE_PARA
 		if ((-1 < particleInstanceId) && (particleInstanceId < pCinematic->count_0x2e8)) {
 			pPVar2 = pCinematic->buffer_0x2e4;
 			if (!bNeedToCreateInstance) {
-				IMPLEMENTATION_GUARD(
-				FUN_001c6ab0(param_1, pPVar2 + particleInstanceId);)
+				FUN_001c6ab0(param_1, pPVar2 + particleInstanceId);
 			}
 
 			pPVar2[particleInstanceId].field_0xc = 1;

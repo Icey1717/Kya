@@ -7,6 +7,12 @@
 #include <libvu0.h>
 #endif
 
+#define M_PI 3.1415927f
+#define M_NEG_PI -3.1415927f
+#define M_PI_2 1.5707964f
+#define M_NEG_PI_2 -1.5707964f
+#define M_2_PI 6.2831855f
+
 extern float g_DefaultNearClip_0044851c;
 
 extern edF32MATRIX4 gF32Matrix4Zero;
@@ -54,7 +60,7 @@ float edF32ATan2Soft(float a, float b);
 void SetVectorFromAngleY(float t0, edF32VECTOR4* v0);
 void SetVectorFromAngles(edF32VECTOR4* rotQuat, edF32VECTOR3* rotEuler);
 void edF32Matrix4ToEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* rotationOrder);
-void MatrixRotationFromVectorAndAngle(float angle, edF32MATRIX4* v0, edF32VECTOR4* v1);
+void edF32Matrix4FromAngAxisSoft(float angle, edF32MATRIX4* v0, edF32VECTOR4* v1);
 edF32MATRIX4* edF32Matrix4FromEulerSoft(edF32MATRIX4* m0, edF32VECTOR3* v0, char* order);
 void edQuatFromMatrix4(edF32VECTOR4* v0, edF32MATRIX4* m0);
 void edF32Matrix4FromEulerOrdSoft(edF32MATRIX4* rotatedMatrix, char* rotationOrder, float* rotationAngles);
@@ -70,6 +76,7 @@ void edF32Matrix4MulF32Matrix4Hard(edF32MATRIX4* dst, edF32MATRIX4* m1, edF32MAT
 void edF32Matrix4SetIdentityHard(edF32MATRIX4* m0);
 
 void edF32Matrix4TranslateHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0);
+void edF32Matrix4RotateXYZHard(edF32MATRIX4* m0, edF32MATRIX4* m1, edF32VECTOR4* v0);
 
 void edF32Matrix4TransposeHard(edF32MATRIX4* m0);
 
@@ -86,6 +93,7 @@ bool edF32Matrix4GetInverseGaussSoft(edF32MATRIX4* param_1, edF32MATRIX4* param_
 void edF32Vector4ScaleV4Hard(edF32VECTOR4* v0, edF32VECTOR4* v1, edF32VECTOR4* v2);
 void edF32Vector4SquareHard(edF32VECTOR4* v0, edF32VECTOR4* v1);
 
+void edF32Vector4FTOI12Hard(edS32VECTOR4* s0, edF32VECTOR4* v0);
 void edF32Matrix4BuildFromVectorUnitSoft(edF32MATRIX4* m0, edF32VECTOR4* v0);
 
 const float g_TinyFloat_00448548 = 1.0E-6f;

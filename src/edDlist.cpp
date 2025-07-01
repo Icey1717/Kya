@@ -49,7 +49,7 @@ int gEndColorNbInVertex = 0;
 int gCurStripPatchable = 0;
 int gCurSpritePatchable = 0;
 
-char* gEndVertexBuf = NULL;
+edVertex* gEndVertexBuf = NULL;
 
 int gNbMatrix;
 edF32MATRIX4* gCurMatrix;
@@ -98,11 +98,13 @@ DisplayListXYZFunc gAddVertexFUNC = NULL;
 DisplayListRGBAQFunc gAddColorFUNC = NULL;
 DisplayListSTFunc gAddSTFUNC = NULL;
 
+short* gCurWHBuf = NULL;
 _rgba* gCurColorBuf = NULL;
 short* gCurSTBuf = NULL;
-char* gEndSTBuf = NULL;
+short* gEndSTBuf = NULL;
+short* gEndWHBuf = NULL;
 edVertex* gCurVertexBuf = NULL;
-undefined* gStartVertexBuf = NULL;
+edVertex* gStartVertexBuf = NULL;
 
 int gCurFlashMaterial = 0;
 edDList_material* gCurMaterial = NULL;
@@ -360,9 +362,8 @@ void edDListSend3DList(ed_3d_extra_stuff_param* pParams)
 							else {
 								if (dataType == DISPLAY_LIST_DATA_TYPE_SPRITE) {
 									if ((pParams->isChild != 1) && (pCurCommand->bActive != 0)) {
-										IMPLEMENTATION_GUARD(
 										ed3DLinkSpriteToViewport(pCurCommand->pRenderInput.pSprite, pMatrix, gBankMaterial, pPktToLink);
-										pPktToLink = (edF32MATRIX4*)0x0;)
+										pPktToLink = (edpkt_data*)0x0;
 									}
 
 									goto LAB_002ce7c4;
@@ -471,7 +472,7 @@ int gbInitDone = 0;
 int gEndSTNbInVertex = 0;
 int gCurSTNbInVertex = 0;
 int gMaxSTNbInVertex = 0;
-char* gEndColorBuf = NULL;
+_rgba* gEndColorBuf = NULL;
 
 edpkt_data gPKTStrip[0xa];
 
@@ -523,6 +524,7 @@ void edDListInitStripPKT(void)
 	gPKTStrip[9].asU32[0] = SCE_VIF1_SET_UNPACK(0, 0, UNPACK_S32, 0); // Might be incorrect?
 	gPKTStrip[9].asU32[1] = SCE_VIF1_SET_NOP(0);
 	gPKTStrip[9].cmdB = 0;
+
 	return;
 }
 
@@ -660,9 +662,9 @@ void edDListInit(void)
 	gCurSTNbInVertex = 0;
 	gMaxSTNbInVertex = 0;
 	gEndSTNbInVertex = 0;
-	gEndVertexBuf = (char*)0x0;
-	gEndColorBuf = (char*)0x0;
-	gEndSTBuf = (char*)0x0;
+	gEndVertexBuf = (edVertex*)0x0;
+	gEndColorBuf = (_rgba*)0x0;
+	gEndSTBuf = (short*)0x0;
 	gMaxNbVertex = 0;
 	gNbDMAVertex = 0;
 	gCurMaterial = (edDList_material*)0x0;
@@ -1478,7 +1480,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	gCurInfPosForBegin = (uint)gCurDList->nbCommands;
 	gCurDList->nbCommands = gCurDList->nbCommands + 1;
 
-	pNewStrip = gCurDListBuf;
+	pNewStrip = reinterpret_cast<ed_3d_strip*>(gCurDListBuf);
 
 	EDDLIST_LOG(LogLevel::Verbose, "edDListBeginStrip: x: {} y: {} z: {} nbVertex: {} type: {} strip: 0x{:x}", x, y, z, nbVertex, type, (uintptr_t)pNewStrip);
 
@@ -1603,8 +1605,7 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 
 	newVifOffset = ((ulong)(gCurVertexBuf + nbVertex) - (ulong)pNewStrip);
 
-	gCurDListBuf = (ed_3d_strip*)(gCurVertexBuf + nbVertex);
-	gStartVertexBuf = (undefined*)gCurVertexBuf;
+	gStartVertexBuf = gCurVertexBuf;
 	pNewStrip->vifListOffset = newVifOffset;
 	pNewStrip->field_0x2c = 0x0;
 	peVar2 = gCurVertexBuf;
@@ -1613,11 +1614,13 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 	gEndSTNbInVertex = 1;
 	gEndColorNbInVertex = 1;
 	gCurSTNbInVertex = 0;
-	gEndColorBuf = (char*)gCurColorBuf + uVar4;
+	gEndColorBuf = gCurColorBuf + uVar4;
 	gMaxSTNbInVertex = 0;
 	gCurColorNbInVertex = 0;
-	gEndVertexBuf = (char*)gCurDListBuf;
-	gEndSTBuf = (char*)gCurSTBuf + uVar6;
+	gEndVertexBuf = gCurVertexBuf + nbVertex;
+	gEndSTBuf = reinterpret_cast<short*>(reinterpret_cast<char*>(gCurSTBuf) + uVar6);
+
+	gCurDListBuf = gEndVertexBuf;
 
 	pNewCommand->pRenderInput.pStrip = pNewStrip;
 	if (((uint)gCurDListBuf & 0xf) != 0) {
@@ -1630,6 +1633,134 @@ void edDListBeginStrip(float x, float y, float z, uint nbVertex, ushort type)
 
 	edF32Matrix4CopyHard(&pNewCommand->matrix, gCurMatrix + gNbMatrix);
 	gNbVertexDMA = 0x48;
+
+	return;
+}
+
+void edDListBeginSprite(uint nbRects, uint param_2)
+{
+	ed_3d_sprite* pNewSprite;
+	uint uVar2;
+	int iVar3;
+	int iVar4;
+	uint uVar5;
+	DisplayListCommand* pCommand;
+
+	pCommand = gCurDList->aCommands + gCurDList->nbCommands;
+	pCommand->nbAddedVertex = nbRects;
+	pCommand->bActive = 1;
+
+	gCurInfPosForBegin = (uint)gCurDList->nbCommands;
+	gCurDList->nbCommands = gCurDList->nbCommands + 1;
+
+	pNewSprite = reinterpret_cast<ed_3d_sprite*>(gCurDListBuf);
+
+	if (gCurDList->aSavedCommands != (DisplayListCommand**)0x0) {
+		gCurDList->aSavedCommands[gCurDList->nbSavedCommands] = pCommand;
+		gCurDList->nbSavedCommands = gCurDList->nbSavedCommands + 1;
+	}
+
+	if (gCurMaterial == (edDList_material*)0x0) {
+		pNewSprite->materialIndex = -1;
+	}
+	else {
+		pNewSprite->materialIndex = (short)gCurMaterial->index;
+	}
+
+	iVar3 = (int)(nbRects - 1) / 0x12;
+	pNewSprite->field_0x6 = 0;
+	uVar5 = iVar3 + 1;
+	uVar2 = nbRects;
+	if (1 < uVar5) {
+		uVar2 = nbRects + iVar3 * -0x12;
+	}
+
+	pNewSprite->cameraPanIndex_0x38 = uVar2;
+	pNewSprite->meshSectionCount_0x3a = (short)((uVar2 & 0xffff) << 2);
+	pNewSprite->pTextureDataMystery = (ushort)uVar5;
+	pNewSprite->flags_0x0 = 0x4000000;
+	pNewSprite->offsetA = 0;
+	iVar4 = nbRects + uVar5 * 2;
+	pNewSprite->pNext = 0x0;
+	pNewSprite->bUseShadowMatrix_0x30 = 0;
+	pNewSprite->field_0x32 = 0;
+	pNewSprite->field_0x36 = (ushort)nbRects;
+	iVar3 = nbRects << 2;
+
+	(pNewSprite->boundingSphere).x = 0.0f;
+	(pNewSprite->boundingSphere).y = 0.0f;
+	(pNewSprite->boundingSphere).z = 0.0f;
+	(pNewSprite->boundingSphere).w = 100000.0f;
+
+	if ((param_2 == 0xb) || (param_2 == 0xc)) {
+		pNewSprite->pRenderFrame30 = 0;
+	}
+	else {
+		if (param_2 == 7) {
+			iVar3 = 4;
+			pNewSprite->pRenderFrame30 = 0x13;
+			iVar4 = 1;
+		}
+		else {
+			if (param_2 == 6) {
+				pNewSprite->pRenderFrame30 = 0x10;
+			}
+		}
+	}
+
+	pNewSprite->pVertexBuf = STORE_SECTION(pNewSprite + 1);
+	uVar2 = (uint)LOAD_SECTION(pNewSprite->pVertexBuf) & 0xf;
+	if (uVar2 != 0) {
+		IMPLEMENTATION_GUARD(
+		pNewSprite->pVertexBuf = (edF32VECTOR4*)((int)pNewSprite->pVertexBuf + (0x10 - uVar2));)
+	}
+
+	pNewSprite->pSTBuf = STORE_SECTION(LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf) + nbRects * 4);
+	uVar2 = (uint)LOAD_SECTION(pNewSprite->pSTBuf) & 0xf;
+	if (uVar2 != 0) {
+		IMPLEMENTATION_GUARD(
+		pNewSprite->pSTBuf = pNewSprite->pSTBuf + (0x10 - uVar2);)
+	}
+
+	pNewSprite->pColorBuf = STORE_SECTION(LOAD_SECTION_CAST(short*, pNewSprite->pSTBuf) + iVar3 * 2);
+	uVar2 = (uint)LOAD_SECTION(pNewSprite->pColorBuf) & 0xf;
+	if (uVar2 != 0) {
+		IMPLEMENTATION_GUARD(
+		pNewSprite->pColorBuf = pNewSprite->pColorBuf + (0x10 - uVar2);)
+	}
+
+	pNewSprite->pWHBuf = STORE_SECTION(LOAD_SECTION_CAST(_rgba*, pNewSprite->pColorBuf) + nbRects * 4);
+	uVar2 = (uint)LOAD_SECTION(pNewSprite->pWHBuf) & 0xf;
+	if (uVar2 != 0) {
+		IMPLEMENTATION_GUARD(
+		pNewSprite->pWHBuf = pNewSprite->pWHBuf + (0x10 - uVar2);)
+	}
+
+	gCurColorBuf = LOAD_SECTION_CAST(_rgba*, pNewSprite->pColorBuf);
+	gCurSTBuf = LOAD_SECTION_CAST(short*, pNewSprite->pSTBuf);
+	gCurVertexBuf = LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf);
+	gCurWHBuf = LOAD_SECTION_CAST(short*, pNewSprite->pWHBuf);
+
+	gCurDListBuf = gCurWHBuf + iVar4 * 2;
+	if (((uint)gCurDListBuf & 0xf) != 0) {
+		gCurDListBuf = (char*)((ulong)gCurDListBuf + (0x10 - ((uint)gCurDListBuf & 0xf)));
+	}
+
+	gStartVertexBuf = gCurVertexBuf;
+	pNewSprite->offsetA = (int)((char*)gCurDListBuf - (char*)pNewSprite);
+	edF32Matrix4CopyHard((edF32MATRIX4*)pCommand, gCurMatrix + gNbMatrix);
+	gEndSTNbInVertex = 4;
+	gEndColorNbInVertex = 4;
+	gEndColorBuf = gCurColorBuf + nbRects * 4;
+	gCurSTNbInVertex = 0;
+	gMaxSTNbInVertex = 0;
+	gCurColorNbInVertex = 0;
+	gEndVertexBuf = gCurVertexBuf + nbRects * 4;
+	gEndSTBuf = gCurSTBuf + iVar3 * 2;
+	gEndWHBuf = gCurWHBuf + iVar4 * 2;
+	pCommand->pRenderInput.pSprite = pNewSprite;
+	pCommand->dataType = 6;
+	pCommand->primType = gCurPrimType;
 
 	return;
 }
@@ -1906,6 +2037,7 @@ void edDListTexCoo2f_3D(float s, float t)
 }
 
 edF32VECTOR4 gCurFloatST;
+edF32VECTOR4 gCurFloatWH;
 
 void edDListTexCoo2f_3D_ALL_SPRITE(float s, float t)
 {
@@ -2053,9 +2185,8 @@ void edDListBegin(float x, float y, float z, uint primType, int nbVertex)
 		case 7:
 		case 0xb:
 		case 0xc:
-			IMPLEMENTATION_GUARD(
-				gMaxNbVertex = gMaxNbVertex << 2;
-			edDListBeginSprite(nbVertex, uVar5 & 0xff);)
+			gMaxNbVertex = gMaxNbVertex << 2;
+			edDListBeginSprite(nbVertex, uVar5 & 0xff);
 			break;
 		case 10:
 			nbVertex = nbVertex + 1;
@@ -2509,6 +2640,131 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 	return pPkt + 10;
 }
 
+edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
+{
+	bool bVar1;
+	uint uVar26;
+	uint uVar27;
+	short* pSTBuf;
+	uint uVar29;
+	uint uVar30;
+	uint uVar31;
+	char* pWHBuf;
+	_rgba* pColorBuf;
+	edVertex* pVertexBuf;
+
+	uVar30 = 0x48;
+	pSTBuf = LOAD_SECTION_CAST(short*, pSprite->pSTBuf);
+	pColorBuf = LOAD_SECTION_CAST(_rgba*, pSprite->pColorBuf);
+	pVertexBuf = LOAD_SECTION_CAST(edVertex*, pSprite->pVertexBuf);
+	pWHBuf = LOAD_SECTION_CAST(char*, pSprite->pWHBuf);
+
+	uVar31 = (uint)pSprite->pTextureDataMystery;
+
+	uVar29 = 0x12;
+	uVar26 = ed3DSpritePreparePacketGetCode(pSprite->pRenderFrame30, pSprite->flags_0x0);
+
+	while (true) {
+		bVar1 = uVar31 == 0;
+		uVar31 = uVar31 - 1;
+
+		if (bVar1) break;
+
+		if (uVar31 == 0) {
+			uVar30 = (uint)(ushort)pSprite->meshSectionCount_0x3a;
+			uVar29 = (uint)pSprite->cameraPanIndex_0x38;
+		}
+
+		pPkt[0] = g_PKTSpriteHeaderRef[0];
+
+		pPkt[1].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+		pPkt[1].asU32[1] = STORE_SECTION(g_stGifTAG_Texture_NoFog + uVar30);
+
+		pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
+		pPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x8000, 1, UNPACK_V4_32, 0);
+
+		pPkt[2] = g_PKTSpriteHeaderRef[4];
+
+		if ((pSprite->pRenderFrame30 & 1) == 0) {
+			while ((uVar30 & 3) != 0) {
+				uVar29 = uVar29 + 1;
+			}
+
+			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(uVar29, 0);
+			pPkt[3].asU32[1] = STORE_SECTION(pWHBuf);
+
+			pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, uVar29, UNPACK_V2_16_MASKED, 0);
+
+			pWHBuf = pWHBuf + 0x50;
+		}
+		else {
+			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+			pPkt[3].asU32[1] = STORE_SECTION(pWHBuf);
+
+			pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, 1, UNPACK_V2_16_MASKED, 0);
+		}
+
+		pPkt[4] = g_PKTSpriteHeaderRef[1];
+
+		if ((pSprite->pRenderFrame30 & 2) == 0) {
+			for (; (uVar30 & 3) != 0; uVar30 = uVar30 + 1) {
+			}
+
+			pPkt[5].asU32[0] = ED_VIF1_SET_TAG_REF(uVar30, 0);
+			pPkt[5].asU32[1] = STORE_SECTION(pSTBuf);
+
+			pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, uVar30, UNPACK_V2_16_MASKED, 0);
+
+			pSTBuf = pSTBuf + 0x90;
+		}
+		else {
+			pPkt[5].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+			pPkt[5].asU32[1] = STORE_SECTION(pSTBuf);
+			pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, 1, UNPACK_V2_16_MASKED, 0);
+		}
+
+		pPkt[6] = g_PKTSpriteHeaderRef[2];
+
+		pPkt[7].asU32[0] = ED_VIF1_SET_TAG_REF(uVar30, 0);
+		pPkt[7].asU32[1] = STORE_SECTION(pColorBuf);
+		pPkt[7].asU32[2] = SCE_VIF1_SET_NOP(0);
+		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, uVar30, UNPACK_V4_8_MASKED, 0);
+
+		pColorBuf = pColorBuf + 0x48;
+
+		pPkt[8] = g_PKTSpriteHeaderRef[3];
+
+		pPkt[9].asU32[0] = ED_VIF1_SET_TAG_REF(uVar30, 0);
+		pPkt[9].asU32[1] = STORE_SECTION(pVertexBuf);
+		pPkt[9].asU32[2] = SCE_VIF1_SET_NOP(0);
+		pPkt[9].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, uVar30, UNPACK_V4_32_MASKED, 0);
+
+		pVertexBuf = pVertexBuf + 0x48;
+
+		pPkt[0xa] = g_PKTHeaderRef[4];
+
+		pPkt[0xc].cmdA = 0x60000000;
+		pPkt[0xc].cmdB = 0;
+
+		pPkt[0xb].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+		pPkt[0xb].asU32[1] = STORE_SECTION(&g_stExecuteCode);
+		pPkt[0xb].asU32[2] = SCE_VIF1_SET_NOP(0);
+		pPkt[0xb].asU32[3] = SCE_VIF1_SET_MSCAL(uVar26, 0);
+
+		pPkt[0xc].asU32[0] = SCE_VIF1_SET_UNPACK(0, 0, UNPACK_S32, 0); // Might be incorrect?
+		pPkt[0xc].asU32[1] = SCE_VIF1_SET_NOP(0);
+		pPkt[0xc].cmdB = 0;
+
+		pPkt = pPkt + 0xd;
+	}
+
+	return pPkt;
+}
+
 void edDlistCopyInPatchableStrip(ed_3d_strip* pStrip)
 {
 	ed_3d_strip* pNewStrip;
@@ -2604,6 +2860,58 @@ void edDListEndStrip(ed_3d_strip* pStrip)
 	return;
 }
 
+void edDListEndSprite(ed_3d_sprite* pSprite)
+{
+	ed_3d_sprite* pRenderSprite;
+	int iVar2;
+	uint uVar3;
+	uint uVar4;
+	DisplayListCommand* pDVar5;
+	DisplayList* pDVar6;
+
+	iVar2 = gNbAddedVertex;
+	if (gNbAddedVertex < 0) {
+		iVar2 = gNbAddedVertex + 3;
+	}
+
+	uVar4 = iVar2 >> 2;
+	if (uVar4 == 0) {
+		pSprite->cameraPanIndex_0x38 = 0;
+		pSprite->meshSectionCount_0x3a = (short)((uVar4 & 0xffff) << 2);
+		pSprite->pTextureDataMystery = 0;
+	}
+	else {
+		iVar2 = (int)(uVar4 - 1) / 0x12;
+		uVar3 = iVar2 + 1;
+
+		if (1 < uVar3) {
+			uVar4 = uVar4 + iVar2 * -0x12;
+		}
+
+		pSprite->cameraPanIndex_0x38 = uVar4;
+		pSprite->meshSectionCount_0x3a = (short)((uVar4 & 0xffff) << 2);
+		pSprite->pTextureDataMystery = (ushort)uVar3;
+	}
+
+	if (((gCurDList->flags_0x0 & 0x100) != 0) && (gCurSpritePatchable == 0)) {
+		pDVar6 = gCurDListHandle + gCurFlushState;
+		pDVar5 = pDVar6->aCommands + (pDVar6->nbCommands - 1);
+		pRenderSprite = pDVar5->pRenderInput.pSprite;
+
+		pDVar5->pCurDListBuf = reinterpret_cast<edpkt_data*>(reinterpret_cast<char*>(pRenderSprite) + pRenderSprite->offsetA);
+
+		pRenderSprite->cameraPanIndex_0x38 = pSprite->cameraPanIndex_0x38;
+		pRenderSprite->meshSectionCount_0x3a = pSprite->meshSectionCount_0x3a;
+		pRenderSprite->pTextureDataMystery = pSprite->pTextureDataMystery;
+		memcpy(pRenderSprite + 1, pSprite + 1, pSprite->offsetA + -0x40);
+
+		pDVar6->pRenderCommands = edDListSpritePreparePacket(pRenderSprite, pDVar5->pCurDListBuf);
+		pDVar6->field_0x10 = pDVar6->pRenderCommands;
+	}
+
+	return;
+}
+
 void edDListEnd(void)
 {
 	ushort dataType;
@@ -2645,9 +2953,8 @@ void edDListEnd(void)
 							assert(pCommand->pRenderInput.pStrip->meshCount > 0);
 						}
 						else {
-							IMPLEMENTATION_GUARD(
 							edDListEndSprite(pCommand->pRenderInput.pSprite);
-							gCurDListBuf = ed3DSpritePreparePacket(pCommand->pRenderInput.pSprite, (undefined4*)gCurDListBuf, (int)gBankMaterial, (ulong)pCommand->dataType);)
+							gCurDListBuf = ed3DSpritePreparePacket(pCommand->pRenderInput.pSprite, (edpkt_data*)gCurDListBuf, gBankMaterial, pCommand->dataType);
 						}
 					}
 					else {
@@ -2738,8 +3045,8 @@ void edDlistSetUseUV(int newUseUV)
 }
 
 DisplayList* gCurDListHandle = NULL;
-ed_3d_strip* gCurDListBuf = NULL;
-ed_3d_strip* gCurDListBufEnd = NULL;
+void* gCurDListBuf = NULL;
+void* gCurDListBufEnd = NULL;
 
 DisplayList* edDListSetCurrent(DisplayList* pNewDisplayList)
 {
@@ -3086,6 +3393,78 @@ void edDListCreateFrameBufferMaterial(edDList_material* pMaterial)
 	pMaterial->mode = 4;
 	pMaterial->pManager = (ed_g2d_manager*)0x0;
 	pMaterial->pMaterial = gFrameBufMaterialPtr;
+
+	return;
+}
+
+void edDlistPartVertex(float width, float height, float* param_3, float* param_4, float* param_5, float* param_6, _rgba* pColor , edF32VECTOR4* pVtx)
+{
+	float* pfVar2;
+	edVertex* peVar3;
+	short* psVar4;
+	float fVar5;
+	float fVar6;
+	edS32VECTOR4 local_10;
+
+	psVar4 = gCurWHBuf;
+	pfVar2 = gCurST_SPR;
+	*gCurST_SPR = *param_3;
+	pfVar2[1] = param_3[1];
+	pfVar2 = gCurST_SPR;
+	gCurST_SPR[2] = *param_4;
+	pfVar2[3] = param_4[1];
+	pfVar2 = gCurST_SPR;
+	gCurST_SPR[4] = *param_5;
+	pfVar2[5] = param_5[1];
+	pfVar2 = gCurST_SPR;
+	gCurST_SPR[6] = *param_6;
+	pfVar2[7] = param_6[1];
+
+	edF32Vector4ScaleHard(4096.0f, (edF32VECTOR4*)gCurST_SPR, (edF32VECTOR4*)gCurST_SPR);
+	edF32Vector4ScaleHard(4096.0f, (edF32VECTOR4*)(gCurST_SPR + 4), (edF32VECTOR4*)(gCurST_SPR + 4));
+
+	gCurFloatWH.x = width * 0.5f;
+	gCurFloatWH.y = height * 0.5f;
+
+	edF32Vector4FTOI12Hard(&local_10, &gCurFloatWH);
+
+	gCurWHBuf = psVar4 + 2;
+	psVar4[1] = (short)local_10.x;
+	psVar4[1] = (short)local_10.y;
+
+	gCurSTBuf[0] = (short)(int)*gCurST_SPR;
+	gCurSTBuf[1] = (short)(int)gCurST_SPR[1];
+	gCurSTBuf[2] = (short)(int)gCurST_SPR[4];
+	gCurSTBuf[3] = (short)(int)gCurST_SPR[5];
+	gCurSTBuf[4] = (short)(int)gCurST_SPR[2];
+	gCurSTBuf[5] = (short)(int)gCurST_SPR[3];
+	gCurSTBuf[6] = (short)(int)gCurST_SPR[6];
+	gCurSTBuf[7] = (short)(int)gCurST_SPR[7];
+	gCurSTBuf = gCurSTBuf + 8;
+
+	*gCurColorBuf = *pColor;
+	gCurColorBuf = gCurColorBuf + 1;
+	*gCurColorBuf = *pColor;
+	gCurColorBuf = gCurColorBuf + 1;
+	*gCurColorBuf = *pColor;
+	gCurColorBuf = gCurColorBuf + 1;
+	*gCurColorBuf = *pColor;
+
+	peVar3 = gCurVertexBuf;
+	gCurColorBuf = gCurColorBuf + 1;
+	peVar3->vector = *pVtx;
+
+	gNbDMAVertex = gNbDMAVertex + 4;
+	gCurVertexBuf = gCurVertexBuf + 4;
+	gNbAddedVertex = gNbAddedVertex + 4;
+
+	if (gNbDMAVertex == 0x48) {
+		*(uint*)gCurWHBuf = 0;
+		gCurWHBuf = gCurWHBuf + 2;
+		*(uint*)gCurWHBuf = 0;
+		gNbDMAVertex = 0;
+		gCurWHBuf = gCurWHBuf + 2;
+	}
 
 	return;
 }

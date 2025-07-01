@@ -2970,7 +2970,7 @@ void CActorFighter::_InterpretCollisions(int param_2)
 		}
 
 		fVar9 = acosf(puVar8);
-		MatrixRotationFromVectorAndAngle(-fVar9, &eStack352, &eStack288);
+		edF32Matrix4FromAngAxisSoft(-fVar9, &eStack352, &eStack288);
 		edF32Matrix4MulF32Matrix4Hard(&this->field_0x760, &this->field_0x760, &eStack352);
 	
 		_SV_DYN_SetRotationAroundMassCenter(&this->field_0x760);
@@ -3037,7 +3037,7 @@ void CActorFighter::_InterpretSlides()
 
 	this->field_0x7b0 = this->field_0x7b0 + this->field_0x7b4 * GetTimer()->cutsceneDeltaTime;
 	edF32Matrix4FromEulerSoft(&local_40, &this->rotationEuler.xyz, "XYZ");
-	MatrixRotationFromVectorAndAngle(-this->field_0x7b0, &eStack128, &this->field_0x7a0);
+	edF32Matrix4FromAngAxisSoft(-this->field_0x7b0, &eStack128, &this->field_0x7a0);
 	edF32Matrix4MulF32Matrix4Hard(&eStack128, &local_40, &eStack128);
 
 	_SV_DYN_SetRotationAroundMassCenter(&eStack128);
@@ -3179,7 +3179,7 @@ void CActorFighter::_StateFighterHitFly()
 	fVar3 = this->field_0x7b4;
 	this->field_0x7b4 = fVar3 - FLOAT_00448b04 * fVar3 * fVar3 * GetTimer()->cutsceneDeltaTime * GetTimer()->cutsceneDeltaTime;
 
-	MatrixRotationFromVectorAndAngle(-this->field_0x7b0, &eStack336, &this->field_0x7a0);
+	edF32Matrix4FromAngAxisSoft(-this->field_0x7b0, &eStack336, &this->field_0x7a0);
 	edF32Matrix4MulF32Matrix4Hard(&eStack336, &this->field_0x760, &eStack336);
 	_SV_DYN_SetRotationAroundMassCenter(&eStack336);
 
@@ -3210,7 +3210,7 @@ void CActorFighter::_StateFighterHitWakingUpInit()
 	edF32MATRIX4 eStack64;
 
 	edF32Matrix4FromEulerSoft(&this->field_0x760, &this->rotationEuler.xyz, "XYZ");
-	MatrixRotationFromVectorAndAngle(-(this->field_0x7dc * 1.570796f), &eStack64, &this->field_0x760.rowX);
+	edF32Matrix4FromAngAxisSoft(-(this->field_0x7dc * 1.570796f), &eStack64, &this->field_0x760.rowX);
 	edF32Matrix4MulF32Matrix4Hard(&this->field_0x760, &this->field_0x760, &eStack64);
 	edF32Matrix4ToEulerSoft(&this->field_0x760, &local_50, "XYZ");
 	this->rotationEuler.xyz = local_50;
@@ -3346,7 +3346,7 @@ void CActorFighter::_StateFighterHitFlyToSlide()
 				}
 
 				fVar5 = edFIntervalUnitDstLERP(fVar5, 0.2f, 1.1f);
-				MatrixRotationFromVectorAndAngle(-(this->field_0x7b0 * (1.0f - fVar5)), &local_1c0, &this->field_0x7a0);
+				edF32Matrix4FromAngAxisSoft(-(this->field_0x7b0 * (1.0f - fVar5)), &local_1c0, &this->field_0x7a0);
 				edF32Matrix4MulF32Matrix4Hard(&local_1c0, &this->field_0x760, &local_1c0);
 				_SV_DYN_SetRotationAroundMassCenter(&local_1c0);
 
@@ -3359,7 +3359,7 @@ void CActorFighter::_StateFighterHitFlyToSlide()
 	fVar9 = GetTimer()->cutsceneDeltaTime;
 	fVar5 = this->field_0x7b4;
 	this->field_0x7b4 = fVar5 - FLOAT_00448b04 * fVar5 * fVar5 * GetTimer()->cutsceneDeltaTime * fVar9;
-	MatrixRotationFromVectorAndAngle(-this->field_0x7b0, &eStack528, &this->field_0x7a0);
+	edF32Matrix4FromAngAxisSoft(-this->field_0x7b0, &eStack528, &this->field_0x7a0);
 	edF32Matrix4MulF32Matrix4Hard(&eStack528, &this->field_0x760, &eStack528);
 	_SV_DYN_SetRotationAroundMassCenter(&eStack528);
 	this->field_0x7dc = 0.0f;
@@ -7306,7 +7306,7 @@ void CBehaviourFighterProjected::Manage()
 		fVar7 = pFighter->field_0x7b0 + pFighter->field_0x7b4 * pTVar2->cutsceneDeltaTime;
 		pFighter->field_0x7b0 = fVar7;
 
-		MatrixRotationFromVectorAndAngle(-fVar7, &eStack64, &pFighter->field_0x7a0);
+		edF32Matrix4FromAngAxisSoft(-fVar7, &eStack64, &pFighter->field_0x7a0);
 		edF32Matrix4MulF32Matrix4Hard(&eStack64, &pFighter->field_0x760, &eStack64);
 		edF32Matrix4ToEulerSoft(&eStack64, &local_50, "XYZ");
 
@@ -7392,7 +7392,7 @@ void CBehaviourFighterProjected::Manage()
 			fVar7 = pFighter->field_0x7b0;
 		}
 
-		MatrixRotationFromVectorAndAngle(-fVar7, &eStack144, &pFighter->field_0x7a0);
+		edF32Matrix4FromAngAxisSoft(-fVar7, &eStack144, &pFighter->field_0x7a0);
 		edF32Matrix4MulF32Matrix4Hard(&eStack144, &pFighter->field_0x760, &eStack144);
 		edF32Matrix4ToEulerSoft(&eStack144, &local_a0, "XYZ");
 
@@ -7467,7 +7467,7 @@ void CBehaviourFighterProjected::Manage()
 			fVar7 = pFighter->field_0x7b0;
 		}
 
-		MatrixRotationFromVectorAndAngle(-fVar7, &eStack224, &pFighter->field_0x7a0);
+		edF32Matrix4FromAngAxisSoft(-fVar7, &eStack224, &pFighter->field_0x7a0);
 		edF32Matrix4MulF32Matrix4Hard(&eStack224, &pFighter->field_0x760, &eStack224);
 		edF32Matrix4ToEulerSoft(&eStack224, &local_f0, "XYZ");
 		pFighter->rotationEuler.xyz = local_f0;

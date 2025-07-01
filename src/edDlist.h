@@ -148,6 +148,8 @@ edDList_material* edDListCreatMaterialFromHashCode(edDList_material* pMaterial, 
 
 void edDListCreateFrameBufferMaterial(edDList_material* pMaterial);
 
+void edDlistPartVertex(float width, float height, float* param_3, float* param_4, float* param_5, float* param_6, _rgba* pColor, edF32VECTOR4* pVtx);
+
 #ifdef PLATFORM_WIN
 Multidelegate<edDList_material*>& edDListGetMaterialLoadedDelegate();
 Multidelegate<edDList_material*>& edDListGetMaterialUnloadedDelegate();

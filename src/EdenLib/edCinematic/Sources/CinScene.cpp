@@ -947,7 +947,7 @@ bool edSceneActor::Timeslice(float currentPlayTime, edResCollection& resCollecti
 
 									ParticleTagData* pParticleTagData = (ParticleTagData*)(pTrackDataStart + 1);
 
-									local_78.particleId = STORE_SECTION(pParticleTagData);
+									local_78.particleId = reinterpret_cast<int>(pParticleTagData);
 									local_78.field_0x4 = LOAD_SECTION_CAST(int, resCollection.pData->aTags[pParticleTagData->field_0x0].pData);
 									local_78.field_0x8 = pParticleTagData->field_0x4;
 									pCinActorInterface->SetParticles(currentPlayTime - *currentKeyframePtr, &local_78);

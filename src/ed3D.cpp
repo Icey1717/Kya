@@ -188,7 +188,7 @@ edLIST gPrim_List_FlushTex[2] = { };
 edLIST gPrim_List_Shadow[2] = { };
 
 ed_3d_hierarchy* gpCurHierarchy = NULL;
-undefined* pOldFANGifTag = NULL;
+edpkt_data* pOldFANGifTag = NULL;
 
 ed_3d_hierarchy_node* gHierarchyManagerBuffer = NULL;
 edNODE_MANAGER* gHierarchyManagerNodeManager = NULL;
@@ -1249,6 +1249,38 @@ ed_g2d_bitmap* ed3DGetG2DBitmap(ed_dma_material* pDMA_Material, int index)
 	return pBitmap;
 }
 
+ed_g2d_bitmap* ed3DGetG2DPalette(ed_dma_material* pMaterial, uint index)
+
+{
+	ed_g2d_material* pG2dMaterial;
+	ed_hash_code* pHash;
+	ed_hash_code* pPaletteHash;
+	ed_g2d_bitmap* pBitmap;
+
+	pG2dMaterial = pMaterial->pMaterial;
+	pBitmap = (ed_g2d_bitmap*)0x0;
+	if (pG2dMaterial != (ed_g2d_material*)0x0) {
+		int* pHash = reinterpret_cast<int*>(pG2dMaterial + 1);
+		ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pHash[index]);
+		ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+		ed_Chunck* pTEX = LOAD_SECTION_CAST(ed_Chunck*, pLayer->pTex);
+		ed_g2d_texture* pTexture = reinterpret_cast<ed_g2d_texture*>(pTEX + 1);
+		ed_hash_code* pHashCode = reinterpret_cast<ed_hash_code*>(pTexture + 1);
+
+		if ((((pG2dMaterial->nbLayers == 0) || (pLayer == (ed_g2d_layer*)0x0)) || (pLayer == (ed_g2d_layer*)0x0)) ||
+			(((pLayer->bHasTexture == 0 || (pTexture == (ed_g2d_texture*)0x0)) ||
+				((pTexture->bHasPalette <= pLayer->paletteId) ||
+					(pPaletteHash = LOAD_SECTION_CAST(ed_hash_code*, pHashCode[pLayer->paletteId].pData), pPaletteHash == (ed_hash_code*)0x0))))) {
+			pBitmap = (ed_g2d_bitmap*)0x0;
+		}
+		else {
+			ed_Chunck* pPA32 = LOAD_SECTION_CAST(ed_Chunck*, pPaletteHash->pData);
+			pBitmap = reinterpret_cast<ed_g2d_bitmap*>(pPA32 + 1);
+		}
+	}
+	return pBitmap;
+}
+
 char DAT_0048c3b0[200] = { 0 };
 char DAT_0048c3c0[200] = { 0 };
 
@@ -1744,7 +1776,7 @@ void ed3DFlushMatrixReset(void)
 
 void ed3DFANGifTagReset(void)
 {
-	pOldFANGifTag = (undefined*)0x0;
+	pOldFANGifTag = (edpkt_data*)0x0;
 	return;
 }
 
@@ -4979,66 +5011,192 @@ edpkt_data* ed3DFlushSpriteFlareFX(float param_1, edpkt_data* pPkt, edF32VECTOR4
 	return pPkt;
 }
 
+float SizeFlare$1162 = 1.5f;
+float FLOAT_00448520 = 0.6f;
+
+edpkt_data* ed3DFlushSpriteScaleFlare(ed_3d_sprite* pSprite, edpkt_data* pPkt)
+{
+	uint uVar1;
+	edF32MATRIX4* peVar2;
+	uint* puVar3;
+	edVertex* pVtx;
+	uint uVar4;
+	float fVar5;
+	edF32VECTOR4 local_10;
+
+	pVtx = LOAD_SECTION_CAST(edVertex*, pSprite->pVertexBuf);
+	puVar3 = LOAD_SECTION_CAST(uint*, pSprite->pWHBuf);
+
+	for (uVar4 = 0; uVar4 < pSprite->field_0x36; uVar4 = uVar4 + 1) {
+		uVar1 = *puVar3;
+		peVar2 = *g_pCurFlareObj2WorldMtx;
+		local_10 = peVar2->rowY;
+		edF32Vector4NormalizeHard(&local_10, &local_10);
+		fVar5 = edF32Vector4DotProductHard(&local_10, &gCamNormal_Z);
+		fVar5 = edFIntervalLERP(fVar5, FLOAT_00448520, 1.0f, 0.0f, 1.0f);
+		if (0.0f < fVar5) {
+			pPkt = ed3DFlushSpriteFlareFX(SizeFlare$1162 * ((float)(uVar1 >> 0x10) / 4096.0f) * fVar5, pPkt, (edF32VECTOR4*)pVtx, 0);
+		}
+
+		pVtx = pVtx + 1;
+		puVar3 = puVar3 + 1;
+	}
+
+	return pPkt;
+}
+
+edpkt_data* ed3DFlushStripOptionFlag(edpkt_data* pPkt, int param_2)
+{
+	PTR_AnimScratchpad_00449554->vuFlags = param_2;
+	PTR_AnimScratchpad_00449554->flags = 0;
+	PTR_AnimScratchpad_00449554->field_0x8 = 0;
+	PTR_AnimScratchpad_00449554->field_0xc = 0;
+
+	pPkt->cmdA = ED_VIF1_SET_TAG_CNT(1);
+	pPkt->asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt->asU32[3] = SCE_VIF1_SET_UNPACK(0x0076, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c010076
+	pPkt[1] = PTR_AnimScratchpad_00449554->pkt;
+
+	pPkt[2].cmdA = ED_VIF1_SET_TAG_CNT(1);
+	pPkt[2].asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt[2].asU32[3] = SCE_VIF1_SET_UNPACK(0x0198, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c01019800000000;
+	pPkt[3] = PTR_AnimScratchpad_00449554->pkt;
+
+	pPkt[4].cmdA = ED_VIF1_SET_TAG_CNT(1);
+	pPkt[4].asU32[2] = SCE_VIF1_SET_NOP(0);
+	pPkt[4].asU32[3] = SCE_VIF1_SET_UNPACK(0x02ba, 0x1, UNPACK_V4_32_MASKED, 0); //0x7c0102ba00000000;
+	pPkt[5] = PTR_AnimScratchpad_00449554->pkt;
+
+	return pPkt + 6;
+}
+
+
+edpkt_data* ed3DDMAGetGIFTagFan(uint flags, ed_g2d_material* pMaterrial)
+{
+	edpkt_data* pGifTag;
+
+	if ((flags & 0x4000) == 0) {
+		if ((flags & 0x8000) == 0) {
+			if ((pMaterrial == (ed_g2d_material*)0x0) || (pMaterrial->nbLayers == 0)) {
+				if ((flags & 0x800) == 0) {
+					pGifTag = &g_stGifTAG_FAN_Gouraud_NoFog;
+				}
+				else {
+					pGifTag = &g_stGifTAG_FAN_Flat_NoFog;
+				}
+			}
+			else {
+				pGifTag = &g_stGifTAG_FAN_Texture_NoFog;
+			}
+		}
+		else {
+			if ((pMaterrial == (ed_g2d_material*)0x0) || (pMaterrial->nbLayers == 0)) {
+				pGifTag = g_stGifTAG_Gouraud_NoFog_LINE;
+			}
+			else {
+				pGifTag = g_stGifTAG_Texture_NoFog_LINE;
+			}
+		}
+	}
+	else {
+		if ((pMaterrial == (ed_g2d_material*)0x0) || (pMaterrial->nbLayers == 0)) {
+			pGifTag = g_stGifTAG_Flat_NoFog_POINT;
+		}
+		else {
+			pGifTag = g_stGifTAG_Texture_NoFog_POINT;
+		}
+	}
+
+	return pGifTag;
+}
+
+edpkt_data* ed3DRefreshFANGifTag(edpkt_data* pPkt, uint flags, ed_g2d_material* pMaterial)
+{
+	edpkt_data* pGifTag;
+
+	if ((flags & 2) != 0) {
+		pGifTag = ed3DDMAGetGIFTagFan(flags, pMaterial);
+		if (pOldFANGifTag != pGifTag) {
+			pPkt[0] = g_PKTHeaderRef[0];
+
+			pPkt[1].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+			pPkt[1].asU32[1] = STORE_SECTION(pGifTag);
+			pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x0001, 1, UNPACK_V4_32_MASKED, 0);
+
+			pPkt[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+			pPkt[2].asU32[2] = SCE_VIF1_SET_FLUSH(0);
+			pPkt[2].asU32[3] = SCE_VIF1_SET_FLUSH(0);
+
+			pPkt = pPkt + 3;
+			pOldFANGifTag = pGifTag;
+		}
+	}
+
+	return pPkt;
+}
+
 void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 {
 	short sVar1;
 	ushort uVar2;
 	ushort uVar3;
-	ed_3d_sprite* peVar4;
+	ed_3d_sprite* pSprite;
 	edpkt_data* pPkt;
-	undefined8* puVar6;
 	edF32VECTOR4* peVar7;
 	edpkt_data* size;
 	uint uVar8;
-	int iVar9;
+	edpkt_data* pSpriteVif;
 
-	peVar4 = reinterpret_cast<ed_3d_sprite*>(pNode->pData);
+	pSprite = reinterpret_cast<ed_3d_sprite*>(pNode->pData);
+
 	sVar1 = pNode->header.typeField.flags;
-	uVar2 = peVar4->pTextureDataMystery;
-	iVar9 = (int)&peVar4->flags_0x0 + peVar4->offsetA;
+	uVar2 = pSprite->pTextureDataMystery;
+	pSpriteVif = reinterpret_cast<edpkt_data*>(reinterpret_cast<char*>(pSprite) + pSprite->offsetA);
 
 	pPkt = g_VifRefPktCur;
 
 	if (uVar2 != 0) {
-		uVar3 = peVar4->pRenderFrame30;
+		uVar3 = pSprite->pRenderFrame30;
 		if (((uVar3 & 0x80) == 0) || ((uVar3 & 0x200) == 0)) {
 			if ((uVar3 & 0x200) == 0) {
-				IMPLEMENTATION_GUARD(
-				puVar6 = ed3DFlushStripOptionFlag((undefined8*)g_VifRefPktCur, (int)sVar1);
-				pPkt = (edpkt_data*)ed3DRefreshFANGifTag((undefined4*)puVar6, (int)sVar1, pMaterial);
+				pPkt = ed3DFlushStripOptionFlag(g_VifRefPktCur, (int)sVar1);
+				pPkt = ed3DRefreshFANGifTag(pPkt, (int)sVar1, pMaterial);
 
-				if ((edpkt_data*)0x70003000 < pPkt + (uint)uVar2 * 2) {
-					size = (edpkt_data*)((int)pPkt - (int)gStartPKT_SPR);
-					edDmaLoadFromFastRam(gStartPKT_SPR, (uint)size, (uint)((ulong)((long)(int)gBackupPKT << 0x24) >> 0x24));
-					pPkt = edpkt_data_ARRAY_70001000;
-					gStartPKT_SPR = edpkt_data_ARRAY_70001000;
-					gBackupPKT = (edpkt_data*)((int)&gBackupPKT->cmdA + ((uint)size & 0xfffffff0));
+				if ((edpkt_data*)SCRATCHPAD_ADDRESS(0x70003000) < pPkt + uVar2 * 2) {
+					uint pktLen = PKT_SIZE(pPkt, gStartPKT_SPR);
+					edDmaLoadFromFastRam(gStartPKT_SPR, pktLen, PKT_TO_SCRATCHPAD(gBackupPKT));
+					pPkt = SCRATCHPAD_ADDRESS(0x70001000);
+					gStartPKT_SPR = SCRATCHPAD_ADDRESS(0x70001000);
+					gBackupPKT = (edpkt_data*)((ulong)gBackupPKT + (pktLen & 0xfffffff0));
 				}
 
 				for (uVar8 = 0; uVar8 < uVar2; uVar8 = uVar8 + 1) {
 					pPkt->cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 					pPkt->cmdB = 0;
-					*(uint*)&pPkt->cmdB = ed3DVU1Buffer[1] + 1 | 0x3000000;
-					*(undefined4*)((int)&pPkt->cmdB + 4) = 0x2000000;
-					pPkt[1].cmdA = ((long)iVar9 & 0xfffffffU) << 0x20 | 0x50000000;
+					pPkt->asU32[2] = SCE_VIF1_SET_BASE((*ed3DVU1Addr_Scratch)[ed3DVU1BufferCur] + 1, 0);
+					pPkt->asU32[3] = SCE_VIF1_SET_OFFSET(0, 0);
+
+					pPkt[1].asU32[0] = SCE_VIF1_SET_DIRECT(0, 0);
+					pPkt[1].asU32[1] = (uint)pSpriteVif & 0xfffffff;
 					pPkt[1].cmdB = 0;
-					*(uint*)((int)&pPkt[1].cmdB + 4) = ed3DVU1Buffer[1] + 1 | 0x4000000;
+					pPkt[1].asU32[3] = SCE_VIF1_SET_ITOP(ed3DVU1Buffer[1] + 1, 0);
+
 					pPkt = pPkt + 2;
 					ed3DSwapVU1Buffer();
-					iVar9 = iVar9 + 0xd0;
-				})
+					pSpriteVif = pSpriteVif + 0xd;
+				}
 			}
 			else {
-				peVar7 = LOAD_SECTION_CAST(edF32VECTOR4*, peVar4->pVertexBuf);
-				for (uVar8 = 0; uVar8 < peVar4->field_0x36; uVar8 = uVar8 + 1) {
+				peVar7 = LOAD_SECTION_CAST(edF32VECTOR4*, pSprite->pVertexBuf);
+				for (uVar8 = 0; uVar8 < pSprite->field_0x36; uVar8 = uVar8 + 1) {
 					pPkt = ed3DFlushSpriteFlareFX(512.0f, pPkt, peVar7, 1);
 					peVar7 = peVar7 + 1;
 				}
 			}
 		}
 		else {
-			IMPLEMENTATION_GUARD(
-			pPkt = (edpkt_data*)ed3DFlushSpriteScaleFlare((int)peVar4, (ulong*)g_VifRefPktCur);)
+			pPkt = ed3DFlushSpriteScaleFlare(pSprite, g_VifRefPktCur);
 		}
 	}
 
@@ -5255,6 +5413,7 @@ edpkt_data* ed3DFlushStripShadowRender(edNODE* pNode, ed_g2d_material* pmaterial
 		gStartPKT_SPR = SCRATCHPAD_ADDRESS(70001000);
 		gBackupPKT = (edpkt_data*)((int)&gBackupPKT->cmdA + ((uint)qwc & 0xfffffff0));)
 	}
+
 	while (bVar6 = meshCount != 0, meshCount = meshCount - 1, bVar6) {
 		peVar9 = ed3DFlushStripPacketReceive(peVar9, peVar13, 1 < bVar1, (uint)headerFlags);
 		peVar13 = peVar13 + uVar8;
@@ -5467,7 +5626,7 @@ ed_g2d_layer* ed3DGetG2DLayer(ed_g2d_material* pMAT, int index)
 			pTVar1 = (ed_g2d_layer*)0x0;
 		}
 		else {
-			int* pHash = (int*)(pMAT + 1);
+			int* pHash = reinterpret_cast<int*>(pMAT + 1);
 			pTVar1 = (ed_g2d_layer*)((char*)LOAD_SECTION(pHash[index]) + 0x10);
 		}
 	}
@@ -9070,9 +9229,9 @@ void _ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, ed_hash_code* pMBNK)
 	edNODE* peVar13;
 	int* piVar14;
 	uint layerFlagsB;
-	int iVar16;
+	ed_g2d_layer* pLayer;
 
-	iVar16 = 0;
+	pLayer = (ed_g2d_layer*)0x0;
 	pMaterial = (ed_g2d_material*)0x0;
 
 	if (((*gShadowRenderMask == 0) || ((*gShadowRenderMask & (uint)(ushort)(pSprite->bUseShadowMatrix_0x30 | pSprite->field_0x32)) != 0)) &&
@@ -9085,18 +9244,18 @@ void _ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, ed_hash_code* pMBNK)
 				pSprite->flags_0x0 = pSprite->flags_0x0 & 0xfffffffc;
 			}
 			else {
-				gBoundSphereCenter->xyz = pSprite->vector_0x10.xyz;
+				gBoundSphereCenter->xyz = pSprite->boundingSphere.xyz;
 				gBoundSphereCenter->w = 1.0f;
 
 				*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
 
-				layerFlagsA = ed3DTestBoundingSphereObject(&pSprite->vector_0x10);
+				layerFlagsA = ed3DTestBoundingSphereObject(&pSprite->boundingSphere);
 				if (layerFlagsA == 4) {
 					return;
 				}
 				pSprite->flags_0x0 = pSprite->flags_0x0 & 0xfffffffc;
 				if (layerFlagsA != 1) {
-					layerFlagsA = ed3DTestBoundingSphereObjectNoZFar(&pSprite->vector_0x10);
+					layerFlagsA = ed3DTestBoundingSphereObjectNoZFar(&pSprite->boundingSphere);
 					if (layerFlagsA == 1) {
 						pSprite->flags_0x0 = pSprite->flags_0x0 & 0xfffffffc;
 					}
@@ -9120,7 +9279,7 @@ void _ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, ed_hash_code* pMBNK)
 		}
 		else {
 			ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, pMaterial->aLayers[0]);
-			ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+			pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
 			layerFlagsA = pLayer->flags_0x0;
 			layerFlagsB = pLayer->flags_0x4;
 
@@ -9140,16 +9299,16 @@ void _ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, ed_hash_code* pMBNK)
 				pDMA_Material->pBitmap = (ed_g2d_bitmap*)0x0;
 			}
 			else {
-				if (iVar16 == 0) {
+				if (pLayer == (ed_g2d_layer*)0x0) {
 					pDMA_Material->pBitmap = (ed_g2d_bitmap*)0x0;
 				}
 				else {
-					IMPLEMENTATION_GUARD(
-					pDMA_Material->pBitmap = ed3DGetG2DPalette(pDMA_Material, 0);)
+					pDMA_Material->pBitmap = ed3DGetG2DPalette(pDMA_Material, 0);
 				}
 
 				if ((pDMA_Material->pBitmap == (ed_g2d_bitmap*)0x0) || (pDMA_Material->pBitmap->pPSX2 == 0x0)) {
 					pDMA_Material->pBitmap = ed3DGetG2DBitmap(pDMA_Material, 0);
+					assert(pDMA_Material->pBitmap->pPSX2 != 0x0);
 				}
 			}
 
@@ -9446,6 +9605,289 @@ LAB_00298420:
 	return;
 }
 
+uint ed3DSpritePreparePacketGetCode(ushort param_1, uint flags)
+{
+	uint in_v0_lo = 0xbbbbbbbb;
+
+	if (param_1 == 0x13) {
+		in_v0_lo = 0x66;
+		if ((flags & 0x80) != 0) {
+			in_v0_lo = 0x1df;
+		}
+	}
+	else {
+		if (param_1 == 0x12) {
+			in_v0_lo = 0x1a0;
+			if ((flags & 0x80) != 0) {
+				in_v0_lo = 0x1e2;
+			}
+		}
+		else {
+			if ((param_1 == 0) && (in_v0_lo = 0x1a8, (flags & 0x80) != 0)) {
+				in_v0_lo = 0x1e5;
+			}
+		}
+	}
+
+	assert(in_v0_lo != 0xbbbbbbbb);
+
+	return in_v0_lo;
+}
+
+
+#define ST_GIF_TAG_TYPE_POINT 0
+#define ST_GIF_TAG_TYPE_LINE 2
+
+edpkt_data* ed3DDMAGetGifTag(uint type, uint flags, ed_g2d_material* pMaterial)
+{
+	edpkt_data* pPkt;
+
+	int* hash = reinterpret_cast<int*>(pMaterial + 1);
+	ed_Chunck* pLAY = LOAD_SECTION_CAST(ed_Chunck*, hash[0]);
+	ed_g2d_layer* pLayer = reinterpret_cast<ed_g2d_layer*>(pLAY + 1);
+
+	if (type == ST_GIF_TAG_TYPE_POINT) {
+		if ((pMaterial == (ed_g2d_material*)0x0) || (pMaterial->nbLayers == 0)) {
+			pPkt = g_stGifTAG_Flat_NoFog_POINT;
+		}
+		else {
+			pPkt = g_stGifTAG_Texture_NoFog_POINT;
+		}
+	}
+	else {
+		if (type == ST_GIF_TAG_TYPE_LINE) {
+			if ((pMaterial == (ed_g2d_material*)0x0) || (pMaterial->nbLayers == 0)) {
+				pPkt = g_stGifTAG_Gouraud_NoFog_LINE;
+			}
+			else {
+				if (pLayer->bHasTexture == 0) {
+					pPkt = g_stGifTAG_Gouraud_NoFog_LINE;
+				}
+				else {
+					pPkt = g_stGifTAG_Texture_NoFog_LINE;
+				}
+			}
+		}
+		else {
+			if ((pMaterial == (ed_g2d_material*)0x0) || (pMaterial->nbLayers == 0)) {
+				if ((flags & 0x800) == 0) {
+					pPkt = g_stGifTAG_Gouraud_NoFog;
+				}
+				else {
+					pPkt = g_stGifTAG_Flat_NoFog;
+				}
+			}
+			else {
+				if ((pLayer->bHasTexture == 0) &&
+					((pLayer->flags_0x4 & 0x800) == 0)) {
+					if ((flags & 0x800) == 0) {
+						pPkt = g_stGifTAG_Gouraud_NoFog;
+					}
+					else {
+						pPkt = g_stGifTAG_Flat_NoFog;
+					}
+				}
+				else {
+					pPkt = g_stGifTAG_Texture_NoFog;
+				}
+			}
+		}
+	}
+
+	return pPkt;
+}
+
+edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_hash_code* pHash, int type)
+{
+	ushort uVar1;
+	uint flags;
+	ed_g2d_material* pMaterial;
+	edpkt_data* pGifTag;
+	ushort uVar27;
+	uint uVar28;
+	uint uVar29;
+	ulong uVar30;
+	int iVar31;
+	uint uVar32;
+	ulong uVar33;
+	int iVar34;
+	char* pWHBuf;
+	edVertex* peVar36;
+	short* pSTBuf;
+	uint uVar38;
+	ulong uVar39;
+	_rgba* pColorBuf;
+	edVertex* pVertexBuf;
+
+	pMaterial = (ed_g2d_material*)0x0;
+	flags = pSprite->flags_0x0;
+
+	pVertexBuf = LOAD_SECTION_CAST(edVertex*, pSprite->pVertexBuf);
+	pSTBuf = LOAD_SECTION_CAST(short*, pSprite->pSTBuf);
+	pColorBuf = LOAD_SECTION_CAST(_rgba*, pSprite->pColorBuf);
+	pWHBuf = LOAD_SECTION_CAST(char*, pSprite->pWHBuf);
+
+	uVar1 = pSprite->pTextureDataMystery;
+	uVar28 = (uint)(ushort)pSprite->materialIndex;
+	if ((uVar28 != 0xffffffff) && (uVar28 != 0xffff)) {
+		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pHash, uVar28);
+	}
+
+	pGifTag = ed3DDMAGetGifTag(type, flags, pMaterial);
+
+	if ((pMaterial == (ed_g2d_material*)0x0) || ((pMaterial != (ed_g2d_material*)0x0 && (pMaterial->nbLayers == 0)))) {
+		pSprite->flags_0x0 = pSprite->flags_0x0 | 0x2000000;
+	}
+	if (type == ST_GIF_TAG_TYPE_LINE) {
+		pSprite->flags_0x0 = pSprite->flags_0x0 | 0x8000;
+	}
+	else {
+		if (type != ST_GIF_TAG_TYPE_POINT) {
+			uVar27 = pSprite->pRenderFrame30;
+			goto LAB_002a335c;
+		}
+
+		pSprite->flags_0x0 = pSprite->flags_0x0 | 0x4000;
+	}
+
+	uVar27 = pSprite->pRenderFrame30;
+LAB_002a335c:
+	uVar28 = ed3DSpritePreparePacketGetCode(uVar27, pSprite->flags_0x0);
+	peVar36 = pVertexBuf;
+	for (iVar31 = 0; iVar31 < (int)(uint)uVar1; iVar31 = iVar31 + 1) {
+		uVar30 = 0x48;
+		if (iVar31 == uVar1 - 1) {
+			uVar38 = (uint)pSprite->cameraPanIndex_0x38;
+			uVar30 = (ulong)(ushort)pSprite->meshSectionCount_0x3a;
+		}
+		else {
+			uVar38 = 0x12;
+		}
+
+		uVar29 = (uint)uVar30;
+
+		pPkt[1].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+		pPkt[1].asU32[1] = STORE_SECTION(pGifTag + uVar30);
+
+		pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
+		pPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x8000, 1, UNPACK_V4_32, 0);
+
+		uVar27 = pSprite->pRenderFrame30;
+
+		pPkt[2] = g_PKTSpriteHeaderRef[4];
+
+		if ((uVar27 & 1) == 0) {
+			while (true) {
+				uVar32 = uVar38 & 3;
+				if (((int)uVar38 < 0) && (uVar32 != 0)) {
+					uVar32 = uVar32 - 4;
+				}
+
+				if (uVar32 == 0) break;
+
+				uVar38 = uVar38 + 1;
+			}
+
+			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(uVar38 >> 2, 0);
+			pPkt[3].asU32[1] = STORE_SECTION(pWHBuf);
+
+			pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, uVar38 << 0x10, UNPACK_V2_16_MASKED, 0);
+		}
+		else {
+			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+			pPkt[3].asU32[1] = STORE_SECTION(pWHBuf);
+
+			pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, 1, UNPACK_V2_16_MASKED, 0);
+		}
+
+		uVar27 = pSprite->pRenderFrame30;
+
+		if ((uVar27 & 1) == 0) {
+			pWHBuf = pWHBuf + 0x50;
+		}
+
+		pPkt[4] = g_PKTSpriteHeaderRef[1];
+
+		uVar39 = uVar30;
+		if ((uVar27 & 2) == 0) {
+			while (true) {
+				uVar33 = uVar39 & 3;
+				if (((long)uVar39 < 0) && (uVar33 != 0)) {
+					uVar33 = uVar33 + -4;
+				}
+
+				iVar34 = uVar39;
+
+				if (uVar33 == 0) break;
+
+				uVar39 = iVar34 + 1;
+			}
+
+			pPkt[5].asU32[0] = ED_VIF1_SET_TAG_REF(iVar34 >> 2, 0);
+			pPkt[5].asU32[1] = STORE_SECTION(pSTBuf);
+
+			pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, iVar34 << 0x10, UNPACK_V2_16_MASKED, 0);
+		}
+		else {
+			pPkt[5].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+			pPkt[5].asU32[1] = STORE_SECTION(pSTBuf);
+			pPkt[5].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[5].asU32[3] = SCE_VIF1_SET_UNPACK(0x8001, 1, UNPACK_V2_16_MASKED, 0);
+		}
+
+		if ((pSprite->pRenderFrame30 & 2) == 0) {
+			pSTBuf = pSTBuf + 0x90;
+		}
+
+		pPkt[6] = g_PKTSpriteHeaderRef[2];
+
+
+		pPkt[7].asU32[0] = ED_VIF1_SET_TAG_REF(uVar29, 0);
+		pPkt[7].asU32[1] = STORE_SECTION(pColorBuf);
+		pPkt[7].asU32[2] = SCE_VIF1_SET_NOP(0);
+		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, uVar29, UNPACK_V4_8_MASKED, 0);
+
+		pPkt[8] = g_PKTSpriteHeaderRef[3];
+
+		pColorBuf = pColorBuf + 0x48;
+
+		if ((flags & 0x4000000) == 0) {
+			pPkt[9].asU32[0] = ED_VIF1_SET_TAG_REF(uVar29, 0);
+			pPkt[9].asU32[1] = STORE_SECTION(pVertexBuf);
+			pPkt[9].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[9].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, uVar29, UNPACK_V4_32_MASKED, 0);
+			pVertexBuf = pVertexBuf + 0x24;
+		}
+		else {
+			pPkt[9].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+			pPkt[9].asU32[1] = STORE_SECTION(pVertexBuf);
+			pPkt[9].asU32[2] = SCE_VIF1_SET_NOP(0);
+			pPkt[9].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, 1, UNPACK_V4_32_MASKED, 0);
+			pVertexBuf = pVertexBuf + 0x48;
+		}
+
+		pPkt[0xa] = g_PKTHeaderRef[4];
+
+		pPkt[0xb].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
+		pPkt[0xb].asU32[1] = STORE_SECTION(&g_stExecuteCode);
+		pPkt[0xb].asU32[2] = SCE_VIF1_SET_NOP(0);
+		pPkt[0xb].asU32[3] = SCE_VIF1_SET_MSCAL(uVar28, 0);
+
+		pPkt[0xc].asU32[0] = SCE_VIF1_SET_UNPACK(0, 0, UNPACK_S32, 0); // Might be incorrect?
+		pPkt[0xc].asU32[1] = SCE_VIF1_SET_NOP(0);
+		pPkt[0xc].cmdB = 0;
+
+		pPkt = pPkt + 0xd;
+	}
+
+	pSprite->pNext = STORE_SECTION(pPkt);
+
+	return pPkt;
+}
+
 int INT_00448a54 = 0x400;
 
 void ed3DRenderSprite(ed_hash_code* pLOD, ed_hash_code* pMBNK)
@@ -9495,7 +9937,7 @@ LAB_002b0ee8:
 		else {
 			fVar8 = (float)INT_00448a54;
 		}
-		(pRenderInput->vector_0x10).w = fVar8;
+		(pRenderInput->boundingSphere).w = fVar8;
 	}
 
 	*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
@@ -14071,23 +14513,7 @@ ScratchPadRenderInfo RenderInfo_00424f80 = { 0x0, 0x0, 0x0, 0x0, 0x0, 1.0f, 0x0,
 
 void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPktToLink)
 {
-	edF32MATRIX4* peVar1;
 	ScratchPadRenderInfo* pScratchRenderInfo;
-	edF32VECTOR4* peVar3;
-	uint boundingSphereTestResult;
-	float fVar5;
-	float fVar6;
-	float fVar7;
-	float fVar8;
-	float fVar9;
-	float fVar10;
-	float fVar11;
-	float fVar12;
-	float fVar13;
-	float fVar14;
-	float fVar15;
-	float fVar16;
-	float extraout_vf9w;
 	edF32MATRIX4 eStack64;
 
 	ED3D_LOG(LogLevel::Info, "ed3DLinkStripToViewport pStrip: 0x{:x} pMatrix: 0x{:x} pHash: 0x{:x} pPkt: 0x{:x}", (uintptr_t)pStrip, (uintptr_t)pMatrix, (uintptr_t)pHash, (uintptr_t)pPktToLink);
@@ -14117,14 +14543,38 @@ void ed3DLinkStripToViewport(ed_3d_strip* pStrip, edF32MATRIX4* pMatrix, ed_hash
 
 	*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
 
-	boundingSphereTestResult = ed3DTestBoundingSphereObject(&pStrip->boundingSphere);
-	gRender_info_SPR->boundingSphereTestResult = boundingSphereTestResult;
+	gRender_info_SPR->boundingSphereTestResult = ed3DTestBoundingSphereObject(&pStrip->boundingSphere);
 	if (*gShadowRenderMask == 0) {
 		_ed3DLinkStripToViewport(pStrip, pHash);
 	}
 	else {
 		_ed3DLinkStripShadowToViewport(pStrip, pHash);
 	}
+
+	return;
+}
+
+void ed3DLinkSpriteToViewport(ed_3d_sprite* pSprite, edF32MATRIX4* pMatrix, ed_hash_code* pHash, edpkt_data* pPkt)
+{
+	edF32MATRIX4 eStack64;
+
+	edF32Matrix4MulF32Matrix4Hard(&eStack64, pMatrix, WorldToCamera_Matrix);
+	gRender_info_SPR->pMeshTransformMatrix = &eStack64;
+
+	gBoundSphereCenter->xyz = (pSprite->boundingSphere).xyz;
+	gBoundSphereCenter->w = 1.0f;
+
+	*gBoundSphereCenter = (*gBoundSphereCenter) * (*gRender_info_SPR->pMeshTransformMatrix);
+
+	gRender_info_SPR->pSharedMeshTransform = pMatrix;
+	gRender_info_SPR->pHierarchySetup = (ed_3d_hierarchy_setup*)0x0;
+	gRender_info_SPR->flags = 0;
+	gRender_info_SPR->biggerScale = ed3DMatrixGetBigerScale(pMatrix);
+	gRender_info_SPR->boundingSphereTestResult = ed3DTestBoundingSphereObject(&pSprite->boundingSphere);
+	gRender_info_SPR->pPkt = pPkt;
+	gRender_info_SPR->pMeshTransformData = (ed_3d_hierarchy*)0x0;
+
+	_ed3DLinkSpriteToViewport(pSprite, pHash);
 
 	return;
 }

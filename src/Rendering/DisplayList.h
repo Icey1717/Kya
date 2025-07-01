@@ -163,7 +163,7 @@ int GameDListPatch_Register(CObject* pObject, int param_2, int param_3);
 
 
 extern DisplayList* gCurDListHandle;
-extern ed_3d_strip* gCurDListBuf;
-extern ed_3d_strip* gCurDListBufEnd;
+extern void* gCurDListBuf;
+extern void* gCurDListBufEnd;
 
 #endif // _DISPLAYLIST_H
