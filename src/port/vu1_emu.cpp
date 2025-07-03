@@ -239,7 +239,7 @@ namespace VU1Emu {
 			if (vi14 == 0) {
 				// JUMP
 				// _$StopStrip
-				assert(false);
+				assert(false); // Don't have the logic to bail in this way, would need a refactor.
 			}
 
 			vi01 = VIF_LOAD_I(vi15, -1, VIF_REG_X);
@@ -2430,6 +2430,277 @@ namespace VU1Emu {
 			}
 		}
 
+		void _$SpriteStart()
+		{
+			vi15 = itop;
+			vi14 = VIF_LOAD_I(vi15, 0, VIF_REG_X);
+
+			vi14 = (vi14 & 0xFF);
+			if (vi14 == 0) {
+				// JUMP
+				// _$StopStrip
+				assert(false); // Don't have the logic to bail in this way, would need a refactor.
+			}
+
+			vi01 = VIF_LOAD_I(vi15, -1, VIF_REG_X);
+		}
+
+		void _$FlareStart()
+		{
+			vi15 = itop;
+			vi14 = VIF_LOAD_I(vi15, 0, VIF_REG_X);
+
+			vi14 = (vi14 & 0xFF);
+			if (vi14 == 0) {
+				// JUMP
+				// _$StopStrip
+				assert(false); // Don't have the logic to bail in this way, would need a refactor.
+			}
+
+			vi01 = VIF_LOAD_I(vi15, -1, VIF_REG_X);
+		}
+
+		bool _$Flare_ComputeStart()
+		{
+			// Load from FLARE_SPR.
+			vi06 = VIF_LOAD_I(vi00, 31, VIF_REG_W);
+
+			return vi06 != 0;
+		}
+
+		void _$Flare_Compute()
+		{
+			IMPLEMENTATION_GUARD();
+		}
+
+		void _$Flare_Start_Simple()
+		{
+			int vtxReg = vi15 + 1;
+			int whReg = vtxReg + 0xd8;
+
+			const int vtxCount = vi14;
+
+			const edF32VECTOR4 camNormalX = VIF_LOAD_F(vi00, 6);
+			const edF32VECTOR4 camNormalY = VIF_LOAD_F(vi00, 7);
+
+			VU_VTX_TRACE_LOG("_$Flare_Start_Simple camNormalX: {}, camNormalY: {}", camNormalX.ToString(), camNormalY.ToString());
+
+			edF32VECTOR4 wh0 = VIF_LOAD_F(whReg, 0);
+
+			for (int i = 0; i < vtxCount; i += 4) {
+				edF32VECTOR4 wh = VIF_LOAD_F(whReg++, 0);
+				edF32VECTOR4 vtx = VIF_LOAD_F(vtxReg, 2);
+
+				wh.x = int12_to_float(wh.xi) * 2.0f;
+				wh.y = int12_to_float(wh.yi) * 2.0f;
+
+				const edF32VECTOR4 normalizedX = camNormalX * wh.x;
+				const edF32VECTOR4 normalizedY = camNormalY * wh.y;
+
+				const edF32VECTOR4 tl = vtx - normalizedX + normalizedY;
+				const edF32VECTOR4 bl = vtx - normalizedX - normalizedY;
+				const edF32VECTOR4 tr = vtx + normalizedX + normalizedY;
+				const edF32VECTOR4 br = vtx + normalizedX - normalizedY;
+
+				edF32VECTOR4 st0 = VIF_LOAD_F(vtxReg, 0);
+				edF32VECTOR4 st1 = VIF_LOAD_F(vtxReg, 3);
+				edF32VECTOR4 st2 = VIF_LOAD_F(vtxReg, 6);
+				edF32VECTOR4 st3 = VIF_LOAD_F(vtxReg, 9);
+
+				// Covert all STQ values to floats.
+				st0.x = int12_to_float(st0.xi);
+				st0.y = int12_to_float(st0.yi);
+				st1.x = int12_to_float(st1.xi);
+				st1.y = int12_to_float(st1.yi);
+				st2.x = int12_to_float(st2.xi);
+				st2.y = int12_to_float(st2.yi);
+				st3.x = int12_to_float(st3.xi);
+				st3.y = int12_to_float(st3.yi);
+
+				// Store the results.
+				(*VIF_AS_F(vtxReg, 0)).xy = st0.xy;
+				(*VIF_AS_F(vtxReg, 3)).xy = st1.xy;
+				(*VIF_AS_F(vtxReg, 6)).xy = st2.xy;
+				(*VIF_AS_F(vtxReg, 9)).xy = st3.xy;
+
+				// Preserve the w component.
+				(*VIF_AS_F(vtxReg, 2)).w = wh0.w;
+				(*VIF_AS_F(vtxReg, 5)).w = wh0.w;
+
+				// Write the four vertices.
+				(*VIF_AS_F(vtxReg, 2)).xyz = tl.xyz;
+				(*VIF_AS_F(vtxReg, 5)).xyz = bl.xyz;
+				*VIF_AS_F(vtxReg, 8) = tr;
+				*VIF_AS_F(vtxReg, 11) = br;
+
+				vtxReg += 12;
+			}
+		}
+
+		void _$Flare_Start()
+		{
+			vi03 = vi15 + 1; // Vtx data reg
+			vi04 = vi03 + 0xd8; // Normal reg
+			vi02 = vi14; // Vtx count
+
+			// CAM_NORMAL_X_SPR
+			vf01 = VIF_LOAD_F(vi00, 6);
+
+			// CAM_NORMAL_Y_SPR
+			vf02 = VIF_LOAD_F(vi00, 7);
+
+			// REFERENCE
+			//vf25 = VIF_LOAD_F(vi03, 0); // STQ
+			//vf27 = VIF_LOAD_F(vi03, 1); // RGBA
+			//vf29 = VIF_LOAD_F(vi03, 2); // XYZ Skip
+
+			// vtx 0
+			vf21 = VIF_LOAD_F(vi03, 2);
+
+			// Normal 0 f
+			vf31 = VIF_LOAD_F(vi04, 0);
+
+			// Normal 0 i
+			vf17 = VIF_LOAD_F(vi04++, 0);
+
+			// Clear
+			vf29 = vf00;
+			vf30 = vf00;
+			vf14 = vf00;
+			vf15 = vf00;
+
+			// Normal 0 to float
+			vf18.x = int12_to_float(vf17.xi);
+			vf18.y = int12_to_float(vf17.yi);
+
+			vf18 = vf18 + vf18;
+
+			vf19 = vf01 * vf18.x;
+			vf20 = vf02 * vf18.y;
+
+			vf27 = vf21 - vf19;
+			vf28 = vf21 - vf19;
+			vf29 = vf21 + vf19;
+			vf30 = vf21 + vf19;
+
+			vf27 = vf27 + vf20;
+
+			while (vi02 > 0) {
+				// Normal 1 i
+				vf07 = VIF_LOAD_F(vi04++, 0);
+
+				vf28 = vf28 - vf20;
+				vf29 = vf29 + vf20;
+				vf30 = vf30 - vf20;
+
+				vf03 = VIF_LOAD_F(vi03, 12); // STQ 4
+				vf04 = VIF_LOAD_F(vi03, 15); // STQ 5
+				vf05 = VIF_LOAD_F(vi03, 18); // STQ 6
+				vf06 = VIF_LOAD_F(vi03, 21); // STQ 7
+
+				// vtx 1
+				vf11 = VIF_LOAD_F(vi03, 14);
+
+				vf08.x = int12_to_float(vf07.xi);
+				vf08.y = int12_to_float(vf07.yi);
+
+				vf03.x = int12_to_float(vf03.xi);
+				vf03.y = int12_to_float(vf03.yi);
+
+				vf04.x = int12_to_float(vf04.xi);
+				vf04.y = int12_to_float(vf04.yi);
+
+				vf05.x = int12_to_float(vf05.xi);
+				vf05.y = int12_to_float(vf05.yi);
+
+				vf06.x = int12_to_float(vf06.xi);
+				vf06.y = int12_to_float(vf06.yi);
+
+				(*VIF_AS_F(vi03, 14)).w = vf31.w;
+				(*VIF_AS_F(vi03, 17)).w = vf31.w;
+
+				// Normal 0 i
+				vf17 = VIF_LOAD_F(vi04++, 0);
+
+				vf08 = vf08 + vf08;
+
+				vf23 = VIF_LOAD_F(vi03, 0); // STQ 0
+				vf24 = VIF_LOAD_F(vi03, 3); // STQ 1
+				vf25 = VIF_LOAD_F(vi03, 6); // STQ 2
+				vf26 = VIF_LOAD_F(vi03, 9);	// STQ 3
+
+				vf18.x = int12_to_float(vf17.xi);
+				vf18.y = int12_to_float(vf17.yi);
+
+				(*VIF_AS_F(vi03, 12)).xy = vf03.xy;
+				(*VIF_AS_F(vi03, 15)).xy = vf04.xy;
+				(*VIF_AS_F(vi03, 18)).xy = vf05.xy;
+				(*VIF_AS_F(vi03, 21)).xy = vf06.xy;
+
+				vf09 = vf01 * vf08.x;
+				vf10 = vf02 * vf08.y;
+
+				vf23.x = int12_to_float(vf23.xi);
+				vf23.y = int12_to_float(vf23.yi);
+
+				vf24.x = int12_to_float(vf24.xi);
+				vf24.y = int12_to_float(vf24.yi);
+
+				vf25.x = int12_to_float(vf25.xi);
+				vf25.y = int12_to_float(vf25.yi);
+
+				vf26.x = int12_to_float(vf26.xi);
+				vf26.y = int12_to_float(vf26.yi);
+
+				vf18 = vf18 + vf18;
+
+				vf21 = VIF_LOAD_F(vi03, 26);
+
+				vf12 = vf11 - vf09;
+				vf13 = vf11 - vf09;
+				vf14 = vf11 + vf09;
+				vf15 = vf11 + vf09;
+
+				vf12 = vf12 + vf10;
+
+				(*VIF_AS_F(vi03, 2)).w = vf31.w;
+				(*VIF_AS_F(vi03, 5)).w = vf31.w;
+
+				(*VIF_AS_F(vi03, 0)).xy = vf23.xy;
+				(*VIF_AS_F(vi03, 3)).xy = vf24.xy;
+				(*VIF_AS_F(vi03, 6)).xy = vf25.xy;
+				(*VIF_AS_F(vi03, 9)).xy = vf26.xy;
+
+				(*VIF_AS_F(vi03, 2)).xyz = vf27.xyz;
+				(*VIF_AS_F(vi03, 5)).xyz = vf28.xyz;
+
+				vf28 = vf28 - vf20;
+				vf29 = vf29 + vf20;
+				vf30 = vf30 - vf20;
+
+				vf19 = vf01 * vf18.x;
+				vf20 = vf02 * vf18.y;
+
+				*VIF_AS_F(vi03, 8) = vf29;
+				*VIF_AS_F(vi03, 11) = vf30;
+
+				(*VIF_AS_F(vi03, 14)).xyz = vf12.xyz;
+				(*VIF_AS_F(vi03, 17)).xyz = vf13.xyz;
+
+				vf27 = vf21 - vf19;
+				vf28 = vf21 - vf19;
+				vf29 = vf21 + vf19;
+				vf30 = vf21 + vf19;
+				vf27 = vf27 + vf20;
+
+				*VIF_AS_F(vi03, 20) = vf14;
+				*VIF_AS_F(vi03, 23) = vf15;
+
+				vi02 = vi02 - 8;
+				vi03 = vi03 + 24;
+			}
+		}
+
 	public:
 
 		void Prepare(char* pMem, int inItop, int inAddr)
@@ -2494,6 +2765,23 @@ namespace VU1Emu {
 				_$ParallelLightning_addcolor();
 
 				_$Env_Mapping();
+			}
+			else if (addr == 0x66) {
+				_$SpriteStart();
+
+				IMPLEMENTATION_GUARD();
+			}
+			else if (addr == 0x1a8)
+			{
+				_$FlareStart();
+
+				if (_$Flare_ComputeStart()) {
+					_$Flare_Compute();
+				}
+
+				_$Flare_Start();
+
+				bTestConv16 = false;
 			}
 			else {
 				IMPLEMENTATION_GUARD();

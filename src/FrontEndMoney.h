@@ -4,7 +4,7 @@
 #include "Types.h"
 #include "FrontEndWidget.h"
 #include "Rendering/edCTextStyle.h"
-#include "Sprite.h"
+#include "SpriteWidget.h"
 
 class CFrontendMoney : public CFrontendLabelText
 {

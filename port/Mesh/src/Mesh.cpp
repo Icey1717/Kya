@@ -97,7 +97,7 @@ void Renderer::Kya::G3D::Strip::PreProcessVertices()
 
 	const DrawMode drawMode = GetDrawMode(pStrip);
 
-	auto& internalVertexBuffer = pSimpleMesh->GetInternalVertexBufferData();
+	auto& vertexBufferData = pSimpleMesh->GetVertexBufferData();
 
 	// Assume that the first gif tag has the largest vtx count.
 	int totalVtxCount = 0;
@@ -109,7 +109,7 @@ void Renderer::Kya::G3D::Strip::PreProcessVertices()
 
 	assert(totalVtxCount > 0);
 
-	internalVertexBuffer.Init(totalVtxCount * 2, totalVtxCount * 4);
+	vertexBufferData.Init(totalVtxCount * 2, totalVtxCount * 4);
 
 	union VertexColor {
 		uint32_t rgba;
@@ -200,8 +200,8 @@ void Renderer::Kya::G3D::Strip::PreProcessVertices()
 				vtx.XYZFlags.flags = pVertex[adjustedIndex].flags;
 			}
 			else {
-				GSVertexUnprocessedNormal::Vertex* pVertex = LOAD_SECTION_CAST(GSVertexUnprocessedNormal::Vertex*, pStrip->pVertexBuf);
-				vtx.XYZFlags = pVertex[index - vtxOffset];
+				GSVertexUnprocessed::Vertex* pVertex = LOAD_SECTION_CAST(GSVertexUnprocessed::Vertex*, pStrip->pVertexBuf);
+				vtx.XYZFlags = pVertex[adjustedIndex];
 			}
 
 			const uint primReg = firstGifTag.tag.PRIM;
@@ -214,10 +214,10 @@ void Renderer::Kya::G3D::Strip::PreProcessVertices()
 			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::PreProcessVertices Processing vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})\n",
 				i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags);
 
-			Renderer::KickVertex(vtx, primPacked, skip, internalVertexBuffer);
+			Renderer::KickVertex(vtx, primPacked, skip, vertexBufferData);
 
 			MESH_LOG_TRACE(LogLevel::Info, "Renderer::Kya::G3D::Strip::PreProcessVertices Kick complete vtx tail: 0x{:x} index tail: 0x{:x}",
-				internalVertexBuffer.GetVertexTail(), internalVertexBuffer.GetIndexTail());
+				vertexBufferData.GetVertexTail(), vertexBufferData.GetIndexTail());
 		}
 
 		meshOffset += gifTag.nLoop;

@@ -2,7 +2,7 @@
 #define FRONTEND_WIDGET_H
 
 #include "Types.h"
-#include "Sprite.h"
+#include "SpriteWidget.h"
 #include "Rendering/edCTextStyle.h"
 
 class CInterface;

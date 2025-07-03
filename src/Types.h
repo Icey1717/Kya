@@ -274,6 +274,11 @@ union edF32VECTOR2 {
 		float beta;
 	};
 
+	struct {
+		float u;
+		float v;
+	};
+
 	float raw[2];
 };
 

@@ -1832,12 +1832,14 @@ void edF32Vector4NormalizeSoft(edF32VECTOR4* v0, edF32VECTOR4* v1)
 	return;
 }
 
+#define float_to_int12(x)	(int)((float)x * (1.0f / 0.000244140625f))
+
 void edF32Vector4FTOI12Hard(edS32VECTOR4* s0, edF32VECTOR4* v0)
 {
-	s0->x = (int)v0->x;
-	s0->y = (int)v0->y;
-	s0->z = (int)v0->z;
-	s0->w = (int)v0->w;
+	s0->x = float_to_int12(v0->x);
+	s0->y = float_to_int12(v0->y);
+	s0->z = float_to_int12(v0->z);
+	s0->w = float_to_int12(v0->w);
 
 	return;
 }

@@ -45,6 +45,7 @@
 #ifdef PLATFORM_WIN
 #include "Texture.h"
 #include "Mesh.h"
+#include "Sprite.h"
 #endif
 
 #define ED_3D_HIDDEN_FLAG 0x40
@@ -435,6 +436,7 @@ void ed3DDMAGenerateHeaders(void)
 		g_stGifTAG_Texture_NoFog_POINT[iVar1].cmdA = uVar3 | 0x3028400000008000;
 		g_stGifTAG_Texture_NoFog_POINT[iVar1].cmdB = 0x512;
 	} while (uVar2 < 0x61);
+
 	g_stVertexOptionFlagHeader.asU32[3] = 0;
 	g_stVertexGIFHeader.asU32[3] = 0;
 	g_stMatrixHeader.asU32[0] = SCE_VIF1_SET_STCYCL(1, 1, 0);
@@ -449,8 +451,10 @@ void ed3DDMAGenerateHeaders(void)
 	g_stVertexGIFHeader.asU32[2] = 0xffffff00;
 	g_stVertexMultiSTHeader.asU32[2] = 0xfffffff0;
 	g_stSpriteVertexXYZHeader.asU32[2] = 0xffffff40;
+
 	g_stSpriteWidthHeightHeader[1].asVector.z = -1.0f;
 	g_stSpriteWidthHeightHeader[1].asU32[3] = 0xc000;
+
 	ed3DVU1Buffer[0] = 0x76;
 	g_stVertexXYZHeader.asU32[0] = SCE_VIF1_SET_STCYCL(1, 3, 0);
 	ed3DVU1Buffer[1] = 0x198;
@@ -494,12 +498,14 @@ void ed3DDMAGenerateHeaders(void)
 	g_stSpriteVertexRGBAHeader.asU32[1] = SCE_VIF1_SET_STMASK(0);
 	g_stSpriteVertexRGBAHeader.asU32[2] = 0xffffff00;
 	g_stSpriteVertexRGBAHeader.asU32[3] = 0;
+
 	g_stSpriteWidthHeightHeader[0].asU32[0] = SCE_VIF1_SET_STCYCL(1, 1, 0);
 	g_stSpriteWidthHeightHeader[0].asU32[1] = SCE_VIF1_SET_STMASK(0);
 	g_stSpriteWidthHeightHeader[0].asU32[2] = 0xffffff50;
 	g_stSpriteWidthHeightHeader[0].asU32[3] = ED_VIF1_SET_TAG_REF(0, 0);
 	g_stSpriteWidthHeightHeader[1].asU32[0] = 0;
 	g_stSpriteWidthHeightHeader[1].asU32[1] = 0;
+
 	g_stSpriteVertexSTHeader[0].asU32[0] = SCE_VIF1_SET_STCYCL(1, 3, 0);
 	g_stSpriteVertexGIFHeader.asU32[0] = SCE_VIF1_SET_STCYCL(1, 3, 0);
 	g_stSpriteVertexSTHeader[0].asU32[1] = SCE_VIF1_SET_STMASK(0);
@@ -531,7 +537,9 @@ void ed3DDMAGenerateHeaders(void)
 	gRefOptionsforVU1Buf[0].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 	gRefOptionsforVU1Buf[1].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
 	gRefOptionsforVU1Buf[2].cmdA = ED_VIF1_SET_TAG_REF(0, 0);
+
 	ed3DOptionFlagCNTInit();
+
 	return;
 }
 
@@ -1036,14 +1044,19 @@ void ed3DDMAGenerateSpritePacketRefHeader(void)
 {
 	g_PKTSpriteHeaderRef[0].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stSpriteVertexGIFHeader));
 	g_PKTSpriteHeaderRef[0].cmdB = 0;
+
 	g_PKTSpriteHeaderRef[1].cmdA = ED_VIF1_SET_TAG_REF(2, STORE_SECTION(g_stSpriteVertexSTHeader));
 	g_PKTSpriteHeaderRef[1].cmdB = 0;
+
 	g_PKTSpriteHeaderRef[2].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stSpriteVertexRGBAHeader));
 	g_PKTSpriteHeaderRef[2].cmdB = 0;
+
 	g_PKTSpriteHeaderRef[3].cmdA = ED_VIF1_SET_TAG_REF(1, STORE_SECTION(&g_stSpriteVertexXYZHeader));
 	g_PKTSpriteHeaderRef[3].cmdB = 0;
+
 	g_PKTSpriteHeaderRef[4].cmdA = ED_VIF1_SET_TAG_REF(2, STORE_SECTION(g_stSpriteWidthHeightHeader));
 	g_PKTSpriteHeaderRef[4].cmdB = 0;
+
 	return;
 }
 
@@ -2752,7 +2765,7 @@ void edF32Matrix4OrthonormalizeHard(edF32MATRIX4* m0, edF32MATRIX4* m1)
 	return;
 }
 
-edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix, byte param_3)
+edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix, byte bComputeFlare)
 {
 	edF32MATRIX4* pObjToWorld;
 	ed_3D_Light_Config* pLightConfig;
@@ -2790,16 +2803,18 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 		}
 	}
 
-	edF32VECTOR4* vectorA = SCRATCHPAD_ADDRESS_TYPE(0x70000990, edF32VECTOR4*);
+	edF32VECTOR4* pFlareSpr = SCRATCHPAD_ADDRESS_TYPE(FLARE_SPR, edF32VECTOR4*);
 
-	vectorA->x = (gRenderCamera->calculatedRotation).x;
-	vectorA->z = (gRenderCamera->calculatedRotation).z;
-	vectorA->y = 0.0f;
-	if (param_3 == 0) {
-		vectorA->w = 0.0f;
+	pFlareSpr->x = (gRenderCamera->calculatedRotation).x;
+	pFlareSpr->z = (gRenderCamera->calculatedRotation).z;
+	pFlareSpr->y = 0.0f;
+	if (bComputeFlare == 0) {
+		pFlareSpr->w = 0.0f;
 	}
 	else {
-		vectorA->w = 999.0f;
+		// This logic will trigger flare compute in the shader, which is currently not implemented.
+		IMPLEMENTATION_GUARD();
+		pFlareSpr->w = 999.0f;
 		pObjToWorld = gF32Matrix4Unit_Scratch;
 	}
 
@@ -2972,7 +2987,7 @@ edpkt_data* ed3DPKTAddMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix)
 		return pPkt + 1;
 	}
 
-	// Check
+	// Check - Flare Compute
 	IMPLEMENTATION_GUARD();
 	pPkt[1].cmdA = ED_VIF1_SET_TAG_REF(0x4, STORE_SECTION(pDmaMatrix->pHierarchy->pMatrixPkt + 7) & 0xfffffffU); // | 0x30000004;
 	pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
@@ -5156,6 +5171,10 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 
 	pPkt = g_VifRefPktCur;
 
+#ifdef PLATFORM_WIN
+	Renderer::Kya::Sprite::RenderNode(pNode);
+#endif
+
 	if (uVar2 != 0) {
 		uVar3 = pSprite->pRenderFrame30;
 		if (((uVar3 & 0x80) == 0) || ((uVar3 & 0x200) == 0)) {
@@ -5184,6 +5203,7 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 
 					pPkt = pPkt + 2;
 					ed3DSwapVU1Buffer();
+
 					pSpriteVif = pSpriteVif + 0xd;
 				}
 			}
@@ -9605,26 +9625,37 @@ LAB_00298420:
 	return;
 }
 
+#define VU1_MICRO_SPRITE_START 0x66
+#define VU1_MICRO_SPRITE_FIXED_Y_START 0x1a0
+#define VU1_MICRO_SPRITE_FLARE 0x1a8
+#define VU1_MICRO_SPRITE_AMBIENT_START 0x1df
+#define VU1_MICRO_SPRITE_FIXED_Y_AMBIENT_START 0x1e2
+#define VU1_MICRO_SPRITE_FLARE_AMBIENT_START 0x1e5
+
 uint ed3DSpritePreparePacketGetCode(ushort param_1, uint flags)
 {
 	uint in_v0_lo = 0xbbbbbbbb;
 
 	if (param_1 == 0x13) {
-		in_v0_lo = 0x66;
+		IMPLEMENTATION_GUARD();
+		in_v0_lo = VU1_MICRO_SPRITE_START;
+
 		if ((flags & 0x80) != 0) {
-			in_v0_lo = 0x1df;
+			in_v0_lo = VU1_MICRO_SPRITE_AMBIENT_START;
 		}
 	}
 	else {
 		if (param_1 == 0x12) {
-			in_v0_lo = 0x1a0;
+			IMPLEMENTATION_GUARD();
+			in_v0_lo = VU1_MICRO_SPRITE_FIXED_Y_START;
 			if ((flags & 0x80) != 0) {
-				in_v0_lo = 0x1e2;
+				in_v0_lo = VU1_MICRO_SPRITE_FIXED_Y_AMBIENT_START;
 			}
 		}
 		else {
-			if ((param_1 == 0) && (in_v0_lo = 0x1a8, (flags & 0x80) != 0)) {
-				in_v0_lo = 0x1e5;
+			if ((param_1 == 0) && (in_v0_lo = VU1_MICRO_SPRITE_FLARE, (flags & 0x80) != 0)) {
+				IMPLEMENTATION_GUARD();
+				in_v0_lo = VU1_MICRO_SPRITE_FLARE_AMBIENT_START;
 			}
 		}
 	}
@@ -9697,6 +9728,9 @@ edpkt_data* ed3DDMAGetGifTag(uint type, uint flags, ed_g2d_material* pMaterial)
 	return pPkt;
 }
 
+// Prepares the GPU packet data for a sprite. Describes how to unpack the ST, RGBA, and VTX data into the PS2 GPU memory.
+// Unlike the strip, the packet data is built from scratch for each sprite, and shared data is stored in g_PKTSpriteHeaderRef
+// which is initialised in ed3DDMAGenerateSpritePacketRefHeader.
 edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_hash_code* pHash, int type)
 {
 	ushort uVar1;
@@ -9704,7 +9738,7 @@ edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_
 	ed_g2d_material* pMaterial;
 	edpkt_data* pGifTag;
 	ushort uVar27;
-	uint uVar28;
+	uint executeCodeAddr;
 	uint uVar29;
 	ulong uVar30;
 	int iVar31;
@@ -9728,9 +9762,9 @@ edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_
 	pWHBuf = LOAD_SECTION_CAST(char*, pSprite->pWHBuf);
 
 	uVar1 = pSprite->pTextureDataMystery;
-	uVar28 = (uint)(ushort)pSprite->materialIndex;
-	if ((uVar28 != 0xffffffff) && (uVar28 != 0xffff)) {
-		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pHash, uVar28);
+	executeCodeAddr = (uint)(ushort)pSprite->materialIndex;
+	if ((executeCodeAddr != 0xffffffff) && (executeCodeAddr != 0xffff)) {
+		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pHash, executeCodeAddr);
 	}
 
 	pGifTag = ed3DDMAGetGifTag(type, flags, pMaterial);
@@ -9752,9 +9786,9 @@ edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_
 
 	uVar27 = pSprite->pRenderFrame30;
 LAB_002a335c:
-	uVar28 = ed3DSpritePreparePacketGetCode(uVar27, pSprite->flags_0x0);
-	peVar36 = pVertexBuf;
-	for (iVar31 = 0; iVar31 < (int)(uint)uVar1; iVar31 = iVar31 + 1) {
+	executeCodeAddr = ed3DSpritePreparePacketGetCode(uVar27, pSprite->flags_0x0);
+
+	for (iVar31 = 0; iVar31 < uVar1; iVar31 = iVar31 + 1) {
 		uVar30 = 0x48;
 		if (iVar31 == uVar1 - 1) {
 			uVar38 = (uint)pSprite->cameraPanIndex_0x38;
@@ -9874,7 +9908,7 @@ LAB_002a335c:
 		pPkt[0xb].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
 		pPkt[0xb].asU32[1] = STORE_SECTION(&g_stExecuteCode);
 		pPkt[0xb].asU32[2] = SCE_VIF1_SET_NOP(0);
-		pPkt[0xb].asU32[3] = SCE_VIF1_SET_MSCAL(uVar28, 0);
+		pPkt[0xb].asU32[3] = SCE_VIF1_SET_MSCAL(executeCodeAddr, 0);
 
 		pPkt[0xc].asU32[0] = SCE_VIF1_SET_UNPACK(0, 0, UNPACK_S32, 0); // Might be incorrect?
 		pPkt[0xc].asU32[1] = SCE_VIF1_SET_NOP(0);
@@ -14006,14 +14040,14 @@ void ed3DSceneComputeCameraToScreenMatrix(ed_3D_Scene* pScene, edF32MATRIX4* m0)
 	sVar1 = pScene->pViewport->screenHeight;
 	fVar10 = (float)(int)pScene->pViewport->screenWidth;
 	ed3DComputeLocalToProjectionMatrix(0.0f, 0.0f, peVar3->computedVerticalHalfFOV, 0.0f, &eStack64);
-	fVar4 = (float)(int)sVar1 * 0.5;
-	ed3DComputeProjectionToScreenMatrix
-	(-fVar9, fVar9, -endY, endY, 2048.0f - fVar10 * 0.5f, fVar10 * 0.5f + 2048.0f, fVar4 + 2048.0f, 2048.0f - fVar4, &eStack128);
+	fVar4 = (float)(int)sVar1 * 0.5f;
+	ed3DComputeProjectionToScreenMatrix(-fVar9, fVar9, -endY, endY, 2048.0f - fVar10 * 0.5f, fVar10 * 0.5f + 2048.0f, fVar4 + 2048.0f, 2048.0f - fVar4, &eStack128);
 	edF32Matrix4MulF32Matrix4Hard(m0, &eStack64, &eStack128);
 	fVar4 = 1.0f / (fVar8 - fVar7);
 	fVar9 = m0->dd + m0->cd * fVar7;
 	m0->cc = fVar4 * (fVar6 * (m0->dd + m0->cd * fVar8) - fVar5 * fVar9);
 	m0->dc = fVar4 * (fVar9 * fVar8 * fVar5 - fVar9 * fVar7 * fVar6);
+
 	return;
 }
 

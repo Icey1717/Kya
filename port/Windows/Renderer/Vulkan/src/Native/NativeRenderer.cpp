@@ -244,11 +244,13 @@ namespace Renderer
 			glm::mat4 lightDirection;
 			glm::mat4 lightColor;
 			glm::vec4 lightAmbient;
+			glm::vec4 flare;
 
 			bool operator==(const LightingDynamicBufferData& other) const {
 				return lightDirection == other.lightDirection &&
 					lightColor == other.lightColor &&
-					lightAmbient == other.lightAmbient;
+					lightAmbient == other.lightAmbient && 
+					flare == other.flare;
 			}
 		};
 
@@ -324,7 +326,7 @@ namespace Renderer
 
 		static void FillIndexData(Draw::Instance& instance)
 		{
-			auto& vertexBufferData = instance.pMesh->GetInternalVertexBufferData();
+			auto& vertexBufferData = instance.pMesh->GetVertexBufferData();
 
 			instance.indexCount = vertexBufferData.GetIndexTail();
 			instance.indexStart = gNativeVertexBuffer.GetDrawBufferData().GetIndexTail();
@@ -807,7 +809,7 @@ namespace Renderer
 
 		static void SanityCheck(SimpleMesh* pMesh)
 		{
-			auto& internalBuffer = pMesh->GetInternalVertexBufferData();
+			auto& internalBuffer = pMesh->GetVertexBufferData();
 
 			assert(internalBuffer.GetIndexTail() == gNativeVertexBufferDataDraw.GetIndexTail());
 			assert(internalBuffer.GetVertexTail() == gNativeVertexBufferDataDraw.GetVertexTail());
@@ -1012,6 +1014,7 @@ namespace Renderer
 				data.lightDirection = glm::make_mat4(pPkt->objLightDirectionsMatrix);
 				data.lightColor = glm::make_mat4(pPkt->lightColorMatrix);
 				data.lightAmbient = glm::vec4(pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
+				data.flare = glm::vec4(pPkt->flare[0], pPkt->flare[1], pPkt->flare[2], pPkt->flare[3]);
 
 				gLightingDynamicBuffer.AddInstanceData(data);
 			}
@@ -1028,6 +1031,8 @@ namespace Renderer
 
 			NATIVE_LOG(LogLevel::Info, "PushLightData: ambient: {} {} {} {}", pPkt->adjustedLightAmbient[0], pPkt->adjustedLightAmbient[1], pPkt->adjustedLightAmbient[2], pPkt->adjustedLightAmbient[3]);
 
+			NATIVE_LOG(LogLevel::Info, "PushLightData: flare: {} {} {} {}", pPkt->flare[0], pPkt->flare[1], pPkt->flare[2], pPkt->flare[3]);
+
 			NATIVE_LOG(LogLevel::Info, "PushLightData: animST: {} {} {} {}", pPkt->animStNormalExtruder[0], pPkt->animStNormalExtruder[1], pPkt->animStNormalExtruder[2], pPkt->animStNormalExtruder[3]);
 		}
 
@@ -1043,11 +1048,6 @@ namespace Renderer
 } // Renderer
 
 // Simple mesh impl
-
-Renderer::NativeVertexBufferData& Renderer::SimpleMesh::GetVertexBufferData()
-{
-	return internalVertexBufferData;
-}
 
 void Renderer::Native::OnVideoFlip()
 {

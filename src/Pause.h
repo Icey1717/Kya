@@ -10,7 +10,7 @@
 #include "ed3D.h"
 #include "edDlist.h"
 #include "Settings.h"
-#include "Sprite.h"
+#include "SpriteWidget.h"
 
 typedef enum EPauseMenu {
 	PM_Bonus = 13,

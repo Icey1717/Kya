@@ -24,6 +24,7 @@ add_subdirectory("pcsx2/VU")
 add_subdirectory("Windows/Renderer")
 add_subdirectory("KyaTexture")
 add_subdirectory("Mesh")
+add_subdirectory("Sprite")
 
 set(SOURCES 
 	"Windows/WindowsFunctions.cpp"
@@ -35,6 +36,6 @@ add_library(Port ${SOURCES})
 
 target_include_directories(Port PUBLIC "include")
 
-target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient Texture Mesh)
+target_link_libraries(Port PUBLIC Renderer pss Tracy::TracyClient Texture Mesh Sprite)
 
 add_subdirectory(DebugMenu)

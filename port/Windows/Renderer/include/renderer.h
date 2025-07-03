@@ -244,8 +244,7 @@ namespace Renderer
 		{}
 
 		// Implementations in renderer implementations.
-		NativeVertexBufferData& GetVertexBufferData();
-		NativeVertexBufferData& GetInternalVertexBufferData() { return internalVertexBufferData; }
+		NativeVertexBufferData& GetVertexBufferData() { return vertexBufferData; }
 
 		const GIFReg::GSPrim& GetPrim() const { return prim; }
 
@@ -257,7 +256,7 @@ namespace Renderer
 
 		GIFReg::GSPrim prim;
 
-		NativeVertexBufferData internalVertexBufferData;
+		NativeVertexBufferData vertexBufferData;
 
 	};
 
@@ -273,7 +272,7 @@ namespace Renderer
 
 			float objLightDirectionsMatrix[12]; // 0x12
 			float lightColorMatrix[16]; // 0x15
-			float _pad[4]; // 0x19
+			float flare[4]; // 0x19
 			float adjustedLightAmbient[4]; // 0x1a
 			float animStNormalExtruder[4]; // 0x1b
 		};

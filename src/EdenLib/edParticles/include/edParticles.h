@@ -3,6 +3,10 @@
 
 #include "Types.h"
 
+#define PARTICLE_STATE_ALIVE 0x2
+#define PARTICLE_STATE_DEAD 0x3
+#define PARTICLE_STATE_DESTROYED 0x4
+
 #ifdef PLATFORM_WIN
 #define PACKED_FIELD(type) PackedType<type>
 
@@ -118,7 +122,7 @@ struct _ed_particle
 	byte field_0x0;
 	byte field_0x1;
 	byte field_0x2;
-	byte field_0x3;
+	byte state;
 	byte field_0x4;
 	byte field_0x5;
 	short field_0x6;
@@ -154,7 +158,7 @@ struct _ed_particle
 	float field_0x30;
 	PackedType<edNODE*> pNode;
 	PackedType<_ed_particle_cube*> field_0x38;
-	uint field_0x3c;
+	uint seed;
 };
 
 static_assert(sizeof(_ed_particle) == 0x40, "Size of _ed_particle is not 0x40 bytes.");
@@ -304,7 +308,7 @@ struct GeneratorFunc
 
 struct _ed_particle_effector_param_10
 {
-	uint field_0x0;
+	uint flags;
 	float field_0x4;
 	int field_0x8;
 	OffsetPointer<float*> field_0xc;
@@ -330,19 +334,31 @@ struct _ed_particle_effector_param
 	edF32MATRIX4 field_0x80;
 	edF32MATRIX4 field_0xc0;
 
-	byte _pad_1_[0x74];
+	byte _pad_1_[0x40];
+
+	float field_0x140;
+
+	byte _pad_5_[0xc];
+
+	edF32VECTOR4 field_0x150;
+
+	byte _pad_4_[0x10];
+
+	edF32VECTOR4 field_0x170;
+
+	byte _pad_7_[0x10];
 
 	float field_0x190;
 	float field_0x194;
 	float field_0x198;
 	float field_0x19c;
 
-	byte _pad_6_[0x20];
+	byte _pad_6_[0x10];
 
-	_ed_particle_effector_param_10 field_0x1b0[6];
+	_ed_particle_effector_param_10 aSubParams[6];
 
 	undefined4 field_0x210;
-	int field_0x214;
+	int nbSubParams;
 	int field_0x218;
 
 	byte _pad_3_[0x8];
@@ -461,7 +477,7 @@ struct _ed_particle_group
 	OffsetPointer<OffsetPointer<_ed_particle_shaper_param*>*> field_0x48;
 	float field_0x4c;
 
-	float field_0x50;
+	float deltaTime;
 	undefined4 field_0x54;
 	float field_0x58;
 	int field_0x5c;

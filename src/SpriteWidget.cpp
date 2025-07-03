@@ -1,4 +1,4 @@
-#include "Sprite.h"
+#include "SpriteWidget.h"
 #include "kya.h"
 #include "MathOps.h"
 

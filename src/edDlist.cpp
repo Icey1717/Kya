@@ -1642,7 +1642,7 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 	ed_3d_sprite* pNewSprite;
 	uint uVar2;
 	int iVar3;
-	int iVar4;
+	int nbWh;
 	uint uVar5;
 	DisplayListCommand* pCommand;
 
@@ -1680,12 +1680,13 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 	pNewSprite->pTextureDataMystery = (ushort)uVar5;
 	pNewSprite->flags_0x0 = 0x4000000;
 	pNewSprite->offsetA = 0;
-	iVar4 = nbRects + uVar5 * 2;
+	nbWh = nbRects + uVar5 * 2;
 	pNewSprite->pNext = 0x0;
 	pNewSprite->bUseShadowMatrix_0x30 = 0;
 	pNewSprite->field_0x32 = 0;
 	pNewSprite->field_0x36 = (ushort)nbRects;
-	iVar3 = nbRects << 2;
+
+	int nbSt = nbRects << 2;
 
 	(pNewSprite->boundingSphere).x = 0.0f;
 	(pNewSprite->boundingSphere).y = 0.0f;
@@ -1697,9 +1698,9 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 	}
 	else {
 		if (param_2 == 7) {
-			iVar3 = 4;
+			nbSt = 4;
 			pNewSprite->pRenderFrame30 = 0x13;
-			iVar4 = 1;
+			nbWh = 1;
 		}
 		else {
 			if (param_2 == 6) {
@@ -1715,14 +1716,14 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 		pNewSprite->pVertexBuf = (edF32VECTOR4*)((int)pNewSprite->pVertexBuf + (0x10 - uVar2));)
 	}
 
-	pNewSprite->pSTBuf = STORE_SECTION(LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf) + nbRects * 4);
+	pNewSprite->pSTBuf = STORE_SECTION(LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf) + nbRects * 4); // Multiply by 4 because we will unpack each float into 4 verts to make a quad.
 	uVar2 = (uint)LOAD_SECTION(pNewSprite->pSTBuf) & 0xf;
 	if (uVar2 != 0) {
 		IMPLEMENTATION_GUARD(
 		pNewSprite->pSTBuf = pNewSprite->pSTBuf + (0x10 - uVar2);)
 	}
 
-	pNewSprite->pColorBuf = STORE_SECTION(LOAD_SECTION_CAST(short*, pNewSprite->pSTBuf) + iVar3 * 2);
+	pNewSprite->pColorBuf = STORE_SECTION(LOAD_SECTION_CAST(short*, pNewSprite->pSTBuf) + nbSt * 2);
 	uVar2 = (uint)LOAD_SECTION(pNewSprite->pColorBuf) & 0xf;
 	if (uVar2 != 0) {
 		IMPLEMENTATION_GUARD(
@@ -1741,7 +1742,7 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 	gCurVertexBuf = LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf);
 	gCurWHBuf = LOAD_SECTION_CAST(short*, pNewSprite->pWHBuf);
 
-	gCurDListBuf = gCurWHBuf + iVar4 * 2;
+	gCurDListBuf = gCurWHBuf + nbWh * 2;
 	if (((uint)gCurDListBuf & 0xf) != 0) {
 		gCurDListBuf = (char*)((ulong)gCurDListBuf + (0x10 - ((uint)gCurDListBuf & 0xf)));
 	}
@@ -1756,8 +1757,8 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 	gMaxSTNbInVertex = 0;
 	gCurColorNbInVertex = 0;
 	gEndVertexBuf = gCurVertexBuf + nbRects * 4;
-	gEndSTBuf = gCurSTBuf + iVar3 * 2;
-	gEndWHBuf = gCurWHBuf + iVar4 * 2;
+	gEndSTBuf = gCurSTBuf + nbSt * 2;
+	gEndWHBuf = gCurWHBuf + nbWh * 2;
 	pCommand->pRenderInput.pSprite = pNewSprite;
 	pCommand->dataType = 6;
 	pCommand->primType = gCurPrimType;
@@ -2521,6 +2522,8 @@ void edDListFindBoundingSphere(edF32VECTOR4* pSphere, uint param_2, ed_Bound_Sph
 	return;
 }
 
+// Prepares the GPU packet data for a strip. Describes how to unpack the ST, RGBA, and VTX data into the PS2 GPU memory.
+// Most of the packet data is the same for each strip (stored in gPKTStrip), prepared in edDListInitStripPKT.
 edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 {
 	bool bVar1;
@@ -2552,8 +2555,9 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 			pSTBuf = pSTBuf + 0x120;
 			pColorBuf = pColorBuf + 0x48;
 			pVertexBuf = pVertexBuf + 0x46;
-			pPkt = pPkt + 10;
+			pPkt = pPkt + 0xa;
 		}
+
 		bVar2 = pStrip->field_0x38;
 		remainderCnt = (uint)bVar2;
 		while (true) {
@@ -2601,8 +2605,9 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 			pSTBuf = pSTBuf + 0x120;
 			pColorBuf = pColorBuf + 0x48;
 			pVertexBuf = pVertexBuf + 0x46;
-			pPkt = pPkt + 10;
+			pPkt = pPkt + 0xa;
 		}
+
 		bVar2 = pStrip->field_0x38;
 		remainderCnt = (uint)bVar2;
 		while (true) {
@@ -2637,9 +2642,12 @@ edpkt_data* edDListStripPreparePacket(ed_3d_strip* pStrip, edpkt_data* pPkt)
 		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, remainderCnt, UNPACK_V4_32_MASKED, 0);
 	}
 
-	return pPkt + 10;
+	return pPkt + 0xa;
 }
 
+// Prepares the GPU packet data for a sprite. Describes how to unpack the ST, RGBA, and VTX data into the PS2 GPU memory.
+// Unlike the strip, the packet data is built from scratch for each sprite, and shared data is stored in g_PKTSpriteHeaderRef
+// which is initialised in ed3DDMAGenerateSpritePacketRefHeader.
 edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 {
 	bool bVar1;
@@ -2654,6 +2662,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 	edVertex* pVertexBuf;
 
 	uVar30 = 0x48;
+
 	pSTBuf = LOAD_SECTION_CAST(short*, pSprite->pSTBuf);
 	pColorBuf = LOAD_SECTION_CAST(_rgba*, pSprite->pColorBuf);
 	pVertexBuf = LOAD_SECTION_CAST(edVertex*, pSprite->pVertexBuf);
@@ -3397,9 +3406,8 @@ void edDListCreateFrameBufferMaterial(edDList_material* pMaterial)
 	return;
 }
 
-void edDlistPartVertex(float width, float height, float* param_3, float* param_4, float* param_5, float* param_6, _rgba* pColor , edF32VECTOR4* pVtx)
+void edDlistPartVertex(float width, float height, edF32VECTOR2* uv0, edF32VECTOR2* uv1, edF32VECTOR2* uv2, edF32VECTOR2* uv3, _rgba* pColor , edF32VECTOR4* pVtx)
 {
-	float* pfVar2;
 	edVertex* peVar3;
 	short* psVar4;
 	float fVar5;
@@ -3407,18 +3415,15 @@ void edDlistPartVertex(float width, float height, float* param_3, float* param_4
 	edS32VECTOR4 local_10;
 
 	psVar4 = gCurWHBuf;
-	pfVar2 = gCurST_SPR;
-	*gCurST_SPR = *param_3;
-	pfVar2[1] = param_3[1];
-	pfVar2 = gCurST_SPR;
-	gCurST_SPR[2] = *param_4;
-	pfVar2[3] = param_4[1];
-	pfVar2 = gCurST_SPR;
-	gCurST_SPR[4] = *param_5;
-	pfVar2[5] = param_5[1];
-	pfVar2 = gCurST_SPR;
-	gCurST_SPR[6] = *param_6;
-	pfVar2[7] = param_6[1];
+
+	gCurST_SPR[0] = uv0->u;
+	gCurST_SPR[1] = uv0->v;
+	gCurST_SPR[2] = uv1->u;
+	gCurST_SPR[3] = uv1->v;
+	gCurST_SPR[4] = uv2->u;
+	gCurST_SPR[5] = uv2->v;
+	gCurST_SPR[6] = uv3->u;
+	gCurST_SPR[7] = uv3->v;
 
 	edF32Vector4ScaleHard(4096.0f, (edF32VECTOR4*)gCurST_SPR, (edF32VECTOR4*)gCurST_SPR);
 	edF32Vector4ScaleHard(4096.0f, (edF32VECTOR4*)(gCurST_SPR + 4), (edF32VECTOR4*)(gCurST_SPR + 4));
@@ -3429,10 +3434,10 @@ void edDlistPartVertex(float width, float height, float* param_3, float* param_4
 	edF32Vector4FTOI12Hard(&local_10, &gCurFloatWH);
 
 	gCurWHBuf = psVar4 + 2;
-	psVar4[1] = (short)local_10.x;
+	psVar4[0] = (short)local_10.x;
 	psVar4[1] = (short)local_10.y;
 
-	gCurSTBuf[0] = (short)(int)*gCurST_SPR;
+	gCurSTBuf[0] = (short)(int)gCurST_SPR[0];
 	gCurSTBuf[1] = (short)(int)gCurST_SPR[1];
 	gCurSTBuf[2] = (short)(int)gCurST_SPR[4];
 	gCurSTBuf[3] = (short)(int)gCurST_SPR[5];
