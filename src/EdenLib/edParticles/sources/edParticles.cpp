@@ -2736,29 +2736,36 @@ void ParticleColorA(_rgba* rgbaColor, _ed_particle* pCurParticle, int alphaMulti
 	return;
 }
 
-void ParticleColorB(_rgba* rgbaColor, _ed_particle* pCurParticle, int alphaMultiplier, _ed_particle_shaper_param* pDrawData, uint uVar26)
+void ParticleColorB(_rgba* rgbaColor, _ed_particle* pCurParticle, int alphaMultiplier, _ed_particle_shaper_param* pDrawData, uint blendAlpha)
 {
-	int lerp8 = (int)(pCurParticle->seed >> 3) & 0xFF;
-	int paletteIdx = pCurParticle->seed & 7;
+	uint lerp8 = (int)(pCurParticle->seed >> 3) & 0xff;
+	uint oneMinusLerp8 = 0xff - lerp8;
+	uint paletteIdx = pCurParticle->seed & 7;
+
 	uint32_t colorA = pDrawData->field_0x9c[paletteIdx];
 	uint32_t colorB = pDrawData->field_0x9c[paletteIdx + 1];
 
+	_rgba rb;
+	_rgba ga;
+
 	// Interpolate R and B
-	uint32_t rb = ((pCurParticle->field_0x8_uint & 0xFF00FF) * (0xFF - uVar26) +
-		(((colorA & 0xFF00FF) * (0xFF - lerp8) + (colorB & 0xFF00FF) * lerp8) >> 8) * uVar26) & 0xFF00FF;
+	rb.rgba = (pCurParticle->field_0x8_uint & 0xff00ff) * (0xff - blendAlpha) +
+		((((colorA & 0xff00ff) * oneMinusLerp8 + (colorB & 0xff00ff) * lerp8) >> 8) & 0xff00ff) * blendAlpha;
 
 	// Interpolate G and A
-	uint32_t ga = (((pCurParticle->field_0x8_uint >> 8) & 0xFF00FF) * (0xFF - uVar26) +
-		(((colorA >> 8) & 0xFF00FF) * (0xFF - lerp8) + ((colorB >> 8) & 0xFF00FF) * lerp8) >> 8) * uVar26;
+	ga.rgba = ((pCurParticle->field_0x8_uint >> 8) & 0xff00ff) * (0xff - blendAlpha) +
+		(((((colorA >> 8) & 0xff00ff) * oneMinusLerp8 + ((colorB >> 8) & 0xff00ff) * lerp8) & 0xff00ff00) >> 8) * blendAlpha;
 
-	uint8_t a = (((ga >> 16) & 0xFF) * pCurParticle->field_0xc * alphaMultiplier) >> 16;
-	uint8_t r = ((rb >> 16) & 0xFF) * pCurParticle->field_0x12 >> 8;
-	uint8_t g = ((ga >> 8) & 0xFF) * pCurParticle->field_0xf >> 8;
-	uint8_t b = (rb & 0xFF) * pCurParticle->field_0xe >> 8;
+	_rgba mix;
+	mix.rgba = ((rb.rgba >> 8) & 0xff00ff) | (ga.rgba & 0xff00ff00);
 
-	rgbaColor[0].rgba = (a << 24) | (r << 16) | (g << 8) | b;
+	mix.r = ((mix.r & 0xff) * (pCurParticle->field_0xe & 0xff) >> 8) & 0xff;
+	mix.g = ((mix.g & 0xff) * (pCurParticle->field_0xf & 0xff) >> 8) & 0xff;
+	mix.b = ((mix.b & 0xff) * (pCurParticle->field_0x12 & 0xff) >> 8) & 0xff;
+	mix.a = ((mix.a & 0xff) * (pCurParticle->field_0xc & 0xff) >> 8) & 0xff;
+	mix.a = ((mix.a & 0xff) * (alphaMultiplier & 0xff) >> 8) & 0xff;
 
-	rgbaColor[0].rgba = 0x7B032B51;
+	*rgbaColor = mix;
 
 	return;
 }
