@@ -683,16 +683,19 @@ PACK(
 }
 );
 
-union DMA_Matrix {
+union DMA_Matrix
+{
 	int pDMA_Matrix;
 
-	struct {
+	struct
+	{
 		ushort flagsA;
 		ushort flagsB;
 	};
 };
 
-struct ed_3d_strip {
+struct ed_3d_strip
+{
 	uint flags;
 	short materialIndex;
 	short cachedIncPacket;
@@ -731,22 +734,13 @@ struct ed_3d_sprite
 	ushort field_0x32;
 	ushort pRenderFrame30;
 	ushort field_0x36;
-	union 
-	{
-		struct
-		{
-			byte field_0x38;
-			byte cameraPanIndex;
-		};
-
-		ushort cameraPanIndex_0x38;
-	};
-	
-	short meshSectionCount_0x3a;
-	ushort pTextureDataMystery;
+	ushort nbRemainderRects;	
+	short nbRemainderVertices;
+	ushort nbBatches;
 };
 
-struct ed_dma_matrix : public edLIST {
+struct ed_dma_matrix : public edLIST
+{
 	edF32MATRIX4* pObjToWorld;
 	ed_3d_hierarchy* pHierarchy;
 	int flags_0x28;
@@ -916,5 +910,8 @@ extern edpkt_data g_PKTSpriteHeaderRef[5];
 
 extern edF32VECTOR4 gCamNormal_X;
 extern edF32VECTOR4 gCamNormal_Y;
+
+// For native sprite rendering.
+extern edpkt_data g_stSpriteWidthHeightHeader[2];
 
 #endif //_ED3D_H

@@ -375,6 +375,7 @@ edpkt_data g_stSpriteVertexSTHeader[2];
 edpkt_data g_stSpriteWidthHeightHeader[2];
 edpkt_data g_stShapeVertexSTHeader[2];
 
+// One packet per possible vertex count.
 edpkt_data g_stGifTAG_Texture_NoFog[97];
 edpkt_data g_stGifTAG_Gouraud_NoFog[97];
 edpkt_data g_stGifTAG_Flat_NoFog[97];
@@ -383,6 +384,7 @@ edpkt_data g_stGifTAG_FAN_Texture_NoFog;
 edpkt_data g_stGifTAG_FAN_Gouraud_NoFog;
 edpkt_data g_stGifTAG_FAN_Flat_NoFog;
 
+// One packet per possible vertex count.
 edpkt_data g_stGifTAG_Texture_NoFog_LINE[97];
 edpkt_data g_stGifTAG_Gouraud_NoFog_LINE[97];
 edpkt_data g_stGifTAG_Flat_NoFog_POINT[97];
@@ -398,6 +400,7 @@ void ed3DDMAGenerateHeaders(void)
 	ulong uVar2;
 	ulong uVar3;
 
+	// These are GIF tags, setup one for each vertex count from 0 to 0x61 (96).
 	uVar2 = 0;
 	do {
 		iVar1 = (int)uVar2;
@@ -405,11 +408,14 @@ void ed3DDMAGenerateHeaders(void)
 		uVar2 = (iVar1 + 1);
 		g_stGifTAG_Texture_NoFog[iVar1].cmdA = uVar3 | 0x302e400000008000;
 		g_stGifTAG_Texture_NoFog[iVar1].cmdB = 0x512;
+
 		g_stGifTAG_Gouraud_NoFog[iVar1].cmdA = uVar3 | 0x3026400000008000;
 		g_stGifTAG_Gouraud_NoFog[iVar1].cmdB = 0x512;
+
 		g_stGifTAG_Flat_NoFog[iVar1].cmdA = uVar3 | 0x3022400000008000;
 		g_stGifTAG_Flat_NoFog[iVar1].cmdB = 0x512;
 	} while (uVar2 < 0x61);
+
 	g_stGifTAG_FAN_Texture_NoFog.cmdA = 0x302ec00000008000;
 	g_stGifTAG_FAN_Gouraud_NoFog.cmdA = 0x3026c00000008000;
 	g_stGifTAG_FAN_Texture_NoFog.cmdB = 0x512;
@@ -417,6 +423,7 @@ void ed3DDMAGenerateHeaders(void)
 	g_stGifTAG_FAN_Flat_NoFog.cmdA = 0x3022c00000008000;
 	g_stGifTAG_FAN_Gouraud_NoFog.cmdB = 0x512;
 	g_stGifTAG_FAN_Flat_NoFog.cmdB = 0x512;
+
 	do {
 		iVar1 = (int)uVar2;
 		uVar3 = uVar2 & 0xffffffff;
@@ -426,6 +433,7 @@ void ed3DDMAGenerateHeaders(void)
 		g_stGifTAG_Gouraud_NoFog_LINE[iVar1].cmdA = uVar3 | 0x3025400000008000;
 		g_stGifTAG_Gouraud_NoFog_LINE[iVar1].cmdB = 0x512;
 	} while (uVar2 < 0x61);
+
 	uVar2 = 0;
 	do {
 		iVar1 = (int)uVar2;
@@ -452,6 +460,7 @@ void ed3DDMAGenerateHeaders(void)
 	g_stVertexMultiSTHeader.asU32[2] = 0xfffffff0;
 	g_stSpriteVertexXYZHeader.asU32[2] = 0xffffff40;
 
+	// These values are fixed fill values for the unpack. 0xc00 is the skip value for the vertex.
 	g_stSpriteWidthHeightHeader[1].asVector.z = -1.0f;
 	g_stSpriteWidthHeightHeader[1].asU32[3] = 0xc000;
 
@@ -2813,7 +2822,7 @@ edpkt_data* ed3DPKTCopyMatrixPacket(edpkt_data* pPkt, ed_dma_matrix* pDmaMatrix,
 	}
 	else {
 		// This logic will trigger flare compute in the shader, which is currently not implemented.
-		IMPLEMENTATION_GUARD();
+		//IMPLEMENTATION_GUARD();
 		pFlareSpr->w = 999.0f;
 		pObjToWorld = gF32Matrix4Unit_Scratch;
 	}
@@ -5166,7 +5175,7 @@ void ed3DFlushSprite(edNODE* pNode, ed_g2d_material* pMaterial)
 	pSprite = reinterpret_cast<ed_3d_sprite*>(pNode->pData);
 
 	sVar1 = pNode->header.typeField.flags;
-	uVar2 = pSprite->pTextureDataMystery;
+	uVar2 = pSprite->nbBatches;
 	pSpriteVif = reinterpret_cast<edpkt_data*>(reinterpret_cast<char*>(pSprite) + pSprite->offsetA);
 
 	pPkt = g_VifRefPktCur;
@@ -9728,27 +9737,35 @@ edpkt_data* ed3DDMAGetGifTag(uint type, uint flags, ed_g2d_material* pMaterial)
 	return pPkt;
 }
 
+// New Debug Function
+void SanityCheckSpriteGifTag(edpkt_data* pGifTag, int vertexCount)
+{
+	Gif_Tag gifTag;
+	gifTag.setTag(reinterpret_cast<u8*>(pGifTag + vertexCount), true);
+	assert(gifTag.nLoop == vertexCount);
+}
+
 // Prepares the GPU packet data for a sprite. Describes how to unpack the ST, RGBA, and VTX data into the PS2 GPU memory.
 // Unlike the strip, the packet data is built from scratch for each sprite, and shared data is stored in g_PKTSpriteHeaderRef
 // which is initialised in ed3DDMAGenerateSpritePacketRefHeader.
 edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_hash_code* pHash, int type)
 {
-	ushort uVar1;
+	ushort nbBatches;
 	uint flags;
 	ed_g2d_material* pMaterial;
 	edpkt_data* pGifTag;
 	ushort uVar27;
 	uint executeCodeAddr;
-	uint uVar29;
-	ulong uVar30;
-	int iVar31;
+	uint nbVerticesB;
+	ulong nbVertices;
+	int batchIndex;
 	uint uVar32;
 	ulong uVar33;
 	int iVar34;
 	char* pWHBuf;
 	edVertex* peVar36;
 	short* pSTBuf;
-	uint uVar38;
+	uint rectIndex;
 	ulong uVar39;
 	_rgba* pColorBuf;
 	edVertex* pVertexBuf;
@@ -9761,7 +9778,7 @@ edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_
 	pColorBuf = LOAD_SECTION_CAST(_rgba*, pSprite->pColorBuf);
 	pWHBuf = LOAD_SECTION_CAST(char*, pSprite->pWHBuf);
 
-	uVar1 = pSprite->pTextureDataMystery;
+	nbBatches = pSprite->nbBatches;
 	executeCodeAddr = (uint)(ushort)pSprite->materialIndex;
 	if ((executeCodeAddr != 0xffffffff) && (executeCodeAddr != 0xffff)) {
 		pMaterial = ed3DG2DGetG2DMaterialFromIndex(pHash, executeCodeAddr);
@@ -9788,20 +9805,24 @@ edpkt_data* ed3DSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt, ed_
 LAB_002a335c:
 	executeCodeAddr = ed3DSpritePreparePacketGetCode(uVar27, pSprite->flags_0x0);
 
-	for (iVar31 = 0; iVar31 < uVar1; iVar31 = iVar31 + 1) {
-		uVar30 = 0x48;
-		if (iVar31 == uVar1 - 1) {
-			uVar38 = (uint)pSprite->cameraPanIndex_0x38;
-			uVar30 = (ulong)(ushort)pSprite->meshSectionCount_0x3a;
+	for (batchIndex = 0; batchIndex < nbBatches; batchIndex = batchIndex + 1) {
+		nbVertices = 0x48;
+
+		if (batchIndex == nbBatches - 1) {
+			rectIndex = pSprite->nbRemainderRects;
+			nbVertices = pSprite->nbRemainderVertices;
 		}
 		else {
-			uVar38 = 0x12;
+			rectIndex = 0x12;
 		}
 
-		uVar29 = (uint)uVar30;
+		nbVerticesB = (uint)nbVertices;
 
 		pPkt[1].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
-		pPkt[1].asU32[1] = STORE_SECTION(pGifTag + uVar30);
+		pPkt[1].asU32[1] = STORE_SECTION(pGifTag + nbVertices);
+
+		// Sanity check
+		SanityCheckSpriteGifTag(pGifTag, nbVertices);
 
 		pPkt[1].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[1].asU32[3] = SCE_VIF1_SET_UNPACK(0x8000, 1, UNPACK_V4_32, 0);
@@ -9812,21 +9833,21 @@ LAB_002a335c:
 
 		if ((uVar27 & 1) == 0) {
 			while (true) {
-				uVar32 = uVar38 & 3;
-				if (((int)uVar38 < 0) && (uVar32 != 0)) {
+				uVar32 = rectIndex & 3;
+				if (((int)rectIndex < 0) && (uVar32 != 0)) {
 					uVar32 = uVar32 - 4;
 				}
 
 				if (uVar32 == 0) break;
 
-				uVar38 = uVar38 + 1;
+				rectIndex = rectIndex + 1;
 			}
 
-			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(uVar38 >> 2, 0);
+			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(rectIndex >> 2, 0);
 			pPkt[3].asU32[1] = STORE_SECTION(pWHBuf);
 
 			pPkt[3].asU32[2] = SCE_VIF1_SET_NOP(0);
-			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, uVar38 << 0x10, UNPACK_V2_16_MASKED, 0);
+			pPkt[3].asU32[3] = SCE_VIF1_SET_UNPACK(0x80d9, rectIndex << 0x10, UNPACK_V2_16_MASKED, 0);
 		}
 		else {
 			pPkt[3].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
@@ -9844,7 +9865,7 @@ LAB_002a335c:
 
 		pPkt[4] = g_PKTSpriteHeaderRef[1];
 
-		uVar39 = uVar30;
+		uVar39 = nbVertices;
 		if ((uVar27 & 2) == 0) {
 			while (true) {
 				uVar33 = uVar39 & 3;
@@ -9879,20 +9900,20 @@ LAB_002a335c:
 		pPkt[6] = g_PKTSpriteHeaderRef[2];
 
 
-		pPkt[7].asU32[0] = ED_VIF1_SET_TAG_REF(uVar29, 0);
+		pPkt[7].asU32[0] = ED_VIF1_SET_TAG_REF(nbVerticesB, 0);
 		pPkt[7].asU32[1] = STORE_SECTION(pColorBuf);
 		pPkt[7].asU32[2] = SCE_VIF1_SET_NOP(0);
-		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, uVar29, UNPACK_V4_8_MASKED, 0);
+		pPkt[7].asU32[3] = SCE_VIF1_SET_UNPACK(0xc002, nbVerticesB, UNPACK_V4_8_MASKED, 0);
 
 		pPkt[8] = g_PKTSpriteHeaderRef[3];
 
 		pColorBuf = pColorBuf + 0x48;
 
 		if ((flags & 0x4000000) == 0) {
-			pPkt[9].asU32[0] = ED_VIF1_SET_TAG_REF(uVar29, 0);
+			pPkt[9].asU32[0] = ED_VIF1_SET_TAG_REF(nbVerticesB, 0);
 			pPkt[9].asU32[1] = STORE_SECTION(pVertexBuf);
 			pPkt[9].asU32[2] = SCE_VIF1_SET_NOP(0);
-			pPkt[9].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, uVar29, UNPACK_V4_32_MASKED, 0);
+			pPkt[9].asU32[3] = SCE_VIF1_SET_UNPACK(0x8003, nbVerticesB, UNPACK_V4_32_MASKED, 0);
 			pVertexBuf = pVertexBuf + 0x24;
 		}
 		else {
@@ -9910,7 +9931,7 @@ LAB_002a335c:
 		pPkt[0xb].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[0xb].asU32[3] = SCE_VIF1_SET_MSCAL(executeCodeAddr, 0);
 
-		pPkt[0xc].asU32[0] = SCE_VIF1_SET_UNPACK(0, 0, UNPACK_S32, 0); // Might be incorrect?
+		pPkt[0xc].asU32[0] = SCE_VIF1_PKT_END(0);
 		pPkt[0xc].asU32[1] = SCE_VIF1_SET_NOP(0);
 		pPkt[0xc].cmdB = 0;
 

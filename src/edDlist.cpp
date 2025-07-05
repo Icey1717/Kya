@@ -121,8 +121,8 @@ int edDlistUseUV = 0;
 
 edSysHandler3D ed3DHandlers;
 
-_rgba gCurColor = _rgba(0, 0, 0, 0);
-_rgba* gCurColor_SPR = &gCurColor;
+_rgba gCurColor[4];
+_rgba* gCurColor_SPR = gCurColor;
 
 void edDListInitMemory(void)
 {
@@ -521,7 +521,7 @@ void edDListInitStripPKT(void)
 	gPKTStrip[8].asU32[2] = SCE_VIF1_SET_NOP(0);
 	gPKTStrip[8].asU32[3] = SCE_VIF1_SET_MSCAL(0x0003, 0);
 
-	gPKTStrip[9].asU32[0] = SCE_VIF1_SET_UNPACK(0, 0, UNPACK_S32, 0); // Might be incorrect?
+	gPKTStrip[9].asU32[0] = SCE_VIF1_PKT_END(0);
 	gPKTStrip[9].asU32[1] = SCE_VIF1_SET_NOP(0);
 	gPKTStrip[9].cmdB = 0;
 
@@ -1212,11 +1212,13 @@ void edDListUseMaterial(edDList_material* pMaterialInfo)
 			gCurDList->nbCommands = gCurDList->nbCommands + 1;
 		}
 	}
+
 	pDVar5->aCommandArray[0].pCommandBuffer = pRVar1;
 LAB_002cba4c:
 	pDVar5->aCommandArray[0].type = LM_REF_0;
 	pDVar5->aCommandArray[0].size = 0;
 	gCurDList->nbCommands = gCurDList->nbCommands + 1;
+
 	if ((gCurDList->nbCommands == 1) || (gCurDList->nbCommands == 3)) {
 		edDListAlphaTestAndZTest(1, 7, 0, 0, 0, 0, 1, 1);
 		edDListSetActiveViewPort(gCurViewport);
@@ -1643,7 +1645,7 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 	uint uVar2;
 	int iVar3;
 	int nbWh;
-	uint uVar5;
+	uint nbBatches;
 	DisplayListCommand* pCommand;
 
 	pCommand = gCurDList->aCommands + gCurDList->nbCommands;
@@ -1667,20 +1669,22 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 		pNewSprite->materialIndex = (short)gCurMaterial->index;
 	}
 
+	// Divide into batches of 0x48 vertices.
 	iVar3 = (int)(nbRects - 1) / 0x12;
+
 	pNewSprite->field_0x6 = 0;
-	uVar5 = iVar3 + 1;
-	uVar2 = nbRects;
-	if (1 < uVar5) {
-		uVar2 = nbRects + iVar3 * -0x12;
+	nbBatches = iVar3 + 1;
+	uint rbRemainderRects = nbRects;
+	if (1 < nbBatches) {
+		rbRemainderRects = nbRects + iVar3 * -0x12;
 	}
 
-	pNewSprite->cameraPanIndex_0x38 = uVar2;
-	pNewSprite->meshSectionCount_0x3a = (short)((uVar2 & 0xffff) << 2);
-	pNewSprite->pTextureDataMystery = (ushort)uVar5;
+	pNewSprite->nbRemainderRects = rbRemainderRects;
+	pNewSprite->nbRemainderVertices = rbRemainderRects << 2;
+	pNewSprite->nbBatches = (ushort)nbBatches;
 	pNewSprite->flags_0x0 = 0x4000000;
 	pNewSprite->offsetA = 0;
-	nbWh = nbRects + uVar5 * 2;
+	nbWh = nbRects + nbBatches * 2;
 	pNewSprite->pNext = 0x0;
 	pNewSprite->bUseShadowMatrix_0x30 = 0;
 	pNewSprite->field_0x32 = 0;
@@ -1715,6 +1719,9 @@ void edDListBeginSprite(uint nbRects, uint param_2)
 		IMPLEMENTATION_GUARD(
 		pNewSprite->pVertexBuf = (edF32VECTOR4*)((int)pNewSprite->pVertexBuf + (0x10 - uVar2));)
 	}
+
+	// DEBUG MEMSET clear the vertex buffer.
+	memset(LOAD_SECTION(pNewSprite->pVertexBuf), 0, nbRects * 4 * sizeof(edVertex));
 
 	pNewSprite->pSTBuf = STORE_SECTION(LOAD_SECTION_CAST(edVertex*, pNewSprite->pVertexBuf) + nbRects * 4); // Multiply by 4 because we will unpack each float into 4 verts to make a quad.
 	uVar2 = (uint)LOAD_SECTION(pNewSprite->pSTBuf) & 0xf;
@@ -2656,7 +2663,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 	short* pSTBuf;
 	uint uVar29;
 	uint uVar30;
-	uint uVar31;
+	uint nbBatches;
 	char* pWHBuf;
 	_rgba* pColorBuf;
 	edVertex* pVertexBuf;
@@ -2668,20 +2675,20 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 	pVertexBuf = LOAD_SECTION_CAST(edVertex*, pSprite->pVertexBuf);
 	pWHBuf = LOAD_SECTION_CAST(char*, pSprite->pWHBuf);
 
-	uVar31 = (uint)pSprite->pTextureDataMystery;
+	nbBatches = (uint)pSprite->nbBatches;
 
 	uVar29 = 0x12;
 	uVar26 = ed3DSpritePreparePacketGetCode(pSprite->pRenderFrame30, pSprite->flags_0x0);
 
 	while (true) {
-		bVar1 = uVar31 == 0;
-		uVar31 = uVar31 - 1;
+		bVar1 = nbBatches == 0;
+		nbBatches = nbBatches - 1;
 
 		if (bVar1) break;
 
-		if (uVar31 == 0) {
-			uVar30 = (uint)(ushort)pSprite->meshSectionCount_0x3a;
-			uVar29 = (uint)pSprite->cameraPanIndex_0x38;
+		if (nbBatches == 0) {
+			uVar30 = pSprite->nbRemainderVertices;
+			uVar29 = pSprite->nbRemainderRects;
 		}
 
 		pPkt[0] = g_PKTSpriteHeaderRef[0];
@@ -2756,7 +2763,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 
 		pPkt[0xa] = g_PKTHeaderRef[4];
 
-		pPkt[0xc].cmdA = 0x60000000;
+		pPkt[0xc].cmdA = SCE_VIF1_PKT_END(0);
 		pPkt[0xc].cmdB = 0;
 
 		pPkt[0xb].asU32[0] = ED_VIF1_SET_TAG_REF(1, 0);
@@ -2764,7 +2771,7 @@ edpkt_data* edDListSpritePreparePacket(ed_3d_sprite* pSprite, edpkt_data* pPkt)
 		pPkt[0xb].asU32[2] = SCE_VIF1_SET_NOP(0);
 		pPkt[0xb].asU32[3] = SCE_VIF1_SET_MSCAL(uVar26, 0);
 
-		pPkt[0xc].asU32[0] = SCE_VIF1_SET_UNPACK(0, 0, UNPACK_S32, 0); // Might be incorrect?
+		pPkt[0xc].asU32[0] = SCE_VIF1_PKT_END(0);
 		pPkt[0xc].asU32[1] = SCE_VIF1_SET_NOP(0);
 		pPkt[0xc].cmdB = 0;
 
@@ -2873,33 +2880,35 @@ void edDListEndSprite(ed_3d_sprite* pSprite)
 {
 	ed_3d_sprite* pRenderSprite;
 	int iVar2;
-	uint uVar3;
-	uint uVar4;
+	uint nbBatches;
+	uint nbRemainderRects;
 	DisplayListCommand* pDVar5;
 	DisplayList* pDVar6;
 
-	iVar2 = gNbAddedVertex;
+	int nbAddedVertex = gNbAddedVertex;
 	if (gNbAddedVertex < 0) {
-		iVar2 = gNbAddedVertex + 3;
+		// Round up to the next multiple of 4.
+		nbAddedVertex = gNbAddedVertex + 3;
 	}
 
-	uVar4 = iVar2 >> 2;
-	if (uVar4 == 0) {
-		pSprite->cameraPanIndex_0x38 = 0;
-		pSprite->meshSectionCount_0x3a = (short)((uVar4 & 0xffff) << 2);
-		pSprite->pTextureDataMystery = 0;
+	nbRemainderRects = nbAddedVertex >> 2;
+
+	if (nbRemainderRects == 0) {
+		pSprite->nbRemainderRects = 0;
+		pSprite->nbRemainderVertices = nbRemainderRects << 2;
+		pSprite->nbBatches = 0;
 	}
 	else {
-		iVar2 = (int)(uVar4 - 1) / 0x12;
-		uVar3 = iVar2 + 1;
+		iVar2 = (int)(nbRemainderRects - 1) / 0x12;
+		nbBatches = iVar2 + 1;
 
-		if (1 < uVar3) {
-			uVar4 = uVar4 + iVar2 * -0x12;
+		if (1 < nbBatches) {
+			nbRemainderRects = nbRemainderRects + iVar2 * -0x12;
 		}
 
-		pSprite->cameraPanIndex_0x38 = uVar4;
-		pSprite->meshSectionCount_0x3a = (short)((uVar4 & 0xffff) << 2);
-		pSprite->pTextureDataMystery = (ushort)uVar3;
+		pSprite->nbRemainderRects = nbRemainderRects;
+		pSprite->nbRemainderVertices = nbRemainderRects << 2;
+		pSprite->nbBatches = nbBatches;
 	}
 
 	if (((gCurDList->flags_0x0 & 0x100) != 0) && (gCurSpritePatchable == 0)) {
@@ -2909,9 +2918,10 @@ void edDListEndSprite(ed_3d_sprite* pSprite)
 
 		pDVar5->pCurDListBuf = reinterpret_cast<edpkt_data*>(reinterpret_cast<char*>(pRenderSprite) + pRenderSprite->offsetA);
 
-		pRenderSprite->cameraPanIndex_0x38 = pSprite->cameraPanIndex_0x38;
-		pRenderSprite->meshSectionCount_0x3a = pSprite->meshSectionCount_0x3a;
-		pRenderSprite->pTextureDataMystery = pSprite->pTextureDataMystery;
+		pRenderSprite->nbRemainderRects = pSprite->nbRemainderRects;
+		pRenderSprite->nbRemainderVertices = pSprite->nbRemainderVertices;
+		pRenderSprite->nbBatches = pSprite->nbBatches;
+
 		memcpy(pRenderSprite + 1, pSprite + 1, pSprite->offsetA + -0x40);
 
 		pDVar6->pRenderCommands = edDListSpritePreparePacket(pRenderSprite, pDVar5->pCurDListBuf);

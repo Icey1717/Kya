@@ -4,8 +4,8 @@
 #include <memory>
 #include <array>
 
-#define SPRITE_LOG(level, format, ...)
-//#define SPRITE_LOG(level, format, ...) MY_LOG_CATEGORY("Sprite", level, format, ##__VA_ARGS__)
+#define SPRITE_LOG_TRACE(level, format, ...)
+#define SPRITE_LOG(level, format, ...) MY_LOG_CATEGORY("Sprite", level, format, ##__VA_ARGS__)
 
 namespace Renderer::Kya::Sprite
 {
@@ -17,6 +17,7 @@ namespace Renderer::Kya::Sprite
 			for (auto& sprite : sprites)
 			{
 				GIFReg::GSPrim prim;
+				prim.ABE = 1;
 				sprite = std::make_unique<SimpleMesh>("Sprite", prim);
 				sprite->GetVertexBufferData().Init(0x100, 0x1000);
 			}
@@ -78,7 +79,7 @@ namespace Renderer::Kya::Sprite
 		// Assume that the first gif tag has the largest vtx count.
 		int totalVtxCount = 0;
 
-		for (int j = 0; j < pSprite->pTextureDataMystery; j++) {
+		for (int j = 0; j < pSprite->nbBatches; j++) {
 			Gif_Tag gifTag = ExtractGifTagFromVifList(pSprite, j);
 			totalVtxCount += gifTag.nLoop;
 		}
@@ -136,20 +137,45 @@ namespace Renderer::Kya::Sprite
 		GSVertexUnprocessed::Vertex* pVertex = LOAD_SECTION_CAST(GSVertexUnprocessed::Vertex*, pSprite->pVertexBuf);
 		WidthHeightData* pWh = LOAD_SECTION_CAST(WidthHeightData*, pSprite->pWHBuf);
 
-		edF32VECTOR4* pWhFlag = LOAD_SECTION_CAST(edF32VECTOR4*, pSprite->pWHBuf);
-
 		// This increases by 2 every loop because we start the next vtx at the end of the previous vtx.
 		int vtxOffset = 0;
 		int meshOffset = 0;
 
-		for (int j = 0; j < pSprite->pTextureDataMystery; j++) {
-			SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Starting section: {}", j);
-			Gif_Tag gifTag = ExtractGifTagFromVifList(pSprite, j);
+		for (int batchIndex = 0; batchIndex < pSprite->nbBatches; batchIndex++) {
+			SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Starting section: {} / {}", batchIndex, pSprite->nbBatches);
+			Gif_Tag gifTag = ExtractGifTagFromVifList(pSprite, batchIndex);
+
+			int vtxCount = gifTag.nLoop;
+
+			// Sanity check that our gif tag matches the calculated batches.
+			if (pSprite->nbBatches > 1) {
+				if (batchIndex < pSprite->nbBatches - 1) {
+					//assert(gifTag.nLoop == 0x48); // Full batch. 72 vertices per batch, 18 quads.
+					vtxCount = 0x48;
+				}
+				else {
+					//assert(gifTag.nLoop == pSprite->nbRemainderVertices); // Last batch, should match the remainder vertices.
+					vtxCount = pSprite->nbRemainderVertices;
+				}
+			}
+			else {
+				//assert(gifTag.nLoop == pSprite->nbRemainderVertices); // Single batch, should match the remainder vertices.
+				vtxCount = pSprite->nbRemainderVertices;
+			}
+
+			SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices NLOOP: {}", gifTag.nLoop);
 
 			// Expand the vertex. Four vertices per quad.
-			for (int i = 0; i < gifTag.nLoop / 4; i++) {
-				WidthHeightData whi = pWh[i];
-				edF32VECTOR4 vtx = pVectorVertex[i];
+			for (int i = 0; i < vtxCount; i += 4) {
+				const int index = i + meshOffset; // -vtxOffset;
+
+				assert(pVectorVertex[index + 0].wi != gGifTagCopyCode);
+				assert(pVectorVertex[index + 1].wi != gGifTagCopyCode);
+				assert(pVectorVertex[index + 2].wi != gGifTagCopyCode);
+				assert(pVectorVertex[index + 3].wi != gGifTagCopyCode);
+
+				WidthHeightData whi = pWh[index / 4];
+				edF32VECTOR4 vtx = pVectorVertex[index];
 
 				edF32VECTOR2 whf;
 				whf.x = int12_to_float(whi.w) * 2.0f;
@@ -164,23 +190,18 @@ namespace Renderer::Kya::Sprite
 				const edF32VECTOR4 br = vtx + normalizedX - normalizedY;
 
 				// Store the vertices in the vertex buffer data.
-				pVectorVertex[(i * 4) + 0] = tl;
-				pVectorVertex[(i * 4) + 1] = bl;
-				pVectorVertex[(i * 4) + 2] = tr;
-				pVectorVertex[(i * 4) + 3] = br;
+				pVectorVertex[index + 0] = tl;
+				pVectorVertex[index + 1] = bl;
+				pVectorVertex[index + 2] = tr;
+				pVectorVertex[index + 3] = br;
 
-				pVectorVertex[(i * 4) + 0].wi = pWhFlag[i].wi;
-				pVectorVertex[(i * 4) + 1].wi = pWhFlag[i].wi;
-
-				pVectorVertex[(i * 4) + 0].wi = 0;
-				pVectorVertex[(i * 4) + 1].wi = 0;
-				pVectorVertex[(i * 4) + 2].wi = 0;
-				pVectorVertex[(i * 4) + 3].wi = 0;
+				// Emulated unpacking, vu1 would usually fill these values in within the data row for W and H.
+				pVectorVertex[index + 0].wi = g_stSpriteWidthHeightHeader[1].asU32[3];
+				pVectorVertex[index + 1].wi = g_stSpriteWidthHeightHeader[1].asU32[3];
 			}
 
-			for (int i = 0; i < gifTag.nLoop; i++) {
-				const int index = i + meshOffset;
-				const int adjustedIndex = index; // -vtxOffset;
+			for (int i = 0; i < vtxCount; i++) {
+				const int index = i + meshOffset; // -vtxOffset;
 
 				Renderer::GSVertexUnprocessedNormal vtx;
 				vtx.RGBA[0] = pRgba[index].r;
@@ -194,25 +215,25 @@ namespace Renderer::Kya::Sprite
 
 				memset(&vtx.normal, 0, sizeof(vtx.normal));
 
-				vtx.XYZFlags = pVertex[adjustedIndex];
+				vtx.XYZFlags = pVertex[index];
 
 				const uint primReg = firstGifTag.tag.PRIM;
 				const GIFReg::GSPrim primPacked = *reinterpret_cast<const GIFReg::GSPrim*>(&primReg);
 
 				const uint skip = vtx.XYZFlags.flags & 0x8000;
 
-				SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Processing vertex: {}, primPacked: 0x{:x}, nloop: 0x{:x}, skip: 0x{:x}", i, primReg, gifTag.nLoop, skip);
+				SPRITE_LOG_TRACE(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Processing vertex: {}, primPacked: 0x{:x}, nloop: 0x{:x}, skip: 0x{:x}", i, primReg, gifTag.nLoop, skip);
 
-				SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Processing vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})\n",
+				SPRITE_LOG_TRACE(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Processing vertex: {}, (S: {} T: {} Q: {}) (R: {} G: {} B: {} A: {}) (X: {} Y: {} Z: {} Skip: {})\n",
 					i, vtx.STQ.ST[0], vtx.STQ.ST[1], vtx.STQ.Q, vtx.RGBA[0], vtx.RGBA[1], vtx.RGBA[2], vtx.RGBA[3], vtx.XYZFlags.fXYZ[0], vtx.XYZFlags.fXYZ[1], vtx.XYZFlags.fXYZ[2], vtx.XYZFlags.flags);
 
 				Renderer::KickVertex(vtx, primPacked, skip, vertexBufferData);
 
-				SPRITE_LOG(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Kick complete vtx tail: 0x{:x} index tail: 0x{:x}",
+				SPRITE_LOG_TRACE(LogLevel::Info, "Renderer::Kya::Sprite::ProcessVertices Kick complete vtx tail: 0x{:x} index tail: 0x{:x}",
 					vertexBufferData.GetVertexTail(), vertexBufferData.GetIndexTail());
 			}
 
-			meshOffset += gifTag.nLoop;
+			meshOffset += vtxCount;
 			vtxOffset += 2;
 		}
 
@@ -231,7 +252,7 @@ void Renderer::Kya::Sprite::RenderNode(const edNODE* pNode)
 	pSprite = reinterpret_cast<ed_3d_sprite*>(pNode->pData);
 
 	sVar1 = pNode->header.typeField.flags;
-	uVar2 = pSprite->pTextureDataMystery;
+	uVar2 = pSprite->nbBatches;
 
 	if (uVar2 != 0) {
 		uVar3 = pSprite->pRenderFrame30;

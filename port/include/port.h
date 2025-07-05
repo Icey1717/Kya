@@ -706,6 +706,8 @@ MY_LOG("SCE_GIF_SET_TAG(\n{}, // NLOOP\n{}, // EOP\n{}, // PRE\n{}, // PRIM\n{},
 
 #define SCE_VIF1_SET_UNPACK(vuaddr, num, cmd, irq) ((u_int)(vuaddr) | ((u_int)(num) << 16) | ((u_int)(0x60 | (cmd)) << 24) | ((u_int)(irq) << 31))
 
+#define SCE_VIF1_PKT_END(irq) 0x60000000
+
 //#ifdef PLATFORM_WIN
 //template<typename A, typename B, typename C, typename D, typename E>
 //inline uint VifQueueWrite(A vuaddr, B num, C cmd, D irq, E pkt) {
