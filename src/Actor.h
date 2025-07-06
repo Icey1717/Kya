@@ -624,6 +624,7 @@ public:
 	CActor* GetCollidingActor();
 
 	float GetPosition_00117db0();
+	void GetPosition_00101130(edF32VECTOR4* pOutPosition);
 
 	CActorSound* CreateActorSound(int soundType);
 

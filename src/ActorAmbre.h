@@ -63,8 +63,6 @@ class CActorAmbre : public CActor {
 public:
 	static StateConfig _gStateCfg_AMB[6];
 
-	CActorAmbre();
-
 	virtual void Create(ByteCode* pByteCode);
 	virtual void Init();
 	virtual void Term();
@@ -78,10 +76,12 @@ public:
 	CFxSparkNoAlloc<4, 12> aFxSparks[3];
 	AmberSparkProps aFxSparkProps[3];
 
-	CFxHandle effectsStructC;
+	CFxHandleExt effectsStructC;
 	StaticMeshComponent staticMesh;
 
 	int field_0x1d0;
+
+	CFxHandle effectsStructD;
 
 	S_TARGET_STREAM_REF* pMagicalSwitch1CBase_0x1224;
 

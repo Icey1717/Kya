@@ -19,6 +19,91 @@ CFxHandle::CFxHandle()
 	this->pFx = (CNewFx*)0x0;
 }
 
+void SV_FX_Start(CFxHandleExt* pFxHandle)
+{
+	CNewFx* pFx;
+	uint uVar1;
+	uint uVar2;
+	uint* pEffectCounts;
+	CFxManager* pFxManager;
+
+	pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+	uVar2 = pFxHandle->type;
+
+	if (uVar2 != 0xffffffff) {
+		if (uVar2 == 0xffffffff) {
+			pFx = (CNewFx*)0x0;
+		}
+		else {
+			pEffectCounts = (CScene::ptable.g_EffectsManager_004516b8)->effectCountByType;
+			uVar1 = 0;
+			do {
+				if (uVar2 < *pEffectCounts) break;
+				uVar1 = uVar1 + 1;
+				uVar2 = uVar2 - *pEffectCounts;
+				pEffectCounts = pEffectCounts + 1;
+			} while (uVar1 < 7);
+
+			pFx = reinterpret_cast<CNewFx*>(CScene::ptable.g_EffectsManager_004516b8->aEffectCategory[uVar1]->InstanciateFx(uVar2, FX_MATERIAL_SELECTOR_NONE));
+		}
+
+		pFxHandle->pFx = pFx;
+		if (pFx == (CNewFx*)0x0) {
+			pFxHandle->id = 0;
+		}
+		else {
+			pFx->id = pFxManager->field_0x6c;
+			pFxHandle->id = pFxManager->field_0x6c;
+
+			if ((uint)pFxManager->field_0x6c < 0x7fffffff) {
+				pFxManager->field_0x6c = pFxManager->field_0x6c + 1;
+			}
+			else {
+				pFxManager->field_0x6c = 2;
+			}
+		}
+	}
+
+	return;
+}
+
+void SV_FX_UpdateEffectorPosition(CFxHandle* pFxHandle, char* szName, edF32VECTOR4* pPosition)
+{
+	CNewFx* pFx;
+	_ed_particle_effector_param* p_Var2;
+	int particleType;
+	uint uVar4;
+	CFxNewParticle* pFxNewParticle;
+	float fVar5;
+	float fVar6;
+	float fVar7;
+
+	pFx = pFxHandle->pFx;
+	if (((pFx == (CNewFx*)0x0) || (pFxHandle->id == 0)) || (pFxHandle->id != pFx->id)) {
+		particleType = 7;
+	}
+	else {
+		particleType = pFx->GetType();
+	}
+
+	if (particleType == FX_TYPE_PARTICLE) {
+		pFxNewParticle = reinterpret_cast<CFxNewParticle*>(pFx);
+		uVar4 = pFxHandle->id & 0x7fffffff;
+		if (((pFxNewParticle == (CFxNewParticle*)0x0) || (uVar4 == 0)) || (uVar4 != pFxNewParticle->id)) {
+			pFxNewParticle = (CFxNewParticle*)0x0;
+		}
+
+		if ((pFxNewParticle->pManager != (_ed_particle_manager*)0x0) &&
+			(p_Var2 = edPartGetEffector(pFxNewParticle->pManager, szName), p_Var2 != (_ed_particle_effector_param*)0x0)) {
+			p_Var2->position = *pPosition;
+			edPartEffectorComputeMatrices(p_Var2);
+		}
+	}
+	return;
+}
+
+
+
 CFxManager::CFxManager()
 {
 	CFxManager* local_a0_lo_24;
@@ -495,7 +580,7 @@ void CFxManager::GetDynamicFx(CFxHandle* pHandle, uint param_3, FX_MATERIAL_SELE
 		pHandle->id = 0;
 	}
 	else {
-		pNewFx->field_0x18 = this->field_0x6c;
+		pNewFx->id = this->field_0x6c;
 		pHandle->id = this->field_0x6c;
 
 		if ((uint)this->field_0x6c < 0x7fffffff) {
@@ -527,7 +612,7 @@ CNewFx::CNewFx()
 	this->field_0x8 = 0;
 	this->pActor = (CActor*)0x0;
 	this->boneId = 0;
-	this->field_0x18 = 1;
+	this->id = 1;
 	this->flags = 0;
 
 	return;
@@ -535,29 +620,31 @@ CNewFx::CNewFx()
 
 void CNewFx::Kill()
 {
-	uint uVar1;
-	CNewFx* pCVar2;
-	CFxManager* pCVar3;
+	uint curFlags;
+	CNewFx* pSonFx;
+	CFxManager* pFxManager;
 
-	if (this->field_0x18 != 1) {
+	if (this->id != 1) {
 		this->flags = this->flags & 0xfffffffd;
 		this->flags = this->flags & 0xfffffffe;
-		pCVar3 = CScene::ptable.g_EffectsManager_004516b8;
-		pCVar3->aEffectCategory[GetType()]->Remove(this);
-		uVar1 = this->flags;
-		if ((uVar1 & 0x100) != 0) {
-			if (((this->boneId != 0) && ((uVar1 & 0x200) == 0)) && ((uVar1 & 0x400) == 0)) {
+
+		pFxManager = CScene::ptable.g_EffectsManager_004516b8;
+		pFxManager->aEffectCategory[GetType()]->Remove(this);
+
+		curFlags = this->flags;
+		if ((curFlags & 0x100) != 0) {
+			if (((this->boneId != 0) && ((curFlags & 0x200) == 0)) && ((curFlags & 0x400) == 0)) {
 				this->pActor->pAnimationController->UnRegisterBone(this->boneId);
 			}
 		}
 
-		pCVar2 = this->pSon;
-		if (pCVar2 != (CNewFx*)0x0) {
-			pCVar2->NotifySonIsDead(this, this->field_0x8);
+		pSonFx = this->pSon;
+		if (pSonFx != (CNewFx*)0x0) {
+			pSonFx->NotifySonIsDead(this, this->field_0x8);
 			this->pSon = (CFxNewComposite*)0x0;
 		}
 
-		this->field_0x18 = 1;
+		this->id = 1;
 	}
 
 	return;
@@ -578,6 +665,17 @@ void CNewFx::Start(float param_1, float param_2)
 	return;
 }
 
+void CNewFx::Stop(float param_1)
+{
+	this->flags = this->flags | 0x20010;
+
+	if ((param_1 != -1.0f) && (this->field_0x10 = param_1, 0.0f < param_1)) {
+		this->flags = this->flags | 0x40;
+	}
+
+	return;
+}
+
 void CNewFx::Func_0x30(float param_1)
 {
 	this->field_0x70 = param_1;
@@ -588,6 +686,119 @@ void CNewFx::NotifySonIsDead(CNewFx* pSon, int)
 	return;
 }
 
+
+void CNewFx::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
+{
+	edF32MATRIX4* m1;
+	bool bVar1;
+	CActor* pColActor;
+	int indexA;
+	edAnmSkeleton* pSkele;
+	float fVar3;
+	float fVar4;
+	edF32VECTOR4 eStack96;
+	edF32VECTOR4 local_50;
+	edF32MATRIX4 eStack64;
+	CNewFx* pCurSon;
+
+	if (pActor == (CActor*)0x0) {
+		this->flags = this->flags & 0xfffe02ff;
+	}
+	else {
+		this->flags = this->flags | 0x100;
+		if ((flags & 1) != 0) {
+			this->flags = this->flags | 0x200;
+		}
+
+		if ((flags & 2) != 0) {
+			this->flags = this->flags | 0x1000;
+		}
+
+		if ((flags & 4) != 0) {
+			this->flags = this->flags | 0x2000;
+		}
+
+		if ((flags & 8) != 0) {
+			this->flags = this->flags | 0x4000;
+		}
+
+		pColActor = pActor->GetCollidingActor();
+		if (pColActor != (CActor*)0x0) {
+			flags = flags | 0x10;
+			this->flags = this->flags | 0x10000;
+		}
+
+		if ((flags & 0x10) != 0) {
+			this->flags = this->flags | 0x8000;
+		}
+
+		if ((flags & 0x40) == 0) {
+			bVar1 = false;
+			if ((((this->flags & 0x100) != 0) && (boneId != 0)) && ((this->flags & 0x200) == 0)) {
+				pActor->pAnimationController->RegisterBone(boneId);
+			}
+
+			if (((boneId != 0) && (pActor->p3DHierNode != (ed_3d_hierarchy_node*)0x0)) && ((m1 = (pActor->p3DHierNode->base).pAnimMatrix, m1 != (edF32MATRIX4*)0x0 &&
+					((pSkele = &pActor->pAnimationController->anmSkeleton, pActor->pAnimationController != (CAnimation*)0x0 && (indexA = pSkele->NodeIndexFromID(boneId), indexA != -1)))))) {
+				pSkele->UnskinNMatrices(&eStack64, m1, indexA, 1);
+				edF32Matrix4MulF32Matrix4Hard(&eStack64, &eStack64, (edF32MATRIX4*)pActor->pMeshTransform);
+				bVar1 = true;
+
+				this->position = eStack64.rowT;
+			}
+
+			if ((!bVar1) && ((this->flags & 0x1000) != 0)) {
+				this->position = pActor->currentLocation;
+			}
+
+			if ((this->flags & 0x2000) != 0) {
+				this->rotationEuler.xyz = pActor->rotationEuler.xyz;
+				this->rotationEuler.w = 0.0f;
+			}
+
+			if ((this->flags & 0x4000) != 0) {
+				this->scale = pActor->scale;
+			}
+
+			if ((this->flags & 0x8000) != 0) {
+				pActor->GetPosition_00101130(&local_50);
+				this->field_0x60 = local_50;
+
+				if ((this->flags & 0x1000) != 0) {
+					edF32Vector4ScaleHard(Timer::GetTimer()->cutsceneDeltaTime, &eStack96, &this->field_0x60);
+					edF32Vector4SubHard(&this->position, &this->position, &eStack96);
+				}
+			}
+		}
+		else {
+			this->flags = this->flags | 0x400;
+			if ((this->flags & 0x1000) != 0) {
+				pCurSon = this->pSon;
+				this->position = pCurSon->position;
+			}
+
+			if ((this->flags & 0x2000) != 0) {
+				pCurSon = this->pSon;
+				this->rotationEuler = pCurSon->rotationEuler;
+			}
+
+			if ((this->flags & 0x4000) != 0) {
+				pCurSon = this->pSon;
+				this->scale = pCurSon->scale;
+			}
+
+			if ((this->flags & 0x8000) != 0) {
+				pCurSon = this->pSon;
+				this->field_0x60 = pCurSon->field_0x60;
+			}
+		}
+	}
+
+	this->pActor = pActor;
+	this->boneId = boneId;
+
+	return;
+}
 
 void CNewFx::Manage()
 {

@@ -15,6 +15,8 @@ public:
 	virtual void Kill() { IMPLEMENTATION_GUARD(); }
 	virtual void Start(float param_1, float param_2);
 	virtual int GetType();
+	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
+
 	void Manage();
 	void Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_SELECTOR selector);
 

@@ -437,6 +437,7 @@ public:
 
 	undefined4 field_0x8;
 
+	float field_0xc;
 	float field_0x10;
 	float field_0x14;
 	float field_0x18;
@@ -445,7 +446,7 @@ public:
 	CFxDigits fxDigits;
 	int field_0x24;
 	int digitMaterialId;
-	CFxHandle field_0x2c;
+	CFxHandle fxHandle;
 
 	edF32VECTOR4 field_0x40;
 };
@@ -772,7 +773,12 @@ struct VisionDetectionProps
 struct InitPathfindingClientMsgParams
 {
 	uint msgId;
-	int newId;
+
+	union
+	{
+		int newId;
+		float time;
+	};
 
 	CActorFighter* pActor;
 };
@@ -957,6 +963,7 @@ public:
 	bool FUN_00174130();
 
 	bool IsExorcizable(CActorHero* pHero);
+	int GetExorciseAnim();
 
 	void UpdateCombatMode(); // new
 	WFIGS_Capability* GetActiveCapability(); // new

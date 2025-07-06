@@ -28,7 +28,8 @@ enum FX_MATERIAL_SELECTOR
 	FX_MATERIAL_SELECTOR_SAND = 3,
 	FX_MATERIAL_SELECTOR_ICE = 4,
 	FX_MATERIAL_SELECTOR_GRASS = 5,
-	FX_MATERIAL_SELECTOR_MAX = 6
+	FX_MATERIAL_SELECTOR_MAX = 6,
+	FX_MATERIAL_SELECTOR_NONE = 0xFFFFFFFF
 };
 
 class CFxHandle
@@ -36,8 +37,14 @@ class CFxHandle
 public:
 	CFxHandle();
 
-	undefined4 id;
+	int id;
 	CNewFx* pFx;
+};
+
+class CFxHandleExt : public CFxHandle
+{
+public:
+	uint type;
 };
 
 template <typename FxType>
@@ -92,9 +99,11 @@ public:
 	virtual void Draw() = 0;
 	virtual void Kill();
 	virtual void Start(float param_1, float param_2);
+	virtual void Stop(float param_1);
 	virtual int GetType() = 0;
 	virtual void Func_0x30(float param_1);
 	virtual void NotifySonIsDead(CNewFx* pSon, int);
+	virtual void SpatializeOnActor(uint flags, CActor* pActor, uint boneId);
 
 	void Manage();
 
@@ -105,7 +114,7 @@ public:
 	float field_0x10;
 
 	uint flags;
-	int field_0x18;
+	int id;
 	CActor* pActor;
 	uint boneId;
 
@@ -180,6 +189,42 @@ public:
 		return pHead;
 	}
 
+	CDoubleLinkedNode<FxType>* RemoveNode(CDoubleLinkedNode<FxType>* pNode)
+	{
+		if (pNode->pNext == (CDoubleLinkedNode<FxType>*)0x0) {
+			this->pHead = pNode->pPrev;
+		}
+		else {
+			pNode->pNext->pPrev = pNode->pPrev;
+		}
+
+		if (pNode->pPrev == (CDoubleLinkedNode<FxType> *)0x0) {
+			this->pTail = pNode->pNext;
+		}
+		else {
+			pNode->pPrev->pNext = pNode->pNext;
+		}
+
+		return pNode;
+	}
+
+	void InsertAfterQueue(CDoubleLinkedNode<FxType>* pNode)
+	{
+		pNode->pNext = this->pTail;
+		pNode->pPrev = (CDoubleLinkedNode<FxType> *)0x0;
+
+		if (this->pTail == (CDoubleLinkedNode<FxType> *)0x0) {
+			this->pHead = pNode;
+		}
+		else {
+			this->pTail->pPrev = pNode;
+		}
+
+		this->pTail = pNode;
+
+		return;
+	}
+
 	CDoubleLinkedNode<FxType>* pHead;
 	CDoubleLinkedNode<FxType>* pTail;
 };
@@ -218,7 +263,7 @@ public:
 		FxType** ppCVar3;
 		CDoubleLinkedNode<FxType>* pCVar1;
 
-		pCVar1 = (this->listB).pHead;
+		pCVar1 = (this->activeList).pHead;
 
 		while (pCVar1 != (CDoubleLinkedNode<FxType>*)0x0) {
 			ppCVar3 = &pCVar1->aFx;
@@ -248,7 +293,7 @@ public:
 		edF32VECTOR4 local_50;
 		edF32MATRIX4 eStack64;
 
-		pCVar3 = (this->listB).pHead;
+		pCVar3 = (this->activeList).pHead;
 		if (pCVar3 != (CDoubleLinkedNode<FxType> *)0x0) {
 			do {
 				pCVar1 = pCVar3->aFx;
@@ -296,16 +341,16 @@ public:
 			while (i != 0) {
 				i = i - 1;
 				pCurNode->aFx = pCurFx;
-				pCurNode->pNext = this->listA.pTail;
+				pCurNode->pNext = this->freeList.pTail;
 				pCurNode->pPrev = (CDoubleLinkedNode<FxType>*)0x0;
 
-				if (this->listA.pTail == (CDoubleLinkedNode<FxType>*)0x0) {
-					this->listA.pHead = pCurNode;
+				if (this->freeList.pTail == (CDoubleLinkedNode<FxType>*)0x0) {
+					this->freeList.pHead = pCurNode;
 				}
 				else {
-					this->listA.pTail->pPrev = pCurNode;
+					this->freeList.pTail->pPrev = pCurNode;
 				}
-				this->listA.pTail = pCurNode;
+				this->freeList.pTail = pCurNode;
 
 				pCurNode = pCurNode + 1;
 				pCurFx = pCurFx + 1;
@@ -330,7 +375,18 @@ public:
 
 	virtual void Remove(CNewFx* pFx)
 	{
-		IMPLEMENTATION_GUARD();
+		FxType* pCVar1;
+		CDoubleLinkedNode<FxType>* pNodes;
+
+		pCVar1 = this->aFx;
+		pNodes = this->aNodes;
+
+		const int fxIndex = (reinterpret_cast<int>(pFx) - reinterpret_cast<int>(pCVar1)) / sizeof(FxType);
+
+		this->activeList.RemoveNode(pNodes + fxIndex);
+		this->freeList.InsertAfterQueue(pNodes + fxIndex);
+
+		return;
 	}
 
 	virtual int GetNbPool()
@@ -344,23 +400,23 @@ public:
 		CDoubleLinkedNode<FxType>* pPrevHead;
 		FxType* pNewFx;
 
-		pPrevHead = this->listA.RemoveHead();
+		pPrevHead = this->freeList.RemoveHead();
 
 		if (pPrevHead == (CDoubleLinkedNode<FxType> *)0x0) {
 			pNewFx = (FxType*)0x0;
 		}
 		else {
-			pPrevHead->pNext = (this->listB).pTail;
+			pPrevHead->pNext = (this->activeList).pTail;
 			pPrevHead->pPrev = (CDoubleLinkedNode<FxType> *)0x0;
-			pTail = (this->listB).pTail;
+			pTail = (this->activeList).pTail;
 			if (pTail == (CDoubleLinkedNode<FxType> *)0x0) {
-				(this->listB).pHead = pPrevHead;
+				(this->activeList).pHead = pPrevHead;
 			}
 			else {
 				pTail->pPrev = pPrevHead;
 			}
 
-			(this->listB).pTail = pPrevHead;
+			(this->activeList).pTail = pPrevHead;
 
 			pNewFx = pPrevHead->aFx;
 			pNewFx->flags = 0;
@@ -369,8 +425,8 @@ public:
 		return pNewFx;
 	}
 
-	CDoubleLinkedList<FxType> listA;
-	CDoubleLinkedList<FxType> listB;
+	CDoubleLinkedList<FxType> freeList;
+	CDoubleLinkedList<FxType> activeList;
 
 	uint nbPool;
 	CDoubleLinkedNode<FxType>* aNodes;
@@ -434,5 +490,8 @@ public:
 
 	ParticleInfo* field_0x0;
 };
+
+void SV_FX_Start(CFxHandleExt* pFxHandle);
+void SV_FX_UpdateEffectorPosition(CFxHandle* pFxHandle, char* szName, edF32VECTOR4* pPosition);
 
 #endif // FX_MANAGER_H

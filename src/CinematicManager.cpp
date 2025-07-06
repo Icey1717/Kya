@@ -2633,7 +2633,7 @@ bool CCinematic::TimeSlice(float currentPlayTime)
 			else {
 				edParticlesSetSystem(pParticleInstance->pParticle);
 
-				for (int iVar9 = 0; iVar9 < pParticleInstance->pParticle->nbParams; iVar9 = iVar9 + 1) {
+				for (int iVar9 = 0; iVar9 < pParticleInstance->pParticle->nbTotalGroups; iVar9 = iVar9 + 1) {
 					_ed_particle_group* p_Var11 = pParticleInstance->pParticle->aGroups.pData + iVar9;
 					for (int iVar8 = 0; iVar8 < p_Var11->field_0x20; iVar8 = iVar8 + 1) {
 						CActor* pCVar1 = pParticleInstance->pActor;

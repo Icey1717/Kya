@@ -71,7 +71,7 @@ bool atst(vec4 outColor)
 			}
 		}
 		else if (test.atst == ATST_NEVER) {
-			return false;
+			return true;
 		}
 	}
 

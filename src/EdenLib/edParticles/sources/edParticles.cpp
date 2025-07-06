@@ -131,24 +131,24 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 		(pFileData->manager).aGroups.pData = reinterpret_cast<_ed_particle_group*>(reinterpret_cast<char*>(pFileData) + offset);
 	}
 
-	offset = (pFileData->manager).aParams.offset;
+	offset = (pFileData->manager).aGeneratorParams.offset;
 	if (offset != 0x0) {
-		(pFileData->manager).aParams.pData = reinterpret_cast<_ed_particle_generator_param*>(reinterpret_cast<char*>(pFileData) + offset);
+		(pFileData->manager).aGeneratorParams.pData = reinterpret_cast<_ed_particle_generator_param*>(reinterpret_cast<char*>(pFileData) + offset);
 	}
 
-	offset = (pFileData->manager).field_0x50.offset;
+	offset = (pFileData->manager).aEffectorParams.offset;
 	if (offset != 0x0) {
-		(pFileData->manager).field_0x50.pData = reinterpret_cast<_ed_particle_effector_param*>(reinterpret_cast<char*>(pFileData) + offset);
+		(pFileData->manager).aEffectorParams.pData = reinterpret_cast<_ed_particle_effector_param*>(reinterpret_cast<char*>(pFileData) + offset);
 	}
 
-	offset = (pFileData->manager).field_0x5c.offset;
+	offset = (pFileData->manager).aSelectorParams.offset;
 	if (offset != 0x0) {
-		(pFileData->manager).field_0x5c.pData = reinterpret_cast<_ed_particle_selector_param*>(reinterpret_cast<char*>(pFileData) + offset);
+		(pFileData->manager).aSelectorParams.pData = reinterpret_cast<_ed_particle_selector_param*>(reinterpret_cast<char*>(pFileData) + offset);
 	}
 
-	offset = (pFileData->manager).field_0x68.offset;
+	offset = (pFileData->manager).aShaperParams.offset;
 	if (offset != 0x0) {
-		(pFileData->manager).field_0x68.pData = reinterpret_cast<_ed_particle_shaper_param*>(reinterpret_cast<char*>(pFileData) + offset);
+		(pFileData->manager).aShaperParams.pData = reinterpret_cast<_ed_particle_shaper_param*>(reinterpret_cast<char*>(pFileData) + offset);
 	}
 
 	offset = (pFileData->manager).field_0xc.offset;
@@ -167,10 +167,10 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 	pCurGroup = (pFileData->manager).aGroups.pData;
 	iVar17 = 0;
 	do {
-		if ((pFileData->manager).nbParams <= iVar17) {
-			pCurParam = (pFileData->manager).aParams.pData;
+		if ((pFileData->manager).nbTotalGroups <= iVar17) {
+			pCurParam = (pFileData->manager).aGeneratorParams.pData;
 
-			for (iVar17 = 0; iVar17 < (pFileData->manager).field_0x4c; iVar17 = iVar17 + 1) {
+			for (iVar17 = 0; iVar17 < (pFileData->manager).nbGeneratorParams; iVar17 = iVar17 + 1) {
 				pCurParam->field_0x0 = 1;
 				pCurParam->field_0x2 = 1;
 				pCurParam->field_0x228 = pCurParam->field_0x178;
@@ -186,22 +186,22 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 				pCurParam = pCurParam + 1;
 			}
 
-			_ed_particle_effector_param* pGenParam = (pFileData->manager).field_0x50.pData;
-			for (iVar17 = 0; iVar17 < (pFileData->manager).field_0x58; iVar17 = iVar17 + 1) {
+			_ed_particle_effector_param* pGenParam = (pFileData->manager).aEffectorParams.pData;
+			for (iVar17 = 0; iVar17 < (pFileData->manager).nbEffectorParams; iVar17 = iVar17 + 1) {
 				pGenParam->field_0x0 = 1;
 				pGenParam->field_0x2 = 1;
 				pGenParam = pGenParam + 1;
 			}
 
-			_ed_particle_selector_param* pSelectorParam = (pFileData->manager).field_0x5c.pData;
-			for (iVar17 = 0; iVar17 < (pFileData->manager).field_0x64; iVar17 = iVar17 + 1) {
+			_ed_particle_selector_param* pSelectorParam = (pFileData->manager).aSelectorParams.pData;
+			for (iVar17 = 0; iVar17 < (pFileData->manager).nbSelectorParams; iVar17 = iVar17 + 1) {
 				pSelectorParam->field_0x0 = 1;
 				pSelectorParam->field_0x2 = 1;
 				pSelectorParam = pSelectorParam + 1;
 			}
 
-			_ed_particle_shaper_param* pParticle_1a0 = (pFileData->manager).field_0x68.pData;
-			for (iVar17 = 0; iVar17 < (pFileData->manager).field_0x70; iVar17 = iVar17 + 1) {
+			_ed_particle_shaper_param* pParticle_1a0 = (pFileData->manager).aShaperParams.pData;
+			for (iVar17 = 0; iVar17 < (pFileData->manager).nbShaperParams; iVar17 = iVar17 + 1) {
 				pParticle_1a0->field_0x0 = 1;
 				pParticle_1a0->field_0x2 = 1;
 				pParticle_1a0 = pParticle_1a0 + 1;
@@ -234,7 +234,7 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 		pCurGroup->field_0x6 = pCurGroup->pParticle.pData->field_0x6;
 
 		for (iVar22 = 0; iVar15 = 0, iVar22 < pCurGroup->field_0x20; iVar22 = iVar22 + 1) {
-			pCurGroup->field_0x24.pData[iVar22].pData = (pFileData->manager).aParams.pData + pCurGroup->field_0x24.pData[iVar22].offset;
+			pCurGroup->field_0x24.pData[iVar22].pData = (pFileData->manager).aGeneratorParams.pData + pCurGroup->field_0x24.pData[iVar22].offset;
 
 			iVar15 = pCurGroup->field_0x80;
 			if (iVar15 == 0) {
@@ -248,7 +248,7 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 
 		iVar22 = pCurGroup->field_0x2c;
 		for (; iVar12 = 0, iVar15 < iVar22; iVar15 = iVar15 + 1) {
-			pCurGroup->field_0x30.pData[iVar15].pData = (pFileData->manager).field_0x50.pData + pCurGroup->field_0x30.pData[iVar15].offset;
+			pCurGroup->field_0x30.pData[iVar15].pData = (pFileData->manager).aEffectorParams.pData + pCurGroup->field_0x30.pData[iVar15].offset;
 
 			pCurGroup->field_0x30.pData[iVar15].pData->field_0xc0 = pCurGroup->field_0x30.pData[iVar15].pData->field_0x40;
 			
@@ -263,7 +263,7 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 
 		for (; iVar22 = 0, iVar12 < pCurGroup->field_0x38; iVar12 = iVar12 + 1) {
 			iVar15 = 0;
-			pCurGroup->field_0x3c.pData[iVar12].pData = (pFileData->manager).field_0x5c.pData + pCurGroup->field_0x3c.pData[iVar12].offset;
+			pCurGroup->field_0x3c.pData[iVar12].pData = (pFileData->manager).aSelectorParams.pData + pCurGroup->field_0x3c.pData[iVar12].offset;
 
 			_ed_particle_selector_param* pSelectorParam = pCurGroup->field_0x3c.pData[iVar12].pData;
 
@@ -271,13 +271,13 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 			
 			while (iVar15 < pSelectorParam->field_0x10) {
 				if (pSelectorParam->field_0x8 == 2) {
-					pSelectorParam->field_0x14.pData[iVar15].pData = (pFileData->manager).field_0x50.pData + pSelectorParam->field_0x14.pData[iVar15].offset;
+					pSelectorParam->field_0x14.pData[iVar15].pData = (pFileData->manager).aEffectorParams.pData + pSelectorParam->field_0x14.pData[iVar15].offset;
 				LAB_0027d4d4:
 					iVar15 = iVar15 + 1;
 				}
 				else {
 					if (pSelectorParam->field_0x8 == 1) {
-						pSelectorParam->field_0x14.pData[iVar15].pData = (pFileData->manager).aParams.pData + pSelectorParam->field_0x14.pData[iVar15].offset;
+						pSelectorParam->field_0x14.pData[iVar15].pData = (pFileData->manager).aGeneratorParams.pData + pSelectorParam->field_0x14.pData[iVar15].offset;
 						goto LAB_0027d4d4;
 					}
 
@@ -288,7 +288,7 @@ _ed_particle_manager* edParticlesInstall(ParticleFileData* pFileData, ed_3D_Scen
 
 		iVar15 = pCurGroup->field_0x44;
 		for (; iVar22 < iVar15; iVar22 = iVar22 + 1) {
-			pCurGroup->field_0x48.pData[iVar22].pData = (pFileData->manager).field_0x68.pData + pCurGroup->field_0x48.pData[iVar22].offset;
+			pCurGroup->field_0x48.pData[iVar22].pData = (pFileData->manager).aShaperParams.pData + pCurGroup->field_0x48.pData[iVar22].offset;
 
 			_ed_particle_shaper_param* pShaperParam = pCurGroup->field_0x48.pData[iVar22].pData;
 			pShaperParam->field_0x198 = pScene;
@@ -508,61 +508,38 @@ void edPartGenNewPosAndSpeed(_ed_particle_generator_param* pGeneratorParam, edF3
 	bVar8 = pGeneratorParam->field_0xf & 0xf;
 
 	if (bVar1 == PARTICLE_SHAPE_SPHERE) {
-		IMPLEMENTATION_GUARD(
 		if ((iVar5 != 0) && (iVar7 = iVar5, iVar5 == 1)) {
 			iVar7 = 2;
 		}
 
 		puVar10 = 0.5f;
 		fVar11 = GenRandomCentered01(pGeneratorParam);
-		fVar14 = GenRandomCentered01(pGeneratorParam) - 0.5;
-		fVar15 = M_PI * fVar14 * g_ScalingFactor_00448518;
-		if (fVar15 < 0.0) {
-			puVar10 = -0.5f;
-		}
-		fVar12 = M_2_PI * fVar11 * g_ScalingFactor_00448518;
-		if (fVar12 < 0.0) {
-			puVar13 = -0.5f;
-		}
-		else {
-			puVar13 = 0.5f;
-		}
-		fVar14 = M_PI * fVar14 * g_ScalingFactor_00448518;
-		local_e0.x = edFCosinus[(int)(fVar15 + (float)puVar10) & 0x1fff] *
-			edFCosinus[(int)(fVar12 + (float)puVar13) & 0x1fff];
-		if (fVar14 < 0.0) {
-			puVar13 = -0.5f;
-		}
-		else {
-			puVar13 = 0.5f;
-		}
-		fVar11 = M_2_PI * fVar11 * g_ScalingFactor_00448518;
-		local_e0.y = edFSinus[(int)(fVar14 + (float)puVar13) & 0x1fff];
-		if (fVar11 < 0.0) {
-			puVar13 = -0.5f;
-		}
-		else {
-			puVar13 = 0.5f;
-		}
-		local_e0.z = edFCosinus[(int)(fVar15 + (float)puVar10) & 0x1fff] * edFSinus[(int)(fVar11 + (float)puVar13) & 0x1fff];
-		local_e0.w = 0.0;
+		fVar14 = GenRandomCentered01(pGeneratorParam) - 0.5f;
+
+		local_e0.x = cosf(fVar11) * cosf(fVar14);
+		local_e0.y = cosf(fVar14);
+		local_e0.z = cosf(fVar11) * cosf(fVar14);
+		local_e0.w = 0.0f;
+
 		if (iVar7 == 3) {
 			fVar14 = GenRandom01(pGeneratorParam) * 0.5f;
 			param_2->x = local_e0.x * fVar14;
 			param_2->y = local_e0.y * fVar14;
 			param_2->z = local_e0.z * fVar14;
-			param_2->w = fVar14 * 0.0;
+			param_2->w = fVar14 * 0.0f;
 		}
 		else {
 			if (iVar7 == 2) {
-				param_2->x = local_e0.x * 0.5;
-				param_2->y = local_e0.y * 0.5;
-				param_2->z = local_e0.z * 0.5;
-				param_2->w = 0.0;
+				param_2->x = local_e0.x * 0.5f;
+				param_2->y = local_e0.y * 0.5f;
+				param_2->z = local_e0.z * 0.5f;
+				param_2->w = 0.0f;
 			}
 		}
-		param_2->w = 1.0;
-		edF32Matrix4MulF32Vector4Hard(param_2, &pGeneratorParam->field_0x40, param_2);)
+
+		param_2->w = 1.0f;
+
+		edF32Matrix4MulF32Vector4Hard(param_2, &pGeneratorParam->field_0x40, param_2);
 	LAB_0027a3b0:
 		bVar1 = pGeneratorParam->field_0x7;
 	}
@@ -2421,8 +2398,8 @@ void edPartSetDisplayMatrix(_ed_particle_manager* pManager, edF32MATRIX4* pMatri
 	int iVar6;
 	_ed_particle_shaper_param* pParticle_1a0;
 
-	nbMatrix = pManager->field_0x70;
-	pParticle_1a0 = pManager->field_0x68.pData;
+	nbMatrix = pManager->nbShaperParams;
+	pParticle_1a0 = pManager->aShaperParams.pData;
 
 	for (iVar6 = 0; iVar6 < nbMatrix; iVar6 = iVar6 + 1) {
 		pParticle_1a0->field_0xd0 = *pMatrix;
@@ -6151,7 +6128,64 @@ void edParticlesDraw(_ed_particle_manager* pManager, float time)
 
 void edParticlesUnInstall(_ed_particle_manager* pManager, ed_3D_Scene* pScene)
 {
-	IMPLEMENTATION_GUARD();
+	byte bVar1;
+	int iVar2;
+	_ed_particle* pParticle;
+	int iVar3;
+	int iVar4;
+	_ed_particle_group* pGroup;
+	int iVar5;
+	_ed_particle_shaper_param* pShaperParam;
+
+	pGroup = pManager->aGroups.pData;
+
+	for (iVar4 = 0; iVar4 < pManager->nbTotalGroups; iVar4 = iVar4 + 1) {
+		iVar5 = 0;
+
+		while (iVar5 < pGroup->field_0x44) {
+			pShaperParam = pGroup->field_0x48.pData[iVar5].pData;
+			iVar3 = 0;
+
+			if (pShaperParam->field_0x4 == 3) {
+				pParticle = pGroup->pParticle.pData;
+				iVar3 = pGroup->field_0x10;
+				for (iVar2 = 0; iVar2 < iVar3; iVar2 = iVar2 + 1) {
+					if (pParticle->pNode != (edNODE*)0x0) {
+						ed3DHierarchyRemoveFromScene(pScene, pParticle->pNode);
+						pParticle->pNode = (edNODE*)0x0;
+					}
+
+					pParticle = pParticle + 1;
+				}
+
+				iVar5 = iVar5 + 1;
+			}
+			else {
+				bVar1 = pShaperParam->field_0xb;
+				for (; iVar3 < (int)(uint)bVar1; iVar3 = iVar3 + 1) {
+					if ((pShaperParam->field_0x44.pData[iVar3].pManager != (ed_g2d_manager*)0x0) && (pShaperParam->field_0x18c == 0)) {
+						edDListTermMaterial(pShaperParam->field_0x44.pData + iVar3);
+					}
+
+					bVar1 = pShaperParam->field_0xb;
+				}
+
+				for (iVar3 = 0; iVar3 < pShaperParam->field_0xc; iVar3 = iVar3 + 1) {
+					if (pShaperParam->field_0x124[iVar3].Get() != 0) {
+						edDListDelete(pShaperParam->field_0x124[iVar3]);
+					}
+				}
+
+				iVar5 = iVar5 + 1;
+			}
+		}
+
+		pGroup = pGroup + 1;
+	}
+
+	pManager->bSetup = 0;
+
+	return;
 }
 
 void edPartGeneratorComputeMatrices(_ed_particle_generator_param* pParam)
@@ -6163,3 +6197,43 @@ void edPartGeneratorComputeMatrices(_ed_particle_generator_param* pParam)
 
 	return;
 }
+
+void edPartEffectorComputeMatrices(_ed_particle_effector_param* pParam)
+{
+	edF32VECTOR4 local_30;
+	edF32VECTOR4 local_20;
+	edF32VECTOR4 local_10;
+
+	local_10.x = 1.0f / (pParam->field_0x10).x;
+	local_10.y = 1.0f / (pParam->field_0x10).y;
+	local_10.z = 1.0f / (pParam->field_0x10).z;
+	local_10.w = 0.0f;
+
+	local_20.x = -(pParam->field_0x20).x;
+	local_20.y = -(pParam->field_0x20).y;
+	local_20.z = -(pParam->field_0x20).z;
+	local_20.w = 0.0f;
+
+	local_30.x = -(pParam->position).x;
+	local_30.y = -(pParam->position).y;
+	local_30.z = -(pParam->position).z;
+	local_30.w = 0.0f;
+
+	edF32Matrix4SetIdentityHard(&pParam->field_0x40);
+	edF32Matrix4ScaleHard(&pParam->field_0x40, &pParam->field_0x40, &pParam->field_0x10);
+	edF32Matrix4RotateXYZHard(&pParam->field_0x40, &pParam->field_0x40, &pParam->field_0x20);
+	edF32Matrix4TranslateHard(&pParam->field_0x40, &pParam->field_0x40, &pParam->position);
+	edF32Matrix4SetIdentityHard(&pParam->field_0x80);
+	edF32Matrix4TranslateHard(&pParam->field_0x80, &pParam->field_0x80, &local_30);
+	edF32Matrix4RotateZYXHard(&pParam->field_0x80, &pParam->field_0x80, &local_20);
+	edF32Matrix4ScaleHard(&pParam->field_0x80, &pParam->field_0x80, &local_10);
+
+	return;
+}
+
+_ed_particle_effector_param* edPartGetEffector(_ed_particle_manager* pManager, char* szName)
+{
+	ulong hash = ed3DComputeHashCode(szName);
+	return _edPartGetEntityByHashcode<_ed_particle_effector_param>(pManager->aEffectorParams.pData.Get(), pManager->nbEffectorParams, &hash);
+}
+

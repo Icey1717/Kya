@@ -14,7 +14,7 @@ class CFxNewParticle : public CNewFx
 {
 public:
 	virtual void Draw();
-	virtual void Kill() { IMPLEMENTATION_GUARD(); }
+	virtual void Kill();
 	virtual int GetType();
 	void Manage();
 	void Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SELECTOR selector);

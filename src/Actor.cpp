@@ -2576,6 +2576,36 @@ float CActor::GetPosition_00117db0()
 	return fVar3;
 }
 
+
+void CActor::GetPosition_00101130(edF32VECTOR4* pOutPosition)
+{
+	CActor* pCVar1;
+	float fVar2;
+	float fVar3;
+	float fVar4;
+	bool bVar5;
+	edF32VECTOR4 newPosition;
+
+	*pOutPosition = gF32Vector4Zero;
+
+	for (pCVar1 = this->pTiedActor; pCVar1 != (CActor*)0x0; pCVar1 = pCVar1->pTiedActor) {
+		bVar5 = pCVar1->IsKindOfObject(OBJ_TYPE_MOVABLE);
+		if (bVar5 == false) {
+			newPosition = gF32Vector4Zero;
+		}
+		else {
+			CActorMovable* pMovable = static_cast<CActorMovable*>(pCVar1);
+			edF32Vector4ScaleHard((pMovable->dynamic).linearAcceleration, &newPosition, &(pMovable->dynamic).velocityDirectionEuler);
+		}
+
+		edF32Vector4AddHard(pOutPosition, pOutPosition, &newPosition);
+	}
+
+	return;
+}
+
+
+
 CActorSound* CActor::CreateActorSound(int soundType)
 {
 	IMPLEMENTATION_GUARD_AUDIO();

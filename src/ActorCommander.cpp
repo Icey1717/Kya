@@ -318,18 +318,18 @@ void CActorCommander::ClearLocalData()
 
 	this->bInCombat_0x1b0 = 1;
 	this->count_0x1d0 = 0;
-	//iVar5 = 0;
-	//if (0 < this->nbTeams) {
-	//	iVar4 = 0;
-	//	do {
-	//		iVar5 = iVar5 + 1;
-	//		puVar4 = (CTeamElt*)((int)&this->aTeamElt->field_0x0 + iVar4);
-	//		puVar4->field_0x0 = 2;
-	//		puVar4->field_0x4 = 2;
-	//		puVar4->field_0x14 = -1;
-	//		iVar4 = iVar4 + 0x18;
-	//	} while (iVar5 < this->nbTeams);
-	//}
+
+	iVar5 = 0;
+	if (0 < this->nbTeams) {
+		do {
+			puVar4 = this->aTeamElt + iVar5;
+			puVar4->field_0x0 = 2;
+			puVar4->field_0x4 = 2;
+			puVar4->field_0x14 = -1;
+
+			iVar5 = iVar5 + 1;
+		} while (iVar5 < this->nbTeams);
+	}
 
 	this->camFigData.pCommanderRef_0x230 = this;
 	this->camFigData.Reset();

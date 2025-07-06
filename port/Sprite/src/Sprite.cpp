@@ -167,7 +167,7 @@ namespace Renderer::Kya::Sprite
 
 			// Expand the vertex. Four vertices per quad.
 			for (int i = 0; i < vtxCount; i += 4) {
-				const int index = i + meshOffset; // -vtxOffset;
+				const int index = i + meshOffset;
 
 				assert(pVectorVertex[index + 0].wi != gGifTagCopyCode);
 				assert(pVectorVertex[index + 1].wi != gGifTagCopyCode);
@@ -201,7 +201,7 @@ namespace Renderer::Kya::Sprite
 			}
 
 			for (int i = 0; i < vtxCount; i++) {
-				const int index = i + meshOffset; // -vtxOffset;
+				const int index = i + meshOffset;
 
 				Renderer::GSVertexUnprocessedNormal vtx;
 				vtx.RGBA[0] = pRgba[index].r;
@@ -234,10 +234,7 @@ namespace Renderer::Kya::Sprite
 			}
 
 			meshOffset += vtxCount;
-			vtxOffset += 2;
 		}
-
-		//assert(internalVertexBuffer.GetIndexTail() > 0);
 	}
 }
 

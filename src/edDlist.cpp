@@ -3217,6 +3217,63 @@ DisplayList* edDListNew(EHeap heapID, uint flags, int nbCommands, int param_4, i
 	return pDisplayList;
 }
 
+void edDListDelete(DisplayList* pDisplayList)
+{
+	ushort uVar1;
+	DisplayList* __dest;
+	int __n;
+	uint uVar2;
+	DisplayList* pDVar3;
+	uint* puVar4;
+	uint uVar5;
+
+	uVar5 = 0;
+	do {
+		while (true) {
+			if (1 < uVar5) {
+				edMemFree(pDisplayList);
+				return;
+			}
+			pDVar3 = pDisplayList + uVar5;
+
+			if (pDVar3->field_0x3 != 0) break;
+		LAB_002cb284:
+			uVar5 = uVar5 + 1;
+		}
+
+		uVar1 = pDVar3->flags_0x0;
+		if ((uVar1 & 2) == 0) {
+			if ((uVar1 & 1) == 0) {
+				return;
+			}
+
+			IMPLEMENTATION_GUARD(
+			puVar4 = (uint*)(gNbDList_3D + uVar5);
+			for (uVar2 = 0; uVar2 < *puVar4; uVar2 = uVar2 + 1) {
+				__dest = *(DisplayList**)(&((DisplayList*)gDList_3D[uVar5])->flags_0x0 + uVar2 * 2);
+				if (__dest == pDVar3) {
+					__n = ((*puVar4 - 1) - uVar2) * 4;
+					if (__n != 0) {
+						memcpy(__dest, *(DisplayList**)((int)(&((DisplayList*)gDList_3D[uVar5])->flags_0x0 + uVar2 * 2) + 4), __n);
+					}
+					*puVar4 = *puVar4 - 1;
+					break;
+				}
+			})
+
+			goto LAB_002cb284;
+		}
+
+		if ((uVar1 & 0x20) == 0) {
+			edListClear(gDList_2D[gCurRenderState]);
+			goto LAB_002cb284;
+		}
+
+		edListClear(gDList_2D_Before3D[uVar5]);
+		uVar5 = uVar5 + 1;
+	} while (true);
+}
+
 void edDListSetSceneUsed(DisplayList* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster)
 {
 	uint displayListIndex;

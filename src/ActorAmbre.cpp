@@ -109,12 +109,6 @@ StateConfig CActorAmbre::_gStateCfg_AMB[6]
 	StateConfig(0x0, 0x0),
 };
 
-CActorAmbre::CActorAmbre()
-{
-	//this->field_0x1d4 = 0;
-	//this->field_0x1d8 = (undefined*)0x0;
-}
-
 void CActorAmbre::Create(ByteCode* pByteCode)
 {
 	S_STREAM_NTF_TARGET_SWITCH* pSVar1;
@@ -127,7 +121,7 @@ void CActorAmbre::Create(ByteCode* pByteCode)
 
 	CActor::Create(pByteCode);
 	materialId = pByteCode->GetS32();
-	/*(this->effectsStructC).field_0x8 = */pByteCode->GetS32();
+	this->effectsStructC.type = pByteCode->GetS32();
 
 	(this->staticMesh).textureIndex = pByteCode->GetS32();
 	(this->staticMesh).meshIndex = pByteCode->GetS32();
@@ -255,6 +249,7 @@ void CActorAmbre::Term()
 
 void CActorAmbre::Draw()
 {
+	// Draw sparks.
 	IMPLEMENTATION_GUARD_LOG();
 }
 
@@ -294,19 +289,18 @@ StateConfig* CActorAmbre::GetStateCfg(int state)
 
 void CActorAmbre::ChangeManageState(int state)
 {
-	undefined* puVar1;
+	CNewFx* pFx;
 	int iVar2;
-	int* piVar3;
-	bool bVar4;
+	bool bVar3;
 
 	CActor::ChangeManageState(state);
 
-	bVar4 = (this->staticMesh).textureIndex != -1;
-
-	if (bVar4) {
-		bVar4 = (this->staticMesh).meshIndex != -1;
+	bVar3 = (this->staticMesh).textureIndex != -1;
+	if (bVar3) {
+		bVar3 = (this->staticMesh).meshIndex != -1;
 	}
-	if (bVar4) {
+
+	if (bVar3) {
 		if (state == 0) {
 			this->staticMesh.SetVisible((ed_3D_Scene*)0x0);
 		}
@@ -315,105 +309,113 @@ void CActorAmbre::ChangeManageState(int state)
 		}
 	}
 
-	IMPLEMENTATION_GUARD_FX(
-	if ((this->effectsStructC).field_0x8 != (undefined*)0xffffffff) {
+	if (this->effectsStructC.type != -1) {
 		if ((state == 0) || (this->actorState == 5)) {
-			piVar3 = (int*)(this->effectsStructC).pFx;
-			if ((piVar3 == (int*)0x0) ||
-				((iVar2 = (this->effectsStructC).id, iVar2 == 0 || (bVar4 = true, iVar2 != piVar3[6])))) {
-				bVar4 = false;
+			pFx = (this->effectsStructC).pFx;
+			if ((pFx == (CNewFx*)0x0) || ((iVar2 = (this->effectsStructC).id, iVar2 == 0 || (bVar3 = true, iVar2 != pFx->id)))) {
+				bVar3 = false;
 			}
-			if (bVar4) {
-				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == piVar3[6]))
-				{
-					(**(code**)(*piVar3 + 0xc))();
+
+			if (bVar3) {
+				if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+					pFx->Kill();
 				}
-				(this->effectsStructC).pFx = (undefined*)0x0;
+
+				(this->effectsStructC).pFx = (CNewFx*)0x0;
 				(this->effectsStructC).id = 0;
 			}
+
 			(this->effectsStructC).id = 0;
-			(this->effectsStructC).pFx = (undefined*)0x0;
+			(this->effectsStructC).pFx = (CNewFx*)0x0;
 		}
 		else {
-			puVar1 = (this->effectsStructC).pFx;
-			if (((puVar1 == (undefined*)0x0) || (iVar2 = (this->effectsStructC).id, iVar2 == 0)) ||
-				(iVar2 != *(int*)(puVar1 + 0x18))) {
-				bVar4 = false;
+			pFx = (this->effectsStructC).pFx;
+
+			if (((pFx == (CNewFx*)0x0) || (iVar2 = (this->effectsStructC).id, iVar2 == 0)) || (iVar2 != pFx->id)) {
+				bVar3 = false;
 			}
 			else {
-				bVar4 = true;
+				bVar3 = true;
 			}
-			if (!bVar4) {
-				CFxHandle::SV_FX_Start(&this->effectsStructC);
+
+			if (!bVar3) {
+				SV_FX_Start(&this->effectsStructC);
 			}
-			piVar3 = (int*)(this->effectsStructC).pFx;
-			if (((piVar3 == (int*)0x0) || (iVar2 = (this->effectsStructC).id, iVar2 == 0)) ||
-				(bVar4 = true, iVar2 != piVar3[6])) {
-				bVar4 = false;
+
+			pFx = (this->effectsStructC).pFx;
+			if (((pFx == (CNewFx*)0x0) || (iVar2 = (this->effectsStructC).id, iVar2 == 0)) ||
+				(bVar3 = true, iVar2 != pFx->id)) {
+				bVar3 = false;
 			}
-			if (bVar4) {
-				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == piVar3[6]))
-				{
-					(**(code**)(*piVar3 + 0x38))(piVar3, 6, this);
+
+			if (bVar3) {
+				if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+					pFx->SpatializeOnActor(6, this, 0x0);
 				}
-				piVar3 = (int*)(this->effectsStructC).pFx;
-				if (((piVar3 != (int*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == piVar3[6]))
-				{
-					(**(code**)(*piVar3 + 0x10))(0, 0);
+
+				pFx = (this->effectsStructC).pFx;
+				if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->effectsStructC).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+					pFx->Start(0, 0);
 				}
 			}
 		}
 	}
 	if (this->field_0x1d0 != 0xffffffff) {
 		if ((state == 0) || (this->actorState != 5)) {
-			piVar3 = (int*)this->field_0x1d8;
-			if ((piVar3 == (int*)0x0) || ((this->field_0x1d4 == 0 || (bVar4 = true, this->field_0x1d4 != piVar3[6])))) {
-				bVar4 = false;
+			pFx = (this->effectsStructD).pFx;
+			if ((pFx == (CNewFx*)0x0) ||
+				((iVar2 = (this->effectsStructD).id, iVar2 == 0 || (bVar3 = true, iVar2 != pFx->id)))) {
+				bVar3 = false;
 			}
-			if (bVar4) {
-				if (((piVar3 != (int*)0x0) && (this->field_0x1d4 != 0)) && (this->field_0x1d4 == piVar3[6])) {
-					(**(code**)(*piVar3 + 0xc))();
+
+			if (bVar3) {
+				if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->effectsStructD).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+					pFx->Kill();
 				}
-				this->field_0x1d8 = (undefined*)0x0;
-				this->field_0x1d4 = 0;
+
+				(this->effectsStructD).pFx = (CNewFx*)0x0;
+				(this->effectsStructD).id = 0;
 			}
-			this->field_0x1d4 = 0;
-			this->field_0x1d8 = (undefined*)0x0;
+
+			(this->effectsStructD).id = 0;
+			(this->effectsStructD).pFx = (CNewFx*)0x0;
 		}
 		else {
-			if (((this->field_0x1d8 == (undefined*)0x0) || (this->field_0x1d4 == 0)) ||
-				(this->field_0x1d4 != *(int*)(this->field_0x1d8 + 0x18))) {
-				bVar4 = false;
+			pFx = (this->effectsStructD).pFx;
+			if (((pFx == (CNewFx*)0x0) || (iVar2 = (this->effectsStructD).id, iVar2 == 0)) || (iVar2 != pFx->id)) {
+				bVar3 = false;
 			}
 			else {
-				bVar4 = true;
+				bVar3 = true;
 			}
-			if (!bVar4) {
-				CParticlesManager::GetDynamicFx
-				(CScene::ptable.g_EffectsManager_004516b8, &this->field_0x1d4, this->field_0x1d0, 0xffffffffffffffff);
+			if (!bVar3) {
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->effectsStructD, this->field_0x1d0, FX_MATERIAL_SELECTOR_NONE);
 			}
-			piVar3 = (int*)this->field_0x1d8;
-			if (((piVar3 == (int*)0x0) || (this->field_0x1d4 == 0)) || (bVar4 = true, this->field_0x1d4 != piVar3[6])) {
-				bVar4 = false;
+
+			pFx = (this->effectsStructD).pFx;
+			if (((pFx == (CNewFx*)0x0) || (iVar2 = (this->effectsStructD).id, iVar2 == 0)) ||
+				(bVar3 = true, iVar2 != pFx->id)) {
+				bVar3 = false;
 			}
-			if (bVar4) {
-				if (((piVar3 != (int*)0x0) && (this->field_0x1d4 != 0)) && (this->field_0x1d4 == piVar3[6])) {
-					(**(code**)(*piVar3 + 0x38))(piVar3, 6, this, 0);
+			if (bVar3) {
+				if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->effectsStructD).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+					pFx->SpatializeOnActor(6, this, 0);
 				}
-				piVar3 = (int*)this->field_0x1d8;
-				if (((piVar3 != (int*)0x0) && (this->field_0x1d4 != 0)) && (this->field_0x1d4 == piVar3[6])) {
-					(**(code**)(*piVar3 + 0x10))(0, 0);
+
+				pFx = (this->effectsStructD).pFx;
+				if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->effectsStructD).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+					pFx->Start(0, 0);
 				}
 			}
 		}
-	})
+	}
 
 	return;
 }
 
 void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 {
-	undefined* puVar1;
+	CNewFx* puVar1;
 	int* piVar2;
 	float fVar3;
 	undefined8 uVar4;
@@ -438,32 +440,29 @@ void CActorAmbre::BehaviourStand_Manage(CBehaviourAmbre* pBehaviour)
 	undefined4 local_8;
 	undefined8* local_4;
 
-	IMPLEMENTATION_GUARD_FX(
 	pCVar6 = CActorHero::_gThis;
 	puVar1 = (this->effectsStructC).pFx;
-	if (((puVar1 == (undefined*)0x0) || (iVar8 = (this->effectsStructC).id, iVar8 == 0)) ||
-		(iVar8 != *(int*)(puVar1 + 0x18))) {
+	if (((puVar1 == (CNewFx*)0x0) || (iVar8 = (this->effectsStructC).id, iVar8 == 0)) || (iVar8 != puVar1->id)) {
 		bVar5 = false;
 	}
 	else {
 		bVar5 = true;
 	}
+
 	if (bVar5) {
 		v1 = &CActorHero::_gThis->currentLocation;
 		v2 = &this->currentLocation;
-		local_20.x = (float)gF32Vertex4Zero._0_8_;
-		local_20.y = (float)((ulong)gF32Vertex4Zero._0_8_ >> 0x20);
-		local_20.z = gF32Vertex4Zero.z;
-		local_20.w = gF32Vertex4Zero.w;
+		local_20 = gF32Vertex4Zero;
 		fVar12 = v1->x - v2->x;
 		fVar13 = CActorHero::_gThis->currentLocation.y - this->currentLocation.y;
 		fVar3 = CActorHero::_gThis->currentLocation.z - this->currentLocation.z;
-		if (fVar12 * fVar12 + fVar13 * fVar13 + fVar3 * fVar3 <= 25.0) {
+		if (fVar12 * fVar12 + fVar13 * fVar13 + fVar3 * fVar3 <= 25.0f) {
 			edF32Vector4SubHard(&local_20, v1, v2);
-			local_20.w = 1.0;
+			local_20.w = 1.0f;
 		}
-		SV_FX_UpdateEffectorPosition(&this->effectsStructC, s_effector_target_0042b9d0, &local_20);
-	})
+
+		SV_FX_UpdateEffectorPosition(&this->effectsStructC, "effector_target", &local_20);
+	}
 
 	if (this->actorState != 5) {
 		return;
@@ -661,7 +660,8 @@ int CBehaviourAmbre::InterpretMessage(CActor* pSender, int msg, void* pMsgParam)
 			}
 			(pCVar1->effectsStructC).id = 0;
 			(pCVar1->effectsStructC).pFx = (undefined*)0x0;
-			CFxHandle::SV_FX_Start(&pCVar1->effectsStructC);
+			SV_FX_Start(&pCVar1->effectsStructC);
+
 			piVar2 = (int*)(pCVar1->effectsStructC).pFx;
 			if (((piVar2 == (int*)0x0) || (iVar5 = (pCVar1->effectsStructC).id, iVar5 == 0)) ||
 				(bVar3 = true, iVar5 != piVar2[6])) {

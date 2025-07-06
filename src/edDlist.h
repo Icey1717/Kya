@@ -136,6 +136,7 @@ void edDlistSetUseUV(int newUseUV);
 
 DisplayList* edDListSetCurrent(DisplayList* pNewDisplayList);
 DisplayList* edDListNew(EHeap heapID, uint inFlags, int param_3, int param_4, int param_5, uint param_6, void* pInBuffer);
+void edDListDelete(DisplayList* pDisplayList);
 void edDListSetSceneUsed(DisplayList* pDisplayListInternalArray, ed_3D_Scene* pStaticMeshMaster);
 uint edDListGetBufSizeNeeded(uint param_1, int param_2, int param_3, int param_4, uint* param_5, uint* param_6);
 

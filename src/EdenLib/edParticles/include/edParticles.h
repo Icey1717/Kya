@@ -321,14 +321,13 @@ struct _ed_particle_effector_param
 	byte field_0x2;
 	byte field_0x3;
 
-	byte _pad_0_[0xc];
+	byte _pad_0_[0x4];
+
+	ulong hash;
 
 	edF32VECTOR4 field_0x10;
-	float field_0x20;
-	float field_0x24;
-	float field_0x28;
-	undefined4 field_0x2c;
-	edF32VECTOR4 field_0x30;
+	edF32VECTOR4 field_0x20;
+	edF32VECTOR4 position;
 
 	edF32MATRIX4 field_0x40;
 	edF32MATRIX4 field_0x80;
@@ -546,27 +545,23 @@ struct _ed_particle_manager
 
 	OffsetPointer<_ed_particle_group*> aGroups;
 	int nbGroups;
+	int nbTotalGroups;
 
-	int nbParams;
-
-	OffsetPointer<_ed_particle_generator_param*> aParams;
+	OffsetPointer<_ed_particle_generator_param*> aGeneratorParams;
 	int field_0x48;
+	int nbGeneratorParams;
 
-	int field_0x4c;
-
-	OffsetPointer<_ed_particle_effector_param*> field_0x50;
+	OffsetPointer<_ed_particle_effector_param*> aEffectorParams;
 	int field_0x54;
+	int nbEffectorParams;
 
-	int field_0x58;
-
-	OffsetPointer<_ed_particle_selector_param*> field_0x5c;
+	OffsetPointer<_ed_particle_selector_param*> aSelectorParams;
 	int field_0x60;
+	int nbSelectorParams;
 
-	int field_0x64;
-
-	OffsetPointer<_ed_particle_shaper_param*> field_0x68;
+	OffsetPointer<_ed_particle_shaper_param*> aShaperParams;
 	int field_0x6c;
-	int field_0x70;
+	int nbShaperParams;
 };
 
 static_assert(sizeof(_ed_particle_manager) == 0x74, "Size of _ed_particle_manager is not 0x74 bytes.");
@@ -590,5 +585,23 @@ void edPartSetDisplayMatrix(_ed_particle_manager* pManager, edF32MATRIX4* pMatri
 void edParticlesDraw(_ed_particle_manager* pManager, float param_2);
 void edParticlesUnInstall(_ed_particle_manager* pManager, ed_3D_Scene* pScene);
 void edPartGeneratorComputeMatrices(_ed_particle_generator_param* pParam);
+void edPartEffectorComputeMatrices(_ed_particle_effector_param* pParam);
+_ed_particle_effector_param* edPartGetEffector(_ed_particle_manager* pManager, char* szName);
+
+template<typename T>
+T* _edPartGetEntityByHashcode(T* pEntities, int nbEntities, ulong* pHash)
+{
+	int i = 0;
+
+	for (; (i < nbEntities && (pEntities->hash != *pHash)); pEntities = pEntities + 1) {
+		i = i + 1;
+	}
+
+	if (i == nbEntities) {
+		pEntities = (_ed_particle_effector_param*)0x0;
+	}
+
+	return pEntities;
+}
 
 #endif // ED_PARTICLES_H

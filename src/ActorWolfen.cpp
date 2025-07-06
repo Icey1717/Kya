@@ -5570,6 +5570,11 @@ bool CActorWolfen::IsExorcizable(CActorHero* pHero)
 	return 0.0f < pHero->GetMagicalForce();
 }
 
+int CActorWolfen::GetExorciseAnim()
+{
+	return CActorFighter::_SV_ANM_GetTwoSidedAnim(0x85, (int)this->field_0x7dc);
+}
+
 void CActorWolfen::UpdateCombatMode()
 {
 	if ((this->combatFlags_0xb78 & 4) == 0) {
@@ -9715,7 +9720,7 @@ void CBehaviourExorcism::Manage()
 
 	this->pOwner->BehaviourExorcism_Manage(this);
 
-	if (((this->field_0x2c.pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x2c.pFx->field_0x18)) {
+	if (((this->fxHandle.pFx == (CNewFx*)0x0) || (this->fxHandle.id == 0)) || (this->fxHandle.id != this->fxHandle.pFx->id)) {
 		bVar3 = false;
 	}
 	else {
@@ -9735,19 +9740,19 @@ void CBehaviourExorcism::Manage()
 			}
 		}
 
-		pFx = this->field_0x2c.pFx;
-		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+		pFx = this->fxHandle.pFx;
+		if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
 			pFx->Func_0x30(fVar7);
 		}
 
-		pFx = this->field_0x2c.pFx;
-		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+		pFx = this->fxHandle.pFx;
+		if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
 			pFx->position = this->field_0x40;
 		}
 
 		pCVar2 = this->pOwner;
-		pFx = this->field_0x2c.pFx;
-		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+		pFx = this->fxHandle.pFx;
+		if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
 			pFx->rotationEuler = pCVar2->rotationEuler;
 		}
 	}
@@ -9815,8 +9820,8 @@ void CBehaviourExorcism::Begin(CActor* pOwner, int newState, int newAnimationTyp
 	edF32Matrix4MulF32Vector4Hard(&this->field_0x40, &this->pOwner->pMeshTransform->base.transformA, &this->field_0x40);
 	(this->field_0x40).y = (this->field_0x40).y + 2.0f;
 	this->pOwner->field_0xb80 = 1;
-	this->field_0x2c.id = 0;
-	this->field_0x2c.pFx = (CNewFx*)0x0;
+	this->fxHandle.id = 0;
+	this->fxHandle.pFx = (CNewFx*)0x0;
 
 	if (newState == -1) {
 		this->pOwner->SetState(0x79, -1);
@@ -9848,22 +9853,22 @@ void CBehaviourExorcism::End(int newBehaviourId)
 	this->field_0x8 = 0xffffffff;
 	pCVar1 = this->pOwner->pCollisionData;
 	pCVar1->flags_0x0 = pCVar1->flags_0x0 | 0x1000;
-	pFx = this->field_0x2c.pFx;
-	if (((pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != pFx->field_0x18)) {
+	pFx = this->fxHandle.pFx;
+	if (((pFx == (CNewFx*)0x0) || (this->fxHandle.id == 0)) || (bVar3 = true, this->fxHandle.id != pFx->id)) {
 		bVar3 = false;
 	}
 
 	if (bVar3) {
-		if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+		if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
 			pFx->Kill();
 		}
 
-		this->field_0x2c.pFx = (CNewFx*)0x0;
-		this->field_0x2c.id = 0;
+		this->fxHandle.pFx = (CNewFx*)0x0;
+		this->fxHandle.id = 0;
 	}
 
-	this->field_0x2c.id = 0;
-	this->field_0x2c.pFx = (CNewFx*)0x0;
+	this->fxHandle.id = 0;
+	this->fxHandle.pFx = (CNewFx*)0x0;
 
 	return;
 }
@@ -9877,7 +9882,7 @@ void CBehaviourExorcism::InitState(int newState)
 	if (newState == WOLFEN_STATE_EXORCISE_IDLE) {
 	
 		if (this->field_0x24 != 0xffffffff) {
-			if (((this->field_0x2c.pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (this->field_0x2c.id != this->field_0x2c.pFx->field_0x18)) {
+			if (((this->fxHandle.pFx == (CNewFx*)0x0) || (this->fxHandle.id == 0)) || (this->fxHandle.id != this->fxHandle.pFx->id)) {
 				bVar3 = false;
 			}
 			else {
@@ -9885,28 +9890,28 @@ void CBehaviourExorcism::InitState(int newState)
 			}
 
 			if (!bVar3) {
-				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->field_0x2c, this->field_0x24, (FX_MATERIAL_SELECTOR)-1);
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->fxHandle, this->field_0x24, FX_MATERIAL_SELECTOR_NONE);
 			}
 		}
 
-		pFx = this->field_0x2c.pFx;
-		if (((pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (bVar3 = true, this->field_0x2c.id != pFx->field_0x18)) {
+		pFx = this->fxHandle.pFx;
+		if (((pFx == (CNewFx*)0x0) || (this->fxHandle.id == 0)) || (bVar3 = true, this->fxHandle.id != pFx->id)) {
 			bVar3 = false;
 		}
 
 		if (bVar3) {
-			if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+			if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
 				pFx->position = this->field_0x40;
 			}
 
 			pWolfen = this->pOwner;
-			pFx = this->field_0x2c.pFx;
-			if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+			pFx = this->fxHandle.pFx;
+			if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
 				pFx->rotationEuler = pWolfen->rotationEuler;
 			}
 
-			pFx = this->field_0x2c.pFx;
-			if (((pFx != (CNewFx*)0x0) && (this->field_0x2c.id != 0)) && (this->field_0x2c.id == pFx->field_0x18)) {
+			pFx = this->fxHandle.pFx;
+			if (((pFx != (CNewFx*)0x0) && (this->fxHandle.id != 0)) && (this->fxHandle.id == pFx->id)) {
 				pFx->Start(0.0f, 0.0f);
 			}
 		}
@@ -9944,12 +9949,12 @@ void CBehaviourExorcism::TermState(int oldState, int newState)
 	bool bVar2;
 
 	if (oldState == WOLFEN_STATE_EXORCISE_IDLE) {
-		pFx = this->field_0x2c.pFx;
-		if (((pFx == (CNewFx*)0x0) || (this->field_0x2c.id == 0)) || (bVar2 = true, this->field_0x2c.id != pFx->field_0x18)) {
+		pFx = this->fxHandle.pFx;
+		if (((pFx == (CNewFx*)0x0) || (this->fxHandle.id == 0)) || (bVar2 = true, this->fxHandle.id != pFx->id)) {
 			bVar2 = false;
 		}
 
-		if (((bVar2) && (pFx != (CNewFx*)0x0)) && ((this->field_0x2c.id != 0 && (this->field_0x2c.id == pFx->field_0x18)))) {
+		if (((bVar2) && (pFx != (CNewFx*)0x0)) && ((this->fxHandle.id != 0 && (this->fxHandle.id == pFx->id)))) {
 			IMPLEMENTATION_GUARD(
 			(**(code**)(*pFx + 0x24))(&DAT_bf800000);)
 		}
@@ -9991,14 +9996,15 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 	CActorWolfen* pWolfen;
 
 	if (msg == 0x1a) {
-		IMPLEMENTATION_GUARD(
-		if (*param_4 == 0xe) {
-			*(float*)&this->field_0xc = (float)param_4[1] / this->field_0x10;
+		InitPathfindingClientMsgParams* pPathfindingClientMsgParams = (InitPathfindingClientMsgParams*)pMsgParam;
+		if (pPathfindingClientMsgParams->msgId == 0xe) {
+			IMPLEMENTATION_GUARD(
+			this->field_0xc = pPathfindingClientMsgParams->time / this->field_0x10;
 			pWolfen = this->pOwner;
-			iVar2 = CActorWolfen::GetExorciseAnim(pWolfen);
-			(*((pWolfen->base).characterBase.base.base.pVTable)->SetState)((CActor*)pWolfen, 0x7a, iVar2);
-			return 1;
-		})
+			iVar2 = pWolfen->GetExorciseAnim();
+			pWolfen->SetState(0x7a, iVar2);
+			return 1;)
+		}
 	}
 	else {
 		if (msg == 0x30) {
@@ -10034,7 +10040,60 @@ int CBehaviourExorcism::InterpretMessage(CActor* pSender, int msg, void* pMsgPar
 
 void CBehaviourExorcism::ChangeManageState(int state)
 {
-	IMPLEMENTATION_GUARD();
+	CNewFx* pFx;
+	int iVar2;
+	CActorWolfen* pWolfen;
+	bool bVar4;
+
+	if (state == 0) {
+		pFx = (this->fxHandle).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar2 = (this->fxHandle).id, iVar2 == 0)) || (bVar4 = true, iVar2 != pFx->id)) {
+			bVar4 = false;
+		}
+
+		if (((bVar4) && (pFx != (CNewFx*)0x0)) && ((iVar2 = (this->fxHandle).id, iVar2 != 0 && (iVar2 == pFx->id)))) {
+			pFx->Stop(-1.0f);
+		}
+	}
+	else {
+		if (this->field_0x24 != 0xffffffff) {
+			pFx = (this->fxHandle).pFx;
+			if (((pFx == (CNewFx*)0x0) || (iVar2 = (this->fxHandle).id, iVar2 == 0)) || (iVar2 != pFx->id)) {
+				bVar4 = false;
+			}
+			else {
+				bVar4 = true;
+			}
+
+			if (!bVar4) {
+				CScene::ptable.g_EffectsManager_004516b8->GetDynamicFx(&this->fxHandle, this->field_0x24, FX_MATERIAL_SELECTOR_NONE);
+			}
+		}
+
+		pFx = (this->fxHandle).pFx;
+		if (((pFx == (CNewFx*)0x0) || (iVar2 = (this->fxHandle).id, iVar2 == 0)) || (bVar4 = true, iVar2 != pFx->id)) {
+			bVar4 = false;
+		}
+
+		if (bVar4) {
+			if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->fxHandle).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+				pFx->position = this->field_0x40;
+			}
+
+			pWolfen = this->pOwner;
+
+			pFx = (this->fxHandle).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->fxHandle).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+				pFx->rotationEuler = pWolfen->rotationEuler;
+			}
+
+			pFx = (this->fxHandle).pFx;
+			if (((pFx != (CNewFx*)0x0) && (iVar2 = (this->fxHandle).id, iVar2 != 0)) && (iVar2 == pFx->id)) {
+				pFx->Start(0.0f, 0.0f);
+			}
+		}
+	}
+	return;
 }
 
 uint astruct_18::FUN_001eeea0(float param_1)

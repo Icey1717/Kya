@@ -67,6 +67,11 @@ int CFxNewComposite::GetType()
 	return FX_TYPE_COMPOSITE;
 }
 
+void CFxNewComposite::SpatializeOnActor(uint flags, CActor* pActor, uint boneId)
+{
+	IMPLEMENTATION_GUARD();
+}
+
 void CFxNewComposite::Manage()
 {
 	CNewFx* pCVar1;
@@ -95,12 +100,12 @@ void CFxNewComposite::Manage()
 			while (uVar7 != 0) {
 				uVar7 = uVar7 - 1;
 				pCVar1 = pCVar4->pFx;
-				if (((pCVar1 == (CNewFx*)0x0) || (pCVar4->id == 0)) || (bVar2 = true, pCVar4->id != pCVar1->field_0x18)) {
+				if (((pCVar1 == (CNewFx*)0x0) || (pCVar4->id == 0)) || (bVar2 = true, pCVar4->id != pCVar1->id)) {
 					bVar2 = false;
 				}
 				if (bVar2) {
 					if (*pfVar5 < this->field_0x80) {
-						if (((pCVar1 == (CNewFx*)0x0) || (pCVar4->id == 0)) || (pCVar4->id != pCVar1->field_0x18)) {
+						if (((pCVar1 == (CNewFx*)0x0) || (pCVar4->id == 0)) || (pCVar4->id != pCVar1->id)) {
 							bVar2 = false;
 						}
 						else {
@@ -110,23 +115,23 @@ void CFxNewComposite::Manage()
 							}
 						}
 
-						if ((((!bVar2) && (pCVar1 != (CNewFx*)0x0)) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+						if ((((!bVar2) && (pCVar1 != (CNewFx*)0x0)) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->id)) {
 							pCVar1->Start(0.0f, 0.0f);
 						}
 					}
 
 					pCVar1 = pCVar4->pFx;
-					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->id)) {
 						pCVar1->position = this->position;
 					}
 
 					pCVar1 = pCVar4->pFx;
-					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->id)) {
 						pCVar1->rotationEuler = this->rotationEuler;
 					}
 
 					pCVar1 = pCVar4->pFx;
-					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->field_0x18)) {
+					if (((pCVar1 != (CNewFx*)0x0) && (pCVar4->id != 0)) && (pCVar4->id == pCVar1->id)) {
 						pCVar1->scale = this->scale;
 					}
 
@@ -183,12 +188,12 @@ void CFxNewComposite::Instanciate(CFxCompositeScenaricData* pData, FX_MATERIAL_S
 			pNewFx = pHandle->pFx;
 
 			if (((pNewFx == (CNewFx*)0x0) || (pHandle->id == 0)) ||
-				(bVar2 = true, pHandle->id != pNewFx->field_0x18)) {
+				(bVar2 = true, pHandle->id != pNewFx->id)) {
 				bVar2 = false;
 			}
 
 			if (((bVar2) && (pNewFx != (CNewFx*)0x0)) &&
-				((pHandle->id != 0 && (pHandle->id == pNewFx->field_0x18)))) {
+				((pHandle->id != 0 && (pHandle->id == pNewFx->id)))) {
 				pNewFx->pSon = this;
 				pNewFx->field_0x8 = i;
 			}

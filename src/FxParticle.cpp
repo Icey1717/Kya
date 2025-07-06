@@ -209,6 +209,18 @@ void CFxNewParticle::Draw()
 	return;
 }
 
+void CFxNewParticle::Kill()
+{
+	if (this->pManager != (_ed_particle_manager*)0x0) {
+		edParticlesUnInstall(this->pManager, CScene::_scene_handleA);
+		//edMemFree(this->pFileData);
+	}
+
+	CNewFx::Kill();
+
+	return;
+}
+
 int CFxNewParticle::GetType()
 {
 	return FX_TYPE_PARTICLE;
@@ -242,8 +254,8 @@ void CFxNewParticle::Manage()
 				edParticlesSetSystem(this->pManager);
 
 				if (((this->field_0x84 & 1) != 0) && ((this->field_0x84 & 2) == 0)) {
-					p_Var7 = this->pManager->aParams.pData;
-					iVar6 = this->pManager->field_0x4c;
+					p_Var7 = this->pManager->aGeneratorParams.pData;
+					iVar6 = this->pManager->nbGeneratorParams;
 					edF32Matrix4ScaleHard(&eStack128, &gF32Matrix4Unit, &this->scale);
 					edF32Matrix4FromEulerSoft(&eStack64, &this->rotationEuler.xyz, "XYZ");
 					edF32Matrix4TranslateHard(&eStack64, &eStack64, &this->position);
@@ -256,7 +268,7 @@ void CFxNewParticle::Manage()
 
 				edParticlesUpdate(this->field_0x80 * Timer::GetTimer()->cutsceneDeltaTime);
 
-				iVar6 = this->pManager->nbParams;
+				iVar6 = this->pManager->nbTotalGroups;
 				iVar5 = 0;
 				if (0 < iVar6) {
 					p_Var4 = this->pManager->aGroups.pData;
@@ -323,7 +335,7 @@ void CFxNewParticle::Instanciate(CFxParticleScenaricData* pData, FX_MATERIAL_SEL
 		} while (iVar6 < pData->nbData);
 	}
 
-	if (((selector != 8) && (selector != 4)) && (iVar1 = pData->aSubObjs[iVar1].field_0x4, iVar1 != -1)) {
+	if (((selector != 8) && (selector != FX_MATERIAL_SELECTOR_ICE)) && (iVar1 = pData->aSubObjs[iVar1].field_0x4, iVar1 != -1)) {
 		pCVar7 = pFxParticleManager->aParticleRes + iVar1;
 		size = pCVar7->fileSize;
 

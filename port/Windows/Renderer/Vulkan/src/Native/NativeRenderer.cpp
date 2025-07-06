@@ -398,6 +398,10 @@ namespace Renderer
 					pTexture->GetName();
 				}
 
+				if (pTexture->GetTextureRegisters().test.ATST == 0) {
+					pTexture->GetName();
+				}
+
 				gAlphaBuffer.SetInstanceData(drawCommandIndex, { pTexture->GetTextureRegisters() });
 				drawCommandIndex++;
 			}
