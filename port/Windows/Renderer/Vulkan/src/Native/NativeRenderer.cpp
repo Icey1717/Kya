@@ -21,7 +21,7 @@
 #include "NativeDisplayList.h"
 #include <functional> // For std::hash
 
-#define DEBUG_TEXTURE_NAME "KIM_Scene01_L.O.D..g2d (m: 3 l: 0)"
+#define DEBUG_TEXTURE_NAME "BACKGROUND_SECT1_Scene01_Back_sect1.g2d (m: 1 l: 0)"
 
 #define NATIVE_LOG(level, format, ...) MY_LOG_CATEGORY("NativeRenderer", level, format, ##__VA_ARGS__)
 #define NATIVE_LOG_VERBOSE(level, format, ...)

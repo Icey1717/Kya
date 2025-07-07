@@ -20,12 +20,46 @@ namespace Debug
 
 		static bool bOpenFirstMaterial = false;
 
+		enum class SortMode
+		{
+			Loaded,
+			Path
+		};
+
+		static SortMode gSortMode = SortMode::Path;
+
+		static void ShowSortModeControls()
+		{
+			ImGui::SameLine(0.0f, 3.0f);
+
+			// Drop down box for Sort Mode
+			const char* sortModeItems[] = { "Loaded", "Path" };
+			const char* currentSortMode = sortModeItems[static_cast<int>(gSortMode)];
+
+			if (ImGui::BeginCombo("Sort Mode", currentSortMode)) {
+				for (int i = 0; i < IM_ARRAYSIZE(sortModeItems); i++) {
+					bool bIsSelected = (gSortMode == static_cast<SortMode>(i));
+					if (ImGui::Selectable(sortModeItems[i], bIsSelected)) {
+						gSortMode = static_cast<SortMode>(i);
+					}
+
+					if (bIsSelected) {
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+		}
+
 		static void ShowList(bool* bOpen)
 		{
 			ImGui::Begin("Texture List", bOpen, ImGuiWindowFlags_AlwaysAutoResize);
 
 			static char nameFilterBuff[256] = { '\0' };
 			ImGui::InputText("Filter", nameFilterBuff, 256);
+
+			ShowSortModeControls();
 
 			std::string nameFilter = nameFilterBuff;
 
@@ -36,6 +70,9 @@ namespace Debug
 
 			// Create a scrollable list of textures.
 			ImGui::BeginChild("List", ImVec2(600, 600), true);
+
+			std::vector<const Renderer::Kya::G2D*> textureList;
+			textureList.reserve(textureLibrary.GetTextureCount());
 
 			textureLibrary.ForEach([&](const Renderer::Kya::G2D& texture) {
 				bool bFound = true;
@@ -51,6 +88,21 @@ namespace Debug
 				const bool bPassFilter = nameFilter.empty() || texture.GetName().find(nameFilter) != std::string::npos;
 
 				if (bFound && bPassFilter) {
+					textureList.push_back(&texture);
+				}
+			});
+
+			// Sort the texture list based on the selected sort mode.
+			if (gSortMode == SortMode::Path) {
+				std::sort(textureList.begin(), textureList.end(), [](const Renderer::Kya::G2D* a, const Renderer::Kya::G2D* b) {
+					return a->GetName() < b->GetName();
+				});
+			}
+
+			for (auto* pTexture : textureList) {
+				if (pTexture) {
+					const Renderer::Kya::G2D& texture = *pTexture;
+
 					if (ImGui::Selectable(texture.GetName().c_str())) {
 						gSelectedTexture = &texture;
 						gSelectedMaterial = nullptr;
@@ -64,7 +116,7 @@ namespace Debug
 						ImGui::Text("(%d, %d) psm: %d", bm->width, bm->height, bm->psm);
 					}
 				}
-			});
+			}
 
 			ImGui::EndChild();
 

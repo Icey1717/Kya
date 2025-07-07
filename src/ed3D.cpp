@@ -1551,6 +1551,7 @@ void ed3DComputeSonHierarchy(void)
 			for (pCVar6 = peVar1->pPrev; pCVar6 != peVar1; pCVar6 = pCVar6->pPrev) {
 				UpdateRenderMeshTransform_002954b0((ed_3d_hierarchy_node*)pCVar6->pData, true);
 			}
+
 			piVar5 = peVar6->field_0x1ac;
 			for (uVar4 = 0; uVar4 < peVar6->heirarchyListCount; uVar4 = uVar4 + 1) {
 				IMPLEMENTATION_GUARD(
@@ -1562,8 +1563,9 @@ void ed3DComputeSonHierarchy(void)
 			}
 		}
 	}
-	edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries,
-		ed3DHandlers.maxEventID, 4, (void*)0x0);
+
+	edSysHandlersCall(ed3DHandlers.mainIdentifier, ed3DHandlers.entries, ed3DHandlers.maxEventID, 4, (void*)0x0);
+
 	return;
 }
 

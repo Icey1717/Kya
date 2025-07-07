@@ -134,7 +134,7 @@ void C3DFileManager::Level_AddAll(ByteCode* pMemoryStream)
 			ed3DInstallG3D(pMVar4->pFileData, pMVar4->fileLength, 0, &iStack8, &pMVar4->pTextureInfo->manager, 0xc, &pMVar4->meshInfo);
 		}
 
-		pMVar3 = ed3DHierarchyAddToScene(CScene::_scene_handleB, &pMVar4->meshInfo, (char*)0x0);
+		pMVar3 = ed3DHierarchyAddToScene(CScene::_scene_handleA, &pMVar4->meshInfo, (char*)0x0);
 		this->pBackgroundNode = pMVar3;
 
 		if (this->pBackgroundNode != (edNODE*)0x0) {
