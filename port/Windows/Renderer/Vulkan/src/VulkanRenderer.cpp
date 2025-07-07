@@ -44,6 +44,7 @@ const std::vector<const char*> deviceExtensions = {
 	VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME,
 	VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME,
 	VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME,
+	VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NAME,
 };
 
 const std::vector<const char*> instanceExtensions = {
@@ -506,7 +507,10 @@ private:
 		}
 
 		{
+			VkPhysicalDeviceColorWriteEnableFeaturesEXT colorWriteFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT };
+
 			VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extendedDynamicState3{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT };
+			extendedDynamicState3.pNext = &colorWriteFeatures;
 
 			VkPhysicalDeviceVulkan13Features deviceFeatures13 { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
 			deviceFeatures13.pNext = &extendedDynamicState3;
@@ -524,11 +528,17 @@ private:
 
 			assert(extendedDynamicState3.extendedDynamicState3ColorBlendEnable);
 			assert(extendedDynamicState3.extendedDynamicState3ColorBlendEquation);
+
+			assert(colorWriteFeatures.colorWriteEnable);
 		}
+
+		VkPhysicalDeviceColorWriteEnableFeaturesEXT colorWriteFeatures{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT };
+		colorWriteFeatures.colorWriteEnable = VK_TRUE;
 
 		VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extendedDynamicState3{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT };
 		extendedDynamicState3.extendedDynamicState3ColorBlendEnable = VK_TRUE;
 		extendedDynamicState3.extendedDynamicState3ColorBlendEquation = VK_TRUE;
+		extendedDynamicState3.pNext = &colorWriteFeatures;
 
 		VkPhysicalDeviceVulkan13Features deviceFeatures13{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };
 		deviceFeatures13.synchronization2 = VK_TRUE;

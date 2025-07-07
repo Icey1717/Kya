@@ -229,11 +229,13 @@ namespace Renderer
 			alignas(4) VkBool32 enable; // Use VkBool32 for proper alignment
 			alignas(4) int atst;
 			alignas(4) int aref;
+			alignas(4) int afail;
 
 			AlphaDynamicBufferData(const TextureRegisters& textureRegisters)
 				: enable(textureRegisters.test.ATE)
 				, atst(textureRegisters.test.ATST)
 				, aref(textureRegisters.test.AREF)
+				, afail(textureRegisters.test.AFAIL)
 			{ }
 		};
 
@@ -298,6 +300,9 @@ namespace Renderer
 			};
 
 			std::vector<Instance> instances;
+
+			// When true, is a fake second draw that only draws the Z buffer.
+			bool bIsAfailZOnly = false;
 		};
 
 		static std::optional<Draw> gCurrentDraw;
@@ -392,17 +397,24 @@ namespace Renderer
 					return;
 				}
 
+				TextureRegisters textureRegisters = pTexture->GetTextureRegisters();
+
 				NATIVE_LOG_VERBOSE(LogLevel::Info, "UpdateDescriptors: {} material: {} layer: {}", pTexture->GetName(), pTexture->GetMaterialIndex(), pTexture->GetLayerIndex());
 
 				if (pTexture->GetName() == DEBUG_TEXTURE_NAME) {
 					pTexture->GetName();
 				}
 
-				if (pTexture->GetTextureRegisters().test.ATST == 0) {
+				if (pTexture->GetTextureRegisters().test.ATST == ATST_NEVER) {
 					pTexture->GetName();
 				}
 
-				gAlphaBuffer.SetInstanceData(drawCommandIndex, { pTexture->GetTextureRegisters() });
+				if (draw.bIsAfailZOnly) {
+					static const uint32_t inverted_atst[] = { ATST_ALWAYS, ATST_NEVER, ATST_GEQUAL, ATST_GREATER, ATST_NOTEQUAL, ATST_LESS, ATST_LEQUAL, ATST_EQUAL };
+					textureRegisters.test.ATST = inverted_atst[textureRegisters.test.ATST];
+				}
+
+				gAlphaBuffer.SetInstanceData(drawCommandIndex, { textureRegisters });
 				drawCommandIndex++;
 			}
 
@@ -476,6 +488,25 @@ namespace Renderer
 			Renderer::Debug::EndLabel(cmd);
 		}
 
+		static void SetColorDepthDynamicState(const VkCommandBuffer& cmd, Draw& drawCommand)
+		{
+			VkBool32 colorWriteEnable = VK_TRUE;
+			VkBool32 depthWriteEnable = drawCommand.pTexture->GetTextureRegisters().test.AFAIL != AFAIL_FB_ONLY ? VK_TRUE : VK_FALSE;
+
+			if (drawCommand.bIsAfailZOnly) {
+				depthWriteEnable = VK_TRUE;
+				colorWriteEnable = VK_FALSE;
+			}
+
+			// Depth.
+			vkCmdSetDepthWriteEnable(cmd, depthWriteEnable);
+
+			// Color.
+			static auto pvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
+			assert(pvkCmdSetColorWriteEnableEXT);
+			pvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+		}
+
 		class DrawCommandRecorder
 		{
 		public:
@@ -527,6 +558,8 @@ namespace Renderer
 							primState = instance.pMesh->GetPrim().CMD;
 							SetBlendingDynamicState(pTexture, instance.pMesh, cmd);
 						}
+
+						SetColorDepthDynamicState(cmd, drawCommand);
 
 						std::array< uint32_t, 5> dynamicOffsets = {
 							instance.modelMatrixIndex * gModelBuffer.GetDynamicAlignment(),
@@ -1202,6 +1235,8 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo<PipelineKey>& cre
 		VK_DYNAMIC_STATE_SCISSOR,
 		VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT,
 		VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT,
+		VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
+		VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT,
 	};
 	VkPipelineDynamicStateCreateInfo dynamicState{};
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -1369,6 +1404,12 @@ void Renderer::Native::BindTexture(SimpleTexture* pTexture)
 		}
 
 		gRenderThread->AddDraw(*gCurrentDraw);
+
+		// If the texture is expecting to do a Z only draw, need to duplicate it.
+		if (pTexture->GetTextureRegisters().test.AFAIL == AFAIL_ZB_ONLY && pTexture->GetTextureRegisters().test.ATST == ATST_NEVER) {
+			gCurrentDraw->bIsAfailZOnly = true;
+			gRenderThread->AddDraw(*gCurrentDraw);
+		}
 
 		gFinalViewMatrix = gCachedViewMatrix;
 		gFinalProjMatrix = gCachedProjMatrix;

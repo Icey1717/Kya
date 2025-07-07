@@ -14,6 +14,7 @@ layout(binding = 6) uniform Test
 	bool enable;
 	int atst;
 	int aref;
+	int afail;
 } test;
 
 #define ATST_NEVER 0
@@ -71,11 +72,26 @@ bool atst(vec4 outColor)
 			}
 		}
 		else if (test.atst == ATST_NEVER) {
-			return true;
+			return false;
 		}
 	}
 
 	return true;
+}
+
+void afail()
+{
+	// afail registers determine what we do when the alpha test fails
+	switch (test.afail) {
+		case 0: // AFAIL_KEEP
+			discard;
+
+		case 1: // AFAIL_FB_ONLY
+		case 2: // AFAIL_RGB_ONLY
+		case 3: // AFAIL_Z_ONLY
+		// Let Vulkan handle write masks dynamically
+		break;
+	}
 }
 
 void main() 
@@ -89,7 +105,7 @@ void main()
 	bool atst_pass = atst(outColor);
 
 	if (!atst_pass) {
-		discard;
+		afail();
 	}
 
 	// For dual source blending
