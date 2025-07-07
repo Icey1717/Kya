@@ -505,6 +505,21 @@ namespace Renderer
 			static auto pvkCmdSetColorWriteEnableEXT = (PFN_vkCmdSetColorWriteEnableEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteEnableEXT");
 			assert(pvkCmdSetColorWriteEnableEXT);
 			pvkCmdSetColorWriteEnableEXT(cmd, 1, &colorWriteEnable);
+
+			std::array<VkBool32, 1> colorWriteMasks = {
+				VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+			};
+
+			if (drawCommand.pTexture->GetTextureRegisters().test.AFAIL == AFAIL_RGB_ONLY) {
+				// Enable only RGB channels (disable alpha write)
+				colorWriteMasks[0] = {
+					VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT
+				};
+			}
+
+			static auto pvkCmdSetColorWriteMaskEXT = (PFN_vkCmdSetColorWriteMaskEXT)vkGetInstanceProcAddr(GetInstance(), "vkCmdSetColorWriteMaskEXT");
+			assert(pvkCmdSetColorWriteMaskEXT);
+			pvkCmdSetColorWriteMaskEXT(cmd, 0, colorWriteMasks.size(), colorWriteMasks.data());
 		}
 
 		class DrawCommandRecorder
@@ -1237,6 +1252,7 @@ void Renderer::Native::CreatePipeline(const PipelineCreateInfo<PipelineKey>& cre
 		VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT,
 		VK_DYNAMIC_STATE_DEPTH_WRITE_ENABLE,
 		VK_DYNAMIC_STATE_COLOR_WRITE_ENABLE_EXT,
+		VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT,
 	};
 	VkPipelineDynamicStateCreateInfo dynamicState{};
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;

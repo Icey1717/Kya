@@ -528,6 +528,7 @@ private:
 
 			assert(extendedDynamicState3.extendedDynamicState3ColorBlendEnable);
 			assert(extendedDynamicState3.extendedDynamicState3ColorBlendEquation);
+			assert(extendedDynamicState3.extendedDynamicState3ColorWriteMask);
 
 			assert(colorWriteFeatures.colorWriteEnable);
 		}
@@ -538,6 +539,7 @@ private:
 		VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extendedDynamicState3{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT };
 		extendedDynamicState3.extendedDynamicState3ColorBlendEnable = VK_TRUE;
 		extendedDynamicState3.extendedDynamicState3ColorBlendEquation = VK_TRUE;
+		extendedDynamicState3.extendedDynamicState3ColorWriteMask = VK_TRUE;
 		extendedDynamicState3.pNext = &colorWriteFeatures;
 
 		VkPhysicalDeviceVulkan13Features deviceFeatures13{ VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES };

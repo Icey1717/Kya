@@ -86,8 +86,11 @@ void afail()
 		case 0: // AFAIL_KEEP
 			discard;
 
-		case 1: // AFAIL_FB_ONLY
 		case 2: // AFAIL_RGB_ONLY
+			outColor.a = 0.0; // Set alpha to zero
+		break;
+
+		case 1: // AFAIL_FB_ONLY
 		case 3: // AFAIL_Z_ONLY
 		// Let Vulkan handle write masks dynamically
 		break;
